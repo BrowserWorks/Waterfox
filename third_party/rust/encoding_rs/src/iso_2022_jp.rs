@@ -7,14 +7,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use handles::*;
-use data::*;
-use variant::*;
 use super::*;
+use data::*;
+use handles::*;
+use variant::*;
 // Rust 1.14.0 requires the following despite the asterisk above.
 use super::in_inclusive_range16;
 
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone)]
 enum Iso2022JpDecoderState {
     Ascii,
     Roman,
@@ -35,15 +35,13 @@ pub struct Iso2022JpDecoder {
 
 impl Iso2022JpDecoder {
     pub fn new() -> VariantDecoder {
-        VariantDecoder::Iso2022Jp(
-            Iso2022JpDecoder {
-                decoder_state: Iso2022JpDecoderState::Ascii,
-                output_state: Iso2022JpDecoderState::Ascii,
-                lead: 0u8,
-                output_flag: false,
-                pending_prepended: false,
-            }
-        )
+        VariantDecoder::Iso2022Jp(Iso2022JpDecoder {
+            decoder_state: Iso2022JpDecoderState::Ascii,
+            output_state: Iso2022JpDecoderState::Ascii,
+            lead: 0u8,
+            output_flag: false,
+            pending_prepended: false,
+        })
     }
 
     fn extra_to_input_from_state(&self, byte_length: usize) -> Option<usize> {
@@ -52,12 +50,10 @@ impl Iso2022JpDecoder {
                 0
             } else {
                 1
-            } +
-            match self.decoder_state {
-                Iso2022JpDecoderState::Escape |
-                Iso2022JpDecoderState::EscapeStart => 1,
+            } + match self.decoder_state {
+                Iso2022JpDecoderState::Escape | Iso2022JpDecoderState::EscapeStart => 1,
                 _ => 0,
-            }
+            },
         )
     }
 
@@ -105,14 +101,13 @@ impl Iso2022JpDecoder {
                         self.pending_prepended = false;
                         self.output_flag = false;
                         match self.decoder_state {
-                            Iso2022JpDecoderState::Ascii |
-                            Iso2022JpDecoderState::Roman => {
+                            Iso2022JpDecoderState::Ascii | Iso2022JpDecoderState::Roman => {
                                 destination_handle.write_ascii(self.lead);
                                 self.lead = 0x0u8;
                             }
                             Iso2022JpDecoderState::Katakana => {
                                 destination_handle
-                                    .write_upper_bmp(self.lead as u16 - 0x21u16 + 0xFF61u16);
+                                    .write_upper_bmp(u16::from(self.lead) - 0x21u16 + 0xFF61u16);
                                 self.lead = 0x0u8;
                             }
                             Iso2022JpDecoderState::LeadByte => {
@@ -127,8 +122,7 @@ impl Iso2022JpDecoder {
         {},
         {
             match self.decoder_state {
-                Iso2022JpDecoderState::TrailByte |
-                Iso2022JpDecoderState::EscapeStart => {
+                Iso2022JpDecoderState::TrailByte | Iso2022JpDecoderState::EscapeStart => {
                     self.decoder_state = self.output_state;
                     return (DecoderResult::Malformed(1, 0), src_consumed, dest.written());
                 }
@@ -149,9 +143,11 @@ impl Iso2022JpDecoder {
                     }
                     self.output_flag = false;
                     if b > 0x7Fu8 || b == 0x0Eu8 || b == 0x0Fu8 {
-                        return (DecoderResult::Malformed(1, 0),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            DecoderResult::Malformed(1, 0),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     destination_handle.write_ascii(b);
                     continue;
@@ -171,9 +167,11 @@ impl Iso2022JpDecoder {
                         continue;
                     }
                     if b > 0x7Fu8 || b == 0x0Eu8 || b == 0x0Fu8 {
-                        return (DecoderResult::Malformed(1, 0),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            DecoderResult::Malformed(1, 0),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     destination_handle.write_ascii(b);
                     continue;
@@ -185,12 +183,14 @@ impl Iso2022JpDecoder {
                     }
                     self.output_flag = false;
                     if b >= 0x21u8 && b <= 0x5Fu8 {
-                        destination_handle.write_upper_bmp(b as u16 - 0x21u16 + 0xFF61u16);
+                        destination_handle.write_upper_bmp(u16::from(b) - 0x21u16 + 0xFF61u16);
                         continue;
                     }
-                    return (DecoderResult::Malformed(1, 0),
-                            unread_handle.consumed(),
-                            destination_handle.written());
+                    return (
+                        DecoderResult::Malformed(1, 0),
+                        unread_handle.consumed(),
+                        destination_handle.written(),
+                    );
                 }
                 Iso2022JpDecoderState::LeadByte => {
                     if b == 0x1Bu8 {
@@ -203,18 +203,22 @@ impl Iso2022JpDecoder {
                         self.decoder_state = Iso2022JpDecoderState::TrailByte;
                         continue;
                     }
-                    return (DecoderResult::Malformed(1, 0),
-                            unread_handle.consumed(),
-                            destination_handle.written());
+                    return (
+                        DecoderResult::Malformed(1, 0),
+                        unread_handle.consumed(),
+                        destination_handle.written(),
+                    );
                 }
                 Iso2022JpDecoderState::TrailByte => {
                     if b == 0x1Bu8 {
                         self.decoder_state = Iso2022JpDecoderState::EscapeStart;
                         // The byte in error is the previous
                         // lead byte.
-                        return (DecoderResult::Malformed(1, 1),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            DecoderResult::Malformed(1, 1),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     self.decoder_state = Iso2022JpDecoderState::LeadByte;
                     let jis0208_lead_minus_offset = self.lead - 0x21;
@@ -227,19 +231,21 @@ impl Iso2022JpDecoder {
                     // and Katakana (10% acconding to Lunde).
                     if jis0208_lead_minus_offset == 0x03 && trail_minus_offset < 0x53 {
                         // Hiragana
-                        handle.write_upper_bmp(0x3041 + trail_minus_offset as u16);
+                        handle.write_upper_bmp(0x3041 + u16::from(trail_minus_offset));
                         continue;
                     } else if jis0208_lead_minus_offset == 0x04 && trail_minus_offset < 0x56 {
                         // Katakana
-                        handle.write_upper_bmp(0x30A1 + trail_minus_offset as u16);
+                        handle.write_upper_bmp(0x30A1 + u16::from(trail_minus_offset));
                         continue;
                     } else if trail_minus_offset > (0xFE - 0xA1) {
-                        return (DecoderResult::Malformed(2, 0),
-                                unread_handle.consumed(),
-                                handle.written());
+                        return (
+                            DecoderResult::Malformed(2, 0),
+                            unread_handle.consumed(),
+                            handle.written(),
+                        );
                     } else {
-                        let pointer = mul_94(jis0208_lead_minus_offset) +
-                                      trail_minus_offset as usize;
+                        let pointer =
+                            mul_94(jis0208_lead_minus_offset) + trail_minus_offset as usize;
                         let level1_pointer = pointer.wrapping_sub(1410);
                         if level1_pointer < JIS0208_LEVEL1_KANJI.len() {
                             handle.write_upper_bmp(JIS0208_LEVEL1_KANJI[level1_pointer]);
@@ -263,9 +269,11 @@ impl Iso2022JpDecoder {
                                     handle.write_bmp_excl_ascii(bmp);
                                     continue;
                                 } else {
-                                    return (DecoderResult::Malformed(2, 0),
-                                            unread_handle.consumed(),
-                                            handle.written());
+                                    return (
+                                        DecoderResult::Malformed(2, 0),
+                                        unread_handle.consumed(),
+                                        handle.written(),
+                                    );
                                 }
                             }
                         }
@@ -279,9 +287,11 @@ impl Iso2022JpDecoder {
                     }
                     self.output_flag = false;
                     self.decoder_state = self.output_state;
-                    return (DecoderResult::Malformed(1, 0),
-                            unread_handle.unread(),
-                            destination_handle.written());
+                    return (
+                        DecoderResult::Malformed(1, 0),
+                        unread_handle.unread(),
+                        destination_handle.written(),
+                    );
                 }
                 Iso2022JpDecoderState::Escape => {
                     let mut state: Option<Iso2022JpDecoderState> = None;
@@ -307,9 +317,11 @@ impl Iso2022JpDecoder {
                                 // escape sequence. Therefore,
                                 // the first one of these was
                                 // useless.
-                                return (DecoderResult::Malformed(3, 3),
-                                        unread_handle.consumed(),
-                                        destination_handle.written());
+                                return (
+                                    DecoderResult::Malformed(3, 3),
+                                    unread_handle.consumed(),
+                                    destination_handle.written(),
+                                );
                             }
                             continue;
                         }
@@ -323,9 +335,11 @@ impl Iso2022JpDecoder {
                             // The byte in error is not the
                             // current or the previous byte but
                             // the one before those (lone 0x1B).
-                            return (DecoderResult::Malformed(1, 1),
-                                    unread_handle.unread(),
-                                    destination_handle.written());
+                            return (
+                                DecoderResult::Malformed(1, 1),
+                                unread_handle.unread(),
+                                destination_handle.written(),
+                            );
                         }
                     }
                 }
@@ -342,8 +356,40 @@ impl Iso2022JpDecoder {
     );
 }
 
+#[cfg(feature = "fast-kanji-encode")]
+#[inline(always)]
+fn is_kanji_mapped(bmp: u16) -> bool {
+    // Use the shift_jis variant, because we don't care about the
+    // byte values here.
+    jis0208_kanji_shift_jis_encode(bmp).is_some()
+}
 
-#[cfg_attr(feature = "cargo-clippy", allow(if_let_redundant_pattern_matching, if_same_then_else))]
+#[cfg(not(feature = "fast-kanji-encode"))]
+#[cfg_attr(
+    feature = "cargo-clippy",
+    allow(if_let_redundant_pattern_matching, if_same_then_else)
+)]
+#[inline(always)]
+fn is_kanji_mapped(bmp: u16) -> bool {
+    if 0x4EDD == bmp {
+        true
+    } else if let Some(_) = jis0208_level1_kanji_shift_jis_encode(bmp) {
+        // Use the shift_jis variant, because we don't care about the
+        // byte values here.
+        true
+    } else if let Some(_) = jis0208_level2_and_additional_kanji_encode(bmp) {
+        true
+    } else if let Some(_) = position(&IBM_KANJI[..], bmp) {
+        true
+    } else {
+        false
+    }
+}
+
+#[cfg_attr(
+    feature = "cargo-clippy",
+    allow(if_let_redundant_pattern_matching, if_same_then_else)
+)]
 fn is_mapped_for_two_byte_encode(bmp: u16) -> bool {
     // The code below uses else after return to
     // keep the same structure as in EUC-JP.
@@ -352,19 +398,7 @@ fn is_mapped_for_two_byte_encode(bmp: u16) -> bool {
     if bmp_minus_hiragana < 0x53 {
         true
     } else if in_inclusive_range16(bmp, 0x4E00, 0x9FA0) {
-        if 0x4EDD == bmp {
-            true
-        } else if let Some(_) = jis0208_level1_kanji_shift_jis_encode(bmp) {
-            // Use the shift_jis variant, because we don't care about the
-            // byte values here.
-            true
-        } else if let Some(_) = jis0208_level2_and_additional_kanji_encode(bmp) {
-            true
-        } else if let Some(_) = position(&IBM_KANJI[..], bmp) {
-            true
-        } else {
-            false
-        }
+        is_kanji_mapped(bmp)
     } else {
         let bmp_minus_katakana = bmp.wrapping_sub(0x30A1);
         if bmp_minus_katakana < 0x56 {
@@ -393,6 +427,33 @@ fn is_mapped_for_two_byte_encode(bmp: u16) -> bool {
     }
 }
 
+#[cfg(feature = "fast-kanji-encode")]
+#[inline(always)]
+fn encode_kanji(bmp: u16) -> Option<(u8, u8)> {
+    jis0208_kanji_iso_2022_jp_encode(bmp)
+}
+
+#[cfg(not(feature = "fast-kanji-encode"))]
+#[inline(always)]
+fn encode_kanji(bmp: u16) -> Option<(u8, u8)> {
+    if 0x4EDD == bmp {
+        // Ideograph on the symbol row!
+        Some((0x21, 0xB8 - 0x80))
+    } else if let Some((lead, trail)) = jis0208_level1_kanji_iso_2022_jp_encode(bmp) {
+        Some((lead, trail))
+    } else if let Some(pos) = jis0208_level2_and_additional_kanji_encode(bmp) {
+        let lead = (pos / 94) + (0xD0 - 0x80);
+        let trail = (pos % 94) + 0x21;
+        Some((lead as u8, trail as u8))
+    } else if let Some(pos) = position(&IBM_KANJI[..], bmp) {
+        let lead = (pos / 94) + (0xF9 - 0x80);
+        let trail = (pos % 94) + 0x21;
+        Some((lead as u8, trail as u8))
+    } else {
+        None
+    }
+}
+
 enum Iso2022JpEncoderState {
     Ascii,
     Roman,
@@ -407,7 +468,9 @@ impl Iso2022JpEncoder {
     pub fn new(encoding: &'static Encoding) -> Encoder {
         Encoder::new(
             encoding,
-            VariantEncoder::Iso2022Jp(Iso2022JpEncoder { state: Iso2022JpEncoderState::Ascii }),
+            VariantEncoder::Iso2022Jp(Iso2022JpEncoder {
+                state: Iso2022JpEncoderState::Ascii,
+            }),
         )
     }
 
@@ -418,10 +481,10 @@ impl Iso2022JpEncoder {
         }
     }
 
-
-    pub fn max_buffer_length_from_utf16_without_replacement(&self,
-                                                            u16_length: usize)
-                                                            -> Option<usize> {
+    pub fn max_buffer_length_from_utf16_without_replacement(
+        &self,
+        u16_length: usize,
+    ) -> Option<usize> {
         // Worst case: every other character is ASCII/Roman and every other
         // JIS0208.
         // Two UTF-16 input units:
@@ -436,9 +499,10 @@ impl Iso2022JpEncoder {
         )
     }
 
-    pub fn max_buffer_length_from_utf8_without_replacement(&self,
-                                                           byte_length: usize)
-                                                           -> Option<usize> {
+    pub fn max_buffer_length_from_utf8_without_replacement(
+        &self,
+        byte_length: usize,
+    ) -> Option<usize> {
         // Worst case: every other character is ASCII/Roman and every other
         // JIS0208.
         // Three UTF-8 input units: 1 ASCII, 2 JIS0208
@@ -454,26 +518,26 @@ impl Iso2022JpEncoder {
         {
             match self.state {
                 Iso2022JpEncoderState::Ascii => {}
-                _ => {
-                    match dest.check_space_three() {
-                        Space::Full(dst_written) => {
-                            return (EncoderResult::OutputFull, src_consumed, dst_written);
-                        }
-                        Space::Available(destination_handle) => {
-                            self.state = Iso2022JpEncoderState::Ascii;
-                            destination_handle.write_three(0x1Bu8, 0x28u8, 0x42u8);
-                        }
+                _ => match dest.check_space_three() {
+                    Space::Full(dst_written) => {
+                        return (EncoderResult::OutputFull, src_consumed, dst_written);
                     }
-                }
+                    Space::Available(destination_handle) => {
+                        self.state = Iso2022JpEncoderState::Ascii;
+                        destination_handle.write_three(0x1Bu8, 0x28u8, 0x42u8);
+                    }
+                },
             }
         },
         {
             match self.state {
                 Iso2022JpEncoderState::Ascii => {
                     if c == '\u{0E}' || c == '\u{0F}' || c == '\u{1B}' {
-                        return (EncoderResult::Unmappable('\u{FFFD}'),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            EncoderResult::Unmappable('\u{FFFD}'),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     if c <= '\u{7F}' {
                         destination_handle.write_one(c as u8);
@@ -486,9 +550,11 @@ impl Iso2022JpEncoder {
                         continue;
                     }
                     if c > '\u{FFFF}' {
-                        return (EncoderResult::Unmappable(c),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            EncoderResult::Unmappable(c),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     // Yes, if c is in index, we'll search
                     // again in the Jis0208 state, but this
@@ -499,15 +565,19 @@ impl Iso2022JpEncoder {
                         unread_handle.unread();
                         continue;
                     }
-                    return (EncoderResult::Unmappable(c),
-                            unread_handle.consumed(),
-                            destination_handle.written());
+                    return (
+                        EncoderResult::Unmappable(c),
+                        unread_handle.consumed(),
+                        destination_handle.written(),
+                    );
                 }
                 Iso2022JpEncoderState::Roman => {
                     if c == '\u{0E}' || c == '\u{0F}' || c == '\u{1B}' {
-                        return (EncoderResult::Unmappable('\u{FFFD}'),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            EncoderResult::Unmappable('\u{FFFD}'),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     if c == '\u{5C}' || c == '\u{7E}' {
                         self.state = Iso2022JpEncoderState::Ascii;
@@ -528,9 +598,11 @@ impl Iso2022JpEncoder {
                         continue;
                     }
                     if c > '\u{FFFF}' {
-                        return (EncoderResult::Unmappable(c),
-                                unread_handle.consumed(),
-                                destination_handle.written());
+                        return (
+                            EncoderResult::Unmappable(c),
+                            unread_handle.consumed(),
+                            destination_handle.written(),
+                        );
                     }
                     // Yes, if c is in index, we'll search
                     // again in the Jis0208 state, but this
@@ -541,9 +613,11 @@ impl Iso2022JpEncoder {
                         unread_handle.unread();
                         continue;
                     }
-                    return (EncoderResult::Unmappable(c),
-                            unread_handle.consumed(),
-                            destination_handle.written());
+                    return (
+                        EncoderResult::Unmappable(c),
+                        unread_handle.consumed(),
+                        destination_handle.written(),
+                    );
                 }
                 Iso2022JpEncoderState::Jis0208 => {
                     if c <= '\u{7F}' {
@@ -563,10 +637,11 @@ impl Iso2022JpEncoder {
                         // not to make it the responsibility
                         // of the caller.
                         self.state = Iso2022JpEncoderState::Ascii;
-                        return (EncoderResult::Unmappable(c),
-                                unread_handle.consumed(),
-                                destination_handle
-                                    .write_three_return_written(0x1Bu8, 0x28u8, 0x42u8));
+                        return (
+                            EncoderResult::Unmappable(c),
+                            unread_handle.consumed(),
+                            destination_handle.write_three_return_written(0x1Bu8, 0x28u8, 0x42u8),
+                        );
                     }
                     let bmp = c as u16;
                     let handle = destination_handle;
@@ -578,29 +653,16 @@ impl Iso2022JpEncoder {
                         handle.write_two(0x24, 0x21 + bmp_minus_hiragana as u8);
                         continue;
                     } else if in_inclusive_range16(bmp, 0x4E00, 0x9FA0) {
-                        if 0x4EDD == bmp {
-                            // Ideograph on the symbol row!
-                            handle.write_two(0x21, 0xB8 - 0x80);
-                            continue;
-                        } else if let Some((lead, trail)) =
-                            jis0208_level1_kanji_iso_2022_jp_encode(bmp) {
+                        if let Some((lead, trail)) = encode_kanji(bmp) {
                             handle.write_two(lead, trail);
-                            continue;
-                        } else if let Some(pos) = jis0208_level2_and_additional_kanji_encode(bmp) {
-                            let lead = (pos / 94) + (0xD0 - 0x80);
-                            let trail = (pos % 94) + 0x21;
-                            handle.write_two(lead as u8, trail as u8);
-                            continue;
-                        } else if let Some(pos) = position(&IBM_KANJI[..], bmp) {
-                            let lead = (pos / 94) + (0xF9 - 0x80);
-                            let trail = (pos % 94) + 0x21;
-                            handle.write_two(lead as u8, trail as u8);
                             continue;
                         } else {
                             self.state = Iso2022JpEncoderState::Ascii;
-                            return (EncoderResult::Unmappable(c),
-                                    unread_handle.consumed(),
-                                    handle.write_three_return_written(0x1Bu8, 0x28u8, 0x42u8));
+                            return (
+                                EncoderResult::Unmappable(c),
+                                unread_handle.consumed(),
+                                handle.write_three_return_written(0x1Bu8, 0x28u8, 0x42u8),
+                            );
                         }
                     } else {
                         let bmp_minus_katakana = bmp.wrapping_sub(0x30A1);
@@ -619,14 +681,14 @@ impl Iso2022JpEncoder {
                                 // We have half-width katakana. The lead is either
                                 // row 1 or 5 of JIS X 0208, so the lookup table
                                 // only stores the trail.
-                                let lead = if bmp != 0xFF70 &&
-                                              in_inclusive_range16(bmp, 0xFF66, 0xFF9D) {
-                                    0x25u8
-                                } else {
-                                    0x21u8
-                                };
-                                let trail = ISO_2022_JP_HALF_WIDTH_TRAIL[bmp_minus_half_width as
-                                usize];
+                                let lead =
+                                    if bmp != 0xFF70 && in_inclusive_range16(bmp, 0xFF66, 0xFF9D) {
+                                        0x25u8
+                                    } else {
+                                        0x21u8
+                                    };
+                                let trail =
+                                    ISO_2022_JP_HALF_WIDTH_TRAIL[bmp_minus_half_width as usize];
                                 handle.write_two(lead, trail);
                                 continue;
                             } else if bmp == 0x2212 {
@@ -637,8 +699,10 @@ impl Iso2022JpEncoder {
                                 let trail = (pointer % 94) + 0x21;
                                 handle.write_two(lead as u8, trail as u8);
                                 continue;
-                            } else if in_inclusive_range16(bmp, 0xFA0E, 0xFA2D) || bmp == 0xF929 ||
-                                      bmp == 0xF9DC {
+                            } else if in_inclusive_range16(bmp, 0xFA0E, 0xFA2D)
+                                || bmp == 0xF929
+                                || bmp == 0xF9DC
+                            {
                                 // Guaranteed to be found in IBM_KANJI
                                 let pos = position(&IBM_KANJI[..], bmp).unwrap();
                                 let lead = (pos / 94) + (0xF9 - 0x80);
@@ -657,9 +721,11 @@ impl Iso2022JpEncoder {
                                 continue;
                             } else {
                                 self.state = Iso2022JpEncoderState::Ascii;
-                                return (EncoderResult::Unmappable(c),
-                                        unread_handle.consumed(),
-                                        handle.write_three_return_written(0x1Bu8, 0x28u8, 0x42u8));
+                                return (
+                                    EncoderResult::Unmappable(c),
+                                    unread_handle.consumed(),
+                                    handle.write_three_return_written(0x1Bu8, 0x28u8, 0x42u8),
+                                );
                             }
                         }
                     }
@@ -890,7 +956,6 @@ mod tests {
         encode_iso_2022_jp("\u{58FA}\x0F", b"\x1B$B\x54\x64\x1B(B&#65533;");
         encode_iso_2022_jp("\u{58FA}\u{00A5}", b"\x1B$B\x54\x64\x1B(J\x5C\x1B(B");
         encode_iso_2022_jp("\u{58FA}a", b"\x1B$B\x54\x64\x1B(Ba");
-
     }
 
     #[test]
@@ -961,6 +1026,20 @@ mod tests {
             assert_eq!(output[0], 0xFFFD);
             assert_eq!(output[1], 0x0041);
         }
+    }
+
+    #[test]
+    fn test_iso_2022_jp_encode_from_two_low_surrogates() {
+        let expectation = b"&#65533;&#65533;";
+        let mut output = [0u8; 40];
+        let mut encoder = ISO_2022_JP.new_encoder();
+        let (result, read, written, had_errors) =
+            encoder.encode_from_utf16(&[0xDC00u16, 0xDEDEu16], &mut output[..], true);
+        assert_eq!(result, CoderResult::InputEmpty);
+        assert_eq!(read, 2);
+        assert_eq!(written, expectation.len());
+        assert!(had_errors);
+        assert_eq!(&output[..written], expectation);
     }
 
 }

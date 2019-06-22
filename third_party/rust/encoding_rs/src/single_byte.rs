@@ -7,10 +7,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use super::*;
+use ascii::*;
+use data::position;
 use handles::*;
 use variant::*;
-use ascii::*;
-use super::*;
 
 pub struct SingleByteDecoder {
     table: &'static [u16; 128],
@@ -33,109 +34,118 @@ impl SingleByteDecoder {
         byte_length.checked_mul(3)
     }
 
-    pub fn decode_to_utf8_raw(&mut self,
-                              src: &[u8],
-                              dst: &mut [u8],
-                              _last: bool)
-                              -> (DecoderResult, usize, usize) {
+    pub fn decode_to_utf8_raw(
+        &mut self,
+        src: &[u8],
+        dst: &mut [u8],
+        _last: bool,
+    ) -> (DecoderResult, usize, usize) {
         let mut source = ByteSource::new(src);
         let mut dest = Utf8Destination::new(dst);
         'outermost: loop {
             match dest.copy_ascii_from_check_space_bmp(&mut source) {
                 CopyAsciiResult::Stop(ret) => return ret,
-                CopyAsciiResult::GoOn((mut non_ascii, mut handle)) => {
-                    'middle: loop {
-                        // Start non-boilerplate
-                        //
-                        // Since the non-ASCIIness of `non_ascii` is hidden from
-                        // the optimizer, it can't figure out that it's OK to
-                        // statically omit the bound check when accessing
-                        // `[u16; 128]` with an index
-                        // `non_ascii as usize - 0x80usize`.
-                        let mapped =
-                            unsafe { *(self.table.get_unchecked(non_ascii as usize - 0x80usize)) };
-                        // let mapped = self.table[non_ascii as usize - 0x80usize];
-                        if mapped == 0u16 {
-                            return (DecoderResult::Malformed(1, 0),
-                                    source.consumed(),
-                                    handle.written());
+                CopyAsciiResult::GoOn((mut non_ascii, mut handle)) => 'middle: loop {
+                    // Start non-boilerplate
+                    //
+                    // Since the non-ASCIIness of `non_ascii` is hidden from
+                    // the optimizer, it can't figure out that it's OK to
+                    // statically omit the bound check when accessing
+                    // `[u16; 128]` with an index
+                    // `non_ascii as usize - 0x80usize`.
+                    let mapped =
+                        unsafe { *(self.table.get_unchecked(non_ascii as usize - 0x80usize)) };
+                    // let mapped = self.table[non_ascii as usize - 0x80usize];
+                    if mapped == 0u16 {
+                        return (
+                            DecoderResult::Malformed(1, 0),
+                            source.consumed(),
+                            handle.written(),
+                        );
+                    }
+                    let dest_again = handle.write_bmp_excl_ascii(mapped);
+                    // End non-boilerplate
+                    match source.check_available() {
+                        Space::Full(src_consumed) => {
+                            return (
+                                DecoderResult::InputEmpty,
+                                src_consumed,
+                                dest_again.written(),
+                            );
                         }
-                        let dest_again = handle.write_bmp_excl_ascii(mapped);
-                        // End non-boilerplate
-                        match source.check_available() {
-                            Space::Full(src_consumed) => {
-                                return (DecoderResult::InputEmpty,
-                                        src_consumed,
-                                        dest_again.written());
-                            }
-                            Space::Available(source_handle) => {
-                                match dest_again.check_space_bmp() {
-                                    Space::Full(dst_written) => {
-                                        return (DecoderResult::OutputFull,
-                                                source_handle.consumed(),
-                                                dst_written);
-                                    }
-                                    Space::Available(mut destination_handle) => {
-                                        let (mut b, unread_handle) = source_handle.read();
-                                        let source_again = unread_handle.commit();
-                                        'innermost: loop {
-                                            if b > 127 {
-                                                non_ascii = b;
-                                                handle = destination_handle;
-                                                continue 'middle;
-                                            }
-                                            // Testing on Haswell says that we should write the
-                                            // byte unconditionally instead of trying to unread it
-                                            // to make it part of the next SIMD stride.
-                                            let dest_again_again =
-                                                destination_handle.write_ascii(b);
-                                            if b < 60 {
-                                                // We've got punctuation
-                                                match source_again.check_available() {
-                                                    Space::Full(src_consumed_again) => {
-                                                        return (DecoderResult::InputEmpty,
-                                                                src_consumed_again,
-                                                                dest_again_again.written());
-                                                    }
-                                                    Space::Available(source_handle_again) => {
-                                                        match dest_again_again.check_space_bmp() {
-                                                            Space::Full(dst_written_again) => {
-                                                                return (DecoderResult::OutputFull,
-                                                                        source_handle_again
-                                                                            .consumed(),
-                                                                        dst_written_again);
-                                                            }
-                                                            Space::Available(destination_handle_again) => {
-                                                                {
-                                                                    let (b_again, _unread_handle_again) =
-                                                                        source_handle_again.read();
-                                                                    b = b_again;
-                                                                    destination_handle = destination_handle_again;
-                                                                    continue 'innermost;
-                                                                }
-                                                            }
+                        Space::Available(source_handle) => {
+                            match dest_again.check_space_bmp() {
+                                Space::Full(dst_written) => {
+                                    return (
+                                        DecoderResult::OutputFull,
+                                        source_handle.consumed(),
+                                        dst_written,
+                                    );
+                                }
+                                Space::Available(mut destination_handle) => {
+                                    let (mut b, unread_handle) = source_handle.read();
+                                    let source_again = unread_handle.commit();
+                                    'innermost: loop {
+                                        if b > 127 {
+                                            non_ascii = b;
+                                            handle = destination_handle;
+                                            continue 'middle;
+                                        }
+                                        // Testing on Haswell says that we should write the
+                                        // byte unconditionally instead of trying to unread it
+                                        // to make it part of the next SIMD stride.
+                                        let dest_again_again = destination_handle.write_ascii(b);
+                                        if b < 60 {
+                                            // We've got punctuation
+                                            match source_again.check_available() {
+                                                Space::Full(src_consumed_again) => {
+                                                    return (
+                                                        DecoderResult::InputEmpty,
+                                                        src_consumed_again,
+                                                        dest_again_again.written(),
+                                                    );
+                                                }
+                                                Space::Available(source_handle_again) => {
+                                                    match dest_again_again.check_space_bmp() {
+                                                        Space::Full(dst_written_again) => {
+                                                            return (
+                                                                DecoderResult::OutputFull,
+                                                                source_handle_again.consumed(),
+                                                                dst_written_again,
+                                                            );
+                                                        }
+                                                        Space::Available(
+                                                            destination_handle_again,
+                                                        ) => {
+                                                            let (b_again, _unread_handle_again) =
+                                                                source_handle_again.read();
+                                                            b = b_again;
+                                                            destination_handle =
+                                                                destination_handle_again;
+                                                            continue 'innermost;
                                                         }
                                                     }
                                                 }
                                             }
-                                            // We've got markup or ASCII text
-                                            continue 'outermost;
                                         }
+                                        // We've got markup or ASCII text
+                                        continue 'outermost;
                                     }
                                 }
                             }
                         }
                     }
-                }
+                },
             }
         }
     }
 
-    pub fn decode_to_utf16_raw(&mut self,
-                               src: &[u8],
-                               dst: &mut [u16],
-                               _last: bool)
-                               -> (DecoderResult, usize, usize) {
+    pub fn decode_to_utf16_raw(
+        &mut self,
+        src: &[u8],
+        dst: &mut [u16],
+        _last: bool,
+    ) -> (DecoderResult, usize, usize) {
         let (pending, length) = if dst.len() < src.len() {
             (DecoderResult::OutputFull, dst.len())
         } else {
@@ -144,12 +154,12 @@ impl SingleByteDecoder {
         let mut converted = 0usize;
         'outermost: loop {
             match unsafe {
-                      ascii_to_basic_latin(
-                    src.as_ptr().offset(converted as isize),
-                    dst.as_mut_ptr().offset(converted as isize),
+                ascii_to_basic_latin(
+                    src.as_ptr().add(converted),
+                    dst.as_mut_ptr().add(converted),
                     length - converted,
                 )
-                  } {
+            } {
                 None => {
                     return (pending, length, length);
                 }
@@ -166,9 +176,11 @@ impl SingleByteDecoder {
                             unsafe { *(self.table.get_unchecked(non_ascii as usize - 0x80usize)) };
                         // let mapped = self.table[non_ascii as usize - 0x80usize];
                         if mapped == 0u16 {
-                            return (DecoderResult::Malformed(1, 0),
-                                    converted + 1, // +1 `for non_ascii`
-                                    converted);
+                            return (
+                                DecoderResult::Malformed(1, 0),
+                                converted + 1, // +1 `for non_ascii`
+                                converted,
+                            );
                         }
                         unsafe {
                             // The bound check has already been performed
@@ -196,7 +208,7 @@ impl SingleByteDecoder {
                             // byte unconditionally instead of trying to unread it
                             // to make it part of the next SIMD stride.
                             unsafe {
-                                *(dst.get_unchecked_mut(converted)) = b as u16;
+                                *(dst.get_unchecked_mut(converted)) = u16::from(b);
                             }
                             converted += 1;
                             if b < 60 {
@@ -219,76 +231,102 @@ impl SingleByteDecoder {
 
 pub struct SingleByteEncoder {
     table: &'static [u16; 128],
+    run_bmp_offset: usize,
+    run_byte_offset: usize,
+    run_length: usize,
 }
 
 impl SingleByteEncoder {
-    pub fn new(encoding: &'static Encoding, data: &'static [u16; 128]) -> Encoder {
+    pub fn new(
+        encoding: &'static Encoding,
+        data: &'static [u16; 128],
+        run_bmp_offset: u16,
+        run_byte_offset: u8,
+        run_length: u8,
+    ) -> Encoder {
         Encoder::new(
             encoding,
-            VariantEncoder::SingleByte(SingleByteEncoder { table: data }),
+            VariantEncoder::SingleByte(SingleByteEncoder {
+                table: data,
+                run_bmp_offset: run_bmp_offset as usize,
+                run_byte_offset: run_byte_offset as usize,
+                run_length: run_length as usize,
+            }),
         )
     }
 
-    pub fn max_buffer_length_from_utf16_without_replacement(&self,
-                                                            u16_length: usize)
-                                                            -> Option<usize> {
+    pub fn max_buffer_length_from_utf16_without_replacement(
+        &self,
+        u16_length: usize,
+    ) -> Option<usize> {
         Some(u16_length)
     }
 
-    pub fn max_buffer_length_from_utf8_without_replacement(&self,
-                                                           byte_length: usize)
-                                                           -> Option<usize> {
+    pub fn max_buffer_length_from_utf8_without_replacement(
+        &self,
+        byte_length: usize,
+    ) -> Option<usize> {
         Some(byte_length)
     }
 
+    #[inline(always)]
     fn encode_u16(&self, code_unit: u16) -> Option<u8> {
-        // We search the quadrants in reverse order, but we search forward
-        // within each quadrant. For Windows and ISO encodings, this is
-        // generally faster than just searching the whole table backwards.
-        // (Exceptions: English, German, Czech.) This order is also OK for
-        // KOI encodings. For IBM and Mac encodings, this order is bad,
-        // but we don't really need to optimize for those encodings anyway.
+        // First, we see if the code unit falls into a run of consecutive
+        // code units that can be mapped by offset. This is very efficient
+        // for most non-Latin encodings as well as Latin1-ish encodings.
+        //
+        // For encodings that don't fit this pattern, the run (which may
+        // have the length of just one) just establishes the starting point
+        // for the next rule.
+        //
+        // Next, we do a forward linear search in the part of the index
+        // after the run. Even in non-Latin1-ish Latin encodings (except
+        // macintosh), the lower case letters are here.
+        //
+        // Next, we search the third quadrant up to the start of the run
+        // (upper case letters in Latin encodings except macintosh, in
+        // Greek and in KOI encodings) and then the second quadrant,
+        // except if the run stared before the third quadrant, we search
+        // the second quadrant up to the run.
+        //
+        // Last, we search the first quadrant, which has unused controls
+        // or punctuation in most encodings. This is bad for macintosh
+        // and IBM866, but those are rare.
 
-        // In Windows and ISO encodings, the fourth quadrant holds most of the
-        // lower-case letters for bicameral scripts as well as the Hebrew
-        // letters. There are some Thai letters and combining marks as well as
-        // Thai numerals here. (In KOI8-R, the upper-case letters are here.)
-        for i in 96..128 {
-            if self.table[i] == code_unit {
-                return Some((i + 128) as u8);
-            }
+        // Run of consecutive units
+        let unit_as_usize = code_unit as usize;
+        let offset = unit_as_usize.wrapping_sub(self.run_bmp_offset);
+        if offset < self.run_length {
+            return Some((128 + self.run_byte_offset + offset) as u8);
         }
 
-        // In Windows and ISO encodings, the third quadrant holds most of the
-        // upper-case letters for bicameral scripts as well as most of the
-        // Arabic letters. Searching this quadrant first would be better for
-        // Arabic. There are a number of Thai letters and combining marks here.
-        // (In KOI8-R, the lower-case letters are here.)
-        for i in 64..96 {
-            if self.table[i] == code_unit {
-                return Some((i + 128) as u8);
-            }
+        // Search after the run
+        let tail_start = self.run_byte_offset + self.run_length;
+        if let Some(pos) = position(&self.table[tail_start..], code_unit) {
+            return Some((128 + tail_start + pos) as u8);
         }
 
-        // In Windows and ISO encodings, the second quadrant hold most of the
-        // Thai letters. In other scripts, there tends to be symbols here.
-        // Even though the two quadrants above are relevant for Thai, for Thai
-        // it would likely be optimal to search this quadrant first. :-(
-        for i in 32..64 {
-            if self.table[i] == code_unit {
-                return Some((i + 128) as u8);
+        if self.run_byte_offset >= 64 {
+            // Search third quadrant before the run
+            if let Some(pos) = position(&self.table[64..self.run_byte_offset], code_unit) {
+                return Some(((128 + 64) + pos) as u8);
             }
+
+            // Search second quadrant
+            if let Some(pos) = position(&self.table[32..64], code_unit) {
+                return Some(((128 + 32) + pos) as u8);
+            }
+        } else if let Some(pos) = position(&self.table[32..self.run_byte_offset], code_unit) {
+            // windows-1252, windows-874, ISO-8859-15 and ISO-8859-5
+            // Search second quadrant before the run
+            return Some(((128 + 32) + pos) as u8);
         }
 
-        // The first quadrant is useless in ISO encodings. In Windows encodings,
-        // there is useful punctuation here that might warrant searching
-        // before the symbols in the second quadrant, but the second quadrant
-        // is searched before this one for the benefit of Thai.
-        for i in 0..32 {
-            if self.table[i] == code_unit {
-                return Some((i + 128) as u8);
-            }
+        // Search first quadrant
+        if let Some(pos) = position(&self.table[..32], code_unit) {
+            return Some((128 + pos) as u8);
         }
+
         None
     }
 
@@ -297,9 +335,11 @@ impl SingleByteEncoder {
             match self.encode_u16(bmp) {
                 Some(byte) => handle.write_one(byte),
                 None => {
-                    return (EncoderResult::unmappable_from_bmp(bmp),
-                            source.consumed(),
-                            handle.written());
+                    return (
+                        EncoderResult::unmappable_from_bmp(bmp),
+                        source.consumed(),
+                        handle.written(),
+                    );
                 }
             }
         },
@@ -315,11 +355,12 @@ impl SingleByteEncoder {
         true
     );
 
-    pub fn encode_from_utf16_raw(&mut self,
-                                 src: &[u16],
-                                 dst: &mut [u8],
-                                 _last: bool)
-                                 -> (EncoderResult, usize, usize) {
+    pub fn encode_from_utf16_raw(
+        &mut self,
+        src: &[u16],
+        dst: &mut [u8],
+        _last: bool,
+    ) -> (EncoderResult, usize, usize) {
         let (pending, length) = if dst.len() < src.len() {
             (EncoderResult::OutputFull, dst.len())
         } else {
@@ -328,12 +369,12 @@ impl SingleByteEncoder {
         let mut converted = 0usize;
         'outermost: loop {
             match unsafe {
-                      basic_latin_to_ascii(
-                    src.as_ptr().offset(converted as isize),
-                    dst.as_mut_ptr().offset(converted as isize),
+                basic_latin_to_ascii(
+                    src.as_ptr().add(converted),
+                    dst.as_mut_ptr().add(converted),
                     length - converted,
                 )
-                  } {
+            } {
                 None => {
                     return (pending, length, length);
                 }
@@ -356,39 +397,47 @@ impl SingleByteEncoder {
                                     // high surrogate
                                     if converted + 1 == length {
                                         // End of buffer. This surrogate is unpaired.
-                                        return (EncoderResult::Unmappable('\u{FFFD}'),
-                                                converted + 1, // +1 `for non_ascii`
-                                                converted);
+                                        return (
+                                            EncoderResult::Unmappable('\u{FFFD}'),
+                                            converted + 1, // +1 `for non_ascii`
+                                            converted,
+                                        );
                                     }
-                                    let second = unsafe { *src.get_unchecked(converted + 1) } as
-                                                 u32;
+                                    let second =
+                                        u32::from(unsafe { *src.get_unchecked(converted + 1) });
                                     if second & 0xFC00u32 != 0xDC00u32 {
-                                        return (EncoderResult::Unmappable('\u{FFFD}'),
-                                                converted + 1, // +1 `for non_ascii`
-                                                converted);
+                                        return (
+                                            EncoderResult::Unmappable('\u{FFFD}'),
+                                            converted + 1, // +1 `for non_ascii`
+                                            converted,
+                                        );
                                     }
                                     // The next code unit is a low surrogate.
                                     let astral: char = unsafe {
-                                        ::std::mem::transmute(
-                                            ((non_ascii as u32) << 10) + second -
-                                            (((0xD800u32 << 10) - 0x10000u32) + 0xDC00u32)
+                                        ::std::char::from_u32_unchecked(
+                                            (u32::from(non_ascii) << 10) + second
+                                                - (((0xD800u32 << 10) - 0x1_0000u32) + 0xDC00u32),
                                         )
                                     };
-                                    return (EncoderResult::Unmappable(astral),
-                                            converted + 2, // +2 `for non_ascii` and `second`
-                                            converted);
+                                    return (
+                                        EncoderResult::Unmappable(astral),
+                                        converted + 2, // +2 `for non_ascii` and `second`
+                                        converted,
+                                    );
                                 }
                                 if high_bits == 0xDC00u16 {
                                     // Unpaired low surrogate
-                                    return (EncoderResult::Unmappable('\u{FFFD}'),
-                                            converted + 1, // +1 `for non_ascii`
-                                            converted);
-                                }
-                                let thirty_two = non_ascii as u32;
-                                let bmp: char = unsafe { ::std::mem::transmute(thirty_two) };
-                                return (EncoderResult::Unmappable(bmp),
+                                    return (
+                                        EncoderResult::Unmappable('\u{FFFD}'),
                                         converted + 1, // +1 `for non_ascii`
-                                        converted);
+                                        converted,
+                                    );
+                                }
+                                return (
+                                    EncoderResult::unmappable_from_bmp(non_ascii),
+                                    converted + 1, // +1 `for non_ascii`
+                                    converted,
+                                );
                             }
                         }
                         // Next, handle ASCII punctuation and non-ASCII without
@@ -438,7 +487,6 @@ impl SingleByteEncoder {
 
 #[cfg(test)]
 mod tests {
-    use super::super::data::*;
     use super::super::testing::*;
     use super::super::*;
 
@@ -502,17 +550,17 @@ mod tests {
         );
     }
 
-    pub const HIGH_BYTES: &'static [u8; 128] =
-        &[0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D,
-          0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B,
-          0x9C, 0x9D, 0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
-          0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7,
-          0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
-          0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3,
-          0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 0xE0, 0xE1,
-          0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
-          0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD,
-          0xFE, 0xFF];
+    pub const HIGH_BYTES: &'static [u8; 128] = &[
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
+        0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D,
+        0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC,
+        0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB,
+        0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA,
+        0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9,
+        0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8,
+        0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7,
+        0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+    ];
 
     fn decode_single_byte(encoding: &'static Encoding, data: &'static [u16; 128]) {
         let mut with_replacement = [0u16; 128];
@@ -556,6 +604,20 @@ mod tests {
         encode_from_utf16(encoding, data, &with_zeros[..]);
     }
 
+    #[test]
+    fn test_single_byte_from_two_low_surrogates() {
+        let expectation = b"&#65533;&#65533;";
+        let mut output = [0u8; 40];
+        let mut encoder = WINDOWS_1253.new_encoder();
+        let (result, read, written, had_errors) =
+            encoder.encode_from_utf16(&[0xDC00u16, 0xDEDEu16], &mut output[..], true);
+        assert_eq!(result, CoderResult::InputEmpty);
+        assert_eq!(read, 2);
+        assert_eq!(written, expectation.len());
+        assert!(had_errors);
+        assert_eq!(&output[..written], expectation);
+    }
+
     // These tests are so self-referential that they are pretty useless.
 
     // BEGIN GENERATED CODE. PLEASE DO NOT EDIT.
@@ -563,64 +625,64 @@ mod tests {
 
     #[test]
     fn test_single_byte_decode() {
-        decode_single_byte(IBM866, IBM866_DATA);
-        decode_single_byte(ISO_8859_10, ISO_8859_10_DATA);
-        decode_single_byte(ISO_8859_13, ISO_8859_13_DATA);
-        decode_single_byte(ISO_8859_14, ISO_8859_14_DATA);
-        decode_single_byte(ISO_8859_15, ISO_8859_15_DATA);
-        decode_single_byte(ISO_8859_16, ISO_8859_16_DATA);
-        decode_single_byte(ISO_8859_2, ISO_8859_2_DATA);
-        decode_single_byte(ISO_8859_3, ISO_8859_3_DATA);
-        decode_single_byte(ISO_8859_4, ISO_8859_4_DATA);
-        decode_single_byte(ISO_8859_5, ISO_8859_5_DATA);
-        decode_single_byte(ISO_8859_6, ISO_8859_6_DATA);
-        decode_single_byte(ISO_8859_7, ISO_8859_7_DATA);
-        decode_single_byte(ISO_8859_8, ISO_8859_8_DATA);
-        decode_single_byte(KOI8_R, KOI8_R_DATA);
-        decode_single_byte(KOI8_U, KOI8_U_DATA);
-        decode_single_byte(MACINTOSH, MACINTOSH_DATA);
-        decode_single_byte(WINDOWS_1250, WINDOWS_1250_DATA);
-        decode_single_byte(WINDOWS_1251, WINDOWS_1251_DATA);
-        decode_single_byte(WINDOWS_1252, WINDOWS_1252_DATA);
-        decode_single_byte(WINDOWS_1253, WINDOWS_1253_DATA);
-        decode_single_byte(WINDOWS_1254, WINDOWS_1254_DATA);
-        decode_single_byte(WINDOWS_1255, WINDOWS_1255_DATA);
-        decode_single_byte(WINDOWS_1256, WINDOWS_1256_DATA);
-        decode_single_byte(WINDOWS_1257, WINDOWS_1257_DATA);
-        decode_single_byte(WINDOWS_1258, WINDOWS_1258_DATA);
-        decode_single_byte(WINDOWS_874, WINDOWS_874_DATA);
-        decode_single_byte(X_MAC_CYRILLIC, X_MAC_CYRILLIC_DATA);
+        decode_single_byte(IBM866, &data::SINGLE_BYTE_DATA.ibm866);
+        decode_single_byte(ISO_8859_10, &data::SINGLE_BYTE_DATA.iso_8859_10);
+        decode_single_byte(ISO_8859_13, &data::SINGLE_BYTE_DATA.iso_8859_13);
+        decode_single_byte(ISO_8859_14, &data::SINGLE_BYTE_DATA.iso_8859_14);
+        decode_single_byte(ISO_8859_15, &data::SINGLE_BYTE_DATA.iso_8859_15);
+        decode_single_byte(ISO_8859_16, &data::SINGLE_BYTE_DATA.iso_8859_16);
+        decode_single_byte(ISO_8859_2, &data::SINGLE_BYTE_DATA.iso_8859_2);
+        decode_single_byte(ISO_8859_3, &data::SINGLE_BYTE_DATA.iso_8859_3);
+        decode_single_byte(ISO_8859_4, &data::SINGLE_BYTE_DATA.iso_8859_4);
+        decode_single_byte(ISO_8859_5, &data::SINGLE_BYTE_DATA.iso_8859_5);
+        decode_single_byte(ISO_8859_6, &data::SINGLE_BYTE_DATA.iso_8859_6);
+        decode_single_byte(ISO_8859_7, &data::SINGLE_BYTE_DATA.iso_8859_7);
+        decode_single_byte(ISO_8859_8, &data::SINGLE_BYTE_DATA.iso_8859_8);
+        decode_single_byte(KOI8_R, &data::SINGLE_BYTE_DATA.koi8_r);
+        decode_single_byte(KOI8_U, &data::SINGLE_BYTE_DATA.koi8_u);
+        decode_single_byte(MACINTOSH, &data::SINGLE_BYTE_DATA.macintosh);
+        decode_single_byte(WINDOWS_1250, &data::SINGLE_BYTE_DATA.windows_1250);
+        decode_single_byte(WINDOWS_1251, &data::SINGLE_BYTE_DATA.windows_1251);
+        decode_single_byte(WINDOWS_1252, &data::SINGLE_BYTE_DATA.windows_1252);
+        decode_single_byte(WINDOWS_1253, &data::SINGLE_BYTE_DATA.windows_1253);
+        decode_single_byte(WINDOWS_1254, &data::SINGLE_BYTE_DATA.windows_1254);
+        decode_single_byte(WINDOWS_1255, &data::SINGLE_BYTE_DATA.windows_1255);
+        decode_single_byte(WINDOWS_1256, &data::SINGLE_BYTE_DATA.windows_1256);
+        decode_single_byte(WINDOWS_1257, &data::SINGLE_BYTE_DATA.windows_1257);
+        decode_single_byte(WINDOWS_1258, &data::SINGLE_BYTE_DATA.windows_1258);
+        decode_single_byte(WINDOWS_874, &data::SINGLE_BYTE_DATA.windows_874);
+        decode_single_byte(X_MAC_CYRILLIC, &data::SINGLE_BYTE_DATA.x_mac_cyrillic);
     }
 
     #[test]
     fn test_single_byte_encode() {
-        encode_single_byte(IBM866, IBM866_DATA);
-        encode_single_byte(ISO_8859_10, ISO_8859_10_DATA);
-        encode_single_byte(ISO_8859_13, ISO_8859_13_DATA);
-        encode_single_byte(ISO_8859_14, ISO_8859_14_DATA);
-        encode_single_byte(ISO_8859_15, ISO_8859_15_DATA);
-        encode_single_byte(ISO_8859_16, ISO_8859_16_DATA);
-        encode_single_byte(ISO_8859_2, ISO_8859_2_DATA);
-        encode_single_byte(ISO_8859_3, ISO_8859_3_DATA);
-        encode_single_byte(ISO_8859_4, ISO_8859_4_DATA);
-        encode_single_byte(ISO_8859_5, ISO_8859_5_DATA);
-        encode_single_byte(ISO_8859_6, ISO_8859_6_DATA);
-        encode_single_byte(ISO_8859_7, ISO_8859_7_DATA);
-        encode_single_byte(ISO_8859_8, ISO_8859_8_DATA);
-        encode_single_byte(KOI8_R, KOI8_R_DATA);
-        encode_single_byte(KOI8_U, KOI8_U_DATA);
-        encode_single_byte(MACINTOSH, MACINTOSH_DATA);
-        encode_single_byte(WINDOWS_1250, WINDOWS_1250_DATA);
-        encode_single_byte(WINDOWS_1251, WINDOWS_1251_DATA);
-        encode_single_byte(WINDOWS_1252, WINDOWS_1252_DATA);
-        encode_single_byte(WINDOWS_1253, WINDOWS_1253_DATA);
-        encode_single_byte(WINDOWS_1254, WINDOWS_1254_DATA);
-        encode_single_byte(WINDOWS_1255, WINDOWS_1255_DATA);
-        encode_single_byte(WINDOWS_1256, WINDOWS_1256_DATA);
-        encode_single_byte(WINDOWS_1257, WINDOWS_1257_DATA);
-        encode_single_byte(WINDOWS_1258, WINDOWS_1258_DATA);
-        encode_single_byte(WINDOWS_874, WINDOWS_874_DATA);
-        encode_single_byte(X_MAC_CYRILLIC, X_MAC_CYRILLIC_DATA);
+        encode_single_byte(IBM866, &data::SINGLE_BYTE_DATA.ibm866);
+        encode_single_byte(ISO_8859_10, &data::SINGLE_BYTE_DATA.iso_8859_10);
+        encode_single_byte(ISO_8859_13, &data::SINGLE_BYTE_DATA.iso_8859_13);
+        encode_single_byte(ISO_8859_14, &data::SINGLE_BYTE_DATA.iso_8859_14);
+        encode_single_byte(ISO_8859_15, &data::SINGLE_BYTE_DATA.iso_8859_15);
+        encode_single_byte(ISO_8859_16, &data::SINGLE_BYTE_DATA.iso_8859_16);
+        encode_single_byte(ISO_8859_2, &data::SINGLE_BYTE_DATA.iso_8859_2);
+        encode_single_byte(ISO_8859_3, &data::SINGLE_BYTE_DATA.iso_8859_3);
+        encode_single_byte(ISO_8859_4, &data::SINGLE_BYTE_DATA.iso_8859_4);
+        encode_single_byte(ISO_8859_5, &data::SINGLE_BYTE_DATA.iso_8859_5);
+        encode_single_byte(ISO_8859_6, &data::SINGLE_BYTE_DATA.iso_8859_6);
+        encode_single_byte(ISO_8859_7, &data::SINGLE_BYTE_DATA.iso_8859_7);
+        encode_single_byte(ISO_8859_8, &data::SINGLE_BYTE_DATA.iso_8859_8);
+        encode_single_byte(KOI8_R, &data::SINGLE_BYTE_DATA.koi8_r);
+        encode_single_byte(KOI8_U, &data::SINGLE_BYTE_DATA.koi8_u);
+        encode_single_byte(MACINTOSH, &data::SINGLE_BYTE_DATA.macintosh);
+        encode_single_byte(WINDOWS_1250, &data::SINGLE_BYTE_DATA.windows_1250);
+        encode_single_byte(WINDOWS_1251, &data::SINGLE_BYTE_DATA.windows_1251);
+        encode_single_byte(WINDOWS_1252, &data::SINGLE_BYTE_DATA.windows_1252);
+        encode_single_byte(WINDOWS_1253, &data::SINGLE_BYTE_DATA.windows_1253);
+        encode_single_byte(WINDOWS_1254, &data::SINGLE_BYTE_DATA.windows_1254);
+        encode_single_byte(WINDOWS_1255, &data::SINGLE_BYTE_DATA.windows_1255);
+        encode_single_byte(WINDOWS_1256, &data::SINGLE_BYTE_DATA.windows_1256);
+        encode_single_byte(WINDOWS_1257, &data::SINGLE_BYTE_DATA.windows_1257);
+        encode_single_byte(WINDOWS_1258, &data::SINGLE_BYTE_DATA.windows_1258);
+        encode_single_byte(WINDOWS_874, &data::SINGLE_BYTE_DATA.windows_874);
+        encode_single_byte(X_MAC_CYRILLIC, &data::SINGLE_BYTE_DATA.x_mac_cyrillic);
     }
     // END GENERATED CODE
 
