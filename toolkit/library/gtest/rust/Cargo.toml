@@ -42,3 +42,6 @@ opt-level = 2
 rpath = false
 debug-assertions = false
 panic = "abort"
+
+[patch.crates-io]
+packed_simd = { git = "https://github.com/hsivonen/packed_simd", branch = "rust_1_32" }
