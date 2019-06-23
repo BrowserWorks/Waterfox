@@ -28,7 +28,9 @@ taken as a waiver of copyright notice.
 Please do not contribute implementations of encodings that are not specified
 in the [Encoding Standard](https://encoding.spec.whatwg.org/).
 
-For example, an implementation of UTF-7 would be explicitly not welcome.
+For example, an implementation of UTF-7 is explicitly out of scope for this
+crate and is, therefore, provided by the [charset](https://crates.io/crates/charset)
+crate instead.
 
 ## Compatibility with Stable Rust
 
@@ -37,8 +39,8 @@ rustc.
 
 ## rustfmt
 
-Please install [`rustfmt`](https://github.com/rust-lang-nursery/rustfmt) and
-run `cargo fmt` before creating a pull request.
+The `rustfmt` version used for this code is `rustfmt-nightly`. Please either
+use that version or avoid using `rustfmt` (so as not to reformat all the code).
 
 ## Unit tests
 

@@ -19,18 +19,18 @@
 //! The purpose of making `Decoder` and `Encoder` `Sized` is to allow stack
 //! allocation in Rust code, including the convenience methods on `Encoding`.
 
-use single_byte::*;
-use utf_8::*;
-use gb18030::*;
+use super::*;
 use big5::*;
 use euc_jp::*;
-use iso_2022_jp::*;
-use shift_jis::*;
 use euc_kr::*;
+use gb18030::*;
+use iso_2022_jp::*;
 use replacement::*;
-use x_user_defined::*;
+use shift_jis::*;
+use single_byte::*;
 use utf_16::*;
-use super::*;
+use utf_8::*;
+use x_user_defined::*;
 
 pub enum VariantDecoder {
     SingleByte(SingleByteDecoder),
@@ -117,11 +117,12 @@ impl VariantDecoder {
         }
     }
 
-    pub fn decode_to_utf16_raw(&mut self,
-                               src: &[u8],
-                               dst: &mut [u16],
-                               last: bool)
-                               -> (DecoderResult, usize, usize) {
+    pub fn decode_to_utf16_raw(
+        &mut self,
+        src: &[u8],
+        dst: &mut [u16],
+        last: bool,
+    ) -> (DecoderResult, usize, usize) {
         match *self {
             VariantDecoder::SingleByte(ref mut v) => v.decode_to_utf16_raw(src, dst, last),
             VariantDecoder::Utf8(ref mut v) => v.decode_to_utf16_raw(src, dst, last),
@@ -137,11 +138,12 @@ impl VariantDecoder {
         }
     }
 
-    pub fn decode_to_utf8_raw(&mut self,
-                              src: &[u8],
-                              dst: &mut [u8],
-                              last: bool)
-                              -> (DecoderResult, usize, usize) {
+    pub fn decode_to_utf8_raw(
+        &mut self,
+        src: &[u8],
+        dst: &mut [u8],
+        last: bool,
+    ) -> (DecoderResult, usize, usize) {
         match *self {
             VariantDecoder::SingleByte(ref mut v) => v.decode_to_utf8_raw(src, dst, last),
             VariantDecoder::Utf8(ref mut v) => v.decode_to_utf8_raw(src, dst, last),
@@ -177,9 +179,10 @@ impl VariantEncoder {
             _ => false,
         }
     }
-    pub fn max_buffer_length_from_utf16_without_replacement(&self,
-                                                            u16_length: usize)
-                                                            -> Option<usize> {
+    pub fn max_buffer_length_from_utf16_without_replacement(
+        &self,
+        u16_length: usize,
+    ) -> Option<usize> {
         match *self {
             VariantEncoder::SingleByte(ref v) => {
                 v.max_buffer_length_from_utf16_without_replacement(u16_length)
@@ -211,9 +214,10 @@ impl VariantEncoder {
         }
     }
 
-    pub fn max_buffer_length_from_utf8_without_replacement(&self,
-                                                           byte_length: usize)
-                                                           -> Option<usize> {
+    pub fn max_buffer_length_from_utf8_without_replacement(
+        &self,
+        byte_length: usize,
+    ) -> Option<usize> {
         match *self {
             VariantEncoder::SingleByte(ref v) => {
                 v.max_buffer_length_from_utf8_without_replacement(byte_length)
@@ -245,11 +249,12 @@ impl VariantEncoder {
         }
     }
 
-    pub fn encode_from_utf16_raw(&mut self,
-                                 src: &[u16],
-                                 dst: &mut [u8],
-                                 last: bool)
-                                 -> (EncoderResult, usize, usize) {
+    pub fn encode_from_utf16_raw(
+        &mut self,
+        src: &[u16],
+        dst: &mut [u8],
+        last: bool,
+    ) -> (EncoderResult, usize, usize) {
         match *self {
             VariantEncoder::SingleByte(ref mut v) => v.encode_from_utf16_raw(src, dst, last),
             VariantEncoder::Utf8(ref mut v) => v.encode_from_utf16_raw(src, dst, last),
@@ -263,11 +268,12 @@ impl VariantEncoder {
         }
     }
 
-    pub fn encode_from_utf8_raw(&mut self,
-                                src: &str,
-                                dst: &mut [u8],
-                                last: bool)
-                                -> (EncoderResult, usize, usize) {
+    pub fn encode_from_utf8_raw(
+        &mut self,
+        src: &str,
+        dst: &mut [u8],
+        last: bool,
+    ) -> (EncoderResult, usize, usize) {
         match *self {
             VariantEncoder::SingleByte(ref mut v) => v.encode_from_utf8_raw(src, dst, last),
             VariantEncoder::Utf8(ref mut v) => v.encode_from_utf8_raw(src, dst, last),
@@ -283,7 +289,7 @@ impl VariantEncoder {
 }
 
 pub enum VariantEncoding {
-    SingleByte(&'static [u16; 128]),
+    SingleByte(&'static [u16; 128], u16, u8, u8),
     Utf8,
     Gbk,
     Gb18030,
@@ -301,10 +307,9 @@ pub enum VariantEncoding {
 impl VariantEncoding {
     pub fn new_variant_decoder(&self) -> VariantDecoder {
         match *self {
-            VariantEncoding::SingleByte(table) => SingleByteDecoder::new(table),
+            VariantEncoding::SingleByte(table, _, _, _) => SingleByteDecoder::new(table),
             VariantEncoding::Utf8 => Utf8Decoder::new(),
-            VariantEncoding::Gbk |
-            VariantEncoding::Gb18030 => Gb18030Decoder::new(),
+            VariantEncoding::Gbk | VariantEncoding::Gb18030 => Gb18030Decoder::new(),
             VariantEncoding::Big5 => Big5Decoder::new(),
             VariantEncoding::EucJp => EucJpDecoder::new(),
             VariantEncoding::Iso2022Jp => Iso2022JpDecoder::new(),
@@ -319,7 +324,9 @@ impl VariantEncoding {
 
     pub fn new_encoder(&self, encoding: &'static Encoding) -> Encoder {
         match *self {
-            VariantEncoding::SingleByte(table) => SingleByteEncoder::new(encoding, table),
+            VariantEncoding::SingleByte(table, run_bmp_offset, run_byte_offset, run_length) => {
+                SingleByteEncoder::new(encoding, table, run_bmp_offset, run_byte_offset, run_length)
+            }
             VariantEncoding::Utf8 => Utf8Encoder::new(encoding),
             VariantEncoding::Gbk => Gb18030Encoder::new(encoding, false),
             VariantEncoding::Gb18030 => Gb18030Encoder::new(encoding, true),
@@ -329,9 +336,16 @@ impl VariantEncoding {
             VariantEncoding::ShiftJis => ShiftJisEncoder::new(encoding),
             VariantEncoding::EucKr => EucKrEncoder::new(encoding),
             VariantEncoding::UserDefined => UserDefinedEncoder::new(encoding),
-            VariantEncoding::Utf16Be |
-            VariantEncoding::Replacement |
-            VariantEncoding::Utf16Le => unreachable!(),
+            VariantEncoding::Utf16Be | VariantEncoding::Replacement | VariantEncoding::Utf16Le => {
+                unreachable!()
+            }
+        }
+    }
+
+    pub fn is_single_byte(&self) -> bool {
+        match *self {
+            VariantEncoding::SingleByte(_, _, _, _) | VariantEncoding::UserDefined => true,
+            _ => false,
         }
     }
 }
