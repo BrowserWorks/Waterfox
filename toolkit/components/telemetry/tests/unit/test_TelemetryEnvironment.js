@@ -1554,7 +1554,7 @@ add_task(async function test_defaultSearchEngine() {
   Assert.equal(data.settings.defaultSearchEngine, "telemetrySearchIdentifier");
   let expectedSearchEngineData = {
     "name": "telemetrySearchIdentifier",
-    "loadPath": "[other]addEngineWithDetails:telemetrySearchIdentifier@search.mozilla.org",
+    "loadPath": "[other]addEngineWithDetails:telemetrySearchIdentifier@search.waterfox.net",
     "origin": "default",
     "submissionURL": "https://ar.wikipedia.org/wiki/%D8%AE%D8%A7%D8%B5:%D8%A8%D8%AD%D8%AB?search=&sourceId=Mozilla-search",
   };

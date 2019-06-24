@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "marktplaats@search.mozilla.org"
+      "id": "marktplaats@search.waterfox.net"
     }
   },
   "hidden": true,

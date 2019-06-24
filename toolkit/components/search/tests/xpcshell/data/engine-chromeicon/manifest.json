@@ -4,7 +4,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "engine-chromeicon@search.mozilla.org"
+      "id": "engine-chromeicon@search.waterfox.net"
     }
   },
   "hidden": true,

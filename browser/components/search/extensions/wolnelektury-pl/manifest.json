@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "wolnelektury-pl@search.mozilla.org"
+      "id": "wolnelektury-pl@search.waterfox.net"
     }
   },
   "hidden": true,

@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "longdo@search.mozilla.org"
+      "id": "longdo@search.waterfox.net"
     }
   },
   "hidden": true,

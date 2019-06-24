@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "mapy-cz@search.mozilla.org"
+      "id": "mapy-cz@search.waterfox.net"
     }
   },
   "hidden": true,

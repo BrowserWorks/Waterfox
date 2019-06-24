@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "pwn-pl@search.mozilla.org"
+      "id": "pwn-pl@search.waterfox.net"
     }
   },
   "hidden": true,

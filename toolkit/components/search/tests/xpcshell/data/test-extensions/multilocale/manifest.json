@@ -4,7 +4,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "multilocale@search.mozilla.org"
+      "id": "multilocale@search.waterfox.net"
     }
   },
   "hidden": true,

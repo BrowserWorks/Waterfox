@@ -5,7 +5,7 @@
   "description": "Hidden engine to test bug 1194265",
   "applications": {
     "gecko": {
-      "id": "hidden@search.mozilla.org"
+      "id": "hidden@search.waterfox.net"
     }
   },
   "hidden": true,

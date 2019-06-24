@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "leo_ende_de@search.mozilla.org"
+      "id": "leo_ende_de@search.waterfox.net"
     }
   },
   "hidden": true,

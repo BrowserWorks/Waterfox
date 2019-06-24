@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "salidzinilv@search.mozilla.org"
+      "id": "salidzinilv@search.waterfox.net"
     }
   },
   "hidden": true,

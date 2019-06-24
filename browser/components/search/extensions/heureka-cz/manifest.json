@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "heureka-cz@search.mozilla.org"
+      "id": "heureka-cz@search.waterfox.net"
     }
   },
   "hidden": true,

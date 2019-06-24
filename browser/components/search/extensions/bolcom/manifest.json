@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "bolcom@search.mozilla.org"
+      "id": "bolcom@search.waterfox.net"
     }
   },
   "hidden": true,

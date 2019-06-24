@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "yahoo-jp@search.mozilla.org"
+      "id": "yahoo-jp@search.waterfox.net"
     }
   },
   "hidden": true,

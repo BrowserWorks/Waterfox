@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "hotline-ua@search.mozilla.org"
+      "id": "hotline-ua@search.waterfox.net"
     }
   },
   "hidden": true,

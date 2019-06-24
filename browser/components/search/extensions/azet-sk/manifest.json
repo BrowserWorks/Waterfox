@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "azet-sk@search.mozilla.org"
+      "id": "azet-sk@search.waterfox.net"
     }
   },
   "hidden": true,

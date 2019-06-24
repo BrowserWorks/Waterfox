@@ -4,7 +4,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "engine2@search.mozilla.org"
+      "id": "engine2@search.waterfox.net"
     }
   },
   "hidden": true,

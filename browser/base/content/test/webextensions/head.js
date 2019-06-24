@@ -555,7 +555,7 @@ add_task(async function() {
       // Builtin search extensions may have been installed by SearchService
       // during the test run, ignore those.
       if (!existingAddons.has(addon.id) &&
-          !(addon.isBuiltin && addon.id.endsWith("@search.mozilla.org"))) {
+          !(addon.isBuiltin && addon.id.endsWith("@search.waterfox.net"))) {
         ok(false, `Addon ${addon.id} was left installed at the end of the test`);
         await addon.uninstall();
       }

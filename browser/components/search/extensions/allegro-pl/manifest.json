@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "allegro-pl@search.mozilla.org"
+      "id": "allegro-pl@search.waterfox.net"
     }
   },
   "hidden": true,

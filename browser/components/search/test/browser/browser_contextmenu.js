@@ -5,7 +5,7 @@
  */
 
 const ENGINE_NAME = "mozSearch";
-const ENGINE_ID = "mozsearch-engine@search.mozilla.org";
+const ENGINE_ID = "mozsearch-engine@search.waterfox.net";
 
 add_task(async function() {
   // We want select events to be fired.

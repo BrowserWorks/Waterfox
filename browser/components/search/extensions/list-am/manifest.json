@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "list-am@search.mozilla.org"
+      "id": "list-am@search.waterfox.net"
     }
   },
   "hidden": true,

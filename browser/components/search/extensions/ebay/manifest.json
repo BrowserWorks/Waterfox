@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "ebay@search.mozilla.org"
+      "id": "ebay@search.waterfox.net"
     }
   },
   "hidden": true,

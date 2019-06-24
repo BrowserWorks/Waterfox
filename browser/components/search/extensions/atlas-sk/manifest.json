@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "atlas-sk@search.mozilla.org"
+      "id": "atlas-sk@search.waterfox.net"
     }
   },
   "hidden": true,
