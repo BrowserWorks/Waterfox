@@ -1202,8 +1202,8 @@ pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSearch", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.topsites", false, locked);
-pref("browser.newtabpage.activity-stream.feeds.topsites", false, locked);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.topsites", true);
+pref("browser.newtabpage.activity-stream.feeds.topsites", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.topSitesRows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("browser.newtabpage.activity-stream.feeds.snippets", false, locked);
@@ -1306,7 +1306,7 @@ pref("browser.newtab.preload", true);
 pref("browser.newtabpage.enabled", true);
 
 // Activity Stream prefs that control to which page to redirect
-pref("browser.newtabpage.activity-stream.prerender", true);
+pref("browser.newtabpage.activity-stream.prerender", false);
 #ifndef RELEASE_OR_BETA
 pref("browser.newtabpage.activity-stream.debug", false);
 #endif
@@ -1317,7 +1317,7 @@ pref("browser.library.activity-stream.enabled", true);
 pref("browser.newtabpage.activity-stream.fxaccounts.endpoint", "https://accounts.firefox.com/");
 
 // The pref that controls if the search shortcuts experiment is on
-pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", true);
+pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", false, locked);
 
 // ASRouter provider configuration
 pref("browser.newtabpage.activity-stream.asrouter.providers.cfr", "{\"id\":\"cfr\",\"enabled\":false,\"type\":\"local\",\"localProvider\":\"CFRMessageProvider\",\"frequency\":{\"custom\":[{\"period\":\"daily\",\"cap\":1}]},\"categories\":[\"cfrAddons\",\"cfrFeatures\"]}", locked);

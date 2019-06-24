@@ -31,14 +31,7 @@ const {DiscoveryStreamFeed} = ChromeUtils.import("resource://activity-stream/lib
 
 const DEFAULT_SITES = new Map([
   // This first item is the global list fallback for any unexpected geos
-  ["", "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.reddit.com/,https://www.amazon.com/,https://twitter.com/"],
-  ["US", "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://twitter.com/"],
-  ["CA", "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://www.amazon.ca/,https://twitter.com/"],
-  ["DE", "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.de/,https://www.ebay.de/,https://www.wikipedia.org/,https://www.reddit.com/"],
-  ["PL", "https://www.youtube.com/,https://www.facebook.com/,https://allegro.pl/,https://www.wikipedia.org/,https://www.olx.pl/,https://www.wykop.pl/"],
-  ["RU", "https://vk.com/,https://www.youtube.com/,https://ok.ru/,https://www.avito.ru/,https://www.aliexpress.com/,https://www.wikipedia.org/"],
-  ["GB", "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.amazon.co.uk/,https://www.bbc.co.uk/,https://www.ebay.co.uk/"],
-  ["FR", "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.amazon.fr/,https://www.leboncoin.fr/,https://twitter.com/"],
+  ["", ""],
 ]);
 const GEO_PREF = "browser.search.region";
 const SPOCS_GEOS = ["US"];
@@ -65,10 +58,10 @@ const PREFS_CONFIG = new Map([
       hidden: !PREFS_CONFIG.get("feeds.section.topstories").getValue(args),
       provider_icon: "pocket",
       provider_name: "Pocket",
-      read_more_endpoint: "https://getpocket.com/explore/trending?src=fx_new_tab",
-      stories_endpoint: `https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?version=3&consumer_key=$apiKey&locale_lang=${args.locale}&feed_variant=${showSpocs(args) ? "default_spocs_on" : "default_spocs_off"}`,
-      stories_referrer: "https://getpocket.com/recommendations",
-      topics_endpoint: `https://getpocket.cdn.mozilla.net/v3/firefox/trending-topics?version=2&consumer_key=$apiKey&locale_lang=${args.locale}`,
+      read_more_endpoint: "",
+      stories_endpoint: ``,
+      stories_referrer: "",
+      topics_endpoint: ``,
       model_keys: ["nmf_model_animals", "nmf_model_business", "nmf_model_career", "nmf_model_datascience", "nmf_model_design", "nmf_model_education", "nmf_model_entertainment", "nmf_model_environment", "nmf_model_fashion", "nmf_model_finance", "nmf_model_food", "nmf_model_health", "nmf_model_home", "nmf_model_life", "nmf_model_marketing", "nmf_model_politics", "nmf_model_programming", "nmf_model_science", "nmf_model_shopping", "nmf_model_sports", "nmf_model_tech", "nmf_model_travel", "nb_model_animals", "nb_model_books", "nb_model_business", "nb_model_career", "nb_model_datascience", "nb_model_design", "nb_model_economics", "nb_model_education", "nb_model_entertainment", "nb_model_environment", "nb_model_fashion", "nb_model_finance", "nb_model_food", "nb_model_game", "nb_model_health", "nb_model_history", "nb_model_home", "nb_model_life", "nb_model_marketing", "nb_model_military", "nb_model_philosophy", "nb_model_photography", "nb_model_politics", "nb_model_productivity", "nb_model_programming", "nb_model_psychology", "nb_model_science", "nb_model_shopping", "nb_model_society", "nb_model_space", "nb_model_sports", "nb_model_tech", "nb_model_travel", "nb_model_writing"],
       show_spocs: showSpocs(args),
       personalized: true,
@@ -238,13 +231,13 @@ const PREFS_CONFIG = new Map([
         hardcoded_layout: true,
         personalized: false,
         // This is currently an exmple layout used for dev purposes.
-        layout_endpoint: "https://getpocket.cdn.mozilla.net/v3/newtab/layout?version=1&consumer_key=$apiKey&layout_variant=basic",
+        layout_endpoint: "",
       });
     },
   }],
   ["discoverystream.endpoints", {
     title: "Endpoint prefixes (comma-separated) that are allowed to be requested",
-    value: "https://getpocket.cdn.mozilla.net/",
+    value: "",
   }],
   ["discoverystream.spoc.impressions", {
     title: "Track spoc impressions",
