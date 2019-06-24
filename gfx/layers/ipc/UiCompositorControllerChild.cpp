@@ -13,6 +13,7 @@
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/StaticPtr.h"
 #include "nsBaseWidget.h"
+#include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
 #if defined(MOZ_WIDGET_ANDROID)
@@ -182,9 +183,16 @@ void UiCompositorControllerChild::Destroy() {
     return;
   }
 
+  if (mWidget) {
+    // Dispatch mWidget to main thread to prevent it from being destructed by
+    // the ui thread.
+    RefPtr<nsIWidget> widget = mWidget.forget();
+    NS_ReleaseOnMainThreadSystemGroup("UiCompositorControllerChild::mWidget",
+                                      widget.forget());
+  }
+
   if (mIsOpen) {
     // Close the underlying IPC channel.
-    mWidget = nullptr;
     PUiCompositorControllerChild::Close();
     mIsOpen = false;
   }

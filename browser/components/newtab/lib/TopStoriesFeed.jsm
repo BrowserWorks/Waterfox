@@ -35,7 +35,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   constructor(ds) {
     // Use discoverystream config pref default values for fast path and
     // if needed lazy load activity stream top stories feed based on
-    // actual user preference when PREFS_INITIAL_VALUES and PREF_CHANGED is invoked
+    // actual user preference when INIT and PREF_CHANGED is invoked
     this.discoveryStreamEnabled = ds && ds.value && JSON.parse(ds.value).enabled;
     if (!this.discoveryStreamEnabled) {
       this.initializeProperties();
@@ -653,8 +653,13 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   lazyLoadTopStories(dsPref) {
+    let _dsPref = dsPref;
+    if (!_dsPref) {
+      _dsPref = this.store.getState().Prefs.values[DISCOVERY_STREAM_PREF];
+    }
+
     try {
-      this.discoveryStreamEnabled = JSON.parse(dsPref).enabled;
+      this.discoveryStreamEnabled = JSON.parse(_dsPref).enabled;
     } catch (e) {
       // Load activity stream top stories if fail to determine discovery stream state
       this.discoveryStreamEnabled = false;
@@ -673,8 +678,8 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
   handleDisabled(action) {
     switch (action.type) {
-      case at.PREFS_INITIAL_VALUES:
-        this.lazyLoadTopStories(action.data[DISCOVERY_STREAM_PREF]);
+      case at.INIT:
+        this.lazyLoadTopStories();
         break;
       case at.PREF_CHANGED:
         if (action.data.name === DISCOVERY_STREAM_PREF) {
@@ -693,11 +698,9 @@ this.TopStoriesFeed = class TopStoriesFeed {
       return;
     }
     switch (action.type) {
-      // Check for pref initial values to lazy load activity stream top stories
-      // Here we are not using usual INIT and relying on PREFS_INITIAL_VALUES
-      // to check discoverystream pref and load activity stream top stories only if needed.
-      case at.PREFS_INITIAL_VALUES:
-        this.lazyLoadTopStories(action.data[DISCOVERY_STREAM_PREF]);
+      // Check discoverystream pref and load activity stream top stories only if needed
+      case at.INIT:
+        this.lazyLoadTopStories();
         break;
       case at.SYSTEM_TICK:
         let stories;

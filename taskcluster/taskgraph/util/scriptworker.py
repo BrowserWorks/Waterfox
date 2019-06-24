@@ -520,8 +520,10 @@ def generate_beetmover_upstream_artifacts(config, job, platform, locale=None, de
     resolve_keyed_by(
         job, 'attributes.artifact_map',
         'artifact map',
-        project=config.params['project'],
-        platform=platform
+        **{
+            'release-type': config.params['release_type'],
+            'platform': platform,
+        }
     )
     map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     upstream_artifacts = list()
@@ -561,6 +563,11 @@ def generate_beetmover_upstream_artifacts(config, job, platform, locale=None, de
                 jsone.render(file_config['source_path_modifier'], {'locale': locale}),
                 filename,
             ))
+
+        if getattr(job['dependencies'][dep], 'release_artifacts', None):
+            paths = [
+                path for path in paths
+                if path in job['dependencies'][dep].release_artifacts]
 
         if not paths:
             continue
@@ -649,7 +656,10 @@ def generate_beetmover_artifact_map(config, job, **kwargs):
     resolve_keyed_by(
         job, 'attributes.artifact_map',
         'artifact map',
-        platform=platform
+        **{
+            'release-type': config.params['release_type'],
+            'platform': platform,
+        }
     )
     map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     base_artifact_prefix = map_config.get('base_artifact_prefix', get_artifact_prefix(job))
@@ -789,8 +799,10 @@ def generate_beetmover_partials_artifact_map(config, job, partials_info, **kwarg
     resolve_keyed_by(
         job, 'attributes.artifact_map',
         'artifact map',
-        project=config.params['project'],
-        platform=platform
+        **{
+            'release-type': config.params['release_type'],
+            'platform': platform,
+        }
     )
     map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     base_artifact_prefix = map_config.get('base_artifact_prefix', get_artifact_prefix(job))
