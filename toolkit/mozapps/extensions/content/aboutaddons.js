@@ -1701,15 +1701,19 @@ class AddonCard extends HTMLElement {
 
     // Update the name.
     let name = card.querySelector(".addon-name");
+    let showVersionInName = Services.prefs.getBoolPref("extensions.addonVersionInfo", true);
+    let versionString = this.updateInstall && this.matches('[current-view="updates"] addon-card') ?
+                        this.updateInstall.version : addon.version;
+    let addonNameWithVersion = showVersionInName ? `${addon.name} ${versionString}` : addon.name;
     if (addon.isActive) {
-      name.textContent = addon.name;
+      name.textContent = addonNameWithVersion;
       name.removeAttribute("data-l10n-id");
     } else {
       document.l10n.setAttributes(name, "addon-name-disabled", {
-        name: addon.name,
+        name: addonNameWithVersion,
       });
     }
-    name.title = `${addon.name} ${addon.version}`;
+    name.title = showVersionInName ? addon.name : `${addon.name} ${versionString}`;
 
     // Set the items in the more options menu.
     this.options.update(this, addon, this.updateInstall);
