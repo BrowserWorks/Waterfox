@@ -23,7 +23,6 @@
 //! [cssparser]: ../cssparser/index.html
 //! [selectors]: ../selectors/index.html
 
-#![deny(missing_docs)]
 
 // FIXME(bholley): We need to blanket-allow unsafe code in order to make the
 // gecko atom!() macro work. When Rust 1.14 is released [1], we can uncomment

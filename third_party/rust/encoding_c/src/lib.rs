@@ -7,7 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![doc(html_root_url = "https://docs.rs/encoding_c/0.7.6")]
+#![doc(html_root_url = "https://docs.rs/encoding_c/0.9.1")]
 
 //! The C API for encoding_rs.
 //!
@@ -19,7 +19,7 @@
 //! of the struct lower-cased, followed by an underscore and ends with the
 //! name of the method.
 //!
-//! For example, `Encoding::for_name()` is wrapped as `encoding_for_name()`.
+//! For example, `Encoding::for_label()` is wrapped as `encoding_for_label()`.
 //!
 //! ## Arguments
 //!
@@ -369,34 +369,6 @@ pub unsafe extern "C" fn encoding_for_bom(buffer: *const u8,
     encoding
 }
 
-/// If the argument matches exactly (case-sensitively; no whitespace
-/// removal performed) the name of an encoding, returns
-/// `const Encoding*` representing that encoding. Otherwise panics.
-///
-/// The motivating use case for this function is interoperability with
-/// legacy Gecko code that represents encodings as name string instead of
-/// type-safe `Encoding` objects. Using this function for other purposes is
-/// most likely the wrong thing to do.
-///
-/// `name` must be non-`NULL` even if `name_len` is zero. When `name_len`
-/// is zero, it is OK for `name` to be something non-dereferencable,
-/// such as `0x1`. This is required due to Rust's optimization for slices
-/// within `Option`.
-///
-/// # Panics
-///
-/// Panics if the argument is not the name of an encoding.
-///
-/// # Undefined behavior
-///
-/// UB ensues if `name` and `name_len` don't designate a valid memory block
-/// of if `name` is `NULL`.
-#[no_mangle]
-pub unsafe extern "C" fn encoding_for_name(name: *const u8, name_len: usize) -> *const Encoding {
-    let name_slice = ::std::slice::from_raw_parts(name, name_len);
-    Encoding::for_name(name_slice)
-}
-
 /// Writes the name of the given `Encoding` to a caller-supplied buffer as
 /// ASCII and returns the number of bytes / ASCII characters written.
 ///
@@ -437,6 +409,22 @@ pub unsafe extern "C" fn encoding_can_encode_everything(encoding: *const Encodin
 #[no_mangle]
 pub unsafe extern "C" fn encoding_is_ascii_compatible(encoding: *const Encoding) -> bool {
     (*encoding).is_ascii_compatible()
+}
+
+/// Checks whether this encoding maps one byte to one Basic Multilingual
+/// Plane code point (i.e. byte length equals decoded UTF-16 length) and
+/// vice versa (for mappable characters).
+///
+/// `true` iff this encoding is on the list of [Legacy single-byte
+/// encodings](https://encoding.spec.whatwg.org/#legacy-single-byte-encodings)
+/// in the spec or x-user-defined.
+///
+/// # Undefined behavior
+///
+/// UB ensues if the argument is `NULL`.
+#[no_mangle]
+pub unsafe extern "C" fn encoding_is_single_byte(encoding: *const Encoding) -> bool {
+    (*encoding).is_single_byte()
 }
 
 /// Returns the _output encoding_ of this encoding. This is UTF-8 for
