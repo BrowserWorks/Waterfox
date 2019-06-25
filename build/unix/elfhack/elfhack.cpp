@@ -89,8 +89,10 @@ private:
 
 class ElfRelHackCode_Section: public ElfSection {
 public:
-    ElfRelHackCode_Section(Elf_Shdr &s, Elf &e, unsigned int init, unsigned int mprotect_cb)
-    : ElfSection(s, nullptr, nullptr), parent(e), init(init), mprotect_cb(mprotect_cb) {
+    ElfRelHackCode_Section(Elf_Shdr &s, Elf &e, ElfRelHack_Section &relhack_section,
+                           unsigned int init, unsigned int mprotect_cb)
+    : ElfSection(s, nullptr, nullptr), parent(e), relhack_section(relhack_section),
+      init(init), mprotect_cb(mprotect_cb) {
         std::string file(rundir);
         file += "/inject/";
         switch (parent.getMachine()) {
@@ -147,7 +149,7 @@ public:
         // Adjust code sections offsets according to their size
         std::vector<ElfSection *>::iterator c = code.begin();
         (*c)->getShdr().sh_addr = 0;
-        for(ElfSection *last = *(c++); c != code.end(); c++) {
+        for(ElfSection *last = *(c++); c != code.end(); ++c) {
             unsigned int addr = last->getShdr().sh_addr + last->getSize();
             if (addr & ((*c)->getAddrAlign() - 1))
                 addr = (addr | ((*c)->getAddrAlign() - 1)) + 1;
@@ -160,7 +162,7 @@ public:
         shdr.sh_size = code.back()->getAddr() + code.back()->getSize();
         data = new char[shdr.sh_size];
         char *buf = data;
-        for (c = code.begin(); c != code.end(); c++) {
+        for (c = code.begin(); c != code.end(); ++c) {
             memcpy(buf, (*c)->getData(), (*c)->getSize());
             buf += (*c)->getSize();
         }
@@ -174,11 +176,11 @@ public:
     void serialize(std::ofstream &file, char ei_class, char ei_data)
     {
         // Readjust code offsets
-        for (std::vector<ElfSection *>::iterator c = code.begin(); c != code.end(); c++)
+        for (std::vector<ElfSection *>::iterator c = code.begin(); c != code.end(); ++c)
             (*c)->getShdr().sh_addr += getAddr();
 
         // Apply relocations
-        for (std::vector<ElfSection *>::iterator c = code.begin(); c != code.end(); c++) {
+        for (std::vector<ElfSection *>::iterator c = code.begin(); c != code.end(); ++c) {
             for (ElfSection *rel = elf->getSection(1); rel != nullptr; rel = rel->getNext())
                 if (((rel->getType() == SHT_REL) ||
                      (rel->getType() == SHT_RELA)) &&
@@ -235,7 +237,7 @@ private:
     void scan_relocs_for_code(ElfRel_Section<Rel_Type> *rel)
     {
         ElfSymtab_Section *symtab = (ElfSymtab_Section *)rel->getLink();
-        for (auto r = rel->rels.begin(); r != rel->rels.end(); r++) {
+        for (auto r = rel->rels.begin(); r != rel->rels.end(); ++r) {
             ElfSection *section = symtab->syms[ELF32_R_SYM(r->r_info)].value.getSection();
             add_code_section(section);
         }
@@ -348,13 +350,13 @@ private:
         char *buf = data + (the_code->getAddr() - code.front()->getAddr());
         // TODO: various checks on the sections
         ElfSymtab_Section *symtab = (ElfSymtab_Section *)rel->getLink();
-        for (typename std::vector<Rel_Type>::iterator r = rel->rels.begin(); r != rel->rels.end(); r++) {
+        for (typename std::vector<Rel_Type>::iterator r = rel->rels.begin(); r != rel->rels.end(); ++r) {
             // TODO: various checks on the symbol
             const char *name = symtab->syms[ELF32_R_SYM(r->r_info)].name;
             unsigned int addr;
             if (symtab->syms[ELF32_R_SYM(r->r_info)].value.getSection() == nullptr) {
                 if (strcmp(name, "relhack") == 0) {
-                    addr = getNext()->getAddr();
+                    addr = relhack_section.getAddr();
                 } else if (strcmp(name, "elf_header") == 0) {
                     // TODO: change this ungly hack to something better
                     ElfSection *ehdr = parent.getSection(1)->getPrevious()->getPrevious();
@@ -388,6 +390,7 @@ private:
 #define REL(machine, type) (EM_ ## machine | (R_ ## machine ## _ ## type << 8))
             switch (elf->getMachine() | (ELF32_R_TYPE(r->r_info) << 8)) {
             case REL(X86_64, PC32):
+            case REL(X86_64, PLT32):
             case REL(386, PC32):
             case REL(386, GOTPC):
             case REL(ARM, GOTPC):
@@ -417,6 +420,7 @@ private:
     }
 
     Elf *elf, &parent;
+    ElfRelHack_Section &relhack_section;
     std::vector<ElfSection *> code;
     unsigned int init;
     unsigned int mprotect_cb;
@@ -473,7 +477,7 @@ void maybe_split_segment(Elf *elf, ElfSegment *segment, bool fill)
             for (; it != segment->end(); ++it) {
                 newSegment->addSection(*it);
             }
-            for (it = newSegment->begin(); it != newSegment->end(); it++) {
+            for (it = newSegment->begin(); it != newSegment->end(); ++it) {
                 segment->removeSection(*it);
             }
             // Fill the virtual address space gap left between the two PT_LOADs
@@ -573,7 +577,7 @@ int do_relocation_section(Elf *elf, unsigned int rel_type, unsigned int rel_type
     relhack_entry.r_offset = relhack_entry.r_info = 0;
     size_t init_array_reloc = 0;
     for (typename std::vector<Rel_Type>::iterator i = section->rels.begin();
-         i != section->rels.end(); i++) {
+         i != section->rels.end(); ++i) {
         // We don't need to keep R_*_NONE relocations
         if (!ELF32_R_TYPE(i->r_info))
             continue;
@@ -621,7 +625,21 @@ int do_relocation_section(Elf *elf, unsigned int rel_type, unsigned int rel_type
             // Our injected code is likely not to be allowed to write there.
             new_rels.push_back(*i);
         } else {
-            // TODO: check that i->r_addend == *i->r_offset
+            // With Elf_Rel, the value pointed by the relocation offset is the addend.
+            // With Elf_Rela, the addend is in the relocation entry, but the elfhacked
+            // relocation info doesn't contain it. Elfhack relies on the value pointed
+            // by the relocation offset to also contain the addend. Which is true with
+            // BFD ld and gold, but not lld, which leaves that nulled out. So if that
+            // value is nulled out, we update it to the addend.
+            Elf_Addr addr(loc.getBuffer(), entry_sz, elf->getClass(), elf->getData());
+            unsigned int addend = get_addend(&*i, elf);
+            if (addr.value == 0) {
+                addr.value = addend;
+                addr.serialize(const_cast<char*>(loc.getBuffer()), entry_sz, elf->getClass(), elf->getData());
+            } else if (addr.value != addend) {
+                fprintf(stderr, "Relocation addend inconsistent with content. Skipping\n");
+                return -1;
+            }
             if (i->r_offset == relhack_entry.r_offset + relhack_entry.r_info * entry_sz) {
                 relhack_entry.r_info++;
             } else {
@@ -637,8 +655,6 @@ int do_relocation_section(Elf *elf, unsigned int rel_type, unsigned int rel_type
     // Last entry must be nullptr
     relhack_entry.r_offset = relhack_entry.r_info = 0;
     relhack->push_back(relhack_entry);
-
-    unsigned int old_end = section->getOffset() + section->getSize();
 
     if (init_array && !init_array_reloc) {
         // Some linkers create a DT_INIT_ARRAY section that, for all purposes,
@@ -728,15 +744,15 @@ int do_relocation_section(Elf *elf, unsigned int rel_type, unsigned int rel_type
 
         // Find the beginning of the bss section, and use an aligned location in there
         // for the relocation.
-        for (ElfSegment *segment = elf->getSegmentByType(PT_LOAD); segment;
-             segment = elf->getSegmentByType(PT_LOAD, segment)) {
-            if ((segment->getFlags() & PF_W) == 0)
+        for (ElfSection *s = elf->getSection(1); s != nullptr; s = s->getNext()) {
+            if (s->getType() != SHT_NOBITS || (s->getFlags() & (SHF_TLS | SHF_WRITE)) != SHF_WRITE) {
                 continue;
+            }
             size_t ptr_size = Elf_Addr::size(elf->getClass());
-            size_t aligned_mem_end = (segment->getAddr() + segment->getMemSize() + ptr_size - 1) & ~(ptr_size - 1);
-            size_t aligned_file_end = (segment->getAddr() + segment->getFileSize() + ptr_size - 1) & ~(ptr_size - 1);
-            if (aligned_mem_end - aligned_file_end >= Elf_Addr::size(elf->getClass())) {
-                mprotect_cb = rel.r_offset = aligned_file_end;
+            size_t usable_start = (s->getAddr() + ptr_size - 1) & ~(ptr_size - 1);
+            size_t usable_end = (s->getAddr() + s->getSize()) & ~(ptr_size - 1);
+            if (usable_end - usable_start >= ptr_size) {
+                mprotect_cb = rel.r_offset = usable_start;
                 break;
             }
         }
@@ -750,10 +766,33 @@ int do_relocation_section(Elf *elf, unsigned int rel_type, unsigned int rel_type
     section->rels.assign(new_rels.begin(), new_rels.end());
     section->shrink(new_rels.size() * section->getEntSize());
 
-    ElfRelHackCode_Section *relhackcode = new ElfRelHackCode_Section(relhackcode_section, *elf, original_init, mprotect_cb);
-    relhackcode->insertBefore(section);
-    relhack->insertAfter(relhackcode);
-    if (section->getOffset() + section->getSize() >= old_end) {
+    ElfRelHackCode_Section *relhackcode = new ElfRelHackCode_Section(relhackcode_section, *elf, *relhack, original_init, mprotect_cb);
+    // Find the first executable section, and insert the relhack code before
+    // that. The relhack data is inserted between .rel.dyn and .rel.plt.
+    ElfSection *first_executable = nullptr;
+    for (ElfSection *s = elf->getSection(1); s != nullptr;
+         s = s->getNext()) {
+        if (s->getFlags() & SHF_EXECINSTR) {
+            first_executable = s;
+            break;
+        }
+    }
+
+    if (!first_executable) {
+        fprintf(stderr, "Couldn't find executable section. Skipping\n");
+        return -1;
+    }
+
+    unsigned int old_exec = first_executable->getOffset();
+
+    relhack->insertBefore(section);
+    relhackcode->insertBefore(first_executable);
+
+    // Trying to get first_executable->getOffset() now may throw if the new
+    // layout would require it to move, so we look at the end of the relhack
+    // code section instead, comparing it to where the first executable
+    // section used to start.
+    if (relhackcode->getOffset() + relhackcode->getSize() >= old_exec) {
         fprintf(stderr, "No gain. Skipping\n");
         return -1;
     }
@@ -863,13 +902,14 @@ void undo_file(const char *name, bool backup = false)
         fprintf(stderr, "Not elfhacked. Skipping\n");
         return;
     }
-    if (data != text->getNext()) {
-        fprintf(stderr, elfhack_data " section not following " elfhack_text ". Skipping\n");
+
+    ElfSegment *first = data->getSegmentByType(PT_LOAD);
+    ElfSegment *second = text->getSegmentByType(PT_LOAD);
+    if (first != second) {
+        fprintf(stderr, elfhack_data " and " elfhack_text " not in the same segment. Skipping\n");
         return;
     }
-
-    ElfSegment *first = elf.getSegmentByType(PT_LOAD);
-    ElfSegment *second = elf.getSegmentByType(PT_LOAD, first);
+    second = elf.getSegmentByType(PT_LOAD, first);
     ElfSegment *filler = nullptr;
     // If the second PT_LOAD is a filler from elfhack --fill, check the third.
     if (second->isElfHackFillerSegment()) {
