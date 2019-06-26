@@ -6122,6 +6122,10 @@ void nsGridContainerFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
                                 nsIFrame* aPrevInFlow) {
   nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
 
+  if (GetStateBits() & NS_FRAME_FONT_INFLATION_CONTAINER) {
+    AddStateBits(NS_FRAME_FONT_INFLATION_FLOW_ROOT);
+  }
+
   nsFrameState bits = nsFrameState(0);
   if (MOZ_LIKELY(!aPrevInFlow)) {
     // skip our scroll frame and such if we have it
