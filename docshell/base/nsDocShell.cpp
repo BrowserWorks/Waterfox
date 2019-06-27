@@ -7388,8 +7388,6 @@ nsresult nsDocShell::CaptureState() {
     mOSHE->AddChildShell(childShell);
   }
 
-  mBrowsingContext->CacheChildren();
-
   return NS_OK;
 }
 
@@ -7775,6 +7773,10 @@ nsresult nsDocShell::RestoreFromHistory() {
 
   // Order the mContentViewer setup just like Embed does.
   mContentViewer = nullptr;
+
+  // Move the browsing ontext's children to the cache. If we're
+  // detaching them, we'll detach them from there.
+  mBrowsingContext->CacheChildren();
 
   // Now that we're about to switch documents, forget all of our children.
   // Note that we cached them as needed up in CaptureState above.
@@ -8436,6 +8438,10 @@ nsresult nsDocShell::SetupNewViewer(nsIContentViewer* aNewViewer) {
   }
 
   mContentViewer = nullptr;
+
+  // Move the browsing ontext's children to the cache. If we're
+  // detaching them, we'll detach them from there.
+  mBrowsingContext->CacheChildren();
 
   // Now that we're about to switch documents, forget all of our children.
   // Note that we cached them as needed up in CaptureState above.
