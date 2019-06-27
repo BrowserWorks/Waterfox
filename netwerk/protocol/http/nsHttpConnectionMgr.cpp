@@ -1805,13 +1805,18 @@ nsHttpConnectionMgr::ProcessNewTransaction(nsHttpTransaction *trans)
 
     trans->SetPendingTime();
 
-    Http2PushedStream *pushedStream = trans->GetPushedStream();
-    if (pushedStream) {
-        LOG(("  ProcessNewTransaction %p tied to h2 session push %p\n",
-             trans, pushedStream->Session()));
-        return pushedStream->Session()->
-            AddStream(trans, trans->Priority(), false, nullptr) ?
-            NS_OK : NS_ERROR_UNEXPECTED;
+    RefPtr<Http2PushedStreamWrapper> pushedStreamWrapper =
+    trans->GetPushedStream();
+    if (pushedStreamWrapper) {
+        Http2PushedStream* pushedStream = pushedStreamWrapper->GetStream();
+        if (pushedStream) {
+            LOG(("  ProcessNewTransaction %p tied to h2 session push %p\n", trans,
+                 pushedStream->Session()));
+            return pushedStream->Session()->AddStream(trans, trans->Priority(), false,
+                                                      nullptr)
+            ? NS_OK
+            : NS_ERROR_UNEXPECTED;
+        }
     }
 
     nsresult rv = NS_OK;
