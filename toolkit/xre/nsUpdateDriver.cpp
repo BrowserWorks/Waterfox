@@ -27,6 +27,7 @@
 #include "mozilla/Printf.h"
 
 #ifdef XP_MACOSX
+#include <sys/xattr.h>
 #include "nsILocalFileMac.h"
 #include "nsCommandLineServiceMac.h"
 #include "MacLaunchHelper.h"
@@ -50,6 +51,7 @@ using namespace mozilla;
 
 static LazyLogModule sUpdateLog("updatedriver");
 #define LOG(args) MOZ_LOG(sUpdateLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(sUpdateLog, mozilla::LogLevel::Debug)
 
 #ifdef XP_WIN
 #define UPDATER_BIN "updater.exe"
@@ -340,6 +342,11 @@ CopyFileIntoUpdateDir(nsIFile *parentDir, const nsACString& leaf, nsIFile *updat
     return false;
   file->Remove(true);
 
+  // Destination path
+  nsCString targetFilePath;
+  rv = file->GetNativePath(targetFilePath);
+  if (NS_FAILED(rv)) return false;
+
   // Now, copy into the target location.
   rv = parentDir->Clone(getter_AddRefs(file));
   if (NS_FAILED(rv))
@@ -350,6 +357,26 @@ CopyFileIntoUpdateDir(nsIFile *parentDir, const nsACString& leaf, nsIFile *updat
   rv = file->CopyToNative(updateDir, EmptyCString());
   if (NS_FAILED(rv))
     return false;
+
+  // Remove the quarantine attribute. Starting with macOS 10.15, if the
+  // updater is quarantined, it will trigger a GateKeeper dialog when
+  // launched and fail to run. Firefox is configured to quarantine all
+  // written files by default.
+  int remove_rv = removexattr(targetFilePath.get(), "com.apple.quarantine", 0);
+  LOG(("Removing quarantine from %s: rv = %d", targetFilePath.get(),
+       remove_rv));
+
+  // Log quarantine status
+  if (LOG_ENABLED()) {
+    bool isQuarantined;
+    // getxattr returns -1 on error or, on success, the size of the value
+    // associated with the attribute. The com.apple.quarantine attribute
+    // can be set with a zero-length value so check for >= 0.
+    isQuarantined = (getxattr(targetFilePath.get(), "com.apple.quarantine",
+                              nullptr, 0, 0, 0) >= 0);
+    LOG(("Destination file %s is%s quarantined", targetFilePath.get(),
+         isQuarantined ? "" : " not"));
+  }
 
   return true;
 }
