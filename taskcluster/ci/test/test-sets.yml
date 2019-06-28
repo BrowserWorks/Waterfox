@@ -308,58 +308,27 @@ marionette-media-tests:
     - marionette-media
 
 macosx1014-64-tests:
-    # - cppunit
-    # - crashtest
-    # - firefox-ui-functional-local
-    # - firefox-ui-functional-remote
-    # - gtest
-    # - jittest
-    # - jsreftest
-    # - marionette
-    # - mochitest
-    # - mochitest-a11y
-    # - mochitest-browser-chrome
-    # - mochitest-chrome
-    # - mochitest-devtools-chrome
-    # - mochitest-devtools-webreplay
-    # - mochitest-gpu
-    # - mochitest-media
-    # - mochitest-webgl1-core
-    # - mochitest-webgl1-ext
-    # - mochitest-webgl2-core
-    # - mochitest-webgl2-ext test  # timeouts
-    - reftest
-    # - telemetry-tests-client
-    # - test-verify
-    # - test-verify-gpu
-    # - test-verify-wpt
-    # - web-platform-tests
-    # - web-platform-tests-reftests
-    # - web-platform-tests-wdspec
-    # - xpcshell
-macosx1014-64-qr-tests:
-    # - crashtest
-    - reftest
     - cppunit
     - crashtest
     - firefox-ui-functional-local
     - firefox-ui-functional-remote
-#    - gtest
+    # - gtest
     - jittest
     - jsreftest
     - marionette
-#    - mochitest
+    # - mochitest
     - mochitest-a11y
-#    - mochitest-browser-chrome
-#    - mochitest-chrome
+    # - mochitest-browser-chrome
+    # - mochitest-chrome
     - mochitest-devtools-chrome
     - mochitest-devtools-webreplay
     - mochitest-gpu
     - mochitest-media
     - mochitest-webgl1-core
     - mochitest-webgl1-ext
-#    - mochitest-webgl2-core
-#     - mochitest-webgl2-ext test  # timeouts
+    # - mochitest-webgl2-core
+    # - mochitest-webgl2-ext test  # timeouts
+    - reftest
     - telemetry-tests-client
     - test-verify
     - test-verify-gpu
@@ -369,19 +338,17 @@ macosx1014-64-qr-tests:
     - web-platform-tests-wdspec
     - xpcshell
 
-# macosx1014-64-qr-tests:
+macosx1014-64-qr-tests:
     - crashtest
-#    - reftest
+    - reftest
 
 macosx64-tests:
     - gtest
     - mochitest
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-media
     - mochitest-webgl2-core
     # - mochitest-webgl2-ext test timeouts
-    - reftest
 
 macosx64-talos:
     - talos-bcv

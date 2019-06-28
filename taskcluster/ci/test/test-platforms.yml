@@ -275,7 +275,6 @@ windows10-64-shippable-qr/opt:
 
 ##
 # MacOS X platforms (matching /macosx.*/)
-
 macosx1014-64-shippable/opt:
     build-platform: macosx64-shippable/opt
     test-sets:
@@ -289,7 +288,7 @@ macosx1014-64-shippable/opt:
         - marionette-media-tests
 
 macosx1014-64/debug:
-    build-platform: macosx64-shippable/opt
+    build-platform: macosx64/debug
     test-sets:
         - macosx1014-64-tests
         # - marionette-media-tests
