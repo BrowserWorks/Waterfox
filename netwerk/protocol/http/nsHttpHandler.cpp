@@ -2511,9 +2511,9 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
-    auto *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
-                                 originAttributes, usingSSL);
+    RefPtr<nsHttpConnectionInfo> ci =
+    new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
+                             originAttributes, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
