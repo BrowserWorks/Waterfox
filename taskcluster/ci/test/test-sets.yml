@@ -326,7 +326,7 @@ macosx1014-64-tests:
     - mochitest-media
     - mochitest-webgl1-core
     - mochitest-webgl1-ext
-    # - mochitest-webgl2-core
+    - mochitest-webgl2-core
     # - mochitest-webgl2-ext test  # timeouts
     - reftest
     - telemetry-tests-client
@@ -346,7 +346,6 @@ macosx64-tests:
     - gtest
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-webgl2-core
     # - mochitest-webgl2-ext test timeouts
 
 macosx64-talos:
