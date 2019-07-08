@@ -112,6 +112,12 @@ ChromeUtils.defineModuleGetter(this, "FormLikeFactory",
 ChromeUtils.defineModuleGetter(this, "GeckoViewAutoFill",
                                "resource://gre/modules/GeckoViewAutoFill.jsm");
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "GMPInstallManager",
+  "resource://gre/modules/GMPInstallManager.jsm"
+);
+
 var GlobalEventDispatcher = EventDispatcher.instance;
 var WindowEventDispatcher = EventDispatcher.for(window);
 
@@ -475,6 +481,8 @@ var BrowserApp = {
       Services.prefs.setBoolPref("xpinstall.enabled", true);
     }
 
+    this.hideH264AddonIfNeeded();
+
     if (ParentalControls.parentalControlsEnabled) {
         let isBlockListEnabled = ParentalControls.isAllowed(ParentalControls.BLOCK_LIST);
         Services.prefs.setBoolPref("browser.safebrowsing.allowOverride", !isBlockListEnabled);
@@ -590,6 +598,23 @@ var BrowserApp = {
    */
   setLocale: function(locale) {
     WindowEventDispatcher.sendRequest({ type: "Locale:Set", locale: locale });
+  },
+
+  hideH264AddonIfNeeded: function() {
+    let installManager = new GMPInstallManager();
+    installManager.checkForAddons().then(
+      ({ usedFallback, gmpAddons }) => {
+        gmpAddons.forEach(addon => {
+          if (addon && addon.id === "gmp-gmpopenh264" && !addon.isInstalled) {
+            Services.prefs.setBoolPref("media.gmp-gmpopenh264.visible", false);
+            Services.prefs.setBoolPref("media.gmp-gmpopenh264.enabled", false);
+          }
+        });
+      },
+      err => {
+        console.log(`Checking for addons failed with:${err}`);
+      }
+    );
   },
 
   initContextMenu: function() {
