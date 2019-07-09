@@ -501,7 +501,7 @@ private:
                                                bool startBuffering,
                                                bool checkingAppCacheEntry);
 
-    void SetPushedStream(Http2PushedStream *stream);
+    void SetPushedStream(Http2PushedStreamWrapper *stream);
 
     void MaybeWarnAboutAppCache();
 
@@ -661,7 +661,7 @@ private:
     // Needed for accurate DNS timing
     RefPtr<nsDNSPrefetch>           mDNSPrefetch;
 
-    Http2PushedStream                 *mPushedStream;
+    RefPtr<Http2PushedStreamWrapper> mPushedStream;
     // True if the channel's principal was found on a phishing, malware, or
     // tracking (if tracking protection is enabled) blocklist
     bool                              mLocalBlocklist;

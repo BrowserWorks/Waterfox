@@ -8552,16 +8552,14 @@ nsHttpChannel::AwaitingCacheCallbacks()
     return mCacheEntriesToWaitFor != 0;
 }
 
-void
-nsHttpChannel::SetPushedStream(Http2PushedStreamWrapper *stream) {
+void nsHttpChannel::SetPushedStream(Http2PushedStreamWrapper *stream)
 {
     MOZ_ASSERT(stream);
     MOZ_ASSERT(!mPushedStream);
     mPushedStream = stream;
 }
 
-nsresult
-nsHttpChannel::OnPush(const nsACString &url, Http2PushedStreamWrapper *pushedStream)
+nsresult nsHttpChannel::OnPush(const nsACString &url, Http2PushedStreamWrapper *pushedStream)
 {
     MOZ_ASSERT(NS_IsMainThread());
     LOG(("nsHttpChannel::OnPush [this=%p]\n", this));
