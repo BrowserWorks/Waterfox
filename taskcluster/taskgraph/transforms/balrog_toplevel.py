@@ -14,7 +14,8 @@ from taskgraph.util.scriptworker import (
 from taskgraph.util.yaml import load_yaml
 
 from mozrelease.balrog import generate_update_properties
-from mozilla_version.gecko import GeckoVersion
+from mozilla_version.gecko import FennecVersion
+
 
 transforms = TransformSequence()
 
@@ -28,14 +29,18 @@ def generate_update_line(config, jobs):
         update_config = load_yaml(config_file)
 
         product = job['shipping-product']
+        # XXX On ESR68, even though they get filtered, we're building balrog tasks with the new
+        # Fennec numbers. This solution is not ideal, but works at the moment.
+        version = FennecVersion.parse(release_config['appVersion'])
         if product == 'devedition':
             product = 'firefox'
+
         job['worker']['update-line'] = {}
         for blob_type, suffix in [('wnp', ''), ('no-wnp', '-No-WNP')]:
             context = {
                 'release-type': config.params['release_type'],
                 'product': product,
-                'version': GeckoVersion.parse(release_config['appVersion']),
+                'version': version,
                 'blob-type': blob_type,
                 'build-id': config.params['moz_build_date'],
             }
