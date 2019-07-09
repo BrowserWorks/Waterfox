@@ -65,14 +65,15 @@ var gSync = {
            .sort((a, b) => a.name.localeCompare(b.name));
   },
 
-  _generateNodeGetters() {
+  _generateNodeGetters(usePhoton) {
+    let prefix = usePhoton ? "appMenu-" : "PanelUI-";
     for (let k of ["Status", "Avatar", "Label", "Container"]) {
       let prop = "appMenu" + k;
       let suffix = k.toLowerCase();
       delete this[prop];
       this.__defineGetter__(prop, function() {
         delete this[prop];
-        return this[prop] = document.getElementById("appMenu-fxa-" + suffix);
+        return this[prop] = document.getElementById(prefix + "fxa-" + suffix);
       });
     }
   },
@@ -87,10 +88,13 @@ var gSync = {
         this.updateAllUI(state);
       }
     }
+
+    this.maybeMoveSyncedTabsButton();
   },
 
   init() {
-    if (this._initialized) {
+    // Bail out if we're already initialized or for pop-up windows.
+    if (this._initialized || !window.toolbar.visible) {
       return;
     }
 
@@ -98,7 +102,14 @@ var gSync = {
       Services.obs.addObserver(this, topic, true);
     }
 
-    this._generateNodeGetters();
+    // Use this getter not because 'lazy' but because of the observer,
+    // which lets us easily update our UI according to the pref flip
+    XPCOMUtils.defineLazyPreferenceGetter(this, "gPhotonStructure",
+      "browser.photon.structure.enabled", (pref, old, newValue) => {
+      this._generateNodeGetters(newValue);
+      this._maybeUpdateUIState();
+    });
+    this._generateNodeGetters(this.gPhotonStructure);
 
     // initial label for the sync buttons.
     let broadcaster = document.getElementById("sync-status");
@@ -297,7 +308,7 @@ var gSync = {
 
   populateSendTabToDevicesMenu(devicesPopup, url, title, createDeviceNodeFn) {
     if (!createDeviceNodeFn) {
-      createDeviceNodeFn = (clientId, name, clientType, lastModified) => {
+      createDeviceNodeFn = (clientId, name, clientType) => {
         let eltName = name ? "menuitem" : "menuseparator";
         return document.createElement(eltName);
       };
@@ -340,10 +351,11 @@ var gSync = {
         this.remoteClients.map(client => client.id);
 
       clients.forEach(clientId => this.sendTabToDevice(url, clientId, title));
-    };
+      BrowserPageActions.panelNode.hidePopup();
+    }
 
-    function addTargetDevice(clientId, name, clientType, lastModified) {
-      const targetDevice = createDeviceNodeFn(clientId, name, clientType, lastModified);
+    function addTargetDevice(clientId, name, clientType) {
+      const targetDevice = createDeviceNodeFn(clientId, name, clientType);
       targetDevice.addEventListener("command", onTargetDeviceCommand, true);
       targetDevice.classList.add("sync-menuitem", "sendtab-target");
       targetDevice.setAttribute("clientId", clientId);
@@ -354,9 +366,7 @@ var gSync = {
 
     const clients = this.remoteClients;
     for (let client of clients) {
-      const type = client.formfactor && client.formfactor.includes("tablet") ?
-                   "tablet" : client.type;
-      addTargetDevice(client.id, client.name, type, client.serverLastModified * 1000);
+      addTargetDevice(client.id, client.name, client.type);
     }
 
     // "Send to All Devices" menu item
@@ -374,6 +384,7 @@ var gSync = {
     const learnMore = this.fxaStrings.GetStringFromName("sendTabToDevice.singledevice");
     this._appendSendTabInfoItems(fragment, createDeviceNodeFn, noDevices, learnMore, () => {
       this.openSendToDevicePromo();
+      BrowserPageActions.panelNode.hidePopup();
     });
   },
 
@@ -382,6 +393,7 @@ var gSync = {
     const verifyAccount = this.fxaStrings.GetStringFromName("sendTabToDevice.verify");
     this._appendSendTabInfoItems(fragment, createDeviceNodeFn, notVerified, verifyAccount, () => {
       this.openPrefs("sendtab");
+      BrowserPageActions.panelNode.hidePopup();
     });
   },
 
@@ -390,21 +402,8 @@ var gSync = {
     const learnMore = this.fxaStrings.GetStringFromName("sendTabToDevice.unconfigured");
     this._appendSendTabInfoItems(fragment, createDeviceNodeFn, notConnected, learnMore, () => {
       this.openSendToDevicePromo();
+      BrowserPageActions.panelNode.hidePopup();
     });
-
-    // Now add a 'sign in to sync' item above the 'learn more' item.
-    const signInToSync = this.fxaStrings.GetStringFromName("sendTabToDevice.signintosync");
-    let signInItem = createDeviceNodeFn(null, signInToSync, null);
-    signInItem.classList.add("sync-menuitem");
-    signInItem.setAttribute("label", signInToSync);
-    // Show an icon if opened in the page action panel:
-    if (signInItem.classList.contains("subviewbutton")) {
-      signInItem.classList.add("subviewbutton-iconic", "signintosync");
-    }
-    signInItem.addEventListener("command", () => {
-      this.openPrefs("sendtab");
-    });
-    fragment.insertBefore(signInItem, fragment.lastChild);
   },
 
   _appendSendTabInfoItems(fragment, createDeviceNodeFn, statusLabel, actionLabel, actionCommand) {
@@ -465,12 +464,9 @@ var gSync = {
                               contextMenu.onVideo || contextMenu.onAudio ||
                               contextMenu.onLink || contextMenu.onTextInput);
 
-    // Avoids double separator on images with links.
-    const hideSeparator = contextMenu.isContentSelected &&
-                          contextMenu.onLink && contextMenu.onImage;
-    ["context-sendpagetodevice", ...(hideSeparator ? [] : ["context-sep-sendpagetodevice"])]
+    ["context-sendpagetodevice", "context-sep-sendpagetodevice"]
     .forEach(id => contextMenu.showItem(id, showSendPage));
-    ["context-sendlinktodevice", ...(hideSeparator ? [] : ["context-sep-sendlinktodevice"])]
+    ["context-sendlinktodevice", "context-sep-sendlinktodevice"]
     .forEach(id => contextMenu.showItem(id, showSendLink));
 
     if (!showSendLink && !showSendPage) {
@@ -492,7 +488,7 @@ var gSync = {
 
     let broadcaster = document.getElementById("sync-status");
     broadcaster.setAttribute("syncstatus", "active");
-    broadcaster.setAttribute("label", this.syncStrings.GetStringFromName("syncingtabs.label"));
+    broadcaster.setAttribute("label", this.syncStrings.GetStringFromName("syncing2.label"));
     broadcaster.setAttribute("disabled", "true");
   },
 
@@ -527,7 +523,6 @@ var gSync = {
     }
     const state = UIState.get();
     if (state.status == UIState.STATUS_SIGNED_IN) {
-      this.updateSyncStatus({ syncing: true });
       setTimeout(() => Weave.Service.errorHandler.syncAndReportErrors(), 0);
     }
   },
@@ -551,6 +546,28 @@ var gSync = {
       // It is placed somewhere else - just try and show it.
       PanelUI.showSubView("PanelUI-remotetabs", anchor, area);
     }
+  },
+
+  /* After we are initialized we perform a once-only check for the sync
+     button being in "customize purgatory" and if so, move it to the panel.
+     This is done primarily for profiles created before SyncedTabs landed,
+     where the button defaulted to being in that purgatory.
+     We use a preference to ensure we only do it once, so people can still
+     customize it away and have it stick.
+  */
+  maybeMoveSyncedTabsButton() {
+    if (gPhotonStructure) {
+      return;
+    }
+    const prefName = "browser.migrated-sync-button";
+    let migrated = Services.prefs.getBoolPref(prefName, false);
+    if (migrated) {
+      return;
+    }
+    if (!CustomizableUI.getPlacementOfWidget("sync-button")) {
+      CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+    }
+    Services.prefs.setBoolPref(prefName, true);
   },
 
   /* Update the tooltip for the sync-status broadcaster (which will update the

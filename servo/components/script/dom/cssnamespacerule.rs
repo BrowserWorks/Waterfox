@@ -4,8 +4,8 @@
 
 use dom::bindings::codegen::Bindings::CSSNamespaceRuleBinding;
 use dom::bindings::codegen::Bindings::CSSNamespaceRuleBinding::CSSNamespaceRuleMethods;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::reflect_dom_object;
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::cssrule::{CSSRule, SpecificCSSRule};
 use dom::cssstylesheet::CSSStyleSheet;
@@ -18,7 +18,7 @@ use style::stylesheets::NamespaceRule;
 #[dom_struct]
 pub struct CSSNamespaceRule {
     cssrule: CSSRule,
-    #[ignore_malloc_size_of = "Arc"]
+    #[ignore_heap_size_of = "Arc"]
     namespacerule: Arc<Locked<NamespaceRule>>,
 }
 
@@ -33,8 +33,8 @@ impl CSSNamespaceRule {
 
     #[allow(unrooted_must_root)]
     pub fn new(window: &Window, parent_stylesheet: &CSSStyleSheet,
-               namespacerule: Arc<Locked<NamespaceRule>>) -> DomRoot<CSSNamespaceRule> {
-        reflect_dom_object(Box::new(CSSNamespaceRule::new_inherited(parent_stylesheet, namespacerule)),
+               namespacerule: Arc<Locked<NamespaceRule>>) -> Root<CSSNamespaceRule> {
+        reflect_dom_object(box CSSNamespaceRule::new_inherited(parent_stylesheet, namespacerule),
                            window,
                            CSSNamespaceRuleBinding::Wrap)
     }

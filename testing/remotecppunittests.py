@@ -107,6 +107,7 @@ class RemoteCPPUnitTests(cppunittests.CPPUnitTests):
         env['LD_LIBRARY_PATH'] = self.remote_bin_dir
         env["TMPDIR"] = self.remote_tmp_dir
         env["HOME"] = self.remote_home_dir
+        env["MOZILLA_FIVE_HOME"] = self.remote_home_dir
         env["MOZ_XRE_DIR"] = self.remote_bin_dir
         if self.options.add_env:
             for envdef in self.options.add_env:
@@ -180,8 +181,7 @@ class RemoteCPPUnittestOptions(cppunittests.CPPUnittestOptions):
 
         self.add_option("--noSetup", action="store_false",
                         dest="setup",
-                        help="do not copy any files to device (to be used only if "
-                        "device is already setup)")
+                        help="do not copy any files to device (to be used only if device is already setup)")
         defaults["setup"] = True
 
         self.add_option("--localLib", action="store",
@@ -214,8 +214,7 @@ class RemoteCPPUnittestOptions(cppunittests.CPPUnittestOptions):
                         help="Architecture of emulator to use: x86 or arm")
         self.add_option("--addEnv", action="append",
                         type="string", dest="add_env",
-                        help="additional remote environment variable definitions "
-                        "(eg. --addEnv \"somevar=something\")")
+                        help="additional remote environment variable definitions (eg. --addEnv \"somevar=something\")")
         defaults["add_env"] = None
 
         self.set_defaults(**defaults)
@@ -239,7 +238,7 @@ def run_test_harness(options, args):
             dm_args['host'] = options.device_ip
             dm_args['port'] = options.device_port
         if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
-            dm_args['logLevel'] = logging.DEBUG # noqa python 2 / 3
+            dm_args['logLevel'] = logging.DEBUG
         dm = devicemanagerADB.DeviceManagerADB(**dm_args)
     except:
         if options.with_b2g_emulator:

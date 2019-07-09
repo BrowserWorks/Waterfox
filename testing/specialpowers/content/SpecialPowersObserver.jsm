@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
 
 // Based on:
 // https://bugzilla.mozilla.org/show_bug.cgi?id=549539
@@ -22,9 +21,9 @@ if (typeof(Cc) == "undefined") {
   const Ci = Components.interfaces;
 }
 
-const CHILD_SCRIPT = "chrome://specialpowers/content/specialpowers.js";
-const CHILD_SCRIPT_API = "chrome://specialpowers/content/specialpowersAPI.js";
-const CHILD_LOGGER_SCRIPT = "chrome://specialpowers/content/MozillaLogger.js";
+const CHILD_SCRIPT = "chrome://specialpowers/content/specialpowers.js"
+const CHILD_SCRIPT_API = "chrome://specialpowers/content/specialpowersAPI.js"
+const CHILD_LOGGER_SCRIPT = "chrome://specialpowers/content/MozillaLogger.js"
 
 
 // Glue to add in the observer API to this object.  This allows us to share code with chrome tests
@@ -37,7 +36,7 @@ this.SpecialPowersObserver = function SpecialPowersObserver() {
   this._isFrameScriptLoaded = false;
   this._messageManager = Cc["@mozilla.org/globalmessagemanager;1"].
                          getService(Ci.nsIMessageBroadcaster);
-};
+}
 
 
 SpecialPowersObserver.prototype = new SpecialPowersObserverAPI();
@@ -70,7 +69,6 @@ SpecialPowersObserver.prototype._loadFrameScript = function() {
   if (!this._isFrameScriptLoaded) {
     // Register for any messages our API needs us to handle
     this._messageManager.addMessageListener("SPPrefService", this);
-    this._messageManager.addMessageListener("SPProcessCrashManagerWait", this);
     this._messageManager.addMessageListener("SPProcessCrashService", this);
     this._messageManager.addMessageListener("SPPingService", this);
     this._messageManager.addMessageListener("SpecialPowers.Quit", this);
@@ -115,7 +113,7 @@ SpecialPowersObserver.prototype.init = function() {
   // Register special testing modules.
   var testsURI = Cc["@mozilla.org/file/directory_service;1"].
                    getService(Ci.nsIProperties).
-                   get("ProfD", Ci.nsIFile);
+                   get("ProfD", Ci.nsILocalFile);
   testsURI.append("tests.manifest");
   var ioSvc = Cc["@mozilla.org/network/io-service;1"].
                 getService(Ci.nsIIOService);
@@ -134,14 +132,13 @@ SpecialPowersObserver.prototype.uninit = function() {
   var obs = Services.obs;
   obs.removeObserver(this, "chrome-document-global-created");
   obs.removeObserver(this, "http-on-modify-request");
-  this._registerObservers._topics.forEach((element) => {
+  this._registerObservers._topics.forEach(function(element) {
     obs.removeObserver(this._registerObservers, element);
   });
   this._removeProcessCrashObservers();
 
   if (this._isFrameScriptLoaded) {
     this._messageManager.removeMessageListener("SPPrefService", this);
-    this._messageManager.removeMessageListener("SPProcessCrashManagerWait", this);
     this._messageManager.removeMessageListener("SPProcessCrashService", this);
     this._messageManager.removeMessageListener("SPPingService", this);
     this._messageManager.removeMessageListener("SpecialPowers.Quit", this);
@@ -236,7 +233,9 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
   switch (aMessage.name) {
     case "SPPingService":
       if (aMessage.json.op == "ping") {
-        aMessage.target.frameLoader
+        aMessage.target
+                .QueryInterface(Ci.nsIFrameLoaderOwner)
+                .frameLoader
                 .messageManager
                 .sendAsyncMessage("SPPingService", { op: "pong" });
       }
@@ -257,7 +256,7 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
       try {
         let promises = [];
         aMessage.data.forEach(function(request) {
-          const filePerms = 0o666;
+          const filePerms = 0666; // eslint-disable-line no-octal
           let testFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
           if (request.name) {
             testFile.appendRelativePath(request.name);
@@ -278,16 +277,22 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
         });
 
         Promise.all(promises).then(function() {
-          aMessage.target.frameLoader
+          aMessage.target
+                  .QueryInterface(Ci.nsIFrameLoaderOwner)
+                  .frameLoader
                   .messageManager
                   .sendAsyncMessage("SpecialPowers.FilesCreated", filePaths);
         }, function(e) {
-          aMessage.target.frameLoader
+          aMessage.target
+                  .QueryInterface(Ci.nsIFrameLoaderOwner)
+                  .frameLoader
                   .messageManager
                   .sendAsyncMessage("SpecialPowers.FilesError", e.toString());
         });
       } catch (e) {
-          aMessage.target.frameLoader
+          aMessage.target
+                  .QueryInterface(Ci.nsIFrameLoaderOwner)
+                  .frameLoader
                   .messageManager
                   .sendAsyncMessage("SpecialPowers.FilesError", e.toString());
       }
@@ -312,7 +317,7 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([SpecialPowersObserver]);
 this.SpecialPowersObserverFactory = Object.freeze({
   createInstance(outer, id) {
-    if (outer) { throw Components.results.NS_ERROR_NO_AGGREGATION; }
+    if (outer) { throw Components.results.NS_ERROR_NO_AGGREGATION }
     return new SpecialPowersObserver();
   },
   loadFactory(lock) {},

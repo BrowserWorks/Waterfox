@@ -5,6 +5,10 @@
 
 const { drawText } = require("devtools/client/memory/components/tree-map/draw");
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function* () {
   // Mock out the Canvas2dContext
   let ctx = {

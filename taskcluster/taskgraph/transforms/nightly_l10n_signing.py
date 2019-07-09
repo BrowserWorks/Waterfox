@@ -21,6 +21,9 @@ def make_signing_description(config, jobs):
 
         dep_job = job['dependent-task']
 
+        label = dep_job.label.replace("nightly-l10n-", "signing-l10n-")
+        job['label'] = label
+
         # add the chunk number to the TH symbol
         symbol = 'Ns{}'.format(dep_job.attributes.get('l10n_chunk'))
         group = 'tc-L10n'

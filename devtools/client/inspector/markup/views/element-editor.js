@@ -29,11 +29,6 @@ const HTML_VOID_ELEMENTS = [
   "hr", "img", "input", "keygen", "link", "meta", "param", "source",
   "track", "wbr" ];
 
-// Global tooltip inspector
-const {LocalizationHelper} = require("devtools/shared/l10n");
-const INSPECTOR_L10N =
-  new LocalizationHelper("devtools/client/locales/inspector.properties");
-
 /**
  * Creates an editor for an Element node.
  *
@@ -74,6 +69,7 @@ function ElementEditor(container, node) {
       trigger: "dblclick",
       stopOnReturn: true,
       done: this.onTagEdit.bind(this),
+      contextMenu: this.markup.inspector.onTextBoxContextMenu,
       cssProperties: this._cssProperties
     });
   }
@@ -101,6 +97,7 @@ function ElementEditor(container, node) {
         undoMods.apply();
       });
     },
+    contextMenu: this.markup.inspector.onTextBoxContextMenu,
     cssProperties: this._cssProperties
   });
 
@@ -160,7 +157,6 @@ ElementEditor.prototype = {
     this.eventNode.classList.add("markupview-events");
     this.eventNode.dataset.event = "true";
     this.eventNode.textContent = "ev";
-    this.eventNode.title = INSPECTOR_L10N.getStr("markupView.event.tooltiptext");
     this.elt.appendChild(this.eventNode);
   },
 
@@ -406,6 +402,7 @@ ElementEditor.prototype = {
           undoMods.apply();
         });
       },
+      contextMenu: this.markup.inspector.onTextBoxContextMenu,
       cssProperties: this._cssProperties
     });
 

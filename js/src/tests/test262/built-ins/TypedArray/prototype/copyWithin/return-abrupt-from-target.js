@@ -23,7 +23,6 @@ info: >
   3. Let relativeTarget be ? ToInteger(target).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var o = {

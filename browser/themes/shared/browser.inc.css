@@ -2,126 +2,77 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-%include downloads/indicator.inc.css
+%ifdef MOZ_PHOTON_THEME
+%ifdef CAN_DRAW_IN_TITLEBAR
+/* Add space for dragging the window */
+%ifdef MOZ_WIDGET_COCOA
+:root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar
+%elifdef MENUBAR_CAN_AUTOHIDE
+:root[tabsintitlebar][sizemode=normal] #toolbar-menubar[autohide=true] ~ #TabsToolbar
+%else
+:root[tabsintitlebar][sizemode=normal] #TabsToolbar
+%endif
+{
+  padding-inline-start: 40px;
+}
+%endif
 
+%ifdef MOZ_PHOTON_THEME
 :root {
-  /* Note: Setting this to 0 (without px) breaks CSS calculations for OSX. */
-  --space-above-tabbar: 0px;
+  --toolbar-background-color: -moz-dialog;
+  --toolbar-foreground-color: -moz-dialogtext;
+}
+/* Colour to use for toolbars and customize mode */
+%if defined(XP_WIN) || defined(XP_MACOSX)
+%ifdef XP_WIN
+@media (-moz-windows-default-theme) {
+%endif
+:root {
+  --toolbar-background-color: #f9f9fa;
+  --toolbar-foreground-color: #0c0c0d;
+}
+%ifdef XP_WIN
+}
+%endif
+%endif
+%endif
+
+
+/* Go button */
+.urlbar-go-button {
+  padding: 0 3px;
+  list-style-image: url("chrome://browser/skin/reload-stop-go.png");
 }
 
-:root[extradragspace][tabsintitlebar]:not([inFullscreen]) {
-  --space-above-tabbar: 8px;
+.urlbar-go-button {
+  -moz-image-region: rect(0, 42px, 14px, 28px);
 }
 
-/* Toolbar / content area border */
-
-#navigator-toolbox::after {
-  content: "";
-  display: -moz-box;
-  border-bottom: 1px solid var(--toolbox-border-bottom-color);
+.urlbar-go-button:hover {
+  -moz-image-region: rect(14px, 42px, 28px, 28px);
 }
 
-:root[customizing] #navigator-toolbox::after {
-  border-bottom-style: none;
+.urlbar-go-button:hover:active {
+  -moz-image-region: rect(28px, 42px, 42px, 28px);
 }
 
-/* Bookmark toolbar */
-
-#navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar) {
-  overflow: -moz-hidden-unscrollable;
-  max-height: 4em;
-  transition: min-height 170ms ease-out, max-height 170ms ease-out;
-  padding: 0 6px 2px;
+.urlbar-go-button:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
 }
 
-#navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar)[collapsed=true] {
-  min-height: 0.1px;
-  max-height: 0;
-  transition: min-height 170ms ease-out, max-height 170ms ease-out, visibility 170ms linear;
+@media (min-resolution: 1.1dppx) {
+  .urlbar-go-button {
+    list-style-image: url("chrome://browser/skin/reload-stop-go@2x.png");
+    -moz-image-region: rect(0, 84px, 28px, 56px);
+    width: 20px;
+  }
+
+  .urlbar-go-button:hover {
+    -moz-image-region: rect(28px, 84px, 56px, 56px);
+  }
+
+  .urlbar-go-button:hover:active {
+    -moz-image-region: rect(56px, 84px, 84px, 56px);
+  }
 }
-
-#navigator-toolbox > toolbar[customizing]:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar) {
-  outline: 1px dashed;
-  outline-offset: -3px;
-  -moz-outline-radius: 2px;
-}
-
-#navigator-toolbox > toolbar[customizing]:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar):empty {
-  /* Avoid the toolbar having no height when there's no items in it */
-  min-height: 22px;
-}
-
-/* Required for Library animation */
-
-#navigator-toolbox {
-  position: relative;
-}
-
-#library-animatable-box {
-  display: none;
-}
-
-#library-animatable-box[animate] {
-  display: -moz-box;
-}
-
-/* Back / Forward context menu */
-
-.unified-nav-back[_moz-menuactive]:-moz-locale-dir(ltr),
-.unified-nav-forward[_moz-menuactive]:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://browser/skin/back.svg") !important;
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-.unified-nav-forward[_moz-menuactive]:-moz-locale-dir(ltr),
-.unified-nav-back[_moz-menuactive]:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://browser/skin/forward.svg") !important;
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-/* Private browsing and accessibility indicators */
-
-.accessibility-indicator,
-.private-browsing-indicator {
-  background-repeat: no-repeat;
-  background-size: 100% auto;
-  background-position: center;
-  width: 24px;
-  height: 24px;
-  margin-left: 8px;
-  margin-right: 8px;
-  position: relative;
-  /* Need to ensure this gets positioned on top of the position:relative #navigator-toolbox
-   * in case the dark/light themes give that item a background. */
-  z-index: 1;
-}
-
-.accessibility-indicator {
-  background-image: url("chrome://browser/skin/accessibility.svg");
-  -moz-user-focus: normal;
-  /* Clear default button styling */
-  -moz-appearance: none;
-  margin-top: unset;
-  margin-bottom: unset;
-  min-width: unset;
-  color: unset;
-  text-shadow: unset;
-}
-
-.accessibility-indicator:-moz-any(:hover, :active, :focus, :-moz-focusring) {
-  background-image: url("chrome://browser/skin/accessibility-active.svg");
-  outline: 0;
-}
-
-.private-browsing-indicator {
-  background-image: url("chrome://browser/skin/private-browsing.svg");
-}
-
-:root:not([accessibilitymode]) .accessibility-indicator,
-:root:not([privatebrowsingmode=temporary]) .private-browsing-indicator {
-  display: none;
-}
-
-/* End private browsing and accessibility indicators */
+%endif

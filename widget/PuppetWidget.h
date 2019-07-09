@@ -182,17 +182,11 @@ public:
                   LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                   LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
 
-  // This is used for creating remote layer managers and for re-creating
-  // them after a compositor reset. The lambda aInitializeFunc is used to perform
-  // any caller-required initialization for the newly created layer
+  // This is used after a compositor reset. The lambda aInitializeFunc is used
+  // to perform any caller-required initialization for the newly created layer
   // manager; in the event of a failure, return false and it will destroy the
   // new layer manager without changing the state of the widget.
-  bool CreateRemoteLayerManager(const std::function<bool(LayerManager*)>& aInitializeFunc);
-
-  bool HasLayerManager()
-  {
-    return !!mLayerManager;
-  }
+  bool RecreateLayerManager(const std::function<bool(LayerManager*)>& aInitializeFunc);
 
   virtual void SetInputContext(const InputContext& aContext,
                                const InputContextAction& aAction) override;
@@ -288,6 +282,7 @@ public:
 
   virtual void SetCandidateWindowForPlugin(
                  const CandidateWindowPosition& aPosition) override;
+  virtual void EnableIMEForPlugin(bool aEnable) override;
 
   virtual void ZoomToRect(const uint32_t& aPresShellId,
                           const FrameMetrics::ViewID& aViewId,
@@ -298,7 +293,6 @@ public:
 
   void HandledWindowedPluginKeyEvent(const NativeEventData& aKeyEventData,
                                      bool aIsConsumed);
-
   virtual nsresult OnWindowedPluginKeyEvent(
                      const NativeEventData& aKeyEventData,
                      nsIKeyEventInPluginCallback* aCallback) override;
@@ -343,6 +337,10 @@ private:
   uint32_t GetCaretOffset();
 
   nsIWidgetListener* GetCurrentWidgetListener();
+
+  // When this widget caches input context and currently managed by
+  // IMEStateManager, the cache is valid.
+  bool HaveValidInputContextCache() const;
 
   class PaintTask : public Runnable {
   public:

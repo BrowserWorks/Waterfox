@@ -4,8 +4,8 @@
 
 use dom::bindings::codegen::Bindings::ClientBinding::{ClientMethods, Wrap};
 use dom::bindings::codegen::Bindings::ClientBinding::FrameType;
+use dom::bindings::js::{Root, MutNullableJS};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::str::{DOMString, USVString};
 use dom::serviceworker::ServiceWorker;
 use dom::window::Window;
@@ -17,10 +17,10 @@ use uuid::Uuid;
 #[dom_struct]
 pub struct Client {
     reflector_: Reflector,
-    active_worker: MutNullableDom<ServiceWorker>,
+    active_worker: MutNullableJS<ServiceWorker>,
     url: ServoUrl,
     frame_type: FrameType,
-    #[ignore_malloc_size_of = "Defined in uuid"]
+    #[ignore_heap_size_of = "Defined in uuid"]
     id: Uuid
 }
 
@@ -35,8 +35,8 @@ impl Client {
         }
     }
 
-    pub fn new(window: &Window) -> DomRoot<Client> {
-        reflect_dom_object(Box::new(Client::new_inherited(window.get_url())),
+    pub fn new(window: &Window) -> Root<Client> {
+        reflect_dom_object(box Client::new_inherited(window.get_url()),
                            window,
                            Wrap)
     }
@@ -45,7 +45,7 @@ impl Client {
         self.url.clone()
     }
 
-    pub fn get_controller(&self) -> Option<DomRoot<ServiceWorker>> {
+    pub fn get_controller(&self) -> Option<Root<ServiceWorker>> {
         self.active_worker.get()
     }
 

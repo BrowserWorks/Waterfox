@@ -10,7 +10,6 @@ info: >
   ...
   3. Return CreateArrayIterator(O, "key").
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var sample = new Int8Array([0, 42, 64]);

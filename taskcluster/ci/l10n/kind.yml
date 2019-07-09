@@ -7,13 +7,11 @@ loader: taskgraph.loader.single_dep:loader
 
 transforms:
    - taskgraph.transforms.l10n:transforms
-   - taskgraph.transforms.use_toolchains:transforms
    - taskgraph.transforms.job:transforms
    - taskgraph.transforms.task:transforms
 
 kind-dependencies:
    - build
-   - toolchain
 
 only-for-build-platforms:
    - linux64/opt
@@ -28,7 +26,7 @@ job-template:
          android-api-16-l10n: Single Locale Repack
    locales-file:
       by-build-platform:
-         default: browser/locales/l10n-changesets.json
+         default: browser/locales/all-locales
          android-api-16-l10n: mobile/locales/l10n-changesets.json
    ignore-locales:
       by-build-platform:
@@ -39,19 +37,6 @@ job-template:
       by-build-platform:
          default: 36000
          android-api-16-l10n: 18000
-   docker-image:
-      by-build-platform:
-         default:
-           in-tree: desktop-build
-         android-api-16-l10n:
-           in-tree: android-build
-         win.*: null
-   toolchains:
-      by-build-platform:
-         default: []
-         android-api-16-l10n:
-            - android-sdk-linux
-            - proguard-jar
    tooltool:
       by-build-platform:
          default: public
@@ -63,7 +48,9 @@ job-template:
          android: aws-provisioner-v1/gecko-{level}-b-android
    treeherder:
       symbol: tc(L10n)
-      tier: 2
+      tier:
+         by-build-platform:
+            default: 2
       platform:
          by-build-platform:
             linux64-l10n: linux64/opt
@@ -117,8 +104,7 @@ job-template:
             android-api-16-l10n: mozharness/scripts/mobile_l10n.py
    when:
       files-changed:
-         - browser/locales/l10n-changesets.json
-         - mobile/locales/l10n-changesets.json
+         - browser/locales/all-locales
          - testing/mozharness/configs/single_locale/**
          - testing/mozharness/mozharness/mozilla/l10n/locales.py
          - testing/mozharness/scripts/desktop_l10n.py

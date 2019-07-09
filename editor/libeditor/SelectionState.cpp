@@ -94,7 +94,9 @@ SelectionState::IsCollapsed()
   }
   RefPtr<nsRange> range = mArray[0]->GetRange();
   NS_ENSURE_TRUE(range, false);
-  return range->Collapsed();
+  bool bIsCollapsed = false;
+  range->GetCollapsed(&bIsCollapsed);
+  return bIsCollapsed;
 }
 
 bool

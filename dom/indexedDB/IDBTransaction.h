@@ -25,7 +25,7 @@ class EventChainPreVisitor;
 
 namespace dom {
 
-class DOMException;
+class DOMError;
 class DOMStringList;
 class IDBDatabase;
 class IDBObjectStore;
@@ -76,7 +76,7 @@ public:
 
 private:
   RefPtr<IDBDatabase> mDatabase;
-  RefPtr<DOMException> mError;
+  RefPtr<DOMError> mError;
   nsTArray<nsString> mObjectStoreNames;
   nsTArray<RefPtr<IDBObjectStore>> mObjectStores;
   nsTArray<RefPtr<IDBObjectStore>> mDeletedObjectStores;
@@ -282,7 +282,7 @@ public:
   IDBTransactionMode
   GetMode(ErrorResult& aRv) const;
 
-  DOMException*
+  DOMError*
   GetError() const;
 
   already_AddRefed<IDBObjectStore>
@@ -328,7 +328,7 @@ private:
   ~IDBTransaction();
 
   void
-  AbortInternal(nsresult aAbortCode, already_AddRefed<DOMException> aError);
+  AbortInternal(nsresult aAbortCode, already_AddRefed<DOMError> aError);
 
   void
   SendCommit();

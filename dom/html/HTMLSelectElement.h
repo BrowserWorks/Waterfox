@@ -211,7 +211,7 @@ public:
   }
   bool Required() const
   {
-    return State().HasState(NS_EVENT_STATE_REQUIRED);
+    return GetBoolAttr(nsGkAtoms::required);
   }
   void SetRequired(bool aVal, ErrorResult& aRv)
   {
@@ -259,7 +259,7 @@ public:
     mOptions->IndexedSetter(aIndex, aOption, aRv);
   }
 
-  static bool MatchSelectedOptions(Element* aElement, int32_t, nsAtom*,
+  static bool MatchSelectedOptions(Element* aElement, int32_t, nsIAtom*,
                                    void*);
 
   nsIHTMLCollection* SelectedOptions();
@@ -341,7 +341,7 @@ public:
    */
   NS_IMETHOD IsOptionDisabled(int32_t aIndex,
                               bool* aIsDisabled);
-  bool IsOptionDisabled(HTMLOptionElement* aOption) const;
+  bool IsOptionDisabled(HTMLOptionElement* aOption);
 
   /**
    * Sets multiple options (or just sets startIndex if select is single)
@@ -380,13 +380,12 @@ public:
                                nsIContent* aBindingParent,
                                bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
-  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   virtual void DoneAddingChildren(bool aHaveNotified) override;
@@ -395,13 +394,13 @@ public:
   }
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  virtual nsChangeHint GetAttributeChangeHint(const nsAtom* aAttribute,
+  virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
                          bool aPreallocateChildren) const override;
@@ -522,7 +521,7 @@ protected:
 
   // nsIConstraintValidation
   void UpdateBarredFromConstraintValidation();
-  bool IsValueMissing() const;
+  bool IsValueMissing();
 
   /**
    * Get the index of the first option at, under or following the content in

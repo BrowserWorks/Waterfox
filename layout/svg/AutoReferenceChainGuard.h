@@ -82,23 +82,23 @@ public:
                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
     : mFrame(aFrame)
     , mFrameInUse(aFrameInUse)
-    , mChainCounter(aChainCounter)
     , mMaxChainLength(aMaxChainLength)
-    , mBrokeReference(false)
   {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     MOZ_ASSERT(aFrame && aFrameInUse && aChainCounter);
+    MOZ_ASSERT(!(*mFrameInUse), "Undetected reference loop!");
     MOZ_ASSERT(aMaxChainLength > 0);
     MOZ_ASSERT(*aChainCounter == noChain ||
                (*aChainCounter >= 0 && *aChainCounter < aMaxChainLength));
+
+    if (*aChainCounter == noChain) {
+      // Initialize - we start at aMaxChainLength and decrement towards zero.
+      *aChainCounter = aMaxChainLength;
+    }
+    mChainCounter = aChainCounter;
   }
 
   ~AutoReferenceChainGuard() {
-    if (mBrokeReference) {
-      // We didn't change mFrameInUse or mChainCounter
-      return;
-    }
-
     *mFrameInUse = false;
 
     // If we fail this assert then there were more destructor calls than
@@ -122,44 +122,32 @@ public:
    */
   MOZ_MUST_USE bool Reference() {
     if (MOZ_UNLIKELY(*mFrameInUse)) {
-      mBrokeReference = true;
       ReportErrorToConsole();
       return false;
     }
 
-    if (*mChainCounter == noChain) {
-      // Initialize - we start at aMaxChainLength and decrement towards zero.
-      *mChainCounter = mMaxChainLength;
-    } else {
-      // If we fail this assertion then either a consumer failed to break a
-      // reference loop/chain, or else they called Reference() more than once
-      MOZ_ASSERT(*mChainCounter >= 0);
+    // If we fail this assertion then either a consumer failed to break a
+    // reference loop/chain, or else they called Reference() more than once
+    MOZ_ASSERT(*mChainCounter >= 0);
 
-      if (MOZ_UNLIKELY(*mChainCounter < 1)) {
-        mBrokeReference = true;
-        ReportErrorToConsole();
-        return false;
-      }
-    }
-
-    // We only set these once we know we're returing true.
-    *mFrameInUse = true;
     (*mChainCounter)--;
 
+    if (MOZ_UNLIKELY(*mChainCounter < 0)) {
+      ReportErrorToConsole();
+      return false;
+    }
     return true;
   }
 
 private:
   void ReportErrorToConsole() {
-    nsAutoString tag, id;
-    dom::Element* element = mFrame->GetContent()->AsElement();
-    element->GetTagName(tag);
-    element->GetId(id);
-    const char16_t* params[] = { tag.get(), id.get() };
+    nsAutoString tag;
+    mFrame->GetContent()->AsElement()->GetTagName(tag);
+    const char16_t* params[] = { tag.get() };
     auto doc = mFrame->GetContent()->OwnerDoc();
     auto warning = *mFrameInUse ?
-                     nsIDocument::eSVGRefLoop :
-                     nsIDocument::eSVGRefChainLengthExceeded;
+                     nsIDocument::eSVGReferenceLoop :
+                     nsIDocument::eSVGReferenceChainLengthExceeded;
     doc->WarnOnceAbout(warning, /* asError */ true,
                        params, ArrayLength(params));
   }
@@ -168,7 +156,6 @@ private:
   bool* mFrameInUse;
   int16_t* mChainCounter;
   const int16_t mMaxChainLength;
-  bool mBrokeReference;
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 

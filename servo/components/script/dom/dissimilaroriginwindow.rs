@@ -6,7 +6,7 @@ use dom::bindings::codegen::Bindings::DissimilarOriginWindowBinding;
 use dom::bindings::codegen::Bindings::DissimilarOriginWindowBinding::DissimilarOriginWindowMethods;
 use dom::bindings::error::{Error, ErrorResult};
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{Dom, DomRoot, MutNullableDom};
+use dom::bindings::js::{JS, MutNullableJS, Root};
 use dom::bindings::str::DOMString;
 use dom::bindings::structuredclone::StructuredCloneData;
 use dom::dissimilaroriginlocation::DissimilarOriginLocation;
@@ -17,7 +17,7 @@ use ipc_channel::ipc;
 use js::jsapi::{JSContext, HandleValue};
 use js::jsval::{JSVal, UndefinedValue};
 use msg::constellation_msg::PipelineId;
-use script_traits::ScriptMsg;
+use script_traits::ScriptMsg as ConstellationMsg;
 use servo_url::ImmutableOrigin;
 use servo_url::MutableOrigin;
 use servo_url::ServoUrl;
@@ -37,85 +37,78 @@ pub struct DissimilarOriginWindow {
     globalscope: GlobalScope,
 
     /// The window proxy for this window.
-    window_proxy: Dom<WindowProxy>,
+    window_proxy: JS<WindowProxy>,
 
     /// The location of this window, initialized lazily.
-    location: MutNullableDom<DissimilarOriginLocation>,
+    location: MutNullableJS<DissimilarOriginLocation>,
 }
 
 impl DissimilarOriginWindow {
     #[allow(unsafe_code)]
-    pub fn new(
-        global_to_clone_from: &GlobalScope,
-        window_proxy: &WindowProxy,
-    ) -> DomRoot<Self> {
+    pub fn new(global_to_clone_from: &GlobalScope, window_proxy: &WindowProxy) -> Root<DissimilarOriginWindow> {
         let cx = global_to_clone_from.get_cx();
         // Any timer events fired on this window are ignored.
         let (timer_event_chan, _) = ipc::channel().unwrap();
-        let win = Box::new(Self {
-            globalscope: GlobalScope::new_inherited(
-                PipelineId::new(),
-                global_to_clone_from.devtools_chan().cloned(),
-                global_to_clone_from.mem_profiler_chan().clone(),
-                global_to_clone_from.time_profiler_chan().clone(),
-                global_to_clone_from.script_to_constellation_chan().clone(),
-                global_to_clone_from.scheduler_chan().clone(),
-                global_to_clone_from.resource_threads().clone(),
-                timer_event_chan,
-                global_to_clone_from.origin().clone(),
-                // FIXME(nox): The microtask queue is probably not important
-                // here, but this whole DOM interface is a hack anyway.
-                global_to_clone_from.microtask_queue().clone(),
-            ),
-            window_proxy: Dom::from_ref(window_proxy),
-            location: Default::default(),
-        });
+        let win = box DissimilarOriginWindow {
+            globalscope: GlobalScope::new_inherited(PipelineId::new(),
+                                                    global_to_clone_from.devtools_chan().cloned(),
+                                                    global_to_clone_from.mem_profiler_chan().clone(),
+                                                    global_to_clone_from.time_profiler_chan().clone(),
+                                                    global_to_clone_from.constellation_chan().clone(),
+                                                    global_to_clone_from.scheduler_chan().clone(),
+                                                    global_to_clone_from.resource_threads().clone(),
+                                                    timer_event_chan,
+                                                    global_to_clone_from.origin().clone()),
+            window_proxy: JS::from_ref(window_proxy),
+            location: MutNullableJS::new(None),
+        };
         unsafe { DissimilarOriginWindowBinding::Wrap(cx, win) }
     }
 
+    #[allow(dead_code)]
     pub fn origin(&self) -> &MutableOrigin {
-        self.upcast::<GlobalScope>().origin()
+        self.globalscope.origin()
     }
 }
 
 impl DissimilarOriginWindowMethods for DissimilarOriginWindow {
     // https://html.spec.whatwg.org/multipage/#dom-window
-    fn Window(&self) -> DomRoot<WindowProxy> {
-        DomRoot::from_ref(&*self.window_proxy)
+    fn Window(&self) -> Root<WindowProxy> {
+        Root::from_ref(&*self.window_proxy)
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-self
-    fn Self_(&self) -> DomRoot<WindowProxy> {
-        DomRoot::from_ref(&*self.window_proxy)
+    fn Self_(&self) -> Root<WindowProxy> {
+        Root::from_ref(&*self.window_proxy)
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-frames
-    fn Frames(&self) -> DomRoot<WindowProxy> {
-        DomRoot::from_ref(&*self.window_proxy)
+    fn Frames(&self) -> Root<WindowProxy> {
+        Root::from_ref(&*self.window_proxy)
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-parent
-    fn GetParent(&self) -> Option<DomRoot<WindowProxy>> {
+    fn GetParent(&self) -> Option<Root<WindowProxy>> {
         // Steps 1-3.
         if self.window_proxy.is_browsing_context_discarded() {
             return None;
         }
         // Step 4.
         if let Some(parent) = self.window_proxy.parent() {
-            return Some(DomRoot::from_ref(parent));
+            return Some(Root::from_ref(parent));
         }
         // Step 5.
-        Some(DomRoot::from_ref(&*self.window_proxy))
+        Some(Root::from_ref(&*self.window_proxy))
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-top
-    fn GetTop(&self) -> Option<DomRoot<WindowProxy>> {
+    fn GetTop(&self) -> Option<Root<WindowProxy>> {
         // Steps 1-3.
         if self.window_proxy.is_browsing_context_discarded() {
             return None;
         }
         // Steps 4-5.
-        Some(DomRoot::from_ref(self.window_proxy.top()))
+        Some(Root::from_ref(self.window_proxy.top()))
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-length
@@ -184,16 +177,16 @@ impl DissimilarOriginWindowMethods for DissimilarOriginWindow {
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-location
-    fn Location(&self) -> DomRoot<DissimilarOriginLocation> {
+    fn Location(&self) -> Root<DissimilarOriginLocation> {
         self.location.or_init(|| DissimilarOriginLocation::new(self))
     }
 }
 
 impl DissimilarOriginWindow {
     pub fn post_message(&self, origin: Option<ImmutableOrigin>, data: StructuredCloneData) {
-        let msg = ScriptMsg::PostMessage(self.window_proxy.browsing_context_id(),
+        let msg = ConstellationMsg::PostMessage(self.window_proxy.browsing_context_id(),
                                                 origin,
                                                 data.move_to_arraybuffer());
-        let _ = self.upcast::<GlobalScope>().script_to_constellation_chan().send(msg);
+        let _ = self.upcast::<GlobalScope>().constellation_chan().send(msg);
     }
 }

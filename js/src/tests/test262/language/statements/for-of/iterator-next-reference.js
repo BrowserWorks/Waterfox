@@ -1,43 +1,43 @@
 // Copyright (C) 2013 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-esid: sec-getiterator
+es6id: 13.6.4.13 S5.c
 description: >
-    The iterator's `next` method should be accessed only once with each
-    iteration as per the `GetIterator` abstract operation (7.4.1).
-features: [Symbol.iterator, for-of]
+    The iterator's `next` method should be accessed with each iteration as per
+    the `IteratorStep` abstract operation (7.4.5).
+features: [Symbol.iterator]
 ---*/
 
 var iterable = {};
 var iterator = {};
-var iterationCount = 0;
-var loadNextCount = 0;
+var firstIterResult = { done: false };
+var iterationCount, invocationCount;
 
 iterable[Symbol.iterator] = function() {
   return iterator;
 };
 
-function next() {
-  if (iterationCount) return { done: true };
-  return { value: 45, done: false };
-}
-Object.defineProperty(iterator, 'next', {
-  get() { loadNextCount++; return next; },
-  configurable: true
-});
-
+iterator.next = function() { return { value: 45, done: false }; };
+iterationCount = 0;
+invocationCount = 0;
 for (var x of iterable) {
   assert.sameValue(x, 45);
 
-  Object.defineProperty(iterator, 'next', {
-    get: function() {
-      throw new Test262Error(
-          'Should not access the `next` method after the iteration prologue.');
-    }
-  });
+  iterator.next = function() {
+    invocationCount++;
+
+    Object.defineProperty(iterator, 'next', {
+      get: function() {
+        $ERROR('Should not access the `next` method after iteration ' +
+          'is complete.');
+      }
+    });
+
+    return { value: null, done: true };
+  };
   iterationCount++;
 }
 assert.sameValue(iterationCount, 1);
-assert.sameValue(loadNextCount, 1);
+assert.sameValue(invocationCount, 1);
 
 reportCompare(0, 0);

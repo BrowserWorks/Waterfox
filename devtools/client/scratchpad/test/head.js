@@ -9,12 +9,10 @@ const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 const {ScratchpadManager} = Cu.import("resource://devtools/client/scratchpad/scratchpad-manager.jsm", {});
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const {gDevTools} = require("devtools/client/framework/devtools");
 const Services = require("Services");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const flags = require("devtools/shared/flags");
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 
 
 var gScratchpadWindow; // Reference to the Scratchpad chrome window object
@@ -122,7 +120,7 @@ function createTempFile(aName, aContent, aCallback = function () {})
   // Write the temporary file.
   let fout = Cc["@mozilla.org/network/file-output-stream;1"].
              createInstance(Ci.nsIFileOutputStream);
-  fout.init(file.QueryInterface(Ci.nsIFile), 0x02 | 0x08 | 0x20,
+  fout.init(file.QueryInterface(Ci.nsILocalFile), 0x02 | 0x08 | 0x20,
             parseInt("644", 8), fout.DEFER_OPEN);
 
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
@@ -155,7 +153,7 @@ function createTempFile(aName, aContent, aCallback = function () {})
  */
 function runAsyncTests(aScratchpad, aTests)
 {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   (function runTest() {
     if (aTests.length) {

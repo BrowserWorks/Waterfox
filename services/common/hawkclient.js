@@ -96,7 +96,7 @@ this.HawkClient = function(host) {
   // Clock offset in milliseconds between our client's clock and the date
   // reported in responses from our host.
   this._localtimeOffsetMsec = 0;
-};
+}
 
 this.HawkClient.prototype = {
 
@@ -244,7 +244,7 @@ this.HawkClient.prototype = {
         return;
       }
 
-      self._updateClockOffset(restResponse.headers.date);
+      self._updateClockOffset(restResponse.headers["date"]);
 
       if (status === 401 && retryOK && !("retry-after" in restResponse.headers)) {
         // Retry once if we were rejected due to a bad timestamp.
@@ -346,4 +346,4 @@ this.HawkClient.prototype = {
     return new HAWKAuthenticatedRESTRequest(uri, credentials, extra);
   },
 
-};
+}

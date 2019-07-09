@@ -18,7 +18,6 @@
 #include "nsTextEquivUtils.h"
 #include "DocAccessibleChild.h"
 #include "EventTree.h"
-#include "GeckoProfiler.h"
 #include "Relation.h"
 #include "Role.h"
 #include "RootAccessible.h"
@@ -57,11 +56,11 @@
 #include "nsIScrollableFrame.h"
 #include "nsFocusManager.h"
 
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsUnicharUtils.h"
 #include "nsReadableUtils.h"
 #include "prdtoa.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIURI.h"
 #include "nsArrayUtils.h"
 #include "nsIMutableArray.h"
@@ -318,9 +317,10 @@ Accessible::TranslateString(const nsString& aKey, nsAString& aStringOut)
   if (!stringBundle)
     return;
 
-  nsAutoString xsValue;
+  nsXPIDLString xsValue;
   nsresult rv =
-    stringBundle->GetStringFromName(NS_ConvertUTF16toUTF8(aKey).get(), xsValue);
+    stringBundle->GetStringFromName(NS_ConvertUTF16toUTF8(aKey).get(),
+                                    getter_Copies(xsValue));
   if (NS_SUCCEEDED(rv))
     aStringOut.Assign(xsValue);
 }
@@ -845,17 +845,6 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
 {
   NS_ENSURE_ARG_POINTER(aEvent);
 
-#ifdef MOZ_GECKO_PROFILER
-  if (profiler_is_active()) {
-    nsAutoCString strEventType;
-    GetAccService()->GetStringEventType(aEvent->GetEventType(), strEventType);
-    nsAutoCString strMarker;
-    strMarker.AppendLiteral("A11y Event - ");
-    strMarker.Append(strEventType);
-    profiler_add_marker(strMarker.get());
-  }
-#endif
-
   if (IPCAccessibilityActive() && Document()) {
     DocAccessibleChild* ipcDoc = mDoc->IPCDoc();
     MOZ_ASSERT(ipcDoc);
@@ -935,7 +924,7 @@ Accessible::Attributes()
     return attributes.forget();
 
   // 'xml-roles' attribute for landmark.
-  nsAtom* landmark = LandmarkRole();
+  nsIAtom* landmark = LandmarkRole();
   if (landmark) {
     nsAccUtils::SetAccAttr(attributes, nsGkAtoms::xmlroles, landmark);
 
@@ -957,6 +946,10 @@ Accessible::Attributes()
     nsAccUtils::SetAccAttr(attributes, nsGkAtoms::hidden,
                            NS_LITERAL_STRING("true"));
   }
+
+  // XXX: In ARIA 1.1, the value of aria-haspopup became a token (bug 1355449).
+  if (aria::UniversalStatesFor(mContent->AsElement()) & states::HASPOPUP)
+    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::haspopup, NS_LITERAL_STRING("true"));
 
   // If there is no aria-live attribute then expose default value of 'live'
   // object attribute used for ARIA role of this accessible.
@@ -1485,7 +1478,7 @@ Accessible::ARIATransformRole(role aRole)
   return aRole;
 }
 
-nsAtom*
+nsIAtom*
 Accessible::LandmarkRole() const
 {
   const nsRoleMapEntry* roleMapEntry = ARIARoleMap();
@@ -2566,7 +2559,7 @@ Accessible::CurrentItem()
 void
 Accessible::SetCurrentItem(Accessible* aItem)
 {
-  nsAtom* id = aItem->GetContent()->GetID();
+  nsIAtom* id = aItem->GetContent()->GetID();
   if (id) {
     nsAutoString idStr;
     id->ToString(idStr);
@@ -2649,7 +2642,7 @@ Accessible::GetSiblingAtOffset(int32_t aOffset, nsresult* aError) const
 }
 
 double
-Accessible::AttrNumericValue(nsAtom* aAttr) const
+Accessible::AttrNumericValue(nsIAtom* aAttr) const
 {
   const nsRoleMapEntry* roleMapEntry = ARIARoleMap();
   if (!roleMapEntry || roleMapEntry->valueRule == eNoValue)
@@ -2842,32 +2835,37 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
     return;
 
   nsAutoString separator;
-  keyStringBundle->GetStringFromName("MODIFIER_SEPARATOR", separator);
+  keyStringBundle->GetStringFromName("MODIFIER_SEPARATOR",
+                                     getter_Copies(separator));
 
   nsAutoString modifierName;
   if (mModifierMask & kControl) {
-    keyStringBundle->GetStringFromName("VK_CONTROL", modifierName);
+    keyStringBundle->GetStringFromName("VK_CONTROL",
+                                       getter_Copies(modifierName));
 
     aValue.Append(modifierName);
     aValue.Append(separator);
   }
 
   if (mModifierMask & kAlt) {
-    keyStringBundle->GetStringFromName("VK_ALT", modifierName);
+    keyStringBundle->GetStringFromName("VK_ALT",
+                                       getter_Copies(modifierName));
 
     aValue.Append(modifierName);
     aValue.Append(separator);
   }
 
   if (mModifierMask & kShift) {
-    keyStringBundle->GetStringFromName("VK_SHIFT", modifierName);
+    keyStringBundle->GetStringFromName("VK_SHIFT",
+                                       getter_Copies(modifierName));
 
     aValue.Append(modifierName);
     aValue.Append(separator);
   }
 
   if (mModifierMask & kMeta) {
-    keyStringBundle->GetStringFromName("VK_META", modifierName);
+    keyStringBundle->GetStringFromName("VK_META",
+                                       getter_Copies(modifierName));
 
     aValue.Append(modifierName);
     aValue.Append(separator);

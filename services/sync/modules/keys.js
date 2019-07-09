@@ -10,7 +10,6 @@ this.EXPORTED_SYMBOLS = [
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/main.js");
@@ -107,12 +106,9 @@ KeyBundle.prototype = {
   /**
    * Populate this key pair with 2 new, randomly generated keys.
    */
-  async generateRandom() {
-    // Compute both at that same time
-    let [generatedHMAC, generatedEncr] = await Promise.all([
-      Weave.Crypto.generateRandomKey(),
-      Weave.Crypto.generateRandomKey()
-    ]);
+  generateRandom: function generateRandom() {
+    let generatedHMAC = Weave.Crypto.generateRandomKey();
+    let generatedEncr = Weave.Crypto.generateRandomKey();
     this.keyPairB64 = [generatedEncr, generatedHMAC];
   },
 
@@ -129,7 +125,7 @@ this.BulkKeyBundle = function BulkKeyBundle(collection) {
   KeyBundle.call(this);
 
   this._collection = collection;
-};
+}
 
 BulkKeyBundle.prototype = {
   __proto__: KeyBundle.prototype,
@@ -166,7 +162,7 @@ BulkKeyBundle.prototype = {
                       "keys.");
     }
 
-    this.encryptionKey  = CommonUtils.safeAtoB(value[0]);
-    this.hmacKey        = CommonUtils.safeAtoB(value[1]);
+    this.encryptionKey  = Utils.safeAtoB(value[0]);
+    this.hmacKey        = Utils.safeAtoB(value[1]);
   },
 };

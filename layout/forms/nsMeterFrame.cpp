@@ -14,10 +14,11 @@
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
-#include "nsCheckboxRadioFrame.h"
+#include "nsFormControlFrame.h"
 #include "nsFontMetrics.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLMeterElement.h"
+#include "nsContentList.h"
 #include "nsCSSPseudoElements.h"
 #include "nsStyleSet.h"
 #include "mozilla/StyleSetHandle.h"
@@ -53,8 +54,8 @@ nsMeterFrame::DestroyFrom(nsIFrame* aDestructRoot)
   NS_ASSERTION(!GetPrevContinuation(),
                "nsMeterFrame should not have continuations; if it does we "
                "need to call RegUnregAccessKey only for the first.");
-  nsCheckboxRadioFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
-  DestroyAnonymousContent(mBarDiv.forget());
+  nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
+  nsContentUtils::DestroyAnonymousContent(&mBarDiv);
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -99,7 +100,6 @@ nsMeterFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsMeterFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   NS_ASSERTION(mBarDiv, "Meter bar div must exist!");
   NS_ASSERTION(!GetPrevContinuation(),
@@ -107,7 +107,7 @@ nsMeterFrame::Reflow(nsPresContext*           aPresContext,
                "need to call RegUnregAccessKey only for the first.");
 
   if (mState & NS_FRAME_FIRST_REFLOW) {
-    nsCheckboxRadioFrame::RegUnRegAccessKey(this, true);
+    nsFormControlFrame::RegUnRegAccessKey(this, true);
   }
 
   nsIFrame* barFrame = mBarDiv->GetPrimaryFrame();
@@ -122,7 +122,7 @@ nsMeterFrame::Reflow(nsPresContext*           aPresContext,
   ConsiderChildOverflow(aDesiredSize.mOverflowAreas, barFrame);
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus.Reset(); // This type of frame can't be split.
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -145,7 +145,7 @@ nsMeterFrame::ReflowBarFrame(nsIFrame*                aBarFrame,
   nscoord yoffset = aReflowInput.ComputedPhysicalBorderPadding().top;
 
   // NOTE: Introduce a new function getPosition in the content part ?
-  HTMLMeterElement* meterElement = static_cast<HTMLMeterElement*>(GetContent());
+  HTMLMeterElement* meterElement = static_cast<HTMLMeterElement*>(mContent);
 
   double max = meterElement->Max();
   double min = meterElement->Min();
@@ -188,7 +188,7 @@ nsMeterFrame::ReflowBarFrame(nsIFrame*                aBarFrame,
 
 nsresult
 nsMeterFrame::AttributeChanged(int32_t  aNameSpaceID,
-                               nsAtom* aAttribute,
+                               nsIAtom* aAttribute,
                                int32_t  aModType)
 {
   NS_ASSERTION(mBarDiv, "Meter bar div must exist!");

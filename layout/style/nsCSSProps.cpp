@@ -25,7 +25,6 @@
 #include "nsStaticNameTable.h"
 
 #include "mozilla/Preferences.h"
-#include "mozilla/StylePrefs.h"
 
 using namespace mozilla;
 
@@ -71,7 +70,7 @@ const char* const kCSSRawProperties[eCSSProperty_COUNT_with_aliases] = {
 #define CSS_PROP_SHORTHAND(name_, id_, method_, flags_, pref_) #name_,
 #include "nsCSSPropList.h"
 #undef CSS_PROP_SHORTHAND
-#define CSS_PROP_ALIAS(aliasname_, aliasid_, id_, method_, pref_) #aliasname_,
+#define CSS_PROP_ALIAS(aliasname_, id_, method_, pref_) #aliasname_,
 #include "nsCSSPropAliasList.h"
 #undef CSS_PROP_ALIAS
 };
@@ -154,7 +153,7 @@ enum {
 
 // The names are in kCSSRawProperties.
 static nsCSSPropertyID gAliases[eCSSAliasCount != 0 ? eCSSAliasCount : 1] = {
-#define CSS_PROP_ALIAS(aliasname_, aliasid_, propid_, aliasmethod_, pref_)  \
+#define CSS_PROP_ALIAS(aliasname_, propid_, aliasmethod_, pref_)  \
   eCSSProperty_##propid_ ,
 #include "nsCSSPropAliasList.h"
 #undef CSS_PROP_ALIAS
@@ -228,7 +227,7 @@ nsCSSProps::AddRefTable(void)
       #include "nsCSSPropList.h"
       #undef CSS_PROP_SHORTHAND
 
-      #define CSS_PROP_ALIAS(aliasname_, aliasid_, propid_, aliasmethod_, pref_)    \
+      #define CSS_PROP_ALIAS(aliasname_, propid_, aliasmethod_, pref_)    \
         OBSERVE_PROP(pref_, eCSSPropertyAlias_##aliasmethod_)
       #include "nsCSSPropAliasList.h"
       #undef CSS_PROP_ALIAS
@@ -613,7 +612,8 @@ nsCSSProps::LookupFontDesc(const nsACString& aFontDesc)
   MOZ_ASSERT(gFontDescTable, "no lookup table, needs addref");
   nsCSSFontDesc which = nsCSSFontDesc(gFontDescTable->Lookup(aFontDesc));
 
-  if (which == eCSSFontDesc_Display && !StylePrefs::sFontDisplayEnabled) {
+  if (which == eCSSFontDesc_Display &&
+      !Preferences::GetBool("layout.css.font-display.enabled")) {
     which = eCSSFontDesc_UNKNOWN;
   } else if (which == eCSSFontDesc_UNKNOWN) {
     // check for unprefixed font-feature-settings/font-language-override
@@ -631,7 +631,8 @@ nsCSSProps::LookupFontDesc(const nsAString& aFontDesc)
   MOZ_ASSERT(gFontDescTable, "no lookup table, needs addref");
   nsCSSFontDesc which = nsCSSFontDesc(gFontDescTable->Lookup(aFontDesc));
 
-  if (which == eCSSFontDesc_Display && !StylePrefs::sFontDisplayEnabled) {
+  if (which == eCSSFontDesc_Display &&
+      !Preferences::GetBool("layout.css.font-display.enabled")) {
     which = eCSSFontDesc_UNKNOWN;
   } else if (which == eCSSFontDesc_UNKNOWN) {
     // check for unprefixed font-feature-settings/font-language-override
@@ -1129,15 +1130,6 @@ const KTableEntry nsCSSProps::kColorKTable[] = {
   { eCSSKeyword__moz_mac_menutextselect, LookAndFeel::eColorID__moz_mac_menutextselect },
   { eCSSKeyword__moz_mac_disabledtoolbartext, LookAndFeel::eColorID__moz_mac_disabledtoolbartext },
   { eCSSKeyword__moz_mac_secondaryhighlight, LookAndFeel::eColorID__moz_mac_secondaryhighlight },
-  { eCSSKeyword__moz_mac_vibrancy_light, LookAndFeel::eColorID__moz_mac_vibrancy_light },
-  { eCSSKeyword__moz_mac_vibrancy_dark, LookAndFeel::eColorID__moz_mac_vibrancy_dark },
-  { eCSSKeyword__moz_mac_menuitem, LookAndFeel::eColorID__moz_mac_menuitem },
-  { eCSSKeyword__moz_mac_active_menuitem, LookAndFeel::eColorID__moz_mac_active_menuitem },
-  { eCSSKeyword__moz_mac_menupopup, LookAndFeel::eColorID__moz_mac_menupopup },
-  { eCSSKeyword__moz_mac_source_list, LookAndFeel::eColorID__moz_mac_source_list },
-  { eCSSKeyword__moz_mac_source_list_selection, LookAndFeel::eColorID__moz_mac_source_list_selection },
-  { eCSSKeyword__moz_mac_active_source_list_selection, LookAndFeel::eColorID__moz_mac_active_source_list_selection },
-  { eCSSKeyword__moz_mac_tooltip, LookAndFeel::eColorID__moz_mac_tooltip },
   { eCSSKeyword__moz_menuhover, LookAndFeel::eColorID__moz_menuhover },
   { eCSSKeyword__moz_menuhovertext, LookAndFeel::eColorID__moz_menuhovertext },
   { eCSSKeyword__moz_menubartext, LookAndFeel::eColorID__moz_menubartext },
@@ -1156,11 +1148,11 @@ const KTableEntry nsCSSProps::kColorKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kContentKTable[] = {
-  { eCSSKeyword_open_quote, uint8_t(StyleContent::OpenQuote) },
-  { eCSSKeyword_close_quote, uint8_t(StyleContent::CloseQuote) },
-  { eCSSKeyword_no_open_quote, uint8_t(StyleContent::NoOpenQuote) },
-  { eCSSKeyword_no_close_quote, uint8_t(StyleContent::NoCloseQuote) },
-  { eCSSKeyword__moz_alt_content, uint8_t(StyleContent::AltContent) },
+  { eCSSKeyword_open_quote, NS_STYLE_CONTENT_OPEN_QUOTE },
+  { eCSSKeyword_close_quote, NS_STYLE_CONTENT_CLOSE_QUOTE },
+  { eCSSKeyword_no_open_quote, NS_STYLE_CONTENT_NO_OPEN_QUOTE },
+  { eCSSKeyword_no_close_quote, NS_STYLE_CONTENT_NO_CLOSE_QUOTE },
+  { eCSSKeyword__moz_alt_content, NS_STYLE_CONTENT_ALT_CONTENT },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -1714,6 +1706,31 @@ const KTableEntry nsCSSProps::kLineHeightKTable[] = {
 const KTableEntry nsCSSProps::kListStylePositionKTable[] = {
   { eCSSKeyword_inside, NS_STYLE_LIST_STYLE_POSITION_INSIDE },
   { eCSSKeyword_outside, NS_STYLE_LIST_STYLE_POSITION_OUTSIDE },
+  { eCSSKeyword_UNKNOWN, -1 }
+};
+
+const KTableEntry nsCSSProps::kListStyleKTable[] = {
+  // none and decimal are not redefinable, so they should not be moved.
+  { eCSSKeyword_none, NS_STYLE_LIST_STYLE_NONE },
+  { eCSSKeyword_decimal, NS_STYLE_LIST_STYLE_DECIMAL },
+  // the following graphic styles are processed in a different way.
+  { eCSSKeyword_disc, NS_STYLE_LIST_STYLE_DISC },
+  { eCSSKeyword_circle, NS_STYLE_LIST_STYLE_CIRCLE },
+  { eCSSKeyword_square, NS_STYLE_LIST_STYLE_SQUARE },
+  { eCSSKeyword_disclosure_closed, NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED },
+  { eCSSKeyword_disclosure_open, NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN },
+  // the following counter styles require specific algorithms to generate.
+  { eCSSKeyword_hebrew, NS_STYLE_LIST_STYLE_HEBREW },
+  { eCSSKeyword_japanese_informal, NS_STYLE_LIST_STYLE_JAPANESE_INFORMAL },
+  { eCSSKeyword_japanese_formal, NS_STYLE_LIST_STYLE_JAPANESE_FORMAL },
+  { eCSSKeyword_korean_hangul_formal, NS_STYLE_LIST_STYLE_KOREAN_HANGUL_FORMAL },
+  { eCSSKeyword_korean_hanja_informal, NS_STYLE_LIST_STYLE_KOREAN_HANJA_INFORMAL },
+  { eCSSKeyword_korean_hanja_formal, NS_STYLE_LIST_STYLE_KOREAN_HANJA_FORMAL },
+  { eCSSKeyword_simp_chinese_informal, NS_STYLE_LIST_STYLE_SIMP_CHINESE_INFORMAL },
+  { eCSSKeyword_simp_chinese_formal, NS_STYLE_LIST_STYLE_SIMP_CHINESE_FORMAL },
+  { eCSSKeyword_trad_chinese_informal, NS_STYLE_LIST_STYLE_TRAD_CHINESE_INFORMAL },
+  { eCSSKeyword_trad_chinese_formal, NS_STYLE_LIST_STYLE_TRAD_CHINESE_FORMAL },
+  { eCSSKeyword_ethiopic_numeric, NS_STYLE_LIST_STYLE_ETHIOPIC_NUMERIC },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -2886,6 +2903,8 @@ static const nsCSSPropertyID gGridSubpropTable[] = {
   eCSSProperty_grid_auto_flow,
   eCSSProperty_grid_auto_rows,
   eCSSProperty_grid_auto_columns,
+  eCSSProperty_grid_row_gap, // can only be reset, not get/set
+  eCSSProperty_grid_column_gap, // can only be reset, not get/set
   eCSSProperty_UNKNOWN
 };
 
@@ -3003,7 +3022,7 @@ static const nsCSSPropertyID gScrollSnapTypeSubpropTable[] = {
   eCSSProperty_scroll_snap_type_y,
   eCSSProperty_UNKNOWN
 };
-
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
 static const nsCSSPropertyID gMaskSubpropTable[] = {
   eCSSProperty_mask_image,
   eCSSProperty_mask_repeat,
@@ -3016,13 +3035,12 @@ static const nsCSSPropertyID gMaskSubpropTable[] = {
   eCSSProperty_mask_mode,
   eCSSProperty_UNKNOWN
 };
-
 static const nsCSSPropertyID gMaskPositionSubpropTable[] = {
   eCSSProperty_mask_position_x,
   eCSSProperty_mask_position_y,
   eCSSProperty_UNKNOWN
 };
-
+#endif
 // FIXME: mask-border tables should be added when we implement
 // mask-border properties.
 
@@ -3336,7 +3354,7 @@ nsCSSProps::gPropertyEnabled[eCSSProperty_COUNT_with_aliases] = {
   #include "nsCSSPropList.h"
   #undef CSS_PROP_SHORTHAND
 
-  #define CSS_PROP_ALIAS(aliasname_, aliasid_, propid_, aliasmethod_, pref_) \
+  #define CSS_PROP_ALIAS(aliasname_, propid_, aliasmethod_, pref_) \
     true,
   #include "nsCSSPropAliasList.h"
   #undef CSS_PROP_ALIAS

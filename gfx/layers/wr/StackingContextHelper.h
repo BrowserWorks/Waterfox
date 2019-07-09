@@ -12,12 +12,10 @@
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "Units.h"
 
-class nsDisplayListBuilder;
-class nsDisplayItem;
-class nsDisplayList;
-
 namespace mozilla {
 namespace layers {
+
+class WebRenderLayer;
 
 /**
  * This is a helper class that pushes/pops a stacking context, and manages
@@ -26,17 +24,33 @@ namespace layers {
 class MOZ_RAII StackingContextHelper
 {
 public:
+  // Pushes a stacking context onto the provided DisplayListBuilder. It uses
+  // the transform if provided, otherwise takes the transform from the layer.
+  // It also takes the mix-blend-mode and bounds from the layer, and uses 1.0
+  // for the opacity.
   StackingContextHelper(const StackingContextHelper& aParentSC,
                         wr::DisplayListBuilder& aBuilder,
-                        const nsTArray<wr::WrFilterOp>& aFilters = nsTArray<wr::WrFilterOp>(),
-                        const gfx::Matrix4x4* aBoundTransform = nullptr,
-                        uint64_t aAnimationsId = 0,
-                        float* aOpacityPtr = nullptr,
-                        gfx::Matrix4x4* aTransformPtr = nullptr,
-                        gfx::Matrix4x4* aPerspectivePtr = nullptr,
-                        const gfx::CompositionOp& aMixBlendMode = gfx::CompositionOp::OP_OVER,
-                        bool aBackfaceVisible = true,
-                        bool aIsPreserve3D = false);
+                        WebRenderLayer* aLayer,
+                        const Maybe<gfx::Matrix4x4>& aTransform = Nothing(),
+                        const nsTArray<wr::WrFilterOp>& aFilters = nsTArray<wr::WrFilterOp>());
+  // Alternate constructor which invokes the version of PushStackingContext
+  // for animations.
+  StackingContextHelper(const StackingContextHelper& aParentSC,
+                        wr::DisplayListBuilder& aBuilder,
+                        WebRenderLayer* aLayer,
+                        uint64_t aAnimationsId,
+                        float* aOpacityPtr,
+                        gfx::Matrix4x4* aTransformPtr,
+                        const nsTArray<wr::WrFilterOp>& aFilters = nsTArray<wr::WrFilterOp>());
+  // The constructor for layers-free mode.
+  StackingContextHelper(const StackingContextHelper& aParentSC,
+                        wr::DisplayListBuilder& aBuilder,
+                        LayerRect aBoundForSC,
+                        LayerPoint aOrigin,
+                        uint64_t aAnimationsId,
+                        float* aOpacityPtr,
+                        gfx::Matrix4x4* aTransformPtr,
+                        const nsTArray<wr::WrFilterOp>& aFilters = nsTArray<wr::WrFilterOp>());
   // This version of the constructor should only be used at the root level
   // of the tree, so that we have a StackingContextHelper to pass down into
   // the RenderLayer traversal, but don't actually want it to push a stacking
@@ -46,8 +60,6 @@ public:
   // Pops the stacking context, if one was pushed during the constructor.
   ~StackingContextHelper();
 
-  void AdjustOrigin(const LayoutDevicePoint& aDelta);
-
   // When this StackingContextHelper is in scope, this function can be used
   // to convert a rect from the layer system's coordinate space to a LayoutRect
   // that is relative to the stacking context. This is useful because most
@@ -56,26 +68,17 @@ public:
   // We allow passing in a LayoutDeviceRect for convenience because in a lot of
   // cases with WebRender display item generate the layout device space is the
   // same as the layer space. (TODO: try to make this more explicit somehow).
-  // We also round the rectangle to ints after transforming since the output
-  // is the final destination rect.
+  wr::LayoutRect ToRelativeLayoutRect(const LayerRect& aRect) const;
   wr::LayoutRect ToRelativeLayoutRect(const LayoutDeviceRect& aRect) const;
   // Same but for points
-  wr::LayoutPoint ToRelativeLayoutPoint(const LayoutDevicePoint& aPoint) const
-  {
-    return wr::ToLayoutPoint(aPoint - mOrigin);
-  }
-
-
-  // Export the inherited scale
-  gfx::Size GetInheritedScale() const { return mScale; }
-
-  bool IsBackfaceVisible() const { return mTransform.IsBackfaceVisible(); }
+  wr::LayoutPoint ToRelativeLayoutPoint(const LayerPoint& aPoint) const;
+  // Same but rounds the rectangle to ints after transforming.
+  wr::LayoutRect ToRelativeLayoutRectRounded(const LayoutDeviceRect& aRect) const;
 
 private:
   wr::DisplayListBuilder* mBuilder;
-  LayoutDevicePoint mOrigin;
+  LayerPoint mOrigin;
   gfx::Matrix4x4 mTransform;
-  gfx::Size mScale;
 };
 
 } // namespace layers

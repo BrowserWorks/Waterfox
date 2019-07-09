@@ -72,10 +72,17 @@ private:
   UniqueProfilerBacktrace mStack;
 };
 
-#define DECL_STREAM_PAYLOAD \
+#define DECL_STREAM_PAYLOAD_BASE  \
   virtual void StreamPayload(SpliceableJSONWriter& aWriter, \
                              const mozilla::TimeStamp& aProcessStartTime, \
-                             UniqueStacks& aUniqueStacks) override;
+                             UniqueStacks& aUniqueStacks) override
+
+// If the profiler is disabled then StreamPayload() will never be called.
+#ifdef MOZ_GECKO_PROFILER
+# define DECL_STREAM_PAYLOAD DECL_STREAM_PAYLOAD_BASE ;
+#else
+# define DECL_STREAM_PAYLOAD DECL_STREAM_PAYLOAD_BASE { MOZ_CRASH(); }
+#endif
 
 class TracingMarkerPayload : public ProfilerMarkerPayload
 {
@@ -122,11 +129,9 @@ class DOMEventMarkerPayload : public ProfilerMarkerPayload
 {
 public:
   DOMEventMarkerPayload(const nsAString& aEventType, uint16_t aPhase,
-                        const mozilla::TimeStamp& aTimeStamp,
                         const mozilla::TimeStamp& aStartTime,
                         const mozilla::TimeStamp& aEndTime)
     : ProfilerMarkerPayload(aStartTime, aEndTime)
-    , mTimeStamp(aTimeStamp)
     , mEventType(aEventType)
     , mPhase(aPhase)
   {}
@@ -134,7 +139,6 @@ public:
   DECL_STREAM_PAYLOAD
 
 private:
-  mozilla::TimeStamp mTimeStamp;
   nsString mEventType;
   uint16_t mPhase;
 };
@@ -200,6 +204,29 @@ public:
 
 private:
   mozilla::TimeStamp mVsyncTimestamp;
+};
+
+class GPUMarkerPayload : public ProfilerMarkerPayload
+{
+public:
+  GPUMarkerPayload(const mozilla::TimeStamp& aCpuTimeStart,
+                   const mozilla::TimeStamp& aCpuTimeEnd,
+                   uint64_t aGpuTimeStart,
+                   uint64_t aGpuTimeEnd)
+    : ProfilerMarkerPayload(aCpuTimeStart, aCpuTimeEnd)
+    , mCpuTimeStart(aCpuTimeStart)
+    , mCpuTimeEnd(aCpuTimeEnd)
+    , mGpuTimeStart(aGpuTimeStart)
+    , mGpuTimeEnd(aGpuTimeEnd)
+  {}
+
+  DECL_STREAM_PAYLOAD
+
+private:
+  mozilla::TimeStamp mCpuTimeStart;
+  mozilla::TimeStamp mCpuTimeEnd;
+  uint64_t mGpuTimeStart;
+  uint64_t mGpuTimeEnd;
 };
 
 class GCSliceMarkerPayload : public ProfilerMarkerPayload

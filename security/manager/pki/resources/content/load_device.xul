@@ -27,19 +27,17 @@
 
   <description>&loaddevice.info;</description>
   <hbox align="center">
-    <label value="&loaddevice.modname2;" accesskey="&loaddevice.modname2.accesskey;"
+    <label value="&loaddevice.modname;" accesskey="&loaddevice.modname.accesskey;"
            control="device_name"/>
-    <textbox id="device_name" flex="1" value="&loaddevice.modname.default;"
-             onchange="validateModuleName();"/>
+    <textbox id="device_name" flex="1" value="&loaddevice.modname.default;"/>
   </hbox>
   <hbox align="center">
-    <label value="&loaddevice.filename2;" accesskey="&loaddevice.filename2.accesskey;"
+    <label value="&loaddevice.filename;" accesskey="&loaddevice.filename.accesskey;"
            control="device_path"/>
     <textbox id="device_path" flex="1"/>
     <button id="browse" label="&loaddevice.browse;" flex="1"
             accesskey="&loaddevice.browse.accesskey;"
             oncommand="onBrowseBtnPress();"/>
   </hbox>
-  <label id="helpText" value=""/>
 
 </dialog>

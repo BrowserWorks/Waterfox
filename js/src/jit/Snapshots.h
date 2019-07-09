@@ -128,11 +128,6 @@ class RValueAllocation
         Register gpr;
         FloatRegisterBits fpu;
         JSValueType type;
-
-        Payload() : index(0) {
-            static_assert(sizeof(index) == sizeof(Payload),
-                          "All Payload bits are initialized.");
-        }
     };
 
     Payload arg1_;
@@ -187,23 +182,17 @@ class RValueAllocation
       : mode_(mode),
         arg1_(a1)
     {
-        arg2_.index = 0;
     }
 
     explicit RValueAllocation(Mode mode)
       : mode_(mode)
     {
-        arg1_.index = 0;
-        arg2_.index = 0;
     }
 
   public:
     RValueAllocation()
       : mode_(INVALID)
-    {
-        arg1_.index = 0;
-        arg2_.index = 0;
-    }
+    { }
 
     // DOUBLE_REG
     static RValueAllocation Double(FloatRegister reg) {
@@ -352,14 +341,12 @@ class RValueAllocation
 
   public:
     bool operator==(const RValueAllocation& rhs) const {
-        // Note, this equality compares the verbatim content of the payload,
-        // which is made possible because we ensure that the payload content is
-        // fully initialized during the creation.
-        static_assert(sizeof(int32_t) == sizeof(Payload),
-                      "All Payload bits are compared.");
-        return mode_ == rhs.mode_ &&
-               arg1_.index == rhs.arg1_.index &&
-               arg2_.index == rhs.arg2_.index;
+        if (mode_ != rhs.mode_)
+            return false;
+
+        const Layout& layout = layoutFromMode(mode());
+        return equalPayloads(layout.type1, arg1_, rhs.arg1_) &&
+            equalPayloads(layout.type2, arg2_, rhs.arg2_);
     }
 
     HashNumber hash() const;

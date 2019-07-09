@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.prototype.setutcmonth
 es6id: 20.3.4.33
 description: >
   Date.prototype.setUTCMonth.name is "setUTCMonth".

@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 // This test makes sure that the title of existing history entries does not
 // change inside a private window.
@@ -31,8 +30,7 @@ add_task(async function test() {
   await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
   await promiseTitleChanged;
   await BrowserTestUtils.waitForCondition(async function() {
-    let entry = await PlacesUtils.history.fetch(TEST_URL);
-    return entry && entry.title == "No Cookie";
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "No Cookie";
   }, "The page should be loaded without any cookie for the first time");
 
   promiseTitleChanged = PlacesTestUtils.waitForNotification(
@@ -40,8 +38,7 @@ add_task(async function test() {
   await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
   await promiseTitleChanged;
   await BrowserTestUtils.waitForCondition(async function() {
-    let entry = await PlacesUtils.history.fetch(TEST_URL);
-    return entry && entry.title == "Cookie";
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "Cookie";
   }, "The page should be loaded with a cookie for the second time");
 
   await cleanup();
@@ -51,8 +48,7 @@ add_task(async function test() {
   await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
   await promiseTitleChanged;
   await BrowserTestUtils.waitForCondition(async function() {
-    let entry = await PlacesUtils.history.fetch(TEST_URL);
-    return entry && entry.title == "No Cookie";
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "No Cookie";
   }, "The page should be loaded without any cookie again");
 
   // Reopen the page in a private browser window, it should not notify a title

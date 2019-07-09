@@ -3,7 +3,6 @@
 
 /*---
 info: My comparefn is inverse implementation comparefn
-esid: sec-array.prototype.sort
 es5id: 15.4.4.11_A2.2_T1
 description: Checking ENGLISH ALPHABET
 ---*/
@@ -15,7 +14,7 @@ var myComparefn = function(x,y) {
   var xS = String(x);
   var yS = String(y);
   if (xS < yS) return 1
-  if (xS > yS) return -1;
+  if (xS > yS) return -1;   
   return 0;
 }
 

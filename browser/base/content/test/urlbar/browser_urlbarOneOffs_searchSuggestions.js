@@ -32,15 +32,15 @@ add_task(async function oneOffReturnAfterSuggestion() {
   assertState(0, -1, typedValue);
 
   // Down to select the first search suggestion.
-  EventUtils.synthesizeKey("VK_DOWN", {});
+  EventUtils.synthesizeKey("VK_DOWN", {})
   assertState(1, -1, "foofoo");
 
   // Down to select the next search suggestion.
-  EventUtils.synthesizeKey("VK_DOWN", {});
+  EventUtils.synthesizeKey("VK_DOWN", {})
   assertState(2, -1, "foobar");
 
   // Alt+Down to select the first one-off.
-  EventUtils.synthesizeKey("VK_DOWN", { altKey: true });
+  EventUtils.synthesizeKey("VK_DOWN", { altKey: true })
   assertState(2, 0, "foobar");
 
   let resultsPromise =
@@ -64,11 +64,11 @@ add_task(async function oneOffClickAfterSuggestion() {
   assertState(0, -1, typedValue);
 
   // Down to select the first search suggestion.
-  EventUtils.synthesizeKey("VK_DOWN", {});
+  EventUtils.synthesizeKey("VK_DOWN", {})
   assertState(1, -1, "foofoo");
 
   // Down to select the next search suggestion.
-  EventUtils.synthesizeKey("VK_DOWN", {});
+  EventUtils.synthesizeKey("VK_DOWN", {})
   assertState(2, -1, "foobar");
 
   let oneOffs = gURLBar.popup.oneOffSearchButtons.getSelectableButtons(true);
@@ -80,33 +80,6 @@ add_task(async function oneOffClickAfterSuggestion() {
 
   await PlacesTestUtils.clearHistory();
   await BrowserTestUtils.removeTab(tab);
-});
-
-add_task(async function overridden_engine_not_reused() {
-  info("An overridden search suggestion item should not be reused by a search with another engine");
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
-    let typedValue = "foo";
-    await promiseAutocompleteResultPopup(typedValue, window, true);
-    await BrowserTestUtils.waitForCondition(suggestionsPresent,
-                                            "waiting for suggestions");
-    // Down to select the first search suggestion.
-    EventUtils.synthesizeKey("VK_DOWN", {});
-    assertState(1, -1, "foofoo");
-    // ALT+Down to select the second search engine.
-    EventUtils.synthesizeKey("VK_DOWN", { altKey: true });
-    EventUtils.synthesizeKey("VK_DOWN", { altKey: true });
-    assertState(1, 1, "foofoo");
-
-    let label = gURLBar.popup.richlistbox.children[gURLBar.popup.richlistbox.selectedIndex].label;
-    // Run again the query, check the label has been replaced.
-    await promiseAutocompleteResultPopup(typedValue, window, true);
-    await BrowserTestUtils.waitForCondition(suggestionsPresent,
-                                            "waiting for suggestions");
-    assertState(0, -1, "foo");
-    let newLabel = gURLBar.popup.richlistbox.children[1].label;
-    Assert.notEqual(newLabel, label, "The label should have been updated");
-
-    await BrowserTestUtils.removeTab(tab);
 });
 
 function assertState(result, oneOff, textValue = undefined) {

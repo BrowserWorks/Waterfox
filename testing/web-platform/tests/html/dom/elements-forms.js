@@ -1,22 +1,9 @@
-var inputModeKeywords = [
-  "verbatim",
-  "latin",
-  "latin-name",
-  "latin-prose",
-  "full-width-latin",
-  "kana",
-  "kana-name",
-  "katakana",
-  "numeric",
-  "tel",
-  "email",
-  "url",
-];
+// Up-to-date as of 2013-04-07.
 var formElements = {
   form: {
     acceptCharset: {type: "string", domAttrName: "accept-charset"},
-    // "action" has magic hard-coded in reflection.js
-    action: "url",
+    // TODO: action is special
+    // action: "url",
     autocomplete: {type: "enum", keywords: ["on", "off"], defaultVal: "on"},
     enctype: {type: "enum", keywords: ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"], defaultVal: "application/x-www-form-urlencoded"},
     encoding: {type: "enum", keywords: ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"], defaultVal: "application/x-www-form-urlencoded", domAttrName: "enctype"},
@@ -40,39 +27,41 @@ var formElements = {
     // Conforming
     accept: "string",
     alt: "string",
-    autocomplete: {type: "string", customGetter: true},
+    // TODO: autocomplete is special.
+    // autocomplete: {type: "enum", keywords: ["on", "off"], defaultVal: "on"},
     autofocus: "boolean",
     defaultChecked: {type: "boolean", domAttrName: "checked"},
     dirName: "string",
     disabled: "boolean",
-    // "formAction" has magic hard-coded in reflection.js
-    formAction: "url",
+    // TODO: formAction is special
+    // formAction: "url",
     formEnctype: {type: "enum", keywords: ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"], invalidVal: "application/x-www-form-urlencoded"},
     formMethod: {type: "enum", keywords: ["get", "post"], invalidVal: "get"},
     formNoValidate: "boolean",
     formTarget: "string",
-    height: {type: "unsigned long", customGetter: true},
-    inputMode: {type: "enum", keywords: inputModeKeywords},
+    //TODO: only reflected on setting
+    //height: "unsigned long",
+    inputMode: {type: "enum", keywords: ["verbatim", "latin", "latin-name", "latin-prose", "full-width-latin", "kana", "katakana", "numeric", "tel", "email", "url"]},
     max: "string",
     maxLength: "limited long",
     min: "string",
-    minLength: "limited long",
     multiple: "boolean",
     name: "string",
     pattern: "string",
     placeholder: "string",
     readOnly: "boolean",
     required: "boolean",
-    // https://html.spec.whatwg.org/#attr-input-size
+    // https://html.spec.whatwg.org/multipage/#attr-input-size
     size: {type: "limited unsigned long", defaultVal: 20},
     src: "url",
     step: "string",
     type: {type: "enum", keywords: ["hidden", "text", "search", "tel",
-      "url", "email", "password", "date", "month", "week",
+      "url", "email", "password", "datetime", "date", "month", "week",
       "time", "datetime-local", "number", "range", "color", "checkbox",
       "radio", "file", "submit", "image", "reset", "button"], defaultVal:
       "text"},
-    width: {type: "unsigned long", customGetter: true},
+    //TODO: only reflected on setting
+    //width: "unsigned long",
     defaultValue: {type: "string", domAttrName: "value"},
 
     // Obsolete
@@ -82,8 +71,8 @@ var formElements = {
   button: {
     autofocus: "boolean",
     disabled: "boolean",
-    // "formAction" has magic hard-coded in reflection.js
-    formAction: "url",
+    // TODO: formAction is special
+    // formAction: "url",
     formEnctype: {type: "enum", keywords: ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"], invalidVal: "application/x-www-form-urlencoded"},
     formMethod: {type: "enum", keywords: ["get", "post", "dialog"], invalidVal: "get"},
     formNoValidate: "boolean",
@@ -93,7 +82,6 @@ var formElements = {
     value: "string"
   },
   select: {
-    autocomplete: {type: "string", customGetter: true},
     autofocus: "boolean",
     disabled: "boolean",
     multiple: "boolean",
@@ -113,20 +101,33 @@ var formElements = {
     value: {type: "string", customGetter: true},
   },
   textarea: {
-    autocomplete: {type: "string", customGetter: true},
+    // TODO: autocomplete is special.
+    // autocomplete: {type: "enum", keywords: ["on", "off"], defaultVal: "on"},
     autofocus: "boolean",
     cols: {type: "limited unsigned long with fallback", defaultVal: 20},
     dirName: "string",
     disabled: "boolean",
-    inputMode: {type: "enum", keywords: inputModeKeywords},
+    inputMode: {type: "enum", keywords: ["verbatim", "latin", "latin-name", "latin-prose", "full-width-latin", "kana", "katakana", "numeric", "tel", "email", "url"]},
     maxLength: "limited long",
-    minLength: "limited long",
     name: "string",
     placeholder: "string",
     readOnly: "boolean",
     required: "boolean",
     rows: {type: "limited unsigned long with fallback", defaultVal: 2},
     wrap: "string",
+  },
+  keygen: {
+    autofocus: "boolean",
+    challenge: "string",
+    disabled: "boolean",
+    // The invalid value default is the "unknown" state, which for our
+    // purposes  seems to be the same as having no invalid value default.
+    // The missing  value default depends on whether "rsa" is implemented,
+    // so we use null,  which is magically reserved for "don't try testing
+    // this", since no one  default is required.  (TODO: we could test that
+    // it's either the RSA  state or the unknown state.)
+    keytype: {type: "enum", keywords: ["rsa"], defaultVal: null},
+    name: "string",
   },
   output: {
     htmlFor: {type: "settable tokenlist", domAttrName: "for" },
@@ -135,14 +136,7 @@ var formElements = {
   progress: {
     max: {type: "limited double", defaultVal: 1.0},
   },
-  meter: {
-    value: {type: "double", customGetter: true},
-    min: {type: "double", customGetter: true},
-    max: {type: "double", customGetter: true},
-    low: {type: "double", customGetter: true},
-    high: {type: "double", customGetter: true},
-    optimum: {type: "double", customGetter: true},
-  },
+  meter: {},
 };
 
 mergeElements(formElements);

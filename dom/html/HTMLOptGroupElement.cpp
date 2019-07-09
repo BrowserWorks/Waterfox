@@ -37,7 +37,8 @@ HTMLOptGroupElement::~HTMLOptGroupElement()
 }
 
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLOptGroupElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLOptGroupElement, nsGenericHTMLElement,
+                            nsIDOMHTMLOptGroupElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLOptGroupElement)
 
@@ -96,11 +97,9 @@ HTMLOptGroupElement::RemoveChildAt(uint32_t aIndex, bool aNotify)
 }
 
 nsresult
-HTMLOptGroupElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLOptGroupElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue,
-                                  const nsAttrValue* aOldValue,
-                                  nsIPrincipal* aSubjectPrincipal,
-                                  bool aNotify)
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled) {
 
@@ -129,7 +128,7 @@ HTMLOptGroupElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 JSObject*

@@ -37,8 +37,8 @@ TEST(TestStandardURL, Simple) {
     ASSERT_EQ(url->GetHost(out), NS_OK);
     ASSERT_TRUE(out == NS_LITERAL_CSTRING("www.yahoo.com"));
 
-    ASSERT_EQ(url->SetPathQueryRef(NS_LITERAL_CSTRING("/some-path/one-the-net/about.html?with-a-query#for-you")), NS_OK);
-    ASSERT_EQ(url->GetPathQueryRef(out), NS_OK);
+    ASSERT_EQ(url->SetPath(NS_LITERAL_CSTRING("/some-path/one-the-net/about.html?with-a-query#for-you")), NS_OK);
+    ASSERT_EQ(url->GetPath(out), NS_OK);
     ASSERT_TRUE(out == NS_LITERAL_CSTRING("/some-path/one-the-net/about.html?with-a-query#for-you"));
 
     ASSERT_EQ(url->SetQuery(NS_LITERAL_CSTRING("a=b&d=c&what-ever-you-want-to-be-called=45")), NS_OK);
@@ -162,7 +162,7 @@ TEST(TestStandardURL, From_test_standardurldotjs)
     for (uint32_t i = 0; i < sizeof(localIPv4s)/sizeof(localIPv4s[0]); i ++) {
         nsCString encHost(localIPv4s[i]);
         ASSERT_EQ(NS_OK, Test_NormalizeIPv4(encHost, result));
-        ASSERT_TRUE(result.EqualsLiteral("127.0.0.1"));
+        ASSERT_TRUE(result.Equals("127.0.0.1"));
     }
 
     const char* nonIPv4s[] = {"0xfffffffff", "0x100000000", "4294967296", "1.2.0x10000",
@@ -190,8 +190,8 @@ MOZ_GTEST_BENCH(TestStandardURL, Perf, [] {
         url->GetScheme(out);
         url->SetHost(NS_LITERAL_CSTRING("www.yahoo.com"));
         url->GetHost(out);
-        url->SetPathQueryRef(NS_LITERAL_CSTRING("/some-path/one-the-net/about.html?with-a-query#for-you"));
-        url->GetPathQueryRef(out);
+        url->SetPath(NS_LITERAL_CSTRING("/some-path/one-the-net/about.html?with-a-query#for-you"));
+        url->GetPath(out);
         url->SetQuery(NS_LITERAL_CSTRING("a=b&d=c&what-ever-you-want-to-be-called=45"));
         url->GetQuery(out);
         url->SetRef(NS_LITERAL_CSTRING("#some-book-mark"));
@@ -216,8 +216,6 @@ MOZ_GTEST_BENCH(TestStandardURL, NormalizePerf, [] {
     }
 });
 
-// Bug 1394785 - ignore unstable test on OSX
-#ifndef XP_MACOSX
 // Note the five calls in the loop, so divide by 100k
 MOZ_GTEST_BENCH(TestStandardURL, NormalizePerfFails, [] {
     nsAutoCString result;
@@ -234,4 +232,3 @@ MOZ_GTEST_BENCH(TestStandardURL, NormalizePerfFails, [] {
       ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost5, result));
     }
 });
-#endif

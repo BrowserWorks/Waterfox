@@ -202,13 +202,6 @@ public:
   inline bool IsSingleLineTextControl(bool aExcludePassword) const;
 
   /**
-  * Returns true if this is a single line text control or a number control.
-  * @param  aExcludePassword  to have NS_FORM_INPUT_PASSWORD returning false.
-  * @return true if this is a single line text control or a number control.
-  */
-  inline bool IsSingleLineTextOrNumberControl(bool aExcludePassword) const;
-
-  /**
    * Returns whether this is a submittable form control.
    * @return whether this is a submittable form control.
    */
@@ -272,13 +265,6 @@ nsIFormControl::IsSingleLineTextControl(bool aExcludePassword) const
   return IsSingleLineTextControl(aExcludePassword, ControlType());
 }
 
-bool
-nsIFormControl::IsSingleLineTextOrNumberControl(bool aExcludePassword) const
-{
-  return IsSingleLineTextControl(aExcludePassword) ||
-         ControlType() == NS_FORM_INPUT_NUMBER;
-}
-
 /*static*/
 bool
 nsIFormControl::IsSingleLineTextControl(bool aExcludePassword, uint32_t aType)
@@ -289,6 +275,11 @@ nsIFormControl::IsSingleLineTextControl(bool aExcludePassword, uint32_t aType)
          aType == NS_FORM_INPUT_TEL ||
          aType == NS_FORM_INPUT_URL ||
          // TODO: those are temporary until bug 773205 is fixed.
+#if defined(MOZ_WIDGET_ANDROID)
+         // On Android/B2G, date/time input appears as a normal text box.
+         aType == NS_FORM_INPUT_TIME ||
+         aType == NS_FORM_INPUT_DATE ||
+#endif
          aType == NS_FORM_INPUT_MONTH ||
          aType == NS_FORM_INPUT_WEEK ||
          aType == NS_FORM_INPUT_DATETIME_LOCAL ||

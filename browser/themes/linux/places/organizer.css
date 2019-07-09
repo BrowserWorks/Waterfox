@@ -8,10 +8,8 @@
   -moz-appearance: menubar;
 }
 
-@media (-moz-menubar-drag) {
-  #placesToolbar {
-    -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
-  }
+#placesToolbar:-moz-system-metric(menubar-drag) {
+  -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
 }
 
 #placesToolbar > toolbarbutton {

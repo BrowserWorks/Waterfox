@@ -361,22 +361,6 @@ browser.session.restore:
     record_in_processes:
       - 'main'
 
-  worker_restart_count:
-    bug_numbers:
-      - 1402267
-    description: >
-      A counter incremented every time the SessionFile worker is restarted due
-      to too many failures, as defined in the browser.sessionstore.max_write_failures
-      pref.
-    expires: "64"
-    kind: uint
-    notification_emails:
-      - mdeboer@mozilla.com
-      - session-restore-telemetry-alerts@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - 'main'
-
 # This section is for probes used to measure use of the Webextensions storage.sync API.
 storage.sync.api.usage:
   extensions_using:
@@ -387,7 +371,7 @@ storage.sync.api.usage:
       This includes extensions that have not used the storage.sync API this session.
       This includes items that were not stored this session.
       This scalar is collected after every sync.
-    expires: "64"
+    expires: "58"
     kind: uint
     keyed: false
     notification_emails:
@@ -403,7 +387,7 @@ storage.sync.api.usage:
       This includes extensions that have not used the storage.sync API this session.
       This includes items that were not stored this session.
       This scalar is collected after every sync.
-    expires: "64"
+    expires: "58"
     kind: uint
     keyed: true
     notification_emails:
@@ -419,7 +403,7 @@ storage.sync.api.usage:
       This includes extensions that have not used the storage.sync API this session.
       This includes items that were not stored this session.
       This scalar is collected after every sync.
-    expires: "64"
+    expires: "58"
     kind: uint
     keyed: true
     notification_emails:
@@ -444,21 +428,6 @@ services.sync:
     record_in_processes:
       - main
 
-  sync_login_state_transitions:
-    bug_numbers:
-      - 1375635
-    description: >
-      Records transitions between login states of "success", "unverified"
-      and "rejected.
-    expires: "65"
-    kind: boolean
-    keyed: true
-    notification_emails:
-      - sync-staff@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
-
 security:
   pkcs11_modules_loaded:
     bug_numbers:
@@ -471,22 +440,6 @@ security:
     keyed: true
     notification_emails:
       - seceng-telemetry@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
-  webauthn_used:
-    bug_numbers:
-      - 1265472
-    description: >
-      Counts of how often Web Authentication was used in this session, keyed
-      by authenticator protocol, method and result. Currently: U2FRegisterFinish,
-      U2FRegisterAbort, U2FSignFinish, U2FSignAbort.
-    expires: "70"
-    kind: uint
-    keyed: true
-    notification_emails:
-      - seceng-telemetry@mozilla.com
-      - jjones@mozilla.com
     release_channel_collection: opt-out
     record_in_processes:
       - main
@@ -559,64 +512,6 @@ preferences:
     notification_emails:
       - chsiang@mozilla.com
     release_channel_collection: opt-in
-    record_in_processes:
-      - main
-  browser_home_page_change:
-    bug_numbers:
-      - 1392951
-    description: >-
-      The number of times the home page has been changed.
-      Recorded when a user changes his/her home page successfully.
-    expires: "62"
-    kind: uint
-    keyed: true
-    notification_emails:
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
-  browser_home_page_count:
-    bug_numbers:
-      - 1392951
-    description: >-
-      Each key is the number of home page urls when users change their home page,
-      multiple home pages can be set (delineated with a "|"),
-      and each value is the number of times that key is recorded.
-      The telemetry data will be recorded if a user changes his/her home page successfully.
-    expires: "62"
-    kind: uint
-    keyed: true
-    notification_emails:
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
-  use_current_page:
-    bug_numbers:
-      - 1392951
-    description: >-
-      The number of times the Use Current Page button has been clicked.
-      Recorded when a a user clicks the "Use Current Page" button.
-    expires: "62"
-    kind: uint
-    keyed: true
-    notification_emails:
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
-  use_bookmark:
-    bug_numbers:
-      - 1392951
-    description: >-
-      The number of times the "Use Bookmark..." button has been clicked.
-      Recorded when a a user clicks the "Use Bookmark..." button.
-    expires: "62"
-    kind: uint
-    keyed: true
-    notification_emails:
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
     record_in_processes:
       - main
 
@@ -707,21 +602,6 @@ webrtc.nicer:
       - 'main'
       - 'content'
 
-mediarecorder:
-  recording_count:
-    bug_numbers:
-      - 1400757
-    description: >
-      The number of times a MediaRecorder has been started. Recorded when a MediaRecorder starts
-    expires: "60"
-    kind: uint
-    notification_emails:
-      - bvandyk@mozilla.com
-    release_channel_collection: opt-in
-    record_in_processes:
-      - main
-      - content
-
 # The following section contains content process base counters.
 dom.contentprocess:
   troubled_due_to_memory:
@@ -759,7 +639,7 @@ devtools.copy.unique.css.selector:
       - 1323700
       - 1352115
     description: Number of times the DevTools copy unique CSS selector has been used.
-    expires: "59"
+    expires: "57"
     kind: uint
     notification_emails:
       - dev-developer-tools@lists.mozilla.org
@@ -773,7 +653,7 @@ devtools.copy.full.css.selector:
       - 1323700
       - 1352115
     description: Number of times the DevTools copy full CSS selector has been used.
-    expires: "59"
+    expires: "57"
     kind: uint
     notification_emails:
       - dev-developer-tools@lists.mozilla.org
@@ -786,7 +666,7 @@ devtools.copy.xpath:
     bug_numbers:
       - 987877
     description: Number of times the DevTools copy XPath has been used.
-    expires: "59"
+    expires: "58"
     kind: uint
     notification_emails:
       - dev-developer-tools@lists.mozilla.org
@@ -911,21 +791,19 @@ navigator.storage:
       - 'content'
 
 telemetry:
-  accumulate_unknown_histogram_keys:
+  os_shutting_down:
     bug_numbers:
-      - 1343855
+      - 1363345
     description: >
-      The count of attempted accumulations to unknown histogram keys for
-      histograms that restrict the set of allowed keys ('keys' property).
-      The names of the offending histograms are used as keys in this probe.
-    expires: never
-    kind: uint
-    keyed: true
+      Records true if there is a signal that Firefox was quitting because
+      the OS was shutting down. Only available on Windows.
+    expires: "58"
+    kind: boolean
     notification_emails:
       - telemetry-client-dev@mozilla.com
     release_channel_collection: opt-out
     record_in_processes:
-      - all
+      - 'main'
 
 telemetry.discarded:
   accumulations:
@@ -1007,22 +885,6 @@ gfx.advanced.layers:
     record_in_processes:
       - 'main'
 
-gfx.omtp:
-  paint_wait_ratio:
-    bug_numbers:
-      - 1386968
-    description: >
-      Ratio (in units of 1/100th of a percent) of how many times OMTP waited
-      for a paint for more than 200us, versus the total number of paints.
-    keyed: false
-    kind: uint
-    expires: "61"
-    notification_emails:
-      - gfx-telemetry-alerts@mozilla.com
-      - danderson@mozilla.com
-    record_in_processes:
-      - 'content'
-
 # The following section contains the form autofill related scalars.
 formautofill:
   availability:
@@ -1081,125 +943,6 @@ formautofill.addresses:
     release_channel_collection: opt-out
     record_in_processes:
       - 'main'
-
-formautofill.creditCards:
-  fill_type_manual:
-    bug_numbers:
-      - 1371232
-    description: Count at submission time whether the submitted credit card form was filled manually.
-    expires: never
-    kind: uint
-    notification_emails:
-      - autofill@lists.mozilla.org
-      - jcheng@mozilla.com
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - 'main'
-  fill_type_autofill:
-    bug_numbers:
-      - 1371232
-    description: Count at submission time whether the submitted credit card form was autofilled.
-    expires: never
-    kind: uint
-    notification_emails:
-      - autofill@lists.mozilla.org
-      - jcheng@mozilla.com
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - 'main'
-  fill_type_autofill_modified:
-    bug_numbers:
-      - 1371232
-    description: >
-      Count at submission time whether the submitted credit card form was autofilled but
-      the data in form is changed.
-    expires: never
-    kind: uint
-    notification_emails:
-      - autofill@lists.mozilla.org
-      - jcheng@mozilla.com
-      - chsiang@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - 'main'
-
-# The following section is for probes for tcp protocol.
-network.tcp:
-  overlapped_io_canceled_before_finished:
-    bug_numbers:
-      - 1363372
-    description: >
-      Count the number of sockets that use overlapped io and are canceled before
-      the overlapped io finishes. (We only use overlapped io for connectEx when
-      TCP Fast Open is used.)
-    expires: "58"
-    kind: uint
-    notification_emails:
-      - necko@mozilla.com
-      - ddamjanovic@ozilla.com
-    record_in_processes:
-      - 'main'
-
-  overlapped_result_delayed:
-    bug_numbers:
-      - 1363372
-    description: >
-      Count the number of overlapped io that are canceled but cancelation
-      have not completed immediately. (We only use overlapped io for
-      connectEx when TCP Fast Open is used.)
-    expires: "58"
-    kind: uint
-    notification_emails:
-      - necko@mozilla.com
-      - ddamjanovic@mozilla.com
-    record_in_processes:
-      - 'main'
-
-idb.type:
-  persistent_count:
-    bug_numbers:
-      - 1360567
-    description: >
-      Number of times indexeddb.open(name, {storage: "persistent"}) has been used.
-    expires: "60"
-    kind: uint
-    notification_emails:
-      - shuang@mozilla.com
-    release_channel_collection: opt-in
-    record_in_processes:
-      - 'main'
-      - 'content'
-
-  temporary_count:
-    bug_numbers:
-      - 1360567
-    description: >
-      Number of times indexeddb.open(name, {storage: "temporary"}) has been used.
-    expires: "60"
-    kind: uint
-    notification_emails:
-      - shuang@mozilla.com
-    release_channel_collection: opt-in
-    record_in_processes:
-      - 'main'
-      - 'content'
-
-# The following section contains probes that record timestamps.
-timestamps:
-  first_paint:
-    bug_numbers:
-      - 1386186
-    description: >
-     Record the timestamp of the first content window paint, in milliseconds since process start.
-    expires: never
-    kind: uint
-    notification_emails:
-      - hkirschner@mozilla.com
-    release_channel_collection: opt-out
-    record_in_processes:
-      - main
 
 # The following section is for probes testing the Telemetry system. They will not be
 # submitted in pings and are only used for testing.
@@ -1382,5 +1125,5 @@ telemetry.test:
       - 'all_childs'
 
 # NOTE: Please don't add new definitions below this point. Consider adding
-# them earlier in the file and leave the telemetry.test category as the last
+# them earlier in the file and leave the telemetry.test group as the last
 # one for readability.

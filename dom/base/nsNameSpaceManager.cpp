@@ -15,6 +15,7 @@
 #include "mozilla/dom/NodeInfo.h"
 #include "nsCOMArray.h"
 #include "nsContentCreatorFunctions.h"
+#include "nsContentUtils.h"
 #include "nsGkAtoms.h"
 #include "nsIDocument.h"
 #include "nsString.h"
@@ -99,7 +100,7 @@ nsNameSpaceManager::RegisterNameSpace(const nsAString& aURI,
     return NS_OK;
   }
 
-  RefPtr<nsAtom> atom = NS_Atomize(aURI);
+  nsCOMPtr<nsIAtom> atom = NS_Atomize(aURI);
   nsresult rv = NS_OK;
   if (!mURIToIDTable.Get(atom, &aNameSpaceID)) {
     aNameSpaceID = mURIArray.Length();
@@ -141,12 +142,12 @@ nsNameSpaceManager::GetNameSpaceID(const nsAString& aURI,
     return kNameSpaceID_None; // xmlns="", see bug 75700 for details
   }
 
-  RefPtr<nsAtom> atom = NS_Atomize(aURI);
+  nsCOMPtr<nsIAtom> atom = NS_Atomize(aURI);
   return GetNameSpaceID(atom, aInChromeDoc);
 }
 
 int32_t
-nsNameSpaceManager::GetNameSpaceID(nsAtom* aURI,
+nsNameSpaceManager::GetNameSpaceID(nsIAtom* aURI,
                                    bool aInChromeDoc)
 {
   if (aURI == nsGkAtoms::_empty) {
@@ -189,7 +190,9 @@ NS_NewElement(Element** aResult,
   if (ns == kNameSpaceID_MathML) {
     // If the mathml.disabled pref. is true, convert all MathML nodes into
     // disabled MathML nodes by swapping the namespace.
-    if (ni->NodeInfoManager()->MathMLEnabled()) {
+    nsNameSpaceManager* nsmgr = nsNameSpaceManager::GetInstance();
+    if ((nsmgr && !nsmgr->mMathMLDisabled) ||
+        nsContentUtils::IsSystemPrincipal(ni->GetDocument()->NodePrincipal())) {
       return NS_NewMathMLElement(aResult, ni.forget());
     }
 
@@ -202,7 +205,29 @@ NS_NewElement(Element** aResult,
   if (ns == kNameSpaceID_SVG) {
     // If the svg.disabled pref. is true, convert all SVG nodes into
     // disabled SVG nodes by swapping the namespace.
-    if (ni->NodeInfoManager()->SVGEnabled()) {
+    nsNameSpaceManager* nsmgr = nsNameSpaceManager::GetInstance();
+    nsCOMPtr<nsILoadInfo> loadInfo;
+    bool SVGEnabled = false;
+
+    if (nsmgr && !nsmgr->mSVGDisabled) {
+      SVGEnabled = true;
+    } else {
+      nsCOMPtr<nsIChannel> channel = ni->GetDocument()->GetChannel();
+      // We don't have a channel for SVGs constructed inside a SVG script
+      if (channel) {
+        loadInfo  = channel->GetLoadInfo();
+      }
+    }
+    if (SVGEnabled ||
+        nsContentUtils::IsSystemPrincipal(ni->GetDocument()->NodePrincipal()) ||
+        (loadInfo &&
+         (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGE ||
+         loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_OTHER) &&
+         (nsContentUtils::IsSystemPrincipal(loadInfo->LoadingPrincipal()) ||
+          nsContentUtils::IsSystemPrincipal(loadInfo->TriggeringPrincipal())
+         )
+        )
+       ) {
       return NS_NewSVGElement(aResult, ni.forget(), aFromParser);
     }
     RefPtr<mozilla::dom::NodeInfo> genericXMLNI =
@@ -231,10 +256,10 @@ nsNameSpaceManager::HasElementCreator(int32_t aNameSpaceID)
          false;
 }
 
-nsresult nsNameSpaceManager::AddNameSpace(already_AddRefed<nsAtom> aURI,
+nsresult nsNameSpaceManager::AddNameSpace(already_AddRefed<nsIAtom> aURI,
                                           const int32_t aNameSpaceID)
 {
-  RefPtr<nsAtom> uri = aURI;
+  nsCOMPtr<nsIAtom> uri = aURI;
   if (aNameSpaceID < 0) {
     // We've wrapped...  Can't do anything else here; just bail.
     return NS_ERROR_OUT_OF_MEMORY;
@@ -248,10 +273,10 @@ nsresult nsNameSpaceManager::AddNameSpace(already_AddRefed<nsAtom> aURI,
 }
 
 nsresult
-nsNameSpaceManager::AddDisabledNameSpace(already_AddRefed<nsAtom> aURI,
+nsNameSpaceManager::AddDisabledNameSpace(already_AddRefed<nsIAtom> aURI,
                                          const int32_t aNameSpaceID)
 {
-  RefPtr<nsAtom> uri = aURI;
+  nsCOMPtr<nsIAtom> uri = aURI;
   if (aNameSpaceID < 0) {
     // We've wrapped...  Can't do anything else here; just bail.
     return NS_ERROR_OUT_OF_MEMORY;

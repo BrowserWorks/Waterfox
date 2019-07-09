@@ -21,7 +21,7 @@ add_task(function* () {
 // Test for bug 588730: Adding a text node to an existing label element causes
 // warnings
 function testTextNodeInsertion(hud) {
-  let deferred = defer();
+  let deferred = promise.defer();
   let outputNode = hud.outputNode;
 
   let label = document.createElementNS(

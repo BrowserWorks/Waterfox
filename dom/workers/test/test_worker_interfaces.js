@@ -25,7 +25,7 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
-    "Atomics",
+    {name: "Atomics", disabled: true},
     "Boolean",
     {name: "ByteLengthQueuingStrategy", optional: true},
     {name: "CountQueuingStrategy", optional: true},
@@ -42,6 +42,7 @@ var ecmaGlobals =
     "Int8Array",
     "InternalError",
     "Intl",
+    "Iterator",
     "JSON",
     "Map",
     "Math",
@@ -56,7 +57,7 @@ var ecmaGlobals =
     "Reflect",
     "RegExp",
     "Set",
-    "SharedArrayBuffer",
+    {name: "SharedArrayBuffer", disabled: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -79,10 +80,6 @@ var ecmaGlobals =
 // IMPORTANT: Do not change the list below without review from a DOM peer!
 var interfaceNamesInGlobalScope =
   [
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "AbortController",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "AbortSignal",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Blob",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -180,9 +177,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PerformanceMeasure",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "PerformanceObserver",
+    { name: "PerformanceObserver", nightly: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "PerformanceObserverEntryList",
+    { name: "PerformanceObserverEntryList", nightly: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ProgressEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -198,7 +195,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ServiceWorkerRegistration",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "StorageManager", isSecureContext: true, android: false},
+    {name: "StorageManager", nightly: true, isSecureContext: true, android: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SubtleCrypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!

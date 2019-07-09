@@ -370,7 +370,7 @@ class BaselineFrame
         flags_ &= ~HAS_OVERRIDE_PC;
     }
 
-    void trace(JSTracer* trc, const JSJitFrameIter& frame);
+    void trace(JSTracer* trc, JitFrameIterator& frame);
 
     bool isGlobalFrame() const {
         return script()->isGlobalCode();

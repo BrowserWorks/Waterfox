@@ -35,22 +35,18 @@ struct ScriptedCaller
 
 // Describes all the parameters that control wasm compilation.
 
-struct CompileArgs : ShareableBase<CompileArgs>
+struct CompileArgs
 {
     Assumptions assumptions;
     ScriptedCaller scriptedCaller;
-    bool baselineEnabled;
+    bool alwaysBaseline;
     bool debugEnabled;
-    bool ionEnabled;
-    bool testTiering;
 
     CompileArgs(Assumptions&& assumptions, ScriptedCaller&& scriptedCaller)
       : assumptions(Move(assumptions)),
         scriptedCaller(Move(scriptedCaller)),
-        baselineEnabled(false),
-        debugEnabled(false),
-        ionEnabled(false),
-        testTiering(false)
+        alwaysBaseline(false),
+        debugEnabled(false)
     {}
 
     // If CompileArgs is constructed without arguments, initFromContext() must
@@ -59,15 +55,6 @@ struct CompileArgs : ShareableBase<CompileArgs>
     bool initFromContext(JSContext* cx, ScriptedCaller&& scriptedCaller);
 };
 
-typedef RefPtr<CompileArgs> MutableCompileArgs;
-typedef RefPtr<const CompileArgs> SharedCompileArgs;
-
-// Return the estimated compiled (machine) code size for the given bytecode size
-// compiled at the given tier.
-
-double
-EstimateCompiledCodeSize(Tier tier, size_t bytecodeSize);
-
 // Compile the given WebAssembly bytecode with the given arguments into a
 // wasm::Module. On success, the Module is returned. On failure, the returned
 // SharedModule pointer is null and either:
@@ -75,13 +62,7 @@ EstimateCompiledCodeSize(Tier tier, size_t bytecodeSize);
 //  - *error is null and the caller should report out-of-memory.
 
 SharedModule
-CompileInitialTier(const ShareableBytes& bytecode, const CompileArgs& args, UniqueChars* error);
-
-// Attempt to compile the second tier of the given wasm::Module, returning whether
-// tier-2 compilation succeeded and Module::finishTier2 was called.
-
-bool
-CompileTier2(Module& module, const CompileArgs& args, Atomic<bool>* cancelled);
+Compile(const ShareableBytes& bytecode, const CompileArgs& args, UniqueChars* error);
 
 }  // namespace wasm
 }  // namespace js

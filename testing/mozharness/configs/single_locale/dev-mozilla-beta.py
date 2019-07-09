@@ -1,10 +1,10 @@
 config = {
     "branch": "jamun",
     "nightly_build": True,
-    "update_channel": "beta",
+    "update_channel": "beta-dev",
 
     # l10n
-    "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/mozilla-beta",
 
     # repositories
     # staging beta dev releases use jamun repo for now

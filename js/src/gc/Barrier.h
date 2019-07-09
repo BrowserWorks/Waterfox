@@ -283,7 +283,7 @@ struct InternalBarrierMethods<Value>
         DispatchTyped(PreBarrierFunctor<Value>(), v);
     }
 
-    static MOZ_ALWAYS_INLINE void postBarrier(Value* vp, const Value& prev, const Value& next) {
+    static void postBarrier(Value* vp, const Value& prev, const Value& next) {
         MOZ_ASSERT(!CurrentThreadIsIonCompiling());
         MOZ_ASSERT(vp);
 
@@ -372,7 +372,7 @@ class WriteBarrieredBase : public BarrieredBase<T>,
 
   protected:
     void pre() { InternalBarrierMethods<T>::preBarrier(this->value); }
-    MOZ_ALWAYS_INLINE void post(const T& prev, const T& next) {
+    void post(const T& prev, const T& next) {
         InternalBarrierMethods<T>::postBarrier(&this->value, prev, next);
     }
 };

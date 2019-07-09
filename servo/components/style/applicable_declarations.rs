@@ -36,7 +36,8 @@ const SOURCE_ORDER_MASK: u32 = (1 << SOURCE_ORDER_BITS) - 1;
 const SOURCE_ORDER_MAX: u32 = SOURCE_ORDER_MASK;
 
 /// Stores the source order of a block and the cascade level it belongs to.
-#[derive(Clone, Copy, Eq, MallocSizeOf, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Copy, Clone, Eq, PartialEq)]
 struct SourceOrderAndCascadeLevel(u32);
 
 impl SourceOrderAndCascadeLevel {
@@ -74,10 +75,11 @@ impl Debug for SourceOrderAndCascadeLevel {
 ///
 /// This represents the declarations in a given declaration block for a given
 /// importance.
-#[derive(Clone, Debug, MallocSizeOf, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ApplicableDeclarationBlock {
     /// The style source, either a style rule, or a property declaration block.
-    #[ignore_malloc_size_of = "Arc"]
+    #[cfg_attr(feature = "servo", ignore_heap_size_of = "Arc")]
     pub source: StyleSource,
     /// The source order of the block, and the cascade level it belongs to.
     order_and_level: SourceOrderAndCascadeLevel,

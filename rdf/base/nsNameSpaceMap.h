@@ -9,21 +9,21 @@
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 class nsNameSpaceMap
 {
 public:
     class Entry {
     public:
-        Entry(const nsACString& aURI, nsAtom* aPrefix)
+        Entry(const nsACString& aURI, nsIAtom* aPrefix)
             : mURI(aURI), mPrefix(aPrefix), mNext(nullptr) {
             MOZ_COUNT_CTOR(nsNameSpaceMap::Entry); }
 
         ~Entry() { MOZ_COUNT_DTOR(nsNameSpaceMap::Entry); }
 
         nsCString mURI;
-        RefPtr<nsAtom> mPrefix;
+        nsCOMPtr<nsIAtom> mPrefix;
 
         Entry* mNext;
     };
@@ -32,10 +32,10 @@ public:
     ~nsNameSpaceMap();
 
     nsresult
-    Put(const nsAString& aURI, nsAtom* aPrefix);
+    Put(const nsAString& aURI, nsIAtom* aPrefix);
 
     nsresult
-    Put(const nsACString& aURI, nsAtom* aPrefix);
+    Put(const nsACString& aURI, nsIAtom* aPrefix);
 
     class const_iterator {
     protected:

@@ -120,17 +120,15 @@ var theme1 = {
 
 // The selected theme
 var theme2 = {
-  manifest: {
-    manifest_version: 2,
-    name: "Theme 2",
-    version: "1.0",
-    theme: { images: { headerURL: "example.png" } },
-    applications: {
-      gecko: {
-        id: "theme2@tests.mozilla.org",
-      },
-    },
-  },
+  id: "theme2@tests.mozilla.org",
+  version: "1.0",
+  name: "Theme 2",
+  internalName: "test/1.0",
+  targetApplications: [{
+    id: "xpcshell@tests.mozilla.org",
+    minVersion: "2",
+    maxVersion: "2"
+  }]
 };
 
 const profileDir = gProfD.clone();
@@ -147,8 +145,7 @@ add_task(async function init() {
   writeInstallRDFForExtension(addon6, profileDir);
   writeInstallRDFForExtension(addon7, profileDir);
   writeInstallRDFForExtension(theme1, profileDir);
-  let theme2XPI = createTempWebExtensionFile(theme2);
-  await AddonTestUtils.manuallyInstall(theme2XPI);
+  writeInstallRDFForExtension(theme2, profileDir);
 
   // Startup the profile and setup the initial state
   await promiseStartupManager();
@@ -249,16 +246,14 @@ add_task(async function run_test_1() {
   do_check_true(t1.userDisabled);
   do_check_false(t1.appDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
-  // Disabled due to bug 1394117
-  // do_check_false(isThemeInAddonsList(profileDir, t1.id));
+  do_check_false(isThemeInAddonsList(profileDir, t1.id));
 
   do_check_neq(t2, null);
   do_check_true(t2.isActive);
   do_check_false(t2.userDisabled);
   do_check_false(t2.appDisabled);
   do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
-  // Disabled due to bug 1394117
-  // do_check_true(isThemeInAddonsList(profileDir, t2.id));
+  do_check_true(isThemeInAddonsList(profileDir, t2.id));
 
   // Open another handle on the JSON DB with as much Unix and Windows locking
   // as we can to simulate some other process interfering with it
@@ -348,21 +343,19 @@ add_task(async function run_test_1() {
 
   // Should be correctly recovered
   do_check_neq(t1, null);
-  // Disabled due to bug 1394117
-  // do_check_false(t1.isActive);
-  // do_check_true(t1.userDisabled);
+  do_check_false(t1.isActive);
+  do_check_true(t1.userDisabled);
   do_check_false(t1.appDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_false(isThemeInAddonsList(profileDir, t1.id));
+  do_check_false(isThemeInAddonsList(profileDir, t1.id));
 
   // Should be correctly recovered
   do_check_neq(t2, null);
   do_check_true(t2.isActive);
-  // Disabled due to bug 1394117
-  // do_check_false(t2.userDisabled);
+  do_check_false(t2.userDisabled);
   do_check_false(t2.appDisabled);
-  // do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_true(isThemeInAddonsList(profileDir, t2.id));
+  do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
+  do_check_true(isThemeInAddonsList(profileDir, t2.id));
 
   // Restarting will actually apply changes to extensions.ini which will
   // then be put into the in-memory database when we next fail to load the
@@ -436,20 +429,18 @@ add_task(async function run_test_1() {
   do_check_eq(a7.pendingOperations, AddonManager.PENDING_NONE);
 
   do_check_neq(t1, null);
-  // Disabled due to bug 1394117
-  // do_check_false(t1.isActive);
-  //  do_check_true(t1.userDisabled);
+  do_check_false(t1.isActive);
+  do_check_true(t1.userDisabled);
   do_check_false(t1.appDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_false(isThemeInAddonsList(profileDir, t1.id));
+  do_check_false(isThemeInAddonsList(profileDir, t1.id));
 
   do_check_neq(t2, null);
-  // Disabled due to bug 1394117
-  // do_check_true(t2.isActive);
-  // do_check_false(t2.userDisabled);
+  do_check_true(t2.isActive);
+  do_check_false(t2.userDisabled);
   do_check_false(t2.appDisabled);
   do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_true(isThemeInAddonsList(profileDir, t2.id));
+  do_check_true(isThemeInAddonsList(profileDir, t2.id));
 
   // After allowing access to the original DB things should go back to as
   // back how they were before the lock
@@ -546,20 +537,18 @@ add_task(async function run_test_1() {
   do_check_eq(a7.pendingOperations, AddonManager.PENDING_NONE);
 
   do_check_neq(t1, null);
-  // Disabled due to bug 1394117
-  // do_check_false(t1.isActive);
-  // do_check_true(t1.userDisabled);
+  do_check_false(t1.isActive);
+  do_check_true(t1.userDisabled);
   do_check_false(t1.appDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_false(isThemeInAddonsList(profileDir, t1.id));
+  do_check_false(isThemeInAddonsList(profileDir, t1.id));
 
   do_check_neq(t2, null);
-  // Disabled due to bug 1394117
-  // do_check_true(t2.isActive);
-  // do_check_false(t2.userDisabled);
+  do_check_true(t2.isActive);
+  do_check_false(t2.userDisabled);
   do_check_false(t2.appDisabled);
   do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
-  // do_check_true(isThemeInAddonsList(profileDir, t2.id));
+  do_check_true(isThemeInAddonsList(profileDir, t2.id));
 
   try {
     shutdownManager();
@@ -567,4 +556,8 @@ add_task(async function run_test_1() {
     // An error is expected here.
   }
 });
+
+function run_test() {
+  run_next_test();
+}
 

@@ -182,7 +182,7 @@ static bool AllowedImageAndFrameDimensions(const nsIntSize& aImageSize,
   if (!AllowedImageSize(aImageSize.width, aImageSize.height)) {
     return false;
   }
-  if (!AllowedImageSize(aFrameRect.Width(), aFrameRect.Height())) {
+  if (!AllowedImageSize(aFrameRect.width, aFrameRect.height)) {
     return false;
   }
   nsIntRect imageRect(0, 0, aImageSize.width, aImageSize.height);
@@ -509,8 +509,8 @@ imgFrame::SurfaceForDrawing(bool               aDoPartialDecode,
                              mFormat);
   }
 
-  gfxRect available = gfxRect(mDecoded.x, mDecoded.y, mDecoded.Width(),
-                              mDecoded.Height());
+  gfxRect available = gfxRect(mDecoded.x, mDecoded.y, mDecoded.width,
+                              mDecoded.height);
 
   if (aDoTile) {
     // Create a temporary surface.
@@ -536,7 +536,7 @@ imgFrame::SurfaceForDrawing(bool               aDoPartialDecode,
   // Not tiling, and we have a surface, so we can account for
   // a partial decode just by twiddling parameters.
   aRegion = aRegion.Intersect(available);
-  IntSize availableSize(mDecoded.Width(), mDecoded.Height());
+  IntSize availableSize(mDecoded.width, mDecoded.height);
 
   return SurfaceWithFormat(new gfxSurfaceDrawable(aSurface, availableSize),
                            mFormat);
@@ -649,11 +649,11 @@ imgFrame::GetImageBytesPerRow() const
   mMonitor.AssertCurrentThreadOwns();
 
   if (mRawSurface) {
-    return mFrameRect.Width() * BytesPerPixel(mFormat);
+    return mFrameRect.width * BytesPerPixel(mFormat);
   }
 
   if (mPaletteDepth) {
-    return mFrameRect.Width();
+    return mFrameRect.width;
   }
 
   return 0;
@@ -662,7 +662,7 @@ imgFrame::GetImageBytesPerRow() const
 uint32_t
 imgFrame::GetImageDataLength() const
 {
-  return GetImageBytesPerRow() * mFrameRect.Height();
+  return GetImageBytesPerRow() * mFrameRect.height;
 }
 
 void

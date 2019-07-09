@@ -52,7 +52,7 @@ HTMLEditor::ShowInlineTableEditingUI(nsIDOMElement* aCell)
   if (!cell || !HTMLEditUtils::IsTableCell(cell)) {
     return NS_OK;
   }
-
+ 
   if (NS_WARN_IF(!IsDescendantOfEditorRoot(cell))) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -63,27 +63,27 @@ HTMLEditor::ShowInlineTableEditingUI(nsIDOMElement* aCell)
   }
 
   // the resizers and the shadow will be anonymous children of the body
-  RefPtr<Element> bodyElement = GetRoot();
+  nsCOMPtr<nsIDOMElement> bodyElement = do_QueryInterface(GetRoot());
   NS_ENSURE_TRUE(bodyElement, NS_ERROR_NULL_POINTER);
 
   mAddColumnBeforeButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableAddColumnBefore"), false);
   mRemoveColumnButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableRemoveColumn"), false);
   mAddColumnAfterButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableAddColumnAfter"), false);
 
   mAddRowBeforeButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableAddRowBefore"), false);
   mRemoveRowButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableRemoveRow"), false);
   mAddRowAfterButton =
-    CreateAnonymousElement(nsGkAtoms::a, *bodyElement,
+    CreateAnonymousElement(nsGkAtoms::a, bodyElement,
                            NS_LITERAL_STRING("mozTableAddRowAfter"), false);
 
   AddMouseClickListener(mAddColumnBeforeButton);
@@ -173,11 +173,6 @@ HTMLEditor::DoInlineTableEditingAction(nsIDOMElement* aElement)
     else
       return NS_OK;
 
-    // InsertTableRow might causes reframe
-    if (Destroyed()) {
-      return NS_OK;
-    }
-
     if (hideUI) {
       HideInlineTableEditingUI();
       if (hideResizersWithInlineTableUI)
@@ -217,11 +212,7 @@ HTMLEditor::RefreshInlineTableEditingUI()
   }
 
   int32_t xCell, yCell, wCell, hCell;
-  nsCOMPtr<Element> element = do_QueryInterface(mInlineEditedCell);
-  if (NS_WARN_IF(!element)) {
-   return NS_ERROR_FAILURE;
-  }
-  GetElementOrigin(*element, xCell, yCell);
+  GetElementOrigin(mInlineEditedCell, xCell, yCell);
 
   nsresult rv = htmlElement->GetOffsetWidth(&wCell);
   NS_ENSURE_SUCCESS(rv, rv);

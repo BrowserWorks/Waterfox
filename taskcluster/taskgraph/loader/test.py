@@ -7,7 +7,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 import copy
 import logging
 
-from .transform import loader as transform_loader
 from ..util.yaml import load_yaml
 
 logger = logging.getLogger(__name__)
@@ -40,8 +39,7 @@ def loader(kind, path, config, params, loaded_tasks):
     test_platforms = expand_tests(test_sets_cfg, test_platforms)
 
     # load the test descriptions
-    tests = transform_loader(kind, path, config, params, loaded_tasks)
-    test_descriptions = {t.pop('name'): t for t in tests}
+    test_descriptions = load_yaml(path, 'tests.yml', enforce_order=True)
 
     # generate all tests for all test platforms
     for test_platform_name, test_platform in test_platforms.iteritems():
@@ -122,7 +120,7 @@ def expand_tests(test_sets_cfg, test_platforms):
     rv = {}
     for test_platform, cfg in test_platforms.iteritems():
         test_sets = cfg['test-sets']
-        if not set(test_sets) <= set(test_sets_cfg):
+        if not set(test_sets) < set(test_sets_cfg):
             raise Exception(
                 "Test sets {} for test platform {} are not defined".format(
                     ', '.join(test_sets), test_platform))

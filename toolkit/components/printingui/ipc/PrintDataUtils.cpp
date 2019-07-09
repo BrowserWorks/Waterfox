@@ -8,7 +8,7 @@
 #include "nsIPrintSettings.h"
 #include "nsIServiceManager.h"
 #include "nsIWebBrowserPrint.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 
 namespace mozilla {
 namespace embedding {

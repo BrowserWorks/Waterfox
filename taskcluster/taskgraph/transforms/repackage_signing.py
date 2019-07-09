@@ -41,7 +41,6 @@ def validate(config, jobs):
 def make_repackage_signing_description(config, jobs):
     for job in jobs:
         dep_job = job['dependent-task']
-        attributes = dep_job.attributes
 
         treeherder = job.get('treeherder', {})
         treeherder.setdefault('symbol', 'tc-rs(N)')
@@ -52,16 +51,7 @@ def make_repackage_signing_description(config, jobs):
         treeherder.setdefault('tier', 1)
         treeherder.setdefault('kind', 'build')
 
-        label = job['label']
-        description = (
-            "Signing of repackaged artifacts for locale '{locale}' for build '"
-            "{build_platform}/{build_type}'".format(
-                locale=attributes.get('locale', 'en-US'),
-                build_platform=attributes.get('build_platform'),
-                build_type=attributes.get('build_type')
-            )
-        )
-
+        label = job.get('label', "repackage-signing-{}".format(dep_job.label))
         dependencies = {"repackage": dep_job.label}
 
         signing_dependencies = dep_job.dependencies
@@ -117,8 +107,9 @@ def make_repackage_signing_description(config, jobs):
 
         task = {
             'label': label,
-            'description': description,
-            'worker-type': _generate_worker_type(signing_cert_scope),
+            'description': "Repackage signing {} ".format(
+                dep_job.task["metadata"]["description"]),
+            'worker-type': "scriptworker-prov-v1/signing-linux-v1",
             'worker': {'implementation': 'scriptworker-signing',
                        'upstream-artifacts': upstream_artifacts,
                        'max-run-time': 3600},
@@ -129,9 +120,18 @@ def make_repackage_signing_description(config, jobs):
             'treeherder': treeherder,
         }
 
+        funsize_platforms = [
+            'linux-nightly',
+            'linux64-nightly',
+            'macosx64-nightly',
+            'win32-nightly',
+            'win64-nightly'
+        ]
+        if build_platform in funsize_platforms and is_nightly:
+            route_template = "project.releng.funsize.level-{level}.{project}"
+            task['routes'] = [
+                route_template.format(project=config.params['project'],
+                                      level=config.params['level'])
+            ]
+
         yield task
-
-
-def _generate_worker_type(signing_cert_scope):
-    worker_type = 'depsigning' if 'dep-signing' in signing_cert_scope else 'signing-linux-v1'
-    return 'scriptworker-prov-v1/{}'.format(worker_type)

@@ -91,6 +91,10 @@ typedef struct TestNPObject : NPObject {
 
 typedef struct _PlatformData PlatformData;
 
+typedef struct TestRange : NPByteRange {
+  bool waiting;
+} TestRange;
+
 typedef struct InstanceData {
   NPP npp;
   NPWindow window;
@@ -105,6 +109,7 @@ typedef struct InstanceData {
   bool dontTouchElement;
   uint32_t timerID[2];
   bool timerTestResult;
+  bool asyncCallbackResult;
   bool invalidateDuringPaint;
   bool slowPaint;
   bool playingAudio;
@@ -117,6 +122,7 @@ typedef struct InstanceData {
   int32_t paintCount;
   int32_t writeCount;
   int32_t writeReadyCount;
+  int32_t asyncTestPhase;
   TestFunction testFunction;
   TestFunction functionToFail;
   NPError failureCode;
@@ -125,10 +131,15 @@ typedef struct InstanceData {
   std::string testUrl;
   std::string frame;
   std::string timerTestScriptCallback;
+  std::string asyncTestScriptCallback;
   std::ostringstream err;
+  uint16_t streamMode;
   int32_t streamChunkSize;
   int32_t streamBufSize;
+  int32_t fileBufSize;
+  TestRange* testrange;
   void* streamBuf;
+  void* fileBuf;
   bool crashOnDestroy;
   bool cleanupWidget;
   ActivationState topLevelWindowActivationState;

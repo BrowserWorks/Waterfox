@@ -170,7 +170,7 @@ public:
 
     uint64_t ByteCountReceived() override { return mInput.ByteCount(); }
     uint64_t ByteCountSent() override { return mOutput.ByteCount(); }
-    static void CloseSocket(PRFileDesc *aFd, nsSocketTransportService *aSTS);
+    static void CloseSocket(PRFileDesc *aFd, bool aTelemetryEnabled);
     static void SendPRBlockingTelemetry(PRIntervalTime aStart,
         Telemetry::HistogramID aIDNormal,
         Telemetry::HistogramID aIDShutdown,
@@ -308,7 +308,6 @@ private:
     bool mProxyTransparentResolvesHost;
     bool mHttpsProxy;
     uint32_t     mConnectionFlags;
-    uint32_t     mTlsFlags;
     bool mReuseAddrPort;
 
     // The origin attributes are used to create sockets.  The first party domain
@@ -478,8 +477,6 @@ private:
     // A Fast Open callback.
     TCPFastOpen *mFastOpenCallback;
     bool mFastOpenLayerHasBufferedData;
-    uint8_t mFastOpenStatus;
-    nsresult mFirstRetryError;
 
     bool mDoNotRetryToConnect;
 };

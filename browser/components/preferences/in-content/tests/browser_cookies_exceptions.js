@@ -65,16 +65,16 @@ var testRunner = {
       {
         expectPermObservancesDuringTestFunction: true,
         test(params) {
-          let uri = Services.io.newURI("http://test.com");
-          Services.perms.add(uri, "popup", Ci.nsIPermissionManager.DENY_ACTION);
+          let uri = params.ioService.newURI("http://test.com");
+          params.pm.add(uri, "popup", Ci.nsIPermissionManager.DENY_ACTION);
           is(params.tree.view.rowCount, 0, "adding unrelated permission should not change display");
           params.btnApplyChanges.doCommand();
         },
         observances: [{ type: "popup", origin: "http://test.com", data: "added",
                         capability: Ci.nsIPermissionManager.DENY_ACTION }],
         cleanUp(params) {
-          let uri = Services.io.newURI("http://test.com");
-          Services.perms.remove(uri, "popup");
+          let uri = params.ioService.newURI("http://test.com");
+          params.pm.remove(uri, "popup");
         },
       },
       {
@@ -179,8 +179,8 @@ var testRunner = {
         expectPermObservancesDuringTestFunction: true,
         test(params) {
           for (let URL of ["http://a", "http://z", "http://b"]) {
-            let URI = Services.io.newURI(URL);
-            Services.perms.add(URI, "cookie", Ci.nsIPermissionManager.ALLOW_ACTION);
+            let URI = params.ioService.newURI(URL);
+            params.pm.add(URI, "cookie", Ci.nsIPermissionManager.ALLOW_ACTION);
           }
 
           is(params.tree.view.rowCount, 3, "Three permissions should be present");
@@ -211,8 +211,8 @@ var testRunner = {
              "site should be sorted. 'a' should be third");
 
           for (let URL of ["http://a", "http://z", "http://b"]) {
-            let uri = Services.io.newURI(URL);
-            Services.perms.remove(uri, "cookie");
+            let uri = params.ioService.newURI(URL);
+            params.pm.remove(uri, "cookie");
           }
         },
       },
@@ -251,6 +251,10 @@ var testRunner = {
             btnBlock: doc.getElementById("btnBlock"),
             btnApplyChanges: doc.getElementById("btnApplyChanges"),
             btnRemove: doc.getElementById("removePermission"),
+            pm: Cc["@mozilla.org/permissionmanager;1"]
+                       .getService(Ci.nsIPermissionManager),
+            ioService: Cc["@mozilla.org/network/io-service;1"]
+                              .getService(Ci.nsIIOService),
             allowText: win.gPermissionManager._getCapabilityString(
                                 Ci.nsIPermissionManager.ALLOW_ACTION),
             denyText: win.gPermissionManager._getCapabilityString(
@@ -285,7 +289,7 @@ var testRunner = {
                    "property: \"origin\" should be equal");
               }
 
-              Services.obs.removeObserver(permObserver, "perm-changed");
+              os.removeObserver(permObserver, "perm-changed");
 
               let testCase = testRunner.tests[testRunner._currentTest];
               if (!testCase.expectPermObservancesDuringTestFunction) {
@@ -299,7 +303,10 @@ var testRunner = {
             },
           };
 
-          Services.obs.addObserver(permObserver, "perm-changed");
+          let os = Cc["@mozilla.org/observer-service;1"]
+                     .getService(Ci.nsIObserverService);
+
+          os.addObserver(permObserver, "perm-changed");
 
           if (testRunner._currentTest == 0) {
             is(params.tree.view.rowCount, 0, "no cookie exceptions");
@@ -327,7 +334,7 @@ var testRunner = {
         Services.prefs.clearUserPref("privacy.history.custom");
       });
 
-      openPreferencesViaOpenPreferencesAPI("panePrivacy", {leaveOpen: true}).then(function() {
+      openPreferencesViaOpenPreferencesAPI("panePrivacy", null, {leaveOpen: true}).then(function() {
         let doc = gBrowser.contentDocument;
         let historyMode = doc.getElementById("historyMode");
         historyMode.value = "custom";

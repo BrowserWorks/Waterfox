@@ -10,7 +10,6 @@
 #include "HTMLEditUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/EditorUtils.h"
-#include "mozilla/FlushType.h"
 #include "mozilla/dom/Selection.h"
 #include "mozilla/dom/Element.h"
 #include "nsAString.h"
@@ -19,7 +18,7 @@
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsGkAtoms.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIContent.h"
 #include "nsIDOMElement.h"
 #include "nsIDOMNode.h"
@@ -28,6 +27,7 @@
 #include "nsIPresShell.h"
 #include "nsISupportsUtils.h"
 #include "nsITableCellLayout.h" // For efficient access to table cell
+#include "nsITableEditor.h"
 #include "nsLiteralString.h"
 #include "nsQueryFrame.h"
 #include "nsRange.h"
@@ -48,18 +48,18 @@ using namespace dom;
 class MOZ_STACK_CLASS AutoSelectionSetterAfterTableEdit final
 {
 private:
-  RefPtr<HTMLEditor> mHTMLEditor;
+  nsCOMPtr<nsITableEditor> mTableEditor;
   nsCOMPtr<nsIDOMElement> mTable;
   int32_t mCol, mRow, mDirection, mSelected;
 
 public:
-  AutoSelectionSetterAfterTableEdit(HTMLEditor& aHTMLEditor,
+  AutoSelectionSetterAfterTableEdit(nsITableEditor* aTableEditor,
                                     nsIDOMElement* aTable,
                                     int32_t aRow,
                                     int32_t aCol,
                                     int32_t aDirection,
                                     bool aSelected)
-    : mHTMLEditor(&aHTMLEditor)
+    : mTableEditor(aTableEditor)
     , mTable(aTable)
     , mCol(aCol)
     , mRow(aRow)
@@ -70,9 +70,9 @@ public:
 
   ~AutoSelectionSetterAfterTableEdit()
   {
-    if (mHTMLEditor) {
-      mHTMLEditor->SetSelectionAfterTableEdit(mTable, mRow, mCol, mDirection,
-                                              mSelected);
+    if (mTableEditor) {
+      mTableEditor->SetSelectionAfterTableEdit(mTable, mRow, mCol, mDirection,
+                                               mSelected);
     }
   }
 
@@ -80,7 +80,7 @@ public:
   //  when one method yields control to another
   void CancelSetCaret()
   {
-    mHTMLEditor = nullptr;
+    mTableEditor = nullptr;
     mTable = nullptr;
   }
 };
@@ -192,7 +192,7 @@ HTMLEditor::InsertTableCell(int32_t aNumber,
   NS_ENSURE_TRUE(curCell, NS_ERROR_FAILURE);
   int32_t newCellIndex = aAfter ? (startColIndex+colSpan) : startColIndex;
   //We control selection resetting after the insert...
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              newCellIndex, ePreviousColumn,
                                              false);
   //...so suppress Rules System selection munging
@@ -415,7 +415,7 @@ HTMLEditor::InsertTableColumn(int32_t aNumber,
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(curCell, NS_ERROR_FAILURE);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent auto insertion of BR in new cell until we're done
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
@@ -436,7 +436,7 @@ HTMLEditor::InsertTableColumn(int32_t aNumber,
   NS_ENSURE_SUCCESS(rv, rv);
 
   //We reset caret in destructor...
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousRow,
                                              false);
   //.. so suppress Rules System selection munging
@@ -550,7 +550,7 @@ HTMLEditor::InsertTableRow(int32_t aNumber,
   rv = GetTableSize(table, &rowCount, &colCount);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent auto insertion of BR in new cell until we're done
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
@@ -568,7 +568,7 @@ HTMLEditor::InsertTableRow(int32_t aNumber,
   }
 
   //We control selection resetting after the insert...
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousColumn,
                                              false);
   //...so suppress Rules System selection munging
@@ -690,16 +690,9 @@ HTMLEditor::InsertTableRow(int32_t aNumber,
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
-
-  // SetSelectionAfterTableEdit from AutoSelectionSetterAfterTableEdit will
-  // access frame selection, so we need reframe.
-  // Because GetCellAt depends on frame.
-  nsCOMPtr<nsIPresShell> ps = GetPresShell();
-  if (ps) {
-    ps->FlushPendingNotifications(FlushType::Frames);
-  }
-
-  return NS_OK;
+  // XXX This might be the result of the last call of
+  //     CreateElementWithDefaults(), otherwise, NS_OK.
+  return rv;
 }
 
 // Editor helper only
@@ -732,7 +725,7 @@ HTMLEditor::DeleteTable()
                                nullptr, nullptr, nullptr, nullptr, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   return DeleteTable2(table, selection);
 }
 
@@ -755,15 +748,20 @@ HTMLEditor::DeleteTableCell(int32_t aNumber)
   // Don't fail if we didn't find a table or cell
   NS_ENSURE_TRUE(table && cell, NS_SUCCESS_EDITOR_ELEMENT_NOT_FOUND);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent rules testing until we're done
   AutoRules beginRulesSniffing(this, EditAction::deleteNode, nsIEditor::eNext);
 
   nsCOMPtr<nsIDOMElement> firstCell;
-  rv = GetFirstSelectedCell(nullptr, getter_AddRefs(firstCell));
+  nsCOMPtr<nsIDOMRange> range;
+  rv = GetFirstSelectedCell(getter_AddRefs(range), getter_AddRefs(firstCell));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (firstCell && selection->RangeCount() > 1) {
+  int32_t rangeCount;
+  rv = selection->GetRangeCount(&rangeCount);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (firstCell && rangeCount > 1) {
     // When > 1 selected cell,
     //  ignore aNumber and use selected cells
     cell = firstCell;
@@ -778,7 +776,7 @@ HTMLEditor::DeleteTableCell(int32_t aNumber)
 
     // The setCaret object will call AutoSelectionSetterAfterTableEdit in its
     // destructor
-    AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+    AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                                startColIndex, ePreviousColumn,
                                                false);
     AutoTransactionsConserveSelection dontChangeSelection(this);
@@ -854,7 +852,8 @@ HTMLEditor::DeleteTableCell(int32_t aNumber)
         if (!deleteCol) {
           // First get the next cell to delete
           nsCOMPtr<nsIDOMElement> nextCell;
-          rv = GetNextSelectedCell(nullptr, getter_AddRefs(nextCell));
+          rv = GetNextSelectedCell(getter_AddRefs(range),
+                                   getter_AddRefs(nextCell));
           NS_ENSURE_SUCCESS(rv, rv);
 
           // Then delete the cell
@@ -907,7 +906,7 @@ HTMLEditor::DeleteTableCell(int32_t aNumber)
 
         // The setCaret object will call AutoSelectionSetterAfterTableEdit in its
         // destructor
-        AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+        AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                                    startColIndex, ePreviousColumn,
                                                    false);
         AutoTransactionsConserveSelection dontChangeSelection(this);
@@ -938,7 +937,7 @@ HTMLEditor::DeleteTableCellContents()
   NS_ENSURE_TRUE(cell, NS_SUCCESS_EDITOR_ELEMENT_NOT_FOUND);
 
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent rules testing until we're done
   AutoRules beginRulesSniffing(this, EditAction::deleteNode, nsIEditor::eNext);
   //Don't let Rules System change the selection
@@ -946,7 +945,8 @@ HTMLEditor::DeleteTableCellContents()
 
 
   nsCOMPtr<nsIDOMElement> firstCell;
-  rv = GetFirstSelectedCell(nullptr, getter_AddRefs(firstCell));
+  nsCOMPtr<nsIDOMRange> range;
+  rv = GetFirstSelectedCell(getter_AddRefs(range), getter_AddRefs(firstCell));
   NS_ENSURE_SUCCESS(rv, rv);
 
 
@@ -956,7 +956,7 @@ HTMLEditor::DeleteTableCellContents()
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousColumn,
                                              false);
 
@@ -1021,16 +1021,19 @@ HTMLEditor::DeleteTableColumn(int32_t aNumber)
   // Check for counts too high
   aNumber = std::min(aNumber,(colCount-startColIndex));
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent rules testing until we're done
   AutoRules beginRulesSniffing(this, EditAction::deleteNode, nsIEditor::eNext);
 
   // Test if deletion is controlled by selected cells
   nsCOMPtr<nsIDOMElement> firstCell;
-  rv = GetFirstSelectedCell(nullptr, getter_AddRefs(firstCell));
+  nsCOMPtr<nsIDOMRange> range;
+  rv = GetFirstSelectedCell(getter_AddRefs(range), getter_AddRefs(firstCell));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  uint32_t rangeCount = selection->RangeCount();
+  int32_t rangeCount;
+  rv = selection->GetRangeCount(&rangeCount);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   if (firstCell && rangeCount > 1) {
     // Fetch indexes again - may be different for selected cells
@@ -1038,7 +1041,7 @@ HTMLEditor::DeleteTableColumn(int32_t aNumber)
     NS_ENSURE_SUCCESS(rv, rv);
   }
   //We control selection resetting after the insert...
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousRow,
                                              false);
 
@@ -1055,7 +1058,7 @@ HTMLEditor::DeleteTableColumn(int32_t aNumber)
       // to continue after we delete this column
       int32_t nextCol = startColIndex;
       while (nextCol == startColIndex) {
-        rv = GetNextSelectedCell(nullptr, getter_AddRefs(cell));
+        rv = GetNextSelectedCell(getter_AddRefs(range), getter_AddRefs(cell));
         NS_ENSURE_SUCCESS(rv, rv);
         if (!cell) {
           break;
@@ -1184,15 +1187,18 @@ HTMLEditor::DeleteTableRow(int32_t aNumber)
     return DeleteTable2(table, selection);
   }
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent rules testing until we're done
   AutoRules beginRulesSniffing(this, EditAction::deleteNode, nsIEditor::eNext);
 
   nsCOMPtr<nsIDOMElement> firstCell;
-  rv = GetFirstSelectedCell(nullptr, getter_AddRefs(firstCell));
+  nsCOMPtr<nsIDOMRange> range;
+  rv = GetFirstSelectedCell(getter_AddRefs(range), getter_AddRefs(firstCell));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  uint32_t rangeCount = selection->RangeCount();
+  int32_t rangeCount;
+  rv = selection->GetRangeCount(&rangeCount);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   if (firstCell && rangeCount > 1) {
     // Fetch indexes again - may be different for selected cells
@@ -1201,7 +1207,7 @@ HTMLEditor::DeleteTableRow(int32_t aNumber)
   }
 
   //We control selection resetting after the insert...
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousRow,
                                              false);
   // Don't change selection during deletions
@@ -1220,7 +1226,7 @@ HTMLEditor::DeleteTableRow(int32_t aNumber)
       // to continue after we delete this row
       int32_t nextRow = startRowIndex;
       while (nextRow == startRowIndex) {
-        rv = GetNextSelectedCell(nullptr, getter_AddRefs(cell));
+        rv = GetNextSelectedCell(getter_AddRefs(range), getter_AddRefs(cell));
         NS_ENSURE_SUCCESS(rv, rv);
         if (!cell) break;
         rv = GetCellIndexes(cell, &nextRow, &startColIndex);
@@ -1721,12 +1727,12 @@ HTMLEditor::SplitTableCell()
     return NS_OK;
   }
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent auto insertion of BR in new cell until we're done
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
   // We reset selection
-  AutoSelectionSetterAfterTableEdit setCaret(*this, table, startRowIndex,
+  AutoSelectionSetterAfterTableEdit setCaret(this, table, startRowIndex,
                                              startColIndex, ePreviousColumn,
                                              false);
   //...so suppress Rules System selection munging
@@ -1949,7 +1955,7 @@ HTMLEditor::SwitchTableCellHeaderType(nsIDOMElement* aSourceCell,
   nsCOMPtr<Element> sourceCell = do_QueryInterface(aSourceCell);
   NS_ENSURE_TRUE(sourceCell, NS_ERROR_NULL_POINTER);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent auto insertion of BR in new cell created by ReplaceContainer
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
@@ -1961,8 +1967,8 @@ HTMLEditor::SwitchTableCellHeaderType(nsIDOMElement* aSourceCell,
   AutoSelectionRestorer selectionRestorer(selection, this);
 
   // Set to the opposite of current type
-  nsAtom* newCellType =
-    sourceCell->IsHTMLElement(nsGkAtoms::td) ? nsGkAtoms::th : nsGkAtoms::td;
+  nsCOMPtr<nsIAtom> atom = EditorBase::GetTag(aSourceCell);
+  nsIAtom* newCellType = atom == nsGkAtoms::td ? nsGkAtoms::th : nsGkAtoms::td;
 
   // This creates new node, moves children, copies attributes (true)
   //   and manages the selection!
@@ -2002,7 +2008,7 @@ HTMLEditor::JoinTableCells(bool aMergeNonContiguousContents)
     return NS_SUCCESS_EDITOR_ELEMENT_NOT_FOUND;
   }
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   //Don't let Rules System change the selection
   AutoTransactionsConserveSelection dontChangeSelection(this);
 
@@ -2203,10 +2209,12 @@ HTMLEditor::JoinTableCells(bool aMergeNonContiguousContents)
     RefPtr<Selection> selection = GetSelection();
     NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
 
-    uint32_t rangeCount = selection->RangeCount();
+    int32_t rangeCount;
+    rv = selection->GetRangeCount(&rangeCount);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     RefPtr<nsRange> range;
-    for (uint32_t i = 0; i < rangeCount; i++) {
+    for (int32_t i = 0; i < rangeCount; i++) {
       range = selection->GetRangeAt(i);
       NS_ENSURE_TRUE(range, NS_ERROR_FAILURE);
 
@@ -2495,7 +2503,7 @@ HTMLEditor::NormalizeTable(nsIDOMElement* aTable)
   // Save current selection
   AutoSelectionRestorer selectionRestorer(selection, this);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   // Prevent auto insertion of BR in new cell until we're done
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
@@ -2716,8 +2724,8 @@ HTMLEditor::GetCellDataAt(nsIDOMElement* aTable,
   }
 
   *aIsSelected = cellFrame->IsSelected();
-  *aStartRowIndex = cellFrame->RowIndex();
-  *aStartColIndex = cellFrame->ColIndex();
+  cellFrame->GetRowIndex(*aStartRowIndex);
+  cellFrame->GetColIndex(*aStartColIndex);
   *aRowSpan = cellFrame->GetRowSpan();
   *aColSpan = cellFrame->GetColSpan();
   *aActualRowSpan = tableFrame->GetEffectiveRowSpanAt(aRowIndex, aColIndex);
@@ -2914,23 +2922,24 @@ HTMLEditor::GetCellFromRange(nsRange* aRange,
 
   *aCell = nullptr;
 
-  nsCOMPtr<nsINode> startContainer = aRange->GetStartContainer();
-  if (NS_WARN_IF(!startContainer)) {
-    return NS_ERROR_FAILURE;
-  }
+  nsCOMPtr<nsIDOMNode> startContainer;
+  nsresult rv = aRange->GetStartContainer(getter_AddRefs(startContainer));
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(startContainer, NS_ERROR_FAILURE);
 
   uint32_t startOffset = aRange->StartOffset();
 
-  nsCOMPtr<nsINode> childNode = aRange->GetChildAtStartOffset();
+  nsCOMPtr<nsIDOMNode> childNode =
+    GetChildAt(startContainer, static_cast<int32_t>(startOffset));
   // This means selection is probably at a text node (or end of doc?)
   if (!childNode) {
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsINode> endContainer = aRange->GetEndContainer();
-  if (NS_WARN_IF(!endContainer)) {
-    return NS_ERROR_FAILURE;
-  }
+  nsCOMPtr<nsIDOMNode> endContainer;
+  rv = aRange->GetEndContainer(getter_AddRefs(endContainer));
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(startContainer, NS_ERROR_FAILURE);
 
   // If a cell is deleted, the range is collapse
   //   (startOffset == aRange->EndOffset())
@@ -2941,7 +2950,8 @@ HTMLEditor::GetCellFromRange(nsRange* aRange,
     // Should we also test if frame is selected? (Use GetCellDataAt())
     // (Let's not for now -- more efficient)
     nsCOMPtr<nsIDOMElement> cellElement = do_QueryInterface(childNode);
-    cellElement.forget(aCell);
+    *aCell = cellElement.get();
+    NS_ADDREF(*aCell);
     return NS_OK;
   }
   return NS_SUCCESS_EDITOR_ELEMENT_NOT_FOUND;
@@ -3079,20 +3089,19 @@ HTMLEditor::GetFirstSelectedCellInTable(int32_t* aRowIndex,
   return NS_OK;
 }
 
-void
+NS_IMETHODIMP
 HTMLEditor::SetSelectionAfterTableEdit(nsIDOMElement* aTable,
                                        int32_t aRow,
                                        int32_t aCol,
                                        int32_t aDirection,
                                        bool aSelected)
 {
-  if (NS_WARN_IF(!aTable) || Destroyed()) {
-    return;
-  }
+  NS_ENSURE_TRUE(aTable, NS_ERROR_NOT_INITIALIZED);
 
   RefPtr<Selection> selection = GetSelection();
+
   if (!selection) {
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   nsCOMPtr<nsIDOMElement> cell;
@@ -3106,49 +3115,48 @@ HTMLEditor::SetSelectionAfterTableEdit(nsIDOMElement* aTable,
     if (cell) {
       if (aSelected) {
         // Reselect the cell
-        SelectElement(cell);
-        return;
-      }
-
-      // Set the caret to deepest first child
-      //   but don't go into nested tables
-      // TODO: Should we really be placing the caret at the END
-      //  of the cell content?
-      nsCOMPtr<nsINode> cellNode = do_QueryInterface(cell);
-      if (cellNode) {
-        CollapseSelectionToDeepestNonTableFirstChild(selection, cellNode);
-      }
-      return;
-    }
-
-    // Setup index to find another cell in the
-    //   direction requested, but move in other direction if already at
-    //   beginning of row or column
-    switch (aDirection) {
-      case ePreviousColumn:
-        if (!aCol) {
-          if (aRow > 0) {
-            aRow--;
-          } else {
-            done = true;
-          }
-        } else {
-          aCol--;
+        return SelectElement(cell);
+      } else {
+        // Set the caret to deepest first child
+        //   but don't go into nested tables
+        // TODO: Should we really be placing the caret at the END
+        //  of the cell content?
+        nsCOMPtr<nsINode> cellNode = do_QueryInterface(cell);
+        if (cellNode) {
+          CollapseSelectionToDeepestNonTableFirstChild(selection, cellNode);
         }
-        break;
-      case ePreviousRow:
-        if (!aRow) {
-          if (aCol > 0) {
+        return NS_OK;
+      }
+    } else {
+      // Setup index to find another cell in the
+      //   direction requested, but move in
+      //   other direction if already at beginning of row or column
+      switch (aDirection) {
+        case ePreviousColumn:
+          if (!aCol) {
+            if (aRow > 0) {
+              aRow--;
+            } else {
+              done = true;
+            }
+          } else {
             aCol--;
-          } else {
-            done = true;
           }
-        } else {
-          aRow--;
-        }
-        break;
-      default:
-        done = true;
+          break;
+        case ePreviousRow:
+          if (!aRow) {
+            if (aCol > 0) {
+              aCol--;
+            } else {
+              done = true;
+            }
+          } else {
+            aRow--;
+          }
+          break;
+        default:
+          done = true;
+      }
     }
   } while (!done);
 
@@ -3158,12 +3166,11 @@ HTMLEditor::SetSelectionAfterTableEdit(nsIDOMElement* aTable,
   nsresult rv = aTable->GetParentNode(getter_AddRefs(tableParent));
   if (NS_SUCCEEDED(rv) && tableParent) {
     int32_t tableOffset = GetChildOffset(aTable, tableParent);
-    selection->Collapse(tableParent, tableOffset);
-    return;
+    return selection->Collapse(tableParent, tableOffset);
   }
   // Last resort: Set selection to start of doc
   // (it's very bad to not have a valid selection!)
-  SetSelectionAtDocumentStart(selection);
+  return SetSelectionAtDocumentStart(selection);
 }
 
 NS_IMETHODIMP
@@ -3191,33 +3198,47 @@ HTMLEditor::GetSelectedOrParentTableElement(nsAString& aTagName,
   if (tableOrCellElement) {
       // Each cell is in its own selection range,
       //  so count signals multiple-cell selection
-      *aSelectedCount = selection->RangeCount();
+      rv = selection->GetRangeCount(aSelectedCount);
+      NS_ENSURE_SUCCESS(rv, rv);
       aTagName = tdName;
   } else {
-    nsCOMPtr<nsINode> anchorNode = selection->GetAnchorNode();
-    if (NS_WARN_IF(!anchorNode)) {
-      return NS_ERROR_FAILURE;
+    nsCOMPtr<nsIDOMNode> anchorNode;
+    rv = selection->GetAnchorNode(getter_AddRefs(anchorNode));
+    if (NS_FAILED(rv)) {
+      return rv;
     }
+    NS_ENSURE_TRUE(anchorNode, NS_ERROR_FAILURE);
+
+    nsCOMPtr<nsIDOMNode> selectedNode;
 
     // Get child of anchor node, if exists
-    if (anchorNode->HasChildNodes()) {
-      nsINode* selectedNode = selection->GetChildAtAnchorOffset();
+    bool hasChildren;
+    anchorNode->HasChildNodes(&hasChildren);
+
+    if (hasChildren) {
+      int32_t anchorOffset;
+      rv = selection->GetAnchorOffset(&anchorOffset);
+      NS_ENSURE_SUCCESS(rv, rv);
+      selectedNode = GetChildAt(anchorNode, anchorOffset);
       if (!selectedNode) {
         selectedNode = anchorNode;
         // If anchor doesn't have a child, we can't be selecting a table element,
         //  so don't do the following:
       } else {
-        if (selectedNode->IsHTMLElement(nsGkAtoms::td)) {
+        nsCOMPtr<nsIAtom> atom = EditorBase::GetTag(selectedNode);
+
+        if (atom == nsGkAtoms::td) {
           tableOrCellElement = do_QueryInterface(selectedNode);
           aTagName = tdName;
           // Each cell is in its own selection range,
           //  so count signals multiple-cell selection
-          *aSelectedCount = selection->RangeCount();
-        } else if (selectedNode->IsHTMLElement(nsGkAtoms::table)) {
+          rv = selection->GetRangeCount(aSelectedCount);
+          NS_ENSURE_SUCCESS(rv, rv);
+        } else if (atom == nsGkAtoms::table) {
           tableOrCellElement = do_QueryInterface(selectedNode);
           aTagName.AssignLiteral("table");
           *aSelectedCount = 1;
-        } else if (selectedNode->IsHTMLElement(nsGkAtoms::tr)) {
+        } else if (atom == nsGkAtoms::tr) {
           tableOrCellElement = do_QueryInterface(selectedNode);
           aTagName.AssignLiteral("tr");
           *aSelectedCount = 1;
@@ -3226,7 +3247,7 @@ HTMLEditor::GetSelectedOrParentTableElement(nsAString& aTagName,
     }
     if (!tableOrCellElement) {
       // Didn't find a table element -- find a cell parent
-      rv = GetElementOrParentByTagName(tdName, GetAsDOMNode(anchorNode),
+      rv = GetElementOrParentByTagName(tdName, anchorNode,
                                        getter_AddRefs(tableOrCellElement));
       if (NS_FAILED(rv)) {
         return rv;

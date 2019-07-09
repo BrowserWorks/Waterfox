@@ -23,6 +23,7 @@ function confirm_install(window) {
   is(items[0].name, "Signed XPI Test", "Should have had the filename for the item name");
   is(items[0].url, TESTROOT + "signed-untrusted.xpi", "Should have listed the correct url for the item");
   is(items[0].icon, "", "Should have listed no icon for the item");
+  is(items[0].signed, "false", "Should have listed the item as unsigned");
   return true;
 }
 

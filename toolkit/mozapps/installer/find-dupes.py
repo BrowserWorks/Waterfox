@@ -56,7 +56,6 @@ def find_dupes(source, allowed_dupes, bail=True):
     total = 0
     total_compressed = 0
     num_dupes = 0
-    unexpected_dupes = []
     for m, (size, compressed, paths) in sorted(md5s.iteritems(),
                                                key=lambda x: x[1][1]):
         if len(paths) > 1:
@@ -68,22 +67,11 @@ def find_dupes(source, allowed_dupes, bail=True):
             total_compressed += (len(paths) - 1) * compressed
             num_dupes += 1
 
-            for p in paths:
-                if not is_l10n_file(p) and normalize_path(p) not in allowed_dupes:
-                    unexpected_dupes.append(p)
-
     if num_dupes:
         print "WARNING: Found %d duplicated files taking %d bytes (%s)" % \
               (num_dupes, total,
                '%d compressed' % total_compressed if total_compressed != total
                                                   else 'uncompressed')
-
-    if unexpected_dupes:
-        errortype = "ERROR" if bail else "WARNING"
-        print "%s: The following duplicated files are not allowed:" % errortype
-        print "\n".join(unexpected_dupes)
-        if bail:
-            sys.exit(1)
 
 
 def main():
@@ -102,7 +90,7 @@ def main():
     allowed_dupes = []
     for filename in args.dupes_files:
         pp = Preprocessor()
-        pp.context.update(buildconfig.defines['ALLDEFINES'])
+        pp.context.update(buildconfig.defines)
         if args.D:
             pp.context.update(args.D)
         for undefine in args.U:

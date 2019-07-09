@@ -18,6 +18,7 @@
 #include "nsIWindowWatcher.h"
 
 // Printing Progress Includes
+#include "nsPrintProgress.h"
 #include "nsIWebProgressListener.h"
 
 class nsPrintingPromptService: public nsIPrintingPromptService,
@@ -34,6 +35,9 @@ public:
 
 protected:
   virtual ~nsPrintingPromptService();
+
+private:
+  nsCOMPtr<nsIPrintProgress> mPrintProgress;
 };
 
 #endif

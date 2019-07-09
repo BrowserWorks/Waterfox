@@ -20,13 +20,7 @@ button {
 
 /* Category panels */
 
-#categories {
-  display: flex;
-  flex-direction: column;
-}
-
 .category {
-  border: 0 solid transparent;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -69,7 +63,6 @@ button {
 
 .target-icon {
   height: 24px;
-  width: 24px;
   margin-inline-end: 5px;
 }
 
@@ -221,7 +214,6 @@ button {
   margin-bottom: 1em;
   background-image: url(chrome://devtools/skin/images/help.svg);
   background-repeat: no-repeat;
-  background-size: 24px;
   padding-inline-start: 32px;
   height: 24px;
 }

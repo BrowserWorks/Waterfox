@@ -41,9 +41,7 @@ public:
    *  process can ask specific task by sending requestId only.
    */
   nsresult
-  CreatePayment(JSContext* aCx,
-                nsPIDOMWindowInner* aWindow,
-                nsIPrincipal* aTopLevelPrincipal,
+  CreatePayment(nsPIDOMWindowInner* aWindow,
                 const Sequence<PaymentMethodData>& aMethodData,
                 const PaymentDetailsInit& aDetails,
                 const PaymentOptions& aOptions,
@@ -54,8 +52,7 @@ public:
   nsresult AbortPayment(const nsAString& aRequestId);
   nsresult CompletePayment(const nsAString& aRequestId,
                            const PaymentComplete& aComplete);
-  nsresult UpdatePayment(JSContext* aCx,
-                         const nsAString& aRequestId,
+  nsresult UpdatePayment(const nsAString& aRequestId,
                          const PaymentDetailsUpdate& aDetails);
 
   nsresult RespondPayment(const IPCPaymentActionResponse& aResponse);

@@ -34,7 +34,7 @@ nsMathMLmsqrtFrame::Init(nsIContent*       aContent,
 {
   nsMathMLContainerFrame::Init(aContent, aParent, aPrevInFlow);
   AllocateMathMLChar(NOTATION_RADICAL);
-  mNotationsToDraw += NOTATION_RADICAL;
+  mNotationsToDraw |= NOTATION_RADICAL;
 }
 
 NS_IMETHODIMP
@@ -49,7 +49,7 @@ nsMathMLmsqrtFrame::InheritAutomaticData(nsIFrame* aParent)
 
 nsresult
 nsMathMLmsqrtFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                     nsAtom*        aAttribute,
+                                     nsIAtom*        aAttribute,
                                      int32_t         aModType)
 {
   return nsMathMLContainerFrame::

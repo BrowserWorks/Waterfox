@@ -177,7 +177,8 @@ class HTMLElement(object):
             of the DOMRect of the ``HTMLElement``.
         """
         body = {"id": self.id}
-        return self.marionette._send_message("getElementRect", body)
+        return self.marionette._send_message(
+            "getElementRect", body, key="value" if self.marionette.protocol == 1 else None)
 
     def value_of_css_property(self, property_name):
         """Gets the value of the specified CSS property name.
@@ -562,7 +563,7 @@ class Marionette(object):
     DEFAULT_SOCKET_TIMEOUT = 360
 
     def __init__(self, host="localhost", port=2828, app=None, bin=None,
-                 baseurl=None, socket_timeout=None,
+                 baseurl=None, socket_timeout=DEFAULT_SOCKET_TIMEOUT,
                  startup_timeout=None, **instance_args):
         """Construct a holder for the Marionette connection.
 
@@ -599,18 +600,10 @@ class Marionette(object):
         self.chrome_window = None
         self.baseurl = baseurl
         self._test_name = None
+        self.socket_timeout = socket_timeout
         self.crashed = 0
 
-        if socket_timeout is None:
-            self.socket_timeout = self.DEFAULT_SOCKET_TIMEOUT
-        else:
-            self.socket_timeout = float(socket_timeout)
-
-        if startup_timeout is None:
-            self.startup_timeout = self.DEFAULT_STARTUP_TIMEOUT
-        else:
-            self.startup_timeout = int(startup_timeout)
-
+        self.startup_timeout = int(startup_timeout or self.DEFAULT_STARTUP_TIMEOUT)
         if self.bin:
             if not Marionette.is_port_available(self.port, host=self.host):
                 ex_msg = "{0}:{1} is unavailable.".format(self.host, self.port)
@@ -618,7 +611,8 @@ class Marionette(object):
 
             self.instance = GeckoInstance.create(
                 app, host=self.host, port=self.port, bin=self.bin, **instance_args)
-            self.start_binary(self.startup_timeout)
+            self.instance.start()
+            self.raise_for_port(timeout=self.startup_timeout)
 
         self.timeout = Timeouts(self)
 
@@ -626,20 +620,6 @@ class Marionette(object):
     def profile_path(self):
         if self.instance and self.instance.profile:
             return self.instance.profile.profile
-
-    def start_binary(self, timeout):
-        try:
-            self.instance.start()
-            self.raise_for_port(timeout=timeout)
-        except socket.timeout:
-            # Something went wrong with starting up Marionette server. Given
-            # that the process will not quit itself, force a shutdown immediately.
-            self.cleanup()
-
-            msg = "Process killed after {}s because no connection to Marionette "\
-                  "server could be established. Check gecko.log for errors"
-            _, _, tb = sys.exc_info()
-            raise IOError, msg.format(timeout), tb
 
     def cleanup(self):
         if self.session is not None:
@@ -686,8 +666,7 @@ class Marionette(object):
         poll_interval = 0.1
         starttime = datetime.datetime.now()
 
-        timeout_time = starttime + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.now() < timeout_time:
+        while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
             # If the instance we want to connect to is not running return immediately
             if runner is not None and not runner.is_running():
                 return False
@@ -710,6 +689,7 @@ class Marionette(object):
 
         return False
 
+    @do_process_check
     def raise_for_port(self, timeout=None):
         """Raise socket.timeout if no connection can be established.
 
@@ -740,7 +720,15 @@ class Marionette(object):
             raise errors.MarionetteException("Please start a session")
 
         try:
-            msg = self.client.request(name, params)
+            if self.protocol < 3:
+                data = {"name": name}
+                if params is not None:
+                    data["parameters"] = params
+                self.client.send(data)
+                msg = self.client.receive()
+
+            else:
+                msg = self.client.request(name, params)
 
         except IOError:
             self.delete_session(send_request=False)
@@ -768,9 +756,18 @@ class Marionette(object):
             return value
 
     def _handle_error(self, obj):
-        error = obj["error"]
-        message = obj["message"]
-        stacktrace = obj["stacktrace"]
+        if self.protocol == 1:
+            if "error" not in obj or not isinstance(obj["error"], dict):
+                raise errors.MarionetteException(
+                    "Malformed packet, expected key 'error' to be a dict: {}".format(obj))
+            error = obj["error"].get("status")
+            message = obj["error"].get("message")
+            stacktrace = obj["error"].get("stacktrace")
+
+        else:
+            error = obj["error"]
+            message = obj["message"]
+            stacktrace = obj["stacktrace"]
 
         raise errors.lookup(error)(message, stacktrace=stacktrace)
 
@@ -869,7 +866,7 @@ class Marionette(object):
                                value if set is returned. Defaults to `False`.
         :param value_type: Optional, XPCOM interface of the pref's complex value.
                            Defaults to `nsISupportsString`. Other possible values are:
-                           `nsIFile`, and `nsIPrefLocalizedString`.
+                           `nsILocalFile`, and `nsIPrefLocalizedString`.
 
         Usage example::
 
@@ -1030,7 +1027,6 @@ class Marionette(object):
         :throws InvalidArgumentException: If there are multiple
             `shutdown_flags` ending with `"Quit"`.
 
-        :returns: The cause of shutdown.
         """
 
         # The vast majority of this function was implemented inside
@@ -1063,7 +1059,7 @@ class Marionette(object):
         if len(flags) > 0:
             body = {"flags": list(flags)}
 
-        return self._send_message("quitApplication", body, key="cause")
+        self._send_message("quitApplication", body)
 
     @do_process_check
     def quit(self, clean=False, in_app=False, callback=None):
@@ -1086,13 +1082,12 @@ class Marionette(object):
             raise errors.MarionetteException("quit() can only be called "
                                              "on Gecko instances launched by Marionette")
 
-        cause = None
         if in_app:
             if callable(callback):
                 self._send_message("acceptConnections", {"value": False})
                 callback()
             else:
-                cause = self._request_in_app_shutdown()
+                self._request_in_app_shutdown()
 
             # Ensure to explicitely mark the session as deleted
             self.delete_session(send_request=False, reset_session_id=True)
@@ -1110,10 +1105,6 @@ class Marionette(object):
         else:
             self.delete_session(reset_session_id=True)
             self.instance.close(clean=clean)
-
-        if cause not in (None, "shutdown"):
-            raise errors.MarionetteException("Unexpected shutdown reason '{}' for "
-                                             "quitting the process.".format(cause))
 
     @do_process_check
     def restart(self, clean=False, in_app=False, callback=None):
@@ -1133,9 +1124,10 @@ class Marionette(object):
         if not self.instance:
             raise errors.MarionetteException("restart() can only be called "
                                              "on Gecko instances launched by Marionette")
-        context = self._send_message("getContext", key="value")
 
-        cause = None
+        context = self._send_message("getContext", key="value")
+        session_id = self.session_id
+
         if in_app:
             if clean:
                 raise ValueError("An in_app restart cannot be triggered with the clean flag set")
@@ -1144,7 +1136,7 @@ class Marionette(object):
                 self._send_message("acceptConnections", {"value": False})
                 callback()
             else:
-                cause = self._request_in_app_shutdown("eRestart")
+                self._request_in_app_shutdown("eRestart")
 
             # Ensure to explicitely mark the session as deleted
             self.delete_session(send_request=False, reset_session_id=True)
@@ -1163,11 +1155,8 @@ class Marionette(object):
             self.instance.restart(clean=clean)
             self.raise_for_port(timeout=self.DEFAULT_STARTUP_TIMEOUT)
 
-        if cause not in (None, "restart"):
-            raise errors.MarionetteException("Unexpected shutdown reason '{}' for "
-                                             "restarting the process".format(cause))
+        self.start_session(session_id=session_id)
 
-        self.start_session()
         # Restore the context as used before the restart
         self.set_context(context)
 
@@ -1186,63 +1175,43 @@ class Marionette(object):
         return "{0}{1}".format(self.baseurl, relative_url)
 
     @do_process_check
-    def start_session(self, capabilities=None, timeout=None):
-        """Create a new WebDriver session.
+    def start_session(self, capabilities=None, session_id=None, timeout=60):
+        """Create a new Marionette session.
+
         This method must be called before performing any other action.
 
-        :param capabilities: An optional dictionary of
-            Marionette-recognised capabilities.  It does not
-            accept a WebDriver conforming capabilities dictionary
-            (including alwaysMatch, firstMatch, desiredCapabilities,
-            or requriedCapabilities), and only recognises extension
-            capabilities that are specific to Marionette.
-        :param timeout: Optional timeout in seconds for the server to be ready.
-        :returns: A dictionary of the capabilities offered.
-        """
-        if timeout is None:
-            timeout = self.startup_timeout
+        :param capabilities: An optional dict of desired or required capabilities.
+        :param timeout: Timeout in seconds for the server to be ready.
+        :param session_id: unique identifier for the session. If no session id is
+            passed in then one will be generated by the marionette server.
 
+        :returns: A dict of the capabilities offered.
+
+        """
         self.crashed = 0
 
         if self.instance:
             returncode = self.instance.runner.returncode
-            # We're managing a binary which has terminated. Start it again
-            # and implicitely wait for the Marionette server to be ready.
             if returncode is not None:
-                self.start_binary(timeout)
-
-        else:
-            # In the case when Marionette doesn't manage the binary wait until
-            # its server component has been started.
-            self.wait_for_port(timeout=timeout)
+                # We're managing a binary which has terminated, so start it again.
+                self.instance.start()
 
         self.client = transport.TcpTransport(
             self.host,
             self.port,
             self.socket_timeout)
+
+        # Call wait_for_port() before attempting to connect in
+        # the event gecko hasn't started yet.
+        timeout = timeout or self.startup_timeout
+        self.wait_for_port(timeout=timeout)
         self.protocol, _ = self.client.connect()
 
-        body = capabilities
-        if body is None:
-            body = {}
-
-        # Duplicate capabilities object so the body we end up
-        # sending looks like this:
-        #
-        #     {acceptInsecureCerts: true, {capabilities: {acceptInsecureCerts: true}}}
-        #
-        # We do this because geckodriver sends the capabilities at the
-        # top-level, and after bug 1388424 removed support for overriding
-        # the session ID, we also do this with this client.  However,
-        # because this client is used with older Firefoxen (through upgrade
-        # tests et al.) we need to preserve backwards compatibility until
-        # Firefox 60.
-        if "capabilities" not in body and capabilities is not None:
-            body["capabilities"] = dict(capabilities)
-
+        body = {"capabilities": capabilities, "sessionId": session_id}
         resp = self._send_message("newSession", body)
+
         self.session_id = resp["sessionId"]
-        self.session = resp["capabilities"]
+        self.session = resp["value"] if self.protocol == 1 else resp["capabilities"]
         # fallback to processId can be removed in Firefox 55
         self.process_id = self.session.get("moz:processID", self.session.get("processId"))
         self.profile = self.session.get("moz:profile")
@@ -1386,7 +1355,8 @@ class Marionette(object):
         """
         warnings.warn("get_window_position() has been deprecated, please use get_window_rect()",
                       DeprecationWarning)
-        return self._send_message("getWindowPosition")
+        return self._send_message(
+            "getWindowPosition", key="value" if self.protocol == 1 else None)
 
     def set_window_position(self, x, y):
         """Set the position of the current window
@@ -1442,7 +1412,8 @@ class Marionette(object):
 
         :returns: Unordered list of unique window handles as strings
         """
-        return self._send_message("getWindowHandles")
+        return self._send_message(
+            "getWindowHandles", key="value" if self.protocol == 1 else None)
 
     @property
     def chrome_window_handles(self):
@@ -1453,7 +1424,8 @@ class Marionette(object):
 
         :returns: Unordered list of unique chrome window handles as strings
         """
-        return self._send_message("getChromeWindowHandles")
+        return self._send_message(
+            "getChromeWindowHandles", key="value" if self.protocol == 1 else None)
 
     @property
     def page_source(self):
@@ -1882,10 +1854,13 @@ class Marionette(object):
         body = {"value": target, "using": method}
         if id:
             body["element"] = id
-        return self._send_message("findElements", body)
+        return self._send_message(
+            "findElements", body, key="value" if self.protocol == 1 else None)
 
     def get_active_element(self):
         el_or_ref = self._send_message("getActiveElement", key="value")
+        if self.protocol < 3:
+            return HTMLElement(self, el_or_ref)
         return el_or_ref
 
     def add_cookie(self, cookie):
@@ -1951,7 +1926,7 @@ class Marionette(object):
 
         :returns: A list of cookies for the current domain.
         """
-        return self._send_message("getCookies")
+        return self._send_message("getCookies", key="value" if self.protocol == 1 else None)
 
     def screenshot(self, element=None, highlights=None, format="base64",
                    full=True, scroll=True):
@@ -2046,7 +2021,8 @@ class Marionette(object):
         """
         warnings.warn("window_size property has been deprecated, please use get_window_rect()",
                       DeprecationWarning)
-        return self._send_message("getWindowSize")
+        return self._send_message("getWindowSize",
+                                  key="value" if self.protocol == 1 else None)
 
     def set_window_size(self, width, height):
         """Resize the browser window currently in focus.

@@ -20,14 +20,13 @@ macosx64-clang:
         script: build-clang-macosx.sh
         tooltool-downloads: internal
         resources:
-            - 'build/build-clang/build-clang.py'
-            - 'build/build-clang/clang-macosx64.json'
+            - 'build/build-clang/**'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
         toolchain-artifact: public/build/clang.tar.xz
     toolchains:
         - linux64-cctools-port
-        - linux64-clang-3.9
-        - linux64-gcc-4.9
+        - linux64-clang
+        - linux64-gcc
 
 macosx64-clang-tidy:
     description: "Clang-tidy build"
@@ -51,14 +50,13 @@ macosx64-clang-tidy:
         tooltool-downloads: internal
         resources:
             - 'build/clang-plugin/**'
-            - 'build/build-clang/build-clang.py'
-            - 'build/build-clang/clang-tidy-macosx64.json'
+            - 'build/build-clang/**'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
         toolchain-artifact: public/build/clang-tidy.tar.xz
     toolchains:
         - linux64-cctools-port
-        - linux64-clang-3.9
-        - linux64-gcc-4.9
+        - linux64-clang
+        - linux64-gcc
 
 macosx64-cctools-port:
     description: "cctools-port toolchain build"
@@ -82,29 +80,4 @@ macosx64-cctools-port:
         toolchain-artifact: public/build/cctools.tar.bz2
     toolchains:
         - linux64-cctools-port
-        - linux64-clang-3.9
-
-macosx64-gn:
-    description: "gn toolchain build"
-    treeherder:
-        kind: build
-        platform: toolchains/opt
-        symbol: TM(gn)
-        tier: 1
-    worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
-    worker:
-        docker-image: {in-tree: desktop-build}
-        max-run-time: 36000
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-clang.manifest"
-    run:
-        using: toolchain-script
-        script: build-gn-macosx.sh
-        tooltool-downloads: internal
-        resources:
-            - 'taskcluster/scripts/misc/tooltool-download.sh'
-            - 'taskcluster/scripts/misc/build-gn-common.sh'
-        toolchain-artifact: public/build/gn.tar.xz
-    toolchains:
-        - linux64-cctools-port
-        - linux64-clang-3.9
+        - linux64-clang

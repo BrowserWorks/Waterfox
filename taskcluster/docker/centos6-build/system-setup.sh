@@ -284,7 +284,7 @@ curl https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py
 
 tooltool_fetch() {
     cat >manifest.tt
-    python2.7 $BUILD/tooltool.py fetch
+    python $BUILD/tooltool.py fetch
     rm manifest.tt
 }
 
@@ -300,6 +300,12 @@ cd $BUILD
 tooltool_fetch <<'EOF'
 [
 {
+    "size": 17051332,
+    "digest": "57c816a6df9731aa5f34678abb59ea560bbdb5abd01df3f3a001dc94a3695d3190b1121caba483f8d8c4a405f4e53fde63a628527aca73f05652efeaec9621c4",
+    "algorithm": "sha512",
+    "filename": "valgrind-3.10.0-1.x86_64.rpm"
+},
+{
     "size": 830601,
     "digest": "c04dadf29a3ac676e93cb684b619f753584f8414167135eb766602671d08c85d7bc564511310564bdf2651d72da911b017f0969b9a26d84df724aebf8733f268",
     "algorithm": "sha512",
@@ -307,32 +313,20 @@ tooltool_fetch <<'EOF'
 }
 ]
 EOF
+yum install -y valgrind-*.rpm
 yum install -y yasm-*.rpm
 
-# Valgrind
-# Install valgrind from sources to make sure we don't strip symbols
-tooltool_fetch <<'EOF'
+# The source RPM for valgrind; not used here, but included for reference
+: <<'EOF'
 [
 {
-    "size": 14723076,
-    "digest": "34e1013cd3815d30a459b86220e871bb0a6209cc9e87af968f347083693779f022e986f211bdf1a5184ad7370cde12ff2cfca8099967ff94732970bd04a97009",
+    "size": 10767445,
+    "digest": "d435897b602f7bdf77fabf1c80bbd06ba4f7288ad0ef31d19a863546d4651172421b45f2f090bad3c3355c9fa2a00352066f18d99bf994838579b768b90553d3",
     "algorithm": "sha512",
-    "filename": "valgrind-3.13.0.tar.bz2"
+    "filename": "valgrind-3.10.0-1.src.rpm"
 }
 ]
 EOF
-
-valgrind_version=3.13.0
-tar -xjf valgrind-$valgrind_version.tar.bz2
-cd valgrind-$valgrind_version
-
-# This patch by Julian Seward allows us to write a suppression for
-# a leak in a library that gets unloaded before shutdown.
-# ref: https://bugs.kde.org/show_bug.cgi?id=79362
-patch -p0 < /tmp/valgrind-epochs.patch
-
-./configure --prefix=/usr
-make -j$(grep -c ^processor /proc/cpuinfo) install
 
 # Git
 cd $BUILD
@@ -456,8 +450,8 @@ ln -s /usr/local/bin/ninja /usr/local/bin/ninja-build
 
 # note that TC will replace workspace with a cache mount; there's no sense
 # creating anything inside there
-mkdir -p /builds/worker/workspace
-chown worker:worker /builds/worker/workspace
+mkdir -p /home/worker/workspace
+chown worker:worker /home/worker/workspace
 
 # /builds is *not* replaced with a mount in the docker container. The worker
 # user writes to lots of subdirectories, though, so it's owned by that user

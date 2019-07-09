@@ -68,6 +68,11 @@ AnimationInfo::ClearAnimations()
     return;
   }
 
+  if (mManager->AsWebRenderLayerManager()) {
+    mManager->AsWebRenderLayerManager()->
+      AddCompositorAnimationsIdForDiscard(mCompositorAnimationsId);
+  }
+
   mAnimations.Clear();
   mAnimationData.Clear();
 

@@ -148,41 +148,84 @@ PaymentRequestService::SetTestingUIService(nsIPaymentUIService* aUIService)
 }
 
 nsresult
-PaymentRequestService::LaunchUIAction(const nsAString& aRequestId, uint32_t aActionType)
+PaymentRequestService::CallTestingUIAction(const nsAString& aRequestId, uint32_t aActionType)
 {
-  nsCOMPtr<nsIPaymentUIService> uiService;
+  nsCOMPtr<nsIPaymentActionResponse> response;
   nsresult rv;
   if (mTestingUIService) {
-    uiService = mTestingUIService;
-  } else {
-    uiService = do_GetService(NS_PAYMENT_UI_SERVICE_CONTRACT_ID, &rv);
+    switch (aActionType) {
+      case nsIPaymentActionRequest::CANMAKE_ACTION: {
+        rv = mTestingUIService->CanMakePayment(aRequestId, getter_AddRefs(response));
+        break;
+      }
+      case nsIPaymentActionRequest::SHOW_ACTION: {
+        rv = mTestingUIService->ShowPayment(aRequestId, getter_AddRefs(response));
+        break;
+      }
+      case nsIPaymentActionRequest::ABORT_ACTION: {
+        rv = mTestingUIService->AbortPayment(aRequestId, getter_AddRefs(response));
+        break;
+      }
+      case nsIPaymentActionRequest::COMPLETE_ACTION: {
+        rv = mTestingUIService->CompletePayment(aRequestId, getter_AddRefs(response));
+        break;
+      }
+      case nsIPaymentActionRequest::UPDATE_ACTION: {
+        rv = mTestingUIService->UpdatePayment(aRequestId, getter_AddRefs(response));
+        break;
+      }
+      default : {
+        return NS_ERROR_FAILURE;
+      }
+    }
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
+  } else {
+    // Since there is no UI implementation and no testing UI Service is registered,
+    // set false response for canMakePayment(), ABORT_SUCCEEDED for abort() and
+    // COMPLETE_SUCCEEDED for complete().
+    switch (aActionType) {
+      case nsIPaymentActionRequest::CANMAKE_ACTION: {
+        nsCOMPtr<nsIPaymentCanMakeActionResponse> canMakeResponse =
+          do_CreateInstance(NS_PAYMENT_CANMAKE_ACTION_RESPONSE_CONTRACT_ID);
+        MOZ_ASSERT(canMakeResponse);
+        rv = canMakeResponse->Init(aRequestId, false);
+        NS_ENSURE_SUCCESS(rv, rv);
+        response = do_QueryInterface(canMakeResponse);
+        MOZ_ASSERT(response);
+        break;
+      }
+      case nsIPaymentActionRequest::ABORT_ACTION: {
+        nsCOMPtr<nsIPaymentAbortActionResponse> abortResponse =
+          do_CreateInstance(NS_PAYMENT_ABORT_ACTION_RESPONSE_CONTRACT_ID);
+        MOZ_ASSERT(abortResponse);
+        rv = abortResponse->Init(aRequestId, nsIPaymentActionResponse::ABORT_SUCCEEDED);
+        NS_ENSURE_SUCCESS(rv, rv);
+        response = do_QueryInterface(abortResponse);
+        MOZ_ASSERT(response);
+        break;
+      }
+      case nsIPaymentActionRequest::COMPLETE_ACTION: {
+        nsCOMPtr<nsIPaymentCompleteActionResponse> completeResponse =
+          do_CreateInstance(NS_PAYMENT_COMPLETE_ACTION_RESPONSE_CONTRACT_ID);
+        MOZ_ASSERT(completeResponse);
+        rv = completeResponse->Init(aRequestId, nsIPaymentActionResponse::COMPLETE_SUCCEEDED);
+        NS_ENSURE_SUCCESS(rv, rv);
+        response = do_QueryInterface(completeResponse);
+        MOZ_ASSERT(response);
+        break;
+      }
+      default : {
+        break;
+      }
+    }
   }
-  switch (aActionType) {
-    case nsIPaymentActionRequest::SHOW_ACTION: {
-      rv = uiService->ShowPayment(aRequestId);
-      break;
+  if (response) {
+    rv = RespondPayment(response);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
-    case nsIPaymentActionRequest::ABORT_ACTION: {
-      rv = uiService->AbortPayment(aRequestId);
-      break;
-    }
-    case nsIPaymentActionRequest::COMPLETE_ACTION: {
-      rv = uiService->CompletePayment(aRequestId);
-      break;
-    }
-    case nsIPaymentActionRequest::UPDATE_ACTION: {
-      rv = uiService->UpdatePayment(aRequestId);
-      break;
-    }
-    default : {
-      return NS_ERROR_FAILURE;
-    }
-  }
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
   }
   return NS_OK;
 }
@@ -237,10 +280,6 @@ PaymentRequestService::RequestPayment(nsIPaymentActionRequest* aRequest)
       rv = request->GetTabId(&tabId);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      nsCOMPtr<nsIPrincipal> topLevelPrincipal;
-      rv = request->GetTopLevelPrincipal(getter_AddRefs(topLevelPrincipal));
-      NS_ENSURE_SUCCESS(rv, rv);
-
       nsCOMPtr<nsIArray> methodData;
       rv = request->GetMethodData(getter_AddRefs(methodData));
       NS_ENSURE_SUCCESS(rv, rv);
@@ -254,49 +293,55 @@ PaymentRequestService::RequestPayment(nsIPaymentActionRequest* aRequest)
       NS_ENSURE_SUCCESS(rv, rv);
 
       nsCOMPtr<nsIPaymentRequest> payment =
-        new payments::PaymentRequest(tabId, requestId, topLevelPrincipal,
-                                     methodData, details, options);
+        new payments::PaymentRequest(tabId, requestId, methodData, details, options);
 
       if (!mRequestQueue.AppendElement(payment, mozilla::fallible)) {
         return NS_ERROR_OUT_OF_MEMORY;
       }
       break;
     }
+    /*
+     *  TODO: 1. Check third party payment app support by traversing all
+     *           registered third party payment apps.
+     */
     case nsIPaymentActionRequest::CANMAKE_ACTION: {
-      nsCOMPtr<nsIPaymentCanMakeActionResponse> canMakeResponse =
-        do_CreateInstance(NS_PAYMENT_CANMAKE_ACTION_RESPONSE_CONTRACT_ID);
-      MOZ_ASSERT(canMakeResponse);
-      if (CanMakePayment(requestId)) {
+      if (IsBasicCardPayment(requestId)) {
+        nsCOMPtr<nsIPaymentCanMakeActionResponse> canMakeResponse =
+          do_CreateInstance(NS_PAYMENT_CANMAKE_ACTION_RESPONSE_CONTRACT_ID);
+        MOZ_ASSERT(canMakeResponse);
         rv = canMakeResponse->Init(requestId, true);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return rv;
+        }
+        nsCOMPtr<nsIPaymentActionResponse> response = do_QueryInterface(canMakeResponse);
+        MOZ_ASSERT(response);
+        rv = RespondPayment(response);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return rv;
+        }
       } else {
-        rv = canMakeResponse->Init(requestId, false);
-      }
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-      nsCOMPtr<nsIPaymentActionResponse> response = do_QueryInterface(canMakeResponse);
-      MOZ_ASSERT(response);
-      rv = RespondPayment(response);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
+        rv = CallTestingUIAction(requestId, type);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return NS_ERROR_FAILURE;
+        }
       }
       break;
     }
+    /*
+     *  TODO: Launch/inform payment UI here once the UI module is implemented.
+     */
     case nsIPaymentActionRequest::SHOW_ACTION: {
-      if (mShowingRequest || !CanMakePayment(requestId)) {
-        uint32_t responseStatus;
-        if (mShowingRequest) {
-          responseStatus = nsIPaymentActionResponse::PAYMENT_REJECTED;
-        } else {
-          responseStatus = nsIPaymentActionResponse::PAYMENT_NOTSUPPORTED;
-        }
+      if (mShowingRequest) {
+        nsCOMPtr<nsIPaymentResponseData> responseData =
+          do_CreateInstance(NS_GENERAL_RESPONSE_DATA_CONTRACT_ID);
+        MOZ_ASSERT(responseData);
         nsCOMPtr<nsIPaymentShowActionResponse> showResponse =
           do_CreateInstance(NS_PAYMENT_SHOW_ACTION_RESPONSE_CONTRACT_ID);
         MOZ_ASSERT(showResponse);
         rv = showResponse->Init(requestId,
-                                responseStatus,
+                                nsIPaymentActionResponse::PAYMENT_REJECTED,
                                 EmptyString(),
-                                nullptr,
+                                responseData,
                                 EmptyString(),
                                 EmptyString(),
                                 EmptyString());
@@ -311,7 +356,7 @@ PaymentRequestService::RequestPayment(nsIPaymentActionRequest* aRequest)
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return NS_ERROR_FAILURE;
         }
-        rv = LaunchUIAction(requestId, type);
+        rv = CallTestingUIAction(requestId, type);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return NS_ERROR_FAILURE;
         }
@@ -320,7 +365,7 @@ PaymentRequestService::RequestPayment(nsIPaymentActionRequest* aRequest)
     }
     case nsIPaymentActionRequest::ABORT_ACTION:
     case nsIPaymentActionRequest::COMPLETE_ACTION: {
-      rv = LaunchUIAction(requestId, type);
+      rv = CallTestingUIAction(requestId, type);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return NS_ERROR_FAILURE;
       }
@@ -345,7 +390,7 @@ PaymentRequestService::RequestPayment(nsIPaymentActionRequest* aRequest)
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
-      rv = LaunchUIAction(requestId, type);
+      rv = CallTestingUIAction(requestId, type);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return NS_ERROR_FAILURE;
       }
@@ -407,10 +452,10 @@ PaymentRequestService::RespondPayment(nsIPaymentActionResponse* aResponse)
       nsCOMPtr<nsIPaymentShowActionResponse> response =
         do_QueryInterface(aResponse);
       MOZ_ASSERT(response);
-      uint32_t acceptStatus;
-      rv = response->GetAcceptStatus(&acceptStatus);
+      bool isAccepted;
+      rv = response->IsAccepted(&isAccepted);
       NS_ENSURE_SUCCESS(rv, rv);
-      if (acceptStatus != nsIPaymentActionResponse::PAYMENT_ACCEPTED) {
+      if (!isAccepted) {
         mShowingRequest = nullptr;
         mRequestQueue.RemoveElement(request);
       }
@@ -489,16 +534,6 @@ PaymentRequestService::RemoveActionCallback(const nsAString& aRequestId)
   }
   mCallbackHashtable.Remove(aRequestId);
   return NS_OK;
-}
-
-bool
-PaymentRequestService::CanMakePayment(const nsAString& aRequestId)
-{
-  /*
-   *  TODO: Check third party payment app support by traversing all
-   *        registered third party payment apps.
-   */
-  return IsBasicCardPayment(aRequestId);
 }
 
 bool

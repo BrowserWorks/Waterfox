@@ -11,45 +11,17 @@
 
 #include "mozilla/mscom/Ptr.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/TypedEnumBits.h"
 #include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace mscom {
 
-enum class ProxyStreamFlags : uint32_t
-{
-  eDefault = 0,
-  // When ePreservable is set on a ProxyStream, its caller *must* call
-  // GetPreservableStream() before the ProxyStream is destroyed.
-  ePreservable = 1
-};
-
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ProxyStreamFlags);
-
 class ProxyStream final
 {
 public:
-  class MOZ_RAII Environment
-  {
-  public:
-    virtual ~Environment() = default;
-    virtual bool Push() = 0;
-    virtual bool Pop() = 0;
-  };
-
-  class MOZ_RAII DefaultEnvironment : public Environment
-  {
-  public:
-    bool Push() override { return true; }
-    bool Pop() override { return true; }
-  };
-
   ProxyStream();
-  ProxyStream(REFIID aIID, IUnknown* aObject, Environment* aEnv,
-              ProxyStreamFlags aFlags = ProxyStreamFlags::eDefault);
-  ProxyStream(REFIID aIID, const BYTE* aInitBuf, const int aInitBufSize,
-              Environment* aEnv);
+  ProxyStream(REFIID aIID, IUnknown* aObject);
+  ProxyStream(REFIID aIID, const BYTE* aInitBuf, const int aInitBufSize);
 
   ~ProxyStream();
 
@@ -62,13 +34,12 @@ public:
 
   inline bool IsValid() const
   {
-    return !(mUnmarshaledProxy && mStream);
+    return !(mStream && mUnmarshaledProxy);
   }
 
   bool GetInterface(void** aOutInterface);
   const BYTE* GetBuffer(int& aReturnedBufSize) const;
-
-  PreservedStreamPtr GetPreservedStream();
+  RefPtr<IStream> GetStream() const;
 
   bool operator==(const ProxyStream& aOther) const
   {
@@ -76,23 +47,18 @@ public:
   }
 
 private:
+  static already_AddRefed<IStream> InitStream(const BYTE* aInitBuf,
+                                              const UINT aInitBufSize);
+
+private:
   RefPtr<IStream> mStream;
   BYTE*           mGlobalLockedBuf;
   HGLOBAL         mHGlobal;
   int             mBufSize;
   ProxyUniquePtr<IUnknown> mUnmarshaledProxy;
-  bool            mPreserveStream;
+  HRESULT         mUnmarshalResult;
 };
 
-namespace detail {
-
-template <typename Interface>
-struct EnvironmentSelector
-{
-  typedef ProxyStream::DefaultEnvironment Type;
-};
-
-} // namespace detail
 } // namespace mscom
 } // namespace mozilla
 

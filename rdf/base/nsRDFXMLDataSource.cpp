@@ -81,7 +81,7 @@
 #include "nsRDFCID.h"
 #include "nsRDFBaseDataSources.h"
 #include "nsCOMArray.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "plstr.h"
 #include "prio.h"
 #include "prthread.h"
@@ -157,7 +157,7 @@ public:
                                              nsIRDFDataSource)
 
     // nsIRDFDataSource
-    NS_IMETHOD GetURI(nsACString& aURI) override;
+    NS_IMETHOD GetURI(char* *uri) override;
 
     NS_IMETHOD GetSource(nsIRDFResource* property,
                          nsIRDFNode* target,
@@ -497,7 +497,7 @@ RDFXMLDataSourceImpl::BlockingParse(nsIURI* aURL, nsIStreamListener* aConsumer)
     // Wrap the channel's input stream in a buffered stream to ensure that
     // ReadSegments is implemented (which OnDataAvailable expects).
     nsCOMPtr<nsIInputStream> bufStream;
-    rv = NS_NewBufferedInputStream(getter_AddRefs(bufStream), in.forget(),
+    rv = NS_NewBufferedInputStream(getter_AddRefs(bufStream), in,
                                    4096 /* buffer size */);
     if (NS_FAILED(rv)) return rv;
 
@@ -596,14 +596,22 @@ RDFXMLDataSourceImpl::Init(const char* uri)
 
 
 NS_IMETHODIMP
-RDFXMLDataSourceImpl::GetURI(nsACString& aURI)
+RDFXMLDataSourceImpl::GetURI(char* *aURI)
 {
+    *aURI = nullptr;
     if (!mURL) {
-        aURI.SetIsVoid(true);
         return NS_OK;
     }
 
-    return mURL->GetSpec(aURI);
+    nsAutoCString spec;
+    nsresult rv = mURL->GetSpec(spec);
+    NS_ENSURE_SUCCESS(rv, rv);
+    *aURI = ToNewCString(spec);
+    if (!*aURI) {
+        return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1052,7 +1060,7 @@ RDFXMLDataSourceImpl::EndLoad(void)
 }
 
 NS_IMETHODIMP
-RDFXMLDataSourceImpl::AddNameSpace(nsAtom* aPrefix, const nsString& aURI)
+RDFXMLDataSourceImpl::AddNameSpace(nsIAtom* aPrefix, const nsString& aURI)
 {
     mNameSpaces.Put(aURI, aPrefix);
     return NS_OK;

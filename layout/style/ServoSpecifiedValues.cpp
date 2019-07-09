@@ -28,19 +28,29 @@ ServoSpecifiedValues::ServoSpecifiedValues(nsPresContext* aContext,
 bool
 ServoSpecifiedValues::PropertyIsSet(nsCSSPropertyID aId)
 {
-  return Servo_DeclarationBlock_PropertyIsSet(mDecl, aId);
+  // We always create fresh ServoSpecifiedValues for each property
+  // mapping, so unlike Gecko there aren't existing properties from
+  // the cascade that we wish to avoid overwriting.
+  //
+  // If a property is being overwritten, that's a bug. Check for it
+  // in debug mode (this is O(n^2) behavior since Servo will traverse
+  // the array each time you add a new property)
+  MOZ_ASSERT(!Servo_DeclarationBlock_PropertyIsSet(mDecl, aId),
+             "Presentation attribute mappers should never attempt to set the "
+             "same property twice");
+  return false;
 }
 
 void
 ServoSpecifiedValues::SetIdentStringValue(nsCSSPropertyID aId,
                                           const nsString& aValue)
 {
-  RefPtr<nsAtom> atom = NS_Atomize(aValue);
+  nsCOMPtr<nsIAtom> atom = NS_Atomize(aValue);
   SetIdentAtomValue(aId, atom);
 }
 
 void
-ServoSpecifiedValues::SetIdentAtomValue(nsCSSPropertyID aId, nsAtom* aValue)
+ServoSpecifiedValues::SetIdentAtomValue(nsCSSPropertyID aId, nsIAtom* aValue)
 {
   Servo_DeclarationBlock_SetIdentStringValue(mDecl, aId, aValue);
   if (aId == eCSSProperty__x_lang) {
@@ -121,10 +131,6 @@ ServoSpecifiedValues::SetTextDecorationColorOverride()
 void
 ServoSpecifiedValues::SetBackgroundImage(nsAttrValue& aValue)
 {
-  if (aValue.Type() != nsAttrValue::eURL &&
-      aValue.Type() != nsAttrValue::eImage) {
-    return;
-  }
   nsAutoString str;
   aValue.ToString(str);
   Servo_DeclarationBlock_SetBackgroundImage(

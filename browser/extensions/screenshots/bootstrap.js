@@ -1,29 +1,22 @@
 /* globals ADDON_DISABLE */
-// TODO: re-enable
-/* eslint-disable */
 const OLD_ADDON_PREF_NAME = "extensions.jid1-NeEaf3sAHdKHPA@jetpack.deviceIdInfo";
 const OLD_ADDON_ID = "jid1-NeEaf3sAHdKHPA@jetpack";
 const ADDON_ID = "screenshots@mozilla.org";
 const TELEMETRY_ENABLED_PREF = "datareporting.healthreport.uploadEnabled";
 const PREF_BRANCH = "extensions.screenshots.";
 const USER_DISABLE_PREF = "extensions.screenshots.disabled";
+const SYSTEM_DISABLE_PREF = "extensions.screenshots.system-disabled";
 
 const { interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Console",
                                   "resource://gre/modules/Console.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
-                                  "resource:///modules/CustomizableUI.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "LegacyExtensionsUtils",
-                                  "resource://gre/modules/LegacyExtensionsUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "PageActions",
-                                  "resource:///modules/PageActions.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LegacyExtensionsUtils",
+                                  "resource://gre/modules/LegacyExtensionsUtils.jsm");
 
 let addonResourceURI;
 let appStartupDone;
@@ -44,7 +37,7 @@ const prefObserver = {
   observe(aSubject, aTopic, aData) {
     // aSubject is the nsIPrefBranch we're observing (after appropriate QI)
     // aData is the name of the pref that's been changed (relative to aSubject)
-    if (aData == USER_DISABLE_PREF) {
+    if (aData == USER_DISABLE_PREF || aData == SYSTEM_DISABLE_PREF) {
       // eslint-disable-next-line promise/catch-or-return
       appStartupPromise = appStartupPromise.then(handleStartup);
     }
@@ -66,63 +59,7 @@ const appStartupObserver = {
   }
 }
 
-const LibraryButton = {
-  ITEM_ID: "appMenu-library-screenshots",
-
-  init(webExtension) {
-    this._initialized = true;
-    let permissionPages = [...webExtension.extension.permissions].filter(p => (/^https?:\/\//i).test(p));
-    if (permissionPages.length > 1) {
-      Cu.reportError(new Error("Should not have more than 1 permission page, but got: " + JSON.stringify(permissionPages)));
-    }
-    this.PAGE_TO_OPEN = permissionPages.length == 1 ? permissionPages[0].replace(/\*$/, "") : "https://screenshots.firefox.com/";
-    this.PAGE_TO_OPEN += "shots";
-    this.ICON_URL = webExtension.extension.getURL("icons/icon-16-v2.svg");
-    this.ICON_URL_2X = webExtension.extension.getURL("icons/icon-32-v2.svg");
-    this.LABEL = webExtension.extension.localizeMessage("libraryLabel");
-    CustomizableUI.addListener(this);
-    for (let win of CustomizableUI.windows) {
-      this.onWindowOpened(win);
-    }
-  },
-
-  uninit() {
-    if (!this._initialized) {
-      return;
-    }
-    for (let win of CustomizableUI.windows) {
-      let item = win.document.getElementById(this.ITEM_ID);
-      if (item) {
-        item.remove();
-      }
-    }
-    CustomizableUI.removeListener(this);
-    this._initialized = false;
-  },
-
-  onWindowOpened(win) {
-    let libraryViewInsertionPoint = win.document.getElementById("appMenu-library-remotetabs-button");
-    // If the library view doesn't exist (on non-photon builds, for instance),
-    // this will be null, and we bail out early.
-    if (!libraryViewInsertionPoint) {
-      return;
-    }
-    let parent = libraryViewInsertionPoint.parentNode;
-    let {nextSibling} = libraryViewInsertionPoint;
-    let item = win.document.createElement("toolbarbutton");
-    item.className = "subviewbutton subviewbutton-iconic";
-    item.addEventListener("command", () => win.openUILinkIn(this.PAGE_TO_OPEN, "tab"));
-    item.id = this.ITEM_ID;
-    let iconURL = win.devicePixelRatio >= 1.1 ? this.ICON_URL_2X : this.ICON_URL;
-    item.setAttribute("image", iconURL);
-    item.setAttribute("label", this.LABEL);
-
-    parent.insertBefore(item, nextSibling);
-  },
-};
-
 const APP_STARTUP = 1;
-const APP_SHUTDOWN = 2;
 let startupReason;
 
 function startup(data, reason) { // eslint-disable-line no-unused-vars
@@ -162,7 +99,7 @@ function getBoolPref(pref) {
 }
 
 function shouldDisable() {
-  return getBoolPref(USER_DISABLE_PREF);
+  return getBoolPref(USER_DISABLE_PREF) || getBoolPref(SYSTEM_DISABLE_PREF);
 }
 
 function handleStartup() {
@@ -181,8 +118,7 @@ function handleStartup() {
 function start(webExtension) {
   return webExtension.startup(startupReason).then((api) => {
     api.browser.runtime.onMessage.addListener(handleMessage);
-    LibraryButton.init(webExtension);
-    initPhotonPageAction(api, webExtension);
+    return Promise.resolve(null);
   }).catch((err) => {
     // The startup() promise will be rejected if the webExtension was
     // already started (a harmless error), or if initializing the
@@ -195,13 +131,6 @@ function start(webExtension) {
 }
 
 function stop(webExtension, reason) {
-  if (reason != APP_SHUTDOWN) {
-    LibraryButton.uninit();
-    if (photonPageAction) {
-      photonPageAction.remove();
-      photonPageAction = null;
-    }
-  }
   return Promise.resolve(webExtension.shutdown(reason));
 }
 
@@ -226,58 +155,4 @@ function handleMessage(msg, sender, sendReply) {
     });
     return true;
   }
-}
-
-let photonPageAction;
-
-// If the current Firefox version supports Photon (57 and later), this sets up
-// a Photon page action and removes the UI for the WebExtension browser action.
-// Does nothing otherwise.  Ideally, in the future, WebExtension page actions
-// and Photon page actions would be one in the same, but they aren't right now.
-function initPhotonPageAction(api, webExtension) {
-  let id = "screenshots";
-  let port = null;
-
-  let {tabManager} = webExtension.extension;
-
-  // Make the page action.
-  photonPageAction = PageActions.actionForID(id) || PageActions.addAction(new PageActions.Action({
-    id,
-    title: "Take a Screenshot",
-    iconURL: webExtension.extension.getURL("icons/icon-32-v2.svg"),
-    _insertBeforeActionID: null,
-    onCommand(event, buttonNode) {
-      if (port) {
-        let browserWin = buttonNode.ownerGlobal;
-        let tab = tabManager.getWrapper(browserWin.gBrowser.selectedTab);
-        port.postMessage({
-          type: "click",
-          tab: {id: tab.id, url: tab.url}
-        });
-      }
-    },
-  }));
-
-  // Establish a port to the WebExtension side.
-  api.browser.runtime.onConnect.addListener((listenerPort) => {
-    if (listenerPort.name != "photonPageActionPort") {
-      return;
-    }
-    port = listenerPort;
-    port.onMessage.addListener((message) => {
-      switch (message.type) {
-      case "setProperties":
-        if (message.title) {
-          photonPageAction.title = message.title;
-        }
-        if (message.iconPath) {
-          photonPageAction.iconURL = webExtension.extension.getURL(message.iconPath);
-        }
-        break;
-      default:
-        console.error("Unrecognized message:", message);
-        break;
-      }
-    });
-  });
 }

@@ -5,9 +5,10 @@
 description: |
     Objects whose specified symbol property is not enumerable do not satisfy the
     assertion.
-includes: [propertyHelper.js,sta.js]
+includes: [propertyHelper.js]
 features: [Symbol]
 ---*/
+
 var threw = false;
 var obj = {};
 var s = Symbol('1');
@@ -28,7 +29,9 @@ try {
 }
 
 if (threw === false) {
-  $ERROR('Expected a Test262Error, but no error was thrown.');
+  throw new Test262Error(
+    'Expected a Test262Error, but no error was thrown for symbol key.'
+  );
 }
 
 reportCompare(0, 0);

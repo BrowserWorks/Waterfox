@@ -12,6 +12,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
+                                  "resource://gre/modules/Deprecated.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "asyncHistory", function() {
   // Lazily add an history observer when it's actually needed.
@@ -354,9 +356,6 @@ LivemarkService.prototype = {
     });
   },
 
-  skipDescendantsOnItemRemoval: false,
-  skipTags: true,
-
   // nsINavHistoryObserver
 
   onPageChanged() {},
@@ -467,7 +466,7 @@ Livemark.prototype = {
     if (!aSiteURI) {
       PlacesUtils.annotations.removeItemAnnotation(this.id,
                                                    PlacesUtils.LMANNO_SITEURI,
-                                                   aSource);
+                                                   aSource)
       this.siteURI = null;
       return;
     }
@@ -710,7 +709,7 @@ Livemark.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
     Ci.mozILivemark
   ])
-};
+}
 
 // LivemarkLoadListener
 
@@ -872,6 +871,6 @@ LivemarkLoadListener.prototype = {
     Ci.nsIRequestObserver,
     Ci.nsIInterfaceRequestor
   ])
-};
+}
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([LivemarkService]);

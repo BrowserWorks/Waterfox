@@ -3,13 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use dom::attr::Attr;
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::EventBinding::EventMethods;
 use dom::bindings::codegen::Bindings::HTMLTextAreaElementBinding;
 use dom::bindings::codegen::Bindings::HTMLTextAreaElementBinding::HTMLTextAreaElementMethods;
 use dom::bindings::codegen::Bindings::NodeBinding::NodeMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{DomRoot, LayoutDom, MutNullableDom};
+use dom::bindings::js::{LayoutJS, MutNullableJS, Root};
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::element::{AttributeMutation, Element};
@@ -27,7 +27,8 @@ use dom::validation::Validatable;
 use dom::virtualmethods::VirtualMethods;
 use dom_struct::dom_struct;
 use html5ever::{LocalName, Prefix};
-use script_traits::ScriptToConstellationChan;
+use ipc_channel::ipc::IpcSender;
+use script_traits::ScriptMsg as ConstellationMsg;
 use std::cell::Cell;
 use std::default::Default;
 use std::ops::Range;
@@ -38,12 +39,12 @@ use textinput::{KeyReaction, Lines, SelectionDirection, TextInput};
 #[dom_struct]
 pub struct HTMLTextAreaElement {
     htmlelement: HTMLElement,
-    #[ignore_malloc_size_of = "#7193"]
-    textinput: DomRefCell<TextInput<ScriptToConstellationChan>>,
-    placeholder: DomRefCell<DOMString>,
+    #[ignore_heap_size_of = "#7193"]
+    textinput: DOMRefCell<TextInput<IpcSender<ConstellationMsg>>>,
+    placeholder: DOMRefCell<DOMString>,
     // https://html.spec.whatwg.org/multipage/#concept-textarea-dirty
     value_changed: Cell<bool>,
-    form_owner: MutNullableDom<HTMLFormElement>,
+    form_owner: MutNullableJS<HTMLFormElement>,
 }
 
 pub trait LayoutHTMLTextAreaElementHelpers {
@@ -57,7 +58,7 @@ pub trait LayoutHTMLTextAreaElementHelpers {
     fn get_rows(self) -> u32;
 }
 
-impl LayoutHTMLTextAreaElementHelpers for LayoutDom<HTMLTextAreaElement> {
+impl LayoutHTMLTextAreaElementHelpers for LayoutJS<HTMLTextAreaElement> {
     #[allow(unrooted_must_root)]
     #[allow(unsafe_code)]
     unsafe fn get_value_for_layout(self) -> String {
@@ -108,13 +109,13 @@ impl HTMLTextAreaElement {
     fn new_inherited(local_name: LocalName,
                      prefix: Option<Prefix>,
                      document: &Document) -> HTMLTextAreaElement {
-        let chan = document.window().upcast::<GlobalScope>().script_to_constellation_chan().clone();
+        let chan = document.window().upcast::<GlobalScope>().constellation_chan().clone();
         HTMLTextAreaElement {
             htmlelement:
                 HTMLElement::new_inherited_with_state(IN_ENABLED_STATE | IN_READ_WRITE_STATE,
                                                       local_name, prefix, document),
-            placeholder: DomRefCell::new(DOMString::new()),
-            textinput: DomRefCell::new(TextInput::new(
+            placeholder: DOMRefCell::new(DOMString::new()),
+            textinput: DOMRefCell::new(TextInput::new(
                     Lines::Multiple, DOMString::new(), chan, None, None, SelectionDirection::None)),
             value_changed: Cell::new(false),
             form_owner: Default::default(),
@@ -124,8 +125,8 @@ impl HTMLTextAreaElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLTextAreaElement> {
-        Node::reflect_node(Box::new(HTMLTextAreaElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLTextAreaElement> {
+        Node::reflect_node(box HTMLTextAreaElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLTextAreaElementBinding::Wrap)
     }
@@ -156,7 +157,7 @@ impl HTMLTextAreaElementMethods for HTMLTextAreaElement {
     make_bool_setter!(SetDisabled, "disabled");
 
     // https://html.spec.whatwg.org/multipage/#dom-fae-form
-    fn GetForm(&self) -> Option<DomRoot<HTMLFormElement>> {
+    fn GetForm(&self) -> Option<Root<HTMLFormElement>> {
         self.form_owner()
     }
 
@@ -232,7 +233,7 @@ impl HTMLTextAreaElementMethods for HTMLTextAreaElement {
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-lfe-labels
-    fn Labels(&self) -> DomRoot<NodeList> {
+    fn Labels(&self) -> Root<NodeList> {
         self.upcast::<HTMLElement>().labels()
     }
 
@@ -441,7 +442,7 @@ impl VirtualMethods for HTMLTextAreaElement {
 }
 
 impl FormControl for HTMLTextAreaElement {
-    fn form_owner(&self) -> Option<DomRoot<HTMLFormElement>> {
+    fn form_owner(&self) -> Option<Root<HTMLFormElement>> {
         self.form_owner.get()
     }
 

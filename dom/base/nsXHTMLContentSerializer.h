@@ -15,11 +15,12 @@
 
 #include "mozilla/Attributes.h"
 #include "nsXMLContentSerializer.h"
+#include "nsIEntityConverter.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
 class nsIContent;
-class nsAtom;
+class nsIAtom;
 
 namespace mozilla {
 class Encoding;
@@ -65,10 +66,10 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
   virtual void AfterElementEnd(nsIContent * aContent,
                                nsAString& aStr) override;
 
-  virtual bool LineBreakBeforeOpen(int32_t aNamespaceID, nsAtom* aName) override;
-  virtual bool LineBreakAfterOpen(int32_t aNamespaceID, nsAtom* aName) override;
-  virtual bool LineBreakBeforeClose(int32_t aNamespaceID, nsAtom* aName) override;
-  virtual bool LineBreakAfterClose(int32_t aNamespaceID, nsAtom* aName) override;
+  virtual bool LineBreakBeforeOpen(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakAfterOpen(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakBeforeClose(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakAfterClose(int32_t aNamespaceID, nsIAtom* aName) override;
 
   bool HasLongLines(const nsString& text, int32_t& aLastNewlineOffset);
 
@@ -81,7 +82,7 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
                            nsIContent *aOriginalElement,
                            nsAString& aTagPrefix,
                            const nsAString& aTagNamespaceURI,
-                           nsAtom* aTagName,
+                           nsIAtom* aTagName,
                            nsAString& aStr,
                            uint32_t aSkipAttr,
                            bool aAddNSAttr) override;
@@ -91,8 +92,8 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
   MOZ_MUST_USE
   bool SerializeLIValueAttribute(nsIContent* aElement,
                                  nsAString& aStr);
-  bool IsShorthandAttr(const nsAtom* aAttrName,
-                         const nsAtom* aElementName);
+  bool IsShorthandAttr(const nsIAtom* aAttrName,
+                         const nsIAtom* aElementName);
 
   MOZ_MUST_USE
   virtual bool AppendAndTranslateEntities(const nsAString& aStr,
@@ -102,6 +103,7 @@ private:
   bool IsElementPreformatted(nsIContent* aNode);
 
 protected:
+  nsCOMPtr<nsIEntityConverter> mEntityConverter;
 
   /*
    * isHTMLParser should be set to true by the HTML parser which inherits from

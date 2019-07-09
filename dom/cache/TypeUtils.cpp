@@ -78,7 +78,7 @@ ToHeadersEntryList(nsTArray<HeadersEntry>& aOut, InternalHeaders* aHeaders)
 } // namespace
 
 already_AddRefed<InternalRequest>
-TypeUtils::ToInternalRequest(JSContext* aCx, const RequestOrUSVString& aIn,
+TypeUtils::ToInternalRequest(const RequestOrUSVString& aIn,
                              BodyAction aBodyAction, ErrorResult& aRv)
 {
   if (aIn.IsRequest()) {
@@ -86,7 +86,7 @@ TypeUtils::ToInternalRequest(JSContext* aCx, const RequestOrUSVString& aIn,
 
     // Check and set bodyUsed flag immediately because its on Request
     // instead of InternalRequest.
-    CheckAndSetBodyUsed(aCx, &request, aBodyAction, aRv);
+    CheckAndSetBodyUsed(&request, aBodyAction, aRv);
     if (aRv.Failed()) { return nullptr; }
 
     return request.GetInternalRequest();
@@ -96,8 +96,7 @@ TypeUtils::ToInternalRequest(JSContext* aCx, const RequestOrUSVString& aIn,
 }
 
 already_AddRefed<InternalRequest>
-TypeUtils::ToInternalRequest(JSContext* aCx,
-                             const OwningRequestOrUSVString& aIn,
+TypeUtils::ToInternalRequest(const OwningRequestOrUSVString& aIn,
                              BodyAction aBodyAction, ErrorResult& aRv)
 {
 
@@ -106,7 +105,7 @@ TypeUtils::ToInternalRequest(JSContext* aCx,
 
     // Check and set bodyUsed flag immediately because its on Request
     // instead of InternalRequest.
-    CheckAndSetBodyUsed(aCx, request, aBodyAction, aRv);
+    CheckAndSetBodyUsed(request, aBodyAction, aRv);
     if (aRv.Failed()) { return nullptr; }
 
     return request->GetInternalRequest();
@@ -201,13 +200,10 @@ TypeUtils::ToCacheResponseWithoutBody(CacheResponse& aOut,
   } else {
     aOut.principalInfo() = void_t();
   }
-
-  aOut.paddingInfo() = aIn.GetPaddingInfo();
-  aOut.paddingSize() = aIn.GetPaddingSize();
 }
 
 void
-TypeUtils::ToCacheResponse(JSContext* aCx, CacheResponse& aOut, Response& aIn,
+TypeUtils::ToCacheResponse(CacheResponse& aOut, Response& aIn,
                            nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
                            ErrorResult& aRv)
 {
@@ -225,10 +221,7 @@ TypeUtils::ToCacheResponse(JSContext* aCx, CacheResponse& aOut, Response& aIn,
   nsCOMPtr<nsIInputStream> stream;
   ir->GetUnfilteredBody(getter_AddRefs(stream));
   if (stream) {
-    aIn.SetBodyUsed(aCx, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+    aIn.SetBodyUsed();
   }
 
   SerializeCacheStream(stream, &aOut.body(), aStreamCleanupList, aRv);
@@ -258,7 +251,7 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
 {
   if (aIn.type() == ResponseType::Error) {
     RefPtr<InternalResponse> error = InternalResponse::NetworkError();
-    RefPtr<Response> r = new Response(GetGlobalObject(), error, nullptr);
+    RefPtr<Response> r = new Response(GetGlobalObject(), error);
     return r.forget();
   }
 
@@ -307,9 +300,7 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
   }
   MOZ_DIAGNOSTIC_ASSERT(ir);
 
-  ir->SetPaddingSize(aIn.paddingSize());
-
-  RefPtr<Response> ref = new Response(GetGlobalObject(), ir, nullptr);
+  RefPtr<Response> ref = new Response(GetGlobalObject(), ir);
   return ref.forget();
 }
 already_AddRefed<InternalRequest>
@@ -343,7 +334,7 @@ TypeUtils::ToInternalRequest(const CacheRequest& aIn)
 
   nsCOMPtr<nsIInputStream> stream = ReadStream::Create(aIn.body());
 
-  internalRequest->SetBody(stream, -1);
+  internalRequest->SetBody(stream);
 
   return internalRequest.forget();
 }
@@ -352,8 +343,7 @@ already_AddRefed<Request>
 TypeUtils::ToRequest(const CacheRequest& aIn)
 {
   RefPtr<InternalRequest> internalRequest = ToInternalRequest(aIn);
-  RefPtr<Request> request =
-    new Request(GetGlobalObject(), internalRequest, nullptr);
+  RefPtr<Request> request = new Request(GetGlobalObject(), internalRequest);
   return request.forget();
 }
 
@@ -435,8 +425,8 @@ TypeUtils::ProcessURL(nsACString& aUrl, bool* aSchemeValidOut,
 }
 
 void
-TypeUtils::CheckAndSetBodyUsed(JSContext* aCx, Request* aRequest,
-                               BodyAction aBodyAction, ErrorResult& aRv)
+TypeUtils::CheckAndSetBodyUsed(Request* aRequest, BodyAction aBodyAction,
+                               ErrorResult& aRv)
 {
   MOZ_DIAGNOSTIC_ASSERT(aRequest);
 
@@ -452,10 +442,7 @@ TypeUtils::CheckAndSetBodyUsed(JSContext* aCx, Request* aRequest,
   nsCOMPtr<nsIInputStream> stream;
   aRequest->GetBody(getter_AddRefs(stream));
   if (stream) {
-    aRequest->SetBodyUsed(aCx, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+    aRequest->SetBodyUsed();
   }
 }
 

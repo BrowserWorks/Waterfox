@@ -173,10 +173,7 @@ def writeMappingsVar(intlData, dict, name, description, fileDate, url):
         variable name and a comment with description, fileDate, and URL.
     """
     intlData.write("\n")
-    if type(description) is not list:
-        description = [description]
-    for desc in description:
-        intlData.write("// {0}\n".format(desc))
+    intlData.write("// {0}.\n".format(description))
     intlData.write("// Derived from IANA Language Subtag Registry, file date {0}.\n".format(fileDate))
     intlData.write("// {0}\n".format(url))
     intlData.write("var {0} = {{\n".format(name))
@@ -187,9 +184,7 @@ def writeMappingsVar(intlData, dict, name, description, fileDate, url):
         else:
             preferred = dict[key]["preferred"]
             prefix = dict[key]["prefix"]
-            if key != preferred:
-                raise Exception("Expected '{0}' matches preferred locale '{1}'".format(key, preferred))
-            value = '"{0}"'.format(prefix)
+            value = '{{preferred: "{0}", prefix: "{1}"}}'.format(preferred, prefix)
         intlData.write('    "{0}": {1},\n'.format(key, value))
     intlData.write("};\n")
 
@@ -197,15 +192,11 @@ def writeMappingsVar(intlData, dict, name, description, fileDate, url):
 def writeLanguageTagData(intlData, fileDate, url, langTagMappings, langSubtagMappings, extlangMappings):
     """ Writes the language tag data to the Intl data file. """
     writeMappingsVar(intlData, langTagMappings, "langTagMappings",
-                     "Mappings from complete tags to preferred values.", fileDate, url)
+                     "Mappings from complete tags to preferred values", fileDate, url)
     writeMappingsVar(intlData, langSubtagMappings, "langSubtagMappings",
-                     "Mappings from non-extlang subtags to preferred values.", fileDate, url)
+                     "Mappings from non-extlang subtags to preferred values", fileDate, url)
     writeMappingsVar(intlData, extlangMappings, "extlangMappings",
-                     ["Mappings from extlang subtags to preferred values.",
-                      "All current deprecated extlang subtags have the form `<prefix>-<extlang>`",
-                      "and their preferred value is exactly equal to `<extlang>`. So each key in",
-                      "extlangMappings acts both as the extlang subtag and its preferred value."],
-                     fileDate, url)
+                     "Mappings from extlang subtags to preferred values", fileDate, url)
 
 def updateLangTags(args):
     """ Update the IntlData.js file. """

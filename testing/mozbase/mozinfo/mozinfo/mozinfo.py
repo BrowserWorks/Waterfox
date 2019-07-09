@@ -65,8 +65,7 @@ info = {'os': unknown,
         'version': unknown,
         'os_version': unknown,
         'bits': unknown,
-        'has_sandbox': unknown,
-        'webrender': bool(os.environ.get("MOZ_WEBRENDER", False))}
+        'has_sandbox': unknown}
 (system, node, release, version, machine, processor) = platform.uname()
 (bits, linkage) = platform.architecture()
 

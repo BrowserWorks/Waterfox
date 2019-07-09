@@ -6,12 +6,15 @@
 #ifndef nsTreeStyleCache_h__
 #define nsTreeStyleCache_h__
 
-#include "mozilla/AtomArray.h"
 #include "mozilla/Attributes.h"
 #include "nsAutoPtr.h"
+#include "nsIAtom.h"
 #include "nsCOMArray.h"
+#include "nsICSSPseudoComparator.h"
 #include "nsRefPtrHashtable.h"
 #include "nsStyleContext.h"
+
+typedef nsCOMArray<nsIAtom> AtomArray;
 
 class nsTreeStyleCache
 {
@@ -33,11 +36,12 @@ public:
     mNextState = 0;
   }
 
-  nsStyleContext* GetStyleContext(nsPresContext* aPresContext,
+  nsStyleContext* GetStyleContext(nsICSSPseudoComparator* aComparator,
+                                  nsPresContext* aPresContext,
                                   nsIContent* aContent,
                                   nsStyleContext* aContext,
                                   nsICSSAnonBoxPseudo* aPseudoElement,
-                                  const mozilla::AtomArray& aInputWord);
+                                  const AtomArray & aInputWord);
 
 protected:
   typedef uint32_t DFAState;
@@ -45,13 +49,13 @@ protected:
   class Transition final
   {
   public:
-    Transition(DFAState aState, nsAtom* aSymbol);
+    Transition(DFAState aState, nsIAtom* aSymbol);
     bool operator==(const Transition& aOther) const;
     uint32_t Hash() const;
 
   private:
     DFAState mState;
-    RefPtr<nsAtom> mInputSymbol;
+    nsCOMPtr<nsIAtom> mInputSymbol;
   };
 
   typedef nsDataHashtable<nsGenericHashKey<Transition>, DFAState> TransitionTable;

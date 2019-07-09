@@ -9,6 +9,7 @@
 
 #include "jsopcode.h"
 
+#include "jit/IonCaches.h"
 #include "jit/JitFrames.h"
 #include "jit/mips-shared/MacroAssembler-mips-shared.h"
 #include "jit/MoveResolver.h"
@@ -51,7 +52,6 @@ class MacroAssemblerMIPS : public MacroAssemblerMIPSShared
     using MacroAssemblerMIPSShared::ma_store;
     using MacroAssemblerMIPSShared::ma_cmp_set;
     using MacroAssemblerMIPSShared::ma_subTestOverflow;
-    using MacroAssemblerMIPSShared::ma_liPatchable;
 
     void ma_li(Register dest, CodeOffset* label);
 
@@ -194,9 +194,6 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void mov(ImmPtr imm, Register dest) {
         mov(ImmWord(uintptr_t(imm.value)), dest);
     }
-    void mov(CodeOffset* label, Register dest) {
-        ma_li(dest, label);
-    }
     void mov(Register src, Address dest) {
         MOZ_CRASH("NYI-IC");
     }
@@ -282,13 +279,6 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         return movWithPatch(ImmWord(uintptr_t(imm.value)), dest);
     }
 
-    void writeCodePointer(CodeOffset* label) {
-        label->bind(currentOffset());
-        ma_liPatchable(ScratchRegister, ImmWord(0));
-        as_jr(ScratchRegister);
-        as_nop();
-    }
-
     void jump(Label* label) {
         ma_b(label);
     }
@@ -342,7 +332,7 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     }
 
     // boxing code
-    void boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister);
+    void boxDouble(FloatRegister src, const ValueOperand& dest);
     void boxNonDouble(JSValueType type, Register src, const ValueOperand& dest);
 
     // Extended unboxing API. If the payload is already in a register, returns
@@ -858,8 +848,9 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void load32(AbsoluteAddress address, Register dest);
     void load32(wasm::SymbolicAddress address, Register dest);
     void load64(const Address& address, Register64 dest) {
-        load32(LowWord(address), dest.low);
-        load32(HighWord(address), dest.high);
+        load32(Address(address.base, address.offset + INT64LOW_OFFSET), dest.low);
+        int32_t highOffset = (address.offset < 0) ? -int32_t(INT64HIGH_OFFSET) : INT64HIGH_OFFSET;
+        load32(Address(address.base, address.offset + highOffset), dest.high);
     }
 
     void loadPtr(const Address& address, Register dest);
@@ -1005,10 +996,12 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         as_movs(dest, src);
     }
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalArea) + globalDataOffset), dest);
+        loadPtr(Address(GlobalReg, globalDataOffset - WasmGlobalRegBias), dest);
     }
     void loadWasmPinnedRegsFromTls() {
         loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
+        ma_addu(GlobalReg, Imm32(WasmGlobalRegBias));
     }
 
     // Instrumentation for entering and leaving the profiler.

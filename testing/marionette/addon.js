@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {utils: Cu} = Components;
+const {interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -30,43 +30,6 @@ function lookupError(code) {
   return new UnknownError(msg);
 }
 
-async function installAddon(file) {
-  let install = await AddonManager.getInstallForFile(file);
-
-  return new Promise((resolve, reject) => {
-    if (install.error != 0) {
-      reject(new UnknownError(lookupError(install.error)));
-    }
-
-    let addonId = install.addon.id;
-
-    let success = install => {
-      if (install.addon.id === addonId) {
-        install.removeListener(listener);
-        resolve(install.addon);
-      }
-    };
-
-    let fail = install => {
-      if (install.addon.id === addonId) {
-        install.removeListener(listener);
-        reject(new UnknownError(lookupError(install.error)));
-      }
-    };
-
-    let listener = {
-      onDownloadCancelled: fail,
-      onDownloadFailed: fail,
-      onInstallCancelled: fail,
-      onInstallFailed: fail,
-      onInstallEnded: success,
-    };
-
-    install.addListener(listener);
-    install.install();
-  });
-}
-
 /**
  * Install a Firefox addon.
  *
@@ -87,26 +50,38 @@ async function installAddon(file) {
  * @throws {UnknownError}
  *     If there is a problem installing the addon.
  */
-addon.install = async function(path, temporary = false) {
-  let file = new FileUtils.File(path);
-  let addon;
+addon.install = function(path, temporary = false) {
+  return new Promise((resolve, reject) => {
+    let file = new FileUtils.File(path);
 
-  if (!file.exists()) {
-    throw new UnknownError(`Could not find add-on at '${path}'`);
-  }
+    let listener = {
+      onInstallEnded(install, addon) {
+        resolve(addon.id);
+      },
 
-  try {
-    if (temporary) {
-      addon = await AddonManager.installTemporaryAddon(file);
+      onInstallFailed(install) {
+        reject(lookupError(install.error));
+      },
+
+      onInstalled(addon) {
+        AddonManager.removeAddonListener(listener);
+        resolve(addon.id);
+      },
+    };
+
+    if (!temporary) {
+      AddonManager.getInstallForFile(file, function(aInstall) {
+        if (aInstall.error !== 0) {
+          reject(lookupError(aInstall.error));
+        }
+        aInstall.addListener(listener);
+        aInstall.install();
+      });
     } else {
-      addon = await installAddon(file);
+      AddonManager.addAddonListener(listener);
+      AddonManager.installTemporaryAddon(file);
     }
-  } catch (e) {
-    throw new UnknownError(
-        `Could not install add-on at '${path}': ${e.message}`);
-  }
-
-  return addon.id;
+  });
 };
 
 /**
@@ -119,28 +94,12 @@ addon.install = async function(path, temporary = false) {
  *     ID of the addon to uninstall.
  *
  * @return {Promise}
- *
- * @throws {UnknownError}
- *     If there is a problem uninstalling the addon.
  */
-addon.uninstall = async function(id) {
-  return AddonManager.getAddonByID(id).then(addon => {
-    let listener = {
-      onOperationCancelled: addon => {
-        if (addon.id === id) {
-          AddonManager.removeAddonListener(listener);
-          throw new UnknownError(`Uninstall of ${id} has been canceled`);
-        }
-      },
-      onUninstalled: addon => {
-        if (addon.id === id) {
-          AddonManager.removeAddonListener(listener);
-          Promise.resolve();
-        }
-      },
-    };
-
-    AddonManager.addAddonListener(listener);
-    addon.uninstall();
+addon.uninstall = function(id) {
+  return new Promise(resolve => {
+    AddonManager.getAddonByID(id, function(addon) {
+      addon.uninstall();
+      resolve();
+    });
   });
 };

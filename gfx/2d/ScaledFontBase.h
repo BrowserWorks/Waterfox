@@ -48,8 +48,8 @@ public:
 
 #ifdef USE_CAIRO_SCALED_FONT
   bool PopulateCairoScaledFont();
-  virtual cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
-  virtual void SetCairoScaledFont(cairo_scaled_font_t* font);
+  cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
+  void SetCairoScaledFont(cairo_scaled_font_t* font);
 #endif
 
 protected:

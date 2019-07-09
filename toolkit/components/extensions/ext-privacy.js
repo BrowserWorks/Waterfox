@@ -138,56 +138,6 @@ ExtensionPreferencesManager.addSetting("websites.referrersEnabled", {
   },
 });
 
-ExtensionPreferencesManager.addSetting("websites.resistFingerprinting", {
-  prefNames: [
-    "privacy.resistFingerprinting",
-  ],
-
-  setCallback(value) {
-    return {[this.prefNames[0]]: value};
-  },
-});
-
-ExtensionPreferencesManager.addSetting("websites.firstPartyIsolate", {
-  prefNames: [
-    "privacy.firstparty.isolate",
-  ],
-
-  setCallback(value) {
-    return {[this.prefNames[0]]: value};
-  },
-});
-
-ExtensionPreferencesManager.addSetting("websites.trackingProtectionMode", {
-  prefNames: [
-    "privacy.trackingprotection.enabled",
-    "privacy.trackingprotection.pbmode.enabled",
-  ],
-
-  setCallback(value) {
-    // Default to private browsing.
-    let prefs = {
-      "privacy.trackingprotection.enabled": false,
-      "privacy.trackingprotection.pbmode.enabled": true,
-    };
-
-    switch (value) {
-      case "private_browsing":
-        break;
-
-      case "always":
-        prefs["privacy.trackingprotection.enabled"] = true;
-        break;
-
-      case "never":
-        prefs["privacy.trackingprotection.pbmode.enabled"] = false;
-        break;
-    }
-
-    return prefs;
-  },
-});
-
 this.privacy = class extends ExtensionAPI {
   getAPI(context) {
     let {extension} = context;
@@ -246,28 +196,6 @@ this.privacy = class extends ExtensionAPI {
             () => {
               return Preferences.get("network.http.sendRefererHeader") !== 0;
             }),
-          resistFingerprinting: getPrivacyAPI(extension,
-            "websites.resistFingerprinting",
-            () => {
-              return Preferences.get("privacy.resistFingerprinting");
-            }),
-          firstPartyIsolate: getPrivacyAPI(extension,
-            "websites.firstPartyIsolate",
-            () => {
-              return Preferences.get("privacy.firstparty.isolate");
-            }),
-          trackingProtectionMode: getPrivacyAPI(extension,
-            "websites.trackingProtectionMode",
-            () => {
-              if (Preferences.get("privacy.trackingprotection.enabled")) {
-                return "always";
-              } else if (
-                  Preferences.get("privacy.trackingprotection.pbmode.enabled")) {
-                return "private_browsing";
-              }
-              return "never";
-            }),
-
         },
       },
     };

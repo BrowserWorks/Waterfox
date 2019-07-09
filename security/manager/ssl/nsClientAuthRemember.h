@@ -7,7 +7,6 @@
 #ifndef __NSCLIENTAUTHREMEMBER_H__
 #define __NSCLIENTAUTHREMEMBER_H__
 
-#include "mozilla/Move.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "nsTHashtable.h"
 #include "nsIObserver.h"
@@ -63,10 +62,9 @@ class nsClientAuthRememberEntry final : public PLDHashEntryHdr
     {
     }
 
-    nsClientAuthRememberEntry(nsClientAuthRememberEntry&& aToMove)
-      : mSettings(mozilla::Move(aToMove.mSettings))
-      , mEntryKey(mozilla::Move(aToMove.mEntryKey))
+    nsClientAuthRememberEntry(const nsClientAuthRememberEntry& aToCopy)
     {
+      mSettings = aToCopy.mSettings;
     }
 
     ~nsClientAuthRememberEntry()

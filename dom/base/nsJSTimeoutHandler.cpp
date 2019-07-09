@@ -21,6 +21,9 @@
 #include "nsJSUtils.h"
 #include "WorkerPrivate.h"
 
+static const char kSetIntervalStr[] = "setInterval";
+static const char kSetTimeoutStr[] = "setTimeout";
+
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::dom::workers;

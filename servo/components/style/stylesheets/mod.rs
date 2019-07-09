@@ -12,8 +12,8 @@ pub mod import_rule;
 pub mod keyframes_rule;
 mod loader;
 mod media_rule;
+mod memory;
 mod namespace_rule;
-pub mod origin;
 mod page_rule;
 mod rule_list;
 mod rule_parser;
@@ -25,9 +25,7 @@ pub mod viewport_rule;
 
 use cssparser::{parse_one_rule, Parser, ParserInput};
 use error_reporting::NullReporter;
-#[cfg(feature = "gecko")]
-use malloc_size_of::{MallocSizeOfOps, MallocUnconditionalShallowSizeOf};
-use parser::{ParserContext, ParserErrorContext};
+use parser::ParserContext;
 use servo_arc::Arc;
 use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
@@ -41,14 +39,13 @@ pub use self::import_rule::ImportRule;
 pub use self::keyframes_rule::KeyframesRule;
 pub use self::loader::StylesheetLoader;
 pub use self::media_rule::MediaRule;
+pub use self::memory::{MallocSizeOf, MallocSizeOfFn, MallocSizeOfWithGuard};
 pub use self::namespace_rule::NamespaceRule;
-pub use self::origin::{Origin, OriginSet, OriginSetIterator, PerOrigin, PerOriginIter};
 pub use self::page_rule::PageRule;
 pub use self::rule_parser::{State, TopLevelRuleParser};
 pub use self::rule_list::{CssRules, CssRulesHelpers};
 pub use self::rules_iterator::{AllRules, EffectiveRules, NestedRuleIterationCondition, RulesIterator};
-pub use self::stylesheet::{Namespaces, Stylesheet, DocumentStyleSheet};
-pub use self::stylesheet::{StylesheetContents, StylesheetInDocument, UserAgentStylesheets};
+pub use self::stylesheet::{Namespaces, Stylesheet, StylesheetContents, StylesheetInDocument, UserAgentStylesheets};
 pub use self::style_rule::StyleRule;
 pub use self::supports_rule::SupportsRule;
 pub use self::viewport_rule::ViewportRule;
@@ -71,11 +68,6 @@ impl UrlExtraData {
         // TODO
         "(stylo: not supported)"
     }
-
-    /// True if this URL scheme is chrome.
-    pub fn is_chrome(&self) -> bool {
-        self.mIsChrome
-    }
 }
 
 // XXX We probably need to figure out whether we should mark Eq here.
@@ -83,10 +75,26 @@ impl UrlExtraData {
 #[cfg(feature = "gecko")]
 impl Eq for UrlExtraData {}
 
+/// Each style rule has an origin, which determines where it enters the cascade.
+///
+/// http://dev.w3.org/csswg/css-cascade/#cascading-origins
+#[derive(Clone, PartialEq, Eq, Copy, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+pub enum Origin {
+    /// http://dev.w3.org/csswg/css-cascade/#cascade-origin-ua
+    UserAgent,
+
+    /// http://dev.w3.org/csswg/css-cascade/#cascade-origin-author
+    Author,
+
+    /// http://dev.w3.org/csswg/css-cascade/#cascade-origin-user
+    User,
+}
+
 /// A CSS rule.
 ///
 /// TODO(emilio): Lots of spec links should be around.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum CssRule {
     // No Charset here, CSSCharsetRule has been removed from CSSOM
@@ -106,46 +114,34 @@ pub enum CssRule {
     Document(Arc<Locked<DocumentRule>>),
 }
 
-impl CssRule {
-    /// Measure heap usage.
-    #[cfg(feature = "gecko")]
-    fn size_of(&self, guard: &SharedRwLockReadGuard, ops: &mut MallocSizeOfOps) -> usize {
+impl MallocSizeOfWithGuard for CssRule {
+    fn malloc_size_of_children(
+        &self,
+        guard: &SharedRwLockReadGuard,
+        malloc_size_of: MallocSizeOfFn
+    ) -> usize {
         match *self {
-            // Not all fields are currently fully measured. Extra measurement
-            // may be added later.
-
-            CssRule::Namespace(_) => 0,
-
-            // We don't need to measure ImportRule::stylesheet because we measure
-            // it on the C++ side in the child list of the ServoStyleSheet.
+            CssRule::Style(ref lock) => {
+                lock.read_with(guard).malloc_size_of_children(guard, malloc_size_of)
+            },
+            // Measurement of these fields may be added later.
             CssRule::Import(_) => 0,
-
-            CssRule::Style(ref lock) =>
-                lock.unconditional_shallow_size_of(ops) + lock.read_with(guard).size_of(guard, ops),
-
-            CssRule::Media(ref lock) =>
-                lock.unconditional_shallow_size_of(ops) + lock.read_with(guard).size_of(guard, ops),
-
+            CssRule::Media(_) => 0,
             CssRule::FontFace(_) => 0,
             CssRule::FontFeatureValues(_) => 0,
             CssRule::CounterStyle(_) => 0,
-            CssRule::Viewport(_) => 0,
             CssRule::Keyframes(_) => 0,
-
-            CssRule::Supports(ref lock) =>
-                lock.unconditional_shallow_size_of(ops) + lock.read_with(guard).size_of(guard, ops),
-
-            CssRule::Page(ref lock) =>
-                lock.unconditional_shallow_size_of(ops) + lock.read_with(guard).size_of(guard, ops),
-
-            CssRule::Document(ref lock) =>
-                lock.unconditional_shallow_size_of(ops) + lock.read_with(guard).size_of(guard, ops),
+            CssRule::Namespace(_) => 0,
+            CssRule::Viewport(_) => 0,
+            CssRule::Supports(_) => 0,
+            CssRule::Page(_) => 0,
+            CssRule::Document(_)  => 0,
         }
     }
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum CssRuleType {
     // https://drafts.csswg.org/cssom/#the-cssrule-interface
     Style               = 1,
@@ -240,6 +236,7 @@ impl CssRule {
         let context = ParserContext::new(
             parent_stylesheet_contents.origin,
             &url_data,
+            &error_reporter,
             None,
             PARSING_MODE_DEFAULT,
             parent_stylesheet_contents.quirks_mode,
@@ -255,12 +252,11 @@ impl CssRule {
         let mut rule_parser = TopLevelRuleParser {
             stylesheet_origin: parent_stylesheet_contents.origin,
             context: context,
-            error_context: ParserErrorContext { error_reporter: &error_reporter },
             shared_lock: &shared_lock,
             loader: loader,
             state: state,
             had_hierarchy_error: false,
-            namespaces: &mut *guard,
+            namespaces: Some(&mut *guard),
         };
 
         parse_one_rule(&mut input, &mut rule_parser)

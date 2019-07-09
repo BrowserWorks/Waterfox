@@ -6,7 +6,7 @@
 #ifndef TRANSFRMX_TXNAMESPACEMAP_H
 #define TRANSFRMX_TXNAMESPACEMAP_H
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCOMArray.h"
 #include "nsTArray.h"
 
@@ -30,13 +30,13 @@ public:
         return mRefCnt;
     }
 
-    nsresult mapNamespace(nsAtom* aPrefix, const nsAString& aNamespaceURI);
-    int32_t lookupNamespace(nsAtom* aPrefix);
+    nsresult mapNamespace(nsIAtom* aPrefix, const nsAString& aNamespaceURI);
+    int32_t lookupNamespace(nsIAtom* aPrefix);
     int32_t lookupNamespaceWithDefault(const nsAString& aPrefix);
 
 private:
     nsAutoRefCnt mRefCnt;
-    nsTArray<RefPtr<nsAtom>> mPrefixes;
+    nsCOMArray<nsIAtom> mPrefixes;
     nsTArray<int32_t> mNamespaces;
 };
 

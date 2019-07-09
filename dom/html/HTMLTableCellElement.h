@@ -8,13 +8,15 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLTableCellElement.h"
 
 namespace mozilla {
 namespace dom {
 
 class HTMLTableElement;
 
-class HTMLTableCellElement final : public nsGenericHTMLElement
+class HTMLTableCellElement final : public nsGenericHTMLElement,
+                                   public nsIDOMHTMLTableCellElement
 {
 public:
   explicit HTMLTableCellElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -25,6 +27,9 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
+
+  // nsIDOMHTMLTableCellElement
+  NS_DECL_NSIDOMHTMLTABLECELLELEMENT
 
   uint32_t ColSpan() const
   {
@@ -137,12 +142,12 @@ public:
   }
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   // Get mapped attributes of ancestor table, if any
   nsMappedAttributes* GetMappedAttributesInheritedFromTable() const;
 

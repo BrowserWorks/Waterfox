@@ -4,35 +4,12 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import abc
-import errno
 import os
 import re
 import subprocess
 import which
 
 from distutils.version import LooseVersion
-
-
-class MissingVCSTool(Exception):
-    """Represents a failure to find a version control tool binary."""
-
-
-class MissingVCSInfo(Exception):
-    """Represents a general failure to resolve a VCS interface."""
-
-
-class MissingConfigureInfo(MissingVCSInfo):
-    """Represents error finding VCS info from configure data."""
-
-
-class InvalidRepoPath(Exception):
-    """Represents a failure to find a VCS repo at a specified path."""
-
-
-class MissingUpstreamRepo(Exception):
-    """Represents a failure to automatically detect an upstream repo."""
-
 
 def get_tool_path(tool):
     """Obtain the path of `tool`."""
@@ -49,51 +26,25 @@ def get_tool_path(tool):
     except which.WhichError:
         try:
             return which.which(tool)
-        except which.WhichError:
-            pass
+        except which.WhichError as e:
+            print(e)
 
-    raise MissingVCSTool('Unable to obtain %s path. Try running '
-                         '|mach bootstrap| to ensure your environment is up to '
-                         'date.' % tool)
-
+    raise Exception('Unable to obtain %s path. Try running '
+                    '|mach bootstrap| to ensure your environment is up to '
+                    'date.' % tool)
 
 class Repository(object):
-    """A class wrapping utility methods around version control repositories.
-
-    This class is abstract and never instantiated. Obtain an instance by
-    calling a ``get_repository_*()`` helper function.
-
-    Clients are recommended to use the object as a context manager. But not
-    all methods require this.
-    """
-
-    __metaclass__ = abc.ABCMeta
-
+    '''A class wrapping utility methods around version control repositories.'''
     def __init__(self, path, tool):
         self.path = os.path.abspath(path)
         self._tool = get_tool_path(tool)
         self._env = os.environ.copy()
         self._version = None
-        self._valid_diff_filter = ('m', 'a', 'd')
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        pass
-
-    def _run(self, *args, **runargs):
-        return_codes = runargs.get('return_codes', [])
-
-        cmd = (self._tool,) + args
-        try:
-            return subprocess.check_output(cmd,
-                                           cwd=self.path,
-                                           env=self._env)
-        except subprocess.CalledProcessError as e:
-            if e.returncode in return_codes:
-                return ''
-            raise
+    def _run(self, *args):
+        return subprocess.check_output((self._tool, ) + args,
+                                       cwd=self.path,
+                                       env=self._env)
 
     @property
     def tool_version(self):
@@ -108,181 +59,44 @@ class Repository(object):
         self.version = LooseVersion(match.group(1))
         return self.version
 
-    @abc.abstractproperty
-    def name(self):
-        """Name of the tool."""
+    def get_modified_files(self):
+        '''Return a list of files that are modified in this repository's
+        working copy.'''
+        raise NotImplementedError
 
-    @abc.abstractproperty
-    def head_ref(self):
-        """Hash of HEAD revision."""
+    def get_added_files(self):
+        '''Return a list of files that are added in this repository's
+        working copy.'''
+        raise NotImplementedError
 
-    @abc.abstractmethod
-    def sparse_checkout_present(self):
-        """Whether the working directory is using a sparse checkout.
-
-        A sparse checkout is defined as a working directory that only
-        materializes a subset of files in a given revision.
-
-        Returns a bool.
-        """
-
-    @abc.abstractmethod
-    def get_upstream(self):
-        """Reference to the upstream remote."""
-
-    @abc.abstractmethod
-    def get_changed_files(self, diff_filter, mode='unstaged'):
-        """Return a list of files that are changed in this repository's
-        working copy.
-
-        ``diff_filter`` controls which kinds of modifications are returned.
-        It is a string which may only contain the following characters:
-
-            A - Include files that were added
-            D - Include files that were deleted
-            M - Include files that were modified
-
-        By default, all three will be included.
-
-        ``mode`` can be one of 'unstaged', 'staged' or 'all'. Only has an
-        affect on git. Defaults to 'unstaged'.
-        """
-
-    @abc.abstractmethod
-    def get_outgoing_files(self, diff_filter, upstream='default'):
-        """Return a list of changed files compared to upstream.
-
-        ``diff_filter`` works the same as `get_changed_files`.
-        ``upstream`` is a remote ref to compare against. If unspecified,
-        this will be determined automatically. If there is no remote ref,
-        a MissingUpstreamRepo exception will be raised.
-        """
-
-    @abc.abstractmethod
     def add_remove_files(self, path):
         '''Add and remove files under `path` in this repository's working copy.
         '''
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def forget_add_remove_files(self, path):
         '''Undo the effects of a previous add_remove_files call for `path`.
         '''
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def get_files_in_working_directory(self):
         """Obtain a list of managed files in the working directory."""
-
-    @abc.abstractmethod
-    def working_directory_clean(self, untracked=False, ignored=False):
-        """Determine if the working directory is free of modifications.
-
-        Returns True if the working directory does not have any file
-        modifications. False otherwise.
-
-        By default, untracked and ignored files are not considered. If
-        ``untracked`` or ``ignored`` are set, they influence the clean check
-        to factor these file classes into consideration.
-        """
+        raise NotImplementedError
 
 
 class HgRepository(Repository):
     '''An implementation of `Repository` for Mercurial repositories.'''
     def __init__(self, path, hg='hg'):
-        import hglib.client
-
         super(HgRepository, self).__init__(path, tool=hg)
         self._env[b'HGPLAIN'] = b'1'
 
-        # Setting this modifies a global variable and makes all future hglib
-        # instances use this binary. Since the tool path was validated, this
-        # should be OK. But ideally hglib would offer an API that defines
-        # per-instance binaries.
-        hglib.HGPATH = self._tool
-
-        # Without connect=False this spawns a persistent process. We want
-        # the process lifetime tied to a context manager.
-        self._client = hglib.client.hgclient(self.path, encoding=b'UTF-8',
-                                             configs=None, connect=False)
-
-    @property
-    def name(self):
-        return 'hg'
-
-    @property
-    def head_ref(self):
-        return self._run('log', '-r', '.', '-T', '{node}')
-
-    def __enter__(self):
-        if self._client.server is None:
-            # The cwd if the spawned process should be the repo root to ensure
-            # relative paths are normalized to it.
-            old_cwd = os.getcwd()
-            try:
-                os.chdir(self.path)
-                self._client.open()
-            finally:
-                os.chdir(old_cwd)
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._client.close()
-
-    def _run_in_client(self, args):
-        if not self._client.server:
-            raise Exception('active HgRepository context manager required')
-
-        return self._client.rawcommand(args)
-
-    def sparse_checkout_present(self):
-        # We assume a sparse checkout is enabled if the .hg/sparse file
-        # has data. Strictly speaking, we should look for a requirement in
-        # .hg/requires. But since the requirement is still experimental
-        # as of Mercurial 4.3, it's probably more trouble than its worth
-        # to verify it.
-        sparse = os.path.join(self.path, '.hg', 'sparse')
-
-        try:
-            st = os.stat(sparse)
-            return st.st_size > 0
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise
-
-            return False
-
-    def get_upstream(self):
-        return 'default'
-
-    def _format_diff_filter(self, diff_filter):
-        df = diff_filter.lower()
-        assert all(f in self._valid_diff_filter for f in df)
-
-        # Mercurial uses 'r' to denote removed files whereas git uses 'd'.
-        if 'd' in df:
-            df.replace('d', 'r')
-
-        return df.lower()
-
-    def get_changed_files(self, diff_filter='ADM', mode='unstaged'):
-        df = self._format_diff_filter(diff_filter)
-
+    def get_modified_files(self):
         # Use --no-status to print just the filename.
-        return self._run('status', '--no-status', '-{}'.format(df)).splitlines()
+        return self._run('status', '--modified', '--no-status').splitlines()
 
-    def get_outgoing_files(self, diff_filter='ADM', upstream='default'):
-        df = self._format_diff_filter(diff_filter)
-
-        template = ''
-        if 'a' in df:
-            template += "{file_adds % '\\n{file}'}"
-        if 'd' in df:
-            template += "{file_dels % '\\n{file}'}"
-        if 'm' in df:
-            template += "{file_mods % '\\n{file}'}"
-
-        return self._run('outgoing', '-r', '.', '--quiet',
-                         '--template', template, upstream, return_codes=(1,)).split()
+    def get_added_files(self):
+        # Use --no-status to print just the filename.
+        return self._run('status', '--added', '--no-status').splitlines()
 
     def add_remove_files(self, path):
         args = ['addremove', path]
@@ -296,20 +110,7 @@ class HgRepository(Repository):
     def get_files_in_working_directory(self):
         # Can return backslashes on Windows. Normalize to forward slashes.
         return list(p.replace('\\', '/') for p in
-                    self._run_in_client([b'files', b'-0']).split(b'\0')
-                    if p)
-
-    def working_directory_clean(self, untracked=False, ignored=False):
-        args = [b'status', b'\0', b'--modified', b'--added', b'--removed',
-                b'--deleted']
-        if untracked:
-            args.append(b'--unknown')
-        if ignored:
-            args.append(b'--ignored')
-
-        # If output is empty, there are no entries of requested status, which
-        # means we are clean.
-        return not len(self._run_in_client(args).strip())
+                    self._run('files', '-0').split('\0'))
 
 
 class GitRepository(Repository):
@@ -317,47 +118,11 @@ class GitRepository(Repository):
     def __init__(self, path, git='git'):
         super(GitRepository, self).__init__(path, tool=git)
 
-    @property
-    def name(self):
-        return 'git'
+    def get_modified_files(self):
+        return self._run('diff', '--diff-filter=M', '--name-only').splitlines()
 
-    @property
-    def head_ref(self):
-        return self._run('rev-parse', 'HEAD')
-
-    def sparse_checkout_present(self):
-        # Not yet implemented.
-        return False
-
-    def get_upstream(self):
-        ref = self._run('symbolic-ref', '-q', 'HEAD').strip()
-        upstream = self._run('for-each-ref', '--format=%(upstream:short)', ref).strip()
-
-        if not upstream:
-            raise MissingUpstreamRepo("Could not detect an upstream repository.")
-
-        return upstream
-
-    def get_changed_files(self, diff_filter='ADM', mode='unstaged'):
-        assert all(f.lower() in self._valid_diff_filter for f in diff_filter)
-
-        cmd = ['diff', '--diff-filter={}'.format(diff_filter.upper()), '--name-only']
-        if mode == 'staged':
-            cmd.append('--cached')
-        elif mode == 'all':
-            cmd.append('HEAD')
-
-        return self._run(*cmd).splitlines()
-
-    def get_outgoing_files(self, diff_filter='ADM', upstream='default'):
-        assert all(f.lower() in self._valid_diff_filter for f in diff_filter)
-
-        if upstream == 'default':
-            upstream = self.get_upstream()
-
-        compare = '{}..HEAD'.format(upstream)
-        return self._run('log', '--name-only', '--diff-filter={}'.format(diff_filter.upper()),
-                         '--oneline', '--pretty=format:', compare).splitlines()
+    def get_added_files(self):
+        return self._run('diff', '--diff-filter=A', '--name-only').splitlines()
 
     def add_remove_files(self, path):
         self._run('add', path)
@@ -366,52 +131,32 @@ class GitRepository(Repository):
         self._run('reset', path)
 
     def get_files_in_working_directory(self):
-        return self._run('ls-files', '-z').split(b'\0')
-
-    def working_directory_clean(self, untracked=False, ignored=False):
-        args = ['status', '--porcelain']
-        if untracked:
-            args.append('--untracked-files')
-        if ignored:
-            args.append('--ignored')
-
-        return not len(self._run(*args).strip())
+        return self._run('ls-files', '-z').split('\0')
 
 
-def get_repository_object(path, hg='hg', git='git'):
+class InvalidRepoPath(Exception):
+    """Represents a failure to find a VCS repo at a specified path."""
+
+
+def get_repository_object(path):
     '''Get a repository object for the repository at `path`.
     If `path` is not a known VCS repository, raise an exception.
     '''
     if os.path.isdir(os.path.join(path, '.hg')):
-        return HgRepository(path, hg=hg)
+        return HgRepository(path)
     elif os.path.exists(os.path.join(path, '.git')):
-        return GitRepository(path, git=git)
+        return GitRepository(path)
     else:
         raise InvalidRepoPath('Unknown VCS, or not a source checkout: %s' %
                               path)
 
 
-def get_repository_from_build_config(config):
-    """Obtain a repository from the build configuration.
+class MissingVCSInfo(Exception):
+    """Represents a general failure to resolve a VCS interface."""
 
-    Accepts an object that has a ``topsrcdir`` and ``subst`` attribute.
-    """
-    flavor = config.substs.get('VCS_CHECKOUT_TYPE')
 
-    # If in build mode, only use what configure found. That way we ensure
-    # that everything in the build system can be controlled via configure.
-    if not flavor:
-        raise MissingConfigureInfo('could not find VCS_CHECKOUT_TYPE '
-                                   'in build config; check configure '
-                                   'output and verify it could find a '
-                                   'VCS binary')
-
-    if flavor == 'hg':
-        return HgRepository(config.topsrcdir, hg=config.substs['HG'])
-    elif flavor == 'git':
-        return GitRepository(config.topsrcdir, git=config.substs['GIT'])
-    else:
-        raise MissingVCSInfo('unknown VCS_CHECKOUT_TYPE value: %s' % flavor)
+class MissingConfigureInfo(MissingVCSInfo):
+    """Represents error finding VCS info from configure data."""
 
 
 def get_repository_from_env():
@@ -425,7 +170,25 @@ def get_repository_from_env():
     try:
         import buildconfig
 
-        return get_repository_from_build_config(buildconfig)
+        flavor = buildconfig.substs.get('VCS_CHECKOUT_TYPE')
+
+        # If in build mode, only use what configure found. That way we ensure
+        # that everything in the build system can be controlled via configure.
+        if not flavor:
+            raise MissingConfigureInfo('could not find VCS_CHECKOUT_TYPE '
+                                       'in build config; check configure '
+                                       'output and verify it could find a '
+                                       'VCS binary')
+
+        if flavor == 'hg':
+            return HgRepository(buildconfig.topsrcdir,
+                                hg=buildconfig.substs['HG'])
+        elif flavor == 'git':
+            return GitRepository(buildconfig.topsrcdir,
+                                 git=buildconfig.subst['GIT'])
+        else:
+            raise MissingVCSInfo('unknown VCS_CHECKOUT_TYPE value: %s' % flavor)
+
     except ImportError:
         pass
 

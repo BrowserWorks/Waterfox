@@ -21,7 +21,7 @@ info: |
         i. Assert: received.[[Type]] is return.
         ii. Let return be ? GetMethod(iterator, "return").
         iii. If return is undefined, return Completion(received).
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var badIter = {};

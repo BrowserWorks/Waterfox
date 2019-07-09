@@ -6,12 +6,10 @@
 
 // Test the links from the rule-view to the styleeditor
 
-const STYLESHEET_DATA_URL_CONTENTS = ["#first {",
-                                      "color: blue",
-                                      "}"].join("\n");
-const STYLESHEET_DATA_URL =
-      `data:text/css,${encodeURIComponent(STYLESHEET_DATA_URL_CONTENTS)}`;
-const STYLESHEET_DECODED_DATA_URL = `data:text/css,${STYLESHEET_DATA_URL_CONTENTS}`;
+const STYLESHEET_URL = "data:text/css," + encodeURIComponent(
+  ["#first {",
+   "color: blue",
+   "}"].join("\n"));
 
 const EXTERNAL_STYLESHEET_FILE_NAME = "doc_style_editor_link.css";
 const EXTERNAL_STYLESHEET_URL = URL_ROOT + EXTERNAL_STYLESHEET_FILE_NAME;
@@ -29,7 +27,7 @@ const DOCUMENT_URL = "data:text/html;charset=utf-8," + encodeURIComponent(`
   <style>
   div { font-weight: bold; }
   </style>
-  <link rel="stylesheet" type="text/css" href="${STYLESHEET_DATA_URL}">
+  <link rel="stylesheet" type="text/css" href="${STYLESHEET_URL}">
   <link rel="stylesheet" type="text/css" href="${EXTERNAL_STYLESHEET_URL}">
   </head>
   <body>
@@ -176,28 +174,15 @@ function* testDisabledStyleEditor(view, toolbox) {
 }
 
 function testRuleViewLinkLabel(view) {
-  info("Checking the data URL link label");
-
-  let link = getRuleViewLinkByIndex(view, 1);
+  let link = getRuleViewLinkByIndex(view, 2);
   let labelElem = link.querySelector(".ruleview-rule-source-label");
   let value = labelElem.textContent;
   let tooltipText = labelElem.getAttribute("title");
 
-  is(value, `${STYLESHEET_DATA_URL_CONTENTS}:1`,
-    "Rule view data URL stylesheet display value matches contents");
-  is(tooltipText, `${STYLESHEET_DECODED_DATA_URL}:1`,
-    "Rule view data URL stylesheet tooltip text matches the full URI path");
-
-  info("Checking the external link label");
-  link = getRuleViewLinkByIndex(view, 2);
-  labelElem = link.querySelector(".ruleview-rule-source-label");
-  value = labelElem.textContent;
-  tooltipText = labelElem.getAttribute("title");
-
-  is(value, `${EXTERNAL_STYLESHEET_FILE_NAME}:1`,
-    "Rule view external stylesheet display value matches filename and line number");
-  is(tooltipText, `${EXTERNAL_STYLESHEET_URL}:1`,
-    "Rule view external stylesheet tooltip text matches the full URI path");
+  is(value, EXTERNAL_STYLESHEET_FILE_NAME + ":1",
+    "rule view stylesheet display value matches filename and line number");
+  is(tooltipText, EXTERNAL_STYLESHEET_URL + ":1",
+    "rule view stylesheet tooltip text matches the full URI path");
 }
 
 function testUnselectableRuleViewLink(view, index) {

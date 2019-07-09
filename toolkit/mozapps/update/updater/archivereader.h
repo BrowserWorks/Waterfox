@@ -20,7 +20,7 @@
 class ArchiveReader
 {
 public:
-  ArchiveReader() {}
+  ArchiveReader() : mArchive(nullptr) {}
   ~ArchiveReader() { Close(); }
 
   int Open(const NS_tchar *path);
@@ -35,11 +35,7 @@ public:
 private:
   int ExtractItemToStream(const MarItem *item, FILE *fp);
 
-  MarFile *mArchive = nullptr;
-  uint8_t *mInBuf = nullptr;
-  uint8_t *mOutBuf = nullptr;
-  size_t mInBufSize  = 262144;
-  size_t mOutBufSize = 262144;
+  MarFile *mArchive;
 };
 
 #endif  // ArchiveReader_h__

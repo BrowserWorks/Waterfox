@@ -18,7 +18,6 @@
 #include <mach/mach.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
-#include <mach/thread_act.h>
 #include <mach/vm_statistics.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -32,17 +31,10 @@
 
 // this port is based off of v8 svn revision 9837
 
-/* static */ int
+/* static */ Thread::tid_t
 Thread::GetCurrentId()
 {
   return gettid();
-}
-
-void*
-GetStackTop(void* aGuess)
-{
-  pthread_t thread = pthread_self();
-  return pthread_get_stackaddr_np(thread);
 }
 
 class PlatformData

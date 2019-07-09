@@ -56,7 +56,7 @@ class Expression:
         self.__ignore_whitespace()
         self.e = self.__get_logical_or()
         if self.content:
-            raise Expression.ParseError(self)
+            raise Expression.ParseError, self
 
     def __get_logical_or(self):
         """
@@ -157,7 +157,7 @@ class Expression:
                 if word_len:
                     rv = Expression.__ASTLeaf('string', self.content[:word_len])
                 else:
-                    raise Expression.ParseError(self)
+                    raise Expression.ParseError, self
         self.__strip(word_len)
         self.__ignore_whitespace()
         return rv
@@ -196,7 +196,7 @@ class Expression:
                 return left and right
             elif tok[1].value == '||':
                 return left or right
-            raise Expression.ParseError(self)
+            raise Expression.ParseError, self
 
         # Mapping from token types to evaluator functions
         # Apart from (non-)equality, all these can be simple lambda forms.
@@ -578,7 +578,7 @@ class Preprocessor:
     # Logic
     def ensure_not_else(self):
         if len(self.ifStates) == 0 or self.ifStates[-1] == 2:
-            sys.stderr.write('WARNING: bad nesting of #else in %s\n' % self.context['FILE'])
+            sys.stderr.write('WARNING: bad nesting of #else\n')
     def do_if(self, args, replace=False):
         if self.disableLevel and not replace:
             self.disableLevel += 1

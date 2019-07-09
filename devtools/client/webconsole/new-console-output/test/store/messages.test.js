@@ -11,6 +11,8 @@ const {
   getAllRepeatById,
   getCurrentGroup,
   getVisibleMessages,
+  getAllMessagesObjectPropertiesById,
+  getAllMessagesObjectEntriesById,
 } = require("devtools/client/webconsole/new-console-output/selectors/messages");
 const {
   clonePacket,
@@ -45,7 +47,7 @@ describe("Message reducer:", () => {
       expect(messages.first()).toEqual(message);
     });
 
-    it("increments repeat on a repeating log message", () => {
+    it("increments repeat on a repeating message", () => {
       const key1 = "console.log('foobar', 'test')";
       const { dispatch, getState } = setupStore([key1, key1]);
 
@@ -55,46 +57,6 @@ describe("Message reducer:", () => {
       packet.message.timeStamp = 1;
       dispatch(actions.messageAdd(packet));
       packet.message.timeStamp = 2;
-      dispatch(actions.messageAdd(packet));
-
-      const messages = getAllMessagesById(getState());
-
-      expect(messages.size).toBe(1);
-
-      const repeat = getAllRepeatById(getState());
-      expect(repeat[messages.first().id]).toBe(4);
-    });
-
-    it("increments repeat on a repeating css message", () => {
-      const key1 = "Unknown property ‘such-unknown-property’.  Declaration dropped.";
-      const { dispatch, getState } = setupStore([key1, key1]);
-
-      const packet = clonePacket(stubPackets.get(key1));
-
-      // Repeat ID must be the same even if the timestamp is different.
-      packet.pageError.timeStamp = 1;
-      dispatch(actions.messageAdd(packet));
-      packet.pageError.timeStamp = 2;
-      dispatch(actions.messageAdd(packet));
-
-      const messages = getAllMessagesById(getState());
-
-      expect(messages.size).toBe(1);
-
-      const repeat = getAllRepeatById(getState());
-      expect(repeat[messages.first().id]).toBe(4);
-    });
-
-    it("increments repeat on a repeating error message", () => {
-      const key1 = "ReferenceError: asdf is not defined";
-      const { dispatch, getState } = setupStore([key1, key1]);
-
-      const packet = clonePacket(stubPackets.get(key1));
-
-      // Repeat ID must be the same even if the timestamp is different.
-      packet.pageError.timeStamp = 1;
-      dispatch(actions.messageAdd(packet));
-      packet.pageError.timeStamp = 2;
       dispatch(actions.messageAdd(packet));
 
       const messages = getAllMessagesById(getState());
@@ -798,34 +760,210 @@ describe("Message reducer:", () => {
     });
   });
 
-  describe("messagesAdd", () => {
-    it("still log repeated message over logLimit, but only repeated ones", () => {
-      // Log two distinct messages
-      const key1 = "console.log('foobar', 'test')";
-      const key2 = "console.log(undefined)";
-      const { dispatch, getState } = setupStore([key1, key2], null, {
+  describe("messagesObjectPropertiesById", () => {
+    it(`adds messagesObjectPropertiesById data in response to
+        MESSAGE_OBJECT_PROPERTIES_RECEIVE action`, () => {
+      const { dispatch, getState } = setupStore([]);
+
+      // Add 2 log messages with loaded object properties.
+      dispatch(actions.messageAdd(
+        stubPackets.get("console.log('myarray', ['red', 'green', 'blue'])")));
+      dispatch(actions.messageAdd(stubPackets.get(
+"console.log('myobject', {red: 'redValue', green: 'greenValue', blue: 'blueValue'});")));
+
+      let messages = getAllMessagesById(getState());
+
+      const arrayProperties = Symbol();
+      const arraySubProperties = Symbol();
+      const objectProperties = Symbol();
+      const objectSubProperties = Symbol();
+      const [id1, id2] = [...messages.keys()];
+      dispatch(actions.messageObjectPropertiesReceive(
+        id1, "fakeActor1", arrayProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id1, "fakeActor2", arraySubProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id2, "fakeActor3", objectProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id2, "fakeActor4", objectSubProperties));
+
+      let loadedProperties = getAllMessagesObjectPropertiesById(getState());
+      expect(loadedProperties.size).toBe(2);
+
+      expect(loadedProperties.get(id1)).toEqual({
+        fakeActor1: arrayProperties,
+        fakeActor2: arraySubProperties,
+      });
+
+      expect(loadedProperties.get(id2)).toEqual({
+        fakeActor3: objectProperties,
+        fakeActor4: objectSubProperties,
+      });
+    });
+
+    it("resets messagesObjectPropertiesById in response to MESSAGES_CLEAR action", () => {
+      const { dispatch, getState } = setupStore([
+        "console.log('myarray', ['red', 'green', 'blue'])"
+      ]);
+
+      let messages = getAllMessagesById(getState());
+      const properties = Symbol("properties");
+      const message = messages.first();
+      const {actor} = message.parameters[1];
+
+      dispatch(actions.messageObjectPropertiesReceive(message.id, actor, properties));
+
+      let loadedProperties = getAllMessagesObjectPropertiesById(getState());
+      expect(loadedProperties.size).toBe(1);
+      expect(loadedProperties.get(message.id)).toEqual({
+        [actor]: properties
+      });
+
+      dispatch(actions.messagesClear());
+
+      expect(getAllMessagesObjectPropertiesById(getState()).size).toBe(0);
+    });
+
+    it("cleans messagesObjectPropertiesById when messages are pruned", () => {
+      const { dispatch, getState } = setupStore([], null, {
         logLimit: 2
       });
 
-      // Then repeat the last one two times and log the first one again
-      const packet1 = clonePacket(stubPackets.get(key2));
-      const packet2 = clonePacket(stubPackets.get(key2));
-      const packet3 = clonePacket(stubPackets.get(key1));
+      // Add 2 log messages with loaded object properties.
+      dispatch(actions.messageAdd(
+        stubPackets.get("console.log('myarray', ['red', 'green', 'blue'])")));
+      dispatch(actions.messageAdd(stubPackets.get(
+"console.log('myobject', {red: 'redValue', green: 'greenValue', blue: 'blueValue'});")));
 
-      // Repeat ID must be the same even if the timestamp is different.
-      packet1.message.timeStamp = 1;
-      packet2.message.timeStamp = 2;
-      packet3.message.timeStamp = 3;
-      dispatch(actions.messagesAdd([packet1, packet2, packet3]));
+      let messages = getAllMessagesById(getState());
 
-      // There is still only two messages being logged,
-      const messages = getAllMessagesById(getState());
-      expect(messages.size).toBe(2);
+      const arrayProperties = Symbol();
+      const arraySubProperties = Symbol();
+      const objectProperties = Symbol();
+      const objectSubProperties = Symbol();
+      const [id1, id2] = [...messages.keys()];
+      dispatch(actions.messageObjectPropertiesReceive(
+        id1, "fakeActor1", arrayProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id1, "fakeActor2", arraySubProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id2, "fakeActor3", objectProperties));
+      dispatch(actions.messageObjectPropertiesReceive(
+        id2, "fakeActor4", objectSubProperties));
 
-      // the second one being repeated 3 times
-      const repeat = getAllRepeatById(getState());
-      expect(repeat[messages.first().id]).toBe(3);
-      expect(repeat[messages.last().id]).toBe(undefined);
+      let loadedProperties = getAllMessagesObjectPropertiesById(getState());
+      expect(loadedProperties.size).toBe(2);
+
+      // This addition will remove the first message.
+      dispatch(actions.messageAdd(stubPackets.get("console.log(undefined)")));
+
+      loadedProperties = getAllMessagesObjectPropertiesById(getState());
+      expect(loadedProperties.size).toBe(1);
+      expect(loadedProperties.get(id2)).toEqual({
+        fakeActor3: objectProperties,
+        fakeActor4: objectSubProperties,
+      });
+
+      // This addition will remove the second table message.
+      dispatch(actions.messageAdd(stubPackets.get("console.log('foobar', 'test')")));
+
+      expect(getAllMessagesObjectPropertiesById(getState()).size).toBe(0);
+    });
+  });
+
+  describe("messagesObjectEntriesById", () => {
+    it(`adds messagesObjectEntriesById data in response to
+        MESSAGE_OBJECT_ENTRIES_RECEIVE action`, () => {
+      const { dispatch, getState } = setupStore([]);
+
+      // Add 2 log messages with loaded entries.
+      dispatch(actions.messageAdd(stubPackets.get("console.log('myset')")));
+      dispatch(actions.messageAdd(stubPackets.get("console.log('mymap')")));
+
+      let messages = getAllMessagesById(getState());
+
+      const setEntries = Symbol();
+      const mapEntries = Symbol();
+      const mapEntries2 = Symbol();
+
+      const [id1, id2] = [...messages.keys()];
+      dispatch(actions.messageObjectEntriesReceive(id1, "fakeActor1", setEntries));
+      dispatch(actions.messageObjectEntriesReceive(id2, "fakeActor2", mapEntries));
+      dispatch(actions.messageObjectEntriesReceive(id2, "fakeActor3", mapEntries2));
+
+      let loadedEntries = getAllMessagesObjectEntriesById(getState());
+      expect(loadedEntries.size).toBe(2);
+
+      expect(loadedEntries.get(id1)).toEqual({
+        fakeActor1: setEntries,
+      });
+
+      expect(loadedEntries.get(id2)).toEqual({
+        fakeActor2: mapEntries,
+        fakeActor3: mapEntries2,
+      });
+    });
+
+    it("resets messagesObjectEntriesById in response to MESSAGES_CLEAR action", () => {
+      const { dispatch, getState } = setupStore([
+        "console.log('myset')"
+      ]);
+
+      let messages = getAllMessagesById(getState());
+      const entries = Symbol("entries");
+      const message = messages.first();
+      const {actor} = message.parameters[1];
+
+      dispatch(actions.messageObjectEntriesReceive(message.id, actor, entries));
+
+      let loadedEntries = getAllMessagesObjectEntriesById(getState());
+      expect(loadedEntries.size).toBe(1);
+      expect(loadedEntries.get(message.id)).toEqual({
+        [actor]: entries
+      });
+
+      dispatch(actions.messagesClear());
+
+      expect(getAllMessagesObjectEntriesById(getState()).size).toBe(0);
+    });
+
+    it("cleans messagesObjectPropertiesById when messages are pruned", () => {
+      const { dispatch, getState } = setupStore([], null, {
+        logLimit: 2
+      });
+
+      // Add 2 log messages with loaded entries.
+      dispatch(actions.messageAdd(stubPackets.get("console.log('myset')")));
+      dispatch(actions.messageAdd(stubPackets.get("console.log('mymap')")));
+
+      let messages = getAllMessagesById(getState());
+
+      const setEntries = Symbol();
+      const mapEntries = Symbol();
+      const mapEntries2 = Symbol();
+
+      const [id1, id2] = [...messages.keys()];
+      dispatch(actions.messageObjectEntriesReceive(id1, "fakeActor1", setEntries));
+      dispatch(actions.messageObjectEntriesReceive(id2, "fakeActor2", mapEntries));
+      dispatch(actions.messageObjectEntriesReceive(id2, "fakeActor3", mapEntries2));
+
+      let loadedEntries = getAllMessagesObjectEntriesById(getState());
+      expect(loadedEntries.size).toBe(2);
+
+      // This addition will remove the first message.
+      dispatch(actions.messageAdd(stubPackets.get("console.log(undefined)")));
+
+      loadedEntries = getAllMessagesObjectEntriesById(getState());
+      expect(loadedEntries.size).toBe(1);
+      expect(loadedEntries.get(id2)).toEqual({
+        fakeActor2: mapEntries,
+        fakeActor3: mapEntries2,
+      });
+
+      // This addition will remove the second table message.
+      dispatch(actions.messageAdd(stubPackets.get("console.log('foobar', 'test')")));
+
+      expect(getAllMessagesObjectEntriesById(getState()).size).toBe(0);
     });
   });
 });

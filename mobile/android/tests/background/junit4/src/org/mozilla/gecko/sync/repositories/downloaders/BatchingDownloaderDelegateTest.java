@@ -96,7 +96,7 @@ public class BatchingDownloaderDelegateTest {
         }
 
         @Override
-        public void onFetchCompleted() {
+        public void onFetchCompleted(long fetchEnd) {
 
         }
 

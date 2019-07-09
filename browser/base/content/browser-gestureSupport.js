@@ -142,12 +142,12 @@ var gGestureSupport = {
       offset += updateEvent.delta;
 
       // Check if the cumulative deltas exceed the threshold
-      if (Math.abs(offset) > aPref.threshold) {
+      if (Math.abs(offset) > aPref["threshold"]) {
         // Trigger the action if we don't care about latching; otherwise, make
         // sure either we're not latched and going the same direction of the
         // initial motion; or we're latched and going the opposite way
         let sameDir = (latchDir ^ offset) >= 0;
-        if (!aPref.latched || (isLatched ^ sameDir)) {
+        if (!aPref["latched"] || (isLatched ^ sameDir)) {
           this._doAction(updateEvent, [aGesture, offset > 0 ? aInc : aDec]);
 
           // We must be getting latched or leaving it, so just toggle
@@ -247,7 +247,7 @@ var gGestureSupport = {
 
       this._doUpdate = function() {};
       this._doEnd = function() {};
-    };
+    }
   },
 
   /**
@@ -664,7 +664,7 @@ var gHistorySwipeAnimation = {
           this._lastSwipeDir = "";
         }
         this.updateAnimation(0);
-      };
+      }
       SessionStore.getSessionHistory(gBrowser.selectedTab, updateSessionHistory);
     }
   },
@@ -836,7 +836,7 @@ var gHistorySwipeAnimation = {
         this._navigateToHistoryIndex();
       else
         this.stopAnimation();
-    };
+    }
     SessionStore.getSessionHistory(gBrowser.selectedTab, updateSessionHistory);
   },
 

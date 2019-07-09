@@ -110,9 +110,9 @@ var tabPreviewPanelHelper = {
   },
   _generateHandler(host) {
     var self = this;
-    return function listener(event) {
+    return function(event) {
       if (event.target == host.panel) {
-        host.panel.removeEventListener(event.type, listener);
+        host.panel.removeEventListener(event.type, arguments.callee);
         self["_" + event.type](host);
       }
     };

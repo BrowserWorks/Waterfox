@@ -43,6 +43,7 @@
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
 #include "nsCSSRendering.h"
+#include "nsIDOMHTMLAnchorElement.h"
 #include "nsNameSpaceManager.h"
 #include <algorithm>
 #ifdef ACCESSIBILITY
@@ -80,7 +81,6 @@
 
 #include "mozilla/dom/Link.h"
 #include "SVGImageContext.h"
-#include "mozilla/dom/HTMLAnchorElement.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -646,7 +646,7 @@ nsImageFrame::InvalidateSelf(const nsIntRect* aLayerInvalidRect,
     nsIFrame::WebRenderUserDataTable* userDataTable =
       GetProperty(nsIFrame::WebRenderUserDataProperty());
     RefPtr<WebRenderUserData> data;
-    userDataTable->Get(static_cast<uint32_t>(DisplayItemType::TYPE_IMAGE), getter_AddRefs(data));
+    userDataTable->Get(nsDisplayItem::TYPE_IMAGE, getter_AddRefs(data));
     if (data && data->AsFallbackData()) {
       data->AsFallbackData()->SetInvalid(true);
     }
@@ -654,12 +654,12 @@ nsImageFrame::InvalidateSelf(const nsIntRect* aLayerInvalidRect,
     return;
   }
 
-  InvalidateLayer(DisplayItemType::TYPE_IMAGE,
+  InvalidateLayer(nsDisplayItem::TYPE_IMAGE,
                   aLayerInvalidRect,
                   aFrameInvalidRect);
 
   if (!mFirstFrameComplete) {
-    InvalidateLayer(DisplayItemType::TYPE_ALT_FEEDBACK,
+    InvalidateLayer(nsDisplayItem::TYPE_ALT_FEEDBACK,
                     aLayerInvalidRect,
                     aFrameInvalidRect);
   }
@@ -982,24 +982,25 @@ nsImageFrame::Reflow(nsPresContext*          aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsImageFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aMetrics, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                   ("enter nsImageFrame::Reflow: availSize=%d,%d",
                   aReflowInput.AvailableWidth(), aReflowInput.AvailableHeight()));
 
   NS_PRECONDITION(mState & NS_FRAME_IN_REFLOW, "frame is not in reflow");
 
+  aStatus.Reset();
+
   // see if we have a frozen size (i.e. a fixed width and height)
   if (HaveFixedSize(aReflowInput)) {
-    AddStateBits(IMAGE_SIZECONSTRAINED);
+    mState |= IMAGE_SIZECONSTRAINED;
   } else {
-    RemoveStateBits(IMAGE_SIZECONSTRAINED);
+    mState &= ~IMAGE_SIZECONSTRAINED;
   }
 
   // XXXldb These two bits are almost exact opposites (except in the
   // middle of the initial reflow); remove IMAGE_GOTINITIALREFLOW.
   if (GetStateBits() & NS_FRAME_FIRST_REFLOW) {
-    AddStateBits(IMAGE_GOTINITIALREFLOW);
+    mState |= IMAGE_GOTINITIALREFLOW;
   }
 
   mComputedSize =
@@ -1040,6 +1041,7 @@ nsImageFrame::Reflow(nsPresContext*          aPresContext,
     // our desired height was greater than 0, so to avoid infinite
     // splitting, use 1 pixel as the min
     aMetrics.Height() = std::max(nsPresContext::CSSPixelsToAppUnits(1), aReflowInput.AvailableHeight());
+    aStatus.Reset();
     aStatus.SetIncomplete();
   }
 
@@ -1312,7 +1314,7 @@ public:
 
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion* aInvalidRegion) const override
+                                         nsRegion* aInvalidRegion) override
   {
     auto geometry =
       static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
@@ -1327,7 +1329,7 @@ public:
   }
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
+                           bool* aSnap) override
   {
     *aSnap = false;
     return mFrame->GetVisualOverflowRectRelativeToSelf() + ToReferenceFrame();
@@ -1496,7 +1498,7 @@ nsImageFrame::DisplayAltFeedback(gfxContext& aRenderingContext,
   if (!inner.IsEmpty()) {
     nsIContent* content = GetContent();
     if (content) {
-      nsAutoString altText;
+      nsXPIDLString altText;
       nsCSSFrameConstructor::GetAlternateTextFor(content,
                                                  content->NodeInfo()->NameAtom(),
                                                  altText);
@@ -1564,7 +1566,7 @@ nsDisplayImage::AllocateGeometry(nsDisplayListBuilder* aBuilder)
 void
 nsDisplayImage::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                           const nsDisplayItemGeometry* aGeometry,
-                                          nsRegion* aInvalidRegion) const
+                                          nsRegion* aInvalidRegion)
 {
   auto geometry =
     static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
@@ -1586,7 +1588,7 @@ nsDisplayImage::GetImage()
 }
 
 nsRect
-nsDisplayImage::GetDestRect() const
+nsDisplayImage::GetDestRect()
 {
   bool snap = true;
   const nsRect frameContentBox = GetBounds(&snap);
@@ -1659,7 +1661,7 @@ nsDisplayImage::GetLayerState(nsDisplayListBuilder* aBuilder,
 
 /* virtual */ nsRegion
 nsDisplayImage::GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
-                                bool* aSnap) const
+                                bool* aSnap)
 {
   *aSnap = false;
   if (mImage && mImage->WillDrawOpaqueNow()) {
@@ -1699,8 +1701,8 @@ nsDisplayImage::BuildLayer(nsDisplayListBuilder* aBuilder,
 
 bool
 nsDisplayImage::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                        mozilla::wr::IpcResourceUpdateQueue& aResources,
                                         const StackingContextHelper& aSc,
+                                        nsTArray<WebRenderParentCommand>& aParentCommands,
                                         WebRenderLayerManager* aManager,
                                         nsDisplayListBuilder* aDisplayListBuilder)
 {
@@ -1722,8 +1724,9 @@ nsDisplayImage::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilde
 
   const int32_t factor = mFrame->PresContext()->AppUnitsPerDevPixel();
   const LayoutDeviceRect destRect(
-    LayoutDeviceRect::FromAppUnits(GetDestRect(), factor));
-  return aManager->CommandBuilder().PushImage(this, container, aBuilder, aResources, aSc, destRect);
+    LayoutDeviceIntRect::FromAppUnits(GetDestRect(), factor));
+  const LayerRect dest = ViewAs<LayerPixel>(destRect, PixelCastJustification::WebRenderHasUnitResolution);
+  return aManager->PushImage(this, container, aBuilder, aSc, dest);
 }
 
 DrawResult
@@ -1795,6 +1798,7 @@ nsImageFrame::PaintImage(gfxContext& aRenderingContext, nsPoint aPt,
 
 void
 nsImageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                               const nsRect&           aDirtyRect,
                                const nsDisplayListSet& aLists)
 {
   if (!IsVisibleForPainting(aBuilder))
@@ -1859,7 +1863,7 @@ nsImageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       if (GetShowFrameBorders() && GetImageMap()) {
         aLists.Outlines()->AppendNewToTop(new (aBuilder)
           nsDisplayGeneric(aBuilder, this, PaintDebugImageMap, "DebugImageMap",
-                           DisplayItemType::TYPE_DEBUG_IMAGE_MAP));
+                           nsDisplayItem::TYPE_DEBUG_IMAGE_MAP));
       }
 #endif
     }
@@ -1992,7 +1996,7 @@ nsImageFrame::GetAnchorHREFTargetAndNode(nsIURI** aHref, nsString& aTarget,
       }
       status = (*aHref != nullptr);
 
-      RefPtr<HTMLAnchorElement> anchor = HTMLAnchorElement::FromContent(content);
+      nsCOMPtr<nsIDOMHTMLAnchorElement> anchor(do_QueryInterface(content));
       if (anchor) {
         anchor->GetTarget(aTarget);
       }
@@ -2138,7 +2142,7 @@ nsImageFrame::GetCursor(const nsPoint& aPoint,
 
 nsresult
 nsImageFrame::AttributeChanged(int32_t aNameSpaceID,
-                               nsAtom* aAttribute,
+                               nsIAtom* aAttribute,
                                int32_t aModType)
 {
   nsresult rv = nsAtomicContainerFrame::AttributeChanged(aNameSpaceID,
@@ -2270,7 +2274,6 @@ nsImageFrame::LoadIcon(const nsAString& aSpec,
                        nullptr,      /* referrer (not relevant for icons) */
                        mozilla::net::RP_Unset,
                        nullptr,      /* principal (not relevant for icons) */
-                       0,
                        loadGroup,
                        gIconLoad,
                        nullptr,      /* No context */

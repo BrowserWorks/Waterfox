@@ -55,7 +55,12 @@ enum class PixelCastJustification : uint8_t {
   MultipleAsyncTransforms,
   // We have reason to believe a layer doesn't have a local transform.
   // Should only be used if we've already checked or asserted this.
-  NoTransformOnLayer
+  NoTransformOnLayer,
+  // When building non-rasterized WebRender layers (e.g.
+  // WebRenderDisplayItemLayer, or anything else that doesn't deal in textures),
+  // there is no "resolution" and so the LayoutDevicePixel space is equal to the
+  // LayerPixel space.
+  WebRenderHasUnitResolution
 };
 
 template <class TargetUnits, class SourceUnits>
@@ -80,11 +85,11 @@ gfx::IntPointTyped<TargetUnits> ViewAs(const gfx::IntPointTyped<SourceUnits>& aP
 }
 template <class TargetUnits, class SourceUnits>
 gfx::RectTyped<TargetUnits> ViewAs(const gfx::RectTyped<SourceUnits>& aRect, PixelCastJustification) {
-  return gfx::RectTyped<TargetUnits>(aRect.x, aRect.y, aRect.Width(), aRect.Height());
+  return gfx::RectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 template <class TargetUnits, class SourceUnits>
 gfx::IntRectTyped<TargetUnits> ViewAs(const gfx::IntRectTyped<SourceUnits>& aRect, PixelCastJustification) {
-  return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.Width(), aRect.Height());
+  return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 template <class TargetUnits, class SourceUnits>
 gfx::MarginTyped<TargetUnits> ViewAs(const gfx::MarginTyped<SourceUnits>& aMargin, PixelCastJustification) {
@@ -138,7 +143,7 @@ gfx::PointTyped<TargetUnits> ViewAs(const gfx::Point& aPoint) {
 }
 template <class TargetUnits>
 gfx::RectTyped<TargetUnits> ViewAs(const gfx::Rect& aRect) {
-  return gfx::RectTyped<TargetUnits>(aRect.x, aRect.y, aRect.Width(), aRect.Height());
+  return gfx::RectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 template <class TargetUnits>
 gfx::IntSizeTyped<TargetUnits> ViewAs(const nsIntSize& aSize) {
@@ -150,7 +155,7 @@ gfx::IntPointTyped<TargetUnits> ViewAs(const nsIntPoint& aPoint) {
 }
 template <class TargetUnits>
 gfx::IntRectTyped<TargetUnits> ViewAs(const nsIntRect& aRect) {
-  return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.Width(), aRect.Height());
+  return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 template <class TargetUnits>
 gfx::IntRegionTyped<TargetUnits> ViewAs(const nsIntRegion& aRegion) {

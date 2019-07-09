@@ -7,7 +7,7 @@ const {Cu} = require("chrome");
 const {TargetFactory} = require("devtools/client/framework/target");
 const Services = require("Services");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {OS} = Cu.import("resource://gre/modules/osfile.jsm", {});
 const {AppProjects} = require("devtools/client/webide/modules/app-projects");
 const TabStore = require("devtools/client/webide/modules/tab-store");
@@ -775,6 +775,7 @@ var AppManager = exports.AppManager = {
     this.runtimeList = {
       usb: [],
       wifi: [],
+      simulator: [],
       other: []
     };
   },
@@ -791,6 +792,9 @@ var AppManager = exports.AppManager = {
           break;
         case RuntimeTypes.WIFI:
           this.runtimeList.wifi.push(runtime);
+          break;
+        case RuntimeTypes.SIMULATOR:
+          this.runtimeList.simulator.push(runtime);
           break;
         default:
           this.runtimeList.other.push(runtime);

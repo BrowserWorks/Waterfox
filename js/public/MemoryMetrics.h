@@ -499,8 +499,8 @@ struct NotableScriptSourceInfo : public ScriptSourceInfo
 };
 
 /**
- * These measurements relate directly to the JSRuntime, and not to zones,
- * compartments, and realms within it.
+ * These measurements relate directly to the JSRuntime, and not to zones and
+ * compartments within it.
  */
 struct RuntimeSizes
 {
@@ -688,7 +688,7 @@ struct ZoneStats
         js_delete(allStrings);
     }
 
-    bool initStrings();
+    bool initStrings(JSRuntime* rt);
 
     void addSizes(const ZoneStats& other) {
         MOZ_ASSERT(isTotals);
@@ -808,7 +808,7 @@ struct CompartmentStats
         js_delete(allClasses);
     }
 
-    bool initClasses();
+    bool initClasses(JSRuntime* rt);
 
     void addSizes(const CompartmentStats& other) {
         MOZ_ASSERT(isTotals);

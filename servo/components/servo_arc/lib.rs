@@ -9,7 +9,6 @@
 // except according to those terms.
 
 //! Fork of Arc for Servo. This has the following advantages over std::Arc:
-//!
 //! * We don't waste storage on the weak reference count.
 //! * We don't do extra RMU operations to handle the possibility of weak references.
 //! * We can experiment with arena allocation (todo).
@@ -17,7 +16,7 @@
 //! * We have support for dynamically-sized types (see from_header_and_iter).
 //! * We have support for thin arcs to unsized types (see ThinArc).
 //!
-//! [1]: https://bugzilla.mozilla.org/show_bug.cgi?id=1360883
+//! [1] https://bugzilla.mozilla.org/show_bug.cgi?id=1360883
 
 // The semantics of Arc are alread documented in the Rust docs, so we don't
 // duplicate those here.
@@ -27,6 +26,8 @@ extern crate nodrop;
 #[cfg(feature = "servo")] extern crate serde;
 extern crate stable_deref_trait;
 
+#[cfg(feature = "servo")]
+use heapsize::HeapSizeOf;
 use nodrop::NoDrop;
 #[cfg(feature = "servo")]
 use serde::{Deserialize, Serialize};
@@ -40,7 +41,6 @@ use std::hash::{Hash, Hasher};
 use std::iter::{ExactSizeIterator, Iterator};
 use std::mem;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::c_void;
 use std::process;
 use std::ptr;
 use std::slice;
@@ -82,7 +82,7 @@ const MAX_REFCOUNT: usize = (isize::MAX) as usize;
 /// be thin or fat (which depends on whether or not T is sized). Given
 /// that this is all a temporary hack, this restriction is fine for now.
 ///
-/// [1]: https://github.com/rust-lang/rust/issues/27730
+/// [1] https://github.com/rust-lang/rust/issues/27730
 pub struct NonZeroPtrMut<T: ?Sized + 'static>(&'static mut T);
 impl<T: ?Sized> NonZeroPtrMut<T> {
     pub fn new(ptr: *mut T) -> Self {
@@ -120,12 +120,6 @@ impl<T: ?Sized + 'static> PartialEq for NonZeroPtrMut<T> {
 }
 
 impl<T: ?Sized + 'static> Eq for NonZeroPtrMut<T> {}
-
-impl<T: Sized + 'static> Hash for NonZeroPtrMut<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.ptr().hash(state)
-    }
-}
 
 pub struct Arc<T: ?Sized + 'static> {
     p: NonZeroPtrMut<ArcInner<T>>,
@@ -206,7 +200,6 @@ impl<T> Arc<T> {
     pub fn borrow_arc<'a>(&'a self) -> ArcBorrow<'a, T> {
         ArcBorrow(&**self)
     }
-
     /// Temporarily converts |self| into a bonafide RawOffsetArc and exposes it to the
     /// provided callback. The refcount is not modified.
     #[inline(always)]
@@ -224,12 +217,6 @@ impl<T> Arc<T> {
 
         // Forward the result.
         result
-    }
-
-    /// Returns the address on the heap of the Arc itself -- not the T within it -- for memory
-    /// reporting.
-    pub fn heap_ptr(&self) -> *const c_void {
-        self.p.ptr() as *const ArcInner<T> as *const c_void
     }
 }
 
@@ -336,7 +323,7 @@ impl<T: ?Sized> Arc<T> {
     }
 
     #[inline]
-    pub fn is_unique(&self) -> bool {
+    fn is_unique(&self) -> bool {
         // We can use Relaxed here, but the justification is a bit subtle.
         //
         // The reason to use Acquire would be to synchronize with other threads
@@ -388,11 +375,11 @@ impl<T: ?Sized> Drop for Arc<T> {
 
 impl<T: ?Sized + PartialEq> PartialEq for Arc<T> {
     fn eq(&self, other: &Arc<T>) -> bool {
-        Self::ptr_eq(self, other) || *(*self) == *(*other)
+        *(*self) == *(*other)
     }
 
     fn ne(&self, other: &Arc<T>) -> bool {
-        !Self::ptr_eq(self, other) && *(*self) != *(*other)
+        *(*self) != *(*other)
     }
 }
 impl<T: ?Sized + PartialOrd> PartialOrd for Arc<T> {
@@ -473,6 +460,15 @@ impl<T: ?Sized> AsRef<T> for Arc<T> {
 
 unsafe impl<T: ?Sized> StableDeref for Arc<T> {}
 unsafe impl<T: ?Sized> CloneStableDeref for Arc<T> {}
+
+// This is what the HeapSize crate does for regular arc, but is questionably
+// sound. See https://github.com/servo/heapsize/issues/37
+#[cfg(feature = "servo")]
+impl<T: HeapSizeOf> HeapSizeOf for Arc<T> {
+    fn heap_size_of_children(&self) -> usize {
+        (**self).heap_size_of_children()
+    }
+}
 
 #[cfg(feature = "servo")]
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Arc<T>
@@ -671,12 +667,6 @@ impl<H: 'static, T: 'static> ThinArc<H, T> {
 
         // Forward the result.
         result
-    }
-
-    /// Returns the address on the heap of the ThinArc itself -- not the T
-    /// within it -- for memory reporting.
-    pub fn heap_ptr(&self) -> *const c_void {
-        self.ptr as *const ArcInner<T> as *const c_void
     }
 }
 
@@ -881,7 +871,7 @@ impl<T: 'static> Arc<T> {
 ///
 /// ArcBorrow lets us deal with borrows of known-refcounted objects
 /// without needing to worry about how they're actually stored.
-#[derive(Eq, PartialEq)]
+#[derive(PartialEq, Eq)]
 pub struct ArcBorrow<'a, T: 'a>(&'a T);
 
 impl<'a, T> Copy for ArcBorrow<'a, T> {}

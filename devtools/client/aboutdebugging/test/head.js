@@ -354,25 +354,14 @@ function waitForServiceWorkerRegistered(tab) {
  * @return {Promise} Resolves when the service worker is unregistered.
  */
 function* unregisterServiceWorker(tab, serviceWorkersElement) {
-  // Get the initial count of service worker registrations.
-  let registrations = serviceWorkersElement.querySelectorAll(".target-container");
-  let registrationCount = registrations.length;
-
-  // Wait until the registration count is decreased by one.
-  let isRemoved = waitUntil(() => {
-    registrations = serviceWorkersElement.querySelectorAll(".target-container");
-    return registrations.length === registrationCount - 1;
-  }, 100);
-
-  // Unregister the service worker from the content page
+  let onMutation = waitForMutation(serviceWorkersElement, { childList: true });
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
     // Retrieve the `sw` promise created in the html page
     let { sw } = content.wrappedJSObject;
     let registration = yield sw;
     yield registration.unregister();
   });
-
-  return isRemoved;
+  return onMutation;
 }
 
 /**

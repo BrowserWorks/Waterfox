@@ -10,6 +10,4 @@ negative:
 flags: [module]
 ---*/
 
-throw "Test262: This statement should not be evaluated.";
-
 function* g() { export default null; }

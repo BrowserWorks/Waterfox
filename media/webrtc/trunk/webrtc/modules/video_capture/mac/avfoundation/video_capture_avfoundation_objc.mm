@@ -152,7 +152,7 @@ using namespace videocapturemodule;
     }
 
     if ([captureConnection isVideoMaxFrameDurationSupported]) {
-      [captureConnection setVideoMaxFrameDuration:bestFrameRateRange.minFrameDuration];
+      [captureConnection setVideoMaxFrameDuration:bestFrameRateRange.maxFrameDuration];
     }
   }
 }

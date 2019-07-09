@@ -5,7 +5,6 @@
 description: >
   verifyProperty allows restoring the original descriptor
 includes: [propertyHelper.js]
-features: [Symbol]
 ---*/
 
 var obj;

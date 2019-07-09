@@ -440,10 +440,6 @@ bool
 VRDisplay::GetFrameData(VRFrameData& aFrameData)
 {
   UpdateFrameInfo();
-  if (!(mFrameInfo.mVRState.flags & gfx::VRDisplayCapabilityFlags::Cap_Orientation)) {
-    // We must have at minimum Cap_Orientation for a valid pose.
-    return false;
-  }
   aFrameData.Update(mFrameInfo);
   return true;
 }
@@ -545,8 +541,7 @@ VRDisplay::RequestPresent(const nsTArray<VRLayer>& aLayers,
   if (!EventStateManager::IsHandlingUserInput() &&
       !isChromePresentation &&
       !IsHandlingVRNavigationEvent() &&
-      gfxPrefs::VRRequireGesture() &&
-      !IsPresenting()) {
+      gfxPrefs::VRRequireGesture()) {
     // The WebVR API states that if called outside of a user gesture, the
     // promise must be rejected.  We allow VR presentations to start within
     // trusted events such as vrdisplayactivate, which triggers in response to
@@ -565,11 +560,7 @@ VRDisplay::RequestPresent(const nsTArray<VRLayer>& aLayers,
     // use cases.
     promise->MaybeRejectWithUndefined();
   } else {
-    if (mPresentation) {
-      mPresentation->UpdateLayers(aLayers);
-    } else {
-      mPresentation = mClient->BeginPresentation(aLayers, presentationGroup);
-    }
+    mPresentation = mClient->BeginPresentation(aLayers, presentationGroup);
     mFrameInfo.Clear();
     promise->MaybeResolve(JS::UndefinedHandleValue);
   }
@@ -656,8 +647,6 @@ VRDisplay::GetLayers(nsTArray<VRLayer>& result)
 void
 VRDisplay::SubmitFrame()
 {
-  AUTO_PROFILER_TRACING("VR", "SubmitFrameAtVRDisplay");
-
   if (mPresentation) {
     mPresentation->SubmitFrame();
   }
@@ -739,7 +728,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(VRDisplay, DOMEventTargetHelper, mCapabilitie
 NS_IMPL_ADDREF_INHERITED(VRDisplay, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(VRDisplay, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(VRDisplay)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(VRDisplay)
 NS_INTERFACE_MAP_ENTRY(nsIObserver)
 NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, DOMEventTargetHelper)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
@@ -986,7 +975,7 @@ VRSubmitFrameResult::WrapObject(JSContext* aCx,
 }
 
 void
-VRSubmitFrameResult::Update(uint64_t aFrameNum, const nsACString& aBase64Image)
+VRSubmitFrameResult::Update(uint32_t aFrameNum, const nsACString& aBase64Image)
 {
   mFrameNum = aFrameNum;
   mBase64Image = NS_ConvertASCIItoUTF16(aBase64Image);

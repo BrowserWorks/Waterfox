@@ -22,7 +22,6 @@ public:
   VRDisplayPresentation(VRDisplayClient *aDisplayClient,
                         const nsTArray<dom::VRLayer>& aLayers,
                         uint32_t aGroup);
-  void UpdateLayers(const nsTArray<mozilla::dom::VRLayer>& aLayers);
   void SubmitFrame();
   void GetDOMLayers(nsTArray<dom::VRLayer>& result);
   uint32_t GetGroup() const;

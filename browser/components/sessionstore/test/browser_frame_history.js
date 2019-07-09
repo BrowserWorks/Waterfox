@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 /**
  Ensure that frameset history works properly when restoring a tab,
@@ -151,13 +150,13 @@ add_task(async function() {
 function waitForLoadsInBrowser(aBrowser, aLoadCount) {
   return new Promise(resolve => {
     let loadCount = 0;
-    aBrowser.addEventListener("load", function listener(aEvent) {
+    aBrowser.addEventListener("load", function(aEvent) {
       if (++loadCount < aLoadCount) {
         info("Got " + loadCount + " loads, waiting until we have " + aLoadCount);
         return;
       }
 
-      aBrowser.removeEventListener("load", listener, true);
+      aBrowser.removeEventListener("load", arguments.callee, true);
       resolve();
     }, true);
   });

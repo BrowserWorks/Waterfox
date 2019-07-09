@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-#define SCALE_DENOMINATOR 16
-
 #define REF_SCALE_SHIFT 14
 #define REF_NO_SCALE (1 << REF_SCALE_SHIFT)
 #define REF_INVALID_SCALE -1

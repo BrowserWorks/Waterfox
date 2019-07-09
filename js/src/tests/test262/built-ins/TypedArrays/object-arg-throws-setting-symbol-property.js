@@ -19,7 +19,7 @@ info: >
     c. Perform ? Set(O, Pk, kValue, true).
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var obj = {

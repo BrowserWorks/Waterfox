@@ -43,7 +43,7 @@ public:
     , mTaskQueue(new TaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK)))
     , mIndex(0)
   {
-    EXPECT_EQ(NS_OK, resource->Open());
+    EXPECT_EQ(NS_OK, resource->Open(nullptr));
   }
 
   template<typename Function>
@@ -184,7 +184,7 @@ ToCryptoString(const CryptoSample& aCrypto)
     for (size_t i = 0; i < aCrypto.mKeyId.Length(); i++) {
       res.AppendPrintf("%02x", aCrypto.mKeyId[i]);
     }
-    res.AppendLiteral(" ");
+    res.Append(" ");
     for (size_t i = 0; i < aCrypto.mIV.Length(); i++) {
       res.AppendPrintf("%02x", aCrypto.mIV[i]);
     }
@@ -194,7 +194,7 @@ ToCryptoString(const CryptoSample& aCrypto)
                        aCrypto.mEncryptedSizes[i]);
     }
   } else {
-    res.AppendLiteral("no crypto");
+    res.Append("no crypto");
   }
   return res;
 }

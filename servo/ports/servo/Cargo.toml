@@ -18,7 +18,6 @@ compiletest_helper = {path = "../../tests/compiletest/helper"}
 gfx_tests = {path = "../../tests/unit/gfx"}
 layout_tests = {path = "../../tests/unit/layout"}
 metrics_tests = {path = "../../tests/unit/metrics"}
-msg_tests = {path = "../../tests/unit/msg"}
 net_tests = {path = "../../tests/unit/net"}
 net_traits_tests = {path = "../../tests/unit/net_traits"}
 plugin_compiletest = {path = "../../tests/compiletest/plugin"}
@@ -29,15 +28,12 @@ servo_remutex_tests = {path = "../../tests/unit/servo_remutex"}
 style_tests = {path = "../../tests/unit/style"}
 
 [features]
-default = ["unstable", "default-except-unstable"]
-default-except-unstable = ["webdriver", "max_log_level"]
+default = ["webdriver", "max_log_level"]
 max_log_level = ["log/release_max_level_info"]
 webdriver = ["libservo/webdriver_server"]
 energy-profiling = ["libservo/energy-profiling"]
+testing = ["libservo/testing"]
 debugmozjs = ["libservo/debugmozjs"]
-googlevr = ["libservo/googlevr"]
-oculusvr = ["libservo/oculusvr"]
-unstable = ["libservo/unstable", "profile_tests/unstable"]
 
 [dependencies]
 backtrace = "0.3"

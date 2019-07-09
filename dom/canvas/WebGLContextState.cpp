@@ -181,15 +181,54 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
 
     MakeContextCurrent();
 
+    if (MinCapabilityMode()) {
+        switch(pname) {
+            ////////////////////////////
+            // Single-value params
+
+            // int
+            case LOCAL_GL_MAX_VERTEX_ATTRIBS:
+                return JS::Int32Value(MINVALUE_GL_MAX_VERTEX_ATTRIBS);
+
+            case LOCAL_GL_MAX_FRAGMENT_UNIFORM_VECTORS:
+                return JS::Int32Value(MINVALUE_GL_MAX_FRAGMENT_UNIFORM_VECTORS);
+
+            case LOCAL_GL_MAX_VERTEX_UNIFORM_VECTORS:
+                return JS::Int32Value(MINVALUE_GL_MAX_VERTEX_UNIFORM_VECTORS);
+
+            case LOCAL_GL_MAX_VARYING_VECTORS:
+                return JS::Int32Value(MINVALUE_GL_MAX_VARYING_VECTORS);
+
+            case LOCAL_GL_MAX_TEXTURE_SIZE:
+                return JS::Int32Value(MINVALUE_GL_MAX_TEXTURE_SIZE);
+
+            case LOCAL_GL_MAX_CUBE_MAP_TEXTURE_SIZE:
+                return JS::Int32Value(MINVALUE_GL_MAX_CUBE_MAP_TEXTURE_SIZE);
+
+            case LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(MINVALUE_GL_MAX_TEXTURE_IMAGE_UNITS);
+
+            case LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(MINVALUE_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+
+            case LOCAL_GL_MAX_RENDERBUFFER_SIZE:
+                return JS::Int32Value(MINVALUE_GL_MAX_RENDERBUFFER_SIZE);
+
+            default:
+                // Return the real value; we're not overriding this one
+                break;
+        }
+    }
+
     if (IsWebGL2() || IsExtensionEnabled(WebGLExtensionID::WEBGL_draw_buffers)) {
         if (pname == LOCAL_GL_MAX_COLOR_ATTACHMENTS) {
-            return JS::Int32Value(mGLMaxColorAttachments);
+            return JS::Int32Value(mImplMaxColorAttachments);
 
         } else if (pname == LOCAL_GL_MAX_DRAW_BUFFERS) {
-            return JS::Int32Value(mGLMaxDrawBuffers);
+            return JS::Int32Value(mImplMaxDrawBuffers);
 
         } else if (pname >= LOCAL_GL_DRAW_BUFFER0 &&
-                   pname < GLenum(LOCAL_GL_DRAW_BUFFER0 + mGLMaxDrawBuffers))
+                   pname < GLenum(LOCAL_GL_DRAW_BUFFER0 + mImplMaxDrawBuffers))
         {
             GLint ret = LOCAL_GL_NONE;
             if (!mBoundDrawFramebuffer) {
@@ -381,7 +420,11 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
         case LOCAL_GL_PACK_ALIGNMENT:
         case LOCAL_GL_SUBPIXEL_BITS:
         case LOCAL_GL_SAMPLE_BUFFERS:
-        case LOCAL_GL_SAMPLES: {
+        case LOCAL_GL_SAMPLES:
+        case LOCAL_GL_MAX_VERTEX_ATTRIBS:
+        case LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+        case LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
+        case LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS: {
             GLint i = 0;
             gl->fGetIntegerv(pname, &i);
             return JS::Int32Value(i);
@@ -402,25 +445,13 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
         }
 
         case LOCAL_GL_MAX_TEXTURE_SIZE:
-            return JS::Int32Value(mGLMaxTextureSize);
+            return JS::Int32Value(mImplMaxTextureSize);
 
         case LOCAL_GL_MAX_CUBE_MAP_TEXTURE_SIZE:
-            return JS::Int32Value(mGLMaxCubeMapTextureSize);
+            return JS::Int32Value(mImplMaxCubeMapTextureSize);
 
         case LOCAL_GL_MAX_RENDERBUFFER_SIZE:
-            return JS::Int32Value(mGLMaxRenderbufferSize);
-
-        case LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
-            return JS::Int32Value(mGLMaxVertexTextureImageUnits);
-
-        case LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS:
-            return JS::Int32Value(mGLMaxFragmentTextureImageUnits);
-
-        case LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
-            return JS::Int32Value(mGLMaxCombinedTextureImageUnits);
-
-        case LOCAL_GL_MAX_VERTEX_ATTRIBS:
-            return JS::Int32Value(mGLMaxVertexAttribs);
+            return JS::Int32Value(mImplMaxRenderbufferSize);
 
         case LOCAL_GL_MAX_VERTEX_UNIFORM_VECTORS:
             return JS::Int32Value(mGLMaxVertexUniformVectors);
@@ -502,21 +533,15 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
         case LOCAL_GL_DEPTH_RANGE:
         case LOCAL_GL_ALIASED_POINT_SIZE_RANGE:
         case LOCAL_GL_ALIASED_LINE_WIDTH_RANGE: {
-            GLfloat fv[2] = { 0 };
-            switch (pname) {
-            case LOCAL_GL_ALIASED_POINT_SIZE_RANGE:
-                fv[0] = mGLAliasedPointSizeRange[0];
-                fv[1] = mGLAliasedPointSizeRange[1];
-                break;
-            case LOCAL_GL_ALIASED_LINE_WIDTH_RANGE:
-                fv[0] = mGLAliasedLineWidthRange[0];
-                fv[1] = mGLAliasedLineWidthRange[1];
-                break;
-            // case LOCAL_GL_DEPTH_RANGE:
-            default:
-                gl->fGetFloatv(pname, fv);
-                break;
+            GLenum driverPName = pname;
+            if (gl->IsCoreProfile() &&
+                driverPName == LOCAL_GL_ALIASED_POINT_SIZE_RANGE)
+            {
+                driverPName = LOCAL_GL_POINT_SIZE_RANGE;
             }
+
+            GLfloat fv[2] = { 0 };
+            gl->fGetFloatv(driverPName, fv);
             JSObject* obj = dom::Float32Array::Create(cx, this, 2, fv);
             if (!obj) {
                 rv = NS_ERROR_OUT_OF_MEMORY;
@@ -538,7 +563,8 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
 
         // 2 ints
         case LOCAL_GL_MAX_VIEWPORT_DIMS: {
-            GLint iv[2] = { GLint(mGLMaxViewportDims[0]), GLint(mGLMaxViewportDims[1]) };
+            GLint iv[2] = { 0 };
+            gl->fGetIntegerv(pname, iv);
             JSObject* obj = dom::Int32Array::Create(cx, this, 2, iv);
             if (!obj) {
                 rv = NS_ERROR_OUT_OF_MEMORY;

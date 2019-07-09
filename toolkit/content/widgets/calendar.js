@@ -11,9 +11,6 @@
  * @param {Object} options
  *        {
  *          {Number} calViewSize: Number of days to appear on a calendar view
- *          {Function} getDayString: Transform day number to string
- *          {Function} getWeekHeaderString: Transform day of week number to string
- *          {Function} setSelection: Set selection for dateKeeper
  *        }
  * @param {Object} context
  *        {
@@ -27,11 +24,9 @@ function Calendar(options, context) {
   this.context = context;
   this.state = {
     days: [],
-    weekHeaders: [],
-    setSelection: options.setSelection,
-    getDayString: options.getDayString,
-    getWeekHeaderString: options.getWeekHeaderString
+    weekHeaders: []
   };
+  this.props = {};
   this.elements = {
     weekHeaders: this._generateNodes(DAYS_IN_A_WEEK, context.weekHeader),
     daysView: this._generateNodes(options.calViewSize, context.daysView)
@@ -50,32 +45,34 @@ Calendar.prototype = {
    *          {Boolean} isVisible: Whether or not the calendar is in view
    *          {Array<Object>} days: Data for days
    *          {
-   *            {Date} dateObj
-   *            {Number} content
+   *            {Number} dateValue: Date in milliseconds
+   *            {Number} textContent
    *            {Array<String>} classNames
-   *            {Boolean} enabled
    *          }
    *          {Array<Object>} weekHeaders: Data for weekHeaders
    *          {
-   *            {Number} content
+   *            {Number} textContent
    *            {Array<String>} classNames
+   *            {Boolean} enabled
    *          }
+   *          {Function} getDayString: Transform day number to string
+   *          {Function} getWeekHeaderString: Transform day of week number to string
+   *          {Function} setSelection: Set selection for dateKeeper
    *        }
    */
   setProps(props) {
     if (props.isVisible) {
       // Transform the days and weekHeaders array for rendering
-      const days = props.days.map(({ dateObj, content, classNames, enabled }) => {
+      const days = props.days.map(({ dateObj, classNames, enabled }) => {
         return {
-          dateObj,
-          textContent: this.state.getDayString(content),
+          textContent: props.getDayString(dateObj.getUTCDate()),
           className: classNames.join(" "),
           enabled
         };
       });
-      const weekHeaders = props.weekHeaders.map(({ content, classNames }) => {
+      const weekHeaders = props.weekHeaders.map(({ textContent, classNames }) => {
         return {
-          textContent: this.state.getWeekHeaderString(content),
+          textContent: props.getWeekHeaderString(textContent),
           className: classNames.join(" ")
         };
       });
@@ -94,6 +91,8 @@ Calendar.prototype = {
       this.state.days = days;
       this.state.weekHeaders = weekHeaders;
     }
+
+    this.props = Object.assign(this.props, props);
   },
 
   /**
@@ -150,9 +149,9 @@ Calendar.prototype = {
       case "click": {
         if (event.target.parentNode == this.context.daysView) {
           let targetId = event.target.dataset.id;
-          let targetObj = this.state.days[targetId];
+          let targetObj = this.props.days[targetId];
           if (targetObj.enabled) {
-            this.state.setSelection(targetObj.dateObj);
+            this.props.setSelection(targetObj.dateObj);
           }
         }
         break;

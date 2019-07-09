@@ -7,7 +7,7 @@
 #define TRANSFRMX_XML_EVENT_HANDLER_H
 
 #include "txCore.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 #define kTXNameSpaceURI "http://www.mozilla.org/TransforMiix"
 #define kTXWrapper "transformiix:result"
@@ -34,8 +34,8 @@ public:
      * @param aNsID the namespace ID of the attribute
      * @param aValue the value of the attribute
      */
-    virtual nsresult attribute(nsAtom* aPrefix, nsAtom* aLocalName,
-                               nsAtom* aLowercaseLocalName, int32_t aNsID,
+    virtual nsresult attribute(nsIAtom* aPrefix, nsIAtom* aLocalName,
+                               nsIAtom* aLowercaseLocalName, int32_t aNsID,
                                const nsString& aValue) = 0;
 
     /**
@@ -46,7 +46,7 @@ public:
      * @param aNsID the namespace ID of the attribute
      * @param aValue the value of the attribute
      */
-    virtual nsresult attribute(nsAtom* aPrefix,
+    virtual nsresult attribute(nsIAtom* aPrefix,
                                const nsAString& aLocalName,
                                const int32_t aNsID,
                                const nsString& aValue) = 0;
@@ -99,9 +99,9 @@ public:
      * @param aLowercaseName the localname of the element in lower case
      * @param aNsID the namespace ID of the element
      */
-    virtual nsresult startElement(nsAtom* aPrefix,
-                                  nsAtom* aLocalName,
-                                  nsAtom* aLowercaseLocalName,
+    virtual nsresult startElement(nsIAtom* aPrefix,
+                                  nsIAtom* aLocalName,
+                                  nsIAtom* aLowercaseLocalName,
                                   int32_t aNsID) = 0;
 
     /**
@@ -112,16 +112,16 @@ public:
      * @param aLocalName the localname of the element
      * @param aNsID the namespace ID of the element
      */
-    virtual nsresult startElement(nsAtom* aPrefix,
+    virtual nsresult startElement(nsIAtom* aPrefix,
                                   const nsAString& aLocalName,
                                   const int32_t aNsID) = 0;
 };
 
 #define TX_DECL_TXAXMLEVENTHANDLER                                           \
-    virtual nsresult attribute(nsAtom* aPrefix, nsAtom* aLocalName,        \
-                               nsAtom* aLowercaseLocalName, int32_t aNsID,  \
+    virtual nsresult attribute(nsIAtom* aPrefix, nsIAtom* aLocalName,        \
+                               nsIAtom* aLowercaseLocalName, int32_t aNsID,  \
                                const nsString& aValue);                      \
-    virtual nsresult attribute(nsAtom* aPrefix,                             \
+    virtual nsresult attribute(nsIAtom* aPrefix,                             \
                                const nsAString& aLocalName,                  \
                                const int32_t aNsID,                          \
                                const nsString& aValue);                      \
@@ -132,11 +132,11 @@ public:
     virtual nsresult processingInstruction(const nsString& aTarget,          \
                                            const nsString& aData);           \
     virtual nsresult startDocument();                                        \
-    virtual nsresult startElement(nsAtom* aPrefix,                          \
-                                  nsAtom* aLocalName,                       \
-                                  nsAtom* aLowercaseLocalName,              \
+    virtual nsresult startElement(nsIAtom* aPrefix,                          \
+                                  nsIAtom* aLocalName,                       \
+                                  nsIAtom* aLowercaseLocalName,              \
                                   int32_t aNsID);                            \
-    virtual nsresult startElement(nsAtom* aPrefix,                          \
+    virtual nsresult startElement(nsIAtom* aPrefix,                          \
                                   const nsAString& aName,                    \
                                   const int32_t aNsID);
 

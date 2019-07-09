@@ -77,11 +77,10 @@ use dom::bindings::constant::{ConstantSpec, define_constants};
 use dom::bindings::conversions::{DOM_OBJECT_SLOT, DerivedFrom, get_dom_class};
 use dom::bindings::error::{Error, Fallible};
 use dom::bindings::guard::Guard;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::bindings::utils::{DOM_PROTOTYPE_SLOT, ProtoOrIfaceArray, get_proto_or_iface_array};
 use dom::create::create_native_html_element;
-use dom::customelementregistry::ConstructionStackEntry;
-use dom::element::{CustomElementState, Element, ElementCreator};
+use dom::element::{Element, ElementCreator};
 use dom::htmlelement::HTMLElement;
 use dom::window::Window;
 use html5ever::LocalName;
@@ -108,7 +107,7 @@ use script_thread::ScriptThread;
 use std::ptr;
 
 /// The class of a non-callback interface object.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct NonCallbackInterfaceObjectClass {
     /// The SpiderMonkey Class structure.
     pub class: Class,
@@ -134,8 +133,8 @@ impl NonCallbackInterfaceObjectClass {
                 name: b"Function\0" as *const _ as *const libc::c_char,
                 flags: 0,
                 cOps: &constructor_behavior.0,
-                spec: 0 as *const _,
-                ext: 0 as *const _,
+                spec: ptr::null(),
+                ext: ptr::null(),
                 oOps: &OBJECT_OPS,
             },
             proto_id: proto_id,
@@ -226,7 +225,7 @@ pub unsafe fn create_global_object(
     // avoid getting trace hooks called on a partially initialized object.
     JS_SetReservedSlot(rval.get(), DOM_OBJECT_SLOT, PrivateValue(private));
     let proto_array: Box<ProtoOrIfaceArray> =
-        Box::new([0 as *mut JSObject; PrototypeList::PROTO_OR_IFACE_LENGTH]);
+        box [0 as *mut JSObject; PrototypeList::PROTO_OR_IFACE_LENGTH];
     JS_SetReservedSlot(rval.get(),
                        DOM_PROTOTYPE_SLOT,
                        PrivateValue(Box::into_raw(proto_array) as *const libc::c_void));
@@ -236,7 +235,7 @@ pub unsafe fn create_global_object(
 }
 
 // https://html.spec.whatwg.org/multipage/#htmlconstructor
-pub unsafe fn html_constructor<T>(window: &Window, call_args: &CallArgs) -> Fallible<DomRoot<T>>
+pub unsafe fn html_constructor<T>(window: &Window, call_args: &CallArgs) -> Fallible<Root<T>>
                                   where T: DerivedFrom<Element> {
     let document = window.Document();
 
@@ -282,44 +281,24 @@ pub unsafe fn html_constructor<T>(window: &Window, call_args: &CallArgs) -> Fall
         }
     }
 
-    let entry = definition.construction_stack.borrow().last().cloned();
-    match entry {
-        // Step 8
-        None => {
-            // Step 8.1
-            let name = QualName::new(None, ns!(html), definition.local_name.clone());
-            let element = if definition.is_autonomous() {
-                DomRoot::upcast(HTMLElement::new(name.local, None, &*document))
-            } else {
-                create_native_html_element(name, None, &*document, ElementCreator::ScriptCreated)
-            };
+    // Step 8.1
+    let name = QualName::new(None, ns!(html), definition.local_name.clone());
+    let element = if definition.is_autonomous() {
+        Root::upcast(HTMLElement::new(name.local, None, &*document))
+    } else {
+        create_native_html_element(name, None, &*document, ElementCreator::ScriptCreated)
+    };
 
-            // Step 8.2 is performed in the generated caller code.
+    // Step 8.2 is performed in the generated caller code.
 
-            // Step 8.3
-            element.set_custom_element_state(CustomElementState::Custom);
+    // TODO: Step 8.3 - 8.4
+    // Set the element's custom element state and definition.
 
-            // Step 8.4
-            element.set_custom_element_definition(definition.clone());
+    // Step 8.5
+    Root::downcast(element).ok_or(Error::InvalidState)
 
-            // Step 8.5
-            DomRoot::downcast(element).ok_or(Error::InvalidState)
-        },
-        // Step 9
-        Some(ConstructionStackEntry::Element(element)) => {
-            // Step 11 is performed in the generated caller code.
-
-            // Step 12
-            let mut construction_stack = definition.construction_stack.borrow_mut();
-            construction_stack.pop();
-            construction_stack.push(ConstructionStackEntry::AlreadyConstructedMarker);
-
-            // Step 13
-            DomRoot::downcast(element).ok_or(Error::InvalidState)
-        },
-        // Step 10
-        Some(ConstructionStackEntry::AlreadyConstructedMarker) => Err(Error::InvalidState),
-    }
+    // TODO: Steps 9-13
+    // Custom element upgrades are not implemented yet, so these steps are unnecessary.
 }
 
 pub fn push_new_element_queue() {
@@ -548,7 +527,7 @@ unsafe extern "C" fn has_instance_hook(cx: *mut JSContext,
 }
 
 /// Return whether a value is an instance of a given prototype.
-/// <http://heycam.github.io/webidl/#es-interface-hasinstance>
+/// http://heycam.github.io/webidl/#es-interface-hasinstance
 unsafe fn has_instance(
         cx: *mut JSContext,
         interface_object: HandleObject,

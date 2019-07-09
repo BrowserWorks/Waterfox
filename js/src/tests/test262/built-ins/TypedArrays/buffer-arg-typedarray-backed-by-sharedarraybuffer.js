@@ -1,3 +1,4 @@
+// |reftest| skip-if(!this.hasOwnProperty('SharedArrayBuffer')) -- SharedArrayBuffer not yet riding the trains
 // Copyright (C) 2017 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -7,7 +8,7 @@ description: >
   Passing a SharedArrayBuffer-backed TypedArray to a TypedArray constructor
   produces an ArrayBuffer-backed TypedArray.
 includes: [testTypedArray.js]
-features: [SharedArrayBuffer, TypedArray]
+features: [SharedArrayBuffer]
 ---*/
 
 var sab = new SharedArrayBuffer(4);

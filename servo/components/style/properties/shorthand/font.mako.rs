@@ -8,15 +8,15 @@
 <%helpers:shorthand name="font"
                     sub_properties="font-style font-variant-caps font-weight font-stretch
                                     font-size line-height font-family
-                                    ${'font-size-adjust' if product == 'gecko' else ''}
-                                    ${'font-kerning' if product == 'gecko' else ''}
-                                    ${'font-variant-alternates' if product == 'gecko' else ''}
-                                    ${'font-variant-east-asian' if product == 'gecko' else ''}
-                                    ${'font-variant-ligatures' if product == 'gecko' else ''}
-                                    ${'font-variant-numeric' if product == 'gecko' else ''}
-                                    ${'font-variant-position' if product == 'gecko' else ''}
-                                    ${'font-language-override' if product == 'gecko' else ''}
-                                    ${'font-feature-settings' if product == 'gecko' else ''}"
+                                    ${'font-size-adjust' if product == 'gecko' or data.testing else ''}
+                                    ${'font-kerning' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-alternates' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-east-asian' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-ligatures' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-numeric' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-position' if product == 'gecko' or data.testing else ''}
+                                    ${'font-language-override' if product == 'gecko' or data.testing else ''}
+                                    ${'font-feature-settings' if product == 'gecko' or data.testing else ''}"
                     spec="https://drafts.csswg.org/css-fonts-3/#propdef-font">
     use parser::Parse;
     use properties::longhands::{font_family, font_style, font_weight, font_stretch};
@@ -31,7 +31,7 @@
                                 variant_ligatures variant_numeric \
                                 variant_position feature_settings".split()
     %>
-    % if product == "gecko":
+    % if product == "gecko" or data.testing:
         % for prop in gecko_sub_properties:
             use properties::longhands::font_${prop};
         % endfor
@@ -98,7 +98,7 @@
         }
         if size.is_none() ||
            (count(&style) + count(&weight) + count(&variant_caps) + count(&stretch) + nb_normals) > 4 {
-            return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            return Err(StyleParseError::UnspecifiedError.into())
         }
         let line_height = if input.try(|input| input.expect_delim('/')).is_ok() {
             Some(LineHeight::parse(context, input)?)
@@ -112,7 +112,7 @@
             % endfor
             line_height: line_height.unwrap_or(LineHeight::normal()),
             font_family: family,
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 % for name in gecko_sub_properties:
                     font_${name}: font_${name}::get_initial_specified_value(),
                 % endfor
@@ -146,7 +146,7 @@
                 }
             % endif
 
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 % for name in gecko_sub_properties:
                     if self.font_${name} != &font_${name}::get_initial_specified_value() {
                         return Ok(());
@@ -226,16 +226,16 @@
 
 <%helpers:shorthand name="font-variant"
                     sub_properties="font-variant-caps
-                                    ${'font-variant-alternates' if product == 'gecko' else ''}
-                                    ${'font-variant-east-asian' if product == 'gecko' else ''}
-                                    ${'font-variant-ligatures' if product == 'gecko' else ''}
-                                    ${'font-variant-numeric' if product == 'gecko' else ''}
-                                    ${'font-variant-position' if product == 'gecko' else ''}"
+                                    ${'font-variant-alternates' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-east-asian' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-ligatures' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-numeric' if product == 'gecko' or data.testing else ''}
+                                    ${'font-variant-position' if product == 'gecko' or data.testing else ''}"
                     spec="https://drafts.csswg.org/css-fonts-3/#propdef-font-variant">
     <% gecko_sub_properties = "alternates east_asian ligatures numeric position".split() %>
     <%
         sub_properties = ["caps"]
-        if product == "gecko":
+        if product == "gecko" or data.testing:
             sub_properties += gecko_sub_properties
     %>
 
@@ -254,7 +254,7 @@
         } else if input.try(|input| input.expect_ident_matching("none")).is_ok() {
             // The 'none' value sets 'font-variant-ligatures' to 'none' and resets all other sub properties
             // to their initial value.
-        % if product == "gecko":
+        % if product == "gecko" or data.testing:
             ligatures = Some(font_variant_ligatures::get_none_specified_value());
         % endif
         } else {
@@ -262,7 +262,7 @@
             loop {
                 if input.try(|input| input.expect_ident_matching("normal")).is_ok() ||
                    input.try(|input| input.expect_ident_matching("none")).is_ok() {
-                    return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+                    return Err(StyleParseError::UnspecifiedError.into())
                 }
             % for prop in sub_properties:
                 if ${prop}.is_none() {
@@ -278,7 +278,7 @@
             }
 
             if !has_custom_value {
-                return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+                return Err(StyleParseError::UnspecifiedError.into())
             }
         }
 
@@ -294,7 +294,7 @@
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
 
             let has_none_ligatures =
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 self.font_variant_ligatures == &font_variant_ligatures::get_none_specified_value();
             % else:
                 false;

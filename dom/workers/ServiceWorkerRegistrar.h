@@ -10,14 +10,13 @@
 #include "mozilla/Monitor.h"
 #include "mozilla/Telemetry.h"
 #include "nsClassHashtable.h"
-#include "nsIAsyncShutdown.h"
 #include "nsIObserver.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
 #define SERVICEWORKERREGISTRAR_FILE "serviceworker.txt"
-#define SERVICEWORKERREGISTRAR_VERSION "8"
+#define SERVICEWORKERREGISTRAR_VERSION "7"
 #define SERVICEWORKERREGISTRAR_TERMINATOR "#"
 #define SERVICEWORKERREGISTRAR_TRUE "true"
 #define SERVICEWORKERREGISTRAR_FALSE "false"
@@ -35,14 +34,12 @@ namespace dom {
 class ServiceWorkerRegistrationData;
 
 class ServiceWorkerRegistrar : public nsIObserver
-                             , public nsIAsyncShutdownBlocker
 {
   friend class ServiceWorkerRegistrarSaveDataRunnable;
 
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIOBSERVER
-  NS_DECL_NSIASYNCSHUTDOWNBLOCKER
 
   static void Initialize();
 
@@ -82,8 +79,6 @@ private:
   void ShutdownCompleted();
   void MaybeScheduleShutdownCompleted();
 
-  nsCOMPtr<nsIAsyncShutdownClient> GetShutdownPhase() const;
-
   bool IsSupportedVersion(const nsACString& aVersion) const;
 
   mozilla::Monitor mMonitor;
@@ -96,6 +91,7 @@ protected:
 
   // PBackground thread only
   bool mShuttingDown;
+  bool* mShutdownCompleteFlag;
   uint32_t mRunnableCounter;
 };
 

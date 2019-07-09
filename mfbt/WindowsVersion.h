@@ -7,7 +7,6 @@
 #ifndef mozilla_WindowsVersion_h
 #define mozilla_WindowsVersion_h
 
-#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include <stdint.h>
 #include <windows.h>
@@ -17,8 +16,8 @@ namespace mozilla {
 inline bool
 IsWindowsVersionOrLater(uint32_t aVersion)
 {
-  static Atomic<uint32_t> minVersion(0);
-  static Atomic<uint32_t> maxVersion(UINT32_MAX);
+  static uint32_t minVersion = 0;
+  static uint32_t maxVersion = UINT32_MAX;
 
   if (minVersion >= aVersion) {
     return true;
@@ -57,8 +56,8 @@ IsWindowsVersionOrLater(uint32_t aVersion)
 inline bool
 IsWindowsBuildOrLater(uint32_t aBuild)
 {
-  static Atomic<uint32_t> minBuild(0);
-  static Atomic<uint32_t> maxBuild(UINT32_MAX);
+  static uint32_t minBuild = 0;
+  static uint32_t maxBuild = UINT32_MAX;
 
   if (minBuild >= aBuild) {
     return true;
@@ -88,8 +87,8 @@ IsWindowsBuildOrLater(uint32_t aBuild)
 inline bool
 IsWindows10BuildOrLater(uint32_t aBuild)
 {
-  static Atomic<uint32_t> minBuild(0);
-  static Atomic<uint32_t> maxBuild(UINT32_MAX);
+  static uint32_t minBuild = 0;
+  static uint32_t maxBuild = UINT32_MAX;
 
   if (minBuild >= aBuild) {
     return true;
@@ -159,7 +158,7 @@ IsNotWin7PreRTM()
   return IsWin7SP1OrLater() || IsWindowsBuildOrLater(7600);
 }
 
-inline bool
+MOZ_ALWAYS_INLINE bool
 IsWin7AndPre2000Compatible() {
   /*
    * See Bug 1279171.

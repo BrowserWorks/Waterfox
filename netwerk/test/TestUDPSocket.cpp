@@ -309,7 +309,7 @@ TEST(TestUDPSocket, TestUDPSocketMain)
   ASSERT_TRUE(NS_SUCCEEDED(clientListener->mResult));
 
   // Setup timer to detect multicast failure
-  nsCOMPtr<nsITimer> timer = NS_NewTimer();
+  nsCOMPtr<nsITimer> timer = do_CreateInstance("@mozilla.org/timer;1");
   ASSERT_TRUE(timer);
   RefPtr<MulticastTimerCallback> timerCb = new MulticastTimerCallback(waiter);
 

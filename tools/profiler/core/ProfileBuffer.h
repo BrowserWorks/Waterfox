@@ -13,7 +13,7 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/RefCounted.h"
 
-class ProfileBuffer final
+class ProfileBuffer final : public ProfilerStackCollector
 {
 public:
   explicit ProfileBuffer(int aEntrySize);
@@ -42,9 +42,16 @@ public:
   // record the resulting generation and index in |aLS| if it's non-null.
   void AddThreadIdEntry(int aThreadId, LastSample* aLS = nullptr);
 
-  void CollectCodeLocation(
+  virtual mozilla::Maybe<uint32_t> Generation() override
+  {
+    return mozilla::Some(mGeneration);
+  }
+
+  virtual void CollectNativeLeafAddr(void* aAddr) override;
+  virtual void CollectJitReturnAddr(void* aAddr) override;
+  virtual void CollectCodeLocation(
     const char* aLabel, const char* aStr, int aLineNumber,
-    const mozilla::Maybe<js::ProfileEntry::Category>& aCategory);
+    const mozilla::Maybe<js::ProfileEntry::Category>& aCategory) override;
 
   // Maximum size of a frameKey string that we'll handle.
   static const size_t kMaxFrameKeyLength = 512;
@@ -96,31 +103,6 @@ public:
 
   // Markers that marker entries in the buffer might refer to.
   ProfilerMarkerLinkedList mStoredMarkers;
-};
-
-/**
- * Helper type used to implement ProfilerStackCollector. This type is used as
- * the collector for MergeStacks by ProfileBuffer. It holds a reference to the
- * buffer, as well as additional feature flags which are needed to control the
- * data collection strategy
- */
-class ProfileBufferCollector final : public ProfilerStackCollector
-{
-public:
-  ProfileBufferCollector(ProfileBuffer& aBuf, uint32_t aFeatures)
-    : mBuf(aBuf)
-    , mFeatures(aFeatures)
-  {}
-
-  virtual mozilla::Maybe<uint32_t> Generation() override;
-  virtual void CollectNativeLeafAddr(void* aAddr) override;
-  virtual void CollectJitReturnAddr(void* aAddr) override;
-  virtual void CollectWasmFrame(const char* aLabel) override;
-  virtual void CollectPseudoEntry(const js::ProfileEntry& aEntry) override;
-
-private:
-  ProfileBuffer& mBuf;
-  uint32_t mFeatures;
 };
 
 #endif

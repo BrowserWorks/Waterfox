@@ -6,7 +6,6 @@ description: >
     When the `next` method of a generator-produced iterable is invoked without
     an argument, the corresponding `yield` expression should be evaluated as
     `undefined`.
-features: [generators]
 ---*/
 
 function* g() { actual = yield; }

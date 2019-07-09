@@ -7,7 +7,6 @@
 #ifndef mozilla_ServoStyleSet_h
 #define mozilla_ServoStyleSet_h
 
-#include "mozilla/AtomArray.h"
 #include "mozilla/EffectCompositor.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/EventStates.h"
@@ -22,8 +21,7 @@
 #include "nsCSSPseudoElements.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsChangeHint.h"
-#include "nsAtom.h"
-#include "nsIMemoryReporter.h"
+#include "nsIAtom.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -48,31 +46,25 @@ struct TreeMatchContext;
 
 namespace mozilla {
 
-// A few flags used to track which kind of stylist state we may need to
-// update.
+/**
+ * A few flags used to track which kind of stylist state we may need to
+ * update.
+ */
 enum class StylistState : uint8_t {
-  // The stylist is not dirty, we should do nothing.
+  /** The stylist is not dirty, we should do nothing */
   NotDirty = 0,
 
-  // The style sheets have changed, so we need to update the style data.
+  /** The style sheets have changed, so we need to update the style data. */
   StyleSheetsDirty = 1 << 0,
 
-  // Some of the style sheets of the bound elements in binding manager have
-  // changed, so we need to tell the binding manager to update style data.
-  XBLStyleSheetsDirty = 1 << 1,
+  /**
+   * All style data is dirty and both style sheet data and default computed
+   * values need to be recomputed.
+   */
+  FullyDirty = 1 << 1,
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(StylistState)
-
-// Bitfield type to represent Servo stylesheet origins.
-enum class OriginFlags : uint8_t {
-  UserAgent = 0x01,
-  User      = 0x02,
-  Author    = 0x04,
-  All       = 0x07,
-};
-
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(OriginFlags)
 
 /**
  * The set of style sheets that apply to a document, backed by a Servo
@@ -98,38 +90,13 @@ public:
     return sInServoTraversal;
   }
 
-#ifdef DEBUG
-  // Used for debug assertions. We make this debug-only to prevent callers from
-  // accidentally using it instead of IsInServoTraversal, which is cheaper. We
-  // can change this if a use-case arises.
-  static bool IsCurrentThreadInServoTraversal();
-#endif
-
   static ServoStyleSet* Current()
   {
     return sInServoTraversal;
   }
 
-  // The kind of styleset we have.
-  //
-  // We use ServoStyleSet also from XBL bindings, and some stuff needs to be
-  // different between them.
-  enum class Kind : uint8_t {
-    // A "master" StyleSet.
-    //
-    // This one is owned by a pres shell for a given document.
-    Master,
-
-    // A StyleSet for XBL, which is owned by a given XBL binding.
-    ForXBL,
-  };
-
-  explicit ServoStyleSet(Kind aKind);
+  ServoStyleSet();
   ~ServoStyleSet();
-
-  static UniquePtr<ServoStyleSet>
-  CreateXBLServoStyleSet(nsPresContext* aPresContext,
-                         const nsTArray<RefPtr<ServoStyleSheet>>& aNewSheets);
 
   void Init(nsPresContext* aPresContext, nsBindingManager* aBindingManager);
   void BeginShutdown();
@@ -140,7 +107,7 @@ public:
   void RecordShadowStyleChange(mozilla::dom::ShadowRoot* aShadowRoot) {
     // FIXME(emilio): When we properly support shadow dom we'll need to do
     // better.
-    MarkOriginsDirty(OriginFlags::All);
+    ForceAllStyleDirty();
   }
 
   bool StyleSheetsHaveChanged() const
@@ -148,14 +115,11 @@ public:
     return StylistNeedsUpdate();
   }
 
-  nsRestyleHint MediumFeaturesChanged(bool aViewportChanged);
-
-  // aViewportChanged outputs whether any viewport units is used.
-  bool MediumFeaturesChangedRules(bool* aViewportUnitsUsed);
+  nsRestyleHint MediumFeaturesChanged(bool aViewportChanged) const;
 
   void InvalidateStyleForCSSRuleChanges();
 
-  void AddSizeOfIncludingThis(nsWindowSizes& aSizes) const;
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
   const RawServoStyleSet* RawSet() const {
     return mRawSet.get();
   }
@@ -220,10 +184,11 @@ public:
   // Resolves style for a (possibly-pseudo) Element without assuming that the
   // style has been resolved. If the element was unstyled and a new style
   // context was resolved, it is not stored in the DOM. (That is, the element
-  // remains unstyled.)
+  // remains unstyled.) |aPeudoTag| and |aPseudoType| must match.
   already_AddRefed<ServoStyleContext>
   ResolveStyleLazily(dom::Element* aElement,
                      CSSPseudoElementType aPseudoType,
+                     nsIAtom* aPseudoTag,
                      StyleRuleInclusion aRules =
                        StyleRuleInclusion::All);
 
@@ -231,22 +196,14 @@ public:
   // use and must be non-null.  It must be an anon box, and must be one that
   // inherits style from the given aParentContext.
   already_AddRefed<ServoStyleContext>
-  ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
+  ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
                                      ServoStyleContext* aParentContext);
 
   // Get a style context for an anonymous box that does not inherit style from
   // anything.  aPseudoTag is the pseudo-tag to use and must be non-null.  It
   // must be an anon box, and must be a non-inheriting one.
   already_AddRefed<ServoStyleContext>
-  ResolveNonInheritingAnonymousBoxStyle(nsAtom* aPseudoTag);
-
-#ifdef MOZ_XUL
-  already_AddRefed<ServoStyleContext>
-  ResolveXULTreePseudoStyle(dom::Element* aParentElement,
-                            nsICSSAnonBoxPseudo* aPseudoTag,
-                            ServoStyleContext* aParentContext,
-                            const AtomArray& aInputWord);
-#endif
+  ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag);
 
   // manage the set of style sheets in the style set
   nsresult AppendStyleSheet(SheetType aType, ServoStyleSheet* aSheet);
@@ -257,6 +214,11 @@ public:
   nsresult InsertStyleSheetBefore(SheetType aType,
                                   ServoStyleSheet* aNewSheet,
                                   ServoStyleSheet* aReferenceSheet);
+
+  // Notify servo that the underlying raw sheet has changed, through cloning.
+  // This should only be called on a just-cloned sheet, because it does not
+  // mark the stylesheets as dirty either here or in servo.
+  void UpdateStyleSheet(ServoStyleSheet* aSheet);
 
   int32_t SheetCount(SheetType aType) const;
   ServoStyleSheet* StyleSheetAt(SheetType aType, int32_t aIndex) const;
@@ -278,6 +240,13 @@ public:
   ProbePseudoElementStyle(dom::Element* aOriginatingElement,
                           mozilla::CSSPseudoElementType aType,
                           ServoStyleContext* aParentContext);
+
+  // Test if style is dependent on content state
+  nsRestyleHint HasStateDependentStyle(dom::Element* aElement,
+                                       EventStates aStateMask);
+  nsRestyleHint HasStateDependentStyle(
+    dom::Element* aElement, mozilla::CSSPseudoElementType aPseudoType,
+    dom::Element* aPseudoElement, EventStates aStateMask);
 
   /**
    * Performs a Servo traversal to compute style for all dirty nodes in the
@@ -318,7 +287,24 @@ public:
   void StyleNewlyBoundElement(dom::Element* aElement);
 
   /**
-   * Helper for correctly calling UpdateStylist without paying the cost of an
+   * Like StyleNewSubtree, but in response to a request to reconstruct frames
+   * for the given subtree, and so works on elements that already have
+   * styles.  This will leave the subtree in a state just like after an initial
+   * styling, i.e. with new styles, no change hints, and with the dirty
+   * descendants bits cleared.  No comparison of old and new styles is done,
+   * so no change hints will be processed.
+   */
+  void StyleSubtreeForReconstruct(dom::Element* aRoot);
+
+  /**
+   * Records that the contents of style sheets have changed since the last
+   * restyle.  Calling this will ensure that the Stylist rebuilds its
+   * selector maps.
+   */
+  void ForceAllStyleDirty();
+
+  /**
+   * Helper for correctly calling RebuildStylist without paying the cost of an
    * extra function call in the common no-rebuild-needed case.
    */
   void UpdateStylistIfNeeded()
@@ -341,7 +327,7 @@ public:
    *
    * Most traversal callsites don't need to check this, but some do.
    */
-  static bool MayTraverseFrom(const dom::Element* aElement);
+  bool MayTraverseFrom(dom::Element* aElement);
 
 #ifdef DEBUG
   void AssertTreeIsClean();
@@ -350,15 +336,11 @@ public:
 #endif
 
   /**
-   * Clears any cached style data that may depend on all sorts of computed
-   * values.
-   *
-   * Right now this clears the non-inheriting style context cache, and resets
-   * the default computed values.
-   *
-   * This does _not_, however, clear the stylist.
+   * Clears the style data, both style sheet data and cached non-inheriting
+   * style contexts, and marks the stylist as needing an unconditional full
+   * rebuild, including a device reset.
    */
-  void ClearCachedStyleData();
+  void ClearDataAndMarkDeviceDirty();
 
   /**
    * Notifies the Servo stylesheet that the document's compatibility mode has changed.
@@ -373,7 +355,7 @@ public:
    */
   already_AddRefed<ServoStyleContext> ResolveServoStyle(dom::Element* aElement);
 
-  bool GetKeyframesForName(nsAtom* aName,
+  bool GetKeyframesForName(const nsString& aName,
                            const nsTimingFunction& aTimingFunction,
                            nsTArray<Keyframe>& aKeyframes);
 
@@ -390,31 +372,16 @@ public:
 
   bool AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
 
-  nsCSSCounterStyleRule* CounterStyleRuleForName(nsAtom* aName);
-
-  // Get all the currently-active font feature values set.
-  already_AddRefed<gfxFontFeatureValueSet> BuildFontFeatureValueSet();
+  nsCSSCounterStyleRule* CounterStyleRuleForName(nsIAtom* aName);
 
   already_AddRefed<ServoStyleContext>
   GetBaseContextForElement(dom::Element* aElement,
+                           ServoStyleContext* aParentContext,
                            nsPresContext* aPresContext,
+                           nsIAtom* aPseudoTag,
                            CSSPseudoElementType aPseudoType,
                            const ServoStyleContext* aStyle);
 
-  // Get a style context that represents |aStyle|, but as though
-  // it additionally matched the rules of the newly added |aAnimaitonaValue|.
-  // We use this function to temporarily generate a ServoStyleContext for
-  // calculating the cumulative change hints.
-  // This must hold:
-  //   The additional rules must be appropriate for the transition
-  //   level of the cascade, which is the highest level of the cascade.
-  //   (This is the case for one current caller, the cover rule used
-  //   for CSS transitions.)
-  // Note: |aElement| should be the generated element if it is pseudo.
-  already_AddRefed<ServoStyleContext>
-  ResolveServoStyleByAddingAnimation(dom::Element* aElement,
-                                     const ServoStyleContext* aStyle,
-                                     RawServoAnimationValue* aAnimationValue);
   /**
    * Resolve style for a given declaration block with/without the parent style.
    * If the parent style is not specified, the document default computed values
@@ -455,15 +422,6 @@ public:
   // Returns the style rule map.
   ServoStyleRuleMap* StyleRuleMap();
 
-  // Return whether this is the last PresContext which uses this XBL styleset.
-  bool IsPresContextChanged(nsPresContext* aPresContext) const {
-    return aPresContext != mLastPresContextUsesXBLStyleSet;
-  }
-
-  // Set PresContext (i.e. Device) for mRawSet. This should be called only
-  // by XBL stylesets. Returns true if there is any rule changing.
-  bool SetPresContext(nsPresContext* aPresContext);
-
   /**
    * Returns true if a modification to an an attribute with the specified
    * local name might require us to restyle the element.
@@ -473,7 +431,7 @@ public:
    * a style sheet.
    */
   bool MightHaveAttributeDependency(const dom::Element& aElement,
-                                    nsAtom* aAttribute) const;
+                                    nsIAtom* aAttribute) const;
 
   /**
    * Returns true if a change in event state on an element might require
@@ -501,14 +459,36 @@ public:
                        ServoStyleContext* aNewLayoutParent,
                        Element* aElement);
 
-  bool IsMaster() const { return mKind == Kind::Master; }
-  bool IsForXBL() const { return mKind == Kind::ForXBL; }
-
 private:
-  friend class AutoSetInServoTraversal;
-  friend class AutoPrepareTraversal;
+  // On construction, sets sInServoTraversal to the given ServoStyleSet.
+  // On destruction, clears sInServoTraversal and calls RunPostTraversalTasks.
+  class MOZ_STACK_CLASS AutoSetInServoTraversal
+  {
+  public:
+    explicit AutoSetInServoTraversal(ServoStyleSet* aSet)
+      : mSet(aSet)
+    {
+      MOZ_ASSERT(!sInServoTraversal);
+      MOZ_ASSERT(aSet);
+      sInServoTraversal = aSet;
+    }
 
-  bool ShouldTraverseInParallel() const;
+    ~AutoSetInServoTraversal()
+    {
+      MOZ_ASSERT(sInServoTraversal);
+      sInServoTraversal = nullptr;
+      mSet->RunPostTraversalTasks();
+    }
+
+  private:
+    ServoStyleSet* mSet;
+  };
+
+  /**
+   * Rebuild the style data. This will force a stylesheet flush, and also
+   * recompute the default computed styles.
+   */
+  void RebuildData();
 
   /**
    * Gets the pending snapshots to handle from the restyle manager.
@@ -522,6 +502,15 @@ private:
    * Call this before jumping into Servo's style system.
    */
   void ResolveMappedAttrDeclarationBlocks();
+
+  /**
+   * Perform all lazy operations required before traversing
+   * a subtree.
+   *
+   * Returns whether a post-traversal is required.
+   */
+  bool PrepareAndTraverseSubtree(RawGeckoElementBorrowed aRoot,
+                                 ServoTraversalFlags aFlags);
 
   /**
    * Clear our cached mNonInheritingStyleContexts.
@@ -545,23 +534,11 @@ private:
   void PreTraverseSync();
 
   /**
-   * Records that the contents of style sheets at the specified origin have
-   * changed since the last.  Calling this will ensure that the Stylist
-   * rebuilds its selector maps.
-   */
-  void MarkOriginsDirty(OriginFlags aChangedOrigins);
-
-  /**
    * Note that the stylist needs a style flush due to style sheet changes.
    */
   void SetStylistStyleSheetsDirty()
   {
     mStylistState |= StylistState::StyleSheetsDirty;
-  }
-
-  void SetStylistXBLStyleSheetsDirty()
-  {
-    mStylistState |= StylistState::XBLStyleSheetsDirty;
   }
 
   bool StylistNeedsUpdate() const
@@ -579,6 +556,8 @@ private:
   already_AddRefed<ServoStyleContext>
     ResolveStyleLazilyInternal(dom::Element* aElement,
                                CSSPseudoElementType aPseudoType,
+                               nsIAtom* aPseudoTag,
+                               const ServoStyleContext* aParentContext,
                                StyleRuleInclusion aRules =
                                  StyleRuleInclusion::All,
                                bool aIgnoreExistingStyles = false);
@@ -598,16 +577,7 @@ private:
   void RemoveSheetOfType(SheetType aType,
                          ServoStyleSheet* aSheet);
 
-  const Kind mKind;
-
-  // Nullptr if this is an XBL style set.
-  nsPresContext* MOZ_NON_OWNING_REF mPresContext = nullptr;
-
-  // Because XBL style set could be used by multiple PresContext, we need to
-  // store the last PresContext pointer which uses this XBL styleset for
-  // computing medium rule changes.
-  void* MOZ_NON_OWNING_REF mLastPresContextUsesXBLStyleSet = nullptr;
-
+  nsPresContext* mPresContext;
   UniquePtr<RawServoStyleSet> mRawSet;
   EnumeratedArray<SheetType, SheetType::Count,
                   nsTArray<RefPtr<ServoStyleSheet>>> mSheets;
@@ -638,15 +608,6 @@ private:
   RefPtr<nsBindingManager> mBindingManager;
 
   static ServoStyleSet* sInServoTraversal;
-};
-
-class UACacheReporter final : public nsIMemoryReporter
-{
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIMEMORYREPORTER
-
-private:
-  ~UACacheReporter() {}
 };
 
 } // namespace mozilla

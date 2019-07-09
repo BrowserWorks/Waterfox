@@ -76,7 +76,6 @@ class CompositorWidgetInitData;
 } // namespace widget
 namespace wr {
 class DisplayListBuilder;
-class IpcResourceUpdateQueue;
 } // namespace wr
 } // namespace mozilla
 
@@ -211,12 +210,8 @@ enum nsCursor {   ///(normal cursor,       usually rendered as an arrow)
                 eCursor_ns_resize,
                 eCursor_ew_resize,
                 eCursor_none,
-                // This one is used for array sizing, and so better be the last
-                // one in this list...
-                eCursorCount,
-
-                // ...except for this one.
-                eCursorInvalid = eCursorCount + 1
+                // This one better be the last one in this list.
+                eCursorCount
                 };
 
 enum nsTopLevelWidgetZPlacement { // for PlaceBehind()
@@ -961,6 +956,14 @@ class nsIWidget : public nsISupports
     virtual void SetBackgroundColor(const nscolor &aColor) { }
 
     /**
+     * Get the cursor for this widget.
+     *
+     * @return this widget's cursor.
+     */
+
+    virtual nsCursor GetCursor(void) = 0;
+
+    /**
      * Set the cursor for this widget
      *
      * @param aCursor the new cursor for this widget
@@ -1291,15 +1294,13 @@ class nsIWidget : public nsISupports
      * Called on the main thread at the end of WebRender display list building.
      */
     virtual void AddWindowOverlayWebRenderCommands(mozilla::layers::WebRenderBridgeChild* aWrBridge,
-                                                   mozilla::wr::DisplayListBuilder& aBuilder,
-                                                   mozilla::wr::IpcResourceUpdateQueue& aResources) {}
+                                                   mozilla::wr::DisplayListBuilder& aBuilder) {}
 
     /**
      * Called on the main thread when WebRender resources used for
      * AddWindowOverlayWebRenderCommands need to be destroyed.
      */
-    virtual void CleanupWebRenderWindowOverlay(mozilla::layers::WebRenderBridgeChild* aWrBridge,
-                                               mozilla::wr::IpcResourceUpdateQueue& aResources) {}
+    virtual void CleanupWebRenderWindowOverlay(mozilla::layers::WebRenderBridgeChild* aWrBridge) {}
 
     /**
      * Called when Gecko knows which themed widgets exist in this window.
@@ -1414,7 +1415,6 @@ class nsIWidget : public nsISupports
      * Enables the dropping of files to a widget.
      */
     virtual void EnableDragDrop(bool aEnable) = 0;
-    virtual nsresult AsyncEnableDragDrop(bool aEnable) = 0;
 
     /**
      * Enables/Disables system mouse capture.
@@ -1692,9 +1692,8 @@ class nsIWidget : public nsISupports
      * Notify APZ to start autoscrolling.
      * @param aAnchorLocation the location of the autoscroll anchor
      * @param aGuid identifies the scroll frame to be autoscrolled
-     * @return true if APZ has been successfully notified
      */
-    virtual bool StartAsyncAutoscroll(const ScreenPoint& aAnchorLocation,
+    virtual void StartAsyncAutoscroll(const ScreenPoint& aAnchorLocation,
                                       const ScrollableLayerGuid& aGuid) = 0;
 
     /**
@@ -1839,6 +1838,13 @@ public:
      */
     virtual void DefaultProcOfPluginEvent(
                    const mozilla::WidgetPluginEvent& aEvent) = 0;
+
+    /*
+     * Enable or Disable IME by windowless plugin.
+     */
+    virtual void EnableIMEForPlugin(bool aEnable)
+    {
+    }
 
     /*
      * Notifies the input context changes.

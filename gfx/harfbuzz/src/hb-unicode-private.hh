@@ -137,7 +137,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
    * we do NOT want to hide them, as the way Uniscribe has implemented them
    * is with regular spacing glyphs, and that's the way fonts are made to work.
    * As such, we make exceptions for those four.
-   * Also ignoring U+1BCA0..1BCA3. https://github.com/behdad/harfbuzz/issues/503
+   * Also ignoring U+1BCA0..1BCA3. https://github.com/harfbuzz/harfbuzz/issues/503
    *
    * Unicode 7.0:
    * $ grep '; Default_Ignorable_Code_Point ' DerivedCoreProperties.txt | sed 's/;.*#/#/'
@@ -357,13 +357,13 @@ extern HB_INTERNAL const hb_unicode_funcs_t _hb_unicode_funcs_nil;
 /* Misc */
 
 #define HB_UNICODE_GENERAL_CATEGORY_IS_MARK(gen_cat) \
-	(FLAG_SAFE (gen_cat) & \
+	(FLAG_UNSAFE (gen_cat) & \
 	 (FLAG (HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)))
 
 #define HB_UNICODE_GENERAL_CATEGORY_IS_NON_ENCLOSING_MARK_OR_MODIFIER_SYMBOL(gen_cat) \
-	(FLAG_SAFE (gen_cat) & \
+	(FLAG_UNSAFE (gen_cat) & \
 	 (FLAG (HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_MODIFIER_SYMBOL)))

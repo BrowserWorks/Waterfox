@@ -3,7 +3,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.wake
 description: >
   Atomics.wake.length is 3.
 info: >

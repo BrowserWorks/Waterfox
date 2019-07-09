@@ -132,18 +132,12 @@ CSPService::ShouldLoad(uint32_t aContentType,
     return NS_OK;
   }
 
-  // Find a principal to retrieve the CSP from. If we don't have a context node
-  // (because, for instance, the load originates in a service worker), or the
-  // requesting principal's CSP overrides our document CSP, use the request
-  // principal. Otherwise, use the document principal.
+  // query the principal of the document; if no document is passed, then
+  // fall back to using the requestPrincipal (e.g. service workers do not
+  // pass a document).
   nsCOMPtr<nsINode> node(do_QueryInterface(aRequestContext));
-  nsCOMPtr<nsIPrincipal> principal;
-  if (!node || (aRequestPrincipal &&
-                BasePrincipal::Cast(aRequestPrincipal)->OverridesCSP(node->NodePrincipal()))) {
-    principal = aRequestPrincipal;
-  } else  {
-    principal = node->NodePrincipal();
-  }
+  nsCOMPtr<nsIPrincipal> principal = node ? node->NodePrincipal()
+                                          : aRequestPrincipal;
   if (!principal) {
     // if we can't query a principal, then there is nothing to do.
     return NS_OK;

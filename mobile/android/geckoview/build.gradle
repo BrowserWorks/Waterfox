@@ -9,9 +9,6 @@ android {
     buildToolsVersion project.ext.buildToolsVersion
 
     defaultConfig {
-        defaultPublishConfig 'release'
-        publishNonDefault true
-
         targetSdkVersion project.ext.targetSdkVersion
         minSdkVersion project.ext.minSdkVersion
         manifestPlaceholders = project.ext.manifestPlaceholders
@@ -165,10 +162,6 @@ android.libraryVariants.all { variant ->
         destinationDir = new File(destinationDir, variant.baseName)
         from files(variant.javaCompile.source)
     }
-}
-
-android.libraryVariants.all { variant ->
-    configureVariantWithJNIWrappers(variant, "Generated")
 }
 
 apply plugin: 'maven'

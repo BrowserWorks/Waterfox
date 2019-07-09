@@ -127,6 +127,10 @@ function loadCallgraph(file)
     }
 
     // Add in any extra functions at the end. (If we did this early, it would
+    // mess up the id <-> name correspondence.)
+    for (var func of extraGCFunctions())
+        addGCFunction(func, "annotation");
+
     // mess up the id <-> name correspondence. Also, we need to know if the
     // functions even exist in the first place.)
     for (var func of extraGCFunctions()) {

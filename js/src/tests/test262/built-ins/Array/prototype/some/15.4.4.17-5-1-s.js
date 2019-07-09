@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.some
 es5id: 15.4.4.17-5-1-s
 description: Array.prototype.some - thisArg not passed to strict callbackfn
 flags: [noStrict]

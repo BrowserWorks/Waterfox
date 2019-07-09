@@ -19,7 +19,6 @@ EXPORTS += [
     'nsReadableUtils.h',
     'nsString.h',
     'nsStringBuffer.h',
-    'nsStringFlags.h',
     'nsStringFwd.h',
     'nsStringIterator.h',
     'nsSubstring.h',
@@ -30,10 +29,13 @@ EXPORTS += [
     'nsTLiteralString.h',
     'nsTPromiseFlatString.h',
     'nsTString.h',
-    'nsTStringRepr.h',
     'nsTSubstring.h',
     'nsTSubstringTuple.h',
     'nsUTF8Utils.h',
+    'nsXPIDLString.h',
+    'string-template-def-char.h',
+    'string-template-def-unichar.h',
+    'string-template-undef.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -48,7 +50,6 @@ UNIFIED_SOURCES += [
     'nsSubstring.cpp',
     'nsSubstringTuple.cpp',
     'nsTextFormatter.cpp',
-    'precompiled_templates.cpp',
 ]
 
 # Are we targeting x86 or x86-64?  If so, compile the SSE2 functions for
@@ -58,12 +59,5 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['nsUTF8UtilsSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
     SOURCES += ['nsReadableUtilsSSE2.cpp']
     SOURCES['nsReadableUtilsSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
-
-# MSVC 2017 has a bug that incorrectly generates C5037 warning which
-# hits the template string code. We need to disable this warning as a
-# workaround. See https://developercommunity.visualstudio.com/
-# content/problem/81223/incorrect-error-c5037-with-permissive.html
-if CONFIG['_MSC_VER']:
-    CXXFLAGS += ['-wd5037']
 
 FINAL_LIBRARY = 'xul'

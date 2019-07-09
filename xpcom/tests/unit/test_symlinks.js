@@ -17,7 +17,7 @@ var process;
 function createSymLink(from, to) {
   if (!process) {
     var ln = Components.classes["@mozilla.org/file/local;1"]
-                       .createInstance(Components.interfaces.nsIFile);
+                       .createInstance(Components.interfaces.nsILocalFile);
     ln.initWithPath("/bin/ln");
 
     process = Components.classes["@mozilla.org/process/util;1"]
@@ -36,7 +36,8 @@ function makeSymLink(from, toName, relative) {
 
   if (relative) {
     createSymLink(from.leafName, to.path);
-  } else {
+  }
+  else {
     createSymLink(from.path, to.path);
   }
 
@@ -51,7 +52,8 @@ function makeSymLink(from, toName, relative) {
     // XXXjag wish I could set followLinks to false so we'd just get
     // the symlink's direct target instead of the final target.
     do_check_eq(from.target, to.target);
-  } else {
+  }
+  else {
     do_check_eq(from.path, to.target);
   }
 
@@ -92,7 +94,8 @@ function setupTestDir(testDir, relative) {
   try {
     makeSymLink(loop, LOOP_LINK, relative);
     do_check_true(false);
-  } catch (e) {
+  }
+  catch (e) {
   }
 }
 

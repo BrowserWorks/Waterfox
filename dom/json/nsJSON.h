@@ -42,7 +42,7 @@ protected:
   mozilla::UniquePtr<mozilla::Encoder> mEncoder;
 };
 
-class nsJSON final : public nsIJSON
+class nsJSON : public nsIJSON
 {
 public:
   nsJSON();
@@ -52,6 +52,10 @@ public:
 
 protected:
   virtual ~nsJSON();
+
+  nsresult EncodeInternal(JSContext* cx,
+                          const JS::Value& val,
+                          nsJSONWriter* writer);
 
   nsresult DecodeInternal(JSContext* cx,
                           nsIInputStream* aStream,

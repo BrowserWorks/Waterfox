@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.activitystream.homepanel.model;
 
-import android.database.Cursor;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,11 +13,6 @@ import org.json.JSONObject;
 
 public class Metadata {
     private static final String LOGTAG = "GeckoMetadata";
-
-    public static Metadata fromCursor(final Cursor cursor, final String columnName) {
-        return new Metadata(
-                cursor.getString(cursor.getColumnIndexOrThrow(columnName)));
-    }
 
     private String provider;
     private String imageUrl;

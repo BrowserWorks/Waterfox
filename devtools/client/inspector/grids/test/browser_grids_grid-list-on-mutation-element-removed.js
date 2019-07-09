@@ -51,13 +51,13 @@ add_task(function* () {
   let onHighlighterHidden = highlighters.once("grid-highlighter-hidden");
   onCheckboxChange = waitUntilState(store, state => state.grids.length == 0);
   testActor.eval(`
-    document.getElementById("grid").remove();
+    content.document.getElementById("grid").remove();
   `);
   yield onHighlighterHidden;
   yield onCheckboxChange;
 
   info("Checking the CSS grid highlighter is not shown.");
   ok(!highlighters.gridHighlighterShown, "No CSS grid highlighter is shown.");
-  let noGridList = doc.querySelector(".grid-pane .devtools-sidepanel-no-result");
+  let noGridList = doc.querySelector(".layout-no-grids");
   ok(noGridList, "The message no grid containers is displayed.");
 });

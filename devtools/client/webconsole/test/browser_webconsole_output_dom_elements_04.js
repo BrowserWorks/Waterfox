@@ -103,7 +103,7 @@ function* getWidgetAndMessage(result) {
 }
 
 function reloadPage() {
-  let def = defer();
+  let def = promise.defer();
   gBrowser.selectedBrowser.addEventListener("load", function () {
     def.resolve();
   }, {capture: true, once: true});

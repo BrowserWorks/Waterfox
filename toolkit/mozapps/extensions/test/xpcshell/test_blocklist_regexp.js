@@ -54,8 +54,8 @@ MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1", WindowWatcher)
 
 
 function load_blocklist(aFile, aCallback) {
-  Services.obs.addObserver(function observer() {
-    Services.obs.removeObserver(observer, "blocklist-updated");
+  Services.obs.addObserver(function() {
+    Services.obs.removeObserver(arguments.callee, "blocklist-updated");
 
     do_execute_soon(aCallback);
   }, "blocklist-updated");
@@ -64,8 +64,12 @@ function load_blocklist(aFile, aCallback) {
                              gPort + "/data/" + aFile);
   var blocklist = Cc["@mozilla.org/extensions/blocklist;1"].
                   getService(Ci.nsITimerCallback);
-  ok(Services.prefs.getBoolPref("services.blocklist.update_enabled"),
-                                "Kinto update should be enabled");
+  // if we're not using the blocklist.xml for certificate blocklist state,
+  // ensure that kinto update is enabled
+  if (!Services.prefs.getBoolPref("security.onecrl.via.amo")) {
+    ok(Services.prefs.getBoolPref("services.blocklist.update_enabled"),
+                                  "Kinto update should be enabled");
+  }
   blocklist.notify(null);
 }
 

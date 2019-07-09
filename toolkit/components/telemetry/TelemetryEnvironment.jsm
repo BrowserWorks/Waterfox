@@ -201,7 +201,6 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["browser.shell.checkDefaultBrowser", {what: RECORD_PREF_VALUE}],
   ["browser.search.ignoredJAREngines", {what: RECORD_DEFAULTPREF_VALUE}],
   ["browser.search.suggest.enabled", {what: RECORD_PREF_VALUE}],
-  ["browser.search.widget.inNavBar", {what: RECORD_DEFAULTPREF_VALUE}],
   ["browser.startup.homepage", {what: RECORD_PREF_STATE}],
   ["browser.startup.page", {what: RECORD_PREF_VALUE}],
   ["toolkit.cosmeticAnimations.enabled", {what: RECORD_PREF_VALUE}],
@@ -221,12 +220,12 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["extensions.blocklist.url", {what: RECORD_PREF_VALUE}],
   ["extensions.formautofill.addresses.enabled", {what: RECORD_PREF_VALUE}],
   ["extensions.formautofill.creditCards.enabled", {what: RECORD_PREF_VALUE}],
-  ["extensions.legacy.enabled", {what: RECORD_PREF_VALUE}],
   ["extensions.strictCompatibility", {what: RECORD_PREF_VALUE}],
   ["extensions.update.enabled", {what: RECORD_PREF_VALUE}],
   ["extensions.update.url", {what: RECORD_PREF_VALUE}],
   ["extensions.update.background.url", {what: RECORD_PREF_VALUE}],
   ["extensions.screenshots.disabled", {what: RECORD_PREF_VALUE}],
+  ["extensions.screenshots.system-disabled", {what: RECORD_PREF_VALUE}],
   ["general.smoothScroll", {what: RECORD_PREF_VALUE}],
   ["gfx.direct2d.disabled", {what: RECORD_PREF_VALUE}],
   ["gfx.direct2d.force-enabled", {what: RECORD_PREF_VALUE}],
@@ -293,7 +292,7 @@ function enforceBoolean(aValue) {
   if (typeof(aValue) !== "number" && typeof(aValue) !== "boolean") {
     return null;
   }
-  return Boolean(aValue);
+  return (new Boolean(aValue)).valueOf();
 }
 
 /**
@@ -867,7 +866,7 @@ function EnvironmentCache() {
   this._currentEnvironment.profile = {};
   p.push(this._updateProfile());
   if (AppConstants.MOZ_BUILD_APP == "browser") {
-    p.push(this._loadAttributionAsync());
+    p.push(this._updateAttribution());
   }
 
   for (const [id, {branch, options}] of gActiveExperimentStartupBuffer.entries()) {
@@ -1292,7 +1291,6 @@ EnvironmentCache.prototype = {
       platformVersion: Services.appinfo.platformVersion || null,
       xpcomAbi: Services.appinfo.XPCOMABI,
       hotfixVersion: Services.prefs.getStringPref(PREF_HOTFIX_LASTVERSION, null),
-      updaterAvailable: AppConstants.MOZ_UPDATER,
     };
 
     // Add |architecturesInBinary| only for Mac Universal builds.
@@ -1382,7 +1380,6 @@ EnvironmentCache.prototype = {
     this._currentEnvironment.settings.addonCompatibilityCheckEnabled =
       AddonManager.checkCompatibility;
 
-    this._updateAttribution();
     this._updateDefaultBrowser();
     this._updateSearchEngine();
   },
@@ -1420,42 +1417,18 @@ EnvironmentCache.prototype = {
   },
 
   /**
-   * Load the attribution data object and updates the environment.
+   * Update the cached attribution data object.
    * @returns Promise<> resolved when the I/O is complete.
    */
-  async _loadAttributionAsync() {
-    try {
-      await AttributionCode.getAttrDataAsync();
-    } catch (e) {
-      // The AttributionCode.jsm module might not be always available
-      // (e.g. tests). Gracefully handle this.
-      return;
+  async _updateAttribution() {
+    let data = await AttributionCode.getAttrDataAsync();
+    if (Object.keys(data).length > 0) {
+      this._currentEnvironment.settings.attribution = {};
+      for (let key in data) {
+        this._currentEnvironment.settings.attribution[key] =
+          limitStringToLength(data[key], MAX_ATTRIBUTION_STRING_LENGTH);
+      }
     }
-    this._updateAttribution();
-  },
-
-  /**
-   * Update the environment with the cached attribution data.
-   */
-  _updateAttribution() {
-    let data = null;
-    try {
-      data = AttributionCode.getCachedAttributionData();
-    } catch (e) {
-      // The AttributionCode.jsm module might not be always available
-      // (e.g. tests). Gracefully handle this.
-    }
-
-    if (!data || !Object.keys(data).length) {
-      return;
-    }
-
-    let attributionData = {};
-    for (let key in data) {
-      attributionData[key] =
-        limitStringToLength(data[key], MAX_ATTRIBUTION_STRING_LENGTH);
-    }
-    this._currentEnvironment.settings.attribution = attributionData;
   },
 
   /**
@@ -1666,7 +1639,6 @@ EnvironmentCache.prototype = {
       os: this._getOSData(),
       hdd: this._getHDDData(),
       gfx: this._getGFXData(),
-      appleModelId: getSysinfoProperty("appleModelId", null),
     };
 
     if (AppConstants.platform === "win") {

@@ -62,14 +62,14 @@ const TEST_CASES = [
   {
     desc: "doctype node with html on clipboard",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     selector: null,
     disabled: INACTIVE_ON_DOCTYPE_ITEMS,
   },
   {
     desc: "element node HTML on the clipboard",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     disabled: [
       "node-menu-copyimagedatauri",
       "node-menu-copy-attribute",
@@ -81,7 +81,7 @@ const TEST_CASES = [
   {
     desc: "<html> element",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     selector: "html",
     disabled: [
       "node-menu-copyimagedatauri",
@@ -97,7 +97,7 @@ const TEST_CASES = [
   {
     desc: "<body> with HTML on clipboard",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     selector: "body",
     disabled: [
       "node-menu-copyimagedatauri",
@@ -111,7 +111,7 @@ const TEST_CASES = [
   {
     desc: "<img> with HTML on clipboard",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     selector: "img",
     disabled: [
       "node-menu-copy-attribute",
@@ -122,7 +122,7 @@ const TEST_CASES = [
   {
     desc: "<head> with HTML on clipboard",
     clipboardData: "<p>some text</p>",
-    clipboardDataType: "text",
+    clipboardDataType: "html",
     selector: "head",
     disabled: [
       "node-menu-copyimagedatauri",
@@ -148,7 +148,7 @@ const TEST_CASES = [
   {
     desc: "<element> with text on clipboard",
     clipboardData: "some text",
-    clipboardDataType: "text",
+    clipboardDataType: undefined,
     selector: "#paste-area",
     disabled: [
       "node-menu-copyimagedatauri",
@@ -160,9 +160,9 @@ const TEST_CASES = [
   {
     desc: "<element> with base64 encoded image data uri on clipboard",
     clipboardData:
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABC" +
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABC" +
       "AAAAAA6fptVAAAACklEQVQYV2P4DwABAQEAWk1v8QAAAABJRU5ErkJggg==",
-    clipboardDataType: "image",
+    clipboardDataType: undefined,
     selector: "#paste-area",
     disabled: PASTE_MENU_ITEMS.concat([
       "node-menu-copyimagedatauri",
@@ -174,7 +174,7 @@ const TEST_CASES = [
   {
     desc: "<element> with empty string on clipboard",
     clipboardData: "",
-    clipboardDataType: "text",
+    clipboardDataType: undefined,
     selector: "#paste-area",
     disabled: PASTE_MENU_ITEMS.concat([
       "node-menu-copyimagedatauri",
@@ -186,7 +186,7 @@ const TEST_CASES = [
   {
     desc: "<element> with whitespace only on clipboard",
     clipboardData: " \n\n\t\n\n  \n",
-    clipboardDataType: "text",
+    clipboardDataType: undefined,
     selector: "#paste-area",
     disabled: PASTE_MENU_ITEMS.concat([
       "node-menu-copyimagedatauri",
@@ -225,9 +225,8 @@ const TEST_CASES = [
   }
 ];
 
-var clipboard = require("devtools/shared/platform/clipboard");
+var clipboard = require("sdk/clipboard");
 registerCleanupFunction(() => {
-  clipboard.copyString("");
   clipboard = null;
 });
 
@@ -259,7 +258,7 @@ add_task(function* () {
       let menuItem = allMenuItems.find(item => item.id === id);
       let shouldBeDisabled = disabled.indexOf(id) !== -1;
       is(menuItem.disabled, shouldBeDisabled,
-        `#${id} should be ${shouldBeDisabled ? "disabled" : "enabled"}`);
+        `#${id} should be ${shouldBeDisabled ? "disabled" : "enabled"} `);
     }
   }
 });
@@ -284,43 +283,11 @@ function* getNodeFrontForSelector(selector, inspector) {
  * clipboard if data is falsy.
  */
 function setupClipboard(data, type) {
-  if (!data) {
-    info("Clearing the clipboard.");
-    clipboard.copyString("");
-  } else if (type === "text") {
-    info("Populating clipboard with text.");
-    clipboard.copyString(data);
-  } else if (type === "image") {
-    info("Populating clipboard with image content");
-    copyImageToClipboard(data);
+  if (data) {
+    info("Populating clipboard with " + type + " data.");
+    clipboard.set(data, type);
+  } else {
+    info("Clearing clipboard.");
+    clipboard.set("", "text");
   }
-}
-
-/**
- * The code below is a simplified version of the sdk/clipboard helper set() method.
- */
-function copyImageToClipboard(data) {
-  let clipboardService = Cc["@mozilla.org/widget/clipboard;1"]
-                              .getService(Ci.nsIClipboard);
-  let imageTools = Cc["@mozilla.org/image/tools;1"]
-                     .getService(Ci.imgITools);
-
-  // Image data is stored as base64 in the test.
-  let image = atob(data);
-
-  let input = Cc["@mozilla.org/io/string-input-stream;1"]
-                .createInstance(Ci.nsIStringInputStream);
-  input.setData(image, image.length);
-
-  let imgPtr = Cc["@mozilla.org/supports-interface-pointer;1"]
-                 .createInstance(Ci.nsISupportsInterfacePointer);
-  imgPtr.data = imageTools.decodeImage(input, "image/png");
-
-  let xferable = Cc["@mozilla.org/widget/transferable;1"]
-                   .createInstance(Ci.nsITransferable);
-  xferable.init(null);
-  xferable.addDataFlavor("image/png");
-  xferable.setTransferData("image/png", imgPtr, -1);
-
-  clipboardService.setData(xferable, null, clipboardService.kGlobalClipboard);
 }

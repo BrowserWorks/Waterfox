@@ -26,6 +26,7 @@ static constexpr FloatRegister ScratchSimd128Reg = { FloatRegisters::invalid_reg
 static constexpr FloatRegister InvalidFloatReg = { FloatRegisters::invalid_reg };
 
 static constexpr Register OsrFrameReg { Registers::invalid_reg };
+static constexpr Register ArgumentsRectifierReg { Registers::invalid_reg };
 static constexpr Register PreBarrierReg { Registers::invalid_reg };
 static constexpr Register CallTempReg0 { Registers::invalid_reg };
 static constexpr Register CallTempReg1 { Registers::invalid_reg };
@@ -80,7 +81,6 @@ static constexpr Register ABINonArgReg0 { Registers::invalid_reg };
 static constexpr Register ABINonArgReg1 { Registers::invalid_reg };
 static constexpr Register ABINonArgReturnReg0 { Registers::invalid_reg };
 static constexpr Register ABINonArgReturnReg1 { Registers::invalid_reg };
-static constexpr Register NativeABIPrologueClobberable { Registers::invalid_reg };
 
 static constexpr Register WasmTableCallScratchReg { Registers::invalid_reg };
 static constexpr Register WasmTableCallSigReg { Registers::invalid_reg };
@@ -145,12 +145,11 @@ class Assembler : public AssemblerShared
 
     static void PatchWrite_NearCall(CodeLocationLabel, CodeLocationLabel) { MOZ_CRASH(); }
     static uint32_t PatchWrite_NearCallSize() { MOZ_CRASH(); }
+    static void PatchInstructionImmediate(uint8_t*, PatchedImmPtr) { MOZ_CRASH(); }
 
     static void ToggleToJmp(CodeLocationLabel) { MOZ_CRASH(); }
     static void ToggleToCmp(CodeLocationLabel) { MOZ_CRASH(); }
     static void ToggleCall(CodeLocationLabel, bool) { MOZ_CRASH(); }
-
-    static void Bind(uint8_t*, CodeOffset, CodeOffset) { MOZ_CRASH(); }
 
     static uintptr_t GetPointer(uint8_t*) { MOZ_CRASH(); }
 
@@ -189,9 +188,7 @@ class MacroAssemblerNone : public Assembler
     size_t numCodeLabels() const { MOZ_CRASH(); }
     CodeLabel codeLabel(size_t) { MOZ_CRASH(); }
 
-    bool reserve(size_t size) { MOZ_CRASH(); }
-    bool appendRawCode(const uint8_t* code, size_t numBytes) { MOZ_CRASH(); }
-    bool swapBuffer(wasm::Bytes& bytes) { MOZ_CRASH(); }
+    bool asmMergeWith(const MacroAssemblerNone&) { MOZ_CRASH(); }
 
     void trace(JSTracer*) { MOZ_CRASH(); }
     static void TraceJumpRelocations(JSTracer*, JitCode*, CompactBufferReader&) { MOZ_CRASH(); }
@@ -218,6 +215,7 @@ class MacroAssemblerNone : public Assembler
     void nopAlign(size_t) { MOZ_CRASH(); }
     void checkStackAlignment() { MOZ_CRASH(); }
     uint32_t currentOffset() { MOZ_CRASH(); }
+    uint32_t labelToPatchOffset(CodeOffset) { MOZ_CRASH(); }
     CodeOffset labelForPatch() { MOZ_CRASH(); }
 
     void nop() { MOZ_CRASH(); }

@@ -7,16 +7,16 @@
 #define MediaInfo_h
 
 #include "mozilla/UniquePtr.h"
+#include "nsRect.h"
 #include "mozilla/RefPtr.h"
 #include "nsDataHashtable.h"
+#include "nsSize.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "ImageTypes.h"
 #include "MediaData.h"
-#include "TrackID.h" // for TrackID
+#include "StreamTracks.h" // for TrackID
 #include "TimeUnits.h"
-#include "mozilla/gfx/Point.h" // for gfx::IntSize
-#include "mozilla/gfx/Rect.h"  // for gfx::IntRect
 
 namespace mozilla {
 
@@ -199,25 +199,20 @@ public:
   }
 
   explicit VideoInfo(int32_t aWidth, int32_t aHeight)
-    : VideoInfo(gfx::IntSize(aWidth, aHeight))
+    : VideoInfo(nsIntSize(aWidth, aHeight))
   {
   }
 
-  explicit VideoInfo(const gfx::IntSize& aSize)
-    : TrackInfo(kVideoTrack,
-                NS_LITERAL_STRING("2"),
-                NS_LITERAL_STRING("main"),
-                EmptyString(),
-                EmptyString(),
-                true,
-                2)
+  explicit VideoInfo(const nsIntSize& aSize)
+    : TrackInfo(kVideoTrack, NS_LITERAL_STRING("2"), NS_LITERAL_STRING("main"),
+                EmptyString(), EmptyString(), true, 2)
     , mDisplay(aSize)
     , mStereoMode(StereoMode::MONO)
     , mImage(aSize)
     , mCodecSpecificConfig(new MediaByteBuffer)
     , mExtraData(new MediaByteBuffer)
     , mRotation(kDegree_0)
-    , mImageRect(gfx::IntRect(gfx::IntPoint(), aSize))
+    , mImageRect(nsIntRect(nsIntPoint(), aSize))
   {
   }
 
@@ -229,7 +224,6 @@ public:
     , mCodecSpecificConfig(aOther.mCodecSpecificConfig)
     , mExtraData(aOther.mExtraData)
     , mRotation(aOther.mRotation)
-    , mBitDepth(aOther.mBitDepth)
     , mImageRect(aOther.mImageRect)
     , mAlphaPresent(aOther.mAlphaPresent)
   {
@@ -265,15 +259,18 @@ public:
     return mAlphaPresent;
   }
 
-  gfx::IntRect ImageRect() const
+  nsIntRect ImageRect() const
   {
-    if (mImageRect.Width() < 0 || mImageRect.Height() < 0) {
-      return gfx::IntRect(0, 0, mImage.width, mImage.height);
+    if (mImageRect.width < 0 || mImageRect.height < 0) {
+      return nsIntRect(0, 0, mImage.width, mImage.height);
     }
     return mImageRect;
   }
 
-  void SetImageRect(const gfx::IntRect& aRect) { mImageRect = aRect; }
+  void SetImageRect(const nsIntRect& aRect)
+  {
+    mImageRect = aRect;
+  }
 
   // Returned the crop rectangle scaled to aWidth/aHeight size relative to
   // mImage size.
@@ -283,29 +280,22 @@ public:
   // reports. This is legal in WebM, and we will preserve the ratio of the crop
   // rectangle as it was reported relative to the picture size reported by the
   // container.
-  gfx::IntRect ScaledImageRect(int64_t aWidth, int64_t aHeight) const
+  nsIntRect ScaledImageRect(int64_t aWidth, int64_t aHeight) const
   {
-    if ((aWidth == mImage.width && aHeight == mImage.height) ||
-        !mImage.width ||
-        !mImage.height) {
+    if ((aWidth == mImage.width && aHeight == mImage.height)
+        || !mImage.width
+        || !mImage.height) {
       return ImageRect();
     }
-
-    gfx::IntRect imageRect = ImageRect();
-    int64_t w = (aWidth * imageRect.Width()) / mImage.width;
-    int64_t h = (aHeight * imageRect.Height()) / mImage.height;
-    if (!w || !h) {
-      return imageRect;
-    }
-
+    nsIntRect imageRect = ImageRect();
     imageRect.x = (imageRect.x * aWidth) / mImage.width;
     imageRect.y = (imageRect.y * aHeight) / mImage.height;
-    imageRect.SetWidth(w);
-    imageRect.SetHeight(h);
+    imageRect.width = (aWidth * imageRect.width) / mImage.width;
+    imageRect.height = (aHeight * imageRect.height) / mImage.height;
     return imageRect;
   }
 
-  Rotation ToSupportedRotation(int32_t aDegree) const
+  Rotation ToSupportedRotation(int32_t aDegree)
   {
     switch (aDegree) {
       case 90:
@@ -322,13 +312,13 @@ public:
 
   // Size in pixels at which the video is rendered. This is after it has
   // been scaled by its aspect ratio.
-  gfx::IntSize mDisplay;
+  nsIntSize mDisplay;
 
   // Indicates the frame layout for single track stereo videos.
   StereoMode mStereoMode;
 
   // Size of the decoded video's image.
-  gfx::IntSize mImage;
+  nsIntSize mImage;
 
   RefPtr<MediaByteBuffer> mCodecSpecificConfig;
   RefPtr<MediaByteBuffer> mExtraData;
@@ -337,13 +327,10 @@ public:
   // get correct view.
   Rotation mRotation;
 
-  // Should be 8, 10 or 12. Default value is 8.
-  uint8_t mBitDepth = 8;
-
 private:
   // mImage may be cropped; currently only used with the WebM container.
   // A negative width or height indicate that no cropping is to occur.
-  gfx::IntRect mImageRect;
+  nsIntRect mImageRect;
 
   // Indicates whether or not frames may contain alpha information.
   bool mAlphaPresent = false;
@@ -381,8 +368,8 @@ public:
 
   bool IsValid() const override
   {
-    return mChannels > 0 && mChannels <= MAX_AUDIO_CHANNELS &&
-           mRate > 0 && mRate <= MAX_RATE;
+    return mChannels > 0 && mChannels <= MAX_AUDIO_CHANNELS
+           && mRate > 0 && mRate <= MAX_RATE;
   }
 
   AudioInfo* GetAsAudioInfo() override
@@ -490,7 +477,7 @@ public:
     }
     // Set dummy values so that HasVideo() will return true;
     // See VideoInfo::IsValid()
-    mVideo.mDisplay = gfx::IntSize(1, 1);
+    mVideo.mDisplay = nsIntSize(1, 1);
   }
 
   bool HasAudio() const
@@ -511,8 +498,8 @@ public:
 
   bool IsEncrypted() const
   {
-    return (HasAudio() && mAudio.mCrypto.mValid) ||
-           (HasVideo() && mVideo.mCrypto.mValid);
+    return (HasAudio() && mAudio.mCrypto.mValid)
+           || (HasVideo() && mVideo.mCrypto.mValid);
   }
 
   bool HasValidMedia() const
@@ -526,8 +513,9 @@ public:
                  "Audio track ID must be valid");
     NS_ASSERTION(!HasVideo() || mVideo.mTrackId != TRACK_INVALID,
                  "Audio track ID must be valid");
-    NS_ASSERTION(!HasAudio() || !HasVideo() ||
-                 mAudio.mTrackId != mVideo.mTrackId,
+    NS_ASSERTION(!HasAudio()
+                 || !HasVideo()
+                 || mAudio.mTrackId != mVideo.mTrackId,
                  "Duplicate track IDs");
   }
 
@@ -743,8 +731,10 @@ public:
   }
   bool operator==(const AudioConfig& aOther) const
   {
-    return mChannelLayout == aOther.mChannelLayout && mRate == aOther.mRate &&
-           mFormat == aOther.mFormat && mInterleaved == aOther.mInterleaved;
+    return mChannelLayout == aOther.mChannelLayout
+      && mRate == aOther.mRate
+      && mFormat == aOther.mFormat
+      && mInterleaved == aOther.mInterleaved;
   }
   bool operator!=(const AudioConfig& aOther) const
   {

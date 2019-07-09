@@ -11,7 +11,7 @@
 #include "nsIContentViewer.h"
 
 #include "nsIServiceManager.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsQuickSort.h"
 
 #include "nsIContent.h"

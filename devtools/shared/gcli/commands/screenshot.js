@@ -36,7 +36,11 @@ const CONTAINER_FLASHING_DURATION = 500;
  */
 const filenameParam = {
   name: "filename",
-  type: "string",
+  type: {
+    name: "file",
+    filetype: "file",
+    existing: "maybe",
+  },
   defaultValue: FILENAME_DEFAULT_VALUE,
   description: l10n.lookup("screenshotFilenameDesc"),
   manual: l10n.lookup("screenshotFilenameManual")
@@ -162,7 +166,7 @@ exports.items = [
             let mainWindow = context.environment.chromeWindow;
             mainWindow.openUILinkIn(imageSummary.href, "tab");
           } else if (imageSummary.filename) {
-            const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+            const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
             file.initWithPath(imageSummary.filename);
             file.reveal();
           }
@@ -180,7 +184,7 @@ exports.items = [
     manual: l10n.lookup("screenshotManual"),
     returnType: "imageSummary",
     buttonId: "command-button-screenshot",
-    buttonClass: "command-button",
+    buttonClass: "command-button command-button-invertable",
     tooltipText: l10n.lookup("screenshotTooltipPage"),
     params: [
       filenameParam,
@@ -379,11 +383,12 @@ function saveToClipboard(context, reply) {
     const imgTools = Cc["@mozilla.org/image/tools;1"]
                         .getService(Ci.imgITools);
 
-    const container = imgTools.decodeImage(input, channel.contentType);
+    const container = {};
+    imgTools.decodeImageData(input, channel.contentType, container);
 
     const wrapped = Cc["@mozilla.org/supports-interface-pointer;1"]
                       .createInstance(Ci.nsISupportsInterfacePointer);
-    wrapped.data = container;
+    wrapped.data = container.value;
 
     const trans = Cc["@mozilla.org/widget/transferable;1"]
                     .createInstance(Ci.nsITransferable);

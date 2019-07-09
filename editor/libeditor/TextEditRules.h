@@ -115,11 +115,6 @@ public:
    */
   static void FillBufWithPWChars(nsAString* aOutString, int32_t aLength);
 
-  bool HasBogusNode()
-  {
-    return !!mBogusNode;
-  }
-
 protected:
 
   void InitFields();
@@ -217,33 +212,8 @@ protected:
    */
   void RemoveIMETextFromPWBuf(uint32_t& aStart, nsAString* aIMEString);
 
-  /**
-   * Create a normal <br> element and insert it to aOffset at aParent.
-   *
-   * @param aParent     The parent node which will have new <br> element.
-   * @param aOffset     The offset in aParent where the new <br> element will
-   *                    be inserted.
-   * @param aOutBRNode  Returns created <br> element.
-   */
-  nsresult CreateBR(nsIDOMNode* aParent, int32_t aOffset,
-                    nsIDOMNode** aOutBRNode = nullptr)
-  {
-    return CreateBRInternal(aParent, aOffset, false, aOutBRNode);
-  }
-
-  /**
-   * Create a moz-<br> element and insert it to aOffset at aParent.
-   *
-   * @param aParent     The parent node which will have new <br> element.
-   * @param aOffset     The offset in aParent where the new <br> element will
-   *                    be inserted.
-   * @param aOutBRNode  Returns created <br> element.
-   */
-  nsresult CreateMozBR(nsIDOMNode* aParent, int32_t aOffset,
-                       nsIDOMNode** aOutBRNode = nullptr)
-  {
-    return CreateBRInternal(aParent, aOffset, true, aOutBRNode);
-  }
+  nsresult CreateMozBR(nsIDOMNode* inParent, int32_t inOffset,
+                       nsIDOMNode** outBRNode = nullptr);
 
   void UndefineCaretBidiLevel(Selection* aSelection);
 
@@ -268,23 +238,6 @@ protected:
 private:
   // Note that we do not refcount the editor.
   TextEditor* mTextEditor;
-
-  /**
-   * Create a normal <br> element or a moz-<br> element and insert it to
-   * aOffset at aParent.
-   *
-   * @param aParent     The parent node which will have new <br> element.
-   * @param aOffset     The offset in aParent where the new <br> element will
-   *                    be inserted.
-   * @param aMozBR      true if the caller wants to create a moz-<br> element.
-   *                    Otherwise, false.
-   * @param aOutBRNode  Returns created <br> element.
-   */
-  nsresult CreateBRInternal(nsIDOMNode* aParent,
-                            int32_t aOffset,
-                            bool aMozBR,
-                            nsIDOMNode** aOutBRNode = nullptr);
-
 
 protected:
   // A buffer we use to store the real value of password editors.

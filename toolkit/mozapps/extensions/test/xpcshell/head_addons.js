@@ -24,8 +24,6 @@ const PREF_SYSTEM_ADDON_SET           = "extensions.systemAddonSet";
 const PREF_SYSTEM_ADDON_UPDATE_URL    = "extensions.systemAddon.update.url";
 const PREF_APP_UPDATE_ENABLED         = "app.update.enabled";
 const PREF_ALLOW_NON_MPC              = "extensions.allow-non-mpc-extensions";
-const PREF_DISABLE_SECURITY = ("security.turn_off_all_security_so_that_" +
-                               "viruses_can_take_over_this_computer");
 
 // Forcibly end the test if it runs longer than 15 minutes
 const TIMEOUT_MS = 900000;
@@ -76,7 +74,6 @@ const {
   createUpdateRDF,
   getFileForAddon,
   manuallyUninstall,
-  overrideBuiltIns,
   promiseAddonEvent,
   promiseCompleteAllInstalls,
   promiseCompleteInstall,
@@ -337,7 +334,7 @@ this.BootstrapMonitor = {
       }
 
       this.installed.delete(id);
-      this.uninstalled.set(id, info);
+      this.uninstalled.set(id, info)
     } else if (info.event == "startup") {
       this.started.set(id, info);
 
@@ -350,7 +347,7 @@ this.BootstrapMonitor = {
       this.startupPromises = [];
     }
   }
-};
+}
 
 AddonTestUtils.on("addon-manager-shutdown", () => BootstrapMonitor.shutdownCheck());
 
@@ -762,7 +759,7 @@ function writeInstallRDFForExtension(aData, aDir, aId, aExtraFile) {
 function promiseWriteWebManifestForExtension(aData, aDir, aId = aData.applications.gecko.id) {
   let files = {
     "manifest.json": JSON.stringify(aData),
-  };
+  }
   return AddonTestUtils.promiseWriteFilesToExtension(aDir.path, aId, files);
 }
 
@@ -805,7 +802,7 @@ function getExpectedInstall(aAddon) {
   if (gExpectedInstalls instanceof Array)
     return gExpectedInstalls.shift();
   if (!aAddon || !aAddon.id)
-    return gExpectedInstalls.NO_ID.shift();
+    return gExpectedInstalls["NO_ID"].shift();
   let id = aAddon.id;
   if (!(id in gExpectedInstalls) || !(gExpectedInstalls[id] instanceof Array))
     do_throw("Wasn't expecting events for " + id);
@@ -1197,7 +1194,7 @@ function interpolateAndServeFile(request, response) {
  * @param  url
  *         the actual URL
  * @param  file
- *         nsIFile representing a static file
+ *         nsILocalFile representing a static file
  */
 function mapUrlToFile(url, file, server) {
   server.registerPathHandler(url, interpolateAndServeFile);
@@ -1297,7 +1294,7 @@ function callback_soon(aFunction) {
     do_execute_soon(function() {
       aFunction.apply(null, args);
     }, aFunction.name ? "delayed callback " + aFunction.name : "delayed callback");
-  };
+  }
 }
 
 function writeProxyFileToDir(aDir, aAddon, aId) {
@@ -1305,7 +1302,7 @@ function writeProxyFileToDir(aDir, aAddon, aId) {
 
   let file = aDir.clone();
   file.append(aId);
-  return file;
+  return file
 }
 
 async function serveSystemUpdate(xml, perform_update, testserver) {
@@ -1338,8 +1335,8 @@ async function updateAllSystemAddons(xml, testserver) {
 
   await serveSystemUpdate(xml, function() {
     return new Promise(resolve => {
-      Services.obs.addObserver(function observer() {
-        Services.obs.removeObserver(observer, "addons-background-update-complete");
+      Services.obs.addObserver(function() {
+        Services.obs.removeObserver(arguments.callee, "addons-background-update-complete");
 
         resolve();
       }, "addons-background-update-complete");
@@ -1532,23 +1529,12 @@ async function setupSystemAddonConditions(setup, distroDir) {
   do_print("Clearing existing database.");
   Services.prefs.clearUserPref(PREF_SYSTEM_ADDON_SET);
   distroDir.leafName = "empty";
-
-  let updateList = [];
-  awaitPromise(overrideBuiltIns({ "system": updateList }));
   startupManager(false);
   await promiseShutdownManager();
 
   do_print("Setting up conditions.");
   await setup.setup();
 
-  if (distroDir) {
-    if (distroDir.path.endsWith("hidden")) {
-      updateList = ["system1@tests.mozilla.org", "system2@tests.mozilla.org"];
-    } else if (distroDir.path.endsWith("prefilled")) {
-      updateList = ["system2@tests.mozilla.org", "system3@tests.mozilla.org"];
-    }
-  }
-  awaitPromise(overrideBuiltIns({ "system": updateList }));
   startupManager(false);
 
   // Make sure the initial state is correct
@@ -1594,19 +1580,7 @@ async function verifySystemAddonState(initialState, finalState = undefined, alre
   await checkInstalledSystemAddons(...finalState, distroDir);
 
   // Check that the new state is active after a restart
-  await promiseShutdownManager();
-
-  let updateList = [];
-
-  if (distroDir) {
-    if (distroDir.path.endsWith("hidden")) {
-      updateList = ["system1@tests.mozilla.org", "system2@tests.mozilla.org"];
-    } else if (distroDir.path.endsWith("prefilled")) {
-      updateList = ["system2@tests.mozilla.org", "system3@tests.mozilla.org"];
-    }
-  }
-  awaitPromise(overrideBuiltIns({ "system": updateList }));
-  startupManager();
+  await promiseRestartManager();
   await checkInstalledSystemAddons(finalState, distroDir);
 }
 

@@ -232,15 +232,6 @@ nsTableRowFrame::InsertFrames(ChildListID  aListID,
   NS_ASSERTION(aListID == kPrincipalList, "unexpected child list");
   NS_ASSERTION(!aPrevFrame || aPrevFrame->GetParent() == this,
                "inserting after sibling frame with different parent");
-  if (mFrames.IsEmpty() ||
-      (aPrevFrame && !aPrevFrame->GetNextSibling())) {
-    // This is actually an append (though our caller didn't figure that out),
-    // and our append codepath is both simpler/faster _and_ less buggy.
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1388898 tracks the bugginess
-    AppendFrames(aListID, aFrameList);
-    return;
-  }
-
   DrainSelfOverflowList(); // ensure aPrevFrame is in mFrames
   //Insert Frames in the frame list
   const nsFrameList::Slice& newCells = mFrames.InsertFrames(nullptr, aPrevFrame, aFrameList);
@@ -260,7 +251,7 @@ nsTableRowFrame::InsertFrames(ChildListID  aListID,
   // insert the cells into the cell map
   int32_t colIndex = -1;
   if (prevCellFrame) {
-    colIndex = prevCellFrame->ColIndex();
+    prevCellFrame->GetColIndex(colIndex);
   }
   tableFrame->InsertCells(cellChildren, GetRowIndex(), colIndex);
 
@@ -327,6 +318,18 @@ GetBSizeOfRowsSpannedBelowFirst(nsTableCellFrame& aTableCellFrame,
     nextRow = nextRow->GetNextSibling();
   }
   return bsize;
+}
+
+nsTableCellFrame*
+nsTableRowFrame::GetFirstCell()
+{
+  for (nsIFrame* childFrame : mFrames) {
+    nsTableCellFrame *cellFrame = do_QueryFrame(childFrame);
+    if (cellFrame) {
+      return cellFrame;
+    }
+  }
+  return nullptr;
 }
 
 /**
@@ -580,9 +583,10 @@ nsTableRowFrame::CalcBSize(const ReflowInput& aReflowInput)
 
 void
 nsTableRowFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
                                   const nsDisplayListSet& aLists)
 {
-  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aLists);
+  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect, aLists);
 }
 
 nsIFrame::LogicalSides
@@ -675,7 +679,8 @@ CalcAvailISize(nsTableFrame&     aTableFrame,
                nsTableCellFrame& aCellFrame)
 {
   nscoord cellAvailISize = 0;
-  uint32_t colIndex = aCellFrame.ColIndex();
+  int32_t colIndex;
+  aCellFrame.GetColIndex(colIndex);
   int32_t colspan = aTableFrame.GetEffectiveColSpan(aCellFrame);
   NS_ASSERTION(colspan > 0, "effective colspan should be positive");
   nsTableFrame* fifTable =
@@ -814,12 +819,12 @@ nsTableRowFrame::ReflowChildren(nsPresContext*           aPresContext,
       }
     }
 
-    uint32_t cellColIndex = cellFrame->ColIndex();
+    int32_t cellColIndex;
+    cellFrame->GetColIndex(cellColIndex);
     cellColSpan = aTableFrame.GetEffectiveColSpan(*cellFrame);
 
     // If the adjacent cell is in a prior row (because of a rowspan) add in the space
-    // NOTE: prevColIndex can be -1 here.
-    if (prevColIndex != (static_cast<int32_t>(cellColIndex) - 1)) {
+    if (prevColIndex != (cellColIndex - 1)) {
       iCoord += GetSpaceBetween(prevColIndex, cellColIndex, cellColSpan, aTableFrame,
                                 false);
     }
@@ -1054,7 +1059,6 @@ nsTableRowFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsTableRowFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   WritingMode wm = aReflowInput.GetWritingMode();
 
@@ -1194,7 +1198,8 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
     shift = rowRect.BSize(wm);
     nsTableCellFrame* cellFrame = GetFirstCell();
     if (cellFrame) {
-      uint32_t rowIndex = cellFrame->RowIndex();
+      int32_t rowIndex;
+      cellFrame->GetRowIndex(rowIndex);
       shift += tableFrame->GetRowSpacing(rowIndex);
       while (cellFrame) {
         LogicalRect cRect = cellFrame->GetLogicalRect(wm, containerSize);
@@ -1225,13 +1230,13 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
     for (nsIFrame* kidFrame : mFrames) {
       nsTableCellFrame *cellFrame = do_QueryFrame(kidFrame);
       if (cellFrame) {
-        uint32_t cellColIndex = cellFrame->ColIndex();
+        int32_t cellColIndex;
+        cellFrame->GetColIndex(cellColIndex);
         int32_t cellColSpan = tableFrame->GetEffectiveColSpan(*cellFrame);
 
         // If the adjacent cell is in a prior row (because of a rowspan) add in
         // the space
-        // NOTE: prevColIndex can be -1 here.
-        if (prevColIndex != (static_cast<int32_t>(cellColIndex) - 1)) {
+        if (prevColIndex != (cellColIndex - 1)) {
           iPos += GetSpaceBetween(prevColIndex, cellColIndex, cellColSpan,
                                   *tableFrame, true);
         }
@@ -1344,9 +1349,9 @@ nsTableRowFrame::InsertCellFrame(nsTableCellFrame* aFrame,
   for (nsIFrame* child : mFrames) {
     nsTableCellFrame *cellFrame = do_QueryFrame(child);
     if (cellFrame) {
-      uint32_t colIndex = cellFrame->ColIndex();
-      // Can aColIndex be -1 here?  Let's assume it can for now.
-      if (static_cast<int32_t>(colIndex) < aColIndex) {
+      int32_t colIndex;
+      cellFrame->GetColIndex(colIndex);
+      if (colIndex < aColIndex) {
         priorCell = cellFrame;
       }
       else break;

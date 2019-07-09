@@ -1,5 +1,5 @@
 fuzzy-if(!contentSameGfxBackendAsCanvas,4,88500) fuzzy-if(azureSkiaGL||skiaContent,4,89700) == linear-1a.html linear-1-ref.html
-fuzzy-if(!contentSameGfxBackendAsCanvas,2,88500) fuzzy-if(azureSkiaGL,2,89997) fuzzy-if(skiaContent,1,16000) fuzzy-if(webrender,1,23905) == linear-keywords-1a.html linear-keywords-1-ref.html
+fuzzy-if(!contentSameGfxBackendAsCanvas,2,88500) fuzzy-if(azureSkiaGL,2,89997) fuzzy-if(skiaContent,1,16000) == linear-keywords-1a.html linear-keywords-1-ref.html
 == linear-diagonal-1a.html linear-diagonal-1-ref.html
 == linear-diagonal-2a.html linear-diagonal-2-ref.html
 == linear-diagonal-3a.html linear-diagonal-3-ref.html
@@ -46,8 +46,8 @@ fuzzy-if(Android,8,771) == radial-shape-farthest-corner-1a.html radial-shape-far
 fails-if(gtkWidget&&/x86_64-/.test(xulRuntime.XPCOMABI)) fuzzy(1,1569) fuzzy-if(cocoaWidget,2,41281) fuzzy-if(Android,8,1091) fuzzy-if(skiaContent,2,500) == radial-shape-farthest-corner-1b.html radial-shape-farthest-corner-1-ref.html
 fuzzy-if(Android,17,13320) == radial-shape-farthest-side-1a.html radial-shape-farthest-side-1-ref.html
 fuzzy-if(Android,17,13320) == radial-shape-farthest-side-1b.html radial-shape-farthest-side-1-ref.html
-fails-if(webrender) == radial-size-1a.html radial-size-1-ref.html
-fails-if(webrender) == radial-size-1b.html radial-size-1-ref.html
+== radial-size-1a.html radial-size-1-ref.html
+== radial-size-1b.html radial-size-1-ref.html
 fuzzy-if(Android,4,248) == radial-zero-length-1a.html radial-zero-length-1-ref.html
 fuzzy-if(Android,4,248) == radial-zero-length-1b.html radial-zero-length-1-ref.html
 fuzzy-if(Android,4,248) == radial-zero-length-1c.html radial-zero-length-1-ref.html
@@ -73,7 +73,7 @@ fuzzy-if(skiaContent,73,900) == twostops-1e.html twostops-1-ref.html
 
 # from http://www.xanthir.com/:4bhipd by way of http://a-ja.net/newgrad.html
 fuzzy-if(!contentSameGfxBackendAsCanvas,3,20000) fuzzy-if(azureSkiaGL||skiaContent&&layersGPUAccelerated,8,20000) == aja-linear-1a.html aja-linear-1-ref.html
-fails-if(!d2d&&!skiaContent) fuzzy-if(webrender,1,10125) == aja-linear-1b.html aja-linear-1-ref.html # bug 526694
+fails-if(!d2d&&!skiaContent) == aja-linear-1b.html aja-linear-1-ref.html # bug 526694
 fuzzy-if(!contentSameGfxBackendAsCanvas,3,20000) fuzzy-if(azureSkiaGL||skiaContent,8,20000) == aja-linear-1c.html aja-linear-1-ref.html 
 fuzzy-if(!contentSameGfxBackendAsCanvas,3,20000) fuzzy-if(azureSkiaGL||skiaContent,8,20000) == aja-linear-1d.html aja-linear-1-ref.html 
 fuzzy-if(!contentSameGfxBackendAsCanvas,3,20000) fuzzy-if(azureSkiaGL||skiaContent,8,20000) == aja-linear-1e.html aja-linear-1-ref.html 

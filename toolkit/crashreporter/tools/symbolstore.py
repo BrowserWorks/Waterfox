@@ -40,13 +40,8 @@ import concurrent.futures
 import multiprocessing
 
 from optparse import OptionParser
+from xml.dom.minidom import parse
 
-from mozbuild.util import memoize
-from mozbuild.generated_sources import (
-    get_filename_with_digest,
-    get_generated_sources,
-    get_s3_region_and_bucket,
-)
 from mozpack.copier import FileRegistry
 from mozpack.manifests import (
     InstallManifest,
@@ -252,54 +247,6 @@ class GitFileInfo(VCSFileInfo):
 # prevent extra filesystem activity or process launching.
 vcsFileInfoCache = {}
 
-if platform.system() == 'Windows':
-    def normpath(path):
-        '''
-        Normalize a path using `GetFinalPathNameByHandleW` to get the
-        path with all components in the case they exist in on-disk, so
-        that making links to a case-sensitive server (hg.mozilla.org) works.
-
-        This function also resolves any symlinks in the path.
-        '''
-        # Return the original path if something fails, which can happen for paths that
-        # don't exist on this system (like paths from the CRT).
-        result = path
-
-        ctypes.windll.kernel32.SetErrorMode(ctypes.c_uint(1))
-        if not isinstance(path, unicode):
-            path = unicode(path, sys.getfilesystemencoding())
-        handle = ctypes.windll.kernel32.CreateFileW(path,
-                                                    # GENERIC_READ
-                                                    0x80000000,
-                                                    # FILE_SHARE_READ
-                                                    1,
-                                                    None,
-                                                    # OPEN_EXISTING
-                                                    3,
-                                                    # FILE_FLAG_BACKUP_SEMANTICS
-                                                    # This is necessary to open
-                                                    # directory handles.
-                                                    0x02000000,
-                                                    None)
-        if handle != -1:
-            size = ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
-                                                                    None,
-                                                                    0,
-                                                                    0)
-            buf = ctypes.create_unicode_buffer(size)
-            if ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
-                                                                buf,
-                                                                size,
-                                                                0) > 0:
-                # The return value of GetFinalPathNameByHandleW uses the
-                # '\\?\' prefix.
-                result = buf.value.encode(sys.getfilesystemencoding())[4:]
-            ctypes.windll.kernel32.CloseHandle(handle)
-        return result
-else:
-    # Just use the os.path version otherwise.
-    normpath = os.path.normpath
-
 def IsInDir(file, dir):
     # the lower() is to handle win32+vc8, where
     # the source filenames come out all lowercase,
@@ -381,19 +328,9 @@ def make_file_mapping(install_manifests):
         manifest.populate_registry(reg)
         for dst, src in reg:
             if hasattr(src, 'path'):
-                # Any paths that get compared to source file names need to go through normpath.
-                abs_dest = normpath(os.path.join(destination, dst))
-                file_mapping[abs_dest] = normpath(src.path)
+                abs_dest = os.path.normpath(os.path.join(destination, dst))
+                file_mapping[abs_dest] = src.path
     return file_mapping
-
-@memoize
-def get_generated_file_s3_path(filename, rel_path, bucket):
-    """Given a filename, return a path formatted similarly to
-    GetVCSFilename but representing a file available in an s3 bucket."""
-    with open(filename, 'rb') as f:
-        path = get_filename_with_digest(rel_path, f.read())
-        return 's3:{bucket}:{path}:'.format(bucket=bucket, path=path)
-
 
 def GetPlatformSpecificDumper(**kwargs):
     """This function simply returns a instance of a subclass of Dumper
@@ -440,8 +377,7 @@ class Dumper:
                  copy_debug=False,
                  vcsinfo=False,
                  srcsrv=False,
-                 generated_files=None,
-                 s3_bucket=None,
+                 repo_manifest=None,
                  file_mapping=None):
         # popen likes absolute paths, at least on windows
         self.dump_syms = os.path.abspath(dump_syms)
@@ -451,13 +387,12 @@ class Dumper:
             self.archs = ['']
         else:
             self.archs = ['-a %s' % a for a in archs.split()]
-        # Any paths that get compared to source file names need to go through normpath.
-        self.srcdirs = [normpath(s) for s in srcdirs]
+        self.srcdirs = [os.path.normpath(self.FixFilenameCase(a)) for a in srcdirs]
         self.copy_debug = copy_debug
         self.vcsinfo = vcsinfo
         self.srcsrv = srcsrv
-        self.generated_files = generated_files or {}
-        self.s3_bucket = s3_bucket
+        if repo_manifest:
+            self.parse_repo_manifest(repo_manifest)
         self.file_mapping = file_mapping or {}
         # Add a static mapping for Rust sources.
         target_os = buildconfig.substs['OS_ARCH']
@@ -474,6 +409,56 @@ class Dumper:
                                                              buildconfig.substs['RUSTC_COMMIT'],
                                                              'https://github.com/rust-lang/rust/')
 
+    def parse_repo_manifest(self, repo_manifest):
+        """
+        Parse an XML manifest of repository info as produced
+        by the `repo manifest -r` command.
+        """
+        doc = parse(repo_manifest)
+        if doc.firstChild.tagName != "manifest":
+            return
+        # First, get remotes.
+        def ensure_slash(u):
+            if not u.endswith("/"):
+                return u + "/"
+            return u
+        remotes = dict([(r.getAttribute("name"), ensure_slash(r.getAttribute("fetch"))) for r in doc.getElementsByTagName("remote")])
+        # And default remote.
+        default_remote = None
+        if doc.getElementsByTagName("default"):
+            default_remote = doc.getElementsByTagName("default")[0].getAttribute("remote")
+        # Now get projects. Assume they're relative to repo_manifest.
+        base_dir = os.path.abspath(os.path.dirname(repo_manifest))
+        for proj in doc.getElementsByTagName("project"):
+            # name is the repository URL relative to the remote path.
+            name = proj.getAttribute("name")
+            # path is the path on-disk, relative to the manifest file.
+            path = proj.getAttribute("path")
+            # revision is the changeset ID.
+            rev = proj.getAttribute("revision")
+            # remote is the base URL to use.
+            remote = proj.getAttribute("remote")
+            # remote defaults to the <default remote>.
+            if not remote:
+                remote = default_remote
+            # path defaults to name.
+            if not path:
+                path = name
+            if not (name and path and rev and remote):
+                print("Skipping project %s" % proj.toxml())
+                continue
+            remote = remotes[remote]
+            # Turn git URLs into http URLs so that urljoin works.
+            if remote.startswith("git:"):
+                remote = "http" + remote[3:]
+            # Add this project to srcdirs.
+            srcdir = os.path.join(base_dir, path)
+            self.srcdirs.append(srcdir)
+            # And cache its VCS file info. Currently all repos mentioned
+            # in a repo manifest are assumed to be git.
+            root = urlparse.urljoin(remote, name)
+            Dumper.srcdirRepoInfo[srcdir] = GitRepoInfo(srcdir, rev, root)
+
     # subclasses override this
     def ShouldProcess(self, file):
         return True
@@ -486,6 +471,10 @@ class Dumper:
             return os.popen("file -Lb " + file).read()
         except:
             return ""
+
+    # This is a no-op except on Win32
+    def FixFilenameCase(self, file):
+        return file
 
     # This is a no-op except on Win32
     def SourceServerIndexing(self, debug_file, guid, sourceFileStream, vcs_root):
@@ -555,18 +544,13 @@ class Dumper:
                     if line.startswith("FILE"):
                         # FILE index filename
                         (x, index, filename) = line.rstrip().split(None, 2)
+                        filename = os.path.normpath(self.FixFilenameCase(filename))
                         # We want original file paths for the source server.
                         sourcepath = filename
-                        filename = normpath(filename)
                         if filename in self.file_mapping:
                             filename = self.file_mapping[filename]
                         if self.vcsinfo:
-                            gen_path = self.generated_files.get(filename)
-                            if gen_path and self.s3_bucket:
-                                filename = get_generated_file_s3_path(filename, gen_path, self.s3_bucket)
-                                rootname = ''
-                            else:
-                                (filename, rootname) = GetVCSFilename(filename, self.srcdirs)
+                            (filename, rootname) = GetVCSFilename(filename, self.srcdirs)
                             # sets vcs_root in case the loop through files were to end on an empty rootname
                             if vcs_root is None:
                               if rootname:
@@ -627,6 +611,51 @@ class Dumper_Win32(Dumper):
                 return True
         return False
 
+    def FixFilenameCase(self, file):
+        """Recent versions of Visual C++ put filenames into
+        PDB files as all lowercase.  If the file exists
+        on the local filesystem, fix it."""
+
+        # Use a cached version if we have one.
+        if file in self.fixedFilenameCaseCache:
+            return self.fixedFilenameCaseCache[file]
+
+        result = file
+
+        ctypes.windll.kernel32.SetErrorMode(ctypes.c_uint(1))
+        if not isinstance(file, unicode):
+            file = unicode(file, sys.getfilesystemencoding())
+        handle = ctypes.windll.kernel32.CreateFileW(file,
+                                                    # GENERIC_READ
+                                                    0x80000000,
+                                                    # FILE_SHARE_READ
+                                                    1,
+                                                    None,
+                                                    # OPEN_EXISTING
+                                                    3,
+                                                    # FILE_FLAG_BACKUP_SEMANTICS
+                                                    # This is necessary to open
+                                                    # directory handles.
+                                                    0x02000000,
+                                                    None)
+        if handle != -1:
+            size = ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
+                                                                    None,
+                                                                    0,
+                                                                    0)
+            buf = ctypes.create_unicode_buffer(size)
+            if ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
+                                                                buf,
+                                                                size,
+                                                                0) > 0:
+                # The return value of GetFinalPathNameByHandleW uses the
+                # '\\?\' prefix.
+                result = buf.value.encode(sys.getfilesystemencoding())[4:]
+            ctypes.windll.kernel32.CloseHandle(handle)
+
+        # Cache the corrected version to avoid future filesystem hits.
+        self.fixedFilenameCaseCache[file] = result
+        return result
 
     def CopyDebug(self, file, debug_file, guid, code_file, code_id):
         file = "%s.pdb" % os.path.splitext(file)[0]
@@ -691,7 +720,6 @@ class Dumper_Win32(Dumper):
             # clean up all the .stream files when done
             os.remove(stream_output_path)
         return result
-
 
 class Dumper_Linux(Dumper):
     objcopy = os.environ['OBJCOPY'] if 'OBJCOPY' in os.environ else 'objcopy'
@@ -840,6 +868,11 @@ def main():
     parser.add_option("-i", "--source-index",
                       action="store_true", dest="srcsrv", default=False,
                       help="Add source index information to debug files, making them suitable for use in a source server.")
+    parser.add_option("--repo-manifest",
+                      action="store", dest="repo_manifest",
+                      help="""Get source information from this XML manifest
+produced by the `repo manifest -r` command.
+""")
     parser.add_option("--install-manifest",
                       action="append", dest="install_manifests",
                       default=[],
@@ -866,10 +899,6 @@ to canonical locations in the source repository. Specify
         parser.error(str(e))
         exit(1)
     file_mapping = make_file_mapping(manifests)
-    # Any paths that get compared to source file names need to go through normpath.
-    generated_files = {normpath(os.path.join(buildconfig.topobjdir, f)): f
-                       for (f, _) in get_generated_sources()}
-    _, bucket = get_s3_region_and_bucket()
     dumper = GetPlatformSpecificDumper(dump_syms=args[0],
                                        symbol_path=args[1],
                                        copy_debug=options.copy_debug,
@@ -877,8 +906,7 @@ to canonical locations in the source repository. Specify
                                        srcdirs=options.srcdir,
                                        vcsinfo=options.vcsinfo,
                                        srcsrv=options.srcsrv,
-                                       generated_files=generated_files,
-                                       s3_bucket=bucket,
+                                       repo_manifest=options.repo_manifest,
                                        file_mapping=file_mapping)
 
     dumper.Process(args[2])

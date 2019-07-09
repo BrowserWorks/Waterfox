@@ -203,14 +203,16 @@ struct MOZ_STACK_CLASS BidiParagraphData
   {
     nsBidiLevel paraLevel = mParaLevel;
     if (paraLevel == NSBIDI_DEFAULT_LTR || paraLevel == NSBIDI_DEFAULT_RTL) {
-      paraLevel = mPresContext->GetBidiEngine().GetParaLevel();
+      mPresContext->GetBidiEngine().GetParaLevel(&paraLevel);
     }
     return paraLevel;
   }
 
   nsBidiDirection GetDirection()
   {
-    return mPresContext->GetBidiEngine().GetDirection();
+    nsBidiDirection dir;
+    mPresContext->GetBidiEngine().GetDirection(&dir);
+    return dir;
   }
 
   nsresult CountRuns(int32_t *runCount)
@@ -218,15 +220,16 @@ struct MOZ_STACK_CLASS BidiParagraphData
     return mPresContext->GetBidiEngine().CountRuns(runCount);
   }
 
-  void GetLogicalRun(int32_t aLogicalStart,
-                     int32_t* aLogicalLimit,
-                     nsBidiLevel* aLevel)
+  nsresult GetLogicalRun(int32_t aLogicalStart,
+                         int32_t* aLogicalLimit,
+                         nsBidiLevel* aLevel)
   {
-    mPresContext->GetBidiEngine().GetLogicalRun(aLogicalStart,
-                                                aLogicalLimit, aLevel);
-    if (mIsVisual) {
+    nsresult rv =
+      mPresContext->GetBidiEngine().GetLogicalRun(aLogicalStart,
+                                                   aLogicalLimit, aLevel);
+    if (mIsVisual || NS_FAILED(rv))
       *aLevel = GetParaLevel();
-    }
+    return rv;
   }
 
   void ResetData()
@@ -890,7 +893,10 @@ nsBidiPresUtils::ResolveParagraph(BidiParagraphData* aBpd)
         break;
       }
       int32_t lineOffset = logicalLimit;
-      aBpd->GetLogicalRun(lineOffset, &logicalLimit, &embeddingLevel);
+      if (NS_FAILED(aBpd->GetLogicalRun(
+              lineOffset, &logicalLimit, &embeddingLevel) ) ) {
+        break;
+      }
       runLength = logicalLimit - lineOffset;
     } // if (runLength <= 0)
 
@@ -2119,10 +2125,15 @@ nsresult nsBidiPresUtils::ProcessText(const char16_t*       aText,
   }
 
   for (i = 0; i < runCount; i++) {
-    nsBidiDirection dir = aBidiEngine->GetVisualRun(i, &start, &length);
+    nsBidiDirection dir;
+    rv = aBidiEngine->GetVisualRun(i, &start, &length, &dir);
+    if (NS_FAILED(rv))
+      return rv;
 
     nsBidiLevel level;
-    aBidiEngine->GetLogicalRun(start, &limit, &level);
+    rv = aBidiEngine->GetLogicalRun(start, &limit, &level);
+    if (NS_FAILED(rv))
+      return rv;
 
     dir = DIRECTION_FROM_LEVEL(level);
     int32_t subRunLength = limit - start;

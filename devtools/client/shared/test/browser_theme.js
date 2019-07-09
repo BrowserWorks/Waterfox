@@ -62,8 +62,8 @@ function testSetTheme() {
 }
 
 function testGetColor() {
-  let BLUE_DARK = "#75BFFF";
-  let BLUE_LIGHT = "#0074e8";
+  let BLUE_DARK = "#46afe3";
+  let BLUE_LIGHT = "#0088cc";
   let BLUE_FIREBUG = "#3455db";
   let originalTheme = getTheme();
 
@@ -92,7 +92,7 @@ function testColorExistence() {
   const vars = [
     "body-background", "sidebar-background", "contrast-background",
     "tab-toolbar-background", "toolbar-background", "selection-background",
-    "selection-color", "selection-background-hover", "splitter-color",
+    "selection-color", "selection-background-semitransparent", "splitter-color",
     "comment", "body-color", "body-color-alt", "content-color1", "content-color2",
     "content-color3", "highlight-green", "highlight-blue", "highlight-bluegrey",
     "highlight-purple", "highlight-lightorange", "highlight-orange", "highlight-red",
@@ -101,7 +101,7 @@ function testColorExistence() {
 
   for (let type of vars) {
     ok(getColor(type, "light"), `${type} is a valid color in light theme`);
-    ok(getColor(type, "dark"), `${type} is a valid color in dark theme`);
-    ok(getColor(type, "firebug"), `${type} is a valid color in firebug theme`);
+    ok(getColor(type, "dark"), `${type} is a valid color in light theme`);
+    ok(getColor(type, "firebug"), `${type} is a valid color in light theme`);
   }
 }

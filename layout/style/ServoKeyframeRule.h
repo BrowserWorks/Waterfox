@@ -18,9 +18,8 @@ class ServoKeyframeDeclaration;
 class ServoKeyframeRule final : public dom::CSSKeyframeRule
 {
 public:
-  ServoKeyframeRule(already_AddRefed<RawServoKeyframe> aRaw,
-                    uint32_t aLine, uint32_t aColumn)
-    : CSSKeyframeRule(aLine, aColumn)
+  explicit ServoKeyframeRule(already_AddRefed<RawServoKeyframe> aRaw)
+    : CSSKeyframeRule(0, 0)
     , mRaw(aRaw) {}
 
   NS_DECL_ISUPPORTS_INHERITED

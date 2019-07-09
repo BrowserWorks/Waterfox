@@ -7,9 +7,6 @@ android {
     buildToolsVersion project.ext.buildToolsVersion
 
     defaultConfig {
-        defaultPublishConfig 'release'
-        publishNonDefault true
-
         targetSdkVersion project.ext.targetSdkVersion
         minSdkVersion project.ext.minSdkVersion
         manifestPlaceholders = project.ext.manifestPlaceholders

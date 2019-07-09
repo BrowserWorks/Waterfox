@@ -13,7 +13,7 @@ test "x$HBSOURCES" = x && HBSOURCES=`cd "$srcdir"; find . -maxdepth 1 -name 'hb-
 echo 'Checking that public header files #include "hb-common.h" or "hb.h" first (or none)'
 
 for x in $HBHEADERS; do
-	test -f "$srcdir/$x" && x="$srcdir/$x"
+	test -f "$srcdir/$x" -a ! -f "$x" && x="$srcdir/$x"
 	grep '#.*\<include\>' "$x" /dev/null | head -n 1
 done |
 grep -v '"hb-common[.]h"' |
@@ -26,7 +26,7 @@ grep . >&2 && stat=1
 echo 'Checking that source files #include "hb-*private.hh" first (or none)'
 
 for x in $HBSOURCES; do
-	test -f "$srcdir/$x" && x="$srcdir/$x"
+	test -f "$srcdir/$x" -a ! -f "$x" && x="$srcdir/$x"
 	grep '#.*\<include\>' "$x" /dev/null | grep -v 'include _' | head -n 1
 done |
 grep -v '"hb-.*private[.]hh"' |
@@ -34,7 +34,7 @@ grep -v 'hb-private[.]hh:' |
 grep . >&2 && stat=1
 
 
-echo 'Checking that there is no #include <hb.*.h>'
+echo 'Checking that there is no #include <hb-*.h>'
 for x in $HBHEADERS $HBSOURCES; do
 	test -f "$srcdir/$x" && x="$srcdir/$x"
 	grep '#.*\<include\>.*<.*hb' "$x" /dev/null >&2 && stat=1

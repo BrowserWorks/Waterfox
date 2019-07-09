@@ -193,12 +193,12 @@ public:
   virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
-  virtual nsChangeHint GetAttributeChangeHint(const nsAtom* aAttribute,
+  virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
   virtual nsresult GetEventTargetParent(
@@ -233,6 +233,7 @@ public:
   NS_IMETHOD SetValueChanged(bool aValueChanged) override;
   NS_IMETHOD_(bool) IsSingleLineTextControl() const override;
   NS_IMETHOD_(bool) IsTextArea() const override;
+  NS_IMETHOD_(bool) IsPlainTextControl() const override;
   NS_IMETHOD_(bool) IsPasswordTextControl() const override;
   NS_IMETHOD_(int32_t) GetCols() override;
   NS_IMETHOD_(int32_t) GetWrapCols() override;
@@ -247,7 +248,9 @@ public:
   NS_IMETHOD_(void) UnbindFromFrame(nsTextControlFrame* aFrame) override;
   NS_IMETHOD CreateEditor() override;
   NS_IMETHOD_(Element*) GetRootEditorNode() override;
+  NS_IMETHOD_(Element*) CreatePlaceholderNode() override;
   NS_IMETHOD_(Element*) GetPlaceholderNode() override;
+  NS_IMETHOD_(Element*) CreatePreviewNode() override;
   NS_IMETHOD_(Element*) GetPreviewNode() override;
   NS_IMETHOD_(void) UpdateOverlayTextVisibility(bool aNotify) override;
   NS_IMETHOD_(void) SetPreviewValue(const nsAString& aValue) override;
@@ -336,17 +339,6 @@ public:
     return mSelectionProperties;
   }
 
-  bool HasPatternAttribute() const
-  {
-    return mHasPatternAttribute;
-  }
-
-  virtual already_AddRefed<nsITextControlElement> GetAsTextControlElement() override
-  {
-    nsCOMPtr<nsITextControlElement> txt = this;
-    return txt.forget();
-  }
-
   // nsIConstraintValidation
   bool     IsTooLong();
   bool     IsTooShort();
@@ -366,14 +358,7 @@ public:
   void     UpdateRangeUnderflowValidityState();
   void     UpdateStepMismatchValidityState();
   void     UpdateBadInputValidityState();
-  // Update all our validity states and then update our element state
-  // as needed.  aNotify controls whether the element state update
-  // needs to notify.
   void     UpdateAllValidityStates(bool aNotify);
-  // Update all our validity states without updating element state.
-  // This should be called instead of UpdateAllValidityStates any time
-  // we're guaranteed that element state will be updated anyway.
-  void     UpdateAllValidityStatesButNotElementState();
   void     UpdateBarredFromConstraintValidation();
   nsresult GetValidationMessage(nsAString& aValidationMessage,
                                 ValidityStateType aType) override;
@@ -528,7 +513,6 @@ public:
   // XPCOM GetForm() is OK
 
   FileList* GetFiles();
-  void SetFiles(FileList* aFiles);
 
   // XPCOM GetFormAction() is OK
   void SetFormAction(const nsAString& aValue, ErrorResult& aRv)
@@ -707,13 +691,13 @@ public:
     SetUnsignedIntAttr(nsGkAtoms::size, aValue, DEFAULT_COLS, aRv);
   }
 
-  void GetSrc(nsAString& aValue, nsIPrincipal&)
+  void GetSrc(nsAString& aValue)
   {
     GetURIAttr(nsGkAtoms::src, nullptr, aValue);
   }
-  void SetSrc(const nsAString& aValue, nsIPrincipal& aTriggeringPrincipal, ErrorResult& aRv)
+  void SetSrc(const nsAString& aValue, ErrorResult& aRv)
   {
-    SetHTMLAttr(nsGkAtoms::src, aValue, aTriggeringPrincipal, aRv);
+    SetHTMLAttr(nsGkAtoms::src, aValue, aRv);
   }
 
   void GetStep(nsAString& aValue)
@@ -957,22 +941,6 @@ public:
 
   static void Shutdown();
 
-  /**
-   * Returns if the required attribute applies for the current type.
-   */
-  bool DoesRequiredApply() const;
-
-  /**
-   * Returns the current required state of the element. This function differs
-   * from Required() in that this function only returns true for input types
-   * that @required attribute applies and the attribute is set; in contrast,
-   * Required() returns true whenever @required attribute is set.
-   */
-  bool IsRequired() const
-  {
-    return State().HasState(NS_EVENT_STATE_REQUIRED);
-  }
-
 protected:
   virtual ~HTMLInputElement();
 
@@ -1066,16 +1034,15 @@ protected:
   /**
    * Called when an attribute is about to be changed
    */
-  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   virtual void BeforeSetForm(bool aBindToTree) override;
@@ -1169,6 +1136,11 @@ protected:
    * Returns if the readonly attribute applies for the current type.
    */
   bool DoesReadOnlyApply() const;
+
+  /**
+   * Returns if the required attribute applies for the current type.
+   */
+  bool DoesRequiredApply() const;
 
   /**
    * Returns if the min and max attributes apply for the current type.
@@ -1617,11 +1589,6 @@ protected:
    */
   nsTextEditorState::SelectionProperties mSelectionProperties;
 
-  /**
-   * The triggering principal for the src attribute.
-   */
-  nsCOMPtr<nsIPrincipal> mSrcTriggeringPrincipal;
-
   /*
    * InputType object created based on input type.
    */
@@ -1688,7 +1655,6 @@ protected:
   bool                     mPickerRunning : 1;
   bool                     mSelectionCached : 1;
   bool                     mIsPreviewEnabled : 1;
-  bool                     mHasPatternAttribute : 1;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

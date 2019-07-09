@@ -47,8 +47,6 @@ import java.util.Map;
     private final Map<String, GeckoBundle> queuedMetadata =
             Collections.synchronizedMap(new LimitedLinkedHashMap<String, GeckoBundle>());
 
-    private boolean initialized;
-
     public static GlobalPageMetadata getInstance() {
         return instance;
     }
@@ -69,15 +67,9 @@ import java.util.Map;
     private GlobalPageMetadata() {}
 
     public void init() {
-        if (initialized) {
-            return;
-        }
-
         EventDispatcher
                 .getInstance()
                 .registerBackgroundThreadListener(this, GlobalHistory.EVENT_URI_AVAILABLE_IN_HISTORY);
-
-        initialized = true;
     }
 
     public void add(BrowserDB db, ContentProviderClient contentProviderClient, String uri, boolean hasImage, @NonNull String metadataJSON) {

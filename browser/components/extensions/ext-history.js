@@ -21,7 +21,6 @@ const TRANSITION_TO_TRANSITION_TYPES_MAP = new Map([
   ["auto_bookmark", nsINavHistoryService.TRANSITION_BOOKMARK],
   ["auto_subframe", nsINavHistoryService.TRANSITION_EMBED],
   ["manual_subframe", nsINavHistoryService.TRANSITION_FRAMED_LINK],
-  ["reload", nsINavHistoryService.TRANSITION_RELOAD],
 ]);
 
 let TRANSITION_TYPE_TO_TRANSITIONS_MAP = new Map();
@@ -93,11 +92,11 @@ var _observer;
 
 const getHistoryObserver = () => {
   if (!_observer) {
-    _observer = new class extends EventEmitter {
-      onDeleteURI(uri, guid, reason) {
+    _observer = {
+      onDeleteURI: function(uri, guid, reason) {
         this.emit("visitRemoved", {allHistory: false, urls: [uri.spec]});
-      }
-      onVisit(uri, visitId, time, sessionId, referringId, transitionType, guid, hidden, visitCount, typed, lastKnownTitle) {
+      },
+      onVisit: function(uri, visitId, time, sessionId, referringId, transitionType, guid, hidden, visitCount, typed, lastKnownTitle) {
         let data = {
           id: guid,
           url: uri.spec,
@@ -107,22 +106,23 @@ const getHistoryObserver = () => {
           typedCount: typed,
         };
         this.emit("visited", data);
-      }
-      onBeginUpdateBatch() {}
-      onEndUpdateBatch() {}
-      onTitleChanged(uri, title) {
+      },
+      onBeginUpdateBatch: function() {},
+      onEndUpdateBatch: function() {},
+      onTitleChanged: function(uri, title) {
         this.emit("titleChanged", {url: uri.spec, title: title});
-      }
-      onClearHistory() {
+      },
+      onClearHistory: function() {
         this.emit("visitRemoved", {allHistory: true, urls: []});
-      }
-      onPageChanged() {}
-      onFrecencyChanged() {}
-      onManyFrecenciesChanged() {}
-      onDeleteVisits(uri, time, guid, reason) {
+      },
+      onPageChanged: function() {},
+      onFrecencyChanged: function() {},
+      onManyFrecenciesChanged: function() {},
+      onDeleteVisits: function(uri, time, guid, reason) {
         this.emit("visitRemoved", {allHistory: false, urls: [uri.spec]});
-      }
-    }();
+      },
+    };
+    EventEmitter.decorate(_observer);
     PlacesUtils.history.addObserver(_observer);
   }
   return _observer;
@@ -190,7 +190,6 @@ this.history = class extends ExtensionAPI {
           }
 
           let options = PlacesUtils.history.getNewQueryOptions();
-          options.includeHidden = true;
           options.sortingMode = options.SORT_BY_DATE_DESCENDING;
           options.maxResults = query.maxResults || 100;
 
@@ -210,7 +209,6 @@ this.history = class extends ExtensionAPI {
           }
 
           let options = PlacesUtils.history.getNewQueryOptions();
-          options.includeHidden = true;
           options.sortingMode = options.SORT_BY_DATE_DESCENDING;
           options.resultType = options.RESULTS_AS_VISIT;
 

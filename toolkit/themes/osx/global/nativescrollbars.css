@@ -41,12 +41,12 @@ slider[orient="vertical"] {
 
 /* ..... thumb ..... */
 
-thumb[orient="vertical"] {
-  -moz-appearance: scrollbarthumb-vertical;
+thumb {
+  -moz-appearance: scrollbarthumb-horizontal;
 }
 
-thumb[orient="horizontal"] {
-  -moz-appearance: scrollbarthumb-horizontal;
+thumb[orient="vertical"] {
+  -moz-appearance: scrollbarthumb-vertical;
 }
 
 /* ..... increment ..... */

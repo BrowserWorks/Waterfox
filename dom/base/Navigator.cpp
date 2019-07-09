@@ -35,6 +35,7 @@
 #include "BatteryManager.h"
 #include "mozilla/dom/CredentialsContainer.h"
 #include "mozilla/dom/GamepadServiceTest.h"
+#include "mozilla/dom/PowerManager.h"
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
 #include "mozilla/dom/FlyWebPublishedServer.h"
@@ -202,6 +203,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNotification)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryPromise)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPowerManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStorageManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCredentials)
@@ -253,6 +255,11 @@ Navigator::Invalidate()
   }
 
   mBatteryPromise = nullptr;
+
+  if (mPowerManager) {
+    mPowerManager->Shutdown();
+    mPowerManager = nullptr;
+  }
 
   if (mConnection) {
     mConnection->Shutdown();
@@ -618,7 +625,7 @@ Navigator::CookieEnabled()
 
   // Pass null for the channel, just like the cookie service does.
   nsCookieAccess access;
-  nsresult rv = permMgr->CanAccess(doc->NodePrincipal(), &access);
+  nsresult rv = permMgr->CanAccess(codebaseURI, nullptr, &access);
   NS_ENSURE_SUCCESS(rv, cookieEnabled);
 
   if (access != nsICookiePermission::ACCESS_DEFAULT) {
@@ -1410,6 +1417,24 @@ Navigator::PublishServer(const nsAString& aName,
   return domPromise.forget();
 }
 
+PowerManager*
+Navigator::GetMozPower(ErrorResult& aRv)
+{
+  if (!mPowerManager) {
+    if (!mWindow) {
+      aRv.Throw(NS_ERROR_UNEXPECTED);
+      return nullptr;
+    }
+    mPowerManager = PowerManager::CreateInstance(mWindow);
+    if (!mPowerManager) {
+      // We failed to get the power manager service?
+      aRv.Throw(NS_ERROR_UNEXPECTED);
+    }
+  }
+
+  return mPowerManager;
+}
+
 already_AddRefed<WakeLock>
 Navigator::RequestWakeLock(const nsAString &aTopic, ErrorResult& aRv)
 {
@@ -1493,19 +1518,14 @@ Navigator::GetActiveVRDisplays(nsTArray<RefPtr<VRDisplay>>& aDisplays) const
 {
   /**
    * Get only the active VR displays.
-   * GetActiveVRDisplays should only enumerate displays that
-   * are already active without causing any other hardware to be
-   * activated.
-   * We must not call nsGlobalWindow::NotifyVREventListenerAdded here,
-   * as that would cause enumeration and activation of other VR hardware.
-   * Activating VR hardware is intrusive to the end user, as it may
-   * involve physically powering on devices that the user did not
-   * intend to use.
+   * Callers do not wish to VRDisplay::RefreshVRDisplays, as the enumeration may
+   * activate hardware that is not yet intended to be used.
    */
   if (!mWindow || !mWindow->GetDocShell()) {
     return;
   }
   nsGlobalWindow* win = nsGlobalWindow::Cast(mWindow);
+  win->NotifyVREventListenerAdded();
   nsTArray<RefPtr<VRDisplay>> displays;
   if (win->UpdateVRDisplays(displays)) {
     for (auto display : displays) {

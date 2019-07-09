@@ -9,6 +9,7 @@ import java.util.Set;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.background.sync.helpers.ExpectFetchDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectFetchSinceDelegate;
+import org.mozilla.gecko.background.sync.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectNoStoreDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.background.sync.helpers.PasswordHelpers;
@@ -56,10 +57,39 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     dispose(session);
   }
 
+  public void testGuidsSinceReturnMultipleRecords() {
+    RepositorySession session = createAndBeginSession();
+
+    PasswordRecord record1 = PasswordHelpers.createPassword1();
+    PasswordRecord record2 = PasswordHelpers.createPassword2();
+
+    updatePassword(NEW_PASSWORD1, record1);
+    long timestamp = updatePassword(NEW_PASSWORD2, record2);
+
+    String[] expected = new String[] { record1.guid, record2.guid };
+
+    performWait(storeRunnable(session, record1));
+    performWait(storeRunnable(session, record2));
+
+    performWait(guidsSinceRunnable(session, timestamp, expected));
+    dispose(session);
+  }
+
+  public void testGuidsSinceReturnNoRecords() {
+    RepositorySession session = createAndBeginSession();
+
+    //  Store 1 record in the past.
+    performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
+
+    String[] expected = {};
+    performWait(guidsSinceRunnable(session, System.currentTimeMillis() + 1000, expected));
+    dispose(session);
+  }
+
   public void testFetchSinceOneRecord() {
     RepositorySession session = createAndBeginSession();
 
-    // Passwords fetchModified checks timePasswordChanged, not insertion time.
+    // Passwords fetchSince checks timePasswordChanged, not insertion time.
     PasswordRecord record1 = PasswordHelpers.createPassword1();
     long timeModified1 = updatePassword(NEW_PASSWORD1, record1);
     performWait(storeRunnable(session, record1));
@@ -419,11 +449,20 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     };
   }
 
+  private static Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
+      }
+    };
+  }
+
   private static Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
     return new Runnable() {
       @Override
       public void run() {
-        session.fetchModified(new ExpectFetchSinceDelegate(timestamp, expected));
+        session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expected));
       }
     };
   }

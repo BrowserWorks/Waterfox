@@ -106,6 +106,8 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        GeckoAppShell.ensureCrashHandling();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.search_activity_main);
 
@@ -253,7 +255,6 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
         storeQuery(query);
 
         try {
-            //BrowserHealthRecorder.recordSearchDelayed("activity", engine.getIdentifier());
         } catch (Exception e) {
             // This should never happen: it'll only throw if the
             // search location is wrong. But let's not tempt fate.

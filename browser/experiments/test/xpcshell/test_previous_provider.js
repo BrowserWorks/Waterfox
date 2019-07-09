@@ -11,6 +11,10 @@ var gDataRoot;
 var gHttpServer;
 var gManifestObject;
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function test_setup() {
   loadAddonManager();
   do_get_profile();

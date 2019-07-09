@@ -1,14 +1,27 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * This Original Code has been modified by IBM Corporation.
+ * Modifications made by IBM described herein are
+ * Copyright (c) International Business Machines
+ * Corporation, 2000
+ *
+ * Modifications to Mozilla code or documentation
+ * identified per MPL Section 3.3
+ *
+ * Date         Modified by     Description of modification
+ * 03/27/2000   IBM Corp.       Added PR_CALLBACK for Optlink
+ *                               use in OS2
+ */
 
 #include "nsCOMPtr.h"
 #include "nsDOMCID.h"
 #include "nsError.h"
 #include "nsDOMString.h"
 #include "nsIDOMEvent.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIBaseWindow.h"
 #include "nsIDOMAttr.h"
 #include "nsIDOMDocument.h"
@@ -51,7 +64,7 @@
 #include "mozilla/dom/Event.h"
 #include "nsRDFCID.h"
 #include "nsStyleConsts.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsXULControllers.h"
 #include "nsIBoxObject.h"
 #include "nsPIBoxObject.h"
@@ -96,7 +109,6 @@
 #include "nsIDOMXULCommandEvent.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsICSSDeclaration.h"
-#include "nsLayoutUtils.h"
 
 #include "mozilla/dom/XULElementBinding.h"
 #include "mozilla/dom/BoxObject.h"
@@ -385,7 +397,7 @@ already_AddRefed<nsINodeList>
 nsXULElement::GetElementsByAttribute(const nsAString& aAttribute,
                                      const nsAString& aValue)
 {
-    RefPtr<nsAtom> attrAtom(NS_Atomize(aAttribute));
+    nsCOMPtr<nsIAtom> attrAtom(NS_Atomize(aAttribute));
     void* attrValue = new nsString(aValue);
     RefPtr<nsContentList> list =
         new nsContentList(this,
@@ -404,7 +416,7 @@ nsXULElement::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
                                        const nsAString& aValue,
                                        ErrorResult& rv)
 {
-    RefPtr<nsAtom> attrAtom(NS_Atomize(aAttribute));
+    nsCOMPtr<nsIAtom> attrAtom(NS_Atomize(aAttribute));
 
     int32_t nameSpaceId = kNameSpaceID_Wildcard;
     if (!aNamespaceURI.EqualsLiteral("*")) {
@@ -430,7 +442,7 @@ nsXULElement::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
 }
 
 EventListenerManager*
-nsXULElement::GetEventListenerManagerForAttr(nsAtom* aAttrName, bool* aDefer)
+nsXULElement::GetEventListenerManagerForAttr(nsIAtom* aAttrName, bool* aDefer)
 {
     // XXXbz sXBL/XBL2 issue: should we instead use GetComposedDoc()
     // here, override BindToTree for those classes and munge event
@@ -642,7 +654,7 @@ nsXULElement::AddListenerFor(const nsAttrName& aName,
     // new element, change an attribute's value, etc.
     // Eventlistenener-attributes are always in the null namespace
     if (aName.IsAtom()) {
-        nsAtom *attr = aName.Atom();
+        nsIAtom *attr = aName.Atom();
         MaybeAddPopupListener(attr);
         if (aCompileEventHandlers &&
             nsContentUtils::IsEventAttributeName(attr, EventNameType_XUL)) {
@@ -654,7 +666,7 @@ nsXULElement::AddListenerFor(const nsAttrName& aName,
 }
 
 void
-nsXULElement::MaybeAddPopupListener(nsAtom* aLocalName)
+nsXULElement::MaybeAddPopupListener(nsIAtom* aLocalName)
 {
     // If appropriate, add a popup listener. Called when we change the
     // element's document, create a new element, change an attribute's
@@ -687,7 +699,7 @@ nsXULElement::UpdateEditableState(bool aNotify)
  * Returns true if the user-agent style sheet rules for this XUL element are
  * in minimal-xul.css instead of xul.css.
  */
-static inline bool XULElementsRulesInMinimalXULSheet(nsAtom* aTag)
+static inline bool XULElementsRulesInMinimalXULSheet(nsIAtom* aTag)
 {
   return // scrollbar parts:
          aTag == nsGkAtoms::scrollbar ||
@@ -697,7 +709,6 @@ static inline bool XULElementsRulesInMinimalXULSheet(nsAtom* aTag)
          aTag == nsGkAtoms::thumb ||
          aTag == nsGkAtoms::scale ||
          // other
-         aTag == nsGkAtoms::datetimebox ||
          aTag == nsGkAtoms::resizer ||
          aTag == nsGkAtoms::label ||
          aTag == nsGkAtoms::videocontrols;
@@ -737,7 +748,7 @@ IsInFeedSubscribeLine(nsXULElement* aElement)
     while (bindingParent->GetBindingParent()) {
       bindingParent = bindingParent->GetBindingParent();
     }
-    nsAtom* idAtom = bindingParent->GetID();
+    nsIAtom* idAtom = bindingParent->GetID();
     if (idAtom && idAtom->Equals(NS_LITERAL_STRING("feedSubscribeLine"))) {
       return true;
     }
@@ -812,7 +823,9 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
       // pulling in xul.css.
       // Note that add-ons may introduce bindings that cause this assertion to
       // fire.
-      NS_ASSERTION(IsInVideoControls(this) || IsInFeedSubscribeLine(this),
+      NS_ASSERTION(IsInVideoControls(this) ||
+                   IsInFeedSubscribeLine(this) ||
+                   IsXULElement(nsGkAtoms::datetimebox),
                    "Unexpected XUL element in non-XUL doc");
     }
   }
@@ -983,7 +996,7 @@ nsXULElement::UnregisterAccessKey(const nsAString& aOldValue)
 }
 
 nsresult
-nsXULElement::BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+nsXULElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                             const nsAttrValueOrString* aValue, bool aNotify)
 {
     if (aNamespaceID == kNameSpaceID_None && aName == nsGkAtoms::accesskey &&
@@ -1029,11 +1042,9 @@ nsXULElement::BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
 }
 
 nsresult
-nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                            const nsAttrValue* aValue,
-                           const nsAttrValue* aOldValue,
-                           nsIPrincipal* aSubjectPrincipal,
-                           bool aNotify)
+                           const nsAttrValue* aOldValue, bool aNotify)
 {
     if (aNamespaceID == kNameSpaceID_None) {
         if (aValue) {
@@ -1154,12 +1165,12 @@ nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
     }
 
     return nsStyledElement::AfterSetAttr(aNamespaceID, aName,
-                                         aValue, aOldValue, aSubjectPrincipal, aNotify);
+                                         aValue, aOldValue, aNotify);
 }
 
 bool
 nsXULElement::ParseAttribute(int32_t aNamespaceID,
-                             nsAtom* aAttribute,
+                             nsIAtom* aAttribute,
                              const nsAString& aValue,
                              nsAttrValue& aResult)
 {
@@ -1384,7 +1395,7 @@ nsXULElement::WalkContentStyleRules(nsRuleWalker* aRuleWalker)
 }
 
 nsChangeHint
-nsXULElement::GetAttributeChangeHint(const nsAtom* aAttribute,
+nsXULElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
                                      int32_t aModType) const
 {
     nsChangeHint retval(nsChangeHint(0));
@@ -1412,7 +1423,7 @@ nsXULElement::GetAttributeChangeHint(const nsAtom* aAttribute,
 }
 
 NS_IMETHODIMP_(bool)
-nsXULElement::IsAttributeMapped(const nsAtom* aAttribute) const
+nsXULElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
     return false;
 }
@@ -1686,7 +1697,7 @@ nsXULElement::IsNodeOfType(uint32_t aFlags) const
 }
 
 nsresult
-nsXULElement::AddPopupListener(nsAtom* aName)
+nsXULElement::AddPopupListener(nsIAtom* aName)
 {
     // Add a popup listener to the element
     bool isContext = (aName == nsGkAtoms::context ||
@@ -1957,7 +1968,7 @@ nsXULElement::ResetChromeMargins()
 }
 
 bool
-nsXULElement::BoolAttrIsTrue(nsAtom* aName) const
+nsXULElement::BoolAttrIsTrue(nsIAtom* aName) const
 {
     const nsAttrValue* attr =
         GetAttrInfo(kNameSpaceID_None, aName).mValue;
@@ -1978,7 +1989,7 @@ nsXULElement::RecompileScriptEventListeners()
             continue;
         }
 
-        nsAtom *attr = name->Atom();
+        nsIAtom *attr = name->Atom();
         if (!nsContentUtils::IsEventAttributeName(attr, EventNameType_XUL)) {
             continue;
         }
@@ -1990,7 +2001,7 @@ nsXULElement::RecompileScriptEventListeners()
 }
 
 bool
-nsXULElement::IsEventAttributeNameInternal(nsAtom *aName)
+nsXULElement::IsEventAttributeNameInternal(nsIAtom *aName)
 {
   return nsContentUtils::IsEventAttributeName(aName, EventNameType_XUL);
 }
@@ -2332,26 +2343,18 @@ nsXULPrototypeElement::SetAttrAt(uint32_t aPos, const nsAString& aValue,
         mHasStyleAttribute = true;
         // Parse the element's 'style' attribute
 
-        // This is basically duplicating what nsINode::NodePrincipal() does
-        nsIPrincipal* principal =
-          mNodeInfo->NodeInfoManager()->DocumentPrincipal();
+        nsCSSParser parser;
+
         // XXX Get correct Base URI (need GetBaseURI on *prototype* element)
         // TODO: If we implement Content Security Policy for chrome documents
         // as has been discussed, the CSP should be checked here to see if
         // inline styles are allowed to be applied.
-
-        RefPtr<DeclarationBlock> declaration;
-        if (nsLayoutUtils::StyloEnabled() &&
-            nsLayoutUtils::ShouldUseStylo(aDocumentURI, principal)) {
-          RefPtr<URLExtraData> data =
-            new URLExtraData(aDocumentURI, aDocumentURI, principal);
-          declaration = ServoDeclarationBlock::FromCssText(
-              aValue, data, eCompatibility_FullStandards, nullptr);
-        } else {
-          nsCSSParser parser;
-          declaration = parser.ParseStyleAttribute(aValue, aDocumentURI,
-                                                   aDocumentURI, principal);
-        }
+        RefPtr<css::Declaration> declaration =
+          parser.ParseStyleAttribute(aValue, aDocumentURI, aDocumentURI,
+                                     // This is basically duplicating what
+                                     // nsINode::NodePrincipal() does
+                                     mNodeInfo->NodeInfoManager()->
+                                       DocumentPrincipal());
         if (declaration) {
             mAttributes[aPos].mValue.SetTo(declaration.forget(), &aValue);
 

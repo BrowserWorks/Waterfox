@@ -72,7 +72,7 @@ HTMLScriptElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
 bool
 HTMLScriptElement::ParseAttribute(int32_t aNamespaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   const nsAString& aValue,
                                   nsAttrValue& aResult)
 {
@@ -169,9 +169,9 @@ HTMLScriptElement::Defer()
 }
 
 void
-HTMLScriptElement::SetSrc(const nsAString& aSrc, nsIPrincipal& aTriggeringPrincipal, ErrorResult& rv)
+HTMLScriptElement::SetSrc(const nsAString& aSrc, ErrorResult& rv)
 {
-  SetHTMLAttr(nsGkAtoms::src, aSrc, aTriggeringPrincipal, rv);
+  rv = SetAttrHelper(nsGkAtoms::src, aSrc);
 }
 
 void
@@ -233,24 +233,15 @@ HTMLScriptElement::SetNoModule(bool aValue, ErrorResult& aRv)
 }
 
 nsresult
-HTMLScriptElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+HTMLScriptElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aMaybeScriptedPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
   if (nsGkAtoms::async == aName && kNameSpaceID_None == aNamespaceID) {
     mForceAsync = false;
   }
-  if (nsGkAtoms::src == aName && kNameSpaceID_None == aNamespaceID) {
-    mSrcTriggeringPrincipal = nsContentUtils::GetAttrTriggeringPrincipal(
-        this, aValue ? aValue->GetStringValue() : EmptyString(),
-        aMaybeScriptedPrincipal);
-  }
-  return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName,
-                                            aValue, aOldValue,
-                                            aMaybeScriptedPrincipal,
-                                            aNotify);
+  return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName, aValue,
+                                            aOldValue, aNotify);
 }
 
 NS_IMETHODIMP

@@ -7,10 +7,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
                                   "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
                                   "resource://gre/modules/ExtensionParent.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-                                  "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
 
 this.runtime = class extends ExtensionAPI {
   getAPI(context) {
@@ -124,12 +126,12 @@ this.runtime = class extends ExtensionAPI {
 
           let uri;
           try {
-            uri = new URL(url);
+            uri = NetUtil.newURI(url);
           } catch (e) {
             return Promise.reject({message: `Invalid URL: ${JSON.stringify(url)}`});
           }
 
-          if (uri.protocol != "http:" && uri.protocol != "https:") {
+          if (uri.scheme != "http" && uri.scheme != "https") {
             return Promise.reject({message: "url must have the scheme http or https"});
           }
 

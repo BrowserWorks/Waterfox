@@ -14,7 +14,6 @@ info: >
     ...
   3. Return ? OrdinaryGet(O, P, Receiver
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

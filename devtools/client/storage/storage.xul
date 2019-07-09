@@ -6,7 +6,7 @@
 <?xml-stylesheet href="chrome://devtools/content/shared/widgets/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/storage.css" type="text/css"?>
-<?xml-stylesheet href="resource://devtools/client/shared/components/SidebarToggle.css" type="text/css"?>
+<?xml-stylesheet href="resource://devtools/client/shared/components/sidebar-toggle.css" type="text/css"?>
 
 <!DOCTYPE window [
   <!ENTITY % storageDTD SYSTEM "chrome://devtools/locale/storage.dtd">
@@ -27,8 +27,6 @@
     <menupopup id="storage-tree-popup">
       <menuitem id="storage-tree-popup-delete-all"
                 label="&storage.popupMenu.deleteAllLabel;"/>
-      <menuitem id="storage-tree-popup-delete-all-session-cookies"
-                label="&storage.popupMenu.deleteAllSessionCookiesLabel;"/>
       <menuitem id="storage-tree-popup-delete"/>
     </menupopup>
     <menupopup id="storage-table-popup">
@@ -37,8 +35,6 @@
       <menuitem id="storage-table-popup-delete-all-from"/>
       <menuitem id="storage-table-popup-delete-all"
                 label="&storage.popupMenu.deleteAllLabel;"/>
-      <menuitem id="storage-table-popup-delete-all-session-cookies"
-                label="&storage.popupMenu.deleteAllSessionCookiesLabel;"/>
     </menupopup>
   </popupset>
 
@@ -49,8 +45,6 @@
       <hbox id="storage-toolbar" class="devtools-toolbar">
         <button id="add-button"
                 class="devtools-button add-button"></button>
-        <button id="refresh-button"
-                class="devtools-button refresh-button"></button>
         <spacer flex="1"/>
         <textbox id="storage-searchbox"
                  class="devtools-filterinput"

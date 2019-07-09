@@ -91,8 +91,13 @@ XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function() {
  *        attach prompts to the most recently active window.
  */
 this.DownloadPrompter = function(aParent) {
-  this._prompter = Services.ww.getNewPrompter(aParent);
-};
+  if (AppConstants.MOZ_B2G) {
+    // On B2G there is no prompter implementation.
+    this._prompter = null;
+  } else {
+    this._prompter = Services.ww.getNewPrompter(aParent);
+  }
+}
 
 this.DownloadPrompter.prototype = {
   /**

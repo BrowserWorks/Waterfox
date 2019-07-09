@@ -12,7 +12,7 @@
     "message": "I miei screenshot"
   },
   "screenshotInstructions": {
-    "message": "Trascina o fai clic su una pagina per selezionare un’area della pagina. Premi ESC per annullare."
+    "message": "Trascina o fai clic su una pagina per selezionare una regione. Premi ESC per annullare."
   },
   "saveScreenshotSelectedArea": {
     "message": "Salva"
@@ -36,14 +36,6 @@
     "message": "Il link all’immagine è stato copiato negli appunti. Utilizza $META_KEY$-V per incollarlo.",
     "placeholders": {
       "meta_key": {
-        "content": "$1"
-      }
-    }
-  },
-  "imageCroppedWarning": {
-    "message": "Questa immagine è stata ritagliata a $PIXELS$ px.",
-    "placeholders": {
-      "pixels": {
         "content": "$1"
       }
     }
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Non sappiamo che cosa sia successo. Riprova, magari con una pagina diversa."
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Cattura, salva e condividi screenshot senza mai uscire da Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Un nuovo modo per salvare informazioni"
-  },
-  "tourBodyPageAction": {
-    "message": "Hai bisogno di catturare un’istantanea della pagina? Ti basta aprire il menu nella barra degli indirizzi."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Cattura solo ciò che ti serve"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Fai clic e trascina per catturare solo una parte della pagina. Posiziona il mouse sopra all’area selezionata per evidenziarla."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Cattura una finestra o una pagina intera"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Utilizza i pulsanti in alto a destra per catturare una parte della finestra o l’intera pagina."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Come piace a te"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Cattura lo screenshot di una pagina web, ritaglialo e salvalo online per condividerlo in modo più veloce, oppure scaricalo sul tuo computer. Puoi anche utilizzare il pulsante “I miei screenshot” per ritrovare tutte le immagini che hai salvato."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Fine"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Utilizzando Firefox Screenshots si accettano le $TERMSANDPRIVACYNOTICETERMSLINK$ e l’$TERMSANDPRIVACYNOTICEPRIVACYLINK$ del servizio.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Utilizzando Firefox Screenshots si accettano le $TERMSANDPRIVACYNOTICETERMSLINK$ e l’$TERMSANDPRIVACYNOTICEPRIVACYLINK$ di Firefox Cloud Services.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "informativa sulla privacy"
-  },
-  "libraryLabel": {
-    "message": "Screenshot"
   }
 }

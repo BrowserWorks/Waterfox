@@ -71,10 +71,6 @@ nsFilterInstance::PaintFilteredFrame(nsIFrame *aFilteredFrame,
 
   gfxContextMatrixAutoSaveRestore autoSR(aCtx);
   gfxSize scaleFactors = aCtx->CurrentMatrix().ScaleFactors(true);
-  if (scaleFactors.IsEmpty()) {
-    return;
-  }
-
   gfxMatrix scaleMatrix(scaleFactors.width, 0.0f,
                         0.0f, scaleFactors.height,
                         0.0f, 0.0f);
@@ -444,7 +440,7 @@ nsFilterInstance::BuildSourcePaints(imgDrawingParams& aImgParams)
 }
 
 void
-nsFilterInstance::BuildSourceImage(DrawTarget *aDest, imgDrawingParams& aImgParams)
+nsFilterInstance::BuildSourceImage(imgDrawingParams& aImgParams)
 {
   MOZ_ASSERT(mTargetFrame);
 
@@ -454,7 +450,8 @@ nsFilterInstance::BuildSourceImage(DrawTarget *aDest, imgDrawingParams& aImgPara
   }
 
   RefPtr<DrawTarget> offscreenDT =
-    aDest->CreateSimilarDrawTarget(neededRect.Size(), SurfaceFormat::B8G8R8A8);
+    gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
+      neededRect.Size(), SurfaceFormat::B8G8R8A8);
   if (!offscreenDT || !offscreenDT->IsValid()) {
     return;
   }
@@ -512,7 +509,7 @@ nsFilterInstance::Render(gfxContext* aCtx, imgDrawingParams& aImgParams)
 
   ComputeNeededBoxes();
 
-  BuildSourceImage(aCtx->GetDrawTarget(), aImgParams);
+  BuildSourceImage(aImgParams);
   BuildSourcePaints(aImgParams);
 
   FilterSupport::RenderFilterDescription(

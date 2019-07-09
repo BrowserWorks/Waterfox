@@ -1,3 +1,0 @@
-== green.html green.html
-== red.html red.html
-!= green.html red.html

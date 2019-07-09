@@ -8,8 +8,9 @@
 
 #include <stdint.h>
 
-#include "nsStringFwd.h"
 #include "nsTArray.h"
+
+class nsCString;
 
 /**
  * XXX Following enums should be in BasicEvents.h.  However, currently, it's

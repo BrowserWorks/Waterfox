@@ -30,8 +30,10 @@
   * [Panel SVGs](frontend/svgs.md)
   * [React](frontend/react.md)
     * [Guidelines](frontend/react-guidelines.md)
+    * [Tips](frontend/react-tips.md)
   * [Redux](frontend/redux.md)
     * [Guidelines](frontend/redux-guidelines.md)
+    * [Tips](frontend/redux-tips.md)
   * [Telemetry](frontend/telemetry.md)
 * [Backend](backend/backend.md)
   * [Remote Debugging Protocol](backend/protocol.md)
@@ -44,7 +46,6 @@
     * [Writing Actors With protocol.js](backend/protocol.js.md)
     * [Registering A New Actor](backend/actor-registration.md)
     * [Actor Best Practices](backend/actor-best-practices.md)
-* [Preferences](preferences.md)
 * [Automated tests](tests/README.md)
   * Running tests
     * [`xpcshell`](tests/xpcshell.md)

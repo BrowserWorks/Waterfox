@@ -35,14 +35,9 @@ interface nsIAboutNewTabService : nsISupports
   readonly attribute bool activityStreamEnabled;
 
   /**
-   * Returns true if the the prerendering pref for activity stream is true
+   * Returns the activity stream resource URL for the newtab page
    */
-  readonly attribute bool activityStreamPrerender;
-
-  /**
-   * Returns true if the the debug pref for activity stream is true
-   */
-  readonly attribute bool activityStreamDebug;
+  readonly attribute ACString activityStreamURL;
 
   /**
    * Resets to the default resource and also resets the

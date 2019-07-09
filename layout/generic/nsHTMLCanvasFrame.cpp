@@ -10,9 +10,6 @@
 #include "nsGkAtoms.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
-#include "mozilla/layers/WebRenderBridgeChild.h"
-#include "mozilla/layers/WebRenderCanvasRenderer.h"
-#include "mozilla/layers/WebRenderLayerManager.h"
 #include "nsDisplayList.h"
 #include "nsLayoutUtils.h"
 #include "nsStyleUtil.h"
@@ -78,8 +75,7 @@ public:
   NS_DISPLAY_DECL_NAME("nsDisplayCanvas", TYPE_CANVAS)
 
   virtual nsRegion GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
-                                   bool* aSnap) const override
-  {
+                                   bool* aSnap) override {
     *aSnap = false;
     nsHTMLCanvasFrame* f = static_cast<nsHTMLCanvasFrame*>(Frame());
     HTMLCanvasElement* canvas =
@@ -108,8 +104,7 @@ public:
   }
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
-  {
+                           bool* aSnap) override {
     *aSnap = true;
     nsHTMLCanvasFrame* f = static_cast<nsHTMLCanvasFrame*>(Frame());
     return f->GetInnerArea() + ToReferenceFrame();
@@ -122,93 +117,6 @@ public:
     return static_cast<nsHTMLCanvasFrame*>(mFrame)->
       BuildLayer(aBuilder, aManager, this, aContainerParameters);
   }
-
-  virtual bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                       wr::IpcResourceUpdateQueue& aResources,
-                                       const StackingContextHelper& aSc,
-                                       mozilla::layers::WebRenderLayerManager* aManager,
-                                       nsDisplayListBuilder* aDisplayListBuilder) override
-  {
-    HTMLCanvasElement* element = static_cast<HTMLCanvasElement*>(mFrame->GetContent());
-    element->HandlePrintCallback(mFrame->PresContext()->Type());
-
-    switch(element->GetCurrentContextType()) {
-      case CanvasContextType::Canvas2D:
-      case CanvasContextType::WebGL1:
-      case CanvasContextType::WebGL2:
-      {
-        bool isRecycled;
-        RefPtr<WebRenderCanvasData> canvasData =
-          aManager->CommandBuilder().CreateOrRecycleWebRenderUserData<WebRenderCanvasData>(this, &isRecycled);
-        WebRenderCanvasRendererAsync* data =
-          static_cast<WebRenderCanvasRendererAsync*>(canvasData->GetCanvasRenderer());
-
-        if (!isRecycled) {
-          nsHTMLCanvasFrame* canvasFrame = static_cast<nsHTMLCanvasFrame*>(mFrame);
-          if (!canvasFrame->InitializeCanvasRenderer(aDisplayListBuilder, data)) {
-            return true;
-          }
-        }
-
-        data->UpdateCompositableClient();
-
-        // Push IFrame for async image pipeline.
-        // XXX Remove this once partial display list update is supported.
-
-        /* ScrollingLayersHelper scroller(this, aBuilder, aResources, aSc); */
-        nsIntSize canvasSizeInPx = data->GetSize();
-        IntrinsicSize intrinsicSize = IntrinsicSizeFromCanvasSize(canvasSizeInPx);
-        nsSize intrinsicRatio = IntrinsicRatioFromCanvasSize(canvasSizeInPx);
-
-        nsRect area = mFrame->GetContentRectRelativeToSelf() + ToReferenceFrame();
-        nsRect dest =
-          nsLayoutUtils::ComputeObjectDestRect(area, intrinsicSize, intrinsicRatio,
-                                               mFrame->StylePosition());
-
-        LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(
-          dest, mFrame->PresContext()->AppUnitsPerDevPixel());
-
-        // We don't push a stacking context for this async image pipeline here.
-        // Instead, we do it inside the iframe that hosts the image. As a result,
-        // a bunch of the calculations normally done as part of that stacking
-        // context need to be done manually and pushed over to the parent side,
-        // where it will be done when we build the display list for the iframe.
-        // That happens in WebRenderCompositableHolder.
-
-        wr::LayoutRect r = aSc.ToRelativeLayoutRect(bounds);
-        aBuilder.PushIFrame(r, !BackfaceIsHidden(), data->GetPipelineId().ref());
-
-        gfx::Matrix4x4 scTransform;
-        gfxRect destGFXRect = mFrame->PresContext()->AppUnitsToGfxUnits(dest);
-        scTransform.PreScale(destGFXRect.Width() / canvasSizeInPx.width,
-                             destGFXRect.Height() / canvasSizeInPx.height, 1.0f);
-        if (data->NeedsYFlip()) {
-          scTransform = scTransform.PreTranslate(0, data->GetSize().height, 0).PreScale(1, -1, 1);
-        }
-
-        MaybeIntSize scaleToSize;
-        LayoutDeviceRect scBounds(LayoutDevicePoint(0, 0), bounds.Size());
-        wr::ImageRendering filter = wr::ToImageRendering(nsLayoutUtils::GetSamplingFilterForFrame(mFrame));
-        wr::MixBlendMode mixBlendMode = wr::MixBlendMode::Normal;
-        aManager->WrBridge()->AddWebRenderParentCommand(OpUpdateAsyncImagePipeline(data->GetPipelineId().value(),
-                                                                                   scBounds,
-                                                                                   scTransform,
-                                                                                   scaleToSize,
-                                                                                   filter,
-                                                                                   mixBlendMode));
-        break;
-      }
-      case CanvasContextType::ImageBitmap:
-      {
-        // TODO: Support ImageBitmap
-        break;
-      }
-      case CanvasContextType::NoContext:
-        return false;
-    }
-    return true;
-  }
-
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
                                    const ContainerLayerParameters& aParameters) override
@@ -343,12 +251,13 @@ nsHTMLCanvasFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsHTMLCanvasFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aMetrics, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                   ("enter nsHTMLCanvasFrame::Reflow: availSize=%d,%d",
                   aReflowInput.AvailableWidth(), aReflowInput.AvailableHeight()));
 
   NS_PRECONDITION(mState & NS_FRAME_IN_REFLOW, "frame is not in reflow");
+
+  aStatus.Reset();
 
   WritingMode wm = aReflowInput.GetWritingMode();
   LogicalSize finalSize(wm,
@@ -448,9 +357,6 @@ nsHTMLCanvasFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
   if (layer->GetType() == layers::Layer::TYPE_CANVAS) {
     RefPtr<CanvasLayer> canvasLayer = static_cast<CanvasLayer*>(layer.get());
     canvasLayer->SetSamplingFilter(nsLayoutUtils::GetSamplingFilterForFrame(this));
-    nsIntRect bounds;
-    bounds.SetRect(0, 0, canvasSizeInPx.width, canvasSizeInPx.height);
-    canvasLayer->SetBounds(bounds);
   } else if (layer->GetType() == layers::Layer::TYPE_IMAGE) {
     RefPtr<ImageLayer> imageLayer = static_cast<ImageLayer*>(layer.get());
     imageLayer->SetSamplingFilter(nsLayoutUtils::GetSamplingFilterForFrame(this));
@@ -459,16 +365,9 @@ nsHTMLCanvasFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
   return layer.forget();
 }
 
-bool
-nsHTMLCanvasFrame::InitializeCanvasRenderer(nsDisplayListBuilder* aBuilder,
-                                            CanvasRenderer* aRenderer)
-{
-  HTMLCanvasElement* element = static_cast<HTMLCanvasElement*>(GetContent());
-  return element->InitializeCanvasRenderer(aBuilder, aRenderer);
-}
-
 void
 nsHTMLCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                    const nsRect&           aDirtyRect,
                                     const nsDisplayListSet& aLists)
 {
   if (!IsVisibleForPainting(aBuilder))

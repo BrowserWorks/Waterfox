@@ -21,7 +21,7 @@
 #include "nsDebug.h"                    // for NS_NOTREACHED, NS_ASSERTION, etc
 #include "nsFont.h"                     // for nsFont
 #include "nsFontMetrics.h"              // for nsFontMetrics
-#include "nsAtom.h"                    // for nsAtom, NS_Atomize
+#include "nsIAtom.h"                    // for nsIAtom, NS_Atomize
 #include "nsID.h"
 #include "nsIDeviceContextSpec.h"       // for nsIDeviceContextSpec
 #include "nsLanguageAtomService.h"      // for nsLanguageAtomService
@@ -68,7 +68,7 @@ protected:
     ~nsFontCache() {}
 
     nsDeviceContext*          mContext; // owner
-    RefPtr<nsAtom>         mLocaleLanguage;
+    nsCOMPtr<nsIAtom>         mLocaleLanguage;
     nsTArray<nsFontMetrics*>  mFontMetrics;
 };
 
@@ -114,7 +114,7 @@ already_AddRefed<nsFontMetrics>
 nsFontCache::GetMetricsFor(const nsFont& aFont,
                            const nsFontMetrics::Params& aParams)
 {
-    nsAtom* language = aParams.language ? aParams.language
+    nsIAtom* language = aParams.language ? aParams.language
                                          : mLocaleLanguage.get();
 
     // First check our cache
@@ -454,8 +454,8 @@ nsDeviceContext::GetDeviceSurfaceDimensions(nscoord &aWidth, nscoord &aHeight)
     } else {
         nsRect area;
         ComputeFullAreaUsingScreen(&area);
-        aWidth = area.Width();
-        aHeight = area.Height();
+        aWidth = area.width;
+        aHeight = area.height;
     }
 
     return NS_OK;
@@ -467,8 +467,8 @@ nsDeviceContext::GetRect(nsRect &aRect)
     if (IsPrinterContext()) {
         aRect.x = 0;
         aRect.y = 0;
-        aRect.SetWidth(mWidth);
-        aRect.SetHeight(mHeight);
+        aRect.width = mWidth;
+        aRect.height = mHeight;
     } else
         ComputeFullAreaUsingScreen ( &aRect );
 
@@ -481,8 +481,8 @@ nsDeviceContext::GetClientRect(nsRect &aRect)
     if (IsPrinterContext()) {
         aRect.x = 0;
         aRect.y = 0;
-        aRect.SetWidth(mWidth);
-        aRect.SetHeight(mHeight);
+        aRect.width = mWidth;
+        aRect.height = mHeight;
     }
     else
         ComputeClientRectUsingScreen(&aRect);
@@ -623,8 +623,8 @@ nsDeviceContext::ComputeClientRectUsingScreen(nsRect* outRect)
         // convert to device units
         outRect->y = NSIntPixelsToAppUnits(y, AppUnitsPerDevPixel());
         outRect->x = NSIntPixelsToAppUnits(x, AppUnitsPerDevPixel());
-        outRect->SetWidth(NSIntPixelsToAppUnits(width, AppUnitsPerDevPixel()));
-        outRect->SetHeight(NSIntPixelsToAppUnits(height, AppUnitsPerDevPixel()));
+        outRect->width = NSIntPixelsToAppUnits(width, AppUnitsPerDevPixel());
+        outRect->height = NSIntPixelsToAppUnits(height, AppUnitsPerDevPixel());
     }
 }
 
@@ -644,11 +644,11 @@ nsDeviceContext::ComputeFullAreaUsingScreen(nsRect* outRect)
         // convert to device units
         outRect->y = NSIntPixelsToAppUnits(y, AppUnitsPerDevPixel());
         outRect->x = NSIntPixelsToAppUnits(x, AppUnitsPerDevPixel());
-        outRect->SetWidth(NSIntPixelsToAppUnits(width, AppUnitsPerDevPixel()));
-        outRect->SetHeight(NSIntPixelsToAppUnits(height, AppUnitsPerDevPixel()));
+        outRect->width = NSIntPixelsToAppUnits(width, AppUnitsPerDevPixel());
+        outRect->height = NSIntPixelsToAppUnits(height, AppUnitsPerDevPixel());
 
-        mWidth = outRect->Width();
-        mHeight = outRect->Height();
+        mWidth = outRect->width;
+        mHeight = outRect->height;
     }
 }
 

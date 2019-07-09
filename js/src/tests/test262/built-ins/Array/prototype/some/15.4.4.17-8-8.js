@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.some
 es5id: 15.4.4.17-8-8
 description: >
     Array.prototype.some returns false if 'length' is 0 (subclassed
@@ -12,9 +11,9 @@ description: >
   foo.prototype = new Array(1, 2, 3);
   function foo() {}
   var f = new foo();
-
+  
   f.length = [];
-
+  
   // objects inherit the default valueOf method of the Object object;
   // that simply returns the itself. Since the default valueOf() method
   // does not return a primitive value, ES next tries to convert the object
@@ -31,7 +30,7 @@ description: >
 
   function cb(){}
   var i = f.some(cb);
-
+  
 
 assert.sameValue(i, false, 'i');
 

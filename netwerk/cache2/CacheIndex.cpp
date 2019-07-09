@@ -2651,16 +2651,26 @@ CacheIndex::ScheduleUpdateTimer(uint32_t aDelay)
 
   MOZ_ASSERT(!mUpdateTimer);
 
+  nsresult rv;
+
+  nsCOMPtr<nsITimer> timer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   nsCOMPtr<nsIEventTarget> ioTarget = CacheFileIOManager::IOTarget();
   MOZ_ASSERT(ioTarget);
 
-  return NS_NewTimerWithFuncCallback(getter_AddRefs(mUpdateTimer),
-                                     CacheIndex::DelayedUpdate,
-                                     nullptr,
-                                     aDelay,
-                                     nsITimer::TYPE_ONE_SHOT,
-                                     "net::CacheIndex::ScheduleUpdateTimer",
-                                     ioTarget);
+  rv = timer->SetTarget(ioTarget);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = timer->InitWithNamedFuncCallback(CacheIndex::DelayedUpdate,
+                                        nullptr,
+                                        aDelay,
+                                        nsITimer::TYPE_ONE_SHOT,
+                                        "net::CacheIndex::ScheduleUpdateTimer");
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  mUpdateTimer.swap(timer);
+  return NS_OK;
 }
 
 nsresult
@@ -2796,16 +2806,11 @@ CacheIndex::BuildIndex()
       return;
     }
 
-    bool fileExists = false;
     nsCOMPtr<nsIFile> file;
     {
       // Do not do IO under the lock.
       StaticMutexAutoUnlock unlock(sLock);
       rv = mDirEnumerator->GetNextFile(getter_AddRefs(file));
-
-      if (file) {
-        file->Exists(&fileExists);
-      }
     }
     if (mState == SHUTDOWN) {
       return;
@@ -2821,12 +2826,6 @@ CacheIndex::BuildIndex()
       LOG(("CacheIndex::BuildIndex() - GetNativeLeafName() failed! Skipping "
            "file."));
       mDontMarkIndexClean = true;
-      continue;
-    }
-
-    if (!fileExists) {
-      LOG(("CacheIndex::BuildIndex() - File returned by the iterator was "
-           "removed in the meantime [name=%s]", leaf.get()));
       continue;
     }
 
@@ -2903,7 +2902,6 @@ CacheIndex::BuildIndex()
         LOG(("CacheIndex::BuildIndex() - CacheFile::InitEntryFromDiskData() "
              "failed, removing file. [name=%s]", leaf.get()));
         file->Remove(false);
-        entry->MarkRemoved();
       } else {
         LOG(("CacheIndex::BuildIndex() - Added entry to index. [name=%s]",
              leaf.get()));
@@ -3025,16 +3023,11 @@ CacheIndex::UpdateIndex()
       return;
     }
 
-    bool fileExists = false;
     nsCOMPtr<nsIFile> file;
     {
       // Do not do IO under the lock.
       StaticMutexAutoUnlock unlock(sLock);
       rv = mDirEnumerator->GetNextFile(getter_AddRefs(file));
-
-      if (file) {
-        file->Exists(&fileExists);
-      }
     }
     if (mState == SHUTDOWN) {
       return;
@@ -3050,12 +3043,6 @@ CacheIndex::UpdateIndex()
       LOG(("CacheIndex::UpdateIndex() - GetNativeLeafName() failed! Skipping "
            "file."));
       mDontMarkIndexClean = true;
-      continue;
-    }
-
-    if (!fileExists) {
-      LOG(("CacheIndex::UpdateIndex() - File returned by the iterator was "
-           "removed in the meantime [name=%s]", leaf.get()));
       continue;
     }
 

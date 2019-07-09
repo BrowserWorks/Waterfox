@@ -6,6 +6,9 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import os
+import json
+
 from taskgraph import try_option_syntax
 from taskgraph.util.attributes import match_run_on_projects
 
@@ -50,14 +53,26 @@ def standard_filter(task, parameters):
 
 
 def _try_task_config(full_task_graph, parameters):
-    requested_tasks = parameters['try_task_config']['tasks']
-    return list(set(requested_tasks) & full_task_graph.graph.nodes)
+    task_config_file = os.path.join(os.getcwd(), 'try_task_config.json')
+
+    if not os.path.isfile(task_config_file):
+        return []
+
+    with open(task_config_file, 'r') as fh:
+        task_config = json.load(fh)
+
+    target_task_labels = []
+    for task in full_task_graph.tasks.itervalues():
+        if task.label in task_config:
+            target_task_labels.append(task.label)
+
+    return target_task_labels
 
 
 def _try_option_syntax(full_task_graph, parameters):
     """Generate a list of target tasks based on try syntax in
     parameters['message'] and, for context, the full task graph."""
-    options = try_option_syntax.TryOptionSyntax(parameters, full_task_graph)
+    options = try_option_syntax.TryOptionSyntax(parameters['message'], full_task_graph)
     target_tasks_labels = [t.label for t in full_task_graph.tasks.itervalues()
                            if options.task_matches(t)]
 
@@ -104,21 +119,19 @@ def _try_option_syntax(full_task_graph, parameters):
 
 @_target_task('try_tasks')
 def target_tasks_try(full_task_graph, parameters):
-    try_mode = parameters['try_mode']
-    if try_mode == 'try_task_config':
-        return _try_task_config(full_task_graph, parameters)
-    elif try_mode == 'try_option_syntax':
-        return _try_option_syntax(full_task_graph, parameters)
-    else:
-        # With no try mode, we schedule nothing, allowing the user to add tasks
-        # later via treeherder.
-        return []
+    labels = _try_task_config(full_task_graph, parameters)
+
+    if 'try:' in parameters['message'] or not labels:
+        labels.extend(_try_option_syntax(full_task_graph, parameters))
+
+    return labels
 
 
 @_target_task('default')
 def target_tasks_default(full_task_graph, parameters):
     """Target the tasks which have indicated they should be run on this project
     via the `run_on_projects` attributes."""
+
     return [l for l, t in full_task_graph.tasks.iteritems()
             if standard_filter(t, parameters)]
 
@@ -302,10 +315,6 @@ def target_tasks_candidates_fennec(full_task_graph, parameters):
     filtered_for_project = target_tasks_nightly_fennec(full_task_graph, parameters)
 
     def filter(task):
-        attr = task.attributes.get
-        # Don't ship single locale fennec anymore - Bug 1408083
-        if attr("locale") or attr("chunk_locales"):
-            return False
         if task.kind not in ['balrog']:
             return task.attributes.get('nightly', False)
 
@@ -341,8 +350,8 @@ def target_tasks_nightly_macosx(full_task_graph, parameters):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
-@_target_task('nightly_win32')
-def target_tasks_nightly_win32(full_task_graph, parameters):
+@_target_task('nightly_win')
+def target_tasks_nightly_win(full_task_graph, parameters):
     """Select the set of tasks required for a nightly build of win32 and win64.
     The nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
@@ -350,21 +359,7 @@ def target_tasks_nightly_win32(full_task_graph, parameters):
         platform = task.attributes.get('build_platform')
         if not filter_for_project(task, parameters):
             return False
-        if platform in ('win32-nightly', ):
-            return task.attributes.get('nightly', False)
-    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
-
-
-@_target_task('nightly_win64')
-def target_tasks_nightly_win64(full_task_graph, parameters):
-    """Select the set of tasks required for a nightly build of win32 and win64.
-    The nightly build process involves a pipeline of builds, signing,
-    and, eventually, uploading the tasks to balrog."""
-    def filter(task):
-        platform = task.attributes.get('build_platform')
-        if not filter_for_project(task, parameters):
-            return False
-        if platform in ('win64-nightly', ):
+        if platform in ('win32-nightly', 'win64-nightly'):
             return task.attributes.get('nightly', False)
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
@@ -375,8 +370,7 @@ def target_tasks_nightly_desktop(full_task_graph, parameters):
     windows."""
     # Avoid duplicate tasks.
     return list(
-        set(target_tasks_nightly_win32(full_task_graph, parameters))
-        | set(target_tasks_nightly_win64(full_task_graph, parameters))
+        set(target_tasks_nightly_win(full_task_graph, parameters))
         | set(target_tasks_nightly_macosx(full_task_graph, parameters))
         | set(target_tasks_nightly_linux(full_task_graph, parameters))
     )
@@ -389,14 +383,4 @@ def target_tasks_dmd(full_task_graph, parameters):
     def filter(task):
         platform = task.attributes.get('build_platform', '')
         return platform.endswith('-dmd')
-    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
-
-
-@_target_task('file_update')
-def target_tasks_file_update(full_task_graph, parameters):
-    """Select the set of tasks required to perform nightly in-tree file updates
-    """
-    def filter(task):
-        # For now any task in the repo-update kind is ok
-        return task.kind in ['repo-update']
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]

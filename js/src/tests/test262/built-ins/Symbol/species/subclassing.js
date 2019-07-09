@@ -9,7 +9,6 @@ author: Sam Mikes
 description: Symbol.species is retained on subclassing
 includes: 
   - propertyHelper.js
-features: [Symbol.species]
 ---*/
 
 class MyRegExp extends RegExp {

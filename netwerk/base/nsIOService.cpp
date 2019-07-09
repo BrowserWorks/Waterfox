@@ -54,7 +54,6 @@
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/net/CaptivePortalService.h"
-#include "mozilla/Unused.h"
 #include "ReferrerPolicy.h"
 #include "nsContentSecurityManager.h"
 #include "nsContentUtils.h"
@@ -259,7 +258,6 @@ nsIOService::Init()
     gIOService = this;
 
     InitializeNetworkLinkService();
-    InitializeProtocolProxyService();
 
     SetOffline(false);
 
@@ -334,19 +332,6 @@ nsIOService::InitializeNetworkLinkService()
 
     // After initializing the networkLinkService, query the connectivity state
     OnNetworkLinkEvent(NS_NETWORK_LINK_DATA_UNKNOWN);
-
-    return rv;
-}
-
-nsresult
-nsIOService::InitializeProtocolProxyService()
-{
-    nsresult rv = NS_OK;
-
-    if (XRE_IsParentProcess()) {
-        // for early-initialization
-        Unused << do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &rv);
-    }
 
     return rv;
 }
@@ -1144,6 +1129,10 @@ nsIOService::SetOffline(bool offline)
             mOffline = false;    // indicate success only AFTER we've
                                     // brought up the services
 
+            // trigger a PAC reload when we come back online
+            if (mProxyService)
+                mProxyService->ReloadPAC();
+
             mLastOfflineStateChange = PR_IntervalNow();
             // don't care if notification fails
             // Only send the ONLINE notification if there is connectivity
@@ -1364,11 +1353,11 @@ nsIOService::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 void
 nsIOService::ParsePortList(nsIPrefBranch *prefBranch, const char *pref, bool remove)
 {
-    nsCString portList;
+    nsXPIDLCString portList;
 
     // Get a pref string and chop it up into a list of ports.
     prefBranch->GetCharPref(pref, getter_Copies(portList));
-    if (!portList.IsVoid()) {
+    if (portList) {
         nsTArray<nsCString> portListArray;
         ParseString(portList, ',', portListArray);
         uint32_t index;
@@ -1508,6 +1497,8 @@ nsIOService::Observe(nsISupports *subject,
             mCaptivePortalService = nullptr;
         }
 
+        // Break circular reference.
+        mProxyService = nullptr;
     } else if (!strcmp(topic, NS_NETWORK_LINK_TOPIC)) {
         OnNetworkLinkEvent(NS_ConvertUTF16toUTF8(data).get());
     } else if (!strcmp(topic, NS_WIDGET_WAKE_OBSERVER_TOPIC)) {

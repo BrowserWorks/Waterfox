@@ -7,7 +7,6 @@
 #include "CubebUtils.h"
 
 #include "MediaInfo.h"
-#include "mozilla/AbstractThread.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
@@ -29,7 +28,6 @@
 #define PREF_CUBEB_LATENCY_PLAYBACK "media.cubeb_latency_playback_ms"
 #define PREF_CUBEB_LATENCY_MSG "media.cubeb_latency_msg_frames"
 #define PREF_CUBEB_LOGGING_LEVEL "media.cubeb.logging_level"
-#define PREF_CUBEB_SANDBOX "media.cubeb.sandbox"
 
 #define MASK_MONO       (1 << AudioConfig::CHANNEL_MONO)
 #define MASK_MONO_LFE   (MASK_MONO | (1 << AudioConfig::CHANNEL_LFE))
@@ -48,46 +46,9 @@
 #define MASK_3F3R_LFE   (MASK_3F2_LFE | (1 << AudioConfig::CHANNEL_RCENTER))
 #define MASK_3F4_LFE    (MASK_3F2_LFE | (1 << AudioConfig::CHANNEL_RLS) | (1 << AudioConfig::CHANNEL_RRS))
 
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-#define MOZ_CUBEB_REMOTING
-#endif
-
-extern "C" {
-// These functions are provided by audioipc-server crate
-extern void* audioipc_server_start();
-extern void audioipc_server_stop(void*);
-// These functions are provided by audioipc-client crate
-extern int audioipc_client_init(cubeb**, const char*);
-}
-
 namespace mozilla {
 
 namespace {
-
-#ifdef MOZ_CUBEB_REMOTING
-////////////////////////////////////////////////////////////////////////////////
-// Cubeb Sound Server Thread
-void* sServerHandle = nullptr;
-
-static bool
-StartSoundServer()
-{
-  sServerHandle = audioipc_server_start();
-  return sServerHandle != nullptr;
-}
-
-static void
-ShutdownSoundServer()
-{
-  if (!sServerHandle)
-    return;
-
-  audioipc_server_stop(sServerHandle);
-  sServerHandle = nullptr;
-}
-#endif // MOZ_CUBEB_REMOTING
-
-////////////////////////////////////////////////////////////////////////////////
 
 LazyLogModule gCubebLog("cubeb");
 
@@ -110,15 +71,12 @@ enum class CubebState {
   Shutdown
 } sCubebState = CubebState::Uninitialized;
 cubeb* sCubebContext;
-double sVolumeScale = 1.0;
-uint32_t sCubebPlaybackLatencyInMilliseconds = 100;
-uint32_t sCubebMSGLatencyInFrames = 512;
+double sVolumeScale;
+uint32_t sCubebPlaybackLatencyInMilliseconds;
+uint32_t sCubebMSGLatencyInFrames;
 bool sCubebPlaybackLatencyPrefSet;
 bool sCubebMSGLatencyPrefSet;
 bool sAudioStreamInitEverSucceeded = false;
-#ifdef MOZ_CUBEB_REMOTING
-bool sCubebSandbox;
-#endif
 StaticAutoPtr<char> sBrandName;
 StaticAutoPtr<char> sCubebBackendName;
 
@@ -193,6 +151,8 @@ cubeb_channel_layout sPreferredChannelLayout;
 
 } // namespace
 
+extern LazyLogModule gAudioStreamLog;
+
 static const uint32_t CUBEB_NORMAL_LATENCY_MS = 100;
 // Consevative default that can work on all platforms.
 static const uint32_t CUBEB_NORMAL_LATENCY_FRAMES = 1024;
@@ -252,18 +212,6 @@ void PrefChanged(const char* aPref, void* aClosure)
       sCubebBackendName[value.Length()] = 0;
     }
   }
-#ifdef MOZ_CUBEB_REMOTING
-  else if (strcmp(aPref, PREF_CUBEB_SANDBOX) == 0) {
-    StaticMutexAutoLock lock(sMutex);
-    sCubebSandbox = Preferences::GetBool(aPref);
-    MOZ_LOG(gCubebLog, LogLevel::Verbose, ("%s: %s", PREF_CUBEB_SANDBOX, sCubebSandbox ? "true" : "false"));
-
-    if (sCubebSandbox && !sServerHandle && XRE_IsParentProcess()) {
-      MOZ_LOG(gCubebLog, LogLevel::Debug, ("Starting cubeb server..."));
-      StartSoundServer();
-    }
-  }
-#endif
 }
 
 bool GetFirstStream()
@@ -345,8 +293,8 @@ uint32_t PreferredChannelMap(uint32_t aChannels)
 {
   // Use SMPTE default channel map if we can't get preferred layout
   // or the channel counts of preferred layout is different from input's one
-  if (!InitPreferredChannelLayout() ||
-      kLayoutInfos[sPreferredChannelLayout].channels != aChannels) {
+  if (!InitPreferredChannelLayout()
+      || kLayoutInfos[sPreferredChannelLayout].channels != aChannels) {
     AudioConfig::ChannelLayout smpteLayout(aChannels);
     return smpteLayout.Map();
   }
@@ -359,7 +307,7 @@ void InitBrandName()
   if (sBrandName) {
     return;
   }
-  nsAutoString brandName;
+  nsXPIDLString brandName;
   nsCOMPtr<nsIStringBundleService> stringBundleService =
     mozilla::services::GetStringBundleService();
   if (stringBundleService) {
@@ -367,7 +315,8 @@ void InitBrandName()
     nsresult rv = stringBundleService->CreateBundle(kBrandBundleURL,
                                            getter_AddRefs(brandBundle));
     if (NS_SUCCEEDED(rv)) {
-      rv = brandBundle->GetStringFromName("brandShortName", brandName);
+      rv = brandBundle->GetStringFromName("brandShortName",
+                                          getter_Copies(brandName));
       NS_WARNING_ASSERTION(
         NS_SUCCEEDED(rv), "Could not get the program name for a cubeb stream.");
     }
@@ -394,15 +343,7 @@ cubeb* GetCubebContextUnlocked()
       sBrandName, "Did not initialize sbrandName, and not on the main thread?");
   }
 
-#ifdef MOZ_CUBEB_REMOTING
-  MOZ_LOG(gCubebLog, LogLevel::Info, ("%s: %s", PREF_CUBEB_SANDBOX, sCubebSandbox ? "true" : "false"));
-
-  int rv = sCubebSandbox
-    ? audioipc_client_init(&sCubebContext, sBrandName)
-    : cubeb_init(&sCubebContext, sBrandName, sCubebBackendName.get());
-#else // !MOZ_CUBEB_REMOTING
   int rv = cubeb_init(&sCubebContext, sBrandName, sCubebBackendName.get());
-#endif // MOZ_CUBEB_REMOTING
   NS_WARNING_ASSERTION(rv == CUBEB_OK, "Could not get a cubeb context.");
   sCubebState = (rv == CUBEB_OK) ? CubebState::Initialized : CubebState::Uninitialized;
 
@@ -482,7 +423,6 @@ void InitLibrary()
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_LATENCY_PLAYBACK);
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_LATENCY_MSG);
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_BACKEND);
-  Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_SANDBOX);
   // We don't want to call the callback on startup, because the pref is the
   // empty string by default ("", which means "logging disabled"). Because the
   // logging can be enabled via environment variables (MOZ_LOG="module:5"),
@@ -497,7 +437,6 @@ void InitLibrary()
 void ShutdownLibrary()
 {
   Preferences::UnregisterCallback(PrefChanged, PREF_VOLUME_SCALE);
-  Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_SANDBOX);
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_BACKEND);
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LATENCY_PLAYBACK);
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LATENCY_MSG);
@@ -512,10 +451,6 @@ void ShutdownLibrary()
   sCubebBackendName = nullptr;
   // This will ensure we don't try to re-create a context.
   sCubebState = CubebState::Shutdown;
-
-#ifdef MOZ_CUBEB_REMOTING
-  ShutdownSoundServer();
-#endif
 }
 
 uint32_t MaxNumberOfChannels()
@@ -555,6 +490,33 @@ cubeb_channel_layout ConvertChannelMapToCubebLayout(uint32_t aChannelMap)
       return CUBEB_LAYOUT_UNDEFINED;
   }
 }
+
+#if defined(__ANDROID__) && defined(MOZ_B2G)
+cubeb_stream_type ConvertChannelToCubebType(dom::AudioChannel aChannel)
+{
+  switch(aChannel) {
+    case dom::AudioChannel::Normal:
+      /* FALLTHROUGH */
+    case dom::AudioChannel::Content:
+      return CUBEB_STREAM_TYPE_MUSIC;
+    case dom::AudioChannel::Notification:
+      return CUBEB_STREAM_TYPE_NOTIFICATION;
+    case dom::AudioChannel::Alarm:
+      return CUBEB_STREAM_TYPE_ALARM;
+    case dom::AudioChannel::Telephony:
+      return CUBEB_STREAM_TYPE_VOICE_CALL;
+    case dom::AudioChannel::Ringer:
+      return CUBEB_STREAM_TYPE_RING;
+    case dom::AudioChannel::System:
+      return CUBEB_STREAM_TYPE_SYSTEM;
+    case dom::AudioChannel::Publicnotification:
+      return CUBEB_STREAM_TYPE_SYSTEM_ENFORCED;
+    default:
+      NS_ERROR("The value of AudioChannel is invalid");
+      return CUBEB_STREAM_TYPE_MAX;
+  }
+}
+#endif
 
 void GetCurrentBackend(nsAString& aBackend)
 {

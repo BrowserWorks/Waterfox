@@ -64,10 +64,6 @@ function clickSearchbarSuggestion(entryName) {
 }
 
 add_task(async function setup() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
-
   // Create two new search engines. Mark one as the default engine, so
   // the test don't crash. We need to engines for this test as the searchbar
   // doesn't display the default search engine among the one-off engines.
@@ -110,8 +106,9 @@ add_task(async function test_plainQuery() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
-  let search_hist = getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
+  let search_hist = getSearchCountsHistogram();
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -150,8 +147,9 @@ add_task(async function test_oneOff_enter() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
-  let search_hist = getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
+  let search_hist = getSearchCountsHistogram();
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -193,15 +191,16 @@ add_task(async function test_oneOff_enter() {
 add_task(async function test_oneOff_enterSelection() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
 
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
   let suggestionEngine = await new Promise((resolve, reject) => {
     Services.search.addEngine(url, null, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); }
+      onSuccess(engine) { resolve(engine) },
+      onError() { reject() }
     });
   });
 
@@ -236,7 +235,8 @@ add_task(async function test_oneOff_enterSelection() {
 add_task(async function test_oneOff_click() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -260,16 +260,17 @@ add_task(async function test_suggestion_click() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
-  let search_hist = getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
+  let search_hist = getSearchCountsHistogram();
 
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
   let suggestionEngine = await new Promise((resolve, reject) => {
     Services.search.addEngine(url, null, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); }
+      onSuccess(engine) { resolve(engine) },
+      onError() { reject() }
     });
   });
 
@@ -318,15 +319,16 @@ add_task(async function test_suggestion_click() {
 add_task(async function test_suggestion_enterSelection() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
-  let resultMethodHist = getAndClearHistogram("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = Services.telemetry.getHistogramById("FX_SEARCHBAR_SELECTED_RESULT_METHOD");
+  resultMethodHist.clear();
 
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
   let suggestionEngine = await new Promise((resolve, reject) => {
     Services.search.addEngine(url, null, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); }
+      onSuccess(engine) { resolve(engine) },
+      onError() { reject() }
     });
   });
 

@@ -28,7 +28,6 @@
 #include "gfxUserFontSet.h"
 #include "gfxConfig.h"
 #include "MediaPrefs.h"
-#include "VRThread.h"
 
 #ifdef XP_WIN
 #include <process.h>
@@ -164,6 +163,7 @@ static Mutex* gGfxPlatformPrefsLock = nullptr;
 static qcms_profile *gCMSOutputProfile = nullptr;
 static qcms_profile *gCMSsRGBProfile = nullptr;
 
+static bool gCMSRGBTransformFailed = false;
 static qcms_transform *gCMSRGBTransform = nullptr;
 static qcms_transform *gCMSInverseRGBTransform = nullptr;
 static qcms_transform *gCMSRGBATransform = nullptr;
@@ -599,30 +599,6 @@ void RecordingPrefChanged(const char *aPrefName, void *aClosure)
   }
 }
 
-#define WR_DEBUG_PREF "gfx.webrender.debug"
-
-void
-WebRenderDebugPrefChangeCallback(const char* aPrefName, void*)
-{
-  int32_t flags = 0;
-  // TODO: It would be nice to get the bit patterns directly from the rust code.
-  if (Preferences::GetBool(WR_DEBUG_PREF".profiler", false)) {
-    flags |= (1 << 0);
-  }
-  if (Preferences::GetBool(WR_DEBUG_PREF".render-targets", false)) {
-    flags |= (1 << 1);
-  }
-  if (Preferences::GetBool(WR_DEBUG_PREF".texture-cache", false)) {
-    flags |= (1 << 2);
-  }
-  if (Preferences::GetBool(WR_DEBUG_PREF".alpha-primitives", false)) {
-    flags |= (1 << 3);
-  }
-
-  gfx::gfxVars::SetWebRenderDebugFlags(flags);
-}
-
-
 #if defined(USE_SKIA)
 static uint32_t GetSkiaGlyphCacheSize()
 {
@@ -1039,7 +1015,6 @@ gfxPlatform::InitLayersIPC()
     }
 
     layers::CompositorThreadHolder::Start();
-    gfx::VRListenerThreadHolder::Start();
   }
 }
 
@@ -1068,11 +1043,8 @@ gfxPlatform::ShutdownLayersIPC()
         layers::ImageBridgeChild::ShutDown();
         // This has to happen after shutting down the child protocols.
         layers::CompositorThreadHolder::Shutdown();
-        gfx::VRListenerThreadHolder::Shutdown();
         if (gfxVars::UseWebRender()) {
           wr::RenderThread::ShutDown();
-
-          Preferences::UnregisterCallback(WebRenderDebugPrefChangeCallback, WR_DEBUG_PREF);
         }
 
     } else {
@@ -1308,6 +1280,17 @@ gfxPlatform::GetWrappedDataSourceSurface(gfxASurface* aSurface)
   result->AddUserData(&kThebesSurface, srcSurfUD, SourceSurfaceDestroyed);
 
   return result.forget();
+}
+
+already_AddRefed<ScaledFont>
+gfxPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
+{
+  NativeFont nativeFont;
+  nativeFont.mType = NativeFontType::CAIRO_FONT_FACE;
+  nativeFont.mFont = aFont->GetCairoScaledFont();
+  return Factory::CreateScaledFontForNativeFont(nativeFont,
+                                                aFont->GetUnscaledFont(),
+                                                aFont->GetAdjustedSize());
 }
 
 void
@@ -1617,7 +1600,7 @@ gfxPlatform::BackendTypeForName(const nsCString& aName)
 }
 
 nsresult
-gfxPlatform::GetFontList(nsAtom *aLangGroup,
+gfxPlatform::GetFontList(nsIAtom *aLangGroup,
                          const nsACString& aGenericFamily,
                          nsTArray<nsString>& aListOfFonts)
 {
@@ -2046,7 +2029,7 @@ gfxPlatform::GetCMSsRGBProfile()
 qcms_transform *
 gfxPlatform::GetCMSRGBTransform()
 {
-    if (!gCMSRGBTransform) {
+    if (!gCMSRGBTransform && !gCMSRGBTransformFailed) {
         qcms_profile *inProfile, *outProfile;
         outProfile = GetCMSOutputProfile();
         inProfile = GetCMSsRGBProfile();
@@ -2057,6 +2040,9 @@ gfxPlatform::GetCMSRGBTransform()
         gCMSRGBTransform = qcms_transform_create(inProfile, QCMS_DATA_RGB_8,
                                               outProfile, QCMS_DATA_RGB_8,
                                              QCMS_INTENT_PERCEPTUAL);
+        if (!gCMSRGBTransform) {
+            gCMSRGBTransformFailed = true;
+        }
     }
 
     return gCMSRGBTransform;
@@ -2171,15 +2157,6 @@ gfxPlatform::FlushFontAndWordCaches()
     }
 
     gfxPlatform::PurgeSkiaFontCache();
-}
-
-/* static */ void
-gfxPlatform::ForceGlobalReflow()
-{
-    // modify a preference that will trigger reflow everywhere
-    static const char kPrefName[] = "font.internaluseonly.changed";
-    bool fontInternalChange = Preferences::GetBool(kPrefName, false);
-    Preferences::SetBool(kPrefName, !fontInternalChange);
 }
 
 void
@@ -2358,7 +2335,7 @@ gfxPlatform::InitAcceleration()
 
   if (Preferences::GetBool("media.hardware-video-decoding.enabled", false) &&
 #ifdef XP_WIN
-      Preferences::GetBool("media.wmf.dxva.enabled", true) &&
+    Preferences::GetBool("media.windows-media-foundation.use-dxva", true) &&
 #endif
       NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING,
                                                discardFailureId, &status))) {
@@ -2406,13 +2383,6 @@ gfxPlatform::InitGPUProcessPrefs()
     gpuProc.UserForceEnable("User force-enabled via pref");
   }
 
-  if (IsHeadless()) {
-    gpuProc.ForceDisable(
-      FeatureStatus::Blocked,
-      "Headless mode is enabled",
-      NS_LITERAL_CSTRING("FEATURE_FAILURE_HEADLESS_MODE"));
-    return;
-  }
   if (InSafeMode()) {
     gpuProc.ForceDisable(
       FeatureStatus::Blocked,
@@ -2459,14 +2429,10 @@ gfxPlatform::InitCompositorAccelerationPrefs()
     feature.UserForceEnable("Force-enabled by pref");
   }
 
-  // Safe and headless modes override everything.
+  // Safe mode trumps everything.
   if (InSafeMode()) {
     feature.ForceDisable(FeatureStatus::Blocked, "Acceleration blocked by safe-mode",
                          NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_SAFEMODE"));
-  }
-  if (IsHeadless()) {
-    feature.ForceDisable(FeatureStatus::Blocked, "Acceleration blocked by headless mode",
-                         NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_HEADLESSMODE"));
   }
 }
 
@@ -2500,14 +2466,6 @@ gfxPlatform::InitWebRenderConfig()
     if (env && *env == '1') {
       featureWebRender.UserEnable("Enabled by envvar");
     }
-  }
-
-  // HW_COMPOSITING being disabled implies interfacing with the GPU might break
-  if (!gfxConfig::IsEnabled(Feature::HW_COMPOSITING)) {
-    featureWebRender.ForceDisable(
-      FeatureStatus::Unavailable,
-      "Hardware compositing is disabled",
-      NS_LITERAL_CSTRING("FEATURE_FAILURE_WEBRENDER_NEED_HWCOMP"));
   }
 
   // WebRender relies on the GPU process when on Windows
@@ -2547,31 +2505,24 @@ gfxPlatform::InitWebRenderConfig()
   }
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  featureWebRender.ForceDisable(
-    FeatureStatus::Unavailable,
-    "WebRender not ready for use on Android",
-    NS_LITERAL_CSTRING("FEATURE_FAILURE_ANDROID"));
-#endif
-
   // gfxFeature is not usable in the GPU process, so we use gfxVars to transmit this feature
   if (gfxConfig::IsEnabled(Feature::WEBRENDER)) {
     gfxVars::SetUseWebRender(true);
     reporter.SetSuccessful();
-
-    if (XRE_IsParentProcess()) {
-      Preferences::RegisterPrefixCallbackAndCall(WebRenderDebugPrefChangeCallback,
-                                                 WR_DEBUG_PREF);
-    }
   }
 }
 
 void
 gfxPlatform::InitOMTPConfig()
 {
-  ScopedGfxFeatureReporter reporter("OMTP");
+  bool prefEnabled = Preferences::GetBool("layers.omtp.enabled", false);
 
-  FeatureState& omtp = gfxConfig::GetFeature(Feature::OMTP);
+  // We don't want to report anything for this feature when turned off, as it is still early in development
+  if (!prefEnabled) {
+    return;
+  }
+
+  ScopedGfxFeatureReporter reporter("OMTP", prefEnabled);
 
   if (!XRE_IsParentProcess()) {
     // The parent process runs through all the real decision-making code
@@ -2583,25 +2534,21 @@ gfxPlatform::InitOMTPConfig()
     return;
   }
 
-  omtp.SetDefaultFromPref(
-    "layers.omtp.enabled",
-    true,
-    Preferences::GetDefaultBool("layers.omtp.enabled", false));
+  FeatureState& featureOMTP = gfxConfig::GetFeature(Feature::OMTP);
 
-  if (mContentBackend == BackendType::CAIRO) {
-    omtp.ForceDisable(FeatureStatus::Broken, "OMTP is not supported when using cairo",
-      NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_PREF"));
-  }
+  featureOMTP.DisableByDefault(
+      FeatureStatus::OptIn,
+      "OMTP is an opt-in feature",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_DEFAULT_OFF"));
+
+  featureOMTP.UserEnable("Enabled by pref");
 
   if (InSafeMode()) {
-    omtp.ForceDisable(FeatureStatus::Blocked, "OMTP blocked by safe-mode",
-                      NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_SAFEMODE"));
-  } else if (gfxPrefs::LayersTilesEnabled()) {
-    omtp.ForceDisable(FeatureStatus::Blocked, "OMTP does not yet support tiling",
-                      NS_LITERAL_CSTRING("FEATURE_FAILURE_OMTP_TILING"));
+    featureOMTP.ForceDisable(FeatureStatus::Blocked, "OMTP blocked by safe-mode",
+                         NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_SAFEMODE"));
   }
 
-  if (omtp.IsEnabled()) {
+  if (gfxConfig::IsEnabled(Feature::OMTP)) {
     gfxVars::SetUseOMTP(true);
     reporter.SetSuccessful();
   }
@@ -2640,6 +2587,17 @@ gfxPlatform::DisableBufferRotation()
   MutexAutoLock autoLock(*gGfxPlatformPrefsLock);
 
   sBufferRotationCheckPref = false;
+}
+
+already_AddRefed<ScaledFont>
+gfxPlatform::GetScaledFontForFontWithCairoSkia(DrawTarget* aTarget, gfxFont* aFont)
+{
+    NativeFont nativeFont;
+    nativeFont.mType = NativeFontType::CAIRO_FONT_FACE;
+    nativeFont.mFont = aFont->GetCairoScaledFont();
+    return Factory::CreateScaledFontForNativeFont(nativeFont,
+                                                  aFont->GetUnscaledFont(),
+                                                  aFont->GetAdjustedSize());
 }
 
 /* static */ bool
@@ -2757,10 +2715,6 @@ gfxPlatform::GetApzSupportInfo(mozilla::widget::InfoObject& aObj)
 
   if (SupportsApzKeyboardInput() && !gfxPrefs::AccessibilityBrowseWithCaret()) {
     aObj.DefineProperty("ApzKeyboardInput", 1);
-  }
-
-  if (SupportsApzAutoscrolling()) {
-    aObj.DefineProperty("ApzAutoscrollInput", 1);
   }
 }
 
@@ -2935,12 +2889,6 @@ bool
 gfxPlatform::SupportsApzKeyboardInput() const
 {
   return gfxPrefs::APZKeyboardEnabled();
-}
-
-bool
-gfxPlatform::SupportsApzAutoscrolling() const
-{
-  return gfxPrefs::APZAutoscrollEnabled();
 }
 
 void

@@ -37,40 +37,9 @@ FALLBACK_FINGERPRINT = {
         ":bf:d7:b8:40:84:01:48:9c:26:ce:d9"}
 
 
-CACHE_UID_GID_MISMATCH = '''
-There is a UID/GID mismatch on the cache. This likely means:
-
-a) different tasks are running as a different user/group
-b) different Docker images have different UID/GID for the same user/group
-
-Our cache policy is that the UID/GID for ALL tasks must be consistent
-for the lifetime of the cache. This eliminates permissions problems due
-to file/directory user/group ownership.
-
-To make this error go away, ensure that all Docker images are use
-a consistent UID/GID and that all tasks using this cache are running as
-the same user/group.
-'''
-
-
-NON_EMPTY_VOLUME = '''
-error: volume %s is not empty
-
-Our Docker image policy requires volumes to be empty.
-
-The volume was likely populated as part of building the Docker image.
-Change the Dockerfile and anything run from it to not create files in
-any VOLUME.
-
-A lesser possibility is that you stumbled upon a TaskCluster platform bug
-where it fails to use new volumes for tasks.
-'''
-
-
 def print_line(prefix, m):
-    now = datetime.datetime.utcnow().isoformat()
-    now = now[:-3] if now[-7] == '.' else now  # slice microseconds to 3 decimals
-    print(b'[%s %sZ] %s' % (prefix, now, m), end=b'')
+    now = datetime.datetime.utcnow()
+    print(b'[%s %sZ] %s' % (prefix, now.isoformat(), m), end=b'')
 
 
 def run_and_prefix_output(prefix, args, extra_env=None):
@@ -110,44 +79,9 @@ def run_and_prefix_output(prefix, args, extra_env=None):
 
     return p.wait()
 
-WANTED_DIR_MODE = stat.S_IXUSR | stat.S_IRUSR | stat.S_IWUSR
-
-
-def set_dir_permissions(path, uid, gid):
-    st = os.lstat(path)
-
-    if st.st_uid != uid or st.st_gid != gid:
-        os.chown(path, uid, gid)
-
-    # Also make sure dirs are writable in case we need to delete
-    # them.
-    if st.st_mode & WANTED_DIR_MODE != WANTED_DIR_MODE:
-        os.chmod(path, st.st_mode | WANTED_DIR_MODE)
-
-
-def chown_recursive(path, user, group, uid, gid):
-    print_line(b'chown',
-               b'recursively changing ownership of %s to %s:%s\n' %
-               (path, user, group))
-
-    set_dir_permissions(path, uid, gid)
-
-    for root, dirs, files in os.walk(path):
-        for d in dirs:
-            set_dir_permissions(os.path.join(root, d), uid, gid)
-
-        for f in files:
-            # File may be a symlink that points to nowhere. In which case
-            # os.chown() would fail because it attempts to follow the
-            # symlink. We only care about directory entries, not what
-            # they point to. So setting the owner of the symlink should
-            # be sufficient.
-            os.lchown(os.path.join(root, f), uid, gid)
-
 
 def vcs_checkout(source_repo, dest, store_path,
-                 base_repo=None, revision=None, branch=None,
-                 fetch_hgfingerprint=False, sparse_profile=None):
+                 base_repo=None, revision=None, branch=None, fetch_hgfingerprint=False):
     # Specify method to checkout a revision. This defaults to revisions as
     # SHA-1 strings, but also supports symbolic revisions like `tip` via the
     # branch flag.
@@ -195,8 +129,6 @@ def vcs_checkout(source_repo, dest, store_path,
 
     if base_repo:
         args.extend([b'--upstream', base_repo])
-    if sparse_profile:
-        args.extend([b'--sparseprofile', sparse_profile])
 
     args.extend([
         revision_flag, revision_value,
@@ -236,12 +168,15 @@ def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--user', default='worker', help='user to run as')
     parser.add_argument('--group', default='worker', help='group to run as')
+    # We allow paths to be chowned by the --user:--group before permissions are
+    # dropped. This is often necessary for caches/volumes, since they default
+    # to root:root ownership.
+    parser.add_argument('--chown', action='append',
+                        help='Directory to chown to --user:--group')
+    parser.add_argument('--chown-recursive', action='append',
+                        help='Directory to recursively chown to --user:--group')
     parser.add_argument('--vcs-checkout',
                         help='Directory where Gecko checkout should be created')
-    parser.add_argument('--sparse-profile',
-                        help='Path to sparse checkout profile to use')
-    parser.add_argument('--comm-checkout',
-                        help='Directory where Comm checkout should be created')
     parser.add_argument('--tools-checkout',
                         help='Directory where build/tools checkout should be created')
     parser.add_argument('--fetch-hgfingerprint', action='store_true',
@@ -255,6 +190,10 @@ def main(args):
         args.vcs_checkout = os.path.expanduser(args.vcs_checkout)
     if args.tools_checkout:
         args.tools_checkout = os.path.expanduser(args.tools_checkout)
+    if args.chown:
+        args.chown = [os.path.expanduser(p) for p in args.chown]
+    if args.chown_recursive:
+        args.chown_recursive = [os.path.expanduser(p) for p in args.chown_recursive]
     if 'HG_STORE_PATH' in os.environ:
         os.environ['HG_STORE_PATH'] = os.path.expanduser(os.environ['HG_STORE_PATH'])
 
@@ -280,160 +219,52 @@ def main(args):
     else:
         uid = gid = gids = None
 
-    # Validate caches.
-    #
-    # Taskgraph should pass in a list of paths that are caches via an
-    # environment variable (which we don't want to pass down to child
-    # processes). For each cache, we write out a special file denoting
-    # attributes and capabilities of run-task and the task being executed.
-    # These attributes are used by subsequent run-task invocations to
-    # validate that use of the cache is acceptable.
-    #
-    # We /could/ blow away the cache data on requirements mismatch.
-    # While this would be convenient, this could result in "competing" tasks
-    # effectively undoing the other's work. This would slow down task
-    # execution in aggregate. Without monitoring for this, people may not notice
-    # the problem and tasks would be slower than they could be. We follow the
-    # principle of "fail fast" to ensure optimal task execution.
+    wanted_dir_mode = stat.S_IXUSR | stat.S_IRUSR | stat.S_IWUSR
 
-    if 'TASKCLUSTER_CACHES' in os.environ:
-        caches = os.environ['TASKCLUSTER_CACHES'].split(';')
-        del os.environ['TASKCLUSTER_CACHES']
-    else:
-        caches = []
+    def set_dir_permissions(path, uid, gid):
+        st = os.lstat(path)
 
-    if 'TASKCLUSTER_UNTRUSTED_CACHES' in os.environ:
-        untrusted_caches = True
-        del os.environ['TASKCLUSTER_UNTRUSTED_CACHES']
-    else:
-        untrusted_caches = False
+        if st.st_uid != uid or st.st_gid != gid:
+            os.chown(path, uid, gid)
 
-    our_requirements = {
-        # Include a version string that we can bump whenever to trigger
-        # fresh caches. The actual value is not relevant and doesn't need
-        # to follow any explicit order. Since taskgraph bakes this file's
-        # hash into cache names, any change to this file/version is sufficient
-        # to force the use of a new cache.
-        b'version=1',
-        # Include the UID and GID the task will run as to ensure that tasks
-        # with different UID and GID don't share the same cache.
-        b'uid=%d' % uid,
-        b'gid=%d' % gid,
-    }
+        # Also make sure dirs are writable in case we need to delete
+        # them.
+        if st.st_mode & wanted_dir_mode != wanted_dir_mode:
+            os.chmod(path, st.st_mode | wanted_dir_mode)
 
-    for cache in caches:
-        if not os.path.isdir(cache):
-            print('error: cache %s is not a directory; this should never '
-                  'happen' % cache)
+    # Change ownership of requested paths.
+    # FUTURE: parse argument values for user/group if we don't want to
+    # use --user/--group.
+    for path in args.chown or []:
+        if not running_as_root:
+            print_line(b'set_dir_permissions', b'--chown not allowed when not running as root')
             return 1
 
-        requires_path = os.path.join(cache, '.cacherequires')
+        print_line(b'chown', b'changing ownership of %s to %s:%s\n' % (
+                   path, user.pw_name, group.gr_name))
+        set_dir_permissions(path, uid, gid)
 
-        # The cache is empty. Configure it.
-        if not os.listdir(cache):
-            print_line(b'cache', b'cache %s is empty; writing requirements: '
-                       b'%s\n' % (cache, b' '.join(sorted(our_requirements))))
-
-            # We write a requirements file so future invocations know what the
-            # requirements are.
-            with open(requires_path, 'wb') as fh:
-                fh.write(b'\n'.join(sorted(our_requirements)))
-
-            # And make it read-only as a precaution against deletion.
-            os.chmod(requires_path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-
-            set_dir_permissions(cache, uid, gid)
-
-        # The cache has content and we have a requirements file. Validate
-        # requirements alignment.
-        elif os.path.exists(requires_path):
-            with open(requires_path, 'rb') as fh:
-                wanted_requirements = set(fh.read().splitlines())
-
-            print_line(b'cache', b'cache %s exists; requirements: %s\n' % (
-                       cache, b' '.join(sorted(wanted_requirements))))
-
-            missing = wanted_requirements - our_requirements
-
-            # Allow requirements mismatch for uid/gid if and only if caches
-            # are untrusted. This allows cache behavior on Try to be
-            # reasonable. Otherwise, random tasks could "poison" cache
-            # usability by introducing uid/gid mismatches. For untrusted
-            # environments like Try, this is a perfectly reasonable thing to
-            # allow.
-            if missing and untrusted_caches and running_as_root and \
-                    all(s.startswith(('uid=', 'gid=')) for s in missing):
-                print_line(b'cache',
-                           b'cache %s uid/gid mismatch; this is acceptable '
-                           b'because caches for this task are untrusted; '
-                           b'changing ownership to facilitate cache use\n' %
-                           cache)
-                chown_recursive(cache, user.pw_name, group.gr_name, uid, gid)
-
-                # And write out the updated reality.
-                with open(requires_path, 'wb') as fh:
-                    fh.write(b'\n'.join(sorted(our_requirements)))
-
-            elif missing:
-                print('error: requirements for populated cache %s differ from '
-                      'this task' % cache)
-                print('cache requirements: %s' % ' '.join(sorted(
-                    wanted_requirements)))
-                print('our requirements:   %s' % ' '.join(sorted(
-                    our_requirements)))
-                if any(s.startswith(('uid=', 'gid=')) for s in missing):
-                    print(CACHE_UID_GID_MISMATCH)
-                return 1
-
-            # We don't need to adjust permissions here because the cache is
-            # associated with a uid/gid and the first task should have set
-            # a proper owner/group.
-
-        # The cache has content and no requirements file. This shouldn't
-        # happen because run-task should be the first thing that touches a
-        # cache.
-        else:
-            print('error: cache %s is not empty and is missing a '
-                  '.cacherequires file; the cache names for this task are '
-                  'likely mis-configured or TASKCLUSTER_CACHES is not set '
-                  'properly' % cache)
+    for path in args.chown_recursive or []:
+        if not running_as_root:
+            print_line(b'set_dir_permissions', b'--chown-recursive not allowed when not running as root')
             return 1
 
-    if 'TASKCLUSTER_VOLUMES' in os.environ:
-        volumes = os.environ['TASKCLUSTER_VOLUMES'].split(';')
-        del os.environ['TASKCLUSTER_VOLUMES']
-    else:
-        volumes = []
+        print_line(b'chown', b'recursively changing ownership of %s to %s:%s\n' %
+                   (path, user.pw_name, group.gr_name))
 
-    # Sanitize volumes.
-    for volume in volumes:
-        # If a volume is a cache, it was dealt with above.
-        if volume in caches:
-            print_line(b'volume', b'volume %s is a cache\n' % volume)
-            continue
+        set_dir_permissions(path, uid, gid)
 
-        # The only time we should see files in the volume is if the Docker
-        # image build put files there.
-        #
-        # For the sake of simplicity, our policy is that volumes should be
-        # empty. This also has the advantage that an empty volume looks
-        # a lot like an empty cache. Tasks can rely on caches being
-        # swapped in and out on any volume without any noticeable change
-        # of behavior.
-        volume_files = os.listdir(volume)
-        if volume_files:
-            print(NON_EMPTY_VOLUME % volume)
-            print('entries in root directory: %s' %
-                  ' '.join(sorted(volume_files)))
-            return 1
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                set_dir_permissions(os.path.join(root, d), uid, gid)
 
-        # The volume is almost certainly owned by root:root. Chown it so it
-        # is writable.
-
-        if running_as_root:
-            print_line(b'volume', b'changing ownership of volume %s '
-                                  b'to %d:%d\n' % (volume, uid, gid))
-            set_dir_permissions(volume, uid, gid)
+            for f in files:
+                # File may be a symlink that points to nowhere. In which case
+                # os.chown() would fail because it attempts to follow the
+                # symlink. We only care about directory entries, not what
+                # they point to. So setting the owner of the symlink should
+                # be sufficient.
+                os.lchown(os.path.join(root, f), uid, gid)
 
     def prepare_checkout_dir(checkout):
         if not checkout:
@@ -499,8 +330,7 @@ def main(args):
             os.environ['HG_STORE_PATH'],
             base_repo=base_repo,
             revision=os.environ.get('GECKO_HEAD_REV'),
-            branch=os.environ.get('GECKO_HEAD_REF'),
-            sparse_profile=args.sparse_profile)
+            branch=os.environ.get('GECKO_HEAD_REF'))
 
     elif not os.environ.get('GECKO_HEAD_REV') and \
             os.environ.get('GECKO_HEAD_REF'):
@@ -514,26 +344,6 @@ def main(args):
                      # Always check out the latest commit on default branch.
                      # This is non-deterministic!
                      branch=b'default')
-
-    # Checkout the repository, setting the COMM_HEAD_REV to the current
-    # revision hash. Revision hashes have priority over symbolic revisions. We
-    # disallow running tasks with symbolic revisions unless they have been
-    # resolved by a checkout.
-    if args.comm_checkout:
-        base_repo = os.environ.get('COMM_BASE_REPOSITORY')
-
-        os.environ['COMM_HEAD_REV'] = vcs_checkout(
-            os.environ['COMM_HEAD_REPOSITORY'],
-            args.comm_checkout,
-            os.environ['HG_STORE_PATH'],
-            base_repo=base_repo,
-            revision=os.environ.get('COMM_HEAD_REV'),
-            branch=os.environ.get('COMM_HEAD_REF'))
-
-    elif not os.environ.get('COMM_HEAD_REV') and \
-            os.environ.get('COMM_HEAD_REF'):
-        print('task should be defined in terms of non-symbolic revision')
-        return 1
 
     return run_and_prefix_output(b'task', task_args)
 

@@ -115,7 +115,7 @@ int64_t EnergyEndpointer::HistoryRing::EndTime() const {
 }
 
 float EnergyEndpointer::HistoryRing::RingSum(float duration_sec) {
-  if (decision_points_.empty())
+  if (!decision_points_.size())
     return 0.0;
 
   int64_t sum_us = 0;

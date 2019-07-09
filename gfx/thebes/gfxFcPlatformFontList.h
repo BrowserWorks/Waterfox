@@ -11,7 +11,6 @@
 #include "gfxFT2FontBase.h"
 #include "gfxPlatformFontList.h"
 #include "mozilla/mozalloc.h"
-#include "nsAutoRef.h"
 #include "nsClassHashtable.h"
 
 #include <fontconfig/fontconfig.h>
@@ -21,12 +20,13 @@
 #include <cairo.h>
 #include <cairo-ft.h>
 
+#include "gfxFontconfigUtils.h" // xxx - only for nsAutoRefTraits<FcPattern>, etc.
+
 template <>
-class nsAutoRefTraits<FcPattern> : public nsPointerRefTraits<FcPattern>
+class nsAutoRefTraits<FcObjectSet> : public nsPointerRefTraits<FcObjectSet>
 {
 public:
-    static void Release(FcPattern *ptr) { FcPatternDestroy(ptr); }
-    static void AddRef(FcPattern *ptr) { FcPatternReference(ptr); }
+    static void Release(FcObjectSet *ptr) { FcObjectSetDestroy(ptr); }
 };
 
 template <>
@@ -60,7 +60,7 @@ private:
     {
         mozilla::gfx::Factory::ReleaseFTFace(mFace);
         if (mFontData) {
-            free((void*)mFontData);
+            NS_Free((void*)mFontData);
         }
     }
 
@@ -95,9 +95,9 @@ public:
                                     int16_t aStretch,
                                     uint8_t aStyle);
 
-    gfxFontEntry* Clone() const override;
-
     FcPattern* GetPattern() { return mFontPattern; }
+
+    bool SupportsLangGroup(nsIAtom *aLangGroup) const override;
 
     nsresult ReadCMAP(FontInfoData *aFontInfoData = nullptr) override;
     bool TestCharacterMap(uint32_t aCh) override;
@@ -167,7 +167,7 @@ protected:
         void MoveToFront(size_t aIndex);
 
         static const size_t kNumEntries = 3;
-        mozilla::ThreadSafeWeakPtr<mozilla::gfx::UnscaledFontFontconfig> mUnscaledFonts[kNumEntries];
+        mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFonts[kNumEntries];
     };
 
     UnscaledFontCache mUnscaledFontCache;
@@ -196,19 +196,10 @@ public:
     void
     FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
                          nsTArray<gfxFontEntry*>& aFontEntryList,
-                         bool& aNeedsSyntheticBold,
-                         bool aIgnoreSizeTolerance) override;
-
-    bool FilterForFontList(nsAtom* aLangGroup,
-                           const nsACString& aGeneric) const final {
-        return SupportsLangGroup(aLangGroup);
-    }
+                         bool& aNeedsSyntheticBold) override;
 
 protected:
     virtual ~gfxFontconfigFontFamily();
-
-    // helper for FilterForFontList
-    bool SupportsLangGroup(nsAtom *aLangGroup) const;
 
     nsTArray<nsCountedRef<FcPattern> > mFontPatterns;
 
@@ -217,7 +208,7 @@ protected:
     bool      mForceScalable;
 };
 
-class gfxFontconfigFont : public gfxFT2FontBase {
+class gfxFontconfigFont : public gfxFontconfigFontBase {
 public:
     gfxFontconfigFont(const RefPtr<mozilla::gfx::UnscaledFontFontconfig> &aUnscaledFont,
                       cairo_scaled_font_t *aScaledFont,
@@ -227,16 +218,8 @@ public:
                       const gfxFontStyle *aFontStyle,
                       bool aNeedsBold);
 
-    virtual FontType GetType() const override { return FONT_TYPE_FONTCONFIG; }
-    virtual FcPattern *GetPattern() const { return mPattern; }
-
-    virtual already_AddRefed<mozilla::gfx::ScaledFont>
-    GetScaledFont(DrawTarget *aTarget) override;
-
-private:
+protected:
     virtual ~gfxFontconfigFont();
-
-    nsCountedRef<FcPattern> mPattern;
 };
 
 class gfxFcPlatformFontList : public gfxPlatformFontList {
@@ -250,7 +233,7 @@ public:
     // initialize font lists
     virtual nsresult InitFontListForPlatform() override;
 
-    void GetFontList(nsAtom *aLangGroup,
+    void GetFontList(nsIAtom *aLangGroup,
                      const nsACString& aGenericFamily,
                      nsTArray<nsString>& aListOfFonts) override;
 
@@ -268,7 +251,6 @@ public:
 
     bool FindAndAddFamilies(const nsAString& aFamily,
                             nsTArray<gfxFontFamily*>* aOutput,
-                            FindFamiliesFlags aFlags,
                             gfxFontStyle* aStyle = nullptr,
                             gfxFloat aDevToCssSize = 1.0) override;
 
@@ -279,7 +261,7 @@ public:
 
     // override to use fontconfig lookup for generics
     void AddGenericFonts(mozilla::FontFamilyType aGenericType,
-                         nsAtom* aLanguage,
+                         nsIAtom* aLanguage,
                          nsTArray<gfxFontFamily*>& aFamilyList) override;
 
     void ClearLangGroupPrefFonts() override;
@@ -301,7 +283,7 @@ protected:
     // figure out which families fontconfig maps a generic to
     // (aGeneric assumed already lowercase)
     PrefFontList* FindGenericFamilies(const nsAString& aGeneric,
-                                      nsAtom* aLanguage);
+                                      nsIAtom* aLanguage);
 
     // are all pref font settings set to use fontconfig generics?
     bool PrefFontListsUseOnlyGenerics();
@@ -310,8 +292,6 @@ protected:
 
     virtual gfxFontFamily*
     GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
-
-    gfxFontFamily* CreateFontFamily(const nsAString& aName) const override;
 
 #ifdef MOZ_BUNDLED_FONTS
     void ActivateBundledFonts();

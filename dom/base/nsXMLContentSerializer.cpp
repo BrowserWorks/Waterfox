@@ -20,7 +20,7 @@
 #include "nsIContentInlines.h"
 #include "nsIDocument.h"
 #include "nsIDocumentEncoder.h"
-#include "nsElementTable.h"
+#include "nsIParserService.h"
 #include "nsNameSpaceManager.h"
 #include "nsTextFragment.h"
 #include "nsString.h"
@@ -366,13 +366,15 @@ nsXMLContentSerializer::AppendDoctype(nsIContent* aDocType,
   nsCOMPtr<nsIDOMDocumentType> docType = do_QueryInterface(aDocType);
   NS_ENSURE_ARG(docType);
   nsresult rv;
-  nsAutoString name, publicId, systemId;
+  nsAutoString name, publicId, systemId, internalSubset;
 
   rv = docType->GetName(name);
   if (NS_FAILED(rv)) return NS_ERROR_FAILURE;
   rv = docType->GetPublicId(publicId);
   if (NS_FAILED(rv)) return NS_ERROR_FAILURE;
   rv = docType->GetSystemId(systemId);
+  if (NS_FAILED(rv)) return NS_ERROR_FAILURE;
+  rv = docType->GetInternalSubset(internalSubset);
   if (NS_FAILED(rv)) return NS_ERROR_FAILURE;
 
   NS_ENSURE_TRUE(MaybeAddNewlineForRootNode(aStr), NS_ERROR_OUT_OF_MEMORY);
@@ -417,6 +419,12 @@ nsXMLContentSerializer::AppendDoctype(nsIContent* aDocType,
     NS_ENSURE_TRUE(AppendToString(quote, aStr), NS_ERROR_OUT_OF_MEMORY);
     NS_ENSURE_TRUE(AppendToString(systemId, aStr), NS_ERROR_OUT_OF_MEMORY);
     NS_ENSURE_TRUE(AppendToString(quote, aStr), NS_ERROR_OUT_OF_MEMORY);
+  }
+
+  if (!internalSubset.IsEmpty()) {
+    NS_ENSURE_TRUE(AppendToString(NS_LITERAL_STRING(" ["), aStr), NS_ERROR_OUT_OF_MEMORY);
+    NS_ENSURE_TRUE(AppendToString(internalSubset, aStr), NS_ERROR_OUT_OF_MEMORY);
+    NS_ENSURE_TRUE(AppendToString(char16_t(']'), aStr), NS_ERROR_OUT_OF_MEMORY);
   }
 
   NS_ENSURE_TRUE(AppendToString(kGreaterThan, aStr), NS_ERROR_OUT_OF_MEMORY);
@@ -729,7 +737,7 @@ nsXMLContentSerializer::ScanNamespaceDeclarations(nsIContent* aContent,
     const nsAttrName* name = info.mName;
 
     int32_t namespaceID = name->NamespaceID();
-    nsAtom *attrName = name->LocalName();
+    nsIAtom *attrName = name->LocalName();
 
     if (namespaceID == kNameSpaceID_XMLNS ||
         // Also push on the stack attrs named "xmlns" in the null
@@ -769,7 +777,7 @@ nsXMLContentSerializer::ScanNamespaceDeclarations(nsIContent* aContent,
 
 
 bool
-nsXMLContentSerializer::IsJavaScript(nsIContent * aContent, nsAtom* aAttrNameAtom,
+nsXMLContentSerializer::IsJavaScript(nsIContent * aContent, nsIAtom* aAttrNameAtom,
                                      int32_t aAttrNamespaceID, const nsAString& aValueString)
 {
   bool isHtml = aContent->IsHTMLElement();
@@ -803,7 +811,7 @@ nsXMLContentSerializer::SerializeAttributes(nsIContent* aContent,
                                             nsIContent *aOriginalElement,
                                             nsAString& aTagPrefix,
                                             const nsAString& aTagNamespaceURI,
-                                            nsAtom* aTagName,
+                                            nsIAtom* aTagName,
                                             nsAString& aStr,
                                             uint32_t aSkipAttr,
                                             bool aAddNSAttr)
@@ -840,8 +848,8 @@ nsXMLContentSerializer::SerializeAttributes(nsIContent* aContent,
 
     const nsAttrName* name = aContent->GetAttrNameAt(index);
     int32_t namespaceID = name->NamespaceID();
-    nsAtom* attrName = name->LocalName();
-    nsAtom* attrPrefix = name->GetPrefix();
+    nsIAtom* attrName = name->LocalName();
+    nsIAtom* attrPrefix = name->GetPrefix();
 
     // Filter out any attribute starting with [-|_]moz
     nsDependentAtomString attrNameStr(attrName);
@@ -910,7 +918,7 @@ nsXMLContentSerializer::AppendElementStart(Element* aElement,
   uint32_t skipAttr = ScanNamespaceDeclarations(content,
                           aOriginalElement, tagNamespaceURI);
 
-  nsAtom *name = content->NodeInfo()->NameAtom();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
   bool lineBreakBeforeOpen = LineBreakBeforeOpen(content->GetNameSpaceID(), name);
 
   if ((mDoFormat || forceFormat) && !mDoRaw && !PreLevel()) {
@@ -995,9 +1003,14 @@ ElementNeedsSeparateEndTag(Element* aElement, Element* aOriginalElement)
   // HTML container tags should have a separate end tag even if empty, per spec.
   // See
   // https://w3c.github.io/DOM-Parsing/#dfn-concept-xml-serialization-algorithm
-  nsAtom* localName = aElement->NodeInfo()->NameAtom();
-  bool isHTMLContainer =
-    nsHTMLElement::IsContainer(nsHTMLTags::CaseSensitiveAtomTagToId(localName));
+  bool isHTMLContainer = true; // Default in case we get no parser service.
+  nsIParserService* parserService = nsContentUtils::GetParserService();
+  if (parserService) {
+    nsIAtom* localName = aElement->NodeInfo()->NameAtom();
+    parserService->IsContainer(
+      parserService->HTMLCaseSensitiveAtomTagToId(localName),
+      isHTMLContainer);
+  }
   return isHTMLContainer;
 }
 
@@ -1033,7 +1046,7 @@ nsXMLContentSerializer::AppendElementEnd(Element* aElement,
   bool forceFormat = false, outputElementEnd;
   outputElementEnd = CheckElementEnd(aElement, forceFormat, aStr);
 
-  nsAtom *name = content->NodeInfo()->NameAtom();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
 
   if ((mDoFormat || forceFormat) && !mDoRaw && !PreLevel()) {
     DecrIndentation(name);
@@ -1338,7 +1351,7 @@ nsXMLContentSerializer::AppendIndentation(nsAString& aStr)
 }
 
 bool
-nsXMLContentSerializer::IncrIndentation(nsAtom* aName)
+nsXMLContentSerializer::IncrIndentation(nsIAtom* aName)
 {
   // we want to keep the source readable
   if (mDoWrap &&
@@ -1353,7 +1366,7 @@ nsXMLContentSerializer::IncrIndentation(nsAtom* aName)
 }
 
 void
-nsXMLContentSerializer::DecrIndentation(nsAtom* aName)
+nsXMLContentSerializer::DecrIndentation(nsIAtom* aName)
 {
   if(mIndentOverflow)
     --mIndentOverflow;
@@ -1362,25 +1375,25 @@ nsXMLContentSerializer::DecrIndentation(nsAtom* aName)
 }
 
 bool
-nsXMLContentSerializer::LineBreakBeforeOpen(int32_t aNamespaceID, nsAtom* aName)
+nsXMLContentSerializer::LineBreakBeforeOpen(int32_t aNamespaceID, nsIAtom* aName)
 {
   return mAddSpace;
 }
 
 bool
-nsXMLContentSerializer::LineBreakAfterOpen(int32_t aNamespaceID, nsAtom* aName)
+nsXMLContentSerializer::LineBreakAfterOpen(int32_t aNamespaceID, nsIAtom* aName)
 {
   return false;
 }
 
 bool
-nsXMLContentSerializer::LineBreakBeforeClose(int32_t aNamespaceID, nsAtom* aName)
+nsXMLContentSerializer::LineBreakBeforeClose(int32_t aNamespaceID, nsIAtom* aName)
 {
   return mAddSpace;
 }
 
 bool
-nsXMLContentSerializer::LineBreakAfterClose(int32_t aNamespaceID, nsAtom* aName)
+nsXMLContentSerializer::LineBreakAfterClose(int32_t aNamespaceID, nsIAtom* aName)
 {
   return false;
 }

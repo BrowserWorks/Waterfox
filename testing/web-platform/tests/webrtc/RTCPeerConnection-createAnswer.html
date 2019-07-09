@@ -13,6 +13,7 @@
   // The following helper functions are called from RTCPeerConnection-helper.js:
   //   generateOffer()
   //   generateAnswer()
+  //   test_never_resolve()
 
   /*
    * 4.3.2. createAnswer()
@@ -36,7 +37,7 @@
   promise_test(t => {
     const pc = new RTCPeerConnection();
 
-    return pc.createOffer({ offerToReceiveVideo: true })
+    return generateOffer({ video: true })
     .then(offer => pc.setRemoteDescription(offer))
     .then(() => pc.createAnswer())
     .then(answer => {
@@ -51,7 +52,7 @@
   promise_test(t => {
     const pc = new RTCPeerConnection();
 
-    return generateOffer({ pc, data: true })
+    return generateOffer({ data: true })
     .then(offer => pc.setRemoteDescription(offer))
     .then(() => {
       pc.close();
@@ -59,6 +60,18 @@
         pc.createAnswer());
     });
   }, 'createAnswer() when connection is closed reject with InvalidStateError');
+
+  test_never_resolve(t => {
+    const pc = new RTCPeerConnection();
+
+    return generateOffer({ data: true })
+    .then(offer => pc.setRemoteDescription(offer))
+    .then(() => {
+      const promise = pc.createAnswer();
+      pc.close();
+      return promise;
+    });
+  }, 'createAnswer() when connection is closed in parallel should never resolve');
 
   /*
    *  TODO

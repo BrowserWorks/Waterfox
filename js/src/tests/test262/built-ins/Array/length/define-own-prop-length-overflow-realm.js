@@ -10,7 +10,6 @@ info: |
   [...]
   2. If P is "length", then
      a. Return ? ArraySetLength(A, Desc).
-features: [cross-realm]
 ---*/
 
 var OArray = $262.createRealm().global.Array;

@@ -32,7 +32,7 @@ class nsIDocument;
 class nsIURI;
 class nsIChannel;
 class nsIDocShell;
-class nsAtom;
+class nsIAtom;
 class nsIChannel;
 class nsIContent;
 class nsNodeInfoManager;
@@ -148,14 +148,13 @@ protected:
                 nsISupports* aContainer, nsIChannel* aChannel);
 
   nsresult ProcessHTTPHeaders(nsIChannel* aChannel);
-  nsresult ProcessHeaderData(nsAtom* aHeader, const nsAString& aValue,
+  nsresult ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
                              nsIContent* aContent = nullptr);
   nsresult ProcessLinkHeader(const nsAString& aLinkData);
   nsresult ProcessLink(const nsAString& aAnchor,
                        const nsAString& aHref, const nsAString& aRel,
                        const nsAString& aTitle, const nsAString& aType,
                        const nsAString& aMedia, const nsAString& aCrossOrigin,
-                       const nsAString& aReferrerPolicy,
                        const nsAString& aAs);
 
   virtual nsresult ProcessStyleLink(nsIContent* aElement,
@@ -163,8 +162,7 @@ protected:
                                     bool aAlternate,
                                     const nsAString& aTitle,
                                     const nsAString& aType,
-                                    const nsAString& aMedia,
-                                    const nsAString& aReferrerPolicy);
+                                    const nsAString& aMedia);
 
   void PrefetchPreloadHref(const nsAString &aHref, nsINode *aSource,
                            uint32_t aLinkTypes, const nsAString& aAs,

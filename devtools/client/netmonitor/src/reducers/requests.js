@@ -5,10 +5,7 @@
 "use strict";
 
 const I = require("devtools/client/shared/vendor/immutable");
-const {
-  getUrlDetails,
-  processNetworkUpdates,
-} = require("../utils/request-utils");
+const { getUrlDetails } = require("../utils/request-utils");
 const {
   ADD_REQUEST,
   CLEAR_REQUESTS,
@@ -17,7 +14,6 @@ const {
   REMOVE_SELECTED_CUSTOM_REQUEST,
   SELECT_REQUEST,
   SEND_CUSTOM_REQUEST,
-  TOGGLE_RECORDING,
   UPDATE_REQUEST,
 } = require("../constants");
 
@@ -27,7 +23,6 @@ const Request = I.Record({
   isCustom: false,
   // Request properties - at the beginning, they are unknown and are gradually filled in
   startedMillis: undefined,
-  endedMillis: undefined,
   method: undefined,
   url: undefined,
   urlDetails: undefined,
@@ -71,9 +66,35 @@ const Requests = I.Record({
   // Auxiliary fields to hold requests stats
   firstStartedMillis: +Infinity,
   lastEndedMillis: -Infinity,
-  // Recording state
-  recording: true,
 });
+
+const UPDATE_PROPS = [
+  "method",
+  "url",
+  "remotePort",
+  "remoteAddress",
+  "status",
+  "statusText",
+  "httpVersion",
+  "securityState",
+  "securityInfo",
+  "mimeType",
+  "contentSize",
+  "transferredSize",
+  "totalTime",
+  "eventTimings",
+  "headersSize",
+  "customQueryValue",
+  "requestHeaders",
+  "requestHeadersFromUploadStream",
+  "requestCookies",
+  "requestPostData",
+  "responseHeaders",
+  "responseCookies",
+  "responseContent",
+  "responseContentDataUri",
+  "formDataSections",
+];
 
 /**
  * Remove the currently selected custom request.
@@ -125,10 +146,51 @@ function requestsReducer(state = new Requests(), action) {
         }
       });
     }
-    case CLEAR_REQUESTS: {
-      return new Requests({
-        recording: state.recording
+    case UPDATE_REQUEST: {
+      let { requests, lastEndedMillis } = state;
+
+      let updatedRequest = requests.get(action.id);
+      if (!updatedRequest) {
+        return state;
+      }
+
+      updatedRequest = updatedRequest.withMutations(request => {
+        for (let [key, value] of Object.entries(action.data)) {
+          if (!UPDATE_PROPS.includes(key)) {
+            continue;
+          }
+
+          request[key] = value;
+
+          switch (key) {
+            case "url":
+              // Compute the additional URL details
+              request.urlDetails = getUrlDetails(value);
+              break;
+            case "totalTime":
+              request.endedMillis = request.startedMillis + value;
+              lastEndedMillis = Math.max(lastEndedMillis, request.endedMillis);
+              break;
+            case "requestPostData":
+              request.requestHeadersFromUploadStream = {
+                headers: [],
+                headersSize: 0,
+              };
+              break;
+          }
+        }
       });
+
+      return state.withMutations(st => {
+        st.requests = requests.set(updatedRequest.id, updatedRequest);
+        st.lastEndedMillis = lastEndedMillis;
+      });
+    }
+    case CLEAR_REQUESTS: {
+      return new Requests();
+    }
+    case SELECT_REQUEST: {
+      return state.set("selectedId", action.id);
     }
     case CLONE_SELECTED_REQUEST: {
       let { requests, selectedId } = state;
@@ -157,6 +219,15 @@ function requestsReducer(state = new Requests(), action) {
         st.selectedId = newRequest.id;
       });
     }
+    case REMOVE_SELECTED_CUSTOM_REQUEST: {
+      return closeCustomRequest(state);
+    }
+    case SEND_CUSTOM_REQUEST: {
+      // When a new request with a given id is added in future, select it immediately.
+      // where we know in advance the ID of the request, at a time when it
+      // wasn't sent yet.
+      return closeCustomRequest(state.set("preselectedId", action.id));
+    }
     case OPEN_NETWORK_DETAILS: {
       if (!action.open) {
         return state.set("selectedId", null);
@@ -167,39 +238,6 @@ function requestsReducer(state = new Requests(), action) {
       }
 
       return state;
-    }
-    case REMOVE_SELECTED_CUSTOM_REQUEST: {
-      return closeCustomRequest(state);
-    }
-    case SELECT_REQUEST: {
-      return state.set("selectedId", action.id);
-    }
-    case SEND_CUSTOM_REQUEST: {
-      // When a new request with a given id is added in future, select it immediately.
-      // where we know in advance the ID of the request, at a time when it
-      // wasn't sent yet.
-      return closeCustomRequest(state.set("preselectedId", action.id));
-    }
-    case TOGGLE_RECORDING: {
-      return state.set("recording", !state.recording);
-    }
-    case UPDATE_REQUEST: {
-      let { requests, lastEndedMillis } = state;
-
-      let updatedRequest = requests.get(action.id);
-      if (!updatedRequest) {
-        return state;
-      }
-
-      updatedRequest = updatedRequest.withMutations(request => {
-        let values = processNetworkUpdates(action.data);
-        request = Object.assign(request, values);
-      });
-
-      return state.withMutations(st => {
-        st.requests = requests.set(updatedRequest.id, updatedRequest);
-        st.lastEndedMillis = lastEndedMillis;
-      });
     }
 
     default:

@@ -14,12 +14,12 @@ XPIDL_SOURCES += [
     'nsIException.idl',
     'nsIGZFileWriter.idl',
     'nsIInterfaceRequestor.idl',
-    'nsILoadURIDelegate.idl',
     'nsIMemory.idl',
     'nsIMemoryInfoDumper.idl',
     'nsIMemoryReporter.idl',
     'nsIMessageLoop.idl',
     'nsIMutable.idl',
+    'nsIProgrammingLanguage.idl',
     'nsISecurityConsoleMessage.idl',
     'nsIStatusReporter.idl',
     'nsISupports.idl',
@@ -200,7 +200,6 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../build',
-    '/dom/base',
     '/xpcom/ds',
 ]
 

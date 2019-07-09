@@ -10,10 +10,8 @@ includes: [propertyHelper.js]
 
 ---*/
 
-verifyProperty(Date.prototype, "toGMTString", {
-  enumerable: false,
-  writable: true,
-  configurable: true,
-});
+verifyWritable(Date.prototype, "toGMTString");
+verifyNotEnumerable(Date.prototype, "toGMTString");
+verifyConfigurable(Date.prototype, "toGMTString");
 
 reportCompare(0, 0);

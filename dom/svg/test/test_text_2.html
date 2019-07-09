@@ -14,7 +14,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=655877
 <p id="display"></p>
 <div id="content">
   <svg width="400" height="200">
-    <text x="100" y="100" style="font: 16px sans-serif">abc אבג 123 דהו defg</text>
+    <text x="100" y="100" style="font: 16px sans-serif">
+      abc אבג 123 דהו defg
+    </text>
   </svg>
 </div>
 
@@ -23,12 +25,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=655877
 SimpleTest.waitForExplicitFinish();
 
 function close(x, y, message) {
-  if (Math.abs(x - y) < 1e-4) {
-    ok(true, message);
-  } else {
-    // Use is() so that the difference is actually printed in the error message
-    is(x, y, message);
-  }
+  ok(Math.abs(x - y) < 1e-4, message);
 }
 
 function runTest() {
@@ -46,12 +43,12 @@ function runTest() {
   for (var i = 0; i < 20; i++) {
     sum += text.getSubStringLength(i, 1);
   }
-  close(sum, total, "sum getSubStringLength 1");
+  close(total, sum, "sum getSubStringLength 1");
 
   // split the text up into three chunks and add them together
-  close(text.getSubStringLength(0, 6) +
-        text.getSubStringLength(6, 8) +
-        text.getSubStringLength(14, 6), total, "sum getSubStringLength 2");
+  close(total, text.getSubStringLength(0, 6) +
+               text.getSubStringLength(6, 8) +
+               text.getSubStringLength(14, 6), "sum getSubStringLength 2");
 
   SimpleTest.finish();
 }

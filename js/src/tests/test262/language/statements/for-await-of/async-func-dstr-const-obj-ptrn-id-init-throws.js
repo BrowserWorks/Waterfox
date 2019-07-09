@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-id-init-throws.case
-// - src/dstr-binding-for-await/error/for-await-of-async-func-const.template
+// - src/dstr-binding/obj-ptrn-id-init-throws.case
+// - src/dstr-binding/error/for-await-of-async-func-const.template
 /*---
 description: Error thrown when evaluating the initializer (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -37,7 +38,7 @@ info: |
 
     13.3.3.7 Runtime Semantics: KeyedBindingInitialization
 
-    SingleNameBinding : BindingIdentifier Initializer_opt
+    SingleNameBinding : BindingIdentifier Initializeropt
 
     [...]
     6. If Initializer is present and v is undefined, then
@@ -56,11 +57,6 @@ async function fn() {
 }
 
 fn()
-  .then(_ => {
-    throw new Test262Error("Expected async function to reject, but resolved.");
-  }, ({ constructor }) => {
-    assert.sameValue(constructor, Test262Error);
-    
-  })
+  .then(_ => { throw new Test262Error("Expected async function to reject, but resolved."); }, ({ constructor }) => assert.sameValue(constructor, Test262Error))
   .then($DONE, $DONE);
 

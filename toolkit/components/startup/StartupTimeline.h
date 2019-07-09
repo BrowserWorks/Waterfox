@@ -37,9 +37,6 @@ mozilla_StartupTimeline_Event(PROFILE_BEFORE_CHANGE, "profileBeforeChange")
 
 namespace mozilla {
 
-void RecordShutdownEndTimeStamp();
-void RecordShutdownStartTimeStamp();
-
 class StartupTimeline {
 public:
   enum Event {
@@ -59,7 +56,7 @@ public:
 
 #ifdef MOZILLA_INTERNAL_API
   static void Record(Event ev) {
-    PROFILER_ADD_MARKER(Describe(ev));
+    profiler_add_marker(Describe(ev));
     Record(ev, TimeStamp::Now());
   }
 
@@ -67,7 +64,10 @@ public:
     sStartupTimeline[ev] = when;
   }
 
-  static void RecordOnce(Event ev);
+  static void RecordOnce(Event ev) {
+    if (!HasRecord(ev))
+      Record(ev);
+  }
 #endif
 
   static bool HasRecord(Event ev) {

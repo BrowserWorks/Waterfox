@@ -9,6 +9,7 @@
 #include "mozilla/DebugOnly.h"
 
 #include "jit/CompactBuffer.h"
+#include "jit/IonCaches.h"
 #include "jit/JitcodeMap.h"
 #include "jit/JitSpewer.h"
 #include "jit/MacroAssembler.h"
@@ -605,7 +606,7 @@ CodeGeneratorShared::encode(LSnapshot* snapshot)
         lirOpcode = ins->op();
         lirId = ins->id();
         if (ins->mirRaw()) {
-            mirOpcode = uint32_t(ins->mirRaw()->op());
+            mirOpcode = ins->mirRaw()->op();
             mirId = ins->mirRaw()->id();
             if (ins->mirRaw()->trackedPc())
                 pcOpcode = *ins->mirRaw()->trackedPc();
@@ -711,7 +712,7 @@ CodeGeneratorShared::createNativeToBytecodeScriptList(JSContext* cx)
     }
 
     // Allocate array for list.
-    JSScript** data = cx->zone()->pod_malloc<JSScript*>(scriptList.length());
+    JSScript** data = cx->runtime()->pod_malloc<JSScript*>(scriptList.length());
     if (!data)
         return false;
 
@@ -758,7 +759,7 @@ CodeGeneratorShared::generateCompactNativeToBytecodeMap(JSContext* cx, JitCode* 
     MOZ_ASSERT(numRegions > 0);
 
     // Writer is done, copy it to sized buffer.
-    uint8_t* data = cx->zone()->pod_malloc<uint8_t>(writer.length());
+    uint8_t* data = cx->runtime()->pod_malloc<uint8_t>(writer.length());
     if (!data) {
         js_free(nativeToBytecodeScriptList_);
         return false;
@@ -914,7 +915,7 @@ CodeGeneratorShared::generateCompactTrackedOptimizationsMap(JSContext* cx, JitCo
     MOZ_ASSERT(attemptsTableOffset > typesTableOffset);
 
     // Copy over the table out of the writer's buffer.
-    uint8_t* data = cx->zone()->pod_malloc<uint8_t>(writer.length());
+    uint8_t* data = cx->runtime()->pod_malloc<uint8_t>(writer.length());
     if (!data)
         return false;
 
@@ -1347,7 +1348,7 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
 {
     // If we're calling a function with an out parameter type of double, make
     // sure we have an FPU.
-    MOZ_ASSERT_IF(fun.outParam == Type_Double, gen->runtime->jitSupportsFloatingPoint());
+    MOZ_ASSERT_IF(fun.outParam == Type_Double, GetJitContext()->runtime->jitSupportsFloatingPoint());
 
 #ifdef DEBUG
     if (ins->mirRaw()) {

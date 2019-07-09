@@ -30,6 +30,10 @@ MockAppender.prototype = {
   }
 };
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function test_Logger() {
   let log = Log.repository.getLogger("test.logger");
   let appender = new MockAppender(new Log.BasicFormatter());
@@ -347,7 +351,7 @@ add_task(async function log_message_with_params() {
 
   // Numbers are substituted.
   do_check_eq(formatMessage("Number is ${number}", {number: 47}),
-              "Number is 47");
+              "Number is 47")
 
   // The entire params object is JSON-formatted and substituted.
   do_check_eq(formatMessage("Object is ${}", {foo: "bar"}),
@@ -368,23 +372,23 @@ add_task(async function log_message_with_params() {
 
   // If an object has a .toJSON method, the formatter uses it.
   let ob = function() {};
-  ob.toJSON = function() {return {sneaky: "value"};};
+  ob.toJSON = function() {return {sneaky: "value"}};
   do_check_eq(formatMessage("JSON is ${sub}", {sub: ob}),
               'JSON is {"sneaky":"value"}');
 
   // Fall back to .toSource() if JSON.stringify() fails on an object.
   ob = function() {};
-  ob.toJSON = function() {throw "oh noes JSON";};
+  ob.toJSON = function() {throw "oh noes JSON"};
   do_check_eq(formatMessage("Fail is ${sub}", {sub: ob}),
               "Fail is (function() {})");
 
   // Fall back to .toString if both .toJSON and .toSource fail.
-  ob.toSource = function() {throw "oh noes SOURCE";};
+  ob.toSource = function() {throw "oh noes SOURCE"};
   do_check_eq(formatMessage("Fail is ${sub}", {sub: ob}),
               "Fail is function() {}");
 
   // Fall back to '[object]' if .toJSON, .toSource and .toString fail.
-  ob.toString = function() {throw "oh noes STRING";};
+  ob.toString = function() {throw "oh noes STRING"};
   do_check_eq(formatMessage("Fail is ${sub}", {sub: ob}),
               "Fail is [object]");
 
@@ -412,9 +416,9 @@ add_task(async function log_message_with_params() {
   do_check_eq(formatMessage("Null ${n} undefined ${u}", {n: null, u: undefined}),
               "Null null undefined undefined");
 
-  // Format params with number, bool, and String type.
+  // Format params with number, bool, and Object/String type.
   do_check_eq(formatMessage("number ${n} boolean ${b} boxed Boolean ${bx} String ${s}",
-                            {n: 45, b: false, bx: Boolean(true), s: String("whatevs")}),
+                            {n: 45, b: false, bx: new Boolean(true), s: new String("whatevs")}),
               "number 45 boolean false boxed Boolean true String whatevs");
 
   /*
@@ -437,16 +441,16 @@ add_task(async function log_message_with_params() {
   // If the message text is null, the message contains only the formatted params object.
   str = formatMessage(null, err);
   do_check_true(str.startsWith('[Exception... "test exception"'));
-  // If the text is null and 'params' is a string, the message is exactly that string.
-  str = formatMessage(null, "String in place of params");
+  // If the text is null and 'params' is a String object, the message is exactly that string.
+  str = formatMessage(null, new String("String in place of params"));
   do_check_eq(str, "String in place of params");
 
   // We use object.valueOf() internally; make sure a broken valueOf() method
   // doesn't cause the logger to fail.
   /* eslint-disable object-shorthand */
-  let vOf = {a: 1, valueOf: function() {throw "oh noes valueOf";}};
+  let vOf = {a: 1, valueOf: function() {throw "oh noes valueOf"}};
   do_check_eq(formatMessage("Broken valueOf ${}", vOf),
-              'Broken valueOf ({a:1, valueOf:(function() {throw "oh noes valueOf";})})');
+              'Broken valueOf ({a:1, valueOf:(function() {throw "oh noes valueOf"})})');
   /* eslint-enable object-shorthand */
 
   // Test edge cases of bad data to formatter:
@@ -560,7 +564,7 @@ add_task(async function log_message_with_params() {
  * Check that we format JS Errors reasonably.
  * This needs to stay a generator to exercise Task.jsm's stack rewriting.
  */
-add_task(function* format_errors() {
+add_task(function *format_errors() {
   let pFormat = new Log.ParameterFormatter();
 
   // Test that subclasses of Error are recognized as errors.

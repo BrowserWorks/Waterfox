@@ -19,7 +19,7 @@
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsTArray.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsICookie2.h"
 #include "nsISupports.h"
 #include "nsIURI.h"
@@ -36,7 +36,7 @@ using dom::MatchPatternOptions;
 // and infrequent updates.
 class AtomSet final : public RefCounted<AtomSet>
 {
-  using ArrayType = AutoTArray<RefPtr<nsAtom>, 1>;
+  using ArrayType = AutoTArray<RefPtr<nsIAtom>, 1>;
 
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(AtomSet)
@@ -45,40 +45,40 @@ public:
 
   explicit AtomSet(const char** aElems);
 
-  MOZ_IMPLICIT AtomSet(std::initializer_list<nsAtom*> aIL);
+  MOZ_IMPLICIT AtomSet(std::initializer_list<nsIAtom*> aIL);
 
   bool Contains(const nsAString& elem) const
   {
-    RefPtr<nsAtom> atom = NS_AtomizeMainThread(elem);
+    nsCOMPtr<nsIAtom> atom = NS_AtomizeMainThread(elem);
     return Contains(atom);
   }
 
   bool Contains(const nsACString& aElem) const
   {
-    RefPtr<nsAtom> atom = NS_Atomize(aElem);
+    nsCOMPtr<nsIAtom> atom = NS_Atomize(aElem);
     return Contains(atom);
   }
 
-  bool Contains(const nsAtom* aAtom) const
+  bool Contains(const nsIAtom* aAtom) const
   {
-    return mElems.ContainsSorted(aAtom);
+    return mElems.BinaryIndexOf(aAtom) != mElems.NoIndex;
   }
 
   bool Intersects(const AtomSet& aOther) const;
 
 
-  void Add(nsAtom* aElem);
-  void Remove(nsAtom* aElem);
+  void Add(nsIAtom* aElem);
+  void Remove(nsIAtom* aElem);
 
   void Add(const nsAString& aElem)
   {
-    RefPtr<nsAtom> atom = NS_AtomizeMainThread(aElem);
+    nsCOMPtr<nsIAtom> atom = NS_AtomizeMainThread(aElem);
     return Add(atom);
   }
 
   void Remove(const nsAString& aElem)
   {
-    RefPtr<nsAtom> atom = NS_AtomizeMainThread(aElem);
+    nsCOMPtr<nsIAtom> atom = NS_AtomizeMainThread(aElem);
     return Remove(atom);
   }
 
@@ -130,7 +130,7 @@ private:
 // A helper class to lazily retrieve, transcode, and atomize certain URI
 // properties the first time they're used, and cache the results, so that they
 // can be used across multiple match operations.
-class URLInfo final
+class MOZ_STACK_CLASS URLInfo final
 {
 public:
   MOZ_IMPLICIT URLInfo(nsIURI* aURI)
@@ -139,26 +139,17 @@ public:
     mHost.SetIsVoid(true);
   }
 
-  URLInfo(nsIURI* aURI, bool aNoRef)
-    : URLInfo(aURI)
-  {
-    if (aNoRef) {
-      mURINoRef = mURI;
-    }
-  }
-
   URLInfo(const URLInfo& aOther)
     : URLInfo(aOther.mURI.get())
   {}
 
   nsIURI* URI() const { return mURI; }
 
-  nsAtom* Scheme() const;
+  nsIAtom* Scheme() const;
   const nsCString& Host() const;
   const nsString& Path() const;
   const nsString& FilePath() const;
   const nsString& Spec() const;
-  const nsCString& CSpec() const;
 
   bool InheritsPrincipal() const;
 
@@ -168,13 +159,12 @@ private:
   nsCOMPtr<nsIURI> mURI;
   mutable nsCOMPtr<nsIURI> mURINoRef;
 
-  mutable RefPtr<nsAtom> mScheme;
+  mutable nsCOMPtr<nsIAtom> mScheme;
   mutable nsCString mHost;
 
-  mutable nsString mPath;
-  mutable nsString mFilePath;
-  mutable nsString mSpec;
-  mutable nsCString mCSpec;
+  mutable nsAutoString mPath;
+  mutable nsAutoString mFilePath;
+  mutable nsAutoString mSpec;
 
   mutable Maybe<bool> mInheritsPrincipal;
 };
@@ -217,15 +207,7 @@ class MatchPattern final : public nsISupports
               const MatchPatternOptions& aOptions,
               ErrorResult& aRv);
 
-  bool Matches(const nsAString& aURL, bool aExplicit, ErrorResult& aRv) const;
-
   bool Matches(const URLInfo& aURL, bool aExplicit = false) const;
-
-  bool Matches(const URLInfo& aURL, bool aExplicit, ErrorResult& aRv) const
-  {
-    return Matches(aURL, aExplicit);
-  }
-
 
   bool MatchesCookie(const CookieInfo& aCookie) const;
 
@@ -302,15 +284,7 @@ class MatchPatternSet final : public nsISupports
               ErrorResult& aRv);
 
 
-  bool Matches(const nsAString& aURL, bool aExplicit, ErrorResult& aRv) const;
-
   bool Matches(const URLInfo& aURL, bool aExplicit = false) const;
-
-  bool Matches(const URLInfo& aURL, bool aExplicit, ErrorResult& aRv) const
-  {
-    return Matches(aURL, aExplicit);
-  }
-
 
   bool MatchesCookie(const CookieInfo& aCookie) const;
 

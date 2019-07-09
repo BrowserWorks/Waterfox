@@ -113,8 +113,9 @@ function nextTest(testframe) {
                                      fragment, 
                                      testframe));
   } else {
+    dataURL = "data:text/html;charset=utf-8," + encodeURIComponent(input);
     testframe.onload = makeTestChecker(input, output, errors);
-    testframe.srcdoc = input;
+    testframe.src = dataURL;
   }
 }
 

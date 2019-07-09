@@ -27,7 +27,7 @@ add_task(async function() {
       let tabState = state.windows[0].tabs[i];
       let tabCurState = curState.windows[0].tabs[i];
       if (tabState.extData) {
-        is(tabCurState.extData.uniq, tabState.extData.uniq,
+        is(tabCurState.extData["uniq"], tabState.extData["uniq"],
            "sanity check that tab has correct extData");
       } else {
         // We aren't expecting there to be any data on extData, but panorama
@@ -87,7 +87,7 @@ add_task(async function() {
   // Wait until the selected tab is restored and all others are pending.
   await Promise.all(Array.map(gBrowser.tabs, tab => {
     return (tab == gBrowser.selectedTab) ?
-      promiseTabRestored(tab) : promiseTabRestoring(tab);
+      promiseTabRestored(tab) : promiseTabRestoring(tab)
   }));
 
   // Kick off the actual tests.

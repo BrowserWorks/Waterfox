@@ -15,9 +15,6 @@
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/TabParent.h"
-#ifdef MOZ_CRASHREPORTER
-#include "nsExceptionHandler.h"
-#endif // #ifdef MOZ_CRASHREPORTER
 #include "nsIWidget.h"
 
 namespace mozilla {
@@ -45,15 +42,15 @@ class GetRectText : public nsAutoCString
 public:
   explicit GetRectText(const LayoutDeviceIntRect& aRect)
   {
-    AssignLiteral("{ x=");
+    Assign("{ x=");
     AppendInt(aRect.x);
-    AppendLiteral(", y=");
+    Append(", y=");
     AppendInt(aRect.y);
-    AppendLiteral(", width=");
+    Append(", width=");
     AppendInt(aRect.width);
-    AppendLiteral(", height=");
+    Append(", height=");
     AppendInt(aRect.height);
-    AppendLiteral(" }");
+    Append(" }");
   }
   virtual ~GetRectText() {}
 };
@@ -64,14 +61,14 @@ public:
   explicit GetWritingModeName(const WritingMode& aWritingMode)
   {
     if (!aWritingMode.IsVertical()) {
-      AssignLiteral("Horizontal");
+      Assign("Horizontal");
       return;
     }
     if (aWritingMode.IsVerticalLR()) {
-      AssignLiteral("Vertical (LTR)");
+      Assign("Vertical (LTR)");
       return;
     }
-    AssignLiteral("Vertical (RTL)");
+    Assign("Vertical (RTL)");
   }
   virtual ~GetWritingModeName() {}
 };
@@ -1113,10 +1110,6 @@ ContentCacheInParent::OnCompositionEvent(const WidgetCompositionEvent& aEvent)
      GetBoolName(mWidgetHasComposition), mPendingCompositionCount,
      mCommitStringByRequest));
 
-#ifdef MOZ_CRASHREPORTER
-  mDispatchedEventMessages.AppendElement(aEvent.mMessage);
-#endif // #ifdef MOZ_CRASHREPORTER
-
   // We must be able to simulate the selection because
   // we might not receive selection updates in time
   if (!mWidgetHasComposition) {
@@ -1193,10 +1186,6 @@ ContentCacheInParent::OnSelectionEvent(
      GetBoolName(aSelectionEvent.mUseNativeLineBreak), mPendingEventsNeedingAck,
      GetBoolName(mWidgetHasComposition), mPendingCompositionCount));
 
-#ifdef MOZ_CRASHREPORTER
-  mDispatchedEventMessages.AppendElement(aSelectionEvent.mMessage);
-#endif // #ifdef MOZ_CRASHREPORTER
-
   mPendingEventsNeedingAck++;
 }
 
@@ -1212,30 +1201,9 @@ ContentCacheInParent::OnEventNeedingAckHandled(nsIWidget* aWidget,
      "aMessage=%s), mPendingEventsNeedingAck=%u, mPendingCompositionCount=%" PRIu8,
      this, aWidget, ToChar(aMessage), mPendingEventsNeedingAck, mPendingCompositionCount));
 
-#ifdef MOZ_CRASHREPORTER
-  mReceivedEventMessages.AppendElement(aMessage);
-#endif // #ifdef MOZ_CRASHREPORTER
-
   if (WidgetCompositionEvent::IsFollowedByCompositionEnd(aMessage) ||
       aMessage == eCompositionCommitRequestHandled) {
-
-#ifdef MOZ_CRASHREPORTER
-    if (mPendingCompositionCount == 1) {
-      RemoveUnnecessaryEventMessageLog();
-    }
-#endif // #ifdef MOZ_CRASHREPORTER
-
-    if (NS_WARN_IF(!mPendingCompositionCount)) {
-#ifdef MOZ_CRASHREPORTER
-      nsPrintfCString info("\nThere is no pending composition but received %s "
-                           "message from the remote child\n\n",
-                           ToChar(aMessage));
-      AppendEventMessageLog(info);
-      CrashReporter::AppendAppNotesToCrashReport(info);
-#endif // #ifdef MOZ_CRASHREPORTER
-      MOZ_CRASH("No pending composition but received unexpected commit event");
-    }
-
+    MOZ_RELEASE_ASSERT(mPendingCompositionCount > 0);
     mPendingCompositionCount--;
     // Forget composition string only when the latest composition string is
     // handled in the remote process because if there is 2 or more pending
@@ -1251,16 +1219,7 @@ ContentCacheInParent::OnEventNeedingAckHandled(nsIWidget* aWidget,
     mPendingCommitLength = 0;
   }
 
-  if (NS_WARN_IF(!mPendingEventsNeedingAck)) {
-#ifdef MOZ_CRASHREPORTER
-    nsPrintfCString info("\nThere is no pending events but received %s "
-                         "message from the remote child\n\n",
-                         ToChar(aMessage));
-    AppendEventMessageLog(info);
-    CrashReporter::AppendAppNotesToCrashReport(info);
-#endif // #ifdef MOZ_CRASHREPORTER
-    MOZ_CRASH("No pending event message but received unexpected event");
-  }
+  MOZ_RELEASE_ASSERT(mPendingEventsNeedingAck > 0);
   if (--mPendingEventsNeedingAck) {
     return;
   }
@@ -1290,11 +1249,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
   // composition events for cleaning up TextComposition and handle the
   // request as it's handled asynchronously.
   if (mPendingCompositionCount > 1) {
-#ifdef MOZ_CRASHREPORTER
-    mRequestIMEToCommitCompositionResults.
-      AppendElement(RequestIMEToCommitCompositionResult::
-                      eToOldCompositionReceived);
-#endif // #ifdef MOZ_CRASHREPORTER
     return false;
   }
 
@@ -1304,11 +1258,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
   // TextComposition.  So, this shouldn't do nothing and TextComposition
   // should handle the request as it's handled asynchronously.
   if (mIsPendingLastCommitEvent) {
-#ifdef MOZ_CRASHREPORTER
-    mRequestIMEToCommitCompositionResults.
-      AppendElement(RequestIMEToCommitCompositionResult::
-                      eToCommittedCompositionReceived);
-#endif // #ifdef MOZ_CRASHREPORTER
     return false;
   }
 
@@ -1317,11 +1266,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
   if (!IMEStateManager::DoesTabParentHaveIMEFocus(&mTabParent)) {
     // Use the latest composition string which may not be handled in the
     // remote process for avoiding data loss.
-#ifdef MOZ_CRASHREPORTER
-    mRequestIMEToCommitCompositionResults.
-      AppendElement(RequestIMEToCommitCompositionResult::
-                      eReceivedAfterTabParentBlur);
-#endif // #ifdef MOZ_CRASHREPORTER
     aCommittedString = mCompositionString;
     return true;
   }
@@ -1332,11 +1276,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
     MOZ_LOG(sContentCacheLog, LogLevel::Warning,
       ("  0x%p RequestToCommitComposition(), "
        "does nothing due to no composition", this));
-#ifdef MOZ_CRASHREPORTER
-    mRequestIMEToCommitCompositionResults.
-      AppendElement(RequestIMEToCommitCompositionResult::
-                      eReceivedButNoTextComposition);
-#endif // #ifdef MOZ_CRASHREPORTER
     return false;
   }
 
@@ -1363,11 +1302,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
     // normally. On the other hand, TextComposition instance in the remote
     // process won't dispatch following composition events and will be
     // destroyed by IMEStateManager::DispatchCompositionEvent().
-#ifdef MOZ_CRASHREPORTER
-    mRequestIMEToCommitCompositionResults.
-      AppendElement(RequestIMEToCommitCompositionResult::
-                      eHandledAsynchronously);
-#endif // #ifdef MOZ_CRASHREPORTER
     return false;
   }
 
@@ -1379,10 +1313,6 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
   // IMEStateManager::DispatchCompositionEvent() at receiving the
   // eCompositionCommit event (Note that TextComposition instance in this
   // process was already destroyed).
-#ifdef MOZ_CRASHREPORTER
-  mRequestIMEToCommitCompositionResults.
-    AppendElement(RequestIMEToCommitCompositionResult::eHandledSynchronously);
-#endif // #ifdef MOZ_CRASHREPORTER
   return true;
 }
 
@@ -1478,97 +1408,6 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
     FlushPendingNotifications(widget);
   }
 }
-
-#ifdef MOZ_CRASHREPORTER
-
-void
-ContentCacheInParent::RemoveUnnecessaryEventMessageLog()
-{
-  bool foundLastCompositionStart = false;
-  for (size_t i = mDispatchedEventMessages.Length(); i > 1; i--) {
-    if (mDispatchedEventMessages[i - 1] != eCompositionStart) {
-      continue;
-    }
-    if (!foundLastCompositionStart) {
-      // Find previous eCompositionStart of the latest eCompositionStart.
-      foundLastCompositionStart = true;
-      continue;
-    }
-    // Remove the messages before the last 2 sets of composition events.
-    mDispatchedEventMessages.RemoveElementsAt(0, i - 1);
-    break;
-  }
-  uint32_t numberOfCompositionCommitRequestHandled = 0;
-  foundLastCompositionStart = false;
-  for (size_t i = mReceivedEventMessages.Length(); i > 1; i--) {
-    if (mReceivedEventMessages[i - 1] == eCompositionCommitRequestHandled) {
-      numberOfCompositionCommitRequestHandled++;
-    }
-    if (mReceivedEventMessages[i - 1] != eCompositionStart) {
-      continue;
-    }
-    if (!foundLastCompositionStart) {
-      // Find previous eCompositionStart of the latest eCompositionStart.
-      foundLastCompositionStart = true;
-      continue;
-    }
-    // Remove the messages before the last 2 sets of composition events.
-    mReceivedEventMessages.RemoveElementsAt(0, i - 1);
-    break;
-  }
-
-  if (!numberOfCompositionCommitRequestHandled) {
-    // If there is no eCompositionCommitRequestHandled in
-    // mReceivedEventMessages, we don't need to store log of
-    // RequestIMEToCommmitComposition().
-    mRequestIMEToCommitCompositionResults.Clear();
-  } else {
-    // We need to keep all reason of eCompositionCommitRequestHandled, which
-    // is sent when mRequestIMEToCommitComposition() returns true.
-    // So, we can discard older log than the first
-    // eCompositionCommitRequestHandled in mReceivedEventMessages.
-    for (size_t i = mRequestIMEToCommitCompositionResults.Length();
-         i > 1; i--) {
-      if (mRequestIMEToCommitCompositionResults[i - 1] ==
-            RequestIMEToCommitCompositionResult::eReceivedAfterTabParentBlur ||
-          mRequestIMEToCommitCompositionResults[i - 1] ==
-            RequestIMEToCommitCompositionResult::eHandledSynchronously) {
-        --numberOfCompositionCommitRequestHandled;
-        if (!numberOfCompositionCommitRequestHandled) {
-          mRequestIMEToCommitCompositionResults.RemoveElementsAt(0, i - 1);
-          break;
-        }
-      }
-    }
-  }
-}
-
-void
-ContentCacheInParent::AppendEventMessageLog(nsACString& aLog) const
-{
-  aLog.AppendLiteral("Dispatched Event Message Log:\n");
-  for (EventMessage message : mDispatchedEventMessages) {
-    aLog.AppendLiteral("  ");
-    aLog.Append(ToChar(message));
-    aLog.AppendLiteral("\n");
-  }
-  aLog.AppendLiteral("\nReceived Event Message Log:\n");
-  for (EventMessage message : mReceivedEventMessages) {
-    aLog.AppendLiteral("  ");
-    aLog.Append(ToChar(message));
-    aLog.AppendLiteral("\n");
-  }
-  aLog.AppendLiteral("\nResult of RequestIMEToCommitComposition():\n");
-  for (RequestIMEToCommitCompositionResult result :
-         mRequestIMEToCommitCompositionResults) {
-    aLog.AppendLiteral("  ");
-    aLog.Append(ToReadableText(result));
-    aLog.AppendLiteral("\n");
-  }
-  aLog.AppendLiteral("\n");
-}
-
-#endif // #ifdef MOZ_CRASHREPORTER
 
 /*****************************************************************************
  * mozilla::ContentCache::TextRectArray

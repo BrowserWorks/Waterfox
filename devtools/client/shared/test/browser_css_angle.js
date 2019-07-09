@@ -48,17 +48,16 @@ function testAngleValidity() {
 }
 
 function testToString(angle, deg, rad, grad, turn) {
-  let { ANGLEUNIT } = angleUtils.CssAngle.prototype;
-  angle.angleUnit = ANGLEUNIT.deg;
+  angle.angleUnit = angleUtils.CssAngle.ANGLEUNIT.deg;
   is(angle.toString(), deg, "toString() with deg type");
 
-  angle.angleUnit = ANGLEUNIT.rad;
+  angle.angleUnit = angleUtils.CssAngle.ANGLEUNIT.rad;
   is(angle.toString(), rad, "toString() with rad type");
 
-  angle.angleUnit = ANGLEUNIT.grad;
+  angle.angleUnit = angleUtils.CssAngle.ANGLEUNIT.grad;
   is(angle.toString(), grad, "toString() with grad type");
 
-  angle.angleUnit = ANGLEUNIT.turn;
+  angle.angleUnit = angleUtils.CssAngle.ANGLEUNIT.turn;
   is(angle.toString(), turn, "toString() with turn type");
 }
 

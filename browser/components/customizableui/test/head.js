@@ -17,12 +17,15 @@ Services.scriptloader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/
 Services.prefs.setBoolPref("browser.uiCustomization.skipSourceNodeCheck", true);
 registerCleanupFunction(() => Services.prefs.clearUserPref("browser.uiCustomization.skipSourceNodeCheck"));
 
+// Remove temporary e10s related new window options in customize ui,
+// they break a lot of tests.
+CustomizableUI.destroyWidget("e10s-button");
+CustomizableUI.removeWidgetFromArea("e10s-button");
+
 var {synthesizeDragStart, synthesizeDrop} = EventUtils;
 
 const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const kTabEventFailureTimeoutInMs = 20000;
-
-const kForceOverflowWidthPx = 300;
 
 function createDummyXULButton(id, label, win = window) {
   let btn = document.createElementNS(kNSXUL, "toolbarbutton");
@@ -115,18 +118,38 @@ function isInDevEdition() {
   return AppConstants.MOZ_DEV_EDITION;
 }
 
+function isInNightly() {
+  return AppConstants.NIGHTLY_BUILD;
+}
+
+function isNotReleaseOrBeta() {
+  return (isInDevEdition() || isInNightly());
+}
+
 function removeNonReleaseButtons(areaPanelPlacements) {
   if (isInDevEdition() && areaPanelPlacements.includes("developer-button")) {
     areaPanelPlacements.splice(areaPanelPlacements.indexOf("developer-button"), 1);
+  }
+
+  if (AppConstants.RELEASE_OR_BETA && !AppConstants.MOZ_DEV_EDITION) {
+    if (areaPanelPlacements.includes("webcompat-reporter-button")) {
+      areaPanelPlacements.splice(areaPanelPlacements.indexOf("webcompat-reporter-button"), 1);
+    }
   }
 }
 
 function removeNonOriginalButtons() {
   CustomizableUI.removeWidgetFromArea("sync-button");
+  if (isNotReleaseOrBeta()) {
+    CustomizableUI.removeWidgetFromArea("webcompat-reporter-button");
+  }
 }
 
 function restoreNonOriginalButtons() {
   CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  if (isNotReleaseOrBeta()) {
+    CustomizableUI.addWidgetToArea("webcompat-reporter-button", CustomizableUI.AREA_PANEL);
+  }
 }
 
 function assertAreaPlacements(areaId, expectedPlacements) {
@@ -185,8 +208,10 @@ function endCustomizing(aWindow = window) {
   if (aWindow.document.documentElement.getAttribute("customizing") != "true") {
     return true;
   }
+  Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", true);
   return new Promise(resolve => {
     function onCustomizationEnds() {
+      Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", false);
       aWindow.gNavToolbox.removeEventListener("aftercustomization", onCustomizationEnds);
       resolve();
     }
@@ -200,9 +225,11 @@ function startCustomizing(aWindow = window) {
   if (aWindow.document.documentElement.getAttribute("customizing") == "true") {
     return null;
   }
+  Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", true);
   return new Promise(resolve => {
     function onCustomizing() {
       aWindow.gNavToolbox.removeEventListener("customizationready", onCustomizing);
+      Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", false);
       resolve();
     }
     aWindow.gNavToolbox.addEventListener("customizationready", onCustomizing);
@@ -278,7 +305,7 @@ function promisePanelHidden(win) {
 }
 
 function promiseOverflowHidden(win) {
-  let panelEl = win.PanelUI.overflowPanel;
+  let panelEl = document.getElementById("widget-overflow");
   return promisePanelElementHidden(win, panelEl);
 }
 
@@ -300,23 +327,18 @@ function isPanelUIOpen() {
   return PanelUI.panel.state == "open" || PanelUI.panel.state == "showing";
 }
 
-function isOverflowOpen() {
-  let panel = document.getElementById("widget-overflow");
-  return panel.state == "open" || panel.state == "showing";
-}
-
 function subviewShown(aSubview) {
   return new Promise((resolve, reject) => {
     let win = aSubview.ownerGlobal;
     let timeoutId = win.setTimeout(() => {
       reject("Subview (" + aSubview.id + ") did not show within 20 seconds.");
     }, 20000);
-    function onViewShown(e) {
-      aSubview.removeEventListener("ViewShown", onViewShown);
+    function onViewShowing(e) {
+      aSubview.removeEventListener("ViewShowing", onViewShowing);
       win.clearTimeout(timeoutId);
       resolve();
     }
-    aSubview.addEventListener("ViewShown", onViewShown);
+    aSubview.addEventListener("ViewShowing", onViewShowing);
   });
 }
 
@@ -502,15 +524,4 @@ function checkContextMenu(aContextMenu, aExpectedEntries, aWindow = window) {
       ok(false, "Exception when checking context menu: " + e);
     }
   }
-}
-
-function waitForOverflowButtonShown(win = window) {
-  let dwu = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-  return BrowserTestUtils.waitForCondition(() => {
-    info("Waiting for overflow button to have non-0 size");
-    let ov = win.document.getElementById("nav-bar-overflow-button");
-    let icon = win.document.getAnonymousElementByAttribute(ov, "class", "toolbarbutton-icon");
-    let bounds = dwu.getBoundsWithoutFlushing(icon);
-    return bounds.width > 0 && bounds.height > 0;
-  });
 }

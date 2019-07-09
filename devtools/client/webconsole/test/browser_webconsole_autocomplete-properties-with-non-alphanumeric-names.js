@@ -14,7 +14,7 @@ add_task(function* () {
   yield loadTab(TEST_URI);
 
   function* autocomplete(term) {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     jsterm.setInputValue(term);
     jsterm.complete(jsterm.COMPLETE_HINT_ONLY, deferred.resolve);

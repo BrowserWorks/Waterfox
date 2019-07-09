@@ -25,15 +25,14 @@ onmessage = function(e) {
   }).then(function() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", blobURL);
-    xhr.onerror = function() {
-      ok(true, "The URL should be done!");
-      SimpleTest.finish();
-    }
-    xhr.onload = function() {
+    try {
+      xhr.send();
       ok(false, "The URL should be done!");
-      SimpleTest.finish();
+    } catch(e) {
+      ok(true, "The URL should be done!");
     }
-    xhr.send();
+
+    SimpleTest.finish();
   });
 }
 

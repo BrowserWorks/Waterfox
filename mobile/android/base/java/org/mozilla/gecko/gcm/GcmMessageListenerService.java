@@ -10,9 +10,7 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
-import org.mozilla.gecko.mma.MmaDelegate;
 import org.mozilla.gecko.push.PushService;
-import org.mozilla.gecko.switchboard.SwitchBoard;
 import org.mozilla.gecko.util.ThreadUtils;
 
 /**
@@ -29,11 +27,6 @@ public class GcmMessageListenerService extends GcmListenerService {
     @Override
     public void onMessageReceived(final String from, final Bundle bundle) {
         Log.d("GeckoPushGCM", "Message received.  Processing on background thread.");
-
-        if (MmaDelegate.handleGcmMessage(this, from, bundle)) {
-            return;
-        }
-
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {

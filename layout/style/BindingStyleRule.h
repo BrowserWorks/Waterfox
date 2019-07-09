@@ -9,7 +9,6 @@
 #include "nscore.h"
 #include "nsStringGlue.h"
 #include "mozilla/css/Rule.h"
-#include "mozilla/NotNull.h"
 
 /**
  * Shared superclass for mozilla::css::StyleRule and mozilla::ServoStyleRule,
@@ -19,7 +18,6 @@
 class nsICSSDeclaration;
 
 namespace mozilla {
-class DeclarationBlock;
 namespace dom {
 class Element;
 }
@@ -56,7 +54,6 @@ public:
                                           uint32_t aSelectorIndex,
                                           const nsAString& aPseudo,
                                           bool* aMatches) = 0;
-  virtual NotNull<DeclarationBlock*> GetDeclarationBlock() const = 0;
 
   // WebIDL API
   // For GetSelectorText/SetSelectorText, we purposefully use a signature that

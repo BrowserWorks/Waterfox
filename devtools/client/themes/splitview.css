@@ -12,14 +12,13 @@
   --sidemenu-selected-arrow-rtl: url(images/item-arrow-rtl.svg);
 }
 
-/* Loading animation */
-@keyframes item-load {
-  0% {
-    transform: scaleY(0) translateY(-100%);
-  }
-  100% {
-    transform: none;
-  }
+.splitview-nav-container .devtools-throbber {
+  display: none;
+  text-align: center;
+}
+
+.loading .splitview-nav-container .devtools-throbber {
+  display: block;
 }
 
 .splitview-nav {
@@ -30,13 +29,11 @@
 }
 
 .splitview-nav > li {
-  animation: item-load .5s var(--animation-curve);
   padding-inline-end: 8px;
   -moz-box-align: center;
   outline: 0;
   vertical-align: bottom;
   border-bottom: 1px solid rgba(128,128,128,0.15);
-  background: inherit;
 }
 
 .placeholder {

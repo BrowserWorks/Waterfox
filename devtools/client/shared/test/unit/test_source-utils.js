@@ -10,6 +10,10 @@
 const { require } = Components.utils.import("resource://devtools/shared/Loader.jsm", {});
 const sourceUtils = require("devtools/client/shared/source-utils");
 
+function run_test() {
+  run_next_test();
+}
+
 const CHROME_URLS = [
   "chrome://foo", "resource://baz", "jar:file:///Users/root"
 ];

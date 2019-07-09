@@ -29,6 +29,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "HttpServer",
                                   "resource://testing-common/httpd.js");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+                                  "resource://testing-common/PlacesTestUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
@@ -55,7 +57,7 @@ const ServerSocket = Components.Constructor(
 const BinaryOutputStream = Components.Constructor(
                                       "@mozilla.org/binaryoutputstream;1",
                                       "nsIBinaryOutputStream",
-                                      "setOutputStream");
+                                      "setOutputStream")
 
 XPCOMUtils.defineLazyServiceGetter(this, "gMIMEService",
                                    "@mozilla.org/mime;1",
@@ -133,7 +135,7 @@ function getTempFile(aLeafName) {
 
   do_register_cleanup(function() {
     try {
-      file.remove(false);
+      file.remove(false)
     } catch (e) {
       if (!(e instanceof Components.Exception &&
             (e.result == Cr.NS_ERROR_FILE_ACCESS_DENIED ||
@@ -291,7 +293,7 @@ function promiseStartLegacyDownload(aSourceUrl, aOptions) {
   }
 
   let fileExtension = null, mimeInfo = null;
-  let match = sourceURI.pathQueryRef.match(/\.([^.\/]+)$/);
+  let match = sourceURI.path.match(/\.([^.\/]+)$/);
   if (match) {
     fileExtension = match[1];
   }

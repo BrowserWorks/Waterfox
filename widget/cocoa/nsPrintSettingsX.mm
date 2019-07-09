@@ -21,6 +21,8 @@ using namespace mozilla;
 NS_IMPL_ISUPPORTS_INHERITED(nsPrintSettingsX, nsPrintSettings, nsPrintSettingsX)
 
 nsPrintSettingsX::nsPrintSettingsX()
+  : mAdjustedPaperWidth{0.0}
+  , mAdjustedPaperHeight{0.0}
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
@@ -52,7 +54,7 @@ nsPrintSettingsX& nsPrintSettingsX::operator=(const nsPrintSettingsX& rhs)
   if (this == &rhs) {
     return *this;
   }
-  
+
   nsPrintSettings::operator=(rhs);
 
   [mPrintInfo release];
@@ -92,7 +94,7 @@ NS_IMETHODIMP nsPrintSettingsX::InitUnwriteableMargin()
 
   return NS_OK;
 
-  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;  
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
 }
 
 NS_IMETHODIMP nsPrintSettingsX::InitAdjustedPaperSize()
@@ -177,7 +179,7 @@ nsresult nsPrintSettingsX::_Clone(nsIPrintSettings **_retval)
 {
   NS_ENSURE_ARG_POINTER(_retval);
   *_retval = nullptr;
-  
+
   nsPrintSettingsX *newSettings = new nsPrintSettingsX(*this);
   if (!newSettings)
     return NS_ERROR_FAILURE;
@@ -328,31 +330,19 @@ nsPrintSettingsX::GetScaling(double *aScaling)
 }
 
 NS_IMETHODIMP
-nsPrintSettingsX::SetToFileName(const nsAString& aToFileName)
+nsPrintSettingsX::SetToFileName(const char16_t *aToFileName)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  if (XRE_IsContentProcess() &&
-      Preferences::GetBool("print.print_via_parent")) {
-    // On content sandbox, NSPrintJobSavingURL will returns error since
-    // sandbox disallows file access.
-    return nsPrintSettings::SetToFileName(aToFileName);
-  }
-
   NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
+  nsString filename = nsDependentString(aToFileName);
 
-  if (!aToFileName.IsEmpty()) {
-    NSURL* jobSavingURL =
-        [NSURL fileURLWithPath: nsCocoaUtils::ToNSString(aToFileName)];
-    if (jobSavingURL) {
-      [printInfoDict setObject: NSPrintSaveJob forKey: NSPrintJobDisposition];
-      [printInfoDict setObject: jobSavingURL forKey: NSPrintJobSavingURL];
-    }
-    mToFileName = aToFileName;
-  } else {
-    mToFileName.Truncate();
+  NSURL* jobSavingURL =
+      [NSURL fileURLWithPath: nsCocoaUtils::ToNSString(filename)];
+  if (jobSavingURL) {
+    [printInfoDict setObject: NSPrintSaveJob forKey: NSPrintJobDisposition];
+    [printInfoDict setObject: jobSavingURL forKey: NSPrintJobSavingURL];
   }
-
   NSPrintInfo* newPrintInfo =
       [[NSPrintInfo alloc] initWithDictionary: printInfoDict];
   if (NS_WARN_IF(!newPrintInfo)) {

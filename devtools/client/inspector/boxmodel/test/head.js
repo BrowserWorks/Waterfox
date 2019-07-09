@@ -37,15 +37,6 @@ function* selectAndHighlightNode(selectorOrNodeFront, inspector) {
 }
 
 /**
- * Is the given node visible in the page (rendered in the frame tree).
- * @param {DOMNode}
- * @return {Boolean}
- */
-function isNodeVisible(node) {
-  return !!node.getClientRects().length;
-}
-
-/**
  * Open the toolbox, with the inspector tool visible, and the computed view
  * sidebar tab selected to display the box model view.
  *
@@ -112,15 +103,15 @@ function waitForMarkupLoaded(inspector) {
 
 function getStyle(testActor, selector, propertyName) {
   return testActor.eval(`
-    document.querySelector("${selector}")
-            .style.getPropertyValue("${propertyName}");
+    content.document.querySelector("${selector}")
+                    .style.getPropertyValue("${propertyName}");
   `);
 }
 
 function setStyle(testActor, selector, propertyName, value) {
   return testActor.eval(`
-    document.querySelector("${selector}")
-            .style.${propertyName} = "${value}";
+    content.document.querySelector("${selector}")
+                    .style.${propertyName} = "${value}";
   `);
 }
 

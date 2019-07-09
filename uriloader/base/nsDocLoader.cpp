@@ -15,7 +15,7 @@
 #include "nsIWebProgressListener2.h"
 
 #include "nsIServiceManager.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 
 #include "nsIURL.h"
 #include "nsCOMPtr.h"
@@ -1162,8 +1162,9 @@ NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsISupports* ctxt,
       mozilla::services::GetStringBundleService();
     if (!sbs)
       return NS_ERROR_FAILURE;
-    nsAutoString msg;
-    nsresult rv = sbs->FormatStatusMessage(aStatus, aStatusArg, msg);
+    nsXPIDLString msg;
+    nsresult rv = sbs->FormatStatusMessage(aStatus, aStatusArg,
+                                           getter_Copies(msg));
     if (NS_FAILED(rv))
       return rv;
 
@@ -1184,7 +1185,7 @@ NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsISupports* ctxt,
       // Put the info at the front of the list
       mStatusInfoList.insertFront(info->mLastStatus);
     }
-    FireOnStatusChange(this, aRequest, aStatus, msg.get());
+    FireOnStatusChange(this, aRequest, aStatus, msg);
   }
   return NS_OK;
 }
@@ -1450,12 +1451,8 @@ NS_IMETHODIMP nsDocLoader::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
       stateFlags |= nsIWebProgressListener::STATE_IS_DOCUMENT;
 
 #if defined(DEBUG)
-      // We only set mDocumentRequest in OnStartRequest(), but its possible
-      // to get a redirect before that for service worker interception.
-      if (mDocumentRequest) {
-        nsCOMPtr<nsIRequest> request(do_QueryInterface(aOldChannel));
-        NS_ASSERTION(request == mDocumentRequest, "Wrong Document Channel");
-      }
+      nsCOMPtr<nsIRequest> request(do_QueryInterface(aOldChannel));
+      NS_ASSERTION(request == mDocumentRequest, "Wrong Document Channel");
 #endif /* DEBUG */
     }
 

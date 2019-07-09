@@ -62,7 +62,7 @@ public:
 
   void Reflow(nsPresContext* aPresContext,
               ReflowOutput& aDesiredSize,
-              const ReflowInput& aReflowInput,
+              const ReflowInput& aReflowState,
               nsReflowStatus& aStatus) override;
 
   // nsIAnonymousContentCreator
@@ -70,7 +70,7 @@ public:
   void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                 uint32_t aFilter) override;
 
-  nsresult AttributeChanged(int32_t aNameSpaceID, nsAtom* aAttribute,
+  nsresult AttributeChanged(int32_t aNameSpaceID, nsIAtom* aAttribute,
                             int32_t aModType) override;
 
   void OnValueChanged();

@@ -34,10 +34,6 @@ public:
 
   bool GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton) override;
 
-  bool GetWRFontInstanceOptions(Maybe<wr::FontInstanceOptions>* aOutOptions,
-                                Maybe<wr::FontInstancePlatformOptions>* aOutPlatformOptions,
-                                std::vector<FontVariation>* aOutVariations) override;
-
 private:
   friend class NativeFontResourceFontconfig;
   friend class UnscaledFontFontconfig;

@@ -116,7 +116,7 @@ var Profiler;
           Components.utils.import("resource://gre/modules/FileUtils.jsm");
 
           var file = Components.classes["@mozilla.org/file/local;1"].
-           createInstance(Components.interfaces.nsIFile);
+           createInstance(Components.interfaces.nsILocalFile);
           file.initWithPath(profileFile);
 
           var ostream = FileUtils.openSafeFileOutputStream(file);

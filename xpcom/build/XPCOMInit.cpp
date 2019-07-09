@@ -76,6 +76,7 @@
 #include "nsStringStream.h"
 extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 
+#include "nsAtomService.h"
 #include "nsAtomTable.h"
 #include "nsISupportsImpl.h"
 
@@ -203,6 +204,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsDouble)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsInterfacePointer)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsConsoleService, Init)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsAtomService)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsTimer)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsBinaryOutputStream)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsBinaryInputStream)
@@ -984,7 +986,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
 #endif
   nsCycleCollector_shutdown(shutdownCollect);
 
-  PROFILER_ADD_MARKER("Shutdown xpcom");
+  profiler_add_marker("Shutdown xpcom");
   // If we are doing any shutdown checks, poison writes.
   if (gShutdownChecks != SCM_NOTHING) {
 #ifdef XP_MACOSX
@@ -1016,7 +1018,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   // JS pseudo-stack's internal reference to the main thread JSContext,
   // duplicating the call in XPCJSContext::~XPCJSContext() in case that
   // never fired.
-  PROFILER_CLEAR_JS_CONTEXT();
+  profiler_clear_js_context();
 
   if (sInitializedJS) {
     // Shut down the JS engine.
@@ -1064,10 +1066,11 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   Omnijar::CleanUp();
 
   HangMonitor::Shutdown();
-  BackgroundHangMonitor::Shutdown();
 
   delete sMainHangMonitor;
   sMainHangMonitor = nullptr;
+
+  BackgroundHangMonitor::Shutdown();
 
   NS_LogTerm();
 

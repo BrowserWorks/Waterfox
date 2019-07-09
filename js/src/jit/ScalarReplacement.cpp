@@ -182,8 +182,8 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
 
         MDefinition* def = consumer->toDefinition();
         switch (def->op()) {
-          case MDefinition::Opcode::StoreFixedSlot:
-          case MDefinition::Opcode::LoadFixedSlot:
+          case MDefinition::Op_StoreFixedSlot:
+          case MDefinition::Op_LoadFixedSlot:
             // Not escaped if it is the first argument.
             if (def->indexOf(*i) == 0)
                 break;
@@ -191,12 +191,12 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
             JitSpewDef(JitSpew_Escape, "is escaped by\n", def);
             return true;
 
-          case MDefinition::Opcode::LoadUnboxedScalar:
-          case MDefinition::Opcode::StoreUnboxedScalar:
-          case MDefinition::Opcode::LoadUnboxedObjectOrNull:
-          case MDefinition::Opcode::StoreUnboxedObjectOrNull:
-          case MDefinition::Opcode::LoadUnboxedString:
-          case MDefinition::Opcode::StoreUnboxedString:
+          case MDefinition::Op_LoadUnboxedScalar:
+          case MDefinition::Op_StoreUnboxedScalar:
+          case MDefinition::Op_LoadUnboxedObjectOrNull:
+          case MDefinition::Op_StoreUnboxedObjectOrNull:
+          case MDefinition::Op_LoadUnboxedString:
+          case MDefinition::Op_StoreUnboxedString:
             // Not escaped if it is the first argument.
             if (def->indexOf(*i) != 0) {
                 JitSpewDef(JitSpew_Escape, "is escaped by\n", def);
@@ -210,10 +210,10 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
 
             break;
 
-          case MDefinition::Opcode::PostWriteBarrier:
+          case MDefinition::Op_PostWriteBarrier:
             break;
 
-          case MDefinition::Opcode::Slots: {
+          case MDefinition::Op_Slots: {
 #ifdef DEBUG
             // Assert that MSlots are only used by MStoreSlot and MLoadSlot.
             MSlots* ins = def->toSlots();
@@ -222,14 +222,14 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
                 // toDefinition should normally never fail, since they don't get
                 // captured by resume points.
                 MDefinition* def = (*i)->consumer()->toDefinition();
-                MOZ_ASSERT(def->op() == MDefinition::Opcode::StoreSlot ||
-                           def->op() == MDefinition::Opcode::LoadSlot);
+                MOZ_ASSERT(def->op() == MDefinition::Op_StoreSlot ||
+                           def->op() == MDefinition::Op_LoadSlot);
             }
 #endif
             break;
           }
 
-          case MDefinition::Opcode::GuardShape: {
+          case MDefinition::Op_GuardShape: {
             MGuardShape* guard = def->toGuardShape();
             MOZ_ASSERT(!ins->isGuardShape());
             if (obj->maybeShape() != guard->shape()) {
@@ -243,8 +243,8 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
             break;
           }
 
-          case MDefinition::Opcode::Lambda:
-          case MDefinition::Opcode::LambdaArrow: {
+          case MDefinition::Op_Lambda:
+          case MDefinition::Op_LambdaArrow: {
             if (IsLambdaEscaped(def->toInstruction(), obj)) {
                 JitSpewDef(JitSpew_Escape, "is indirectly escaped by\n", def);
                 return true;
@@ -254,7 +254,7 @@ IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
 
           // This instruction is a no-op used to verify that scalar replacement
           // is working as expected in jit-test.
-          case MDefinition::Opcode::AssertRecoveredOnBailout:
+          case MDefinition::Op_AssertRecoveredOnBailout:
             break;
 
           default:
@@ -826,7 +826,7 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
         MDefinition* access = (*i)->consumer()->toDefinition();
 
         switch (access->op()) {
-          case MDefinition::Opcode::LoadElement: {
+          case MDefinition::Op_LoadElement: {
             MOZ_ASSERT(access->toLoadElement()->elements() == def);
 
             // If we need hole checks, then the array cannot be escaped
@@ -856,7 +856,7 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
             break;
           }
 
-          case MDefinition::Opcode::StoreElement: {
+          case MDefinition::Op_StoreElement: {
             MOZ_ASSERT(access->toStoreElement()->elements() == def);
 
             // If we need hole checks, then the array cannot be escaped
@@ -890,15 +890,15 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
             break;
           }
 
-          case MDefinition::Opcode::SetInitializedLength:
+          case MDefinition::Op_SetInitializedLength:
             MOZ_ASSERT(access->toSetInitializedLength()->elements() == def);
             break;
 
-          case MDefinition::Opcode::InitializedLength:
+          case MDefinition::Op_InitializedLength:
             MOZ_ASSERT(access->toInitializedLength()->elements() == def);
             break;
 
-          case MDefinition::Opcode::ArrayLength:
+          case MDefinition::Op_ArrayLength:
             MOZ_ASSERT(access->toArrayLength()->elements() == def);
             break;
 
@@ -932,6 +932,11 @@ IsArrayEscaped(MInstruction* ins)
         return true;
     }
 
+    if (obj->is<UnboxedArrayObject>()) {
+        JitSpew(JitSpew_Escape, "Template object is an unboxed plain object.");
+        return true;
+    }
+
     if (length >= 16) {
         JitSpew(JitSpew_Escape, "Array has too many elements");
         return true;
@@ -953,7 +958,7 @@ IsArrayEscaped(MInstruction* ins)
 
         MDefinition* def = consumer->toDefinition();
         switch (def->op()) {
-          case MDefinition::Opcode::Elements: {
+          case MDefinition::Op_Elements: {
             MElements *elem = def->toElements();
             MOZ_ASSERT(elem->object() == ins);
             if (IsElementEscaped(elem, length)) {
@@ -966,7 +971,7 @@ IsArrayEscaped(MInstruction* ins)
 
           // This instruction is a no-op used to verify that scalar replacement
           // is working as expected in jit-test.
-          case MDefinition::Opcode::AssertRecoveredOnBailout:
+          case MDefinition::Op_AssertRecoveredOnBailout:
             break;
 
           default:

@@ -3,15 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-loader.lazyRequireGetter(this, "CSS_PROPERTIES_DB",
-  "devtools/shared/css/properties-db", true);
-
-loader.lazyRequireGetter(this, "cssColors",
-  "devtools/shared/css/color-db", true);
-
 const { FrontClassWithSpec, Front } = require("devtools/shared/protocol");
 const { cssPropertiesSpec } = require("devtools/shared/specs/css-properties");
 const { Task } = require("devtools/shared/task");
+const { CSS_PROPERTIES_DB } = require("devtools/shared/css/properties-db");
+const { cssColors } = require("devtools/shared/css/color-db");
 
 /**
  * Build up a regular expression that matches a CSS variable token. This is an
@@ -153,8 +149,7 @@ CssProperties.prototype = {
    * @return {Boolean}
    */
   isInherited(property) {
-    return (this.properties[property] && this.properties[property].isInherited) ||
-            isCssVariable(property);
+    return this.properties[property] && this.properties[property].isInherited;
   },
 
   /**
@@ -284,10 +279,7 @@ function getClientCssProperties() {
  * @return {Object} The normalized CSS database.
  */
 function normalizeCssData(db) {
-  // If there is a `from` attributes, it means that it comes from RDP
-  // and it is not the client CSS_PROPERTIES_DB object.
-  // (prevent comparing to CSS_PROPERTIES_DB to avoid loading client database)
-  if (typeof (db.from) == "string") {
+  if (db !== CSS_PROPERTIES_DB) {
     // Firefox 49's getCSSDatabase() just returned the properties object, but
     // now it returns an object with multiple types of CSS information.
     if (!db.properties) {
@@ -297,36 +289,29 @@ function normalizeCssData(db) {
     let missingSupports = !db.properties.color.supports;
     let missingValues = !db.properties.color.values;
     let missingSubproperties = !db.properties.background.subproperties;
-    let missingIsInherited = !db.properties.font.isInherited;
 
-    let missingSomething = missingSupports || missingValues || missingSubproperties ||
-      missingIsInherited;
+    for (let name in db.properties) {
+      // Skip the current property if we can't find it in CSS_PROPERTIES_DB.
+      if (typeof CSS_PROPERTIES_DB.properties[name] !== "object") {
+        continue;
+      }
 
-    if (missingSomething) {
-      for (let name in db.properties) {
-        // Skip the current property if we can't find it in CSS_PROPERTIES_DB.
-        if (typeof CSS_PROPERTIES_DB.properties[name] !== "object") {
-          continue;
-        }
-
-        // Add "supports" information to the css properties if it's missing.
-        if (missingSupports) {
-          db.properties[name].supports = CSS_PROPERTIES_DB.properties[name].supports;
-        }
-        // Add "values" information to the css properties if it's missing.
-        if (missingValues) {
-          db.properties[name].values = CSS_PROPERTIES_DB.properties[name].values;
-        }
-        // Add "subproperties" information to the css properties if it's missing.
-        if (missingSubproperties) {
-          db.properties[name].subproperties =
-            CSS_PROPERTIES_DB.properties[name].subproperties;
-        }
-        // Add "isInherited" information to the css properties if it's missing.
-        if (missingIsInherited) {
-          db.properties[name].isInherited =
-            CSS_PROPERTIES_DB.properties[name].isInherited;
-        }
+      // Add "supports" information to the css properties if it's missing.
+      if (missingSupports) {
+        db.properties[name].supports = CSS_PROPERTIES_DB.properties[name].supports;
+      }
+      // Add "values" information to the css properties if it's missing.
+      if (missingValues) {
+        db.properties[name].values = CSS_PROPERTIES_DB.properties[name].values;
+      }
+      // Add "subproperties" information to the css properties if it's missing.
+      if (missingSubproperties) {
+        db.properties[name].subproperties =
+          CSS_PROPERTIES_DB.properties[name].subproperties;
+      }
+      // Add "isInherited" information to the css properties if it's missing.
+      if (db.properties.font.isInherited) {
+        db.properties[name].isInherited = CSS_PROPERTIES_DB.properties[name].isInherited;
       }
     }
   }
@@ -365,6 +350,5 @@ module.exports = {
   CssProperties,
   getCssProperties,
   getClientCssProperties,
-  initCssProperties,
-  isCssVariable,
+  initCssProperties
 };

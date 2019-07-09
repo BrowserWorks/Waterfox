@@ -67,7 +67,7 @@ function test() {
 
     let viewSource = browserconsole.viewSource;
     let URL = null;
-    let clickPromise = defer();
+    let clickPromise = promise.defer();
     browserconsole.viewSourceInDebugger = (sourceURL) => {
       info("browserconsole.viewSourceInDebugger() was invoked: " + sourceURL);
       URL = sourceURL;

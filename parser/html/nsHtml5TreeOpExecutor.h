@@ -5,7 +5,7 @@
 #ifndef nsHtml5TreeOpExecutor_h
 #define nsHtml5TreeOpExecutor_h
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsTraceRefcnt.h"
 #include "nsHtml5TreeOperation.h"
 #include "nsHtml5SpeculativeLoad.h"
@@ -258,7 +258,6 @@ class nsHtml5TreeOpExecutor final : public nsHtml5DocumentBuilder,
 
     void PreloadStyle(const nsAString& aURL, const nsAString& aCharset,
                       const nsAString& aCrossOrigin,
-                      const nsAString& aReferrerPolicy,
                       const nsAString& aIntegrity);
 
     void PreloadImage(const nsAString& aURL,

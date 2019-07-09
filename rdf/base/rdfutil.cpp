@@ -29,6 +29,7 @@
 #include "nsIURL.h"
 #include "nsRDFCID.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsUnicharUtils.h"
 #include "rdfutil.h"
 #include "prtime.h"

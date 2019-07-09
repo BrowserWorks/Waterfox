@@ -2,11 +2,10 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-description: >
-    `yield` is a valid expression within generator function bodies.
-es6id: 14.4
-features: [generators]
----*/
+  description: >
+      `yield` is a valid expression within generator function bodies.
+  es6id: 14.4
+ ---*/
 
 var result, iter;
 function* g1() { (yield 1) }

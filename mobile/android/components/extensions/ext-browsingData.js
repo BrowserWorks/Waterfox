@@ -4,26 +4,25 @@
 
 Cu.import("resource://gre/modules/Task.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Sanitizer",
-                                  "resource://gre/modules/Sanitizer.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SharedPreferences",
                                   "resource://gre/modules/SharedPreferences.jsm");
 
-const clearCache = () => {
-  // Clearing the cache does not support timestamps.
-  return Sanitizer.clearItem("cache");
-};
+let clearCookies = async function(options) {
+  if (options.originTypes &&
+      (options.originTypes.protectedWeb || options.originTypes.extension)) {
+    return Promise.reject(
+      {message: "Firefox does not support protectedWeb or extension as originTypes."});
+  }
 
-const clearCookies = async function(options) {
   let cookieMgr = Services.cookies;
   let yieldCounter = 0;
   const YIELD_PERIOD = 10;
 
   if (options.since) {
     // Convert it to microseconds
-    let since =  options.since * 1000;
+    let since =  options.since*1000;
     // Iterate through the cookies and delete any created after our cutoff.
     let cookiesEnum = cookieMgr.enumerator;
     while (cookiesEnum.hasMoreElements()) {
@@ -45,53 +44,8 @@ const clearCookies = async function(options) {
   }
 };
 
-const clearDownloads = options => {
-  return Sanitizer.clearItem("downloadHistory", options.since);
-};
-
-const clearFormData = options => {
-  return Sanitizer.clearItem("formdata", options.since);
-};
-
-const doRemoval = (options, dataToRemove, extension) => {
-  if (options.originTypes &&
-      (options.originTypes.protectedWeb || options.originTypes.extension)) {
-    return Promise.reject(
-      {message: "Firefox does not support protectedWeb or extension as originTypes."});
-  }
-
-  let removalPromises = [];
-  let invalidDataTypes = [];
-  for (let dataType in dataToRemove) {
-    if (dataToRemove[dataType]) {
-      switch (dataType) {
-        case "cache":
-          removalPromises.push(clearCache());
-          break;
-        case "cookies":
-          removalPromises.push(clearCookies(options));
-          break;
-        case "downloads":
-          removalPromises.push(clearDownloads(options));
-          break;
-        case "formData":
-          removalPromises.push(clearFormData(options));
-          break;
-        default:
-          invalidDataTypes.push(dataType);
-      }
-    }
-  }
-  if (extension && invalidDataTypes.length) {
-    extension.logger.warn(
-      `Firefox does not support dataTypes: ${invalidDataTypes.toString()}.`);
-  }
-  return Promise.all(removalPromises);
-};
-
 this.browsingData = class extends ExtensionAPI {
   getAPI(context) {
-    let {extension} = context;
     return {
       browsingData: {
         settings() {
@@ -110,7 +64,7 @@ this.browsingData = class extends ExtensionAPI {
           for (let item of PREF_LIST) {
             // The property formData needs a different case than the
             // formdata preference.
-            switch (item) {
+            switch(item){
               case "formdata":
                 name = "formData";
                 break;
@@ -132,20 +86,8 @@ this.browsingData = class extends ExtensionAPI {
           // so, since value is given 0, which means Everything
           return Promise.resolve({options: {since: 0}, dataToRemove, dataRemovalPermitted});
         },
-        remove(options, dataToRemove) {
-          return doRemoval(options, dataToRemove, extension);
-        },
-        removeCache(options) {
-          return doRemoval(options, {cache: true});
-        },
         removeCookies(options) {
-          return doRemoval(options, {cookies: true});
-        },
-        removeDownloads(options) {
-          return doRemoval(options, {downloads: true});
-        },
-        removeFormData(options) {
-          return doRemoval(options, {formData: true});
+          return clearCookies(options);
         },
       },
     };

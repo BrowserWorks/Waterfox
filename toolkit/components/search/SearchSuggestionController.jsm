@@ -244,11 +244,7 @@ this.SearchSuggestionController.prototype = {
     // or remote results for existing searches.
     this._request.addEventListener("abort", (evt) => deferredResponse.reject("HTTP request aborted"));
 
-    if (submission.postData) {
-      this._request.sendInputStream(submission.postData);
-    } else {
-      this._request.send();
-    }
+    this._request.send(submission.postData);
 
     return deferredResponse;
   },

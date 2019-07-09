@@ -118,7 +118,7 @@ nsresult nsKeygenThread::ConsumeResult(
 
 static void nsKeygenThreadRunner(void *arg)
 {
-  AUTO_PROFILER_REGISTER_THREAD("Keygen");
+  AutoProfilerRegisterThread registerThread("Keygen");
   NS_SetCurrentThreadName("Keygen");
   nsKeygenThread *self = static_cast<nsKeygenThread *>(arg);
   self->Run();

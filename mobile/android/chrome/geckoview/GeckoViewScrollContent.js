@@ -6,11 +6,9 @@
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/GeckoViewContentModule.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewScrollContent"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewScrollContent");
 
 function debug(aMsg) {
   // dump(aMsg);
@@ -36,11 +34,9 @@ class GeckoViewScrollContent extends GeckoViewContentModule {
 
     switch (aEvent.type) {
       case "scroll":
-        this.eventDispatcher.sendRequest({
-          type: "GeckoView:ScrollChanged",
-          scrollX: Math.round(content.scrollX),
-          scrollY: Math.round(content.scrollY)
-        });
+        sendAsyncMessage("GeckoView:ScrollChanged",
+                         { scrollX: Math.round(content.scrollX),
+                           scrollY: Math.round(content.scrollY) });
         break;
     }
   }

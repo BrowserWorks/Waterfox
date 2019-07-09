@@ -45,7 +45,7 @@ function reloadStorage(aInputPathName, aInputFileName)
   var inputFile = null;
   if (aInputFileName) {
       inputFile  = Cc["@mozilla.org/file/local;1"].
-                       createInstance(Ci.nsIFile);
+                       createInstance(Ci.nsILocalFile);
       inputFile.initWithPath(aInputPathName);
       inputFile.append(aInputFileName);
   }
@@ -492,7 +492,7 @@ storage.addLogin(testuser1);
 checkStorageData(storage, [], [testuser1]);
 
 // check the file exists
-var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
 file.initWithPath(OS.Constants.Path.profileDir);
 file.append(filename);
 do_check_true(file.exists());

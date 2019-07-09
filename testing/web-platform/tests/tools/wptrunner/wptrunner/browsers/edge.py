@@ -55,8 +55,8 @@ class EdgeBrowser(Browser):
         print self.server.url
         self.server.start()
 
-    def stop(self, force=False):
-        self.server.stop(force=force)
+    def stop(self):
+        self.server.stop()
 
     def pid(self):
         return self.server.pid

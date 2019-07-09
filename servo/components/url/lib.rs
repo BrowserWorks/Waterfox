@@ -7,8 +7,8 @@
 #![crate_name = "servo_url"]
 #![crate_type = "rlib"]
 
-#[macro_use] extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
+#[macro_use] extern crate heapsize;
+#[macro_use] extern crate heapsize_derive;
 #[macro_use] extern crate serde;
 extern crate servo_rand;
 extern crate url;
@@ -28,11 +28,8 @@ use url::{Url, Position};
 
 pub use url::Host;
 
-#[derive(Clone, Eq, Hash, MallocSizeOf, Ord, PartialEq, PartialOrd)]
-pub struct ServoUrl(
-    #[ignore_malloc_size_of = "Arc"]
-    Arc<Url>
-);
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, HeapSizeOf)]
+pub struct ServoUrl(Arc<Url>);
 
 impl ServoUrl {
     pub fn from_url(url: Url) -> Self {
@@ -86,10 +83,6 @@ impl ServoUrl {
     pub fn is_secure_scheme(&self) -> bool {
         let scheme = self.scheme();
         scheme == "https" || scheme == "wss"
-    }
-
-    pub fn is_chrome(&self) -> bool {
-        self.scheme() == "chrome"
     }
 
     pub fn as_str(&self) -> &str {

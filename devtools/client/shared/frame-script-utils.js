@@ -7,6 +7,7 @@
 "use strict";
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 const {require, loader} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
 
 loader.lazyGetter(this, "nsIProfilerModule", () => {
@@ -50,32 +51,32 @@ addMessageListener("devtools:test:console", function ({ data }) {
  *
  */
 function promiseXHR(data) {
-  return new Promise((resolve, reject) => {
-    let xhr = new content.XMLHttpRequest();
+  let xhr = new content.XMLHttpRequest();
 
-    let method = data.method || "GET";
-    let url = data.url || content.location.href;
-    let body = data.body || "";
+  let method = data.method || "GET";
+  let url = data.url || content.location.href;
+  let body = data.body || "";
 
-    if (data.nocache) {
-      url += "?devtools-cachebust=" + Math.random();
-    }
+  if (data.nocache) {
+    url += "?devtools-cachebust=" + Math.random();
+  }
 
-    xhr.addEventListener("loadend", function (event) {
-      resolve({ status: xhr.status, response: xhr.response });
-    }, {once: true});
+  let deferred = defer();
+  xhr.addEventListener("loadend", function (event) {
+    deferred.resolve({ status: xhr.status, response: xhr.response });
+  }, {once: true});
 
-    xhr.open(method, url);
+  xhr.open(method, url);
 
-    // Set request headers
-    if (data.requestHeaders) {
-      data.requestHeaders.forEach(header => {
-        xhr.setRequestHeader(header.name, header.value);
-      });
-    }
+  // Set request headers
+  if (data.requestHeaders) {
+    data.requestHeaders.forEach(header => {
+      xhr.setRequestHeader(header.name, header.value);
+    });
+  }
 
-    xhr.send(body);
-  });
+  xhr.send(body);
+  return deferred.promise;
 }
 
 /**

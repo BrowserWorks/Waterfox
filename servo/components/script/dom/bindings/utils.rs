@@ -13,6 +13,7 @@ use dom::bindings::inheritance::TopTypeId;
 use dom::bindings::str::DOMString;
 use dom::bindings::trace::trace_object;
 use dom::windowproxy;
+use heapsize::HeapSizeOf;
 use js;
 use js::JS_CALLEE;
 use js::glue::{CallJitGetterOp, CallJitMethodOp, CallJitSetterOp, IsWrapper};
@@ -31,7 +32,6 @@ use js::jsapi::{JS_StringHasLatin1Chars, MutableHandleValue, ObjectOpResult};
 use js::jsval::{JSVal, UndefinedValue};
 use js::rust::{GCMethods, ToString, get_object_class, is_dom_class};
 use libc;
-use malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
 use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::ptr;
@@ -40,14 +40,14 @@ use std::slice;
 /// Proxy handler for a WindowProxy.
 pub struct WindowProxyHandler(pub *const libc::c_void);
 
-impl MallocSizeOf for WindowProxyHandler {
-    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+impl HeapSizeOf for WindowProxyHandler {
+    fn heap_size_of_children(&self) -> usize {
         // FIXME(#6907) this is a pointer to memory allocated by `new` in NewProxyHandler in rust-mozjs.
         0
     }
 }
 
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 /// Static data associated with a global object.
 pub struct GlobalStaticData {
     /// The WindowProxy proxy handler for this global.
@@ -79,7 +79,7 @@ pub const JSCLASS_DOM_GLOBAL: u32 = js::JSCLASS_USERBIT1;
 
 
 /// The struct that holds inheritance information for DOM object reflectors.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct DOMClass {
     /// A list of interfaces that this object implements, in order of decreasing
     /// derivedness.
@@ -88,8 +88,8 @@ pub struct DOMClass {
     /// The type ID of that interface.
     pub type_id: TopTypeId,
 
-    /// The MallocSizeOf function wrapper for that interface.
-    pub malloc_size_of: unsafe fn(ops: &mut MallocSizeOfOps, *const c_void) -> usize,
+    /// The HeapSizeOf function wrapper for that interface.
+    pub heap_size_of: unsafe fn(*const c_void) -> usize,
 
     /// The `Globals` flag for this global interface, if any.
     pub global: InterfaceObjectMap::Globals,
@@ -194,7 +194,7 @@ pub unsafe fn find_enum_value<'a, T>(cx: *mut JSContext,
 }
 
 /// Returns wether `obj` is a platform object
-/// <https://heycam.github.io/webidl/#dfn-platform-object>
+/// https://heycam.github.io/webidl/#dfn-platform-object
 pub fn is_platform_object(obj: *mut JSObject) -> bool {
     unsafe {
         // Fast-path the common case
@@ -414,22 +414,18 @@ unsafe fn generic_call(cx: *mut JSContext,
                                               -> bool)
                        -> bool {
     let args = CallArgs::from_vp(vp, argc);
-
-    let info = RUST_FUNCTION_VALUE_TO_JITINFO(JS_CALLEE(cx, vp));
-    let proto_id = (*info).protoID;
-
     let thisobj = args.thisv();
     if !thisobj.get().is_null_or_undefined() && !thisobj.get().is_object() {
-        throw_invalid_this(cx, proto_id);
         return false;
     }
-
     let obj = if thisobj.get().is_object() {
         thisobj.get().to_object()
     } else {
         GetGlobalForObjectCrossCompartment(JS_CALLEE(cx, vp).to_object_or_null())
     };
     rooted!(in(cx) let obj = obj);
+    let info = RUST_FUNCTION_VALUE_TO_JITINFO(JS_CALLEE(cx, vp));
+    let proto_id = (*info).protoID;
     let depth = (*info).depth;
     let proto_check = |class: &'static DOMClass| {
         class.interface_chain[depth as usize] as u16 == proto_id

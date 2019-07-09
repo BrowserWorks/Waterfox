@@ -143,9 +143,7 @@
                   { "$ref": "ImageDataType" },
                   {
                     "type": "object",
-                    "patternProperties": {
-                      "^[1-9]\\d*$": {"$ref": "ImageDataType"}
-                    }
+                    "additionalProperties": {"$ref": "ImageDataType"}
                   }
                 ],
                 "optional": true,
@@ -156,9 +154,7 @@
                   { "type": "string" },
                   {
                     "type": "object",
-                    "patternProperties": {
-                      "^[1-9]\\d*$": { "type": "string" }
-                    }
+                    "additionalProperties": {"type": "string"}
                   }
                 ],
                 "optional": true,
@@ -220,14 +216,6 @@
             ]
           }
         ]
-      },
-      {
-        "name": "openPopup",
-        "type": "function",
-        "requireUserInput": true,
-        "description": "Opens the extension page action in the active window.",
-        "async": true,
-        "parameters": []
       }
     ],
     "events": [

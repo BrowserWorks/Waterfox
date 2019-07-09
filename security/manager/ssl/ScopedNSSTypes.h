@@ -26,7 +26,6 @@
 #include "pkcs12.h"
 #include "prerror.h"
 #include "prio.h"
-#include "prmem.h"
 #include "sechash.h"
 #include "secmod.h"
 #include "secpkcs7.h"
@@ -109,6 +108,7 @@ class Digest
 {
 public:
   Digest()
+  : mItemBuf()
   {
     mItem.type = siBuffer;
     mItem.data = mItemBuf;
@@ -328,9 +328,9 @@ MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniquePORTString,
 MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniquePRFileDesc,
                                       PRFileDesc,
                                       PR_Close)
-MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniquePRString,
+MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniquePRLibraryName,
                                       char,
-                                      PR_Free)
+                                      PR_FreeLibraryName)
 
 MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniqueSECAlgorithmID,
                                       SECAlgorithmID,

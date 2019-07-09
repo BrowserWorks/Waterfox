@@ -48,9 +48,9 @@ struct MathValueRecord
   }
 
   protected:
-  SHORT			value;		/* The X or Y value in design units */
+  HBINT16			value;		/* The X or Y value in design units */
   OffsetTo<Device>	deviceTable;	/* Offset to the device table - from the
-					 * beginning of parent table. May be NULL.
+					 * beginning of parent table. May be nullptr.
 					 * Suggested format for device table is 1. */
 
   public:
@@ -154,10 +154,10 @@ struct MathConstants
   }
 
   protected:
-  SHORT percentScaleDown[2];
-  USHORT minHeight[2];
+  HBINT16 percentScaleDown[2];
+  HBUINT16 minHeight[2];
   MathValueRecord mathValueRecords[51];
-  SHORT radicalDegreeBottomRaisePercent;
+  HBINT16 radicalDegreeBottomRaisePercent;
 
   public:
   DEFINE_SIZE_STATIC (214);
@@ -279,7 +279,7 @@ struct MathKern
   }
 
   protected:
-  USHORT	  heightCount;
+  HBUINT16	  heightCount;
   MathValueRecord mathValueRecords[VAR]; /* Array of correction heights at
 					  * which the kern value changes.
 					  * Sorted by the height value in
@@ -319,7 +319,7 @@ struct MathKernInfoRecord
 
   protected:
   /* Offset to MathKern table for each corner -
-   * from the beginning of MathKernInfo table. May be NULL. */
+   * from the beginning of MathKernInfo table. May be nullptr. */
   OffsetTo<MathKern> mathKern[4];
 
   public:
@@ -402,7 +402,7 @@ struct MathGlyphInfo
    * from the beginning of MathGlyphInfo table. When the left or right glyph of
    * a box is an extended shape variant, the (ink) box (and not the default
    * position defined by values in MathConstants table) should be used for
-   * vertical positioning purposes. May be NULL.. */
+   * vertical positioning purposes. May be nullptr.. */
   OffsetTo<Coverage> extendedShapeCoverage;
 
    /* Offset to MathKernInfo table -
@@ -425,7 +425,7 @@ struct MathGlyphVariantRecord
 
   protected:
   GlyphID variantGlyph;       /* Glyph ID for the variant. */
-  USHORT  advanceMeasurement; /* Advance width/height, in design units, of the
+  HBUINT16  advanceMeasurement; /* Advance width/height, in design units, of the
 			       * variant, in the direction of requested
 			       * glyph extension. */
 
@@ -433,7 +433,7 @@ struct MathGlyphVariantRecord
   DEFINE_SIZE_STATIC (4);
 };
 
-struct PartFlags : USHORT
+struct PartFlags : HBUINT16
 {
   enum Flags {
     Extender	= 0x0001u, /* If set, the part can be skipped or repeated. */
@@ -463,8 +463,8 @@ struct MathGlyphPartRecord
     out.end_connector_length	= font->em_scale (endConnectorLength, scale);
     out.full_advance		= font->em_scale (fullAdvance, scale);
 
-    ASSERT_STATIC ((unsigned int) HB_MATH_GLYPH_PART_FLAG_EXTENDER ==
-		   (unsigned int) PartFlags::Extender);
+    static_assert ((unsigned int) HB_MATH_GLYPH_PART_FLAG_EXTENDER ==
+		   (unsigned int) PartFlags::Extender, "");
 
     out.flags = (hb_ot_math_glyph_part_flags_t)
 		(unsigned int)
@@ -473,15 +473,15 @@ struct MathGlyphPartRecord
 
   protected:
   GlyphID   glyph;		  /* Glyph ID for the part. */
-  USHORT    startConnectorLength; /* Advance width/ height of the straight bar
+  HBUINT16    startConnectorLength; /* Advance width/ height of the straight bar
 				   * connector material, in design units, is at
 				   * the beginning of the glyph, in the
 				   * direction of the extension. */
-  USHORT    endConnectorLength;   /* Advance width/ height of the straight bar
+  HBUINT16    endConnectorLength;   /* Advance width/ height of the straight bar
 				   * connector material, in design units, is at
 				   * the end of the glyph, in the direction of
 				   * the extension. */
-  USHORT    fullAdvance;	  /* Full advance width/height for this part,
+  HBUINT16    fullAdvance;	  /* Full advance width/height for this part,
 				   * in the direction of the extension.
 				   * In design units. */
   PartFlags partFlags;		  /* Part qualifiers. */
@@ -571,7 +571,7 @@ struct MathGlyphConstruction
 
   protected:
   /* Offset to MathGlyphAssembly table for this shape - from the beginning of
-     MathGlyphConstruction table. May be NULL. */
+     MathGlyphConstruction table. May be nullptr. */
   OffsetTo<MathGlyphAssembly>	  glyphAssembly;
 
   /* MathGlyphVariantRecords for alternative variants of the glyphs. */
@@ -651,7 +651,7 @@ struct MathVariants
   }
 
   protected:
-  USHORT	     minConnectorOverlap; /* Minimum overlap of connecting
+  HBUINT16	     minConnectorOverlap; /* Minimum overlap of connecting
 					   * glyphs during glyph construction,
 					   * in design units. */
   OffsetTo<Coverage> vertGlyphCoverage;   /* Offset to Coverage table -
@@ -660,10 +660,10 @@ struct MathVariants
   OffsetTo<Coverage> horizGlyphCoverage;  /* Offset to Coverage table -
 					   * from the beginning of MathVariants
 					   * table. */
-  USHORT	     vertGlyphCount;      /* Number of glyphs for which
+  HBUINT16	     vertGlyphCount;      /* Number of glyphs for which
 					   * information is provided for
 					   * vertically growing variants. */
-  USHORT	     horizGlyphCount;     /* Number of glyphs for which
+  HBUINT16	     horizGlyphCount;     /* Number of glyphs for which
 					   * information is provided for
 					   * horizontally growing variants. */
 

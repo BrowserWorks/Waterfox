@@ -18,7 +18,7 @@
 #include "nsCOMPtr.h"
 #include "nsIThreadInternal.h"
 
-class nsIEventTarget;
+class nsIThread;
 class nsITimer;
 
 namespace mozilla {
@@ -31,7 +31,7 @@ class MessagePump : public base::MessagePumpDefault
   friend class DoWorkRunnable;
 
 public:
-  explicit MessagePump(nsIEventTarget* aEventTarget);
+  explicit MessagePump(nsIThread* aThread);
 
   // From base::MessagePump.
   virtual void
@@ -60,9 +60,9 @@ private:
   void DoDelayedWork(base::MessagePump::Delegate* aDelegate);
 
 protected:
-  nsIEventTarget* mEventTarget;
+  nsIThread* mThread;
 
-  // mDelayedWorkTimer and mEventTarget are set in Run() by this class or its
+  // mDelayedWorkTimer and mThread are set in Run() by this class or its
   // subclasses.
   nsCOMPtr<nsITimer> mDelayedWorkTimer;
 
@@ -91,8 +91,8 @@ private:
 class MessagePumpForNonMainThreads final : public MessagePump
 {
 public:
-  explicit MessagePumpForNonMainThreads(nsIEventTarget* aEventTarget)
-    : MessagePump(aEventTarget)
+  explicit MessagePumpForNonMainThreads(nsIThread* aThread)
+    : MessagePump(aThread)
   { }
 
   virtual void Run(base::MessagePump::Delegate* aDelegate) override;
@@ -123,7 +123,7 @@ public:
   NS_DECL_NSITHREADOBSERVER
 
 public:
-  explicit MessagePumpForNonMainUIThreads(nsIEventTarget* aEventTarget) :
+  explicit MessagePumpForNonMainUIThreads(nsIThread* aThread) :
     mInWait(false),
     mWaitLock("mInWait")
   {

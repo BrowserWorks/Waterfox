@@ -27,7 +27,7 @@ function manifestVideo() {
 // name "mochi.test".
 let serverUrl = SpecialPowers.Services.prefs.getCharPref("media.hls.server.url");
 var gHLSTests = [
-  { name: serverUrl + "/bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:20.000 }
+  { name: serverUrl + "/bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:19.95334 }
 ];
 
 // These are small test files, good for just seeing if something loads. We
@@ -255,6 +255,9 @@ var gPlayTests = [
   // Test playback of a WebM file with resolution changes.
   { name:"resolution-change.webm", type:"video/webm", duration:6.533 },
 
+  // Test playback of a raw file
+  { name:"seek.yuv", type:"video/x-raw-yuv", duration:1.833 },
+
   // A really short, low sample rate, single channel file. This tests whether
   // we can handle playing files when only push very little audio data to the
   // hardware.
@@ -349,6 +352,8 @@ var gSeekToNextFrameTests = [
   { name:"seek-short.webm", type:"video/webm", duration:0.23 },
   // Test playback of a WebM file with non-zero start time.
   { name:"split.webm", type:"video/webm", duration:1.967 },
+  // Test playback of a raw file
+  { name:"seek.yuv", type:"video/x-raw-yuv", duration:1.833 },
 
   { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27 },
 
@@ -472,7 +477,7 @@ function fileUriToSrc(path, mustExist) {
   const Cr = SpecialPowers.Cr;
   var dirSvc = Cc["@mozilla.org/file/directory_service;1"].
                getService(Ci.nsIProperties);
-  var f = dirSvc.get("CurWorkD", Ci.nsIFile);
+  var f = dirSvc.get("CurWorkD", Ci.nsILocalFile);
   var split = path.split("/");
   for(var i = 0; i < split.length; ++i) {
     f.append(split[i]);
@@ -1685,8 +1690,7 @@ function MediaTestManager() {
 
     var onTimeout = () => {
       this.hasTimeout = true;
-      ok(false, "Test timed out!");
-      info(`${token} timed out!`);
+      ok(false, `${token} timed out!`);
       this.finished(token);
     };
     // Default timeout to 180s for each test.

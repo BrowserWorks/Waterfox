@@ -21,15 +21,14 @@ public class MenuItemDefault extends TextView
     private static final int[] STATE_CHECKED = new int[] { android.R.attr.state_checkable, android.R.attr.state_checked };
     private static final int[] STATE_UNCHECKED = new int[] { android.R.attr.state_checkable };
 
-    protected Drawable mIcon;
-    protected boolean mShowIcon;
-
+    private Drawable mIcon;
     private final Drawable mState;
     private static Rect sIconBounds;
 
     private boolean mCheckable;
     private boolean mChecked;
     private boolean mHasSubMenu;
+    private boolean mShowIcon;
 
     public MenuItemDefault(Context context) {
         this(context, null);
@@ -89,7 +88,7 @@ public class MenuItemDefault extends TextView
         setSubMenuIndicator(item.hasSubMenu());
     }
 
-    protected void refreshIcon() {
+    private void refreshIcon() {
         TextViewCompat.setCompoundDrawablesRelative(this, mShowIcon ? mIcon : null, null, mState, null);
     }
 

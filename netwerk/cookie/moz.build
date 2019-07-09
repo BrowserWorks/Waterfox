@@ -23,7 +23,6 @@ if CONFIG['NECKO_COOKIES']:
     EXPORTS.mozilla.net = [
         'CookieServiceChild.h',
         'CookieServiceParent.h',
-        'nsCookieKey.h',
     ]
     UNIFIED_SOURCES += [
         'CookieServiceChild.cpp',

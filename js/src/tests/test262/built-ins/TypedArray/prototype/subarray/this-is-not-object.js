@@ -12,7 +12,7 @@ info: >
   2. If Type(O) is not Object, throw a TypeError exception.
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var subarray = TypedArray.prototype.subarray;

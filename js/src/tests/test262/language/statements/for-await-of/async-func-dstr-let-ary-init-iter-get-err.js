@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/ary-init-iter-get-err.case
-// - src/dstr-binding-for-await/error/for-await-of-async-func-let.template
+// - src/dstr-binding/ary-init-iter-get-err.case
+// - src/dstr-binding/error/for-await-of-async-func-let.template
 /*---
 description: Abrupt completion returned by GetIterator (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -39,7 +40,8 @@ info: |
 
     BindingPattern : ArrayBindingPattern
 
-    1. Let iterator be ? GetIterator(value).
+    1. Let iterator be GetIterator(value).
+    2. ReturnIfAbrupt(iterator).
 
 ---*/
 var iter = {};
@@ -54,11 +56,6 @@ async function fn() {
 }
 
 fn()
-  .then(_ => {
-    throw new Test262Error("Expected async function to reject, but resolved.");
-  }, ({ constructor }) => {
-    assert.sameValue(constructor, Test262Error);
-    
-  })
+  .then(_ => { throw new Test262Error("Expected async function to reject, but resolved."); }, ({ constructor }) => assert.sameValue(constructor, Test262Error))
   .then($DONE, $DONE);
 

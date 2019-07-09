@@ -6,7 +6,6 @@
 
 with Files('**'):
     BUG_COMPONENT = ('Testing', 'Reftest')
-    SCHEDULES.exclusive = ['reftest']
 
 XPI_NAME = 'reftest'
 USE_EXTENSION_MANIFEST = True
@@ -31,8 +30,4 @@ TEST_HARNESS_FILES.reftest += [
 TEST_HARNESS_FILES.reftest.chrome += [
     'chrome/binding.xml',
     'chrome/userContent.css',
-]
-
-TEST_HARNESS_FILES.reftest.manifest += [
-    'reftest/__init__.py'
 ]

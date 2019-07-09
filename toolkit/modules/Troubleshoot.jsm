@@ -235,19 +235,10 @@ var dataProviders = {
     data.styloBuild = AppConstants.MOZ_STYLO;
     data.styloDefault = Services.prefs.getDefaultBranch(null)
                                 .getBoolPref("layout.css.servo.enabled", false);
-    data.styloResult = false;
-    // Perhaps a bit redundant in places, but this is easier to compare with the
-    // the real check in `nsLayoutUtils.cpp` to ensure they test the same way.
-    if (AppConstants.MOZ_STYLO) {
-      if (env.get("STYLO_FORCE_ENABLED")) {
-        data.styloResult = true;
-      } else if (env.get("STYLO_FORCE_DISABLED")) {
-        data.styloResult = false;
-      } else {
-        data.styloResult =
-          Services.prefs.getBoolPref("layout.css.servo.enabled", false);
-      }
-    }
+    data.styloResult =
+      AppConstants.MOZ_STYLO &&
+      (!!env.get("STYLO_FORCE_ENABLED") ||
+       Services.prefs.getBoolPref("layout.css.servo.enabled", false));
 
     const keyGoogle = Services.urlFormatter.formatURL("%GOOGLE_API_KEY%").trim();
     data.keyGoogleFound = keyGoogle != "no-google-api-key" && keyGoogle.length > 0;
@@ -317,8 +308,7 @@ var dataProviders = {
 
     // getExperiments promises experiment history
     Experiments.instance().getExperiments().then(
-      experiments => done(experiments),
-      () => done([])
+      experiments => done(experiments)
     );
   },
 
@@ -447,7 +437,6 @@ var dataProviders = {
       DWriteEnabled: "directWriteEnabled",
       DWriteVersion: "directWriteVersion",
       cleartypeParameters: "clearTypeParameters",
-      OffMainThreadPaintEnabled: "offMainThreadPaintEnabled",
     };
 
     for (let prop in gfxInfoProps) {
@@ -615,7 +604,6 @@ var dataProviders = {
         Services.prefs.getIntPref("accessibility.force_disabled");
     } catch (e) {}
     data.handlerUsed = Services.appinfo.accessibleHandlerUsed;
-    data.instantiator = Services.appinfo.accessibilityInstantiator;
     done(data);
   },
 
@@ -653,7 +641,7 @@ if (AppConstants.MOZ_CRASHREPORTER) {
     let reportsPendingCount = reportsNew.length - reportsSubmitted.length;
     let data = {submitted: reportsSubmitted, pending: reportsPendingCount};
     done(data);
-  };
+  }
 }
 
 if (AppConstants.MOZ_SANDBOX) {
@@ -679,7 +667,7 @@ if (AppConstants.MOZ_SANDBOX) {
       for (let index = snapshot.begin; index < snapshot.end; ++index) {
         let report = snapshot.getElement(index);
         let { msecAgo, pid, tid, procType, syscall } = report;
-        let args = [];
+        let args = []
         for (let i = 0; i < report.numArgs; ++i) {
           args.push(report.getArg(i));
         }
@@ -698,5 +686,5 @@ if (AppConstants.MOZ_SANDBOX) {
     }
 
     done(data);
-  };
+  }
 }

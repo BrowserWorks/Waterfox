@@ -9,11 +9,6 @@
 #include "RenderTextureHost.h"
 
 namespace mozilla {
-
-namespace gl {
-class GLContext;
-}
-
 namespace wr {
 
 class RenderTextureHostOGL : public RenderTextureHost

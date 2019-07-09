@@ -38,19 +38,19 @@
 }
 
 #genericAbout[addontype="theme"] #extensionIcon {
-  list-style-image: url("chrome://mozapps/skin/extensions/themeGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/themeGeneric.png");
 }
 
 #genericAbout[addontype="locale"] #extensionIcon {
-  list-style-image: url("chrome://mozapps/skin/extensions/localeGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/localeGeneric.png");
 }
 
 #genericAbout[addontype="plugin"] #extensionIcon {
-  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric.png");
 }
 
 #genericAbout[addontype="dictionary"] #extensionIcon {
-  list-style-image: url("chrome://mozapps/skin/extensions/dictionaryGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/dictionaryGeneric.png");
 }
 
 #extensionName {

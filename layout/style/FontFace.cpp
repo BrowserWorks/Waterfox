@@ -657,7 +657,7 @@ FontFace::GetDesc(nsCSSFontDesc aDescID,
                                                   nsCSSProps::kFontDisplayKTable),
                        aResult);
   } else {
-    value.AppendToString(aPropID, aResult);
+    value.AppendToString(aPropID, aResult, nsCSSValue::eNormalized);
   }
 }
 
@@ -671,6 +671,11 @@ FontFace::SetUserFontEntry(gfxUserFontEntry* aEntry)
   mUserFontEntry = static_cast<Entry*>(aEntry);
   if (mUserFontEntry) {
     mUserFontEntry->mFontFaces.AppendElement(this);
+
+    MOZ_ASSERT(mUserFontEntry->GetUserFontSet() ==
+                 mFontFaceSet->GetUserFontSet(),
+               "user font entry must be associated with the same user font set "
+               "as the FontFace");
 
     // Our newly assigned user font entry might be in the process of or
     // finished loading, so set our status accordingly.  But only do so

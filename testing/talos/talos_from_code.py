@@ -9,15 +9,13 @@
 # Author(s):     Zambrano Gasparnian, Armen <armenzg@mozilla.com>
 # Target:        Python 2.5
 #
-from __future__ import absolute_import, print_function
-
+from optparse import OptionParser
 import json
-import os
 import re
-import sys
 import urllib2
 import urlparse
-from optparse import OptionParser
+import sys
+import os
 
 
 def main():

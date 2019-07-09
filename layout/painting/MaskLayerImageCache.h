@@ -15,7 +15,7 @@ namespace mozilla {
 
 namespace layers {
 class ImageContainer;
-class KnowsCompositor;
+class ShadowLayerForwarder;
 } // namespace layers
 
 /**
@@ -34,7 +34,7 @@ class KnowsCompositor;
 class MaskLayerImageCache
 {
   typedef mozilla::layers::ImageContainer ImageContainer;
-  typedef mozilla::layers::KnowsCompositor KnowsCompositor;
+  typedef mozilla::layers::ShadowLayerForwarder ShadowLayerForwarder;
 public:
   MaskLayerImageCache();
   ~MaskLayerImageCache();
@@ -154,19 +154,19 @@ public:
       for (uint32_t i = 0; i < mRoundedClipRects.Length(); ++i) {
         hash = AddToHash(hash, mRoundedClipRects[i].Hash());
       }
-      hash = AddToHash(hash, mKnowsCompositor.get());
+      hash = AddToHash(hash, mForwarder.get());
 
       return hash;
     }
 
     bool operator==(const MaskLayerImageKey& aOther) const
     {
-      return mKnowsCompositor == aOther.mKnowsCompositor &&
+      return mForwarder == aOther.mForwarder &&
              mRoundedClipRects == aOther.mRoundedClipRects;
     }
 
     nsTArray<PixelRoundedRect> mRoundedClipRects;
-    RefPtr<KnowsCompositor> mKnowsCompositor;
+    RefPtr<ShadowLayerForwarder> mForwarder;
   private:
     void IncLayerCount() const { ++mLayerCount; }
     void DecLayerCount() const

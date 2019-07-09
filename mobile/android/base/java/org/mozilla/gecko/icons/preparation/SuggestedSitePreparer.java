@@ -5,7 +5,6 @@
 package org.mozilla.gecko.icons.preparation;
 
 import android.content.Context;
-import android.database.ContentObserver;
 import android.database.Cursor;
 
 import org.mozilla.gecko.db.BrowserContract;
@@ -14,54 +13,21 @@ import org.mozilla.gecko.db.SuggestedSites;
 import org.mozilla.gecko.icons.IconDescriptor;
 import org.mozilla.gecko.icons.IconRequest;
 import org.mozilla.gecko.icons.loader.SuggestedSiteLoader;
-import org.mozilla.gecko.util.ThreadUtils;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class SuggestedSitePreparer implements Preparer {
+
     private boolean initialised = false;
     private final Set<String> siteFaviconMap = new HashSet<>();
-
-    private boolean initialise(final Context context) {
-        registerForSuggestedSitesUpdated(context.getApplicationContext());
-
-        return refreshSiteFaviconMap(context);
-    }
-
-    // Suggested sites can change at runtime - for example when a distribution is (down)loaded. In
-    // this case we need to refresh our local cache of suggested sites' favicons.
-    private void registerForSuggestedSitesUpdated(final Context context) {
-        context.getContentResolver().registerContentObserver(
-                BrowserContract.SuggestedSites.CONTENT_URI,
-                false,
-                new ContentObserver(null) {
-                    @Override
-                    public void onChange(boolean selfChange) {
-                        // The list of suggested sites has changed. We need to update our local
-                        // mapping.
-                        refreshSiteFaviconMapOnBackgroundThread(context);
-                    }
-                });
-    }
-
-    private void refreshSiteFaviconMapOnBackgroundThread(final Context context) {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                refreshSiteFaviconMap(context);
-            }
-        });
-    }
 
     // Loading suggested sites (and iterating over them) is potentially slow. The number of suggested
     // sites is low, and a HashSet containing them is therefore likely to be exceedingly small.
     // Hence we opt to iterate over the list once, and do an immediate lookup every time a favicon
     // is requested:
     // Loading can fail if suggested sites haven't been initialised yet, only proceed if we return true.
-    private synchronized boolean refreshSiteFaviconMap(Context context) {
-        siteFaviconMap.clear();
-
+    private boolean initialise(final Context context) {
         final SuggestedSites suggestedSites = BrowserDB.from(context).getSuggestedSites();
 
         // suggestedSites may not have been initialised yet if BrowserApp isn't running yet. Suggested
@@ -87,10 +53,8 @@ public class SuggestedSitePreparer implements Preparer {
         return true;
     }
 
-    // Synchronized so that asynchronous updates of the map (via content observer) are visible
-    // immediately and completely.
     @Override
-    public synchronized void prepare(final IconRequest request) {
+    public void prepare(final IconRequest request) {
         if (request.shouldSkipDisk()) {
             return;
         }

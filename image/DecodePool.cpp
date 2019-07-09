@@ -180,7 +180,9 @@ public:
 
         case Work::Type::SHUTDOWN:
           DecodePoolImpl::ShutdownThread(thisThread);
-          PROFILER_UNREGISTER_THREAD();
+
+          profiler_unregister_thread();
+
           return NS_OK;
 
         default:

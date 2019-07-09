@@ -603,7 +603,7 @@ PendingAlertsCollector::Start(uint32_t timerDelayMS) {
   }
 
   if (!mTimer) {
-    mTimer = NS_NewTimer();
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   }
 
   nsresult rv = mTimer->InitWithCallback(this, timerDelayMS, nsITimer::TYPE_ONE_SHOT);

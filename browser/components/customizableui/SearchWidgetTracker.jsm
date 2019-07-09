@@ -38,15 +38,6 @@ const SearchWidgetTracker = {
                                () => this.syncWidgetWithPreference());
   },
 
-  onAreaNodeRegistered(aArea) {
-    // The placement of the widget always takes priority, and the preference
-    // should always match the actual placement when the browser starts up - i.e.
-    // once the navigation bar has been registered.
-    if (aArea == CustomizableUI.AREA_NAVBAR) {
-      this.syncPreferenceWithWidget();
-    }
-  },
-
   onCustomizeEnd() {
     // onWidgetUndoMove does not fire when the search container is moved back to
     // the customization palette as a result of an undo, so we sync again here.

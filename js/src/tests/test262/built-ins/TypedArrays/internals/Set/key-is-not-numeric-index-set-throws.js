@@ -20,7 +20,6 @@ info: >
   8. Perform ? Call(setter, Receiver, « V »).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

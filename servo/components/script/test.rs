@@ -6,17 +6,13 @@ pub use dom::bindings::str::{ByteString, DOMString};
 pub use dom::headers::normalize_value;
 
 // For compile-fail tests only.
-pub use dom::bindings::cell::DomRefCell;
-pub use dom::bindings::root::Dom;
+pub use dom::bindings::cell::DOMRefCell;
+pub use dom::bindings::js::JS;
 pub use dom::node::Node;
 pub use dom::bindings::refcounted::TrustedPromise;
 
 pub mod area {
     pub use dom::htmlareaelement::{Area, Shape};
-}
-
-pub mod sizes {
-    pub use dom::htmlimageelement::{parse_a_sizes_attribute, Size};
 }
 
 pub mod size_of {
@@ -61,8 +57,4 @@ pub mod size_of {
     pub fn Text() -> usize {
         size_of::<Text>()
     }
-}
-
-pub mod srcset {
-    pub use dom::htmlimageelement::{parse_a_srcset_attribute, ImageSource, Descriptor};
 }

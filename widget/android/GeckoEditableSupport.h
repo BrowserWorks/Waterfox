@@ -137,14 +137,15 @@ public:
     {
         struct IMEEvent : nsAppShell::LambdaEvent<Functor>
         {
-            IMEEvent(Functor&& l) : nsAppShell::LambdaEvent<Functor>(Move(l)) {}
+            using Base = nsAppShell::LambdaEvent<Functor>;
+            using Base::LambdaEvent;
 
             nsAppShell::Event::Type ActivityType() const override
             {
                 using GES = GeckoEditableSupport;
-                if (this->lambda.IsTarget(&GES::OnKeyEvent) ||
-                        this->lambda.IsTarget(&GES::OnImeReplaceText) ||
-                        this->lambda.IsTarget(&GES::OnImeUpdateComposition)) {
+                if (Base::lambda.IsTarget(&GES::OnKeyEvent) ||
+                        Base::lambda.IsTarget(&GES::OnImeReplaceText) ||
+                        Base::lambda.IsTarget(&GES::OnImeUpdateComposition)) {
                     return nsAppShell::Event::Type::kUIActivity;
                 }
                 return nsAppShell::Event::Type::kGeneralActivity;
@@ -152,12 +153,12 @@ public:
 
             void Run() override
             {
-                if (!this->lambda.GetNativeObject()) {
+                if (!Base::lambda.GetNativeObject()) {
                     // Ignore stale calls after disposal.
                     jni::GetGeckoThreadEnv()->ExceptionClear();
                     return;
                 }
-                nsAppShell::LambdaEvent<Functor>::Run();
+                Base::Run();
             }
         };
         nsAppShell::PostEvent(mozilla::MakeUnique<IMEEvent>(

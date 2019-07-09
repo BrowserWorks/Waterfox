@@ -52,16 +52,8 @@ add_task(async function test_create_options() {
               result: {url: "http://example.com/"},
             },
             {
-              create: {url: "view-source:http://example.com/"},
-              result: {url: "view-source:http://example.com/"},
-            },
-            {
               create: {url: "blank.html"},
               result: {url: browser.runtime.getURL("bg/blank.html")},
-            },
-            {
-              create: {url: "http://example.com/", openInReaderMode: true},
-              result: {url: `about:reader?url=${encodeURIComponent("http://example.com/")}`},
             },
             {
               create: {},

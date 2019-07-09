@@ -25,9 +25,9 @@ using namespace mozilla::gfx;
 
 nsIFrame*
 NS_NewPlaceholderFrame(nsIPresShell* aPresShell, nsStyleContext* aContext,
-                       nsFrameState aTypeBits)
+                       nsFrameState aTypeBit)
 {
-  return new (aPresShell) nsPlaceholderFrame(aContext, aTypeBits);
+  return new (aPresShell) nsPlaceholderFrame(aContext, aTypeBit);
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsPlaceholderFrame)
@@ -149,30 +149,10 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsPlaceholderFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   aDesiredSize.ClearSize();
 
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
-}
-
-static nsIFrame::ChildListID
-ChildListIDForOutOfFlow(nsFrameState aPlaceholderState, const nsIFrame* aChild)
-{
-  if (aPlaceholderState & PLACEHOLDER_FOR_FLOAT) {
-    return nsIFrame::kFloatList;
-  }
-  if (aPlaceholderState & PLACEHOLDER_FOR_POPUP) {
-    return nsIFrame::kPopupList;
-  }
-  if (aPlaceholderState & PLACEHOLDER_FOR_FIXEDPOS) {
-    return nsLayoutUtils::MayBeReallyFixedPos(aChild)
-      ? nsIFrame::kFixedList : nsIFrame::kAbsoluteList;
-  }
-  if (aPlaceholderState & PLACEHOLDER_FOR_ABSPOS) {
-    return nsIFrame::kAbsoluteList;
-  }
-  MOZ_DIAGNOSTIC_ASSERT(false, "unknown list");
-  return nsIFrame::kFloatList;
 }
 
 void
@@ -182,13 +162,12 @@ nsPlaceholderFrame::DestroyFrom(nsIFrame* aDestructRoot)
   if (oof) {
     mOutOfFlowFrame = nullptr;
     oof->DeleteProperty(nsIFrame::PlaceholderFrameProperty());
-
     // If aDestructRoot is not an ancestor of the out-of-flow frame,
     // then call RemoveFrame on it here.
     // Also destroy it here if it's a popup frame. (Bug 96291)
     if ((GetStateBits() & PLACEHOLDER_FOR_POPUP) ||
         !nsLayoutUtils::IsProperAncestorFrame(aDestructRoot, oof)) {
-      ChildListID listId = ChildListIDForOutOfFlow(GetStateBits(), oof);
+      ChildListID listId = nsLayoutUtils::GetChildListNameFor(oof);
       nsFrameManager* fm = PresContext()->GetPresShell()->FrameManager();
       fm->RemoveFrame(listId, oof);
     }
@@ -224,16 +203,25 @@ nsPlaceholderFrame::GetParentStyleContextForOutOfFlow(nsIFrame** aProviderFrame)
     }
   }
 
-  return GetLayoutParentStyleForOutOfFlow(aProviderFrame);
-}
+  nsIFrame* parentFrame = GetParent();
+  // Placeholder of backdrop frame is a child of the corresponding top
+  // layer frame, and its style context inherits from that frame. In
+  // case of table, the top layer frame is the table wrapper frame.
+  // However, it will be skipped in CorrectStyleParentFrame below, so
+  // we need to handle it specially here.
+  if ((GetStateBits() & PLACEHOLDER_FOR_TOPLAYER) &&
+      parentFrame->IsTableWrapperFrame()) {
+    MOZ_ASSERT(mOutOfFlowFrame->IsBackdropFrame(),
+               "Only placeholder of backdrop frame can be put inside "
+               "a table wrapper frame");
+    *aProviderFrame = parentFrame;
+    return parentFrame->StyleContext();
+  }
 
-nsStyleContext*
-nsPlaceholderFrame::GetLayoutParentStyleForOutOfFlow(nsIFrame** aProviderFrame) const
-{
   // Lie about our pseudo so we can step out of all anon boxes and
   // pseudo-elements.  The other option would be to reimplement the
   // {ib} split gunk here.
-  *aProviderFrame = CorrectStyleParentFrame(GetParent(),
+  *aProviderFrame = CorrectStyleParentFrame(parentFrame,
                                             nsGkAtoms::placeholderFrame);
   return *aProviderFrame ? (*aProviderFrame)->StyleContext() : nullptr;
 }
@@ -265,6 +253,7 @@ PaintDebugPlaceholder(nsIFrame* aFrame, DrawTarget* aDrawTarget,
 
 void
 nsPlaceholderFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                     const nsRect&           aDirtyRect,
                                      const nsDisplayListSet& aLists)
 {
   DO_GLOBAL_REFLOW_COUNT_DSP("nsPlaceholderFrame");
@@ -274,7 +263,7 @@ nsPlaceholderFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     aLists.Outlines()->AppendNewToTop(
       new (aBuilder) nsDisplayGeneric(aBuilder, this, PaintDebugPlaceholder,
                                       "DebugPlaceholder",
-                                      DisplayItemType::TYPE_DEBUG_PLACEHOLDER));
+                                      nsDisplayItem::TYPE_DEBUG_PLACEHOLDER));
   }
 #endif
 }

@@ -15,7 +15,7 @@
 namespace mozilla {
 
 template<class T>
-class MOZ_IS_SMARTPTR_TO_REFCOUNTED OwningNonNull
+class OwningNonNull
 {
 public:
   OwningNonNull() {}

@@ -65,12 +65,11 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
             GLuint destTex = dest->ProdTexture();
             GLenum destTarget = dest->ProdTextureTarget();
 
-            const ScopedBindFramebuffer bindFB(gl, 0);
-
-            gl->BlitHelper()->BlitFramebufferToTexture(destTex,
+            gl->BlitHelper()->BlitFramebufferToTexture(0, destTex,
                                                        src->mSize,
                                                        dest->mSize,
-                                                       destTarget);
+                                                       destTarget,
+                                                       true);
         } else if (dest->mAttachType == AttachmentType::GLRenderbuffer) {
             GLuint destRB = dest->ProdRenderbuffer();
             ScopedFramebufferForRenderbuffer destWrapper(gl, destRB);
@@ -78,7 +77,8 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
             gl->BlitHelper()->BlitFramebufferToFramebuffer(0,
                                                            destWrapper.FB(),
                                                            src->mSize,
-                                                           dest->mSize);
+                                                           dest->mSize,
+                                                           true);
         } else {
             MOZ_CRASH("GFX: Unhandled dest->mAttachType 1.");
         }
@@ -110,12 +110,11 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
             GLuint srcTex = src->ProdTexture();
             GLenum srcTarget = src->ProdTextureTarget();
 
-            const ScopedBindFramebuffer bindFB(gl, 0);
-
-            gl->BlitHelper()->BlitTextureToFramebuffer(srcTex,
+            gl->BlitHelper()->BlitTextureToFramebuffer(srcTex, 0,
                                                        src->mSize,
                                                        dest->mSize,
-                                                       srcTarget);
+                                                       srcTarget,
+                                                       !!gl->Screen());
         } else if (src->mAttachType == AttachmentType::GLRenderbuffer) {
             GLuint srcRB = src->ProdRenderbuffer();
             ScopedFramebufferForRenderbuffer srcWrapper(gl, srcRB);
@@ -123,7 +122,8 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
             gl->BlitHelper()->BlitFramebufferToFramebuffer(srcWrapper.FB(),
                                                            0,
                                                            src->mSize,
-                                                           dest->mSize);
+                                                           dest->mSize,
+                                                           true);
         } else {
             MOZ_CRASH("GFX: Unhandled src->mAttachType 2.");
         }
@@ -158,9 +158,9 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
         if (dest->mAttachType == AttachmentType::GLRenderbuffer) {
             GLuint destRB = dest->ProdRenderbuffer();
             ScopedFramebufferForRenderbuffer destWrapper(gl, destRB);
-            const ScopedBindFramebuffer bindFB(gl, destWrapper.FB());
-            gl->BlitHelper()->BlitTextureToFramebuffer(srcTex, src->mSize, dest->mSize,
-                                                       srcTarget);
+
+            gl->BlitHelper()->BlitTextureToFramebuffer(srcTex, destWrapper.FB(),
+                                                       src->mSize, dest->mSize, srcTarget);
 
             return;
         }
@@ -175,10 +175,9 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
         if (dest->mAttachType == AttachmentType::GLTexture) {
             GLuint destTex = dest->ProdTexture();
             GLenum destTarget = dest->ProdTextureTarget();
-            const ScopedBindFramebuffer bindFB(gl, srcWrapper.FB());
 
-            gl->BlitHelper()->BlitFramebufferToTexture(destTex, src->mSize, dest->mSize,
-                                                       destTarget);
+            gl->BlitHelper()->BlitFramebufferToTexture(srcWrapper.FB(), destTex,
+                                                       src->mSize, dest->mSize, destTarget);
 
             return;
         }
@@ -316,15 +315,22 @@ SurfaceFactory::~SurfaceFactory()
 }
 
 already_AddRefed<layers::SharedSurfaceTextureClient>
-SurfaceFactory::NewTexClient(const gfx::IntSize& size)
+SurfaceFactory::NewTexClient(const gfx::IntSize& size, const layers::LayersIPCChannel* aLayersChannel)
 {
     while (!mRecycleFreePool.empty()) {
         RefPtr<layers::SharedSurfaceTextureClient> cur = mRecycleFreePool.front();
         mRecycleFreePool.pop();
 
-        if (cur->Surf()->mSize == size) {
-            cur->Surf()->WaitForBufferOwnership();
-            return cur.forget();
+        if (cur->Surf()->mSize == size){
+            // In the general case, textureClients transit textures through
+            // CompositorForwarder. But, the textureClient created by VRManagerChild
+            // has a different LayerIPCChannel, PVRManager. Therefore, textureClients
+            // need to be separated into different cases.
+            if ((aLayersChannel && aLayersChannel == cur->GetAllocator()) ||
+                (cur->GetAllocator() != gfx::VRManagerChild::Get())) {
+                cur->Surf()->WaitForBufferOwnership();
+                return cur.forget();
+            }
         }
 
         StopRecycling(cur);

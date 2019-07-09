@@ -4,14 +4,14 @@
 
 use dom::bindings::codegen::Bindings::ValidityStateBinding;
 use dom::bindings::codegen::Bindings::ValidityStateBinding::ValidityStateMethods;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::element::Element;
 use dom::window::Window;
 use dom_struct::dom_struct;
 
 // https://html.spec.whatwg.org/multipage/#validity-states
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 #[allow(dead_code)]
 pub enum ValidityStatus {
     ValueMissing,
@@ -46,7 +46,7 @@ bitflags!{
 #[dom_struct]
 pub struct ValidityState {
     reflector_: Reflector,
-    element: Dom<Element>,
+    element: JS<Element>,
     state: ValidityStatus
 }
 
@@ -55,13 +55,13 @@ impl ValidityState {
     fn new_inherited(element: &Element) -> ValidityState {
         ValidityState {
             reflector_: Reflector::new(),
-            element: Dom::from_ref(element),
+            element: JS::from_ref(element),
             state: ValidityStatus::Valid
         }
     }
 
-    pub fn new(window: &Window, element: &Element) -> DomRoot<ValidityState> {
-        reflect_dom_object(Box::new(ValidityState::new_inherited(element)),
+    pub fn new(window: &Window, element: &Element) -> Root<ValidityState> {
+        reflect_dom_object(box ValidityState::new_inherited(element),
                            window,
                            ValidityStateBinding::Wrap)
     }

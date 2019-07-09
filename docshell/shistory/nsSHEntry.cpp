@@ -476,7 +476,7 @@ nsSHEntry::Create(nsIURI* aURI, const nsAString& aTitle,
   mShared->mExpired = false;
 
   mIsSrcdocEntry = false;
-  mSrcdocData = VoidString();
+  mSrcdocData = NullString();
 
   mLoadedInThisProcess = true;
 
@@ -959,7 +959,7 @@ nsSHEntry::HasDynamicallyAddedChild(bool* aAdded)
 NS_IMETHODIMP
 nsSHEntry::GetDocshellID(nsID** aID)
 {
-  *aID = mShared->mDocShellID.Clone();
+  *aID = static_cast<nsID*>(nsMemory::Clone(&mShared->mDocShellID, sizeof(nsID)));
   return NS_OK;
 }
 

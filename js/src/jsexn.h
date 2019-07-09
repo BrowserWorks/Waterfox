@@ -97,7 +97,7 @@ ExnTypeFromProtoKey(JSProtoKey key)
 static inline bool
 IsErrorProtoKey(JSProtoKey key)
 {
-    int type = key - JSProto_Error;
+    JSExnType type = static_cast<JSExnType>(key - JSProto_Error);
     return type >= JSEXN_ERR && type < JSEXN_ERROR_LIMIT;
 }
 

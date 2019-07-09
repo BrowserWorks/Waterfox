@@ -15,57 +15,55 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
   "resource://gre/modules/Messaging.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewProgress"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewProgress");
 
 function debug(aMsg) {
   // dump(aMsg);
 }
 
 var IdentityHandler = {
-  // The definitions below should be kept in sync with those in GeckoView.ProgressListener.SecurityInformation
   // No trusted identity information. No site identity icon is shown.
-  IDENTITY_MODE_UNKNOWN: 0,
+  IDENTITY_MODE_UNKNOWN: "unknown",
 
   // Domain-Validation SSL CA-signed domain verification (DV).
-  IDENTITY_MODE_IDENTIFIED: 1,
+  IDENTITY_MODE_IDENTIFIED: "identified",
 
   // Extended-Validation SSL CA-signed identity information (EV). A more rigorous validation process.
-  IDENTITY_MODE_VERIFIED: 2,
+  IDENTITY_MODE_VERIFIED: "verified",
 
   // The following mixed content modes are only used if "security.mixed_content.block_active_content"
   // is enabled. Our Java frontend coalesces them into one indicator.
 
   // No mixed content information. No mixed content icon is shown.
-  MIXED_MODE_UNKNOWN: 0,
+  MIXED_MODE_UNKNOWN: "unknown",
 
   // Blocked active mixed content.
-  MIXED_MODE_CONTENT_BLOCKED: 1,
+  MIXED_MODE_CONTENT_BLOCKED: "blocked",
 
   // Loaded active mixed content.
-  MIXED_MODE_CONTENT_LOADED: 2,
+  MIXED_MODE_CONTENT_LOADED: "loaded",
 
   // The following tracking content modes are only used if tracking protection
   // is enabled. Our Java frontend coalesces them into one indicator.
 
   // No tracking content information. No tracking content icon is shown.
-  TRACKING_MODE_UNKNOWN: 0,
+  TRACKING_MODE_UNKNOWN: "unknown",
 
   // Blocked active tracking content. Shield icon is shown, with a popup option to load content.
-  TRACKING_MODE_CONTENT_BLOCKED: 1,
+  TRACKING_MODE_CONTENT_BLOCKED: "blocked",
 
   // Loaded active tracking content. Yellow triangle icon is shown.
-  TRACKING_MODE_CONTENT_LOADED: 2,
+  TRACKING_MODE_CONTENT_LOADED: "loaded",
 
-  _useTrackingProtection: false,
-  _usePrivateMode: false,
+  _useTrackingProtection : false,
+  _usePrivateMode : false,
 
-  setUseTrackingProtection: function(aUse) {
+  setUseTrackingProtection : function(aUse) {
     this._useTrackingProtection = aUse;
   },
 
-  setUsePrivateMode: function(aUse) {
+  setUsePrivateMode : function(aUse) {
     this._usePrivateMode = aUse;
   },
 
@@ -271,7 +269,7 @@ class GeckoViewProgress extends GeckoViewModule {
       let uri = aRequest.QueryInterface(Ci.nsIChannel).URI;
       let message = {
         type: "GeckoView:PageStart",
-        uri: uri.displaySpec,
+        uri: uri.spec,
       };
 
       this.eventDispatcher.sendRequest(message);

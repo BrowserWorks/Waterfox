@@ -18,6 +18,7 @@ WebRenderTextureHost::WebRenderTextureHost(const SurfaceDescriptor& aDesc,
                                            wr::ExternalImageId& aExternalImageId)
   : TextureHost(aFlags)
   , mExternalImageId(aExternalImageId)
+  , mIsWrappingNativeHandle(false)
 {
   // The wrapped textureHost will be used in WebRender, and the WebRender could
   // run at another thread. It's hard to control the life-time when gecko
@@ -45,6 +46,25 @@ WebRenderTextureHost::CreateRenderTextureHost(const layers::SurfaceDescriptor& a
                                               TextureHost* aTexture)
 {
   MOZ_ASSERT(aTexture);
+
+  switch (aDesc.type()) {
+    case SurfaceDescriptor::TSurfaceDescriptorBuffer: {
+      mIsWrappingNativeHandle = false;
+      break;
+    }
+#ifdef XP_MACOSX
+    case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface: {
+      mIsWrappingNativeHandle = true;
+      break;
+    }
+#endif
+    case SurfaceDescriptor::TSurfaceDescriptorGPUVideo: {
+      mIsWrappingNativeHandle = !aTexture->HasIntermediateBuffer();
+      break;
+    }
+    default:
+      gfxCriticalError() << "No WR implement for texture type:" << aDesc.type();
+  }
 
   aTexture->CreateRenderTexture(mExternalImageId);
 }
@@ -134,36 +154,38 @@ WebRenderTextureHost::GetRGBStride()
   return ImageDataSerializer::ComputeRGBStride(format, GetSize().width);
 }
 
-uint32_t
-WebRenderTextureHost::NumSubTextures() const
+void
+WebRenderTextureHost::GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                                     const std::function<wr::ImageKey()>& aImageKeyAllocator)
 {
   MOZ_ASSERT(mWrappedTextureHost);
-  return mWrappedTextureHost->NumSubTextures();
+  MOZ_ASSERT(aImageKeys.IsEmpty());
+
+  mWrappedTextureHost->GetWRImageKeys(aImageKeys, aImageKeyAllocator);
 }
 
 void
-WebRenderTextureHost::PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                          ResourceUpdateOp aOp,
-                                          const Range<wr::ImageKey>& aImageKeys,
-                                          const wr::ExternalImageId& aExtID)
+WebRenderTextureHost::AddWRImage(wr::WebRenderAPI* aAPI,
+                                 Range<const wr::ImageKey>& aImageKeys,
+                                 const wr::ExternalImageId& aExtID)
 {
   MOZ_ASSERT(mWrappedTextureHost);
   MOZ_ASSERT(mExternalImageId == aExtID);
 
-  mWrappedTextureHost->PushResourceUpdates(aResources, aOp, aImageKeys, aExtID);
+  mWrappedTextureHost->AddWRImage(aAPI, aImageKeys, aExtID);
 }
 
 void
-WebRenderTextureHost::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                       const wr::LayoutRect& aBounds,
-                                       const wr::LayoutRect& aClip,
-                                       wr::ImageRendering aFilter,
-                                       const Range<wr::ImageKey>& aImageKeys)
+WebRenderTextureHost::PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                        const wr::LayoutRect& aBounds,
+                                        const wr::LayoutRect& aClip,
+                                        wr::ImageRendering aFilter,
+                                        Range<const wr::ImageKey>& aImageKeys)
 {
   MOZ_ASSERT(mWrappedTextureHost);
   MOZ_ASSERT(aImageKeys.length() > 0);
 
-  mWrappedTextureHost->PushDisplayItems(aBuilder,
+  mWrappedTextureHost->PushExternalImage(aBuilder,
                                          aBounds,
                                          aClip,
                                          aFilter,

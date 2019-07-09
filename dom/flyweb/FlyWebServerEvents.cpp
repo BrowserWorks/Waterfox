@@ -35,7 +35,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(FlyWebFetchEvent, Event)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mRequest)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(FlyWebFetchEvent)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FlyWebFetchEvent)
 NS_INTERFACE_MAP_END_INHERITING(Event)
 
 FlyWebFetchEvent::FlyWebFetchEvent(FlyWebPublishedServer* aServer,
@@ -87,13 +87,7 @@ FlyWebFetchEvent::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue)
   if (response && response->Type() != ResponseType::Opaque) {
     intResponse = response->GetInternalResponse();
 
-    IgnoredErrorResult rv;
-    response->SetBodyUsed(aCx, rv);
-    if (NS_WARN_IF(rv.Failed())) {
-      // Let's nullify the response. In this way we end up using a NetworkError
-      // response.
-      intResponse = nullptr;
-    }
+    response->SetBodyUsed();
   }
 
   if (!intResponse) {

@@ -22,8 +22,8 @@ public:
 
 protected:
     uint32_t mType;
-    nsCString mContentType;
-    nsCString mLocation;
+    nsXPIDLCString mContentType;
+    nsXPIDLCString mLocation;
     nsString mDescription;
     int64_t mSize;
     PRTime mLastModified;

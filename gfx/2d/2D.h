@@ -26,9 +26,10 @@
 // outparams using the &-operator. But it will have to do as there's no easy
 // solution.
 #include "mozilla/RefPtr.h"
+#include "mozilla/ServoUtils.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/ThreadSafeWeakPtr.h"
+#include "mozilla/WeakPtr.h"
 
 #include "mozilla/DebugOnly.h"
 
@@ -71,15 +72,22 @@ namespace mozilla {
 
 class Mutex;
 
-namespace wr {
-struct FontInstanceOptions;
-struct FontInstancePlatformOptions;
-}
-
 namespace gfx {
 class UnscaledFont;
-class ScaledFont;
 }
+
+template<>
+struct WeakPtrTraits<gfx::UnscaledFont>
+{
+  static void AssertSafeToAccessFromNonOwningThread()
+  {
+    // We want to allow UnscaledFont objects that were created on the main
+    // thread to be accessed from other threads if the Servo font metrics
+    // mutex is locked, and for objects created on Servo style worker threads
+    // to be accessed later back on the main thread.
+    AssertIsMainThreadOrServoFontMetricsLocked();
+  }
+};
 
 namespace gfx {
 
@@ -187,7 +195,7 @@ struct DrawSurfaceOptions {
  * matching DrawTarget. Not adhering to this condition will make a draw call
  * fail.
  */
-class GradientStops : public external::AtomicRefCounted<GradientStops>
+class GradientStops : public RefCounted<GradientStops>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GradientStops)
@@ -496,9 +504,6 @@ public:
   /** @deprecated
    * Get the raw bitmap data of the surface.
    * Can return null if there was OOM allocating surface data.
-   *
-   * Deprecated means you shouldn't be using this!! Use Map instead.
-   * Please deny any reviews which add calls to this!
    */
   virtual uint8_t *GetData() = 0;
 
@@ -597,7 +602,7 @@ class FlattenedPath;
 /** The path class is used to create (sets of) figures of any shape that can be
  * filled or stroked to a DrawTarget
  */
-class Path : public external::AtomicRefCounted<Path>
+class Path : public RefCounted<Path>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(Path)
@@ -727,11 +732,13 @@ struct GlyphMetrics
   Float mHeight;
 };
 
-class UnscaledFont : public SupportsThreadSafeWeakPtr<UnscaledFont>
+class UnscaledFont
+  : public external::AtomicRefCounted<UnscaledFont>
+  , public SupportsWeakPtr<UnscaledFont>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(UnscaledFont)
-  MOZ_DECLARE_THREADSAFEWEAKREFERENCE_TYPENAME(UnscaledFont)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(UnscaledFont)
 
   virtual ~UnscaledFont();
 
@@ -753,9 +760,7 @@ public:
   virtual already_AddRefed<ScaledFont>
     CreateScaledFont(Float aGlyphSize,
                      const uint8_t* aInstanceData,
-                     uint32_t aInstanceDataLength,
-                     const FontVariation* aVariations,
-                     uint32_t aNumVariations)
+                     uint32_t aInstanceDataLength)
   {
     return nullptr;
   }
@@ -764,26 +769,22 @@ protected:
   UnscaledFont() {}
 
 private:
-  static Atomic<uint32_t> sDeletionCounter;
+  static uint32_t sDeletionCounter;
 };
 
 /** This class is an abstraction of a backend/platform specific font object
  * at a particular size. It is passed into text drawing calls to describe
  * the font used for the drawing call.
  */
-class ScaledFont : public SupportsThreadSafeWeakPtr<ScaledFont>
+class ScaledFont : public external::AtomicRefCounted<ScaledFont>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFont)
-  MOZ_DECLARE_THREADSAFEWEAKREFERENCE_TYPENAME(ScaledFont)
-
-  virtual ~ScaledFont();
+  virtual ~ScaledFont() {}
 
   virtual FontType GetType() const = 0;
   virtual Float GetSize() const = 0;
   virtual AntialiasMode GetDefaultAAMode();
-
-  static uint32_t DeletionCounter() { return sDeletionCounter; }
 
   /** This allows getting a path that describes the outline of a set of glyphs.
    * A target is passed in so that the guarantee is made the returned path
@@ -803,18 +804,9 @@ public:
    */
   virtual void GetGlyphDesignMetrics(const uint16_t* aGlyphIndices, uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) = 0;
 
-  typedef void (*FontInstanceDataOutput)(const uint8_t* aData, uint32_t aLength,
-                                         const FontVariation* aVariations, uint32_t aNumVariations,
-                                         void* aBaton);
+  typedef void (*FontInstanceDataOutput)(const uint8_t* aData, uint32_t aLength, void* aBaton);
 
   virtual bool GetFontInstanceData(FontInstanceDataOutput, void *) { return false; }
-
-  virtual bool GetWRFontInstanceOptions(Maybe<wr::FontInstanceOptions>* aOutOptions,
-                                        Maybe<wr::FontInstancePlatformOptions>* aOutPlatformOptions,
-                                        std::vector<FontVariation>* aOutVariations)
-  {
-    return false;
-  }
 
   virtual bool CanSerialize() { return false; }
 
@@ -831,9 +823,6 @@ public:
 
   const RefPtr<UnscaledFont>& GetUnscaledFont() const { return mUnscaledFont; }
 
-  virtual cairo_scaled_font_t* GetCairoScaledFont() { return nullptr; }
-  virtual void SetCairoScaledFont(cairo_scaled_font_t* font) {}
-
 protected:
   explicit ScaledFont(const RefPtr<UnscaledFont>& aUnscaledFont)
     : mUnscaledFont(aUnscaledFont)
@@ -841,9 +830,6 @@ protected:
 
   UserData mUserData;
   RefPtr<UnscaledFont> mUnscaledFont;
-
-private:
-  static Atomic<uint32_t> sDeletionCounter;
 };
 
 /**
@@ -896,7 +882,7 @@ class DrawTargetCapture;
  * may be used either through a Snapshot or by flushing the target and directly
  * accessing the backing store a DrawTarget was created with.
  */
-class DrawTarget : public external::AtomicRefCounted<DrawTarget>
+class DrawTarget : public RefCounted<DrawTarget>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTarget)

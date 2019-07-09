@@ -19,7 +19,7 @@ struct MiscContainer final
   typedef nsAttrValue::ValueType ValueType;
 
   ValueType mType;
-  // mStringBits points to either nsAtom* or nsStringBuffer* and is used when
+  // mStringBits points to either nsIAtom* or nsStringBuffer* and is used when
   // mType isn't eCSSDeclaration.
   // Note eStringBase and eAtomBase is used also to handle the type of
   // mStringBits.
@@ -34,7 +34,7 @@ struct MiscContainer final
         mozilla::DeclarationBlock* mCSSDeclaration;
         mozilla::css::URLValue* mURL;
         mozilla::css::ImageValue* mImage;
-        mozilla::AtomArray* mAtomArray;
+        nsAttrValue::AtomArray* mAtomArray;
         nsIntMargin* mIntMargin;
         const nsSVGAngle* mSVGAngle;
         const nsSVGIntegerPair* mSVGIntegerPair;
@@ -139,7 +139,7 @@ nsAttrValue::GetPercentValue() const
             / 100.0f;
 }
 
-inline mozilla::AtomArray*
+inline nsAttrValue::AtomArray*
 nsAttrValue::GetAtomArrayValue() const
 {
   NS_PRECONDITION(Type() == eAtomArray, "wrong type");

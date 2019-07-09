@@ -8,7 +8,9 @@
 #include "content_decryption_module_ext.h"
 #include "VideoUtils.h"
 #include "gmp-api/gmp-entrypoints.h"
+#include "gmp-api/gmp-decryption.h"
 #include "gmp-api/gmp-video-codec.h"
+#include "gmp-api/gmp-platform.h"
 #include "WidevineUtils.h"
 #include "GMPLog.h"
 #include "mozilla/Move.h"
@@ -27,7 +29,8 @@
 #include <fcntl.h>
 #endif
 
-const GMPPlatformAPI* sPlatform = nullptr;
+// Declared in WidevineAdapter.cpp.
+extern const GMPPlatformAPI* sPlatform;
 
 namespace mozilla {
 

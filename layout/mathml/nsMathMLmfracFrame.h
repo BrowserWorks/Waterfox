@@ -67,11 +67,12 @@ public:
         ReflowOutput& aDesiredSize) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual nsresult
   AttributeChanged(int32_t  aNameSpaceID,
-                   nsAtom* aAttribute,
+                   nsIAtom* aAttribute,
                    int32_t  aModType) override;
 
   NS_IMETHOD

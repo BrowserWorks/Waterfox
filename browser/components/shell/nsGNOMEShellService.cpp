@@ -23,7 +23,7 @@
 #include "nsIProcess.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIDOMElement.h"
+#include "nsIDOMHTMLImageElement.h"
 #include "nsIImageLoadingContent.h"
 #include "imgIRequest.h"
 #include "imgIContainer.h"
@@ -288,8 +288,9 @@ nsGNOMEShellService::SetDefaultBrowser(bool aClaimAllTypes,
     rv = bundleService->CreateBundle(BRAND_PROPERTIES, getter_AddRefs(brandBundle));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsAutoString brandShortName;
-    brandBundle->GetStringFromName("brandShortName", brandShortName);
+    nsString brandShortName;
+    brandBundle->GetStringFromName("brandShortName",
+                                   getter_Copies(brandShortName));
 
     // use brandShortName as the application id.
     NS_ConvertUTF16toUTF8 id(brandShortName);
@@ -366,8 +367,7 @@ WriteImage(const nsCString& aPath, imgIContainer* aImage)
 
 NS_IMETHODIMP
 nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
-                                          int32_t aPosition,
-                                          const nsACString& aImageName)
+                                          int32_t aPosition)
 {
   nsresult rv;
   nsCOMPtr<nsIImageLoadingContent> imageContent = do_QueryInterface(aElement, &rv);
@@ -399,7 +399,7 @@ nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
   nsAutoCString filePath(PR_GetEnv("HOME"));
 
   // get the product brand name from localized strings
-  nsAutoString brandName;
+  nsString brandName;
   nsCID bundleCID = NS_STRINGBUNDLESERVICE_CID;
   nsCOMPtr<nsIStringBundleService> bundleService(do_GetService(bundleCID));
   if (bundleService) {
@@ -407,7 +407,8 @@ nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
     rv = bundleService->CreateBundle(BRAND_PROPERTIES,
                                      getter_AddRefs(brandBundle));
     if (NS_SUCCEEDED(rv) && brandBundle) {
-      rv = brandBundle->GetStringFromName("brandShortName", brandName);
+      rv = brandBundle->GetStringFromName("brandShortName",
+                                          getter_Copies(brandName));
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }

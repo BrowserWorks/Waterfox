@@ -64,8 +64,8 @@ add_task(async function test_opening_blocked_popups() {
 
   gBrowser.tabContainer.removeEventListener("TabOpen", onTabOpen);
 
-  ok(popupTabs[0].linkedBrowser.currentURI.spec.endsWith("popup_blocker_a.html"), "Popup a");
-  ok(popupTabs[1].linkedBrowser.currentURI.spec.endsWith("popup_blocker_b.html"), "Popup b");
+  is(popupTabs[0].linkedBrowser.currentURI.spec, "data:text/plain;charset=utf-8,a", "Popup a");
+  is(popupTabs[1].linkedBrowser.currentURI.spec, "data:text/plain;charset=utf-8,b", "Popup b");
 
   // Clean up.
   gBrowser.removeTab(tab);
@@ -75,4 +75,22 @@ add_task(async function test_opening_blocked_popups() {
   clearAllPermissionsByPrefix("popup");
   // Ensure the menu closes.
   menu.hidePopup();
+});
+
+add_task(async function check_icon_hides() {
+  // Enable the popup blocker.
+  await SpecialPowers.pushPrefEnv({set: [["dom.disable_open_during_load", true]]});
+
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, baseURL + "popup_blocker.html");
+
+  let button = document.getElementById("page-report-button");
+  await BrowserTestUtils.waitForCondition(() =>
+    gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"));
+  ok(!button.hidden, "Button should be visible");
+
+  let otherPageLoaded = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+  openLinkIn(baseURL, "current", {});
+  await otherPageLoaded;
+  ok(button.hidden, "Button should have hidden again after another page loaded.");
+  await BrowserTestUtils.removeTab(tab);
 });

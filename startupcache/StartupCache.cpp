@@ -501,7 +501,7 @@ StartupCache::WaitOnWriteThread()
 void
 StartupCache::ThreadedWrite(void *aClosure)
 {
-  AUTO_PROFILER_REGISTER_THREAD("StartupCache");
+  AutoProfilerRegisterThread registerThread("StartupCache");
   NS_SetCurrentThreadName("StartupCache");
   mozilla::IOInterposer::RegisterCurrentThread();
   /*
@@ -581,9 +581,9 @@ nsresult
 StartupCache::ResetStartupWriteTimer()
 {
   mStartupWriteInitiated = false;
-  nsresult rv = NS_OK;
+  nsresult rv;
   if (!mTimer)
-    mTimer = NS_NewTimer();
+    mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
   else
     rv = mTimer->Cancel();
   NS_ENSURE_SUCCESS(rv, rv);

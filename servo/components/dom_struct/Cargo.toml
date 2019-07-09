@@ -8,3 +8,6 @@ publish = false
 [lib]
 path = "lib.rs"
 proc-macro = true
+
+[dependencies]
+quote = "0.3"

@@ -13,7 +13,6 @@ info: >
   6. Let targetOffset be ? ToInteger(offset).
   7. If targetOffset < 0, throw a RangeError exception.
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -65,7 +65,7 @@ namespace jit {
     _(Lsh)                                      \
     _(Rsh)                                      \
     _(Ursh)                                     \
-    _(SignExtendInt32)                          \
+    _(SignExtend)                               \
     _(Add)                                      \
     _(Sub)                                      \
     _(Mul)                                      \
@@ -104,14 +104,12 @@ namespace jit {
     _(NewArray)                                 \
     _(NewIterator)                              \
     _(NewDerivedTypedObject)                    \
-    _(NewCallObject)                            \
     _(CreateThisWithTemplate)                   \
     _(Lambda)                                   \
     _(LambdaArrow)                              \
     _(SimdBox)                                  \
     _(ObjectState)                              \
     _(ArrayState)                               \
-    _(SetArrayLength)                           \
     _(AtomicIsLockFree)                         \
     _(AssertRecoveredOnBailout)
 
@@ -260,13 +258,13 @@ class RUrsh final : public RInstruction
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
 };
 
-class RSignExtendInt32 final : public RInstruction
+class RSignExtend final : public RInstruction
 {
   private:
     uint8_t mode_;
 
   public:
-    RINSTRUCTION_HEADER_NUM_OP_(SignExtendInt32, 1)
+    RINSTRUCTION_HEADER_NUM_OP_(SignExtend, 1)
 
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
 };
@@ -640,14 +638,6 @@ class RLambdaArrow final : public RInstruction
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
 };
 
-class RNewCallObject final : public RInstruction
-{
-  public:
-    RINSTRUCTION_HEADER_NUM_OP_(NewCallObject, 1)
-
-    MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
-};
-
 class RSimdBox final : public RInstruction
 {
   private:
@@ -694,14 +684,6 @@ class RArrayState final : public RInstruction
         // +1 for the initalized length.
         return numElements() + 2;
     }
-
-    MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
-};
-
-class RSetArrayLength final : public RInstruction
-{
-  public:
-    RINSTRUCTION_HEADER_NUM_OP_(SetArrayLength, 2)
 
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const override;
 };

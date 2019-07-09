@@ -7,7 +7,6 @@
 
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 
 // handlers for our server.
 var numTokenFetches;
@@ -30,7 +29,7 @@ function destroy(request, response) {
   sis.close();
   let token = body.token;
   ok(activeTokens.delete(token));
-  print("after destroy have", activeTokens.size, "tokens left.");
+  print("after destroy have", activeTokens.size, "tokens left.")
   response.setStatusLine("1.1", 200, "OK");
   response.write("{}");
 }
@@ -52,24 +51,23 @@ function promiseStopServer(server) {
 }
 
 add_task(async function getAndRevokeToken() {
-  Services.prefs.setBoolPref("identity.fxaccounts.allowHttp", true);
   let server = startServer();
-  try {
-    let clientOptions = {
-      serverURL: "http://localhost:" + server.identity.primaryPort + "/v1",
-      client_id: "abc123",
-    };
-
-    let client = new FxAccountsOAuthGrantClient(clientOptions);
-    let result = await client.getTokenFromAssertion("assertion", "scope");
-    equal(result.access_token, "token0");
-    equal(numTokenFetches, 1, "we hit the server to fetch a token");
-    await client.destroyToken("token0");
-    equal(activeTokens.size, 0, "We hit the server to revoke it");
-  } finally {
-    await promiseStopServer(server);
-    Services.prefs.clearUserPref("identity.fxaccounts.allowHttp");
+  let clientOptions = {
+    serverURL: "http://localhost:" + server.identity.primaryPort + "/v1",
+    client_id: "abc123",
   }
+
+  let client = new FxAccountsOAuthGrantClient(clientOptions);
+  let result = await client.getTokenFromAssertion("assertion", "scope");
+  equal(result.access_token, "token0");
+  equal(numTokenFetches, 1, "we hit the server to fetch a token");
+  await client.destroyToken("token0");
+  equal(activeTokens.size, 0, "We hit the server to revoke it");
+  await promiseStopServer(server);
 });
 
 // XXX - TODO - we should probably add more tests for unexpected responses etc.
+
+function run_test() {
+  run_next_test();
+}

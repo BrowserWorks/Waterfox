@@ -7,7 +7,7 @@
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/ContextualIdentityService.jsm");
 
-const containersBundle = Services.strings.createBundle("chrome://browser/locale/preferences/containers.properties");
+const containersBundle = Services.strings.createBundle("chrome://browser/locale/preferences-old/containers.properties");
 
 const defaultContainerIcon = "fingerprint";
 const defaultContainerColor = "blue";
@@ -18,7 +18,7 @@ let gContainersPane = {
     this._list = document.getElementById("containersView");
 
     document.getElementById("backContainersLink").addEventListener("click", function() {
-      gotoPref("general");
+      gotoPref("privacy");
     });
 
     this._rebuildView();
@@ -49,7 +49,7 @@ let gContainersPane = {
 
       let title = bundlePreferences.getString("removeContainerAlertTitle");
       let message = PluralForm.get(count, bundlePreferences.getString("removeContainerMsg"))
-                              .replace("#S", count);
+                              .replace("#S", count)
       let okButton = bundlePreferences.getString("removeContainerOkButton");
       let cancelButton = bundlePreferences.getString("removeContainerButton2");
 

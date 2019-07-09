@@ -15,10 +15,10 @@
 #include "nsIDOMElement.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
-#include "nsElementTable.h"
 #include "nsNameSpaceManager.h"
 #include "nsString.h"
 #include "nsUnicharUtils.h"
+#include "nsXPIDLString.h"
 #include "nsIServiceManager.h"
 #include "nsIDocumentEncoder.h"
 #include "nsGkAtoms.h"
@@ -26,6 +26,7 @@
 #include "nsNetUtil.h"
 #include "nsEscape.h"
 #include "nsCRT.h"
+#include "nsIParserService.h"
 #include "nsContentUtils.h"
 #include "nsLWBrkCIID.h"
 #include "nsIScriptElement.h"
@@ -85,6 +86,10 @@ nsXHTMLContentSerializer::Init(uint32_t aFlags,
   mBodyOnly = (mFlags & nsIDocumentEncoder::OutputBodyOnly) ? true
                                                             : false;
 
+  // set up entity converter if we are going to need it
+  if (mFlags & nsIDocumentEncoder::OutputEncodeW3CEntities) {
+    mEntityConverter = do_CreateInstance(NS_ENTITYCONVERTER_CONTRACTID);
+  }
   return NS_OK;
 }
 
@@ -160,7 +165,7 @@ nsXHTMLContentSerializer::SerializeAttributes(nsIContent* aContent,
                                               nsIContent *aOriginalElement,
                                               nsAString& aTagPrefix,
                                               const nsAString& aTagNamespaceURI,
-                                              nsAtom* aTagName,
+                                              nsIAtom* aTagName,
                                               nsAString& aStr,
                                               uint32_t aSkipAttr,
                                               bool aAddNSAttr)
@@ -243,8 +248,8 @@ nsXHTMLContentSerializer::SerializeAttributes(nsIContent* aContent,
     const nsAttrName* name = info.mName;
 
     int32_t namespaceID = name->NamespaceID();
-    nsAtom* attrName = name->LocalName();
-    nsAtom* attrPrefix = name->GetPrefix();
+    nsIAtom* attrName = name->LocalName();
+    nsIAtom* attrPrefix = name->GetPrefix();
 
     // Filter out any attribute starting with [-|_]moz
     nsDependentAtomString attrNameStr(attrName);
@@ -294,7 +299,7 @@ nsXHTMLContentSerializer::SerializeAttributes(nsIContent* aContent,
           (attrName == nsGkAtoms::src))) {
         // Make all links absolute when converting only the selection:
         if (mFlags & nsIDocumentEncoder::OutputAbsoluteLinks) {
-          // Would be nice to handle OBJECT tags,
+          // Would be nice to handle OBJECT and APPLET tags,
           // but that gets more complicated since we have to
           // search the tag list for CODEBASE as well.
           // For now, just leave them relative.
@@ -480,8 +485,8 @@ nsXHTMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
 }
 
 bool
-nsXHTMLContentSerializer::IsShorthandAttr(const nsAtom* aAttrName,
-                                          const nsAtom* aElementName)
+nsXHTMLContentSerializer::IsShorthandAttr(const nsIAtom* aAttrName,
+                                          const nsIAtom* aElementName)
 {
   // checked
   if ((aAttrName == nsGkAtoms::checked) &&
@@ -578,7 +583,7 @@ nsXHTMLContentSerializer::IsShorthandAttr(const nsAtom* aAttrName,
 }
 
 bool
-nsXHTMLContentSerializer::LineBreakBeforeOpen(int32_t aNamespaceID, nsAtom* aName)
+nsXHTMLContentSerializer::LineBreakBeforeOpen(int32_t aNamespaceID, nsIAtom* aName)
 {
 
   if (aNamespaceID != kNameSpaceID_XHTML) {
@@ -595,12 +600,22 @@ nsXHTMLContentSerializer::LineBreakBeforeOpen(int32_t aNamespaceID, nsAtom* aNam
       aName == nsGkAtoms::html) {
     return true;
   }
+  else {
+    nsIParserService* parserService = nsContentUtils::GetParserService();
 
-  return nsHTMLElement::IsBlock(nsHTMLTags::CaseSensitiveAtomTagToId(aName));
+    if (parserService) {
+      bool res;
+      parserService->
+        IsBlock(parserService->HTMLCaseSensitiveAtomTagToId(aName), res);
+      return res;
+    }
+  }
+
+  return mAddSpace;
 }
 
 bool
-nsXHTMLContentSerializer::LineBreakAfterOpen(int32_t aNamespaceID, nsAtom* aName)
+nsXHTMLContentSerializer::LineBreakAfterOpen(int32_t aNamespaceID, nsIAtom* aName)
 {
 
   if (aNamespaceID != kNameSpaceID_XHTML) {
@@ -631,7 +646,7 @@ nsXHTMLContentSerializer::LineBreakAfterOpen(int32_t aNamespaceID, nsAtom* aName
 }
 
 bool
-nsXHTMLContentSerializer::LineBreakBeforeClose(int32_t aNamespaceID, nsAtom* aName)
+nsXHTMLContentSerializer::LineBreakBeforeClose(int32_t aNamespaceID, nsIAtom* aName)
 {
 
   if (aNamespaceID != kNameSpaceID_XHTML) {
@@ -653,7 +668,7 @@ nsXHTMLContentSerializer::LineBreakBeforeClose(int32_t aNamespaceID, nsAtom* aNa
 }
 
 bool
-nsXHTMLContentSerializer::LineBreakAfterClose(int32_t aNamespaceID, nsAtom* aName)
+nsXHTMLContentSerializer::LineBreakAfterClose(int32_t aNamespaceID, nsIAtom* aName)
 {
 
   if (aNamespaceID != kNameSpaceID_XHTML) {
@@ -666,16 +681,31 @@ nsXHTMLContentSerializer::LineBreakAfterClose(int32_t aNamespaceID, nsAtom* aNam
       (aName == nsGkAtoms::tr) ||
       (aName == nsGkAtoms::th) ||
       (aName == nsGkAtoms::td) ||
+      (aName == nsGkAtoms::pre) ||
       (aName == nsGkAtoms::title) ||
+      (aName == nsGkAtoms::li) ||
       (aName == nsGkAtoms::dt) ||
       (aName == nsGkAtoms::dd) ||
+      (aName == nsGkAtoms::blockquote) ||
       (aName == nsGkAtoms::select) ||
       (aName == nsGkAtoms::option) ||
-      (aName == nsGkAtoms::map)) {
+      (aName == nsGkAtoms::p) ||
+      (aName == nsGkAtoms::map) ||
+      (aName == nsGkAtoms::div)) {
     return true;
   }
+  else {
+    nsIParserService* parserService = nsContentUtils::GetParserService();
 
-  return nsHTMLElement::IsBlock(nsHTMLTags::CaseSensitiveAtomTagToId(aName));
+    if (parserService) {
+      bool res;
+      parserService->
+        IsBlock(parserService->HTMLCaseSensitiveAtomTagToId(aName), res);
+      return res;
+    }
+  }
+
+  return false;
 }
 
 

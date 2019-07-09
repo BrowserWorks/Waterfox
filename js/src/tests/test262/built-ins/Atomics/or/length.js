@@ -3,7 +3,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.or
 description: >
   Atomics.or.length is 3.
 info: >

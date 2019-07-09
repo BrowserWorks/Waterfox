@@ -10,21 +10,11 @@
             "optional": true
           }
         }
-      },
-      {
-        "$extend": "Permission",
-        "choices": [{
-          "type": "string",
-          "enum": [
-            "devtools"
-          ]
-        }]
       }
     ]
   },
   {
     "namespace": "devtools",
-    "permissions": ["devtools"],
     "allowedContexts": ["devtools", "devtools_only"],
     "defaultContexts": ["devtools", "devtools_only"]
   }

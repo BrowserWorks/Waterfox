@@ -2,11 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os
+import sys
 
-import mozunit
 import pytest
 
 from mozlint.parser import Parser
@@ -60,4 +58,4 @@ def test_parse_non_existent_linter(parse):
 
 
 if __name__ == '__main__':
-    mozunit.main()
+    sys.exit(pytest.main(['--verbose', __file__]))

@@ -6,7 +6,6 @@ description: >
     When a generator body contains no control flow statements, it should
     produce an iterator that is initially completed with `undefined` as its
     value.
-features: [generators]
 ---*/
 
 function* g() {}

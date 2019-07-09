@@ -244,7 +244,7 @@ static std::ostream& operator<<(std::ostream& os, SkipFirstDelimiter& delim)
 void
 SdpImageattrAttributeList::XYRange::Serialize(std::ostream& os) const
 {
-  if (discreteValues.empty()) {
+  if (discreteValues.size() == 0) {
     os << "[" << min << ":";
     if (step != 1) {
       os << step << ":";
@@ -500,7 +500,7 @@ void
 SdpImageattrAttributeList::SRange::Serialize(std::ostream& os) const
 {
   os << std::setprecision(4) << std::fixed;
-  if (discreteValues.empty()) {
+  if (discreteValues.size() == 0) {
     os << "[" << min << "-" << max << "]";
   } else if (discreteValues.size() == 1) {
     os << discreteValues.front();
@@ -1451,6 +1451,8 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
       return false;
     case kImageattrAttribute:
       return true;
+    case kInactiveAttribute:
+      return true;
     case kLabelAttribute:
       return true;
     case kMaxptimeAttribute:
@@ -1462,6 +1464,8 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
     case kMsidSemanticAttribute:
       return false;
     case kPtimeAttribute:
+      return true;
+    case kRecvonlyAttribute:
       return true;
     case kRemoteCandidatesAttribute:
       return true;
@@ -1478,6 +1482,10 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
     case kRtpmapAttribute:
       return true;
     case kSctpmapAttribute:
+      return true;
+    case kSendonlyAttribute:
+      return true;
+    case kSendrecvAttribute:
       return true;
     case kSetupAttribute:
       return true;
@@ -1533,6 +1541,8 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return true;
     case kImageattrAttribute:
       return false;
+    case kInactiveAttribute:
+      return true;
     case kLabelAttribute:
       return false;
     case kMaxptimeAttribute:
@@ -1545,6 +1555,8 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return false;
     case kPtimeAttribute:
       return false;
+    case kRecvonlyAttribute:
+      return true;
     case kRemoteCandidatesAttribute:
       return false;
     case kRidAttribute:
@@ -1561,6 +1573,10 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return false;
     case kSctpmapAttribute:
       return false;
+    case kSendonlyAttribute:
+      return true;
+    case kSendrecvAttribute:
+      return true;
     case kSetupAttribute:
       return true;
     case kSimulcastAttribute:
@@ -1613,6 +1629,8 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "identity";
     case kImageattrAttribute:
       return "imageattr";
+    case kInactiveAttribute:
+      return "inactive";
     case kLabelAttribute:
       return "label";
     case kMaxptimeAttribute:
@@ -1625,6 +1643,8 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "msid-semantic";
     case kPtimeAttribute:
       return "ptime";
+    case kRecvonlyAttribute:
+      return "recvonly";
     case kRemoteCandidatesAttribute:
       return "remote-candidates";
     case kRidAttribute:
@@ -1641,6 +1661,10 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "rtpmap";
     case kSctpmapAttribute:
       return "sctpmap";
+    case kSendonlyAttribute:
+      return "sendonly";
+    case kSendrecvAttribute:
+      return "sendrecv";
     case kSetupAttribute:
       return "setup";
     case kSimulcastAttribute:

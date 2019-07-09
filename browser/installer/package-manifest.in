@@ -146,6 +146,11 @@
 @BINPATH@/@DLL_PREFIX@mozavcodec@DLL_SUFFIX@
 #endif
 @RESPATH@/browser/blocklist.xml
+#ifdef XP_UNIX
+#ifndef XP_MACOSX
+@RESPATH@/run-mozilla.sh
+#endif
+#endif
 #ifdef XP_WIN
 #ifdef _AMD64_
 @BINPATH@/@DLL_PREFIX@qipcap64@DLL_SUFFIX@
@@ -234,6 +239,7 @@
 @RESPATH@/components/editor.xpt
 @RESPATH@/components/extensions.xpt
 @RESPATH@/components/exthandler.xpt
+@RESPATH@/components/exthelper.xpt
 @RESPATH@/components/fastfind.xpt
 @RESPATH@/components/feeds.xpt
 #ifdef MOZ_GTK
@@ -256,6 +262,9 @@
 @RESPATH@/components/layout_xul_tree.xpt
 @RESPATH@/components/layout_xul.xpt
 @RESPATH@/components/locale.xpt
+#ifdef MOZ_GECKO_PROFILER
+@RESPATH@/components/memory_profiler.xpt
+#endif
 @RESPATH@/browser/components/migration.xpt
 @RESPATH@/components/mimetype.xpt
 @RESPATH@/components/mozfind.xpt
@@ -377,8 +386,6 @@
 @RESPATH@/browser/components/devtools-startup.js
 @RESPATH@/browser/components/aboutdebugging-registration.js
 @RESPATH@/browser/components/aboutdebugging.manifest
-@RESPATH@/browser/components/aboutdevtools-registration.js
-@RESPATH@/browser/components/aboutdevtools.manifest
 @RESPATH@/browser/components/Experiments.manifest
 @RESPATH@/browser/components/ExperimentsService.js
 @RESPATH@/browser/components/browser-newtab.xpt
@@ -393,9 +400,8 @@
 @RESPATH@/components/nsSearchService.js
 @RESPATH@/components/nsSearchSuggestions.js
 @RESPATH@/components/nsSidebar.js
-#ifdef NIGHTLY_BUILD
+#if defined(NIGHTLY_BUILD) && defined(MOZ_BUILD_APP_IS_BROWSER)
 @RESPATH@/components/payments.manifest
-@RESPATH@/components/paymentUIService.js
 #endif
 @RESPATH@/components/passwordmgr.manifest
 @RESPATH@/components/nsLoginInfo.js
@@ -461,8 +467,8 @@
 @RESPATH@/components/mozProtocolHandler.manifest
 @RESPATH@/components/nsDefaultCLH.manifest
 @RESPATH@/components/nsDefaultCLH.js
-@RESPATH@/components/ContentPrefService2.manifest
-@RESPATH@/components/ContentPrefService2.js
+@RESPATH@/components/nsContentPrefService.manifest
+@RESPATH@/components/nsContentPrefService.js
 @RESPATH@/components/nsContentDispatchChooser.manifest
 @RESPATH@/components/nsContentDispatchChooser.js
 @RESPATH@/components/nsHandlerService-json.manifest
@@ -481,6 +487,7 @@
 @RESPATH@/browser/components/ProfileMigrator.js
 @RESPATH@/browser/components/ChromeProfileMigrator.js
 @RESPATH@/browser/components/FirefoxProfileMigrator.js
+@RESPATH@/browser/components/WaterfoxProfileMigrator.js
 #ifdef XP_WIN
 @RESPATH@/browser/components/360seProfileMigrator.js
 @RESPATH@/browser/components/EdgeProfileMigrator.js
@@ -493,10 +500,6 @@
 @RESPATH@/components/nsINIProcessor.js
 @RESPATH@/components/nsPrompter.manifest
 @RESPATH@/components/nsPrompter.js
-#ifdef MOZ_SERVICES_HEALTHREPORT
-@RESPATH@/browser/components/SelfSupportService.manifest
-@RESPATH@/browser/components/SelfSupportService.js
-#endif
 @RESPATH@/components/SyncComponents.manifest
 @RESPATH@/components/Weave.js
 @RESPATH@/components/FxAccountsComponents.manifest
@@ -602,10 +605,6 @@
 #endif
 #endif # MOZ_ANGLE_RENDERER
 
-#if defined(XP_WIN) && defined(MOZ_ENABLE_SKIA_PDF)
-@BINPATH@/pdfium.dll
-#endif
-
 ; [Browser Chrome Files]
 @RESPATH@/browser/chrome.manifest
 @RESPATH@/browser/chrome/browser@JAREXT@
@@ -620,8 +619,13 @@
 @RESPATH@/chrome/recording/*
 #ifdef MOZ_GTK
 @RESPATH@/browser/chrome/icons/default/default16.png
+@RESPATH@/browser/chrome/icons/default/default22.png
+@RESPATH@/browser/chrome/icons/default/default24.png
 @RESPATH@/browser/chrome/icons/default/default32.png
 @RESPATH@/browser/chrome/icons/default/default48.png
+@RESPATH@/browser/chrome/icons/default/default64.png
+@RESPATH@/browser/chrome/icons/default/default128.png
+@RESPATH@/browser/chrome/icons/default/default256.png
 #endif
 @RESPATH@/browser/features/*
 
@@ -633,7 +637,6 @@
 ; [DevTools Shim Files]
 @RESPATH@/browser/chrome/devtools-shim@JAREXT@
 @RESPATH@/browser/chrome/devtools-shim.manifest
-@RESPATH@/browser/@PREF_DIR@/devtools-startup-prefs.js
 
 ; DevTools
 @RESPATH@/browser/chrome/devtools@JAREXT@
@@ -644,8 +647,6 @@
 ; shell icons
 #ifdef XP_UNIX
 #ifndef XP_MACOSX
-; shell icons
-@RESPATH@/browser/icons/*.png
 #ifdef MOZ_UPDATER
 ; updater icon
 @RESPATH@/icons/updater.png
@@ -704,8 +705,8 @@
 #endif
 @RESPATH@/res/fonts/*
 @RESPATH@/res/dtd/*
-@RESPATH@/res/html/*
 @RESPATH@/res/language.properties
+@RESPATH@/res/entityTables/*
 #ifdef XP_MACOSX
 @RESPATH@/res/MainMenu.nib/
 #endif
@@ -800,10 +801,6 @@ bin/libfreebl_32int64_3.so
 #endif
 #endif
 
-; [ Ping Sender ]
-;
-@BINPATH@/pingsender@BIN_SUFFIX@
-
 @RESPATH@/components/dom_audiochannel.xpt
 
 ; Shutdown Terminator
@@ -839,14 +836,4 @@ bin/libfreebl_32int64_3.so
 #ifdef XP_LINUX
 @RESPATH@/fix_linux_stack.py
 #endif
-#endif
-
-; Background Hang Monitor
-@RESPATH@/components/backgroundhangmonitor.xpt
-
-; NOTE: This must match the config checks in
-; /toolkit/components/backgroundhangmonitor/moz.build.
-#if defined(NIGHTLY_BUILD) && !defined(MOZ_DEBUG) && !defined(MOZ_TSAN)
-@RESPATH@/components/BHRTelemetryService.js
-@RESPATH@/components/BHRTelemetryService.manifest
 #endif

@@ -102,7 +102,7 @@ function CheckLockState() {
             adbCheckResult.textContent = sNo;
             adbRootAction.removeAttribute("hidden");
           }
-        }, console.error);
+        }, e => console.error(e));
       } else {
         adbCheckResult.textContent = sUnknown;
       }
@@ -120,7 +120,7 @@ function CheckLockState() {
         } else {
           devtoolsCheckResult.textContent = sYes;
         }
-      }, console.error);
+      }, e => console.error(e));
     } catch (e) {
       // Exception. pref actor is only accessible if forbird-certified-apps is false
       devtoolsCheckResult.textContent = sNo;
@@ -147,5 +147,5 @@ function EnableCertApps() {
 
 function RootADB() {
   let device = AppManager.selectedRuntime.device;
-  device.summonRoot().then(CheckLockState, console.error);
+  device.summonRoot().then(CheckLockState, (e) => console.error(e));
 }

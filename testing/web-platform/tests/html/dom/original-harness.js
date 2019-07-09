@@ -141,8 +141,7 @@ ReflectionHarness.assertThrows = function(exceptionName, fn) {
   try {
     fn();
   } catch (e) {
-    if (e instanceof DOMException && (e.code == DOMException[exceptionName] ||
-                                      e.name == exceptionName)) {
+    if (e instanceof DOMException && e.code == DOMException[exceptionName]) {
       this.increment(this.passed);
       return true;
     }

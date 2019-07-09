@@ -8,7 +8,6 @@
 #include "DXVA2Manager.h"
 #include "D3D9SurfaceImage.h"
 #include "DriverCrashGuard.h"
-#include "GfxDriverInfo.h"
 #include "ImageContainer.h"
 #include "MFTDecoder.h"
 #include "MediaTelemetryConstants.h"
@@ -25,7 +24,6 @@
 #include "nsPrintfCString.h"
 #include "nsThreadUtils.h"
 #include "VideoUtils.h"
-#include "mozilla/mscom/EnsureMTA.h"
 
 const CLSID CLSID_VideoProcessorMFT =
 {
@@ -75,39 +73,6 @@ static const DWORD sAMDPreUVD4[] = {
   0x999c, 0x999d, 0x99a0, 0x99a2, 0x99a4
 };
 
-// List of NVidia Telsa GPU known to have broken NV12 rendering.
-static const DWORD sNVIDIABrokenNV12[] = {
-  0x0191, 0x0193, 0x0194, 0x0197, 0x019d, 0x019e, // G80
-  0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0405, 0x0406, 0x0407, 0x0408, 0x0409, // G84
-  0x040a, 0x040b, 0x040c, 0x040d, 0x040e, 0x040f,
-  0x0420, 0x0421, 0x0422, 0x0423, 0x0424, 0x0425, 0x0426, 0x0427, 0x0428, 0x0429, // G86
-  0x042a, 0x042b, 0x042c, 0x042d, 0x042e, 0x042f,
-  0x0410, 0x0600, 0x0601, 0x0602, 0x0603, 0x0604, 0x0605, 0x0606, 0x0607, 0x0608, // G92
-  0x0609, 0x060a, 0x060b, 0x060c, 0x060f, 0x0610, 0x0611, 0x0612, 0x0613, 0x0614,
-  0x0615, 0x0617, 0x0618, 0x0619, 0x061a, 0x061b, 0x061c, 0x061d, 0x061e, 0x061f, // G94
-  0x0621, 0x0622, 0x0623, 0x0625, 0x0626, 0x0627, 0x0628, 0x062a, 0x062b, 0x062c,
-  0x062d, 0x062e, 0x0631, 0x0635, 0x0637, 0x0638, 0x063a,
-  0x0640, 0x0641, 0x0643, 0x0644, 0x0645, 0x0646, 0x0647, 0x0648, 0x0649, 0x064a, // G96
-  0x064b, 0x064c, 0x0651, 0x0652, 0x0653, 0x0654, 0x0655, 0x0656, 0x0658, 0x0659,
-  0x065a, 0x065b, 0x065c, 0x065f,
-  0x06e0, 0x06e1, 0x06e2, 0x06e3, 0x06e4, 0x06e6, 0x06e7, 0x06e8, 0x06e9, 0x06ea, // G98
-  0x06eb, 0x06ec, 0x06ef, 0x06f1, 0x06f8, 0x06f9, 0x06fa, 0x06fb, 0x06fd, 0x06ff,
-  0x05e0, 0x05e1, 0x05e2, 0x05e3, 0x05e6, 0x05e7, 0x05e9, 0x05ea, 0x05eb, 0x05ed, // G200
-  0x05ee, 0x05ef,
-  0x0840, 0x0844, 0x0845, 0x0846, 0x0847, 0x0848, 0x0849, 0x084a, 0x084b, 0x084c, // MCP77
-  0x084d, 0x084f,
-  0x0860, 0x0861, 0x0862, 0x0863, 0x0864, 0x0865, 0x0866, 0x0867, 0x0868, 0x0869, // MCP79
-  0x086a, 0x086c, 0x086d, 0x086e, 0x086f, 0x0870, 0x0871, 0x0872, 0x0873, 0x0874,
-  0x0876, 0x087a, 0x087d, 0x087e, 0x087f,
-  0x0ca0, 0x0ca2, 0x0ca3, 0x0ca2, 0x0ca4, 0x0ca5, 0x0ca7, 0x0ca9, 0x0cac, 0x0caf, // GT215
-  0x0cb0, 0x0cb1, 0x0cbc,
-  0x0a20, 0x0a22, 0x0a23, 0x0a26, 0x0a27, 0x0a28, 0x0a29, 0x0a2a, 0x0a2b, 0x0a2c, // GT216
-  0x0a2d, 0x0a32, 0x0a34, 0x0a35, 0x0a38, 0x0a3c,
-  0x0a60, 0x0a62, 0x0a63, 0x0a64, 0x0a65, 0x0a66, 0x0a67, 0x0a68, 0x0a69, 0x0a6a, // GT218
-  0x0a6c, 0x0a6e, 0x0a6f, 0x0a70, 0x0a71, 0x0a72, 0x0a73, 0x0a74, 0x0a75, 0x0a76,
-  0x0a78, 0x0a7a, 0x0a7c, 0x10c0, 0x10c3, 0x10c5, 0x10d8
-};
-
 // The size we use for our synchronization surface.
 // 16x16 is the size recommended by Microsoft (in the D3D9ExDXGISharedSurf sample) that works
 // best to avoid driver bugs.
@@ -138,10 +103,13 @@ public:
   // Copies a region (aRegion) of the video frame stored in aVideoSample
   // into an image which is returned by aOutImage.
   HRESULT CopyToImage(IMFSample* aVideoSample,
-                      const gfx::IntRect& aRegion,
+                      const nsIntRect& aRegion,
                       Image** aOutImage) override;
 
   bool SupportsConfig(IMFMediaType* aType, float aFramerate) override;
+
+  bool CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
+                          nsACString& aFailureReason) override;
 
 private:
   bool CanCreateDecoder(const DXVA2_VideoDesc& aDesc,
@@ -218,10 +186,10 @@ HRESULT ConvertMFTypeToDXVAType(IMFMediaType *pType, DXVA2_VideoDesc *pDesc)
 
   GetDXVA2ExtendedFormatFromMFMediaType(pType, &pDesc->SampleFormat);
   pDesc->OutputFrameFreq = pDesc->InputSampleFreq;
-  if ((pDesc->SampleFormat.SampleFormat ==
-       DXVA2_SampleFieldInterleavedEvenFirst) ||
-      (pDesc->SampleFormat.SampleFormat ==
-       DXVA2_SampleFieldInterleavedOddFirst)) {
+  if ((pDesc->SampleFormat.SampleFormat
+       == DXVA2_SampleFieldInterleavedEvenFirst)
+      || (pDesc->SampleFormat.SampleFormat
+          == DXVA2_SampleFieldInterleavedOddFirst)) {
     pDesc->OutputFrameFreq.Numerator *= 2;
   }
 
@@ -404,8 +372,8 @@ D3D9DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
 
   bool found = false;
   for (UINT i = 0; i < deviceCount; i++) {
-    if (decoderDevices[i] == DXVA2_ModeH264_E ||
-        decoderDevices[i] == DXVA2_Intel_ModeH264_E) {
+    if (decoderDevices[i] == DXVA2_ModeH264_E
+        || decoderDevices[i] == DXVA2_Intel_ModeH264_E) {
       mDecoderGUID = decoderDevices[i];
       found = true;
       break;
@@ -426,8 +394,7 @@ D3D9DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
     return hr;
   }
 
-  if ((adapter.VendorId == 0x1022  || adapter.VendorId == 0x1002) &&
-      !gfxPrefs::PDMWMFSkipBlacklist()) {
+  if (adapter.VendorId == 0x1022 && !gfxPrefs::PDMWMFSkipBlacklist()) {
     for (const auto& model : sAMDPreUVD4) {
       if (adapter.DeviceId == model) {
         mIsAMDPreUVD4 = true;
@@ -471,7 +438,7 @@ D3D9DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
 
 HRESULT
 D3D9DXVA2Manager::CopyToImage(IMFSample* aSample,
-                              const gfx::IntRect& aRegion,
+                              const nsIntRect& aRegion,
                               Image** aOutImage)
 {
   RefPtr<IMFMediaBuffer> buffer;
@@ -538,6 +505,31 @@ DXVA2Manager::CreateD3D9DXVA(layers::KnowsCompositor* aKnowsCompositor,
 
   // No hardware accelerated video decoding. :(
   return nullptr;
+}
+
+bool
+D3D9DXVA2Manager::CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
+                                     nsACString& aFailureReason)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  DXVA2_VideoDesc desc;
+  desc.SampleWidth = aVideoInfo.mImage.width;
+  desc.SampleHeight = aVideoInfo.mImage.height;
+  desc.Format = (D3DFORMAT)MAKEFOURCC('N','V','1','2');
+
+  // Assume the current duration is representative for the entire video.
+  float framerate = 1000000.0 / aVideoInfo.mDuration.ToMicroseconds();
+  if (IsUnsupportedResolution(desc.SampleWidth, desc.SampleHeight, framerate)) {
+    return false;
+  }
+
+  mDecoder = CreateDecoder(desc);
+  if (!mDecoder) {
+    aFailureReason =
+      nsPrintfCString("Fail to create video decoder in D3D9DXVA2Manager.");
+    return false;
+  }
+  return true;
 }
 
 bool
@@ -618,7 +610,7 @@ public:
   // Copies a region (aRegion) of the video frame stored in aVideoSample
   // into an image which is returned by aOutImage.
   HRESULT CopyToImage(IMFSample* aVideoSample,
-                      const gfx::IntRect& aRegion,
+                      const nsIntRect& aRegion,
                       Image** aOutImage) override;
 
   virtual HRESULT CopyToBGRATexture(ID3D11Texture2D *aInTexture,
@@ -629,6 +621,9 @@ public:
   bool IsD3D11() override { return true; }
 
   bool SupportsConfig(IMFMediaType* aType, float aFramerate) override;
+
+  bool CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
+                          nsACString& aFailureReason) override;
 
 private:
   HRESULT CreateFormatConverter();
@@ -648,12 +643,11 @@ private:
   RefPtr<MFTDecoder> mTransform;
   RefPtr<D3D11RecycleAllocator> mTextureClientAllocator;
   RefPtr<ID3D11VideoDecoder> mDecoder;
-  RefPtr<layers::SyncObjectClient> mSyncObject;
+  RefPtr<layers::SyncObject> mSyncObject;
   GUID mDecoderGUID;
   uint32_t mWidth = 0;
   uint32_t mHeight = 0;
   UINT mDeviceManagerToken = 0;
-  bool mConfiuredForSize = false;
 };
 
 bool
@@ -717,10 +711,9 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
       // and because it allows color conversion ocurring directly from this texture
       // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
       mSyncObject =
-        layers::SyncObjectClient::CreateSyncObjectClient(
-            layers::ImageBridgeChild::GetSingleton()->
-              GetTextureFactoryIdentifier().mSyncHandle,
-            mDevice);
+        layers::SyncObject::CreateSyncObject(layers::ImageBridgeChild::GetSingleton()->
+                                               GetTextureFactoryIdentifier().mSyncHandle,
+                                             mDevice);
     }
   } else {
     mTextureClientAllocator =
@@ -730,9 +723,8 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
       // and because it allows color conversion ocurring directly from this texture
       // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
       mSyncObject =
-        layers::SyncObjectClient::CreateSyncObjectClient(
-            aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
-            mDevice);
+        layers::SyncObject::CreateSyncObject(aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
+                                             mDevice);
     }
   }
   mTextureClientAllocator->SetMaxPoolSize(5);
@@ -784,35 +776,22 @@ D3D11DXVA2Manager::InitInternal(layers::KnowsCompositor* aKnowsCompositor,
     return hr;
   }
 
-  // The IMFTransform interface used by MFTDecoder is documented to require to
-  // run on an MTA thread.
-  // https://msdn.microsoft.com/en-us/library/windows/desktop/ee892371(v=vs.85).aspx#components
-  // The main thread (where this function is called) is STA, not MTA.
-  RefPtr<MFTDecoder> mft;
-  mozilla::mscom::EnsureMTA([&]() -> void {
-    mft = new MFTDecoder();
-    hr = mft->Create(CLSID_VideoProcessorMFT);
-
-    if (!SUCCEEDED(hr)) {
-      aFailureReason = nsPrintfCString(
-        "MFTDecoder::Create(CLSID_VideoProcessorMFT) failed with code %X", hr);
-      return;
-    }
-
-    hr = mft->SendMFTMessage(MFT_MESSAGE_SET_D3D_MANAGER,
-                             ULONG_PTR(mDXGIDeviceManager.get()));
-    if (!SUCCEEDED(hr)) {
-      aFailureReason = nsPrintfCString("MFTDecoder::SendMFTMessage(MFT_MESSAGE_"
-                                       "SET_D3D_MANAGER) failed with code %X",
-                                       hr);
-      return;
-    }
-  });
-
+  mTransform = new MFTDecoder();
+  hr = mTransform->Create(CLSID_VideoProcessorMFT);
   if (!SUCCEEDED(hr)) {
+    aFailureReason = nsPrintfCString(
+      "MFTDecoder::Create(CLSID_VideoProcessorMFT) failed with code %X", hr);
     return hr;
   }
-  mTransform = mft;
+
+  hr = mTransform->SendMFTMessage(MFT_MESSAGE_SET_D3D_MANAGER,
+                                  ULONG_PTR(mDXGIDeviceManager.get()));
+  if (!SUCCEEDED(hr)) {
+    aFailureReason = nsPrintfCString("MFTDecoder::SendMFTMessage(MFT_MESSAGE_"
+                                     "SET_D3D_MANAGER) failed with code %X",
+                                     hr);
+    return hr;
+  }
 
   RefPtr<ID3D11VideoDevice> videoDevice;
   hr = mDevice->QueryInterface(
@@ -828,8 +807,8 @@ D3D11DXVA2Manager::InitInternal(layers::KnowsCompositor* aKnowsCompositor,
   for (UINT i = 0; i < profileCount; i++) {
     GUID id;
     hr = videoDevice->GetVideoDecoderProfile(i, &id);
-    if (SUCCEEDED(hr) &&
-        (id == DXVA2_ModeH264_E || id == DXVA2_Intel_ModeH264_E)) {
+    if (SUCCEEDED(hr)
+        && (id == DXVA2_ModeH264_E || id == DXVA2_Intel_ModeH264_E)) {
       mDecoderGUID = id;
       found = true;
       break;
@@ -878,8 +857,7 @@ D3D11DXVA2Manager::InitInternal(layers::KnowsCompositor* aKnowsCompositor,
     return hr;
   }
 
-  if ((adapterDesc.VendorId == 0x1022 || adapterDesc.VendorId == 0x1002) &&
-      !gfxPrefs::PDMWMFSkipBlacklist()) {
+  if (adapterDesc.VendorId == 0x1022 && !gfxPrefs::PDMWMFSkipBlacklist()) {
     for (const auto& model : sAMDPreUVD4) {
       if (adapterDesc.DeviceId == model) {
         mIsAMDPreUVD4 = true;
@@ -904,8 +882,7 @@ D3D11DXVA2Manager::CreateOutputSample(RefPtr<IMFSample>& aSample,
     __uuidof(ID3D11Texture2D), aTexture, 0, FALSE, getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  hr = sample->AddBuffer(buffer);
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  sample->AddBuffer(buffer);
 
   aSample = sample;
   return S_OK;
@@ -913,7 +890,7 @@ D3D11DXVA2Manager::CreateOutputSample(RefPtr<IMFSample>& aSample,
 
 HRESULT
 D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
-                               const gfx::IntRect& aRegion,
+                               const nsIntRect& aRegion,
                                Image** aOutImage)
 {
   NS_ENSURE_TRUE(aVideoSample, E_POINTER);
@@ -967,19 +944,14 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
     } else {
       // Our video sample is in NV12 format but our output texture is in BGRA.
       // Use MFT to do color conversion.
-      hr = E_FAIL;
-      mozilla::mscom::EnsureMTA(
-        [&]() -> void { hr = mTransform->Input(aVideoSample); });
+      hr = mTransform->Input(aVideoSample);
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
       RefPtr<IMFSample> sample;
       hr = CreateOutputSample(sample, texture);
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-      hr = E_FAIL;
-      mozilla::mscom::EnsureMTA(
-        [&]() -> void { hr = mTransform->Output(&sample); });
-      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+      hr = mTransform->Output(&sample);
     }
   }
 
@@ -987,7 +959,7 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
     // It appears some race-condition may allow us to arrive here even when mSyncObject
     // is null. It's better to avoid that crash.
     client->SyncWithObject(mSyncObject);
-    mSyncObject->Synchronize();
+    mSyncObject->FinalizeFrame();
   }
 
   image.forget(aOutImage);
@@ -1053,19 +1025,14 @@ D3D11DXVA2Manager::CopyToBGRATexture(ID3D11Texture2D *aInTexture,
 
   inputSample->AddBuffer(inputBuffer);
 
-  hr = E_FAIL;
-  mozilla::mscom::EnsureMTA(
-    [&]() -> void { hr = mTransform->Input(inputSample); });
+  hr = mTransform->Input(inputSample);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   RefPtr<IMFSample> outputSample;
   hr = CreateOutputSample(outputSample, texture);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  hr = E_FAIL;
-  mozilla::mscom::EnsureMTA(
-    [&]() -> void { hr = mTransform->Output(&outputSample); });
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  hr = mTransform->Output(&outputSample);
 
   texture.forget(aOutTexture);
 
@@ -1091,11 +1058,6 @@ HRESULT ConfigureOutput(IMFMediaType* aOutput, void* aData)
 HRESULT
 D3D11DXVA2Manager::ConfigureForSize(uint32_t aWidth, uint32_t aHeight)
 {
-  if (mConfiuredForSize && aWidth == mWidth && aHeight == mHeight) {
-    // If the size hasn't changed, don't reconfigure.
-    return S_OK;
-  }
-
   mWidth = aWidth;
   mHeight = aHeight;
 
@@ -1115,10 +1077,7 @@ D3D11DXVA2Manager::ConfigureForSize(uint32_t aWidth, uint32_t aHeight)
   hr = inputType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  RefPtr<IMFAttributes> attr;
-  mozilla::mscom::EnsureMTA(
-    [&]() -> void { attr = mTransform->GetAttributes(); });
-  NS_ENSURE_TRUE(attr != nullptr, E_FAIL);
+  RefPtr<IMFAttributes> attr = mTransform->GetAttributes();
 
   hr = attr->SetUINT32(MF_XVP_PLAYBACK_MODE, TRUE);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
@@ -1140,16 +1099,36 @@ D3D11DXVA2Manager::ConfigureForSize(uint32_t aWidth, uint32_t aHeight)
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   gfx::IntSize size(mWidth, mHeight);
-  hr = E_FAIL;
-  mozilla::mscom::EnsureMTA([&]() -> void {
-    hr =
-      mTransform->SetMediaTypes(inputType, outputType, ConfigureOutput, &size);
-  });
+  hr = mTransform->SetMediaTypes(inputType, outputType, ConfigureOutput, &size);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  mConfiuredForSize = true;
-
   return S_OK;
+}
+
+bool
+D3D11DXVA2Manager::CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
+                                      nsACString& aFailureReason)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  D3D11_VIDEO_DECODER_DESC desc;
+  desc.Guid = mDecoderGUID;
+  desc.OutputFormat = DXGI_FORMAT_NV12;
+  desc.SampleWidth = aVideoInfo.mImage.width;
+  desc.SampleHeight = aVideoInfo.mImage.height;
+
+  // Assume the current duration is representative for the entire video.
+  float framerate = 1000000.0 / aVideoInfo.mDuration.ToMicroseconds();
+  if (IsUnsupportedResolution(desc.SampleWidth, desc.SampleHeight, framerate)) {
+    return false;
+  }
+
+  mDecoder = CreateDecoder(desc);
+  if (!mDecoder) {
+    aFailureReason =
+      nsPrintfCString("Fail to create video decoder in D3D11DXVA2Manager.");
+    return false;
+  }
+  return true;
 }
 
 bool
@@ -1242,40 +1221,9 @@ DXVA2Manager::IsUnsupportedResolution(const uint32_t& aWidth,
   // AMD cards with UVD3 or earlier perform poorly trying to decode 1080p60 in
   // hardware, so use software instead. Pick 45 as an arbitrary upper bound for
   // the framerate we can handle.
-  return mIsAMDPreUVD4 &&
-         (aWidth >= 1920 || aHeight >= 1088) &&
-         aFramerate > 45;
-}
-
-/* static */ bool
-DXVA2Manager::IsNV12Supported(uint32_t aVendorID,
-                              uint32_t aDeviceID,
-                              const nsAString& aDriverVersionString)
-{
-  if (aVendorID == 0x1022 || aVendorID == 0x1002) {
-    // AMD
-    // Block old cards regardless of driver version.
-    for (const auto& model : sAMDPreUVD4) {
-      if (aDeviceID == model) {
-        return false;
-      }
-    }
-    // AMD driver earlier than 21.19.411.0 have bugs in their handling of NV12
-    // surfaces.
-    uint64_t driverVersion;
-    if (widget::ParseDriverVersion(aDriverVersionString, &driverVersion) &&
-        driverVersion < widget::V(21, 19, 411, 0)) {
-      return false;
-    }
-  } else if (aVendorID == 0x10DE) {
-    // NVidia
-    for (const auto& model : sNVIDIABrokenNV12) {
-      if (aDeviceID == model) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return mIsAMDPreUVD4
+         && (aWidth >= 1920 || aHeight >= 1088)
+         && aFramerate > 45;
 }
 
 } // namespace mozilla

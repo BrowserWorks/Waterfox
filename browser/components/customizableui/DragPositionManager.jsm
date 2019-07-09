@@ -7,6 +7,9 @@
 Components.utils.import("resource:///modules/CustomizableUI.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyPreferenceGetter(this, "gPhotonStructure",
+  "browser.photon.structure.enabled", false);
+
 var gManagers = new WeakMap();
 
 const kPaletteId = "customization-palette";
@@ -373,14 +376,16 @@ AreaPositionManager.prototype = {
     let rv = aNode;
     do {
       rv = rv[aDirection + "Sibling"];
-    } while (rv && rv.getAttribute("hidden") == "true");
+    } while (rv && rv.getAttribute("hidden") == "true")
     return rv;
   }
-};
+}
 
 var DragPositionManager = {
   start(aWindow) {
-    let areas = [aWindow.document.getElementById(kPaletteId)];
+    let areas = gPhotonStructure ? [] : [CustomizableUI.AREA_PANEL];
+    areas = areas.map((area) => CustomizableUI.getCustomizeTargetForArea(area, aWindow));
+    areas.push(aWindow.document.getElementById(kPaletteId));
     for (let areaNode of areas) {
       let positionManager = gManagers.get(areaNode);
       if (positionManager) {
@@ -389,6 +394,22 @@ var DragPositionManager = {
         gManagers.set(areaNode, new AreaPositionManager(areaNode));
       }
     }
+  },
+
+  add(aWindow, aArea, aContainer) {
+    if (aArea != CustomizableUI.AREA_PANEL) {
+      return;
+    }
+
+    gManagers.set(aContainer, new AreaPositionManager(aContainer));
+  },
+
+  remove(aWindow, aArea, aContainer) {
+    if (aArea != CustomizableUI.AREA_PANEL) {
+      return;
+    }
+
+    gManagers.delete(aContainer);
   },
 
   stop() {

@@ -105,7 +105,9 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     profilerSampleBufferGen_(0),
     profilerSampleBufferLapCount_(1),
     telemetryCallback(nullptr),
-    consumeStreamCallback(nullptr),
+    startAsyncTaskCallback(nullptr),
+    finishAsyncTaskCallback(nullptr),
+    promiseTasksToDestroy(mutexid::PromiseTaskPtrVector),
     readableStreamDataRequestCallback(nullptr),
     readableStreamWriteIntoReadRequestCallback(nullptr),
     readableStreamCancelCallback(nullptr),
@@ -117,8 +119,6 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     destroyCompartmentCallback(nullptr),
     sizeOfIncludingThisCompartmentCallback(nullptr),
     compartmentNameCallback(nullptr),
-    destroyRealmCallback(nullptr),
-    realmNameCallback(nullptr),
     externalStringSizeofCallback(nullptr),
     securityCallbacks(&NullSecurityCallbacks),
     DOMcallbacks(nullptr),
@@ -137,7 +137,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
 #ifdef DEBUG
     activeThreadHasExclusiveAccess(false),
 #endif
-    numActiveHelperThreadZones(0),
+    numHelperThreadZones(0),
     numCompartments(0),
     localeCallbacks(nullptr),
     defaultLocale(nullptr),
@@ -219,12 +219,12 @@ JSRuntime::init(JSContext* cx, uint32_t maxbytes, uint32_t maxNurseryBytes)
     if (!gc.init(maxbytes, maxNurseryBytes))
         return false;
 
-    ScopedJSDeletePtr<Zone> atomsZone(js_new<Zone>(this, nullptr));
+    ScopedJSDeletePtr<Zone> atomsZone(new_<Zone>(this, nullptr));
     if (!atomsZone || !atomsZone->init(true))
         return false;
 
     JS::CompartmentOptions options;
-    ScopedJSDeletePtr<JSCompartment> atomsCompartment(js_new<JSCompartment>(atomsZone.get(), options));
+    ScopedJSDeletePtr<JSCompartment> atomsCompartment(new_<JSCompartment>(atomsZone.get(), options));
     if (!atomsCompartment || !atomsCompartment->init(nullptr))
         return false;
 
@@ -446,19 +446,6 @@ JSRuntime::setTelemetryCallback(JSRuntime* rt, JSAccumulateTelemetryDataCallback
 }
 
 void
-JSRuntime::setUseCounter(JSObject* obj, JSUseCounter counter)
-{
-    if (useCounterCallback)
-        (*useCounterCallback)(obj, counter);
-}
-
-void
-JSRuntime::setUseCounterCallback(JSRuntime* rt, JSSetUseCounterCallback callback)
-{
-    rt->useCounterCallback = callback;
-}
-
-void
 JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes* rtSizes)
 {
     // Several tables in the runtime enumerated below can be used off thread.
@@ -592,11 +579,11 @@ JSContext::requestInterrupt(InterruptMode mode)
     jitStackLimit = UINTPTR_MAX;
 
     if (mode == JSContext::RequestInterruptUrgent) {
-        // If this interrupt is urgent (slow script dialog for instance), take
-        // additional steps to interrupt corner cases where the above fields are
-        // not regularly polled. Wake ilooping Ion code, irregexp JIT code and
-        // Atomics.wait()
-        interruptRegExpJit_ = true;
+        // If this interrupt is urgent (slow script dialog and garbage
+        // collection among others), take additional steps to
+        // interrupt corner cases where the above fields are not
+        // regularly polled.  Wake both ilooping JIT code and
+        // Atomics.wait().
         fx.lock();
         if (fx.isWaiting())
             fx.wake(FutexThread::WakeForJSInterrupt);
@@ -611,7 +598,6 @@ JSContext::handleInterrupt()
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime()));
     if (interrupt_ || jitStackLimit == UINTPTR_MAX) {
         interrupt_ = false;
-        interruptRegExpJit_ = false;
         resetJitStackLimit();
         return InvokeInterruptCallback(this);
     }
@@ -729,7 +715,7 @@ JSRuntime::enqueuePromiseJob(JSContext* cx, HandleFunction job, HandleObject pro
                              HandleObject incumbentGlobal)
 {
     MOZ_ASSERT(cx->enqueuePromiseJobCallback,
-               "Must set a callback using JS::SetEnqueuePromiseJobCallback before using Promises");
+               "Must set a callback using JS_SetEnqeueuPromiseJobCallback before using Promises");
     MOZ_ASSERT_IF(incumbentGlobal, !IsWrapper(incumbentGlobal) && !IsWindowProxy(incumbentGlobal));
 
     void* data = cx->enqueuePromiseJobCallbackData;
@@ -800,7 +786,13 @@ JSRuntime::forkRandomKeyGenerator()
 void
 JSRuntime::updateMallocCounter(size_t nbytes)
 {
-    gc.updateMallocCounter(nbytes);
+    updateMallocCounter(nullptr, nbytes);
+}
+
+void
+JSRuntime::updateMallocCounter(JS::Zone* zone, size_t nbytes)
+{
+    gc.updateMallocCounter(zone, nbytes);
 }
 
 JS_FRIEND_API(void*)
@@ -887,18 +879,18 @@ JSRuntime::destroyAtomsAddedWhileSweepingTable()
 void
 JSRuntime::setUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(!zone->group()->usedByHelperThread());
+    MOZ_ASSERT(!zone->group()->usedByHelperThread);
     MOZ_ASSERT(!zone->wasGCStarted());
-    zone->group()->setUsedByHelperThread();
-    numActiveHelperThreadZones++;
+    zone->group()->usedByHelperThread = true;
+    numHelperThreadZones++;
 }
 
 void
 JSRuntime::clearUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(zone->group()->usedByHelperThread());
-    zone->group()->clearUsedByHelperThread();
-    numActiveHelperThreadZones--;
+    MOZ_ASSERT(zone->group()->usedByHelperThread);
+    zone->group()->usedByHelperThread = false;
+    numHelperThreadZones--;
     JSContext* cx = TlsContext.get();
     if (gc.fullGCForAtomsRequested() && cx->canCollectAtoms())
         gc.triggerFullGCForAtoms(cx);

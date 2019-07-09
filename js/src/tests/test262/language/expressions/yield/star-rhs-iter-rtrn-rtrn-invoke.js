@@ -23,7 +23,7 @@ info: |
         iv. Let innerReturnResult be ? Call(return, iterator, «
             received.[[Value]] »).
         [...]
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var args, thisValue;

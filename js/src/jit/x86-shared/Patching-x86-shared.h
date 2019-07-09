@@ -62,30 +62,51 @@ GetRel32Target(void* where)
 class JmpSrc {
   public:
     JmpSrc()
-      : offset_(-1)
+        : offset_(-1)
     {
     }
+
     explicit JmpSrc(int32_t offset)
-      : offset_(offset)
+        : offset_(offset)
     {
     }
+
     int32_t offset() const {
         return offset_;
     }
+
+    bool isSet() const {
+        return offset_ != -1;
+    }
+
   private:
-    int32_t offset_;
+    int offset_;
 };
 
 class JmpDst {
   public:
+    JmpDst()
+        : offset_(-1)
+        , used_(false)
+    {
+    }
+
+    bool isUsed() const { return used_; }
+    void used() { used_ = true; }
+    bool isValid() const { return offset_ != -1; }
+
     explicit JmpDst(int32_t offset)
-      : offset_(offset)
-    {}
+        : offset_(offset)
+        , used_(false)
+    {
+        MOZ_ASSERT(offset_ == offset);
+    }
     int32_t offset() const {
         return offset_;
     }
   private:
-    int32_t offset_;
+    int32_t offset_ : 31;
+    bool used_ : 1;
 };
 
 inline bool

@@ -116,7 +116,7 @@ class RegExpShared : public gc::TenuredCell
     };
 
     /* Source to the RegExp, for lazy compilation. */
-    GCPtr<JSAtom*>     source;
+    HeapPtr<JSAtom*>   source;
 
     RegExpFlag         flags;
     bool               canStringMatch;
@@ -260,7 +260,7 @@ class RegExpZone
      * The set of all RegExpShareds in the zone. On every GC, every RegExpShared
      * that was not marked is deleted and removed from the set.
      */
-    using Set = JS::WeakCache<JS::GCHashSet<ReadBarriered<RegExpShared*>, Key, ZoneAllocPolicy>>;
+    using Set = JS::WeakCache<JS::GCHashSet<ReadBarriered<RegExpShared*>, Key, RuntimeAllocPolicy>>;
     Set set_;
 
   public:
@@ -278,10 +278,6 @@ class RegExpZone
 
     /* Like 'get', but compile 'maybeOpt' (if non-null). */
     RegExpShared* get(JSContext* cx, HandleAtom source, JSString* maybeOpt);
-
-#ifdef DEBUG
-    void clear() { set_.clear(); }
-#endif
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };

@@ -14,7 +14,6 @@ info: >
   24.1.1.6 SetValueInBuffer ( arrayBuffer, byteIndex, type, value [ ,
   isLittleEndian ] )
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

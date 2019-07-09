@@ -30,8 +30,8 @@ add_task(function* () {
   let {DebuggerController} = panelWin;
   let {activeThread} = DebuggerController;
 
-  let firstCall = defer();
-  let frameAdded = defer();
+  let firstCall = promise.defer();
+  let frameAdded = promise.defer();
   executeSoon(() => {
     info("Executing firstCall");
     activeThread.addOneTimeListener("framesadded", () => {

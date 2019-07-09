@@ -27,6 +27,7 @@ Notes to self:
 #include "nsISupportsPrimitives.h"
 #include "nsMemory.h"
 #include "nsPrimitiveHelpers.h"
+#include "nsXPIDLString.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryService.h"
 #include "nsCRT.h"
@@ -138,9 +139,9 @@ DataStruct::WriteCache(nsISupports* aData, uint32_t aDataLen)
   if (cacheFile) {
     // remember the file name
     if (!mCacheFileName) {
-      nsCString fName;
+      nsXPIDLCString fName;
       cacheFile->GetNativeLeafName(fName);
-      mCacheFileName = strdup(fName.get());
+      mCacheFileName = strdup(fName);
     }
 
     // write out the contents of the clipboard
@@ -154,7 +155,7 @@ DataStruct::WriteCache(nsISupports* aData, uint32_t aDataLen)
     if (!outStr) return NS_ERROR_FAILURE;
 
     void* buff = nullptr;
-    nsPrimitiveHelpers::CreateDataFromPrimitive ( mFlavor, aData, &buff, aDataLen );
+    nsPrimitiveHelpers::CreateDataFromPrimitive ( mFlavor.get(), aData, &buff, aDataLen );
     if ( buff ) {
       uint32_t ignored;
       outStr->Write(reinterpret_cast<char*>(buff), aDataLen, &ignored);
@@ -202,7 +203,7 @@ DataStruct::ReadCache(nsISupports** aData, uint32_t* aDataLen)
 
     // make sure we got all the data ok
     if (NS_SUCCEEDED(rv) && *aDataLen == size) {
-      nsPrimitiveHelpers::CreatePrimitiveForData(mFlavor, data.get(),
+      nsPrimitiveHelpers::CreatePrimitiveForData(mFlavor.get(), data.get(),
                                                  fileSize, aData);
       return *aData ? NS_OK : NS_ERROR_FAILURE;
     }

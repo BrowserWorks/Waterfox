@@ -2,15 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::ApiMsg;
-use bincode::{serialize, Infinite};
-use byteorder::{LittleEndian, WriteBytesExt};
-use std::any::TypeId;
+use bincode::{Infinite, serialize};
 use std::fmt::Debug;
+use std::mem;
+use std::any::TypeId;
 use std::fs::File;
 use std::io::Write;
-use std::mem;
 use std::path::PathBuf;
+use api::ApiMsg;
+use byteorder::{LittleEndian, WriteBytesExt};
 
 pub static WEBRENDER_RECORDING_HEADER: u64 = 0xbeefbeefbeefbe01u64;
 
@@ -33,11 +33,12 @@ impl BinaryRecorder {
             assert!(mem::size_of::<TypeId>() == mem::size_of::<u64>());
             mem::transmute::<TypeId, u64>(TypeId::of::<ApiMsg>())
         };
-        file.write_u64::<LittleEndian>(WEBRENDER_RECORDING_HEADER)
-            .ok();
+        file.write_u64::<LittleEndian>(WEBRENDER_RECORDING_HEADER).ok();
         file.write_u64::<LittleEndian>(apimsg_type_id).ok();
 
-        BinaryRecorder { file }
+        BinaryRecorder {
+            file,
+        }
     }
 
     fn write_length_and_data(&mut self, data: &[u8]) {
@@ -63,10 +64,20 @@ impl ApiRecordingReceiver for BinaryRecorder {
 
 pub fn should_record_msg(msg: &ApiMsg) -> bool {
     match *msg {
-        ApiMsg::UpdateResources(..) |
-        ApiMsg::AddDocument { .. } |
-        ApiMsg::UpdateDocument(..) |
-        ApiMsg::DeleteDocument(..) => true,
-        _ => false,
+        ApiMsg::AddRawFont(..) |
+        ApiMsg::AddNativeFont(..) |
+        ApiMsg::DeleteFont(..) |
+        ApiMsg::AddImage(..) |
+        ApiMsg::GenerateFrame(..) |
+        ApiMsg::UpdateImage(..) |
+        ApiMsg::DeleteImage(..) |
+        ApiMsg::SetDisplayList(..) |
+        ApiMsg::SetRootPipeline(..) |
+        ApiMsg::Scroll(..) |
+        ApiMsg::TickScrollingBounce |
+        ApiMsg::WebGLCommand(..) |
+        ApiMsg::SetWindowParameters(..) =>
+            true,
+        _ => false
     }
 }

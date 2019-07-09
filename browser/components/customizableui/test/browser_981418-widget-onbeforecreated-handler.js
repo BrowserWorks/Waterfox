@@ -1,13 +1,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 "use strict";
 const kWidgetId = "test-981418-widget-onbeforecreated";
 
 // Should be able to add broken view widget
 add_task(async function testAddOnBeforeCreatedWidget() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
+  let viewShownDeferred = Promise.defer();
   let onBeforeCreatedCalled = false;
   let widgetSpec = {
     id: kWidgetId,
@@ -16,47 +17,76 @@ add_task(async function testAddOnBeforeCreatedWidget() {
     onBeforeCreated(doc) {
       let view = doc.createElement("panelview");
       view.id = kWidgetId + "idontexistyet";
-      document.getElementById("appMenu-viewCache").appendChild(view);
+      let label = doc.createElement("label");
+      label.setAttribute("value", "Hello world");
+      label.className = "panel-subview-header";
+      view.appendChild(label);
+      document.getElementById("PanelUI-multiView").appendChild(view);
       onBeforeCreatedCalled = true;
+    },
+    onViewShowing() {
+      viewShownDeferred.resolve();
     }
   };
 
-  CustomizableUI.createWidget(widgetSpec);
-  CustomizableUI.addWidgetToArea(kWidgetId, CustomizableUI.AREA_NAVBAR);
-
+  let noError = true;
+  try {
+    CustomizableUI.createWidget(widgetSpec);
+    CustomizableUI.addWidgetToArea(kWidgetId, CustomizableUI.AREA_NAVBAR);
+  } catch (ex) {
+    Cu.reportError(ex);
+    noError = false;
+  }
+  ok(noError, "Should not throw an exception trying to add the widget.");
   ok(onBeforeCreatedCalled, "onBeforeCreated should have been called");
 
   let widgetNode = document.getElementById(kWidgetId);
-  let viewNode = document.getElementById(kWidgetId + "idontexistyet");
   ok(widgetNode, "Widget should exist");
-  ok(viewNode, "Panelview should exist");
-  widgetNode.click();
+  if (widgetNode) {
+    try {
+      widgetNode.click();
 
-  let tempPanel = document.getElementById("customizationui-widget-panel");
-  let panelShownPromise = promisePanelElementShown(window, tempPanel);
+      let tempPanel = document.getElementById("customizationui-widget-panel");
+      let panelShownPromise = promisePanelElementShown(window, tempPanel);
 
-  await Promise.all([
-    BrowserTestUtils.waitForEvent(viewNode, "ViewShown"),
-    panelShownPromise
-  ]);
+      let shownTimeout = setTimeout(() => viewShownDeferred.reject("Panel not shown within 20s"), 20000);
+      await viewShownDeferred.promise;
+      await panelShownPromise;
+      clearTimeout(shownTimeout);
+      ok(true, "Found view shown");
 
-  let panelHiddenPromise = promisePanelElementHidden(window, tempPanel);
-  tempPanel.hidePopup();
-  await panelHiddenPromise;
+      let panelHiddenPromise = promisePanelElementHidden(window, tempPanel);
+      tempPanel.hidePopup();
+      await panelHiddenPromise;
 
-  CustomizableUI.addWidgetToArea(kWidgetId, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-  await waitForOverflowButtonShown();
-  await document.getElementById("nav-bar").overflowable.show();
+      CustomizableUI.addWidgetToArea(kWidgetId, CustomizableUI.AREA_PANEL);
+      await PanelUI.show();
 
-  widgetNode.click();
+      viewShownDeferred = Promise.defer();
+      widgetNode.click();
 
-  await BrowserTestUtils.waitForEvent(viewNode, "ViewShown");
+      shownTimeout = setTimeout(() => viewShownDeferred.reject("Panel not shown within 20s"), 20000);
+      await viewShownDeferred.promise;
+      clearTimeout(shownTimeout);
+      ok(true, "Found view shown");
 
-  let panelHidden = promiseOverflowHidden(window);
-  PanelUI.overflowPanel.hidePopup();
-  await panelHidden;
+      let panelHidden = promisePanelHidden(window);
+      PanelUI.hide();
+      await panelHidden;
+    } catch (ex) {
+      ok(false, "Unexpected exception (like a timeout for one of the yields) " +
+                "when testing view widget.");
+    }
+  }
 
-  CustomizableUI.destroyWidget(kWidgetId);
+  noError = true;
+  try {
+    CustomizableUI.destroyWidget(kWidgetId);
+  } catch (ex) {
+    Cu.reportError(ex);
+    noError = false;
+  }
+  ok(noError, "Should not throw an exception trying to remove the broken view widget.");
 });
 
 add_task(async function asyncCleanup() {

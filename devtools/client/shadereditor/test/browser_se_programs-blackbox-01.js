@@ -163,7 +163,7 @@ function getBlackBoxCheckbox(aPanel, aIndex) {
 }
 
 function once(aTarget, aEvent) {
-  let deferred = defer();
+  let deferred = promise.defer();
   aTarget.once(aEvent, deferred.resolve);
   return deferred.promise;
 }

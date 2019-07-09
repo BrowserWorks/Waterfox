@@ -35,7 +35,7 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
-  GetRawId(JSContext* cx, JS::MutableHandle<JSObject*> aRetVal);
+  GetRawId(JSContext* cx, JS::MutableHandle<JSObject*> aRetVal) const;
 
   already_AddRefed<AuthenticatorResponse>
   Response() const;
@@ -46,12 +46,8 @@ public:
   void
   SetResponse(RefPtr<AuthenticatorResponse>);
 
-  static already_AddRefed<Promise>
-  IsPlatformAuthenticatorAvailable(GlobalObject& aGlobal);
-
 private:
   CryptoBuffer mRawId;
-  JS::Heap<JSObject*> mRawIdCachedObj;
   RefPtr<AuthenticatorResponse> mResponse;
   // Extensions are not supported yet.
   // <some type> mClientExtensionResults;

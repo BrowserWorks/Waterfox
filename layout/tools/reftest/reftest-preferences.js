@@ -66,10 +66,6 @@ user_pref("browser.search.geoSpecificDefaults", false);
 // Make sure Shield doesn't hit the network.
 user_pref("extensions.shield-recipe-client.api_url", "https://localhost/selfsupport-dummy/");
 
-// Make sure Ping Centre doesn't hit the network.
-user_pref("browser.ping-centre.staging.endpoint", "https://localhost");
-user_pref("browser.ping-centre.production.endpoint", "https://localhost");
-
 // use about:blank, not browser.startup.homepage
 user_pref("browser.startup.page", 0);
 
@@ -91,15 +87,12 @@ user_pref("toolkit.telemetry.unified", false);
 user_pref("browser.safebrowsing.phishing.enabled", false);
 user_pref("browser.safebrowsing.malware.enabled", false);
 user_pref("browser.safebrowsing.blockedURIs.enabled", false);
-user_pref("browser.safebrowsing.passwords.enabled", false);
 user_pref("browser.safebrowsing.downloads.remote.url", "http://127.0.0.1/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.google.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.google.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
 user_pref("browser.safebrowsing.provider.google4.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.google4.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
-// Likewise for lists served from the Mozilla server.
-user_pref("plugins.flashBlock.enabled", false);
-user_pref("privacy.trackingprotection.annotate_channels", false);
+// Likewise for tracking protection.
 user_pref("privacy.trackingprotection.enabled", false);
 user_pref("privacy.trackingprotection.pbmode.enabled", false);
 user_pref("browser.safebrowsing.provider.mozilla.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
@@ -120,6 +113,10 @@ user_pref("extensions.enabledScopes", 5);
 user_pref("extensions.autoDisableScopes", 0);
 // Allow unsigned add-ons
 user_pref("xpinstall.signatures.required", false);
+
+// Don't use auto-enabled e10s
+user_pref("browser.tabs.remote.autostart.1", false);
+user_pref("browser.tabs.remote.autostart.2", false);
 
 user_pref("startup.homepage_welcome_url", "");
 user_pref("startup.homepage_welcome_url.additional", "");
@@ -150,6 +147,3 @@ user_pref("marionette.prefs.recommended", false);
 // Make sure we don't reach out to the network with pocket or snippets
 user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
 user_pref("browser.newtabpage.activity-stream.feeds.snippets", false);
-
-// Don't forcibly kill content processes after a timeout
-user_pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);

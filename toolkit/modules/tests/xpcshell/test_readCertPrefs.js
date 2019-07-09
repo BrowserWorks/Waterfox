@@ -6,6 +6,10 @@ Components.utils.import("resource://gre/modules/CertUtils.jsm");
 
 const PREF_PREFIX = "certutils.certs.";
 
+function run_test() {
+  run_next_test();
+}
+
 function resetPrefs() {
   var prefs = Services.prefs.getChildList(PREF_PREFIX);
   prefs.forEach(Services.prefs.clearUserPref);

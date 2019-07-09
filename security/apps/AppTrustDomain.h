@@ -78,6 +78,7 @@ private:
   /*out*/ UniqueCERTCertList& mCertChain;
   void* mPinArg; // non-owning!
   UniqueCERTCertificate mTrustedRoot;
+  UniqueCERTCertificate mAddonsIntermediate;
 
   static StaticMutex sMutex;
   static UniquePtr<unsigned char[]> sDevImportedDERData;

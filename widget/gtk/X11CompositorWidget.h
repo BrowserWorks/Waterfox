@@ -15,27 +15,18 @@ class nsWindow;
 namespace mozilla {
 namespace widget {
 
-class PlatformCompositorWidgetDelegate
-  : public CompositorWidgetDelegate
+class CompositorWidgetDelegate
 {
 public:
   virtual void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize) = 0;
-
-  // CompositorWidgetDelegate Overrides
-
-  PlatformCompositorWidgetDelegate* AsPlatformSpecificDelegate() override {
-    return this;
-  }
 };
-
-class X11CompositorWidgetInitData;
 
 class X11CompositorWidget
  : public CompositorWidget
- , public PlatformCompositorWidgetDelegate
+ , public CompositorWidgetDelegate
 {
 public:
-  X11CompositorWidget(const X11CompositorWidgetInitData& aInitData,
+  X11CompositorWidget(const CompositorWidgetInitData& aInitData,
                       const layers::CompositorOptions& aOptions,
                       nsWindow* aWindow = nullptr);
   ~X11CompositorWidget();
@@ -52,6 +43,7 @@ public:
                                 LayoutDeviceIntRegion& aInvalidRegion) override;
   uintptr_t GetWidgetKey() override;
 
+  void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize) override;
   LayoutDeviceIntSize GetClientSize() override;
 
   nsIWidget* RealWidget() override;
@@ -60,10 +52,6 @@ public:
 
   Display* XDisplay() const { return mXDisplay; }
   Window XWindow() const { return mXWindow; }
-
-  // PlatformCompositorWidgetDelegate Overrides
-
-  void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize) override;
 
 protected:
   nsWindow* mWidget;

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 es6id: 23.3.3.3
-esid: sec-weakmap.prototype.get
 description: >
   Throws a TypeError if `this` value is not an Object.
 info: >

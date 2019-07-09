@@ -238,13 +238,13 @@ ContentAreaDropListener.prototype =
     return links;
   },
 
-  queryLinks: function(aDataTransfer, aCount)
+  validateURIsForDrop: function(aEvent, aURIsCount, aURIs, aDisallowInherit)
   {
-    let links = this._getDropLinks(aDataTransfer);
-    if (aCount) {
-      aCount.value = links.length;
+    let dataTransfer = aEvent.dataTransfer;
+
+    for (let uri of aURIs) {
+      this._validateURI(dataTransfer, uri, aDisallowInherit);
     }
-    return links;
   },
 
   _eventTargetIsDisabled: function(aEvent)

@@ -1,4 +1,4 @@
-// |reftest| error:SyntaxError
+// |reftest| skip-if(release_or_beta) error:SyntaxError -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/ary-ptrn-rest-init-ary.case
 // - src/dstr-binding/default/cls-expr-async-gen-meth-dflt.template
@@ -50,7 +50,6 @@ info: |
         [ BindingElementList[?Yield] ]
         [ BindingElementList[?Yield] , Elisionopt BindingRestElement[?Yield]opt ]
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 
 var callCount = 0;

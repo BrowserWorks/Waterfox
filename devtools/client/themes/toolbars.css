@@ -5,16 +5,15 @@
 
 /* CSS Variables specific to the devtools toolbar that aren't defined by the themes */
 .theme-light {
-  --searchbox-background-color: var(--theme-highlight-yellow);
+  --searchbox-background-color: #ffee99;
   --searchbox-border-color: #ffbf00;
   --searcbox-no-match-background-color: #ffe5e5;
   --searcbox-no-match-border-color: #e52e2e;
-
   --magnifying-glass-image: url(chrome://devtools/skin/images/search.svg);
   --filter-image: url(chrome://devtools/skin/images/filter.svg);
   --tool-options-image: url(chrome://devtools/skin/images/tool-options.svg);
-
-  --separator-border-image: linear-gradient(transparent 4px, rgba(0,0,0,.1) 4px, rgba(0,0,0,.1) calc(100% - 4px), transparent calc(100% - 4px));
+  --icon-filter: none;
+  --checked-icon-filter: url(chrome://devtools/skin/images/filters.svg#checked-icon-state);
 }
 
 .theme-dark {
@@ -22,17 +21,18 @@
   --searchbox-border-color: #d99f2b;
   --searcbox-no-match-background-color: #402325;
   --searcbox-no-match-border-color: #cc3d3d;
-
   --magnifying-glass-image: url(chrome://devtools/skin/images/search.svg);
   --filter-image: url(chrome://devtools/skin/images/filter.svg);
   --tool-options-image: url(chrome://devtools/skin/images/tool-options.svg);
-
-  --separator-border-image: linear-gradient(transparent 4px, rgba(100%,100%,100%,.2) 4px, rgba(100%,100%,100%,.2) calc(100% - 4px), transparent calc(100% - 4px));
+  --icon-filter: invert(1);
+  --checked-icon-filter: url(chrome://devtools/skin/images/filters.svg#dark-theme-checked-icon-state);
 }
 
 .theme-firebug {
   --magnifying-glass-image: url(chrome://devtools/skin/images/search.svg);
   --tool-options-image: url(chrome://devtools/skin/images/firebug/tool-options.svg);
+  --icon-filter: none;
+  --checked-icon-filter: none;
 }
 
 
@@ -80,10 +80,12 @@
 }
 
 .devtools-separator {
-  border-inline-start: 1px solid;
-  border-image: var(--separator-border-image);
-  border-image-slice: 1;
-  height: inherit;
+  margin: 0 2px;
+  width: 2px;
+  background-image: linear-gradient(transparent 15%, var(--theme-splitter-color) 15%, var(--theme-splitter-color) 85%, transparent 85%);
+  background-size: 1px 100%;
+  background-repeat: no-repeat;
+  background-position: 0, 1px, 2px;
 }
 
 /* In-tools sidebar */
@@ -180,9 +182,10 @@
   background: var(--theme-selection-background);
 }
 
-/*
- * Apply the default fill color to toolbar icons
+/* Invert the colors of certain light theme images for displaying
+ * inside of the dark theme.
  */
+.devtools-tab.icon-invertable > img,
 .devtools-toolbarbutton > image,
 .devtools-button::before,
 .scrollbutton-up > .toolbarbutton-icon,
@@ -191,8 +194,7 @@
 #canvas-debugging-empty-notice-button .button-icon,
 #toggle-breakpoints[checked] > image,
 .event-tooltip-debugger-icon {
-  -moz-context-properties: fill;
-  fill: var(--theme-toolbar-color);
+  filter: var(--icon-filter);
 }
 
 .hidden-labels-box:not(.visible) > label,

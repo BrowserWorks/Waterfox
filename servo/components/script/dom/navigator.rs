@@ -5,8 +5,8 @@
 use dom::bindings::codegen::Bindings::NavigatorBinding;
 use dom::bindings::codegen::Bindings::NavigatorBinding::NavigatorMethods;
 use dom::bindings::codegen::Bindings::VRBinding::VRBinding::VRMethods;
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::reflector::{Reflector, DomObject, reflect_dom_object};
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::str::DOMString;
 use dom::bluetooth::Bluetooth;
 use dom::gamepadlist::GamepadList;
@@ -24,13 +24,13 @@ use std::rc::Rc;
 #[dom_struct]
 pub struct Navigator {
     reflector_: Reflector,
-    bluetooth: MutNullableDom<Bluetooth>,
-    plugins: MutNullableDom<PluginArray>,
-    mime_types: MutNullableDom<MimeTypeArray>,
-    service_worker: MutNullableDom<ServiceWorkerContainer>,
-    vr: MutNullableDom<VR>,
-    gamepads: MutNullableDom<GamepadList>,
-    permissions: MutNullableDom<Permissions>,
+    bluetooth: MutNullableJS<Bluetooth>,
+    plugins: MutNullableJS<PluginArray>,
+    mime_types: MutNullableJS<MimeTypeArray>,
+    service_worker: MutNullableJS<ServiceWorkerContainer>,
+    vr: MutNullableJS<VR>,
+    gamepads: MutNullableJS<GamepadList>,
+    permissions: MutNullableJS<Permissions>,
 }
 
 impl Navigator {
@@ -47,8 +47,8 @@ impl Navigator {
         }
     }
 
-    pub fn new(window: &Window) -> DomRoot<Navigator> {
-        reflect_dom_object(Box::new(Navigator::new_inherited()),
+    pub fn new(window: &Window) -> Root<Navigator> {
+        reflect_dom_object(box Navigator::new_inherited(),
                            window,
                            NavigatorBinding::Wrap)
     }
@@ -91,7 +91,7 @@ impl NavigatorMethods for Navigator {
     }
 
     // https://webbluetoothcg.github.io/web-bluetooth/#dom-navigator-bluetooth
-    fn Bluetooth(&self) -> DomRoot<Bluetooth> {
+    fn Bluetooth(&self) -> Root<Bluetooth> {
         self.bluetooth.or_init(|| Bluetooth::new(&self.global()))
     }
 
@@ -101,12 +101,12 @@ impl NavigatorMethods for Navigator {
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-navigator-plugins
-    fn Plugins(&self) -> DomRoot<PluginArray> {
+    fn Plugins(&self) -> Root<PluginArray> {
         self.plugins.or_init(|| PluginArray::new(&self.global()))
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-navigator-mimetypes
-    fn MimeTypes(&self) -> DomRoot<MimeTypeArray> {
+    fn MimeTypes(&self) -> Root<MimeTypeArray> {
         self.mime_types.or_init(|| MimeTypeArray::new(&self.global()))
     }
 
@@ -116,7 +116,7 @@ impl NavigatorMethods for Navigator {
     }
 
     // https://w3c.github.io/ServiceWorker/#navigator-service-worker-attribute
-    fn ServiceWorker(&self) -> DomRoot<ServiceWorkerContainer> {
+    fn ServiceWorker(&self) -> Root<ServiceWorkerContainer> {
         self.service_worker.or_init(|| {
             ServiceWorkerContainer::new(&self.global())
         })
@@ -128,7 +128,7 @@ impl NavigatorMethods for Navigator {
     }
 
     // https://www.w3.org/TR/gamepad/#navigator-interface-extension
-    fn GetGamepads(&self) -> DomRoot<GamepadList> {
+    fn GetGamepads(&self) -> Root<GamepadList> {
         let root = self.gamepads.or_init(|| {
             GamepadList::new(&self.global(), &[])
         });
@@ -139,7 +139,7 @@ impl NavigatorMethods for Navigator {
         root
     }
     // https://w3c.github.io/permissions/#navigator-and-workernavigator-extension
-    fn Permissions(&self) -> DomRoot<Permissions> {
+    fn Permissions(&self) -> Root<Permissions> {
         self.permissions.or_init(|| Permissions::new(&self.global()))
     }
 
@@ -151,7 +151,7 @@ impl NavigatorMethods for Navigator {
 }
 
 impl Navigator {
-    pub fn Vr(&self) -> DomRoot<VR> {
+    pub fn Vr(&self) -> Root<VR> {
         self.vr.or_init(|| VR::new(&self.global()))
     }
 }

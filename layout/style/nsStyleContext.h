@@ -16,7 +16,7 @@
 #include "nsCSSAnonBoxes.h"
 #include "nsStyleSet.h"
 
-class nsAtom;
+class nsIAtom;
 class nsPresContext;
 
 namespace mozilla {
@@ -69,42 +69,39 @@ public:
   }
   nsIPresShell* Arena();
 
+  void AddChild(nsStyleContext* aChild);
+  void RemoveChild(nsStyleContext* aChild);
+
   inline void AddRef();
   inline void Release();
 
 #ifdef DEBUG
-  void FrameAddRef();
-  void FrameRelease();
+  void FrameAddRef() {
+    ++mFrameRefCnt;
+  }
+
+  void FrameRelease() {
+    --mFrameRefCnt;
+  }
+
+  uint32_t FrameRefCnt() const {
+    return mFrameRefCnt;
+  }
 #endif
 
   inline nsPresContext* PresContext() const;
 
-  nsAtom* GetPseudo() const { return mPseudoTag; }
+  nsIAtom* GetPseudo() const { return mPseudoTag; }
   mozilla::CSSPseudoElementType GetPseudoType() const {
     return static_cast<mozilla::CSSPseudoElementType>(
              mBits >> NS_STYLE_CONTEXT_TYPE_SHIFT);
   }
 
-  bool IsInheritingAnonBox() const {
-    return GetPseudoType() == mozilla::CSSPseudoElementType::InheritingAnonBox;
-  }
-
-  bool IsNonInheritingAnonBox() const {
-    return GetPseudoType() == mozilla::CSSPseudoElementType::NonInheritingAnonBox;
-  }
-
-  // This function is rather slow; you probably don't want to use it outside
-  // asserts unless you have to.  We _could_ add a new CSSPseudoElementType for
-  // wrapper anon boxes, but that adds a bunch of complexity everywhere we
-  // resolve anonymous box styles...
-  bool IsWrapperAnonBox() const {
-    return nsCSSAnonBoxes::IsWrapperAnonBox(GetPseudo());
-  }
-
   bool IsAnonBox() const {
-    return IsInheritingAnonBox() || IsNonInheritingAnonBox();
+    return
+      GetPseudoType() == mozilla::CSSPseudoElementType::InheritingAnonBox ||
+      GetPseudoType() == mozilla::CSSPseudoElementType::NonInheritingAnonBox;
   }
-
   bool IsPseudoElement() const { return mPseudoTag && !IsAnonBox(); }
 
 
@@ -241,6 +238,14 @@ public:
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
 
+  // Value that can be passed as CalcStyleDifference's aRelevantStructs
+  // argument to indicate that all structs that are currently resolved on the
+  // old style context should be compared.  This is only relevant for
+  // ServoStyleContexts.
+  enum { kAllResolvedStructs = 0xffffffff };
+  static_assert(kAllResolvedStructs != NS_STYLE_INHERIT_MASK,
+                "uint32_t not big enough for special kAllResolvedStructs value");
+
   /**
    * Compute the style changes needed during restyling when this style
    * context is being replaced by aNewContext.  (This is nonsymmetric since
@@ -255,14 +260,17 @@ public:
    * aEqualStructs must not be null.  Into it will be stored a bitfield
    * representing which structs were compared to be non-equal.
    *
-   * aIgnoreVariables indicates whether to skip comparing the Variables
-   * struct.  This must only be true for Servo style contexts.  When
-   * true, the Variables bit in aEqualStructs will be set.
+   * aRelevantStructs must be kAllResolvedStructs for GeckoStyleContexts.
+   * For ServoStyleContexts, it controls which structs will be compared.
+   * This is needed because in some cases, we can't rely on mBits in the
+   * old style context to accurately reflect which are the relevant
+   * structs to be compared.
    */
   nsChangeHint CalcStyleDifference(nsStyleContext* aNewContext,
                                    uint32_t* aEqualStructs,
                                    uint32_t* aSamePointerStructs,
-				   bool aIgnoreVariables = false);
+                                   uint32_t aRelevantStructs =
+                                     kAllResolvedStructs);
 
 public:
   /**
@@ -302,8 +310,14 @@ protected:
   ~nsStyleContext() {}
 
   // Delegated Helper constructor.
-  nsStyleContext(nsAtom* aPseudoTag,
+  nsStyleContext(nsStyleContext* aParent,
+                 nsIAtom* aPseudoTag,
                  mozilla::CSSPseudoElementType aPseudoType);
+
+  // Helper post-contruct hook.
+  void FinishConstruction();
+
+  void SetStyleBits();
 
   // Helper functions for GetStyle* and PeekStyle*
   #define STYLE_STRUCT_INHERITED(name_, checkdata_cb_)                  \
@@ -317,9 +331,11 @@ protected:
   #undef STYLE_STRUCT_RESET
   #undef STYLE_STRUCT_INHERITED
 
+  RefPtr<nsStyleContext> mParent;
+
   // If this style context is for a pseudo-element or anonymous box,
   // the relevant atom.
-  RefPtr<nsAtom> mPseudoTag;
+  nsCOMPtr<nsIAtom> mPseudoTag;
 
   // mBits stores a number of things:
   //  - It records (using the style struct bits) which structs are
@@ -330,6 +346,9 @@ protected:
   uint64_t                mBits;
 
 #ifdef DEBUG
+  uint32_t                mFrameRefCnt; // number of frames that use this
+                                        // as their style context
+
   static bool DependencyAllowed(nsStyleStructID aOuterSID,
                                 nsStyleStructID aInnerSID)
   {
@@ -343,7 +362,7 @@ protected:
 
 already_AddRefed<mozilla::GeckoStyleContext>
 NS_NewStyleContext(mozilla::GeckoStyleContext* aParentContext,
-                   nsAtom* aPseudoTag,
+                   nsIAtom* aPseudoTag,
                    mozilla::CSSPseudoElementType aPseudoType,
                    nsRuleNode* aRuleNode,
                    bool aSkipParentDisplayBasedStyleFixup);

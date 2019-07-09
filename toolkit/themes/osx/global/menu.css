@@ -8,7 +8,6 @@ menu,
 menuitem,
 menucaption {
   -moz-appearance: menuitem;
-  -moz-font-smoothing-background-color: -moz-mac-menuitem;
   -moz-box-align: center;
   color: MenuText;
   font: -moz-pull-down-menu;
@@ -21,7 +20,6 @@ menu[disabled="true"], menuitem[disabled="true"],
 menu[_moz-menuactive="true"][disabled="true"],
 menuitem[_moz-menuactive="true"][disabled="true"] {
   color: -moz-mac-menutextdisable;
-  -moz-font-smoothing-background-color: -moz-mac-menuitem;
 }
 
 /* ..... internal content .... */
@@ -108,7 +106,6 @@ menubar > menu[_moz-menuactive="true"] {
 
 menubar > menu[_moz-menuactive="true"][open="true"] {
   -moz-appearance: menuitem;
-  -moz-font-smoothing-background-color: -moz-mac-active-menuitem;
   color: -moz-mac-menutextselect;
 }
 
@@ -134,7 +131,6 @@ menupopup > menucaption {
 
 menu[_moz-menuactive="true"],
 menuitem[_moz-menuactive="true"] {
-  -moz-font-smoothing-background-color: -moz-mac-active-menuitem;
   color: -moz-mac-menutextselect;
   background-color: Highlight;
 }

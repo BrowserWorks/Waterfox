@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-boolean.prototype.tostring
 info: >
     toString: If this boolean value is true, then the string "true"
     is returned, otherwise, this boolean value must be false, and the string

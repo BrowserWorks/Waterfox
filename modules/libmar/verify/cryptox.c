@@ -111,7 +111,7 @@ NSS_VerifySignature(VFYContext * const *ctx,
  * @return CryptoX_Success on success, CryptoX_Error on error.
 */
 CryptoX_Result
-CryptoAPI_VerifySignature(HCRYPTHASH *hash,
+CyprtoAPI_VerifySignature(HCRYPTHASH *hash, 
                           HCRYPTKEY *pubKey,
                           const BYTE *signature, 
                           DWORD signatureLen)

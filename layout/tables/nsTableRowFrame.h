@@ -78,11 +78,10 @@ public:
   virtual nsMargin GetUsedPadding() const override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
-  // Implemented in nsTableCellFrame.h, because it needs to know about the
-  // nsTableCellFrame class, but we can't include nsTableCellFrame.h here.
-  inline nsTableCellFrame* GetFirstCell() const;
+  nsTableCellFrame* GetFirstCell() ;
 
   /** calls Reflow for all of its child cells.
     * Cells with rowspan=1 are all set to the same height and stacked horizontally.

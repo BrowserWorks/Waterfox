@@ -51,14 +51,6 @@ var suppressed_toggles = [
   "-moz-windows-glass",
 ];
 
-var toggles_enabled_in_content = [
-  "-moz-mac-graphite-theme",
-  "-moz-touch-enabled",
-  "-moz-windows-compositor",
-  "-moz-windows-default-theme",
-  "-moz-windows-glass",
-];
-
 // Possible values for '-moz-os-version'
 var windows_versions = [
   "windows-win7",
@@ -85,7 +77,6 @@ var OS = SpecialPowers.Services.appinfo.OS;
 // available on that OS.
 if (OS === "WINNT") {
   suppressed_toggles.push("-moz-windows-classic");
-  toggles_enabled_in_content.push("-moz-windows-classic");
 }
 
 // __keyValMatches(key, val)__.
@@ -113,7 +104,7 @@ var testToggles = function (resisting) {
   suppressed_toggles.forEach(
     function (key) {
       var exists = keyValMatches(key, 0) || keyValMatches(key, 1);
-      if (resisting || toggles_enabled_in_content.indexOf(key) === -1) {
+      if (resisting) {
          ok(!exists, key + " should not exist.");
       } else {
          ok(exists, key + " should exist.");
@@ -202,7 +193,6 @@ var suppressedMediaQueryCSSLine = function (key, color, suppressed) {
 // expected value, then the element will be colored green.
 var generateCSSLines = function (resisting) {
   let lines = ".spoof { background-color: red;}\n";
-  let is_chrome_window = window.location.protocol === "chrome:";
   expected_values.forEach(
     function ([key, offVal, onVal]) {
       lines += mediaQueryCSSLine(key, resisting ? onVal : offVal, "green");
@@ -210,11 +200,7 @@ var generateCSSLines = function (resisting) {
   lines += ".suppress { background-color: " + (resisting ? "green" : "red") + ";}\n";
   suppressed_toggles.forEach(
     function (key) {
-      if (toggles_enabled_in_content.indexOf(key) === -1 && !resisting && !is_chrome_window) {
-        lines += "#" + key + " { background-color: green; }\n";
-      } else {
-        lines += suppressedMediaQueryCSSLine(key, resisting ? "red" : "green");
-      }
+      lines += suppressedMediaQueryCSSLine(key, resisting ? "red" : "green");
     });
   if (OS === "WINNT") {
     lines += ".windows { background-color: " + (resisting ? "green" : "red") + ";}\n";
@@ -234,13 +220,23 @@ var green = (function () {
   return getComputedStyle(temp).backgroundColor;
 })();
 
+// Injected HTML will automatically be sanitized when we're in a chrome
+// document unless we use `unsafeSetInnerHTML`. That function doesn't
+// exist in non-chrome documents, so add a stub to allow the same code
+// to run in both.
+if (!Element.prototype.unsafeSetInnerHTML) {
+  Element.prototype.unsafeSetInnerHTML = html => {
+    this.innerHTML = html;
+  };
+}
+
 // __testCSS(resisting)__.
 // Creates a series of divs and CSS using media queries to set their
 // background color. If all media queries match as expected, then
 // all divs should have a green background color.
 var testCSS = function (resisting) {
-  document.getElementById("display").innerHTML = generateHtmlLines(resisting);
-  document.getElementById("test-css").innerHTML = generateCSSLines(resisting);
+  document.getElementById("display").unsafeSetInnerHTML(generateHtmlLines(resisting));
+  document.getElementById("test-css").unsafeSetInnerHTML(generateCSSLines(resisting));
   let cssTestDivs = document.querySelectorAll(".spoof,.suppress");
   for (let div of cssTestDivs) {
     let color = window.getComputedStyle(div).backgroundColor;
@@ -284,7 +280,7 @@ var testMediaQueriesInPictureElements = async function(resisting) {
       lines += "</picture><br/>\n";
     }
   }
-  document.getElementById("pictures").innerHTML = lines;
+  document.getElementById("pictures").unsafeSetInnerHTML(lines);
   var testImages = document.getElementsByClassName("testImage");
   await sleep(0);
   for (let testImage of testImages) {

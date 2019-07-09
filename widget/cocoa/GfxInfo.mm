@@ -31,7 +31,7 @@ using namespace mozilla::widget;
 NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfoDebug)
 #endif
 
-GfxInfo::GfxInfo()
+GfxInfo::GfxInfo() : mOSXVersion{0}
 {
 }
 
@@ -54,8 +54,6 @@ OSXVersionToOperatingSystem(uint32_t aOSXVersion)
         return OperatingSystem::OSX10_11;
       case 12:
         return OperatingSystem::OSX10_12;
-      case 13:
-        return OperatingSystem::OSX10_13;
     }
   }
 
@@ -296,9 +294,9 @@ GfxInfo::AddCrashReportAnnotations()
    * can go away after we store the above in the socorro db */
   nsAutoCString note;
   /* AppendPrintf only supports 32 character strings, mrghh. */
-  note.AppendLiteral("AdapterVendorID: ");
+  note.Append("AdapterVendorID: ");
   note.Append(narrowVendorID);
-  note.AppendLiteral(", AdapterDeviceID: ");
+  note.Append(", AdapterDeviceID: ");
   note.Append(narrowDeviceID);
   CrashReporter::AppendAppNotesToCrashReport(note);
 #endif
@@ -341,6 +339,10 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   OperatingSystem os = OSXVersionToOperatingSystem(mOSXVersion);
   if (aOS)
     *aOS = os;
+
+  if (mShutdownOccurred) {
+    return NS_OK;
+  }
 
   // Don't evaluate special cases when we're evaluating the downloaded blocklist.
   if (!aDriverInfo.Length()) {

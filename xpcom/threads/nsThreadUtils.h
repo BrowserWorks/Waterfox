@@ -344,8 +344,6 @@ SpinEventLoopUntil(Pred&& aPredicate, nsIThread* aThread = nullptr)
  */
 extern bool NS_IsInCompositorThread();
 
-extern bool NS_IsInVRThread();
-
 //-----------------------------------------------------------------------------
 // Helpers that work with nsCOMPtr:
 
@@ -488,26 +486,6 @@ private:
   IdleRunnable& operator=(const IdleRunnable&&) = delete;
 };
 
-// This class is designed to be a wrapper of a real runnable to support event
-// prioritizable.
-class PrioritizableRunnable : public Runnable, public nsIRunnablePriority
-{
-public:
-  PrioritizableRunnable(already_AddRefed<nsIRunnable>&& aRunnable,
-                        uint32_t aPriority);
-
-  NS_IMETHOD GetName(nsACString& aName) override;
-
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIRUNNABLE
-  NS_DECL_NSIRUNNABLEPRIORITY
-
-protected:
-  virtual ~PrioritizableRunnable() {};
-  nsCOMPtr<nsIRunnable> mRunnable;
-  uint32_t mPriority;
-};
-
 namespace detail {
 
 // An event that can be used to call a C++11 functions or function objects,
@@ -640,6 +618,8 @@ NS_NewRunnableFunction(const char* aName, Function&& aFunction)
 namespace mozilla {
 namespace detail {
 
+already_AddRefed<nsITimer> CreateTimer();
+
 template <RunnableKind Kind>
 class TimerBehaviour
 {
@@ -658,7 +638,7 @@ public:
   nsITimer* GetTimer()
   {
     if (!mTimer) {
-      mTimer = NS_NewTimer();
+      mTimer = CreateTimer();
     }
 
     return mTimer;
@@ -842,8 +822,8 @@ struct IsParameterStorageClass : public mozilla::FalseType {};
 template<typename T>
 struct StoreCopyPassByValue
 {
-  typedef typename mozilla::Decay<T>::Type stored_type;
-  typedef stored_type passed_type;
+  typedef T stored_type;
+  typedef T passed_type;
   stored_type m;
   template <typename A>
   MOZ_IMPLICIT StoreCopyPassByValue(A&& a) : m(mozilla::Forward<A>(a)) {}
@@ -856,8 +836,8 @@ struct IsParameterStorageClass<StoreCopyPassByValue<S>>
 template<typename T>
 struct StoreCopyPassByConstLRef
 {
-  typedef typename mozilla::Decay<T>::Type stored_type;
-  typedef const stored_type& passed_type;
+  typedef T stored_type;
+  typedef const T& passed_type;
   stored_type m;
   template <typename A>
   MOZ_IMPLICIT StoreCopyPassByConstLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
@@ -870,8 +850,8 @@ struct IsParameterStorageClass<StoreCopyPassByConstLRef<S>>
 template<typename T>
 struct StoreCopyPassByLRef
 {
-  typedef typename mozilla::Decay<T>::Type stored_type;
-  typedef stored_type& passed_type;
+  typedef T stored_type;
+  typedef T& passed_type;
   stored_type m;
   template <typename A>
   MOZ_IMPLICIT StoreCopyPassByLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
@@ -884,8 +864,8 @@ struct IsParameterStorageClass<StoreCopyPassByLRef<S>>
 template<typename T>
 struct StoreCopyPassByRRef
 {
-  typedef typename mozilla::Decay<T>::Type stored_type;
-  typedef stored_type&& passed_type;
+  typedef T stored_type;
+  typedef T&& passed_type;
   stored_type m;
   template <typename A>
   MOZ_IMPLICIT StoreCopyPassByRRef(A&& a) : m(mozilla::Forward<A>(a)) {}
@@ -1680,18 +1660,6 @@ private:
 
 void
 NS_SetMainThread();
-
-// Used only on cooperatively scheduled "main" threads. Causes the thread to be
-// considered a main thread and also causes GetCurrentVirtualThread to return
-// aVirtualThread.
-void
-NS_SetMainThread(PRThread* aVirtualThread);
-
-// Used only on cooperatively scheduled "main" threads. Causes the thread to no
-// longer be considered a main thread. Also causes GetCurrentVirtualThread() to
-// return a unique value.
-void
-NS_UnsetMainThread();
 
 /**
  * Return the expiration time of the next timer to run on the current

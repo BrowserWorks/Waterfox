@@ -42,8 +42,7 @@ CreateCacheId(mozIStorageConnection* aConn, CacheId* aCacheIdOut);
 
 nsresult
 DeleteCacheId(mozIStorageConnection* aConn, CacheId aCacheId,
-              nsTArray<nsID>& aDeletedBodyIdListOut,
-              int64_t* aDeletedPaddingSizeOut);
+              nsTArray<nsID>& aDeletedBodyIdListOut);
 
 // TODO: Consider removing unused IsCacheOrphaned after writing cleanup code. (bug 1110446)
 nsresult
@@ -53,10 +52,6 @@ IsCacheOrphaned(mozIStorageConnection* aConn, CacheId aCacheId,
 nsresult
 FindOrphanedCacheIds(mozIStorageConnection* aConn,
                      nsTArray<CacheId>& aOrphanedListOut);
-
-nsresult
-FindOverallPaddingSize(mozIStorageConnection* aConn,
-                       int64_t* aOverallPaddingSizeOut);
 
 nsresult
 GetKnownBodyIds(mozIStorageConnection* aConn, nsTArray<nsID>& aBodyIdListOut);
@@ -78,15 +73,13 @@ CachePut(mozIStorageConnection* aConn, CacheId aCacheId,
          const nsID* aRequestBodyId,
          const CacheResponse& aResponse,
          const nsID* aResponseBodyId,
-         nsTArray<nsID>& aDeletedBodyIdListOut,
-         int64_t* aDeletedPaddingSizeOut);
+         nsTArray<nsID>& aDeletedBodyIdListOut);
 
 nsresult
 CacheDelete(mozIStorageConnection* aConn, CacheId aCacheId,
             const CacheRequest& aRequest,
             const CacheQueryParams& aParams,
             nsTArray<nsID>& aDeletedBodyIdListOut,
-            int64_t* aDeletedPaddingSizeOut,
             bool* aSuccessOut);
 
 nsresult

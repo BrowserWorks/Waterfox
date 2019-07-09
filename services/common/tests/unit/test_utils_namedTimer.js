@@ -3,6 +3,10 @@
 
 Cu.import("resource://services-common/utils.js");
 
+function run_test() {
+  run_next_test();
+}
+
 add_test(function test_required_args() {
   try {
     CommonUtils.namedTimer(function callback() {

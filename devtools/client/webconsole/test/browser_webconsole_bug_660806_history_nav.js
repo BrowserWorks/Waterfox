@@ -17,7 +17,7 @@ add_task(function* () {
 });
 
 function consoleOpened(HUD) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let jsterm = HUD.jsterm;
   let popup = jsterm.autocompletePopup;

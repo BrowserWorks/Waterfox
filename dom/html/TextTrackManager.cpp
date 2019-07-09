@@ -31,6 +31,13 @@ namespace dom {
 
 NS_IMPL_ISUPPORTS(TextTrackManager::ShutdownObserverProxy, nsIObserver);
 
+void
+TextTrackManager::ShutdownObserverProxy::Unregister()
+{
+  nsContentUtils::UnregisterShutdownObserver(this);
+  mManager = nullptr;
+}
+
 CompareTextTracks::CompareTextTracks(HTMLMediaElement* aMediaElement)
 {
   mMediaElement = aMediaElement;
@@ -140,7 +147,7 @@ TextTrackManager::TextTrackManager(HTMLMediaElement *aMediaElement)
 TextTrackManager::~TextTrackManager()
 {
   WEBVTT_LOG("%p ~TextTrackManager",this);
-  nsContentUtils::UnregisterShutdownObserver(mShutdownProxy);
+  mShutdownProxy->Unregister();
 }
 
 TextTrackList*
@@ -505,14 +512,6 @@ public:
     return NS_OK;
   }
 
-  void Dispatch() {
-    if (nsCOMPtr<nsIGlobalObject> global = mCue->GetOwnerGlobal()) {
-      global->Dispatch(TaskCategory::Other, do_AddRef(this));
-    } else {
-      NS_DispatchToMainThread(do_AddRef(this));
-    }
-  }
-
 private:
   nsString mName;
   double mTime;
@@ -858,7 +857,7 @@ TextTrackManager::TimeMarchesOn()
 
   // Fire the eventList
   for (uint32_t i = 0; i < eventList.Length(); ++i) {
-    eventList[i]->Dispatch();
+    NS_DispatchToMainThread(eventList[i].forget());
   }
 
   // Step 16.

@@ -1,4 +1,4 @@
-"use strict";
+"use strict"
 
 add_task(async function() {
   info("Bug 479348 - Properties on a root should be read-only.");
@@ -64,9 +64,6 @@ add_task(async function() {
       let tags = PlacesUtils.tagging.getTagsForURI(uri);
       Assert.equal(tags.length, 1, "Found the right number of tags");
       Assert.ok(tags.includes("tag2"), "Found the expected tag");
-
-      // Ensure that the addition really is finished before we hit cancel.
-      await PlacesTestUtils.promiseAsyncUpdates();
     }
   );
 

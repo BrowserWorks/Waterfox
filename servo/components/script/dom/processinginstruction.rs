@@ -4,7 +4,7 @@
 
 use dom::bindings::codegen::Bindings::ProcessingInstructionBinding;
 use dom::bindings::codegen::Bindings::ProcessingInstructionBinding::ProcessingInstructionMethods;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::bindings::str::DOMString;
 use dom::characterdata::CharacterData;
 use dom::document::Document;
@@ -26,8 +26,8 @@ impl ProcessingInstruction {
         }
     }
 
-    pub fn new(target: DOMString, data: DOMString, document: &Document) -> DomRoot<ProcessingInstruction> {
-        Node::reflect_node(Box::new(ProcessingInstruction::new_inherited(target, data, document)),
+    pub fn new(target: DOMString, data: DOMString, document: &Document) -> Root<ProcessingInstruction> {
+        Node::reflect_node(box ProcessingInstruction::new_inherited(target, data, document),
                            document, ProcessingInstructionBinding::Wrap)
     }
 }

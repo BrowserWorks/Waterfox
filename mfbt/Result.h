@@ -96,32 +96,6 @@ public:
 };
 
 /**
- * Specialization for when the success type is Ok (or another empty class) and
- * the error type is a value type which can never have the value 0 (as
- * determined by UnusedZero<>).
- */
-template <typename V, typename E>
-class ResultImplementation<V, E, PackingStrategy::NullIsOk>
-{
-  static constexpr E NullValue = E(0);
-
-  E mErrorValue;
-
-public:
-  explicit ResultImplementation(V) : mErrorValue(NullValue) {}
-  explicit ResultImplementation(E aErrorValue) : mErrorValue(aErrorValue)
-  {
-    MOZ_ASSERT(aErrorValue != NullValue);
-  }
-
-  bool isOk() const { return mErrorValue == NullValue; }
-
-  V unwrap() const { return V(); }
-  E unwrapErr() const { return mErrorValue; }
-};
-
-
-/**
  * Specialization for when alignment permits using the least significant bit as
  * a tag bit.
  */
@@ -259,14 +233,6 @@ template <typename V, typename E>
 struct IsResult<Result<V, E>> : TrueType { };
 
 } // namespace detail
-
-template <typename V, typename E>
-auto
-ToResult(Result<V, E>&& aValue)
-  -> decltype(Forward<Result<V, E>>(aValue))
-{
-  return Forward<Result<V, E>>(aValue);
-}
 
 /**
  * Result<V, E> represents the outcome of an operation that can either succeed
@@ -450,7 +416,7 @@ Err(E&& aErrorValue)
  */
 #define MOZ_TRY(expr) \
   do { \
-    auto mozTryTempResult_ = ::mozilla::ToResult(expr); \
+    auto mozTryTempResult_ = (expr); \
     if (mozTryTempResult_.isErr()) { \
       return ::mozilla::Err(mozTryTempResult_.unwrapErr()); \
     } \

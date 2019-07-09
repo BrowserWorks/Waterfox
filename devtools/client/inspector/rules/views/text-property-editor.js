@@ -228,6 +228,7 @@ TextPropertyEditor.prototype = {
         contentType: InplaceEditor.CONTENT_TYPES.CSS_PROPERTY,
         popup: this.popup,
         cssProperties: this.cssProperties,
+        contextMenu: this.ruleView.inspector.onTextBoxContextMenu
       });
 
       // Auto blur name field on multiple CSS rules get pasted in.
@@ -295,11 +296,11 @@ TextPropertyEditor.prototype = {
         advanceChars: advanceValidate,
         contentType: InplaceEditor.CONTENT_TYPES.CSS_VALUE,
         property: this.prop,
-        defaultIncrement: this.prop.name === "opacity" ? 0.1 : 1,
         popup: this.popup,
         multiline: true,
         maxWidth: () => this.container.getBoundingClientRect().width,
         cssProperties: this.cssProperties,
+        contextMenu: this.ruleView.inspector.onTextBoxContextMenu
       });
 
       this.ruleView.highlighters.on("hover-shape-point", this._onHoverShapePoint);
@@ -364,9 +365,7 @@ TextPropertyEditor.prototype = {
       shapeClass: "ruleview-shape",
       defaultColorType: !propDirty,
       urlClass: "theme-link",
-      baseURI: this.sheetHref,
-      unmatchedVariableClass: "ruleview-variable-unmatched",
-      isVariableInUse: varName => this.rule.elementStyle.getVariable(varName),
+      baseURI: this.sheetHref
     };
     let frag = outputParser.parseCssProperty(name, val, parserOptions);
     this.valueSpan.innerHTML = "";

@@ -10,48 +10,21 @@ const {utils: Cu, interfaces: Ci} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "AboutNewTab",
-                                  "resource:///modules/AboutNewTab.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
 
 const LOCAL_NEWTAB_URL = "chrome://browser/content/newtab/newTab.xhtml";
 
-// Debug versions are only available in Nightly
-const ACTIVITY_STREAM_URLS = {
-  "": "resource://activity-stream/data/content/activity-stream.html",
-  "debug": "resource://activity-stream/data/content/activity-stream-debug.html",
-  "prerender": "resource://activity-stream/data/content/activity-stream-prerendered.html",
-  "prerenderdebug": "resource://activity-stream/data/content/activity-stream-prerendered-debug.html",
-};
+const ACTIVITY_STREAM_URL = "resource://activity-stream/data/content/activity-stream.html";
 
 const ABOUT_URL = "about:newtab";
 
-const IS_MAIN_PROCESS = Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_DEFAULT;
-
-const IS_RELEASE_OR_BETA = AppConstants.RELEASE_OR_BETA;
-
 // Pref that tells if activity stream is enabled
 const PREF_ACTIVITY_STREAM_ENABLED = "browser.newtabpage.activity-stream.enabled";
-const PREF_ACTIVITY_STREAM_PRERENDER_ENABLED = "browser.newtabpage.activity-stream.prerender";
-const PREF_ACTIVITY_STREAM_DEBUG = "browser.newtabpage.activity-stream.debug";
-
 
 function AboutNewTabService() {
-  Services.obs.addObserver(this, "quit-application-granted");
-  Services.prefs.addObserver(PREF_ACTIVITY_STREAM_ENABLED, this);
-  Services.prefs.addObserver(PREF_ACTIVITY_STREAM_PRERENDER_ENABLED, this);
-  if (!IS_RELEASE_OR_BETA) {
-    Services.prefs.addObserver(PREF_ACTIVITY_STREAM_DEBUG, this);
-  }
-
-  // More initialization happens here
-  this.toggleActivityStream();
-  this.initialized = true;
-
-  if (IS_MAIN_PROCESS) {
-    AboutNewTab.init();
-  }
+  Preferences.observe(PREF_ACTIVITY_STREAM_ENABLED, this._handleToggleEvent.bind(this));
+  this.toggleActivityStream(Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_ENABLED));
 }
 
 /*
@@ -92,40 +65,17 @@ AboutNewTabService.prototype = {
 
   _newTabURL: ABOUT_URL,
   _activityStreamEnabled: false,
-  _activityStreamPrerender: false,
-  _activityStreamDebug: false,
   _overridden: false,
 
   classID: Components.ID("{dfcd2adc-7867-4d3a-ba70-17501f208142}"),
-  QueryInterface: XPCOMUtils.generateQI([
-    Ci.nsIAboutNewTabService,
-    Ci.nsIObserver
-  ]),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutNewTabService]),
   _xpcom_categories: [{
     service: true
   }],
 
-  observe(subject, topic, data) {
-    switch (topic) {
-      case "nsPref:changed":
-        if (data === PREF_ACTIVITY_STREAM_ENABLED) {
-          if (this.toggleActivityStream()) {
-            Services.obs.notifyObservers(null, "newtab-url-changed", ABOUT_URL);
-          }
-        } else if (data === PREF_ACTIVITY_STREAM_PRERENDER_ENABLED) {
-          this._activityStreamPrerender = Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_PRERENDER_ENABLED);
-          Services.obs.notifyObservers(null, "newtab-url-changed", ABOUT_URL);
-        } else if (!IS_RELEASE_OR_BETA && data === PREF_ACTIVITY_STREAM_DEBUG) {
-          this._activityStreamDebug = Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_DEBUG, false);
-          Services.obs.notifyObservers(null, "newtab-url-changed", ABOUT_URL);
-        }
-        break;
-      case "quit-application-granted":
-        this.uninit();
-        if (IS_MAIN_PROCESS) {
-          AboutNewTab.uninit();
-        }
-        break;
+  _handleToggleEvent(stateEnabled) {
+    if (this.toggleActivityStream(stateEnabled)) {
+      Services.obs.notifyObservers(null, "newtab-url-changed", ABOUT_URL);
     }
   },
 
@@ -143,8 +93,7 @@ AboutNewTabService.prototype = {
    * @param {Boolean}   stateEnabled    activity stream enabled state to set to
    * @param {Boolean}   forceState      force state change
    */
-  toggleActivityStream(stateEnabled = Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_ENABLED),
-                       forceState = false) {
+  toggleActivityStream(stateEnabled, forceState = false) {
 
     if (!forceState && (this.overridden || stateEnabled === this.activityStreamEnabled)) {
       // exit there is no change of state
@@ -154,10 +103,6 @@ AboutNewTabService.prototype = {
       this._activityStreamEnabled = true;
     } else {
       this._activityStreamEnabled = false;
-    }
-    this._activityStreamPrerender = Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_PRERENDER_ENABLED);
-    if (!IS_RELEASE_OR_BETA) {
-      this._activityStreamDebug = Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_DEBUG, false);
     }
     this._newtabURL = ABOUT_URL;
     return true;
@@ -173,9 +118,7 @@ AboutNewTabService.prototype = {
    */
   get defaultURL() {
     if (this.activityStreamEnabled) {
-      const prerender = this.activityStreamPrerender ? "prerender" : "";
-      const debug = this.activityStreamDebug ? "debug" : "";
-      return ACTIVITY_STREAM_URLS[prerender + debug];
+      return this.activityStreamURL;
     }
     return LOCAL_NEWTAB_URL;
   },
@@ -208,32 +151,15 @@ AboutNewTabService.prototype = {
     return this._activityStreamEnabled;
   },
 
-  get activityStreamPrerender() {
-    return this._activityStreamPrerender;
-  },
-
-  get activityStreamDebug() {
-    return this._activityStreamDebug;
+  get activityStreamURL() {
+    return ACTIVITY_STREAM_URL;
   },
 
   resetNewTabURL() {
     this._overridden = false;
     this._newTabURL = ABOUT_URL;
-    this.toggleActivityStream(undefined, true);
+    this.toggleActivityStream(Services.prefs.getBoolPref(PREF_ACTIVITY_STREAM_ENABLED), true);
     Services.obs.notifyObservers(null, "newtab-url-changed", this._newTabURL);
-  },
-
-  uninit() {
-    if (!this.initialized) {
-      return;
-    }
-    Services.obs.removeObserver(this, "quit-application-granted");
-    Services.prefs.removeObserver(PREF_ACTIVITY_STREAM_ENABLED, this);
-    Services.prefs.removeObserver(PREF_ACTIVITY_STREAM_PRERENDER_ENABLED, this);
-    if (!IS_RELEASE_OR_BETA) {
-      Services.prefs.removeObserver(PREF_ACTIVITY_STREAM_DEBUG, this);
-    }
-    this.initialized = false;
   }
 };
 

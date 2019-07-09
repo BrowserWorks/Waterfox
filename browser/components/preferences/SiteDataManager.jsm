@@ -9,9 +9,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "OfflineAppCacheHelper",
                                   "resource:///modules/offlineAppCache.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
                                   "resource://gre/modules/ContextualIdentityService.jsm");
-XPCOMUtils.defineLazyServiceGetter(this, "serviceWorkerManager",
-                                   "@mozilla.org/serviceworkers/manager;1",
-                                   "nsIServiceWorkerManager");
 
 this.EXPORTED_SYMBOLS = [
   "SiteDataManager"
@@ -36,58 +33,59 @@ this.SiteDataManager = {
 
   _quotaUsageRequest: null,
 
-  async updateSites() {
+  updateSites() {
     Services.obs.notifyObservers(null, "sitedatamanager:updating-sites");
-    await this._getQuotaUsage();
-    this._updateAppCache();
-    Services.obs.notifyObservers(null, "sitedatamanager:sites-updated");
-  },
 
-  _getQuotaUsage() {
     // Clear old data and requests first
     this._sites.clear();
     this._cancelGetQuotaUsage();
+
+    this._getQuotaUsage()
+        .then(results => {
+          for (let result of results) {
+            let principal =
+              Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(result.origin);
+            let uri = principal.URI;
+            if (uri.scheme == "http" || uri.scheme == "https") {
+              let site = this._sites.get(uri.host);
+              if (!site) {
+                site = {
+                  persisted: false,
+                  quotaUsage: 0,
+                  principals: [],
+                  appCacheList: [],
+                };
+              }
+              // Assume 3 sites:
+              //   - Site A (not persisted): https://www.foo.com
+              //   - Site B (not persisted): https://www.foo.com^userContextId=2
+              //   - Site C (persisted):     https://www.foo.com:1234
+              // Although only C is persisted, grouping by host, as a result,
+              // we still mark as persisted here under this host group.
+              if (result.persisted) {
+                site.persisted = true;
+              }
+              site.principals.push(principal);
+              site.quotaUsage += result.usage;
+              this._sites.set(uri.host, site);
+            }
+          }
+          this._updateAppCache();
+          Services.obs.notifyObservers(null, "sitedatamanager:sites-updated");
+        });
+  },
+
+  _getQuotaUsage() {
     this._getQuotaUsagePromise = new Promise(resolve => {
-      let onUsageResult = request => {
-        let items = request.result;
-        for (let item of items) {
-          if (!item.persisted && item.usage <= 0) {
-            // An non-persistent-storage site with 0 byte quota usage is redundant for us so skip it.
-            continue;
-          }
-          let principal =
-            Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(item.origin);
-          let uri = principal.URI;
-          if (uri.scheme == "http" || uri.scheme == "https") {
-            let site = this._sites.get(uri.host);
-            if (!site) {
-              site = {
-                persisted: false,
-                quotaUsage: 0,
-                principals: [],
-                appCacheList: [],
-              };
-            }
-            // Assume 3 sites:
-            //   - Site A (not persisted): https://www.foo.com
-            //   - Site B (not persisted): https://www.foo.com^userContextId=2
-            //   - Site C (persisted):     https://www.foo.com:1234
-            // Although only C is persisted, grouping by host, as a result,
-            // we still mark as persisted here under this host group.
-            if (item.persisted) {
-              site.persisted = true;
-            }
-            site.principals.push(principal);
-            site.quotaUsage += item.usage;
-            this._sites.set(uri.host, site);
-          }
+      let callback = {
+        onUsageResult(request) {
+          resolve(request.result);
         }
-        resolve();
       };
       // XXX: The work of integrating localStorage into Quota Manager is in progress.
       //      After the bug 742822 and 1286798 landed, localStorage usage will be included.
       //      So currently only get indexedDB usage.
-      this._quotaUsageRequest = this._qms.getUsage(onUsageResult);
+      this._quotaUsageRequest = this._qms.getUsage(callback);
     });
     return this._getQuotaUsagePromise;
   },
@@ -102,11 +100,6 @@ this.SiteDataManager = {
   _updateAppCache() {
     let groups = this._appCache.getGroups();
     for (let group of groups) {
-      let cache = this._appCache.getActiveCache(group);
-      if (cache.usage <= 0) {
-        // A site with 0 byte appcache usage is redundant for us so skip it.
-        continue;
-      }
       let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(group);
       let uri = principal.URI;
       let site = this._sites.get(uri.host);
@@ -121,6 +114,7 @@ this.SiteDataManager = {
       } else if (!site.principals.some(p => p.origin == principal.origin)) {
         site.principals.push(principal);
       }
+      let cache = this._appCache.getActiveCache(group);
       site.appCacheList.push(cache);
     }
   },
@@ -220,19 +214,6 @@ this.SiteDataManager = {
     }
   },
 
-  _removeServiceWorkers(site) {
-    let serviceWorkers = serviceWorkerManager.getAllRegistrations();
-    for (let i = 0; i < serviceWorkers.length; i++) {
-      let sw = serviceWorkers.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
-      for (let principal of site.principals) {
-        if (sw.principal.equals(principal)) {
-          serviceWorkerManager.removeAndPropagate(sw.principal.URI.host);
-          break;
-        }
-      }
-    }
-  },
-
   remove(hosts) {
     let promises = [];
     let unknownHost = "";
@@ -242,7 +223,6 @@ this.SiteDataManager = {
         this._removePermission(site);
         this._removeAppCache(site);
         this._removeCookie(site);
-        this._removeServiceWorkers(site);
         promises.push(this._removeQuotaUsage(site));
       } else {
         unknownHost = host;
@@ -257,36 +237,16 @@ this.SiteDataManager = {
     }
   },
 
-  async removeAll() {
-    Services.cache2.clear();
-    Services.cookies.removeAll();
-    OfflineAppCacheHelper.clear();
-
-    // Iterate through the service workers and remove them.
-    let serviceWorkers = serviceWorkerManager.getAllRegistrations();
-    for (let i = 0; i < serviceWorkers.length; i++) {
-      let sw = serviceWorkers.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
-      let host = sw.principal.URI.host;
-      serviceWorkerManager.removeAndPropagate(host);
-    }
-
-    // Refresh sites using quota usage again.
-    // This is for the case:
-    //   1. User goes to the about:preferences Site Data section.
-    //   2. With the about:preferences opened, user visits another website.
-    //   3. The website saves to quota usage, like indexedDB.
-    //   4. User goes back to the Site Data section and commands to clear all site data.
-    // For this case, we should refresh the site list so not to miss the website in the step 3.
-    // We don't do "Clear All" on the quota manager like the cookie, appcache, http cache above
-    // because that would clear browser data as well too,
-    // see https://bugzilla.mozilla.org/show_bug.cgi?id=1312361#c9
-    await this._getQuotaUsage();
+  removeAll() {
     let promises = [];
     for (let site of this._sites.values()) {
       this._removePermission(site);
       promises.push(this._removeQuotaUsage(site));
     }
-    return Promise.all(promises).then(() => this.updateSites());
+    Services.cache2.clear();
+    Services.cookies.removeAll();
+    OfflineAppCacheHelper.clear();
+    Promise.all(promises).then(() => this.updateSites());
   },
 
   isPrivateCookie(cookie) {

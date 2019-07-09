@@ -57,7 +57,7 @@ MultipartBlobImpl::Create(nsTArray<RefPtr<BlobImpl>>&& aBlobImpls,
 }
 
 void
-MultipartBlobImpl::CreateInputStream(nsIInputStream** aStream,
+MultipartBlobImpl::GetInternalStream(nsIInputStream** aStream,
                                      ErrorResult& aRv)
 {
   *aStream = nullptr;
@@ -74,7 +74,7 @@ MultipartBlobImpl::CreateInputStream(nsIInputStream** aStream,
     nsCOMPtr<nsIInputStream> scratchStream;
     BlobImpl* blobImpl = mBlobImpls.ElementAt(i).get();
 
-    blobImpl->CreateInputStream(getter_AddRefs(scratchStream), aRv);
+    blobImpl->GetInternalStream(getter_AddRefs(scratchStream), aRv);
     if (NS_WARN_IF(aRv.Failed())) {
       return;
     }
@@ -85,7 +85,7 @@ MultipartBlobImpl::CreateInputStream(nsIInputStream** aStream,
     }
   }
 
-  CallQueryInterface(stream, aStream);
+  stream.forget(aStream);
 }
 
 already_AddRefed<BlobImpl>
@@ -410,14 +410,4 @@ MultipartBlobImpl::MayBeClonedToOtherThreads() const
   }
 
   return true;
-}
-
-size_t MultipartBlobImpl::GetAllocationSize() const
-{
-  size_t total = 0;
-  for (uint32_t i = 0; i < mBlobImpls.Length(); ++i) {
-    total += mBlobImpls[i]->GetAllocationSize();
-  }
-
-  return total;
 }

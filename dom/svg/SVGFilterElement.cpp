@@ -114,7 +114,7 @@ SVGFilterElement::Href()
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGFilterElement::IsAttributeMapped(const nsAtom* name) const
+SVGFilterElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sFEFloodMap,

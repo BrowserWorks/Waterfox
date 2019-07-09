@@ -52,11 +52,11 @@ public:
                          bool aPreallocateChildren) const override = 0;
 
   // nsIContent
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
   virtual nsSVGAnimatedTransformList*
     GetAnimatedTransformList(uint32_t aFlags = 0) override;
-  virtual nsAtom* GetTransformListAttrName() const override {
+  virtual nsIAtom* GetTransformListAttrName() const override {
     return nsGkAtoms::gradientTransform;
   }
 

@@ -60,15 +60,7 @@ public:
     void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                 FontListSizes* aSizes) const final;
 
-    bool FilterForFontList(nsAtom* aLangGroup,
-                           const nsACString& aGeneric) const final {
-        return !IsSymbolFontFamily();
-    }
-
 protected:
-    // helper for FilterForFontList
-    bool IsSymbolFontFamily() const;
-
     /** This font family's directwrite fontfamily object */
     RefPtr<IDWriteFontFamily> mDWFamily;
     bool mForceGDIClassic;
@@ -158,9 +150,9 @@ public:
         mIsCJK = UNINITIALIZED_VALUE;
     }
 
-    gfxFontEntry* Clone() const override;
-
     virtual ~gfxDWriteFontEntry();
+
+    virtual bool IsSymbolFont();
 
     virtual hb_blob_t* GetFontTable(uint32_t aTableTag) override;
 
@@ -212,8 +204,8 @@ protected:
     int8_t mIsCJK;
     bool mForceGDIClassic;
 
-    mozilla::ThreadSafeWeakPtr<mozilla::gfx::UnscaledFontDWrite> mUnscaledFont;
-    mozilla::ThreadSafeWeakPtr<mozilla::gfx::UnscaledFontDWrite> mUnscaledFontBold;
+    mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFont;
+    mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFontBold;
 };
 
 // custom text renderer used to determine the fallback font for a given char
@@ -367,8 +359,6 @@ public:
     // initialize font lists
     virtual nsresult InitFontListForPlatform() override;
 
-    gfxFontFamily* CreateFontFamily(const nsAString& aName) const override;
-
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
@@ -389,7 +379,6 @@ public:
 
     bool FindAndAddFamilies(const nsAString& aFamily,
                             nsTArray<gfxFontFamily*>* aOutput,
-                            FindFamiliesFlags aFlags,
                             gfxFontStyle* aStyle = nullptr,
                             gfxFloat aDevToCssSize = 1.0) override;
 

@@ -53,16 +53,25 @@
   padding-inline-end: 4px;
 }
 
-#sidebar-switcher-arrow {
+#sidebar-switcher-arrow,
+#sidebar-close > .toolbarbutton-icon {
   -moz-context-properties: fill;
   fill: currentColor;
   opacity: 0.8;
 }
 
 #sidebar-switcher-arrow {
-  list-style-image: url(chrome://global/skin/icons/arrow-dropdown-12.svg);
+  list-style-image: url(chrome://browser/skin/arrow-dropdown.svg);
   width: 12px;
   height: 12px;
+}
+
+#sidebar-close {
+  -moz-appearance: none;
+  list-style-image: url(chrome://browser/skin/sidebar/close.svg);
+  margin: 0;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 #sidebar-switcher-target {
@@ -74,7 +83,8 @@
   padding: 2px 4px;
 }
 
-#sidebar-switcher-target:hover {
+#sidebar-switcher-target:hover,
+#sidebar-close:hover {
   background: hsla(240, 5%, 5%, 0.05);
 }
 
@@ -82,6 +92,7 @@
   border-color: rgba(0, 0, 0, 0.2);
 }
 
+#sidebar-close:hover:active,
 #sidebar-switcher-target:hover:active,
 #sidebar-switcher-target.active {
   background: hsla(240, 5%, 5%, 0.1);
@@ -103,11 +114,10 @@
 %ifndef XP_MACOSX
 /* Allow room for the checkbox drawn as a background image at the start of the toolbarbutton */
 #sidebarMenu-popup .subviewbutton-iconic > .toolbarbutton-icon {
-  margin-inline-start: 16px;
-}
-/* Align items without icons to the start of the icons: */
-#sidebarMenu-popup .subviewbutton:not(.subviewbutton-iconic) > .toolbarbutton-text {
   padding-inline-start: 16px;
+}
+#sidebarMenu-popup .subviewbutton-iconic > .toolbarbutton-text {
+  padding-inline-start: 0;
 }
 %endif
 

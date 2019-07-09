@@ -320,13 +320,6 @@ function isOMTAEnabled() {
 }
 
 /**
- * Returns true if the document is styled by servo.
- */
-function isStyledByServo() {
-  return SpecialPowers.DOMWindowUtils.isStyledByServo;
-}
-
-/**
  * Append an SVG element to the target element.
  *
  * @param target The element which want to append.
@@ -346,22 +339,4 @@ function addSVGElement(target, tag, attrs) {
   }
   target.appendChild(element);
   return element;
-}
-
-/*
- * Get Animation distance between two specified values for a specific property.
- *
- * @param target The target element.
- * @param prop The CSS property.
- * @param v1 The first property value.
- * @param v2 The Second property value.
- *
- * @return The distance between |v1| and |v2| for |prop| on |target|.
- */
-function getDistance(target, prop, v1, v2) {
-  if (!target) {
-    return 0.0;
-  }
-  return SpecialPowers.DOMWindowUtils
-           .computeAnimationDistance(target, prop, v1, v2);
 }

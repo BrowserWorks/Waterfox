@@ -66,16 +66,16 @@ public:
   }
 
   NS_IMETHOD
-  GetContractID(nsACString& aContractID) override
+  GetContractID(char **_contractID) override
   {
-    aContractID.SetIsVoid(true);
+    *_contractID = nullptr;
     return NS_OK;
   }
 
   NS_IMETHOD
-  GetClassDescription(nsACString& aDesc) override
+  GetClassDescription(char **_desc) override
   {
-    aDesc.SetIsVoid(true);
+    *_desc = nullptr;
     return NS_OK;
   }
 

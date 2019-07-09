@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.lastindexof
 es5id: 15.4.4.15-4-8
 description: >
     Array.prototype.lastIndexOf returns -1 if 'length' is 0 (length is
@@ -23,7 +22,7 @@ description: >
   // then converted back to n itself. If an array contains more than one element,
   // or if its one element is not a number, the array converts to NaN.
  var i = Array.prototype.lastIndexOf.call({length: [ ]}, 1);
-
+  
 
 assert.sameValue(i, -1, 'i');
 

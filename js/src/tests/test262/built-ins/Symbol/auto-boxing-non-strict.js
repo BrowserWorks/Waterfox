@@ -5,7 +5,6 @@ es6id: 19.4
 description: >
     Symbol ToObject auto-boxing
 flags: [noStrict]
-features: [Symbol]
 ---*/
 
 var sym = Symbol('66');

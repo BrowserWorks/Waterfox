@@ -726,38 +726,25 @@ function isPrimitive(v) {
   return v === null || (typeof(v) != "object" && typeof(v) != "function");
 }
 
-function checkProperty(obj, prop, required, checkFn) {
-  if (prop in obj)
-    return checkFn(obj[prop]);
-
-  return !required;
-}
-
 DefineTransaction.annotationObjectValidate = function(obj) {
+  let checkProperty = (prop, required, checkFn) => {
+    if (prop in obj)
+      return checkFn(obj[prop]);
+
+    return !required;
+  };
+
   if (obj &&
-      checkProperty(obj, "name", true, v => typeof(v) == "string" && v.length > 0) &&
-      checkProperty(obj, "expires", false, Number.isInteger) &&
-      checkProperty(obj, "flags", false, Number.isInteger) &&
-      checkProperty(obj, "value", false, isPrimitive) ) {
+      checkProperty("name", true, v => typeof(v) == "string" && v.length > 0) &&
+      checkProperty("expires", false, Number.isInteger) &&
+      checkProperty("flags", false, Number.isInteger) &&
+      checkProperty("value", false, isPrimitive) ) {
     // Nothing else should be set
     let validKeys = ["name", "value", "flags", "expires"];
     if (Object.keys(obj).every(k => validKeys.includes(k)))
       return obj;
   }
   throw new Error("Invalid annotation object");
-};
-
-DefineTransaction.childObjectValidate = function(obj) {
-  if (obj &&
-      checkProperty(obj, "title", false, v => typeof(v) == "string") &&
-      !("type" in obj && obj.type != PlacesUtils.bookmarks.TYPE_BOOKMARK)) {
-    obj.url = DefineTransaction.urlValidate(obj.url);
-    let validKeys = ["title", "url"];
-    if (Object.keys(obj).every(k => validKeys.includes(k))) {
-      return obj;
-    }
-  }
-  throw new Error("Invalid child object");
 };
 
 DefineTransaction.urlValidate = function(url) {
@@ -776,7 +763,7 @@ DefineTransaction.defineInputProps = function(names, validateFn, defaultValue) {
         try {
           return validateFn(value);
         } catch (ex) {
-          throw new Error(`Invalid value for input property ${name}: ${ex}`);
+          throw new Error(`Invalid value for input property ${name}`);
         }
       },
 
@@ -804,15 +791,9 @@ DefineTransaction.defineArrayInputProp = function(name, basePropertyName) {
       if (!Array.isArray(aValue))
         throw new Error(`${name} input property value must be an array`);
 
-      // We must create a new array in the local scope to avoid a memory leak due
-      // to the array global object. We can't use Cu.cloneInto as that doesn't
-      // handle the URIs. Slice & map also aren't good enough, so we start off
-      // with a clean array and insert what we need into it.
-      let newArray = [];
-      for (let item of aValue) {
-        newArray.push(baseProp.validateValue(item));
-      }
-      return newArray;
+      // This also takes care of abandoning the global scope of the input
+      // array (through Array.prototype).
+      return aValue.map(baseProp.validateValue);
     },
 
     // We allow setting either the array property itself (e.g. urls), or a
@@ -917,13 +898,10 @@ DefineTransaction.defineInputProps(["index", "newIndex"],
                                    PlacesUtils.bookmarks.DEFAULT_INDEX);
 DefineTransaction.defineInputProps(["annotation"],
                                    DefineTransaction.annotationObjectValidate);
-DefineTransaction.defineInputProps(["child"],
-                                   DefineTransaction.childObjectValidate);
 DefineTransaction.defineArrayInputProp("guids", "guid");
 DefineTransaction.defineArrayInputProp("urls", "url");
 DefineTransaction.defineArrayInputProp("tags", "tag");
 DefineTransaction.defineArrayInputProp("annotations", "annotation");
-DefineTransaction.defineArrayInputProp("children", "child");
 DefineTransaction.defineArrayInputProp("excludingAnnotations",
                                        "excludingAnnotation");
 
@@ -993,6 +971,8 @@ function createItemsFromBookmarksTree(tree, restoring = false,
         if ("tags" in item) {
           PlacesUtils.tagging.tagURI(Services.io.newURI(item.uri),
                                      item.tags.split(","));
+          if (restoring)
+            shouldResetLastModified = true;
         }
         break;
       }
@@ -1039,8 +1019,9 @@ function createItemsFromBookmarksTree(tree, restoring = false,
 
       if (annos.length > 0) {
         let itemId = await PlacesUtils.promiseItemId(guid);
-        PlacesUtils.setAnnotationsForItem(itemId, annos,
-          Ci.nsINavBookmarksService.SOURCE_DEFAULT, true);
+        PlacesUtils.setAnnotationsForItem(itemId, annos);
+        if (restoring)
+          shouldResetLastModified = true;
       }
     }
 
@@ -1089,8 +1070,7 @@ PT.NewBookmark.prototype = Object.seal({
       info = await PlacesUtils.bookmarks.insert(info);
       if (annotations.length > 0) {
         let itemId = await PlacesUtils.promiseItemId(info.guid);
-        PlacesUtils.setAnnotationsForItem(itemId, annotations,
-          Ci.nsINavBookmarksService.SOURCE_DEFAULT, true);
+        PlacesUtils.setAnnotationsForItem(itemId, annotations);
       }
       if (tags.length > 0) {
         PlacesUtils.tagging.tagURI(Services.io.newURI(url.href), tags);
@@ -1109,6 +1089,10 @@ PT.NewBookmark.prototype = Object.seal({
     };
     this.redo = async function() {
       await createItem();
+      // CreateItem will update the lastModified value if tags or annotations
+      // are present, but we don't care to restore it. The likely of a user
+      // creating a bookmark, undoing and redoing that, and still caring
+      // about lastModified is basically non-existant.
     };
     return info.guid;
   }
@@ -1118,60 +1102,35 @@ PT.NewBookmark.prototype = Object.seal({
  * Transaction for creating a folder.
  *
  * Required Input Properties: title, parentGuid.
- * Optional Input Properties: index, annotations, children
+ * Optional Input Properties: index, annotations.
  *
  * When this transaction is executed, it's resolved to the new folder's GUID.
  */
 PT.NewFolder = DefineTransaction(["parentGuid", "title"],
-                                 ["index", "annotations", "children"]);
+                                 ["index", "annotations"]);
 PT.NewFolder.prototype = Object.seal({
-  async execute({ parentGuid, title, index, annotations, children }) {
-    let folderGuid;
-    let info = {
-      children: [{
-        title,
-        type: PlacesUtils.bookmarks.TYPE_FOLDER,
-      }],
-      // insertTree uses guid as the parent for where it is being inserted
-      // into.
-      guid: parentGuid,
-    };
-
-    if (children && children.length > 0) {
-      info.children[0].children = children;
-    }
+  async execute({ parentGuid, title, index, annotations }) {
+    let info = { type: PlacesUtils.bookmarks.TYPE_FOLDER,
+                 parentGuid, index, title };
 
     async function createItem() {
-      // Note, insertTree returns an array, rather than the folder/child structure.
-      // For simplicity, we only get the new folder id here. This means that
-      // an undo then redo won't retain exactly the same information for all
-      // the child bookmarks, but we believe that isn't important at the moment.
-      let bmInfo = await PlacesUtils.bookmarks.insertTree(info);
-      // insertTree returns an array, but we only need to deal with the folder guid.
-      folderGuid = bmInfo[0].guid;
-
-      // Bug 1388097: insertTree doesn't handle inserting at a specific index for the folder,
-      // therefore we update the bookmark manually afterwards.
-      if (index != PlacesUtils.bookmarks.DEFAULT_INDEX) {
-        bmInfo[0].index = index;
-        bmInfo = await PlacesUtils.bookmarks.update(bmInfo[0]);
-      }
-
+      info = await PlacesUtils.bookmarks.insert(info);
       if (annotations.length > 0) {
-        let itemId = await PlacesUtils.promiseItemId(folderGuid);
-        PlacesUtils.setAnnotationsForItem(itemId, annotations,
-          Ci.nsINavBookmarksService.SOURCE_DEFAULT, true);
+        let itemId = await PlacesUtils.promiseItemId(info.guid);
+        PlacesUtils.setAnnotationsForItem(itemId, annotations);
       }
     }
     await createItem();
 
     this.undo = async function() {
-      await PlacesUtils.bookmarks.remove(folderGuid);
+      await PlacesUtils.bookmarks.remove(info);
     };
     this.redo = async function() {
       await createItem();
+      // See the reasoning in CreateItem for why we don't care
+      // about precisely resetting the lastModified value.
     };
-    return folderGuid;
+    return info.guid;
   }
 });
 
@@ -1217,8 +1176,7 @@ PT.NewLivemark.prototype = Object.seal({
     let createItem = async function() {
       let livemark = await PlacesUtils.livemarks.addLivemark(livemarkInfo);
       if (annotations.length > 0) {
-        PlacesUtils.setAnnotationsForItem(livemark.id, annotations,
-          Ci.nsINavBookmarksService.SOURCE_DEFAULT, true);
+        PlacesUtils.setAnnotationsForItem(livemark.id, annotations);
       }
       return livemark;
     };
@@ -1250,7 +1208,7 @@ PT.Move.prototype = Object.seal({
     let originalInfo = await PlacesUtils.bookmarks.fetch(guid);
     if (!originalInfo)
       throw new Error("Cannot move a non-existent item");
-    let updateInfo = { guid, parentGuid: newParentGuid, index: newIndex };
+    let updateInfo = { guid, parentGuid: newParentGuid, index: newIndex }
     updateInfo = await PlacesUtils.bookmarks.update(updateInfo);
 
     // Moving down in the same parent takes in count removal of the item
@@ -1519,6 +1477,25 @@ PT.Remove.prototype = {
 };
 
 /**
+ * Transactions for removing all bookmarks for one or more urls.
+ *
+ * Required Input Properties: urls.
+ */
+PT.RemoveBookmarksForUrls = DefineTransaction(["urls"]);
+PT.RemoveBookmarksForUrls.prototype = {
+  async execute({ urls }) {
+    let guids = [];
+    for (let url of urls) {
+      await PlacesUtils.bookmarks.fetch({ url }, b => guids.push(b.guid));
+    }
+    let removeTxn = TransactionsHistory.getRawTransaction(PT.Remove(guids));
+    await removeTxn.execute();
+    this.undo = removeTxn.undo.bind(removeTxn);
+    this.redo = removeTxn.redo.bind(removeTxn);
+  }
+};
+
+/**
  * Transaction for tagging urls.
  *
  * Required Input Properties: urls, tags.
@@ -1643,7 +1620,7 @@ PT.Copy.prototype = {
     };
     this.redo = async function() {
       await createItemsFromBookmarksTree(newItemInfo, true);
-    };
+    }
 
     return newItemGuid;
   }

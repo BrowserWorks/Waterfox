@@ -4,7 +4,6 @@
 es6id: 12.5.12.1
 description: >
     "Logical Not" coercion operation on Symbols
-features: [Symbol]
 ---*/
 var sym = Symbol();
 

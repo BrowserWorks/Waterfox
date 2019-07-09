@@ -8,7 +8,8 @@
 #define mozilla_a11y_Platform_h
 
 #include <stdint.h>
-#include "nsStringFwd.h"
+
+class nsString;
 
 namespace mozilla {
 namespace a11y {
@@ -44,16 +45,7 @@ bool ShouldA11yBeEnabled();
 #endif
 
 #if defined(XP_WIN)
-/*
- * Do we have AccessibleHandler.dll registered.
- */
 bool IsHandlerRegistered();
-
-/*
- * Name of platform service that instantiated accessibility
- */
-void SetInstantiator(const nsAString& aInstantiator);
-bool GetInstantiator(nsAString& aInstantiator);
 #endif
 
 /**

@@ -15,7 +15,6 @@ info: >
   20. Return O.
 
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var len = 10;

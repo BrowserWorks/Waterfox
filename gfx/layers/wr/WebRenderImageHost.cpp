@@ -188,7 +188,6 @@ WebRenderImageHost::SetCurrentTextureHost(TextureHost* aTexture)
   }
 
   if (mWrBridge &&
-      !mAsyncRef &&
       !!mCurrentTextureHost &&
       mCurrentTextureHost != aTexture &&
       mCurrentTextureHost->AsWebRenderTextureHost()) {
@@ -208,6 +207,7 @@ void WebRenderImageHost::Attach(Layer* aLayer,
                        TextureSourceProvider* aProvider,
                        AttachFlags aFlags)
 {
+  MOZ_ASSERT_UNREACHABLE("unexpected to be called");
 }
 
 void
@@ -292,7 +292,7 @@ WebRenderImageHost::GetImageSize() const
 {
   const TimedImage* img = ChooseImage();
   if (img) {
-    return IntSize(img->mPictureRect.Width(), img->mPictureRect.Height());
+    return IntSize(img->mPictureRect.width, img->mPictureRect.height);
   }
   return IntSize();
 }

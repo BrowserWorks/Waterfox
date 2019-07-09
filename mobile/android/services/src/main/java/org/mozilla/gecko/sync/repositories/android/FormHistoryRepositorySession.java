@@ -23,6 +23,7 @@ import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -120,6 +121,59 @@ public class FormHistoryRepositorySession extends
 
   protected static final String[] GUID_COLUMNS = new String[] { FormHistory.GUID };
 
+  @Override
+  public void guidsSince(final long timestamp, final RepositorySessionGuidsSinceDelegate delegate) {
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        if (!isActive()) {
+          delegate.onGuidsSinceFailed(new InactiveSessionException());
+          return;
+        }
+
+        ArrayList<String> guids = new ArrayList<String>();
+
+        final long sharedEnd = now();
+        Cursor cur = null;
+        try {
+          cur = regularHelper.safeQuery(formsProvider, "", GUID_COLUMNS, regularBetween(timestamp, sharedEnd), null, null);
+          cur.moveToFirst();
+          while (!cur.isAfterLast()) {
+            guids.add(cur.getString(0));
+            cur.moveToNext();
+          }
+        } catch (RemoteException | NullCursorException e) {
+          delegate.onGuidsSinceFailed(e);
+          return;
+        } finally {
+          if (cur != null) {
+            cur.close();
+          }
+        }
+
+        try {
+          cur = deletedHelper.safeQuery(formsProvider, "", GUID_COLUMNS, deletedBetween(timestamp, sharedEnd), null, null);
+          cur.moveToFirst();
+          while (!cur.isAfterLast()) {
+            guids.add(cur.getString(0));
+            cur.moveToNext();
+          }
+        } catch (RemoteException | NullCursorException e) {
+          delegate.onGuidsSinceFailed(e);
+          return;
+        } finally {
+          if (cur != null) {
+            cur.close();
+          }
+        }
+
+        String guidsArray[] = guids.toArray(new String[guids.size()]);
+        delegate.onGuidsSinceSucceeded(guidsArray);
+      }
+    };
+    delegateQueue.execute(command);
+  }
+
   protected static FormHistoryRecord retrieveDuringFetch(final Cursor cursor) {
     // A simple and efficient way to distinguish two tables.
     if (cursor.getColumnCount() == BrowserContractHelpers.FormHistoryColumns.length) {
@@ -213,8 +267,7 @@ public class FormHistoryRepositorySession extends
           }
         }
 
-        setLastFetchTimestamp(end);
-        delegate.onFetchCompleted();
+        delegate.onFetchCompleted(end);
       }
     };
 
@@ -231,8 +284,9 @@ public class FormHistoryRepositorySession extends
            DeletedFormHistory.TIME_DELETED + " <= " + Long.toString(end); // Milliseconds.
   }
 
-  private void fetchSince(final long timestamp, final RepositorySessionFetchRecordsDelegate delegate) {
-    Logger.trace(LOG_TAG, "Running fetchSince(" + timestamp + ")");
+  @Override
+  public void fetchSince(final long timestamp, final RepositorySessionFetchRecordsDelegate delegate) {
+    Logger.trace(LOG_TAG, "Running fetchSince(" + timestamp + ").");
 
     /*
      * We need to be careful about the timestamp we complete the fetch with. If
@@ -245,14 +299,14 @@ public class FormHistoryRepositorySession extends
     Callable<Cursor> regularCallable = new Callable<Cursor>() {
       @Override
       public Cursor call() throws Exception {
-        return regularHelper.safeQuery(formsProvider, ".fetchModified(regular)", null, regularBetween(timestamp, sharedEnd), null, null);
+        return regularHelper.safeQuery(formsProvider, ".fetchSince(regular)", null, regularBetween(timestamp, sharedEnd), null, null);
       }
     };
 
     Callable<Cursor> deletedCallable = new Callable<Cursor>() {
       @Override
       public Cursor call() throws Exception {
-        return deletedHelper.safeQuery(formsProvider, ".fetchModified(deleted)", null, deletedBetween(timestamp, sharedEnd), null, null);
+        return deletedHelper.safeQuery(formsProvider, ".fetchSince(deleted)", null, deletedBetween(timestamp, sharedEnd), null, null);
       }
     };
 
@@ -263,14 +317,9 @@ public class FormHistoryRepositorySession extends
   }
 
   @Override
-  public void fetchModified(final RepositorySessionFetchRecordsDelegate delegate) {
-    this.fetchSince(getLastSyncTimestamp(), delegate);
-  }
-
-  @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     Logger.trace(LOG_TAG, "Running fetchAll.");
-    this.fetchSince(-1, delegate);
+    fetchSince(0, delegate);
   }
 
   @Override
@@ -437,8 +486,7 @@ public class FormHistoryRepositorySession extends
           synchronized (recordsBufferMonitor) {
             flushInsertQueue();
           }
-          setLastStoreTimestamp(now());
-          storeDelegate.deferredStoreDelegate(storeWorkQueue).onStoreCompleted();
+          storeDelegate.deferredStoreDelegate(storeWorkQueue).onStoreCompleted(now());
         } catch (Exception e) {
           // XXX TODO
           storeDelegate.deferredStoreDelegate(storeWorkQueue).onRecordStoreFailed(e, null);
@@ -567,7 +615,7 @@ public class FormHistoryRepositorySession extends
               // Note that while this counts as "reconciliation", we're probably over-counting.
               // Currently, locallyModified above is _always_ true if a record exists locally,
               // and so we'll consider any deletions of already present records as reconciliations.
-              storeDelegate.onRecordStoreReconciled(record.guid, null, null);
+              storeDelegate.onRecordStoreReconciled(record.guid);
               storeDelegate.onRecordStoreSucceeded(record.guid);
               return;
             }
@@ -619,7 +667,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote is newer, and not deleted. Storing.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            storeDelegate.onRecordStoreReconciled(record.guid, existingRecord.guid, null);
+            storeDelegate.onRecordStoreReconciled(record.guid);
             storeDelegate.onRecordStoreSucceeded(record.guid);
             return;
           }

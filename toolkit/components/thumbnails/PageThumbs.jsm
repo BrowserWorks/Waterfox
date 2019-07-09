@@ -34,16 +34,17 @@ Cu.import("resource://gre/modules/osfile.jsm", this);
 
 Cu.importGlobalProperties(["FileReader"]);
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  NetUtil: "resource://gre/modules/NetUtil.jsm",
-  Services: "resource://gre/modules/Services.jsm",
-  FileUtils: "resource://gre/modules/FileUtils.jsm",
-  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
-  Deprecated: "resource://gre/modules/Deprecated.jsm",
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
-  PageThumbUtils: "resource://gre/modules/PageThumbUtils.jsm",
-  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+  "resource://gre/modules/NetUtil.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+  "resource://gre/modules/Services.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+  "resource://gre/modules/FileUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "gUpdateTimerManager",
   "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
@@ -59,6 +60,15 @@ XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function() {
   return converter;
 });
 
+XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
+  "resource://gre/modules/Deprecated.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+  "resource://gre/modules/AsyncShutdown.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PageThumbUtils",
+  "resource://gre/modules/PageThumbUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
+
 /**
  * Utilities for dealing with promises and Task.jsm
  */
@@ -68,7 +78,7 @@ const TaskUtils = {
    *
    * @return {Promise}
    * @resolve {ArrayBuffer} In case of success, the bytes contained in the blob.
-   * @reject {DOMException} In case of error, the underlying DOMException.
+   * @reject {DOMError} In case of error, the underlying DOMError.
    */
   readBlob: function readBlob(blob) {
     return new Promise((resolve, reject) => {
@@ -239,7 +249,7 @@ this.PageThumbs = {
       let resultFunc = function(aMsg) {
         mm.removeMessageListener("Browser:Thumbnail:CheckState:Response", resultFunc);
         aCallback(aMsg.data.result);
-      };
+      }
       mm.addMessageListener("Browser:Thumbnail:CheckState:Response", resultFunc);
       try {
         mm.sendAsyncMessage("Browser:Thumbnail:CheckState");
@@ -327,12 +337,12 @@ this.PageThumbs = {
             resolve({
               thumbnail
             });
-          };
+          }
           image.src = reader.result;
         });
         // xxx wish there was a way to skip this encoding step
         reader.readAsDataURL(imageBlob);
-      };
+      }
 
       // Send a thumbnail request
       mm.addMessageListener("Browser:Thumbnail:Response", thumbFunc);
@@ -835,7 +845,7 @@ var PageThumbsExpiration = {
 
     for (let filter of this._filters) {
       if (typeof filter == "function")
-        filter(filterCallback);
+        filter(filterCallback)
       else
         filter.filterForThumbnailExpiration(filterCallback);
     }

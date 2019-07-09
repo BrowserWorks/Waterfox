@@ -90,11 +90,11 @@ AndroidFlingAnimation::AndroidFlingAnimation(AsyncPanZoomController& aApzc,
   // This ensures that we don't take the 'overscroll' path in Sample()
   // on account of one axis which can't scroll having a velocity.
   if (!mOverscrollHandoffChain->CanScrollInDirection(&mApzc, ScrollDirection::HORIZONTAL)) {
-    RecursiveMutexAutoLock lock(mApzc.mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mApzc.mMonitor);
     mApzc.mX.SetVelocity(0);
   }
   if (!mOverscrollHandoffChain->CanScrollInDirection(&mApzc, ScrollDirection::VERTICAL)) {
-    RecursiveMutexAutoLock lock(mApzc.mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mApzc.mMonitor);
     mApzc.mY.SetVelocity(0);
   }
 

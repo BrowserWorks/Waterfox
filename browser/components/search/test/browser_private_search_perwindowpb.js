@@ -3,9 +3,9 @@
 // whether there is an autocomplete entry for the private search.
 
 add_task(async function() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
+  // Don't use about:home as the homepage for new windows
+  Services.prefs.setIntPref("browser.startup.page", 0);
+  registerCleanupFunction(() => Services.prefs.clearUserPref("browser.startup.page"));
 
   let windowsToClose = [];
 

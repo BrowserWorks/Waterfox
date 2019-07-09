@@ -30,21 +30,21 @@ function record(aName) {
 
 function TabOpen(aEvent) {
   if (aEvent.target == tab)
-    record("TabOpen");
+    record(arguments.callee.name);
 }
 
 var progressListener = {
   onLocationChange: function onLocationChange(aBrowser) {
     if (aBrowser == tab.linkedBrowser)
-      record("onLocationChange");
+      record(arguments.callee.name);
   },
   onStateChange: function onStateChange(aBrowser) {
     if (aBrowser == tab.linkedBrowser)
-      record("onStateChange");
+      record(arguments.callee.name);
   },
   onLinkIconAvailable: function onLinkIconAvailable(aBrowser, aIconURL) {
     if (aBrowser == tab.linkedBrowser &&
         aIconURL == "about:logo")
-      record("onLinkIconAvailable");
+      record(arguments.callee.name);
   }
 };

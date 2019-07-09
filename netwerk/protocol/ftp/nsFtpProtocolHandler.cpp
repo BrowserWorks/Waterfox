@@ -1,7 +1,21 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *
+ * This Original Code has been modified by IBM Corporation.
+ * Modifications made by IBM described herein are
+ * Copyright (c) International Business Machines
+ * Corporation, 2000
+ *
+ * Modifications to Mozilla code or documentation
+ * identified per MPL Section 3.3
+ *
+ * Date         Modified by     Description of modification
+ * 03/27/2000   IBM Corp.       Added PR_CALLBACK for Optlink
+ *                               use in OS2
+ */
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/net/FTPChannelChild.h"
@@ -309,17 +323,20 @@ nsFtpProtocolHandler::InsertConnection(nsIURI *aKey, nsFtpControlConnection *aCo
 
     LOG(("FTP:inserting connection for %s\n", spec.get()));
 
+    nsresult rv;
+    nsCOMPtr<nsITimer> timer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+    if (NS_FAILED(rv)) return rv;
+
     timerStruct* ts = new timerStruct();
     if (!ts)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    nsCOMPtr<nsITimer> timer;
-    nsresult rv = NS_NewTimerWithFuncCallback(getter_AddRefs(timer),
-                                              nsFtpProtocolHandler::Timeout,
-                                              ts,
-                                              mIdleTimeout * 1000,
-                                              nsITimer::TYPE_REPEATING_SLACK,
-                                              "nsFtpProtocolHandler::InsertConnection");
+    rv = timer->InitWithNamedFuncCallback(
+      nsFtpProtocolHandler::Timeout,
+      ts,
+      mIdleTimeout * 1000,
+      nsITimer::TYPE_REPEATING_SLACK,
+      "nsFtpProtocolHandler::InsertConnection");
     if (NS_FAILED(rv)) {
         delete ts;
         return rv;

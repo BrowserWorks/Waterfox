@@ -17,18 +17,19 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1265841
 </div>
 <pre id="test">
 </pre>
-<script src="utils.js"></script>
 <script type="text/javascript">
   SimpleTest.requestFlakyTimeout("Mock alert service dispatches show, click, and close events.");
 
   function testFrame(src) {
     var iframe = document.createElement("iframe");
     iframe.src = src;
-    window.callback = function(result) {
+    window.callback = function(data) {
       window.callback = null;
       document.body.removeChild(iframe);
       iframe = null;
-      ok(result, "Got notificationclose event with correct data.");
+      ok(data.result, "Got notificationclose event with correct data.");
+      ok(!data.windowOpened,
+         "Shouldn't allow to openWindow in notificationclose");
       MockServices.unregister();
       registration.unregister().then(function() {
         SimpleTest.finish();
@@ -41,13 +42,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1265841
 
   function runTest() {
     MockServices.register();
+    testFrame('notificationclose.html');
     navigator.serviceWorker.register("notificationclose.js", { scope: "notificationclose.html" }).then(function(reg) {
       registration = reg;
-      return waitForState(reg.installing, 'activated');
     }, function(e) {
       ok(false, "registration should have passed!");
-    }).then(() => {
-      testFrame('notificationclose.html');
     });
   };
 

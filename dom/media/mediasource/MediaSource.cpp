@@ -374,7 +374,7 @@ void
 MediaSource::EndOfStream(const MediaResult& aError)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("EndOfStream(aError=%s)", aError.ErrorName().get());
+  MSE_API("EndOfStream(aError=%" PRId32")", static_cast<uint32_t>(aError.Code()));
 
   SetReadyState(MediaSourceReadyState::Ended);
   mSourceBuffers->Ended();
@@ -623,7 +623,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(MediaSource, DOMEventTargetHelper,
 NS_IMPL_ADDREF_INHERITED(MediaSource, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(MediaSource, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaSource)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaSource)
   NS_INTERFACE_MAP_ENTRY(mozilla::dom::MediaSource)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 

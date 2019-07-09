@@ -11,6 +11,8 @@
 #include "mozilla/dom/Link.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
+#include "nsDOMTokenList.h"
+#include "nsIDOMHTMLAreaElement.h"
 #include "nsIURL.h"
 
 class nsIDocument;
@@ -21,6 +23,7 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLAreaElement final : public nsGenericHTMLElement,
+                              public nsIDOMHTMLAreaElement,
                               public Link
 {
 public:
@@ -33,11 +36,13 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLAreaElement,
                                            nsGenericHTMLElement)
 
-  NS_DECL_ADDSIZEOFEXCLUDINGTHIS
-
-  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLAreaElement, area)
+  // DOM memory reporter participant
+  NS_DECL_SIZEOF_EXCLUDING_THIS
 
   virtual int32_t TabIndexDefault() override;
+
+  // nsIDOMHTMLAreaElement
+  NS_DECL_NSIDOMHTMLAREAELEMENT
 
   virtual nsresult GetEventTargetParent(
                      EventChainPreVisitor& aVisitor) override;
@@ -58,64 +63,44 @@ public:
   virtual EventStates IntrinsicState() const override;
 
   // WebIDL
-  void GetAlt(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::alt, aValue);
-  }
+
+  // The XPCOM GetAlt is OK for us
   void SetAlt(const nsAString& aAlt, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::alt, aAlt, aError);
   }
 
-  void GetCoords(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::coords, aValue);
-  }
+  // The XPCOM GetCoords is OK for us
   void SetCoords(const nsAString& aCoords, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::coords, aCoords, aError);
   }
 
-  // argument type nsAString for HTMLImageMapAccessible
-  void GetShape(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::shape, aValue);
-  }
+  // The XPCOM GetShape is OK for us
   void SetShape(const nsAString& aShape, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::shape, aShape, aError);
   }
 
-  // argument type nsAString for nsContextMenuInfo
-  void GetHref(nsAString& aValue)
-  {
-    GetURIAttr(nsGkAtoms::href, nullptr, aValue);
-  }
+  // The XPCOM GetHref is OK for us
   void SetHref(const nsAString& aHref, ErrorResult& aError)
   {
-    SetHTMLAttr(nsGkAtoms::href, aHref, aError);
+    aError = SetHref(aHref);
   }
 
-  void GetTarget(DOMString& aValue);
+  // The XPCOM GetTarget is OK for us
   void SetTarget(const nsAString& aTarget, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::target, aTarget, aError);
   }
 
-  void GetDownload(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::download, aValue);
-  }
+  // The XPCOM GetDownload is OK for us
   void SetDownload(const nsAString& aDownload, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::download, aDownload, aError);
   }
 
-  void GetPing(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::ping, aValue);
-  }
-
+  // The XPCOM GetPing is OK for us
   void SetPing(const nsAString& aPing, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::ping, aPing, aError);
@@ -182,7 +167,6 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::nohref, aValue, aError);
   }
 
-  void ToString(nsAString& aSource);
   void Stringify(nsAString& aResult)
   {
     GetHref(aResult);
@@ -199,10 +183,9 @@ protected:
 
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   RefPtr<nsDOMTokenList > mRelList;

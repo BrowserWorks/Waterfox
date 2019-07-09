@@ -36,11 +36,10 @@ this.FileUtils = {
    *          leaf name of a file.
    * @return  nsIFile object for the file specified. The file is NOT created
    *          if it does not exist, however all required directories along
-   *          the way are if pathArray has more than one item.
+   *          the way are.
    */
   getFile: function FileUtils_getFile(key, pathArray, followLinks) {
-    var file = this.getDir(key, pathArray.slice(0, -1), pathArray.length > 1,
-                           followLinks);
+    var file = this.getDir(key, pathArray.slice(0, -1), true, followLinks);
     file.append(pathArray[pathArray.length - 1]);
     return file;
   },
@@ -171,5 +170,5 @@ this.FileUtils = {
     stream.close();
   },
 
-  File: Components.Constructor("@mozilla.org/file/local;1", Ci.nsIFile, "initWithPath")
+  File: Components.Constructor("@mozilla.org/file/local;1", Ci.nsILocalFile, "initWithPath")
 };

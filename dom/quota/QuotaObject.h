@@ -41,9 +41,6 @@ public:
   bool
   MaybeUpdateSize(int64_t aSize, bool aTruncate);
 
-  bool
-  IncreaseSize(int64_t aDelta);
-
   void
   DisableQuotaCheck();
 
@@ -75,9 +72,6 @@ private:
     RefPtr<QuotaObject> result = dont_AddRef(this);
     return result.forget();
   }
-
-  bool
-  LockedMaybeUpdateSize(int64_t aSize, bool aTruncate);
 
   mozilla::ThreadSafeAutoRefCnt mRefCnt;
 

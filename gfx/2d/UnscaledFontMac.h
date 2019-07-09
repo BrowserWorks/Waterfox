@@ -41,9 +41,7 @@ public:
   already_AddRefed<ScaledFont>
     CreateScaledFont(Float aGlyphSize,
                      const uint8_t* aInstanceData,
-                     uint32_t aInstanceDataLength,
-                     const FontVariation* aVariations,
-                     uint32_t aNumVariations) override;
+                     uint32_t aInstanceDataLength) override;
 
   static CGFontRef
     CreateCGFontWithVariations(CGFontRef aFont,

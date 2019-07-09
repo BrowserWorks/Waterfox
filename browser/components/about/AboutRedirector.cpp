@@ -21,8 +21,8 @@ namespace browser {
 
 NS_IMPL_ISUPPORTS(AboutRedirector, nsIAboutModule)
 
+bool AboutRedirector::sUseOldPreferences = false;
 bool AboutRedirector::sActivityStreamEnabled = false;
-bool AboutRedirector::sActivityStreamAboutHomeEnabled = false;
 
 struct RedirEntry {
   const char* id;
@@ -72,11 +72,9 @@ static const RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT },
   { "sessionrestore", "chrome://browser/content/aboutSessionRestore.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT |
-    nsIAboutModule::HIDE_FROM_ABOUTABOUT },
+    nsIAboutModule::ALLOW_SCRIPT },
   { "welcomeback", "chrome://browser/content/aboutWelcomeBack.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT |
-    nsIAboutModule::HIDE_FROM_ABOUTABOUT },
+    nsIAboutModule::ALLOW_SCRIPT },
   // Linkable because of indexeddb use (bug 1228118)
   { "home", "chrome://browser/content/abouthome/aboutHome.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
@@ -108,7 +106,7 @@ static nsAutoCString
 GetAboutModuleName(nsIURI *aURI)
 {
   nsAutoCString path;
-  aURI->GetPathQueryRef(path);
+  aURI->GetPath(path);
 
   int32_t f = path.FindChar('#');
   if (f >= 0)
@@ -120,19 +118,6 @@ GetAboutModuleName(nsIURI *aURI)
 
   ToLowerCase(path);
   return path;
-}
-
-void
-AboutRedirector::LoadActivityStreamPrefs()
-{
-  static bool sASEnabledCacheInited = false;
-  if (!sASEnabledCacheInited) {
-    Preferences::AddBoolVarCache(&AboutRedirector::sActivityStreamEnabled,
-                                 "browser.newtabpage.activity-stream.enabled");
-    Preferences::AddBoolVarCache(&AboutRedirector::sActivityStreamAboutHomeEnabled,
-                                 "browser.newtabpage.activity-stream.aboutHome.enabled");
-    sASEnabledCacheInited = true;
-  }
 }
 
 NS_IMETHODIMP
@@ -151,20 +136,26 @@ AboutRedirector::NewChannel(nsIURI* aURI,
   nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  LoadActivityStreamPrefs();
+  static bool sPrefCacheInited = false;
+  if (!sPrefCacheInited) {
+    Preferences::AddBoolVarCache(&sUseOldPreferences,
+                                 "browser.preferences.useOldOrganization");
+    sPrefCacheInited = true;
+  }
 
   for (auto & redir : kRedirMap) {
     if (!strcmp(path.get(), redir.id)) {
       nsAutoCString url;
 
-      if (path.EqualsLiteral("newtab") ||
-          (path.EqualsLiteral("home") && sActivityStreamEnabled && sActivityStreamAboutHomeEnabled)) {
+      if (path.EqualsLiteral("newtab")) {
         // let the aboutNewTabService decide where to redirect
         nsCOMPtr<nsIAboutNewTabService> aboutNewTabService =
           do_GetService("@mozilla.org/browser/aboutnewtab-service;1", &rv);
         NS_ENSURE_SUCCESS(rv, rv);
         rv = aboutNewTabService->GetDefaultURL(url);
         NS_ENSURE_SUCCESS(rv, rv);
+      } else if (path.EqualsLiteral("preferences") && !sUseOldPreferences) {
+        url.AssignASCII("chrome://browser/content/preferences/in-content-new/preferences.xul");
       }
       // fall back to the specified url in the map
       if (url.IsEmpty()) {
@@ -210,7 +201,12 @@ AboutRedirector::GetURIFlags(nsIURI *aURI, uint32_t *result)
 
   nsAutoCString name = GetAboutModuleName(aURI);
 
-  LoadActivityStreamPrefs();
+  static bool sASEnabledCacheInited = false;
+  if (!sASEnabledCacheInited) {
+    Preferences::AddBoolVarCache(&sActivityStreamEnabled,
+                                 "browser.newtabpage.activity-stream.enabled");
+    sASEnabledCacheInited = true;
+  }
 
   for (auto & redir : kRedirMap) {
     if (name.Equals(redir.id)) {
@@ -218,7 +214,7 @@ AboutRedirector::GetURIFlags(nsIURI *aURI, uint32_t *result)
       // Once ActivityStream is fully rolled out and we've removed Tiles,
       // this special case can go away and the flag can just become part
       // of the normal about:newtab entry in kRedirMap.
-      if (name.EqualsLiteral("newtab") || (name.EqualsLiteral("home") && sActivityStreamAboutHomeEnabled)) {
+      if (name.EqualsLiteral("newtab")) {
         if (sActivityStreamEnabled) {
           *result = redir.flags |
             nsIAboutModule::URI_MUST_LOAD_IN_CHILD |

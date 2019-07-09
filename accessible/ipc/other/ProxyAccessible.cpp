@@ -119,7 +119,7 @@ ProxyAccessible::IsSearchbox() const
   return retVal;
 }
 
-nsAtom*
+nsIAtom*
 ProxyAccessible::LandmarkRole() const
 {
   nsString landmark;
@@ -127,7 +127,7 @@ ProxyAccessible::LandmarkRole() const
   return NS_GetStaticAtom(landmark);
 }
 
-nsAtom*
+nsIAtom*
 ProxyAccessible::ARIARoleAtom() const
 {
   nsString role;

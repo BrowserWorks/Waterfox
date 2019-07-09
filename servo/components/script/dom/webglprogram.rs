@@ -3,12 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://www.khronos.org/registry/webgl/specs/latest/1.0/webgl.idl
-use canvas_traits::webgl::{WebGLCommand, WebGLError, WebGLMsgSender, WebGLParameter, WebGLProgramId, WebGLResult};
-use canvas_traits::webgl::webgl_channel;
+use canvas_traits::CanvasMsg;
 use dom::bindings::codegen::Bindings::WebGLProgramBinding;
 use dom::bindings::codegen::Bindings::WebGLRenderingContextBinding::WebGLRenderingContextConstants as constants;
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::str::DOMString;
 use dom::webglactiveinfo::WebGLActiveInfo;
 use dom::webglobject::WebGLObject;
@@ -16,7 +15,10 @@ use dom::webglrenderingcontext::MAX_UNIFORM_AND_ATTRIBUTE_LEN;
 use dom::webglshader::WebGLShader;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use ipc_channel::ipc::IpcSender;
 use std::cell::Cell;
+use webrender_api;
+use webrender_api::{WebGLCommand, WebGLError, WebGLParameter, WebGLProgramId, WebGLResult};
 
 #[dom_struct]
 pub struct WebGLProgram {
@@ -25,14 +27,14 @@ pub struct WebGLProgram {
     is_deleted: Cell<bool>,
     link_called: Cell<bool>,
     linked: Cell<bool>,
-    fragment_shader: MutNullableDom<WebGLShader>,
-    vertex_shader: MutNullableDom<WebGLShader>,
-    #[ignore_malloc_size_of = "Defined in ipc-channel"]
-    renderer: WebGLMsgSender,
+    fragment_shader: MutNullableJS<WebGLShader>,
+    vertex_shader: MutNullableJS<WebGLShader>,
+    #[ignore_heap_size_of = "Defined in ipc-channel"]
+    renderer: IpcSender<CanvasMsg>,
 }
 
 impl WebGLProgram {
-    fn new_inherited(renderer: WebGLMsgSender,
+    fn new_inherited(renderer: IpcSender<CanvasMsg>,
                      id: WebGLProgramId)
                      -> WebGLProgram {
         WebGLProgram {
@@ -47,20 +49,20 @@ impl WebGLProgram {
         }
     }
 
-    pub fn maybe_new(window: &Window, renderer: WebGLMsgSender)
-                     -> Option<DomRoot<WebGLProgram>> {
-        let (sender, receiver) = webgl_channel().unwrap();
-        renderer.send(WebGLCommand::CreateProgram(sender)).unwrap();
+    pub fn maybe_new(window: &Window, renderer: IpcSender<CanvasMsg>)
+                     -> Option<Root<WebGLProgram>> {
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
+        renderer.send(CanvasMsg::WebGL(WebGLCommand::CreateProgram(sender))).unwrap();
 
         let result = receiver.recv().unwrap();
         result.map(|program_id| WebGLProgram::new(window, renderer, program_id))
     }
 
     pub fn new(window: &Window,
-               renderer: WebGLMsgSender,
+               renderer: IpcSender<CanvasMsg>,
                id: WebGLProgramId)
-               -> DomRoot<WebGLProgram> {
-        reflect_dom_object(Box::new(WebGLProgram::new_inherited(renderer, id)),
+               -> Root<WebGLProgram> {
+        reflect_dom_object(box WebGLProgram::new_inherited(renderer, id),
                            window,
                            WebGLProgramBinding::Wrap)
     }
@@ -76,7 +78,7 @@ impl WebGLProgram {
     pub fn delete(&self) {
         if !self.is_deleted.get() {
             self.is_deleted.set(true);
-            let _ = self.renderer.send(WebGLCommand::DeleteProgram(self.id));
+            let _ = self.renderer.send(CanvasMsg::WebGL(WebGLCommand::DeleteProgram(self.id)));
 
             if let Some(shader) = self.fragment_shader.get() {
                 shader.decrement_attached_counter();
@@ -115,7 +117,7 @@ impl WebGLProgram {
         }
 
         self.linked.set(true);
-        self.renderer.send(WebGLCommand::LinkProgram(self.id)).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::LinkProgram(self.id))).unwrap();
         Ok(())
     }
 
@@ -128,7 +130,7 @@ impl WebGLProgram {
             return Err(WebGLError::InvalidOperation);
         }
 
-        self.renderer.send(WebGLCommand::UseProgram(self.id)).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::UseProgram(self.id))).unwrap();
         Ok(())
     }
 
@@ -137,7 +139,7 @@ impl WebGLProgram {
         if self.is_deleted() {
             return Err(WebGLError::InvalidOperation);
         }
-        self.renderer.send(WebGLCommand::ValidateProgram(self.id)).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::ValidateProgram(self.id))).unwrap();
         Ok(())
     }
 
@@ -164,7 +166,7 @@ impl WebGLProgram {
         shader_slot.set(Some(shader));
         shader.increment_attached_counter();
 
-        self.renderer.send(WebGLCommand::AttachShader(self.id, shader.id())).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::AttachShader(self.id, shader.id()))).unwrap();
 
         Ok(())
     }
@@ -194,7 +196,7 @@ impl WebGLProgram {
         shader_slot.set(None);
         shader.decrement_attached_counter();
 
-        self.renderer.send(WebGLCommand::DetachShader(self.id, shader.id())).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::DetachShader(self.id, shader.id()))).unwrap();
 
         Ok(())
     }
@@ -214,18 +216,18 @@ impl WebGLProgram {
         }
 
         self.renderer
-            .send(WebGLCommand::BindAttribLocation(self.id, index, String::from(name)))
+            .send(CanvasMsg::WebGL(WebGLCommand::BindAttribLocation(self.id, index, String::from(name))))
             .unwrap();
         Ok(())
     }
 
-    pub fn get_active_uniform(&self, index: u32) -> WebGLResult<DomRoot<WebGLActiveInfo>> {
+    pub fn get_active_uniform(&self, index: u32) -> WebGLResult<Root<WebGLActiveInfo>> {
         if self.is_deleted() {
             return Err(WebGLError::InvalidValue);
         }
-        let (sender, receiver) = webgl_channel().unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
         self.renderer
-            .send(WebGLCommand::GetActiveUniform(self.id, index, sender))
+            .send(CanvasMsg::WebGL(WebGLCommand::GetActiveUniform(self.id, index, sender)))
             .unwrap();
 
         receiver.recv().unwrap().map(|(size, ty, name)|
@@ -233,13 +235,13 @@ impl WebGLProgram {
     }
 
     /// glGetActiveAttrib
-    pub fn get_active_attrib(&self, index: u32) -> WebGLResult<DomRoot<WebGLActiveInfo>> {
+    pub fn get_active_attrib(&self, index: u32) -> WebGLResult<Root<WebGLActiveInfo>> {
         if self.is_deleted() {
             return Err(WebGLError::InvalidValue);
         }
-        let (sender, receiver) = webgl_channel().unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
         self.renderer
-            .send(WebGLCommand::GetActiveAttrib(self.id, index, sender))
+            .send(CanvasMsg::WebGL(WebGLCommand::GetActiveAttrib(self.id, index, sender)))
             .unwrap();
 
         receiver.recv().unwrap().map(|(size, ty, name)|
@@ -264,9 +266,9 @@ impl WebGLProgram {
             return Ok(None);
         }
 
-        let (sender, receiver) = webgl_channel().unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
         self.renderer
-            .send(WebGLCommand::GetAttribLocation(self.id, String::from(name), sender))
+            .send(CanvasMsg::WebGL(WebGLCommand::GetAttribLocation(self.id, String::from(name), sender)))
             .unwrap();
         Ok(receiver.recv().unwrap())
     }
@@ -285,9 +287,9 @@ impl WebGLProgram {
             return Ok(None);
         }
 
-        let (sender, receiver) = webgl_channel().unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
         self.renderer
-            .send(WebGLCommand::GetUniformLocation(self.id, String::from(name), sender))
+            .send(CanvasMsg::WebGL(WebGLCommand::GetUniformLocation(self.id, String::from(name), sender)))
             .unwrap();
         Ok(receiver.recv().unwrap())
     }
@@ -306,15 +308,15 @@ impl WebGLProgram {
                 return Ok("One or more shaders failed to compile".to_string());
             }
         }
-        let (sender, receiver) = webgl_channel().unwrap();
-        self.renderer.send(WebGLCommand::GetProgramInfoLog(self.id, sender)).unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::GetProgramInfoLog(self.id, sender))).unwrap();
         Ok(receiver.recv().unwrap())
     }
 
     /// glGetProgramParameter
     pub fn parameter(&self, param_id: u32) -> WebGLResult<WebGLParameter> {
-        let (sender, receiver) = webgl_channel().unwrap();
-        self.renderer.send(WebGLCommand::GetProgramParameter(self.id, param_id, sender)).unwrap();
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::GetProgramParameter(self.id, param_id, sender))).unwrap();
         receiver.recv().unwrap()
     }
 }

@@ -219,7 +219,7 @@ ClippedImage::GetWidth(int32_t* aWidth)
     return InnerImage()->GetWidth(aWidth);
   }
 
-  *aWidth = mClip.Width();
+  *aWidth = mClip.width;
   return NS_OK;
 }
 
@@ -230,7 +230,7 @@ ClippedImage::GetHeight(int32_t* aHeight)
     return InnerImage()->GetHeight(aHeight);
   }
 
-  *aHeight = mClip.Height();
+  *aHeight = mClip.height;
   return NS_OK;
 }
 
@@ -241,7 +241,7 @@ ClippedImage::GetIntrinsicSize(nsSize* aSize)
     return InnerImage()->GetIntrinsicSize(aSize);
   }
 
-  *aSize = nsSize(mClip.Width(), mClip.Height());
+  *aSize = nsSize(mClip.width, mClip.height);
   return NS_OK;
 }
 
@@ -252,7 +252,7 @@ ClippedImage::GetIntrinsicRatio(nsSize* aRatio)
     return InnerImage()->GetIntrinsicRatio(aRatio);
   }
 
-  *aRatio = nsSize(mClip.Width(), mClip.Height());
+  *aRatio = nsSize(mClip.width, mClip.height);
   return NS_OK;
 }
 
@@ -428,7 +428,7 @@ ClippedImage::DrawSingleTile(gfxContext* aContext,
   MOZ_ASSERT(!MustCreateSurface(aContext, aSize, aRegion, aFlags),
              "Shouldn't need to create a surface");
 
-  gfxRect clip(mClip.x, mClip.y, mClip.Width(), mClip.Height());
+  gfxRect clip(mClip.x, mClip.y, mClip.width, mClip.height);
   nsIntSize size(aSize), innerSize(aSize);
   bool needScale = false;
   if (mSVGViewportSize && !mSVGViewportSize->IsEmpty()) {
@@ -443,8 +443,8 @@ ClippedImage::DrawSingleTile(gfxContext* aContext,
   }
 
   if (needScale) {
-    double scaleX = aSize.width / clip.Width();
-    double scaleY = aSize.height / clip.Height();
+    double scaleX = aSize.width / clip.width;
+    double scaleY = aSize.height / clip.height;
 
     // Map the clip and size to the scale requested by the caller.
     clip.Scale(scaleX, scaleY);
@@ -472,9 +472,9 @@ ClippedImage::DrawSingleTile(gfxContext* aContext,
     if (oldViewport) {
       CSSIntSize newViewport;
       newViewport.width =
-        ceil(oldViewport->width * double(innerSize.width) / mClip.Width());
+        ceil(oldViewport->width * double(innerSize.width) / mClip.width);
       newViewport.height =
-        ceil(oldViewport->height * double(innerSize.height) / mClip.Height());
+        ceil(oldViewport->height * double(innerSize.height) / mClip.height);
       context.SetViewportSize(Some(newViewport));
     }
     return context;
@@ -533,8 +533,8 @@ ClippedImage::OptimalImageSizeForDest(const gfxSize& aDest,
 
     // First, we select a scale that's good for ClippedImage. An integer
     // multiple of the size of the clipping region is always fine.
-    IntSize scale = IntSize::Ceil(aDest.width / mClip.Width(),
-                                  aDest.height / mClip.Height());
+    IntSize scale = IntSize::Ceil(aDest.width / mClip.width,
+                                  aDest.height / mClip.height);
 
     if (forceUniformScaling) {
       scale.width = scale.height = max(scale.height, scale.width);

@@ -237,7 +237,7 @@ function autoComplete({ ed, cm }) {
     });
     popup.openPopup(cursorElement, -1 * left, 0);
     autocompleteOpts.suggestionInsertedOnce = false;
-  }).catch(console.error);
+  }).catch(e => console.error(e));
 }
 
 /**

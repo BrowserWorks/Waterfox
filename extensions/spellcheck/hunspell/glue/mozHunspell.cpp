@@ -59,7 +59,7 @@
 
 #include "mozHunspell.h"
 #include "nsReadableUtils.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIObserverService.h"
 #include "nsISimpleEnumerator.h"
 #include "nsIDirectoryEnumerator.h"

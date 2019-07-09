@@ -19,11 +19,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(Object.prototype.__defineGetter__, "name", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: "__defineGetter__"
-});
+assert.sameValue(Object.prototype.__defineGetter__.name, '__defineGetter__');
+
+verifyNotEnumerable(Object.prototype.__defineGetter__, 'name');
+verifyNotWritable(Object.prototype.__defineGetter__, 'name');
+verifyConfigurable(Object.prototype.__defineGetter__, 'name');
 
 reportCompare(0, 0);

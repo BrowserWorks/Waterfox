@@ -40,7 +40,7 @@
 
 nsIFrame* NS_NewPlaceholderFrame(nsIPresShell* aPresShell,
                                  nsStyleContext* aContext,
-                                 nsFrameState aTypeBits);
+                                 nsFrameState aTypeBit);
 
 #define PLACEHOLDER_TYPE_MASK    (PLACEHOLDER_FOR_FLOAT | \
                                   PLACEHOLDER_FOR_ABSPOS | \
@@ -65,19 +65,18 @@ public:
    */
   friend nsIFrame* NS_NewPlaceholderFrame(nsIPresShell* aPresShell,
                                           nsStyleContext* aContext,
-                                          nsFrameState aTypeBits);
-  nsPlaceholderFrame(nsStyleContext* aContext, nsFrameState aTypeBits)
+                                          nsFrameState aTypeBit);
+  nsPlaceholderFrame(nsStyleContext* aContext, nsFrameState aTypeBit)
     : nsFrame(aContext, kClassID)
     , mOutOfFlowFrame(nullptr)
   {
-    MOZ_ASSERT(aTypeBits == PLACEHOLDER_FOR_FLOAT ||
-               aTypeBits == PLACEHOLDER_FOR_ABSPOS ||
-               aTypeBits == PLACEHOLDER_FOR_FIXEDPOS ||
-               aTypeBits == PLACEHOLDER_FOR_POPUP ||
-               aTypeBits == (PLACEHOLDER_FOR_TOPLAYER | PLACEHOLDER_FOR_ABSPOS) ||
-               aTypeBits == (PLACEHOLDER_FOR_TOPLAYER | PLACEHOLDER_FOR_FIXEDPOS),
-               "Unexpected type bit");
-    AddStateBits(aTypeBits);
+    NS_PRECONDITION(aTypeBit == PLACEHOLDER_FOR_FLOAT ||
+                    aTypeBit == PLACEHOLDER_FOR_ABSPOS ||
+                    aTypeBit == PLACEHOLDER_FOR_FIXEDPOS ||
+                    aTypeBit == PLACEHOLDER_FOR_POPUP ||
+                    aTypeBit == PLACEHOLDER_FOR_TOPLAYER,
+                    "Unexpected type bit");
+    AddStateBits(aTypeBit);
   }
 
   // Get/Set the associated out of flow frame
@@ -108,6 +107,7 @@ public:
 
 #if defined(DEBUG) || (defined(MOZ_REFLOW_PERF_DSP) && defined(MOZ_REFLOW_PERF))
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 #endif // DEBUG || (MOZ_REFLOW_PERF_DSP && MOZ_REFLOW_PERF)
 
@@ -146,9 +146,6 @@ public:
 #endif
 
   nsStyleContext* GetParentStyleContextForOutOfFlow(nsIFrame** aProviderFrame) const;
-
-  // Like GetParentStyleContextForOutOfFlow, but ignores display:contents bits.
-  nsStyleContext* GetLayoutParentStyleForOutOfFlow(nsIFrame** aProviderFrame) const;
 
   bool RenumberFrameAndDescendants(int32_t* aOrdinal,
                                    int32_t aDepth,

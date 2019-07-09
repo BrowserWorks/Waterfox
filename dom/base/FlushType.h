@@ -21,30 +21,21 @@ namespace mozilla {
  */
 enum class FlushType : uint8_t {
   None             = 0, /* Actually don't flush anything */
-  Event            = 1, /* Flush pending events before notify other observers */
-  Content          = 2, /* flush the content model construction */
-  ContentAndNotify = 3, /* As above, plus flush the frame model
+  Content          = 1, /* flush the content model construction */
+  ContentAndNotify = 2, /* As above, plus flush the frame model
                            construction and other nsIMutationObserver
                            notifications. */
-  Style            = 4, /* As above, plus flush style reresolution */
+  Style            = 3, /* As above, plus flush style reresolution */
   Frames           = Style,
-  EnsurePresShellInitAndFrames = 5, /* As above, plus ensure the pres shell is alive */
-  InterruptibleLayout = 6, /* As above, plus flush reflow,
+  EnsurePresShellInitAndFrames = 4, /* As above, plus ensure the pres shell is alive */
+  InterruptibleLayout = 5, /* As above, plus flush reflow,
                               but allow it to be interrupted (so
                               an incomplete layout may result) */
-  Layout           = 7, /* As above, but layout must run to
+  Layout           = 6, /* As above, but layout must run to
                            completion */
-  Display          = 8, /* As above, plus flush painting */
-  Count
-};
+  Display          = 7, /* As above, plus flush painting */
 
-/**
- * This is the enum used by nsIDocument::FlushPendingNotifications to decide
- * whether the current document is skippable.
- */
-enum class FlushTarget : uint8_t {
-  Normal = 0,     /* Flush current and parent documents. */
-  ParentOnly = 1  /* Skip current document, only flush its parent. */
+  Count
 };
 
 struct ChangesToFlush {

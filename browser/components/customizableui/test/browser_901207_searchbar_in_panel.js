@@ -16,8 +16,11 @@ async function waitForSearchBarFocus() {
 
 // Ctrl+K should open the menu panel and focus the search bar if the search bar is in the panel.
 add_task(async function() {
-  CustomizableUI.addWidgetToArea("search-container",
-                                 CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", true]]});
+  let searchbar = document.getElementById("searchbar");
+  gCustomizeMode.addToPanel(searchbar);
+  let placement = CustomizableUI.getPlacementOfWidget("search-container");
+  is(placement.area, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL, "Should be in panel");
 
   let shownPanelPromise = promiseOverflowShown(window);
   sendWebSearchKeyCommand();
@@ -33,8 +36,10 @@ add_task(async function() {
 
 // Ctrl+K should give focus to the searchbar when the searchbar is in the menupanel and the panel is already opened.
 add_task(async function() {
-  CustomizableUI.addWidgetToArea("search-container",
-                                 CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+  let searchbar = document.getElementById("searchbar");
+  gCustomizeMode.addToPanel(searchbar);
+  let placement = CustomizableUI.getPlacementOfWidget("search-container");
+  is(placement.area, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL, "Should be in panel");
 
   await document.getElementById("nav-bar").overflowable.show();
 
@@ -55,9 +60,7 @@ add_task(async function() {
   ok(!navbar.hasAttribute("overflowing"), "Should start with a non-overflowing toolbar.");
   ok(CustomizableUI.inDefaultState, "Should start in default state.");
 
-  Services.prefs.setBoolPref("browser.search.widget.inNavBar", true);
-
-  window.resizeTo(kForceOverflowWidthPx, window.outerHeight);
+  window.resizeTo(360, window.outerHeight);
   await waitForCondition(() => navbar.getAttribute("overflowing") == "true");
   ok(!navbar.querySelector("#search-container"), "Search container should be overflowing");
 
@@ -73,9 +76,6 @@ add_task(async function() {
   let hiddenPanelPromise = promiseOverflowHidden(window);
   EventUtils.synthesizeKey("VK_ESCAPE", {});
   await hiddenPanelPromise;
-
-  Services.prefs.setBoolPref("browser.search.widget.inNavBar", false);
-
   navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
   window.resizeTo(this.originalWindowWidth, window.outerHeight);
   await waitForCondition(() => !navbar.hasAttribute("overflowing"));
@@ -84,15 +84,12 @@ add_task(async function() {
 
 // Ctrl+K should focus the search bar if it is in the navbar and not overflowing.
 add_task(async function() {
-  Services.prefs.setBoolPref("browser.search.widget.inNavBar", true);
   let placement = CustomizableUI.getPlacementOfWidget("search-container");
   is(placement.area, CustomizableUI.AREA_NAVBAR, "Should be in nav-bar");
 
   sendWebSearchKeyCommand();
 
   await waitForSearchBarFocus();
-
-  Services.prefs.setBoolPref("browser.search.widget.inNavBar", false);
 });
 
 

@@ -19,22 +19,57 @@
 #ifndef wasm_stubs_h
 #define wasm_stubs_h
 
-#include "wasm/WasmGenerator.h"
+#include "wasm/WasmTypes.h"
 
 namespace js {
+
+namespace jit {
+    class MacroAssembler;
+    class Label;
+    enum ABIFunctionType;
+}
+
 namespace wasm {
 
-extern bool
+class ExitReason;
+class FuncExport;
+class FuncImport;
+
+extern Offsets
+GenerateEntry(jit::MacroAssembler& masm, const FuncExport& fe);
+
+extern FuncOffsets
+GenerateImportFunction(jit::MacroAssembler& masm, const FuncImport& fi, SigIdDesc sigId);
+
+extern CallableOffsets
+GenerateImportInterpExit(jit::MacroAssembler& masm, const FuncImport& fi, uint32_t funcImportIndex,
+                         jit::Label* throwLabel);
+
+extern CallableOffsets
+GenerateImportJitExit(jit::MacroAssembler& masm, const FuncImport& fi, jit::Label* throwLabel);
+
+extern CallableOffsets
 GenerateBuiltinThunk(jit::MacroAssembler& masm, jit::ABIFunctionType abiType, ExitReason exitReason,
-                     void* funcPtr, CallableOffsets* offsets);
+                     void* func);
 
-extern bool
-GenerateImportFunctions(const ModuleEnvironment& env, const FuncImportVector& imports,
-                        CompiledCode* code);
+extern CallableOffsets
+GenerateTrapExit(jit::MacroAssembler& masm, Trap trap, jit::Label* throwLabel);
 
-extern bool
-GenerateStubs(const ModuleEnvironment& env, const FuncImportVector& imports,
-              const FuncExportVector& exports, CompiledCode* code);
+extern Offsets
+GenerateOutOfBoundsExit(jit::MacroAssembler& masm, jit::Label* throwLabel);
+
+extern Offsets
+GenerateUnalignedExit(jit::MacroAssembler& masm, jit::Label* throwLabel);
+
+extern Offsets
+GenerateInterruptExit(jit::MacroAssembler& masm, jit::Label* throwLabel);
+
+extern Offsets
+GenerateThrowStub(jit::MacroAssembler& masm, jit::Label* throwLabel);
+
+extern Offsets
+GenerateDebugTrapStub(jit::MacroAssembler& masm, jit::Label* throwLabel);
+
 
 } // namespace wasm
 } // namespace js

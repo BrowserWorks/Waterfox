@@ -7,7 +7,6 @@
 #ifndef jit_shared_Assembler_shared_h
 #define jit_shared_Assembler_shared_h
 
-#include "mozilla/CheckedInt.h"
 #include "mozilla/PodOperations.h"
 
 #include <limits.h>
@@ -34,8 +33,6 @@
 
 namespace js {
 namespace jit {
-
-using mozilla::CheckedInt;
 
 namespace Disassembler {
 class HeapAccess;
@@ -301,24 +298,6 @@ struct Address
     Address() { mozilla::PodZero(this); }
 };
 
-#if JS_BITS_PER_WORD == 32
-
-static inline Address
-LowWord(const Address& address) {
-    CheckedInt<int32_t> offset = CheckedInt<int32_t>(address.offset) + INT64LOW_OFFSET;
-    MOZ_ALWAYS_TRUE(offset.isValid());
-    return Address(address.base, offset.value());
-}
-
-static inline Address
-HighWord(const Address& address) {
-    CheckedInt<int32_t> offset = CheckedInt<int32_t>(address.offset) + INT64HIGH_OFFSET;
-    MOZ_ALWAYS_TRUE(offset.isValid());
-    return Address(address.base, offset.value());
-}
-
-#endif
-
 // Specifies an address computed in the form of a register base, a register
 // index with a scale, and a constant, 32-bit offset.
 struct BaseIndex
@@ -334,24 +313,6 @@ struct BaseIndex
 
     BaseIndex() { mozilla::PodZero(this); }
 };
-
-#if JS_BITS_PER_WORD == 32
-
-static inline BaseIndex
-LowWord(const BaseIndex& address) {
-    CheckedInt<int32_t> offset = CheckedInt<int32_t>(address.offset) + INT64LOW_OFFSET;
-    MOZ_ALWAYS_TRUE(offset.isValid());
-    return BaseIndex(address.base, address.index, address.scale, offset.value());
-}
-
-static inline BaseIndex
-HighWord(const BaseIndex& address) {
-    CheckedInt<int32_t> offset = CheckedInt<int32_t>(address.offset) + INT64HIGH_OFFSET;
-    MOZ_ALWAYS_TRUE(offset.isValid());
-    return BaseIndex(address.base, address.index, address.scale, offset.value());
-}
-
-#endif
 
 // A BaseIndex used to access Values.  Note that |offset| is *not* scaled by
 // sizeof(Value).  Use this *only* if you're indexing into a series of Values
@@ -438,6 +399,32 @@ class RepatchLabel
     }
 
 };
+// An absolute label is like a Label, except it represents an absolute
+// reference rather than a relative one. Thus, it cannot be patched until after
+// linking.
+struct AbsoluteLabel : public LabelBase
+{
+  public:
+    AbsoluteLabel()
+    { }
+    AbsoluteLabel(const AbsoluteLabel& label) : LabelBase(label)
+    { }
+    int32_t prev() const {
+        MOZ_ASSERT(!bound());
+        if (!used())
+            return INVALID_OFFSET;
+        return offset();
+    }
+    void setPrev(int32_t offset) {
+        use(offset);
+    }
+    void bind() {
+        bound_ = true;
+
+        // These labels cannot be used after being bound.
+        offset_ = -1;
+    }
+};
 
 class CodeOffset
 {
@@ -500,15 +487,11 @@ class CodeLabel
     CodeOffset* target() {
         return &target_;
     }
-    CodeOffset patchAt() const {
-        return patchAt_;
-    }
-    CodeOffset target() const {
-        return target_;
+    void offsetBy(size_t delta) {
+        patchAt_.offsetBy(delta);
+        target_.offsetBy(delta);
     }
 };
-
-typedef Vector<CodeLabel, 0, SystemAllocPolicy> CodeLabelVector;
 
 // Location of a jump or label in a generated JitCode block, relative to the
 // start of the block.
@@ -850,16 +833,15 @@ namespace jit {
 // The base class of all Assemblers for all archs.
 class AssemblerShared
 {
-    wasm::CallSiteVector callSites_;
-    wasm::CallSiteTargetVector callSiteTargets_;
+    wasm::CallSiteAndTargetVector callSites_;
+    wasm::CallFarJumpVector callFarJumps_;
     wasm::TrapSiteVector trapSites_;
     wasm::TrapFarJumpVector trapFarJumps_;
-    wasm::CallFarJumpVector callFarJumps_;
     wasm::MemoryAccessVector memoryAccesses_;
     wasm::SymbolicAccessVector symbolicAccesses_;
 
   protected:
-    CodeLabelVector codeLabels_;
+    Vector<CodeLabel, 0, SystemAllocPolicy> codeLabels_;
 
     bool enoughMemory_;
     bool embedsNurseryPointers_;
@@ -886,43 +868,33 @@ class AssemblerShared
         return embedsNurseryPointers_;
     }
 
-    static bool canUseInSingleByteInstruction(Register reg) {
-        return true;
-    }
-
-    void addCodeLabel(CodeLabel label) {
-        propagateOOM(codeLabels_.append(label));
-    }
-    size_t numCodeLabels() const {
-        return codeLabels_.length();
-    }
-    CodeLabel codeLabel(size_t i) {
-        return codeLabels_[i];
-    }
-    CodeLabelVector& codeLabels() {
-        return codeLabels_;
-    }
-
-    // WebAssembly metadata emitted by masm operations accumulated on the
-    // MacroAssembler, and swapped into a wasm::CompiledCode after finish().
-
     template <typename... Args>
-    void append(const wasm::CallSiteDesc& desc, CodeOffset retAddr, Args&&... args) {
-        enoughMemory_ &= callSites_.emplaceBack(desc, retAddr.offset());
-        enoughMemory_ &= callSiteTargets_.emplaceBack(mozilla::Forward<Args>(args)...);
+    void append(const wasm::CallSiteDesc& desc, CodeOffset retAddr, Args&&... args)
+    {
+        wasm::CallSite cs(desc, retAddr.offset());
+        enoughMemory_ &= callSites_.emplaceBack(cs, mozilla::Forward<Args>(args)...);
     }
-    void append(wasm::TrapSite trapSite) {
-        enoughMemory_ &= trapSites_.append(trapSite);
-    }
-    void append(wasm::TrapFarJump jmp) {
-        enoughMemory_ &= trapFarJumps_.append(jmp);
-    }
+    wasm::CallSiteAndTargetVector& callSites() { return callSites_; }
+
     void append(wasm::CallFarJump jmp) {
         enoughMemory_ &= callFarJumps_.append(jmp);
     }
-    void append(wasm::MemoryAccess access) {
-        enoughMemory_ &= memoryAccesses_.append(access);
+    const wasm::CallFarJumpVector& callFarJumps() const { return callFarJumps_; }
+
+    void append(wasm::TrapSite trapSite) {
+        enoughMemory_ &= trapSites_.append(trapSite);
     }
+    const wasm::TrapSiteVector& trapSites() const { return trapSites_; }
+    void clearTrapSites() { trapSites_.clear(); }
+
+    void append(wasm::TrapFarJump jmp) {
+        enoughMemory_ &= trapFarJumps_.append(jmp);
+    }
+    const wasm::TrapFarJumpVector& trapFarJumps() const { return trapFarJumps_; }
+
+    void append(wasm::MemoryAccess access) { enoughMemory_ &= memoryAccesses_.append(access); }
+    wasm::MemoryAccessVector&& extractMemoryAccesses() { return Move(memoryAccesses_); }
+
     void append(const wasm::MemoryAccessDesc& access, size_t codeOffset, size_t framePushed) {
         if (access.hasTrap()) {
             // If a memory access is trapping (wasm, SIMD.js, Atomics), create a
@@ -941,17 +913,60 @@ class AssemblerShared
 #endif
         }
     }
-    void append(wasm::SymbolicAccess access) {
-        enoughMemory_ &= symbolicAccesses_.append(access);
+
+    void append(wasm::SymbolicAccess access) { enoughMemory_ &= symbolicAccesses_.append(access); }
+    size_t numSymbolicAccesses() const { return symbolicAccesses_.length(); }
+    wasm::SymbolicAccess symbolicAccess(size_t i) const { return symbolicAccesses_[i]; }
+
+    static bool canUseInSingleByteInstruction(Register reg) { return true; }
+
+    void addCodeLabel(CodeLabel label) {
+        propagateOOM(codeLabels_.append(label));
+    }
+    size_t numCodeLabels() const {
+        return codeLabels_.length();
+    }
+    CodeLabel codeLabel(size_t i) {
+        return codeLabels_[i];
     }
 
-    wasm::CallSiteVector& callSites() { return callSites_; }
-    wasm::CallSiteTargetVector& callSiteTargets() { return callSiteTargets_; }
-    wasm::TrapSiteVector& trapSites() { return trapSites_; }
-    wasm::TrapFarJumpVector& trapFarJumps() { return trapFarJumps_; }
-    wasm::CallFarJumpVector& callFarJumps() { return callFarJumps_; }
-    wasm::MemoryAccessVector& memoryAccesses() { return memoryAccesses_; }
-    wasm::SymbolicAccessVector& symbolicAccesses() { return symbolicAccesses_; }
+    // Merge this assembler with the other one, invalidating it, by shifting all
+    // offsets by a delta.
+    bool asmMergeWith(size_t delta, const AssemblerShared& other) {
+        size_t i = callSites_.length();
+        enoughMemory_ &= callSites_.appendAll(other.callSites_);
+        for (; i < callSites_.length(); i++)
+            callSites_[i].offsetReturnAddressBy(delta);
+
+        MOZ_ASSERT(other.trapSites_.empty(), "should have been cleared by wasmEmitTrapOutOfLineCode");
+
+        i = callFarJumps_.length();
+        enoughMemory_ &= callFarJumps_.appendAll(other.callFarJumps_);
+        for (; i < callFarJumps_.length(); i++)
+            callFarJumps_[i].offsetBy(delta);
+
+        i = trapFarJumps_.length();
+        enoughMemory_ &= trapFarJumps_.appendAll(other.trapFarJumps_);
+        for (; i < trapFarJumps_.length(); i++)
+            trapFarJumps_[i].offsetBy(delta);
+
+        i = memoryAccesses_.length();
+        enoughMemory_ &= memoryAccesses_.appendAll(other.memoryAccesses_);
+        for (; i < memoryAccesses_.length(); i++)
+            memoryAccesses_[i].offsetBy(delta);
+
+        i = symbolicAccesses_.length();
+        enoughMemory_ &= symbolicAccesses_.appendAll(other.symbolicAccesses_);
+        for (; i < symbolicAccesses_.length(); i++)
+            symbolicAccesses_[i].patchAt.offsetBy(delta);
+
+        i = codeLabels_.length();
+        enoughMemory_ &= codeLabels_.appendAll(other.codeLabels_);
+        for (; i < codeLabels_.length(); i++)
+            codeLabels_[i].offsetBy(delta);
+
+        return !oom();
+    }
 };
 
 } // namespace jit

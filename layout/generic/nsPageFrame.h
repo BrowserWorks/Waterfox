@@ -24,10 +24,11 @@ public:
 
   virtual void Reflow(nsPresContext*      aPresContext,
                       ReflowOutput& aDesiredSize,
-                      const ReflowInput& aReflowInput,
+                      const ReflowInput& aMaxSize,
                       nsReflowStatus&      aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
 #ifdef DEBUG_FRAME_DUMP
@@ -100,7 +101,7 @@ protected:
 };
 
 
-class nsPageBreakFrame final : public nsLeafFrame
+class nsPageBreakFrame : public nsLeafFrame
 {
   NS_DECL_FRAMEARENA_HELPERS(nsPageBreakFrame)
 

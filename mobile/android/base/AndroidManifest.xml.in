@@ -32,7 +32,7 @@
 # The preprocessor does not yet support arbitrary parentheses, so this cannot
 # be parenthesized thus to clarify that the logical AND operator has precedence:
 #   !defined(MOZILLA_OFFICIAL) || (defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG))
-#if !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
+#if defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
                  android:debuggable="true">
 #else
                  android:debuggable="false">
@@ -43,10 +43,7 @@
         <meta-data android:name="android.max_aspect" android:value="2.1"/>
 
 #ifdef MOZ_NATIVE_DEVICES
-        <!-- This resources comes from Google Play Services. Required for casting support. -->
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
         <service android:name="org.mozilla.gecko.RemotePresentationService" android:exported="false"/>
-
 #endif
 
         <!-- This activity handles all incoming Intents and dispatches them to other activities. -->
@@ -110,7 +107,6 @@
                 <data android:mimeType="text/html"/>
                 <data android:mimeType="text/plain"/>
                 <data android:mimeType="application/xhtml+xml"/>
-                <data android:mimeType="image/svg+xml"/>
             </intent-filter>
 
             <meta-data android:name="com.sec.minimode.icon.portrait.normal"
@@ -313,10 +309,12 @@
 
         </activity>
 
+#ifdef MOZ_ANDROID_CUSTOM_TABS
         <activity android:name="org.mozilla.gecko.customtabs.CustomTabsActivity"
                   android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection|smallestScreenSize|screenLayout"
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
                   android:theme="@style/GeckoCustomTabs" />
+#endif
 
         <activity android:name="org.mozilla.gecko.webapps.WebAppActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
@@ -385,11 +383,28 @@
             android:name="org.mozilla.gecko.dlc.DownloadContentService">
         </service>
 
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.feeds.FeedService">
+        </service>
+
         <!-- DON'T EXPORT THIS, please! An attacker could delete arbitrary files. -->
         <service
             android:exported="false"
             android:name="org.mozilla.gecko.cleanup.FileCleanupService">
         </service>
+
+        <receiver
+            android:name="org.mozilla.gecko.feeds.FeedAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="org.mozilla.gecko.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name="org.mozilla.gecko.PackageReplacedReceiver"
@@ -403,6 +418,7 @@
           android:name="org.mozilla.gecko.telemetry.TelemetryUploadService"
           android:exported="false"/>
 
+#ifdef MOZ_ANDROID_CUSTOM_TABS
         <service
             android:name="org.mozilla.gecko.customtabs.GeckoCustomTabsService"
             android:exported="true">
@@ -410,6 +426,7 @@
                 <action android:name="android.support.customtabs.action.CustomTabsService" />
             </intent-filter>
         </service>
+#endif
 
 #include ../services/manifests/FxAccountAndroidManifest_services.xml.in
 
@@ -463,6 +480,11 @@
 
 #ifdef MOZ_ANDROID_MMA
 #include MmaAndroidManifest_services.xml.in
+#endif
+
+#ifdef MOZ_ANDROID_GOOGLE_PLAY_SERVICES
+        <!-- This resources comes from Google Play Services. Required for casting support. -->
+        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 #endif
 
     </application>

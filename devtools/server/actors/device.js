@@ -6,7 +6,7 @@
 
 const Services = require("Services");
 const protocol = require("devtools/shared/protocol");
-const defer = require("devtools/shared/defer");
+const promise = require("promise");
 const {LongStringActor} = require("devtools/server/actors/string");
 const {DebuggerServer} = require("devtools/server/main");
 const {getSystemInfo, getSetting} = require("devtools/shared/system");
@@ -21,7 +21,7 @@ exports.DeviceActor = protocol.ActorClassWithSpec(deviceSpec, {
   },
 
   getWallpaper: function () {
-    let deferred = defer();
+    let deferred = promise.defer();
     getSetting("wallpaper.image").then((blob) => {
       let reader = new FileReader();
       let conn = this.conn;

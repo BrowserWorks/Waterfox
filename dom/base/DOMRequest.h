@@ -10,7 +10,7 @@
 #include "nsIDOMDOMRequest.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/DOMRequestBinding.h"
 
 #include "nsCOMPtr.h"
@@ -29,7 +29,7 @@ class DOMRequest : public DOMEventTargetHelper,
 {
 protected:
   JS::Heap<JS::Value> mResult;
-  RefPtr<DOMException> mError;
+  RefPtr<DOMError> mError;
   RefPtr<Promise> mPromise;
   bool mDone;
 
@@ -63,7 +63,7 @@ public:
     aRetval.set(mResult);
   }
 
-  DOMException* GetError() const
+  DOMError* GetError() const
   {
     NS_ASSERTION(mDone || !mError,
                  "Error should be null when pending");
@@ -82,7 +82,7 @@ public:
   void FireSuccess(JS::Handle<JS::Value> aResult);
   void FireError(const nsAString& aError);
   void FireError(nsresult aError);
-  void FireDetailedError(DOMException* aError);
+  void FireDetailedError(DOMError* aError);
 
   explicit DOMRequest(nsPIDOMWindowInner* aWindow);
   explicit DOMRequest(nsIGlobalObject* aGlobal);

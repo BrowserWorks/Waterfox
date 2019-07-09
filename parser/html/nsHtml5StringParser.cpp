@@ -28,7 +28,7 @@ nsHtml5StringParser::~nsHtml5StringParser()
 nsresult
 nsHtml5StringParser::ParseFragment(const nsAString& aSourceBuffer,
                                    nsIContent* aTargetNode,
-                                   nsAtom* aContextLocalName,
+                                   nsIAtom* aContextLocalName,
                                    int32_t aContextNamespace,
                                    bool aQuirks,
                                    bool aPreventScriptExecution)

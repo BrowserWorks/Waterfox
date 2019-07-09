@@ -4,8 +4,6 @@
 # http://creativecommons.org/publicdomain/zero/1.0/
 #
 
-from __future__ import absolute_import
-
 import mozinfo
 import mozunit
 import os
@@ -30,12 +28,11 @@ mozinfo.find_and_update_from_json()
 objdir = build_obj.topobjdir.encode("utf-8")
 
 if mozinfo.isMac:
-    xpcshellBin = os.path.join(objdir, "dist", substs['MOZ_MACBUNDLE_NAME'],
-                               "Contents", "MacOS", "xpcshell")
+  xpcshellBin = os.path.join(objdir, "dist", substs['MOZ_MACBUNDLE_NAME'], "Contents", "MacOS", "xpcshell")
 else:
-    xpcshellBin = os.path.join(objdir, "dist", "bin", "xpcshell")
-    if sys.platform == "win32":
-        xpcshellBin += ".exe"
+  xpcshellBin = os.path.join(objdir, "dist", "bin", "xpcshell")
+  if sys.platform == "win32":
+    xpcshellBin += ".exe"
 
 TEST_PASS_STRING = "TEST-PASS"
 TEST_FAIL_STRING = "TEST-UNEXPECTED-FAIL"
@@ -162,7 +159,7 @@ Components.utils.import("resource://gre/modules/Promise.jsm");
 
 function run_test() { run_next_test(); }
 
-add_task(function* test_task() {
+add_task(function test_task() {
   yield Promise.resolve(true);
   yield Promise.resolve(false);
 });
@@ -173,11 +170,11 @@ Components.utils.import("resource://gre/modules/Promise.jsm");
 
 function run_test() { run_next_test(); }
 
-add_task(function* test_task() {
+add_task(function test_task() {
   yield Promise.resolve(true);
 });
 
-add_task(function* test_2() {
+add_task(function test_2() {
   yield Promise.resolve(true);
 });
 '''
@@ -187,7 +184,7 @@ Components.utils.import("resource://gre/modules/Promise.jsm");
 
 function run_test() { run_next_test(); }
 
-add_task(function* test_failing() {
+add_task(function test_failing() {
   yield Promise.reject(new Error("I fail."));
 });
 '''
@@ -197,7 +194,7 @@ Components.utils.import("resource://gre/modules/Promise.jsm");
 
 function run_test() { run_next_test(); }
 
-add_task(function* test() {
+add_task(function test() {
   let result = yield Promise.resolve(false);
 
   do_check_true(result);
@@ -220,6 +217,19 @@ Components.utils.import("resource://gre/modules/Promise.jsm", this);
 function run_test() { run_next_test(); }
 
 add_task(function* this_test_will_fail() {
+  for (let i = 0; i < 10; ++i) {
+    yield Promise.resolve();
+  }
+  Assert.ok(false);
+});
+'''
+
+ADD_TASK_STACK_TRACE_WITHOUT_STAR = '''
+Components.utils.import("resource://gre/modules/Promise.jsm", this);
+
+function run_test() { run_next_test(); }
+
+add_task(function this_test_will_fail() {
   for (let i = 0; i < 10; ++i) {
     yield Promise.resolve();
   }
@@ -320,7 +330,8 @@ function run_test(
 # A test for failure to load a test due to an error other than a syntax error
 LOAD_ERROR_OTHER_ERROR = '''
 function run_test() {
-    1 = "foo"; // invalid assignment left-hand side
+    yield "foo";
+    return "foo"; // can't use return in a generator!
 };
 '''
 
@@ -425,11 +436,11 @@ add_task(function no_run_test_add_task_fail() {
 NO_RUN_TEST_ADD_TASK_MULTIPLE = '''
 Components.utils.import("resource://gre/modules/Promise.jsm");
 
-add_task(function* test_task() {
+add_task(function test_task() {
   yield Promise.resolve(true);
 });
 
-add_task(function* test_2() {
+add_task(function test_2() {
   yield Promise.resolve(true);
 });
 '''
@@ -449,8 +460,6 @@ add_test(function test_child_mozinfo () {
   run_next_test();
 });
 '''
-
-
 class XPCShellTestsTests(unittest.TestCase):
     """
     Yes, these are unit tests for a unit test harness.
@@ -467,7 +476,7 @@ class XPCShellTestsTests(unittest.TestCase):
         self.symbols_path = None
         candidate_path = os.path.join(build_obj.distdir, 'crashreporter-symbols')
         if (os.path.isdir(candidate_path)):
-            self.symbols_path = candidate_path
+          self.symbols_path = candidate_path
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -508,18 +517,16 @@ tail =
         Assert that self.x.runTests with manifest=self.manifest
         returns |expected|.
         """
-        kwargs = {}
-        kwargs['xpcshell'] = xpcshellBin
-        kwargs['symbolsPath'] = self.symbols_path
-        kwargs['manifest'] = self.manifest
-        kwargs['mozInfo'] = mozinfo.info
-        kwargs['shuffle'] = shuffle
-        kwargs['verbose'] = verbose
-        kwargs['sequential'] = True
-        kwargs['testingModulesDir'] = os.path.join(objdir, '_tests', 'modules')
-        kwargs['utility_path'] = self.utility_path
         self.assertEquals(expected,
-                          self.x.runTests(kwargs),
+                          self.x.runTests(xpcshellBin,
+                                          symbolsPath=self.symbols_path,
+                                          manifest=self.manifest,
+                                          mozInfo=mozinfo.info,
+                                          shuffle=shuffle,
+                                          verbose=verbose,
+                                          sequential=True,
+                                          testingModulesDir=os.path.join(objdir, '_tests', 'modules'),
+                                          utility_path=self.utility_path),
                           msg="""Tests should have %s, log:
 ========
 %s
@@ -599,11 +606,9 @@ tail =
         line_pat = "#\d\d:"
         unknown_pat = "#\d\d\: \?\?\?\[.* \+0x[a-f0-9]+\]"
         self.assertFalse(any(re.search(unknown_pat, line) for line in log_lines),
-                         "An stack frame without symbols was found in\n%s" %
-                         pprint.pformat(log_lines))
+                         "An stack frame without symbols was found in\n%s" % pprint.pformat(log_lines))
         self.assertTrue(any(re.search(line_pat, line) for line in log_lines),
-                        "No line resembling a stack frame was found in\n%s" %
-                        pprint.pformat(log_lines))
+                        "No line resembling a stack frame was found in\n%s" % pprint.pformat(log_lines))
 
     def testChildPass(self):
         """
@@ -899,8 +904,8 @@ add_test({
         self.assertTestResult(False)
         self.assertInLog(TEST_FAIL_STRING)
         if not substs.get('RELEASE_OR_BETA'):
-            # async stacks are currently not enabled in release builds.
-            self.assertInLog("test_simple_uncaught_rejection.js:3:3")
+          # async stacks are currently not enabled in release builds.
+          self.assertInLog("test_simple_uncaught_rejection.js:3:3")
         self.assertInLog("Test rejection.")
         self.assertEquals(1, self.x.testCount)
         self.assertEquals(0, self.x.passCount)
@@ -999,7 +1004,7 @@ add_test({
         Ensure multiple calls to add_test_task() work as expected.
         """
         self.writeFile("test_add_task_multiple.js",
-                       ADD_TASK_MULTIPLE)
+            ADD_TASK_MULTIPLE)
         self.writeManifest(["test_add_task_multiple.js"])
 
         self.assertTestResult(True)
@@ -1012,7 +1017,7 @@ add_test({
         Ensure rejected task reports as failure.
         """
         self.writeFile("test_add_task_rejected.js",
-                       ADD_TASK_REJECTED)
+            ADD_TASK_REJECTED)
         self.writeManifest(["test_add_task_rejected.js"])
 
         self.assertTestResult(False)
@@ -1025,7 +1030,7 @@ add_test({
         Ensure tests inside task are reported as failures.
         """
         self.writeFile("test_add_task_failure_inside.js",
-                       ADD_TASK_FAILURE_INSIDE)
+            ADD_TASK_FAILURE_INSIDE)
         self.writeManifest(["test_add_task_failure_inside.js"])
 
         self.assertTestResult(False)
@@ -1038,7 +1043,7 @@ add_test({
         Calling run_next_test() from inside add_task() results in failure.
         """
         self.writeFile("test_add_task_run_next_test.js",
-                       ADD_TASK_RUN_NEXT_TEST)
+            ADD_TASK_RUN_NEXT_TEST)
         self.writeManifest(["test_add_task_run_next_test.js"])
 
         self.assertTestResult(False)
@@ -1052,8 +1057,24 @@ add_test({
         results in a human-readable stack trace.
         """
         self.writeFile("test_add_task_stack_trace.js",
-                       ADD_TASK_STACK_TRACE)
+            ADD_TASK_STACK_TRACE)
         self.writeManifest(["test_add_task_stack_trace.js"])
+
+        self.assertTestResult(False)
+        self.assertInLog("this_test_will_fail")
+        self.assertInLog("run_next_test")
+        self.assertInLog("run_test")
+        self.assertNotInLog("Task.jsm")
+
+    def testAddTaskStackTraceWithoutStar(self):
+        """
+        Ensuring that calling Assert.ok(false) from inside add_task()
+        results in a human-readable stack trace. This variant uses deprecated
+        `function()` syntax instead of now standard `function*()`.
+        """
+        self.writeFile("test_add_task_stack_trace_without_star.js",
+            ADD_TASK_STACK_TRACE)
+        self.writeManifest(["test_add_task_stack_trace_without_star.js"])
 
         self.assertTestResult(False)
         self.assertInLog("this_test_will_fail")
@@ -1091,7 +1112,7 @@ add_test({
         try:
             # The actual return value is never checked because we raise.
             self.assertTestResult(True)
-        except Exception as ex:
+        except Exception, ex:
             raised = True
             self.assertEquals(ex.message[0:9], "head file")
 
@@ -1195,8 +1216,8 @@ add_test({
 
         self.assertTestResult(False)
         self.assertInLog(TEST_FAIL_STRING)
-        self.assertInLog("ReferenceError: invalid assignment left-hand side at")
-        self.assertInLog("test_error.js:3")
+        self.assertInLog("TypeError: generator function can't return a value at")
+        self.assertInLog("test_error.js:4")
         self.assertNotInLog(TEST_PASS_STRING)
 
     def testDoPrintWhenVerboseNotExplicit(self):
@@ -1371,7 +1392,6 @@ add_test({
         self.assertEquals(0, self.x.todoCount)
         self.assertInLog(TEST_PASS_STRING)
         self.assertNotInLog(TEST_FAIL_STRING)
-
 
 if __name__ == "__main__":
     mozunit.main()

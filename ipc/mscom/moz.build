@@ -14,14 +14,9 @@ EXPORTS.mozilla.mscom += [
     'MainThreadClientInfo.h',
     'MainThreadRuntime.h',
     'Objref.h',
-    'PassthruProxy.h',
     'ProxyStream.h',
     'Ptr.h',
     'Utils.h',
-]
-
-SOURCES += [
-    'VTableBuilder.c',
 ]
 
 UNIFIED_SOURCES += [
@@ -30,14 +25,13 @@ UNIFIED_SOURCES += [
     'MainThreadClientInfo.cpp',
     'MainThreadRuntime.cpp',
     'Objref.cpp',
-    'PassthruProxy.cpp',
     'ProxyStream.cpp',
     'Utils.cpp',
 ]
 
 if CONFIG['MOZ_CRASHREPORTER']:
     UNIFIED_SOURCES += [
-        'RegistrationAnnotator.cpp',
+        'InterfaceRegistrationAnnotator.cpp',
     ]
 
 if CONFIG['ACCESSIBILITY']:
@@ -48,7 +42,6 @@ if CONFIG['ACCESSIBILITY']:
     EXPORTS.mozilla.mscom += [
         'ActivationContext.h',
         'DispatchForwarder.h',
-        'FastMarshaler.h',
         'IHandlerProvider.h',
         'Interceptor.h',
         'InterceptorLog.h',
@@ -70,7 +63,6 @@ if CONFIG['ACCESSIBILITY']:
     UNIFIED_SOURCES += [
         'ActivationContext.cpp',
         'DispatchForwarder.cpp',
-        'FastMarshaler.cpp',
         'InterceptorLog.cpp',
         'MainThreadHandoff.cpp',
         'MainThreadInvoker.cpp',

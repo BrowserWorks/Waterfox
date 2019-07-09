@@ -109,6 +109,7 @@ body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  color: var(--theme-content-color3);
 }
 
 /* The top toolbar, containing the toggle-all button. And the timeline toolbar,
@@ -156,6 +157,8 @@ body {
 /* The error message, shown when an invalid/unanimated element is selected */
 
 #error-message {
+  padding-top: 10%;
+  text-align: center;
   flex: 1;
   overflow: auto;
 
@@ -263,11 +266,6 @@ body {
   height: var(--detail-animation-height);
 }
 
-.time-body.track-container {
-  height: 0;
-  pointer-events: none;
-}
-
 .animation-timeline .scrubber-wrapper {
   position: absolute;
   z-index: 5;
@@ -341,13 +339,13 @@ body {
 
 .animation-timeline .time-body {
   top: var(--toolbar-height);
-  z-index: 3;
 }
 
 .progress-tick-container .progress-tick,
 .animation-timeline .time-body .time-tick {
   -moz-user-select: none;
   position: absolute;
+  height: 100%;
 }
 
 .progress-tick-container .progress-tick::before,
@@ -381,7 +379,7 @@ body {
 }
 
 .animation-timeline .animation.selected {
-  background-color: var(--theme-selection-background-hover);
+  background-color: var(--theme-selection-background-semitransparent);
 }
 
 .animation-timeline .animation:last-child {
@@ -540,12 +538,12 @@ body {
 }
 
 .animation-target .node-highlighter:hover {
-  filter: var(--theme-icon-checked-filter);
+  filter: url(images/filters.svg#checked-icon-state);
 }
 
 .animation-target .node-highlighter:active,
 .animation-target .node-highlighter.selected {
-  filter: var(--theme-icon-checked-filter) brightness(0.9);
+  filter: url(images/filters.svg#checked-icon-state) brightness(0.9);
 }
 
 /* Inline keyframes info in the timeline */
@@ -695,24 +693,6 @@ body {
 .keyframes svg path.color {
   stroke: none;
   height: 100%;
-}
-
-.keyframes svg .hint {
-  stroke-opacity: 0;
-  stroke-linecap: round;
-  stroke-width: 5;
-}
-
-.keyframes svg path.hint {
-  fill: none;
-}
-
-.keyframes svg path.hint:hover {
-  stroke-opacity: 1;
-}
-
-.keyframes svg rect.hint {
-  fill-opacity: .1;
 }
 
 .animation-detail {

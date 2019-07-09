@@ -64,7 +64,8 @@ HTMLTitleElement::CharacterDataChanged(nsIDocument *aDocument,
 void
 HTMLTitleElement::ContentAppended(nsIDocument *aDocument,
                                   nsIContent *aContainer,
-                                  nsIContent *aFirstNewContent)
+                                  nsIContent *aFirstNewContent,
+                                  int32_t aNewIndexInContainer)
 {
   SendTitleChangeEvent(false);
 }
@@ -72,7 +73,8 @@ HTMLTitleElement::ContentAppended(nsIDocument *aDocument,
 void
 HTMLTitleElement::ContentInserted(nsIDocument *aDocument,
                                   nsIContent *aContainer,
-                                  nsIContent *aChild)
+                                  nsIContent *aChild,
+                                  int32_t aIndexInContainer)
 {
   SendTitleChangeEvent(false);
 }
@@ -81,6 +83,7 @@ void
 HTMLTitleElement::ContentRemoved(nsIDocument *aDocument,
                                  nsIContent *aContainer,
                                  nsIContent *aChild,
+                                 int32_t aIndexInContainer,
                                  nsIContent *aPreviousSibling)
 {
   SendTitleChangeEvent(false);

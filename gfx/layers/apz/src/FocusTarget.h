@@ -10,7 +10,6 @@
 
 #include "FrameMetrics.h"        // for FrameMetrics::ViewID
 #include "mozilla/DefineEnum.h"  // for MOZ_DEFINE_ENUM
-#include "mozilla/Variant.h"     // for Variant
 
 class nsIPresShell;
 
@@ -30,23 +29,19 @@ public:
   {
     FrameMetrics::ViewID mHorizontal;
     FrameMetrics::ViewID mVertical;
-
-    bool operator==(const ScrollTargets& aRhs) const
-    {
-      return mHorizontal == aRhs.mHorizontal &&
-             mVertical == aRhs.mVertical;
-    }
   };
 
-  typedef uint64_t RefLayerId;
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    FocusTargetType, (
+      eNone,
+      eRefLayer,
+      eScrollLayer
+  ));
 
-  // We need this to represent the case where mData has no focus target data
-  // because we can't have an empty variant
-  struct NoFocusTarget {
-    bool operator==(const NoFocusTarget& aRhs) const
-    {
-     return true;
-    }
+  union FocusTargetData
+  {
+    uint64_t      mRefLayerId;
+    ScrollTargets mScrollTargets;
   };
 
   FocusTarget();
@@ -59,8 +54,6 @@ public:
 
   bool operator==(const FocusTarget& aRhs) const;
 
-  const char* Type() const;
-
 public:
   // The content sequence number recorded at the time of this class's creation
   uint64_t mSequenceNumber;
@@ -69,7 +62,8 @@ public:
   // in the event target chain of the focused element
   bool mFocusHasKeyEventListeners;
 
-  mozilla::Variant<RefLayerId, ScrollTargets, NoFocusTarget> mData;
+  FocusTargetType mType;
+  FocusTargetData mData;
 };
 
 } // namespace layers

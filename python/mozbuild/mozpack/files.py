@@ -145,13 +145,13 @@ class BaseFile(object):
         # - keep file type (e.g. S_IFREG)
         ret = stat.S_IFMT(mode)
         # - expand user read and execute permissions to everyone
-        if mode & 0o0400:
-            ret |= 0o0444
-        if mode & 0o0100:
-            ret |= 0o0111
-         # - keep user write permissions
-        if mode & 0o0200:
-            ret |= 0o0200
+        if mode & 0400:
+            ret |= 0444
+        if mode & 0100:
+            ret |= 0111
+        # - keep user write permissions
+        if mode & 0200:
+            ret |= 0200
         # - leave away sticky bit, setuid, setgid
         return ret
 
@@ -995,7 +995,7 @@ class FileFinder(BaseFinder):
 
     def get(self, path):
         srcpath = os.path.join(self.base, path)
-        if not os.path.lexists(srcpath):
+        if not os.path.exists(srcpath):
             return None
 
         for p in self.ignore:
@@ -1168,9 +1168,7 @@ class MercurialRevisionFinder(BaseFinder):
         # operation requires this list.
         out = self._client.rawcommand([b'files', b'--rev', str(self._rev)])
         for relpath in out.splitlines():
-            # Mercurial may use \ as path separator on Windows. So use
-            # normpath().
-            self._files[mozpath.normpath(relpath)] = None
+            self._files[relpath] = None
 
     def _find(self, pattern):
         if self._recognize_repo_paths:
@@ -1179,7 +1177,6 @@ class MercurialRevisionFinder(BaseFinder):
         return self._find_helper(pattern, self._files, self._get)
 
     def get(self, path):
-        path = mozpath.normpath(path)
         if self._recognize_repo_paths:
             if not path.startswith(self._root):
                 raise ValueError('lookups in recognize_repo_paths mode must be '

@@ -175,12 +175,12 @@ ContentHostTexture::Composite(Compositor* aCompositor,
             tileRegionRect.MoveBy(-currentTileRect.TopLeft());
           }
           gfx::Rect rect(tileScreenRect.x, tileScreenRect.y,
-                         tileScreenRect.Width(), tileScreenRect.Height());
+                         tileScreenRect.width, tileScreenRect.height);
 
-          effect->mTextureCoords = Rect(Float(tileRegionRect.x) / texRect.Width(),
-                                        Float(tileRegionRect.y) / texRect.Height(),
-                                        Float(tileRegionRect.Width()) / texRect.Width(),
-                                        Float(tileRegionRect.Height()) / texRect.Height());
+          effect->mTextureCoords = Rect(Float(tileRegionRect.x) / texRect.width,
+                                        Float(tileRegionRect.y) / texRect.height,
+                                        Float(tileRegionRect.width) / texRect.width,
+                                        Float(tileRegionRect.height) / texRect.height);
 
           aCompositor->DrawGeometry(rect, aClipRect, aEffectChain,
                                     aOpacity, aTransform, aGeometry);
@@ -359,8 +359,8 @@ ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
   destRegion.MoveBy(-aData.rect().TopLeft());
 
   if (!aData.rect().Contains(aUpdated.GetBounds()) ||
-      aData.rotation().x > aData.rect().Width() ||
-      aData.rotation().y > aData.rect().Height()) {
+      aData.rotation().x > aData.rect().width ||
+      aData.rotation().y > aData.rect().height) {
     NS_ERROR("Invalid update data");
     return false;
   }
@@ -381,11 +381,11 @@ ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
 
   // For each of the overlap areas (right, bottom-right, bottom), select those
   // pixels and wrap them around to the opposite edge of the buffer rect.
-  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(aData.rect().Width(), 0));
-  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(aData.rect().Width(), aData.rect().Height()));
-  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(0, aData.rect().Height()));
+  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(aData.rect().width, 0));
+  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(aData.rect().width, aData.rect().height));
+  AddWrappedRegion(destRegion, finalRegion, bufferSize, nsIntPoint(0, aData.rect().height));
 
-  MOZ_ASSERT(IntRect(0, 0, aData.rect().Width(), aData.rect().Height()).Contains(finalRegion.GetBounds()));
+  MOZ_ASSERT(IntRect(0, 0, aData.rect().width, aData.rect().height).Contains(finalRegion.GetBounds()));
 
   mTextureHost->Updated(&finalRegion);
   if (mTextureHostOnWhite) {

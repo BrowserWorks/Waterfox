@@ -8,16 +8,13 @@
 
 document.body.innerText = "Background Page Body Test Content";
 
-// These functions are called from the following about:debugging tests:
-// - browser_addons_debug_webextension.js
-// - browser_addons_debug_webextension_popup.js
+// This function are called from the webconsole test:
+// browser_addons_debug_webextension.js
 
-// eslint-disable-next-line no-unused-vars
-function myWebExtensionAddonFunction() {
+function myWebExtensionAddonFunction() {  // eslint-disable-line no-unused-vars
   console.log("Background page function called", browser.runtime.getManifest());
 }
 
-// eslint-disable-next-line no-unused-vars
-function myWebExtensionShowPopup() {
-  browser.test.sendMessage("readyForOpenPopup");
+function myWebExtensionShowPopup() {  // eslint-disable-line no-unused-vars
+  console.log("readyForOpenPopup");
 }

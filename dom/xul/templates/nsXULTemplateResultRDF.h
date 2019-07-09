@@ -44,7 +44,7 @@ public:
      * then the bindings
      */
     void
-    GetAssignment(nsAtom* aVar, nsIRDFNode** aValue);
+    GetAssignment(nsIAtom* aVar, nsIRDFNode** aValue);
 
     /**
      * Synchronize the bindings after a change in the RDF graph. Bindings that

@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.6.1
-esid: sec-properties-of-typedarray-prototype-objects
 description: >
   The initial value of Uint8ClampedArray.prototype.BYTES_PER_ELEMENT is 1.
 info: >

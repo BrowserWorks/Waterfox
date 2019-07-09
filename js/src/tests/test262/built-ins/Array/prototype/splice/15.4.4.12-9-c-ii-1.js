@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.splice
 es5id: 15.4.4.12-9-c-ii-1
 description: >
     Array.prototype.splice will splice an array even when

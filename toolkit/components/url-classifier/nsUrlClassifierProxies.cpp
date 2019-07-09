@@ -243,34 +243,25 @@ UrlClassifierDBServiceWorkerProxy::ClearLastResultsRunnable::Run()
 
 nsresult
 UrlClassifierDBServiceWorkerProxy::GetCacheInfo(const nsACString& aTable,
-                                                nsIUrlClassifierGetCacheCallback* aCallback)
+                                                nsIUrlClassifierCacheInfo** aCache)
 {
-  nsCOMPtr<nsIRunnable> r = new GetCacheInfoRunnable(mTarget, aTable, aCallback);
-  return DispatchToWorkerThread(r);
+  nsCOMPtr<nsIRunnable> r = new GetCacheInfoRunnable(mTarget, aTable, aCache);
+
+  nsIThread* t = nsUrlClassifierDBService::BackgroundThread();
+  if (!t) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // This blocks main thread but since 'GetCacheInfo' is only used by
+  // about:url-classifier so it should be fine.
+  mozilla::SyncRunnable::DispatchToThread(t, r);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
 UrlClassifierDBServiceWorkerProxy::GetCacheInfoRunnable::Run()
 {
-  MOZ_ASSERT(mCallback);
-
-  mTarget->GetCacheInfo(mTable, &mCache);
-
-  nsCOMPtr<nsIRunnable> r = new GetCacheInfoCallbackRunnable(mCache, mCallback);
-  return NS_DispatchToMainThread(r);
-}
-
-
-NS_IMETHODIMP
-UrlClassifierDBServiceWorkerProxy::GetCacheInfoCallbackRunnable::Run()
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Must be called on main thread");
-  MOZ_ASSERT(mCallback);
-
-  mCallback->OnGetCacheComplete(mCache);
-  NS_RELEASE(mCache);
-
-  return NS_OK;
+  return mTarget->GetCacheInfo(mTable, mCache);
 }
 
 NS_IMPL_ISUPPORTS(UrlClassifierLookupCallbackProxy,

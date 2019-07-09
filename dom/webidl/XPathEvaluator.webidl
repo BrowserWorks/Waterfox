@@ -9,13 +9,11 @@ interface XPathEvaluator {
   // Based on nsIDOMXPathEvaluator
   [NewObject, Throws]
   XPathExpression createExpression(DOMString expression,
-                                   optional XPathNSResolver? resolver = null);
+                                   XPathNSResolver? resolver);
   [Pure]
   Node createNSResolver(Node nodeResolver);
   [Throws]
-  XPathResult evaluate(DOMString expression,
-                       Node contextNode,
-                       optional XPathNSResolver? resolver = null,
-                       optional unsigned short type = 0 /* XPathResult.ANY_TYPE */,
-                       optional object? result = null);
+  XPathResult evaluate(DOMString expression, Node contextNode,
+                       XPathNSResolver? resolver, unsigned short type,
+                       object? result);
 };

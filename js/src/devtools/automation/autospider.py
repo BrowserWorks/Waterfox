@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import re
 import os
 import platform
@@ -45,7 +46,7 @@ parser.add_argument('--timeout', '-t', type=int, metavar='TIMEOUT',
                     default=10800,
                     help='kill job after TIMEOUT seconds')
 parser.add_argument('--objdir', type=str, metavar='DIR',
-                    default=env.get('OBJDIR', os.path.join(DIR.source, 'obj-spider')),
+                    default=env.get('OBJDIR', 'obj-spider'),
                     help='object directory')
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--optimize', action='store_true',
@@ -61,14 +62,6 @@ group.add_argument('--no-debug', action='store_false',
                    dest='debug',
                    help='generate a non-debug build. Overrides variant setting.')
 group.set_defaults(debug=None)
-group = parser.add_mutually_exclusive_group()
-group.add_argument('--jemalloc', action='store_true',
-                   dest='jemalloc',
-                   help='use mozilla\'s jemalloc instead of the default allocator')
-group.add_argument('--no-jemalloc', action='store_false',
-                   dest='jemalloc',
-                   help='use the default allocator instead of mozilla\'s jemalloc')
-group.set_defaults(jemalloc=None)
 parser.add_argument('--run-tests', '--tests', type=str, metavar='TESTSUITE',
                     default='',
                     help="comma-separated set of test suites to add to the variant's default set")
@@ -85,14 +78,6 @@ parser.add_argument('--nobuild', action='store_true',
 parser.add_argument('variant', type=str,
                     help='type of job requested, see variants/ subdir')
 args = parser.parse_args()
-
-OBJDIR = args.objdir
-OUTDIR = os.path.join(OBJDIR, "out")
-POBJDIR = posixpath.join(PDIR.source, args.objdir)
-AUTOMATION = env.get('AUTOMATION', False)
-MAKE = env.get('MAKE', 'make')
-MAKEFLAGS = env.get('MAKEFLAGS', '-j6' + ('' if AUTOMATION else ' -s'))
-UNAME_M = subprocess.check_output(['uname', '-m']).strip()
 
 
 def set_vars_from_script(script, vars):
@@ -140,15 +125,11 @@ def set_vars_from_script(script, vars):
                 env[var] = "%s;%s" % (env[var], originals[var])
 
 
-def ensure_dir_exists(name, clobber=True, creation_marker_filename="CREATED-BY-AUTOSPIDER"):
-    marker = os.path.join(name, creation_marker_filename)
+def ensure_dir_exists(name, clobber=True):
     if clobber:
-        if not AUTOMATION and os.path.exists(name) and not os.path.exists(marker):
-            raise Exception("Refusing to delete objdir %s because it was not created by autospider" % name)
         shutil.rmtree(name, ignore_errors=True)
     try:
         os.mkdir(name)
-        open(marker, 'a').close()
     except OSError:
         if clobber:
             raise
@@ -167,6 +148,14 @@ if args.variant == 'nonunified':
             subprocess.check_call(['sed'] + in_place + ['s/UNIFIED_SOURCES/SOURCES/',
                                                         os.path.join(dirpath, 'moz.build')])
 
+OBJDIR = os.path.join(DIR.source, args.objdir)
+OUTDIR = os.path.join(OBJDIR, "out")
+POBJDIR = posixpath.join(PDIR.source, args.objdir)
+AUTOMATION = env.get('AUTOMATION', False)
+MAKE = env.get('MAKE', 'make')
+MAKEFLAGS = env.get('MAKEFLAGS', '-j6' + ('' if AUTOMATION else ' -s'))
+UNAME_M = subprocess.check_output(['uname', '-m']).strip()
+
 CONFIGURE_ARGS = variant['configure-args']
 
 opt = args.optimize
@@ -183,10 +172,6 @@ if opt is None:
     opt = variant.get('debug')
 if opt is not None:
     CONFIGURE_ARGS += (" --enable-debug" if opt else " --disable-debug")
-
-opt = args.jemalloc
-if opt is not None:
-    CONFIGURE_ARGS += (" --enable-jemalloc" if opt else " --disable-jemalloc")
 
 # Any jobs that wish to produce additional output can save them into the upload
 # directory if there is such a thing, falling back to OBJDIR.
@@ -395,12 +380,6 @@ test_suites |= set(normalize_tests(args.run_tests.split(",")))
 test_suites -= set(normalize_tests(args.skip_tests.split(",")))
 if 'all' in args.skip_tests.split(","):
     test_suites = []
-
-# Bug 1391877 - Windows test runs are getting mysterious timeouts when run
-# through taskcluster, but only when running multiple jit-test jobs in
-# parallel. Work around them for now.
-if platform.system() == 'Windows':
-    env['JITTEST_EXTRA_ARGS'] = "-j1 " + env.get('JITTEST_EXTRA_ARGS', '')
 
 # Always run all enabled tests, even if earlier ones failed. But return the
 # first failed status.

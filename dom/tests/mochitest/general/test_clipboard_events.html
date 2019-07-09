@@ -659,19 +659,22 @@ function checkCachedDataTransfer(cd, eventtype)
   setClipboardText("Some Clipboard Text");
 
   var oldtext = cd.getData("text/plain");
-  ok(!oldtext, "clipboard get using " + testprefix);
+  ok(oldtext != "Some Clipboard Text", "clipboard get using " + testprefix);
 
-  try {
-    cd.mozSetDataAt("text/plain", "Test Cache Data", 0);
-  } catch (ex) {}
-  ok(!cd.getData("text/plain"), "clipboard set using " + testprefix);
+  var exh = false;
+  try { cd.mozSetDataAt("text/plain", "Test Cache Data", 0); } catch (ex) { exh = true; }
+  ok(eventtype == "paste" ? exh : !exh, "exception occured setting " + testprefix);
+
+  var newtext = (eventtype == "paste") ? cd.getData("text/plain") :
+                                         cd.mozGetDataAt("text/plain", 0);
+  is(newtext, (eventtype == "paste") ? oldtext : "Test Cache Data",
+     " clipboardData not changed using " + testprefix);
 
   is(getClipboardText(), "Some Clipboard Text", "clipboard not changed using " + testprefix);
 
-  try {
-    cd.mozClearDataAt("text/plain", 0);
-  } catch (ex) {}
-  ok(!cd.getData("text/plain"), "clipboard clear using " + testprefix);
+  var exh = false;
+  try { cd.mozClearDataAt("text/plain", 0); } catch (ex) { exh = true; }
+  ok(eventtype == "paste" ? exh : !exh, "exception occured clearing " + testprefix);
 
   is(getClipboardText(), "Some Clipboard Text", "clipboard not changed using " + testprefix);
 }
@@ -746,13 +749,7 @@ function test_image_dataTransfer() {
   }
 }
 
-SimpleTest.waitForFocus(() => {
-  SpecialPowers.pushPrefEnv({
-    // NOTE: These tests operate under the assumption that the protected mode of
-    // DataTransfer is enabled.
-    "set": [["dom.events.dataTransfer.protected.enabled", true]]
-  }, doTests);
-});
+SimpleTest.waitForFocus(doTests);
 
 </script>
 </pre>

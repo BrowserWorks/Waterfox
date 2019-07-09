@@ -7,6 +7,16 @@ LIBRARY mozglue.dll
 EXPORTS
 #ifdef MOZ_MEMORY
   ; symbols that are actually useful
+#ifdef MOZ_REPLACE_MALLOC
+  malloc=malloc_impl
+  calloc=calloc_impl
+  realloc=realloc_impl
+  free=free_impl
+  posix_memalign=posix_memalign_impl
+  malloc_usable_size=malloc_usable_size_impl
+  malloc_good_size=malloc_good_size_impl
+  _aligned_free=free_impl
+#else
   malloc=je_malloc
   calloc=je_calloc
   realloc=je_realloc
@@ -15,10 +25,16 @@ EXPORTS
   malloc_usable_size=je_malloc_usable_size
   malloc_good_size=je_malloc_good_size
   _aligned_free=je_free
+#endif
   _aligned_malloc
   strndup=wrap_strndup
   strdup=wrap_strdup
   _strdup=wrap_strdup
   wcsdup=wrap_wcsdup
   _wcsdup=wrap_wcsdup
+  jemalloc_stats
+  jemalloc_free_dirty_pages
+  jemalloc_thread_local_arena
+  ; A hack to work around the CRT (see giant comment in Makefile.in)
+  frex=dumb_free_thunk
 #endif

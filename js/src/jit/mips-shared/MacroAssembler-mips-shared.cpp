@@ -71,27 +71,13 @@ MacroAssemblerMIPSShared::ma_sra(Register rd, Register rt, Imm32 shift)
 void
 MacroAssemblerMIPSShared::ma_ror(Register rd, Register rt, Imm32 shift)
 {
-    if (hasR2()) {
-        as_rotr(rd, rt, shift.value % 32);
-    } else {
-        ScratchRegisterScope scratch(asMasm());
-        as_srl(scratch, rt, shift.value % 32);
-        as_sll(rd, rt, (32 - (shift.value % 32)) % 32);
-        as_or(rd, rd, scratch);
-    }
+    as_rotr(rd, rt, shift.value % 32);
 }
 
 void
 MacroAssemblerMIPSShared::ma_rol(Register rd, Register rt, Imm32 shift)
 {
-    if (hasR2()) {
-        as_rotr(rd, rt, (32 - (shift.value % 32)) % 32);
-    } else {
-        ScratchRegisterScope scratch(asMasm());
-        as_srl(scratch, rt, (32 - (shift.value % 32)) % 32);
-        as_sll(rd, rt, shift.value % 32);
-        as_or(rd, rd, scratch);
-    }
+    as_rotr(rd, rt, 32 - (shift.value % 32));
 }
 
 void
@@ -115,29 +101,14 @@ MacroAssemblerMIPSShared::ma_sra(Register rd, Register rt, Register shift)
 void
 MacroAssemblerMIPSShared::ma_ror(Register rd, Register rt, Register shift)
 {
-    if (hasR2()) {
-        as_rotrv(rd, rt, shift);
-    } else {
-        ScratchRegisterScope scratch(asMasm());
-        ma_negu(scratch, shift);
-        as_sllv(scratch, rt, scratch);
-        as_srlv(rd, rt, shift);
-        as_or(rd, rd, scratch);
-    }
+    as_rotrv(rd, rt, shift);
 }
 
 void
 MacroAssemblerMIPSShared::ma_rol(Register rd, Register rt, Register shift)
 {
-    ScratchRegisterScope scratch(asMasm());
-    ma_negu(scratch, shift);
-    if (hasR2()) {
-        as_rotrv(rd, rt, scratch);
-    } else {
-        as_srlv(rd, rt, scratch);
-        as_sllv(scratch, rt, shift);
-        as_or(rd, rd, scratch);
-    }
+    ma_negu(ScratchRegister, shift);
+    as_rotrv(rd, rt, ScratchRegister);
 }
 
 void
@@ -150,69 +121,6 @@ void
 MacroAssemblerMIPSShared::ma_not(Register rd, Register rs)
 {
     as_nor(rd, rs, zero);
-}
-
-// Bit extract/insert
-void
-MacroAssemblerMIPSShared::ma_ext(Register rt, Register rs, uint16_t pos, uint16_t size) {
-    MOZ_ASSERT(pos < 32);
-    MOZ_ASSERT(pos + size < 33);
-
-    if (hasR2()) {
-        as_ext(rt, rs, pos, size);
-    } else {
-        int shift_left = 32 - (pos + size);
-        as_sll(rt, rs, shift_left);
-        int shift_right = 32 - size;
-        if (shift_right > 0) {
-            as_srl(rt, rt, shift_right);
-        }
-    }
-}
-
-void
-MacroAssemblerMIPSShared::ma_ins(Register rt, Register rs, uint16_t pos, uint16_t size) {
-    MOZ_ASSERT(pos < 32);
-    MOZ_ASSERT(pos + size <= 32);
-    MOZ_ASSERT(size != 0);
-
-    if (hasR2()) {
-        as_ins(rt, rs, pos, size);
-    } else {
-        ScratchRegisterScope scratch(asMasm());
-        SecondScratchRegisterScope scratch2(asMasm());
-        ma_subu(scratch, zero, Imm32(1));
-        as_srl(scratch, scratch, 32 - size);
-        as_and(scratch2, rs, scratch);
-        as_sll(scratch2, scratch2, pos);
-        as_sll(scratch, scratch, pos);
-        as_nor(scratch, scratch, zero);
-        as_and(scratch, rt, scratch);
-        as_or(rt, scratch2, scratch);
-    }
-}
-
-// Sign extend
-void
-MacroAssemblerMIPSShared::ma_seb(Register rd, Register rt)
-{
-    if (hasR2()) {
-        as_seb(rd, rt);
-    } else {
-        as_sll(rd, rt, 24);
-        as_sra(rd, rd, 24);
-    }
-}
-
-void
-MacroAssemblerMIPSShared::ma_seh(Register rd, Register rt)
-{
-    if (hasR2()) {
-        as_seh(rd, rt);
-    } else {
-        as_sll(rd, rt, 16);
-        as_sra(rd, rd, 16);
-    }
 }
 
 // And.
@@ -576,7 +484,7 @@ MacroAssemblerMIPSShared::ma_load_unaligned(Register dest, const BaseIndex& src,
             as_lbu(temp, base, hiOffset);
         else
             as_lb(temp, base, hiOffset);
-        ma_ins(dest, temp, 8, 24);
+        as_ins(dest, temp, 8, 24);
         break;
       case SizeWord:
         as_lwl(dest, base, hiOffset);
@@ -719,7 +627,7 @@ MacroAssemblerMIPSShared::ma_store_unaligned(Register data, const BaseIndex& des
     switch (size) {
       case SizeHalfWord:
         as_sb(data, base, lowOffset);
-        ma_ext(temp, data, 8, 8);
+        as_ext(temp, data, 8, 8);
         as_sb(temp, base, hiOffset);
         break;
       case SizeWord:
@@ -1335,10 +1243,10 @@ MacroAssemblerMIPSShared::atomicFetchOpMIPSr2(int nbytes, bool signExtend, Atomi
         if (signExtend) {
             switch (nbytes) {
             case 1:
-                ma_seb(output, output);
+                as_seb(output, output);
                 break;
             case 2:
-                ma_seh(output, output);
+                as_seh(output, output);
                 break;
             case 4:
                 break;
@@ -1510,10 +1418,10 @@ MacroAssemblerMIPSShared::compareExchangeMIPSr2(int nbytes, bool signExtend, con
     if (signExtend) {
         switch (nbytes) {
         case 1:
-            ma_seb(output, output);
+            as_seb(output, output);
             break;
         case 2:
-            ma_seh(output, output);
+            as_seh(output, output);
             break;
         case 4:
             break;
@@ -1579,7 +1487,7 @@ void
 MacroAssembler::Push(Register reg)
 {
     ma_push(reg);
-    adjustFrame(int32_t(sizeof(intptr_t)));
+    adjustFrame(sizeof(intptr_t));
 }
 
 void
@@ -1587,7 +1495,7 @@ MacroAssembler::Push(const Imm32 imm)
 {
     ma_li(ScratchRegister, imm);
     ma_push(ScratchRegister);
-    adjustFrame(int32_t(sizeof(intptr_t)));
+    adjustFrame(sizeof(intptr_t));
 }
 
 void
@@ -1595,7 +1503,7 @@ MacroAssembler::Push(const ImmWord imm)
 {
     ma_li(ScratchRegister, imm);
     ma_push(ScratchRegister);
-    adjustFrame(int32_t(sizeof(intptr_t)));
+    adjustFrame(sizeof(intptr_t));
 }
 
 void
@@ -1609,28 +1517,28 @@ MacroAssembler::Push(const ImmGCPtr ptr)
 {
     ma_li(ScratchRegister, ptr);
     ma_push(ScratchRegister);
-    adjustFrame(int32_t(sizeof(intptr_t)));
+    adjustFrame(sizeof(intptr_t));
 }
 
 void
 MacroAssembler::Push(FloatRegister f)
 {
     ma_push(f);
-    adjustFrame(int32_t(sizeof(double)));
+    adjustFrame(sizeof(double));
 }
 
 void
 MacroAssembler::Pop(Register reg)
 {
     ma_pop(reg);
-    adjustFrame(-int32_t(sizeof(intptr_t)));
+    adjustFrame(-sizeof(intptr_t));
 }
 
 void
 MacroAssembler::Pop(FloatRegister f)
 {
     ma_pop(f);
-    adjustFrame(-int32_t(sizeof(double)));
+    adjustFrame(-sizeof(double));
 }
 
 void
@@ -1643,8 +1551,7 @@ MacroAssembler::Pop(const ValueOperand& val)
 void
 MacroAssembler::PopStackPtr()
 {
-    loadPtr(Address(StackPointer, 0), StackPointer);
-    framePushed_ -= sizeof(intptr_t);
+    MOZ_CRASH("NYI");
 }
 
 
@@ -1672,7 +1579,6 @@ MacroAssembler::callWithPatch()
     as_bal(BOffImm16(3 * sizeof(uint32_t)));
     addPtr(Imm32(5 * sizeof(uint32_t)), ra);
     // Allocate space which will be patched by patchCall().
-    spew(".space 32bit initValue 0xffff ffff");
     writeInst(UINT32_MAX);
     as_lw(ScratchRegister, ra, -(int32_t)(5 * sizeof(uint32_t)));
     addPtr(ra, ScratchRegister);
@@ -1705,7 +1611,6 @@ MacroAssembler::farJumpWithPatch()
     as_lw(ScratchRegister, ra, 0);
     // Allocate space which will be patched by patchFarJump().
     CodeOffset farJump(currentOffset());
-    spew(".space 32bit initValue 0xffff ffff");
     writeInst(UINT32_MAX);
     addPtr(ra, ScratchRegister);
     as_jr(ScratchRegister);
@@ -1753,13 +1658,6 @@ void
 MacroAssembler::call(wasm::SymbolicAddress target)
 {
     movePtr(target, CallReg);
-    call(CallReg);
-}
-
-void
-MacroAssembler::call(const Address& addr)
-{
-    loadPtr(addr, CallReg);
     call(CallReg);
 }
 
@@ -1852,28 +1750,6 @@ void
 MacroAssembler::comment(const char* msg)
 {
     Assembler::comment(msg);
-}
-
-
-void
-MacroAssembler::wasmTruncateDoubleToInt32(FloatRegister input, Register output, Label* oolEntry)
-{
-    as_truncwd(ScratchFloat32Reg, input);
-    as_cfc1(ScratchRegister, Assembler::FCSR);
-    moveFromFloat32(ScratchFloat32Reg, output);
-    ma_ext(ScratchRegister, ScratchRegister, 6, 1);
-    ma_b(ScratchRegister, Imm32(0), oolEntry, Assembler::NotEqual);
-}
-
-
-void
-MacroAssembler::wasmTruncateFloat32ToInt32(FloatRegister input, Register output, Label* oolEntry)
-{
-    as_truncws(ScratchFloat32Reg, input);
-    as_cfc1(ScratchRegister, Assembler::FCSR);
-    moveFromFloat32(ScratchFloat32Reg, output);
-    ma_ext(ScratchRegister, ScratchRegister, 6, 1);
-    ma_b(ScratchRegister, Imm32(0), oolEntry, Assembler::NotEqual);
 }
 
 //}}} check_macroassembler_style

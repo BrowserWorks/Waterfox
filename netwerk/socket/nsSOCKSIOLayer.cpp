@@ -78,8 +78,7 @@ public:
               int32_t family,
               nsIProxyInfo *proxy,
               const char *destinationHost,
-              uint32_t flags,
-              uint32_t tlsFlags);
+              uint32_t flags);
 
     void SetConnectTimeout(PRIntervalTime to);
     PRStatus DoHandshake(PRFileDesc *fd, int16_t oflags = -1);
@@ -217,7 +216,6 @@ private:
     int32_t   mVersion;   // SOCKS version 4 or 5
     int32_t   mDestinationFamily;
     uint32_t  mFlags;
-    uint32_t  mTlsFlags;
     NetAddr   mInternalProxyAddr;
     NetAddr   mExternalProxyAddr;
     NetAddr   mDestinationAddr;
@@ -234,7 +232,6 @@ nsSOCKSSocketInfo::nsSOCKSSocketInfo()
     , mVersion(-1)
     , mDestinationFamily(AF_INET)
     , mFlags(0)
-    , mTlsFlags(0)
     , mTimeout(PR_INTERVAL_NO_TIMEOUT)
 {
     mData = new uint8_t[BUFFER_SIZE];
@@ -362,14 +359,13 @@ private:
 
 
 void
-nsSOCKSSocketInfo::Init(int32_t version, int32_t family, nsIProxyInfo *proxy, const char *host, uint32_t flags, uint32_t tlsFlags)
+nsSOCKSSocketInfo::Init(int32_t version, int32_t family, nsIProxyInfo *proxy, const char *host, uint32_t flags)
 {
     mVersion         = version;
     mDestinationFamily = family;
     mProxy           = proxy;
     mDestinationHost = host;
     mFlags           = flags;
-    mTlsFlags        = tlsFlags;
     mProxy->GetUsername(mProxyUsername); // cache
 }
 
@@ -1522,7 +1518,6 @@ nsSOCKSIOLayerAddToSocket(int32_t family,
                           nsIProxyInfo *proxy,
                           int32_t socksVersion,
                           uint32_t flags,
-                          uint32_t tlsFlags,
                           PRFileDesc *fd,
                           nsISupports** info)
 {
@@ -1582,7 +1577,7 @@ nsSOCKSIOLayerAddToSocket(int32_t family,
     }
 
     NS_ADDREF(infoObject);
-    infoObject->Init(socksVersion, family, proxy, host, flags, tlsFlags);
+    infoObject->Init(socksVersion, family, proxy, host, flags);
     layer->secret = (PRFilePrivate*) infoObject;
 
     PRDescIdentity fdIdentity = PR_GetLayersIdentity(fd);

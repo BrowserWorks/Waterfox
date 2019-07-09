@@ -41,7 +41,7 @@ jit::EliminateBoundsChecks(MIRGenerator* mir, MIRGraph& graph)
             MDefinition* def = *dIter++;
 
             switch (def->op()) {
-              case MDefinition::Opcode::WasmBoundsCheck: {
+              case MDefinition::Op_WasmBoundsCheck: {
                 MWasmBoundsCheck* bc = def->toWasmBoundsCheck();
                 MDefinition* addr = bc->index();
 
@@ -74,7 +74,7 @@ jit::EliminateBoundsChecks(MIRGenerator* mir, MIRGraph& graph)
                 }
                 break;
               }
-              case MDefinition::Opcode::Phi: {
+              case MDefinition::Op_Phi: {
                 MPhi* phi = def->toPhi();
                 bool phiChecked = true;
 

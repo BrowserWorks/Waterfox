@@ -44,10 +44,10 @@ public:
 
   // EventTarget
   using EventTarget::EventListenerAdded;
-  virtual void EventListenerAdded(nsAtom* aType) override;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
 
   using EventTarget::EventListenerRemoved;
-  virtual void EventListenerRemoved(nsAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
     override;
@@ -128,7 +128,7 @@ protected:
 
 private:
   void Send(nsIInputStream* aMsgStream, const nsACString& aMsgString,
-            bool aIsBinary, mozilla::ErrorResult& aRv);
+            uint32_t aMsgLength, bool aIsBinary, mozilla::ErrorResult& aRv);
 
   void ReleaseSelf();
 

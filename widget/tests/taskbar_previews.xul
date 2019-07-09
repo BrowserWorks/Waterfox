@@ -50,6 +50,8 @@
         width: 400,
         height: 400,
         thumbnailAspectRatio: 1.0,
+        drawThumbnail: function () { return false; },
+        drawPreview: function () { return false; },
         get wrappedJSObject() { return this; }
       }
       // HACK from mconnor:

@@ -19,20 +19,22 @@
 
   <script type="application/javascript">
 
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Invokers
 
     /**
      * Hide parent while child stays visible.
      */
-    function test1(aContainerID, aParentID, aChildID) {
+    function test1(aContainerID, aParentID, aChildID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode(aParentID)),
         new invokerChecker(EVENT_SHOW, getNode(aChildID)),
         new invokerChecker(EVENT_REORDER, getNode(aContainerID))
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [
             { SECTION: [
@@ -44,9 +46,10 @@
         testAccessibleTree(aContainerID, tree);
 
         getNode(aParentID).style.visibility = "hidden";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [
             { SECTION: [
@@ -54,17 +57,19 @@
             ] }
           ] };
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "hide parent while child stays visible";
-      };
+      }
     }
 
     /**
      * Hide grand parent while its children stay visible.
      */
-    function test2(aContainerID, aGrandParentID, aChildID, aChild2ID) {
+    function test2(aContainerID, aGrandParentID, aChildID, aChild2ID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode(aGrandParentID)),
         new invokerChecker(EVENT_SHOW, getNode(aChildID)),
@@ -72,7 +77,8 @@
         new invokerChecker(EVENT_REORDER, getNode(aContainerID))
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // grand parent
@@ -89,9 +95,10 @@
         testAccessibleTree(aContainerID, tree);
 
         getNode(aGrandParentID).style.visibility = "hidden";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // child
@@ -102,17 +109,19 @@
             ] }
           ] };
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "hide grand parent while its children stay visible";
-      };
+      }
     }
 
     /**
      * Change container style, hide parents while their children stay visible.
      */
-    function test3(aContainerID, aParentID, aParent2ID, aChildID, aChild2ID) {
+    function test3(aContainerID, aParentID, aParent2ID, aChildID, aChild2ID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode(aParentID)),
         new invokerChecker(EVENT_HIDE, getNode(aParent2ID)),
@@ -121,7 +130,8 @@
         new invokerChecker(EVENT_REORDER, getNode(aContainerID))
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // parent
@@ -140,9 +150,10 @@
         getNode(aContainerID).style.color = "red";
         getNode(aParentID).style.visibility = "hidden";
         getNode(aParent2ID).style.visibility = "hidden";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // child
@@ -153,23 +164,26 @@
             ] }
           ] };
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "change container style, hide parents while their children stay visible";
-      };
+      }
     }
 
     /**
      * Change container style and make visible child inside the table.
      */
-    function test4(aContainerID, aChildID) {
+    function test4(aContainerID, aChildID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_SHOW, getNode(aChildID)),
         new invokerChecker(EVENT_REORDER, getNode(aChildID).parentNode)
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [
             { TABLE: [
@@ -182,9 +196,10 @@
 
         getNode(aContainerID).style.color = "red";
         getNode(aChildID).style.visibility = "visible";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [
             { TABLE: [
@@ -198,24 +213,27 @@
           ] }
         ] };
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "change container style, make visible child insdie the table";
-      };
+      }
     }
 
     /**
      * Hide subcontainer while child inside the table stays visible.
      */
-    function test5(aContainerID, aSubContainerID, aChildID) {
+    function test5(aContainerID, aSubContainerID, aChildID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode(aSubContainerID)),
         new invokerChecker(EVENT_SHOW, getNode(aChildID)),
         new invokerChecker(EVENT_REORDER, getNode(aContainerID))
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // subcontainer
@@ -233,9 +251,10 @@
         testAccessibleTree(aContainerID, tree);
 
         getNode(aSubContainerID).style.visibility = "hidden";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // child
@@ -243,17 +262,19 @@
             ] }
           ] };
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "hide subcontainer while child inside the table stays visible";
-      };
+      }
     }
 
     /**
      * Hide subcontainer while its child and child inside the nested table stays visible.
      */
-    function test6(aContainerID, aSubContainerID, aChildID, aChild2ID) {
+    function test6(aContainerID, aSubContainerID, aChildID, aChild2ID)
+    {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode(aSubContainerID)),
         new invokerChecker(EVENT_SHOW, getNode(aChildID)),
@@ -261,7 +282,8 @@
         new invokerChecker(EVENT_REORDER, getNode(aContainerID))
       ];
 
-      this.invoke = function invoke() {
+      this.invoke = function invoke()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // subcontainer
@@ -280,9 +302,10 @@
 
         // invoke
         getNode(aSubContainerID).style.visibility = "hidden";
-      };
+      }
 
-      this.finalCheck = function finalCheck() {
+      this.finalCheck = function finalCheck()
+      {
         var tree =
           { SECTION: [ // container
             { SECTION: [ // child
@@ -291,22 +314,24 @@
               { TEXT_LEAF: [] } ]} ]};
 
         testAccessibleTree(aContainerID, tree);
-      };
+      }
 
-      this.getID = function getID() {
+      this.getID = function getID()
+      {
         return "hide subcontainer while its child and child inside the nested table stays visible";
-      };
+      }
     }
 
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Test
 
-    // gA11yEventDumpID = "eventdump"; // debug stuff
-    // gA11yEventDumpToConsole = true;
+    //gA11yEventDumpID = "eventdump"; // debug stuff
+    //gA11yEventDumpToConsole = true;
 
     var gQueue = null;
 
-    function doTest() {
+    function doTest()
+    {
       gQueue = new eventQueue();
 
       gQueue.push(new test1("t1_container", "t1_parent", "t1_child"));

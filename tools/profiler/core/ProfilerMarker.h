@@ -27,8 +27,10 @@ public:
                           double aTime = 0)
     : mMarkerName(strdup(aMarkerName))
     , mPayload(Move(aPayload))
+    , mNext{nullptr}
     , mTime(aTime)
-  {}
+    , mGenID{0}
+    {}
 
   void SetGeneration(uint32_t aGenID) { mGenID = aGenID; }
 
@@ -51,7 +53,7 @@ public:
       // if have location data
       //   b.NameValue(marker, "location", ...);
       if (mPayload) {
-        aWriter.StartObjectElement(SpliceableJSONWriter::SingleLineStyle);
+        aWriter.StartObjectElement();
         {
           mPayload->StreamPayload(aWriter, aProcessStartTime, aUniqueStacks);
         }

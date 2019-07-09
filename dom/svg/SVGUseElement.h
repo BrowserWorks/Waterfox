@@ -8,7 +8,7 @@
 #define mozilla_dom_SVGUseElement_h
 
 #include "mozilla/dom/FromParser.h"
-#include "mozilla/dom/IDTracker.h"
+#include "nsReferencedElement.h"
 #include "nsStubMutationObserver.h"
 #include "mozilla/dom/SVGGraphicsElement.h"
 #include "nsSVGLength2.h"
@@ -57,7 +57,9 @@ public:
   NS_DECL_NSIMUTATIONOBSERVER_NODEWILLBEDESTROYED
 
   // for nsSVGUseFrame's nsIAnonymousContentCreator implementation.
-  already_AddRefed<nsIContent> CreateAnonymousContent();
+  nsIContent* CreateAnonymousContent();
+  nsIContent* GetAnonymousContent() const { return mClone; }
+  void DestroyAnonymousContent();
 
   // nsSVGElement specializations:
   virtual gfxMatrix PrependLocalTransformsTo(
@@ -68,7 +70,7 @@ public:
   // nsIContent interface
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedString> Href();
@@ -81,30 +83,20 @@ public:
   URLExtraData* GetContentURLData() const { return mContentURLData; }
 
 protected:
-  /**
-   * Helper that provides a reference to the element with the ID that is
-   * referenced by the 'use' element's 'href' attribute, and that will update
-   * the 'use' element if the element that that ID identifies changes to a
-   * different element (or none).
-   */
-  class ElementTracker final : public IDTracker {
+  class SourceReference : public nsReferencedElement {
   public:
-    explicit ElementTracker(SVGUseElement* aOwningUseElement)
-      : mOwningUseElement(aOwningUseElement)
-    {}
+    explicit SourceReference(SVGUseElement* aContainer) : mContainer(aContainer) {}
   protected:
     virtual void ElementChanged(Element* aFrom, Element* aTo) override {
-      IDTracker::ElementChanged(aFrom, aTo);
+      nsReferencedElement::ElementChanged(aFrom, aTo);
       if (aFrom) {
-        aFrom->RemoveMutationObserver(mOwningUseElement);
+        aFrom->RemoveMutationObserver(mContainer);
       }
-      mOwningUseElement->TriggerReclone();
+      mContainer->TriggerReclone();
     }
   private:
-    SVGUseElement* mOwningUseElement;
+    SVGUseElement* mContainer;
   };
-
-  nsSVGUseFrame* GetFrame() const;
 
   virtual LengthAttributesInfo GetLengthInfo() override;
   virtual StringAttributesInfo GetStringInfo() override;
@@ -115,7 +107,7 @@ protected:
    * element that we're referencing.
    */
   bool OurWidthAndHeightAreUsed() const;
-  void SyncWidthOrHeight(nsAtom *aName);
+  void SyncWidthOrHeight(nsIAtom *aName);
   void LookupHref();
   void TriggerReclone();
   void UnlinkSource();
@@ -129,7 +121,8 @@ protected:
   static StringInfo sStringInfo[2];
 
   nsCOMPtr<nsIContent> mOriginal; // if we've been cloned, our "real" copy
-  ElementTracker       mReferencedElementTracker;
+  nsCOMPtr<nsIContent> mClone;    // cloned tree
+  SourceReference      mSource;   // observed element
   RefPtr<URLExtraData> mContentURLData; // URL data for its anonymous content
 };
 

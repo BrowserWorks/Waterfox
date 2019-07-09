@@ -11,10 +11,10 @@
 TEST(TestXPathGenerator, TestQuoteArgumentWithoutQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"testing");
+  arg.Assign(NS_LITERAL_STRING("testing"));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"\'testing\'");
+  expectedResult.Assign(NS_LITERAL_STRING("\'testing\'"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -25,10 +25,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithoutQuote)
 TEST(TestXPathGenerator, TestQuoteArgumentWithSingleQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"\'testing\'");
+  arg.Assign(NS_LITERAL_STRING("\'testing\'"));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"\"\'testing\'\"");
+  expectedResult.Assign(NS_LITERAL_STRING("\"\'testing\'\""));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -39,10 +39,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithSingleQuote)
 TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"\"testing\"");
+  arg.Assign(NS_LITERAL_STRING("\"testing\""));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"\'\"testing\"\'");
+  expectedResult.Assign(NS_LITERAL_STRING("\'\"testing\"\'"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -53,10 +53,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuote)
 TEST(TestXPathGenerator, TestQuoteArgumentWithSingleAndDoubleQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"\'testing\"");
+  arg.Assign(NS_LITERAL_STRING("\'testing\""));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"concat(\'\',\"\'\",\'testing\"\')");
+  expectedResult.Assign(NS_LITERAL_STRING("concat(\'\',\"\'\",\'testing\"\')"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -68,10 +68,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithSingleAndDoubleQuote)
 TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndASequenceOfSingleQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"\'\'\'\'testing\"");
+  arg.Assign(NS_LITERAL_STRING("\'\'\'\'testing\""));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"concat(\'\',\"\'\'\'\'\",\'testing\"\')");
+  expectedResult.Assign(NS_LITERAL_STRING("concat(\'\',\"\'\'\'\'\",\'testing\"\')"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -83,10 +83,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndASequenceOfSingleQuo
 TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndTwoSequencesOfSingleQuote)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"\'\'\'\'testing\'\'\'\'\'\'\"");
+  arg.Assign(NS_LITERAL_STRING("\'\'\'\'testing\'\'\'\'\'\'\""));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"concat(\'\',\"\'\'\'\'\",\'testing\',\"\'\'\'\'\'\'\",\'\"\')");
+  expectedResult.Assign(NS_LITERAL_STRING("concat(\'\',\"\'\'\'\'\",\'testing\',\"\'\'\'\'\'\'\",\'\"\')"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -98,10 +98,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndTwoSequencesOfSingle
 TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndTwoSequencesOfSingleQuoteInMiddle)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"t\'\'\'\'estin\'\'\'\'\'\'\"g");
+  arg.Assign(NS_LITERAL_STRING("t\'\'\'\'estin\'\'\'\'\'\'\"g"));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"concat(\'t\',\"\'\'\'\'\",\'estin\',\"\'\'\'\'\'\'\",\'\"g\')");
+  expectedResult.Assign(NS_LITERAL_STRING("concat(\'t\',\"\'\'\'\'\",\'estin\',\"\'\'\'\'\'\'\",\'\"g\')"));
 
   nsAutoString result;
   XPathGenerator::QuoteArgument(arg, result);
@@ -113,10 +113,10 @@ TEST(TestXPathGenerator, TestQuoteArgumentWithDoubleQuoteAndTwoSequencesOfSingle
 TEST(TestXPathGenerator, TestEscapeNameWithNormalCharacters)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"testing");
+  arg.Assign(NS_LITERAL_STRING("testing"));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"testing");
+  expectedResult.Assign(NS_LITERAL_STRING("testing"));
 
   nsAutoString result;
   XPathGenerator::EscapeName(arg, result);
@@ -127,10 +127,10 @@ TEST(TestXPathGenerator, TestEscapeNameWithNormalCharacters)
 TEST(TestXPathGenerator, TestEscapeNameWithSpecialCharacters)
 {
   nsAutoString arg;
-  arg.AssignLiteral(u"^testing!");
+  arg.Assign(NS_LITERAL_STRING("^testing!"));
 
   nsAutoString expectedResult;
-  expectedResult.AssignLiteral(u"*[local-name()=\'^testing!\']");
+  expectedResult.Assign(NS_LITERAL_STRING("*[local-name()=\'^testing!\']"));
 
   nsAutoString result;
   XPathGenerator::EscapeName(arg, result);

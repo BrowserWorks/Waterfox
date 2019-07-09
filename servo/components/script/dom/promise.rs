@@ -11,6 +11,8 @@
 //! native Promise values that refer to the same JS value yet are distinct native objects
 //! (ie. address equality for the native objects is meaningless).
 
+use dom::bindings::callback::CallbackContainer;
+use dom::bindings::codegen::Bindings::PromiseBinding::AnyCallback;
 use dom::bindings::conversions::root_from_object;
 use dom::bindings::error::{Error, Fallible};
 use dom::bindings::reflector::{DomObject, MutDomObject, Reflector};
@@ -19,7 +21,7 @@ use dom::globalscope::GlobalScope;
 use dom::promisenativehandler::PromiseNativeHandler;
 use dom_struct::dom_struct;
 use js::conversions::ToJSValConvertible;
-use js::jsapi::{CallOriginalPromiseResolve, CallOriginalPromiseReject};
+use js::jsapi::{CallOriginalPromiseResolve, CallOriginalPromiseReject, CallOriginalPromiseThen};
 use js::jsapi::{JSAutoCompartment, CallArgs, JS_GetFunctionObject, JS_NewFunction};
 use js::jsapi::{JSContext, HandleValue, HandleObject, IsPromiseObject, GetFunctionNativeReserved};
 use js::jsapi::{JS_ClearPendingException, JSObject, AddRawValueRoot, RemoveRawValueRoot, PromiseState};
@@ -37,7 +39,7 @@ pub struct Promise {
     /// the SpiderMonkey GC, an explicit root for the reflector is stored while any
     /// native instance exists. This ensures that the reflector will never be GCed
     /// while native code could still interact with its native representation.
-    #[ignore_malloc_size_of = "SM handles JS values"]
+    #[ignore_heap_size_of = "SM handles JS values"]
     permanent_js_root: Heap<JSVal>,
 }
 
@@ -112,78 +114,95 @@ impl Promise {
     }
 
     #[allow(unrooted_must_root, unsafe_code)]
-    pub unsafe fn new_resolved(
-        global: &GlobalScope,
-        cx: *mut JSContext,
-        value: HandleValue,
-    ) -> Fallible<Rc<Promise>> {
+    pub fn Resolve(global: &GlobalScope,
+                   cx: *mut JSContext,
+                   value: HandleValue) -> Fallible<Rc<Promise>> {
         let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
-        rooted!(in(cx) let p = CallOriginalPromiseResolve(cx, value));
+        rooted!(in(cx) let p = unsafe { CallOriginalPromiseResolve(cx, value) });
         assert!(!p.handle().is_null());
-        Ok(Promise::new_with_js_promise(p.handle(), cx))
-    }
-
-    #[allow(unrooted_must_root, unsafe_code)]
-    pub unsafe fn new_rejected(
-        global: &GlobalScope,
-        cx: *mut JSContext,
-        value: HandleValue,
-    ) -> Fallible<Rc<Promise>> {
-        let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
-        rooted!(in(cx) let p = CallOriginalPromiseReject(cx, value));
-        assert!(!p.handle().is_null());
-        Ok(Promise::new_with_js_promise(p.handle(), cx))
-    }
-
-    #[allow(unsafe_code)]
-    pub fn resolve_native<T>(&self, val: &T) where T: ToJSValConvertible {
-        let cx = self.global().get_cx();
-        let _ac = JSAutoCompartment::new(cx, self.reflector().get_jsobject().get());
-        rooted!(in(cx) let mut v = UndefinedValue());
         unsafe {
-            val.to_jsval(cx, v.handle_mut());
-            self.resolve(cx, v.handle());
+            Ok(Promise::new_with_js_promise(p.handle(), cx))
         }
     }
 
     #[allow(unrooted_must_root, unsafe_code)]
-    pub unsafe fn resolve(&self, cx: *mut JSContext, value: HandleValue) {
-        if !ResolvePromise(cx, self.promise_obj(), value) {
-            JS_ClearPendingException(cx);
+    pub fn Reject(global: &GlobalScope,
+                  cx: *mut JSContext,
+                  value: HandleValue) -> Fallible<Rc<Promise>> {
+        let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
+        rooted!(in(cx) let p = unsafe { CallOriginalPromiseReject(cx, value) });
+        assert!(!p.handle().is_null());
+        unsafe {
+            Ok(Promise::new_with_js_promise(p.handle(), cx))
         }
     }
 
     #[allow(unsafe_code)]
-    pub fn reject_native<T>(&self, val: &T) where T: ToJSValConvertible {
-        let cx = self.global().get_cx();
-        let _ac = JSAutoCompartment::new(cx, self.reflector().get_jsobject().get());
+    pub fn resolve_native<T>(&self, cx: *mut JSContext, val: &T) where T: ToJSValConvertible {
         rooted!(in(cx) let mut v = UndefinedValue());
         unsafe {
             val.to_jsval(cx, v.handle_mut());
-            self.reject(cx, v.handle());
+        }
+        self.resolve(cx, v.handle());
+    }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn resolve(&self, cx: *mut JSContext, value: HandleValue) {
+        unsafe {
+            if !ResolvePromise(cx, self.promise_obj(), value) {
+                JS_ClearPendingException(cx);
+            }
         }
     }
 
     #[allow(unsafe_code)]
-    pub fn reject_error(&self, error: Error) {
-        let cx = self.global().get_cx();
-        let _ac = JSAutoCompartment::new(cx, self.reflector().get_jsobject().get());
+    pub fn reject_native<T>(&self, cx: *mut JSContext, val: &T) where T: ToJSValConvertible {
+        rooted!(in(cx) let mut v = UndefinedValue());
+        unsafe {
+            val.to_jsval(cx, v.handle_mut());
+        }
+        self.reject(cx, v.handle());
+    }
+
+    #[allow(unsafe_code)]
+    pub fn reject_error(&self, cx: *mut JSContext, error: Error) {
         rooted!(in(cx) let mut v = UndefinedValue());
         unsafe {
             error.to_jsval(cx, &self.global(), v.handle_mut());
-            self.reject(cx, v.handle());
+        }
+        self.reject(cx, v.handle());
+    }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn reject(&self,
+                        cx: *mut JSContext,
+                        value: HandleValue) {
+        unsafe {
+            if !RejectPromise(cx, self.promise_obj(), value) {
+                JS_ClearPendingException(cx);
+            }
         }
     }
 
     #[allow(unrooted_must_root, unsafe_code)]
-    pub unsafe fn reject(&self, cx: *mut JSContext, value: HandleValue) {
-        if !RejectPromise(cx, self.promise_obj(), value) {
-            JS_ClearPendingException(cx);
+    pub fn then(&self,
+                cx: *mut JSContext,
+                _callee: HandleObject,
+                cb_resolve: AnyCallback,
+                cb_reject: AnyCallback,
+                result: MutableHandleObject) {
+        let promise = self.promise_obj();
+        rooted!(in(cx) let resolve = cb_resolve.callback());
+        rooted!(in(cx) let reject = cb_reject.callback());
+        unsafe {
+            rooted!(in(cx) let res =
+                CallOriginalPromiseThen(cx, promise, resolve.handle(), reject.handle()));
+            result.set(*res);
         }
     }
 
     #[allow(unsafe_code)]
-    pub fn is_fulfilled(&self) -> bool {
+    pub fn is_settled(&self) -> bool {
         let state = unsafe { GetPromiseState(self.promise_obj()) };
         match state {
             PromiseState::Rejected | PromiseState::Fulfilled => true,

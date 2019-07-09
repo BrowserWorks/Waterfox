@@ -5,7 +5,7 @@
 description: Error thrown when accessing the corresponding property of the value object (generator function declaration)
 esid: sec-generator-function-definitions-runtime-semantics-instantiatefunctionobject
 es6id: 14.4.12
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     GeneratorDeclaration : function * ( FormalParameters ) { GeneratorBody }

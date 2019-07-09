@@ -11,7 +11,7 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/RefCounted.h"
 #include "mozilla/UniquePtr.h"
-#include "double-conversion/utils.h" // for DISALLOW_COPY_AND_ASSIGN
+#include "mozilla/utils.h"
 #include "CodecConfig.h"
 #include "VideoTypes.h"
 #include "MediaConduitErrors.h"
@@ -228,8 +228,6 @@ public:
   virtual bool GetRemoteSSRC(unsigned int* ssrc) = 0;
   virtual bool SetRemoteSSRC(unsigned int ssrc) = 0;
   virtual bool SetLocalCNAME(const char* cname) = 0;
-
-  virtual bool SetLocalMID(const std::string& mid) = 0;
 
   /**
    * Functions returning stats needed by w3c stats model.
@@ -468,10 +466,9 @@ public:
    *
    */
   virtual MediaConduitErrorCode SendAudioFrame(const int16_t audioData[],
-                                               int32_t lengthSamples,
-                                               int32_t samplingFreqHz,
-                                               uint32_t channels,
-                                               int32_t capture_delay) = 0;
+                                                int32_t lengthSamples,
+                                                int32_t samplingFreqHz,
+                                                int32_t capture_delay) = 0;
 
   /**
    * Function to grab a decoded audio-sample from the media engine for rendering
@@ -516,7 +513,6 @@ public:
     * NOTE: See AudioConduit for more information
     */
   virtual MediaConduitErrorCode EnableAudioLevelExtension(bool enabled, uint8_t id) = 0;
-  virtual MediaConduitErrorCode EnableMIDExtension(bool enabled, uint8_t id) = 0;
 
   virtual bool SetDtmfPayloadType(unsigned char type, int freq) = 0;
 

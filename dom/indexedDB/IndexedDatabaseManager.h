@@ -189,8 +189,10 @@ public:
   nsresult
   FlushPendingFileDeletions();
 
+#ifdef ENABLE_INTL_API
   static const nsCString&
   GetLocale();
+#endif
 
   static mozilla::Mutex&
   FileMutex()
@@ -239,7 +241,9 @@ private:
   // and FileInfo.mSliceRefCnt
   mozilla::Mutex mFileMutex;
 
+#ifdef ENABLE_INTL_API
   nsCString mLocale;
+#endif
 
   indexedDB::BackgroundUtilsChild* mBackgroundActor;
 

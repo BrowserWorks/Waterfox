@@ -5,6 +5,8 @@
 
 #include "nsAuth.h"
 #include "nsAuthSambaNTLM.h"
+#include "nsMemory.h"
+#include "nspr.h"
 #include "prenv.h"
 #include "plbase64.h"
 #include "prerror.h"
@@ -23,7 +25,7 @@ nsAuthSambaNTLM::~nsAuthSambaNTLM()
     // ntlm_auth reads from stdin regularly so closing our file handles
     // should cause it to exit.
     Shutdown();
-    free(mInitialMessage);
+    PR_Free(mInitialMessage);
 }
 
 void
@@ -248,7 +250,7 @@ nsAuthSambaNTLM::GetNextToken(const void *inToken,
     nsCString request;
     request.AssignLiteral("TT ");
     request.Append(encoded);
-    free(encoded);
+    PR_Free(encoded);
     request.Append('\n');
 
     if (!WriteString(mToChildFD, request))
@@ -265,7 +267,7 @@ nsAuthSambaNTLM::GetNextToken(const void *inToken,
     if (!buf)
         return NS_ERROR_FAILURE;
     *outToken = nsMemory::Clone(buf, *outTokenLen);
-    free(buf);
+    PR_Free(buf);
     if (!*outToken) {
         return NS_ERROR_OUT_OF_MEMORY;
     }

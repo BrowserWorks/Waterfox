@@ -13,8 +13,8 @@ use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
 use dom::bindings::error::{Error, ErrorResult, Fallible};
 use dom::bindings::inheritance::{CharacterDataTypeId, NodeTypeId};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{JS, MutJS, Root, RootedReference};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot, MutDom, RootedReference};
 use dom::bindings::str::DOMString;
 use dom::bindings::trace::JSTraceable;
 use dom::bindings::weakref::{WeakRef, WeakRefVec};
@@ -27,8 +27,8 @@ use dom::node::{Node, UnbindContext};
 use dom::text::Text;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use heapsize::HeapSizeOf;
 use js::jsapi::JSTracer;
-use malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
 use std::cell::{Cell, UnsafeCell};
 use std::cmp::{Ord, Ordering, PartialEq, PartialOrd};
 
@@ -49,7 +49,7 @@ impl Range {
         }
     }
 
-    pub fn new_with_doc(document: &Document) -> DomRoot<Range> {
+    pub fn new_with_doc(document: &Document) -> Root<Range> {
         let root = document.upcast();
         Range::new(document, root, 0, root, 0)
     }
@@ -57,14 +57,11 @@ impl Range {
     pub fn new(document: &Document,
                start_container: &Node, start_offset: u32,
                end_container: &Node, end_offset: u32)
-               -> DomRoot<Range> {
-        let range = reflect_dom_object(
-            Box::new(Range::new_inherited(
-                start_container, start_offset, end_container, end_offset
-            )),
-            document.window(),
-            RangeBinding::Wrap
-        );
+               -> Root<Range> {
+        let range = reflect_dom_object(box Range::new_inherited(start_container, start_offset,
+                                                                end_container, end_offset),
+                                       document.window(),
+                                       RangeBinding::Wrap);
         start_container.ranges().push(WeakRef::new(&range));
         if start_container != end_container {
             end_container.ranges().push(WeakRef::new(&range));
@@ -73,7 +70,7 @@ impl Range {
     }
 
     // https://dom.spec.whatwg.org/#dom-range
-    pub fn Constructor(window: &Window) -> Fallible<DomRoot<Range>> {
+    pub fn Constructor(window: &Window) -> Fallible<Root<Range>> {
         let document = window.Document();
         Ok(Range::new_with_doc(&document))
     }
@@ -94,9 +91,9 @@ impl Range {
     }
 
     // https://dom.spec.whatwg.org/#concept-range-clone
-    fn contained_children(&self) -> Fallible<(Option<DomRoot<Node>>,
-                                              Option<DomRoot<Node>>,
-                                              Vec<DomRoot<Node>>)> {
+    fn contained_children(&self) -> Fallible<(Option<Root<Node>>,
+                                              Option<Root<Node>>,
+                                              Vec<Root<Node>>)> {
         let start_node = self.StartContainer();
         let end_node = self.EndContainer();
         // Steps 5-6.
@@ -123,7 +120,7 @@ impl Range {
             };
 
         // Step 11.
-        let contained_children: Vec<DomRoot<Node>> =
+        let contained_children: Vec<Root<Node>> =
             common_ancestor.children().filter(|n| self.contains(n)).collect();
 
         // Step 12.
@@ -194,7 +191,7 @@ impl Range {
 
 impl RangeMethods for Range {
     // https://dom.spec.whatwg.org/#dom-range-startcontainer
-    fn StartContainer(&self) -> DomRoot<Node> {
+    fn StartContainer(&self) -> Root<Node> {
         self.start.node.get()
     }
 
@@ -204,7 +201,7 @@ impl RangeMethods for Range {
     }
 
     // https://dom.spec.whatwg.org/#dom-range-endcontainer
-    fn EndContainer(&self) -> DomRoot<Node> {
+    fn EndContainer(&self) -> Root<Node> {
         self.end.node.get()
     }
 
@@ -219,7 +216,7 @@ impl RangeMethods for Range {
     }
 
     // https://dom.spec.whatwg.org/#dom-range-commonancestorcontainer
-    fn CommonAncestorContainer(&self) -> DomRoot<Node> {
+    fn CommonAncestorContainer(&self) -> Root<Node> {
         let end_container = self.EndContainer();
         // Step 1.
         for container in self.StartContainer().inclusive_ancestors() {
@@ -369,7 +366,7 @@ impl RangeMethods for Range {
     }
 
     // https://dom.spec.whatwg.org/#dom-range-clonerange
-    fn CloneRange(&self) -> DomRoot<Range> {
+    fn CloneRange(&self) -> Root<Range> {
         let start_node = self.StartContainer();
         let owner_doc = start_node.owner_doc();
         Range::new(&owner_doc, &start_node, self.StartOffset(),
@@ -428,7 +425,7 @@ impl RangeMethods for Range {
 
     // https://dom.spec.whatwg.org/#dom-range-clonecontents
     // https://dom.spec.whatwg.org/#concept-range-clone
-    fn CloneContents(&self) -> Fallible<DomRoot<DocumentFragment>> {
+    fn CloneContents(&self) -> Fallible<Root<DocumentFragment>> {
         // Step 3.
         let start_node = self.StartContainer();
         let start_offset = self.StartOffset();
@@ -527,7 +524,7 @@ impl RangeMethods for Range {
 
     // https://dom.spec.whatwg.org/#dom-range-extractcontents
     // https://dom.spec.whatwg.org/#concept-range-extract
-    fn ExtractContents(&self) -> Fallible<DomRoot<DocumentFragment>> {
+    fn ExtractContents(&self) -> Fallible<Root<DocumentFragment>> {
         // Step 3.
         let start_node = self.StartContainer();
         let start_offset = self.StartOffset();
@@ -566,13 +563,13 @@ impl RangeMethods for Range {
 
         let (new_node, new_offset) = if start_node.is_inclusive_ancestor_of(&end_node) {
             // Step 13.
-            (DomRoot::from_ref(&*start_node), start_offset)
+            (Root::from_ref(&*start_node), start_offset)
         } else {
             // Step 14.1-2.
             let reference_node = start_node.ancestors()
                                            .take_while(|n| !n.is_inclusive_ancestor_of(&end_node))
                                            .last()
-                                           .unwrap_or(DomRoot::from_ref(&start_node));
+                                           .unwrap_or(Root::from_ref(&start_node));
             // Step 14.3.
             (reference_node.GetParentNode().unwrap(), reference_node.index() + 1)
         };
@@ -685,11 +682,11 @@ impl RangeMethods for Range {
                     None => return Err(Error::HierarchyRequest)
                 };
                 // Step 5.
-                (Some(DomRoot::from_ref(&*start_node)), parent)
+                (Some(Root::from_ref(&*start_node)), parent)
             } else {
                 // Steps 4-5.
                 let child = start_node.ChildNodes().Item(start_offset);
-                (child, DomRoot::from_ref(&*start_node))
+                (child, Root::from_ref(&*start_node))
             };
 
         // Step 6.
@@ -703,7 +700,7 @@ impl RangeMethods for Range {
             match start_node.downcast::<Text>() {
                 Some(text) => {
                     split_text = text.SplitText(start_offset)?;
-                    let new_reference = DomRoot::upcast::<Node>(split_text);
+                    let new_reference = Root::upcast::<Node>(split_text);
                     assert!(new_reference.GetParentNode().r() == Some(&parent));
                     Some(new_reference)
                 },
@@ -773,7 +770,7 @@ impl RangeMethods for Range {
         let mut next = iter.next();
         while let Some(child) = next {
             if self.contains(&child) {
-                contained_children.push(Dom::from_ref(&*child));
+                contained_children.push(JS::from_ref(&*child));
                 next = iter.next_skipping_children();
             } else {
                 next = iter.next();
@@ -782,11 +779,11 @@ impl RangeMethods for Range {
 
         let (new_node, new_offset) = if start_node.is_inclusive_ancestor_of(&end_node) {
             // Step 5.
-            (DomRoot::from_ref(&*start_node), start_offset)
+            (Root::from_ref(&*start_node), start_offset)
         } else {
             // Step 6.
-            fn compute_reference(start_node: &Node, end_node: &Node) -> (DomRoot<Node>, u32) {
-                let mut reference_node = DomRoot::from_ref(start_node);
+            fn compute_reference(start_node: &Node, end_node: &Node) -> (Root<Node>, u32) {
+                let mut reference_node = Root::from_ref(start_node);
                 while let Some(parent) = reference_node.GetParentNode() {
                     if parent.is_inclusive_ancestor_of(end_node) {
                         return (parent, reference_node.index() + 1)
@@ -882,7 +879,7 @@ impl RangeMethods for Range {
         // Step 4.
         let ancestor = self.CommonAncestorContainer();
         let mut iter = start_node.following_nodes(&ancestor)
-                                 .filter_map(DomRoot::downcast::<Text>);
+                                 .filter_map(Root::downcast::<Text>);
 
         while let Some(child) = iter.next() {
             if self.contains(child.upcast()) {
@@ -901,13 +898,13 @@ impl RangeMethods for Range {
     }
 
     // https://dvcs.w3.org/hg/innerhtml/raw-file/tip/index.html#extensions-to-the-range-interface
-    fn CreateContextualFragment(&self, fragment: DOMString) -> Fallible<DomRoot<DocumentFragment>> {
+    fn CreateContextualFragment(&self, fragment: DOMString) -> Fallible<Root<DocumentFragment>> {
         // Step 1.
         let node = self.StartContainer();
         let owner_doc = node.owner_doc();
         let element = match node.type_id() {
             NodeTypeId::Document(_) | NodeTypeId::DocumentFragment => None,
-            NodeTypeId::Element(_) => Some(DomRoot::downcast::<Element>(node).unwrap()),
+            NodeTypeId::Element(_) => Some(Root::downcast::<Element>(node).unwrap()),
             NodeTypeId::CharacterData(CharacterDataTypeId::Comment) |
             NodeTypeId::CharacterData(CharacterDataTypeId::Text) => node.GetParentElement(),
             NodeTypeId::CharacterData(CharacterDataTypeId::ProcessingInstruction) |
@@ -933,10 +930,10 @@ impl RangeMethods for Range {
     }
 }
 
-#[derive(DenyPublicFields, JSTraceable, MallocSizeOf)]
+#[derive(DenyPublicFields, HeapSizeOf, JSTraceable)]
 #[must_root]
 pub struct BoundaryPoint {
-    node: MutDom<Node>,
+    node: MutJS<Node>,
     offset: Cell<u32>,
 }
 
@@ -945,7 +942,7 @@ impl BoundaryPoint {
         debug_assert!(!node.is_doctype());
         debug_assert!(offset <= node.len());
         BoundaryPoint {
-            node: MutDom::new(node),
+            node: MutJS::new(node),
             offset: Cell::new(offset),
         }
     }
@@ -1031,19 +1028,19 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 2.1-2. when inserting a node.
-    /// <https://dom.spec.whatwg.org/#concept-node-insert>
+    /// https://dom.spec.whatwg.org/#concept-node-insert
     pub fn increase_above(&self, node: &Node, offset: u32, delta: u32) {
         self.map_offset_above(node, offset, |offset| offset + delta);
     }
 
     /// Used for steps 4-5. when removing a node.
-    /// <https://dom.spec.whatwg.org/#concept-node-remove>
+    /// https://dom.spec.whatwg.org/#concept-node-remove
     pub fn decrease_above(&self, node: &Node, offset: u32, delta: u32) {
         self.map_offset_above(node, offset, |offset| offset - delta);
     }
 
     /// Used for steps 2-3. when removing a node.
-    /// <https://dom.spec.whatwg.org/#concept-node-remove>
+    /// https://dom.spec.whatwg.org/#concept-node-remove
     pub fn drain_to_parent(&self, context: &UnbindContext, child: &Node) {
         if self.is_empty() {
             return;
@@ -1072,7 +1069,7 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 7.1-2. when normalizing a node.
-    /// <https://dom.spec.whatwg.org/#dom-node-normalize>
+    /// https://dom.spec.whatwg.org/#dom-node-normalize
     pub fn drain_to_preceding_text_sibling(&self, node: &Node, sibling: &Node, length: u32) {
         if self.is_empty() {
             return;
@@ -1099,7 +1096,7 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 7.3-4. when normalizing a node.
-    /// <https://dom.spec.whatwg.org/#dom-node-normalize>
+    /// https://dom.spec.whatwg.org/#dom-node-normalize
     pub fn move_to_text_child_at(&self,
                                  node: &Node, offset: u32,
                                  child: &Node, new_offset: u32) {
@@ -1142,7 +1139,7 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 8-11. when replacing character data.
-    /// <https://dom.spec.whatwg.org/#concept-cd-replace>
+    /// https://dom.spec.whatwg.org/#concept-cd-replace
     pub fn replace_code_units(&self,
                               node: &Node, offset: u32,
                               removed_code_units: u32, added_code_units: u32) {
@@ -1156,7 +1153,7 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 7.2-3. when splitting a text node.
-    /// <https://dom.spec.whatwg.org/#concept-text-split>
+    /// https://dom.spec.whatwg.org/#concept-text-split
     pub fn move_to_following_text_sibling_above(&self,
                                                 node: &Node, offset: u32,
                                                 sibling: &Node) {
@@ -1202,7 +1199,7 @@ impl WeakRangeVec {
     }
 
     /// Used for steps 7.4-5. when splitting a text node.
-    /// <https://dom.spec.whatwg.org/#concept-text-split>
+    /// https://dom.spec.whatwg.org/#concept-text-split
     pub fn increment_at(&self, node: &Node, offset: u32) {
         unsafe {
             (*self.cell.get()).update(|entry| {
@@ -1251,9 +1248,9 @@ impl WeakRangeVec {
 }
 
 #[allow(unsafe_code)]
-impl MallocSizeOf for WeakRangeVec {
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        unsafe { (*self.cell.get()).size_of(ops) }
+impl HeapSizeOf for WeakRangeVec {
+    fn heap_size_of_children(&self) -> usize {
+        unsafe { (*self.cell.get()).heap_size_of_children() }
     }
 }
 

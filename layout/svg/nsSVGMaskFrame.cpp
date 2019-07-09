@@ -12,7 +12,7 @@
 #include "gfxContext.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "mozilla/dom/SVGMaskElement.h"
 
 using namespace mozilla;
@@ -63,7 +63,8 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(MaskParams& aParams)
   // and maskArea) is important for performance.
   context->Save();
   nsSVGUtils::SetClipRect(context, aParams.toUserSpace, maskArea);
-  gfxRect maskSurfaceRect = context->GetClipExtents(gfxContext::eDeviceSpace);
+  context->SetMatrix(gfxMatrix());
+  gfxRect maskSurfaceRect = context->GetClipExtents();
   maskSurfaceRect.RoundOut();
   context->Restore();
 
@@ -159,7 +160,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(MaskParams& aParams)
 gfxRect
 nsSVGMaskFrame::GetMaskArea(nsIFrame* aMaskedFrame)
 {
-  SVGMaskElement *maskElem = static_cast<SVGMaskElement*>(GetContent());
+  SVGMaskElement *maskElem = static_cast<SVGMaskElement*>(mContent);
 
   uint16_t units =
     maskElem->mEnumAttributes[SVGMaskElement::MASKUNITS].GetAnimValue();
@@ -181,7 +182,7 @@ nsSVGMaskFrame::GetMaskArea(nsIFrame* aMaskedFrame)
 
 nsresult
 nsSVGMaskFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                 nsAtom* aAttribute,
+                                 nsIAtom* aAttribute,
                                  int32_t  aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -191,7 +192,7 @@ nsSVGMaskFrame::AttributeChanged(int32_t  aNameSpaceID,
        aAttribute == nsGkAtoms::height||
        aAttribute == nsGkAtoms::maskUnits ||
        aAttribute == nsGkAtoms::maskContentUnits)) {
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
   return nsSVGContainerFrame::AttributeChanged(aNameSpaceID,
@@ -220,7 +221,7 @@ nsSVGMaskFrame::GetCanvasTM()
 gfxMatrix
 nsSVGMaskFrame::GetMaskTransform(nsIFrame* aMaskedFrame)
 {
-  SVGMaskElement *content = static_cast<SVGMaskElement*>(GetContent());
+  SVGMaskElement *content = static_cast<SVGMaskElement*>(mContent);
 
   nsSVGEnum* maskContentUnits =
     &content->mEnumAttributes[SVGMaskElement::MASKCONTENTUNITS];

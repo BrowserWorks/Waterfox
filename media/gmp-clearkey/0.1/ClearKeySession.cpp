@@ -60,7 +60,7 @@ ClearKeySession::Init(InitDataType aInitDataType,
     mKeyIds.push_back(keyId);
   }
 
-  if (mKeyIds.empty()) {
+  if (!mKeyIds.size()) {
     return false;
   }
 

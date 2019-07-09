@@ -12,7 +12,7 @@
 //!
 //! 1. Layout is not allowed to mutate the DOM.
 //!
-//! 2. Layout is not allowed to see anything with `LayoutDom` in the name, because it could hang
+//! 2. Layout is not allowed to see anything with `LayoutJS` in the name, because it could hang
 //!    onto these objects and cause use-after-free.
 //!
 //! When implementing wrapper functions, be careful that you do not touch the borrow flags, or you
@@ -146,7 +146,7 @@ impl<T: ThreadSafeLayoutNode> ThreadSafeLayoutNodeHelpers for T {
                 // because that's what the code expects.
                 RestyleDamage::rebuild_and_reflow()
             } else {
-                data.style_data.element_data.borrow().damage
+                data.style_data.element_data.borrow().restyle.damage
             }
         };
 

@@ -105,10 +105,10 @@ AudioData::TransferAndUpdateTimestampAndDuration(AudioData* aOther,
 static bool
 ValidatePlane(const VideoData::YCbCrBuffer::Plane& aPlane)
 {
-  return aPlane.mWidth <= PlanarYCbCrImage::MAX_DIMENSION &&
-         aPlane.mHeight <= PlanarYCbCrImage::MAX_DIMENSION &&
-         aPlane.mWidth * aPlane.mHeight < MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT &&
-         aPlane.mStride > 0;
+  return aPlane.mWidth <= PlanarYCbCrImage::MAX_DIMENSION
+         && aPlane.mHeight <= PlanarYCbCrImage::MAX_DIMENSION
+         && aPlane.mWidth * aPlane.mHeight < MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT
+         && aPlane.mStride > 0 && aPlane.mWidth <= aPlane.mStride;
 }
 
 static bool ValidateBufferAndPicture(const VideoData::YCbCrBuffer& aBuffer,
@@ -116,8 +116,8 @@ static bool ValidateBufferAndPicture(const VideoData::YCbCrBuffer& aBuffer,
 {
   // The following situation should never happen unless there is a bug
   // in the decoder
-  if (aBuffer.mPlanes[1].mWidth != aBuffer.mPlanes[2].mWidth ||
-      aBuffer.mPlanes[1].mHeight != aBuffer.mPlanes[2].mHeight) {
+  if (aBuffer.mPlanes[1].mWidth != aBuffer.mPlanes[2].mWidth
+      || aBuffer.mPlanes[1].mHeight != aBuffer.mPlanes[2].mHeight) {
     NS_ERROR("C planes with different sizes");
     return false;
   }
@@ -128,9 +128,9 @@ static bool ValidateBufferAndPicture(const VideoData::YCbCrBuffer& aBuffer,
     MOZ_ASSERT(false, "Empty picture rect");
     return false;
   }
-  if (!ValidatePlane(aBuffer.mPlanes[0]) ||
-      !ValidatePlane(aBuffer.mPlanes[1]) ||
-      !ValidatePlane(aBuffer.mPlanes[2])) {
+  if (!ValidatePlane(aBuffer.mPlanes[0])
+      || !ValidatePlane(aBuffer.mPlanes[1])
+      || !ValidatePlane(aBuffer.mPlanes[2])) {
     NS_WARNING("Invalid plane size");
     return false;
   }
@@ -139,8 +139,11 @@ static bool ValidateBufferAndPicture(const VideoData::YCbCrBuffer& aBuffer,
   // the frame we've been supplied without indexing out of bounds.
   CheckedUint32 xLimit = aPicture.x + CheckedUint32(aPicture.width);
   CheckedUint32 yLimit = aPicture.y + CheckedUint32(aPicture.height);
-  if (!xLimit.isValid() || xLimit.value() > aBuffer.mPlanes[0].mStride ||
-      !yLimit.isValid() || yLimit.value() > aBuffer.mPlanes[0].mHeight) {
+  if (!xLimit.isValid()
+      || xLimit.value() > aBuffer.mPlanes[0].mStride
+      || !yLimit.isValid()
+      || yLimit.value() > aBuffer.mPlanes[0].mHeight)
+  {
     // The specified picture dimensions can't be contained inside the video
     // frame, we'll stomp memory if we try to copy it. Fail.
     NS_WARNING("Overflowing picture rect");
@@ -254,7 +257,6 @@ ConstructPlanarYCbCrData(const VideoInfo& aInfo,
   data.mPicSize = aPicture.Size();
   data.mStereoMode = aInfo.mStereoMode;
   data.mYUVColorSpace = aBuffer.mYUVColorSpace;
-  data.mBitDepth = aBuffer.mBitDepth;
   return data;
 }
 
@@ -322,8 +324,7 @@ VideoData::CreateAndCopyData(const VideoInfo& aInfo,
 #if XP_WIN
   // We disable this code path on Windows version earlier of Windows 8 due to
   // intermittent crashes with old drivers. See bug 1405110.
-  if (IsWin8OrLater() && !XRE_IsParentProcess() &&
-      aAllocator && aAllocator->GetCompositorBackendType()
+  if (IsWin8OrLater() && aAllocator && aAllocator->GetCompositorBackendType()
                     == layers::LayersBackend::LAYERS_D3D11) {
     RefPtr<layers::D3D11YCbCrImage> d3d11Image = new layers::D3D11YCbCrImage();
     PlanarYCbCrData data = ConstructPlanarYCbCrData(aInfo, aBuffer, aPicture);

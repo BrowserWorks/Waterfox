@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.every
 es5id: 15.4.4.16-7-c-i-9
 description: >
     Array.prototype.every - element to be retrieved is own accessor
@@ -25,7 +24,7 @@ description: >
             },
             configurable: true
         });
-
+        
 
 assert.sameValue(Array.prototype.every.call(obj, callbackfn), false, 'Array.prototype.every.call(obj, callbackfn)');
 

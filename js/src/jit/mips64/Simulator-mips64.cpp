@@ -40,8 +40,6 @@
 #include "jit/mips64/Assembler-mips64.h"
 #include "threading/LockGuard.h"
 #include "vm/Runtime.h"
-#include "wasm/WasmInstance.h"
-#include "wasm/WasmSignalHandlers.h"
 
 #define I8(v)   static_cast<int8_t>(v)
 #define I16(v)  static_cast<int16_t>(v)
@@ -1269,7 +1267,7 @@ Simulator::Simulator()
     pc_modified_ = false;
     icount_ = 0;
     break_count_ = 0;
-    wasm_interrupt_ = false;
+    resume_pc_ = 0;
     break_pc_ = nullptr;
     break_instr_ = 0;
     single_stepping_ = false;
@@ -1610,18 +1608,6 @@ int64_t
 Simulator::get_pc() const
 {
     return registers_[pc];
-}
-
-void
-Simulator::startInterrupt(JitActivation* activation)
-{
-    MOZ_CRASH("NIY");
-}
-
-void
-Simulator::handleWasmInterrupt()
-{
-    MOZ_CRASH("NIY");
 }
 
 // The MIPS cannot do unaligned reads and writes.  On some MIPS platforms an
@@ -2734,7 +2720,6 @@ Simulator::decodeTypeRegister(SimInstruction* instr)
             break;
           case rs_cfc1:
             setRegister(rt_reg, alu_out);
-            MOZ_FALLTHROUGH;
           case rs_mfc1:
             setRegister(rt_reg, alu_out);
             break;
@@ -2823,7 +2808,6 @@ Simulator::decodeTypeRegister(SimInstruction* instr)
                 // Rounding modes are not yet supported.
                 MOZ_ASSERT((FCSR_ & 3) == 0);
                 // In rounding mode 0 it should behave like ROUND.
-                MOZ_FALLTHROUGH;
               case ff_round_w_fmt: { // Round double to word (round half to even).
                 float rounded = std::floor(fs_value + 0.5);
                 int32_t result = I32(rounded);
@@ -2959,7 +2943,6 @@ Simulator::decodeTypeRegister(SimInstruction* instr)
                 // Rounding modes are not yet supported.
                 MOZ_ASSERT((FCSR_ & 3) == 0);
                 // In rounding mode 0 it should behave like ROUND.
-                MOZ_FALLTHROUGH;
               case ff_round_w_fmt: { // Round double to word (round half to even).
                 double rounded = std::floor(ds_value + 0.5);
                 int32_t result = I32(rounded);
@@ -3041,9 +3024,6 @@ Simulator::decodeTypeRegister(SimInstruction* instr)
                 }
                 break;
               case ff_movf_fmt:
-              // location of cc field in MOVF is equal to float branch instructions
-                cc = instr->fbccValue();
-                fcsr_cc = GetFCSRConditionBit(cc);
                 if (testFCSRBit(fcsr_cc)) {
                   setFpuRegisterDouble(fd_reg, getFpuRegisterDouble(fs_reg));
                 }
@@ -3334,7 +3314,6 @@ Simulator::decodeTypeImmediate(SimInstruction* instr)
             } else {
                 next_pc = current_pc + kBranchReturnOffset;
             }
-            break;
           default:
             break;
         };
@@ -3733,19 +3712,6 @@ Simulator::disable_single_stepping()
     single_step_callback_arg_ = nullptr;
 }
 
-static void
-FakeInterruptHandler()
-{
-    JSContext* cx = TlsContext.get();
-    uint8_t* pc = cx->simulator()->get_pc_as<uint8_t*>();
-
-    const wasm::CodeSegment* cs = nullptr;
-    if (!wasm::InInterruptibleCode(cx, pc, &cs))
-        return;
-
-    cx->simulator()->trigger_wasm_interrupt();
-}
-
 template<bool enableStopSimAt>
 void
 Simulator::execute()
@@ -3756,6 +3722,7 @@ Simulator::execute()
     // Get the PC to simulate. Cannot use the accessor here as we need the
     // raw PC value and not the one used as input to arithmetic instructions.
     int64_t program_counter = get_pc();
+    WasmActivation* activation = TlsContext.get()->wasmActivationStack();
 
     while (program_counter != end_sim_pc) {
         if (enableStopSimAt && (icount_ == Simulator::StopSimAt)) {
@@ -3764,15 +3731,16 @@ Simulator::execute()
         } else {
             if (single_stepping_)
                 single_step_callback_(single_step_callback_arg_, this, (void*)program_counter);
-            if (MOZ_UNLIKELY(JitOptions.simulatorAlwaysInterrupt))
-                FakeInterruptHandler();
             SimInstruction* instr = reinterpret_cast<SimInstruction *>(program_counter);
             instructionDecode(instr);
             icount_++;
 
-            if (MOZ_UNLIKELY(wasm_interrupt_)) {
-                handleWasmInterrupt();
-                wasm_interrupt_ = false;
+            int64_t rpc = resume_pc_;
+            if (MOZ_UNLIKELY(rpc != 0)) {
+                // wasm signal handler ran and we have to adjust the pc.
+                activation->setResumePC((void*)get_pc());
+                set_pc(rpc);
+                resume_pc_ = 0;
             }
         }
         program_counter = get_pc();

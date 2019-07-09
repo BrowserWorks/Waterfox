@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 'use strict';
 
 (function() {
@@ -19,14 +18,6 @@
   var associatedBindings = mojo;
   var codec = mojo.internal;
   var validator = mojo.internal;
-
-  var exports = mojo.internal.exposeNamespace('device.mojom');
-  var string16$ =
-      mojo.internal.exposeNamespace('mojo.common.mojom');
-  if (mojo.config.autoLoadMojomDeps) {
-    mojo.internal.loadMojomIfNecessary(
-        'mojo/common/string16.mojom', '../../../../mojo/common/string16.mojom.js');
-  }
 
 
   var UsbOpenDeviceError = {};
@@ -299,7 +290,7 @@
 
     
     // validate UsbAlternateInterfaceInfo.interfaceName
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 8, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 8, true)
     if (err !== validator.validationError.NONE)
         return err;
 
@@ -328,7 +319,7 @@
     decoder.skip(1);
     decoder.skip(1);
     decoder.skip(1);
-    val.interfaceName = decoder.decodeStructPointer(string16$.String16);
+    val.interfaceName = decoder.decodeStruct(codec.NullableString);
     val.endpoints = decoder.decodeArrayPointer(new codec.PointerTo(UsbEndpointInfo));
     return val;
   };
@@ -345,7 +336,7 @@
     encoder.skip(1);
     encoder.skip(1);
     encoder.skip(1);
-    encoder.encodeStructPointer(string16$.String16, val.interfaceName);
+    encoder.encodeStruct(codec.NullableString, val.interfaceName);
     encoder.encodeArrayPointer(new codec.PointerTo(UsbEndpointInfo), val.endpoints);
   };
   function UsbInterfaceInfo(values) {
@@ -457,7 +448,7 @@
 
     
     // validate UsbConfigurationInfo.configurationName
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 8, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 8, true)
     if (err !== validator.validationError.NONE)
         return err;
 
@@ -486,7 +477,7 @@
     decoder.skip(1);
     decoder.skip(1);
     decoder.skip(1);
-    val.configurationName = decoder.decodeStructPointer(string16$.String16);
+    val.configurationName = decoder.decodeStruct(codec.NullableString);
     val.interfaces = decoder.decodeArrayPointer(new codec.PointerTo(UsbInterfaceInfo));
     return val;
   };
@@ -503,7 +494,7 @@
     encoder.skip(1);
     encoder.skip(1);
     encoder.skip(1);
-    encoder.encodeStructPointer(string16$.String16, val.configurationName);
+    encoder.encodeStruct(codec.NullableString, val.configurationName);
     encoder.encodeArrayPointer(new codec.PointerTo(UsbInterfaceInfo), val.interfaces);
   };
   function UsbDeviceInfo(values) {
@@ -572,21 +563,21 @@
 
     
     // validate UsbDeviceInfo.manufacturerName
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 24, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 24, true)
     if (err !== validator.validationError.NONE)
         return err;
 
 
     
     // validate UsbDeviceInfo.productName
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 32, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 32, true)
     if (err !== validator.validationError.NONE)
         return err;
 
 
     
     // validate UsbDeviceInfo.serialNumber
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 40, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 40, true)
     if (err !== validator.validationError.NONE)
         return err;
 
@@ -623,9 +614,9 @@
     val.activeConfiguration = decoder.decodeStruct(codec.Uint8);
     decoder.skip(1);
     decoder.skip(1);
-    val.manufacturerName = decoder.decodeStructPointer(string16$.String16);
-    val.productName = decoder.decodeStructPointer(string16$.String16);
-    val.serialNumber = decoder.decodeStructPointer(string16$.String16);
+    val.manufacturerName = decoder.decodeStruct(codec.NullableString);
+    val.productName = decoder.decodeStruct(codec.NullableString);
+    val.serialNumber = decoder.decodeStruct(codec.NullableString);
     val.configurations = decoder.decodeArrayPointer(new codec.PointerTo(UsbConfigurationInfo));
     return val;
   };
@@ -649,9 +640,9 @@
     encoder.encodeStruct(codec.Uint8, val.activeConfiguration);
     encoder.skip(1);
     encoder.skip(1);
-    encoder.encodeStructPointer(string16$.String16, val.manufacturerName);
-    encoder.encodeStructPointer(string16$.String16, val.productName);
-    encoder.encodeStructPointer(string16$.String16, val.serialNumber);
+    encoder.encodeStruct(codec.NullableString, val.manufacturerName);
+    encoder.encodeStruct(codec.NullableString, val.productName);
+    encoder.encodeStruct(codec.NullableString, val.serialNumber);
     encoder.encodeArrayPointer(new codec.PointerTo(UsbConfigurationInfo), val.configurations);
   };
   function UsbControlTransferParams(values) {
@@ -3441,6 +3432,7 @@
   };
   UsbDeviceStub.prototype.validator = validateUsbDeviceRequest;
   UsbDeviceProxy.prototype.validator = validateUsbDeviceResponse;
+  var exports = mojo.internal.exposeNamespace("device.mojom");
   exports.UsbOpenDeviceError = UsbOpenDeviceError;
   exports.UsbTransferDirection = UsbTransferDirection;
   exports.UsbControlTransferType = UsbControlTransferType;

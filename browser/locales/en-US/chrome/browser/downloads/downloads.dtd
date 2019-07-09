@@ -56,7 +56,6 @@
 <!ENTITY cmd.show.accesskey               "F">
 <!ENTITY cmd.showMac.label                "Show In Finder">
 <!ENTITY cmd.showMac.accesskey            "F">
-<!ENTITY cmd.showDownloads.label          "Show Downloads Folder">
 <!ENTITY cmd.retry.label                  "Retry">
 <!ENTITY cmd.goToDownloadPage.label       "Go To Download Page">
 <!ENTITY cmd.goToDownloadPage.accesskey   "G">
@@ -134,12 +133,6 @@
      -->
 <!ENTITY downloadsHistory.label           "Show All Downloads">
 <!ENTITY downloadsHistory.accesskey       "S">
-
-<!-- LOCALIZATION NOTE (downloadDetails.label):
-     This string is shown at the top of the Download Details Panel, to indicate
-     that we are showing the details of a single download.
-     -->
-<!ENTITY downloadDetails.label            "Download Details">
 
 <!-- LOCALIZATION NOTE (openDownloadsFolder.label):
      This command is not currently available in the user interface, but the

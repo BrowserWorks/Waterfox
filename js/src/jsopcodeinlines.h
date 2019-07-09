@@ -14,8 +14,10 @@
 namespace js {
 
 static inline unsigned
-GetDefCount(jsbytecode* pc)
+GetDefCount(JSScript* script, unsigned offset)
 {
+    jsbytecode* pc = script->offsetToPC(offset);
+
     /*
      * Add an extra pushed value for OR/AND opcodes, so that they are included
      * in the pushed array of stack values for type inference.
@@ -34,17 +36,20 @@ GetDefCount(jsbytecode* pc)
          */
         return pc[1] + 1;
       default:
-        return StackDefs(pc);
+        return StackDefs(script, pc);
     }
 }
 
 static inline unsigned
-GetUseCount(jsbytecode* pc)
+GetUseCount(JSScript* script, unsigned offset)
 {
+    jsbytecode* pc = script->offsetToPC(offset);
+
     if (JSOp(*pc) == JSOP_PICK || JSOp(*pc) == JSOP_UNPICK)
         return pc[1] + 1;
-
-    return StackUses(pc);
+    if (CodeSpec[*pc].nuses == -1)
+        return StackUses(script, pc);
+    return CodeSpec[*pc].nuses;
 }
 
 static inline JSOp

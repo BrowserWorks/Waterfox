@@ -19,11 +19,11 @@ public interface RepositorySessionStoreDelegate {
   // Meant for signaling that a record has been reconciled.
   // Only makes sense in context of local repositories.
   // Further call to onRecordStoreSucceeded is necessary.
-  void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion);
+  void onRecordStoreReconciled(String guid);
 
   // Called with a GUID when store has succeeded.
   void onRecordStoreSucceeded(String guid);
-  void onStoreCompleted();
+  void onStoreCompleted(long storeEnd);
   void onStoreFailed(Exception e);
   RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService executor);
 }

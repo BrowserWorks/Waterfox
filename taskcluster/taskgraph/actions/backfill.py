@@ -9,14 +9,15 @@ from __future__ import absolute_import, print_function, unicode_literals
 import logging
 
 import requests
-from requests.exceptions import HTTPError
+from slugid import nice as slugid
 
 from .registry import register_callback_action
-from .util import find_decision_task, create_tasks
+from .util import create_task
 from taskgraph.util.taskcluster import get_artifact_from_index
+from taskgraph.util.parameterization import resolve_task_references
 from taskgraph.taskgraph import TaskGraph
 
-PUSHLOG_TMPL = '{}/json-pushes?version=2&startID={}&endID={}'
+PUSHLOG_TMPL = '{}json-pushes?version=2&startID={}&endID={}'
 INDEX_TMPL = 'gecko.v2.{}.pushlog-id.{}.decision'
 
 logger = logging.getLogger(__name__)
@@ -71,24 +72,20 @@ def backfill_action(parameters, input, task_group_id, task_id, task):
     pushes = sorted(pushes)[-depth:]
 
     for push in pushes:
-        try:
-            full_task_graph = get_artifact_from_index(
-                    INDEX_TMPL.format(parameters['project'], push),
-                    'public/full-task-graph.json')
-            _, full_task_graph = TaskGraph.from_json(full_task_graph)
-            label_to_taskid = get_artifact_from_index(
-                    INDEX_TMPL.format(parameters['project'], push),
-                    'public/label-to-taskid.json')
-            push_params = get_artifact_from_index(
-                    INDEX_TMPL.format(parameters['project'], push),
-                    'public/parameters.yml')
-            push_decision_task_id = find_decision_task(push_params)
-        except HTTPError as e:
-            logger.info('Skipping {} due to missing index artifacts! Error: {}'.format(push, e))
-            continue
+        full_task_graph = get_artifact_from_index(
+                INDEX_TMPL.format(parameters['project'], push),
+                'public/full-task-graph.json')
+        _, full_task_graph = TaskGraph.from_json(full_task_graph)
+        label_to_taskid = get_artifact_from_index(
+                INDEX_TMPL.format(parameters['project'], push),
+                'public/label-to-taskid.json')
 
         if label in full_task_graph.tasks.keys():
-            create_tasks(
-                    [label], full_task_graph, label_to_taskid, push_params, push_decision_task_id)
+            task = full_task_graph.tasks[label]
+            dependencies = {name: label_to_taskid[label]
+                            for name, label in task.dependencies.iteritems()}
+            task_def = resolve_task_references(task.label, task.task, dependencies)
+            task_def.setdefault('dependencies', []).extend(dependencies.itervalues())
+            create_task(slugid(), task_def, parameters['level'])
         else:
             logging.info('Could not find {} on {}. Skipping.'.format(label, push))

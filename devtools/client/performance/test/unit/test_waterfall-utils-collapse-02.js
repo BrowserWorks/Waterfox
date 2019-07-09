@@ -7,6 +7,10 @@
  * markers, as they should ignore any sort of collapsing.
  */
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function test() {
   const WaterfallUtils = require("devtools/client/performance/modules/logic/waterfall-utils");
 

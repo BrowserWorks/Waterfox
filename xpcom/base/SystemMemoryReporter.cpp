@@ -950,10 +950,10 @@ private:
       LinuxUtils::GetThreadName(atoi(pid), procName);
 
       if (procName.IsEmpty()) {
-        procName.AppendLiteral("pid=");
+        procName.Append("pid=");
         procName.Append(pid);
       } else {
-        procName.AppendLiteral(" (pid=");
+        procName.Append(" (pid=");
         procName.Append(pid);
         procName.Append(")");
       }

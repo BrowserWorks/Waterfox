@@ -11,7 +11,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsHashKeys.h"
 #include "nsIAddonPolicyService.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 #include "nsISupports.h"
@@ -49,14 +49,14 @@ public:
   }
 
   WebExtensionPolicy*
-  GetByID(const nsAtom* aAddonId)
+  GetByID(const nsIAtom* aAddonId)
   {
     return mExtensions.GetWeak(aAddonId);
   }
 
   WebExtensionPolicy* GetByID(const nsAString& aAddonId)
   {
-    RefPtr<nsAtom> atom = NS_AtomizeMainThread(aAddonId);
+    nsCOMPtr<nsIAtom> atom = NS_AtomizeMainThread(aAddonId);
     return GetByID(atom);
   }
 
@@ -93,7 +93,7 @@ private:
 
   void CheckContentScripts(const DocInfo& aDocInfo, bool aIsPreload);
 
-  nsRefPtrHashtable<nsPtrHashKey<const nsAtom>, WebExtensionPolicy> mExtensions;
+  nsRefPtrHashtable<nsPtrHashKey<const nsIAtom>, WebExtensionPolicy> mExtensions;
   nsRefPtrHashtable<nsCStringHashKey, WebExtensionPolicy> mExtensionHosts;
 
   nsCOMPtr<nsIObserverService> mObs;

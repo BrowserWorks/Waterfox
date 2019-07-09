@@ -30,10 +30,10 @@
 //! For more information, see:
 //!
 //! * rooting pointers on the stack:
-//!   the [`Root`](bindings/root/struct.Root.html) smart pointer;
-//! * tracing pointers in member fields: the [`Dom`](bindings/root/struct.Dom.html),
-//!   [`MutNullableDom`](bindings/root/struct.MutNullableDom.html) and
-//!   [`MutDom`](bindings/root/struct.MutDom.html) smart pointers and
+//!   the [`Root`](bindings/js/struct.Root.html) smart pointer;
+//! * tracing pointers in member fields: the [`JS`](bindings/js/struct.JS.html),
+//!   [`MutNullableJS`](bindings/js/struct.MutNullableJS.html) and
+//!   [`MutJS`](bindings/js/struct.MutJS.html) smart pointers and
 //!   [the tracing implementation](bindings/trace/index.html);
 //! * rooting pointers from across thread boundaries or in channels: the
 //!   [`Trusted`](bindings/refcounted/struct.Trusted.html) smart pointer;
@@ -44,7 +44,7 @@
 //! Rust does not support struct inheritance, as would be used for the
 //! object-oriented DOM APIs. To work around this issue, Servo stores an
 //! instance of the superclass in the first field of its subclasses. (Note that
-//! it is stored by value, rather than in a smart pointer such as `Dom<T>`.)
+//! it is stored by value, rather than in a smart pointer such as `JS<T>`.)
 //!
 //! This implies that a pointer to an object can safely be cast to a pointer
 //! to all its classes.
@@ -94,7 +94,7 @@
 //! DOM objects of type `T` in Servo have two constructors:
 //!
 //! * a `T::new_inherited` static method that returns a plain `T`, and
-//! * a `T::new` static method that returns `DomRoot<T>`.
+//! * a `T::new` static method that returns `Root<T>`.
 //!
 //! (The result of either method can be wrapped in `Result`, if that is
 //! appropriate for the type in question.)
@@ -123,7 +123,7 @@
 //!
 //! Reflectors are JavaScript objects, and as such can be freely aliased. As
 //! Rust does not allow mutable aliasing, mutable borrows of DOM objects are
-//! not allowed. In particular, any mutable fields use `Cell` or `DomRefCell`
+//! not allowed. In particular, any mutable fields use `Cell` or `DOMRefCell`
 //! to manage their mutability.
 //!
 //! `Reflector` and `DomObject`
@@ -195,11 +195,11 @@
 //! =================================
 //!
 //! Layout code can access the DOM through the
-//! [`LayoutDom`](bindings/root/struct.LayoutDom.html) smart pointer. This does not
+//! [`LayoutJS`](bindings/js/struct.LayoutJS.html) smart pointer. This does not
 //! keep the DOM object alive; we ensure that no DOM code (Garbage Collection
 //! in particular) runs while the layout thread is accessing the DOM.
 //!
-//! Methods accessible to layout are implemented on `LayoutDom<Foo>` using
+//! Methods accessible to layout are implemented on `LayoutJS<Foo>` using
 //! `LayoutFooHelpers` traits.
 
 #[macro_use]
@@ -236,7 +236,6 @@ pub mod characterdata;
 pub mod client;
 pub mod closeevent;
 pub mod comment;
-pub mod compositionevent;
 pub mod console;
 mod create;
 pub mod crypto;
@@ -398,12 +397,6 @@ pub mod paintrenderingcontext2d;
 pub mod paintsize;
 pub mod paintworkletglobalscope;
 pub mod performance;
-pub mod performanceentry;
-pub mod performancemark;
-pub mod performancemeasure;
-pub mod performanceobserver;
-pub mod performanceobserverentrylist;
-pub mod performancepainttiming;
 pub mod performancetiming;
 pub mod permissions;
 pub mod permissionstatus;

@@ -9,7 +9,6 @@ author: Sam Mikes
 description: Symbol.species getters have defined names
 includes: 
   - propertyHelper.js
-features: [Symbol.species]
 ---*/
 
 function getGetterName(obj, name) {

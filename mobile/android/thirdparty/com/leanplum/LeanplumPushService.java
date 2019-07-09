@@ -254,7 +254,7 @@ public class LeanplumPushService {
     return messageId;
   }
 
-  public static void handleNotification(final Context context, final Bundle message) {
+  static void handleNotification(final Context context, final Bundle message) {
     if (LeanplumActivityHelper.currentActivity != null
         && !LeanplumActivityHelper.isActivityPaused
         && (message.containsKey(Keys.PUSH_MESSAGE_ID_MUTE_WITH_ACTION)
@@ -475,21 +475,13 @@ public class LeanplumPushService {
    * Checks if there is some activity that can handle intent.
    */
   private static Boolean activityHasIntent(Context context, Intent deepLinkIntent) {
-    final int flag;
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-      flag = PackageManager.MATCH_ALL;
-    } else {
-      flag = 0;
-    }
     List<ResolveInfo> resolveInfoList =
-            context.getPackageManager().queryIntentActivities(deepLinkIntent, flag);
+        context.getPackageManager().queryIntentActivities(deepLinkIntent, 0);
     if (resolveInfoList != null && !resolveInfoList.isEmpty()) {
       for (ResolveInfo resolveInfo : resolveInfoList) {
         if (resolveInfo != null && resolveInfo.activityInfo != null &&
             resolveInfo.activityInfo.name != null) {
-          // In local build, Fennec's activityInfo.packagename is org.mozilla.fennec_<device_name>
-          // But activityInfo.name is org.mozilla.Gecko.App. Thus we should use packagename here.
-          if (resolveInfo.activityInfo.packageName.equals(context.getPackageName())) {
+          if (resolveInfo.activityInfo.name.contains(context.getPackageName())) {
             // If url can be handled by current app - set package name to intent, so url will be
             // open by current app. Skip chooser dialog.
             deepLinkIntent.setPackage(resolveInfo.activityInfo.packageName);
@@ -572,7 +564,7 @@ public class LeanplumPushService {
       return;
     }
     provider = new LeanplumGcmProvider();
-    if (!provider.isInitialized()) {
+    if (!provider.isInitialized() || !provider.isManifestSetUp()) {
       return;
     }
     if (hasAppIDChanged(Request.appId())) {
@@ -614,6 +606,15 @@ public class LeanplumPushService {
       Class gcmPushInstanceIDClass = getClassForName(LEANPLUM_PUSH_INSTANCE_ID_SERVICE_CLASS);
       if (gcmPushInstanceIDClass == null) {
         return false;
+      }
+
+      if (!wasComponentEnabled(context, packageManager, gcmPushInstanceIDClass)) {
+        if (!enableComponent(context, packageManager, LEANPLUM_PUSH_LISTENER_SERVICE_CLASS) ||
+            !enableComponent(context, packageManager, gcmPushInstanceIDClass) ||
+            !enableComponent(context, packageManager, GCM_RECEIVER_CLASS)) {
+          return false;
+        }
+
       }
     }
     return true;

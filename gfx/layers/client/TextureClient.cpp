@@ -15,7 +15,6 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/ImageDataSerializer.h"
-#include "mozilla/layers/PaintThread.h"
 #include "mozilla/layers/TextureClientRecycleAllocator.h"
 #include "mozilla/Mutex.h"
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING, etc
@@ -162,7 +161,7 @@ private:
   // Lock tile A
   // Lock tile B
   // Lock tile C
-  // Apply drawing commands to tiles A, B and C
+  // Apply drawing commands to tiles A, B and C 
   // Unlock tile A
   // Unlock tile B
   // Unlock tile C
@@ -381,9 +380,6 @@ DeallocateTextureClient(TextureDeallocParams params)
 
 void TextureClient::Destroy()
 {
-  // Async paints should have been flushed by now.
-  MOZ_RELEASE_ASSERT(mPaintThreadRefs == 0);
-
   if (mActor && !mIsLocked) {
     mActor->Lock();
   }
@@ -547,23 +543,22 @@ TextureClient::Unlock()
   }
 
   if (mBorrowedDrawTarget) {
-    if (!(mOpenMode & OpenMode::OPEN_ASYNC_WRITE)) {
-      if (mOpenMode & OpenMode::OPEN_WRITE) {
-        mBorrowedDrawTarget->Flush();
-        if (mReadbackSink && !mData->ReadBack(mReadbackSink)) {
-          // Fallback implementation for reading back, because mData does not
-          // have a backend-specific implementation and returned false.
-          RefPtr<SourceSurface> snapshot = mBorrowedDrawTarget->Snapshot();
-          RefPtr<DataSourceSurface> dataSurf = snapshot->GetDataSurface();
-          mReadbackSink->ProcessReadback(dataSurf);
-        }
+    if (mOpenMode & OpenMode::OPEN_WRITE) {
+      mBorrowedDrawTarget->Flush();
+      if (mReadbackSink && !mData->ReadBack(mReadbackSink)) {
+        // Fallback implementation for reading back, because mData does not
+        // have a backend-specific implementation and returned false.
+        RefPtr<SourceSurface> snapshot = mBorrowedDrawTarget->Snapshot();
+        RefPtr<DataSourceSurface> dataSurf = snapshot->GetDataSurface();
+        mReadbackSink->ProcessReadback(dataSurf);
       }
-
-      mBorrowedDrawTarget->DetachAllSnapshots();
-      // If this assertion is hit, it means something is holding a strong reference
-      // to our DrawTarget externally, which is not allowed.
-      MOZ_ASSERT(mBorrowedDrawTarget->refCount() <= mExpectedDtRefs);
     }
+
+    mBorrowedDrawTarget->DetachAllSnapshots();
+    // If this assertion is hit, it means something is holding a strong reference
+    // to our DrawTarget externally, which is not allowed.
+    MOZ_ASSERT_IF(!(mOpenMode & OpenMode::OPEN_ASYNC_WRITE),
+                  mBorrowedDrawTarget->refCount() <= mExpectedDtRefs);
 
     mBorrowedDrawTarget = nullptr;
   }
@@ -609,9 +604,6 @@ TextureClient::SerializeReadLock(ReadLockDescriptor& aDescriptor)
 
 TextureClient::~TextureClient()
 {
-  // TextureClients should be kept alive while there are references on the
-  // paint thread.
-  MOZ_ASSERT(mPaintThreadRefs == 0);
   mReadLock = nullptr;
   Destroy();
 }
@@ -1075,8 +1067,7 @@ TextureClient::CreateForDrawing(TextureForwarder* aAllocator,
   TextureData* data = nullptr;
 
 #ifdef XP_WIN
-  if ((aLayersBackend == LayersBackend::LAYERS_D3D11 ||
-       aLayersBackend == LayersBackend::LAYERS_WR) &&
+  if (aLayersBackend == LayersBackend::LAYERS_D3D11 &&
       (moz2DBackend == gfx::BackendType::DIRECT2D ||
        moz2DBackend == gfx::BackendType::DIRECT2D1_1 ||
        (!!(aAllocFlags & ALLOC_FOR_OUT_OF_BAND_CONTENT) &&
@@ -1256,12 +1247,9 @@ TextureClient::CreateForRawBufferAccess(LayersIPCChannel* aAllocator,
 already_AddRefed<TextureClient>
 TextureClient::CreateForYCbCr(KnowsCompositor* aAllocator,
                               gfx::IntSize aYSize,
-                              uint32_t aYStride,
                               gfx::IntSize aCbCrSize,
-                              uint32_t aCbCrStride,
                               StereoMode aStereoMode,
                               YUVColorSpace aYUVColorSpace,
-                              uint32_t aBitDepth,
                               TextureFlags aTextureFlags)
 {
   if (!aAllocator || !aAllocator->GetLayersIPCActor()->IPCOpen()) {
@@ -1272,12 +1260,9 @@ TextureClient::CreateForYCbCr(KnowsCompositor* aAllocator,
     return nullptr;
   }
 
-  TextureData* data =
-    BufferTextureData::CreateForYCbCr(aAllocator,
-                                      aYSize, aYStride,
-                                      aCbCrSize, aCbCrStride,
-                                      aStereoMode, aYUVColorSpace,
-                                      aBitDepth, aTextureFlags);
+  TextureData* data = BufferTextureData::CreateForYCbCr(aAllocator, aYSize, aCbCrSize,
+                                                        aStereoMode, aYUVColorSpace,
+                                                        aTextureFlags);
   if (!data) {
     return nullptr;
   }
@@ -1291,15 +1276,15 @@ already_AddRefed<TextureClient>
 TextureClient::CreateForYCbCrWithBufferSize(KnowsCompositor* aAllocator,
                                             size_t aSize,
                                             YUVColorSpace aYUVColorSpace,
-                                            uint32_t aBitDepth,
                                             TextureFlags aTextureFlags)
 {
   if (!aAllocator || !aAllocator->GetLayersIPCActor()->IPCOpen()) {
     return nullptr;
   }
 
-  TextureData* data = BufferTextureData::CreateForYCbCrWithBufferSize(
-    aAllocator, aSize, aYUVColorSpace, aBitDepth, aTextureFlags);
+  TextureData* data =
+    BufferTextureData::CreateForYCbCrWithBufferSize(aAllocator, aSize, aYUVColorSpace,
+                                                    aTextureFlags);
   if (!data) {
     return nullptr;
   }
@@ -1308,28 +1293,26 @@ TextureClient::CreateForYCbCrWithBufferSize(KnowsCompositor* aAllocator,
                                       aAllocator->GetTextureForwarder());
 }
 
-TextureClient::TextureClient(TextureData* aData,
-                             TextureFlags aFlags,
-                             LayersIPCChannel* aAllocator)
-  : AtomicRefCountedWithFinalize("TextureClient")
-  , mAllocator(aAllocator)
-  , mActor(nullptr)
-  , mData(aData)
-  , mFlags(aFlags)
-  , mOpenMode(OpenMode::OPEN_NONE)
+TextureClient::TextureClient(TextureData* aData, TextureFlags aFlags, LayersIPCChannel* aAllocator)
+: AtomicRefCountedWithFinalize("TextureClient")
+, mAllocator(aAllocator)
+, mActor(nullptr)
+, mData(aData)
+, mFlags(aFlags)
+, mOpenMode(OpenMode::OPEN_NONE)
 #ifdef DEBUG
-  , mExpectedDtRefs(0)
+, mExpectedDtRefs(0)
 #endif
-  , mIsLocked(false)
-  , mIsReadLocked(false)
-  , mUpdated(false)
-  , mAddedToCompositableClient(false)
-  , mWorkaroundAnnoyingSharedSurfaceLifetimeIssues(false)
-  , mWorkaroundAnnoyingSharedSurfaceOwnershipIssues(false)
-  , mFwdTransactionId(0)
-  , mSerial(++sSerialCounter)
+, mIsLocked(false)
+, mIsReadLocked(false)
+, mUpdated(false)
+, mAddedToCompositableClient(false)
+, mWorkaroundAnnoyingSharedSurfaceLifetimeIssues(false)
+, mWorkaroundAnnoyingSharedSurfaceOwnershipIssues(false)
+, mFwdTransactionId(0)
+, mSerial(++sSerialCounter)
 #ifdef GFX_DEBUG_TRACK_CLIENTS_IN_POOL
-  , mPoolTracker(nullptr)
+, mPoolTracker(nullptr)
 #endif
 {
   mData->FillInfo(mInfo);
@@ -1396,7 +1379,8 @@ TextureClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   AppendToString(aStream, mFlags, " [flags=", "]");
 
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxPrefs::LayersDumpTexture()) {
+  if (gfxPrefs::LayersDumpTexture() ||
+      profiler_feature_active(ProfilerFeature::LayersDump)) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 
@@ -1407,18 +1391,6 @@ TextureClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
     }
   }
 #endif
-}
-
-void
-TextureClient::GPUVideoDesc(SurfaceDescriptorGPUVideo* const aOutDesc)
-{
-  const auto handle = GetSerial();
-
-  GPUVideoSubDescriptor subDesc = null_t();
-  MOZ_RELEASE_ASSERT(mData);
-  mData->GetSubDescriptor(&subDesc);
-
-  *aOutDesc = SurfaceDescriptorGPUVideo(handle, Move(subDesc));
 }
 
 class MemoryTextureReadLock : public NonBlockingTextureReadLock {
@@ -1728,21 +1700,6 @@ TextureClient::EnableBlockingReadLock()
   }
 }
 
-void
-TextureClient::AddPaintThreadRef()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  mPaintThreadRefs += 1;
-}
-
-void
-TextureClient::DropPaintThreadRef()
-{
-  MOZ_RELEASE_ASSERT(PaintThread::IsOnPaintThread());
-  MOZ_RELEASE_ASSERT(mPaintThreadRefs >= 1);
-  mPaintThreadRefs -= 1;
-}
-
 bool
 UpdateYCbCrTextureClient(TextureClient* aTexture, const PlanarYCbCrData& aData)
 {
@@ -1764,18 +1721,14 @@ UpdateYCbCrTextureClient(TextureClient* aTexture, const PlanarYCbCrData& aData)
   srcData.y.size = aData.mYSize;
   srcData.y.stride = aData.mYStride;
   srcData.y.skip = aData.mYSkip;
-  MOZ_ASSERT(aData.mBitDepth == 8 || (aData.mBitDepth > 8 && aData.mBitDepth <= 16));
-  srcData.y.bytesPerPixel = (aData.mBitDepth > 8) ? 2 : 1;
   srcData.cb.data = aData.mCbChannel;
   srcData.cb.size = aData.mCbCrSize;
   srcData.cb.stride = aData.mCbCrStride;
   srcData.cb.skip = aData.mCbSkip;
-  srcData.cb.bytesPerPixel = (aData.mBitDepth > 8) ? 2 : 1;
   srcData.cr.data = aData.mCrChannel;
   srcData.cr.size = aData.mCbCrSize;
   srcData.cr.stride = aData.mCbCrStride;
   srcData.cr.skip = aData.mCrSkip;
-  srcData.cr.bytesPerPixel = (aData.mBitDepth > 8) ? 2 : 1;
   srcData.metadata = nullptr;
 
   if (!srcData.CopyInto(mapped)) {
@@ -1789,6 +1742,25 @@ UpdateYCbCrTextureClient(TextureClient* aTexture, const PlanarYCbCrData& aData)
     aTexture->MarkImmutable();
   }
   return true;
+}
+
+already_AddRefed<SyncObject>
+SyncObject::CreateSyncObject(SyncHandle aHandle
+#ifdef XP_WIN
+                             , ID3D11Device* aDevice
+#endif
+                             )
+{
+  if (!aHandle) {
+    return nullptr;
+  }
+
+#ifdef XP_WIN
+  return MakeAndAddRef<SyncObjectD3D11>(aHandle, aDevice);
+#else
+  MOZ_ASSERT_UNREACHABLE();
+  return nullptr;
+#endif
 }
 
 already_AddRefed<TextureClient>
@@ -1820,19 +1792,15 @@ MappedYCbCrChannelData::CopyInto(MappedYCbCrChannelData& aDst)
       // fast-ish path
       memcpy(aDst.data + i * aDst.stride,
              data + i * stride,
-             size.width * bytesPerPixel);
+             size.width);
     } else {
       // slow path
       uint8_t* src = data + i * stride;
       uint8_t* dst = aDst.data + i * aDst.stride;
       for (int32_t j = 0; j < size.width; ++j) {
-        for (uint32_t k = 0; k < bytesPerPixel; ++k) {
-          *dst = *src;
-          src += 1;
-          dst += 1;
-        }
-        src += skip;
-        dst += aDst.skip;
+        *dst = *src;
+        src += 1 + skip;
+        dst += 1 + aDst.skip;
       }
     }
   }

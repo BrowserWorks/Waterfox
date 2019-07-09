@@ -26,7 +26,7 @@ info: |
        a. Let realm be ? GetFunctionRealm(constructor).
        b. Let proto be realm's intrinsic object named intrinsicDefaultProto.
     [...]
-features: [generators, cross-realm, Reflect]
+features: [Reflect]
 ---*/
 
 var GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;

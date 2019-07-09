@@ -40,7 +40,7 @@ InactiveFeaturesAndParamsCheck()
   StrVec filters;
 
   ASSERT_TRUE(!profiler_is_active());
-  ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::MainThreadIO));
+  ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::GPU));
   ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Privacy));
   ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -85,7 +85,7 @@ TEST(GeckoProfiler, FeaturesAndParams)
                    features, filters, MOZ_ARRAY_LENGTH(filters));
 
     ASSERT_TRUE(profiler_is_active());
-    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::MainThreadIO));
+    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::GPU));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Privacy));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -99,15 +99,14 @@ TEST(GeckoProfiler, FeaturesAndParams)
 
   // Try some different features and filters.
   {
-    uint32_t features = ProfilerFeature::MainThreadIO |
-                        ProfilerFeature::Privacy;
+    uint32_t features = ProfilerFeature::GPU | ProfilerFeature::Privacy;
     const char* filters[] = { "GeckoMain", "Foo", "Bar" };
 
     profiler_start(999999, 3,
                    features, filters, MOZ_ARRAY_LENGTH(filters));
 
     ASSERT_TRUE(profiler_is_active());
-    ASSERT_TRUE(profiler_feature_active(ProfilerFeature::MainThreadIO));
+    ASSERT_TRUE(profiler_feature_active(ProfilerFeature::GPU));
     ASSERT_TRUE(profiler_feature_active(ProfilerFeature::Privacy));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -130,7 +129,7 @@ TEST(GeckoProfiler, FeaturesAndParams)
                    availableFeatures, filters, MOZ_ARRAY_LENGTH(filters));
 
     ASSERT_TRUE(profiler_is_active());
-    ASSERT_TRUE(profiler_feature_active(ProfilerFeature::MainThreadIO));
+    ASSERT_TRUE(profiler_feature_active(ProfilerFeature::GPU));
     ASSERT_TRUE(profiler_feature_active(ProfilerFeature::Privacy));
     ASSERT_TRUE(profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -151,7 +150,7 @@ TEST(GeckoProfiler, FeaturesAndParams)
                    features, filters, MOZ_ARRAY_LENGTH(filters));
 
     ASSERT_TRUE(profiler_is_active());
-    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::MainThreadIO));
+    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::GPU));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Privacy));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -271,7 +270,7 @@ TEST(GeckoProfiler, DifferentThreads)
       NS_DISPATCH_SYNC);
 
     ASSERT_TRUE(profiler_is_active());
-    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::MainThreadIO));
+    ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::GPU));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Privacy));
     ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -300,7 +299,7 @@ TEST(GeckoProfiler, DifferentThreads)
         "GeckoProfiler_DifferentThreads_Test::TestBody",
         [&]() {
           ASSERT_TRUE(profiler_is_active());
-          ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::MainThreadIO));
+          ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::GPU));
           ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Privacy));
           ASSERT_TRUE(!profiler_feature_active(ProfilerFeature::Restyle));
 
@@ -458,20 +457,20 @@ TEST(GeckoProfiler, Markers)
                  features, filters, MOZ_ARRAY_LENGTH(filters));
 
   profiler_tracing("A", "B", TRACING_EVENT);
-  PROFILER_TRACING("A", "C", TRACING_INTERVAL_START);
-  PROFILER_TRACING("A", "C", TRACING_INTERVAL_END);
+  profiler_tracing("A", "C", TRACING_INTERVAL_START);
+  profiler_tracing("A", "C", TRACING_INTERVAL_END);
 
   UniqueProfilerBacktrace bt = profiler_get_backtrace();
-  profiler_tracing("B", "A", TRACING_EVENT, Move(bt));
+  profiler_tracing("B", "A", Move(bt), TRACING_EVENT);
 
   {
-    AUTO_PROFILER_TRACING("C", "A");
+    AutoProfilerTracing tracing("C", "A");
   }
 
   profiler_add_marker("M1");
-  profiler_add_marker(
-    "M2", MakeUnique<TracingMarkerPayload>("C", TRACING_EVENT));
-  PROFILER_ADD_MARKER("M3");
+  profiler_add_marker("M2",
+                      MakeUnique<TracingMarkerPayload>("C", TRACING_EVENT));
+  profiler_add_marker("M3");
   profiler_add_marker(
     "M4",
     MakeUnique<TracingMarkerPayload>("C", TRACING_EVENT,
@@ -628,7 +627,7 @@ TEST(GeckoProfiler, StreamJSONForThisProcess)
   profiler_start(PROFILER_DEFAULT_ENTRIES, PROFILER_DEFAULT_INTERVAL,
                  features, filters, MOZ_ARRAY_LENGTH(filters));
 
-  w.Start();
+  w.Start(SpliceableJSONWriter::SingleLineStyle);
   ASSERT_TRUE(profiler_stream_json_for_this_process(w));
   w.End();
 
@@ -663,7 +662,7 @@ TEST(GeckoProfiler, StreamJSONForThisProcessThreaded)
     NS_NewRunnableFunction(
       "GeckoProfiler_StreamJSONForThisProcessThreaded_Test::TestBody",
       [&]() {
-        w.Start();
+        w.Start(SpliceableJSONWriter::SingleLineStyle);
         ASSERT_TRUE(profiler_stream_json_for_this_process(w));
         w.End();
       }),
@@ -751,8 +750,9 @@ public:
 
   virtual void CollectNativeLeafAddr(void* aAddr) { mFrames++; }
   virtual void CollectJitReturnAddr(void* aAddr) { mFrames++; }
-  virtual void CollectWasmFrame(const char* aLabel) { mFrames++; }
-  virtual void CollectPseudoEntry(const js::ProfileEntry& aEntry) { mFrames++; }
+  virtual void CollectCodeLocation(
+    const char* aLabel, const char* aStr, int aLineNumber,
+    const mozilla::Maybe<js::ProfileEntry::Category>& aCategory) { mFrames++; }
 
   int mSetIsMainThread;
   int mFrames;

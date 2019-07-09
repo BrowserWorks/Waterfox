@@ -37,9 +37,8 @@ add_task(async function test_load_start() {
  * Ensure that anchor navigation invalidates shistory.
  */
 add_task(async function test_hashchange() {
-  const PATH = getRootDirectory(gTestPath)
-              .replace("chrome://mochitests/content/", "http://example.com/");
-  const URL = PATH + "file_sessionHistory_hashchange.html";
+  const URL = "data:text/html;charset=utf-8,<a id=a href=%23>clickme</a>";
+
   // Create a new tab.
   let tab = BrowserTestUtils.addTab(gBrowser, URL);
   let browser = tab.linkedBrowser;
@@ -79,14 +78,9 @@ add_task(async function test_pageshow() {
   browser.loadURI(URL2);
   await promiseBrowserLoaded(browser);
 
-  // Wait until shistory changes.
-  let pageShowPromise = ContentTask.spawn(browser, null, async () => {
-    return ContentTaskUtils.waitForEvent(this, "pageshow", true);
-  });
-
   // Go back to the previous url which is loaded from the bfcache.
   browser.goBack();
-  await pageShowPromise;
+  await promiseContentMessage(browser, "ss-test:onFrameTreeCollected");
   is(browser.currentURI.spec, URL, "correct url after going back");
 
   // Check that loading from bfcache did invalidate shistory.

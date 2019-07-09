@@ -14,13 +14,13 @@
 
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCSSValue.h"
-#include "nsStringFwd.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/MediaList.h"
 
 class nsPresContext;
+class nsAString;
 struct nsMediaFeature;
 
 namespace mozilla {
@@ -71,7 +71,7 @@ struct nsMediaExpression {
  */
 class nsMediaQueryResultCacheKey {
 public:
-  explicit nsMediaQueryResultCacheKey(nsAtom* aMedium)
+  explicit nsMediaQueryResultCacheKey(nsIAtom* aMedium)
     : mMedium(aMedium)
   {}
 
@@ -126,7 +126,7 @@ private:
       return !(*this == aOther);
     }
   };
-  RefPtr<nsAtom> mMedium;
+  nsCOMPtr<nsIAtom> mMedium;
   nsTArray<FeatureEntry> mFeatureCache;
 };
 
@@ -217,7 +217,7 @@ public:
   void SetHasOnly()                     { mHasOnly = true; }
   void SetTypeOmitted()                 { mTypeOmitted = true; }
   void SetHadUnknownExpression()        { mHadUnknownExpression = true; }
-  void SetType(nsAtom* aMediaType)     {
+  void SetType(nsIAtom* aMediaType)     {
                                           NS_ASSERTION(aMediaType,
                                                        "expected non-null");
                                           mMediaType = aMediaType;
@@ -243,7 +243,7 @@ private:
   bool mHasOnly; // only needed for serialization
   bool mTypeOmitted; // only needed for serialization
   bool mHadUnknownExpression;
-  RefPtr<nsAtom> mMediaType;
+  nsCOMPtr<nsIAtom> mMediaType;
   nsTArray<nsMediaExpression> mExpressions;
 };
 

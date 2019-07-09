@@ -14,7 +14,6 @@
 
 #include "builtin/ModuleObject.h"
 #include "frontend/BytecodeEmitter.h"
-#include "frontend/ErrorReporter.h"
 #include "frontend/FoldConstants.h"
 #include "frontend/NameFunctions.h"
 #include "frontend/Parser.h"
@@ -108,21 +107,21 @@ AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextI
 #endif
 
 AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                                           const ErrorReporter& errorReporter)
+                                           const TokenStreamAnyChars& tokenStream)
 #ifdef JS_TRACE_LOGGING
   : logger_(TraceLoggerForCurrentThread(cx))
 {
     // If the tokenizer hasn't yet gotten any tokens, use the line and column
     // numbers from CompileOptions.
     uint32_t line, column;
-    if (errorReporter.hasTokenizationStarted()) {
-        line = errorReporter.options().lineno;
-        column = errorReporter.options().column;
+    if (tokenStream.isCurrentTokenType(TOK_EOF) && !tokenStream.isEOF()) {
+        line = tokenStream.options().lineno;
+        column = tokenStream.options().column;
     } else {
-        uint32_t offset = errorReporter.offset();
-        errorReporter.lineNumAndColumnIndex(offset, &line, &column);
+        uint32_t offset = tokenStream.currentToken().pos.begin;
+        tokenStream.srcCoords.lineNumAndColumnIndex(offset, &line, &column);
     }
-    frontendEvent_.emplace(TraceLogger_Frontend, errorReporter.getFilename(), line, column);
+    frontendEvent_.emplace(TraceLogger_Frontend, tokenStream.getFilename(), line, column);
     frontendLog_.emplace(logger_, *frontendEvent_);
     typeLog_.emplace(logger_, id);
 }
@@ -131,12 +130,12 @@ AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextI
 #endif
 
 AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                                           const ErrorReporter& errorReporter,
+                                           const TokenStreamAnyChars& tokenStream,
                                            FunctionBox* funbox)
 #ifdef JS_TRACE_LOGGING
   : logger_(TraceLoggerForCurrentThread(cx))
 {
-    frontendEvent_.emplace(TraceLogger_Frontend, errorReporter.getFilename(),
+    frontendEvent_.emplace(TraceLogger_Frontend, tokenStream.getFilename(),
                            funbox->startLine, funbox->startColumn);
     frontendLog_.emplace(logger_, *frontendEvent_);
     typeLog_.emplace(logger_, id);
@@ -146,13 +145,13 @@ AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextI
 #endif
 
 AutoFrontendTraceLog::AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                                           const ErrorReporter& errorReporter, ParseNode* pn)
+                                           const TokenStreamAnyChars& tokenStream, ParseNode* pn)
 #ifdef JS_TRACE_LOGGING
   : logger_(TraceLoggerForCurrentThread(cx))
 {
     uint32_t line, column;
-    errorReporter.lineNumAndColumnIndex(pn->pn_pos.begin, &line, &column);
-    frontendEvent_.emplace(TraceLogger_Frontend, errorReporter.getFilename(), line, column);
+    tokenStream.srcCoords.lineNumAndColumnIndex(pn->pn_pos.begin, &line, &column);
+    frontendEvent_.emplace(TraceLogger_Frontend, tokenStream.getFilename(), line, column);
     frontendLog_.emplace(logger_, *frontendEvent_);
     typeLog_.emplace(logger_, id);
 }
@@ -222,6 +221,7 @@ bool
 BytecodeCompiler::canLazilyParse()
 {
     return options.canLazilyParse &&
+           !(enclosingScope && enclosingScope->hasOnChain(ScopeKind::NonSyntactic)) &&
            !cx->compartment()->behaviors().disableLazyParsing() &&
            !cx->compartment()->behaviors().discardSource() &&
            !options.sourceIsLazy &&
@@ -417,10 +417,7 @@ BytecodeCompiler::compileModule()
 
     module->init(script);
 
-    ModuleBuilder builder(cx, module, parser->tokenStream);
-    if (!builder.init())
-        return nullptr;
-
+    ModuleBuilder builder(cx, module);
     ModuleSharedContext modulesc(cx, module, enclosingScope, builder);
     ParseNode* pn = parser->moduleBody(&modulesc);
     if (!pn)

@@ -7,8 +7,8 @@
 // https://www.khronos.org/registry/webgl/specs/latest/1.0/webgl.idl
 use dom::bindings::codegen::Bindings::WebGLShaderPrecisionFormatBinding;
 use dom::bindings::codegen::Bindings::WebGLShaderPrecisionFormatBinding::WebGLShaderPrecisionFormatMethods;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::window::Window;
 use dom_struct::dom_struct;
 
@@ -33,9 +33,9 @@ impl WebGLShaderPrecisionFormat {
     pub fn new(window: &Window,
                range_min: i32,
                range_max: i32,
-               precision: i32) -> DomRoot<WebGLShaderPrecisionFormat> {
+               precision: i32) -> Root<WebGLShaderPrecisionFormat> {
         reflect_dom_object(
-            Box::new(WebGLShaderPrecisionFormat::new_inherited(range_min, range_max, precision)),
+            box WebGLShaderPrecisionFormat::new_inherited(range_min, range_max, precision),
             window,
             WebGLShaderPrecisionFormatBinding::Wrap)
     }

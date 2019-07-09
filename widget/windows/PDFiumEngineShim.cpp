@@ -18,7 +18,7 @@ PDFiumEngineShim::GetInstanceOrNull()
   RefPtr<PDFiumEngineShim> inst = sPDFiumEngineShim;
   if (!inst) {
     inst = new PDFiumEngineShim();
-    if (!inst->Init(nsCString("pdfium.dll"))) {
+    if (!inst->Init()) {
       inst = nullptr;
     }
     sPDFiumEngineShim = inst.get();
@@ -27,28 +27,18 @@ PDFiumEngineShim::GetInstanceOrNull()
   return inst.forget();
 }
 
-/* static */
-already_AddRefed<PDFiumEngineShim>
-PDFiumEngineShim::GetInstanceOrNull(const nsCString& aLibrary)
-{
-  RefPtr<PDFiumEngineShim> shim = new PDFiumEngineShim();
-  if (!shim->Init(aLibrary)) {
-    return nullptr;
-  }
-
-  return shim.forget();
-}
-
 PDFiumEngineShim::PDFiumEngineShim()
-  : mInitialized(false)
-  , mFPDF_InitLibrary(nullptr)
+  : mFPDF_InitLibrary(nullptr)
   , mFPDF_DestroyLibrary(nullptr)
   , mFPDF_CloseDocument(nullptr)
   , mFPDF_GetPageCount(nullptr)
   , mFPDF_LoadPage(nullptr)
   , mFPDF_ClosePage(nullptr)
   , mFPDF_RenderPage(nullptr)
+#ifdef USE_EXTERNAL_PDFIUM
   , mPRLibrary(nullptr)
+#endif
+  , mInitialized(false)
 {
 }
 
@@ -60,19 +50,27 @@ PDFiumEngineShim::~PDFiumEngineShim()
 
   sPDFiumEngineShim = nullptr;
 
+#ifdef USE_EXTERNAL_PDFIUM
   if (mPRLibrary) {
     PR_UnloadLibrary(mPRLibrary);
   }
+#endif
 }
 
 bool
-PDFiumEngineShim::Init(const nsCString& aLibrary)
+PDFiumEngineShim::Init()
 {
   if (mInitialized) {
     return true;
   }
 
-  mPRLibrary = PR_LoadLibrary(aLibrary.get());
+#ifdef USE_EXTERNAL_PDFIUM
+  nsAutoString PDFiumPath;
+  mozilla::Preferences::GetString("print.load_external_pdfium", PDFiumPath);
+  NS_ENSURE_FALSE(PDFiumPath.IsEmpty(), false);
+
+  nsAutoCString filePath = NS_ConvertUTF16toUTF8(PDFiumPath);
+  mPRLibrary = PR_LoadLibrary(filePath.get());
   NS_ENSURE_TRUE(mPRLibrary, false);
 
   mFPDF_InitLibrary = (FPDF_InitLibrary_Pfn)PR_FindFunctionSymbol(
@@ -106,6 +104,17 @@ PDFiumEngineShim::Init(const nsCString& aLibrary)
   mFPDF_RenderPage = (FPDF_RenderPage_Pfn)PR_FindFunctionSymbol(
     mPRLibrary, "FPDF_RenderPage");
   NS_ENSURE_TRUE(mFPDF_RenderPage, false);
+
+#else
+  mFPDF_InitLibrary = (FPDF_InitLibrary_Pfn) FPDF_InitLibrary;
+  mFPDF_DestroyLibrary = (FPDF_DestroyLibrary_Pfn) FPDF_DestroyLibrary;
+  mFPDF_LoadDocument = (FPDF_LoadDocument_Pfn) FPDF_LoadDocument;
+  mFPDF_CloseDocument = (FPDF_CloseDocument_Pfn) FPDF_CloseDocument;
+  mFPDF_GetPageCount = (FPDF_GetPageCount_Pfn) FPDF_GetPageCount;
+  mFPDF_LoadPage = (FPDF_LoadPage_Pfn) FPDF_LoadPage;
+  mFPDF_ClosePage = (FPDF_ClosePage_Pfn) FPDF_ClosePage;
+  mFPDF_RenderPage = (FPDF_RenderPage_Pfn) FPDF_RenderPage;
+#endif
 
   mFPDF_InitLibrary();
   mInitialized = true;

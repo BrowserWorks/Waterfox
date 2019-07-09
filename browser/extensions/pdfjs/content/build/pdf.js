@@ -58,6 +58,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// expose the module cache
 /******/ 	__w_pdfjs_require__.c = installedModules;
 /******/
+/******/ 	// identity function for calling harmony imports with the correct context
+/******/ 	__w_pdfjs_require__.i = function(value) { return value; };
+/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__w_pdfjs_require__.d = function(exports, name, getter) {
 /******/ 		if(!__w_pdfjs_require__.o(exports, name)) {
@@ -85,7 +88,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__w_pdfjs_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __w_pdfjs_require__(__w_pdfjs_require__.s = 9);
+/******/ 	return __w_pdfjs_require__(__w_pdfjs_require__.s = 14);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -98,12 +101,13 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unreachable = exports.warn = exports.utf8StringToString = exports.stringToUTF8String = exports.stringToPDFString = exports.stringToBytes = exports.string32 = exports.shadow = exports.setVerbosityLevel = exports.ReadableStream = exports.removeNullCharacters = exports.readUint32 = exports.readUint16 = exports.readInt8 = exports.log2 = exports.loadJpegStream = exports.isEvalSupported = exports.isLittleEndian = exports.createValidAbsoluteUrl = exports.isSameOrigin = exports.isNodeJS = exports.isSpace = exports.isString = exports.isNum = exports.isEmptyObj = exports.isBool = exports.isArrayBuffer = exports.info = exports.getVerbosityLevel = exports.getLookupTableFactory = exports.deprecated = exports.createObjectURL = exports.createPromiseCapability = exports.createBlob = exports.bytesToString = exports.assert = exports.arraysToBytes = exports.arrayByteLength = exports.FormatError = exports.XRefParseException = exports.Util = exports.UnknownErrorException = exports.UnexpectedResponseException = exports.TextRenderingMode = exports.StreamType = exports.StatTimer = exports.PasswordResponses = exports.PasswordException = exports.PageViewport = exports.NotImplementedException = exports.NativeImageDecoding = exports.MissingPDFException = exports.MissingDataException = exports.MessageHandler = exports.InvalidPDFException = exports.AbortException = exports.CMapCompressionType = exports.ImageKind = exports.FontType = exports.AnnotationType = exports.AnnotationFlag = exports.AnnotationFieldFlag = exports.AnnotationBorderStyleType = exports.UNSUPPORTED_FEATURES = exports.VERBOSITY_LEVELS = exports.OPS = exports.IDENTITY_MATRIX = exports.FONT_IDENTITY_MATRIX = undefined;
+exports.unreachable = exports.warn = exports.utf8StringToString = exports.stringToUTF8String = exports.stringToPDFString = exports.stringToBytes = exports.string32 = exports.shadow = exports.setVerbosityLevel = exports.ReadableStream = exports.removeNullCharacters = exports.readUint32 = exports.readUint16 = exports.readInt8 = exports.log2 = exports.loadJpegStream = exports.isEvalSupported = exports.isLittleEndian = exports.createValidAbsoluteUrl = exports.isSameOrigin = exports.isNodeJS = exports.isSpace = exports.isString = exports.isNum = exports.isInt = exports.isEmptyObj = exports.isBool = exports.isArrayBuffer = exports.isArray = exports.info = exports.globalScope = exports.getVerbosityLevel = exports.getLookupTableFactory = exports.deprecated = exports.createObjectURL = exports.createPromiseCapability = exports.createBlob = exports.bytesToString = exports.assert = exports.arraysToBytes = exports.arrayByteLength = exports.FormatError = exports.XRefParseException = exports.Util = exports.UnknownErrorException = exports.UnexpectedResponseException = exports.TextRenderingMode = exports.StreamType = exports.StatTimer = exports.PasswordResponses = exports.PasswordException = exports.PageViewport = exports.NotImplementedException = exports.NativeImageDecoding = exports.MissingPDFException = exports.MissingDataException = exports.MessageHandler = exports.InvalidPDFException = exports.AbortException = exports.CMapCompressionType = exports.ImageKind = exports.FontType = exports.AnnotationType = exports.AnnotationFlag = exports.AnnotationFieldFlag = exports.AnnotationBorderStyleType = exports.UNSUPPORTED_FEATURES = exports.VERBOSITY_LEVELS = exports.OPS = exports.IDENTITY_MATRIX = exports.FONT_IDENTITY_MATRIX = undefined;
 
-__w_pdfjs_require__(10);
+__w_pdfjs_require__(15);
 
-var _streams_polyfill = __w_pdfjs_require__(11);
+var _streams_polyfill = __w_pdfjs_require__(16);
 
+var globalScope = typeof window !== 'undefined' && window.Math === Math ? window : typeof global !== 'undefined' && global.Math === Math ? global : typeof self !== 'undefined' && self.Math === Math ? self : undefined;
 var FONT_IDENTITY_MATRIX = [0.001, 0, 0, 0.001, 0, 0];
 const NativeImageDecoding = {
   NONE: 'none',
@@ -706,9 +710,12 @@ var Util = function UtilClosure() {
     }
     return result;
   };
+  Util.sign = function Util_sign(num) {
+    return num < 0 ? -1 : 1;
+  };
   var ROMAN_NUMBER_MAP = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM', '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC', '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
   Util.toRoman = function Util_toRoman(number, lowerCase) {
-    assert(Number.isInteger(number) && number > 0, 'The number should be a positive integer.');
+    assert(isInt(number) && number > 0, 'The number should be a positive integer.');
     var pos,
         romanBuf = [];
     while (number >= 1000) {
@@ -881,11 +888,17 @@ function isEmptyObj(obj) {
 function isBool(v) {
   return typeof v === 'boolean';
 }
+function isInt(v) {
+  return typeof v === 'number' && (v | 0) === v;
+}
 function isNum(v) {
   return typeof v === 'number';
 }
 function isString(v) {
   return typeof v === 'string';
+}
+function isArray(v) {
+  return v instanceof Array;
 }
 function isArrayBuffer(v) {
   return typeof v === 'object' && v !== null && v.byteLength !== undefined;
@@ -1011,12 +1024,6 @@ function wrapReason(reason) {
       return new UnknownErrorException(reason.message, reason.details);
   }
 }
-function makeReasonSerializable(reason) {
-  if (!(reason instanceof Error) || reason instanceof AbortException || reason instanceof MissingPDFException || reason instanceof UnexpectedResponseException || reason instanceof UnknownErrorException) {
-    return reason;
-  }
-  return new UnknownErrorException(reason.message, reason.toString());
-}
 function resolveOrReject(capability, success, reason) {
   if (success) {
     capability.resolve();
@@ -1074,12 +1081,15 @@ function MessageHandler(sourceName, targetName, comObj) {
             data: result
           });
         }, reason => {
+          if (reason instanceof Error) {
+            reason = reason + '';
+          }
           comObj.postMessage({
             sourceName,
             targetName,
             isReply: true,
             callbackId: data.callbackId,
-            error: makeReasonSerializable(reason)
+            error: reason
           });
         });
       } else if (data.streamId) {
@@ -1217,7 +1227,6 @@ MessageHandler.prototype = {
         if (this.isCancelled) {
           return;
         }
-        this.isCancelled = true;
         sendStreamRequest({ stream: 'close' });
         delete self.streamSinks[streamId];
       },
@@ -1417,10 +1426,13 @@ exports.createObjectURL = createObjectURL;
 exports.deprecated = deprecated;
 exports.getLookupTableFactory = getLookupTableFactory;
 exports.getVerbosityLevel = getVerbosityLevel;
+exports.globalScope = globalScope;
 exports.info = info;
+exports.isArray = isArray;
 exports.isArrayBuffer = isArrayBuffer;
 exports.isBool = isBool;
 exports.isEmptyObj = isEmptyObj;
+exports.isInt = isInt;
 exports.isNum = isNum;
 exports.isString = isString;
 exports.isSpace = isSpace;
@@ -1456,18 +1468,11 @@ exports.unreachable = unreachable;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SimpleXMLParser = exports.DOMSVGFactory = exports.DOMCMapReaderFactory = exports.DOMCanvasFactory = exports.DEFAULT_LINK_REL = exports.getDefaultSetting = exports.LinkTarget = exports.getFilenameFromUrl = exports.isValidUrl = exports.isExternalLinkTargetSet = exports.addLinkAttributes = exports.RenderingCancelledException = exports.CustomStyle = undefined;
+exports.DOMCMapReaderFactory = exports.DOMCanvasFactory = exports.DEFAULT_LINK_REL = exports.getDefaultSetting = exports.LinkTarget = exports.getFilenameFromUrl = exports.isValidUrl = exports.isExternalLinkTargetSet = exports.addLinkAttributes = exports.RenderingCancelledException = exports.CustomStyle = undefined;
 
 var _util = __w_pdfjs_require__(0);
 
-var _global_scope = __w_pdfjs_require__(2);
-
-var _global_scope2 = _interopRequireDefault(_global_scope);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const DEFAULT_LINK_REL = 'noopener noreferrer nofollow';
-const SVG_NS = 'http://www.w3.org/2000/svg';
+var DEFAULT_LINK_REL = 'noopener noreferrer nofollow';
 class DOMCanvasFactory {
   create(width, height) {
     if (width <= 0 || height <= 0) {
@@ -1508,9 +1513,6 @@ class DOMCMapReaderFactory {
     this.isCompressed = isCompressed;
   }
   fetch({ name }) {
-    if (!this.baseUrl) {
-      return Promise.reject(new Error('CMap baseUrl must be specified, ' + 'see "PDFJS.cMapUrl" (and also "PDFJS.cMapPacked").'));
-    }
     if (!name) {
       return Promise.reject(new Error('CMap name must be specified.'));
     }
@@ -1543,123 +1545,6 @@ class DOMCMapReaderFactory {
         reject(new Error('Unable to load ' + (this.isCompressed ? 'binary ' : '') + 'CMap at: ' + url));
       };
       request.send(null);
-    });
-  }
-}
-class DOMSVGFactory {
-  create(width, height) {
-    (0, _util.assert)(width > 0 && height > 0, 'Invalid SVG dimensions');
-    let svg = document.createElementNS(SVG_NS, 'svg:svg');
-    svg.setAttribute('version', '1.1');
-    svg.setAttribute('width', width + 'px');
-    svg.setAttribute('height', height + 'px');
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
-    return svg;
-  }
-  createElement(type) {
-    (0, _util.assert)(typeof type === 'string', 'Invalid SVG element type');
-    return document.createElementNS(SVG_NS, type);
-  }
-}
-class SimpleDOMNode {
-  constructor(nodeName, nodeValue) {
-    this.nodeName = nodeName;
-    this.nodeValue = nodeValue;
-    Object.defineProperty(this, 'parentNode', {
-      value: null,
-      writable: true
-    });
-  }
-  get firstChild() {
-    return this.childNodes[0];
-  }
-  get nextSibling() {
-    let index = this.parentNode.childNodes.indexOf(this);
-    return this.parentNode.childNodes[index + 1];
-  }
-  get textContent() {
-    if (!this.childNodes) {
-      return this.nodeValue || '';
-    }
-    return this.childNodes.map(function (child) {
-      return child.textContent;
-    }).join('');
-  }
-  hasChildNodes() {
-    return this.childNodes && this.childNodes.length > 0;
-  }
-}
-class SimpleXMLParser {
-  parseFromString(data) {
-    let nodes = [];
-    data = data.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->/g, '').trim();
-    data = data.replace(/<!DOCTYPE[^>\[]+(\[[^\]]+)?[^>]+>/g, '').trim();
-    data = data.replace(/>([^<][\s\S]*?)</g, (all, text) => {
-      let length = nodes.length;
-      let node = new SimpleDOMNode('#text', this._decodeXML(text));
-      nodes.push(node);
-      if (node.textContent.trim().length === 0) {
-        return '><';
-      }
-      return '>' + length + ',<';
-    });
-    data = data.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, function (all, text) {
-      let length = nodes.length;
-      let node = new SimpleDOMNode('#text', text);
-      nodes.push(node);
-      return length + ',';
-    });
-    let regex = /<([\w\:]+)((?:[\s\w:=]|'[^']*'|"[^"]*")*)(?:\/>|>([\d,]*)<\/[^>]+>)/g;
-    let lastLength;
-    do {
-      lastLength = nodes.length;
-      data = data.replace(regex, function (all, name, attrs, data) {
-        let length = nodes.length;
-        let node = new SimpleDOMNode(name);
-        let children = [];
-        if (data) {
-          data = data.split(',');
-          data.pop();
-          data.forEach(function (child) {
-            let childNode = nodes[+child];
-            childNode.parentNode = node;
-            children.push(childNode);
-          });
-        }
-        node.childNodes = children;
-        nodes.push(node);
-        return length + ',';
-      });
-    } while (lastLength < nodes.length);
-    return { documentElement: nodes.pop() };
-  }
-  _decodeXML(text) {
-    if (text.indexOf('&') < 0) {
-      return text;
-    }
-    return text.replace(/&(#(x[0-9a-f]+|\d+)|\w+);/gi, function (all, entityName, number) {
-      if (number) {
-        if (number[0] === 'x') {
-          number = parseInt(number.substring(1), 16);
-        } else {
-          number = +number;
-        }
-        return String.fromCharCode(number);
-      }
-      switch (entityName) {
-        case 'amp':
-          return '&';
-        case 'lt':
-          return '<';
-        case 'gt':
-          return '>';
-        case 'quot':
-          return '\"';
-        case 'apos':
-          return '\'';
-      }
-      return '&' + entityName + ';';
     });
   }
 }
@@ -1736,7 +1621,7 @@ function getFilenameFromUrl(url) {
   return url.substring(url.lastIndexOf('/', end) + 1, end);
 }
 function getDefaultSetting(id) {
-  var globalSettings = _global_scope2.default.PDFJS;
+  var globalSettings = _util.globalScope.PDFJS;
   switch (id) {
     case 'pdfBug':
       return globalSettings ? globalSettings.pdfBug : false;
@@ -1823,8 +1708,6 @@ exports.getDefaultSetting = getDefaultSetting;
 exports.DEFAULT_LINK_REL = DEFAULT_LINK_REL;
 exports.DOMCanvasFactory = DOMCanvasFactory;
 exports.DOMCMapReaderFactory = DOMCMapReaderFactory;
-exports.DOMSVGFactory = DOMSVGFactory;
-exports.SimpleXMLParser = SimpleXMLParser;
 
 /***/ }),
 /* 2 */
@@ -1833,7 +1716,648 @@ exports.SimpleXMLParser = SimpleXMLParser;
 "use strict";
 
 
-module.exports = typeof window !== 'undefined' && window.Math === Math ? window : typeof global !== 'undefined' && global.Math === Math ? global : typeof self !== 'undefined' && self.Math === Math ? self : {};
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AnnotationLayer = undefined;
+
+var _dom_utils = __w_pdfjs_require__(1);
+
+var _util = __w_pdfjs_require__(0);
+
+function AnnotationElementFactory() {}
+AnnotationElementFactory.prototype = {
+  create: function AnnotationElementFactory_create(parameters) {
+    var subtype = parameters.data.annotationType;
+    switch (subtype) {
+      case _util.AnnotationType.LINK:
+        return new LinkAnnotationElement(parameters);
+      case _util.AnnotationType.TEXT:
+        return new TextAnnotationElement(parameters);
+      case _util.AnnotationType.WIDGET:
+        var fieldType = parameters.data.fieldType;
+        switch (fieldType) {
+          case 'Tx':
+            return new TextWidgetAnnotationElement(parameters);
+          case 'Btn':
+            if (parameters.data.radioButton) {
+              return new RadioButtonWidgetAnnotationElement(parameters);
+            } else if (parameters.data.checkBox) {
+              return new CheckboxWidgetAnnotationElement(parameters);
+            }
+            (0, _util.warn)('Unimplemented button widget annotation: pushbutton');
+            break;
+          case 'Ch':
+            return new ChoiceWidgetAnnotationElement(parameters);
+        }
+        return new WidgetAnnotationElement(parameters);
+      case _util.AnnotationType.POPUP:
+        return new PopupAnnotationElement(parameters);
+      case _util.AnnotationType.LINE:
+        return new LineAnnotationElement(parameters);
+      case _util.AnnotationType.HIGHLIGHT:
+        return new HighlightAnnotationElement(parameters);
+      case _util.AnnotationType.UNDERLINE:
+        return new UnderlineAnnotationElement(parameters);
+      case _util.AnnotationType.SQUIGGLY:
+        return new SquigglyAnnotationElement(parameters);
+      case _util.AnnotationType.STRIKEOUT:
+        return new StrikeOutAnnotationElement(parameters);
+      case _util.AnnotationType.FILEATTACHMENT:
+        return new FileAttachmentAnnotationElement(parameters);
+      default:
+        return new AnnotationElement(parameters);
+    }
+  }
+};
+var AnnotationElement = function AnnotationElementClosure() {
+  function AnnotationElement(parameters, isRenderable, ignoreBorder) {
+    this.isRenderable = isRenderable || false;
+    this.data = parameters.data;
+    this.layer = parameters.layer;
+    this.page = parameters.page;
+    this.viewport = parameters.viewport;
+    this.linkService = parameters.linkService;
+    this.downloadManager = parameters.downloadManager;
+    this.imageResourcesPath = parameters.imageResourcesPath;
+    this.renderInteractiveForms = parameters.renderInteractiveForms;
+    if (isRenderable) {
+      this.container = this._createContainer(ignoreBorder);
+    }
+  }
+  AnnotationElement.prototype = {
+    _createContainer: function AnnotationElement_createContainer(ignoreBorder) {
+      var data = this.data,
+          page = this.page,
+          viewport = this.viewport;
+      var container = document.createElement('section');
+      var width = data.rect[2] - data.rect[0];
+      var height = data.rect[3] - data.rect[1];
+      container.setAttribute('data-annotation-id', data.id);
+      var rect = _util.Util.normalizeRect([data.rect[0], page.view[3] - data.rect[1] + page.view[1], data.rect[2], page.view[3] - data.rect[3] + page.view[1]]);
+      _dom_utils.CustomStyle.setProp('transform', container, 'matrix(' + viewport.transform.join(',') + ')');
+      _dom_utils.CustomStyle.setProp('transformOrigin', container, -rect[0] + 'px ' + -rect[1] + 'px');
+      if (!ignoreBorder && data.borderStyle.width > 0) {
+        container.style.borderWidth = data.borderStyle.width + 'px';
+        if (data.borderStyle.style !== _util.AnnotationBorderStyleType.UNDERLINE) {
+          width = width - 2 * data.borderStyle.width;
+          height = height - 2 * data.borderStyle.width;
+        }
+        var horizontalRadius = data.borderStyle.horizontalCornerRadius;
+        var verticalRadius = data.borderStyle.verticalCornerRadius;
+        if (horizontalRadius > 0 || verticalRadius > 0) {
+          var radius = horizontalRadius + 'px / ' + verticalRadius + 'px';
+          _dom_utils.CustomStyle.setProp('borderRadius', container, radius);
+        }
+        switch (data.borderStyle.style) {
+          case _util.AnnotationBorderStyleType.SOLID:
+            container.style.borderStyle = 'solid';
+            break;
+          case _util.AnnotationBorderStyleType.DASHED:
+            container.style.borderStyle = 'dashed';
+            break;
+          case _util.AnnotationBorderStyleType.BEVELED:
+            (0, _util.warn)('Unimplemented border style: beveled');
+            break;
+          case _util.AnnotationBorderStyleType.INSET:
+            (0, _util.warn)('Unimplemented border style: inset');
+            break;
+          case _util.AnnotationBorderStyleType.UNDERLINE:
+            container.style.borderBottomStyle = 'solid';
+            break;
+          default:
+            break;
+        }
+        if (data.color) {
+          container.style.borderColor = _util.Util.makeCssRgb(data.color[0] | 0, data.color[1] | 0, data.color[2] | 0);
+        } else {
+          container.style.borderWidth = 0;
+        }
+      }
+      container.style.left = rect[0] + 'px';
+      container.style.top = rect[1] + 'px';
+      container.style.width = width + 'px';
+      container.style.height = height + 'px';
+      return container;
+    },
+    _createPopup: function AnnotationElement_createPopup(container, trigger, data) {
+      if (!trigger) {
+        trigger = document.createElement('div');
+        trigger.style.height = container.style.height;
+        trigger.style.width = container.style.width;
+        container.appendChild(trigger);
+      }
+      var popupElement = new PopupElement({
+        container,
+        trigger,
+        color: data.color,
+        title: data.title,
+        contents: data.contents,
+        hideWrapper: true
+      });
+      var popup = popupElement.render();
+      popup.style.left = container.style.width;
+      container.appendChild(popup);
+    },
+    render: function AnnotationElement_render() {
+      throw new Error('Abstract method AnnotationElement.render called');
+    }
+  };
+  return AnnotationElement;
+}();
+var LinkAnnotationElement = function LinkAnnotationElementClosure() {
+  function LinkAnnotationElement(parameters) {
+    AnnotationElement.call(this, parameters, true);
+  }
+  _util.Util.inherit(LinkAnnotationElement, AnnotationElement, {
+    render: function LinkAnnotationElement_render() {
+      this.container.className = 'linkAnnotation';
+      var link = document.createElement('a');
+      (0, _dom_utils.addLinkAttributes)(link, {
+        url: this.data.url,
+        target: this.data.newWindow ? _dom_utils.LinkTarget.BLANK : undefined
+      });
+      if (!this.data.url) {
+        if (this.data.action) {
+          this._bindNamedAction(link, this.data.action);
+        } else {
+          this._bindLink(link, this.data.dest);
+        }
+      }
+      this.container.appendChild(link);
+      return this.container;
+    },
+    _bindLink(link, destination) {
+      link.href = this.linkService.getDestinationHash(destination);
+      link.onclick = () => {
+        if (destination) {
+          this.linkService.navigateTo(destination);
+        }
+        return false;
+      };
+      if (destination) {
+        link.className = 'internalLink';
+      }
+    },
+    _bindNamedAction(link, action) {
+      link.href = this.linkService.getAnchorUrl('');
+      link.onclick = () => {
+        this.linkService.executeNamedAction(action);
+        return false;
+      };
+      link.className = 'internalLink';
+    }
+  });
+  return LinkAnnotationElement;
+}();
+var TextAnnotationElement = function TextAnnotationElementClosure() {
+  function TextAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable);
+  }
+  _util.Util.inherit(TextAnnotationElement, AnnotationElement, {
+    render: function TextAnnotationElement_render() {
+      this.container.className = 'textAnnotation';
+      var image = document.createElement('img');
+      image.style.height = this.container.style.height;
+      image.style.width = this.container.style.width;
+      image.src = this.imageResourcesPath + 'annotation-' + this.data.name.toLowerCase() + '.svg';
+      image.alt = '[{{type}} Annotation]';
+      image.dataset.l10nId = 'text_annotation_type';
+      image.dataset.l10nArgs = JSON.stringify({ type: this.data.name });
+      if (!this.data.hasPopup) {
+        this._createPopup(this.container, image, this.data);
+      }
+      this.container.appendChild(image);
+      return this.container;
+    }
+  });
+  return TextAnnotationElement;
+}();
+var WidgetAnnotationElement = function WidgetAnnotationElementClosure() {
+  function WidgetAnnotationElement(parameters, isRenderable) {
+    AnnotationElement.call(this, parameters, isRenderable);
+  }
+  _util.Util.inherit(WidgetAnnotationElement, AnnotationElement, {
+    render: function WidgetAnnotationElement_render() {
+      return this.container;
+    }
+  });
+  return WidgetAnnotationElement;
+}();
+var TextWidgetAnnotationElement = function TextWidgetAnnotationElementClosure() {
+  var TEXT_ALIGNMENT = ['left', 'center', 'right'];
+  function TextWidgetAnnotationElement(parameters) {
+    var isRenderable = parameters.renderInteractiveForms || !parameters.data.hasAppearance && !!parameters.data.fieldValue;
+    WidgetAnnotationElement.call(this, parameters, isRenderable);
+  }
+  _util.Util.inherit(TextWidgetAnnotationElement, WidgetAnnotationElement, {
+    render: function TextWidgetAnnotationElement_render() {
+      this.container.className = 'textWidgetAnnotation';
+      var element = null;
+      if (this.renderInteractiveForms) {
+        if (this.data.multiLine) {
+          element = document.createElement('textarea');
+          element.textContent = this.data.fieldValue;
+        } else {
+          element = document.createElement('input');
+          element.type = 'text';
+          element.setAttribute('value', this.data.fieldValue);
+        }
+        element.disabled = this.data.readOnly;
+        if (this.data.maxLen !== null) {
+          element.maxLength = this.data.maxLen;
+        }
+        if (this.data.comb) {
+          var fieldWidth = this.data.rect[2] - this.data.rect[0];
+          var combWidth = fieldWidth / this.data.maxLen;
+          element.classList.add('comb');
+          element.style.letterSpacing = 'calc(' + combWidth + 'px - 1ch)';
+        }
+      } else {
+        element = document.createElement('div');
+        element.textContent = this.data.fieldValue;
+        element.style.verticalAlign = 'middle';
+        element.style.display = 'table-cell';
+        var font = null;
+        if (this.data.fontRefName) {
+          font = this.page.commonObjs.getData(this.data.fontRefName);
+        }
+        this._setTextStyle(element, font);
+      }
+      if (this.data.textAlignment !== null) {
+        element.style.textAlign = TEXT_ALIGNMENT[this.data.textAlignment];
+      }
+      this.container.appendChild(element);
+      return this.container;
+    },
+    _setTextStyle: function TextWidgetAnnotationElement_setTextStyle(element, font) {
+      var style = element.style;
+      style.fontSize = this.data.fontSize + 'px';
+      style.direction = this.data.fontDirection < 0 ? 'rtl' : 'ltr';
+      if (!font) {
+        return;
+      }
+      style.fontWeight = font.black ? font.bold ? '900' : 'bold' : font.bold ? 'bold' : 'normal';
+      style.fontStyle = font.italic ? 'italic' : 'normal';
+      var fontFamily = font.loadedName ? '"' + font.loadedName + '", ' : '';
+      var fallbackName = font.fallbackName || 'Helvetica, sans-serif';
+      style.fontFamily = fontFamily + fallbackName;
+    }
+  });
+  return TextWidgetAnnotationElement;
+}();
+var CheckboxWidgetAnnotationElement = function CheckboxWidgetAnnotationElementClosure() {
+  function CheckboxWidgetAnnotationElement(parameters) {
+    WidgetAnnotationElement.call(this, parameters, parameters.renderInteractiveForms);
+  }
+  _util.Util.inherit(CheckboxWidgetAnnotationElement, WidgetAnnotationElement, {
+    render: function CheckboxWidgetAnnotationElement_render() {
+      this.container.className = 'buttonWidgetAnnotation checkBox';
+      var element = document.createElement('input');
+      element.disabled = this.data.readOnly;
+      element.type = 'checkbox';
+      if (this.data.fieldValue && this.data.fieldValue !== 'Off') {
+        element.setAttribute('checked', true);
+      }
+      this.container.appendChild(element);
+      return this.container;
+    }
+  });
+  return CheckboxWidgetAnnotationElement;
+}();
+var RadioButtonWidgetAnnotationElement = function RadioButtonWidgetAnnotationElementClosure() {
+  function RadioButtonWidgetAnnotationElement(parameters) {
+    WidgetAnnotationElement.call(this, parameters, parameters.renderInteractiveForms);
+  }
+  _util.Util.inherit(RadioButtonWidgetAnnotationElement, WidgetAnnotationElement, {
+    render: function RadioButtonWidgetAnnotationElement_render() {
+      this.container.className = 'buttonWidgetAnnotation radioButton';
+      var element = document.createElement('input');
+      element.disabled = this.data.readOnly;
+      element.type = 'radio';
+      element.name = this.data.fieldName;
+      if (this.data.fieldValue === this.data.buttonValue) {
+        element.setAttribute('checked', true);
+      }
+      this.container.appendChild(element);
+      return this.container;
+    }
+  });
+  return RadioButtonWidgetAnnotationElement;
+}();
+var ChoiceWidgetAnnotationElement = function ChoiceWidgetAnnotationElementClosure() {
+  function ChoiceWidgetAnnotationElement(parameters) {
+    WidgetAnnotationElement.call(this, parameters, parameters.renderInteractiveForms);
+  }
+  _util.Util.inherit(ChoiceWidgetAnnotationElement, WidgetAnnotationElement, {
+    render: function ChoiceWidgetAnnotationElement_render() {
+      this.container.className = 'choiceWidgetAnnotation';
+      var selectElement = document.createElement('select');
+      selectElement.disabled = this.data.readOnly;
+      if (!this.data.combo) {
+        selectElement.size = this.data.options.length;
+        if (this.data.multiSelect) {
+          selectElement.multiple = true;
+        }
+      }
+      for (var i = 0, ii = this.data.options.length; i < ii; i++) {
+        var option = this.data.options[i];
+        var optionElement = document.createElement('option');
+        optionElement.textContent = option.displayValue;
+        optionElement.value = option.exportValue;
+        if (this.data.fieldValue.indexOf(option.displayValue) >= 0) {
+          optionElement.setAttribute('selected', true);
+        }
+        selectElement.appendChild(optionElement);
+      }
+      this.container.appendChild(selectElement);
+      return this.container;
+    }
+  });
+  return ChoiceWidgetAnnotationElement;
+}();
+var PopupAnnotationElement = function PopupAnnotationElementClosure() {
+  var IGNORE_TYPES = ['Line'];
+  function PopupAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable);
+  }
+  _util.Util.inherit(PopupAnnotationElement, AnnotationElement, {
+    render: function PopupAnnotationElement_render() {
+      this.container.className = 'popupAnnotation';
+      if (IGNORE_TYPES.indexOf(this.data.parentType) >= 0) {
+        return this.container;
+      }
+      var selector = '[data-annotation-id="' + this.data.parentId + '"]';
+      var parentElement = this.layer.querySelector(selector);
+      if (!parentElement) {
+        return this.container;
+      }
+      var popup = new PopupElement({
+        container: this.container,
+        trigger: parentElement,
+        color: this.data.color,
+        title: this.data.title,
+        contents: this.data.contents
+      });
+      var parentLeft = parseFloat(parentElement.style.left);
+      var parentWidth = parseFloat(parentElement.style.width);
+      _dom_utils.CustomStyle.setProp('transformOrigin', this.container, -(parentLeft + parentWidth) + 'px -' + parentElement.style.top);
+      this.container.style.left = parentLeft + parentWidth + 'px';
+      this.container.appendChild(popup.render());
+      return this.container;
+    }
+  });
+  return PopupAnnotationElement;
+}();
+var PopupElement = function PopupElementClosure() {
+  var BACKGROUND_ENLIGHT = 0.7;
+  function PopupElement(parameters) {
+    this.container = parameters.container;
+    this.trigger = parameters.trigger;
+    this.color = parameters.color;
+    this.title = parameters.title;
+    this.contents = parameters.contents;
+    this.hideWrapper = parameters.hideWrapper || false;
+    this.pinned = false;
+  }
+  PopupElement.prototype = {
+    render: function PopupElement_render() {
+      var wrapper = document.createElement('div');
+      wrapper.className = 'popupWrapper';
+      this.hideElement = this.hideWrapper ? wrapper : this.container;
+      this.hideElement.setAttribute('hidden', true);
+      var popup = document.createElement('div');
+      popup.className = 'popup';
+      var color = this.color;
+      if (color) {
+        var r = BACKGROUND_ENLIGHT * (255 - color[0]) + color[0];
+        var g = BACKGROUND_ENLIGHT * (255 - color[1]) + color[1];
+        var b = BACKGROUND_ENLIGHT * (255 - color[2]) + color[2];
+        popup.style.backgroundColor = _util.Util.makeCssRgb(r | 0, g | 0, b | 0);
+      }
+      var contents = this._formatContents(this.contents);
+      var title = document.createElement('h1');
+      title.textContent = this.title;
+      this.trigger.addEventListener('click', this._toggle.bind(this));
+      this.trigger.addEventListener('mouseover', this._show.bind(this, false));
+      this.trigger.addEventListener('mouseout', this._hide.bind(this, false));
+      popup.addEventListener('click', this._hide.bind(this, true));
+      popup.appendChild(title);
+      popup.appendChild(contents);
+      wrapper.appendChild(popup);
+      return wrapper;
+    },
+    _formatContents: function PopupElement_formatContents(contents) {
+      var p = document.createElement('p');
+      var lines = contents.split(/(?:\r\n?|\n)/);
+      for (var i = 0, ii = lines.length; i < ii; ++i) {
+        var line = lines[i];
+        p.appendChild(document.createTextNode(line));
+        if (i < ii - 1) {
+          p.appendChild(document.createElement('br'));
+        }
+      }
+      return p;
+    },
+    _toggle: function PopupElement_toggle() {
+      if (this.pinned) {
+        this._hide(true);
+      } else {
+        this._show(true);
+      }
+    },
+    _show: function PopupElement_show(pin) {
+      if (pin) {
+        this.pinned = true;
+      }
+      if (this.hideElement.hasAttribute('hidden')) {
+        this.hideElement.removeAttribute('hidden');
+        this.container.style.zIndex += 1;
+      }
+    },
+    _hide: function PopupElement_hide(unpin) {
+      if (unpin) {
+        this.pinned = false;
+      }
+      if (!this.hideElement.hasAttribute('hidden') && !this.pinned) {
+        this.hideElement.setAttribute('hidden', true);
+        this.container.style.zIndex -= 1;
+      }
+    }
+  };
+  return PopupElement;
+}();
+var LineAnnotationElement = function LineAnnotationElementClosure() {
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function LineAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable, true);
+  }
+  _util.Util.inherit(LineAnnotationElement, AnnotationElement, {
+    render: function LineAnnotationElement_render() {
+      this.container.className = 'lineAnnotation';
+      var data = this.data;
+      var width = data.rect[2] - data.rect[0];
+      var height = data.rect[3] - data.rect[1];
+      var svg = document.createElementNS(SVG_NS, 'svg:svg');
+      svg.setAttributeNS(null, 'version', '1.1');
+      svg.setAttributeNS(null, 'width', width + 'px');
+      svg.setAttributeNS(null, 'height', height + 'px');
+      svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
+      svg.setAttributeNS(null, 'viewBox', '0 0 ' + width + ' ' + height);
+      var line = document.createElementNS(SVG_NS, 'svg:line');
+      line.setAttributeNS(null, 'x1', data.rect[2] - data.lineCoordinates[0]);
+      line.setAttributeNS(null, 'y1', data.rect[3] - data.lineCoordinates[1]);
+      line.setAttributeNS(null, 'x2', data.rect[2] - data.lineCoordinates[2]);
+      line.setAttributeNS(null, 'y2', data.rect[3] - data.lineCoordinates[3]);
+      line.setAttributeNS(null, 'stroke-width', data.borderStyle.width);
+      line.setAttributeNS(null, 'stroke', 'transparent');
+      svg.appendChild(line);
+      this.container.append(svg);
+      this._createPopup(this.container, line, this.data);
+      return this.container;
+    }
+  });
+  return LineAnnotationElement;
+}();
+var HighlightAnnotationElement = function HighlightAnnotationElementClosure() {
+  function HighlightAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable, true);
+  }
+  _util.Util.inherit(HighlightAnnotationElement, AnnotationElement, {
+    render: function HighlightAnnotationElement_render() {
+      this.container.className = 'highlightAnnotation';
+      if (!this.data.hasPopup) {
+        this._createPopup(this.container, null, this.data);
+      }
+      return this.container;
+    }
+  });
+  return HighlightAnnotationElement;
+}();
+var UnderlineAnnotationElement = function UnderlineAnnotationElementClosure() {
+  function UnderlineAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable, true);
+  }
+  _util.Util.inherit(UnderlineAnnotationElement, AnnotationElement, {
+    render: function UnderlineAnnotationElement_render() {
+      this.container.className = 'underlineAnnotation';
+      if (!this.data.hasPopup) {
+        this._createPopup(this.container, null, this.data);
+      }
+      return this.container;
+    }
+  });
+  return UnderlineAnnotationElement;
+}();
+var SquigglyAnnotationElement = function SquigglyAnnotationElementClosure() {
+  function SquigglyAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable, true);
+  }
+  _util.Util.inherit(SquigglyAnnotationElement, AnnotationElement, {
+    render: function SquigglyAnnotationElement_render() {
+      this.container.className = 'squigglyAnnotation';
+      if (!this.data.hasPopup) {
+        this._createPopup(this.container, null, this.data);
+      }
+      return this.container;
+    }
+  });
+  return SquigglyAnnotationElement;
+}();
+var StrikeOutAnnotationElement = function StrikeOutAnnotationElementClosure() {
+  function StrikeOutAnnotationElement(parameters) {
+    var isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
+    AnnotationElement.call(this, parameters, isRenderable, true);
+  }
+  _util.Util.inherit(StrikeOutAnnotationElement, AnnotationElement, {
+    render: function StrikeOutAnnotationElement_render() {
+      this.container.className = 'strikeoutAnnotation';
+      if (!this.data.hasPopup) {
+        this._createPopup(this.container, null, this.data);
+      }
+      return this.container;
+    }
+  });
+  return StrikeOutAnnotationElement;
+}();
+var FileAttachmentAnnotationElement = function FileAttachmentAnnotationElementClosure() {
+  function FileAttachmentAnnotationElement(parameters) {
+    AnnotationElement.call(this, parameters, true);
+    var file = this.data.file;
+    this.filename = (0, _dom_utils.getFilenameFromUrl)(file.filename);
+    this.content = file.content;
+    this.linkService.onFileAttachmentAnnotation({
+      id: (0, _util.stringToPDFString)(file.filename),
+      filename: file.filename,
+      content: file.content
+    });
+  }
+  _util.Util.inherit(FileAttachmentAnnotationElement, AnnotationElement, {
+    render: function FileAttachmentAnnotationElement_render() {
+      this.container.className = 'fileAttachmentAnnotation';
+      var trigger = document.createElement('div');
+      trigger.style.height = this.container.style.height;
+      trigger.style.width = this.container.style.width;
+      trigger.addEventListener('dblclick', this._download.bind(this));
+      if (!this.data.hasPopup && (this.data.title || this.data.contents)) {
+        this._createPopup(this.container, trigger, this.data);
+      }
+      this.container.appendChild(trigger);
+      return this.container;
+    },
+    _download: function FileAttachmentAnnotationElement_download() {
+      if (!this.downloadManager) {
+        (0, _util.warn)('Download cannot be started due to unavailable download manager');
+        return;
+      }
+      this.downloadManager.downloadData(this.content, this.filename, '');
+    }
+  });
+  return FileAttachmentAnnotationElement;
+}();
+var AnnotationLayer = function AnnotationLayerClosure() {
+  return {
+    render: function AnnotationLayer_render(parameters) {
+      var annotationElementFactory = new AnnotationElementFactory();
+      for (var i = 0, ii = parameters.annotations.length; i < ii; i++) {
+        var data = parameters.annotations[i];
+        if (!data) {
+          continue;
+        }
+        var element = annotationElementFactory.create({
+          data,
+          layer: parameters.div,
+          page: parameters.page,
+          viewport: parameters.viewport,
+          linkService: parameters.linkService,
+          downloadManager: parameters.downloadManager,
+          imageResourcesPath: parameters.imageResourcesPath || (0, _dom_utils.getDefaultSetting)('imageResourcesPath'),
+          renderInteractiveForms: parameters.renderInteractiveForms || false
+        });
+        if (element.isRenderable) {
+          parameters.div.appendChild(element.render());
+        }
+      }
+    },
+    update: function AnnotationLayer_update(parameters) {
+      for (var i = 0, ii = parameters.annotations.length; i < ii; i++) {
+        var data = parameters.annotations[i];
+        var element = parameters.div.querySelector('[data-annotation-id="' + data.id + '"]');
+        if (element) {
+          _dom_utils.CustomStyle.setProp('transform', element, 'matrix(' + parameters.viewport.transform.join(',') + ')');
+        }
+      }
+      parameters.div.removeAttribute('hidden');
+    }
+  };
+}();
+exports.AnnotationLayer = AnnotationLayer;
 
 /***/ }),
 /* 3 */
@@ -1851,19 +2375,13 @@ var _util = __w_pdfjs_require__(0);
 
 var _dom_utils = __w_pdfjs_require__(1);
 
-var _font_loader = __w_pdfjs_require__(14);
+var _font_loader = __w_pdfjs_require__(11);
 
-var _canvas = __w_pdfjs_require__(15);
+var _canvas = __w_pdfjs_require__(10);
 
-var _global_scope = __w_pdfjs_require__(2);
+var _metadata = __w_pdfjs_require__(6);
 
-var _global_scope2 = _interopRequireDefault(_global_scope);
-
-var _metadata = __w_pdfjs_require__(5);
-
-var _transport_stream = __w_pdfjs_require__(17);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _transport_stream = __w_pdfjs_require__(13);
 
 var DEFAULT_RANGE_CHUNK_SIZE = 65536;
 var isWorkerDisabled = false;
@@ -1990,7 +2508,6 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
   if (worker.destroyed) {
     return Promise.reject(new Error('Worker was destroyed'));
   }
-  let apiVersion = '1.9.640';
   source.disableAutoFetch = (0, _dom_utils.getDefaultSetting)('disableAutoFetch');
   source.disableStream = (0, _dom_utils.getDefaultSetting)('disableStream');
   source.chunkedViewerLoading = !!pdfDataRangeTransport;
@@ -2000,7 +2517,6 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
   }
   return worker.messageHandler.sendWithPromise('GetDocRequest', {
     docId,
-    apiVersion,
     source: {
       data: source.data,
       url: source.url,
@@ -2015,8 +2531,7 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
     postMessageTransfers: (0, _dom_utils.getDefaultSetting)('postMessageTransfers') && !isPostMessageTransfersDisabled,
     docBaseUrl: source.docBaseUrl,
     nativeImageDecoderSupport: source.nativeImageDecoderSupport,
-    ignoreErrors: source.ignoreErrors,
-    isEvalSupported: (0, _dom_utils.getDefaultSetting)('isEvalSupported')
+    ignoreErrors: source.ignoreErrors
   }).then(function (workerId) {
     if (worker.destroyed) {
       throw new Error('Worker was destroyed');
@@ -2443,7 +2958,7 @@ class LoopbackPort {
         cloned.set(value, result);
         return result;
       }
-      result = Array.isArray(value) ? [] : {};
+      result = (0, _util.isArray)(value) ? [] : {};
       cloned.set(value, result);
       for (var i in value) {
         var desc,
@@ -2876,15 +3391,15 @@ var WorkerTransport = function WorkerTransportClosure() {
               break;
             }
             var fontRegistry = null;
-            if ((0, _dom_utils.getDefaultSetting)('pdfBug') && _global_scope2.default.FontInspector && _global_scope2.default['FontInspector'].enabled) {
+            if ((0, _dom_utils.getDefaultSetting)('pdfBug') && _util.globalScope.FontInspector && _util.globalScope['FontInspector'].enabled) {
               fontRegistry = {
                 registerFont(font, url) {
-                  _global_scope2.default['FontInspector'].fontAdded(font, url);
+                  _util.globalScope['FontInspector'].fontAdded(font, url);
                 }
               };
             }
             var font = new _font_loader.FontFaceObject(exportedData, {
-              isEvalSupported: (0, _dom_utils.getDefaultSetting)('isEvalSupported'),
+              isEvalSuported: (0, _dom_utils.getDefaultSetting)('isEvalSupported'),
               disableFontFace: (0, _dom_utils.getDefaultSetting)('disableFontFace'),
               fontRegistry
             });
@@ -3031,7 +3546,7 @@ var WorkerTransport = function WorkerTransportClosure() {
       return this.messageHandler.sendWithPromise('GetData', null);
     },
     getPage: function WorkerTransport_getPage(pageNumber, capability) {
-      if (!Number.isInteger(pageNumber) || pageNumber <= 0 || pageNumber > this.numPages) {
+      if (!(0, _util.isInt)(pageNumber) || pageNumber <= 0 || pageNumber > this.numPages) {
         return Promise.reject(new Error('Invalid page request'));
       }
       var pageIndex = pageNumber - 1;
@@ -3216,8 +3731,8 @@ var InternalRenderTask = function InternalRenderTaskClosure() {
       if (this.cancelled) {
         return;
       }
-      if ((0, _dom_utils.getDefaultSetting)('pdfBug') && _global_scope2.default.StepperManager && _global_scope2.default.StepperManager.enabled) {
-        this.stepper = _global_scope2.default.StepperManager.create(this.pageNumber - 1);
+      if ((0, _dom_utils.getDefaultSetting)('pdfBug') && _util.globalScope.StepperManager && _util.globalScope.StepperManager.enabled) {
+        this.stepper = _util.globalScope.StepperManager.create(this.pageNumber - 1);
         this.stepper.init(this.operatorList);
         this.stepper.nextBreakPoint = this.stepper.getNextBreakPoint();
       }
@@ -3311,8 +3826,8 @@ var _UnsupportedManager = function UnsupportedManagerClosure() {
 }();
 var version, build;
 {
-  exports.version = version = '1.9.640';
-  exports.build = build = '853db85b';
+  exports.version = version = '1.8.618';
+  exports.build = build = '21cc2c02';
 }
 exports.getDocument = getDocument;
 exports.LoopbackPort = LoopbackPort;
@@ -3335,1157 +3850,18 @@ exports.build = build;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.WebGLUtils = undefined;
-
-var _dom_utils = __w_pdfjs_require__(1);
+exports.SVGGraphics = undefined;
 
 var _util = __w_pdfjs_require__(0);
 
-var WebGLUtils = function WebGLUtilsClosure() {
-  function loadShader(gl, code, shaderType) {
-    var shader = gl.createShader(shaderType);
-    gl.shaderSource(shader, code);
-    gl.compileShader(shader);
-    var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (!compiled) {
-      var errorMsg = gl.getShaderInfoLog(shader);
-      throw new Error('Error during shader compilation: ' + errorMsg);
-    }
-    return shader;
-  }
-  function createVertexShader(gl, code) {
-    return loadShader(gl, code, gl.VERTEX_SHADER);
-  }
-  function createFragmentShader(gl, code) {
-    return loadShader(gl, code, gl.FRAGMENT_SHADER);
-  }
-  function createProgram(gl, shaders) {
-    var program = gl.createProgram();
-    for (var i = 0, ii = shaders.length; i < ii; ++i) {
-      gl.attachShader(program, shaders[i]);
-    }
-    gl.linkProgram(program);
-    var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (!linked) {
-      var errorMsg = gl.getProgramInfoLog(program);
-      throw new Error('Error during program linking: ' + errorMsg);
-    }
-    return program;
-  }
-  function createTexture(gl, image, textureId) {
-    gl.activeTexture(textureId);
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    return texture;
-  }
-  var currentGL, currentCanvas;
-  function generateGL() {
-    if (currentGL) {
-      return;
-    }
-    currentCanvas = document.createElement('canvas');
-    currentGL = currentCanvas.getContext('webgl', { premultipliedalpha: false });
-  }
-  var smaskVertexShaderCode = '\
-  attribute vec2 a_position;                                    \
-  attribute vec2 a_texCoord;                                    \
-                                                                \
-  uniform vec2 u_resolution;                                    \
-                                                                \
-  varying vec2 v_texCoord;                                      \
-                                                                \
-  void main() {                                                 \
-    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;   \
-    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);          \
-                                                                \
-    v_texCoord = a_texCoord;                                    \
-  }                                                             ';
-  var smaskFragmentShaderCode = '\
-  precision mediump float;                                      \
-                                                                \
-  uniform vec4 u_backdrop;                                      \
-  uniform int u_subtype;                                        \
-  uniform sampler2D u_image;                                    \
-  uniform sampler2D u_mask;                                     \
-                                                                \
-  varying vec2 v_texCoord;                                      \
-                                                                \
-  void main() {                                                 \
-    vec4 imageColor = texture2D(u_image, v_texCoord);           \
-    vec4 maskColor = texture2D(u_mask, v_texCoord);             \
-    if (u_backdrop.a > 0.0) {                                   \
-      maskColor.rgb = maskColor.rgb * maskColor.a +             \
-                      u_backdrop.rgb * (1.0 - maskColor.a);     \
-    }                                                           \
-    float lum;                                                  \
-    if (u_subtype == 0) {                                       \
-      lum = maskColor.a;                                        \
-    } else {                                                    \
-      lum = maskColor.r * 0.3 + maskColor.g * 0.59 +            \
-            maskColor.b * 0.11;                                 \
-    }                                                           \
-    imageColor.a *= lum;                                        \
-    imageColor.rgb *= imageColor.a;                             \
-    gl_FragColor = imageColor;                                  \
-  }                                                             ';
-  var smaskCache = null;
-  function initSmaskGL() {
-    var canvas, gl;
-    generateGL();
-    canvas = currentCanvas;
-    currentCanvas = null;
-    gl = currentGL;
-    currentGL = null;
-    var vertexShader = createVertexShader(gl, smaskVertexShaderCode);
-    var fragmentShader = createFragmentShader(gl, smaskFragmentShaderCode);
-    var program = createProgram(gl, [vertexShader, fragmentShader]);
-    gl.useProgram(program);
-    var cache = {};
-    cache.gl = gl;
-    cache.canvas = canvas;
-    cache.resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
-    cache.positionLocation = gl.getAttribLocation(program, 'a_position');
-    cache.backdropLocation = gl.getUniformLocation(program, 'u_backdrop');
-    cache.subtypeLocation = gl.getUniformLocation(program, 'u_subtype');
-    var texCoordLocation = gl.getAttribLocation(program, 'a_texCoord');
-    var texLayerLocation = gl.getUniformLocation(program, 'u_image');
-    var texMaskLocation = gl.getUniformLocation(program, 'u_mask');
-    var texCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(texCoordLocation);
-    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform1i(texLayerLocation, 0);
-    gl.uniform1i(texMaskLocation, 1);
-    smaskCache = cache;
-  }
-  function composeSMask(layer, mask, properties) {
-    var width = layer.width,
-        height = layer.height;
-    if (!smaskCache) {
-      initSmaskGL();
-    }
-    var cache = smaskCache,
-        canvas = cache.canvas,
-        gl = cache.gl;
-    canvas.width = width;
-    canvas.height = height;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.uniform2f(cache.resolutionLocation, width, height);
-    if (properties.backdrop) {
-      gl.uniform4f(cache.resolutionLocation, properties.backdrop[0], properties.backdrop[1], properties.backdrop[2], 1);
-    } else {
-      gl.uniform4f(cache.resolutionLocation, 0, 0, 0, 0);
-    }
-    gl.uniform1i(cache.subtypeLocation, properties.subtype === 'Luminosity' ? 1 : 0);
-    var texture = createTexture(gl, layer, gl.TEXTURE0);
-    var maskTexture = createTexture(gl, mask, gl.TEXTURE1);
-    var buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, width, 0, 0, height, 0, height, width, 0, width, height]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(cache.positionLocation);
-    gl.vertexAttribPointer(cache.positionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.clearColor(0, 0, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    gl.flush();
-    gl.deleteTexture(texture);
-    gl.deleteTexture(maskTexture);
-    gl.deleteBuffer(buffer);
-    return canvas;
-  }
-  var figuresVertexShaderCode = '\
-  attribute vec2 a_position;                                    \
-  attribute vec3 a_color;                                       \
-                                                                \
-  uniform vec2 u_resolution;                                    \
-  uniform vec2 u_scale;                                         \
-  uniform vec2 u_offset;                                        \
-                                                                \
-  varying vec4 v_color;                                         \
-                                                                \
-  void main() {                                                 \
-    vec2 position = (a_position + u_offset) * u_scale;          \
-    vec2 clipSpace = (position / u_resolution) * 2.0 - 1.0;     \
-    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);          \
-                                                                \
-    v_color = vec4(a_color / 255.0, 1.0);                       \
-  }                                                             ';
-  var figuresFragmentShaderCode = '\
-  precision mediump float;                                      \
-                                                                \
-  varying vec4 v_color;                                         \
-                                                                \
-  void main() {                                                 \
-    gl_FragColor = v_color;                                     \
-  }                                                             ';
-  var figuresCache = null;
-  function initFiguresGL() {
-    var canvas, gl;
-    generateGL();
-    canvas = currentCanvas;
-    currentCanvas = null;
-    gl = currentGL;
-    currentGL = null;
-    var vertexShader = createVertexShader(gl, figuresVertexShaderCode);
-    var fragmentShader = createFragmentShader(gl, figuresFragmentShaderCode);
-    var program = createProgram(gl, [vertexShader, fragmentShader]);
-    gl.useProgram(program);
-    var cache = {};
-    cache.gl = gl;
-    cache.canvas = canvas;
-    cache.resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
-    cache.scaleLocation = gl.getUniformLocation(program, 'u_scale');
-    cache.offsetLocation = gl.getUniformLocation(program, 'u_offset');
-    cache.positionLocation = gl.getAttribLocation(program, 'a_position');
-    cache.colorLocation = gl.getAttribLocation(program, 'a_color');
-    figuresCache = cache;
-  }
-  function drawFigures(width, height, backgroundColor, figures, context) {
-    if (!figuresCache) {
-      initFiguresGL();
-    }
-    var cache = figuresCache,
-        canvas = cache.canvas,
-        gl = cache.gl;
-    canvas.width = width;
-    canvas.height = height;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.uniform2f(cache.resolutionLocation, width, height);
-    var count = 0;
-    var i, ii, rows;
-    for (i = 0, ii = figures.length; i < ii; i++) {
-      switch (figures[i].type) {
-        case 'lattice':
-          rows = figures[i].coords.length / figures[i].verticesPerRow | 0;
-          count += (rows - 1) * (figures[i].verticesPerRow - 1) * 6;
-          break;
-        case 'triangles':
-          count += figures[i].coords.length;
-          break;
-      }
-    }
-    var coords = new Float32Array(count * 2);
-    var colors = new Uint8Array(count * 3);
-    var coordsMap = context.coords,
-        colorsMap = context.colors;
-    var pIndex = 0,
-        cIndex = 0;
-    for (i = 0, ii = figures.length; i < ii; i++) {
-      var figure = figures[i],
-          ps = figure.coords,
-          cs = figure.colors;
-      switch (figure.type) {
-        case 'lattice':
-          var cols = figure.verticesPerRow;
-          rows = ps.length / cols | 0;
-          for (var row = 1; row < rows; row++) {
-            var offset = row * cols + 1;
-            for (var col = 1; col < cols; col++, offset++) {
-              coords[pIndex] = coordsMap[ps[offset - cols - 1]];
-              coords[pIndex + 1] = coordsMap[ps[offset - cols - 1] + 1];
-              coords[pIndex + 2] = coordsMap[ps[offset - cols]];
-              coords[pIndex + 3] = coordsMap[ps[offset - cols] + 1];
-              coords[pIndex + 4] = coordsMap[ps[offset - 1]];
-              coords[pIndex + 5] = coordsMap[ps[offset - 1] + 1];
-              colors[cIndex] = colorsMap[cs[offset - cols - 1]];
-              colors[cIndex + 1] = colorsMap[cs[offset - cols - 1] + 1];
-              colors[cIndex + 2] = colorsMap[cs[offset - cols - 1] + 2];
-              colors[cIndex + 3] = colorsMap[cs[offset - cols]];
-              colors[cIndex + 4] = colorsMap[cs[offset - cols] + 1];
-              colors[cIndex + 5] = colorsMap[cs[offset - cols] + 2];
-              colors[cIndex + 6] = colorsMap[cs[offset - 1]];
-              colors[cIndex + 7] = colorsMap[cs[offset - 1] + 1];
-              colors[cIndex + 8] = colorsMap[cs[offset - 1] + 2];
-              coords[pIndex + 6] = coords[pIndex + 2];
-              coords[pIndex + 7] = coords[pIndex + 3];
-              coords[pIndex + 8] = coords[pIndex + 4];
-              coords[pIndex + 9] = coords[pIndex + 5];
-              coords[pIndex + 10] = coordsMap[ps[offset]];
-              coords[pIndex + 11] = coordsMap[ps[offset] + 1];
-              colors[cIndex + 9] = colors[cIndex + 3];
-              colors[cIndex + 10] = colors[cIndex + 4];
-              colors[cIndex + 11] = colors[cIndex + 5];
-              colors[cIndex + 12] = colors[cIndex + 6];
-              colors[cIndex + 13] = colors[cIndex + 7];
-              colors[cIndex + 14] = colors[cIndex + 8];
-              colors[cIndex + 15] = colorsMap[cs[offset]];
-              colors[cIndex + 16] = colorsMap[cs[offset] + 1];
-              colors[cIndex + 17] = colorsMap[cs[offset] + 2];
-              pIndex += 12;
-              cIndex += 18;
-            }
-          }
-          break;
-        case 'triangles':
-          for (var j = 0, jj = ps.length; j < jj; j++) {
-            coords[pIndex] = coordsMap[ps[j]];
-            coords[pIndex + 1] = coordsMap[ps[j] + 1];
-            colors[cIndex] = colorsMap[cs[j]];
-            colors[cIndex + 1] = colorsMap[cs[j] + 1];
-            colors[cIndex + 2] = colorsMap[cs[j] + 2];
-            pIndex += 2;
-            cIndex += 3;
-          }
-          break;
-      }
-    }
-    if (backgroundColor) {
-      gl.clearColor(backgroundColor[0] / 255, backgroundColor[1] / 255, backgroundColor[2] / 255, 1.0);
-    } else {
-      gl.clearColor(0, 0, 0, 0);
-    }
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    var coordsBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, coordsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(cache.positionLocation);
-    gl.vertexAttribPointer(cache.positionLocation, 2, gl.FLOAT, false, 0, 0);
-    var colorsBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(cache.colorLocation);
-    gl.vertexAttribPointer(cache.colorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
-    gl.uniform2f(cache.scaleLocation, context.scaleX, context.scaleY);
-    gl.uniform2f(cache.offsetLocation, context.offsetX, context.offsetY);
-    gl.drawArrays(gl.TRIANGLES, 0, count);
-    gl.flush();
-    gl.deleteBuffer(coordsBuffer);
-    gl.deleteBuffer(colorsBuffer);
-    return canvas;
-  }
-  function cleanup() {
-    if (smaskCache && smaskCache.canvas) {
-      smaskCache.canvas.width = 0;
-      smaskCache.canvas.height = 0;
-    }
-    if (figuresCache && figuresCache.canvas) {
-      figuresCache.canvas.width = 0;
-      figuresCache.canvas.height = 0;
-    }
-    smaskCache = null;
-    figuresCache = null;
-  }
-  return {
-    get isEnabled() {
-      if ((0, _dom_utils.getDefaultSetting)('disableWebGL')) {
-        return false;
-      }
-      var enabled = false;
-      try {
-        generateGL();
-        enabled = !!currentGL;
-      } catch (e) {}
-      return (0, _util.shadow)(this, 'isEnabled', enabled);
-    },
-    composeSMask,
-    drawFigures,
-    clear: cleanup
-  };
-}();
-exports.WebGLUtils = WebGLUtils;
+var SVGGraphics = function () {
+  throw new Error('Not implemented: SVGGraphics');
+};
+;
+exports.SVGGraphics = SVGGraphics;
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Metadata = undefined;
-
-var _util = __w_pdfjs_require__(0);
-
-var _dom_utils = __w_pdfjs_require__(1);
-
-class Metadata {
-  constructor(data) {
-    (0, _util.assert)(typeof data === 'string', 'Metadata: input is not a string');
-    data = this._repair(data);
-    let parser = new _dom_utils.SimpleXMLParser();
-    data = parser.parseFromString(data);
-    this._metadata = Object.create(null);
-    this._parse(data);
-  }
-  _repair(data) {
-    return data.replace(/>\\376\\377([^<]+)/g, function (all, codes) {
-      let bytes = codes.replace(/\\([0-3])([0-7])([0-7])/g, function (code, d1, d2, d3) {
-        return String.fromCharCode(d1 * 64 + d2 * 8 + d3 * 1);
-      });
-      let chars = '';
-      for (let i = 0, ii = bytes.length; i < ii; i += 2) {
-        let code = bytes.charCodeAt(i) * 256 + bytes.charCodeAt(i + 1);
-        if (code >= 32 && code < 127 && code !== 60 && code !== 62 && code !== 38) {
-          chars += String.fromCharCode(code);
-        } else {
-          chars += '&#x' + (0x10000 + code).toString(16).substring(1) + ';';
-        }
-      }
-      return '>' + chars;
-    });
-  }
-  _parse(domDocument) {
-    let rdf = domDocument.documentElement;
-    if (rdf.nodeName.toLowerCase() !== 'rdf:rdf') {
-      rdf = rdf.firstChild;
-      while (rdf && rdf.nodeName.toLowerCase() !== 'rdf:rdf') {
-        rdf = rdf.nextSibling;
-      }
-    }
-    let nodeName = rdf ? rdf.nodeName.toLowerCase() : null;
-    if (!rdf || nodeName !== 'rdf:rdf' || !rdf.hasChildNodes()) {
-      return;
-    }
-    let children = rdf.childNodes;
-    for (let i = 0, ii = children.length; i < ii; i++) {
-      let desc = children[i];
-      if (desc.nodeName.toLowerCase() !== 'rdf:description') {
-        continue;
-      }
-      for (let j = 0, jj = desc.childNodes.length; j < jj; j++) {
-        if (desc.childNodes[j].nodeName.toLowerCase() !== '#text') {
-          let entry = desc.childNodes[j];
-          let name = entry.nodeName.toLowerCase();
-          this._metadata[name] = entry.textContent.trim();
-        }
-      }
-    }
-  }
-  get(name) {
-    return this._metadata[name] || null;
-  }
-  getAll() {
-    return this._metadata;
-  }
-  has(name) {
-    return typeof this._metadata[name] !== 'undefined';
-  }
-  get metadata() {
-    (0, _util.deprecated)('`metadata` getter; use `getAll()` instead.');
-    return this.getAll();
-  }
-}
-exports.Metadata = Metadata;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.AnnotationLayer = undefined;
-
-var _dom_utils = __w_pdfjs_require__(1);
-
-var _util = __w_pdfjs_require__(0);
-
-class AnnotationElementFactory {
-  static create(parameters) {
-    let subtype = parameters.data.annotationType;
-    switch (subtype) {
-      case _util.AnnotationType.LINK:
-        return new LinkAnnotationElement(parameters);
-      case _util.AnnotationType.TEXT:
-        return new TextAnnotationElement(parameters);
-      case _util.AnnotationType.WIDGET:
-        let fieldType = parameters.data.fieldType;
-        switch (fieldType) {
-          case 'Tx':
-            return new TextWidgetAnnotationElement(parameters);
-          case 'Btn':
-            if (parameters.data.radioButton) {
-              return new RadioButtonWidgetAnnotationElement(parameters);
-            } else if (parameters.data.checkBox) {
-              return new CheckboxWidgetAnnotationElement(parameters);
-            }
-            (0, _util.warn)('Unimplemented button widget annotation: pushbutton');
-            break;
-          case 'Ch':
-            return new ChoiceWidgetAnnotationElement(parameters);
-        }
-        return new WidgetAnnotationElement(parameters);
-      case _util.AnnotationType.POPUP:
-        return new PopupAnnotationElement(parameters);
-      case _util.AnnotationType.LINE:
-        return new LineAnnotationElement(parameters);
-      case _util.AnnotationType.SQUARE:
-        return new SquareAnnotationElement(parameters);
-      case _util.AnnotationType.CIRCLE:
-        return new CircleAnnotationElement(parameters);
-      case _util.AnnotationType.POLYLINE:
-        return new PolylineAnnotationElement(parameters);
-      case _util.AnnotationType.POLYGON:
-        return new PolygonAnnotationElement(parameters);
-      case _util.AnnotationType.HIGHLIGHT:
-        return new HighlightAnnotationElement(parameters);
-      case _util.AnnotationType.UNDERLINE:
-        return new UnderlineAnnotationElement(parameters);
-      case _util.AnnotationType.SQUIGGLY:
-        return new SquigglyAnnotationElement(parameters);
-      case _util.AnnotationType.STRIKEOUT:
-        return new StrikeOutAnnotationElement(parameters);
-      case _util.AnnotationType.STAMP:
-        return new StampAnnotationElement(parameters);
-      case _util.AnnotationType.FILEATTACHMENT:
-        return new FileAttachmentAnnotationElement(parameters);
-      default:
-        return new AnnotationElement(parameters);
-    }
-  }
-}
-class AnnotationElement {
-  constructor(parameters, isRenderable = false, ignoreBorder = false) {
-    this.isRenderable = isRenderable;
-    this.data = parameters.data;
-    this.layer = parameters.layer;
-    this.page = parameters.page;
-    this.viewport = parameters.viewport;
-    this.linkService = parameters.linkService;
-    this.downloadManager = parameters.downloadManager;
-    this.imageResourcesPath = parameters.imageResourcesPath;
-    this.renderInteractiveForms = parameters.renderInteractiveForms;
-    this.svgFactory = parameters.svgFactory;
-    if (isRenderable) {
-      this.container = this._createContainer(ignoreBorder);
-    }
-  }
-  _createContainer(ignoreBorder = false) {
-    let data = this.data,
-        page = this.page,
-        viewport = this.viewport;
-    let container = document.createElement('section');
-    let width = data.rect[2] - data.rect[0];
-    let height = data.rect[3] - data.rect[1];
-    container.setAttribute('data-annotation-id', data.id);
-    let rect = _util.Util.normalizeRect([data.rect[0], page.view[3] - data.rect[1] + page.view[1], data.rect[2], page.view[3] - data.rect[3] + page.view[1]]);
-    _dom_utils.CustomStyle.setProp('transform', container, 'matrix(' + viewport.transform.join(',') + ')');
-    _dom_utils.CustomStyle.setProp('transformOrigin', container, -rect[0] + 'px ' + -rect[1] + 'px');
-    if (!ignoreBorder && data.borderStyle.width > 0) {
-      container.style.borderWidth = data.borderStyle.width + 'px';
-      if (data.borderStyle.style !== _util.AnnotationBorderStyleType.UNDERLINE) {
-        width = width - 2 * data.borderStyle.width;
-        height = height - 2 * data.borderStyle.width;
-      }
-      let horizontalRadius = data.borderStyle.horizontalCornerRadius;
-      let verticalRadius = data.borderStyle.verticalCornerRadius;
-      if (horizontalRadius > 0 || verticalRadius > 0) {
-        let radius = horizontalRadius + 'px / ' + verticalRadius + 'px';
-        _dom_utils.CustomStyle.setProp('borderRadius', container, radius);
-      }
-      switch (data.borderStyle.style) {
-        case _util.AnnotationBorderStyleType.SOLID:
-          container.style.borderStyle = 'solid';
-          break;
-        case _util.AnnotationBorderStyleType.DASHED:
-          container.style.borderStyle = 'dashed';
-          break;
-        case _util.AnnotationBorderStyleType.BEVELED:
-          (0, _util.warn)('Unimplemented border style: beveled');
-          break;
-        case _util.AnnotationBorderStyleType.INSET:
-          (0, _util.warn)('Unimplemented border style: inset');
-          break;
-        case _util.AnnotationBorderStyleType.UNDERLINE:
-          container.style.borderBottomStyle = 'solid';
-          break;
-        default:
-          break;
-      }
-      if (data.color) {
-        container.style.borderColor = _util.Util.makeCssRgb(data.color[0] | 0, data.color[1] | 0, data.color[2] | 0);
-      } else {
-        container.style.borderWidth = 0;
-      }
-    }
-    container.style.left = rect[0] + 'px';
-    container.style.top = rect[1] + 'px';
-    container.style.width = width + 'px';
-    container.style.height = height + 'px';
-    return container;
-  }
-  _createPopup(container, trigger, data) {
-    if (!trigger) {
-      trigger = document.createElement('div');
-      trigger.style.height = container.style.height;
-      trigger.style.width = container.style.width;
-      container.appendChild(trigger);
-    }
-    let popupElement = new PopupElement({
-      container,
-      trigger,
-      color: data.color,
-      title: data.title,
-      contents: data.contents,
-      hideWrapper: true
-    });
-    let popup = popupElement.render();
-    popup.style.left = container.style.width;
-    container.appendChild(popup);
-  }
-  render() {
-    throw new Error('Abstract method `AnnotationElement.render` called');
-  }
-}
-class LinkAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.url || parameters.data.dest || parameters.data.action);
-    super(parameters, isRenderable);
-  }
-  render() {
-    this.container.className = 'linkAnnotation';
-    let link = document.createElement('a');
-    (0, _dom_utils.addLinkAttributes)(link, {
-      url: this.data.url,
-      target: this.data.newWindow ? _dom_utils.LinkTarget.BLANK : undefined
-    });
-    if (!this.data.url) {
-      if (this.data.action) {
-        this._bindNamedAction(link, this.data.action);
-      } else {
-        this._bindLink(link, this.data.dest);
-      }
-    }
-    this.container.appendChild(link);
-    return this.container;
-  }
-  _bindLink(link, destination) {
-    link.href = this.linkService.getDestinationHash(destination);
-    link.onclick = () => {
-      if (destination) {
-        this.linkService.navigateTo(destination);
-      }
-      return false;
-    };
-    if (destination) {
-      link.className = 'internalLink';
-    }
-  }
-  _bindNamedAction(link, action) {
-    link.href = this.linkService.getAnchorUrl('');
-    link.onclick = () => {
-      this.linkService.executeNamedAction(action);
-      return false;
-    };
-    link.className = 'internalLink';
-  }
-}
-class TextAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable);
-  }
-  render() {
-    this.container.className = 'textAnnotation';
-    let image = document.createElement('img');
-    image.style.height = this.container.style.height;
-    image.style.width = this.container.style.width;
-    image.src = this.imageResourcesPath + 'annotation-' + this.data.name.toLowerCase() + '.svg';
-    image.alt = '[{{type}} Annotation]';
-    image.dataset.l10nId = 'text_annotation_type';
-    image.dataset.l10nArgs = JSON.stringify({ type: this.data.name });
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, image, this.data);
-    }
-    this.container.appendChild(image);
-    return this.container;
-  }
-}
-class WidgetAnnotationElement extends AnnotationElement {
-  render() {
-    return this.container;
-  }
-}
-class TextWidgetAnnotationElement extends WidgetAnnotationElement {
-  constructor(parameters) {
-    let isRenderable = parameters.renderInteractiveForms || !parameters.data.hasAppearance && !!parameters.data.fieldValue;
-    super(parameters, isRenderable);
-  }
-  render() {
-    const TEXT_ALIGNMENT = ['left', 'center', 'right'];
-    this.container.className = 'textWidgetAnnotation';
-    let element = null;
-    if (this.renderInteractiveForms) {
-      if (this.data.multiLine) {
-        element = document.createElement('textarea');
-        element.textContent = this.data.fieldValue;
-      } else {
-        element = document.createElement('input');
-        element.type = 'text';
-        element.setAttribute('value', this.data.fieldValue);
-      }
-      element.disabled = this.data.readOnly;
-      if (this.data.maxLen !== null) {
-        element.maxLength = this.data.maxLen;
-      }
-      if (this.data.comb) {
-        let fieldWidth = this.data.rect[2] - this.data.rect[0];
-        let combWidth = fieldWidth / this.data.maxLen;
-        element.classList.add('comb');
-        element.style.letterSpacing = 'calc(' + combWidth + 'px - 1ch)';
-      }
-    } else {
-      element = document.createElement('div');
-      element.textContent = this.data.fieldValue;
-      element.style.verticalAlign = 'middle';
-      element.style.display = 'table-cell';
-      let font = null;
-      if (this.data.fontRefName) {
-        font = this.page.commonObjs.getData(this.data.fontRefName);
-      }
-      this._setTextStyle(element, font);
-    }
-    if (this.data.textAlignment !== null) {
-      element.style.textAlign = TEXT_ALIGNMENT[this.data.textAlignment];
-    }
-    this.container.appendChild(element);
-    return this.container;
-  }
-  _setTextStyle(element, font) {
-    let style = element.style;
-    style.fontSize = this.data.fontSize + 'px';
-    style.direction = this.data.fontDirection < 0 ? 'rtl' : 'ltr';
-    if (!font) {
-      return;
-    }
-    style.fontWeight = font.black ? font.bold ? '900' : 'bold' : font.bold ? 'bold' : 'normal';
-    style.fontStyle = font.italic ? 'italic' : 'normal';
-    let fontFamily = font.loadedName ? '"' + font.loadedName + '", ' : '';
-    let fallbackName = font.fallbackName || 'Helvetica, sans-serif';
-    style.fontFamily = fontFamily + fallbackName;
-  }
-}
-class CheckboxWidgetAnnotationElement extends WidgetAnnotationElement {
-  constructor(parameters) {
-    super(parameters, parameters.renderInteractiveForms);
-  }
-  render() {
-    this.container.className = 'buttonWidgetAnnotation checkBox';
-    let element = document.createElement('input');
-    element.disabled = this.data.readOnly;
-    element.type = 'checkbox';
-    if (this.data.fieldValue && this.data.fieldValue !== 'Off') {
-      element.setAttribute('checked', true);
-    }
-    this.container.appendChild(element);
-    return this.container;
-  }
-}
-class RadioButtonWidgetAnnotationElement extends WidgetAnnotationElement {
-  constructor(parameters) {
-    super(parameters, parameters.renderInteractiveForms);
-  }
-  render() {
-    this.container.className = 'buttonWidgetAnnotation radioButton';
-    let element = document.createElement('input');
-    element.disabled = this.data.readOnly;
-    element.type = 'radio';
-    element.name = this.data.fieldName;
-    if (this.data.fieldValue === this.data.buttonValue) {
-      element.setAttribute('checked', true);
-    }
-    this.container.appendChild(element);
-    return this.container;
-  }
-}
-class ChoiceWidgetAnnotationElement extends WidgetAnnotationElement {
-  constructor(parameters) {
-    super(parameters, parameters.renderInteractiveForms);
-  }
-  render() {
-    this.container.className = 'choiceWidgetAnnotation';
-    let selectElement = document.createElement('select');
-    selectElement.disabled = this.data.readOnly;
-    if (!this.data.combo) {
-      selectElement.size = this.data.options.length;
-      if (this.data.multiSelect) {
-        selectElement.multiple = true;
-      }
-    }
-    for (let i = 0, ii = this.data.options.length; i < ii; i++) {
-      let option = this.data.options[i];
-      let optionElement = document.createElement('option');
-      optionElement.textContent = option.displayValue;
-      optionElement.value = option.exportValue;
-      if (this.data.fieldValue.indexOf(option.displayValue) >= 0) {
-        optionElement.setAttribute('selected', true);
-      }
-      selectElement.appendChild(optionElement);
-    }
-    this.container.appendChild(selectElement);
-    return this.container;
-  }
-}
-class PopupAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable);
-  }
-  render() {
-    const IGNORE_TYPES = ['Line', 'Square', 'Circle', 'PolyLine', 'Polygon'];
-    this.container.className = 'popupAnnotation';
-    if (IGNORE_TYPES.indexOf(this.data.parentType) >= 0) {
-      return this.container;
-    }
-    let selector = '[data-annotation-id="' + this.data.parentId + '"]';
-    let parentElement = this.layer.querySelector(selector);
-    if (!parentElement) {
-      return this.container;
-    }
-    let popup = new PopupElement({
-      container: this.container,
-      trigger: parentElement,
-      color: this.data.color,
-      title: this.data.title,
-      contents: this.data.contents
-    });
-    let parentLeft = parseFloat(parentElement.style.left);
-    let parentWidth = parseFloat(parentElement.style.width);
-    _dom_utils.CustomStyle.setProp('transformOrigin', this.container, -(parentLeft + parentWidth) + 'px -' + parentElement.style.top);
-    this.container.style.left = parentLeft + parentWidth + 'px';
-    this.container.appendChild(popup.render());
-    return this.container;
-  }
-}
-class PopupElement {
-  constructor(parameters) {
-    this.container = parameters.container;
-    this.trigger = parameters.trigger;
-    this.color = parameters.color;
-    this.title = parameters.title;
-    this.contents = parameters.contents;
-    this.hideWrapper = parameters.hideWrapper || false;
-    this.pinned = false;
-  }
-  render() {
-    const BACKGROUND_ENLIGHT = 0.7;
-    let wrapper = document.createElement('div');
-    wrapper.className = 'popupWrapper';
-    this.hideElement = this.hideWrapper ? wrapper : this.container;
-    this.hideElement.setAttribute('hidden', true);
-    let popup = document.createElement('div');
-    popup.className = 'popup';
-    let color = this.color;
-    if (color) {
-      let r = BACKGROUND_ENLIGHT * (255 - color[0]) + color[0];
-      let g = BACKGROUND_ENLIGHT * (255 - color[1]) + color[1];
-      let b = BACKGROUND_ENLIGHT * (255 - color[2]) + color[2];
-      popup.style.backgroundColor = _util.Util.makeCssRgb(r | 0, g | 0, b | 0);
-    }
-    let contents = this._formatContents(this.contents);
-    let title = document.createElement('h1');
-    title.textContent = this.title;
-    this.trigger.addEventListener('click', this._toggle.bind(this));
-    this.trigger.addEventListener('mouseover', this._show.bind(this, false));
-    this.trigger.addEventListener('mouseout', this._hide.bind(this, false));
-    popup.addEventListener('click', this._hide.bind(this, true));
-    popup.appendChild(title);
-    popup.appendChild(contents);
-    wrapper.appendChild(popup);
-    return wrapper;
-  }
-  _formatContents(contents) {
-    let p = document.createElement('p');
-    let lines = contents.split(/(?:\r\n?|\n)/);
-    for (let i = 0, ii = lines.length; i < ii; ++i) {
-      let line = lines[i];
-      p.appendChild(document.createTextNode(line));
-      if (i < ii - 1) {
-        p.appendChild(document.createElement('br'));
-      }
-    }
-    return p;
-  }
-  _toggle() {
-    if (this.pinned) {
-      this._hide(true);
-    } else {
-      this._show(true);
-    }
-  }
-  _show(pin = false) {
-    if (pin) {
-      this.pinned = true;
-    }
-    if (this.hideElement.hasAttribute('hidden')) {
-      this.hideElement.removeAttribute('hidden');
-      this.container.style.zIndex += 1;
-    }
-  }
-  _hide(unpin = true) {
-    if (unpin) {
-      this.pinned = false;
-    }
-    if (!this.hideElement.hasAttribute('hidden') && !this.pinned) {
-      this.hideElement.setAttribute('hidden', true);
-      this.container.style.zIndex -= 1;
-    }
-  }
-}
-class LineAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'lineAnnotation';
-    let data = this.data;
-    let width = data.rect[2] - data.rect[0];
-    let height = data.rect[3] - data.rect[1];
-    let svg = this.svgFactory.create(width, height);
-    let line = this.svgFactory.createElement('svg:line');
-    line.setAttribute('x1', data.rect[2] - data.lineCoordinates[0]);
-    line.setAttribute('y1', data.rect[3] - data.lineCoordinates[1]);
-    line.setAttribute('x2', data.rect[2] - data.lineCoordinates[2]);
-    line.setAttribute('y2', data.rect[3] - data.lineCoordinates[3]);
-    line.setAttribute('stroke-width', data.borderStyle.width);
-    line.setAttribute('stroke', 'transparent');
-    svg.appendChild(line);
-    this.container.append(svg);
-    this._createPopup(this.container, line, data);
-    return this.container;
-  }
-}
-class SquareAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'squareAnnotation';
-    let data = this.data;
-    let width = data.rect[2] - data.rect[0];
-    let height = data.rect[3] - data.rect[1];
-    let svg = this.svgFactory.create(width, height);
-    let borderWidth = data.borderStyle.width;
-    let square = this.svgFactory.createElement('svg:rect');
-    square.setAttribute('x', borderWidth / 2);
-    square.setAttribute('y', borderWidth / 2);
-    square.setAttribute('width', width - borderWidth);
-    square.setAttribute('height', height - borderWidth);
-    square.setAttribute('stroke-width', borderWidth);
-    square.setAttribute('stroke', 'transparent');
-    square.setAttribute('fill', 'none');
-    svg.appendChild(square);
-    this.container.append(svg);
-    this._createPopup(this.container, square, data);
-    return this.container;
-  }
-}
-class CircleAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'circleAnnotation';
-    let data = this.data;
-    let width = data.rect[2] - data.rect[0];
-    let height = data.rect[3] - data.rect[1];
-    let svg = this.svgFactory.create(width, height);
-    let borderWidth = data.borderStyle.width;
-    let circle = this.svgFactory.createElement('svg:ellipse');
-    circle.setAttribute('cx', width / 2);
-    circle.setAttribute('cy', height / 2);
-    circle.setAttribute('rx', width / 2 - borderWidth / 2);
-    circle.setAttribute('ry', height / 2 - borderWidth / 2);
-    circle.setAttribute('stroke-width', borderWidth);
-    circle.setAttribute('stroke', 'transparent');
-    circle.setAttribute('fill', 'none');
-    svg.appendChild(circle);
-    this.container.append(svg);
-    this._createPopup(this.container, circle, data);
-    return this.container;
-  }
-}
-class PolylineAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-    this.containerClassName = 'polylineAnnotation';
-    this.svgElementName = 'svg:polyline';
-  }
-  render() {
-    this.container.className = this.containerClassName;
-    let data = this.data;
-    let width = data.rect[2] - data.rect[0];
-    let height = data.rect[3] - data.rect[1];
-    let svg = this.svgFactory.create(width, height);
-    let vertices = data.vertices;
-    let points = [];
-    for (let i = 0, ii = vertices.length; i < ii; i++) {
-      let x = vertices[i].x - data.rect[0];
-      let y = data.rect[3] - vertices[i].y;
-      points.push(x + ',' + y);
-    }
-    points = points.join(' ');
-    let borderWidth = data.borderStyle.width;
-    let polyline = this.svgFactory.createElement(this.svgElementName);
-    polyline.setAttribute('points', points);
-    polyline.setAttribute('stroke-width', borderWidth);
-    polyline.setAttribute('stroke', 'transparent');
-    polyline.setAttribute('fill', 'none');
-    svg.appendChild(polyline);
-    this.container.append(svg);
-    this._createPopup(this.container, polyline, data);
-    return this.container;
-  }
-}
-class PolygonAnnotationElement extends PolylineAnnotationElement {
-  constructor(parameters) {
-    super(parameters);
-    this.containerClassName = 'polygonAnnotation';
-    this.svgElementName = 'svg:polygon';
-  }
-}
-class HighlightAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'highlightAnnotation';
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, null, this.data);
-    }
-    return this.container;
-  }
-}
-class UnderlineAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'underlineAnnotation';
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, null, this.data);
-    }
-    return this.container;
-  }
-}
-class SquigglyAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'squigglyAnnotation';
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, null, this.data);
-    }
-    return this.container;
-  }
-}
-class StrikeOutAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'strikeoutAnnotation';
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, null, this.data);
-    }
-    return this.container;
-  }
-}
-class StampAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    let isRenderable = !!(parameters.data.hasPopup || parameters.data.title || parameters.data.contents);
-    super(parameters, isRenderable, true);
-  }
-  render() {
-    this.container.className = 'stampAnnotation';
-    if (!this.data.hasPopup) {
-      this._createPopup(this.container, null, this.data);
-    }
-    return this.container;
-  }
-}
-class FileAttachmentAnnotationElement extends AnnotationElement {
-  constructor(parameters) {
-    super(parameters, true);
-    let file = this.data.file;
-    this.filename = (0, _dom_utils.getFilenameFromUrl)(file.filename);
-    this.content = file.content;
-    this.linkService.onFileAttachmentAnnotation({
-      id: (0, _util.stringToPDFString)(file.filename),
-      filename: file.filename,
-      content: file.content
-    });
-  }
-  render() {
-    this.container.className = 'fileAttachmentAnnotation';
-    let trigger = document.createElement('div');
-    trigger.style.height = this.container.style.height;
-    trigger.style.width = this.container.style.width;
-    trigger.addEventListener('dblclick', this._download.bind(this));
-    if (!this.data.hasPopup && (this.data.title || this.data.contents)) {
-      this._createPopup(this.container, trigger, this.data);
-    }
-    this.container.appendChild(trigger);
-    return this.container;
-  }
-  _download() {
-    if (!this.downloadManager) {
-      (0, _util.warn)('Download cannot be started due to unavailable download manager');
-      return;
-    }
-    this.downloadManager.downloadData(this.content, this.filename, '');
-  }
-}
-class AnnotationLayer {
-  static render(parameters) {
-    for (let i = 0, ii = parameters.annotations.length; i < ii; i++) {
-      let data = parameters.annotations[i];
-      if (!data) {
-        continue;
-      }
-      let element = AnnotationElementFactory.create({
-        data,
-        layer: parameters.div,
-        page: parameters.page,
-        viewport: parameters.viewport,
-        linkService: parameters.linkService,
-        downloadManager: parameters.downloadManager,
-        imageResourcesPath: parameters.imageResourcesPath || (0, _dom_utils.getDefaultSetting)('imageResourcesPath'),
-        renderInteractiveForms: parameters.renderInteractiveForms || false,
-        svgFactory: new _dom_utils.DOMSVGFactory()
-      });
-      if (element.isRenderable) {
-        parameters.div.appendChild(element.render());
-      }
-    }
-  }
-  static update(parameters) {
-    for (let i = 0, ii = parameters.annotations.length; i < ii; i++) {
-      let data = parameters.annotations[i];
-      let element = parameters.div.querySelector('[data-annotation-id="' + data.id + '"]');
-      if (element) {
-        _dom_utils.CustomStyle.setProp('transform', element, 'matrix(' + parameters.viewport.transform.join(',') + ')');
-      }
-    }
-    parameters.div.removeAttribute('hidden');
-  }
-}
-exports.AnnotationLayer = AnnotationLayer;
-
-/***/ }),
-/* 7 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
 "use strict";
@@ -5023,6 +4399,453 @@ var renderTextLayer = function renderTextLayerClosure() {
 exports.renderTextLayer = renderTextLayer;
 
 /***/ }),
+/* 6 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+function fixMetadata(meta) {
+  return meta.replace(/>\\376\\377([^<]+)/g, function (all, codes) {
+    var bytes = codes.replace(/\\([0-3])([0-7])([0-7])/g, function (code, d1, d2, d3) {
+      return String.fromCharCode(d1 * 64 + d2 * 8 + d3 * 1);
+    });
+    var chars = '';
+    for (var i = 0; i < bytes.length; i += 2) {
+      var code = bytes.charCodeAt(i) * 256 + bytes.charCodeAt(i + 1);
+      chars += code >= 32 && code < 127 && code !== 60 && code !== 62 && code !== 38 ? String.fromCharCode(code) : '&#x' + (0x10000 + code).toString(16).substring(1) + ';';
+    }
+    return '>' + chars;
+  });
+}
+function Metadata(meta) {
+  if (typeof meta === 'string') {
+    meta = fixMetadata(meta);
+    var parser = new DOMParser();
+    meta = parser.parseFromString(meta, 'application/xml');
+  } else if (!(meta instanceof Document)) {
+    throw new Error('Metadata: Invalid metadata object');
+  }
+  this.metaDocument = meta;
+  this.metadata = Object.create(null);
+  this.parse();
+}
+Metadata.prototype = {
+  parse: function Metadata_parse() {
+    var doc = this.metaDocument;
+    var rdf = doc.documentElement;
+    if (rdf.nodeName.toLowerCase() !== 'rdf:rdf') {
+      rdf = rdf.firstChild;
+      while (rdf && rdf.nodeName.toLowerCase() !== 'rdf:rdf') {
+        rdf = rdf.nextSibling;
+      }
+    }
+    var nodeName = rdf ? rdf.nodeName.toLowerCase() : null;
+    if (!rdf || nodeName !== 'rdf:rdf' || !rdf.hasChildNodes()) {
+      return;
+    }
+    var children = rdf.childNodes,
+        desc,
+        entry,
+        name,
+        i,
+        ii,
+        length,
+        iLength;
+    for (i = 0, length = children.length; i < length; i++) {
+      desc = children[i];
+      if (desc.nodeName.toLowerCase() !== 'rdf:description') {
+        continue;
+      }
+      for (ii = 0, iLength = desc.childNodes.length; ii < iLength; ii++) {
+        if (desc.childNodes[ii].nodeName.toLowerCase() !== '#text') {
+          entry = desc.childNodes[ii];
+          name = entry.nodeName.toLowerCase();
+          this.metadata[name] = entry.textContent.trim();
+        }
+      }
+    }
+  },
+  get: function Metadata_get(name) {
+    return this.metadata[name] || null;
+  },
+  has: function Metadata_has(name) {
+    return typeof this.metadata[name] !== 'undefined';
+  }
+};
+exports.Metadata = Metadata;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.WebGLUtils = undefined;
+
+var _dom_utils = __w_pdfjs_require__(1);
+
+var _util = __w_pdfjs_require__(0);
+
+var WebGLUtils = function WebGLUtilsClosure() {
+  function loadShader(gl, code, shaderType) {
+    var shader = gl.createShader(shaderType);
+    gl.shaderSource(shader, code);
+    gl.compileShader(shader);
+    var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (!compiled) {
+      var errorMsg = gl.getShaderInfoLog(shader);
+      throw new Error('Error during shader compilation: ' + errorMsg);
+    }
+    return shader;
+  }
+  function createVertexShader(gl, code) {
+    return loadShader(gl, code, gl.VERTEX_SHADER);
+  }
+  function createFragmentShader(gl, code) {
+    return loadShader(gl, code, gl.FRAGMENT_SHADER);
+  }
+  function createProgram(gl, shaders) {
+    var program = gl.createProgram();
+    for (var i = 0, ii = shaders.length; i < ii; ++i) {
+      gl.attachShader(program, shaders[i]);
+    }
+    gl.linkProgram(program);
+    var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (!linked) {
+      var errorMsg = gl.getProgramInfoLog(program);
+      throw new Error('Error during program linking: ' + errorMsg);
+    }
+    return program;
+  }
+  function createTexture(gl, image, textureId) {
+    gl.activeTexture(textureId);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    return texture;
+  }
+  var currentGL, currentCanvas;
+  function generateGL() {
+    if (currentGL) {
+      return;
+    }
+    currentCanvas = document.createElement('canvas');
+    currentGL = currentCanvas.getContext('webgl', { premultipliedalpha: false });
+  }
+  var smaskVertexShaderCode = '\
+  attribute vec2 a_position;                                    \
+  attribute vec2 a_texCoord;                                    \
+                                                                \
+  uniform vec2 u_resolution;                                    \
+                                                                \
+  varying vec2 v_texCoord;                                      \
+                                                                \
+  void main() {                                                 \
+    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;   \
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);          \
+                                                                \
+    v_texCoord = a_texCoord;                                    \
+  }                                                             ';
+  var smaskFragmentShaderCode = '\
+  precision mediump float;                                      \
+                                                                \
+  uniform vec4 u_backdrop;                                      \
+  uniform int u_subtype;                                        \
+  uniform sampler2D u_image;                                    \
+  uniform sampler2D u_mask;                                     \
+                                                                \
+  varying vec2 v_texCoord;                                      \
+                                                                \
+  void main() {                                                 \
+    vec4 imageColor = texture2D(u_image, v_texCoord);           \
+    vec4 maskColor = texture2D(u_mask, v_texCoord);             \
+    if (u_backdrop.a > 0.0) {                                   \
+      maskColor.rgb = maskColor.rgb * maskColor.a +             \
+                      u_backdrop.rgb * (1.0 - maskColor.a);     \
+    }                                                           \
+    float lum;                                                  \
+    if (u_subtype == 0) {                                       \
+      lum = maskColor.a;                                        \
+    } else {                                                    \
+      lum = maskColor.r * 0.3 + maskColor.g * 0.59 +            \
+            maskColor.b * 0.11;                                 \
+    }                                                           \
+    imageColor.a *= lum;                                        \
+    imageColor.rgb *= imageColor.a;                             \
+    gl_FragColor = imageColor;                                  \
+  }                                                             ';
+  var smaskCache = null;
+  function initSmaskGL() {
+    var canvas, gl;
+    generateGL();
+    canvas = currentCanvas;
+    currentCanvas = null;
+    gl = currentGL;
+    currentGL = null;
+    var vertexShader = createVertexShader(gl, smaskVertexShaderCode);
+    var fragmentShader = createFragmentShader(gl, smaskFragmentShaderCode);
+    var program = createProgram(gl, [vertexShader, fragmentShader]);
+    gl.useProgram(program);
+    var cache = {};
+    cache.gl = gl;
+    cache.canvas = canvas;
+    cache.resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+    cache.positionLocation = gl.getAttribLocation(program, 'a_position');
+    cache.backdropLocation = gl.getUniformLocation(program, 'u_backdrop');
+    cache.subtypeLocation = gl.getUniformLocation(program, 'u_subtype');
+    var texCoordLocation = gl.getAttribLocation(program, 'a_texCoord');
+    var texLayerLocation = gl.getUniformLocation(program, 'u_image');
+    var texMaskLocation = gl.getUniformLocation(program, 'u_mask');
+    var texCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(texCoordLocation);
+    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform1i(texLayerLocation, 0);
+    gl.uniform1i(texMaskLocation, 1);
+    smaskCache = cache;
+  }
+  function composeSMask(layer, mask, properties) {
+    var width = layer.width,
+        height = layer.height;
+    if (!smaskCache) {
+      initSmaskGL();
+    }
+    var cache = smaskCache,
+        canvas = cache.canvas,
+        gl = cache.gl;
+    canvas.width = width;
+    canvas.height = height;
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform2f(cache.resolutionLocation, width, height);
+    if (properties.backdrop) {
+      gl.uniform4f(cache.resolutionLocation, properties.backdrop[0], properties.backdrop[1], properties.backdrop[2], 1);
+    } else {
+      gl.uniform4f(cache.resolutionLocation, 0, 0, 0, 0);
+    }
+    gl.uniform1i(cache.subtypeLocation, properties.subtype === 'Luminosity' ? 1 : 0);
+    var texture = createTexture(gl, layer, gl.TEXTURE0);
+    var maskTexture = createTexture(gl, mask, gl.TEXTURE1);
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, width, 0, 0, height, 0, height, width, 0, width, height]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(cache.positionLocation);
+    gl.vertexAttribPointer(cache.positionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.flush();
+    gl.deleteTexture(texture);
+    gl.deleteTexture(maskTexture);
+    gl.deleteBuffer(buffer);
+    return canvas;
+  }
+  var figuresVertexShaderCode = '\
+  attribute vec2 a_position;                                    \
+  attribute vec3 a_color;                                       \
+                                                                \
+  uniform vec2 u_resolution;                                    \
+  uniform vec2 u_scale;                                         \
+  uniform vec2 u_offset;                                        \
+                                                                \
+  varying vec4 v_color;                                         \
+                                                                \
+  void main() {                                                 \
+    vec2 position = (a_position + u_offset) * u_scale;          \
+    vec2 clipSpace = (position / u_resolution) * 2.0 - 1.0;     \
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);          \
+                                                                \
+    v_color = vec4(a_color / 255.0, 1.0);                       \
+  }                                                             ';
+  var figuresFragmentShaderCode = '\
+  precision mediump float;                                      \
+                                                                \
+  varying vec4 v_color;                                         \
+                                                                \
+  void main() {                                                 \
+    gl_FragColor = v_color;                                     \
+  }                                                             ';
+  var figuresCache = null;
+  function initFiguresGL() {
+    var canvas, gl;
+    generateGL();
+    canvas = currentCanvas;
+    currentCanvas = null;
+    gl = currentGL;
+    currentGL = null;
+    var vertexShader = createVertexShader(gl, figuresVertexShaderCode);
+    var fragmentShader = createFragmentShader(gl, figuresFragmentShaderCode);
+    var program = createProgram(gl, [vertexShader, fragmentShader]);
+    gl.useProgram(program);
+    var cache = {};
+    cache.gl = gl;
+    cache.canvas = canvas;
+    cache.resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+    cache.scaleLocation = gl.getUniformLocation(program, 'u_scale');
+    cache.offsetLocation = gl.getUniformLocation(program, 'u_offset');
+    cache.positionLocation = gl.getAttribLocation(program, 'a_position');
+    cache.colorLocation = gl.getAttribLocation(program, 'a_color');
+    figuresCache = cache;
+  }
+  function drawFigures(width, height, backgroundColor, figures, context) {
+    if (!figuresCache) {
+      initFiguresGL();
+    }
+    var cache = figuresCache,
+        canvas = cache.canvas,
+        gl = cache.gl;
+    canvas.width = width;
+    canvas.height = height;
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform2f(cache.resolutionLocation, width, height);
+    var count = 0;
+    var i, ii, rows;
+    for (i = 0, ii = figures.length; i < ii; i++) {
+      switch (figures[i].type) {
+        case 'lattice':
+          rows = figures[i].coords.length / figures[i].verticesPerRow | 0;
+          count += (rows - 1) * (figures[i].verticesPerRow - 1) * 6;
+          break;
+        case 'triangles':
+          count += figures[i].coords.length;
+          break;
+      }
+    }
+    var coords = new Float32Array(count * 2);
+    var colors = new Uint8Array(count * 3);
+    var coordsMap = context.coords,
+        colorsMap = context.colors;
+    var pIndex = 0,
+        cIndex = 0;
+    for (i = 0, ii = figures.length; i < ii; i++) {
+      var figure = figures[i],
+          ps = figure.coords,
+          cs = figure.colors;
+      switch (figure.type) {
+        case 'lattice':
+          var cols = figure.verticesPerRow;
+          rows = ps.length / cols | 0;
+          for (var row = 1; row < rows; row++) {
+            var offset = row * cols + 1;
+            for (var col = 1; col < cols; col++, offset++) {
+              coords[pIndex] = coordsMap[ps[offset - cols - 1]];
+              coords[pIndex + 1] = coordsMap[ps[offset - cols - 1] + 1];
+              coords[pIndex + 2] = coordsMap[ps[offset - cols]];
+              coords[pIndex + 3] = coordsMap[ps[offset - cols] + 1];
+              coords[pIndex + 4] = coordsMap[ps[offset - 1]];
+              coords[pIndex + 5] = coordsMap[ps[offset - 1] + 1];
+              colors[cIndex] = colorsMap[cs[offset - cols - 1]];
+              colors[cIndex + 1] = colorsMap[cs[offset - cols - 1] + 1];
+              colors[cIndex + 2] = colorsMap[cs[offset - cols - 1] + 2];
+              colors[cIndex + 3] = colorsMap[cs[offset - cols]];
+              colors[cIndex + 4] = colorsMap[cs[offset - cols] + 1];
+              colors[cIndex + 5] = colorsMap[cs[offset - cols] + 2];
+              colors[cIndex + 6] = colorsMap[cs[offset - 1]];
+              colors[cIndex + 7] = colorsMap[cs[offset - 1] + 1];
+              colors[cIndex + 8] = colorsMap[cs[offset - 1] + 2];
+              coords[pIndex + 6] = coords[pIndex + 2];
+              coords[pIndex + 7] = coords[pIndex + 3];
+              coords[pIndex + 8] = coords[pIndex + 4];
+              coords[pIndex + 9] = coords[pIndex + 5];
+              coords[pIndex + 10] = coordsMap[ps[offset]];
+              coords[pIndex + 11] = coordsMap[ps[offset] + 1];
+              colors[cIndex + 9] = colors[cIndex + 3];
+              colors[cIndex + 10] = colors[cIndex + 4];
+              colors[cIndex + 11] = colors[cIndex + 5];
+              colors[cIndex + 12] = colors[cIndex + 6];
+              colors[cIndex + 13] = colors[cIndex + 7];
+              colors[cIndex + 14] = colors[cIndex + 8];
+              colors[cIndex + 15] = colorsMap[cs[offset]];
+              colors[cIndex + 16] = colorsMap[cs[offset] + 1];
+              colors[cIndex + 17] = colorsMap[cs[offset] + 2];
+              pIndex += 12;
+              cIndex += 18;
+            }
+          }
+          break;
+        case 'triangles':
+          for (var j = 0, jj = ps.length; j < jj; j++) {
+            coords[pIndex] = coordsMap[ps[j]];
+            coords[pIndex + 1] = coordsMap[ps[j] + 1];
+            colors[cIndex] = colorsMap[cs[j]];
+            colors[cIndex + 1] = colorsMap[cs[j] + 1];
+            colors[cIndex + 2] = colorsMap[cs[j] + 2];
+            pIndex += 2;
+            cIndex += 3;
+          }
+          break;
+      }
+    }
+    if (backgroundColor) {
+      gl.clearColor(backgroundColor[0] / 255, backgroundColor[1] / 255, backgroundColor[2] / 255, 1.0);
+    } else {
+      gl.clearColor(0, 0, 0, 0);
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    var coordsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, coordsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(cache.positionLocation);
+    gl.vertexAttribPointer(cache.positionLocation, 2, gl.FLOAT, false, 0, 0);
+    var colorsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(cache.colorLocation);
+    gl.vertexAttribPointer(cache.colorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
+    gl.uniform2f(cache.scaleLocation, context.scaleX, context.scaleY);
+    gl.uniform2f(cache.offsetLocation, context.offsetX, context.offsetY);
+    gl.drawArrays(gl.TRIANGLES, 0, count);
+    gl.flush();
+    gl.deleteBuffer(coordsBuffer);
+    gl.deleteBuffer(colorsBuffer);
+    return canvas;
+  }
+  function cleanup() {
+    if (smaskCache && smaskCache.canvas) {
+      smaskCache.canvas.width = 0;
+      smaskCache.canvas.height = 0;
+    }
+    if (figuresCache && figuresCache.canvas) {
+      figuresCache.canvas.width = 0;
+      figuresCache.canvas.height = 0;
+    }
+    smaskCache = null;
+    figuresCache = null;
+  }
+  return {
+    get isEnabled() {
+      if ((0, _dom_utils.getDefaultSetting)('disableWebGL')) {
+        return false;
+      }
+      var enabled = false;
+      try {
+        generateGL();
+        enabled = !!currentGL;
+      } catch (e) {}
+      return (0, _util.shadow)(this, 'isEnabled', enabled);
+    },
+    composeSMask,
+    drawFigures,
+    clear: cleanup
+  };
+}();
+exports.WebGLUtils = WebGLUtils;
+
+/***/ }),
 /* 8 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
@@ -5032,100 +4855,112 @@ exports.renderTextLayer = renderTextLayer;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.SVGGraphics = undefined;
+exports.PDFJS = exports.isWorker = exports.globalScope = undefined;
 
-var _util = __w_pdfjs_require__(0);
+var _api = __w_pdfjs_require__(3);
 
 var _dom_utils = __w_pdfjs_require__(1);
 
-var SVGGraphics = function () {
-  throw new Error('Not implemented: SVGGraphics');
+var _util = __w_pdfjs_require__(0);
+
+var _annotation_layer = __w_pdfjs_require__(2);
+
+var _metadata = __w_pdfjs_require__(6);
+
+var _text_layer = __w_pdfjs_require__(5);
+
+var _svg = __w_pdfjs_require__(4);
+
+var isWorker = typeof window === 'undefined';
+if (!_util.globalScope.PDFJS) {
+  _util.globalScope.PDFJS = {};
+}
+var PDFJS = _util.globalScope.PDFJS;
+{
+  PDFJS.version = '1.8.618';
+  PDFJS.build = '21cc2c02';
+}
+PDFJS.pdfBug = false;
+if (PDFJS.verbosity !== undefined) {
+  (0, _util.setVerbosityLevel)(PDFJS.verbosity);
+}
+delete PDFJS.verbosity;
+Object.defineProperty(PDFJS, 'verbosity', {
+  get() {
+    return (0, _util.getVerbosityLevel)();
+  },
+  set(level) {
+    (0, _util.setVerbosityLevel)(level);
+  },
+  enumerable: true,
+  configurable: true
+});
+PDFJS.VERBOSITY_LEVELS = _util.VERBOSITY_LEVELS;
+PDFJS.OPS = _util.OPS;
+PDFJS.UNSUPPORTED_FEATURES = _util.UNSUPPORTED_FEATURES;
+PDFJS.isValidUrl = _dom_utils.isValidUrl;
+PDFJS.shadow = _util.shadow;
+PDFJS.createBlob = _util.createBlob;
+PDFJS.createObjectURL = function PDFJS_createObjectURL(data, contentType) {
+  return (0, _util.createObjectURL)(data, contentType, PDFJS.disableCreateObjectURL);
 };
+Object.defineProperty(PDFJS, 'isLittleEndian', {
+  configurable: true,
+  get: function PDFJS_isLittleEndian() {
+    return (0, _util.shadow)(PDFJS, 'isLittleEndian', (0, _util.isLittleEndian)());
+  }
+});
+PDFJS.removeNullCharacters = _util.removeNullCharacters;
+PDFJS.PasswordResponses = _util.PasswordResponses;
+PDFJS.PasswordException = _util.PasswordException;
+PDFJS.UnknownErrorException = _util.UnknownErrorException;
+PDFJS.InvalidPDFException = _util.InvalidPDFException;
+PDFJS.MissingPDFException = _util.MissingPDFException;
+PDFJS.UnexpectedResponseException = _util.UnexpectedResponseException;
+PDFJS.Util = _util.Util;
+PDFJS.PageViewport = _util.PageViewport;
+PDFJS.createPromiseCapability = _util.createPromiseCapability;
+PDFJS.maxImageSize = PDFJS.maxImageSize === undefined ? -1 : PDFJS.maxImageSize;
+PDFJS.cMapUrl = PDFJS.cMapUrl === undefined ? null : PDFJS.cMapUrl;
+PDFJS.cMapPacked = PDFJS.cMapPacked === undefined ? false : PDFJS.cMapPacked;
+PDFJS.disableFontFace = PDFJS.disableFontFace === undefined ? false : PDFJS.disableFontFace;
+PDFJS.imageResourcesPath = PDFJS.imageResourcesPath === undefined ? '' : PDFJS.imageResourcesPath;
+PDFJS.disableWorker = PDFJS.disableWorker === undefined ? false : PDFJS.disableWorker;
+PDFJS.workerSrc = PDFJS.workerSrc === undefined ? null : PDFJS.workerSrc;
+PDFJS.workerPort = PDFJS.workerPort === undefined ? null : PDFJS.workerPort;
+PDFJS.disableRange = PDFJS.disableRange === undefined ? false : PDFJS.disableRange;
+PDFJS.disableStream = PDFJS.disableStream === undefined ? false : PDFJS.disableStream;
+PDFJS.disableAutoFetch = PDFJS.disableAutoFetch === undefined ? false : PDFJS.disableAutoFetch;
+PDFJS.pdfBug = PDFJS.pdfBug === undefined ? false : PDFJS.pdfBug;
+PDFJS.postMessageTransfers = PDFJS.postMessageTransfers === undefined ? true : PDFJS.postMessageTransfers;
+PDFJS.disableCreateObjectURL = PDFJS.disableCreateObjectURL === undefined ? false : PDFJS.disableCreateObjectURL;
+PDFJS.disableWebGL = PDFJS.disableWebGL === undefined ? true : PDFJS.disableWebGL;
+PDFJS.externalLinkTarget = PDFJS.externalLinkTarget === undefined ? _dom_utils.LinkTarget.NONE : PDFJS.externalLinkTarget;
+PDFJS.externalLinkRel = PDFJS.externalLinkRel === undefined ? _dom_utils.DEFAULT_LINK_REL : PDFJS.externalLinkRel;
+PDFJS.isEvalSupported = PDFJS.isEvalSupported === undefined ? true : PDFJS.isEvalSupported;
+PDFJS.pdfjsNext = PDFJS.pdfjsNext === undefined ? false : PDFJS.pdfjsNext;
 ;
-exports.SVGGraphics = SVGGraphics;
+PDFJS.getDocument = _api.getDocument;
+PDFJS.LoopbackPort = _api.LoopbackPort;
+PDFJS.PDFDataRangeTransport = _api.PDFDataRangeTransport;
+PDFJS.PDFWorker = _api.PDFWorker;
+PDFJS.hasCanvasTypedArrays = true;
+PDFJS.CustomStyle = _dom_utils.CustomStyle;
+PDFJS.LinkTarget = _dom_utils.LinkTarget;
+PDFJS.addLinkAttributes = _dom_utils.addLinkAttributes;
+PDFJS.getFilenameFromUrl = _dom_utils.getFilenameFromUrl;
+PDFJS.isExternalLinkTargetSet = _dom_utils.isExternalLinkTargetSet;
+PDFJS.AnnotationLayer = _annotation_layer.AnnotationLayer;
+PDFJS.renderTextLayer = _text_layer.renderTextLayer;
+PDFJS.Metadata = _metadata.Metadata;
+PDFJS.SVGGraphics = _svg.SVGGraphics;
+PDFJS.UnsupportedManager = _api._UnsupportedManager;
+exports.globalScope = _util.globalScope;
+exports.isWorker = isWorker;
+exports.PDFJS = PDFJS;
 
 /***/ }),
 /* 9 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-var pdfjsVersion = '1.9.640';
-var pdfjsBuild = '853db85b';
-var pdfjsSharedUtil = __w_pdfjs_require__(0);
-var pdfjsDisplayGlobal = __w_pdfjs_require__(13);
-var pdfjsDisplayAPI = __w_pdfjs_require__(3);
-var pdfjsDisplayTextLayer = __w_pdfjs_require__(7);
-var pdfjsDisplayAnnotationLayer = __w_pdfjs_require__(6);
-var pdfjsDisplayDOMUtils = __w_pdfjs_require__(1);
-var pdfjsDisplaySVG = __w_pdfjs_require__(8);
-;
-exports.PDFJS = pdfjsDisplayGlobal.PDFJS;
-exports.build = pdfjsDisplayAPI.build;
-exports.version = pdfjsDisplayAPI.version;
-exports.getDocument = pdfjsDisplayAPI.getDocument;
-exports.LoopbackPort = pdfjsDisplayAPI.LoopbackPort;
-exports.PDFDataRangeTransport = pdfjsDisplayAPI.PDFDataRangeTransport;
-exports.PDFWorker = pdfjsDisplayAPI.PDFWorker;
-exports.renderTextLayer = pdfjsDisplayTextLayer.renderTextLayer;
-exports.AnnotationLayer = pdfjsDisplayAnnotationLayer.AnnotationLayer;
-exports.CustomStyle = pdfjsDisplayDOMUtils.CustomStyle;
-exports.createPromiseCapability = pdfjsSharedUtil.createPromiseCapability;
-exports.PasswordResponses = pdfjsSharedUtil.PasswordResponses;
-exports.InvalidPDFException = pdfjsSharedUtil.InvalidPDFException;
-exports.MissingPDFException = pdfjsSharedUtil.MissingPDFException;
-exports.SVGGraphics = pdfjsDisplaySVG.SVGGraphics;
-exports.NativeImageDecoding = pdfjsSharedUtil.NativeImageDecoding;
-exports.UnexpectedResponseException = pdfjsSharedUtil.UnexpectedResponseException;
-exports.OPS = pdfjsSharedUtil.OPS;
-exports.UNSUPPORTED_FEATURES = pdfjsSharedUtil.UNSUPPORTED_FEATURES;
-exports.isValidUrl = pdfjsDisplayDOMUtils.isValidUrl;
-exports.createValidAbsoluteUrl = pdfjsSharedUtil.createValidAbsoluteUrl;
-exports.createObjectURL = pdfjsSharedUtil.createObjectURL;
-exports.removeNullCharacters = pdfjsSharedUtil.removeNullCharacters;
-exports.shadow = pdfjsSharedUtil.shadow;
-exports.createBlob = pdfjsSharedUtil.createBlob;
-exports.RenderingCancelledException = pdfjsDisplayDOMUtils.RenderingCancelledException;
-exports.getFilenameFromUrl = pdfjsDisplayDOMUtils.getFilenameFromUrl;
-exports.addLinkAttributes = pdfjsDisplayDOMUtils.addLinkAttributes;
-exports.StatTimer = pdfjsSharedUtil.StatTimer;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-let isReadableStreamSupported = false;
-if (typeof ReadableStream !== 'undefined') {
-  try {
-    new ReadableStream({
-      start(controller) {
-        controller.close();
-      }
-    });
-    isReadableStreamSupported = true;
-  } catch (e) {}
-}
-if (isReadableStreamSupported) {
-  exports.ReadableStream = ReadableStream;
-} else {
-  exports.ReadableStream = __w_pdfjs_require__(12).ReadableStream;
-}
-
-/***/ }),
-/* 12 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
 "use strict";
@@ -8141,250 +7976,7 @@ if (isReadableStreamSupported) {
 }]));
 
 /***/ }),
-/* 13 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.PDFJS = exports.globalScope = undefined;
-
-var _api = __w_pdfjs_require__(3);
-
-var _dom_utils = __w_pdfjs_require__(1);
-
-var _util = __w_pdfjs_require__(0);
-
-var _annotation_layer = __w_pdfjs_require__(6);
-
-var _global_scope = __w_pdfjs_require__(2);
-
-var _global_scope2 = _interopRequireDefault(_global_scope);
-
-var _metadata = __w_pdfjs_require__(5);
-
-var _text_layer = __w_pdfjs_require__(7);
-
-var _svg = __w_pdfjs_require__(8);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-if (!_global_scope2.default.PDFJS) {
-  _global_scope2.default.PDFJS = {};
-}
-var PDFJS = _global_scope2.default.PDFJS;
-{
-  PDFJS.version = '1.9.640';
-  PDFJS.build = '853db85b';
-}
-PDFJS.pdfBug = false;
-if (PDFJS.verbosity !== undefined) {
-  (0, _util.setVerbosityLevel)(PDFJS.verbosity);
-}
-delete PDFJS.verbosity;
-Object.defineProperty(PDFJS, 'verbosity', {
-  get() {
-    return (0, _util.getVerbosityLevel)();
-  },
-  set(level) {
-    (0, _util.setVerbosityLevel)(level);
-  },
-  enumerable: true,
-  configurable: true
-});
-PDFJS.VERBOSITY_LEVELS = _util.VERBOSITY_LEVELS;
-PDFJS.OPS = _util.OPS;
-PDFJS.UNSUPPORTED_FEATURES = _util.UNSUPPORTED_FEATURES;
-PDFJS.isValidUrl = _dom_utils.isValidUrl;
-PDFJS.shadow = _util.shadow;
-PDFJS.createBlob = _util.createBlob;
-PDFJS.createObjectURL = function PDFJS_createObjectURL(data, contentType) {
-  return (0, _util.createObjectURL)(data, contentType, PDFJS.disableCreateObjectURL);
-};
-Object.defineProperty(PDFJS, 'isLittleEndian', {
-  configurable: true,
-  get: function PDFJS_isLittleEndian() {
-    return (0, _util.shadow)(PDFJS, 'isLittleEndian', (0, _util.isLittleEndian)());
-  }
-});
-PDFJS.removeNullCharacters = _util.removeNullCharacters;
-PDFJS.PasswordResponses = _util.PasswordResponses;
-PDFJS.PasswordException = _util.PasswordException;
-PDFJS.UnknownErrorException = _util.UnknownErrorException;
-PDFJS.InvalidPDFException = _util.InvalidPDFException;
-PDFJS.MissingPDFException = _util.MissingPDFException;
-PDFJS.UnexpectedResponseException = _util.UnexpectedResponseException;
-PDFJS.Util = _util.Util;
-PDFJS.PageViewport = _util.PageViewport;
-PDFJS.createPromiseCapability = _util.createPromiseCapability;
-PDFJS.maxImageSize = PDFJS.maxImageSize === undefined ? -1 : PDFJS.maxImageSize;
-PDFJS.cMapUrl = PDFJS.cMapUrl === undefined ? null : PDFJS.cMapUrl;
-PDFJS.cMapPacked = PDFJS.cMapPacked === undefined ? false : PDFJS.cMapPacked;
-PDFJS.disableFontFace = PDFJS.disableFontFace === undefined ? false : PDFJS.disableFontFace;
-PDFJS.imageResourcesPath = PDFJS.imageResourcesPath === undefined ? '' : PDFJS.imageResourcesPath;
-PDFJS.disableWorker = PDFJS.disableWorker === undefined ? false : PDFJS.disableWorker;
-PDFJS.workerSrc = PDFJS.workerSrc === undefined ? null : PDFJS.workerSrc;
-PDFJS.workerPort = PDFJS.workerPort === undefined ? null : PDFJS.workerPort;
-PDFJS.disableRange = PDFJS.disableRange === undefined ? false : PDFJS.disableRange;
-PDFJS.disableStream = PDFJS.disableStream === undefined ? false : PDFJS.disableStream;
-PDFJS.disableAutoFetch = PDFJS.disableAutoFetch === undefined ? false : PDFJS.disableAutoFetch;
-PDFJS.pdfBug = PDFJS.pdfBug === undefined ? false : PDFJS.pdfBug;
-PDFJS.postMessageTransfers = PDFJS.postMessageTransfers === undefined ? true : PDFJS.postMessageTransfers;
-PDFJS.disableCreateObjectURL = PDFJS.disableCreateObjectURL === undefined ? false : PDFJS.disableCreateObjectURL;
-PDFJS.disableWebGL = PDFJS.disableWebGL === undefined ? true : PDFJS.disableWebGL;
-PDFJS.externalLinkTarget = PDFJS.externalLinkTarget === undefined ? _dom_utils.LinkTarget.NONE : PDFJS.externalLinkTarget;
-PDFJS.externalLinkRel = PDFJS.externalLinkRel === undefined ? _dom_utils.DEFAULT_LINK_REL : PDFJS.externalLinkRel;
-PDFJS.isEvalSupported = PDFJS.isEvalSupported === undefined ? true : PDFJS.isEvalSupported;
-PDFJS.pdfjsNext = PDFJS.pdfjsNext === undefined ? false : PDFJS.pdfjsNext;
-;
-PDFJS.getDocument = _api.getDocument;
-PDFJS.LoopbackPort = _api.LoopbackPort;
-PDFJS.PDFDataRangeTransport = _api.PDFDataRangeTransport;
-PDFJS.PDFWorker = _api.PDFWorker;
-PDFJS.hasCanvasTypedArrays = true;
-PDFJS.CustomStyle = _dom_utils.CustomStyle;
-PDFJS.LinkTarget = _dom_utils.LinkTarget;
-PDFJS.addLinkAttributes = _dom_utils.addLinkAttributes;
-PDFJS.getFilenameFromUrl = _dom_utils.getFilenameFromUrl;
-PDFJS.isExternalLinkTargetSet = _dom_utils.isExternalLinkTargetSet;
-PDFJS.AnnotationLayer = _annotation_layer.AnnotationLayer;
-PDFJS.renderTextLayer = _text_layer.renderTextLayer;
-PDFJS.Metadata = _metadata.Metadata;
-PDFJS.SVGGraphics = _svg.SVGGraphics;
-PDFJS.UnsupportedManager = _api._UnsupportedManager;
-exports.globalScope = _global_scope2.default;
-exports.PDFJS = PDFJS;
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __w_pdfjs_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.FontLoader = exports.FontFaceObject = undefined;
-
-var _util = __w_pdfjs_require__(0);
-
-function FontLoader(docId) {
-  this.docId = docId;
-  this.styleElement = null;
-}
-FontLoader.prototype = {
-  insertRule: function fontLoaderInsertRule(rule) {
-    var styleElement = this.styleElement;
-    if (!styleElement) {
-      styleElement = this.styleElement = document.createElement('style');
-      styleElement.id = 'PDFJS_FONT_STYLE_TAG_' + this.docId;
-      document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
-    }
-    var styleSheet = styleElement.sheet;
-    styleSheet.insertRule(rule, styleSheet.cssRules.length);
-  },
-  clear: function fontLoaderClear() {
-    if (this.styleElement) {
-      this.styleElement.remove();
-      this.styleElement = null;
-    }
-  }
-};
-{
-  FontLoader.prototype.bind = function fontLoaderBind(fonts, callback) {
-    for (var i = 0, ii = fonts.length; i < ii; i++) {
-      var font = fonts[i];
-      if (font.attached) {
-        continue;
-      }
-      font.attached = true;
-      var rule = font.createFontFaceRule();
-      if (rule) {
-        this.insertRule(rule);
-      }
-    }
-    setTimeout(callback);
-  };
-}
-;
-;
-var IsEvalSupportedCached = {
-  get value() {
-    return (0, _util.shadow)(this, 'value', (0, _util.isEvalSupported)());
-  }
-};
-var FontFaceObject = function FontFaceObjectClosure() {
-  function FontFaceObject(translatedData, options) {
-    this.compiledGlyphs = Object.create(null);
-    for (var i in translatedData) {
-      this[i] = translatedData[i];
-    }
-    this.options = options;
-  }
-  FontFaceObject.prototype = {
-    createNativeFontFace: function FontFaceObject_createNativeFontFace() {
-      throw new Error('Not implemented: createNativeFontFace');
-    },
-    createFontFaceRule: function FontFaceObject_createFontFaceRule() {
-      if (!this.data) {
-        return null;
-      }
-      if (this.options.disableFontFace) {
-        this.disableFontFace = true;
-        return null;
-      }
-      var data = (0, _util.bytesToString)(new Uint8Array(this.data));
-      var fontName = this.loadedName;
-      var url = 'url(data:' + this.mimetype + ';base64,' + btoa(data) + ');';
-      var rule = '@font-face { font-family:"' + fontName + '";src:' + url + '}';
-      if (this.options.fontRegistry) {
-        this.options.fontRegistry.registerFont(this, url);
-      }
-      return rule;
-    },
-    getPathGenerator: function FontFaceObject_getPathGenerator(objs, character) {
-      if (!(character in this.compiledGlyphs)) {
-        var cmds = objs.get(this.loadedName + '_path_' + character);
-        var current, i, len;
-        if (this.options.isEvalSupported && IsEvalSupportedCached.value) {
-          var args,
-              js = '';
-          for (i = 0, len = cmds.length; i < len; i++) {
-            current = cmds[i];
-            if (current.args !== undefined) {
-              args = current.args.join(',');
-            } else {
-              args = '';
-            }
-            js += 'c.' + current.cmd + '(' + args + ');\n';
-          }
-          this.compiledGlyphs[character] = new Function('c', 'size', js);
-        } else {
-          this.compiledGlyphs[character] = function (c, size) {
-            for (i = 0, len = cmds.length; i < len; i++) {
-              current = cmds[i];
-              if (current.cmd === 'scale') {
-                current.args = [size, -size];
-              }
-              c[current.cmd].apply(c, current.args);
-            }
-          };
-        }
-      }
-      return this.compiledGlyphs[character];
-    }
-  };
-  return FontFaceObject;
-}();
-exports.FontFaceObject = FontFaceObject;
-exports.FontLoader = FontLoader;
-
-/***/ }),
-/* 15 */
+/* 10 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
 "use strict";
@@ -8397,9 +7989,9 @@ exports.CanvasGraphics = undefined;
 
 var _util = __w_pdfjs_require__(0);
 
-var _pattern_helper = __w_pdfjs_require__(16);
+var _pattern_helper = __w_pdfjs_require__(12);
 
-var _webgl = __w_pdfjs_require__(4);
+var _webgl = __w_pdfjs_require__(7);
 
 var MIN_FONT_SIZE = 16;
 var MAX_FONT_SIZE = 100;
@@ -9729,11 +9321,11 @@ var CanvasGraphics = function CanvasGraphicsClosure() {
     paintFormXObjectBegin: function CanvasGraphics_paintFormXObjectBegin(matrix, bbox) {
       this.save();
       this.baseTransformStack.push(this.baseTransform);
-      if (Array.isArray(matrix) && matrix.length === 6) {
+      if ((0, _util.isArray)(matrix) && matrix.length === 6) {
         this.transform.apply(this, matrix);
       }
       this.baseTransform = this.ctx.mozCurrentTransform;
-      if (Array.isArray(bbox) && bbox.length === 4) {
+      if ((0, _util.isArray)(bbox) && bbox.length === 4) {
         var width = bbox[2] - bbox[0];
         var height = bbox[3] - bbox[1];
         this.ctx.rect(bbox[0], bbox[1], width, height);
@@ -9841,7 +9433,7 @@ var CanvasGraphics = function CanvasGraphicsClosure() {
       this.save();
       resetCtxToDefault(this.ctx);
       this.current = new CanvasExtraState();
-      if (Array.isArray(rect) && rect.length === 4) {
+      if ((0, _util.isArray)(rect) && rect.length === 4) {
         var width = rect[2] - rect[0];
         var height = rect[3] - rect[1];
         this.ctx.rect(rect[0], rect[1], width, height);
@@ -10113,7 +9705,132 @@ var CanvasGraphics = function CanvasGraphicsClosure() {
 exports.CanvasGraphics = CanvasGraphics;
 
 /***/ }),
-/* 16 */
+/* 11 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.FontLoader = exports.FontFaceObject = undefined;
+
+var _util = __w_pdfjs_require__(0);
+
+function FontLoader(docId) {
+  this.docId = docId;
+  this.styleElement = null;
+}
+FontLoader.prototype = {
+  insertRule: function fontLoaderInsertRule(rule) {
+    var styleElement = this.styleElement;
+    if (!styleElement) {
+      styleElement = this.styleElement = document.createElement('style');
+      styleElement.id = 'PDFJS_FONT_STYLE_TAG_' + this.docId;
+      document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+    }
+    var styleSheet = styleElement.sheet;
+    styleSheet.insertRule(rule, styleSheet.cssRules.length);
+  },
+  clear: function fontLoaderClear() {
+    if (this.styleElement) {
+      this.styleElement.remove();
+      this.styleElement = null;
+    }
+  }
+};
+{
+  FontLoader.prototype.bind = function fontLoaderBind(fonts, callback) {
+    for (var i = 0, ii = fonts.length; i < ii; i++) {
+      var font = fonts[i];
+      if (font.attached) {
+        continue;
+      }
+      font.attached = true;
+      var rule = font.createFontFaceRule();
+      if (rule) {
+        this.insertRule(rule);
+      }
+    }
+    setTimeout(callback);
+  };
+}
+;
+;
+var IsEvalSupportedCached = {
+  get value() {
+    return (0, _util.shadow)(this, 'value', (0, _util.isEvalSupported)());
+  }
+};
+var FontFaceObject = function FontFaceObjectClosure() {
+  function FontFaceObject(translatedData, options) {
+    this.compiledGlyphs = Object.create(null);
+    for (var i in translatedData) {
+      this[i] = translatedData[i];
+    }
+    this.options = options;
+  }
+  FontFaceObject.prototype = {
+    createNativeFontFace: function FontFaceObject_createNativeFontFace() {
+      throw new Error('Not implemented: createNativeFontFace');
+    },
+    createFontFaceRule: function FontFaceObject_createFontFaceRule() {
+      if (!this.data) {
+        return null;
+      }
+      if (this.options.disableFontFace) {
+        this.disableFontFace = true;
+        return null;
+      }
+      var data = (0, _util.bytesToString)(new Uint8Array(this.data));
+      var fontName = this.loadedName;
+      var url = 'url(data:' + this.mimetype + ';base64,' + btoa(data) + ');';
+      var rule = '@font-face { font-family:"' + fontName + '";src:' + url + '}';
+      if (this.options.fontRegistry) {
+        this.options.fontRegistry.registerFont(this, url);
+      }
+      return rule;
+    },
+    getPathGenerator: function FontFaceObject_getPathGenerator(objs, character) {
+      if (!(character in this.compiledGlyphs)) {
+        var cmds = objs.get(this.loadedName + '_path_' + character);
+        var current, i, len;
+        if (this.options.isEvalSupported && IsEvalSupportedCached.value) {
+          var args,
+              js = '';
+          for (i = 0, len = cmds.length; i < len; i++) {
+            current = cmds[i];
+            if (current.args !== undefined) {
+              args = current.args.join(',');
+            } else {
+              args = '';
+            }
+            js += 'c.' + current.cmd + '(' + args + ');\n';
+          }
+          this.compiledGlyphs[character] = new Function('c', 'size', js);
+        } else {
+          this.compiledGlyphs[character] = function (c, size) {
+            for (i = 0, len = cmds.length; i < len; i++) {
+              current = cmds[i];
+              if (current.cmd === 'scale') {
+                current.args = [size, -size];
+              }
+              c[current.cmd].apply(c, current.args);
+            }
+          };
+        }
+      }
+      return this.compiledGlyphs[character];
+    }
+  };
+  return FontFaceObject;
+}();
+exports.FontFaceObject = FontFaceObject;
+exports.FontLoader = FontLoader;
+
+/***/ }),
+/* 12 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
 "use strict";
@@ -10126,7 +9843,7 @@ exports.TilingPattern = exports.getShadingPatternFromIR = undefined;
 
 var _util = __w_pdfjs_require__(0);
 
-var _webgl = __w_pdfjs_require__(4);
+var _webgl = __w_pdfjs_require__(7);
 
 var ShadingIRs = {};
 ShadingIRs.RadialAxial = {
@@ -10424,7 +10141,7 @@ var TilingPattern = function TilingPatternClosure() {
       var tmpCtx = tmpCanvas.context;
       var graphics = canvasGraphicsFactory.createCanvasGraphics(tmpCtx);
       graphics.groupLevel = owner.groupLevel;
-      this.setFillAndStrokeStyleToContext(graphics, paintType, color);
+      this.setFillAndStrokeStyleToContext(tmpCtx, paintType, color);
       this.setScale(width, height, xstep, ystep);
       this.transformToScale(graphics);
       var tmpTranslate = [1, 0, 0, 1, -topLeft[0], -topLeft[1]];
@@ -10446,7 +10163,7 @@ var TilingPattern = function TilingPatternClosure() {
       this.ctx.scale(1 / scale[0], 1 / scale[1]);
     },
     clipBbox: function clipBbox(graphics, bbox, x0, y0, x1, y1) {
-      if (Array.isArray(bbox) && bbox.length === 4) {
+      if ((0, _util.isArray)(bbox) && bbox.length === 4) {
         var bboxWidth = x1 - x0;
         var bboxHeight = y1 - y0;
         graphics.ctx.rect(x0, y0, bboxWidth, bboxHeight);
@@ -10454,23 +10171,17 @@ var TilingPattern = function TilingPatternClosure() {
         graphics.endPath();
       }
     },
-    setFillAndStrokeStyleToContext: function setFillAndStrokeStyleToContext(graphics, paintType, color) {
-      let context = graphics.ctx,
-          current = graphics.current;
+    setFillAndStrokeStyleToContext: function setFillAndStrokeStyleToContext(context, paintType, color) {
       switch (paintType) {
         case PaintType.COLORED:
           var ctx = this.ctx;
           context.fillStyle = ctx.fillStyle;
           context.strokeStyle = ctx.strokeStyle;
-          current.fillColor = ctx.fillStyle;
-          current.strokeColor = ctx.strokeStyle;
           break;
         case PaintType.UNCOLORED:
           var cssColor = _util.Util.makeCssRgb(color[0], color[1], color[2]);
           context.fillStyle = cssColor;
           context.strokeStyle = cssColor;
-          current.fillColor = cssColor;
-          current.strokeColor = cssColor;
           break;
         default:
           throw new _util.FormatError(`Unsupported paint type: ${paintType}`);
@@ -10491,7 +10202,7 @@ exports.getShadingPatternFromIR = getShadingPatternFromIR;
 exports.TilingPattern = TilingPattern;
 
 /***/ }),
-/* 17 */
+/* 13 */
 /***/ (function(module, exports, __w_pdfjs_require__) {
 
 "use strict";
@@ -10725,6 +10436,86 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
   return PDFDataTransportStream;
 }();
 exports.PDFDataTransportStream = PDFDataTransportStream;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+var pdfjsVersion = '1.8.618';
+var pdfjsBuild = '21cc2c02';
+var pdfjsSharedUtil = __w_pdfjs_require__(0);
+var pdfjsDisplayGlobal = __w_pdfjs_require__(8);
+var pdfjsDisplayAPI = __w_pdfjs_require__(3);
+var pdfjsDisplayTextLayer = __w_pdfjs_require__(5);
+var pdfjsDisplayAnnotationLayer = __w_pdfjs_require__(2);
+var pdfjsDisplayDOMUtils = __w_pdfjs_require__(1);
+var pdfjsDisplaySVG = __w_pdfjs_require__(4);
+;
+exports.PDFJS = pdfjsDisplayGlobal.PDFJS;
+exports.build = pdfjsDisplayAPI.build;
+exports.version = pdfjsDisplayAPI.version;
+exports.getDocument = pdfjsDisplayAPI.getDocument;
+exports.LoopbackPort = pdfjsDisplayAPI.LoopbackPort;
+exports.PDFDataRangeTransport = pdfjsDisplayAPI.PDFDataRangeTransport;
+exports.PDFWorker = pdfjsDisplayAPI.PDFWorker;
+exports.renderTextLayer = pdfjsDisplayTextLayer.renderTextLayer;
+exports.AnnotationLayer = pdfjsDisplayAnnotationLayer.AnnotationLayer;
+exports.CustomStyle = pdfjsDisplayDOMUtils.CustomStyle;
+exports.createPromiseCapability = pdfjsSharedUtil.createPromiseCapability;
+exports.PasswordResponses = pdfjsSharedUtil.PasswordResponses;
+exports.InvalidPDFException = pdfjsSharedUtil.InvalidPDFException;
+exports.MissingPDFException = pdfjsSharedUtil.MissingPDFException;
+exports.SVGGraphics = pdfjsDisplaySVG.SVGGraphics;
+exports.NativeImageDecoding = pdfjsSharedUtil.NativeImageDecoding;
+exports.UnexpectedResponseException = pdfjsSharedUtil.UnexpectedResponseException;
+exports.OPS = pdfjsSharedUtil.OPS;
+exports.UNSUPPORTED_FEATURES = pdfjsSharedUtil.UNSUPPORTED_FEATURES;
+exports.isValidUrl = pdfjsDisplayDOMUtils.isValidUrl;
+exports.createValidAbsoluteUrl = pdfjsSharedUtil.createValidAbsoluteUrl;
+exports.createObjectURL = pdfjsSharedUtil.createObjectURL;
+exports.removeNullCharacters = pdfjsSharedUtil.removeNullCharacters;
+exports.shadow = pdfjsSharedUtil.shadow;
+exports.createBlob = pdfjsSharedUtil.createBlob;
+exports.RenderingCancelledException = pdfjsDisplayDOMUtils.RenderingCancelledException;
+exports.getFilenameFromUrl = pdfjsDisplayDOMUtils.getFilenameFromUrl;
+exports.addLinkAttributes = pdfjsDisplayDOMUtils.addLinkAttributes;
+exports.StatTimer = pdfjsSharedUtil.StatTimer;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __w_pdfjs_require__) {
+
+"use strict";
+
+
+let isReadableStreamSupported = false;
+if (typeof ReadableStream !== 'undefined') {
+  try {
+    new ReadableStream({
+      start(controller) {
+        controller.close();
+      }
+    });
+    isReadableStreamSupported = true;
+  } catch (e) {}
+}
+if (isReadableStreamSupported) {
+  exports.ReadableStream = ReadableStream;
+} else {
+  exports.ReadableStream = __w_pdfjs_require__(9).ReadableStream;
+}
 
 /***/ })
 /******/ ]);

@@ -22,7 +22,6 @@ info: |
        false, [[Configurable]]: true}).
     [...]
 includes: [propertyHelper.js]
-features: [generators]
 ---*/
 
 var GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;

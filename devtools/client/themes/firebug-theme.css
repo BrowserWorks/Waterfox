@@ -7,7 +7,7 @@
 @import url(resource://devtools/client/themes/common.css);
 @import url(chrome://devtools/skin/light-theme.css);
 
-:root.theme-firebug {
+:root {
   font-size: 11px;
   font-family: var(--proportional-font-family);
 }
@@ -76,6 +76,7 @@
 .theme-firebug .devtools-sidebar-tabs tab {
   margin: 3px 0 -1px 0;
   padding: 1px 4px !important;
+  padding-inline-end: 0 !important;
   border: 1px solid transparent !important;
   border-bottom: none !important;
   border-radius: 4px 4px 0 0;
@@ -99,8 +100,8 @@
 }
 
 .theme-firebug .devtools-tab-label {
-  padding-inline-end: 0;
-  mask-image: none;
+  /* Set the end padding on the label to make sure the label gets faded out properly */
+  padding-inline-end: 4px;
 }
 
 /* In order to hide bottom-border of side panel tabs we need

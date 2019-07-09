@@ -115,7 +115,7 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
           nsAutoCString name;
           icStr->GetData(name);
 
-          nsCString spec;
+          nsXPIDLCString spec;
           catMan->GetCategoryEntry("agent-style-sheets", name.get(),
                                    getter_Copies(spec));
 

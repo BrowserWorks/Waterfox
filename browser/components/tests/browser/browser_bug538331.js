@@ -400,12 +400,14 @@ function writeUpdatesToXMLFile(aText) {
   const MODE_CREATE   = 0x08;
   const MODE_TRUNCATE = 0x20;
 
-  let file = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
+  let file = Cc["@mozilla.org/file/directory_service;1"].
+             getService(Ci.nsIProperties).
+             get("UpdRootD", Ci.nsIFile);
   file.append("updates.xml");
   let fos = Cc["@mozilla.org/network/file-output-stream;1"].
             createInstance(Ci.nsIFileOutputStream);
   if (!file.exists()) {
-    file.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
+    file.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, PERMS_FILE);
   }
   fos.init(file, MODE_WRONLY | MODE_CREATE | MODE_TRUNCATE, PERMS_FILE, 0);
   fos.write(aText, aText.length);

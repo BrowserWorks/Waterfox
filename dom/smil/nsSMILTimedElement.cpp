@@ -230,8 +230,7 @@ const nsAttrValue::EnumTable nsSMILTimedElement::sRestartModeTable[] = {
       {nullptr, 0}
 };
 
-const nsSMILMilestone nsSMILTimedElement::sMaxMilestone(
-  std::numeric_limits<nsSMILTime>::max(), false);
+const nsSMILMilestone nsSMILTimedElement::sMaxMilestone(INT64_MAX, false);
 
 // The thresholds at which point we start filtering intervals and instance times
 // indiscriminately.
@@ -854,7 +853,7 @@ namespace
 } // namespace
 
 bool
-nsSMILTimedElement::SetAttr(nsAtom* aAttribute, const nsAString& aValue,
+nsSMILTimedElement::SetAttr(nsIAtom* aAttribute, const nsAString& aValue,
                             nsAttrValue& aResult,
                             Element* aContextNode,
                             nsresult* aParseResult)
@@ -895,7 +894,7 @@ nsSMILTimedElement::SetAttr(nsAtom* aAttribute, const nsAString& aValue,
 }
 
 bool
-nsSMILTimedElement::UnsetAttr(nsAtom* aAttribute)
+nsSMILTimedElement::UnsetAttr(nsIAtom* aAttribute)
 {
   bool foundMatch = true;
 
@@ -1928,11 +1927,8 @@ nsSMILTimedElement::GetRepeatDuration() const
 {
   nsSMILTimeValue multipliedDuration;
   if (mRepeatCount.IsDefinite() && mSimpleDur.IsDefinite()) {
-    if (mRepeatCount * double(mSimpleDur.GetMillis()) <=
-        std::numeric_limits<nsSMILTime>::max()) {
-      multipliedDuration.SetMillis(
-        nsSMILTime(mRepeatCount * mSimpleDur.GetMillis()));
-    }
+    multipliedDuration.SetMillis(
+      nsSMILTime(mRepeatCount * double(mSimpleDur.GetMillis())));
   } else {
     multipliedDuration.SetIndefinite();
   }
@@ -2211,13 +2207,13 @@ nsresult
 nsSMILTimedElement::AddInstanceTimeFromCurrentTime(nsSMILTime aCurrentTime,
     double aOffsetSeconds, bool aIsBegin)
 {
-  double offset = NS_round(aOffsetSeconds * PR_MSEC_PER_SEC);
+  double offset = aOffsetSeconds * PR_MSEC_PER_SEC;
 
   // Check we won't overflow the range of nsSMILTime
-  if (aCurrentTime + offset > std::numeric_limits<nsSMILTime>::max())
+  if (aCurrentTime + NS_round(offset) > INT64_MAX)
     return NS_ERROR_ILLEGAL_VALUE;
 
-  nsSMILTimeValue timeVal(aCurrentTime + int64_t(offset));
+  nsSMILTimeValue timeVal(aCurrentTime + int64_t(NS_round(offset)));
 
   RefPtr<nsSMILInstanceTime> instanceTime =
     new nsSMILInstanceTime(timeVal, nsSMILInstanceTime::SOURCE_DOM);

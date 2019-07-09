@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-%arrayiteratorprototype%-@@tostringtag
 description: >
     `Symbol.toStringTag` property descriptor
 info: >

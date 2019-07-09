@@ -157,7 +157,7 @@ BEGIN_TEST(test_ubiNodeJSObjectConstructorName)
     UniqueTwoByteChars ctorName;
     CHECK(JS::ubi::Node(&val.toObject()).jsObjectConstructorName(cx, ctorName));
     CHECK(ctorName);
-    CHECK(EqualChars(ctorName.get(), u"Ctor", js_strlen(u"Ctor") + 1));
+    CHECK(js_strcmp(ctorName.get(), u"Ctor") == 0);
 
     return true;
 }

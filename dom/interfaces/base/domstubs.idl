@@ -32,13 +32,7 @@ interface nsIDOMClientRect;
 interface nsIDOMClientRectList;
 
 // Needed for raises() in our IDL
-%{C++
-namespace mozilla {
-namespace dom {
-class DOMException;
-}
-}
-%}
+interface DOMException;
 
 // Style Sheets
 interface nsIDOMStyleSheetList;

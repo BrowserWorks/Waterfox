@@ -11,7 +11,6 @@
 #include "jsiter.h"
 
 #include "gc/Barrier.h"
-#include "gc/Marking.h"
 
 #include "jscntxtinlines.h"
 
@@ -34,13 +33,6 @@ js::GlobalObject*
 JSCompartment::unsafeUnbarrieredMaybeGlobal() const
 {
     return *global_.unsafeGet();
-}
-
-inline bool
-JSCompartment::globalIsAboutToBeFinalized()
-{
-    MOZ_ASSERT(zone_->isGCSweeping());
-    return global_ && js::gc::IsAboutToBeFinalizedUnbarriered(global_.unsafeGet());
 }
 
 template <typename T>

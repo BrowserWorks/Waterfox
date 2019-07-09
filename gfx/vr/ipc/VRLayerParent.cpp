@@ -6,16 +6,15 @@
 
 #include "VRLayerParent.h"
 #include "mozilla/Unused.h"
-#include "VRDisplayHost.h"
-#include "mozilla/layers/CompositorThread.h"
 
 namespace mozilla {
-using namespace layers;
 namespace gfx {
 
-VRLayerParent::VRLayerParent(uint32_t aVRDisplayID, const uint32_t aGroup)
+VRLayerParent::VRLayerParent(uint32_t aVRDisplayID, const Rect& aLeftEyeRect, const Rect& aRightEyeRect, const uint32_t aGroup)
   : mIPCOpen(true)
   , mVRDisplayID(aVRDisplayID)
+  , mLeftEyeRect(aLeftEyeRect)
+  , mRightEyeRect(aRightEyeRect)
   , mGroup(aGroup)
 {
 }
@@ -58,37 +57,17 @@ VRLayerParent::Destroy()
 }
 
 mozilla::ipc::IPCResult
-VRLayerParent::RecvSubmitFrame(const layers::SurfaceDescriptor &aTexture,
-                               const uint64_t& aFrameId,
-                               const gfx::Rect& aLeftEyeRect,
-                               const gfx::Rect& aRightEyeRect)
+VRLayerParent::RecvSubmitFrame(PTextureParent* texture,
+                               const uint64_t& aFrameId)
 {
   if (mVRDisplayID) {
-    MessageLoop* loop = layers::CompositorThreadHolder::Loop();
     VRManager* vm = VRManager::Get();
-    RefPtr<VRDisplayHost> display = vm->GetDisplay(mVRDisplayID);
-    if (display) {
-      // Because VR compositor still shares the same graphics device with Compositor thread.
-      // We have to post sumbit frame tasks to Compositor thread.
-      // TODO: Move SubmitFrame to Bug 1392217.
-      loop->PostTask(NewRunnableMethod<VRDisplayHost*, const layers::SurfaceDescriptor, uint64_t,
-                                       const gfx::Rect&, const gfx::Rect&>(
-                     "gfx::VRLayerParent::SubmitFrame",
-                     this,
-                     &VRLayerParent::SubmitFrame, display, aTexture, aFrameId, aLeftEyeRect, aRightEyeRect));
-    }
+    vm->SubmitFrame(this, texture, aFrameId, mLeftEyeRect, mRightEyeRect);
   }
 
   return IPC_OK();
 }
 
-void
-VRLayerParent::SubmitFrame(VRDisplayHost* aDisplay, const layers::SurfaceDescriptor& aTexture,
-                           uint64_t aFrameId, const gfx::Rect& aLeftEyeRect, const gfx::Rect& aRightEyeRect)
-{
-  aDisplay->SubmitFrame(this, aTexture, aFrameId,
-                        aLeftEyeRect, aRightEyeRect);
-}
 
 } // namespace gfx
 } // namespace mozilla

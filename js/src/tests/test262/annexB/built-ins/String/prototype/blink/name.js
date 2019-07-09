@@ -19,11 +19,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype.blink, "name", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: "blink"
-});
+assert.sameValue(String.prototype.blink.name, "blink");
+
+verifyNotEnumerable(String.prototype.blink, "name");
+verifyNotWritable(String.prototype.blink, "name");
+verifyConfigurable(String.prototype.blink, "name");
 
 reportCompare(0, 0);

@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use core::nonzero::NonZero;
 use dom::bindings::codegen::Bindings::GamepadBinding;
 use dom::bindings::codegen::Bindings::GamepadBinding::GamepadMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::num::Finite;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::bindings::str::DOMString;
 use dom::event::Event;
 use dom::eventtarget::EventTarget;
@@ -33,9 +33,9 @@ pub struct Gamepad {
     timestamp: Cell<f64>,
     mapping_type: String,
     axes: Heap<*mut JSObject>,
-    buttons: Dom<GamepadButtonList>,
-    pose: Option<Dom<VRPose>>,
-    #[ignore_malloc_size_of = "Defined in rust-webvr"]
+    buttons: JS<GamepadButtonList>,
+    pose: Option<JS<VRPose>>,
+    #[ignore_heap_size_of = "Defined in rust-webvr"]
     hand: WebVRGamepadHand,
     display_id: u32
 }
@@ -60,8 +60,8 @@ impl Gamepad {
             timestamp: Cell::new(timestamp),
             mapping_type: mapping_type,
             axes: Heap::default(),
-            buttons: Dom::from_ref(buttons),
-            pose: pose.map(Dom::from_ref),
+            buttons: JS::from_ref(buttons),
+            pose: pose.map(JS::from_ref),
             hand: hand,
             display_id: display_id
         }
@@ -71,26 +71,22 @@ impl Gamepad {
     pub fn new_from_vr(global: &GlobalScope,
                        index: i32,
                        data: &WebVRGamepadData,
-                       state: &WebVRGamepadState) -> DomRoot<Gamepad> {
+                       state: &WebVRGamepadState) -> Root<Gamepad> {
         let buttons = GamepadButtonList::new_from_vr(&global, &state.buttons);
         let pose = VRPose::new(&global, &state.pose);
 
-        let gamepad = reflect_dom_object(
-            Box::new(Gamepad::new_inherited(
-                state.gamepad_id,
-                data.name.clone(),
-                index,
-                state.connected,
-                state.timestamp,
-                "".into(),
-                &buttons,
-                Some(&pose),
-                data.hand.clone(),
-                data.display_id
-            )),
-            global,
-            GamepadBinding::Wrap
-        );
+        let gamepad = reflect_dom_object(box Gamepad::new_inherited(state.gamepad_id,
+                                                                    data.name.clone(),
+                                                                    index,
+                                                                    state.connected,
+                                                                    state.timestamp,
+                                                                    "".into(),
+                                                                    &buttons,
+                                                                    Some(&pose),
+                                                                    data.hand.clone(),
+                                                                    data.display_id),
+                                         global,
+                                         GamepadBinding::Wrap);
 
         let cx = global.get_cx();
         rooted!(in (cx) let mut array = ptr::null_mut());
@@ -131,13 +127,13 @@ impl GamepadMethods for Gamepad {
 
     #[allow(unsafe_code)]
     // https://w3c.github.io/gamepad/#dom-gamepad-axes
-    unsafe fn Axes(&self, _cx: *mut JSContext) -> NonNullJSObjectPtr {
-        NonNullJSObjectPtr::new_unchecked(self.axes.get())
+    unsafe fn Axes(&self, _cx: *mut JSContext) -> NonZero<*mut JSObject> {
+        NonZero::new_unchecked(self.axes.get())
     }
 
     // https://w3c.github.io/gamepad/#dom-gamepad-buttons
-    fn Buttons(&self) -> DomRoot<GamepadButtonList> {
-        DomRoot::from_ref(&*self.buttons)
+    fn Buttons(&self) -> Root<GamepadButtonList> {
+        Root::from_ref(&*self.buttons)
     }
 
     // https://w3c.github.io/gamepad/extensions.html#gamepadhand-enum
@@ -151,8 +147,8 @@ impl GamepadMethods for Gamepad {
     }
 
     // https://w3c.github.io/gamepad/extensions.html#dom-gamepad-pose
-    fn GetPose(&self) -> Option<DomRoot<VRPose>> {
-        self.pose.as_ref().map(|p| DomRoot::from_ref(&**p))
+    fn GetPose(&self) -> Option<Root<VRPose>> {
+        self.pose.as_ref().map(|p| Root::from_ref(&**p))
     }
 
     // https://w3c.github.io/webvr/spec/1.1/#gamepad-getvrdisplays-attribute

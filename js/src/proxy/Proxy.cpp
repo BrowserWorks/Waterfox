@@ -272,21 +272,6 @@ Proxy::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 }
 
 bool
-js::ProxyHas(JSContext* cx, HandleObject proxy, HandleValue idVal, MutableHandleValue result)
-{
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, idVal, &id))
-        return false;
-
-    bool has;
-    if (!Proxy::has(cx, proxy, id, &has))
-        return false;
-
-    result.setBoolean(has);
-    return true;
-}
-
-bool
 Proxy::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 {
     if (!CheckRecursionLimit(cx))
@@ -315,19 +300,17 @@ js::ProxyHasOwn(JSContext* cx, HandleObject proxy, HandleValue idVal, MutableHan
 }
 
 static MOZ_ALWAYS_INLINE Value
-ValueToWindowProxyIfWindow(const Value& v, JSObject* proxy)
+ValueToWindowProxyIfWindow(const Value& v)
 {
-    if (v.isObject() && v != ObjectValue(*proxy))
+    if (v.isObject())
         return ObjectValue(*ToWindowProxyIfWindow(&v.toObject()));
     return v;
 }
 
 MOZ_ALWAYS_INLINE bool
-Proxy::getInternal(JSContext* cx, HandleObject proxy, HandleValue receiver,
-                   HandleId id, MutableHandleValue vp)
+Proxy::get(JSContext* cx, HandleObject proxy, HandleValue receiver_, HandleId id,
+           MutableHandleValue vp)
 {
-    MOZ_ASSERT_IF(receiver.isObject(), !IsWindow(&receiver.toObject()));
-
     if (!CheckRecursionLimit(cx))
         return false;
     const BaseProxyHandler* handler = proxy->as<ProxyObject>().handler();
@@ -335,6 +318,10 @@ Proxy::getInternal(JSContext* cx, HandleObject proxy, HandleValue receiver,
     AutoEnterPolicy policy(cx, handler, proxy, id, BaseProxyHandler::GET, true);
     if (!policy.allowed())
         return policy.returnValue();
+
+    // Use the WindowProxy as receiver if receiver_ is a Window. Proxy handlers
+    // shouldn't have to know about the Window/WindowProxy distinction.
+    RootedValue receiver(cx, ValueToWindowProxyIfWindow(receiver_));
 
     if (handler->hasPrototype()) {
         bool own;
@@ -354,20 +341,10 @@ Proxy::getInternal(JSContext* cx, HandleObject proxy, HandleValue receiver,
 }
 
 bool
-Proxy::get(JSContext* cx, HandleObject proxy, HandleValue receiver_, HandleId id,
-           MutableHandleValue vp)
-{
-    // Use the WindowProxy as receiver if receiver_ is a Window. Proxy handlers
-    // shouldn't have to know about the Window/WindowProxy distinction.
-    RootedValue receiver(cx, ValueToWindowProxyIfWindow(receiver_, proxy));
-    return getInternal(cx, proxy, receiver, id, vp);
-}
-
-bool
 js::ProxyGetProperty(JSContext* cx, HandleObject proxy, HandleId id, MutableHandleValue vp)
 {
     RootedValue receiver(cx, ObjectValue(*proxy));
-    return Proxy::getInternal(cx, proxy, receiver, id, vp);
+    return Proxy::get(cx, proxy, receiver, id, vp);
 }
 
 bool
@@ -379,15 +356,13 @@ js::ProxyGetPropertyByValue(JSContext* cx, HandleObject proxy, HandleValue idVal
         return false;
 
     RootedValue receiver(cx, ObjectValue(*proxy));
-    return Proxy::getInternal(cx, proxy, receiver, id, vp);
+    return Proxy::get(cx, proxy, receiver, id, vp);
 }
 
-MOZ_ALWAYS_INLINE bool
-Proxy::setInternal(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
-                   HandleValue receiver, ObjectOpResult& result)
+bool
+Proxy::set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver_,
+           ObjectOpResult& result)
 {
-    MOZ_ASSERT_IF(receiver.isObject(), !IsWindow(&receiver.toObject()));
-
     if (!CheckRecursionLimit(cx))
         return false;
     const BaseProxyHandler* handler = proxy->as<ProxyObject>().handler();
@@ -398,6 +373,10 @@ Proxy::setInternal(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v
         return result.succeed();
     }
 
+    // Use the WindowProxy as receiver if receiver_ is a Window. Proxy handlers
+    // shouldn't have to know about the Window/WindowProxy distinction.
+    RootedValue receiver(cx, ValueToWindowProxyIfWindow(receiver_));
+
     // Special case. See the comment on BaseProxyHandler::mHasPrototype.
     if (handler->hasPrototype())
         return handler->BaseProxyHandler::set(cx, proxy, id, v, receiver, result);
@@ -406,21 +385,11 @@ Proxy::setInternal(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v
 }
 
 bool
-Proxy::set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver_,
-           ObjectOpResult& result)
-{
-    // Use the WindowProxy as receiver if receiver_ is a Window. Proxy handlers
-    // shouldn't have to know about the Window/WindowProxy distinction.
-    RootedValue receiver(cx, ValueToWindowProxyIfWindow(receiver_, proxy));
-    return setInternal(cx, proxy, id, v, receiver, result);
-}
-
-bool
 js::ProxySetProperty(JSContext* cx, HandleObject proxy, HandleId id, HandleValue val, bool strict)
 {
     ObjectOpResult result;
     RootedValue receiver(cx, ObjectValue(*proxy));
-    if (!Proxy::setInternal(cx, proxy, id, val, receiver, result))
+    if (!Proxy::set(cx, proxy, id, val, receiver, result))
         return false;
     return result.checkStrictErrorOrWarning(cx, proxy, id, strict);
 }
@@ -435,7 +404,7 @@ js::ProxySetPropertyByValue(JSContext* cx, HandleObject proxy, HandleValue idVal
 
     ObjectOpResult result;
     RootedValue receiver(cx, ObjectValue(*proxy));
-    if (!Proxy::setInternal(cx, proxy, id, val, receiver, result))
+    if (!Proxy::set(cx, proxy, id, val, receiver, result))
         return false;
     return result.checkStrictErrorOrWarning(cx, proxy, id, strict);
 }
@@ -693,12 +662,6 @@ proxy_DeleteProperty(JSContext* cx, HandleObject obj, HandleId id, ObjectOpResul
 }
 
 /* static */ void
-ProxyObject::traceEdgeToTarget(JSTracer* trc, ProxyObject* obj)
-{
-    TraceCrossCompartmentEdge(trc, obj, obj->slotOfPrivate(), "proxy target");
-}
-
-/* static */ void
 ProxyObject::trace(JSTracer* trc, JSObject* obj)
 {
     ProxyObject* proxy = &obj->as<ProxyObject>();
@@ -723,8 +686,7 @@ ProxyObject::trace(JSTracer* trc, JSObject* obj)
 
     // Note: If you add new slots here, make sure to change
     // nuke() to cope.
-
-    traceEdgeToTarget(trc, proxy);
+    TraceCrossCompartmentEdge(trc, obj, proxy->slotOfPrivate(), "private");
 
     size_t nreserved = proxy->numReservedSlots();
     for (size_t i = 0; i < nreserved; i++) {
@@ -763,19 +725,11 @@ proxy_Finalize(FreeOp* fop, JSObject* obj)
         js_free(js::detail::GetProxyDataLayout(obj)->values());
 }
 
-size_t
-js::proxy_ObjectMoved(JSObject* obj, JSObject* old)
+static void
+proxy_ObjectMoved(JSObject* obj, const JSObject* old)
 {
-    ProxyObject& proxy = obj->as<ProxyObject>();
-
-    if (IsInsideNursery(old)) {
-        // Objects in the nursery are never swapped so the proxy must have an
-        // inline ProxyValueArray.
-        MOZ_ASSERT(old->as<ProxyObject>().usingInlineValueArray());
-        proxy.setInlineValueArray();
-    }
-
-    return proxy.handler()->objectMoved(obj, old);
+    MOZ_ASSERT(obj->is<ProxyObject>());
+    obj->as<ProxyObject>().handler()->objectMoved(obj, old);
 }
 
 bool
@@ -799,6 +753,8 @@ js::proxy_Construct(JSContext* cx, unsigned argc, Value* vp)
 const ClassOps js::ProxyClassOps = {
     nullptr,                 /* addProperty */
     nullptr,                 /* delProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     nullptr,                 /* enumerate   */
     nullptr,                 /* newEnumerate */
     nullptr,                 /* resolve     */
@@ -810,10 +766,9 @@ const ClassOps js::ProxyClassOps = {
     ProxyObject::trace,      /* trace       */
 };
 
-const ClassExtension js::ProxyClassExtension = {
-    proxy_WeakmapKeyDelegate,
+const ClassExtension js::ProxyClassExtension = PROXY_MAKE_EXT(
     proxy_ObjectMoved
-};
+);
 
 const ObjectOps js::ProxyObjectOps = {
     proxy_LookupProperty,
@@ -878,7 +833,7 @@ js::InitProxyClass(JSContext* cx, HandleObject obj)
 
     if (!JS_DefineFunctions(cx, ctor, static_methods))
         return nullptr;
-    if (!JS_DefineProperty(cx, obj, "Proxy", ctor, JSPROP_RESOLVING))
+    if (!JS_DefineProperty(cx, obj, "Proxy", ctor, JSPROP_RESOLVING, JS_STUBGETTER, JS_STUBSETTER))
         return nullptr;
 
     global->setConstructor(JSProto_Proxy, ObjectValue(*ctor));

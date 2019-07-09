@@ -18,6 +18,8 @@
 #include "nsIDOMEventTarget.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIDOMNode.h"
+#include "nsIHTMLInlineTableEditor.h"
+#include "nsIHTMLObjectResizer.h"
 #include "nsISupportsImpl.h"
 #include "nsLiteralString.h"
 #include "nsQueryObject.h"
@@ -131,9 +133,11 @@ HTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
     // Detect if mouse point is within current selection for context click
     bool nodeIsInSelection = false;
     if (isContextClick && !selection->Collapsed()) {
-      uint32_t rangeCount = selection->RangeCount();
+      int32_t rangeCount;
+      rv = selection->GetRangeCount(&rangeCount);
+      NS_ENSURE_SUCCESS(rv, rv);
 
-      for (uint32_t i = 0; i < rangeCount; i++) {
+      for (int32_t i = 0; i < rangeCount; i++) {
         RefPtr<nsRange> range = selection->GetRangeAt(i);
         if (!range) {
           // Don't bail yet, iterate through them all
@@ -213,14 +217,9 @@ HTMLEditorEventListener::MouseClick(nsIDOMMouseEvent* aMouseEvent)
   NS_ENSURE_TRUE(target, NS_ERROR_NULL_POINTER);
   nsCOMPtr<nsIDOMElement> element = do_QueryInterface(target);
 
-  RefPtr<HTMLEditor> htmlEditor = mEditorBase->AsHTMLEditor();
+  HTMLEditor* htmlEditor = mEditorBase->AsHTMLEditor();
   MOZ_ASSERT(htmlEditor);
   htmlEditor->DoInlineTableEditingAction(element);
-  // DoInlineTableEditingAction might cause reframe
-  // Editor is destroyed.
-  if (htmlEditor->Destroyed()) {
-    return NS_OK;
-  }
 
   return EditorEventListener::MouseClick(aMouseEvent);
 }

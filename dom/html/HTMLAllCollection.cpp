@@ -70,6 +70,7 @@ static bool
 IsAllNamedElement(nsIContent* aContent)
 {
   return aContent->IsAnyOfHTMLElements(nsGkAtoms::a,
+                                       nsGkAtoms::applet,
                                        nsGkAtoms::button,
                                        nsGkAtoms::embed,
                                        nsGkAtoms::form,
@@ -86,7 +87,7 @@ IsAllNamedElement(nsIContent* aContent)
 }
 
 static bool
-DocAllResultMatch(Element* aElement, int32_t aNamespaceID, nsAtom* aAtom,
+DocAllResultMatch(Element* aElement, int32_t aNamespaceID, nsIAtom* aAtom,
                   void* aData)
 {
   if (aElement->GetID() == aAtom) {
@@ -112,7 +113,7 @@ HTMLAllCollection::GetDocumentAllList(const nsAString& aID)
 {
   return mNamedMap.LookupForAdd(aID).OrInsert(
     [this, &aID] () {
-      RefPtr<nsAtom> id = NS_Atomize(aID);
+      nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
       return new nsContentList(mDocument, DocAllResultMatch, nullptr,
                                nullptr, true, id);
     });
@@ -161,11 +162,11 @@ HTMLAllCollection::GetSupportedNames(nsTArray<nsString>& aNames)
 {
   // XXXbz this is very similar to nsContentList::GetSupportedNames,
   // but has to check IsAllNamedElement for the name case.
-  AutoTArray<nsAtom*, 8> atoms;
+  AutoTArray<nsIAtom*, 8> atoms;
   for (uint32_t i = 0; i < Length(); ++i) {
     nsIContent *content = Item(i);
     if (content->HasID()) {
-      nsAtom* id = content->GetID();
+      nsIAtom* id = content->GetID();
       MOZ_ASSERT(id != nsGkAtoms::_empty,
                  "Empty ids don't get atomized");
       if (!atoms.Contains(id)) {
@@ -180,7 +181,7 @@ HTMLAllCollection::GetSupportedNames(nsTArray<nsString>& aNames)
       const nsAttrValue* val = el->GetParsedAttr(nsGkAtoms::name);
       if (val && val->Type() == nsAttrValue::eAtom &&
           IsAllNamedElement(content)) {
-        nsAtom* name = val->GetAtomValue();
+        nsIAtom* name = val->GetAtomValue();
         MOZ_ASSERT(name != nsGkAtoms::_empty,
                    "Empty names don't get atomized");
         if (!atoms.Contains(name)) {

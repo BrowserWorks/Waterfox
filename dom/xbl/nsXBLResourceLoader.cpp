@@ -46,10 +46,10 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(nsXBLResourceLoader)
 struct nsXBLResource
 {
   nsXBLResource* mNext;
-  nsAtom* mType;
+  nsIAtom* mType;
   nsString mSrc;
 
-  nsXBLResource(nsAtom* aType, const nsAString& aSrc)
+  nsXBLResource(nsIAtom* aType, const nsAString& aSrc)
   {
     MOZ_COUNT_CTOR(nsXBLResource);
     mNext = nullptr;
@@ -121,7 +121,7 @@ nsXBLResourceLoader::LoadResources(nsIContent* aBoundElement)
       // Passing nullptr for pretty much everything -- cause we don't care!
       // XXX: initialDocumentURI is nullptr!
       RefPtr<imgRequestProxy> req;
-      nsContentUtils::LoadImage(url, doc, doc, docPrincipal, 0, docURL,
+      nsContentUtils::LoadImage(url, doc, doc, docPrincipal, docURL,
                                 doc->GetReferrerPolicy(), nullptr,
                                 nsIRequest::LOAD_BACKGROUND, EmptyString(),
                                 getter_AddRefs(req));
@@ -151,7 +151,7 @@ nsXBLResourceLoader::LoadResources(nsIContent* aBoundElement)
       }
       else
       {
-        rv = cssLoader->LoadSheet(url, false, docPrincipal, nullptr, this);
+        rv = cssLoader->LoadSheet(url, false, docPrincipal, EmptyCString(), this);
         if (NS_SUCCEEDED(rv))
           ++mPendingSheets;
       }
@@ -200,7 +200,7 @@ nsXBLResourceLoader::StyleSheetLoaded(StyleSheet* aSheet,
 }
 
 void
-nsXBLResourceLoader::AddResource(nsAtom* aResourceType, const nsAString& aSrc)
+nsXBLResourceLoader::AddResource(nsIAtom* aResourceType, const nsAString& aSrc)
 {
   nsXBLResource* res = new nsXBLResource(aResourceType, aSrc);
   if (!mResourceList)
@@ -258,9 +258,10 @@ nsXBLResourceLoader::NotifyBoundElements()
         if (shell) {
           nsIFrame* childFrame = content->GetPrimaryFrame();
           if (!childFrame) {
-            // Check if it's in the display:none or display:contents maps.
+            // Check to see if it's in the undisplayed content map, or the
+            // display: contents map.
             nsStyleContext* sc =
-              shell->FrameManager()->GetDisplayNoneStyleFor(content);
+              shell->FrameManager()->GetUndisplayedContent(content);
 
             if (!sc) {
               sc = shell->FrameManager()->GetDisplayContentsStyleFor(content);

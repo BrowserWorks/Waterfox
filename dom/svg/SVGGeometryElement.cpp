@@ -35,11 +35,9 @@ SVGGeometryElement::GetNumberInfo()
 }
 
 nsresult
-SVGGeometryElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+SVGGeometryElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValue* aValue,
-                                 const nsAttrValue* aOldValue,
-                                 nsIPrincipal* aSubjectPrincipal,
-                                 bool aNotify)
+                                 const nsAttrValue* aOldValue, bool aNotify)
 {
   if (mCachedPath &&
       aNamespaceID == kNameSpaceID_None &&
@@ -47,13 +45,11 @@ SVGGeometryElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
     mCachedPath = nullptr;
   }
   return SVGGeometryElementBase::AfterSetAttr(aNamespaceID, aName,
-                                              aValue, aOldValue,
-                                              aSubjectPrincipal,
-                                              aNotify);
+                                              aValue, aOldValue, aNotify);
 }
 
 bool
-SVGGeometryElement::AttributeDefinesGeometry(const nsAtom *aName)
+SVGGeometryElement::AttributeDefinesGeometry(const nsIAtom *aName)
 {
   if (aName == nsGkAtoms::pathLength) {
     return true;

@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <cstdio>
-#include <cstring>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -32,13 +31,6 @@
 
 #endif
 
-// Path of the minidump to be analyzed.
-static string gMinidumpPath;
-
-// When set to true print out the full minidump analysis, otherwise only
-// include the crashing thread in the output.
-static bool gFullMinidump = false;
-
 namespace CrashReporter {
 
 using std::ios;
@@ -63,39 +55,6 @@ using google_breakpad::ProcessState;
 using google_breakpad::StackFrame;
 
 #ifdef XP_WIN
-
-#if !defined(_MSC_VER)
-static string WideToMBCP(const wstring& wide,
-                         unsigned int cp,
-                         bool* success = nullptr)
-{
-  char* buffer = nullptr;
-  int buffer_size = WideCharToMultiByte(cp, 0, wide.c_str(),
-                                        -1, nullptr, 0, nullptr, nullptr);
-  if(buffer_size == 0) {
-    if (success)
-      *success = false;
-    return "";
-  }
-
-  buffer = new char[buffer_size];
-  if(buffer == nullptr) {
-    if (success)
-      *success = false;
-    return "";
-  }
-
-  WideCharToMultiByte(cp, 0, wide.c_str(),
-                      -1, buffer, buffer_size, nullptr, nullptr);
-  string mb = buffer;
-  delete [] buffer;
-
-  if (success)
-    *success = true;
-
-  return mb;
-}
-#endif /* !defined(_MSC_VER) */
 
 static wstring UTF8ToWide(const string& aUtf8Str, bool *aSuccess = nullptr)
 {
@@ -314,10 +273,7 @@ ConvertProcessStateToJSON(const ProcessState& aProcessState, Json::Value& aRoot)
     crashInfo["address"] = ToHex(aProcessState.crash_address());
 
     if (requestingThread != -1) {
-      // Record the crashing thread index only if this is a full minidump
-      // and all threads' stacks are present, otherwise only the crashing
-      // thread stack is written out and this field is set to 0.
-      crashInfo["crashing_thread"] = gFullMinidump ? requestingThread : 0;
+      crashInfo["crashing_thread"] = requestingThread;
     }
   } else {
     crashInfo["type"] = Json::Value(Json::nullValue);
@@ -345,25 +301,14 @@ ConvertProcessStateToJSON(const ProcessState& aProcessState, Json::Value& aRoot)
   Json::Value threads(Json::arrayValue);
   int threadCount = aProcessState.threads()->size();
 
-  if (!gFullMinidump && (requestingThread != -1)) {
-    // Only add the crashing thread
+  for (int threadIndex = 0; threadIndex < threadCount; ++threadIndex) {
     Json::Value thread;
     Json::Value stack(Json::arrayValue);
-    const CallStack* rawStack = aProcessState.threads()->at(requestingThread);
+    const CallStack* rawStack = aProcessState.threads()->at(threadIndex);
 
     ConvertStackToJSON(aProcessState, orderedModules, rawStack, stack);
     thread["frames"] = stack;
     threads.append(thread);
-   } else {
-    for (int threadIndex = 0; threadIndex < threadCount; ++threadIndex) {
-      Json::Value thread;
-      Json::Value stack(Json::arrayValue);
-      const CallStack* rawStack = aProcessState.threads()->at(threadIndex);
-
-      ConvertStackToJSON(aProcessState, orderedModules, rawStack, stack);
-      thread["frames"] = stack;
-      threads.append(thread);
-    }
   }
 
   aRoot["threads"] = threads;
@@ -465,36 +410,27 @@ UpdateExtraDataFile(const string &aDumpPath, const Json::Value& aRoot)
 
 using namespace CrashReporter;
 
-static void
-ParseArguments(int argc, char** argv) {
-  if (argc <= 1) {
-    exit(EXIT_FAILURE);
-  }
-
-  for (int i = 1; i < argc - 1; i++) {
-    if (strcmp(argv[i], "--full") == 0) {
-      gFullMinidump = true;
-    } else {
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  gMinidumpPath = argv[argc - 1];
-}
-
 int main(int argc, char** argv)
 {
-  ParseArguments(argc, argv);
+  string dumpPath;
 
-  if (!FileExists(gMinidumpPath)) {
-    // The dump file does not exist
+  if (argc > 1) {
+    dumpPath = argv[1];
+  }
+
+  if (dumpPath.empty()) {
     exit(EXIT_FAILURE);
+  }
+
+  if (!FileExists(dumpPath)) {
+    // The dump file does not exist
+    return 1;
   }
 
   // Try processing the minidump
   Json::Value root;
-  if (ProcessMinidump(root, gMinidumpPath)) {
-    UpdateExtraDataFile(gMinidumpPath, root);
+  if (ProcessMinidump(root, dumpPath)) {
+    UpdateExtraDataFile(dumpPath, root);
   }
 
   exit(EXIT_SUCCESS);

@@ -63,7 +63,7 @@ var AboutBlockedSiteListener = {
     anchorEl.setAttribute("href", advisoryUrl);
     anchorEl.textContent = advisoryLinkText;
   },
-};
+}
 AboutBlockedSiteListener.init();
 
 // This is copied from desktop's tab-content.js. See bug 1153485 about sharing this code somehow.
@@ -166,7 +166,7 @@ var AboutReaderListener = {
     } else if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader ||
         !(content.document instanceof content.HTMLDocument) ||
         content.document.mozSyntheticDocument) {
-
+      return;
     } else {
         this.scheduleReadabilityCheckPostPaint(forceNonArticle);
     }

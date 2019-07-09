@@ -15,7 +15,8 @@
           src="../attributes.js"></script>
 
   <script type="application/javascript">
-    function doTests() {
+    function doTests()
+    {
       // landmark tests section
       testRole("frm", ROLE_FORM);
 
@@ -32,9 +33,9 @@
       // Check that landmark elements get accessibles with styled overflow.
       testRole("section_overflow", ROLE_SECTION);
       testRole("nav_overflow", ROLE_SECTION);
-      testRole("header_overflow", ROLE_SECTION);
+      testRole("header_overflow", ROLE_HEADER);
       testRole("aside_overflow", ROLE_NOTE);
-      testRole("footer_overflow", ROLE_SECTION);
+      testRole("footer_overflow", ROLE_FOOTER);
       testRole("article_overflow", ROLE_ARTICLE);
 
       // test html:div

@@ -8,19 +8,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-
-use std::char;
-use super::UnicodeNormalization;
-use super::char::is_combining_mark;
-
+use UnicodeNormalization;
 
 #[test]
 fn test_nfd() {
     macro_rules! t {
         ($input: expr, $expected: expr) => {
-            assert_eq!($input.nfd().to_string(), $expected);
-            // A dummy iterator that is not std::str::Chars directly;
-            // note that `id_func` is used to ensure `Clone` implementation
+            assert_eq!($input.nfd().collect::<String>(), $expected);
+            // A dummy iterator that is not std::str::Chars directly:
             assert_eq!($input.chars().map(|c| c).nfd().collect::<String>(), $expected);
         }
     }
@@ -40,7 +35,7 @@ fn test_nfd() {
 fn test_nfkd() {
     macro_rules! t {
         ($input: expr, $expected: expr) => {
-            assert_eq!($input.nfkd().to_string(), $expected);
+            assert_eq!($input.nfkd().collect::<String>(), $expected);
         }
     }
     t!("abc", "abc");
@@ -59,7 +54,7 @@ fn test_nfkd() {
 fn test_nfc() {
     macro_rules! t {
         ($input: expr, $expected: expr) => {
-            assert_eq!($input.nfc().to_string(), $expected);
+            assert_eq!($input.nfc().collect::<String>(), $expected);
         }
     }
     t!("abc", "abc");
@@ -79,7 +74,7 @@ fn test_nfc() {
 fn test_nfkc() {
     macro_rules! t {
         ($input: expr, $expected: expr) => {
-            assert_eq!($input.nfkc().to_string(), $expected);
+            assert_eq!($input.nfkc().collect::<String>(), $expected);
         }
     }
     t!("abc", "abc");
@@ -157,25 +152,4 @@ fn test_official() {
             assert_eq!(s5, &r5[..]);
         }
     }
-}
-
-
-
-#[test]
-fn test_is_combining_mark_ascii() {
-    for cp in 0..0x7f {
-        assert!(!is_combining_mark(char::from_u32(cp).unwrap()));
-    }
-}
-
-#[test]
-fn test_is_combining_mark_misc() {
-    // https://github.com/unicode-rs/unicode-normalization/issues/16
-    // U+11C3A BHAIKSUKI VOWEL SIGN O
-    // Category: Mark, Nonspacing [Mn]
-    assert!(is_combining_mark('\u{11C3A}'));
-
-    // U+11C3F BHAIKSUKI SIGN VIRAMA
-    // Category: Mark, Nonspacing [Mn]
-    assert!(is_combining_mark('\u{11C3F}'));
 }

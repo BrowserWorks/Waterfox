@@ -43,22 +43,19 @@ info: |
 
 var callCount = 0;
 function f({a, b, ...rest}) {
+  assert.sameValue(rest.x, 1);
+  assert.sameValue(rest.y, 2);
   assert.sameValue(rest.a, undefined);
   assert.sameValue(rest.b, undefined);
 
-  verifyProperty(rest, "x", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 1
-  });
+  verifyEnumerable(rest, "x");
+  verifyWritable(rest, "x");
+  verifyConfigurable(rest, "x");
 
-  verifyProperty(rest, "y", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 2
-  });
+  verifyEnumerable(rest, "y");
+  verifyWritable(rest, "y");
+  verifyConfigurable(rest, "y");
+
   callCount = callCount + 1;
 };
 f({x: 1, y: 2, a: 5, b: 3});

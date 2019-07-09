@@ -849,15 +849,6 @@ nsCocoaWindow::Show(bool bState)
       }
     }
     else if (mWindowType == eWindowType_popup) {
-      // If a popup window is shown after being hidden, it needs to be "reset"
-      // for it to receive any mouse events aside from mouse-moved events
-      // (because it was removed from the "window cache" when it was hidden
-      // -- see below).  Setting the window number to -1 and then back to its
-      // original value seems to accomplish this.  The idea was "borrowed"
-      // from the Java Embedding Plugin.
-      NSInteger windowNumber = [mWindow windowNumber];
-      [mWindow _setWindowNumber:-1];
-      [mWindow _setWindowNumber:windowNumber];
       // For reasons that aren't yet clear, calls to [NSWindow orderFront:] or
       // [NSWindow makeKeyAndOrderFront:] can sometimes trigger "Error (1000)
       // creating CGSWindow", which in turn triggers an internal inconsistency
@@ -885,11 +876,9 @@ nsCocoaWindow::Show(bool bState)
       // appear above the parent and move when the parent does. Setting this
       // needs to happen after the _setWindowNumber calls above, otherwise the
       // window doesn't focus properly.
-      if (nativeParentWindow && mPopupLevel == ePopupLevelParent) {
+      if (nativeParentWindow && mPopupLevel == ePopupLevelParent)
         [nativeParentWindow addChildWindow:mWindow
                             ordered:NSWindowAbove];
-        [mWindow setLevel:NSPopUpMenuWindowLevel];
-      }
     }
     else {
       NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
@@ -993,17 +982,6 @@ nsCocoaWindow::Show(bool bState)
         [nativeParentWindow removeChildWindow:mWindow];
 
       [mWindow orderOut:nil];
-      // Unless it's explicitly removed from NSApp's "window cache", a popup
-      // window will keep receiving mouse-moved events even after it's been
-      // "ordered out" (instead of the browser window that was underneath it,
-      // until you click on that window).  This is bmo bug 378645, but it's
-      // surely an Apple bug.  The "window cache" is an undocumented subsystem,
-      // all of whose methods are included in the NSWindowCache category of
-      // the NSApplication class (in header files generated using class-dump).
-      // This workaround was "borrowed" from the Java Embedding Plugin (which
-      // uses it for a different purpose).
-      if (mWindowType == eWindowType_popup)
-        [NSApp _removeWindowFromCache:mWindow];
 
       // If our popup window is a non-native context menu, tell the OS (and
       // other programs) that a menu has closed.
@@ -1377,7 +1355,6 @@ nsCocoaWindow::HideWindowChrome(bool aShouldHide)
   enumerator = [childWindows objectEnumerator];
   while ((child = [enumerator nextObject])) {
     [mWindow addChildWindow:child ordered:NSWindowAbove];
-    [mWindow setLevel:NSPopUpMenuWindowLevel];
   }
 
   // Show the new window.
@@ -1492,13 +1469,6 @@ nsCocoaWindow::PerformFullscreenTransition(FullscreenTransitionStage aStage,
   [mFullscreenTransitionAnimation setDelegate:delegate];
   [mFullscreenTransitionAnimation setDuration:aDuration / 1000.0];
   [mFullscreenTransitionAnimation startAnimation];
-}
-
-void nsCocoaWindow::WillEnterFullScreen(bool aFullScreen)
-{
-  if (mWidgetListener) {
-    mWidgetListener->FullscreenWillChange(aFullScreen);
-  }
 }
 
 void nsCocoaWindow::EnteredFullScreen(bool aFullScreen, bool aNativeMode)
@@ -2388,13 +2358,7 @@ nsCocoaWindow::SetDrawsTitle(bool aDrawTitle)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  if (![mWindow drawsContentsIntoWindowFrame]) {
-    // If we don't draw into the window frame, we always want to display window
-    // titles.
-    [mWindow setWantsTitleDrawn:YES];
-  } else {
-    [mWindow setWantsTitleDrawn:aDrawTitle];
-  }
+  [mWindow setWantsTitleDrawn:aDrawTitle];
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -2652,15 +2616,6 @@ nsCocoaWindow::GetEditCommands(NativeKeyBindingsType aType,
   mGeckoWindow->ReportMoveEvent();
 }
 
-- (void)windowWillEnterFullScreen:(NSNotification *)notification
-{
-  if (!mGeckoWindow) {
-    return;
-  }
-
-  mGeckoWindow->WillEnterFullScreen(true);
-}
-
 // Lion's full screen mode will bypass our internal fullscreen tracking, so
 // we need to catch it when we transition and call our own methods, which in
 // turn will fire "fullscreen" events.
@@ -2694,15 +2649,6 @@ nsCocoaWindow::GetEditCommands(NativeKeyBindingsType aType,
   if ([titlebarContainerView respondsToSelector:@selector(setTransparent:)]) {
     [titlebarContainerView setTransparent:NO];
   }
-}
-
-- (void)windowWillExitFullScreen:(NSNotification *)notification
-{
-  if (!mGeckoWindow) {
-    return;
-  }
-
-  mGeckoWindow->WillEnterFullScreen(false);
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification

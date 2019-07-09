@@ -49,16 +49,15 @@ public:
     mSelectedChanged = aValue;
   }
 
-  virtual nsChangeHint GetAttributeChangeHint(const nsAtom* aAttribute,
+  virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
 
-  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   void SetSelectedInternal(bool aValue, bool aNotify);

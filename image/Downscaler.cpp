@@ -79,7 +79,7 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
 
   mFrameRect = aFrameRect.valueOr(nsIntRect(nsIntPoint(), aOriginalSize));
   MOZ_ASSERT(mFrameRect.x >= 0 && mFrameRect.y >= 0 &&
-             mFrameRect.Width() >= 0 && mFrameRect.Height() >= 0,
+             mFrameRect.width >= 0 && mFrameRect.height >= 0,
              "Frame rect must have non-negative components");
   MOZ_ASSERT(nsIntRect(0, 0, aOriginalSize.width, aOriginalSize.height)
                .Contains(mFrameRect),
@@ -197,13 +197,14 @@ Downscaler::CommitRow()
     int32_t inLineToRead = filterOffset + mLinesInBuffer;
     MOZ_ASSERT(mCurrentInLine <= inLineToRead, "Reading past end of input");
     if (mCurrentInLine == inLineToRead) {
+      MOZ_RELEASE_ASSERT(mLinesInBuffer < mWindowCapacity, "Need more rows than capacity!");
       mXFilter.ConvolveHorizontally(mRowBuffer.get(), mWindow[mLinesInBuffer++], mHasAlpha);
     }
 
     MOZ_ASSERT(mCurrentOutLine < mTargetSize.height,
                "Writing past end of output");
 
-    while (mLinesInBuffer == filterLength) {
+    while (mLinesInBuffer >= filterLength) {
       DownscaleInputLine();
 
       if (mCurrentOutLine == mTargetSize.height) {
@@ -219,7 +220,7 @@ Downscaler::CommitRow()
 
   // If we're at the end of the part of the original image that has data, commit
   // rows to shift us to the end.
-  if (mCurrentInLine == (mFrameRect.y + mFrameRect.Height())) {
+  if (mCurrentInLine == (mFrameRect.y + mFrameRect.height)) {
     SkipToRow(mOriginalSize.height - 1);
   }
 }
@@ -299,9 +300,14 @@ Downscaler::DownscaleInputLine()
 
   // Shift the buffer. We're just moving pointers here, so this is cheap.
   mLinesInBuffer -= diff;
-  mLinesInBuffer = max(mLinesInBuffer, 0);
-  for (int32_t i = 0; i < mLinesInBuffer; ++i) {
-    swap(mWindow[i], mWindow[filterLength - mLinesInBuffer + i]);
+  mLinesInBuffer = min(max(mLinesInBuffer, 0), mWindowCapacity);
+
+  // If we already have enough rows to satisfy the filter, there is no need
+  // to swap as we won't be writing more before the next convolution.
+  if (filterLength > mLinesInBuffer) {
+    for (int32_t i = 0; i < mLinesInBuffer; ++i) {
+      swap(mWindow[i], mWindow[filterLength - mLinesInBuffer + i]);
+    }
   }
 }
 

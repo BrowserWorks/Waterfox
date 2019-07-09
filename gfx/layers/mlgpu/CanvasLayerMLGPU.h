@@ -32,6 +32,10 @@ protected:
   ~CanvasLayerMLGPU() override;
 
 public:
+  void Initialize(const Data& aData) override {
+    MOZ_CRASH("Incompatibe surface type");
+  }
+
   Layer* GetLayer() override;
   void Disconnect() override;
 
@@ -39,16 +43,11 @@ public:
   CanvasLayerMLGPU* AsCanvasLayerMLGPU() override { return this; }
   gfx::SamplingFilter GetSamplingFilter() override;
   void ClearCachedResources() override;
-  void SetRenderRegion(LayerIntRegion&& aRegion) override;
+  void SetRegionToRender(LayerIntRegion&& aRegion) override;
 
   MOZ_LAYER_DECL_NAME("CanvasLayerMLGPU", TYPE_CANVAS)
 
 protected:
-  CanvasRenderer* CreateCanvasRendererInternal() override {
-    MOZ_CRASH("Incompatible surface type");
-    return nullptr;
-  }
-
   void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
   void CleanupResources();
 };

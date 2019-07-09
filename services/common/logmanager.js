@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict;";
+"use strict;"
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
@@ -127,7 +127,7 @@ FlushableStorageAppender.prototype = {
     }
     log.trace("finished copy to", fullOutputFileName);
   },
-};
+}
 
 // The public LogManager object.
 function LogManager(prefRoot, logNames, logFilePrefix) {
@@ -174,13 +174,13 @@ LogManager.prototype = {
           }
         }
         appender.level = level;
-      };
+      }
       this._prefs.observe(prefName, observer, this);
       this._prefObservers.push([prefName, observer]);
       // and call the observer now with the current pref value.
       observer(this._prefs.get(prefName));
       return observer;
-    };
+    }
 
     this._observeConsolePref = setupAppender(consoleAppender, "log.appender.console", Log.Level.Fatal, true);
     this._observeDumpPref = setupAppender(dumpAppender, "log.appender.dump", Log.Level.Error, true);
@@ -266,18 +266,19 @@ LogManager.prototype = {
       // logs are grouped in about:sync-log.
       let filename = reasonPrefix + "-" + this.logFilePrefix + "-" + Date.now() + ".txt";
       await this._fileAppender.flushToFile(this._logFileSubDirectoryEntries, filename, this._log);
+
       // It's not completely clear to markh why we only do log cleanups
       // for errors, but for now the Sync semantics have been copied...
       // (one theory is that only cleaning up on error makes it less
       // likely old error logs would be removed, but that's not true if
       // there are occasional errors - let's address this later!)
       if (reason == this.ERROR_LOG_WRITTEN && !this._cleaningUpFileLogs) {
-        this._log.trace("Running cleanup.");
-        try {
-          await this.cleanupLogs();
-        } catch (err) {
+        this._log.trace("Scheduling cleanup.");
+        // Note we don't return/await or otherwise wait on this promise - it
+        // continues in the background
+        this.cleanupLogs().catch(err => {
           this._log.error("Failed to cleanup logs", err);
-        }
+        });
       }
       return reason;
     } catch (ex) {
@@ -320,16 +321,10 @@ LogManager.prototype = {
                         + entry.name, ex);
       }
     });
-    // Wait for this to close if we need to (but it might fail if OS.File has
-    // shut down)
-    try {
-      await iterator.close();
-    } catch (e) {
-      this._log.warn("Failed to close directory iterator", e);
-    }
+    iterator.close();
     this._cleaningUpFileLogs = false;
     this._log.debug("Done deleting files.");
     // This notification is used only for tests.
     Services.obs.notifyObservers(null, "services-tests:common:log-manager:cleanup-logs");
   },
-};
+}

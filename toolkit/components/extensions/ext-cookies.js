@@ -3,6 +3,8 @@
 // The ext-* files are imported into the same scopes.
 /* import-globals-from ext-toolkit.js */
 
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource://gre/modules/ContextualIdentityService.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 
@@ -172,15 +174,15 @@ const query = function* (detailsIn, props, context) {
 
   // We can use getCookiesFromHost for faster searching.
   let enumerator;
-  let url;
+  let uri;
   let originAttributes = {
     userContextId,
     privateBrowsingId: isPrivate ? 1 : 0,
   };
   if ("url" in details) {
     try {
-      url = new URL(details.url);
-      enumerator = Services.cookies.getCookiesFromHost(url.host, originAttributes);
+      uri = Services.io.newURI(details.url).QueryInterface(Ci.nsIURL);
+      enumerator = Services.cookies.getCookiesFromHost(uri.host, originAttributes);
     } catch (ex) {
       // This often happens for about: URLs
       return;
@@ -211,20 +213,21 @@ const query = function* (detailsIn, props, context) {
 
       // URL path is a substring of the cookie path, so it matches if, and
       // only if, the next character is a path delimiter.
-      return path[cookiePath.length] === "/";
+      let pathDelimiters = ["/", "?", "#", ";"];
+      return pathDelimiters.includes(path[cookiePath.length]);
     }
 
     // "Restricts the retrieved cookies to those that would match the given URL."
-    if (url) {
-      if (!domainMatches(url.host)) {
+    if (uri) {
+      if (!domainMatches(uri.host)) {
         return false;
       }
 
-      if (cookie.isSecure && url.protocol != "https:") {
+      if (cookie.isSecure && uri.scheme != "https") {
         return false;
       }
 
-      if (!pathMatches(url.pathname)) {
+      if (!pathMatches(uri.path)) {
         return false;
       }
     }
@@ -259,7 +262,8 @@ const query = function* (detailsIn, props, context) {
     return true;
   }
 
-  for (const cookie of XPCOMUtils.IterSimpleEnumerator(enumerator, Ci.nsICookie2)) {
+  while (enumerator.hasMoreElements()) {
+    let cookie = enumerator.getNext().QueryInterface(Ci.nsICookie2);
     if (matches(cookie)) {
       yield {cookie, isPrivate, storeId};
     }
@@ -289,7 +293,7 @@ this.cookies = class extends ExtensionAPI {
         },
 
         set: function(details) {
-          let uri = Services.io.newURI(details.url);
+          let uri = Services.io.newURI(details.url).QueryInterface(Ci.nsIURL);
 
           let path;
           if (details.path !== null) {
@@ -299,7 +303,7 @@ this.cookies = class extends ExtensionAPI {
             // Set-Cookie header. In the case of an omitted path, the cookie
             // service uses the directory path of the requesting URL, ignoring
             // any filename or query parameters.
-            path = uri.QueryInterface(Ci.nsIURL).directory;
+            path = uri.directory;
           }
 
           let name = details.name !== null ? details.name : "";

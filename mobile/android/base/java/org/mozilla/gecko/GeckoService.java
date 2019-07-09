@@ -89,6 +89,7 @@ public class GeckoService extends Service {
 
     @Override // Service
     public void onCreate() {
+        GeckoAppShell.ensureCrashHandling();
         GeckoThread.onResume();
         super.onCreate();
 

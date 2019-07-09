@@ -1,14 +1,5 @@
-// file: promiseHelper.js
-// Copyright (C) 2017 Ecma International.  All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
-/*---
-description: |
-    Check that an array contains a numeric sequence starting at 1
-    and incrementing by 1 for each entry in the array. Used by
-    Promise tests to assert the order of execution in deep Promise
-    resolution pipelines.
----*/
-
+// file: PromiseHelper.js
+//-----------------------------------------------------------------------------
 function checkSequence(arr, message) {
   arr.forEach(function(e, i) {
     if (e !== (i+1)) {
@@ -16,6 +7,4 @@ function checkSequence(arr, message) {
              " '" + arr.join(',') + "'");
     }
   });
-
-  return true;
 }

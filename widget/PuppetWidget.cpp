@@ -28,7 +28,6 @@
 #include "nsIWidgetListener.h"
 #include "imgIContainer.h"
 #include "nsView.h"
-#include "nsPrintfCString.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -544,7 +543,7 @@ PuppetWidget::ClearNativeTouchSequence(nsIObserver* aObserver)
   mTabChild->SendClearNativeTouchSequence(notifier.SaveObserver());
   return NS_OK;
 }
-
+ 
 void
 PuppetWidget::SetConfirmedTargetAPZC(
                 uint64_t aInputBlockId,
@@ -596,19 +595,31 @@ PuppetWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
       return mLayerManager;
     }
 
-    // If we know for sure that the parent side of this TabChild is not
-    // connected to the compositor, we don't want to use a "remote" layer
-    // manager like WebRender or Client. Instead we use a Basic one which
-    // can do drawing in this process.
-    MOZ_ASSERT(!mTabChild || mTabChild->IsLayersConnected() != Some(true));
-    mLayerManager = new BasicLayerManager(this);
+    if (mTabChild && !mTabChild->IsLayersConnected()) {
+      // If we know for sure that the parent side of this TabChild is not
+      // connected to the compositor, we don't want to use a "remote" layer
+      // manager like WebRender or Client. Instead we use a Basic one which
+      // can do drawing in this process.
+      mLayerManager = new BasicLayerManager(this);
+    } else if (gfxVars::UseWebRender()) {
+      MOZ_ASSERT(!aShadowManager);
+      mLayerManager = new WebRenderLayerManager(this);
+    } else {
+      mLayerManager = new ClientLayerManager(this);
+    }
+  }
+
+  // Attach a shadow forwarder if none exists.
+  ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder();
+  if (lf && !lf->HasShadowManager() && aShadowManager) {
+    lf->SetShadowManager(aShadowManager);
   }
 
   return mLayerManager;
 }
 
 bool
-PuppetWidget::CreateRemoteLayerManager(const std::function<bool(LayerManager*)>& aInitializeFunc)
+PuppetWidget::RecreateLayerManager(const std::function<bool(LayerManager*)>& aInitializeFunc)
 {
   RefPtr<LayerManager> lm;
   MOZ_ASSERT(mTabChild);
@@ -709,6 +720,15 @@ PuppetWidget::DefaultProcOfPluginEvent(const WidgetPluginEvent& aEvent)
   mTabChild->SendDefaultProcOfPluginEvent(aEvent);
 }
 
+// When this widget caches input context and currently managed by
+// IMEStateManager, the cache is valid.
+bool
+PuppetWidget::HaveValidInputContextCache() const
+{
+  return (mInputContext.mIMEState.mEnabled != IMEState::UNKNOWN &&
+          IMEStateManager::GetWidgetForActiveInputContext() == this);
+}
+
 void
 PuppetWidget::SetInputContext(const InputContext& aContext,
                               const InputContextAction& aAction)
@@ -727,7 +747,6 @@ PuppetWidget::SetInputContext(const InputContext& aContext,
     aContext.mHTMLInputType,
     aContext.mHTMLInputInputmode,
     aContext.mActionHint,
-    aContext.mInPrivateBrowsing,
     static_cast<int32_t>(aAction.mCause),
     static_cast<int32_t>(aAction.mFocusChange));
 }
@@ -738,11 +757,9 @@ PuppetWidget::GetInputContext()
   // XXX Currently, we don't support retrieving IME open state from child
   //     process.
 
-  // When this widget caches input context and currently managed by
-  // IMEStateManager, the cache is valid.  Only in this case, we can
-  // avoid to use synchronous IPC.
-  if (mInputContext.mIMEState.mEnabled != IMEState::UNKNOWN &&
-      IMEStateManager::GetWidgetForActiveInputContext() == this) {
+  // If the cache of input context is valid, we can avoid to use synchronous
+  // IPC.
+  if (HaveValidInputContextCache()) {
     return mInputContext;
   }
 
@@ -794,19 +811,11 @@ PuppetWidget::NotifyIMEOfFocusChange(const IMENotification& aIMENotification)
     mContentCache.Clear();
   }
 
-  mIMENotificationRequestsOfParent =
-  IMENotificationRequests(IMENotificationRequests::NOTIFY_ALL);
-  RefPtr<PuppetWidget> self = this;
-  mTabChild->SendNotifyIMEFocus(mContentCache, aIMENotification)->Then(
-    mTabChild->TabGroup()->EventTargetFor(TaskCategory::UI),
-    __func__,
-    [self] (IMENotificationRequests aRequests) {
-      self->mIMENotificationRequestsOfParent = aRequests;
-    },
-    [self] (mozilla::ipc::PromiseRejectReason aReason) {
-      NS_WARNING("SendNotifyIMEFocus got rejected.");
-    });
-
+  mIMENotificationRequestsOfParent = IMENotificationRequests();
+  if (!mTabChild->SendNotifyIMEFocus(mContentCache, aIMENotification,
+                                     &mIMENotificationRequestsOfParent)) {
+    return NS_ERROR_FAILURE;
+  }
   return NS_OK;
 }
 
@@ -877,7 +886,7 @@ PuppetWidget::NotifyIMEOfSelectionChange(
   // Note that selection change must be notified after text change if it occurs.
   // Therefore, we don't need to query text content again here.
   mContentCache.SetSelection(
-    this,
+    this, 
     aIMENotification.mSelectionChangeData.mOffset,
     aIMENotification.mSelectionChangeData.Length(),
     aIMENotification.mSelectionChangeData.mReversed,
@@ -1000,7 +1009,7 @@ PuppetWidget::SetCursor(imgIContainer* aCursor,
     return NS_ERROR_FAILURE;
   }
 
-  mCursor = eCursorInvalid;
+  mCursor = nsCursor(-1);
   mCustomCursor = aCursor;
   mCursorHotspotX = aHotspotX;
   mCursorHotspotY = aHotspotY;
@@ -1041,9 +1050,7 @@ PuppetWidget::Paint()
 #endif
 
     if (mLayerManager->GetBackendType() == mozilla::layers::LayersBackend::LAYERS_CLIENT ||
-        mLayerManager->GetBackendType() == mozilla::layers::LayersBackend::LAYERS_WR ||
-        (mozilla::layers::LayersBackend::LAYERS_BASIC == mLayerManager->GetBackendType() &&
-         mTabChild && mTabChild->IsLayersConnected().isSome())) {
+        mLayerManager->GetBackendType() == mozilla::layers::LayersBackend::LAYERS_WR) {
       // Do nothing, the compositor will handle drawing
       if (mTabChild) {
         mTabChild->NotifyPainted();
@@ -1366,6 +1373,25 @@ PuppetWidget::SetCandidateWindowForPlugin(
 }
 
 void
+PuppetWidget::EnableIMEForPlugin(bool aEnable)
+{
+  if (!mTabChild) {
+    return;
+  }
+
+  // If current IME state isn't plugin, we ignore this call.
+  if (NS_WARN_IF(HaveValidInputContextCache() &&
+                 mInputContext.mIMEState.mEnabled != IMEState::UNKNOWN &&
+                 mInputContext.mIMEState.mEnabled != IMEState::PLUGIN)) {
+    return;
+  }
+
+  // We don't have valid state in cache or state is plugin, so delegate to
+  // chrome process.
+  mTabChild->SendEnableIMEForPlugin(aEnable);
+}
+
+void
 PuppetWidget::ZoomToRect(const uint32_t& aPresShellId,
                          const FrameMetrics::ViewID& aViewId,
                          const CSSRect& aRect,
@@ -1403,9 +1429,23 @@ PuppetWidget::HasPendingInputEvent()
 
   mTabChild->GetIPCChannel()->PeekMessages(
     [&ret](const IPC::Message& aMsg) -> bool {
-      if (nsContentUtils::IsMessageInputEvent(aMsg)) {
-        ret = true;
-        return false; // Stop peeking.
+      if ((aMsg.type() & mozilla::dom::PBrowser::PBrowserStart)
+          == mozilla::dom::PBrowser::PBrowserStart) {
+        switch (aMsg.type()) {
+          case mozilla::dom::PBrowser::Msg_RealMouseMoveEvent__ID:
+          case mozilla::dom::PBrowser::Msg_RealMouseButtonEvent__ID:
+          case mozilla::dom::PBrowser::Msg_RealKeyEvent__ID:
+          case mozilla::dom::PBrowser::Msg_MouseWheelEvent__ID:
+          case mozilla::dom::PBrowser::Msg_RealTouchEvent__ID:
+          case mozilla::dom::PBrowser::Msg_RealTouchMoveEvent__ID:
+          case mozilla::dom::PBrowser::Msg_RealDragEvent__ID:
+          case mozilla::dom::PBrowser::Msg_UpdateDimensions__ID:
+          case mozilla::dom::PBrowser::Msg_MouseEvent__ID:
+          case mozilla::dom::PBrowser::Msg_KeyEvent__ID:
+          case mozilla::dom::PBrowser::Msg_SetDocShellIsActive__ID:
+            ret = true;
+            return false;  // Stop peeking.
+        }
       }
       return true;
     }

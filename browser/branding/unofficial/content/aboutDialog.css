@@ -2,24 +2,42 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#aboutDialogContainer {
-  background-image: url("chrome://branding/content/about-background.png");
-  background-repeat: no-repeat;
-  background-color: rgb(10,17,37);
-  color: #fff;
+#clientBox {
+  background-color: #F7F7F7;
+  color: #222222;
 }
 
-.text-link {
-  color: #fff !important;
-  text-decoration: underline;
+#leftBox {
+  background-image: url("chrome://branding/content/about-logo.png");
+  background-repeat: no-repeat;
+  background-size: 192px auto;
+  /* min-width and min-height create room for the logo */
+  min-width: 210px;
+  min-height: 210px;
+  margin-top: 20px;
+  margin-inline-start: 30px;
+}
+
+
+@media (min-resolution: 2dppx) {
+  #leftBox {
+    background-image: url("chrome://branding/content/about-logo@2x.png");
+  }
 }
 
 #rightBox {
-  /* this margin prevents text from overlapping the planet image */
-  margin-left: 280px;
-  margin-right: 20px;
+  margin-left: 30px;
+  margin-right: 30px;
 }
 
-#bottomBox {
-  background-color: rgba(0,0,0,.7);
+#updateDeck > hbox > label:not([class="text-link"]) {
+  color: #909090;
+}
+
+#trademark {
+  font-size: xx-small;
+  text-align: center;
+  color: #999999;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }

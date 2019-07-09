@@ -7,12 +7,14 @@
 EXPORTS += [
     'HLSDecoder.h',
     'HLSDemuxer.h',
+    'HLSResource.h',
     'HLSUtils.h',
 ]
 
 UNIFIED_SOURCES += [
     'HLSDecoder.cpp',
     'HLSDemuxer.cpp',
+    'HLSResource.cpp',
     'HLSUtils.cpp',
 ]
 

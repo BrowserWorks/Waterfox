@@ -84,7 +84,7 @@ public:
    *                           pointed by
    */
   RelatedAccIterator(DocAccessible* aDocument, nsIContent* aDependentContent,
-                     nsAtom* aRelAttr);
+                     nsIAtom* aRelAttr);
 
   virtual ~RelatedAccIterator() { }
 
@@ -99,7 +99,7 @@ private:
   RelatedAccIterator& operator = (const RelatedAccIterator&);
 
   DocAccessible* mDocument;
-  nsAtom* mRelAttr;
+  nsIAtom* mRelAttr;
   DocAccessible::AttrRelProviderArray* mProviders;
   nsIContent* mBindingParent;
   uint32_t mIndex;
@@ -219,7 +219,7 @@ class IDRefsIterator : public AccIterable
 {
 public:
   IDRefsIterator(DocAccessible* aDoc, nsIContent* aContent,
-                 nsAtom* aIDRefsAttr);
+                 nsIAtom* aIDRefsAttr);
   virtual ~IDRefsIterator() { }
 
   /**

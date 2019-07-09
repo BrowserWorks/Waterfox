@@ -145,14 +145,19 @@
 <!ENTITY options.debugger.label            "Debugger">
 
 <!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
-   - label for the checkbox that toggles source maps in all tools -->
+   - label for the checkbox that toggles source maps in the Debugger -->
 <!ENTITY options.sourceMaps.label      "Enable Source Maps">
-<!ENTITY options.sourceMaps.tooltip1   "If you enable this option sources will be mapped in the tools.">
+<!ENTITY options.sourceMaps.tooltip    "If you enable this option sources will be mapped in the Debugger and Console.">
 
 <!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
   -  heading of the group of Style Editor preferences in the options
   -  panel. -->
 <!ENTITY options.styleeditor.label            "Style Editor">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Show original sources">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Show original sources (e.g. Sass files) in the Style Editor and Inspector">
 
 <!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
    - label for the checkbox that toggles autocompletion of css in the Style Editor -->
@@ -173,6 +178,18 @@
    - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
 <!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
 <!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Common Preferences">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Enable persistent logs">
+<!ENTITY options.enablePersistentLogs.tooltip  "If you enable this option the Web Console and Network Monitor will not clear the output each time you navigate to a new page">
 
 <!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
   -  label for the checkbox that toggles the display of the platform data in the,

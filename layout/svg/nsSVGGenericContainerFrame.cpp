@@ -23,7 +23,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsSVGGenericContainerFrame)
 
 nsresult
 nsSVGGenericContainerFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                             nsAtom*        aAttribute,
+                                             nsIAtom*        aAttribute,
                                              int32_t         aModType)
 {
 #ifdef DEBUG

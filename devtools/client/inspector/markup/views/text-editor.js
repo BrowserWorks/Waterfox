@@ -55,6 +55,7 @@ function TextEditor(container, node, type) {
       });
     },
     cssProperties: getCssProperties(this.markup.toolbox),
+    contextMenu: this.markup.inspector.onTextBoxContextMenu
   });
 
   this.update();
@@ -68,6 +69,8 @@ TextEditor.prototype = {
     this.elt.classList.add("editor", type);
 
     if (type === "comment") {
+      this.elt.classList.add("theme-comment");
+
       let openComment = doc.createElement("span");
       openComment.textContent = "<!--";
       this.elt.appendChild(openComment);

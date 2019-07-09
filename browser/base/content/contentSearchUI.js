@@ -246,8 +246,7 @@ ContentSearchUIController.prototype = {
     let searchText = this.input;
     let searchTerms;
     if (this._table.hidden ||
-        (aEvent.originalTarget &&
-          aEvent.originalTarget.id == "contentSearchDefaultEngineHeader") ||
+        aEvent.originalTarget.id == "contentSearchDefaultEngineHeader" ||
         aEvent instanceof KeyboardEvent) {
       searchTerms = searchText.value;
     } else {
@@ -478,8 +477,6 @@ ContentSearchUIController.prototype = {
   _onMousemove(event) {
     let idx = this._indexOfTableItem(event.target);
     if (idx >= this.numSuggestions) {
-      // Deselect any search suggestion that has been selected.
-      this.selectedIndex = -1;
       this.selectedButtonIndex = idx - this.numSuggestions;
       return;
     }

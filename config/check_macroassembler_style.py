@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# ----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
 # This script checks that SpiderMonkey MacroAssembler methods are properly
 # annotated.
 #
@@ -18,7 +18,7 @@
 # MacroAssembler-inl.h for method definitions. The result of both scans are
 # uniformized, and compared, to determine if the MacroAssembler.h header as
 # proper methods annotations.
-# ----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
 
 from __future__ import print_function
 
@@ -30,10 +30,10 @@ import sys
 from mozversioncontrol import get_repository_from_env
 
 
-architecture_independent = set(['generic'])
-all_unsupported_architectures_names = set(['mips32', 'mips64', 'mips_shared'])
-all_architecture_names = set(['x86', 'x64', 'arm', 'arm64'])
-all_shared_architecture_names = set(['x86_shared', 'arm', 'arm64'])
+architecture_independent = set([ 'generic' ])
+all_unsupported_architectures_names = set([ 'mips32', 'mips64', 'mips_shared' ])
+all_architecture_names = set([ 'x86', 'x64', 'arm', 'arm64' ])
+all_shared_architecture_names = set([ 'x86_shared', 'arm', 'arm64' ])
 
 reBeforeArg = "(?<=[(,\s])"
 reArgType = "(?P<type>[\w\s:*&]+)"
@@ -42,8 +42,7 @@ reArgDefault = "(?P<default>(?:\s=[^,)]+)?)"
 reAfterArg = "(?=[,)])"
 reMatchArg = re.compile(reBeforeArg + reArgType + reArgName + reArgDefault + reAfterArg)
 
-
-def get_normalized_signatures(signature, fileAnnot=None):
+def get_normalized_signatures(signature, fileAnnot = None):
     # Remove static
     signature = signature.replace('static', '')
     # Remove semicolon.
@@ -89,21 +88,18 @@ def get_normalized_signatures(signature, fileAnnot=None):
     inlinePrefx = ''
     if inline:
         inlinePrefx = 'inline '
-    signatures = [
-        {'arch': a, 'sig': inlinePrefx + signature}
+    signatures =  [
+        { 'arch': a, 'sig': inlinePrefx + signature }
         for a in archs
     ]
 
     return signatures
-
 
 file_suffixes = set([
     a.replace('_', '-') for a in
     all_architecture_names.union(all_shared_architecture_names)
                           .union(all_unsupported_architectures_names)
 ])
-
-
 def get_file_annotation(filename):
     origFilename = filename
     filename = filename.split('/')[-1]
@@ -128,7 +124,6 @@ def get_file_annotation(filename):
         'arch': arch.replace('-', '_')
     }
 
-
 def get_macroassembler_definitions(filename):
     try:
         fileAnnot = get_file_annotation(filename)
@@ -149,12 +144,10 @@ def get_macroassembler_definitions(filename):
                 continue
 
             line = re.sub(r'//.*', '', line)
-            if line.startswith('{') or line.strip() == "{}":
+            if line.startswith('{'):
                 if 'MacroAssembler::' in lines:
                     signatures.extend(get_normalized_signatures(lines, fileAnnot))
-                if line.strip() != "{}":  # Empty declaration, no need to declare
-                    # a new code section
-                    code_section = True
+                code_section = True
                 continue
             if line.startswith('}'):
                 code_section = False
@@ -176,7 +169,6 @@ def get_macroassembler_definitions(filename):
                 continue
 
     return signatures
-
 
 def get_macroassembler_declaration(filename):
     style_section = False
@@ -209,14 +201,12 @@ def get_macroassembler_declaration(filename):
 
     return signatures
 
-
 def append_signatures(d, sigs):
     for s in sigs:
         if s['sig'] not in d:
             d[s['sig']] = []
-        d[s['sig']].append(s['arch'])
+        d[s['sig']].append(s['arch']);
     return d
-
 
 def generate_file_content(signatures):
     output = []
@@ -245,7 +235,6 @@ def generate_file_content(signatures):
                     output.append('    is defined in %s.cpp\n' % masm)
     return output
 
-
 def check_style():
     # We read from the header file the signature of each function.
     decls = dict()      # type: dict(signature => ['x86', 'x64'])
@@ -253,20 +242,21 @@ def check_style():
     # We infer from each file the signature of each MacroAssembler function.
     defs = dict()       # type: dict(signature => ['x86', 'x64'])
 
-    with get_repository_from_env() as repo:
-        # Select the appropriate files.
-        for filename in repo.get_files_in_working_directory():
-            if not filename.startswith('js/src/jit/'):
-                continue
-            if 'MacroAssembler' not in filename:
-                continue
+    repo = get_repository_from_env()
 
-            filename = os.path.join(repo.path, filename)
+    # Select the appropriate files.
+    for filename in repo.get_files_in_working_directory():
+        if not filename.startswith('js/src/jit/'):
+            continue
+        if 'MacroAssembler' not in filename:
+            continue
 
-            if filename.endswith('MacroAssembler.h'):
-                decls = append_signatures(decls, get_macroassembler_declaration(filename))
-            else:
-                defs = append_signatures(defs, get_macroassembler_definitions(filename))
+        filename = os.path.join(repo.path, filename)
+
+        if filename.endswith('MacroAssembler.h'):
+            decls = append_signatures(decls, get_macroassembler_declaration(filename))
+        else:
+            defs = append_signatures(defs, get_macroassembler_definitions(filename))
 
     # Compare declarations and definitions output.
     difflines = difflib.unified_diff(generate_file_content(decls),
@@ -287,7 +277,7 @@ def main():
     if ok:
         print('TEST-PASS | check_macroassembler_style.py | ok')
     else:
-        print('TEST-UNEXPECTED-FAIL | check_macroassembler_style.py | actual output does not match expected output;  diff is above')  # noqa: E501
+        print('TEST-UNEXPECTED-FAIL | check_macroassembler_style.py | actual output does not match expected output;  diff is above')
 
     sys.exit(0 if ok else 1)
 

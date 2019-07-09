@@ -73,20 +73,8 @@ private:
   AnimatedValue() = delete;
 };
 
-// CompositorAnimationStorage stores the animations and animated values
-// keyed by a CompositorAnimationsId. The "animations" are a representation of
-// an entire animation over time, while the "animated values" are values sampled
-// from the animations at a particular point in time.
-//
-// There is one CompositorAnimationStorage per CompositorBridgeParent (i.e.
-// one per browser window), and the CompositorAnimationsId key is unique within
-// a particular CompositorAnimationStorage instance.
-//
-// Each layer which has animations gets a CompositorAnimationsId key, and reuses
-// that key during its lifetime. Likewise, in layers-free webrender, a display
-// item that is animated (e.g. nsDisplayTransform) gets a CompositorAnimationsId
-// key and reuses that key (it persists the key via the frame user-data
-// mechanism).
+// CompositorAnimationStorage stores the layer animations and animated value
+// after sampling based on an unique id (CompositorAnimationsId)
 class CompositorAnimationStorage final
 {
   typedef nsClassHashtable<nsUint64HashKey, AnimatedValue> AnimatedValueTable;
@@ -174,8 +162,8 @@ public:
    * Clear AnimatedValues and Animations data
    */
   void Clear();
-  void ClearById(const uint64_t& aId);
 
+  void ClearById(const uint64_t& aId);
 private:
   ~CompositorAnimationStorage() { };
 
@@ -184,16 +172,16 @@ private:
   AnimationsTable mAnimations;
 };
 
-/**
- * This utility class allows reusing code between the webrender and
- * non-webrender compositor-side implementations. It provides
- * utility functions for sampling animations at particular timestamps.
- */
 class AnimationHelper
 {
 public:
 
-  /**
+
+  /*
+   * TODO Bug 1356509 Once we decouple the compositor animations and layers
+   * in parent side, the API will be called inside SampleAnimations.
+   * Before this, we expose this API for AsyncCompositionManager.
+   *
    * Sample animations based on a given time stamp for a element(layer) with
    * its animation data.
    * Returns true if there exists compositor animation, and stores corresponding
@@ -205,16 +193,19 @@ public:
                              InfallibleTArray<AnimData>& aAnimationData,
                              StyleAnimationValue& aAnimationValue,
                              bool& aHasInEffectAnimations);
-  /**
-   * Populates AnimData stuctures into |aAnimData| and |aBaseAnimationStyle|
-   * based on |aAnimations|.
+  /*
+   * TODO Bug 1356509 Once we decouple the compositor animations and layers
+   * in parent side, the API will be called inside SampleAnimations.
+   * Before this, we expose this API for AsyncCompositionManager.
+   *
+   * Populates AnimData stuctures into |aAnimData| based on |aAnimations|
    */
   static void
   SetAnimations(AnimationArray& aAnimations,
                 InfallibleTArray<AnimData>& aAnimData,
                 StyleAnimationValue& aBaseAnimationStyle);
 
-  /**
+  /*
    * Get a unique id to represent the compositor animation between child
    * and parent side. This id will be used as a key to store animation
    * data in the CompositorAnimationStorage per compositor.
@@ -223,7 +214,7 @@ public:
    */
   static uint64_t GetNextCompositorAnimationsId();
 
-  /**
+  /*
    * Sample animation based a given time stamp |aTime| and the animation
    * data inside CompositorAnimationStorage |aStorage|. The animated values
    * after sampling will be stored in CompositorAnimationStorage as well.

@@ -7,6 +7,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if defined(MOZ_ENABLE_CONTENTACTION)
+#include <contentaction/contentaction.h>
+#include <QString>
+#endif
+
 #include "nsOSHelperAppService.h"
 #include "nsMIMEInfoUnix.h"
 #ifdef MOZ_WIDGET_GTK
@@ -16,6 +21,7 @@
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
+#include "nsXPIDLString.h"
 #include "nsIURL.h"
 #include "nsIFileStreams.h"
 #include "nsILineInputStream.h"
@@ -27,7 +33,6 @@
 #include "nsCRT.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
-#include "ContentHandlerService.h"
 #include "prenv.h"      // for PR_GetEnv()
 #include "nsAutoPtr.h"
 #include "mozilla/Preferences.h"
@@ -1128,24 +1133,25 @@ nsOSHelperAppService::GetHandlerAndDescriptionFromMailcapFile(const nsAString& a
 
 nsresult nsOSHelperAppService::OSProtocolHandlerExists(const char * aProtocolScheme, bool * aHandlerExists)
 {
-  nsresult rv = NS_OK;
+  LOG(("-- nsOSHelperAppService::OSProtocolHandlerExists for '%s'\n",
+       aProtocolScheme));
+  *aHandlerExists = false;
 
-  if (!XRE_IsContentProcess()) {
-#ifdef MOZ_WIDGET_GTK
-    // Check the GNOME registry for a protocol handler
-    *aHandlerExists = nsGNOMERegistry::HandlerExists(aProtocolScheme);
-#else
-    *aHandlerExists = false;
+#if defined(MOZ_ENABLE_CONTENTACTION)
+  // libcontentaction requires character ':' after scheme
+  ContentAction::Action action =
+    ContentAction::Action::defaultActionForScheme(QString(aProtocolScheme) + ':');
+
+  if (action.isValid())
+    *aHandlerExists = true;
 #endif
-  } else {
-    *aHandlerExists = false;
-    nsCOMPtr<nsIHandlerService> handlerSvc = do_GetService(NS_HANDLERSERVICE_CONTRACTID, &rv);
-    if (NS_SUCCEEDED(rv) && handlerSvc) {
-      rv = handlerSvc->ExistsForProtocol(nsCString(aProtocolScheme), aHandlerExists);
-    }
-  }
 
-  return rv;
+#ifdef MOZ_WIDGET_GTK
+  // Check the GNOME registry for a protocol handler
+  *aHandlerExists = nsGNOMERegistry::HandlerExists(aProtocolScheme);
+#endif
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP nsOSHelperAppService::GetApplicationDescription(const nsACString& aScheme, nsAString& _retval)

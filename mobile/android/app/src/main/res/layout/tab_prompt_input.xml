@@ -11,19 +11,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:minHeight="100dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:minHeight="100dp">
 
         <TabWidget
             android:id="@android:id/tabs"
             style="@style/TabInput.TabWidget"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"></TabWidget>
+            android:layout_height="wrap_content" >
+        </TabWidget>
 
         <FrameLayout
             android:id="@android:id/tabcontent"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"></FrameLayout>
+            android:layout_height="match_parent" >
+        </FrameLayout>
 
     </LinearLayout>
 

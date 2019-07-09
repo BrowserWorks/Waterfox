@@ -31,25 +31,24 @@ function runTest() {
 
   var test = tests.shift();
 
-  if (test.revoke) {
-    URL.revokeObjectURL(url + test.part);
-  }
+  URL.revokeObjectURL(url + test.part);
 
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url + test.part);
 
   xhr.onload = function() {
-    ok(!test.revoke, "Not-revoked URL should send()");
     is(xhr.responseText, 'hello world', 'URL: ' + url + test.part);
     runTest();
   }
 
-  xhr.onerror = function() {
-    ok(test.revoke, "Revoked URL should fail on send()");
+  try {
+    xhr.send();
+  } catch(e) {
+    ok(test.revoke, "This should fail!");
     runTest();
+    return;
   }
-
-  xhr.send();
+  ok(!test.revoke, "This should succeed!");
 }
 
 SimpleTest.waitForExplicitFinish();

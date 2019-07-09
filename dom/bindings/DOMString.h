@@ -13,7 +13,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "nsDOMString.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 namespace mozilla {
 namespace dom {
@@ -172,21 +172,14 @@ public:
     eNullNotExpected
   };
 
-  void SetOwnedAtom(nsAtom* aAtom, NullHandling aNullHandling)
+  void SetOwnedAtom(nsIAtom* aAtom, NullHandling aNullHandling)
   {
     MOZ_ASSERT(mString.isNothing(), "We already have a string?");
     MOZ_ASSERT(!mIsNull, "We're already set as null");
     MOZ_ASSERT(!mStringBuffer, "Setting stringbuffer twice?");
     MOZ_ASSERT(aAtom || aNullHandling != eNullNotExpected);
     if (aNullHandling == eNullNotExpected || aAtom) {
-      if (aAtom->IsStaticAtom()) {
-        // XXX: bug 1407858 will replace this with a direct assignment of the
-        // static atom that doesn't go via nsString.
-        AsAString().AssignLiteral(aAtom->GetUTF16String(), aAtom->GetLength());
-      } else {
-        // Dynamic atoms always have a string buffer.
-        SetStringBuffer(aAtom->GetStringBuffer(), aAtom->GetLength());
-      }
+      SetStringBuffer(aAtom->GetStringBuffer(), aAtom->GetLength());
     } else if (aNullHandling == eTreatNullAsNull) {
       SetNull();
     }

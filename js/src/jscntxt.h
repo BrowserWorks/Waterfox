@@ -33,7 +33,7 @@ class AutoCompartment;
 
 namespace jit {
 class JitContext;
-class DebugModeOSRVolatileJitFrameIter;
+class DebugModeOSRVolatileJitFrameIterator;
 } // namespace jit
 
 typedef HashSet<Shape*> ShapeSet;
@@ -71,6 +71,21 @@ struct HelperThread;
 using JobQueue = GCVector<JSObject*, 0, SystemAllocPolicy>;
 
 class AutoLockForExclusiveAccess;
+
+/*
+ * Used for engine-internal handling of async tasks, as currently
+ * enabled in the js shell and jsapi tests.
+ */
+struct InternalAsyncTasks
+{
+    explicit InternalAsyncTasks()
+      : outstanding(0),
+        finished()
+    {}
+
+    size_t outstanding;
+    Vector<JS::AsyncTask*, 0, SystemAllocPolicy> finished;
+};
 
 void ReportOverRecursed(JSContext* cx, unsigned errorNumber);
 
@@ -142,7 +157,10 @@ struct JSContext : public JS::RootingContext,
     /* Clear the pending exception (if any) due to OOM. */
     void recoverFromOutOfMemory();
 
-    void updateMallocCounter(size_t nbytes);
+    inline void updateMallocCounter(size_t nbytes) {
+        // Note: this is racy.
+        runtime()->updateMallocCounter(zone(), nbytes);
+    }
 
     void reportAllocationOverflow() {
         js::ReportAllocationOverflow(this);
@@ -297,7 +315,7 @@ struct JSContext : public JS::RootingContext,
     }
 
     friend class JS::AutoSaveExceptionState;
-    friend class js::jit::DebugModeOSRVolatileJitFrameIter;
+    friend class js::jit::DebugModeOSRVolatileJitFrameIterator;
     friend void js::ReportOverRecursed(JSContext*, unsigned errorNumber);
 
     // Returns to the embedding to allow other cooperative threads to run. We
@@ -374,17 +392,7 @@ struct JSContext : public JS::RootingContext,
     }
     static size_t offsetOfProfilingActivation() {
         return offsetof(JSContext, profilingActivation_);
-    }
-
-    static size_t offsetOfJitActivation() {
-        return offsetof(JSContext, jitActivation);
-    }
-
-#ifdef DEBUG
-    static size_t offsetOfInUnsafeCallWithABI() {
-        return offsetof(JSContext, inUnsafeCallWithABI);
-    }
-#endif
+     }
 
   private:
     /* Space for interpreter frames. */
@@ -426,8 +434,6 @@ struct JSContext : public JS::RootingContext,
 
 #ifdef DEBUG
     js::ThreadLocalData<unsigned> checkRequestDepth;
-    js::ThreadLocalData<uint32_t> inUnsafeCallWithABI;
-    js::ThreadLocalData<bool> hasAutoUnsafeCallWithABI;
 #endif
 
 #ifdef JS_SIMULATOR
@@ -614,6 +620,13 @@ struct JSContext : public JS::RootingContext,
 
     js::ThreadLocalData<uint32_t> debuggerMutations;
 
+    /*
+     * The propertyRemovals counter is incremented for every JSObject::clear,
+     * and for each JSObject::remove method call that frees a slot in the given
+     * object. See js_NativeGet and js_NativeSet in jsobj.cpp.
+     */
+    js::ThreadLocalData<uint32_t> propertyRemovals;
+
     // Cache for jit::GetPcScript().
     js::ThreadLocalData<js::jit::PcScriptCache*> ionPcScriptCache;
 
@@ -638,8 +651,7 @@ struct JSContext : public JS::RootingContext,
 
     // A stack of live iterators that need to be updated in case of debug mode
     // OSR.
-    js::ThreadLocalData<js::jit::DebugModeOSRVolatileJitFrameIter*>
-        liveVolatileJitFrameIter_;
+    js::ThreadLocalData<js::jit::DebugModeOSRVolatileJitFrameIterator*> liveVolatileJitFrameIterators_;
 
   public:
     js::ThreadLocalData<int32_t> reportGranularity;  /* see vm/Probes.h */
@@ -813,7 +825,6 @@ struct JSContext : public JS::RootingContext,
     js::ThreadLocalData<bool> interruptCallbackDisabled;
 
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interrupt_;
-    mozilla::Atomic<uint32_t, mozilla::Relaxed> interruptRegExpJit_;
 
     enum InterruptMode {
         RequestInterruptUrgent,
@@ -920,6 +931,7 @@ struct JSContext : public JS::RootingContext,
     js::ThreadLocalData<JS::PersistentRooted<js::JobQueue>*> jobQueue;
     js::ThreadLocalData<bool> drainingJobQueue;
     js::ThreadLocalData<bool> stopDrainingJobQueue;
+    js::ExclusiveData<js::InternalAsyncTasks> asyncTasks;
 
     js::ThreadLocalData<JSPromiseRejectionTrackerCallback> promiseRejectionTrackerCallback;
     js::ThreadLocalData<void*> promiseRejectionTrackerCallbackData;
@@ -1286,23 +1298,6 @@ class MOZ_RAII AutoEnterIonCompilation
     }
 
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
-// Should be used in functions called directly from JIT code (with
-// masm.callWithABI) to assert invariants in debug builds.
-class MOZ_RAII AutoUnsafeCallWithABI
-{
-#ifdef DEBUG
-    JSContext* cx_;
-    bool nested_;
-#endif
-    JS::AutoCheckCannotGC nogc;
-
-  public:
-#ifdef DEBUG
-    AutoUnsafeCallWithABI();
-    ~AutoUnsafeCallWithABI();
-#endif
 };
 
 namespace gc {

@@ -10,6 +10,8 @@ const Cr = Components.results;
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
+                                  "resource://gre/modules/Deprecated.jsm");
 
 const TOPIC_SHUTDOWN = "places-shutdown";
 
@@ -141,34 +143,43 @@ TaggingService.prototype = {
     // This also does some input validation.
     let tags = this._convertInputMixedTagsArray(aTags, true);
 
-    for (let tag of tags) {
-      if (tag.id == -1) {
-        // Tag does not exist yet, create it.
-        this._createTag(tag.name, aSource);
-      }
+    let taggingFunction = () => {
+      for (let tag of tags) {
+        if (tag.id == -1) {
+          // Tag does not exist yet, create it.
+          this._createTag(tag.name, aSource);
+        }
 
-      let itemId = this._getItemIdForTaggedURI(aURI, tag.name);
-      if (itemId == -1) {
-        // The provided URI is not yet tagged, add a tag for it.
-        // Note that bookmarks under tag containers must have null titles.
-        PlacesUtils.bookmarks.insertBookmark(
-          tag.id, aURI, PlacesUtils.bookmarks.DEFAULT_INDEX,
-          /* aTitle */ null, /* aGuid */ null, aSource
-        );
-      } else {
-        // Otherwise, bump the tag's timestamp, so that we can increment the
-        // sync change counter for all bookmarks with the URI.
-        PlacesUtils.bookmarks.setItemLastModified(itemId,
-          PlacesUtils.toPRTime(Date.now()), aSource);
-      }
+        let itemId = this._getItemIdForTaggedURI(aURI, tag.name);
+        if (itemId == -1) {
+          // The provided URI is not yet tagged, add a tag for it.
+          // Note that bookmarks under tag containers must have null titles.
+          PlacesUtils.bookmarks.insertBookmark(
+            tag.id, aURI, PlacesUtils.bookmarks.DEFAULT_INDEX,
+            /* aTitle */ null, /* aGuid */ null, aSource
+          );
+        } else {
+          // Otherwise, bump the tag's timestamp, so that we can increment the
+          // sync change counter for all bookmarks with the URI.
+          PlacesUtils.bookmarks.setItemLastModified(itemId,
+            PlacesUtils.toPRTime(Date.now()), aSource);
+        }
 
-      // Try to preserve user's tag name casing.
-      // Rename the tag container so the Places view matches the most-recent
-      // user-typed value.
-      if (PlacesUtils.bookmarks.getItemTitle(tag.id) != tag.name) {
-        // this._tagFolders is updated by the bookmarks observer.
-        PlacesUtils.bookmarks.setItemTitle(tag.id, tag.name, aSource);
+        // Try to preserve user's tag name casing.
+        // Rename the tag container so the Places view matches the most-recent
+        // user-typed value.
+        if (PlacesUtils.bookmarks.getItemTitle(tag.id) != tag.name) {
+          // this._tagFolders is updated by the bookmarks observer.
+          PlacesUtils.bookmarks.setItemTitle(tag.id, tag.name, aSource);
+        }
       }
+    };
+
+    // Use a batch only if creating more than 2 tags.
+    if (tags.length < 3) {
+      taggingFunction();
+    } else {
+      PlacesUtils.bookmarks.runInBatchMode(taggingFunction, null);
     }
   },
 
@@ -219,19 +230,28 @@ TaggingService.prototype = {
 
     let isAnyTagNotTrimmed = tags.some(tag => /^\s|\s$/.test(tag.name));
     if (isAnyTagNotTrimmed) {
-      throw Components.Exception("At least one tag passed to untagURI was not trimmed",
-                                 Cr.NS_ERROR_INVALID_ARG);
+      Deprecated.warning("At least one tag passed to untagURI was not trimmed",
+                         "https://bugzilla.mozilla.org/show_bug.cgi?id=967196");
     }
 
-    for (let tag of tags) {
-      if (tag.id != -1) {
-        // A tag could exist.
-        let itemId = this._getItemIdForTaggedURI(aURI, tag.name);
-        if (itemId != -1) {
-          // There is a tagged item.
-          PlacesUtils.bookmarks.removeItem(itemId, aSource);
+    let untaggingFunction = () => {
+      for (let tag of tags) {
+        if (tag.id != -1) {
+          // A tag could exist.
+          let itemId = this._getItemIdForTaggedURI(aURI, tag.name);
+          if (itemId != -1) {
+            // There is a tagged item.
+            PlacesUtils.bookmarks.removeItem(itemId, aSource);
+          }
         }
       }
+    };
+
+    // Use a batch only if creating more than 2 tags.
+    if (tags.length < 3) {
+      untaggingFunction();
+    } else {
+      PlacesUtils.bookmarks.runInBatchMode(untaggingFunction, null);
     }
   },
 
@@ -242,8 +262,8 @@ TaggingService.prototype = {
     }
 
     if (/^\s|\s$/.test(aTagName)) {
-      throw Components.Exception("Tag passed to getURIsForTag was not trimmed",
-                                 Cr.NS_ERROR_INVALID_ARG);
+      Deprecated.warning("Tag passed to getURIsForTag was not trimmed",
+                         "https://bugzilla.mozilla.org/show_bug.cgi?id=967196");
     }
 
     let uris = [];

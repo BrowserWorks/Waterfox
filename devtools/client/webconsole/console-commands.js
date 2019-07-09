@@ -17,7 +17,7 @@ exports.items = [
     name: "splitconsole",
     hidden: true,
     buttonId: "command-button-splitconsole",
-    buttonClass: "command-button",
+    buttonClass: "command-button command-button-invertable",
     tooltipText: l10n.lookupFormat("splitconsoleTooltip2", ["Esc"]),
     isRemoteSafe: true,
     state: {

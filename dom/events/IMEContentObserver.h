@@ -9,7 +9,6 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/EditorBase.h"
-#include "mozilla/dom/Selection.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDocShell.h" // XXX Why does only this need to be included here?
@@ -203,9 +202,9 @@ private:
 
   /**
    * MaybeNotifyIMEOfAddedTextDuringDocumentChange() may send text change
-   * notification caused by the nodes added between mFirstAddedContent in
-   * mFirstAddedContainer and mLastAddedContent in
-   * mLastAddedContainer and forgets the range.
+   * notification caused by the nodes added between mFirstAddedNodeOffset in
+   * mFirstAddedNodeContainer and mLastAddedNodeOffset in
+   * mLastAddedNodeContainer and forgets the range.
    */
   void MaybeNotifyIMEOfAddedTextDuringDocumentChange();
 
@@ -233,14 +232,15 @@ private:
    */
   bool HasAddedNodesDuringDocumentChange() const
   {
-    return mFirstAddedContainer && mLastAddedContainer;
+    return mFirstAddedNodeContainer && mLastAddedNodeContainer;
   }
 
   /**
-   * Returns true if the passed-in node in aParent is the next node of
-   * mLastAddedContent in pre-order tree traversal of the DOM.
+   * Returns true if the node at aOffset in aParent is next node of the node at
+   * mLastAddedNodeOffset in mLastAddedNodeContainer in pre-order tree
+   * traversal of the DOM.
    */
-  bool IsNextNodeOfLastAddedNode(nsINode* aParent, nsIContent* aChild) const;
+  bool IsNextNodeOfLastAddedNode(nsINode* aParent, int32_t aOffset) const;
 
   void PostFocusSetNotification();
   void MaybeNotifyIMEOfFocusSet();
@@ -256,9 +256,7 @@ private:
   void CancelNotifyingIMEOfPositionChange();
   void PostCompositionEventHandledNotification();
 
-  void NotifyContentAdded(nsINode* aContainer,
-                          nsIContent* aFirstContent,
-                          nsIContent* aLastContent);
+  void NotifyContentAdded(nsINode* aContainer, int32_t aStart, int32_t aEnd);
   void ObserveEditableNode();
   /**
    *  NotifyIMEOfBlur() notifies IME of blur.
@@ -310,7 +308,7 @@ private:
   // focused editor is in XUL panel, this should be the widget of the panel.
   // On the other hand, mWidget is its parent which handles IME.
   nsCOMPtr<nsIWidget> mFocusedWidget;
-  RefPtr<dom::Selection> mSelection;
+  nsCOMPtr<nsISelection> mSelection;
   nsCOMPtr<nsIContent> mRootContent;
   nsCOMPtr<nsINode> mEditableNode;
   nsCOMPtr<nsIDocShell> mDocShell;
@@ -433,43 +431,42 @@ private:
    */
   struct FlatTextCache
   {
-    // mContainerNode and mNode represent a point in DOM tree.  E.g.,
-    // if mContainerNode is a div element, mNode is a child.
+    // mContainerNode and mNodeOffset represent a point in DOM tree.  E.g.,
+    // if mContainerNode is a div element, mNodeOffset is index of its child.
     nsCOMPtr<nsINode> mContainerNode;
-    // mNode points to the last child which participates in the current
-    // mFlatTextLength. If mNode is null, then that means that the end point for
-    // mFlatTextLength is immediately before the first child of mContainerNode.
-    nsCOMPtr<nsINode> mNode;
+    int32_t mNodeOffset;
     // Length of flat text generated from contents between the start of content
     // and a child node whose index is mNodeOffset of mContainerNode.
     uint32_t mFlatTextLength;
 
     FlatTextCache()
-      : mFlatTextLength(0)
+      : mNodeOffset(0)
+      , mFlatTextLength(0)
     {
     }
 
     void Clear()
     {
       mContainerNode = nullptr;
-      mNode = nullptr;
+      mNodeOffset = 0;
       mFlatTextLength = 0;
     }
 
-    void Cache(nsINode* aContainer, nsINode* aNode,
+    void Cache(nsINode* aContainer, int32_t aNodeOffset,
                uint32_t aFlatTextLength)
     {
       MOZ_ASSERT(aContainer, "aContainer must not be null");
-      MOZ_ASSERT(!aNode || aNode->GetParentNode() == aContainer,
-                 "aNode must be either null or a child of aContainer");
+      MOZ_ASSERT(
+        aNodeOffset <= static_cast<int32_t>(aContainer->GetChildCount()),
+        "aNodeOffset must be same as or less than the count of children");
       mContainerNode = aContainer;
-      mNode = aNode;
+      mNodeOffset = aNodeOffset;
       mFlatTextLength = aFlatTextLength;
     }
 
-    bool Match(nsINode* aContainer, nsINode* aNode) const
+    bool Match(nsINode* aContainer, int32_t aNodeOffset) const
     {
-      return aContainer == mContainerNode && aNode == mNode;
+      return aContainer == mContainerNode && aNodeOffset == mNodeOffset;
     }
   };
   // mEndOfAddedTextCache caches text length from the start of content to
@@ -482,25 +479,26 @@ private:
   // handled by the editor and no other mutation (e.g., adding node) occur.
   FlatTextCache mStartOfRemovingTextRangeCache;
 
-  // mFirstAddedContainer is parent node of first added node in current
+  // mFirstAddedNodeContainer is parent node of first added node in current
   // document change.  So, this is not nullptr only when a node was added
   // during a document change and the change has not been included into
   // mTextChangeData yet.
   // Note that this shouldn't be in cycle collection since this is not nullptr
   // only during a document change.
-  nsCOMPtr<nsINode> mFirstAddedContainer;
-  // mLastAddedContainer is parent node of last added node in current
+  nsCOMPtr<nsINode> mFirstAddedNodeContainer;
+  // mLastAddedNodeContainer is parent node of last added node in current
   // document change.  So, this is not nullptr only when a node was added
   // during a document change and the change has not been included into
   // mTextChangeData yet.
   // Note that this shouldn't be in cycle collection since this is not nullptr
   // only during a document change.
-  nsCOMPtr<nsINode> mLastAddedContainer;
-
-  // mFirstAddedContent is the first node added in mFirstAddedContainer.
-  nsCOMPtr<nsIContent> mFirstAddedContent;
-  // mLastAddedContent is the last node added in mLastAddedContainer;
-  nsCOMPtr<nsIContent> mLastAddedContent;
+  nsCOMPtr<nsINode> mLastAddedNodeContainer;
+  // mFirstAddedNodeOffset is offset of first added node in
+  // mFirstAddedNodeContainer.
+  int32_t mFirstAddedNodeOffset;
+  // mLastAddedNodeOffset is offset of *after* last added node in
+  // mLastAddedNodeContainer.  I.e., the index of last added node + 1.
+  int32_t mLastAddedNodeOffset;
 
   TextChangeData mTextChangeData;
 

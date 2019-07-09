@@ -54,7 +54,7 @@ if (CONFIG_AV1_DECODER)
   if (CONFIG_ANALYZER)
     set(AOM_DOXYGEN_EXAMPLE_SOURCES
         ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-        "${AOM_ROOT}/examples/analyzer.cc")
+        "${AOM_ROOT}examples/analyzer.cc")
 
     set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS
         ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
@@ -202,9 +202,10 @@ reference. The following utilities are included:
   set(AOM_DOXYGEN_SOURCES ${AOM_DOXYGEN_SOURCES} ${samples_dox})
 
   # Generate libaom's doxyfile.
-  file(WRITE "${AOM_DOXYFILE}" "##\n## GENERATED FILE. DO NOT EDIT\n##\n")
-  file(READ "${AOM_ROOT}/${AOM_DOXYGEN_CONFIG_TEMPLATE}" doxygen_template_data)
-  file(APPEND "${AOM_DOXYFILE}" ${doxygen_template_data})
+  file(COPY "${AOM_ROOT}/${AOM_DOXYGEN_CONFIG_TEMPLATE}"
+       DESTINATION "${AOM_CONFIG_DIR}")
+  file(RENAME
+       "${AOM_CONFIG_DIR}/${AOM_DOXYGEN_CONFIG_TEMPLATE}" "${AOM_DOXYFILE}")
   file(APPEND "${AOM_DOXYFILE}"
        "EXAMPLE_PATH += ${AOM_ROOT} ${AOM_ROOT}/examples\n")
   file(APPEND
@@ -220,10 +221,8 @@ reference. The following utilities are included:
                     COMMAND "${DOXYGEN_EXECUTABLE}" "${AOM_DOXYFILE}"
                     DEPENDS "${AOM_DOXYFILE}" ${AOM_DOXYGEN_SOURCES}
                              ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-                             "${AOM_DOXYGEN_CONFIG_TEMPLATE}"
                     SOURCES "${AOM_DOXYFILE}" ${AOM_DOXYGEN_SOURCES}
-                             ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-                             "${AOM_DOXYGEN_CONFIG_TEMPLATE}")
+                             ${AOM_DOXYGEN_EXAMPLE_SOURCES})
 endfunction ()
 
 endif ()  # AOM_DOCS_CMAKE_

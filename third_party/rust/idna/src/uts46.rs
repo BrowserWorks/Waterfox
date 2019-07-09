@@ -12,35 +12,25 @@
 use self::Mapping::*;
 use punycode;
 use std::ascii::AsciiExt;
-use std::cmp::Ordering::{Equal, Less, Greater};
-use unicode_bidi::{BidiClass, bidi_class};
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
+use unicode_bidi::{BidiClass, bidi_class};
 
 include!("uts46_mapping_table.rs");
 
-
-pub static PUNYCODE_PREFIX: &'static str = "xn--";
-
-
 #[derive(Debug)]
 struct StringTableSlice {
-    // Store these as separate fields so the structure will have an
-    // alignment of 1 and thus pack better into the Mapping enum, below.
-    byte_start_lo: u8,
-    byte_start_hi: u8,
-    byte_len: u8,
+    byte_start: u16,
+    byte_len: u16,
 }
 
 fn decode_slice(slice: &StringTableSlice) -> &'static str {
-    let lo = slice.byte_start_lo as usize;
-    let hi = slice.byte_start_hi as usize;
-    let start = (hi << 8) | lo;
+    let start = slice.byte_start as usize;
     let len = slice.byte_len as usize;
     &STRING_TABLE[start..(start + len)]
 }
 
-#[repr(u8)]
+#[repr(u16)]
 #[derive(Debug)]
 enum Mapping {
     Valid,
@@ -59,16 +49,20 @@ struct Range {
 }
 
 fn find_char(codepoint: char) -> &'static Mapping {
-    let r = TABLE.binary_search_by(|ref range| {
-        if codepoint > range.to {
-            Less
-        } else if codepoint < range.from {
-            Greater
+    let mut min = 0;
+    let mut max = TABLE.len() - 1;
+    while max > min {
+        let mid = (min + max) >> 1;
+        if codepoint > TABLE[mid].to {
+           min = mid;
+        } else if codepoint < TABLE[mid].from {
+            max = mid;
         } else {
-            Equal
+            min = mid;
+            max = mid;
         }
-    });
-    r.ok().map(|i| &TABLE[i].mapping).unwrap()
+    }
+    &TABLE[min].mapping
 }
 
 fn map_char(codepoint: char, flags: Flags, output: &mut String, errors: &mut Vec<Error>) {
@@ -103,177 +97,135 @@ fn map_char(codepoint: char, flags: Flags, output: &mut String, errors: &mut Vec
 }
 
 // http://tools.ietf.org/html/rfc5893#section-2
-fn passes_bidi(label: &str, is_bidi_domain: bool) -> bool {
-    // Rule 0: Bidi Rules apply to Bidi Domain Names: a name with at least one RTL label.  A label
-    // is RTL if it contains at least one character of bidi class R, AL or AN.
-    if !is_bidi_domain {
-        return true;
-    }
-
+fn passes_bidi(label: &str, transitional_processing: bool) -> bool {
     let mut chars = label.chars();
-    let first_char_class = match chars.next() {
+    let class = match chars.next() {
         Some(c) => bidi_class(c),
         None => return true, // empty string
     };
 
-    match first_char_class {
-        // LTR label
-        BidiClass::L => {
-            // Rule 5
-            loop {
-                match chars.next() {
-                    Some(c) => {
-                        if !matches!(bidi_class(c),
-                                     BidiClass::L | BidiClass::EN |
-                                     BidiClass::ES | BidiClass::CS |
-                                     BidiClass::ET | BidiClass::ON |
-                                     BidiClass::BN | BidiClass::NSM
-                                    ) {
-                            return false;
-                        }
-                    },
-                    None => { break; },
-                }
-            }
-
-            // Rule 6
-            // must end in L or EN followed by 0 or more NSM
-            let mut rev_chars = label.chars().rev();
-            let mut last_non_nsm = rev_chars.next();
-            loop {
-                match last_non_nsm {
-                    Some(c) if bidi_class(c) == BidiClass::NSM => {
-                        last_non_nsm = rev_chars.next();
-                        continue;
+    if class == BidiClass::L
+       || (class == BidiClass::ON && transitional_processing) // starts with \u200D
+       || (class == BidiClass::ES && transitional_processing) // hack: 1.35.+33.49
+       || class == BidiClass::EN // hack: starts with number 0à.\u05D0
+    { // LTR
+        // Rule 5
+        loop {
+            match chars.next() {
+                Some(c) => {
+                    let c = bidi_class(c);
+                    if !matches!(c, BidiClass::L | BidiClass::EN |
+                                    BidiClass::ES | BidiClass::CS |
+                                    BidiClass::ET | BidiClass::ON |
+                                    BidiClass::BN | BidiClass::NSM) {
+                        return false;
                     }
-                    _ => { break; },
-                }
+                },
+                None => { break; },
             }
-            match last_non_nsm {
-                Some(c) if bidi_class(c) == BidiClass::L
-                    || bidi_class(c) == BidiClass::EN => {},
-                Some(_) => { return false; },
-                _ => {}
-            }
-
         }
 
-        // RTL label
-        BidiClass::R | BidiClass::AL => {
-            let mut found_en = false;
-            let mut found_an = false;
-
-            // Rule 2
-            loop {
-                match chars.next() {
-                    Some(c) => {
-                        let char_class = bidi_class(c);
-
-                        if char_class == BidiClass::EN {
-                            found_en = true;
-                        }
-                        if char_class == BidiClass::AN {
-                            found_an = true;
-                        }
-
-                        if !matches!(char_class, BidiClass::R | BidiClass::AL |
-                                     BidiClass::AN | BidiClass::EN |
-                                     BidiClass::ES | BidiClass::CS |
-                                     BidiClass::ET | BidiClass::ON |
-                                     BidiClass::BN | BidiClass::NSM) {
-                            return false;
-                        }
-                    },
-                    None => { break; },
-                }
-            }
-            // Rule 3
-            let mut rev_chars = label.chars().rev();
-            let mut last = rev_chars.next();
-            loop { // must end in L or EN followed by 0 or more NSM
-                match last {
-                    Some(c) if bidi_class(c) == BidiClass::NSM => {
-                        last = rev_chars.next();
-                        continue;
-                    }
-                    _ => { break; },
-                }
-            }
+        // Rule 6
+        let mut rev_chars = label.chars().rev();
+        let mut last = rev_chars.next();
+        loop { // must end in L or EN followed by 0 or more NSM
             match last {
-                Some(c) if matches!(bidi_class(c), BidiClass::R | BidiClass::AL |
-                                    BidiClass::EN | BidiClass::AN) => {},
-                _ => { return false; }
-            }
-
-            // Rule 4
-            if found_an && found_en {
-                return false;
+                Some(c) if bidi_class(c) == BidiClass::NSM => {
+                    last = rev_chars.next();
+                    continue;
+                }
+                _ => { break; },
             }
         }
 
-        // Rule 1: Should start with L or R/AL
-        _ => {
+        // TODO: does not pass for àˇ.\u05D0
+        // match last {
+        //     Some(c) if bidi_class(c) == BidiClass::L
+        //             || bidi_class(c) == BidiClass::EN => {},
+        //     Some(c) => { return false; },
+        //     _ => {}
+        // }
+
+    } else if class == BidiClass::R || class == BidiClass::AL { // RTL
+        let mut found_en = false;
+        let mut found_an = false;
+
+        // Rule 2
+        loop {
+            match chars.next() {
+                Some(c) => {
+                    let char_class = bidi_class(c);
+
+                    if char_class == BidiClass::EN {
+                        found_en = true;
+                    }
+                    if char_class == BidiClass::AN {
+                        found_an = true;
+                    }
+
+                    if !matches!(char_class, BidiClass::R | BidiClass::AL |
+                                             BidiClass::AN | BidiClass::EN |
+                                             BidiClass::ES | BidiClass::CS |
+                                             BidiClass::ET | BidiClass::ON |
+                                             BidiClass::BN | BidiClass::NSM) {
+                        return false;
+                    }
+                },
+                None => { break; },
+            }
+        }
+        // Rule 3
+        let mut rev_chars = label.chars().rev();
+        let mut last = rev_chars.next();
+        loop { // must end in L or EN followed by 0 or more NSM
+            match last {
+                Some(c) if bidi_class(c) == BidiClass::NSM => {
+                    last = rev_chars.next();
+                    continue;
+                }
+                _ => { break; },
+            }
+        }
+        match last {
+            Some(c) if matches!(bidi_class(c), BidiClass::R | BidiClass::AL |
+                                               BidiClass::EN | BidiClass::AN) => {},
+            _ => { return false; }
+        }
+
+        // Rule 4
+        if found_an && found_en {
             return false;
         }
+    } else {
+        // Rule 2: Should start with L or R/AL
+        return false;
     }
 
     return true;
 }
 
 /// http://www.unicode.org/reports/tr46/#Validity_Criteria
-fn validate(label: &str, is_bidi_domain: bool, flags: Flags, errors: &mut Vec<Error>) {
-    let first_char = label.chars().next();
-    if first_char == None {
-        // Empty string, pass
-    }
-
-    // V1: Must be in NFC form.
-    else if label.nfc().ne(label.chars()) {
+fn validate(label: &str, flags: Flags, errors: &mut Vec<Error>) {
+    if label.nfc().ne(label.chars()) {
         errors.push(Error::ValidityCriteria);
     }
 
-    // V2: No U+002D HYPHEN-MINUS in both third and fourth positions.
-    //
-    // NOTE: Spec says that the label must not contain a HYPHEN-MINUS character in both the
+    // Can not contain '.' since the input is from .split('.')
+    // Spec says that the label must not contain a HYPHEN-MINUS character in both the
     // third and fourth positions. But nobody follows this criteria. See the spec issue below:
     // https://github.com/whatwg/url/issues/53
-    //
-    // TODO: Add *CheckHyphens* flag.
-
-    // V3: neither begin nor end with a U+002D HYPHEN-MINUS
-    else if label.starts_with("-") || label.ends_with("-") {
-        errors.push(Error::ValidityCriteria);
-    }
-
-    // V4: not contain a U+002E FULL STOP
-    //
-    // Here, label can't contain '.' since the input is from .split('.')
-
-    // V5: not begin with a GC=Mark
-    else if is_combining_mark(first_char.unwrap()) {
-        errors.push(Error::ValidityCriteria);
-    }
-
-    // V6: Check against Mapping Table
-    else if label.chars().any(|c| match *find_char(c) {
-        Mapping::Valid => false,
-        Mapping::Deviation(_) => flags.transitional_processing,
-        Mapping::DisallowedStd3Valid => flags.use_std3_ascii_rules,
-        _ => true,
-    }) {
-        errors.push(Error::ValidityCriteria);
-    }
-
-    // V7: ContextJ rules
-    //
-    // TODO: Implement rules and add *CheckJoiners* flag.
-
-    // V8: Bidi rules
-    //
-    // TODO: Add *CheckBidi* flag
-    else if !passes_bidi(label, is_bidi_domain)
+    if label.starts_with("-")
+        || label.ends_with("-")
+        || label.chars().next().map_or(false, is_combining_mark)
+        || label.chars().any(|c| match *find_char(c) {
+            Mapping::Valid => false,
+            Mapping::Deviation(_) => flags.transitional_processing,
+            Mapping::DisallowedStd3Valid => flags.use_std3_ascii_rules,
+            _ => true,
+        })
+        || !passes_bidi(label, flags.transitional_processing)
     {
-        errors.push(Error::ValidityCriteria);
+        errors.push(Error::ValidityCriteria)
     }
 }
 
@@ -284,51 +236,22 @@ fn processing(domain: &str, flags: Flags, errors: &mut Vec<Error>) -> String {
         map_char(c, flags, &mut mapped, errors)
     }
     let normalized: String = mapped.nfc().collect();
-
-    // Find out if it's a Bidi Domain Name
-    //
-    // First, check for literal bidi chars
-    let mut is_bidi_domain = domain.chars().any(|c|
-        matches!(bidi_class(c), BidiClass::R | BidiClass::AL | BidiClass::AN)
-    );
-    if !is_bidi_domain {
-        // Then check for punycode-encoded bidi chars
-        for label in normalized.split('.') {
-            if label.starts_with(PUNYCODE_PREFIX) {
-                match punycode::decode_to_string(&label[PUNYCODE_PREFIX.len()..]) {
-                    Some(decoded_label) => {
-                        if decoded_label.chars().any(|c|
-                            matches!(bidi_class(c), BidiClass::R | BidiClass::AL | BidiClass::AN)
-                        ) {
-                            is_bidi_domain = true;
-                        }
-                    }
-                    None => {
-                        is_bidi_domain = true;
-                    }
-                }
-            }
-        }
-    }
-
     let mut validated = String::new();
-    let mut first = true;
     for label in normalized.split('.') {
-        if !first {
+        if validated.len() > 0 {
             validated.push('.');
         }
-        first = false;
-        if label.starts_with(PUNYCODE_PREFIX) {
-            match punycode::decode_to_string(&label[PUNYCODE_PREFIX.len()..]) {
+        if label.starts_with("xn--") {
+            match punycode::decode_to_string(&label["xn--".len()..]) {
                 Some(decoded_label) => {
                     let flags = Flags { transitional_processing: false, ..flags };
-                    validate(&decoded_label, is_bidi_domain, flags, errors);
+                    validate(&decoded_label, flags, errors);
                     validated.push_str(&decoded_label)
                 }
                 None => errors.push(Error::PunycodeError)
             }
         } else {
-            validate(label, is_bidi_domain, flags, errors);
+            validate(label, flags, errors);
             validated.push_str(label)
         }
     }
@@ -350,7 +273,6 @@ enum Error {
     DissallowedMappedInStd3,
     DissallowedCharacter,
     TooLongForDns,
-    TooShortForDns,
 }
 
 /// Errors recorded during UTS #46 processing.
@@ -364,18 +286,16 @@ pub struct Errors(Vec<Error>);
 pub fn to_ascii(domain: &str, flags: Flags) -> Result<String, Errors> {
     let mut errors = Vec::new();
     let mut result = String::new();
-    let mut first = true;
     for label in processing(domain, flags, &mut errors).split('.') {
-        if !first {
+        if result.len() > 0 {
             result.push('.');
         }
-        first = false;
         if label.is_ascii() {
             result.push_str(label);
         } else {
             match punycode::encode_str(label) {
                 Some(x) => {
-                    result.push_str(PUNYCODE_PREFIX);
+                    result.push_str("xn--");
                     result.push_str(&x);
                 },
                 None => errors.push(Error::PunycodeError)
@@ -385,10 +305,8 @@ pub fn to_ascii(domain: &str, flags: Flags) -> Result<String, Errors> {
 
     if flags.verify_dns_length {
         let domain = if result.ends_with(".") { &result[..result.len()-1]  } else { &*result };
-        if domain.len() < 1 || domain.split('.').any(|label| label.len() < 1) {
-            errors.push(Error::TooShortForDns)
-        }
-        if domain.len() > 253 || domain.split('.').any(|label| label.len() > 63) {
+        if domain.len() < 1 || domain.len() > 253 ||
+                domain.split('.').any(|label| label.len() < 1 || label.len() > 63) {
             errors.push(Error::TooLongForDns)
         }
     }

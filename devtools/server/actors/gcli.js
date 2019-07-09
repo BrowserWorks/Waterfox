@@ -6,6 +6,7 @@
 
 const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
 const { gcliSpec } = require("devtools/shared/specs/gcli");
+const events = require("sdk/event/core");
 const { createSystem } = require("gcli/system");
 
 /**
@@ -221,7 +222,7 @@ const GcliActor = ActorClassWithSpec(gcliSpec, {
    * Pass events from requisition.system.commands.onCommandsChange upwards
    */
   _commandsChanged: function () {
-    this.emit("commands-changed");
+    events.emit(this, "commands-changed");
   },
 });
 

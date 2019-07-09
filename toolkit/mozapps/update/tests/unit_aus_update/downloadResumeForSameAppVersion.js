@@ -5,7 +5,6 @@
 
 function run_test() {
   setupTestCommon();
-  start_httpserver();
 
   debugDump("testing resuming an update download in progress for the same " +
             "version of the application on startup (Bug 485624)");
@@ -19,22 +18,19 @@ function run_test() {
 
   standardInit();
 
-  Assert.equal(gUpdateManager.updateCount, 0,
+  Assert.equal(gUpdateManager.updateCount, 1,
                "the update manager updateCount attribute" + MSG_SHOULD_EQUAL);
   Assert.equal(gUpdateManager.activeUpdate.state, STATE_DOWNLOADING,
                "the update manager activeUpdate state attribute" +
                MSG_SHOULD_EQUAL);
 
-  // Pausing the download along with reloading the update manager in
-  // doTestFinish will prevent writing the update xml files during shutdown.
+  // Pause the download and reload the Update Manager with an empty update so
+  // the Application Update Service doesn't write the update xml files during
+  // xpcom-shutdown which will leave behind the test directory.
   gAUS.pauseDownload();
-  gUpdateManager.cleanupActiveUpdate();
-  do_execute_soon(waitForUpdateXMLFiles);
-}
+  writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), true);
+  writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
+  reloadUpdateManagerData();
 
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
-  stop_httpserver(doTestFinish);
+  do_execute_soon(doTestFinish);
 }

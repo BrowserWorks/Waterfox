@@ -120,8 +120,8 @@ hb_buffer_t::enlarge (unsigned int size)
   }
 
   unsigned int new_allocated = allocated;
-  hb_glyph_position_t *new_pos = NULL;
-  hb_glyph_info_t *new_info = NULL;
+  hb_glyph_position_t *new_pos = nullptr;
+  hb_glyph_info_t *new_info = nullptr;
   bool separate_out = out_info != info;
 
   if (unlikely (_hb_unsigned_int_mul_overflows (size, sizeof (info[0]))))
@@ -130,7 +130,7 @@ hb_buffer_t::enlarge (unsigned int size)
   while (size >= new_allocated)
     new_allocated += (new_allocated >> 1) + 32;
 
-  ASSERT_STATIC (sizeof (info[0]) == sizeof (pos[0]));
+  static_assert ((sizeof (info[0]) == sizeof (pos[0])), "");
   if (unlikely (_hb_unsigned_int_mul_overflows (new_allocated, sizeof (info[0]))))
     goto done;
 
@@ -554,7 +554,7 @@ hb_buffer_t::merge_clusters_impl (unsigned int start,
   unsigned int cluster = info[start].cluster;
 
   for (unsigned int i = start + 1; i < end; i++)
-    cluster = MIN (cluster, info[i].cluster);
+    cluster = MIN<unsigned int> (cluster, info[i].cluster);
 
   /* Extend end */
   while (end < len && info[end - 1].cluster == info[end].cluster)
@@ -585,7 +585,7 @@ hb_buffer_t::merge_out_clusters (unsigned int start,
   unsigned int cluster = out_info[start].cluster;
 
   for (unsigned int i = start + 1; i < end; i++)
-    cluster = MIN (cluster, out_info[i].cluster);
+    cluster = MIN<unsigned int> (cluster, out_info[i].cluster);
 
   /* Extend start */
   while (start && out_info[start - 1].cluster == out_info[start].cluster)
@@ -722,6 +722,7 @@ hb_buffer_create (void)
     return hb_buffer_get_empty ();
 
   buffer->max_len = HB_BUFFER_MAX_LEN_DEFAULT;
+  buffer->max_ops = HB_BUFFER_MAX_OPS_DEFAULT;
 
   buffer->reset ();
 
@@ -749,6 +750,7 @@ hb_buffer_get_empty (void)
     HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT,
     HB_BUFFER_SCRATCH_FLAG_DEFAULT,
     HB_BUFFER_MAX_LEN_DEFAULT,
+    HB_BUFFER_MAX_OPS_DEFAULT,
 
     HB_BUFFER_CONTENT_TYPE_INVALID,
     HB_SEGMENT_PROPERTIES_DEFAULT,
@@ -1931,7 +1933,7 @@ hb_buffer_diff (hb_buffer_t *buffer,
       result |= HB_BUFFER_DIFF_FLAG_CODEPOINT_MISMATCH;
     if (buf_info->cluster != ref_info->cluster)
       result |= HB_BUFFER_DIFF_FLAG_CLUSTER_MISMATCH;
-    if ((buf_info->mask & HB_GLYPH_FLAG_DEFINED) != (ref_info->mask & HB_GLYPH_FLAG_DEFINED))
+    if ((buf_info->mask & ~ref_info->mask & HB_GLYPH_FLAG_DEFINED))
       result |= HB_BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH;
     if (contains && ref_info->codepoint == dottedcircle_glyph)
       result |= HB_BUFFER_DIFF_FLAG_DOTTED_CIRCLE_PRESENT;
@@ -1993,9 +1995,9 @@ hb_buffer_set_message_func (hb_buffer_t *buffer,
     buffer->message_data = user_data;
     buffer->message_destroy = destroy;
   } else {
-    buffer->message_func = NULL;
-    buffer->message_data = NULL;
-    buffer->message_destroy = NULL;
+    buffer->message_func = nullptr;
+    buffer->message_data = nullptr;
+    buffer->message_destroy = nullptr;
   }
 }
 

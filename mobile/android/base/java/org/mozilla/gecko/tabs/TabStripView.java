@@ -273,8 +273,8 @@ public class TabStripView extends RecyclerView
         final float strength = getFadingEdgeStrength(isLTR);
         if (strength > 0.0f) {
             if (isLTR) {
-                final int w = getWidth();
-                canvas.drawRect(w - fadingEdgeSize, getTop(), w, getBottom(), fadingEdgePaint);
+                final int r = getRight();
+                canvas.drawRect(r - fadingEdgeSize, getTop(), r, getBottom(), fadingEdgePaint);
             } else {
                 canvas.drawRect(0, getTop(), fadingEdgeSize, getBottom(), fadingEdgePaint);
             }

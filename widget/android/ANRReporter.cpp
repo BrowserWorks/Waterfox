@@ -13,7 +13,6 @@ namespace mozilla {
 bool
 ANRReporter::RequestNativeStack(bool aUnwind)
 {
-#ifdef MOZ_GECKO_PROFILER
     if (profiler_is_active()) {
         // Don't proceed if profiler is already running
         return false;
@@ -34,14 +33,12 @@ ANRReporter::RequestNativeStack(bool aUnwind)
     profiler_start(/* entries */ 100, /* interval */ 10000, features,
                    NATIVE_STACK_THREADS,
                    sizeof(NATIVE_STACK_THREADS) / sizeof(char*));
-#endif
     return true;
 }
 
 jni::String::LocalRef
 ANRReporter::GetNativeStack()
 {
-#ifdef MOZ_GECKO_PROFILER
     // Timeout if we don't get a profiler sample after 5 seconds.
     const PRIntervalTime timeout = PR_SecondsToInterval(5);
     const PRIntervalTime startTime = PR_IntervalNow();
@@ -49,7 +46,8 @@ ANRReporter::GetNativeStack()
     // Pointer to a profile JSON string
     typedef mozilla::UniquePtr<char[]> ProfilePtr;
 
-    // profiler_get_profile() will return nullptr if the profiler is inactive.
+    // profiler_get_profile() will return nullptr if the profiler is disabled
+    // or inactive.
     ProfilePtr profile(profiler_get_profile());
     if (!profile) {
         return nullptr;
@@ -67,20 +65,17 @@ ANRReporter::GetNativeStack()
     if (profile) {
         return jni::String::Param(profile.get());
     }
-#endif
     return nullptr;
 }
 
 void
 ANRReporter::ReleaseNativeStack()
 {
-#ifdef MOZ_GECKO_PROFILER
     if (!profiler_is_active()) {
         // Maybe profiler support is disabled?
         return;
     }
     profiler_stop();
-#endif
 }
 
 } // namespace

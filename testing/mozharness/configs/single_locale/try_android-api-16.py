@@ -1,5 +1,3 @@
-import os
-
 BRANCH = "try"
 MOZILLA_DIR = BRANCH
 EN_US_BINARY_URL = "http://archive.mozilla.org/pub/" \
@@ -8,7 +6,7 @@ EN_US_BINARY_URL = "http://archive.mozilla.org/pub/" \
 config = {
     "branch": "try",
     "log_name": "single_locale",
-    "objdir": "obj-firefox",
+    "objdir": "obj-l10n",
     "is_automation": True,
     "buildbot_json_path": "buildprops.json",
     "force_clobber": True,
@@ -27,7 +25,6 @@ config = {
         'tooltool.py': '/builds/tooltool.py',
     },
     "update_gecko_source_to_enUS": False,
-    "nightly_build": True,
     "repos": [{
         "vcs": "hg",
         "repo": "https://hg.mozilla.org/build/tools",
@@ -50,12 +47,14 @@ config = {
     "repack_env": {
         # so ugly, bug 951238
         "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
-        "MOZ_OBJDIR": "obj-firefox",
-        "EN_US_BINARY_URL": os.environ.get("EN_US_BINARY_URL", EN_US_BINARY_URL),
+        "MOZ_OBJDIR": "obj-l10n",
+        "EN_US_BINARY_URL": EN_US_BINARY_URL,
+        "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": "try", # XXX Invalid
     },
     "upload_branch": "%s-android-api-16" % BRANCH,
     "ssh_key_dir": "~/.ssh",
+    "merge_locales": True,
     "mozilla_dir": MOZILLA_DIR,
     "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-16/l10n-nightly" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",

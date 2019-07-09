@@ -8,6 +8,7 @@ const protocol = require("devtools/shared/protocol");
 const { Memory } = require("devtools/server/performance/memory");
 const { actorBridgeWithSpec } = require("devtools/server/actors/common");
 const { memorySpec } = require("devtools/shared/specs/memory");
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "StackFrameCache",
                          "devtools/server/actors/utils/stack", true);
 
@@ -70,13 +71,13 @@ exports.MemoryActor = protocol.ActorClassWithSpec(memorySpec, {
 
   _onGarbageCollection: function (data) {
     if (this.conn.transport) {
-      this.emit("garbage-collection", data);
+      events.emit(this, "garbage-collection", data);
     }
   },
 
   _onAllocations: function (data) {
     if (this.conn.transport) {
-      this.emit("allocations", data);
+      events.emit(this, "allocations", data);
     }
   },
 });

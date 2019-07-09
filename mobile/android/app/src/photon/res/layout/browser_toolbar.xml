@@ -5,11 +5,10 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:gecko="http://schemas.android.com/apk/res-auto"
-       xmlns:tools="http://schemas.android.com/tools"
-       tools:layout_height="@dimen/browser_toolbar_url_height"
-       tools:layout_width="match_parent"
-       tools:parentTag="RelativeLayout">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:layout_height="wrap_content"
+    tools:layout_width="match_parent"
+    tools:parentTag="RelativeLayout">
 
     <!-- Note: any layout parameters setting the right edge of
          this View should be matched in the url_bar_translating_edge. -->
@@ -22,7 +21,7 @@
         android:duplicateParentState="true"
         android:focusable="false"
         android:scaleType="fitXY"
-        android:src="@android:color/transparent"/>
+        android:src="@android:color/transparent" />
 
     <!-- A View that clips with url_bar_entry and translates
          around it to animate growing the url bar,
@@ -37,22 +36,23 @@
         android:focusable="false"
         android:scaleType="fitXY"
         android:src="@android:color/transparent"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
-    <org.mozilla.gecko.toolbar.ToolbarRoundButton
+    <org.mozilla.gecko.widget.themed.ThemedImageButton
         android:id="@+id/menu"
         style="@style/UrlBar.Menu"
-        android:background="@drawable/url_bar_action_button"
+        android:background="@drawable/action_bar_button"
         android:contentDescription="@string/menu"
         android:src="@drawable/ic_overflow"
-        gecko:showLWTBackground="true"/>
+        tools:background="#880000FF" />
 
-    <org.mozilla.gecko.toolbar.ToolbarRoundButton
+    <org.mozilla.gecko.widget.themed.ThemedImageButton
         android:id="@+id/tabs"
         style="@style/UrlBar.Tabs"
         android:layout_alignWithParentIfMissing="true"
-        android:background="@drawable/url_bar_action_button"
-        gecko:showLWTBackground="true"/>
+        android:layout_marginRight="-2dp"
+        android:background="@drawable/action_bar_button"
+        tools:background="#88FF0000" />
 
     <org.mozilla.gecko.toolbar.TabCounter
         android:id="@+id/tabs_counter"
@@ -62,18 +62,17 @@
         android:clipChildren="false"
         android:clipToPadding="false"
         android:gravity="center_horizontal"
-        gecko:drawableTintList="@color/url_bar_image_color"/>
+        tools:background="#8800FF00" />
 
     <!-- Note that the edit components are invisible so that the views
          depending on their location can properly layout. -->
-    <org.mozilla.gecko.toolbar.ToolbarRoundButton
+    <org.mozilla.gecko.widget.themed.ThemedImageView
         android:id="@+id/edit_cancel"
         style="@style/UrlBar.EditCancel"
-        android:background="@drawable/url_bar_action_button"
+        android:background="@drawable/action_bar_button"
         android:contentDescription="@string/edit_mode_cancel"
         android:src="@drawable/ic_cancel"
-        android:visibility="invisible"
-        gecko:showLWTBackground="true"/>
+        android:visibility="invisible" />
 
     <!-- The space to the left of the cancel button would be larger than the right because
          the url bar drawable contains some whitespace, so we compensate by removing
@@ -81,10 +80,12 @@
     <org.mozilla.gecko.toolbar.ToolbarEditLayout
         android:id="@+id/edit_layout"
         style="@style/UrlBar.EditLayout"
-        android:visibility="invisible"/>
+        android:paddingEnd="0dp"
+        android:paddingRight="0dp"
+        android:visibility="invisible" />
 
     <org.mozilla.gecko.toolbar.ToolbarDisplayLayout
         android:id="@+id/display_layout"
-        style="@style/UrlBar.DisplayLayout"/>
+        style="@style/UrlBar.DisplayLayout" />
 
 </merge>

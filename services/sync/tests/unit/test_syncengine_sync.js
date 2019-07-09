@@ -56,6 +56,11 @@ async function createServerAndConfigureClient() {
   return [engine, server, USER];
 }
 
+function run_test() {
+  generateNewKeys(Service.collectionKeys);
+  Svc.Prefs.set("log.logger.engine.rotary", "Trace");
+  run_next_test();
+}
 
 /*
  * Tests
@@ -70,11 +75,6 @@ async function createServerAndConfigureClient() {
  * In the spirit of unit testing, these are tested individually for
  * different scenarios below.
  */
-
-add_task(async function setup() {
-  await generateNewKeys(Service.collectionKeys);
-  Svc.Prefs.set("log.logger.engine.rotary", "Trace");
-});
 
 add_task(async function test_syncStartup_emptyOrOutdatedGlobalsResetsSync() {
   _("SyncEngine._syncStartup resets sync and wipes server data if there's no or an outdated global record");
@@ -99,7 +99,7 @@ add_task(async function test_syncStartup_emptyOrOutdatedGlobalsResetsSync() {
   try {
 
     // Confirm initial environment
-    do_check_eq(engine._tracker.changedIDs.rekolok, undefined);
+    do_check_eq(engine._tracker.changedIDs["rekolok"], undefined);
     let metaGlobal = await Service.recordManager.get(engine.metaURL);
     do_check_eq(metaGlobal.payload.engines, undefined);
     do_check_true(!!collection.payload("flying"));
@@ -113,7 +113,7 @@ add_task(async function test_syncStartup_emptyOrOutdatedGlobalsResetsSync() {
     await engine._syncStartup();
 
     // The meta/global WBO has been filled with data about the engine
-    let engineData = metaGlobal.payload.engines.rotary;
+    let engineData = metaGlobal.payload.engines["rotary"];
     do_check_eq(engineData.version, engine.version);
     do_check_eq(engineData.syncID, engine.syncID);
 
@@ -174,7 +174,7 @@ add_task(async function test_syncStartup_syncIDMismatchResetsClient() {
 
     // Confirm initial environment
     do_check_eq(engine.syncID, "fake-guid-00");
-    do_check_eq(engine._tracker.changedIDs.rekolok, undefined);
+    do_check_eq(engine._tracker.changedIDs["rekolok"], undefined);
 
     engine.lastSync = Date.now() / 1000;
     engine.lastSyncLocal = Date.now();
@@ -240,7 +240,7 @@ add_task(async function test_processIncoming_createFromServer() {
 
   await SyncTestingInfrastructure(server);
 
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let engine = makeRotaryEngine();
   let meta_global = Service.recordManager.set(engine.metaURL,
@@ -349,7 +349,7 @@ add_task(async function test_processIncoming_reconcile() {
     do_check_eq(engine._store.items.olderidentical, "Older but identical");
     do_check_eq(engine._store.items.updateclient, "Got data?");
     do_check_eq(engine._store.items.nukeme, "Nuke me!");
-    do_check_true(engine._tracker.changedIDs.olderidentical > 0);
+    do_check_true(engine._tracker.changedIDs["olderidentical"] > 0);
 
     await engine._syncStartup();
     await engine._processIncoming();
@@ -367,7 +367,7 @@ add_task(async function test_processIncoming_reconcile() {
     // The data for 'olderidentical' is identical on the server, so
     // it's no longer marked as changed anymore.
     do_check_eq(engine._store.items.olderidentical, "Older but identical");
-    do_check_eq(engine._tracker.changedIDs.olderidentical, undefined);
+    do_check_eq(engine._tracker.changedIDs["olderidentical"], undefined);
 
     // Updated with server data.
     do_check_eq(engine._store.items.updateclient, "Get this!");
@@ -466,7 +466,6 @@ add_task(async function test_processIncoming_reconcile_locally_deleted_dupe_new(
   do_check_false((await engine._store.itemExists("DUPE_INCOMING")));
   do_check_eq("DUPE_LOCAL", (await engine._findDupe({id: "DUPE_INCOMING"})));
 
-  engine.lastModified = server.getCollection(user, engine.name).timestamp;
   await engine._sync();
 
   // After the sync, the server's payload for the original ID should be marked
@@ -540,7 +539,6 @@ add_task(async function test_processIncoming_reconcile_changed_dupe() {
   do_check_true((await engine._store.itemExists("DUPE_LOCAL")));
   do_check_eq("DUPE_LOCAL", (await engine._findDupe({id: "DUPE_INCOMING"})));
 
-  engine.lastModified = server.getCollection(user, engine.name).timestamp;
   await engine._sync();
 
   // The ID should have been changed to incoming.
@@ -579,7 +577,6 @@ add_task(async function test_processIncoming_reconcile_changed_dupe_new() {
   do_check_true((await engine._store.itemExists("DUPE_LOCAL")));
   do_check_eq("DUPE_LOCAL", (await engine._findDupe({id: "DUPE_INCOMING"})));
 
-  engine.lastModified = server.getCollection(user, engine.name).timestamp;
   await engine._sync();
 
   // The ID should have been changed to incoming.
@@ -1165,7 +1162,7 @@ add_task(async function test_uploadOutgoing_toEmptyServer() {
   });
 
   await SyncTestingInfrastructure(server);
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let engine = makeRotaryEngine();
   engine.lastSync = 123; // needs to be non-zero so that tracker is queried
@@ -1198,7 +1195,7 @@ add_task(async function test_uploadOutgoing_toEmptyServer() {
     do_check_true(!!collection.payload("scotsman"));
     do_check_eq(JSON.parse(collection.wbo("scotsman").data.ciphertext).id,
                 "scotsman");
-    do_check_eq(engine._tracker.changedIDs.scotsman, undefined);
+    do_check_eq(engine._tracker.changedIDs["scotsman"], undefined);
 
     // The 'flying' record wasn't marked so it wasn't uploaded
     do_check_eq(collection.payload("flying"), undefined);
@@ -1221,7 +1218,7 @@ async function test_uploadOutgoing_max_record_payload_bytes(allowSkippedRecord) 
   });
 
   await SyncTestingInfrastructure(server);
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let engine = makeRotaryEngine();
   engine.allowSkippedRecord = allowSkippedRecord;
@@ -1254,7 +1251,7 @@ async function test_uploadOutgoing_max_record_payload_bytes(allowSkippedRecord) 
     // Check we uploaded the other record to the server
     do_check_true(collection.payload("scotsman"));
     // And that we won't try to upload the huge record next time.
-    do_check_eq(engine._tracker.changedIDs.flying, undefined);
+    do_check_eq(engine._tracker.changedIDs["flying"], undefined);
 
   } catch (e) {
     if (allowSkippedRecord) {
@@ -1264,7 +1261,7 @@ async function test_uploadOutgoing_max_record_payload_bytes(allowSkippedRecord) 
     await engine.trackRemainingChanges();
 
     // Check that we will try to upload the huge record next time
-    do_check_eq(engine._tracker.changedIDs.flying, 1000);
+    do_check_eq(engine._tracker.changedIDs["flying"], 1000);
   } finally {
     // Check we didn't upload the oversized record to the server
     do_check_eq(collection.payload("flying"), undefined);
@@ -1320,9 +1317,9 @@ add_task(async function test_uploadOutgoing_failed() {
     // Confirm initial environment
     do_check_eq(engine.lastSyncLocal, 0);
     do_check_eq(collection.payload("flying"), undefined);
-    do_check_eq(engine._tracker.changedIDs.flying, FLYING_CHANGED);
-    do_check_eq(engine._tracker.changedIDs.scotsman, SCOTSMAN_CHANGED);
-    do_check_eq(engine._tracker.changedIDs.peppercorn, PEPPERCORN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["flying"], FLYING_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["scotsman"], SCOTSMAN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["peppercorn"], PEPPERCORN_CHANGED);
 
     engine.enabled = true;
     await sync_engine_and_validate_telem(engine, true);
@@ -1332,15 +1329,82 @@ add_task(async function test_uploadOutgoing_failed() {
 
     // Ensure the 'flying' record has been uploaded and is no longer marked.
     do_check_true(!!collection.payload("flying"));
-    do_check_eq(engine._tracker.changedIDs.flying, undefined);
+    do_check_eq(engine._tracker.changedIDs["flying"], undefined);
 
     // The 'scotsman' and 'peppercorn' records couldn't be uploaded so
     // they weren't cleared from the tracker.
-    do_check_eq(engine._tracker.changedIDs.scotsman, SCOTSMAN_CHANGED);
-    do_check_eq(engine._tracker.changedIDs.peppercorn, PEPPERCORN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["scotsman"], SCOTSMAN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["peppercorn"], PEPPERCORN_CHANGED);
 
   } finally {
     await promiseClean(engine, server);
+  }
+});
+
+/* A couple of "functional" tests to ensure we split records into appropriate
+   POST requests. More comprehensive unit-tests for this "batching" are in
+   test_postqueue.js.
+*/
+add_task(async function test_uploadOutgoing_MAX_UPLOAD_RECORDS() {
+  _("SyncEngine._uploadOutgoing uploads in batches of MAX_UPLOAD_RECORDS");
+
+  let collection = new ServerCollection();
+
+  // Let's count how many times the client posts to the server
+  var noOfUploads = 0;
+  collection.post = (function(orig) {
+    return function(data, request) {
+      // This test doesn't arrange for batch semantics - so we expect the
+      // first request to come in with batch=true and the others to have no
+      // batch related headers at all (as the first response did not provide
+      // a batch ID)
+      if (noOfUploads == 0) {
+        do_check_eq(request.queryString, "batch=true");
+      } else {
+        do_check_eq(request.queryString, "");
+      }
+      noOfUploads++;
+      return orig.call(this, data, request);
+    };
+  }(collection.post));
+
+  // Create a bunch of records (and server side handlers)
+  let engine = makeRotaryEngine();
+  for (var i = 0; i < 234; i++) {
+    let id = "record-no-" + i;
+    engine._store.items[id] = "Record No. " + i;
+    engine._tracker.addChangedID(id, 0);
+    collection.insert(id);
+  }
+
+  let meta_global = Service.recordManager.set(engine.metaURL,
+                                              new WBORecord(engine.metaURL));
+  meta_global.payload.engines = {rotary: {version: engine.version,
+                                         syncID: engine.syncID}};
+
+  let server = sync_httpd_setup({
+      "/1.1/foo/storage/rotary": collection.handler()
+  });
+
+  await SyncTestingInfrastructure(server);
+  try {
+
+    // Confirm initial environment.
+    do_check_eq(noOfUploads, 0);
+
+    await engine._syncStartup();
+    await engine._uploadOutgoing();
+
+    // Ensure all records have been uploaded.
+    for (i = 0; i < 234; i++) {
+      do_check_true(!!collection.payload("record-no-" + i));
+    }
+
+    // Ensure that the uploads were performed in batches of MAX_UPLOAD_RECORDS.
+    do_check_eq(noOfUploads, Math.ceil(234 / MAX_UPLOAD_RECORDS));
+
+  } finally {
+    await cleanAndGo(engine, server);
   }
 });
 
@@ -1364,7 +1428,7 @@ async function createRecordFailTelemetry(allowSkippedRecord) {
       throw new Error("oops");
     }
     return oldCreateRecord.call(engine._store, id, col);
-  };
+  }
   engine.lastSync = 123; // needs to be non-zero so that tracker is queried
   engine._store.items = {flying: "LNER Class A3 4472",
                          scotsman: "Flying Scotsman"};
@@ -1384,8 +1448,8 @@ async function createRecordFailTelemetry(allowSkippedRecord) {
     // Confirm initial environment
     do_check_eq(engine.lastSyncLocal, 0);
     do_check_eq(collection.payload("flying"), undefined);
-    do_check_eq(engine._tracker.changedIDs.flying, FLYING_CHANGED);
-    do_check_eq(engine._tracker.changedIDs.scotsman, SCOTSMAN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["flying"], FLYING_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["scotsman"], SCOTSMAN_CHANGED);
 
     engine.enabled = true;
     ping = await sync_engine_and_validate_telem(engine, true, onErrorPing => {
@@ -1398,7 +1462,7 @@ async function createRecordFailTelemetry(allowSkippedRecord) {
 
     // Ensure the 'flying' record has been uploaded and is no longer marked.
     do_check_true(!!collection.payload("flying"));
-    do_check_eq(engine._tracker.changedIDs.flying, undefined);
+    do_check_eq(engine._tracker.changedIDs["flying"], undefined);
   } catch (err) {
     if (allowSkippedRecord) {
       do_throw("should not get here");
@@ -1406,7 +1470,7 @@ async function createRecordFailTelemetry(allowSkippedRecord) {
 
     // Ensure the 'flying' record has not been uploaded and is still marked
     do_check_false(collection.payload("flying"));
-    do_check_true(engine._tracker.changedIDs.flying);
+    do_check_true(engine._tracker.changedIDs["flying"]);
   } finally {
     // Local timestamp has been set.
     do_check_true(engine.lastSyncLocal > 0);
@@ -1417,7 +1481,7 @@ async function createRecordFailTelemetry(allowSkippedRecord) {
     // In any case, the 'scotsman' record couldn't be created so it wasn't
     // uploaded nor it was not cleared from the tracker.
     do_check_false(collection.payload("scotsman"));
-    do_check_eq(engine._tracker.changedIDs.scotsman, SCOTSMAN_CHANGED);
+    do_check_eq(engine._tracker.changedIDs["scotsman"], SCOTSMAN_CHANGED);
 
     engine._store.createRecord = oldCreateRecord;
     await promiseClean(engine, server);
@@ -1435,13 +1499,13 @@ add_task(async function test_uploadOutgoing_createRecord_throws_dontAllowSkipRec
 });
 
 add_task(async function test_uploadOutgoing_largeRecords() {
-  _("SyncEngine._uploadOutgoing throws on records larger than the max record payload size");
+  _("SyncEngine._uploadOutgoing throws on records larger than MAX_UPLOAD_BYTES");
 
   let collection = new ServerCollection();
 
   let engine = makeRotaryEngine();
   engine.allowSkippedRecord = false;
-  engine._store.items["large-item"] = "Y".repeat(Service.getMaxRecordPayloadSize() * 2);
+  engine._store.items["large-item"] = "Y".repeat(MAX_UPLOAD_BYTES * 2);
   engine._tracker.addChangedID("large-item", 0);
   collection.insert("large-item");
 
@@ -1469,6 +1533,23 @@ add_task(async function test_uploadOutgoing_largeRecords() {
   } finally {
     await cleanAndGo(engine, server);
   }
+});
+
+
+add_task(async function test_syncFinish_noDelete() {
+  _("SyncEngine._syncFinish resets tracker's score");
+
+  let server = httpd_setup({});
+
+  await SyncTestingInfrastructure(server);
+  let engine = makeRotaryEngine();
+  engine._delete = {}; // Nothing to delete
+  engine._tracker.score = 100;
+
+  // _syncFinish() will reset the engine's score.
+  await engine._syncFinish();
+  do_check_eq(engine.score, 0);
+  server.stop(run_next_test);
 });
 
 
@@ -1588,12 +1669,8 @@ add_task(async function test_sync_partialUpload() {
   let server = sync_httpd_setup({
       "/1.1/foo/storage/rotary": collection.handler()
   });
-  let oldServerConfiguration = Service.serverConfiguration;
-  Service.serverConfiguration = {
-    max_post_records: 100
-  };
   await SyncTestingInfrastructure(server);
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let engine = makeRotaryEngine();
   engine.lastSync = 123; // needs to be non-zero so that tracker is queried
@@ -1645,8 +1722,8 @@ add_task(async function test_sync_partialUpload() {
       let id = "record-no-" + i;
       // Ensure failed records are back in the tracker:
       // * records no. 23 and 42 were rejected by the server,
-      // * records after the third batch and higher couldn't be uploaded because
-      //   we failed hard on the 3rd upload.
+      // * records no. 200 and higher couldn't be uploaded because we failed
+      //   hard on the 3rd upload.
       if ((i == 23) || (i == 42) || (i >= 200))
         do_check_eq(engine._tracker.changedIDs[id], i);
       else
@@ -1654,7 +1731,6 @@ add_task(async function test_sync_partialUpload() {
     }
 
   } finally {
-    Service.serverConfiguration = oldServerConfiguration;
     await promiseClean(engine, server);
   }
 });
@@ -1688,7 +1764,7 @@ add_task(async function test_canDecrypt_noCryptoKeys() {
 add_task(async function test_canDecrypt_true() {
   _("SyncEngine.canDecrypt returns true if the engine can decrypt the items on the server.");
 
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let collection = new ServerCollection();
   collection._wbos.flying = new ServerWBO(

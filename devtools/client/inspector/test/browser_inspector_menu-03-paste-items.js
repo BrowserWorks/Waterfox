@@ -29,7 +29,7 @@ const PASTE_ADJACENT_HTML_DATA = [
   },
 ];
 
-var clipboard = require("devtools/shared/platform/clipboard");
+var clipboard = require("sdk/clipboard");
 registerCleanupFunction(() => {
   clipboard = null;
 });
@@ -43,7 +43,7 @@ add_task(function* () {
 
   function* testPasteOuterHTMLMenu() {
     info("Testing that 'Paste Outer HTML' menu item works.");
-    clipboard.copyString("this was pasted (outerHTML)");
+    clipboard.set("this was pasted (outerHTML)");
     let outerHTMLSelector = "#paste-area h1";
 
     let nodeFront = yield getNodeFront(outerHTMLSelector, inspector);
@@ -60,7 +60,7 @@ add_task(function* () {
     yield onNodeReselected;
 
     let outerHTML = yield testActor.getProperty("body", "outerHTML");
-    ok(outerHTML.includes(clipboard.getText()),
+    ok(outerHTML.includes(clipboard.get()),
        "Clipboard content was pasted into the node's outer HTML.");
     ok(!(yield testActor.hasNode(outerHTMLSelector)),
       "The original node was removed.");
@@ -68,7 +68,7 @@ add_task(function* () {
 
   function* testPasteInnerHTMLMenu() {
     info("Testing that 'Paste Inner HTML' menu item works.");
-    clipboard.copyString("this was pasted (innerHTML)");
+    clipboard.set("this was pasted (innerHTML)");
     let innerHTMLSelector = "#paste-area .inner";
     let getInnerHTML = () => testActor.getProperty(innerHTMLSelector,
                                                    "innerHTML");
@@ -86,7 +86,7 @@ add_task(function* () {
     info("Waiting for mutation to occur");
     yield onMutation;
 
-    ok((yield getInnerHTML()) === clipboard.getText(),
+    ok((yield getInnerHTML()) === clipboard.get(),
        "Clipboard content was pasted into the node's inner HTML.");
     ok((yield testActor.hasNode(innerHTMLSelector)),
        "The original node has been preserved.");
@@ -107,7 +107,7 @@ add_task(function* () {
         target: markupTagLine,
       });
       info(`Testing ${menuId} for ${clipboardData}`);
-      clipboard.copyString(clipboardData);
+      clipboard.set(clipboardData);
 
       let onMutation = inspector.once("markupmutation");
       allMenuItems.find(item => item.id === menuId).click();

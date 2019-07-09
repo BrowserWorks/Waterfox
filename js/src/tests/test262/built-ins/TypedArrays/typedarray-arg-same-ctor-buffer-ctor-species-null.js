@@ -30,7 +30,7 @@ info: >
   6. If S is either undefined or null, return defaultConstructor.
   ...
 includes: [testTypedArray.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

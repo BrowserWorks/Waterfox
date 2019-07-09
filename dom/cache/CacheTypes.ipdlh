@@ -10,8 +10,6 @@ include ChannelInfo;
 include PBackgroundSharedTypes;
 
 using HeadersGuardEnum from "mozilla/dom/FetchIPCTypes.h";
-using Namespace from "mozilla/dom/cache/IPCUtils.h";
-using OpenMode from "mozilla/dom/cache/IPCUtils.h";
 using ReferrerPolicy from "mozilla/dom/FetchIPCTypes.h";
 using RequestCredentials from "mozilla/dom/FetchIPCTypes.h";
 using RequestMode from "mozilla/dom/FetchIPCTypes.h";
@@ -38,7 +36,7 @@ struct CacheReadStream
 {
   nsID id;
   nullable PCacheStreamControl control;
-  OptionalIPCStream stream;
+  IPCStream stream;
 };
 
 union CacheReadStreamOrVoid
@@ -88,8 +86,6 @@ struct CacheResponse
   CacheReadStreamOrVoid body;
   IPCChannelInfo channelInfo;
   OptionalPrincipalInfo principalInfo;
-  uint32_t paddingInfo;
-  int64_t paddingSize;
 };
 
 union CacheResponseOrVoid
@@ -108,14 +104,12 @@ struct CacheMatchArgs
 {
   CacheRequest request;
   CacheQueryParams params;
-  OpenMode openMode;
 };
 
 struct CacheMatchAllArgs
 {
   CacheRequestOrVoid requestOrVoid;
   CacheQueryParams params;
-  OpenMode openMode;
 };
 
 struct CachePutAllArgs
@@ -133,14 +127,12 @@ struct CacheKeysArgs
 {
   CacheRequestOrVoid requestOrVoid;
   CacheQueryParams params;
-  OpenMode openMode;
 };
 
 struct StorageMatchArgs
 {
   CacheRequest request;
   CacheQueryParams params;
-  OpenMode openMode;
 };
 
 struct StorageHasArgs
@@ -213,7 +205,6 @@ struct StorageHasResult
 struct StorageOpenResult
 {
   nullable PCache actor;
-  Namespace ns;
 };
 
 struct StorageDeleteResult

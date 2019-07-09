@@ -4,10 +4,11 @@
 /*---
 esid: sec-module-namespace-exotic-objects-defineownproperty-p-desc
 description: >
-    The [[DefineOwnProperty]] internal method returns `true` if no change is
-    requested, and `false` otherwise.
+    The [[DefineOwnProperty]] internal method consistently returns `false`
+info: |
+    1. Return false.
 flags: [module]
-features: [Symbol.iterator, Reflect, Symbol, Symbol.toStringTag]
+features: [Reflect, Symbol, Symbol.toStringTag]
 ---*/
 
 import * as ns from './define-own-property.js';
@@ -17,103 +18,65 @@ export { local2 as renamed };
 export { local1 as indirect } from './define-own-property.js';
 var sym = Symbol('test262');
 
-const exported = ['local1', 'renamed', 'indirect'];
-
-
-// Non-existant properties.
-
-for (const key of ['local2', 0, sym, Symbol.iterator]) {
-  assert.sameValue(
-    Reflect.defineProperty(ns, key, {}),
-    false,
-    'Reflect.defineProperty: ' + key.toString()
-  );
-  assert.throws(TypeError, function() {
-    Object.defineProperty(ns, key, {});
-  }, 'Object.defineProperty: ' + key.toString());
-}
-
-
-// Own properties. No change requested.
-
-for (const key of ([...exported, Symbol.toStringTag])) {
-  assert.sameValue(
-    Reflect.defineProperty(ns, key, {}),
-    true,
-    'Reflect.defineProperty: ' + key.toString()
-  );
-  assert.sameValue(
-    Object.defineProperty(ns, key, {}),
-    ns,
-    'Object.defineProperty: ' + key.toString()
-  );
-
-}
-
 assert.sameValue(
-  Reflect.defineProperty(ns, 'indirect',
-      {writable: true, enumerable: true, configurable: false}),
-  true,
-  'Reflect.defineProperty: indirect'
+  Reflect.defineProperty(ns, 'local1', {}),
+  false,
+  'Reflect.defineProperty: local1'
 );
+assert.throws(TypeError, function() {
+  Object.defineProperty(ns, 'local1', {});
+}, 'Object.defineProperty: local1');
+
 assert.sameValue(
-  Object.defineProperty(ns, 'indirect',
-      {writable: true, enumerable: true, configurable: false}),
-  ns,
-  'Object.defineProperty: indirect'
+  Reflect.defineProperty(ns, 'local2', {}),
+  false,
+  'Reflect.defineProperty: local2'
 );
+assert.throws(TypeError, function() {
+  Object.defineProperty(ns, 'local2', {});
+}, 'Object.defineProperty: local2');
 
 assert.sameValue(
-  Reflect.defineProperty(ns, Symbol.toStringTag,
-      {value: "Module", writable: false, enumerable: false,
-       configurable: false}),
-  true,
-  'Reflect.defineProperty: Symbol.toStringTag'
+  Reflect.defineProperty(ns, 'renamed', {}),
+  false,
+  'Reflect.defineProperty: renamed'
 );
-assert.sameValue(
-  Object.defineProperty(ns, Symbol.toStringTag,
-      {value: "Module", writable: false, enumerable: false,
-       configurable: false}),
-  ns,
-  'Object.defineProperty: Symbol.toStringTag'
-);
-
-
-// Own properties. Change requested.
-
-for (const key of ([...exported, Symbol.toStringTag])) {
-  assert.sameValue(
-    Reflect.defineProperty(ns, key, {value: 123}),
-    false,
-    'Reflect.defineProperty: ' + key.toString()
-  );
-  assert.throws(TypeError, function() {
-    Object.defineProperty(ns, key, {value: 123});
-  }, 'Object.defineProperty: ' + key.toString());
-}
+assert.throws(TypeError, function() {
+  Object.defineProperty(ns, 'renamed', {});
+}, 'Object.defineProperty: renamed');
 
 assert.sameValue(
-  Reflect.defineProperty(ns, 'indirect',
-      {writable: true, enumerable: true, configurable: true}),
+  Reflect.defineProperty(ns, 'indirect', {}),
   false,
   'Reflect.defineProperty: indirect'
 );
 assert.throws(TypeError, function() {
-  Object.defineProperty(ns, 'indirect',
-      {writable: true, enumerable: true, configurable: true});
+  Object.defineProperty(ns, 'indirect', {});
 }, 'Object.defineProperty: indirect');
 
 assert.sameValue(
-  Reflect.defineProperty(ns, Symbol.toStringTag,
-      {value: "module", writable: false, enumerable: false,
-       configurable: false}),
+  Reflect.defineProperty(ns, 'default', {}),
+  false,
+  'Reflect.defineProperty: default'
+);
+assert.throws(TypeError, function() {
+  Object.defineProperty(ns, 'default', {});
+}, 'Object.defineProperty: default');
+
+assert.sameValue(
+  Reflect.defineProperty(ns, Symbol.toStringTag, {}),
   false,
   'Reflect.defineProperty: Symbol.toStringTag'
 );
 assert.throws(TypeError, function() {
-  Object.defineProperty(ns, Symbol.toStringTag,
-      {value: "module", writable: false, enumerable: false,
-       configurable: false});
+  Object.defineProperty(ns, Symbol.toStringTag, {});
 }, 'Object.defineProperty: Symbol.toStringTag');
+
+assert.sameValue(
+  Reflect.defineProperty(ns, sym, {}), false, 'Reflect.defineProperty: sym'
+);
+assert.throws(TypeError, function() {
+  Object.defineProperty(ns, sym, {});
+}, 'Object.defineProperty: symbol');
 
 reportCompare(0, 0);

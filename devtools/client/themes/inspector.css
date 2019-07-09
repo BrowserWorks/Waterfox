@@ -11,6 +11,14 @@
   --eyedropper-image: url(images/firebug/command-eyedropper.svg);
 }
 
+:root.theme-light {
+  --breadcrumbs-border-color: #f3f3f3;
+}
+
+:root.theme-dark {
+  --breadcrumbs-border-color: #454d5d;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -108,11 +116,15 @@ window {
   background-image: var(--eyedropper-image);
 }
 
+#inspector-sidebar-toggle-box {
+  line-height: initial;
+}
+
 #inspector-breadcrumbs-toolbar {
   padding: 0px;
   border-bottom-width: 0px;
   border-top-width: 1px;
-  border-top-color: var(--theme-splitter-color);
+  border-top-color: var(--breadcrumbs-border-color);
   /* Bug 1262668 - Use the same background as the body so the breadcrumbs toolbar doesn't
      get mistaken as a splitter */
   background-color: var(--theme-body-background);
@@ -176,6 +188,15 @@ window {
   -moz-user-focus: normal;
 }
 
+/* "no results" warning message displayed in the ruleview and in the computed view */
+
+#ruleview-no-results,
+#computedview-no-results {
+  color: var(--theme-body-color-inactive);
+  text-align: center;
+  margin: 5px;
+}
+
 /* Markup Box */
 
 iframe {
@@ -192,3 +213,4 @@ iframe {
   height: 100%;
   width: 100%;
 }
+

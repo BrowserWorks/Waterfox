@@ -20,7 +20,6 @@ EXPORTS += [
     'nsHtml5AttributeEntry.h',
     'nsHtml5AttributeName.h',
     'nsHtml5ByteReadable.h',
-    'nsHtml5ContentCreatorFunction.h',
     'nsHtml5DependentUTF16Buffer.h',
     'nsHtml5DocumentBuilder.h',
     'nsHtml5DocumentMode.h',
@@ -55,6 +54,7 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'nsHtml5Atom.cpp',
     'nsHtml5AtomTable.cpp',
     'nsHtml5AttributeName.cpp',
     'nsHtml5DependentUTF16Buffer.cpp',
@@ -98,6 +98,7 @@ LOCAL_INCLUDES += [
     '/dom/base',
 ]
 
-if CONFIG['GNU_CXX'] or CONFIG['CLANG_CXX']:
-    CXXFLAGS += ['-Wno-error=shadow',
-                 '-Wno-implicit-fallthrough']
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']
+    if CONFIG['CLANG_CXX']:
+        CXXFLAGS += ['-Wno-implicit-fallthrough']

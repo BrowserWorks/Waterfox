@@ -1,10 +1,8 @@
-from __future__ import absolute_import, print_function
-
-import json
-import unittest
-
 from talos import talosconfig
 from talos.configuration import YAML
+import unittest
+import json
+
 
 # globals
 ffox_path = 'test/path/to/firefox'

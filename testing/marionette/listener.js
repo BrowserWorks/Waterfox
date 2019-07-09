@@ -7,24 +7,26 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-const winUtil = content.QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIDOMWindowUtils);
+var uuidGen = Cc["@mozilla.org/uuid-generator;1"]
+    .getService(Ci.nsIUUIDGenerator);
+
+var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+    .getService(Ci.mozIJSSubScriptLoader);
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 Cu.import("chrome://marionette/content/accessibility.js");
 Cu.import("chrome://marionette/content/action.js");
 Cu.import("chrome://marionette/content/atom.js");
 Cu.import("chrome://marionette/content/capture.js");
-const {
-  element,
-  WebElement,
-} = Cu.import("chrome://marionette/content/element.js", {});
+Cu.import("chrome://marionette/content/element.js");
 const {
   ElementNotInteractableError,
   error,
@@ -34,13 +36,11 @@ const {
   InvalidSelectorError,
   NoSuchElementError,
   NoSuchFrameError,
-  pprint,
   TimeoutError,
   UnknownError,
 } = Cu.import("chrome://marionette/content/error.js", {});
 Cu.import("chrome://marionette/content/evaluate.js");
 Cu.import("chrome://marionette/content/event.js");
-const {ContentEventObserverService} = Cu.import("chrome://marionette/content/dom.js", {});
 Cu.import("chrome://marionette/content/interaction.js");
 Cu.import("chrome://marionette/content/legacyaction.js");
 Cu.import("chrome://marionette/content/navigate.js");
@@ -49,12 +49,15 @@ Cu.import("chrome://marionette/content/session.js");
 
 Cu.importGlobalProperties(["URL"]);
 
-let listenerId = null;  // unique ID of this listener
-let curContainer = {frame: content, shadowRoot: null};
-let previousContainer = null;
+var marionetteTestName;
+var winUtil = content.QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIDOMWindowUtils);
+var listenerId = null; // unique ID of this listener
+var curContainer = {frame: content, shadowRoot: null};
+var previousContainer = null;
 
-const seenEls = new element.Store();
-const SUPPORTED_STRATEGIES = new Set([
+var seenEls = new element.Store();
+var SUPPORTED_STRATEGIES = new Set([
   element.Strategy.ClassName,
   element.Strategy.Selector,
   element.Strategy.ID,
@@ -65,24 +68,53 @@ const SUPPORTED_STRATEGIES = new Set([
   element.Strategy.XPath,
 ]);
 
-let capabilities;
+var capabilities;
 
-let legacyactions = new legacyaction.Chain(checkForInterrupted);
+var legacyactions = new legacyaction.Chain(checkForInterrupted);
 
+// the unload handler
+var onunload;
+
+// Flag to indicate whether an async script is currently running or not.
+var asyncTestRunning = false;
+var asyncTestCommandId;
+var asyncTestTimeoutId;
+
+var inactivityTimeoutId = null;
+
+var originalOnError;
+// Send move events about this often
+var EVENT_INTERVAL = 30; // milliseconds
 // last touch for each fingerId
-let multiLast = {};
+var multiLast = {};
+var asyncChrome = proxy.toChromeAsync({
+  addMessageListener: addMessageListenerId.bind(this),
+  removeMessageListener: removeMessageListenerId.bind(this),
+  sendAsyncMessage: sendAsyncMessage.bind(this),
+});
+var syncChrome = proxy.toChrome(sendSyncMessage.bind(this));
 
-const logger = Log.repository.getLogger("Marionette");
+var logger = Log.repository.getLogger("Marionette");
 // Append only once to avoid duplicated output after listener.js gets reloaded
 if (logger.ownAppenders.length == 0) {
   logger.addAppender(new Log.DumpAppender());
 }
 
-// sandbox storage and name of the current sandbox
-const sandboxes = new Sandboxes(() => curContainer.frame);
+var modalHandler = function() {
+  // This gets called on the system app only since it receives the
+  // mozbrowserprompt event
+  sendSyncMessage("Marionette:switchedToFrame",
+      {frameValue: null, storePrevious: true});
+  let isLocal = sendSyncMessage("MarionetteFrame:handleModal", {})[0].value;
+  if (isLocal) {
+    previousContainer = curContainer;
+  }
+  curContainer = {frame: content, shadowRoot: null};
+};
 
-const eventObservers = new ContentEventObserverService(
-    content, sendAsyncMessage.bind(this));
+// sandbox storage and name of the current sandbox
+var sandboxes = new Sandboxes(() => curContainer.frame);
+var sandboxName = "default";
 
 /**
  * The load listener singleton helps to keep track of active page load
@@ -90,8 +122,8 @@ const eventObservers = new ContentEventObserverService(
  * to happen. In the specific case of a reload of the frame script it allows
  * to continue observing the current page load.
  */
-const loadListener = {
-  commandID: null,
+var loadListener = {
+  command_id: null,
   seenBeforeUnload: false,
   seenUnload: false,
   timeout: null,
@@ -101,7 +133,7 @@ const loadListener = {
   /**
    * Start listening for page unload/load events.
    *
-   * @param {number} commandID
+   * @param {number} command_id
    *     ID of the currently handled message between the driver and
    *     listener.
    * @param {number} timeout
@@ -113,8 +145,8 @@ const loadListener = {
    *     If true wait for page unload events, otherwise only for page
    *     load events.
    */
-  start(commandID, timeout, startTime, waitForUnloaded = true) {
-    this.commandID = commandID;
+  start(command_id, timeout, startTime, waitForUnloaded = true) {
+    this.command_id = command_id;
     this.timeout = timeout;
 
     this.seenBeforeUnload = false;
@@ -242,7 +274,7 @@ const loadListener = {
       case "hashchange":
       case "popstate":
         this.stop();
-        sendOk(this.commandID);
+        sendOk(this.command_id);
         break;
 
       case "DOMContentLoaded":
@@ -274,13 +306,13 @@ const loadListener = {
       case "interactive":
         if (documentURI.startsWith("about:certerror")) {
           this.stop();
-          sendError(new InsecureCertificateError(), this.commandID);
+          sendError(new InsecureCertificateError(), this.command_id);
           finished = true;
 
         } else if (/about:.*(error)\?/.exec(documentURI)) {
           this.stop();
           sendError(new UnknownError(`Reached error page: ${documentURI}`),
-              this.commandID);
+              this.command_id);
           finished = true;
 
         // Return early with a page load strategy of eager, and also
@@ -294,7 +326,7 @@ const loadListener = {
             documentURI != "about:blank") ||
             /about:blocked\?/.exec(documentURI)) {
           this.stop();
-          sendOk(this.commandID);
+          sendOk(this.command_id);
           finished = true;
         }
 
@@ -302,7 +334,7 @@ const loadListener = {
 
       case "complete":
         this.stop();
-        sendOk(this.commandID);
+        sendOk(this.command_id);
         finished = true;
 
         break;
@@ -336,7 +368,7 @@ const loadListener = {
           logger.debug("Canceled page load listener because no navigation " +
               "has been detected");
           this.stop();
-          sendOk(this.commandID);
+          sendOk(this.command_id);
         }
         break;
 
@@ -344,12 +376,12 @@ const loadListener = {
         this.stop();
         sendError(
             new TimeoutError(`Timeout loading page after ${this.timeout}ms`),
-            this.commandID);
+            this.command_id);
         break;
     }
   },
 
-  observe(subject, topic) {
+  observe(subject, topic, data) {
     const win = curContainer.frame;
     const winID = subject.QueryInterface(Ci.nsISupportsPRUint64).data;
     const curWinID = win.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -363,7 +395,7 @@ const loadListener = {
       case "outer-window-destroyed":
         if (curWinID === winID) {
           this.stop();
-          sendOk(this.commandID);
+          sendOk(this.command_id);
         }
         break;
     }
@@ -373,7 +405,7 @@ const loadListener = {
    * Continue to listen for page load events after the frame script has been
    * reloaded.
    *
-   * @param {number} commandID
+   * @param {number} command_id
    *     ID of the currently handled message between the driver and
    *     listener.
    * @param {number} timeout
@@ -382,8 +414,8 @@ const loadListener = {
    * @param {number} startTime
    *     Unix timestap when the navitation request got triggered.
    */
-  waitForLoadAfterFramescriptReload(commandID, timeout, startTime) {
-    this.start(commandID, timeout, startTime, false);
+  waitForLoadAfterFramescriptReload(command_id, timeout, startTime) {
+    this.start(command_id, timeout, startTime, false);
   },
 
   /**
@@ -392,7 +424,7 @@ const loadListener = {
    *
    * @param {function} trigger
    *     Callback that triggers the page load.
-   * @param {number} commandID
+   * @param {number} command_id
    *     ID of the currently handled message between the driver and listener.
    * @param {number} pageTimeout
    *     Timeout in milliseconds the method has to wait for the page
@@ -403,7 +435,7 @@ const loadListener = {
    * @param {string=} url
    *     Optional URL, which is used to check if a page load is expected.
    */
-  navigate(trigger, commandID, timeout, loadEventExpected = true,
+  navigate(trigger, command_id, timeout, loadEventExpected = true,
       useUnloadTimer = false) {
 
     // Only wait if the page load strategy is not `none`
@@ -413,15 +445,15 @@ const loadListener = {
 
     if (loadEventExpected) {
       let startTime = new Date().getTime();
-      this.start(commandID, timeout, startTime, true);
+      this.start(command_id, timeout, startTime, true);
     }
 
-    return (async () => {
-      await trigger();
+    return Task.spawn(function* () {
+      yield trigger();
 
-    })().then(() => {
+    }).then(val => {
       if (!loadEventExpected) {
-        sendOk(commandID);
+        sendOk(command_id);
         return;
       }
 
@@ -438,7 +470,8 @@ const loadListener = {
         this.stop();
       }
 
-      sendError(err, commandID);
+      sendError(err, command_id);
+
     });
   },
 };
@@ -466,33 +499,35 @@ function registerSelf() {
   }
 }
 
-// Eventually we will not have a closure for every single command,
-// but use a generic dispatch for all listener commands.
+// Eventually we will not have a closure for every single command, but
+// use a generic dispatch for all listener commands.
 //
-// Worth nothing that this shares many characteristics with
-// server.TCPConnection#execute.  Perhaps this could be generalised
-// at the point.
+// Perhaps one could even conceive having a separate instance of
+// CommandProcessor for the listener, because the code is mostly the same.
 function dispatch(fn) {
   if (typeof fn != "function") {
     throw new TypeError("Provided dispatch handler is not a function");
   }
 
-  return msg => {
-    const id = msg.json.commandID;
+  return function(msg) {
+    let id = msg.json.command_id;
 
-    let req = new Promise(resolve => {
-      const args = evaluate.fromJSON(msg.json, seenEls, curContainer.frame);
-
-      let rv;
-      if (typeof args == "undefined" || args instanceof Array) {
-        rv = fn.apply(null, args);
-      } else {
-        rv = fn(args);
+    let req = Task.spawn(function* () {
+      if (typeof msg.json == "undefined" || msg.json instanceof Array) {
+        return yield fn.apply(null, msg.json);
       }
-      resolve(rv);
+      return yield fn(msg.json);
     });
 
-    req.then(rv => sendResponse(rv, id), err => sendError(err, id))
+    let okOrValueResponse = rv => {
+      if (typeof rv == "undefined") {
+        sendOk(id);
+      } else {
+        sendResponse(rv, id);
+      }
+    };
+
+    req.then(okOrValueResponse, err => sendError(err, id))
         .catch(error.report);
   };
 }
@@ -511,31 +546,31 @@ function removeMessageListenerId(messageName, handler) {
   removeMessageListener(messageName + listenerId, handler);
 }
 
-let getPageSourceFn = dispatch(getPageSource);
-let getActiveElementFn = dispatch(getActiveElement);
-let getElementAttributeFn = dispatch(getElementAttribute);
-let getElementPropertyFn = dispatch(getElementProperty);
-let getElementTextFn = dispatch(getElementText);
-let getElementTagNameFn = dispatch(getElementTagName);
-let getElementRectFn = dispatch(getElementRect);
-let isElementEnabledFn = dispatch(isElementEnabled);
-let findElementContentFn = dispatch(findElementContent);
-let findElementsContentFn = dispatch(findElementsContent);
-let isElementSelectedFn = dispatch(isElementSelected);
-let clearElementFn = dispatch(clearElement);
-let isElementDisplayedFn = dispatch(isElementDisplayed);
-let getElementValueOfCssPropertyFn = dispatch(getElementValueOfCssProperty);
-let switchToShadowRootFn = dispatch(switchToShadowRoot);
-let singleTapFn = dispatch(singleTap);
-let takeScreenshotFn = dispatch(takeScreenshot);
-let performActionsFn = dispatch(performActions);
-let releaseActionsFn = dispatch(releaseActions);
-let actionChainFn = dispatch(actionChain);
-let multiActionFn = dispatch(multiAction);
-let executeFn = dispatch(execute);
-let executeInSandboxFn = dispatch(executeInSandbox);
-let sendKeysToElementFn = dispatch(sendKeysToElement);
-let reftestWaitFn = dispatch(reftestWait);
+var getPageSourceFn = dispatch(getPageSource);
+var getActiveElementFn = dispatch(getActiveElement);
+var getElementAttributeFn = dispatch(getElementAttribute);
+var getElementPropertyFn = dispatch(getElementProperty);
+var getElementTextFn = dispatch(getElementText);
+var getElementTagNameFn = dispatch(getElementTagName);
+var getElementRectFn = dispatch(getElementRect);
+var isElementEnabledFn = dispatch(isElementEnabled);
+var findElementContentFn = dispatch(findElementContent);
+var findElementsContentFn = dispatch(findElementsContent);
+var isElementSelectedFn = dispatch(isElementSelected);
+var clearElementFn = dispatch(clearElement);
+var isElementDisplayedFn = dispatch(isElementDisplayed);
+var getElementValueOfCssPropertyFn = dispatch(getElementValueOfCssProperty);
+var switchToShadowRootFn = dispatch(switchToShadowRoot);
+var singleTapFn = dispatch(singleTap);
+var takeScreenshotFn = dispatch(takeScreenshot);
+var performActionsFn = dispatch(performActions);
+var releaseActionsFn = dispatch(releaseActions);
+var actionChainFn = dispatch(actionChain);
+var multiActionFn = dispatch(multiAction);
+var executeFn = dispatch(execute);
+var executeInSandboxFn = dispatch(executeInSandbox);
+var sendKeysToElementFn = dispatch(sendKeysToElement);
+var reftestWaitFn = dispatch(reftestWait);
 
 /**
  * Start all message listeners
@@ -582,8 +617,6 @@ function startListeners() {
   addMessageListenerId("Marionette:sleepSession", sleepSession);
   addMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
   addMessageListenerId("Marionette:reftestWait", reftestWaitFn);
-  addMessageListener("Marionette:DOM:AddEventListener", domAddEventListener);
-  addMessageListener("Marionette:DOM:RemoveEventListener", domRemoveEventListener);
 }
 
 /**
@@ -599,7 +632,7 @@ function newSession(msg) {
  * Puts the current session to sleep, so all listeners are removed except
  * for the 'restart' listener.
  */
-function sleepSession() {
+function sleepSession(msg) {
   deleteSession();
   addMessageListener("Marionette:restart", restart);
 }
@@ -607,7 +640,7 @@ function sleepSession() {
 /**
  * Restarts all our listeners after this listener was put to sleep
  */
-function restart() {
+function restart(msg) {
   removeMessageListener("Marionette:restart", restart);
   registerSelf();
 }
@@ -615,7 +648,7 @@ function restart() {
 /**
  * Removes all listeners
  */
-function deleteSession() {
+function deleteSession(msg) {
   removeMessageListenerId("Marionette:newSession", newSession);
   removeMessageListenerId("Marionette:execute", executeFn);
   removeMessageListenerId("Marionette:executeInSandbox", executeInSandboxFn);
@@ -706,8 +739,7 @@ function sendToServer(uuid, data = undefined) {
  *     Unique identifier of the request.
  */
 function sendResponse(obj, uuid) {
-  let payload = evaluate.toJSON(obj, seenEls);
-  sendToServer(uuid, payload);
+  sendToServer(uuid, obj);
 }
 
 /**
@@ -771,16 +803,27 @@ function checkForInterrupted() {
   }
 }
 
-async function execute(script, args, timeout, opts) {
+function* execute(script, args, timeout, opts) {
   opts.timeout = timeout;
+
   let sb = sandbox.createMutable(curContainer.frame);
-  return evaluate.sandbox(sb, script, args, opts);
+  let wargs = evaluate.fromJSON(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
+  let res = yield evaluate.sandbox(sb, script, wargs, opts);
+
+  return evaluate.toJSON(res, seenEls);
 }
 
-async function executeInSandbox(script, args, timeout, opts) {
+function* executeInSandbox(script, args, timeout, opts) {
   opts.timeout = timeout;
+
   let sb = sandboxes.get(opts.sandboxName, opts.newSandbox);
-  return evaluate.sandbox(sb, script, args, opts);
+  let wargs = evaluate.fromJSON(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
+  let evaluatePromise = evaluate.sandbox(sb, script, wargs, opts);
+
+  let res = yield evaluatePromise;
+  return evaluate.toJSON(res, seenEls);
 }
 
 function emitTouchEvent(type, touch) {
@@ -841,7 +884,8 @@ function emitTouchEvent(type, touch) {
 /**
  * Function that perform a single tap
  */
-async function singleTap(el, corx, cory) {
+function singleTap(id, corx, cory) {
+  let el = seenEls.get(id, curContainer);
   // after this block, the element will be scrolled into view
   let visible = element.isVisible(el, corx, cory);
   if (!visible) {
@@ -850,20 +894,21 @@ async function singleTap(el, corx, cory) {
   }
 
   let a11y = accessibility.get(capabilities.get("moz:accessibilityChecks"));
-  let acc = await a11y.getAccessible(el, true);
-  a11y.assertVisible(acc, el, visible);
-  a11y.assertActionable(acc, el);
-  if (!curContainer.frame.document.createTouch) {
-    legacyactions.mouseEventsOnly = true;
-  }
-  let c = element.coordinates(el, corx, cory);
-  if (!legacyactions.mouseEventsOnly) {
-    let touchId = legacyactions.nextTouchId++;
-    let touch = createATouch(el, c.x, c.y, touchId);
-    emitTouchEvent("touchstart", touch);
-    emitTouchEvent("touchend", touch);
-  }
-  legacyactions.mouseTap(el.ownerDocument, c.x, c.y);
+  return a11y.getAccessible(el, true).then(acc => {
+    a11y.assertVisible(acc, el, visible);
+    a11y.assertActionable(acc, el);
+    if (!curContainer.frame.document.createTouch) {
+      legacyactions.mouseEventsOnly = true;
+    }
+    let c = element.coordinates(el, corx, cory);
+    if (!legacyactions.mouseEventsOnly) {
+      let touchId = legacyactions.nextTouchId++;
+      let touch = createATouch(el, c.x, c.y, touchId);
+      emitTouchEvent("touchstart", touch);
+      emitTouchEvent("touchend", touch);
+    }
+    legacyactions.mouseTap(el.ownerDocument, c.x, c.y);
+  });
 }
 
 /**
@@ -895,20 +940,20 @@ function createATouch(el, corx, cory, touchId) {
  *      Object with an |actions| attribute that is an Array of objects
  *      each of which represents an action sequence.
  */
-async function performActions(msg) {
-  let chain = action.Chain.fromJSON(msg.actions);
-  await action.dispatch(chain, curContainer.frame);
+function* performActions(msg) {
+  let chain = action.Chain.fromJson(msg.actions);
+  yield action.dispatch(chain, seenEls, curContainer);
 }
 
 /**
- * The release actions command is used to release all the keys and pointer
+ * The Release Actions command is used to release all the keys and pointer
  * buttons that are currently depressed. This causes events to be fired
  * as if the state was released by an explicit series of actions. It also
  * clears all the internal state of the virtual devices.
  */
-async function releaseActions() {
-  await action.dispatchTickActions(
-      action.inputsToCancel.reverse(), 0, curContainer.frame);
+function* releaseActions() {
+  yield action.dispatchTickActions(
+      action.inputsToCancel.reverse(), 0, seenEls, curContainer);
   action.inputsToCancel.length = 0;
   action.inputStateMap.clear();
 }
@@ -991,7 +1036,7 @@ function setDispatch(batches, touches, batchIndex = 0) {
 
     switch (command) {
       case "press":
-        el = seenEls.get(pack[2], curContainer.frame);
+        el = seenEls.get(pack[2], curContainer);
         c = element.coordinates(el, pack[3], pack[4]);
         touch = createATouch(el, c.x, c.y, touchId);
         multiLast[touchId] = touch;
@@ -1009,7 +1054,7 @@ function setDispatch(batches, touches, batchIndex = 0) {
         break;
 
       case "move":
-        el = seenEls.get(pack[2], curContainer.frame);
+        el = seenEls.get(pack[2], curContainer);
         c = element.coordinates(el);
         touch = createATouch(multiLast[touchId].target, c.x, c.y, touchId);
         touchIndex = touches.indexOf(lastTouch);
@@ -1076,7 +1121,8 @@ function setDispatch(batches, touches, batchIndex = 0) {
  */
 function multiAction(args, maxLen) {
   // unwrap the original nested array
-  let commandArray = evaluate.fromJSON(args, seenEls, curContainer.frame);
+  let commandArray = evaluate.fromJSON(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
   let concurrentEvent = [];
   let temp;
   for (let i = 0; i < maxLen; i++) {
@@ -1117,7 +1163,7 @@ function cancelRequest() {
  * navigate request). This is most of of the work of a navigate request,
  * but doesn't assume DOMContentLoaded is yet to fire.
  *
- * @param {number} commandID
+ * @param {number} command_id
  *     ID of the currently handled message between the driver and
  *     listener.
  * @param {number} pageTimeout
@@ -1127,9 +1173,10 @@ function cancelRequest() {
  *     Unix timestap when the navitation request got triggred.
  */
 function waitForPageLoaded(msg) {
-  let {commandID, pageTimeout, startTime} = msg.json;
+  let {command_id, pageTimeout, startTime} = msg.json;
+
   loadListener.waitForLoadAfterFramescriptReload(
-      commandID, pageTimeout, startTime);
+      command_id, pageTimeout, startTime);
 }
 
 /**
@@ -1139,7 +1186,7 @@ function waitForPageLoaded(msg) {
  * (in chrome space).
  */
 function get(msg) {
-  let {commandID, pageTimeout, url, loadEventExpected = null} = msg.json;
+  let {command_id, pageTimeout, url, loadEventExpected = null} = msg.json;
 
   try {
     if (typeof url == "string") {
@@ -1150,7 +1197,7 @@ function get(msg) {
         }
       } catch (e) {
         let err = new InvalidArgumentError("Malformed URL: " + e.message);
-        sendError(err, commandID);
+        sendError(err, command_id);
         return;
       }
     }
@@ -1161,10 +1208,10 @@ function get(msg) {
 
     loadListener.navigate(() => {
       curContainer.frame.location = url;
-    }, commandID, pageTimeout, loadEventExpected);
+    }, command_id, pageTimeout, loadEventExpected);
 
   } catch (e) {
-    sendError(e, commandID);
+    sendError(e, command_id);
   }
 }
 
@@ -1172,7 +1219,7 @@ function get(msg) {
  * Cause the browser to traverse one step backward in the joint history
  * of the current browsing context.
  *
- * @param {number} commandID
+ * @param {number} command_id
  *     ID of the currently handled message between the driver and
  *     listener.
  * @param {number} pageTimeout
@@ -1180,15 +1227,15 @@ function get(msg) {
  *     finished loading.
  */
 function goBack(msg) {
-  let {commandID, pageTimeout} = msg.json;
+  let {command_id, pageTimeout} = msg.json;
 
   try {
     loadListener.navigate(() => {
       curContainer.frame.history.back();
-    }, commandID, pageTimeout);
+    }, command_id, pageTimeout);
 
   } catch (e) {
-    sendError(e, commandID);
+    sendError(e, command_id);
   }
 }
 
@@ -1196,7 +1243,7 @@ function goBack(msg) {
  * Cause the browser to traverse one step forward in the joint history
  * of the current browsing context.
  *
- * @param {number} commandID
+ * @param {number} command_id
  *     ID of the currently handled message between the driver and
  *     listener.
  * @param {number} pageTimeout
@@ -1204,15 +1251,15 @@ function goBack(msg) {
  *     finished loading.
  */
 function goForward(msg) {
-  let {commandID, pageTimeout} = msg.json;
+  let {command_id, pageTimeout} = msg.json;
 
   try {
     loadListener.navigate(() => {
       curContainer.frame.history.forward();
-    }, commandID, pageTimeout);
+    }, command_id, pageTimeout);
 
   } catch (e) {
-    sendError(e, commandID);
+    sendError(e, command_id);
   }
 }
 
@@ -1220,7 +1267,7 @@ function goForward(msg) {
  * Causes the browser to reload the page in in current top-level browsing
  * context.
  *
- * @param {number} commandID
+ * @param {number} command_id
  *     ID of the currently handled message between the driver and
  *     listener.
  * @param {number} pageTimeout
@@ -1228,7 +1275,7 @@ function goForward(msg) {
  *     finished loading.
  */
 function refresh(msg) {
-  let {commandID, pageTimeout} = msg.json;
+  let {command_id, pageTimeout} = msg.json;
 
   try {
     // We need to move to the top frame before navigating
@@ -1237,10 +1284,10 @@ function refresh(msg) {
 
     loadListener.navigate(() => {
       curContainer.frame.location.reload(true);
-    }, commandID, pageTimeout);
+    }, command_id, pageTimeout);
 
   } catch (e) {
-    sendError(e, commandID);
+    sendError(e, command_id);
   }
 }
 
@@ -1255,32 +1302,39 @@ function getPageSource() {
  * Find an element in the current browsing context's document using the
  * given search strategy.
  */
-async function findElementContent(strategy, selector, opts = {}) {
+function* findElementContent(strategy, selector, opts = {}) {
   if (!SUPPORTED_STRATEGIES.has(strategy)) {
     throw new InvalidSelectorError("Strategy not supported: " + strategy);
   }
 
   opts.all = false;
   if (opts.startNode) {
-    opts.startNode = opts.startNode;
+    opts.startNode = seenEls.get(opts.startNode, curContainer);
   }
 
-  let el = await element.find(curContainer, strategy, selector, opts);
-  return seenEls.add(el);
+  let el = yield element.find(curContainer, strategy, selector, opts);
+  let elRef = seenEls.add(el);
+  let webEl = element.makeWebElement(elRef);
+  return webEl;
 }
 
 /**
  * Find elements in the current browsing context's document using the
  * given search strategy.
  */
-async function findElementsContent(strategy, selector, opts = {}) {
+function* findElementsContent(strategy, selector, opts = {}) {
   if (!SUPPORTED_STRATEGIES.has(strategy)) {
     throw new InvalidSelectorError("Strategy not supported: " + strategy);
   }
 
   opts.all = true;
-  let els = await element.find(curContainer, strategy, selector, opts);
-  let webEls = seenEls.addAll(els);
+  if (opts.startNode) {
+    opts.startNode = seenEls.get(opts.startNode, curContainer);
+  }
+
+  let els = yield element.find(curContainer, strategy, selector, opts);
+  let elRefs = seenEls.addAll(els);
+  let webEls = elRefs.map(element.makeWebElement);
   return webEls;
 }
 
@@ -1293,24 +1347,22 @@ function getActiveElement() {
 /**
  * Send click event to element.
  *
- * @param {number} commandID
+ * @param {number} command_id
  *     ID of the currently handled message between the driver and
  *     listener.
- * @param {WebElement} el
+ * @param {WebElement} id
  *     Reference to the web element to click.
  * @param {number} pageTimeout
  *     Timeout in milliseconds the method has to wait for the page being
  *     finished loading.
  */
 function clickElement(msg) {
-  let {commandID, webElRef, pageTimeout} = msg.json;
-  let webEl = WebElement.fromJSON(webElRef);
-  let el = seenEls.get(webEl, curContainer.frame);
+  let {command_id, id, pageTimeout} = msg.json;
 
   try {
     let loadEventExpected = true;
 
-    let target = getElementAttribute(el, "target");
+    let target = getElementAttribute(id, "target");
 
     if (target === "_blank") {
       loadEventExpected = false;
@@ -1318,18 +1370,19 @@ function clickElement(msg) {
 
     loadListener.navigate(() => {
       return interaction.clickElement(
-          el,
+          seenEls.get(id, curContainer),
           capabilities.get("moz:accessibilityChecks"),
-          capabilities.get("moz:webdriverClick")
+          capabilities.get("specificationLevel") >= 1
       );
-    }, commandID, pageTimeout, loadEventExpected, true);
+    }, command_id, pageTimeout, loadEventExpected, true);
 
   } catch (e) {
-    sendError(e, commandID);
+    sendError(e, command_id);
   }
 }
 
-function getElementAttribute(el, name) {
+function getElementAttribute(id, name) {
+  let el = seenEls.get(id, curContainer);
   if (element.isBooleanAttribute(el, name)) {
     if (el.hasAttribute(name)) {
       return "true";
@@ -1339,15 +1392,22 @@ function getElementAttribute(el, name) {
   return el.getAttribute(name);
 }
 
-function getElementProperty(el, name) {
+function getElementProperty(id, name) {
+  let el = seenEls.get(id, curContainer);
   return typeof el[name] != "undefined" ? el[name] : null;
 }
 
 /**
- * Get the text of this element.  This includes text from child
- * elements.
+ * Get the text of this element. This includes text from child elements.
+ *
+ * @param {WebElement} id
+ *     Reference to web element.
+ *
+ * @return {string}
+ *     Text of element.
  */
-function getElementText(el) {
+function getElementText(id) {
+  let el = seenEls.get(id, curContainer);
   return atom.getElementText(el, curContainer.frame);
 }
 
@@ -1360,7 +1420,8 @@ function getElementText(el) {
  * @return {string}
  *     Tag name of element.
  */
-function getElementTagName(el) {
+function getElementTagName(id) {
+  let el = seenEls.get(id, curContainer);
   return el.tagName.toLowerCase();
 }
 
@@ -1370,7 +1431,8 @@ function getElementTagName(el) {
  * Also performs additional accessibility checks if enabled by session
  * capability.
  */
-function isElementDisplayed(el) {
+function isElementDisplayed(id) {
+  let el = seenEls.get(id, curContainer);
   return interaction.isElementDisplayed(
       el, capabilities.get("moz:accessibilityChecks"));
 }
@@ -1378,8 +1440,17 @@ function isElementDisplayed(el) {
 /**
  * Retrieves the computed value of the given CSS property of the given
  * web element.
+ *
+ * @param {String} id
+ *     Web element reference.
+ * @param {String} prop
+ *     The CSS property to get.
+ *
+ * @return {String}
+ *     Effective value of the requested CSS property.
  */
-function getElementValueOfCssProperty(el, prop) {
+function getElementValueOfCssProperty(id, prop) {
+  let el = seenEls.get(id, curContainer);
   let st = curContainer.frame.document.defaultView.getComputedStyle(el);
   return st.getPropertyValue(prop);
 }
@@ -1387,10 +1458,14 @@ function getElementValueOfCssProperty(el, prop) {
 /**
  * Get the position and dimensions of the element.
  *
+ * @param {WebElement} id
+ *     Reference to web element.
+ *
  * @return {Object.<string, number>}
  *     The x, y, width, and height properties of the element.
  */
-function getElementRect(el) {
+function getElementRect(id) {
+  let el = seenEls.get(id, curContainer);
   let clientRect = el.getBoundingClientRect();
   return {
     x: clientRect.x + curContainer.frame.pageXOffset,
@@ -1400,7 +1475,17 @@ function getElementRect(el) {
   };
 }
 
-function isElementEnabled(el) {
+/**
+ * Check if element is enabled.
+ *
+ * @param {WebElement} id
+ *     Reference to web element.
+ *
+ * @return {boolean}
+ *     True if enabled, false otherwise.
+ */
+function isElementEnabled(id) {
+  let el = seenEls.get(id, curContainer);
   return interaction.isElementEnabled(
       el, capabilities.get("moz:accessibilityChecks"));
 }
@@ -1411,26 +1496,31 @@ function isElementEnabled(el) {
  * This operation only makes sense on input elements of the Checkbox-
  * and Radio Button states, or option elements.
  */
-function isElementSelected(el) {
+function isElementSelected(id) {
+  let el = seenEls.get(id, curContainer);
   return interaction.isElementSelected(
       el, capabilities.get("moz:accessibilityChecks"));
 }
 
-async function sendKeysToElement(el, val) {
+function* sendKeysToElement(id, val) {
+  let el = seenEls.get(id, curContainer);
   if (el.type == "file") {
-    await interaction.uploadFile(el, val);
+    yield interaction.uploadFile(el, val);
   } else if ((el.type == "date" || el.type == "time") &&
       Preferences.get("dom.forms.datetime")) {
-    interaction.setFormControlValue(el, val);
+    yield interaction.setFormControlValue(el, val);
   } else {
-    await interaction.sendKeysToElement(
+    yield interaction.sendKeysToElement(
         el, val, false, capabilities.get("moz:accessibilityChecks"));
   }
 }
 
-/** Clear the text of an element. */
-function clearElement(el) {
+/**
+ * Clear the text of an element.
+ */
+function clearElement(id) {
   try {
+    let el = seenEls.get(id, curContainer);
     if (el.type == "file") {
       el.value = null;
     } else {
@@ -1447,9 +1537,14 @@ function clearElement(el) {
   }
 }
 
-/** Switch the current context to the specified host's Shadow DOM. */
-function switchToShadowRoot(el) {
-  if (!el) {
+/**
+ * Switch the current context to the specified host's Shadow DOM.
+ *
+ * @param {WebElement} id
+ *     Reference to web element.
+ */
+function switchToShadowRoot(id) {
+  if (!id) {
     // If no host element is passed, attempt to find a parent shadow
     // root or, if none found, unset the current shadow root
     if (curContainer.shadowRoot) {
@@ -1470,9 +1565,11 @@ function switchToShadowRoot(el) {
     return;
   }
 
-  let foundShadowRoot = el.shadowRoot;
+  let foundShadowRoot;
+  let hostEl = seenEls.get(id, curContainer);
+  foundShadowRoot = hostEl.shadowRoot;
   if (!foundShadowRoot) {
-    throw new NoSuchElementError(pprint`Unable to locate shadow root: ${el}`);
+    throw new NoSuchElementError("Unable to locate shadow root: " + id);
   }
   curContainer.shadowRoot = foundShadowRoot;
 }
@@ -1486,9 +1583,9 @@ function switchToParentFrame(msg) {
   let parentElement = seenEls.add(curContainer.frame);
 
   sendSyncMessage(
-      "Marionette:switchedToFrame", {frameValue: parentElement.uuid});
+      "Marionette:switchedToFrame", {frameValue: parentElement});
 
-  sendOk(msg.json.commandID);
+  sendOk(msg.json.command_id);
 }
 
 /**
@@ -1496,7 +1593,7 @@ function switchToParentFrame(msg) {
  * its index in window.frames, or the iframe's name or id.
  */
 function switchToFrame(msg) {
-  let commandID = msg.json.commandID;
+  let command_id = msg.json.command_id;
   let foundFrame = null;
   let frames = [];
   let parWindow = null;
@@ -1528,21 +1625,17 @@ function switchToFrame(msg) {
       curContainer.frame.focus();
     }
 
-    sendOk(commandID);
+    sendOk(command_id);
     return;
   }
 
-  let webEl;
-  if (typeof msg.json.element != "undefined") {
-    webEl = WebElement.fromUUID(msg.json.element, "content");
-  }
-  if (webEl && seenEls.has(webEl)) {
+  let id = msg.json.element;
+  if (seenEls.has(id)) {
     let wantedFrame;
     try {
-      wantedFrame = seenEls.get(webEl, curContainer.frame);
+      wantedFrame = seenEls.get(id, curContainer);
     } catch (e) {
-      sendError(e, commandID);
-      return;
+      sendError(e, command_id);
     }
 
     if (frames.length > 0) {
@@ -1564,7 +1657,7 @@ function switchToFrame(msg) {
       // throwing in the towel
       const doc = curContainer.frame.document;
       let iframes = doc.getElementsByTagName("iframe");
-      for (let i = 0; i < iframes.length; i++) {
+      for (var i = 0; i < iframes.length; i++) {
         let frameEl = iframes[i];
         let wrappedEl = new XPCNativeWrapper(frameEl);
         let wrappedWanted = new XPCNativeWrapper(wantedFrame);
@@ -1577,7 +1670,7 @@ function switchToFrame(msg) {
   }
 
   if (foundFrame === null) {
-    if (typeof msg.json.id === "number") {
+    if (typeof(msg.json.id) === "number") {
       try {
         foundFrame = frames[msg.json.id].frameElement;
         if (foundFrame !== null) {
@@ -1593,7 +1686,7 @@ function switchToFrame(msg) {
             curContainer.frame.focus();
           }
 
-          sendOk(commandID);
+          sendOk(command_id);
           return;
         }
       } catch (e) {
@@ -1613,21 +1706,22 @@ function switchToFrame(msg) {
   if (foundFrame === null) {
     let failedFrame = msg.json.id || msg.json.element;
     let err = new NoSuchFrameError(`Unable to locate frame: ${failedFrame}`);
-    sendError(err, commandID);
+    sendError(err, command_id);
     return;
   }
 
   // send a synchronous message to let the server update the currently active
   // frame element (for getActiveFrame)
-  let frameWebEl = seenEls.add(curContainer.frame.wrappedJSObject);
-  sendSyncMessage("Marionette:switchedToFrame", {"frameValue": frameWebEl.uuid});
+  let frameValue = evaluate.toJSON(
+      curContainer.frame.wrappedJSObject, seenEls)[element.Key];
+  sendSyncMessage("Marionette:switchedToFrame", {"frameValue": frameValue});
 
   if (curContainer.frame.contentWindow === null) {
     // The frame we want to switch to is a remote/OOP frame;
     // notify our parent to handle the switch
     curContainer.frame = content;
     let rv = {win: parWindow, frame: foundFrame};
-    sendResponse(rv, commandID);
+    sendResponse(rv, command_id);
 
   } else {
     curContainer.frame = curContainer.frame.contentWindow;
@@ -1636,7 +1730,7 @@ function switchToFrame(msg) {
       curContainer.frame.focus();
     }
 
-    sendOk(commandID);
+    sendOk(command_id);
   }
 }
 
@@ -1672,28 +1766,24 @@ function takeScreenshot(format, opts = {}) {
   let highlights = opts.highlights || [];
   let scroll = !!opts.scroll;
 
-  let win = curContainer.frame;
+  let highlightEls = highlights.map(ref => seenEls.get(ref, curContainer));
 
   let canvas;
-  let highlightEls = highlights
-      .map(ref => WebElement.fromUUID(ref, "content"))
-      .map(webEl => seenEls.get(webEl, win));
 
   // viewport
   if (!id && !full) {
-    canvas = capture.viewport(win, highlightEls);
+    canvas = capture.viewport(curContainer.frame, highlightEls);
 
   // element or full document element
   } else {
     let el;
     if (id) {
-      let webEl = WebElement.fromUUID(id, "content");
-      el = seenEls.get(webEl, win);
+      el = seenEls.get(id, curContainer);
       if (scroll) {
         element.scrollIntoView(el);
       }
     } else {
-      el = win.document.documentElement;
+      el = curContainer.frame.document.documentElement;
     }
 
     canvas = capture.element(el, highlightEls);
@@ -1752,7 +1842,7 @@ function flushRendering() {
   return windowUtils.isMozAfterPaintPending;
 }
 
-async function reftestWait(url, remote) {
+function* reftestWait(url, remote) {
   let win = curContainer.frame;
   let document = curContainer.frame.document;
 
@@ -1764,8 +1854,8 @@ async function reftestWait(url, remote) {
 
   if (document.location.href !== url || document.readyState != "complete") {
     logger.debug(`Waiting for page load of ${url}`);
-    await new Promise(resolve => {
-      let maybeResolve = event => {
+    yield new Promise(resolve => {
+      let maybeResolve = (event) => {
         if (event.target === curContainer.frame.document &&
             event.target.location.href === url) {
           win = curContainer.frame;
@@ -1781,7 +1871,7 @@ async function reftestWait(url, remote) {
     // Ensure that the event loop has spun at least once since load,
     // so that setTimeout(fn, 0) in the load event has run
     reftestWait = document.documentElement.classList.contains("reftest-wait");
-    await new Promise(resolve => win.setTimeout(resolve, 0));
+    yield new Promise(resolve => win.setTimeout(resolve, 0));
   }
 
   let root = document.documentElement;
@@ -1789,7 +1879,7 @@ async function reftestWait(url, remote) {
     // Check again in case reftest-wait was removed since the load event
     if (root.classList.contains("reftest-wait")) {
       logger.debug("Waiting for reftest-wait removal");
-      await new Promise(resolve => {
+      yield new Promise(resolve => {
         let observer = new win.MutationObserver(() => {
           if (!root.classList.contains("reftest-wait")) {
             observer.disconnect();
@@ -1803,7 +1893,7 @@ async function reftestWait(url, remote) {
 
     logger.debug("Waiting for rendering");
 
-    await new Promise(resolve => {
+    yield new Promise(resolve => {
       let maybeResolve = () => {
         if (flushRendering()) {
           win.addEventListener("MozAfterPaint", maybeResolve, {once: true});
@@ -1820,14 +1910,6 @@ async function reftestWait(url, remote) {
   if (remote) {
     windowUtils.updateLayerTree();
   }
-}
-
-function domAddEventListener(msg) {
-  eventObservers.add(msg.json.type);
-}
-
-function domRemoveEventListener(msg) {
-  eventObservers.remove(msg.json.type);
 }
 
 // Call register self when we get loaded

@@ -30,7 +30,7 @@
 class nsGlobalWindow;
 class nsIPrincipal;
 class nsScriptNameSpaceManager;
-class nsIHandleReportCallback;
+class nsIMemoryReporterCallback;
 
 namespace mozilla {
 namespace dom {
@@ -77,11 +77,7 @@ private:
 JSObject*
 TransplantObject(JSContext* cx, JS::HandleObject origobj, JS::HandleObject target);
 
-JSObject*
-TransplantObjectRetainingXrayExpandos(JSContext* cx, JS::HandleObject origobj, JS::HandleObject target);
-
-bool IsContentXBLCompartment(JSCompartment* compartment);
-bool IsContentXBLScope(JS::Realm* realm);
+bool IsContentXBLScope(JSCompartment* compartment);
 bool IsInContentXBLScope(JSObject* obj);
 
 // Return a raw XBL scope object corresponding to contentScope, which must
@@ -118,22 +114,19 @@ GetScopeForXBLExecution(JSContext* cx, JS::HandleObject obj, JSAddonId* addonId)
 // Returns whether XBL scopes have been explicitly disabled for code running
 // in this compartment. See the comment around mAllowContentXBLScope.
 bool
-AllowContentXBLScope(JS::Realm* realm);
+AllowContentXBLScope(JSCompartment* c);
 
-// Returns whether we will use an XBL scope for this realm. This is
+// Returns whether we will use an XBL scope for this compartment. This is
 // semantically equivalent to comparing global != GetXBLScope(global), but it
 // does not have the side-effect of eagerly creating the XBL scope if it does
 // not already exist.
 bool
-UseContentXBLScope(JS::Realm* realm);
+UseContentXBLScope(JSCompartment* c);
 
 // Clear out the content XBL scope (if any) on the given global.  This will
 // force creation of a new one if one is needed again.
 void
 ClearContentXBLScope(JSObject* global);
-
-bool
-IsAddonCompartment(JSCompartment* c);
 
 bool
 IsInAddonScope(JSObject* obj);
@@ -177,35 +170,6 @@ XrayAwareCalleeGlobalForSpecializedGetters(JSContext* cx,
 
 void
 TraceXPCGlobal(JSTracer* trc, JSObject* obj);
-
-/**
- * Creates a new global object using the given aCOMObj as the global
- * object. The object will be set up according to the flags (defined
- * below). If you do not pass INIT_JS_STANDARD_CLASSES, then aCOMObj
- * must implement nsIXPCScriptable so it can resolve the standard
- * classes when asked by the JS engine.
- *
- * @param aJSContext the context to use while creating the global object.
- * @param aCOMObj the native object that represents the global object.
- * @param aPrincipal the principal of the code that will run in this
- *                   compartment. Can be null if not on the main thread.
- * @param aFlags one of the flags below specifying what options this
- *               global object wants.
- * @param aOptions JSAPI-specific options for the new compartment.
- */
-nsresult
-InitClassesWithNewWrappedGlobal(JSContext* aJSContext,
-                                nsISupports* aCOMObj,
-                                nsIPrincipal* aPrincipal,
-                                uint32_t aFlags,
-                                JS::CompartmentOptions& aOptions,
-                                JS::MutableHandleObject aNewGlobal);
-
-enum InitClassesFlag {
-    INIT_JS_STANDARD_CLASSES  = 1 << 0,
-    DONT_FIRE_ONNEWGLOBALHOOK = 1 << 1,
-    OMIT_COMPONENTS_OBJECT    = 1 << 2,
-};
 
 } /* namespace xpc */
 
@@ -434,7 +398,7 @@ private:
 void
 ReportJSRuntimeExplicitTreeStats(const JS::RuntimeStats& rtStats,
                                  const nsACString& rtPath,
-                                 nsIHandleReportCallback* handleReport,
+                                 nsIMemoryReporterCallback* handleReport,
                                  nsISupports* data,
                                  bool anonymize,
                                  size_t* rtTotal = nullptr);

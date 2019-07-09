@@ -129,23 +129,23 @@ nsMediaExpression::Matches(nsPresContext *aPresContext,
                      required.GetUnit() == eCSSUnit_Pixel ||
                      required.GetUnit() == eCSSUnit_Centimeter,
                      "bad required value");
-        float actualDPPX = actual.GetFloatValue();
+        float actualDPI = actual.GetFloatValue();
         float overrideDPPX = aPresContext->GetOverrideDPPX();
 
         if (overrideDPPX > 0) {
-          actualDPPX = overrideDPPX;
+          actualDPI = overrideDPPX * 96.0f;
         } else if (actual.GetUnit() == eCSSUnit_Centimeter) {
-          actualDPPX = actualDPPX * 2.54f / 96.0f;
-        } else if (actual.GetUnit() == eCSSUnit_Inch) {
-          actualDPPX = actualDPPX / 96.0f;
+          actualDPI = actualDPI * 2.54f;
+        } else if (actual.GetUnit() == eCSSUnit_Pixel) {
+          actualDPI = actualDPI * 96.0f;
         }
-        float requiredDPPX = required.GetFloatValue();
+        float requiredDPI = required.GetFloatValue();
         if (required.GetUnit() == eCSSUnit_Centimeter) {
-          requiredDPPX = requiredDPPX * 2.54f / 96.0f;
-        } else if (required.GetUnit() == eCSSUnit_Inch) {
-          requiredDPPX = requiredDPPX / 96.0f;
+          requiredDPI = requiredDPI * 2.54f;
+        } else if (required.GetUnit() == eCSSUnit_Pixel) {
+          requiredDPI = requiredDPI * 96.0f;
         }
-        cmp = DoCompare(actualDPPX, requiredDPPX);
+        cmp = DoCompare(actualDPI, requiredDPI);
       }
       break;
     case nsMediaFeature::eEnumerated:
@@ -274,7 +274,7 @@ nsDocumentRuleResultCacheKey::Matches(
 
 #ifdef DEBUG
   for (css::DocumentRule* rule : mMatchingRules) {
-    MOZ_ASSERT(aRules.ContainsSorted(rule),
+    MOZ_ASSERT(aRules.BinaryIndexOf(rule) != aRules.NoIndex,
                "aRules must contain all rules in mMatchingRules");
   }
 #endif
@@ -389,7 +389,8 @@ nsMediaQuery::AppendToString(nsAString& aString) const
           NS_ASSERTION(expr.mValue.IsLengthUnit(), "bad unit");
           // Use 'width' as a property that takes length values
           // written in the normal way.
-          expr.mValue.AppendToString(eCSSProperty_width, aString);
+          expr.mValue.AppendToString(eCSSProperty_width, aString,
+                                     nsCSSValue::eNormalized);
           break;
         case nsMediaFeature::eInteger:
         case nsMediaFeature::eBoolInteger:
@@ -397,7 +398,8 @@ nsMediaQuery::AppendToString(nsAString& aString) const
                        "bad unit");
           // Use 'z-index' as a property that takes integer values
           // written without anything extra.
-          expr.mValue.AppendToString(eCSSProperty_z_index, aString);
+          expr.mValue.AppendToString(eCSSProperty_z_index, aString,
+                                     nsCSSValue::eNormalized);
           break;
         case nsMediaFeature::eFloat:
           {
@@ -405,7 +407,8 @@ nsMediaQuery::AppendToString(nsAString& aString) const
                          "bad unit");
             // Use 'line-height' as a property that takes float values
             // written in the normal way.
-            expr.mValue.AppendToString(eCSSProperty_line_height, aString);
+            expr.mValue.AppendToString(eCSSProperty_line_height, aString,
+                                       nsCSSValue::eNormalized);
           }
           break;
         case nsMediaFeature::eIntRatio:
@@ -418,9 +421,11 @@ nsMediaQuery::AppendToString(nsAString& aString) const
                          "bad unit");
             NS_ASSERTION(array->Item(1).GetUnit() == eCSSUnit_Integer,
                          "bad unit");
-            array->Item(0).AppendToString(eCSSProperty_z_index, aString);
+            array->Item(0).AppendToString(eCSSProperty_z_index, aString,
+                                          nsCSSValue::eNormalized);
             aString.Append('/');
-            array->Item(1).AppendToString(eCSSProperty_z_index, aString);
+            array->Item(1).AppendToString(eCSSProperty_z_index, aString,
+                                          nsCSSValue::eNormalized);
           }
           break;
         case nsMediaFeature::eResolution:

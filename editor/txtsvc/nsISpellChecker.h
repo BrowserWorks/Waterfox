@@ -8,7 +8,6 @@
 
 #include "mozilla/MozPromise.h"
 #include "nsISupports.h"
-#include "nsStringFwd.h"
 #include "nsTArray.h"
 
 #define NS_SPELLCHECKER_CONTRACTID "@mozilla.org/spellchecker;1"
@@ -19,6 +18,7 @@
   { 0x9f, 0x5d, 0xaf, 0x0c, 0xdd, 0x21, 0x18, 0x68 } }
 
 class nsITextServicesDocument;
+class nsString;
 
 /**
  * A generic interface for a spelling checker.

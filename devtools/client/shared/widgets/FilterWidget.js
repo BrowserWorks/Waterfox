@@ -9,7 +9,7 @@
   * for Rule View's filter swatches
   */
 
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const { Cc, Ci } = require("chrome");
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -575,7 +575,7 @@ CSSFilterEditorWidget.prototype = {
         // If the click happened on the remove button.
         presets.splice(id, 1);
         this.setPresets(presets).then(this.renderPresets,
-                                      console.error);
+                                      ex => console.error(ex));
       } else {
         // Or if the click happened on a preset.
         let p = presets[id];
@@ -583,7 +583,7 @@ CSSFilterEditorWidget.prototype = {
         this.setCssValue(p.value);
         this.addPresetInput.value = p.name;
       }
-    }, console.error);
+    }, ex => console.error(ex));
   },
 
   _togglePresets: function () {
@@ -612,8 +612,8 @@ CSSFilterEditorWidget.prototype = {
       }
 
       this.setPresets(presets).then(this.renderPresets,
-                                    console.error);
-    }, console.error);
+                                    ex => console.error(ex));
+    }, ex => console.error(ex));
   },
 
   /**
@@ -952,12 +952,12 @@ CSSFilterEditorWidget.prototype = {
       }
 
       return presets;
-    }, console.error);
+    }, e => console.error(e));
   },
 
   setPresets: function (presets) {
     return asyncStorage.setItem("cssFilterPresets", presets)
-      .catch(console.error);
+      .catch(e => console.error(e));
   }
 };
 

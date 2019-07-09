@@ -427,28 +427,6 @@ typedef Rooted<ModuleEnvironmentObject*> RootedModuleEnvironmentObject;
 typedef Handle<ModuleEnvironmentObject*> HandleModuleEnvironmentObject;
 typedef MutableHandle<ModuleEnvironmentObject*> MutableHandleModuleEnvironmentObject;
 
-class WasmInstanceEnvironmentObject : public EnvironmentObject
-{
-    // Currently WasmInstanceScopes do not use their scopes in a
-    // meaningful way. However, it is an invariant of DebugEnvironments that
-    // environments kept in those maps have live scopes, thus this strong
-    // reference.
-    static const uint32_t SCOPE_SLOT = 1;
-
-  public:
-    static const Class class_;
-
-    static const uint32_t RESERVED_SLOTS = 2;
-
-    static WasmInstanceEnvironmentObject* createHollowForDebug(JSContext* cx,
-                                                               Handle<WasmInstanceScope*> scope);
-    WasmInstanceScope& scope() const {
-        Value v = getReservedSlot(SCOPE_SLOT);
-        MOZ_ASSERT(v.isPrivateGCThing());
-        return *static_cast<WasmInstanceScope*>(v.toGCThing());
-    }
-};
-
 class WasmFunctionCallObject : public EnvironmentObject
 {
     // Currently WasmFunctionCallObjects do not use their scopes in a
@@ -462,7 +440,7 @@ class WasmFunctionCallObject : public EnvironmentObject
 
     static const uint32_t RESERVED_SLOTS = 2;
 
-    static WasmFunctionCallObject* createHollowForDebug(JSContext* cx, HandleObject enclosing,
+    static WasmFunctionCallObject* createHollowForDebug(JSContext* cx,
                                                         Handle<WasmFunctionScope*> scope);
     WasmFunctionScope& scope() const {
         Value v = getReservedSlot(SCOPE_SLOT);
@@ -510,8 +488,7 @@ class LexicalEnvironmentObject : public EnvironmentObject
     static LexicalEnvironmentObject* create(JSContext* cx, Handle<LexicalScope*> scope,
                                             AbstractFramePtr frame);
     static LexicalEnvironmentObject* createGlobal(JSContext* cx, Handle<GlobalObject*> global);
-    static LexicalEnvironmentObject* createNonSyntactic(JSContext* cx, HandleObject enclosing,
-                                                        HandleObject thisv);
+    static LexicalEnvironmentObject* createNonSyntactic(JSContext* cx, HandleObject enclosing);
     static LexicalEnvironmentObject* createHollowForDebug(JSContext* cx,
                                                           Handle<LexicalScope*> scope);
 
@@ -949,7 +926,7 @@ class DebugEnvironments
     typedef HashMap<MissingEnvironmentKey,
                     ReadBarrieredDebugEnvironmentProxy,
                     MissingEnvironmentKey,
-                    ZoneAllocPolicy> MissingEnvironmentMap;
+                    RuntimeAllocPolicy> MissingEnvironmentMap;
     MissingEnvironmentMap missingEnvs;
 
     /*
@@ -963,7 +940,7 @@ class DebugEnvironments
     typedef GCHashMap<ReadBarriered<JSObject*>,
                       LiveEnvironmentVal,
                       MovableCellHasher<ReadBarriered<JSObject*>>,
-                      ZoneAllocPolicy> LiveEnvironmentMap;
+                      RuntimeAllocPolicy> LiveEnvironmentMap;
     LiveEnvironmentMap liveEnvs;
 
   public:
@@ -1038,7 +1015,6 @@ JSObject::is<js::EnvironmentObject>() const
     return is<js::CallObject>() ||
            is<js::VarEnvironmentObject>() ||
            is<js::ModuleEnvironmentObject>() ||
-           is<js::WasmInstanceEnvironmentObject>() ||
            is<js::WasmFunctionCallObject>() ||
            is<js::LexicalEnvironmentObject>() ||
            is<js::WithEnvironmentObject>() ||
@@ -1082,14 +1058,6 @@ IsGlobalLexicalEnvironment(JSObject* env)
 {
     return env->is<LexicalEnvironmentObject>() &&
            env->as<LexicalEnvironmentObject>().isGlobal();
-}
-
-inline bool
-IsNSVOLexicalEnvironment(JSObject* env)
-{
-    return env->is<LexicalEnvironmentObject>() &&
-           env->as<LexicalEnvironmentObject>().enclosingEnvironment()
-                                              .is<NonSyntacticVariablesObject>();
 }
 
 inline JSObject*

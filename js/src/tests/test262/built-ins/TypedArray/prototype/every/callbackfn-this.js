@@ -24,7 +24,6 @@ info: >
       ii. Let testResult be ToBoolean(? Call(callbackfn, T, « kValue, k, O »)).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var expected = (function() { return this; })();

@@ -65,7 +65,7 @@ IsSameDimension(dom::ScreenOrientationInternal o1, dom::ScreenOrientationInterna
 static bool
 ContentMightReflowOnOrientationChange(const IntRect& rect)
 {
-  return rect.Width() != rect.Height();
+  return rect.width != rect.height;
 }
 
   AsyncCompositionManager::AsyncCompositionManager(CompositorBridgeParent* aParent,

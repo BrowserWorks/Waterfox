@@ -14,7 +14,6 @@ const actionTypes = {
   CLONE_SELECTED_REQUEST: "CLONE_SELECTED_REQUEST",
   ENABLE_REQUEST_FILTER_TYPE_ONLY: "ENABLE_REQUEST_FILTER_TYPE_ONLY",
   OPEN_NETWORK_DETAILS: "OPEN_NETWORK_DETAILS",
-  ENABLE_PERSISTENT_LOGS: "ENABLE_PERSISTENT_LOGS",
   DISABLE_BROWSER_CACHE: "DISABLE_BROWSER_CACHE",
   OPEN_STATISTICS: "OPEN_STATISTICS",
   REMOVE_SELECTED_CUSTOM_REQUEST: "REMOVE_SELECTED_CUSTOM_REQUEST",
@@ -25,7 +24,6 @@ const actionTypes = {
   SET_REQUEST_FILTER_TEXT: "SET_REQUEST_FILTER_TEXT",
   SORT_BY: "SORT_BY",
   TOGGLE_COLUMN: "TOGGLE_COLUMN",
-  TOGGLE_RECORDING: "TOGGLE_RECORDING",
   TOGGLE_REQUEST_FILTER_TYPE: "TOGGLE_REQUEST_FILTER_TYPE",
   UPDATE_REQUEST: "UPDATE_REQUEST",
   WATERFALL_RESIZE: "WATERFALL_RESIZE",
@@ -54,7 +52,6 @@ const EVENTS = {
   // See https://developer.mozilla.org/docs/Tools/Web_Console/remoting for
   // more information about what each packet is supposed to deliver.
   NETWORK_EVENT: "NetMonitor:NetworkEvent",
-  NETWORK_EVENT_UPDATED: "NetMonitor:NetworkEventUpdated",
   TIMELINE_EVENT: "NetMonitor:TimelineEvent",
 
   // When a network event is added to the view
@@ -95,47 +92,6 @@ const EVENTS = {
 
   // Fired once the connection is established
   CONNECTED: "connected",
-
-  // When request payload (HTTP details data) are fetched from the backend.
-  PAYLOAD_READY: "NetMonitor:PayloadReady",
-};
-
-const UPDATE_PROPS = [
-  "method",
-  "url",
-  "remotePort",
-  "remoteAddress",
-  "status",
-  "statusText",
-  "httpVersion",
-  "securityState",
-  "securityInfo",
-  "mimeType",
-  "contentSize",
-  "transferredSize",
-  "totalTime",
-  "eventTimings",
-  "headersSize",
-  "customQueryValue",
-  "requestHeaders",
-  "requestHeadersFromUploadStream",
-  "requestCookies",
-  "requestPostData",
-  "responseHeaders",
-  "responseCookies",
-  "responseContent",
-  "responseContentDataUri",
-  "formDataSections",
-];
-
-const PANELS = {
-  COOKIES: "cookies",
-  HEADERS: "headers",
-  PARAMS: "params",
-  RESPONSE: "response",
-  SECURITY: "security",
-  STACK_TRACE: "stack-trace",
-  TIMINGS: "timings",
 };
 
 const RESPONSE_HEADERS = [
@@ -267,19 +223,6 @@ const FILTER_FLAGS = [
   "regexp",
 ];
 
-const FILTER_TAGS = [
-  "html",
-  "css",
-  "js",
-  "xhr",
-  "fonts",
-  "images",
-  "media",
-  "flash",
-  "ws",
-  "other",
-];
-
 const REQUESTS_WATERFALL = {
   BACKGROUND_TICKS_MULTIPLE: 5, // ms
   BACKGROUND_TICKS_SCALES: 3,
@@ -288,13 +231,11 @@ const REQUESTS_WATERFALL = {
   // 8-bit value of the alpha component of the tick color
   BACKGROUND_TICKS_OPACITY_MIN: 32,
   BACKGROUND_TICKS_OPACITY_ADD: 32,
-  // Colors for timing markers (theme colors, see variables.css)
-  DOMCONTENTLOADED_TICKS_COLOR: "highlight-blue",
-  LOAD_TICKS_COLOR: "highlight-red",
-  // Opacity for the timing markers
-  TICKS_COLOR_OPACITY: 192,
+  // RGBA colors for the timing markers
+  DOMCONTENTLOADED_TICKS_COLOR_RGBA: [0, 0, 255, 128],
   HEADER_TICKS_MULTIPLE: 5, // ms
   HEADER_TICKS_SPACING_MIN: 60, // px
+  LOAD_TICKS_COLOR_RGBA: [255, 0, 0, 128],
   // Reserve extra space for rendering waterfall time label
   LABEL_WIDTH: 50, // px
 };
@@ -303,14 +244,11 @@ const general = {
   ACTIVITY_TYPE,
   EVENTS,
   FILTER_SEARCH_DELAY: 200,
-  UPDATE_PROPS,
   HEADERS,
   RESPONSE_HEADERS,
   FILTER_FLAGS,
-  FILTER_TAGS,
   SOURCE_EDITOR_SYNTAX_HIGHLIGHT_MAX_SIZE: 51200, // 50 KB in bytes
   REQUESTS_WATERFALL,
-  PANELS,
 };
 
 // flatten constants

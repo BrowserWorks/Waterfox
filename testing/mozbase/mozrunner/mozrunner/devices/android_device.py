@@ -600,9 +600,9 @@ class AndroidEmulator(object):
 
 def _find_sdk_exe(substs, exe, tools):
     if tools:
-        subdirs = ['emulator', 'tools']
+        subdir = 'tools'
     else:
-        subdirs = ['platform-tools']
+        subdir = 'platform-tools'
 
     found = False
     if not found and substs:
@@ -627,15 +627,13 @@ def _find_sdk_exe(substs, exe, tools):
         # Can exe be found in the Android SDK?
         try:
             android_sdk_root = os.environ['ANDROID_SDK_ROOT']
-            for subdir in subdirs:
-                exe_path = os.path.join(
-                    android_sdk_root, subdir, exe)
-                if os.path.exists(exe_path):
-                    found = True
-                    break
-                else:
-                    _log_debug(
-                        "Unable to find executable at %s" % exe_path)
+            exe_path = os.path.join(
+                android_sdk_root, subdir, exe)
+            if os.path.exists(exe_path):
+                found = True
+            else:
+                _log_debug(
+                    "Unable to find executable at %s" % exe_path)
         except KeyError:
             _log_debug("ANDROID_SDK_ROOT not set")
 
@@ -643,15 +641,13 @@ def _find_sdk_exe(substs, exe, tools):
         # Can exe be found in the default bootstrap location?
         mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH',
                                        os.path.expanduser(os.path.join('~', '.mozbuild')))
-        for subdir in subdirs:
-            exe_path = os.path.join(
-                mozbuild_path, 'android-sdk-linux', subdir, exe)
-            if os.path.exists(exe_path):
-                found = True
-                break
-            else:
-                _log_debug(
-                    "Unable to find executable at %s" % exe_path)
+        exe_path = os.path.join(
+            mozbuild_path, 'android-sdk-linux', subdir, exe)
+        if os.path.exists(exe_path):
+            found = True
+        else:
+            _log_debug(
+                "Unable to find executable at %s" % exe_path)
 
     if not found:
         # Is exe on PATH?

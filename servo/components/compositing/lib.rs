@@ -3,18 +3,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #![deny(unsafe_code)]
+#![feature(box_syntax)]
 
 extern crate euclid;
 extern crate gfx_traits;
 extern crate gleam;
 extern crate image;
 extern crate ipc_channel;
-extern crate libc;
 #[macro_use]
 extern crate log;
 extern crate msg;
 extern crate net_traits;
-extern crate nonzero;
 extern crate profile_traits;
 extern crate script_traits;
 extern crate servo_config;
@@ -27,7 +26,6 @@ extern crate webrender_api;
 
 pub use compositor_thread::CompositorProxy;
 pub use compositor::IOCompositor;
-pub use compositor::ShutdownState;
 use euclid::TypedSize2D;
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::PipelineId;

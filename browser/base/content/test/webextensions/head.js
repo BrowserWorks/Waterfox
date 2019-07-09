@@ -315,10 +315,8 @@ async function testInstallMethod(installFn, telemetryBase) {
         ["webextPerms.hostDescription.wildcard", "wildcard.domain"],
         ["webextPerms.hostDescription.oneSite", "singlehost.domain"],
         ["webextPerms.description.nativeMessaging"],
-        // The below permissions are deliberately in this order as permissions
-        // are sorted alphabetically by the permission string to match AMO.
-        ["webextPerms.description.history"],
         ["webextPerms.description.tabs"],
+        ["webextPerms.description.history"],
       ]);
     } else if (filename == NO_PERMS_XPI) {
       checkNotification(panel, isDefaultIcon, []);

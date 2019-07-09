@@ -8,16 +8,12 @@ loadRelativeToScript('annotations.js');
 var gcTypes_filename = scriptArgs[0] || "gcTypes.txt";
 var typeInfo_filename = scriptArgs[1] || "typeInfo.txt";
 
-var typeInfo = {
+var annotations = {
     'GCPointers': [],
     'GCThings': [],
     'NonGCTypes': {}, // unused
     'NonGCPointers': {},
-    'RootedGCThings': {},
     'RootedPointers': {},
-
-    // RAII types within which we should assume GC is suppressed, eg
-    // AutoSuppressGC.
     'GCSuppressors': {},
 };
 
@@ -26,7 +22,6 @@ var gDescriptors = new Map; // Map from descriptor string => Set of typeName
 var structureParents = {}; // Map from field => list of <parent, fieldName>
 var pointerParents = {}; // Map from field => list of <parent, fieldName>
 var baseClasses = {}; // Map from struct name => list of base class name strings
-var subClasses = {}; // Map from struct name => list of subclass  name strings
 
 var gcTypes = {}; // map from parent struct => Set of GC typed children
 var gcPointers = {}; // map from parent struct => Set of GC typed children
@@ -66,17 +61,17 @@ function processCSU(csu, body)
             continue;
 
         if (tag == 'GC Pointer')
-            typeInfo.GCPointers.push(csu);
+            annotations.GCPointers.push(csu);
         else if (tag == 'Invalidated by GC')
-            typeInfo.GCPointers.push(csu);
+            annotations.GCPointers.push(csu);
         else if (tag == 'GC Thing')
-            typeInfo.GCThings.push(csu);
+            annotations.GCThings.push(csu);
         else if (tag == 'Suppressed GC Pointer')
-            typeInfo.NonGCPointers[csu] = true;
+            annotations.NonGCPointers[csu] = true;
         else if (tag == 'Rooted Pointer')
-            typeInfo.RootedPointers[csu] = true;
+            annotations.RootedPointers[csu] = true;
         else if (tag == 'Suppress GC')
-            typeInfo.GCSuppressors[csu] = true;
+            annotations.GCSuppressors[csu] = true;
     }
 }
 
@@ -96,9 +91,6 @@ function addBaseClass(csu, base) {
     if (!(csu in baseClasses))
         baseClasses[csu] = [];
     baseClasses[csu].push(base);
-    if (!(base in subClasses))
-        subClasses[base] = [];
-    subClasses[base].push(csu);
     var k = baseClasses[csu].length;
     addNestedStructure(csu, base, `<base-${k}>`);
 }
@@ -127,24 +119,22 @@ for (var csuIndex = minStream; csuIndex <= maxStream; csuIndex++) {
     xdb.free_string(data);
 }
 
-for (const typename of extraRootedGCThings())
-    typeInfo.RootedGCThings[typename] = true;
-
-for (const typename of extraRootedPointers())
-    typeInfo.RootedPointers[typename] = true;
-
 // Now that we have the whole hierarchy set up, add all the types and propagate
 // info.
-for (const csu of typeInfo.GCThings)
+for (let csu of annotations.GCThings)
     addGCType(csu);
-for (const csu of typeInfo.GCPointers)
+for (let csu of annotations.GCPointers)
     addGCPointer(csu);
+
+function stars(n) { return n ? '*' + stars(n-1) : '' };
 
 // "typeName is a (pointer to a)^'typePtrLevel' GC type because it contains a field
 // named 'child' of type 'why' (or pointer to 'why' if fieldPtrLevel == 1), which is
 // itself a GCThing or GCPointer."
 function markGCType(typeName, child, why, typePtrLevel, fieldPtrLevel, indent)
 {
+    //printErr(`${indent}${typeName}${stars(typePtrLevel)} may be a gctype/ptr because of its child '${child}' of type ${why}${stars(fieldPtrLevel)}`);
+
     // Some types, like UniquePtr, do not mark/trace/relocate their contained
     // pointers and so should not hold them live across a GC. UniquePtr in
     // particular should be the only thing pointing to a structure containing a
@@ -176,22 +166,19 @@ function markGCType(typeName, child, why, typePtrLevel, fieldPtrLevel, indent)
     if (ptrLevel > 2)
         return;
 
-    if (isRootedGCPointerTypeName(typeName) && !(typeName in typeInfo.RootedPointers))
-        printErr("FIXME: use in-source annotation for " + typeName);
-
-    if (ptrLevel == 0 && (typeName in typeInfo.RootedGCThings))
+    if (ptrLevel == 0 && isRootedGCTypeName(typeName))
         return;
-    if (ptrLevel == 1 && (isRootedGCPointerTypeName(typeName) || (typeName in typeInfo.RootedPointers)))
+    if (ptrLevel == 1 && isRootedGCPointerTypeName(typeName))
         return;
 
     if (ptrLevel == 0) {
-        if (typeName in typeInfo.NonGCTypes)
+        if (typeName in annotations.NonGCTypes)
             return;
         if (!(typeName in gcTypes))
             gcTypes[typeName] = new Set();
         gcTypes[typeName].add(why);
     } else if (ptrLevel == 1) {
-        if (typeName in typeInfo.NonGCPointers)
+        if (typeName in annotations.NonGCPointers)
             return;
         if (!(typeName in gcPointers))
             gcPointers[typeName] = new Set();
@@ -228,34 +215,28 @@ function addGCPointer(typeName)
     markGCType(typeName, '<pointer-annotation>', '(annotation)', 1, 0, "");
 }
 
-// Call a function for a type and every type that contains the type in a field
-// or as a base class (which internally is pretty much the same thing --
-// sublcasses are structs beginning with the base class and adding on their
-// local fields.)
-function foreachContainingStruct(typeName, func, seen = new Set())
+// Add an arbitrary descriptor to a type, and apply it recursively to all base
+// structs and structs that contain the given typeName as a field.
+function addDescriptor(typeName, descriptor)
 {
-    function recurse(container, typeName) {
-        if (seen.has(typeName))
-            return;
-        seen.add(typeName);
-
-        func(container, typeName);
-
-        if (typeName in subClasses) {
-            for (const sub of subClasses[typeName])
-                recurse("subclass of " + typeName, sub);
-        }
+    if (!gDescriptors.has(descriptor))
+        gDescriptors.set(descriptor, new Set);
+    let descriptorTypes = gDescriptors.get(descriptor);
+    if (!descriptorTypes.has(typeName)) {
+        descriptorTypes.add(typeName);
         if (typeName in structureParents) {
-            for (const [holder, field] of structureParents[typeName])
-                recurse(field + " : " + typeName, holder);
+            for (let [holder, field] of structureParents[typeName])
+                addDescriptor(holder, descriptor);
+        }
+        if (typeName in baseClasses) {
+            for (let base of baseClasses[typeName])
+                addDescriptor(base, descriptor);
         }
     }
-
-    recurse('<annotation>', typeName);
 }
 
 for (var type of listNonGCPointers())
-    typeInfo.NonGCPointers[type] = true;
+    annotations.NonGCPointers[type] = true;
 
 function explain(csu, indent, seen) {
     if (!seen)
@@ -307,14 +288,12 @@ for (var csu in gcPointers) {
 // Redirect output to the typeInfo file and close the gcTypes file.
 os.file.close(os.file.redirect(typeInfo_filename));
 
-// Compute the set of types that suppress GC within their RAII scopes (eg
-// AutoSuppressGC, AutoSuppressGCForAnalysis).
-var seen = new Set();
-for (let csu in typeInfo.GCSuppressors)
-    foreachContainingStruct(csu,
-                            (holder, typeName) => { typeInfo.GCSuppressors[typeName] = holder },
-                            seen);
+for (let csu in annotations.GCSuppressors)
+    addDescriptor(csu, 'Suppress GC');
 
-print(JSON.stringify(typeInfo, null, 4));
+for (let [descriptor, types] of gDescriptors) {
+    for (let csu of types)
+        print(descriptor + "$$" + csu);
+}
 
 os.file.close(os.file.redirect(origOut));

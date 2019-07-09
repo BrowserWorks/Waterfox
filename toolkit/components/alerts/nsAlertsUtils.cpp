@@ -8,7 +8,7 @@
 #include "nsContentUtils.h"
 #include "nsIStringBundle.h"
 #include "nsIURI.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 
 /* static */
 bool

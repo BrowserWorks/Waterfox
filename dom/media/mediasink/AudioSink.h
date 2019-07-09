@@ -12,6 +12,7 @@
 #include "MediaInfo.h"
 #include "MediaSink.h"
 
+#include "mozilla/dom/AudioChannelBinding.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MozPromise.h"
@@ -32,7 +33,8 @@ public:
   AudioSink(AbstractThread* aThread,
             MediaQueue<AudioData>& aAudioQueue,
             const TimeUnit& aStartTime,
-            const AudioInfo& aInfo);
+            const AudioInfo& aInfo,
+            dom::AudioChannel aChannel);
 
   ~AudioSink();
 
@@ -89,6 +91,8 @@ private:
   TimeUnit mLastGoodPosition;
 
   const AudioInfo mInfo;
+
+  const dom::AudioChannel mChannel;
 
   // Used on the task queue of MDSM only.
   bool mPlaying;

@@ -14,12 +14,10 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/Compression.h"
-#include "mozilla/LinkedList.h"
+#include "mozilla/FileUtils.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/ResultExtensions.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/Services.h"
-#include "mozilla/URLPreloader.h"
 #include "mozilla/Unused.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/ipc/StructuredCloneData.h"
@@ -27,22 +25,51 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsAppRunner.h"
 #include "nsContentUtils.h"
-#include "nsChromeRegistry.h"
 #include "nsIAddonInterposition.h"
-#include "nsIDOMWindowUtils.h" // for nsIJSRAIIHelper
-#include "nsIFileURL.h"
 #include "nsIIOService.h"
 #include "nsIJARProtocolHandler.h"
-#include "nsIJARURI.h"
 #include "nsIStringEnumerator.h"
 #include "nsIZipReader.h"
-#include "nsJSUtils.h"
 #include "nsReadableUtils.h"
 #include "nsXULAppAPI.h"
 
 #include <stdlib.h>
 
 namespace mozilla {
+
+template <>
+class MOZ_MUST_USE_TYPE GenericErrorResult<nsresult>
+{
+  nsresult mErrorValue;
+
+  template<typename V, typename E2> friend class Result;
+
+public:
+  explicit GenericErrorResult(nsresult aErrorValue) : mErrorValue(aErrorValue) {}
+
+  operator nsresult() { return mErrorValue; }
+};
+
+static inline Result<Ok, nsresult>
+WrapNSResult(PRStatus aRv)
+{
+    if (aRv != PR_SUCCESS) {
+        return Err(NS_ERROR_FAILURE);
+    }
+    return Ok();
+}
+
+static inline Result<Ok, nsresult>
+WrapNSResult(nsresult aRv)
+{
+    if (NS_FAILED(aRv)) {
+        return Err(aRv);
+    }
+    return Ok();
+}
+
+#define NS_TRY(expr) MOZ_TRY(WrapNSResult(expr))
+
 
 using Compression::LZ4;
 using dom::ipc::StructuredCloneData;
@@ -82,7 +109,7 @@ AddonManagerStartup::ProfileDir()
   return mProfileDir;
 }
 
-NS_IMPL_ISUPPORTS(AddonManagerStartup, amIAddonManagerStartup, nsIObserver)
+NS_IMPL_ISUPPORTS(AddonManagerStartup, amIAddonManagerStartup)
 
 
 /*****************************************************************************
@@ -103,6 +130,28 @@ IsNormalFile(nsIFile* file)
 {
   bool result;
   return NS_SUCCEEDED(file->IsFile(&result)) && result;
+}
+
+static Result<nsCString, nsresult>
+ReadFile(nsIFile* file)
+{
+  nsCString result;
+
+  AutoFDClose fd;
+  NS_TRY(file->OpenNSPRFileDesc(PR_RDONLY, 0, &fd.rwget()));
+
+  auto size = PR_Seek64(fd, 0, PR_SEEK_END);
+  PR_Seek64(fd, 0, PR_SEEK_SET);
+
+  result.SetLength(size);
+
+  auto len = PR_Read(fd, result.BeginWriting(), size);
+
+  if (size != len) {
+    return Err(NS_ERROR_FAILURE);
+  }
+
+  return result;
 }
 
 static const char STRUCTURED_CLONE_MAGIC[] = "mozJSSCLz40v001";
@@ -168,14 +217,19 @@ static_assert(sizeof STRUCTURED_CLONE_MAGIC % 8 == 0,
 /**
  * Reads the contents of a LZ4-compressed file, as stored by the OS.File
  * module, and returns the decompressed contents on success.
+ *
+ * A nonexistent or empty file is treated as success. A corrupt or non-LZ4
+ * file is treated as failure.
  */
 static Result<nsCString, nsresult>
 ReadFileLZ4(nsIFile* file)
 {
   static const char MAGIC_NUMBER[] = "mozLz40";
 
+  nsCString result;
+
   nsCString lz4;
-  MOZ_TRY_VAR(lz4, URLPreloader::ReadFile(file));
+  MOZ_TRY_VAR(lz4, ReadFile(file));
 
   if (lz4.IsEmpty()) {
     return lz4;
@@ -200,46 +254,15 @@ GetJarCache()
   NS_ENSURE_TRUE(ios, Err(NS_ERROR_FAILURE));
 
   nsCOMPtr<nsIProtocolHandler> jarProto;
-  MOZ_TRY(ios->GetProtocolHandler("jar", getter_AddRefs(jarProto)));
+  NS_TRY(ios->GetProtocolHandler("jar", getter_AddRefs(jarProto)));
 
   nsCOMPtr<nsIJARProtocolHandler> jar = do_QueryInterface(jarProto);
   MOZ_ASSERT(jar);
 
   nsCOMPtr<nsIZipReaderCache> zipCache;
-  MOZ_TRY(jar->GetJARCache(getter_AddRefs(zipCache)));
+  NS_TRY(jar->GetJARCache(getter_AddRefs(zipCache)));
 
   return Move(zipCache);
-}
-
-static Result<FileLocation, nsresult>
-GetFileLocation(nsIURI* uri)
-{
-  FileLocation location;
-
-  nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(uri);
-  nsCOMPtr<nsIFile> file;
-  if (fileURL) {
-    MOZ_TRY(fileURL->GetFile(getter_AddRefs(file)));
-    location.Init(file);
-  } else {
-    nsCOMPtr<nsIJARURI> jarURI = do_QueryInterface(uri);
-    NS_ENSURE_TRUE(jarURI, Err(NS_ERROR_INVALID_ARG));
-
-    nsCOMPtr<nsIURI> fileURI;
-    MOZ_TRY(jarURI->GetJARFile(getter_AddRefs(fileURI)));
-
-    fileURL = do_QueryInterface(fileURI);
-    NS_ENSURE_TRUE(fileURL, Err(NS_ERROR_INVALID_ARG));
-
-    MOZ_TRY(fileURL->GetFile(getter_AddRefs(file)));
-
-    nsCString entry;
-    MOZ_TRY(jarURI->GetJAREntry(entry));
-
-    location.Init(file, entry.get());
-  }
-
-  return Move(location);
 }
 
 
@@ -438,9 +461,9 @@ Addon::FullPath()
   }
 
   // If not an absolute path, fall back to a relative path from the location.
-  MOZ_TRY(NS_NewLocalFile(mLocation.Path(), false, getter_AddRefs(file)));
+  NS_TRY(NS_NewLocalFile(mLocation.Path(), false, getter_AddRefs(file)));
 
-  MOZ_TRY(file->AppendRelativePath(path));
+  NS_TRY(file->AppendRelativePath(path));
   return Move(file);
 }
 
@@ -533,7 +556,7 @@ AddonManagerStartup::AddInstallLocation(Addon& addon)
   MOZ_TRY_VAR(file, addon.FullPath());
 
   nsString path;
-  MOZ_TRY(file->GetPath(path));
+  NS_TRY(file->GetPath(path));
 
   auto type = addon.LocationType();
 
@@ -560,12 +583,7 @@ AddonManagerStartup::ReadStartupData(JSContext* cx, JS::MutableHandleValue locat
   nsCOMPtr<nsIFile> file = CloneAndAppend(ProfileDir(), "addonStartup.json.lz4");
 
   nsCString data;
-  auto res = ReadFileLZ4(file);
-  if (res.isOk()) {
-    data = res.unwrap();
-  } else if (res.unwrapErr() != NS_ERROR_FILE_NOT_FOUND) {
-    return res.unwrapErr();
-  }
+  MOZ_TRY_VAR(data, ReadFileLZ4(file));
 
   if (data.IsEmpty() || !ParseJSON(cx, data, locations)) {
     return NS_OK;
@@ -657,7 +675,7 @@ AddonManagerStartup::EncodeBlob(JS::HandleValue value, JSContext* cx, JS::Mutabl
   MOZ_TRY_VAR(lz4, EncodeLZ4(scData, STRUCTURED_CLONE_MAGIC));
 
   JS::RootedObject obj(cx);
-  MOZ_TRY(nsContentUtils::CreateArrayBuffer(cx, lz4, &obj.get()));
+  NS_TRY(nsContentUtils::CreateArrayBuffer(cx, lz4, &obj.get()));
 
   result.set(JS::ObjectValue(*obj));
   return NS_OK;
@@ -707,16 +725,16 @@ AddonManagerStartup::EnumerateZipFile(nsIFile* file, const nsACString& pattern,
   MOZ_TRY_VAR(zipCache, GetJarCache());
 
   nsCOMPtr<nsIZipReader> zip;
-  MOZ_TRY(zipCache->GetZip(file, getter_AddRefs(zip)));
+  NS_TRY(zipCache->GetZip(file, getter_AddRefs(zip)));
 
   nsCOMPtr<nsIUTF8StringEnumerator> entries;
-  MOZ_TRY(zip->FindEntries(pattern, getter_AddRefs(entries)));
+  NS_TRY(zip->FindEntries(pattern, getter_AddRefs(entries)));
 
   nsTArray<nsString> results;
   bool hasMore;
   while (NS_SUCCEEDED(entries->HasMore(&hasMore)) && hasMore) {
     nsAutoCString name;
-    MOZ_TRY(entries->GetNext(name));
+    NS_TRY(entries->GetNext(name));
 
     results.AppendElement(NS_ConvertUTF8toUTF16(name));
   }
@@ -741,188 +759,6 @@ AddonManagerStartup::Reset()
 
   mExtensionPaths.Clear();
   mThemePaths.Clear();
-
-  return NS_OK;
-}
-
-nsresult
-AddonManagerStartup::InitializeURLPreloader()
-{
-  MOZ_RELEASE_ASSERT(xpc::IsInAutomation());
-
-  URLPreloader::ReInitialize();
-
-  return NS_OK;
-}
-
-/******************************************************************************
- * RegisterChrome
- ******************************************************************************/
-
-namespace {
-static bool sObserverRegistered;
-
-class RegistryEntries final : public nsIJSRAIIHelper
-                            , public LinkedListElement<RegistryEntries>
-{
-public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIJSRAIIHELPER
-
-  using Override = AutoTArray<nsCString, 2>;
-  using Locale = AutoTArray<nsCString, 3>;
-
-  RegistryEntries(FileLocation& location, nsTArray<Override>&& overrides, nsTArray<Locale>&& locales)
-    : mLocation(location)
-    , mOverrides(Move(overrides))
-    , mLocales(Move(locales))
-  {}
-
-  void Register();
-
-protected:
-  virtual ~RegistryEntries()
-  {
-    Unused << Destruct();
-  }
-
-private:
-  FileLocation mLocation;
-  const nsTArray<Override> mOverrides;
-  const nsTArray<Locale> mLocales;
-};
-
-NS_IMPL_ISUPPORTS(RegistryEntries, nsIJSRAIIHelper)
-
-void
-RegistryEntries::Register()
-{
-  RefPtr<nsChromeRegistry> cr = nsChromeRegistry::GetSingleton();
-
-  nsChromeRegistry::ManifestProcessingContext context(NS_EXTENSION_LOCATION, mLocation);
-
-  for (auto& override : mOverrides) {
-    const char* args[] = {override[0].get(), override[1].get()};
-    cr->ManifestOverride(context, 0, const_cast<char**>(args), 0);
-  }
-
-  for (auto& locale : mLocales) {
-    const char* args[] = {locale[0].get(), locale[1].get(), locale[2].get()};
-    cr->ManifestLocale(context, 0, const_cast<char**>(args), 0);
-  }
-}
-
-NS_IMETHODIMP
-RegistryEntries::Destruct()
-{
-  if (isInList()) {
-    remove();
-
-    // When we remove dynamic entries from the registry, we need to rebuild it
-    // in order to ensure a consistent state. See comments in Observe().
-    RefPtr<nsChromeRegistry> cr = nsChromeRegistry::GetSingleton();
-    return cr->CheckForNewChrome();
-  }
-  return NS_OK;
-}
-
-static LinkedList<RegistryEntries>&
-GetRegistryEntries()
-{
-  static LinkedList<RegistryEntries> sEntries;
-  return sEntries;
-}
-}; // anonymous namespace
-
-NS_IMETHODIMP
-AddonManagerStartup::RegisterChrome(nsIURI* manifestURI, JS::HandleValue locations,
-                                    JSContext* cx, nsIJSRAIIHelper** result)
-{
-  auto IsArray = [cx] (JS::HandleValue val) -> bool {
-    bool isArray;
-    return JS_IsArrayObject(cx, val, &isArray) && isArray;
-  };
-
-  NS_ENSURE_ARG_POINTER(manifestURI);
-  NS_ENSURE_TRUE(IsArray(locations), NS_ERROR_INVALID_ARG);
-
-  FileLocation location;
-  MOZ_TRY_VAR(location, GetFileLocation(manifestURI));
-
-
-  nsTArray<RegistryEntries::Locale> locales;
-  nsTArray<RegistryEntries::Override> overrides;
-
-  JS::RootedObject locs(cx, &locations.toObject());
-  JS::RootedValue arrayVal(cx);
-  JS::RootedObject array(cx);
-
-  for (auto elem : ArrayIter(cx, locs)) {
-    arrayVal = elem.Value();
-    NS_ENSURE_TRUE(IsArray(arrayVal), NS_ERROR_INVALID_ARG);
-
-    array = &arrayVal.toObject();
-
-    AutoTArray<nsCString, 4> vals;
-    for (auto val : ArrayIter(cx, array)) {
-      nsAutoJSString str;
-      NS_ENSURE_TRUE(str.init(cx, val.Value()), NS_ERROR_OUT_OF_MEMORY);
-
-      vals.AppendElement(NS_ConvertUTF16toUTF8(str));
-    }
-    NS_ENSURE_TRUE(vals.Length() > 0, NS_ERROR_INVALID_ARG);
-
-    nsCString type = vals[0];
-    vals.RemoveElementAt(0);
-
-    if (type.EqualsLiteral("override")) {
-      NS_ENSURE_TRUE(vals.Length() == 2, NS_ERROR_INVALID_ARG);
-      overrides.AppendElement(vals);
-    } else if (type.EqualsLiteral("locale")) {
-      NS_ENSURE_TRUE(vals.Length() == 3, NS_ERROR_INVALID_ARG);
-      locales.AppendElement(vals);
-    } else {
-      return NS_ERROR_INVALID_ARG;
-    }
-  }
-
-  if (!sObserverRegistered) {
-    nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-    NS_ENSURE_TRUE(obs, NS_ERROR_UNEXPECTED);
-    obs->AddObserver(this, "chrome-manifests-loaded", false);
-
-    sObserverRegistered = true;
-  }
-
-  auto entry = MakeRefPtr<RegistryEntries>(location,
-                                           Move(overrides),
-                                           Move(locales));
-
-  entry->Register();
-  GetRegistryEntries().insertBack(entry);
-
-  entry.forget(result);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-AddonManagerStartup::Observe(nsISupports* subject, const char* topic, const char16_t* data)
-{
-  // The chrome registry is maintained as a set of global resource mappings
-  // generated mainly from manifest files, on-the-fly, as they're parsed.
-  // Entries added later override entries added earlier, and no record is kept
-  // of the former state.
-  //
-  // As a result, if we remove a dynamically-added manifest file, or a set of
-  // dynamic entries, the registry needs to be rebuilt from scratch, from the
-  // manifests and dynamic entries that remain. The chrome registry itself
-  // takes care of re-parsing manifes files. This observer notification lets
-  // us know when we need to re-register our dynamic entries.
-  if (!strcmp(topic, "chrome-manifests-loaded")) {
-    for (auto entry : GetRegistryEntries()) {
-      entry->Register();
-    }
-  }
 
   return NS_OK;
 }

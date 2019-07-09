@@ -32,7 +32,7 @@ info: >
     ...
   4. Return newTypedArray.
 includes: [testTypedArray.js, compareArray.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

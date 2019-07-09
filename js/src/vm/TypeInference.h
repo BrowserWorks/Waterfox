@@ -382,8 +382,8 @@ class TypeSet
 
     static const char* NonObjectTypeString(Type type);
 
-    static UniqueChars TypeString(Type type);
-    static UniqueChars ObjectGroupString(ObjectGroup* group);
+    static const char* TypeString(Type type);
+    static const char* ObjectGroupString(ObjectGroup* group);
 
   protected:
     /* Flags for this type set. */
@@ -700,11 +700,6 @@ class ConstraintTypeSet : public TypeSet
      */
     void addType(JSContext* cx, Type type);
 
-    /* Generalize to any type. */
-    void makeUnknown(JSContext* cx) {
-        addType(cx, UnknownType());
-    }
-
     // Trigger a post barrier when writing to this set, if necessary.
     // addType(cx, type) takes care of this automatically.
     void postWriteBarrier(JSContext* cx, Type type);
@@ -905,8 +900,8 @@ class PreliminaryObjectArray
         mozilla::PodZero(this);
     }
 
-    void registerNewObject(PlainObject* res);
-    void unregisterObject(PlainObject* obj);
+    void registerNewObject(JSObject* res);
+    void unregisterObject(JSObject* obj);
 
     JSObject* get(size_t i) const {
         MOZ_ASSERT(i < COUNT);
@@ -1287,6 +1282,20 @@ class TypeScript
 #endif
 };
 
+// Ensures no TypeScripts are purged in the current zone.
+class MOZ_RAII AutoKeepTypeScripts
+{
+    TypeZone& zone_;
+    bool prev_;
+
+    AutoKeepTypeScripts(const AutoKeepTypeScripts&) = delete;
+    void operator=(const AutoKeepTypeScripts&) = delete;
+
+  public:
+    explicit inline AutoKeepTypeScripts(JSContext* cx);
+    inline ~AutoKeepTypeScripts();
+};
+
 void
 FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap);
 
@@ -1361,6 +1370,9 @@ class TypeZone
     static const size_t TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE = 8 * 1024;
     ZoneGroupData<LifoAlloc> typeLifoAlloc_;
 
+    TypeZone(const TypeZone&) = delete;
+    void operator=(const TypeZone&) = delete;
+
   public:
     // Current generation for sweeping.
     ZoneGroupOrGCTaskOrIonCompileData<uint32_t> generation;
@@ -1386,6 +1398,8 @@ class TypeZone
     ZoneGroupData<bool> sweepReleaseTypes;
 
     ZoneGroupData<bool> sweepingTypes;
+
+    ZoneGroupData<bool> keepTypeScripts;
 
     // The topmost AutoEnterAnalysis on the stack, if there is one.
     ZoneGroupData<AutoEnterAnalysis*> activeAnalysis;

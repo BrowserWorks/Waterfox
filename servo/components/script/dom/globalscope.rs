@@ -3,14 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use devtools_traits::{ScriptToDevtoolsControlMsg, WorkerId};
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
-use dom::bindings::codegen::Bindings::WorkerGlobalScopeBinding::WorkerGlobalScopeMethods;
 use dom::bindings::conversions::root_from_object;
 use dom::bindings::error::{ErrorInfo, report_pending_exception};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::reflector::DomObject;
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::settings_stack::{AutoEntryScript, entry_global, incumbent_global};
 use dom::bindings::str::DOMString;
 use dom::crypto::Crypto;
@@ -18,7 +17,6 @@ use dom::dedicatedworkerglobalscope::DedicatedWorkerGlobalScope;
 use dom::errorevent::ErrorEvent;
 use dom::event::{Event, EventBubbles, EventCancelable, EventStatus};
 use dom::eventtarget::EventTarget;
-use dom::performance::Performance;
 use dom::window::Window;
 use dom::workerglobalscope::WorkerGlobalScope;
 use dom::workletglobalscope::WorkletGlobalScope;
@@ -33,24 +31,21 @@ use js::jsapi::{JS_GetObjectRuntime, MutableHandleValue};
 use js::panic::maybe_resume_unwind;
 use js::rust::{CompileOptionsWrapper, Runtime, get_object_class};
 use libc;
-use microtask::{Microtask, MicrotaskQueue};
+use microtask::Microtask;
 use msg::constellation_msg::PipelineId;
 use net_traits::{CoreResourceThread, ResourceThreads, IpcSend};
 use profile_traits::{mem, time};
 use script_runtime::{CommonScriptMsg, ScriptChan, ScriptPort};
-use script_thread::{MainThreadScriptChan, ScriptThread};
-use script_traits::{MsDuration, ScriptToConstellationChan, TimerEvent};
+use script_thread::{MainThreadScriptChan, RunnableWrapper, ScriptThread};
+use script_traits::{MsDuration, ScriptMsg as ConstellationMsg, TimerEvent};
 use script_traits::{TimerEventId, TimerSchedulerMsg, TimerSource};
 use servo_url::{MutableOrigin, ServoUrl};
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::ffi::CString;
-use std::rc::Rc;
-use task::TaskCanceller;
 use task_source::file_reading::FileReadingTaskSource;
 use task_source::networking::NetworkingTaskSource;
-use task_source::performance_timeline::PerformanceTimelineTaskSource;
 use time::{Timespec, get_time};
 use timers::{IsInterval, OneshotTimerCallback, OneshotTimerHandle};
 use timers::{OneshotTimers, TimerCallback};
@@ -58,7 +53,7 @@ use timers::{OneshotTimers, TimerCallback};
 #[dom_struct]
 pub struct GlobalScope {
     eventtarget: EventTarget,
-    crypto: MutNullableDom<Crypto>,
+    crypto: MutNullableJS<Crypto>,
     next_worker_id: Cell<WorkerId>,
 
     /// Pipeline id associated with this global.
@@ -69,28 +64,28 @@ pub struct GlobalScope {
     devtools_wants_updates: Cell<bool>,
 
     /// Timers used by the Console API.
-    console_timers: DomRefCell<HashMap<DOMString, u64>>,
+    console_timers: DOMRefCell<HashMap<DOMString, u64>>,
 
     /// For providing instructions to an optional devtools server.
-    #[ignore_malloc_size_of = "channels are hard"]
+    #[ignore_heap_size_of = "channels are hard"]
     devtools_chan: Option<IpcSender<ScriptToDevtoolsControlMsg>>,
 
     /// For sending messages to the memory profiler.
-    #[ignore_malloc_size_of = "channels are hard"]
+    #[ignore_heap_size_of = "channels are hard"]
     mem_profiler_chan: mem::ProfilerChan,
 
     /// For sending messages to the time profiler.
-    #[ignore_malloc_size_of = "channels are hard"]
+    #[ignore_heap_size_of = "channels are hard"]
     time_profiler_chan: time::ProfilerChan,
 
     /// A handle for communicating messages to the constellation thread.
-    #[ignore_malloc_size_of = "channels are hard"]
-    script_to_constellation_chan: ScriptToConstellationChan,
+    #[ignore_heap_size_of = "channels are hard"]
+    constellation_chan: IpcSender<ConstellationMsg>,
 
-    #[ignore_malloc_size_of = "channels are hard"]
+    #[ignore_heap_size_of = "channels are hard"]
     scheduler_chan: IpcSender<TimerSchedulerMsg>,
 
-    /// <https://html.spec.whatwg.org/multipage/#in-error-reporting-mode>
+    /// https://html.spec.whatwg.org/multipage/#in-error-reporting-mode
     in_error_reporting_mode: Cell<bool>,
 
     /// Associated resource threads for use by DOM objects like XMLHttpRequest,
@@ -101,60 +96,49 @@ pub struct GlobalScope {
 
     /// The origin of the globalscope
     origin: MutableOrigin,
-
-    /// The microtask queue associated with this global.
-    ///
-    /// It is refcounted because windows in the same script thread share the
-    /// same microtask queue.
-    ///
-    /// <https://html.spec.whatwg.org/multipage/#microtask-queue>
-    #[ignore_malloc_size_of = "Rc<T> is hard"]
-    microtask_queue: Rc<MicrotaskQueue>,
 }
 
 impl GlobalScope {
     pub fn new_inherited(
-        pipeline_id: PipelineId,
-        devtools_chan: Option<IpcSender<ScriptToDevtoolsControlMsg>>,
-        mem_profiler_chan: mem::ProfilerChan,
-        time_profiler_chan: time::ProfilerChan,
-        script_to_constellation_chan: ScriptToConstellationChan,
-        scheduler_chan: IpcSender<TimerSchedulerMsg>,
-        resource_threads: ResourceThreads,
-        timer_event_chan: IpcSender<TimerEvent>,
-        origin: MutableOrigin,
-        microtask_queue: Rc<MicrotaskQueue>,
-    ) -> Self {
-        Self {
+            pipeline_id: PipelineId,
+            devtools_chan: Option<IpcSender<ScriptToDevtoolsControlMsg>>,
+            mem_profiler_chan: mem::ProfilerChan,
+            time_profiler_chan: time::ProfilerChan,
+            constellation_chan: IpcSender<ConstellationMsg>,
+            scheduler_chan: IpcSender<TimerSchedulerMsg>,
+            resource_threads: ResourceThreads,
+            timer_event_chan: IpcSender<TimerEvent>,
+            origin: MutableOrigin)
+            -> Self {
+        GlobalScope {
             eventtarget: EventTarget::new_inherited(),
             crypto: Default::default(),
             next_worker_id: Cell::new(WorkerId(0)),
-            pipeline_id,
+            pipeline_id: pipeline_id,
             devtools_wants_updates: Default::default(),
-            console_timers: DomRefCell::new(Default::default()),
-            devtools_chan,
-            mem_profiler_chan,
-            time_profiler_chan,
-            script_to_constellation_chan,
+            console_timers: DOMRefCell::new(Default::default()),
+            devtools_chan: devtools_chan,
+            mem_profiler_chan: mem_profiler_chan,
+            time_profiler_chan: time_profiler_chan,
+            constellation_chan: constellation_chan,
             scheduler_chan: scheduler_chan.clone(),
             in_error_reporting_mode: Default::default(),
-            resource_threads,
+            resource_threads: resource_threads,
             timers: OneshotTimers::new(timer_event_chan, scheduler_chan),
-            origin,
-            microtask_queue,
+            origin: origin,
         }
     }
 
     /// Returns the global scope of the realm that the given DOM object's reflector
     /// was created in.
     #[allow(unsafe_code)]
-    pub fn from_reflector<T: DomObject>(reflector: &T) -> DomRoot<Self> {
+    pub fn from_reflector<T: DomObject>(reflector: &T) -> Root<Self> {
         unsafe { GlobalScope::from_object(*reflector.reflector().get_jsobject()) }
     }
 
     /// Returns the global scope of the realm that the given JS object was created in.
     #[allow(unsafe_code)]
-    pub unsafe fn from_object(obj: *mut JSObject) -> DomRoot<Self> {
+    pub unsafe fn from_object(obj: *mut JSObject) -> Root<Self> {
         assert!(!obj.is_null());
         let global = GetGlobalForObjectCrossCompartment(obj);
         global_scope_from_global(global)
@@ -162,7 +146,7 @@ impl GlobalScope {
 
     /// Returns the global scope for the given JSContext
     #[allow(unsafe_code)]
-    pub unsafe fn from_context(cx: *mut JSContext) -> DomRoot<Self> {
+    pub unsafe fn from_context(cx: *mut JSContext) -> Root<Self> {
         let global = CurrentGlobalOrNull(cx);
         global_scope_from_global(global)
     }
@@ -170,7 +154,7 @@ impl GlobalScope {
     /// Returns the global object of the realm that the given JS object
     /// was created in, after unwrapping any wrappers.
     #[allow(unsafe_code)]
-    pub unsafe fn from_object_maybe_wrapped(mut obj: *mut JSObject) -> DomRoot<Self> {
+    pub unsafe fn from_object_maybe_wrapped(mut obj: *mut JSObject) -> Root<Self> {
         if IsWrapper(obj) {
             obj = UnwrapObject(obj, /* stopAtWindowProxy = */ 0);
             assert!(!obj.is_null());
@@ -190,7 +174,7 @@ impl GlobalScope {
         }
     }
 
-    pub fn crypto(&self) -> DomRoot<Crypto> {
+    pub fn crypto(&self) -> Root<Crypto> {
         self.crypto.or_init(|| Crypto::new(self))
     }
 
@@ -247,8 +231,8 @@ impl GlobalScope {
     }
 
     /// Get a sender to the constellation thread.
-    pub fn script_to_constellation_chan(&self) -> &ScriptToConstellationChan {
-        &self.script_to_constellation_chan
+    pub fn constellation_chan(&self) -> &IpcSender<ConstellationMsg> {
+        &self.constellation_chan
     }
 
     pub fn scheduler_chan(&self) -> &IpcSender<TimerSchedulerMsg> {
@@ -303,7 +287,7 @@ impl GlobalScope {
         self.downcast::<Window>().expect("expected a Window scope")
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#report-the-error>
+    /// https://html.spec.whatwg.org/multipage/#report-the-error
     pub fn report_an_error(&self, error_info: ErrorInfo, value: HandleValue) {
         // Step 1.
         if self.in_error_reporting_mode.get() {
@@ -313,34 +297,30 @@ impl GlobalScope {
         // Step 2.
         self.in_error_reporting_mode.set(true);
 
-        // Steps 3-6.
+        // Steps 3-12.
         // FIXME(#13195): muted errors.
-        let event = ErrorEvent::new(
-            self,
-            atom!("error"),
-            EventBubbles::DoesNotBubble,
-            EventCancelable::Cancelable,
-            error_info.message.as_str().into(),
-            error_info.filename.as_str().into(),
-            error_info.lineno,
-            error_info.column,
-            value,
-        );
+        let event = ErrorEvent::new(self,
+                                    atom!("error"),
+                                    EventBubbles::DoesNotBubble,
+                                    EventCancelable::Cancelable,
+                                    error_info.message.as_str().into(),
+                                    error_info.filename.as_str().into(),
+                                    error_info.lineno,
+                                    error_info.column,
+                                    value);
 
-        // Step 7.
+        // Step 13.
         let event_status = event.upcast::<Event>().fire(self.upcast::<EventTarget>());
 
-        // Step 8.
-        self.in_error_reporting_mode.set(false);
-
-        // Step 9.
+        // Step 15
         if event_status == EventStatus::NotCanceled {
-            // https://html.spec.whatwg.org/multipage/#runtime-script-errors-2
             if let Some(dedicated) = self.downcast::<DedicatedWorkerGlobalScope>() {
                 dedicated.forward_error_to_worker_object(error_info);
             }
         }
 
+        // Step 14
+        self.in_error_reporting_mode.set(false);
     }
 
     /// Get the `&ResourceThreads` for this global scope.
@@ -409,7 +389,7 @@ impl GlobalScope {
                 let _aes = AutoEntryScript::new(self);
                 let options = CompileOptionsWrapper::new(cx, filename.as_ptr(), line_number);
 
-                debug!("evaluating Dom string");
+                debug!("evaluating JS string");
                 let result = unsafe {
                     Evaluate2(cx, options.ptr, code.as_ptr(),
                               code.len() as libc::size_t,
@@ -417,7 +397,7 @@ impl GlobalScope {
                 };
 
                 if !result {
-                    debug!("error evaluating Dom string");
+                    debug!("error evaluating JS string");
                     unsafe { report_pending_exception(cx, true) };
                 }
 
@@ -482,26 +462,44 @@ impl GlobalScope {
         unreachable!();
     }
 
-    /// Returns the task canceller of this global to ensure that everything is
-    /// properly cancelled when the global scope is destroyed.
-    pub fn task_canceller(&self) -> TaskCanceller {
+    /// Returns a wrapper for runnables to ensure they are cancelled if
+    /// the global scope is being destroyed.
+    pub fn get_runnable_wrapper(&self) -> RunnableWrapper {
         if let Some(window) = self.downcast::<Window>() {
-            return window.task_canceller();
+            return window.get_runnable_wrapper();
         }
         if let Some(worker) = self.downcast::<WorkerGlobalScope>() {
-            return worker.task_canceller();
+            return worker.get_runnable_wrapper();
         }
         unreachable!();
     }
 
     /// Perform a microtask checkpoint.
     pub fn perform_a_microtask_checkpoint(&self) {
-        self.microtask_queue.checkpoint(|_| Some(DomRoot::from_ref(self)));
+        if self.is::<Window>() {
+            return ScriptThread::invoke_perform_a_microtask_checkpoint();
+        }
+        if let Some(worker) = self.downcast::<WorkerGlobalScope>() {
+            return worker.perform_a_microtask_checkpoint();
+        }
+        if let Some(worker) = self.downcast::<WorkletGlobalScope>() {
+            return worker.perform_a_microtask_checkpoint();
+        }
+        unreachable!();
     }
 
     /// Enqueue a microtask for subsequent execution.
     pub fn enqueue_microtask(&self, job: Microtask) {
-        self.microtask_queue.enqueue(job);
+        if self.is::<Window>() {
+            return ScriptThread::enqueue_microtask(job);
+        }
+        if let Some(worker) = self.downcast::<WorkerGlobalScope>() {
+            return worker.enqueue_microtask(job);
+        }
+        if let Some(worker) = self.downcast::<WorkletGlobalScope>() {
+            return worker.enqueue_microtask(job);
+        }
+        unreachable!();
     }
 
     /// Create a new sender/receiver pair that can be used to implement an on-demand
@@ -515,11 +513,6 @@ impl GlobalScope {
             return worker.new_script_pair();
         }
         unreachable!();
-    }
-
-    /// Returns the microtask queue of this global.
-    pub fn microtask_queue(&self) -> &Rc<MicrotaskQueue> {
-        &self.microtask_queue
     }
 
     /// Process a single event as if it were the next event
@@ -550,7 +543,7 @@ impl GlobalScope {
     ///
     /// ["current"]: https://html.spec.whatwg.org/multipage/#current
     #[allow(unsafe_code)]
-    pub fn current() -> Option<DomRoot<Self>> {
+    pub fn current() -> Option<Root<Self>> {
         unsafe {
             let cx = Runtime::get();
             assert!(!cx.is_null());
@@ -566,39 +559,16 @@ impl GlobalScope {
     /// Returns the ["entry"] global object.
     ///
     /// ["entry"]: https://html.spec.whatwg.org/multipage/#entry
-    pub fn entry() -> DomRoot<Self> {
+    pub fn entry() -> Root<Self> {
         entry_global()
     }
 
     /// Returns the ["incumbent"] global object.
     ///
     /// ["incumbent"]: https://html.spec.whatwg.org/multipage/#incumbent
-    pub fn incumbent() -> Option<DomRoot<Self>> {
+    pub fn incumbent() -> Option<Root<Self>> {
         incumbent_global()
     }
-
-    pub fn performance(&self) -> DomRoot<Performance> {
-        if let Some(window) = self.downcast::<Window>() {
-            return window.Performance();
-        }
-        if let Some(worker) = self.downcast::<WorkerGlobalScope>() {
-            return worker.Performance();
-        }
-        unreachable!();
-    }
-
-    /// Channel to send messages to the performance timeline task source
-    /// of this global scope.
-    pub fn performance_timeline_task_source(&self) -> PerformanceTimelineTaskSource {
-        if let Some(window) = self.downcast::<Window>() {
-            return window.performance_timeline_task_source();
-        }
-        if let Some(worker) = self.downcast::<WorkerGlobalScope>() {
-            return worker.performance_timeline_task_source();
-        }
-        unreachable!();
-    }
-
 }
 
 fn timestamp_in_ms(time: Timespec) -> u64 {
@@ -607,7 +577,7 @@ fn timestamp_in_ms(time: Timespec) -> u64 {
 
 /// Returns the Rust global scope from a JS global object.
 #[allow(unsafe_code)]
-unsafe fn global_scope_from_global(global: *mut JSObject) -> DomRoot<GlobalScope> {
+unsafe fn global_scope_from_global(global: *mut JSObject) -> Root<GlobalScope> {
     assert!(!global.is_null());
     let clasp = get_object_class(global);
     assert!(((*clasp).flags & (JSCLASS_IS_DOMJSCLASS | JSCLASS_IS_GLOBAL)) != 0);

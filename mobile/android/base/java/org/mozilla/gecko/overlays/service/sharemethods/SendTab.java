@@ -9,12 +9,16 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.RemoteClient;
+import org.mozilla.gecko.db.TabsAccessor;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
@@ -24,11 +28,7 @@ import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
-import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -238,19 +238,16 @@ public class SendTab extends ShareMethod {
             return Collections.emptyList();
         }
 
-        final ClientsDatabaseAccessor clientsDatabaseAccessor = new ClientsDatabaseAccessor(context);
+        final BrowserDB browserDB = BrowserDB.from(context);
+        final TabsAccessor tabsAccessor = browserDB.getTabsAccessor();
+        final Cursor remoteTabsCursor = tabsAccessor.getRemoteClientsNoStaleSorted(context);
         try {
-            final String[] remoteDevicesIds = clientsDatabaseAccessor.getRemoteDevicesIds(context);
-            final Collection<ClientRecord> clientRecords = clientsDatabaseAccessor.fetchNonStaleClients(remoteDevicesIds);
-            final Collection<RemoteClient> remoteClients = new ArrayList<>(clientRecords.size());
-            for (ClientRecord cr : clientRecords) {
-                remoteClients.add(new RemoteClient(cr.guid, cr.name, cr.lastModified, cr.type));
+            if (remoteTabsCursor.getCount() == 0) {
+                return Collections.emptyList();
             }
-            return remoteClients;
-        } catch (NullCursorException e) {
-            return Collections.emptyList();
+            return tabsAccessor.getClientsWithoutTabsNoStaleSortedFromCursor(remoteTabsCursor);
         } finally {
-            clientsDatabaseAccessor.close();
+            remoteTabsCursor.close();
         }
     }
 
@@ -293,7 +290,7 @@ public class SendTab extends ShareMethod {
 
         @Override
         public void sync() {
-            fxAccount.requestImmediateSync(STAGES_TO_SYNC, null, true);
+            fxAccount.requestImmediateSync(STAGES_TO_SYNC, null);
         }
     }
 }

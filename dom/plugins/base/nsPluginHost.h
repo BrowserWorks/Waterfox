@@ -182,6 +182,8 @@ public:
   AddHeadersToChannel(const char *aHeadersData, uint32_t aHeadersDataLen,
                       nsIChannel *aGenericChannel);
 
+  static nsresult GetPluginTempDir(nsIFile **aDir);
+
   // Helper that checks if a type is whitelisted in plugin.allowed_types.
   // Always returns true if plugin.allowed_types is not set
   static bool IsTypeWhitelisted(const char *aType);
@@ -191,20 +193,16 @@ public:
   // Always returns false if plugin.load_in_parent_process.<mime> is not set.
   static bool ShouldLoadTypeInParent(const nsACString& aMimeType);
 
-  /**
-   * Returns true if a plugin can be used to load the requested MIME type. Used
-   * for short circuiting before sending things to plugin code.
-   */
-  static bool
-  CanUsePluginForMIMEType(const nsACString& aMIMEType);
-
   // checks whether aType is a type we recognize for potential special handling
   enum SpecialType {
     eSpecialType_None,
     // Needed to whitelist for async init support
     eSpecialType_Test,
     // Informs some decisions about OOP and quirks
-    eSpecialType_Flash
+    eSpecialType_Flash,
+    // Binds to the <applet> tag, has various special
+    // rules around opening channels, codebase, ...
+    eSpecialType_Java
   };
   static SpecialType GetSpecialType(const nsACString & aMIMEType);
 
@@ -368,6 +366,8 @@ private:
   void UpdateInMemoryPluginInfo(nsPluginTag* aPluginTag);
 
   nsresult ActuallyReloadPlugins();
+
+  bool ShouldAddPlugin(nsPluginTag* aPluginTag);
 
   RefPtr<nsPluginTag> mPlugins;
   RefPtr<nsPluginTag> mCachedPlugins;

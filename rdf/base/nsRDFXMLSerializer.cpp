@@ -7,12 +7,13 @@
 
 #include "nsRDFXMLSerializer.h"
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIOutputStream.h"
 #include "nsIRDFService.h"
 #include "nsIRDFContainerUtils.h"
 #include "nsIServiceManager.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsTArray.h"
 #include "rdf.h"
 #include "rdfutil.h"
@@ -118,10 +119,10 @@ nsRDFXMLSerializer::Init(nsIRDFDataSource* aDataSource)
         return NS_ERROR_NULL_POINTER;
 
     mDataSource = aDataSource;
-    mDataSource->GetURI(mBaseURLSpec);
+    mDataSource->GetURI(getter_Copies(mBaseURLSpec));
 
     // Add the ``RDF'' prefix, by default.
-    RefPtr<nsAtom> prefix;
+    nsCOMPtr<nsIAtom> prefix;
 
     prefix = NS_Atomize("RDF");
     AddNameSpace(prefix, NS_LITERAL_STRING("http://www.w3.org/1999/02/22-rdf-syntax-ns#"));
@@ -135,9 +136,9 @@ nsRDFXMLSerializer::Init(nsIRDFDataSource* aDataSource)
 }
 
 NS_IMETHODIMP
-nsRDFXMLSerializer::AddNameSpace(nsAtom* aPrefix, const nsAString& aURI)
+nsRDFXMLSerializer::AddNameSpace(nsIAtom* aPrefix, const nsAString& aURI)
 {
-    RefPtr<nsAtom> prefix = aPrefix;
+    nsCOMPtr<nsIAtom> prefix = aPrefix;
     if (!prefix) {
         // Make up a prefix, we don't want default namespaces, so
         // that we can use QNames for elements and attributes alike.
@@ -178,11 +179,11 @@ rdf_BlockingWrite(nsIOutputStream* stream, const nsAString& s)
     return rdf_BlockingWrite(stream, utf8.get(), utf8.Length());
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 nsRDFXMLSerializer::EnsureNewPrefix()
 {
     nsAutoString qname;
-    RefPtr<nsAtom> prefix;
+    nsCOMPtr<nsIAtom> prefix;
     bool isNewPrefix;
     do {
         isNewPrefix = true;
@@ -233,7 +234,7 @@ nsRDFXMLSerializer::RegisterQName(nsIRDFResource* aResource)
 
     // Take whatever is to the right of the '#' or '/' and call it the
     // local name, make up a prefix.
-    RefPtr<nsAtom> prefix = EnsureNewPrefix();
+    nsCOMPtr<nsIAtom> prefix = EnsureNewPrefix();
     mNameSpaces.Put(StringHead(uri, i+1), prefix);
     prefix->ToUTF8String(qname);
     qname.Append(':');

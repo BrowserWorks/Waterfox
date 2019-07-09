@@ -14,17 +14,15 @@ transforms:
 # generate tasks for every docker image in the directory, secure in the
 # knowledge that unnecessary images will be omitted from the target task graph
 jobs:
+  desktop-test:
+    symbol: I(dt)
   desktop1604-test:
     symbol: I(dt16t)
   desktop-build:
     symbol: I(db)
-  valgrind-build:
-    symbol: I(vb)
   lint:
     symbol: I(lnt)
-  android-build:
+  android-gradle-build:
     symbol: I(agb)
   index-task:
     symbol: I(idx)
-  funsize-update-generator:
-    symbol: I(pg)

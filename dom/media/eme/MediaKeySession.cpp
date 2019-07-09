@@ -33,7 +33,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(MediaKeySession,
                                    mKeyStatusMap,
                                    mClosed)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaKeySession)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaKeySession)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(MediaKeySession, DOMEventTargetHelper)
@@ -154,7 +154,7 @@ MediaKeySession::UpdateKeyStatusMap()
       message.Append(nsPrintfCString(" (%s,%s)", ToHexString(status.mId).get(),
         MediaKeyStatusValues::strings[static_cast<IntegerType>(status.mStatus)].value));
     }
-    message.AppendLiteral(" }");
+    message.Append(" }");
     // Use %s so we aren't exposing random strings to printf interpolation.
     EME_LOG("%s", message.get());
   }

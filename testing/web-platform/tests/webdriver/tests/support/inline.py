@@ -1,10 +1,6 @@
 import urllib
 
-
-def inline(doc, doctype="html", mime="text/html;charset=utf-8", protocol="http"):
-    from .fixtures import server_config, url
-    build_url = url(server_config())
-
+def inline(doc, doctype="html", mime="text/html;charset=utf-8"):
     if doctype == "html":
         mime = "text/html;charset=utf-8"
     elif doctype == "xhtml":
@@ -20,25 +16,4 @@ def inline(doc, doctype="html", mime="text/html;charset=utf-8", protocol="http")
     {}
   </body>
 </html>""".format(doc)
-
-    query = {"doc": doc}
-    if mime != "text/html;charset=utf8":
-        query["content-type"] = mime
-
-    return build_url("/webdriver/tests/support/inline.py",
-                     query=urllib.urlencode(query),
-                     protocol=protocol)
-
-
-def iframe(doc):
-    return "<iframe src='%s'></iframe>" % inline(doc)
-
-
-def main(request, response):
-    doc = request.GET.first("doc", None)
-    content_type = request.GET.first("content-type", "text/html;charset=utf8")
-    if doc is None:
-        rv = 404, [("Content-Type", "text/plain")], "Missing doc parameter in query"
-    else:
-        rv = [("Content-Type", content_type)], doc
-    return rv
+    return "data:{},{}".format(mime, urllib.quote(doc))

@@ -256,7 +256,8 @@ nsAlertsIconListener::InitAlertAsync(nsIAlertNotification* aAlert,
       nsAutoString appName;
 
       if (bundle) {
-        bundle->GetStringFromName("brandShortName", appName);
+        bundle->GetStringFromName("brandShortName",
+                                  getter_Copies(appName));
         appShortName = NS_ConvertUTF16toUTF8(appName);
       } else {
         NS_WARNING("brand.properties not present, using default application name");

@@ -11,10 +11,8 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype, "sup", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyNotEnumerable(String.prototype, 'sup');
+verifyWritable(String.prototype, 'sup');
+verifyConfigurable(String.prototype, 'sup');
 
 reportCompare(0, 0);

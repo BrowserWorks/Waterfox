@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "jsapi.h"
 #include "nsIContent.h"
@@ -156,10 +156,9 @@ nsXBLProtoImplProperty::InstallMember(JSContext *aCx,
     nsDependentString name(mName);
     if (!::JS_DefineUCProperty(aCx, aTargetClassObject,
                                static_cast<const char16_t*>(mName),
-                               name.Length(),
+                               name.Length(), JS::UndefinedHandleValue, mJSAttributes,
                                JS_DATA_TO_FUNC_PTR(JSNative, getter.get()),
-                               JS_DATA_TO_FUNC_PTR(JSNative, setter.get()),
-                               mJSAttributes))
+                               JS_DATA_TO_FUNC_PTR(JSNative, setter.get())))
       return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;
@@ -200,7 +199,7 @@ nsXBLProtoImplProperty::CompileMember(AutoJSAPI& jsapi, const nsString& aClassSt
       JSAutoCompartment ac(cx, aClassObject);
       JS::CompileOptions options(cx);
       options.setFileAndLine(functionUri.get(), getterText->GetLineNumber())
-             .setVersion(JSVERSION_DEFAULT);
+             .setVersion(JSVERSION_LATEST);
       nsCString name = NS_LITERAL_CSTRING("get_") + NS_ConvertUTF16toUTF8(mName);
       JS::Rooted<JSObject*> getterObject(cx);
       JS::AutoObjectVector emptyVector(cx);
@@ -213,7 +212,7 @@ nsXBLProtoImplProperty::CompileMember(AutoJSAPI& jsapi, const nsString& aClassSt
       mGetter.SetJSFunction(getterObject);
 
       if (mGetter.GetJSFunction() && NS_SUCCEEDED(rv)) {
-        mJSAttributes |= JSPROP_GETTER;
+        mJSAttributes |= JSPROP_GETTER | JSPROP_SHARED;
       }
       if (NS_FAILED(rv)) {
         mGetter.SetJSFunction(nullptr);
@@ -246,7 +245,7 @@ nsXBLProtoImplProperty::CompileMember(AutoJSAPI& jsapi, const nsString& aClassSt
       JSAutoCompartment ac(cx, aClassObject);
       JS::CompileOptions options(cx);
       options.setFileAndLine(functionUri.get(), setterText->GetLineNumber())
-             .setVersion(JSVERSION_DEFAULT);
+             .setVersion(JSVERSION_LATEST);
       nsCString name = NS_LITERAL_CSTRING("set_") + NS_ConvertUTF16toUTF8(mName);
       JS::Rooted<JSObject*> setterObject(cx);
       JS::AutoObjectVector emptyVector(cx);
@@ -259,7 +258,7 @@ nsXBLProtoImplProperty::CompileMember(AutoJSAPI& jsapi, const nsString& aClassSt
       mSetter.SetJSFunction(setterObject);
 
       if (mSetter.GetJSFunction() && NS_SUCCEEDED(rv)) {
-        mJSAttributes |= JSPROP_SETTER;
+        mJSAttributes |= JSPROP_SETTER | JSPROP_SHARED;
       }
       if (NS_FAILED(rv)) {
         mSetter.SetJSFunction(nullptr);
@@ -308,7 +307,7 @@ nsXBLProtoImplProperty::Read(nsIObjectInputStream* aStream,
     nsresult rv = XBL_DeserializeFunction(aStream, &getterObject);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    mJSAttributes |= JSPROP_GETTER;
+    mJSAttributes |= JSPROP_GETTER | JSPROP_SHARED;
   }
   mGetter.SetJSFunction(getterObject);
 
@@ -318,7 +317,7 @@ nsXBLProtoImplProperty::Read(nsIObjectInputStream* aStream,
     nsresult rv = XBL_DeserializeFunction(aStream, &setterObject);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    mJSAttributes |= JSPROP_SETTER;
+    mJSAttributes |= JSPROP_SETTER | JSPROP_SHARED;
   }
   mSetter.SetJSFunction(setterObject);
 

@@ -37,17 +37,13 @@
         let mut background_color = None;
 
         % for name in "image position_x position_y repeat size attachment origin clip".split():
-            // Vec grows from 0 to 4 by default on first push().  So allocate
-            // with capacity 1, so in the common case of only one item we don't
-            // way overallocate.  Note that we always push at least one item if
-            // parsing succeeds.
-            let mut background_${name} = background_${name}::SpecifiedValue(Vec::with_capacity(1));
+            let mut background_${name} = background_${name}::SpecifiedValue(Vec::new());
         % endfor
         input.parse_comma_separated(|input| {
             // background-color can only be in the last element, so if it
             // is parsed anywhere before, the value is invalid.
             if background_color.is_some() {
-                return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
+                return Err(StyleParseError::UnspecifiedError.into());
             }
 
             % for name in "image position repeat size attachment origin clip".split():
@@ -112,7 +108,7 @@
                 % endfor
                 Ok(())
             } else {
-                Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+                Err(StyleParseError::UnspecifiedError.into())
             }
         })?;
 
@@ -152,36 +148,36 @@
                 % endfor
 
                 if i != 0 {
-                    dest.write_str(", ")?;
+                    write!(dest, ", ")?;
                 }
 
                 if i == len - 1 {
                     self.background_color.to_css(dest)?;
-                    dest.write_str(" ")?;
+                    write!(dest, " ")?;
                 }
 
                 image.to_css(dest)?;
                 % for name in "repeat attachment".split():
-                    dest.write_str(" ")?;
+                    write!(dest, " ")?;
                     ${name}.to_css(dest)?;
                 % endfor
 
-                dest.write_str(" ")?;
+                write!(dest, " ")?;
                 Position {
                     horizontal: position_x.clone(),
                     vertical: position_y.clone()
                 }.to_css(dest)?;
 
                 if *size != background_size::single_value::get_initial_specified_value() {
-                    dest.write_str(" / ")?;
+                    write!(dest, " / ")?;
                     size.to_css(dest)?;
                 }
 
                 if *origin != Origin::padding_box || *clip != Clip::border_box {
-                    dest.write_str(" ")?;
+                    write!(dest, " ")?;
                     origin.to_css(dest)?;
                     if *clip != From::from(*origin) {
-                        dest.write_str(" ")?;
+                        write!(dest, " ")?;
                         clip.to_css(dest)?;
                     }
                 }
@@ -201,12 +197,8 @@
 
     pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                -> Result<Longhands, ParseError<'i>> {
-        // Vec grows from 0 to 4 by default on first push().  So allocate with
-        // capacity 1, so in the common case of only one item we don't way
-        // overallocate.  Note that we always push at least one item if parsing
-        // succeeds.
-        let mut position_x = background_position_x::SpecifiedValue(Vec::with_capacity(1));
-        let mut position_y = background_position_y::SpecifiedValue(Vec::with_capacity(1));
+        let mut position_x = background_position_x::SpecifiedValue(Vec::new());
+        let mut position_y = background_position_y::SpecifiedValue(Vec::new());
         let mut any = false;
 
         input.parse_comma_separated(|input| {
@@ -217,7 +209,7 @@
             Ok(())
         })?;
         if !any {
-            return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
+            return Err(StyleParseError::UnspecifiedError.into());
         }
 
         Ok(expanded! {

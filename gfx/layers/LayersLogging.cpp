@@ -65,7 +65,7 @@ AppendToString(std::stringstream& aStream, const nsRect& r,
   aStream << pfx;
   aStream << nsPrintfCString(
     "(x=%d, y=%d, w=%d, h=%d)",
-    r.x, r.y, r.Width(), r.Height()).get();
+    r.x, r.y, r.width, r.height).get();
   aStream << sfx;
 }
 
@@ -99,16 +99,6 @@ AppendToString(std::stringstream& aStream, const wr::LayoutSize& s,
   aStream << nsPrintfCString(
     "(w=%f, h=%f)",
     s.width, s.height).get();
-  aStream << sfx;
-}
-
-void
-AppendToString(std::stringstream& aStream, const wr::StickySideConstraint& s,
-               const char* pfx, const char* sfx)
-{
-  aStream << pfx;
-  aStream << nsPrintfCString("(margin=%f max=%f)",
-      s.margin, s.max_offset).get();
   aStream << sfx;
 }
 
@@ -400,6 +390,8 @@ AppendToString(std::stringstream& aStream, ImageFormat format,
     aStream << "ImageFormat::MAC_IOSURFACE"; break;
   case ImageFormat::SURFACE_TEXTURE:
     aStream << "ImageFormat::SURFACE_TEXTURE"; break;
+  case ImageFormat::EGLIMAGE:
+    aStream << "ImageFormat::EGLIMAGE"; break;
   case ImageFormat::D3D9_RGB32_TEXTURE:
     aStream << "ImageFormat::D3D9_RBG32_TEXTURE"; break;
   case ImageFormat::OVERLAY_IMAGE:

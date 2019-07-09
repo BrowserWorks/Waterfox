@@ -6,23 +6,23 @@
 
 //! Implementation of `iterable<...>` and `iterable<..., ...>` WebIDL declarations.
 
+use core::nonzero::NonZero;
 use dom::bindings::codegen::Bindings::IterableIteratorBinding::IterableKeyAndValueResult;
 use dom::bindings::codegen::Bindings::IterableIteratorBinding::IterableKeyOrValueResult;
 use dom::bindings::error::Fallible;
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::bindings::trace::JSTraceable;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use js::conversions::ToJSValConvertible;
-use js::jsapi::{HandleValue, Heap, JSContext, MutableHandleObject};
+use js::jsapi::{HandleValue, Heap, JSContext, JSObject, MutableHandleObject};
 use js::jsval::UndefinedValue;
 use std::cell::Cell;
 use std::ptr;
 
 /// The values that an iterator will iterate over.
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 pub enum IteratorType {
     /// The keys of the iterable object.
     Keys,
@@ -51,7 +51,7 @@ pub trait Iterable {
 #[dom_struct]
 pub struct IterableIterator<T: DomObject + JSTraceable + Iterable> {
     reflector: Reflector,
-    iterable: Dom<T>,
+    iterable: JS<T>,
     type_: IteratorType,
     index: Cell<u32>,
 }
@@ -61,19 +61,19 @@ impl<T: DomObject + JSTraceable + Iterable> IterableIterator<T> {
     pub fn new(iterable: &T,
                type_: IteratorType,
                wrap: unsafe fn(*mut JSContext, &GlobalScope, Box<IterableIterator<T>>)
-                     -> DomRoot<Self>) -> DomRoot<Self> {
-        let iterator = Box::new(IterableIterator {
+                     -> Root<Self>) -> Root<Self> {
+        let iterator = box IterableIterator {
             reflector: Reflector::new(),
             type_: type_,
-            iterable: Dom::from_ref(iterable),
+            iterable: JS::from_ref(iterable),
             index: Cell::new(0),
-        });
+        };
         reflect_dom_object(iterator, &*iterable.global(), wrap)
     }
 
     /// Return the next value from the iterable object.
     #[allow(non_snake_case)]
-    pub fn Next(&self, cx: *mut JSContext) -> Fallible<NonNullJSObjectPtr> {
+    pub fn Next(&self, cx: *mut JSContext) -> Fallible<NonZero<*mut JSObject>> {
         let index = self.index.get();
         rooted!(in(cx) let mut value = UndefinedValue());
         rooted!(in(cx) let mut rval = ptr::null_mut());
@@ -106,7 +106,7 @@ impl<T: DomObject + JSTraceable + Iterable> IterableIterator<T> {
         self.index.set(index + 1);
         result.map(|_| {
             assert!(!rval.is_null());
-            unsafe { NonNullJSObjectPtr::new_unchecked(rval.get()) }
+            unsafe { NonZero::new_unchecked(rval.get()) }
         })
     }
 }
@@ -132,10 +132,7 @@ fn key_and_value_return(cx: *mut JSContext,
                         value: HandleValue) -> Fallible<()> {
     let mut dict = unsafe { IterableKeyAndValueResult::empty(cx) };
     dict.done = false;
-    let values = vec![Heap::default(), Heap::default()];
-    values[0].set(key.get());
-    values[1].set(value.get());
-    dict.value = Some(values);
+    dict.value = Some(vec![Heap::new(key.get()), Heap::new(value.get())]);
     rooted!(in(cx) let mut dict_value = UndefinedValue());
     unsafe {
         dict.to_jsval(cx, dict_value.handle_mut());

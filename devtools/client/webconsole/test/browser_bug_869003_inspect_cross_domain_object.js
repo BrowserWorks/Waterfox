@@ -39,22 +39,10 @@ add_task(function* () {
 
   let body = msg.querySelector(".message-body");
   ok(body, "message body");
-  ok(body.textContent.includes('{ hello: "world!",'), "message text check");
-  ok(body.textContent.includes('function func()'), "message text check");
 
-  yield testClickable(result.clickableElements[0], [
-    { name: "hello", value: "world!" },
-    { name: "bug", value: 869003 },
-  ], hud);
-  yield testClickable(result.clickableElements[1], [
-    { name: "hello", value: "world!" },
-    { name: "name", value: "func" },
-    { name: "length", value: 1 },
-  ], hud);
-});
-
-function* testClickable(clickable, props, hud) {
+  let clickable = result.clickableElements[0];
   ok(clickable, "clickable object found");
+  ok(body.textContent.includes('{ hello: "world!",'), "message text check");
 
   executeSoon(() => {
     EventUtils.synthesizeMouse(clickable, 2, 2, {}, hud.iframeWindow);
@@ -64,9 +52,13 @@ function* testClickable(clickable, props, hud) {
   ok(aVar, "variables view fetched");
   ok(aVar._variablesView, "variables view object");
 
-  let [result] = yield findVariableViewProperties(aVar, props, { webconsole: hud });
+  [result] = yield findVariableViewProperties(aVar, [
+    { name: "hello", value: "world!" },
+    { name: "bug", value: 869003 },
+  ], { webconsole: hud });
+
   let prop = result.matchedProp;
-  ok(prop, "matched the |" + props[0].name + "| property in the variables view");
+  ok(prop, "matched the |hello| property in the variables view");
 
   // Check that property value updates work.
   aVar = yield updateVariablesViewProperty({
@@ -78,6 +70,8 @@ function* testClickable(clickable, props, hud) {
 
   info("onFetchAfterUpdate");
 
-  props[0].value = "omgtest";
-  yield findVariableViewProperties(aVar, props, { webconsole: hud });
-}
+  yield findVariableViewProperties(aVar, [
+    { name: "hello", value: "omgtest" },
+    { name: "bug", value: 869003 },
+  ], { webconsole: hud });
+});

@@ -12,7 +12,8 @@
           src="../common.js"></script>
 
   <script type="application/javascript">
-    function doTest() {
+    function doTest()
+    {
       document.body.appendChild(document.getElementById("mw_a"));
       setTimeout(function() { ok(true, "no crash and assertions"); SimpleTest.finish(); } , 0);
     }

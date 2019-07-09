@@ -298,9 +298,6 @@ with Files("SourceBuffer*"):
 with Files("StereoPannerNode.webidl"):
     BUG_COMPONENT = ("Core", "Web Audio")
 
-with Files("StreamFilter*"):
-    BUG_COMPONENT = ("Toolkit", "WebExtensions: Request Handling")
-
 with Files("Style*"):
     BUG_COMPONENT = ("Core", "DOM: CSS Object Model")
 
@@ -381,8 +378,6 @@ PREPROCESSED_WEBIDL_FILES = [
 ]
 
 WEBIDL_FILES = [
-    'AbortController.webidl',
-    'AbortSignal.webidl',
     'AbstractWorker.webidl',
     'AddonManager.webidl',
     'AnalyserNode.webidl',
@@ -400,6 +395,7 @@ WEBIDL_FILES = [
     'Attr.webidl',
     'AudioBuffer.webidl',
     'AudioBufferSourceNode.webidl',
+    'AudioChannel.webidl',
     'AudioContext.webidl',
     'AudioDestinationNode.webidl',
     'AudioListener.webidl',
@@ -432,7 +428,6 @@ WEBIDL_FILES = [
     'CDATASection.webidl',
     'ChannelMergerNode.webidl',
     'ChannelSplitterNode.webidl',
-    'ChannelWrapper.webidl',
     'CharacterData.webidl',
     'CheckerboardReportService.webidl',
     'ChildNode.webidl',
@@ -521,8 +516,10 @@ WEBIDL_FILES = [
     'ExtendableMessageEvent.webidl',
     'FakePluginTagInit.webidl',
     'Fetch.webidl',
+    'FetchController.webidl',
     'FetchEvent.webidl',
     'FetchObserver.webidl',
+    'FetchSignal.webidl',
     'File.webidl',
     'FileList.webidl',
     'FileMode.webidl',
@@ -542,7 +539,6 @@ WEBIDL_FILES = [
     'FontFaceSet.webidl',
     'FontFaceSource.webidl',
     'FormData.webidl',
-    'FrameLoader.webidl',
     'Function.webidl',
     'GainNode.webidl',
     'Gamepad.webidl',
@@ -558,6 +554,7 @@ WEBIDL_FILES = [
     'History.webidl',
     'HTMLAllCollection.webidl',
     'HTMLAnchorElement.webidl',
+    'HTMLAppletElement.webidl',
     'HTMLAreaElement.webidl',
     'HTMLAudioElement.webidl',
     'HTMLBaseElement.webidl',
@@ -616,7 +613,7 @@ WEBIDL_FILES = [
     'HTMLQuoteElement.webidl',
     'HTMLScriptElement.webidl',
     'HTMLSelectElement.webidl',
-    'HTMLSlotElement.webidl',
+    'HTMLShadowElement.webidl',
     'HTMLSourceElement.webidl',
     'HTMLSpanElement.webidl',
     'HTMLStyleElement.webidl',
@@ -656,7 +653,6 @@ WEBIDL_FILES = [
     'InputEvent.webidl',
     'InspectorUtils.webidl',
     'IntersectionObserver.webidl',
-    'IntlUtils.webidl',
     'IterableIterator.webidl',
     'KeyAlgorithm.webidl',
     'KeyboardEvent.webidl',
@@ -703,10 +699,8 @@ WEBIDL_FILES = [
     'MimeTypeArray.webidl',
     'MouseEvent.webidl',
     'MouseScrollEvent.webidl',
+    'MozPowerManager.webidl',
     'MozSelfSupport.webidl',
-    'MozStorageAsyncStatementParams.webidl',
-    'MozStorageStatementParams.webidl',
-    'MozStorageStatementRow.webidl',
     'MozTimeManager.webidl',
     'MozWakeLock.webidl',
     'MutationEvent.webidl',
@@ -740,7 +734,6 @@ WEBIDL_FILES = [
     'PerformanceMark.webidl',
     'PerformanceMeasure.webidl',
     'PerformanceNavigation.webidl',
-    'PerformanceNavigationTiming.webidl',
     'PerformanceObserver.webidl',
     'PerformanceObserverEntryList.webidl',
     'PerformanceResourceTiming.webidl',
@@ -801,8 +794,6 @@ WEBIDL_FILES = [
     'StorageEvent.webidl',
     'StorageManager.webidl',
     'StorageType.webidl',
-    'StreamFilter.webidl',
-    'StreamFilterDataEvent.webidl',
     'StructuredCloneHolder.webidl',
     'StyleSheet.webidl',
     'StyleSheetList.webidl',
@@ -1043,6 +1034,7 @@ WEBIDL_FILES += [
     'PopStateEvent.webidl',
     'PopupBlockedEvent.webidl',
     'ProgressEvent.webidl',
+    'RecordErrorEvent.webidl',
     'StyleRuleChangeEvent.webidl',
     'StyleSheetApplicableStateChangeEvent.webidl',
     'StyleSheetChangeEvent.webidl',
@@ -1090,7 +1082,6 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'HiddenPluginEvent.webidl',
     'ImageCaptureErrorEvent.webidl',
     'MediaQueryListEvent.webidl',
-    'MediaRecorderErrorEvent.webidl',
     'MediaStreamEvent.webidl',
     'MediaStreamTrackEvent.webidl',
     'OfflineAudioCompletionEvent.webidl',
@@ -1103,6 +1094,7 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'PresentationConnectionCloseEvent.webidl',
     'ProgressEvent.webidl',
     'PromiseRejectionEvent.webidl',
+    'RecordErrorEvent.webidl',
     'ScrollViewChangeEvent.webidl',
     'StyleRuleChangeEvent.webidl',
     'StyleSheetApplicableStateChangeEvent.webidl',
@@ -1141,7 +1133,20 @@ if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
         'External.webidl',
     ]
 
+if CONFIG['MOZ_B2G']:
+    WEBIDL_FILES += [
+        'MozApplicationEvent.webidl'
+    ]
+    GENERATED_EVENTS_WEBIDL_FILES += [
+        'MozApplicationEvent.webidl'
+    ]
+
 if CONFIG['ACCESSIBILITY']:
     WEBIDL_FILES += [
         'AccessibleNode.webidl',
+    ]
+
+if CONFIG['ENABLE_INTL_API']:
+    WEBIDL_FILES += [
+        'IntlUtils.webidl',
     ]

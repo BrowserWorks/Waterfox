@@ -34,7 +34,7 @@ public:
                     nsIFrame*         aPrevInFlow) override;
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
   virtual nsresult  AttributeChanged(int32_t         aNameSpaceID,
-                                     nsAtom*        aAttribute,
+                                     nsIAtom*        aAttribute,
                                      int32_t         aModType) override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override {
@@ -47,6 +47,7 @@ public:
                       nsReflowStatus&          aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override

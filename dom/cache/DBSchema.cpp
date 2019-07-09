@@ -10,7 +10,6 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/dom/HeadersBinding.h"
 #include "mozilla/dom/InternalHeaders.h"
-#include "mozilla/dom/InternalResponse.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "mozilla/dom/ResponseBinding.h"
 #include "mozilla/dom/cache/CacheTypes.h"
@@ -35,44 +34,8 @@ namespace cache {
 namespace db {
 const int32_t kFirstShippedSchemaVersion = 15;
 namespace {
-// ## Firefox 57 Cache API v25/v26/v27 Schema Hack Info
-// ### Overview
-// In Firefox 57 we introduced Cache API schema version 26 and Quota Manager
-// schema v3 to support tracking padding for opaque responses.  Unfortunately,
-// Firefox 57 is a big release that may potentially result in users downgrading
-// to Firefox 56 due to 57 retiring add-ons.  These schema changes have the
-// unfortunate side-effect of causing QuotaManager and all its clients to break
-// if the user downgrades to 56.  In order to avoid making a bad situation
-// worse, we're now retrofitting 57 so that Firefox 56 won't freak out.
-//
-// ### Implementation
-// We're introducing a new schema version 27 that uses an on-disk schema version
-// of v25.  We differentiate v25 from v27 by the presence of the column added
-// by v26.  This translates to:
-// - v25: on-disk schema=25, no "response_padding_size" column in table
-//   "entries".
-// - v26: on-disk schema=26, yes "response_padding_size" column in table
-//   "entries".
-// - v27: on-disk schema=25, yes "response_padding_size" column in table
-//   "entries".
-//
-// ### Fallout
-// Firefox 57 is happy because it sees schema 27 and everything is as it
-// expects.
-//
-// Firefox 56 non-DEBUG build is fine/happy, but DEBUG builds will not be.
-// - Our QuotaClient will invoke `NS_WARNING("Unknown Cache file found!");`
-//   at QuotaManager init time.  This is harmless but annoying and potentially
-//   misleading.
-// - The DEBUG-only Validate() call will error out whenever an attempt is made
-//   to open a DOM Cache database because it will notice the schema is broken
-//   and there is no attempt at recovery.
-//
-const int32_t kHackyDowngradeSchemaVersion = 25;
-const int32_t kHackyPaddingSizePresentVersion = 27;
-//
 // Update this whenever the DB schema is changed.
-const int32_t kLatestSchemaVersion = 27;
+const int32_t kLatestSchemaVersion = 25;
 // ---------
 // The following constants define the SQL schema.  These are defined in the
 // same order the SQL should be executed in CreateOrMigrateSchema().  They are
@@ -138,8 +101,7 @@ const char* const kTableEntries =
     "request_redirect INTEGER NOT NULL, "
     "request_referrer_policy INTEGER NOT NULL, "
     "request_integrity TEXT NOT NULL, "
-    "request_url_fragment TEXT NOT NULL, "
-    "response_padding_size INTEGER NULL "
+    "request_url_fragment TEXT NOT NULL"
     // New columns must be added at the end of table to migrate and
     // validate properly.
   ")";
@@ -357,7 +319,6 @@ static nsresult DeleteEntries(mozIStorageConnection* aConn,
                               const nsTArray<EntryId>& aEntryIdList,
                               nsTArray<nsID>& aDeletedBodyIdListOut,
                               nsTArray<IdCount>& aDeletedSecurityIdListOut,
-                              int64_t* aDeletedPaddingSizeOut,
                               uint32_t aPos=0, int32_t aLen=-1);
 static nsresult InsertSecurityInfo(mozIStorageConnection* aConn,
                                    nsICryptoHash* aCrypto,
@@ -392,8 +353,6 @@ static nsresult CreateAndBindKeyStatement(mozIStorageConnection* aConn,
                                           mozIStorageStatement** aStateOut);
 static nsresult HashCString(nsICryptoHash* aCrypto, const nsACString& aIn,
                             nsACString& aOut);
-nsresult GetEffectiveSchemaVersion(mozIStorageConnection* aConn,
-                                   int32_t& schemaVersion);
 nsresult Validate(mozIStorageConnection* aConn);
 nsresult Migrate(mozIStorageConnection* aConn);
 } // namespace
@@ -450,7 +409,7 @@ CreateOrMigrateSchema(mozIStorageConnection* aConn)
   MOZ_DIAGNOSTIC_ASSERT(aConn);
 
   int32_t schemaVersion;
-  nsresult rv = GetEffectiveSchemaVersion(aConn, schemaVersion);
+  nsresult rv = aConn->GetSchemaVersion(&schemaVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   if (schemaVersion == kLatestSchemaVersion) {
@@ -511,10 +470,10 @@ CreateOrMigrateSchema(mozIStorageConnection* aConn)
     rv = aConn->ExecuteSimpleSQL(nsDependentCString(kTableStorage));
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = aConn->SetSchemaVersion(kHackyDowngradeSchemaVersion);
+    rv = aConn->SetSchemaVersion(kLatestSchemaVersion);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = GetEffectiveSchemaVersion(aConn, schemaVersion);
+    rv = aConn->GetSchemaVersion(&schemaVersion);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
   }
 
@@ -639,12 +598,10 @@ CreateCacheId(mozIStorageConnection* aConn, CacheId* aCacheIdOut)
 
 nsresult
 DeleteCacheId(mozIStorageConnection* aConn, CacheId aCacheId,
-              nsTArray<nsID>& aDeletedBodyIdListOut,
-              int64_t* aDeletedPaddingSizeOut)
+              nsTArray<nsID>& aDeletedBodyIdListOut)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(aConn);
-  MOZ_DIAGNOSTIC_ASSERT(aDeletedPaddingSizeOut);
 
   // Delete the bodies explicitly as we need to read out the body IDs
   // anyway.  These body IDs must be deleted one-by-one as content may
@@ -654,12 +611,9 @@ DeleteCacheId(mozIStorageConnection* aConn, CacheId aCacheId,
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   AutoTArray<IdCount, 16> deletedSecurityIdList;
-  int64_t deletedPaddingSize = 0;
   rv = DeleteEntries(aConn, matches, aDeletedBodyIdListOut,
-                     deletedSecurityIdList, &deletedPaddingSize);
+                     deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  *aDeletedPaddingSizeOut = deletedPaddingSize;
 
   rv = DeleteSecurityInfoList(aConn, deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -732,37 +686,6 @@ FindOrphanedCacheIds(mozIStorageConnection* aConn,
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     aOrphanedListOut.AppendElement(cacheId);
   }
-
-  return rv;
-}
-
-nsresult
-FindOverallPaddingSize(mozIStorageConnection* aConn,
-                       int64_t* aOverallPaddingSizeOut)
-{
-  MOZ_DIAGNOSTIC_ASSERT(aConn);
-  MOZ_DIAGNOSTIC_ASSERT(aOverallPaddingSizeOut);
-
-  nsCOMPtr<mozIStorageStatement> state;
-  nsresult rv = aConn->CreateStatement(NS_LITERAL_CSTRING(
-    "SELECT response_padding_size FROM entries "
-    "WHERE response_padding_size IS NOT NULL;"
-  ), getter_AddRefs(state));
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  int64_t overallPaddingSize = 0;
-  bool hasMoreData = false;
-  while (NS_SUCCEEDED(state->ExecuteStep(&hasMoreData)) && hasMoreData) {
-    int64_t padding_size = 0;
-    rv = state->GetInt64(0, &padding_size);
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-    MOZ_DIAGNOSTIC_ASSERT(padding_size >= 0);
-    MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - padding_size >= overallPaddingSize);
-    overallPaddingSize += padding_size;
-  }
-
-  *aOverallPaddingSizeOut = overallPaddingSize;
 
   return rv;
 }
@@ -869,12 +792,10 @@ CachePut(mozIStorageConnection* aConn, CacheId aCacheId,
          const nsID* aRequestBodyId,
          const CacheResponse& aResponse,
          const nsID* aResponseBodyId,
-         nsTArray<nsID>& aDeletedBodyIdListOut,
-         int64_t* aDeletedPaddingSizeOut)
+         nsTArray<nsID>& aDeletedBodyIdListOut)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(aConn);
-  MOZ_DIAGNOSTIC_ASSERT(aDeletedPaddingSizeOut);
 
   CacheQueryParams params(false, false, false, false,
                            NS_LITERAL_STRING(""));
@@ -883,9 +804,8 @@ CachePut(mozIStorageConnection* aConn, CacheId aCacheId,
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   AutoTArray<IdCount, 16> deletedSecurityIdList;
-  int64_t deletedPaddingSize = 0;
   rv = DeleteEntries(aConn, matches, aDeletedBodyIdListOut,
-                     deletedSecurityIdList, &deletedPaddingSize);
+                     deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   rv = InsertEntry(aConn, aCacheId, aRequest, aRequestBodyId, aResponse,
@@ -897,8 +817,6 @@ CachePut(mozIStorageConnection* aConn, CacheId aCacheId,
   rv = DeleteSecurityInfoList(aConn, deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  *aDeletedPaddingSizeOut = deletedPaddingSize;
-
   return rv;
 }
 
@@ -906,12 +824,10 @@ nsresult
 CacheDelete(mozIStorageConnection* aConn, CacheId aCacheId,
             const CacheRequest& aRequest,
             const CacheQueryParams& aParams,
-            nsTArray<nsID>& aDeletedBodyIdListOut,
-            int64_t* aDeletedPaddingSizeOut, bool* aSuccessOut)
+            nsTArray<nsID>& aDeletedBodyIdListOut, bool* aSuccessOut)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(aConn);
-  MOZ_DIAGNOSTIC_ASSERT(aDeletedPaddingSizeOut);
   MOZ_DIAGNOSTIC_ASSERT(aSuccessOut);
 
   *aSuccessOut = false;
@@ -925,12 +841,9 @@ CacheDelete(mozIStorageConnection* aConn, CacheId aCacheId,
   }
 
   AutoTArray<IdCount, 16> deletedSecurityIdList;
-  int64_t deletedPaddingSize = 0;
   rv = DeleteEntries(aConn, matches, aDeletedBodyIdListOut,
-                     deletedSecurityIdList, &deletedPaddingSize);
+                     deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  *aDeletedPaddingSizeOut = deletedPaddingSize;
 
   rv = DeleteSecurityInfoList(aConn, deletedSecurityIdList);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -1420,12 +1333,10 @@ DeleteEntries(mozIStorageConnection* aConn,
               const nsTArray<EntryId>& aEntryIdList,
               nsTArray<nsID>& aDeletedBodyIdListOut,
               nsTArray<IdCount>& aDeletedSecurityIdListOut,
-              int64_t* aDeletedPaddingSizeOut,
               uint32_t aPos, int32_t aLen)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(aConn);
-  MOZ_DIAGNOSTIC_ASSERT(aDeletedPaddingSizeOut);
 
   if (aEntryIdList.IsEmpty()) {
     return NS_OK;
@@ -1440,36 +1351,24 @@ DeleteEntries(mozIStorageConnection* aConn,
   // Sqlite limits the number of entries allowed for an IN clause,
   // so split up larger operations.
   if (aLen > kMaxEntriesPerStatement) {
-    int64_t overallDeletedPaddingSize = 0;
     uint32_t curPos = aPos;
     int32_t remaining = aLen;
     while (remaining > 0) {
-      int64_t deletedPaddingSize = 0;
       int32_t max = kMaxEntriesPerStatement;
       int32_t curLen = std::min(max, remaining);
       nsresult rv = DeleteEntries(aConn, aEntryIdList, aDeletedBodyIdListOut,
-                                  aDeletedSecurityIdListOut,
-                                  &deletedPaddingSize, curPos, curLen);
+                                  aDeletedSecurityIdListOut, curPos, curLen);
       if (NS_FAILED(rv)) { return rv; }
 
-      MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - deletedPaddingSize >=
-                            overallDeletedPaddingSize);
-      overallDeletedPaddingSize += deletedPaddingSize;
       curPos += curLen;
       remaining -= curLen;
     }
-
-    *aDeletedPaddingSizeOut += overallDeletedPaddingSize;
     return NS_OK;
   }
 
   nsCOMPtr<mozIStorageStatement> state;
   nsAutoCString query(
-    "SELECT "
-      "request_body_id, "
-      "response_body_id, "
-      "response_security_info_id, "
-      "response_padding_size "
+    "SELECT request_body_id, response_body_id, response_security_info_id "
     "FROM entries WHERE id IN ("
   );
   AppendListParamsToQuery(query, aEntryIdList, aPos, aLen);
@@ -1481,7 +1380,6 @@ DeleteEntries(mozIStorageConnection* aConn,
   rv = BindListParamsToQuery(state, aEntryIdList, aPos, aLen);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  int64_t overallPaddingSize = 0;
   bool hasMoreData = false;
   while (NS_SUCCEEDED(state->ExecuteStep(&hasMoreData)) && hasMoreData) {
     // extract 0 to 2 nsID structs per row
@@ -1525,23 +1423,7 @@ DeleteEntries(mozIStorageConnection* aConn,
         aDeletedSecurityIdListOut.AppendElement(IdCount(securityId));
       }
     }
-
-    // It's possible to have null padding size for non-opaque response
-    rv = state->GetIsNull(3, &isNull);
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-    if (!isNull) {
-      int64_t paddingSize = 0;
-      rv = state->GetInt64(3, &paddingSize);
-      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-      MOZ_DIAGNOSTIC_ASSERT(paddingSize >= 0);
-      MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - overallPaddingSize >= paddingSize);
-      overallPaddingSize += paddingSize;
-    }
   }
-
-  *aDeletedPaddingSizeOut = overallPaddingSize;
 
   // Dependent records removed via ON DELETE CASCADE
 
@@ -1788,7 +1670,6 @@ InsertEntry(mozIStorageConnection* aConn, CacheId aCacheId,
       "response_body_id, "
       "response_security_info_id, "
       "response_principal_info, "
-      "response_padding_size, "
       "cache_id "
     ") VALUES ("
       ":request_method, "
@@ -1814,7 +1695,6 @@ InsertEntry(mozIStorageConnection* aConn, CacheId aCacheId,
       ":response_body_id, "
       ":response_security_info_id, "
       ":response_principal_info, "
-      ":response_padding_size, "
       ":cache_id "
     ");"
   ), getter_AddRefs(state));
@@ -1932,18 +1812,6 @@ InsertEntry(mozIStorageConnection* aConn, CacheId aCacheId,
                                    serializedInfo);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  if (aResponse.paddingSize() == InternalResponse::UNKNOWN_PADDING_SIZE) {
-    MOZ_DIAGNOSTIC_ASSERT(aResponse.type() != ResponseType::Opaque);
-    rv = state->BindNullByName(NS_LITERAL_CSTRING("response_padding_size"));
-  } else {
-    MOZ_DIAGNOSTIC_ASSERT(aResponse.paddingSize() >= 0);
-    MOZ_DIAGNOSTIC_ASSERT(aResponse.type() == ResponseType::Opaque);
-
-    rv = state->BindInt64ByName(NS_LITERAL_CSTRING("response_padding_size"),
-                                aResponse.paddingSize());
-  }
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
   rv = state->BindInt64ByName(NS_LITERAL_CSTRING("cache_id"), aCacheId);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -2029,7 +1897,7 @@ InsertEntry(mozIStorageConnection* aConn, CacheId aCacheId,
                                      responseUrlList[i]);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = state->BindInt32ByName(NS_LITERAL_CSTRING("entry_id"), entryId);
+    rv = state->BindInt64ByName(NS_LITERAL_CSTRING("entry_id"), entryId);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
     rv = state->Execute();
@@ -2056,7 +1924,6 @@ ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
       "entries.response_headers_guard, "
       "entries.response_body_id, "
       "entries.response_principal_info, "
-      "entries.response_padding_size, "
       "security_info.data "
     "FROM entries "
     "LEFT OUTER JOIN security_info "
@@ -2118,52 +1985,8 @@ ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
       mozilla::ipc::ContentPrincipalInfo(attrs, void_t(), specNoSuffix);
   }
 
-  bool nullPadding = false;
-  rv = state->GetIsNull(6, &nullPadding);
+  rv = state->GetBlobAsUTF8String(6, aSavedResponseOut->mValue.channelInfo().securityInfo());
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-#ifdef NIGHTLY_BUILD
-  bool shouldUpdateTo26 = false;
-  if (nullPadding && aSavedResponseOut->mValue.type() == ResponseType::Opaque) {
-    // XXXtt: This should be removed in the future (e.g. Nightly 58) by
-    // bug 1398167.
-    shouldUpdateTo26 = true;
-    aSavedResponseOut->mValue.paddingSize() = 0;
-  } else if (nullPadding) {
-#else
-  if (nullPadding) {
-#endif // NIGHTLY_BUILD
-    MOZ_DIAGNOSTIC_ASSERT(aSavedResponseOut->mValue.type() !=
-                          ResponseType::Opaque);
-    aSavedResponseOut->mValue.paddingSize() =
-      InternalResponse::UNKNOWN_PADDING_SIZE;
-  } else {
-    MOZ_DIAGNOSTIC_ASSERT(aSavedResponseOut->mValue.type() ==
-                          ResponseType::Opaque);
-    int64_t paddingSize = 0;
-    rv = state->GetInt64(6, &paddingSize);
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-    MOZ_DIAGNOSTIC_ASSERT(paddingSize >= 0);
-    aSavedResponseOut->mValue.paddingSize() = paddingSize;
-  }
-
-  rv = state->GetBlobAsUTF8String(7, aSavedResponseOut->mValue.channelInfo().securityInfo());
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-#ifdef NIGHTLY_BUILD
-  if (shouldUpdateTo26) {
-    // XXXtt: This is a quick fix for not updating properly in Nightly 57.
-    // Note: This should be removed in the future (e.g. Nightly 58) by
-    // bug 1398167.
-    rv = aConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-      "UPDATE entries SET response_padding_size = 0 "
-        "WHERE response_type = 4 " // opaque response
-          "AND response_padding_size IS NULL"
-    ));
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  }
-#endif // NIGHTLY_BUILD
 
   rv = aConn->CreateStatement(NS_LITERAL_CSTRING(
     "SELECT "
@@ -2525,44 +2348,6 @@ IncrementalVacuum(mozIStorageConnection* aConn)
 
 namespace {
 
-// Wrapper around mozIStorageConnection::GetSchemaVersion() that compensates
-// for hacky downgrade schema version tricks.  See the block comments for
-// kHackyDowngradeSchemaVersion and kHackyPaddingSizePresentVersion.
-nsresult
-GetEffectiveSchemaVersion(mozIStorageConnection* aConn,
-                          int32_t& schemaVersion)
-{
-  nsresult rv = aConn->GetSchemaVersion(&schemaVersion);
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  if (schemaVersion == kHackyDowngradeSchemaVersion) {
-    // This is the special case.  Check for the existence of the
-    // "response_padding_size" colum in table "entries".
-    //
-    // (pragma_table_info is a table-valued function format variant of
-    // "PRAGMA table_info" supported since SQLite 3.16.0.  Firefox 53 shipped
-    // was the first release with this functionality, shipping 3.16.2.)
-    nsCOMPtr<mozIStorageStatement> stmt;
-    nsresult rv = aConn->CreateStatement(NS_LITERAL_CSTRING(
-      "SELECT name FROM pragma_table_info('entries') WHERE "
-      "name = 'response_padding_size'"
-    ), getter_AddRefs(stmt));
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-    // If there are any result rows, then the column is present.
-    bool hasColumn = false;
-    rv = stmt->ExecuteStep(&hasColumn);
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-    if (hasColumn) {
-      schemaVersion = kHackyPaddingSizePresentVersion;
-    }
-  }
-
-  return NS_OK;
-}
-
-
 #ifdef DEBUG
 struct Expect
 {
@@ -2592,7 +2377,7 @@ nsresult
 Validate(mozIStorageConnection* aConn)
 {
   int32_t schemaVersion;
-  nsresult rv = GetEffectiveSchemaVersion(aConn, schemaVersion);
+  nsresult rv = aConn->GetSchemaVersion(&schemaVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   if (NS_WARN_IF(schemaVersion != kLatestSchemaVersion)) {
@@ -2697,8 +2482,6 @@ nsresult MigrateFrom21To22(mozIStorageConnection* aConn, bool& aRewriteSchema);
 nsresult MigrateFrom22To23(mozIStorageConnection* aConn, bool& aRewriteSchema);
 nsresult MigrateFrom23To24(mozIStorageConnection* aConn, bool& aRewriteSchema);
 nsresult MigrateFrom24To25(mozIStorageConnection* aConn, bool& aRewriteSchema);
-nsresult MigrateFrom25To26(mozIStorageConnection* aConn, bool& aRewriteSchema);
-nsresult MigrateFrom26To27(mozIStorageConnection* aConn, bool& aRewriteSchema);
 // Configure migration functions to run for the given starting version.
 Migration sMigrationList[] = {
   Migration(15, MigrateFrom15To16),
@@ -2711,8 +2494,6 @@ Migration sMigrationList[] = {
   Migration(22, MigrateFrom22To23),
   Migration(23, MigrateFrom23To24),
   Migration(24, MigrateFrom24To25),
-  Migration(25, MigrateFrom25To26),
-  Migration(26, MigrateFrom26To27),
 };
 uint32_t sMigrationListLength = sizeof(sMigrationList) / sizeof(Migration);
 nsresult
@@ -2751,7 +2532,7 @@ Migrate(mozIStorageConnection* aConn)
   MOZ_DIAGNOSTIC_ASSERT(aConn);
 
   int32_t currentVersion = 0;
-  nsresult rv = GetEffectiveSchemaVersion(aConn, currentVersion);
+  nsresult rv = aConn->GetSchemaVersion(&currentVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   bool rewriteSchema = false;
@@ -2777,7 +2558,7 @@ Migrate(mozIStorageConnection* aConn)
 #ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
     int32_t lastVersion = currentVersion;
 #endif
-    rv = GetEffectiveSchemaVersion(aConn, currentVersion);
+    rv = aConn->GetSchemaVersion(&currentVersion);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     MOZ_DIAGNOSTIC_ASSERT(currentVersion > lastVersion);
   }
@@ -3245,43 +3026,6 @@ nsresult MigrateFrom24To25(mozIStorageConnection* aConn, bool& aRewriteSchema)
 
   // The only change between 24 and 25 was a new nsIContentPolicy type.
   nsresult rv = aConn->SetSchemaVersion(25);
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  return rv;
-}
-
-nsresult MigrateFrom25To26(mozIStorageConnection* aConn, bool& aRewriteSchema)
-{
-  MOZ_ASSERT(!NS_IsMainThread());
-  MOZ_DIAGNOSTIC_ASSERT(aConn);
-
-  // Add the response_padding_size column.
-  // Note: only opaque repsonse should be non-null interger.
-  nsresult rv = aConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "ALTER TABLE entries "
-    "ADD COLUMN response_padding_size INTEGER NULL "
-  ));
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  rv = aConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "UPDATE entries SET response_padding_size = 0 "
-      "WHERE response_type = 4" // opaque response
-  ));
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  rv = aConn->SetSchemaVersion(26);
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  aRewriteSchema = true;
-
-  return rv;
-}
-
-nsresult MigrateFrom26To27(mozIStorageConnection* aConn, bool& aRewriteSchema)
-{
-  MOZ_ASSERT(!NS_IsMainThread());
-  MOZ_DIAGNOSTIC_ASSERT(aConn);
-
-  nsresult rv = aConn->SetSchemaVersion(kHackyDowngradeSchemaVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
   return rv;
 }

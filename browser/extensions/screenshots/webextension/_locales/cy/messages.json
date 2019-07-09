@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Mae'r ddelwedd wedi ei thocio i $PIXELS$px.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Ddim yn gweithio."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Nid ydym yn gwybod beth sydd wedi ddigwydd. Ceisiwch eto neu dynnu llun o dudalen wahanol?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Cymryd, cadw a rhannu lluniau sgrin heb adael Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Ffordd newydd i gadw"
-  },
-  "tourBodyPageAction": {
-    "message": "Ehangwch y ddewislen gweithredoedd tudalen yn y bar cyfeiriad unrhyw bryd fyddwch am gymryd llun sgrin."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Cipio Dim ond Beth Rydych ei Angen"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Cliciwch a llusgo i gipio rhan o dudalen. Gallwch hofran i amlygu eich dewis."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Cipio Ffenestri neu Dudalennau Cyfan"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Dewiswch y botymau ar y dde uchod i gipio ardal gweladwy mewn ffenestr neu i gipio tudalen gyfan."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Yn Ôl eich Dewis"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Cadwch eich lluniau wedi eu golygu i'r We ar gyfer rhannu haws, neu eu llwytho i lawr i'ch cyfrifiadur. Gallwch hefyd glicio ar Fy Lluniau i weld pob llun sydd gennych."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Gorffen"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Drwy ddefnyddio Firefox Screenshots, rydych yn cytuno i'n $TERMSANDPRIVACYNOTICETERMSLINK$ a'n $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Drwy ddefnyddio Firefox Screenshots, rydych yn cytuno i Firefox Cloud Services $TERMSANDPRIVACYNOTICETERMSLINK$ a $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Hysbysiad Preifatrwydd"
-  },
-  "libraryLabel": {
-    "message": "Rhannu ar Pinterest"
   }
 }

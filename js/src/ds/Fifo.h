@@ -9,8 +9,7 @@
 
 #include "mozilla/Move.h"
 
-#include "jsutil.h"
-
+#include "js/Utility.h"
 #include "js/Vector.h"
 
 namespace js {
@@ -47,11 +46,19 @@ class Fifo
 
   private:
     // Maintain invariants after adding or removing entries.
-    void fixup() {
-        if (front_.empty() && !rear_.empty()) {
-            front_.swap(rear_);
-            Reverse(front_.begin(), front_.end());
+    bool fixup() {
+        if (!front_.empty())
+            return true;
+
+        if (!front_.reserve(rear_.length()))
+            return false;
+
+        while (!rear_.empty()) {
+            front_.infallibleAppend(mozilla::Move(rear_.back()));
+            rear_.popBack();
         }
+
+        return true;
     }
 
   public:
@@ -91,7 +98,10 @@ class Fifo
     MOZ_MUST_USE bool pushBack(U&& u) {
         if (!rear_.append(mozilla::Forward<U>(u)))
             return false;
-        fixup();
+        if (!fixup()) {
+            rear_.popBack();
+            return false;
+        }
         return true;
     }
 
@@ -100,7 +110,10 @@ class Fifo
     MOZ_MUST_USE bool emplaceBack(Args&&... args) {
         if (!rear_.emplaceBack(mozilla::Forward<Args>(args)...))
             return false;
-        fixup();
+        if (!fixup()) {
+            rear_.popBack();
+            return false;
+        }
         return true;
     }
 
@@ -115,32 +128,26 @@ class Fifo
     }
 
     // Remove the front element from the queue.
-    void popFront() {
+    MOZ_MUST_USE bool popFront() {
         MOZ_ASSERT(!empty());
+        T t(mozilla::Move(front()));
         front_.popBack();
-        fixup();
-    }
-
-    // Convenience utility.
-    T popCopyFront() {
-        T ret = front();
-        popFront();
-        return ret;
+        if (!fixup()) {
+            // Attempt to remain in a valid state by reinserting the element
+            // back at the front. If we can't remain in a valid state in the
+            // face of OOMs, crash.
+            AutoEnterOOMUnsafeRegion oomUnsafe;
+            if (!front_.append(mozilla::Move(t)))
+                oomUnsafe.crash("js::Fifo::popFront");
+            return false;
+        }
+        return true;
     }
 
     // Clear all elements from the queue.
     void clear() {
         front_.clear();
         rear_.clear();
-    }
-
-    // Clear all elements for which the given predicate returns 'true'. Return
-    // the number of elements removed.
-    template <class Pred>
-    size_t eraseIf(Pred pred) {
-        size_t erased = EraseIf(front_, pred);
-        erased += EraseIf(rear_, pred);
-        return erased;
     }
 };
 

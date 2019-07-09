@@ -36,7 +36,7 @@ public:
 
   // Element specializations
   bool ParseAttribute(int32_t aNamespaceID,
-                        nsAtom* aAttribute,
+                        nsIAtom* aAttribute,
                         const nsAString& aValue,
                         nsAttrValue& aResult) override;
 

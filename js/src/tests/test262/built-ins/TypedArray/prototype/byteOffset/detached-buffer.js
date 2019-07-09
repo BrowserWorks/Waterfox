@@ -11,7 +11,6 @@ info: >
   5. If IsDetachedBuffer(buffer) is true, return 0.
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

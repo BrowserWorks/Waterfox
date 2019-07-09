@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "A kép $PIXELS$px méretűre lett vágva.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Nem működik."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Nem vagyunk benne biztosak, hogy mi történt. Próbálja újra, vagy készítsen képet egy másik oldalról."
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Készítsen, mentsen és osszon meg képernyőképeket, anélkül, hogy elhagyná a Firefoxot."
   },
-  "tourHeaderPageAction": {
-    "message": "A mentés új módja"
-  },
-  "tourBodyPageAction": {
-    "message": "Nyissa le a lapműveletek menüt a címsávban bármikor, ha képernyőképet akar készíteni."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Csak azt mentse, amit szeretne"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Kattintson és húzzon, hogy csak a lap egy részét mentse el. Vagy csak rá is mutathat a kijelöléshez."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Mentsen ablakokat vagy teljes lapokat"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Válassza a jobb felső sarokban lévő gombokat, hogy egy látható területet mentsen az ablakból, vagy elmentsen egy teljes oldalt."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Ahogy tetszik"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Mentse a kivágott képeket a webre a könnyebb megosztáshoz, vagy töltse le a számítógépére. Rá is kattinthat a Képernyőképek gombra, hogy megtalálja az összes képét."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Kész"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "A Firefox képernyőképek használatával, Ön beleegyezik a $TERMSANDPRIVACYNOTICETERMSLINK$ és $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "A Firefox képernyőképek használatával beleegyezik a Firefox felhőszolgáltatások $TERMSANDPRIVACYNOTICETERMSLINK$ és $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Adatvédelmi nyilatkozatba"
-  },
-  "libraryLabel": {
-    "message": "Képernyőképek"
   }
 }

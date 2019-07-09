@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.5
-esid: sec-properties-of-the-typedarray-constructors
 description: >
   Float32Array.name is "Float32Array".
 info: >

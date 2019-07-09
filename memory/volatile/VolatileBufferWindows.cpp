@@ -4,7 +4,6 @@
 
 #include "VolatileBuffer.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/DebugOnly.h"
 #include "mozilla/mozalloc.h"
 #include "mozilla/WindowsVersion.h"
 
@@ -120,11 +119,11 @@ VolatileBuffer::Unlock()
     return;
   }
 
-  DebugOnly<void*> addr = VirtualAllocEx(GetCurrentProcess(),
-                                         mBuf,
-                                         mSize,
-                                         MEM_RESET,
-                                         PAGE_READWRITE);
+  void* addr = VirtualAllocEx(GetCurrentProcess(),
+                              mBuf,
+                              mSize,
+                              MEM_RESET,
+                              PAGE_READWRITE);
   MOZ_ASSERT(addr, "Failed to MEM_RESET");
 }
 

@@ -76,7 +76,7 @@ public:
 #endif
 
   virtual nsresult  AttributeChanged(int32_t         aNameSpaceID,
-                                     nsAtom*        aAttribute,
+                                     nsIAtom*        aAttribute,
                                      int32_t         aModType) override;
 
   /** @see nsIFrame::DidSetStyleContext */
@@ -105,6 +105,7 @@ public:
   virtual bool NeedsToObserve(const ReflowInput& aReflowInput) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual nsresult ProcessBorders(nsTableFrame* aFrame,
@@ -170,10 +171,7 @@ public:
   NS_IMETHOD GetCellIndexes(int32_t &aRowIndex, int32_t &aColIndex) override;
 
   /** return the mapped cell's row index (starting at 0 for the first row) */
-  uint32_t RowIndex() const
-  {
-    return static_cast<nsTableRowFrame*>(GetParent())->GetRowIndex();
-  }
+  virtual nsresult GetRowIndex(int32_t &aRowIndex) const override;
 
   /**
    * return the cell's specified col span. this is what was specified in the
@@ -184,17 +182,7 @@ public:
   int32_t GetColSpan();
 
   /** return the cell's column index (starting at 0 for the first column) */
-  uint32_t ColIndex() const
-  {
-    // NOTE: We copy this from previous continuations, and we don't ever have
-    // dynamic updates when tables split, so our mColIndex always matches our
-    // first continuation's.
-    MOZ_ASSERT(static_cast<nsTableCellFrame*>(FirstContinuation())->mColIndex ==
-               mColIndex,
-               "mColIndex out of sync with first continuation");
-    return mColIndex;
-  }
-    
+  virtual nsresult GetColIndex(int32_t &aColIndex) const override;
   void SetColIndex(int32_t aColIndex);
 
   /** return the available isize given to this frame during its last reflow */
@@ -209,23 +197,13 @@ public:
   /** set the desired size returned by this frame during its last reflow */
   inline void SetDesiredSize(const ReflowOutput & aDesiredSize);
 
-  bool GetContentEmpty() const;
+  bool GetContentEmpty();
   void SetContentEmpty(bool aContentEmpty);
 
   bool HasPctOverBSize();
   void SetHasPctOverBSize(bool aValue);
 
-  nsTableCellFrame* GetNextCell() const
-  {
-    nsIFrame* sibling = GetNextSibling();
-#ifdef DEBUG
-    if (sibling) {
-      nsTableCellFrame* cellFrame = do_QueryFrame(sibling);
-      MOZ_ASSERT(cellFrame, "How do we have a non-cell sibling?");
-    }
-#endif // DEBUG
-    return static_cast<nsTableCellFrame*>(sibling);
-  }
+  nsTableCellFrame* GetNextCell() const;
 
   virtual LogicalMargin GetBorderWidth(WritingMode aWM) const;
 
@@ -246,10 +224,6 @@ public:
   virtual void InvalidateFrame(uint32_t aDisplayItemKey = 0) override;
   virtual void InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemKey = 0) override;
   virtual void InvalidateFrameForRemoval() override { InvalidateFrameSubtree(); }
-
-  bool ShouldPaintBordersAndBackgrounds() const;
-
-  bool ShouldPaintBackground(nsDisplayListBuilder* aBuilder);
 
 protected:
   nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame,
@@ -291,7 +265,7 @@ inline void nsTableCellFrame::SetDesiredSize(const ReflowOutput & aDesiredSize)
   mDesiredSize = aDesiredSize.Size(wm).ConvertTo(GetWritingMode(), wm);
 }
 
-inline bool nsTableCellFrame::GetContentEmpty() const
+inline bool nsTableCellFrame::GetContentEmpty()
 {
   return HasAnyStateBits(NS_TABLE_CELL_CONTENT_EMPTY);
 }
@@ -361,18 +335,5 @@ private:
   BCPixelSize mBEndBorder;
   BCPixelSize mIStartBorder;
 };
-
-// Implemented here because that's a sane-ish way to make the includes work out.
-inline nsTableCellFrame* nsTableRowFrame::GetFirstCell() const
-{
-  nsIFrame* firstChild = mFrames.FirstChild();
-#ifdef DEBUG
-    if (firstChild) {
-      nsTableCellFrame* cellFrame = do_QueryFrame(firstChild);
-      MOZ_ASSERT(cellFrame, "How do we have a non-cell sibling?");
-    }
-#endif // DEBUG
-  return static_cast<nsTableCellFrame*>(firstChild);
-}
 
 #endif

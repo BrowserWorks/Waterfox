@@ -30,6 +30,7 @@ const promise = require("promise");
 const protocol = require("devtools/shared/protocol");
 const {Actor} = protocol;
 const {animationPlayerSpec, animationsSpec} = require("devtools/shared/specs/animation");
+const events = require("sdk/event/core");
 
 // Types of animations.
 const ANIMATION_TYPES = {
@@ -262,25 +263,6 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
     return this.player.effect.getComputedTiming().direction;
   },
 
-  /**
-   * Get animation-timing-function from animated element if CSS Animations.
-   * @return {String}
-   */
-  getAnimationTimingFunction: function () {
-    if (!this.isCssAnimation()) {
-      return null;
-    }
-
-    let pseudo = null;
-    let target = this.player.effect.target;
-    if (target.type) {
-      // Animated element is a pseudo element.
-      pseudo = target.type;
-      target = target.parentElement;
-    }
-    return this.window.getComputedStyle(target, pseudo).animationTimingFunction;
-  },
-
   getPropertiesCompositorStatus: function () {
     let properties = this.player.effect.getProperties();
     return properties.map(prop => {
@@ -326,7 +308,6 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
       fill: this.getFill(),
       easing: this.getEasing(),
       direction: this.getDirection(),
-      animationTimingFunction: this.getAnimationTimingFunction(),
       // animation is hitting the fast path or not. Returns false whenever the
       // animation is paused as it is taken off the compositor then.
       isRunningOnCompositor:
@@ -404,7 +385,7 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
     }
 
     if (hasChanged) {
-      this.emit("changed", this.getCurrentState());
+      events.emit(this, "changed", this.getCurrentState());
     }
   },
 
@@ -614,14 +595,14 @@ exports.AnimationsActor = protocol.ActorClassWithSpec(animationsSpec, {
     this.onAnimationMutation = this.onAnimationMutation.bind(this);
 
     this.allAnimationsPaused = false;
-    this.tabActor.on("will-navigate", this.onWillNavigate);
-    this.tabActor.on("navigate", this.onNavigate);
+    events.on(this.tabActor, "will-navigate", this.onWillNavigate);
+    events.on(this.tabActor, "navigate", this.onNavigate);
   },
 
   destroy: function () {
     Actor.prototype.destroy.call(this);
-    this.tabActor.off("will-navigate", this.onWillNavigate);
-    this.tabActor.off("navigate", this.onNavigate);
+    events.off(this.tabActor, "will-navigate", this.onWillNavigate);
+    events.off(this.tabActor, "navigate", this.onNavigate);
 
     this.stopAnimationPlayerUpdates();
     this.tabActor = this.observer = this.actors = this.walker = null;
@@ -748,7 +729,7 @@ exports.AnimationsActor = protocol.ActorClassWithSpec(animationsSpec, {
       // Let's wait for all added animations to be ready before telling the
       // front-end.
       Promise.all(readyPromises).then(() => {
-        this.emit("mutations", eventData);
+        events.emit(this, "mutations", eventData);
       });
     }
   },

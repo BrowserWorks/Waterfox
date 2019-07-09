@@ -31,17 +31,24 @@ Cu.importGlobalProperties(["URL"]);
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
-
-XPCOMUtils.defineLazyModuleGetters(this, {
-  Services: "resource://gre/modules/Services.jsm",
-  NetUtil: "resource://gre/modules/NetUtil.jsm",
-  OS: "resource://gre/modules/osfile.jsm",
-  Sqlite: "resource://gre/modules/Sqlite.jsm",
-  Bookmarks: "resource://gre/modules/Bookmarks.jsm",
-  History: "resource://gre/modules/History.jsm",
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
-  PlacesSyncUtils: "resource://gre/modules/PlacesSyncUtils.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+                                  "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
+                                  "resource://gre/modules/Sqlite.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
+                                  "resource://gre/modules/Deprecated.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Bookmarks",
+                                  "resource://gre/modules/Bookmarks.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "History",
+                                  "resource://gre/modules/History.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesSyncUtils",
+                                  "resource://gre/modules/PlacesSyncUtils.jsm");
 
 // The minimum amount of transactions before starting a batch. Usually we do
 // do incremental updates, a batch will cause views to completely
@@ -135,9 +142,6 @@ function serializeNode(aNode, aIsLivemark) {
   data.title = aNode.title;
   data.id = aNode.itemId;
   data.livemark = aIsLivemark;
-  // Add an instanceId so we can tell which instance of an FF session the data
-  // is coming from.
-  data.instanceId = PlacesUtils.instanceId;
 
   let guid = aNode.bookmarkGuid;
   if (guid) {
@@ -1116,6 +1120,30 @@ this.PlacesUtils = {
   },
 
   /**
+   * Fetch all annotations for a URI, including all properties of each
+   * annotation which would be required to recreate it.
+   * @param aURI
+   *        The URI for which annotations are to be retrieved.
+   * @return Array of objects, each containing the following properties:
+   *         name, flags, expires, value
+   */
+  getAnnotationsForURI: function PU_getAnnotationsForURI(aURI) {
+    var annosvc = this.annotations;
+    var annos = [], val = null;
+    var annoNames = annosvc.getPageAnnotationNames(aURI);
+    for (var i = 0; i < annoNames.length; i++) {
+      var flags = {}, exp = {}, storageType = {};
+      annosvc.getPageAnnotationInfo(aURI, annoNames[i], flags, exp, storageType);
+      val = annosvc.getPageAnnotation(aURI, annoNames[i]);
+      annos.push({name: annoNames[i],
+                  flags: flags.value,
+                  expires: exp.value,
+                  value: val});
+    }
+    return annos;
+  },
+
+  /**
    * Fetch all annotations for an item, including all properties of each
    * annotation which would be required to recreate it.
    * @param aItemId
@@ -1172,7 +1200,7 @@ this.PlacesUtils = {
    *        name, flags, expires.
    *        If the value for an annotation is not set it will be removed.
    */
-  setAnnotationsForItem: function PU_setAnnotationsForItem(aItemId, aAnnos, aSource, aDontUpdateLastModified) {
+  setAnnotationsForItem: function PU_setAnnotationsForItem(aItemId, aAnnos, aSource) {
     var annosvc = this.annotations;
 
     aAnnos.forEach(function(anno) {
@@ -1183,7 +1211,7 @@ this.PlacesUtils = {
         let expires = ("expires" in anno) ?
           anno.expires : Ci.nsIAnnotationService.EXPIRE_NEVER;
         annosvc.setItemAnnotation(aItemId, anno.name, anno.value, flags,
-                                  expires, aSource, aDontUpdateLastModified);
+                                  expires, aSource);
       }
     });
   },
@@ -1300,6 +1328,33 @@ this.PlacesUtils = {
       if (!stmt.executeStep())
         return null;
       return stmt.row.post_data;
+    } finally {
+      stmt.finalize();
+    }
+  },
+
+  /**
+   * Get the URI (and any associated POST data) for a given keyword.
+   * @param aKeyword string keyword
+   * @returns an array containing a string URL and a string of POST data
+   *
+   * @deprecated
+   */
+  getURLAndPostDataForKeyword(aKeyword) {
+    Deprecated.warning("getURLAndPostDataForKeyword() is deprecated, please " +
+                       "use PlacesUtils.keywords.fetch() instead",
+                       "https://bugzilla.mozilla.org/show_bug.cgi?id=1100294");
+
+    let stmt = PlacesUtils.history.DBConnection.createStatement(
+      `SELECT h.url, k.post_data
+       FROM moz_keywords k
+       JOIN moz_places h ON h.id = k.place_id
+       WHERE k.keyword = :keyword`);
+    stmt.params.keyword = aKeyword.toLowerCase();
+    try {
+      if (!stmt.executeStep())
+        return [ null, null ];
+      return [ stmt.row.url, stmt.row.post_data ];
     } finally {
       stmt.finalize();
     }
@@ -1499,6 +1554,40 @@ this.PlacesUtils = {
   },
 
   /**
+   * Lazily adds a bookmarks observer, waiting for the bookmarks service to be
+   * alive before registering the observer.  This is especially useful in the
+   * startup path, to avoid initializing the service just to add an observer.
+   *
+   * @param aObserver
+   *        Object implementing nsINavBookmarkObserver
+   * @param [optional]aWeakOwner
+   *        Whether to use weak ownership.
+   *
+   * @note Correct functionality of lazy observers relies on the fact Places
+   *       notifies categories before real observers, and uses
+   *       PlacesCategoriesStarter component to kick-off the registration.
+   */
+  addLazyBookmarkObserver(aObserver, aWeakOwner) {
+    Deprecated.warning(`PlacesUtils.addLazyBookmarkObserver() is deprecated.
+                        Please use PlacesUtils.bookmarks.addObserver()`,
+                       "https://bugzilla.mozilla.org/show_bug.cgi?id=1371677");
+    this.bookmarks.addObserver(aObserver, aWeakOwner === true);
+  },
+
+  /**
+   * Removes a bookmarks observer added through addLazyBookmarkObserver.
+   *
+   * @param aObserver
+   *        Object implementing nsINavBookmarkObserver
+   */
+  removeLazyBookmarkObserver(aObserver) {
+    Deprecated.warning(`PlacesUtils.removeLazyBookmarkObserver() is deprecated.
+                        Please use PlacesUtils.bookmarks.removeObserver()`,
+                       "https://bugzilla.mozilla.org/show_bug.cgi?id=1371677");
+    this.bookmarks.removeObserver(aObserver);
+  },
+
+  /**
    * Sets the character-set for a URI.
    *
    * @param {nsIURI} aURI
@@ -1547,6 +1636,22 @@ this.PlacesUtils = {
       });
 
     });
+  },
+
+  /**
+   * Deprecated wrapper for History.jsm::fetch.
+   *
+   * @param aPlaceIdentifier
+   *        either an URL or a GUID (@see History.jsm::fetch)
+   * @return {Promise}.
+   * @resolve a PageInfo
+   * @reject if there is an error in the place identifier
+   */
+  promisePlaceInfo(aPlaceIdentifier) {
+    Deprecated.warning(`PlacesUtils.promisePlaceInfo() is deprecated.
+                        Please use PlacesUtils.history.fetch()`,
+                       "https://bugzilla.mozilla.org/show_bug.cgi?id=1350377");
+    return PlacesUtils.history.fetch(aPlaceIdentifier);
   },
 
   /**
@@ -1624,7 +1729,7 @@ this.PlacesUtils = {
    * @rejects if aItemId is invalid.
    */
   promiseItemGuid(aItemId) {
-    return GuidHelper.getItemGuid(aItemId);
+    return GuidHelper.getItemGuid(aItemId)
   },
 
   /**
@@ -1638,7 +1743,7 @@ this.PlacesUtils = {
    * @rejects if there's no item for the given GUID.
    */
   promiseItemId(aGuid) {
-    return GuidHelper.getItemId(aGuid);
+    return GuidHelper.getItemId(aGuid)
   },
 
   /**
@@ -1661,7 +1766,7 @@ this.PlacesUtils = {
    *        an item id
    */
   invalidateCachedGuidFor(aItemId) {
-    GuidHelper.invalidateCacheForItemId(aItemId);
+    GuidHelper.invalidateCacheForItemId(aItemId)
   },
 
   /**
@@ -1697,8 +1802,6 @@ this.PlacesUtils = {
    *  - [deprecated] id (number): the item's id. This is only if
    *    aOptions.includeItemIds is set.
    *  - type (string):  the item's type.  @see PlacesUtils.TYPE_X_*
-   *  - typeCode (number):  the item's type in numeric format.
-   *    @see PlacesUtils.bookmarks.TYPE_*
    *  - title (string): the item's title. If it has no title, this property
    *    isn't set.
    *  - dateAdded (number, microseconds from the epoch): the date-added value of
@@ -1757,7 +1860,6 @@ this.PlacesUtils = {
       GuidHelper.updateCache(itemId, item.guid);
 
       let type = aRow.getResultByName("type");
-      item.typeCode = type;
       if (type == Ci.nsINavBookmarksService.TYPE_BOOKMARK)
         copyProps("charset", "tags", "iconuri");
 
@@ -1948,6 +2050,10 @@ XPCOMUtils.defineLazyServiceGetter(PlacesUtils, "asyncHistory",
                                    "@mozilla.org/browser/history;1",
                                    "mozIAsyncHistory");
 
+XPCOMUtils.defineLazyGetter(PlacesUtils, "bhistory", function() {
+  return PlacesUtils.history;
+});
+
 XPCOMUtils.defineLazyServiceGetter(PlacesUtils, "favicons",
                                    "@mozilla.org/browser/favicon-service;1",
                                    "mozIAsyncFavicons");
@@ -2016,11 +2122,6 @@ XPCOMUtils.defineLazyGetter(this, "bundle", function() {
   return Cc["@mozilla.org/intl/stringbundle;1"].
          getService(Ci.nsIStringBundleService).
          createBundle(PLACES_STRING_BUNDLE_URI);
-});
-
-// This is just used as a reasonably-random value for copy & paste / drag operations.
-XPCOMUtils.defineLazyGetter(PlacesUtils, "instanceId", () => {
-  return PlacesUtils.history.makeGuid();
 });
 
 /**
@@ -2355,7 +2456,7 @@ XPCOMUtils.defineLazyGetter(this, "gKeywordsCachePromise", () =>
         _onKeywordChanged(guid, keyword, href) {
           if (keyword.length == 0) {
             // We are removing a keyword.
-            let keywords = keywordsForHref(href);
+            let keywords = keywordsForHref(href)
             for (let kw of keywords) {
               cache.delete(kw);
             }
@@ -2715,11 +2816,11 @@ this.PlacesAggregatedTransaction =
         aTxnCount = countTransactions(txn.childTransactions, aTxnCount);
     }
     return aTxnCount;
-  };
+  }
 
   let txnCount = countTransactions(this.childTransactions, 0);
   this._useBatch = txnCount >= MIN_TRANSACTIONS_FOR_BATCH;
-};
+}
 
 PlacesAggregatedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -2784,7 +2885,7 @@ this.PlacesCreateFolderTransaction =
   this.item.index = aIndex;
   this.item.annotations = aAnnotations;
   this.childTransactions = aChildTransactions;
-};
+}
 
 PlacesCreateFolderTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -2861,7 +2962,7 @@ this.PlacesCreateBookmarkTransaction =
   this.item.postData = aPostData;
   this.item.annotations = aAnnotations;
   this.childTransactions = aChildTransactions;
-};
+}
 
 PlacesCreateBookmarkTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -2922,7 +3023,7 @@ this.PlacesCreateSeparatorTransaction =
   this.item = new TransactionItemCache();
   this.item.parentId = aParentId;
   this.item.index = aIndex;
-};
+}
 
 PlacesCreateSeparatorTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -2968,7 +3069,7 @@ this.PlacesCreateLivemarkTransaction =
   this.item.parentId = aParentId;
   this.item.index = aIndex;
   this.item.annotations = aAnnotations;
-};
+}
 
 PlacesCreateLivemarkTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3083,7 +3184,7 @@ this.PlacesMoveItemTransaction =
   this.new = new TransactionItemCache();
   this.new.parentId = aNewParentId;
   this.new.index = aNewIndex;
-};
+}
 
 PlacesMoveItemTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3160,7 +3261,7 @@ this.PlacesRemoveItemTransaction =
   this.item.dateAdded = PlacesUtils.bookmarks.getItemDateAdded(this.item.id);
   this.item.lastModified =
     PlacesUtils.bookmarks.getItemLastModified(this.item.id);
-};
+}
 
 PlacesRemoveItemTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3255,7 +3356,7 @@ this.PlacesEditItemTitleTransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.title = aNewTitle;
-};
+}
 
 PlacesEditItemTitleTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3287,7 +3388,7 @@ this.PlacesEditBookmarkURITransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.uri = aNewURI;
-};
+}
 
 PlacesEditBookmarkURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3336,7 +3437,7 @@ this.PlacesSetItemAnnotationTransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.annotations = [aAnnotationObject];
-};
+}
 
 PlacesSetItemAnnotationTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3390,7 +3491,7 @@ this.PlacesSetPageAnnotationTransaction =
   this.item.uri = aURI;
   this.new = new TransactionItemCache();
   this.new.annotations = [aAnnotationObject];
-};
+}
 
 PlacesSetPageAnnotationTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3449,8 +3550,8 @@ this.PlacesEditBookmarkKeywordTransaction =
   this.item.href = (PlacesUtils.bookmarks.getBookmarkURI(aItemId)).spec;
   this.new = new TransactionItemCache();
   this.new.keyword = aNewKeyword;
-  this.new.postData = aNewPostData;
-};
+  this.new.postData = aNewPostData
+}
 
 PlacesEditBookmarkKeywordTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3520,7 +3621,7 @@ this.PlacesEditBookmarkPostDataTransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.postData = aPostData;
-};
+}
 
 PlacesEditBookmarkPostDataTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3558,7 +3659,7 @@ this.PlacesEditItemDateAddedTransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.dateAdded = aNewDateAdded;
-};
+}
 
 PlacesEditItemDateAddedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3594,7 +3695,7 @@ this.PlacesEditItemLastModifiedTransaction =
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
   this.new.lastModified = aNewLastModified;
-};
+}
 
 PlacesEditItemLastModifiedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3630,7 +3731,7 @@ this.PlacesSortFolderByNameTransaction =
  function PlacesSortFolderByNameTransaction(aFolderId) {
   this.item = new TransactionItemCache();
   this.item.id = aFolderId;
-};
+}
 
 PlacesSortFolderByNameTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3714,7 +3815,7 @@ this.PlacesTagURITransaction =
   this.item = new TransactionItemCache();
   this.item.uri = aURI;
   this.item.tags = aTags;
-};
+}
 
 PlacesTagURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,
@@ -3771,7 +3872,7 @@ this.PlacesUntagURITransaction =
     }
     this.item.tags = tags;
   }
-};
+}
 
 PlacesUntagURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,

@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Resim $PIXELS$ piksele kırpıldı.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Arıza var."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Ne olduğunu biz de anlamadık. Bir daha denemeye veya başka bir sayfanın ekran görüntüsünü almaya ne dersiniz?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Firefox'tan çıkmadan ekran görüntüleri alın, kaydedin ve paylaşın."
   },
-  "tourHeaderPageAction": {
-    "message": "Kaydetmenin yeni yolu"
-  },
-  "tourBodyPageAction": {
-    "message": "Ekran görüntüsü almak istediğiniz zaman adres çubuğundaki sayfa eylemleri menüsünü açabilirsiniz."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "İstediğini yakala"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Sayfanın belli bir kısmını yakalamak için işaretçiyi tıklayıp sürükleyin. Seçiminizi vurgulamak için fareyle üzerine gelebilirsiniz."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Pencereleri veya sayfaların tamamını yakala"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Yalnızca pencerede gördüğünüz alanı veya sayfanın tamamını yakalamak için sağ üstteki düğmelerden uygun olanı seçin."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "İstediğin gibi yakala"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Ekran görüntülerinizi daha kolay paylaşmak veya bilgisayarınıza indirmek için web’e kaydedin. Kaydettiğiniz tüm görüntüleri bulmak için \"Ekran görüntülerim\" düğmesine tıklayabilirsiniz."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Tamam"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Firefox Screenshots'ı kullandığınızda $TERMSANDPRIVACYNOTICETERMSLINK$ ve $TERMSANDPRIVACYNOTICEPRIVACYLINK$ kabul etmiş sayılırsınız.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Firefox Screenshots'ı kullandığınızda Firefox Bulut Hizmetleri'nin $TERMSANDPRIVACYNOTICETERMSLINK$ ve $TERMSANDPRIVACYNOTICEPRIVACYLINK$ kabul etmiş sayılırsınız.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Gizlilik Bildirimimizi"
-  },
-  "libraryLabel": {
-    "message": "Ekran görüntüleri"
   }
 }

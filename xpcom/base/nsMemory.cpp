@@ -30,7 +30,7 @@ nsMemory::HeapMinimize(bool aImmediate)
 void*
 nsMemory::Clone(const void* aPtr, size_t aSize)
 {
-  void* newPtr = moz_xmalloc(aSize);
+  void* newPtr = NS_Alloc(aSize);
   if (newPtr) {
     memcpy(newPtr, aPtr, aSize);
   }

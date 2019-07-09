@@ -6,6 +6,7 @@
 const protocol = require("devtools/shared/protocol");
 const {Arg, RetVal, generateActorSpec} = protocol;
 const promise = require("promise");
+const {Class} = require("sdk/core/heritage");
 
 const longStringSpec = generateActorSpec({
   typeName: "longstractor",
@@ -29,33 +30,32 @@ exports.longStringSpec = longStringSpec;
  * client, the SimpleStringFront can be used as it shares the same API as a
  * LongStringFront but will not make unnecessary trips to the server.
  */
-class SimpleStringFront {
-
-  constructor(str) {
+const SimpleStringFront = Class({
+  initialize: function (str) {
     this.str = str;
-  }
+  },
 
   get length() {
     return this.str.length;
-  }
+  },
 
   get initial() {
     return this.str;
-  }
+  },
 
-  string() {
+  string: function () {
     return promise.resolve(this.str);
-  }
+  },
 
-  substring(start, end) {
+  substring: function (start, end) {
     return promise.resolve(this.str.substring(start, end));
-  }
+  },
 
-  release() {
+  release: function () {
     this.str = null;
     return promise.resolve(undefined);
   }
-}
+});
 
 exports.SimpleStringFront = SimpleStringFront;
 

@@ -22,7 +22,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/async.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/clients.js");
@@ -47,15 +46,15 @@ function getEngineModules() {
     Prefs: {module: "prefs.js", symbol: "PrefsEngine"},
     Tab: {module: "tabs.js", symbol: "TabEngine"},
     ExtensionStorage: {module: "extension-storage.js", symbol: "ExtensionStorageEngine"},
-  };
+  }
   if (Svc.Prefs.get("engine.addresses.available", false)) {
-    result.Addresses = {
+    result["Addresses"] = {
       module: "resource://formautofill/FormAutofillSync.jsm",
       symbol: "AddressesEngine",
     };
   }
   if (Svc.Prefs.get("engine.creditcards.available", false)) {
-    result.CreditCards = {
+    result["CreditCards"] = {
       module: "resource://formautofill/FormAutofillSync.jsm",
       symbol: "CreditCardsEngine",
     };
@@ -267,7 +266,7 @@ Sync11Service.prototype = {
   async handleFetchedKeys(syncKey, cryptoKeys, skipReset) {
     // Don't want to wipe if we're just starting up!
     let wasBlank = this.collectionKeys.isClear;
-    let keysChanged = await this.collectionKeys.updateContents(syncKey, cryptoKeys);
+    let keysChanged = this.collectionKeys.updateContents(syncKey, cryptoKeys);
 
     if (keysChanged && !wasBlank) {
       this._log.debug("Keys changed: " + JSON.stringify(keysChanged));
@@ -344,7 +343,7 @@ Sync11Service.prototype = {
     // Send an event now that Weave service is ready.  We don't do this
     // synchronously so that observers can import this module before
     // registering an observer.
-    CommonUtils.nextTick(() => {
+    Utils.nextTick(() => {
       this.status.ready = true;
 
       // UI code uses the flag on the XPCOM service so it doesn't have
@@ -514,7 +513,7 @@ Sync11Service.prototype = {
     // Always check for errors; this is also where we look for X-Weave-Alert.
     this.errorHandler.checkServerError(info);
     if (!info.success) {
-      this._log.error("Aborting sync: failed to get collections.");
+      this._log.error("Aborting sync: failed to get collections.")
       throw info;
     }
     return info;
@@ -618,20 +617,6 @@ Sync11Service.prototype = {
     }
   },
 
-  getMaxRecordPayloadSize() {
-    let config = this.serverConfiguration;
-    if (!config || !config.max_record_payload_bytes) {
-      this._log.warn("No config or incomplete config in getMaxRecordPayloadSize."
-                     + " Are we running tests?");
-      return 256 * 1024;
-    }
-    let payloadMax = config.max_record_payload_bytes;
-    if (config.max_post_bytes && payloadMax <= config.max_post_bytes) {
-      return config.max_post_bytes - 4096;
-    }
-    return payloadMax;
-  },
-
   async verifyLogin(allow40XRecovery = true) {
     if (!this.identity.username) {
       this._log.warn("No username in verifyLogin.");
@@ -724,9 +709,9 @@ Sync11Service.prototype = {
 
   async generateNewSymmetricKeys() {
     this._log.info("Generating new keys WBO...");
-    let wbo = await this.collectionKeys.generateNewKeysWBO();
+    let wbo = this.collectionKeys.generateNewKeysWBO();
     this._log.info("Encrypting new key bundle.");
-    await wbo.encrypt(this.identity.syncKeyBundle);
+    wbo.encrypt(this.identity.syncKeyBundle);
 
     let uploadRes = await this._uploadCryptoKeys(wbo, 0);
     if (uploadRes.status != 200) {
@@ -1063,10 +1048,7 @@ Sync11Service.prototype = {
    */
   _checkSync: function _checkSync(ignore) {
     let reason = "";
-    // Ideally we'd call _checkSetup() here but that has too many side-effects.
-    if (Status.service == CLIENT_NOT_CONFIGURED)
-      reason = kSyncNotConfigured;
-    else if (Status.service == STATUS_DISABLED || !this.enabled)
+    if (!this.enabled)
       reason = kSyncWeaveDisabled;
     else if (Services.io.offline)
       reason = kSyncNetworkOffline;

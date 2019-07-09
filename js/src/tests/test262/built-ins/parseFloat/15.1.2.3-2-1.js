@@ -3,8 +3,6 @@
 
 /*---
 es5id: 15.1.2.3-2-1
-es6id: 18.2.4
-esid: sec-parsefloat-string
 description: >
     pareseFloat - 'trimmedString' is the empty string when inputString
     does not contain any such characters

@@ -12,9 +12,10 @@ const TEST_UNICODE_ARGS = ["M\u00F8z\u00EEll\u00E5",
 
 // test if a process can be started, polled for its running status
 // and then killed
-function test_kill() {
+function test_kill()
+{
   var file = get_test_program("TestBlockingProcess");
-
+ 
   var process = Components.classes["@mozilla.org/process/util;1"]
                           .createInstance(Components.interfaces.nsIProcess);
   process.init(file);
@@ -24,7 +25,8 @@ function test_kill() {
   try {
     process.kill();
     do_throw("Attempting to kill a not-running process should throw");
-  } catch (e) { }
+  }
+  catch (e) { }
 
   process.run(false, [], 0);
 
@@ -37,49 +39,55 @@ function test_kill() {
   try {
     process.kill();
     do_throw("Attempting to kill a not-running process should throw");
-  } catch (e) { }
+  }
+  catch (e) { }
 }
 
 // test if we can get an exit value from an application that is
 // guaranteed to return an exit value of 42
-function test_quick() {
+function test_quick()
+{
   var file = get_test_program("TestQuickReturn");
-
+  
   var process = Components.classes["@mozilla.org/process/util;1"]
                           .createInstance(Components.interfaces.nsIProcess);
   process.init(file);
-
+  
   // to get an exit value it must be a blocking process
   process.run(true, [], 0);
 
   do_check_eq(process.exitValue, 42);
 }
 
-function test_args(file, args, argsAreASCII) {
+function test_args(file, args, argsAreASCII)
+{
   var process = Components.classes["@mozilla.org/process/util;1"]
                           .createInstance(Components.interfaces.nsIProcess);
   process.init(file);
 
-  if (argsAreASCII)
+  if (argsAreASCII)  
     process.run(true, args, args.length);
-  else
+  else  
     process.runw(true, args, args.length);
-
+  
   do_check_eq(process.exitValue, 0);
 }
 
 // test if an argument can be successfully passed to an application
 // that will return 0 if "mozilla" is the only argument
-function test_arguments() {
+function test_arguments()
+{
   test_args(get_test_program("TestArguments"), TEST_ARGS, true);
 }
 
 // test if Unicode arguments can be successfully passed to an application
-function test_unicode_arguments() {
+function test_unicode_arguments()
+{
   test_args(get_test_program("TestUnicodeArguments"), TEST_UNICODE_ARGS, false);
 }
 
-function rename_and_test(asciiName, unicodeName, args, argsAreASCII) {
+function rename_and_test(asciiName, unicodeName, args, argsAreASCII)
+{
   var asciiFile = get_test_program(asciiName);
   var asciiLeaf = asciiFile.leafName;
   var unicodeLeaf = asciiLeaf.replace(asciiName, unicodeName);
@@ -94,7 +102,8 @@ function rename_and_test(asciiName, unicodeName, args, argsAreASCII) {
 }
 
 // test passing ASCII and Unicode arguments to an application with a Unicode name
-function test_unicode_app() {
+function test_unicode_app()
+{
   rename_and_test("TestArguments",
                   // "Unicode" in Tamil
                   "\u0BAF\u0BC1\u0BA9\u0BBF\u0B95\u0BCB\u0B9F\u0BCD",
@@ -107,7 +116,8 @@ function test_unicode_app() {
 }
 
 // test if we get notified about a blocking process
-function test_notify_blocking() {
+function test_notify_blocking()
+{
   var file = get_test_program("TestQuickReturn");
 
   var process = Components.classes["@mozilla.org/process/util;1"]
@@ -115,7 +125,7 @@ function test_notify_blocking() {
   process.init(file);
 
   process.runAsync([], 0, {
-    observe(subject, topic, data) {
+    observe: function(subject, topic, data) {
       process = subject.QueryInterface(Components.interfaces.nsIProcess);
       do_check_eq(topic, "process-finished");
       do_check_eq(process.exitValue, 42);
@@ -125,7 +135,8 @@ function test_notify_blocking() {
 }
 
 // test if we get notified about a non-blocking process
-function test_notify_nonblocking() {
+function test_notify_nonblocking()
+{
   var file = get_test_program("TestArguments");
 
   var process = Components.classes["@mozilla.org/process/util;1"]
@@ -133,7 +144,7 @@ function test_notify_nonblocking() {
   process.init(file);
 
   process.runAsync(TEST_ARGS, TEST_ARGS.length, {
-    observe(subject, topic, data) {
+    observe: function(subject, topic, data) {
       process = subject.QueryInterface(Components.interfaces.nsIProcess);
       do_check_eq(topic, "process-finished");
       do_check_eq(process.exitValue, 0);
@@ -143,7 +154,8 @@ function test_notify_nonblocking() {
 }
 
 // test if we get notified about a killed process
-function test_notify_killed() {
+function test_notify_killed()
+{
   var file = get_test_program("TestBlockingProcess");
 
   var process = Components.classes["@mozilla.org/process/util;1"]
@@ -151,7 +163,7 @@ function test_notify_killed() {
   process.init(file);
 
   process.runAsync([], 0, {
-    observe(subject, topic, data) {
+    observe: function(subject, topic, data) {
       process = subject.QueryInterface(Components.interfaces.nsIProcess);
       do_check_eq(topic, "process-finished");
       do_test_finished();

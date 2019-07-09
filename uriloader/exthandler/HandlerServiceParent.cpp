@@ -1,11 +1,7 @@
-#include "mozilla/Logging.h"
 #include "HandlerServiceParent.h"
 #include "nsIHandlerService.h"
 #include "nsIMIMEInfo.h"
 #include "ContentHandlerService.h"
-#ifdef MOZ_WIDGET_GTK
-#include "unix/nsGNOMERegistry.h"
-#endif
 
 using mozilla::dom::HandlerInfo;
 using mozilla::dom::HandlerApp;
@@ -260,19 +256,6 @@ HandlerServiceParent::RecvExists(const HandlerInfo& aHandlerInfo,
   nsCOMPtr<nsIHandlerInfo> info(WrapHandlerInfo(aHandlerInfo));
   nsCOMPtr<nsIHandlerService> handlerSvc = do_GetService(NS_HANDLERSERVICE_CONTRACTID);
   handlerSvc->Exists(info, exists);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-HandlerServiceParent::RecvExistsForProtocol(const nsCString& aProtocolScheme,
-                                            bool* aHandlerExists)
-{
-#ifdef MOZ_WIDGET_GTK
-  // Check the GNOME registry for a protocol handler
-  *aHandlerExists = nsGNOMERegistry::HandlerExists(aProtocolScheme.get());
-#else
-  *aHandlerExists = false;
-#endif
   return IPC_OK();
 }
 

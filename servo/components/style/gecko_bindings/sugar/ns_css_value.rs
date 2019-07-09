@@ -4,6 +4,7 @@
 
 //! Little helpers for `nsCSSValue`.
 
+use app_units::Au;
 use gecko_bindings::bindings;
 use gecko_bindings::structs;
 use gecko_bindings::structs::{nsCSSValue, nsCSSUnit};
@@ -74,11 +75,11 @@ impl nsCSSValue {
     /// Sets LengthOrPercentage value to this nsCSSValue.
     pub unsafe fn set_lop(&mut self, lop: LengthOrPercentage) {
         match lop {
-            LengthOrPercentage::Length(px) => {
-                self.set_px(px.px())
+            LengthOrPercentage::Length(au) => {
+                bindings::Gecko_CSSValue_SetAbsoluteLength(self, au.0)
             }
             LengthOrPercentage::Percentage(pc) => {
-                self.set_percentage(pc.0)
+                bindings::Gecko_CSSValue_SetPercentage(self, pc.0)
             }
             LengthOrPercentage::Calc(calc) => {
                 bindings::Gecko_CSSValue_SetCalc(self, calc.into())
@@ -86,22 +87,11 @@ impl nsCSSValue {
         }
     }
 
-    /// Sets a px value to this nsCSSValue.
-    pub unsafe fn set_px(&mut self, px: f32) {
-        bindings::Gecko_CSSValue_SetPixelLength(self, px)
-    }
-
-    /// Sets a percentage value to this nsCSSValue.
-    pub unsafe fn set_percentage(&mut self, unit_value: f32) {
-        bindings::Gecko_CSSValue_SetPercentage(self, unit_value)
-    }
-
     /// Returns LengthOrPercentage value.
     pub unsafe fn get_lop(&self) -> LengthOrPercentage {
-        use values::computed::Length;
         match self.mUnit {
             nsCSSUnit::eCSSUnit_Pixel => {
-                LengthOrPercentage::Length(Length::new(bindings::Gecko_CSSValue_GetNumber(self)))
+                LengthOrPercentage::Length(Au(bindings::Gecko_CSSValue_GetAbsoluteLength(self)))
             },
             nsCSSUnit::eCSSUnit_Percent => {
                 LengthOrPercentage::Percentage(Percentage(bindings::Gecko_CSSValue_GetPercentage(self)))

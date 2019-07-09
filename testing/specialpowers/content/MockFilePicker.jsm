@@ -34,7 +34,7 @@ var newFactory = function(window) {
     },
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory])
   };
-};
+}
 
 this.MockFilePicker = {
   returnOK: Ci.nsIFilePicker.returnOK,
@@ -250,6 +250,9 @@ MockFilePickerInstance.prototype = {
         return null;
       }
     };
+  },
+  show() {
+    throw "This is not implemented";
   },
   open(aFilePickerShownCallback) {
     MockFilePicker.showing = true;

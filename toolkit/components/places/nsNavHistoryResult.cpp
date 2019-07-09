@@ -108,6 +108,8 @@ nsNavHistoryResultNode::nsNavHistoryResultNode(
   mTransitionType(0)
 {
   mTags.SetIsVoid(true);
+  mParentFolder.SetIsVoid(true);
+  mParentPath.SetIsVoid(true);
 }
 
 
@@ -259,6 +261,16 @@ nsNavHistoryResultNode::GetVisitType(uint32_t* aVisitType) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsNavHistoryResultNode::GetParentFolder(nsACString& aParentFolder){
+  aParentFolder = mParentFolder;
+  return NS_OK; }
+
+NS_IMETHODIMP
+nsNavHistoryResultNode::GetParentPath(nsACString& aParentPath){
+  aParentPath = mParentPath;
+  return NS_OK; }
+
 
 void
 nsNavHistoryResultNode::OnRemoving()
@@ -337,7 +349,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(nsNavHistoryContainerResultNode, nsNavHistory
 NS_IMPL_ADDREF_INHERITED(nsNavHistoryContainerResultNode, nsNavHistoryResultNode)
 NS_IMPL_RELEASE_INHERITED(nsNavHistoryContainerResultNode, nsNavHistoryResultNode)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsNavHistoryContainerResultNode)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsNavHistoryContainerResultNode)
   NS_INTERFACE_MAP_STATIC_AMBIGUOUS(nsNavHistoryContainerResultNode)
   NS_INTERFACE_MAP_ENTRY(nsINavHistoryContainerResultNode)
 NS_INTERFACE_MAP_END_INHERITING(nsNavHistoryResultNode)
@@ -779,6 +791,14 @@ nsNavHistoryContainerResultNode::GetSortingComparator(uint16_t aSortType)
       return &SortComparison_TagsLess;
     case nsINavHistoryQueryOptions::SORT_BY_TAGS_DESCENDING:
       return &SortComparison_TagsGreater;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_ASCENDING:
+      return &SortComparison_ParentFolderLess;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_DESCENDING:
+      return &SortComparison_ParentFolderGreater;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_ASCENDING:
+      return &SortComparison_ParentPathLess;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_DESCENDING:
+      return &SortComparison_ParentPathGreater;
     case nsINavHistoryQueryOptions::SORT_BY_FRECENCY_ASCENDING:
       return &SortComparison_FrecencyLess;
     case nsINavHistoryQueryOptions::SORT_BY_FRECENCY_DESCENDING:
@@ -1296,6 +1316,71 @@ nsNavHistoryContainerResultNode::SortComparison_FrecencyGreater(
 )
 {
   return -nsNavHistoryContainerResultNode::SortComparison_FrecencyLess(a, b, closure);
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentFolderLess(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  uint32_t aType;
+  a->GetType(&aType);
+
+  int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentFolder),
+                                            NS_ConvertUTF8toUTF16(b->mParentFolder));
+  if (value == 0) {
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
+    }
+  }
+  return value;
+}
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentFolderGreater(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  return -SortComparison_ParentFolderLess(a, b, closure);
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathLess(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  uint32_t aType;
+  a->GetType(&aType);
+
+  int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentPath),
+                                            NS_ConvertUTF8toUTF16(b->mParentPath));
+  if (value == 0) {
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
+    }
+  }
+  return value;
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathGreater(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  return -SortComparison_ParentPathLess(a, b, closure);
 }
 
 /**
@@ -2460,10 +2545,7 @@ nsNavHistoryQueryResultNode::OnVisit(nsIURI* aURI, int64_t aVisitId,
       nsresult rv = history->VisitIdToResultNode(aVisitId, mOptions,
                                                  getter_AddRefs(addition));
       NS_ENSURE_SUCCESS(rv, rv);
-      if (!addition) {
-        // Certain result types manage the nodes by themselves.
-        return NS_OK;
-      }
+      NS_ENSURE_STATE(addition);
       addition->mTransitionType = aTransitionType;
       if (!history->EvaluateQueryForNode(mQueries, mOptions, addition))
         return NS_OK; // don't need to include in our query
@@ -3857,10 +3939,7 @@ nsNavHistoryFolderResultNode::OnItemVisited(int64_t aItemId,
   rv = history->VisitIdToResultNode(aVisitId, mOptions,
                                     getter_AddRefs(visitNode));
   NS_ENSURE_SUCCESS(rv, rv);
-  if (!visitNode) {
-    // Certain result types manage the nodes by themselves.
-    return NS_OK;
-  }
+  NS_ENSURE_STATE(visitNode);
   node->mFrecency = visitNode->mFrecency;
 
   if (AreChildrenVisible()) {
@@ -4405,7 +4484,7 @@ nsNavHistoryResult::GetSkipTags(bool *aSkipTags)
 NS_IMETHODIMP
 nsNavHistoryResult::GetSkipDescendantsOnItemRemoval(bool *aSkipDescendantsOnItemRemoval)
 {
-  *aSkipDescendantsOnItemRemoval = true;
+  *aSkipDescendantsOnItemRemoval = false;
   return NS_OK;
 }
 

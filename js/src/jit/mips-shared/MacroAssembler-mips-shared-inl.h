@@ -29,13 +29,13 @@ MacroAssembler::moveGPRToFloat32(Register src, FloatRegister dest)
 void
 MacroAssembler::move8SignExtend(Register src, Register dest)
 {
-    ma_seb(dest, src);
+    as_seb(dest, src);
 }
 
 void
 MacroAssembler::move16SignExtend(Register src, Register dest)
 {
-    ma_seh(dest, src);
+    as_seh(dest, src);
 }
 
 // ===============================================================
@@ -865,14 +865,6 @@ MacroAssembler::branchTestString(Condition cond, Register tag, Label* label)
 {
     MOZ_ASSERT(cond == Equal || cond == NotEqual);
     ma_b(tag, ImmTag(JSVAL_TAG_STRING), label, cond);
-}
-
-void
-MacroAssembler::branchTestString(Condition cond, const Address& address, Label* label)
-{
-    SecondScratchRegisterScope scratch2(*this);
-    extractTag(address, scratch2);
-    branchTestString(cond, scratch2, label);
 }
 
 void

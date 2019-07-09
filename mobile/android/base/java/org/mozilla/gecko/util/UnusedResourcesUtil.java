@@ -99,8 +99,4 @@ final class UnusedResourcesUtil {
     public static final int[] TEMPORARY_UNUSED_ACTIVITY_STREAM = {
             R.string.activity_stream_topsites
     };
-
-    public static final int[] USED_IN_PAGE_ACTION = {
-            R.drawable.add_to_homescreen
-    };
 }

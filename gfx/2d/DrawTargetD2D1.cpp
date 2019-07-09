@@ -45,7 +45,7 @@ RefPtr<ID2D1Factory1> D2DFactory()
 DrawTargetD2D1::DrawTargetD2D1()
   : mPushedLayers(1)
   , mUsedCommandListsSincePurge(0)
-  , mComplexBlendsWithListInList(0)
+  , mDidComplexBlendWithListInList(false)
   , mDeviceSeq(0)
 {
 }
@@ -192,8 +192,8 @@ DrawTargetD2D1::DrawSurface(SourceSurface *aSurface,
     samplingBounds = D2D1::RectF(0, 0, Float(aSurface->GetSize().width), Float(aSurface->GetSize().height));
   }
 
-  Float xScale = aDest.Width() / aSource.Width();
-  Float yScale = aDest.Height() / aSource.Height();
+  Float xScale = aDest.width / aSource.width;
+  Float yScale = aDest.height / aSource.height;
 
   RefPtr<ID2D1ImageBrush> brush;
 
@@ -425,8 +425,8 @@ DrawTargetD2D1::MaskSurface(const Pattern &aSource,
     // we have to fixup our sizes here.
     size.width = bitmap->GetSize().width;
     size.height = bitmap->GetSize().height;
-    dest.SetWidth(size.width);
-    dest.SetHeight(size.height);
+    dest.width = size.width;
+    dest.height = size.height;
   }
 
   // FillOpacityMask only works if the antialias mode is MODE_ALIASED
@@ -488,10 +488,10 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
   }
 
   Rect srcRect(Float(sourceRect.x), Float(sourceRect.y),
-               Float(aSourceRect.Width()), Float(aSourceRect.Height()));
+               Float(aSourceRect.width), Float(aSourceRect.height));
 
   Rect dstRect(Float(aDestination.x), Float(aDestination.y),
-               Float(aSourceRect.Width()), Float(aSourceRect.Height()));
+               Float(aSourceRect.width), Float(aSourceRect.height));
 
   if (SUCCEEDED(hr) && bitmap) {
     mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
@@ -949,8 +949,6 @@ DrawTargetD2D1::PopLayer()
 
   DCCommandSink sink(mDC);
   list->Stream(&sink);
-
-  mComplexBlendsWithListInList = 0;
 
   mDC->PopLayer();
 }
@@ -1422,7 +1420,12 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
 
     mDC->DrawImage(blendEffect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
 
-    mComplexBlendsWithListInList++;
+    // This may seem a little counter intuitive. If this is false, we go through the regular
+    // codepaths and set it to true. When this was true, GetImageForLayerContent will return
+    // a bitmap for the current command list and we will no longer have a complex blend
+    // with a list for tmpImage. Therefore we can set it to false again.
+    mDidComplexBlendWithListInList = !mDidComplexBlendWithListInList;
+
     return;
   }
 
@@ -1503,8 +1506,6 @@ DrawTargetD2D1::GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAli
   return true;
 }
 
-static const uint32_t sComplexBlendsWithListAllowedInList = 4;
-
 already_AddRefed<ID2D1Image>
 DrawTargetD2D1::GetImageForLayerContent(bool aShouldPreserveContent)
 {
@@ -1534,7 +1535,7 @@ DrawTargetD2D1::GetImageForLayerContent(bool aShouldPreserveContent)
     list->Close();
 
     RefPtr<ID2D1Bitmap1> tmpBitmap;
-    if (mComplexBlendsWithListInList >= sComplexBlendsWithListAllowedInList) {
+    if (mDidComplexBlendWithListInList) {
       D2D1_BITMAP_PROPERTIES1 props =
         D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET,
                                 D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -1544,7 +1545,6 @@ DrawTargetD2D1::GetImageForLayerContent(bool aShouldPreserveContent)
       mDC->SetTarget(tmpBitmap);
       mDC->DrawImage(list, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
       mDC->SetTarget(CurrentTarget());
-      mComplexBlendsWithListInList = 0;
     }
 
     DCCommandSink sink(mDC);
@@ -1554,7 +1554,7 @@ DrawTargetD2D1::GetImageForLayerContent(bool aShouldPreserveContent)
       PushAllClips();
     }
 
-    if (tmpBitmap) {
+    if (mDidComplexBlendWithListInList) {
       return tmpBitmap.forget();
     }
 
@@ -1881,7 +1881,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
       mat.PreTranslate(pat->mSamplingRect.x, pat->mSamplingRect.y);
     } else {
       // We will do a partial upload of the sampling restricted area from GetImageForSurface.
-      samplingBounds = D2D1::RectF(0, 0, pat->mSamplingRect.Width(), pat->mSamplingRect.Height());
+      samplingBounds = D2D1::RectF(0, 0, pat->mSamplingRect.width, pat->mSamplingRect.height);
     }
 
     D2D1_EXTEND_MODE xRepeat = D2DExtend(pat->mExtendMode, Axis::X_AXIS);

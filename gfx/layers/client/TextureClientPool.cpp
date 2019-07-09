@@ -62,8 +62,8 @@ TextureClientPool::TextureClientPool(LayersBackend aLayersBackend,
 {
   TCP_LOG("TexturePool %p created with maximum unused texture clients %u\n",
       this, mInitialPoolSize);
-  mShrinkTimer = NS_NewTimer();
-  mClearTimer = NS_NewTimer();
+  mShrinkTimer = do_CreateInstance("@mozilla.org/timer;1");
+  mClearTimer = do_CreateInstance("@mozilla.org/timer;1");
   if (aFormat == gfx::SurfaceFormat::UNKNOWN) {
     gfxWarning() << "Creating texture pool for SurfaceFormat::UNKNOWN format";
   }
@@ -117,11 +117,11 @@ TextureClientPool::GetTextureClient()
   // We initially allocate mInitialPoolSize for our pool. If we run
   // out of TextureClients, we allocate additional TextureClients to try and keep around
   // mPoolUnusedSize
-  if (mTextureClients.empty()) {
+  if (!mTextureClients.size()) {
     AllocateTextureClient();
   }
 
-  if (mTextureClients.empty()) {
+  if (!mTextureClients.size()) {
     // All our allocations failed, return nullptr
     return nullptr;
   }
@@ -261,7 +261,7 @@ TextureClientPool::ShrinkToMaximumSize()
       this, targetUnusedClients, totalUnusedTextureClients, mOutstandingClients);
 
   while (totalUnusedTextureClients > targetUnusedClients) {
-    if (!mTextureClientsDeferred.empty()) {
+    if (mTextureClientsDeferred.size()) {
       mOutstandingClients--;
       TCP_LOG("TexturePool %p dropped deferred client %p; %u remaining\n",
           this, mTextureClientsDeferred.front().get(),

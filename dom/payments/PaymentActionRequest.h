@@ -45,7 +45,6 @@ private:
   ~PaymentCreateActionRequest() = default;
 
   uint64_t mTabId;
-  nsCOMPtr<nsIPrincipal> mTopLevelPrincipal;
   nsCOMPtr<nsIArray> mMethodData;
   nsCOMPtr<nsIPaymentDetails> mDetails;
   nsCOMPtr<nsIPaymentOptions> mOptions;

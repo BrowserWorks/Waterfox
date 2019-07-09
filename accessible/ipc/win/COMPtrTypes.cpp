@@ -11,7 +11,6 @@
 #include "mozilla/a11y/Accessible.h"
 #include "mozilla/a11y/Platform.h"
 #include "mozilla/a11y/HandlerProvider.h"
-#include "mozilla/Assertions.h"
 #include "mozilla/Move.h"
 #include "mozilla/mscom/MainThreadHandoff.h"
 #include "mozilla/mscom/Utils.h"
@@ -27,13 +26,16 @@ namespace mozilla {
 namespace a11y {
 
 IAccessibleHolder
-CreateHolderFromAccessible(NotNull<Accessible*> aAccToWrap)
+CreateHolderFromAccessible(Accessible* aAccToWrap)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aAccToWrap && NS_IsMainThread());
+  if (!aAccToWrap) {
+    return nullptr;
+  }
 
   STAUniquePtr<IAccessible> iaToProxy;
   aAccToWrap->GetNativeInterface(mscom::getter_AddRefs(iaToProxy));
-  MOZ_DIAGNOSTIC_ASSERT(iaToProxy);
+  MOZ_ASSERT(iaToProxy);
   if (!iaToProxy) {
     return nullptr;
   }
@@ -51,7 +53,7 @@ CreateHolderFromAccessible(NotNull<Accessible*> aAccToWrap)
   ProxyUniquePtr<IAccessible> intercepted;
   HRESULT hr = MainThreadHandoff::WrapInterface(Move(iaToProxy), payload,
                                                 (IAccessible**) mscom::getter_AddRefs(intercepted));
-  MOZ_DIAGNOSTIC_ASSERT(SUCCEEDED(hr));
+  MOZ_ASSERT(SUCCEEDED(hr));
   if (FAILED(hr)) {
     return nullptr;
   }

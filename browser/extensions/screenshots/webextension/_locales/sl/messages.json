@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Ta slika je bila obrezana na $PIXELS$ pikslov.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Ne dela."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Ne vemo točno, kaj se je pravkar zgodilo. Bi radi poskusili znova ali pa zajeli posnetek kakšne druge strani?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Zajemite, shranite in delite zaslonske posnetke, ne da bi zapustili Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Nov način shranjevanja"
-  },
-  "tourBodyPageAction": {
-    "message": "Kadarkoli želite zajeti posnetek zaslona, v naslovni vrstici razširite meni dejanj strani."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Zajemite to, kar hočete"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Kliknite in povlecite, če želite zajeti samo del strani. Svojo izbiro lahko tudi poudarite, tako da preko nje povlečete miškin kazalec."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Zajemite okna ali celotne strani"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "V zgornjem desnem kotu izberite gumb za zajem vidnega območja v oknu ali celotne strani."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Kot vi želite"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Shranite obrezane posnetke na splet za lažje deljenje ali jih prenesite na svoj računalnik. Vse zajete posnetke lahko najdete s klikom na gumb Moji posnetki."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Končano"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Z uporabo razširitve Firefox Screenshots se strinjate z našimi $TERMSANDPRIVACYNOTICETERMSLINK$ in $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Z uporabo Firefox Screenshots se strinjate s $TERMSANDPRIVACYNOTICETERMSLINK$ Firefoxovih storitev v oblaku in $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "obvestilom o zasebnosti"
-  },
-  "libraryLabel": {
-    "message": "Posnetki zaslona"
   }
 }

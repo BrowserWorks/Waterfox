@@ -35,7 +35,6 @@ tabbox > tabs {
 
 tab {
   -moz-appearance: tab;
-  padding-top: 1px;
 }
 
 tab:-moz-focusring {
@@ -51,15 +50,9 @@ tab:last-of-type {
   padding-inline-end: 2px;
 }
 
-tab[visuallyselected="true"]:not(:-moz-window-inactive) {
+tab[visuallyselected="true"] {
   color: #FFF;
-}
-
-@media not all and (-moz-mac-yosemite-theme) {
-  tab[visuallyselected="true"] {
-    color: #FFF;
-    text-shadow: rgba(0, 0, 0, 0.4) 0 1px;
-  }
+  text-shadow: rgba(0, 0, 0, 0.4) 0 1px;
 }
 
 .tab-middle {

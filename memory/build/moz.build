@@ -5,8 +5,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
-    'malloc_decls.h',
-    'mozjemalloc_types.h',
     'mozmemory.h',
     'mozmemory_wrap.h',
 ]
@@ -16,18 +14,19 @@ DEFINES['MOZ_MEMORY_IMPL'] = True
 
 if CONFIG['MOZ_REPLACE_MALLOC']:
     EXPORTS += [
+        'malloc_decls.h',
         'replace_malloc.h',
         'replace_malloc_bridge.h',
     ]
 
-if CONFIG['MOZ_MEMORY']:
-    UNIFIED_SOURCES += [
-        'mozjemalloc.cpp',
-        'mozmemory_wrap.cpp',
-    ]
-else:
-    UNIFIED_SOURCES += [
-        'fallback.cpp',
+SOURCES += [
+    'jemalloc_config.cpp',
+    'mozmemory_wrap.c',
+]
+
+if CONFIG['MOZ_REPLACE_MALLOC']:
+    SOURCES += [
+        'replace_malloc.c',
     ]
 
 if CONFIG['OS_TARGET'] == 'Darwin' and (CONFIG['MOZ_REPLACE_MALLOC'] or
@@ -38,19 +37,9 @@ if CONFIG['OS_TARGET'] == 'Darwin' and (CONFIG['MOZ_REPLACE_MALLOC'] or
 
 Library('memory')
 
-if CONFIG['OS_TARGET'] == 'Android' and CONFIG['CC_TYPE'] == 'clang':
-    CFLAGS += [
-        '-Wno-tautological-pointer-compare',
-    ]
+if CONFIG['MOZ_GLUE_IN_PROGRAM']:
+    DIST_INSTALL = True
 
-FINAL_LIBRARY = 'mozglue'
-
-if CONFIG['GNU_CXX']:
-    # too many warnings from functions generated through rb_wrab from rb.h.
-    CXXFLAGS += ['-Wno-unused-function',
-                 '-Wno-error=uninitialized']
-
-if CONFIG['_MSC_VER']:
-    CXXFLAGS += ['-wd4273'] # inconsistent dll linkage (bug 558163)
-
-DisableStlWrapping()
+# Keep jemalloc separated when mozglue is statically linked
+if CONFIG['MOZ_MEMORY'] and CONFIG['OS_TARGET'] in ('WINNT', 'Darwin', 'Android'):
+    FINAL_LIBRARY = 'mozglue'

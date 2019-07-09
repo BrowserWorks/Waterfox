@@ -73,10 +73,6 @@ D3D11YCbCrImage::SetData(KnowsCompositor* aAllocator,
 
   RefPtr<ID3D11DeviceContext> ctx;
   allocator->GetDevice()->GetImmediateContext(getter_AddRefs(ctx));
-  if (!ctx) {
-    gfxCriticalError() << "Failed to get immediate context.";
-    return false;
-  }
 
   AutoLockD3D11Texture lockY(textureY);
   AutoLockD3D11Texture lockCb(textureCb);
@@ -101,7 +97,7 @@ D3D11YCbCrImage::SetData(KnowsCompositor* aAllocator,
                          aData.mCbCrStride,
                          aData.mCbCrStride * aData.mCbCrSize.height);
 
-
+  
   return true;
 }
 
@@ -115,15 +111,6 @@ TextureClient*
 D3D11YCbCrImage::GetTextureClient(KnowsCompositor* aForwarder)
 {
   return mTextureClient;
-}
-
-const DXGIYCbCrTextureData*
-D3D11YCbCrImage::GetData() const
-{
-  if (!mTextureClient)
-    return nullptr;
-
-  return static_cast<DXGIYCbCrTextureData*>(mTextureClient->GetInternalData());
 }
 
 already_AddRefed<SourceSurface>
@@ -193,10 +180,6 @@ D3D11YCbCrImage::GetAsSourceSurface()
 
   RefPtr<ID3D11DeviceContext> ctx;
   dev->GetImmediateContext(getter_AddRefs(ctx));
-  if (!ctx) {
-    gfxCriticalError() << "Failed to get immediate context.";
-    return nullptr;
-  }
 
   {
     AutoLockD3D11Texture lockY(texY);
@@ -297,24 +280,9 @@ D3D11YCbCrRecycleAllocator::Allocate(SurfaceFormat aFormat,
                                 1, 1);
   newDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-  RefPtr<ID3D10Multithread> mt;
-  HRESULT hr = mDevice->QueryInterface(
-    (ID3D10Multithread**)getter_AddRefs(mt));
-
-  if (FAILED(hr) || !mt) {
-    gfxCriticalError() << "Multithread safety interface not supported. " << hr;
-    return nullptr;
-  }
-
-  if (!mt->GetMultithreadProtected()) {
-    gfxCriticalError() << "Device used not marked as multithread-safe.";
-    return nullptr;
-  }
-
-  D3D11MTAutoEnter mtAutoEnter(mt.forget());
-
   RefPtr<ID3D11Texture2D> textureY;
-  hr = mDevice->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(textureY));
+  HRESULT hr =
+    mDevice->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(textureY));
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   newDesc.Width = CbCrSize.width;

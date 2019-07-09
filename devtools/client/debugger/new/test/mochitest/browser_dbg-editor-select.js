@@ -11,44 +11,44 @@ function isElementVisible(dbg, elementName) {
   return bpLine && isVisibleWithin(cm, bpLine);
 }
 
-add_task(async function() {
+add_task(function*() {
   // This test runs too slowly on linux debug. I'd like to figure out
   // which is the slowest part of this and make it run faster, but to
   // fix a frequent failure allow a longer timeout.
   requestLongerTimeout(2);
 
-  const dbg = await initDebugger("doc-scripts.html");
+  const dbg = yield initDebugger("doc-scripts.html");
   const { selectors: { getSelectedSource }, getState } = dbg;
   const simple1 = findSource(dbg, "simple1.js");
   const simple2 = findSource(dbg, "simple2.js");
 
   // Set the initial breakpoint.
-  await addBreakpoint(dbg, simple1, 4);
+  yield addBreakpoint(dbg, simple1, 4);
   ok(!getSelectedSource(getState()), "No selected source");
 
   // Call the function that we set a breakpoint in.
   invokeInTab("main");
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, simple1, 4);
 
   // Step through to another file and make sure it's paused in the
   // right place.
-  await stepIn(dbg);
-  assertPausedLocation(dbg);
+  yield stepIn(dbg);
+  assertPausedLocation(dbg, simple2, 2);
 
   // Step back out to the initial file.
-  await stepOut(dbg);
-  await stepOut(dbg);
-  assertPausedLocation(dbg);
-  await resume(dbg);
+  yield stepOut(dbg);
+  yield stepOut(dbg);
+  assertPausedLocation(dbg, simple1, 5);
+  yield resume(dbg);
 
   // Make sure that we can set a breakpoint on a line out of the
   // viewport, and that pausing there scrolls the editor to it.
   let longSrc = findSource(dbg, "long.js");
-  await addBreakpoint(dbg, longSrc, 66);
+  yield addBreakpoint(dbg, longSrc, 66);
 
   invokeInTab("testModel");
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, longSrc, 66);
   ok(isElementVisible(dbg, "breakpoint"), "Breakpoint is visible");
 });

@@ -202,6 +202,13 @@ nsTreeColumn::GetIdConst(const char16_t** aIdConst)
 }
 
 NS_IMETHODIMP
+nsTreeColumn::GetAtom(nsIAtom** aAtom)
+{
+  NS_IF_ADDREF(*aAtom = GetAtom());
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsTreeColumn::GetIndex(int32_t* aIndex)
 {
   *aIndex = GetIndex();

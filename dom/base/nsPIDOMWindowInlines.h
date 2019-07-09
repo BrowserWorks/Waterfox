@@ -99,12 +99,6 @@ nsPIDOMWindowInner::HasActiveDocument()
      mOuterWindow->GetCurrentInnerWindow()->GetDoc() == mDoc);
 }
 
-bool
-nsPIDOMWindowInner::IsTopInnerWindow() const
-{
-  return mTopInnerWindow == this;
-}
-
 template <class T>
 nsIDocShell*
 nsPIDOMWindow<T>::GetDocShell() const

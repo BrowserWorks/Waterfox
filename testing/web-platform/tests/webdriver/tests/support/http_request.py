@@ -1,7 +1,6 @@
 import contextlib
 import httplib
 
-
 class HTTPRequest(object):
     def __init__(self, host, port):
         self.host = host

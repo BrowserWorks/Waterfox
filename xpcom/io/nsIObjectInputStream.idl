@@ -35,9 +35,6 @@ interface nsIObjectInputStream : nsIBinaryInputStream
 
 %{C++
 
-already_AddRefed<nsIObjectInputStream>
-NS_NewObjectInputStream(nsIInputStream* aOutputStream);
-
 inline nsresult
 NS_ReadOptionalObject(nsIObjectInputStream* aStream, bool aIsStrongRef,
                       nsISupports* *aResult)

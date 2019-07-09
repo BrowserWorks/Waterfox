@@ -34,9 +34,11 @@ static const int32_t LOW_AUDIO_USECS = 300000;
 AudioSink::AudioSink(AbstractThread* aThread,
                      MediaQueue<AudioData>& aAudioQueue,
                      const TimeUnit& aStartTime,
-                     const AudioInfo& aInfo)
+                     const AudioInfo& aInfo,
+                     dom::AudioChannel aChannel)
   : mStartTime(aStartTime)
   , mInfo(aInfo)
+  , mChannel(aChannel)
   , mPlaying(true)
   , mMonitor("AudioSink")
   , mWritten(0)
@@ -201,7 +203,7 @@ AudioSink::InitializeAudioStream(const PlaybackParams& aParams)
   // The layout map used here is already processed by mConverter with
   // mOutputChannels into SMPTE format, so there is no need to worry if
   // MediaPrefs::MonoAudio() or MediaPrefs::AudioSinkForceStereo() is applied.
-  nsresult rv = mAudioStream->Init(mOutputChannels, channelMap, mOutputRate);
+  nsresult rv = mAudioStream->Init(mOutputChannels, channelMap, mOutputRate, mChannel);
   if (NS_FAILED(rv)) {
     mAudioStream->Shutdown();
     mAudioStream = nullptr;
@@ -424,21 +426,28 @@ AudioSink::NotifyAudioNeeded()
       missingFrames = std::min<int64_t>(INT32_MAX, missingFrames.value());
       mFramesParsed += missingFrames.value();
 
-      RefPtr<AudioData> silenceData;
-      AlignedAudioBuffer silenceBuffer(missingFrames.value() * data->mChannels);
-       if (!silenceBuffer) {
-         NS_WARNING("OOM in AudioSink");
-         mErrored = true;
-         return;
-       }
-      if (mConverter->InputConfig() != mConverter->OutputConfig()) {
-        AlignedAudioBuffer convertedData =
-          mConverter->Process(AudioSampleBuffer(Move(silenceBuffer))).Forget();
-        silenceData = CreateAudioFromBuffer(Move(convertedData), data);
-      } else {
-        silenceData = CreateAudioFromBuffer(Move(silenceBuffer), data);
+      // We need to calculate how many frames are missing at the output rate.
+      missingFrames =
+        SaferMultDiv(missingFrames.value(), mOutputRate, data->mRate);
+      if (!missingFrames.isValid()) {
+        NS_WARNING("Int overflow in AudioSink");
+        mErrored = true;
+        return;
       }
-      PushProcessedAudio(silenceData);
+
+      // We need to insert silence, first use drained frames if any.
+      missingFrames -= DrainConverter(missingFrames.value());
+      // Insert silence if still needed.
+      if (missingFrames.value()) {
+        AlignedAudioBuffer silenceData(missingFrames.value() * mOutputChannels);
+        if (!silenceData) {
+          NS_WARNING("OOM in AudioSink");
+          mErrored = true;
+          return;
+        }
+        RefPtr<AudioData> silence = CreateAudioFromBuffer(Move(silenceData), data);
+        PushProcessedAudio(silence);
+      }
     }
 
     mLastEndTime = data->GetEndTime();
@@ -479,7 +488,7 @@ AudioSink::PushProcessedAudio(AudioData* aData)
 
 already_AddRefed<AudioData>
 AudioSink::CreateAudioFromBuffer(AlignedAudioBuffer&& aBuffer,
-                                 AudioData* aReference)
+                                            AudioData* aReference)
 {
   uint32_t frames = aBuffer.Length() / mOutputChannels;
   if (!frames) {

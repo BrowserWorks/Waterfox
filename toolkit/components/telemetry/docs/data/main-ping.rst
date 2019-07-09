@@ -63,7 +63,7 @@ Structure:
       histograms: {...},
       keyedHistograms: {...},
       chromeHangs: {...},
-      threadHangStats: [...], // obsolete in firefox 57, use the 'bhr' ping
+      threadHangStats: [...],
       capturedStacks: {...},
       log: [...],
       webrtc: {...},
@@ -90,7 +90,7 @@ If the monotonic clock failed, this will be ``-1``.
 Note that this currently does not behave consistently over our supported platforms:
 
 * On Windows this uses ``GetTickCount64()``, which does increase over sleep periods
-* On macOS this uses ``mach_absolute_time()``, which does not increase over sleep periods
+* On OS X this uses ``mach_absolute_time()``, which does not increase over sleep periods
 * On POSIX/Linux this uses ``clock_gettime(CLOCK_MONOTONIC, &ts)``, which should not increase over sleep time
 
 See `bug 1204823 <https://bugzilla.mozilla.org/show_bug.cgi?id=1204823>`_ for details.
@@ -149,7 +149,7 @@ The recorded events are defined in the `Events.yaml <https://dxr.mozilla.org/moz
 
 childPayloads
 -------------
-The Telemetry payloads sent by child processes, recorded on child process shutdown (event ``content-child-shutdown`` observed). They are reduced session payloads, only available with e10s. Among some other things, they don't contain histograms, keyed histograms, add-on details, or UI Telemetry.
+The Telemetry payloads sent by child processes, recorded on child process shutdown (event ``content-child-shutdown`` observed). They are reduced session payloads, only available with e10s. Among some other things, they don't contain histograms, keyed histograms, addon details, or UI Telemetry.
 
 Note: Child payloads are not collected and cleared with subsession splits, they are currently only meaningful when analysed from ``saved-session`` or ``main`` pings with ``reason`` set to ``shutdown``.
 
@@ -189,6 +189,7 @@ Structure:
 
     "js" : {
       "setProto": <unsigned integer>, // Number of times __proto__ is set
+      "customIter": <unsigned integer> // Number of times __iterator__ is used (i.e., is found for a for-in loop)
     }
 
 maximalNumberOfConcurrentThreads
@@ -249,8 +250,6 @@ As of Firefox 48, this section does not contain empty keyed histograms anymore.
 
 threadHangStats
 ---------------
-As of Firefox 57 this section is no longer present, and has been replaced with the 'bhr' ping.
-
 Contains the statistics about the hangs in main and background threads. Note that hangs in this section capture the `C++ pseudostack <https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Profiling_with_the_Built-in_Profiler#Native_stack_vs._Pseudo_stack>`_ and an incomplete JS stack, which is not 100% precise. For particularly egregious hangs, and on nightly, an unsymbolicated native stack is also captured. The amount of time that is considered "egregious" is different from thread to thread, and is set when the BackgroundHangMonitor is constructed for that thread. In general though, hangs from 5 - 10 seconds are generally considered egregious. Shorter hangs (1 - 2s) are considered egregious for other threads (the compositor thread, and the hang monitor that is only enabled during tab switch).
 
 To avoid submitting overly large payloads, some limits are applied:
@@ -427,9 +426,11 @@ Contains special statistics gathered by WebRTC related components.
 So far only a bitmask for the ICE candidate type present in a successful or
 failed WebRTC connection is getting reported through C++ code as
 IceCandidatesStats, because the required bitmask is too big to be represented
-in a regular enum histogram.
+in a regular enum histogram. Further this data differentiates between Loop
+(aka Firefox Hello) connections and everything else, which is categorized as
+WebRTC.
 
-Note: in most cases the webrtc dictionary inside of
+Note: in most cases the webrtc and loop dictionaries inside of
 IceCandidatesStats will simply be empty as the user has not used any WebRTC
 PeerConnection at all during the ping report time.
 
@@ -447,6 +448,15 @@ Structure:
             "failureCount": 1
           }
         },
+        "loop": {
+          "2349346359": {
+            "successCount": 3
+          },
+          "73424": {
+            "successCount": 1,
+            "failureCount": 5
+          }
+        }
       }
     },
 
@@ -607,7 +617,7 @@ Structure:
 
 addonDetails
 ------------
-This section contains per add-on telemetry details, as reported by each add-on provider. The XPI provider is the only one reporting at the time of writing (`see DXR <https://dxr.mozilla.org/mozilla-central/search?q=setTelemetryDetails&case=true>`_). Telemetry does not manipulate or enforce a specific format for the supplied provider's data.
+This section contains per-addon telemetry details, as reported by each addon provider. The XPI provider is the only one reporting at the time of writing (`see DXR <https://dxr.mozilla.org/mozilla-central/search?q=setTelemetryDetails&case=true>`_). Telemetry does not manipulate or enforce a specific format for the supplied provider's data.
 
 Structure:
 

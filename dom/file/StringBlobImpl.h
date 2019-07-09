@@ -25,17 +25,12 @@ public:
   static already_AddRefed<StringBlobImpl>
   Create(const nsACString& aData, const nsAString& aContentType);
 
-  virtual void CreateInputStream(nsIInputStream** aStream,
+  virtual void GetInternalStream(nsIInputStream** aStream,
                                  ErrorResult& aRv) override;
 
   virtual already_AddRefed<BlobImpl>
   CreateSlice(uint64_t aStart, uint64_t aLength,
               const nsAString& aContentType, ErrorResult& aRv) override;
-
-  size_t GetAllocationSize() const override
-  {
-    return mData.Length();
-  }
 
 private:
   StringBlobImpl(const nsACString& aData, const nsAString& aContentType);

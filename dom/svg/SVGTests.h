@@ -12,7 +12,8 @@
 #include "nsCOMPtr.h"
 
 class nsAttrValue;
-class nsAtom;
+class nsIAtom;
+class nsString;
 
 namespace mozilla {
 class DOMSVGStringList;
@@ -71,19 +72,19 @@ public:
    * Returns true if the attribute is one of the conditional processing
    * attributes.
    */
-  bool IsConditionalProcessingAttribute(const nsAtom* aAttribute) const;
+  bool IsConditionalProcessingAttribute(const nsIAtom* aAttribute) const;
 
   bool ParseConditionalProcessingAttribute(
-         nsAtom* aAttribute,
+         nsIAtom* aAttribute,
          const nsAString& aValue,
          nsAttrValue& aResult);
 
   /**
    * Unsets a conditional processing attribute.
    */
-  void UnsetAttr(const nsAtom* aAttribute);
+  void UnsetAttr(const nsIAtom* aAttribute);
 
-  nsAtom* GetAttrName(uint8_t aAttrEnum) const;
+  nsIAtom* GetAttrName(uint8_t aAttrEnum) const;
   void GetAttrValue(uint8_t aAttrEnum, nsAttrValue &aValue) const;
 
   void MaybeInvalidate();
@@ -102,7 +103,7 @@ protected:
 private:
   enum { FEATURES, EXTENSIONS, LANGUAGE };
   SVGStringList mStringListAttributes[3];
-  static nsAtom** sStringListNames[3];
+  static nsIAtom** sStringListNames[3];
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(SVGTests, MOZILLA_DOMSVGTESTS_IID)

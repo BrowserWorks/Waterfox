@@ -18,7 +18,6 @@ info: >
   ...
 includes: [testTypedArray.js]
 flags: [onlyStrict]
-features: [TypedArray]
 ---*/
 
 var source = [42, 43];

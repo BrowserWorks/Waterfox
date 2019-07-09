@@ -42,6 +42,7 @@ namespace net {
 #define HTTP_AUTH_DIALOG_TOP_LEVEL_DOC 29
 #define HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE 30
 #define HTTP_AUTH_DIALOG_SAME_ORIGIN_XHR 31
+#define HTTP_AUTH_DIALOG_NON_WEB_CONTENT 32
 
 #define HTTP_AUTH_BASIC_INSECURE 0
 #define HTTP_AUTH_BASIC_SECURE 1
@@ -95,6 +96,7 @@ uint32_t nsHttpChannelAuthProvider::sAuthAllowPref =
     SUBRESOURCE_AUTH_DIALOG_ALLOW_ALL;
 
 bool nsHttpChannelAuthProvider::sImgCrossOriginAuthAllowPref = true;
+bool nsHttpChannelAuthProvider::sNonWebContentTriggeredAuthAllow = false;
 
 void
 nsHttpChannelAuthProvider::InitializePrefs()
@@ -106,6 +108,9 @@ nsHttpChannelAuthProvider::InitializePrefs()
   mozilla::Preferences::AddBoolVarCache(&sImgCrossOriginAuthAllowPref,
                                         "network.auth.subresource-img-cross-origin-http-auth-allow",
                                         true);
+  mozilla::Preferences::AddBoolVarCache(&sNonWebContentTriggeredAuthAllow,
+                                        "network.auth.non-web-content-triggered-resources-http-auth-allow",
+                                        false);
 }
 
 NS_IMETHODIMP
@@ -531,7 +536,7 @@ nsHttpChannelAuthProvider::PrepareForAuthentication(bool proxyAuth)
     // non-request based authentication handshake (e.g., for NTLM auth).
 
     nsAutoCString contractId;
-    contractId.AssignLiteral(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
+    contractId.Assign(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
     contractId.Append(mProxyAuthType);
 
     nsresult rv;
@@ -912,8 +917,10 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
             // BlockPrompt will set mCrossOrigin parameter as well.
             if (BlockPrompt()) {
                 LOG(("nsHttpChannelAuthProvider::GetCredentialsForChallenge: "
-                     "Prompt is blocked [this=%p pref=%d img-pref=%d]\n",
-                      this, sAuthAllowPref, sImgCrossOriginAuthAllowPref));
+                     "Prompt is blocked [this=%p pref=%d img-pref=%d "
+                     "non-web-content-triggered-pref=%d]\n",
+                      this, sAuthAllowPref, sImgCrossOriginAuthAllowPref,
+                      sNonWebContentTriggeredAuthAllow));
                 return NS_ERROR_ABORT;
             }
 
@@ -952,7 +959,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
     // that we don't transparently authenticate as someone they're not
     // expecting to authenticate as.
     //
-    nsCString result;
+    nsXPIDLCString result;
     rv = GenCredsAndSetEntry(auth, proxyAuth, scheme.get(), host, port,
                              path.get(), realm.get(), challenge, *ident,
                              sessionStateGrip, getter_Copies(result));
@@ -983,12 +990,22 @@ nsHttpChannelAuthProvider::BlockPrompt()
     // We will treat loads w/o loadInfo as a top level document.
     bool topDoc = true;
     bool xhr = false;
+    bool nonWebContent = false;
 
     if (loadInfo) {
         if (loadInfo->GetExternalContentPolicyType() !=
             nsIContentPolicy::TYPE_DOCUMENT) {
             topDoc = false;
         }
+
+        if (!topDoc) {
+            nsCOMPtr<nsIPrincipal> triggeringPrinc =
+                loadInfo->TriggeringPrincipal();
+            if (nsContentUtils::IsSystemPrincipal(triggeringPrinc)) {
+                nonWebContent = true;
+            }
+        }
+
         if (loadInfo->GetExternalContentPolicyType() ==
             nsIContentPolicy::TYPE_XMLHTTPREQUEST) {
             xhr = true;
@@ -1014,20 +1031,27 @@ nsHttpChannelAuthProvider::BlockPrompt()
 
     if (gHttpHandler->IsTelemetryEnabled()) {
         if (topDoc) {
-            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                   HTTP_AUTH_DIALOG_TOP_LEVEL_DOC);
+        } else if (nonWebContent) {
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
+                                   HTTP_AUTH_DIALOG_NON_WEB_CONTENT);
         } else if (!mCrossOrigin) {
             if (xhr) {
-                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                       HTTP_AUTH_DIALOG_SAME_ORIGIN_XHR);
             } else {
-                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                       HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE);
             }
         } else {
-            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                   loadInfo->GetExternalContentPolicyType());
         }
+    }
+
+    if (!topDoc && !sNonWebContentTriggeredAuthAllow && nonWebContent) {
+        return true;
     }
 
     switch (sAuthAllowPref) {
@@ -1044,7 +1068,8 @@ nsHttpChannelAuthProvider::BlockPrompt()
         // If pref network.auth.subresource-img-cross-origin-http-auth-allow
         // is set, http-authentication dialog for image subresources is
         // blocked.
-        if (!sImgCrossOriginAuthAllowPref &&
+        if (mCrossOrigin &&
+            !sImgCrossOriginAuthAllowPref &&
             loadInfo &&
             ((loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGE) ||
              (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGESET))) {
@@ -1084,7 +1109,7 @@ nsHttpChannelAuthProvider::GetAuthenticator(const char            *challenge,
     ToLowerCase(authType);
 
     nsAutoCString contractid;
-    contractid.AssignLiteral(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
+    contractid.Assign(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
     contractid.Append(authType);
 
     return CallGetService(contractid.get(), auth);
@@ -1353,7 +1378,7 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnAuthAvailable(nsISupports *aContext,
         return NS_OK;
     }
 
-    nsCString creds;
+    nsXPIDLCString creds;
     rv = GenCredsAndSetEntry(auth, mProxyAuth,
                              scheme.get(), host, port, path.get(),
                              realm.get(), mCurrentChallenge.get(), *ident,
@@ -1586,9 +1611,9 @@ nsHttpChannelAuthProvider::ConfirmAuth(const char* bundleKey,
 
     const char16_t *strs[2] = { ucsHost.get(), ucsUser.get() };
 
-    nsAutoString msg;
-    rv = bundle->FormatStringFromName(bundleKey, strs, 2, msg);
-    if (NS_FAILED(rv))
+    nsXPIDLString msg;
+    bundle->FormatStringFromName(bundleKey, strs, 2, getter_Copies(msg));
+    if (!msg)
         return true;
 
     nsCOMPtr<nsIInterfaceRequestor> callbacks;
@@ -1614,7 +1639,7 @@ nsHttpChannelAuthProvider::ConfirmAuth(const char* bundleKey,
     if (doYesNoPrompt) {
         int32_t choice;
         bool checkState = false;
-        rv = prompt->ConfirmEx(nullptr, msg.get(),
+        rv = prompt->ConfirmEx(nullptr, msg,
                                nsIPrompt::BUTTON_POS_1_DEFAULT +
                                nsIPrompt::STD_YES_NO_BUTTONS,
                                nullptr, nullptr, nullptr, nullptr,
@@ -1625,7 +1650,7 @@ nsHttpChannelAuthProvider::ConfirmAuth(const char* bundleKey,
         confirmed = choice == 0;
     }
     else {
-        rv = prompt->Confirm(nullptr, msg.get(), &confirmed);
+        rv = prompt->Confirm(nullptr, msg, &confirmed);
         if (NS_FAILED(rv))
             return true;
     }
@@ -1693,7 +1718,7 @@ nsHttpChannelAuthProvider::SetAuthorizationHeader(nsHttpAuthCache    *authCache,
         else
             identFromURI = true;
 
-        nsCString temp;  // this must have the same lifetime as creds
+        nsXPIDLCString temp;
         const char *creds     = entry->Creds();
         const char *challenge = entry->Challenge();
         // we can only send a preemptive Authorization header if we have either
@@ -1748,7 +1773,7 @@ nsHttpChannelAuthProvider::GetCurrentPath(nsACString &path)
     if (url)
         rv = url->GetDirectory(path);
     else
-        rv = mURI->GetPathQueryRef(path);
+        rv = mURI->GetPath(path);
     return rv;
 }
 

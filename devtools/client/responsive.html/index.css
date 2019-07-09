@@ -76,7 +76,7 @@ body,
 }
 
 .toolbar-button:active::before {
-  filter: var(--theme-icon-checked-filter);
+  filter: var(--checked-icon-filter);
 }
 
 select {
@@ -166,7 +166,7 @@ select > option.divider {
 }
 
 #global-screenshot-button:disabled {
-  filter: var(--theme-icon-checked-filter);
+  filter: var(--checked-icon-filter);
   opacity: 1 !important;
 }
 
@@ -179,7 +179,6 @@ select > option.divider {
 #global-dpr-selector > select {
   padding: 0 8px 0 0;
   margin-left: 2px;
-  max-width: 5em;
 }
 
 #global-dpr-selector {

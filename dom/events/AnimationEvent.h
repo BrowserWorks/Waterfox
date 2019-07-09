@@ -10,7 +10,8 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/AnimationEventBinding.h"
 #include "nsIDOMAnimationEvent.h"
-#include "nsStringFwd.h"
+
+class nsAString;
 
 namespace mozilla {
 namespace dom {

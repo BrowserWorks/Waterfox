@@ -158,7 +158,7 @@ void HRTFDatabaseLoader::MainThreadRelease()
 // Asynchronously load the database in this thread.
 static void databaseLoaderEntry(void* threadData)
 {
-    AUTO_PROFILER_REGISTER_THREAD("HRTFDatabaseLdr");
+    AutoProfilerRegisterThread registerThread("HRTFDatabaseLdr");
     NS_SetCurrentThreadName("HRTFDatabaseLdr");
 
     HRTFDatabaseLoader* loader = reinterpret_cast<HRTFDatabaseLoader*>(threadData);

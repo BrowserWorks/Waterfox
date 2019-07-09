@@ -60,20 +60,20 @@ SVGAnimationElement::Init()
 //----------------------------------------------------------------------
 
 const nsAttrValue*
-SVGAnimationElement::GetAnimAttr(nsAtom* aName) const
+SVGAnimationElement::GetAnimAttr(nsIAtom* aName) const
 {
   return mAttrsAndChildren.GetAttr(aName, kNameSpaceID_None);
 }
 
 bool
-SVGAnimationElement::GetAnimAttr(nsAtom* aAttName,
+SVGAnimationElement::GetAnimAttr(nsIAtom* aAttName,
                                  nsAString& aResult) const
 {
   return GetAttr(kNameSpaceID_None, aAttName, aResult);
 }
 
 bool
-SVGAnimationElement::HasAnimAttr(nsAtom* aAttName) const
+SVGAnimationElement::HasAnimAttr(nsIAtom* aAttName) const
 {
   return HasAttr(kNameSpaceID_None, aAttName);
 }
@@ -96,7 +96,7 @@ SVGAnimationElement::GetTargetElementContent()
 
 bool
 SVGAnimationElement::GetTargetAttributeName(int32_t *aNamespaceID,
-                                            nsAtom **aLocalName) const
+                                            nsIAtom **aLocalName) const
 {
   const nsAttrValue* nameAttr
     = mAttrsAndChildren.GetAttr(nsGkAtoms::attributeName);
@@ -242,7 +242,7 @@ SVGAnimationElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 bool
 SVGAnimationElement::ParseAttribute(int32_t aNamespaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     const nsAString& aValue,
                                     nsAttrValue& aResult)
 {
@@ -282,15 +282,13 @@ SVGAnimationElement::ParseAttribute(int32_t aNamespaceID,
 }
 
 nsresult
-SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue,
-                                  const nsAttrValue* aOldValue,
-                                  nsIPrincipal* aSubjectPrincipal,
-                                  bool aNotify)
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   nsresult rv =
     SVGAnimationElementBase::AfterSetAttr(aNamespaceID, aName, aValue,
-                                          aOldValue, aSubjectPrincipal, aNotify);
+                                          aOldValue, aNotify);
 
   if (SVGTests::IsConditionalProcessingAttribute(aName)) {
     bool isDisabled = !SVGTests::PassesConditionalProcessingTests();
@@ -338,7 +336,7 @@ SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
 
 nsresult
 SVGAnimationElement::UnsetAttr(int32_t aNamespaceID,
-                               nsAtom* aAttribute, bool aNotify)
+                               nsIAtom* aAttribute, bool aNotify)
 {
   nsresult rv = SVGAnimationElementBase::UnsetAttr(aNamespaceID, aAttribute,
                                                    aNotify);
@@ -447,7 +445,7 @@ SVGAnimationElement::EndElementAt(float offset, ErrorResult& rv)
 }
 
 bool
-SVGAnimationElement::IsEventAttributeNameInternal(nsAtom* aName)
+SVGAnimationElement::IsEventAttributeNameInternal(nsIAtom* aName)
 {
   return nsContentUtils::IsEventAttributeName(aName, EventNameType_SMIL);
 }

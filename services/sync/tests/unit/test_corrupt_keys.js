@@ -2,7 +2,6 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/main.js");
@@ -46,11 +45,9 @@ add_task(async function test_locally_changed_keys() {
     await Service.engineManager.register(HistoryEngine);
     Service.engineManager.unregister("addons");
 
-    async function corrupt_local_keys() {
-      Service.collectionKeys._default.keyPair = [
-        await Weave.Crypto.generateRandomKey(),
-        await Weave.Crypto.generateRandomKey()
-      ];
+    function corrupt_local_keys() {
+      Service.collectionKeys._default.keyPair = [Weave.Crypto.generateRandomKey(),
+                                                 Weave.Crypto.generateRandomKey()];
     }
 
     _("Setting meta.");
@@ -64,9 +61,9 @@ add_task(async function test_locally_changed_keys() {
     _("New meta/global: " + JSON.stringify(johndoe.collection("meta").wbo("global")));
 
     // Upload keys.
-    await generateNewKeys(Service.collectionKeys);
+    generateNewKeys(Service.collectionKeys);
     let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
-    await serverKeys.encrypt(Service.identity.syncKeyBundle);
+    serverKeys.encrypt(Service.identity.syncKeyBundle);
     do_check_true((await serverKeys.upload(Service.resource(Service.cryptoKeysURL))).success);
 
     // Check that login works.
@@ -97,7 +94,7 @@ add_task(async function test_locally_changed_keys() {
         sortindex: i,
         visits: [{date: (modified - 5) * 1000000, type: visitType}],
         deleted: false};
-      await w.encrypt(liveKeys);
+      w.encrypt(liveKeys);
 
       let payload = {ciphertext: w.ciphertext,
                      IV:         w.IV,
@@ -113,12 +110,12 @@ add_task(async function test_locally_changed_keys() {
     let rec = new CryptoWrapper("history", "record-no--0");
     await rec.fetch(Service.resource(Service.storageURL + "history/record-no--0"));
     _(JSON.stringify(rec));
-    do_check_true(!!await rec.decrypt(liveKeys));
+    do_check_true(!!rec.decrypt(liveKeys));
 
     do_check_eq(hmacErrorCount, 0);
 
     // Fill local key cache with bad data.
-    await corrupt_local_keys();
+    corrupt_local_keys();
     _("Keys now: " + Service.collectionKeys.keyForCollection("history").keyPair);
 
     do_check_eq(hmacErrorCount, 0);
@@ -153,7 +150,7 @@ add_task(async function test_locally_changed_keys() {
         sortindex: i,
         visits: [{date: (modified - 5 ) * 1000000, type: visitType}],
         deleted: false};
-      await w.encrypt(Service.collectionKeys.keyForCollection("history"));
+      w.encrypt(Service.collectionKeys.keyForCollection("history"));
       w.hmac = w.hmac.toUpperCase();
 
       let payload = {ciphertext: w.ciphertext,
@@ -204,7 +201,7 @@ function run_test() {
  */
 function promiseIsURIVisited(url) {
   return new Promise(resolve => {
-    PlacesUtils.asyncHistory.isURIVisited(CommonUtils.makeURI(url), function(aURI, aIsVisited) {
+    PlacesUtils.asyncHistory.isURIVisited(Utils.makeURI(url), function(aURI, aIsVisited) {
       resolve(aIsVisited);
     });
   });

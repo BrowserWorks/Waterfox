@@ -13,7 +13,6 @@ import org.mozilla.gecko.GeckoAppShell;
 import java.util.TreeSet;
 
 import ch.boye.httpclientandroidlib.util.TextUtils;
-import org.mozilla.gecko.icons.processing.ResizingProcessor;
 
 /**
  * Builder for creating a request to load an icon.
@@ -107,24 +106,6 @@ public class IconRequestBuilder {
     }
 
     /**
-     * The icon will be scaled to the given size.
-     */
-    public IconRequestBuilder targetSize(final int targetSize) {
-        internal.targetSize = targetSize;
-        return this;
-    }
-
-    /**
-     * The icon will be used in Activity Stream: a minimum size for the icon will be set.
-     */
-    public IconRequestBuilder forActivityStream() {
-        // This value was set anecdotally: 16px icons scaled up both look blurry and
-        // don't fill the space well. 32px icons look good enough.
-        internal.minimumSizePxAfterScaling = 32 * ResizingProcessor.MAX_SCALE_FACTOR;
-        return this;
-    }
-
-    /**
      * Execute the callback on the background thread. By default the callback is always executed on
      * the UI thread in order to add the loaded icon to a view easily.
      */
@@ -141,15 +122,6 @@ public class IconRequestBuilder {
      */
     public IconRequestBuilder prepareOnly() {
         internal.prepareOnly = true;
-        return this;
-    }
-
-    /**
-     * The text size will be resized to the given size, and this field is only used by
-     * {@link org.mozilla.gecko.icons.loader.IconGenerator} for creating a new icon.
-     */
-    public IconRequestBuilder textSize(final float textSize) {
-        internal.textSize = textSize;
         return this;
     }
 
@@ -171,9 +143,7 @@ public class IconRequestBuilder {
         request.skipDisk = internal.skipDisk;
         request.skipMemory = internal.skipMemory;
         request.targetSize = internal.targetSize;
-        request.minimumSizePxAfterScaling = internal.minimumSizePxAfterScaling;
         request.prepareOnly = internal.prepareOnly;
-        request.textSize = internal.textSize;
         return request;
     }
 

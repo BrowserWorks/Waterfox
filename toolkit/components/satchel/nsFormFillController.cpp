@@ -141,7 +141,7 @@ void
 nsFormFillController::AttributeChanged(nsIDocument* aDocument,
                                        mozilla::dom::Element* aElement,
                                        int32_t aNameSpaceID,
-                                       nsAtom* aAttribute, int32_t aModType,
+                                       nsIAtom* aAttribute, int32_t aModType,
                                        const nsAttrValue* aOldValue)
 {
   if ((aAttribute == nsGkAtoms::type || aAttribute == nsGkAtoms::readonly ||
@@ -170,7 +170,8 @@ nsFormFillController::AttributeChanged(nsIDocument* aDocument,
 void
 nsFormFillController::ContentAppended(nsIDocument* aDocument,
                                       nsIContent* aContainer,
-                                      nsIContent* aChild)
+                                      nsIContent* aChild,
+                                      int32_t aIndexInContainer)
 {
   if (mListNode && mListNode->Contains(aContainer)) {
     RevalidateDataList();
@@ -180,7 +181,8 @@ nsFormFillController::ContentAppended(nsIDocument* aDocument,
 void
 nsFormFillController::ContentInserted(nsIDocument* aDocument,
                                       nsIContent* aContainer,
-                                      nsIContent* aChild)
+                                      nsIContent* aChild,
+                                      int32_t aIndexInContainer)
 {
   if (mListNode && mListNode->Contains(aContainer)) {
     RevalidateDataList();
@@ -191,6 +193,7 @@ void
 nsFormFillController::ContentRemoved(nsIDocument* aDocument,
                                      nsIContent* aContainer,
                                      nsIContent* aChild,
+                                     int32_t aIndexInContainer,
                                      nsIContent* aPreviousSibling)
 {
   if (mListNode && mListNode->Contains(aContainer)) {
@@ -216,7 +219,7 @@ void
 nsFormFillController::AttributeWillChange(nsIDocument* aDocument,
                                           mozilla::dom::Element* aElement,
                                           int32_t aNameSpaceID,
-                                          nsAtom* aAttribute, int32_t aModType,
+                                          nsIAtom* aAttribute, int32_t aModType,
                                           const nsAttrValue* aNewValue)
 {
 }
@@ -1067,12 +1070,7 @@ nsFormFillController::MaybeStartControllingInput(nsIDOMHTMLInputElement* aInput)
     isPwmgrInput = true;
   }
 
-  bool isAutofillInput = false;
-  if (mAutofillInputs.Get(inputNode)) {
-    isAutofillInput = true;
-  }
-
-  if (isAutofillInput || isPwmgrInput ||  hasList || autocomplete) {
+  if (isPwmgrInput || hasList || autocomplete) {
     StartControllingInput(aInput);
   }
 }

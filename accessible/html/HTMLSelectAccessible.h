@@ -39,7 +39,6 @@ public:
   // Accessible
   virtual a11y::role NativeRole() override;
   virtual uint64_t NativeState() override;
-  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 
   // SelectAccessible
   virtual bool SelectAll() override;
@@ -51,6 +50,8 @@ public:
   virtual bool AreItemsOperable() const override;
   virtual Accessible* CurrentItem() override;
   virtual void SetCurrentItem(Accessible* aItem) override;
+
+  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 };
 
 /*
@@ -137,7 +138,6 @@ public:
   // Accessible
   virtual a11y::role NativeRole() override;
   virtual uint64_t NativeInteractiveState() const override;
-  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 
   // ActionAccessible
   virtual uint8_t ActionCount() override;
@@ -169,7 +169,6 @@ public:
   virtual a11y::role NativeRole() override;
   virtual uint64_t NativeState() override;
   virtual bool RemoveChild(Accessible* aChild) override;
-  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 
   // ActionAccessible
   virtual uint8_t ActionCount() override;
@@ -211,7 +210,6 @@ public:
   virtual a11y::role NativeRole() override;
   virtual uint64_t NativeState() override;
   virtual nsRect RelativeBounds(nsIFrame** aBoundingFrame) const override;
-  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 
   // Widgets
   virtual bool IsActiveWidget() const override;

@@ -11,7 +11,6 @@ const { interfaces: Ci, utils: Cu, results: Cr } = Components;
 const DBG_XUL = "chrome://devtools/content/framework/toolbox-process-window.xul";
 const CHROME_DEBUGGER_PROFILE_NAME = "chrome_debugger_profile";
 
-const { console } = Cu.import("resource://gre/modules/Console.jsm", {});
 const { require, DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -20,10 +19,7 @@ XPCOMUtils.defineLazyGetter(this, "Telemetry", function () {
   return require("devtools/client/shared/telemetry");
 });
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function () {
-  return require("devtools/shared/old-event-emitter");
-});
-XPCOMUtils.defineLazyGetter(this, "system", function () {
-  return require("devtools/shared/system");
+  return require("devtools/shared/event-emitter");
 });
 const promise = require("promise");
 const Services = require("Services");
@@ -149,20 +145,17 @@ BrowserToolboxProcess.prototype = {
     this.debuggerServer.allowChromeProcess = true;
     dumpn("initialized and added the browser actors for the DebuggerServer.");
 
+    let chromeDebuggingPort =
+      Services.prefs.getIntPref("devtools.debugger.chrome-debugging-port");
     let chromeDebuggingWebSocket =
       Services.prefs.getBoolPref("devtools.debugger.chrome-debugging-websocket");
     let listener = this.debuggerServer.createListener();
-    listener.portOrPath = -1;
+    listener.portOrPath = chromeDebuggingPort;
     listener.webSocket = chromeDebuggingWebSocket;
     listener.open();
-    this.port = listener.port;
-
-    if (!this.port) {
-      throw new Error("No debugger server port");
-    }
 
     dumpn("Finished initializing the chrome toolbox server.");
-    dump(`Debugger Server for Browser Toolbox listening on port: ${this.port}\n`);
+    dumpn("Started listening on port: " + chromeDebuggingPort);
   },
 
   /**
@@ -214,12 +207,6 @@ BrowserToolboxProcess.prototype = {
    */
   _migrateProfileDir() {
     let oldDebuggingProfileDir = Services.dirsvc.get("ProfLD", Ci.nsIFile);
-    let newDebuggingProfileDir = Services.dirsvc.get("ProfD", Ci.nsIFile);
-    if (oldDebuggingProfileDir.path == newDebuggingProfileDir.path) {
-      // It's possible for these locations to be the same, such as running from
-      // a custom profile directory specified via CLI.
-      return;
-    }
     oldDebuggingProfileDir.append(CHROME_DEBUGGER_PROFILE_NAME);
     if (!oldDebuggingProfileDir.exists()) {
       return;
@@ -227,6 +214,7 @@ BrowserToolboxProcess.prototype = {
     dumpn(`Old debugging profile exists: ${oldDebuggingProfileDir.path}`);
     try {
       // Remove the directory from the target location, if it exists
+      let newDebuggingProfileDir = Services.dirsvc.get("ProfD", Ci.nsIFile);
       newDebuggingProfileDir.append(CHROME_DEBUGGER_PROFILE_NAME);
       if (newDebuggingProfileDir.exists()) {
         dumpn(`Removing folder at destination: ${newDebuggingProfileDir.path}`);
@@ -249,22 +237,19 @@ BrowserToolboxProcess.prototype = {
 
     let command = Services.dirsvc.get("XREExeF", Ci.nsIFile).path;
 
+    let xulURI = DBG_XUL;
+
+    if (this._options.addonID) {
+      xulURI += "?addonID=" + this._options.addonID;
+    }
+
     dumpn("Running chrome debugging process.");
     let args = [
       "-no-remote",
       "-foreground",
       "-profile", this._dbgProfilePath,
-      "-chrome", DBG_XUL
+      "-chrome", xulURI
     ];
-    let environment = {
-      // Disable safe mode for the new process in case this was opened via the
-      // keyboard shortcut.
-      MOZ_DISABLE_SAFE_MODE_KEY: "1",
-      MOZ_BROWSER_TOOLBOX_PORT: String(this.port),
-    };
-    if (this._options.addonID) {
-      environment.MOZ_BROWSER_TOOLBOX_ADDONID = String(this._options.addonID);
-    }
 
     // During local development, incremental builds can trigger the main process
     // to clear its startup cache with the "flag file" .purgecaches, but this
@@ -273,7 +258,7 @@ BrowserToolboxProcess.prototype = {
     // well.
     //
     // As an approximation of "isLocalBuild", check for an unofficial build.
-    if (!system.constants.MOZILLA_OFFICIAL) {
+    if (!Services.appinfo.isOfficial) {
       args.push("-purgecaches");
     }
 
@@ -281,8 +266,11 @@ BrowserToolboxProcess.prototype = {
       command,
       arguments: args,
       environmentAppend: true,
-      stderr: "stdout",
-      environment,
+      environment: {
+        // Disable safe mode for the new process in case this was opened via the
+        // keyboard shortcut.
+        MOZ_DISABLE_SAFE_MODE_KEY: "1",
+      },
     }).then(proc => {
       this._dbgProcess = proc;
 
@@ -304,8 +292,6 @@ BrowserToolboxProcess.prototype = {
       proc.wait().then(() => this.close());
 
       return proc;
-    }, err => {
-      console.log(`Error loading Browser Toolbox: ${command} ${args.join(" ")}`, err);
     });
   },
 

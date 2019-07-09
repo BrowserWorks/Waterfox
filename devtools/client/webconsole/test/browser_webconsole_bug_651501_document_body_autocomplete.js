@@ -26,7 +26,7 @@ add_task(function* () {
 });
 
 function consoleOpened() {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let jsterm = gHUD.jsterm;
   let popup = jsterm.autocompletePopup;
@@ -58,7 +58,7 @@ function consoleOpened() {
 }
 
 function autocompletePopupHidden() {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let jsterm = gHUD.jsterm;
   let popup = jsterm.autocompletePopup;
@@ -80,7 +80,7 @@ function autocompletePopupHidden() {
 }
 
 function testPropertyPanel() {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let jsterm = gHUD.jsterm;
   jsterm.clearOutput();

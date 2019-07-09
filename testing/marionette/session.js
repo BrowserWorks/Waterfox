@@ -6,15 +6,20 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-Cu.importGlobalProperties(["URL"]);
-
+Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 Cu.import("chrome://marionette/content/assert.js");
-const {InvalidArgumentError} = Cu.import("chrome://marionette/content/error.js", {});
+const {
+  error,
+  InvalidArgumentError,
+} = Cu.import("chrome://marionette/content/error.js", {});
 
 this.EXPORTED_SYMBOLS = ["session"];
+
+const logger = Log.repository.getLogger("Marionette");
+const {pprint} = error;
 
 // Enable testing this module, as Services.appinfo.* is not available
 // in xpcshell tests.
@@ -103,13 +108,12 @@ session.Proxy = class {
   /** @class */
   constructor() {
     this.proxyType = null;
-    this.ftpProxy = null;
-    this.ftpProxyPort = null;
     this.httpProxy = null;
     this.httpProxyPort = null;
-    this.noProxy = null;
     this.sslProxy = null;
     this.sslProxyPort = null;
+    this.ftpProxy = null;
+    this.ftpProxyPort = null;
     this.socksProxy = null;
     this.socksProxyPort = null;
     this.socksVersion = null;
@@ -126,50 +130,26 @@ session.Proxy = class {
    */
   init() {
     switch (this.proxyType) {
-      case "autodetect":
-        Preferences.set("network.proxy.type", 4);
-        return true;
-
-      case "direct":
-        Preferences.set("network.proxy.type", 0);
-        return true;
-
       case "manual":
         Preferences.set("network.proxy.type", 1);
-
-        if (this.ftpProxy) {
-          Preferences.set("network.proxy.ftp", this.ftpProxy);
-          if (Number.isInteger(this.ftpProxyPort)) {
-            Preferences.set("network.proxy.ftp_port", this.ftpProxyPort);
-          }
-        }
-
-        if (this.httpProxy) {
+        if (this.httpProxy && this.httpProxyPort) {
           Preferences.set("network.proxy.http", this.httpProxy);
-          if (Number.isInteger(this.httpProxyPort)) {
-            Preferences.set("network.proxy.http_port", this.httpProxyPort);
-          }
+          Preferences.set("network.proxy.http_port", this.httpProxyPort);
         }
-
-        if (this.sslProxy) {
+        if (this.sslProxy && this.sslProxyPort) {
           Preferences.set("network.proxy.ssl", this.sslProxy);
-          if (Number.isInteger(this.sslProxyPort)) {
-            Preferences.set("network.proxy.ssl_port", this.sslProxyPort);
-          }
+          Preferences.set("network.proxy.ssl_port", this.sslProxyPort);
         }
-
+        if (this.ftpProxy && this.ftpProxyPort) {
+          Preferences.set("network.proxy.ftp", this.ftpProxy);
+          Preferences.set("network.proxy.ftp_port", this.ftpProxyPort);
+        }
         if (this.socksProxy) {
           Preferences.set("network.proxy.socks", this.socksProxy);
-          if (Number.isInteger(this.socksProxyPort)) {
-            Preferences.set("network.proxy.socks_port", this.socksProxyPort);
-          }
+          Preferences.set("network.proxy.socks_port", this.socksProxyPort);
           if (this.socksVersion) {
             Preferences.set("network.proxy.socks_version", this.socksVersion);
           }
-        }
-
-        if (this.noProxy) {
-          Preferences.set("network.proxy.no_proxies_on", this.noProxy.join(", "));
         }
         return true;
 
@@ -179,8 +159,16 @@ session.Proxy = class {
             "network.proxy.autoconfig_url", this.proxyAutoconfigUrl);
         return true;
 
+      case "autodetect":
+        Preferences.set("network.proxy.type", 4);
+        return true;
+
       case "system":
         Preferences.set("network.proxy.type", 5);
+        return true;
+
+      case "noproxy":
+        Preferences.set("network.proxy.type", 0);
         return true;
 
       default:
@@ -188,66 +176,33 @@ session.Proxy = class {
     }
   }
 
+  toString() { return "[object session.Proxy]"; }
+
+  /**
+   * @return {Object.<string, (number|string)>}
+   *     JSON serialisation of proxy object.
+   */
+  toJSON() {
+    return marshal({
+      proxyType: this.proxyType,
+      httpProxy: this.httpProxy,
+      httpProxyPort: this.httpProxyPort,
+      sslProxy: this.sslProxy,
+      sslProxyPort: this.sslProxyPort,
+      ftpProxy: this.ftpProxy,
+      ftpProxyPort: this.ftpProxyPort,
+      socksProxy: this.socksProxy,
+      socksProxyPort: this.socksProxyPort,
+      socksProxyVersion: this.socksProxyVersion,
+      proxyAutoconfigUrl: this.proxyAutoconfigUrl,
+    });
+  }
+
   /**
    * @param {Object.<string, ?>} json
    *     JSON Object to unmarshal.
-   *
-   * @throws {InvalidArgumentError}
-   *     When proxy configuration is invalid.
    */
   static fromJSON(json) {
-    function stripBracketsFromIpv6Hostname(hostname) {
-      return hostname.includes(":") ? hostname.replace(/[\[\]]/g, "") : hostname;
-    }
-
-    // Parse hostname and optional port from host
-    function fromHost(scheme, host) {
-      assert.string(host);
-
-      if (host.includes("://")) {
-        throw new InvalidArgumentError(`${host} contains a scheme`);
-      }
-
-      let url;
-      try {
-        // To parse the host a scheme has to be added temporarily.
-        // If the returned value for the port is an empty string it
-        // could mean no port or the default port for this scheme was
-        // specified. In such a case parse again with a different
-        // scheme to ensure we filter out the default port.
-        url = new URL("http://" + host);
-        if (url.port == "") {
-          url = new URL("https://" + host);
-        }
-      } catch (e) {
-        throw new InvalidArgumentError(e.message);
-      }
-
-      let hostname = stripBracketsFromIpv6Hostname(url.hostname);
-
-      // If the port hasn't been set, use the default port of
-      // the selected scheme (except for socks which doesn't have one).
-      let port = parseInt(url.port);
-      if (!Number.isInteger(port)) {
-        if (scheme === "socks") {
-          port = null;
-        } else {
-          port = Services.io.getProtocolHandler(scheme).defaultPort;
-        }
-      }
-
-      if (url.username != "" ||
-          url.password != "" ||
-          url.pathname != "/" ||
-          url.search != "" ||
-          url.hash != "") {
-        throw new InvalidArgumentError(
-            `${host} was not of the form host[:port]`);
-      }
-
-      return [hostname, port];
-    }
-
     let p = new session.Proxy();
     if (typeof json == "undefined" || json === null) {
       return p;
@@ -256,91 +211,37 @@ session.Proxy = class {
     assert.object(json);
 
     assert.in("proxyType", json);
-    p.proxyType = assert.string(json.proxyType);
+    p.proxyType = json.proxyType;
 
-    switch (p.proxyType) {
-      case "autodetect":
-      case "direct":
-      case "system":
-        break;
+    if (json.proxyType == "manual") {
+      if (typeof json.httpProxy != "undefined") {
+        p.httpProxy = assert.string(json.httpProxy);
+        p.httpProxyPort = assert.positiveInteger(json.httpProxyPort);
+      }
 
-      case "pac":
-        p.proxyAutoconfigUrl = assert.string(json.proxyAutoconfigUrl);
-        break;
+      if (typeof json.sslProxy != "undefined") {
+        p.sslProxy = assert.string(json.sslProxy);
+        p.sslProxyPort = assert.positiveInteger(json.sslProxyPort);
+      }
 
-      case "manual":
-        if (typeof json.ftpProxy != "undefined") {
-          [p.ftpProxy, p.ftpProxyPort] = fromHost("ftp", json.ftpProxy);
-        }
-        if (typeof json.httpProxy != "undefined") {
-          [p.httpProxy, p.httpProxyPort] = fromHost("http", json.httpProxy);
-        }
-        if (typeof json.sslProxy != "undefined") {
-          [p.sslProxy, p.sslProxyPort] = fromHost("https", json.sslProxy);
-        }
-        if (typeof json.socksProxy != "undefined") {
-          [p.socksProxy, p.socksProxyPort] = fromHost("socks", json.socksProxy);
-          p.socksVersion = assert.positiveInteger(json.socksVersion);
-        }
-        if (typeof json.noProxy != "undefined") {
-          let entries = assert.array(json.noProxy);
-          p.noProxy = entries.map(entry => {
-            assert.string(entry);
-            return stripBracketsFromIpv6Hostname(entry);
-          });
-        }
-        break;
+      if (typeof json.ftpProxy != "undefined") {
+        p.ftpProxy = assert.string(json.ftpProxy);
+        p.ftpProxyPort = assert.positiveInteger(json.ftpProxyPort);
+      }
 
-      default:
-        throw new InvalidArgumentError(
-            `Invalid type of proxy: ${p.proxyType}`);
+      if (typeof json.socksProxy != "undefined") {
+        p.socksProxy = assert.string(json.socksProxy);
+        p.socksProxyPort = assert.positiveInteger(json.socksProxyPort);
+        p.socksProxyVersion = assert.positiveInteger(json.socksProxyVersion);
+      }
+    }
+
+    if (typeof json.proxyAutoconfigUrl != "undefined") {
+      p.proxyAutoconfigUrl = assert.string(json.proxyAutoconfigUrl);
     }
 
     return p;
   }
-
-  /**
-   * @return {Object.<string, (number|string)>}
-   *     JSON serialisation of proxy object.
-   */
-  toJSON() {
-    function addBracketsToIpv6Hostname(hostname) {
-      return hostname.includes(":") ? `[${hostname}]` : hostname;
-    }
-
-    function toHost(hostname, port) {
-      if (!hostname) {
-        return null;
-      }
-
-      // Add brackets around IPv6 addresses
-      hostname = addBracketsToIpv6Hostname(hostname);
-
-      if (port != null) {
-        return `${hostname}:${port}`;
-      }
-
-      return hostname;
-    }
-
-    let excludes = this.noProxy;
-    if (excludes) {
-      excludes = excludes.map(addBracketsToIpv6Hostname);
-    }
-
-    return marshal({
-      proxyType: this.proxyType,
-      ftpProxy: toHost(this.ftpProxy, this.ftpProxyPort),
-      httpProxy: toHost(this.httpProxy, this.httpProxyPort),
-      noProxy: excludes,
-      sslProxy: toHost(this.sslProxy, this.sslProxyPort),
-      socksProxy: toHost(this.socksProxy, this.socksProxyPort),
-      socksVersion: this.socksVersion,
-      proxyAutoconfigUrl: this.proxyAutoconfigUrl,
-    });
-  }
-
-  toString() { return "[object session.Proxy]"; }
 };
 
 /** WebDriver session capabilities representation. */
@@ -362,17 +263,17 @@ session.Capabilities = class extends Map {
       ["rotatable", appinfo.name == "B2G"],
 
       // proprietary
-      ["moz:accessibilityChecks", false],
-      ["moz:headless", Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless],
+      ["specificationLevel", 0],
       ["moz:processID", Services.appinfo.processID],
       ["moz:profile", maybeProfile()],
-      ["moz:webdriverClick", false],
+      ["moz:accessibilityChecks", false],
+      ["moz:headless", Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless],
     ]);
   }
 
   /**
    * @param {string} key
-   *     Capability key.
+   *     Capability name.
    * @param {(string|number|boolean)} value
    *     JSON-safe capability value.
    */
@@ -401,27 +302,101 @@ session.Capabilities = class extends Map {
   /**
    * Unmarshal a JSON object representation of WebDriver capabilities.
    *
-   * @param {Object.<string, *>=} json
+   * @param {Object.<string, ?>=} json
    *     WebDriver capabilities.
+   * @param {boolean=} merge
+   *     If providing <var>json</var> with <tt>desiredCapabilities</tt> or
+   *     <tt>requiredCapabilities</tt> fields, or both, it should be
+   *     set to true to merge these before parsing.  This indicates that
+   *     the input provided is from a client and not from
+   *     {@link session.Capabilities#toJSON}.
    *
    * @return {session.Capabilities}
    *     Internal representation of WebDriver capabilities.
    */
-  static fromJSON(json) {
+  static fromJSON(json, {merge = false} = {}) {
     if (typeof json == "undefined" || json === null) {
       json = {};
     }
     assert.object(json);
 
+    if (merge) {
+      json = session.Capabilities.merge_(json);
+    }
     return session.Capabilities.match_(json);
   }
 
+  // Processes capabilities as described by WebDriver.
+  static merge_(json) {
+    for (let entry of [json.desiredCapabilities, json.requiredCapabilities]) {
+      if (typeof entry == "undefined" || entry === null) {
+        continue;
+      }
+      assert.object(entry,
+          error.pprint`Expected ${entry} to be a capabilities object`);
+    }
+
+    let desired = json.desiredCapabilities || {};
+    let required = json.requiredCapabilities || {};
+
+    // One level deep union merge of desired- and required capabilities
+    // with preference on required
+    return Object.assign({}, desired, required);
+  }
+
   // Matches capabilities as described by WebDriver.
-  static match_(json = {}) {
+  static match_(caps = {}) {
     let matched = new session.Capabilities();
 
-    for (let [k, v] of Object.entries(json)) {
+    const defined = v => typeof v != "undefined" && v !== null;
+    const wildcard = v => v === "*";
+
+    // Iff |actual| provides some value, or is a wildcard or an exact
+    // match of |expected|.  This means it can be null or undefined,
+    // or "*", or "firefox".
+    function stringMatch(actual, expected) {
+      return !defined(actual) || (wildcard(actual) || actual === expected);
+    }
+
+    for (let [k, v] of Object.entries(caps)) {
       switch (k) {
+        case "browserName":
+          let bname = matched.get("browserName");
+          if (!stringMatch(v, bname)) {
+            throw new TypeError(
+                pprint`Given browserName ${v}, but my name is ${bname}`);
+          }
+          break;
+
+        // TODO(ato): bug 1326397
+        case "browserVersion":
+          let bversion = matched.get("browserVersion");
+          if (!stringMatch(v, bversion)) {
+            throw new TypeError(
+                pprint`Given browserVersion ${v}, ` +
+                pprint`but current version is ${bversion}`);
+          }
+          break;
+
+        case "platformName":
+          let pname = matched.get("platformName");
+          if (!stringMatch(v, pname)) {
+            throw new TypeError(
+                pprint`Given platformName ${v}, ` +
+                pprint`but current platform is ${pname}`);
+          }
+          break;
+
+        // TODO(ato): bug 1326397
+        case "platformVersion":
+          let pversion = matched.get("platformVersion");
+          if (!stringMatch(v, pversion)) {
+            throw new TypeError(
+                pprint`Given platformVersion ${v}, ` +
+                pprint`but current platform version is ${pversion}`);
+          }
+          break;
+
         case "acceptInsecureCerts":
           assert.boolean(v);
           matched.set("acceptInsecureCerts", v);
@@ -453,9 +428,9 @@ session.Capabilities = class extends Map {
           matched.set("timeouts", timeouts);
           break;
 
-        case "moz:webdriverClick":
-          assert.boolean(v);
-          matched.set("moz:webdriverClick", v);
+        case "specificationLevel":
+          assert.positiveInteger(v);
+          matched.set("specificationLevel", v);
           break;
 
         case "moz:accessibilityChecks":

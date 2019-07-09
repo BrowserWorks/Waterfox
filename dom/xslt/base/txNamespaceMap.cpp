@@ -18,16 +18,16 @@ txNamespaceMap::txNamespaceMap(const txNamespaceMap& aOther)
 }
 
 nsresult
-txNamespaceMap::mapNamespace(nsAtom* aPrefix, const nsAString& aNamespaceURI)
+txNamespaceMap::mapNamespace(nsIAtom* aPrefix, const nsAString& aNamespaceURI)
 {
-    nsAtom* prefix = aPrefix == nsGkAtoms::_empty ? nullptr : aPrefix;
+    nsIAtom* prefix = aPrefix == nsGkAtoms::_empty ? nullptr : aPrefix;
 
     int32_t nsId;
     if (prefix && aNamespaceURI.IsEmpty()) {
         // Remove the mapping
         int32_t index = mPrefixes.IndexOf(prefix);
         if (index >= 0) {
-            mPrefixes.RemoveElementAt(index);
+            mPrefixes.RemoveObjectAt(index);
             mNamespaces.RemoveElementAt(index);
         }
 
@@ -52,12 +52,12 @@ txNamespaceMap::mapNamespace(nsAtom* aPrefix, const nsAString& aNamespaceURI)
     }
 
     // New mapping
-    if (!mPrefixes.AppendElement(prefix)) {
+    if (!mPrefixes.AppendObject(prefix)) {
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
     if (mNamespaces.AppendElement(nsId) == nullptr) {
-        mPrefixes.RemoveElementAt(mPrefixes.Length() - 1);
+        mPrefixes.RemoveObjectAt(mPrefixes.Count() - 1);
 
         return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -66,13 +66,13 @@ txNamespaceMap::mapNamespace(nsAtom* aPrefix, const nsAString& aNamespaceURI)
 }
 
 int32_t
-txNamespaceMap::lookupNamespace(nsAtom* aPrefix)
+txNamespaceMap::lookupNamespace(nsIAtom* aPrefix)
 {
     if (aPrefix == nsGkAtoms::xml) {
         return kNameSpaceID_XML;
     }
 
-    nsAtom* prefix = aPrefix == nsGkAtoms::_empty ? 0 : aPrefix;
+    nsIAtom* prefix = aPrefix == nsGkAtoms::_empty ? 0 : aPrefix;
 
     int32_t index = mPrefixes.IndexOf(prefix);
     if (index >= 0) {
@@ -89,7 +89,7 @@ txNamespaceMap::lookupNamespace(nsAtom* aPrefix)
 int32_t
 txNamespaceMap::lookupNamespaceWithDefault(const nsAString& aPrefix)
 {
-    RefPtr<nsAtom> prefix = NS_Atomize(aPrefix);
+    nsCOMPtr<nsIAtom> prefix = NS_Atomize(aPrefix);
     if (prefix != nsGkAtoms::_poundDefault) {
         return lookupNamespace(prefix);
     }

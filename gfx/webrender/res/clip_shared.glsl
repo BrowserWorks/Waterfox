@@ -1,3 +1,4 @@
+#line 1
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,29 +11,30 @@
 #define SEGMENT_CORNER_BL   3
 #define SEGMENT_CORNER_BR   4
 
-in int aClipRenderTaskAddress;
-in int aClipLayerAddress;
-in int aClipSegment;
-in ivec4 aClipDataResourceAddress;
+in int aClipRenderTaskIndex;
+in int aClipLayerIndex;
+in int aClipDataIndex;
+in int aClipSegmentIndex;
+in int aClipResourceAddress;
 
-struct ClipMaskInstance {
-    int render_task_address;
-    int layer_address;
-    int segment;
-    ivec2 clip_data_address;
-    ivec2 resource_address;
+struct CacheClipInstance {
+    int render_task_index;
+    int layer_index;
+    int data_index;
+    int segment_index;
+    int resource_address;
 };
 
-ClipMaskInstance fetch_clip_item() {
-    ClipMaskInstance cmi;
+CacheClipInstance fetch_clip_item(int index) {
+    CacheClipInstance cci;
 
-    cmi.render_task_address = aClipRenderTaskAddress;
-    cmi.layer_address = aClipLayerAddress;
-    cmi.segment = aClipSegment;
-    cmi.clip_data_address = aClipDataResourceAddress.xy;
-    cmi.resource_address = aClipDataResourceAddress.zw;
+    cci.render_task_index = aClipRenderTaskIndex;
+    cci.layer_index = aClipLayerIndex;
+    cci.data_index = aClipDataIndex;
+    cci.segment_index = aClipSegmentIndex;
+    cci.resource_address = aClipResourceAddress;
 
-    return cmi;
+    return cci;
 }
 
 struct ClipVertexInfo {
@@ -41,17 +43,12 @@ struct ClipVertexInfo {
     RectWithSize clipped_local_rect;
 };
 
-RectWithSize intersect_rect(RectWithSize a, RectWithSize b) {
-    vec4 p = clamp(vec4(a.p0, a.p0 + a.size), b.p0.xyxy, b.p0.xyxy + b.size.xyxy);
-    return RectWithSize(p.xy, max(vec2(0.0), p.zw - p.xy));
-}
-
 // The transformed vertex function that always covers the whole clip area,
 // which is the intersection of all clip instances of a given primitive
 ClipVertexInfo write_clip_tile_vertex(RectWithSize local_clip_rect,
                                       Layer layer,
                                       ClipArea area,
-                                      int segment) {
+                                      int segment_index) {
 
     RectWithSize clipped_local_rect = intersect_rect(local_clip_rect,
                                                      layer.local_clip_rect);
@@ -62,7 +59,7 @@ ClipVertexInfo write_clip_tile_vertex(RectWithSize local_clip_rect,
     vec2 inner_p1 = area.inner_rect.zw;
 
     vec2 p0, p1;
-    switch (segment) {
+    switch (segment_index) {
         case SEGMENT_ALL:
             p0 = outer_p0;
             p1 = outer_p1;

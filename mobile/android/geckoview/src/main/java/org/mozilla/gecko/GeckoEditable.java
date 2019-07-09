@@ -451,33 +451,8 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
                           getConstantName(Action.class, "TYPE_", action.mType) + ")");
         }
 
-        switch (action.mType) {
-            case Action.TYPE_EVENT:
-            case Action.TYPE_SET_HANDLER:
-                break;
-
-            case Action.TYPE_SET_SPAN:
-                mText.shadowSetSpan(action.mSpanObject, action.mStart,
-                                    action.mEnd, action.mSpanFlags);
-                break;
-
-            case Action.TYPE_REMOVE_SPAN:
-                action.mSpanFlags = mText.getShadowText().getSpanFlags(action.mSpanObject);
-                mText.shadowRemoveSpan(action.mSpanObject);
-                break;
-
-            case Action.TYPE_REPLACE_TEXT:
-                mText.shadowReplace(action.mStart, action.mEnd, action.mSequence);
-                break;
-
-            default:
-                throw new IllegalStateException("Action not processed");
-        }
-
-        // Always perform actions on the shadow text side above, so we still act as a
-        // valid Editable object, but don't send the actions to Gecko below if we haven't
-        // been focused or initialized, or we've been destroyed.
         if (mFocusedChild == null || mListener == null) {
+            // We haven't been focused or initialized, or we've been destroyed.
             return;
         }
 
@@ -505,6 +480,8 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
                                         action.mSpanObject == Selection.SELECTION_START ||
                                         action.mSpanObject == Selection.SELECTION_END);
 
+            mText.shadowSetSpan(action.mSpanObject, action.mStart,
+                                action.mEnd, action.mSpanFlags);
             action.mSequence = TextUtils.substring(
                     mText.getShadowText(), action.mStart, action.mEnd);
 
@@ -518,8 +495,10 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
             break;
         }
         case Action.TYPE_REMOVE_SPAN: {
-            final boolean needUpdate = (action.mSpanFlags & Spanned.SPAN_INTERMEDIATE) == 0 &&
-                                       (action.mSpanFlags & Spanned.SPAN_COMPOSING) != 0;
+            final int flags = mText.getShadowText().getSpanFlags(action.mSpanObject);
+            final boolean needUpdate = (flags & Spanned.SPAN_INTERMEDIATE) == 0 &&
+                                       (flags & Spanned.SPAN_COMPOSING) != 0;
+            mText.shadowRemoveSpan(action.mSpanObject);
 
             mNeedUpdateComposition |= needUpdate;
             if (needUpdate) {
@@ -542,6 +521,7 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
                 // Since we don't have a composition, we can try sending key events.
                 sendCharKeyEvents(action);
             }
+            mText.shadowReplace(action.mStart, action.mEnd, action.mSequence);
             mFocusedChild.onImeReplaceText(
                     action.mStart, action.mEnd, action.mSequence.toString());
             break;
@@ -1155,15 +1135,12 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
 
     @Override // IGeckoEditableParent
     public void notifyIMEContext(final int state, final String typeHint,
-                                 final String modeHint, final String actionHint,
-                                 final boolean inPrivateBrowsing,
-                                 final boolean isUserAction) {
+                                 final String modeHint, final String actionHint) {
         // On Gecko or binder thread.
         if (DEBUG) {
             Log.d(LOGTAG, "notifyIMEContext(" +
                           getConstantName(GeckoEditableListener.class, "IME_STATE_", state) +
-                          ", \"" + typeHint + "\", \"" + modeHint + "\", \"" + actionHint + "\", " +
-                          "inPrivateBrowsing=" + inPrivateBrowsing + ")");
+                          ", \"" + typeHint + "\", \"" + modeHint + "\", \"" + actionHint + "\")");
         }
 
         // Don't check token for notifyIMEContext, because the calls all come
@@ -1176,7 +1153,7 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
                 if (mListener == null) {
                     return;
                 }
-                mListener.notifyIMEContext(state, typeHint, modeHint, actionHint, inPrivateBrowsing, isUserAction);
+                mListener.notifyIMEContext(state, typeHint, modeHint, actionHint);
             }
         });
     }
@@ -1399,15 +1376,6 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
         return String.valueOf(value);
     }
 
-    private static String getPrintableChar(char chr) {
-        if (chr >= 0x20 && chr <= 0x7e) {
-            return String.valueOf(chr);
-        } else if (chr == '\n') {
-            return "\u21b2";
-        }
-        return String.format("%04x", (int) chr);
-    }
-
     static StringBuilder debugAppend(StringBuilder sb, Object obj) {
         if (obj == null) {
             sb.append("null");
@@ -1417,20 +1385,8 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
             sb.append("GeckoEditableChild");
         } else if (Proxy.isProxyClass(obj.getClass())) {
             debugAppend(sb, Proxy.getInvocationHandler(obj));
-        } else if (obj instanceof Character) {
-            sb.append('\'').append(getPrintableChar((Character) obj)).append('\'');
         } else if (obj instanceof CharSequence) {
-            final String str = obj.toString();
-            sb.append('"');
-            for (int i = 0; i < str.length(); i++) {
-              final char chr = str.charAt(i);
-              if (chr >= 0x20 && chr <= 0x7e) {
-                sb.append(chr);
-              } else {
-                sb.append(getPrintableChar(chr));
-              }
-            }
-            sb.append('"');
+            sb.append('"').append(obj.toString().replace('\n', '\u21b2')).append('"');
         } else if (obj.getClass().isArray()) {
             sb.append(obj.getClass().getComponentType().getSimpleName()).append('[')
               .append(Array.getLength(obj)).append(']');
@@ -1457,8 +1413,32 @@ final class GeckoEditable extends IGeckoEditableParent.Stub
         } else {
             target = mText.getShadowText();
         }
-
-        final Object ret = method.invoke(target, args);
+        Object ret;
+        try {
+            ret = method.invoke(target, args);
+        } catch (InvocationTargetException e) {
+            // Bug 817386
+            // Most likely Gecko has changed the text while GeckoInputConnection is
+            // trying to access the text. If we pass through the exception here, Fennec
+            // will crash due to a lack of exception handler. Log the exception and
+            // return an empty value instead.
+            if (!(e.getCause() instanceof IndexOutOfBoundsException)) {
+                // Only handle IndexOutOfBoundsException for now,
+                // as other exceptions might signal other bugs
+                throw e;
+            }
+            Log.w(LOGTAG, "Exception in GeckoEditable." + method.getName(), e.getCause());
+            Class<?> retClass = method.getReturnType();
+            if (retClass == Character.TYPE) {
+                ret = '\0';
+            } else if (retClass == Integer.TYPE) {
+                ret = 0;
+            } else if (retClass == String.class) {
+                ret = "";
+            } else {
+                ret = null;
+            }
+        }
         if (DEBUG) {
             StringBuilder log = new StringBuilder(method.getName());
             log.append("(");

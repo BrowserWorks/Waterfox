@@ -1,10 +1,10 @@
-"use strict";
+"use strict"
 
 add_task(async function() {
   info("Add a live bookmark editing its data");
 
   await withSidebarTree("bookmarks", async function(tree) {
-    let itemId = PlacesUIUtils.leftPaneQueries.UnfiledBookmarks;
+    let itemId = PlacesUIUtils.leftPaneQueries["UnfiledBookmarks"];
     tree.selectItems([itemId]);
 
     await withBookmarksDialog(
@@ -14,7 +14,7 @@ add_task(async function() {
                                           "livemark", "description");
       },
       async function test(dialogWin) {
-        let promiseTitleChangeNotification = PlacesTestUtils.waitForNotification(
+        let promiseTitleChangeNotification = promiseBookmarksNotification(
           "onItemChanged", (unused, prop, isAnno, val) => prop == "title" && val == "modified");
 
         fillBookmarkTextField("editBMPanel_namePicker", "modified", dialogWin);

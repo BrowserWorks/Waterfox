@@ -42,7 +42,7 @@ function test() {
 
         // Verify that non JSON serialized data is the same as JSON serialized data.
         is(JSON.stringify(data), ss.getClosedWindowData(),
-           "Non-serialized data is the same as serialized data");
+           "Non-serialized data is the same as serialized data")
 
         ok(data[0].title == TEST_URL && JSON.stringify(data[0]).indexOf(uniqueText) > -1,
            "The closed window data was stored correctly");
@@ -50,7 +50,7 @@ function test() {
         // Reopen the closed window and ensure its integrity.
         let newWin2 = ss.undoCloseWindow(0);
 
-        ok(newWin2.isChromeWindow,
+        ok(newWin2 instanceof ChromeWindow,
            "undoCloseWindow actually returned a window");
         is(ss.getClosedWindowCount(), 0,
            "The reopened window was removed from Recently Closed Windows");

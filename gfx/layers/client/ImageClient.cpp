@@ -101,11 +101,8 @@ ImageClient::CreateTextureClientForImage(Image* aImage, KnowsCompositor* aForwar
       return nullptr;
     }
     texture = TextureClient::CreateForYCbCr(aForwarder,
-                                            data->mYSize, data->mYStride,
-                                            data->mCbCrSize, data->mCbCrStride,
-                                            data->mStereoMode,
+                                            data->mYSize, data->mCbCrSize, data->mStereoMode,
                                             data->mYUVColorSpace,
-                                            data->mBitDepth,
                                             TextureFlags::DEFAULT);
     if (!texture) {
       return nullptr;
@@ -121,14 +118,24 @@ ImageClient::CreateTextureClientForImage(Image* aImage, KnowsCompositor* aForwar
     if (!status) {
       return nullptr;
     }
-#ifdef MOZ_WIDGET_ANDROID
-  } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
+  } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE ||
+             aImage->GetFormat() == ImageFormat::EGLIMAGE) {
     gfx::IntSize size = aImage->GetSize();
-    SurfaceTextureImage* typedImage = aImage->AsSurfaceTextureImage();
-    texture = AndroidSurfaceTextureData::CreateTextureClient(
-      typedImage->GetHandle(), size, typedImage->GetContinuous(), typedImage->GetOriginPos(),
-      aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
+
+    if (aImage->GetFormat() == ImageFormat::EGLIMAGE) {
+      EGLImageImage* typedImage = aImage->AsEGLImageImage();
+      texture = EGLImageTextureData::CreateTextureClient(
+        typedImage, size, aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
+#ifdef MOZ_WIDGET_ANDROID
+    } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
+      SurfaceTextureImage* typedImage = aImage->AsSurfaceTextureImage();
+      texture = AndroidSurfaceTextureData::CreateTextureClient(
+        typedImage->GetHandle(), size, typedImage->GetContinuous(), typedImage->GetOriginPos(),
+        aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
 #endif
+    } else {
+      MOZ_ASSERT(false, "Bad ImageFormat.");
+    }
   } else {
     RefPtr<gfx::SourceSurface> surface = aImage->GetAsSourceSurface();
     MOZ_ASSERT(surface);

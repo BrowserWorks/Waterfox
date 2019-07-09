@@ -370,12 +370,6 @@ ARCHIVE_FILES = {
             'base': 'testing',
             'pattern': 'talos/**',
         },
-        {
-            'source': buildconfig.topsrcdir,
-            'base': 'third_party/speedometer',
-            'pattern': '**',
-            'dest': 'talos/talos/tests/speedometer/',
-        },
     ],
     'awsy': [
         {

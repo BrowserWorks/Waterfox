@@ -5,7 +5,7 @@
 /**
  * A client to fetch profile information for a Firefox Account.
  */
- "use strict;";
+ "use strict;"
 
 this.EXPORTED_SYMBOLS = ["FxAccountsProfileClient", "FxAccountsProfileClientError"];
 
@@ -173,7 +173,7 @@ this.FxAccountsProfileClient.prototype = {
         if (request.response.success) {
           resolve({
             body,
-            etag: request.response.headers.etag
+            etag: request.response.headers["etag"]
           });
           return;
         }

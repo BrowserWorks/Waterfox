@@ -377,8 +377,7 @@ nsRuleNode::GetMetricsFor(nsPresContext* aPresContext,
                           bool aIsVertical,
                           const nsStyleFont* aStyleFont,
                           nscoord aFontSize,
-                          bool aUseUserFontSet,
-                          FlushUserFontSet aFlushUserFontSet)
+                          bool aUseUserFontSet)
 {
   nsFont font = aStyleFont->mFont;
   font.size = aFontSize;
@@ -388,9 +387,8 @@ nsRuleNode::GetMetricsFor(nsPresContext* aPresContext,
   params.language = aStyleFont->mLanguage;
   params.explicitLanguage = aStyleFont->mExplicitLanguage;
   params.orientation = orientation;
-  params.userFontSet = aUseUserFontSet
-    ? aPresContext->GetUserFontSet(aFlushUserFontSet == FlushUserFontSet::Yes)
-    : nullptr;
+  params.userFontSet =
+    aUseUserFontSet ? aPresContext->GetUserFontSet() : nullptr;
   params.textPerf = aPresContext->GetTextPerfMetrics();
   return aPresContext->DeviceContext()->GetMetricsFor(font, params);
 }
@@ -410,9 +408,8 @@ nsRuleNode::GetMetricsFor(nsPresContext* aPresContext,
       isVertical = true;
     }
   }
-  return nsRuleNode::GetMetricsFor(
-      aPresContext, isVertical, aStyleFont, aFontSize, aUseUserFontSet,
-      FlushUserFontSet::Yes);
+  return nsRuleNode::GetMetricsFor(aPresContext, isVertical, aStyleFont,
+                                   aFontSize, aUseUserFontSet);
 }
 
 /* static */
@@ -428,8 +425,8 @@ nsRuleNode::FixupNoneGeneric(nsFont* aFont,
       (!useDocumentFonts && (aGenericFontID == kGenericFont_cursive ||
                              aGenericFontID == kGenericFont_fantasy))) {
     FontFamilyType defaultGeneric =
-      aDefaultVariableFont->fontlist.GetDefaultFontType();
-    MOZ_ASSERT(aDefaultVariableFont->fontlist.IsEmpty() &&
+      aDefaultVariableFont->fontlist.FirstGeneric();
+    MOZ_ASSERT(aDefaultVariableFont->fontlist.Length() == 1 &&
                (defaultGeneric == eFamily_serif ||
                 defaultGeneric == eFamily_sans_serif));
     if (defaultGeneric != eFamily_none) {
@@ -1470,7 +1467,7 @@ static void SetStyleImage(GeckoStyleContext* aStyleContext,
     }
     case eCSSUnit_Element:
     {
-      RefPtr<nsAtom> atom = NS_Atomize(aValue.GetStringBufferValue());
+      nsCOMPtr<nsIAtom> atom = NS_Atomize(aValue.GetStringBufferValue());
       aResult.SetElementId(atom.forget());
       break;
     }
@@ -1544,7 +1541,6 @@ struct SetEnumValueHelper
   DEFINE_ENUM_CLASS_SETTER(StyleBoxPack, Start, Justify)
   DEFINE_ENUM_CLASS_SETTER(StyleBoxSizing, Content, Border)
   DEFINE_ENUM_CLASS_SETTER(StyleClear, None, Both)
-  DEFINE_ENUM_CLASS_SETTER(StyleContent, OpenQuote, AltContent)
   DEFINE_ENUM_CLASS_SETTER(StyleFillRule, Nonzero, Evenodd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloat, None, InlineEnd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloatEdge, ContentBox, MarginBox)
@@ -2465,7 +2461,7 @@ GetPseudoRestriction(GeckoStyleContext *aContext)
 {
   // This needs to match nsStyleSet::WalkRestrictionRule.
   uint32_t pseudoRestriction = 0;
-  nsAtom *pseudoType = aContext->GetPseudo();
+  nsIAtom *pseudoType = aContext->GetPseudo();
   if (pseudoType) {
     if (pseudoType == nsCSSPseudoElements::firstLetter) {
       pseudoRestriction = CSS_PROPERTY_APPLIES_TO_FIRST_LETTER;
@@ -2844,6 +2840,14 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, GeckoStyleContext* aCon
     case eStyleStruct_Font:
     {
       nsStyleFont* fontData = new (mPresContext) nsStyleFont(mPresContext);
+      nscoord minimumFontSize = mPresContext->MinFontSize(fontData->mLanguage);
+
+      if (minimumFontSize > 0 && !mPresContext->IsChrome()) {
+        fontData->mFont.size = std::max(fontData->mSize, minimumFontSize);
+      }
+      else {
+        fontData->mFont.size = fontData->mSize;
+      }
       aContext->SetStyle(eStyleStruct_Font, fontData);
       return fontData;
     }
@@ -3484,11 +3488,19 @@ nsRuleNode::SetFontSize(nsPresContext* aPresContext,
              NS_STYLE_FONT_SIZE_SMALLER == value) {
       aConditions.SetUncacheable();
 
+      // Un-zoom so we use the tables correctly.  We'll then rezoom due
+      // to the |zoom = true| above.
+      // Note that relative units here use the parent's size unadjusted
+      // for scriptlevel changes. A scriptlevel change between us and the parent
+      // is simply ignored.
+      nscoord parentSize = aParentSize;
+      if (aParentFont->mAllowZoom) {
+        parentSize = nsStyleFont::UnZoomText(aPresContext, parentSize);
+      }
+
       float factor = (NS_STYLE_FONT_SIZE_LARGER == value) ? 1.2f : (1.0f / 1.2f);
 
-      *aSize = NSToCoordFloorClamped(aParentSize * factor);
-
-      sizeIsZoomedAccordingToParent = true;
+      *aSize = parentSize * factor;
 
     } else {
       NS_NOTREACHED("unexpected value");
@@ -3695,49 +3707,37 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, GeckoStyleContext* aContext,
   const nsFont& systemFont = lazySystemFont.refOr(*defaultVariableFont);
 
   // font-family: font family list, enum, inherit
-  switch (aRuleData->ValueForFontFamily()->GetUnit()) {
-    case eCSSUnit_FontFamilyList:
-      // set the correct font if we are using DocumentFonts OR we are overriding
-      // for XUL - MJA: bug 31816
-      nsRuleNode::FixupNoneGeneric(&aFont->mFont, aPresContext,
-                                   aGenericFontID, defaultVariableFont);
+  const nsCSSValue* familyValue = aRuleData->ValueForFontFamily();
+  NS_ASSERTION(eCSSUnit_Enumerated != familyValue->GetUnit(),
+               "system fonts should not be in mFamily anymore");
+  if (eCSSUnit_FontFamilyList == familyValue->GetUnit()) {
+    // set the correct font if we are using DocumentFonts OR we are overriding for XUL
+    // MJA: bug 31816
+    nsRuleNode::FixupNoneGeneric(&aFont->mFont, aPresContext,
+                                 aGenericFontID, defaultVariableFont);
 
-      aFont->mFont.systemFont = false;
-      // Technically this is redundant with the code below, but it's good
-      // to have since we'll still want it once we get rid of
-      // SetGenericFont (bug 380915).
-      aFont->mGenericID = aGenericFontID;
-      break;
-    case eCSSUnit_System_Font:
-      aFont->mFont.fontlist = systemFont.fontlist;
-      aFont->mFont.systemFont = true;
-      aFont->mGenericID = kGenericFont_NONE;
-      break;
-    case eCSSUnit_Inherit:
-    case eCSSUnit_Unset:
-      aConditions.SetUncacheable();
-      aFont->mFont.fontlist = aParentFont->mFont.fontlist;
-      aFont->mFont.systemFont = aParentFont->mFont.systemFont;
-      aFont->mGenericID = aParentFont->mGenericID;
-      MOZ_FALLTHROUGH;  // Fall through here to check for a lang change.
-    case eCSSUnit_Null:
-      // If we have inheritance (cases eCSSUnit_Inherit, eCSSUnit_Unset, and
-      // eCSSUnit_Null) and a (potentially different) language is explicitly
-      // specified, then we need to overwrite the inherited default generic font
-      // with the default generic from defaultVariableFont, which is computed
-      // using aFont->mLanguage above.
-      if (aRuleData->ValueForLang()->GetUnit() != eCSSUnit_Null) {
-        FixupNoneGeneric(&aFont->mFont, aPresContext, aGenericFontID,
-                         defaultVariableFont);
-      }
-      break;
-    case eCSSUnit_Initial:
-      aFont->mFont.fontlist = defaultVariableFont->fontlist;
-      aFont->mFont.systemFont = defaultVariableFont->systemFont;
-      aFont->mGenericID = kGenericFont_NONE;
-      break;
-    default:
-      MOZ_ASSERT_UNREACHABLE("Unexpected unit for font-family");
+    aFont->mFont.systemFont = false;
+    // Technically this is redundant with the code below, but it's good
+    // to have since we'll still want it once we get rid of
+    // SetGenericFont (bug 380915).
+    aFont->mGenericID = aGenericFontID;
+  }
+  else if (eCSSUnit_System_Font == familyValue->GetUnit()) {
+    aFont->mFont.fontlist = systemFont.fontlist;
+    aFont->mFont.systemFont = true;
+    aFont->mGenericID = kGenericFont_NONE;
+  }
+  else if (eCSSUnit_Inherit == familyValue->GetUnit() ||
+           eCSSUnit_Unset == familyValue->GetUnit()) {
+    aConditions.SetUncacheable();
+    aFont->mFont.fontlist = aParentFont->mFont.fontlist;
+    aFont->mFont.systemFont = aParentFont->mFont.systemFont;
+    aFont->mGenericID = aParentFont->mGenericID;
+  }
+  else if (eCSSUnit_Initial == familyValue->GetUnit()) {
+    aFont->mFont.fontlist = defaultVariableFont->fontlist;
+    aFont->mFont.systemFont = defaultVariableFont->systemFont;
+    aFont->mGenericID = kGenericFont_NONE;
   }
 
   // When we're in the loop in SetGenericFont, we must ensure that we
@@ -3930,7 +3930,8 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, GeckoStyleContext* aContext,
       // fetch the feature lookup object from the styleset
       MOZ_ASSERT(aPresContext->StyleSet()->IsGecko(),
                  "ServoStyleSets should not have rule nodes");
-      aFont->mFont.featureValueLookup = aPresContext->GetFontFeatureValuesLookup();
+      aFont->mFont.featureValueLookup =
+        aPresContext->StyleSet()->AsGecko()->GetFontFeatureValuesLookup();
 
       NS_ASSERTION(variantAlternatesValue->GetPairValue().mYValue.GetUnit() ==
                    eCSSUnit_List, "function list not a list value");
@@ -4376,13 +4377,16 @@ nsRuleNode::ComputeFontData(void* aStartStruct,
   // the optimization with a non-null aStartStruct?
   const nsCSSValue* familyValue = aRuleData->ValueForFontFamily();
   if (eCSSUnit_FontFamilyList == familyValue->GetUnit()) {
-    NotNull<SharedFontList*> fontlist = familyValue->GetFontFamilyListValue();
-    font->mFont.fontlist = FontFamilyList(fontlist);
+    const FontFamilyList* fontlist = familyValue->GetFontFamilyListValue();
+    FontFamilyList& fl = font->mFont.fontlist;
+    fl = *fontlist;
+
+    // extract the first generic in the fontlist, if exists
+    FontFamilyType fontType = fontlist->FirstGeneric();
 
     // if only a single generic, set the generic type
-    if (fontlist->mNames.Length() == 1) {
-      // extract the first generic in the fontlist, if exists
-      switch (font->mFont.fontlist.FirstGeneric()) {
+    if (fontlist->Length() == 1) {
+      switch (fontType) {
         case eFamily_serif:
           generic = kGenericFont_serif;
           break;
@@ -5326,18 +5330,6 @@ nsRuleNode::ComputeUserInterfaceData(void* aStartStruct,
                                  mPresContext,
                                  ui->mCaretColor, conditions);
 
-  // -moz-font-smoothing-background-color:
-  const nsCSSValue* fsbColorValue =
-    aRuleData->ValueForFontSmoothingBackgroundColor();
-  if (eCSSUnit_Initial == fsbColorValue->GetUnit() ||
-      eCSSUnit_Unset == fsbColorValue->GetUnit()) {
-    ui->mFontSmoothingBackgroundColor = NS_RGBA(0, 0, 0, 0);
-  } else {
-    SetColor(*fsbColorValue, parentUI->mFontSmoothingBackgroundColor,
-             mPresContext, aContext, ui->mFontSmoothingBackgroundColor,
-             conditions);
-  }
-
   COMPUTE_END_INHERITED(UserInterface, ui)
 }
 
@@ -5901,17 +5893,18 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
       animation->SetName(parentDisplay->mAnimations[i].GetName());
     } else if (animName.unit == eCSSUnit_Initial ||
                animName.unit == eCSSUnit_Unset) {
-      animation->SetName(nsGkAtoms::_empty);
+      animation->SetName(EmptyString());
     } else if (animName.list) {
       switch (animName.list->mValue.GetUnit()) {
         case eCSSUnit_String:
         case eCSSUnit_Ident: {
-          animation->SetName(
-            NS_Atomize(animName.list->mValue.GetStringBufferValue()));
+          nsDependentString
+            nameStr(animName.list->mValue.GetStringBufferValue());
+          animation->SetName(nameStr);
           break;
         }
         case eCSSUnit_None: {
-          animation->SetName(nsGkAtoms::_empty);
+          animation->SetName(EmptyString());
           break;
         }
         default:
@@ -6395,7 +6388,7 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
     // and 'position'.  Since generated content can't be floated or
     // positioned, we can deal with it here.
 
-    nsAtom* pseudo = aContext->GetPseudo();
+    nsIAtom* pseudo = aContext->GetPseudo();
     if (pseudo && display->mDisplay == StyleDisplay::Contents) {
       // We don't want to create frames for anonymous content using a parent
       // frame that is for content above the root of the anon tree.
@@ -6497,7 +6490,7 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
     for (const nsCSSValueList* item = willChangeValue->GetListValue();
          item; item = item->mNext)
     {
-      nsAtom* atom = item->mValue.GetAtomValue();
+      nsIAtom* atom = item->mValue.GetAtomValue();
       display->mWillChange.AppendElement(atom);
       if (atom == nsGkAtoms::transform) {
         display->mWillChangeBitField |= NS_STYLE_WILL_CHANGE_TRANSFORM;
@@ -7747,10 +7740,13 @@ nsRuleNode::ComputeBorderData(void* aStartStruct,
     case eCSSUnit_Inherit: {
       conditions.SetUncacheable();
       border->ClearBorderColors(side);
-      if (parentBorder->mBorderColors) {
-        border->EnsureBorderColors();
-        border->mBorderColors->mColors[side] =
-          parentBorder->mBorderColors->mColors[side];
+      if (parentContext) {
+        nsBorderColors *parentColors;
+        parentBorder->GetCompositeColors(side, &parentColors);
+        if (parentColors) {
+          border->EnsureBorderColors();
+          border->mBorderColors[side] = parentColors->Clone();
+        }
       }
       break;
     }
@@ -7765,7 +7761,7 @@ nsRuleNode::ComputeBorderData(void* aStartStruct,
       while (list) {
         if (SetColor(list->mValue, unused, mPresContext,
                      aContext, borderColor, conditions))
-          border->mBorderColors->mColors[side].AppendElement(borderColor);
+          border->AppendBorderColor(side, borderColor);
         else {
           NS_NOTREACHED("unexpected item in -moz-border-*-colors list");
         }
@@ -8076,7 +8072,7 @@ nsRuleNode::ComputeListData(void* aStartStruct,
 
   // list-style-type: string, none, inherit, initial
   const nsCSSValue* typeValue = aRuleData->ValueForListStyleType();
-  auto setListStyleType = [this, list](nsAtom* type) {
+  auto setListStyleType = [this, list](nsIAtom* type) {
     list->mCounterStyle = mPresContext->
       CounterStyleManager()->BuildCounterStyle(type);
   };
@@ -8101,12 +8097,10 @@ nsRuleNode::ComputeListData(void* aStartStruct,
       break;
     }
     case eCSSUnit_Enumerated: {
-      // For compatibility with html attribute map. This branch should
-      // never be called for value from CSS. The values can only come
-      // from the items in EnumTable listed in HTMLLIElement.cpp and
-      // HTMLSharedListElement.cpp.
+      // For compatibility with html attribute map.
+      // This branch should never be called for value from CSS.
       int32_t intValue = typeValue->GetIntValue();
-      RefPtr<nsAtom> name;
+      nsCOMPtr<nsIAtom> name;
       switch (intValue) {
         case NS_STYLE_LIST_STYLE_LOWER_ROMAN:
           name = nsGkAtoms::lowerRoman;
@@ -8121,7 +8115,8 @@ nsRuleNode::ComputeListData(void* aStartStruct,
           name = nsGkAtoms::upperAlpha;
           break;
         default:
-          name = CounterStyleManager::GetStyleNameFromType(intValue);
+          name = NS_Atomize(nsCSSProps::ValueToKeyword(
+                  intValue, nsCSSProps::kListStyleKTable));
           break;
       }
       setListStyleType(name);
@@ -8330,8 +8325,8 @@ AppendGridLineNames(const nsCSSValue& aValue,
 
 static void
 SetGridTrackList(const nsCSSValue& aValue,
-                 UniquePtr<nsStyleGridTemplate>& aResult,
-                 const nsStyleGridTemplate* aParentValue,
+                 nsStyleGridTemplate& aResult,
+                 const nsStyleGridTemplate& aParentValue,
                  GeckoStyleContext* aStyleContext,
                  nsPresContext* aPresContext,
                  RuleNodeCacheConditions& aConditions)
@@ -8343,42 +8338,51 @@ SetGridTrackList(const nsCSSValue& aValue,
 
   case eCSSUnit_Inherit:
     aConditions.SetUncacheable();
-    if (aParentValue) {
-      aResult = MakeUnique<nsStyleGridTemplate>(*aParentValue);
-    } else {
-      aResult = nullptr;
-    }
+    aResult = aParentValue;
     break;
 
   case eCSSUnit_Initial:
   case eCSSUnit_Unset:
   case eCSSUnit_None:
-    aResult = nullptr;
+    aResult.mIsSubgrid = false;
+    aResult.mLineNameLists.Clear();
+    aResult.mMinTrackSizingFunctions.Clear();
+    aResult.mMaxTrackSizingFunctions.Clear();
+    aResult.mRepeatAutoLineNameListBefore.Clear();
+    aResult.mRepeatAutoLineNameListAfter.Clear();
+    aResult.mRepeatAutoIndex = -1;
+    aResult.mIsAutoFill = false;
     break;
 
   default:
-    aResult = MakeUnique<nsStyleGridTemplate>();
+    aResult.mLineNameLists.Clear();
+    aResult.mMinTrackSizingFunctions.Clear();
+    aResult.mMaxTrackSizingFunctions.Clear();
+    aResult.mRepeatAutoLineNameListBefore.Clear();
+    aResult.mRepeatAutoLineNameListAfter.Clear();
+    aResult.mRepeatAutoIndex = -1;
+    aResult.mIsAutoFill = false;
     const nsCSSValueList* item = aValue.GetListValue();
     if (item->mValue.GetUnit() == eCSSUnit_Enumerated &&
         item->mValue.GetIntValue() == NS_STYLE_GRID_TEMPLATE_SUBGRID) {
       // subgrid <line-name-list>?
-      aResult->mIsSubgrid = true;
+      aResult.mIsSubgrid = true;
       item = item->mNext;
       for (int32_t i = 0; item && i < nsStyleGridLine::kMaxLine; ++i) {
         if (item->mValue.GetUnit() == eCSSUnit_Pair) {
           // This is a 'auto-fill' <name-repeat> expression.
           const nsCSSValuePair& pair = item->mValue.GetPairValue();
-          MOZ_ASSERT(aResult->mRepeatAutoIndex == -1,
+          MOZ_ASSERT(aResult.mRepeatAutoIndex == -1,
                      "can only have one <name-repeat> with auto-fill");
-          aResult->mRepeatAutoIndex = i;
-          aResult->mIsAutoFill = true;
+          aResult.mRepeatAutoIndex = i;
+          aResult.mIsAutoFill = true;
           MOZ_ASSERT(pair.mXValue.GetIntValue() == NS_STYLE_GRID_REPEAT_AUTO_FILL,
                      "unexpected repeat() enum value for subgrid");
           const nsCSSValueList* list = pair.mYValue.GetListValue();
-          AppendGridLineNames(list->mValue, aResult->mRepeatAutoLineNameListBefore);
+          AppendGridLineNames(list->mValue, aResult.mRepeatAutoLineNameListBefore);
         } else {
           AppendGridLineNames(item->mValue,
-                              *aResult->mLineNameLists.AppendElement());
+                              *aResult.mLineNameLists.AppendElement());
         }
         item = item->mNext;
       }
@@ -8387,10 +8391,10 @@ SetGridTrackList(const nsCSSValue& aValue,
       // The list is expected to have odd number of items, at least 3
       // starting with a <line-names> (sub list of identifiers),
       // and alternating between that and <track-size>.
-      aResult->mIsSubgrid = false;
+      aResult.mIsSubgrid = false;
       for (int32_t line = 1;  ; ++line) {
         AppendGridLineNames(item->mValue,
-                            *aResult->mLineNameLists.AppendElement());
+                            *aResult.mLineNameLists.AppendElement());
         item = item->mNext;
 
         if (!item || line == nsStyleGridLine::kMaxLine) {
@@ -8400,31 +8404,31 @@ SetGridTrackList(const nsCSSValue& aValue,
         if (item->mValue.GetUnit() == eCSSUnit_Pair) {
           // This is a 'auto-fill' / 'auto-fit' <auto-repeat> expression.
           const nsCSSValuePair& pair = item->mValue.GetPairValue();
-          MOZ_ASSERT(aResult->mRepeatAutoIndex == -1,
+          MOZ_ASSERT(aResult.mRepeatAutoIndex == -1,
                      "can only have one <auto-repeat>");
-          aResult->mRepeatAutoIndex = line - 1;
+          aResult.mRepeatAutoIndex = line - 1;
           switch (pair.mXValue.GetIntValue()) {
             case NS_STYLE_GRID_REPEAT_AUTO_FILL:
-              aResult->mIsAutoFill = true;
+              aResult.mIsAutoFill = true;
               break;
             case NS_STYLE_GRID_REPEAT_AUTO_FIT:
-              aResult->mIsAutoFill = false;
+              aResult.mIsAutoFill = false;
               break;
             default:
               MOZ_ASSERT_UNREACHABLE("unexpected repeat() enum value");
           }
           const nsCSSValueList* list = pair.mYValue.GetListValue();
-          AppendGridLineNames(list->mValue, aResult->mRepeatAutoLineNameListBefore);
+          AppendGridLineNames(list->mValue, aResult.mRepeatAutoLineNameListBefore);
           list = list->mNext;
-          nsStyleCoord& min = *aResult->mMinTrackSizingFunctions.AppendElement();
-          nsStyleCoord& max = *aResult->mMaxTrackSizingFunctions.AppendElement();
+          nsStyleCoord& min = *aResult.mMinTrackSizingFunctions.AppendElement();
+          nsStyleCoord& max = *aResult.mMaxTrackSizingFunctions.AppendElement();
           SetGridTrackSize(list->mValue, min, max,
                            aStyleContext, aPresContext, aConditions);
           list = list->mNext;
-          AppendGridLineNames(list->mValue, aResult->mRepeatAutoLineNameListAfter);
+          AppendGridLineNames(list->mValue, aResult.mRepeatAutoLineNameListAfter);
         } else {
-          nsStyleCoord& min = *aResult->mMinTrackSizingFunctions.AppendElement();
-          nsStyleCoord& max = *aResult->mMaxTrackSizingFunctions.AppendElement();
+          nsStyleCoord& min = *aResult.mMinTrackSizingFunctions.AppendElement();
+          nsStyleCoord& max = *aResult.mMaxTrackSizingFunctions.AppendElement();
           SetGridTrackSize(item->mValue, min, max,
                            aStyleContext, aPresContext, aConditions);
         }
@@ -8432,11 +8436,11 @@ SetGridTrackList(const nsCSSValue& aValue,
         item = item->mNext;
         MOZ_ASSERT(item, "Expected a eCSSUnit_List of odd length");
       }
-      MOZ_ASSERT(!aResult->mMinTrackSizingFunctions.IsEmpty() &&
-                 aResult->mMinTrackSizingFunctions.Length() ==
-                 aResult->mMaxTrackSizingFunctions.Length() &&
-                 aResult->mMinTrackSizingFunctions.Length() + 1 ==
-                 aResult->mLineNameLists.Length(),
+      MOZ_ASSERT(!aResult.mMinTrackSizingFunctions.IsEmpty() &&
+                 aResult.mMinTrackSizingFunctions.Length() ==
+                 aResult.mMaxTrackSizingFunctions.Length() &&
+                 aResult.mMinTrackSizingFunctions.Length() + 1 ==
+                 aResult.mLineNameLists.Length(),
                  "Inconstistent array lengths for nsStyleGridTemplate");
     }
   }
@@ -8787,14 +8791,12 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
 
   // grid-template-columns
   SetGridTrackList(*aRuleData->ValueForGridTemplateColumns(),
-                   pos->mGridTemplateColumns,
-                   parentPos->mGridTemplateColumns.get(),
+                   pos->mGridTemplateColumns, parentPos->mGridTemplateColumns,
                    aContext, mPresContext, conditions);
 
   // grid-template-rows
   SetGridTrackList(*aRuleData->ValueForGridTemplateRows(),
-                   pos->mGridTemplateRows,
-                   parentPos->mGridTemplateRows.get(),
+                   pos->mGridTemplateRows, parentPos->mGridTemplateRows,
                    aContext, mPresContext, conditions);
 
   // grid-tempate-areas
@@ -8984,7 +8986,7 @@ nsRuleNode::ComputeContentData(void* aStartStruct,
     break;
 
   case eCSSUnit_Enumerated: {
-    MOZ_ASSERT(contentValue->GetIntValue() == int32_t(StyleContent::AltContent),
+    MOZ_ASSERT(contentValue->GetIntValue() == NS_STYLE_CONTENT_ALT_CONTENT,
                "unrecognized solitary content keyword");
     content->AllocateContents(1);
     content->ContentAt(0).SetKeyword(eStyleContentType_AltContent);
@@ -9049,16 +9051,16 @@ nsRuleNode::ComputeContentData(void* aStartStruct,
         }
         case eCSSUnit_Enumerated:
           switch (value.GetIntValue()) {
-		  case uint8_t(StyleContent::OpenQuote):
+            case NS_STYLE_CONTENT_OPEN_QUOTE:
               data.SetKeyword(eStyleContentType_OpenQuote);
               break;
-		  case uint8_t(StyleContent::CloseQuote):
+            case NS_STYLE_CONTENT_CLOSE_QUOTE:
               data.SetKeyword(eStyleContentType_CloseQuote);
               break;
-		  case uint8_t(StyleContent::NoOpenQuote):
+            case NS_STYLE_CONTENT_NO_OPEN_QUOTE:
               data.SetKeyword(eStyleContentType_NoOpenQuote);
               break;
-		  case uint8_t(StyleContent::NoCloseQuote):
+            case NS_STYLE_CONTENT_NO_CLOSE_QUOTE:
               data.SetKeyword(eStyleContentType_NoCloseQuote);
               break;
             default:
@@ -9756,7 +9758,7 @@ nsRuleNode::ComputeSVGData(void* aStartStruct,
     for (const nsCSSValueList* item = contextPropsValue->GetListValue();
          item; item = item->mNext)
     {
-      nsAtom* atom = item->mValue.GetAtomValue();
+      nsIAtom* atom = item->mValue.GetAtomValue();
       svg->mContextProps.AppendElement(atom);
       if (atom == nsGkAtoms::fill) {
         svg->mContextPropsBits |= NS_STYLE_CONTEXT_PROPERTY_FILL;
@@ -9791,13 +9793,13 @@ nsRuleNode::ComputeSVGData(void* aStartStruct,
   COMPUTE_END_INHERITED(SVG, svg)
 }
 
-static UniquePtr<StyleBasicShape>
+static already_AddRefed<StyleBasicShape>
 GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
                                GeckoStyleContext* aStyleContext,
                                nsPresContext* aPresContext,
                                RuleNodeCacheConditions& aConditions)
 {
-  UniquePtr<StyleBasicShape> basicShape;
+  RefPtr<StyleBasicShape> basicShape;
 
   nsCSSValue::Array* shapeFunction = aValue.GetArrayValue();
   nsCSSKeyword functionName =
@@ -9805,7 +9807,7 @@ GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
 
   if (functionName == eCSSKeyword_polygon) {
     MOZ_ASSERT(!basicShape, "did not expect value");
-    basicShape = MakeUnique<StyleBasicShape>(StyleBasicShapeType::Polygon);
+    basicShape = new StyleBasicShape(StyleBasicShapeType::Polygon);
     MOZ_ASSERT(shapeFunction->Count() > 1,
                "polygon has wrong number of arguments");
     size_t j = 1;
@@ -9842,7 +9844,7 @@ GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
       StyleBasicShapeType::Circle :
       StyleBasicShapeType::Ellipse;
     MOZ_ASSERT(!basicShape, "did not expect value");
-    basicShape = MakeUnique<StyleBasicShape>(type);
+    basicShape = new StyleBasicShape(type);
     const int32_t mask = SETCOORD_PERCENT | SETCOORD_LENGTH |
       SETCOORD_STORE_CALC | SETCOORD_ENUMERATED;
     size_t count = type == StyleBasicShapeType::Circle ? 2 : 3;
@@ -9878,7 +9880,7 @@ GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
     }
   } else if (functionName == eCSSKeyword_inset) {
     MOZ_ASSERT(!basicShape, "did not expect value");
-    basicShape = MakeUnique<StyleBasicShape>(StyleBasicShapeType::Inset);
+    basicShape = new StyleBasicShape(StyleBasicShapeType::Inset);
     MOZ_ASSERT(shapeFunction->Count() == 6,
                "inset function has wrong number of arguments");
     MOZ_ASSERT(shapeFunction->Item(1).GetUnit() != eCSSUnit_Null,
@@ -9939,7 +9941,7 @@ GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
     NS_NOTREACHED("unexpected basic shape function");
   }
 
-  return basicShape;
+  return basicShape.forget();
 }
 
 static void
@@ -9958,7 +9960,7 @@ SetStyleShapeSourceToCSSValue(
              "Expect one or both of a shape function and a reference box");
 
   StyleGeometryBox referenceBox = StyleGeometryBox::NoBox;
-  UniquePtr<StyleBasicShape> basicShape;
+  RefPtr<StyleBasicShape> basicShape;
 
   for (size_t i = 0; i < array->Count(); ++i) {
     const nsCSSValue& item = array->Item(i);
@@ -9974,7 +9976,7 @@ SetStyleShapeSourceToCSSValue(
   }
 
   if (basicShape) {
-    aShapeSource->SetBasicShape(Move(basicShape), referenceBox);
+    aShapeSource->SetBasicShape(basicShape, referenceBox);
   } else {
     aShapeSource->SetReferenceBox(referenceBox);
   }
@@ -10145,6 +10147,7 @@ nsRuleNode::ComputeSVGResetData(void* aStartStruct,
            parentSVGReset->mMaskType,
            NS_STYLE_MASK_TYPE_LUMINANCE);
 
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
   uint32_t maxItemCount = 1;
   bool rebuild = false;
 
@@ -10244,6 +10247,21 @@ nsRuleNode::ComputeSVGResetData(void* aStartStruct,
   if (rebuild) {
     FillAllBackgroundLists(svgReset->mMask, maxItemCount);
   }
+#else
+  // mask: none | <url>
+  const nsCSSValue* maskValue = aRuleData->ValueForMask();
+  if (eCSSUnit_URL == maskValue->GetUnit()) {
+    svgReset->mMask.mLayers[0].mSourceURI = maskValue->GetURLStructValue();
+  } else if (eCSSUnit_None == maskValue->GetUnit() ||
+             eCSSUnit_Initial == maskValue->GetUnit() ||
+             eCSSUnit_Unset == maskValue->GetUnit()) {
+    svgReset->mMask.mLayers[0].mSourceURI = nullptr;
+  } else if (eCSSUnit_Inherit == maskValue->GetUnit()) {
+    conditions.SetUncacheable();
+    svgReset->mMask.mLayers[0].mSourceURI =
+      parentSVGReset->mMask.mLayers[0].mSourceURI;
+  }
+#endif
 
   COMPUTE_END_RESET(SVGReset, svgReset)
 }
@@ -10507,9 +10525,14 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
   if (ruleTypeMask & NS_AUTHOR_SPECIFIED_PADDING)
     inheritBits |= NS_STYLE_INHERIT_BIT(Padding);
 
+  if (ruleTypeMask & NS_AUTHOR_SPECIFIED_TEXT_SHADOW)
+    inheritBits |= NS_STYLE_INHERIT_BIT(Text);
+
   // properties in the SIDS, whether or not we care about them
   size_t nprops = 0,
-         backgroundOffset, borderOffset, paddingOffset;
+         backgroundOffset, borderOffset, paddingOffset, textShadowOffset;
+
+  // We put the reset properties the start of the nsCSSValue array....
 
   if (ruleTypeMask & NS_AUTHOR_SPECIFIED_BACKGROUND) {
     backgroundOffset = nprops;
@@ -10524,6 +10547,14 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
   if (ruleTypeMask & NS_AUTHOR_SPECIFIED_PADDING) {
     paddingOffset = nprops;
     nprops += nsCSSProps::PropertyCountInStruct(eStyleStruct_Padding);
+  }
+
+  // ...and the inherited properties at the end of the array.
+  size_t inheritedOffset = nprops;
+
+  if (ruleTypeMask & NS_AUTHOR_SPECIFIED_TEXT_SHADOW) {
+    textShadowOffset = nprops;
+    nprops += nsCSSProps::PropertyCountInStruct(eStyleStruct_Text);
   }
 
   void* dataStorage = alloca(nprops * sizeof(nsCSSValue));
@@ -10543,6 +10574,10 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
 
   if (ruleTypeMask & NS_AUTHOR_SPECIFIED_PADDING) {
     ruleData.mValueOffsets[eStyleStruct_Padding] = paddingOffset;
+  }
+
+  if (ruleTypeMask & NS_AUTHOR_SPECIFIED_TEXT_SHADOW) {
+    ruleData.mValueOffsets[eStyleStruct_Text] = textShadowOffset;
   }
 
   static const nsCSSPropertyID backgroundValues[] = {
@@ -10576,16 +10611,22 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
     eCSSProperty_padding_left,
   };
 
+  static const nsCSSPropertyID textShadowValues[] = {
+    eCSSProperty_text_shadow
+  };
+
   // Number of properties we care about
   size_t nValues = 0;
 
   nsCSSValue* values[MOZ_ARRAY_LENGTH(backgroundValues) +
                      MOZ_ARRAY_LENGTH(borderValues) +
-                     MOZ_ARRAY_LENGTH(paddingValues)];
+                     MOZ_ARRAY_LENGTH(paddingValues) +
+                     MOZ_ARRAY_LENGTH(textShadowValues)];
 
   nsCSSPropertyID properties[MOZ_ARRAY_LENGTH(backgroundValues) +
                            MOZ_ARRAY_LENGTH(borderValues) +
-                           MOZ_ARRAY_LENGTH(paddingValues)];
+                           MOZ_ARRAY_LENGTH(paddingValues) +
+                           MOZ_ARRAY_LENGTH(textShadowValues)];
 
   if (ruleTypeMask & NS_AUTHOR_SPECIFIED_BACKGROUND) {
     for (uint32_t i = 0, i_end = ArrayLength(backgroundValues);
@@ -10608,6 +10649,14 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
          i < i_end; ++i) {
       properties[nValues] = paddingValues[i];
       values[nValues++] = ruleData.ValueFor(paddingValues[i]);
+    }
+  }
+
+  if (ruleTypeMask & NS_AUTHOR_SPECIFIED_TEXT_SHADOW) {
+    for (uint32_t i = 0, i_end = ArrayLength(textShadowValues);
+         i < i_end; ++i) {
+      properties[nValues] = textShadowValues[i];
+      values[nValues++] = ruleData.ValueFor(textShadowValues[i]);
     }
   }
 
@@ -10641,7 +10690,8 @@ nsRuleNode::HasAuthorSpecifiedRules(GeckoStyleContext* aStyleContext,
             if (unit != eCSSUnit_Null &&
                 unit != eCSSUnit_Dummy &&
                 unit != eCSSUnit_DummyInherit) {
-              if (unit == eCSSUnit_Inherit) {
+              if (unit == eCSSUnit_Inherit ||
+                  (i >= inheritedOffset && unit == eCSSUnit_Unset)) {
                 haveExplicitUAInherit = true;
                 values[i]->SetDummyInheritValue();
               } else {

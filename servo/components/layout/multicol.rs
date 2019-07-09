@@ -10,7 +10,7 @@ use ServoArc;
 use app_units::Au;
 use block::BlockFlow;
 use context::LayoutContext;
-use display_list_builder::{DisplayListBuildState, StackingContextCollectionState};
+use display_list_builder::DisplayListBuildState;
 use euclid::{Point2D, Vector2D};
 use floats::FloatKind;
 use flow::{Flow, FlowClass, OpaqueFlow, mut_base, FragmentationContext};
@@ -24,10 +24,6 @@ use style::properties::ComputedValues;
 use style::values::Either;
 use style::values::computed::{LengthOrPercentageOrAuto, LengthOrPercentageOrNone};
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for MulticolFlow {}
-
-#[repr(C)]
 pub struct MulticolFlow {
     pub block_flow: BlockFlow,
 
@@ -36,10 +32,6 @@ pub struct MulticolFlow {
     pub column_pitch: Au,
 }
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for MulticolColumnFlow {}
-
-#[repr(C)]
 pub struct MulticolColumnFlow {
     pub block_flow: BlockFlow,
 }
@@ -106,21 +98,20 @@ impl Flow for MulticolFlow {
             let column_style = self.block_flow.fragment.style.get_column();
 
             let column_gap = match column_style.column_gap {
-                Either::First(len) => len.into(),
-                Either::Second(_normal) => self.block_flow.fragment.style.get_font().font_size.size(),
+                Either::First(len) => len,
+                Either::Second(_normal) => self.block_flow.fragment.style.get_font().font_size,
             };
 
             let mut column_count;
             if let Either::First(column_width) = column_style.column_width {
-                let column_width = Au::from(column_width);
                 column_count =
                     max(1, (content_inline_size + column_gap).0 / (column_width + column_gap).0);
                 if let Either::First(specified_column_count) = column_style.column_count {
-                    column_count = min(column_count, specified_column_count.0 as i32);
+                    column_count = min(column_count, specified_column_count as i32);
                 }
             } else {
                 column_count = match column_style.column_count {
-                    Either::First(n) => n.0,
+                    Either::First(n) => n,
                     _ => unreachable!(),
                 }
             }
@@ -144,9 +135,9 @@ impl Flow for MulticolFlow {
             available_block_size: {
                 let style = &self.block_flow.fragment.style;
                 if let LengthOrPercentageOrAuto::Length(length) = style.content_block_size() {
-                    Au::from(length)
+                    length
                 } else if let LengthOrPercentageOrNone::Length(length) = style.max_block_size() {
-                    Au::from(length)
+                    length
                 } else {
                     // FIXME: do column balancing instead
                     // FIXME: (until column balancing) substract margins/borders/padding
@@ -175,8 +166,8 @@ impl Flow for MulticolFlow {
         }
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context);
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context);
         let pitch = LogicalSize::new(self.block_flow.base.writing_mode, self.column_pitch, Au(0));
         let pitch = pitch.to_physical(self.block_flow.base.writing_mode);
         for (i, child) in self.block_flow.base.children.iter_mut().enumerate() {
@@ -198,7 +189,7 @@ impl Flow for MulticolFlow {
         self.block_flow.build_display_list(state);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
         self.block_flow.collect_stacking_contexts(state);
     }
 
@@ -208,14 +199,6 @@ impl Flow for MulticolFlow {
 
     fn compute_overflow(&self) -> Overflow {
         self.block_flow.compute_overflow()
-    }
-
-    fn contains_roots_of_absolute_flow_tree(&self) -> bool {
-        self.block_flow.contains_roots_of_absolute_flow_tree()
-    }
-
-    fn is_absolute_containing_block(&self) -> bool {
-        self.block_flow.is_absolute_containing_block()
     }
 
     fn generated_containing_block_size(&self, flow: OpaqueFlow) -> LogicalSize<Au> {
@@ -271,8 +254,8 @@ impl Flow for MulticolColumnFlow {
         Flow::fragment(&mut self.block_flow, layout_context, fragmentation_context)
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn update_late_computed_inline_position_if_necessary(&mut self, inline_position: Au) {
@@ -288,7 +271,7 @@ impl Flow for MulticolColumnFlow {
         self.block_flow.build_display_list(state);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
         self.block_flow.collect_stacking_contexts(state);
     }
 
@@ -298,14 +281,6 @@ impl Flow for MulticolColumnFlow {
 
     fn compute_overflow(&self) -> Overflow {
         self.block_flow.compute_overflow()
-    }
-
-    fn contains_roots_of_absolute_flow_tree(&self) -> bool {
-        self.block_flow.contains_roots_of_absolute_flow_tree()
-    }
-
-    fn is_absolute_containing_block(&self) -> bool {
-        self.block_flow.is_absolute_containing_block()
     }
 
     fn generated_containing_block_size(&self, flow: OpaqueFlow) -> LogicalSize<Au> {

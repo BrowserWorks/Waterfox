@@ -21,10 +21,7 @@
 #include "nsJSUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Observer.h"
-#include "mozilla/Services.h"
-#include "mozilla/StaticPtr.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ScreenOrientation.h"
 #include "WindowIdentifier.h"
 
@@ -388,6 +385,58 @@ NotifyBatteryChange(const BatteryInformation& aInfo)
   BatteryObservers().BroadcastCachedInformation();
 }
 
+bool GetScreenEnabled()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetScreenEnabled(), false);
+}
+
+void SetScreenEnabled(bool aEnabled)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(SetScreenEnabled(aEnabled));
+}
+
+bool GetKeyLightEnabled()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetKeyLightEnabled(), false);
+}
+
+void SetKeyLightEnabled(bool aEnabled)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(SetKeyLightEnabled(aEnabled));
+}
+
+bool GetCpuSleepAllowed()
+{
+  // Generally for interfaces that are accessible by normal web content
+  // we should cache the result and be notified on state changes, like
+  // what the battery API does. But since this is only used by
+  // privileged interface, the synchronous getter is OK here.
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetCpuSleepAllowed(), true);
+}
+
+void SetCpuSleepAllowed(bool aAllowed)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(SetCpuSleepAllowed(aAllowed));
+}
+
+double GetScreenBrightness()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetScreenBrightness(), 0);
+}
+
+void SetScreenBrightness(double aBrightness)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(SetScreenBrightness(clamped(aBrightness, 0.0, 1.0)));
+}
+
 class SystemClockChangeObserversManager : public ObserversManager<int64_t>
 {
 protected:
@@ -476,6 +525,27 @@ AdjustSystemClock(int64_t aDeltaMilliseconds)
 }
 
 void
+SetTimezone(const nsCString& aTimezoneSpec)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(SetTimezone(aTimezoneSpec));
+}
+
+int32_t
+GetTimezoneOffset()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetTimezoneOffset(), 0);
+}
+
+nsCString
+GetTimezone()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetTimezone(), nsCString(""));
+}
+
+void
 EnableSensorNotifications(SensorType aSensor) {
   AssertMainThread();
   PROXY_IF_SANDBOXED(EnableSensorNotifications(aSensor));
@@ -517,6 +587,7 @@ UnregisterSensorObserver(SensorType aSensor, ISensorObserver *aObserver) {
   AssertMainThread();
 
   if (!gSensorObservers) {
+    HAL_ERR("Un-registering a sensor when none have been registered");
     return;
   }
 
@@ -526,14 +597,29 @@ UnregisterSensorObserver(SensorType aSensor, ISensorObserver *aObserver) {
   }
   DisableSensorNotifications(aSensor);
 
-  // Destroy sSensorObservers only if all observer lists are empty.
   for (int i = 0; i < NUM_SENSOR_TYPE; i++) {
     if (gSensorObservers[i].Length() > 0) {
       return;
     }
   }
-  delete [] gSensorObservers;
+
+  // We want to destroy gSensorObservers if all observer lists are
+  // empty, but we have to defer the deallocation via a runnable to
+  // mainthread (since we may be inside NotifySensorChange()/Broadcast()
+  // when it calls UnregisterSensorObserver()).
+  SensorObserverList* sensorlists = gSensorObservers;
   gSensorObservers = nullptr;
+
+  // Unlike DispatchToMainThread, DispatchToCurrentThread doesn't leak a runnable if
+  // it fails (and we assert we're on MainThread).
+  if (NS_FAILED(NS_DispatchToCurrentThread(NS_NewRunnableFunction("UnregisterSensorObserver",
+                                                                  [sensorlists]() -> void {
+      delete [] sensorlists;
+      }))))
+  {
+    // Still need to delete sensorlists if the dispatch fails
+    delete [] sensorlists;
+  }
 }
 
 void
@@ -571,6 +657,27 @@ NotifyNetworkChange(const NetworkInformation& aInfo)
 {
   NetworkObservers().CacheInformation(aInfo);
   NetworkObservers().BroadcastCachedInformation();
+}
+
+void Reboot()
+{
+  AssertMainProcess();
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(Reboot());
+}
+
+void PowerOff()
+{
+  AssertMainProcess();
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(PowerOff());
+}
+
+void StartForceQuitWatchdog(ShutdownMode aMode, int32_t aTimeoutSecs)
+{
+  AssertMainProcess();
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(StartForceQuitWatchdog(aMode, aTimeoutSecs));
 }
 
 void
@@ -670,6 +777,18 @@ void
 DisableSwitchNotifications(SwitchDevice aDevice) {
   AssertMainThread();
   PROXY_IF_SANDBOXED(DisableSwitchNotifications(aDevice));
+}
+
+SwitchState GetCurrentSwitchState(SwitchDevice aDevice)
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(GetCurrentSwitchState(aDevice), SWITCH_STATE_UNKNOWN);
+}
+
+void NotifySwitchStateFromInputDevice(SwitchDevice aDevice, SwitchState aState)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(NotifySwitchStateFromInputDevice(aDevice, aState));
 }
 
 typedef mozilla::ObserverList<SwitchEvent> SwitchObserverList;
@@ -804,6 +923,12 @@ ThreadPriorityToString(ThreadPriority aPriority)
   }
 }
 
+void FactoryReset(mozilla::dom::FactoryResetReason& aReason)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(FactoryReset(aReason));
+}
+
 void
 StartDiskSpaceWatcher()
 {
@@ -818,6 +943,36 @@ StopDiskSpaceWatcher()
   AssertMainProcess();
   AssertMainThread();
   PROXY_IF_SANDBOXED(StopDiskSpaceWatcher());
+}
+
+uint32_t
+GetTotalSystemMemory()
+{
+  return hal_impl::GetTotalSystemMemory();
+}
+
+bool IsHeadphoneEventFromInputDev()
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(IsHeadphoneEventFromInputDev(), false);
+}
+
+nsresult StartSystemService(const char* aSvcName, const char* aArgs)
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(StartSystemService(aSvcName, aArgs), NS_ERROR_FAILURE);
+}
+
+void StopSystemService(const char* aSvcName)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(StopSystemService(aSvcName));
+}
+
+bool SystemServiceIsRunning(const char* aSvcName)
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(SystemServiceIsRunning(aSvcName), false);
 }
 
 } // namespace hal

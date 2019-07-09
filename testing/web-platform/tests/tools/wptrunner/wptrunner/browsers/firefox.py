@@ -78,8 +78,7 @@ def browser_kwargs(test_type, run_info_data, **kwargs):
                                                          run_info_data,
                                                          **kwargs),
             "leak_check": kwargs["leak_check"],
-            "stylo_threads": kwargs["stylo_threads"],
-            "chaos_mode_flags": kwargs["chaos_mode_flags"]}
+            "stylo_threads": kwargs["stylo_threads"]}
 
 
 def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
@@ -94,6 +93,9 @@ def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
         executor_kwargs["reftest_internal"] = kwargs["reftest_internal"]
         executor_kwargs["reftest_screenshot"] = kwargs["reftest_screenshot"]
     if test_type == "wdspec":
+        executor_kwargs["binary"] = kwargs["binary"]
+        executor_kwargs["webdriver_binary"] = kwargs.get("webdriver_binary")
+        executor_kwargs["webdriver_args"] = kwargs.get("webdriver_args")
         fxOptions = {}
         if kwargs["binary"]:
             fxOptions["binary"] = kwargs["binary"]
@@ -120,8 +122,7 @@ def env_options():
 
 
 def run_info_extras(**kwargs):
-    return {"e10s": kwargs["gecko_e10s"],
-            "headless": "MOZ_HEADLESS" in os.environ}
+    return {"e10s": kwargs["gecko_e10s"]}
 
 
 def update_properties():
@@ -137,8 +138,7 @@ class FirefoxBrowser(Browser):
     def __init__(self, logger, binary, prefs_root, test_type, extra_prefs=None, debug_info=None,
                  symbols_path=None, stackwalk_binary=None, certutil_binary=None,
                  ca_certificate_path=None, e10s=False, stackfix_dir=None,
-                 binary_args=None, timeout_multiplier=None, leak_check=False, stylo_threads=1,
-                 chaos_mode_flags=None):
+                 binary_args=None, timeout_multiplier=None, leak_check=False, stylo_threads=1):
         Browser.__init__(self, logger)
         self.binary = binary
         self.prefs_root = prefs_root
@@ -154,7 +154,7 @@ class FirefoxBrowser(Browser):
         self.certutil_binary = certutil_binary
         self.e10s = e10s
         self.binary_args = binary_args
-        if stackfix_dir:
+        if self.symbols_path and stackfix_dir:
             self.stack_fixer = get_stack_fixer_function(stackfix_dir,
                                                         self.symbols_path)
         else:
@@ -166,7 +166,6 @@ class FirefoxBrowser(Browser):
         self.leak_report_file = None
         self.leak_check = leak_check
         self.stylo_threads = stylo_threads
-        self.chaos_mode_flags = chaos_mode_flags
 
     def settings(self, test):
         return {"check_leaks": self.leak_check and not test.leaks}
@@ -177,12 +176,8 @@ class FirefoxBrowser(Browser):
             self.used_ports.add(self.marionette_port)
 
         env = os.environ.copy()
-        env["MOZ_CRASHREPORTER"] = "1"
-        env["MOZ_CRASHREPORTER_SHUTDOWN"] = "1"
         env["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "1"
         env["STYLO_THREADS"] = str(self.stylo_threads)
-        if self.chaos_mode_flags is not None:
-            env["MOZ_CHAOSMODE"] = str(self.chaos_mode_flags)
 
         locations = ServerLocations(filename=os.path.join(here, "server-locations.txt"))
 
@@ -195,8 +190,7 @@ class FirefoxBrowser(Browser):
                                       "network.dns.localDomains": ",".join(hostnames),
                                       "network.proxy.type": 0,
                                       "places.history.enabled": False,
-                                      "dom.send_after_paint_to_content": True,
-                                      "network.preload": True})
+                                      "dom.send_after_paint_to_content": True})
         if self.e10s:
             self.profile.set_preferences({"browser.tabs.remote.autostart": True})
 
@@ -315,14 +309,6 @@ class FirefoxBrowser(Browser):
     def executor_browser(self):
         assert self.marionette_port is not None
         return ExecutorBrowser, {"marionette_port": self.marionette_port}
-
-    def check_for_crashes(self):
-        dump_dir = os.path.join(self.profile.profile, "minidumps")
-
-        return bool(mozcrash.check_for_crashes(dump_dir,
-                                               symbols_path=self.symbols_path,
-                                               stackwalk_binary=self.stackwalk_binary,
-                                               quiet=True))
 
     def log_crash(self, process, test):
         dump_dir = os.path.join(self.profile.profile, "minidumps")

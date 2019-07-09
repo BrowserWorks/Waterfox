@@ -7,15 +7,14 @@
 const { Ci, Cu } = require("chrome");
 
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
+const events = require("sdk/event/core");
 const protocol = require("devtools/shared/protocol");
 const Services = require("Services");
+const { isWindowIncluded } = require("devtools/shared/layout/utils");
 const { highlighterSpec, customHighlighterSpec } = require("devtools/shared/specs/highlighters");
-
-loader.lazyRequireGetter(this, "isWindowIncluded", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "isXUL", "devtools/server/actors/highlighters/utils/markup", true);
-loader.lazyRequireGetter(this, "SimpleOutlineHighlighter", "devtools/server/actors/highlighters/simple-outline", true);
-loader.lazyRequireGetter(this, "BoxModelHighlighter", "devtools/server/actors/highlighters/box-model", true);
+const { isXUL } = require("./highlighters/utils/markup");
+const { SimpleOutlineHighlighter } = require("./highlighters/simple-outline");
 
 const HIGHLIGHTER_PICKED_TIMER = 1000;
 const IS_OSX = Services.appinfo.OS === "Darwin";
@@ -43,12 +42,16 @@ exports.isTypeRegistered = isTypeRegistered;
  * If no `typeName` is provided, the `typeName` property on the constructor's prototype
  * is used, if one is found, otherwise the name of the constructor function is used.
  */
-const register = (typeName, modulePath) => {
+const register = (constructor, typeName) => {
+  if (!typeName) {
+    typeName = constructor.prototype.typeName || constructor.name;
+  }
+
   if (highlighterTypes.has(typeName)) {
     throw Error(`${typeName} is already registered.`);
   }
 
-  highlighterTypes.set(typeName, modulePath);
+  highlighterTypes.set(typeName, constructor);
 };
 exports.register = register;
 
@@ -103,7 +106,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
 
     // Listen to navigation events to switch from the BoxModelHighlighter to the
     // SimpleOutlineHighlighter, and back, if the top level window changes.
-    this._tabActor.on("navigate", this._onNavigate);
+    events.on(this._tabActor, "navigate", this._onNavigate);
   },
 
   get conn() {
@@ -162,7 +165,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
 
     this.hideBoxModel();
     this._destroyHighlighter();
-    this._tabActor.off("navigate", this._onNavigate);
+    events.off(this._tabActor, "navigate", this._onNavigate);
 
     this._highlighterEnv.destroy();
     this._highlighterEnv = null;
@@ -252,7 +255,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
       // If shift is pressed, this is only a preview click, send the event to
       // the client, but don't stop picking.
       if (event.shiftKey) {
-        this._walker.emit("picker-node-previewed",
+        events.emit(this._walker, "picker-node-previewed",
           this._findAndAttachElement(event));
         return;
       }
@@ -267,7 +270,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
       if (!this._currentNode) {
         this._currentNode = this._findAndAttachElement(event);
       }
-      this._walker.emit("picker-node-picked", this._currentNode);
+      events.emit(this._walker, "picker-node-picked", this._currentNode);
     };
 
     this._onHovered = event => {
@@ -280,7 +283,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
       this._currentNode = this._findAndAttachElement(event);
       if (this._hoveredNode !== this._currentNode.node) {
         this._highlighter.show(this._currentNode.node.rawNode);
-        this._walker.emit("picker-node-hovered", this._currentNode);
+        events.emit(this._walker, "picker-node-hovered", this._currentNode);
         this._hoveredNode = this._currentNode.node;
       }
     };
@@ -342,13 +345,13 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
         // Cancel pick mode.
         case Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE:
           this.cancelPick();
-          this._walker.emit("picker-node-canceled");
+          events.emit(this._walker, "picker-node-canceled");
           return;
         case Ci.nsIDOMKeyEvent.DOM_VK_C:
           if ((IS_OSX && event.metaKey && event.altKey) ||
             (!IS_OSX && event.ctrlKey && event.shiftKey)) {
             this.cancelPick();
-            this._walker.emit("picker-node-canceled");
+            events.emit(this._walker, "picker-node-canceled");
           }
           return;
         default: return;
@@ -357,7 +360,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
       // Store currently attached element
       this._currentNode = this._walker.attachElement(currentNode);
       this._highlighter.show(this._currentNode.node.rawNode);
-      this._walker.emit("picker-node-hovered", this._currentNode);
+      events.emit(this._walker, "picker-node-hovered", this._currentNode);
     };
 
     this._startPickerListeners();
@@ -411,11 +414,11 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
   },
 
   _highlighterReady: function () {
-    this._inspector.walker.emit("highlighter-ready");
+    events.emit(this._inspector.walker, "highlighter-ready");
   },
 
   _highlighterHidden: function () {
-    this._inspector.walker.emit("highlighter-hide");
+    events.emit(this._inspector.walker, "highlighter-hide");
   },
 
   cancelPick: function () {
@@ -443,8 +446,8 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSp
 
     this._inspector = inspector;
 
-    let modulePath = highlighterTypes.get(typeName);
-    if (!modulePath) {
+    let constructor = highlighterTypes.get(typeName);
+    if (!constructor) {
       let list = [...highlighterTypes.keys()];
 
       throw new Error(`${typeName} isn't a valid highlighter class (${list})`);
@@ -455,7 +458,6 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSp
     if (!isXUL(this._inspector.tabActor.window)) {
       this._highlighterEnv = new HighlighterEnvironment();
       this._highlighterEnv.initFromTabActor(inspector.tabActor);
-      let constructor = require("./highlighters/" + modulePath)[typeName];
       this._highlighter = new constructor(this._highlighterEnv);
       if (this._highlighter.on) {
         this._highlighter.on("highlighter-event", this._onHighlighterEvent.bind(this));
@@ -516,7 +518,7 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSp
    * Upon receiving an event from the highlighter, forward it to the client.
    */
   _onHighlighterEvent: function (type, data) {
-    this.emit("highlighter-event", data);
+    events.emit(this, "highlighter-event", data);
   },
 
   /**
@@ -565,9 +567,9 @@ exports.HighlighterEnvironment = HighlighterEnvironment;
 HighlighterEnvironment.prototype = {
   initFromTabActor: function (tabActor) {
     this._tabActor = tabActor;
-    this._tabActor.on("window-ready", this.relayTabActorWindowReady);
-    this._tabActor.on("navigate", this.relayTabActorNavigate);
-    this._tabActor.on("will-navigate", this.relayTabActorWillNavigate);
+    events.on(this._tabActor, "window-ready", this.relayTabActorWindowReady);
+    events.on(this._tabActor, "navigate", this.relayTabActorNavigate);
+    events.on(this._tabActor, "will-navigate", this.relayTabActorWillNavigate);
   },
 
   initFromWindow: function (win) {
@@ -684,9 +686,9 @@ HighlighterEnvironment.prototype = {
 
   destroy: function () {
     if (this._tabActor) {
-      this._tabActor.off("window-ready", this.relayTabActorWindowReady);
-      this._tabActor.off("navigate", this.relayTabActorNavigate);
-      this._tabActor.off("will-navigate", this.relayTabActorWillNavigate);
+      events.off(this._tabActor, "window-ready", this.relayTabActorWindowReady);
+      events.off(this._tabActor, "navigate", this.relayTabActorNavigate);
+      events.off(this._tabActor, "will-navigate", this.relayTabActorWillNavigate);
     }
 
     // In case the environment was initialized from a window, we need to remove
@@ -704,13 +706,42 @@ HighlighterEnvironment.prototype = {
   }
 };
 
-register("BoxModelHighlighter", "box-model");
-register("CssGridHighlighter", "css-grid");
-register("CssTransformHighlighter", "css-transform");
-register("SelectorHighlighter", "selector");
-register("GeometryEditorHighlighter", "geometry-editor");
-register("RulersHighlighter", "rulers");
-register("MeasuringToolHighlighter", "measuring-tool");
-register("EyeDropper", "eye-dropper");
-register("PausedDebuggerOverlay", "paused-debugger");
-register("ShapesHighlighter", "shapes");
+const { BoxModelHighlighter } = require("./highlighters/box-model");
+register(BoxModelHighlighter);
+exports.BoxModelHighlighter = BoxModelHighlighter;
+
+const { CssGridHighlighter } = require("./highlighters/css-grid");
+register(CssGridHighlighter);
+exports.CssGridHighlighter = CssGridHighlighter;
+
+const { CssTransformHighlighter } = require("./highlighters/css-transform");
+register(CssTransformHighlighter);
+exports.CssTransformHighlighter = CssTransformHighlighter;
+
+const { SelectorHighlighter } = require("./highlighters/selector");
+register(SelectorHighlighter);
+exports.SelectorHighlighter = SelectorHighlighter;
+
+const { GeometryEditorHighlighter } = require("./highlighters/geometry-editor");
+register(GeometryEditorHighlighter);
+exports.GeometryEditorHighlighter = GeometryEditorHighlighter;
+
+const { RulersHighlighter } = require("./highlighters/rulers");
+register(RulersHighlighter);
+exports.RulersHighlighter = RulersHighlighter;
+
+const { MeasuringToolHighlighter } = require("./highlighters/measuring-tool");
+register(MeasuringToolHighlighter);
+exports.MeasuringToolHighlighter = MeasuringToolHighlighter;
+
+const { EyeDropper } = require("./highlighters/eye-dropper");
+register(EyeDropper);
+exports.EyeDropper = EyeDropper;
+
+const { PausedDebuggerOverlay } = require("./highlighters/paused-debugger");
+register(PausedDebuggerOverlay);
+exports.PausedDebuggerOverlay = PausedDebuggerOverlay;
+
+const { ShapesHighlighter } = require("./highlighters/shapes");
+register(ShapesHighlighter);
+exports.ShapesHighlighter = ShapesHighlighter;

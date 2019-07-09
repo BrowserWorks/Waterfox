@@ -56,6 +56,22 @@ TracingMarkerPayload::StreamPayload(SpliceableJSONWriter& aWriter,
 }
 
 void
+GPUMarkerPayload::StreamPayload(SpliceableJSONWriter& aWriter,
+                                const TimeStamp& aProcessStartTime,
+                                UniqueStacks& aUniqueStacks)
+{
+  StreamCommonProps("gpu_timer_query", aWriter, aProcessStartTime,
+                    aUniqueStacks);
+
+  aWriter.DoubleProperty("cpustart",
+                         (mCpuTimeStart - aProcessStartTime).ToMilliseconds());
+  aWriter.DoubleProperty("cpuend",
+                         (mCpuTimeEnd - aProcessStartTime).ToMilliseconds());
+  aWriter.IntProperty("gpustart", (int)mGpuTimeStart);
+  aWriter.IntProperty("gpuend", (int)mGpuTimeEnd);
+}
+
+void
 IOMarkerPayload::StreamPayload(SpliceableJSONWriter& aWriter,
                                const TimeStamp& aProcessStartTime,
                                UniqueStacks& aUniqueStacks)
@@ -83,10 +99,6 @@ DOMEventMarkerPayload::StreamPayload(SpliceableJSONWriter& aWriter,
                                      UniqueStacks& aUniqueStacks)
 {
   StreamCommonProps("DOMEvent", aWriter, aProcessStartTime, aUniqueStacks);
-  if (!mTimeStamp.IsNull()) {
-    aWriter.DoubleProperty("timeStamp",
-                           (mTimeStamp - aProcessStartTime).ToMilliseconds());
-  }
   aWriter.StringProperty("eventType", NS_ConvertUTF16toUTF8(mEventType).get());
   aWriter.IntProperty("phase", mPhase);
 }

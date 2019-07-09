@@ -67,7 +67,7 @@
                 android:ellipsize="end"
                 android:gravity="start"
                 android:hint="@string/bookmark_edit_location"
-                android:inputType="textUri"
+                android:inputType="textNoSuggestions"
                 android:maxLines="1"
                 android:singleLine="true"
                 android:textColor="@color/text_and_tabs_tray_grey"

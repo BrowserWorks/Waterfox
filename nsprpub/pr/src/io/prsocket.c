@@ -304,25 +304,7 @@ static PRStatus PR_CALLBACK SocketConnectContinue(
         if (err != 0) {
             _PR_MD_MAP_CONNECT_ERROR(err);
         } else {
-#if defined(_WIN64)
-            if (fd->secret->overlappedActive) {
-                PRInt32 rvSent;
-                if (GetOverlappedResult(osfd, &fd->secret->ol, &rvSent, FALSE) == FALSE) {
-                    err = WSAGetLastError();
-                    PR_LOG(_pr_io_lm, PR_LOG_MIN,
-                           ("SocketConnectContinue GetOverlappedResult failed %d\n", err));
-                    if (err != ERROR_IO_INCOMPLETE) {
-                        _PR_MD_MAP_CONNECT_ERROR(err);
-                        fd->secret->overlappedActive = PR_FALSE;
-                    }
-                }
-            }
-            if (err == 0) {
-                PR_SetError(PR_UNKNOWN_ERROR, 0);
-            }
-#else
             PR_SetError(PR_UNKNOWN_ERROR, 0);
-#endif
         }
         return PR_FAILURE;
     }
@@ -1682,33 +1664,6 @@ PR_ChangeFileDescNativeHandle(PRFileDesc *fd, PROsfd handle)
 {
 	if (fd)
 		fd->secret->md.osfd = handle;
-}
-
-/* Expose OVERLAPPED if present. OVERLAPPED is implemented only on WIN95. */
-PR_IMPLEMENT(PRStatus)
-PR_EXPERIMENTAL_ONLY_IN_4_17_GetOverlappedIOHandle(PRFileDesc *fd, void **ol)
-{
-#if defined(_WIN64) && defined(WIN95)
-    *ol = NULL;
-    if (fd) {
-        fd = PR_GetIdentitiesLayer(fd, PR_NSPR_IO_LAYER);
-    }
-    if (!fd) {
-        PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
-        return PR_FAILURE;
-    }
-
-    if (!fd->secret->overlappedActive) {
-        PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
-        return PR_FAILURE;
-    }
-
-    *ol = &fd->secret->ol;
-    return PR_SUCCESS;
-#else
-    PR_SetError(PR_NOT_IMPLEMENTED_ERROR, 0);
-    return PR_FAILURE;
-#endif
 }
 
 /*

@@ -65,15 +65,15 @@
                ],
                [
                   "property",
-                  "objectAttributes",
-                  "contains",
+                  "attribute",
+                  "is",
                   "text-input-type:search"
                ],
                [
-                  "property",
-                  "states",
-                  "doesNotContain",
-                  "IA2_STATE_REQUIRED"
+                  "state",
+                  "IA2_STATE_REQUIRED",
+                  "is",
+                  "false"
                ]
             ],
             "MSAA" : [
@@ -82,6 +82,18 @@
                   "role",
                   "is",
                   "ROLE_SYSTEM_TEXT"
+               ],
+               [
+                  "property",
+                  "attribute",
+                  "is",
+                  "text-input-type:search"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_REQUIRED"
                ]
             ],
             "UIA" : [

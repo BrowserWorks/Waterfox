@@ -20,6 +20,7 @@ using mozilla::dom::FontListEntry;
 class FontNameCache;
 typedef struct FT_FaceRec_* FT_Face;
 class nsZipArchive;
+class WillShutdownObserver;
 
 class FT2FontEntry : public gfxFontEntry
 {
@@ -33,8 +34,6 @@ public:
     }
 
     ~FT2FontEntry();
-
-    gfxFontEntry* Clone() const override;
 
     const nsString& GetName() const {
         return Name();
@@ -98,7 +97,7 @@ public:
     nsCString mFilename;
     uint8_t   mFTFontIndex;
 
-    mozilla::ThreadSafeWeakPtr<mozilla::gfx::UnscaledFontFreeType> mUnscaledFont;
+    mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFont;
 };
 
 class FT2FontFamily : public gfxFontFamily
@@ -136,8 +135,6 @@ public:
     }
 
     virtual void GetFontFamilyList(nsTArray<RefPtr<gfxFontFamily> >& aFamilyArray) override;
-
-    gfxFontFamily* CreateFontFamily(const nsAString& aName) const override;
 
     void WillShutdown();
 
@@ -185,7 +182,8 @@ protected:
 private:
     mozilla::UniquePtr<FontNameCache> mFontNameCache;
     int64_t mJarModifiedTime;
-    nsCOMPtr<nsIObserver> mObserver;
+    RefPtr<WillShutdownObserver> mObserver;
+
 };
 
 #endif /* GFX_FT2FONTLIST_H */

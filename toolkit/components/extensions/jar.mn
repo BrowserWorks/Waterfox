@@ -10,10 +10,10 @@ toolkit.jar:
     content/extensions/ext-browser-content.js
     content/extensions/ext-browserSettings.js
     content/extensions/ext-contextualIdentities.js
-    content/extensions/ext-clipboard.js
     content/extensions/ext-cookies.js
     content/extensions/ext-downloads.js
     content/extensions/ext-extension.js
+    content/extensions/ext-geolocation.js
     content/extensions/ext-i18n.js
 #ifndef ANDROID
     content/extensions/ext-identity.js
@@ -27,10 +27,8 @@ toolkit.jar:
     content/extensions/ext-proxy.js
     content/extensions/ext-runtime.js
     content/extensions/ext-storage.js
-    content/extensions/ext-tabs-base.js
     content/extensions/ext-theme.js
     content/extensions/ext-toolkit.js
-    content/extensions/ext-toolkit.json
     content/extensions/ext-topSites.js
     content/extensions/ext-webRequest.js
     content/extensions/ext-webNavigation.js
@@ -45,4 +43,3 @@ toolkit.jar:
     content/extensions/ext-c-storage.js
     content/extensions/ext-c-test.js
     content/extensions/ext-c-toolkit.js
-    content/extensions/ext-c-webRequest.js

@@ -202,8 +202,7 @@ WSRunObject::InsertBreak(nsCOMPtr<nsINode>* aInOutParent,
       WSPoint thePoint = GetCharAfter(*aInOutParent, *aInOutOffset);
       if (thePoint.mTextNode && nsCRT::IsAsciiSpace(thePoint.mChar)) {
         WSPoint prevPoint = GetCharBefore(thePoint);
-        if (!prevPoint.mTextNode ||
-            (prevPoint.mTextNode && !nsCRT::IsAsciiSpace(prevPoint.mChar))) {
+        if (prevPoint.mTextNode && !nsCRT::IsAsciiSpace(prevPoint.mChar)) {
           // We are at start of non-nbsps.  Convert to a single nbsp.
           nsresult rv = ConvertToNBSP(thePoint);
           NS_ENSURE_SUCCESS(rv, nullptr);
@@ -234,7 +233,6 @@ WSRunObject::InsertBreak(nsCOMPtr<nsINode>* aInOutParent,
 nsresult
 WSRunObject::InsertText(const nsAString& aStringToInsert,
                         nsCOMPtr<nsINode>* aInOutParent,
-                        nsCOMPtr<nsIContent>* aInOutChildAtOffset,
                         int32_t* aInOutOffset,
                         nsIDocument* aDoc)
 {
@@ -357,8 +355,7 @@ WSRunObject::InsertText(const nsAString& aStringToInsert,
   }
 
   // Ready, aim, fire!
-  mHTMLEditor->InsertTextImpl(theString, aInOutParent, aInOutChildAtOffset,
-                              aInOutOffset, aDoc);
+  mHTMLEditor->InsertTextImpl(theString, aInOutParent, aInOutOffset, aDoc);
   return NS_OK;
 }
 
@@ -646,9 +643,7 @@ WSRunObject::GetWSNodes()
         mStartOffset = start.offset;
         mStartReason = WSType::otherBlock;
         mStartReasonNode = priorNode;
-      } else if (priorNode->IsNodeOfType(nsINode::eTEXT) &&
-                 priorNode->IsEditable()) {
-        RefPtr<Text> textNode = priorNode->GetAsText();
+      } else if (RefPtr<Text> textNode = priorNode->GetAsText()) {
         mNodeArray.InsertElementAt(0, textNode);
         const nsTextFragment *textFrag;
         if (!textNode || !(textFrag = textNode->GetText())) {
@@ -755,9 +750,7 @@ WSRunObject::GetWSNodes()
         mEndOffset = end.offset;
         mEndReason = WSType::otherBlock;
         mEndReasonNode = nextNode;
-      } else if (nextNode->IsNodeOfType(nsINode::eTEXT) &&
-                 nextNode->IsEditable()) {
-        RefPtr<Text> textNode = nextNode->GetAsText();
+      } else if (RefPtr<Text> textNode = nextNode->GetAsText()) {
         mNodeArray.AppendElement(textNode);
         const nsTextFragment *textFrag;
         if (!textNode || !(textFrag = textNode->GetText())) {

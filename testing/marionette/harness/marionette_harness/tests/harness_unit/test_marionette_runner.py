@@ -3,7 +3,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import manifestparser
-import mozunit
 import pytest
 
 from mock import Mock, patch, mock_open, sentinel, DEFAULT
@@ -455,8 +454,11 @@ def test_option_e10s_sets_prefs(mach_parsed_kwargs, e10s):
     e10s_prefs = {
         'browser.tabs.remote.autostart': True,
         'browser.tabs.remote.force-enable': True,
+        'extensions.e10sBlocksEnabling': False
     }
     for k,v in e10s_prefs.iteritems():
+        if k == 'extensions.e10sBlocksEnabling' and not e10s:
+            continue
         assert runner.prefs.get(k, False) == (v and e10s)
 
 
@@ -505,4 +507,6 @@ def test_option_run_until_failure(mach_parsed_kwargs, repeat, run_until_failure)
 
 
 if __name__ == '__main__':
-    mozunit.main('--log-tbpl=-')
+    import sys
+    sys.exit(pytest.main(
+        ['--log-tbpl=-', __file__]))

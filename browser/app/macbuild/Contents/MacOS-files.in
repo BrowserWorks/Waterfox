@@ -1,15 +1,11 @@
 /*.app/***
 /*.dylib
 /certutil
-/firefox-bin
-#if defined(MOZ_GECKODRIVER)
-/geckodriver
-#endif
+/waterfox-bin
 /gtest/***
 #if defined(MOZ_ASAN) || defined(MOZ_TSAN)
 /llvm-symbolizer
 #endif
-/pingsender
 /pk12util
 /ssltunnel
 /webrtc-gtest

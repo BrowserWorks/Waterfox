@@ -6,15 +6,11 @@
 #include "mozilla/Bootstrap.h"
 #include "nsXPCOM.h"
 
-#include "AutoSQLiteLifetime.h"
-
 namespace mozilla {
 
 class BootstrapImpl final : public Bootstrap
 {
 protected:
-  AutoSQLiteLifetime mSQLLT;
-
   virtual void Dispose() override
   {
     delete this;

@@ -7,6 +7,7 @@
 #include "mozilla/dom/HTMLOptionElement.h"
 #include "mozilla/dom/HTMLOptionElementBinding.h"
 #include "mozilla/dom/HTMLSelectElement.h"
+#include "nsIDOMHTMLOptGroupElement.h"
 #include "nsIDOMHTMLFormElement.h"
 #include "nsGkAtoms.h"
 #include "nsStyleConsts.h"
@@ -193,7 +194,7 @@ HTMLOptionElement::DefaultSelected() const
 }
 
 nsChangeHint
-HTMLOptionElement::GetAttributeChangeHint(const nsAtom* aAttribute,
+HTMLOptionElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
                                           int32_t aModType) const
 {
   nsChangeHint retval =
@@ -207,7 +208,7 @@ HTMLOptionElement::GetAttributeChangeHint(const nsAtom* aAttribute,
 }
 
 nsresult
-HTMLOptionElement::BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+HTMLOptionElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify)
 {
@@ -263,11 +264,9 @@ HTMLOptionElement::BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
 }
 
 nsresult
-HTMLOptionElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLOptionElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::disabled) {
@@ -286,7 +285,7 @@ HTMLOptionElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName,
-                                            aValue, aOldValue, aSubjectPrincipal, aNotify);
+                                            aValue, aOldValue, aNotify);
 }
 
 NS_IMETHODIMP

@@ -582,6 +582,8 @@ PlacesTreeView.prototype = {
   COLUMN_TYPE_DATEADDED: 6,
   COLUMN_TYPE_LASTMODIFIED: 7,
   COLUMN_TYPE_TAGS: 8,
+  COLUMN_TYPE_PARENTFOLDER: 9,
+  COLUMN_TYPE_PARENTPATH: 10,
 
   _getColumnType: function PTV__getColumnType(aColumn) {
     let columnType = aColumn.element.getAttribute("anonid") || aColumn.id;
@@ -603,6 +605,10 @@ PlacesTreeView.prototype = {
         return this.COLUMN_TYPE_LASTMODIFIED;
       case "tags":
         return this.COLUMN_TYPE_TAGS;
+      case "parentFolder":
+        return this.COLUMN_TYPE_PARENTFOLDER;
+      case "parentPath":
+        return this.COLUMN_TYPE_PARENTPATH;
     }
     return this.COLUMN_TYPE_UNKNOWN;
   },
@@ -1373,7 +1379,7 @@ PlacesTreeView.prototype = {
 
   _getInsertionPoint: function PTV__getInsertionPoint(index, orientation) {
     let container = this._result.root;
-    let dropNearNode = null;
+    let dropNearItemId = -1;
     // When there's no selection, assume the container is the container
     // the view is populated from (i.e. the result's itemId).
     if (index != -1) {
@@ -1406,7 +1412,7 @@ PlacesTreeView.prototype = {
 
         // Avoid the potentially expensive call to getChildIndex
         // if we know this container doesn't allow insertion.
-        if (PlacesControllerDragHelper.disallowInsertion(container, this._tree.element))
+        if (PlacesControllerDragHelper.disallowInsertion(container))
           return null;
 
         let queryOptions = PlacesUtils.asQuery(this._result.root).queryOptions;
@@ -1421,7 +1427,7 @@ PlacesTreeView.prototype = {
           // We don't replace index here to avoid requests to the db,
           // instead it will be calculated later by the controller.
           index = -1;
-          dropNearNode = lastSelected;
+          dropNearItemId = lastSelected.itemId;
         } else {
           let lsi = container.getChildIndex(lastSelected);
           index = orientation == Ci.nsITreeView.DROP_BEFORE ? lsi : lsi + 1;
@@ -1429,7 +1435,7 @@ PlacesTreeView.prototype = {
       }
     }
 
-    if (PlacesControllerDragHelper.disallowInsertion(container, this._tree.element))
+    if (PlacesControllerDragHelper.disallowInsertion(container))
       return null;
 
     // TODO (Bug 1160193): properly support dropping on a tag root.
@@ -1440,11 +1446,10 @@ PlacesTreeView.prototype = {
         return null;
     }
 
-    return new InsertionPoint({
-      parentId: PlacesUtils.getConcreteItemId(container),
-      parentGuid: PlacesUtils.getConcreteItemGuid(container),
-      index, orientation, tagName, dropNearNode
-    });
+    return new InsertionPoint(PlacesUtils.getConcreteItemId(container),
+                              index, orientation,
+                              tagName,
+                              dropNearItemId);
   },
 
   drop: function PTV_drop(aRow, aOrientation, aDataTransfer) {
@@ -1453,14 +1458,11 @@ PlacesTreeView.prototype = {
     // since this information is specific to the tree view.
     let ip = this._getInsertionPoint(aRow, aOrientation);
     if (ip) {
-      PlacesControllerDragHelper.onDrop(ip, aDataTransfer, this)
-                                .catch(Components.utils.reportError)
-                                .then(() => {
-                                  // We should only clear the drop target once
-                                  // the onDrop is complete, as it is an async function.
-                                  PlacesControllerDragHelper.currentDropTarget = null;
-                                });
+      PlacesControllerDragHelper.onDrop(ip, aDataTransfer)
+                                .catch(Components.utils.reportError);
     }
+
+    PlacesControllerDragHelper.currentDropTarget = null;
   },
 
   getParentIndex: function PTV_getParentIndex(aRow) {
@@ -1559,6 +1561,10 @@ PlacesTreeView.prototype = {
         if (node.lastModified)
           return this._convertPRTimeToString(node.lastModified);
         return "";
+      case this.COLUMN_TYPE_PARENTFOLDER:
+        return node.parentFolder
+      case this.COLUMN_TYPE_PARENTPATH:
+        return node.parentPath
     }
     return "";
   },
@@ -1721,6 +1727,26 @@ PlacesTreeView.prototype = {
           newSort = NHQO.SORT_BY_TAGS_ASCENDING;
 
         break;
+      case this.COLUMN_TYPE_PARENTFOLDER:
+        if (oldSort == NHQO.SORT_BY_PARENTFOLDER_ASCENDING)
+          newSort = NHQO.SORT_BY_PARENTFOLDER_DESCENDING;
+        else if (allowTriState && oldSort == NHQO.SORT_BY_PARENTFOLDER_DESCENDING)
+          newSort = NHQO.SORT_BY_NONE;
+        else
+          newSort = NHQO.SORT_BY_PARENTFOLDER_ASCENDING;
+
+        break;
+      case this.COLUMN_TYPE_PARENTPATH:
+        if (oldSort == NHQO.SORT_BY_PARENTPATH_ASCENDING)
+          newSort = NHQO.SORT_BY_PARENTPATH_DESCENDING;
+        else if (allowTriState && oldSort == NHQO.SORT_BY_PARENTPATH_DESCENDING)
+          newSort = NHQO.SORT_BY_NONE;
+        else
+          newSort = NHQO.SORT_BY_PARENTPATH_ASCENDING;
+
+        break;
+
+
       default:
         throw Cr.NS_ERROR_INVALID_ARG;
     }

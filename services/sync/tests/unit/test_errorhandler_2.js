@@ -29,7 +29,7 @@ const logsdir = FileUtils.getDir("ProfD", ["weave", "logs"], true);
 function removeLogFiles() {
   let entries = logsdir.directoryEntries;
   while (entries.hasMoreElements()) {
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     logfile.remove(false);
   }
 }
@@ -38,7 +38,7 @@ function getLogFiles() {
   let result = [];
   let entries = logsdir.directoryEntries;
   while (entries.hasMoreElements()) {
-    result.push(entries.getNext().QueryInterface(Ci.nsIFile));
+    result.push(entries.getNext().QueryInterface(Ci.nsILocalFile));
   }
   return result;
 }
@@ -336,7 +336,7 @@ add_task(async function test_wipeRemote_prolonged_server_maintenance_error() {
 
   server.registerPathHandler("/1.1/broken.wipe/storage/catapult", EHTestsCommon.service_unavailable);
   await configureIdentity({username: "broken.wipe"}, server);
-  await EHTestsCommon.generateAndUploadKeys();
+  EHTestsCommon.generateAndUploadKeys();
 
   engine.exception = null;
   engine.enabled = true;
@@ -384,7 +384,7 @@ add_task(async function test_sync_syncAndReportErrors_server_maintenance_error()
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:sync:error");
+  await syncAndReportErrorsAndWait("weave:ui:sync:error")
 
   do_check_eq(Status.service, SYNC_FAILED_PARTIAL);
   do_check_eq(Status.sync, SERVER_MAINTENANCE);
@@ -414,7 +414,7 @@ add_task(async function test_info_collections_login_syncAndReportErrors_server_m
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -446,7 +446,7 @@ add_task(async function test_meta_global_login_syncAndReportErrors_server_mainte
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -480,7 +480,7 @@ add_task(async function test_download_crypto_keys_login_syncAndReportErrors_serv
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -512,7 +512,7 @@ add_task(async function test_upload_crypto_keys_login_syncAndReportErrors_server
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -544,7 +544,7 @@ add_task(async function test_wipeServer_login_syncAndReportErrors_server_mainten
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -564,7 +564,7 @@ add_task(async function test_wipeRemote_syncAndReportErrors_server_maintenance_e
   let server = await EHTestsCommon.sync_httpd_setup();
 
   await configureIdentity({username: "broken.wipe"}, server);
-  await EHTestsCommon.generateAndUploadKeys();
+  EHTestsCommon.generateAndUploadKeys();
 
   engine.exception = null;
   engine.enabled = true;
@@ -580,7 +580,7 @@ add_task(async function test_wipeRemote_syncAndReportErrors_server_maintenance_e
 
   Svc.Prefs.set("firstSync", "wipeRemote");
   setLastSync(NON_PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:sync:error");
+  await syncAndReportErrorsAndWait("weave:ui:sync:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -609,7 +609,7 @@ add_task(async function test_sync_syncAndReportErrors_prolonged_server_maintenan
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:sync:error");
+  await syncAndReportErrorsAndWait("weave:ui:sync:error")
 
   do_check_eq(Status.service, SYNC_FAILED_PARTIAL);
   do_check_eq(Status.sync, SERVER_MAINTENANCE);
@@ -641,7 +641,7 @@ add_task(async function test_info_collections_login_syncAndReportErrors_prolonge
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -675,7 +675,7 @@ add_task(async function test_meta_global_login_syncAndReportErrors_prolonged_ser
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -711,7 +711,7 @@ add_task(async function test_download_crypto_keys_login_syncAndReportErrors_prol
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -745,7 +745,7 @@ add_task(async function test_upload_crypto_keys_login_syncAndReportErrors_prolon
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -779,7 +779,7 @@ add_task(async function test_wipeServer_login_syncAndReportErrors_prolonged_serv
   do_check_eq(Status.service, STATUS_OK);
 
   setLastSync(PROLONGED_ERROR_DURATION);
-  await syncAndReportErrorsAndWait("weave:ui:login:error");
+  await syncAndReportErrorsAndWait("weave:ui:login:error")
 
   do_check_true(Status.enforceBackoff);
   do_check_eq(backoffInterval, 42);
@@ -807,7 +807,7 @@ add_task(async function test_sync_engine_generic_fail() {
   let log = Log.repository.getLogger("Sync.ErrorHandler");
   Svc.Prefs.set("log.appender.file.logOnError", true);
 
-  do_check_eq(Status.engines.catapult, undefined);
+  do_check_eq(Status.engines["catapult"], undefined);
 
   let promiseObserved = new Promise(res => {
     Svc.Obs.add("weave:engine:sync:finish", function onEngineFinish() {
@@ -829,7 +829,7 @@ add_task(async function test_sync_engine_generic_fail() {
   await promiseObserved;
 
   _("Status.engines: " + JSON.stringify(Status.engines));
-  do_check_eq(Status.engines.catapult, ENGINE_UNKNOWN_FAIL);
+  do_check_eq(Status.engines["catapult"], ENGINE_UNKNOWN_FAIL);
   do_check_eq(Status.service, SYNC_FAILED_PARTIAL);
 
   // Test Error log was written on SYNC_FAILED_PARTIAL.
@@ -915,12 +915,12 @@ add_task(async function test_engine_applyFailed() {
 
   let promiseObserved = promiseOneObserver("weave:service:reset-file-log");
 
-  do_check_eq(Status.engines.catapult, undefined);
+  do_check_eq(Status.engines["catapult"], undefined);
   do_check_true(await EHTestsCommon.setUp(server));
   await Service.sync();
   await promiseObserved;
 
-  do_check_eq(Status.engines.catapult, ENGINE_APPLY_FAIL);
+  do_check_eq(Status.engines["catapult"], ENGINE_APPLY_FAIL);
   do_check_eq(Status.service, SYNC_FAILED_PARTIAL);
 
   // Test Error log was written on SYNC_FAILED_PARTIAL.

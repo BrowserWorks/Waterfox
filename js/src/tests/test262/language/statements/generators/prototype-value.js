@@ -7,7 +7,6 @@ description: >
     value of the prototype property of the Generator function that created the
     instance.
 es6id: 25.3
-features: [generators]
 ---*/
 
 function* g() {}

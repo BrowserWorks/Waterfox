@@ -80,7 +80,7 @@ protected:
   virtual ~nsXMLFragmentContentSink();
 
   virtual bool SetDocElement(int32_t aNameSpaceID,
-                               nsAtom* aTagName,
+                               nsIAtom* aTagName,
                                nsIContent* aContent) override;
   virtual nsresult CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
                                  mozilla::dom::NodeInfo* aNodeInfo, uint32_t aLineNumber,
@@ -96,9 +96,7 @@ protected:
                                     bool aAlternate,
                                     const nsAString& aTitle,
                                     const nsAString& aType,
-                                    const nsAString& aMedia,
-                                    const nsAString& aReferrerPolicy) override;
-
+                                    const nsAString& aMedia) override;
   nsresult LoadXSLStyleSheet(nsIURI* aUrl);
   void StartLayout();
 
@@ -134,7 +132,7 @@ nsXMLFragmentContentSink::~nsXMLFragmentContentSink()
 {
 }
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsXMLFragmentContentSink)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsXMLFragmentContentSink)
   NS_INTERFACE_MAP_ENTRY(nsIFragmentContentSink)
 NS_INTERFACE_MAP_END_INHERITING(nsXMLContentSink)
 
@@ -192,7 +190,7 @@ nsXMLFragmentContentSink::GetTarget()
 
 bool
 nsXMLFragmentContentSink::SetDocElement(int32_t aNameSpaceID,
-                                        nsAtom* aTagName,
+                                        nsIAtom* aTagName,
                                         nsIContent *aContent)
 {
   // this is a fragment, not a document
@@ -333,9 +331,7 @@ nsXMLFragmentContentSink::ProcessStyleLink(nsIContent* aElement,
                                            bool aAlternate,
                                            const nsAString& aTitle,
                                            const nsAString& aType,
-                                           const nsAString& aMedia,
-                                           const nsAString& aReferrerPolicy)
-
+                                           const nsAString& aMedia)
 {
   // don't process until moved to document
   return NS_OK;

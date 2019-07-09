@@ -7,68 +7,34 @@
 #ifndef mozilla_storage_mozStorageAsyncStatementParams_h_
 #define mozilla_storage_mozStorageAsyncStatementParams_h_
 
+#include "mozIStorageStatementParams.h"
+#include "nsIXPCScriptable.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/ErrorResult.h"
-#include "nsPIDOMWindow.h"
-#include "nsWrapperCache.h"
 
 namespace mozilla {
 namespace storage {
 
 class AsyncStatement;
 
-class AsyncStatementParams final : public nsISupports
-                                 , public nsWrapperCache
+/*
+ * Since mozIStorageStatementParams is just a tagging interface we do not have
+ * an async variant.
+ */
+class AsyncStatementParams final : public mozIStorageStatementParams
+                                 , public nsIXPCScriptable
 {
 public:
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(AsyncStatementParams)
+  explicit AsyncStatementParams(AsyncStatement *aStatement);
 
-  explicit AsyncStatementParams(nsPIDOMWindowInner* aWindow, AsyncStatement* aStatement);
+  // interfaces
+  NS_DECL_ISUPPORTS
+  NS_DECL_MOZISTORAGESTATEMENTPARAMS
+  NS_DECL_NSIXPCSCRIPTABLE
 
-  void NamedGetter(JSContext* aCx,
-                   const nsAString& aName,
-                   bool& aFound,
-                   JS::MutableHandle<JS::Value> aResult,
-                   mozilla::ErrorResult& aRv);
-
-  void NamedSetter(JSContext* aCx,
-                   const nsAString& aName,
-                   JS::Handle<JS::Value> aValue,
-                   mozilla::ErrorResult& aRv);
-
-  uint32_t Length() const {
-    // WebIDL requires a .length property when there's an indexed getter.
-    // Unfortunately we don't know how many params there are in the async case,
-    // so we have to lie.
-    return UINT16_MAX;
-  }
-
-  void IndexedGetter(JSContext* aCx,
-                     uint32_t aIndex,
-                     bool& aFound,
-                     JS::MutableHandle<JS::Value> aResult,
-                     mozilla::ErrorResult& aRv);
-
-  void IndexedSetter(JSContext* aCx,
-                     uint32_t aIndex,
-                     JS::Handle<JS::Value> aValue,
-                     mozilla::ErrorResult& aRv);
-
-  void GetSupportedNames(nsTArray<nsString>& aNames);
-
-  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
-
-  nsPIDOMWindowInner* GetParentObject() const
-  {
-    return mWindow;
-  }
-
-private:
+protected:
   virtual ~AsyncStatementParams() {}
 
-  nsCOMPtr<nsPIDOMWindowInner> mWindow;
-  AsyncStatement* mStatement;
+  AsyncStatement *mStatement;
 
   friend class AsyncStatementParamsHolder;
 };

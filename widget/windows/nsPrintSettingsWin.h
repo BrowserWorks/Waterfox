@@ -47,8 +47,8 @@ public:
 protected:
   void CopyDevMode(DEVMODEW* aInDevMode, DEVMODEW *& aOutDevMode);
 
-  nsString      mDeviceName;
-  nsString      mDriverName;
+  wchar_t*      mDeviceName;
+  wchar_t*      mDriverName;
   LPDEVMODEW mDevMode;
   double mPrintableWidthInInches = 0l;
   double mPrintableHeightInInches = 0l;

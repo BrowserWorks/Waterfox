@@ -10,11 +10,7 @@ import hashlib
 
 
 @memoize
-def hash_path(path):
-    """Hash a single file.
-
-    Returns the SHA-256 hash in hex form.
-    """
+def _hash_path(path):
     with open(path) as fh:
         return hashlib.sha256(fh.read()).hexdigest()
 
@@ -32,14 +28,10 @@ def hash_paths(base_path, patterns):
     h = hashlib.sha256()
     files = {}
     for pattern in patterns:
-        found = list(finder.find(pattern))
-        if found:
-            files.update(found)
-        else:
-            raise Exception('%s did not match anything' % pattern)
+        files.update(finder.find(pattern))
     for path in sorted(files.keys()):
         h.update('{} {}\n'.format(
-            hash_path(mozpath.abspath(mozpath.join(base_path, path))),
+            _hash_path(mozpath.abspath(mozpath.join(base_path, path))),
             mozpath.normsep(path)
         ))
     return h.hexdigest()

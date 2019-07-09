@@ -51,16 +51,15 @@
         children differently)
         -->
         <xul:box>
-          <xul:hbox class="searchbar-search-button"
-                    anonid="searchbar-search-button"
-                    xbl:inherits="addengines"
-                    tooltiptext="&searchIcon.tooltip;">
-            <xul:image class="searchbar-search-icon"/>
-            <xul:image class="searchbar-search-icon-overlay"/>
+          <xul:hbox class="searchbar-search-button-container">
+            <xul:image class="searchbar-search-button"
+                       anonid="searchbar-search-button"
+                       xbl:inherits="addengines"
+                       tooltiptext="&searchIcon.tooltip;"/>
           </xul:hbox>
         </xul:box>
         <xul:hbox class="search-go-container">
-          <xul:image class="search-go-button urlbar-icon" hidden="true"
+          <xul:image class="search-go-button" hidden="true"
                      anonid="search-go-button"
                      onclick="handleSearchCommand(event);"
                      tooltiptext="&contentSearchSubmit.tooltip;"/>
@@ -393,11 +392,6 @@
           let selection = this.telemetrySearchDetails;
           let oneOffRecorded = false;
 
-          BrowserUsageTelemetry.recordSearchbarSelectedResultMethod(
-            aEvent,
-            selection ? selection.index : -1
-          );
-
           if (!selection || (selection.index == -1)) {
             oneOffRecorded = this.textbox.popup.oneOffButtons
                                  .maybeRecordTelemetry(aEvent, aWhere, aParams);
@@ -421,8 +415,6 @@
               if (!aEngine) {
                 aEngine = this.currentEngine;
               }
-              BrowserSearch.recordOneoffSearchInTelemetry(aEngine, source, type,
-                                                          aWhere);
             }
           }
 
@@ -467,7 +459,6 @@
             isSuggestion: (!aOneOff && telemetrySearchDetails),
             selection: telemetrySearchDetails
           };
-          BrowserSearch.recordSearchInTelemetry(engine, "searchbar", details);
           // null parameter below specifies HTML response for search
           let params = {
             postData: submission.postData,
@@ -550,7 +541,7 @@
         }
       ]]></handler>
 
-      <handler event="mousedown" button="0">
+      <handler event="click" button="0">
       <![CDATA[
         // Ignore clicks on the search go button.
         if (event.originalTarget.getAttribute("anonid") == "search-go-button") {
@@ -990,11 +981,6 @@
 
           // Check for middle-click or modified clicks on the search bar
           if (popupForSearchBar) {
-            BrowserUsageTelemetry.recordSearchbarSelectedResultMethod(
-              aEvent,
-              this.selectedIndex
-            );
-
             // Handle search bar popup clicks
             var search = controller.getValueAt(this.selectedIndex);
 
@@ -1474,7 +1460,6 @@
 
       <method name="showSettings">
         <body><![CDATA[
-          BrowserUITelemetry.countSearchSettingsEvent(this.telemetryOrigin);
 
           openPreferences("paneSearch", {origin: "contentSearch"});
 
@@ -2235,8 +2220,6 @@
                               aOpenUILinkParams &&
                               aOpenUILinkParams.inBackground;
           let where = tabBackground ? "tab-background" : aOpenUILinkWhere;
-          BrowserSearch.recordOneoffSearchInTelemetry(engine, source, type,
-                                                      where);
           return true;
         ]]></body>
       </method>

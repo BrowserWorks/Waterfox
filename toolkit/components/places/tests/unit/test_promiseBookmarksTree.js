@@ -28,19 +28,17 @@ async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   }
 
   // Bug 1013053 - bookmarkIndex is unavailable for the query's root
-  if (aNode.bookmarkIndex == -1) {
-    let bookmark = await PlacesUtils.bookmarks.fetch(aNode.bookmarkGuid);
-    Assert.strictEqual(aItem.index, bookmark.index);
-  } else {
+  if (aNode.bookmarkIndex == -1)
+    Assert.strictEqual(aItem.index, PlacesUtils.bookmarks.getItemIndex(aNode.itemId));
+  else
     compare_prop("index", "bookmarkIndex");
-  }
 
   compare_prop("dateAdded");
   compare_prop("lastModified");
 
   if (aIsRootItem && aNode.itemId != PlacesUtils.placesRootId) {
     Assert.ok("parentGuid" in aItem);
-    await check_has_child(aItem.parentGuid, aItem.guid);
+    await check_has_child(aItem.parentGuid, aItem.guid)
   } else {
     check_unset("parentGuid");
   }
@@ -59,7 +57,6 @@ async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   switch (aNode.type) {
     case Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER:
       Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER);
-      Assert.equal(aItem.typeCode, PlacesUtils.bookmarks.TYPE_FOLDER);
       compare_prop("title", "title", true);
       check_unset(...BOOKMARK_ONLY_PROPS);
 
@@ -98,12 +95,10 @@ async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
       break;
     case Ci.nsINavHistoryResultNode.RESULT_TYPE_SEPARATOR:
       Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR);
-      Assert.equal(aItem.typeCode, PlacesUtils.bookmarks.TYPE_SEPARATOR);
       check_unset(...BOOKMARK_ONLY_PROPS, ...FOLDER_ONLY_PROPS);
       break;
     default:
       Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE);
-      Assert.equal(aItem.typeCode, PlacesUtils.bookmarks.TYPE_BOOKMARK);
       compare_prop("uri");
       // node.tags's format is "a, b" whilst promiseBoookmarksTree is "a,b"
       if (aNode.tags === null)

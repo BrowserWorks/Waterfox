@@ -389,12 +389,8 @@ public:
 
   enum BBoxFlags {
     eBBoxIncludeFill           = 1 << 0,
-    // Include the geometry of the fill even when the fill does not
-    // actually render (e.g. when fill="none" or fill-opacity="0")
     eBBoxIncludeFillGeometry   = 1 << 1,
     eBBoxIncludeStroke         = 1 << 2,
-    // Include the geometry of the stroke even when the stroke does not
-    // actually render (e.g. when stroke="none" or stroke-opacity="0")
     eBBoxIncludeStrokeGeometry = 1 << 3,
     eBBoxIncludeMarkers        = 1 << 4,
     eBBoxIncludeClipped        = 1 << 5,
@@ -408,11 +404,6 @@ public:
     // given frame, instead of all continuations of it, while computing bbox if
     // this flag is set.
     eIncludeOnlyCurrentFrameForNonSVGElement = 1 << 8,
-    // This flag is only has an effect when the target is a <use> element.
-    // getBBox returns the bounds of the elements children in user space if
-    // this flag is set; Otherwise, getBBox returns the union bounds in
-    // the coordinate system formed by the <use> element.
-    eUseUserSpaceOfUseElement = 1 << 9,
   };
   /**
    * This function in primarily for implementing the SVG DOM function getBBox()
@@ -548,9 +539,10 @@ public:
                               SVGContextPaint* aContextPaint = nullptr);
 
   /*
-   * Set up a context for a stroked path (including any dashing that applies).
+   * Set up a cairo context for a stroked path (including any dashing that
+   * applies).
    */
-  static void SetupStrokeGeometry(nsIFrame* aFrame, gfxContext *aContext,
+  static void SetupCairoStrokeGeometry(nsIFrame* aFrame, gfxContext *aContext,
                                        SVGContextPaint* aContextPaint = nullptr);
 
   /**

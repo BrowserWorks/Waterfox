@@ -97,7 +97,7 @@ public:
     }
 
 private:
-    Result<Ok, nsresult> InitCacheInternal(JS::HandleObject scope = nullptr);
+    Result<Ok, nsresult> InitCacheInternal();
 
 public:
     void Trace(JSTracer* trc);
@@ -145,7 +145,7 @@ private:
     class CachedScript : public LinkedListElement<CachedScript>
     {
     public:
-        CachedScript(CachedScript&&) = delete;
+        CachedScript(CachedScript&&) = default;
 
         CachedScript(ScriptPreloader& cache, const nsCString& url, const nsCString& cachePath, JSScript* script)
             : mCache(cache)
@@ -269,12 +269,8 @@ private:
                 return size;
             }
 
-            // Note: mURL and mCachePath use the same string for scripts loaded
-            // by the message manager. The following statement avoids
-            // double-measuring in that case.
-            size += (mURL.SizeOfExcludingThisIfUnshared(mallocSizeOf) +
+            size += (mURL.SizeOfExcludingThisEvenIfShared(mallocSizeOf) +
                      mCachePath.SizeOfExcludingThisEvenIfShared(mallocSizeOf));
-
             return size;
         }
 
@@ -388,16 +384,11 @@ private:
     // decodes it synchronously on the main thread, as appropriate.
     JSScript* WaitForCachedScript(JSContext* cx, CachedScript* script);
 
-    void DecodeNextBatch(size_t chunkSize, JS::HandleObject scope = nullptr);
+    void DecodeNextBatch(size_t chunkSize);
 
     static void OffThreadDecodeCallback(void* token, void* context);
     void MaybeFinishOffThreadDecode();
     void DoFinishOffThreadDecode();
-
-    // Returns the global scope object for off-thread compilation. When global
-    // sharing is enabled in the component loader, this should be the shared
-    // module global. Otherwise, it should be the XPConnect compilation scope.
-    JSObject* CompilationScope(JSContext* cx);
 
     size_t ShallowHeapSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf)
     {

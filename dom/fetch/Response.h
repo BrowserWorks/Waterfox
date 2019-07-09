@@ -33,8 +33,7 @@ class Response final : public nsISupports
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Response)
 
 public:
-  Response(nsIGlobalObject* aGlobal, InternalResponse* aInternalResponse,
-           AbortSignal* aSignal);
+  Response(nsIGlobalObject* aGlobal, InternalResponse* aInternalResponse);
 
   Response(const Response& aOther) = delete;
 
@@ -105,12 +104,7 @@ public:
   Headers* Headers_();
 
   void
-  GetBody(nsIInputStream** aStream, int64_t* aBodyLength = nullptr)
-  {
-    mInternalResponse->GetBody(aStream, aBodyLength);
-  }
-
-  using FetchBody::GetBody;
+  GetBody(nsIInputStream** aStream) { return mInternalResponse->GetBody(aStream); }
 
   static already_AddRefed<Response>
   Error(const GlobalObject& aGlobal);
@@ -120,7 +114,7 @@ public:
 
   static already_AddRefed<Response>
   Constructor(const GlobalObject& aGlobal,
-              const Optional<fetch::ResponseBodyInit>& aBody,
+              const Optional<fetch::BodyInit>& aBody,
               const ResponseInit& aInit, ErrorResult& rv);
 
   nsIGlobalObject* GetParentObject() const
@@ -129,10 +123,10 @@ public:
   }
 
   already_AddRefed<Response>
-  Clone(JSContext* aCx, ErrorResult& aRv);
+  Clone(ErrorResult& aRv) const;
 
   already_AddRefed<Response>
-  CloneUnfiltered(JSContext* aCx, ErrorResult& aRv);
+  CloneUnfiltered(ErrorResult& aRv) const;
 
   void
   SetBody(nsIInputStream* aBody, int64_t aBodySize);
@@ -140,19 +134,12 @@ public:
   already_AddRefed<InternalResponse>
   GetInternalResponse() const;
 
-  AbortSignal*
-  GetSignal() const override
-  {
-    return mSignal;
-  }
-
 private:
   ~Response();
 
   RefPtr<InternalResponse> mInternalResponse;
   // Lazily created
   RefPtr<Headers> mHeaders;
-  RefPtr<AbortSignal> mSignal;
 };
 
 } // namespace dom

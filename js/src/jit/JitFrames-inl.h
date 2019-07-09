@@ -11,7 +11,7 @@
 
 #include "jit/LIR.h"
 
-#include "jit/JSJitFrameIter-inl.h"
+#include "jit/JitFrameIterator-inl.h"
 
 namespace js {
 namespace jit {
@@ -29,13 +29,13 @@ SafepointIndex::resolve()
 inline BaselineFrame*
 GetTopBaselineFrame(JSContext* cx)
 {
-    JSJitFrameIter frame(cx);
-    MOZ_ASSERT(frame.type() == JitFrame_Exit);
-    ++frame;
-    if (frame.isBaselineStub())
-        ++frame;
-    MOZ_ASSERT(frame.isBaselineJS());
-    return frame.baselineFrame();
+    JitFrameIterator iter(cx);
+    MOZ_ASSERT(iter.type() == JitFrame_Exit);
+    ++iter;
+    if (iter.isBaselineStub())
+        ++iter;
+    MOZ_ASSERT(iter.isBaselineJS());
+    return iter.baselineFrame();
 }
 
 } // namespace jit

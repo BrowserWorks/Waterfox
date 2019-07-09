@@ -16,7 +16,7 @@
 #include "txXSLTNumber.h"
 #include "nsTArray.h"
 
-class nsAtom;
+class nsIAtom;
 class txExecutionState;
 
 class txInstruction : public txObject
@@ -47,13 +47,7 @@ public:
     TX_DECL_TXINSTRUCTION
 };
 
-class txApplyImportsEnd : public txInstruction
-{
-public:
-    TX_DECL_TXINSTRUCTION
-};
-
-class txApplyImportsStart : public txInstruction
+class txApplyImports : public txInstruction
 {
 public:
     TX_DECL_TXINSTRUCTION
@@ -191,15 +185,15 @@ public:
 class txLREAttribute : public txInstruction
 {
 public:
-    txLREAttribute(int32_t aNamespaceID, nsAtom* aLocalName,
-                   nsAtom* aPrefix, nsAutoPtr<Expr>&& aValue);
+    txLREAttribute(int32_t aNamespaceID, nsIAtom* aLocalName,
+                   nsIAtom* aPrefix, nsAutoPtr<Expr>&& aValue);
 
     TX_DECL_TXINSTRUCTION
 
     int32_t mNamespaceID;
-    RefPtr<nsAtom> mLocalName;
-    RefPtr<nsAtom> mLowercaseLocalName;
-    RefPtr<nsAtom> mPrefix;
+    nsCOMPtr<nsIAtom> mLocalName;
+    nsCOMPtr<nsIAtom> mLowercaseLocalName;
+    nsCOMPtr<nsIAtom> mPrefix;
     nsAutoPtr<Expr> mValue;
 };
 
@@ -358,15 +352,15 @@ public:
 class txStartLREElement : public txInstruction
 {
 public:
-    txStartLREElement(int32_t aNamespaceID, nsAtom* aLocalName,
-                      nsAtom* aPrefix);
+    txStartLREElement(int32_t aNamespaceID, nsIAtom* aLocalName,
+                      nsIAtom* aPrefix);
 
     TX_DECL_TXINSTRUCTION
 
     int32_t mNamespaceID;
-    RefPtr<nsAtom> mLocalName;
-    RefPtr<nsAtom> mLowercaseLocalName;
-    RefPtr<nsAtom> mPrefix;
+    nsCOMPtr<nsIAtom> mLocalName;
+    nsCOMPtr<nsIAtom> mLowercaseLocalName;
+    nsCOMPtr<nsIAtom> mPrefix;
 };
 
 class txText : public txInstruction

@@ -31,12 +31,16 @@ HTMLSharedElement::~HTMLSharedElement()
 {
 }
 
-NS_IMPL_ADDREF_INHERITED(HTMLSharedElement, nsGenericHTMLElement)
-NS_IMPL_RELEASE_INHERITED(HTMLSharedElement, nsGenericHTMLElement)
+NS_IMPL_ADDREF_INHERITED(HTMLSharedElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLSharedElement, Element)
 
 // QueryInterface implementation for HTMLSharedElement
 NS_INTERFACE_MAP_BEGIN(HTMLSharedElement)
   NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLBaseElement, base)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLDirectoryElement, dir)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLQuoteElement, q)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLQuoteElement, blockquote)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLHeadElement, head)
   NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLHtmlElement, html)
 NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 
@@ -89,7 +93,7 @@ HTMLSharedElement::SetHref(const nsAString& aValue)
 
 bool
 HTMLSharedElement::ParseAttribute(int32_t aNamespaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   const nsAString& aValue,
                                   nsAttrValue& aResult)
 {
@@ -129,7 +133,7 @@ DirectoryMapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLSharedElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLSharedElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   if (mNodeInfo->Equals(nsGkAtoms::dir)) {
     static const MappedAttributeEntry attributes[] = {
@@ -226,11 +230,9 @@ SetBaseTargetUsingFirstBaseWithTarget(nsIDocument* aDocument,
 }
 
 nsresult
-HTMLSharedElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+HTMLSharedElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::href) {
@@ -254,7 +256,7 @@ HTMLSharedElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 nsresult

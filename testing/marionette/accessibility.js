@@ -156,7 +156,7 @@ accessibility.Checks = class {
       }
       // Accessibility for the doc is busy, so wait for the state to change.
       let eventObserver = {
-        observe(subject, topic) {
+        observe(subject, topic, data) {
           if (topic !== "accessible-event") {
             return;
           }

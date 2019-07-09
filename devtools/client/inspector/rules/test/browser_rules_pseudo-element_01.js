@@ -241,7 +241,7 @@ function* assertPseudoElementRulesNumbers(selector, inspector, view, ruleNbs) {
 }
 
 function getGutters(view) {
-  return view.element.querySelectorAll(".ruleview-header");
+  return view.element.querySelectorAll(".theme-gutter");
 }
 
 function assertGutters(view) {

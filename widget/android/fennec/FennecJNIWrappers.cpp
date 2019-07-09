@@ -4,10 +4,8 @@
 // corresponding Java methods and rerun the build. Manually updating this file
 // will cause your build to fail.
 
-#ifndef MOZ_PREPROCESSOR
 #include "FennecJNIWrappers.h"
 #include "mozilla/jni/Accessors.h"
-#endif
 
 namespace mozilla {
 namespace java {
@@ -160,6 +158,7 @@ const char MemoryMonitor::name[] =
 constexpr char MemoryMonitor::DispatchMemoryPressure_t::name[];
 constexpr char MemoryMonitor::DispatchMemoryPressure_t::signature[];
 
+#ifdef MOZ_NATIVE_DEVICES
 const char PresentationMediaPlayerManager::name[] =
         "org/mozilla/gecko/PresentationMediaPlayerManager";
 
@@ -172,6 +171,7 @@ constexpr char PresentationMediaPlayerManager::InvalidateAndScheduleComposite_t:
 constexpr char PresentationMediaPlayerManager::RemovePresentationSurface_t::name[];
 constexpr char PresentationMediaPlayerManager::RemovePresentationSurface_t::signature[];
 
+#endif // MOZ_NATIVE_DEVICES
 const char Telemetry::name[] =
         "org/mozilla/gecko/Telemetry";
 

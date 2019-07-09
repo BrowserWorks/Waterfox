@@ -3,10 +3,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<resources
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:gecko="http://schemas.android.com/apk/res-auto">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <!--
         Base application styles. This could be overridden in other res/values-XXX/themes.xml.
@@ -83,19 +80,6 @@
 
     <style name="Widget.Spinner" parent="android:style/Widget.Spinner">
         <item name="android:minWidth">@dimen/doorhanger_input_width</item>
-    </style>
-
-    <style name="Gecko.PreferenceCategory" parent="TextAppearance.AppCompat.Body2">
-        <item name="android:textColor">@color/fennec_ui_accent</item>
-        <item name="android:padding">24dp</item>
-    </style>
-
-    <style name="Gecko.SwitchPreferenceView" parent="TextAppearance">
-        <item name="android:textSize">16sp</item>
-        <item name="android:paddingStart">@dimen/dialog_switchpreferenceview_padding</item>
-        <item name="android:paddingLeft">@dimen/dialog_switchpreferenceview_padding</item>
-        <item name="android:paddingEnd">@dimen/dialog_switchpreferenceview_padding</item>
-        <item name="android:paddingRight">@dimen/dialog_switchpreferenceview_padding</item>
     </style>
 
     <style name="Widget.GeckoMenuListView" parent="Widget.ListView">
@@ -176,6 +160,10 @@
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">none</item>
         <item name="android:background">@color/about_page_header_grey</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingRight">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
         <item name="android:drawablePadding">20dp</item>
     </style>
 
@@ -278,9 +266,9 @@
 
     <style name="Widget.Firstrun.Button" parent="Widget.BaseButton">
         <item name="android:layout_width">@dimen/firstrun_content_width</item>
-        <item name="android:layout_height">43dp</item>
+        <item name="android:layout_height">60dp</item>
         <item name="android:textColor">@color/android:white</item>
-        <item name="android:background">@color/action_accent</item>
+        <item name="android:background">@color/action_orange</item>
         <item name="android:textSize">18sp</item>
     </style>
 
@@ -310,7 +298,7 @@
     -->
     <style name="TextAppearance">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textColorHighlight">@color/fennec_ui_accent</item>
+        <item name="android:textColorHighlight">@color/fennec_ui_orange</item>
         <item name="android:textColorHint">?android:attr/textColorHint</item>
         <item name="android:textColorLink">?android:attr/textColorLink</item>
         <item name="android:textSize">@dimen/menu_item_textsize</item>
@@ -446,16 +434,6 @@
 
     <style name="TextAppearance.SearchSuggestion" parent="TextAppearance.Small"/>
 
-    <style name="TextAppearance.PrivateTab.Title" parent="TextAppearance.Large">
-        <item name="android:textSize">20sp</item>
-        <item name="android:maxWidth">200dp</item>
-        <item name="android:layout_marginBottom">16dp</item>
-    </style>
-
-    <style name="TextAppearance.PrivateTab.Description" parent="TextAppearance.Small">
-        <item name="android:maxWidth">265dp</item>
-    </style>
-
     <!-- BrowserToolbar -->
     <style name="BrowserToolbar">
         <item name="android:layout_width">match_parent</item>
@@ -477,7 +455,6 @@
     </style>
 
     <style name="UrlBar.Title" parent="UrlBar.Button">
-        <item name="android:layout_height">@dimen/browser_toolbar_url_height</item>
         <item name="android:textAppearance">@style/TextAppearance.UrlBar.Title</item>
         <item name="android:textColor">@color/url_bar_title</item>
         <item name="android:textColorHint">@color/url_bar_title_hint</item>
@@ -516,15 +493,6 @@
 
     <style name="TabsItemClose">
          <item name="android:nextFocusLeft">@+id/info</item>
-    </style>
-
-    <style name="TabsLayoutItemFavicon">
-        <item name="android:layout_marginRight">4dp</item>
-    </style>
-
-    <style name="TabsListItemFavicon">
-        <item name="android:layout_marginLeft">10dp</item>
-        <item name="android:layout_marginRight">6dp</item>
     </style>
 
     <style name="Widget.RemoteTabsItemView" parent="Widget.TwoLinePageRow"/>
@@ -661,7 +629,7 @@
          some attrs that share a purpose have different names so instead we inherit. -->
     <style name="GeckoActionBar" parent="ThemeOverlay.AppCompat.ActionBar">
         <item name="android:colorBackground">@color/action_bar_bg_color</item>
-        <item name="colorAccent">@color/fennec_ui_accent</item>
+        <item name="colorAccent">@color/fennec_ui_orange</item>
         <item name="colorControlNormal">@color/toolbar_icon_grey</item>
     </style>
     <style name="GeckoActionBar.ActionMode">
@@ -748,18 +716,18 @@
 
     <style name="TextAppearance.FirstrunLight.Main">
         <item name="android:textSize">20sp</item>
-        <item name="android:textColor">@color/ob_title</item>
+        <item name="android:textColor">@color/text_and_tabs_tray_grey</item>
     </style>
 
     <style name="TextAppearance.FirstrunRegular.Body">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/ob_subtitle</item>
+        <item name="android:textColor">@color/placeholder_grey</item>
         <item name="android:lineSpacingMultiplier">1.25</item>
     </style>
 
-    <style name="TextAppearance.Link">
+    <style name="TextAppearance.FirstrunRegular.Link">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/ob_click</item>
+        <item name="android:textColor">@color/link_blue</item>
     </style>
 
     <!-- Remote Tabs home panel -->
@@ -836,29 +804,17 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <!-- centerInside will downscale larger icons to fit or center smaller favicons and allow us to draw a colored
-         border around them. When changing these values, consider favicons downloaded from the internet and
-         those provided by suggested sites, including suggested sites from distributions. -->
-    <style name="ActivityStreamFaviconView">
-        <item name="enableRoundCorners">false</item>
-        <item name="overrideScaleType">false</item>
-        <item name="android:scaleType">centerInside</item>
-    </style>
-
-    <style name="UrlBar.ThemeBackground" parent="UrlBar.V15.ThemeBackground"/>
-    <style name="UrlBar.V15.ThemeBackground" parent="UrlBar.Base">
-        <item name="android:layout_marginLeft">5dp</item>
-    </style>
-
     <!-- URL bar - Site identity -->
     <style name="UrlBar.SiteIdentity" parent="UrlBar.V15.SiteIdentity"/>
     <style name="UrlBar.Base.SiteIdentity" parent="UrlBar.Button">
-        <item name="android:layout_width">@dimen/browser_toolbar_site_security_width</item>
-        <item name="android:layout_height">@dimen/browser_toolbar_url_height</item>
-        <item name="android:scaleType">center</item>
+        <item name="android:layout_width">35dp</item>
+        <item name="android:layout_height">@dimen/browser_toolbar_height</item>
+        <item name="android:scaleType">fitCenter</item>
     </style>
     <style name="UrlBar.V15.SiteIdentity" parent="UrlBar.Base.SiteIdentity">
-        <item name="android:paddingRight">@dimen/browser_toolbar_site_security_margin_end</item>
+        <item name="android:layout_marginLeft">5dp</item>
+        <item name="android:paddingLeft">5.5dp</item>
+        <item name="android:paddingRight">5.5dp</item>
     </style>
 
     <style name="UrlBar.Entry" parent="UrlBar.V15.Entry"/>
@@ -885,20 +841,13 @@
     <style name="UrlBar.Base.Tabs" parent="UrlBar.ImageButton"/>
     <style name="UrlBar.V15.Tabs" parent="UrlBar.Base.Tabs">
         <item name="android:layout_toLeftOf">@id/menu</item>
-        <item name="android:layout_marginRight">-3dp</item>
     </style>
 
     <style name="UrlBar.TabCounter" parent="UrlBar.V15.TabCounter"/>
     <style name="UrlBar.Base.TabCounter" parent="UrlBar.ImageButton"/>
     <style name="UrlBar.V15.TabCounter" parent="UrlBar.Base.TabCounter">
-        <item name="android:layout_alignLeft">@id/tabs</item>
+        <item name="android:layout_alignTop">@id/tabs</item>
         <item name="android:layout_alignRight">@id/tabs</item>
-        <item name="android:layout_toLeftOf">@id/menu</item>
-    </style>
-
-    <style name="UrlBar.TabCounter.Text">
-        <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="UrlBar.EditCancel" parent="UrlBar.V15.EditCancel"/>
@@ -912,14 +861,7 @@
     <style name="UrlBar.V15.EditLayout" parent="UrlBar.Base.EditLayout">
         <item name="android:layout_alignLeft">@id/url_bar_entry</item>
         <item name="android:layout_toLeftOf">@id/edit_cancel</item>
-        <item name="android:paddingLeft">5dp</item>
-        <item name="android:paddingRight">0dp</item>
-        <item name="android:layout_marginRight">-3dp</item>
-    </style>
-
-    <style name="UrlBar.EditLayout.Title" parent="UrlBar.V15.EditLayout.Title"/>
-    <style name="UrlBar.V15.EditLayout.Title" parent="UrlBar.Title">
-        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingLeft">8dp</item>
         <item name="android:paddingRight">8dp</item>
     </style>
 
@@ -929,68 +871,6 @@
     <style name="UrlBar.V15.DisplayLayout" parent="UrlBar.Base.DisplayLayout">
         <item name="android:layout_alignLeft">@id/url_bar_entry</item>
         <item name="android:layout_alignRight">@id/url_bar_entry</item>
-    </style>
-
-    <style name="UrlBar.QRCode" parent="UrlBar.V15.QRCode"/>
-    <style name="UrlBar.V15.QRCode" parent="UrlBar.ImageButton">
-        <item name="android:layout_marginRight">-3dp</item>
-    </style>
-
-    <style name="TabsTray.AddTab" parent="TabsTray.V15.AddTab"/>
-    <style name="TabsTray.V15.AddTab" parent="TabsTray.Base.AddTab">
-        <item name="android:layout_marginRight">-3dp</item>
-    </style>
-    <style name="TabsTray.Base.AddTab" parent="UrlBar.ImageButton">
-        <item name="drawableTintList">@null</item>
-    </style>
-
-    <style name="TabsTray.Menu" parent="TabsTray.V15.Menu"/>
-    <style name="TabsTray.V15.Menu" parent="TabsTray.Base.Menu"/>
-    <style name="TabsTray.Base.Menu" parent="UrlBar.ImageButton">
-        <item name="drawableTintList">@null</item>
-    </style>
-
-    <!-- TabStrip -->
-    <style name="TabStrip"/>
-
-    <style name="TabStrip.Base">
-        <item name="android:layout_width">@dimen/tablet_tab_strip_item_width</item>
-        <item name="android:layout_height">@dimen/tablet_tab_strip_item_height</item>
-    </style>
-
-    <style name="TabStrip.Favicon" parent="TabStrip.V15.Favicon"/>
-    <style name="TabStrip.Base.Favicon" parent="TabStrip.Base"/>
-    <style name="TabStrip.V15.Favicon" parent="TabStrip.Base.Favicon">
-        <item name="android:layout_marginLeft">12dp</item>
-        <item name="android:layout_marginRight">8dp</item>
-    </style>
-
-    <style name="TabStrip.Close" parent="TabStrip.V15.Close"/>
-    <style name="TabStrip.V15.Close" parent="TabStrip.Base">
-        <item name="android:layout_alignParentRight">true</item>
-    </style>
-
-    <style name="TabStrip.Title" parent="TabStrip.V15.Title"/>
-    <style name="TabStrip.V15.Title" parent="TabStrip.Base">
-        <item name="android:layout_toRightOf">@id/favicon</item>
-        <item name="android:layout_toLeftOf">@id/close</item>
-    </style>
-
-    <style name="PwaConfirm">
-        <item name="android:layout_width">match_parent</item>
-    </style>
-
-    <style name="PwaConfirm.Title">
-        <item name="android:layout_toRightOf">@id/pwa_confirm_icon_wrap</item>
-        <item name="android:layout_toLeftOf">@id/pwa_confirm_cancel</item>
-    </style>
-
-    <style name="PwaConfirm.Cancel">
-        <item name="android:layout_alignParentRight">true</item>
-    </style>
-
-    <style name="PwaConfirm.Url">
-        <item name="android:layout_alignLeft">@+id/pwa_confirm_title</item>
     </style>
 
 </resources>

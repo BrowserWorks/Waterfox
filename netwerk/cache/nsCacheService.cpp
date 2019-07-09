@@ -1314,7 +1314,10 @@ nsCacheService::CreateSession(const char *          clientID,
 {
     *result = nullptr;
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if (net::CacheObserver::UseNewCache())
+        return NS_ERROR_NOT_IMPLEMENTED;
+
+    return CreateSessionInternal(clientID, storagePolicy, streamBased, result);
 }
 
 nsresult
@@ -1472,7 +1475,10 @@ nsCacheService::IsStorageEnabledForPolicy_Locked(nsCacheStoragePolicy  storagePo
 
 NS_IMETHODIMP nsCacheService::VisitEntries(nsICacheVisitor *visitor)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if (net::CacheObserver::UseNewCache())
+        return NS_ERROR_NOT_IMPLEMENTED;
+
+    return VisitEntriesInternal(visitor);
 }
 
 nsresult nsCacheService::VisitEntriesInternal(nsICacheVisitor *visitor)
@@ -1531,7 +1537,10 @@ void nsCacheService::FireClearNetworkCacheStoredAnywhereNotification()
 
 NS_IMETHODIMP nsCacheService::EvictEntries(nsCacheStoragePolicy storagePolicy)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if (net::CacheObserver::UseNewCache())
+        return NS_ERROR_NOT_IMPLEMENTED;
+
+    return EvictEntriesInternal(storagePolicy);
 }
 
 nsresult nsCacheService::EvictEntriesInternal(nsCacheStoragePolicy storagePolicy)
@@ -1632,12 +1641,17 @@ nsCacheService::CreateDiskDevice()
     // Disk device is usually created during the startup. Delay smart size
     // calculation to avoid possible massive IO caused by eviction of entries
     // in case the new smart size is smaller than current cache usage.
-    rv = NS_NewTimerWithCallback(getter_AddRefs(mSmartSizeTimer),
-                                 new nsSetDiskSmartSizeCallback(),
-                                 1000*60*3,
-                                 nsITimer::TYPE_ONE_SHOT);
-    if (NS_FAILED(rv)) {
-        NS_WARNING("Failed to post smart size timer");
+    mSmartSizeTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+    if (NS_SUCCEEDED(rv)) {
+        rv = mSmartSizeTimer->InitWithCallback(new nsSetDiskSmartSizeCallback(),
+                                               1000*60*3,
+                                               nsITimer::TYPE_ONE_SHOT);
+        if (NS_FAILED(rv)) {
+            NS_WARNING("Failed to post smart size timer");
+            mSmartSizeTimer = nullptr;
+        }
+    } else {
+        NS_WARNING("Can't create smart size timer");
     }
     // Ignore state of the timer and return success since the purpose of the
     // method (create the disk-device) has been fulfilled
@@ -3094,7 +3108,33 @@ nsCacheService::SetDiskSmartSize()
 nsresult
 nsCacheService::SetDiskSmartSize_Locked()
 {
-    return NS_ERROR_NOT_AVAILABLE;
+    nsresult rv;
+
+    if (mozilla::net::CacheObserver::UseNewCache()) {
+        return NS_ERROR_NOT_AVAILABLE;
+    }
+
+    if (!mObserver->DiskCacheParentDirectory())
+        return NS_ERROR_NOT_AVAILABLE;
+
+    if (!mDiskDevice)
+        return NS_ERROR_NOT_AVAILABLE;
+
+    if (!mObserver->SmartSizeEnabled())
+        return NS_ERROR_NOT_AVAILABLE;
+
+    nsAutoString cachePath;
+    rv = mObserver->DiskCacheParentDirectory()->GetPath(cachePath);
+    if (NS_SUCCEEDED(rv)) {
+        nsCOMPtr<nsIRunnable> event =
+            new nsGetSmartSizeEvent(cachePath, mDiskDevice->getCacheSize(),
+                                    mObserver->ShouldUseOldMaxSmartSize());
+        DispatchToCacheIOThread(event);
+    } else {
+        return NS_ERROR_FAILURE;
+    }
+
+    return NS_OK;
 }
 
 void

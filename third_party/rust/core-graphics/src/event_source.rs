@@ -12,9 +12,8 @@ pub enum CGEventSourceStateID {
     HIDSystemState = 1,
 }
 
-// This is an enum due to zero-sized types warnings.
-// For more details see https://github.com/rust-lang/rust/issues/27303
-pub enum __CGEventSource {}
+#[repr(C)]
+pub struct __CGEventSource;
 
 pub type CGEventSourceRef = *const __CGEventSource;
 

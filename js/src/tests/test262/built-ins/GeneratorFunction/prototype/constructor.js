@@ -12,7 +12,6 @@ info: >
   This property has the attributes { [[Writable]]: false, [[Enumerable]]:
   false, [[Configurable]]: true }.
 includes: [propertyHelper.js]
-features: [generators]
 ---*/
 
 var GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;

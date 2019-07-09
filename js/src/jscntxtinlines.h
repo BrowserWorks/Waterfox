@@ -55,7 +55,9 @@ class CompartmentChecker
 
     void check(JSCompartment* c) {
         if (c && !compartment->runtimeFromAnyThread()->isAtomsCompartment(c)) {
-            if (c != compartment)
+            if (!compartment)
+                compartment = c;
+            else if (c != compartment)
                 fail(compartment, c);
         }
     }
@@ -339,9 +341,13 @@ CallJSNativeConstructor(JSContext* cx, Native native, const CallArgs& args)
      * - CallOrConstructBoundFunction is an exception as well because we might
      *   have used bind on a proxy function.
      *
+     * - new Iterator(x) is user-hookable; it returns x.__iterator__() which
+     *   could be any object.
+     *
      * - (new Object(Object)) returns the callee.
      */
     MOZ_ASSERT_IF(native != js::proxy_Construct &&
+                  native != js::IteratorConstructor &&
                   (!callee->is<JSFunction>() || callee->as<JSFunction>().native() != obj_construct),
                   args.rval().isObject() && callee != &args.rval().toObject());
 
@@ -363,14 +369,14 @@ CallJSGetterOp(JSContext* cx, GetterOp op, HandleObject obj, HandleId id,
 }
 
 MOZ_ALWAYS_INLINE bool
-CallJSSetterOp(JSContext* cx, SetterOp op, HandleObject obj, HandleId id, HandleValue v,
+CallJSSetterOp(JSContext* cx, SetterOp op, HandleObject obj, HandleId id, MutableHandleValue vp,
                ObjectOpResult& result)
 {
     if (!CheckRecursionLimit(cx))
         return false;
 
-    assertSameCompartment(cx, obj, id, v);
-    return op(cx, obj, id, v, result);
+    assertSameCompartment(cx, obj, id, vp);
+    return op(cx, obj, id, vp, result);
 }
 
 inline bool
@@ -405,9 +411,6 @@ CheckForInterrupt(JSContext* cx)
     // C++ loops of library builtins.
     if (MOZ_UNLIKELY(cx->hasPendingInterrupt()))
         return cx->handleInterrupt();
-
-    JS_INTERRUPT_POSSIBLY_FAIL();
-
     return true;
 }
 
@@ -455,9 +458,7 @@ JSContext::enterNonAtomsCompartment(JSCompartment* c)
     enterCompartmentDepth_++;
 
     MOZ_ASSERT(!c->zone()->isAtomsZone());
-    c->holdGlobal();
     enterZoneGroup(c->zone()->group());
-    c->releaseGlobal();
 
     c->enter();
     setCompartment(c, nullptr);
@@ -558,6 +559,9 @@ JSContext::currentScript(jsbytecode** ppc,
         *ppc = nullptr;
 
     js::Activation* act = activation();
+    while (act && act->isJit() && !act->asJit()->isActive())
+        act = act->prev();
+
     if (!act)
         return nullptr;
 
@@ -567,13 +571,14 @@ JSContext::currentScript(jsbytecode** ppc,
         return nullptr;
 
     if (act->isJit()) {
-        if (act->hasWasmExitFP())
-            return nullptr;
         JSScript* script = nullptr;
         js::jit::GetPcScript(const_cast<JSContext*>(this), &script, ppc);
         MOZ_ASSERT(allowCrossCompartment || script->compartment() == compartment());
         return script;
     }
+
+    if (act->isWasm())
+        return nullptr;
 
     MOZ_ASSERT(act->isInterpreter());
 

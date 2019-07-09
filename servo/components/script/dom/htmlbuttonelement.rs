@@ -7,7 +7,7 @@ use dom::attr::Attr;
 use dom::bindings::codegen::Bindings::HTMLButtonElementBinding;
 use dom::bindings::codegen::Bindings::HTMLButtonElementBinding::HTMLButtonElementMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{DomRoot, MutNullableDom};
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::element::{AttributeMutation, Element};
@@ -29,8 +29,8 @@ use std::cell::Cell;
 use std::default::Default;
 use style::element_state::*;
 
-#[derive(Clone, Copy, JSTraceable, PartialEq)]
-#[derive(MallocSizeOf)]
+#[derive(JSTraceable, PartialEq, Copy, Clone)]
+#[derive(HeapSizeOf)]
 enum ButtonType {
     Submit,
     Reset,
@@ -42,7 +42,7 @@ enum ButtonType {
 pub struct HTMLButtonElement {
     htmlelement: HTMLElement,
     button_type: Cell<ButtonType>,
-    form_owner: MutNullableDom<HTMLFormElement>,
+    form_owner: MutNullableJS<HTMLFormElement>,
 }
 
 impl HTMLButtonElement {
@@ -61,8 +61,8 @@ impl HTMLButtonElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLButtonElement> {
-        Node::reflect_node(Box::new(HTMLButtonElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLButtonElement> {
+        Node::reflect_node(box HTMLButtonElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLButtonElementBinding::Wrap)
     }
@@ -70,7 +70,7 @@ impl HTMLButtonElement {
 
 impl HTMLButtonElementMethods for HTMLButtonElement {
     // https://html.spec.whatwg.org/multipage/#dom-cva-validity
-    fn Validity(&self) -> DomRoot<ValidityState> {
+    fn Validity(&self) -> Root<ValidityState> {
         let window = window_from_node(self);
         ValidityState::new(&window, self.upcast())
     }
@@ -82,7 +82,7 @@ impl HTMLButtonElementMethods for HTMLButtonElement {
     make_bool_setter!(SetDisabled, "disabled");
 
     // https://html.spec.whatwg.org/multipage/#dom-fae-form
-    fn GetForm(&self) -> Option<DomRoot<HTMLFormElement>> {
+    fn GetForm(&self) -> Option<Root<HTMLFormElement>> {
         self.form_owner()
     }
 
@@ -93,7 +93,7 @@ impl HTMLButtonElementMethods for HTMLButtonElement {
     make_setter!(SetType, "type");
 
     // https://html.spec.whatwg.org/multipage/#dom-fs-formaction
-    make_form_action_getter!(FormAction, "formaction");
+    make_url_or_base_getter!(FormAction, "formaction");
 
     // https://html.spec.whatwg.org/multipage/#dom-fs-formaction
     make_setter!(SetFormAction, "formaction");
@@ -138,13 +138,13 @@ impl HTMLButtonElementMethods for HTMLButtonElement {
     make_setter!(SetValue, "value");
 
     // https://html.spec.whatwg.org/multipage/#dom-lfe-labels
-    fn Labels(&self) -> DomRoot<NodeList> {
+    fn Labels(&self) -> Root<NodeList> {
         self.upcast::<HTMLElement>().labels()
     }
 }
 
 impl HTMLButtonElement {
-    /// <https://html.spec.whatwg.org/multipage/#constructing-the-form-data-set>
+    /// https://html.spec.whatwg.org/multipage/#constructing-the-form-data-set
     /// Steps range from 3.1 to 3.7 (specific to HTMLButtonElement)
     pub fn form_datum(&self, submitter: Option<FormSubmitter>) -> Option<FormDatum> {
         // Step 3.1: disabled state check is in get_unclean_dataset
@@ -244,7 +244,7 @@ impl VirtualMethods for HTMLButtonElement {
 }
 
 impl FormControl for HTMLButtonElement {
-    fn form_owner(&self) -> Option<DomRoot<HTMLFormElement>> {
+    fn form_owner(&self) -> Option<Root<HTMLFormElement>> {
         self.form_owner.get()
     }
 
@@ -319,7 +319,7 @@ impl Activatable for HTMLButtonElement {
             return;
         }
         node.query_selector_iter(DOMString::from("button[type=submit]")).unwrap()
-            .filter_map(DomRoot::downcast::<HTMLButtonElement>)
+            .filter_map(Root::downcast::<HTMLButtonElement>)
             .find(|r| r.form_owner() == owner)
             .map(|s| synthetic_click_activation(s.as_element(),
                                                 ctrl_key,

@@ -382,9 +382,7 @@ nsHttpTransaction::Init(uint32_t caps,
         // wrap the multiplexed input stream with a buffered input stream, so
         // that we write data in the largest chunks possible.  this is actually
         // necessary to workaround some common server bugs (see bug 137155).
-        nsCOMPtr<nsIInputStream> stream(do_QueryInterface(multi));
-        rv = NS_NewBufferedInputStream(getter_AddRefs(mRequestStream),
-                                       stream.forget(),
+        rv = NS_NewBufferedInputStream(getter_AddRefs(mRequestStream), multi,
                                        nsIOService::gDefaultSegmentSize);
         if (NS_FAILED(rv)) return rv;
     } else {
@@ -584,25 +582,16 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
         } else if (status == NS_NET_STATUS_CONNECTING_TO) {
             SetConnectStart(TimeStamp::Now());
         } else if (status == NS_NET_STATUS_CONNECTED_TO) {
-            TimeStamp tnow = TimeStamp::Now();
-            SetConnectEnd(tnow, true);
+            SetConnectEnd(TimeStamp::Now(), true);
+        } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_ENDED) {
             {
+                // before overwriting connectEnd, copy it to secureConnectionStart
                 MutexAutoLock lock(mLock);
-                mTimings.tcpConnectEnd = tnow;
-                // After a socket is connected we know for sure whether data
-                // has been sent on SYN packet and if not we should update TLS
-                // start timing.
-                if ((mFastOpenStatus != TFO_DATA_SENT) && 
-                    !mTimings.secureConnectionStart.IsNull()) {
-                    mTimings.secureConnectionStart = tnow;
+                if (mTimings.secureConnectionStart.IsNull() &&
+                    !mTimings.connectEnd.IsNull()) {
+                    mTimings.secureConnectionStart = mTimings.connectEnd;
                 }
             }
-        } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_STARTING) {
-            {
-                MutexAutoLock lock(mLock);
-                mTimings.secureConnectionStart = TimeStamp::Now();
-            }
-        } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_ENDED) {
             SetConnectEnd(TimeStamp::Now(), false);
         } else if (status == NS_NET_STATUS_SENDING_TO) {
             // Set the timestamp to Now(), only if it null
@@ -730,8 +719,6 @@ nsHttpTransaction::ReadRequestSegment(nsIInputStream *stream,
     nsresult rv = trans->mReader->OnReadSegment(buf, count, countRead);
     if (NS_FAILED(rv)) return rv;
 
-    LOG(("nsHttpTransaction::ReadRequestSegment %p read=%u", trans, *countRead));
-
     trans->mSentData = true;
     return NS_OK;
 }
@@ -740,8 +727,6 @@ nsresult
 nsHttpTransaction::ReadSegments(nsAHttpSegmentReader *reader,
                                 uint32_t count, uint32_t *countRead)
 {
-    LOG(("nsHttpTransaction::ReadSegments %p", this));
-
     MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
     if (mTransactionDone) {
@@ -832,8 +817,6 @@ nsHttpTransaction::WritePipeSegment(nsIOutputStream *stream,
     //
     rv = trans->mWriter->OnWriteSegment(buf, count, countWritten);
     if (NS_FAILED(rv)) return rv; // caller didn't want to write anything
-
-    LOG(("nsHttpTransaction::WritePipeSegment %p written=%u", trans, *countWritten));
 
     MOZ_ASSERT(*countWritten > 0, "bad writer");
     trans->mReceivedData = true;
@@ -1959,7 +1942,7 @@ nsHttpTransaction::CheckForStickyAuthSchemeAt(nsHttpAtom const& header)
       ToLowerCase(schema);
 
       nsAutoCString contractid;
-      contractid.AssignLiteral(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
+      contractid.Assign(NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX);
       contractid.Append(schema);
 
       // using a new instance because of thread safety of auth modules refcnt
@@ -2086,13 +2069,6 @@ nsHttpTransaction::GetConnectStart()
 {
     mozilla::MutexAutoLock lock(mLock);
     return mTimings.connectStart;
-}
-
-mozilla::TimeStamp
-nsHttpTransaction::GetTcpConnectEnd()
-{
-    mozilla::MutexAutoLock lock(mLock);
-    return mTimings.tcpConnectEnd;
 }
 
 mozilla::TimeStamp
@@ -2355,7 +2331,6 @@ nsHttpTransaction::RestartOnFastOpenError()
     mEarlyDataDisposition = EARLY_NONE;
     m0RTTInProgress = false;
     mFastOpenStatus = TFO_FAILED;
-    mTimings = TimingStruct();
     return NS_OK;
 }
 

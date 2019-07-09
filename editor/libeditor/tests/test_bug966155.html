@@ -18,10 +18,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=966155
 <script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
-var win = window.open("file_bug966155.html", "", "test-966155");
-win.addEventListener("load", function() {
-  runTest(win);
-}, {once: true});
+addLoadEvent(function() {
+  var win = window.open("data:text/html,<input><iframe onload=\"contentDocument.designMode = 'on';\">", "", "test-966155");
+  win.addEventListener("load", function() {
+    runTest(win);
+  }, {once: true});
+});
 
 function runTest(win) {
   SimpleTest.waitForFocus(function() {
@@ -35,14 +37,14 @@ function runTest(win) {
     "test".split("").forEach(function(letter) {
       synthesizeKey(letter, {}, win);
     });
-    is(iframeDoc.body.textContent.trim(), "test", "entered the text");
+    is(iframeDoc.body.textContent, "test", "entered the text");
     // focus the input box
     input.focus();
     // press tab
     synthesizeKey("VK_TAB", {}, win);
     // Now press Ctrl+Backspace
     synthesizeKey("VK_BACK_SPACE", {ctrlKey: true}, win);
-    is(iframeDoc.body.textContent.trim(), "", "deleted the text");
+    is(iframeDoc.body.textContent, "", "deleted the text");
     win.close();
     SimpleTest.finish();
   }, win);

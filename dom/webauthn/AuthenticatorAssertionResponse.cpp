@@ -10,42 +10,18 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(AuthenticatorAssertionResponse)
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(AuthenticatorAssertionResponse,
-                                                AuthenticatorResponse)
-  tmp->mAuthenticatorDataCachedObj = nullptr;
-  tmp->mSignatureCachedObj = nullptr;
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(AuthenticatorAssertionResponse,
-                                               AuthenticatorResponse)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mAuthenticatorDataCachedObj)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mSignatureCachedObj)
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
-
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AuthenticatorAssertionResponse,
-                                                  AuthenticatorResponse)
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
-
 NS_IMPL_ADDREF_INHERITED(AuthenticatorAssertionResponse, AuthenticatorResponse)
 NS_IMPL_RELEASE_INHERITED(AuthenticatorAssertionResponse, AuthenticatorResponse)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AuthenticatorAssertionResponse)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AuthenticatorAssertionResponse)
 NS_INTERFACE_MAP_END_INHERITING(AuthenticatorResponse)
 
 AuthenticatorAssertionResponse::AuthenticatorAssertionResponse(nsPIDOMWindowInner* aParent)
   : AuthenticatorResponse(aParent)
-  , mAuthenticatorDataCachedObj(nullptr)
-  , mSignatureCachedObj(nullptr)
-{
-  mozilla::HoldJSObjects(this);
-}
+{}
 
 AuthenticatorAssertionResponse::~AuthenticatorAssertionResponse()
-{
-  mozilla::DropJSObjects(this);
-}
+{}
 
 JSObject*
 AuthenticatorAssertionResponse::WrapObject(JSContext* aCx,
@@ -56,12 +32,9 @@ AuthenticatorAssertionResponse::WrapObject(JSContext* aCx,
 
 void
 AuthenticatorAssertionResponse::GetAuthenticatorData(JSContext* aCx,
-                                                     JS::MutableHandle<JSObject*> aRetVal)
+                                                     JS::MutableHandle<JSObject*> aRetVal) const
 {
-  if (!mAuthenticatorDataCachedObj) {
-    mAuthenticatorDataCachedObj = mAuthenticatorData.ToArrayBuffer(aCx);
-  }
-  aRetVal.set(mAuthenticatorDataCachedObj);
+  aRetVal.set(mAuthenticatorData.ToUint8Array(aCx));
 }
 
 nsresult
@@ -75,12 +48,9 @@ AuthenticatorAssertionResponse::SetAuthenticatorData(CryptoBuffer& aBuffer)
 
 void
 AuthenticatorAssertionResponse::GetSignature(JSContext* aCx,
-                                             JS::MutableHandle<JSObject*> aRetVal)
+                                             JS::MutableHandle<JSObject*> aRetVal) const
 {
-  if (!mSignatureCachedObj) {
-    mSignatureCachedObj = mSignature.ToArrayBuffer(aCx);
-  }
-  aRetVal.set(mSignatureCachedObj);
+  aRetVal.set(mSignature.ToUint8Array(aCx));
 }
 
 nsresult
@@ -89,21 +59,6 @@ AuthenticatorAssertionResponse::SetSignature(CryptoBuffer& aBuffer)
   if (NS_WARN_IF(!mSignature.Assign(aBuffer))) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
-  return NS_OK;
-}
-
-void
-AuthenticatorAssertionResponse::GetUserId(DOMString& aRetVal)
-{
-  // This requires mUserId to not be re-set for the life of the caller's in-var.
-  aRetVal.SetOwnedString(mUserId);
-}
-
-nsresult
-AuthenticatorAssertionResponse::SetUserId(const nsAString& aUserId)
-{
-  MOZ_ASSERT(mUserId.IsEmpty(), "We already have a UserID?");
-  mUserId.Assign(aUserId);
   return NS_OK;
 }
 

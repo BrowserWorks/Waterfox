@@ -1,5 +1,8 @@
-job-defaults:
+mozlint-eslint:
+    description: JS lint check
+    platform: lint/opt
     treeherder:
+        symbol: ES
         kind: test
         tier: 1
     worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
@@ -7,22 +10,9 @@ job-defaults:
         docker-image: {in-tree: "lint"}
         max-run-time: 1800
     run:
-        using: mach
-    when:
-        files-changed:
-            # Other misc lint related files.
-            - 'python/mozlint/**'
-            - 'tools/lint/**'
-
-eslint:
-    description: JS lint check
-    platform: lint/opt
-    treeherder:
-        symbol: ES
-    run:
         using: run-task
         command: >
-            cd /builds/worker/checkouts/gecko/ &&
+            cd /home/worker/checkouts/gecko/ &&
             cp -r /build/node_modules_eslint node_modules &&
             ln -s ../tools/lint/eslint/eslint-plugin-mozilla node_modules &&
             ln -s ../tools/lint/eslint/eslint-plugin-spidermonkey-js node_modules &&
@@ -42,41 +32,28 @@ eslint:
             # The plugin implementing custom checks.
             - 'tools/lint/eslint/eslint-plugin-mozilla/**'
             - 'tools/lint/eslint/eslint-plugin-spidermonkey-js/**'
+            # Other misc lint related files.
+            - 'python/mozlint/**'
+            - 'tools/lint/**'
 
-py-compat:
-    description: lint for python 2/3 compatibility issues
-    platform: lint/opt
-    treeherder:
-        symbol: py-compat
-    run:
-        mach: lint -l py2 -l py3 -f treeherder
-    when:
-        files-changed:
-            - '**/*.py'
-            - '**/.flake8'
-
-py-flake8:
+mozlint-flake8:
     description: flake8 run over the gecko codebase
     platform: lint/opt
     treeherder:
         symbol: f8
+        kind: test
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
+    worker:
+        docker-image: {in-tree: "lint"}
+        max-run-time: 1800
     run:
+        using: mach
         mach: lint -l flake8 -f treeherder
     when:
         files-changed:
             - '**/*.py'
             - '**/.flake8'
-
-test-manifest:
-    description: lint test manifests
-    platform: lint/opt
-    treeherder:
-        symbol: tm
-    run:
-        mach: lint -l test-disable -f treeherder
-    when:
-        files-changed:
-            - '**/*.ini'
             - 'python/mozlint/**'
             - 'tools/lint/**'
 
@@ -85,7 +62,14 @@ wptlint-gecko:
     platform: lint/opt
     treeherder:
         symbol: W
+        kind: test
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
+    worker:
+        docker-image: {in-tree: "lint"}
+        max-run-time: 1800
     run:
+        using: mach
         mach: lint -l wpt -l wpt_manifest -f treeherder
     when:
         files-changed:
@@ -93,16 +77,5 @@ wptlint-gecko:
             - 'testing/web-platform/mozilla/tests/**'
             - 'testing/web-platform/meta/MANIFEST.json'
             - 'testing/web-platform/mozilla/meta/MANIFEST.json'
-
-yaml:
-    description: yamllint run over the gecko codebase
-    platform: lint/opt
-    treeherder:
-        symbol: yaml
-    run:
-        mach: lint -l yaml -f treeherder
-    when:
-        files-changed:
-            - '**/*.yml'
-            - '**/*.yaml'
-            - '**/.ymllint'
+            - 'python/mozlint/**'
+            - 'tools/lint/**'

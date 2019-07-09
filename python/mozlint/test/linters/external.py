@@ -2,10 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
-import os
-
 from mozlint import result
 from mozlint.errors import LintException
 
@@ -15,15 +11,8 @@ def badreturncode(files, config, **lintargs):
 
 
 def external(files, config, **lintargs):
-    if lintargs.get('fix'):
-        # mimics no results because they got fixed
-        return []
-
     results = []
     for path in files:
-        if os.path.isdir(path):
-            continue
-
         with open(path, 'r') as fh:
             for i, line in enumerate(fh.readlines()):
                 if 'foobar' in line:
@@ -38,9 +27,6 @@ def raises(files, config, **lintargs):
 
 def structured(files, config, logger, **kwargs):
     for path in files:
-        if os.path.isdir(path):
-            continue
-
         with open(path, 'r') as fh:
             for i, line in enumerate(fh.readlines()):
                 if 'foobar' in line:

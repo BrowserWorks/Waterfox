@@ -187,39 +187,19 @@ public:
   public:
     explicit GetCacheInfoRunnable(nsUrlClassifierDBServiceWorker* aTarget,
                                   const nsACString& aTable,
-                                  nsIUrlClassifierGetCacheCallback* aCallback)
+                                  nsIUrlClassifierCacheInfo** aCache)
       : mozilla::Runnable(
           "UrlClassifierDBServiceWorkerProxy::GetCacheInfoRunnable")
       , mTarget(aTarget)
       , mTable(aTable)
-      , mCache(nullptr)
-      , mCallback(new nsMainThreadPtrHolder<nsIUrlClassifierGetCacheCallback>(
-          "nsIUrlClassifierGetCacheCallback", aCallback))
+      , mCache(aCache)
     { }
 
     NS_DECL_NSIRUNNABLE
   private:
     RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCString mTable;
-    nsIUrlClassifierCacheInfo* mCache;
-    nsMainThreadPtrHandle<nsIUrlClassifierGetCacheCallback> mCallback;
-  };
-
-  class GetCacheInfoCallbackRunnable: public mozilla::Runnable
-  {
-  public:
-    explicit GetCacheInfoCallbackRunnable(nsIUrlClassifierCacheInfo* aCache,
-                                          nsMainThreadPtrHandle<nsIUrlClassifierGetCacheCallback>& aCallback)
-      : mozilla::Runnable(
-          "UrlClassifierDBServiceWorkerProxy::GetCacheInfoCallbackRunnable")
-      , mCache(aCache)
-      , mCallback(aCallback)
-    { }
-
-    NS_DECL_NSIRUNNABLE
-  private:
-    nsIUrlClassifierCacheInfo* mCache;
-    nsMainThreadPtrHandle<nsIUrlClassifierGetCacheCallback> mCallback;
+    nsIUrlClassifierCacheInfo** mCache;
   };
 
 public:
@@ -233,7 +213,7 @@ public:
   nsresult CacheCompletions(mozilla::safebrowsing::CacheResultArray * aEntries);
 
   nsresult GetCacheInfo(const nsACString& aTable,
-                        nsIUrlClassifierGetCacheCallback* aCallback);
+                        nsIUrlClassifierCacheInfo** aCache);
 private:
   ~UrlClassifierDBServiceWorkerProxy() {}
 

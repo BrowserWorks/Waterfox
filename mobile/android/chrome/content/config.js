@@ -46,7 +46,7 @@ var NewPrefDialog = {
 
   set type(aType) {
     this._prefTypeSelectElt.value = aType;
-    switch (this._prefTypeSelectElt.value) {
+    switch(this._prefTypeSelectElt.value) {
       case "boolean":
         this._prefTypeSelectElt.selectedIndex = 0;
         break;
@@ -87,7 +87,7 @@ var NewPrefDialog = {
     }
 
     // If item already in list, it's being changed, else added
-    let item = AboutConfig._list.filter(i => { return i.name == aPrefName; });
+    let item = AboutConfig._list.filter(i => { return i.name == aPrefName });
     if (item.length) {
       this._positiveButton.textContent = gStringBundle.GetStringFromName("newPref.changeButton");
     } else {
@@ -145,7 +145,7 @@ var NewPrefDialog = {
       return;
     }
 
-    switch (this.type) {
+    switch(this.type) {
       case "boolean":
         Services.prefs.setBoolPref(this._prefNameInputElt.value, !!(this._booleanValue.value == "true"));
         break;
@@ -178,7 +178,7 @@ var NewPrefDialog = {
   toggleBoolValue: function AC_toggleBoolValue() {
     this._booleanValue.value = (this._booleanValue.value == "true" ? "false" : "true");
   }
-};
+}
 
 
 /* ============================== AboutConfig ==============================
@@ -274,7 +274,7 @@ var AboutConfig = {
   _clearPrefsContainer: function AC_clearPrefsContainer() {
     // Quick clear the prefsContainer list
     let empty = this._prefsContainer.cloneNode(false);
-    this._prefsContainer.parentNode.replaceChild(empty, this._prefsContainer);
+    this._prefsContainer.parentNode.replaceChild(empty, this._prefsContainer); 
     this._prefsContainer = empty;
 
     // Quick clear the prefs li.HTML list
@@ -492,7 +492,7 @@ var AboutConfig = {
     }
 
     // If pref not already in list, refresh display as it's being added
-    let anyWhere = this._list.filter(i => { return i.name == pref.name; });
+    let anyWhere = this._list.filter(i => { return i.name == pref.name });
     if (!anyWhere.length) {
       document.location.reload();
     }
@@ -501,13 +501,13 @@ var AboutConfig = {
   // Quick context menu helpers for about:config
   clipboardCopy: function AC_clipboardCopy(aField) {
     let pref = this._getPrefForNode(this.contextMenuLINode);
-    if (aField == "name") {
+    if (aField == 'name') {
       gClipboardHelper.copyString(pref.name);
     } else {
       gClipboardHelper.copyString(pref.value);
     }
   }
-};
+}
 
 
 /* ============================== Pref ==============================
@@ -597,8 +597,7 @@ Pref.prototype = {
       this.li.setAttribute("contextmenu", "prefs-context-menu");
 
       // Create list item outline, bind to object actions
-      // eslint-disable-next-line no-unsanitized/property
-      this.li.innerHTML =
+      this.li.unsafeSetInnerHTML(
         "<div class='pref-name' " +
             "onclick='AboutConfig.selectOrToggleBoolPref(event);'>" +
             this.name +
@@ -622,7 +621,7 @@ Pref.prototype = {
           "<div class='pref-button down' " +
             "onclick='AboutConfig.incrOrDecrIntPref(event, -1);'>" +
           "</div>" +
-        "</div>";
+        "</div>");
 
       // Delay providing the list item values, until the LI is returned and added to the document
       setTimeout(this._valueSetup.bind(this), INNERHTML_VALUE_DELAY);
@@ -640,7 +639,7 @@ Pref.prototype = {
     let valDiv = this.li.querySelector(".pref-value");
     valDiv.value = this.value;
 
-    switch (this.type) {
+    switch(this.type) {
       case Services.prefs.PREF_BOOL:
         valDiv.setAttribute("type", "button");
         this.li.querySelector(".up").setAttribute("disabled", true);
@@ -668,5 +667,5 @@ Pref.prototype = {
       this.li.querySelector(".pref-name").setAttribute("locked", true);
     }
   }
-};
+}
 

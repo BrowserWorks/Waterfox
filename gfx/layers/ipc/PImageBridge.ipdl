@@ -60,7 +60,7 @@ parent:
   async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t aSerial, MaybeExternalImageId aExternalImageId);
   async PMediaSystemResourceManager();
 
-  sync NewCompositable(CompositableHandle aHandle, TextureInfo aInfo, LayersBackend aBackend);
+  sync NewCompositable(CompositableHandle aHandle, TextureInfo aInfo);
   async ReleaseCompositable(CompositableHandle aHandle);
 };
 

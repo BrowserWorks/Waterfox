@@ -274,12 +274,6 @@ nsSimpleURI::GetDisplayHost(nsACString &aUnicodeHost)
 }
 
 NS_IMETHODIMP
-nsSimpleURI::GetDisplayPrePath(nsACString &aPrePath)
-{
-    return GetPrePath(aPrePath);
-}
-
-NS_IMETHODIMP
 nsSimpleURI::GetHasRef(bool *result)
 {
     *result = mIsRefValid;
@@ -291,23 +285,28 @@ nsSimpleURI::SetSpec(const nsACString &aSpec)
 {
     NS_ENSURE_STATE(mMutable);
 
-    nsresult rv = net_ExtractURLScheme(aSpec, mScheme);
-    if (NS_FAILED(rv)) {
-        return rv;
-    }
-    ToLowerCase(mScheme);
+    // filter out unexpected chars "\r\n\t" if necessary
+    nsAutoCString filteredSpec;
+    net_FilterURIString(aSpec, filteredSpec);
 
+    // nsSimpleURI currently restricts the charset to US-ASCII
     nsAutoCString spec;
-    rv = net_FilterAndEscapeURI(aSpec, esc_OnlyNonASCII, spec);
+    nsresult rv = NS_EscapeURL(filteredSpec, esc_OnlyNonASCII, spec, fallible);
     if (NS_FAILED(rv)) {
-        return rv;
+      return rv;
     }
 
     int32_t colonPos = spec.FindChar(':');
-    MOZ_ASSERT(colonPos != kNotFound, "A colon should be in this string");
+    if (colonPos < 0 || !net_IsValidScheme(spec.get(), colonPos))
+        return NS_ERROR_MALFORMED_URI;
+
+    mScheme.Truncate();
+    DebugOnly<int32_t> n = spec.Left(mScheme, colonPos);
+    NS_ASSERTION(n == colonPos, "Left failed");
+    ToLowerCase(mScheme);
+
     // This sets mPath, mQuery and mRef.
-    return SetPathQueryRefEscaped(Substring(spec, colonPos + 1),
-                                  /* needsEscape = */ false);
+    return SetPath(Substring(spec, colonPos + 1));
 }
 
 NS_IMETHODIMP
@@ -438,7 +437,7 @@ nsSimpleURI::SetPort(int32_t port)
 }
 
 NS_IMETHODIMP
-nsSimpleURI::GetPathQueryRef(nsACString &result)
+nsSimpleURI::GetPath(nsACString &result)
 {
     result = mPath;
     if (mIsQueryValid) {
@@ -452,26 +451,14 @@ nsSimpleURI::GetPathQueryRef(nsACString &result)
 }
 
 NS_IMETHODIMP
-nsSimpleURI::SetPathQueryRef(const nsACString &aPath)
+nsSimpleURI::SetPath(const nsACString &aPath)
 {
     NS_ENSURE_STATE(mMutable);
 
-    return SetPathQueryRefEscaped(aPath, true);
-}
-nsresult
-nsSimpleURI::SetPathQueryRefEscaped(const nsACString &aPath, bool aNeedsEscape)
-{
-    nsresult rv;
     nsAutoCString path;
-    if (aNeedsEscape) {
-        rv = NS_EscapeURL(aPath, esc_OnlyNonASCII, path, fallible);
-        if (NS_FAILED(rv)) {
-          return rv;
-        }
-    } else {
-        path.Assign(aPath);
+    if (!path.Assign(aPath, fallible)) {
+        return NS_ERROR_OUT_OF_MEMORY;
     }
-
     int32_t queryPos = path.FindChar('?');
     int32_t hashPos = path.FindChar('#');
 
@@ -509,7 +496,7 @@ nsSimpleURI::SetPathQueryRefEscaped(const nsACString &aPath, bool aNeedsEscape)
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    rv = SetQuery(query);
+    nsresult rv = SetQuery(query);
     if (NS_FAILED(rv)) {
         return rv;
     }
@@ -702,12 +689,12 @@ nsSimpleURI::Resolve(const nsACString &relativePath, nsACString &result)
 }
 
 NS_IMETHODIMP
-nsSimpleURI::GetAsciiSpec(nsACString &aResult)
+nsSimpleURI::GetAsciiSpec(nsACString &result)
 {
-    nsresult rv = GetSpec(aResult);
+    nsAutoCString buf;
+    nsresult rv = GetSpec(buf);
     if (NS_FAILED(rv)) return rv;
-    MOZ_ASSERT(IsASCII(aResult), "The spec should be ASCII");
-    return NS_OK;
+    return NS_EscapeURL(buf, esc_OnlyNonASCII|esc_AlwaysCopy, result, fallible);
 }
 
 NS_IMETHODIMP
@@ -719,6 +706,13 @@ nsSimpleURI::GetAsciiHostPort(nsACString &result)
 
 NS_IMETHODIMP
 nsSimpleURI::GetAsciiHost(nsACString &result)
+{
+    result.Truncate();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSimpleURI::GetOriginCharset(nsACString &result)
 {
     result.Truncate();
     return NS_OK;
@@ -744,18 +738,18 @@ nsSimpleURI::GetScriptableHelper(nsIXPCScriptable **_retval)
 }
 
 NS_IMETHODIMP
-nsSimpleURI::GetContractID(nsACString& aContractID)
+nsSimpleURI::GetContractID(char * *aContractID)
 {
     // Make sure to modify any subclasses as needed if this ever
     // changes.
-    aContractID.SetIsVoid(true);
+    *aContractID = nullptr;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSimpleURI::GetClassDescription(nsACString& aClassDescription)
+nsSimpleURI::GetClassDescription(char * *aClassDescription)
 {
-    aClassDescription.SetIsVoid(true);
+    *aClassDescription = nullptr;
     return NS_OK;
 }
 
@@ -874,13 +868,6 @@ nsSimpleURI::SetQuery(const nsACString& aQuery)
     }
 
     return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSimpleURI::SetQueryWithEncoding(const nsACString& aQuery,
-                                  const Encoding* aEncoding)
-{
-    return SetQuery(aQuery);
 }
 
 } // namespace net

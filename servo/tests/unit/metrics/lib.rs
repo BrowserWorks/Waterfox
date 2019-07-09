@@ -4,7 +4,6 @@
 
 extern crate euclid;
 extern crate gfx;
-extern crate gfx_traits;
 extern crate ipc_channel;
 extern crate metrics;
 extern crate msg;

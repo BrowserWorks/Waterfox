@@ -5,7 +5,7 @@
 description: SingleNameBinding assigns name to "anonymous" generator functions (method)
 esid: sec-runtime-semantics-definemethod
 es6id: 14.3.8
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     MethodDefinition : PropertyName ( StrictFormalParameters ) { FunctionBody }
@@ -52,7 +52,6 @@ info: |
           ii. ReturnIfAbrupt(hasNameProperty).
           iii. If hasNameProperty is false, perform SetFunctionName(v,
                bindingId).
-
 ---*/
 
 var callCount = 0;

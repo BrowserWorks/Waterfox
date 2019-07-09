@@ -25,7 +25,7 @@ public:
 
   explicit ChromiumCDMChild(GMPContentChild* aPlugin);
 
-  void Init(cdm::ContentDecryptionModule_9* aCDM);
+  void Init(cdm::ContentDecryptionModule_9* aCDM, const nsCString& aStorageId);
 
   void TimerExpired(void* aContext);
 
@@ -71,8 +71,7 @@ public:
   void OnDeferredInitializationDone(cdm::StreamType aStreamType,
                                     cdm::Status aDecoderStatus) override {}
   // cdm::Host_9 interface
-  // TODO: sync with unpstream, the interface has changed.
-  void RequestStorageId() override {}
+  void RequestStorageId(uint32_t aVersion) override;
   cdm::FileIO* CreateFileIO(cdm::FileIOClient* aClient) override;
 
   // cdm::Host_8 implementation
@@ -161,6 +160,7 @@ protected:
   bool mDecoderInitialized = false;
   bool mPersistentStateAllowed = false;
   bool mDestroyed = false;
+  nsCString mStorageId;
 };
 
 } // namespace gmp

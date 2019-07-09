@@ -291,8 +291,7 @@ bool RTPSenderVideo::SendVideo(RtpVideoCodecTypes video_type,
                                size_t payload_size,
                                const RTPFragmentationHeader* fragmentation,
                                const RTPVideoHeader* video_header,
-                               const StreamId* rtpStreamId,
-                               const StreamId* mId) {
+                               const StreamId* rtpStreamId) {
   if (payload_size == 0)
     return false;
 
@@ -328,9 +327,6 @@ bool RTPSenderVideo::SendVideo(RtpVideoCodecTypes video_type,
     }
     if (rtpStreamId && !rtpStreamId->empty()) {
        rtp_header->SetExtension<RtpStreamId>(*rtpStreamId);
-    }
-    if (mId && !mId->empty()) {
-       rtp_header->SetExtension<MId>(*mId);
     }
 
     // FEC settings.

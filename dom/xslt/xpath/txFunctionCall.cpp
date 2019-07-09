@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "txExpr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "txIXPathContext.h"
 #include "txNodeSet.h"
 
@@ -112,7 +112,7 @@ FunctionCall::argsSensitiveTo(ContextSensitivity aContext)
 void
 FunctionCall::toString(nsAString& aDest)
 {
-    RefPtr<nsAtom> functionNameAtom;
+    nsCOMPtr<nsIAtom> functionNameAtom;
     if (NS_FAILED(getNameAtom(getter_AddRefs(functionNameAtom)))) {
         NS_ERROR("Can't get function name.");
         return;

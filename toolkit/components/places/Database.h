@@ -19,7 +19,7 @@
 
 // This is the schema version. Update it at any schema change and add a
 // corresponding migrateVxx method below.
-#define DATABASE_SCHEMA_VERSION 40
+#define DATABASE_SCHEMA_VERSION 38
 
 // Fired after Places inited.
 #define TOPIC_PLACES_INIT_COMPLETE "places-init-complete"
@@ -303,8 +303,6 @@ protected:
   nsresult MigrateV36Up();
   nsresult MigrateV37Up();
   nsresult MigrateV38Up();
-  nsresult MigrateV39Up();
-  nsresult MigrateV40Up();
 
   nsresult UpdateBookmarkRootTitles();
 
@@ -334,9 +332,6 @@ private:
   int32_t mDBPageSize;
   uint16_t mDatabaseStatus;
   bool mClosed;
-  // Used to track whether icon payloads should be converted at the end of
-  // schema migration.
-  bool mShouldConvertIconPayloads;
 
   /**
    * Phases for shutting down the Database.

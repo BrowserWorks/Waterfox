@@ -14,7 +14,6 @@
 <pre id="test">
 
 <script class="testbody" type="application/javascript">
-/* import-globals-from classifierHelper.js */
 var Cc = SpecialPowers.Cc;
 var Ci = SpecialPowers.Ci;
 var Cr = SpecialPowers.Cr;
@@ -48,13 +47,13 @@ var inputDatas = [
   },
 ];
 
-function hash(str) {
-  function bytesFromString(str1) {
+function hashPrefix(str) {
+  function bytesFromString(str) {
     let converter =
       Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                        .createInstance(Ci.nsIScriptableUnicodeConverter);
     converter.charset = "UTF-8";
-    return converter.convertToByteArray(str1);
+    return converter.convertToByteArray(str);
   }
 
   let hasher = Cc["@mozilla.org/security/hash;1"]
@@ -64,7 +63,7 @@ function hash(str) {
   hasher.init(hasher.SHA256);
   hasher.update(data, data.length);
 
-  return hasher.finish(false);
+  return hasher.finish(false).slice(0, 4);
 }
 
 var testDatas = [
@@ -73,8 +72,8 @@ var testDatas = [
     expect: { error: Cr.NS_ERROR_BLOCKED_URI,
               table: "mochi-block-simple",
               provider: "",
-              fullhash: (function() {
-                return hash("malware.example.com/");
+              prefix: (function(){
+                return hashPrefix("malware.example.com/");
               })(),
             }
   },
@@ -83,8 +82,8 @@ var testDatas = [
     expect: { error: Cr.NS_ERROR_MALWARE_URI,
               table: "mochi1-malware-simple",
               provider: "mozilla",
-              fullhash: (function() {
-                return hash("malware1.example.com/");
+              prefix: (function(){
+                return hashPrefix("malware1.example.com/");
               })(),
             }
   },
@@ -93,8 +92,8 @@ var testDatas = [
     expect: { error: Cr.NS_ERROR_MALWARE_URI,
               table: "mochi2-malware-simple",
               provider: "mozilla",
-              fullhash: (function() {
-                return hash("malware2.example.com/");
+              prefix: (function(){
+                return hashPrefix("malware2.example.com/");
               })(),
             }
   },
@@ -103,8 +102,8 @@ var testDatas = [
     expect: { error: Cr.NS_ERROR_MALWARE_URI,
               table: "mochig3-malware-simple",
               provider: "google",
-              fullhash: (function() {
-                return hash("malware3.example.com/");
+              prefix: (function(){
+                return hashPrefix("malware3.example.com/");
               })(),
             }
   },
@@ -159,11 +158,11 @@ function runTest() {
       let test = testDatas.shift();
       let uri = ios.newURI(test.url);
       let prin = ssm.createCodebasePrincipal(uri, {});
-      SpecialPowers.doUrlClassify(prin, null, false, function(errorCode, table, provider, fullhash) {
+      SpecialPowers.doUrlClassify(prin, null, false, function(errorCode, table, provider, prefix) {
         is(errorCode, test.expect.error, `Test url ${test.url} correct error`);
         is(table, test.expect.table, `Test url ${test.url} correct table`);
         is(provider, test.expect.provider, `Test url ${test.url} correct provider`);
-        is(fullhash, btoa(test.expect.fullhash), `Test url ${test.url} correct full hash`);
+        is(prefix, btoa(test.expect.prefix), `Test url ${test.url} correct prefix`);
         runNextTest();
       });
     }
@@ -172,7 +171,7 @@ function runTest() {
 }
 
 SpecialPowers.pushPrefEnv(
-  {"set": [["browser.safebrowsing.malware.enabled", true]]},
+  {"set" : [["browser.safebrowsing.malware.enabled", true]]},
   function() {
     classifierHelper.waitForInit()
       .then(() => setupTestData(inputDatas))

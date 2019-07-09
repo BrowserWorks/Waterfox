@@ -2,19 +2,15 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
+"use strict"
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Messaging.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  EventDispatcher: "resource://gre/modules/Messaging.jsm",
-  GeckoViewUtils: "resource://gre/modules/GeckoViewUtils.jsm",
-  Services: "resource://gre/modules/Services.jsm",
-});
-
-this.EXPORTED_SYMBOLS = ["Prompt", "DoorHanger"];
+this.EXPORTED_SYMBOLS = ["Prompt"];
 
 function log(msg) {
   Services.console.logStringMessage(msg);
@@ -44,9 +40,9 @@ function Prompt(aOptions) {
   }
 
   if (aOptions.priority === 1)
-    this.msg.type = "Prompt:ShowTop";
+    this.msg.type = "Prompt:ShowTop"
   else
-    this.msg.type = "Prompt:Show";
+    this.msg.type = "Prompt:Show"
 
   if ("title" in aOptions && aOptions.title != null)
     this.msg.title = aOptions.title;
@@ -129,7 +125,7 @@ Prompt.prototype = {
       value: aOptions.value,
       hint: aOptions.hint,
       autofocus: aOptions.autofocus,
-      id: aOptions.id
+      id : aOptions.id
     });
   },
 
@@ -189,9 +185,20 @@ Prompt.prototype = {
     this._innerShow();
   },
 
+  _getDispatcher: function(win) {
+    let root = win && getRootWindow(win);
+    try {
+      return root && (root.WindowEventDispatcher || EventDispatcher.for(root));
+    } catch (e) {
+      // No EventDispatcher for this window.
+      return null;
+    }
+  },
+
   _innerShow: function() {
-    let dispatcher = GeckoViewUtils.getDispatcherForWindow(this.window) ||
-                     GeckoViewUtils.getActiveDispatcher();
+    let dispatcher =
+        this._getDispatcher(this.window) ||
+        this._getDispatcher(Services.wm.getMostRecentWindow("navigator:browser"));
     dispatcher.sendRequestForResult(this.msg).then((data) => {
       if (this.callback) {
         this.callback(data);
@@ -248,59 +255,4 @@ Prompt.prototype = {
     return this._setListItems(aItems);
   },
 
-};
-
-var DoorHanger = {
-  _getTabId: function(aWindow, aBrowserApp) {
-      let tab = aBrowserApp.getTabForWindow(aWindow.top) ||
-                aBrowserApp.selectedTab;
-      return tab ? tab.id : -1;
-  },
-
-  show: function(aWindow, aMessage, aValue, aButtons, aOptions, aCategory) {
-    let chromeWin = getRootWindow(aWindow);
-    if (chromeWin.NativeWindow && chromeWin.NativeWindow.doorhanger) {
-      // We're dealing with browser.js.
-      return chromeWin.NativeWindow.doorhanger.show(
-          aMessage, aValue, aButtons, this._getTabId(aWindow, chromeWin.BrowserApp),
-          aOptions, aCategory);
-    }
-
-    // We're dealing with GeckoView (e.g. custom tabs).
-    aButtons = aButtons || [];
-
-    // Extract callbacks into a separate array, and replace each callback in
-    // the buttons array with an index into the callback array.
-    let callbacks = aButtons.map((aButton, aIndex) => {
-      let cb = aButton.callback;
-      aButton.callback = aIndex;
-      return cb;
-    });
-
-    EventDispatcher.for(chromeWin).sendRequestForResult({
-      type: "Doorhanger:Add",
-      message: aMessage,
-      value: aValue,
-      buttons: aButtons,
-      options: aOptions || {},
-      category: aCategory,
-    }).then(response => {
-      // Pass the value of the optional checkbox to the callback
-      callbacks[response.callback](response.checked, response.inputs);
-    });
-  },
-
-  hide: function(aWindow, aValue) {
-    let chromeWin = getRootWindow(aWindow);
-    if (chromeWin.NativeWindow && chromeWin.NativeWindow.doorhanger) {
-      // We're dealing with browser.js.
-      return chromeWin.NativeWindow.doorhanger.hide(
-          aValue, this._getTabId(aWindow, chromeWin.BrowserApp));
-    }
-
-    EventDispatcher.for(chromeWin).sendRequest({
-      type: "Doorhanger:Remove",
-      value: aValue,
-    });
-  },
-};
+}

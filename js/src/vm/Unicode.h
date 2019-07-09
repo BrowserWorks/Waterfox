@@ -10,12 +10,12 @@
 #include "jspubtd.h"
 #include "vm/UnicodeNonBMP.h"
 
-namespace js {
-namespace unicode {
-
 extern const bool js_isidstart[];
 extern const bool js_isident[];
 extern const bool js_isspace[];
+
+namespace js {
+namespace unicode {
 
 /*
  * This namespace contains all the knowledge required to handle Unicode
@@ -65,11 +65,7 @@ namespace CharFlag {
 
 constexpr char16_t NO_BREAK_SPACE = 0x00A0;
 constexpr char16_t MICRO_SIGN = 0x00B5;
-constexpr char16_t LATIN_CAPITAL_LETTER_A_WITH_GRAVE = 0x00C0;
-constexpr char16_t MULTIPLICATION_SIGN = 0x00D7;
 constexpr char16_t LATIN_SMALL_LETTER_SHARP_S = 0x00DF;
-constexpr char16_t LATIN_SMALL_LETTER_A_WITH_GRAVE = 0x00E0;
-constexpr char16_t DIVISION_SIGN = 0x00F7;
 constexpr char16_t LATIN_SMALL_LETTER_Y_WITH_DIAERESIS = 0x00FF;
 constexpr char16_t LATIN_CAPITAL_LETTER_I_WITH_DOT_ABOVE = 0x0130;
 constexpr char16_t COMBINING_DOT_ABOVE = 0x0307;
@@ -298,20 +294,6 @@ CanUpperCase(char16_t ch)
     return CharInfo(ch).upperCase != 0;
 }
 
-// Returns true iff ToUpperCase(ch) != ch.
-inline bool
-CanUpperCase(JS::Latin1Char ch)
-{
-    if (MOZ_LIKELY(ch < 128))
-        return ch >= 'a' && ch <= 'z';
-
-    // U+00B5 and U+00E0 to U+00FF, except U+00F7, have an uppercase form.
-    bool canUpper = ch == MICRO_SIGN ||
-                    (((ch & ~0x1F) == LATIN_SMALL_LETTER_A_WITH_GRAVE) && ch != DIVISION_SIGN);
-    MOZ_ASSERT(canUpper == CanUpperCase(char16_t(ch)));
-    return canUpper;
-}
-
 // Returns true iff ToLowerCase(ch) != ch.
 inline bool
 CanLowerCase(char16_t ch)
@@ -319,20 +301,6 @@ CanLowerCase(char16_t ch)
     if (ch < 128)
         return ch >= 'A' && ch <= 'Z';
     return CharInfo(ch).lowerCase != 0;
-}
-
-// Returns true iff ToLowerCase(ch) != ch.
-inline bool
-CanLowerCase(JS::Latin1Char ch)
-{
-    if (MOZ_LIKELY(ch < 128))
-        return ch >= 'A' && ch <= 'Z';
-
-    // U+00C0 to U+00DE, except U+00D7, have a lowercase form.
-    bool canLower = ((ch & ~0x1F) == LATIN_CAPITAL_LETTER_A_WITH_GRAVE) &&
-                    ((ch & MULTIPLICATION_SIGN) != MULTIPLICATION_SIGN);
-    MOZ_ASSERT(canLower == CanLowerCase(char16_t(ch)));
-    return canLower;
 }
 
 #define CHECK_RANGE(FROM, TO, LEAD, TRAIL_FROM, TRAIL_TO, DIFF) \

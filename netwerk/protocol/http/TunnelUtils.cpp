@@ -80,7 +80,7 @@ TLSFilterTransaction::TLSFilterTransaction(nsAHttpTransaction *aWrapped,
   if (provider && mFD) {
     mFD->secret = reinterpret_cast<PRFilePrivate *>(this);
     provider->AddToSocket(PR_AF_INET, aTLSHost, aTLSPort, nullptr,
-                          OriginAttributes(), 0, 0, mFD,
+                          OriginAttributes(), 0, mFD,
                           getter_AddRefs(mSecInfo));
   }
 
@@ -424,7 +424,7 @@ TLSFilterTransaction::NudgeTunnel(NudgeTunnelCallback *aCallback)
   }
 
   if(!mTimer) {
-    mTimer = NS_NewTimer();
+    mTimer = do_CreateInstance("@mozilla.org/timer;1");
   }
 
   mNudgeCallback = aCallback;
@@ -1529,12 +1529,6 @@ SocketTransportShim::Bind(NetAddr *aLocalAddr)
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-NS_IMETHODIMP
-SocketTransportShim::GetFirstRetryError(nsresult *aFirstRetryError)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
 #define FWD_TS_PTR(fx, ts) NS_IMETHODIMP \
 SocketTransportShim::fx(ts *arg) { return mWrapped->fx(arg); }
 
@@ -1557,8 +1551,6 @@ FWD_TS_ADDREF(GetSecurityCallbacks, nsIInterfaceRequestor);
 FWD_TS_PTR(IsAlive, bool);
 FWD_TS_PTR(GetConnectionFlags, uint32_t);
 FWD_TS(SetConnectionFlags, uint32_t);
-FWD_TS_PTR(GetTlsFlags, uint32_t);
-FWD_TS(SetTlsFlags, uint32_t);
 FWD_TS_PTR(GetRecvBufferSize, uint32_t);
 FWD_TS(SetRecvBufferSize, uint32_t);
 

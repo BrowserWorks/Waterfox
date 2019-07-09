@@ -8,7 +8,7 @@
 // are enabled.
 
 const TESTCASE_URI = URL_ROOT_SSL + "doc_sourcemaps.html";
-const PREF = "devtools.source-map.client-service.enabled";
+const PREF = "devtools.styleeditor.source-maps-enabled";
 const SCSS_LOC = "doc_sourcemaps.scss:4";
 const CSS_LOC = "doc_sourcemaps.css:1";
 
@@ -18,18 +18,22 @@ add_task(function* () {
 
   yield addTab(TESTCASE_URI);
   let {toolbox, inspector, view} = yield openComputedView();
-  let onLinksUpdated = inspector.once("computed-view-sourcelinks-updated");
   yield selectNode("div", inspector);
 
   info("Expanding the first property");
   yield expandComputedViewPropertyByIndex(view, 0);
 
   info("Verifying the link text");
-  yield onLinksUpdated;
+  // Forcing a call to updateSourceLink on the SelectorView here. The
+  // computed-view already does it, but we have no way of waiting for it to be
+  // done here, so just call it again and wait for the returned promise to
+  // resolve.
+  let propertyView = getComputedViewPropertyView(view, "color");
+  yield propertyView.matchedSelectorViews[0].updateSourceLink();
   verifyLinkText(view, SCSS_LOC);
 
   info("Toggling the pref");
-  onLinksUpdated = inspector.once("computed-view-sourcelinks-updated");
+  let onLinksUpdated = inspector.once("computed-view-sourcelinks-updated");
   Services.prefs.setBoolPref(PREF, false);
   yield onLinksUpdated;
 

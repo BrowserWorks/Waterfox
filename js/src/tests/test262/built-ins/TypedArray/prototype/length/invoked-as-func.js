@@ -10,7 +10,6 @@ info: >
   2. If Type(O) is not Object, throw a TypeError exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var TypedArrayPrototype = TypedArray.prototype;

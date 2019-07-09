@@ -1,40 +1,24 @@
----
 flake8:
     description: Python linter
     include:
-        - build/moz.configure/*.configure
-        - build/*.py
-        - configure.py
-        - config/check_macroassembler_style.py
-        - config/mozunit.py
         - layout/tools/reftest
-        - python/mach
-        - python/mach_commands.py
-        - python/mozboot
         - python/mozlint
-        - python/mozversioncontrol
         - security/manager
         - taskcluster
         - testing/firefox-ui
-        - testing/mach_commands.py
         - testing/marionette/client
         - testing/marionette/harness
         - testing/marionette/puppeteer
         - testing/mozbase
         - testing/mochitest
-        - testing/remotecppunittests.py
-        - testing/runcppunittests.py
         - testing/talos/
-        - testing/xpcshell
         - tools/git
         - tools/lint
         - tools/mercurial
         - tools/tryselect
         - toolkit/components/telemetry
-    # Excludes should be added to topsrcdir/.flake8 due to a bug in flake8 where
-    # specifying --exclude causes custom configuration files to be ignored.
-    exclude: []
-    # The configure option is used by the build system
-    extensions: ['configure', 'py']
+    exclude:
+        - testing/mochitest/pywebsocket
+    extensions: ['py']
     type: external
-    payload: python.flake8:lint
+    payload: flake8_:lint

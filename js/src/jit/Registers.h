@@ -135,8 +135,7 @@ Register::AllocatableAsIndexableSet<RegTypeName::GPR>(SetType set)
     return set;
 }
 
-#if JS_BITS_PER_WORD == 32
-// Note, some platform code depends on INT64LOW_OFFSET being zero.
+#if defined(JS_NUNBOX32)
 static const uint32_t INT64LOW_OFFSET = 0 * sizeof(int32_t);
 static const uint32_t INT64HIGH_OFFSET = 1 * sizeof(int32_t);
 #endif

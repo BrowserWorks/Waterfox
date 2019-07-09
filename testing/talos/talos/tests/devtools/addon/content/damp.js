@@ -1,40 +1,18 @@
-const { Services } = Components.utils.import("resource://gre/modules/Services.jsm", {});
-const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+Components.utils.import("resource://devtools/client/framework/gDevTools.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "require", function() {
-  let { require } =
-    Components.utils.import("resource://devtools/shared/Loader.jsm", {});
-  return require;
-});
-XPCOMUtils.defineLazyGetter(this, "gDevTools", function() {
-  let { gDevTools } = require("devtools/client/framework/devtools");
-  return gDevTools;
-});
-XPCOMUtils.defineLazyGetter(this, "EVENTS", function() {
-  let { EVENTS } = require("devtools/client/netmonitor/src/constants");
-  return EVENTS;
-});
-XPCOMUtils.defineLazyGetter(this, "TargetFactory", function() {
-  let { TargetFactory } = require("devtools/client/framework/target");
-  return TargetFactory;
-});
-XPCOMUtils.defineLazyGetter(this, "ThreadSafeChromeUtils", function() {
-  return require("ThreadSafeChromeUtils");
-});
+const { devtools } =
+  Components.utils.import("resource://devtools/shared/Loader.jsm", {});
+const { getActiveTab } = devtools.require("sdk/tabs/utils");
+const { getMostRecentBrowserWindow } = devtools.require("sdk/window/utils");
+const ThreadSafeChromeUtils = devtools.require("ThreadSafeChromeUtils");
+const { EVENTS } = devtools.require("devtools/client/netmonitor/src/constants");
+const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 
 const webserver = Services.prefs.getCharPref("addon.test.damp.webserver");
 
 const SIMPLE_URL = webserver + "/tests/devtools/addon/content/pages/simple.html";
 const COMPLICATED_URL = webserver + "/tests/tp5n/bild.de/www.bild.de/index.html";
-
-function getMostRecentBrowserWindow() {
-  return Services.wm.getMostRecentWindow("navigator:browser");
-}
-
-function getActiveTab(window) {
-  return window.gBrowser.selectedTab;
-}
 
 /* globals res:true */
 
@@ -65,54 +43,38 @@ Damp.prototype = {
     return this._win.gBrowser.selectedTab;
   },
 
-  reloadPage(onReload) {
+  reloadPage() {
     let startReloadTimestamp = performance.now();
     return new Promise((resolve, reject) => {
       let browser = gBrowser.selectedBrowser;
-      if (typeof (onReload) == "function") {
-        onReload().then(function() {
-          let stopReloadTimestamp = performance.now();
-          resolve({
-            time: stopReloadTimestamp - startReloadTimestamp
-          });
+      browser.addEventListener("load", function onload() {
+        let stopReloadTimestamp = performance.now();
+        resolve({
+          time: stopReloadTimestamp - startReloadTimestamp
         });
-      } else {
-        browser.addEventListener("load", function onload() {
-          let stopReloadTimestamp = performance.now();
-          resolve({
-            time: stopReloadTimestamp - startReloadTimestamp
-          });
-        }, {capture: true, once: true});
-      }
+      }, {capture: true, once: true});
       browser.reload();
-
     });
   },
 
-  async openToolbox(tool = "webconsole", onLoad) {
+  openToolbox(tool = "webconsole") {
     let tab = getActiveTab(getMostRecentBrowserWindow());
-    let target = TargetFactory.forTab(tab);
+    let target = devtools.TargetFactory.forTab(tab);
     let startRecordTimestamp = performance.now();
-    let onToolboxCreated = gDevTools.once("toolbox-created");
     let showPromise = gDevTools.showToolbox(target, tool);
-    let toolbox = await onToolboxCreated;
 
-    if (typeof(onLoad) == "function") {
-      let panel = await toolbox.getPanelWhenReady(tool);
-      await onLoad(toolbox, panel);
-    }
-    await showPromise;
-
-    let stopRecordTimestamp = performance.now();
-    return {
-      toolbox,
-      time: stopRecordTimestamp - startRecordTimestamp
-    };
+    return showPromise.then(toolbox => {
+      let stopRecordTimestamp = performance.now();
+      return {
+        toolbox,
+        time: stopRecordTimestamp - startRecordTimestamp
+      };
+    });
   },
 
-  closeToolbox: Task.async(function* () {
+  closeToolbox: Task.async(function*() {
     let tab = getActiveTab(getMostRecentBrowserWindow());
-    let target = TargetFactory.forTab(tab);
+    let target = devtools.TargetFactory.forTab(tab);
     yield target.client.waitForRequestsToSettle();
     let startRecordTimestamp = performance.now();
     yield gDevTools.closeToolbox(target);
@@ -124,7 +86,7 @@ Damp.prototype = {
 
   saveHeapSnapshot(label) {
     let tab = getActiveTab(getMostRecentBrowserWindow());
-    let target = TargetFactory.forTab(tab);
+    let target = devtools.TargetFactory.forTab(tab);
     let toolbox = gDevTools.getToolbox(target);
     let panel = toolbox.getCurrentPanel();
     let memoryFront = panel.panelWin.gFront;
@@ -151,7 +113,7 @@ Damp.prototype = {
     return Promise.resolve();
   },
 
-  waitForNetworkRequests: Task.async(function* (label, toolbox) {
+  waitForNetworkRequests: Task.async(function*(label, toolbox) {
     const start = performance.now();
     yield this.waitForAllRequestsFinished();
     const end = performance.now();
@@ -161,7 +123,7 @@ Damp.prototype = {
     });
   }),
 
-  _consoleBulkLoggingTest: Task.async(function* () {
+  _consoleBulkLoggingTest: Task.async(function*() {
     let TOTAL_MESSAGES = 10;
     let tab = yield this.testSetup(SIMPLE_URL);
     let messageManager = tab.linkedBrowser.messageManager;
@@ -213,7 +175,7 @@ Damp.prototype = {
   // Log a stream of console messages, 1 per rAF.  Then record the average
   // time per rAF.  The idea is that the console being slow can slow down
   // content (i.e. Bug 1237368).
-  _consoleStreamLoggingTest: Task.async(function* () {
+  _consoleStreamLoggingTest: Task.async(function*() {
     let TOTAL_MESSAGES = 100;
     let tab = yield this.testSetup(SIMPLE_URL);
     let messageManager = tab.linkedBrowser.messageManager;
@@ -259,64 +221,6 @@ Damp.prototype = {
     yield this.testTeardown();
   }),
 
-  _consoleObjectExpansionTest: Task.async(function* () {
-    let tab = yield this.testSetup(SIMPLE_URL);
-    let messageManager = tab.linkedBrowser.messageManager;
-    let {toolbox} = yield this.openToolbox("webconsole");
-    let webconsole = toolbox.getPanel("webconsole");
-
-    // Resolve once the first message is received.
-    let onMessageReceived = new Promise(resolve => {
-      function receiveMessages(e, messages) {
-        for (let m of messages) {
-          resolve(m);
-        }
-      }
-      webconsole.hud.ui.once("new-messages", receiveMessages);
-    });
-
-    // Load a frame script using a data URI so we can do logs
-    // from the page.
-    messageManager.loadFrameScript("data:,(" + encodeURIComponent(
-      `function () {
-        addMessageListener("do-dir", function () {
-          content.console.dir(Array.from({length:1000}).reduce((res, _, i)=> {
-            res["item_" + i] = i;
-            return res;
-          }, {}));
-        });
-      }`
-    ) + ")()", true);
-
-    // Kick off the logging
-    messageManager.sendAsyncMessage("do-dir");
-
-    let start = performance.now();
-    yield onMessageReceived;
-    const tree = webconsole.hud.ui.outputNode.querySelector(".dir.message .tree");
-    // The tree can be collapsed since the properties are fetched asynchronously.
-    if (tree.querySelectorAll(".node").length === 1) {
-      // If this is the case, we wait for the properties to be fetched and displayed.
-      yield new Promise(resolve => {
-        const observer = new MutationObserver(mutations => {
-          resolve(mutations);
-          observer.disconnect();
-        });
-        observer.observe(tree, {
-          childList: true
-        });
-      });
-    }
-
-    this._results.push({
-      name: "console.objectexpand",
-      value: performance.now() - start,
-    });
-
-    yield this.closeToolboxAndLog("console.objectexpanded");
-    yield this.testTeardown();
-  }),
-
   takeCensus(label) {
     let start = performance.now();
 
@@ -353,152 +257,104 @@ Damp.prototype = {
     return Promise.resolve();
   },
 
-  async openToolboxAndLog(name, tool, onLoad) {
-    dump("Open toolbox on '" + name + "'\n");
-    let {time, toolbox} = await this.openToolbox(tool, onLoad);
-    this._results.push({name: name + ".open.DAMP", value: time });
-    return toolbox;
-  },
+  _getToolLoadingTests(url, label) {
 
-  async closeToolboxAndLog(name) {
-    dump("Close toolbox on '" + name + "'\n");
-    let {time} = await this.closeToolbox();
-    this._results.push({name: name + ".close.DAMP", value: time });
-  },
+    let openToolboxAndLog = Task.async(function*(name, tool) {
+      let {time, toolbox} = yield this.openToolbox(tool);
+      this._results.push({name: name + ".open.DAMP", value: time });
+      return toolbox;
+    }.bind(this));
 
-  async reloadPageAndLog(name, onReload) {
-    dump("Reload page on '" + name + "'\n");
-    let {time} = await this.reloadPage(onReload);
-    this._results.push({name: name + ".reload.DAMP", value: time });
-  },
+    let closeToolboxAndLog = Task.async(function*(name) {
+      let {time} = yield this.closeToolbox();
+      this._results.push({name: name + ".close.DAMP", value: time });
+    }.bind(this));
 
-  async _coldInspectorOpen() {
-    await this.testSetup(SIMPLE_URL);
-    await this.openToolboxAndLog("cold.inspector", "inspector");
-    await this.closeToolbox();
-    await this.testTeardown();
-  },
+    let reloadPageAndLog = Task.async(function*(name) {
+      let {time} = yield this.reloadPage();
+      this._results.push({name: name + ".reload.DAMP", value: time });
+    }.bind(this));
 
-  _getToolLoadingTests(url, label, { expectedMessages, expectedSources }) {
-    let tests = {
-      inspector: Task.async(function* () {
+    let subtests = {
+      webconsoleOpen: Task.async(function*() {
         yield this.testSetup(url);
-        let toolbox = yield this.openToolboxAndLog(label + ".inspector", "inspector");
-        let onReload = async function() {
-          let inspector = toolbox.getPanel("inspector");
-          // First wait for markup view to be loaded against the new root node
-          await inspector.once("new-root");
-          // Then wait for inspector to be updated
-          await inspector.once("inspector-updated");
-        };
-        yield this.reloadPageAndLog(label + ".inspector", onReload);
-        yield this.closeToolboxAndLog(label + ".inspector");
+        yield openToolboxAndLog(label + ".webconsole", "webconsole");
+        yield reloadPageAndLog(label + ".webconsole");
+        yield closeToolboxAndLog(label + ".webconsole");
         yield this.testTeardown();
       }),
 
-      webconsole: Task.async(function* () {
+      inspectorOpen: Task.async(function*() {
         yield this.testSetup(url);
-        let toolbox = yield this.openToolboxAndLog(label + ".webconsole", "webconsole");
-        let onReload = async function() {
-          let webconsole = toolbox.getPanel("webconsole");
-          await new Promise(done => {
-            let messages = 0;
-            let receiveMessages = () => {
-              if (++messages == expectedMessages) {
-                webconsole.hud.ui.off("new-messages", receiveMessages);
-                done();
-              }
-            };
-            webconsole.hud.ui.on("new-messages", receiveMessages);
-          });
-        };
-        yield this.reloadPageAndLog(label + ".webconsole", onReload);
-        yield this.closeToolboxAndLog(label + ".webconsole");
+        yield openToolboxAndLog(label + ".inspector", "inspector");
+        yield reloadPageAndLog(label + ".inspector");
+        yield closeToolboxAndLog(label + ".inspector");
         yield this.testTeardown();
       }),
 
-      debugger: Task.async(function* () {
+      debuggerOpen: Task.async(function*() {
         yield this.testSetup(url);
-        let onLoad = async function(toolbox, dbg) {
-          await new Promise(done => {
-            let { selectors, store } = dbg.panelWin.getGlobalsForTesting();
-            let unsubscribe;
-            function countSources() {
-              const sources = selectors.getSources(store.getState());
-              if (sources.size >= expectedSources) {
-                unsubscribe();
-                done();
-              }
-            }
-            unsubscribe = store.subscribe(countSources);
-            countSources();
-          });
-        };
-        let toolbox = yield this.openToolboxAndLog(label + ".jsdebugger", "jsdebugger", onLoad);
-        let onReload = async function() {
-          await new Promise(done => {
-            let count = 0;
-            let { client } = toolbox.target;
-            let onSource = async (_, actor) => {
-              if (++count >= expectedSources) {
-                client.removeListener("newSource", onSource);
-                done();
-              }
-            };
-            client.addListener("newSource", onSource);
-          });
-        };
-        yield this.reloadPageAndLog(label + ".jsdebugger", onReload);
-        yield this.closeToolboxAndLog(label + ".jsdebugger");
+        yield openToolboxAndLog(label + ".jsdebugger", "jsdebugger");
+        yield reloadPageAndLog(label + ".jsdebugger");
+        yield closeToolboxAndLog(label + ".jsdebugger");
         yield this.testTeardown();
       }),
 
-      styleeditor: Task.async(function* () {
+      styleEditorOpen: Task.async(function*() {
         yield this.testSetup(url);
-        yield this.openToolboxAndLog(label + ".styleeditor", "styleeditor");
-        yield this.reloadPageAndLog(label + ".styleeditor");
-        yield this.closeToolboxAndLog(label + ".styleeditor");
+        yield openToolboxAndLog(label + ".styleeditor", "styleeditor");
+        yield reloadPageAndLog(label + ".styleeditor");
+        yield closeToolboxAndLog(label + ".styleeditor");
         yield this.testTeardown();
       }),
 
-      performance: Task.async(function* () {
+      performanceOpen: Task.async(function*() {
         yield this.testSetup(url);
-        yield this.openToolboxAndLog(label + ".performance", "performance");
-        yield this.reloadPageAndLog(label + ".performance");
-        yield this.closeToolboxAndLog(label + ".performance");
+        yield openToolboxAndLog(label + ".performance", "performance");
+        yield reloadPageAndLog(label + ".performance");
+        yield closeToolboxAndLog(label + ".performance");
         yield this.testTeardown();
       }),
 
-      netmonitor: Task.async(function* () {
+      netmonitorOpen: Task.async(function*() {
         yield this.testSetup(url);
-        const toolbox = yield this.openToolboxAndLog(label + ".netmonitor", "netmonitor");
+        const toolbox = yield openToolboxAndLog(label + ".netmonitor", "netmonitor");
         const requestsDone = this.waitForNetworkRequests(label + ".netmonitor", toolbox);
-        yield this.reloadPageAndLog(label + ".netmonitor");
+        yield reloadPageAndLog(label + ".netmonitor");
         yield requestsDone;
-        yield this.closeToolboxAndLog(label + ".netmonitor");
+        yield closeToolboxAndLog(label + ".netmonitor");
         yield this.testTeardown();
       }),
 
-      saveAndReadHeapSnapshot: Task.async(function* () {
+      saveAndReadHeapSnapshot: Task.async(function*() {
         yield this.testSetup(url);
-        yield this.openToolboxAndLog(label + ".memory", "memory");
-        yield this.reloadPageAndLog(label + ".memory");
+        yield openToolboxAndLog(label + ".memory", "memory");
+        yield reloadPageAndLog(label + ".memory");
         yield this.saveHeapSnapshot(label);
         yield this.readHeapSnapshot(label);
         yield this.takeCensus(label);
-        yield this.closeToolboxAndLog(label + ".memory");
+        yield closeToolboxAndLog(label + ".memory");
         yield this.testTeardown();
       }),
     };
-    // Prefix all tests with the page type (simple or complicated)
-    for (let name in tests) {
-      tests[label + "." + name] = tests[name];
-      delete tests[name];
+
+    // Construct the sequence array: config.repeat times config.subtests
+    let config = this._config;
+    let sequenceArray = [];
+    for (var i in config.subtests) {
+      for (var r = 0; r < config.repeat; r++) {
+        if (!config.subtests[i] || !subtests[config.subtests[i]]) {
+          continue;
+        }
+
+        sequenceArray.push(subtests[config.subtests[i]]);
+      }
     }
-    return tests;
+
+    return sequenceArray;
   },
 
-  testSetup: Task.async(function* (url) {
+  testSetup: Task.async(function*(url) {
     let tab = yield this.addTab(url);
     yield new Promise(resolve => {
       setTimeout(resolve, this._config.rest);
@@ -506,7 +362,7 @@ Damp.prototype = {
     return tab;
   }),
 
-  testTeardown: Task.async(function* (url) {
+  testTeardown: Task.async(function*(url) {
     this.closeCurrentTab();
     this._nextCommand();
   }),
@@ -603,7 +459,7 @@ Damp.prototype = {
    */
   waitForAllRequestsFinished() {
     let tab = getActiveTab(getMostRecentBrowserWindow());
-    let target = TargetFactory.forTab(tab);
+    let target = devtools.TargetFactory.forTab(tab);
     let toolbox = gDevTools.getToolbox(target);
     let window = toolbox.getCurrentPanel().panelWin;
 
@@ -652,56 +508,16 @@ Damp.prototype = {
 
     TalosParentProfiler.resume("DAMP - start");
 
-    let tests = {};
+    let tests = [];
+    tests = tests.concat(this._getToolLoadingTests(SIMPLE_URL, "simple"));
+    tests = tests.concat(this._getToolLoadingTests(COMPLICATED_URL, "complicated"));
 
-    // Run cold test only once
-    let topWindow = getMostRecentBrowserWindow();
-    if (!topWindow.coldRunDAMP) {
-      topWindow.coldRunDAMP = true;
-      tests["cold.inspector"] = this._coldInspectorOpen;
+    if (config.subtests.indexOf("consoleBulkLogging") > -1) {
+      tests = tests.concat(this._consoleBulkLoggingTest);
     }
-
-    Object.assign(tests, this._getToolLoadingTests(SIMPLE_URL, "simple", {
-      expectedMessages: 1,
-      expectedSources: 1,
-    }));
-
-    Object.assign(tests, this._getToolLoadingTests(COMPLICATED_URL, "complicated", {
-      expectedMessages: 7,
-      expectedSources: 14,
-    }));
-
-    tests["console.bulklog"] = this._consoleBulkLoggingTest;
-    tests["console.streamlog"] = this._consoleStreamLoggingTest;
-    tests["console.objectexpand"] = this._consoleObjectExpansionTest;
-
-    // Filter tests via `./mach --subtests filter` command line argument
-    let filter = Services.prefs.getCharPref("talos.subtests", "");
-    if (filter) {
-      for (let name in tests) {
-        if (!name.includes(filter)) {
-          delete tests[name];
-        }
-      }
-      if (Object.keys(tests).length == 0) {
-        dump("ERROR: Unable to find any test matching '" + filter + "'\n");
-        this._doneInternal();
-        return;
-      }
+    if (config.subtests.indexOf("consoleStreamLogging") > -1) {
+      tests = tests.concat(this._consoleStreamLoggingTest);
     }
-
-    // Construct the sequence array while filtering tests
-    let sequenceArray = [];
-    for (var i in config.subtests) {
-      for (var r = 0; r < config.repeat; r++) {
-        if (!config.subtests[i] || !tests[config.subtests[i]]) {
-          continue;
-        }
-
-        sequenceArray.push(tests[config.subtests[i]]);
-      }
-    }
-
-    this._doSequence(sequenceArray, this._doneInternal);
+    this._doSequence(tests, this._doneInternal);
   }
 }

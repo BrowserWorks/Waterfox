@@ -16,7 +16,7 @@ var originalFavicon = {
 
 var uniqueFaviconId = 0;
 function createFavicon(fileName) {
-  let tempdir = Services.dirsvc.get("TmpD", Ci.nsIFile);
+  let tempdir = Services.dirsvc.get("TmpD", Ci.nsILocalFile);
 
   // remove any existing file at the path we're about to copy to
   let outfile = tempdir.clone();

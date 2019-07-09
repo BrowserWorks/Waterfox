@@ -15,7 +15,7 @@
 #include "nsIRDFLiteral.h"
 #include "nsIDocumentLoaderFactory.h"
 #include "nsITimer.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIDirIndexListener.h"
 #include "nsIFTPChannel.h"
 #include "nsCycleCollectionParticipant.h"
@@ -85,7 +85,7 @@ protected:
     explicit nsHTTPIndex(nsIInterfaceRequestor* aRequestor);
     nsresult CommonInit(void);
     nsresult Init(nsIURI* aBaseURL);
-    void        GetDestination(nsIRDFResource* r, nsACString& dest);
+    void        GetDestination(nsIRDFResource* r, nsXPIDLCString& dest);
     bool        isWellknownContainerURI(nsIRDFResource *r);
     nsresult    AddElement(nsIRDFResource *parent, nsIRDFResource *prop,
                            nsIRDFNode *child);

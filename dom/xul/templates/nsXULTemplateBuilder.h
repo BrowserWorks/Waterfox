@@ -236,19 +236,19 @@ public:
     nsresult
     CompileExtendedQuery(nsIContent* aRuleElement,
                          nsIContent* aActionElement,
-                         nsAtom* aMemberVariable,
+                         nsIAtom* aMemberVariable,
                          nsTemplateQuerySet* aQuerySet);
 
     /**
      * Determine the ref variable and tag from inside a RDF query.
      */
-    void DetermineRDFQueryRef(nsIContent* aQueryElement, nsAtom** tag);
+    void DetermineRDFQueryRef(nsIContent* aQueryElement, nsIAtom** tag);
 
     /**
      * Determine the member variable from inside an action body. It will be
      * the value of the uri attribute on a node.
      */
-    already_AddRefed<nsAtom> DetermineMemberVariable(nsIContent* aElement);
+    already_AddRefed<nsIAtom> DetermineMemberVariable(nsIContent* aElement);
 
     /**
      * Compile a simple query. A simple query is one that doesn't have a
@@ -423,8 +423,8 @@ protected:
     /**
      * The default reference and member variables.
      */
-    RefPtr<nsAtom> mRefVariable;
-    RefPtr<nsAtom> mMemberVariable;
+    nsCOMPtr<nsIAtom> mRefVariable;
+    nsCOMPtr<nsIAtom> mMemberVariable;
 
     /**
      * The match map contains nsTemplateMatch objects, one for each unique

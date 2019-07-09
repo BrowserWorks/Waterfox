@@ -15,7 +15,6 @@ use gecko_bindings::structs::{self, nsCSSFontFaceRule, nsCSSValue};
 use gecko_bindings::structs::{nsCSSCounterDesc, nsCSSCounterStyleRule};
 use gecko_bindings::sugar::ns_css_value::ToNsCssValue;
 use gecko_bindings::sugar::refptr::{RefPtr, UniqueRefPtr};
-use nsstring::nsString;
 use properties::longhands::font_language_override;
 use shared_lock::{ToCssWithGuard, SharedRwLockReadGuard};
 use std::{fmt, str};
@@ -202,7 +201,7 @@ impl From<FontFaceRuleData> for FontFaceRule {
 impl ToCssWithGuard for FontFaceRule {
     fn to_css<W>(&self, _guard: &SharedRwLockReadGuard, dest: &mut W) -> fmt::Result
     where W: fmt::Write {
-        let mut css_text = nsString::new();
+        ns_auto_string!(css_text);
         unsafe {
             bindings::Gecko_CSSFontFaceRule_GetCssText(self.get(), &mut *css_text);
         }
@@ -239,7 +238,7 @@ impl From<counter_style::CounterStyleRuleData> for CounterStyleRule {
 impl ToCssWithGuard for CounterStyleRule {
     fn to_css<W>(&self, _guard: &SharedRwLockReadGuard, dest: &mut W) -> fmt::Result
     where W: fmt::Write {
-        let mut css_text = nsString::new();
+        ns_auto_string!(css_text);
         unsafe {
             bindings::Gecko_CSSCounterStyle_GetCssText(self.get(), &mut *css_text);
         }

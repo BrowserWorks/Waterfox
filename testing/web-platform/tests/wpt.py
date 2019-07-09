@@ -1,1 +1,0 @@
-execfile("wpt")

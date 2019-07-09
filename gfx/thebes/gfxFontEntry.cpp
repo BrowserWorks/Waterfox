@@ -65,6 +65,7 @@ gfxFontEntry::gfxFontEntry() :
     mIsDataUserFont(false),
     mIsLocalUserFont(false),
     mStandardFace(false),
+    mSymbolFont(false),
     mIgnoreGDEF(false),
     mIgnoreGSUB(false),
     mSVGInitialized(false),
@@ -103,6 +104,7 @@ gfxFontEntry::gfxFontEntry(const nsAString& aName, bool aIsStandardFace) :
     mIsUserFontContainer(false),
     mIsDataUserFont(false),
     mIsLocalUserFont(false), mStandardFace(aIsStandardFace),
+    mSymbolFont(false),
     mIgnoreGDEF(false),
     mIgnoreGSUB(false),
     mSVGInitialized(false),
@@ -164,6 +166,11 @@ gfxFontEntry::~gfxFontEntry()
     // face objects should have been released.
     MOZ_ASSERT(!mHBFace);
     MOZ_ASSERT(!mGrFaceInitialized);
+}
+
+bool gfxFontEntry::IsSymbolFont() 
+{
+    return mSymbolFont;
 }
 
 bool gfxFontEntry::TestCharacterMap(uint32_t aCh)
@@ -595,13 +602,14 @@ gfxFontEntry::ShareFontTableAndGetBlob(uint32_t aTag,
 
 already_AddRefed<gfxCharacterMap>
 gfxFontEntry::GetCMAPFromFontInfo(FontInfoData *aFontInfoData,
-                                  uint32_t& aUVSOffset)
+                                  uint32_t& aUVSOffset,
+                                  bool& aSymbolFont)
 {
     if (!aFontInfoData || !aFontInfoData->mLoadCmaps) {
         return nullptr;
     }
 
-    return aFontInfoData->GetCMAP(mName, aUVSOffset);
+    return aFontInfoData->GetCMAP(mName, aUVSOffset, aSymbolFont);
 }
 
 hb_blob_t *
@@ -1093,12 +1101,10 @@ gfxFontFamily::HasOtherFamilyNames()
 
 gfxFontEntry*
 gfxFontFamily::FindFontForStyle(const gfxFontStyle& aFontStyle, 
-                                bool& aNeedsSyntheticBold,
-                                bool aIgnoreSizeTolerance)
+                                bool& aNeedsSyntheticBold)
 {
     AutoTArray<gfxFontEntry*,4> matched;
-    FindAllFontsForStyle(aFontStyle, matched, aNeedsSyntheticBold,
-                         aIgnoreSizeTolerance);
+    FindAllFontsForStyle(aFontStyle, matched, aNeedsSyntheticBold);
     if (!matched.IsEmpty()) {
         return matched[0];
     }
@@ -1228,8 +1234,7 @@ WeightStyleStretchDistance(gfxFontEntry* aFontEntry,
 void
 gfxFontFamily::FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
                                     nsTArray<gfxFontEntry*>& aFontEntryList,
-                                    bool& aNeedsSyntheticBold,
-                                    bool aIgnoreSizeTolerance)
+                                    bool& aNeedsSyntheticBold)
 {
     if (!mHasStyles) {
         FindStyleVariations(); // collect faces for the family, if not already done
@@ -1464,7 +1469,7 @@ gfxFontFamily::FindFontForChar(GlobalFontMatch *aMatchData)
     gfxFontEntry *fe =
         FindFontForStyle(aMatchData->mStyle ? *aMatchData->mStyle
                                             : gfxFontStyle(),
-                         needsBold, true);
+                         needsBold);
 
     if (fe && !fe->SkipDuringSystemFallback()) {
         int32_t rank = 0;
@@ -1652,83 +1657,6 @@ gfxFontFamily::ReadOtherFamilyNames(gfxPlatformFontList *aPlatformFontList)
         }
         ReadOtherFamilyNamesForFace(aPlatformFontList, nameTable);
     }
-}
-
-static bool
-LookForLegacyFamilyName(const nsAString& aCanonicalName,
-                        const char* aNameData,
-                        uint32_t aDataLength,
-                        nsAString& aLegacyName /* outparam */)
-{
-    const gfxFontUtils::NameHeader* nameHeader =
-        reinterpret_cast<const gfxFontUtils::NameHeader*>(aNameData);
-
-    uint32_t nameCount = nameHeader->count;
-    if (nameCount * sizeof(gfxFontUtils::NameRecord) > aDataLength) {
-        NS_WARNING("invalid font (name records)");
-        return false;
-    }
-
-    const gfxFontUtils::NameRecord* nameRecord =
-        reinterpret_cast<const gfxFontUtils::NameRecord*>
-            (aNameData + sizeof(gfxFontUtils::NameHeader));
-    uint32_t stringsBase = uint32_t(nameHeader->stringOffset);
-
-    for (uint32_t i = 0; i < nameCount; i++, nameRecord++) {
-        uint32_t nameLen = nameRecord->length;
-        uint32_t nameOff = nameRecord->offset;
-
-        if (stringsBase + nameOff + nameLen > aDataLength) {
-            NS_WARNING("invalid font (name table strings)");
-            return false;
-        }
-
-        if (uint16_t(nameRecord->nameID) == gfxFontUtils::NAME_ID_FAMILY) {
-            bool ok =
-                gfxFontUtils::DecodeFontName(aNameData + stringsBase + nameOff,
-                                             nameLen,
-                                             uint32_t(nameRecord->platformID),
-                                             uint32_t(nameRecord->encodingID),
-                                             uint32_t(nameRecord->languageID),
-                                             aLegacyName);
-            // it's only a legacy name if it differs from the canonical name
-            if (ok && aLegacyName != aCanonicalName) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool
-gfxFontFamily::CheckForLegacyFamilyNames(gfxPlatformFontList* aFontList)
-{
-    if (mCheckedForLegacyFamilyNames) {
-        // we already did this, so there's nothing more to add
-        return false;
-    }
-    mCheckedForLegacyFamilyNames = true;
-    bool added = false;
-    const uint32_t kNAME = TRUETYPE_TAG('n','a','m','e');
-    for (auto& fe : mAvailableFonts) {
-        if (!fe) {
-            continue;
-        }
-        gfxFontEntry::AutoTable nameTable(fe, kNAME);
-        if (!nameTable) {
-            continue;
-        }
-        nsAutoString legacyName;
-        uint32_t dataLength;
-        const char* nameData = hb_blob_get_data(nameTable, &dataLength);
-        if (LookForLegacyFamilyName(Name(), nameData, dataLength,
-                                    legacyName)) {
-            if (aFontList->AddWithLegacyFamilyName(legacyName, fe)) {
-                added = true;
-            }
-        }
-    }
-    return added;
 }
 
 void

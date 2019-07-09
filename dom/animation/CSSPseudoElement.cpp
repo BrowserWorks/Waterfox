@@ -82,7 +82,7 @@ CSSPseudoElement::GetCSSPseudoElement(Element* aElement,
     return nullptr;
   }
 
-  nsAtom* propName = CSSPseudoElement::GetCSSPseudoElementPropertyAtom(aType);
+  nsIAtom* propName = CSSPseudoElement::GetCSSPseudoElementPropertyAtom(aType);
   RefPtr<CSSPseudoElement> pseudo =
     static_cast<CSSPseudoElement*>(aElement->GetProperty(propName));
   if (pseudo) {
@@ -102,7 +102,7 @@ CSSPseudoElement::GetCSSPseudoElement(Element* aElement,
   return pseudo.forget();
 }
 
-/* static */ nsAtom*
+/* static */ nsIAtom*
 CSSPseudoElement::GetCSSPseudoElementPropertyAtom(CSSPseudoElementType aType)
 {
   switch (aType) {

@@ -65,16 +65,10 @@ interface nsIServiceWorkerRegistrationInfoListener : nsISupports
 [scriptable, builtinclass, uuid(ddbc1fd4-2f2e-4fca-a395-6e010bbedfe3)]
 interface nsIServiceWorkerRegistrationInfo : nsISupports
 {
-  // State values below should match the ServiceWorkerUpdateViaCache enumeration.
-  const unsigned short UPDATE_VIA_CACHE_IMPORTS = 0;
-  const unsigned short UPDATE_VIA_CACHE_ALL = 1;
-  const unsigned short UPDATE_VIA_CACHE_NONE = 2;
-
   readonly attribute nsIPrincipal principal;
 
   readonly attribute DOMString scope;
   readonly attribute DOMString scriptSpec;
-  readonly attribute unsigned short updateViaCache;
 
   readonly attribute PRTime lastUpdateTime;
 
@@ -116,7 +110,7 @@ interface nsIServiceWorkerManager : nsISupports
   nsISupports register(in mozIDOMWindow aWindow,
                        in nsIURI aScope,
                        in nsIURI aScriptURI,
-                       in uint16_t aUpdateViaCache);
+                       in nsLoadFlags aLoadFlags);
 
   /**
    * Unregister an existing ServiceWorker registration for `aScope`.
@@ -186,13 +180,16 @@ interface nsIServiceWorkerManager : nsISupports
   // Testing
   DOMString getScopeForUrl(in nsIPrincipal aPrincipal, in DOMString aPath);
 
+  // Note: This is meant to be used only by about:serviceworkers.
   // It returns an array of nsIServiceWorkerRegistrationInfos.
   nsIArray getAllRegistrations();
 
+  // Note: This is meant to be used only by about:serviceworkers.
   // It calls softUpdate() for each child process.
   [implicit_jscontext] void propagateSoftUpdate(in jsval aOriginAttributes,
                                                 in DOMString aScope);
 
+  // Note: This is meant to be used only by about:serviceworkers.
   // It calls unregister() in each child process. The callback is used to
   // inform when unregister() is completed on the current process.
   void propagateUnregister(in nsIPrincipal aPrincipal,

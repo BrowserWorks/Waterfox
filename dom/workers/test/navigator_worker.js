@@ -15,7 +15,7 @@ var supportedProps = [
   "language",
   "languages",
   "hardwareConcurrency",
-  { name: "storage", isSecureContext: true },
+  { name: "storage", nightly: true, isSecureContext: true },
   "connection",
 ];
 

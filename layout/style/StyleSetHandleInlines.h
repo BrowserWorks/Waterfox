@@ -140,29 +140,17 @@ StyleSetHandle::Ptr::ResolvePseudoElementStyle(dom::Element* aParentElement,
 }
 
 already_AddRefed<nsStyleContext>
-StyleSetHandle::Ptr::ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
+StyleSetHandle::Ptr::ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
                                                         nsStyleContext* aParentContext)
 {
   FORWARD_WITH_PARENT(ResolveInheritingAnonymousBoxStyle, aParentContext, (aPseudoTag, parent));
 }
 
 already_AddRefed<nsStyleContext>
-StyleSetHandle::Ptr::ResolveNonInheritingAnonymousBoxStyle(nsAtom* aPseudoTag)
+StyleSetHandle::Ptr::ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag)
 {
   FORWARD(ResolveNonInheritingAnonymousBoxStyle, (aPseudoTag));
 }
-
-#ifdef MOZ_XUL
-already_AddRefed<nsStyleContext>
-StyleSetHandle::Ptr::ResolveXULTreePseudoStyle(dom::Element* aParentElement,
-                                               nsICSSAnonBoxPseudo* aPseudoTag,
-                                               nsStyleContext* aParentContext,
-                                               const AtomArray& aInputWord)
-{
-  FORWARD_WITH_PARENT(ResolveXULTreePseudoStyle, aParentContext,
-                      (aParentElement, aPseudoTag, parent, aInputWord));
-}
-#endif
 
 // manage the set of style sheets in the style set
 nsresult
@@ -304,6 +292,23 @@ StyleSetHandle::Ptr::ProbePseudoElementStyle(dom::Element* aParentElement,
   return AsServo()->ProbePseudoElementStyle(aParentElement, aType, parent);
 }
 
+nsRestyleHint
+StyleSetHandle::Ptr::HasStateDependentStyle(dom::Element* aElement,
+                                            EventStates aStateMask)
+{
+  FORWARD(HasStateDependentStyle, (aElement, aStateMask));
+}
+
+nsRestyleHint
+StyleSetHandle::Ptr::HasStateDependentStyle(dom::Element* aElement,
+                                            CSSPseudoElementType aPseudoType,
+                                            dom::Element* aPseudoElement,
+                                            EventStates aStateMask)
+{
+  FORWARD(HasStateDependentStyle, (aElement, aPseudoType, aPseudoElement,
+                                   aStateMask));
+}
+
 void
 StyleSetHandle::Ptr::RootStyleContextAdded()
 {
@@ -332,15 +337,9 @@ AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray)
 }
 
 nsCSSCounterStyleRule*
-StyleSetHandle::Ptr::CounterStyleRuleForName(nsAtom* aName)
+StyleSetHandle::Ptr::CounterStyleRuleForName(nsIAtom* aName)
 {
   FORWARD(CounterStyleRuleForName, (aName));
-}
-
-already_AddRefed<gfxFontFeatureValueSet>
-StyleSetHandle::Ptr::BuildFontFeatureValueSet()
-{
-  FORWARD(BuildFontFeatureValueSet, ());
 }
 
 bool

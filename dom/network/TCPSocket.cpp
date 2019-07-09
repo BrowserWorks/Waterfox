@@ -7,6 +7,7 @@
 #include "TCPSocket.h"
 #include "TCPServerSocket.h"
 #include "TCPSocketChild.h"
+#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/TCPSocketBinding.h"
 #include "mozilla/dom/TCPSocketErrorEvent.h"
 #include "mozilla/dom/TCPSocketErrorEventBinding.h"
@@ -131,7 +132,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_ADDREF_INHERITED(TCPSocket, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(TCPSocket, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TCPSocket)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TCPSocket)
   NS_INTERFACE_MAP_ENTRY(nsITransportEventSink)
   NS_INTERFACE_MAP_ENTRY(nsIRequestObserver)
   NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
@@ -209,7 +210,6 @@ TCPSocket::CreateStream()
 
   mMultiplexStream = do_CreateInstance("@mozilla.org/io/multiplex-input-stream;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
-  nsCOMPtr<nsIInputStream> stream = do_QueryInterface(mMultiplexStream);
 
   mMultiplexStreamCopier = do_CreateInstance("@mozilla.org/network/async-stream-copier;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -218,7 +218,7 @@ TCPSocket::CreateStream()
       do_GetService("@mozilla.org/network/socket-transport-service;1");
 
   nsCOMPtr<nsIEventTarget> target = do_QueryInterface(sts);
-  rv = mMultiplexStreamCopier->Init(stream,
+  rv = mMultiplexStreamCopier->Init(mMultiplexStream,
                                     mSocketOutputStream,
                                     target,
                                     true, /* source buffered */
@@ -596,8 +596,7 @@ TCPSocket::BufferedAmount()
   }
   if (mMultiplexStream) {
     uint64_t available = 0;
-    nsCOMPtr<nsIInputStream> stream(do_QueryInterface(mMultiplexStream));
-    stream->Available(&available);
+    mMultiplexStream->Available(&available);
     return available;
   }
   return 0;
@@ -990,7 +989,7 @@ TCPSocket::CreateInputStreamPump()
   mInputStreamPump = do_CreateInstance("@mozilla.org/network/input-stream-pump;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = mInputStreamPump->Init(mSocketInputStream, 0, 0, false, nullptr);
+  rv = mInputStreamPump->Init(mSocketInputStream, -1, -1, 0, 0, false, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t suspendCount = mSuspendCount;

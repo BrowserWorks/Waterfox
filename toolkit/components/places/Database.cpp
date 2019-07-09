@@ -222,7 +222,7 @@ SetJournalMode(nsCOMPtr<mozIStorageConnection>& aDBConn,
 nsresult
 CreateRoot(nsCOMPtr<mozIStorageConnection>& aDBConn,
            const nsCString& aRootName, const nsCString& aGuid,
-           const nsAString& titleString)
+           const nsXPIDLString& titleString)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -370,7 +370,6 @@ Database::Database()
   , mDBPageSize(0)
   , mDatabaseStatus(nsINavHistoryService::DATABASE_STATUS_OK)
   , mClosed(false)
-  , mShouldConvertIconPayloads(false)
   , mClientsShutdown(new ClientsShutdownBlocker())
   , mConnectionShutdown(new ConnectionShutdownBlocker(this))
   , mMaxUrlLength(0)
@@ -589,31 +588,13 @@ Database::EnsureConnection()
     bool databaseMigrated = false;
     rv = SetupDatabaseConnection(storage);
     if (NS_SUCCEEDED(rv)) {
-      // Failing to initialize the schema may indicate a corruption.
-      rv = InitSchema(&databaseMigrated);
-      if (NS_FAILED(rv)) {
-        if (rv == NS_ERROR_STORAGE_BUSY ||
-            rv == NS_ERROR_FILE_IS_LOCKED ||
-            rv == NS_ERROR_FILE_NO_DEVICE_SPACE ||
-            rv == NS_ERROR_OUT_OF_MEMORY) {
-          // The database is not corrupt, though some migration step failed.
-          // This may be caused by concurrent use of sync and async Storage APIs
-          // or by a system issue.
-          // The best we can do is trying again. If it should still fail, Places
-          // won't work properly and will be handled as LOCKED.
-          rv = InitSchema(&databaseMigrated);
-          if (NS_FAILED(rv)) {
-            rv = NS_ERROR_FILE_IS_LOCKED;
-          }
-        } else {
-          rv = NS_ERROR_FILE_CORRUPTED;
-        }
+      // Failing to initialize the schema always indicates a corruption.
+      if (NS_FAILED(InitSchema(&databaseMigrated))) {
+        rv = NS_ERROR_FILE_CORRUPTED;
       }
     }
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      if (rv != NS_ERROR_FILE_IS_LOCKED) {
-        mDatabaseStatus = nsINavHistoryService::DATABASE_STATUS_CORRUPT;
-      }
+      mDatabaseStatus = nsINavHistoryService::DATABASE_STATUS_CORRUPT;
       // Some errors may not indicate a database corruption, for those cases we
       // just bail out without throwing away a possibly valid places.sqlite.
       if (rv == NS_ERROR_FILE_CORRUPTED) {
@@ -980,14 +961,6 @@ Database::InitSchema(bool* aDatabaseMigrated)
         return NS_ERROR_FILE_CORRUPTED;
       }
 
-      auto guard = MakeScopeExit([&]() {
-        // This runs at the end of the migration, regardless of its success.
-        if (mShouldConvertIconPayloads) {
-          mShouldConvertIconPayloads = false;
-          nsFaviconService::ConvertUnsupportedPayloads(mMainConn);
-        }
-      });
-
       // Firefox 4 uses schema version 11.
 
       // Firefox 8 uses schema version 12.
@@ -1138,29 +1111,9 @@ Database::InitSchema(bool* aDatabaseMigrated)
         rv = MigrateV38Up();
         NS_ENSURE_SUCCESS(rv, rv);
       }
-
       // Firefox 56 uses schema version 38.
 
-      if (currentSchemaVersion < 39) {
-        rv = MigrateV39Up();
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-
-      // Firefox 57 uses schema version 39.
-
-      if (currentSchemaVersion < 40) {
-        rv = MigrateV40Up();
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-
-      // Firefox 58 uses schema version 40.
-
       // Schema Upgrades must add migration code here.
-      // >>> IMPORTANT! <<<
-      // NEVER MIX UP SYNC AND ASYNC EXECUTION IN MIGRATORS, YOU MAY LOCK THE
-      // CONNECTION AND CAUSE FURTHER STEPS TO FAIL.
-      // In case, set a bool and do the async work in the ScopeExit guard just
-      // before the migration steps.
 
       rv = UpdateBookmarkRootTitles();
       // We don't want a broken localization to cause us to think
@@ -1215,8 +1168,6 @@ Database::InitSchema(bool* aDatabaseMigrated)
     rv = mMainConn->ExecuteSimpleSQL(CREATE_IDX_MOZ_BOOKMARKS_PARENTPOSITION);
     NS_ENSURE_SUCCESS(rv, rv);
     rv = mMainConn->ExecuteSimpleSQL(CREATE_IDX_MOZ_BOOKMARKS_PLACELASTMODIFIED);
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = mMainConn->ExecuteSimpleSQL(CREATE_IDX_MOZ_BOOKMARKS_DATEADDED);
     NS_ENSURE_SUCCESS(rv, rv);
     rv = mMainConn->ExecuteSimpleSQL(CREATE_IDX_MOZ_BOOKMARKS_GUID);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1275,32 +1226,36 @@ Database::CreateBookmarkRoots()
   nsresult rv = bundleService->CreateBundle(PLACES_BUNDLE, getter_AddRefs(bundle));
   if (NS_FAILED(rv)) return rv;
 
-  nsAutoString rootTitle;
+  nsXPIDLString rootTitle;
   // The first root's title is an empty string.
   rv = CreateRoot(mMainConn, NS_LITERAL_CSTRING("places"),
                   NS_LITERAL_CSTRING("root________"), rootTitle);
   if (NS_FAILED(rv)) return rv;
 
   // Fetch the internationalized folder name from the string bundle.
-  rv = bundle->GetStringFromName("BookmarksMenuFolderTitle", rootTitle);
+  rv = bundle->GetStringFromName("BookmarksMenuFolderTitle",
+                                 getter_Copies(rootTitle));
   if (NS_FAILED(rv)) return rv;
   rv = CreateRoot(mMainConn, NS_LITERAL_CSTRING("menu"),
                   NS_LITERAL_CSTRING("menu________"), rootTitle);
   if (NS_FAILED(rv)) return rv;
 
-  rv = bundle->GetStringFromName("BookmarksToolbarFolderTitle", rootTitle);
+  rv = bundle->GetStringFromName("BookmarksToolbarFolderTitle",
+                                 getter_Copies(rootTitle));
   if (NS_FAILED(rv)) return rv;
   rv = CreateRoot(mMainConn, NS_LITERAL_CSTRING("toolbar"),
                   NS_LITERAL_CSTRING("toolbar_____"), rootTitle);
   if (NS_FAILED(rv)) return rv;
 
-  rv = bundle->GetStringFromName("TagsFolderTitle", rootTitle);
+  rv = bundle->GetStringFromName("TagsFolderTitle",
+                                 getter_Copies(rootTitle));
   if (NS_FAILED(rv)) return rv;
   rv = CreateRoot(mMainConn, NS_LITERAL_CSTRING("tags"),
                   NS_LITERAL_CSTRING("tags________"), rootTitle);
   if (NS_FAILED(rv)) return rv;
 
-  rv = bundle->GetStringFromName("OtherBookmarksFolderTitle", rootTitle);
+  rv = bundle->GetStringFromName("OtherBookmarksFolderTitle",
+                                 getter_Copies(rootTitle));
   if (NS_FAILED(rv)) return rv;
   rv = CreateRoot(mMainConn, NS_LITERAL_CSTRING("unfiled"),
                   NS_LITERAL_CSTRING("unfiled_____"), rootTitle);
@@ -1361,8 +1316,6 @@ Database::InitFunctions()
   rv = CalculateFrecencyFunction::create(mMainConn);
   NS_ENSURE_SUCCESS(rv, rv);
   rv = GenerateGUIDFunction::create(mMainConn);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = IsValidGUIDFunction::create(mMainConn);
   NS_ENSURE_SUCCESS(rv, rv);
   rv = FixupURLFunction::create(mMainConn);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1454,8 +1407,9 @@ Database::UpdateBookmarkRootTitles()
                                  };
 
   for (uint32_t i = 0; i < ArrayLength(rootGuids); ++i) {
-    nsAutoString title;
-    rv = bundle->GetStringFromName(titleStringIDs[i], title);
+    nsXPIDLString title;
+    rv = bundle->GetStringFromName(titleStringIDs[i],
+                                   getter_Copies(title));
     if (NS_FAILED(rv)) return rv;
 
     nsCOMPtr<mozIStorageBindingParams> params;
@@ -2345,9 +2299,8 @@ Database::MigrateV37Up() {
   ));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // The async favicons conversion will happen at the end of the normal schema
-  // migration.
-  mShouldConvertIconPayloads = true;
+  // Start the async conversion
+  nsFaviconService::ConvertUnsupportedPayloads(mMainConn);
 
   return NS_OK;
 }
@@ -2373,42 +2326,6 @@ Database::MigrateV38Up()
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  return NS_OK;
-}
-
-nsresult
-Database::MigrateV39Up() {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  // Create an index on dateAdded.
-  nsresult rv = mMainConn->ExecuteSimpleSQL(CREATE_IDX_MOZ_BOOKMARKS_DATEADDED);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
-}
-
-nsresult
-Database::MigrateV40Up() {
-  MOZ_ASSERT(NS_IsMainThread());
-  // We are changing the hashing function to crop the hashed text to a maximum
-  // length, thus we must recalculate the hashes.
-  // Due to this, on downgrade some of these may not match, it should be limited
-  // to unicode and very long urls though.
-  nsresult rv = mMainConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "UPDATE moz_places "
-    "SET url_hash = hash(url) "
-    "WHERE url_hash <> hash(url)"));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = mMainConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "UPDATE moz_icons "
-    "SET fixed_icon_url_hash = hash(fixup_url(icon_url)) "
-    "WHERE fixed_icon_url_hash <> hash(fixup_url(icon_url))"));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = mMainConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "UPDATE moz_pages_w_icons "
-    "SET page_url_hash = hash(page_url) "
-    "WHERE page_url_hash <> hash(page_url)"));
-  NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
 

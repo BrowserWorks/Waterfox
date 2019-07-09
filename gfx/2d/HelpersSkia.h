@@ -10,9 +10,6 @@
 #include "skia/include/core/SkCanvas.h"
 #include "skia/include/effects/SkDashPathEffect.h"
 #include "skia/include/core/SkShader.h"
-#ifdef USE_SKIA_GPU
-#include "skia/include/gpu/GrTypes.h"
-#endif
 #include "mozilla/Assertions.h"
 #include <vector>
 #include "nsDebug.h"
@@ -77,27 +74,6 @@ MakeSkiaImageInfo(const IntSize& aSize, SurfaceFormat aFormat)
                            GfxFormatToSkiaAlphaType(aFormat));
 }
 
-#ifdef USE_SKIA_GPU
-static inline GrPixelConfig
-GfxFormatToGrConfig(SurfaceFormat format)
-{
-  switch (format)
-  {
-    case SurfaceFormat::B8G8R8A8:
-      return kBGRA_8888_GrPixelConfig;
-    case SurfaceFormat::B8G8R8X8:
-      // We probably need to do something here.
-      return kBGRA_8888_GrPixelConfig;
-    case SurfaceFormat::R5G6B5_UINT16:
-      return kRGB_565_GrPixelConfig;
-    case SurfaceFormat::A8:
-      return kAlpha_8_GrPixelConfig;
-    default:
-      return kRGBA_8888_GrPixelConfig;
-  }
-
-}
-#endif
 static inline void
 GfxMatrixToSkiaMatrix(const Matrix& mat, SkMatrix& retval)
 {
@@ -274,27 +250,27 @@ static inline SkRect
 RectToSkRect(const Rect& aRect)
 {
   return SkRect::MakeXYWH(SkFloatToScalar(aRect.x), SkFloatToScalar(aRect.y),
-                          SkFloatToScalar(aRect.Width()), SkFloatToScalar(aRect.Height()));
+                          SkFloatToScalar(aRect.width), SkFloatToScalar(aRect.height));
 }
 
 static inline SkRect
 IntRectToSkRect(const IntRect& aRect)
 {
   return SkRect::MakeXYWH(SkIntToScalar(aRect.x), SkIntToScalar(aRect.y),
-                          SkIntToScalar(aRect.Width()), SkIntToScalar(aRect.Height()));
+                          SkIntToScalar(aRect.width), SkIntToScalar(aRect.height));
 }
 
 static inline SkIRect
 RectToSkIRect(const Rect& aRect)
 {
   return SkIRect::MakeXYWH(int32_t(aRect.x), int32_t(aRect.y),
-                           int32_t(aRect.Width()), int32_t(aRect.Height()));
+                           int32_t(aRect.width), int32_t(aRect.height));
 }
 
 static inline SkIRect
 IntRectToSkIRect(const IntRect& aRect)
 {
-  return SkIRect::MakeXYWH(aRect.x, aRect.y, aRect.Width(), aRect.Height());
+  return SkIRect::MakeXYWH(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
 static inline IntRect

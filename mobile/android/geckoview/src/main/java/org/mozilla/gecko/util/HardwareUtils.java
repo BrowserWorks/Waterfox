@@ -79,28 +79,17 @@ public final class HardwareUtils {
         return SysInfo.getMemSize();
     }
 
-    private static String getPreferredAbi() {
-        String abi = null;
-        if (Build.VERSION.SDK_INT >= 21) {
-            abi = Build.SUPPORTED_ABIS[0];
-        }
-        if (abi == null) {
-            abi = Build.CPU_ABI;
-        }
-        return abi;
-    }
-
     public static boolean isARMSystem() {
-        return "armeabi-v7a".equals(getPreferredAbi());
+        return Build.CPU_ABI != null && Build.CPU_ABI.equals("armeabi-v7a");
     }
 
     public static boolean isARM64System() {
         // 64-bit support was introduced in 21.
-        return "arm64-v8a".equals(getPreferredAbi());
+        return Build.VERSION.SDK_INT >= 21 && "arm64-v8a".equals(Build.SUPPORTED_ABIS[0]);
     }
 
     public static boolean isX86System() {
-        if ("x86".equals(getPreferredAbi())) {
+        if (Build.CPU_ABI != null && Build.CPU_ABI.equals("x86")) {
             return true;
         }
         if (Build.VERSION.SDK_INT >= 21) {
@@ -120,7 +109,7 @@ public final class HardwareUtils {
             // in which case CPU_ABI is not reliable.
             return "x86";
         }
-        return getPreferredAbi();
+        return Build.CPU_ABI;
     }
 
     /**
@@ -152,8 +141,7 @@ public final class HardwareUtils {
             return true;
         }
 
-        Log.w(LOGTAG, "Unknown app/system ABI combination: " +
-                      BuildConfig.MOZ_APP_ABI + " / " + getRealAbi());
+        Log.w(LOGTAG, "Unknown app/system ABI combination: " + BuildConfig.MOZ_APP_ABI + " / " + Build.CPU_ABI);
         return true;
     }
 }

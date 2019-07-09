@@ -2,7 +2,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
 
 /**
  * Firefox Accounts Web Channel.
@@ -12,12 +11,12 @@
  */
 this.EXPORTED_SYMBOLS = ["EnsureFxAccountsWebChannel"];
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components; /* global Components */
+const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components; /*global Components */
 
-Cu.import("resource://gre/modules/Accounts.jsm"); /* global Accounts */
-Cu.import("resource://gre/modules/Services.jsm"); /* global Services */
-Cu.import("resource://gre/modules/WebChannel.jsm"); /* global WebChannel */
-Cu.import("resource://gre/modules/XPCOMUtils.jsm"); /* global XPCOMUtils */
+Cu.import("resource://gre/modules/Accounts.jsm"); /*global Accounts */
+Cu.import("resource://gre/modules/Services.jsm"); /*global Services */
+Cu.import("resource://gre/modules/WebChannel.jsm"); /*global WebChannel */
+Cu.import("resource://gre/modules/XPCOMUtils.jsm"); /*global XPCOMUtils */
 
 const log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.bind("FxAccounts");
 
@@ -34,11 +33,10 @@ const COMMAND_SYNC_PREFERENCES     = "fxaccounts:sync_preferences";
 const PREF_LAST_FXA_USER           = "identity.fxaccounts.lastSignedInUserHash";
 
 XPCOMUtils.defineLazyGetter(this, "strings",
-                            () => Services.strings.createBundle("chrome://browser/locale/aboutAccounts.properties")); /* global strings */
+                            () => Services.strings.createBundle("chrome://browser/locale/aboutAccounts.properties")); /*global strings */
 
 XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt", "resource://gre/modules/Prompt.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
 
 this.FxAccountsWebChannelHelpers = function() {
 };
@@ -99,12 +97,12 @@ this.FxAccountsWebChannel = function(options) {
   if (!options) {
     throw new Error("Missing configuration options");
   }
-  if (!options.content_uri) {
+  if (!options["content_uri"]) {
     throw new Error("Missing 'content_uri' option");
   }
   this._contentUri = options.content_uri;
 
-  if (!options.channel_id) {
+  if (!options["channel_id"]) {
     throw new Error("Missing 'channel_id' option");
   }
   this._webChannelId = options.channel_id;
@@ -240,7 +238,6 @@ this.FxAccountsWebChannel.prototype = {
                   log.w("Warning about creating a new Android Account: previously linked to different email address!");
                   let message = strings.formatStringFromName("relinkVerify.message", [data.email], 1);
                   new Prompt({
-                    window: sendingContext.browser && sendingContext.browser.ownerGlobal,
                     title: strings.GetStringFromName("relinkVerify.title"),
                     message: message,
                     buttons: [
@@ -270,18 +267,16 @@ this.FxAccountsWebChannel.prototype = {
                   if (!success) {
                     throw new Error("Could not create Firefox Account!");
                   }
-                  UITelemetry.addEvent("action.1", "content", null, "fxaccount-create");
                   return success;
                 });
-              }
+              } else {
                 return Accounts.updateFirefoxAccountFromJSON(data).then(success => {
                   if (!success) {
                     throw new Error("Could not update Firefox Account!");
                   }
-                  UITelemetry.addEvent("action.1", "content", null, "fxaccount-login");
                   return success;
                 });
-
+              }
             })
             .then(success => {
               if (!success) {
@@ -310,7 +305,6 @@ this.FxAccountsWebChannel.prototype = {
               if (!success) {
                 throw new Error("Could not change Firefox Account password!");
               }
-              UITelemetry.addEvent("action.1", "content", null, "fxaccount-changepassword");
               log.i("Changed Firefox Account password.");
             })
             .catch(e => {
@@ -331,7 +325,6 @@ this.FxAccountsWebChannel.prototype = {
                 if (!success) {
                   throw new Error("Could not delete Firefox Account!");
                 }
-                UITelemetry.addEvent("action.1", "content", null, "fxaccount-delete");
                 log.i("Firefox Account deleted.");
               });
             }).catch(e => {
@@ -345,7 +338,6 @@ this.FxAccountsWebChannel.prototype = {
               if (!account) {
                 throw new Error("Can't change profile of non-existent Firefox Account!");
               }
-              UITelemetry.addEvent("action.1", "content", null, "fxaccount-changeprofile");
               return Accounts.notifyFirefoxAccountProfileChanged();
             })
             .catch(e => {
@@ -354,7 +346,6 @@ this.FxAccountsWebChannel.prototype = {
             break;
 
           case COMMAND_SYNC_PREFERENCES:
-            UITelemetry.addEvent("action.1", "content", null, "fxaccount-syncprefs");
             Accounts.showSyncPreferences()
             .catch(e => {
               log.e(e.toString());
@@ -381,7 +372,7 @@ var singleton;
 // ever created - we require this because the WebChannel is global in scope and
 // allowing multiple channels would cause such notifications to be sent multiple
 // times.
-this.EnsureFxAccountsWebChannel = () => {
+this.EnsureFxAccountsWebChannel = function() {
   if (!singleton) {
     let contentUri = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.webchannel.uri");
     // The FxAccountsWebChannel listens for events and updates the Java layer.

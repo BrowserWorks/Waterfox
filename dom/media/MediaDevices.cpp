@@ -82,6 +82,8 @@ public:
   NS_IMETHOD
   OnSuccess(nsIVariant* aDevices) override
   {
+    // Cribbed from MediaPermissionGonk.cpp
+
     // Create array for nsIMediaDevice
     nsTArray<nsCOMPtr<nsIMediaDevice>> devices;
     // Contain the fumes
@@ -234,7 +236,7 @@ MediaDevices::OnDeviceChange()
 
   if (!mFuzzTimer)
   {
-    mFuzzTimer = NS_NewTimer();
+    mFuzzTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   }
 
   if (!mFuzzTimer) {

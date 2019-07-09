@@ -12,7 +12,6 @@ info: >
   ToInteger(endPosition).
   11. ReturnIfAbrupt(pos).
   ...
-features: [String.prototype.endsWith]
 ---*/
 
 var position = {

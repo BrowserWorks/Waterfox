@@ -9,25 +9,17 @@
 #include "AsyncPanZoomController.h"
 #include "gfxPrefs.h"
 #include "nsPoint.h"
-#include "ScrollAnimationPhysics.h"
-#include "ScrollAnimationBezierPhysics.h"
-#include "ScrollAnimationMSDPhysics.h"
 
 namespace mozilla {
 namespace layers {
 
 GenericScrollAnimation::GenericScrollAnimation(AsyncPanZoomController& aApzc,
-                                               const nsPoint& aInitialPosition,
-                                               const ScrollAnimationBezierPhysicsSettings& aSettings)
-  : mApzc(aApzc)
+                                               const nsPoint& aInitialPosition)
+  : AsyncScrollBase(aInitialPosition)
+  , mApzc(aApzc)
   , mFinalDestination(aInitialPosition)
   , mForceVerticalOverscroll(false)
 {
-  if (gfxPrefs::SmoothScrollMSDPhysicsEnabled()) {
-    mAnimationPhysics = MakeUnique<ScrollAnimationMSDPhysics>(aInitialPosition);
-  } else {
-    mAnimationPhysics = MakeUnique<ScrollAnimationBezierPhysics>(aInitialPosition, aSettings);
-  }
 }
 
 void
@@ -49,13 +41,17 @@ GenericScrollAnimation::UpdateDestination(TimeStamp aTime, nsPoint aDestination,
 void
 GenericScrollAnimation::Update(TimeStamp aTime, const nsSize& aCurrentVelocity)
 {
+  if (mIsFirstIteration) {
+    InitializeHistory(aTime);
+  }
+
   // Clamp the final destination to the scrollable area.
   CSSPoint clamped = CSSPoint::FromAppUnits(mFinalDestination);
   clamped.x = mApzc.mX.ClampOriginToScrollableRect(clamped.x);
   clamped.y = mApzc.mY.ClampOriginToScrollableRect(clamped.y);
   mFinalDestination = CSSPoint::ToAppUnits(clamped);
 
-  mAnimationPhysics->Update(aTime, mFinalDestination, aCurrentVelocity);
+  AsyncScrollBase::Update(aTime, mFinalDestination, aCurrentVelocity);
 }
 
 bool
@@ -67,8 +63,10 @@ GenericScrollAnimation::DoSample(FrameMetrics& aFrameMetrics, const TimeDuration
   // If the animation is finished, make sure the final position is correct by
   // using one last displacement. Otherwise, compute the delta via the timing
   // function as normal.
-  bool finished = mAnimationPhysics->IsFinished(now);
-  nsPoint sampledDest = mAnimationPhysics->PositionAt(now);
+  bool finished = IsFinished(now);
+  nsPoint sampledDest = finished
+                        ? mDestination
+                        : PositionAt(now);
   ParentLayerPoint displacement =
     (CSSPoint::FromAppUnits(sampledDest) - aFrameMetrics.GetScrollOffset()) * zoom;
 
@@ -76,12 +74,11 @@ GenericScrollAnimation::DoSample(FrameMetrics& aFrameMetrics, const TimeDuration
     mApzc.mX.SetVelocity(0);
     mApzc.mY.SetVelocity(0);
   } else if (!IsZero(displacement)) {
-    // Convert velocity from AppUnits/Seconds to ParentLayerCoords/Milliseconds
-    nsSize velocity = mAnimationPhysics->VelocityAt(now);
-    ParentLayerPoint velocityPL =
-      CSSPoint::FromAppUnits(nsPoint(velocity.width, velocity.height)) * zoom;
-    mApzc.mX.SetVelocity(velocityPL.x / 1000.0);
-    mApzc.mY.SetVelocity(velocityPL.y / 1000.0);
+    // Velocity is measured in ParentLayerCoords / Milliseconds
+    float xVelocity = displacement.x / aDelta.ToMilliseconds();
+    float yVelocity = displacement.y / aDelta.ToMilliseconds();
+    mApzc.mX.SetVelocity(xVelocity);
+    mApzc.mY.SetVelocity(yVelocity);
   }
 
   // Note: we ignore overscroll for generic animations.

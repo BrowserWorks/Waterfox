@@ -36,20 +36,67 @@
 #include <unistd.h>
 #endif
 
+#include "base/child_privileges.h"
 #include "base/command_line.h"
 #include "base/process.h"
 
-#if defined(OS_POSIX)
+#if defined(OS_WIN)
+typedef PROCESSENTRY32 ProcessEntry;
+typedef IO_COUNTERS IoCounters;
+#elif defined(OS_POSIX)
+// TODO(port): we should not rely on a Win32 structure.
+struct ProcessEntry {
+  int pid;
+  int ppid;
+  char szExeFile[_POSIX_PATH_MAX + 1];
+};
+
+struct IoCounters {
+  unsigned long long ReadOperationCount;
+  unsigned long long WriteOperationCount;
+  unsigned long long OtherOperationCount;
+  unsigned long long ReadTransferCount;
+  unsigned long long WriteTransferCount;
+  unsigned long long OtherTransferCount;
+};
+
 #include "base/file_descriptor_shuffle.h"
 #endif
-
-#include "mozilla/UniquePtr.h"
 
 #if defined(OS_MACOSX)
 struct kinfo_proc;
 #endif
 
 namespace base {
+
+// These can be used in a 32-bit bitmask.
+enum ProcessArchitecture {
+  PROCESS_ARCH_I386 = 0x1,
+  PROCESS_ARCH_X86_64 = 0x2,
+  PROCESS_ARCH_PPC = 0x4,
+  PROCESS_ARCH_ARM = 0x8,
+  PROCESS_ARCH_MIPS = 0x10,
+  PROCESS_ARCH_ARM64 = 0x20
+};
+
+inline ProcessArchitecture GetCurrentProcessArchitecture()
+{
+  base::ProcessArchitecture currentArchitecture;
+#if defined(ARCH_CPU_X86)
+  currentArchitecture = base::PROCESS_ARCH_I386;
+#elif defined(ARCH_CPU_X86_64)
+  currentArchitecture = base::PROCESS_ARCH_X86_64;
+#elif defined(ARCH_CPU_PPC)
+  currentArchitecture = base::PROCESS_ARCH_PPC;
+#elif defined(ARCH_CPU_ARMEL)
+  currentArchitecture = base::PROCESS_ARCH_ARM;
+#elif defined(ARCH_CPU_MIPS)
+  currentArchitecture = base::PROCESS_ARCH_MIPS;
+#elif defined(ARCH_CPU_ARM64)
+  currentArchitecture = base::PROCESS_ARCH_ARM64;
+#endif
+  return currentArchitecture;
+}
 
 // A minimalistic but hopefully cross-platform set of exit codes.
 // Do not change the enumeration values or you will break third-party
@@ -134,20 +181,19 @@ typedef std::map<std::string, std::string> environment_map;
 bool LaunchApp(const std::vector<std::string>& argv,
                const file_handle_mapping_vector& fds_to_remap,
                const environment_map& env_vars_to_set,
-               bool wait, ProcessHandle* process_handle);
-
-// Deleter for the array of strings allocated within BuildEnvironmentArray.
-struct FreeEnvVarsArray
-{
-  void operator()(char** array);
-};
-
-typedef mozilla::UniquePtr<char*[], FreeEnvVarsArray> EnvironmentArray;
-
-// Merge an environment map with the current environment.
-// Existing variables are overwritten by env_vars_to_set.
-EnvironmentArray BuildEnvironmentArray(const environment_map& env_vars_to_set);
+               ChildPrivileges privs,
+               bool wait, ProcessHandle* process_handle,
+               ProcessArchitecture arch=GetCurrentProcessArchitecture());
+bool LaunchApp(const std::vector<std::string>& argv,
+               const file_handle_mapping_vector& fds_to_remap,
+               const environment_map& env_vars_to_set,
+               bool wait, ProcessHandle* process_handle,
+               ProcessArchitecture arch=GetCurrentProcessArchitecture());
 #endif
+
+// Adjust the privileges of this process to match |privs|.  Only
+// returns if privileges were successfully adjusted.
+void SetCurrentProcessPrivileges(ChildPrivileges privs);
 
 // Executes the application specified by cl. This function delegates to one
 // of the above two platform-specific functions.

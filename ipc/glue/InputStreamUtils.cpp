@@ -20,6 +20,7 @@
 #include "nsMultiplexInputStream.h"
 #include "nsNetCID.h"
 #include "nsStringStream.h"
+#include "nsTemporaryFileInputStream.h"
 #include "nsXULAppAPI.h"
 #include "SlicedInputStream.h"
 
@@ -69,8 +70,6 @@ InputStreamHelper::DeserializeInputStream(const InputStreamParams& aParams,
   if (aParams.type() == InputStreamParams::TIPCBlobInputStreamParams) {
     MOZ_ASSERT(XRE_IsParentProcess());
     IPCBlobInputStreamStorage::Get()->GetStream(aParams.get_IPCBlobInputStreamParams().id(),
-                                                aParams.get_IPCBlobInputStreamParams().start(),
-                                                aParams.get_IPCBlobInputStreamParams().length(),
                                                 getter_AddRefs(stream));
     return stream.forget();
   }
@@ -82,6 +81,10 @@ InputStreamHelper::DeserializeInputStream(const InputStreamParams& aParams,
 
     case InputStreamParams::TFileInputStreamParams:
       serializable = do_CreateInstance(kFileInputStreamCID);
+      break;
+
+    case InputStreamParams::TTemporaryFileInputStreamParams:
+      serializable = new nsTemporaryFileInputStream();
       break;
 
     case InputStreamParams::TBufferedInputStreamParams:

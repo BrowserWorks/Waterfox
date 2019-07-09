@@ -139,10 +139,10 @@ nsAboutProtocolHandler::NewURI(const nsACString &aSpec,
         // path, in case someone decides to hardcode checks for particular
         // about: URIs somewhere.
         nsAutoCString spec;
-        rv = url->GetPathQueryRef(spec);
+        rv = url->GetPath(spec);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        spec.InsertLiteral("moz-safe-about:", 0);
+        spec.Insert("moz-safe-about:", 0);
 
         nsCOMPtr<nsIURI> inner;
         rv = NS_NewURI(getter_AddRefs(inner), spec);

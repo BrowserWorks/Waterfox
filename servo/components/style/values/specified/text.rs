@@ -6,17 +6,16 @@
 
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
-use selectors::parser::SelectorParseErrorKind;
-use std::ascii::AsciiExt;
+use selectors::parser::SelectorParseError;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use style_traits::ParseError;
 use values::computed::{Context, ToComputedValue};
 use values::computed::text::LineHeight as ComputedLineHeight;
 use values::generics::text::InitialLetter as GenericInitialLetter;
 use values::generics::text::LineHeight as GenericLineHeight;
 use values::generics::text::Spacing;
-use values::specified::{AllowQuirks, Integer, NonNegativeNumber, Number};
+use values::specified::{AllowQuirks, Integer, Number};
 use values::specified::length::{FontRelativeLength, Length, LengthOrPercentage, NoCalcLength};
-use values::specified::length::NonNegativeLengthOrPercentage;
 
 /// A specified type for the `initial-letter` property.
 pub type InitialLetter = GenericInitialLetter<Number, Integer>;
@@ -28,7 +27,7 @@ pub type LetterSpacing = Spacing<Length>;
 pub type WordSpacing = Spacing<LengthOrPercentage>;
 
 /// A specified value for the `line-height` property.
-pub type LineHeight = GenericLineHeight<NonNegativeNumber, NonNegativeLengthOrPercentage>;
+pub type LineHeight = GenericLineHeight<Number, LengthOrPercentage>;
 
 impl Parse for InitialLetter {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
@@ -59,13 +58,12 @@ impl Parse for WordSpacing {
 
 impl Parse for LineHeight {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        if let Ok(number) = input.try(|i| NonNegativeNumber::parse(context, i)) {
+        if let Ok(number) = input.try(|i| Number::parse_non_negative(context, i)) {
             return Ok(GenericLineHeight::Number(number))
         }
-        if let Ok(nlop) = input.try(|i| NonNegativeLengthOrPercentage::parse(context, i)) {
-            return Ok(GenericLineHeight::Length(nlop))
+        if let Ok(lop) = input.try(|i| LengthOrPercentage::parse_non_negative(context, i)) {
+            return Ok(GenericLineHeight::Length(lop))
         }
-        let location = input.current_source_location();
         let ident = input.expect_ident()?;
         match ident {
             ref ident if ident.eq_ignore_ascii_case("normal") => {
@@ -75,7 +73,7 @@ impl Parse for LineHeight {
             ref ident if ident.eq_ignore_ascii_case("-moz-block-height") => {
                 Ok(GenericLineHeight::MozBlockHeight)
             },
-            ident => Err(location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone()))),
+            ident => Err(SelectorParseError::UnexpectedIdent(ident.clone()).into()),
         }
     }
 }
@@ -85,8 +83,6 @@ impl ToComputedValue for LineHeight {
 
     #[inline]
     fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
-        use values::computed::Length as ComputedLength;
-        use values::specified::length::FontBaseSize;
         match *self {
             GenericLineHeight::Normal => {
                 GenericLineHeight::Normal
@@ -98,40 +94,24 @@ impl ToComputedValue for LineHeight {
             GenericLineHeight::Number(number) => {
                 GenericLineHeight::Number(number.to_computed_value(context))
             },
-            GenericLineHeight::Length(ref non_negative_lop) => {
-                let result = match non_negative_lop.0 {
-                    LengthOrPercentage::Length(NoCalcLength::Absolute(ref abs)) => {
-                        context.maybe_zoom_text(abs.to_computed_value(context).into()).0
-                    }
-                    LengthOrPercentage::Length(ref length) => {
-                        length.to_computed_value(context)
-                    },
-                    LengthOrPercentage::Percentage(ref p) => {
-                        FontRelativeLength::Em(p.0)
-                            .to_computed_value(
-                                context,
-                                FontBaseSize::CurrentStyle,
-                            )
-                    }
-                    LengthOrPercentage::Calc(ref calc) => {
-                        let computed_calc =
-                            calc.to_computed_value_zoomed(context, FontBaseSize::CurrentStyle);
-                        let font_relative_length =
-                            FontRelativeLength::Em(computed_calc.percentage())
-                                .to_computed_value(
-                                    context,
-                                    FontBaseSize::CurrentStyle,
-                                ).px();
-
-                        let absolute_length = computed_calc.unclamped_length().px();
-                        let pixel = computed_calc
-                            .clamping_mode
-                            .clamp(absolute_length + font_relative_length);
-                        ComputedLength::new(pixel)
-                    }
-                };
-                GenericLineHeight::Length(result.into())
-            }
+            GenericLineHeight::Length(LengthOrPercentage::Length(ref length)) => {
+                GenericLineHeight::Length(length.to_computed_value(context))
+            },
+            GenericLineHeight::Length(LengthOrPercentage::Percentage(p)) => {
+                let font_relative_length =
+                    Length::NoCalc(NoCalcLength::FontRelative(FontRelativeLength::Em(p.0)));
+                GenericLineHeight::Length(font_relative_length.to_computed_value(context))
+            },
+            GenericLineHeight::Length(LengthOrPercentage::Calc(ref calc)) => {
+                let computed_calc = calc.to_computed_value(context);
+                let font_relative_length =
+                    Length::NoCalc(NoCalcLength::FontRelative(FontRelativeLength::Em(computed_calc.percentage())));
+                let absolute_length = computed_calc.unclamped_length();
+                let computed_length = computed_calc.clamping_mode.clamp(
+                    absolute_length + font_relative_length.to_computed_value(context)
+                );
+                GenericLineHeight::Length(computed_length)
+            },
         }
     }
 
@@ -146,10 +126,12 @@ impl ToComputedValue for LineHeight {
                 GenericLineHeight::MozBlockHeight
             },
             GenericLineHeight::Number(ref number) => {
-                GenericLineHeight::Number(NonNegativeNumber::from_computed_value(number))
+                GenericLineHeight::Number(Number::from_computed_value(number))
             },
             GenericLineHeight::Length(ref length) => {
-                GenericLineHeight::Length(NoCalcLength::from_computed_value(&length.0).into())
+                GenericLineHeight::Length(LengthOrPercentage::Length(
+                    NoCalcLength::from_computed_value(length)
+                ))
             }
         }
     }

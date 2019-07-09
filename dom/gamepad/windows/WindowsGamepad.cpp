@@ -139,10 +139,10 @@ public:
           uint32_t aNumButtons,
           bool aHasDpad,
           GamepadType aType) :
-    type(aType),
     numAxes(aNumAxes),
     numButtons(aNumButtons),
     hasDpad(aHasDpad),
+    type(aType),
     present(true)
   {
     buttons.SetLength(numButtons);
@@ -159,8 +159,8 @@ typedef void (WINAPI *XInputEnable_func)(BOOL);
 class XInputLoader {
 public:
   XInputLoader() : module(nullptr),
-                   mXInputGetState(nullptr),
-                   mXInputEnable(nullptr) {
+                   mXInputEnable(nullptr),
+                   mXInputGetState(nullptr) {
     // xinput1_4.dll exists on Windows 8
     // xinput9_1_0.dll exists on Windows 7 and Vista
     // xinput1_3.dll shipped with the DirectX SDK
@@ -280,14 +280,14 @@ SupportedUsage(USHORT page, USHORT usage)
 
 class HIDLoader {
 public:
-  HIDLoader() : mHidD_GetProductString(nullptr),
+  HIDLoader() : mModule(LoadLibraryW(L"hid.dll")),
+                mHidD_GetProductString(nullptr),
                 mHidP_GetCaps(nullptr),
                 mHidP_GetButtonCaps(nullptr),
                 mHidP_GetValueCaps(nullptr),
                 mHidP_GetUsages(nullptr),
                 mHidP_GetUsageValue(nullptr),
-                mHidP_GetScaledUsageValue(nullptr),
-                mModule(LoadLibraryW(L"hid.dll"))
+                mHidP_GetScaledUsageValue(nullptr)
   {
     if (mModule) {
       mHidD_GetProductString = reinterpret_cast<decltype(HidD_GetProductString)*>(GetProcAddress(mModule, "HidD_GetProductString"));
@@ -354,9 +354,9 @@ class WindowsGamepadService
  public:
   WindowsGamepadService()
   {
-    mDirectInputTimer = NS_NewTimer();
-    mXInputTimer = NS_NewTimer();
-    mDeviceChangeTimer = NS_NewTimer();
+    mDirectInputTimer = do_CreateInstance("@mozilla.org/timer;1");
+    mXInputTimer = do_CreateInstance("@mozilla.org/timer;1");
+    mDeviceChangeTimer = do_CreateInstance("@mozilla.org/timer;1");
   }
   virtual ~WindowsGamepadService()
   {
@@ -388,7 +388,7 @@ class WindowsGamepadService
   void ScanForRawInputDevices();
   // Look for connected XInput devices.
   bool ScanForXInputDevices();
-  bool HaveXInputGamepad(unsigned int userIndex);
+  bool HaveXInputGamepad(int userIndex);
 
   bool mIsXInputMonitoring;
   void PollXInput();
@@ -462,7 +462,7 @@ WindowsGamepadService::DevicesChangeCallback(nsITimer *aTimer, void* aService)
 }
 
 bool
-WindowsGamepadService::HaveXInputGamepad(unsigned int userIndex)
+WindowsGamepadService::HaveXInputGamepad(int userIndex)
 {
   for (unsigned int i = 0; i < mGamepads.Length(); i++) {
     if (mGamepads[i].type == kXInputGamepad
@@ -486,7 +486,7 @@ WindowsGamepadService::ScanForXInputDevices()
     return found;
   }
 
-  for (unsigned int i = 0; i < XUSER_MAX_COUNT; i++) {
+  for (int i = 0; i < XUSER_MAX_COUNT; i++) {
     XINPUT_STATE state = {};
     if (mXInput.mXInputGetState(i, &state) != ERROR_SUCCESS) {
       continue;

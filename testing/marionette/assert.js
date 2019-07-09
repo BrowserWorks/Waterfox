@@ -4,26 +4,25 @@
 
 "use strict";
 
-const {utils: Cu} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 const {
+  error,
   InvalidArgumentError,
   InvalidSessionIDError,
   NoSuchWindowError,
   UnexpectedAlertOpenError,
   UnsupportedOperationError,
 } = Cu.import("chrome://marionette/content/error.js", {});
-const {pprint} = Cu.import("chrome://marionette/content/format.js", {});
 
 this.EXPORTED_SYMBOLS = ["assert"];
 
 const isFennec = () => AppConstants.platform == "android";
-const isFirefox = () =>
-    Services.appinfo.ID == "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
+const isFirefox = () => Services.appinfo.name == "Waterfox";
 
 /**
  * Shorthands for common assertions made in Marionette.
@@ -41,15 +40,15 @@ this.assert = {};
  *     Custom error message.
  *
  * @return {string}
- *     Current session's ID.
+ *     Session ID.
  *
  * @throws {InvalidSessionIDError}
- *     If <var>driver</var> does not have a session ID.
+ *     If |driver| does not have a session ID.
  */
 assert.session = function(driver, msg = "") {
   assert.that(sessionID => sessionID,
-      msg, InvalidSessionIDError)(driver.sessionID);
-  return driver.sessionID;
+      msg, InvalidSessionIDError)(driver.sessionId);
+  return driver.sessionId;
 };
 
 /**
@@ -175,7 +174,7 @@ assert.noUserPrompt = function(dialog, msg = "") {
  *     If |obj| is not defined.
  */
 assert.defined = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be defined`;
+  msg = msg || error.pprint`Expected ${obj} to be defined`;
   return assert.that(o => typeof o != "undefined", msg)(obj);
 };
 
@@ -194,7 +193,7 @@ assert.defined = function(obj, msg = "") {
  *     If |obj| is not a number.
  */
 assert.number = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be finite number`;
+  msg = msg || error.pprint`Expected ${obj} to be finite number`;
   return assert.that(Number.isFinite, msg)(obj);
 };
 
@@ -213,7 +212,7 @@ assert.number = function(obj, msg = "") {
  *     If |obj| is not callable.
  */
 assert.callable = function(obj, msg = "") {
-  msg = msg || pprint`${obj} is not callable`;
+  msg = msg || error.pprint`${obj} is not callable`;
   return assert.that(o => typeof o == "function", msg)(obj);
 };
 
@@ -232,7 +231,7 @@ assert.callable = function(obj, msg = "") {
  *     If |obj| is not an integer.
  */
 assert.integer = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be an integer`;
+  msg = msg || error.pprint`Expected ${obj} to be an integer`;
   return assert.that(Number.isInteger, msg)(obj);
 };
 
@@ -252,7 +251,7 @@ assert.integer = function(obj, msg = "") {
  */
 assert.positiveInteger = function(obj, msg = "") {
   assert.integer(obj, msg);
-  msg = msg || pprint`Expected ${obj} to be >= 0`;
+  msg = msg || error.pprint`Expected ${obj} to be >= 0`;
   return assert.that(n => n >= 0, msg)(obj);
 };
 
@@ -271,7 +270,7 @@ assert.positiveInteger = function(obj, msg = "") {
  *     If |obj| is not a boolean.
  */
 assert.boolean = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be boolean`;
+  msg = msg || error.pprint`Expected ${obj} to be boolean`;
   return assert.that(b => typeof b == "boolean", msg)(obj);
 };
 
@@ -290,7 +289,7 @@ assert.boolean = function(obj, msg = "") {
  *     If |obj| is not a string.
  */
 assert.string = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be a string`;
+  msg = msg || error.pprint`Expected ${obj} to be a string`;
   return assert.that(s => typeof s == "string", msg)(obj);
 };
 
@@ -309,7 +308,7 @@ assert.string = function(obj, msg = "") {
  *     If |obj| is not an object.
  */
 assert.object = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be an object`;
+  msg = msg || error.pprint`Expected ${obj} to be an object`;
   return assert.that(o => {
     // unable to use instanceof because LHS and RHS may come from
     // different globals
@@ -336,7 +335,7 @@ assert.object = function(obj, msg = "") {
  */
 assert.in = function(prop, obj, msg = "") {
   assert.object(obj, msg);
-  msg = msg || pprint`Expected ${prop} in ${obj}`;
+  msg = msg || error.pprint`Expected ${prop} in ${obj}`;
   assert.that(p => obj.hasOwnProperty(p), msg)(prop);
   return obj[prop];
 };
@@ -356,7 +355,7 @@ assert.in = function(prop, obj, msg = "") {
  *     If |obj| is not an Array.
  */
 assert.array = function(obj, msg = "") {
-  msg = msg || pprint`Expected ${obj} to be an Array`;
+  msg = msg || error.pprint`Expected ${obj} to be an Array`;
   return assert.that(Array.isArray, msg)(obj);
 };
 

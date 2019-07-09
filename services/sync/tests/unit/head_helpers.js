@@ -11,7 +11,7 @@
 /* global Service */
 
 Cu.import("resource://services-common/async.js");
-Cu.import("resource://services-common/utils.js");
+Cu.import("resource://testing-common/services/common/utils.js");
 Cu.import("resource://testing-common/PlacesTestUtils.jsm");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -29,8 +29,20 @@ add_task(async function head_setup() {
 // Load mocking/stubbing library, sinon
 // docs: http://sinonjs.org/releases/v2.3.2/
 Cu.import("resource://gre/modules/Timer.jsm");
-Services.scriptloader.loadSubScript("resource://testing-common/sinon-2.3.2.js", this);
-/* globals sinon */
+var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
+var loader = new Loader.Loader({
+  paths: {
+    "": "resource://testing-common/",
+  },
+  globals: {
+    setTimeout,
+    setInterval,
+    clearTimeout,
+    clearInterval,
+  },
+});
+var require = Loader.Require(loader, {id: ""});
+var sinon = require("sinon-2.3.2");
 // ================================================
 
 XPCOMUtils.defineLazyGetter(this, "SyncPingSchema", function() {
@@ -197,8 +209,8 @@ function uninstallAddon(addon) {
   Async.waitForSyncCallback(cb);
 }
 
-async function generateNewKeys(collectionKeys, collections = null) {
-  let wbo = await collectionKeys.generateNewKeysWBO(collections);
+function generateNewKeys(collectionKeys, collections = null) {
+  let wbo = collectionKeys.generateNewKeysWBO(collections);
   let modified = new_timestamp();
   collectionKeys.setContents(wbo.cleartext, modified);
 }
@@ -238,14 +250,14 @@ function mockGetWindowEnumerator(url, numWindows, numTabs, indexes, moreURLs) {
     elements.push(win);
 
     for (let t = 0; t < numTabs; ++t) {
-      tabs.push(Cu.cloneInto({
+      tabs.push(TestingUtils.deepCopy({
         index: indexes ? indexes() : 1,
         entries: (moreURLs ? [url].concat(moreURLs()) : [url]).map(url2entry),
         attributes: {
           image: "image"
         },
         lastAccessed: 1499
-      }, {}));
+      }));
     }
   }
 
@@ -466,7 +478,7 @@ async function sync_engine_and_validate_telem(engine, allowErrorPings, onError) 
       } else {
         resolve(ping.syncs[0]);
       }
-    };
+    }
   });
   // neuter the scheduler as it interacts badly with some of the tests - the
   // engine being synced usually isn't the registered engine, so we see
@@ -498,8 +510,8 @@ function promiseOneObserver(topic, callback) {
     let observer = function(subject, data) {
       Svc.Obs.remove(topic, observer);
       resolve({ subject, data });
-    };
-    Svc.Obs.add(topic, observer);
+    }
+    Svc.Obs.add(topic, observer)
   });
 }
 
@@ -535,10 +547,10 @@ function enableValidationPrefs() {
   Svc.Prefs.set("engine.bookmarks.validation.enabled", true);
 }
 
-async function serverForEnginesWithKeys(users, engines, callback) {
+function serverForEnginesWithKeys(users, engines, callback) {
   // Generate and store a fake default key bundle to avoid resetting the client
   // before the first sync.
-  let wbo = await Service.collectionKeys.generateNewKeysWBO();
+  let wbo = Service.collectionKeys.generateNewKeysWBO();
   let modified = new_timestamp();
   Service.collectionKeys.setContents(wbo.cleartext, modified);
 
@@ -569,7 +581,7 @@ async function serverForEnginesWithKeys(users, engines, callback) {
   return serverForUsers(users, contents, callback);
 }
 
-async function serverForFoo(engine, callback) {
+function serverForFoo(engine, callback) {
   // The bookmarks engine *always* tracks changes, meaning we might try
   // and sync due to the bookmarks we ourselves create! Worse, because we
   // do an engine sync only, there's no locking - so we end up with multiple
@@ -611,7 +623,7 @@ async function promiseVisit(expectedType, expectedURI) {
 
 async function addVisit(suffix, referrer = null, transition = PlacesUtils.history.TRANSITION_LINK) {
   let uriString = "http://getfirefox.com/" + suffix;
-  let uri = CommonUtils.makeURI(uriString);
+  let uri = Utils.makeURI(uriString);
   _("Adding visit for URI " + uriString);
 
   let visitAddedPromise = promiseVisit("added", uri);

@@ -141,7 +141,7 @@ public:
     if (GetFragment().IsEmpty()) {
       return;
     }
-    aURL.AppendLiteral("#");
+    aURL.Append(NS_LITERAL_CSTRING("#"));
     aURL.Append(GetFragment());
   }
 
@@ -462,25 +462,20 @@ public:
   }
 
   void
-  SetBody(nsIInputStream* aStream, int64_t aBodyLength)
+  SetBody(nsIInputStream* aStream)
   {
     // A request's body may not be reset once set.
     MOZ_ASSERT_IF(aStream, !mBodyStream);
     mBodyStream = aStream;
-    mBodyLength = aBodyLength;
   }
 
   // Will return the original stream!
   // Use a tee or copy if you don't want to erase the original.
   void
-  GetBody(nsIInputStream** aStream, int64_t* aBodyLength = nullptr)
+  GetBody(nsIInputStream** aStream)
   {
     nsCOMPtr<nsIInputStream> s = mBodyStream;
     s.forget(aStream);
-
-    if (aBodyLength) {
-      *aBodyLength = mBodyLength;
-    }
   }
 
   // The global is used as the client for the new object.
@@ -559,7 +554,6 @@ private:
   nsTArray<nsCString> mURLList;
   RefPtr<InternalHeaders> mHeaders;
   nsCOMPtr<nsIInputStream> mBodyStream;
-  int64_t mBodyLength;
 
   nsContentPolicyType mContentPolicyType;
 

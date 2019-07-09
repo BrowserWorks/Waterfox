@@ -522,9 +522,9 @@ nsGeolocationRequest::SetTimeoutTimer()
   StopTimeoutTimer();
 
   if (mOptions && mOptions->mTimeout != 0 && mOptions->mTimeout != 0x7fffffff) {
+    mTimeoutTimer = do_CreateInstance("@mozilla.org/timer;1");
     RefPtr<TimerCallbackHolder> holder = new TimerCallbackHolder(this);
-    NS_NewTimerWithCallback(getter_AddRefs(mTimeoutTimer),
-                            holder, mOptions->mTimeout, nsITimer::TYPE_ONE_SHOT);
+    mTimeoutTimer->InitWithCallback(holder, mOptions->mTimeout, nsITimer::TYPE_ONE_SHOT);
   }
 }
 
@@ -867,7 +867,7 @@ void
 nsGeolocationService::SetDisconnectTimer()
 {
   if (!mDisconnectTimer) {
-    mDisconnectTimer = NS_NewTimer();
+    mDisconnectTimer = do_CreateInstance("@mozilla.org/timer;1");
   } else {
     mDisconnectTimer->Cancel();
   }

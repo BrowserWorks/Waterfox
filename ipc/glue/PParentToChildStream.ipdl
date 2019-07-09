@@ -6,10 +6,6 @@ include protocol PBackground;
 include protocol PContent;
 include protocol PContentBridge;
 
-include "mozilla/layers/WebRenderMessageUtils.h";
-
-using mozilla::wr::ByteBuffer from "mozilla/webrender/WebRenderTypes.h";
-
 namespace mozilla {
 namespace ipc {
 
@@ -20,7 +16,7 @@ protocol PParentToChildStream
   manager PBackground or PContent or PContentBridge;
 
 child:
-  async Buffer(ByteBuffer aBuffer);
+  async Buffer(nsCString aBuffer);
   async Close(nsresult aRv);
 
 parent:

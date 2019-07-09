@@ -42,8 +42,6 @@ private:
     typedef TimeStamp MS_TimeStamp;
 
 private:
-    nsresult MakeSN(const char *principal, nsCString &result);
-
     CredHandle   mCred;
     CtxtHandle   mCtxt;
     nsCString    mServiceName;

@@ -7,8 +7,6 @@
 //! [media]: https://drafts.csswg.org/css-conditional/#at-ruledef-media
 
 use cssparser::SourceLocation;
-#[cfg(feature = "gecko")]
-use malloc_size_of::{MallocSizeOfOps, MallocUnconditionalShallowSizeOf};
 use media_queries::MediaList;
 use servo_arc::Arc;
 use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
@@ -27,16 +25,6 @@ pub struct MediaRule {
     pub rules: Arc<Locked<CssRules>>,
     /// The source position where this media rule was found.
     pub source_location: SourceLocation,
-}
-
-impl MediaRule {
-    /// Measure heap usage.
-    #[cfg(feature = "gecko")]
-    pub fn size_of(&self, guard: &SharedRwLockReadGuard, ops: &mut MallocSizeOfOps) -> usize {
-        // Measurement of other fields may be added later.
-        self.rules.unconditional_shallow_size_of(ops) +
-            self.rules.read_with(guard).size_of(guard, ops)
-    }
 }
 
 impl ToCssWithGuard for MediaRule {

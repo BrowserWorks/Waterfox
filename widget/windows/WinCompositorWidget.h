@@ -17,8 +17,7 @@ class nsWindow;
 namespace mozilla {
 namespace widget {
 
-class PlatformCompositorWidgetDelegate
-  : public CompositorWidgetDelegate
+class CompositorWidgetDelegate
 {
 public:
   // Callbacks for nsWindow.
@@ -33,29 +32,19 @@ public:
   // If in-process and using software rendering, return the backing transparent
   // DC.
   virtual HDC GetTransparentDC() const = 0;
-
-  // CompositorWidgetDelegate Overrides
-
-  PlatformCompositorWidgetDelegate* AsPlatformSpecificDelegate() override {
-    return this;
-  }
 };
-
-class WinCompositorWidgetInitData;
-
+ 
 // This is the Windows-specific implementation of CompositorWidget. For
 // the most part it only requires an HWND, however it maintains extra state
 // for transparent windows, as well as for synchronizing WM_SETTEXT messages
 // with the compositor.
 class WinCompositorWidget
  : public CompositorWidget,
-   public PlatformCompositorWidgetDelegate
+   public CompositorWidgetDelegate
 {
 public:
-  WinCompositorWidget(const WinCompositorWidgetInitData& aInitData,
+  WinCompositorWidget(const CompositorWidgetInitData& aInitData,
                       const layers::CompositorOptions& aOptions);
-
-  // CompositorWidget Overrides
 
   bool PreRender(WidgetRenderingContext*) override;
   void PostRender(WidgetRenderingContext*) override;
@@ -77,8 +66,7 @@ public:
   }
   bool IsHidden() const override;
 
-  // PlatformCompositorWidgetDelegate Overrides
-
+  // CompositorWidgetDelegate overrides.
   void EnterPresentLock() override;
   void LeavePresentLock() override;
   void OnDestroyWindow() override;

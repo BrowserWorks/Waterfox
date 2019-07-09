@@ -50,16 +50,6 @@
 #define ATTR_NONCONFIGURABLE    0x10
 #define ATTR_NONWRITABLE        0x20
 
-// Property descriptor kind, must be different from the descriptor attributes.
-#define DATA_DESCRIPTOR_KIND     0x100
-#define ACCESSOR_DESCRIPTOR_KIND 0x200
-
-// Property descriptor array indices.
-#define PROP_DESC_ATTRS_AND_KIND_INDEX 0
-#define PROP_DESC_VALUE_INDEX 1
-#define PROP_DESC_GETTER_INDEX 1
-#define PROP_DESC_SETTER_INDEX 2
-
 // The extended slot in which the self-hosted name for self-hosted builtins is
 // stored.
 #define LAZY_FUNCTION_NAME_SLOT 0
@@ -72,6 +62,9 @@
 // Stores the length for bound functions, so the .length property doesn't need
 // to be resolved eagerly.
 #define BOUND_FUN_LENGTH_SLOT 1
+
+// Stores the private WeakMap slot used for WeakSets
+#define WEAKSET_MAP_SLOT 0
 
 #define ITERATOR_SLOT_TARGET 0
 // Used for collection iterators.
@@ -100,18 +93,12 @@
 #define REGEXP_STICKY_FLAG      0x08
 #define REGEXP_UNICODE_FLAG     0x10
 
-#define MODULE_OBJECT_ENVIRONMENT_SLOT        2
-#define MODULE_OBJECT_STATUS_SLOT             4
-#define MODULE_OBJECT_ERROR_SLOT              5
-#define MODULE_OBJECT_DFS_INDEX_SLOT          16
-#define MODULE_OBJECT_DFS_ANCESTOR_INDEX_SLOT 17
+#define MODULE_OBJECT_ENVIRONMENT_SLOT 2
 
-#define MODULE_STATUS_ERRORED        0
-#define MODULE_STATUS_UNINSTANTIATED 1
-#define MODULE_STATUS_INSTANTIATING  2
-#define MODULE_STATUS_INSTANTIATED   3
-#define MODULE_STATUS_EVALUATING     4
-#define MODULE_STATUS_EVALUATED      5
+#define MODULE_STATE_FAILED       0
+#define MODULE_STATE_PARSED       1
+#define MODULE_STATE_INSTANTIATED 2
+#define MODULE_STATE_EVALUATED    3
 
 #define STRING_GENERICS_CHAR_AT               0
 #define STRING_GENERICS_CHAR_CODE_AT          1

@@ -68,14 +68,13 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/EventDispatcher.h"
 #include "mozilla/MouseEvents.h"
 
 #include "nsPIWindowRoot.h"
 
 #include "gfxPlatform.h"
 
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
 #include "nsINativeMenuService.h"
 #define USE_NATIVE_MENUS
 #endif
@@ -91,6 +90,7 @@ static NS_DEFINE_CID(kWindowCID,           NS_WINDOW_CID);
 nsWebShellWindow::nsWebShellWindow(uint32_t aChromeFlags)
   : nsXULWindow(aChromeFlags)
   , mSPTimerLock("nsWebShellWindow.mSPTimerLock")
+  , mWidgetListenerDelegate(this)
 {
 }
 
@@ -180,7 +180,7 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
     mParentWindow = do_GetWeakReference(aParent);
   }
 
-  mWindow->SetWidgetListener(this);
+  mWindow->SetWidgetListener(&mWidgetListenerDelegate);
   rv = mWindow->Create((nsIWidget *)parentWidget, // Parent nsIWidget
                        nullptr,                   // Native parent widget
                        deskRect,                  // Widget dimensions
@@ -334,8 +334,7 @@ nsWebShellWindow::RequestWindowClose(nsIWidget* aWidget)
     nsEventStatus status = nsEventStatus_eIgnore;
     WidgetMouseEvent event(true, eClose, nullptr,
                            WidgetMouseEvent::eReal);
-    if (NS_SUCCEEDED(EventDispatcher::Dispatch(eventTarget, presContext,
-                                               &event, nullptr, &status)) &&
+    if (NS_SUCCEEDED(eventTarget->DispatchDOMEvent(&event, nullptr, presContext, &status)) &&
         status == nsEventStatus_eConsumeNoDefault)
       return false;
   }
@@ -410,16 +409,6 @@ nsWebShellWindow::UIResolutionChanged()
   if (ourWindow) {
     MOZ_ASSERT(ourWindow->IsOuterWindow());
     ourWindow->DispatchCustomEvent(NS_LITERAL_STRING("resolutionchange"));
-  }
-}
-
-void
-nsWebShellWindow::FullscreenWillChange(bool aInFullscreen)
-{
-  if (mDocShell) {
-    if (nsCOMPtr<nsPIDOMWindowOuter> ourWindow = mDocShell->GetWindow()) {
-      ourWindow->FullscreenWillChange(aInFullscreen);
-    }
   }
 }
 
@@ -584,7 +573,7 @@ nsWebShellWindow::SetPersistenceTimer(uint32_t aDirtyFlags)
 {
   MutexAutoLock lock(mSPTimerLock);
   if (!mSPTimer) {
-    mSPTimer = NS_NewTimer();
+    mSPTimer = do_CreateInstance("@mozilla.org/timer;1");
     if (!mSPTimer) {
       NS_WARNING("Couldn't create @mozilla.org/timer;1 instance?");
       return;
@@ -728,8 +717,8 @@ bool nsWebShellWindow::ExecuteCloseHandler()
       WidgetMouseEvent event(true, eClose, nullptr,
                              WidgetMouseEvent::eReal);
 
-      nsresult rv = EventDispatcher::Dispatch(eventTarget, presContext,
-                                              &event, nullptr, &status);
+      nsresult rv =
+        eventTarget->DispatchDOMEvent(&event, nullptr, presContext, &status);
       if (NS_SUCCEEDED(rv) && status == nsEventStatus_eConsumeNoDefault)
         return true;
       // else fall through and return false
@@ -785,4 +774,101 @@ NS_IMETHODIMP nsWebShellWindow::Destroy()
     }
   }
   return nsXULWindow::Destroy();
+}
+
+nsIXULWindow*
+nsWebShellWindow::WidgetListenerDelegate::GetXULWindow()
+{
+  return mWebShellWindow->GetXULWindow();
+}
+
+nsIPresShell*
+nsWebShellWindow::WidgetListenerDelegate::GetPresShell()
+{
+  return mWebShellWindow->GetPresShell();
+}
+
+bool
+nsWebShellWindow::WidgetListenerDelegate::WindowMoved(
+  nsIWidget* aWidget, int32_t aX, int32_t aY)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  return holder->WindowMoved(aWidget, aX, aY);
+}
+
+bool
+nsWebShellWindow::WidgetListenerDelegate::WindowResized(
+  nsIWidget* aWidget, int32_t aWidth, int32_t aHeight)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  return holder->WindowResized(aWidget, aWidth, aHeight);
+}
+
+bool
+nsWebShellWindow::WidgetListenerDelegate::RequestWindowClose(nsIWidget* aWidget)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  return holder->RequestWindowClose(aWidget);
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::SizeModeChanged(nsSizeMode aSizeMode)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->SizeModeChanged(aSizeMode);
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::UIResolutionChanged()
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->UIResolutionChanged();
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::FullscreenChanged(bool aInFullscreen)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->FullscreenChanged(aInFullscreen);
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::OcclusionStateChanged(
+  bool aIsFullyOccluded)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->OcclusionStateChanged(aIsFullyOccluded);
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::OSToolbarButtonPressed()
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->OSToolbarButtonPressed();
+}
+
+bool
+nsWebShellWindow::WidgetListenerDelegate::ZLevelChanged(
+  bool aImmediate, nsWindowZ *aPlacement, nsIWidget* aRequestBelow,
+  nsIWidget** aActualBelow)
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  return holder->ZLevelChanged(aImmediate,
+                               aPlacement,
+                               aRequestBelow,
+                               aActualBelow);
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::WindowActivated()
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->WindowActivated();
+}
+
+void
+nsWebShellWindow::WidgetListenerDelegate::WindowDeactivated()
+{
+  RefPtr<nsWebShellWindow> holder = mWebShellWindow;
+  holder->WindowDeactivated();
 }

@@ -10,7 +10,6 @@ description: >
       a. If x and y are both the same Symbol value, 
           return true; otherwise, return false.
     ...
-features: [Symbol]
 ---*/
 
 assert.sameValue(

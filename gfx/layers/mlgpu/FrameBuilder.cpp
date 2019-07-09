@@ -148,17 +148,21 @@ FrameBuilder::ProcessContainerLayer(ContainerLayer* aContainer,
 {
   LayerMLGPU* layer = aContainer->AsHostLayer()->AsLayerMLGPU();
 
-  // Diagnostic information for bug 1387467.
-  if (!layer) {
-    gfxDevCrash(LogReason::InvalidLayerType) <<
-      "Layer type is invalid: " << aContainer->Name();
-    return false;
-  }
-
   // We don't want to traverse containers twice, so we only traverse them if
   // they haven't been prepared yet.
   bool isFirstVisit = !layer->IsPrepared();
   if (isFirstVisit && !layer->PrepareToRender(this, aClipRect)) {
+    return false;
+  }
+
+  // If the container is not part of the invalid region, we don't draw it
+  // or traverse it. Note that we do not pass the geometry here. Otherwise
+  // we could decide the particular split is not visible, and because of the
+  // check above, never bother traversing the container again.
+  gfx::IntRect boundingBox = layer->GetClippedBoundingBox(aView, Nothing());
+  const gfx::IntRect& invalidRect = aView->GetInvalidRect();
+  if (boundingBox.IsEmpty() || !invalidRect.Intersects(boundingBox)) {
+    AL_LOG("Culling ContainerLayer %p that does not need painting\n", aContainer);
     return false;
   }
 
@@ -178,12 +182,6 @@ FrameBuilder::ProcessContainerLayer(ContainerLayer* aContainer,
   // RefLayers do not have intermediate surfaces so this is guaranteed
   // to be a full-fledged ContainerLayerMLGPU.
   ContainerLayerMLGPU* viewContainer = layer->AsContainerLayerMLGPU();
-  if (!viewContainer) {
-    gfxDevCrash(LogReason::InvalidLayerType) <<
-      "Container layer type is invalid: " << aContainer->Name();
-    return false;
-  }
-
   if (isFirstVisit && !viewContainer->GetInvalidRect().IsEmpty()) {
     // The RenderView constructor automatically attaches itself to the parent.
     RefPtr<RenderViewMLGPU> view = new RenderViewMLGPU(this, viewContainer, aView);

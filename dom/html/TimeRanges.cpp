@@ -7,7 +7,6 @@
 #include "mozilla/dom/TimeRanges.h"
 #include "mozilla/dom/TimeRangesBinding.h"
 #include "mozilla/dom/HTMLMediaElement.h"
-#include "TimeUnits.h"
 #include "nsError.h"
 
 namespace mozilla {
@@ -32,35 +31,6 @@ TimeRanges::TimeRanges(nsISupports* aParent)
 {
 }
 
-TimeRanges::TimeRanges(nsISupports* aParent,
-                       const media::TimeIntervals& aTimeIntervals)
-  : TimeRanges(aParent)
-{
-  if (aTimeIntervals.IsInvalid()) {
-    return;
-  }
-  for (const media::TimeInterval& interval : aTimeIntervals) {
-    Add(interval.mStart.ToSeconds(), interval.mEnd.ToSeconds());
-  }
-}
-
-TimeRanges::TimeRanges(const media::TimeIntervals& aTimeIntervals)
-  : TimeRanges(nullptr, aTimeIntervals)
-{
-}
-
-media::TimeIntervals
-TimeRanges::ToTimeIntervals() const
-{
-  media::TimeIntervals t;
-  for (uint32_t i = 0; i < Length(); i++) {
-    ErrorResult rv;
-    t += media::TimeInterval(media::TimeUnit::FromSeconds(Start(i, rv)),
-                             media::TimeUnit::FromSeconds(End(i, rv)));
-  }
-  return t;
-}
-
 TimeRanges::~TimeRanges()
 {
 }
@@ -73,7 +43,7 @@ TimeRanges::GetLength(uint32_t* aLength)
 }
 
 double
-TimeRanges::Start(uint32_t aIndex, ErrorResult& aRv) const
+TimeRanges::Start(uint32_t aIndex, ErrorResult& aRv)
 {
   if (aIndex >= mRanges.Length()) {
     aRv = NS_ERROR_DOM_INDEX_SIZE_ERR;
@@ -92,7 +62,7 @@ TimeRanges::Start(uint32_t aIndex, double* aTime)
 }
 
 double
-TimeRanges::End(uint32_t aIndex, ErrorResult& aRv) const
+TimeRanges::End(uint32_t aIndex, ErrorResult& aRv)
 {
   if (aIndex >= mRanges.Length()) {
     aRv = NS_ERROR_DOM_INDEX_SIZE_ERR;

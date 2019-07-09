@@ -12,7 +12,6 @@
 #include "mozilla/Attributes.h"
 #include "nsContainerFrame.h"
 #include "nsIAnonymousContentCreator.h"
-#include "nsStringFwd.h"
 #include "nsTArrayForwardDeclare.h"
 #include "FrameLayerBuilder.h"
 
@@ -23,6 +22,7 @@ class LayerManager;
 } // namespace layers
 } // namespace mozilla
 
+class nsAString;
 class nsPresContext;
 class nsDisplayItem;
 
@@ -44,10 +44,11 @@ public:
   NS_DECL_FRAMEARENA_HELPERS(nsVideoFrame)
 
   void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
                         const nsDisplayListSet& aLists) override;
 
   nsresult AttributeChanged(int32_t aNameSpaceID,
-                            nsAtom* aAttribute,
+                            nsIAtom* aAttribute,
                             int32_t aModType) override;
 
   void OnVisibilityChange(Visibility aNewVisibility,

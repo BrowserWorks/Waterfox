@@ -3,11 +3,13 @@
 "use strict";
 
 // The ext-* files are imported into the same scopes.
-/* import-globals-from ext-browser.js */
+/* import-globals-from ext-utils.js */
 
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
                                    "nsIAboutNewTabService");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
@@ -80,14 +82,7 @@ this.windows = class extends ExtensionAPI {
         },
 
         getAll: function(getInfo) {
-          let doNotCheckTypes = getInfo === null || getInfo.windowTypes === null;
-
-          function typeFilter(win) {
-            return doNotCheckTypes || getInfo.windowTypes.includes(win.type);
-          }
-
-          let windows = Array.from(windowManager.getAll(), win => win.convert(getInfo))
-                        .filter(typeFilter);
+          let windows = Array.from(windowManager.getAll(), win => win.convert(getInfo));
 
           return Promise.resolve(windows);
         },

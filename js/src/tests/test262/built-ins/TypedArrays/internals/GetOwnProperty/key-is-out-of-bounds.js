@@ -21,7 +21,6 @@ info: >
   8. If index < 0 or index ≥ length, return undefined.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

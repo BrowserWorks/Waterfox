@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.now
 es5id: 15.9.4.4-0-3
 description: Date.now must exist as a function
 ---*/

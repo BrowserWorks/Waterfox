@@ -7,7 +7,7 @@
 #include "AnimationUtils.h"
 
 #include "nsDebug.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsGlobalWindow.h"
@@ -27,7 +27,7 @@ AnimationUtils::LogAsyncAnimationFailure(nsCString& aMessage,
     aMessage.AppendLiteral(" [");
     aMessage.Append(nsAtomCString(aContent->NodeInfo()->NameAtom()));
 
-    nsAtom* id = aContent->GetID();
+    nsIAtom* id = aContent->GetID();
     if (id) {
       aMessage.AppendLiteral(" with id '");
       aMessage.Append(nsAtomCString(aContent->GetID()));

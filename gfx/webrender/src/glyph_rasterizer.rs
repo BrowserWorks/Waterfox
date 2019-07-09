@@ -3,26 +3,30 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #[cfg(test)]
-use api::{ColorF, IdNamespace, LayoutPoint};
-use api::{DevicePoint, DeviceUintSize, FontInstance};
-use api::{FontKey, FontTemplate, FontRenderMode, ColorU};
-use api::{GlyphDimensions, GlyphKey, SubpixelDirection};
-use api::{ImageData, ImageDescriptor, ImageFormat};
-#[cfg(test)]
 use app_units::Au;
 use device::TextureFilter;
-use glyph_cache::{CachedGlyphInfo, GlyphCache};
-use gpu_cache::GpuCache;
-use internal_types::FastHashSet;
+use fnv::FnvHasher;
+use frame::FrameId;
 use platform::font::{FontContext, RasterizedGlyph};
 use profiler::TextureCacheProfileCounters;
 use rayon::ThreadPool;
 use rayon::prelude::*;
-use std::collections::hash_map::Entry;
-use std::mem;
+use resource_cache::ResourceClassCache;
+use std::hash::BuildHasherDefault;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::mpsc::{channel, Receiver, Sender};
-use texture_cache::{TextureCache, TextureCacheHandle};
+use std::collections::hash_map::Entry;
+use std::collections::HashSet;
+use std::mem;
+use texture_cache::{TextureCacheItemId, TextureCache};
+#[cfg(test)]
+use api::{ColorF, FontRenderMode, IdNamespace};
+use api::{FontInstanceKey, LayoutPoint};
+use api::{FontKey, FontTemplate};
+use api::{ImageData, ImageDescriptor, ImageFormat};
+use api::{GlyphKey, GlyphInstance, GlyphDimensions};
+
+pub type GlyphCache = ResourceClassCache<GlyphRequest, Option<TextureCacheItemId>>;
 
 pub struct FontContexts {
     // These worker are mostly accessed from their corresponding worker threads.
@@ -75,17 +79,17 @@ pub struct GlyphRasterizer {
     workers: Arc<ThreadPool>,
     font_contexts: Arc<FontContexts>,
 
+    // Receives the rendered glyphs.
+    glyph_rx: Receiver<Vec<GlyphRasterJob>>,
+    glyph_tx: Sender<Vec<GlyphRasterJob>>,
+
     // Maintain a set of glyphs that have been requested this
     // frame. This ensures the glyph thread won't rasterize
     // the same glyph more than once in a frame. This is required
     // because the glyph cache hash table is not updated
     // until the end of the frame when we wait for glyph requests
     // to be resolved.
-    pending_glyphs: FastHashSet<GlyphRequest>,
-
-    // Receives the rendered glyphs.
-    glyph_rx: Receiver<Vec<GlyphRasterJob>>,
-    glyph_tx: Sender<Vec<GlyphRasterJob>>,
+    pending_glyphs: HashSet<GlyphRequest>,
 
     // We defer removing fonts to the end of the frame so that:
     // - this work is done outside of the critical path,
@@ -101,19 +105,21 @@ impl GlyphRasterizer {
         let num_workers = workers.current_num_threads();
         let mut contexts = Vec::with_capacity(num_workers);
 
-        for _ in 0 .. num_workers {
+        for _ in 0..num_workers {
             contexts.push(Mutex::new(FontContext::new()));
         }
 
         GlyphRasterizer {
-            font_contexts: Arc::new(FontContexts {
-                worker_contexts: contexts,
-                shared_context: Mutex::new(FontContext::new()),
-                workers: Arc::clone(&workers),
-            }),
-            pending_glyphs: FastHashSet::default(),
+            font_contexts: Arc::new(
+                FontContexts {
+                    worker_contexts: contexts,
+                    shared_context: Mutex::new(FontContext::new()),
+                    workers: Arc::clone(&workers),
+                }
+            ),
             glyph_rx,
             glyph_tx,
+            pending_glyphs: HashSet::new(),
             workers,
             fonts_to_remove: Vec::new(),
         }
@@ -123,9 +129,7 @@ impl GlyphRasterizer {
         let font_contexts = Arc::clone(&self.font_contexts);
         // It's important to synchronously add the font for the shared context because
         // we use it to check that fonts have been properly added when requesting glyphs.
-        font_contexts
-            .lock_shared_context()
-            .add_font(&font_key, &template);
+        font_contexts.lock_shared_context().add_font(&font_key, &template);
 
         // TODO: this locks each font context while adding the font data, probably not a big deal,
         // but if there is contention on this lock we could easily have a queue of per-context
@@ -133,10 +137,8 @@ impl GlyphRasterizer {
         // before rendering a glyph.
         // We can also move this into a worker to free up some cycles in the calling (render backend)
         // thread.
-        for i in 0 .. font_contexts.num_worker_contexts() {
-            font_contexts
-                .lock_context(Some(i))
-                .add_font(&font_key, &template);
+        for i in 0..font_contexts.num_worker_contexts() {
+            font_contexts.lock_context(Some(i)).add_font(&font_key, &template);
         }
     }
 
@@ -144,79 +146,34 @@ impl GlyphRasterizer {
         self.fonts_to_remove.push(font_key);
     }
 
-    pub fn prepare_font(&self, font: &mut FontInstance) {
-        // In alpha/mono mode, the color of the font is irrelevant.
-        // Forcing it to black in those cases saves rasterizing glyphs
-        // of different colors when not needed.
-        match font.render_mode {
-            FontRenderMode::Mono | FontRenderMode::Bitmap => {
-                font.color = ColorU::new(255, 255, 255, 255);
-                // Subpixel positioning is disabled in mono and bitmap modes.
-                font.subpx_dir = SubpixelDirection::None;
-            }
-            FontRenderMode::Alpha => {
-                font.color = ColorU::new(255, 255, 255, 255);
-            }
-            FontRenderMode::Subpixel => {
-                // In subpixel mode, we only actually need the color if preblending
-                // is used in the font backend.
-                if !FontContext::has_gamma_correct_subpixel_aa() {
-                    font.color = ColorU::new(255, 255, 255, 255);
-                }
-            }
-        }
-    }
-
     pub fn request_glyphs(
         &mut self,
         glyph_cache: &mut GlyphCache,
-        font: FontInstance,
-        glyph_keys: &[GlyphKey],
-        texture_cache: &mut TextureCache,
-        gpu_cache: &mut GpuCache,
+        current_frame_id: FrameId,
+        font: FontInstanceKey,
+        glyph_instances: &[GlyphInstance],
+        requested_items: &mut HashSet<TextureCacheItemId, BuildHasherDefault<FnvHasher>>,
     ) {
-        assert!(
-            self.font_contexts
-                .lock_shared_context()
-                .has_font(&font.font_key)
-        );
-        let mut glyphs = Vec::new();
+        assert!(self.font_contexts.lock_shared_context().has_font(&font.font_key));
 
-        let glyph_key_cache = glyph_cache.get_glyph_key_cache_for_font_mut(font.clone());
+        let mut glyphs = Vec::with_capacity(glyph_instances.len());
 
         // select glyphs that have not been requested yet.
-        for key in glyph_keys {
-            match glyph_key_cache.entry(key.clone()) {
-                Entry::Occupied(mut entry) => {
-                    if let Ok(Some(ref mut glyph_info)) = *entry.get_mut() {
-                        if texture_cache.request(&mut glyph_info.texture_cache_handle, gpu_cache) {
-                            // This case gets hit when we have already rasterized
-                            // the glyph and stored it in CPU memory, the the glyph
-                            // has been evicted from the texture cache. In which case
-                            // we need to re-upload it to the GPU.
-                            texture_cache.update(
-                                &mut glyph_info.texture_cache_handle,
-                                ImageDescriptor {
-                                    width: glyph_info.size.width,
-                                    height: glyph_info.size.height,
-                                    stride: None,
-                                    format: ImageFormat::BGRA8,
-                                    is_opaque: false,
-                                    offset: 0,
-                                },
-                                TextureFilter::Linear,
-                                ImageData::Raw(glyph_info.glyph_bytes.clone()),
-                                [glyph_info.offset.x, glyph_info.offset.y, glyph_info.scale],
-                                None,
-                                gpu_cache,
-                            );
-                        }
+        for glyph in glyph_instances {
+            let glyph_request = GlyphRequest::new(font.clone(),
+                                                  glyph.index,
+                                                  glyph.point);
+
+            match glyph_cache.entry(glyph_request.clone(), current_frame_id) {
+                Entry::Occupied(entry) => {
+                    if let &Some(texture_cache_item_id) = entry.get() {
+                        requested_items.insert(texture_cache_item_id);
                     }
                 }
                 Entry::Vacant(..) => {
-                    let request = GlyphRequest::new(&font, key);
-                    if self.pending_glyphs.insert(request.clone()) {
-                        glyphs.push(request);
+                    if !self.pending_glyphs.contains(&glyph_request) {
+                        self.pending_glyphs.insert(glyph_request.clone());
+                        glyphs.push(glyph_request.clone());
                     }
                 }
             }
@@ -232,74 +189,54 @@ impl GlyphRasterizer {
         // possible and in that task use rayon's fork join dispatch to rasterize the
         // glyphs in the thread pool.
         self.workers.spawn(move || {
-            let jobs = glyphs
-                .par_iter()
-                .map(|request: &GlyphRequest| {
-                    profile_scope!("glyph-raster");
-                    let mut context = font_contexts.lock_current_context();
-                    let job = GlyphRasterJob {
-                        request: request.clone(),
-                        result: context.rasterize_glyph(&request.font, &request.key),
-                    };
+            let jobs = glyphs.par_iter().map(|request: &GlyphRequest| {
+                profile_scope!("glyph-raster");
+                let mut context = font_contexts.lock_current_context();
+                let job = GlyphRasterJob {
+                    request: request.clone(),
+                    result: context.rasterize_glyph(&request.font, &request.key),
+                };
 
-                    // Sanity check.
-                    if let Some(ref glyph) = job.result {
-                        let bpp = 4; // We always render glyphs in 32 bits RGBA format.
-                        assert_eq!(
-                            glyph.bytes.len(),
-                            bpp * (glyph.width * glyph.height) as usize
-                        );
-                    }
+                // Sanity check.
+                if let Some(ref glyph) = job.result {
+                    let bpp = 4; // We always render glyphs in 32 bits RGBA format.
+                    assert_eq!(glyph.bytes.len(), bpp * (glyph.width * glyph.height) as usize);
+                }
 
-                    job
-                })
-                .collect();
+                job
+            }).collect();
 
             glyph_tx.send(jobs).unwrap();
         });
     }
 
-    pub fn get_glyph_dimensions(
-        &mut self,
-        font: &FontInstance,
-        glyph_key: &GlyphKey,
-    ) -> Option<GlyphDimensions> {
-        self.font_contexts
-            .lock_shared_context()
-            .get_glyph_dimensions(font, glyph_key)
-    }
-
-    pub fn is_bitmap_font(&self, font: &FontInstance) -> bool {
-        self.font_contexts
-            .lock_shared_context()
-            .is_bitmap_font(font)
+    pub fn get_glyph_dimensions(&mut self,
+                                font: &FontInstanceKey,
+                                glyph_key: &GlyphKey) -> Option<GlyphDimensions> {
+        self.font_contexts.lock_shared_context().get_glyph_dimensions(font, glyph_key)
     }
 
     pub fn get_glyph_index(&mut self, font_key: FontKey, ch: char) -> Option<u32> {
-        self.font_contexts
-            .lock_shared_context()
-            .get_glyph_index(font_key, ch)
+        self.font_contexts.lock_shared_context().get_glyph_index(font_key, ch)
     }
 
     pub fn resolve_glyphs(
         &mut self,
+        current_frame_id: FrameId,
         glyph_cache: &mut GlyphCache,
         texture_cache: &mut TextureCache,
-        gpu_cache: &mut GpuCache,
-        _texture_cache_profile: &mut TextureCacheProfileCounters,
+        requested_items: &mut HashSet<TextureCacheItemId, BuildHasherDefault<FnvHasher>>,
+        texture_cache_profile: &mut TextureCacheProfileCounters,
     ) {
         let mut rasterized_glyphs = Vec::with_capacity(self.pending_glyphs.len());
 
         // Pull rasterized glyphs from the queue.
-
         while !self.pending_glyphs.is_empty() {
             // TODO: rather than blocking until all pending glyphs are available
             // we could try_recv and steal work from the thread pool to take advantage
             // of the fact that this thread is alive and we avoid the added latency
             // of blocking it.
-            let raster_jobs = self.glyph_rx
-                .recv()
-                .expect("BUG: Should be glyphs pending!");
+            let raster_jobs = self.glyph_rx.recv().expect("BUG: Should be glyphs pending!");
             for job in raster_jobs {
                 debug_assert!(self.pending_glyphs.contains(&job.request));
                 self.pending_glyphs.remove(&job.request);
@@ -317,14 +254,10 @@ impl GlyphRasterizer {
 
         // Update the caches.
         for job in rasterized_glyphs {
-            let glyph_info = job.result
-                .and_then(|glyph| if glyph.width > 0 && glyph.height > 0 {
+            let image_id = job.result.and_then(
+                |glyph| if glyph.width > 0 && glyph.height > 0 {
                     assert_eq!((glyph.left.fract(), glyph.top.fract()), (0.0, 0.0));
-                    let glyph_bytes = Arc::new(glyph.bytes);
-                    let mut texture_cache_handle = TextureCacheHandle::new();
-                    texture_cache.request(&mut texture_cache_handle, gpu_cache);
-                    texture_cache.update(
-                        &mut texture_cache_handle,
+                    let image_id = texture_cache.insert(
                         ImageDescriptor {
                             width: glyph.width,
                             height: glyph.height,
@@ -334,25 +267,18 @@ impl GlyphRasterizer {
                             offset: 0,
                         },
                         TextureFilter::Linear,
-                        ImageData::Raw(glyph_bytes.clone()),
-                        [glyph.left, glyph.top, glyph.scale],
-                        None,
-                        gpu_cache,
+                        ImageData::Raw(Arc::new(glyph.bytes)),
+                        [glyph.left, glyph.top],
+                        texture_cache_profile,
                     );
-                    Some(CachedGlyphInfo {
-                        texture_cache_handle,
-                        glyph_bytes,
-                        size: DeviceUintSize::new(glyph.width, glyph.height),
-                        offset: DevicePoint::new(glyph.left, glyph.top),
-                        scale: glyph.scale,
-                    })
+                    requested_items.insert(image_id);
+                    Some(image_id)
                 } else {
                     None
-                });
+                }
+            );
 
-            let glyph_key_cache = glyph_cache.get_glyph_key_cache_for_font_mut(job.request.font);
-
-            glyph_key_cache.insert(job.request.key, Ok(glyph_info));
+            glyph_cache.insert(job.request, image_id, current_frame_id);
         }
 
         // Now that we are done with the critical path (rendering the glyphs),
@@ -364,7 +290,7 @@ impl GlyphRasterizer {
                 for font_key in &fonts_to_remove {
                     font_contexts.lock_shared_context().delete_font(font_key);
                 }
-                for i in 0 .. font_contexts.num_worker_contexts() {
+                for i in 0..font_contexts.num_worker_contexts() {
                     let mut context = font_contexts.lock_context(Some(i));
                     for font_key in &fonts_to_remove {
                         context.delete_font(font_key);
@@ -379,7 +305,7 @@ impl FontContext {
     fn add_font(&mut self, font_key: &FontKey, template: &FontTemplate) {
         match template {
             &FontTemplate::Raw(ref bytes, index) => {
-                self.add_raw_font(&font_key, bytes.clone(), index);
+                self.add_raw_font(&font_key, &**bytes, index);
             }
             &FontTemplate::Native(ref native_font_handle) => {
                 self.add_native_font(&font_key, (*native_font_handle).clone());
@@ -391,14 +317,17 @@ impl FontContext {
 #[derive(Clone, Hash, PartialEq, Eq, Debug, Ord, PartialOrd)]
 pub struct GlyphRequest {
     pub key: GlyphKey,
-    pub font: FontInstance,
+    pub font: FontInstanceKey,
 }
 
 impl GlyphRequest {
-    pub fn new(font: &FontInstance, key: &GlyphKey) -> Self {
+    pub fn new(
+        font: FontInstanceKey,
+        index: u32,
+        point: LayoutPoint) -> Self {
         GlyphRequest {
-            key: key.clone(),
-            font: font.clone(),
+            key: GlyphKey::new(index, point, font.render_mode),
+            font,
         }
     }
 }
@@ -420,56 +349,50 @@ fn raterize_200_glyphs() {
     let workers = Arc::new(ThreadPool::new(Configuration::new()).unwrap());
     let mut glyph_rasterizer = GlyphRasterizer::new(workers);
     let mut glyph_cache = GlyphCache::new();
-    let mut gpu_cache = GpuCache::new();
-    let mut texture_cache = TextureCache::new(2048);
+    let mut requested_items = HashSet::default();
 
-    let mut font_file =
-        File::open("../wrench/reftests/text/VeraBd.ttf").expect("Couldn't open font file");
+    let mut font_file = File::open("../wrench/reftests/text/VeraBd.ttf").expect("Couldn't open font file");
     let mut font_data = vec![];
-    font_file
-        .read_to_end(&mut font_data)
-        .expect("failed to read font file");
+    font_file.read_to_end(&mut font_data).expect("failed to read font file");
 
     let font_key = FontKey::new(IdNamespace(0), 0);
     glyph_rasterizer.add_font(font_key, FontTemplate::Raw(Arc::new(font_data), 0));
 
-    let font = FontInstance::new(
-        font_key,
-        Au::from_px(32),
-        ColorF::new(0.0, 0.0, 0.0, 1.0),
-        FontRenderMode::Subpixel,
-        SubpixelDirection::Horizontal,
-        None,
-        Vec::new(),
-        false,
-    );
+    let frame_id = FrameId(1);
 
-    let mut glyph_keys = Vec::with_capacity(200);
-    for i in 0 .. 200 {
-        glyph_keys.push(GlyphKey::new(
-            i,
-            LayoutPoint::zero(),
-            font.render_mode,
-            font.subpx_dir,
-        ));
+    let mut glyph_instances = Vec::with_capacity(200);
+    for i in 0..200 {
+        glyph_instances.push(GlyphInstance {
+            index: i, // It doesn't matter which glyphs we are actually rendering.
+            point: LayoutPoint::new(0.0, 0.0),
+        });
     }
 
-    for i in 0 .. 4 {
+    let font = FontInstanceKey {
+        font_key,
+        color: ColorF::new(0.0, 0.0, 0.0, 1.0).into(),
+        size: Au::from_px(32),
+        render_mode: FontRenderMode::Subpixel,
+        glyph_options: None,
+    };
+
+    for i in 0..4 {
         glyph_rasterizer.request_glyphs(
             &mut glyph_cache,
+            frame_id,
             font.clone(),
-            &glyph_keys[(50 * i) .. (50 * (i + 1))],
-            &mut texture_cache,
-            &mut gpu_cache,
+            &glyph_instances[(50 * i)..(50 * (i + 1))],
+            &mut requested_items,
         );
     }
 
     glyph_rasterizer.delete_font(font_key);
 
     glyph_rasterizer.resolve_glyphs(
+        frame_id,
         &mut glyph_cache,
         &mut TextureCache::new(4096),
-        &mut gpu_cache,
+        &mut requested_items,
         &mut TextureCacheProfileCounters::new(),
     );
 }

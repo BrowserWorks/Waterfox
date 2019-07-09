@@ -8,7 +8,9 @@
 #define mozilla_dom_indexeddb_scripterrorhelper_h__
 
 #include <inttypes.h>
-#include "nsStringFwd.h"
+
+class nsACString;
+class nsAString;
 
 namespace mozilla {
 namespace dom {

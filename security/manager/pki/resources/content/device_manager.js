@@ -12,16 +12,38 @@ const nsPK11TokenDB = "@mozilla.org/security/pk11tokendb;1";
 const nsIPK11TokenDB = Components.interfaces.nsIPK11TokenDB;
 const nsIDialogParamBlock = Components.interfaces.nsIDialogParamBlock;
 const nsDialogParamBlock = "@mozilla.org/embedcomp/dialogparam;1";
+const nsIPKCS11 = Components.interfaces.nsIPKCS11;
+const nsPKCS11ContractID = "@mozilla.org/security/pkcs11;1";
+
+var { Services } = Components.utils.import("resource://gre/modules/Services.jsm", {});
 
 var bundle;
 var secmoddb;
 var skip_enable_buttons = false;
 
+var smartCardObserver = {
+  observe() {
+    onSmartCardChange();
+  }
+};
+
+function DeregisterSmartCardObservers() {
+  Services.obs.removeObserver(smartCardObserver, "smartcard-insert");
+  Services.obs.removeObserver(smartCardObserver, "smartcard-remove");
+}
+
 /* Do the initial load of all PKCS# modules and list them. */
 function LoadModules() {
   bundle = document.getElementById("pippki_bundle");
   secmoddb = Components.classes[nsPKCS11ModuleDB].getService(nsIPKCS11ModuleDB);
+  Services.obs.addObserver(smartCardObserver, "smartcard-insert");
+  Services.obs.addObserver(smartCardObserver, "smartcard-remove");
+
   RefreshDeviceList();
+}
+
+function getPKCS11() {
+  return Components.classes[nsPKCS11ContractID].getService(nsIPKCS11);
 }
 
 function getNSSString(name) {
@@ -334,7 +356,7 @@ function deleteSelected() {
   if (selected_module &&
       doConfirm(getNSSString("DelModuleWarning"))) {
     try {
-      secmoddb.deleteModule(selected_module.name);
+      getPKCS11().deleteModule(selected_module.name);
     } catch (e) {
       doPrompt(getNSSString("DelModuleError"));
       return false;
@@ -350,6 +372,17 @@ function doUnload() {
     ClearDeviceList();
     RefreshDeviceList();
   }
+}
+
+// handle card insertion and removal
+function onSmartCardChange() {
+  var tree = document.getElementById("device_tree");
+  var index = tree.currentIndex;
+  tree.currentIndex = 0;
+  ClearDeviceList();
+  RefreshDeviceList();
+  tree.currentIndex = index;
+  enableButtons();
 }
 
 function changePassword() {

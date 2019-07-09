@@ -104,15 +104,10 @@ struct CrossOriginAccessiblePropertiesOnly : public Policy {
     }
 };
 
-// This class used to support permitting access to properties if they
-// appeared in an access list on the object, but now it acts like an
-// Opaque wrapper, with the exception that it fails silently for GET,
-// ENUMERATE, and GET_PROPERTY_DESCRIPTOR. This is done for backwards
-// compatibility. See bug 1397513.
-struct OpaqueWithSilentFailing : public Policy {
-    static bool check(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id, js::Wrapper::Action act) {
-        return false;
-    }
+// This policy only permits access to properties if they appear in the
+// objects exposed properties list.
+struct ExposedPropertiesOnly : public Policy {
+    static bool check(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id, js::Wrapper::Action act);
 
     static bool deny(JSContext* cx, js::Wrapper::Action act, JS::HandleId id,
                      bool mayThrow);

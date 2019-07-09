@@ -4,6 +4,10 @@
 
 // Test the HeapAnalyses{Client,Worker} "computeDominatorTree" request.
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function* () {
   const client = new HeapAnalysesClient();
 

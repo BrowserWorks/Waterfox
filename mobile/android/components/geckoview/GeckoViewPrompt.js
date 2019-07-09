@@ -4,26 +4,65 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  EventDispatcher: "resource://gre/modules/Messaging.jsm",
-  FileUtils: "resource://gre/modules/FileUtils.jsm",
-  Services: "resource://gre/modules/Services.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncPrefs",
+                                  "resource://gre/modules/AsyncPrefs.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "ContentPrefServiceParent",
+                                  "resource://gre/modules/ContentPrefServiceParent.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
+                                  "resource://gre/modules/Messaging.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+                                  "resource://gre/modules/FileUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "UUIDGen",
                                    "@mozilla.org/uuid-generator;1", "nsIUUIDGenerator");
 
 function PromptFactory() {
-  this.wrappedJSObject = this;
 }
 
 PromptFactory.prototype = {
   classID: Components.ID("{076ac188-23c1-4390-aa08-7ef1f78ca5d9}"),
 
   QueryInterface: XPCOMUtils.generateQI([
-    Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+    Ci.nsIObserver, Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+
+  /* ----------  nsIObserver  ---------- */
+  observe: function(aSubject, aTopic, aData) {
+    switch (aTopic) {
+      case "app-startup": {
+        Services.obs.addObserver(this, "chrome-document-global-created");
+        Services.obs.addObserver(this, "content-document-global-created");
+        break;
+      }
+      case "profile-after-change": {
+        // ContentPrefServiceParent is needed for e10s file picker.
+        ContentPrefServiceParent.init();
+        // AsyncPrefs is needed for reader mode.
+        AsyncPrefs.init();
+        Services.mm.addMessageListener("GeckoView:Prompt", this);
+        break;
+      }
+      case "chrome-document-global-created":
+      case "content-document-global-created": {
+        let win = aSubject.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDocShell).QueryInterface(Ci.nsIDocShellTreeItem)
+                          .rootTreeItem.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDOMWindow);
+        if (win !== aSubject) {
+          // Only attach to top-level windows.
+          return;
+        }
+        win.addEventListener("click", this); // non-capture
+        win.addEventListener("contextmenu", this); // non-capture
+        break;
+      }
+    }
+  },
 
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
@@ -369,7 +408,7 @@ function PromptDelegate(aDomWin) {
                      .rootTreeItem.QueryInterface(Ci.nsIInterfaceRequestor)
                      .getInterface(Ci.nsIDOMWindow);
   try {
-    this._dispatcher = gvWin.WindowEventDispatcher || EventDispatcher.for(gvWin);
+    this._dispatcher = EventDispatcher.for(gvWin);
   } catch (e) {
     // Use global dispatcher.
   }
@@ -407,7 +446,7 @@ PromptDelegate.prototype = {
       }
       return true;
 
-    } catch (ex) {
+    } catch(ex) {
       Cu.reportError("Failed to change modal state: " + e);
     }
     return false;
@@ -668,7 +707,7 @@ PromptDelegate.prototype = {
       mode: aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD ? "password" : "auth",
       options: {
         flags: aAuthInfo.flags,
-        uri: aChannel && aChannel.URI.displaySpec,
+        uri: aChannel && aChannel.URI.spec,
         level: aLevel,
         username: username,
         password: aAuthInfo.password,
@@ -801,7 +840,7 @@ PromptDelegate.prototype = {
       return [hostname, realm];
     }
 
-    let hostname = aChannel.URI.scheme + "://" + aChannel.URI.displayHostPort;
+    let hostname = aChannel.URI.scheme + "://" + aChannel.URI.hostPort;
     // If a HTTP WWW-Authenticate header specified a realm, that value
     // will be available here. If it wasn't set or wasn't HTTP, we'll use
     // the formatted hostname instead.

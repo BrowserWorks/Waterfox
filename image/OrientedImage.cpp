@@ -365,10 +365,10 @@ OrientedImage::GetImageSpaceInvalidationRect(const nsIntRect& aRect)
   // Transform the invalidation rect into the correct orientation.
   gfxMatrix matrix(OrientationMatrix(innerSize));
   gfxRect invalidRect(matrix.TransformBounds(gfxRect(rect.x, rect.y,
-                                                     rect.Width(), rect.Height())));
+                                                     rect.width, rect.height)));
 
   return IntRect::RoundOut(invalidRect.x, invalidRect.y,
-                           invalidRect.Width(), invalidRect.Height());
+                           invalidRect.width, invalidRect.height);
 }
 
 } // namespace image

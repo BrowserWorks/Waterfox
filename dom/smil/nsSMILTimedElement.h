@@ -24,7 +24,7 @@
 class nsSMILAnimationFunction;
 class nsSMILTimeContainer;
 class nsSMILTimeValue;
-class nsAtom;
+class nsIAtom;
 
 namespace mozilla {
 namespace dom {
@@ -272,7 +272,7 @@ public:
    * @return true if the given attribute is a timing attribute, false
    * otherwise.
    */
-  bool SetAttr(nsAtom* aAttribute, const nsAString& aValue,
+  bool SetAttr(nsIAtom* aAttribute, const nsAString& aValue,
                  nsAttrValue& aResult, Element* aContextNode,
                  nsresult* aParseResult = nullptr);
 
@@ -286,7 +286,7 @@ public:
    * @return true if the given attribute is a timing attribute, false
    * otherwise.
    */
-  bool UnsetAttr(nsAtom* aAttribute);
+  bool UnsetAttr(nsIAtom* aAttribute);
 
   /**
    * Adds a syncbase dependency to the list of dependents that will be notified

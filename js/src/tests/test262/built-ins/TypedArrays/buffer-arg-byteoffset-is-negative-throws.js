@@ -16,7 +16,6 @@ info: >
   8. If offset < 0, throw a RangeError exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var buffer = new ArrayBuffer(8);

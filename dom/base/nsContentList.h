@@ -22,7 +22,7 @@
 #include "nsIDOMNodeList.h"
 #include "nsINodeList.h"
 #include "nsStubMutationObserver.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsNameSpaceManager.h"
 #include "nsWrapperCache.h"
@@ -139,52 +139,6 @@ private:
   nsCOMPtr<nsINode> mRoot;
 };
 
-// Used for returning lists that will always be empty, such as the applets list
-// in HTML Documents
-class nsEmptyContentList: public nsBaseContentList,
-                          public nsIHTMLCollection
-{
-public:
-  explicit nsEmptyContentList(nsINode* aRoot) : nsBaseContentList(),
-                                                mRoot(aRoot)
-  {
-  }
-
-  // nsIDOMHTMLCollection
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsEmptyContentList,
-                                           nsBaseContentList)
-  NS_DECL_NSIDOMHTMLCOLLECTION
-
-  virtual nsINode* GetParentObject() override
-  {
-    return mRoot;
-  }
-
-  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
-
-  virtual JSObject* GetWrapperPreserveColorInternal() override
-  {
-    return nsWrapperCache::GetWrapperPreserveColor();
-  }
-  virtual void PreserveWrapperInternal(nsISupports* aScriptObjectHolder) override
-  {
-    nsWrapperCache::PreserveWrapper(aScriptObjectHolder);
-  }
-
-  virtual nsIContent* Item(uint32_t aIndex) override;
-  virtual mozilla::dom::Element* GetElementAt(uint32_t index) override;
-  virtual mozilla::dom::Element*
-  GetFirstNamedElement(const nsAString& aName, bool& aFound) override;
-  virtual void GetSupportedNames(nsTArray<nsString>& aNames) override;
-
-protected:
-  virtual ~nsEmptyContentList() {}
-private:
-  // This has to be a strong reference, the root might go away before the list.
-  nsCOMPtr<nsINode> mRoot;
-};
-
 /**
  * Class that's used as the key to hash nsContentList implementations
  * for fast retrieval
@@ -251,8 +205,8 @@ struct nsContentListKey
 #define LIST_LAZY 2
 
 /**
- * Class that implements a possibly live NodeList that matches Elements
- * in the tree based on some criterion.
+ * Class that implements a live NodeList that matches Elements in the
+ * tree based on some criterion.
  */
 class nsContentList : public nsBaseContentList,
                       public nsIHTMLCollection,
@@ -276,15 +230,12 @@ public:
    * @param aDeep If false, then look only at children of the root, nothing
    *              deeper.  If true, then look at the whole subtree rooted at
    *              our root.
-   * @param aLiveList Whether the created list should be a live list observing
-   *                  mutations to the DOM tree.
    */
   nsContentList(nsINode* aRootNode,
                 int32_t aMatchNameSpaceId,
-                nsAtom* aHTMLMatchAtom,
-                nsAtom* aXMLMatchAtom,
-                bool aDeep = true,
-                bool aLiveList = true);
+                nsIAtom* aHTMLMatchAtom,
+                nsIAtom* aXMLMatchAtom,
+                bool aDeep = true);
 
   /**
    * @param aRootNode The node under which to limit our search.
@@ -301,18 +252,15 @@ public:
    * @param aMatchNameSpaceId a namespace id to be passed back to aFunc
    * @param aFuncMayDependOnAttr a boolean that indicates whether this list is
    *                             sensitive to attribute changes.
-   * @param aLiveList Whether the created list should be a live list observing
-   *                  mutations to the DOM tree.
    */
   nsContentList(nsINode* aRootNode,
                 nsContentListMatchFunc aFunc,
                 nsContentListDestroyFunc aDestroyFunc,
                 void* aData,
                 bool aDeep = true,
-                nsAtom* aMatchAtom = nullptr,
+                nsIAtom* aMatchAtom = nullptr,
                 int32_t aMatchNameSpaceId = kNameSpaceID_None,
-                bool aFuncMayDependOnAttr = true,
-                bool aLiveList = true);
+                bool aFuncMayDependOnAttr = true);
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
@@ -472,8 +420,8 @@ protected:
 
   nsINode* mRootNode; // Weak ref
   int32_t mMatchNameSpaceId;
-  RefPtr<nsAtom> mHTMLMatchAtom;
-  RefPtr<nsAtom> mXMLMatchAtom;
+  nsCOMPtr<nsIAtom> mHTMLMatchAtom;
+  nsCOMPtr<nsIAtom> mXMLMatchAtom;
 
   /**
    * Function to use to determine whether a piece of content matches
@@ -523,10 +471,6 @@ protected:
    * when doing function matching, always false otherwise.
    */
   uint8_t mIsHTMLDocument : 1;
-  /**
-   * Whether the list observes mutations to the DOM tree.
-   */
-  const uint8_t mIsLiveList : 1;
 
 #ifdef DEBUG_CONTENT_LIST
   void AssertInSync();

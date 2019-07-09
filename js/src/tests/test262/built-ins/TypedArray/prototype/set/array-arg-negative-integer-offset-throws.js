@@ -15,7 +15,6 @@ info: >
   7. If targetOffset < 0, throw a RangeError exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

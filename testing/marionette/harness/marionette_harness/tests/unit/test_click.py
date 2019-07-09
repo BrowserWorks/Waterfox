@@ -132,7 +132,8 @@ class TestClick(TestLegacyClick):
     def setUp(self):
         TestLegacyClick.setUp(self)
         self.marionette.delete_session()
-        self.marionette.start_session({"moz:webdriverClick": True})
+        self.marionette.start_session(
+            {"requiredCapabilities": {"specificationLevel": 1}})
 
     def test_click_element_obscured_by_absolute_positioned_element(self):
         self.marionette.navigate(obscured_overlay)

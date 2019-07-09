@@ -585,7 +585,7 @@ public:
 
       mMechanism = CKM_AES_CBC_PAD;
       telemetryAlg = TA_AES_CBC;
-      AesCbcParams params;
+      RootedDictionary<AesCbcParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_INVALID_ACCESS_ERR;
@@ -602,7 +602,7 @@ public:
 
       mMechanism = CKM_AES_CTR;
       telemetryAlg = TA_AES_CTR;
-      AesCtrParams params;
+      RootedDictionary<AesCtrParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_SYNTAX_ERR;
@@ -621,7 +621,7 @@ public:
 
       mMechanism = CKM_AES_GCM;
       telemetryAlg = TA_AES_GCM;
-      AesGcmParams params;
+      RootedDictionary<AesGcmParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_SYNTAX_ERR;
@@ -716,12 +716,16 @@ private:
       return NS_ERROR_DOM_INVALID_ACCESS_ERR;
     }
 
+    // Check whether the integer addition would overflow.
+    if (std::numeric_limits<CryptoBuffer::size_type>::max() - 16 < mData.Length()) {
+      return NS_ERROR_DOM_DATA_ERR;
+    }
+
     // Initialize the output buffer (enough space for padding / a full tag)
-    uint32_t dataLen = mData.Length();
-    uint32_t maxLen = dataLen + 16;
-    if (!mResult.SetLength(maxLen, fallible)) {
+    if (!mResult.SetLength(mData.Length() + 16, fallible)) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
+
     uint32_t outLen = 0;
 
     // Perform the encryption/decryption
@@ -1447,7 +1451,7 @@ public:
     mDataIsJwk = false;
 
     // Try ArrayBuffer
-    RootedSpiderMonkeyInterface<ArrayBuffer> ab(aCx);
+    RootedTypedArray<ArrayBuffer> ab(aCx);
     if (ab.Init(aKeyData)) {
       if (!mKeyData.Assign(ab)) {
         mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
@@ -1456,7 +1460,7 @@ public:
     }
 
     // Try ArrayBufferView
-    RootedSpiderMonkeyInterface<ArrayBufferView> abv(aCx);
+    RootedTypedArray<ArrayBufferView> abv(aCx);
     if (abv.Init(aKeyData)) {
       if (!mKeyData.Assign(abv)) {
         mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;

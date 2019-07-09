@@ -25,9 +25,6 @@ with Files("reftests/*fallback*"):
 with Files("*CompositorWidget*"):
     BUG_COMPONENT = ("Core", "Graphics")
 
-with Files("*Gfx*"):
-    BUG_COMPONENT = ("Core", "Graphics")
-
 with Files("*WindowSurface*"):
     BUG_COMPONENT = ("Core", "Graphics")
 
@@ -38,6 +35,8 @@ toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
 if toolkit in ('cocoa', 'android', 'uikit'):
     DIRS += [toolkit]
+if toolkit in ('android', 'cocoa', 'gtk2', 'gtk3'):
+    EXPORTS += ['nsIPrintDialogService.h']
 
 if toolkit == 'windows':
     DIRS += ['windows']
@@ -64,9 +63,9 @@ elif toolkit == 'cocoa':
         'nsISystemStatusBar.idl',
         'nsITaskbarProgress.idl',
     ]
-    EXPORTS += [
-        'nsINativeMenuService.h',
-    ]
+
+if toolkit in ('cocoa', 'gtk2', 'gtk3'):
+    EXPORTS += ['nsINativeMenuService.h']
 
 TEST_DIRS += ['tests']
 
@@ -125,7 +124,6 @@ EXPORTS += [
     'nsIDeviceContextSpec.h',
     'nsIKeyEventInPluginCallback.h',
     'nsIPluginWidget.h',
-    'nsIPrintDialogService.h',
     'nsIRollupListener.h',
     'nsIWidget.h',
     'nsIWidgetListener.h',
@@ -265,7 +263,7 @@ if toolkit in {'gtk2', 'gtk3', 'cocoa', 'windows',
         'nsBaseFilePicker.cpp',
     ]
 
-if toolkit in ('gtk2', 'gtk3', 'windows', 'cocoa', 'android'):
+if toolkit in ('gtk2', 'gtk3', 'windows', 'cocoa'):
     UNIFIED_SOURCES += [
         'nsNativeTheme.cpp',
     ]
@@ -274,7 +272,8 @@ if toolkit == 'gtk3':
         'nsIApplicationChooser.idl',
     ]
 
-DEFINES['MOZ_CROSS_PROCESS_IME'] = True
+if not CONFIG['MOZ_B2G']:
+    DEFINES['MOZ_CROSS_PROCESS_IME'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -293,7 +292,6 @@ LOCAL_INCLUDES += [
 
 if toolkit == 'windows':
     IPDL_SOURCES = [
-        'headless/HeadlessWidgetTypes.ipdlh',
         'windows/PCompositorWidget.ipdl',
         'windows/PlatformWidgetTypes.ipdlh',
     ]
@@ -301,11 +299,9 @@ elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] and CONFIG['MOZ_X11']:
     IPDL_SOURCES = [
         'gtk/PCompositorWidget.ipdl',
         'gtk/PlatformWidgetTypes.ipdlh',
-        'headless/HeadlessWidgetTypes.ipdlh',
     ]
 else:
     IPDL_SOURCES = [
-        'headless/HeadlessWidgetTypes.ipdlh',
         'PCompositorWidget.ipdl',
         'PlatformWidgetTypes.ipdlh',
     ]

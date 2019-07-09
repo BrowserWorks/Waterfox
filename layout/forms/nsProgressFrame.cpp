@@ -14,10 +14,11 @@
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
-#include "nsCheckboxRadioFrame.h"
+#include "nsFormControlFrame.h"
 #include "nsFontMetrics.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLProgressElement.h"
+#include "nsContentList.h"
 #include "nsCSSPseudoElements.h"
 #include "nsStyleSet.h"
 #include "mozilla/StyleSetHandle.h"
@@ -52,8 +53,8 @@ nsProgressFrame::DestroyFrom(nsIFrame* aDestructRoot)
   NS_ASSERTION(!GetPrevContinuation(),
                "nsProgressFrame should not have continuations; if it does we "
                "need to call RegUnregAccessKey only for the first.");
-  nsCheckboxRadioFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
-  DestroyAnonymousContent(mBarDiv.forget());
+  nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
+  nsContentUtils::DestroyAnonymousContent(&mBarDiv);
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -91,9 +92,10 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 void
 nsProgressFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
                                   const nsDisplayListSet& aLists)
 {
-  BuildDisplayListForInline(aBuilder, aLists);
+  BuildDisplayListForInline(aBuilder, aDirtyRect, aLists);
 }
 
 void
@@ -105,7 +107,6 @@ nsProgressFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsProgressFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   NS_ASSERTION(mBarDiv, "Progress bar div must exist!");
   NS_ASSERTION(PrincipalChildList().GetLength() == 1 &&
@@ -116,7 +117,7 @@ nsProgressFrame::Reflow(nsPresContext*           aPresContext,
                "need to call RegUnregAccessKey only for the first.");
 
   if (mState & NS_FRAME_FIRST_REFLOW) {
-    nsCheckboxRadioFrame::RegUnRegAccessKey(this, true);
+    nsFormControlFrame::RegUnRegAccessKey(this, true);
   }
 
   aDesiredSize.SetSize(aReflowInput.GetWritingMode(),
@@ -130,7 +131,7 @@ nsProgressFrame::Reflow(nsPresContext*           aPresContext,
 
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus.Reset(); // This type of frame can't be split.
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -151,7 +152,7 @@ nsProgressFrame::ReflowChildFrame(nsIFrame*          aChild,
   nscoord xoffset = aReflowInput.ComputedPhysicalBorderPadding().left;
   nscoord yoffset = aReflowInput.ComputedPhysicalBorderPadding().top;
 
-  double position = static_cast<HTMLProgressElement*>(GetContent())->Position();
+  double position = static_cast<HTMLProgressElement*>(mContent)->Position();
 
   // Force the bar's size to match the current progress.
   // When indeterminate, the progress' size will be 100%.
@@ -204,7 +205,7 @@ nsProgressFrame::ReflowChildFrame(nsIFrame*          aChild,
 
 nsresult
 nsProgressFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   int32_t  aModType)
 {
   NS_ASSERTION(mBarDiv, "Progress bar div must exist!");

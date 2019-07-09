@@ -3,7 +3,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # If we add unicode_literals, Python 2.6.1 (required for OS X 10.6) breaks.
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 
 import platform
 import sys
@@ -27,6 +27,9 @@ from mozboot.util import (
 )
 
 APPLICATION_CHOICE = '''
+Please choose the version of Firefox you want to build:
+%s
+
 Note on Artifact Mode:
 
 Firefox for Desktop and Android supports a fast build mode called
@@ -53,11 +56,9 @@ But don't worry! You can always switch configurations later.
 You can learn more about Artifact mode builds at
 https://developer.mozilla.org/en-US/docs/Artifact_builds.
 
-Please choose the version of Firefox you want to build:
-%s
 Your choice: '''
 
-APPLICATIONS_LIST = [
+APPLICATIONS_LIST=[
     ('Firefox for Desktop Artifact Mode', 'browser_artifact_mode'),
     ('Firefox for Desktop', 'browser'),
     ('Firefox for Android Artifact Mode', 'mobile_android_artifact_mode'),
@@ -138,33 +139,13 @@ optimally configured?
 Please enter your reply: '''
 
 CLONE_MERCURIAL = '''
-If you would like to clone the mozilla-unified Mercurial repository, please
+If you would like to clone the canonical Mercurial repository, please
 enter the destination path below.
 
 (If you prefer to use Git, leave this blank.)
-'''
 
-CLONE_MERCURIAL_PROMPT = '''
 Destination directory for Mercurial clone (leave empty to not clone): '''.lstrip()
 
-CLONE_MERCURIAL_NOT_EMPTY = '''
-ERROR! Destination directory '{}' is not empty.
-
-Would you like to clone to '{}'?
-
-  1. Yes
-  2. No, let me enter another path
-  3. No, stop cloning
-
-Please enter your reply: '''.lstrip()
-
-CLONE_MERCURIAL_NOT_EMPTY_FALLBACK_FAILED = '''
-ERROR! Destination directory '{}' is not empty.
-'''
-
-CLONE_MERCURIAL_NOT_DIR = '''
-ERROR! Destination '{}' exists but is not a directory.
-'''
 
 DEBIAN_DISTROS = (
     'Debian',
@@ -244,39 +225,6 @@ class Bootstrapper(object):
 
         self.instance = cls(**args)
 
-    def input_clone_dest(self):
-        print(CLONE_MERCURIAL)
-
-        while True:
-            dest = raw_input(CLONE_MERCURIAL_PROMPT)
-            dest = dest.strip()
-            if not dest:
-                return ''
-
-            dest = os.path.expanduser(dest)
-            if not os.path.exists(dest):
-                return dest
-
-            if not os.path.isdir(dest):
-                print(CLONE_MERCURIAL_NOT_DIR.format(dest))
-                continue
-
-            if os.listdir(dest) == []:
-                return dest
-
-            newdest = os.path.join(dest, 'mozilla-unified')
-            if os.path.exists(newdest):
-                print(CLONE_MERCURIAL_NOT_EMPTY_FALLBACK_FAILED.format(dest))
-                continue
-
-            choice = self.instance.prompt_int(prompt=CLONE_MERCURIAL_NOT_EMPTY.format(dest,
-                                              newdest), low=1, high=3)
-            if choice == 1:
-                return newdest
-            if choice == 2:
-                continue
-            return ''
-
     def bootstrap(self):
         if self.choice is None:
             # Like ['1. Firefox for Desktop', '2. Firefox for Android Artifact Mode', ...].
@@ -285,8 +233,7 @@ class Bootstrapper(object):
             prompt_choice = self.instance.prompt_int(prompt=prompt, low=1, high=len(APPLICATIONS))
             name, application = APPLICATIONS_LIST[prompt_choice-1]
         elif self.choice not in APPLICATIONS.keys():
-            raise Exception('Please pick a valid application choice: (%s)' %
-                            '/'.join(APPLICATIONS.keys()))
+            raise Exception('Please pick a valid application choice: (%s)' % '/'.join(APPLICATIONS.keys()))
         else:
             name, application = APPLICATIONS[self.choice]
 
@@ -344,8 +291,10 @@ class Bootstrapper(object):
         if checkout_type:
             have_clone = True
         elif hg_installed and not self.instance.no_interactive:
-            dest = self.input_clone_dest()
+            dest = raw_input(CLONE_MERCURIAL)
+            dest = dest.strip()
             if dest:
+                dest = os.path.expanduser(dest)
                 have_clone = clone_firefox(self.instance.which('hg'), dest)
                 checkout_root = dest
 
@@ -371,12 +320,8 @@ class Bootstrapper(object):
             self.instance.state_dir = state_dir
             self.instance.ensure_stylo_packages(state_dir, checkout_root)
 
-            if 'mobile_android' in application:
-                self.instance.ensure_proguard_packages(state_dir, checkout_root)
-
         print(self.finished % name)
-        if not (self.instance.which('rustc') and self.instance._parse_version('rustc')
-                >= MODERN_RUST_VERSION):
+        if not (self.instance.which('rustc') and self.instance._parse_version('rustc') >= MODERN_RUST_VERSION):
             print("To build %s, please restart the shell (Start a new terminal window)" % name)
 
         # Like 'suggest_browser_mozconfig' or 'suggest_mobile_android_mozconfig'.
@@ -409,6 +354,8 @@ def configure_mercurial(hg, root_state_dir):
 
 def update_mercurial_repo(hg, url, dest, revision):
     """Perform a clone/pull + update of a Mercurial repository."""
+    args = [hg]
+
     # Disable common extensions whose older versions may cause `hg`
     # invocations to abort.
     disable_exts = [
@@ -422,31 +369,22 @@ def update_mercurial_repo(hg, url, dest, revision):
         'push-to-try',
         'reviewboard',
     ]
-
-    def disable_extensions(args):
-        for ext in disable_exts:
-            args.extend(['--config', 'extensions.%s=!' % ext])
-
-    pull_args = [hg]
-    disable_extensions(pull_args)
+    for ext in disable_exts:
+        args.extend(['--config', 'extensions.%s=!' % ext])
 
     if os.path.exists(dest):
-        pull_args.extend(['pull', url])
+        args.extend(['pull', url])
         cwd = dest
     else:
-        pull_args.extend(['clone', '--noupdate', url, dest])
+        args.extend(['clone', '--noupdate', url, dest])
         cwd = '/'
-
-    update_args = [hg]
-    disable_extensions(update_args)
-    update_args.extend(['update', '-r', revision])
 
     print('=' * 80)
     print('Ensuring %s is up to date at %s' % (url, dest))
 
     try:
-        subprocess.check_call(pull_args, cwd=cwd)
-        subprocess.check_call(update_args, cwd=dest)
+        subprocess.check_call(args, cwd=cwd)
+        subprocess.check_call([hg, 'update', '-r', revision], cwd=dest)
     finally:
         print('=' * 80)
 
@@ -490,8 +428,7 @@ def clone_firefox(hg, dest):
     res = subprocess.call([hg, 'pull', 'https://hg.mozilla.org/mozilla-unified'], cwd=dest)
     print('')
     if res:
-        print('error pulling; try running `hg pull https://hg.mozilla.org/mozilla-unified` '
-              'manually')
+        print('error pulling; try running `hg pull https://hg.mozilla.org/mozilla-unified` manually')
         return False
 
     print('updating to "central" - the development head of Gecko and Firefox')

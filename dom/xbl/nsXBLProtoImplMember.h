@@ -7,7 +7,7 @@
 #ifndef nsXBLProtoImplMember_h__
 #define nsXBLProtoImplMember_h__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "nsString.h"
 #include "nsIServiceManager.h"

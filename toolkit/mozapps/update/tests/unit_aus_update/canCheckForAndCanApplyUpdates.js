@@ -15,6 +15,8 @@ function run_test() {
   testFile.remove(false);
   Assert.ok(!testFile.exists(), MSG_SHOULD_NOT_EXIST);
 
+  standardInit();
+
   if (IS_WIN) {
     // Create a mutex to prevent being able to check for or apply updates.
     debugDump("attempting to create mutex");
@@ -67,7 +69,7 @@ function getPerInstallationMutexName() {
                createInstance(Ci.nsICryptoHash);
   hasher.init(hasher.SHA1);
 
-  let exeFile = Services.dirsvc.get(XRE_EXECUTABLE_FILE, Ci.nsIFile);
+  let exeFile = Services.dirsvc.get(XRE_EXECUTABLE_FILE, Ci.nsILocalFile);
 
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
                   createInstance(Ci.nsIScriptableUnicodeConverter);

@@ -4,16 +4,16 @@
 
 #![allow(unsafe_code)]
 
-//! A drop-in replacement for string_cache, but backed by Gecko `nsAtom`s.
+//! A drop-in replacement for string_cache, but backed by Gecko `nsIAtom`s.
 
 use gecko_bindings::bindings::Gecko_AddRefAtom;
 use gecko_bindings::bindings::Gecko_Atomize;
 use gecko_bindings::bindings::Gecko_Atomize16;
 use gecko_bindings::bindings::Gecko_ReleaseAtom;
-use gecko_bindings::structs::{nsAtom, nsAtom_AtomKind};
-use nsstring::{nsAString, nsStr};
+use gecko_bindings::structs::nsIAtom;
+use nsstring::{nsAString, nsString};
 use precomputed_hash::PrecomputedHash;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::borrow::{Cow, Borrow};
 use std::char::{self, DecodeUtf16};
 use std::fmt::{self, Write};
@@ -39,16 +39,16 @@ macro_rules! local_name {
 }
 
 /// A strong reference to a Gecko atom.
-#[derive(Eq, PartialEq)]
+#[derive(PartialEq, Eq)]
 pub struct Atom(*mut WeakAtom);
 
 /// An atom *without* a strong reference.
 ///
 /// Only usable as `&'a WeakAtom`,
 /// where `'a` is the lifetime of something that holds a strong reference to that atom.
-pub struct WeakAtom(nsAtom);
+pub struct WeakAtom(nsIAtom);
 
-/// A BorrowedAtom for Gecko is just a weak reference to a `nsAtom`, that
+/// A BorrowedAtom for Gecko is just a weak reference to a `nsIAtom`, that
 /// hasn't been bumped.
 pub type BorrowedAtom<'a> = &'a WeakAtom;
 
@@ -92,9 +92,9 @@ unsafe impl Sync for Atom {}
 unsafe impl Sync for WeakAtom {}
 
 impl WeakAtom {
-    /// Construct a `WeakAtom` from a raw `nsAtom`.
+    /// Construct a `WeakAtom` from a raw `nsIAtom`.
     #[inline]
-    pub unsafe fn new<'a>(atom: *const nsAtom) -> &'a mut Self {
+    pub unsafe fn new<'a>(atom: *const nsIAtom) -> &'a mut Self {
         &mut *(atom as *mut WeakAtom)
     }
 
@@ -149,15 +149,18 @@ impl WeakAtom {
     #[inline]
     pub fn is_static(&self) -> bool {
         unsafe {
-            (*self.as_ptr()).mKind() == nsAtom_AtomKind::StaticAtom as u32
+            (*self.as_ptr()).mIsStatic() != 0
         }
     }
 
     /// Returns the length of the atom string.
     #[inline]
     pub fn len(&self) -> u32 {
+        // FIXME(emilio): re-introduce bitfield accessors:
+        //
+        // https://github.com/servo/rust-bindgen/issues/519
         unsafe {
-            (*self.as_ptr()).mLength()
+            (*self.as_ptr())._bitfield_1 & 0x7FFFFFFF
         }
     }
 
@@ -169,9 +172,9 @@ impl WeakAtom {
 
     /// Returns the atom as a mutable pointer.
     #[inline]
-    pub fn as_ptr(&self) -> *mut nsAtom {
-        let const_ptr: *const nsAtom = &self.0;
-        const_ptr as *mut nsAtom
+    pub fn as_ptr(&self) -> *mut nsIAtom {
+        let const_ptr: *const nsIAtom = &self.0;
+        const_ptr as *mut nsIAtom
     }
 
     /// Convert this atom to ASCII lower-case
@@ -240,7 +243,7 @@ impl fmt::Display for WeakAtom {
 
 impl Atom {
     /// Execute a callback with the atom represented by `ptr`.
-    pub unsafe fn with<F, R>(ptr: *mut nsAtom, callback: F) -> R where F: FnOnce(&Atom) -> R {
+    pub unsafe fn with<F, R>(ptr: *mut nsIAtom, callback: F) -> R where F: FnOnce(&Atom) -> R {
         let atom = Atom(WeakAtom::new(ptr));
         let ret = callback(&atom);
         mem::forget(atom);
@@ -254,7 +257,7 @@ impl Atom {
     /// that way, now we have sugar for is_static, creating atoms using
     /// Atom::from should involve almost no overhead.
     #[inline]
-    unsafe fn from_static(ptr: *mut nsAtom) -> Self {
+    unsafe fn from_static(ptr: *mut nsIAtom) -> Self {
         let atom = Atom(ptr as *mut WeakAtom);
         debug_assert!(atom.is_static(),
                       "Called from_static for a non-static atom!");
@@ -264,16 +267,16 @@ impl Atom {
     /// Creates an atom from a dynamic atom pointer that has already had AddRef
     /// called on it.
     #[inline]
-    pub unsafe fn from_addrefed(ptr: *mut nsAtom) -> Self {
-        assert!(!ptr.is_null());
+    pub unsafe fn from_addrefed(ptr: *mut nsIAtom) -> Self {
+        debug_assert!(!ptr.is_null());
         unsafe {
             Atom(WeakAtom::new(ptr))
         }
     }
 
-    /// Convert this atom into an addrefed nsAtom pointer.
+    /// Convert this atom into an addrefed nsIAtom pointer.
     #[inline]
-    pub fn into_addrefed(self) -> *mut nsAtom {
+    pub fn into_addrefed(self) -> *mut nsIAtom {
         let ptr = self.as_ptr();
         mem::forget(self);
         ptr
@@ -346,7 +349,7 @@ impl<'a> From<&'a str> for Atom {
 impl<'a> From<&'a [u16]> for Atom {
     #[inline]
     fn from(slice: &[u16]) -> Atom {
-        Atom::from(&*nsStr::from(slice))
+        Atom::from(&*nsString::from(slice))
     }
 }
 
@@ -375,10 +378,10 @@ impl From<String> for Atom {
     }
 }
 
-impl From<*mut nsAtom> for Atom {
+impl From<*mut nsIAtom> for Atom {
     #[inline]
-    fn from(ptr: *mut nsAtom) -> Atom {
-        assert!(!ptr.is_null());
+    fn from(ptr: *mut nsIAtom) -> Atom {
+        debug_assert!(!ptr.is_null());
         unsafe {
             let ret = Atom(WeakAtom::new(ptr));
             if !ret.is_static() {
@@ -388,5 +391,3 @@ impl From<*mut nsAtom> for Atom {
         }
     }
 }
-
-malloc_size_of_is_0!(Atom);

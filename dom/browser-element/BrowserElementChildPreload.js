@@ -666,9 +666,9 @@ BrowserElementChild.prototype = {
   _ClickHandler: function(e) {
 
     let isHTMLLink = node =>
-        ((ChromeUtils.getClassName(node) === "HTMLAnchorElement" && node.href) ||
-         (ChromeUtils.getClassName(node) === "HTMLAreaElement" && node.href) ||
-         ChromeUtils.getClassName(node) === "HTMLLinkElement");
+      ((node instanceof Ci.nsIDOMHTMLAnchorElement && node.href) ||
+       (node instanceof Ci.nsIDOMHTMLAreaElement && node.href) ||
+        node instanceof Ci.nsIDOMHTMLLinkElement);
 
     // Open in a new tab if middle click or ctrl/cmd-click,
     // and e.target is a link or inside a link.
@@ -855,9 +855,8 @@ BrowserElementChild.prototype = {
   _getSystemCtxMenuData: function(elem) {
     let documentURI =
       docShell.QueryInterface(Ci.nsIWebNavigation).currentURI.spec;
-
-    if ((ChromeUtils.getClassName(elem) === "HTMLAnchorElement" && elem.href) ||
-        (ChromeUtils.getClassName(elem) === "HTMLAreaElement" && elem.href)) {
+    if ((elem instanceof Ci.nsIDOMHTMLAnchorElement && elem.href) ||
+        (elem instanceof Ci.nsIDOMHTMLAreaElement && elem.href)) {
       return {uri: elem.href,
               documentURI: documentURI,
               text: elem.textContent.substring(0, kLongestReturnedString)};
@@ -865,7 +864,7 @@ BrowserElementChild.prototype = {
     if (elem instanceof Ci.nsIImageLoadingContent && elem.currentURI) {
       return {uri: elem.currentURI.spec, documentURI: documentURI};
     }
-    if (ChromeUtils.getClassName(elem) === "HTMLImageElement") {
+    if (elem instanceof Ci.nsIDOMHTMLImageElement) {
       return {uri: elem.src, documentURI: documentURI};
     }
     if (elem instanceof Ci.nsIDOMHTMLMediaElement) {
@@ -1460,9 +1459,6 @@ BrowserElementChild.prototype = {
             return;
           case Cr.NS_ERROR_MALWARE_URI :
             sendAsyncMsg('error', { type: 'malwareBlocked' });
-            return;
-          case Cr.NS_ERROR_HARMFUL_URI :
-            sendAsyncMsg('error', { type: 'harmfulBlocked' });
             return;
           case Cr.NS_ERROR_UNWANTED_URI :
             sendAsyncMsg('error', { type: 'unwantedBlocked' });

@@ -1,13 +1,10 @@
 if (typeof oomTest === 'undefined')
     quit();
 
-// Test baseline compiler only.
-if (typeof wasmCompileMode === 'undefined' || wasmCompileMode() != 'baseline')
-    quit();
-
 try {
-    var bin = wasmTextToBinary(
-	`(module (func (result i32) (param f64) (param f32)
+    oomTest(Function(`
+        new WebAssembly.Module(wasmTextToBinary(\`
+            (module (func (result i32) (param f64) (param f32)
                 i64.const 0
                 get_local 0
                 drop
@@ -27,6 +24,8 @@ try {
                 select
                 select
                 drop
-                  drop))`);
-    oomTest(() => new WebAssembly.Module(bin));
+                drop
+            ))
+        \`))
+    `));
 } catch(e) { }

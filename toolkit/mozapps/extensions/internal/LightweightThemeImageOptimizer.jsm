@@ -151,13 +151,13 @@ XPCOMUtils.defineLazyModuleGetter(ImageFile, "_netUtil",
 
 var ImageTools = {
   decode(aInputStream, aContentType) {
-    let outParam = null;
+    let outParam = {value: null};
 
     try {
-      outParam = this._imgTools.decodeImage(aInputStream, aContentType);
+      this._imgTools.decodeImageData(aInputStream, aContentType, outParam);
     } catch (e) {}
 
-    return outParam;
+    return outParam.value;
   },
 
   encode(aImage, aScreen, aOrigin, aContentType) {

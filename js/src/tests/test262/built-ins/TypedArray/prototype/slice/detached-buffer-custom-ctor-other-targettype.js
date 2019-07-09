@@ -19,7 +19,7 @@ info: >
       ...
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

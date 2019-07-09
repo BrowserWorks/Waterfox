@@ -13,7 +13,6 @@ from taskgraph.transforms.tests import (
     normpath
 )
 from taskgraph.transforms.job.common import (
-    docker_worker_add_tooltool,
     support_vcs_checkout,
 )
 import os
@@ -25,8 +24,7 @@ BUILDER_NAME_PREFIX = {
     'linux64-asan': 'Ubuntu ASAN VM 12.04 x64',
     'linux64-ccov': 'Ubuntu Code Coverage VM 12.04 x64',
     'linux64-jsdcov': 'Ubuntu Code Coverage VM 12.04 x64',
-    'linux64-qr': 'Ubuntu VM 12.04 x64',
-    'linux64-stylo-disabled': 'Ubuntu VM 12.04 x64',
+    'linux64-stylo': 'Ubuntu VM 12.04 x64',
     'linux64-stylo-sequential': 'Ubuntu VM 12.04 x64',
     'linux64-devedition': 'Ubuntu VM 12.04 x64',
     'linux64-devedition-nightly': 'Ubuntu VM 12.04 x64',
@@ -37,16 +35,15 @@ BUILDER_NAME_PREFIX = {
     'android-4.3-arm7-api-16-gradle': 'Android 4.3 armv7 api-16+',
     'windows10-64': 'Windows 10 64-bit',
     'windows10-64-nightly': 'Windows 10 64-bit',
-    'windows10-64-devedition': 'Windows 10 64-bit DevEdition',
     'windows10-64-pgo': 'Windows 10 64-bit',
     'windows10-64-asan': 'Windows 10 64-bit',
-    'windows10-64-stylo-disabled': 'Windows 10 64-bit',
+    'windows10-64-stylo': 'Windows 10 64-bit',
     'windows7-32': 'Windows 7 32-bit',
     ('windows7-32', 'virtual-with-gpu'): 'Windows 7 VM-GFX 32-bit',
     'windows7-32-nightly': 'Windows 7 32-bit',
     'windows7-32-devedition': 'Windows 7 32-bit DevEdition',
     'windows7-32-pgo': 'Windows 7 32-bit',
-    'windows7-32-stylo-disabled': 'Windows 7 32-bit',
+    'windows7-32-stylo': 'Windows 7 32-bit',
     'windows8-64': 'Windows 8 64-bit',
     'windows8-64-nightly': 'Windows 8 64-bit',
     'windows8-64-devedition': 'Windows 8 64-bit DevEdition',
@@ -59,7 +56,6 @@ VARIANTS = [
     'pgo',
     'asan',
     'stylo',
-    'stylo-disabled',
     'stylo-sequential',
     'qr',
     'ccov',
@@ -104,9 +100,9 @@ def mozharness_test_on_docker(config, job, taskdesc):
 
     artifacts = [
         # (artifact name prefix, in-image path)
-        ("public/logs/", "/builds/worker/workspace/build/upload/logs/"),
-        ("public/test", "/builds/worker/artifacts/"),
-        ("public/test_info/", "/builds/worker/workspace/build/blobber_upload_dir/"),
+        ("public/logs/", "/home/worker/workspace/build/upload/logs/"),
+        ("public/test", "/home/worker/artifacts/"),
+        ("public/test_info/", "/home/worker/workspace/build/blobber_upload_dir/"),
     ]
 
     installer_url = get_artifact_url('<build>', mozharness['build-artifact-name'])
@@ -115,7 +111,7 @@ def mozharness_test_on_docker(config, job, taskdesc):
 
     worker['artifacts'] = [{
         'name': prefix,
-        'path': os.path.join('/builds/worker/workspace', path),
+        'path': os.path.join('/home/worker/workspace', path),
         'type': 'directory',
     } for (prefix, path) in artifacts]
 
@@ -123,7 +119,7 @@ def mozharness_test_on_docker(config, job, taskdesc):
         'type': 'persistent',
         'name': 'level-{}-{}-test-workspace'.format(
             config.params['level'], config.params['project']),
-        'mount-point': "/builds/worker/workspace",
+        'mount-point': "/home/worker/workspace",
     }]
 
     env = worker['env'] = {
@@ -145,20 +141,31 @@ def mozharness_test_on_docker(config, job, taskdesc):
     if 'actions' in mozharness:
         env['MOZHARNESS_ACTIONS'] = ' '.join(mozharness['actions'])
 
-    if 'try' in config.params['project']:
+    if config.params['project'] == 'try':
         env['TRY_COMMIT_MSG'] = config.params['message']
 
     # handle some of the mozharness-specific options
 
     if mozharness['tooltool-downloads']:
-        docker_worker_add_tooltool(config, job, taskdesc, internal=True)
+        worker['relengapi-proxy'] = True
+        worker['caches'].append({
+            'type': 'persistent',
+            'name': 'tooltool-cache',
+            'mount-point': '/home/worker/tooltool-cache',
+        })
+        taskdesc['scopes'].extend([
+            'docker-worker:relengapi-proxy:tooltool.download.internal',
+            'docker-worker:relengapi-proxy:tooltool.download.public',
+        ])
 
     if test['reboot']:
         raise Exception('reboot: {} not supported on generic-worker'.format(test['reboot']))
 
     # assemble the command line
     command = [
-        '/builds/worker/bin/run-task',
+        '/home/worker/bin/run-task',
+        # The workspace cache/volume is default owned by root:root.
+        '--chown', '/home/worker/workspace',
     ]
 
     # Support vcs checkouts regardless of whether the task runs from
@@ -168,14 +175,14 @@ def mozharness_test_on_docker(config, job, taskdesc):
     # If we have a source checkout, run mozharness from it instead of
     # downloading a zip file with the same content.
     if test['checkout']:
-        command.extend(['--vcs-checkout', '/builds/worker/checkouts/gecko'])
-        env['MOZHARNESS_PATH'] = '/builds/worker/checkouts/gecko/testing/mozharness'
+        command.extend(['--vcs-checkout', '/home/worker/checkouts/gecko'])
+        env['MOZHARNESS_PATH'] = '/home/worker/checkouts/gecko/testing/mozharness'
     else:
         env['MOZHARNESS_URL'] = {'task-reference': mozharness_url}
 
     command.extend([
         '--',
-        '/builds/worker/bin/test-linux.sh',
+        '/home/worker/bin/test-linux.sh',
     ])
 
     if mozharness.get('no-read-buildbot-config'):
@@ -248,8 +255,6 @@ def mozharness_test_on_generic_worker(config, job, taskdesc):
 
     env = worker.setdefault('env', {})
     env['MOZ_AUTOMATION'] = '1'
-    env['GECKO_HEAD_REPOSITORY'] = config.params['head_repository']
-    env['GECKO_HEAD_REV'] = config.params['head_rev']
 
     # this list will get cleaned up / reduced / removed in bug 1354088
     if is_macosx:
@@ -313,7 +318,7 @@ def mozharness_test_on_generic_worker(config, job, taskdesc):
                 if isinstance(c, basestring) and c.startswith('--test-suite'):
                     mh_command[i] += suffix
 
-    if 'try' in config.params['project']:
+    if config.params['project'] == 'try':
         env['TRY_COMMIT_MSG'] = config.params['message']
 
     worker['mounts'] = [{
@@ -476,7 +481,7 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
             variant = ''
 
         # this variant name has branch after the variant type in BBB bug 1338871
-        if variant in ('qr', 'stylo', 'stylo-sequential', 'devedition', 'stylo-disabled'):
+        if variant in ('stylo', 'stylo-sequential', 'devedition'):
             name = '{prefix} {variant} {branch} talos {test_name}'
         elif variant:
             name = '{prefix} {branch} {variant} talos {test_name}'
@@ -501,21 +506,12 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
         prefix = BUILDER_NAME_PREFIX.get(
             (test_platform, test.get('virtualization')),
             BUILDER_NAME_PREFIX[test_platform])
-        if variant in ['stylo-disabled']:
-            buildername = '{prefix} {variant} {branch} {build_type} test {test_name}'.format(
-                prefix=prefix,
-                variant=variant,
-                branch=branch,
-                build_type=build_type,
-                test_name=test_name
-            )
-        else:
-            buildername = '{prefix} {branch} {build_type} test {test_name}'.format(
-                prefix=prefix,
-                branch=branch,
-                build_type=build_type,
-                test_name=test_name
-            )
+        buildername = '{prefix} {branch} {build_type} test {test_name}'.format(
+            prefix=prefix,
+            branch=branch,
+            build_type=build_type,
+            test_name=test_name
+        )
 
     worker.update({
         'buildername': buildername,

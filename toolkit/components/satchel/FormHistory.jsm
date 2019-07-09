@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
 
 /**
  * FormHistory
@@ -442,8 +441,6 @@ function dbCreateAsyncStatement(aQuery, aParams, aBindingArrays) {
   return stmt;
 }
 
-var dbMigrate;
-
 /**
  * Attempts to initialize the database. This creates the file if it doesn't
  * exist, performs any migrations, etc.
@@ -501,7 +498,7 @@ function dbCreate() {
   _dbConnection.schemaVersion = DB_SCHEMA_VERSION;
 }
 
-dbMigrate = (oldVersion) => {
+function dbMigrate(oldVersion) {
   log("Attempting to migrate from version " + oldVersion);
 
   if (oldVersion > DB_SCHEMA_VERSION) {
@@ -542,7 +539,7 @@ dbMigrate = (oldVersion) => {
   _dbConnection.commitTransaction();
 
   log("DB migration completed.");
-};
+}
 
 /**
  * Sanity check to ensure that the columns this version of the code expects
@@ -676,9 +673,7 @@ function updateFormHistoryWrite(aChanges, aCallbacks) {
         break;
       case "add":
         log("Add to form history " + change);
-        if (!change.guid) {
-          change.guid = generateGUID();
-        }
+        change.guid = generateGUID();
         stmt = makeAddStatement(change, now, bindingArrays);
         notifications.push(["formhistory-add", change.guid]);
         break;
@@ -924,12 +919,13 @@ this.FormHistory = {
           }
           break;
         case "add":
-          if (change.fieldname && change.value) {
-            validateOpData(change, "Add");
-          } else {
+          if (change.guid) {
             throw Components.Exception(
-              "update op='add' must have a fieldname and a value.",
+              "op='add' cannot contain field 'guid'. Either use op='update' " +
+                "explicitly or make 'guid' undefined.",
               Cr.NS_ERROR_ILLEGAL_VALUE);
+          } else if (change.fieldname && change.value) {
+            validateOpData(change, "Add");
           }
           break;
         default:
@@ -1038,7 +1034,7 @@ this.FormHistory = {
      */
 
     let query = "/* do not warn (bug 496471): can't use an index */ " +
-                "SELECT value, guid, " +
+                "SELECT value, " +
                 "ROUND( " +
                     "timesUsed / MAX(1.0, (lastUsed - firstUsed) / :timeGroupingSize) * " +
                     "MAX(1.0, :maxTimeGroupings - (:now - lastUsed) / :timeGroupingSize) * " +
@@ -1074,11 +1070,9 @@ this.FormHistory = {
       handleResult(aResultSet) {
         for (let row = aResultSet.getNextRow(); row; row = aResultSet.getNextRow()) {
           let value = row.getResultByName("value");
-          let guid = row.getResultByName("guid");
           let frecency = row.getResultByName("frecency");
           let entry = {
             text:          value,
-            guid,
             textLowerCase: value.toLowerCase(),
             frecency,
             totalScore:    Math.round(frecency * row.getResultByName("boundaryBonuses")),

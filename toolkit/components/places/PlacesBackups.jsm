@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
 
 XPCOMUtils.defineLazyGetter(this, "localFileCtor",
   () => Components.Constructor("@mozilla.org/file/local;1",
-                               "nsIFile", "initWithPath"));
+                               "nsILocalFile", "initWithPath"));
 
 XPCOMUtils.defineLazyGetter(this, "filenamesRegex",
   () => /^bookmarks-([0-9-]+)(?:_([0-9]+)){0,1}(?:_([a-z0-9=+-]{24})){0,1}\.(json(lz4)?)$/i
@@ -130,7 +130,7 @@ this.PlacesBackups = {
    * needed to support deprecated methods themselves.
    */
   get _folder() {
-    let bookmarksBackupDir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    let bookmarksBackupDir = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
     bookmarksBackupDir.append(this.profileRelativeFolderPath);
     if (!bookmarksBackupDir.exists()) {
       bookmarksBackupDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0700", 8));
@@ -608,4 +608,4 @@ this.PlacesBackups = {
 
     return PlacesUtils.bookmarks.eraseEverything(options);
   },
-};
+}

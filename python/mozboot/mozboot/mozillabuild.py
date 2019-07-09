@@ -2,14 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
+import errno
 import os
 import sys
 import subprocess
+import tempfile
 
 from mozboot.base import BaseBootstrapper
-
 
 class MozillaBuildBootstrapper(BaseBootstrapper):
     '''Bootstrapper for MozillaBuild to install rustup.'''
@@ -21,7 +20,37 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
         return BaseBootstrapper.which(self, name + '.exe')
 
     def install_system_packages(self):
-        pass
+        self.install_rustup()
+
+    def install_rustup(self):
+        try:
+            rustup_init = tempfile.gettempdir() + '/rustup-init.exe'
+            self.http_download_and_save(
+                    'https://static.rust-lang.org/rustup/archive/0.2.0/i686-pc-windows-msvc/rustup-init.exe',
+                    rustup_init,
+                    'a45ab7462b567dacddaf6e9e48bb43a1b9c1db4404ba77868f7d6fc685282a46')
+            self.run([rustup_init, '--no-modify-path', '--default-host',
+                'x86_64-pc-windows-msvc', '--default-toolchain', 'stable', '-y'])
+            mozillabuild_dir = os.environ['MOZILLABUILD']
+
+            with open(mozillabuild_dir + 'msys/etc/profile.d/profile-rustup.sh', 'wb') as f:
+                f.write('#!/bash/sh\n')
+                f.write('if test -n "$MOZILLABUILD"; then\n')
+                f.write('    WIN_HOME=$(command cd "$HOME" && pwd)\n')
+                f.write('    PATH="$WIN_HOME/.cargo/bin:$PATH"\n')
+                f.write('    export PATH\n')
+                f.write('fi')
+            _, cargo_bin = self.cargo_home()
+            rustup = os.path.join(cargo_bin, 'rustup')
+            self.run([rustup, 'target', 'add', 'i686-pc-windows-msvc'])
+        finally:
+            try:
+                os.remove(rustup_init)
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    pass
+                else:
+                    raise
 
     def ensure_mercurial_modern(self):
         # Overrides default implementation to always run pip because.
@@ -45,8 +74,8 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
         pass
 
     def ensure_stylo_packages(self, state_dir, checkout_root):
-        from mozboot import stylo
-        self.install_toolchain_artifact(state_dir, checkout_root, stylo.WINDOWS)
+        import stylo
+        self.install_tooltool_clang_package(state_dir, checkout_root, stylo.WINDOWS)
 
     def _update_package_manager(self):
         pass
@@ -59,3 +88,4 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
         command = [pip_dir, 'install', '--upgrade']
         command.extend(packages)
         self.run(command)
+

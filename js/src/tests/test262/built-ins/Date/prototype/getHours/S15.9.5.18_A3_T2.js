@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.prototype.gethours
 info: >
     The Date.prototype.getHours property "length" has { ReadOnly, !
     DontDelete, DontEnum } attributes

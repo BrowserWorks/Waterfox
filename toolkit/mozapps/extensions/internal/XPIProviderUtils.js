@@ -19,6 +19,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 /* globals AddonManagerPrivate*/
+Cu.import("resource://gre/modules/Preferences.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository",
                                   "resource://gre/modules/addons/AddonRepository.jsm");
@@ -31,6 +32,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
 XPCOMUtils.defineLazyServiceGetter(this, "Blocklist",
                                    "@mozilla.org/extensions/blocklist;1",
                                    Ci.nsIBlocklistService);
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "ALLOW_NON_MPC",
+                                      "extensions.allow-non-mpc-extensions");
 
 Cu.import("resource://gre/modules/Log.jsm");
 const LOGGER_ID = "addons.xpi-utils";
@@ -50,6 +54,9 @@ const LAST_SQLITE_DB_SCHEMA           = 14;
 const PREF_DB_SCHEMA                  = "extensions.databaseSchema";
 const PREF_PENDING_OPERATIONS         = "extensions.pendingOperations";
 const PREF_EM_AUTO_DISABLED_SCOPES    = "extensions.autoDisableScopes";
+const PREF_E10S_BLOCKED_BY_ADDONS     = "extensions.e10sBlockedByAddons";
+const PREF_E10S_MULTI_BLOCKED_BY_ADDONS = "extensions.e10sMultiBlockedByAddons";
+const PREF_E10S_HAS_NONEXEMPT_ADDON   = "extensions.e10s.rollout.hasAddon";
 
 const KEY_APP_SYSTEM_ADDONS           = "app-system-addons";
 const KEY_APP_SYSTEM_DEFAULTS         = "app-system-defaults";
@@ -69,7 +76,7 @@ const PROP_JSON_FIELDS = ["id", "syncGUID", "location", "version", "type",
                           "targetPlatforms", "multiprocessCompatible", "signedState",
                           "seen", "dependencies", "hasEmbeddedWebExtension", "mpcOptedOut",
                           "userPermissions", "icons", "iconURL", "icon64URL",
-                          "blocklistState", "blocklistURL", "startupData"];
+                          "blocklistState", "blocklistURL"];
 
 // Time to wait before async save of XPI JSON database, in milliseconds
 const ASYNC_SAVE_DELAY_MS = 20;
@@ -102,7 +109,7 @@ function makeSafe(aCallback) {
     } catch (ex) {
       logger.warn("XPI Database callback failed", ex);
     }
-  };
+  }
 }
 
 /**
@@ -313,6 +320,8 @@ this.XPIDatabase = {
                                             ASYNC_SAVE_DELAY_MS);
     }
 
+    this.updateAddonsBlockingE10s();
+    this.updateAddonsBlockingE10sMulti();
     let promise = this._deferredSave.saveChanges();
     if (!this._schemaVersionSet) {
       this._schemaVersionSet = true;
@@ -1072,6 +1081,44 @@ this.XPIDatabase = {
     this.saveChanges();
   },
 
+  updateAddonsBlockingE10s() {
+    if (!this.addonDB) {
+      // jank-tastic! Must synchronously load DB if the theme switches from
+      // an XPI theme to a lightweight theme before the DB has loaded,
+      // because we're called from sync XPIProvider.addonChanged
+      logger.warn("Synchronous load of XPI database due to updateAddonsBlockingE10s()");
+      AddonManagerPrivate.recordSimpleMeasure("XPIDB_lateOpen_byType", XPIProvider.runPhase);
+      this.syncLoadDB(true);
+    }
+
+    let blockE10s = false;
+
+    Preferences.set(PREF_E10S_HAS_NONEXEMPT_ADDON, false);
+    for (let [, addon] of this.addonDB) {
+      let active = (addon.visible && !addon.disabled && !addon.pendingUninstall);
+
+      if (active && XPIProvider.isBlockingE10s(addon)) {
+        blockE10s = true;
+        break;
+      }
+    }
+    Preferences.set(PREF_E10S_BLOCKED_BY_ADDONS, blockE10s);
+  },
+
+  updateAddonsBlockingE10sMulti() {
+    let blockMulti = false;
+
+    for (let [, addon] of this.addonDB) {
+      let active = (addon.visible && !addon.disabled && !addon.pendingUninstall);
+
+      if (active && XPIProvider.isBlockingE10sMulti(addon)) {
+        blockMulti = true;
+        break;
+      }
+    }
+    Preferences.set(PREF_E10S_MULTI_BLOCKED_BY_ADDONS, blockMulti);
+  },
+
   /**
    * Synchronously calculates and updates all the active flags in the database.
    */
@@ -1226,7 +1273,7 @@ this.XPIDatabaseReconcile = {
     if (isDetectedInstall && aNewAddon.foreignInstall) {
       // If the add-on is a foreign install and is in a scope where add-ons
       // that were dropped in should default to disabled then disable it
-      let disablingScopes = Services.prefs.getIntPref(PREF_EM_AUTO_DISABLED_SCOPES, 0);
+      let disablingScopes = Preferences.get(PREF_EM_AUTO_DISABLED_SCOPES, 0);
       if (aInstallLocation.scope & disablingScopes) {
         logger.warn("Disabling foreign installed add-on " + aNewAddon.id + " in "
             + aInstallLocation.name);
@@ -1482,6 +1529,7 @@ this.XPIDatabaseReconcile = {
               }
             }
 
+            let wasDisabled = oldAddon.appDisabled;
             let oldPath = oldAddon.path || descriptorToPath(oldAddon.descriptor);
 
             // The add-on has changed if the modification time has changed, if
@@ -1507,6 +1555,18 @@ this.XPIDatabaseReconcile = {
             } else {
               // No change
               newAddon = oldAddon;
+            }
+
+            // If an extension has just become appDisabled and it appears to
+            // be due to the ALLOW_NON_MPC pref, show a notification.  If the
+            // extension is also disabled for some other reason(s), don't
+            // bother with the notification since flipping the pref will leave
+            // the extension disabled.
+            if (!wasDisabled && newAddon.appDisabled &&
+                !ALLOW_NON_MPC && !newAddon.multiprocessCompatible &&
+                (newAddon.blocklistState != Ci.nsIBlocklistService.STATE_BLOCKED) &&
+                newAddon.isPlatformCompatible && newAddon.isCompatible) {
+              AddonManagerPrivate.nonMpcDisabled = true;
             }
 
             if (newAddon)
@@ -1576,7 +1636,7 @@ this.XPIDatabaseReconcile = {
         XPIProvider.allAppGlobal = false;
 
       let isActive = !currentAddon.disabled && !currentAddon.pendingUninstall;
-      let wasActive = previousAddon ? previousAddon.active : currentAddon.active;
+      let wasActive = previousAddon ? previousAddon.active : currentAddon.active
 
       if (!previousAddon) {
         // If we had a manifest for this add-on it was a staged install and
@@ -1718,4 +1778,4 @@ this.XPIDatabaseReconcile = {
 
     return true;
   },
-};
+}

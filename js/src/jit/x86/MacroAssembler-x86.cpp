@@ -206,14 +206,13 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
     // Call the handler.
     asMasm().setupUnalignedABICall(ecx);
     asMasm().passABIArg(eax);
-    asMasm().callWithABI(handler, MoveOp::GENERAL, CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    asMasm().callWithABI(handler);
 
     Label entryFrame;
     Label catch_;
     Label finally;
     Label return_;
     Label bailout;
-    Label wasm;
 
     loadPtr(Address(esp, offsetof(ResumeFromException, kind)), eax);
     asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME),
@@ -223,7 +222,6 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
     asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_FORCED_RETURN),
                       &return_);
     asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
-    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_WASM), &wasm);
 
     breakpoint(); // Invalid kind.
 
@@ -285,14 +283,6 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
     loadPtr(Address(esp, offsetof(ResumeFromException, bailoutInfo)), ecx);
     movl(Imm32(BAILOUT_RETURN_OK), eax);
     jmp(Operand(esp, offsetof(ResumeFromException, target)));
-
-    // If we are throwing and the innermost frame was a wasm frame, reset SP and
-    // FP; SP is pointing to the unwound return address to the wasm entry, so
-    // we can just ret().
-    bind(&wasm);
-    loadPtr(Address(esp, offsetof(ResumeFromException, framePointer)), ebp);
-    loadPtr(Address(esp, offsetof(ResumeFromException, stackPointer)), esp);
-    masm.ret();
 }
 
 void
@@ -768,18 +758,30 @@ MacroAssembler::wasmLoadI64(const wasm::MemoryAccessDesc& access, Operand srcAdd
         xorl(out.high, out.high);
         break;
       case Scalar::Int64: {
-        if (srcAddr.kind() == Operand::MEM_SCALE) {
-            MOZ_RELEASE_ASSERT(srcAddr.toBaseIndex().base != out.low &&
-                               srcAddr.toBaseIndex().index != out.low);
-        }
-        if (srcAddr.kind() == Operand::MEM_REG_DISP)
-            MOZ_RELEASE_ASSERT(srcAddr.toAddress().base != out.low);
+        Operand low(eax);
+        Operand high(eax);
 
-        movl(LowWord(srcAddr), out.low);
+        if (srcAddr.kind() == Operand::MEM_SCALE) {
+            BaseIndex addr = srcAddr.toBaseIndex();
+
+            MOZ_RELEASE_ASSERT(addr.base != out.low && addr.index != out.low);
+
+            low = Operand(addr.base, addr.index, addr.scale, addr.offset + INT64LOW_OFFSET);
+            high = Operand(addr.base, addr.index, addr.scale, addr.offset + INT64HIGH_OFFSET);
+        } else {
+            Address addr = srcAddr.toAddress();
+
+            MOZ_RELEASE_ASSERT(addr.base != out.low);
+
+            low = Operand(addr.base, addr.offset + INT64LOW_OFFSET);
+            high = Operand(addr.base, addr.offset + INT64HIGH_OFFSET);
+        }
+
+        movl(low, out.low);
         append(access, loadOffset, framePushed());
 
         loadOffset = size();
-        movl(HighWord(srcAddr), out.high);
+        movl(high, out.high);
         append(access, loadOffset, framePushed());
 
         break;
@@ -870,12 +872,24 @@ MacroAssembler::wasmStoreI64(const wasm::MemoryAccessDesc& access, Register64 va
     MOZ_ASSERT(!access.isSimd());
     MOZ_ASSERT(dstAddr.kind() == Operand::MEM_REG_DISP || dstAddr.kind() == Operand::MEM_SCALE);
 
+    Operand low(eax);
+    Operand high(eax);
+    if (dstAddr.kind() == Operand::MEM_SCALE) {
+        BaseIndex addr = dstAddr.toBaseIndex();
+        low = Operand(addr.base, addr.index, addr.scale, addr.offset + INT64LOW_OFFSET);
+        high = Operand(addr.base, addr.index, addr.scale, addr.offset + INT64HIGH_OFFSET);
+    } else {
+        Address addr = dstAddr.toAddress();
+        low = Operand(addr.base, addr.offset + INT64LOW_OFFSET);
+        high = Operand(addr.base, addr.offset + INT64HIGH_OFFSET);
+    }
+
     size_t storeOffset = size();
-    movl(value.low, LowWord(dstAddr));
+    movl(value.low, low);
     append(access, storeOffset, framePushed());
 
     storeOffset = size();
-    movl(value.high, HighWord(dstAddr));
+    movl(value.high, high);
     append(access, storeOffset, framePushed());
 }
 

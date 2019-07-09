@@ -5,7 +5,7 @@
 description: RestElement applied to an exhausted iterator (generator method)
 esid: sec-generator-function-definitions-runtime-semantics-propertydefinitionevaluation
 es6id: 14.4.13
-features: [Symbol.iterator, generators, destructuring-binding]
+features: [Symbol.iterator, destructuring-binding]
 flags: [generated]
 info: |
     GeneratorMethod :

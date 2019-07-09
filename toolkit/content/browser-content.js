@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* eslint-env mozilla/frame-script */
-/* global sendAsyncMessage */
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
@@ -20,8 +19,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SelectContentHelper",
   "resource://gre/modules/SelectContentHelper.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "FindContent",
-  "resource://gre/modules/FindContent.jsm");
 
 var global = this;
 
@@ -139,12 +136,6 @@ var ClickEventHandler = {
     if (!this._scrollable)
       return;
 
-    // In some configurations like Print Preview, content.performance
-    // (which we use below) is null. Autoscrolling is broken in Print
-    // Preview anyways (see bug 1393494), so just don't start it at all.
-    if (!content.performance)
-      return;
-
     let domUtils = content.QueryInterface(Ci.nsIInterfaceRequestor)
                           .getInterface(Ci.nsIDOMWindowUtils);
     let scrollable = this._scrollable;
@@ -159,19 +150,20 @@ var ClickEventHandler = {
       // No view ID - leave this._scrollId as null. Receiving side will check.
     }
     let presShellId = domUtils.getPresShellId();
-    let [result] = sendSyncMessage("Autoscroll:Start",
-                                   {scrolldir: this._scrolldir,
-                                    screenX: event.screenX,
-                                    screenY: event.screenY,
-                                    scrollId: this._scrollId,
-                                    presShellId});
-    if (!result.autoscrollEnabled) {
+    let [enabled] = sendSyncMessage("Autoscroll:Start",
+                                    {scrolldir: this._scrolldir,
+                                     screenX: event.screenX,
+                                     screenY: event.screenY,
+                                     scrollId: this._scrollId,
+                                     presShellId});
+    if (!enabled) {
       this._scrollable = null;
       return;
     }
 
     Services.els.addSystemEventListener(global, "mousemove", this, true);
     addEventListener("pagehide", this, true);
+    Services.obs.addObserver(this, "autoscroll-handled-by-apz");
 
     this._ignoreMouseEvents = true;
     this._startX = event.screenX;
@@ -180,22 +172,9 @@ var ClickEventHandler = {
     this._screenY = event.screenY;
     this._scrollErrorX = 0;
     this._scrollErrorY = 0;
-    this._autoscrollHandledByApz = result.usingApz;
-
-    if (!result.usingApz) {
-      // If the browser didn't hand the autoscroll off to APZ,
-      // scroll here in the main thread.
-      this.startMainThreadScroll();
-    } else {
-      // Even if the browser did hand the autoscroll to APZ,
-      // APZ might reject it in which case it will notify us
-      // and we need to take over.
-      Services.obs.addObserver(this, "autoscroll-rejected-by-apz");
-    }
-  },
-
-  startMainThreadScroll() {
+    this._autoscrollHandledByApz = false;
     this._lastFrame = content.performance.now();
+
     content.requestAnimationFrame(this.autoscrollLoop);
   },
 
@@ -206,9 +185,7 @@ var ClickEventHandler = {
 
       Services.els.removeSystemEventListener(global, "mousemove", this, true);
       removeEventListener("pagehide", this, true);
-      if (this._autoscrollHandledByApz) {
-        Services.obs.removeObserver(this, "autoscroll-rejected-by-apz");
-      }
+      Services.obs.removeObserver(this, "autoscroll-handled-by-apz");
     }
   },
 
@@ -232,6 +209,12 @@ var ClickEventHandler = {
   autoscrollLoop(timestamp) {
     if (!this._scrollable) {
       // Scrolling has been canceled
+      return;
+    }
+
+    if (this._autoscrollHandledByApz) {
+      // APZ is handling the autoscroll, so we don't need to keep running
+      // this callback.
       return;
     }
 
@@ -305,12 +288,10 @@ var ClickEventHandler = {
   },
 
   observe(subject, topic, data) {
-    if (topic === "autoscroll-rejected-by-apz") {
+    if (topic === "autoscroll-handled-by-apz") {
       // The caller passes in the scroll id via 'data'.
       if (data == this._scrollId) {
-        this._autoscrollHandledByApz = false;
-        this.startMainThreadScroll();
-        Services.obs.removeObserver(this, "autoscroll-rejected-by-apz");
+        this._autoscrollHandledByApz = true;
       }
     }
   },
@@ -363,7 +344,7 @@ var PopupBlocking = {
           } else {
             // Limit 500 chars to be sent because the URI will be cropped
             // by the UI anyway, and data: URIs can be significantly larger.
-            popupWindowURIspec = popupWindowURIspec.substring(0, 500);
+            popupWindowURIspec = popupWindowURIspec.substring(0, 500)
           }
 
           popupData.push({popupWindowURIspec});
@@ -725,7 +706,7 @@ var Printing = {
           this.printPreviewInitializingInfo = null;
           sendAsyncMessage("Printing:Preview:Entered", { failed: true });
         }
-      };
+      }
 
       // If printPreviewInitializingInfo.entered is not set we are still in the
       // initial setup of a previous preview request. We delay this one until
@@ -844,7 +825,7 @@ var Printing = {
   onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {},
   onStatusChange(aWebProgress, aRequest, aStatus, aMessage) {},
   onSecurityChange(aWebProgress, aRequest, aState) {},
-};
+}
 Printing.init();
 
 function SwitchDocumentDirection(aWindow) {
@@ -910,7 +891,7 @@ var FindBar = {
       let win = focusedWindow.value;
       should = BrowserUtils.shouldFastFind(elt, win);
     }
-    return { can, should };
+    return { can, should }
   },
 
   _onKeypress(event) {
@@ -1479,8 +1460,35 @@ var ViewSelectionSource = {
       return charTable[letter];
     }
 
+    function convertEntity(letter) {
+      try {
+        var unichar = this._entityConverter
+                          .ConvertToEntity(letter, entityVersion);
+        var entity = unichar.substring(1); // extract '&'
+        return '&amp;<span class="entity">' + entity + "</span>";
+      } catch (ex) {
+        return letter;
+      }
+    }
+
+    if (!this._entityConverter) {
+      try {
+        this._entityConverter = Cc["@mozilla.org/intl/entityconverter;1"]
+                                  .createInstance(Ci.nsIEntityConverter);
+      } catch (e) { }
+    }
+
+    const entityVersion = Ci.nsIEntityConverter.entityW3C;
+
+    var str = text;
+
     // replace chars in our charTable
-    return text.replace(/[<>&"]/g, charTableLookup);
+    str = str.replace(/[<>&"]/g, charTableLookup);
+
+    // replace chars > 0x7f via nsIEntityConverter
+    str = str.replace(/[^\0-\u007f]/g, convertEntity);
+
+    return str;
   }
 };
 
@@ -1689,7 +1697,7 @@ let AutoCompletePopup = {
 
     return results;
   },
-};
+}
 
 AutoCompletePopup.init();
 
@@ -1800,14 +1808,6 @@ let DateTimePickerListener = {
             (aEvent.originalTarget.type == "time" && !this.getTimePickerPref())) {
           return;
         }
-
-        if (this._inputElement) {
-          // This happens when we're trying to open a picker when another picker
-          // is still open. We ignore this request to let the first picker
-          // close gracefully.
-          return;
-        }
-
         this._inputElement = aEvent.originalTarget;
         this._inputElement.setDateTimePickerState(true);
         this.addListeners();
@@ -1853,7 +1853,7 @@ let DateTimePickerListener = {
         break;
     }
   },
-};
+}
 
 DateTimePickerListener.init();
 
@@ -1874,37 +1874,3 @@ addEventListener("mozshowdropdown-sourcetouch", event => {
     new SelectContentHelper(event.target, {isOpenedViaTouch: true}, this);
   }
 });
-
-let ExtFind = {
-  init() {
-    addMessageListener("ext-Finder:CollectResults", this);
-    addMessageListener("ext-Finder:HighlightResults", this);
-    addMessageListener("ext-Finder:clearHighlighting", this);
-  },
-
-  _findContent: null,
-
-  async receiveMessage(message) {
-    if (!this._findContent) {
-      this._findContent = new FindContent(docShell);
-    }
-
-    let data;
-    switch (message.name) {
-      case "ext-Finder:CollectResults":
-        this.finderInited = true;
-        data = await this._findContent.findRanges(message.data);
-        sendAsyncMessage("ext-Finder:CollectResultsFinished", data);
-        break;
-      case "ext-Finder:HighlightResults":
-        data = this._findContent.highlightResults(message.data);
-        sendAsyncMessage("ext-Finder:HighlightResultsFinished", data);
-        break;
-      case "ext-Finder:clearHighlighting":
-        this._findContent.highlighter.highlight(false);
-        break;
-    }
-  },
-};
-
-ExtFind.init();

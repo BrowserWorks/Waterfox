@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.indexof
 es5id: 15.4.4.14-4-4
 description: >
     Array.prototype.indexOf returns -1 if 'length' is 0 (generic
@@ -10,7 +9,7 @@ description: >
 ---*/
 
  var i = Array.prototype.lastIndexOf.call({length: 0}, 1);
-
+  
 
 assert.sameValue(i, -1, 'i');
 

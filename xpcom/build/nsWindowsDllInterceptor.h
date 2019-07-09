@@ -122,7 +122,7 @@ class WindowsDllNopSpacePatcher
   // (This should be nsTArray, but non-XPCOM code uses this class.)
   static const size_t maxPatchedFns = 16;
   byteptr_t mPatchedFns[maxPatchedFns];
-  size_t mPatchedFnsLen;
+  int mPatchedFnsLen;
 
 public:
   WindowsDllNopSpacePatcher()
@@ -135,7 +135,7 @@ public:
   {
     // Restore the mov edi, edi to the beginning of each function we patched.
 
-    for (size_t i = 0; i < mPatchedFnsLen; i++) {
+    for (int i = 0; i < mPatchedFnsLen; i++) {
       byteptr_t fn = mPatchedFns[i];
 
       // Ensure we can write to the code.

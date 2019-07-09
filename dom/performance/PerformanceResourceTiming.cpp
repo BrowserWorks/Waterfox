@@ -17,7 +17,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(PerformanceResourceTiming,
                                                PerformanceEntry)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PerformanceResourceTiming)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(PerformanceResourceTiming)
 NS_INTERFACE_MAP_END_INHERITING(PerformanceEntry)
 
 NS_IMPL_ADDREF_INHERITED(PerformanceResourceTiming, PerformanceEntry)
@@ -25,8 +25,7 @@ NS_IMPL_RELEASE_INHERITED(PerformanceResourceTiming, PerformanceEntry)
 
 PerformanceResourceTiming::PerformanceResourceTiming(PerformanceTiming* aPerformanceTiming,
                                                      Performance* aPerformance,
-                                                     const nsAString& aName,
-                                                     nsIHttpChannel* aChannel)
+                                                     const nsAString& aName)
 : PerformanceEntry(aPerformance->GetParentObject(), aName, NS_LITERAL_STRING("resource")),
   mTiming(aPerformanceTiming),
   mEncodedBodySize(0),
@@ -34,34 +33,6 @@ PerformanceResourceTiming::PerformanceResourceTiming(PerformanceTiming* aPerform
   mDecodedBodySize(0)
 {
   MOZ_ASSERT(aPerformance, "Parent performance object should be provided");
-  SetPropertiesFromChannel(aChannel);
-}
-
-void
-PerformanceResourceTiming::SetPropertiesFromChannel(nsIHttpChannel* aChannel)
-{
-  if (!aChannel) {
-    return;
-  }
-
-  nsAutoCString protocol;
-  Unused << aChannel->GetProtocolVersion(protocol);
-  SetNextHopProtocol(NS_ConvertUTF8toUTF16(protocol));
-
-  uint64_t encodedBodySize = 0;
-  Unused << aChannel->GetEncodedBodySize(&encodedBodySize);
-  SetEncodedBodySize(encodedBodySize);
-
-  uint64_t transferSize = 0;
-  Unused << aChannel->GetTransferSize(&transferSize);
-  SetTransferSize(transferSize);
-
-  uint64_t decodedBodySize = 0;
-  Unused << aChannel->GetDecodedBodySize(&decodedBodySize);
-  if (decodedBodySize == 0) {
-    decodedBodySize = encodedBodySize;
-  }
-  SetDecodedBodySize(decodedBodySize);
 }
 
 PerformanceResourceTiming::~PerformanceResourceTiming()
@@ -71,22 +42,8 @@ PerformanceResourceTiming::~PerformanceResourceTiming()
 DOMHighResTimeStamp
 PerformanceResourceTiming::StartTime() const
 {
-  // Force the start time to be the earliest of:
-  //  - RedirectStart
-  //  - WorkerStart
-  //  - AsyncOpen
-  // Ignore zero values.  The RedirectStart and WorkerStart values
-  // can come from earlier redirected channels prior to the AsyncOpen
-  // time being recorded.
-  DOMHighResTimeStamp redirect = mTiming->RedirectStartHighRes();
-  redirect = redirect ? redirect : DBL_MAX;
-
-  DOMHighResTimeStamp worker = mTiming->WorkerStartHighRes();
-  worker = worker ? worker : DBL_MAX;
-
-  DOMHighResTimeStamp asyncOpen = mTiming->AsyncOpenHighRes();
-
-  return std::min(asyncOpen, std::min(redirect, worker));
+  DOMHighResTimeStamp startTime = mTiming->RedirectStartHighRes();
+  return startTime ? startTime : mTiming->FetchStartHighRes();
 }
 
 JSObject*

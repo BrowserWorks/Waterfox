@@ -59,6 +59,10 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount");
 
+    // The data associated to each Account should be invalidated when we change
+    // the set of Firefox Accounts on the system.
+    AndroidFxAccount.invalidateCaches();
+
     final Bundle res = new Bundle();
 
     if (!FxAccountConstants.ACCOUNT_TYPE.equals(accountType)) {
@@ -330,16 +334,6 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
   @Override
   public Bundle getAccountRemovalAllowed(final AccountAuthenticatorResponse response, Account account)
       throws NetworkErrorException {
-    // If we're currently renaming an account, which has a side-effect of removing it first on
-    // pre-21 APIs, skip our regular account deletion logic, and ensure that account removal is allowed.
-    final String renameInProgress = accountManager.getUserData(
-            account, AndroidFxAccount.ACCOUNT_KEY_RENAME_IN_PROGRESS);
-    if (AndroidFxAccount.ACCOUNT_VALUE_RENAME_IN_PROGRESS.equals(renameInProgress)) {
-      final Bundle overrideResult = new Bundle();
-      overrideResult.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, true);
-      return overrideResult;
-    }
-
     Bundle result = super.getAccountRemovalAllowed(response, account);
 
     if (result == null ||

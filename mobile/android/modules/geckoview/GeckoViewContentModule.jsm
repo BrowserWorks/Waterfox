@@ -8,14 +8,8 @@ this.EXPORTED_SYMBOLS = ["GeckoViewContentModule"];
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
-  "resource://gre/modules/Messaging.jsm");
-
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewContentModule"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewContentModule");
 
 function debug(aMsg) {
   // dump(aMsg);
@@ -25,7 +19,6 @@ class GeckoViewContentModule {
   constructor(aModuleName, aMessageManager) {
     this.moduleName = aModuleName;
     this.messageManager = aMessageManager;
-    this.eventDispatcher = EventDispatcher.forMessageManager(aMessageManager);
 
     this.messageManager.addMessageListener(
       "GeckoView:Register",

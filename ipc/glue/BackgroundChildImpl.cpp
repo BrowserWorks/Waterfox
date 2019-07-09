@@ -24,15 +24,12 @@
 #include "mozilla/dom/indexedDB/PBackgroundIndexedDBUtilsChild.h"
 #include "mozilla/dom/ipc/IPCBlobInputStreamChild.h"
 #include "mozilla/dom/ipc/PendingIPCBlobChild.h"
-#include "mozilla/dom/ipc/TemporaryIPCBlobChild.h"
 #include "mozilla/dom/quota/PQuotaChild.h"
 #include "mozilla/dom/StorageIPC.h"
 #include "mozilla/dom/GamepadEventChannelChild.h"
 #include "mozilla/dom/GamepadTestChannelChild.h"
-#include "mozilla/dom/LocalStorage.h"
 #include "mozilla/dom/MessagePortChild.h"
-#include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/TabGroup.h"
+#include "mozilla/dom/LocalStorage.h"
 #include "mozilla/ipc/IPCStreamAlloc.h"
 #include "mozilla/ipc/PBackgroundTestChild.h"
 #include "mozilla/ipc/PChildToParentStreamChild.h"
@@ -239,21 +236,6 @@ BackgroundChildImpl::DeallocPPendingIPCBlobChild(PPendingIPCBlobChild* aActor)
   return true;
 }
 
-PTemporaryIPCBlobChild*
-BackgroundChildImpl::AllocPTemporaryIPCBlobChild()
-{
-  MOZ_CRASH("This is not supposed to be called.");
-  return nullptr;
-}
-
-bool
-BackgroundChildImpl::DeallocPTemporaryIPCBlobChild(PTemporaryIPCBlobChild* aActor)
-{
-  RefPtr<mozilla::dom::TemporaryIPCBlobChild> actor =
-    dont_AddRef(static_cast<mozilla::dom::TemporaryIPCBlobChild*>(aActor));
-  return true;
-}
-
 PIPCBlobInputStreamChild*
 BackgroundChildImpl::AllocPIPCBlobInputStreamChild(const nsID& aID,
                                                    const uint64_t& aSize)
@@ -371,6 +353,7 @@ BackgroundChildImpl::DeallocPCamerasChild(camera::PCamerasChild *aActor)
   RefPtr<camera::CamerasChild> child =
       dont_AddRef(static_cast<camera::CamerasChild*>(aActor));
   MOZ_ASSERT(aActor);
+  camera::Shutdown();
 #endif
   return true;
 }
@@ -641,24 +624,6 @@ BackgroundChildImpl::RecvDispatchLocalStorageChange(
                                      principal, aIsPrivate, nullptr, true);
 
   return IPC_OK();
-}
-
-bool
-BackgroundChildImpl::GetMessageSchedulerGroups(const Message& aMsg, SchedulerGroupSet& aGroups)
-{
-  if (aMsg.type() == layout::PVsync::MessageType::Msg_Notify__ID) {
-    MOZ_ASSERT(NS_IsMainThread());
-    aGroups.Clear();
-    if (dom::TabChild::HasActiveTabs()) {
-      for (auto iter = dom::TabChild::GetActiveTabs().ConstIter();
-           !iter.Done(); iter.Next()) {
-        aGroups.Put(iter.Get()->GetKey()->TabGroup());
-      }
-    }
-    return true;
-  }
-
-  return false;
 }
 
 } // namespace ipc

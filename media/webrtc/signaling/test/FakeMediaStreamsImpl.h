@@ -37,8 +37,14 @@ Fake_MediaStream::TicksToTimeRoundDown(mozilla::TrackRate aRate,
 
 // Fake_SourceMediaStream
 nsresult Fake_SourceMediaStream::Start() {
-  return NS_NewTimerWithCallback(getter_AddRefs(mTimer),
-                                 mPeriodic, 100, nsITimer::TYPE_REPEATING_SLACK);
+  mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  if (!mTimer) {
+    return NS_ERROR_FAILURE;
+  }
+
+  mTimer->InitWithCallback(mPeriodic, 100, nsITimer::TYPE_REPEATING_SLACK);
+
+  return NS_OK;
 }
 
 nsresult Fake_SourceMediaStream::Stop() {
@@ -77,8 +83,14 @@ void Fake_MediaStreamTrack::RemoveListener(Fake_MediaStreamTrackListener *aListe
 
 // Fake_MediaStreamBase
 nsresult Fake_MediaStreamBase::Start() {
-  return NS_NewTimerWithCallback(getter_AddRefs(mTimer),
-                                 mPeriodic, 100, nsITimer::TYPE_REPEATING_SLACK);
+  mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  if (!mTimer) {
+    return NS_ERROR_FAILURE;
+  }
+
+  mTimer->InitWithCallback(mPeriodic, 100, nsITimer::TYPE_REPEATING_SLACK);
+
+  return NS_OK;
 }
 
 nsresult Fake_MediaStreamBase::Stop() {

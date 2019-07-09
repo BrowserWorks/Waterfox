@@ -307,14 +307,13 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     // Call the handler.
     asMasm().setupUnalignedABICall(rcx);
     asMasm().passABIArg(rax);
-    asMasm().callWithABI(handler, MoveOp::GENERAL, CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    asMasm().callWithABI(handler);
 
     Label entryFrame;
     Label catch_;
     Label finally;
     Label return_;
     Label bailout;
-    Label wasm;
 
     load32(Address(rsp, offsetof(ResumeFromException, kind)), rax);
     asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME), &entryFrame);
@@ -322,7 +321,6 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
     asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FORCED_RETURN), &return_);
     asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
-    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_WASM), &wasm);
 
     breakpoint(); // Invalid kind.
 
@@ -382,14 +380,6 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     loadPtr(Address(esp, offsetof(ResumeFromException, bailoutInfo)), r9);
     mov(ImmWord(BAILOUT_RETURN_OK), rax);
     jmp(Operand(rsp, offsetof(ResumeFromException, target)));
-
-    // If we are throwing and the innermost frame was a wasm frame, reset SP and
-    // FP; SP is pointing to the unwound return address to the wasm entry, so
-    // we can just ret().
-    bind(&wasm);
-    loadPtr(Address(rsp, offsetof(ResumeFromException, framePointer)), rbp);
-    loadPtr(Address(rsp, offsetof(ResumeFromException, stackPointer)), rsp);
-    masm.ret();
 }
 
 void

@@ -112,7 +112,7 @@ public:
   }
 
   already_AddRefed<ImageBitmap>
-  TransferToImageBitmap(ErrorResult& aRv);
+  TransferToImageBitmap();
 
   already_AddRefed<Promise>
   ToBlob(JSContext* aCx,

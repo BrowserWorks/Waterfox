@@ -24,8 +24,8 @@
 #include "nsRect.h"
 #include "nsString.h"
 #include "nsStubDocumentObserver.h"
-#include "SVGObserverUtils.h" // for nsSVGRenderingObserver
-#include "nsWindowSizes.h"
+#include "nsSVGEffects.h" // for nsSVGRenderingObserver
+#include "nsWindowMemoryReporter.h"
 #include "ImageRegion.h"
 #include "ISurfaceProvider.h"
 #include "LookupResult.h"
@@ -62,11 +62,11 @@ public:
     MOZ_ASSERT(mDocWrapper, "Need a non-null SVG document wrapper");
     MOZ_ASSERT(mVectorImage, "Need a non-null VectorImage");
 
-    StartObserving();
+    StartListening();
     Element* elem = GetTarget();
     MOZ_ASSERT(elem, "no root SVG node for us to observe");
 
-    SVGObserverUtils::AddRenderingObserver(elem, this);
+    nsSVGEffects::AddRenderingObserver(elem, this);
     mInObserverList = true;
   }
 
@@ -79,7 +79,7 @@ public:
 protected:
   virtual ~SVGRootRenderingObserver()
   {
-    StopObserving();
+    StopListening();
   }
 
   virtual Element* GetTarget() override
@@ -87,7 +87,7 @@ protected:
     return mDocWrapper->GetRootSVGElem();
   }
 
-  virtual void OnRenderingChange() override
+  virtual void DoUpdate() override
   {
     Element* elem = GetTarget();
     MOZ_ASSERT(elem, "missing root SVG node");
@@ -108,7 +108,7 @@ protected:
     // Our caller might've removed us from rendering-observer list.
     // Add ourselves back!
     if (!mInObserverList) {
-      SVGObserverUtils::AddRenderingObserver(elem, this);
+      nsSVGEffects::AddRenderingObserver(elem, this);
       mInObserverList = true;
     }
   }
@@ -392,7 +392,7 @@ VectorImage::SizeOfSourceWithComputedFallback(SizeOfState& aState) const
   }
 
   nsWindowSizes windowSizes(aState);
-  doc->DocAddSizeOfIncludingThis(windowSizes);
+  doc->DocAddSizeOfIncludingThis(&windowSizes);
 
   if (windowSizes.getTotalSize() == 0) {
     // MallocSizeOf fails on this platform. Because we also use this method for
@@ -526,13 +526,6 @@ nsresult
 VectorImage::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
 {
   return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-//******************************************************************************
-size_t
-VectorImage::GetNativeSizesLength() const
-{
-  return 0;
 }
 
 //******************************************************************************

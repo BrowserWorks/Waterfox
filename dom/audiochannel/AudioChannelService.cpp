@@ -217,6 +217,19 @@ AudibleChangedReasonToStr(const AudioChannelService::AudibleChangedReasons& aRea
 
 StaticRefPtr<AudioChannelService> gAudioChannelService;
 
+// Mappings from 'mozaudiochannel' attribute strings to an enumeration.
+static const nsAttrValue::EnumTable kMozAudioChannelAttributeTable[] = {
+  { "normal",             (int16_t)AudioChannel::Normal },
+  { "content",            (int16_t)AudioChannel::Content },
+  { "notification",       (int16_t)AudioChannel::Notification },
+  { "alarm",              (int16_t)AudioChannel::Alarm },
+  { "telephony",          (int16_t)AudioChannel::Telephony },
+  { "ringer",             (int16_t)AudioChannel::Ringer },
+  { "publicnotification", (int16_t)AudioChannel::Publicnotification },
+  { "system",             (int16_t)AudioChannel::System },
+  { nullptr,              0 }
+};
+
 /* static */ void
 AudioChannelService::CreateServiceIfNeeded()
 {
@@ -343,9 +356,11 @@ AudioChannelService::UnregisterAudioChannelAgent(AudioChannelAgent* aAgent)
 }
 
 AudioPlaybackConfig
-AudioChannelService::GetMediaConfig(nsPIDOMWindowOuter* aWindow) const
+AudioChannelService::GetMediaConfig(nsPIDOMWindowOuter* aWindow,
+                                    uint32_t aAudioChannel) const
 {
   MOZ_ASSERT(!aWindow || aWindow->IsOuterWindow());
+  MOZ_ASSERT(aAudioChannel < NUMBER_OF_AUDIO_CHANNELS);
 
   AudioPlaybackConfig config(1.0, false,
                              nsISuspendedTypes::NONE_SUSPENDED);
@@ -364,8 +379,8 @@ AudioChannelService::GetMediaConfig(nsPIDOMWindowOuter* aWindow) const
   do {
     winData = GetWindowData(window->WindowID());
     if (winData) {
-      config.mVolume *= winData->mConfig.mVolume;
-      config.mMuted = config.mMuted || winData->mConfig.mMuted;
+      config.mVolume *= winData->mChannels[aAudioChannel].mVolume;
+      config.mMuted = config.mMuted || winData->mChannels[aAudioChannel].mMuted;
       config.mSuspend = winData->mOwningAudioFocus ?
         config.mSuspend : nsISuspendedTypes::SUSPENDED_STOP_DISPOSABLE;
     }
@@ -525,6 +540,42 @@ AudioChannelService::SetWindowAudioCaptured(nsPIDOMWindowOuter* aWindow,
       iter.GetNext()->WindowAudioCaptureChanged(aInnerWindowID, aCapture);
     }
   }
+}
+
+/* static */ const nsAttrValue::EnumTable*
+AudioChannelService::GetAudioChannelTable()
+{
+  return kMozAudioChannelAttributeTable;
+}
+
+/* static */ AudioChannel
+AudioChannelService::GetAudioChannel(const nsAString& aChannel)
+{
+  for (uint32_t i = 0; kMozAudioChannelAttributeTable[i].tag; ++i) {
+    if (aChannel.EqualsASCII(kMozAudioChannelAttributeTable[i].tag)) {
+      return static_cast<AudioChannel>(kMozAudioChannelAttributeTable[i].value);
+    }
+  }
+
+  return AudioChannel::Normal;
+}
+
+/* static */ AudioChannel
+AudioChannelService::GetDefaultAudioChannel()
+{
+  nsAutoString audioChannel;
+  Preferences::GetString("media.defaultAudioChannel", audioChannel);
+  if (audioChannel.IsEmpty()) {
+    return AudioChannel::Normal;
+  }
+
+  for (uint32_t i = 0; kMozAudioChannelAttributeTable[i].tag; ++i) {
+    if (audioChannel.EqualsASCII(kMozAudioChannelAttributeTable[i].tag)) {
+      return static_cast<AudioChannel>(kMozAudioChannelAttributeTable[i].value);
+    }
+  }
+
+  return AudioChannel::Normal;
 }
 
 AudioChannelService::AudioChannelWindow*
@@ -718,7 +769,8 @@ AudioChannelService::AudioChannelWindow::AudioFocusChanged(AudioChannelAgent* aN
         continue;
       }
 
-      uint32_t type = GetCompetingBehavior(agent);
+      uint32_t type = GetCompetingBehavior(agent,
+                                           aNewPlayingAgent->AudioChannelType());
 
       // If window will be suspended, it needs to abandon the audio focus
       // because only one window can own audio focus at a time. However, we
@@ -747,18 +799,27 @@ AudioChannelService::AudioChannelWindow::IsContainingPlayingAgent(AudioChannelAg
 }
 
 uint32_t
-AudioChannelService::AudioChannelWindow::GetCompetingBehavior(AudioChannelAgent* aAgent) const
+AudioChannelService::AudioChannelWindow::GetCompetingBehavior(AudioChannelAgent* aAgent,
+                                                              int32_t aIncomingChannelType) const
 {
   MOZ_ASSERT(aAgent);
   MOZ_ASSERT(IsEnableAudioCompetingForAllAgents() ?
     mAgents.Contains(aAgent) : mAudibleAgents.Contains(aAgent));
 
-  uint32_t competingBehavior = nsISuspendedTypes::SUSPENDED_STOP_DISPOSABLE;
+  uint32_t competingBehavior = nsISuspendedTypes::NONE_SUSPENDED;
+  int32_t presentChannelType = aAgent->AudioChannelType();
+
+  // TODO : add other competing cases for MediaSession API
+  if (presentChannelType == int32_t(AudioChannel::Normal) &&
+      aIncomingChannelType == int32_t(AudioChannel::Normal)) {
+    competingBehavior = nsISuspendedTypes::SUSPENDED_STOP_DISPOSABLE;
+  }
 
   MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
          ("AudioChannelWindow, GetCompetingBehavior, this = %p, "
-          "behavior = %s\n",
-          this, SuspendTypeToStr(competingBehavior)));
+          "present type = %d, incoming channel = %d, behavior = %s\n",
+          this, presentChannelType, aIncomingChannelType,
+          SuspendTypeToStr(competingBehavior)));
 
   return competingBehavior;
 }
@@ -839,12 +900,13 @@ AudioChannelService::AudioChannelWindow::AppendAgentAndIncreaseAgentsNum(AudioCh
   MOZ_ASSERT(aAgent);
   MOZ_ASSERT(!mAgents.Contains(aAgent));
 
+  int32_t channel = aAgent->AudioChannelType();
   mAgents.AppendElement(aAgent);
 
-  ++mConfig.mNumberOfAgents;
+  ++mChannels[channel].mNumberOfAgents;
 
   // TODO: Make NotifyChannelActiveRunnable irrelevant to BrowserElementAudioChannel
-  if (mConfig.mNumberOfAgents == 1) {
+  if (mChannels[channel].mNumberOfAgents == 1) {
     NotifyChannelActive(aAgent->WindowID(), true);
   }
 }
@@ -855,12 +917,13 @@ AudioChannelService::AudioChannelWindow::RemoveAgentAndReduceAgentsNum(AudioChan
   MOZ_ASSERT(aAgent);
   MOZ_ASSERT(mAgents.Contains(aAgent));
 
+  int32_t channel = aAgent->AudioChannelType();
   mAgents.RemoveElement(aAgent);
 
-  MOZ_ASSERT(mConfig.mNumberOfAgents > 0);
-  --mConfig.mNumberOfAgents;
+  MOZ_ASSERT(mChannels[channel].mNumberOfAgents > 0);
+  --mChannels[channel].mNumberOfAgents;
 
-  if (mConfig.mNumberOfAgents == 0) {
+  if (mChannels[channel].mNumberOfAgents == 0) {
     NotifyChannelActive(aAgent->WindowID(), false);
   }
 }

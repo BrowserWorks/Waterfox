@@ -9,7 +9,6 @@
 #include "mozilla/dom/PresentationAvailabilityBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/Unused.h"
-#include "nsContentUtils.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIPresentationDeviceManager.h"
 #include "nsIPresentationService.h"
@@ -33,7 +32,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_ADDREF_INHERITED(PresentationAvailability, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(PresentationAvailability, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PresentationAvailability)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(PresentationAvailability)
   NS_INTERFACE_MAP_ENTRY(nsIPresentationAvailabilityListener)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
@@ -158,10 +157,6 @@ PresentationAvailability::EnqueuePromise(RefPtr<Promise>& aPromise)
 bool
 PresentationAvailability::Value() const
 {
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    return false;
-  }
-
   return mIsAvailable;
 }
 
@@ -196,21 +191,12 @@ PresentationAvailability::UpdateAvailabilityAndDispatchEvent(bool aIsAvailable)
     // Use the first availability change notification to resolve promise.
     do {
       nsTArray<RefPtr<Promise>> promises = Move(mPromises);
-
-      if (nsContentUtils::ShouldResistFingerprinting()) {
-        continue;
-      }
-
       for (auto& promise : promises) {
         promise->MaybeResolve(this);
       }
       // more promises may have been added to mPromises, at least in theory
     } while (!mPromises.IsEmpty());
 
-    return;
-  }
-
-  if (nsContentUtils::ShouldResistFingerprinting()) {
     return;
   }
 

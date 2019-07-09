@@ -5,7 +5,7 @@
 description: Elision advances iterator and forwards abrupt completions (function expression)
 esid: sec-function-definitions-runtime-semantics-evaluation
 es6id: 14.1.20
-features: [generators, destructuring-binding]
+features: [generator, destructuring-binding]
 flags: [generated]
 info: |
     FunctionExpression : function ( FormalParameters ) { FunctionBody }

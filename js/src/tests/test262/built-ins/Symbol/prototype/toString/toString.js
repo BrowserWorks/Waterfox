@@ -4,7 +4,6 @@
 es6id: 19.4.3.2
 description: >
     toString operations on Symbols
-features: [Symbol]
 ---*/
 assert.sameValue(
   String(Symbol('66')),

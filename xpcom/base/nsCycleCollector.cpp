@@ -197,35 +197,6 @@
 
 using namespace mozilla;
 
-struct NurseryPurpleBufferEntry
-{
-  void* mPtr;
-  nsCycleCollectionParticipant* mParticipant;
-  nsCycleCollectingAutoRefCnt* mRefCnt;
-};
-
-#define NURSERY_PURPLE_BUFFER_SIZE 2048
-bool gNurseryPurpleBufferEnabled = true;
-NurseryPurpleBufferEntry gNurseryPurpleBufferEntry[NURSERY_PURPLE_BUFFER_SIZE];
-uint32_t gNurseryPurpleBufferEntryCount = 0;
-
-void ClearNurseryPurpleBuffer();
-
-void SuspectUsingNurseryPurpleBuffer(void* aPtr,
-                                     nsCycleCollectionParticipant* aCp,
-                                     nsCycleCollectingAutoRefCnt* aRefCnt)
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-  MOZ_ASSERT(gNurseryPurpleBufferEnabled);
-  if (gNurseryPurpleBufferEntryCount == NURSERY_PURPLE_BUFFER_SIZE) {
-    ClearNurseryPurpleBuffer();
-  }
-
-  gNurseryPurpleBufferEntry[gNurseryPurpleBufferEntryCount] =
-    { aPtr, aCp, aRefCnt };
-  ++gNurseryPurpleBufferEntryCount;
-}
-
 //#define COLLECT_TIME_DEBUG
 
 // Enable assertions that are useful for diagnosing errors in graph construction.
@@ -374,7 +345,7 @@ public:
 // Base types
 ////////////////////////////////////////////////////////////////////////
 
-class PtrInfo;
+struct PtrInfo;
 
 class EdgePool
 {
@@ -579,15 +550,13 @@ enum NodeColor { black, white, grey };
 // hundreds of thousands of them to be allocated and touched
 // repeatedly during each cycle collection.
 
-class PtrInfo final
+struct PtrInfo
 {
-public:
   void* mPointer;
   nsCycleCollectionParticipant* mParticipant;
   uint32_t mColor : 2;
   uint32_t mInternalRefs : 30;
   uint32_t mRefCount;
-
 private:
   EdgePool::Iterator mFirstChild;
 
@@ -657,28 +626,7 @@ public:
     CC_GRAPH_ASSERT(aLastChild.Initialized());
     (this + 1)->mFirstChild = aLastChild;
   }
-
-  void AnnotatedReleaseAssert(bool aCondition, const char* aMessage);
 };
-
-void
-PtrInfo::AnnotatedReleaseAssert(bool aCondition, const char* aMessage)
-{
-  if (aCondition) {
-    return;
-  }
-
-#ifdef MOZ_CRASHREPORTER
-  const char* piName = "Unknown";
-  if (mParticipant) {
-    piName = mParticipant->ClassName();
-  }
-  nsPrintfCString msg("%s, for class %s", aMessage, piName);
-  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("CycleCollector"), msg);
-#endif
-
-  MOZ_CRASH();
-}
 
 /**
  * A structure designed to be used like a linked list of PtrInfo, except
@@ -1091,19 +1039,12 @@ public:
   template<class PurpleVisitor>
   void VisitEntries(PurpleVisitor& aVisitor)
   {
-    Maybe<AutoRestore<bool>> ar;
-    if (NS_IsMainThread()) {
-      ar.emplace(gNurseryPurpleBufferEnabled);
-      gNurseryPurpleBufferEnabled = false;
-      ClearNurseryPurpleBuffer();
-    }
-
     if (mEntries.IsEmpty()) {
       return;
     }
 
     uint32_t oldLength = mEntries.Length();
-    uint32_t keptLength = 0;
+    uint32_t newLength = 0;
     auto revIter = mEntries.IterFromLast();
     auto iter = mEntries.Iter();
      // After iteration this points to the first empty entry.
@@ -1144,7 +1085,7 @@ public:
       // in mEntries.
       if (e.mObject) {
         firstEmptyIter.Next();
-        ++keptLength;
+        ++newLength;
       }
 
       if (&e == &revIter.Get()) {
@@ -1153,7 +1094,7 @@ public:
     }
 
     // There were some empty entries.
-    if (oldLength != keptLength) {
+    if (oldLength != newLength) {
 
       // While visiting entries, some new ones were possibly added. This can
       // happen during CanSkip. Move all such new entries to be after other
@@ -1167,10 +1108,11 @@ public:
           firstEmptyIter.Get().Swap(iterForNewEntries.Get());
           firstEmptyIter.Next();
           iterForNewEntries.Next();
+          ++newLength; // We keep all the new entries.
         }
       }
 
-      mEntries.PopLastN(oldLength - keptLength);
+      mEntries.PopLastN(oldLength - newLength);
     }
   }
 
@@ -1347,7 +1289,6 @@ public:
 
   void Suspect(void* aPtr, nsCycleCollectionParticipant* aCp,
                nsCycleCollectingAutoRefCnt* aRefCnt);
-  void SuspectNurseryEntries();
   uint32_t SuspectedCount();
   void ForgetSkippable(js::SliceBudget& aBudget, bool aRemoveChildlessNodes,
                        bool aAsyncSnowWhiteFreeing);
@@ -2122,7 +2063,6 @@ private:
   RefPtr<nsCycleCollectorLogger> mLogger;
   bool mMergeZones;
   nsAutoPtr<NodePool::Enumerator> mCurrNode;
-  uint32_t mNoteChildCount;
 
 public:
   CCGraphBuilder(CCGraph& aGraph,
@@ -2236,7 +2176,6 @@ CCGraphBuilder::CCGraphBuilder(CCGraph& aGraph,
   , mJSZoneParticipant(nullptr)
   , mLogger(aLogger)
   , mMergeZones(aMergeZones)
-  , mNoteChildCount(0)
 {
   if (aCCRuntime) {
     mJSParticipant = aCCRuntime->GCThingParticipant();
@@ -2320,8 +2259,6 @@ CCGraphBuilder::BuildGraph(SliceBudget& aBudget)
   MOZ_ASSERT(mCurrNode);
 
   while (!aBudget.isOverBudget() && !mCurrNode->IsDone()) {
-    mNoteChildCount = 0;
-
     PtrInfo* pi = mCurrNode->GetNext();
     if (!pi) {
       MOZ_CRASH();
@@ -2342,7 +2279,7 @@ CCGraphBuilder::BuildGraph(SliceBudget& aBudget)
       SetLastChild();
     }
 
-    aBudget.step(kStep * (mNoteChildCount + 1));
+    aBudget.step(kStep);
   }
 
   if (!mCurrNode->IsDone()) {
@@ -2393,10 +2330,8 @@ CCGraphBuilder::NoteNativeRoot(void* aRoot,
 NS_IMETHODIMP_(void)
 CCGraphBuilder::DescribeRefCountedNode(nsrefcnt aRefCount, const char* aObjName)
 {
-  mCurrPi->AnnotatedReleaseAssert(aRefCount != 0,
-                                  "CCed refcounted object has zero refcount");
-  mCurrPi->AnnotatedReleaseAssert(aRefCount != UINT32_MAX,
-                                  "CCed refcounted object has overflowing refcount");
+  MOZ_RELEASE_ASSERT(aRefCount != 0, "CCed refcounted object has zero refcount");
+  MOZ_RELEASE_ASSERT(aRefCount != UINT32_MAX, "CCed refcounted object has overflowing refcount");
 
   mResults.mVisitedRefCounted++;
 
@@ -2435,8 +2370,6 @@ CCGraphBuilder::NoteXPCOMChild(nsISupports* aChild)
     return;
   }
 
-  ++mNoteChildCount;
-
   nsXPCOMCycleCollectionParticipant* cp;
   ToParticipant(aChild, &cp);
   if (cp && (!cp->CanSkipThis(aChild) || WantAllTraces())) {
@@ -2457,8 +2390,6 @@ CCGraphBuilder::NoteNativeChild(void* aChild,
     return;
   }
 
-  ++mNoteChildCount;
-
   MOZ_ASSERT(aParticipant, "Need a nsCycleCollectionParticipant!");
   if (!aParticipant->CanSkipThis(aChild) || WantAllTraces()) {
     NoteChild(aChild, aParticipant, edgeName);
@@ -2471,8 +2402,6 @@ CCGraphBuilder::NoteJSChild(const JS::GCCellPtr& aChild)
   if (!aChild) {
     return;
   }
-
-  ++mNoteChildCount;
 
   nsCString edgeName;
   if (MOZ_UNLIKELY(WantDebugInfo())) {
@@ -2925,6 +2854,10 @@ nsCycleCollector::ForgetSkippable(js::SliceBudget& aBudget,
 {
   CheckThreadSafety();
 
+  if (mFreeingSnowWhite) {
+    return;
+  }
+
   mozilla::Maybe<mozilla::AutoGlobalTimelineMarker> marker;
   if (NS_IsMainThread()) {
     marker.emplace("nsCycleCollector::ForgetSkippable", MarkerStackRequest::NO_STACK);
@@ -3227,8 +3160,17 @@ nsCycleCollector::ScanWhiteNodes(bool aFullySynchGraphBuild)
       continue;
     }
 
-    pi->AnnotatedReleaseAssert(pi->mInternalRefs <= pi->mRefCount,
-                               "More references to an object than its refcount");
+    if (pi->mInternalRefs > pi->mRefCount) {
+#ifdef MOZ_CRASHREPORTER
+      const char* piName = "Unknown";
+      if (pi->mParticipant) {
+        piName = pi->mParticipant->ClassName();
+      }
+      nsPrintfCString msg("More references to an object than its refcount, for class %s", piName);
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("CycleCollector"), msg);
+#endif
+      MOZ_CRASH();
+    }
 
     // This node will get marked black in the next pass.
   }
@@ -3554,17 +3496,6 @@ nsCycleCollector::Suspect(void* aPtr, nsCycleCollectionParticipant* aParti,
 }
 
 void
-nsCycleCollector::SuspectNurseryEntries()
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-  while (gNurseryPurpleBufferEntryCount) {
-    NurseryPurpleBufferEntry& entry =
-      gNurseryPurpleBufferEntry[--gNurseryPurpleBufferEntryCount];
-    mPurpleBuf.Put(entry.mPtr, entry.mParticipant, entry.mRefCnt);
-  }
-}
-
-void
 nsCycleCollector::CheckThreadSafety()
 {
 #ifdef DEBUG
@@ -3610,8 +3541,7 @@ nsCycleCollector::FixGrayBits(bool aForceGC, TimeLog& aTimeLog)
     // It's possible that FixWeakMappingGrayBits will hit OOM when unmarking
     // gray and we will have to go round again. The second time there should not
     // be any weak mappings to fix up so the loop body should run at most twice.
-    MOZ_RELEASE_ASSERT(count < 2);
-    count++;
+    MOZ_RELEASE_ASSERT(count++ < 2);
   } while (!mCCJSRuntime->AreGCGrayBitsValid());
 
   aTimeLog.Checkpoint("FixGrayBits");
@@ -3679,7 +3609,6 @@ void
 nsCycleCollector::ShutdownCollect()
 {
   FinishAnyIncrementalGCInProgress();
-  JS::ShutdownAsyncTasks(CycleCollectedJSContext::Get()->Context());
 
   SliceBudget unlimitedBudget = SliceBudget::unlimited();
   uint32_t i;
@@ -3967,10 +3896,6 @@ uint32_t
 nsCycleCollector::SuspectedCount()
 {
   CheckThreadSafety();
-  if (NS_IsMainThread()) {
-    return gNurseryPurpleBufferEntryCount + mPurpleBuf.Count();
-  }
-
   return mPurpleBuf.Count();
 }
 
@@ -3978,10 +3903,6 @@ void
 nsCycleCollector::Shutdown(bool aDoCollect)
 {
   CheckThreadSafety();
-
-  if (NS_IsMainThread()) {
-    gNurseryPurpleBufferEnabled = false;
-  }
 
   // Always delete snow white objects.
   FreeSnowWhite(true);
@@ -4118,30 +4039,6 @@ NS_CycleCollectorSuspect3(void* aPtr, nsCycleCollectionParticipant* aCp,
     return;
   }
   SuspectAfterShutdown(aPtr, aCp, aRefCnt, aShouldDelete);
-}
-
-void ClearNurseryPurpleBuffer()
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-  CollectorData* data = sCollectorData.get();
-  MOZ_ASSERT(data);
-  MOZ_ASSERT(data->mCollector);
-  data->mCollector->SuspectNurseryEntries();
-}
-
-void
-NS_CycleCollectorSuspectUsingNursery(void* aPtr,
-                                     nsCycleCollectionParticipant* aCp,
-                                     nsCycleCollectingAutoRefCnt* aRefCnt,
-                                     bool* aShouldDelete)
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-  if (!gNurseryPurpleBufferEnabled) {
-    NS_CycleCollectorSuspect3(aPtr, aCp, aRefCnt, aShouldDelete);
-    return;
-  }
-
-  SuspectUsingNurseryPurpleBuffer(aPtr, aCp, aRefCnt);
 }
 
 uint32_t

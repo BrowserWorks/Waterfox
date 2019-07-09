@@ -195,8 +195,12 @@ js::SetPropertyIgnoringNamedGetter(JSContext* cx, HandleObject obj, HandleId id,
         RootedObject receiverObj(cx, &receiver.toObject());
 
         // Nonstandard SpiderMonkey special case: setter ops.
-        if (SetterOp setter = ownDesc.setter())
-            return CallJSSetterOp(cx, setter, receiverObj, id, v, result);
+        SetterOp setter = ownDesc.setter();
+        MOZ_ASSERT(setter != JS_StrictPropertyStub);
+        if (setter && setter != JS_StrictPropertyStub) {
+            RootedValue valCopy(cx, v);
+            return CallJSSetterOp(cx, setter, receiverObj, id, &valCopy, result);
+        }
 
         // Steps 5.c-d.
         Rooted<PropertyDescriptor> existingDescriptor(cx);
@@ -221,7 +225,13 @@ js::SetPropertyIgnoringNamedGetter(JSContext* cx, HandleObject obj, HandleId id,
             ? JSPROP_IGNORE_ENUMERATE | JSPROP_IGNORE_READONLY | JSPROP_IGNORE_PERMANENT
             : JSPROP_ENUMERATE;
 
-        return DefineDataProperty(cx, receiverObj, id, v, attrs, result);
+        // A very old nonstandard SpiderMonkey extension: default to the Class
+        // getter and setter ops.
+        const Class* clasp = receiverObj->getClass();
+        MOZ_ASSERT(clasp->getGetProperty() != JS_PropertyStub);
+        MOZ_ASSERT(clasp->getSetProperty() != JS_StrictPropertyStub);
+        return DefineProperty(cx, receiverObj, id, v,
+                              clasp->getGetProperty(), clasp->getSetProperty(), attrs, result);
     }
 
     // Step 6.
@@ -371,10 +381,9 @@ BaseProxyHandler::finalize(JSFreeOp* fop, JSObject* proxy) const
 {
 }
 
-size_t
-BaseProxyHandler::objectMoved(JSObject* proxy, JSObject* old) const
+void
+BaseProxyHandler::objectMoved(JSObject* proxy, const JSObject* old) const
 {
-    return 0;
 }
 
 JSObject*

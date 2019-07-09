@@ -232,7 +232,9 @@ DefineHelpProperty(JSContext* cx, HandleObject obj, const char* prop, const char
     RootedAtom atom(cx, Atomize(cx, value, strlen(value)));
     if (!atom)
         return false;
-    return JS_DefineProperty(cx, obj, prop, atom, JSPROP_READONLY | JSPROP_PERMANENT);
+    return JS_DefineProperty(cx, obj, prop, atom,
+                             JSPROP_READONLY | JSPROP_PERMANENT,
+                             JS_STUBGETTER, JS_STUBSETTER);
 }
 
 JS_FRIEND_API(bool)
@@ -278,7 +280,7 @@ js::GetBuiltinClass(JSContext* cx, HandleObject obj, ESClass* cls)
 
     if (obj->is<PlainObject>() || obj->is<UnboxedPlainObject>())
         *cls = ESClass::Object;
-    else if (obj->is<ArrayObject>())
+    else if (obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>())
         *cls = ESClass::Array;
     else if (obj->is<NumberObject>())
         *cls = ESClass::Number;
@@ -546,6 +548,15 @@ JS_SetProtoCalled(JSContext*)
     return sSetProtoCalled;
 }
 
+// Defined in jsiter.cpp.
+extern size_t sCustomIteratorCount;
+
+JS_FRIEND_API(size_t)
+JS_GetCustomIteratorCount(JSContext* cx)
+{
+    return sCustomIteratorCount;
+}
+
 JS_FRIEND_API(unsigned)
 JS_PCToLineNumber(JSScript* script, jsbytecode* pc, unsigned* columnp)
 {
@@ -646,12 +657,6 @@ JS_SetAccumulateTelemetryCallback(JSContext* cx, JSAccumulateTelemetryDataCallba
     cx->runtime()->setTelemetryCallback(cx->runtime(), callback);
 }
 
-JS_FRIEND_API(void)
-JS_SetSetUseCounterCallback(JSContext* cx, JSSetUseCounterCallback callback)
-{
-    cx->runtime()->setUseCounterCallback(cx->runtime(), callback);
-}
-
 JS_FRIEND_API(JSObject*)
 JS_CloneObject(JSContext* cx, HandleObject obj, HandleObject protoArg)
 {
@@ -663,103 +668,34 @@ JS_CloneObject(JSContext* cx, HandleObject obj, HandleObject protoArg)
 
 #ifdef DEBUG
 
-// We don't want jsfriendapi.h to depend on GenericPrinter,
-// so these functions are declared directly in the cpp.
-
-namespace js {
-
-extern JS_FRIEND_API(void)
-DumpString(JSString* str, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpAtom(JSAtom* atom, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpObject(JSObject* obj, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpChars(const char16_t* s, size_t n, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpValue(const JS::Value& val, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpId(jsid id, js::GenericPrinter& out);
-
-extern JS_FRIEND_API(void)
-DumpInterpreterFrame(JSContext* cx, js::GenericPrinter& out, InterpreterFrame* start = nullptr);
-
-} // namespace js
-
-JS_FRIEND_API(void)
-js::DumpString(JSString* str, js::GenericPrinter& out)
-{
-    str->dump(out);
-}
-
-JS_FRIEND_API(void)
-js::DumpAtom(JSAtom* atom, js::GenericPrinter& out)
-{
-    atom->dump(out);
-}
-
-JS_FRIEND_API(void)
-js::DumpChars(const char16_t* s, size_t n, js::GenericPrinter& out)
-{
-    out.printf("char16_t * (%p) = ", (void*) s);
-    JSString::dumpChars(s, n, out);
-    out.putChar('\n');
-}
-
-JS_FRIEND_API(void)
-js::DumpObject(JSObject* obj, js::GenericPrinter& out)
-{
-    if (!obj) {
-        out.printf("NULL\n");
-        return;
-    }
-    obj->dump(out);
-}
-
 JS_FRIEND_API(void)
 js::DumpString(JSString* str, FILE* fp)
 {
-    Fprinter out(fp);
-    js::DumpString(str, out);
+    str->dump(fp);
 }
 
 JS_FRIEND_API(void)
 js::DumpAtom(JSAtom* atom, FILE* fp)
 {
-    Fprinter out(fp);
-    js::DumpAtom(atom, out);
+    atom->dump(fp);
 }
 
 JS_FRIEND_API(void)
 js::DumpChars(const char16_t* s, size_t n, FILE* fp)
 {
-    Fprinter out(fp);
-    js::DumpChars(s, n, out);
+    fprintf(fp, "char16_t * (%p) = ", (void*) s);
+    JSString::dumpChars(s, n, fp);
+    fputc('\n', fp);
 }
 
 JS_FRIEND_API(void)
 js::DumpObject(JSObject* obj, FILE* fp)
 {
-    Fprinter out(fp);
-    js::DumpObject(obj, out);
-}
-
-JS_FRIEND_API(void)
-js::DumpId(jsid id, FILE* fp)
-{
-    Fprinter out(fp);
-    js::DumpId(id, out);
-}
-
-JS_FRIEND_API(void)
-js::DumpValue(const JS::Value& val, FILE* fp) {
-    Fprinter out(fp);
-    js::DumpValue(val, out);
+    if (!obj) {
+        fprintf(fp, "NULL\n");
+        return;
+    }
+    obj->dump(fp);
 }
 
 JS_FRIEND_API(void)
@@ -789,8 +725,7 @@ js::DumpId(jsid id) {
 JS_FRIEND_API(void)
 js::DumpInterpreterFrame(JSContext* cx, InterpreterFrame* start)
 {
-    Fprinter out(stderr);
-    DumpInterpreterFrame(cx, out, start);
+    DumpInterpreterFrame(cx, stderr, start);
 }
 JS_FRIEND_API(bool)
 js::DumpPC(JSContext* cx) {
@@ -1122,7 +1057,7 @@ JS::ForceLexicalInitialization(JSContext *cx, HandleObject obj)
     for (Shape::Range<NoGC> r(nobj->lastProperty()); !r.empty(); r.popFront()) {
         Shape* s = &r.front();
         Value v = nobj->getSlot(s->slot());
-        if (s->isDataProperty() && v.isMagic() && v.whyMagic() == JS_UNINITIALIZED_LEXICAL) {
+        if (s->hasSlot() && v.isMagic() && v.whyMagic() == JS_UNINITIALIZED_LEXICAL) {
             nobj->setSlot(s->slot(), UndefinedValue());
             initializedAny = true;
         }

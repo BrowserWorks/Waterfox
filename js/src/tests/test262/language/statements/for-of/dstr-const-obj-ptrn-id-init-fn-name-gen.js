@@ -5,7 +5,7 @@
 description: SingleNameBinding assigns name to "anonymous" generator functions (for-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
 es6id: 13.7.5.11
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     IterationStatement :
@@ -48,7 +48,6 @@ info: |
           ii. ReturnIfAbrupt(hasNameProperty).
           iii. If hasNameProperty is false, perform SetFunctionName(v,
                bindingId).
-
 ---*/
 
 var iterCount = 0;

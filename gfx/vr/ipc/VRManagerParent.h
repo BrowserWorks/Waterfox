@@ -8,13 +8,13 @@
 #ifndef MOZILLA_GFX_VR_VRMANAGERPARENT_H
 #define MOZILLA_GFX_VR_VRMANAGERPARENT_H
 
-#include "mozilla/layers/CompositableTransactionParent.h"  // need?
+#include "mozilla/layers/CompositableTransactionParent.h"
+#include "mozilla/layers/CompositorThread.h" // for CompositorThreadHolder
 #include "mozilla/gfx/PVRManagerParent.h" // for PVRManagerParent
 #include "mozilla/gfx/PVRLayerParent.h"   // for PVRLayerParent
 #include "mozilla/ipc/ProtocolUtils.h"    // for IToplevelProtocol
 #include "mozilla/TimeStamp.h"            // for TimeStamp
 #include "gfxVR.h"                        // for VRFieldOfView
-#include "VRThread.h"                     // for VRListenerThreadHolder
 
 namespace mozilla {
 using namespace layers;
@@ -28,8 +28,9 @@ class VRControllerPuppet;
 } // namespace impl
 
 class VRManagerParent final : public PVRManagerParent
+                            , public HostIPCAllocator
+                            , public ShmemAllocator
 {
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VRManagerParent);
 public:
   explicit VRManagerParent(ProcessId aChildProcessId, bool aIsContentChild);
 
@@ -37,16 +38,49 @@ public:
   static bool CreateForGPUProcess(Endpoint<PVRManagerParent>&& aEndpoint);
   static bool CreateForContent(Endpoint<PVRManagerParent>&& aEndpoint);
 
-  bool IsSameProcess() const;
+  virtual base::ProcessId GetChildProcessId() override;
+
+  // ShmemAllocator
+
+  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
+
+  virtual bool AllocShmem(size_t aSize,
+    ipc::SharedMemory::SharedMemoryType aType,
+    ipc::Shmem* aShmem) override;
+
+  virtual bool AllocUnsafeShmem(size_t aSize,
+    ipc::SharedMemory::SharedMemoryType aType,
+    ipc::Shmem* aShmem) override;
+
+  virtual void DeallocShmem(ipc::Shmem& aShmem) override;
+
+  virtual bool IsSameProcess() const override;
   bool HaveEventListener();
   bool HaveControllerListener();
+
+  virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) override;
+  virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
   bool SendGamepadUpdate(const GamepadChangeEvent& aGamepadEvent);
   bool SendReplyGamepadVibrateHaptic(const uint32_t& aPromiseID);
 
 protected:
   ~VRManagerParent();
 
+  virtual PTextureParent* AllocPTextureParent(const SurfaceDescriptor& aSharedData,
+                                              const LayersBackend& aLayersBackend,
+                                              const TextureFlags& aFlags,
+                                              const uint64_t& aSerial) override;
+  virtual bool DeallocPTextureParent(PTextureParent* actor) override;
+
   virtual PVRLayerParent* AllocPVRLayerParent(const uint32_t& aDisplayID,
+                                              const float& aLeftEyeX,
+                                              const float& aLeftEyeY,
+                                              const float& aLeftEyeWidth,
+                                              const float& aLeftEyeHeight,
+                                              const float& aRightEyeX,
+                                              const float& aRightEyeY,
+                                              const float& aRightEyeWidth,
+                                              const float& aRightEyeHeight,
                                               const uint32_t& aGroup) override;
   virtual bool DeallocPVRLayerParent(PVRLayerParent* actor) override;
 
@@ -81,14 +115,16 @@ private:
 
   void Bind(Endpoint<PVRManagerParent>&& aEndpoint);
 
-  static void RegisterVRManagerInVRListenerThread(VRManagerParent* aVRManager);
+  static void RegisterVRManagerInCompositorThread(VRManagerParent* aVRManager);
 
   void DeferredDestroy();
 
   // This keeps us alive until ActorDestroy(), at which point we do a
   // deferred destruction of ourselves.
   RefPtr<VRManagerParent> mSelfRef;
-  RefPtr<VRListenerThreadHolder> mVRListenerThreadHolder;
+
+  // Keep the compositor thread alive, until we have destroyed ourselves.
+  RefPtr<layers::CompositorThreadHolder> mCompositorThreadHolder;
 
   // Keep the VRManager alive, until we have destroyed ourselves.
   RefPtr<VRManager> mVRManagerHolder;

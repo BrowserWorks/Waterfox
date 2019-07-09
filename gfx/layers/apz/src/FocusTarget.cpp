@@ -64,27 +64,7 @@ HasListenersForKeyEvents(nsIContent* aContent)
       nullptr, nullptr, &targets);
   NS_ENSURE_SUCCESS(rv, false);
   for (size_t i = 0; i < targets.Length(); i++) {
-    if (targets[i]->HasNonSystemGroupListenersForUntrustedKeyEvents()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-static bool
-HasListenersForNonPassiveKeyEvents(nsIContent* aContent)
-{
-  if (!aContent) {
-    return false;
-  }
-
-  WidgetEvent event(true, eVoidEvent);
-  nsTArray<EventTarget*> targets;
-  nsresult rv = EventDispatcher::Dispatch(aContent, nullptr, &event, nullptr,
-      nullptr, nullptr, &targets);
-  NS_ENSURE_SUCCESS(rv, false);
-  for (size_t i = 0; i < targets.Length(); i++) {
-    if (targets[i]->HasNonPassiveNonSystemGroupListenersForUntrustedKeyEvents()) {
+    if (targets[i]->HasUntrustedOrNonSystemGroupKeyEventListeners()) {
       return true;
     }
   }
@@ -100,7 +80,7 @@ IsEditableNode(nsINode* aNode)
 FocusTarget::FocusTarget()
   : mSequenceNumber(0)
   , mFocusHasKeyEventListeners(false)
-  , mData(AsVariant(NoFocusTarget()))
+  , mType(FocusTarget::eNone)
 {
 }
 
@@ -108,7 +88,6 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
                          uint64_t aFocusSequenceNumber)
   : mSequenceNumber(aFocusSequenceNumber)
   , mFocusHasKeyEventListeners(false)
-  , mData(AsVariant(NoFocusTarget()))
 {
   MOZ_ASSERT(aRootPresShell);
   MOZ_ASSERT(NS_IsMainThread());
@@ -120,6 +99,7 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
     FT_LOG("Creating nil target with seq=%" PRIu64 " (can't find retargeted presshell)\n",
            aFocusSequenceNumber);
 
+    mType = FocusTarget::eNone;
     return;
   }
 
@@ -128,6 +108,7 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
     FT_LOG("Creating nil target with seq=%" PRIu64 " (no document)\n",
            aFocusSequenceNumber);
 
+    mType = FocusTarget::eNone;
     return;
   }
 
@@ -135,35 +116,27 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
   // listeners or whether key events will be targeted at a different process
   // through a remote browser.
   nsCOMPtr<nsIContent> focusedContent = presShell->GetFocusedContentInOurWindow();
-  nsCOMPtr<nsIContent> keyEventTarget = focusedContent;
-
-  // If there is no focused element then event dispatch goes to the body of
-  // the page if it exists or the root element.
-  if (!keyEventTarget) {
-    keyEventTarget = document->GetUnfocusedKeyEventTarget();
-  }
 
   // Check if there are key event listeners that could prevent default or change
   // the focus or selection of the page.
-  if (gfxPrefs::APZKeyboardPassiveListeners()) {
-    mFocusHasKeyEventListeners = HasListenersForNonPassiveKeyEvents(keyEventTarget.get());
-  } else {
-    mFocusHasKeyEventListeners = HasListenersForKeyEvents(keyEventTarget.get());
-  }
+  mFocusHasKeyEventListeners =
+    HasListenersForKeyEvents(focusedContent ? focusedContent.get()
+                                            : document->GetUnfocusedKeyEventTarget());
 
-  // Check if the key event target is content editable or if the document
+  // Check if the focused element is content editable or if the document
   // is in design mode.
-  if (IsEditableNode(keyEventTarget) ||
+  if (IsEditableNode(focusedContent) ||
       IsEditableNode(document)) {
     FT_LOG("Creating nil target with seq=%" PRIu64 ", kl=%d (disabling for editable node)\n",
            aFocusSequenceNumber,
            static_cast<int>(mFocusHasKeyEventListeners));
 
+    mType = FocusTarget::eNone;
     return;
   }
 
-  // Check if the key event target is a remote browser
-  if (TabParent* browserParent = TabParent::GetFrom(keyEventTarget)) {
+  // Check if the focused element is a remote browser
+  if (TabParent* browserParent = TabParent::GetFrom(focusedContent)) {
     RenderFrameParent* rfp = browserParent->GetRenderFrame();
 
     // The globally focused element for scrolling is in a remote layer tree
@@ -173,7 +146,8 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
              mFocusHasKeyEventListeners,
              rfp->GetLayersId());
 
-      mData = AsVariant<RefLayerId>(rfp->GetLayersId());
+      mType = FocusTarget::eRefLayer;
+      mData.mRefLayerId = rfp->GetLayersId();
       return;
     }
 
@@ -181,6 +155,7 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
            aFocusSequenceNumber,
            mFocusHasKeyEventListeners);
 
+    mType = FocusTarget::eNone;
     return;
   }
 
@@ -194,6 +169,7 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
            aFocusSequenceNumber,
            mFocusHasKeyEventListeners);
 
+    mType = FocusTarget::eNone;
     return;
   }
 
@@ -210,39 +186,35 @@ FocusTarget::FocusTarget(nsIPresShell* aRootPresShell,
 
   // We might have the globally focused element for scrolling. Gather a ViewID for
   // the horizontal and vertical scroll targets of this element.
-  ScrollTargets target;
-  target.mHorizontal =  nsLayoutUtils::FindIDForScrollableFrame(horizontal);
-  target.mVertical = nsLayoutUtils::FindIDForScrollableFrame(vertical);
-  mData = AsVariant(target);
+  mType = FocusTarget::eScrollLayer;
+  mData.mScrollTargets.mHorizontal =
+    nsLayoutUtils::FindIDForScrollableFrame(horizontal);
+  mData.mScrollTargets.mVertical =
+    nsLayoutUtils::FindIDForScrollableFrame(vertical);
 
   FT_LOG("Creating scroll target with seq=%" PRIu64 ", kl=%d, h=%" PRIu64 ", v=%" PRIu64 "\n",
          aFocusSequenceNumber,
          mFocusHasKeyEventListeners,
-         target.mHorizontal,
-         target.mVertical);
+         mData.mScrollTargets.mHorizontal,
+         mData.mScrollTargets.mVertical);
 }
 
 bool
 FocusTarget::operator==(const FocusTarget& aRhs) const
 {
-  return mSequenceNumber == aRhs.mSequenceNumber &&
-         mFocusHasKeyEventListeners == aRhs.mFocusHasKeyEventListeners &&
-         mData == aRhs.mData;
-}
+  if (mSequenceNumber != aRhs.mSequenceNumber ||
+      mFocusHasKeyEventListeners != aRhs.mFocusHasKeyEventListeners ||
+      mType != aRhs.mType) {
+    return false;
+  }
 
-const char*
-FocusTarget::Type() const
-{
-  if (mData.is<RefLayerId>()) {
-    return "RefLayerId";
+  if (mType == FocusTarget::eRefLayer) {
+      return mData.mRefLayerId == aRhs.mData.mRefLayerId;
+  } else if (mType == FocusTarget::eScrollLayer) {
+      return mData.mScrollTargets.mHorizontal == aRhs.mData.mScrollTargets.mHorizontal &&
+             mData.mScrollTargets.mVertical == aRhs.mData.mScrollTargets.mVertical;
   }
-  if (mData.is<ScrollTargets>()) {
-    return "ScrollTargets";
-  }
-  if (mData.is<NoFocusTarget>()) {
-    return "NoFocusTarget";
-  }
-  return "<unknown>";
+  return true;
 }
 
 } // namespace layers

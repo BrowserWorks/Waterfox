@@ -12,7 +12,5 @@ negative:
   type: SyntaxError
 flags: [onlyStrict]
 ---*/
-
-throw "Test262: This statement should not be evaluated.";
 if (true) {} else function g() {}
 

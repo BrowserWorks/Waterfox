@@ -124,7 +124,7 @@ function getUnicodeConverter() {
 }
 
 function asyncCopy(data, file) {
-  let deferred = defer();
+  let deferred = Promise.defer();
 
   let string = JSON.stringify(data);
   let inputStream = getUnicodeConverter().convertToInputStream(string);

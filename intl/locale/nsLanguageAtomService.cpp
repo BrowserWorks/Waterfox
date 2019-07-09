@@ -6,7 +6,7 @@
 #include "nsLanguageAtomService.h"
 #include "nsUConvPropertySearch.h"
 #include "nsUnicharUtils.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Encoding.h"
@@ -36,17 +36,17 @@ nsLanguageAtomService::GetService()
   return gLangAtomService.get();
 }
 
-nsAtom*
+nsIAtom*
 nsLanguageAtomService::LookupLanguage(const nsACString &aLanguage)
 {
   nsAutoCString lowered(aLanguage);
   ToLowerCase(lowered);
 
-  RefPtr<nsAtom> lang = NS_Atomize(lowered);
+  nsCOMPtr<nsIAtom> lang = NS_Atomize(lowered);
   return GetLanguageGroup(lang);
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 nsLanguageAtomService::LookupCharSet(NotNull<const Encoding*> aEncoding)
 {
   nsAutoCString charset;
@@ -54,12 +54,12 @@ nsLanguageAtomService::LookupCharSet(NotNull<const Encoding*> aEncoding)
   nsAutoCString group;
   if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
       encodingsGroups, ArrayLength(encodingsGroups), charset, group))) {
-    return RefPtr<nsAtom>(nsGkAtoms::Unicode).forget();
+    return RefPtr<nsIAtom>(nsGkAtoms::Unicode).forget();
   }
   return NS_Atomize(group);
 }
 
-nsAtom*
+nsIAtom*
 nsLanguageAtomService::GetLocaleLanguage()
 {
   do {
@@ -83,17 +83,17 @@ nsLanguageAtomService::GetLocaleLanguage()
   return mLocaleLanguage;
 }
 
-nsAtom*
-nsLanguageAtomService::GetLanguageGroup(nsAtom *aLanguage, bool* aNeedsToCache)
+nsIAtom*
+nsLanguageAtomService::GetLanguageGroup(nsIAtom *aLanguage, bool* aNeedsToCache)
 {
-  nsAtom *retVal = mLangToGroup.GetWeak(aLanguage);
+  nsIAtom *retVal = mLangToGroup.GetWeak(aLanguage);
 
   if (!retVal) {
     if (aNeedsToCache) {
       *aNeedsToCache = true;
       return nullptr;
     }
-    RefPtr<nsAtom> uncached = GetUncachedLanguageGroup(aLanguage);
+    nsCOMPtr<nsIAtom> uncached = GetUncachedLanguageGroup(aLanguage);
     retVal = uncached.get();
 
     AssertIsMainThreadOrServoLangFontPrefsCacheLocked();
@@ -104,8 +104,8 @@ nsLanguageAtomService::GetLanguageGroup(nsAtom *aLanguage, bool* aNeedsToCache)
   return retVal;
 }
 
-already_AddRefed<nsAtom>
-nsLanguageAtomService::GetUncachedLanguageGroup(nsAtom* aLanguage) const
+already_AddRefed<nsIAtom>
+nsLanguageAtomService::GetUncachedLanguageGroup(nsIAtom* aLanguage) const
 {
   nsAutoCString langStr;
   aLanguage->ToUTF8String(langStr);
@@ -128,7 +128,7 @@ nsLanguageAtomService::GetUncachedLanguageGroup(nsAtom* aLanguage) const
                                                      langStr, langGroupStr);
   }
 
-  RefPtr<nsAtom> langGroup = NS_Atomize(langGroupStr);
+  nsCOMPtr<nsIAtom> langGroup = NS_Atomize(langGroupStr);
 
   return langGroup.forget();
 }

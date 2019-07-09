@@ -7,8 +7,7 @@
 const l10n = require("gcli/l10n");
 const {gDevTools} = require("devtools/client/framework/devtools");
 /* eslint-disable mozilla/reject-some-requires */
-const {HighlighterEnvironment} = require("devtools/server/actors/highlighters");
-const {EyeDropper} = require("devtools/server/actors/highlighters/eye-dropper");
+const {EyeDropper, HighlighterEnvironment} = require("devtools/server/actors/highlighters");
 /* eslint-enable mozilla/reject-some-requires */
 const Telemetry = require("devtools/client/shared/telemetry");
 
@@ -59,7 +58,7 @@ exports.items = [{
   }],
   exec: function* (args, context) {
     if (args.hide) {
-      context.updateExec("eyedropper_server_hide").catch(console.error);
+      context.updateExec("eyedropper_server_hide").catch(e => console.error(e));
       return;
     }
 
@@ -75,7 +74,7 @@ exports.items = [{
 
     let telemetry = new Telemetry();
     telemetry.toolOpened(args.frommenu ? "menueyedropper" : "eyedropper");
-    context.updateExec("eyedropper_server").catch(console.error);
+    context.updateExec("eyedropper_server").catch(e => console.error(e));
   }
 }, {
   item: "command",

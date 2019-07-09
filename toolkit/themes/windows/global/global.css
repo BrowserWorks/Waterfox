@@ -135,7 +135,12 @@ statusbarpanel:not(.statusbar-resizerpanel):-moz-lwtheme {
 
 sidebarheader {
   min-height: 25px;
+  background-color: -moz-Dialog;
+  color: -moz-dialogText;
   text-shadow: none;
+  -moz-appearance: toolbox;
+  border-bottom: 1px solid ThreeDShadow;
+  border-top: 1px solid ThreeDHighlight;
 }
 
 sidebarheader > label {
@@ -152,6 +157,10 @@ toolbar[mode="text"] .toolbarbutton-text {
 }
 
 /* ::::: miscellaneous formatting ::::: */
+
+:root:-moz-lwtheme {
+  -moz-appearance: none;
+}
 
 :root:-moz-lwtheme-darktext {
   text-shadow: 0 -0.5px 1.5px white;
@@ -238,11 +247,9 @@ label[disabled="true"] {
   color: GrayText;
 }
 
-@media (-moz-windows-classic) {
-  label[disabled="true"] {
-    color: ThreeDShadow;
-    text-shadow: 1px 1px ThreeDHighlight;
-  }
+label[disabled="true"]:-moz-system-metric(windows-classic) {
+  color: ThreeDShadow;
+  text-shadow: 1px 1px ThreeDHighlight;
 }
 
 .tooltip-label {
@@ -300,21 +307,96 @@ popupnotificationcontent {
   border: none;
   margin: -14px;
   padding: 0;
-  background-image: url("chrome://global/skin/icons/autoscroll.svg");
-  background-size: contain;
+  background-image: url("chrome://global/skin/icons/autoscroll.png");
   background-color: transparent;
-  background-repeat: no-repeat;
+%ifdef XP_WIN
+  background-position: right top;
+%endif
   -moz-appearance: none;
 }
 
 .autoscroller[scrolldir="NS"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-vertical.svg");
+%ifdef XP_WIN
+  background-position: right center;
+%else
+  background-position: left center;
+%endif
 }
 
 .autoscroller[scrolldir="EW"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-horizontal.svg");
+%ifdef XP_WIN
+  background-position: right bottom;
+%else
+  background-position: left bottom;
+%endif
 }
 
 /* :::::: Close button icons ::::: */
 
-%include ../../shared/close-icon.inc.css
+.close-icon {
+  list-style-image: url("chrome://global/skin/icons/close.png");
+  -moz-image-region: rect(0, 20px, 20px, 0);
+}
+
+.close-icon:hover {
+  -moz-image-region: rect(0, 40px, 20px, 20px);
+}
+
+.close-icon:hover:active {
+  -moz-image-region: rect(0, 60px, 20px, 40px);
+}
+
+.close-icon > .button-icon,
+.close-icon > .button-box > .button-icon,
+.close-icon > .toolbarbutton-icon {
+  width: 20px;
+}
+
+@media (-moz-os-version: windows-win7) {
+  .close-icon {
+    -moz-image-region: rect(0, 16px, 16px, 0);
+  }
+
+  .close-icon:hover {
+    -moz-image-region: rect(0, 32px, 16px, 16px);
+  }
+
+  .close-icon:hover:active {
+    -moz-image-region: rect(0, 48px, 16px, 32px);
+  }
+
+  .close-icon > .button-icon,
+  .close-icon > .button-box > .button-icon,
+  .close-icon > .toolbarbutton-icon {
+    width: 16px;
+  }
+}
+
+@media (min-resolution: 1.1dppx) {
+  .close-icon {
+    list-style-image: url("chrome://global/skin/icons/close@2x.png");
+    -moz-image-region: rect(0, 40px, 40px, 0);
+  }
+
+  .close-icon:hover {
+    -moz-image-region: rect(0, 80px, 40px, 40px);
+  }
+
+  .close-icon:hover:active {
+    -moz-image-region: rect(0, 120px, 40px, 80px);
+  }
+
+  @media (-moz-os-version: windows-win7) {
+    .close-icon {
+      -moz-image-region: rect(0, 32px, 32px, 0);
+    }
+
+    .close-icon:hover {
+      -moz-image-region: rect(0, 64px, 32px, 32px);
+    }
+
+    .close-icon:hover:active {
+      -moz-image-region: rect(0, 96px, 32px, 64px);
+    }
+  }
+}

@@ -73,9 +73,6 @@ enum class ScopeKind : uint8_t
     // ModuleScope
     Module,
 
-    // WasmInstanceScope
-    WasmInstance,
-
     // WasmFunctionScope
     WasmFunction
 };
@@ -952,19 +949,21 @@ class ModuleScope : public Scope
     static Shape* getEmptyEnvironmentShape(JSContext* cx);
 };
 
-class WasmInstanceScope : public Scope
+// Scope corresponding to the wasm function. A WasmFunctionScope is used by
+// Debugger only, and not for wasm execution.
+//
+class WasmFunctionScope : public Scope
 {
     friend class BindingIter;
     friend class Scope;
-    static const ScopeKind classScopeKind_ = ScopeKind::WasmInstance;
+    static const ScopeKind classScopeKind_ = ScopeKind::WasmFunction;
 
   public:
     struct Data
     {
-        uint32_t memoriesStart;
-        uint32_t globalsStart;
         uint32_t length;
         uint32_t nextFrameSlot;
+        uint32_t funcIndex;
 
         // The wasm instance of the scope.
         GCPtr<WasmInstanceObject*> instance;
@@ -974,7 +973,7 @@ class WasmInstanceScope : public Scope
         void trace(JSTracer* trc);
     };
 
-    static WasmInstanceScope* create(JSContext* cx, WasmInstanceObject* instance);
+    static WasmFunctionScope* create(JSContext* cx, WasmInstanceObject* instance, uint32_t funcIndex);
 
     static size_t sizeOfData(uint32_t length) {
         return sizeof(Data) + (length ? length - 1 : 0) * sizeof(BindingName);
@@ -994,58 +993,6 @@ class WasmInstanceScope : public Scope
         return data().instance;
     }
 
-    uint32_t memoriesStart() const {
-        return data().memoriesStart;
-    }
-
-    uint32_t globalsStart() const {
-        return data().globalsStart;
-    }
-
-    uint32_t namesCount() const {
-        return data().length;
-    }
-
-    static Shape* getEmptyEnvironmentShape(JSContext* cx);
-};
-
-// Scope corresponding to the wasm function. A WasmFunctionScope is used by
-// Debugger only, and not for wasm execution.
-//
-class WasmFunctionScope : public Scope
-{
-    friend class BindingIter;
-    friend class Scope;
-    static const ScopeKind classScopeKind_ = ScopeKind::WasmFunction;
-
-  public:
-    struct Data
-    {
-        uint32_t length;
-        uint32_t nextFrameSlot;
-        uint32_t funcIndex;
-
-        BindingName names[1];
-
-        void trace(JSTracer* trc);
-    };
-
-    static WasmFunctionScope* create(JSContext* cx, HandleScope enclosing, uint32_t funcIndex);
-
-    static size_t sizeOfData(uint32_t length) {
-        return sizeof(Data) + (length ? length - 1 : 0) * sizeof(BindingName);
-    }
-
-  private:
-    Data& data() {
-        return *reinterpret_cast<Data*>(data_);
-    }
-
-    const Data& data() const {
-        return *reinterpret_cast<Data*>(data_);
-    }
-
-  public:
     uint32_t funcIndex() const {
         return data().funcIndex;
     }
@@ -1100,15 +1047,15 @@ class BindingIter
     //               vars - environment slot or name
     //               lets - environment slot or name
     //             consts - environment slot or name
-    MOZ_INIT_OUTSIDE_CTOR uint32_t positionalFormalStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t nonPositionalFormalStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t topLevelFunctionStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t varStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t letStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t constStart_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t length_;
+    uint32_t positionalFormalStart_;
+    uint32_t nonPositionalFormalStart_;
+    uint32_t topLevelFunctionStart_;
+    uint32_t varStart_;
+    uint32_t letStart_;
+    uint32_t constStart_;
+    uint32_t length_;
 
-    MOZ_INIT_OUTSIDE_CTOR uint32_t index_;
+    uint32_t index_;
 
     enum Flags : uint8_t {
         CannotHaveSlots = 0,
@@ -1126,12 +1073,12 @@ class BindingIter
 
     static const uint8_t CanHaveSlotsMask = 0x7;
 
-    MOZ_INIT_OUTSIDE_CTOR uint8_t flags_;
-    MOZ_INIT_OUTSIDE_CTOR uint16_t argumentSlot_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t frameSlot_;
-    MOZ_INIT_OUTSIDE_CTOR uint32_t environmentSlot_;
+    uint8_t flags_;
+    uint16_t argumentSlot_;
+    uint32_t frameSlot_;
+    uint32_t environmentSlot_;
 
-    MOZ_INIT_OUTSIDE_CTOR BindingName* names_;
+    BindingName* names_;
 
     void init(uint32_t positionalFormalStart, uint32_t nonPositionalFormalStart,
               uint32_t topLevelFunctionStart, uint32_t varStart,
@@ -1162,7 +1109,6 @@ class BindingIter
     void init(GlobalScope::Data& data);
     void init(EvalScope::Data& data, bool strict);
     void init(ModuleScope::Data& data);
-    void init(WasmInstanceScope::Data& data);
     void init(WasmFunctionScope::Data& data);
 
     bool hasFormalParameterExprs() const {
@@ -1517,7 +1463,17 @@ struct GCPolicy<js::ScopeKind> : public IgnoreGCPolicy<js::ScopeKind>
 { };
 
 template <typename T>
-struct ScopeDataGCPolicy : public NonGCPointerPolicy<T> {};
+struct ScopeDataGCPolicy
+{
+    static T initial() {
+        return nullptr;
+    }
+
+    static void trace(JSTracer* trc, T* vp, const char* name) {
+        if (*vp)
+            (*vp)->trace(trc);
+    }
+};
 
 #define DEFINE_SCOPE_DATA_GCPOLICY(Data)                        \
     template <>                                                 \

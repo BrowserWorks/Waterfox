@@ -27,11 +27,10 @@ result = {...src.y} = vals;
 assert.sameValue(src.y.x, 1);
 assert.sameValue(src.y.y, 2);
 
-verifyProperty(src, "y", {
-  enumerable: true,
-  writable: true,
-  configurable: true
-});
+verifyEnumerable(src, "y");
+verifyWritable(src, "y");
+verifyConfigurable(src, "y");
+
 
 assert.sameValue(result, vals);
 

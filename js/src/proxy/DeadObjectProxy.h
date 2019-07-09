@@ -13,13 +13,22 @@ namespace js {
 
 class ProxyObject;
 
-enum DeadObjectProxyFlags
+enum DeadProxyIsCallableIsConstructorOption
 {
-    DeadObjectProxyIsCallable            = 1 << 0,
-    DeadObjectProxyIsConstructor         = 1 << 1,
-    DeadObjectProxyIsBackgroundFinalized = 1 << 2
+    DeadProxyNotCallableNotConstructor,
+    DeadProxyNotCallableIsConstructor,
+    DeadProxyIsCallableNotConstructor,
+    DeadProxyIsCallableIsConstructor
 };
 
+enum class DeadProxyBackgroundFinalized
+{
+    Yes,
+    No
+};
+
+template <DeadProxyIsCallableIsConstructorOption CC,
+          DeadProxyBackgroundFinalized BackgroundFinalized>
 class DeadObjectProxy : public BaseProxyHandler
 {
   public:
@@ -62,30 +71,29 @@ class DeadObjectProxy : public BaseProxyHandler
     virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
 
     virtual bool isCallable(JSObject* obj) const override {
-        return flags(obj) & DeadObjectProxyIsCallable;
+        return CC == DeadProxyIsCallableIsConstructor || CC == DeadProxyIsCallableNotConstructor;
     }
     virtual bool isConstructor(JSObject* obj) const override {
-        return flags(obj) & DeadObjectProxyIsConstructor;
+        return CC == DeadProxyIsCallableIsConstructor || CC == DeadProxyNotCallableIsConstructor;
     }
 
     virtual bool finalizeInBackground(const JS::Value& priv) const override {
-        return priv.toInt32() & DeadObjectProxyIsBackgroundFinalized;
+        return BackgroundFinalized == DeadProxyBackgroundFinalized::Yes;
     }
 
-    static const DeadObjectProxy singleton;
+    static const DeadObjectProxy* singleton() {
+        static DeadObjectProxy singleton;
+        return &singleton;
+    }
+
     static const char family;
-
-  private:
-    static int32_t flags(JSObject* obj) {
-        return GetProxyPrivate(obj).toInt32();
-    }
 };
 
 bool
 IsDeadProxyObject(JSObject* obj);
 
-Value
-DeadProxyTargetValue(ProxyObject* obj);
+const BaseProxyHandler*
+SelectDeadProxyHandler(ProxyObject* obj);
 
 JSObject*
 NewDeadProxyObject(JSContext* cx, JSObject* origObj = nullptr);

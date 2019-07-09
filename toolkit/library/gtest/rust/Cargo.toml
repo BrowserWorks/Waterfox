@@ -9,11 +9,9 @@ description = "Testing code for libgkrust"
 bindgen = ["gkrust-shared/bindgen"]
 servo = ["gkrust-shared/servo"]
 quantum_render = ["gkrust-shared/quantum_render"]
-cubeb-remoting = ["gkrust-shared/cubeb-remoting"]
 cubeb_pulse_rust = ["gkrust-shared/cubeb_pulse_rust"]
 gecko_debug = ["gkrust-shared/gecko_debug"]
 simd-accel = ["gkrust-shared/simd-accel"]
-no-static-ideograph-encoder-tables = ["gkrust-shared/no-static-ideograph-encoder-tables"]
 
 [dependencies]
 mp4parse-gtest = { path = "../../../../dom/media/gtest" }
@@ -45,5 +43,5 @@ rpath = false
 debug-assertions = false
 panic = "abort"
 
-[replace]
-"libudev-sys:0.1.3" = { path = "../../../../dom/webauthn/libudev-sys" }
+[patch.crates-io]
+packed_simd = { git = "https://github.com/hsivonen/packed_simd", branch = "rust_1_32" }

@@ -37,7 +37,7 @@ using namespace mozilla::dom;
 NS_IMPL_ADDREF_INHERITED(PresentationRequest, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(PresentationRequest, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PresentationRequest)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(PresentationRequest)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 static nsresult
@@ -140,7 +140,7 @@ PresentationRequest::WrapObject(JSContext* aCx,
 already_AddRefed<Promise>
 PresentationRequest::Start(ErrorResult& aRv)
 {
-  return StartWithDevice(VoidString(), aRv);
+  return StartWithDevice(NullString(), aRv);
 }
 
 already_AddRefed<Promise>
@@ -170,11 +170,6 @@ PresentationRequest::StartWithDevice(const nsAString& aDeviceId,
   RefPtr<Promise> promise = Promise::Create(global, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
-  }
-
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-    return promise.forget();
   }
 
   if (IsProhibitMixedSecurityContexts(doc) &&
@@ -274,11 +269,6 @@ PresentationRequest::Reconnect(const nsAString& aPresentationId,
   RefPtr<Promise> promise = Promise::Create(global, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
-  }
-
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-    return promise.forget();
   }
 
   if (IsProhibitMixedSecurityContexts(doc) &&
@@ -394,11 +384,6 @@ PresentationRequest::GetAvailability(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-    return promise.forget();
-  }
-
   if (IsProhibitMixedSecurityContexts(doc) &&
       !IsAllURLAuthenticated()) {
     promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
@@ -458,10 +443,6 @@ PresentationRequest::FindOrCreatePresentationAvailability(RefPtr<Promise>& aProm
 nsresult
 PresentationRequest::DispatchConnectionAvailableEvent(PresentationConnection* aConnection)
 {
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    return NS_OK;
-  }
-
   PresentationConnectionAvailableEventInit init;
   init.mConnection = aConnection;
 

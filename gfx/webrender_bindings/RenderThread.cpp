@@ -205,7 +205,7 @@ NotifyDidRender(layers::CompositorBridgeParentBase* aBridge,
 void
 RenderThread::UpdateAndRender(wr::WindowId aWindowId)
 {
-  AUTO_PROFILER_TRACING("Paint", "Composite");
+  AutoProfilerTracing tracing("Paint", "Composite");
   MOZ_ASSERT(IsInRenderThread());
 
   auto it = mRenderers.find(aWindowId);

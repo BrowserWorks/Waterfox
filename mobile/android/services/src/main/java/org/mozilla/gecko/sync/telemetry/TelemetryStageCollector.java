@@ -26,7 +26,6 @@ public class TelemetryStageCollector {
     public volatile int outboundFailed = 0;
     public volatile int reconciled = 0;
     public volatile ExtendedJSONObject error = null;
-    public volatile ExtendedJSONObject validation = null;
 
     public TelemetryStageCollector(TelemetryCollector syncCollector) {
         this.syncCollector = syncCollector;

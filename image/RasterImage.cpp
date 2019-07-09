@@ -242,21 +242,6 @@ RasterImage::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
 }
 
 //******************************************************************************
-size_t
-RasterImage::GetNativeSizesLength() const
-{
-  if (mError || !mHasSize) {
-    return 0;
-  }
-
-  if (mNativeSizes.IsEmpty()) {
-    return 1;
-  }
-
-  return mNativeSizes.Length();
-}
-
-//******************************************************************************
 NS_IMETHODIMP
 RasterImage::GetIntrinsicSize(nsSize* aSize)
 {
@@ -366,14 +351,6 @@ RasterImage::LookupFrame(const IntSize& aSize,
                !mAnimationState || mAnimationState->KnownFrameCount() < 1,
                "Animated frames should be locked");
 
-    // The surface cache may suggest the preferred size we are supposed to
-    // decode at. This should only happen if we accept substitutions.
-    if (!result.SuggestedSize().IsEmpty()) {
-      MOZ_ASSERT(!(aFlags & FLAG_SYNC_DECODE) &&
-                  (aFlags & FLAG_HIGH_QUALITY_SCALING));
-      requestedSize = result.SuggestedSize();
-    }
-
     bool ranSync = Decode(requestedSize, aFlags, aPlaybackType);
 
     // If we can or did sync decode, we should already have the frame.
@@ -479,20 +456,12 @@ RasterImage::OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey)
   bool animatedFramesDiscarded =
     mAnimationState && aSurfaceKey.Playback() == PlaybackType::eAnimated;
 
-  nsCOMPtr<nsIEventTarget> eventTarget;
-  if (mProgressTracker) {
-    eventTarget = mProgressTracker->GetEventTarget();
-  } else {
-    eventTarget = do_GetMainThread();
-  }
-
   RefPtr<RasterImage> image = this;
-  nsCOMPtr<nsIRunnable> ev = NS_NewRunnableFunction(
+  NS_DispatchToMainThread(NS_NewRunnableFunction(
                             "RasterImage::OnSurfaceDiscarded",
                             [=]() -> void {
     image->OnSurfaceDiscardedInternal(animatedFramesDiscarded);
-  });
-  eventTarget->Dispatch(ev.forget(), NS_DISPATCH_NORMAL);
+  }));
 }
 
 void
@@ -573,11 +542,6 @@ RasterImage::GetFrameAtSize(const IntSize& aSize,
                             uint32_t aWhichFrame,
                             uint32_t aFlags)
 {
-
-#ifdef DEBUG
-  NotifyDrawingObservers();
-#endif
-
   RefPtr<SourceSurface> surf =
     GetFrameInternal(aSize, aWhichFrame, aFlags).second().forget();
   // If we are here, it suggests the image is embedded in a canvas or some
@@ -699,10 +663,6 @@ RasterImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
   if (!image) {
     return nullptr;
   }
-
-#ifdef DEBUG
-  NotifyDrawingObservers();
-#endif
 
   // |image| holds a reference to a SourceSurface which in turn holds a lock on
   // the current frame's data buffer, ensuring that it doesn't get freed as
@@ -1286,12 +1246,6 @@ RasterImage::Decode(const IntSize& aSize,
   if (mHasBeenDecoded) {
     decoderFlags |= DecoderFlags::IS_REDECODE;
   }
-  if ((aFlags & FLAG_SYNC_DECODE) || !(aFlags & FLAG_HIGH_QUALITY_SCALING)) {
-    // Used SurfaceCache::Lookup instead of SurfaceCache::LookupBestMatch. That
-    // means the caller can handle a differently sized surface to be returned
-    // at any point.
-    decoderFlags |= DecoderFlags::CANNOT_SUBSTITUTE;
-  }
 
   SurfaceFlags surfaceFlags = ToSurfaceFlags(aFlags);
   if (IsOpaque()) {
@@ -1443,7 +1397,17 @@ RasterImage::DrawInternal(DrawableSurface&& aSurface,
   bool frameIsFinished = aSurface->IsFinished();
 
 #ifdef DEBUG
-  NotifyDrawingObservers();
+  // Record the image drawing for startup performance testing.
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+    NS_WARNING_ASSERTION(obs, "Can't get an observer service handle");
+    if (obs) {
+      nsCOMPtr<nsIURI> imageURI = mURI->ToIURI();
+      nsAutoCString spec;
+      imageURI->GetSpec(spec);
+      obs->NotifyObservers(nullptr, "image-drawing", NS_ConvertUTF8toUTF16(spec).get());
+    }
+  }
 #endif
 
   // By now we may have a frame with the requested size. If not, we need to
@@ -1689,32 +1653,6 @@ RasterImage::GetFramesNotified(uint32_t* aFramesNotified)
   *aFramesNotified = mFramesNotified;
 
   return NS_OK;
-}
-#endif
-
-#ifdef DEBUG
-void
-RasterImage::NotifyDrawingObservers()
-{
-  if (!mURI || !NS_IsMainThread()) {
-    return;
-  }
-
-  bool match = false;
-  if ((NS_FAILED(mURI->SchemeIs("resource", &match)) || !match) &&
-      (NS_FAILED(mURI->SchemeIs("chrome", &match)) || !match)) {
-    return;
-  }
-
-  // Record the image drawing for startup performance testing.
-  nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-  NS_WARNING_ASSERTION(obs, "Can't get an observer service handle");
-  if (obs) {
-    nsCOMPtr<nsIURI> imageURI = mURI->ToIURI();
-    nsAutoCString spec;
-    imageURI->GetSpec(spec);
-    obs->NotifyObservers(nullptr, "image-drawing", NS_ConvertUTF8toUTF16(spec).get());
-  }
 }
 #endif
 

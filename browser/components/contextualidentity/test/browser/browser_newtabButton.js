@@ -48,18 +48,8 @@ add_task(async function test_menu_without_timeout() {
   await BrowserTestUtils.waitForCondition(() => !!document.getAnonymousElementByAttribute(newTab, "anonid", "newtab-popup"), "Wait for popup to exist");
   let popup = document.getAnonymousElementByAttribute(newTab, "anonid", "newtab-popup");
 
-  let popupShownPromise = BrowserTestUtils.waitForEvent(popup, "popupshown");
-  let popupHiddenPromise = BrowserTestUtils.waitForEvent(popup, "popuphidden");
-  EventUtils.synthesizeMouseAtCenter(newTabButton, {type: "mousedown"});
-  await popupShownPromise;
-  let contextIdItems = popup.querySelectorAll("menuitem");
-  // 4 + default + manage containers
-  is(contextIdItems.length, 6, "Has 6 menu items");
-  popup.hidePopup();
-  await popupHiddenPromise;
-
-  for (let i = 0; i <= 4; i++) {
-    popupShownPromise = BrowserTestUtils.waitForEvent(popup, "popupshown");
+  for (let i = 1; i <= 4; i++) {
+    let popupShownPromise = BrowserTestUtils.waitForEvent(popup, "popupshown");
     EventUtils.synthesizeMouseAtCenter(newTabButton, {type: "mousedown"});
 
     await popupShownPromise;
@@ -67,17 +57,12 @@ add_task(async function test_menu_without_timeout() {
 
     ok(contextIdItem, `User context id ${i} exists`);
 
-    // waitForNewTab doesn't work for default tabs due to a different code path that doesn't cause a load event
-    let waitForTabPromise = BrowserTestUtils.waitForEvent(gBrowser.tabContainer, "TabOpen");
+    let waitForTabPromise = BrowserTestUtils.waitForNewTab(gBrowser);
     EventUtils.synthesizeMouseAtCenter(contextIdItem, {});
 
-    let tabEvent = await waitForTabPromise;
-    let tab = tabEvent.target;
-    if (i > 0) {
-      is(tab.getAttribute("usercontextid"), i, `New tab has UCI equal ${i}`);
-    } else {
-      ok(!tab.hasAttribute("usercontextid"), `New tab has no UCI`);
-    }
+    let tab = await waitForTabPromise;
+
+    is(tab.getAttribute("usercontextid"), i, `New tab has UCI equal ${i}`);
     await BrowserTestUtils.removeTab(tab);
   }
 });

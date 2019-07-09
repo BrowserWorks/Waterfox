@@ -5,27 +5,20 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "TestUtils",
   "resource://testing-common/TestUtils.jsm");
 
-// We need to cache these before test runs...
-let leftPaneGetters = new Map([["leftPaneFolderId", null],
-                               ["allBookmarksFolderId", null]]);
-for (let [key, val] of leftPaneGetters) {
-  if (!val) {
-    let getter = Object.getOwnPropertyDescriptor(PlacesUIUtils, key).get;
-    if (typeof getter == "function") {
-      leftPaneGetters.set(key, getter);
-    }
-  }
+// We need to cache this before test runs...
+var cachedLeftPaneFolderIdGetter;
+var getter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
+if (!cachedLeftPaneFolderIdGetter && typeof(getter) == "function") {
+  cachedLeftPaneFolderIdGetter = getter;
 }
 
-// ...And restore them when test ends.
-function restoreLeftPaneGetters() {
-  for (let [key, getter] of leftPaneGetters) {
-    Object.defineProperty(PlacesUIUtils, key, {
-      enumerable: true, configurable: true, get: getter
-    });
+// ...And restore it when test ends.
+registerCleanupFunction(function() {
+  let updatedGetter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
+  if (cachedLeftPaneFolderIdGetter && typeof(updatedGetter) != "function") {
+    PlacesUIUtils.__defineGetter__("leftPaneFolderId", cachedLeftPaneFolderIdGetter);
   }
-}
-registerCleanupFunction(restoreLeftPaneGetters);
+});
 
 function openLibrary(callback, aLeftPaneRoot) {
   let library = window.openDialog("chrome://browser/content/places/places.xul",
@@ -82,8 +75,8 @@ function promiseLibraryClosed(organizer) {
  *        Data flavor to expect.
  */
 function promiseClipboard(aPopulateClipboardFn, aFlavor) {
-  return new Promise((resolve, reject) => {
-    waitForClipboard(data => !!data, aPopulateClipboardFn, resolve, reject, aFlavor);
+  return new Promise(resolve => {
+    waitForClipboard(data => !!data, aPopulateClipboardFn, resolve, aFlavor);
   });
 }
 
@@ -157,6 +150,51 @@ function promiseIsURIVisited(aURI) {
       resolve(aIsVisited);
     });
 
+  });
+}
+
+function promiseBookmarksNotification(notification, conditionFn) {
+  info(`promiseBookmarksNotification: waiting for ${notification}`);
+  return new Promise((resolve) => {
+    let proxifiedObserver = new Proxy({}, {
+      get: (target, name) => {
+        if (name == "QueryInterface")
+          return XPCOMUtils.generateQI([ Ci.nsINavBookmarkObserver ]);
+        info(`promiseBookmarksNotification: got ${name} notification`);
+        if (name == notification)
+          return (...args) => {
+            if (conditionFn.apply(this, args)) {
+              PlacesUtils.bookmarks.removeObserver(proxifiedObserver, false);
+              executeSoon(resolve);
+            } else {
+              info(`promiseBookmarksNotification: skip cause condition doesn't apply to ${JSON.stringify(args)}`);
+            }
+          }
+        return () => {};
+      }
+    });
+    PlacesUtils.bookmarks.addObserver(proxifiedObserver);
+  });
+}
+
+function promiseHistoryNotification(notification, conditionFn) {
+  info(`Waiting for ${notification}`);
+  return new Promise((resolve) => {
+    let proxifiedObserver = new Proxy({}, {
+      get: (target, name) => {
+        if (name == "QueryInterface")
+          return XPCOMUtils.generateQI([ Ci.nsINavHistoryObserver ]);
+        if (name == notification)
+          return (...args) => {
+            if (conditionFn.apply(this, args)) {
+              PlacesUtils.history.removeObserver(proxifiedObserver, false);
+              executeSoon(resolve);
+            }
+          }
+        return () => {};
+      }
+    });
+    PlacesUtils.history.addObserver(proxifiedObserver);
   });
 }
 
@@ -239,16 +277,14 @@ function isToolbarVisible(aToolbar) {
  *        A function to be used to wait for pending work when the dialog is
  *        closing. It is passed the dialog window handle and should return a promise.
  */
-var withBookmarksDialog = async function(autoCancel, openFn, taskFn, closeFn,
-                                         dialogUrl = "chrome://browser/content/places/bookmarkProperties",
-                                         skipOverlayWait = false) {
+var withBookmarksDialog = async function(autoCancel, openFn, taskFn, closeFn) {
   let closed = false;
   let dialogPromise = new Promise(resolve => {
     Services.ww.registerNotification(function winObserver(subject, topic, data) {
       if (topic == "domwindowopened") {
         let win = subject.QueryInterface(Ci.nsIDOMWindow);
         win.addEventListener("load", function() {
-          ok(win.location.href.startsWith(dialogUrl),
+          ok(win.location.href.startsWith("chrome://browser/content/places/bookmarkProperties"),
              "The bookmark properties dialog is open");
           // This is needed for the overlay.
           waitForFocus(() => {
@@ -270,11 +306,9 @@ var withBookmarksDialog = async function(autoCancel, openFn, taskFn, closeFn,
   let dialogWin = await dialogPromise;
 
   // Ensure overlay is loaded
-  if (!skipOverlayWait) {
-    info("waiting for the overlay to be loaded");
-    await waitForCondition(() => dialogWin.gEditItemOverlay.initialized,
-                           "EditItemOverlay should be initialized");
-  }
+  info("waiting for the overlay to be loaded");
+  await waitForCondition(() => dialogWin.gEditItemOverlay.initialized,
+                         "EditItemOverlay should be initialized");
 
   // Check the first textbox is focused.
   let doc = dialogWin.document;
@@ -295,13 +329,10 @@ var withBookmarksDialog = async function(autoCancel, openFn, taskFn, closeFn,
   try {
     await taskFn(dialogWin);
   } finally {
-    if (!closed && !autoCancel) {
-      // Give the dialog a little time to close itself in the manually closing
-      // case.
-      await BrowserTestUtils.waitForCondition(() => closed,
-        "The test should have closed the dialog!");
-    }
     if (!closed) {
+      if (!autoCancel) {
+        ok(false, "The test should have closed the dialog!");
+      }
       info("withBookmarksDialog: canceling the dialog");
 
       doc.documentElement.cancelDialog();
@@ -326,7 +357,7 @@ var openContextMenuForContentSelector = async function(browser, selector) {
                                                      "popupshown");
   await ContentTask.spawn(browser, { selector }, async function(args) {
     let doc = content.document;
-    let elt = doc.querySelector(args.selector);
+    let elt = doc.querySelector(args.selector)
     dump(`openContextMenuForContentSelector: found ${elt}\n`);
 
     /* Open context menu so chrome can access the element */
@@ -433,15 +464,3 @@ var withSidebarTree = async function(type, taskFn) {
     SidebarUI.hide();
   }
 };
-
-function promisePlacesInitComplete() {
-  const gBrowserGlue = Cc["@mozilla.org/browser/browserglue;1"]
-                         .getService(Ci.nsIObserver);
-
-  let placesInitCompleteObserved = TestUtils.topicObserved("places-browser-init-complete");
-
-  gBrowserGlue.observe(null, "browser-glue-test",
-    "places-browser-init-complete");
-
-  return placesInitCompleteObserved;
-}

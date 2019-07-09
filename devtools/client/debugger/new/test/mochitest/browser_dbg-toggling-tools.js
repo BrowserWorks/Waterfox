@@ -25,10 +25,10 @@ function getSplitConsole(dbg) {
   });
 }
 
-add_task(async function() {
-  const dbg = await initDebugger("doc-scripts.html");
+add_task(function*() {
+  const dbg = yield initDebugger("doc-scripts.html");
 
-  await selectSource(dbg, "long");
+  yield selectSource(dbg, "long");
   dbg.win.cm.scrollTo(0, 284);
 
   pressKey(dbg, "inspector");

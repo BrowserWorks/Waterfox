@@ -8,6 +8,7 @@
 #define jit_CodeGenerator_h
 
 #include "jit/CacheIR.h"
+#include "jit/IonCaches.h"
 #if defined(JS_ION_PERF)
 # include "jit/PerfSpewer.h"
 #endif
@@ -245,6 +246,10 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitSubstr(LSubstr* lir);
     void visitInitializedLength(LInitializedLength* lir);
     void visitSetInitializedLength(LSetInitializedLength* lir);
+    void visitUnboxedArrayLength(LUnboxedArrayLength* lir);
+    void visitUnboxedArrayInitializedLength(LUnboxedArrayInitializedLength* lir);
+    void visitIncrementUnboxedArrayInitializedLength(LIncrementUnboxedArrayInitializedLength* lir);
+    void visitSetUnboxedArrayInitializedLength(LSetUnboxedArrayInitializedLength* lir);
     void visitNotO(LNotO* ins);
     void visitNotV(LNotV* ins);
     void visitBoundsCheck(LBoundsCheck* lir);
@@ -287,12 +292,9 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitCharCodeAt(LCharCodeAt* lir);
     void visitFromCharCode(LFromCharCode* lir);
     void visitFromCodePoint(LFromCodePoint* lir);
-    void visitStringConvertCase(LStringConvertCase* lir);
     void visitSinCos(LSinCos *lir);
     void visitStringSplit(LStringSplit* lir);
     void visitFunctionEnvironment(LFunctionEnvironment* lir);
-    void visitHomeObject(LHomeObject* lir);
-    void visitHomeObjectSuperBase(LHomeObjectSuperBase* lir);
     void visitNewLexicalEnvironmentObject(LNewLexicalEnvironmentObject* lir);
     void visitCopyLexicalEnvironmentObject(LCopyLexicalEnvironmentObject* lir);
     void visitCallGetProperty(LCallGetProperty* lir);
@@ -383,8 +385,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     };
     template <CallableOrConstructor mode>
     void emitIsCallableOrConstructor(Register object, Register output, Label* failure);
-    void visitIsCallableO(LIsCallableO* lir);
-    void visitIsCallableV(LIsCallableV* lir);
+    void visitIsCallable(LIsCallable* lir);
     void visitOutOfLineIsCallable(OutOfLineIsCallable* ool);
     void visitIsConstructor(LIsConstructor* lir);
     void visitOutOfLineIsConstructor(OutOfLineIsConstructor* ool);
@@ -431,7 +432,6 @@ class CodeGenerator final : public CodeGeneratorSpecific
 
     void visitGetPropertyCacheV(LGetPropertyCacheV* ins);
     void visitGetPropertyCacheT(LGetPropertyCacheT* ins);
-    void visitGetPropSuperCacheV(LGetPropSuperCacheV* ins);
     void visitBindNameCache(LBindNameCache* ins);
     void visitCallSetProperty(LInstruction* ins);
     void visitSetPropertyCache(LSetPropertyCache* ins);
@@ -457,7 +457,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitRotate(LRotate* ins);
 
     void visitRandom(LRandom* ins);
-    void visitSignExtendInt32(LSignExtendInt32* ins);
+    void visitSignExtend(LSignExtend* ins);
 
 #ifdef DEBUG
     void emitDebugForceBailing(LInstruction* lir);

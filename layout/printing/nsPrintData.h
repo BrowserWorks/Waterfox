@@ -57,6 +57,7 @@ public:
 
   ePrintDataType               mType;            // the type of data this is (Printing or Print Preview)
   RefPtr<nsDeviceContext>   mPrintDC;
+  FILE                        *mDebugFilePtr;    // a file where information can go to when printing
 
   mozilla::UniquePtr<nsPrintObject> mPrintObject;
 
@@ -86,7 +87,7 @@ public:
   nsCOMPtr<nsIPrintSettings>  mPrintSettings;
   nsPrintPreviewListener*     mPPEventListeners;
 
-  nsString                    mBrandName; //  needed as a substitute name for a document
+  char16_t*            mBrandName; //  needed as a substitute name for a document
 
 private:
   nsPrintData() = delete;

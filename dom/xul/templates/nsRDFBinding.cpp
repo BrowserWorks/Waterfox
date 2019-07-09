@@ -23,7 +23,7 @@ RDFBindingSet::~RDFBindingSet()
 }
 
 nsresult
-RDFBindingSet::AddBinding(nsAtom* aVar, nsAtom* aRef, nsIRDFResource* aPredicate)
+RDFBindingSet::AddBinding(nsIAtom* aVar, nsIAtom* aRef, nsIRDFResource* aPredicate)
 {
     RDFBinding* newbinding = new RDFBinding(aRef, aPredicate, aVar);
     if (mFirst) {
@@ -63,7 +63,7 @@ bool
 RDFBindingSet::SyncAssignments(nsIRDFResource* aSubject,
                                nsIRDFResource* aPredicate,
                                nsIRDFNode* aTarget,
-                               nsAtom* aMemberVariable,
+                               nsIAtom* aMemberVariable,
                                nsXULTemplateResultRDF* aResult,
                                nsBindingValues& aBindingValues)
 {
@@ -163,7 +163,7 @@ RDFBindingSet::RemoveDependencies(nsIRDFResource* aSubject,
 }
 
 int32_t
-RDFBindingSet::LookupTargetIndex(nsAtom* aTargetVariable, RDFBinding** aBinding)
+RDFBindingSet::LookupTargetIndex(nsIAtom* aTargetVariable, RDFBinding** aBinding)
 {
     int32_t idx = 0;
     RDFBinding* binding = mFirst;
@@ -216,7 +216,7 @@ nsBindingValues::SetBindingSet(RDFBindingSet* aBindings)
 
 void
 nsBindingValues::GetAssignmentFor(nsXULTemplateResultRDF* aResult,
-                                  nsAtom* aVar,
+                                  nsIAtom* aVar,
                                   nsIRDFNode** aValue)
 {
     *aValue = nullptr;

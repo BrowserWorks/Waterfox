@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use dom::bindings::codegen::Bindings::HTMLTableHeaderCellElementBinding;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::document::Document;
 use dom::htmltablecellelement::HTMLTableCellElement;
 use dom::node::Node;
@@ -28,8 +28,8 @@ impl HTMLTableHeaderCellElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLTableHeaderCellElement> {
-        Node::reflect_node(Box::new(HTMLTableHeaderCellElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLTableHeaderCellElement> {
+        Node::reflect_node(box HTMLTableHeaderCellElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLTableHeaderCellElementBinding::Wrap)
     }

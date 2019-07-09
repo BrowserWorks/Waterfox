@@ -50,6 +50,10 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'chunkifyTests.js',
     'gen_template.pl',
     'harness.xul',
+    'jetpack-addon-harness.js',
+    'jetpack-addon-overlay.xul',
+    'jetpack-package-harness.js',
+    'jetpack-package-overlay.xul',
     'leaks.py',
     'mach_test_package_commands.py',
     'manifest.webapp',
@@ -165,7 +169,6 @@ TEST_HARNESS_FILES.testing.mochitest.websocketprocessbridge += [
 
 with Files("**"):
     BUG_COMPONENT = ("Testing", "Mochitest")
-    SCHEDULES.exclusive = ['mochitest', 'robocop']
 
 with Files("*remote*"):
     BUG_COMPONENT = ("Firefox for Android", "Testing")

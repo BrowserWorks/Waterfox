@@ -348,9 +348,8 @@ import org.mozilla.gecko.gfx.GeckoSurface;
     private InputProcessor mInputProcessor;
     private OutputProcessor mOutputProcessor;
     private SamplePool mSamplePool;
-    // Values will be updated after configure called.
+    // Value will be updated after configure called.
     private volatile boolean mIsAdaptivePlaybackSupported = false;
-    private boolean mIsTunneledPlaybackSupported = false;
 
     public synchronized void setCallbacks(ICodecCallbacks callbacks) throws RemoteException {
         mCallbacks = callbacks;
@@ -404,9 +403,6 @@ import org.mozilla.gecko.gfx.GeckoSurface;
             final boolean renderToSurface = surface != null;
             mOutputProcessor = new OutputProcessor(renderToSurface);
             mSamplePool = new SamplePool(name, renderToSurface);
-            if (renderToSurface) {
-                mIsTunneledPlaybackSupported = mCodec.isTunneledPlaybackSupported(mime);
-            }
             if (DEBUG) { Log.d(LOGTAG, codec.toString() + " created. Render to surface?" + renderToSurface); }
             return true;
         }
@@ -475,11 +471,6 @@ import org.mozilla.gecko.gfx.GeckoSurface;
     @Override
     public synchronized boolean isAdaptivePlaybackSupported() {
         return mIsAdaptivePlaybackSupported;
-    }
-
-    @Override
-    public synchronized boolean isTunneledPlaybackSupported() {
-        return mIsTunneledPlaybackSupported;
     }
 
     @Override

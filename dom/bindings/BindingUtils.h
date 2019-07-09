@@ -286,7 +286,7 @@ UnwrapObjectInternal(V& obj, U& value, prototypes::ID protoID,
   // something of type U might trigger GC (e.g. release the value currently
   // stored in there, with arbitrary consequences) and invalidate the
   // "unwrappedObj" pointer.
-  T* tempValue = nullptr;
+  T* tempValue;
   nsresult rv = UnwrapObjectInternal<T, false>(unwrappedObj, tempValue,
                                                protoID, protoDepth);
   if (NS_SUCCEEDED(rv)) {
@@ -1918,9 +1918,9 @@ GetOrCreateDOMReflectorNoWrap(JSContext* cx, T& value,
 
 template <class T>
 inline JSObject*
-GetCallbackFromCallbackObject(JSContext* aCx, T* aObj)
+GetCallbackFromCallbackObject(T* aObj)
 {
-  return aObj->Callback(aCx);
+  return aObj->CallbackOrNull();
 }
 
 // Helper for getting the callback JSObject* of a smart ptr around a
@@ -1929,26 +1929,26 @@ GetCallbackFromCallbackObject(JSContext* aCx, T* aObj)
 template <class T, bool isSmartPtr=IsSmartPtr<T>::value>
 struct GetCallbackFromCallbackObjectHelper
 {
-  static inline JSObject* Get(JSContext* aCx, const T& aObj)
+  static inline JSObject* Get(const T& aObj)
   {
-    return GetCallbackFromCallbackObject(aCx, aObj.get());
+    return GetCallbackFromCallbackObject(aObj.get());
   }
 };
 
 template <class T>
 struct GetCallbackFromCallbackObjectHelper<T, false>
 {
-  static inline JSObject* Get(JSContext* aCx, T& aObj)
+  static inline JSObject* Get(T& aObj)
   {
-    return GetCallbackFromCallbackObject(aCx, &aObj);
+    return GetCallbackFromCallbackObject(&aObj);
   }
 };
 
 template<class T>
 inline JSObject*
-GetCallbackFromCallbackObject(JSContext* aCx, T& aObj)
+GetCallbackFromCallbackObject(T& aObj)
 {
-  return GetCallbackFromCallbackObjectHelper<T>::Get(aCx, aObj);
+  return GetCallbackFromCallbackObjectHelper<T>::Get(aObj);
 }
 
 static inline bool
@@ -2697,8 +2697,8 @@ const nsAString& NonNullHelper(const binding_detail::FakeString& aArg)
 
 // Reparent the wrapper of aObj to whatever its native now thinks its
 // parent should be.
-void
-ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObj, ErrorResult& aError);
+nsresult
+ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObj);
 
 /**
  * Used to implement the Symbol.hasInstance property of an interface object.
@@ -2819,18 +2819,6 @@ ToSupportsIsOnPrimaryInheritanceChain(T* aObject, nsWrapperCache* aCache)
                                                                      aCache);
 }
 
-// Get the size of allocated memory to associate with a binding JSObject for a
-// native object. This is supplied to the JS engine to allow it to schedule GC
-// when necessary.
-//
-// This function supplies a default value and is overloaded for specific native
-// object types.
-inline size_t
-BindingJSObjectMallocBytes(void *aNativePtr)
-{
-  return 0;
-}
-
 // The BindingJSObjectCreator class is supposed to be used by a caller that
 // wants to create and initialise a binding JSObject. After initialisation has
 // been successfully completed it should call ForgetObject().
@@ -2873,10 +2861,6 @@ public:
       mNative = aNative;
       mReflector = aReflector;
     }
-
-    if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
-      JS_updateMallocCounter(aCx, mallocBytes);
-    }
   }
 
   void
@@ -2889,10 +2873,6 @@ public:
       js::SetReservedSlot(aReflector, DOM_OBJECT_SLOT, JS::PrivateValue(aNative));
       mNative = aNative;
       mReflector = aReflector;
-    }
-
-    if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
-      JS_updateMallocCounter(aCx, mallocBytes);
     }
   }
 
@@ -3393,10 +3373,11 @@ GetCustomElementReactionsStack(JS::Handle<JSObject*> aObj);
 // that constructor function.
 already_AddRefed<nsGenericHTMLElement>
 CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
-                  JS::Handle<JSObject*> aGivenProto, ErrorResult& aRv);
+                  ErrorResult& aRv);
 
 void
-SetDocumentAndPageUseCounter(JSObject* aObject, UseCounter aUseCounter);
+SetDocumentAndPageUseCounter(JSContext* aCx, JSObject* aObject,
+                             UseCounter aUseCounter);
 
 // Warnings
 void

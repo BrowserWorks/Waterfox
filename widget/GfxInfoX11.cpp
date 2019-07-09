@@ -28,7 +28,7 @@ NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfoDebug)
 #endif
 
 // these global variables will be set when firing the glxtest process
-int glxtest_pipe = -1;
+int glxtest_pipe = 0;
 pid_t glxtest_pid = 0;
 
 nsresult
@@ -55,8 +55,8 @@ GfxInfo::GetData()
     // to understand this function, see bug 639842. We retrieve the OpenGL driver information in a
     // separate process to protect against bad drivers.
 
-    // if glxtest_pipe == -1, that means that we already read the information
-    if (glxtest_pipe == -1)
+    // if glxtest_pipe == 0, that means that we already read the information
+    if (!glxtest_pipe)
         return;
 
     enum { buf_size = 1024 };
@@ -65,7 +65,7 @@ GfxInfo::GetData()
                              &buf,
                              buf_size-1); // -1 because we'll append a zero
     close(glxtest_pipe);
-    glxtest_pipe = -1;
+    glxtest_pipe = 0;
 
     // bytesread < 0 would mean that the above read() call failed.
     // This should never happen. If it did, the outcome would be to blacklist anyway.
@@ -279,14 +279,18 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
                               OperatingSystem* aOS /* = nullptr */)
 
 {
-  GetData();
-
   NS_ENSURE_ARG_POINTER(aStatus);
   *aStatus = nsIGfxInfo::FEATURE_STATUS_UNKNOWN;
   aSuggestedDriverVersion.SetIsVoid(true);
   OperatingSystem os = OperatingSystem::Linux;
   if (aOS)
     *aOS = os;
+
+  if (mShutdownOccurred) {
+    return NS_OK;
+  }
+
+  GetData();
 
   if (mGLMajorVersion == 1) {
     // We're on OpenGL 1. In most cases that indicates really old hardware.

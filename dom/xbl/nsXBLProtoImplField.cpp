@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIContent.h"
 #include "nsString.h"
 #include "nsJSUtils.h"
@@ -361,10 +361,10 @@ nsXBLProtoImplField::InstallAccessors(JSContext* aCx,
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  if (!::JS_DefinePropertyById(aCx, aTargetClassObject, id,
+  if (!::JS_DefinePropertyById(aCx, aTargetClassObject, id, JS::UndefinedHandleValue,
+                               AccessorAttributes(),
                                JS_DATA_TO_FUNC_PTR(JSNative, get.get()),
-                               JS_DATA_TO_FUNC_PTR(JSNative, set.get()),
-                               AccessorAttributes())) {
+                               JS_DATA_TO_FUNC_PTR(JSNative, set.get()))) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -434,7 +434,7 @@ nsXBLProtoImplField::InstallField(JS::Handle<JSObject*> aBoundNode,
   JS::Rooted<JS::Value> result(cx);
   JS::CompileOptions options(cx);
   options.setFileAndLine(uriSpec.get(), mLineNumber)
-         .setVersion(JSVERSION_DEFAULT);
+         .setVersion(JSVERSION_LATEST);
   JS::AutoObjectVector scopeChain(cx);
   if (!nsJSUtils::GetScopeChainForElement(cx, boundElement, scopeChain)) {
     return NS_ERROR_OUT_OF_MEMORY;

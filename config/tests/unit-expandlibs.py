@@ -428,4 +428,4 @@ class TestSymbolOrder(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    mozunit.main(runwith='unittest')
+    mozunit.main()

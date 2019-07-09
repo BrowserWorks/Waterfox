@@ -5,6 +5,7 @@
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIServiceManager.h"
 #include "nsICategoryManager.h"
 #include "nsXPCOM.h"
@@ -43,7 +44,7 @@ NS_IMETHODIMP nsAppStartupNotifier::Observe(nsISupports *aSubject, const char *a
             nsAutoCString categoryEntry;
             rv = category->GetData(categoryEntry);
 
-            nsCString contractId;
+            nsXPIDLCString contractId;
             categoryManager->GetCategoryEntry(aTopic,
                                               categoryEntry.get(),
                                               getter_Copies(contractId));
@@ -58,7 +59,7 @@ NS_IMETHODIMP nsAppStartupNotifier::Observe(nsISupports *aSubject, const char *a
                 if (Substring(contractId, 0, 8).EqualsLiteral("service,"))
                     startupInstance = do_GetService(contractId.get() + 8, &rv);
                 else
-                    startupInstance = do_CreateInstance(contractId.get(), &rv);
+                    startupInstance = do_CreateInstance(contractId, &rv);
 
                 if (NS_SUCCEEDED(rv)) {
                     // Try to QI to nsIObserver

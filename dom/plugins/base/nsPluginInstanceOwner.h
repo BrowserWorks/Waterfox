@@ -8,7 +8,6 @@
 #define nsPluginInstanceOwner_h_
 
 #include "mozilla/Attributes.h"
-#include "mozilla/StaticPtr.h"
 #include "npapi.h"
 #include "nsCOMPtr.h"
 #include "nsIKeyEventInPluginCallback.h"
@@ -80,7 +79,7 @@ public:
 
   /**
    * Get the type of the HTML tag that was used ot instantiate this
-   * plugin.  Currently supported tags are EMBED or OBJECT.
+   * plugin.  Currently supported tags are EMBED, OBJECT and APPLET.
    */
   NS_IMETHOD GetTagType(nsPluginTagType *aResult);
 
@@ -260,6 +259,7 @@ public:
   bool SetCandidateWindow(
            const mozilla::widget::CandidateWindowPosition& aPosition);
   bool RequestCommitOrCancel(bool aCommitted);
+  bool EnableIME(bool aEnable);
 
   // See nsIKeyEventInPluginCallback
   virtual void HandledWindowedPluginKeyEvent(
@@ -309,7 +309,7 @@ private:
   RefPtr<nsPluginHost>      mPluginHost;
 
 #ifdef XP_MACOSX
-  static mozilla::StaticRefPtr<nsITimer>    sCATimer;
+  static nsCOMPtr<nsITimer>                *sCATimer;
   static nsTArray<nsPluginInstanceOwner*>  *sCARefreshListeners;
   bool                                      mSentInitialTopLevelWindowEvent;
   bool                                      mLastWindowIsActive;

@@ -40,6 +40,7 @@ namespace mozilla {
 class DeclarationBlock;
 namespace dom {
 struct CustomElementData;
+class DOMIntersectionObserver;
 class Element;
 } // namespace dom
 } // namespace mozilla
@@ -52,7 +53,7 @@ class nsNodeWeakReference final : public nsIWeakReference
 {
 public:
   explicit nsNodeWeakReference(nsINode* aNode)
-    : nsIWeakReference(aNode)
+    : mNode(aNode)
   {
   }
 
@@ -62,14 +63,17 @@ public:
   // nsIWeakReference
   NS_DECL_NSIWEAKREFERENCE
   virtual size_t SizeOfOnlyThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
+  virtual bool IsAlive() const override { return mNode != nullptr; }
 
   void NoticeNodeDestruction()
   {
-    mObject = nullptr;
+    mNode = nullptr;
   }
 
 private:
   ~nsNodeWeakReference();
+
+  nsINode* MOZ_NON_OWNING_REF mNode;
 };
 
 /**
@@ -114,11 +118,12 @@ public:
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
-  NS_DECL_ADDSIZEOFEXCLUDINGTHIS
+  NS_DECL_SIZEOF_EXCLUDING_THIS
 
   // nsINode interface methods
   virtual uint32_t GetChildCount() const override;
   virtual nsIContent *GetChildAt(uint32_t aIndex) const override;
+  virtual nsIContent * const * GetChildArray(uint32_t* aChildCount) const override;
   virtual int32_t IndexOf(const nsINode* aPossibleChild) const override;
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
                                  bool aNotify) override;
@@ -155,8 +160,6 @@ public:
   virtual nsTArray<nsIContent*> &DestInsertionPoints() override;
   virtual nsTArray<nsIContent*> *GetExistingDestInsertionPoints() const override;
   virtual void SetShadowRoot(ShadowRoot* aBinding) override;
-  virtual mozilla::dom::HTMLSlotElement* GetAssignedSlot() const override;
-  virtual void SetAssignedSlot(mozilla::dom::HTMLSlotElement* aSlot) override;
   virtual nsIContent *GetXBLInsertionParent() const override;
   virtual void SetXBLInsertionParent(nsIContent* aContent) override;
   virtual bool IsLink(nsIURI** aURI) const override;
@@ -223,13 +226,13 @@ public:
   static void RemoveBlackMarkedNode(nsINode* aNode);
   static void MarkNodeChildren(nsINode* aNode);
   static void InitCCCallbacks();
-  static void MarkUserData(void* aObject, nsAtom* aKey, void* aChild,
+  static void MarkUserData(void* aObject, nsIAtom* aKey, void* aChild,
                            void *aData);
 
   /**
    * Is the HTML local name a void element?
    */
-  static bool IsHTMLVoid(nsAtom* aLocalName);
+  static bool IsHTMLVoid(nsIAtom* aLocalName);
 protected:
   virtual ~FragmentOrElement();
 
@@ -300,11 +303,6 @@ public:
     nsTArray<nsIContent*> mDestInsertionPoints;
 
     /**
-     * The assigned slot associated with this element.
-     */
-    RefPtr<mozilla::dom::HTMLSlotElement> mAssignedSlot;
-
-    /**
      * XBL binding installed on the element.
      */
     RefPtr<nsXBLBinding> mXBLBinding;
@@ -318,6 +316,12 @@ public:
      * Web components custom element data.
      */
     RefPtr<CustomElementData> mCustomElementData;
+
+    /**
+     * Registered Intersection Observers on the element.
+     */
+    nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>
+      mRegisteredIntersectionObservers;
 
     /**
      * For XUL to hold either frameloader or opener.
@@ -371,7 +375,8 @@ public:
 
 protected:
   void GetMarkup(bool aIncludeSelf, nsAString& aMarkup);
-  void SetInnerHTMLInternal(const nsAString& aInnerHTML, ErrorResult& aError);
+  void SetInnerHTMLInternal(const nsAString& aInnerHTML, ErrorResult& aError,
+                            bool aNeverSanitize = false);
 
   // Override from nsINode
   virtual nsINode::nsSlots* CreateSlots() override;

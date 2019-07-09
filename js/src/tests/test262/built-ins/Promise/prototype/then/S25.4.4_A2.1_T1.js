@@ -9,7 +9,7 @@ info: >
 es6id: S25.4.4_A2.1_T1
 author: Sam Mikes
 description: Promise onResolved functions are called in predictable sequence
-includes: [promiseHelper.js]
+includes: [PromiseHelper.js]
 flags: [async]
 ---*/
 

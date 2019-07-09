@@ -6,8 +6,8 @@ use cssparser::{Parser, ParserInput};
 use dom::bindings::codegen::Bindings::MediaListBinding;
 use dom::bindings::codegen::Bindings::MediaListBinding::MediaListMethods;
 use dom::bindings::codegen::Bindings::WindowBinding::WindowBinding::WindowMethods;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::bindings::str::DOMString;
 use dom::cssstylesheet::CSSStyleSheet;
 use dom::window::Window;
@@ -23,8 +23,8 @@ use style_traits::{PARSING_MODE_DEFAULT, ToCss};
 #[dom_struct]
 pub struct MediaList {
     reflector_: Reflector,
-    parent_stylesheet: Dom<CSSStyleSheet>,
-    #[ignore_malloc_size_of = "Arc"]
+    parent_stylesheet: JS<CSSStyleSheet>,
+    #[ignore_heap_size_of = "Arc"]
     media_queries: Arc<Locked<StyleMediaList>>,
 }
 
@@ -33,7 +33,7 @@ impl MediaList {
     pub fn new_inherited(parent_stylesheet: &CSSStyleSheet,
                          media_queries: Arc<Locked<StyleMediaList>>) -> MediaList {
         MediaList {
-            parent_stylesheet: Dom::from_ref(parent_stylesheet),
+            parent_stylesheet: JS::from_ref(parent_stylesheet),
             reflector_: Reflector::new(),
             media_queries: media_queries,
         }
@@ -42,8 +42,8 @@ impl MediaList {
     #[allow(unrooted_must_root)]
     pub fn new(window: &Window, parent_stylesheet: &CSSStyleSheet,
                media_queries: Arc<Locked<StyleMediaList>>)
-        -> DomRoot<MediaList> {
-        reflect_dom_object(Box::new(MediaList::new_inherited(parent_stylesheet, media_queries)),
+        -> Root<MediaList> {
+        reflect_dom_object(box MediaList::new_inherited(parent_stylesheet, media_queries),
                            window,
                            MediaListBinding::Wrap)
     }
@@ -74,14 +74,13 @@ impl MediaListMethods for MediaList {
         let mut input = ParserInput::new(&value);
         let mut parser = Parser::new(&mut input);
         let global = self.global();
-        let window = global.as_window();
-        let url = window.get_url();
-        let quirks_mode = window.Document().quirks_mode();
-        let context = ParserContext::new_for_cssom(&url, Some(CssRuleType::Media),
+        let win = global.as_window();
+        let url = win.get_url();
+        let quirks_mode = win.Document().quirks_mode();
+        let context = ParserContext::new_for_cssom(&url, win.css_error_reporter(), Some(CssRuleType::Media),
                                                    PARSING_MODE_DEFAULT,
                                                    quirks_mode);
-        *media_queries = parse_media_query_list(&context, &mut parser,
-                                                window.css_error_reporter());
+        *media_queries = parse_media_query_list(&context, &mut parser);
     }
 
     // https://drafts.csswg.org/cssom/#dom-medialist-length
@@ -115,7 +114,7 @@ impl MediaListMethods for MediaList {
         let win = global.as_window();
         let url = win.get_url();
         let quirks_mode = win.Document().quirks_mode();
-        let context = ParserContext::new_for_cssom(&url, Some(CssRuleType::Media),
+        let context = ParserContext::new_for_cssom(&url, win.css_error_reporter(), Some(CssRuleType::Media),
                                                    PARSING_MODE_DEFAULT,
                                                    quirks_mode);
         let m = MediaQuery::parse(&context, &mut parser);
@@ -144,7 +143,7 @@ impl MediaListMethods for MediaList {
         let win = global.as_window();
         let url = win.get_url();
         let quirks_mode = win.Document().quirks_mode();
-        let context = ParserContext::new_for_cssom(&url, Some(CssRuleType::Media),
+        let context = ParserContext::new_for_cssom(&url, win.css_error_reporter(), Some(CssRuleType::Media),
                                                    PARSING_MODE_DEFAULT,
                                                    quirks_mode);
         let m = MediaQuery::parse(&context, &mut parser);

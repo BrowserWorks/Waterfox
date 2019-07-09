@@ -18,7 +18,7 @@
 
 class nsIContent;
 class nsIDOMDocument;
-class nsAtom;
+class nsIAtom;
 class nsIDOMDocumentFragment;
 class nsITransformObserver;
 class nsNodeInfoManager;
@@ -80,13 +80,13 @@ private:
     nsresult createTxWrapper();
     nsresult startHTMLElement(nsIContent* aElement, bool aXHTML);
     nsresult endHTMLElement(nsIContent* aElement);
-    void processHTTPEquiv(nsAtom* aHeader, const nsString& aValue);
-    nsresult createHTMLElement(nsAtom* aName,
+    void processHTTPEquiv(nsIAtom* aHeader, const nsString& aValue);
+    nsresult createHTMLElement(nsIAtom* aName,
                                nsIContent** aResult);
 
-    nsresult attributeInternal(nsAtom* aPrefix, nsAtom* aLocalName,
+    nsresult attributeInternal(nsIAtom* aPrefix, nsIAtom* aLocalName,
                                int32_t aNsID, const nsString& aValue);
-    nsresult startElementInternal(nsAtom* aPrefix, nsAtom* aLocalName,
+    nsresult startElementInternal(nsIAtom* aPrefix, nsIAtom* aLocalName,
                                   int32_t aNsID);
 
     nsCOMPtr<nsIDocument> mDocument;

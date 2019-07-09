@@ -3,7 +3,6 @@
 
 /*---
 info: Operator use ToString from array arguments
-esid: sec-array.prototype.join
 es5id: 15.4.4.5_A3.2_T2
 description: If Type(argument) is Object, evaluate ToPrimitive(argument, String)
 ---*/
@@ -20,7 +19,7 @@ var object = {valueOf: function() {return "+"}, toString: function() {return "*"
 var x = new Array(object);
 if (x.join() !== "*") {
   $ERROR('#2: var object = {valueOf: function() {return "+"}, toString: function() {return "*"}} var x = new Array(object); x.join() === "*". Actual: ' + (x.join()));
-}
+} 
 
 //CHECK#3
 var object = {valueOf: function() {return "+"}, toString: function() {return {}}};
@@ -65,11 +64,11 @@ try {
   var x = new Array(object);
   x.join();
   $ERROR('#7.1: var object = {valueOf: function() {return "+"}, toString: function() {throw "error"}} var x = new Array(object); x.join() throw "error". Actual: ' + (x.join()));
-}
+}  
 catch (e) {
   if (e !== "error") {
     $ERROR('#7.2: var object = {valueOf: function() {return "+"}, toString: function() {throw "error"}} var x = new Array(object); x.join() throw "error". Actual: ' + (e));
-  }
+  } 
 }
 
 //CHECK#8
@@ -78,11 +77,11 @@ try {
   var x = new Array(object);
   x.join();
   $ERROR('#8.1: var object = {valueOf: function() {return {}}, toString: function() {return {}}} var x = new Array(object); x.join() throw TypeError. Actual: ' + (x.join()));
-}
+}  
 catch (e) {
   if ((e instanceof TypeError) !== true) {
     $ERROR('#8.2: var object = {valueOf: function() {return {}}, toString: function() {return {}}} var x = new Array(object); x.join() throw TypeError. Actual: ' + (e));
-  }
+  } 
 }
 
 reportCompare(0, 0);

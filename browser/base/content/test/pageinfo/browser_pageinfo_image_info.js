@@ -1,12 +1,4 @@
 /* Make sure that "View Image Info" loads the correct image data */
-function getImageInfo(imageElement) {
-  return {
-    currentSrc: imageElement.currentSrc,
-    width: imageElement.width,
-    height: imageElement.height,
-    imageText: imageElement.title || imageElement.alt
-  };
-}
 
 function test() {
   waitForExplicitFinish();
@@ -17,7 +9,7 @@ function test() {
     var doc = gBrowser.contentDocument;
     var testImg = doc.getElementById("test-image");
     var pageInfo = BrowserPageInfo(gBrowser.selectedBrowser.currentURI.spec,
-                                   "mediaTab", getImageInfo(testImg));
+                                   "mediaTab", testImg);
 
     pageInfo.addEventListener("load", function() {
       pageInfo.onFinished.push(function() {

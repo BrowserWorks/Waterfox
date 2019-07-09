@@ -66,7 +66,7 @@ protected:
    * @param aValue [out] the value for the attribute with name specified in
    *                     aAttribute. Empty if the attribute isn't present.
    */
-  bool GetAttrValue(nsAtom *aName, nsAString& aValue);
+  bool GetAttrValue(nsIAtom *aName, nsAString& aValue);
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 };

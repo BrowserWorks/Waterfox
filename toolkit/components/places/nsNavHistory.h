@@ -238,7 +238,8 @@ public:
   static const int32_t kGetInfoIndex_VisitId;
   static const int32_t kGetInfoIndex_FromVisitId;
   static const int32_t kGetInfoIndex_VisitType;
-
+  static const int32_t kGetInfoIndex_ParentFolder;
+  static const int32_t kGetInfoIndex_ParentPath;
   int64_t GetTagsFolder();
 
   // this actually executes a query and gives you results, it is used by

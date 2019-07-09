@@ -14,6 +14,7 @@ const {Ci} = require("chrome");
 const Services = require("Services");
 const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 const {Actor, ActorClassWithSpec} = require("devtools/shared/protocol");
+const events = require("sdk/event/core");
 const {eventLoopLagSpec} = require("devtools/shared/specs/eventlooplag");
 
 exports.EventLoopLagActor = ActorClassWithSpec(eventLoopLagSpec, {
@@ -51,7 +52,7 @@ exports.EventLoopLagActor = ActorClassWithSpec(eventLoopLagSpec, {
   observe: function (subject, topic, data) {
     if (topic == "event-loop-lag") {
       // Forward event loop lag event
-      this.emit("event-loop-lag", data);
+      events.emit(this, "event-loop-lag", data);
     }
   },
 

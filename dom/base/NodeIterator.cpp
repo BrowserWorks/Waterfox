@@ -272,6 +272,7 @@ NS_IMETHODIMP NodeIterator::GetPointerBeforeReferenceNode(bool *aBeforeNode)
 void NodeIterator::ContentRemoved(nsIDocument *aDocument,
                                   nsIContent *aContainer,
                                   nsIContent *aChild,
+                                  int32_t aIndexInContainer,
                                   nsIContent *aPreviousSibling)
 {
     nsINode *container = NODE_FROM(aContainer, aDocument);

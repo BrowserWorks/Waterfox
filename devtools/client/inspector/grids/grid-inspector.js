@@ -27,21 +27,19 @@ const CSS_GRID_COUNT_HISTOGRAM_ID = "DEVTOOLS_NUMBER_OF_CSS_GRIDS_IN_A_PAGE";
 const SHOW_GRID_AREAS = "devtools.gridinspector.showGridAreas";
 const SHOW_GRID_LINE_NUMBERS = "devtools.gridinspector.showGridLineNumbers";
 const SHOW_INFINITE_LINES_PREF = "devtools.gridinspector.showInfiniteLines";
+// @remove after release 56 (See Bug 1355747)
+const PROMOTE_COUNT_PREF = "devtools.promote.layoutview";
 
 // Default grid colors.
 const GRID_COLORS = [
-  "#9400FF",
-  "#DF00A9",
-  "#0A84FF",
-  "#12BC00",
-  "#EA8000",
-  "#00B0BD",
-  "#D70022",
-  "#4B42FF",
-  "#B5007F",
-  "#058B00",
-  "#A47F00",
-  "#005A71"
+  "#4B0082",
+  "#BB9DFF",
+  "#FFB53B",
+  "#71F362",
+  "#FF90FF",
+  "#FF90FF",
+  "#1B80FF",
+  "#FF2647"
 ];
 
 function GridInspector(inspector, window) {
@@ -115,11 +113,7 @@ GridInspector.prototype = {
 
     this.inspector.reflowTracker.untrackReflows(this, this.onReflow);
 
-    // The color picker may not be ready as `init` function is async,
-    // and we do not wait for its completion before calling destroy in tests
-    if (this.swatchColorPickerTooltip) {
-      this.swatchColorPickerTooltip.destroy();
-    }
+    this.swatchColorPickerTooltip.destroy();
 
     this.document = null;
     this.highlighters = null;
@@ -566,6 +560,9 @@ GridInspector.prototype = {
       this.inspector.reflowTracker.untrackReflows(this, this.onReflow);
       return;
     }
+
+    // @remove after release 56 (See Bug 1355747)
+    Services.prefs.setIntPref(PROMOTE_COUNT_PREF, 0);
 
     this.inspector.reflowTracker.trackReflows(this, this.onReflow);
     this.updateGridPanel();

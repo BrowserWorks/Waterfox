@@ -15,7 +15,6 @@ info: >
   2. If NewTarget is undefined, throw a TypeError exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

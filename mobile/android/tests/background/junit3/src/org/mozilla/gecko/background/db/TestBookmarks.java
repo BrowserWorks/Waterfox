@@ -28,8 +28,9 @@ import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
-import org.mozilla.gecko.sync.repositories.android.BookmarksDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.BookmarksRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -49,10 +50,45 @@ public class TestBookmarks extends AndroidSyncTestCase {
   protected static final String LOG_TAG = "BookmarksTest";
 
   /**
+   * Trivial test that forbidden records such as pinned items
+   * will be ignored if processed.
+   */
+  public void testForbiddenItemsAreIgnored() {
+    final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+    final long now = System.currentTimeMillis();
+    final String bookmarksCollection = "bookmarks";
+
+    final BookmarkRecord pinned = new BookmarkRecord("pinpinpinpin", "bookmarks", now - 1, false);
+    final BookmarkRecord normal = new BookmarkRecord("baaaaaaaaaaa", "bookmarks", now - 2, false);
+
+    final BookmarkRecord pinnedItems  = new BookmarkRecord(Bookmarks.PINNED_FOLDER_GUID,
+                                                           bookmarksCollection, now - 4, false);
+
+    normal.type = "bookmark";
+    pinned.type = "bookmark";
+    pinnedItems.type = "folder";
+
+    pinned.parentID = Bookmarks.PINNED_FOLDER_GUID;
+    normal.parentID = Bookmarks.TOOLBAR_FOLDER_GUID;
+
+    pinnedItems.parentID = Bookmarks.PLACES_FOLDER_GUID;
+
+    inBegunSession(repo, new SimpleSuccessBeginDelegate() {
+      @Override
+      public void onBeginSucceeded(RepositorySession session) {
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(pinned));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(pinnedItems));
+        assertFalse(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(normal));
+        finishAndNotify(session);
+      }
+    });
+  }
+
+  /**
    * Trivial test that pinned items will be skipped if present in the DB.
    */
   public void testPinnedItemsAreNotRetrieved() {
-    final BookmarksRepository repo = new BookmarksRepository();
+    final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
     // Ensure that they exist.
     setUpFennecPinnedItemsRecord();
@@ -73,7 +109,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
   }
 
   public void testRetrieveFolderHasAccurateChildren() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
     final long now = System.currentTimeMillis();
 
@@ -183,7 +219,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
   }
 
   public void testMergeFoldersPreservesSaneOrder() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
     final long now = System.currentTimeMillis();
     final String folderGUID = "mobile";
@@ -275,7 +311,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * for reupload (i.e., that its modified time is *ahem* unmodified).
    */
   public void testNoReorderingMeansNoReupload() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
     final long now = System.currentTimeMillis();
 
@@ -359,7 +395,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * if we simply deleted the records, so we move them first.
    */
   public void testFolderDeletionOrphansChildren() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
     long now = System.currentTimeMillis();
 
@@ -471,7 +507,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * co-operate.
    */
   public void testInsertAndReplaceGuid() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
     wipe();
 
     BookmarkRecord folder1 = BookmarkHelpers.createFolder1();
@@ -521,7 +557,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * replace and insert co-operate.
    */
   public void testInsertAndReplaceTitle() {
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
     wipe();
 
     BookmarkRecord folder1 = BookmarkHelpers.createFolder1();
@@ -569,7 +605,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
    */
-  public void inBegunSession(final BookmarksRepository repo,
+  public void inBegunSession(final AndroidBrowserBookmarksRepository repo,
                              final RepositorySessionBeginDelegate beginDelegate) {
     Runnable go = new Runnable() {
       @Override
@@ -626,7 +662,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
         }
 
         @Override
-        public void onFetchCompleted() {
+        public void onFetchCompleted(long end) {
           finishAndNotify(session);
         }
 
@@ -635,7 +671,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
 
         }
       };
-      session.fetchModified(fetchDelegate);
+      session.fetchSince(0, fetchDelegate);
     }
   }
 
@@ -661,7 +697,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
         }
 
         @Override
-        public void onFetchCompleted() {
+        public void onFetchCompleted(long end) {
           finishAndNotify(session);
         }
 
@@ -687,7 +723,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    * @param records
    * @param tracked
    */
-  public void storeRecordsInSession(BookmarksRepository repo,
+  public void storeRecordsInSession(AndroidBrowserBookmarksRepository repo,
                                     final BookmarkRecord[] records,
                                     final Collection<String> tracked) {
     SimpleSuccessBeginDelegate beginDelegate = new SimpleSuccessBeginDelegate() {
@@ -696,7 +732,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
         RepositorySessionStoreDelegate storeDelegate = new SimpleSuccessStoreDelegate() {
 
           @Override
-          public void onStoreCompleted() {
+          public void onStoreCompleted(final long storeEnd) {
             // Pass back whatever we tracked.
             if (tracked != null) {
               Iterator<String> iter = session.getTrackedRecordIDs();
@@ -712,7 +748,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
           }
 
           @Override
-          public void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion) {
+          public void onRecordStoreReconciled(String guid) {
           }
 
           @Override
@@ -734,13 +770,13 @@ public class TestBookmarks extends AndroidSyncTestCase {
     inBegunSession(repo, beginDelegate);
   }
 
-  public ArrayList<String> fetchGUIDs(BookmarksRepository repo) {
+  public ArrayList<String> fetchGUIDs(AndroidBrowserBookmarksRepository repo) {
     SimpleFetchAllBeginDelegate beginDelegate = new SimpleFetchAllBeginDelegate();
     inBegunSession(repo, beginDelegate);
     return beginDelegate.fetchedGUIDs;
   }
 
-  public BookmarkRecord fetchGUID(BookmarksRepository repo,
+  public BookmarkRecord fetchGUID(AndroidBrowserBookmarksRepository repo,
                                   final String guid) {
     Logger.info(LOG_TAG, "Fetching for " + guid);
     SimpleFetchOneBeginDelegate beginDelegate = new SimpleFetchOneBeginDelegate(guid);
@@ -750,7 +786,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
     return (BookmarkRecord) beginDelegate.fetchedRecord;
   }
 
-  public JSONArray fetchChildrenForGUID(BookmarksRepository repo,
+  public JSONArray fetchChildrenForGUID(AndroidBrowserBookmarksRepository repo,
       final String guid) {
     return fetchGUID(repo, guid).children;
   }
@@ -919,10 +955,10 @@ public class TestBookmarks extends AndroidSyncTestCase {
     return c.getLong(0);
   }
 
-  protected BookmarksDataAccessor dataAccessor = null;
-  protected BookmarksDataAccessor getDataAccessor() {
+  protected AndroidBrowserBookmarksDataAccessor dataAccessor = null;
+  protected AndroidBrowserBookmarksDataAccessor getDataAccessor() {
     if (dataAccessor == null) {
-      dataAccessor = new BookmarksDataAccessor(getApplicationContext());
+      dataAccessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
     }
     return dataAccessor;
   }
@@ -932,7 +968,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
     getDataAccessor().wipe();
   }
 
-  protected void assertChildrenAreOrdered(BookmarksRepository repo, String guid, Record[] expected) {
+  protected void assertChildrenAreOrdered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {
     Logger.debug(getName(), "Fetching children...");
     JSONArray folderChildren = fetchChildrenForGUID(repo, guid);
 
@@ -944,7 +980,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
     }
   }
 
-  protected void assertChildrenAreUnordered(BookmarksRepository repo, String guid, Record[] expected) {
+  protected void assertChildrenAreUnordered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {
     Logger.debug(getName(), "Fetching children...");
     JSONArray folderChildren = fetchChildrenForGUID(repo, guid);
 
@@ -962,7 +998,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
   protected ArrayList<String> fetchChildrenDirect(long id) {
     Logger.debug(getName(), "Fetching children directly from DB...");
     final ArrayList<String> out = new ArrayList<String>();
-    final BookmarksDataAccessor accessor = new BookmarksDataAccessor(getApplicationContext());
+    final AndroidBrowserBookmarksDataAccessor accessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
     Cursor cur = null;
     try {
       cur = accessor.getChildren(id);
@@ -991,7 +1027,7 @@ public class TestBookmarks extends AndroidSyncTestCase {
    */
   protected void assertChildrenAreDirect(long id, String[] guids) {
     Logger.debug(getName(), "Fetching children directly from DB...");
-    BookmarksDataAccessor accessor = new BookmarksDataAccessor(getApplicationContext());
+    AndroidBrowserBookmarksDataAccessor accessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
     Cursor cur = null;
     try {
       cur = accessor.getChildren(id);

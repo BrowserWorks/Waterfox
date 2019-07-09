@@ -33,13 +33,14 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS(nsFileControlFrame)
 
   // nsIFormControlFrame
-  virtual nsresult SetFormProperty(nsAtom* aName, const nsAString& aValue) override;
+  virtual nsresult SetFormProperty(nsIAtom* aName, const nsAString& aValue) override;
   virtual void SetFocus(bool aOn, bool aRepaint) override;
 
   virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
@@ -51,7 +52,7 @@ public:
 #endif
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
   virtual void ContentStatesChanged(mozilla::EventStates aStates) override;
 

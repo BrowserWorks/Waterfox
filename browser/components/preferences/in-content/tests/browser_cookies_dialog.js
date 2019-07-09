@@ -8,7 +8,7 @@ const URI = Services.io.newURI("http://www.example.com");
 var cookiesDialog;
 
 add_task(async function openCookiesSubDialog() {
-  await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
+  await openPreferencesViaOpenPreferencesAPI("panePrivacy", null, {leaveOpen: true});
 
   let dialogOpened = promiseLoadSubDialog(COOKIES_URL);
 
@@ -25,7 +25,7 @@ add_task(async function testDeleteCookie() {
   let doc = cookiesDialog.document;
 
   // Add a cookie.
-  Services.cookies.add(URI.host, URI.pathQueryRef, "", "", false, false, true, Date.now());
+  Services.cookies.add(URI.host, URI.path, "", "", false, false, true, Date.now());
 
   let tree = doc.getElementById("cookiesList");
   Assert.equal(tree.view.rowCount, 1, "Row count should initially be 1");

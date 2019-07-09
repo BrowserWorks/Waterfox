@@ -10,7 +10,6 @@ info: >
   The %TypedArray% intrinsic object is a constructor function object that all of
   the TypedArray constructor object inherit from.
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

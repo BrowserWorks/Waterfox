@@ -3,21 +3,20 @@
 
 // Tests pretty-printing a source that is currently paused.
 
-add_task(async function() {
-  const dbg = await initDebugger("doc-minified.html");
+add_task(function* () {
+  const dbg = yield initDebugger("doc-minified.html");
 
-  await selectSource(dbg, "math.min.js");
-  await addBreakpoint(dbg, "math.min.js", 2);
+  yield selectSource(dbg, "math.min.js");
+  yield addBreakpoint(dbg, "math.min.js", 2);
 
   invokeInTab("arithmetic");
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, "math.min.js", 2);
 
   clickElement(dbg, "prettyPrintButton");
-  await waitForDispatch(dbg, "SELECT_SOURCE");
+  yield waitForDispatch(dbg, "TOGGLE_PRETTY_PRINT");
 
-  // this doesnt work yet
-  // assertPausedLocation(dbg);
+  assertPausedLocation(dbg, "math.min.js:formatted", 18);
 
-  await resume(dbg);
+  yield resume(dbg);
 });

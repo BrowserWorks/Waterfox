@@ -24,9 +24,6 @@ namespace mozilla {
 namespace gfx {
 struct RectCornerRadii;
 } // namespace gfx
-namespace layout {
-class TextDrawTarget;
-} // namespace layout
 } // namespace mozilla
 
 class ClipExporter;
@@ -81,11 +78,6 @@ public:
         CreatePreservingTransformOrNull(mozilla::gfx::DrawTarget* aTarget);
 
     mozilla::gfx::DrawTarget *GetDrawTarget() { return mDT; }
-
-    /**
-     * Returns the DrawTarget if it's actually a TextDrawTarget.
-     */
-    mozilla::layout::TextDrawTarget* GetTextDrawer();
 
     /**
      ** State
@@ -385,16 +377,16 @@ public:
 
     void PopClip();
 
-    enum ClipExtentsSpace {
-        eUserSpace = 0,
-        eDeviceSpace = 1,
-    };
+    /**
+     * This will return the current bounds of the clip region in user
+     * space.
+     */
+    gfxRect GetClipExtents();
 
     /**
-     * According to aSpace, this function will return the current bounds of
-     * the clip region in user space or device space.
+     * Whether the current clip is not a simple rectangle.
      */
-    gfxRect GetClipExtents(ClipExtentsSpace aSpace = eUserSpace) const;
+    bool HasComplexClip() const;
 
     /**
      * Returns true if the given rectangle is fully contained in the current clip.
@@ -486,9 +478,6 @@ private:
       , aaMode(mozilla::gfx::AntialiasMode::SUBPIXEL)
       , patternTransformChanged(false)
       , mBlendOpacity(0.0f)
-#ifdef DEBUG
-      , mContentChanged(false)
-#endif
     {}
 
     mozilla::gfx::CompositionOp op;
@@ -520,8 +509,6 @@ private:
     Matrix mBlendMaskTransform;
 #ifdef DEBUG
     bool mWasPushedForBlendBack;
-    // Whether the content of this AzureState changed after construction.
-    bool mContentChanged;
 #endif
   };
 
@@ -532,7 +519,7 @@ private:
   void FillAzure(const Pattern& aPattern, mozilla::gfx::Float aOpacity);
   CompositionOp GetOp();
   void ChangeTransform(const mozilla::gfx::Matrix &aNewMatrix, bool aUpdatePatternTransform = true);
-  Rect GetAzureDeviceSpaceClipBounds() const;
+  Rect GetAzureDeviceSpaceClipBounds();
   Matrix GetDeviceTransform() const;
   Matrix GetDTTransform() const;
 

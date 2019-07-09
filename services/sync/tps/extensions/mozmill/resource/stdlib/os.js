@@ -25,7 +25,7 @@ function listDirectory(file) {
 }
 
 function getFileForPath(path) {
-  var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+  var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
   file.initWithPath(path);
   return file;
 }

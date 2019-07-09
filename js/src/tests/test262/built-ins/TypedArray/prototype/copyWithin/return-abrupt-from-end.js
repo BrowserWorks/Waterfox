@@ -24,7 +24,6 @@ info: >
   ToInteger(end).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -10,7 +10,7 @@
 #include "mozilla/Attributes.h"
 
 #include "nsCOMPtr.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIChannel.h"
 #include "nsILoadGroup.h"
 #include "nsILoadInfo.h"

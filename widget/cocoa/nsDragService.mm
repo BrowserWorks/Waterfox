@@ -396,14 +396,14 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
         nsCOMPtr<nsISupportsCString> currentFlavor = do_QueryElementAt(flavorList, i);
         if (!currentFlavor)
           continue;
-        nsCString flavorStr;
+        nsXPIDLCString flavorStr;
         currentFlavor->ToString(getter_Copies(flavorStr));
 
         nsCOMPtr<nsISupports> dataSupports;
         uint32_t dataSize = 0;
-        rv = currentTransferable->GetTransferData(flavorStr.get(), getter_AddRefs(dataSupports), &dataSize);
+        rv = currentTransferable->GetTransferData(flavorStr, getter_AddRefs(dataSupports), &dataSize);
         if (NS_SUCCEEDED(rv)) {
-          aTransferable->SetTransferData(flavorStr.get(), dataSupports, dataSize);
+          aTransferable->SetTransferData(flavorStr, dataSupports, dataSize);
           return NS_OK; // maybe try to fill in more types? Is there a point?
         }
       }
@@ -416,7 +416,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
     if (!currentFlavor)
       continue;
 
-    nsCString flavorStr;
+    nsXPIDLCString flavorStr;
     currentFlavor->ToString(getter_Copies(flavorStr));
 
     MOZ_LOG(sCocoaLog, LogLevel::Info, ("nsDragService::GetData: looking for clipboard data of type %s\n", flavorStr.get()));
@@ -455,7 +455,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
       if (NS_FAILED(rv))
         continue;
 
-      aTransferable->SetTransferData(flavorStr.get(), file, dataLength);
+      aTransferable->SetTransferData(flavorStr, file, dataLength);
       
       break;
     }
@@ -482,7 +482,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
       nsPrimitiveHelpers::CreatePrimitiveForData(flavorStr, clipboardDataPtr, dataLength,
                                                  getter_AddRefs(genericDataWrapper));
 
-      aTransferable->SetTransferData(flavorStr.get(), genericDataWrapper, sizeof(nsIInputStream*));
+      aTransferable->SetTransferData(flavorStr, genericDataWrapper, sizeof(nsIInputStream*));
       free(clipboardDataPtr);
       break;
     }
@@ -548,7 +548,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
       nsCOMPtr<nsISupports> genericDataWrapper;
       nsPrimitiveHelpers::CreatePrimitiveForData(flavorStr, clipboardDataPtrNoBOM, dataLength,
                                                  getter_AddRefs(genericDataWrapper));
-      aTransferable->SetTransferData(flavorStr.get(), genericDataWrapper, dataLength);
+      aTransferable->SetTransferData(flavorStr, genericDataWrapper, dataLength);
       free(clipboardDataPtr);
       break;
     }
@@ -599,7 +599,7 @@ nsDragService::IsDataFlavorSupported(const char *aDataFlavor, bool *_retval)
         nsCOMPtr<nsISupportsCString> currentFlavor = do_QueryElementAt(flavorList, j);
         if (!currentFlavor)
           continue;
-        nsCString flavorStr;
+        nsXPIDLCString flavorStr;
         currentFlavor->ToString(getter_Copies(flavorStr));
         if (dataFlavor.Equals(flavorStr)) {
           *_retval = true;

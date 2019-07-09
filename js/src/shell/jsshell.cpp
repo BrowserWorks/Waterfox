@@ -8,8 +8,6 @@
 
 #include "shell/jsshell.h"
 
-#include "mozilla/Sprintf.h"
-
 #include "jsapi.h"
 #include "jsfriendapi.h"
 
@@ -40,7 +38,14 @@ GenerateInterfaceHelp(JSContext* cx, HandleObject obj, const char* name)
         return false;
 
     StringBuffer buf(cx);
-    int numEntries = 0;
+    if (!buf.append(name, strlen(name)) || !buf.append(" - interface object", 19))
+        return false;
+    RootedString s(cx, buf.finishString());
+    if (!s || !JS_DefineProperty(cx, obj, "usage", s, 0))
+        return false;
+    buf.clear();
+
+    bool first = true;
     for (size_t i = 0; i < idv.length(); i++) {
         RootedId id(cx, idv[i]);
         RootedValue v(cx);
@@ -59,9 +64,9 @@ GenerateInterfaceHelp(JSContext* cx, HandleObject obj, const char* name)
         if (!usage.isString() && !help.isString())
             continue;
 
-        if (numEntries && !buf.append("\n"))
+        if (!first && !buf.append("\n"))
             return false;
-        numEntries++;
+        first = false;
 
         if (!buf.append("  ", 2))
             return false;
@@ -70,19 +75,8 @@ GenerateInterfaceHelp(JSContext* cx, HandleObject obj, const char* name)
             return false;
     }
 
-    RootedString s(cx, buf.finishString());
-    if (!s || !JS_DefineProperty(cx, obj, "help", s, 0))
-        return false;
-
-    buf.clear();
-    if (!buf.append(name, strlen(name)) || !buf.append(" - interface object with ", 25))
-        return false;
-    char cbuf[100];
-    SprintfLiteral(cbuf, "%d %s", numEntries, numEntries == 1 ? "entry" : "entries");
-    if (!buf.append(cbuf, strlen(cbuf)))
-        return false;
     s = buf.finishString();
-    if (!s || !JS_DefineProperty(cx, obj, "usage", s, 0))
+    if (!s || !JS_DefineProperty(cx, obj, "help", s, 0))
         return false;
 
     return true;

@@ -18,7 +18,6 @@ info: >
   exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var findIndex = TypedArray.prototype.findIndex;

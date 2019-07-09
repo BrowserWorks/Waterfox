@@ -104,13 +104,10 @@
         <menuitem command="downloadsCmd_clearList"
                   label="&cmd.clearList2.label;"
                   accesskey="&cmd.clearList2.accesskey;"/>
-        <menuitem command="downloadsCmd_clearDownloads"
-                  hidden="true"
-                  label="&cmd.clearDownloads.label;"/>
       </menupopup>
 
-      <photonpanelmultiview id="downloadsPanel-multiView"
-                            mainViewId="downloadsPanel-mainView">
+      <panelmultiview id="downloadsPanel-multiView"
+                      mainViewId="downloadsPanel-mainView">
 
         <panelview id="downloadsPanel-mainView">
           <vbox class="panel-view-body-unscrollable">
@@ -153,17 +150,14 @@
                         label="&downloadsHistory.label;"
                         accesskey="&downloadsHistory.accesskey;"
                         flex="1"
-                        oncommand="DownloadsPanel.showDownloadsHistory();"
-                        pack="start"/>
+                        oncommand="DownloadsPanel.showDownloadsHistory();"/>
               </hbox>
             </stack>
           </vbox>
         </panelview>
 
         <panelview id="downloadsPanel-blockedSubview"
-                   descriptionheightworkaround="true"
-                   class="PanelUI-subView"
-                   title="&downloadDetails.label;">
+                   descriptionheightworkaround="true">
           <vbox class="panel-view-body-unscrollable">
             <description id="downloadsPanel-blockedSubview-title"/>
             <description id="downloadsPanel-blockedSubview-details1"/>
@@ -185,29 +179,7 @@
           </hbox>
         </panelview>
 
-        <panelview id="PanelUI-downloads" class="PanelUI-subView">
-          <vbox class="panel-subview-body">
-            <toolbarbutton id="appMenu-library-downloads-show-button"
-                           class="subviewbutton subviewbutton-iconic"
-                           label="&cmd.showDownloads.label;"
-                           closemenu="none"
-                           oncommand="DownloadsSubview.onShowDownloads(this);"/>
-            <toolbarseparator/>
-            <toolbaritem id="panelMenu_downloadsMenu"
-                         orient="vertical"
-                         smoothscroll="false"
-                         flatList="true"
-                         tooltip="bhTooltip">
-              <!-- downloads menu items will go here -->
-            </toolbaritem>
-          </vbox>
-          <toolbarbutton id="PanelUI-downloadsMore"
-                         class="panel-subview-footer subviewbutton"
-                         label="&downloadsHistory.label;"
-                         oncommand="BrowserDownloadsUI(); CustomizableUI.hidePanelForNode(this);"/>
-        </panelview>
-
-      </photonpanelmultiview>
+      </panelmultiview>
 
     </panel>
   </popupset>

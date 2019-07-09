@@ -26,10 +26,7 @@ public:
   {
     mLength = size;
     if (mBuffer) {
-      char* originalBuffer = mBuffer;
-      if (!(mBuffer = (char *)realloc(originalBuffer, size))) {
-        free(originalBuffer);
-      }
+      mBuffer = (char *)realloc(mBuffer, size);
       return;
     }
     mBuffer = (char *)malloc(size);

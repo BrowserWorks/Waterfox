@@ -1772,15 +1772,9 @@ class HashTable : private AllocPolicy
         if (!EnsureHash<HashPolicy>(l))
             return AddPtr();
         HashNumber keyHash = prepareHash(l);
-        // Calling constructor in return statement here avoid excess copying
-        // when build with Visual Studio 2015 and 2017, but it triggers a bug in
-        // gcc which is fixed in gcc-6. See bug 1385181.
-#if MOZ_IS_GCC && __GNUC__ < 6
-        AddPtr p(lookup(l, keyHash, sCollisionBit), *this, keyHash);
+        Entry& entry = lookup(l, keyHash, sCollisionBit);
+        AddPtr p(entry, *this, keyHash);
         return p;
-#else
-        return AddPtr(lookup(l, keyHash, sCollisionBit), *this, keyHash);
-#endif
     }
 
     template <typename... Args>
@@ -1797,9 +1791,7 @@ class HashTable : private AllocPolicy
             return false;
 
         MOZ_ASSERT(p.generation == generation());
-#ifdef JS_DEBUG
         MOZ_ASSERT(p.mutationCount == mutationCount);
-#endif
 
         // Changing an entry from removed to live does not affect whether we
         // are overloaded and can be handled separately.

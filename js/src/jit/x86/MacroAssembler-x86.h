@@ -414,11 +414,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         cmp32(tagOf(address), ImmTag(JSVAL_TAG_BOOLEAN));
         return cond;
     }
-    Condition testString(Condition cond, const Address& address) {
-        MOZ_ASSERT(cond == Equal || cond == NotEqual);
-        cmp32(tagOf(address), ImmTag(JSVAL_TAG_STRING));
-        return cond;
-    }
     Condition testString(Condition cond, const BaseIndex& address) {
         MOZ_ASSERT(cond == Equal || cond == NotEqual);
         cmp32(tagOf(address), ImmTag(JSVAL_TAG_STRING));
@@ -587,10 +582,10 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void load32(AbsoluteAddress address, Register dest) {
         movl(Operand(address), dest);
     }
-    template <typename T>
-    void load64(const T& address, Register64 dest) {
-        movl(Operand(LowWord(address)), dest.low);
-        movl(Operand(HighWord(address)), dest.high);
+    void load64(const Address& address, Register64 dest) {
+        movl(Operand(Address(address.base, address.offset + INT64LOW_OFFSET)), dest.low);
+        int32_t highOffset = (address.offset < 0) ? -int32_t(INT64HIGH_OFFSET) : INT64HIGH_OFFSET;
+        movl(Operand(Address(address.base, address.offset + highOffset)), dest.high);
     }
     template <typename T>
     void storePtr(ImmWord imm, T address) {
@@ -622,14 +617,13 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void store16(Register src, AbsoluteAddress address) {
         movw(src, Operand(address));
     }
-    template <typename T>
-    void store64(Register64 src, const T& address) {
-        movl(src.low, Operand(LowWord(address)));
-        movl(src.high, Operand(HighWord(address)));
+    void store64(Register64 src, Address address) {
+        movl(src.low, Operand(Address(address.base, address.offset + INT64LOW_OFFSET)));
+        movl(src.high, Operand(Address(address.base, address.offset + INT64HIGH_OFFSET)));
     }
     void store64(Imm64 imm, Address address) {
-        movl(imm.low(), Operand(LowWord(address)));
-        movl(imm.hi(), Operand(HighWord(address)));
+        movl(imm.low(), Operand(Address(address.base, address.offset + INT64LOW_OFFSET)));
+        movl(imm.hi(), Operand(Address(address.base, address.offset + INT64HIGH_OFFSET)));
     }
 
     void setStackArg(Register reg, uint32_t arg) {

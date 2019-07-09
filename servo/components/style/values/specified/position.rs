@@ -10,7 +10,7 @@
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
 use std::fmt;
-use style_traits::{ToCss, ParseError};
+use style_traits::{HasViewportPercentage, ToCss, ParseError};
 use values::computed::{CalcLengthOrPercentage, LengthOrPercentage as ComputedLengthOrPercentage};
 use values::computed::{Context, Percentage, ToComputedValue};
 use values::generics::position::Position as GenericPosition;
@@ -27,7 +27,8 @@ pub type HorizontalPosition = PositionComponent<X>;
 pub type VerticalPosition = PositionComponent<Y>;
 
 /// The specified value of a component of a CSS `<position>`.
-#[derive(Clone, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Debug, PartialEq, ToCss)]
 pub enum PositionComponent<S> {
     /// `center`
     Center,
@@ -155,6 +156,18 @@ impl ToCss for Position {
     }
 }
 
+impl<S> HasViewportPercentage for PositionComponent<S> {
+    fn has_viewport_percentage(&self) -> bool {
+        match *self {
+            PositionComponent::Length(ref lop) |
+            PositionComponent::Side(_, Some(ref lop)) => {
+                lop.has_viewport_percentage()
+            },
+            _ => false,
+        }
+    }
+}
+
 impl<S: Parse> Parse for PositionComponent<S> {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         Self::parse_quirky(context, input, AllowQuirks::No)
@@ -209,8 +222,7 @@ impl<S: Side> ToComputedValue for PositionComponent<S> {
                     },
                     ComputedLengthOrPercentage::Calc(calc) => {
                         let p = Percentage(1. - calc.percentage.map_or(0., |p| p.0));
-                        let l = -calc.unclamped_length();
-                        ComputedLengthOrPercentage::Calc(CalcLengthOrPercentage::new(l, Some(p)))
+                        ComputedLengthOrPercentage::Calc(CalcLengthOrPercentage::new(-calc.unclamped_length(), Some(p)))
                     },
                 }
             },
@@ -308,6 +320,11 @@ impl LegacyPosition {
                 return Ok(Self::new(x_pos, y_pos));
             },
             Ok(OriginComponent::Side(x_keyword)) => {
+                if input.try(|i| i.expect_ident_matching("center")).is_ok() {
+                    let x_pos = OriginComponent::Side(x_keyword);
+                    let y_pos = OriginComponent::Center;
+                    return Ok(Self::new(x_pos, y_pos));
+                }
                 if let Ok(y_keyword) = input.try(Y::parse) {
                     let x_pos = OriginComponent::Side(x_keyword);
                     let y_pos = OriginComponent::Side(y_keyword);
@@ -317,8 +334,6 @@ impl LegacyPosition {
                 if let Ok(y_lop) = input.try(|i| LengthOrPercentage::parse_quirky(context, i, allow_quirks)) {
                     return Ok(Self::new(x_pos, OriginComponent::Length(y_lop)))
                 }
-                let _ = input.try(|i| i.expect_ident_matching("center"));
-                return Ok(Self::new(x_pos, OriginComponent::Center));
             },
             Ok(x_pos @ OriginComponent::Length(_)) => {
                 if let Ok(y_keyword) = input.try(Y::parse) {
@@ -329,8 +344,9 @@ impl LegacyPosition {
                     let y_pos = OriginComponent::Length(y_lop);
                     return Ok(Self::new(x_pos, y_pos));
                 }
+                let y_pos = OriginComponent::Center;
                 let _ = input.try(|i| i.expect_ident_matching("center"));
-                return Ok(Self::new(x_pos, OriginComponent::Center));
+                return Ok(Self::new(x_pos, y_pos));
             },
             Err(_) => {},
         }

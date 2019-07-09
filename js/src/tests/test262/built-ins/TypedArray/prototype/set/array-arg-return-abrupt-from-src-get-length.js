@@ -14,7 +14,6 @@ info: >
   16. Let srcLength be ? ToLength(? Get(src, "length")).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var obj = {};

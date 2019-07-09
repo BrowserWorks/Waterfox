@@ -8,16 +8,18 @@ var permRemoved = false;
 function test() {
   waitForExplicitFinish();
 
+  let pm = Services.perms;
   registerCleanupFunction(function() {
+    pm.remove(makeURI(notificationURL), "desktop-notification");
     gBrowser.removeTab(tab);
     window.restore();
   });
 
-  addNotificationPermission(notificationURL).then(function openTab() {
-    tab = BrowserTestUtils.addTab(gBrowser, notificationURL);
-    gBrowser.selectedTab = tab;
-    tab.linkedBrowser.addEventListener("load", onLoad, true);
-  });
+  pm.add(makeURI(notificationURL), "desktop-notification", pm.ALLOW_ACTION);
+
+  tab = BrowserTestUtils.addTab(gBrowser, notificationURL);
+  gBrowser.selectedTab = tab;
+  tab.linkedBrowser.addEventListener("load", onLoad, true);
 }
 
 function onLoad() {
@@ -41,7 +43,7 @@ function onAlertShowing() {
   Services.obs.addObserver(permObserver, "perm-changed");
   alertWindow.addEventListener("beforeunload", onAlertClosing);
   disableForOriginMenuItem.click();
-  info("Clicked on disable-for-origin menuitem");
+  info("Clicked on disable-for-origin menuitem")
 }
 
 function permObserver(subject, topic, data) {

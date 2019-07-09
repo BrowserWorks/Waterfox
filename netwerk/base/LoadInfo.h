@@ -56,12 +56,10 @@ public:
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType);
 
-  // Constructor used for TYPE_DOCUMENT loads which have a different
-  // loadingContext than other loads. This ContextForTopLevelLoad is
-  // only used for content policy checks.
+  // Constructor used for TYPE_DOCUMENT loads which have no reasonable
+  // loadingNode or loadingPrincipal
   LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
            nsIPrincipal* aTriggeringPrincipal,
-           nsISupports* aContextForTopLevelLoad,
            nsSecurityFlags aSecurityFlags);
 
   // create an exact copy of the loadinfo
@@ -103,11 +101,11 @@ private:
            bool aUpgradeInsecureRequests,
            bool aVerifySignedContent,
            bool aEnforceSRI,
+           bool aAllowDocumentToBeAgnosticToCSP,
            bool aForceInheritPrincipalDropped,
            uint64_t aInnerWindowID,
            uint64_t aOuterWindowID,
            uint64_t aParentOuterWindowID,
-           uint64_t aTopOuterWindowID,
            uint64_t aFrameOuterWindowID,
            bool aEnforceSecurity,
            bool aInitialSecurityCheckDone,
@@ -115,8 +113,6 @@ private:
            const OriginAttributes& aOriginAttributes,
            RedirectHistoryArray& aRedirectChainIncludingInternalRedirects,
            RedirectHistoryArray& aRedirectChain,
-           nsTArray<nsCOMPtr<nsIPrincipal>>&& aAncestorPrincipals,
-           const nsTArray<uint64_t>& aAncestorOuterWindowIDs,
            const nsTArray<nsCString>& aUnsafeHeaders,
            bool aForcePreflight,
            bool aIsPreflight,
@@ -151,18 +147,17 @@ private:
   nsCOMPtr<nsIPrincipal>           mSandboxedLoadingPrincipal;
   nsCOMPtr<nsIURI>                 mResultPrincipalURI;
   nsWeakPtr                        mLoadingContext;
-  nsWeakPtr                        mContextForTopLevelLoad;
   nsSecurityFlags                  mSecurityFlags;
   nsContentPolicyType              mInternalContentPolicyType;
   LoadTainting                     mTainting;
   bool                             mUpgradeInsecureRequests;
   bool                             mVerifySignedContent;
   bool                             mEnforceSRI;
+  bool                             mAllowDocumentToBeAgnosticToCSP;
   bool                             mForceInheritPrincipalDropped;
   uint64_t                         mInnerWindowID;
   uint64_t                         mOuterWindowID;
   uint64_t                         mParentOuterWindowID;
-  uint64_t                         mTopOuterWindowID;
   uint64_t                         mFrameOuterWindowID;
   bool                             mEnforceSecurity;
   bool                             mInitialSecurityCheckDone;
@@ -170,8 +165,6 @@ private:
   OriginAttributes                 mOriginAttributes;
   RedirectHistoryArray             mRedirectChainIncludingInternalRedirects;
   RedirectHistoryArray             mRedirectChain;
-  nsTArray<nsCOMPtr<nsIPrincipal>> mAncestorPrincipals;
-  nsTArray<uint64_t>               mAncestorOuterWindowIDs;
   nsTArray<nsCString>              mCorsUnsafeHeaders;
   bool                             mForcePreflight;
   bool                             mIsPreflight;

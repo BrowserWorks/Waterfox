@@ -250,7 +250,7 @@ void nsMenuItemX::SetKeyEquiv()
           keyChar.Assign(charCode);
         }
         else {
-          keyChar.AssignLiteral(u" ");
+          keyChar.Assign(NS_LITERAL_STRING(" "));
         }
       }
 
@@ -283,7 +283,7 @@ void nsMenuItemX::SetKeyEquiv()
 //
 
 void
-nsMenuItemX::ObserveAttributeChanged(nsIDocument *aDocument, nsIContent *aContent, nsAtom *aAttribute)
+nsMenuItemX::ObserveAttributeChanged(nsIDocument *aDocument, nsIContent *aContent, nsIAtom *aAttribute)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
@@ -346,10 +346,7 @@ nsMenuItemX::ObserveAttributeChanged(nsIDocument *aDocument, nsIContent *aConten
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
-void nsMenuItemX::ObserveContentRemoved(nsIDocument* aDocument,
-                                        nsIContent* aContainer,
-                                        nsIContent* aChild,
-                                        nsIContent* aPreviousSibling)
+void nsMenuItemX::ObserveContentRemoved(nsIDocument *aDocument, nsIContent *aChild, int32_t aIndexInContainer)
 {
   if (aChild == mCommandContent) {
     mMenuGroupOwner->UnregisterForContentChanges(mCommandContent);

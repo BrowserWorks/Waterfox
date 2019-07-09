@@ -20,7 +20,7 @@ class nsRange;
 class nsIWidget;
 
 namespace mozilla {
-class TextEditor;
+
 namespace dom {
 class Selection;
 }
@@ -54,7 +54,7 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // Accessible
-  virtual nsAtom* LandmarkRole() const override;
+  virtual nsIAtom* LandmarkRole() const override;
   virtual int32_t GetLevelInternal() override;
   virtual already_AddRefed<nsIPersistentProperties> NativeAttributes() override;
   virtual mozilla::a11y::role NativeRole() override;
@@ -422,9 +422,8 @@ public:
 
   /**
    * Return the editor associated with the accessible.
-   * The result may be either TextEditor or HTMLEditor.
    */
-  virtual already_AddRefed<TextEditor> GetEditor() const;
+  virtual already_AddRefed<nsIEditor> GetEditor() const;
 
   /**
    * Return DOM selection object for the accessible.

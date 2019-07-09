@@ -331,7 +331,7 @@ HTMLMenuItemElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
 bool
 HTMLMenuItemElement::ParseAttribute(int32_t aNamespaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     const nsAString& aValue,
                                     nsAttrValue& aResult)
 {
@@ -373,11 +373,9 @@ HTMLMenuItemElement::GetText(nsAString& aText)
 }
 
 nsresult
-HTMLMenuItemElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLMenuItemElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue,
-                                  const nsAttrValue* aOldValue,
-                                  nsIPrincipal* aSubjectPrincipal,
-                                  bool aNotify)
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     // Handle type changes first, since some of the later conditions in this
@@ -411,7 +409,7 @@ HTMLMenuItemElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 void

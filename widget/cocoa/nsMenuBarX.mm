@@ -193,14 +193,14 @@ void nsMenuBarX::ConstructFallbackNativeMenus()
     return;
   }
 
-  nsAutoString labelUTF16;
-  nsAutoString keyUTF16;
+  nsXPIDLString labelUTF16;
+  nsXPIDLString keyUTF16;
 
   const char* labelProp = "quitMenuitem.label";
   const char* keyProp = "quitMenuitem.key";
 
-  stringBundle->GetStringFromName(labelProp, labelUTF16);
-  stringBundle->GetStringFromName(keyProp, keyUTF16);
+  stringBundle->GetStringFromName(labelProp, getter_Copies(labelUTF16));
+  stringBundle->GetStringFromName(keyProp, getter_Copies(keyUTF16));
 
   NSString* labelStr = [NSString stringWithUTF8String:
                         NS_ConvertUTF16toUTF8(labelUTF16).get()];
@@ -304,19 +304,15 @@ void nsMenuBarX::RemoveMenuAtIndex(uint32_t aIndex)
 
 void nsMenuBarX::ObserveAttributeChanged(nsIDocument* aDocument,
                                          nsIContent* aContent,
-                                         nsAtom* aAttribute)
+                                         nsIAtom* aAttribute)
 {
 }
 
 void nsMenuBarX::ObserveContentRemoved(nsIDocument* aDocument,
-                                       nsIContent* aContainer,
                                        nsIContent* aChild,
-                                       nsIContent* aPreviousSibling)
+                                       int32_t aIndexInContainer)
 {
-  nsINode* parent = NODE_FROM(aContainer, aDocument);
-  MOZ_ASSERT(parent);
-  int32_t index = parent->IndexOf(aPreviousSibling) + 1;
-  RemoveMenuAtIndex(index);
+  RemoveMenuAtIndex(aIndexInContainer);
 }
 
 void nsMenuBarX::ObserveContentInserted(nsIDocument* aDocument,

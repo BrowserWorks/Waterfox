@@ -34,7 +34,7 @@
 #include "hb-unicode-private.hh"
 
 #include <unicode/uchar.h>
-#include <unicode/unorm.h>
+#include <unicode/unorm2.h>
 #include <unicode/ustring.h>
 #include <unicode/utf16.h>
 #include <unicode/uversion.h>
@@ -200,7 +200,7 @@ hb_icu_unicode_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   if (err) return false;
 
   icu_err = U_ZERO_ERROR;
-  len = unorm_normalize (utf16, len, UNORM_NFC, 0, normalized, ARRAY_LENGTH (normalized), &icu_err);
+  len = unorm2_normalize (unorm2_getNFCInstance (&icu_err), utf16, len, normalized, ARRAY_LENGTH (normalized), &icu_err);
   if (U_FAILURE (icu_err))
     return false;
   if (u_countChar32 (normalized, len) == 1) {
@@ -261,7 +261,7 @@ hb_icu_unicode_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   if (err) return false;
 
   icu_err = U_ZERO_ERROR;
-  len = unorm_normalize (utf16, len, UNORM_NFD, 0, normalized, ARRAY_LENGTH (normalized), &icu_err);
+  len = unorm2_normalize (unorm2_getNFDInstance (&icu_err), utf16, len, normalized, ARRAY_LENGTH (normalized), &icu_err);
   if (U_FAILURE (icu_err))
     return false;
 
@@ -281,7 +281,7 @@ hb_icu_unicode_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
      * the second part :-(. */
     UChar recomposed[20];
     icu_err = U_ZERO_ERROR;
-    unorm_normalize (normalized, len, UNORM_NFC, 0, recomposed, ARRAY_LENGTH (recomposed), &icu_err);
+    unorm2_normalize (unorm2_getNFCInstance (&icu_err), normalized, len, recomposed, ARRAY_LENGTH (recomposed), &icu_err);
     if (U_FAILURE (icu_err))
       return false;
     hb_codepoint_t c;
@@ -297,7 +297,7 @@ hb_icu_unicode_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
     U16_PREV_UNSAFE (normalized, len, *b); /* Changes len in-place. */
     UChar recomposed[18 * 2];
     icu_err = U_ZERO_ERROR;
-    len = unorm_normalize (normalized, len, UNORM_NFC, 0, recomposed, ARRAY_LENGTH (recomposed), &icu_err);
+    len = unorm2_normalize (unorm2_getNFCInstance (&icu_err), normalized, len, recomposed, ARRAY_LENGTH (recomposed), &icu_err);
     if (U_FAILURE (icu_err))
       return false;
     /* We expect that recomposed has exactly one character now. */
@@ -331,41 +331,64 @@ hb_icu_unicode_decompose_compatibility (hb_unicode_funcs_t *ufuncs HB_UNUSED,
 
   /* Normalise the codepoint using NFKD mode. */
   icu_err = U_ZERO_ERROR;
-  len = unorm_normalize (utf16, len, UNORM_NFKD, 0, normalized, ARRAY_LENGTH (normalized), &icu_err);
-  if (icu_err)
+  len = unorm2_normalize (unorm2_getNFKDInstance (&icu_err), utf16, len, normalized, ARRAY_LENGTH (normalized), &icu_err);
+  if (U_FAILURE (icu_err))
     return 0;
 
   /* Convert the decomposed form from UTF-16 to UTF-32. */
   icu_err = U_ZERO_ERROR;
   u_strToUTF32 ((UChar32*) decomposed, HB_UNICODE_MAX_DECOMPOSITION_LEN, &utf32_len, normalized, len, &icu_err);
-  if (icu_err)
+  if (U_FAILURE (icu_err))
     return 0;
 
   return utf32_len;
 }
 
 
+static hb_unicode_funcs_t *static_icu_funcs = nullptr;
+
+#ifdef HB_USE_ATEXIT
+static
+void free_static_icu_funcs (void)
+{
+  hb_unicode_funcs_destroy (static_icu_funcs);
+}
+#endif
+
 hb_unicode_funcs_t *
 hb_icu_get_unicode_funcs (void)
 {
-  static const hb_unicode_funcs_t _hb_icu_unicode_funcs = {
-    HB_OBJECT_HEADER_STATIC,
+retry:
+  hb_unicode_funcs_t *funcs = (hb_unicode_funcs_t *) hb_atomic_ptr_get (&static_icu_funcs);
 
-    NULL, /* parent */
-    true, /* immutable */
-    {
-#define HB_UNICODE_FUNC_IMPLEMENT(name) hb_icu_unicode_##name,
+  if (unlikely (!funcs))
+  {
+#if U_ICU_VERSION_MAJOR_NUM >= 49
+    if (!hb_atomic_ptr_get (&normalizer)) {
+      UErrorCode icu_err = U_ZERO_ERROR;
+      /* We ignore failure in getNFCInstace(). */
+      (void) hb_atomic_ptr_cmpexch (&normalizer, nullptr, unorm2_getNFCInstance (&icu_err));
+    }
+#endif
+
+    funcs = hb_unicode_funcs_create (nullptr);
+
+#define HB_UNICODE_FUNC_IMPLEMENT(name) \
+    hb_unicode_funcs_set_##name##_func (funcs, hb_icu_unicode_##name, nullptr, nullptr);
       HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS
 #undef HB_UNICODE_FUNC_IMPLEMENT
+
+    hb_unicode_funcs_make_immutable (funcs);
+
+    if (!hb_atomic_ptr_cmpexch (&static_icu_funcs, nullptr, funcs)) {
+      hb_unicode_funcs_destroy (funcs);
+      goto retry;
     }
+
+#ifdef HB_USE_ATEXIT
+    atexit (free_static_icu_funcs); /* First person registers atexit() callback. */
+#endif
   };
 
-#if U_ICU_VERSION_MAJOR_NUM >= 49
-  if (!hb_atomic_ptr_get (&normalizer)) {
-    UErrorCode icu_err = U_ZERO_ERROR;
-    /* We ignore failure in getNFCInstace(). */
-    (void) hb_atomic_ptr_cmpexch (&normalizer, NULL, unorm2_getNFCInstance (&icu_err));
-  }
-#endif
-  return const_cast<hb_unicode_funcs_t *> (&_hb_icu_unicode_funcs);
+  return hb_unicode_funcs_reference (funcs);
 }

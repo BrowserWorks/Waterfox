@@ -10,17 +10,23 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 
-public class TopSitesPage extends RecyclerView {
+import org.mozilla.gecko.home.HomePager;
 
-    public static final int NUM_COLUMNS = 4;
-    public static final int NUM_ROWS = 2;
-    public static final int NUM_TILES = NUM_COLUMNS * NUM_ROWS;
-
-    public TopSitesPage(Context context, @Nullable AttributeSet attrs) {
+public class TopSitesPage
+        extends RecyclerView {
+    public TopSitesPage(Context context,
+                        @Nullable AttributeSet attrs) {
         super(context, attrs);
 
-        setLayoutManager(new GridLayoutManager(getContext(), NUM_COLUMNS));
+        setLayoutManager(new GridLayoutManager(context, 1));
     }
+
+    public void setTiles(int tiles) {
+        setLayoutManager(new GridLayoutManager(getContext(), tiles));
+    }
+
+    private HomePager.OnUrlOpenListener onUrlOpenListener;
+    private HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener;
 
     public TopSitesPageAdapter getAdapter() {
         return (TopSitesPageAdapter) super.getAdapter();

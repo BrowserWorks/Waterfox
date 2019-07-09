@@ -410,7 +410,7 @@
            extends="chrome://global/content/bindings/richlistbox.xml#richlistitem">
     <content align="center">
       <xul:image anonid="icon" class="category-icon"/>
-      <xul:label anonid="name" class="category-name" crop="end" flex="1" xbl:inherits="value=name"/>
+      <xul:label anonid="name" class="category-name" flex="1" xbl:inherits="value=name"/>
       <xul:label anonid="badge" class="category-badge" xbl:inherits="value=count"/>
     </content>
 
@@ -842,7 +842,8 @@
               <xul:hbox class="name-container">
                 <xul:label anonid="name" class="name" crop="end" flex="1"
                            tooltip="addonitem-tooltip" xbl:inherits="value=name"/>
-                <xul:label anonid="legacy" class="legacy-warning text-link" value="&addon.legacy.label;"/>
+                <xul:label anonid="legacy"/>
+                <xul:label anonid="version" class="version"/>
                 <xul:label class="disabled-postfix" value="&addon.disabled.postfix;"/>
                 <xul:label class="update-postfix" value="&addon.update.postfix;"/>
                 <xul:spacer flex="5000"/> <!-- Necessary to make the name crop -->
@@ -1024,6 +1025,9 @@
         document.getAnonymousElementByAttribute(this, "anonid",
                                                 "info");
       </field>
+      <field name="_version">
+        document.getAnonymousElementByAttribute(this, "anonid", "version");
+      </field>
       <field name="_experimentState">
         document.getAnonymousElementByAttribute(this, "anonid", "experiment-state");
       </field>
@@ -1125,9 +1129,9 @@
         ]]></getter>
         <setter><![CDATA[
           if (val === true) {
-            gViewController.commands.cmd_disableItem.doCommand(this.mAddon);
+            gViewController.commands["cmd_disableItem"].doCommand(this.mAddon);
           } else if (val === false) {
-            gViewController.commands.cmd_enableItem.doCommand(this.mAddon);
+            gViewController.commands["cmd_enableItem"].doCommand(this.mAddon);
           } else {
             this.mAddon.userDisabled = val;
           }
@@ -1161,6 +1165,12 @@
             this._icon.src = iconURL;
           else
             this._icon.src = "";
+
+          if (shouldShowVersionNumber(this.mAddon) && 
+            Services.prefs.getBoolPref("extensions.addonVersionInfo", true))
+            this._version.value = this.mAddon.version;
+          else
+            this._version.hidden = true;
 
           if (this.mAddon.description)
             this._description.value = this.mAddon.description;
@@ -1303,7 +1313,6 @@
               this._warningLink.hidden = true;
               this._warningBtn.hidden = true;
             } else if (!isUpgrade && this.mAddon.appDisabled &&
-                       this.mAddon.type == "extension" &&
                        !this.mAddon.multiprocessCompatible &&
                        !Services.prefs.getBoolPref("extensions.allow-non-mpc-extensions", true)) {
               this.setAttribute("notification", "error");
@@ -1313,14 +1322,6 @@
               this._errorLink.value = gStrings.ext.GetStringFromName("notification.nonMpcDisabled.link");
               this._errorLink.href = "https://wiki.mozilla.org/Add-ons/ShimsNightly";
               this._errorLink.hidden = false;
-            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon)) {
-              this.setAttribute("notification", "warning");
-              this._warning.textContent = gStrings.ext.formatStringFromName(
-                "notification.unsigned", [this.mAddon.name, gStrings.brandShortName], 2
-              );
-              this._warningLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
-              this._warningLink.href = SUPPORT_URL + "unsigned-addons";
-              this._warningLink.hidden = false;
             } else if (!isUpgrade && this.mAddon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
               this.setAttribute("notification", "warning");
               this._warning.textContent = gStrings.ext.formatStringFromName(
@@ -1394,7 +1395,7 @@
           } else {
             this._stateMenulist.hidden = true;
 
-            let enableTooltip = gViewController.commands.cmd_enableItem
+            let enableTooltip = gViewController.commands["cmd_enableItem"]
                                                .getTooltip(this.mAddon);
             this._enableBtn.setAttribute("tooltiptext", enableTooltip);
             if (this.hasPermission("enable")) {
@@ -1403,7 +1404,7 @@
               this._enableBtn.hidden = true;
             }
 
-            let disableTooltip = gViewController.commands.cmd_disableItem
+            let disableTooltip = gViewController.commands["cmd_disableItem"]
                                                 .getTooltip(this.mAddon);
             this._disableBtn.setAttribute("tooltiptext", disableTooltip);
             if (this.hasPermission("disable")) {
@@ -1413,7 +1414,7 @@
             }
           }
 
-          let uninstallTooltip = gViewController.commands.cmd_uninstallItem
+          let uninstallTooltip = gViewController.commands["cmd_uninstallItem"]
                                                 .getTooltip(this.mAddon);
           this._removeBtn.setAttribute("tooltiptext", uninstallTooltip);
           if (this.hasPermission("uninstall")) {
@@ -1458,6 +1459,14 @@
               this._experimentTime.value = timeMessage;
             }
           }
+        ]]></body>
+      </method>
+
+      <method name="_updateUpgradeInfo">
+        <body><![CDATA[
+          // Only update the version string if we're displaying the upgrade info
+          if (this.hasAttribute("upgrade") && shouldShowVersionNumber(this.mAddon))
+            this._version.value = this.mManualUpdate.version;
         ]]></body>
       </method>
 
@@ -1582,13 +1591,13 @@
 
       <method name="restart">
         <body><![CDATA[
-          gViewController.commands.cmd_restartApp.doCommand();
+          gViewController.commands["cmd_restartApp"].doCommand();
         ]]></body>
       </method>
 
       <method name="undo">
         <body><![CDATA[
-          gViewController.commands.cmd_cancelOperation.doCommand(this.mAddon);
+          gViewController.commands["cmd_cancelOperation"].doCommand(this.mAddon);
         ]]></body>
       </method>
 
@@ -1648,10 +1657,7 @@
 
       <method name="findReplacement">
         <body><![CDATA[
-          let url = (this.mAddon.type == "theme") ?
-            SUPPORT_URL + "complete-themes" :
-            `https://addons.mozilla.org/find-replacement/?guid=${this.mAddon.id}`;
-            openURL(url);
+          openURL(`https://addons.mozilla.org/find-replacement/?guid=${this.mAddon.id}`);
         ]]></body>
       </method>
 
@@ -1756,6 +1762,7 @@
 
           this.mManualUpdate = aInstall;
           this._showStatus("update-available");
+          this._updateUpgradeInfo();
         ]]></body>
       </method>
 
@@ -1958,6 +1965,7 @@
         <xul:vbox class="fade name-outer-container" flex="1">
           <xul:hbox class="name-container">
             <xul:label anonid="name" class="name" crop="end" tooltip="addonitem-tooltip"/>
+            <xul:label anonid="version" class="version" hidden="true"/>
           </xul:hbox>
         </xul:vbox>
         <xul:vbox class="install-status-container">
@@ -1978,6 +1986,9 @@
       </field>
       <field name="_name">
         document.getAnonymousElementByAttribute(this, "anonid", "name");
+      </field>
+      <field name="_version">
+        document.getAnonymousElementByAttribute(this, "anonid", "version");
       </field>
       <field name="_warning">
         document.getAnonymousElementByAttribute(this, "anonid", "warning");
@@ -2006,6 +2017,14 @@
             this._icon.src = this.mAddon.iconURL ||
                              (this.mInstall ? this.mInstall.iconURL : "");
             this._name.value = this.mAddon.name;
+
+            if (this.mAddon.version) {
+              this._version.value = this.mAddon.version;
+              this._version.hidden = false;
+            } else {
+              this._version.hidden = true;
+            }
+
           } else {
             this._icon.src = this.mInstall.iconURL;
             // AddonInstall.name isn't always available - fallback to filename
@@ -2018,6 +2037,13 @@
                        null, null);
               url.QueryInterface(Components.interfaces.nsIURL);
               this._name.value = url.fileName;
+            }
+
+            if (this.mInstall.version) {
+              this._version.value = this.mInstall.version;
+              this._version.hidden = false;
+            } else {
+              this._version.hidden = true;
             }
           }
 

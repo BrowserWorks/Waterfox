@@ -67,10 +67,9 @@ module.exports = {
   },
 
   rules: {
-    "mozilla/import-headjs-globals": "error",
-    "mozilla/mark-test-function-used": "error",
+    "mozilla/import-headjs-globals": "warn",
+    "mozilla/mark-test-function-used": "warn",
     "mozilla/no-arbitrary-setTimeout": "error",
-    "mozilla/no-useless-run-test": "error",
     "no-shadow": "error"
   }
 };

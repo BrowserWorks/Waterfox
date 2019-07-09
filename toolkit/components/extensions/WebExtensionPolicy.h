@@ -41,7 +41,7 @@ public:
   static already_AddRefed<WebExtensionPolicy>
   Constructor(dom::GlobalObject& aGlobal, const WebExtensionInit& aInit, ErrorResult& aRv);
 
-  nsAtom* Id() const { return mId; }
+  nsIAtom* Id() const { return mId; }
   void GetId(nsAString& aId) const { aId = nsDependentAtomString(mId); };
 
   const nsCString& MozExtensionHostname() const { return mHostname; }
@@ -59,7 +59,7 @@ public:
 
   Result<nsString, nsresult> GetURL(const nsAString& aPath) const;
 
-  bool CanAccessURI(const URLInfo& aURI, bool aExplicit = false) const
+  bool CanAccessURI(nsIURI* aURI, bool aExplicit = false) const
   {
     return mHostPermissions && mHostPermissions->Matches(aURI, aExplicit);
   }
@@ -69,7 +69,7 @@ public:
     return mWebAccessiblePaths.Matches(aPath);
   }
 
-  bool HasPermission(const nsAtom* aPermission) const
+  bool HasPermission(const nsIAtom* aPermission) const
   {
     return mPermissions->Contains(aPermission);
   }
@@ -81,15 +81,6 @@ public:
   nsCString BackgroundPageHTML() const;
 
   void Localize(const nsAString& aInput, nsString& aResult) const;
-
-  const nsString& Name() const
-  {
-    return mName;
-  }
-  void GetName(nsAString& aName) const
-  {
-    aName = mName;
-  }
 
   const nsString& ContentSecurityPolicy() const
   {
@@ -159,11 +150,10 @@ private:
 
   nsCOMPtr<nsISupports> mParent;
 
-  RefPtr<nsAtom> mId;
+  nsCOMPtr<nsIAtom> mId;
   nsCString mHostname;
   nsCOMPtr<nsIURI> mBaseURI;
 
-  nsString mName;
   nsString mContentSecurityPolicy;
 
   bool mActive = false;

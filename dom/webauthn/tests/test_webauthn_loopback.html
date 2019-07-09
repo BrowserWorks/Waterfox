@@ -53,39 +53,23 @@ function() {
 
     is(aCredInfo.type, "public-key", "Credential type must be public-key")
 
-    ok(aCredInfo.rawId.byteLength > 0, "Key ID exists");
+    ok(aCredInfo.rawId.length > 0, "Key ID exists");
     is(aCredInfo.id, bytesToBase64UrlSafe(aCredInfo.rawId), "Encoded Key ID and Raw Key ID match");
-
-    ok(aCredInfo.rawId === aCredInfo.rawId, "PublicKeyCredential.RawID is SameObject");
-    ok(aCredInfo.response === aCredInfo.response, "PublicKeyCredential.Response is SameObject");
-    ok(aCredInfo.response.clientDataJSON === aCredInfo.response.clientDataJSON, "PublicKeyCredential.Response.ClientDataJSON is SameObject");
-    ok(aCredInfo.response.attestationObject === aCredInfo.response.attestationObject, "PublicKeyCredential.Response.AttestationObject is SameObject");
 
     let clientData = JSON.parse(buffer2string(aCredInfo.response.clientDataJSON));
     is(clientData.challenge, bytesToBase64UrlSafe(gCredentialChallenge), "Challenge is correct");
-    is(clientData.origin, window.location.origin, "Origin is correct");
-    is(clientData.hashAlgorithm, "SHA-256", "Hash algorithm is correct");
+    // WD-05 vs. WD-06: In WD-06, the second parameter should be "window.location.origin". Fix
+    // this in Bug 1384776
+    is(clientData.origin, document.domain, "Origin is correct");
+    is(clientData.hashAlg, "S256", "Hash algorithm is correct");
 
-    return webAuthnDecodeCBORAttestation(aCredInfo.response.attestationObject)
-    .then(function(aAttestationObj) {
-      // Make sure the RP ID hash matches what we calculate.
-      return crypto.subtle.digest("SHA-256", string2buffer(document.domain))
-      .then(function(calculatedRpIdHash) {
-        let calcHashStr = bytesToBase64UrlSafe(new Uint8Array(calculatedRpIdHash));
-        let providedHashStr = bytesToBase64UrlSafe(new Uint8Array(aAttestationObj.authDataObj.rpIdHash));
-
-        is(calcHashStr, providedHashStr,
-           "Calculated RP ID hash must match what the browser derived.");
-        return Promise.resolve(aAttestationObj);
-      });
-    })
-    .then(function(aAttestationObj) {
-      ok(aAttestationObj.authDataObj.flags == (flag_TUP | flag_AT),
-         "User presence and Attestation Object must be the only flags set");
+    return webAuthnDecodeCBORAttestation(aCredInfo.response.attestationObject.buffer)
+    .then(function(decodedResult) {
+      ok(decodedResult.flags == (flag_TUP | flag_AT), "User presence and Attestation Object must both be set");
 
       aCredInfo.clientDataObj = clientData;
-      aCredInfo.publicKeyHandle = aAttestationObj.authDataObj.publicKeyHandle;
-      aCredInfo.attestationObject = aAttestationObj.authDataObj.attestationAuthData;
+      aCredInfo.publicKeyHandle = decodedResult.publicKeyHandle;
+      aCredInfo.attestationObject = decodedResult.attestationObject;
       return aCredInfo;
     });
   }
@@ -103,24 +87,22 @@ function() {
 
     is(aAssertion.type, "public-key", "Credential type must be public-key")
 
-    ok(aAssertion.rawId.byteLength > 0, "Key ID exists");
-    is(aAssertion.id, bytesToBase64UrlSafe(new Uint8Array(aAssertion.rawId)), "Encoded Key ID and Raw Key ID match");
+    ok(aAssertion.rawId.length > 0, "Key ID exists");
+    is(aAssertion.id, bytesToBase64UrlSafe(aAssertion.rawId), "Encoded Key ID and Raw Key ID match");
 
-    ok(aAssertion.response.authenticatorData === aAssertion.response.authenticatorData, "AuthenticatorAssertionResponse.AuthenticatorData is SameObject");
-    ok(aAssertion.response.signature === aAssertion.response.signature, "AuthenticatorAssertionResponse.Signature is SameObject");
-    isnot(aAssertion.response.userId, undefined, "AuthenticatorAssertionResponse.UserId is defined")
-
-    ok(aAssertion.response.authenticatorData.byteLength > 0, "Authenticator data exists");
+    ok(aAssertion.response.authenticatorData.length > 0, "Authenticator data exists");
     let clientData = JSON.parse(buffer2string(aAssertion.response.clientDataJSON));
     is(clientData.challenge, bytesToBase64UrlSafe(gAssertionChallenge), "Challenge is correct");
-    is(clientData.origin, window.location.origin, "Origin is correct");
-    is(clientData.hashAlgorithm, "SHA-256", "Hash algorithm is correct");
+    // WD-05 vs. WD-06: In WD-06, the second parameter should be "window.location.origin". Fix
+    // this in Bug 1384776
+    is(clientData.origin, document.domain, "Origin is correct");
+    is(clientData.hashAlg, "S256", "Hash algorithm is correct");
 
-    return webAuthnDecodeAuthDataArray(aAssertion.response.authenticatorData)
-    .then(function(aAttestation) {
-      ok(new Uint8Array(aAttestation.flags) == flag_TUP, "User presence must be the only flag set");
-      is(aAttestation.counter.byteLength, 4, "Counter must be 4 bytes");
-      return deriveAppAndChallengeParam(window.location.host, aAssertion.response.clientDataJSON, aAttestation)
+    return webAuthnDecodeAttestation(aAssertion.response.authenticatorData)
+    .then(function(decodedResult) {
+      ok(decodedResult.flags == flag_TUP, "User presence must be the only flag set");
+      is(decodedResult.counter.length, 4, "Counter must be 4 bytes");
+      return deriveAppAndChallengeParam(window.location.host, aAssertion.response.clientDataJSON, decodedResult)
     })
     .then(function(aParams) {
       console.log(aParams);
@@ -137,13 +119,13 @@ function() {
 
   function testMakeCredential() {
     let rp = {id: document.domain, name: "none", icon: "none"};
-    let user = {name: "none", icon: "none", displayName: "none"};
-    let param = {type: "public-key", alg: cose_alg_ECDSA_w_SHA256};
+    let user = {id: "none", name: "none", icon: "none", displayName: "none"};
+    let param = {type: "public-key", algorithm: "ES256"};
     let makeCredentialOptions = {
       rp: rp,
       user: user,
       challenge: gCredentialChallenge,
-      pubKeyCredParams: [param]
+      parameters: [param]
     };
     credm.create({publicKey: makeCredentialOptions})
     .then(decodeCreatedCredential)
@@ -156,14 +138,14 @@ function() {
 
   function testMakeDuplicate(aCredInfo) {
     let rp = {id: document.domain, name: "none", icon: "none"};
-    let user = {name: "none", icon: "none", displayName: "none"};
-    let param = {type: "public-key", alg: cose_alg_ECDSA_w_SHA256};
+    let user = {id: "none", name: "none", icon: "none", displayName: "none"};
+    let param = {type: "public-key", algorithm: "ES256"};
     let makeCredentialOptions = {
       rp: rp,
       user: user,
       challenge: gCredentialChallenge,
-      pubKeyCredParams: [param],
-      excludeCredentials: [{type: "public-key", id: new Uint8Array(aCredInfo.rawId),
+      parameters: [param],
+      excludeList: [{type: "public-key", id: Uint8Array.from(aCredInfo.rawId),
                      transports: ["usb"]}]
     };
     credm.create({publicKey: makeCredentialOptions})
@@ -181,7 +163,7 @@ function() {
   function testAssertion(aCredInfo) {
     let newCredential = {
       type: "public-key",
-      id: new Uint8Array(aCredInfo.rawId),
+      id: Uint8Array.from(aCredInfo.rawId),
       transports: ["usb"],
     }
 
@@ -189,7 +171,7 @@ function() {
       challenge: gAssertionChallenge,
       timeout: 5000, // the minimum timeout is actually 15 seconds
       rpId: document.domain,
-      allowCredentials: [newCredential]
+      allowList: [newCredential]
     };
     credm.get({publicKey: publicKeyCredentialRequestOptions})
     .then(function(aAssertion) {

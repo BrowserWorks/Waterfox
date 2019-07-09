@@ -201,7 +201,7 @@ public:
   already_AddRefed<ServiceWorkerRegistrationInfo>
   CreateNewRegistration(const nsCString& aScope,
                         nsIPrincipal* aPrincipal,
-                        ServiceWorkerUpdateViaCache aUpdateViaCache);
+                        nsLoadFlags aLoadFlags);
 
   void
   RemoveRegistration(ServiceWorkerRegistrationInfo* aRegistration);
@@ -336,9 +336,6 @@ public:
   void
   WorkerIsIdle(ServiceWorkerInfo* aWorker);
 
-  void
-  CheckPendingReadyPromises();
-
 private:
   ServiceWorkerManager();
   ~ServiceWorkerManager();
@@ -448,6 +445,9 @@ private:
   void
   StorePendingReadyPromise(nsPIDOMWindowInner* aWindow, nsIURI* aURI,
                            Promise* aPromise);
+
+  void
+  CheckPendingReadyPromises();
 
   bool
   CheckReadyPromise(nsPIDOMWindowInner* aWindow, nsIURI* aURI,

@@ -5,7 +5,6 @@
 description: Spread operator following other arguments when evaluation throws (Array initializer)
 esid: sec-runtime-semantics-arrayaccumulation
 es6id: 12.2.5.2
-features: [generators]
 flags: [generated]
 info: |
     SpreadElement : ...AssignmentExpression
@@ -30,7 +29,6 @@ info: |
     2. Let spreadRef be the result of evaluating AssignmentExpression.
     3. Let iterator be GetIterator(GetValue(spreadRef) ).
     4. ReturnIfAbrupt(iterator).
-
 ---*/
 
 assert.throws(Test262Error, function() {

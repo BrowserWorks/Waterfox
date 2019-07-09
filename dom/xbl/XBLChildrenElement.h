@@ -139,13 +139,13 @@ public:
 
 protected:
   ~XBLChildrenElement();
-  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
 private:
   nsTArray<nsIContent*> mInsertedChildren; // WEAK
-  nsTArray<RefPtr<nsAtom> > mIncludes;
+  nsTArray<nsCOMPtr<nsIAtom> > mIncludes;
 };
 
 } // namespace dom

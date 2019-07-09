@@ -14,6 +14,8 @@ module.exports = {
     }],
     curly: ["error", "all"],
     "dot-location": ["error", "property"],
+    "dot-notation": "error",
+    "generator-star-spacing": ["error", "after"],
     indent: ["error", 2, {
       SwitchCase: 1,
       CallExpression: {
@@ -32,12 +34,14 @@ module.exports = {
     "max-len": ["error", 100],
     "max-nested-callbacks": ["error", 4],
     "new-parens": "error",
+    "no-caller": "error",
     "no-console": "error",
     "no-fallthrough": "error",
     "no-multi-str": "error",
     "no-multiple-empty-lines": ["error", {
       max: 2,
     }],
+    "no-new-wrappers": "error",
     "no-proto": "error",
     "no-throw-literal": "error",
     "no-unused-expressions": "error",

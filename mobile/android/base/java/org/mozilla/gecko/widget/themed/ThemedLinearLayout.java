@@ -161,10 +161,6 @@ public class ThemedLinearLayout extends android.widget.LinearLayout
         return new ColorDrawable(ContextCompat.getColor(getContext(), id));
     }
 
-    public ColorStateList getDrawableColors() {
-        return drawableColors;
-    }
-
     protected LightweightTheme getTheme() {
         return theme;
     }

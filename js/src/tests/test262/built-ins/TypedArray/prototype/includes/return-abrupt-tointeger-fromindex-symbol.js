@@ -19,7 +19,7 @@ info: >
   produces the value 0.)
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var fromIndex = Symbol("1");

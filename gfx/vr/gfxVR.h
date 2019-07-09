@@ -137,7 +137,7 @@ struct VRHMDSensorState {
   {
     Clear();
   }
-  int64_t inputFrameID;
+  int32_t inputFrameID;
   double timestamp;
   VRDisplayCapabilityFlags flags;
 
@@ -199,7 +199,7 @@ struct VRDisplayInfo
   uint32_t GetGroupMask() const { return mGroupMask; }
   const Size& GetStageSize() const { return mStageSize; }
   const Matrix4x4& GetSittingToStandingTransform() const { return mSittingToStandingTransform; }
-  uint64_t GetFrameId() const { return mFrameId; }
+  uint32_t GetFrameId() const { return mFrameId; }
 
   enum Eye {
     Eye_Left,
@@ -220,7 +220,7 @@ struct VRDisplayInfo
   uint32_t mGroupMask;
   Size mStageSize;
   Matrix4x4 mSittingToStandingTransform;
-  uint64_t mFrameId;
+  uint32_t mFrameId;
   VRHMDSensorState mLastSensorState[kVRMaxLatencyFrames];
 
   bool operator==(const VRDisplayInfo& other) const {
@@ -267,7 +267,7 @@ struct VRSubmitFrameResultInfo
 
   nsCString mBase64Image;
   SurfaceFormat mFormat;
-  uint64_t mFrameNum;
+  uint32_t mFrameNum;
   uint32_t mWidth;
   uint32_t mHeight;
 };
@@ -309,25 +309,6 @@ struct VRControllerInfo
   bool operator!=(const VRControllerInfo& other) const {
     return !(*this == other);
   }
-};
-
-struct VRTelemetry
-{
-  VRTelemetry()
-   : mLastDroppedFrameCount(-1)
-  {}
-
-  void Clear() {
-    mPresentationStart = TimeStamp();
-    mLastDroppedFrameCount = -1;
-  }
-
-  bool IsLastDroppedFrameValid() {
-    return (mLastDroppedFrameCount != -1);
-  }
-
-  TimeStamp mPresentationStart;
-  int32_t mLastDroppedFrameCount;
 };
 
 class VRSystemManager {

@@ -4,6 +4,8 @@ set -x -e
 
 echo "running as" $(id)
 
+. /home/worker/scripts/xvfb.sh
+
 ####
 # Taskcluster friendly wrapper for performing fx desktop builds via mozharness.
 ####
@@ -15,7 +17,7 @@ echo "running as" $(id)
 : MOZHARNESS_ACTIONS            ${MOZHARNESS_ACTIONS}
 : MOZHARNESS_OPTIONS            ${MOZHARNESS_OPTIONS}
 
-: TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/builds/worker/tooltool-cache}
+: TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/home/worker/tooltool-cache}
 
 : NEED_XVFB                     ${NEED_XVFB:=false}
 
@@ -24,7 +26,7 @@ echo "running as" $(id)
 : MH_BUILD_POOL                 ${MH_BUILD_POOL:=staging}
 : MOZ_SCM_LEVEL                 ${MOZ_SCM_LEVEL:=1}
 
-: WORKSPACE                     ${WORKSPACE:=/builds/worker/workspace}
+: WORKSPACE                     ${WORKSPACE:=/home/worker/workspace}
 
 set -v
 
@@ -57,17 +59,15 @@ fi
 if [[ -z ${MOZHARNESS_SCRIPT} ]]; then fail "MOZHARNESS_SCRIPT is not set"; fi
 if [[ -z ${MOZHARNESS_CONFIG} ]]; then fail "MOZHARNESS_CONFIG is not set"; fi
 
+cleanup() {
+    local rv=$?
+    cleanup_xvfb
+    exit $rv
+}
+trap cleanup EXIT INT
+
 # run XVfb in the background, if necessary
 if $NEED_XVFB; then
-    . /builds/worker/scripts/xvfb.sh
-
-    cleanup() {
-        local rv=$?
-        cleanup_xvfb
-        exit $rv
-    }
-    trap cleanup EXIT INT
-
     start_xvfb '1024x768x24' 2
 fi
 
@@ -112,7 +112,7 @@ if [ -n "$MOZHARNESS_OPTIONS" ]; then
     done
 fi
 
-cd /builds/worker
+cd /home/worker
 
 python2.7 $WORKSPACE/build/src/testing/${MOZHARNESS_SCRIPT} ${config_cmds} \
   $debug_flag \

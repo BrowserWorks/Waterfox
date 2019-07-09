@@ -10,7 +10,7 @@
 
 const { PromisesFront } = require("devtools/shared/fronts/promises");
 
-var EventEmitter = require("devtools/shared/event-emitter");
+var events = require("sdk/event/core");
 
 add_task(function* () {
   let client = yield startTestDebuggerServer("promises-actor-test");
@@ -44,7 +44,7 @@ function* testNewPromisesEvent(client, form, makePromise) {
   yield front.listPromises();
 
   let onNewPromise = new Promise(resolve => {
-    EventEmitter.on(front, "new-promises", promises => {
+    events.on(front, "new-promises", promises => {
       for (let p of promises) {
         equal(p.type, "object", "Expect type to be Object");
         equal(p.class, "Promise", "Expect class to be Promise");

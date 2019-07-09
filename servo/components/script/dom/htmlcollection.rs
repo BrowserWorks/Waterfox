@@ -5,8 +5,8 @@
 use dom::bindings::codegen::Bindings::HTMLCollectionBinding;
 use dom::bindings::codegen::Bindings::HTMLCollectionBinding::HTMLCollectionMethods;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{JS, Root, MutNullableJS};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot, MutNullableDom};
 use dom::bindings::str::DOMString;
 use dom::bindings::trace::JSTraceable;
 use dom::bindings::xmlname::namespace_from_domstring;
@@ -26,7 +26,7 @@ pub trait CollectionFilter : JSTraceable {
 // An optional u32, using maxint to represent None.
 // It would be nicer just to use Option<u32> for this, but that would produce word
 // alignment issues since Option<u32> uses 33 bits.
-#[derive(Clone, Copy, JSTraceable, MallocSizeOf)]
+#[derive(Clone, Copy, JSTraceable, HeapSizeOf)]
 struct OptionU32 {
     bits: u32,
 }
@@ -53,14 +53,14 @@ impl OptionU32 {
 #[dom_struct]
 pub struct HTMLCollection {
     reflector_: Reflector,
-    root: Dom<Node>,
-    #[ignore_malloc_size_of = "Contains a trait object; can't measure due to #6870"]
+    root: JS<Node>,
+    #[ignore_heap_size_of = "Contains a trait object; can't measure due to #6870"]
     filter: Box<CollectionFilter + 'static>,
     // We cache the version of the root node and all its decendents,
     // the length of the collection, and a cursor into the collection.
     // FIXME: make the cached cursor element a weak pointer
     cached_version: Cell<u64>,
-    cached_cursor_element: MutNullableDom<Element>,
+    cached_cursor_element: MutNullableJS<Element>,
     cached_cursor_index: Cell<OptionU32>,
     cached_length: Cell<OptionU32>,
 }
@@ -70,24 +70,24 @@ impl HTMLCollection {
     pub fn new_inherited(root: &Node, filter: Box<CollectionFilter + 'static>) -> HTMLCollection {
         HTMLCollection {
             reflector_: Reflector::new(),
-            root: Dom::from_ref(root),
+            root: JS::from_ref(root),
             filter: filter,
             // Default values for the cache
             cached_version: Cell::new(root.inclusive_descendants_version()),
-            cached_cursor_element: MutNullableDom::new(None),
+            cached_cursor_element: MutNullableJS::new(None),
             cached_cursor_index: Cell::new(OptionU32::none()),
             cached_length: Cell::new(OptionU32::none()),
         }
     }
 
     #[allow(unrooted_must_root)]
-    pub fn new(window: &Window, root: &Node, filter: Box<CollectionFilter + 'static>) -> DomRoot<HTMLCollection> {
-        reflect_dom_object(Box::new(HTMLCollection::new_inherited(root, filter)),
+    pub fn new(window: &Window, root: &Node, filter: Box<CollectionFilter + 'static>) -> Root<HTMLCollection> {
+        reflect_dom_object(box HTMLCollection::new_inherited(root, filter),
                            window, HTMLCollectionBinding::Wrap)
     }
 
     pub fn create(window: &Window, root: &Node,
-                  filter: Box<CollectionFilter + 'static>) -> DomRoot<HTMLCollection> {
+                  filter: Box<CollectionFilter + 'static>) -> Root<HTMLCollection> {
         HTMLCollection::new(window, root, filter)
     }
 
@@ -104,7 +104,7 @@ impl HTMLCollection {
         }
     }
 
-    fn set_cached_cursor(&self, index: u32, element: Option<DomRoot<Element>>) -> Option<DomRoot<Element>> {
+    fn set_cached_cursor(&self, index: u32, element: Option<Root<Element>>) -> Option<Root<Element>> {
         if let Some(element) = element {
             self.cached_cursor_index.set(OptionU32::some(index));
             self.cached_cursor_element.set(Some(&element));
@@ -116,20 +116,20 @@ impl HTMLCollection {
 
     // https://dom.spec.whatwg.org/#concept-getelementsbytagname
     pub fn by_qualified_name(window: &Window, root: &Node, qualified_name: LocalName)
-                             -> DomRoot<HTMLCollection> {
+                             -> Root<HTMLCollection> {
         // case 1
         if qualified_name == local_name!("*") {
-            #[derive(JSTraceable, MallocSizeOf)]
+            #[derive(JSTraceable, HeapSizeOf)]
             struct AllFilter;
             impl CollectionFilter for AllFilter {
                 fn filter(&self, _elem: &Element, _root: &Node) -> bool {
                     true
                 }
             }
-            return HTMLCollection::create(window, root, Box::new(AllFilter));
+            return HTMLCollection::create(window, root, box AllFilter);
         }
 
-        #[derive(JSTraceable, MallocSizeOf)]
+        #[derive(JSTraceable, HeapSizeOf)]
         struct HtmlDocumentFilter {
             qualified_name: LocalName,
             ascii_lower_qualified_name: LocalName,
@@ -148,7 +148,7 @@ impl HTMLCollection {
             ascii_lower_qualified_name: qualified_name.to_ascii_lowercase(),
             qualified_name: qualified_name,
         };
-        HTMLCollection::create(window, root, Box::new(filter))
+        HTMLCollection::create(window, root, box filter)
     }
 
     fn match_element(elem: &Element, qualified_name: &LocalName) -> bool {
@@ -161,15 +161,15 @@ impl HTMLCollection {
     }
 
     pub fn by_tag_name_ns(window: &Window, root: &Node, tag: DOMString,
-                          maybe_ns: Option<DOMString>) -> DomRoot<HTMLCollection> {
+                          maybe_ns: Option<DOMString>) -> Root<HTMLCollection> {
         let local = LocalName::from(tag);
         let ns = namespace_from_domstring(maybe_ns);
         let qname = QualName::new(None, ns, local);
         HTMLCollection::by_qual_tag_name(window, root, qname)
     }
 
-    pub fn by_qual_tag_name(window: &Window, root: &Node, qname: QualName) -> DomRoot<HTMLCollection> {
-        #[derive(JSTraceable, MallocSizeOf)]
+    pub fn by_qual_tag_name(window: &Window, root: &Node, qname: QualName) -> Root<HTMLCollection> {
+        #[derive(JSTraceable, HeapSizeOf)]
         struct TagNameNSFilter {
             qname: QualName
         }
@@ -182,18 +182,18 @@ impl HTMLCollection {
         let filter = TagNameNSFilter {
             qname: qname
         };
-        HTMLCollection::create(window, root, Box::new(filter))
+        HTMLCollection::create(window, root, box filter)
     }
 
     pub fn by_class_name(window: &Window, root: &Node, classes: DOMString)
-                         -> DomRoot<HTMLCollection> {
+                         -> Root<HTMLCollection> {
         let class_atoms = split_html_space_chars(&classes).map(Atom::from).collect();
         HTMLCollection::by_atomic_class_name(window, root, class_atoms)
     }
 
     pub fn by_atomic_class_name(window: &Window, root: &Node, classes: Vec<Atom>)
-                         -> DomRoot<HTMLCollection> {
-        #[derive(JSTraceable, MallocSizeOf)]
+                         -> Root<HTMLCollection> {
+        #[derive(JSTraceable, HeapSizeOf)]
         struct ClassNameFilter {
             classes: Vec<Atom>
         }
@@ -208,41 +208,41 @@ impl HTMLCollection {
         let filter = ClassNameFilter {
             classes: classes
         };
-        HTMLCollection::create(window, root, Box::new(filter))
+        HTMLCollection::create(window, root, box filter)
     }
 
-    pub fn children(window: &Window, root: &Node) -> DomRoot<HTMLCollection> {
-        #[derive(JSTraceable, MallocSizeOf)]
+    pub fn children(window: &Window, root: &Node) -> Root<HTMLCollection> {
+        #[derive(JSTraceable, HeapSizeOf)]
         struct ElementChildFilter;
         impl CollectionFilter for ElementChildFilter {
             fn filter(&self, elem: &Element, root: &Node) -> bool {
                 root.is_parent_of(elem.upcast())
             }
         }
-        HTMLCollection::create(window, root, Box::new(ElementChildFilter))
+        HTMLCollection::create(window, root, box ElementChildFilter)
     }
 
-    pub fn elements_iter_after<'a>(&'a self, after: &'a Node) -> impl Iterator<Item=DomRoot<Element>> + 'a {
+    pub fn elements_iter_after<'a>(&'a self, after: &'a Node) -> impl Iterator<Item=Root<Element>> + 'a {
         // Iterate forwards from a node.
         after.following_nodes(&self.root)
-            .filter_map(DomRoot::downcast)
+            .filter_map(Root::downcast)
             .filter(move |element| self.filter.filter(&element, &self.root))
     }
 
-    pub fn elements_iter<'a>(&'a self) -> impl Iterator<Item=DomRoot<Element>> + 'a {
+    pub fn elements_iter<'a>(&'a self) -> impl Iterator<Item=Root<Element>> + 'a {
         // Iterate forwards from the root.
         self.elements_iter_after(&*self.root)
     }
 
-    pub fn elements_iter_before<'a>(&'a self, before: &'a Node) -> impl Iterator<Item=DomRoot<Element>> + 'a {
+    pub fn elements_iter_before<'a>(&'a self, before: &'a Node) -> impl Iterator<Item=Root<Element>> + 'a {
         // Iterate backwards from a node.
         before.preceding_nodes(&self.root)
-            .filter_map(DomRoot::downcast)
+            .filter_map(Root::downcast)
             .filter(move |element| self.filter.filter(&element, &self.root))
     }
 
-    pub fn root_node(&self) -> DomRoot<Node> {
-        DomRoot::from_ref(&self.root)
+    pub fn root_node(&self) -> Root<Node> {
+        Root::from_ref(&self.root)
     }
 }
 
@@ -263,7 +263,7 @@ impl HTMLCollectionMethods for HTMLCollection {
     }
 
     // https://dom.spec.whatwg.org/#dom-htmlcollection-item
-    fn Item(&self, index: u32) -> Option<DomRoot<Element>> {
+    fn Item(&self, index: u32) -> Option<Root<Element>> {
         self.validate_cache();
 
         if let Some(element) = self.cached_cursor_element.get() {
@@ -276,14 +276,14 @@ impl HTMLCollectionMethods for HTMLCollection {
                     // The cursor is before the element we're looking for
                     // Iterate forwards, starting at the cursor.
                     let offset = index - (cached_index + 1);
-                    let node: DomRoot<Node> = DomRoot::upcast(element);
+                    let node: Root<Node> = Root::upcast(element);
                     let mut iter = self.elements_iter_after(&node);
                     self.set_cached_cursor(index, iter.nth(offset as usize))
                 } else {
                     // The cursor is after the element we're looking for
                     // Iterate backwards, starting at the cursor.
                     let offset = cached_index - (index + 1);
-                    let node: DomRoot<Node> = DomRoot::upcast(element);
+                    let node: Root<Node> = Root::upcast(element);
                     let mut iter = self.elements_iter_before(&node);
                     self.set_cached_cursor(index, iter.nth(offset as usize))
                 }
@@ -300,7 +300,7 @@ impl HTMLCollectionMethods for HTMLCollection {
     }
 
     // https://dom.spec.whatwg.org/#dom-htmlcollection-nameditem
-    fn NamedItem(&self, key: DOMString) -> Option<DomRoot<Element>> {
+    fn NamedItem(&self, key: DOMString) -> Option<Root<Element>> {
         // Step 1.
         if key.is_empty() {
             return None;
@@ -314,12 +314,12 @@ impl HTMLCollectionMethods for HTMLCollection {
     }
 
     // https://dom.spec.whatwg.org/#dom-htmlcollection-item
-    fn IndexedGetter(&self, index: u32) -> Option<DomRoot<Element>> {
+    fn IndexedGetter(&self, index: u32) -> Option<Root<Element>> {
         self.Item(index)
     }
 
     // check-tidy: no specs after this line
-    fn NamedGetter(&self, name: DOMString) -> Option<DomRoot<Element>> {
+    fn NamedGetter(&self, name: DOMString) -> Option<Root<Element>> {
         self.NamedItem(name)
     }
 

@@ -12,25 +12,26 @@ add_task(function* () {
   yield addTab(URL_ROOT + "doc_short_duration_animation.html");
   const { panel, inspector } = yield openAnimationInspector();
 
+  const timelineComponent = panel.animationsTimelineComponent;
+
   info("Check the listed time blocks");
-  const timeBlocks = getAnimationTimeBlocks(panel);
-  for (let i = 0; i < timeBlocks.length; i++) {
+  for (let i = 0; i < timelineComponent.timeBlocks.length; i++) {
     info(`Check the time block ${i}`);
-    const {containerEl, animation: {state}} = timeBlocks[i];
+    const {containerEl, animation: {state}} = timelineComponent.timeBlocks[i];
     checkSummaryGraph(containerEl, state);
   }
 
   info("Check the time block one by one");
   info("Check #onetime");
   yield selectNodeAndWaitForAnimations("#onetime", inspector);
-  let timeBlock = getAnimationTimeBlocks(panel)[0];
+  let timeBlock = timelineComponent.timeBlocks[0];
   let containerEl = timeBlock.containerEl;
   let state = timeBlock.animation.state;
   checkSummaryGraph(containerEl, state, true);
 
   info("Check #infinite");
   yield selectNodeAndWaitForAnimations("#infinite", inspector);
-  timeBlock = getAnimationTimeBlocks(panel)[0];
+  timeBlock = timelineComponent.timeBlocks[0];
   containerEl = timeBlock.containerEl;
   state = timeBlock.animation.state;
   checkSummaryGraph(containerEl, state, true);
@@ -82,8 +83,9 @@ function checkSummaryGraph(el, state, isDetail) {
          `The x of second last segment should be ${ endX }`);
       // We use computed style of 'opacity' to create summary graph.
       // So, if currentTime is same to the duration, although progress is null
-      // opacity is 0.
-      const expectedY = 0;
+      // opacity is 1.
+      const expectedY =
+        state.iterationCount && expectedIterationCount === index + 1 ? 1 : 0;
       is(secondLastPathSeg.y, expectedY,
          `The y of second last segment should be ${ expectedY }`);
 

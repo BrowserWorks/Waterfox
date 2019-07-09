@@ -21,11 +21,10 @@ eval(
   'var global = fnGlobalObject();\
   assert.sameValue(f, undefined, "binding is initialized to `undefined`");\
   \
-  verifyProperty(global, "f", {\
-    enumerable: true,\
-    writable: true,\
-    configurable: true\
-  });switch (1) {' +
+  verifyEnumerable(global, "f");\
+  verifyWritable(global, "f");\
+  verifyConfigurable(global, "f");\
+switch (1) {' +
   '  default:' +
   '    function f() {  }' +
   '}\

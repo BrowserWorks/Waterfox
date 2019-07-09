@@ -151,13 +151,19 @@ function onMessageReceived(event, aWindow) {
   }
 }
 
-function whenDelayedStartupFinished(aCallback) {
+function whenDelayedStartupFinished(aWindow, aCallback) {
   Services.obs.addObserver(function observer(aSubject, aTopic) {
-    Services.obs.removeObserver(observer, aTopic);
+    if (aWindow == aSubject) {
+      Services.obs.removeObserver(observer, aTopic);
+    }
 
-    aSubject.addEventListener("DOMContentLoaded", function() {
-      SimpleTest.executeSoon(function() { aCallback(aSubject); });
-    }, {capture: true, once: true});
+    if (aWindow.content == null || aWindow.content.location.href != CONTENT_PAGE ) {
+      aWindow.addEventListener("DOMContentLoaded", function() {
+        SimpleTest.executeSoon(function() { aCallback(aWindow); });
+      }, {capture: true, once: true});
+
+      aWindow.gBrowser.loadURI(CONTENT_PAGE);
+    }
   }, "browser-delayed-startup-finished");
 }
 
@@ -169,8 +175,8 @@ function testOnWindow(aIsPrivate, callback) {
                          .QueryInterface(Ci.nsIInterfaceRequestor)
                          .getInterface(Ci.nsIDOMWindow);
 
-  mainWindow.openUILinkIn(CONTENT_PAGE, "window", {private: aIsPrivate});
-  whenDelayedStartupFinished(callback);
+  var win = mainWindow.OpenBrowserWindow({private: aIsPrivate});
+  whenDelayedStartupFinished(win, function() { callback(win); });
 };
 </script>
 </head>

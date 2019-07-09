@@ -8,8 +8,8 @@ use context::QuirksMode;
 use fnv::FnvHashSet;
 use media_queries::Device;
 use shared_lock::SharedRwLockReadGuard;
-use stylesheets::{DocumentRule, ImportRule, MediaRule};
-use stylesheets::{NestedRuleIterationCondition, Stylesheet, SupportsRule};
+use stylesheets::{DocumentRule, ImportRule, MediaRule,  SupportsRule};
+use stylesheets::{NestedRuleIterationCondition, Stylesheet};
 
 /// A key for a given media query result.
 ///
@@ -23,7 +23,8 @@ use stylesheets::{NestedRuleIterationCondition, Stylesheet, SupportsRule};
 ///
 /// If this changes, though, we may need to remove the item from the cache if
 /// present before it goes away.
-#[derive(Clone, Copy, Debug, Eq, Hash, MallocSizeOf, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct MediaListKey(usize);
 
 impl MediaListKey {
@@ -51,7 +52,7 @@ impl ToMediaListKey for MediaRule {}
 
 /// A struct that holds the result of a media query evaluation pass for the
 /// media queries that evaluated successfully.
-#[derive(Debug, MallocSizeOf, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct EffectiveMediaQueryResults {
     /// The set of media lists that matched last time.
     set: FnvHashSet<MediaListKey>,

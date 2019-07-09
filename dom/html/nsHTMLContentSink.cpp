@@ -14,7 +14,6 @@
 
 #include "nsContentSink.h"
 #include "nsCOMPtr.h"
-#include "nsHTMLTags.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsIHTMLContentSink.h"
@@ -30,7 +29,6 @@
 #include "mozilla/Logging.h"
 #include "nsNodeUtils.h"
 #include "nsIContent.h"
-#include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Preferences.h"
 
@@ -51,6 +49,7 @@
 #include "nsIDocument.h"
 #include "nsStubDocumentObserver.h"
 #include "nsIHTMLDocument.h"
+#include "nsIDOMHTMLMapElement.h"
 #include "nsICookieService.h"
 #include "nsTArray.h"
 #include "nsIScriptSecurityManager.h"
@@ -58,6 +57,8 @@
 #include "nsTextFragment.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsNameSpaceManager.h"
+
+#include "nsIParserService.h"
 
 #include "nsIStyleSheetLinkingElement.h"
 #include "nsITimer.h"
@@ -82,6 +83,10 @@ using namespace mozilla::dom;
 
 //----------------------------------------------------------------------
 
+typedef nsGenericHTMLElement*
+  (*contentCreatorCallback)(already_AddRefed<mozilla::dom::NodeInfo>&&,
+                            FromParser aFromParser);
+
 nsGenericHTMLElement*
 NS_NewHTMLNOTUSEDElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                          FromParser aFromParser)
@@ -92,7 +97,7 @@ NS_NewHTMLNOTUSEDElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
 
 #define HTML_TAG(_tag, _classname, _interfacename) NS_NewHTML##_classname##Element,
 #define HTML_OTHER(_tag) NS_NewHTMLNOTUSEDElement,
-static const HTMLContentCreatorFunction sHTMLContentCreatorFunctions[] = {
+static const contentCreatorCallback sContentCreatorCallbacks[] = {
   NS_NewHTMLUnknownElement,
 #include "nsHTMLTagList.h"
 #undef HTML_TAG
@@ -224,31 +229,6 @@ public:
   int32_t mStackPos;
 };
 
-static void
-DoCustomElementCreate(Element** aElement, nsIDocument* aDoc, nsAtom* aLocalName,
-                      CustomElementConstructor* aConstructor, ErrorResult& aRv)
-{
-  RefPtr<Element> element =
-    aConstructor->Construct("Custom Element Create", aRv);
-  if (aRv.Failed()) {
-    return;
-  }
-
-  if (!element || !element->IsHTMLElement()) {
-    aRv.ThrowTypeError<MSG_THIS_DOES_NOT_IMPLEMENT_INTERFACE>(NS_LITERAL_STRING("HTMLElement"));
-    return;
-  }
-
-  if (aDoc != element->OwnerDoc() || element->GetParentNode() ||
-      element->HasChildren() || element->GetAttrCount() ||
-      element->NodeInfo()->NameAtom() != aLocalName) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return;
-  }
-
-  element.forget(aElement);
-}
-
 nsresult
 NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                   FromParser aFromParser, const nsAString* aIs)
@@ -257,88 +237,16 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
 
   RefPtr<mozilla::dom::NodeInfo> nodeInfo = aNodeInfo;
 
-  nsAtom *name = nodeInfo->NameAtom();
+  nsIParserService* parserService = nsContentUtils::GetParserService();
+  if (!parserService)
+    return NS_ERROR_OUT_OF_MEMORY;
+
+  nsIAtom *name = nodeInfo->NameAtom();
 
   NS_ASSERTION(nodeInfo->NamespaceEquals(kNameSpaceID_XHTML),
                "Trying to HTML elements that don't have the XHTML namespace");
 
-  int32_t tag = nsHTMLTags::CaseSensitiveAtomTagToId(name);
-
-  // https://dom.spec.whatwg.org/#concept-create-element
-  // We only handle the "synchronous custom elements flag is set" now.
-  // For the unset case (e.g. cloning a node), see bug 1319342 for that.
-  // Step 4.
-  CustomElementDefinition* definition = nullptr;
-  if (CustomElementRegistry::IsCustomElementEnabled()) {
-    definition =
-      nsContentUtils::LookupCustomElementDefinition(nodeInfo->GetDocument(),
-                                                    nodeInfo->LocalName(),
-                                                    nodeInfo->NamespaceID(),
-                                                    aIs);
-  }
-
-  // It might be a problem that parser synchronously calls constructor, so filed
-  // bug 1378079 to figure out what we should do for parser case.
-  if (definition) {
-    /*
-     * Synchronous custom elements flag is determined by 3 places in spec,
-     * 1) create an element for a token, the flag is determined by
-     *    "will execute script" which is not originally created
-     *    for the HTML fragment parsing algorithm.
-     * 2) createElement and createElementNS, the flag is the same as
-     *    NOT_FROM_PARSER.
-     * 3) clone a node, our implementation will not go into this function.
-     * For the unset case which is non-synchronous only applied for
-     * inner/outerHTML.
-     */
-    bool synchronousCustomElements = aFromParser != dom::FROM_PARSER_FRAGMENT ||
-                                     aFromParser == dom::NOT_FROM_PARSER;
-    // Per discussion in https://github.com/w3c/webcomponents/issues/635,
-    // use entry global in those places that are called from JS APIs.
-    nsIGlobalObject* global = GetEntryGlobal();
-    MOZ_ASSERT(global);
-    AutoEntryScript aes(global, "create custom elements");
-    JSContext* cx = aes.cx();
-    ErrorResult rv;
-
-    // Step 5.
-    if (definition->IsCustomBuiltIn()) {
-      // SetupCustomElement() should be called with an element that don't have
-      // CustomElementData setup, if not we will hit the assertion in
-      // SetCustomElementData().
-      RefPtr<nsAtom> tagAtom = nodeInfo->NameAtom();
-      RefPtr<nsAtom> typeAtom = aIs ? NS_Atomize(*aIs) : tagAtom;
-      // Built-in element
-      *aResult = CreateHTMLElement(tag, nodeInfo.forget(), aFromParser).take();
-      (*aResult)->SetCustomElementData(new CustomElementData(typeAtom));
-      if (synchronousCustomElements) {
-        CustomElementRegistry::Upgrade(*aResult, definition, rv);
-        if (rv.MaybeSetPendingException(cx)) {
-          aes.ReportException();
-        }
-      } else {
-        nsContentUtils::EnqueueUpgradeReaction(*aResult, definition);
-      }
-
-      return NS_OK;
-    }
-
-    // Step 6.1.
-    if (synchronousCustomElements) {
-      DoCustomElementCreate(aResult, nodeInfo->GetDocument(),
-                            nodeInfo->NameAtom(),
-                            definition->mConstructor, rv);
-      if (rv.MaybeSetPendingException(cx)) {
-        NS_IF_ADDREF(*aResult = NS_NewHTMLUnknownElement(nodeInfo.forget(), aFromParser));
-      }
-      return NS_OK;
-    }
-
-    // Step 6.2.
-    NS_IF_ADDREF(*aResult = NS_NewHTMLElement(nodeInfo.forget(), aFromParser));
-    nsContentUtils::EnqueueUpgradeReaction(*aResult, definition);
-    return NS_OK;
-  }
+  int32_t tag = parserService->HTMLCaseSensitiveAtomTagToId(name);
 
   // Per the Custom Element specification, unknown tags that are valid custom
   // element names should be HTMLElement instead of HTMLUnknownElement.
@@ -371,7 +279,7 @@ CreateHTMLElement(uint32_t aNodeType,
                aNodeType == eHTMLTag_userdefined,
                "aNodeType is out of bounds");
 
-  HTMLContentCreatorFunction cb = sHTMLContentCreatorFunctions[aNodeType];
+  contentCreatorCallback cb = sContentCreatorCallbacks[aNodeType];
 
   NS_ASSERTION(cb != NS_NewHTMLNOTUSEDElement,
                "Don't know how to construct tag element!");
@@ -766,16 +674,31 @@ HTMLContentSink::~HTMLContentSink()
   delete mHeadContext;
 }
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLContentSink, nsContentSink,
-                                   mHTMLDocument,
-                                   mRoot,
-                                   mBody,
-                                   mHead)
+NS_IMPL_CYCLE_COLLECTION_CLASS(HTMLContentSink)
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLContentSink,
-                                             nsContentSink,
-                                             nsIContentSink,
-                                             nsIHTMLContentSink)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLContentSink, nsContentSink)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mHTMLDocument)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mRoot)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBody)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mHead)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLContentSink,
+                                                  nsContentSink)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mHTMLDocument)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRoot)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBody)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mHead)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLContentSink)
+  NS_INTERFACE_TABLE_BEGIN
+    NS_INTERFACE_TABLE_ENTRY(HTMLContentSink, nsIContentSink)
+    NS_INTERFACE_TABLE_ENTRY(HTMLContentSink, nsIHTMLContentSink)
+  NS_INTERFACE_TABLE_END
+NS_INTERFACE_TABLE_TAIL_INHERITING(nsContentSink)
+
+NS_IMPL_ADDREF_INHERITED(HTMLContentSink, nsContentSink)
+NS_IMPL_RELEASE_INHERITED(HTMLContentSink, nsContentSink)
 
 nsresult
 HTMLContentSink::Init(nsIDocument* aDoc,
@@ -1087,7 +1010,7 @@ HTMLContentSink::NotifyInsert(nsIContent* aContent,
     // Scope so we call EndUpdate before we decrease mInNotification
     MOZ_AUTO_DOC_UPDATE(mDocument, UPDATE_CONTENT_MODEL, !mBeganUpdate);
     nsNodeUtils::ContentInserted(NODE_FROM(aContent, mDocument),
-                                 aChildContent);
+                                 aChildContent, aIndexInContainer);
     mLastNotificationTime = PR_Now();
   }
 

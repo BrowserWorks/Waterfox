@@ -27,6 +27,7 @@ function confirm_install(window) {
   is(items.length, 1, "Should only be 1 item listed in the confirmation dialog");
   is(items[0].name, "XPI Test", "Should have seen the name from the trigger list");
   is(items[0].url, TESTROOT + "amosigned.xpi", "Should have listed the correct url for the item");
+  is(items[0].signed, "false", "Should have listed the item as unsigned");
   return true;
 }
 
@@ -41,8 +42,8 @@ const finish_test = async function(count) {
     return {
       return: content.document.getElementById("return").textContent,
       status: content.document.getElementById("status").textContent,
-    };
-  });
+    }
+  })
 
   is(results.return, "false", "installTrigger should seen a failure");
 

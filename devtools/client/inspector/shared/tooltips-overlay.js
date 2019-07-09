@@ -118,6 +118,11 @@ TooltipsOverlay.prototype = {
         tooltip = new SwatchFilterTooltip(doc,
           this._cssProperties.getValidityChecker(this.view.inspector.panelDoc));
         break;
+      case "cssDocs":
+        const CssDocsTooltip =
+          require("devtools/client/shared/widgets/tooltip/CssDocsTooltip");
+        tooltip = new CssDocsTooltip(doc);
+        break;
       case "previewTooltip":
         tooltip = new HTMLTooltip(doc, {
           type: "arrow",

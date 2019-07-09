@@ -12,7 +12,6 @@ use std::fmt;
 // the threshold.
 use std::sync::Arc;
 use style_traits::{ToCss, ParseError};
-use values::computed::{Context, ToComputedValue, ComputedUrl};
 
 /// A specified url() value for servo.
 ///
@@ -21,8 +20,8 @@ use values::computed::{Context, ToComputedValue, ComputedUrl};
 /// eagerly resolving with rust-url would be duplicated work.
 ///
 /// However, this approach is still not necessarily optimal: See
-/// <https://bugzilla.mozilla.org/show_bug.cgi?id=1347435#c6>
-#[derive(Clone, Debug, Deserialize, MallocSizeOf, Serialize)]
+/// https://bugzilla.mozilla.org/show_bug.cgi?id=1347435#c6
+#[derive(Clone, Debug, HeapSizeOf, Serialize, Deserialize)]
 pub struct SpecifiedUrl {
     /// The original URI. This might be optional since we may insert computed
     /// values of images into the cascade directly, and we don't bother to
@@ -30,7 +29,6 @@ pub struct SpecifiedUrl {
     ///
     /// Refcounted since cloning this should be cheap and data: uris can be
     /// really large.
-    #[ignore_malloc_size_of = "Arc"]
     original: Option<Arc<String>>,
 
     /// The resolved value for the url, if valid.
@@ -128,35 +126,3 @@ impl ToCss for SpecifiedUrl {
         dest.write_str(")")
     }
 }
-
-impl ToComputedValue for SpecifiedUrl {
-    type ComputedValue = ComputedUrl;
-
-    // If we can't resolve the URL from the specified one, we fall back to the original
-    // but still return it as a ComputedUrl::Invalid
-    fn to_computed_value(&self, _: &Context) -> Self::ComputedValue {
-        match self.resolved {
-            Some(ref url) => ComputedUrl::Valid(url.clone()),
-            None => match self.original {
-                Some(ref url) => ComputedUrl::Invalid(url.clone()),
-                None => {
-                    unreachable!("Found specified url with neither resolved or original URI!");
-                },
-            }
-        }
-    }
-
-    fn from_computed_value(computed: &ComputedUrl) -> Self {
-        match *computed {
-            ComputedUrl::Valid(ref url) => SpecifiedUrl {
-                original: None,
-                resolved: Some(url.clone()),
-            },
-            ComputedUrl::Invalid(ref url) => SpecifiedUrl {
-                original: Some(url.clone()),
-                resolved: None,
-            }
-        }
-    }
-}
-

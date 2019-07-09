@@ -188,8 +188,8 @@ WebGLRenderbuffer::RenderbufferStorage(const char* funcName, uint32_t samples,
         return;
     }
 
-    if (width > mContext->mGLMaxRenderbufferSize ||
-        height > mContext->mGLMaxRenderbufferSize)
+    if (width > mContext->mImplMaxRenderbufferSize ||
+        height > mContext->mImplMaxRenderbufferSize)
     {
         mContext->ErrorInvalidValue("%s: Width or height exceeds maximum renderbuffer"
                                     " size.",

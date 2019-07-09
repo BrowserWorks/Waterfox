@@ -3,7 +3,6 @@
 
 /*---
 es6id: 18.2.5
-esid: sec-parseint-string-radix
 description: >
   parseInt.name is "parseInt".
 info: >

@@ -1,32 +1,74 @@
-'use strict';
-
-importScripts('interfaces-idls.js');
+importScripts('interfaces.js');
 importScripts('worker-testharness.js');
-importScripts('/resources/WebIDLParser.js');
-importScripts('/resources/idlharness.js');
+importScripts('../resources/testharness-helpers.js');
 
-var idlArray = new IdlArray();
-idlArray.add_untested_idls(idls.untested);
-idlArray.add_idls(idls.tested);
-idlArray.add_objects({
-    ServiceWorkerGlobalScope: ['self'],
-    Clients: ['self.clients'],
-    ServiceWorkerRegistration: ['self.registration'],
-    CacheStorage: ['self.caches']
-    // TODO: Test instances of Client and WindowClient, e.g.
-    // Client: ['self.clientInstance'],
-    // WindowClient: ['self.windowClientInstance']
-  });
+var EVENT_HANDLER = 'object';
+
+test(function() {
+    verify_interface('ServiceWorkerGlobalScope',
+                     self,
+                     {
+                       clients: 'object',
+                       registration: 'object',
+                       skipWaiting: 'function',
+
+                       onactivate: EVENT_HANDLER,
+                       onfetch: EVENT_HANDLER,
+                       oninstall: EVENT_HANDLER,
+                       onmessage: EVENT_HANDLER,
+                       onmessageerror: EVENT_HANDLER
+                     });
+  }, 'ServiceWorkerGlobalScope');
+
+test(function() {
+    verify_interface('Clients',
+                     self.clients,
+                     {
+                       claim: 'function',
+                       matchAll: 'function'
+                     });
+  }, 'Clients');
+
+test(function() {
+    verify_interface('Client');
+    // FIXME: Get an instance and test it, or ensure property exists on
+    // prototype.
+  }, 'Client');
+
+test(function() {
+    verify_interface('WindowClient');
+    // FIXME: Get an instance and test it, or ensure property exists on
+    // prototype.
+  }, 'WindowClient');
+
+test(function() {
+    verify_interface('CacheStorage',
+                     self.caches,
+                     {
+                       match: 'function',
+                       has: 'function',
+                       open: 'function',
+                       delete: 'function',
+                       keys: 'function'
+                     });
+  }, 'CacheStorage');
 
 promise_test(function(t) {
     return create_temporary_cache(t)
       .then(function(cache) {
-          self.cacheInstance = cache;
-
-          idlArray.add_objects({ Cache: ['self.cacheInstance'] });
-          idlArray.test();
+          verify_interface('Cache',
+                           cache,
+                           {
+                             match: 'function',
+                             matchAll: 'function',
+                             add: 'function',
+                             addAll: 'function',
+                             put: 'function',
+                             delete: 'function',
+                             keys: 'function'
+                           });
         });
-  }, 'test setup (cache creation)');
+  }, 'Cache');
 
 test(function() {
     var req = new Request('http://{{host}}/',

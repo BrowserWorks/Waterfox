@@ -113,10 +113,10 @@ int
 main(int argc, char* argv[])
 {
 
-  if (argc < 7 || (argc - 7) % 5 != 0) {
+  if (argc < 6 || (argc - 6) % 4 != 0) {
     PR_fprintf(PR_STDERR, "usage: %s <NSS DB directory> <responsetype> "
-                          "<cert_nick> <extranick> <this_update_skew> <outfilename> [<resptype> "
-                          "<cert_nick> <extranick> <this_update_skew> <outfilename>]* \n",
+                          "<cert_nick> <extranick> <outfilename> [<resptype> "
+                          "<cert_nick> <extranick> <outfilename>]* \n",
                           argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -131,12 +131,11 @@ main(int argc, char* argv[])
     exit(EXIT_FAILURE);
   }
 
-  for (int i = 2; i + 3 < argc; i += 5) {
+  for (int i = 2; i + 3 < argc; i += 4) {
     const char* ocspTypeText  = argv[i];
     const char* certNick      = argv[i + 1];
     const char* extraCertname = argv[i + 2];
-    const char* skewChars     = argv[i + 3];
-    const char* filename      = argv[i + 4];
+    const char* filename      = argv[i + 3];
 
     OCSPResponseType ORT;
     if (!StringToOCSPResponseType(ocspTypeText, &ORT)) {
@@ -153,10 +152,8 @@ main(int argc, char* argv[])
       exit(EXIT_FAILURE);
     }
 
-    time_t skew = static_cast<time_t>(atoll(skewChars));
-
     SECItemArray* response = GetOCSPResponseForType(ORT, cert, arena,
-                                                    extraCertname, skew);
+                                                    extraCertname);
     if (!response) {
       PR_fprintf(PR_STDERR, "Failed to generate OCSP response of type %s "
                             "for %s\n", ocspTypeText, certNick);

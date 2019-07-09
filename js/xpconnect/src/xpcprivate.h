@@ -76,7 +76,6 @@
 #include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/DefineEnum.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
@@ -124,6 +123,7 @@
 #include "prcvar.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
+#include "nsXPIDLString.h"
 
 #include "MainThreadUtils.h"
 
@@ -190,8 +190,14 @@ extern const char XPC_XPCONNECT_CONTRACTID[];
 
 #define XPC_STRING_GETTER_BODY(dest, src)                                     \
     NS_ENSURE_ARG_POINTER(dest);                                              \
-    *dest = src ? moz_xstrdup(src) : nullptr;                                 \
-    return NS_OK
+    char* result;                                                             \
+    if (src)                                                                  \
+        result = (char*) nsMemory::Clone(src,                                 \
+                                         sizeof(char)*(strlen(src)+1));       \
+    else                                                                      \
+        result = nullptr;                                                      \
+    *dest = result;                                                           \
+    return (result || !src) ? NS_OK : NS_ERROR_OUT_OF_MEMORY
 
 // If IS_WN_CLASS for the JSClass of an object is true, the object is a
 // wrappednative wrapper, holding the XPCWrappedNative in its private slot.
@@ -333,12 +339,14 @@ private:
 
 class WatchdogManager;
 
-MOZ_DEFINE_ENUM(WatchdogTimestampCategory, (
+enum WatchdogTimestampCategory
+{
+    TimestampContextStateChange = 0,
     TimestampWatchdogWakeup,
     TimestampWatchdogHibernateStart,
     TimestampWatchdogHibernateStop,
-    TimestampContextStateChange
-));
+    TimestampCount
+};
 
 class AsyncFreeSnowWhite;
 
@@ -389,7 +397,6 @@ private:
 };
 
 class XPCJSContext final : public mozilla::CycleCollectedJSContext
-                         , public mozilla::LinkedListElement<XPCJSContext>
 {
 public:
     static void InitTLS();
@@ -452,6 +459,8 @@ public:
         IDX_CREATE_INSTANCE         ,
         IDX_ITEM                    ,
         IDX_PROTO                   ,
+        IDX_ITERATOR                ,
+        IDX_EXPOSEDPROPS            ,
         IDX_EVAL                    ,
         IDX_CONTROLLERS             ,
         IDX_CONTROLLERS_CLASS       ,
@@ -485,12 +494,7 @@ private:
     AutoMarkingPtr*          mAutoRoots;
     jsid                     mResolveName;
     XPCWrappedNative*        mResolvingWrapper;
-    WatchdogManager*         mWatchdogManager;
-
-    // Number of XPCJSContexts currently alive.
-    static uint32_t         sInstanceCount;
-    static mozilla::StaticRefPtr<WatchdogManager> sWatchdogInstance;
-    static WatchdogManager* GetWatchdogManager();
+    RefPtr<WatchdogManager>  mWatchdogManager;
 
     // If we spend too much time running JS code in an event handler, then we
     // want to show the slow script UI. The timeout T is controlled by prefs. We
@@ -518,13 +522,8 @@ private:
     // meaningful while calling through XPCWrappedJS.
     nsresult mPendingResult;
 
-    // These members must be accessed via WatchdogManager.
-    enum { CONTEXT_ACTIVE, CONTEXT_INACTIVE } mActive;
-    PRTime mLastStateChange;
-
     friend class XPCJSRuntime;
     friend class Watchdog;
-    friend class WatchdogManager;
     friend class AutoLockWatchdog;
 };
 
@@ -612,6 +611,7 @@ public:
     static void DoCycleCollectionCallback(JSContext* cx);
     static void FinalizeCallback(JSFreeOp* fop,
                                  JSFinalizeStatus status,
+                                 bool isZoneGC,
                                  void* data);
     static void WeakPointerZonesCallback(JSContext* cx, void* data);
     static void WeakPointerCompartmentCallback(JSContext* cx, JSCompartment* comp, void* data);
@@ -919,9 +919,6 @@ public:
     JSObject*
     GetExpandoChain(JS::HandleObject target);
 
-    JSObject*
-    DetachExpandoChain(JS::HandleObject target);
-
     bool
     SetExpandoChain(JSContext* cx, JS::HandleObject target, JS::HandleObject chain);
 
@@ -1007,16 +1004,14 @@ public:
 
     nsAutoPtr<JSObject2JSObjectMap> mWaiverWrapperMap;
 
-    JSCompartment* Compartment() const { return js::GetObjectCompartment(mGlobalJSObject); }
-
-    bool IsContentXBLScope() { return xpc::IsContentXBLCompartment(Compartment()); }
+    bool IsContentXBLScope() { return mIsContentXBLScope; }
     bool AllowContentXBLScope();
     bool UseContentXBLScope() { return mUseContentXBLScope; }
     void ClearContentXBLScope() { mContentXBLScope = nullptr; }
 
-    bool IsAddonScope() { return xpc::IsAddonCompartment(Compartment()); }
+    bool IsAddonScope() { return mIsAddonScope; }
 
-    inline bool HasInterposition() { return mInterposition; }
+    bool HasInterposition() { return mInterposition; }
     nsCOMPtr<nsIAddonInterposition> GetInterposition();
 
     static bool SetAddonInterposition(JSContext* cx,
@@ -1026,6 +1021,9 @@ public:
     static InterpositionWhitelist* GetInterpositionWhitelist(nsIAddonInterposition* interposition);
     static bool UpdateInterpositionWhitelist(JSContext* cx,
                                              nsIAddonInterposition* interposition);
+
+    void SetAddonCallInterposition() { mHasCallInterpositions = true; }
+    bool HasCallInterposition() { return mHasCallInterpositions; };
 
     static bool AllowCPOWsInAddon(JSContext* cx, JSAddonId* addonId, bool allow);
 
@@ -1074,7 +1072,14 @@ private:
     // objects from other scope, for add-on compatibility reasons.
     nsCOMPtr<nsIAddonInterposition>  mInterposition;
 
+    // If this flag is set, we intercept function calls on vanilla JS function objects
+    // from this scope if the caller scope has mInterposition set.
+    bool mHasCallInterpositions;
+
     JS::WeakMapPtr<JSObject*, JSObject*> mXrayExpandos;
+
+    bool mIsContentXBLScope;
+    bool mIsAddonScope;
 
     // For remote XUL domains, we run all XBL in the content scope for compat
     // reasons (though we sometimes pref this off for automation). We separately
@@ -2031,6 +2036,26 @@ private:
     nsCOMPtr<nsISupports> mOuter;    // only set in root
 };
 
+/***************************************************************************/
+
+class XPCJSObjectHolder final : public nsIXPConnectJSObjectHolder
+{
+public:
+    // all the interface method declarations...
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIXPCONNECTJSOBJECTHOLDER
+
+    // non-interface implementation
+
+public:
+    XPCJSObjectHolder(JSContext* cx, JSObject* obj);
+
+private:
+    virtual ~XPCJSObjectHolder() {}
+    XPCJSObjectHolder() = delete;
+
+    JS::PersistentRooted<JSObject*> mJSObj;
+};
 
 /***************************************************************************
 ****************************************************************************
@@ -2097,7 +2122,8 @@ public:
      * @param src_is_identity optional performance hint. Set to true only
      *                        if src is the identity pointer.
      */
-    static bool NativeInterface2JSObject(JS::MutableHandleValue dest,
+    static bool NativeInterface2JSObject(JS::MutableHandleValue d,
+                                         nsIXPConnectJSObjectHolder** dest,
                                          xpcObjectHelper& aHelper,
                                          const nsID* iid,
                                          bool allowNativeWrapper,
@@ -2769,7 +2795,6 @@ public:
         , writeToGlobalPrototype(false)
         , sameZoneAs(cx)
         , freshZone(false)
-        , isContentXBLScope(false)
         , invisibleToDebugger(false)
         , discardSource(false)
         , metadata(cx)
@@ -2791,7 +2816,6 @@ public:
     bool writeToGlobalPrototype;
     JS::RootedObject sameZoneAs;
     bool freshZone;
-    bool isContentXBLScope;
     bool invisibleToDebugger;
     bool discardSource;
     GlobalProperties globalProperties;
@@ -2992,15 +3016,8 @@ enum WrapperDenialType {
 };
 bool ReportWrapperDenial(JSContext* cx, JS::HandleId id, WrapperDenialType type, const char* reason);
 
-// The CompartmentPrivate contains XPConnect-specific stuff related to each JS
-// compartment. Since compartments are trust domains, this means mostly
-// information needed to select the right security policy for cross-compartment
-// wrappers.
 class CompartmentPrivate
 {
-    CompartmentPrivate() = delete;
-    CompartmentPrivate(const CompartmentPrivate&) = delete;
-
 public:
     enum LocationHint {
         LocationHintRegular,
@@ -3046,24 +3063,14 @@ public:
     // classes, for example).
     bool skipWriteToGlobalPrototype;
 
-    // This compartment corresponds to a WebExtension content script, and
-    // receives various bits of special compatibility behavior.
+    // This scope corresponds to a WebExtension content script, and receives
+    // various bits of special compatibility behavior.
     bool isWebExtensionContentScript;
 
-    // True if wrappers in this compartment will interpose on some property
-    // accesses on objects from other compartments, for add-on compatibility
-    // reasons.
-    bool hasInterposition;
-
     // Even if an add-on needs interposition, it does not necessary need it
-    // for every compartment. If this flag is set we waive interposition for
-    // this compartment.
+    // for every scope. If this flag is set we waive interposition for this
+    // scope.
     bool waiveInterposition;
-
-    // If this flag is set, we intercept function calls on vanilla JS function
-    // objects from this compartment if the caller compartment has the
-    // hasInterposition flag set.
-    bool addonCallInterposition;
 
     // If CPOWs are disabled for browser code via the
     // dom.ipc.cpows.forbid-unsafe-from-browser preferences, then only
@@ -3071,15 +3078,6 @@ public:
     // to opt into CPOWs. It's necessary for the implementation of
     // RemoteAddonsParent.jsm.
     bool allowCPOWs;
-
-    // True if this compartment is a content XBL compartment. Every global in
-    // such a compartment is a content XBL scope.
-    bool isContentXBLCompartment;
-
-    // True if EnsureAddonCompartment has been called for this compartment.
-    // Note that this is false for extensions that ship with the browser, like
-    // browser/extensions/activity-stream.
-    bool isAddonCompartment;
 
     // This is only ever set during mochitest runs when enablePrivilege is called.
     // It's intended as a temporary stopgap measure until we can finish ripping out
@@ -3104,6 +3102,13 @@ public:
     // Whether we've emitted a warning about a property that was filtered out
     // by a security wrapper. See XrayWrapper.cpp.
     bool wrapperDenialWarnings[WrapperDenialTypeCount];
+
+    // The scriptability of this compartment.
+    Scriptability scriptability;
+
+    // Our XPCWrappedNativeScope. This is non-null if and only if this is an
+    // XPConnect compartment.
+    XPCWrappedNativeScope* scope;
 
     const nsACString& GetLocation() {
         if (location.IsEmpty() && locationURI) {
@@ -3147,8 +3152,6 @@ public:
         locationURI = aLocationURI;
     }
 
-    void SetAddonCallInterposition() { addonCallInterposition = true; }
-
     JSObject2WrappedJSMap* GetWrappedJSMap() const { return mWrappedJSMap; }
     void UpdateWeakPointersAfterGC();
 
@@ -3172,60 +3175,10 @@ CrashIfNotInAutomation()
     MOZ_RELEASE_ASSERT(IsInAutomation());
 }
 
-// XPConnect-specific data associated with each JavaScript realm. Per-Window
-// settings live here; security-wrapper-related settings live in the
-// CompartmentPrivate.
-//
-// Following the ECMAScript spec, a realm contains a global (e.g. an inner
-// Window) and its associated scripts and objects; a compartment may contain
-// several same-origin, same-principal realms.
-class RealmPrivate
-{
-    RealmPrivate() = delete;
-    RealmPrivate(const RealmPrivate&) = delete;
-
-public:
-    explicit RealmPrivate(JS::Realm* realm);
-
-    static RealmPrivate* Get(JS::Realm* realm)
-    {
-        MOZ_ASSERT(realm);
-        void* priv = JS::GetRealmPrivate(realm);
-        return static_cast<RealmPrivate*>(priv);
-    }
-
-    // Get the RealmPrivate for a given object.  `object` must not be a
-    // cross-compartment wrapper, as CCWs aren't dedicated to a particular
-    // realm.
-    static RealmPrivate* Get(JSObject* object)
-    {
-        JS::Realm* realm = JS::GetObjectRealmOrNull(object);
-        return Get(realm);
-    }
-
-    // This flag is intended for a very specific use, internal to Gecko. It may
-    // go away or change behavior at any time. It should not be added to any
-    // documentation and it should not be used without consulting the XPConnect
-    // module owner.
-    bool writeToGlobalPrototype;
-
-    // When writeToGlobalPrototype is true, we use this flag to temporarily
-    // disable the writeToGlobalPrototype behavior (when resolving standard
-    // classes, for example).
-    bool skipWriteToGlobalPrototype;
-
-    // The scriptability of this realm.
-    Scriptability scriptability;
-
-    // Our XPCWrappedNativeScope. This is non-null if and only if this is an
-    // XPConnect realm.
-    XPCWrappedNativeScope* scope;
-};
-
 inline XPCWrappedNativeScope*
 ObjectScope(JSObject* obj)
 {
-    return RealmPrivate::Get(obj)->scope;
+    return CompartmentPrivate::Get(obj)->scope;
 }
 
 JSObject* NewOutObject(JSContext* cx);
@@ -3245,9 +3198,9 @@ DefineStaticJSVals(JSContext* cx);
 } // namespace mozilla
 
 bool
-xpc_LocalizeRuntime(JSRuntime* rt);
+xpc_LocalizeContext(JSContext* cx);
 void
-xpc_DelocalizeRuntime(JSRuntime* rt);
+xpc_DelocalizeContext(JSContext* cx);
 
 /***************************************************************************/
 // Inlines use the above - include last.

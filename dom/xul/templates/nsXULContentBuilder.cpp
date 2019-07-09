@@ -20,7 +20,7 @@
 #include "nsTemplateRule.h"
 #include "nsTemplateMap.h"
 #include "nsTArray.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsGkAtoms.h"
 #include "nsXULContentUtils.h"
 #include "nsXULElement.h"
@@ -233,7 +233,7 @@ protected:
     nsresult
     EnsureElementHasGenericChild(nsIContent* aParent,
                                  int32_t aNameSpaceID,
-                                 nsAtom* aTag,
+                                 nsIAtom* aTag,
                                  bool aNotify,
                                  nsIContent** aResult);
 
@@ -249,7 +249,7 @@ protected:
 
     nsresult
     CreateElement(int32_t aNameSpaceID,
-                  nsAtom* aTag,
+                  nsIAtom* aTag,
                   Element** aResult);
 
     /**
@@ -511,7 +511,7 @@ nsXULContentBuilder::BuildContentFromTemplate(nsIContent *aTemplateNode,
 
         MOZ_ASSERT_IF(isGenerationElement, tmplKid->IsElement());
 
-        nsAtom *tag = tmplKid->NodeInfo()->NameAtom();
+        nsIAtom *tag = tmplKid->NodeInfo()->NameAtom();
 
         if (MOZ_LOG_TEST(gXULTemplateLog, LogLevel::Debug)) {
             MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
@@ -600,7 +600,8 @@ nsXULContentBuilder::BuildContentFromTemplate(nsIContent *aTemplateNode,
             // given node.
             // SynchronizeUsingTemplate contains code used to update textnodes,
             // so make sure to modify both when changing this
-            nsAutoString attrValue;
+            char16_t attrbuf[128];
+            nsFixedString attrValue(attrbuf, ArrayLength(attrbuf), 0);
             tmplKid->GetAttr(kNameSpaceID_None, nsGkAtoms::value, attrValue);
             if (!attrValue.IsEmpty()) {
                 nsAutoString value;
@@ -732,11 +733,15 @@ nsXULContentBuilder::CopyAttributesToElement(nsIContent* aTemplateNode,
         int32_t attribNameSpaceID = name->NamespaceID();
         // Hold a strong reference here so that the atom doesn't go away
         // during UnsetAttr.
-        RefPtr<nsAtom> attribName = name->LocalName();
+        nsCOMPtr<nsIAtom> attribName = name->LocalName();
 
         // XXXndeakin ignore namespaces until bug 321182 is fixed
         if (attribName != nsGkAtoms::id && attribName != nsGkAtoms::uri) {
-            nsAutoString attribValue;
+            // Create a buffer here, because there's a chance that an
+            // attribute in the template is going to be an RDF URI, which is
+            // usually longish.
+            char16_t attrbuf[128];
+            nsFixedString attribValue(attrbuf, ArrayLength(attrbuf), 0);
             aTemplateNode->GetAttr(attribNameSpaceID, attribName, attribValue);
             if (!attribValue.IsEmpty()) {
                 nsAutoString value;
@@ -801,7 +806,7 @@ nsXULContentBuilder::AddPersistentAttributes(Element* aTemplateNode,
         if (attribute.IsEmpty())
             break;
 
-        RefPtr<nsAtom> tag;
+        nsCOMPtr<nsIAtom> tag;
         int32_t nameSpaceID;
 
         RefPtr<mozilla::dom::NodeInfo> ni =
@@ -873,7 +878,8 @@ nsXULContentBuilder::SynchronizeUsingTemplate(nsIContent* aTemplateNode,
         // This code is similar to that in BuildContentFromTemplate
         if (tmplKid->NodeInfo()->Equals(nsGkAtoms::textnode,
                                         kNameSpaceID_XUL)) {
-            nsAutoString attrValue;
+            char16_t attrbuf[128];
+            nsFixedString attrValue(attrbuf, ArrayLength(attrbuf), 0);
             tmplKid->GetAttr(kNameSpaceID_None, nsGkAtoms::value, attrValue);
             if (!attrValue.IsEmpty()) {
                 nsAutoString value;
@@ -1028,7 +1034,7 @@ nsXULContentBuilder::CreateContainerContents(nsIContent* aElement,
     for (int32_t r = 0; r < querySetCount; r++) {
         nsTemplateQuerySet* queryset = mQuerySets[r];
 
-        nsAtom* tag = queryset->GetTag();
+        nsIAtom* tag = queryset->GetTag();
         if (tag && tag != aElement->NodeInfo()->NameAtom())
             continue;
 
@@ -1040,7 +1046,8 @@ nsXULContentBuilder::CreateContainerContents(nsIContent* aElement,
         MOZ_AUTO_DOC_UPDATE(container->GetUncomposedDoc(), UPDATE_CONTENT_MODEL,
                             true);
         nsNodeUtils::ContentAppended(container,
-                                     container->GetChildAt(newIndexInContainer));
+                                     container->GetChildAt(newIndexInContainer),
+                                     newIndexInContainer);
     }
 
     NS_IF_RELEASE(container);
@@ -1204,7 +1211,7 @@ nsXULContentBuilder::CreateContainerContentsForQuerySet(nsIContent* aElement,
 nsresult
 nsXULContentBuilder::EnsureElementHasGenericChild(nsIContent* parent,
                                                   int32_t nameSpaceID,
-                                                  nsAtom* tag,
+                                                  nsIAtom* tag,
                                                   bool aNotify,
                                                   nsIContent** result)
 {
@@ -1329,7 +1336,7 @@ nsXULContentBuilder::GetElementsForResult(nsIXULTemplateResult* aResult,
 
 nsresult
 nsXULContentBuilder::CreateElement(int32_t aNameSpaceID,
-                                   nsAtom* aTag,
+                                   nsIAtom* aTag,
                                    Element** aResult)
 {
     nsCOMPtr<nsIDocument> doc = mRoot->GetComposedDoc();
@@ -1480,7 +1487,7 @@ void
 nsXULContentBuilder::AttributeChanged(nsIDocument* aDocument,
                                       Element*     aElement,
                                       int32_t      aNameSpaceID,
-                                      nsAtom*     aAttribute,
+                                      nsIAtom*     aAttribute,
                                       int32_t      aModType,
                                       const nsAttrValue* aOldValue)
 {
@@ -1773,7 +1780,7 @@ nsXULContentBuilder::CompareResultToNode(nsIXULTemplateResult* aResult,
     else {
         // iterate over each sort key and compare. If the nodes are equal,
         // continue to compare using the next sort key. If not equal, stop.
-        int32_t length = mSortState.sortKeys.Length();
+        int32_t length = mSortState.sortKeys.Count();
         for (int32_t t = 0; t < length; t++) {
             nsresult rv = mQueryProcessor->CompareResults(aResult, match->mResult,
                                                           mSortState.sortKeys[t],

@@ -9,31 +9,28 @@
 define(function (require, exports, module) {
   const { render } = require("devtools/client/shared/vendor/react-dom");
   const { createFactories } = require("devtools/client/shared/react-utils");
-  const { MainTabbedArea } = createFactories(require("./components/MainTabbedArea"));
+  const { MainTabbedArea } = createFactories(require("./components/main-tabbed-area"));
 
   const json = document.getElementById("json");
 
+  let jsonData;
   let prettyURL;
+
+  try {
+    jsonData = JSON.parse(json.textContent);
+  } catch (err) {
+    jsonData = err;
+  }
 
   // Application state object.
   let input = {
     jsonText: json.textContent,
     jsonPretty: null,
+    json: jsonData,
     headers: JSONView.headers,
     tabActive: 0,
     prettified: false
   };
-
-  // Remove BOM.
-  if (input.jsonText.startsWith("\ufeff")) {
-    input.jsonText = input.jsonText.slice(1);
-  }
-
-  try {
-    input.json = JSON.parse(input.jsonText);
-  } catch (err) {
-    input.json = err;
-  }
 
   json.remove();
 
@@ -62,7 +59,7 @@ define(function (require, exports, module) {
     },
 
     onPrettify: function (data) {
-      if (input.json instanceof Error) {
+      if (jsonData instanceof Error) {
         // Cannot prettify invalid JSON
         return;
       }
@@ -70,7 +67,7 @@ define(function (require, exports, module) {
         theApp.setState({jsonText: input.jsonText});
       } else {
         if (!input.jsonPretty) {
-          input.jsonPretty = JSON.stringify(input.json, null, "  ");
+          input.jsonPretty = JSON.stringify(jsonData, null, "  ");
         }
         theApp.setState({jsonText: input.jsonPretty});
       }

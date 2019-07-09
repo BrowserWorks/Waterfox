@@ -22,6 +22,7 @@
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
 #include "mozilla/SandboxInfo.h"
 #endif
+#include "CDMStorageIdProvider.h"
 #include "GMPContentParent.h"
 #include "MediaPrefs.h"
 #include "VideoUtils.h"
@@ -42,6 +43,7 @@ using CrashReporter::GetIDFromMinidump;
 #endif
 
 #include "mozilla/dom/WidevineCDMManifestBinding.h"
+#include "widevine-adapter/WidevineAdapter.h"
 #include "ChromiumCDMAdapter.h"
 
 namespace mozilla {
@@ -118,12 +120,12 @@ GMPParent::Init(GeckoMediaPluginServiceParent* aService, nsIFile* aPluginDir)
   // where <gmp-plugin-id> should be gmp-gmpopenh264
   nsCOMPtr<nsIFile> parent;
   nsresult rv = aPluginDir->GetParent(getter_AddRefs(parent));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   nsAutoString parentLeafName;
   rv = parent->GetLeafName(parentLeafName);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   LOGD("%s: for %s", __FUNCTION__, NS_LossyConvertUTF16toASCII(parentLeafName).get());
@@ -150,7 +152,7 @@ GMPParent::LoadProcess()
   MOZ_ASSERT(mState == GMPStateNotLoaded);
 
   nsAutoString path;
-  if (NS_WARN_IF(NS_FAILED(mDirectory->GetPath(path)))) {
+  if (NS_FAILED(mDirectory->GetPath(path))) {
     return NS_ERROR_FAILURE;
   }
   LOGD("%s: for %s", __FUNCTION__, NS_ConvertUTF16toUTF8(path).get());
@@ -176,6 +178,16 @@ GMPParent::LoadProcess()
       return NS_ERROR_FAILURE;
     }
     LOGD("%s: Opened channel to new child process", __FUNCTION__);
+
+    // ComputeStorageId may return empty string, we leave the error handling to CDM.
+    // The CDM will reject the promise once we provide a empty string of storage id.
+    bool ok = SendProvideStorageId(
+      CDMStorageIdProvider::ComputeStorageId(mNodeId));
+    if (!ok) {
+      LOGD("%s: Failed to send storage id to child process", __FUNCTION__);
+      return NS_ERROR_FAILURE;
+    }
+    LOGD("%s: Sent storage id to child process", __FUNCTION__);
 
 #ifdef XP_WIN
     if (!mLibs.IsEmpty()) {
@@ -618,7 +630,7 @@ GMPParent::ReadGMPMetaData()
 
   nsCOMPtr<nsIFile> infoFile;
   nsresult rv = mDirectory->Clone(getter_AddRefs(infoFile));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   infoFile->AppendRelativePath(mName + NS_LITERAL_STRING(".info"));
@@ -630,7 +642,7 @@ GMPParent::ReadGMPMetaData()
   // Maybe this is the Widevine adapted plugin?
   nsCOMPtr<nsIFile> manifestFile;
   rv = mDirectory->Clone(getter_AddRefs(manifestFile));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   manifestFile->AppendRelativePath(NS_LITERAL_STRING("manifest.json"));
@@ -691,6 +703,22 @@ GMPParent::ReadGMPInfoFile(nsIFile* aFile)
       }
     }
 
+    if (cap.mAPIName.EqualsLiteral(GMP_API_DECRYPTOR)) {
+      mCanDecrypt = true;
+
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+      if (!mozilla::SandboxInfo::Get().CanSandboxMedia()) {
+        nsPrintfCString msg(
+          "GMPParent::ReadGMPMetaData: Plugin \"%s\" is an EME CDM"
+          " but this system can't sandbox it; not loading.",
+          mDisplayName.get());
+        printf_stderr("%s\n", msg.get());
+        LOGD("%s", msg.get());
+        return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+      }
+#endif
+    }
+
     mCapabilities.AppendElement(Move(cap));
   }
 
@@ -723,7 +751,11 @@ IsCDMAPISupported(const mozilla::dom::WidevineCDMManifest& aManifest)
   int32_t interfaceVersion =
     aManifest.mX_cdm_interface_versions.ToInteger(&ignored);
   int32_t hostVersion = aManifest.mX_cdm_host_versions.ToInteger(&ignored);
-  return ChromiumCDMAdapter::Supports(
+  if (MediaPrefs::EMEChromiumAPIEnabled()) {
+    return ChromiumCDMAdapter::Supports(
+      moduleVersion, interfaceVersion, hostVersion);
+  }
+  return WidevineAdapter::Supports(
     moduleVersion, interfaceVersion, hostVersion);
 }
 
@@ -774,11 +806,6 @@ GMPParent::ParseChromiumManifest(const nsAString& aJSON)
     // in future versions, see bug 1383611 for details.
     mLibs = NS_LITERAL_CSTRING("dxva2.dll, psapi.dll");
 #endif
-  } else if (mDisplayName.EqualsASCII("fake")) {
-    kEMEKeySystem = NS_LITERAL_CSTRING("fake");
-#if XP_WIN
-    mLibs = NS_LITERAL_CSTRING("dxva2.dll");
-#endif
   } else {
     return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
@@ -806,9 +833,17 @@ GMPParent::ParseChromiumManifest(const nsAString& aJSON)
 
   video.mAPITags.AppendElement(kEMEKeySystem);
 
-  video.mAPIName = NS_LITERAL_CSTRING(CHROMIUM_CDM_API);
-  mAdapter = NS_LITERAL_STRING("chromium");
+  if (MediaPrefs::EMEChromiumAPIEnabled()) {
+    video.mAPIName = NS_LITERAL_CSTRING(CHROMIUM_CDM_API);
+    mAdapter = NS_LITERAL_STRING("chromium");
+  } else {
+    video.mAPIName = NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER);
+    mAdapter = NS_LITERAL_STRING("widevine");
 
+    GMPCapability decrypt(NS_LITERAL_CSTRING(GMP_API_DECRYPTOR));
+    decrypt.mAPITags.AppendElement(kEMEKeySystem);
+    mCapabilities.AppendElement(Move(decrypt));
+  }
   mCapabilities.AppendElement(Move(video));
 
   return GenericPromise::CreateAndResolve(true, __func__);
@@ -876,8 +911,8 @@ GMPParent::OpenPGMPContent()
 
   Endpoint<PGMPContentParent> parent;
   Endpoint<PGMPContentChild> child;
-  if (NS_WARN_IF(NS_FAILED(PGMPContent::CreateEndpoints(
-        base::GetCurrentProcId(), OtherPid(), &parent, &child)))) {
+  if (NS_FAILED(PGMPContent::CreateEndpoints(base::GetCurrentProcId(),
+                                             OtherPid(), &parent, &child))) {
     return false;
   }
 

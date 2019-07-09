@@ -347,7 +347,7 @@ addURI(nsIURI* aURI)
   do_wait_async_updates();
 }
 
-static const char TOPIC_PROFILE_CHANGE_QM[] = "profile-before-change-qm";
+static const char TOPIC_PROFILE_CHANGE[] = "profile-before-change";
 static const char TOPIC_PLACES_CONNECTION_CLOSED[] = "places-connection-closed";
 
 class WaitForConnectionClosed final : public nsIObserver
@@ -365,10 +365,7 @@ public:
       do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
     MOZ_ASSERT(os);
     if (os) {
-      // The places-connection-closed notification happens because of things
-      // that occur during profile-before-change, so we use the stage after that
-      // to wait for it.
-      MOZ_ALWAYS_SUCCEEDS(os->AddObserver(this, TOPIC_PROFILE_CHANGE_QM, false));
+      MOZ_ALWAYS_SUCCEEDS(os->AddObserver(this, TOPIC_PROFILE_CHANGE, false));
     }
     mSpinner = new WaitForTopicSpinner(TOPIC_PLACES_CONNECTION_CLOSED);
   }

@@ -14,7 +14,7 @@
 #include "nsAttrValue.h"
 #include "nsChangeHint.h"
 #include "nsGkAtoms.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 namespace mozilla {
 
@@ -101,7 +101,7 @@ public:
    */
   void AddAttrs(Element* aElement,
                 int32_t aNameSpaceID,
-                nsAtom* aChangedAttribute);
+                nsIAtom* aChangedAttribute);
 
   /**
    * Captures some other pseudo-class matching state not included in
@@ -121,12 +121,12 @@ public:
     return BorrowedAttrInfo(&mAttrs[aIndex].mName, &mAttrs[aIndex].mValue);
   }
 
-  const nsAttrValue* GetParsedAttr(nsAtom* aLocalName) const
+  const nsAttrValue* GetParsedAttr(nsIAtom* aLocalName) const
   {
     return GetParsedAttr(aLocalName, kNameSpaceID_None);
   }
 
-  const nsAttrValue* GetParsedAttr(nsAtom* aLocalName,
+  const nsAttrValue* GetParsedAttr(nsIAtom* aLocalName,
                                    int32_t aNamespaceID) const
   {
     MOZ_ASSERT(HasAttrs());

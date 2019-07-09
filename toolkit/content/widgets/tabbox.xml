@@ -32,6 +32,20 @@
         </getter>
       </property>
 
+      <property name="handleCtrlPageUpDown">
+        <setter>
+        <![CDATA[
+          this.setAttribute("handleCtrlPageUpDown", val);
+          return val;
+        ]]>
+        </setter>
+        <getter>
+        <![CDATA[
+          return (this.getAttribute("handleCtrlPageUpDown") != "false");
+        ]]>
+        </getter>
+      </property>
+
       <field name="_handleMetaAltArrows" readonly="true">
         /Mac/.test(navigator.platform)
       </field>
@@ -44,9 +58,6 @@
       <property name="tabs" readonly="true">
         <getter>
         <![CDATA[
-          if (this.hasAttribute("tabcontainer")) {
-            return document.getElementById(this.getAttribute("tabcontainer"));
-          }
           return this.getElementsByTagNameNS(
               "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
               "tabs").item(0);
@@ -144,18 +155,18 @@
                 }
               break;
             case event.DOM_VK_PAGE_UP:
-              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey &&
-                  this.tabs) {
-                this.tabs.advanceSelectedTab(-1, true);
-                event.preventDefault();
-              }
+              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey)
+                if (this.tabs && this.handleCtrlPageUpDown) {
+                  this.tabs.advanceSelectedTab(-1, true);
+                  event.preventDefault();
+                }
               break;
             case event.DOM_VK_PAGE_DOWN:
-              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey &&
-                  this.tabs) {
-                this.tabs.advanceSelectedTab(1, true);
-                event.preventDefault();
-              }
+              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey)
+                if (this.tabs && this.handleCtrlPageUpDown) {
+                  this.tabs.advanceSelectedTab(1, true);
+                  event.preventDefault();
+                }
               break;
             case event.DOM_VK_LEFT:
               if (event.metaKey && event.altKey && !event.shiftKey && !event.ctrlKey)

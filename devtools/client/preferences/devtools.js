@@ -13,8 +13,12 @@ pref("devtools.devedition.promo.url", "https://www.mozilla.org/firefox/developer
   pref("devtools.devedition.promo.enabled", false);
 #endif
 
+// DevTools development workflow
+pref("devtools.loader.hotreload", false);
+
 // Developer toolbar preferences
 pref("devtools.toolbar.enabled", true);
+pref("devtools.toolbar.visible", false);
 
 // Enable DevTools WebIDE by default
 pref("devtools.webide.enabled", true);
@@ -56,10 +60,22 @@ pref("devtools.inspector.imagePreviewTooltipSize", 300);
 pref("devtools.inspector.showUserAgentStyles", false);
 // Show all native anonymous content (like controls in <video> tags)
 pref("devtools.inspector.showAllAnonymousContent", false);
+// Enable the MDN docs tooltip
+pref("devtools.inspector.mdnDocsTooltip.enabled", false);
 // Enable the new color widget
 pref("devtools.inspector.colorWidget.enabled", false);
 // Enable the CSS shapes highlighter
-pref("devtools.inspector.shapesHighlighter.enabled", true);
+pref("devtools.inspector.shapesHighlighter.enabled", false);
+
+// Enable the Font Inspector
+pref("devtools.fontinspector.enabled", true);
+
+// Counter to promote the inspector layout view.
+// @remove after release 56 (See Bug 1355747)
+pref("devtools.promote.layoutview", 1);
+// Whether or not to show the promote bar in the layout view
+// @remove after release 56 (See Bug 1355747)
+pref("devtools.promote.layoutview.showPromoteBar", true);
 
 // Grid highlighter preferences
 pref("devtools.gridinspector.gridOutlineMaxColumns", 50);
@@ -87,6 +103,9 @@ pref("devtools.markup.collapseAttributeLength", 120);
 
 // DevTools default color unit
 pref("devtools.defaultColorUnit", "authored");
+
+// Enable the Responsive UI tool
+pref("devtools.responsiveUI.no-reload-notification", false);
 
 // Enable the Memory tools
 pref("devtools.memory.enabled", true);
@@ -183,6 +202,7 @@ pref("devtools.storage.enabled", true);
 
 // Enable the Style Editor.
 pref("devtools.styleeditor.enabled", true);
+pref("devtools.styleeditor.source-maps-enabled", true);
 pref("devtools.styleeditor.autocompletion-enabled", true);
 pref("devtools.styleeditor.showMediaSidebar", true);
 pref("devtools.styleeditor.mediaSidebarWidth", 238);
@@ -210,6 +230,13 @@ pref("devtools.dom.enabled", false);
 
 // Web Audio Editor Inspector Width should be a preference
 pref("devtools.webaudioeditor.inspectorWidth", 300);
+
+// Default theme ("dark" or "light")
+#ifdef MOZ_DEV_EDITION
+sticky_pref("devtools.theme", "dark");
+#else
+sticky_pref("devtools.theme", "light");
+#endif
 
 // Web console filters
 pref("devtools.webconsole.filter.error", true);
@@ -271,11 +298,10 @@ pref("devtools.webconsole.ui.filterbar", false);
 // Max number of inputs to store in web console history.
 pref("devtools.webconsole.inputHistoryCount", 50);
 
-// Persistent logging: |true| if you want the relevant tool to keep all of the
+// Persistent logging: |true| if you want the Web Console to keep all of the
 // logged messages after reloading the page, |false| if you want the output to
 // be cleared each time page navigation happens.
 pref("devtools.webconsole.persistlog", false);
-pref("devtools.netmonitor.persistlog", false);
 
 // Web Console timestamp: |true| if you want the logs and instructions
 // in the Web Console to display a timestamp, or |false| to not display
@@ -287,17 +313,21 @@ pref("devtools.webconsole.timestampMessages", false);
 pref("devtools.webconsole.autoMultiline", true);
 
 // Enable the new webconsole frontend
+#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION)
 pref("devtools.webconsole.new-frontend-enabled", true);
+#else
+pref("devtools.webconsole.new-frontend-enabled", false);
+#endif
 
 // Enable client-side mapping service for source maps
 pref("devtools.source-map.client-service.enabled", true);
 
 // The number of lines that are displayed in the web console.
-pref("devtools.hud.loglimit", 10000);
+pref("devtools.hud.loglimit", 1000);
 
-// The number of lines that are displayed in the old web console for the Net,
+// The number of lines that are displayed in the web console for the Net,
 // CSS, JS and Web Developer categories. These defaults should be kept in sync
-// with DEFAULT_LOG_LIMIT in the old webconsole frontend.
+// with DEFAULT_LOG_LIMIT in the webconsole frontend.
 pref("devtools.hud.loglimit.network", 1000);
 pref("devtools.hud.loglimit.cssparser", 1000);
 pref("devtools.hud.loglimit.exception", 1000);
@@ -322,3 +352,9 @@ pref("devtools.editor.autocomplete", true);
 // opened developer tool. This allows us to ping telemetry just once per browser
 // version for each user.
 pref("devtools.telemetry.tools.opened.version", "{}");
+
+// Enable the JSON View tool (an inspector for application/json documents).
+pref("devtools.jsonview.enabled", true);
+
+// Enable the HTML responsive design mode for all channels.
+pref("devtools.responsive.html.enabled", true);

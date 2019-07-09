@@ -10,7 +10,9 @@ function run_test()
           new VisitCallback(0, 0, [], function() {
             var storage = getCacheStorage("disk");
 
-            var expectedConsumption = 2048;
+            var expectedConsumption = newCacheBackEndUsed()
+              ? 2048
+              : 24;
 
             storage.asyncVisitStorage(
               new VisitCallback(2, expectedConsumption, ["http://a/", "http://b/"], function() {
@@ -23,7 +25,7 @@ function run_test()
         );
       })
     );
-  });
+  }, !newCacheBackEndUsed());
 
   asyncOpenCacheEntry("http://mem1/", "memory", Ci.nsICacheStorage.OPEN_NORMALLY, null,
     new OpenCallback(NEW, "m2m", "m2d", function(entry) {

@@ -37,7 +37,6 @@ info: >
   3. Set all of the bytes of db to 0.
   4. Return db. 
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

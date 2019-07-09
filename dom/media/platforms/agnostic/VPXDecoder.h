@@ -27,9 +27,9 @@ public:
   RefPtr<DecodePromise> Drain() override;
   RefPtr<FlushPromise> Flush() override;
   RefPtr<ShutdownPromise> Shutdown() override;
-  nsCString GetDescriptionName() const override
+  const char* GetDescriptionName() const override
   {
-    return NS_LITERAL_CSTRING("libvpx video decoder");
+    return "libvpx video decoder";
   }
 
   enum Codec: uint8_t
@@ -50,7 +50,7 @@ public:
   static bool IsKeyframe(Span<const uint8_t> aBuffer, Codec aCodec);
 
   // Return the frame dimensions for a sample for the specified codec.
-  static gfx::IntSize GetFrameSize(Span<const uint8_t> aBuffer, Codec aCodec);
+  static nsIntSize GetFrameSize(Span<const uint8_t> aBuffer, Codec aCodec);
 
 private:
   ~VPXDecoder();

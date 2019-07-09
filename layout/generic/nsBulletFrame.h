@@ -70,6 +70,7 @@ public:
   // nsIFrame
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 #ifdef DEBUG_FRAME_DUMP
@@ -86,14 +87,6 @@ public:
                          nsIFrame::InlineMinISizeData* aData) override;
   void AddInlinePrefISize(gfxContext* aRenderingContext,
                           nsIFrame::InlinePrefISizeData* aData) override;
-
-  virtual bool IsFrameOfType(uint32_t aFlags) const override
-  {
-    if (aFlags & eSupportsCSSTransforms) {
-      return false;
-    }
-    return nsFrame::IsFrameOfType(aFlags);
-  }
 
   // nsBulletFrame
   int32_t SetListItemOrdinal(int32_t aNextOrdinal, bool* aChanged,

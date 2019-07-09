@@ -19,8 +19,6 @@
 #include "mozilla/Maybe.h"
 #include "nsTArrayForwardDeclare.h"
 
-class nsDisplayItem;
-
 namespace mozilla {
 
 struct ActiveScrolledRoot;
@@ -64,20 +62,14 @@ public:
   const ScrollMetadata& GetScrollMetadata(const WebRenderScrollData& aOwner,
                                           size_t aIndex) const;
 
-  void SetTransform(const gfx::Matrix4x4& aTransform) { mTransform = aTransform; }
   gfx::Matrix4x4 GetTransform() const { return mTransform; }
   CSSTransformMatrix GetTransformTyped() const;
-  void SetTransformIsPerspective(bool aTransformIsPerspective) { mTransformIsPerspective = aTransformIsPerspective; }
   bool GetTransformIsPerspective() const { return mTransformIsPerspective; }
-
-  void AddEventRegions(const EventRegions& aRegions) { mEventRegions.OrWith(aRegions); }
   EventRegions GetEventRegions() const { return mEventRegions; }
-  void SetEventRegionsOverride(const EventRegionsOverride& aOverride) { mEventRegionsOverride = aOverride; }
-  EventRegionsOverride GetEventRegionsOverride() const { return mEventRegionsOverride; }
-
   const LayerIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
   void SetReferentId(uint64_t aReferentId) { mReferentId = Some(aReferentId); }
   Maybe<uint64_t> GetReferentId() const { return mReferentId; }
+  EventRegionsOverride GetEventRegionsOverride() const { return mEventRegionsOverride; }
 
   void SetScrollThumbData(const ScrollThumbData& aData) { mScrollThumbData = aData; }
   const ScrollThumbData& GetScrollThumbData() const { return mScrollThumbData; }
@@ -152,7 +144,6 @@ public:
   const WebRenderLayerScrollData* GetLayerData(size_t aIndex) const;
 
   const ScrollMetadata& GetScrollMetadata(size_t aIndex) const;
-  bool HasMetadataFor(const FrameMetrics::ViewID& aScrollId) const;
 
   const FocusTarget& GetFocusTarget() const { return mFocusTarget; }
   void SetFocusTarget(const FocusTarget& aFocusTarget);

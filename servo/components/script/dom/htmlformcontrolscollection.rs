@@ -6,8 +6,8 @@ use dom::bindings::codegen::Bindings::HTMLCollectionBinding::HTMLCollectionMetho
 use dom::bindings::codegen::Bindings::HTMLFormControlsCollectionBinding;
 use dom::bindings::codegen::Bindings::HTMLFormControlsCollectionBinding::HTMLFormControlsCollectionMethods;
 use dom::bindings::codegen::UnionTypes::RadioNodeListOrElement;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::element::Element;
 use dom::htmlcollection::{CollectionFilter, HTMLCollection};
@@ -30,9 +30,9 @@ impl HTMLFormControlsCollection {
     }
 
     pub fn new(window: &Window, root: &Node, filter: Box<CollectionFilter + 'static>)
-        -> DomRoot<HTMLFormControlsCollection>
+        -> Root<HTMLFormControlsCollection>
     {
-        reflect_dom_object(Box::new(HTMLFormControlsCollection::new_inherited(root, filter)),
+        reflect_dom_object(box HTMLFormControlsCollection::new_inherited(root, filter),
                            window,
                            HTMLFormControlsCollectionBinding::Wrap)
     }
@@ -64,8 +64,8 @@ impl HTMLFormControlsCollectionMethods for HTMLFormControlsCollection {
                 Some(RadioNodeListOrElement::Element(elem))
             } else {
                 // Step 4-5
-                let once = iter::once(DomRoot::upcast::<Node>(elem));
-                let list = once.chain(peekable.map(DomRoot::upcast));
+                let once = iter::once(Root::upcast::<Node>(elem));
+                let list = once.chain(peekable.map(Root::upcast));
                 let global = self.global();
                 let window = global.as_window();
                 Some(RadioNodeListOrElement::RadioNodeList(RadioNodeList::new_simple_list(window, list)))
@@ -90,7 +90,7 @@ impl HTMLFormControlsCollectionMethods for HTMLFormControlsCollection {
     // https://github.com/servo/servo/issues/5875
     //
     // https://dom.spec.whatwg.org/#dom-htmlcollection-item
-    fn IndexedGetter(&self, index: u32) -> Option<DomRoot<Element>> {
+    fn IndexedGetter(&self, index: u32) -> Option<Root<Element>> {
         self.collection.IndexedGetter(index)
     }
 }

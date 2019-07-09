@@ -26,7 +26,6 @@ public:
   already_AddRefed<DataTextureSource>
   CreateDataTextureSourceAround(gfx::DataSourceSurface* aSurface) override;
 
-  void UnlockAfterComposition(TextureHost* aTexture) override;
   bool NotifyNotUsedAfterComposition(TextureHost* aTextureHost) override;
 
   int32_t GetMaxTextureSize() const override;

@@ -30,11 +30,12 @@ FFmpegAudioDecoder<LIBAV_VER>::FFmpegAudioDecoder(FFmpegLibWrapper* aLib,
 RefPtr<MediaDataDecoder::InitPromise>
 FFmpegAudioDecoder<LIBAV_VER>::Init()
 {
-  MediaResult rv = InitDecoder();
+  nsresult rv = InitDecoder();
 
-  return NS_SUCCEEDED(rv)
+  return rv == NS_OK
          ? InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__)
-         : InitPromise::CreateAndReject(rv, __func__);
+         : InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                        __func__);
 }
 
 void

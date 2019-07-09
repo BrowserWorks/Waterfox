@@ -9,7 +9,6 @@
 #include "LayersLogging.h"
 #include "mozilla/layout/RenderFrameParent.h"
 #include "mozilla/Unused.h"
-#include "nsDisplayList.h"
 #include "nsTArray.h"
 #include "UnitTransforms.h"
 
@@ -212,12 +211,6 @@ WebRenderScrollData::GetScrollMetadata(size_t aIndex) const
 {
   MOZ_ASSERT(aIndex < mScrollMetadatas.Length());
   return mScrollMetadatas[aIndex];
-}
-
-bool
-WebRenderScrollData::HasMetadataFor(const FrameMetrics::ViewID& aScrollId) const
-{
-  return mScrollIdMap.find(aScrollId) != mScrollIdMap.end();
 }
 
 void

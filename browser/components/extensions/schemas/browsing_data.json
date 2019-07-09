@@ -36,7 +36,7 @@
             "type": "array",
             "items": {"type": "string", "format": "hostname"},
             "optional": true,
-            "description": "Only remove data associated with these hostnames (only applies to cookies and localStorage)."
+            "description": "Only remove data associated with these hostnames (only applies to cookies)."
           },
           "originTypes": {
             "type": "object",
@@ -341,6 +341,7 @@
         "description": "Clears websites' local storage data.",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",

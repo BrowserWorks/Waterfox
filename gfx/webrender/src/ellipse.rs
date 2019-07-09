@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{LayerPoint, LayerSize, LayerVector2D};
+use api::{LayerPoint, LayerSize};
 use std::f32::consts::FRAC_PI_2;
 
 /// Number of steps to integrate arc length over.
@@ -18,7 +18,9 @@ pub struct Ellipse {
 impl Ellipse {
     pub fn new(radius: LayerSize) -> Ellipse {
         // Approximate the total length of the first quadrant of this ellipse.
-        let total_arc_length = get_simpson_length(FRAC_PI_2, radius.width, radius.height);
+        let total_arc_length = get_simpson_length(FRAC_PI_2,
+                                                  radius.width,
+                                                  radius.height);
 
         Ellipse {
             radius,
@@ -40,7 +42,9 @@ impl Ellipse {
 
         while low <= high {
             theta = 0.5 * (low + high);
-            let length = get_simpson_length(theta, self.radius.width, self.radius.height);
+            let length = get_simpson_length(theta,
+                                            self.radius.width,
+                                            self.radius.height);
 
             if (length - arc_length).abs() < epsilon {
                 break;
@@ -58,71 +62,11 @@ impl Ellipse {
     /// This only works for the first quadrant of the ellipse.
     pub fn get_point_and_tangent(&self, theta: f32) -> (LayerPoint, LayerPoint) {
         let (sin_theta, cos_theta) = theta.sin_cos();
-        let point = LayerPoint::new(
-            self.radius.width * cos_theta,
-            self.radius.height * sin_theta,
-        );
-        let tangent = LayerPoint::new(
-            -self.radius.width * sin_theta,
-            self.radius.height * cos_theta,
-        );
+        let point = LayerPoint::new(self.radius.width * cos_theta,
+                                    self.radius.height * sin_theta);
+        let tangent = LayerPoint::new(-self.radius.width * sin_theta,
+                                       self.radius.height * cos_theta);
         (point, tangent)
-    }
-
-    pub fn contains(&self, point: LayerPoint) -> bool {
-        self.signed_distance(point.to_vector()) <= 0.0
-    }
-
-    /// Find the signed distance from this ellipse given a point.
-    /// Taken from http://www.iquilezles.org/www/articles/ellipsedist/ellipsedist.htm
-    fn signed_distance(&self, point: LayerVector2D) -> f32 {
-        // This algorithm fails for circles, so we handle them here.
-        if self.radius.width == self.radius.height {
-            return point.length() - self.radius.width;
-        }
-
-        let mut p = LayerVector2D::new(point.x.abs(), point.y.abs());
-        let mut ab = self.radius.to_vector();
-        if p.x > p.y {
-            p = p.yx();
-            ab = ab.yx();
-        }
-
-        let l = ab.y * ab.y - ab.x * ab.x;
-
-        let m = ab.x * p.x / l;
-        let n = ab.y * p.y / l;
-        let m2 = m * m;
-        let n2 = n * n;
-
-        let c = (m2 + n2 - 1.0) / 3.0;
-        let c3 = c * c * c;
-
-        let q = c3 + m2 * n2 * 2.0;
-        let d = c3 + m2 * n2;
-        let g = m + m * n2;
-
-        let co = if d < 0.0 {
-            let p = (q / c3).acos() / 3.0;
-            let s = p.cos();
-            let t = p.sin() * (3.0_f32).sqrt();
-            let rx = (-c * (s + t + 2.0) + m2).sqrt();
-            let ry = (-c * (s - t + 2.0) + m2).sqrt();
-            (ry + l.signum() * rx + g.abs() / (rx * ry) - m) / 2.0
-        } else {
-            let h = 2.0 * m * n * d.sqrt();
-            let s = (q + h).signum() * (q + h).abs().powf(1.0 / 3.0);
-            let u = (q - h).signum() * (q - h).abs().powf(1.0 / 3.0);
-            let rx = -s - u - c * 4.0 + 2.0 * m2;
-            let ry = (s - u) * (3.0_f32).sqrt();
-            let rm = (rx * rx + ry * ry).sqrt();
-            let p = ry / (rm - rx).sqrt();
-            (p + 2.0 * g / rm - m) / 2.0
-        };
-
-        let si = (1.0 - co * co).sqrt();
-        let r = LayerVector2D::new(ab.x * co, ab.y * si);
-        return (r - p).length() * (p.y - r.y).signum();
     }
 }
 
@@ -136,11 +80,11 @@ fn get_simpson_length(theta: f32, rx: f32, ry: f32) -> f32 {
     let df = theta / STEP_COUNT as f32;
     let mut sum = 0.0;
 
-    for i in 0 .. (STEP_COUNT + 1) {
+    for i in 0..(STEP_COUNT+1) {
         let (sin_theta, cos_theta) = (i as f32 * df).sin_cos();
         let a = rx * sin_theta;
         let b = ry * cos_theta;
-        let y = (a * a + b * b).sqrt();
+        let y = (a*a + b*b).sqrt();
         let q = if i == 0 || i == STEP_COUNT {
             1.0
         } else if i % 2 == 0 {

@@ -31,12 +31,21 @@
 #include "hb-open-type-private.hh"
 #include "hb-ot-layout-private.hh"
 
+#include "hb-ot-layout-base-table.hh"
 #include "hb-ot-layout-gdef-table.hh"
 #include "hb-ot-layout-gsub-table.hh"
 #include "hb-ot-layout-gpos-table.hh"
 #include "hb-ot-layout-jstf-table.hh" // Just so we compile it; unused otherwise.
+#include "hb-ot-name-table.hh" // Just so we compile it; unused otherwise.
+#include "hb-ot-color-colr-table.hh"
+#include "hb-ot-color-cpal-table.hh"
 
 #include "hb-ot-map-private.hh"
+
+
+#ifndef HB_NO_VISIBILITY
+const void * const OT::_hb_NullPool[HB_NULL_POOL_SIZE / sizeof (void *)] = {};
+#endif
 
 
 hb_ot_layout_t *
@@ -44,20 +53,27 @@ _hb_ot_layout_create (hb_face_t *face)
 {
   hb_ot_layout_t *layout = (hb_ot_layout_t *) calloc (1, sizeof (hb_ot_layout_t));
   if (unlikely (!layout))
-    return NULL;
+    return nullptr;
 
-  layout->gdef_blob = OT::Sanitizer<OT::GDEF>::sanitize (face->reference_table (HB_OT_TAG_GDEF));
+  layout->gdef_blob = OT::Sanitizer<OT::GDEF>().sanitize (face->reference_table (HB_OT_TAG_GDEF));
   layout->gdef = OT::Sanitizer<OT::GDEF>::lock_instance (layout->gdef_blob);
 
-  layout->gsub_blob = OT::Sanitizer<OT::GSUB>::sanitize (face->reference_table (HB_OT_TAG_GSUB));
+  layout->gsub_blob = OT::Sanitizer<OT::GSUB>().sanitize (face->reference_table (HB_OT_TAG_GSUB));
   layout->gsub = OT::Sanitizer<OT::GSUB>::lock_instance (layout->gsub_blob);
 
-  layout->gpos_blob = OT::Sanitizer<OT::GPOS>::sanitize (face->reference_table (HB_OT_TAG_GPOS));
+  layout->gpos_blob = OT::Sanitizer<OT::GPOS>().sanitize (face->reference_table (HB_OT_TAG_GPOS));
   layout->gpos = OT::Sanitizer<OT::GPOS>::lock_instance (layout->gpos_blob);
 
+  layout->base.init (face);
+  layout->colr.init (face);
+  layout->cpal.init (face);
   layout->math.init (face);
   layout->fvar.init (face);
   layout->avar.init (face);
+  layout->ankr.init (face);
+  layout->kerx.init (face);
+  layout->morx.init (face);
+  layout->trak.init (face);
 
   {
     /*
@@ -176,7 +192,7 @@ _hb_ot_layout_create (hb_face_t *face)
 		(layout->gpos_lookup_count && !layout->gpos_accels)))
   {
     _hb_ot_layout_destroy (layout);
-    return NULL;
+    return nullptr;
   }
 
   for (unsigned int i = 0; i < layout->gsub_lookup_count; i++)
@@ -190,10 +206,12 @@ _hb_ot_layout_create (hb_face_t *face)
 void
 _hb_ot_layout_destroy (hb_ot_layout_t *layout)
 {
-  for (unsigned int i = 0; i < layout->gsub_lookup_count; i++)
-    layout->gsub_accels[i].fini ();
-  for (unsigned int i = 0; i < layout->gpos_lookup_count; i++)
-    layout->gpos_accels[i].fini ();
+  if (layout->gsub_accels)
+    for (unsigned int i = 0; i < layout->gsub_lookup_count; i++)
+      layout->gsub_accels[i].fini ();
+  if (layout->gpos_accels)
+    for (unsigned int i = 0; i < layout->gpos_lookup_count; i++)
+      layout->gpos_accels[i].fini ();
 
   free (layout->gsub_accels);
   free (layout->gpos_accels);
@@ -202,12 +220,27 @@ _hb_ot_layout_destroy (hb_ot_layout_t *layout)
   hb_blob_destroy (layout->gsub_blob);
   hb_blob_destroy (layout->gpos_blob);
 
+  layout->base.fini ();
+  layout->colr.fini ();
+  layout->cpal.fini ();
   layout->math.fini ();
   layout->fvar.fini ();
   layout->avar.fini ();
+  layout->ankr.fini ();
+  layout->kerx.fini ();
+  layout->morx.fini ();
+  layout->trak.fini ();
 
   free (layout);
 }
+
+// static inline const OT::BASE&
+// _get_base (hb_face_t *face)
+// {
+//   if (unlikely (!hb_ot_shaper_face_data_ensure (face))) return OT::Null(OT::BASE);
+//   hb_ot_layout_t * layout = hb_ot_layout_from_face (face);
+//   return *(layout->base.get ());
+// }
 
 static inline const OT::GDEF&
 _get_gdef (hb_face_t *face)
@@ -321,7 +354,7 @@ hb_ot_layout_table_find_script (hb_face_t    *face,
 				hb_tag_t      script_tag,
 				unsigned int *script_index)
 {
-  ASSERT_STATIC (OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_SCRIPT_INDEX);
+  static_assert ((OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_SCRIPT_INDEX), "");
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
 
   if (g.find_script_index (script_tag, script_index))
@@ -352,7 +385,7 @@ hb_ot_layout_table_choose_script (hb_face_t      *face,
 				  unsigned int   *script_index,
 				  hb_tag_t       *chosen_script)
 {
-  ASSERT_STATIC (OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_SCRIPT_INDEX);
+  static_assert ((OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_SCRIPT_INDEX), "");
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
 
   while (*script_tags)
@@ -411,7 +444,7 @@ hb_ot_layout_table_find_feature (hb_face_t    *face,
 				 hb_tag_t      feature_tag,
 				 unsigned int *feature_index)
 {
-  ASSERT_STATIC (OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_FEATURE_INDEX);
+  static_assert ((OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_FEATURE_INDEX), "");
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
 
   unsigned int num_features = g.get_feature_count ();
@@ -448,7 +481,7 @@ hb_ot_layout_script_find_language (hb_face_t    *face,
 				   hb_tag_t      language_tag,
 				   unsigned int *language_index)
 {
-  ASSERT_STATIC (OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX);
+  static_assert ((OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX), "");
   const OT::Script &s = get_gsubgpos_table (face, table_tag).get_script (script_index);
 
   if (s.find_lang_sys_index (language_tag, language_index))
@@ -474,7 +507,7 @@ hb_ot_layout_language_get_required_feature_index (hb_face_t    *face,
 						     script_index,
 						     language_index,
 						     feature_index,
-						     NULL);
+						     nullptr);
 }
 
 /**
@@ -527,7 +560,7 @@ hb_ot_layout_language_get_feature_tags (hb_face_t    *face,
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
   const OT::LangSys &l = g.get_script (script_index).get_lang_sys (language_index);
 
-  ASSERT_STATIC (sizeof (unsigned int) == sizeof (hb_tag_t));
+  static_assert ((sizeof (unsigned int) == sizeof (hb_tag_t)), "");
   unsigned int ret = l.get_feature_indexes (start_offset, feature_count, (unsigned int *) feature_tags);
 
   if (feature_tags) {
@@ -548,7 +581,7 @@ hb_ot_layout_language_find_feature (hb_face_t    *face,
 				    hb_tag_t      feature_tag,
 				    unsigned int *feature_index)
 {
-  ASSERT_STATIC (OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_FEATURE_INDEX);
+  static_assert ((OT::Index::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_FEATURE_INDEX), "");
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
   const OT::LangSys &l = g.get_script (script_index).get_lang_sys (language_index);
 
@@ -597,6 +630,7 @@ unsigned int
 hb_ot_layout_table_get_lookup_count (hb_face_t    *face,
 				     hb_tag_t      table_tag)
 {
+  if (unlikely (!hb_ot_shaper_face_data_ensure (face))) return 0;
   switch (table_tag)
   {
     case HB_OT_TAG_GSUB:
@@ -652,7 +686,7 @@ _hb_ot_layout_collect_lookups_features (hb_face_t      *face,
 						    script_index,
 						    language_index,
 						    &required_feature_index,
-						    NULL))
+						    nullptr))
       _hb_ot_layout_collect_lookups_lookups (face,
 					     table_tag,
 					     required_feature_index,
@@ -721,7 +755,7 @@ _hb_ot_layout_collect_lookups_languages (hb_face_t      *face,
     unsigned int count = hb_ot_layout_script_get_language_tags (face,
 								table_tag,
 								script_index,
-								0, NULL, NULL);
+								0, nullptr, nullptr);
     for (unsigned int language_index = 0; language_index < count; language_index++)
       _hb_ot_layout_collect_lookups_features (face,
 					      table_tag,
@@ -768,7 +802,7 @@ hb_ot_layout_collect_lookups (hb_face_t      *face,
     /* All scripts */
     unsigned int count = hb_ot_layout_table_get_script_tags (face,
 							     table_tag,
-							     0, NULL, NULL);
+							     0, nullptr, nullptr);
     for (unsigned int script_index = 0; script_index < count; script_index++)
       _hb_ot_layout_collect_lookups_languages (face,
 					       table_tag,
@@ -805,10 +839,10 @@ void
 hb_ot_layout_lookup_collect_glyphs (hb_face_t    *face,
 				    hb_tag_t      table_tag,
 				    unsigned int  lookup_index,
-				    hb_set_t     *glyphs_before, /* OUT. May be NULL */
-				    hb_set_t     *glyphs_input,  /* OUT. May be NULL */
-				    hb_set_t     *glyphs_after,  /* OUT. May be NULL */
-				    hb_set_t     *glyphs_output  /* OUT. May be NULL */)
+				    hb_set_t     *glyphs_before, /* OUT. May be nullptr */
+				    hb_set_t     *glyphs_input,  /* OUT. May be nullptr */
+				    hb_set_t     *glyphs_after,  /* OUT. May be nullptr */
+				    hb_set_t     *glyphs_output  /* OUT. May be nullptr */)
 {
   if (unlikely (!hb_ot_shaper_face_data_ensure (face))) return;
 
@@ -859,7 +893,7 @@ hb_ot_layout_feature_with_variations_get_lookups (hb_face_t    *face,
 						  unsigned int *lookup_count /* IN/OUT */,
 						  unsigned int *lookup_indexes /* OUT */)
 {
-  ASSERT_STATIC (OT::FeatureVariations::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_VARIATIONS_INDEX);
+  static_assert ((OT::FeatureVariations::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_VARIATIONS_INDEX), "");
   const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
 
   const OT::Feature &f = g.get_feature_variation (feature_index, variations_index);
@@ -967,11 +1001,11 @@ hb_ot_layout_position_finish_offsets (hb_font_t *font, hb_buffer_t *buffer)
  **/
 hb_bool_t
 hb_ot_layout_get_size_params (hb_face_t    *face,
-			      unsigned int *design_size,       /* OUT.  May be NULL */
-			      unsigned int *subfamily_id,      /* OUT.  May be NULL */
-			      unsigned int *subfamily_name_id, /* OUT.  May be NULL */
-			      unsigned int *range_start,       /* OUT.  May be NULL */
-			      unsigned int *range_end          /* OUT.  May be NULL */)
+			      unsigned int *design_size,       /* OUT.  May be nullptr */
+			      unsigned int *subfamily_id,      /* OUT.  May be nullptr */
+			      unsigned int *subfamily_name_id, /* OUT.  May be nullptr */
+			      unsigned int *range_start,       /* OUT.  May be nullptr */
+			      unsigned int *range_end          /* OUT.  May be nullptr */)
 {
   const OT::GPOS &gpos = _get_gpos (face);
   const hb_tag_t tag = HB_TAG ('s','i','z','e');
@@ -1050,13 +1084,13 @@ struct hb_get_subtables_context_t :
        OT::hb_dispatch_context_t<hb_get_subtables_context_t, hb_void_t, HB_DEBUG_APPLY>
 {
   template <typename Type>
-  static inline bool apply_to (const void *obj, OT::hb_apply_context_t *c)
+  static inline bool apply_to (const void *obj, OT::hb_ot_apply_context_t *c)
   {
     const Type *typed_obj = (const Type *) obj;
     return typed_obj->apply (c);
   }
 
-  typedef bool (*hb_apply_func_t) (const void *obj, OT::hb_apply_context_t *c);
+  typedef bool (*hb_apply_func_t) (const void *obj, OT::hb_ot_apply_context_t *c);
 
   struct hb_applicable_t
   {
@@ -1066,7 +1100,7 @@ struct hb_get_subtables_context_t :
       apply_func = apply_func_;
     }
 
-    inline bool apply (OT::hb_apply_context_t *c) const { return apply_func (obj, c); }
+    inline bool apply (OT::hb_ot_apply_context_t *c) const { return apply_func (obj, c); }
 
     private:
     const void *obj;
@@ -1097,7 +1131,7 @@ struct hb_get_subtables_context_t :
 };
 
 static inline bool
-apply_forward (OT::hb_apply_context_t *c,
+apply_forward (OT::hb_ot_apply_context_t *c,
 	       const hb_ot_layout_lookup_accelerator_t &accel,
 	       const hb_get_subtables_context_t::array_t &subtables)
 {
@@ -1127,7 +1161,7 @@ apply_forward (OT::hb_apply_context_t *c,
 }
 
 static inline bool
-apply_backward (OT::hb_apply_context_t *c,
+apply_backward (OT::hb_ot_apply_context_t *c,
 	       const hb_ot_layout_lookup_accelerator_t &accel,
 	       const hb_get_subtables_context_t::array_t &subtables)
 {
@@ -1156,7 +1190,7 @@ apply_backward (OT::hb_apply_context_t *c,
 
 template <typename Proxy>
 static inline void
-apply_string (OT::hb_apply_context_t *c,
+apply_string (OT::hb_ot_apply_context_t *c,
 	      const typename Proxy::Lookup &lookup,
 	      const hb_ot_layout_lookup_accelerator_t &accel)
 {
@@ -1207,7 +1241,7 @@ inline void hb_ot_map_t::apply (const Proxy &proxy,
 {
   const unsigned int table_index = proxy.table_index;
   unsigned int i = 0;
-  OT::hb_apply_context_t c (table_index, font, buffer);
+  OT::hb_ot_apply_context_t c (table_index, font, buffer);
   c.set_recurse_func (Proxy::Lookup::apply_recurse_func);
 
   for (unsigned int stage_index = 0; stage_index < stages[table_index].len; stage_index++) {
@@ -1246,10 +1280,34 @@ void hb_ot_map_t::position (const hb_ot_shape_plan_t *plan, hb_font_t *font, hb_
   apply (proxy, plan, font, buffer);
 }
 
-HB_INTERNAL void
-hb_ot_layout_substitute_lookup (OT::hb_apply_context_t *c,
+void
+hb_ot_layout_substitute_lookup (OT::hb_ot_apply_context_t *c,
 				const OT::SubstLookup &lookup,
 				const hb_ot_layout_lookup_accelerator_t &accel)
 {
   apply_string<GSUBProxy> (c, lookup, accel);
 }
+
+
+
+
+/*
+ * OT::BASE
+ */
+
+// /**
+//  * hb_ot_base_has_data:
+//  * @face: #hb_face_t to test
+//  *
+//  * This function allows to verify the presence of an OpenType BASE table on the
+//  * face.
+//  *
+//  * Return value: true if face has a BASE table, false otherwise
+//  *
+//  * Since: XXX
+//  **/
+// hb_bool_t
+// hb_ot_base_has_data (hb_face_t *face)
+// {
+//   return &_get_base (face) != &OT::Null(OT::BASE);
+// }

@@ -6,7 +6,7 @@
 /* atom list for CSS pseudo-classes */
 
 /*
- * This file contains the list of nsAtoms and their values for CSS
+ * This file contains the list of nsIAtoms and their values for CSS
  * pseudo-classes.  It is designed to be used as inline input to
  * nsCSSPseudoClasses.cpp *only* through the magic of C preprocessing.
  * All entries must be enclosed in the macros CSS_PSEUDO_CLASS,
@@ -68,6 +68,7 @@
 
 CSS_PSEUDO_CLASS(empty, ":empty", 0, "")
 CSS_PSEUDO_CLASS(mozOnlyWhitespace, ":-moz-only-whitespace", 0, "")
+CSS_PSEUDO_CLASS(mozEmptyExceptChildrenWithLocalname, ":-moz-empty-except-children-with-localname", 0, "")
 CSS_PSEUDO_CLASS(lang, ":lang", 0, "")
 CSS_PSEUDO_CLASS(root, ":root", 0, "")
 CSS_PSEUDO_CLASS(any, ":-moz-any", 0, "")
@@ -99,6 +100,9 @@ CSS_PSEUDO_CLASS(mozNativeAnonymous, ":-moz-native-anonymous",
 
 CSS_PSEUDO_CLASS(mozUseShadowTreeRoot, ":-moz-use-shadow-tree-root",
                  CSS_PSEUDO_CLASS_ENABLED_IN_UA_SHEETS, "")
+
+// Matches anything when the specified look-and-feel metric is set
+CSS_PSEUDO_CLASS(mozSystemMetric, ":-moz-system-metric", 0, "")
 
 // -moz-locale-dir(ltr) and -moz-locale-dir(rtl) may be used
 // to match based on the locale's chrome direction
@@ -158,11 +162,9 @@ CSS_STATE_PSEUDO_CLASS(target, ":target", 0, "", NS_EVENT_STATE_URLTARGET)
 CSS_STATE_PSEUDO_CLASS(indeterminate, ":indeterminate", 0, "",
                        NS_EVENT_STATE_INDETERMINATE)
 
-CSS_STATE_PSEUDO_CLASS(mozDevtoolsHighlighted, ":-moz-devtools-highlighted",
-                       CSS_PSEUDO_CLASS_ENABLED_IN_UA_SHEETS, "",
+CSS_STATE_PSEUDO_CLASS(mozDevtoolsHighlighted, ":-moz-devtools-highlighted", 0, "",
                        NS_EVENT_STATE_DEVTOOLS_HIGHLIGHTED)
-CSS_STATE_PSEUDO_CLASS(mozStyleeditorTransitioning, ":-moz-styleeditor-transitioning",
-                       CSS_PSEUDO_CLASS_ENABLED_IN_UA_SHEETS, "",
+CSS_STATE_PSEUDO_CLASS(mozStyleeditorTransitioning, ":-moz-styleeditor-transitioning", 0, "",
                        NS_EVENT_STATE_STYLEEDITOR_TRANSITIONING)
 
 // Matches the element which is being displayed full-screen, and

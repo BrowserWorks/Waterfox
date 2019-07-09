@@ -7,9 +7,6 @@
 #define MOZILLA_GFX_DRAWTARGETTILED_H_
 
 #include "2D.h"
-
-#include "mozilla/Vector.h"
-
 #include "Filters.h"
 #include "Logging.h"
 
@@ -46,7 +43,7 @@ public:
   virtual already_AddRefed<SourceSurface> Snapshot() override;
   virtual void DetachAllSnapshots() override;
   virtual IntSize GetSize() override {
-    MOZ_ASSERT(mRect.Width() > 0 && mRect.Height() > 0);
+    MOZ_ASSERT(mRect.width > 0 && mRect.height > 0);
     return IntSize(mRect.XMost(), mRect.YMost());
   }
 
@@ -162,12 +159,7 @@ public:
 
 private:
   std::vector<TileInternal> mTiles;
-
-  // mClippedOutTilesStack[clipIndex][tileIndex] is true if the tile at
-  // tileIndex has become completely clipped out at the clip stack depth
-  // clipIndex.
-  Vector<std::vector<bool>,8> mClippedOutTilesStack;
-
+  std::vector<std::vector<uint32_t> > mClippedOutTilesStack;
   IntRect mRect;
 
   struct PushedLayer
@@ -194,7 +186,7 @@ public:
 
   virtual SurfaceType GetType() const { return SurfaceType::TILED; }
   virtual IntSize GetSize() const {
-    MOZ_ASSERT(mRect.Width() > 0 && mRect.Height() > 0);
+    MOZ_ASSERT(mRect.width > 0 && mRect.height > 0);
     return IntSize(mRect.XMost(), mRect.YMost());
   }
   virtual SurfaceFormat GetFormat() const { return mSnapshots[0]->GetFormat(); }

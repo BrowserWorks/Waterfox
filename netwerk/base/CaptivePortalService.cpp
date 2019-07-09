@@ -93,7 +93,7 @@ CaptivePortalService::RearmTimer()
   }
 
   if (!mTimer) {
-    mTimer = NS_NewTimer();
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   }
 
   if (mTimer && mDelay > 0) {

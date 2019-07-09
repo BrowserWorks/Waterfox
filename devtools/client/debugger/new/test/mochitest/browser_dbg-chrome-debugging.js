@@ -15,7 +15,7 @@ var { DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var customLoader = new DevToolsLoader();
 customLoader.invisibleToDebugger = true;
 var { DebuggerServer } = customLoader.require("devtools/server/main");
-var { DebuggerClient } = require("devtools/shared/client/debugger-client");
+var { DebuggerClient } = require("devtools/shared/client/main");
 
 function initDebuggerClient() {
   if (!DebuggerServer.initialized) {
@@ -68,21 +68,21 @@ registerCleanupFunction(function() {
   DebuggerServer = null;
 });
 
-add_task(async function() {
+add_task(function*() {
   gClient = initDebuggerClient();
 
-  const [type] = await gClient.connect();
+  const [type] = yield gClient.connect();
   is(type, "browser", "Root actor should identify itself as a browser.");
 
-  const response = await gClient.getProcess();
+  const response = yield gClient.getProcess();
   let actor = response.form.actor;
-  gThreadClient = await attachThread(gClient, actor);
+  gThreadClient = yield attachThread(gClient, actor);
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "about:mozilla");
 
   // listen for a new source and global
   gThreadClient.addListener("newSource", onNewSource);
   gClient.addListener("newGlobal", onNewGlobal);
-  await promise.all([gNewGlobal.promise, gNewChromeSource.promise]);
+  yield promise.all([gNewGlobal.promise, gNewChromeSource.promise]);
 
-  await resumeAndCloseConnection();
+  yield resumeAndCloseConnection();
 });

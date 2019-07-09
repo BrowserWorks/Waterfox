@@ -17,7 +17,6 @@
 #include "nsWindow.h"
 #include "nsTransferable.h"
 #include "nsHTMLFormatConverter.h"
-#include "HeadlessClipboard.h"
 #ifdef MOZ_X11
 #include "nsClipboardHelper.h"
 #include "nsClipboard.h"
@@ -49,8 +48,9 @@
 #include "GfxInfoX11.h"
 #endif
 
+#include "nsNativeMenuService.h"
+
 #include "nsNativeThemeGTK.h"
-#include "HeadlessThemeGTK.h"
 
 #include "nsIComponentRegistrar.h"
 #include "nsComponentManagerUtils.h"
@@ -74,6 +74,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLFormatConverter)
 #ifdef MOZ_X11
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIdleServiceGTK, nsIdleServiceGTK::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIClipboard, nsClipboard::GetInstance)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsDragService, nsDragService::GetInstance)
 #endif
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISound, nsSound::GetInstance)
@@ -88,8 +89,11 @@ static nsresult
 nsNativeThemeGTKConstructor(nsISupports *aOuter, REFNSIID aIID,
                             void **aResult)
 {
+    if (gfxPlatform::IsHeadless()) {
+        return NS_ERROR_NO_INTERFACE;
+    }
     nsresult rv;
-    nsCOMPtr<nsITheme> inst;
+    nsNativeThemeGTK * inst;
 
     if (gDisableNativeTheme)
         return NS_ERROR_NO_INTERFACE;
@@ -99,16 +103,15 @@ nsNativeThemeGTKConstructor(nsISupports *aOuter, REFNSIID aIID,
         rv = NS_ERROR_NO_AGGREGATION;
         return rv;
     }
-    if (gfxPlatform::IsHeadless()) {
-        inst = new HeadlessThemeGTK();
-    } else {
-        inst = new nsNativeThemeGTK();
-    }
+
+    inst = new nsNativeThemeGTK();
     if (nullptr == inst) {
         rv = NS_ERROR_OUT_OF_MEMORY;
         return rv;
     }
+    NS_ADDREF(inst);
     rv = inst->QueryInterface(aIID, aResult);
+    NS_RELEASE(inst);
 
     return rv;
 }
@@ -121,6 +124,9 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(GfxInfo, Init)
 }
 }
 #endif
+
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsNativeMenuService,
+                                         nsNativeMenuService::GetInstanceForServiceManager)
 
 #ifdef NS_PRINTING
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
@@ -193,28 +199,6 @@ nsColorPickerConstructor(nsISupports *aOuter, REFNSIID aIID,
     return picker->QueryInterface(aIID, aResult);
 }
 
-static nsresult
-nsClipboardConstructor(nsISupports *aOuter, REFNSIID aIID,
-                       void **aResult)
-{
-  *aResult = nullptr;
-  if (aOuter != nullptr) {
-    return NS_ERROR_NO_AGGREGATION;
-  }
-
-  nsCOMPtr<nsIClipboard> inst;
-  if (gfxPlatform::IsHeadless()) {
-    inst = new HeadlessClipboard();
-  } else {
-    RefPtr<nsClipboard> clipboard = new nsClipboard();
-    nsresult rv = clipboard->Init();
-    NS_ENSURE_SUCCESS(rv, rv);
-    inst = clipboard;
-  }
-
-  return inst->QueryInterface(aIID, aResult);
-}
-
 NS_DEFINE_NAMED_CID(NS_WINDOW_CID);
 NS_DEFINE_NAMED_CID(NS_CHILD_CID);
 NS_DEFINE_NAMED_CID(NS_APPSHELL_CID);
@@ -246,6 +230,7 @@ NS_DEFINE_NAMED_CID(NS_IMAGE_TO_PIXBUF_CID);
 NS_DEFINE_NAMED_CID(NS_IDLE_SERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_GFXINFO_CID);
 #endif
+NS_DEFINE_NAMED_CID(NS_NATIVEMENUSERVICE_CID);
 
 
 static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
@@ -260,7 +245,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
     { &kNS_SOUND_CID, false, nullptr, nsISoundConstructor, Module::MAIN_PROCESS_ONLY },
     { &kNS_TRANSFERABLE_CID, false, nullptr, nsTransferableConstructor },
 #ifdef MOZ_X11
-    { &kNS_CLIPBOARD_CID, false, nullptr, nsClipboardConstructor, Module::MAIN_PROCESS_ONLY },
+    { &kNS_CLIPBOARD_CID, false, nullptr, nsIClipboardConstructor, Module::MAIN_PROCESS_ONLY },
     { &kNS_CLIPBOARDHELPER_CID, false, nullptr, nsClipboardHelperConstructor },
     { &kNS_DRAGSERVICE_CID, false, nullptr, nsDragServiceConstructor, Module::MAIN_PROCESS_ONLY },
 #endif
@@ -281,6 +266,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
     { &kNS_IDLE_SERVICE_CID, false, nullptr, nsIdleServiceGTKConstructor },
     { &kNS_GFXINFO_CID, false, nullptr, mozilla::widget::GfxInfoConstructor },
 #endif
+    { &kNS_NATIVEMENUSERVICE_CID, true, NULL, nsNativeMenuServiceConstructor },
     { nullptr }
 };
 
@@ -318,6 +304,7 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
     { "@mozilla.org/widget/idleservice;1", &kNS_IDLE_SERVICE_CID },
     { "@mozilla.org/gfx/info;1", &kNS_GFXINFO_CID },
 #endif
+    { "@mozilla.org/widget/nativemenuservice;1", &kNS_NATIVEMENUSERVICE_CID },
     { nullptr }
 };
 

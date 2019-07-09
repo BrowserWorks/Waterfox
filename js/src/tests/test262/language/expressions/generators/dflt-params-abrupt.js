@@ -4,7 +4,7 @@
 /*---
 description: Abrupt completion returned by evaluation of initializer (generator function expression)
 esid: sec-generator-function-definitions-runtime-semantics-evaluation
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 info: |
     GeneratorExpression : function * ( FormalParameters ) { GeneratorBody }
@@ -36,7 +36,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     14.1.19 Runtime Semantics: IteratorBindingInitialization
 

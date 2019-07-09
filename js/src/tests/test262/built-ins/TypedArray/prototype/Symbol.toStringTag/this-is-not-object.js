@@ -10,7 +10,7 @@ info: >
   2. If Type(O) is not Object, return undefined.
   ...
 includes: [testTypedArray.js]
-features: [Symbol, Symbol.toStringTag, TypedArray]
+features: [Symbol, Symbol.toStringTag]
 ---*/
 
 var TypedArrayPrototype = TypedArray.prototype;

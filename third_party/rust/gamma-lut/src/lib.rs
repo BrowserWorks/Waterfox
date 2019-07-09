@@ -21,12 +21,10 @@ pub enum LuminanceColorSpace {
 
 impl LuminanceColorSpace {
     pub fn new(gamma: f32) -> LuminanceColorSpace {
-        if gamma == 1.0 {
-            LuminanceColorSpace::Linear
-        } else if gamma == 0.0 {
-            LuminanceColorSpace::Srgb
-        } else {
-            LuminanceColorSpace::Gamma(gamma)
+        match gamma {
+            1.0 => LuminanceColorSpace::Linear,
+            0.0 => LuminanceColorSpace::Srgb,
+            _ => LuminanceColorSpace::Gamma(gamma),
         }
     }
 
@@ -333,7 +331,7 @@ impl GammaLut {
                 pixel[0] = table_g[luminance as usize];
                 pixel[1] = table_g[luminance as usize];
                 pixel[2] = table_g[luminance as usize];
-                pixel[3] = table_g[luminance as usize];
+                // Don't touch alpha
             }
         }
     }

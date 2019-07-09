@@ -4,7 +4,7 @@
 
 this.EXPORTED_SYMBOLS = ["LightweightThemeConsumer"];
 
-const {utils: Cu, interfaces: Ci, classes: Cc} = Components;
+const {utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -12,15 +12,6 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeImageOptimizer",
   "resource://gre/modules/addons/LightweightThemeImageOptimizer.jsm");
-
-const kCSSVarsMap = new Map([
-  ["--lwt-background-alignment", "backgroundsAlignment"],
-  ["--lwt-background-tiling", "backgroundsTiling"],
-  ["--toolbar-bgcolor", "toolbarColor"],
-  ["--toolbar-color", "toolbar_text"],
-  ["--url-and-searchbar-background-color", "toolbar_field"],
-  ["--url-and-searchbar-color", "toolbar_field_text"]
-]);
 
 this.LightweightThemeConsumer =
  function LightweightThemeConsumer(aDocument) {
@@ -37,7 +28,7 @@ this.LightweightThemeConsumer =
   Cu.import("resource://gre/modules/LightweightThemeManager.jsm", temp);
   this._update(temp.LightweightThemeManager.currentThemeForDisplay);
   this._win.addEventListener("resize", this);
-};
+}
 
 LightweightThemeConsumer.prototype = {
   _lastData: null,
@@ -55,7 +46,7 @@ LightweightThemeConsumer.prototype = {
 
   disable() {
     // Dance to keep the data, but reset the applied styles:
-    let lastData = this._lastData;
+    let lastData = this._lastData
     this._update(null);
     this._enabled = false;
     this._lastData = lastData;
@@ -69,16 +60,7 @@ LightweightThemeConsumer.prototype = {
     if (aTopic != "lightweight-theme-styling-update")
       return;
 
-    const { outerWindowID } = this._win
-      .QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIDOMWindowUtils);
-
-    const parsedData = JSON.parse(aData);
-    if (parsedData && parsedData.window && parsedData.window !== outerWindowID) {
-      return;
-    }
-
-    this._update(parsedData);
+    this._update(JSON.parse(aData));
   },
 
   handleEvent(aEvent) {
@@ -116,15 +98,16 @@ LightweightThemeConsumer.prototype = {
 
     let root = this._doc.documentElement;
     let active = !!aData.headerURL;
+    let stateChanging = (active != this._active);
 
     // We need to clear these either way: either because the theme is being removed,
     // or because we are applying a new theme and the data might be bogus CSS,
     // so if we don't reset first, it'll keep the old value.
     root.style.removeProperty("--lwt-text-color");
     root.style.removeProperty("--lwt-accent-color");
-    let textcolor = this._sanitizeCSSColor(aData.textcolor) || "black";
+    let textcolor = aData.textcolor || "black";
     _setProperty(root, active, "--lwt-text-color", textcolor);
-    _setProperty(root, active, "--lwt-accent-color", this._sanitizeCSSColor(aData.accentcolor) || "white");
+    _setProperty(root, active, "--lwt-accent-color", aData.accentcolor || "white");
     if (active) {
       let dummy = this._doc.createElement("dummy");
       dummy.style.color = textcolor;
@@ -152,30 +135,39 @@ LightweightThemeConsumer.prototype = {
     _setImage(root, active, "--lwt-header-image", aData.headerURL);
     _setImage(root, active, "--lwt-footer-image", aData.footerURL);
     _setImage(root, active, "--lwt-additional-images", aData.additionalBackgrounds);
-    _setProperties(root, active, aData);
+    _setProperty(root, active, "--lwt-background-alignment", aData.backgroundsAlignment);
+    _setProperty(root, active, "--lwt-background-tiling", aData.backgroundsTiling);
 
     if (active && aData.footerURL)
       root.setAttribute("lwthemefooter", "true");
     else
       root.removeAttribute("lwthemefooter");
 
+    // On OS X, we extend the lightweight theme into the titlebar, which means setting
+    // the chromemargin attribute. Some XUL applications already draw in the titlebar,
+    // so we need to save the chromemargin value before we overwrite it with the value
+    // that lets us draw in the titlebar. We stash this value on the root attribute so
+    // that XUL applications have the ability to invalidate the saved value.
+    if (AppConstants.platform == "macosx" && stateChanging) {
+      if (!root.hasAttribute("chromemargin-nonlwtheme")) {
+        root.setAttribute("chromemargin-nonlwtheme", root.getAttribute("chromemargin"));
+      }
+
+      if (active) {
+        root.setAttribute("chromemargin", "0,-1,-1,-1");
+      } else {
+        let defaultChromemargin = root.getAttribute("chromemargin-nonlwtheme");
+        if (defaultChromemargin) {
+          root.setAttribute("chromemargin", defaultChromemargin);
+        } else {
+          root.removeAttribute("chromemargin");
+        }
+      }
+    }
     Services.obs.notifyObservers(this._win, "lightweight-theme-window-updated",
                                  JSON.stringify(aData));
-  },
-
-  _sanitizeCSSColor(cssColor) {
-    // style.color normalizes color values and rejects invalid ones, so a
-    // simple round trip gets us a sanitized color value.
-    let span = this._doc.createElementNS("http://www.w3.org/1999/xhtml", "span");
-    span.style.color = cssColor;
-    cssColor = span.style.color;
-    if (cssColor == "transparent" ||
-        cssColor == "rgba(0, 0, 0, 0)") {
-      return "";
-    }
-    return cssColor;
   }
-};
+}
 
 function _setImage(aRoot, aActive, aVariableName, aURLs) {
   if (aURLs && !Array.isArray(aURLs)) {
@@ -189,12 +181,6 @@ function _setProperty(root, active, variableName, value) {
     root.style.setProperty(variableName, value);
   } else {
     root.style.removeProperty(variableName);
-  }
-}
-
-function _setProperties(root, active, vars) {
-  for (let [cssVarName, varsKey] of kCSSVarsMap) {
-    _setProperty(root, active, cssVarName, vars[varsKey]);
   }
 }
 

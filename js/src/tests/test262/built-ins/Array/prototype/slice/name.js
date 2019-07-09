@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.slice
 es6id: 22.1.3.22
 description: >
   Array.prototype.slice.name is "slice".

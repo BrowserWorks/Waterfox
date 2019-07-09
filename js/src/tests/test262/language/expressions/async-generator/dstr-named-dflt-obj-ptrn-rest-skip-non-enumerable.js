@@ -1,3 +1,4 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/obj-ptrn-rest-skip-non-enumerable.case
 // - src/dstr-binding/default/async-gen-func-named-expr-dflt.template
@@ -24,21 +25,18 @@ Object.defineProperty(o, "x", { value: 4, enumerable: false });
 var callCount = 0;
 var f;
 f = async function* h({...rest} = o) {
+  assert.sameValue(rest.a, 3);
+  assert.sameValue(rest.b, 4);
   assert.sameValue(rest.x, undefined);
 
-  verifyProperty(rest, "a", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 3
-  });
+  verifyEnumerable(rest, "a");
+  verifyWritable(rest, "a");
+  verifyConfigurable(rest, "a");
 
-  verifyProperty(rest, "b", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 4
-  });
+  verifyEnumerable(rest, "b");
+  verifyWritable(rest, "b");
+  verifyConfigurable(rest, "b");
+
   callCount = callCount + 1;
 };
 

@@ -15,6 +15,7 @@
 #include "base/time.h"
 #include "GMPUtils.h"
 #include "mozilla/ScopeExit.h"
+#include "CDMStorageIdProvider.h"
 
 namespace mozilla {
 namespace gmp {
@@ -27,11 +28,12 @@ ChromiumCDMChild::ChromiumCDMChild(GMPContentChild* aPlugin)
 }
 
 void
-ChromiumCDMChild::Init(cdm::ContentDecryptionModule_9* aCDM)
+ChromiumCDMChild::Init(cdm::ContentDecryptionModule_9* aCDM, const nsCString& aStorageId)
 {
   MOZ_ASSERT(IsOnMessageLoopThread());
   mCDM = aCDM;
   MOZ_ASSERT(mCDM);
+  mStorageId = aStorageId;
 }
 
 void
@@ -239,7 +241,7 @@ ChromiumCDMChild::OnResolveNewSessionPromiseInternal(uint32_t aPromiseId,
     // a session it calls OnResolveNewSessionPromise with nullptr as the sessionId.
     // We can safely assume this means that we have failed to load a session
     // as the other methods specify calling 'OnRejectPromise' when they fail.
-    bool loadSuccessful = !aSessionId.IsEmpty();
+    bool loadSuccessful = aSessionId != nullptr;
     GMP_LOG("ChromiumCDMChild::OnResolveNewSessionPromise(pid=%u, sid=%s) "
             "resolving %s load session ",
             aPromiseId,
@@ -468,6 +470,28 @@ ChromiumCDMChild::CreateFileIO(cdm::FileIOClient * aClient)
     return nullptr;
   }
   return new WidevineFileIO(aClient);
+}
+
+void
+ChromiumCDMChild::RequestStorageId(uint32_t aVersion)
+{
+  MOZ_ASSERT(IsOnMessageLoopThread());
+  GMP_LOG("ChromiumCDMChild::RequestStorageId() aVersion = %u", aVersion);
+  // aVersion >= 0x80000000 are reserved.
+  if (aVersion >= 0x80000000) {
+    mCDM->OnStorageId(aVersion, nullptr, 0);
+    return;
+  }
+  if (aVersion > CDMStorageIdProvider::kCurrentVersion) {
+    mCDM->OnStorageId(aVersion, nullptr, 0);
+    return;
+  }
+
+  mCDM->OnStorageId(CDMStorageIdProvider::kCurrentVersion,
+                    !mStorageId.IsEmpty()
+                      ? reinterpret_cast<const uint8_t*>(mStorageId.get())
+                      : nullptr,
+                    mStorageId.Length());
 }
 
 ChromiumCDMChild::~ChromiumCDMChild()

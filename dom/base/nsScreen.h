@@ -62,7 +62,7 @@ public:
     }
 
     aRv = GetRect(rect);
-    return rect.Width();
+    return rect.width;
   }
 
   int32_t GetHeight(ErrorResult& aRv)
@@ -77,7 +77,7 @@ public:
     }
 
     aRv = GetRect(rect);
-    return rect.Height();
+    return rect.height;
   }
 
   int32_t GetPixelDepth(ErrorResult& aRv);
@@ -104,14 +104,14 @@ public:
   {
     nsRect rect;
     aRv = GetAvailRect(rect);
-    return rect.Width();
+    return rect.width;
   }
 
   int32_t GetAvailHeight(ErrorResult& aRv)
   {
     nsRect rect;
     aRv = GetAvailRect(rect);
-    return rect.Height();
+    return rect.height;
   }
 
   // Deprecated

@@ -77,6 +77,33 @@ class Response(Message):
         return Response(data[1], data[2], data[3])
 
 
+class Proto2Command(Command):
+    """Compatibility shim that marshals messages from a protocol level
+    2 and below remote into ``Command`` objects.
+    """
+
+    def __init__(self, name, params):
+        Command.__init__(self, None, name, params)
+
+
+class Proto2Response(Response):
+    """Compatibility shim that marshals messages from a protocol level
+    2 and below remote into ``Response`` objects.
+    """
+
+    def __init__(self, error, result):
+        Response.__init__(self, None, error, result)
+
+    @staticmethod
+    def from_data(data):
+        err, res = None, None
+        if "error" in data:
+            err = data
+        else:
+            res = data
+        return Proto2Response(err, res)
+
+
 class TcpTransport(object):
     """Socket client that communciates with Marionette via TCP.
 
@@ -87,10 +114,9 @@ class TcpTransport(object):
 
     On top of this protocol it uses a Marionette message format, that
     depending on the protocol level offered by the remote server, varies.
-    Supported protocol levels are `min_protocol_level` and above.
+    Supported protocol levels are 1 and above.
     """
     max_packet_length = 4096
-    min_protocol_level = 3
 
     def __init__(self, addr, port, socket_timeout=60.0):
         """If `socket_timeout` is `0` or `0.0`, non-blocking socket mode
@@ -101,7 +127,7 @@ class TcpTransport(object):
         self.port = port
         self._socket_timeout = socket_timeout
 
-        self.protocol = self.min_protocol_level
+        self.protocol = 1
         self.application_type = None
         self.last_id = 0
         self.expected_response = None
@@ -127,6 +153,12 @@ class TcpTransport(object):
                 msg = Command.from_msg(packet)
             elif typ == Response.TYPE:
                 msg = Response.from_msg(packet)
+
+        # protocol 2 and below
+        else:
+            data = json.loads(packet)
+
+            msg = Proto2Response.from_data(data)
 
         return msg
 
@@ -161,10 +193,13 @@ class TcpTransport(object):
                         msg = self._unmarshal(remaining)
                         self.last_id = msg.id
 
-                        # keep reading incoming responses until
-                        # we receive the user's expected response
-                        if isinstance(msg, Response) and msg != self.expected_response:
-                            return self.receive(unmarshal)
+                        if self.protocol >= 3:
+                            self.last_id = msg.id
+
+                            # keep reading incoming responses until
+                            # we receive the user's expected response
+                            if isinstance(msg, Response) and msg != self.expected_response:
+                                return self.receive(unmarshal)
 
                         return msg
 
@@ -197,7 +232,7 @@ class TcpTransport(object):
             # which we can use to tell which protocol level we are at
             raw = self.receive(unmarshal=False)
         hello = json.loads(raw)
-        self.protocol = hello.get("marionetteProtocol", self.min_protocol_level)
+        self.protocol = hello.get("marionetteProtocol", 1)
         self.application_type = hello.get("applicationType")
 
         return (self.protocol, self.application_type)

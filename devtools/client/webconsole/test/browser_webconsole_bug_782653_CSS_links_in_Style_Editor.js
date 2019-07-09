@@ -22,7 +22,7 @@ add_task(function* () {
 });
 
 function testViewSource() {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   waitForMessages({
     webconsole: hud,
@@ -58,7 +58,7 @@ function testViewSource() {
 }
 
 function onStyleEditorReady(panel) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let win = panel.panelWindow;
   ok(win, "Style Editor Window is defined");
@@ -115,7 +115,7 @@ function checkStyleEditorForSheetAndLine(href, line) {
 }
 
 function performLineCheck(editor, line) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   function checkForCorrectState() {
     is(editor.sourceEditor.getCursor().line, line,

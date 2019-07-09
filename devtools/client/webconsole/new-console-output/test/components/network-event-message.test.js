@@ -10,8 +10,8 @@ const { render } = require("enzyme");
 const { createFactory } = require("devtools/client/shared/vendor/react");
 
 // Components under test.
-const NetworkEventMessage = createFactory(require("devtools/client/webconsole/new-console-output/components/message-types/NetworkEventMessage"));
-const { INDENT_WIDTH } = require("devtools/client/webconsole/new-console-output/components/MessageIndent");
+const NetworkEventMessage = createFactory(require("devtools/client/webconsole/new-console-output/components/message-types/network-event-message"));
+const { INDENT_WIDTH } = require("devtools/client/webconsole/new-console-output/components/message-indent");
 
 // Test fakes.
 const { stubPreparedMessages } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
@@ -107,18 +107,6 @@ describe("NetworkEventMessage component:", () => {
       expect(wrapper.find(".message-body .url").text()).toBe(EXPECTED_URL);
       expect(wrapper.find(".message-body .status").length).toBe(1);
       expect(wrapper.find(".message-body .status").text()).toMatch(EXPECTED_STATUS);
-    });
-  });
-
-  describe("is expandable", () => {
-    it("renders as expected", () => {
-      const message = stubPreparedMessages.get("XHR POST request");
-      const wrapper = render(NetworkEventMessage({
-        message,
-        serviceContainer,
-      }));
-
-      expect(wrapper.find(".message .theme-twisty")).toExist();
     });
   });
 });

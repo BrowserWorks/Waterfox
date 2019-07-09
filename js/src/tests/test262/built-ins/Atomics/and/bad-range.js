@@ -2,11 +2,9 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.and
 description: >
   Test range checking of Atomics.and on arrays that allow atomic operations
 includes: [testAtomics.js, testTypedArray.js]
-features: [SharedArrayBuffer, ArrayBuffer, DataView, Atomics, arrow-function, let, TypedArray, for-of]
 ---*/
 
 var sab = new SharedArrayBuffer(4);

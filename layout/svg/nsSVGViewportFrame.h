@@ -28,7 +28,7 @@ public:
   NS_DECL_ABSTRACT_FRAME(nsSVGViewportFrame)
 
   virtual nsresult  AttributeChanged(int32_t         aNameSpaceID,
-                                     nsAtom*        aAttribute,
+                                     nsIAtom*        aAttribute,
                                      int32_t         aModType) override;
 
   // nsSVGDisplayableFrame interface:
@@ -43,10 +43,16 @@ public:
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
 
   // nsSVGContainerFrame methods:
+  virtual gfxMatrix GetCanvasTM() override;
+
   virtual bool HasChildrenOnlyTransform(Matrix *aTransform) const override;
 
   // nsISVGSVGFrame interface:
   virtual void NotifyViewportOrTransformChanged(uint32_t aFlags) override;
+
+protected:
+
+  nsAutoPtr<gfxMatrix> mCanvasTM;
 };
 
 #endif // __NS_SVGVIEWPORTFRAME_H__

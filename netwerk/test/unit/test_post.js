@@ -78,6 +78,7 @@ function run_test() {
                createInstance(Ci.nsIMIMEInputStream);
   mime.addHeader("Content-Type", "multipart/form-data; boundary="+BOUNDARY);
   mime.setData(multi);
+  mime.addContentLength = true;
 
   httpserver.registerPathHandler(testpath, serverHandler);
   httpserver.start(-1);

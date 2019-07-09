@@ -31,9 +31,6 @@ var textElements = {
   },
   dfn: {},
   abbr: {},
-  ruby: {},
-  rt: {},
-  rp: {},
   data: {
     value: "string",
   },
@@ -41,7 +38,9 @@ var textElements = {
     dateTime: "string",
   },
   code: {},
-  var: {},
+  // Opera 11.50 doesn't allow unquoted "var" here, although ES5 does and
+  // other browsers support it.
+  "var": {},
   samp: {},
   kbd: {},
   sub: {},
@@ -50,6 +49,9 @@ var textElements = {
   b: {},
   u: {},
   mark: {},
+  ruby: {},
+  rt: {},
+  rp: {},
   bdi: {},
   bdo: {},
   span: {},

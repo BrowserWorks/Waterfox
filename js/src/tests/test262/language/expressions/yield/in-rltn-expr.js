@@ -10,7 +10,6 @@ info: |
   Syntax
 
   yield [no LineTerminator here] AssignmentExpression[?In, +Yield]
-features: [generators]
 ---*/
 
 var obj = Object.create(null);

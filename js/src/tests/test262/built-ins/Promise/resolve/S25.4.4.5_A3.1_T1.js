@@ -7,7 +7,7 @@ info: >
 es6id: S25.4.4.5_A3.1_T1
 author: Sam Mikes
 description: Promise.resolve delegates to foreign thenable
-includes: [promiseHelper.js]
+includes: [PromiseHelper.js]
 flags: [async]
 ---*/
 

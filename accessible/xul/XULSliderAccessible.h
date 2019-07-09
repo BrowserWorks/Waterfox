@@ -45,11 +45,11 @@ protected:
    */
   nsIContent* GetSliderElement() const;
 
-  nsresult GetSliderAttr(nsAtom *aName, nsAString& aValue) const;
-  nsresult SetSliderAttr(nsAtom *aName, const nsAString& aValue);
+  nsresult GetSliderAttr(nsIAtom *aName, nsAString& aValue) const;
+  nsresult SetSliderAttr(nsIAtom *aName, const nsAString& aValue);
 
-  double GetSliderAttr(nsAtom *aName) const;
-  bool SetSliderAttr(nsAtom *aName, double aValue);
+  double GetSliderAttr(nsIAtom *aName) const;
+  bool SetSliderAttr(nsIAtom *aName, double aValue);
 
 private:
   mutable nsCOMPtr<nsIContent> mSliderNode;

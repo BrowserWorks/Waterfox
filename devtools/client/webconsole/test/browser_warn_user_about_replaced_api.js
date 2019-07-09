@@ -31,7 +31,7 @@ add_task(function* () {
 });
 
 function testWarningNotPresent(hud) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   is(hud.outputNode.textContent.indexOf("logging API"), -1,
      "no warning displayed");
@@ -60,7 +60,7 @@ function testWarningNotPresent(hud) {
 
 function testWarningPresent(hud) {
   info("wait for the warning to show");
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let warning = {
     webconsole: hud,

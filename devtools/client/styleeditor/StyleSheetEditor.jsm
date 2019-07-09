@@ -17,7 +17,7 @@ const promise = require("promise");
 const {shortSource, prettifyCSS} = require("devtools/shared/inspector/css-logic");
 const {console} = require("resource://gre/modules/Console.jsm");
 const Services = require("Services");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {Task} = require("devtools/shared/task");
 const {FileUtils} = require("resource://gre/modules/FileUtils.jsm");
 const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
@@ -127,7 +127,7 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this.mediaRules = [];
   if (this.cssSheet.getMediaRules) {
     this.cssSheet.getMediaRules().then(this._onMediaRulesChanged,
-                                       console.error);
+                                       e => console.error(e));
   }
   this.cssSheet.on("media-rules-changed", this._onMediaRulesChanged);
   this.cssSheet.on("style-applied", this._onStyleApplied);
@@ -297,7 +297,6 @@ StyleSheetEditor.prototype = {
                      ", the editor was destroyed");
         console.error(e);
       } else {
-        console.error(e);
         this.emit("error", { key: LOAD_ERROR, append: this.styleSheet.href });
         throw e;
       }
@@ -359,7 +358,6 @@ StyleSheetEditor.prototype = {
       // We just applied an edit in the editor, so we can drop this
       // notification.
       this._isUpdating = false;
-      this.emit("style-applied");
     } else if (this.sourceEditor) {
       this._getSourceTextAndPrettify().then((newText) => {
         this._justSetText = true;
@@ -520,7 +518,7 @@ StyleSheetEditor.prototype = {
    * Toggled the disabled state of the underlying stylesheet.
    */
   toggleDisabled: function () {
-    this.styleSheet.toggleDisabled().catch(console.error);
+    this.styleSheet.toggleDisabled().catch(e => console.error(e));
   },
 
   /**
@@ -562,7 +560,7 @@ StyleSheetEditor.prototype = {
 
     this._isUpdating = true;
     this.styleSheet.update(this._state.text, this.transitionsEnabled)
-      .catch(console.error);
+      .catch(e => console.error(e));
   },
 
   /**
@@ -744,9 +742,6 @@ StyleSheetEditor.prototype = {
       let decoder = new TextDecoder();
       let text = decoder.decode(array);
 
-      // Ensure we don't re-fetch the text from the original source
-      // actor when we're notified that the style sheet changed.
-      this._isUpdating = true;
       let relatedSheet = this.styleSheet.relatedStyleSheet;
       relatedSheet.update(text, this.transitionsEnabled);
     }, this.markLinkedFileBroken);
@@ -862,8 +857,8 @@ function findProjectPath(file, branch) {
  *         object with 'branch' and 'origBranch' array of path parts for branch
  */
 function findUnsharedBranches(origUri, uri) {
-  origUri = OS.Path.split(origUri.pathQueryRef).components;
-  uri = OS.Path.split(uri.pathQueryRef).components;
+  origUri = OS.Path.split(origUri.path).components;
+  uri = OS.Path.split(uri.path).components;
 
   for (let i = 0; i < uri.length - 1; i++) {
     if (uri[i] != origUri[i]) {

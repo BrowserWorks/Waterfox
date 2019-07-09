@@ -69,7 +69,6 @@
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/InputAPZContext.h"
-#include "mozilla/layers/IpcResourceUpdateQueue.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "mozilla/widget/CompositorWidget.h"
@@ -167,6 +166,7 @@ static NSMutableDictionary* sNativeKeyEventsMap =
 
 // sets up our view, attaching it to its owning gecko view
 - (id)initWithFrame:(NSRect)inFrame geckoChild:(nsChildView*)inChild;
+- (void)forceRefreshOpenGL;
 
 // set up a gecko mouse event based on a cocoa mouse event
 - (void) convertCocoaMouseWheelEvent:(NSEvent*)aMouseEvent
@@ -196,6 +196,7 @@ static NSMutableDictionary* sNativeKeyEventsMap =
 
 // Overlay drawing functions for traditional CGContext drawing
 - (void)drawTitleString;
+- (void)drawTitlebarHighlight;
 - (void)maskTopCornersInContext:(CGContextRef)aContext;
 
 #if USE_CLICK_HOLD_CONTEXTMENU
@@ -359,6 +360,7 @@ nsChildView::nsChildView() : nsBaseWidget()
 , mEffectsLock("WidgetEffects")
 , mShowsResizeIndicator(false)
 , mHasRoundedBottomCorners(false)
+, mDevPixelCornerRadius{0}
 , mIsCoveringTitlebar(false)
 , mIsFullscreen(false)
 , mIsOpaque(false)
@@ -367,6 +369,8 @@ nsChildView::nsChildView() : nsBaseWidget()
 , mVisible(false)
 , mDrawing(false)
 , mIsDispatchPaint(false)
+, mPluginFocused{false}
+, mCurrentPanGestureBelongsToSwipe{false}
 {
   EnsureLogInitialized();
 }
@@ -440,13 +444,6 @@ nsChildView::Create(nsIWidget* aParent,
   if (!gChildViewMethodsSwizzled) {
     nsToolkit::SwizzleMethods([NSView class], @selector(mouseDownCanMoveWindow),
                               @selector(nsChildView_NSView_mouseDownCanMoveWindow));
-#ifdef __LP64__
-    nsToolkit::SwizzleMethods([NSEvent class], @selector(addLocalMonitorForEventsMatchingMask:handler:),
-                              @selector(nsChildView_NSEvent_addLocalMonitorForEventsMatchingMask:handler:),
-                              true);
-    nsToolkit::SwizzleMethods([NSEvent class], @selector(removeMonitor:),
-                              @selector(nsChildView_NSEvent_removeMonitor:), true);
-#endif
     gChildViewMethodsSwizzled = true;
   }
 
@@ -561,7 +558,7 @@ void nsChildView::TearDownView()
 }
 
 nsCocoaWindow*
-nsChildView::GetXULWindowWidget() const
+nsChildView::GetXULWindowWidget()
 {
   id windowDelegate = [[mView window] delegate];
   if (windowDelegate && [windowDelegate isKindOfClass:[WindowDelegate class]]) {
@@ -695,10 +692,6 @@ bool nsChildView::IsVisible() const
 
   if (!mVisible) {
     return mVisible;
-  }
-
-  if (!GetXULWindowWidget()->IsVisible()) {
-    return false;
   }
 
   // mVisible does not accurately reflect the state of a hidden tabbed view
@@ -2013,16 +2006,18 @@ nsChildView::ConfigureAPZControllerThread()
 LayoutDeviceIntRect
 nsChildView::RectContainingTitlebarControls()
 {
-  NSRect rect = NSZeroRect;
+  // Start with a thin strip at the top of the window for the highlight line.
+  NSRect rect = NSMakeRect(0, 0, [mView bounds].size.width,
+                           [(ChildView*)mView cornerRadius]);
 
-  // If we draw the titlebar title string, set the rect to the full window
-  // width times the default titlebar height. This height does not necessarily
-  // include all the titlebar controls because we may have moved them further
-  // down, but at least it will include the whole title text.
+  // If we draw the titlebar title string, increase the height to the default
+  // titlebar height. This height does not necessarily include all the titlebar
+  // controls because we may have moved them further down, but at least it will
+  // include the whole title text.
   BaseWindow* window = (BaseWindow*)[mView window];
   if ([window wantsTitleDrawn] && [window isKindOfClass:[ToolbarWindow class]]) {
     CGFloat defaultTitlebarHeight = [(ToolbarWindow*)window titlebarHeight];
-    rect = NSMakeRect(0, 0, [mView bounds].size.width, defaultTitlebarHeight);
+    rect.size.height = std::max(rect.size.height, defaultTitlebarHeight);
   }
 
   // Add the rects of the titlebar controls.
@@ -2080,12 +2075,12 @@ nsChildView::CleanupWindowEffects()
 
 void
 nsChildView::AddWindowOverlayWebRenderCommands(layers::WebRenderBridgeChild* aWrBridge,
-                                               wr::DisplayListBuilder& aBuilder,
-                                               wr::IpcResourceUpdateQueue& aResources)
+                                               wr::DisplayListBuilder& aBuilder)
 {
   PrepareWindowEffects();
 
-  bool needUpdate = mUpdatedTitlebarRegion.Intersects(mTitlebarRect);
+  LayoutDeviceIntRegion updatedTitlebarRegion;
+  updatedTitlebarRegion.And(mUpdatedTitlebarRegion, mTitlebarRect);
   mUpdatedTitlebarRegion.SetEmpty();
 
   if (mTitlebarCGContext) {
@@ -2094,44 +2089,39 @@ nsChildView::AddWindowOverlayWebRenderCommands(layers::WebRenderBridgeChild* aWr
     size_t stride = CGBitmapContextGetBytesPerRow(mTitlebarCGContext);
     size_t titlebarCGContextDataLength = stride * size.height;
     gfx::SurfaceFormat format = gfx::SurfaceFormat::B8G8R8A8;
-    Range<uint8_t> buffer(
-      static_cast<uint8_t *>(CGBitmapContextGetData(mTitlebarCGContext)),
-      titlebarCGContextDataLength
-    );
+    wr::ByteBuffer buffer(
+      titlebarCGContextDataLength,
+      static_cast<uint8_t *>(CGBitmapContextGetData(mTitlebarCGContext)));
 
     if (mTitlebarImageKey &&
         mTitlebarImageSize != size) {
       // Delete wr::ImageKey. wr::ImageKey does not support size change.
-      // TODO: that's not true anymore! (size change is now supported).
-      CleanupWebRenderWindowOverlay(aWrBridge, aResources);
+      CleanupWebRenderWindowOverlay(aWrBridge);
       MOZ_ASSERT(mTitlebarImageKey.isNothing());
     }
 
     if (!mTitlebarImageKey) {
       mTitlebarImageKey = Some(aWrBridge->GetNextImageKey());
-      wr::ImageDescriptor descriptor(size, stride, format);
-      aResources.AddImage(*mTitlebarImageKey, descriptor, buffer);
+      aWrBridge->SendAddImage(*mTitlebarImageKey, size, stride, format, buffer);
       mTitlebarImageSize = size;
-      needUpdate = false;
+      updatedTitlebarRegion.SetEmpty();
     }
 
-    if (needUpdate) {
-      wr::ImageDescriptor descriptor(size, stride, format);
-      aResources.UpdateImageBuffer(*mTitlebarImageKey, descriptor, buffer);
+    if (!updatedTitlebarRegion.IsEmpty()) {
+      aWrBridge->SendUpdateImage(*mTitlebarImageKey, size, format, buffer);
     }
 
     wr::LayoutRect rect = wr::ToLayoutRect(mTitlebarRect);
-    aBuilder.PushImage(wr::LayoutRect{ rect.origin, { float(size.width), float(size.height) } },
-                       rect, true, wr::ImageRendering::Auto, *mTitlebarImageKey);
+    aBuilder.PushImage(wr::LayoutRect{ { 0, 0 }, { float(size.width), float(size.height) } },
+                       rect, wr::ImageRendering::Auto, *mTitlebarImageKey);
   }
 }
 
 void
-nsChildView::CleanupWebRenderWindowOverlay(layers::WebRenderBridgeChild* aWrBridge,
-                                           wr::IpcResourceUpdateQueue& aResources)
+nsChildView::CleanupWebRenderWindowOverlay(layers::WebRenderBridgeChild* aWrBridge)
 {
   if (mTitlebarImageKey) {
-    aResources.DeleteImage(*mTitlebarImageKey);
+    aWrBridge->SendDeleteImage(*mTitlebarImageKey);
     mTitlebarImageKey = Nothing();
   }
 }
@@ -2257,6 +2247,38 @@ nsChildView::MaybeDrawResizeIndicator(GLManager* aManager)
   mResizerImage->Draw(aManager, mResizeIndicatorRect.TopLeft());
 }
 
+// Draw the highlight line at the top of the titlebar.
+// This function draws into the current NSGraphicsContext and assumes flippedness.
+static void
+DrawTitlebarHighlight(NSSize aWindowSize, CGFloat aRadius, CGFloat aDevicePixelWidth)
+{
+  [NSGraphicsContext saveGraphicsState];
+
+  // Set up the clip path. We start with the outer rectangle and cut out a
+  // slightly smaller inner rectangle with rounded corners.
+  // The outer corners of the resulting path will be square, but they will be
+  // masked away in a later step.
+  NSBezierPath* path = [NSBezierPath bezierPath];
+  [path setWindingRule:NSEvenOddWindingRule];
+  NSRect pathRect = NSMakeRect(0, 0, aWindowSize.width, aRadius + 2);
+  [path appendBezierPathWithRect:pathRect];
+  pathRect = NSInsetRect(pathRect, aDevicePixelWidth, aDevicePixelWidth);
+  CGFloat innerRadius = aRadius - aDevicePixelWidth;
+  [path appendBezierPathWithRoundedRect:pathRect xRadius:innerRadius yRadius:innerRadius];
+  [path addClip];
+
+  // Now we fill the path with a subtle highlight gradient.
+  // We don't use NSGradient because it's 5x to 15x slower than the manual fill,
+  // as indicated by the performance test in bug 880620.
+  for (CGFloat y = 0; y < aRadius; y += aDevicePixelWidth) {
+    CGFloat t = y / aRadius;
+    [[NSColor colorWithDeviceWhite:1.0 alpha:0.4 * (1.0 - t)] set];
+    NSRectFillUsingOperation(NSMakeRect(0, y, aWindowSize.width, aDevicePixelWidth), NSCompositeSourceOver);
+  }
+
+  [NSGraphicsContext restoreGraphicsState];
+}
+
 static CGContextRef
 CreateCGContext(const LayoutDeviceIntSize& aSize)
 {
@@ -2316,8 +2338,6 @@ nsChildView::UpdateTitlebarCGContext()
   CGContextRef ctx = mTitlebarCGContext;
 
   CGContextSaveGState(ctx);
-
-  CGContextTranslateCTM(ctx, -mTitlebarRect.x, -mTitlebarRect.y);
 
   double scale = BackingScaleFactor();
   CGContextScaleCTM(ctx, scale, scale);
@@ -2400,6 +2420,9 @@ nsChildView::UpdateTitlebarCGContext()
 
   CGContextRestoreGState(ctx);
 
+  DrawTitlebarHighlight([frameView bounds].size, [(ChildView*)mView cornerRadius],
+                        DevPixelsToCocoaPoints(1));
+
   [NSGraphicsContext setCurrentContext:oldContext];
 
   CGContextRestoreGState(ctx);
@@ -2421,13 +2444,12 @@ void
 nsChildView::MaybeDrawTitlebar(GLManager* aManager)
 {
   MutexAutoLock lock(mEffectsLock);
-  if (!mIsCoveringTitlebar || mIsFullscreen || mTitlebarRect.IsEmpty()) {
+  if (!mIsCoveringTitlebar || mIsFullscreen) {
     return;
   }
 
   LayoutDeviceIntRegion updatedTitlebarRegion;
   updatedTitlebarRegion.And(mUpdatedTitlebarRegion, mTitlebarRect);
-  updatedTitlebarRegion.MoveBy(-mTitlebarRect.TopLeft());
   mUpdatedTitlebarRegion.SetEmpty();
 
   if (!mTitlebarImage) {
@@ -2560,11 +2582,12 @@ nsChildView::UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometri
     FindFirstRectOfType(aThemeGeometries, nsNativeThemeCocoa::eThemeGeometryTypeToolbox).YMost();
 
   ToolbarWindow* win = (ToolbarWindow*)[mView window];
+  bool drawsContentsIntoWindowFrame = [win drawsContentsIntoWindowFrame];
   int32_t titlebarHeight = CocoaPointsToDevPixels([win titlebarHeight]);
-  int32_t devUnifiedHeight = titlebarHeight + unifiedToolbarBottom;
+  int32_t contentOffset = drawsContentsIntoWindowFrame ? titlebarHeight : 0;
+  int32_t devUnifiedHeight = titlebarHeight + unifiedToolbarBottom - contentOffset;
   [win setUnifiedToolbarHeight:DevPixelsToCocoaPoints(devUnifiedHeight)];
-  int32_t devSheetPosition = titlebarHeight +
-                             std::max(toolboxBottom, unifiedToolbarBottom);
+  int32_t devSheetPosition = titlebarHeight + std::max(toolboxBottom, unifiedToolbarBottom) - contentOffset;
   [win setSheetAttachmentPosition:DevPixelsToCocoaPoints(devSheetPosition)];
 
   // Update titlebar control offsets.
@@ -2696,6 +2719,16 @@ nsChildView::VibrancyFillColorForThemeGeometryType(nsITheme::ThemeGeometryType a
       ThemeGeometryTypeToVibrancyType(aThemeGeometryType));
   }
   return [NSColor whiteColor];
+}
+
+NSColor*
+nsChildView::VibrancyFontSmoothingBackgroundColorForThemeGeometryType(nsITheme::ThemeGeometryType aThemeGeometryType)
+{
+  if (VibrancyManager::SystemSupportsVibrancy()) {
+    return EnsureVibrancyManager().VibrancyFontSmoothingBackgroundColorForType(
+      ThemeGeometryTypeToVibrancyType(aThemeGeometryType));
+  }
+  return [NSColor clearColor];
 }
 
 mozilla::VibrancyManager&
@@ -3137,6 +3170,7 @@ nsChildView::GetDocumentAccessible()
 
 GLPresenter::GLPresenter(GLContext* aContext)
  : mGLContext(aContext)
+ , mQuadVBO{0}
 {
   mGLContext->MakeCurrent();
   ShaderConfigOGL config;
@@ -3321,6 +3355,12 @@ NSEvent* gLastDragMouseDownEvent = nil;
     mCumulativeMagnification = 0.0;
     mCumulativeRotation = 0.0;
 
+    // We can't call forceRefreshOpenGL here because, in order to work around
+    // the bug, it seems we need to have a draw already happening. Therefore,
+    // we call it in drawRect:inContext:, when we know that a draw is in
+    // progress.
+    mDidForceRefreshOpenGL = NO;
+
     mNeedsGLUpdate = NO;
 
     [self setFocusRingType:NSFocusRingTypeNone];
@@ -3330,7 +3370,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
 #endif
 
     mTopLeftCornerMask = NULL;
-    mLastPressureStage = 0;
   }
 
   // register for things we'll take from other applications
@@ -3344,9 +3383,10 @@ NSEvent* gLastDragMouseDownEvent = nil;
                                            selector:@selector(systemMetricsChanged)
                                                name:NSSystemColorsDidChangeNotification
                                              object:nil];
+  // TODO: replace the string with the constant once we build with the 10.7 SDK
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(scrollbarSystemMetricChanged)
-                                               name:NSPreferredScrollerStyleDidChangeNotification
+                                               name:@"NSPreferredScrollerStyleDidChangeNotification"
                                              object:nil];
   [[NSDistributedNotificationCenter defaultCenter] addObserver:self
                                                       selector:@selector(systemMetricsChanged)
@@ -3400,6 +3440,25 @@ NSEvent* gLastDragMouseDownEvent = nil;
 - (void)uninstallTextInputHandler
 {
   mTextInputHandler = nullptr;
+}
+
+// Work around bug 603134.
+// OS X has a bug that causes new OpenGL windows to only paint once or twice,
+// then stop painting altogether. By clearing the drawable from the GL context,
+// and then resetting the view to ourselves, we convince OS X to start updating
+// again.
+// This can cause a flash in new windows - bug 631339 - but it's very hard to
+// fix that while maintaining this workaround.
+- (void)forceRefreshOpenGL
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  [mGLContext clearDrawable];
+  CGLLockContext((CGLContextObj)[mGLContext CGLContextObj]);
+  [self updateGLContext];
+  CGLUnlockContext((CGLContextObj)[mGLContext CGLContextObj]);
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
 - (bool)preRender:(NSOpenGLContext *)aGLContext
@@ -3598,6 +3657,19 @@ NSEvent* gLastDragMouseDownEvent = nil;
   return [[self window] isOpaque];
 }
 
+// XXX Is this really used?
+- (void)sendFocusEvent:(EventMessage)eventMessage
+{
+  if (!mGeckoChild)
+    return;
+
+  nsEventStatus status = nsEventStatus_eIgnore;
+  WidgetGUIEvent focusGuiEvent(true, eventMessage, mGeckoChild);
+  focusGuiEvent.mTime = PR_IntervalNow();
+  focusGuiEvent.mTimeStamp = nsCocoaUtils::GetEventTimeStamp(0);
+  mGeckoChild->DispatchEvent(&focusGuiEvent, status);
+}
+
 // We accept key and mouse events, so don't keep passing them up the chain. Allow
 // this to be a 'focused' widget for event dispatch.
 - (BOOL)acceptsFirstResponder
@@ -3715,6 +3787,14 @@ NSEvent* gLastDragMouseDownEvent = nil;
   return mGeckoChild->VibrancyFillColorForThemeGeometryType(aThemeGeometryType);
 }
 
+- (NSColor*)vibrancyFontSmoothingBackgroundColorForThemeGeometryType:(nsITheme::ThemeGeometryType)aThemeGeometryType
+{
+  if (!mGeckoChild) {
+    return [NSColor clearColor];
+  }
+  return mGeckoChild->VibrancyFontSmoothingBackgroundColorForThemeGeometryType(aThemeGeometryType);
+}
+
 - (LayoutDeviceIntRegion)nativeDirtyRegionWithBoundingRect:(NSRect)aRect
 {
   LayoutDeviceIntRect boundingRect = mGeckoChild->CocoaPointsToDevPixels(aRect);
@@ -3809,6 +3889,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
   if ([self isCoveringTitlebar]) {
     [self drawTitleString];
+    [self drawTitlebarHighlight];
     [self maskTopCornersInContext:aContext];
   }
 
@@ -3857,6 +3938,13 @@ NSEvent* gLastDragMouseDownEvent = nil;
   LayoutDeviceIntRegion region(geckoBounds);
 
   mGeckoChild->PaintWindow(region);
+
+  // Force OpenGL to refresh the very first time we draw. This works around a
+  // Mac OS X bug that stops windows updating on OS X when we use OpenGL.
+  if (!mDidForceRefreshOpenGL) {
+    [self performSelector:@selector(forceRefreshOpenGL) withObject:nil afterDelay:0];
+    mDidForceRefreshOpenGL = YES;
+  }
 }
 
 // Called asynchronously after setNeedsDisplay in order to avoid entering the
@@ -3989,6 +4077,12 @@ NSEvent* gLastDragMouseDownEvent = nil;
   [frameView _drawTitleBar:[frameView bounds]];
   CGContextRestoreGState(ctx);
   [NSGraphicsContext setCurrentContext:oldContext];
+}
+
+- (void)drawTitlebarHighlight
+{
+  DrawTitlebarHighlight([self bounds].size, [self cornerRadius],
+                        mGeckoChild->DevPixelsToCocoaPoints(1));
 }
 
 - (void)viewWillDraw
@@ -4148,9 +4242,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
         if ([theEvent type] == NSLeftMouseDown) {
           NSPoint point = [NSEvent mouseLocation];
           FlipCocoaScreenCoordinate(point);
-          LayoutDeviceIntPoint devPoint =
-            mGeckoChild->CocoaPointsToDevPixels(point);
-          gfx::IntPoint pos = devPoint.ToUnknownPoint();
+          gfx::IntPoint pos = gfx::IntPoint::Truncate(point.x, point.y);
           consumeEvent = (BOOL)rollupListener->Rollup(popupsToRollup, true, &pos, nullptr);
         }
         else {
@@ -4165,11 +4257,24 @@ NSEvent* gLastDragMouseDownEvent = nil;
   NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(NO);
 }
 
+/*
+ * In OS X Mountain Lion and above, smart zoom gestures are implemented in
+ * smartMagnifyWithEvent. In OS X Lion, they are implemented in
+ * magnifyWithEvent. See inline comments for more info.
+ *
+ * The prototypes swipeWithEvent, beginGestureWithEvent, magnifyWithEvent,
+ * smartMagnifyWithEvent, rotateWithEvent, and endGestureWithEvent were
+ * obtained from the following links:
+ * https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSResponder_Class/Reference/Reference.html
+ * https://developer.apple.com/library/mac/#releasenotes/Cocoa/AppKit.html
+ */
+
 - (void)swipeWithEvent:(NSEvent *)anEvent
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  if (!anEvent || !mGeckoChild) {
+  if (!anEvent || !mGeckoChild ||
+      [self beginOrEndGestureForEventPhase:anEvent]) {
     return;
   }
 
@@ -4200,7 +4305,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
-// Pinch zoom gesture.
 - (void)magnifyWithEvent:(NSEvent *)anEvent
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
@@ -4270,7 +4374,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
-// Smart zoom gesture, i.e. two-finger double tap on trackpads.
 - (void)smartMagnifyWithEvent:(NSEvent *)anEvent
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
@@ -6322,24 +6425,6 @@ provideDataForType:(NSString*)aType
   return command.mSucceeded && command.mIsEnabled;
 }
 
-- (void)pressureChangeWithEvent:(NSEvent*)event
-{
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK
-
-  NSInteger stage = [event stage];
-  if (mLastPressureStage == 1 && stage == 2) {
-    NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
-    if ([userDefaults integerForKey:@"com.apple.trackpad.forceClick"] == 1) {
-      // This is no public API to get configuration for current force click.
-      // This is filed as radar 29294285.
-      [self quickLookWithEvent:event];
-    }
-  }
-  mLastPressureStage = stage;
-
-  NS_OBJC_END_TRY_ABORT_BLOCK
-}
-
 nsresult
 nsChildView::GetSelectionAsPlaintext(nsAString& aResult)
 {
@@ -6746,7 +6831,8 @@ HandleEvent(CGEventTapProxy aProxy, CGEventType aType,
 
 - (void)runEventThread
 {
-  PROFILER_REGISTER_THREAD("APZC Event Thread");
+  char aLocal;
+  profiler_register_thread("APZC Event Thread", &aLocal);
   NS_SetCurrentThreadName("APZC Event Thread");
 
   mThread = [NSThread currentThread];
@@ -6829,48 +6915,3 @@ static const CGEventField kCGWindowNumberField = (const CGEventField) 51;
 }
 
 @end
-
-#ifdef __LP64__
-// When using blocks, at least on OS X 10.7, the OS sometimes calls
-// +[NSEvent removeMonitor:] more than once on a single event monitor, which
-// causes crashes.  See bug 678607.  We hook these methods to work around
-// the problem.
-@interface NSEvent (MethodSwizzling)
-+ (id)nsChildView_NSEvent_addLocalMonitorForEventsMatchingMask:(unsigned long long)mask handler:(id)block;
-+ (void)nsChildView_NSEvent_removeMonitor:(id)eventMonitor;
-@end
-
-// This is a local copy of the AppKit frameworks sEventObservers hashtable.
-// It only stores "local monitors".  We use it to ensure that +[NSEvent
-// removeMonitor:] is never called more than once on the same local monitor.
-static NSHashTable *sLocalEventObservers = nil;
-
-@implementation NSEvent (MethodSwizzling)
-
-+ (id)nsChildView_NSEvent_addLocalMonitorForEventsMatchingMask:(unsigned long long)mask handler:(id)block
-{
-  if (!sLocalEventObservers) {
-    sLocalEventObservers = [[NSHashTable hashTableWithOptions:
-      NSHashTableStrongMemory | NSHashTableObjectPointerPersonality] retain];
-  }
-  id retval =
-    [self nsChildView_NSEvent_addLocalMonitorForEventsMatchingMask:mask handler:block];
-  if (sLocalEventObservers && retval && ![sLocalEventObservers containsObject:retval]) {
-    [sLocalEventObservers addObject:retval];
-  }
-  return retval;
-}
-
-+ (void)nsChildView_NSEvent_removeMonitor:(id)eventMonitor
-{
-  if (sLocalEventObservers && [eventMonitor isKindOfClass: ::NSClassFromString(@"_NSLocalEventObserver")]) {
-    if (![sLocalEventObservers containsObject:eventMonitor]) {
-      return;
-    }
-    [sLocalEventObservers removeObject:eventMonitor];
-  }
-  [self nsChildView_NSEvent_removeMonitor:eventMonitor];
-}
-
-@end
-#endif // #ifdef __LP64__

@@ -20,7 +20,7 @@ class gfxContext;
 namespace mozilla {
 class SVGGeometryFrame;
 namespace dom {
-class SVGViewportElement;
+class SVGSVGElement;
 } // namespace dom
 } // namespace mozilla
 
@@ -54,10 +54,11 @@ public:
 #endif
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {}
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
 #ifdef DEBUG_FRAME_DUMP
@@ -118,7 +119,7 @@ private:
   };
 
   // nsSVGMarkerFrame methods:
-  void SetParentCoordCtxProvider(mozilla::dom::SVGViewportElement *aContext);
+  void SetParentCoordCtxProvider(mozilla::dom::SVGSVGElement *aContext);
 
   // recursion prevention flag
   bool mInUse;

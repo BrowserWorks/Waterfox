@@ -63,13 +63,9 @@ this.DateTimePickerHelper = {
           return;
         }
         this.picker.closePicker();
-        this.close();
         break;
       }
       case "FormDateTime:UpdatePicker": {
-        if (!this.picker) {
-          return;
-        }
         this.picker.setPopupValue(aMessage.data);
         break;
       }
@@ -91,7 +87,6 @@ this.DateTimePickerHelper = {
         if (browser) {
           browser.messageManager.sendAsyncMessage("FormDateTime:PickerClosed");
         }
-        this.picker.closePicker();
         this.close();
         break;
       }

@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {interfaces: Ci, utils: Cu, classes: Cc} = Components;
+const {Constructor: CC, interfaces: Ci, utils: Cu, classes: Cc} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -39,7 +39,7 @@ const LOG_LEVELS = new class extends Map {
   }
 
   get(level) {
-    let s = String(level).toLowerCase();
+    let s = new String(level).toLowerCase();
     if (!this.has(s)) {
       return DEFAULT_LOG_LEVEL;
     }
@@ -64,6 +64,10 @@ const ENV_ENABLED = "MOZ_MARIONETTE";
 // something like {"port": 4444} would result in the marionette.port
 // pref being set to 4444.
 const ENV_PRESERVE_PREFS = "MOZ_MARIONETTE_PREF_STATE_ACROSS_RESTARTS";
+
+const ServerSocket = CC("@mozilla.org/network/server-socket;1",
+    "nsIServerSocket",
+    "initSpecialConnection");
 
 const {PREF_STRING, PREF_BOOL, PREF_INT, PREF_INVALID} = Ci.nsIPrefBranch;
 
@@ -172,7 +176,6 @@ MarionetteComponent.prototype = {
     Ci.nsICommandLineHandler,
     Ci.nsIMarionette,
   ]),
-  // eslint-disable-next-line camelcase
   _xpcom_categories: [
     {category: "command-line-handler", entry: "b-marionette"},
     {category: "profile-after-change", service: true},
@@ -188,7 +191,7 @@ MarionetteComponent.prototype.handle = function(cmdLine) {
   }
 };
 
-MarionetteComponent.prototype.observe = function(subject, topic) {
+MarionetteComponent.prototype.observe = function(subject, topic, data) {
   this.logger.debug(`Received observer notification "${topic}"`);
 
   switch (topic) {

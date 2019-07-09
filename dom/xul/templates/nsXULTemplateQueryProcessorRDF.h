@@ -129,7 +129,7 @@ public:
      * set as a child of aParentNode.
      */
     virtual nsresult
-    CompileQueryChild(nsAtom* aTag,
+    CompileQueryChild(nsIAtom* aTag,
                       nsRDFQuery* aQuery,
                       nsIContent* aConditions,
                       TestNode* aParentNode,
@@ -292,7 +292,7 @@ protected:
     TestNode* mSimpleRuleMemberTest;
 
     // the reference variable
-    RefPtr<nsAtom> mRefVariable;
+    nsCOMPtr<nsIAtom> mRefVariable;
 
     // the last ref that was calculated, used for simple rules
     nsCOMPtr<nsIXULTemplateResult> mLastRef;

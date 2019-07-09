@@ -18,7 +18,7 @@ info: >
     b. If IsDetachedBuffer(srcBuffer) is true, throw a TypeError exception.
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -7,7 +7,6 @@
 #ifndef mozilla_StyleSetHandle_h
 #define mozilla_StyleSetHandle_h
 
-#include "mozilla/AtomArray.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/ServoTypes.h"
@@ -29,14 +28,12 @@ class ShadowRoot;
 class nsBindingManager;
 class nsCSSCounterStyleRule;
 struct nsFontFaceRuleContainer;
-class nsAtom;
-class nsICSSAnonBoxPseudo;
+class nsIAtom;
 class nsIContent;
 class nsIDocument;
 class nsStyleContext;
 class nsStyleSet;
 class nsPresContext;
-class gfxFontFeatureValueSet;
 struct TreeMatchContext;
 
 namespace mozilla {
@@ -142,17 +139,10 @@ public:
                               nsStyleContext* aParentContext,
                               dom::Element* aPseudoElement);
     inline already_AddRefed<nsStyleContext>
-    ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
+    ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
                                        nsStyleContext* aParentContext);
     inline already_AddRefed<nsStyleContext>
-    ResolveNonInheritingAnonymousBoxStyle(nsAtom* aPseudoTag);
-#ifdef MOZ_XUL
-    inline already_AddRefed<nsStyleContext>
-    ResolveXULTreePseudoStyle(dom::Element* aParentElement,
-                              nsICSSAnonBoxPseudo* aPseudoTag,
-                              nsStyleContext* aParentContext,
-                              const AtomArray& aInputWord);
-#endif
+    ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag);
     inline nsresult AppendStyleSheet(SheetType aType, StyleSheet* aSheet);
     inline nsresult PrependStyleSheet(SheetType aType, StyleSheet* aSheet);
     inline nsresult RemoveStyleSheet(SheetType aType, StyleSheet* aSheet);
@@ -180,12 +170,19 @@ public:
                             mozilla::CSSPseudoElementType aType,
                             nsStyleContext* aParentContext,
                             TreeMatchContext* aTreeMatchContext);
+    inline nsRestyleHint HasStateDependentStyle(dom::Element* aElement,
+                                                EventStates aStateMask);
+    inline nsRestyleHint HasStateDependentStyle(
+        dom::Element* aElement,
+        mozilla::CSSPseudoElementType aPseudoType,
+        dom::Element* aPseudoElement,
+        EventStates aStateMask);
+
     inline void RootStyleContextAdded();
     inline void RootStyleContextRemoved();
 
     inline bool AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
-    inline nsCSSCounterStyleRule* CounterStyleRuleForName(nsAtom* aName);
-    inline already_AddRefed<gfxFontFeatureValueSet> BuildFontFeatureValueSet();
+    inline nsCSSCounterStyleRule* CounterStyleRuleForName(nsIAtom* aName);
 
     inline bool EnsureUniqueInnerOnCSSSheets();
     inline void SetNeedsRestyleAfterEnsureUniqueInner();

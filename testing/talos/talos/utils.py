@@ -3,16 +3,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """Utility functions for Talos"""
-from __future__ import absolute_import
 
-import json
 import os
-import platform
-import re
-import string
 import time
-import urllib
 import urlparse
+import string
+import urllib
+import json
+import re
+import platform
 
 from mozlog import get_proxy_logger
 

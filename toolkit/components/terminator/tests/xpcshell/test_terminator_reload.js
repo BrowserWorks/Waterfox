@@ -33,9 +33,7 @@ add_task(async function init() {
 add_task(async function test_reload() {
   do_print("Forging data");
   let data = {};
-  let telemetrySnapshots = Services.telemetry.snapshotHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN,
-                                                                 false /* subsession */,
-                                                                 false /* clear */).parent;
+  let telemetrySnapshots = Services.telemetry.histogramSnapshots.parent;
   let i = 0;
   for (let k of Object.keys(HISTOGRAMS)) {
     let id = HISTOGRAMS[k];
@@ -66,9 +64,7 @@ add_task(async function test_reload() {
   // Now wait until Telemetry is updated
   await wait;
 
-  telemetrySnapshots = Services.telemetry.snapshotHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN,
-                                                             false /* subsession */,
-                                                             false /* clear */).parent;
+  telemetrySnapshots = Services.telemetry.histogramSnapshots.parent;
   for (let k of Object.keys(HISTOGRAMS)) {
     let id = HISTOGRAMS[k];
     do_print("Testing histogram " + id);
@@ -81,3 +77,7 @@ add_task(async function test_reload() {
   }
 
 });
+
+function run_test() {
+  run_next_test();
+}

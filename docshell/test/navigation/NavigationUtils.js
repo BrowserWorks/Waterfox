@@ -9,10 +9,10 @@
 ///////////////////////////////////////////////////////////////////////////
 
 var body = "This frame was navigated.";
-var target_url = "navigation_target_url.html"
+var target_url = "data:text/html,<html><body>" + body + "</body></html>";
 
 var popup_body = "This is a popup";
-var target_popup_url = "navigation_target_popup_url.html";
+var target_popup_url = "data:text/html,<html><body>" + popup_body + "</body></html>";
 
 ///////////////////////////////////////////////////////////////////////////
 // Functions that navigate frames
@@ -58,7 +58,7 @@ function navigateByHyperlink(name) {
 function isNavigated(wnd, message) {
   var result = null;
   try {
-    result = SpecialPowers.wrap(wnd).document.body.innerHTML.trim();
+    result = SpecialPowers.wrap(wnd).document.body.innerHTML;
   } catch(ex) {
     result = ex;
   }
@@ -68,7 +68,7 @@ function isNavigated(wnd, message) {
 function isBlank(wnd, message) {
   var result = null;
   try {
-    result = wnd.document.body.innerHTML.trim();
+    result = wnd.document.body.innerHTML;
   } catch(ex) {
     result = ex;
   }
@@ -108,7 +108,7 @@ function xpcEnumerateContentWindows(callback) {
 
   while (enumerator.hasMoreElements()) {
     var win = enumerator.getNext();
-    if (win.isChromeWindow) {
+    if (/ChromeWindow/.exec(win)) {
       var docshellTreeNode = win.QueryInterface(Ci.nsIInterfaceRequestor)
                                 .getInterface(Ci.nsIWebNavigation)
                                 .QueryInterface(Ci.nsIDocShellTreeItem);
@@ -146,11 +146,8 @@ function xpcGetFramesByName(name) {
 
 function xpcCleanupWindows() {
   xpcEnumerateContentWindows(function(win) {
-    if (win.location &&
-        (win.location.href.endsWith(target_url) ||
-         win.location.href.endsWith(target_popup_url))) {
+    if (win.location && win.location.protocol == "data:")
       win.close();
-    }
   });
 }
 
@@ -180,12 +177,12 @@ function xpcWaitForFinishedFrames(callback, numFrames) {
   }
 
   function searchForFinishedFrames(win) {
-    if ((win.location.href.endsWith(target_url) ||
-         win.location.href.endsWith(target_popup_url)) &&
+    if ((escape(unescape(win.location)) == escape(target_url) ||
+         escape(unescape(win.location)) == escape(target_popup_url)) && 
         win.document && 
         win.document.body && 
-        (win.document.body.textContent.trim() == body ||
-         win.document.body.textContent.trim() == popup_body) && 
+        (win.document.body.textContent == body ||
+         win.document.body.textContent == popup_body) && 
         win.document.readyState == "complete") {
 
       var util = win.QueryInterface(SpecialPowers.Ci.nsIInterfaceRequestor)

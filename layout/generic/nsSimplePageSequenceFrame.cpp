@@ -152,8 +152,9 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*     aPresContext,
                   "A Page Sequence is only for real pages");
   DO_GLOBAL_REFLOW_COUNT("nsSimplePageSequenceFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   NS_FRAME_TRACE_REFLOW_IN("nsSimplePageSequenceFrame::Reflow");
+
+  aStatus.Reset();  // we're always complete
 
   // Don't do incremental reflow until we've taught tables how to do
   // it right in paginated mode.
@@ -310,11 +311,12 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*     aPresContext,
   }
 
   nsAutoString formattedDateString;
-  PRTime now = PR_Now();
-  if (NS_SUCCEEDED(DateTimeFormat::FormatPRTime(kDateFormatShort,
-                                                kTimeFormatNoSeconds,
-                                                now,
-                                                formattedDateString))) {
+  time_t ltime;
+  time( &ltime );
+  if (NS_SUCCEEDED(DateTimeFormat::FormatTime(kDateFormatShort,
+                                              kTimeFormatNoSeconds,
+                                              ltime,
+                                              formattedDateString))) {
     SetDateTimeStr(formattedDateString);
   }
 
@@ -391,7 +393,7 @@ void
 nsSimplePageSequenceFrame::SetPageNumberFormat(const char* aPropName, const char* aDefPropVal, bool aPageNumOnly)
 {
   // Doing this here so we only have to go get these formats once
-  nsAutoString pageNumberFormat;
+  nsXPIDLString pageNumberFormat;
   // Now go get the Localized Page Formating String
   nsresult rv =
     nsContentUtils::GetLocalizedString(nsContentUtils::ePRINTING_PROPERTIES,
@@ -825,11 +827,12 @@ ComputePageSequenceTransform(nsIFrame* aFrame, float aAppUnitsPerPixel)
 
 void
 nsSimplePageSequenceFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                            const nsRect&           aDirtyRect,
                                             const nsDisplayListSet& aLists)
 {
   DisplayBorderBackgroundOutline(aBuilder, aLists);
 
-  nsDisplayList content(aBuilder);
+  nsDisplayList content;
 
   {
     // Clear clip state while we construct the children of the
@@ -838,16 +841,13 @@ nsSimplePageSequenceFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     clipState.Clear();
 
     nsIFrame* child = PrincipalChildList().FirstChild();
-    nsRect dirty = aBuilder->GetDirtyRect();
+    nsRect dirty = aDirtyRect;
     dirty.ScaleInverseRoundOut(PresContext()->GetPrintPreviewScale());
 
     while (child) {
       if (child->GetVisualOverflowRectRelativeToParent().Intersects(dirty)) {
-        nsDisplayListBuilder::AutoBuildingDisplayList
-          buildingForChild(aBuilder, child,
-                           dirty - child->GetPosition(),
-                           aBuilder->IsAtRootOfPseudoStackingContext());
-        child->BuildDisplayListForStackingContext(aBuilder, &content);
+        child->BuildDisplayListForStackingContext(aBuilder,
+            dirty - child->GetPosition(), &content);
         aBuilder->ResetMarkedFramesForDisplayList();
       }
       child = child->GetNextSibling();

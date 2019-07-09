@@ -18,10 +18,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=966552
 <script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
-var win = window.open("file_bug966552.html", "", "test-966552");
-win.addEventListener("load", function() {
-  runTest(win);
-}, {once: true});
+addLoadEvent(function() {
+  var win = window.open("data:text/html,<body onload=\"document.designMode='on'\">test</body>", "", "test-966552");
+  win.addEventListener("load", function() {
+    runTest(win);
+  }, {once: true});
+});
 
 function runTest(win) {
   SimpleTest.waitForFocus(function() {
@@ -30,7 +32,7 @@ function runTest(win) {
     doc.body.focus();
     sel.collapse(doc.body.firstChild, 2);
     synthesizeKey("VK_BACK_SPACE", {ctrlKey: true}, win);
-    is(doc.body.textContent.trim(), "st");
+    is(doc.body.textContent, "st");
     win.close();
     SimpleTest.finish();
   }, win);

@@ -9,7 +9,7 @@
 const React = require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
-const TreeView = React.createFactory(require("devtools/client/shared/components/tree/TreeView"));
+const TreeView = React.createFactory(require("devtools/client/shared/components/tree/tree-view"));
 
 // Reps
 const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
@@ -30,11 +30,10 @@ var DomTree = React.createClass({
   displayName: "DomTree",
 
   propTypes: {
-    dispatch: PropTypes.func.isRequired,
-    filter: PropTypes.string,
-    grips: PropTypes.object,
     object: PropTypes.any,
-    openLink: PropTypes.func,
+    filter: PropTypes.string,
+    dispatch: PropTypes.func.isRequired,
+    grips: PropTypes.object,
   },
 
   /**
@@ -53,13 +52,6 @@ var DomTree = React.createClass({
    * Render DOM panel content
    */
   render: function () {
-    let {
-      dispatch,
-      grips,
-      object,
-      openLink,
-    } = this.props;
-
     let columns = [{
       "id": "value"
     }];
@@ -76,14 +68,13 @@ var DomTree = React.createClass({
 
     return (
       TreeView({
-        columns,
+        object: this.props.object,
+        provider: new GripProvider(this.props.grips, this.props.dispatch),
         decorator: new DomDecorator(),
         mode: MODE.SHORT,
-        object,
-        onFilter: this.onFilter,
-        openLink,
-        provider: new GripProvider(grips, dispatch),
-        renderValue,
+        columns: columns,
+        renderValue: renderValue,
+        onFilter: this.onFilter
       })
     );
   }

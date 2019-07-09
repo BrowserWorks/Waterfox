@@ -66,9 +66,9 @@ body {
 }
 
 ul, ol {
-  margin: 1em 0;
+  margin: 0;
   padding: 0;
-  margin-inline-start: 2em;
+  margin-inline-start: 1em;
 }
 
 ul > li, ol > li {
@@ -101,6 +101,7 @@ ul.columns {
 
 button {
   padding: 0 1.5em;
+  border-radius: 0;
 }
 
 .button-container > button:first-child {
@@ -120,11 +121,4 @@ button {
 
 tree {
   width: 100%;
-}
-
-/* Illustrated Info Pages */
-
-.illustrated .title {
-  margin-inline-start: 0;
-  padding-inline-start: 0;
 }

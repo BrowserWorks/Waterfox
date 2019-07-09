@@ -9,11 +9,11 @@
  */
 
 #include "nsAtomListUtils.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsStaticAtom.h"
 
 /* static */ bool
-nsAtomListUtils::IsMember(nsAtom *aAtom,
+nsAtomListUtils::IsMember(nsIAtom *aAtom,
                           const nsStaticAtom* aInfo,
                           uint32_t aInfoCount)
 {

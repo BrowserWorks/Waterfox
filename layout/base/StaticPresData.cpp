@@ -71,7 +71,7 @@ enum {
 };
 
 void
-LangGroupFontPrefs::Initialize(nsAtom* aLangGroupAtom)
+LangGroupFontPrefs::Initialize(nsIAtom* aLangGroupAtom)
 {
   mLangGroup = aLangGroupAtom;
 
@@ -171,11 +171,7 @@ LangGroupFontPrefs::Initialize(nsAtom* aLangGroupAtom)
         NS_ASSERTION(defaultType == eFamily_serif ||
                      defaultType == eFamily_sans_serif,
                      "default type must be serif or sans-serif");
-        mDefaultVariableFont.fontlist = FontFamilyList();
-        mDefaultVariableFont.fontlist.SetDefaultFontType(defaultType);
-        // We create mDefaultVariableFont.fontlist with defaultType as the
-        // fallback font, and not as part of the font list proper. This way,
-        // it can be overwritten should there be a language change.
+        mDefaultVariableFont.fontlist = FontFamilyList(defaultType);
       }
       else {
         MAKE_FONT_PREF_KEY(pref, "font.default.", langGroup);
@@ -186,11 +182,7 @@ LangGroupFontPrefs::Initialize(nsAtom* aLangGroupAtom)
           NS_ASSERTION(defaultType == eFamily_serif ||
                        defaultType == eFamily_sans_serif,
                        "default type must be serif or sans-serif");
-          mDefaultVariableFont.fontlist = FontFamilyList();
-          mDefaultVariableFont.fontlist.SetDefaultFontType(defaultType);
-          // We create mDefaultVariableFont.fontlist with defaultType as the
-          // (fallback) font, and not as part of the font list proper. This way,
-          // it can be overwritten should there be a language change.
+          mDefaultVariableFont.fontlist = FontFamilyList(defaultType);
         }
       }
     }
@@ -245,11 +237,11 @@ LangGroupFontPrefs::Initialize(nsAtom* aLangGroupAtom)
   }
 }
 
-nsAtom*
-StaticPresData::GetLangGroup(nsAtom* aLanguage,
+nsIAtom*
+StaticPresData::GetLangGroup(nsIAtom* aLanguage,
                              bool* aNeedsToCache) const
 {
-  nsAtom* langGroupAtom = nullptr;
+  nsIAtom* langGroupAtom = nullptr;
   langGroupAtom = mLangService->GetLanguageGroup(aLanguage, aNeedsToCache);
   if (!langGroupAtom) {
     langGroupAtom = nsGkAtoms::x_western; // Assume x-western is safe...
@@ -257,10 +249,10 @@ StaticPresData::GetLangGroup(nsAtom* aLanguage,
   return langGroupAtom;
 }
 
-already_AddRefed<nsAtom>
-StaticPresData::GetUncachedLangGroup(nsAtom* aLanguage) const
+already_AddRefed<nsIAtom>
+StaticPresData::GetUncachedLangGroup(nsIAtom* aLanguage) const
 {
-  RefPtr<nsAtom> langGroupAtom = mLangService->GetUncachedLanguageGroup(aLanguage);
+  nsCOMPtr<nsIAtom> langGroupAtom = mLangService->GetUncachedLanguageGroup(aLanguage);
   if (!langGroupAtom) {
     langGroupAtom = nsGkAtoms::x_western; // Assume x-western is safe...
   }
@@ -268,7 +260,7 @@ StaticPresData::GetUncachedLangGroup(nsAtom* aLanguage) const
 }
 
 const LangGroupFontPrefs*
-StaticPresData::GetFontPrefsForLangHelper(nsAtom* aLanguage,
+StaticPresData::GetFontPrefsForLangHelper(nsIAtom* aLanguage,
                                           const LangGroupFontPrefs* aPrefs,
                                           bool* aNeedsToCache) const
 {
@@ -277,7 +269,7 @@ StaticPresData::GetFontPrefsForLangHelper(nsAtom* aLanguage,
   MOZ_ASSERT(mLangService);
   MOZ_ASSERT(aPrefs);
 
-  nsAtom* langGroupAtom = GetLangGroup(aLanguage, aNeedsToCache);
+  nsIAtom* langGroupAtom = GetLangGroup(aLanguage, aNeedsToCache);
 
   if (aNeedsToCache && *aNeedsToCache) {
     return nullptr;
@@ -317,7 +309,7 @@ StaticPresData::GetFontPrefsForLangHelper(nsAtom* aLanguage,
 }
 
 const nsFont*
-StaticPresData::GetDefaultFontHelper(uint8_t aFontID, nsAtom *aLanguage,
+StaticPresData::GetDefaultFontHelper(uint8_t aFontID, nsIAtom *aLanguage,
                                      const LangGroupFontPrefs* aPrefs) const
 {
   MOZ_ASSERT(aLanguage);

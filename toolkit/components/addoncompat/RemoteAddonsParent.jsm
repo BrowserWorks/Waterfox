@@ -438,15 +438,10 @@ var EventTargetParent = {
         return target.linkedBrowser;
       }
 
-      // Check if |target| is somewhere on the path from the
+      // Check if |target| is somewhere on the patch from the
       // <tabbrowser> up to the root element.
       let window = target.ownerGlobal;
-
-      // Some non-browser windows define gBrowser globals which are not elements
-      // and can't be passed to target.contains().
-      if (window &&
-          window.gBrowser instanceof Ci.nsIDOMXULElement &&
-          target.contains(window.gBrowser)) {
+      if (window && target.contains(window.gBrowser)) {
         return window;
       }
     }
@@ -560,7 +555,7 @@ var EventTargetParent = {
               return knownProps[name];
             return event[name];
           }
-        };
+        }
         let proxyEvent = new Proxy({
           currentTarget: target,
           target: eventTarget,
@@ -740,7 +735,7 @@ var SandboxParent = {
     if (rest.length) {
       // Do a shallow copy of the options object into the child
       // process. This way we don't have to access it through a Chrome
-      // object wrapper, which would not let us access any properties.
+      // object wrapper, which would require __exposedProps__.
       //
       // The only object property here is sandboxPrototype. We assume
       // it's a child process object (since that's what Greasemonkey
@@ -858,7 +853,7 @@ RemoteBrowserElementInterposition.getters.sessionHistory = function(addon, targe
                      addon, CompatWarning.warnings.content);
 
   return getSessionHistory(target);
-};
+}
 
 // We use this in place of the real browser.contentWindow if we
 // haven't yet received a CPOW for the child process's window. This
@@ -1022,7 +1017,10 @@ TabBrowserElementInterposition.methods.removeTabsProgressListener = function(add
 var ChromeWindowInterposition = new Interposition("ChromeWindowInterposition",
                                                   EventTargetInterposition);
 
-ChromeWindowInterposition.getters.content = function(addon, target) {
+// _content is for older add-ons like pinboard and all-in-one gestures
+// that should be using content instead.
+ChromeWindowInterposition.getters.content =
+ChromeWindowInterposition.getters._content = function(addon, target) {
   CompatWarning.warn("Direct access to chromeWindow.content will no longer work in the chrome process.",
                      addon, CompatWarning.warnings.content);
 
@@ -1054,7 +1052,7 @@ RemoteWebNavigationInterposition.getters.sessionHistory = function(addon, target
   let browser = impl._browser;
 
   return getSessionHistory(browser);
-};
+}
 
 var RemoteAddonsParent = {
   init() {

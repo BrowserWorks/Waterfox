@@ -25,7 +25,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 this.DownloadList = function() {
   this._downloads = [];
   this._views = new Set();
-};
+}
 
 this.DownloadList.prototype = {
   /**
@@ -178,17 +178,18 @@ this.DownloadList.prototype = {
   },
 
   /**
-   * Notifies all the views of a download addition, change, removal, or other
-   * event. The additional arguments are passed to the called method.
+   * Notifies all the views of a download addition, change, or removal.
    *
-   * @param methodName
+   * @param aMethodName
    *        String containing the name of the method to call on the view.
+   * @param aDownload
+   *        The Download object that changed.
    */
-  _notifyAllViews(methodName, ...args) {
+  _notifyAllViews(aMethodName, aDownload) {
     for (let view of this._views) {
       try {
-        if (methodName in view) {
-          view[methodName](...args);
+        if (aMethodName in view) {
+          view[aMethodName](aDownload);
         }
       } catch (ex) {
         Cu.reportError(ex);
@@ -251,7 +252,7 @@ this.DownloadCombinedList = function(aPublicList, aPrivateList) {
   this._privateList = aPrivateList;
   aPublicList.addView(this).catch(Cu.reportError);
   aPrivateList.addView(this).catch(Cu.reportError);
-};
+}
 
 this.DownloadCombinedList.prototype = {
   __proto__: DownloadList.prototype,
@@ -339,7 +340,7 @@ this.DownloadCombinedList.prototype = {
 this.DownloadSummary = function() {
   this._downloads = [];
   this._views = new Set();
-};
+}
 
 this.DownloadSummary.prototype = {
   /**

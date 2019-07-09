@@ -36,7 +36,7 @@
 #include "nsTArray.h"
 #include "nsCOMArray.h"
 #include "nsArrayEnumerator.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "rdf.h"
 #include "nsCycleCollectionParticipant.h"
 
@@ -530,9 +530,9 @@ NS_INTERFACE_MAP_END
 //
 
 NS_IMETHODIMP
-CompositeDataSourceImpl::GetURI(nsACString& aURI)
+CompositeDataSourceImpl::GetURI(char* *uri)
 {
-    aURI.SetIsVoid(true);
+    *uri = nullptr;
     return NS_OK;
 }
 

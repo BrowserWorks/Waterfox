@@ -29,6 +29,23 @@ XPC_WN_CannotDeletePropertyStub(JSContext* cx, JS::HandleObject obj,
                                 JS::HandleId id, JS::ObjectOpResult& result);
 
 bool
+XPC_WN_Helper_GetProperty(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
+                          JS::MutableHandleValue vp);
+
+bool
+XPC_WN_Helper_SetProperty(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
+                          JS::MutableHandleValue vp,
+                          JS::ObjectOpResult& result);
+bool
+XPC_WN_MaybeResolvingSetPropertyStub(JSContext* cx, JS::HandleObject obj,
+                                     JS::HandleId id, JS::MutableHandleValue vp,
+                                     JS::ObjectOpResult& result);
+bool
+XPC_WN_CannotModifySetPropertyStub(JSContext* cx, JS::HandleObject obj,
+                                   JS::HandleId id, JS::MutableHandleValue vp,
+                                   JS::ObjectOpResult& result);
+
+bool
 XPC_WN_Helper_Enumerate(JSContext* cx, JS::HandleObject obj);
 bool
 XPC_WN_Shared_Enumerate(JSContext* cx, JS::HandleObject obj);
@@ -75,6 +92,20 @@ extern const js::ClassExtension XPC_WN_JSClassExtension;
     : ((_flags) & XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE) \
       ? XPC_WN_MaybeResolvingDeletePropertyStub \
       : XPC_WN_CannotDeletePropertyStub, \
+    \
+    /* getProperty */ \
+    ((_flags) & XPC_SCRIPTABLE_WANT_GETPROPERTY) \
+    ? XPC_WN_Helper_GetProperty \
+    : nullptr, \
+    \
+    /* setProperty */ \
+    ((_flags) & XPC_SCRIPTABLE_WANT_SETPROPERTY) \
+    ? XPC_WN_Helper_SetProperty \
+    : ((_flags) & XPC_SCRIPTABLE_USE_JSSTUB_FOR_SETPROPERTY) \
+      ? nullptr \
+      : ((_flags) & XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE) \
+        ? XPC_WN_MaybeResolvingSetPropertyStub \
+        : XPC_WN_CannotModifySetPropertyStub, \
     \
     /* enumerate */ \
     ((_flags) & XPC_SCRIPTABLE_WANT_NEWENUMERATE) \

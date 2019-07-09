@@ -6,19 +6,18 @@
 #ifndef GFX_WEBRENDERTYPES_H
 #define GFX_WEBRENDERTYPES_H
 
-#include "FrameMetrics.h"
 #include "mozilla/webrender/webrender_ffi.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/gfx/Tools.h"
 #include "mozilla/layers/LayersTypes.h"
-#include "mozilla/PodOperations.h"
 #include "mozilla/Range.h"
-#include "mozilla/Variant.h"
 #include "Units.h"
 #include "RoundedRect.h"
 #include "nsStyleConsts.h"
+
+//#define ENABLE_FRAME_LATENCY_LOG
 
 namespace mozilla {
 namespace wr {
@@ -27,16 +26,11 @@ typedef wr::WrWindowId WindowId;
 typedef wr::WrPipelineId PipelineId;
 typedef wr::WrImageKey ImageKey;
 typedef wr::WrFontKey FontKey;
-typedef wr::WrFontInstanceKey FontInstanceKey;
 typedef wr::WrEpoch Epoch;
 typedef wr::WrExternalImageId ExternalImageId;
-typedef wr::WrDebugFlags DebugFlags;
 
 typedef mozilla::Maybe<mozilla::wr::WrImageMask> MaybeImageMask;
 typedef Maybe<ExternalImageId> MaybeExternalImageId;
-
-typedef Maybe<FontInstanceOptions> MaybeFontInstanceOptions;
-typedef Maybe<FontInstancePlatformOptions> MaybeFontInstancePlatformOptions;
 
 inline WindowId NewWindowId(uint64_t aId) {
   WindowId id;
@@ -48,12 +42,6 @@ inline Epoch NewEpoch(uint32_t aEpoch) {
   Epoch e;
   e.mHandle = aEpoch;
   return e;
-}
-
-inline DebugFlags NewDebugFlags(uint32_t aFlags) {
-  DebugFlags flags;
-  flags.mBits = aFlags;
-  return flags;
 }
 
 inline Maybe<wr::ImageFormat>
@@ -95,16 +83,6 @@ ImageFormatToSurfaceFormat(ImageFormat aFormat) {
 }
 
 struct ImageDescriptor: public wr::WrImageDescriptor {
-  // We need a default constructor for ipdl serialization.
-  ImageDescriptor()
-  {
-    format = wr::ImageFormat::Invalid;
-    width = 0;
-    height = 0;
-    stride = 0;
-    is_opaque = false;
-  }
-
   ImageDescriptor(const gfx::IntSize& aSize, gfx::SurfaceFormat aFormat)
   {
     format = wr::SurfaceFormatToImageFormat(aFormat).value();
@@ -122,16 +100,6 @@ struct ImageDescriptor: public wr::WrImageDescriptor {
     stride = aByteStride;
     is_opaque = gfx::IsOpaqueFormat(aFormat);
   }
-
-  ImageDescriptor(const gfx::IntSize& aSize, uint32_t aByteStride, gfx::SurfaceFormat aFormat, bool opaque)
-  {
-    format = wr::SurfaceFormatToImageFormat(aFormat).value();
-    width = aSize.width;
-    height = aSize.height;
-    stride = aByteStride;
-    is_opaque = opaque;
-  }
-
 };
 
 // Whenever possible, use wr::WindowId instead of manipulating uint64_t.
@@ -165,19 +133,6 @@ inline FontKey AsFontKey(const uint64_t& aId) {
   return fontKey;
 }
 
-// Whenever possible, use wr::FontInstanceKey instead of manipulating uint64_t.
-inline uint64_t AsUint64(const FontInstanceKey& aId) {
-  return (static_cast<uint64_t>(aId.mNamespace.mHandle) << 32)
-        + static_cast<uint64_t>(aId.mHandle);
-}
-
-inline FontInstanceKey AsFontInstanceKey(const uint64_t& aId) {
-  FontInstanceKey instanceKey;
-  instanceKey.mNamespace.mHandle = aId >> 32;
-  instanceKey.mHandle = aId;
-  return instanceKey;
-}
-
 // Whenever possible, use wr::PipelineId instead of manipulating uint64_t.
 inline uint64_t AsUint64(const PipelineId& aId) {
   return (static_cast<uint64_t>(aId.mNamespace) << 32)
@@ -195,19 +150,6 @@ inline ImageRendering ToImageRendering(gfx::SamplingFilter aFilter)
 {
   return aFilter == gfx::SamplingFilter::POINT ? ImageRendering::Pixelated
                                                : ImageRendering::Auto;
-}
-
-static inline FontRenderMode ToFontRenderMode(gfx::AntialiasMode aMode, bool aPermitSubpixelAA = true)
-{
-  switch (aMode) {
-    case gfx::AntialiasMode::NONE:
-      return FontRenderMode::Mono;
-    case gfx::AntialiasMode::GRAY:
-      return FontRenderMode::Alpha;
-    case gfx::AntialiasMode::SUBPIXEL:
-    default:
-      return aPermitSubpixelAA ? FontRenderMode::Subpixel : FontRenderMode::Alpha;
-  }
 }
 
 static inline MixBlendMode ToMixBlendMode(gfx::CompositionOp compositionOp)
@@ -259,7 +201,8 @@ static inline wr::ColorF ToColorF(const gfx::Color& color)
   return c;
 }
 
-static inline wr::LayoutPoint ToLayoutPoint(const mozilla::LayoutDevicePoint& point)
+template<class T>
+static inline wr::LayoutPoint ToLayoutPoint(const gfx::PointTyped<T>& point)
 {
   wr::LayoutPoint p;
   p.x = point.x;
@@ -267,12 +210,14 @@ static inline wr::LayoutPoint ToLayoutPoint(const mozilla::LayoutDevicePoint& po
   return p;
 }
 
-static inline wr::LayoutPoint ToLayoutPoint(const mozilla::LayoutDeviceIntPoint& point)
+template<class T>
+static inline wr::LayoutPoint ToLayoutPoint(const gfx::IntPointTyped<T>& point)
 {
-  return ToLayoutPoint(LayoutDevicePoint(point));
+  return ToLayoutPoint(IntPointToPoint(point));
 }
 
-static inline wr::LayoutVector2D ToLayoutVector2D(const mozilla::LayoutDevicePoint& point)
+template<class T>
+static inline wr::LayoutVector2D ToLayoutVector2D(const gfx::PointTyped<T>& point)
 {
   wr::LayoutVector2D p;
   p.x = point.x;
@@ -280,18 +225,20 @@ static inline wr::LayoutVector2D ToLayoutVector2D(const mozilla::LayoutDevicePoi
   return p;
 }
 
-static inline wr::LayoutVector2D ToLayoutVector2D(const mozilla::LayoutDeviceIntPoint& point)
+template<class T>
+static inline wr::LayoutVector2D ToLayoutVector2D(const gfx::IntPointTyped<T>& point)
 {
-  return ToLayoutVector2D(LayoutDevicePoint(point));
+  return ToLayoutVector2D(IntPointToPoint(point));
 }
 
-static inline wr::LayoutRect ToLayoutRect(const mozilla::LayoutDeviceRect& rect)
+template<class T>
+static inline wr::LayoutRect ToLayoutRect(const gfx::RectTyped<T>& rect)
 {
   wr::LayoutRect r;
   r.origin.x = rect.x;
   r.origin.y = rect.y;
-  r.size.width = rect.Width();
-  r.size.height = rect.Height();
+  r.size.width = rect.width;
+  r.size.height = rect.height;
   return r;
 }
 
@@ -300,17 +247,19 @@ static inline wr::LayoutRect ToLayoutRect(const gfxRect rect)
   wr::LayoutRect r;
   r.origin.x = rect.x;
   r.origin.y = rect.y;
-  r.size.width = rect.Width();
-  r.size.height = rect.Height();
+  r.size.width = rect.width;
+  r.size.height = rect.height;
   return r;
 }
 
-static inline wr::LayoutRect ToLayoutRect(const mozilla::LayoutDeviceIntRect& rect)
+template<class T>
+static inline wr::LayoutRect ToLayoutRect(const gfx::IntRectTyped<T>& rect)
 {
   return ToLayoutRect(IntRectToRect(rect));
 }
 
-static inline wr::LayoutSize ToLayoutSize(const mozilla::LayoutDeviceSize& size)
+template<class T>
+static inline wr::LayoutSize ToLayoutSize(const gfx::SizeTyped<T>& size)
 {
   wr::LayoutSize ls;
   ls.width = size.width;
@@ -318,20 +267,21 @@ static inline wr::LayoutSize ToLayoutSize(const mozilla::LayoutDeviceSize& size)
   return ls;
 }
 
-static inline wr::ComplexClipRegion ToComplexClipRegion(const RoundedRect& rect)
+static inline wr::WrComplexClipRegion ToWrComplexClipRegion(const RoundedRect& rect)
 {
-  wr::ComplexClipRegion ret;
+  wr::WrComplexClipRegion ret;
   ret.rect               = ToLayoutRect(rect.rect);
-  ret.radii.top_left     = ToLayoutSize(LayoutDeviceSize::FromUnknownSize(rect.corners.radii[mozilla::eCornerTopLeft]));
-  ret.radii.top_right    = ToLayoutSize(LayoutDeviceSize::FromUnknownSize(rect.corners.radii[mozilla::eCornerTopRight]));
-  ret.radii.bottom_left  = ToLayoutSize(LayoutDeviceSize::FromUnknownSize(rect.corners.radii[mozilla::eCornerBottomLeft]));
-  ret.radii.bottom_right = ToLayoutSize(LayoutDeviceSize::FromUnknownSize(rect.corners.radii[mozilla::eCornerBottomRight]));
+  ret.radii.top_left     = ToLayoutSize(rect.corners.radii[mozilla::eCornerTopLeft]);
+  ret.radii.top_right    = ToLayoutSize(rect.corners.radii[mozilla::eCornerTopRight]);
+  ret.radii.bottom_left  = ToLayoutSize(rect.corners.radii[mozilla::eCornerBottomLeft]);
+  ret.radii.bottom_right = ToLayoutSize(rect.corners.radii[mozilla::eCornerBottomRight]);
   return ret;
 }
 
-static inline wr::LayoutSize ToLayoutSize(const mozilla::LayoutDeviceIntSize& size)
+template<class T>
+static inline wr::LayoutSize ToLayoutSize(const gfx::IntSizeTyped<T>& size)
 {
-  return ToLayoutSize(LayoutDeviceSize(size));
+  return ToLayoutSize(IntSizeToSize(size));
 }
 
 template<class S, class T>
@@ -394,17 +344,18 @@ static inline wr::BorderSide ToBorderSide(const gfx::Color& color, const uint8_t
   return bs;
 }
 
-static inline wr::BorderRadius EmptyBorderRadius()
+static inline wr::BorderRadius ToUniformBorderRadius(const mozilla::LayerSize& aSize)
 {
   wr::BorderRadius br;
-  PodZero(&br);
+  br.top_left = ToLayoutSize(aSize);
+  br.top_right = ToLayoutSize(aSize);
+  br.bottom_left = ToLayoutSize(aSize);
+  br.bottom_right = ToLayoutSize(aSize);
   return br;
 }
 
-static inline wr::BorderRadius ToBorderRadius(const mozilla::LayoutDeviceSize& topLeft,
-                                              const mozilla::LayoutDeviceSize& topRight,
-                                              const mozilla::LayoutDeviceSize& bottomLeft,
-                                              const mozilla::LayoutDeviceSize& bottomRight)
+static inline wr::BorderRadius ToBorderRadius(const mozilla::LayerSize& topLeft, const mozilla::LayerSize& topRight,
+                                              const mozilla::LayerSize& bottomLeft, const mozilla::LayerSize& bottomRight)
 {
   wr::BorderRadius br;
   br.top_left = ToLayoutSize(topLeft);
@@ -490,6 +441,22 @@ static inline wr::WrOpacityProperty ToWrOpacityProperty(uint64_t id, const float
   return prop;
 }
 
+static inline wr::WrComplexClipRegion ToWrComplexClipRegion(const wr::LayoutRect& rect,
+                                                            const mozilla::LayerSize& size)
+{
+  wr::WrComplexClipRegion complex_clip;
+  complex_clip.rect = rect;
+  complex_clip.radii = wr::ToUniformBorderRadius(size);
+  return complex_clip;
+}
+
+template<class T>
+static inline wr::WrComplexClipRegion ToWrComplexClipRegion(const gfx::RectTyped<T>& rect,
+                                                            const mozilla::LayerSize& size)
+{
+  return ToWrComplexClipRegion(wr::ToLayoutRect(rect), size);
+}
+
 // Whenever possible, use wr::ExternalImageId instead of manipulating uint64_t.
 inline uint64_t AsUint64(const ExternalImageId& aId) {
   return static_cast<uint64_t>(aId.mHandle);
@@ -521,18 +488,6 @@ static inline wr::WrExternalImage NativeTextureToWrExternalImage(uint32_t aHandl
     aHandle, u0, v0, u1, v1,
     nullptr, 0
   };
-}
-
-inline wr::ByteSlice RangeToByteSlice(mozilla::Range<uint8_t> aRange) {
-  return wr::ByteSlice { aRange.begin().get(), aRange.length() };
-}
-
-inline mozilla::Range<const uint8_t> ByteSliceToRange(wr::ByteSlice aWrSlice) {
-  return mozilla::Range<const uint8_t>(aWrSlice.buffer, aWrSlice.len);
-}
-
-inline mozilla::Range<uint8_t> MutByteSliceToRange(wr::MutByteSlice aWrSlice) {
-  return mozilla::Range<uint8_t>(aWrSlice.buffer, aWrSlice.len);
 }
 
 struct Vec_u8 {
@@ -567,13 +522,6 @@ struct Vec_u8 {
     inner.length = 0;
   }
 
-  size_t Length() { return inner.length; }
-
-  void PushBytes(Range<uint8_t> aBytes)
-  {
-    wr_vec_u8_push_bytes(&inner, RangeToByteSlice(aBytes));
-  }
-
   ~Vec_u8() {
     if (inner.data) {
       wr_vec_u8_free(inner);
@@ -605,27 +553,6 @@ struct ByteBuffer
       mLength = 0;
     }
   }
-
-  ByteBuffer(ByteBuffer&& aFrom)
-  : mLength(aFrom.mLength)
-  , mData(aFrom.mData)
-  , mOwned(aFrom.mOwned)
-  {
-    aFrom.mLength = 0;
-    aFrom.mData = nullptr;
-    aFrom.mOwned = false;
-  }
-
-  ByteBuffer(ByteBuffer& aFrom)
-  : mLength(aFrom.mLength)
-  , mData(aFrom.mData)
-  , mOwned(aFrom.mOwned)
-  {
-    aFrom.mLength = 0;
-    aFrom.mData = nullptr;
-    aFrom.mOwned = false;
-  }
-
 
   ByteBuffer()
     : mLength(0)
@@ -666,6 +593,18 @@ struct ByteBuffer
   uint8_t* mData;
   bool mOwned;
 };
+
+inline wr::ByteSlice RangeToByteSlice(mozilla::Range<uint8_t> aRange) {
+  return wr::ByteSlice { aRange.begin().get(), aRange.length() };
+}
+
+inline mozilla::Range<const uint8_t> ByteSliceToRange(wr::ByteSlice aWrSlice) {
+  return mozilla::Range<const uint8_t>(aWrSlice.buffer, aWrSlice.len);
+}
+
+inline mozilla::Range<uint8_t> MutByteSliceToRange(wr::MutByteSlice aWrSlice) {
+  return mozilla::Range<uint8_t>(aWrSlice.buffer, aWrSlice.len);
+}
 
 struct BuiltDisplayList {
   wr::VecU8 dl;
@@ -710,30 +649,6 @@ static inline wr::WrFilterOp ToWrFilterOp(const layers::CSSFilter& filter) {
 // and the compiler will catch accidental conversions between the two.
 struct WrClipId {
   uint64_t id;
-
-  bool operator==(const WrClipId& other) const {
-    return id == other.id;
-  }
-};
-
-// Corresponds to a clip id for a position:sticky clip in webrender. Similar
-// to WrClipId but a separate struct so we don't get them mixed up in C++.
-struct WrStickyId {
-  uint64_t id;
-
-  bool operator==(const WrClipId& other) const {
-    return id == other.id;
-  }
-};
-
-typedef Variant<layers::FrameMetrics::ViewID, WrClipId> ScrollOrClipId;
-
-enum class WebRenderError : int8_t {
-  INITIALIZE = 0,
-  MAKE_CURRENT,
-  RENDER,
-
-  Sentinel /* this must be last for serialization purposes. */
 };
 
 } // namespace wr

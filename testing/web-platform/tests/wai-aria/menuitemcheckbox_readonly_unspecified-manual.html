@@ -59,15 +59,15 @@
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "IA2_ROLE_CHECK_MENU_ITEM"
+                  "states",
+                  "contains",
+                  "IA2_STATE_SYSTEM_EDITABLE"
                ],
                [
                   "property",
-                  "states",
-                  "contains",
-                  "IA2_STATE_EDITABLE"
+                  "role",
+                  "is",
+                  "IA2_ROLE_CHECK_MENU_ITEM"
                ]
             ],
             "MSAA" : [
@@ -75,7 +75,7 @@
                   "property",
                   "role",
                   "isAny",
-                  "[ROLE_SYSTEM_CHECKBUTTON, ROLE_SYSTEM_MENUITEM]"
+                  "ROLE_SYSTEM_CHECKBUTTON or ROLE_SYSTEM_MENUITEM"
                ]
             ],
             "UIA" : [

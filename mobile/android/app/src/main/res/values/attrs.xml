@@ -55,10 +55,6 @@
         <attr name="android:visible"/>
         <attr name="android:enabled"/>
         <attr name="android:showAsAction"/>
-        <attr name="itemType" type="enum">
-            <enum name="default_menu_item" value="0x00" />
-            <enum name="icon_menu_item" value="0x01" />
-        </attr>
     </declare-styleable>
 
     <declare-styleable name="MenuItemDefault">
@@ -81,11 +77,6 @@
 
     <declare-styleable name="MultiPrefMultiChoicePreference">
         <attr name="entryKeys" format="string"/>
-    </declare-styleable>
-
-    <declare-styleable name="SwitchPreferenceView">
-        <attr name="androidPreferenceKey" format="string"/>
-        <attr name="defaultValue" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="TabsLayout">
@@ -183,21 +174,6 @@
              and setting colorFilters in code. This is because on pre-Lollipop,
              android:tint and DrawableCompat.tint* uses colorFilters under the hood. -->
         <attr name="drawableTintList" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="NavButton">
-        <attr name="borderColor" format="color" />
-        <attr name="borderColorPrivate" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="AnimatedProgressBar">
-        <attr name="wrapShiftDrawable" format="boolean" />
-        <attr name="shiftDuration" format="reference" />
-        <attr name="shiftInterpolator" format="reference" />
-    </declare-styleable>
-
-    <declare-styleable name="ToolbarRoundButton">
-        <attr name="showLWTBackground" format="boolean"/>
     </declare-styleable>
 
 </resources>

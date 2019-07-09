@@ -36,7 +36,6 @@ function getBrowser(sidebar) {
   browser.setAttribute("context", "contentAreaContextMenu");
   browser.setAttribute("tooltip", "aHTMLTooltip");
   browser.setAttribute("autocompletepopup", "PopupAutoComplete");
-  browser.setAttribute("selectmenulist", "ContentSelectDropdown");
   browser.setAttribute("onclick", "window.parent.contentAreaClick(event, true);");
 
   let readyPromise;

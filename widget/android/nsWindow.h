@@ -130,7 +130,16 @@ public:
             nsWindow* operator->() const { return mWindow; }
         };
 
-        WindowPtr(NativePtr<Impl>* aPtr, nsWindow* aWindow);
+        WindowPtr(NativePtr<Impl>* aPtr, nsWindow* aWindow)
+            : mPtr(aPtr)
+            , mWindow(aWindow)
+            , mWindowLock(NativePtr<Impl>::sName)
+        {
+            MOZ_ASSERT(NS_IsMainThread());
+            if (mPtr) {
+                mPtr->mPtr = this;
+            }
+        }
 
         ~WindowPtr()
         {
@@ -194,8 +203,10 @@ private:
     // keep it last in the list, so its destructor is called first.
     mozilla::UniquePtr<GeckoViewSupport> mGeckoViewSupport;
 
+#ifdef MOZ_NATIVE_DEVICES
     // Class that implements native PresentationMediaPlayerManager calls.
     class PMPMSupport;
+#endif
 
 public:
     static nsWindow* TopWindow();
@@ -348,22 +359,5 @@ private:
     int64_t GetRootLayerId() const;
     RefPtr<mozilla::layers::UiCompositorControllerChild> GetUiCompositorControllerChild();
 };
-
-// Explicit template declarations to make clang be quiet.
-template<> const char nsWindow::NativePtr<nsWindow::LayerViewSupport>::sName[];
-template<> const char nsWindow::NativePtr<mozilla::widget::GeckoEditableSupport>::sName[];
-template<> const char nsWindow::NativePtr<nsWindow::NPZCSupport>::sName[];
-
-template<class Impl>
-nsWindow::WindowPtr<Impl>::WindowPtr(NativePtr<Impl>* aPtr, nsWindow* aWindow)
-    : mPtr(aPtr)
-    , mWindow(aWindow)
-    , mWindowLock(NativePtr<Impl>::sName)
-{
-    MOZ_ASSERT(NS_IsMainThread());
-    if (mPtr) {
-        mPtr->mPtr = this;
-    }
-}
 
 #endif /* NSWINDOW_H_ */

@@ -6,7 +6,6 @@ es6id: 19.4.2.1
 description: Error resulting from string coercion of first argument
 info: >
     1. Let stringKey be ? ToString(key).
-features: [Symbol]
 ---*/
 
 var subject = {

@@ -27,7 +27,7 @@ const APPSHELL_SERV_CONTRACTID  = "@mozilla.org/appshell/appShellService;1";
 const STRBUNDLE_SERV_CONTRACTID = "@mozilla.org/intl/stringbundle;1";
 
 const nsIAppShellService    = Components.interfaces.nsIAppShellService;
-const nsIFile          = Components.interfaces.nsIFile;
+const nsILocalFile          = Components.interfaces.nsILocalFile;
 const nsIFileURL            = Components.interfaces.nsIFileURL;
 const nsISupports           = Components.interfaces.nsISupports;
 const nsIFactory            = Components.interfaces.nsIFactory;
@@ -58,7 +58,7 @@ function nsFilePicker() {
   this.mDisplaySpecialDirectory = null;
   if (lastDirectory) {
     try {
-      var dir = Components.classes[LOCAL_FILE_CONTRACTID].createInstance(nsIFile);
+      var dir = Components.classes[LOCAL_FILE_CONTRACTID].createInstance(nsILocalFile);
       dir.initWithPath(lastDirectory);
       this.mDisplayDirectory = dir;
     } catch (e) {}
@@ -77,15 +77,15 @@ nsFilePicker.prototype = {
   },
 
 
-  /* attribute nsIFile displayDirectory; */
+  /* attribute nsILocalFile displayDirectory; */
   set displayDirectory(a) {
     this.mDisplayDirectory = a &&
-      a.clone().QueryInterface(nsIFile);
+      a.clone().QueryInterface(nsILocalFile);
   },
   get displayDirectory() {
     return this.mDisplayDirectory &&
            this.mDisplayDirectory.clone()
-               .QueryInterface(nsIFile);
+               .QueryInterface(nsILocalFile);
   },
 
   /* attribute AString displaySpecialDirectory; */
@@ -96,7 +96,7 @@ nsFilePicker.prototype = {
     return this.mDisplaySpecialDirectory;
   },
 
-  /* readonly attribute nsIFile file; */
+  /* readonly attribute nsILocalFile file; */
   get file() { return this.mFilesEnumerator.mFiles[0]; },
 
   /* readonly attribute nsISimpleEnumerator files; */
@@ -304,7 +304,7 @@ nsFilePicker.prototype = {
 
     return null;
   }
-};
+}
 
 if (DEBUG)
   debug = function(s) { dump("-*- filepicker: " + s + "\n"); };

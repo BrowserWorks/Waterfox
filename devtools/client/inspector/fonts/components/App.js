@@ -7,8 +7,9 @@
 const { addons, createClass, createFactory, DOM: dom, PropTypes } =
   require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
+const { findDOMNode } = require("devtools/client/shared/vendor/react-dom");
 
-const SearchBox = createFactory(require("devtools/client/shared/components/SearchBox"));
+const SearchBox = createFactory(require("devtools/client/shared/components/search-box"));
 const FontList = createFactory(require("./FontList"));
 
 const { getStr } = require("../utils/l10n");
@@ -24,9 +25,24 @@ const App = createClass({
     fonts: PropTypes.arrayOf(PropTypes.shape(Types.font)).isRequired,
     onPreviewFonts: PropTypes.func.isRequired,
     onShowAllFont: PropTypes.func.isRequired,
+    onTextBoxContextMenu: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
+
+  componentDidMount() {
+    let { onTextBoxContextMenu } = this.props;
+
+    let searchInput = findDOMNode(this).querySelector(".devtools-textinput");
+    searchInput.addEventListener("contextmenu", onTextBoxContextMenu);
+  },
+
+  componentWillUnmount() {
+    let { onTextBoxContextMenu } = this.props;
+
+    let searchInput = findDOMNode(this).querySelector(".devtools-textinput");
+    searchInput.removeEventListener("contextmenu", onTextBoxContextMenu);
+  },
 
   render() {
     let {
@@ -37,7 +53,7 @@ const App = createClass({
 
     return dom.div(
       {
-        className: "theme-sidebar inspector-tabpanel",
+        className: "devtools-monospace theme-sidebar inspector-tabpanel",
         id: "sidebar-panel-fontinspector"
       },
       dom.div(
@@ -60,15 +76,7 @@ const App = createClass({
           getStr("fontinspector.seeAll")
         )
       ),
-      fonts.length ?
-        FontList({ fonts })
-        :
-        dom.div(
-          {
-            className: "devtools-sidepanel-no-result"
-          },
-          getStr("fontinspector.noFontsOnSelectedElement")
-        )
+      FontList({ fonts })
     );
   }
 });

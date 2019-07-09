@@ -177,13 +177,6 @@ wasm::Classify(OpBytes op)
       case Op::F64ConvertUI64:
       case Op::F64ReinterpretI64:
       case Op::F64PromoteF32:
-#ifdef ENABLE_WASM_THREAD_OPS
-      case Op::I32Extend8S:
-      case Op::I32Extend16S:
-      case Op::I64Extend8S:
-      case Op::I64Extend16S:
-      case Op::I64Extend32S:
-#endif
         return OpKind::Conversion;
       case Op::I32Load8S:
       case Op::I32Load8U:
@@ -390,8 +383,6 @@ wasm::Classify(OpBytes op)
             case MozOp::F32x4store2:
             case MozOp::F32x4store3:
               return OpKind::TeeStore;
-            case MozOp::OldCallDirect:
-              return OpKind::OldCallDirect;
             case MozOp::OldCallIndirect:
               return OpKind::OldCallIndirect;
             case MozOp::I32AtomicsLoad:

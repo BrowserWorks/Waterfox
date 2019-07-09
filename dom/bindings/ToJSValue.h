@@ -132,7 +132,7 @@ ToJSValue(JSContext* aCx,
   // Make sure we're called in a compartment
   MOZ_ASSERT(JS::CurrentGlobalOrNull(aCx));
 
-  aValue.setObjectOrNull(aArgument.Callback(aCx));
+  aValue.setObjectOrNull(aArgument.CallbackOrNull());
 
   return MaybeWrapValue(aCx, aValue);
 }

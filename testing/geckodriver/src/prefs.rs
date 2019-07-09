@@ -1,7 +1,7 @@
 use mozprofile::preferences::Pref;
 
 lazy_static! {
-    pub static ref DEFAULT: [(&'static str, Pref); 81] = [
+    pub static ref DEFAULT: [(&'static str, Pref); 80] = [
         // Disable automatic downloading of new releases
         ("app.update.auto", Pref::new(false)),
 
@@ -51,7 +51,8 @@ lazy_static! {
         // Disable safebrowsing components
         ("browser.safebrowsing.blockedURIs.enabled", Pref::new(false)),
         ("browser.safebrowsing.downloads.enabled", Pref::new(false)),
-        ("browser.safebrowsing.passwords.enabled", Pref::new(false)),
+        ("browser.safebrowsing.enabled", Pref::new(false)),
+        ("browser.safebrowsing.forbiddenURIs.enabled", Pref::new(false)),
         ("browser.safebrowsing.malware.enabled", Pref::new(false)),
         ("browser.safebrowsing.phishing.enabled", Pref::new(false)),
 
@@ -105,14 +106,6 @@ lazy_static! {
         // Disable the UI tour
         ("browser.uitour.enabled", Pref::new(false)),
 
-        // Turn off search suggestions in the location bar so as not to trigger
-        // network connections.
-        ("browser.urlbar.suggest.searches", Pref::new(false)),
-
-        // Turn off the location bar search suggestions opt-in.  It interferes with
-        // tests that don't expect it to be there.
-        ("browser.urlbar.userMadeSearchSuggestionsChoice", Pref::new(true)),
-
         // Do not warn on quitting Firefox
         ("browser.warnOnQuit", Pref::new(false)),
 
@@ -146,15 +139,14 @@ lazy_static! {
         ("extensions.autoDisableScopes", Pref::new(0)),
         ("extensions.enabledScopes", Pref::new(5)),
 
+        // don't block add-ons for e10s
+        ("extensions.e10sBlocksEnabling", Pref::new(false)),
+
         // Disable metadata caching for installed add-ons by default
         ("extensions.getAddons.cache.enabled", Pref::new(false)),
 
         // Disable intalling any distribution extensions or add-ons
         ("extensions.installDistroAddons", Pref::new(false)),
-
-        // Make sure Shield doesn't hit the network.
-        ("extensions.shield-recipe-client.api_url", Pref::new("")),
-
         ("extensions.showMismatchUI", Pref::new(false)),
 
         // Turn off extension updates so they do not bother tests

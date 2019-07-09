@@ -64,10 +64,8 @@ DeleteRangeTransaction::DoTransaction()
 
   if (startContainer == endContainer) {
     // the selection begins and ends in the same node
-    nsIContent* startChild = rangeToDelete->GetChildAtStartOffset();
     nsresult rv =
-      CreateTxnsToDeleteBetween(startContainer, startOffset,
-                                startChild, endOffset);
+      CreateTxnsToDeleteBetween(startContainer, startOffset, endOffset);
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
     // the selection ends in a different node from where it started.  delete
@@ -124,7 +122,6 @@ DeleteRangeTransaction::GetTxnDescription(nsAString& aString)
 nsresult
 DeleteRangeTransaction::CreateTxnsToDeleteBetween(nsINode* aNode,
                                                   int32_t aStartOffset,
-                                                  nsIContent* aChildAtStartOffset,
                                                   int32_t aEndOffset)
 {
   if (NS_WARN_IF(!mEditorBase)) {
@@ -156,7 +153,7 @@ DeleteRangeTransaction::CreateTxnsToDeleteBetween(nsINode* aNode,
     return NS_OK;
   }
 
-  nsIContent* child = aChildAtStartOffset;
+  nsCOMPtr<nsIContent> child = aNode->GetChildAt(aStartOffset);
   for (int32_t i = aStartOffset; i < aEndOffset; ++i) {
     // Even if we detect invalid range, we should ignore it for removing
     // specified range's nodes as far as possible.

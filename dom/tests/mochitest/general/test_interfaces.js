@@ -27,7 +27,7 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
-    "Atomics",
+    {name: "Atomics", disabled: true},
     "Boolean",
     {name: "ByteLengthQueuingStrategy", disabled: !SpecialPowers.Cu.getJSTestingFunctions().streamsAreEnabled()},
     {name: "CountQueuingStrategy", disabled: !SpecialPowers.Cu.getJSTestingFunctions().streamsAreEnabled()},
@@ -47,6 +47,7 @@ var ecmaGlobals =
     "Int8Array",
     "InternalError",
     "Intl",
+    "Iterator",
     "JSON",
     "Map",
     "Math",
@@ -61,7 +62,7 @@ var ecmaGlobals =
     "Reflect",
     "RegExp",
     "Set",
-    "SharedArrayBuffer",
+    {name: "SharedArrayBuffer", disabled: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -101,10 +102,6 @@ var legacyMozPrefixedInterfaces =
 // IMPORTANT: Do not change the list below without review from a DOM peer!
 var interfaceNamesInGlobalScope =
   [
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "AbortController",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "AbortSignal",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "AnalyserNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -187,6 +184,8 @@ var interfaceNamesInGlobalScope =
     "CharacterData",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ChromeNodeList", xbl: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ChromeWindow", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ClipboardEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -398,6 +397,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLAnchorElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "HTMLAppletElement",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLAreaElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLAudioElement",
@@ -414,7 +415,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLCollection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "HTMLContentElement",
+    {name: "HTMLContentElement", stylo: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDataElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -512,7 +513,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLSelectElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "HTMLSlotElement",
+    {name: "HTMLShadowElement", stylo: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLSourceElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -642,8 +643,6 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaRecorder",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "MediaRecorderErrorEvent",
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaSource",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaStream",
@@ -734,11 +733,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PerformanceNavigation",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "PerformanceNavigationTiming",
+    {name: "PerformanceObserver", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "PerformanceObserver",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "PerformanceObserverEntryList",
+    {name: "PerformanceObserverEntryList", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PerformanceResourceTiming",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -792,6 +789,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Range",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "RecordErrorEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Rect",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Request",
@@ -844,7 +843,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ScopedCredentialInfo", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "ShadowRoot", // Bogus, but the test harness forces it on.  See bug 1159768.
+    {name: "ShadowRoot", stylo: false}, // Bogus, but the test harness forces it on.  See bug 1159768.
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SharedWorker",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -874,7 +873,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "StorageEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "StorageManager", isSecureContext: true, android: false},
+    {name: "StorageManager", nightly: true, isSecureContext: true, android: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "StyleSheet",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1174,21 +1173,21 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VideoStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRDisplay", releaseNonWindowsAndMac: false},
+    {name: "VRDisplay", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRDisplayCapabilities", releaseNonWindowsAndMac: false},
+    {name: "VRDisplayCapabilities", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRDisplayEvent", releaseNonWindowsAndMac: false},
+    {name: "VRDisplayEvent", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VREyeParameters", releaseNonWindowsAndMac: false},
+    {name: "VREyeParameters", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRFieldOfView", releaseNonWindowsAndMac: false},
+    {name: "VRFieldOfView", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRFrameData", releaseNonWindowsAndMac: false},
+    {name: "VRFrameData", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRPose", releaseNonWindowsAndMac: false},
+    {name: "VRPose", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRStageParameters", releaseNonWindowsAndMac: false},
+    {name: "VRStageParameters", releaseNonWindows: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VTTCue",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1300,6 +1299,7 @@ function createInterfaceMap(isXBLScope) {
   var isWindows = /Windows/.test(navigator.oscpu);
   var isAndroid = navigator.userAgent.includes("Android");
   var isLinux = /Linux/.test(navigator.oscpu) && !isAndroid;
+  var isStylo = SpecialPowers.DOMWindowUtils.isStyledByServo;
   var isSecureContext = window.isSecureContext;
 
   var interfaceMap = {};
@@ -1316,11 +1316,12 @@ function createInterfaceMap(isXBLScope) {
             (entry.xbl === !isXBLScope) ||
             (entry.desktop === !isDesktop) ||
             (entry.windows === !isWindows) ||
+            (entry.releaseNonWindows === !isRelease && !isWindows) ||
             (entry.mac === !isMac) ||
             (entry.linux === !isLinux) ||
             (entry.android === !isAndroid && !entry.nightlyAndroid) ||
+            (entry.stylo === !isStylo) ||
             (entry.release === !isRelease) ||
-            (entry.releaseNonWindowsAndMac === !(isRelease && !isWindows && !isMac)) ||
             (entry.isSecureContext === !isSecureContext) ||
             entry.disabled) {
           interfaceMap[entry.name] = false;

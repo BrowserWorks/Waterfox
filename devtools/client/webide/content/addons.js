@@ -17,7 +17,10 @@ window.addEventListener("load", function () {
     }
   };
   document.querySelector("#close").onclick = CloseUI;
-  BuildUI(GetAvailableAddons());
+  GetAvailableAddons().then(BuildUI, (e) => {
+    console.error(e);
+    window.alert(Strings.formatStringFromName("error_cantFetchAddonsJSON", [e], 1));
+  });
 }, {capture: true, once: true});
 
 window.addEventListener("unload", function () {
@@ -30,6 +33,10 @@ function CloseUI() {
 
 function BuildUI(addons) {
   BuildItem(addons.adb, "adb");
+  BuildItem(addons.adapters, "adapters");
+  for (let addon of addons.simulators) {
+    BuildItem(addon, "simulator");
+  }
 }
 
 function BuildItem(addon, type) {
@@ -74,6 +81,21 @@ function BuildItem(addon, type) {
     case "adb":
       li.setAttribute("addon", type);
       name.textContent = Strings.GetStringFromName("addons_adb_label");
+      break;
+    case "adapters":
+      li.setAttribute("addon", type);
+      try {
+        name.textContent = Strings.GetStringFromName("addons_adapters_label");
+      } catch (e) {
+        // This code (bug 1081093) will be backported to Aurora, which doesn't
+        // contain this string.
+        name.textContent = "Tools Adapters Add-on";
+      }
+      break;
+    case "simulator":
+      li.setAttribute("addon", "simulator-" + addon.version);
+      let stability = Strings.GetStringFromName("addons_" + addon.stability);
+      name.textContent = Strings.formatStringFromName("addons_simulator_label", [addon.version, stability], 2);
       break;
   }
 

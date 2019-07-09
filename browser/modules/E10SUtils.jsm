@@ -22,7 +22,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
 
 function getAboutModule(aURL) {
   // Needs to match NS_GetAboutModuleName
-  let moduleName = aURL.pathQueryRef.replace(/[#?].*/, "").toLowerCase();
+  let moduleName = aURL.path.replace(/[#?].*/, "").toLowerCase();
   let contract = "@mozilla.org/network/protocol/about;1?what=" + moduleName;
   try {
     return Cc[contract].getService(Ci.nsIAboutModule);
@@ -239,14 +239,6 @@ this.E10SUtils = {
       let remoteType = Services.appinfo.remoteType;
       return remoteType ==
         this.getRemoteTypeForURIObject(aURI, true, remoteType, webNav.currentURI);
-    }
-
-    if (sessionHistory.count == 1 && webNav.currentURI.spec == "about:newtab") {
-      // This is possibly a preloaded browser and we're about to navigate away for
-      // the first time. On the child side there is no way to tell for sure if that
-      // is the case, so let's redirect this request to the parent to decide if a new
-      // process is needed.
-      return false;
     }
 
     // If the URI can be loaded in the current process then continue

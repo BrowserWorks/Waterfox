@@ -6,28 +6,12 @@
 //! between layout and style.
 
 use attr::{AttrSelectorOperation, NamespaceConstraint, CaseSensitivity};
-use matching::{ElementSelectorFlags, MatchingContext, RelevantLinkStatus};
+use matching::{ElementSelectorFlags, LocalMatchingContext, MatchingContext, RelevantLinkStatus};
 use parser::SelectorImpl;
-use servo_arc::NonZeroPtrMut;
 use std::fmt::Debug;
 
-/// Opaque representation of an Element, for identity comparisons. We use
-/// NonZeroPtrMut to get the NonZero optimization.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct OpaqueElement(pub NonZeroPtrMut<()>);
-
-impl OpaqueElement {
-    /// Creates a new OpaqueElement from an arbitrarily-typed pointer.
-    pub fn new<T>(ptr: *const T) -> Self {
-        OpaqueElement(NonZeroPtrMut::new(ptr as *const () as *mut ()))
-    }
-}
-
-pub trait Element: Sized + Clone + Debug {
+pub trait Element: Sized + Debug {
     type Impl: SelectorImpl;
-
-    /// Converts self into an opaque representation.
-    fn opaque(&self) -> OpaqueElement;
 
     fn parent_element(&self) -> Option<Self>;
 
@@ -64,21 +48,17 @@ pub trait Element: Sized + Clone + Debug {
                     operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl>::AttrValue>)
                     -> bool;
 
-    fn match_non_ts_pseudo_class<F>(
-        &self,
-        pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
-        context: &mut MatchingContext<Self::Impl>,
-        relevant_link: &RelevantLinkStatus,
-        flags_setter: &mut F,
-    ) -> bool
-    where
-        F: FnMut(&Self, ElementSelectorFlags);
+    fn match_non_ts_pseudo_class<F>(&self,
+                                    pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
+                                    context: &mut LocalMatchingContext<Self::Impl>,
+                                    relevant_link: &RelevantLinkStatus,
+                                    flags_setter: &mut F) -> bool
+        where F: FnMut(&Self, ElementSelectorFlags);
 
-    fn match_pseudo_element(
-        &self,
-        pe: &<Self::Impl as SelectorImpl>::PseudoElement,
-        context: &mut MatchingContext<Self::Impl>,
-    ) -> bool;
+    fn match_pseudo_element(&self,
+                            pe: &<Self::Impl as SelectorImpl>::PseudoElement,
+                            context: &mut MatchingContext)
+                            -> bool;
 
     /// Whether this element is a `link`.
     fn is_link(&self) -> bool;
@@ -105,12 +85,6 @@ pub trait Element: Sized + Clone + Debug {
     /// Note: this can be false even if `.parent_element()` is `None`
     /// if the parent node is a `DocumentFragment`.
     fn is_root(&self) -> bool;
-
-    /// Returns whether this element should ignore matching nth child
-    /// selector.
-    fn ignores_nth_child_selectors(&self) -> bool {
-        false
-    }
 
     /// Return true if we want to stop lookup ancestor of the current
     /// element while matching complex selectors with descendant/child

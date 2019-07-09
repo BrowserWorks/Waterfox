@@ -55,10 +55,11 @@ nsRepeatService::Start(Callback aCallback, void* aCallbackData,
   mCallbackData = aCallbackData;
   mCallbackName = aCallbackName;
 
-  mRepeatTimer = NS_NewTimer(
-    aDocument->EventTargetFor(TaskCategory::Other));
+  nsresult rv;
+  mRepeatTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
 
-  if (mRepeatTimer)  {
+  if (NS_SUCCEEDED(rv))  {
+    mRepeatTimer->SetTarget(aDocument->EventTargetFor(TaskCategory::Other));
     InitTimerCallback(aInitialDelay);
   }
 }

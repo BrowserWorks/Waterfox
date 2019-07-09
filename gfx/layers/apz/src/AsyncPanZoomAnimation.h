@@ -7,7 +7,6 @@
 #ifndef mozilla_layers_AsyncPanZoomAnimation_h_
 #define mozilla_layers_AsyncPanZoomAnimation_h_
 
-#include "APZUtils.h"
 #include "base/message_loop.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TimeStamp.h"
@@ -65,8 +64,6 @@ public:
   virtual bool WantsRepaints() {
     return true;
   }
-
-  virtual void Cancel(CancelAnimationFlags aFlags) {}
 
 protected:
   // Protected destructor, to discourage deletion outside of Release():

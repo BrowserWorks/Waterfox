@@ -3,10 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 //! Tracking of pending loads in a document.
-//!
-//! <https://html.spec.whatwg.org/multipage/#the-end>
+//! https://html.spec.whatwg.org/multipage/#the-end
 
-use dom::bindings::root::Dom;
+use dom::bindings::js::JS;
 use dom::document::Document;
 use ipc_channel::ipc::IpcSender;
 use net_traits::{CoreResourceMsg, FetchResponseMsg, ResourceThreads, IpcSend};
@@ -14,25 +13,25 @@ use net_traits::request::RequestInit;
 use servo_url::ServoUrl;
 use std::thread;
 
-#[derive(Clone, Debug, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(JSTraceable, PartialEq, Clone, Debug, HeapSizeOf)]
 pub enum LoadType {
     Image(ServoUrl),
     Script(ServoUrl),
     Subframe(ServoUrl),
     Stylesheet(ServoUrl),
     PageSource(ServoUrl),
-    Media,
+    Media(ServoUrl),
 }
 
 impl LoadType {
-    fn url(&self) -> Option<&ServoUrl> {
+    fn url(&self) -> &ServoUrl {
         match *self {
             LoadType::Image(ref url) |
             LoadType::Script(ref url) |
             LoadType::Subframe(ref url) |
             LoadType::Stylesheet(ref url) |
-            LoadType::PageSource(ref url) => Some(url),
-            LoadType::Media => None,
+            LoadType::Media(ref url) |
+            LoadType::PageSource(ref url) => url,
         }
     }
 }
@@ -40,11 +39,11 @@ impl LoadType {
 /// Canary value ensuring that manually added blocking loads (ie. ones that weren't
 /// created via DocumentLoader::fetch_async) are always removed by the time
 /// that the owner is destroyed.
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 #[must_root]
 pub struct LoadBlocker {
     /// The document whose load event is blocked by this object existing.
-    doc: Dom<Document>,
+    doc: JS<Document>,
     /// The load that is blocking the document's load event.
     load: Option<LoadType>,
 }
@@ -52,9 +51,9 @@ pub struct LoadBlocker {
 impl LoadBlocker {
     /// Mark the document's load event as blocked on this new load.
     pub fn new(doc: &Document, load: LoadType) -> LoadBlocker {
-        doc.loader_mut().add_blocking_load(load.clone());
+        doc.mut_loader().add_blocking_load(load.clone());
         LoadBlocker {
-            doc: Dom::from_ref(doc),
+            doc: JS::from_ref(doc),
             load: Some(load),
         }
     }
@@ -69,7 +68,7 @@ impl LoadBlocker {
 
     /// Return the url associated with this load.
     pub fn url(&self) -> Option<&ServoUrl> {
-        self.load.as_ref().and_then(LoadType::url)
+        self.load.as_ref().map(LoadType::url)
     }
 }
 
@@ -81,7 +80,7 @@ impl Drop for LoadBlocker {
     }
 }
 
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 pub struct DocumentLoader {
     resource_threads: ResourceThreads,
     blocking_loads: Vec<LoadType>,
@@ -131,7 +130,7 @@ impl DocumentLoader {
     pub fn finish_load(&mut self, load: &LoadType) {
         debug!("Removing blocking load {:?} ({}).", load, self.blocking_loads.len());
         let idx = self.blocking_loads.iter().position(|unfinished| *unfinished == *load);
-        self.blocking_loads.remove(idx.unwrap_or_else(|| panic!("unknown completed load {:?}", load)));
+        self.blocking_loads.remove(idx.expect(&format!("unknown completed load {:?}", load)));
     }
 
     pub fn is_blocked(&self) -> bool {

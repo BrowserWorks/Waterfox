@@ -7,8 +7,6 @@
 #ifndef mozilla_mscom_InterceptorLog_h
 #define mozilla_mscom_InterceptorLog_h
 
-#include "mozilla/TimeStamp.h"
-
 struct ICallFrame;
 struct IUnknown;
 
@@ -19,13 +17,8 @@ class InterceptorLog
 {
 public:
   static bool Init();
-  static void QI(HRESULT aResult, IUnknown* aTarget, REFIID aIid,
-                 IUnknown* aInterface,
-                 const TimeDuration* aOverheadDuration = nullptr,
-                 const TimeDuration* aGeckoDuration = nullptr);
-  static void Event(ICallFrame* aCallFrame, IUnknown* aTarget,
-                    const TimeDuration& aOverheadDuration,
-                    const TimeDuration& aGeckoDuration);
+  static void QI(HRESULT aResult, IUnknown* aTarget, REFIID aIid, IUnknown* aInterface);
+  static void Event(ICallFrame* aCallFrame, IUnknown* aTarget);
 };
 
 } // namespace mscom

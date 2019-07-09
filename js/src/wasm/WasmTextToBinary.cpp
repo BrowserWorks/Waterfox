@@ -1123,12 +1123,6 @@ WasmTokenStream::next()
                     return WasmToken(WasmToken::UnaryOpcode, Op::I32Eqz, begin, cur_);
                 if (consume(u"eq"))
                     return WasmToken(WasmToken::ComparisonOpcode, Op::I32Eq, begin, cur_);
-#ifdef ENABLE_WASM_THREAD_OPS
-                if (consume(u"extend8_s"))
-                    return WasmToken(WasmToken::ConversionOpcode, Op::I32Extend8S, begin, cur_);
-                if (consume(u"extend16_s"))
-                    return WasmToken(WasmToken::ConversionOpcode, Op::I32Extend16S, begin, cur_);
-#endif
                 break;
               case 'g':
                 if (consume(u"ge_s"))
@@ -1273,14 +1267,6 @@ WasmTokenStream::next()
                 if (consume(u"extend_u/i32"))
                     return WasmToken(WasmToken::ConversionOpcode, Op::I64ExtendUI32,
                                      begin, cur_);
-#ifdef ENABLE_WASM_THREAD_OPS
-                if (consume(u"extend8_s"))
-                    return WasmToken(WasmToken::ConversionOpcode, Op::I64Extend8S, begin, cur_);
-                if (consume(u"extend16_s"))
-                    return WasmToken(WasmToken::ConversionOpcode, Op::I64Extend16S, begin, cur_);
-                if (consume(u"extend32_s"))
-                    return WasmToken(WasmToken::ConversionOpcode, Op::I64Extend32S, begin, cur_);
-#endif
                 break;
               case 'g':
                 if (consume(u"ge_s"))
@@ -2804,7 +2790,8 @@ ParseLimits(WasmParseContext& c, Limits* limits)
     if (c.ts.getIf(WasmToken::Index, &token))
         maximum.emplace(token.index());
 
-    *limits = Limits(initial.index(), maximum);
+    Limits r = { initial.index(), maximum };
+    *limits = r;
     return true;
 }
 
@@ -2871,7 +2858,8 @@ ParseMemory(WasmParseContext& c, WasmToken token, AstModule* module)
                 return false;
         }
 
-        if (!module->addMemory(name, Limits(pages, Some(pages))))
+        Limits memory = { uint32_t(pages), Some(uint32_t(pages)) };
+        if (!module->addMemory(name, memory))
             return false;
 
         if (!c.ts.match(WasmToken::CloseParen, c.error))
@@ -3163,7 +3151,8 @@ ParseTable(WasmParseContext& c, WasmToken token, AstModule* module)
     if (numElements != elems.length())
         return false;
 
-    if (!module->addTable(name, Limits(numElements, Some(numElements))))
+    Limits r = { numElements, Some(numElements) };
+    if (!module->addTable(name, r))
         return false;
 
     auto* zero = new(c.lifo) AstConst(Val(uint32_t(0)));

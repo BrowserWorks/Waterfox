@@ -2,13 +2,11 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-description: >
-    If the `this` value does not have all of the internal slots of an Array
-    Iterator Instance (22.1.5.3), throw a TypeError exception.
-es6id: 22.1.5.2.1
-esid: sec-%arrayiteratorprototype%.next
-features: [Symbol.iterator]
----*/
+  description: >
+      If the `this` value does not have all of the internal slots of an Array
+      Iterator Instance (22.1.5.3), throw a TypeError exception.
+  es6id: 22.1.5.2.1
+ ---*/
 
 var array = [0];
 var iterator = array[Symbol.iterator]();

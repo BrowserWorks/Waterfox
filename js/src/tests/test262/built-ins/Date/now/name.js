@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.now
 es6id: 20.3.3.1
 description: >
   Date.now.name is "now".

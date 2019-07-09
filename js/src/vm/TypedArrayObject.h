@@ -12,6 +12,7 @@
 #include "jsobj.h"
 
 #include "gc/Barrier.h"
+#include "gc/Zone.h"
 #include "js/Class.h"
 #include "vm/ArrayBufferObject.h"
 #include "vm/SharedArrayObject.h"
@@ -182,12 +183,6 @@ class TypedArrayObject : public NativeObject
     Value getElement(uint32_t index);
     static void setElement(TypedArrayObject& obj, uint32_t index, double d);
 
-    /*
-     * Copy all elements from this typed array to vp. vp must point to rooted
-     * memory.
-     */
-    void getElements(Value* vp);
-
     void notifyBufferDetached(JSContext* cx, void* newData);
 
     static bool
@@ -272,7 +267,9 @@ class TypedArrayObject : public NativeObject
   public:
     static void trace(JSTracer* trc, JSObject* obj);
     static void finalize(FreeOp* fop, JSObject* obj);
-    static size_t objectMoved(JSObject* obj, JSObject* old);
+    static void objectMoved(JSObject* obj, const JSObject* old);
+    static size_t objectMovedDuringMinorGC(JSTracer* trc, JSObject* obj, const JSObject* old,
+                                           gc::AllocKind allocKind);
 
     /* Initialization bits */
 
@@ -325,11 +322,6 @@ IsTypedArrayClass(const Class* clasp)
 
 bool
 IsTypedArrayConstructor(HandleValue v, uint32_t type);
-
-// In WebIDL terminology, a BufferSource is either an ArrayBuffer or a typed
-// array view. In either case, extract the dataPointer/byteLength.
-bool
-IsBufferSource(JSObject* object, SharedMem<uint8_t*>* dataPointer, size_t* byteLength);
 
 inline Scalar::Type
 TypedArrayObject::type() const

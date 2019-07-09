@@ -389,9 +389,6 @@ nsContentPermissionUtils::AskPermission(nsIContentPermissionRequest* aRequest,
     rv = aRequest->GetPrincipal(getter_AddRefs(principal));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    ContentChild::GetSingleton()->SetEventTargetForActor(
-      req, aWindow->EventTargetFor(TaskCategory::Other));
-
     req->IPDLAddRef();
     ContentChild::GetSingleton()->SendPContentPermissionRequestConstructor(
       req,

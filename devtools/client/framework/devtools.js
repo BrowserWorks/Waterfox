@@ -11,19 +11,19 @@ const {DevToolsShim} = Cu.import("chrome://devtools-shim/content/DevToolsShim.js
 
 // Load gDevToolsBrowser toolbox lazily as they need gDevTools to be fully initialized
 loader.lazyRequireGetter(this, "TargetFactory", "devtools/client/framework/target", true);
-loader.lazyRequireGetter(this, "TabTarget", "devtools/client/framework/target", true);
 loader.lazyRequireGetter(this, "Toolbox", "devtools/client/framework/toolbox", true);
 loader.lazyRequireGetter(this, "ToolboxHostManager", "devtools/client/framework/toolbox-host-manager", true);
 loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
-loader.lazyRequireGetter(this, "HUDService", "devtools/client/webconsole/hudservice", true);
 loader.lazyImporter(this, "ScratchpadManager", "resource://devtools/client/scratchpad/scratchpad-manager.jsm");
 
-loader.lazyRequireGetter(this, "WebExtensionInspectedWindowFront",
-      "devtools/shared/fronts/webextension-inspected-window", true);
+// Dependencies required for addon sdk compatibility layer.
+loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/main", true);
+loader.lazyImporter(this, "BrowserToolboxProcess", "resource://devtools/client/framework/ToolboxProcess.jsm");
 
 const {defaultTools: DefaultTools, defaultThemes: DefaultThemes} =
   require("devtools/client/definitions");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const AboutDevTools = require("devtools/client/framework/about-devtools-toolbox");
 const {Task} = require("devtools/shared/task");
 const {getTheme, setTheme, addThemeObserver, removeThemeObserver} =
@@ -99,6 +99,10 @@ DevTools.prototype = {
    *                     A falsy value indicates that it cannot be hidden.
    * - icon: URL pointing to a graphic which will be used as the src for an
    *         16x16 img tag (string|required)
+   * - invertIconForLightTheme: The icon can automatically have an inversion
+   *         filter applied (default is false).  All builtin tools are true, but
+   *         addons may omit this to prevent unwanted changes to the `icon`
+   *         image. filter: invert(1) is applied to the image (boolean|optional)
    * - url: URL pointing to a XUL/XHTML document containing the user interface
    *        (string|required)
    * - label: Localized name for the tool to be displayed to the user
@@ -393,39 +397,25 @@ DevTools.prototype = {
   },
 
   /**
-   * Called from SessionStore.jsm in mozilla-central when saving the current state.
+   * Get the array of currently opened scratchpad windows.
    *
-   * @param {Object} state
-   *                 A SessionStore state object that gets modified by reference
+   * @return {Array} array of currently opened scratchpad windows.
+   *         Empty array if the scratchpad manager is not loaded.
    */
-  saveDevToolsSession: function (state) {
-    state.browserConsole = HUDService.getBrowserConsoleSessionState();
-
+  getOpenedScratchpads: function () {
     // Check if the module is loaded to avoid loading ScratchpadManager for no reason.
-    state.scratchpads = [];
-    if (Cu.isModuleLoaded("resource://devtools/client/scratchpad/scratchpad-manager.jsm")) {
-      state.scratchpads = ScratchpadManager.getSessionState();
+    if (!Cu.isModuleLoaded("resource://devtools/client/scratchpad/scratchpad-manager.jsm")) {
+      return [];
     }
+    return ScratchpadManager.getSessionState();
   },
 
   /**
-   * Restore the devtools session state as provided by SessionStore.
+   * Restore the provided array of scratchpad window states.
    */
-  restoreDevToolsSession: function ({scratchpads, browserConsole}) {
-    if (scratchpads) {
-      ScratchpadManager.restoreSession(scratchpads);
-    }
-
-    if (browserConsole && !HUDService.getBrowserConsole()) {
-      HUDService.toggleBrowserConsole();
-    }
+  restoreScratchpadSession: function (scratchpads) {
+    ScratchpadManager.restoreSession(scratchpads);
   },
-
-  /**
-   * Boolean, true, if we never opened a toolbox.
-   * Used to implement the telemetry tracking toolbox opening.
-   */
-  _firstShowToolbox: true,
 
   /**
    * Show a Toolbox for a target (either by creating a new one, or if a toolbox
@@ -443,14 +433,11 @@ DevTools.prototype = {
    *        The type of host (bottom, window, side)
    * @param {object} hostOptions
    *        Options for host specifically
-   * @param {Number} startTime
-   *        Optional, indicates the time at which the user event related to this toolbox
-   *        opening started. This is a `performance.now()` timing.
    *
    * @return {Toolbox} toolbox
    *        The toolbox that was opened
    */
-  showToolbox: Task.async(function* (target, toolId, hostType, hostOptions, startTime) {
+  showToolbox: Task.async(function* (target, toolId, hostType, hostOptions) {
     let toolbox = this._toolboxes.get(target);
     if (toolbox) {
       if (hostType != null && toolbox.hostType != hostType) {
@@ -474,36 +461,9 @@ DevTools.prototype = {
       this._creatingToolboxes.set(target, toolboxPromise);
       toolbox = yield toolboxPromise;
       this._creatingToolboxes.delete(target);
-
-      if (startTime) {
-        this.logToolboxOpenTime(toolbox.currentToolId, startTime);
-      }
-      this._firstShowToolbox = false;
     }
     return toolbox;
   }),
-
-  /**
-   * Log telemetry related to toolbox opening.
-   * Two distinct probes are logged. One for cold startup, when we open the very first
-   * toolbox. This one includes devtools framework loading. And a second one for all
-   * subsequent toolbox opening, which should all be faster.
-   * These two probes are indexed by Tool ID.
-   *
-   * @param {String} toolId
-   *        The id of the opened tool.
-   * @param {Number} startTime
-   *        Indicates the time at which the user event related to the toolbox
-   *        opening started. This is a `performance.now()` timing.
-   */
-  logToolboxOpenTime(toolId, startTime) {
-    let { performance } = Services.appShell.hiddenDOMWindow;
-    let delay = performance.now() - startTime;
-    let telemetryKey = this._firstShowToolbox ?
-      "DEVTOOLS_COLD_TOOLBOX_OPEN_DELAY_MS" : "DEVTOOLS_WARM_TOOLBOX_OPEN_DELAY_MS";
-    let histogram = Services.telemetry.getKeyedHistogramById(telemetryKey);
-    histogram.add(toolId, delay);
-  },
 
   createToolbox: Task.async(function* (target, toolId, hostType, hostOptions) {
     let manager = new ToolboxHostManager(target, hostType, hostOptions);
@@ -575,31 +535,39 @@ DevTools.prototype = {
   },
 
   /**
-   * Compatibility layer for web-extensions. Used by DevToolsShim for
-   * browser/components/extensions/ext-devtools.js
+   * Compatibility layer for addon-sdk. Remove when Firefox 57 hits release.
+   * Initialize the debugger server if needed and and create a connection.
    *
-   * web-extensions need to use dedicated instances of TabTarget and cannot reuse the
-   * cached instances managed by DevTools target factory.
+   * @return {DebuggerTransport} a client-side DebuggerTransport for communicating with
+   *         the created connection.
    */
-  createTargetForTab: function (tab) {
-    return new TabTarget(tab);
+  connectDebuggerServer: function () {
+    if (!DebuggerServer.initialized) {
+      DebuggerServer.init();
+      DebuggerServer.addBrowserActors();
+    }
+
+    return DebuggerServer.connectPipe();
   },
 
   /**
-   * Compatibility layer for web-extensions. Used by DevToolsShim for
-   * browser/components/extensions/ext-devtools-inspectedWindow.js
+   * Compatibility layer for addon-sdk. Remove when Firefox 57 hits release.
+   *
+   * Create a connection to the debugger server and return a debugger client for this
+   * new connection.
    */
-  createWebExtensionInspectedWindowFront: function (tabTarget) {
-    return new WebExtensionInspectedWindowFront(tabTarget.client, tabTarget.form);
+  createDebuggerClient: function () {
+    let transport = this.connectDebuggerServer();
+    return new DebuggerClient(transport);
   },
 
   /**
-   * Compatibility layer for web-extensions. Used by DevToolsShim for
-   * toolkit/components/extensions/ext-c-toolkit.js
+   * Compatibility layer for addon-sdk. Remove when Firefox 57 hits release.
+   *
+   * Create a BrowserToolbox process linked to the provided addon id.
    */
-  openBrowserConsole: function () {
-    let {HUDService} = require("devtools/client/webconsole/hudservice");
-    HUDService.openBrowserConsoleOrFocus();
+  initBrowserToolboxProcessForAddon: function (addonID) {
+    BrowserToolboxProcess.init({ addonID });
   },
 
   /**
@@ -611,16 +579,13 @@ DevTools.prototype = {
    *        An array of CSS selectors to find the target node. Several selectors can be
    *        needed if the element is nested in frames and not directly in the root
    *        document.
-   * @param {Number} startTime
-   *        Optional, indicates the time at which the user event related to this node
-   *        inspection started. This is a `performance.now()` timing.
    * @return {Promise} a promise that resolves when the node is selected in the inspector
    *         markup view.
    */
-  async inspectNode(tab, nodeSelectors, startTime) {
+  async inspectNode(tab, nodeSelectors) {
     let target = TargetFactory.forTab(tab);
 
-    let toolbox = await gDevTools.showToolbox(target, "inspector", null, null, startTime);
+    let toolbox = await gDevTools.showToolbox(target, "inspector");
     let inspector = toolbox.getCurrentPanel();
 
     // new-node-front tells us when the node has been selected, whether the

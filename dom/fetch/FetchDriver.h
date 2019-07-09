@@ -12,7 +12,7 @@
 #include "nsIStreamListener.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "mozilla/ConsoleReportCollector.h"
-#include "mozilla/dom/AbortSignal.h"
+#include "mozilla/dom/FetchSignal.h"
 #include "mozilla/dom/SRIMetadata.h"
 #include "mozilla/RefPtr.h"
 
@@ -68,13 +68,6 @@ public:
 
   virtual void FlushConsoleReport() = 0;
 
-  // Called in OnStartRequest() to determine if the OnDataAvailable() method
-  // needs to be called.  Invoking that method may generate additional main
-  // thread runnables.
-  virtual bool NeedOnDataAvailable() = 0;
-
-  // Called once when the first byte of data is received iff
-  // NeedOnDataAvailable() returned true when called in OnStartRequest().
   virtual void OnDataAvailable() = 0;
 
 protected:
@@ -92,10 +85,10 @@ class FetchDriver final : public nsIStreamListener,
                           public nsIChannelEventSink,
                           public nsIInterfaceRequestor,
                           public nsIThreadRetargetableStreamListener,
-                          public AbortFollower
+                          public FetchSignal::Follower
 {
 public:
-  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSICHANNELEVENTSINK
@@ -108,7 +101,7 @@ public:
               nsIEventTarget* aMainThreadEventTarget,
               bool aIsTrackingFetch);
 
-  nsresult Fetch(AbortSignal* aSignal,
+  nsresult Fetch(FetchSignal* aSignal,
                  FetchDriverObserver* aObserver);
 
   void
@@ -121,9 +114,10 @@ public:
     mWorkerScript = aWorkerScirpt;
   }
 
-  // AbortFollower
+  // FetchSignal::Follower
+
   void
-  Abort() override;
+  Aborted() override;
 
 private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -138,12 +132,6 @@ private:
   nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
   SRIMetadata mSRIMetadata;
   nsCString mWorkerScript;
-
-  // This is written once in OnStartRequest on the main thread and then
-  // written/read in OnDataAvailable() on any thread.  Necko guarantees
-  // that these do not overlap.
-  bool mNeedToObserveOnDataAvailable;
-
   bool mIsTrackingFetch;
 
 #ifdef DEBUG

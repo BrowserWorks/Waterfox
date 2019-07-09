@@ -9,7 +9,7 @@
 
 var protocol = require("devtools/shared/protocol");
 var {Arg, Option, RetVal} = protocol;
-var EventEmitter = require("devtools/shared/event-emitter");
+var events = require("sdk/event/core");
 
 function simpleHello() {
   return {
@@ -158,11 +158,11 @@ var RootActor = protocol.ActorClassWithSpec(rootSpec, {
 
   testOneWay: function (a) {
     // Emit to show that we got this message, because there won't be a response.
-    EventEmitter.emit(this, "oneway", a);
+    events.emit(this, "oneway", a);
   },
 
   emitFalsyOptions: function () {
-    EventEmitter.emit(this, "falsyOptions", { zero: 0, farce: false });
+    events.emit(this, "falsyOptions", { zero: 0, farce: false });
   }
 });
 
@@ -300,7 +300,7 @@ function run_test() {
 
       do_check_eq(str, "hello");
 
-      let deferred = defer();
+      let deferred = promise.defer();
       rootClient.on("oneway", (response) => {
         trace.expectSend({"type": "testOneWay", "a": "hello", "to": "<actorid>"});
         trace.expectReceive({"type": "oneway", "a": "hello", "from": "<actorid>"});
@@ -311,7 +311,7 @@ function run_test() {
       do_check_true(typeof (rootClient.testOneWay("hello")) === "undefined");
       return deferred.promise;
     }).then(() => {
-      let deferred = defer();
+      let deferred = promise.defer();
       rootClient.on("falsyOptions", res => {
         trace.expectSend({"type": "emitFalsyOptions", "to": "<actorid>"});
         trace.expectReceive({"type": "falsyOptions",

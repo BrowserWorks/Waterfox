@@ -40,7 +40,8 @@ protected:
     nsresult SetGlyphsFromRun(gfxShapedText *aShapedText,
                               uint32_t       aOffset,
                               uint32_t       aLength,
-                              CTRunRef       aCTRun);
+                              CTRunRef       aCTRun,
+                              int32_t        aStringOffset);
 
     CTFontRef CreateCTFontWithFeatures(CGFloat aSize,
                                        CTFontDescriptorRef aDescriptor);
@@ -53,19 +54,15 @@ protected:
                                  size_t aCount);
 
     static CTFontDescriptorRef GetDefaultFeaturesDescriptor();
-    static CTFontDescriptorRef GetSmallCapsDescriptor();
     static CTFontDescriptorRef GetDisableLigaturesDescriptor();
-    static CTFontDescriptorRef GetSmallCapDisableLigDescriptor();
     static CTFontDescriptorRef GetIndicFeaturesDescriptor();
     static CTFontDescriptorRef GetIndicDisableLigaturesDescriptor();
 
     // cached font descriptor, created the first time it's needed
     static CTFontDescriptorRef    sDefaultFeaturesDescriptor;
-    static CTFontDescriptorRef    sSmallCapsDescriptor;
 
     // cached descriptor for adding disable-ligatures setting to a font
     static CTFontDescriptorRef    sDisableLigaturesDescriptor;
-    static CTFontDescriptorRef    sSmallCapDisableLigDescriptor;
 
     // feature descriptors for buggy Indic AAT font workaround
     static CTFontDescriptorRef    sIndicFeaturesDescriptor;

@@ -22,12 +22,15 @@
                                       \
   _(GlobalHelperThreadState,     300) \
                                       \
+  _(InternalAsyncTasks,          350) \
+                                      \
   _(GCLock,                      400) \
                                       \
   _(WasmInitBuiltinThunks,       450) \
                                       \
   _(SharedImmutableStringsCache, 500) \
   _(FutexThread,                 500) \
+  _(PromiseTaskPtrVector,        500) \
   _(GeckoProfilerStrings,        500) \
   _(ProtectedRegionTree,         500) \
   _(WasmSigIdSet,                500) \
@@ -40,15 +43,12 @@
   _(TraceLoggerThreadState,      500) \
   _(DateTimeInfoMutex,           500) \
   _(IcuTimeZoneStateMutex,       500) \
-  _(ProcessExecutableRegion,     500) \
-  _(OffThreadPromiseState,       500) \
-  _(BufferStreamState,           500) \
-  _(WasmCodeProfilingLabels,     500) \
-  _(WasmModuleTieringLock,       500) \
-  _(WasmCompileTaskState,        500) \
                                       \
-  _(ThreadId,                    600) \
-  _(WasmCodeSegmentMap,          600) \
+  /* ProcessExecutableRegion > PromiseTaskPtrVector */ \
+  /* WasmCodeProfilingLabels > PromiseTaskPtrVector */ \
+  _(ProcessExecutableRegion,     550) \
+  _(WasmCodeProfilingLabels,     550) \
+                                      \
   _(TraceLoggerGraphState,       600) \
   _(VTuneLock,                   600)
 

@@ -31,7 +31,7 @@ SVGMotionSMILAnimationFunction::SVGMotionSMILAnimationFunction()
 }
 
 void
-SVGMotionSMILAnimationFunction::MarkStaleIfAttributeAffectsPath(nsAtom* aAttribute)
+SVGMotionSMILAnimationFunction::MarkStaleIfAttributeAffectsPath(nsIAtom* aAttribute)
 {
   bool isAffected;
   if (aAttribute == nsGkAtoms::path) {
@@ -55,7 +55,7 @@ SVGMotionSMILAnimationFunction::MarkStaleIfAttributeAffectsPath(nsAtom* aAttribu
 }
 
 bool
-SVGMotionSMILAnimationFunction::SetAttr(nsAtom* aAttribute,
+SVGMotionSMILAnimationFunction::SetAttr(nsIAtom* aAttribute,
                                         const nsAString& aValue,
                                         nsAttrValue& aResult,
                                         nsresult* aParseResult)
@@ -91,7 +91,7 @@ SVGMotionSMILAnimationFunction::SetAttr(nsAtom* aAttribute,
 }
 
 bool
-SVGMotionSMILAnimationFunction::UnsetAttr(nsAtom* aAttribute)
+SVGMotionSMILAnimationFunction::UnsetAttr(nsIAtom* aAttribute)
 {
   if (aAttribute == nsGkAtoms::keyPoints) {
     UnsetKeyPoints();
@@ -431,14 +431,20 @@ SVGMotionSMILAnimationFunction::SetRotate(const nsAString& aRotate,
   } else {
     mRotateType = eRotateType_Explicit;
 
-    uint16_t angleUnit;
-    if (!nsSVGAngle::GetValueFromString(aRotate, mRotateAngle, &angleUnit)) {
+    // Parse numeric angle string, with the help of a temp nsSVGAngle.
+    nsSVGAngle svgAngle;
+    svgAngle.Init();
+    nsresult rv = svgAngle.SetBaseValueString(aRotate, nullptr, false);
+    if (NS_FAILED(rv)) { // Parse error
       mRotateAngle = 0.0f; // set default rotate angle
       // XXX report to console?
-      return NS_ERROR_DOM_SYNTAX_ERR;
+      return rv;
     }
 
+    mRotateAngle = svgAngle.GetBaseValInSpecifiedUnits();
+
     // Convert to radian units, if we're not already in radians.
+    uint8_t angleUnit = svgAngle.GetBaseValueUnit();
     if (angleUnit != SVG_ANGLETYPE_RAD) {
       mRotateAngle *= nsSVGAngle::GetDegreesPerUnit(angleUnit) /
         nsSVGAngle::GetDegreesPerUnit(SVG_ANGLETYPE_RAD);

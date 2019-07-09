@@ -38,10 +38,10 @@ var maketest = function(prefix, test) {
     okpromise: function okpromise(t, m) {
       return t.then(
         function onSuccess() {
-          utils.ok(true, m);
+          util.ok(true, m);
         },
         function onFailure() {
-          utils.ok(false, m);
+          util.ok(false, m);
         }
       );
     }
@@ -116,14 +116,14 @@ var reference_dir_contents = function reference_dir_contents(path) {
   let result = [];
   let entries = new FileUtils.File(path).directoryEntries;
   while (entries.hasMoreElements()) {
-    let entry = entries.getNext().QueryInterface(Components.interfaces.nsIFile);
+    let entry = entries.getNext().QueryInterface(Components.interfaces.nsILocalFile);
     result.push(entry.path);
   }
   return result;
 };
 
 // Set/Unset OS.Shared.DEBUG, OS.Shared.TEST and a console listener.
-function toggleDebugTest(pref, consoleListener) {
+function toggleDebugTest (pref, consoleListener) {
   Services.prefs.setBoolPref("toolkit.osfile.log", pref);
   Services.prefs.setBoolPref("toolkit.osfile.log.redirect", pref);
   Services.console[pref ? "registerListener" : "unregisterListener"](
@@ -276,7 +276,7 @@ var test_iter = maketest("iter", function iter(test) {
     test.info("Double closing DirectoryIterator");
     iterator = new OS.File.DirectoryIterator(currentDir);
     await iterator.close();
-    await iterator.close(); // double closing |DirectoryIterator|
+    await iterator.close(); //double closing |DirectoryIterator|
     test.ok(true, "|DirectoryIterator| was closed twice successfully");
 
     let allFiles2 = [];
@@ -309,7 +309,7 @@ var test_iter = maketest("iter", function iter(test) {
     await iterator.forEach(function cb(entry, index, iterator) {
       if (index < BATCH_LENGTH) {
         test.is(entry.path, someFiles1[index].path, "Both runs return the same files (part 1)");
-      } else if (index < 2 * BATCH_LENGTH) {
+      } else if (index < 2*BATCH_LENGTH) {
         test.is(entry.path, someFiles2[index - BATCH_LENGTH].path, "Both runs return the same files (part 2)");
       } else if (index == 2 * BATCH_LENGTH) {
         test.info("Attempting to stop asynchronous forEach");
@@ -344,14 +344,10 @@ var test_iter = maketest("iter", function iter(test) {
       let exn = null;
       try {
         await iterator.next();
-      } catch (ex) {
-        if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
-          exn = ex;
-          let exists = await iterator.exists();
-          test.ok(!exists, "After one iteration, iterator detects that the directory doesn't exist");
-        } else {
-          throw ex;
-        }
+      } catch (ex if ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
+        exn = ex;
+        let exists = await iterator.exists();
+        test.ok(!exists, "After one iteration, iterator detects that the directory doesn't exist");
       }
       test.ok(exn, "Iterating through a directory that does not exist has failed with becauseNoSuchFile");
     } finally {
@@ -380,7 +376,7 @@ var test_exists = maketest("exists", function exists(test) {
  */
 var test_debug = maketest("debug", function debug(test) {
   return (async function() {
-    function testSetDebugPref(pref) {
+    function testSetDebugPref (pref) {
       try {
         Services.prefs.setBoolPref("toolkit.osfile.log", pref);
       } catch (x) {
@@ -407,7 +403,7 @@ var test_debug_test = maketest("debug_test", function debug_test(test) {
   return (async function() {
     // Create a console listener.
     let consoleListener = {
-      observe(aMessage) {
+      observe: function (aMessage) {
         // Ignore unexpected messages.
         if (!(aMessage instanceof Components.interfaces.nsIConsoleMessage)) {
           return;
@@ -420,7 +416,9 @@ var test_debug_test = maketest("debug_test", function debug_test(test) {
     };
     toggleDebugTest(true, consoleListener);
     // Execution of OS.File.exist method will trigger OS.File.LOG several times.
-    await OS.File.exists(EXISTING_FILE);
+    let fileExists = await OS.File.exists(EXISTING_FILE);
     toggleDebugTest(false, consoleListener);
   })();
 });
+
+

@@ -13,9 +13,8 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/CSSImportRule.h"
 
-#include "nsStringFwd.h"
-
 class nsMediaList;
+class nsString;
 
 namespace mozilla {
 

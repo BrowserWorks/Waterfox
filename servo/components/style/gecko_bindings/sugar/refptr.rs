@@ -286,7 +286,4 @@ impl_threadsafe_refcount!(::gecko_bindings::structs::mozilla::css::GridTemplateA
 impl_threadsafe_refcount!(::gecko_bindings::structs::ImageValue,
                           Gecko_AddRefImageValueArbitraryThread,
                           Gecko_ReleaseImageValueArbitraryThread);
-impl_threadsafe_refcount!(::gecko_bindings::structs::SharedFontList,
-                          Gecko_AddRefSharedFontListArbitraryThread,
-                          Gecko_ReleaseSharedFontListArbitraryThread);
 

@@ -19,11 +19,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype.sup, "name", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: "sup"
-});
+assert.sameValue(String.prototype.sup.name, "sup");
+
+verifyNotEnumerable(String.prototype.sup, "name");
+verifyNotWritable(String.prototype.sup, "name");
+verifyConfigurable(String.prototype.sup, "name");
 
 reportCompare(0, 0);

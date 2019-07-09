@@ -13,6 +13,7 @@
 #include "nsDocShell.h"
 #include "nsIDocumentInlines.h"
 #include "nsDOMTokenList.h"
+#include "nsIDOMHTMLImageElement.h"
 #include "nsIDOMEvent.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsIDOMMouseEvent.h"
@@ -101,13 +102,10 @@ ImageListener::OnStartRequest(nsIRequest* request, nsISupports *ctxt)
     secMan->GetChannelResultPrincipal(channel, getter_AddRefs(channelPrincipal));
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-
   int16_t decision = nsIContentPolicy::ACCEPT;
   nsresult rv = NS_CheckContentProcessPolicy(nsIContentPolicy::TYPE_INTERNAL_IMAGE,
                                              channelURI,
                                              channelPrincipal,
-                                             loadInfo ? loadInfo->TriggeringPrincipal() : nullptr,
                                              domWindow->GetFrameElementInternal(),
                                              mimeType,
                                              nullptr,
@@ -167,11 +165,13 @@ ImageDocument::~ImageDocument()
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ImageDocument, MediaDocument,
                                    mImageContent)
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(ImageDocument,
-                                             MediaDocument,
-                                             nsIImageDocument,
-                                             imgINotificationObserver,
-                                             nsIDOMEventListener)
+NS_IMPL_ADDREF_INHERITED(ImageDocument, MediaDocument)
+NS_IMPL_RELEASE_INHERITED(ImageDocument, MediaDocument)
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(ImageDocument)
+  NS_INTERFACE_TABLE_INHERITED(ImageDocument, nsIImageDocument,
+                               imgINotificationObserver, nsIDOMEventListener)
+NS_INTERFACE_TABLE_TAIL_INHERITING(MediaDocument)
 
 
 nsresult
@@ -599,9 +599,9 @@ ImageDocument::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
     mDocumentURI->GetSpec(src);
     NS_ConvertUTF8toUTF16 srcString(src);
     const char16_t* formatString[] = { srcString.get() };
-    nsAutoString errorMsg;
+    nsXPIDLString errorMsg;
     mStringBundle->FormatStringFromName("InvalidImage", formatString, 1,
-                                        errorMsg);
+                                        getter_Copies(errorMsg));
 
     mImageContent->SetAttr(kNameSpaceID_None, nsGkAtoms::alt, errorMsg, false);
   }
@@ -777,13 +777,13 @@ ImageDocument::UpdateTitleAndCharset()
   }
 
   if (imageRequest) {
-    nsCString mimeType;
+    nsXPIDLCString mimeType;
     imageRequest->GetMimeType(getter_Copies(mimeType));
     ToUpperCase(mimeType);
-    nsCString::const_iterator start, end;
+    nsXPIDLCString::const_iterator start, end;
     mimeType.BeginReading(start);
     mimeType.EndReading(end);
-    nsCString::const_iterator iter = end;
+    nsXPIDLCString::const_iterator iter = end;
     if (FindInReadable(NS_LITERAL_CSTRING("IMAGE/"), start, iter) &&
         iter != end) {
       // strip out "X-" if any
@@ -805,13 +805,15 @@ ImageDocument::UpdateTitleAndCharset()
     }
   }
 
-  nsAutoString status;
+  nsXPIDLString status;
   if (mImageIsResized) {
     nsAutoString ratioStr;
     ratioStr.AppendInt(NSToCoordFloor(GetRatio() * 100));
 
     const char16_t* formatString[1] = { ratioStr.get() };
-    mStringBundle->FormatStringFromName("ScaledImage", formatString, 1, status);
+    mStringBundle->FormatStringFromName("ScaledImage",
+                                        formatString, 1,
+                                        getter_Copies(status));
   }
 
   static const char* const formatNames[4] =

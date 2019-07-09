@@ -184,7 +184,7 @@ this.BrowserUtils = {
   },
 
   makeURIFromCPOW(aCPOWURI) {
-    return Services.io.newURI(aCPOWURI.spec);
+    return Services.io.newURI(aCPOWURI.spec, aCPOWURI.originCharset);
   },
 
   /**
@@ -416,8 +416,13 @@ this.BrowserUtils = {
    * the font-size.
    *
    * @param element An element within the toolbar whose height is desired.
+   * @param options An object with the following properties:
+              {
+                forceLayoutFlushIfNeeded:
+                  Set to true if a sync layout flush is acceptable.
+              }
    */
-  async setToolbarButtonHeightProperty(element) {
+  setToolbarButtonHeightProperty(element, options) {
     let window = element.ownerGlobal;
     let dwu = window.getInterface(Ci.nsIDOMWindowUtils);
     let toolbarItem = element;
@@ -431,11 +436,8 @@ this.BrowserUtils = {
       return;
     }
     let bounds = dwu.getBoundsWithoutFlushing(toolbarItem);
-    if (!bounds.height) {
-      let document = element.ownerDocument;
-      await BrowserUtils.promiseLayoutFlushed(document, "layout", () => {
-        bounds = dwu.getBoundsWithoutFlushing(toolbarItem);
-      });
+    if (!bounds.height && options.forceLayoutFlushIfNeeded) {
+      bounds = toolbarItem.getBoundingClientRect();
     }
     if (bounds.height) {
       toolbarItem.style.setProperty("--toolbarbutton-height", bounds.height + "px");
@@ -496,17 +498,6 @@ this.BrowserUtils = {
 
     let url;
     let linkText;
-
-    // try getting a selected text in text input.
-    if (!selectionStr && focusedElement instanceof Ci.nsIDOMNSEditableElement) {
-      // Don't get the selection for password fields. See bug 565717.
-      if (focusedElement instanceof Ci.nsIDOMHTMLTextAreaElement ||
-          (focusedElement instanceof Ci.nsIDOMHTMLInputElement &&
-           focusedElement.mozIsTextField(true))) {
-        selectionStr = focusedElement.editor.selection.toString();
-      }
-    }
-
     if (selectionStr) {
       // Have some text, let's figure out if it looks like a URL that isn't
       // actually a link.
@@ -556,6 +547,16 @@ this.BrowserUtils = {
             url = uriFixup.createFixupURI(linkText, uriFixup.FIXUP_FLAG_NONE);
           } catch (ex) {}
         }
+      }
+    }
+
+    // try getting a selected text in text input.
+    if (!selectionStr && focusedElement instanceof Ci.nsIDOMNSEditableElement) {
+      // Don't get the selection for password fields. See bug 565717.
+      if (focusedElement instanceof Ci.nsIDOMHTMLTextAreaElement ||
+          (focusedElement instanceof Ci.nsIDOMHTMLInputElement &&
+           focusedElement.mozIsTextField(true))) {
+        selectionStr = focusedElement.editor.selection.toString();
       }
     }
 
@@ -610,7 +611,7 @@ this.BrowserUtils = {
    * @throws if nor url nor postData accept a param, but a param was provided.
    */
   async parseUrlAndPostData(url, postData, param) {
-    let hasGETParam = /%s/i.test(url);
+    let hasGETParam = /%s/i.test(url)
     let decodedPostData = postData ? unescape(postData) : "";
     let hasPOSTParam = /%s/i.test(decodedPostData);
 

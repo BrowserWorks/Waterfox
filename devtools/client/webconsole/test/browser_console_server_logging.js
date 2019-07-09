@@ -109,7 +109,7 @@ add_task(function* () {
 });
 
 function updateServerLoggingListener(hud) {
-  let deferred = defer();
+  let deferred = promise.defer();
   hud.ui._updateServerLoggingListener(response => {
     deferred.resolve(response);
   });

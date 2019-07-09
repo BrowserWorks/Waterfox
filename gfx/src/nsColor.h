@@ -10,7 +10,9 @@
 #include <stdint.h>                     // for uint8_t, uint32_t
 #include "nscore.h"                     // for nsAString
 #include "nsCoord.h"                    // for NSToIntRound
-#include "nsStringFwd.h"
+
+class nsAString;
+class nsString;
 
 // A color is a 32 bit unsigned integer with four components: R, G, B
 // and A.

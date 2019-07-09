@@ -3,11 +3,6 @@
 
 "use strict";
 
-add_task(function setup() {
-  // gSync.init() is called in a requestIdleCallback. Force its initialization.
-  gSync.init();
-});
-
 add_task(async function test_ui_state_notification_calls_updateAllUI() {
   let called = false;
   let updateAllUI = gSync.updateAllUI;
@@ -57,7 +52,8 @@ add_task(async function test_ui_state_syncing() {
 
   gSync.updateAllUI(state);
 
-  checkSyncNowButton("appMenu-fxa-icon", true);
+  let prefix = gPhotonStructure ? "appMenu" : "PanelUI";
+  checkSyncNowButton(`${prefix}-fxa-icon`, true);
   checkSyncNowButton("PanelUI-remotetabs-syncnow", true);
 
   // Be good citizens and remove the "syncing" state.
@@ -150,17 +146,18 @@ add_task(async function test_FormatLastSyncDateMonthAgo() {
 });
 
 function checkPanelUIStatusBar({label, tooltip, fxastatus, avatarURL, syncing, syncNowTooltip}) {
-  let labelNode = document.getElementById("appMenu-fxa-label");
-  let tooltipNode = document.getElementById("appMenu-fxa-status");
-  let statusNode = document.getElementById("appMenu-fxa-container");
-  let avatar = document.getElementById("appMenu-fxa-avatar");
+  let prefix = gPhotonStructure ? "appMenu" : "PanelUI"
+  let labelNode = document.getElementById(`${prefix}-fxa-label`);
+  let tooltipNode = document.getElementById(`${prefix}-fxa-status`);
+  let statusNode = document.getElementById(`${prefix}-fxa-container`);
+  let avatar = document.getElementById(`${prefix}-fxa-avatar`);
 
   is(labelNode.getAttribute("label"), label, "fxa label has the right value");
   is(tooltipNode.getAttribute("tooltiptext"), tooltip, "fxa tooltip has the right value");
   if (fxastatus) {
     is(statusNode.getAttribute("fxastatus"), fxastatus, "fxa fxastatus has the right value");
   } else {
-    ok(!statusNode.hasAttribute("fxastatus"), "fxastatus is unset");
+    ok(!statusNode.hasAttribute("fxastatus"), "fxastatus is unset")
   }
   if (avatarURL) {
     is(avatar.style.listStyleImage, `url("${avatarURL}")`, "fxa avatar URL is set");
@@ -169,7 +166,7 @@ function checkPanelUIStatusBar({label, tooltip, fxastatus, avatarURL, syncing, s
   }
 
   if (syncing != undefined && syncNowTooltip != undefined) {
-    checkSyncNowButton("appMenu-fxa-icon", syncing, syncNowTooltip);
+    checkSyncNowButton(`${prefix}-fxa-icon`, syncing, syncNowTooltip);
   }
 }
 
@@ -203,7 +200,7 @@ function checkSyncNowButton(buttonId, syncing, tooltip = null) {
 
   is(remoteTabsButton.hasAttribute("disabled"), syncing, "disabled has the right value");
   if (syncing) {
-    is(remoteTabsButton.getAttribute("label"), gSync.syncStrings.GetStringFromName("syncingtabs.label"), "label is set to the right value");
+    is(remoteTabsButton.getAttribute("label"), gSync.syncStrings.GetStringFromName("syncing2.label"), "label is set to the right value");
   } else {
     is(remoteTabsButton.getAttribute("label"), gSync.syncStrings.GetStringFromName("syncnow.label"), "label is set to the right value");
   }
@@ -225,7 +222,7 @@ function promiseObserver(topic) {
     let obs = (aSubject, aTopic, aData) => {
       Services.obs.removeObserver(obs, aTopic);
       resolve(aSubject);
-    };
+    }
     Services.obs.addObserver(obs, topic);
   });
 }

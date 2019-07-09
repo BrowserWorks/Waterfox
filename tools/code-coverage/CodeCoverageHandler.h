@@ -9,6 +9,8 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ipc/CrossProcessMutex.h"
 
+using namespace mozilla::ipc;
+
 namespace mozilla {
 
 class CodeCoverageHandler {

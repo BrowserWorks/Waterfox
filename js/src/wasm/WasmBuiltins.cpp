@@ -37,6 +37,7 @@ using namespace js;
 using namespace jit;
 using namespace wasm;
 
+using mozilla::Atomic;
 using mozilla::BinarySearchIf;
 using mozilla::HashGeneric;
 using mozilla::IsNaN;
@@ -61,56 +62,58 @@ __aeabi_uidivmod(int, int);
 #endif
 
 // This utility function can only be called for builtins that are called
-// directly from wasm code.
-static JitActivation*
+// directly from wasm code. Note that WasmCall pushes both an outer
+// WasmActivation and an inner JitActivation that becomes active when calling
+// JIT code.
+static WasmActivation*
 CallingActivation()
 {
     Activation* act = TlsContext.get()->activation();
-    MOZ_ASSERT(act->asJit()->hasWasmExitFP());
-    return act->asJit();
+    MOZ_ASSERT(!act->asJit()->isActive(), "WasmCall pushes an inactive JitActivation");
+    return act->prev()->asWasm();
 }
 
 static void*
 WasmHandleExecutionInterrupt()
 {
-    JitActivation* activation = CallingActivation();
-    MOZ_ASSERT(activation->isWasmInterrupted());
+    WasmActivation* activation = CallingActivation();
+    MOZ_ASSERT(activation->interrupted());
 
     if (!CheckForInterrupt(activation->cx())) {
         // If CheckForInterrupt failed, it is time to interrupt execution.
         // Returning nullptr to the caller will jump to the throw stub which
-        // will call HandleThrow. The JitActivation must stay in the
+        // will call WasmHandleThrow. The WasmActivation must stay in the
         // interrupted state until then so that stack unwinding works in
-        // HandleThrow.
+        // WasmHandleThrow.
         return nullptr;
     }
 
     // If CheckForInterrupt succeeded, then execution can proceed and the
     // interrupt is over.
-    void* resumePC = activation->wasmResumePC();
-    activation->finishWasmInterrupt();
+    void* resumePC = activation->resumePC();
+    activation->finishInterrupt();
     return resumePC;
 }
 
 static bool
 WasmHandleDebugTrap()
 {
-    JitActivation* activation = CallingActivation();
+    WasmActivation* activation = CallingActivation();
     MOZ_ASSERT(activation);
     JSContext* cx = activation->cx();
 
-    WasmFrameIter frame(activation);
-    MOZ_ASSERT(frame.debugEnabled());
-    const CallSite* site = frame.debugTrapCallsite();
+    FrameIterator iter(activation);
+    MOZ_ASSERT(iter.debugEnabled());
+    const CallSite* site = iter.debugTrapCallsite();
     MOZ_ASSERT(site);
     if (site->kind() == CallSite::EnterFrame) {
-        if (!frame.instance()->enterFrameTrapsEnabled())
+        if (!iter.instance()->enterFrameTrapsEnabled())
             return true;
-        DebugFrame* debugFrame = frame.debugFrame();
-        debugFrame->setIsDebuggee();
-        debugFrame->observe(cx);
+        DebugFrame* frame = iter.debugFrame();
+        frame->setIsDebuggee();
+        frame->observe(cx);
         // TODO call onEnterFrame
-        JSTrapStatus status = Debugger::onEnterFrame(cx, debugFrame);
+        JSTrapStatus status = Debugger::onEnterFrame(cx, frame);
         if (status == JSTRAP_RETURN) {
             // Ignoring forced return (JSTRAP_RETURN) -- changing code execution
             // order is not yet implemented in the wasm baseline.
@@ -121,17 +124,17 @@ WasmHandleDebugTrap()
         return status == JSTRAP_CONTINUE;
     }
     if (site->kind() == CallSite::LeaveFrame) {
-        DebugFrame* debugFrame = frame.debugFrame();
-        debugFrame->updateReturnJSValue();
-        bool ok = Debugger::onLeaveFrame(cx, debugFrame, nullptr, true);
-        debugFrame->leave(cx);
+        DebugFrame* frame = iter.debugFrame();
+        frame->updateReturnJSValue();
+        bool ok = Debugger::onLeaveFrame(cx, frame, nullptr, true);
+        frame->leave(cx);
         return ok;
     }
 
-    DebugFrame* debugFrame = frame.debugFrame();
-    DebugState& debug = frame.instance()->debug();
+    DebugFrame* frame = iter.debugFrame();
+    DebugState& debug = iter.instance()->debug();
     MOZ_ASSERT(debug.hasBreakpointTrapAtOffset(site->lineOrBytecode()));
-    if (debug.stepModeEnabled(debugFrame->funcIndex())) {
+    if (debug.stepModeEnabled(frame->funcIndex())) {
         RootedValue result(cx, UndefinedValue());
         JSTrapStatus status = Debugger::onSingleStep(cx, &result);
         if (status == JSTRAP_RETURN) {
@@ -160,28 +163,24 @@ WasmHandleDebugTrap()
 // is responsible for notifying the debugger of each unwound frame. The return
 // value is the new stack address which the calling stub will set to the sp
 // register before executing a return instruction.
-
-void*
-wasm::HandleThrow(JSContext* cx, WasmFrameIter& iter)
+static void*
+WasmHandleThrow()
 {
-    // WasmFrameIter iterates down wasm frames in the activation starting at
-    // JitActivation::wasmExitFP(). Pass Unwind::True to pop
-    // JitActivation::wasmExitFP() once each time WasmFrameIter is incremented,
-    // ultimately leaving exit FP null when the WasmFrameIter is done().  This
-    // is necessary to prevent a DebugFrame from being observed again after we
-    // just called onLeaveFrame (which would lead to the frame being re-added
-    // to the map of live frames, right as it becomes trash).
-    //
-    // TODO(bug 1360211): when JitActivation and WasmActivation get merged,
-    // we'll be able to switch to ion / other wasm state from here, and we'll
-    // need to do things differently.
+    WasmActivation* activation = CallingActivation();
+    JSContext* cx = activation->cx();
 
-    MOZ_ASSERT(CallingActivation() == iter.activation());
+    // FrameIterator iterates down wasm frames in the activation starting at
+    // WasmActivation::exitFP. Pass Unwind::True to pop WasmActivation::exitFP
+    // once each time FrameIterator is incremented, ultimately leaving exitFP
+    // null when the FrameIterator is done(). This is necessary to prevent a
+    // DebugFrame from being observed again after we just called onLeaveFrame
+    // (which would lead to the frame being re-added to the map of live frames,
+    // right as it becomes trash).
+    FrameIterator iter(activation, FrameIterator::Unwind::True);
     MOZ_ASSERT(!iter.done());
-    iter.setUnwind(WasmFrameIter::Unwind::True);
 
-    // Live wasm code on the stack is kept alive (in TraceJitActivation) by
-    // marking the instance of every wasm::Frame found by WasmFrameIter.
+    // Live wasm code on the stack is kept alive (in wasm::TraceActivations) by
+    // marking the instance of every wasm::Frame found by FrameIterator.
     // However, as explained above, we're popping frames while iterating which
     // means that a GC during this loop could collect the code of frames whose
     // code is still on the stack. This is actually mostly fine: as soon as we
@@ -217,20 +216,10 @@ wasm::HandleThrow(JSContext* cx, WasmFrameIter& iter)
             JS_ReportErrorASCII(cx, "Unexpected success from onLeaveFrame");
         }
         frame->leave(cx);
-    }
+     }
 
-    MOZ_ASSERT(!cx->activation()->asJit()->isWasmInterrupted(), "unwinding clears the interrupt");
-
+    MOZ_ASSERT(!activation->interrupted(), "unwinding clears the interrupt");
     return iter.unwoundAddressOfReturnAddress();
-}
-
-static void*
-WasmHandleThrow()
-{
-    JitActivation* activation = CallingActivation();
-    JSContext* cx = activation->cx();
-    WasmFrameIter iter(activation);
-    return HandleThrow(cx, iter);
 }
 
 static void
@@ -292,34 +281,28 @@ WasmReportUnalignedAccess()
 }
 
 static int32_t
-CoerceInPlace_ToInt32(Value* rawVal)
+CoerceInPlace_ToInt32(MutableHandleValue val)
 {
     JSContext* cx = TlsContext.get();
 
     int32_t i32;
-    RootedValue val(cx, *rawVal);
-    if (!ToInt32(cx, val, &i32)) {
-        *rawVal = PoisonedObjectValue(0x42);
+    if (!ToInt32(cx, val, &i32))
         return false;
-    }
+    val.set(Int32Value(i32));
 
-    *rawVal = Int32Value(i32);
     return true;
 }
 
 static int32_t
-CoerceInPlace_ToNumber(Value* rawVal)
+CoerceInPlace_ToNumber(MutableHandleValue val)
 {
     JSContext* cx = TlsContext.get();
 
     double dbl;
-    RootedValue val(cx, *rawVal);
-    if (!ToNumber(cx, val, &dbl)) {
-        *rawVal = PoisonedObjectValue(0x42);
+    if (!ToNumber(cx, val, &dbl))
         return false;
-    }
+    val.set(DoubleValue(dbl));
 
-    *rawVal = DoubleValue(dbl);
     return true;
 }
 
@@ -846,13 +829,9 @@ wasm::EnsureBuiltinThunksInitialized()
 
         ABIFunctionType abiType;
         void* funcPtr = AddressOf(sym, &abiType);
-
         ExitReason exitReason(sym);
-
-        CallableOffsets offsets;
-        if (!GenerateBuiltinThunk(masm, abiType, exitReason, funcPtr, &offsets))
-            return false;
-        if (!thunks->codeRanges.emplaceBack(CodeRange::BuiltinThunk, offsets))
+        CallableOffsets offset = GenerateBuiltinThunk(masm, abiType, exitReason, funcPtr);
+        if (masm.oom() || !thunks->codeRanges.emplaceBack(CodeRange::BuiltinThunk, offset))
             return false;
     }
 
@@ -872,13 +851,9 @@ wasm::EnsureBuiltinThunksInitialized()
 
         ABIFunctionType abiType = typedNative.abiType;
         void* funcPtr = r.front().value();
-
         ExitReason exitReason = ExitReason::Fixed::BuiltinNative;
-
-        CallableOffsets offsets;
-        if (!GenerateBuiltinThunk(masm, abiType, exitReason, funcPtr, &offsets))
-            return false;
-        if (!thunks->codeRanges.emplaceBack(CodeRange::BuiltinThunk, offsets))
+        CallableOffsets offset = GenerateBuiltinThunk(masm, abiType, exitReason, funcPtr);
+        if (masm.oom() || !thunks->codeRanges.emplaceBack(CodeRange::BuiltinThunk, offset))
             return false;
     }
 
@@ -899,13 +874,11 @@ wasm::EnsureBuiltinThunksInitialized()
     masm.processCodeLabels(thunks->codeBase);
 #ifdef DEBUG
     MOZ_ASSERT(masm.callSites().empty());
-    MOZ_ASSERT(masm.callSiteTargets().empty());
     MOZ_ASSERT(masm.callFarJumps().empty());
     MOZ_ASSERT(masm.trapSites().empty());
     MOZ_ASSERT(masm.trapFarJumps().empty());
-    MOZ_ASSERT(masm.callFarJumps().empty());
-    MOZ_ASSERT(masm.memoryAccesses().empty());
-    MOZ_ASSERT(masm.symbolicAccesses().empty());
+    MOZ_ASSERT(masm.extractMemoryAccesses().empty());
+    MOZ_ASSERT(!masm.numSymbolicAccesses());
 #endif
 
     ExecutableAllocator::cacheFlush(thunks->codeBase, thunks->codeSize);

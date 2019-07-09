@@ -32,8 +32,6 @@ add_task(async function test_reader_button() {
 
   let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   is_element_hidden(readerButton, "Reader mode button is not present on a new tab");
-  ok(!UITour.isInfoOnTarget(window, "readerMode-urlBar"),
-     "Info panel shouldn't appear without the reader mode button");
 
   // Point tab to a test page that is reader-able.
   let url = TEST_PATH + "readerModeArticle.html";

@@ -15,9 +15,7 @@
 
 
 #![deny(unsafe_code)]
-#![feature(plugin)]
-#![feature(plugin_registrar)]
-#![feature(rustc_private)]
+#![feature(box_syntax, plugin, plugin_registrar, rustc_private)]
 
 #[macro_use]
 extern crate rustc;
@@ -33,7 +31,7 @@ mod utils;
 
 #[plugin_registrar]
 pub fn plugin_registrar(reg: &mut Registry) {
-    reg.register_late_lint_pass(Box::new(unrooted_must_root::UnrootedPass::new()));
+    reg.register_late_lint_pass(box unrooted_must_root::UnrootedPass::new());
     reg.register_attribute("allow_unrooted_interior".to_string(), Whitelisted);
     reg.register_attribute("must_root".to_string(), Whitelisted);
 }

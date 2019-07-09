@@ -2,26 +2,24 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from unittest import TextTestRunner as _TestRunner, TestResult as _TestResult
+import unittest
 import inspect
+from StringIO import StringIO
 import os
 import sys
-import unittest
-from StringIO import StringIO
-from unittest import TextTestRunner as _TestRunner, TestResult as _TestResult
-
-import pytest
 
 '''Helper to make python unit tests report the way that the Mozilla
 unit test infrastructure expects tests to report.
 
 Usage:
 
+import unittest
 import mozunit
 
 if __name__ == '__main__':
     mozunit.main()
 '''
-
 
 class _MozTestResult(_TestResult):
     def __init__(self, stream, descriptions):
@@ -70,7 +68,7 @@ class _MozTestResult(_TestResult):
 
     def addFailure(self, test, err):
         _TestResult.addFailure(self, test, err)
-        self.printFail(test, err)
+        self.printFail(test,err)
         self.stream.writeln("FAIL: {0}".format(self.getDescription(test)))
         self.stream.writeln(self.failures[-1][1])
 
@@ -89,15 +87,13 @@ class _MozTestResult(_TestResult):
 class MozTestRunner(_TestRunner):
     def _makeResult(self):
         return _MozTestResult(self.stream, self.descriptions)
-
     def run(self, test):
         result = self._makeResult()
         test(result)
         return result
 
-
 class MockedFile(StringIO):
-    def __init__(self, context, filename, content=''):
+    def __init__(self, context, filename, content = ''):
         self.context = context
         self.name = filename
         StringIO.__init__(self, content)
@@ -112,7 +108,6 @@ class MockedFile(StringIO):
     def __exit__(self, type, value, traceback):
         self.close()
 
-
 def normcase(path):
     '''
     Normalize the case of `path`.
@@ -124,7 +119,6 @@ def normcase(path):
         return path.lower()
     return path
 
-
 class MockedOpen(object):
     '''
     Context manager diverting the open builtin such that opening files
@@ -135,9 +129,6 @@ class MockedOpen(object):
 
     will thus open the virtual file instance for the file 'foo' to f.
 
-    If the content of a file is given as None, then that file will be
-    represented as not existing (even if it does, actually, exist).
-
     MockedOpen also masks writes, so that creating or replacing files
     doesn't touch the file system, while subsequently opening the file
     will return the recorded content.
@@ -147,20 +138,17 @@ class MockedOpen(object):
         f.write('foo')
     self.assertRaises(Exception,f.open('foo', 'r'))
     '''
-    def __init__(self, files={}):
+    def __init__(self, files = {}):
         self.files = {}
         for name, content in files.iteritems():
             self.files[normcase(os.path.abspath(name))] = content
 
-    def __call__(self, name, mode='r'):
+    def __call__(self, name, mode = 'r'):
         absname = normcase(os.path.abspath(name))
         if 'w' in mode:
             file = MockedFile(self, absname)
         elif absname in self.files:
-            content = self.files[absname]
-            if content is None:
-                raise IOError(2, 'No such file or directory')
-            file = MockedFile(self, absname, content)
+            file = MockedFile(self, absname, self.files[absname])
         elif 'a' in mode:
             file = MockedFile(self, absname, self.open(name, 'r').read())
         else:
@@ -189,16 +177,17 @@ class MockedOpen(object):
 
     def _wrapped_exists(self, p):
         return (self._wrapped_isfile(p) or
-                self._wrapped_isdir(p))
+                self._wrapped_isdir(p) or
+                self._orig_path_exists(p))
 
     def _wrapped_isfile(self, p):
         p = normcase(p)
         if p in self.files:
-            return self.files[p] is not None
+            return True
 
         abspath = normcase(os.path.abspath(p))
         if abspath in self.files:
-            return self.files[abspath] is not None
+            return True
 
         return self._orig_path_isfile(p)
 
@@ -212,23 +201,7 @@ class MockedOpen(object):
         if any(f.startswith(abspath) for f in self.files):
             return True
 
-        return self._orig_path_isdir(p)
-
+        return self._orig_path_exists(p)
 
 def main(*args, **kwargs):
-    runwith = kwargs.pop('runwith', 'pytest')
-
-    if runwith == 'unittest':
-        unittest.main(testRunner=MozTestRunner(), *args, **kwargs)
-    else:
-        args = list(args)
-        if os.environ.get('MACH_STDOUT_ISATTY') and not any(a.startswith('--color') for a in args):
-            args.append('--color=yes')
-
-        module = __import__('__main__')
-        args.extend([
-            '--verbose',
-            '-p', 'mozlog.pytest_mozlog.plugin',
-            module.__file__,
-        ])
-        sys.exit(pytest.main(args))
+    unittest.main(testRunner=MozTestRunner(), *args, **kwargs)

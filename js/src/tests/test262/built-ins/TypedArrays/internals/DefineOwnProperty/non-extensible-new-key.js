@@ -14,7 +14,7 @@ info: >
   4. Return OrdinaryDefineOwnProperty(O, P, Desc).
   ...
 includes: [testTypedArray.js]
-features: [Reflect, TypedArray]
+features: [Reflect]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

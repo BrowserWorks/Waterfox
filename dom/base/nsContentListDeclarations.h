@@ -9,12 +9,14 @@
 
 #include <stdint.h>
 #include "nsCOMPtr.h"
-#include "nsStringFwd.h"
 
 class nsContentList;
-class nsAtom;
+class nsIAtom;
 class nsIContent;
 class nsINode;
+// Can't use nsStringFwd.h because that's internal-API-only.
+class nsString;
+class nsAString;
 
 namespace mozilla {
 namespace dom {
@@ -32,7 +34,7 @@ class Element;
 // was passed to the list's constructor.
 typedef bool (*nsContentListMatchFunc)(mozilla::dom::Element* aElement,
                                        int32_t aNamespaceID,
-                                       nsAtom* aAtom,
+                                       nsIAtom* aAtom,
                                        void* aData);
 
 typedef void (*nsContentListDestroyFunc)(void* aData);

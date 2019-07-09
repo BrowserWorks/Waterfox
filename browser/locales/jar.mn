@@ -3,9 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Note: This file should only contain locale entries. All
-# override and resource entries should go to browser/base/jar.mn to avoid
-# having to create the same entry for each locale.
 
 @AB_CD@.jar:
 % locale browser @AB_CD@ %locale/browser/
@@ -62,34 +59,48 @@
     locale/browser/feeds/subscribe.properties       (%chrome/browser/feeds/subscribe.properties)
     locale/browser/migration/migration.dtd         (%chrome/browser/migration/migration.dtd)
     locale/browser/migration/migration.properties  (%chrome/browser/migration/migration.properties)
+    locale/browser/preferences-old/advanced.dtd       (%chrome/browser/preferences-old/advanced.dtd)
     locale/browser/preferences/advanced.dtd           (%chrome/browser/preferences/advanced.dtd)
     locale/browser/preferences/applicationManager.dtd     (%chrome/browser/preferences/applicationManager.dtd)
     locale/browser/preferences/applicationManager.properties     (%chrome/browser/preferences/applicationManager.properties)
+    locale/browser/preferences-old/applications.dtd   (%chrome/browser/preferences-old/applications.dtd)
     locale/browser/preferences/applications.dtd       (%chrome/browser/preferences/applications.dtd)
     locale/browser/preferences/blocklists.dtd         (%chrome/browser/preferences/blocklists.dtd)
     locale/browser/preferences/colors.dtd             (%chrome/browser/preferences/colors.dtd)
     locale/browser/preferences/connection.dtd         (%chrome/browser/preferences/connection.dtd)
+    locale/browser/preferences-old/containers.dtd     (%chrome/browser/preferences-old/containers.dtd)
     locale/browser/preferences/containers.dtd         (%chrome/browser/preferences/containers.dtd)
+    locale/browser/preferences-old/containers.properties (%chrome/browser/preferences-old/containers.properties)
     locale/browser/preferences/containers.properties     (%chrome/browser/preferences/containers.properties)
+    locale/browser/preferences-old/content.dtd        (%chrome/browser/preferences-old/content.dtd)
     locale/browser/preferences/content.dtd            (%chrome/browser/preferences/content.dtd)
     locale/browser/preferences/cookies.dtd            (%chrome/browser/preferences/cookies.dtd)
     locale/browser/preferences/donottrack.dtd         (%chrome/browser/preferences/donottrack.dtd)
     locale/browser/preferences/fonts.dtd              (%chrome/browser/preferences/fonts.dtd)
     locale/browser/preferences/languages.dtd          (%chrome/browser/preferences/languages.dtd)
+    locale/browser/preferences-old/main.dtd           (%chrome/browser/preferences-old/main.dtd)
     locale/browser/preferences/main.dtd               (%chrome/browser/preferences/main.dtd)
     locale/browser/preferences/permissions.dtd        (%chrome/browser/preferences/permissions.dtd)
+    locale/browser/preferences-old/preferences.dtd    (%chrome/browser/preferences-old/preferences.dtd)
     locale/browser/preferences/preferences.dtd        (%chrome/browser/preferences/preferences.dtd)
+    locale/browser/preferences-old/preferences.properties (%chrome/browser/preferences-old/preferences.properties)
     locale/browser/preferences/preferences.properties     (%chrome/browser/preferences/preferences.properties)
+    locale/browser/preferences-old/privacy.dtd        (%chrome/browser/preferences-old/privacy.dtd)
     locale/browser/preferences/privacy.dtd            (%chrome/browser/preferences/privacy.dtd)
+    locale/browser/preferences-old/search.dtd         (%chrome/browser/preferences-old/search.dtd)
     locale/browser/preferences/search.dtd             (%chrome/browser/preferences/search.dtd)
+    locale/browser/preferences-old/security.dtd       (%chrome/browser/preferences-old/security.dtd)
     locale/browser/preferences/security.dtd           (%chrome/browser/preferences/security.dtd)
     locale/browser/preferences/selectBookmark.dtd     (%chrome/browser/preferences/selectBookmark.dtd)
     locale/browser/preferences/siteDataSettings.dtd     (%chrome/browser/preferences/siteDataSettings.dtd)
+    locale/browser/preferences-old/sync.dtd           (%chrome/browser/preferences-old/sync.dtd)
     locale/browser/preferences/sync.dtd               (%chrome/browser/preferences/sync.dtd)
+    locale/browser/preferences-old/tabs.dtd           (%chrome/browser/preferences-old/tabs.dtd)
     locale/browser/preferences/tabs.dtd               (%chrome/browser/preferences/tabs.dtd)
     locale/browser/preferences/translation.dtd        (%chrome/browser/preferences/translation.dtd)
     locale/browser/syncBrand.dtd                (%chrome/browser/syncBrand.dtd)
     locale/browser/syncSetup.properties         (%chrome/browser/syncSetup.properties)
+% resource search-plugins chrome://browser/locale/searchplugins/
 #if BUILD_FASTER
     locale/browser/searchplugins/               (searchplugins/*.xml)
     locale/browser/searchplugins/list.json      (search/list.json)
@@ -97,18 +108,18 @@
     locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
     locale/browser/searchplugins/list.json      (.deps/generated_@AB_CD@/list.json)
 #endif
-    locale/browser/searchplugins/images/amazon.ico     (searchplugins/images/amazon.ico)
-    locale/browser/searchplugins/images/ebay.ico       (searchplugins/images/ebay.ico)
+    locale/browser/searchplugins/images/google.ico     (searchplugins/images/google.ico)
     locale/browser/searchplugins/images/wikipedia.ico  (searchplugins/images/wikipedia.ico)
     locale/browser/searchplugins/images/yahoo.ico      (searchplugins/images/yahoo.ico)
-    locale/browser/searchplugins/images/yandex-en.ico  (searchplugins/images/yandex-en.ico)
-    locale/browser/searchplugins/images/yandex-ru.ico  (searchplugins/images/yandex-ru.ico)
 % locale browser-region @AB_CD@ %locale/browser-region/
     locale/browser-region/region.properties        (%chrome/browser-region/region.properties)
 # the following files are browser-specific overrides
     locale/browser/netError.dtd                (%chrome/overrides/netError.dtd)
     locale/browser/appstrings.properties       (%chrome/overrides/appstrings.properties)
     locale/browser/downloads/settingsChange.dtd  (%chrome/overrides/settingsChange.dtd)
+% override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+% override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+% override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
 % locale pdf.js @AB_CD@ %locale/pdfviewer/
     locale/pdfviewer/viewer.properties             (%pdfviewer/viewer.properties)
     locale/pdfviewer/chrome.properties             (%pdfviewer/chrome.properties)

@@ -71,7 +71,7 @@ nsDefaultURIFixup::CreateExposableURI(nsIURI* aURI, nsIURI** aReturn)
   nsCOMPtr<nsIURI> uri;
   if (isWyciwyg) {
     nsAutoCString path;
-    nsresult rv = aURI->GetPathQueryRef(path);
+    nsresult rv = aURI->GetPath(path);
     NS_ENSURE_SUCCESS(rv, rv);
 
     uint32_t pathLength = path.Length();
@@ -87,8 +87,14 @@ nsDefaultURIFixup::CreateExposableURI(nsIURI* aURI, nsIURI** aReturn)
       return NS_ERROR_FAILURE;
     }
 
+    // Get the charset of the original URI so we can pass it to our fixed up
+    // URI.
+    nsAutoCString charset;
+    aURI->GetOriginCharset(charset);
+
     rv = NS_NewURI(getter_AddRefs(uri),
-                   Substring(path, slashIndex + 1, pathLength - slashIndex - 1));
+                   Substring(path, slashIndex + 1, pathLength - slashIndex - 1),
+                   charset.get());
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
     // clone the URI so zapping user:pass doesn't change the original
@@ -148,6 +154,15 @@ HasUserPassword(const nsACString& aStringURI)
   return false;
 }
 
+// Assume that 1 tab is accidental, but more than 1 implies this is
+// supposed to be tab-separated content.
+static bool
+MaybeTabSeparatedContent(const nsCString& aStringURI)
+{
+  auto firstTab = aStringURI.FindChar('\t');
+  return firstTab != kNotFound && aStringURI.RFindChar('\t') != firstTab;
+}
+
 NS_IMETHODIMP
 nsDefaultURIFixup::GetFixupURIInfo(const nsACString& aStringURI,
                                    uint32_t aFixupFlags,
@@ -162,8 +177,8 @@ nsDefaultURIFixup::GetFixupURIInfo(const nsACString& aStringURI,
 
   // Eliminate embedded newlines, which single-line text fields now allow:
   uriString.StripCRLF();
-  // Cleanup the empty spaces that might be on each end:
-  uriString.Trim(" ");
+  // Cleanup the empty spaces and tabs that might be on each end:
+  uriString.Trim(" \t");
 
   NS_ENSURE_TRUE(!uriString.IsEmpty(), NS_ERROR_FAILURE);
 
@@ -258,32 +273,32 @@ nsDefaultURIFixup::GetFixupURIInfo(const nsACString& aStringURI,
       // Do nothing.
     } else if (scheme.LowerCaseEqualsLiteral("ttp")) {
       // ttp -> http.
-      uriString.ReplaceLiteral(0, 3, "http");
+      uriString.Replace(0, 3, "http");
       scheme.AssignLiteral("http");
       info->mFixupChangedProtocol = true;
     } else if (scheme.LowerCaseEqualsLiteral("ttps")) {
       // ttps -> https.
-      uriString.ReplaceLiteral(0, 4, "https");
+      uriString.Replace(0, 4, "https");
       scheme.AssignLiteral("https");
       info->mFixupChangedProtocol = true;
     } else if (scheme.LowerCaseEqualsLiteral("tps")) {
       // tps -> https.
-      uriString.ReplaceLiteral(0, 3, "https");
+      uriString.Replace(0, 3, "https");
       scheme.AssignLiteral("https");
       info->mFixupChangedProtocol = true;
     } else if (scheme.LowerCaseEqualsLiteral("ps")) {
       // ps -> https.
-      uriString.ReplaceLiteral(0, 2, "https");
+      uriString.Replace(0, 2, "https");
       scheme.AssignLiteral("https");
       info->mFixupChangedProtocol = true;
     } else if (scheme.LowerCaseEqualsLiteral("ile")) {
       // ile -> file.
-      uriString.ReplaceLiteral(0, 3, "file");
+      uriString.Replace(0, 3, "file");
       scheme.AssignLiteral("file");
       info->mFixupChangedProtocol = true;
     } else if (scheme.LowerCaseEqualsLiteral("le")) {
       // le -> file.
-      uriString.ReplaceLiteral(0, 2, "file");
+      uriString.Replace(0, 2, "file");
       scheme.AssignLiteral("file");
       info->mFixupChangedProtocol = true;
     }
@@ -361,12 +376,16 @@ nsDefaultURIFixup::GetFixupURIInfo(const nsACString& aStringURI,
     inputHadDuffProtocol = true;
   }
 
-  // NB: this rv gets returned at the end of this method if we never
-  // do a keyword fixup after this (because the pref or the flags passed
-  // might not let us).
-  rv = FixupURIProtocol(uriString, info, getter_AddRefs(uriWithProtocol));
-  if (uriWithProtocol) {
-    info->mFixedURI = uriWithProtocol;
+  // Note: this rv gets returned at the end of this method if we don't fix up
+  // the protocol and don't do a keyword fixup after this (because the pref
+  // or the flags passed might not let us).
+  rv = NS_OK;
+  // Avoid fixing up content that looks like tab-separated values
+  if (!MaybeTabSeparatedContent(uriString)) {
+    rv = FixupURIProtocol(uriString, info, getter_AddRefs(uriWithProtocol));
+    if (uriWithProtocol) {
+      info->mFixedURI = uriWithProtocol;
+    }
   }
 
   // See if it is a keyword
@@ -687,7 +706,7 @@ nsDefaultURIFixup::FixupURIProtocol(const nsACString& aURIString,
   //   no-scheme.com/query?foo=http://www.foo.com
   //   user:pass@no-scheme.com
   //
-  int32_t schemeDelim = uriString.Find("://");
+  int32_t schemeDelim = uriString.Find("://", 0);
   int32_t firstDelim = uriString.FindCharInSet("/:");
   if (schemeDelim <= 0 ||
       (firstDelim != -1 && schemeDelim > firstDelim)) {

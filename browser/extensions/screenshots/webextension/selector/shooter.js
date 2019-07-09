@@ -1,5 +1,5 @@
 /* globals global, documentMetadata, util, uicontrol, ui, catcher */
-/* globals buildSettings, domainFromUrl, randomString, shot, blobConverters */
+/* globals buildSettings, domainFromUrl, randomString, shot */
 
 "use strict";
 
@@ -21,7 +21,7 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
 
   function sanitizeError(data) {
     const href = new RegExp(regexpEscape(window.location.href), 'g');
-    const origin = new RegExp(`${regexpEscape(window.location.origin)}[^ \t\n\r",>]*`, 'g');
+    const origin = new RegExp(`${regexpEscape(window.location.origin)}[^\s",>]*`, 'g');
     const json = JSON.stringify(data)
       .replace(href, 'REDACTED_HREF')
       .replace(origin, 'REDACTED_URL');
@@ -39,24 +39,17 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
     supportsDrawWindow = !!ctx.drawWindow;
   })();
 
-  let screenshotPage = exports.screenshotPage = function(selectedPos, captureType) {
+  function screenshotPage(selectedPos) {
     if (!supportsDrawWindow) {
       return null;
     }
     let height = selectedPos.bottom - selectedPos.top;
     let width = selectedPos.right - selectedPos.left;
     let canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
     let ctx = canvas.getContext('2d');
-    let expand = window.devicePixelRatio !== 1;
-    if (captureType == 'fullPage' || captureType == 'fullPageTruncated') {
-      expand = false;
-      canvas.width = width;
-      canvas.height = height;
-    } else {
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-    }
-    if (expand) {
+    if (window.devicePixelRatio !== 1) {
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
     ui.iframe.hide();
@@ -65,21 +58,12 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
     } finally {
       ui.iframe.unhide();
     }
-    let limit = buildSettings.pngToJpegCutoff;
-    let dataUrl = canvas.toDataURL();
-    if (limit && dataUrl.length > limit) {
-      let jpegDataUrl = canvas.toDataURL("image/jpeg");
-      if (jpegDataUrl.length < dataUrl.length) {
-        // Only use the JPEG if it is actually smaller
-        dataUrl = jpegDataUrl;
-      }
-    }
-    return dataUrl;
-  };
+    return canvas.toDataURL();
+  }
 
   let isSaving = null;
 
-  exports.takeShot = function(captureType, selectedPos, url) {
+  exports.takeShot = function(captureType, selectedPos) {
     // isSaving indicates we're aleady in the middle of saving
     // we use a timeout so in the case of a failure the button will
     // still start working again
@@ -91,7 +75,6 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
         catcher.unhandled(exc);
         return;
     }
-    let imageBlob;
     const uicontrol = global.uicontrol;
     let deactivateAfterFinish = true;
     if (isSaving) {
@@ -109,17 +92,13 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
     if (buildSettings.captureText) {
       captureText = util.captureEnclosedText(selectedPos);
     }
-    let dataUrl = url || screenshotPage(selectedPos, captureType);
-    let type = blobConverters.getTypeFromDataUrl(dataUrl);
-    type = type ? type.split("/", 2)[1] : null;
+    let dataUrl = screenshotPage(selectedPos);
     if (dataUrl) {
-      imageBlob = blobConverters.dataUrlToBlob(dataUrl);
       shotObject.delAllClips();
       shotObject.addClip({
         createdDate: Date.now(),
         image: {
-          url: "data:",
-          type,
+          url: dataUrl,
           captureType,
           text: captureText,
           location: selectedPos,
@@ -141,8 +120,7 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
       },
       selectedPos,
       shotId: shotObject.id,
-      shot: shotObject.asJson(),
-      imageBlob
+      shot: shotObject.asJson()
     }).then((url) => {
       return clipboard.copy(url).then((copied) => {
         return callBackground("openShot", { url, copied });
@@ -180,17 +158,6 @@ this.shooter = (function() { // eslint-disable-line no-unused-vars
         });
     }
     catcher.watchPromise(promise.then((dataUrl) => {
-      let type = blobConverters.getTypeFromDataUrl(dataUrl);
-      type = type ? type.split("/", 2)[1] : null;
-      shotObject.delAllClips();
-      shotObject.addClip({
-        createdDate: Date.now(),
-        image: {
-          url: dataUrl,
-          type,
-          location: selectedPos
-        }
-      });
       ui.triggerDownload(dataUrl, shotObject.filename);
       uicontrol.deactivate();
     }));

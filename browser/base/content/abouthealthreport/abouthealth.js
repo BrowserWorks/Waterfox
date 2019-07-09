@@ -97,7 +97,7 @@ var healthReportWrapper = {
     let data = {
       type,
       content
-    };
+    }
 
     let iframe = document.getElementById("remote-report");
     iframe.contentWindow.postMessage(data, reportUrl);
@@ -105,7 +105,7 @@ var healthReportWrapper = {
 
   handleRemoteCommand(evt) {
     // Do an origin check to harden against the frame content being loaded from unexpected locations.
-    let allowedPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(this._getReportURI(), {});
+    let allowedPrincipal = Services.scriptSecurityManager.getCodebasePrincipal(this._getReportURI());
     let targetPrincipal = evt.target.nodePrincipal;
     if (!allowedPrincipal.equals(targetPrincipal)) {
       Cu.reportError(`Origin check failed for message "${evt.detail.command}": ` +
@@ -156,7 +156,7 @@ var healthReportWrapper = {
   reportFailure(error) {
     let details = {
       errorType: error,
-    };
+    }
     healthReportWrapper.injectData("error", details);
   },
 
@@ -167,6 +167,6 @@ var healthReportWrapper = {
   handlePayloadFailure() {
     healthReportWrapper.reportFailure(healthReportWrapper.ERROR_PAYLOAD_FAILED);
   },
-};
+}
 
 window.addEventListener("load", function() { healthReportWrapper.init(); });

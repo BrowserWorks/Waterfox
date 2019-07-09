@@ -145,7 +145,11 @@ var imgFile = do_get_file(imgName);
 var istream = getFileInputStream(imgFile);
 do_check_eq(istream.available(), 8415);
 
-var container = imgTools.decodeImage(istream, inMimeType);
+// Use decodeImageData for this test even though it's deprecated to ensure that
+// it correctly forwards to decodeImage and continues to work.
+var outParam = { value: null };
+imgTools.decodeImageData(istream, inMimeType, outParam);
+var container = outParam.value;
 
 // It's not easy to look at the pixel values from JS, so just
 // check the container's size.

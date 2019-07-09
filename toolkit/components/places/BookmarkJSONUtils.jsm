@@ -57,15 +57,15 @@ this.BookmarkJSONUtils = Object.freeze({
    */
   importFromURL: function BJU_importFromURL(aSpec, aReplace) {
     return (async function() {
-      notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN, aReplace);
+      notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN);
       try {
         let importer = new BookmarkImporter(aReplace);
         await importer.importFromURL(aSpec);
 
-        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS, aReplace);
+        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS);
       } catch (ex) {
         Cu.reportError("Failed to restore bookmarks from " + aSpec + ": " + ex);
-        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED, aReplace);
+        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED);
       }
     })();
   },
@@ -94,7 +94,7 @@ this.BookmarkJSONUtils = Object.freeze({
     }
 
     return (async function() {
-      notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN, aReplace);
+      notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN);
       try {
         if (!(await OS.File.exists(aFilePath)))
           throw new Error("Cannot restore from nonexisting json file");
@@ -105,10 +105,10 @@ this.BookmarkJSONUtils = Object.freeze({
         } else {
           await importer.importFromURL(OS.Path.toFileURI(aFilePath));
         }
-        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS, aReplace);
+        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS);
       } catch (ex) {
         Cu.reportError("Failed to restore bookmarks from " + aFilePath + ": " + ex);
-        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED, aReplace);
+        notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED);
         throw ex;
       }
     })();
@@ -323,8 +323,8 @@ BookmarkImporter.prototype = {
   },
 };
 
-function notifyObservers(topic, replace) {
-  Services.obs.notifyObservers(null, topic, replace ? "json" : "json-append");
+function notifyObservers(topic) {
+  Services.obs.notifyObservers(null, topic, "json");
 }
 
 /**
@@ -354,13 +354,13 @@ async function fixupQuery(aQueryURI, aFolderIdMap) {
   let queryFolderGuids = [];
   for (let folderString of found) {
     let existingFolderId = folderString.match(re)[0];
-    queryFolderGuids.push(aFolderIdMap[existingFolderId]);
+    queryFolderGuids.push(aFolderIdMap[existingFolderId])
   }
 
   let newFolderIds = await PlacesUtils.promiseManyItemIds(queryFolderGuids);
   let convert = function(str, p1) {
     return "folder=" + newFolderIds.get(aFolderIdMap[p1]);
-  };
+  }
   return uri.replace(reGlobal, convert);
 }
 
@@ -455,7 +455,7 @@ function translateTreeTypes(node) {
     let lastModified = PlacesUtils.toDate(node.lastModified);
     // Ensure we get a last modified date that's later or equal to the dateAdded
     // so that we don't upset the Bookmarks API.
-    if (lastModified >= node.dateAdded) {
+    if (lastModified >= node.dataAdded) {
       node.lastModified = lastModified;
     } else {
       delete node.lastModified;

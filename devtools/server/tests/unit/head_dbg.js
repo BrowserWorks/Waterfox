@@ -25,7 +25,6 @@ _appInfo.updateAppInfo({
 const { require, loader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { worker } = Cu.import("resource://devtools/shared/worker/loader.js", {});
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
 const { console } = require("resource://gre/modules/Console.jsm");
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
@@ -40,8 +39,7 @@ Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { DebuggerServer } = require("devtools/server/main");
 const { DebuggerServer: WorkerDebuggerServer } = worker.require("devtools/server/main");
-const { DebuggerClient } = require("devtools/shared/client/debugger-client");
-const ObjectClient = require("devtools/shared/client/object-client");
+const { DebuggerClient, ObjectClient } = require("devtools/shared/client/main");
 const { MemoryFront } = require("devtools/shared/fronts/memory");
 
 const { addDebuggerToGlobal } = Cu.import("resource://gre/modules/jsdebugger.jsm", {});
@@ -768,20 +766,6 @@ function stepOver(client, threadClient) {
 }
 
 /**
- * Resume JS execution for a step out and wait for the pause after the step
- * has been taken.
- *
- * @param DebuggerClient client
- * @param ThreadClient threadClient
- * @returns Promise
- */
-function stepOut(client, threadClient) {
-  dumpn("Stepping out.");
-  return threadClient.stepOut()
-    .then(() => waitForPause(client));
-}
-
-/**
  * Get the list of `count` frames currently on stack, starting at the index
  * `first` for the specified thread.
  *
@@ -837,7 +821,7 @@ function getSourceContent(sourceClient) {
  * @returns Promise<SourceClient>
  */
 function getSource(threadClient, url) {
-  let deferred = defer();
+  let deferred = promise.defer();
   threadClient.getSources((res) => {
     let source = res.sources.filter(function (s) {
       return s.url === url;
@@ -858,7 +842,7 @@ function getSource(threadClient, url) {
  * @returns Promise<response>
  */
 function reload(tabClient) {
-  let deferred = defer();
+  let deferred = promise.defer();
   tabClient._reload({}, deferred.resolve);
   return deferred.promise;
 }

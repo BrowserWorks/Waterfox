@@ -17,7 +17,6 @@ import android.content.Intent;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -260,8 +259,7 @@ public class GeckoMenu extends ListView
                 @Override
                 public boolean onLongClick(View view) {
                     if (handleMenuItemLongClick(menuItem)) {
-                        GeckoAppShell.getHapticFeedbackDelegate().performHapticFeedback(
-                                HapticFeedbackConstants.LONG_PRESS);
+                        GeckoAppShell.vibrateOnHapticFeedbackEnabled(getResources().getIntArray(R.array.long_press_vibrate_msec));
                         return true;
                     }
                     return false;
@@ -278,8 +276,7 @@ public class GeckoMenu extends ListView
                 @Override
                 public boolean onLongClick(View view) {
                     if (handleMenuItemLongClick(menuItem)) {
-                        GeckoAppShell.getHapticFeedbackDelegate().performHapticFeedback(
-                                HapticFeedbackConstants.LONG_PRESS);
+                        GeckoAppShell.vibrateOnHapticFeedbackEnabled(getResources().getIntArray(R.array.long_press_vibrate_msec));
                         return true;
                     }
                     return false;
@@ -780,7 +777,6 @@ public class GeckoMenu extends ListView
     private class MenuItemsAdapter extends BaseAdapter {
         private static final int VIEW_TYPE_DEFAULT = 0;
         private static final int VIEW_TYPE_ACTION_MODE = 1;
-        private static final int VIEW_TYPE_ICON = 1;
 
         private final List<GeckoMenuItem> mItems;
 
@@ -827,13 +823,8 @@ public class GeckoMenu extends ListView
             GeckoMenuItem.Layout view = null;
 
             // Try to re-use the view.
-            if (convertView == null) {
-                final int type = getItemViewType(position);
-                if (type == VIEW_TYPE_ICON) {
-                    view = new MenuItemIcon(parent.getContext(), null);
-                } else if (type == VIEW_TYPE_DEFAULT) {
-                    view = new MenuItemDefault(parent.getContext(), null);
-                }
+            if (convertView == null && getItemViewType(position) == VIEW_TYPE_DEFAULT) {
+                view = new MenuItemDefault(parent.getContext(), null);
             } else {
                 view = (GeckoMenuItem.Layout) convertView;
             }
@@ -865,10 +856,6 @@ public class GeckoMenu extends ListView
 
         @Override
         public int getItemViewType(int position) {
-            final GeckoMenuItem item = getItem(position);
-            if (item.getItemType() == GeckoMenuItem.ITEM_TYPE_ICON) {
-                return VIEW_TYPE_ICON;
-            }
             return getItem(position).getGeckoActionProvider() == null ? VIEW_TYPE_DEFAULT : VIEW_TYPE_ACTION_MODE;
         }
 

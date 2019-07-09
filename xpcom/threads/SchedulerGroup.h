@@ -8,12 +8,9 @@
 #define mozilla_SchedulerGroup_h
 
 #include "mozilla/AlreadyAddRefed.h"
-#include "mozilla/LinkedList.h"
 #include "mozilla/TaskCategory.h"
-#include "mozilla/ThreadLocal.h"
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
-#include "nsILabelableRunnable.h"
 #include "nsISupportsImpl.h"
 #include "nsThreadUtils.h"
 
@@ -41,7 +38,7 @@ class TabGroup;
 // only functionality offered by a SchedulerGroup is the ability to dispatch
 // runnables to the group. TabGroup, DocGroup, and SystemGroup are the concrete
 // implementations of SchedulerGroup.
-class SchedulerGroup : public LinkedListElement<SchedulerGroup>
+class SchedulerGroup
 {
 public:
   SchedulerGroup();
@@ -52,13 +49,22 @@ public:
   // "background" state.
   virtual bool IsBackground() const { return false; }
 
+  class MOZ_STACK_CLASS AutoProcessEvent final {
+  public:
+    AutoProcessEvent();
+    ~AutoProcessEvent();
+
+  private:
+    SchedulerGroup* mPrevRunningDispatcher;
+  };
+
   // This function returns true if it's currently safe to run code associated
   // with this SchedulerGroup. It will return true either if we're inside an
   // unlabeled runnable or if we're inside a runnable labeled with this
   // SchedulerGroup.
   bool IsSafeToRun() const
   {
-    return !sTlsValidatingAccess.get() || mIsRunning;
+    return !sRunningDispatcher || mAccessValid;
   }
 
   // This function returns true if it's currently safe to run unlabeled code
@@ -66,7 +72,7 @@ public:
   // unlabeled runnable.
   static bool IsSafeToRunUnlabeled()
   {
-    return !sTlsValidatingAccess.get();
+    return !sRunningDispatcher;
   }
 
   // Ensure that it's valid to access the TabGroup at this time.
@@ -75,45 +81,11 @@ public:
     MOZ_ASSERT(IsSafeToRun());
   }
 
-  enum EnqueueStatus
-  {
-    NewlyQueued,
-    AlreadyQueued,
-  };
-
-  // Records that this SchedulerGroup had an event enqueued in some
-  // queue. Returns whether the SchedulerGroup was already in a queue before
-  // EnqueueEvent() was called.
-  EnqueueStatus EnqueueEvent()
-  {
-    mEventCount++;
-    return mEventCount == 1 ? NewlyQueued : AlreadyQueued;
-  }
-
-  enum DequeueStatus
-  {
-    StillQueued,
-    NoLongerQueued,
-  };
-
-  // Records that this SchedulerGroup had an event dequeued from some
-  // queue. Returns whether the SchedulerGroup is still in a queue after
-  // DequeueEvent() returns.
-  DequeueStatus DequeueEvent()
-  {
-    mEventCount--;
-    return mEventCount == 0 ? NoLongerQueued : StillQueued;
-  }
-
   class Runnable final : public mozilla::Runnable
-                       , public nsIRunnablePriority
-                       , public nsILabelableRunnable
   {
   public:
     Runnable(already_AddRefed<nsIRunnable>&& aRunnable,
              SchedulerGroup* aGroup);
-
-    bool GetAffectedSchedulerGroups(SchedulerGroupSet& aGroups) override;
 
     SchedulerGroup* Group() const { return mGroup; }
 
@@ -123,7 +95,6 @@ public:
 
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIRUNNABLE
-    NS_DECL_NSIRUNNABLEPRIORITY
 
     NS_DECLARE_STATIC_IID_ACCESSOR(NS_SCHEDULERGROUPRUNNABLE_IID);
 
@@ -137,7 +108,7 @@ public:
   };
   friend class Runnable;
 
-  bool* GetValidAccessPtr() { return &mIsRunning; }
+  bool* GetValidAccessPtr() { return &mAccessValid; }
 
   virtual nsresult Dispatch(TaskCategory aCategory,
                             already_AddRefed<nsIRunnable>&& aRunnable);
@@ -158,15 +129,6 @@ public:
   static void MarkVsyncReceived();
 
   static void MarkVsyncRan();
-
-  void SetIsRunning(bool aIsRunning) { mIsRunning = aIsRunning; }
-  bool IsRunning() const { return mIsRunning; }
-
-  enum ValidationType {
-    StartValidation,
-    EndValidation,
-  };
-  static void SetValidatingAccess(ValidationType aType);
 
 protected:
   static nsresult InternalUnlabeledDispatch(TaskCategory aCategory,
@@ -193,13 +155,14 @@ protected:
   // dispatcher.
   void Shutdown(bool aXPCOMShutdown);
 
-  static MOZ_THREAD_LOCAL(bool) sTlsValidatingAccess;
+  enum ValidationType {
+    StartValidation,
+    EndValidation,
+  };
+  void SetValidatingAccess(ValidationType aType);
 
-  bool mIsRunning;
-
-  // Number of events that are currently enqueued for this SchedulerGroup
-  // (across all queues).
-  size_t mEventCount = 0;
+  static SchedulerGroup* sRunningDispatcher;
+  bool mAccessValid;
 
   nsCOMPtr<nsISerialEventTarget> mEventTargets[size_t(TaskCategory::Count)];
   RefPtr<AbstractThread> mAbstractThreads[size_t(TaskCategory::Count)];

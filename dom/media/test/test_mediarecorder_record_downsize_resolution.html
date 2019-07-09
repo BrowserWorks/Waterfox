@@ -90,14 +90,12 @@ function startTest() {
     video.play();
 
     // Check last color
-    helper.pixelMustBecome(video, helper.red, {
-      threshold: 128,
-      infoString: "Should become red",
-    }).then(() => {
-      video.onresize = {};
-      video.onended = {};
-      SimpleTest.finish();
-    });
+    helper.waitForPixelColor(video, helper.red, 128, "Should become red")
+      .then(() => {
+        video.onresize = {};
+        video.onended = {};
+        SimpleTest.finish();
+      });
   };
 
   // Start here by stream recorder.

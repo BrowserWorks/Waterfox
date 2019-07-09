@@ -2,12 +2,11 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-description: >
-    Generators declared with GeneratorExpression syntax do not require a
-    `yield` expression.
-es6id: 14.4
-features: [generators]
----*/
+  description: >
+      Generators declared with GeneratorExpression syntax do not require a
+      `yield` expression.
+  es6id: 14.4
+ ---*/
 
 var result;
 var foo = function*(a) {};

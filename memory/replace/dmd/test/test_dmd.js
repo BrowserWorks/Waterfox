@@ -187,7 +187,7 @@ function run_test() {
   // of the tested values.
   jsonFile = FileUtils.getFile("CurWorkD", ["script-max-frames.json"]);
   test("script-max-frames-8",
-       [jsonFile.path]);  // --max-frames=8 is the default
+       ["--max-frames=8", jsonFile.path]);
   test("script-max-frames-3",
        ["--max-frames=3", "--no-fix-stacks", jsonFile.path]);
   test("script-max-frames-1",

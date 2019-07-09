@@ -1,5 +1,7 @@
 // The .environment of a function Debugger.Object is an Environment object.
 
+load(libdir + 'nightly-only.js');
+
 var g = newGlobal()
 var dbg = new Debugger;
 var gDO = dbg.addDebuggee(g);
@@ -19,4 +21,6 @@ check('(() => { })');
 check('(function f() { })');
 check('(function* g() { })');
 check('(async function m() { })');
-check('(async function* n() { })');
+nightlyOnly(g.SyntaxError, () => {
+  check('(async function* n() { })');
+});

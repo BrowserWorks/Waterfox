@@ -300,8 +300,8 @@ OmxDataDecoder::FillBufferDone(BufferData* aData)
   MOZ_ASSERT(!aData || aData->mStatus == BufferData::BufferStatus::OMX_CLIENT);
 
   // Don't output sample when flush or shutting down, especially for video
-  // decoded frame. Because video decoded frame can have a promise in
-  // BufferData waiting for layer to resolve it via recycle callback, if other
+  // decoded frame. Because video decoded frame has a promise in BufferData
+  // waiting for layer to resolve it via recycle callback on Gonk, if other
   // module doesn't send it to layer, it will cause a unresolved promise and
   // waiting for resolve infinitely.
   if (mFlushing || mShuttingDown) {
@@ -336,7 +336,8 @@ OmxDataDecoder::Output(BufferData* aData)
 
   if (isPlatformData) {
     // If the MediaData is platform dependnet data, it's mostly a kind of
-    // limited resource, so we use promise to notify when the resource is free.
+    // limited resource, for example, GraphicBuffer on Gonk. So we use promise
+    // to notify when the resource is free.
     aData->mStatus = BufferData::BufferStatus::OMX_CLIENT_OUTPUT;
 
     MOZ_RELEASE_ASSERT(aData->mPromise.IsEmpty());
@@ -409,8 +410,8 @@ OmxDataDecoder::EmptyBufferFailure(OmxBufferFailureHolder aFailureHolder)
 void
 OmxDataDecoder::NotifyError(OMX_ERRORTYPE aOmxError, const char* aLine, const MediaResult& aError)
 {
-  LOG("NotifyError %d (%s) at %s", static_cast<int>(aOmxError),
-      aError.ErrorName().get(), aLine);
+  LOG("NotifyError %d (%" PRIu32 ") at %s", static_cast<int>(aOmxError),
+      static_cast<uint32_t>(aError.Code()), aLine);
   mDecodedData.Clear();
   mDecodePromise.RejectIfExists(aError, __func__);
   mDrainPromise.RejectIfExists(aError, __func__);

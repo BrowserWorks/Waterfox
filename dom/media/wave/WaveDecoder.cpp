@@ -4,26 +4,45 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "WaveDecoder.h"
+#include "WaveDemuxer.h"
 #include "MediaContainerType.h"
-#include "MediaDecoder.h"
+#include "MediaDecoderStateMachine.h"
+#include "WaveDecoder.h"
+#include "MediaFormatReader.h"
+#include "PDMFactory.h"
 
 namespace mozilla {
+
+ChannelMediaDecoder*
+WaveDecoder::Clone(MediaDecoderInit& aInit)
+{
+  return new WaveDecoder(aInit);
+}
+
+MediaDecoderStateMachine*
+WaveDecoder::CreateStateMachine()
+{
+  MediaFormatReaderInit init;
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, new WAVDemuxer(mResource));
+  return new MediaDecoderStateMachine(this, mReader);
+}
 
 /* static */ bool
 WaveDecoder::IsSupportedType(const MediaContainerType& aContainerType)
 {
-  if (!MediaDecoder::IsWaveEnabled()) {
+  if (!IsWaveEnabled()) {
     return false;
   }
-  if (aContainerType.Type() == MEDIAMIMETYPE("audio/wave") ||
-      aContainerType.Type() == MEDIAMIMETYPE("audio/x-wav") ||
-      aContainerType.Type() == MEDIAMIMETYPE("audio/wav") ||
-      aContainerType.Type() == MEDIAMIMETYPE("audio/x-pn-wav")) {
-    return (aContainerType.ExtendedType().Codecs().IsEmpty() ||
-            aContainerType.ExtendedType().Codecs() == "1" ||
-            aContainerType.ExtendedType().Codecs() == "6" ||
-            aContainerType.ExtendedType().Codecs() == "7");
+  if (aContainerType.Type() == MEDIAMIMETYPE("audio/wave")
+      || aContainerType.Type() == MEDIAMIMETYPE("audio/x-wav")
+      || aContainerType.Type() == MEDIAMIMETYPE("audio/wav")
+      || aContainerType.Type() == MEDIAMIMETYPE("audio/x-pn-wav")) {
+    return (aContainerType.ExtendedType().Codecs().IsEmpty()
+            || aContainerType.ExtendedType().Codecs() == "1"
+            || aContainerType.ExtendedType().Codecs() == "6"
+            || aContainerType.ExtendedType().Codecs() == "7");
   }
 
   return false;

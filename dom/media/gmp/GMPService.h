@@ -25,7 +25,6 @@
 #include "GMPContentParent.h"
 #include "GMPCrashHelper.h"
 #include "ChromiumCDMParent.h"
-#include "MediaResult.h"
 
 template <class> struct already_AddRefed;
 
@@ -57,7 +56,7 @@ typedef MozPromise<RefPtr<GMPContentParent::CloseBlocker>,
                    /* IsExclusive = */ true>
   GetGMPContentParentPromise;
 typedef MozPromise<RefPtr<ChromiumCDMParent>,
-                   MediaResult,
+                   nsresult,
                    /* IsExclusive = */ true>
   GetCDMParentPromise;
 
@@ -87,6 +86,11 @@ public:
                                 nsTArray<nsCString>* aTags,
                                 const nsACString& aNodeId,
                                 UniquePtr<GetGMPVideoEncoderCallback>&& aCallback)
+    override;
+  NS_IMETHOD GetGMPDecryptor(GMPCrashHelper* aHelper,
+                             nsTArray<nsCString>* aTags,
+                             const nsACString& aNodeId,
+                             UniquePtr<GetGMPDecryptorCallback>&& aCallback)
     override;
 
   // Helper for backwards compatibility with WebRTC/tests.

@@ -4,7 +4,6 @@
 
 //! Invalidation of element styles due to attribute or style changes.
 
-pub mod collector;
 pub mod element_wrapper;
 pub mod invalidation_map;
 pub mod invalidator;

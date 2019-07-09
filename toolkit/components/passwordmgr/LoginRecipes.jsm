@@ -113,7 +113,6 @@ LoginRecipesParent.prototype = {
             resolve(JSON.parse(data));
           });
         }).then(recipes => {
-          Services.ppmm.broadcastAsyncMessage("clearRecipeCache");
           return this.load(recipes);
         }).then(resolve => {
           return this;
@@ -190,64 +189,6 @@ LoginRecipesParent.prototype = {
 
 
 var LoginRecipesContent = {
-  _recipeCache: new WeakMap(),
-
-  _clearRecipeCache() {
-    this._recipeCache = new WeakMap();
-  },
-
-  /**
-   * Locally caches recipes for a given host.
-   *
-   * @param {String} aHost (e.g. example.com:8080 [non-default port] or sub.example.com)
-   * @param {Object} win - the window of the host
-   * @param {Set} recipes - recipes that apply to the host
-   */
-  cacheRecipes(aHost, win, recipes) {
-    log.debug("cacheRecipes: for:", aHost);
-    let recipeMap = this._recipeCache.get(win);
-
-    if (!recipeMap) {
-      recipeMap = new Map();
-      this._recipeCache.set(win, recipeMap);
-    }
-
-    recipeMap.set(aHost, recipes);
-  },
-
-  /**
-   * Tries to fetch recipes for a given host, using a local cache if possible.
-   * Otherwise, the recipes are cached for later use.
-   *
-   * @param {String} aHost (e.g. example.com:8080 [non-default port] or sub.example.com)
-   * @param {Object} win - the window of the host
-   * @return {Set} of recipes that apply to the host
-   */
-  getRecipes(aHost, win) {
-    let recipes;
-    let recipeMap = this._recipeCache.get(win);
-
-    if (recipeMap) {
-      recipes = recipeMap.get(aHost);
-
-      if (recipes) {
-        return recipes;
-      }
-    }
-
-    let mm = win.QueryInterface(Ci.nsIInterfaceRequestor)
-                .getInterface(Ci.nsIWebNavigation)
-                .QueryInterface(Ci.nsIDocShell)
-                .QueryInterface(Ci.nsIInterfaceRequestor)
-                .getInterface(Ci.nsIContentFrameMessageManager);
-
-    log.warn("getRecipes: falling back to a synchronous message for:", aHost);
-    recipes = mm.sendSyncMessage("RemoteLogins:findRecipes", { formOrigin: aHost })[0];
-    this.cacheRecipes(aHost, win, recipes);
-
-    return recipes;
-  },
-
   /**
    * @param {Set} aRecipes - Possible recipes that could apply to the form
    * @param {FormLike} aForm - We use a form instead of just a URL so we can later apply

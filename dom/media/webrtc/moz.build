@@ -3,7 +3,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-include('/media/webrtc/webrtc.mozbuild')
 
 with Files('*'):
     BUG_COMPONENT = ('Core', 'WebRTC: Audio/Video')
@@ -18,10 +17,13 @@ EXPORTS += [
     'MediaEngineCameraVideoSource.h',
     'MediaEngineDefault.h',
     'MediaTrackConstraints.h',
-    'SineWaveGenerator.h',
 ]
 
 if CONFIG['MOZ_WEBRTC']:
+    if CONFIG['OS_TARGET'] == 'WINNT':
+        DEFINES['WEBRTC_WIN'] = True
+    else:
+        DEFINES['WEBRTC_POSIX'] = True
     EXPORTS += ['AudioOutputObserver.h',
                 'MediaEngineRemoteVideoSource.h',
                 'MediaEngineWebRTC.h']

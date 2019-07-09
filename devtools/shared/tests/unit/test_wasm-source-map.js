@@ -42,6 +42,11 @@ function run_test() {
   equal(remap1.sources[0], "/the/root/one.js");
   equal(remap1.sources[1], "/the/root/two.js");
 
+  remap1.sourceRoot = "/newroot";
+  equal(remap1.sources.length, 2);
+  equal(remap1.sources[0], "/newroot/one.js");
+  equal(remap1.sources[1], "/newroot/two.js");
+
   let expectedEntries = testMap1Entries.slice(0);
   remap1.eachMapping(function (entry) {
     let expected = expectedEntries.shift();
@@ -55,10 +60,10 @@ function run_test() {
   let pos1 = remap1.originalPositionFor({line: 5, column: 0});
   equal(pos1.line, 1);
   equal(pos1.column, 7);
-  equal(pos1.source, "/the/root/one.js");
+  equal(pos1.source, "/newroot/one.js");
 
   let pos2 = remap1.generatedPositionFor({
-    source: "/the/root/one.js",
+    source: "/newroot/one.js",
     line: 2,
     column: 18
   });
@@ -68,7 +73,7 @@ function run_test() {
 
   remap1.computeColumnSpans();
   let pos3 = remap1.allGeneratedPositionsFor({
-    source: "/the/root/one.js",
+    source: "/newroot/one.js",
     line: 2,
     column: 17
   });

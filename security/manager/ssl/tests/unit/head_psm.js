@@ -90,6 +90,9 @@ const certificateUsageSSLServer              = 0x0002;
 const certificateUsageSSLCA                  = 0x0008;
 const certificateUsageEmailSigner            = 0x0010;
 const certificateUsageEmailRecipient         = 0x0020;
+const certificateUsageObjectSigner           = 0x0040;
+const certificateUsageVerifyCA               = 0x0100;
+const certificateUsageStatusResponder        = 0x0400;
 
 // A map from the name of a certificate usage to the value of the usage.
 // Useful for printing debugging information and for enumerating all supported
@@ -100,6 +103,9 @@ const allCertificateUsages = {
   certificateUsageSSLCA,
   certificateUsageEmailSigner,
   certificateUsageEmailRecipient,
+  certificateUsageObjectSigner,
+  certificateUsageVerifyCA,
+  certificateUsageStatusResponder
 };
 
 const NO_FLAGS = 0;
@@ -211,7 +217,7 @@ function _getLibraryFunctionWithNoArguments(functionName, libraryName,
   } catch (e) {
     // In case opening the library without a full path fails,
     // try again with a full path.
-    let file = Services.dirsvc.get("GreBinD", Ci.nsIFile);
+    let file = Services.dirsvc.get("GreBinD", Ci.nsILocalFile);
     file.append(path);
     nsslib = ctypes.open(file.path);
   }
@@ -463,12 +469,12 @@ function _getBinaryUtil(binaryUtilName) {
   let directoryService = Cc["@mozilla.org/file/directory_service;1"]
                            .getService(Ci.nsIProperties);
 
-  let utilBin = directoryService.get("CurProcD", Ci.nsIFile);
+  let utilBin = directoryService.get("CurProcD", Ci.nsILocalFile);
   utilBin.append(binaryUtilName + mozinfo.bin_suffix);
   // If we're testing locally, the above works. If not, the server executable
   // is in another location.
   if (!utilBin.exists()) {
-    utilBin = directoryService.get("CurWorkD", Ci.nsIFile);
+    utilBin = directoryService.get("CurWorkD", Ci.nsILocalFile);
     while (utilBin.path.indexOf("xpcshell") != -1) {
       utilBin = utilBin.parent;
     }
@@ -521,7 +527,7 @@ function _setupTLSServerTest(serverBinName, certsPath) {
   let serverBin = _getBinaryUtil(serverBinName);
   let process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
   process.init(serverBin);
-  let certDir = directoryService.get("CurWorkD", Ci.nsIFile);
+  let certDir = directoryService.get("CurWorkD", Ci.nsILocalFile);
   certDir.append(`${certsPath}`);
   Assert.ok(certDir.exists(), `certificate folder (${certsPath}) should exist`);
   // Using "sql:" causes the SQL DB to be used so we can run tests on Android.
@@ -535,7 +541,7 @@ function _setupTLSServerTest(serverBinName, certsPath) {
 // Returns an Array of OCSP responses for a given ocspRespArray and a location
 // for a nssDB where the certs and public keys are prepopulated.
 // ocspRespArray is an array of arrays like:
-// [ [typeOfResponse, certnick, extracertnick, thisUpdateSkew]...]
+// [ [typeOfResponse, certnick, extracertnick]...]
 function generateOCSPResponses(ocspRespArray, nssDBlocation) {
   let utilBinName = "GenerateOCSPResponse";
   let ocspGenBin = _getBinaryUtil(utilBinName);
@@ -550,14 +556,13 @@ function generateOCSPResponses(ocspRespArray, nssDBlocation) {
     argArray.push(ocspRespArray[i][0]); // ocsRespType;
     argArray.push(ocspRespArray[i][1]); // nick;
     argArray.push(ocspRespArray[i][2]); // extranickname
-    argArray.push(ocspRespArray[i][3]); // thisUpdate skew
     argArray.push(filename);
     do_print("argArray = " + argArray);
 
     let process = Cc["@mozilla.org/process/util;1"]
                     .createInstance(Ci.nsIProcess);
     process.init(ocspGenBin);
-    process.run(true, argArray, argArray.length);
+    process.run(true, argArray, 5);
     Assert.equal(0, process.exitValue, "Process exit value should be 0");
     let ocspFile = do_get_file(i.toString() + ".ocsp", false);
     retArray.push(readFile(ocspFile));
@@ -612,7 +617,7 @@ function startOCSPResponder(serverPort, identity, nssDBLocation,
       if (expectedResponseTypes && expectedResponseTypes.length >= 1) {
         responseType = expectedResponseTypes.shift();
       }
-      return [responseType, expectedNick, "unused", 0];
+      return [responseType, expectedNick, "unused"];
     }
   );
   let ocspResponses = generateOCSPResponses(ocspResponseGenerationArgs,
@@ -762,6 +767,14 @@ function add_prevented_cert_override_test(aHost, aExpectedBits, aExpectedError) 
   add_connection_test(aHost, aExpectedError);
 }
 
+function loginToDBWithDefaultPassword() {
+  let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                  .getService(Ci.nsIPK11TokenDB);
+  let token = tokenDB.getInternalKeyToken();
+  token.initPassword("");
+  token.login(/* force */ false);
+}
+
 // Helper for asyncTestCertificateUsages.
 class CertVerificationResult {
   constructor(certName, usageString, successExpected, resolve) {
@@ -829,22 +842,21 @@ function asyncTestCertificateUsages(certdb, cert, expectedUsages) {
  *                  module gets reported.
  */
 function loadPKCS11TestModule(expectModuleUnloadToFail) {
-  let libraryFile = Services.dirsvc.get("CurWorkD", Ci.nsIFile);
+  let libraryFile = Services.dirsvc.get("CurWorkD", Ci.nsILocalFile);
   libraryFile.append("pkcs11testmodule");
   libraryFile.append(ctypes.libraryName("pkcs11testmodule"));
   ok(libraryFile.exists(), "The pkcs11testmodule file should exist");
 
-  let pkcs11ModuleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                         .getService(Ci.nsIPKCS11ModuleDB);
+  let pkcs11 = Cc["@mozilla.org/security/pkcs11;1"].getService(Ci.nsIPKCS11);
   do_register_cleanup(() => {
     try {
-      pkcs11ModuleDB.deleteModule("PKCS11 Test Module");
+      pkcs11.deleteModule("PKCS11 Test Module");
     } catch (e) {
       Assert.ok(expectModuleUnloadToFail,
                 `Module unload should suceed only when expected: ${e}`);
     }
   });
-  pkcs11ModuleDB.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
+  pkcs11.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
 }
 
 /**

@@ -78,7 +78,7 @@ enum BinaryOperator {
     /* binary */
     BINOP_BITOR, BINOP_BITXOR, BINOP_BITAND,
     /* misc */
-    BINOP_IN, BINOP_INSTANCEOF, BINOP_PIPELINE,
+    BINOP_IN, BINOP_INSTANCEOF,
 
     BINOP_LIMIT
 };
@@ -154,7 +154,6 @@ static const char* const binopNames[] = {
     "&",          /* BINOP_BITAND */
     "in",         /* BINOP_IN */
     "instanceof", /* BINOP_INSTANCEOF */
-    "|>",         /* BINOP_PIPELINE */
 };
 
 static const char* const unopNames[] = {
@@ -439,7 +438,7 @@ class NodeBuilder
 
         /* Represent "no node" as null and ensure users are not exposed to magic values. */
         RootedValue optVal(cx, val.isMagic(JS_SERIALIZE_NO_NODE) ? NullValue() : val);
-        return DefineDataProperty(cx, obj, atom->asPropertyName(), optVal);
+        return DefineProperty(cx, obj, atom->asPropertyName(), optVal);
     }
 
     MOZ_MUST_USE bool newNodeLoc(TokenPos* pos, MutableHandleValue dst);
@@ -680,7 +679,7 @@ NodeBuilder::newArray(NodeVector& elts, MutableHandleValue dst)
         if (val.isMagic(JS_SERIALIZE_NO_NODE))
             continue;
 
-        if (!DefineDataElement(cx, array, i, val))
+        if (!DefineElement(cx, array, i, val))
             return false;
     }
 
@@ -1735,9 +1734,9 @@ class ASTSerializer
         return StringValue(atom ? atom : cx->names().empty);
     }
 
-    BinaryOperator binop(ParseNodeKind kind);
-    UnaryOperator unop(ParseNodeKind kind);
-    AssignmentOperator aop(ParseNodeKind kind);
+    BinaryOperator binop(ParseNodeKind kind, JSOp op);
+    UnaryOperator unop(ParseNodeKind kind, JSOp op);
+    AssignmentOperator aop(JSOp op);
 
     bool statements(ParseNode* pn, NodeVector& elts);
     bool expressions(ParseNode* pn, NodeVector& elts);
@@ -1844,34 +1843,34 @@ class ASTSerializer
 } /* anonymous namespace */
 
 AssignmentOperator
-ASTSerializer::aop(ParseNodeKind kind)
+ASTSerializer::aop(JSOp op)
 {
-    switch (kind) {
-      case PNK_ASSIGN:
+    switch (op) {
+      case JSOP_NOP:
         return AOP_ASSIGN;
-      case PNK_ADDASSIGN:
+      case JSOP_ADD:
         return AOP_PLUS;
-      case PNK_SUBASSIGN:
+      case JSOP_SUB:
         return AOP_MINUS;
-      case PNK_MULASSIGN:
+      case JSOP_MUL:
         return AOP_STAR;
-      case PNK_DIVASSIGN:
+      case JSOP_DIV:
         return AOP_DIV;
-      case PNK_MODASSIGN:
+      case JSOP_MOD:
         return AOP_MOD;
-      case PNK_POWASSIGN:
+      case JSOP_POW:
         return AOP_POW;
-      case PNK_LSHASSIGN:
+      case JSOP_LSH:
         return AOP_LSH;
-      case PNK_RSHASSIGN:
+      case JSOP_RSH:
         return AOP_RSH;
-      case PNK_URSHASSIGN:
+      case JSOP_URSH:
         return AOP_URSH;
-      case PNK_BITORASSIGN:
+      case JSOP_BITOR:
         return AOP_BITOR;
-      case PNK_BITXORASSIGN:
+      case JSOP_BITXOR:
         return AOP_BITXOR;
-      case PNK_BITANDASSIGN:
+      case JSOP_BITAND:
         return AOP_BITAND;
       default:
         return AOP_ERR;
@@ -1879,7 +1878,7 @@ ASTSerializer::aop(ParseNodeKind kind)
 }
 
 UnaryOperator
-ASTSerializer::unop(ParseNodeKind kind)
+ASTSerializer::unop(ParseNodeKind kind, JSOp op)
 {
     if (IsDeleteKind(kind))
         return UNOP_DELETE;
@@ -1887,18 +1886,19 @@ ASTSerializer::unop(ParseNodeKind kind)
     if (IsTypeofKind(kind))
         return UNOP_TYPEOF;
 
-    switch (kind) {
-      case PNK_AWAIT:
+    if (kind == PNK_AWAIT)
         return UNOP_AWAIT;
-      case PNK_NEG:
+
+    switch (op) {
+      case JSOP_NEG:
         return UNOP_NEG;
-      case PNK_POS:
+      case JSOP_POS:
         return UNOP_POS;
-      case PNK_NOT:
+      case JSOP_NOT:
         return UNOP_NOT;
-      case PNK_BITNOT:
+      case JSOP_BITNOT:
         return UNOP_BITNOT;
-      case PNK_VOID:
+      case JSOP_VOID:
         return UNOP_VOID;
       default:
         return UNOP_ERR;
@@ -1906,7 +1906,7 @@ ASTSerializer::unop(ParseNodeKind kind)
 }
 
 BinaryOperator
-ASTSerializer::binop(ParseNodeKind kind)
+ASTSerializer::binop(ParseNodeKind kind, JSOp op)
 {
     switch (kind) {
       case PNK_LSH:
@@ -1953,8 +1953,6 @@ ASTSerializer::binop(ParseNodeKind kind)
         return BINOP_IN;
       case PNK_INSTANCEOF:
         return BINOP_INSTANCEOF;
-      case PNK_PIPELINE:
-        return BINOP_PIPELINE;
       default:
         return BINOP_ERR;
     }
@@ -2634,7 +2632,7 @@ ASTSerializer::leftAssociate(ParseNode* pn, MutableHandleValue dst)
             if (!builder.logicalExpression(lor, left, right, &subpos, &left))
                 return false;
         } else {
-            BinaryOperator op = binop(pn->getKind());
+            BinaryOperator op = binop(pn->getKind(), pn->getOp());
             LOCAL_ASSERT(op > BINOP_ERR && op < BINOP_LIMIT);
 
             if (!builder.binaryExpression(op, left, right, &subpos, &left))
@@ -2678,7 +2676,7 @@ ASTSerializer::rightAssociate(ParseNode* pn, MutableHandleValue dst)
 
         TokenPos subpos(pn->pn_pos.begin, next->pn_pos.end);
 
-        BinaryOperator op = binop(pn->getKind());
+        BinaryOperator op = binop(pn->getKind(), pn->getOp());
         LOCAL_ASSERT(op > BINOP_ERR && op < BINOP_LIMIT);
 
         if (!builder.binaryExpression(op, left, right, &subpos, &right))
@@ -2889,7 +2887,7 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_left->pn_pos));
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_right->pn_pos));
 
-        AssignmentOperator op = aop(pn->getKind());
+        AssignmentOperator op = aop(pn->getOp());
         LOCAL_ASSERT(op > AOP_ERR && op < AOP_LIMIT);
 
         RootedValue lhs(cx), rhs(cx);
@@ -2898,7 +2896,6 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
                builder.assignmentExpression(op, lhs, rhs, &pn->pn_pos, dst);
       }
 
-      case PNK_PIPELINE:
       case PNK_ADD:
       case PNK_SUB:
       case PNK_STRICTEQ:
@@ -2939,7 +2936,7 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
       case PNK_NEG: {
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_kid->pn_pos));
 
-        UnaryOperator op = unop(pn->getKind());
+        UnaryOperator op = unop(pn->getKind(), pn->getOp());
         LOCAL_ASSERT(op > UNOP_ERR && op < UNOP_LIMIT);
 
         RootedValue expr(cx);
@@ -3489,8 +3486,10 @@ ASTSerializer::functionArgsAndBody(ParseNode* pn, NodeVector& args, NodeVector& 
         ParseNode* pnstart = pnbody->pn_head;
 
         // Skip over initial yield in generator.
-        if (pnstart && pnstart->isKind(PNK_INITIALYIELD))
+        if (pnstart && pnstart->isKind(PNK_INITIALYIELD)) {
+            MOZ_ASSERT(pnstart->getOp() == JSOP_INITIALYIELD);
             pnstart = pnstart->pn_next;
+        }
 
         // Async arrow with expression body is converted into STATEMENTLIST
         // to insert initial yield.
@@ -3742,10 +3741,7 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
         if (!module)
             return false;
 
-        ModuleBuilder builder(cx, module, parser.tokenStream);
-        if (!builder.init())
-            return false;
-
+        ModuleBuilder builder(cx, module);
         ModuleSharedContext modulesc(cx, module, &cx->global()->emptyGlobalScope(), builder);
         pn = parser.moduleBody(&modulesc);
         if (!pn)

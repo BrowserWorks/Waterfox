@@ -105,7 +105,7 @@ JavaScriptParent::allowMessage(JSContext* cx)
 
     bool warn = !isSafe;
     nsIGlobalObject* global = dom::GetIncumbentGlobal();
-    JS::Rooted<JSObject*> jsGlobal(cx, global ? global->GetGlobalJSObject() : nullptr);
+    JSObject* jsGlobal = global ? global->GetGlobalJSObject() : nullptr;
     if (jsGlobal) {
         JSAutoCompartment ac(cx, jsGlobal);
         JSAddonId* addonId = JS::AddonIdOfObject(jsGlobal);

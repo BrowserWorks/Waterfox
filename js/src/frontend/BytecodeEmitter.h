@@ -105,6 +105,9 @@ struct CGYieldAndAwaitOffsetList {
     void finish(YieldAndAwaitOffsetArray& array, uint32_t prologueLength);
 };
 
+static constexpr size_t MaxBytecodeLength = INT32_MAX;
+static constexpr size_t MaxSrcNotesLength = INT32_MAX;
+
 // Have a few inline elements, so as to avoid heap allocation for tiny
 // sequences.  See bug 1390526.
 typedef Vector<jsbytecode, 64> BytecodeVector;
@@ -278,7 +281,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     const EmitterMode emitterMode;
 
     // The end location of a function body that is being emitted.
-    MOZ_INIT_OUTSIDE_CTOR uint32_t functionBodyEndPos;
+    uint32_t functionBodyEndPos;
     // Whether functionBodyEndPos was set.
     bool functionBodyEndPosSet;
 
@@ -417,6 +420,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
 
     void reportError(ParseNode* pn, unsigned errorNumber, ...);
     bool reportExtraWarning(ParseNode* pn, unsigned errorNumber, ...);
+    bool reportStrictModeError(ParseNode* pn, unsigned errorNumber, ...);
 
     // If pn contains a useful expression, return true with *answer set to true.
     // If pn contains a useless expression, return true with *answer set to
@@ -508,9 +512,6 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     // Helper to emit JSOP_CHECKISCALLABLE.
     MOZ_MUST_USE bool emitCheckIsCallable(CheckIsCallableKind kind);
 
-    // Push whether the value atop of the stack is non-undefined and non-null.
-    MOZ_MUST_USE bool emitPushNotUndefinedOrNull();
-
     // Emit a bytecode followed by an uint16 immediate operand stored in
     // big-endian order.
     MOZ_MUST_USE bool emitUint16Operand(JSOp op, uint32_t operand);
@@ -554,7 +555,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitAtomOp(ParseNode* pn, JSOp op);
 
     MOZ_MUST_USE bool emitArrayLiteral(ParseNode* pn);
-    MOZ_MUST_USE bool emitArray(ParseNode* pn, uint32_t count);
+    MOZ_MUST_USE bool emitArray(ParseNode* pn, uint32_t count, JSOp op);
     MOZ_MUST_USE bool emitArrayComp(ParseNode* pn);
 
     MOZ_MUST_USE bool emitInternedScopeOp(uint32_t index, JSOp op);
@@ -634,6 +635,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitPrepareIteratorResult();
     MOZ_MUST_USE bool emitFinishIteratorResult(bool done);
     MOZ_MUST_USE bool iteratorResultShape(unsigned* shape);
+    MOZ_MUST_USE bool emitToIteratorResult(bool done);
 
     MOZ_MUST_USE bool emitGetDotGenerator();
 
@@ -762,7 +764,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
 
     MOZ_MUST_USE bool emitCallSiteObject(ParseNode* pn);
     MOZ_MUST_USE bool emitTemplateString(ParseNode* pn);
-    MOZ_MUST_USE bool emitAssignment(ParseNode* lhs, ParseNodeKind pnk, ParseNode* rhs);
+    MOZ_MUST_USE bool emitAssignment(ParseNode* lhs, JSOp op, ParseNode* rhs);
 
     MOZ_MUST_USE bool emitReturn(ParseNode* pn);
     MOZ_MUST_USE bool emitStatement(ParseNode* pn);
@@ -838,10 +840,6 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitSuperElemOperands(ParseNode* pn,
                                             EmitElemOption opts = EmitElemOption::Get);
     MOZ_MUST_USE bool emitSuperElemOp(ParseNode* pn, JSOp op, bool isCall = false);
-
-    MOZ_MUST_USE bool emitCallee(ParseNode* callee, ParseNode* call, bool spread, bool* callop);
-
-    MOZ_MUST_USE bool emitPipeline(ParseNode* pn);
 };
 
 } /* namespace frontend */

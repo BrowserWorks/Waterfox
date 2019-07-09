@@ -13,7 +13,6 @@
 #include <algorithm>
 #include "nsAnonymousTemporaryFile.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/SystemGroup.h"
 #include "nsXULAppAPI.h"
 
 namespace mozilla {
@@ -76,9 +75,18 @@ FileBlockCache::SetCacheFile(PRFileDesc* aFD)
 nsresult
 FileBlockCache::Init()
 {
-  LOG("Init()");
   MutexAutoLock mon(mDataMutex);
-  MOZ_ASSERT(!mThread);
+  if (mThread) {
+    LOG("Init() again");
+    // Just discard pending changes, assume MediaCache won't read from
+    // blocks it hasn't written to.
+    mChangeIndexList.clear();
+    mBlockChanges.Clear();
+    return NS_OK;
+  }
+
+  LOG("Init()");
+
   nsresult rv = NS_NewNamedThread("FileBlockCache",
                                   getter_AddRefs(mThread),
                                   nullptr,
@@ -113,25 +121,6 @@ FileBlockCache::Init()
   }
 
   return rv;
-}
-
-void
-FileBlockCache::Flush()
-{
-  LOG("Flush()");
-  MutexAutoLock mon(mDataMutex);
-  MOZ_ASSERT(mThread);
-
-  // Dispatch a task so we won't clear the arrays while PerformBlockIOs() is
-  // dropping the data lock and cause InvalidArrayIndex.
-  RefPtr<FileBlockCache> self = this;
-  mThread->Dispatch(NS_NewRunnableFunction("FileBlockCache::Flush", [self]() {
-    MutexAutoLock mon(self->mDataMutex);
-    // Just discard pending changes, assume MediaCache won't read from
-    // blocks it hasn't written to.
-    self->mChangeIndexList.clear();
-    self->mBlockChanges.Clear();
-  }));
 }
 
 int32_t
@@ -362,7 +351,7 @@ nsresult FileBlockCache::MoveBlockInFile(int32_t aSourceBlockIndex,
 void
 FileBlockCache::PerformBlockIOs()
 {
-  MOZ_ASSERT(mThread->IsOnCurrentThread());
+  NS_ASSERTION(!NS_IsMainThread(), "Don't call on main thread");
   MutexAutoLock mon(mDataMutex);
   NS_ASSERTION(mIsWriteScheduled, "Should report write running or scheduled.");
 

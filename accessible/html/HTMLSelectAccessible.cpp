@@ -310,13 +310,6 @@ HTMLSelectOptGroupAccessible::NativeInteractiveState() const
   return NativelyUnavailable() ? states::UNAVAILABLE : 0;
 }
 
-bool
-HTMLSelectOptGroupAccessible::IsAcceptableChild(nsIContent* aEl) const
-{
-  return aEl->IsNodeOfType(nsINode::eDATA_NODE) ||
-    aEl->IsHTMLElement(nsGkAtoms::option);
-}
-
 uint8_t
 HTMLSelectOptGroupAccessible::ActionCount()
 {
@@ -465,12 +458,6 @@ HTMLComboboxAccessible::ActionNameAt(uint8_t aIndex, nsAString& aName)
     aName.AssignLiteral("open");
 }
 
-bool
-HTMLComboboxAccessible::IsAcceptableChild(nsIContent* aEl) const
-{
-  return false;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLComboboxAccessible: Widgets
 
@@ -606,12 +593,6 @@ HTMLComboboxListAccessible::RelativeBounds(nsIFrame** aBoundingFrame) const
   return (*aBoundingFrame)->GetRect();
 }
 
-bool
-HTMLComboboxListAccessible::IsAcceptableChild(nsIContent* aEl) const
-{
-  return aEl->IsAnyOfHTMLElements(nsGkAtoms::option, nsGkAtoms::optgroup);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLComboboxListAccessible: Widgets
 
@@ -626,3 +607,4 @@ HTMLComboboxListAccessible::AreItemsOperable() const
 {
   return mParent && mParent->AreItemsOperable();
 }
+

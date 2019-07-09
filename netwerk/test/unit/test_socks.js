@@ -31,7 +31,7 @@ function getAvailableBytes(input)
 function runScriptSubprocess(script, args)
 {
   var ds = new DirectoryService();
-  var bin = ds.get("XREExeF", Ci.nsIFile);
+  var bin = ds.get("XREExeF", Ci.nsILocalFile);
   if (!bin.exists()) {
     do_throw("Can't find xpcshell binary");
   }

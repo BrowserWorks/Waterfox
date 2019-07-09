@@ -352,7 +352,7 @@ nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
   return NS_ERROR_FAILURE;
 }
 
-nsresult
+NS_IMETHODIMP
 nsFilePicker::Show(int16_t *aReturn)
 {
   NS_ENSURE_ARG_POINTER(aReturn);
@@ -376,7 +376,7 @@ nsFilePicker::Open(nsIFilePickerShownCallback *aCallback)
   if (mRunning)
     return NS_ERROR_NOT_AVAILABLE;
 
-  nsCString title;
+  nsXPIDLCString title;
   title.Adopt(ToNewUTF8String(mTitle));
 
   GtkWindow *parent_widget =
@@ -394,7 +394,7 @@ nsFilePicker::Open(nsIFilePickerShownCallback *aCallback)
   }
 
   GtkWidget *file_chooser =
-      gtk_file_chooser_dialog_new(title.get(), parent_widget, action,
+      gtk_file_chooser_dialog_new(title, parent_widget, action,
                                   GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                                   accept_button, GTK_RESPONSE_ACCEPT,
                                   nullptr);

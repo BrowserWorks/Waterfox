@@ -154,8 +154,10 @@ nsPrintSettingsWin::nsPrintSettingsWin() :
  *  See documentation in nsPrintSettingsWin.h
  *	@update 
  */
-nsPrintSettingsWin::nsPrintSettingsWin(const nsPrintSettingsWin& aPS)
-  : mDevMode(nullptr)
+nsPrintSettingsWin::nsPrintSettingsWin(const nsPrintSettingsWin& aPS) :
+  mDeviceName(nullptr),
+  mDriverName(nullptr),
+  mDevMode(nullptr)
 {
   *this = aPS;
 }
@@ -166,28 +168,38 @@ nsPrintSettingsWin::nsPrintSettingsWin(const nsPrintSettingsWin& aPS)
  */
 nsPrintSettingsWin::~nsPrintSettingsWin()
 {
+  if (mDeviceName) free(mDeviceName);
+  if (mDriverName) free(mDriverName);
   if (mDevMode) ::HeapFree(::GetProcessHeap(), 0, mDevMode);
 }
 
-NS_IMETHODIMP nsPrintSettingsWin::SetDeviceName(const nsAString& aDeviceName)
+NS_IMETHODIMP nsPrintSettingsWin::SetDeviceName(const char16_t * aDeviceName)
 {
-  mDeviceName = aDeviceName;
+  if (mDeviceName) {
+    free(mDeviceName);
+  }
+  mDeviceName = aDeviceName?wcsdup(char16ptr_t(aDeviceName)):nullptr;
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettingsWin::GetDeviceName(nsAString& aDeviceName)
+NS_IMETHODIMP nsPrintSettingsWin::GetDeviceName(char16_t **aDeviceName)
 {
-  aDeviceName = mDeviceName;
+  NS_ENSURE_ARG_POINTER(aDeviceName);
+  *aDeviceName = mDeviceName?reinterpret_cast<char16_t*>(wcsdup(mDeviceName)):nullptr;
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettingsWin::SetDriverName(const nsAString& aDriverName)
+NS_IMETHODIMP nsPrintSettingsWin::SetDriverName(const char16_t * aDriverName)
 {
-  mDriverName = aDriverName;
+  if (mDriverName) {
+    free(mDriverName);
+  }
+  mDriverName = aDriverName?wcsdup(char16ptr_t(aDriverName)):nullptr;
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettingsWin::GetDriverName(nsAString& aDriverName)
+NS_IMETHODIMP nsPrintSettingsWin::GetDriverName(char16_t **aDriverName)
 {
-  aDriverName = mDriverName;
+  NS_ENSURE_ARG_POINTER(aDriverName);
+  *aDriverName = mDriverName?reinterpret_cast<char16_t*>(wcsdup(mDriverName)):nullptr;
   return NS_OK;
 }
 
@@ -413,13 +425,21 @@ nsPrintSettingsWin& nsPrintSettingsWin::operator=(const nsPrintSettingsWin& rhs)
 
   ((nsPrintSettings&) *this) = rhs;
 
+  if (mDeviceName) {
+    free(mDeviceName);
+  }
+
+  if (mDriverName) {
+    free(mDriverName);
+  }
+
   // Use free because we used the native malloc to create the memory
   if (mDevMode) {
     ::HeapFree(::GetProcessHeap(), 0, mDevMode);
   }
 
-  mDeviceName = rhs.mDeviceName;
-  mDriverName = rhs.mDriverName;
+  mDeviceName = rhs.mDeviceName?wcsdup(rhs.mDeviceName):nullptr;
+  mDriverName = rhs.mDriverName?wcsdup(rhs.mDriverName):nullptr;
 
   if (rhs.mDevMode) {
     CopyDevMode(rhs.mDevMode, mDevMode);

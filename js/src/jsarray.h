@@ -76,37 +76,49 @@ extern ArrayObject*
 NewDenseFullyAllocatedArrayWithTemplate(JSContext* cx, uint32_t length, JSObject* templateObject);
 
 /* Create a dense array with the same copy-on-write elements as another object. */
-extern ArrayObject*
+extern JSObject*
 NewDenseCopyOnWriteArray(JSContext* cx, HandleArrayObject templateObject, gc::InitialHeap heap);
 
-extern ArrayObject*
+// The methods below can create either boxed or unboxed arrays.
+
+extern JSObject*
 NewFullyAllocatedArrayTryUseGroup(JSContext* cx, HandleObjectGroup group, size_t length,
                                   NewObjectKind newKind = GenericObject);
 
-extern ArrayObject*
+extern JSObject*
 NewPartlyAllocatedArrayTryUseGroup(JSContext* cx, HandleObjectGroup group, size_t length);
 
-extern ArrayObject*
+extern JSObject*
 NewFullyAllocatedArrayTryReuseGroup(JSContext* cx, HandleObject obj, size_t length,
                                     NewObjectKind newKind = GenericObject);
 
-extern ArrayObject*
+extern JSObject*
 NewPartlyAllocatedArrayTryReuseGroup(JSContext* cx, HandleObject obj, size_t length);
 
-extern ArrayObject*
+extern JSObject*
 NewFullyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length,
                                                NewObjectKind newKind = GenericObject);
 
-extern ArrayObject*
+extern JSObject*
 NewPartlyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length, HandleObject proto);
 
-extern ArrayObject*
+enum class ShouldUpdateTypes
+{
+    Update,
+    DontUpdate
+};
+
+extern bool
+MaybeAnalyzeBeforeCreatingLargeArray(JSContext* cx, HandleObjectGroup group,
+                                     const Value* vp, size_t length);
+
+extern JSObject*
 NewCopiedArrayTryUseGroup(JSContext* cx, HandleObjectGroup group,
                           const Value* vp, size_t length,
                           NewObjectKind newKind = GenericObject,
                           ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update);
 
-extern ArrayObject*
+extern JSObject*
 NewCopiedArrayForCallingAllocationSite(JSContext* cx, const Value* vp, size_t length,
                                        HandleObject proto = nullptr);
 
@@ -120,6 +132,13 @@ NewValuePair(JSContext* cx, const Value& val1, const Value& val2, MutableHandleV
  */
 extern bool
 WouldDefinePastNonwritableLength(HandleNativeObject obj, uint32_t index);
+
+/*
+ * Canonicalize |vp| to a uint32_t value potentially suitable for use as an
+ * array length.
+ */
+extern bool
+CanonicalizeArrayLengthValue(JSContext* cx, HandleValue v, uint32_t* canonicalized);
 
 extern bool
 GetLengthProperty(JSContext* cx, HandleObject obj, uint32_t* lengthp);
@@ -139,7 +158,7 @@ GetElements(JSContext* cx, HandleObject aobj, uint32_t length, js::Value* vp);
 /* Natives exposed for optimization by the interpreter and JITs. */
 
 extern bool
-intrinsic_ArrayNativeSort(JSContext* cx, unsigned argc, js::Value* vp);
+array_sort(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern bool
 array_push(JSContext* cx, unsigned argc, js::Value* vp);
@@ -151,7 +170,7 @@ extern bool
 array_join(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern void
-ArrayShiftMoveElements(NativeObject* obj);
+ArrayShiftMoveElements(JSObject* obj);
 
 extern bool
 array_shift(JSContext* cx, unsigned argc, js::Value* vp);
@@ -183,7 +202,7 @@ extern const JSJitInfo array_splice_info;
 extern bool
 NewbornArrayPush(JSContext* cx, HandleObject obj, const Value& v);
 
-extern ArrayObject*
+extern JSObject*
 ArrayConstructorOneArg(JSContext* cx, HandleObjectGroup group, int32_t lengthInt);
 
 #ifdef DEBUG

@@ -2,8 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.lastindexof
-es6id: 22.1.3.15
+es6id: 22.1.3.14
 description: >
   Array.prototype.lastIndexOf.name is "lastIndexOf".
 info: >

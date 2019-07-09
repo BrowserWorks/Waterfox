@@ -9,12 +9,32 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifndef MOZILLA_INTERNAL_API
+// some of the includes make use of internal string types
+#define nsAString_h___
+#define nsString_h___
+#define nsStringFwd_h___
+#define nsReadableUtils_h___
+class nsACString;
+class nsAString;
+class nsString;
+class nsCString;
+class nsXPIDLString;
+template<class T> class nsReadingIterator;
+#endif
+
 #include "nsIContentSecurityPolicy.h"
 #include "nsNetUtil.h"
+#include "nsIScriptSecurityManager.h"
 #include "mozilla/dom/nsCSPContext.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
-#include "nsStringFwd.h"
+
+#ifndef MOZILLA_INTERNAL_API
+#undef nsString_h___
+#undef nsAString_h___
+#undef nsReadableUtils_h___
+#endif
 
 /*
  * Testing the parser is non trivial, especially since we can not call
@@ -72,6 +92,9 @@ nsresult runTest(uint32_t aExpectedPolicyCount, // this should be 0 for policies
                  const char* aExpectedResult) {
 
   nsresult rv;
+  nsCOMPtr<nsIScriptSecurityManager> secman =
+    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // we init the csp with http://www.selfuri.com
   nsCOMPtr<nsIURI> selfURI;
@@ -79,10 +102,10 @@ nsresult runTest(uint32_t aExpectedPolicyCount, // this should be 0 for policies
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIPrincipal> selfURIPrincipal;
-  mozilla::OriginAttributes attrs;
-  selfURIPrincipal =
-    mozilla::BasePrincipal::CreateCodebasePrincipal(selfURI, attrs);
-  NS_ENSURE_TRUE(selfURIPrincipal, NS_ERROR_FAILURE);
+  // Can't use BasePrincipal::CreateCodebasePrincipal here
+  // because the symbol is not visible here
+  rv = secman->GetCodebasePrincipal(selfURI, getter_AddRefs(selfURIPrincipal));
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // create a CSP object
   nsCOMPtr<nsIContentSecurityPolicy> csp =

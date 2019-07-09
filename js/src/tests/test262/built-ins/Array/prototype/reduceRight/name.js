@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.reduceright
 es6id: 22.1.3.19
 description: >
   Array.prototype.reduceRight.name is "reduceRight".

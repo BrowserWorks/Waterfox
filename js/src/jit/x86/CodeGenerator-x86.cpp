@@ -11,6 +11,7 @@
 
 #include "jsnum.h"
 
+#include "jit/IonCaches.h"
 #include "jit/MIR.h"
 #include "jit/MIRGraph.h"
 #include "js/Conversions.h"
@@ -744,8 +745,7 @@ CodeGeneratorX86::visitOutOfLineTruncate(OutOfLineTruncate* ool)
         } else {
             masm.setupUnalignedABICall(output);
             masm.passABIArg(input, MoveOp::DOUBLE);
-            masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32), MoveOp::GENERAL,
-                             CheckUnsafeCallWithABI::DontCheckOther);
+            masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
         }
         masm.storeCallWordResult(output);
 
@@ -832,12 +832,10 @@ CodeGeneratorX86::visitOutOfLineTruncateFloat32(OutOfLineTruncateFloat32* ool)
         masm.vcvtss2sd(input, input, input);
         masm.passABIArg(input.asDouble(), MoveOp::DOUBLE);
 
-        if (gen->compilingWasm()) {
+        if (gen->compilingWasm())
             masm.callWithABI(ins->mir()->bytecodeOffset(), wasm::SymbolicAddress::ToInt32);
-        } else {
-            masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32), MoveOp::GENERAL,
-                             CheckUnsafeCallWithABI::DontCheckOther);
-        }
+        else
+            masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
 
         masm.storeCallWordResult(output);
         masm.Pop(input);
@@ -1054,30 +1052,6 @@ CodeGeneratorX86::visitExtendInt32ToInt64(LExtendInt32ToInt64* lir)
         MOZ_ASSERT(output.high == edx);
         masm.cdq();
     }
-}
-
-void
-CodeGeneratorX86::visitSignExtendInt64(LSignExtendInt64* lir)
-{
-#ifdef DEBUG
-    Register64 input = ToRegister64(lir->getInt64Operand(0));
-    Register64 output = ToOutRegister64(lir);
-    MOZ_ASSERT(input.low == eax);
-    MOZ_ASSERT(output.low == eax);
-    MOZ_ASSERT(input.high == edx);
-    MOZ_ASSERT(output.high == edx);
-#endif
-    switch (lir->mode()) {
-      case MSignExtendInt64::Byte:
-        masm.move8SignExtend(eax, eax);
-        break;
-      case MSignExtendInt64::Half:
-        masm.move16SignExtend(eax, eax);
-        break;
-      case MSignExtendInt64::Word:
-        break;
-    }
-    masm.cdq();
 }
 
 void

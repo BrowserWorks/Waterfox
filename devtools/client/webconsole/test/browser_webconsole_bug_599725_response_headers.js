@@ -10,7 +10,7 @@ const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
                  "test/test-bug-599725-response-headers.sjs";
 
 function performTest(request, hud) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let headers = null;
 

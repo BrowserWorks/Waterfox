@@ -3,7 +3,16 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * This Original Code has been modified by IBM Corporation. Modifications made
+ * by IBM described herein are Copyright (c) International Business Machines
+ * Corporation, 2000. Modifications to Mozilla code or documentation identified
+ * per MPL Section 3.3
+ *
+ * Date             Modified by     Description of modification
+ * 04/20/2000       IBM Corp.      OS/2 VisualAge build.
+ */
 
 /* storage of the frame tree and information about it */
 
@@ -54,7 +63,6 @@ struct UndisplayedNode : public LinkedListElement<UndisplayedNode>
 class nsFrameManager : public nsFrameManagerBase
 {
   typedef mozilla::layout::FrameChildListID ChildListID;
-  typedef mozilla::UndisplayedNode UndisplayedNode;
 
 public:
   explicit nsFrameManager(nsIPresShell* aPresShell) {
@@ -70,55 +78,30 @@ public:
    */
   void Destroy();
 
-
-  // display:none and display:contents content does not get an nsIFrame.  To
-  // enable the style context for such content to be obtained we store the
-  // contexts in a couple of hash tables.  The following methods provide the
-  // API that's used to set, reset, obtain and clear these style contexts.
-
-  /**
-   * Register the style context for the display:none content, aContent.
-   */
-  void RegisterDisplayNoneStyleFor(nsIContent* aContent,
-                                   nsStyleContext* aStyleContext);
-
-  /**
-   * Register the style context for the display:contents content, aContent.
-   */
-  void RegisterDisplayContentsStyleFor(nsIContent* aContent,
-                                       nsStyleContext* aStyleContext);
-
-  /**
-   * Change the style context for the display:none content, aContent.
-   */
-  void ChangeRegisteredDisplayNoneStyleFor(nsIContent* aContent,
-                                           nsStyleContext* aStyleContext)
+  // Mapping undisplayed content
+  nsStyleContext* GetUndisplayedContent(const nsIContent* aContent)
   {
-    ChangeStyleContextInMap(mDisplayNoneMap, aContent, aStyleContext);
-  }
-
-  /**
-   * Change the style context for the display:contents content, aContent.
-   */
-  void ChangeRegisteredDisplayContentsStyleFor(nsIContent* aContent,
-                                               nsStyleContext* aStyleContext)
-  {
-    ChangeStyleContextInMap(mDisplayContentsMap, aContent, aStyleContext);
-  }
-
-  /**
-   * Get the style context for the display:none content, aContent, if any.
-   */
-  nsStyleContext* GetDisplayNoneStyleFor(const nsIContent* aContent)
-  {
-    if (!mDisplayNoneMap) {
+    if (!mUndisplayedMap) {
       return nullptr;
     }
-    return GetStyleContextInMap(mDisplayNoneMap, aContent);
+    return GetStyleContextInMap(mUndisplayedMap, aContent);
+  }
+  mozilla::UndisplayedNode*
+    GetAllUndisplayedContentIn(nsIContent* aParentContent);
+  void SetUndisplayedContent(nsIContent* aContent,
+                             nsStyleContext* aStyleContext);
+  void ChangeUndisplayedContent(nsIContent* aContent,
+                                nsStyleContext* aStyleContext)
+  {
+    ChangeStyleContextInMap(mUndisplayedMap, aContent, aStyleContext);
   }
 
+  void ClearUndisplayedContentIn(nsIContent* aContent,
+                                 nsIContent* aParentContent);
+
+  // display:contents related methods:
   /**
-   * Get the style context for the display:contents content, aContent, if any.
+   * Return the registered display:contents style context for aContent, if any.
    */
   nsStyleContext* GetDisplayContentsStyleFor(const nsIContent* aContent)
   {
@@ -129,37 +112,42 @@ public:
   }
 
   /**
-   * Return the linked list of UndisplayedNodes that contain the style contexts
-   * that have been registered for the display:none children of
-   * aParentContent.
+   * Return the linked list of UndisplayedNodes containing the registered
+   * display:contents children of aParentContent, if any.
    */
-  UndisplayedNode*
-  GetAllRegisteredDisplayNoneStylesIn(nsIContent* aParentContent);
+  mozilla::UndisplayedNode* GetAllDisplayContentsIn(nsIContent* aParentContent);
 
   /**
-   * Return the linked list of UndisplayedNodes that contain the style contexts
-   * that have been registered for the display:contents children of
-   * aParentContent.
+   * Return the relevant undisplayed node for a given content with display:
+   * contents style.
    */
-  UndisplayedNode*
-  GetAllRegisteredDisplayContentsStylesIn(nsIContent* aParentContent);
+  mozilla::UndisplayedNode* GetDisplayContentsNodeFor(
+      const nsIContent* aContent) {
+    if (!mDisplayContentsMap) {
+      return nullptr;
+    }
+    return GetUndisplayedNodeInMapFor(mDisplayContentsMap, aContent);
+  }
 
   /**
-   * Unregister the style context for the display:none content, aContent,
-   * if any.  If found, then this method also unregisters the style contexts
-   * for any display:contents and display:none descendants of aContent.
+   * Register aContent having a display:contents style context.
    */
-  void UnregisterDisplayNoneStyleFor(nsIContent* aContent,
-                                     nsIContent* aParentContent);
+  void SetDisplayContents(nsIContent* aContent, nsStyleContext* aStyleContext);
+  /**
+   * Change the registered style context for aContent to aStyleContext.
+   */
+  void ChangeDisplayContents(nsIContent* aContent,
+                             nsStyleContext* aStyleContext)
+  {
+    ChangeStyleContextInMap(mDisplayContentsMap, aContent, aStyleContext);
+  }
 
   /**
-   * Unregister the style context for the display:contents content, aContent,
-   * if any.  If found, then this method also unregisters the style contexts
-   * for any display:contents and display:none descendants of aContent.
+   * Unregister the display:contents style context for aContent, if any.
+   * If found, then also unregister any display:contents and display:none
+   * style contexts for its descendants.
    */
-  void UnregisterDisplayContentsStyleFor(nsIContent* aContent,
-                                         nsIContent* aParentContent);
-
+  void ClearDisplayContentsIn(nsIContent* aContent, nsIContent* aParentContent);
 
   // Functions for manipulating the frame model
   void AppendFrames(nsContainerFrame* aParentFrame,
@@ -199,11 +187,7 @@ public:
 
   void RestoreFrameStateFor(nsIFrame* aFrame, nsILayoutHistoryState* aState);
 
-  void DestroyAnonymousContent(already_AddRefed<nsIContent> aContent);
-
 protected:
-  static nsIContent* ParentForUndisplayedMap(const nsIContent* aContent);
-
   void ClearAllMapsFor(nsIContent* aParentContent);
 
   static nsStyleContext* GetStyleContextInMap(UndisplayedMap* aMap,

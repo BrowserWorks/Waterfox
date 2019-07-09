@@ -10,7 +10,6 @@ treeherder configuration and attributes for that platform.
 from __future__ import absolute_import, print_function, unicode_literals
 
 import copy
-import os
 
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.transforms.job import job_description_schema
@@ -69,11 +68,9 @@ def validate(config, jobs):
 
 
 @transforms.add
-def set_job_name(config, jobs):
+def set_job_try_name(config, jobs):
     for job in jobs:
-        if 'job-from' in job and job['job-from'] != 'kind.yml':
-            from_name = os.path.splitext(job['job-from'])[0]
-            job['name'] = '{}-{}'.format(from_name, job['name'])
+        job.setdefault('attributes', {}).setdefault('job_try_name', job['name'])
         yield job
 
 

@@ -52,7 +52,7 @@ cd ~/web-platform-tests/referrer-policy
 git add * && git commit -m "Add generated tests"
 
 # Regenerate the manifest.
-../wpt manifest
+../manifest
 
 ```
 
@@ -87,7 +87,7 @@ cd ~/web-platform-tests/referrer-policy
 git add * && git commit -m "Remove generated tests"
 
 # Regenerate the manifest.
-../wpt manifest
+../manifest
 ```
 
 **Important:**
@@ -136,7 +136,7 @@ cd ~/web-platform-tests/referrer-policy
 git add * && git commit -m "Update generated tests"
 
 # Regenerate the manifest.
-../wpt manifest
+../manifest
 
 
 ```

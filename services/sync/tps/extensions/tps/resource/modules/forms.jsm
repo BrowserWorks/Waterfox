@@ -32,7 +32,7 @@ var FormDB = {
         handleCompletion(reason) {
           resolve();
         }
-      };
+      }
       FormHistory.update(data, handlers);
     });
   },
@@ -50,7 +50,7 @@ var FormDB = {
    */
   insertValue(fieldname, value, us) {
     let data = { op: "add", fieldname, value, timesUsed: 1,
-                 firstUsed: us, lastUsed: us };
+                 firstUsed: us, lastUsed: us }
     return this._update(data);
   },
 
@@ -97,8 +97,8 @@ var FormDB = {
         handleCompletion(reason) {
           resolve(result);
         }
-      };
-      FormHistory.search(["guid", "lastUsed", "firstUsed"], { fieldname, value }, handlers);
+      }
+      FormHistory.search(["guid", "lastUsed", "firstUsed"], { fieldname }, handlers);
     });
   },
 
@@ -211,11 +211,9 @@ FormData.prototype = {
    *
    * @return nothing
    */
-  async Remove() {
-    const formdata = await FormDB.getDataForValue(this.fieldname, this.value);
-    if (!formdata) {
-      return;
-    }
-    await FormDB.remove(formdata.guid);
+  Remove() {
+    /* Right now Weave doesn't handle this correctly, see bug 568363.
+     */
+    return FormDB.remove(this.id);
   },
 };

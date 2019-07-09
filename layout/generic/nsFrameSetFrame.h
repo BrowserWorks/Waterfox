@@ -17,7 +17,7 @@ class  nsIContent;
 class  nsPresContext;
 struct nsRect;
 struct nsSize;
-class  nsAtom;
+class  nsIAtom;
 class  nsHTMLFramesetBorderFrame;
 class  nsHTMLFramesetFrame;
 
@@ -96,6 +96,7 @@ public:
                              nsIFrame::Cursor& aCursor) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,

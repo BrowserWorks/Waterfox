@@ -3,7 +3,8 @@
 let notificationURL = "http://example.org/browser/browser/base/content/test/alerts/file_dom_notifications.html";
 
 add_task(async function test_notificationReplace() {
-  await addNotificationPermission(notificationURL);
+  let pm = Services.perms;
+  pm.add(makeURI(notificationURL), "desktop-notification", pm.ALLOW_ACTION);
 
   await BrowserTestUtils.withNewTab({
     gBrowser,
@@ -30,4 +31,8 @@ add_task(async function test_notificationReplace() {
       Assert.equal(newCloseEvent.target.body, "Test body 2", "Closed new notification");
     });
   });
+});
+
+add_task(async function cleanup() {
+  Services.perms.remove(makeURI(notificationURL), "desktop-notification");
 });

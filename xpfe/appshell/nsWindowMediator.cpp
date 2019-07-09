@@ -17,6 +17,7 @@
 #include "nsAppShellWindowEnumerator.h"
 #include "nsWindowMediator.h"
 #include "nsIWindowMediatorListener.h"
+#include "nsXPIDLString.h"
 #include "nsGlobalWindow.h"
 
 #include "nsIDocShell.h"
@@ -396,7 +397,7 @@ nsWindowMediator::UpdateWindowTimeStamp(nsIXULWindow* inWindow)
 
 NS_IMETHODIMP
 nsWindowMediator::UpdateWindowTitle(nsIXULWindow* inWindow,
-                                    const nsAString& inTitle)
+                                    const char16_t* inTitle)
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_STATE(mReady);

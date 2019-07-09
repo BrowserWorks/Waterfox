@@ -153,7 +153,7 @@ nsMathMLmmultiscriptsFrame::PlaceMultiScript(nsPresContext*  aPresContext,
                                         nscoord              aUserSupScriptShift,
                                         float                aFontSizeInflation)
 {
-  nsAtom* tag = aFrame->GetContent()->NodeInfo()->NameAtom();
+  nsIAtom* tag = aFrame->GetContent()->NodeInfo()->NameAtom();
 
   // This function deals with both munderover etc. as well as msubsup etc.
   // As the former behaves identically to the later, we treat it as such

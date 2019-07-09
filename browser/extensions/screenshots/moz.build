@@ -4,9 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-with Files("**"):
-    BUG_COMPONENT = ("Cloud Services", "Screenshots")
-
 FINAL_TARGET_FILES.features['screenshots@mozilla.org'] += [
   'bootstrap.js',
   'install.rdf'
@@ -18,7 +15,6 @@ FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"] += [
   'webextension/assertIsBlankDocument.js',
   'webextension/assertIsTrusted.js',
   'webextension/blank.html',
-  'webextension/blobConverters.js',
   'webextension/catcher.js',
   'webextension/clipboard.js',
   'webextension/domainFromUrl.js',
@@ -35,10 +31,6 @@ FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales
 
 FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["ar"] += [
   'webextension/_locales/ar/messages.json'
-]
-
-FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["ast"] += [
-  'webextension/_locales/ast/messages.json'
 ]
 
 FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["az"] += [
@@ -119,10 +111,6 @@ FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales
 
 FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["et"] += [
   'webextension/_locales/et/messages.json'
-]
-
-FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["eu"] += [
-  'webextension/_locales/eu/messages.json'
 ]
 
 FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["_locales"]["fa"] += [
@@ -372,14 +360,12 @@ FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["icons"] 
   'webextension/icons/icon-starred-32-v2.svg',
   'webextension/icons/icon-welcome-face-without-eyes.svg',
   'webextension/icons/menu-fullpage.svg',
-  'webextension/icons/menu-myshot-white.svg',
   'webextension/icons/menu-myshot.svg',
   'webextension/icons/menu-visible.svg',
   'webextension/icons/onboarding-1.png',
   'webextension/icons/onboarding-2.png',
   'webextension/icons/onboarding-3.png',
-  'webextension/icons/onboarding-4.png',
-  'webextension/icons/onboarding-5.png'
+  'webextension/icons/onboarding-4.png'
 ]
 
 FINAL_TARGET_FILES.features['screenshots@mozilla.org']["webextension"]["onboarding"] += [

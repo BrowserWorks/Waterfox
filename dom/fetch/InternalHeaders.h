@@ -45,23 +45,14 @@ private:
   HeadersGuardEnum mGuard;
   nsTArray<Entry> mList;
 
-  nsTArray<Entry> mSortedList;
-
-  // This boolean is set to true at any writing operation to mList. It's set to
-  // false when mSortedList is regenerated. This happens when the header is
-  // iterated.
-  bool mListDirty;
-
 public:
   explicit InternalHeaders(HeadersGuardEnum aGuard = HeadersGuardEnum::None)
     : mGuard(aGuard)
-    , mListDirty(false)
   {
   }
 
   explicit InternalHeaders(const InternalHeaders& aOther)
     : mGuard(HeadersGuardEnum::None)
-    , mListDirty(true)
   {
     ErrorResult result;
     Fill(aOther, result);
@@ -88,22 +79,19 @@ public:
   bool Has(const nsACString& aName, ErrorResult& aRv) const;
   void Set(const nsACString& aName, const nsACString& aValue, ErrorResult& aRv);
 
-  uint32_t GetIterableLength()
+  uint32_t GetIterableLength() const
   {
-    MaybeSortList();
-    return mSortedList.Length();
+    return mList.Length();
   }
-  const NS_ConvertASCIItoUTF16 GetKeyAtIndex(unsigned aIndex)
+  const NS_ConvertASCIItoUTF16 GetKeyAtIndex(unsigned aIndex) const
   {
-    MaybeSortList();
-    MOZ_ASSERT(aIndex < mSortedList.Length());
-    return NS_ConvertASCIItoUTF16(mSortedList[aIndex].mName);
+    MOZ_ASSERT(aIndex < mList.Length());
+    return NS_ConvertASCIItoUTF16(mList[aIndex].mName);
   }
-  const NS_ConvertASCIItoUTF16 GetValueAtIndex(unsigned aIndex)
+  const NS_ConvertASCIItoUTF16 GetValueAtIndex(unsigned aIndex) const
   {
-    MaybeSortList();
-    MOZ_ASSERT(aIndex < mSortedList.Length());
-    return NS_ConvertASCIItoUTF16(mSortedList[aIndex].mValue);
+    MOZ_ASSERT(aIndex < mList.Length());
+    return NS_ConvertASCIItoUTF16(mList[aIndex].mValue);
   }
 
   void Clear();
@@ -165,9 +153,6 @@ private:
                              const nsACString& aValue);
 
   static bool IsRevalidationHeader(const nsACString& aName);
-
-  void MaybeSortList();
-  void SetListDirty();
 };
 
 } // namespace dom

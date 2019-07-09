@@ -8,7 +8,6 @@
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/layers/Compositor.h"
-#include "mozilla/layers/SyncObject.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/TextureHost.h"
 #include "gfxWindowsPlatform.h"
@@ -18,10 +17,6 @@
 #include <vector>
 
 namespace mozilla {
-namespace gl {
-class GLBlitHelper;
-}
-
 namespace layers {
 
 class MOZ_RAII AutoTextureLock
@@ -43,9 +38,7 @@ class DXGITextureData : public TextureData
 public:
   virtual void FillInfo(TextureData::Info& aInfo) const override;
 
-  bool SerializeSpecific(SurfaceDescriptorD3D10* aOutDesc);
   virtual bool Serialize(SurfaceDescriptor& aOutDescrptor) override;
-  virtual void GetSubDescriptor(GPUVideoSubDescriptor* aOutDesc) override;
 
   static DXGITextureData*
   Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat, TextureAllocationFlags aFlags);
@@ -96,7 +89,7 @@ public:
                 TextureFlags aFlags,
                 TextureAllocationFlags aAllocFlags) const override;
 
-  virtual void SyncWithObject(SyncObjectClient* aSyncObject) override;
+  virtual void SyncWithObject(SyncObject* aSync) override;
 
   ID3D11Texture2D* GetD3D11Texture() { return mTexture; }
 
@@ -132,7 +125,6 @@ CreateD3D11extureClientWithDevice(gfx::IntSize aSize, gfx::SurfaceFormat aFormat
 
 class DXGIYCbCrTextureData : public TextureData
 {
-  friend class gl::GLBlitHelper;
 public:
   static DXGIYCbCrTextureData*
   Create(IDirect3DTexture9* aTextureY,
@@ -159,9 +151,7 @@ public:
 
   virtual void FillInfo(TextureData::Info& aInfo) const override;
 
-  void SerializeSpecific(SurfaceDescriptorDXGIYCbCr* aOutDesc);
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
-  virtual void GetSubDescriptor(GPUVideoSubDescriptor* aOutDesc) override;
 
   virtual already_AddRefed<gfx::DrawTarget> BorrowDrawTarget() override { return nullptr; }
 
@@ -333,20 +323,18 @@ public:
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
-  virtual void CreateRenderTexture(const wr::ExternalImageId& aExternalImageId) override;
+  virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                              const std::function<wr::ImageKey()>& aImageKeyAllocator) override;
 
-  virtual uint32_t NumSubTextures() const override;
+  virtual void AddWRImage(wr::WebRenderAPI* aAPI,
+                          Range<const wr::ImageKey>& aImageKeys,
+                          const wr::ExternalImageId& aExtID) override;
 
-  virtual void PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                   ResourceUpdateOp aOp,
-                                   const Range<wr::ImageKey>& aImageKeys,
-                                   const wr::ExternalImageId& aExtID) override;
-
-  virtual void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                const wr::LayoutRect& aBounds,
-                                const wr::LayoutRect& aClip,
-                                wr::ImageRendering aFilter,
-                                const Range<wr::ImageKey>& aImageKeys) override;
+  virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                 const wr::LayoutRect& aBounds,
+                                 const wr::LayoutRect& aClip,
+                                 wr::ImageRendering aFilter,
+                                 Range<const wr::ImageKey>& aImageKeys) override;
 
 protected:
   bool LockInternal();
@@ -356,7 +344,7 @@ protected:
 
   RefPtr<ID3D11Device> GetDevice();
 
-  bool EnsureTexture();
+  bool OpenSharedHandle();
 
   RefPtr<ID3D11Device> mDevice;
   RefPtr<ID3D11Texture2D> mTexture;
@@ -396,20 +384,18 @@ public:
     return nullptr;
   }
 
-  virtual void CreateRenderTexture(const wr::ExternalImageId& aExternalImageId) override;
+  virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                              const std::function<wr::ImageKey()>& aImageKeyAllocator) override;
 
-  virtual uint32_t NumSubTextures() const override;
+  virtual void AddWRImage(wr::WebRenderAPI* aAPI,
+                          Range<const wr::ImageKey>& aImageKeys,
+                          const wr::ExternalImageId& aExtID) override;
 
-  virtual void PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                   ResourceUpdateOp aOp,
-                                   const Range<wr::ImageKey>& aImageKeys,
-                                   const wr::ExternalImageId& aExtID) override;
-
-  virtual void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                const wr::LayoutRect& aBounds,
-                                const wr::LayoutRect& aClip,
-                                wr::ImageRendering aFilter,
-                                const Range<wr::ImageKey>& aImageKeys) override;
+  virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                 const wr::LayoutRect& aBounds,
+                                 const wr::LayoutRect& aClip,
+                                 wr::ImageRendering aFilter,
+                                 Range<const wr::ImageKey>& aImageKeys) override;
 
 private:
   bool EnsureTextureSource();
@@ -417,7 +403,7 @@ private:
 protected:
   RefPtr<ID3D11Device> GetDevice();
 
-  bool EnsureTexture();
+  bool OpenSharedHandle();
 
   RefPtr<ID3D11Texture2D> mTextures[3];
   RefPtr<DataTextureSourceD3D11> mTextureSources[3];
@@ -450,50 +436,26 @@ private:
   RefPtr<ID3D11RenderTargetView> mRTView;
 };
 
-class SyncObjectD3D11Host : public SyncObjectHost
+class SyncObjectD3D11 : public SyncObject
 {
 public:
-  explicit SyncObjectD3D11Host(ID3D11Device* aDevice);
+  explicit SyncObjectD3D11(SyncHandle aSyncHandle, ID3D11Device* aDevice);
+  virtual void FinalizeFrame();
+  virtual bool IsSyncObjectValid();
 
-  virtual bool Init() override;
-
-  virtual SyncHandle GetSyncHandle() override;
-
-  virtual bool Synchronize() override;
-
-  IDXGIKeyedMutex* GetKeyedMutex() { return mKeyedMutex.get(); };
-
-private:
-  virtual ~SyncObjectD3D11Host() { }
-
-  SyncHandle mSyncHandle;
-  RefPtr<ID3D11Device> mDevice;
-  RefPtr<IDXGIResource> mSyncTexture;
-  RefPtr<IDXGIKeyedMutex> mKeyedMutex;
-};
-
-class SyncObjectD3D11Client : public SyncObjectClient
-{
-public:
-  explicit SyncObjectD3D11Client(SyncHandle aSyncHandle, ID3D11Device* aDevice);
-
-  virtual void Synchronize() override;
-
-  virtual bool IsSyncObjectValid() override;
-
-  virtual SyncType GetSyncType() override { return SyncType::D3D11; }
+  virtual SyncType GetSyncType() { return SyncType::D3D11; }
 
   void RegisterTexture(ID3D11Texture2D* aTexture);
 
 private:
   bool Init();
 
+private:
   SyncHandle mSyncHandle;
-  RefPtr<ID3D11Device> mDevice;
-  RefPtr<ID3D11Texture2D> mSyncTexture;
+  RefPtr<ID3D11Device> mD3D11Device;
+  RefPtr<ID3D11Texture2D> mD3D11Texture;
   RefPtr<IDXGIKeyedMutex> mKeyedMutex;
-  std::vector<ID3D11Texture2D*> mSyncedTextures;
-  Mutex mSyncLock;
+  std::vector<ID3D11Texture2D*> mD3D11SyncedTextures;
 };
 
 inline uint32_t GetMaxTextureSizeForFeatureLevel(D3D_FEATURE_LEVEL aFeatureLevel)

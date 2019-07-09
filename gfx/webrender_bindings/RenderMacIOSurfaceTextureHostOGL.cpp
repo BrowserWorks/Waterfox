@@ -105,7 +105,6 @@ RenderMacIOSurfaceTextureHostOGL::SetGLContext(gl::GLContext* aContext)
     // release the texture handle in the previous gl context
     DeleteTextureHandle();
     mGL = aContext;
-    mGL->MakeCurrent();
   }
 }
 

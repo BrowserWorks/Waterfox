@@ -757,9 +757,8 @@ int main(int argc, char** argv)
     }
 
     string sendURL = queryParameters["ServerURL"];
-    // we don't need to actually send these
+    // we don't need to actually send this
     queryParameters.erase("ServerURL");
-    queryParameters.erase("StackTraces");
 
     queryParameters["Throttleable"] = "1";
 

@@ -25,14 +25,13 @@ using libaom_test::ACMRandom;
 
 namespace {
 typedef void (*IhtFunc)(const tran_low_t *in, uint8_t *out, int stride,
-                        const TxfmParam *txfm_param);
+                        int tx_type);
 using std::tr1::tuple;
 using libaom_test::FhtFunc;
 typedef tuple<FhtFunc, IhtFunc, int, aom_bit_depth_t, int> Ht32x32Param;
 
-void fht32x32_ref(const int16_t *in, tran_low_t *out, int stride,
-                  TxfmParam *txfm_param) {
-  av1_fht32x32_c(in, out, stride, txfm_param);
+void fht32x32_ref(const int16_t *in, tran_low_t *out, int stride, int tx_type) {
+  av1_fht32x32_c(in, out, stride, tx_type);
 }
 
 #if CONFIG_HIGHBITDEPTH
@@ -52,11 +51,11 @@ void highbd_fht32x32_ref(const int16_t *in, int32_t *out, int stride,
 
 #if HAVE_SSE2 || HAVE_AVX2
 void dummy_inv_txfm(const tran_low_t *in, uint8_t *out, int stride,
-                    const TxfmParam *txfm_param) {
+                    int tx_type) {
   (void)in;
   (void)out;
   (void)stride;
-  (void)txfm_param;
+  (void)tx_type;
 }
 #endif
 
@@ -68,23 +67,23 @@ class AV1Trans32x32HT : public libaom_test::TransformTestBase,
   virtual void SetUp() {
     fwd_txfm_ = GET_PARAM(0);
     inv_txfm_ = GET_PARAM(1);
+    tx_type_ = GET_PARAM(2);
     pitch_ = 32;
     height_ = 32;
     fwd_txfm_ref = fht32x32_ref;
     bit_depth_ = GET_PARAM(3);
     mask_ = (1 << bit_depth_) - 1;
     num_coeffs_ = GET_PARAM(4);
-    txfm_param_.tx_type = GET_PARAM(2);
   }
   virtual void TearDown() { libaom_test::ClearSystemState(); }
 
  protected:
   void RunFwdTxfm(const int16_t *in, tran_low_t *out, int stride) {
-    fwd_txfm_(in, out, stride, &txfm_param_);
+    fwd_txfm_(in, out, stride, tx_type_);
   }
 
   void RunInvTxfm(const tran_low_t *out, uint8_t *dst, int stride) {
-    inv_txfm_(out, dst, stride, &txfm_param_);
+    inv_txfm_(out, dst, stride, tx_type_);
   }
 
   FhtFunc fwd_txfm_;

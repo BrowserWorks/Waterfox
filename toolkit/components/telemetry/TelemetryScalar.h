@@ -55,9 +55,6 @@ void Set(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, uint32_t aValu
 void Set(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, bool aValue);
 void SetMaximum(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, uint32_t aValue);
 
-nsresult RegisterScalars(const nsACString& aCategoryName, JS::Handle<JS::Value> aScalarData,
-                         JSContext* cx);
-
 // Only to be used for testing.
 void ClearScalars();
 
@@ -72,9 +69,6 @@ void UpdateChildKeyedData(mozilla::Telemetry::ProcessID aProcessType,
 
 void RecordDiscardedData(mozilla::Telemetry::ProcessID aProcessType,
                          const mozilla::Telemetry::DiscardedData& aDiscardedData);
-
-void GetDynamicScalarDefinitions(nsTArray<mozilla::Telemetry::DynamicScalarDefinition>&);
-void AddDynamicScalarDefinitions(const nsTArray<mozilla::Telemetry::DynamicScalarDefinition>&);
 
 } // namespace TelemetryScalar
 

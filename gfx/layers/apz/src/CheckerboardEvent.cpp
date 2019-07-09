@@ -114,8 +114,8 @@ CheckerboardEvent::LogInfo(RendertraceProperty aProperty,
       << sColors[aProperty] << " "
       << aRect.x << " "
       << aRect.y << " "
-      << aRect.Width() << " "
-      << aRect.Height() << " "
+      << aRect.width << " "
+      << aRect.height << " "
       << "// " << sDescriptions[aProperty]
       << aExtraInfo << std::endl;
 }

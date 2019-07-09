@@ -17,7 +17,7 @@ MockMediaResource::MockMediaResource(const char* aFileName)
 }
 
 nsresult
-MockMediaResource::Open()
+MockMediaResource::Open(nsIStreamListener** aStreamListener)
 {
   mFileHandle = fopen(mFileName, "rb");
   if (mFileHandle == nullptr) {

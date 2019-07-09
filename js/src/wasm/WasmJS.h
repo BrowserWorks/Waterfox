@@ -27,7 +27,6 @@ namespace js {
 
 class TypedArrayObject;
 class WasmFunctionScope;
-class WasmInstanceScope;
 
 namespace wasm {
 
@@ -148,7 +147,6 @@ class WasmInstanceObject : public NativeObject
     static const unsigned EXPORTS_OBJ_SLOT = 1;
     static const unsigned EXPORTS_SLOT = 2;
     static const unsigned SCOPES_SLOT = 3;
-    static const unsigned INSTANCE_SCOPE_SLOT = 4;
     static const ClassOps classOps_;
     static bool exportsGetterImpl(JSContext* cx, const CallArgs& args);
     static bool exportsGetter(JSContext* cx, unsigned argc, Value* vp);
@@ -176,7 +174,7 @@ class WasmInstanceObject : public NativeObject
     ScopeMap& scopes() const;
 
   public:
-    static const unsigned RESERVED_SLOTS = 5;
+    static const unsigned RESERVED_SLOTS = 4;
     static const Class class_;
     static const JSPropertySpec properties[];
     static const JSFunctionSpec methods[];
@@ -204,7 +202,6 @@ class WasmInstanceObject : public NativeObject
 
     const wasm::CodeRange& getExportedFunctionCodeRange(HandleFunction fun, wasm::Tier tier);
 
-    static WasmInstanceScope* getScope(JSContext* cx, HandleWasmInstanceObject instanceObj);
     static WasmFunctionScope* getFunctionScope(JSContext* cx,
                                                HandleWasmInstanceObject instanceObj,
                                                uint32_t funcIndex);

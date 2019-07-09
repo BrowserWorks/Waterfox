@@ -155,7 +155,13 @@ NS_IMETHODIMP
 nsProfiler::GetProfile(double aSinceTime, char** aProfile)
 {
   mozilla::UniquePtr<char[]> profile = profiler_get_profile(aSinceTime);
-  *aProfile = profile.release();
+  if (profile) {
+    size_t len = strlen(profile.get());
+    char *profileStr = static_cast<char *>
+                         (nsMemory::Clone(profile.get(), (len + 1) * sizeof(char)));
+    profileStr[len] = '\0';
+    *aProfile = profileStr;
+  }
   return NS_OK;
 }
 
@@ -346,8 +352,7 @@ nsProfiler::GetProfileDataAsArrayBuffer(double aSinceTime, JSContext* aCx,
 
 NS_IMETHODIMP
 nsProfiler::DumpProfileToFileAsync(const nsACString& aFilename,
-                                   double aSinceTime, JSContext* aCx,
-                                   nsISupports** aPromise)
+                                   double aSinceTime)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -355,28 +360,11 @@ nsProfiler::DumpProfileToFileAsync(const nsACString& aFilename,
     return NS_ERROR_FAILURE;
   }
 
-  if (NS_WARN_IF(!aCx)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsIGlobalObject* globalObject =
-    xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx));
-
-  if (NS_WARN_IF(!globalObject)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  ErrorResult result;
-  RefPtr<Promise> promise = Promise::Create(globalObject, result);
-  if (NS_WARN_IF(result.Failed())) {
-    return result.StealNSResult();
-  }
-
   nsCString filename(aFilename);
 
   StartGathering(aSinceTime)->Then(
     GetMainThreadSerialEventTarget(), __func__,
-    [filename, promise](const nsCString& aResult) {
+    [filename](const nsCString& aResult) {
       nsCOMPtr<nsIFile> file = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
       nsresult rv = file->InitWithNativePath(filename);
       if (NS_FAILED(rv)) {
@@ -388,14 +376,9 @@ nsProfiler::DumpProfileToFileAsync(const nsACString& aFilename,
       uint32_t sz;
       of->Write(aResult.get(), aResult.Length(), &sz);
       of->Close();
-
-      promise->MaybeResolveWithUndefined();
     },
-    [promise](nsresult aRv) {
-      promise->MaybeReject(aRv);
-    });
+    [](nsresult aRv) { });
 
-  promise.forget(aPromise);
   return NS_OK;
 }
 
@@ -433,7 +416,9 @@ GetArrayOfStringsForFeatures(uint32_t aFeatures,
 
   #define DUP_IF_SET(n_, str_, Name_) \
     if (ProfilerFeature::Has##Name_(aFeatures)) { \
-      featureList[i] = moz_xstrdup(str_); \
+      size_t strLen = strlen(str_); \
+      featureList[i] = static_cast<char*>( \
+        nsMemory::Clone(str_, (strLen + 1) * sizeof(char))); \
       i++; \
     }
 
@@ -583,7 +568,7 @@ nsProfiler::StartGathering(double aSinceTime)
   TimeStamp thisProcessFirstSampleTime;
 
   // Start building up the JSON result and grab the profile from this process.
-  mWriter->Start();
+  mWriter->Start(SpliceableJSONWriter::SingleLineStyle);
   if (!profiler_stream_json_for_this_process(*mWriter, aSinceTime,
                                              /* aIsShuttingDown */ true,
                                              &thisProcessFirstSampleTime)) {
@@ -623,8 +608,10 @@ nsProfiler::StartGathering(double aSinceTime)
   RefPtr<nsProfiler> self = this;
   for (auto profile : profiles) {
     profile->Then(GetMainThreadSerialEventTarget(), __func__,
-      [self](const nsCString& aResult) {
-        self->GatheredOOPProfile(aResult);
+      [self](const mozilla::ipc::Shmem& aResult) {
+        const nsDependentCSubstring profileString(aResult.get<char>(),
+                                                  aResult.Size<char>() - 1);
+        self->GatheredOOPProfile(profileString);
       },
       [self](ipc::PromiseRejectReason aReason) {
         self->GatheredOOPProfile(NS_LITERAL_CSTRING(""));

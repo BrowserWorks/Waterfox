@@ -1215,7 +1215,7 @@ static const EStateRule sWAIUnivStateMap[] = {
   eARIACurrent,
   eARIADisabled,
   eARIAExpanded,  // Currently under spec review but precedent exists
-  eARIAHasPopup,  // Note this is a tokenised attribute starting in ARIA 1.1
+  eARIAHasPopup,  // Note this is technically a "property"
   eARIAInvalid,
   eARIAModal,
   eARIARequired,  // XXX not global, Bug 553117
@@ -1230,7 +1230,7 @@ static const EStateRule sWAIUnivStateMap[] = {
 
 struct AttrCharacteristics
 {
-  nsAtom** attributeName;
+  nsIAtom** attributeName;
   const uint8_t characteristics;
 };
 
@@ -1248,7 +1248,7 @@ static const AttrCharacteristics gWAIUnivAttrMap[] = {
   {&nsGkAtoms::aria_expanded,          ATTR_BYPASSOBJ | ATTR_VALTOKEN               },
   {&nsGkAtoms::aria_flowto,            ATTR_BYPASSOBJ                 | ATTR_GLOBAL },
   {&nsGkAtoms::aria_grabbed,                            ATTR_VALTOKEN | ATTR_GLOBAL },
-  {&nsGkAtoms::aria_haspopup,          ATTR_BYPASSOBJ_IF_FALSE | ATTR_VALTOKEN | ATTR_GLOBAL },
+  {&nsGkAtoms::aria_haspopup,          ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL },
   {&nsGkAtoms::aria_hidden,            ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL }, /* handled special way */
   {&nsGkAtoms::aria_invalid,           ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL },
   {&nsGkAtoms::aria_label,             ATTR_BYPASSOBJ                 | ATTR_GLOBAL },
@@ -1361,7 +1361,7 @@ aria::UniversalStatesFor(mozilla::dom::Element* aElement)
 }
 
 uint8_t
-aria::AttrCharacteristicsFor(nsAtom* aAtom)
+aria::AttrCharacteristicsFor(nsIAtom* aAtom)
 {
   for (uint32_t i = 0; i < ArrayLength(gWAIUnivAttrMap); i++)
     if (*gWAIUnivAttrMap[i].attributeName == aAtom)
@@ -1389,7 +1389,7 @@ AttrIterator::Next(nsAString& aAttrName, nsAString& aAttrValue)
     const nsAttrName* attr = mContent->GetAttrNameAt(mAttrIdx);
     mAttrIdx++;
     if (attr->NamespaceEquals(kNameSpaceID_None)) {
-      nsAtom* attrAtom = attr->Atom();
+      nsIAtom* attrAtom = attr->Atom();
       nsDependentAtomString attrStr(attrAtom);
       if (!StringBeginsWith(attrStr, NS_LITERAL_STRING("aria-")))
         continue; // Not ARIA

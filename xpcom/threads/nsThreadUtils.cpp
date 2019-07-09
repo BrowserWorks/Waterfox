@@ -9,10 +9,6 @@
 #include "mozilla/Likely.h"
 #include "mozilla/TimeStamp.h"
 #include "LeakRefPtr.h"
-#include "nsComponentManagerUtils.h"
-#include "nsITimer.h"
-
-#include "nsComponentManagerUtils.h"
 
 #ifdef MOZILLA_INTERNAL_API
 # include "nsThreadManager.h"
@@ -82,46 +78,15 @@ CancelableRunnable::Cancel()
 NS_IMPL_ISUPPORTS_INHERITED(IdleRunnable, CancelableRunnable,
                             nsIIdleRunnable)
 
-NS_IMPL_ISUPPORTS_INHERITED(PrioritizableRunnable, Runnable,
-                            nsIRunnablePriority)
-
-PrioritizableRunnable::PrioritizableRunnable(already_AddRefed<nsIRunnable>&& aRunnable,
-                                             uint32_t aPriority)
- // Real runnable name is managed by overridding the GetName function.
- : Runnable("PrioritizableRunnable")
- , mRunnable(Move(aRunnable))
- , mPriority(aPriority)
+namespace mozilla {
+namespace detail {
+already_AddRefed<nsITimer> CreateTimer()
 {
-#if DEBUG
-  nsCOMPtr<nsIRunnablePriority> runnablePrio = do_QueryInterface(mRunnable);
-  MOZ_ASSERT(!runnablePrio);
-#endif
+  nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  return timer.forget();
 }
-
-NS_IMETHODIMP
-PrioritizableRunnable::GetName(nsACString& aName)
-{
-  // Try to get a name from the underlying runnable.
-  nsCOMPtr<nsINamed> named = do_QueryInterface(mRunnable);
-  if (named) {
-    named->GetName(aName);
-  }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-PrioritizableRunnable::Run()
-{
-  MOZ_RELEASE_ASSERT(NS_IsMainThread());
-  return mRunnable->Run();
-}
-
-NS_IMETHODIMP
-PrioritizableRunnable::GetPriority(uint32_t* aPriority)
-{
-  *aPriority = mPriority;
-  return NS_OK;
-}
+} // namespace detail
+} // namespace mozilla
 
 #endif  // XPCOM_GLUE_AVOID_NSPR
 
@@ -351,13 +316,15 @@ public:
   {
     MOZ_ASSERT(aTarget);
     MOZ_ASSERT(!mTimer);
-    NS_NewTimerWithFuncCallback(getter_AddRefs(mTimer),
-                                TimedOut,
-                                this,
-                                aDelay,
-                                nsITimer::TYPE_ONE_SHOT,
-                                "IdleRunnableWrapper::SetTimer",
-                                aTarget);
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    if (mTimer) {
+      mTimer->SetTarget(aTarget);
+      mTimer->InitWithNamedFuncCallback(TimedOut,
+                                        this,
+                                        aDelay,
+                                        nsITimer::TYPE_ONE_SHOT,
+                                        "IdleRunnableWrapper::SetTimer");
+    }
   }
 
   NS_IMETHOD GetName(nsACString& aName) override
@@ -572,6 +539,18 @@ nsAutoLowPriorityIO::~nsAutoLowPriorityIO()
 }
 
 namespace mozilla {
+
+PRThread*
+GetCurrentVirtualThread()
+{
+  return PR_GetCurrentThread();
+}
+
+PRThread*
+GetCurrentPhysicalThread()
+{
+  return PR_GetCurrentThread();
+}
 
 nsIEventTarget*
 GetCurrentThreadEventTarget()

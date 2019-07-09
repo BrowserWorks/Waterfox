@@ -13,13 +13,16 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  LanguageDetector: "resource:///modules/translation/LanguageDetector.jsm",
-  MessageChannel: "resource://gre/modules/MessageChannel.jsm",
-  Schemas: "resource://gre/modules/Schemas.jsm",
-  TelemetryStopwatch: "resource://gre/modules/TelemetryStopwatch.jsm",
-  WebNavigationFrames: "resource://gre/modules/WebNavigationFrames.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
+                                  "resource:///modules/translation/LanguageDetector.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
+                                  "resource://gre/modules/MessageChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
+                                  "resource://gre/modules/Schemas.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
+                                  "resource://gre/modules/TelemetryStopwatch.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "WebNavigationFrames",
+                                  "resource://gre/modules/WebNavigationFrames.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "styleSheetService",
                                    "@mozilla.org/content/style-sheet-service;1",
@@ -137,16 +140,8 @@ class CacheMap extends DefaultMap {
 
 class ScriptCache extends CacheMap {
   constructor(options) {
-    super(SCRIPT_EXPIRY_TIMEOUT_MS);
-    this.options = options;
-  }
-
-  defaultConstructor(url) {
-    let promise = ChromeUtils.compileScript(url, this.options);
-    promise.then(script => {
-      promise.script = script;
-    });
-    return promise;
+    super(SCRIPT_EXPIRY_TIMEOUT_MS,
+          url => ChromeUtils.compileScript(url, options));
   }
 }
 
@@ -262,25 +257,14 @@ class Script {
 
   async injectInto(window) {
     let context = this.extension.getContext(window);
-    try {
-      if (this.runAt === "document_end") {
-        await promiseDocumentReady(window.document);
-      } else if (this.runAt === "document_idle") {
-        let readyThenIdle = promiseDocumentReady(window.document).then(() => {
-          return new Promise(resolve =>
-            window.requestIdleCallback(resolve, {timeout: idleTimeout}));
-        });
 
-        await Promise.race([
-          readyThenIdle,
-          promiseDocumentLoaded(window.document),
-        ]);
-      }
-
-      return this.inject(context);
-    } catch (e) {
-      return Promise.reject(context.normalizeError(e));
+    if (this.runAt === "document_end") {
+      await promiseDocumentReady(window.document);
+    } else if (this.runAt === "document_idle") {
+      await promiseDocumentLoaded(window.document);
     }
+
+    return this.inject(context);
   }
 
   /**
@@ -328,26 +312,24 @@ class Script {
       }
     }
 
-    let scriptPromises = this.compileScripts();
+    let scriptsPromise = Promise.all(this.compileScripts());
 
-    let scripts = scriptPromises.map(promise => promise.script);
-    // If not all scripts are already available in the cache, block
-    // parsing and wait all promises to resolve.
-    if (!scripts.every(script => script)) {
-      let promise = Promise.all(scriptPromises);
-
-      // If we're supposed to inject at the start of the document load,
-      // and we haven't already missed that point, block further parsing
-      // until the scripts have been loaded.
-      let {document} = context.contentWindow;
-      if (this.runAt === "document_start" && document.readyState !== "complete") {
-        document.blockParsing(promise, {blockScriptCreated: false});
-      }
-
-      scripts = await promise;
+    // If we're supposed to inject at the start of the document load,
+    // and we haven't already missed that point, block further parsing
+    // until the scripts have been loaded.
+    let {document} = context.contentWindow;
+    if (this.runAt === "document_start" && document.readyState !== "complete") {
+      document.blockParsing(scriptsPromise);
     }
 
+    let scripts = await scriptsPromise;
     let result;
+
+    if (this.runAt === "document_idle") {
+      await new Promise(resolve =>
+          context.contentWindow.requestIdleCallback(resolve,
+                                                    {timeout: idleTimeout}));
+    }
 
     // The evaluations below may throw, in which case the promise will be
     // automatically rejected.
@@ -450,16 +432,7 @@ class ContentScriptContextChild extends BaseContext {
         originAttributes: attrs,
       });
 
-      // Preserve a copy of the original window's XMLHttpRequest and fetch
-      // in a content object (fetch is manually binded to the window
-      // to prevent it from raising a TypeError because content object is not
-      // a real window).
       Cu.evalInSandbox(`
-        this.content = {
-          XMLHttpRequest: window.XMLHttpRequest,
-          fetch: window.fetch.bind(window),
-        };
-
         window.JSON = JSON;
         window.XMLHttpRequest = XMLHttpRequest;
         window.fetch = fetch;
@@ -740,14 +713,8 @@ this.ExtensionContent = {
       return null;
     };
 
-    let promises;
-    try {
-      promises = Array.from(this.enumerateWindows(global.docShell), executeInWin)
-                      .filter(promise => promise);
-    } catch (e) {
-      Cu.reportError(e);
-      return Promise.reject({message: "An unexpected error occurred"});
-    }
+    let promises = Array.from(this.enumerateWindows(global.docShell), executeInWin)
+                        .filter(promise => promise);
 
     if (!promises.length) {
       if (options.frame_id) {
@@ -792,12 +759,7 @@ this.ExtensionContent = {
                                                docShell.ENUMERATE_FORWARDS);
 
     for (let docShell of XPCOMUtils.IterSimpleEnumerator(enum_, Ci.nsIInterfaceRequestor)) {
-      try {
-        yield docShell.getInterface(Ci.nsIDOMWindow);
-      } catch (e) {
-        // This can fail if the docShell is being destroyed, so just
-        // ignore the error.
-      }
+      yield docShell.getInterface(Ci.nsIDOMWindow);
     }
   },
 };

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.prototype.toutcstring
 es6id: 20.3.4.43
 description: >
   Date.prototype.toUTCString.name is "toUTCString".

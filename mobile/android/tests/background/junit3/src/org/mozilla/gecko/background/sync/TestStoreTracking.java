@@ -61,14 +61,14 @@ public class TestStoreTracking extends AndroidSyncTestCase {
       }
 
       @Override
-      public void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion) {
+      public void onRecordStoreReconciled(String guid) {
         Logger.debug(getName(), "Reconciled " + guid);
         assertEq(expectedGUID, guid);
       }
 
       @Override
-      public void onStoreCompleted() {
-        Logger.debug(getName(), "Store completed.");
+      public void onStoreCompleted(long storeEnd) {
+        Logger.debug(getName(), "Store completed at " + storeEnd + ".");
         try {
           session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
             @Override
@@ -78,11 +78,11 @@ public class TestStoreTracking extends AndroidSyncTestCase {
             }
 
             @Override
-            public void onFetchCompleted() {
-              Logger.debug(getName(), "Fetch completed.");
+            public void onFetchCompleted(final long fetchEnd) {
+              Logger.debug(getName(), "Fetch completed at " + fetchEnd + ".");
 
               // But fetching by time returns nothing.
-              session.fetchModified(new SimpleSuccessFetchDelegate() {
+              session.fetchSince(0, new SimpleSuccessFetchDelegate() {
                 private AtomicBoolean fetched = new AtomicBoolean(false);
 
                 @Override
@@ -93,7 +93,7 @@ public class TestStoreTracking extends AndroidSyncTestCase {
                 }
 
                 @Override
-                public void onFetchCompleted() {
+                public void onFetchCompleted(final long fetchEnd) {
                   if (fetched.get()) {
                     Logger.debug(getName(), "Not finishing session: record retrieved.");
                     return;
@@ -155,7 +155,7 @@ public class TestStoreTracking extends AndroidSyncTestCase {
             @Override
             public void onBeginSucceeded(final RepositorySession session) {
               // Now we get a result.
-              session.fetchModified(new SimpleSuccessFetchDelegate() {
+              session.fetchSince(0, new SimpleSuccessFetchDelegate() {
 
                 @Override
                 public void onFetchedRecord(Record record) {
@@ -163,7 +163,7 @@ public class TestStoreTracking extends AndroidSyncTestCase {
                 }
 
                 @Override
-                public void onFetchCompleted() {
+                public void onFetchCompleted(long end) {
                   try {
                     session.finish(new SimpleSuccessFinishDelegate() {
                       @Override

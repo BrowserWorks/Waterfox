@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ResultExtensions.h"
 #include "nsAutoConfig.h"
 #include "nsIURI.h"
 #include "nsIHttpChannel.h"
@@ -209,6 +208,7 @@ nsresult nsAutoConfig::downloadAutoConfig()
 {
     nsresult rv;
     nsAutoCString emailAddr;
+    nsXPIDLCString urlName;
     static bool firstTime = true;
 
     if (mConfigURL.IsEmpty()) {
@@ -336,8 +336,13 @@ nsresult nsAutoConfig::downloadAutoConfig()
         if (NS_SUCCEEDED(rv) && minutes > 0) {
             // Create a new timer and pass this nsAutoConfig
             // object as a timer callback.
-            MOZ_TRY_VAR(mTimer, NS_NewTimerWithCallback(this, minutes * 60 * 1000,
-                                                        nsITimer::TYPE_REPEATING_SLACK));
+            mTimer = do_CreateInstance("@mozilla.org/timer;1",&rv);
+            if (NS_FAILED(rv))
+                return rv;
+            rv = mTimer->InitWithCallback(this, minutes * 60 * 1000,
+                             nsITimer::TYPE_REPEATING_SLACK);
+            if (NS_FAILED(rv))
+                return rv;
         }
     } //first_time
 
@@ -458,7 +463,7 @@ nsresult nsAutoConfig::getEmailAddr(nsACString & emailAddr)
 {
 
     nsresult rv;
-    nsCString prefValue;
+    nsXPIDLCString prefValue;
 
     /* Getting an email address through set of three preferences:
        First getting a default account with
@@ -513,15 +518,15 @@ nsresult nsAutoConfig::PromptForEMailAddress(nsACString &emailAddress)
                                 getter_AddRefs(bundle));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsAutoString title;
-    rv = bundle->GetStringFromName("emailPromptTitle", title);
+    nsXPIDLString title;
+    rv = bundle->GetStringFromName("emailPromptTitle", getter_Copies(title));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsAutoString err;
-    rv = bundle->GetStringFromName("emailPromptMsg", err);
+    nsXPIDLString err;
+    rv = bundle->GetStringFromName("emailPromptMsg", getter_Copies(err));
     NS_ENSURE_SUCCESS(rv, rv);
     bool check = false;
-    nsString emailResult;
+    nsXPIDLString emailResult;
     bool success;
     rv = promptService->Prompt(nullptr, title.get(), err.get(), getter_Copies(emailResult), nullptr, &check, &success);
     if (!success)

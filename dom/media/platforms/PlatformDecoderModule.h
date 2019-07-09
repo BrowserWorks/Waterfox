@@ -52,20 +52,6 @@ struct MOZ_STACK_CLASS CreateDecoderParams final
   };
   using OptionSet = EnumSet<Option>;
 
-  struct UseNullDecoder
-  {
-    UseNullDecoder() = default;
-    explicit UseNullDecoder(bool aUseNullDecoder) : mUse(aUseNullDecoder) { }
-    bool mUse = false;
-  };
-
-  struct VideoFrameRate
-  {
-    VideoFrameRate() = default;
-    explicit VideoFrameRate(float aFramerate) : mValue(aFramerate) { }
-    float mValue = 0.0f;
-  };
-
   template <typename T1, typename... Ts>
   CreateDecoderParams(const TrackInfo& aConfig, T1&& a1, Ts&&... args)
     : mConfig(aConfig)
@@ -100,11 +86,10 @@ struct MOZ_STACK_CLASS CreateDecoderParams final
   MediaResult* mError = nullptr;
   RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   RefPtr<GMPCrashHelper> mCrashHelper;
-  UseNullDecoder mUseNullDecoder;
+  bool mUseNullDecoder = false;
   TrackInfo::TrackType mType = TrackInfo::kUndefinedTrack;
   MediaEventProducer<TrackInfo::TrackType>* mOnWaitingForKeyEvent = nullptr;
   OptionSet mOptions = OptionSet(Option::Default);
-  VideoFrameRate mRate;
 
 private:
   void Set(TaskQueue* aTaskQueue) { mTaskQueue = aTaskQueue; }
@@ -118,9 +103,8 @@ private:
   }
   void Set(MediaResult* aError) { mError = aError; }
   void Set(GMPCrashHelper* aCrashHelper) { mCrashHelper = aCrashHelper; }
-  void Set(UseNullDecoder aUseNullDecoder) { mUseNullDecoder = aUseNullDecoder; }
+  void Set(bool aUseNullDecoder) { mUseNullDecoder = aUseNullDecoder; }
   void Set(OptionSet aOptions) { mOptions = aOptions; }
-  void Set(VideoFrameRate aRate) { mRate = aRate; }
   void Set(layers::KnowsCompositor* aKnowsCompositor)
   {
     mKnowsCompositor = aKnowsCompositor;
@@ -168,16 +152,13 @@ public:
   virtual bool
   SupportsMimeType(const nsACString& aMimeType,
                    DecoderDoctorDiagnostics* aDiagnostics) const = 0;
-
   virtual bool
   Supports(const TrackInfo& aTrackInfo,
            DecoderDoctorDiagnostics* aDiagnostics) const
   {
-    if (!SupportsMimeType(aTrackInfo.mMimeType, aDiagnostics)) {
-      return false;
-    }
-    const auto videoInfo = aTrackInfo.GetAsVideoInfo();
-    return !videoInfo || SupportsBitDepth(videoInfo->mBitDepth, aDiagnostics);
+    // By default, fall back to SupportsMimeType with just the MIME string.
+    // (So PDMs do not need to override this method -- yet.)
+    return SupportsMimeType(aTrackInfo.mMimeType, aDiagnostics);
   }
 
 protected:
@@ -188,14 +169,6 @@ protected:
   friend class PDMFactory;
   friend class dom::RemoteDecoderModule;
   friend class EMEDecoderModule;
-
-  // Indicates if the PlatformDecoderModule supports decoding of aBitDepth.
-  // Should override this method when the platform can support bitDepth != 8.
-  virtual bool SupportsBitDepth(const uint8_t aBitDepth,
-                                DecoderDoctorDiagnostics* aDiagnostics) const
-  {
-    return aBitDepth == 8;
-  }
 
   // Creates a Video decoder. The layers backend is passed in so that
   // decoders can determine whether hardware accelerated decoding can be used.
@@ -307,8 +280,9 @@ public:
   }
 
   // Return the name of the MediaDataDecoder, only used for decoding.
-  // May be accessed in a non thread-safe fashion.
-  virtual nsCString GetDescriptionName() const = 0;
+  // Only return a static const string, as the information may be accessed
+  // in a non thread-safe fashion.
+  virtual const char* GetDescriptionName() const = 0;
 
   // Set a hint of seek target time to decoder. Decoder will drop any decoded
   // data which pts is smaller than this value. This threshold needs to be clear

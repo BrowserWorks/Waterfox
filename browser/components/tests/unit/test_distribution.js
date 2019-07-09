@@ -86,12 +86,11 @@ do_register_cleanup(function() {
   distDir.append("distribution");
   distDir.remove(true);
   Assert.ok(!distDir.exists());
-  Services.prefs.clearUserPref("distribution.testing.loadFromProfile");
 });
 
 add_task(async function() {
   // Force distribution.
-  let glue = Cc["@mozilla.org/browser/browserglue;1"].getService(Ci.nsIObserver);
+  let glue = Cc["@mozilla.org/browser/browserglue;1"].getService(Ci.nsIObserver)
   glue.observe(null, TOPIC_BROWSERGLUE_TEST, TOPICDATA_DISTRIBUTION_CUSTOMIZATION);
 
   var defaultBranch = Services.prefs.getDefaultBranch(null);

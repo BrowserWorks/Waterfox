@@ -3,6 +3,7 @@ var Ci = Components.interfaces;
 
 const runtime = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
 
-function run_test() {
-  do_check_eq(runtime.processType, Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT);
-}
+if (typeof(run_test) == "undefined") {
+  run_test = function() {
+    do_check_eq(runtime.processType, Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT);
+  }}

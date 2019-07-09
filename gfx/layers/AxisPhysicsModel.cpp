@@ -47,13 +47,13 @@ AxisPhysicsModel::~AxisPhysicsModel()
 }
 
 double
-AxisPhysicsModel::GetVelocity() const
+AxisPhysicsModel::GetVelocity()
 {
   return LinearInterpolate(mPrevState.v, mNextState.v, mProgress);
 }
 
 double
-AxisPhysicsModel::GetPosition() const
+AxisPhysicsModel::GetPosition()
 {
   return LinearInterpolate(mPrevState.p, mNextState.p, mProgress);
 }

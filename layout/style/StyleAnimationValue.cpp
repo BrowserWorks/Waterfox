@@ -1345,39 +1345,27 @@ ComputeTransformDistance(nsCSSValue::Array* aArray1,
       Point3D vector1(a1->Item(1).GetFloatValue(),
                       a1->Item(2).GetFloatValue(),
                       a1->Item(3).GetFloatValue());
-      double angle1 = a1->Item(4).GetAngleValueInRadians();
-
+      vector1.Normalize();
       Point3D vector2(a2->Item(1).GetFloatValue(),
                       a2->Item(2).GetFloatValue(),
                       a2->Item(3).GetFloatValue());
-      double angle2 = a2->Item(4).GetAngleValueInRadians();
-
-      auto normalizeVector = [](Point3D& vector, double& angle) {
-        if (vector.Length() > 0) {
-          vector.Normalize();
-        } else {
-          vector.x = 0.0;
-          vector.y = 0.0;
-          vector.z = 1.0;
-          angle = 0.0;
-        }
-      };
-      normalizeVector(vector1, angle1);
-      normalizeVector(vector2, angle2);
+      vector2.Normalize();
 
       if (vector1 == vector2) {
         // Handle rotate3d with matched (normalized) vectors.
-        distance = EnsureNotNan(angle2 - angle1);
+        nsCSSValue angle;
+        AddCSSValueAngle(1.0, a2->Item(4), -1.0, a1->Item(4), angle);
+        distance = angle.GetAngleValueInRadians() *
+                   angle.GetAngleValueInRadians();
       } else {
         // Use quaternion vectors to get the angle difference. Both q1 and q2
         // are unit vectors, so we can get their angle difference by
         // cos(theta/2) = (q1 dot q2) / (|q1| * |q2|) = q1 dot q2.
-        gfxQuaternion q1(vector1, angle1);
-        gfxQuaternion q2(vector2, angle2);
-        distance =
-          EnsureNotNan(2.0 * acos(clamped(q1.DotProduct(q2), -1.0, 1.0)));
+        gfxQuaternion q1(vector1, a1->Item(4).GetAngleValueInRadians());
+        gfxQuaternion q2(vector2, a2->Item(4).GetAngleValueInRadians());
+        distance = 2.0 * acos(clamped(q1.DotProduct(q2), -1.0, 1.0));
+        distance = distance * distance;
       }
-      distance = distance * distance;
       break;
     }
     case eCSSKeyword_perspective: {
@@ -3871,7 +3859,7 @@ StyleAnimationValue::UncomputeValue(nsCSSPropertyID aProperty,
     return false;
   }
 
-  val.AppendToString(aProperty, aSpecifiedValue);
+  val.AppendToString(aProperty, aSpecifiedValue, nsCSSValue::eNormalized);
   return true;
 }
 
@@ -4152,13 +4140,13 @@ ExtractImageLayerSizePairList(const nsStyleImageLayers& aLayer,
 }
 
 static bool
-StyleShapeSourceToCSSArray(const StyleShapeSource& aShapeSource,
-                           nsCSSValue::Array* aResult)
+StyleClipBasicShapeToCSSArray(const StyleShapeSource& aClipPath,
+                              nsCSSValue::Array* aResult)
 {
   MOZ_ASSERT(aResult->Count() == 2,
              "Expected array to be presized for a function and the sizing-box");
 
-  const UniquePtr<StyleBasicShape>& shape = aShapeSource.GetBasicShape();
+  const StyleBasicShape* shape = aClipPath.GetBasicShape();
   nsCSSKeyword functionName = shape->GetShapeTypeName();
   RefPtr<nsCSSValue::Array> functionArray;
   switch (shape->GetShapeType()) {
@@ -4236,36 +4224,7 @@ StyleShapeSourceToCSSArray(const StyleShapeSource& aShapeSource,
       MOZ_ASSERT_UNREACHABLE("Unknown shape type");
       return false;
   }
-  aResult->Item(1).SetEnumValue(aShapeSource.GetReferenceBox());
-  return true;
-}
-
-static bool
-ExtractComputedValueFromShapeSource(const StyleShapeSource& aShapeSource,
-                                    StyleAnimationValue& aComputedValue)
-{
-  const StyleShapeSourceType type = aShapeSource.GetType();
-
-  if (type == StyleShapeSourceType::URL) {
-    auto result = MakeUnique<nsCSSValue>();
-    result->SetURLValue(aShapeSource.GetURL());
-    aComputedValue.SetAndAdoptCSSValueValue(result.release(),
-                                            StyleAnimationValue::eUnit_URL);
-  } else if (type == StyleShapeSourceType::Box) {
-    aComputedValue.SetEnumValue(aShapeSource.GetReferenceBox());
-  } else if (type == StyleShapeSourceType::Shape) {
-    RefPtr<nsCSSValue::Array> result = nsCSSValue::Array::Create(2);
-    if (!StyleShapeSourceToCSSArray(aShapeSource, result)) {
-      return false;
-    }
-    aComputedValue.SetCSSValueArrayValue(result,
-                                         StyleAnimationValue::eUnit_Shape);
-
-  } else {
-    MOZ_ASSERT(type == StyleShapeSourceType::None, "unknown type");
-    aComputedValue.SetNoneValue();
-  }
-
+  aResult->Item(1).SetEnumValue(aClipPath.GetReferenceBox());
   return true;
 }
 
@@ -4545,14 +4504,13 @@ StyleAnimationValue::ExtractComputedValue(nsCSSPropertyID aProperty,
           ExtractImageLayerPositionYList(layers, aComputedValue);
           break;
         }
-
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
         case eCSSProperty_mask_position_x: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleSVGReset*>(styleStruct)->mMask;
           ExtractImageLayerPositionXList(layers, aComputedValue);
           break;
         }
-
         case eCSSProperty_mask_position_y: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleSVGReset*>(styleStruct)->mMask;
@@ -4560,38 +4518,45 @@ StyleAnimationValue::ExtractComputedValue(nsCSSPropertyID aProperty,
 
           break;
         }
-
+#endif
         case eCSSProperty_background_size: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleBackground*>(styleStruct)->mImage;
           ExtractImageLayerSizePairList(layers, aComputedValue);
           break;
         }
-
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
         case eCSSProperty_mask_size: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleSVGReset*>(styleStruct)->mMask;
           ExtractImageLayerSizePairList(layers, aComputedValue);
           break;
         }
+#endif
 
         case eCSSProperty_clip_path: {
           const nsStyleSVGReset* svgReset =
             static_cast<const nsStyleSVGReset*>(styleStruct);
-          if (!ExtractComputedValueFromShapeSource(svgReset->mClipPath,
-                                                   aComputedValue)) {
-            return false;
-          }
-          break;
-        }
+          const StyleShapeSource& clipPath = svgReset->mClipPath;
+          const StyleShapeSourceType type = clipPath.GetType();
 
-        case eCSSProperty_shape_outside: {
-          const nsStyleDisplay* styleDisplay =
-            static_cast<const nsStyleDisplay*>(styleStruct);
-          if (!ExtractComputedValueFromShapeSource(styleDisplay->mShapeOutside,
-                                                   aComputedValue)) {
-            return false;
-          };
+          if (type == StyleShapeSourceType::URL) {
+            auto result = MakeUnique<nsCSSValue>();
+            result->SetURLValue(clipPath.GetURL());
+            aComputedValue.SetAndAdoptCSSValueValue(result.release(), eUnit_URL);
+          } else if (type == StyleShapeSourceType::Box) {
+            aComputedValue.SetEnumValue(clipPath.GetReferenceBox());
+          } else if (type == StyleShapeSourceType::Shape) {
+            RefPtr<nsCSSValue::Array> result = nsCSSValue::Array::Create(2);
+            if (!StyleClipBasicShapeToCSSArray(clipPath, result)) {
+              return false;
+            }
+            aComputedValue.SetCSSValueArrayValue(result, eUnit_Shape);
+
+          } else {
+            MOZ_ASSERT(type == StyleShapeSourceType::None, "unknown type");
+            aComputedValue.SetNoneValue();
+          }
           break;
         }
 
@@ -5423,14 +5388,11 @@ AnimationValue::ComputeDistance(nsCSSPropertyID aProperty,
              !mServo == !aOther.mServo,
              "Animation values should have the same style engine");
 
-  double distance= 0.0;
   if (mServo) {
-    distance = Servo_AnimationValues_ComputeDistance(mServo, aOther.mServo);
-    return distance < 0.0
-           ? 0.0
-           : distance;
+    return Servo_AnimationValues_ComputeDistance(mServo, aOther.mServo);
   }
 
+  double distance = 0.0;
   return StyleAnimationValue::ComputeDistance(aProperty,
                                               mGecko,
                                               aOther.mGecko,

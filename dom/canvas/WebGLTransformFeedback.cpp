@@ -62,7 +62,7 @@ WebGLTransformFeedback::BeginTransformFeedback(GLenum primMode)
     const auto& prog = mContext->mCurrentProgram;
     if (!prog ||
         !prog->IsLinked() ||
-        prog->LinkInfo()->componentsPerTFVert.empty())
+        !prog->LinkInfo()->componentsPerTFVert.size())
     {
         mContext->ErrorInvalidOperation("%s: Current program not valid for transform"
                                         " feedback.",

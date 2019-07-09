@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/ary-ptrn-elem-ary-empty-init.case
-// - src/dstr-binding-for-await/default/for-await-of-async-gen-var.template
+// - src/dstr-binding/ary-ptrn-elem-ary-empty-init.case
+// - src/dstr-binding/default/for-await-of-async-gen-var.template
 /*---
 description: BindingElement with array binding pattern and initializer is used (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
-features: [generators, destructuring-binding, async-iteration]
+features: [destructuring-binding, async-iteration]
 flags: [generated, async]
 info: |
     IterationStatement :
@@ -34,7 +35,7 @@ info: |
 
     13.3.3.6 Runtime Semantics: IteratorBindingInitialization
 
-    BindingElement : BindingPattern Initializer_opt
+    BindingElement : BindingPatternInitializer opt
 
     [...]
     2. If iteratorRecord.[[done]] is true, let v be undefined.
@@ -43,7 +44,6 @@ info: |
        b. Let v be ? GetValue(defaultValue).
     4. Return the result of performing BindingInitialization of BindingPattern
        with v and environment as the arguments.
-
 ---*/
 var initCount = 0;
 var iterCount = 0;

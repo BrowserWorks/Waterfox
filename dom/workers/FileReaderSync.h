@@ -32,8 +32,7 @@ private:
   nsresult ConvertStream(nsIInputStream *aStream, const char *aCharset,
                          nsAString &aResult);
 
-  nsresult ConvertAsyncToSyncStream(uint64_t aStreamSize,
-                                    already_AddRefed<nsIInputStream> aAsyncStream,
+  nsresult ConvertAsyncToSyncStream(nsIInputStream* aAsyncStream,
                                     nsIInputStream** aSyncStream);
 
   nsresult SyncRead(nsIInputStream* aStream, char* aBuffer,

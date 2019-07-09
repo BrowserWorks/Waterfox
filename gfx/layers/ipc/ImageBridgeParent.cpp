@@ -46,8 +46,6 @@ std::map<base::ProcessId, ImageBridgeParent*> ImageBridgeParent::sImageBridges;
 
 StaticAutoPtr<mozilla::Monitor> sImageBridgesLock;
 
-static StaticRefPtr<ImageBridgeParent> sImageBridgeParentSingleton;
-
 // defined in CompositorBridgeParent.cpp
 CompositorThreadHolder* GetCompositorThreadHolder();
 
@@ -66,7 +64,6 @@ ImageBridgeParent::ImageBridgeParent(MessageLoop* aLoop,
   : mMessageLoop(aLoop)
   , mSetChildThreadPriority(false)
   , mClosed(false)
-  , mCompositorThreadHolder(CompositorThreadHolder::GetSingleton())
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -81,6 +78,12 @@ ImageBridgeParent::ImageBridgeParent(MessageLoop* aLoop,
 
 ImageBridgeParent::~ImageBridgeParent()
 {
+}
+
+static StaticRefPtr<ImageBridgeParent> sImageBridgeParentSingleton;
+
+void ReleaseImageBridgeParentSingleton() {
+  sImageBridgeParentSingleton = nullptr;
 }
 
 /* static */ ImageBridgeParent*
@@ -110,36 +113,6 @@ ImageBridgeParent::CreateForGPUProcess(Endpoint<PImageBridgeParent>&& aEndpoint)
 
   sImageBridgeParentSingleton = parent;
   return true;
-}
-
-/* static */ void
-ImageBridgeParent::ShutdownInternal()
-{
-  // We make a copy because we don't want to hold the lock while closing and we
-  // don't want the object to get freed underneath us.
-  nsTArray<RefPtr<ImageBridgeParent>> actors;
-  {
-    MonitorAutoLock lock(*sImageBridgesLock);
-    for (const auto& iter : sImageBridges) {
-      actors.AppendElement(iter.second);
-    }
-  }
-
-  for (auto const& actor : actors) {
-    MOZ_RELEASE_ASSERT(!actor->mClosed);
-    actor->Close();
-  }
-
-  sImageBridgeParentSingleton = nullptr;
-}
-
-/* static */ void
-ImageBridgeParent::Shutdown()
-{
-  CompositorThreadHolder::Loop()->PostTask(
-    NS_NewRunnableFunction("ImageBridgeParent::Shutdown", []() -> void {
-      ImageBridgeParent::ShutdownInternal();
-  }));
 }
 
 void
@@ -275,12 +248,9 @@ mozilla::ipc::IPCResult ImageBridgeParent::RecvWillClose()
 }
 
 mozilla::ipc::IPCResult
-ImageBridgeParent::RecvNewCompositable(const CompositableHandle& aHandle,
-                                       const TextureInfo& aInfo,
-                                       const LayersBackend& aLayersBackend)
+ImageBridgeParent::RecvNewCompositable(const CompositableHandle& aHandle, const TextureInfo& aInfo)
 {
-  bool useWebRender = aLayersBackend == LayersBackend::LAYERS_WR;
-  RefPtr<CompositableHost> host = AddCompositable(aHandle, aInfo, useWebRender);
+  RefPtr<CompositableHost> host = AddCompositable(aHandle, aInfo);
   if (!host) {
     return IPC_FAIL_NO_REASON(this);
   }
@@ -390,6 +360,13 @@ ImageBridgeParent::GetInstance(ProcessId aId)
   NS_ASSERTION(sImageBridges.count(aId) == 1, "ImageBridgeParent for the process");
   return sImageBridges[aId];
 }
+
+void
+ImageBridgeParent::OnChannelConnected(int32_t aPid)
+{
+  mCompositorThreadHolder = GetCompositorThreadHolder();
+}
+
 
 bool
 ImageBridgeParent::AllocShmem(size_t aSize,

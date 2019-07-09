@@ -22,7 +22,7 @@ info: |
 
   1. Assert: Type(iterResult) is Object.
   2. Return ? Get(iterResult, "value").
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var quickIter = {};

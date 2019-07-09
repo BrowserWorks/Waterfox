@@ -1,7 +1,6 @@
 /* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 "use strict";
 
@@ -74,9 +73,9 @@ function* chooseWithInspectElementContextMenu(selector, tab) {
 }
 
 function waitForLinkedBrowserEvent(tab, event) {
-  return new Promise(resolve => {
-    tab.linkedBrowser.addEventListener(event, function () {
-      resolve();
-    }, {capture: true, once: true});
-  });
+  let def = defer();
+  tab.linkedBrowser.addEventListener(event, function () {
+    def.resolve();
+  }, {capture: true, once: true});
+  return def.promise;
 }

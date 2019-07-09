@@ -25,8 +25,7 @@ fuzzy-if(Android,255,30) == clipPath-html-06-extref.xhtml clipPath-html-06-ref.x
 == dynamic-conditions-outer-svg-03.xhtml ../pass.svg
 == dynamic-conditions-outer-svg-04.xhtml ../pass.svg
 == filter-html-01.xhtml filter-html-01-ref.svg
-== filter-html-dynamic-01.xhtml filter-html-dynamic-01-ref.xhtml
-random-if(Android) skip-if(styloVsGecko) == filter-html-01-extref.xhtml filter-html-01-ref.svg # Android: bug 1198380. skip styloVsGecko for imperceptible pixel rounding differences between Stylo and Gecko
+random-if(Android) random-if(styloVsGecko) == filter-html-01-extref.xhtml filter-html-01-ref.svg # Android: bug 1198380
 == filter-html-zoomed-01.xhtml filter-html-01-ref.svg
 fuzzy-if(webrender,1,125414) == mask-html-01.xhtml mask-html-01-ref.svg
 fuzzy-if(webrender,1,125414) == mask-html-01-extref-01.xhtml mask-html-01-ref.svg
@@ -48,5 +47,5 @@ fuzzy(1,5000) == mask-clipPath-opacity-01e.xhtml mask-clipPath-opacity-01-ref.xh
 
 # box-decoration-break tests
 fuzzy-if(Android,4,10) == box-decoration-break-01.xhtml box-decoration-break-01-ref.xhtml
-fuzzy(62,14) == box-decoration-break-02.xhtml box-decoration-break-02-ref.xhtml
-fuzzy(67,234) fails-if(webrender) == box-decoration-break-03.xhtml box-decoration-break-01-ref.xhtml
+fuzzy(56,14) == box-decoration-break-02.xhtml box-decoration-break-02-ref.xhtml
+fuzzy(67,234) == box-decoration-break-03.xhtml box-decoration-break-01-ref.xhtml

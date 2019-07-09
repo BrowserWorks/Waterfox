@@ -181,22 +181,6 @@
             }
           }
         ]
-      },
-      {
-        "name": "open",
-        "type": "function",
-        "requireUserInput": true,
-        "description": "Opens the extension sidebar in the active window.",
-        "async": true,
-        "parameters": []
-      },
-      {
-        "name": "close",
-        "type": "function",
-        "requireUserInput": true,
-        "description": "Closes the extension sidebar in the active window if the sidebar belongs to the extension.",
-        "async": true,
-        "parameters": []
       }
     ]
   }

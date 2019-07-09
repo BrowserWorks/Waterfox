@@ -15,4 +15,3 @@ webdriver/.idea
 .DS_Store
 *.rej
 _venv
-webdriver/.cache

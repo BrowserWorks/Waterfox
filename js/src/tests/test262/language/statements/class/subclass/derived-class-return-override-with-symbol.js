@@ -13,7 +13,6 @@ description: >
 
     `return Symbol();`
 
-features: [Symbol]
 ---*/
 class Base {
   constructor() {}

@@ -6,13 +6,11 @@
 
 #include "VRManager.h"
 #include "VRManagerParent.h"
-#include "VRThread.h"
 #include "gfxVR.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/VRDisplay.h"
 #include "mozilla/dom/GamepadEventTypes.h"
 #include "mozilla/layers/TextureHost.h"
-#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/Unused.h"
 
 #include "gfxPrefs.h"
@@ -163,7 +161,6 @@ VRManager::RemoveVRManagerParent(VRManagerParent* aVRManagerParent)
 void
 VRManager::NotifyVsync(const TimeStamp& aVsyncTimestamp)
 {
-  MOZ_ASSERT(VRListenerThreadHolder::IsInVRListenerThread());
   const double kVRDisplayRefreshMaxDuration = 5000; // milliseconds
   const double kVRDisplayInactiveMaxDuration = 30000; // milliseconds
 
@@ -239,7 +236,6 @@ VRManager::NotifyVsync(const TimeStamp& aVsyncTimestamp)
 void
 VRManager::NotifyVRVsync(const uint32_t& aDisplayID)
 {
-  MOZ_ASSERT(VRListenerThreadHolder::IsInVRListenerThread());
   for (const auto& manager: mManagers) {
     if (manager->GetIsPresenting()) {
       manager->HandleInput();
@@ -345,6 +341,20 @@ VRManager::GetDisplay(const uint32_t& aDisplayID)
     return display;
   }
   return nullptr;
+}
+
+void
+VRManager::SubmitFrame(VRLayerParent* aLayer, layers::PTextureParent* aTexture,
+                       uint64_t aFrameId,
+                       const gfx::Rect& aLeftEyeRect,
+                       const gfx::Rect& aRightEyeRect)
+{
+  TextureHost* th = TextureHost::AsTextureHost(aTexture);
+  mLastFrame = th;
+  RefPtr<VRDisplayHost> display = GetDisplay(aLayer->GetDisplayID());
+  if (display) {
+    display->SubmitFrame(aLayer, aTexture, aFrameId, aLeftEyeRect, aRightEyeRect);
+  }
 }
 
 RefPtr<gfx::VRControllerHost>

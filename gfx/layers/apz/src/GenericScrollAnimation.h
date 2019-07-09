@@ -8,23 +8,20 @@
 #define mozilla_layers_GenericScrollAnimation_h_
 
 #include "AsyncPanZoomAnimation.h"
+#include "AsyncScrollBase.h"
 
 namespace mozilla {
-
-struct ScrollAnimationBezierPhysicsSettings;
-class ScrollAnimationPhysics;
-
 namespace layers {
 
 class AsyncPanZoomController;
 
 class GenericScrollAnimation
-  : public AsyncPanZoomAnimation
+  : public AsyncPanZoomAnimation,
+    public AsyncScrollBase
 {
 public:
   GenericScrollAnimation(AsyncPanZoomController& aApzc,
-                         const nsPoint& aInitialPosition,
-                         const ScrollAnimationBezierPhysicsSettings& aSettings);
+                         const nsPoint& aInitialPosition);
 
   bool DoSample(FrameMetrics& aFrameMetrics, const TimeDuration& aDelta) override;
 
@@ -40,7 +37,6 @@ private:
 
 protected:
   AsyncPanZoomController& mApzc;
-  UniquePtr<ScrollAnimationPhysics> mAnimationPhysics;
   nsPoint mFinalDestination;
   bool mForceVerticalOverscroll;
 };

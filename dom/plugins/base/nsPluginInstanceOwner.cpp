@@ -35,7 +35,9 @@ using mozilla::DefaultXDisplay;
 #include "nsIPluginWidget.h"
 #include "nsViewManager.h"
 #include "nsIDocShellTreeOwner.h"
+#include "nsIDOMHTMLObjectElement.h"
 #include "nsIAppShell.h"
+#include "nsIDOMHTMLAppletElement.h"
 #include "nsIObjectLoadingContent.h"
 #include "nsObjectLoadingContent.h"
 #include "nsAttrName.h"
@@ -490,8 +492,8 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
     triggeringPrincipal = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
   }
 
-  rv = lh->OnLinkClick(content, uri, unitarget.get(), VoidString(),
-                       aPostStream, -1, headersDataStream, true, triggeringPrincipal);
+  rv = lh->OnLinkClick(content, uri, unitarget.get(), NullString(),
+                       aPostStream, headersDataStream, true, triggeringPrincipal);
 
   return rv;
 }
@@ -557,7 +559,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRect(NPRect *invalidRect)
   double scaleFactor = 1.0;
   GetContentsScaleFactor(&scaleFactor);
   rect.ScaleRoundOut(scaleFactor);
-  mPluginFrame->InvalidateLayer(DisplayItemType::TYPE_PLUGIN, &rect);
+  mPluginFrame->InvalidateLayer(nsDisplayItem::TYPE_PLUGIN, &rect);
   return NS_OK;
 }
 
@@ -570,7 +572,7 @@ NS_IMETHODIMP
 nsPluginInstanceOwner::RedrawPlugin()
 {
   if (mPluginFrame) {
-    mPluginFrame->InvalidateLayer(DisplayItemType::TYPE_PLUGIN);
+    mPluginFrame->InvalidateLayer(nsDisplayItem::TYPE_PLUGIN);
   }
   return NS_OK;
 }
@@ -903,6 +905,25 @@ nsPluginInstanceOwner::RequestCommitOrCancel(bool aCommitted)
   return true;
 }
 
+bool
+nsPluginInstanceOwner::EnableIME(bool aEnable)
+{
+  if (NS_WARN_IF(!mPluginFrame)) {
+    return false;
+  }
+
+  nsCOMPtr<nsIWidget> widget = GetContainingWidgetIfOffset();
+  if (!widget) {
+    widget = GetRootWidgetForPluginFrame(mPluginFrame);
+    if (NS_WARN_IF(!widget)) {
+      return false;
+    }
+  }
+
+  widget->EnableIMEForPlugin(aEnable);
+  return true;
+}
+
 #endif // #ifdef XP_WIN
 
 void
@@ -1228,7 +1249,9 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetTagType(nsPluginTagType *result)
   *result = nsPluginTagType_Unknown;
 
   nsCOMPtr<nsIContent> content = do_QueryReferent(mContent);
-  if (content->IsHTMLElement(nsGkAtoms::embed))
+  if (content->IsHTMLElement(nsGkAtoms::applet))
+    *result = nsPluginTagType_Applet;
+  else if (content->IsHTMLElement(nsGkAtoms::embed))
     *result = nsPluginTagType_Embed;
   else if (content->IsHTMLElement(nsGkAtoms::object))
     *result = nsPluginTagType_Object;
@@ -1287,7 +1310,8 @@ NPEventModel nsPluginInstanceOwner::GetEventModel()
 }
 
 #define DEFAULT_REFRESH_RATE 20 // 50 FPS
-StaticRefPtr<nsITimer>            nsPluginInstanceOwner::sCATimer;
+
+nsCOMPtr<nsITimer>               *nsPluginInstanceOwner::sCATimer = nullptr;
 nsTArray<nsPluginInstanceOwner*> *nsPluginInstanceOwner::sCARefreshListeners = nullptr;
 
 void nsPluginInstanceOwner::CARefresh(nsITimer *aTimer, void *aClosure) {
@@ -1333,13 +1357,15 @@ void nsPluginInstanceOwner::AddToCARefreshTimer() {
 
   sCARefreshListeners->AppendElement(this);
 
+  if (!sCATimer) {
+    sCATimer = new nsCOMPtr<nsITimer>();
+  }
+
   if (sCARefreshListeners->Length() == 1) {
-    nsCOMPtr<nsITimer> timer;
-    NS_NewTimerWithFuncCallback(getter_AddRefs(timer),
-                                CARefresh, nullptr,
-                                DEFAULT_REFRESH_RATE, nsITimer::TYPE_REPEATING_SLACK,
-                                "nsPluginInstanceOwner::CARefresh");
-    sCATimer = timer.forget();
+    *sCATimer = do_CreateInstance("@mozilla.org/timer;1");
+    (*sCATimer)->InitWithNamedFuncCallback(CARefresh, nullptr,
+                                           DEFAULT_REFRESH_RATE, nsITimer::TYPE_REPEATING_SLACK,
+                                           "nsPluginInstanceOwner::CARefresh");
   }
 }
 
@@ -1352,7 +1378,8 @@ void nsPluginInstanceOwner::RemoveFromCARefreshTimer() {
 
   if (sCARefreshListeners->Length() == 0) {
     if (sCATimer) {
-      sCATimer->Cancel();
+      (*sCATimer)->Cancel();
+      delete sCATimer;
       sCATimer = nullptr;
     }
     delete sCARefreshListeners;
@@ -1821,10 +1848,7 @@ ContentIsFocusedWithinWindow(nsIContent* aContent)
   }
 
   nsCOMPtr<nsPIDOMWindowOuter> focusedFrame;
-  nsCOMPtr<nsIContent> focusedContent =
-    nsFocusManager::GetFocusedDescendant(rootWindow,
-                                         nsFocusManager::eIncludeAllDescendants,
-                                         getter_AddRefs(focusedFrame));
+  nsCOMPtr<nsIContent> focusedContent = fm->GetFocusedDescendant(rootWindow, true, getter_AddRefs(focusedFrame));
   return (focusedContent.get() == aContent);
 }
 

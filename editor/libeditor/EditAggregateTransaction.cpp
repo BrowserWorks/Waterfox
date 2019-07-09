@@ -132,7 +132,7 @@ EditAggregateTransaction::AppendChild(EditTransactionBase* aTransaction)
 }
 
 NS_IMETHODIMP
-EditAggregateTransaction::GetName(nsAtom** aName)
+EditAggregateTransaction::GetName(nsIAtom** aName)
 {
   if (aName && mName) {
     *aName = mName;

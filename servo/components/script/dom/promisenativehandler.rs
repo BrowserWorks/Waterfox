@@ -3,15 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use dom::bindings::codegen::Bindings::PromiseNativeHandlerBinding;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::trace::JSTraceable;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
+use heapsize::HeapSizeOf;
 use js::jsapi::{JSContext, HandleValue};
-use malloc_size_of::MallocSizeOf;
 
-pub trait Callback: JSTraceable + MallocSizeOf {
+pub trait Callback: JSTraceable + HeapSizeOf {
     fn callback(&self, cx: *mut JSContext, v: HandleValue);
 }
 
@@ -26,12 +26,12 @@ impl PromiseNativeHandler {
     pub fn new(global: &GlobalScope,
                resolve: Option<Box<Callback>>,
                reject: Option<Box<Callback>>)
-               -> DomRoot<PromiseNativeHandler> {
-        reflect_dom_object(Box::new(PromiseNativeHandler {
+               -> Root<PromiseNativeHandler> {
+        reflect_dom_object(box PromiseNativeHandler {
             reflector: Reflector::new(),
             resolve: resolve,
             reject: reject,
-        }), global, PromiseNativeHandlerBinding::Wrap)
+        }, global, PromiseNativeHandlerBinding::Wrap)
     }
 
     fn callback(callback: &Option<Box<Callback>>, cx: *mut JSContext, v: HandleValue) {

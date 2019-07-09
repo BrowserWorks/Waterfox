@@ -9,7 +9,7 @@ const { createClass, DOM: dom, PropTypes } =
 const Services = require("Services");
 
 loader.lazyRequireGetter(this, "DebuggerClient",
-  "devtools/shared/client/debugger-client", true);
+  "devtools/shared/client/main", true);
 
 const Strings = Services.strings.createBundle(
   "chrome://devtools/locale/aboutdebugging.properties");

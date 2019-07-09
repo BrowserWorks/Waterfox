@@ -1,7 +1,8 @@
 /**
  * Load the browser with the given url and then invokes the given function.
  */
-function openBrowserWindow(aFunc, aURL, aRect) {
+function openBrowserWindow(aFunc, aURL, aRect)
+{
   gBrowserContext.testFunc = aFunc;
   gBrowserContext.startURL = aURL;
   gBrowserContext.browserRect = aRect;
@@ -12,81 +13,92 @@ function openBrowserWindow(aFunc, aURL, aRect) {
 /**
  * Close the browser window.
  */
-function closeBrowserWindow() {
+function closeBrowserWindow()
+{
   gBrowserContext.browserWnd.close();
 }
 
 /**
  * Return the browser window object.
  */
-function browserWindow() {
+function browserWindow()
+{
   return gBrowserContext.browserWnd;
 }
 
 /**
  * Return the document of the browser window.
  */
-function browserDocument() {
+function browserDocument()
+{
   return browserWindow().document;
 }
 
 /**
  * Return tab browser object.
  */
-function tabBrowser() {
+function tabBrowser()
+{
   return browserWindow().gBrowser;
 }
 
 /**
  * Return browser element of the current tab.
  */
-function currentBrowser() {
+function currentBrowser()
+{
   return tabBrowser().selectedBrowser;
 }
 
 /**
  * Return DOM document of the current tab.
  */
-function currentTabDocument() {
+function currentTabDocument()
+{
   return currentBrowser().contentDocument;
 }
 
 /**
  * Return window of the current tab.
  */
-function currentTabWindow() {
+function currentTabWindow()
+{
   return currentTabDocument().defaultView;
 }
 
 /**
  * Return browser element of the tab at the given index.
  */
-function browserAt(aIndex) {
+function browserAt(aIndex)
+{
   return tabBrowser().getBrowserAtIndex(aIndex);
 }
 
 /**
  * Return DOM document of the tab at the given index.
  */
-function tabDocumentAt(aIndex) {
+function tabDocumentAt(aIndex)
+{
   return browserAt(aIndex).contentDocument;
 }
 
 /**
  * Return input element of address bar.
  */
-function urlbarInput() {
+function urlbarInput()
+{
   return browserWindow().document.getElementById("urlbar").inputField;
 }
 
 /**
  * Return reload button.
  */
-function reloadButton() {
+function reloadButton()
+{
   return browserWindow().document.getElementById("urlbar-reload-button");
 }
 
-// //////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // private section
 
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -98,8 +110,9 @@ var gBrowserContext =
   startURL: ""
 };
 
-function openBrowserWindowIntl() {
-  var params = "chrome,all,dialog=no,non-remote";
+function openBrowserWindowIntl()
+{
+  var params = "chrome,all,dialog=no";
   var rect = gBrowserContext.browserRect;
   if (rect) {
     if ("left" in rect)
@@ -117,12 +130,13 @@ function openBrowserWindowIntl() {
                       "_blank", params,
                       gBrowserContext.startURL);
 
-  whenDelayedStartupFinished(browserWindow(), function() {
+  whenDelayedStartupFinished(browserWindow(), function () {
     addA11yLoadEvent(startBrowserTests, browserWindow());
   });
 }
 
-function startBrowserTests() {
+function startBrowserTests()
+{
   if (gBrowserContext.startURL) // wait for load
     addA11yLoadEvent(gBrowserContext.testFunc, currentBrowser().contentWindow);
   else

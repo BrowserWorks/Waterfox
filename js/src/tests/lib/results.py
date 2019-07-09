@@ -300,5 +300,4 @@ class ResultsSink:
             result += ' | (SKIP)'
         if time > self.options.timeout:
             result += ' | (TIMEOUT)'
-        result += ' [{:.1f} s]'.format(time)
         print(result)

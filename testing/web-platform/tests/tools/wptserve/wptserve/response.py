@@ -465,11 +465,9 @@ class ResponseWriter(object):
             raise ValueError
 
     def flush(self):
-        """Flush the output. Returns False if the flush failed due to
-        the socket being closed by the remote end."""
+        """Flush the output."""
         try:
             self._wfile.flush()
-            return True
         except socket.error:
             # This can happen if the socket got closed by the remote end
-            return False
+            pass

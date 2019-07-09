@@ -158,7 +158,7 @@ DocumentFunctionCall::isSensitiveTo(ContextSensitivity aContext)
 
 #ifdef TX_TO_STRING
 nsresult
-DocumentFunctionCall::getNameAtom(nsAtom** aAtom)
+DocumentFunctionCall::getNameAtom(nsIAtom** aAtom)
 {
     *aAtom = nsGkAtoms::document;
     NS_ADDREF(*aAtom);

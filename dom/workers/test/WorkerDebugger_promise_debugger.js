@@ -22,11 +22,7 @@ self.onmessage = function (event) {
           leaveEventLoop();
         });
       };
-      // Test bug 1392540 where DOM Promises from debugger principal
-      // where frozen while hitting a worker breakpoint.
-      Promise.resolve().then(() => {
-        postMessage("paused");
-      });
+      postMessage("paused");
       enterEventLoop();
     };
     postMessage("resolved");

@@ -1,4 +1,4 @@
-/*! Raven.js 3.17.0 (6384830) | github.com/getsentry/raven-js */
+/*! Raven.js 3.15.0 (d49a1b8) | github.com/getsentry/raven-js */
 
 /*
  * Includes TraceKit
@@ -91,13 +91,6 @@ var _window = typeof window !== 'undefined' ? window
 var _document = _window.document;
 var _navigator = _window.navigator;
 
-
-function keepOriginalCallback(original, callback) {
-    return isFunction(callback) ?
-    function (data) { return callback(data, original) } :
-    callback;
-}
-
 // First, check for JSON support
 // If there is no JSON, we no-op the core features of Raven
 // since JSON is required to encode the payload
@@ -163,7 +156,7 @@ Raven.prototype = {
     // webpack (using a build step causes webpack #1617). Grunt verifies that
     // this value matches package.json during build.
     //   See: https://github.com/getsentry/raven-js/issues/465
-    VERSION: '3.17.0',
+    VERSION: '3.15.0',
 
     debug: false,
 
@@ -645,8 +638,10 @@ Raven.prototype = {
      */
     setDataCallback: function(callback) {
         var original = this._globalOptions.dataCallback;
-        this._globalOptions.dataCallback =
-          keepOriginalCallback(original, callback);
+        this._globalOptions.dataCallback = isFunction(callback)
+          ? function (data) { return callback(data, original); }
+          : callback;
+
         return this;
     },
 
@@ -659,8 +654,10 @@ Raven.prototype = {
      */
     setBreadcrumbCallback: function(callback) {
         var original = this._globalOptions.breadcrumbCallback;
-        this._globalOptions.breadcrumbCallback =
-          keepOriginalCallback(original, callback);
+        this._globalOptions.breadcrumbCallback = isFunction(callback)
+          ? function (data) { return callback(data, original); }
+          : callback;
+
         return this;
     },
 
@@ -673,8 +670,10 @@ Raven.prototype = {
      */
     setShouldSendCallback: function(callback) {
         var original = this._globalOptions.shouldSendCallback;
-        this._globalOptions.shouldSendCallback =
-          keepOriginalCallback(original, callback);
+        this._globalOptions.shouldSendCallback = isFunction(callback)
+            ? function (data) { return callback(data, original); }
+            : callback;
+
         return this;
     },
 
@@ -1450,17 +1449,16 @@ Raven.prototype = {
 
         for (var i = 0; i < breadcrumbs.values.length; ++i) {
             crumb = breadcrumbs.values[i];
-            if (!crumb.hasOwnProperty('data') || !isObject(crumb.data) || objectFrozen(crumb.data))
+            if (!crumb.hasOwnProperty('data') || !isObject(crumb.data))
                 continue;
 
-            data = objectMerge({}, crumb.data);
+            data = crumb.data;
             for (var j = 0; j < urlProps.length; ++j) {
                 urlProp = urlProps[j];
                 if (data.hasOwnProperty(urlProp)) {
                     data[urlProp] = truncate(data[urlProp], this._globalOptions.maxUrlLength);
                 }
             }
-            breadcrumbs.values[i].data = data;
         }
     },
 
@@ -1845,21 +1843,6 @@ function objectMerge(obj1, obj2) {
     return obj1;
 }
 
-/**
- * This function is only used for react-native.
- * react-native freezes object that have already been sent over the
- * js bridge. We need this function in order to check if the object is frozen.
- * So it's ok that objectFrozen returns false if Object.isFrozen is not
- * supported because it's not relevant for other "platforms". See related issue:
- * https://github.com/getsentry/react-native-sentry/issues/57
- */
-function objectFrozen(obj) {
-    if (!Object.isFrozen) {
-        return false;
-    }
-    return Object.isFrozen(obj);
-}
-
 function truncate(str, max) {
     return !max || str.length <= max ? str : str.substr(0, max) + '\u2026';
 }
@@ -2185,22 +2168,9 @@ function isError(value) {
   }
 }
 
-function wrappedCallback(callback) {
-    function dataCallback(data, original) {
-      var normalizedData = callback(data) || data;
-      if (original) {
-          return original(normalizedData) || normalizedData;
-      }
-      return normalizedData;
-    }
-
-    return dataCallback;
-}
-
 module.exports = {
     isObject: isObject,
-    isError: isError,
-    wrappedCallback: wrappedCallback
+    isError: isError
 };
 
 },{}],6:[function(_dereq_,module,exports){
@@ -2577,7 +2547,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
         if (typeof ex.stack === 'undefined' || !ex.stack) return;
 
         var chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i,
-            gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i,
+            gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|\[native).*?)(?::(\d+))?(?::(\d+))?\s*$/i,
             winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i,
 
             // Used to additionally parse URL/line/column from eval frames

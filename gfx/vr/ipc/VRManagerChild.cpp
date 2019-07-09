@@ -7,7 +7,6 @@
 
 #include "VRManagerChild.h"
 #include "VRManagerParent.h"
-#include "VRThread.h"
 #include "VRDisplayClient.h"
 #include "nsGlobalWindow.h"
 #include "mozilla/StaticPtr.h"
@@ -20,7 +19,6 @@
 #include "nsContentUtils.h"
 #include "mozilla/dom/GamepadManager.h"
 #include "mozilla/dom/VRServiceTest.h"
-#include "mozilla/layers/SyncObject.h"
 
 using layers::TextureClient;
 
@@ -40,7 +38,8 @@ void ReleaseVRManagerParentSingleton() {
 }
 
 VRManagerChild::VRManagerChild()
-  : mDisplaysInitialized(false)
+  : TextureForwarder()
+  , mDisplaysInitialized(false)
   , mMessageLoop(MessageLoop::current())
   , mFrameRequestCallbackCounter(0)
   , mBackend(layers::LayersBackend::LAYERS_NONE)
@@ -62,8 +61,7 @@ VRManagerChild::IdentifyTextureHost(const TextureFactoryIdentifier& aIdentifier)
 {
   if (sVRManagerChildSingleton) {
     sVRManagerChildSingleton->mBackend = aIdentifier.mParentBackend;
-    sVRManagerChildSingleton->mSyncObject =
-        layers::SyncObjectClient::CreateSyncObjectClient(aIdentifier.mSyncHandle);
+    sVRManagerChildSingleton->mSyncObject = SyncObject::CreateSyncObject(aIdentifier.mSyncHandle);
   }
 }
 
@@ -120,7 +118,7 @@ VRManagerChild::InitSameProcess()
   sVRManagerChildSingleton = new VRManagerChild();
   sVRManagerParentSingleton = VRManagerParent::CreateSameProcess();
   sVRManagerChildSingleton->Open(sVRManagerParentSingleton->GetIPCChannel(),
-                                 VRListenerThreadHolder::Loop(),
+                                 mozilla::layers::CompositorThreadHolder::Loop(),
                                  mozilla::ipc::ChildSide);
 }
 
@@ -167,8 +165,31 @@ VRManagerChild::Destroy()
              NewRunnableFunction(DeferredDestroy, selfRef));
 }
 
+layers::PTextureChild*
+VRManagerChild::AllocPTextureChild(const SurfaceDescriptor&,
+                                   const LayersBackend&,
+                                   const TextureFlags&,
+                                   const uint64_t&)
+{
+  return TextureClient::CreateIPDLActor();
+}
+
+bool
+VRManagerChild::DeallocPTextureChild(PTextureChild* actor)
+{
+  return TextureClient::DestroyIPDLActor(actor);
+}
+
 PVRLayerChild*
 VRManagerChild::AllocPVRLayerChild(const uint32_t& aDisplayID,
+                                   const float& aLeftEyeX,
+                                   const float& aLeftEyeY,
+                                   const float& aLeftEyeWidth,
+                                   const float& aLeftEyeHeight,
+                                   const float& aRightEyeX,
+                                   const float& aRightEyeY,
+                                   const float& aRightEyeWidth,
+                                   const float& aRightEyeHeight,
                                    const uint32_t& aGroup)
 {
   return VRLayerChild::CreateIPDLActor();
@@ -319,6 +340,27 @@ VRManagerChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>
   return IPC_OK();
 }
 
+PTextureChild*
+VRManagerChild::CreateTexture(const SurfaceDescriptor& aSharedData,
+                              LayersBackend aLayersBackend,
+                              TextureFlags aFlags,
+                              uint64_t aSerial,
+                              wr::MaybeExternalImageId& aExternalImageId,
+                              nsIEventTarget* aTarget)
+{
+  return SendPTextureConstructor(aSharedData, aLayersBackend, aFlags, aSerial);
+}
+
+void
+VRManagerChild::CancelWaitForRecycle(uint64_t aTextureId)
+{
+  RefPtr<TextureClient> client = mTexturesWaitingRecycled.Get(aTextureId);
+  if (!client) {
+    return;
+  }
+  mTexturesWaitingRecycled.Remove(aTextureId);
+}
+
 void
 VRManagerChild::NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId)
 {
@@ -329,18 +371,52 @@ VRManagerChild::NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId)
   mTexturesWaitingRecycled.Remove(aTextureId);
 }
 
+bool
+VRManagerChild::AllocShmem(size_t aSize,
+                           ipc::SharedMemory::SharedMemoryType aType,
+                           ipc::Shmem* aShmem)
+{
+  return PVRManagerChild::AllocShmem(aSize, aType, aShmem);
+}
+
+bool
+VRManagerChild::AllocUnsafeShmem(size_t aSize,
+                                 ipc::SharedMemory::SharedMemoryType aType,
+                                 ipc::Shmem* aShmem)
+{
+  return PVRManagerChild::AllocUnsafeShmem(aSize, aType, aShmem);
+}
+
+bool
+VRManagerChild::DeallocShmem(ipc::Shmem& aShmem)
+{
+  return PVRManagerChild::DeallocShmem(aShmem);
+}
+
 PVRLayerChild*
 VRManagerChild::CreateVRLayer(uint32_t aDisplayID,
+                              const Rect& aLeftEyeRect,
+                              const Rect& aRightEyeRect,
                               nsIEventTarget* aTarget,
                               uint32_t aGroup)
 {
-  PVRLayerChild* vrLayerChild = AllocPVRLayerChild(aDisplayID, aGroup);
+  PVRLayerChild* vrLayerChild = AllocPVRLayerChild(aDisplayID, aLeftEyeRect.x,
+                                                   aLeftEyeRect.y, aLeftEyeRect.width,
+                                                   aLeftEyeRect.height, aRightEyeRect.x,
+                                                   aRightEyeRect.y, aRightEyeRect.width,
+                                                   aRightEyeRect.height,
+                                                   aGroup);
   // Do the DOM labeling.
   if (aTarget) {
     SetEventTargetForActor(vrLayerChild, aTarget);
     MOZ_ASSERT(vrLayerChild->GetActorEventTarget());
   }
-  return SendPVRLayerConstructor(vrLayerChild, aDisplayID, aGroup);
+  return SendPVRLayerConstructor(vrLayerChild, aDisplayID, aLeftEyeRect.x,
+                                 aLeftEyeRect.y, aLeftEyeRect.width,
+                                 aLeftEyeRect.height, aRightEyeRect.x,
+                                 aRightEyeRect.y, aRightEyeRect.width,
+                                 aRightEyeRect.height,
+                                 aGroup);
 }
 
 
@@ -450,8 +526,6 @@ VRManagerChild::RecvReplyCreateVRServiceTestController(const nsCString& aID,
 void
 VRManagerChild::RunFrameRequestCallbacks()
 {
-  AUTO_PROFILER_TRACING("VR", "RunFrameRequestCallbacks");
-
   TimeStamp nowTime = TimeStamp::Now();
   mozilla::TimeDuration duration = nowTime - mStartTimeStamp;
   DOMHighResTimeStamp timeStamp = duration.ToMilliseconds();

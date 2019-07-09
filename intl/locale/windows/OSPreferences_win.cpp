@@ -64,7 +64,7 @@ ReadUserLocale(nsCString& aRetVal)
   WCHAR locale[LOCALE_NAME_MAX_LENGTH];
   if (NS_WARN_IF(!LCIDToLocaleName(LOCALE_USER_DEFAULT, locale,
                                    LOCALE_NAME_MAX_LENGTH, 0))) {
-    aRetVal.AssignLiteral("en-US");
+    aRetVal.Assign("en-US");
     return;
   }
 
@@ -209,9 +209,9 @@ OSPreferences::ReadDateTimePattern(DateTimeFormatStyle aDateStyle,
     start = str->BeginReading(pos);
     str->EndReading(end);
     if (FindInReadable(NS_LITERAL_STRING("dddd"), pos, end)) {
-      str->ReplaceLiteral(pos - start, 4, u"EEEE");
+      str->Replace(pos - start, 4, NS_LITERAL_STRING("EEEE"));
     } else if (FindInReadable(NS_LITERAL_STRING("ddd"), pos, end)) {
-      str->ReplaceLiteral(pos - start, 3, u"EEE");
+      str->Replace(pos - start, 3, NS_LITERAL_STRING("EEE"));
     }
 
     // Also, Windows uses lowercase "g" or "gg" for era, but ICU wants uppercase "G"

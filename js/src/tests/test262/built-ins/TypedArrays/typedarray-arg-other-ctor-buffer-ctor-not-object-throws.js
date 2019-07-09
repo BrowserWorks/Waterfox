@@ -24,7 +24,7 @@ info: >
   4. If Type(C) is not Object, throw a TypeError exception.
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var sample1 = new Int8Array();

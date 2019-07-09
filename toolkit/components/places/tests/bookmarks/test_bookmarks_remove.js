@@ -4,12 +4,30 @@
 const UNVISITED_BOOKMARK_BONUS = 140;
 
 function promiseFrecencyChanged(expectedURI, expectedFrecency) {
-  return PlacesTestUtils.waitForNotification("onFrecencyChanged",
-    (uri, newFrecency) => {
+  return new Promise(resolve => {
+    let obs = new NavHistoryObserver();
+    obs.onFrecencyChanged = (uri, newFrecency) => {
       Assert.equal(uri.spec, expectedURI, "onFrecencyChanged is triggered for the correct uri.");
       Assert.equal(newFrecency, expectedFrecency, "onFrecencyChanged has the expected frecency");
-      return true;
-    }, "history");
+      PlacesUtils.history.removeObserver(obs)
+      resolve();
+    };
+
+    PlacesUtils.history.addObserver(obs);
+  });
+}
+
+function promiseManyFrecenciesChanged() {
+  return new Promise(resolve => {
+    let obs = new NavHistoryObserver();
+    obs.onManyFrecenciesChanged = () => {
+      Assert.ok(true, "onManyFrecenciesChanged is triggered.");
+      PlacesUtils.history.removeObserver(obs)
+      resolve();
+    };
+
+    PlacesUtils.history.addObserver(obs);
+  });
 }
 
 add_task(async function setup() {
@@ -167,7 +185,7 @@ add_task(async function remove_folder() {
   Assert.equal(bm2.title, "a folder");
   Assert.ok(!("url" in bm2));
 
-  // No wait for onManyFrecenciesChanged in this test as the folder doesn't have
+  // No promiseManyFrecenciesChanged in this test as the folder doesn't have
   // any children that would need updating.
 });
 
@@ -180,10 +198,7 @@ add_task(async function test_contents_removed() {
                                                  url: "http://example.com/",
                                                  title: "" });
 
-  let skipDescendantsObserver = expectNotifications(true);
-  let receiveAllObserver = expectNotifications(false);
-  let manyFrencenciesPromise =
-    PlacesTestUtils.waitForNotification("onManyFrecenciesChanged", () => true, "history");
+  let manyFrencenciesPromise = promiseManyFrecenciesChanged();
   await PlacesUtils.bookmarks.remove(folder1);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder1.guid)), null);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(bm1.guid)), null);
@@ -191,28 +206,6 @@ add_task(async function test_contents_removed() {
   // We should get an onManyFrecenciesChanged notification with the removal of
   // a folder with children.
   await manyFrencenciesPromise;
-
-  let expectedNotifications = [{
-    name: "onItemRemoved",
-    arguments: {
-      guid: folder1.guid,
-    },
-  }];
-
-  // If we're skipping descendents, we'll only be notified of the folder.
-  skipDescendantsObserver.check(expectedNotifications);
-
-  // Note: Items of folders get notified first.
-  expectedNotifications.unshift({
-    name: "onItemRemoved",
-    arguments: {
-      guid: bm1.guid
-    },
-  });
-
-  // If we don't skip descendents, we'll be notified of the folder and the
-  // bookmark.
-  receiveAllObserver.check(expectedNotifications);
 });
 
 
@@ -228,8 +221,7 @@ add_task(async function test_nested_contents_removed() {
                                                  url: "http://example.com/",
                                                  title: "" });
 
-  let manyFrencenciesPromise =
-    PlacesTestUtils.waitForNotification("onManyFrecenciesChanged", () => true, "history");
+  let manyFrencenciesPromise = promiseManyFrecenciesChanged();
   await PlacesUtils.bookmarks.remove(folder1);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder1.guid)), null);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder2.guid)), null);

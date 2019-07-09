@@ -25,7 +25,7 @@ PrintTranslator::PrintTranslator(nsDeviceContext* aDeviceContext)
 }
 
 bool
-PrintTranslator::TranslateRecording(PRFileDescStream& aRecording)
+PrintTranslator::TranslateRecording(std::istream& aRecording)
 {
   uint32_t magicInt;
   ReadElement(aRecording, magicInt);

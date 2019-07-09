@@ -326,13 +326,6 @@ public:
     return result.ToMatrix();
   }
 
-  static Matrix4x4 operateForFallback(const Matrix4x4& aMatrix1,
-                                      const Matrix4x4& aMatrix2,
-                                      double aProgress)
-  {
-    return aMatrix1;
-  }
-
   static Matrix4x4 operateByServo(const Matrix4x4& aMatrix1,
                                   const Matrix4x4& aMatrix2,
                                   double aCount)
@@ -376,13 +369,6 @@ public:
     return aOne.Slerp(aTwo, aCoeff).ToMatrix();
   }
 
-  static Matrix4x4 operateForFallback(const Matrix4x4& aMatrix1,
-                                      const Matrix4x4& aMatrix2,
-                                      double aProgress)
-  {
-    return aProgress < 0.5 ? aMatrix1 : aMatrix2;
-  }
-
   static Matrix4x4 operateByServo(const Matrix4x4& aMatrix1,
                                   const Matrix4x4& aMatrix2,
                                   double aProgress)
@@ -412,6 +398,7 @@ OperateTransformMatrix(const Matrix4x4 &aMatrix1,
 {
   // Decompose both matrices
 
+  // TODO: What do we do if one of these returns false (singular matrix)
   Point3D scale1(1, 1, 1), translate1;
   Point4D perspective1(0, 0, 0, 1);
   gfxQuaternion rotate1;
@@ -422,24 +409,15 @@ OperateTransformMatrix(const Matrix4x4 &aMatrix1,
   gfxQuaternion rotate2;
   nsStyleTransformMatrix::ShearArray shear2{0.0f, 0.0f, 0.0f};
 
-  // Check if both matrices are decomposable.
-  bool wasDecomposed;
   Matrix matrix2d1, matrix2d2;
   if (aMatrix1.Is2D(&matrix2d1) && aMatrix2.Is2D(&matrix2d2)) {
-    wasDecomposed =
-      Decompose2DMatrix(matrix2d1, scale1, shear1, rotate1, translate1) &&
-      Decompose2DMatrix(matrix2d2, scale2, shear2, rotate2, translate2);
+    Decompose2DMatrix(matrix2d1, scale1, shear1, rotate1, translate1);
+    Decompose2DMatrix(matrix2d2, scale2, shear2, rotate2, translate2);
   } else {
-    wasDecomposed =
-      Decompose3DMatrix(aMatrix1, scale1, shear1,
-                        rotate1, translate1, perspective1) &&
-      Decompose3DMatrix(aMatrix2, scale2, shear2,
-                        rotate2, translate2, perspective2);
-  }
-
-  // Fallback to discrete operation if one of the matrices is not decomposable.
-  if (!wasDecomposed) {
-    return Operator::operateForFallback(aMatrix1, aMatrix2, aProgress);
+    Decompose3DMatrix(aMatrix1, scale1, shear1,
+                      rotate1, translate1, perspective1);
+    Decompose3DMatrix(aMatrix2, scale2, shear2,
+                      rotate2, translate2, perspective2);
   }
 
   Matrix4x4 result;
@@ -1237,13 +1215,10 @@ Decompose2DMatrix(const Matrix& aMatrix,
   D /= scaleY;
   XYshear /= scaleY;
 
-  float determinant = A * D - B * C;
-  // Determinant should now be 1 or -1.
-  if (0.99 > Abs(determinant) || Abs(determinant) > 1.01) {
-    return false;
-  }
-
-  if (determinant < 0) {
+  // A*D - B*C should now be 1 or -1
+  NS_ASSERTION(0.99 < Abs(A*D - B*C) && Abs(A*D - B*C) < 1.01,
+               "determinant should now be 1 or -1");
+  if (A * D < B * C) {
     A = -A;
     B = -B;
     C = -C;

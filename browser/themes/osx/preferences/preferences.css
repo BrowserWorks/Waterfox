@@ -7,6 +7,9 @@
 
 %include ../../../../toolkit/themes/osx/global/shared.inc
 
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
 .windowDialog {
   padding: 12px;
   font: -moz-dialog;
@@ -14,12 +17,20 @@
 
 /* ----- APPLICATIONS PREFPANE ----- */
 description {
+  font: small-caption;
+  font-weight: normal;
+  line-height: 1.3em;
   margin-bottom: 4px !important;
 }
 
 prefpane .groupbox-body {
   -moz-appearance: none;
   padding: 8px 4px 4px 4px;
+}
+
+prefpane .groupbox-title {
+  background: url("chrome://global/skin/50pct_transparent_grey.png") repeat-x bottom left;
+  margin-bottom: 4px;
 }
 
 tabpanels {

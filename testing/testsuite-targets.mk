@@ -91,6 +91,9 @@ REMOTE_CPPUNITTESTS = \
 cppunittests-remote:
 	$(call REMOTE_CPPUNITTESTS);
 
+jetpack-tests:
+	cd $(topsrcdir)/addon-sdk/source && $(PYTHON) bin/cfx -b $(abspath $(browser_path)) --parseable testpkgs
+
 pgo-profile-run:
 	$(PYTHON) $(topsrcdir)/build/pgo/profileserver.py $(EXTRA_TEST_ARGS)
 
@@ -105,6 +108,7 @@ stage-all: \
   stage-extensions \
   stage-mochitest \
   stage-jstests \
+  stage-jetpack \
   test-packages-manifest \
   $(NULL)
 ifdef MOZ_WEBRTC
@@ -175,6 +179,7 @@ make-stage-dir: install-test-files
 	$(NSINSTALL) -D $(PKG_STAGE)/bin/components
 	$(NSINSTALL) -D $(PKG_STAGE)/certs
 	$(NSINSTALL) -D $(PKG_STAGE)/config
+	$(NSINSTALL) -D $(PKG_STAGE)/jetpack
 	$(NSINSTALL) -D $(PKG_STAGE)/modules
 	$(NSINSTALL) -D $(PKG_STAGE)/tools/mach
 
@@ -225,6 +230,9 @@ stage-android: make-stage-dir
 	$(NSINSTALL) $(topsrcdir)/mobile/android/fonts $(DEPTH)/_tests/testing/mochitest
 	$(NSINSTALL) -D $(DEPTH)/_tests/reftest/hyphenation
 	$(NSINSTALL) $(wildcard $(topsrcdir)/intl/locales/*/hyphenation/*.dic) $(DEPTH)/_tests/reftest/hyphenation
+
+stage-jetpack: make-stage-dir
+	$(MAKE) -C $(DEPTH)/addon-sdk stage-tests-package
 
 CPP_UNIT_TEST_BINS=$(wildcard $(DIST)/cppunittests/*)
 
@@ -280,6 +288,7 @@ check::
   stage-mochitest \
   stage-jstests \
   stage-android \
+  stage-jetpack \
   stage-steeplechase \
   stage-instrumentation-tests \
   test-packages-manifest \

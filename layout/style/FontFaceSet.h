@@ -22,7 +22,9 @@ class nsPIDOMWindowInner;
 
 namespace mozilla {
 class PostTraversalTask;
-class SharedFontList;
+namespace css {
+class FontFamilyListRefCnt;
+} // namespace css
 namespace dom {
 class FontFace;
 class Promise;
@@ -134,7 +136,7 @@ public:
    * Finds an existing entry in the user font cache or creates a new user
    * font entry for the given FontFace object.
    */
-  already_AddRefed<gfxUserFontEntry>
+  static already_AddRefed<gfxUserFontEntry>
     FindOrCreateUserFontEntryFromFontFace(FontFace* aFontFace);
 
   /**
@@ -266,7 +268,7 @@ private:
     bool mLoadEventShouldFire;
   };
 
-  already_AddRefed<gfxUserFontEntry> FindOrCreateUserFontEntryFromFontFace(
+  static already_AddRefed<gfxUserFontEntry> FindOrCreateUserFontEntryFromFontFace(
                                                    const nsAString& aFamilyName,
                                                    FontFace* aFontFace,
                                                    SheetType aSheetType);
@@ -313,7 +315,7 @@ private:
 
   void ParseFontShorthandForMatching(
               const nsAString& aFont,
-              RefPtr<SharedFontList>& aFamilyList,
+              RefPtr<mozilla::css::FontFamilyListRefCnt>& aFamilyList,
               uint32_t& aWeight,
               int32_t& aStretch,
               uint8_t& aStyle,

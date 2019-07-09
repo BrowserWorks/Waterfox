@@ -17,6 +17,24 @@ function WebRequestEventManager(context, eventName) {
   let name = `webRequest.${eventName}`;
   let register = (fire, filter, info) => {
     let listener = data => {
+      // Prevent listening in on requests originating from system principal to
+      // prevent tinkering with OCSP, app and addon updates, etc.
+      if (data.isSystemPrincipal) {
+        return;
+      }
+
+      // Check hosts permissions for both the resource being requested,
+      const hosts = context.extension.whiteListedHosts;
+      if (!hosts.matches(Services.io.newURI(data.url))) {
+        return;
+      }
+      // and the origin that is loading the resource.
+      const origin = data.documentUrl;
+      const own = origin && origin.startsWith(context.extension.getURL());
+      if (origin && !own && !hosts.matches(Services.io.newURI(origin))) {
+        return;
+      }
+
       let browserData = {tabId: -1, windowId: -1};
       if (data.browser) {
         browserData = tabTracker.getBrowserData(data.browser);
@@ -28,10 +46,37 @@ function WebRequestEventManager(context, eventName) {
         return;
       }
 
-      let event = data.serialize(eventName);
-      event.tabId = browserData.tabId;
+      let data2 = {
+        requestId: data.requestId,
+        url: data.url,
+        originUrl: data.originUrl,
+        documentUrl: data.documentUrl,
+        method: data.method,
+        tabId: browserData.tabId,
+        type: data.type,
+        timeStamp: Date.now(),
+        frameId: data.windowId,
+        parentFrameId: data.parentWindowId,
+      };
 
-      return fire.sync(event);
+      const maybeCached = ["onResponseStarted", "onBeforeRedirect", "onCompleted", "onErrorOccurred"];
+      if (maybeCached.includes(eventName)) {
+        data2.fromCache = !!data.fromCache;
+      }
+
+      if ("ip" in data) {
+        data2.ip = data.ip;
+      }
+
+      let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl",
+                      "requestBody", "scheme", "realm", "isProxy", "challenger"];
+      for (let opt of optional) {
+        if (opt in data) {
+          data2[opt] = data[opt];
+        }
+      }
+
+      return fire.sync(data2);
     };
 
     let filter2 = {};
@@ -55,12 +100,10 @@ function WebRequestEventManager(context, eventName) {
       filter2.windowId = filter.windowId;
     }
 
-    let blockingAllowed = context.extension.hasPermission("webRequestBlocking");
-
     let info2 = [];
     if (info) {
       for (let desc of info) {
-        if (desc == "blocking" && !blockingAllowed) {
+        if (desc == "blocking" && !context.extension.hasPermission("webRequestBlocking")) {
           Cu.reportError("Using webRequest.addListener with the blocking option " +
                          "requires the 'webRequestBlocking' permission.");
         } else {
@@ -69,16 +112,7 @@ function WebRequestEventManager(context, eventName) {
       }
     }
 
-    let listenerDetails = {
-      addonId: context.extension.id,
-      extension: context.extension.policy,
-      blockingAllowed,
-      tabParent: context.xulBrowser.frameLoader.tabParent,
-    };
-
-    WebRequest[eventName].addListener(
-      listener, filter2, info2,
-      listenerDetails);
+    WebRequest[eventName].addListener(listener, filter2, info2);
     return () => {
       WebRequest[eventName].removeListener(listener);
     };

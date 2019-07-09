@@ -60,10 +60,6 @@ private:
   {
   }
 
-  // This method updates mSeekableStreams, mIPCSerializableStreams,
-  // mCloneableStreams and mAsyncInputStreams values.
-  void UpdateQIMap(nsIInputStream* aStream, int32_t aCount);
-
   struct MOZ_STACK_CLASS ReadSegmentsState
   {
     nsCOMPtr<nsIInputStream> mThisStream;
@@ -88,11 +84,6 @@ private:
   bool mStartedReadingCurrent;
   nsresult mStatus;
   nsCOMPtr<nsIInputStreamCallback> mAsyncWaitCallback;
-
-  uint32_t mSeekableStreams;
-  uint32_t mIPCSerializableStreams;
-  uint32_t mCloneableStreams;
-  uint32_t mAsyncInputStreams;
 };
 
 NS_IMPL_ADDREF(nsMultiplexInputStream)
@@ -103,7 +94,7 @@ NS_IMPL_CLASSINFO(nsMultiplexInputStream, nullptr, nsIClassInfo::THREADSAFE,
 
 NS_INTERFACE_MAP_BEGIN(nsMultiplexInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIMultiplexInputStream)
-  NS_INTERFACE_MAP_ENTRY(nsIInputStream)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIInputStream, nsIMultiplexInputStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsISeekableStream, IsSeekable())
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIIPCSerializableInputStream,
                                      IsIPCSerializable())
@@ -158,15 +149,12 @@ TellMaybeSeek(nsISeekableStream* aSeekable, int64_t* aResult)
 }
 
 nsMultiplexInputStream::nsMultiplexInputStream()
-  : mLock("nsMultiplexInputStream lock")
-  , mCurrentStream(0)
-  , mStartedReadingCurrent(false)
-  , mStatus(NS_OK)
-  , mSeekableStreams(0)
-  , mIPCSerializableStreams(0)
-  , mCloneableStreams(0)
-  , mAsyncInputStreams(0)
-{}
+  : mLock("nsMultiplexInputStream lock"),
+    mCurrentStream(0),
+    mStartedReadingCurrent(false),
+    mStatus(NS_OK)
+{
+}
 
 NS_IMETHODIMP
 nsMultiplexInputStream::GetCount(uint32_t* aCount)
@@ -180,28 +168,18 @@ NS_IMETHODIMP
 nsMultiplexInputStream::AppendStream(nsIInputStream* aStream)
 {
   MutexAutoLock lock(mLock);
-  if (!mStreams.AppendElement(aStream)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  UpdateQIMap(aStream, 1);
-  return NS_OK;
+  return mStreams.AppendElement(aStream) ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
 NS_IMETHODIMP
 nsMultiplexInputStream::InsertStream(nsIInputStream* aStream, uint32_t aIndex)
 {
   MutexAutoLock lock(mLock);
-  if (!mStreams.InsertElementAt(aIndex, aStream)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
+  mStreams.InsertElementAt(aIndex, aStream);
   if (mCurrentStream > aIndex ||
       (mCurrentStream == aIndex && mStartedReadingCurrent)) {
     ++mCurrentStream;
   }
-
-  UpdateQIMap(aStream, 1);
   return NS_OK;
 }
 
@@ -209,12 +187,6 @@ NS_IMETHODIMP
 nsMultiplexInputStream::RemoveStream(uint32_t aIndex)
 {
   MutexAutoLock lock(mLock);
-  if (aIndex >= mStreams.Length()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  UpdateQIMap(mStreams[aIndex], -1);
-
   mStreams.RemoveElementAt(aIndex);
   if (mCurrentStream > aIndex) {
     --mCurrentStream;
@@ -349,7 +321,7 @@ nsMultiplexInputStream::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
 
   nsresult rv = NS_OK;
   ReadSegmentsState state;
-  state.mThisStream = this;
+  state.mThisStream = static_cast<nsIMultiplexInputStream*>(this);
   state.mOffset = 0;
   state.mWriter = aWriter;
   state.mClosure = aClosure;
@@ -1048,7 +1020,7 @@ nsMultiplexInputStream::Clone(nsIInputStream** aClone)
     return NS_ERROR_FAILURE;
   }
 
-  RefPtr<nsMultiplexInputStream> clone = new nsMultiplexInputStream();
+  nsCOMPtr<nsIMultiplexInputStream> clone = new nsMultiplexInputStream();
 
   nsresult rv;
   uint32_t len = mStreams.Length();
@@ -1074,50 +1046,40 @@ nsMultiplexInputStream::Clone(nsIInputStream** aClone)
   return NS_OK;
 }
 
-#define MAYBE_UPDATE_VALUE(x, y)                        \
-  {                                                     \
-    nsCOMPtr<y> substream = do_QueryInterface(aStream); \
-    if (substream) {                                    \
-      if (aCount == 1) {                                \
-        ++x;                                            \
-      } else if (x > 0) {                               \
-        --x;                                            \
-      } else {                                          \
-        MOZ_CRASH("A nsIInputStream changed QI map when stored in a nsMultiplexInputStream!"); \
-      }                                                 \
-    }                                                   \
-  }
-
-void
-nsMultiplexInputStream::UpdateQIMap(nsIInputStream* aStream, int32_t aCount)
-{
-  MOZ_ASSERT(aStream);
-  MOZ_ASSERT(aCount == -1 || aCount == 1);
-
-  MAYBE_UPDATE_VALUE(mSeekableStreams, nsISeekableStream);
-  MAYBE_UPDATE_VALUE(mIPCSerializableStreams, nsIIPCSerializableInputStream);
-  MAYBE_UPDATE_VALUE(mCloneableStreams, nsICloneableInputStream);
-  MAYBE_UPDATE_VALUE(mAsyncInputStreams, nsIAsyncInputStream);
-}
-
-#undef MAYBE_UPDATE_VALUE
-
 bool
 nsMultiplexInputStream::IsSeekable() const
 {
-  return mStreams.Length() == mSeekableStreams;
+  for (uint32_t i = 0, len = mStreams.Length(); i < len; ++i) {
+    nsCOMPtr<nsISeekableStream> substream = do_QueryInterface(mStreams[i]);
+    if (!substream) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool
 nsMultiplexInputStream::IsIPCSerializable() const
 {
-  return mStreams.Length() == mIPCSerializableStreams;
+  for (uint32_t i = 0, len = mStreams.Length(); i < len; ++i) {
+    nsCOMPtr<nsIIPCSerializableInputStream> substream = do_QueryInterface(mStreams[i]);
+    if (!substream) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool
 nsMultiplexInputStream::IsCloneable() const
 {
-  return mStreams.Length() == mCloneableStreams;
+  for (uint32_t i = 0, len = mStreams.Length(); i < len; ++i) {
+    nsCOMPtr<nsICloneableInputStream> substream = do_QueryInterface(mStreams[i]);
+    if (!substream) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool
@@ -1125,5 +1087,11 @@ nsMultiplexInputStream::IsAsyncInputStream() const
 {
   // nsMultiplexInputStream is nsIAsyncInputStream if at least 1 of the
   // substream implements that interface.
-  return !!mAsyncInputStreams;
+  for (uint32_t i = 0, len = mStreams.Length(); i < len; ++i) {
+    nsCOMPtr<nsIAsyncInputStream> substream = do_QueryInterface(mStreams[i]);
+    if (substream) {
+      return true;
+    }
+  }
+  return false;
 }

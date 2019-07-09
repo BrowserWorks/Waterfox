@@ -37,7 +37,7 @@ SVGTransformableElement::Transform()
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGTransformableElement::IsAttributeMapped(const nsAtom* name) const
+SVGTransformableElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sColorMap,
@@ -50,7 +50,7 @@ SVGTransformableElement::IsAttributeMapped(const nsAtom* name) const
 }
 
 nsChangeHint
-SVGTransformableElement::GetAttributeChangeHint(const nsAtom* aAttribute,
+SVGTransformableElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
                                                 int32_t aModType) const
 {
   nsChangeHint retval =
@@ -92,7 +92,7 @@ SVGTransformableElement::GetAttributeChangeHint(const nsAtom* aAttribute,
 }
 
 bool
-SVGTransformableElement::IsEventAttributeNameInternal(nsAtom* aName)
+SVGTransformableElement::IsEventAttributeNameInternal(nsIAtom* aName)
 {
   return nsContentUtils::IsEventAttributeName(aName, EventNameType_SVGGraphic);
 }
@@ -188,9 +188,7 @@ SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions,
   }
 
   if (!NS_SVGNewGetBBoxEnabled()) {
-    return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame,
-                                      nsSVGUtils::eBBoxIncludeFillGeometry |
-                                      nsSVGUtils::eUseUserSpaceOfUseElement)));
+    return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame)));
   } else {
     uint32_t flags = 0;
     if (aOptions.mFill) {
@@ -212,7 +210,6 @@ SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions,
         flags == nsSVGUtils::eBBoxIncludeClipped) {
       flags |= nsSVGUtils::eBBoxIncludeFill;
     }
-    flags |= nsSVGUtils::eUseUserSpaceOfUseElement;
     return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame, flags)));
   }
 }

@@ -95,14 +95,8 @@ public:
   virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) const override;
-  bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                               mozilla::wr::IpcResourceUpdateQueue& aResources,
-                               const StackingContextHelper& aSc,
-                               mozilla::layers::WebRenderLayerManager* aManager,
-                               nsDisplayListBuilder* aDisplayListBuilder) override;
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override;
+                                         nsRegion *aInvalidRegion) override;
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override;
   NS_DISPLAY_DECL_NAME("FieldSetBorder", TYPE_FIELDSET_BORDER_BACKGROUND)
 };
 
@@ -125,7 +119,7 @@ nsDisplayFieldSetBorder::AllocateGeometry(nsDisplayListBuilder* aBuilder)
 void
 nsDisplayFieldSetBorder::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                                    const nsDisplayItemGeometry* aGeometry,
-                                                   nsRegion *aInvalidRegion) const
+                                                   nsRegion *aInvalidRegion)
 {
   auto geometry =
     static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
@@ -141,7 +135,7 @@ nsDisplayFieldSetBorder::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilde
 
 nsRect
 nsDisplayFieldSetBorder::GetBounds(nsDisplayListBuilder* aBuilder,
-                                   bool* aSnap) const
+                                   bool* aSnap)
 {
   // Just go ahead and claim our frame's overflow rect as the bounds, because we
   // may have border-image-outset or other features that cause borders to extend
@@ -152,45 +146,9 @@ nsDisplayFieldSetBorder::GetBounds(nsDisplayListBuilder* aBuilder,
   return Frame()->GetVisualOverflowRectRelativeToSelf() + ToReferenceFrame();
 }
 
-bool
-nsDisplayFieldSetBorder::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                                 mozilla::wr::IpcResourceUpdateQueue& aResources,
-                                                 const StackingContextHelper& aSc,
-                                                 mozilla::layers::WebRenderLayerManager* aManager,
-                                                 nsDisplayListBuilder* aDisplayListBuilder)
-{
-  if (!ShouldUseAdvancedLayer(aManager, gfxPrefs::LayersAllowBorderLayers)) {
-    return false;
-  }
-
-  auto frame = static_cast<nsFieldSetFrame*>(mFrame);
-  auto offset = ToReferenceFrame();
-  nsRect rect;
-
-  if (nsIFrame* legend = frame->GetLegend()) {
-    rect = frame->VisualBorderRectRelativeToSelf() + offset;
-
-    // Legends require a "negative" clip around the text, which WR doesn't support yet.
-    nsRect legendRect = legend->GetNormalRect() + offset;
-    if (!legendRect.IsEmpty()) {
-      return false;
-    }
-  } else {
-    rect = nsRect(offset, frame->GetRect().Size());
-  }
-
-  return nsCSSRendering::CreateWebRenderCommandsForBorder(this,
-                                                          mFrame,
-                                                          rect,
-                                                          aBuilder,
-                                                          aResources,
-                                                          aSc,
-                                                          aManager,
-                                                          aDisplayListBuilder);
-};
-
 void
 nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
                                   const nsDisplayListSet& aLists) {
   // Paint our background and border in a special way.
   // REVIEW: We don't really need to check frame emptiness here; if it's empty,
@@ -217,10 +175,10 @@ nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   }
 
   if (GetPrevInFlow()) {
-    DisplayOverflowContainers(aBuilder, aLists);
+    DisplayOverflowContainers(aBuilder, aDirtyRect, aLists);
   }
 
-  nsDisplayListCollection contentDisplayItems(aBuilder);
+  nsDisplayListCollection contentDisplayItems;
   if (nsIFrame* inner = GetInner()) {
     // Collect the inner frame's display items into their own collection.
     // We need to be calling BuildDisplayList on it before the legend in
@@ -228,13 +186,13 @@ nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     // legend. However, we want the inner frame's display items to be
     // after the legend's display items in z-order, so we need to save them
     // and append them later.
-    BuildDisplayListForChild(aBuilder, inner, contentDisplayItems);
+    BuildDisplayListForChild(aBuilder, inner, aDirtyRect, contentDisplayItems);
   }
   if (nsIFrame* legend = GetLegend()) {
     // The legend's background goes on our BlockBorderBackgrounds list because
     // it's a block child.
     nsDisplayListSet set(aLists, aLists.BlockBorderBackgrounds());
-    BuildDisplayListForChild(aBuilder, legend, set);
+    BuildDisplayListForChild(aBuilder, legend, aDirtyRect, set);
   }
   // Put the inner frame's display items on the master list. Note that this
   // moves its border/background display items to our BorderBackground() list,
@@ -367,9 +325,12 @@ nsFieldSetFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsFieldSetFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
+
   NS_PRECONDITION(aReflowInput.ComputedISize() != NS_INTRINSICSIZE,
                   "Should have a precomputed inline-size!");
+
+  // Initialize OUT parameter
+  aStatus.Reset();
 
   nsOverflowAreas ocBounds;
   nsReflowStatus ocStatus;

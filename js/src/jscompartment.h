@@ -40,9 +40,7 @@ template <typename Node, typename Derived> class ComponentFinder;
 
 class GlobalObject;
 class LexicalEnvironmentObject;
-class MapObject;
 class ScriptSourceObject;
-class SetObject;
 struct NativeIterator;
 
 /*
@@ -623,11 +621,9 @@ struct JSCompartment
   public:
     bool                         isSelfHosting;
     bool                         marked;
-    bool                         warnedAboutDateToLocaleFormat : 1;
-    bool                         warnedAboutExprClosure : 1;
-    bool                         warnedAboutForEach : 1;
-    bool                         warnedAboutLegacyGenerator : 1;
-    bool                         warnedAboutObjectWatch : 1;
+    bool                         warnedAboutDateToLocaleFormat;
+    bool                         warnedAboutExprClosure;
+    bool                         warnedAboutForEach;
     uint32_t                     warnedAboutStringGenericsMethods;
 
 #ifdef DEBUG
@@ -642,7 +638,6 @@ struct JSCompartment
     js::ReadBarrieredGlobalObject global_;
 
     unsigned                     enterCompartmentDepth;
-    unsigned                     globalHolds;
 
   public:
     js::PerformanceGroupHolder performanceMonitoring;
@@ -653,16 +648,7 @@ struct JSCompartment
     void leave() {
         enterCompartmentDepth--;
     }
-    bool hasBeenEntered() const { return !!enterCompartmentDepth; }
-
-    void holdGlobal() {
-        globalHolds++;
-    }
-    void releaseGlobal() {
-        MOZ_ASSERT(globalHolds > 0);
-        globalHolds--;
-    }
-    bool shouldTraceGlobal() const { return globalHolds > 0 || hasBeenEntered(); }
+    bool hasBeenEntered() { return !!enterCompartmentDepth; }
 
     JS::Zone* zone() { return zone_; }
     const JS::Zone* zone() const { return zone_; }
@@ -672,7 +658,7 @@ struct JSCompartment
     const JS::CompartmentBehaviors& behaviors() const { return behaviors_; }
 
     JSRuntime* runtimeFromActiveCooperatingThread() const {
-        MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(runtime_));
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime_));
         return runtime_;
     }
 
@@ -682,12 +668,12 @@ struct JSCompartment
         return runtime_;
     }
 
-    /* The global object for this compartment.
-     *
-     * This returns nullptr if this is the atoms compartment.  (The global_
-     * field is also null briefly during GC, after the global object is
-     * collected; but when that happens the JSCompartment is destroyed during
-     * the same GC.)
+    /*
+     * Nb: global_ might be nullptr, if (a) it's the atoms compartment, or
+     * (b) the compartment's global has been collected.  The latter can happen
+     * if e.g. a string in a compartment is rooted but no object is, and thus
+     * the global isn't rooted, and thus the global can be finalized while the
+     * compartment lives on.
      *
      * In contrast, JSObject::global() is infallible because marking a JSObject
      * always marks its global as well.
@@ -698,14 +684,10 @@ struct JSCompartment
     /* An unbarriered getter for use while tracing. */
     inline js::GlobalObject* unsafeUnbarrieredMaybeGlobal() const;
 
-    /* True if a global object exists, but it's being collected. */
-    inline bool globalIsAboutToBeFinalized();
-
     inline void initGlobal(js::GlobalObject& global);
 
   public:
     void*                        data;
-    void*                        realmData;
 
   private:
     const js::AllocationMetadataBuilder *allocationMetadataBuilder;
@@ -955,7 +937,6 @@ struct JSCompartment
     bool preserveJitCode() { return creationOptions_.preserveJitCode(); }
 
     void sweepAfterMinorGC(JSTracer* trc);
-    void sweepMapAndSetObjectsAfterMinorGC();
 
     void sweepCrossCompartmentWrappers();
     void sweepSavedStacks();
@@ -1010,11 +991,11 @@ struct JSCompartment
     // and a template object. If a template object is found in template
     // registry, that object is returned. Otherwise, the passed-in templateObj
     // is added to the registry.
-    bool getTemplateLiteralObject(JSContext* cx, js::HandleArrayObject rawStrings,
+    bool getTemplateLiteralObject(JSContext* cx, js::HandleObject rawStrings,
                                   js::MutableHandleObject templateObj);
 
     // Per above, but an entry must already exist in the template registry.
-    JSObject* getExistingTemplateLiteralObject(js::ArrayObject* rawStrings);
+    JSObject* getExistingTemplateLiteralObject(JSObject* rawStrings);
 
     void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
 
@@ -1208,7 +1189,6 @@ struct JSCompartment
 
     js::ReadBarriered<js::ArgumentsObject*> mappedArgumentsTemplate_;
     js::ReadBarriered<js::ArgumentsObject*> unmappedArgumentsTemplate_;
-    js::ReadBarriered<js::NativeObject*> iterResultTemplate_;
 
   public:
     bool ensureJitCompartmentExists(JSContext* cx);
@@ -1219,10 +1199,6 @@ struct JSCompartment
     js::ArgumentsObject* getOrCreateArgumentsTemplateObject(JSContext* cx, bool mapped);
 
     js::ArgumentsObject* maybeArgumentsTemplateObject(bool mapped) const;
-
-    static const size_t IterResultObjectValueSlot = 0;
-    static const size_t IterResultObjectDoneSlot = 1;
-    js::NativeObject* getOrCreateIterResultTemplateObject(JSContext* cx);
 
   private:
     // Used for collecting telemetry on SpiderMonkey's deprecated language extensions.
@@ -1237,27 +1213,6 @@ struct JSCompartment
     // Aggregated output used to collect JSScript hit counts when code coverage
     // is enabled.
     js::coverage::LCovCompartment lcovOutput;
-
-    bool addMapWithNurseryMemory(js::MapObject* obj) {
-        MOZ_ASSERT_IF(!mapsWithNurseryMemory.empty(),
-                      mapsWithNurseryMemory.back() != obj);
-        return mapsWithNurseryMemory.append(obj);
-    }
-
-    bool addSetWithNurseryMemory(js::SetObject* obj) {
-        MOZ_ASSERT_IF(!setsWithNurseryMemory.empty(),
-                      setsWithNurseryMemory.back() != obj);
-        return setsWithNurseryMemory.append(obj);
-    }
-
-  private:
-
-    /*
-     * Lists of map and set objects allocated in the nursery or with iterators
-     * allocated there. Such objects need to be swept after minor GC.
-     */
-    js::Vector<js::MapObject*, 0, js::SystemAllocPolicy> mapsWithNurseryMemory;
-    js::Vector<js::SetObject*, 0, js::SystemAllocPolicy> setsWithNurseryMemory;
 };
 
 namespace js {

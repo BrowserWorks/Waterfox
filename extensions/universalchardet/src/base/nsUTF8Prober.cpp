@@ -14,7 +14,7 @@ void  nsUTF8Prober::Reset(void)
 
 nsProbingState nsUTF8Prober::HandleData(const char* aBuf, uint32_t aLen)
 {
-  uint32_t codingState;
+  nsSMState codingState;
 
   for (uint32_t i = 0; i < aLen; i++)
   {

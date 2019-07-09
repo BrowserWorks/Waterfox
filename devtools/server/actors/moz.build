@@ -5,14 +5,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DIRS += [
-    'emulation',
     'highlighters',
     'utils',
-    'webconsole',
 ]
 
 DevToolsModules(
-    'accessibility.js',
     'actor-registry.js',
     'addon.js',
     'addons.js',
@@ -42,11 +39,13 @@ DevToolsModules(
     'memory.js',
     'monitor.js',
     'object.js',
+    'performance-entries.js',
     'performance-recording.js',
     'performance.js',
     'preference.js',
     'pretty-print-worker.js',
     'process.js',
+    'profiler.js',
     'promises.js',
     'reflow.js',
     'root.js',
@@ -54,6 +53,7 @@ DevToolsModules(
     'source.js',
     'storage.js',
     'string.js',
+    'styleeditor.js',
     'styles.js',
     'stylesheets.js',
     'tab.js',
@@ -94,13 +94,16 @@ with Files('monitor.js'):
 with Files('performance*'):
     BUG_COMPONENT = ('Firefox', 'Developer Tools: Performance Tools (Profiler/Timeline)')
 
+with Files('profiler.js'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools: Performance Tools (Profiler/Timeline)')
+
 with Files('source.js'):
     BUG_COMPONENT = ('Firefox', 'Developer Tools: Debugger')
 
 with Files('storage.js'):
     BUG_COMPONENT = ('Firefox', 'Developer Tools: Storage Inspector')
 
-with Files('stylesheets.js'):
+with Files('styleeditor.js'):
     BUG_COMPONENT = ('Firefox', 'Developer Tools: Style Editor')
 
 with Files('webaudio.js'):

@@ -10,14 +10,14 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 struct nsNameSpaceEntry
 {
-  explicit nsNameSpaceEntry(nsAtom* aPrefix)
+  explicit nsNameSpaceEntry(nsIAtom* aPrefix)
     : prefix(aPrefix) {}
 
-  RefPtr<nsAtom> prefix;
+  nsCOMPtr<nsIAtom> prefix;
   MOZ_INIT_OUTSIDE_CTOR int32_t nameSpaceID;
 };
 
@@ -39,13 +39,13 @@ public:
    * Passing a null |aPrefix| corresponds to the default namespace, which may
    * be set to something other than kNameSpaceID_None.
    */
-  nsresult AddPrefix(nsAtom *aPrefix, int32_t aNameSpaceID);
+  nsresult AddPrefix(nsIAtom *aPrefix, int32_t aNameSpaceID);
 
   /**
    * Add a prefix and a namespace URI to the map.  The URI will be converted
    * to its corresponding namespace ID.
    */
-  nsresult AddPrefix(nsAtom *aPrefix, nsString &aURI);
+  nsresult AddPrefix(nsIAtom *aPrefix, nsString &aURI);
 
   /*
    * Returns the namespace ID for the given prefix, if it is in the map.
@@ -53,13 +53,13 @@ public:
    * (kNameSpaceID_None) is returned.  If |aPrefix| is non-null and is not in
    * the map, then kNameSpaceID_Unknown is returned.
    */
-  int32_t FindNameSpaceID(nsAtom *aPrefix) const;
+  int32_t FindNameSpaceID(nsIAtom *aPrefix) const;
 
   /**
    * If the given namespace ID is in the map, then the first prefix which
    * maps to that namespace is returned.  Otherwise, null is returned.
    */
-  nsAtom* FindPrefix(int32_t aNameSpaceID) const;
+  nsIAtom* FindPrefix(int32_t aNameSpaceID) const;
 
   /* Removes all prefix mappings. */
   void Clear();

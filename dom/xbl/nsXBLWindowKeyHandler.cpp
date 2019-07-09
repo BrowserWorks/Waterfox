@@ -8,7 +8,7 @@
 #include "nsXBLPrototypeHandler.h"
 #include "nsXBLWindowKeyHandler.h"
 #include "nsIContent.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsXBLService.h"
 #include "nsIServiceManager.h"
@@ -22,19 +22,20 @@
 #include "nsXBLPrototypeBinding.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocShell.h"
-#include "nsIDOMDocument.h"
-#include "nsISelectionController.h"
 #include "nsIPresShell.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
-#include "mozilla/HTMLEditor.h"
 #include "mozilla/Move.h"
+#include "nsISelectionController.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/layers/KeyboardMap.h"
+#include "nsIEditor.h"
+#include "nsIHTMLEditor.h"
+#include "nsIDOMDocument.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -255,7 +256,7 @@ nsXBLWindowKeyHandler::EnsureHandlers()
 }
 
 nsresult
-nsXBLWindowKeyHandler::WalkHandlers(nsIDOMKeyEvent* aKeyEvent, nsAtom* aEventType)
+nsXBLWindowKeyHandler::WalkHandlers(nsIDOMKeyEvent* aKeyEvent, nsIAtom* aEventType)
 {
   bool prevent;
   aKeyEvent->AsEvent()->GetDefaultPrevented(&prevent);
@@ -443,7 +444,7 @@ nsXBLWindowKeyHandler::CollectKeyboardShortcuts()
   return KeyboardMap(mozilla::Move(shortcuts));
 }
 
-nsAtom*
+nsIAtom*
 nsXBLWindowKeyHandler::ConvertEventToDOMEventType(
                          const WidgetKeyboardEvent& aWidgetKeyboardEvent) const
 {
@@ -503,14 +504,7 @@ nsXBLWindowKeyHandler::HandleEvent(nsIDOMEvent* aEvent)
     }
   }
 
-  // If this event was handled by APZ then don't do the default action, and
-  // preventDefault to prevent any other listeners from handling the event.
-  if (widgetKeyboardEvent->mFlags.mHandledByAPZ) {
-    aEvent->PreventDefault();
-    return NS_OK;
-  }
-
-  RefPtr<nsAtom> eventTypeAtom =
+  nsCOMPtr<nsIAtom> eventTypeAtom =
     ConvertEventToDOMEventType(*widgetKeyboardEvent);
   return WalkHandlers(keyEvent, eventTypeAtom);
 }
@@ -579,12 +573,16 @@ nsXBLWindowKeyHandler::IsHTMLEditableFieldFocused()
     return false;
   }
 
-  RefPtr<HTMLEditor> htmlEditor = docShell->GetHTMLEditor();
+  nsCOMPtr<nsIEditor> editor;
+  docShell->GetEditor(getter_AddRefs(editor));
+  nsCOMPtr<nsIHTMLEditor> htmlEditor = do_QueryInterface(editor);
   if (!htmlEditor) {
     return false;
   }
 
-  nsCOMPtr<nsIDocument> doc = htmlEditor->GetDocument();
+  nsCOMPtr<nsIDOMDocument> domDocument;
+  editor->GetDocument(getter_AddRefs(domDocument));
+  nsCOMPtr<nsIDocument> doc = do_QueryInterface(domDocument);
   if (doc->HasFlag(NODE_IS_EDITABLE)) {
     // Don't need to perform any checks in designMode documents.
     return true;
@@ -619,7 +617,7 @@ nsXBLWindowKeyHandler::IsHTMLEditableFieldFocused()
 //
 bool
 nsXBLWindowKeyHandler::WalkHandlersInternal(nsIDOMKeyEvent* aKeyEvent,
-                                            nsAtom* aEventType,
+                                            nsIAtom* aEventType,
                                             nsXBLPrototypeHandler* aHandler,
                                             bool aExecute,
                                             bool* aOutReservedForChrome)
@@ -653,7 +651,7 @@ nsXBLWindowKeyHandler::WalkHandlersInternal(nsIDOMKeyEvent* aKeyEvent,
 bool
 nsXBLWindowKeyHandler::WalkHandlersAndExecute(
                          nsIDOMKeyEvent* aKeyEvent,
-                         nsAtom* aEventType,
+                         nsIAtom* aEventType,
                          nsXBLPrototypeHandler* aFirstHandler,
                          uint32_t aCharCode,
                          const IgnoreModifierState& aIgnoreModifierState,
@@ -810,7 +808,7 @@ nsXBLWindowKeyHandler::HasHandlerForEvent(nsIDOMKeyEvent* aEvent,
     return false;
   }
 
-  RefPtr<nsAtom> eventTypeAtom =
+  nsCOMPtr<nsIAtom> eventTypeAtom =
     ConvertEventToDOMEventType(*widgetKeyboardEvent);
   return WalkHandlersInternal(aEvent, eventTypeAtom, mHandler, false,
                               aOutReservedForChrome);

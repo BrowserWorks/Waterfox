@@ -6,7 +6,6 @@
 #include "mp4_demuxer/SinfParser.h"
 #include "mp4_demuxer/AtomType.h"
 #include "mp4_demuxer/Box.h"
-#include "mp4_demuxer/Stream.h"
 
 namespace mp4_demuxer {
 
@@ -24,54 +23,50 @@ SinfParser::SinfParser(Box& aBox)
 {
   for (Box box = aBox.FirstChild(); box.IsAvailable(); box = box.Next()) {
     if (box.IsType("schm")) {
-      mozilla::Unused << ParseSchm(box);
+      ParseSchm(box);
     } else if (box.IsType("schi")) {
-      mozilla::Unused << ParseSchi(box);
+      ParseSchi(box);
     }
   }
 }
 
-Result<Ok, nsresult>
+void
 SinfParser::ParseSchm(Box& aBox)
 {
   BoxReader reader(aBox);
 
   if (reader->Remaining() < 8) {
-    return Err(NS_ERROR_FAILURE);
+    return;
   }
 
-  MOZ_TRY(reader->ReadU32()); // flags -- ignore
-  MOZ_TRY_VAR(mSinf.mDefaultEncryptionType, reader->ReadU32());
-  return Ok();
+  mozilla::Unused << reader->ReadU32(); // flags -- ignore
+  mSinf.mDefaultEncryptionType = reader->ReadU32();
 }
 
-Result<Ok, nsresult>
+void
 SinfParser::ParseSchi(Box& aBox)
 {
   for (Box box = aBox.FirstChild(); box.IsAvailable(); box = box.Next()) {
-    if (box.IsType("tenc") && ParseTenc(box).isErr()) {
-      return Err(NS_ERROR_FAILURE);
+    if (box.IsType("tenc")) {
+      ParseTenc(box);
     }
   }
-  return Ok();
 }
 
-Result<Ok, nsresult>
+void
 SinfParser::ParseTenc(Box& aBox)
 {
   BoxReader reader(aBox);
 
   if (reader->Remaining() < 24) {
-    return Err(NS_ERROR_FAILURE);
+    return;
   }
 
-  MOZ_TRY(reader->ReadU32()); // flags -- ignore
+  mozilla::Unused << reader->ReadU32(); // flags -- ignore
 
-  uint32_t isEncrypted;
-  MOZ_TRY_VAR(isEncrypted, reader->ReadU24());
-  MOZ_TRY_VAR(mSinf.mDefaultIVSize, reader->ReadU8());
+  uint32_t isEncrypted = reader->ReadU24();
+  mSinf.mDefaultIVSize = reader->ReadU8();
   memcpy(mSinf.mDefaultKeyID, reader->Read(16), 16);
-  return Ok();
 }
 
 }

@@ -25,9 +25,11 @@ XPIDL_SOURCES += [
     'nsIKeyModule.idl',
     'nsILocalCertService.idl',
     'nsINSSErrorsService.idl',
+    'nsINSSU2FToken.idl',
     'nsINSSVersion.idl',
     'nsIPK11Token.idl',
     'nsIPK11TokenDB.idl',
+    'nsIPKCS11.idl',
     'nsIPKCS11Module.idl',
     'nsIPKCS11ModuleDB.idl',
     'nsIPKCS11Slot.idl',
@@ -39,6 +41,7 @@ XPIDL_SOURCES += [
     'nsISSLStatusProvider.idl',
     'nsITokenDialogs.idl',
     'nsITokenPasswordDialogs.idl',
+    'nsIU2FToken.idl',
     'nsIX509Cert.idl',
     'nsIX509CertDB.idl',
     'nsIX509CertList.idl',
@@ -67,6 +70,7 @@ EXPORTS += [
     'nsNSSComponent.h',
     'nsNSSHelper.h',
     'nsNSSShutDown.h',
+    'nsNSSU2FToken.h',
     'nsRandomGenerator.h',
     'nsSecurityHeaderParser.h',
     'NSSErrorsService.h',
@@ -115,6 +119,7 @@ UNIFIED_SOURCES += [
     'nsNSSIOLayer.cpp',
     'nsNSSModule.cpp',
     'nsNSSShutDown.cpp',
+    'nsNSSU2FToken.cpp',
     'nsNSSVersion.cpp',
     'nsNTLMAuthModule.cpp',
     'nsPK11TokenDB.cpp',
@@ -129,7 +134,7 @@ UNIFIED_SOURCES += [
     'nsSSLSocketProvider.cpp',
     'nsSSLStatus.cpp',
     'nsTLSSocketProvider.cpp',
-    'PKCS11ModuleDB.cpp',
+    'PKCS11.cpp',
     'PSMContentListener.cpp',
     'PSMRunnable.cpp',
     'PublicKeyPinningService.cpp',
@@ -143,6 +148,11 @@ UNIFIED_SOURCES += [
 IPDL_SOURCES += [
     'PPSMContentDownloader.ipdl',
 ]
+
+if not CONFIG['MOZ_NO_SMART_CARDS']:
+    UNIFIED_SOURCES += [
+        'nsSmartCardMonitor.cpp',
+    ]
 
 if CONFIG['MOZ_XUL']:
     UNIFIED_SOURCES += [

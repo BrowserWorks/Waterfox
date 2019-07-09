@@ -24,26 +24,6 @@ FileLocation::FileLocation(nsIFile* aFile, const char* aPath)
   Init(aFile, aPath);
 }
 
-FileLocation::FileLocation(nsZipArchive* aZip, const char* aPath)
-{
-  Init(aZip, aPath);
-}
-
-FileLocation::FileLocation(const FileLocation& aOther)
-  : mBaseFile(aOther.mBaseFile)
-  , mBaseZip(aOther.mBaseZip)
-  , mPath(aOther.mPath)
-{
-}
-
-FileLocation::FileLocation(FileLocation&& aOther)
-  : mBaseFile(Move(aOther.mBaseFile))
-  , mBaseZip(Move(aOther.mBaseZip))
-  , mPath(Move(aOther.mPath))
-{
-  aOther.mPath.Truncate();
-}
-
 FileLocation::FileLocation(const FileLocation& aFile, const char* aPath)
 {
   if (aFile.IsZip()) {
@@ -121,7 +101,7 @@ FileLocation::GetURIString(nsACString& aResult) const
     handler->mFile.GetURIString(aResult);
   }
   if (IsZip()) {
-    aResult.InsertLiteral("jar:", 0);
+    aResult.Insert("jar:", 0);
     aResult += "!/";
     aResult += mPath;
   }

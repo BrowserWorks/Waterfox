@@ -4,17 +4,15 @@
 
 "use strict";
 
-const EventEmitter = require("devtools/shared/event-emitter");
+const events = require("sdk/event/core");
 
 loader.lazyRequireGetter(this, "CommandState",
   "devtools/shared/gcli/command-state", true);
 
 const l10n = require("gcli/l10n");
 require("devtools/server/actors/inspector");
-const { HighlighterEnvironment } =
+const { RulersHighlighter, HighlighterEnvironment } =
   require("devtools/server/actors/highlighters");
-const { RulersHighlighter } =
-  require("devtools/server/actors/highlighters/rulers");
 
 const highlighters = new WeakMap();
 
@@ -28,7 +26,7 @@ exports.items = [
     description: l10n.lookup("rulersDesc"),
     manual: l10n.lookup("rulersManual"),
     buttonId: "command-button-rulers",
-    buttonClass: "command-button",
+    buttonClass: "command-button command-button-invertable",
     tooltipText: l10n.lookup("rulersTooltip"),
     state: {
       isChecked: (target) => CommandState.isEnabledForTarget(target, "rulers"),
@@ -83,7 +81,7 @@ exports.items = [
 
       // Listen to the highlighter's destroy event which may happen if the
       // window is refreshed or closed with the rulers shown.
-      EventEmitter.once(highlighter, "destroy", () => {
+      events.once(highlighter, "destroy", () => {
         if (highlighters.has(document)) {
           let { environment: toDestroy } = highlighters.get(document);
           toDestroy.destroy();

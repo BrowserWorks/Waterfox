@@ -27,7 +27,7 @@
 #include "nsLayoutUtils.h"
 #include "mozilla/EnumeratedArray.h"
 #include "FilterSupport.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "Layers.h"
 #include "nsBidi.h"
 
@@ -204,10 +204,10 @@ public:
   bool DrawCustomFocusRing(mozilla::dom::Element& aElement);
   void Clip(const CanvasWindingRule& aWinding);
   void Clip(const CanvasPath& aPath, const CanvasWindingRule& aWinding);
-  bool IsPointInPath(JSContext* aCx, double aX, double aY, const CanvasWindingRule& aWinding);
-  bool IsPointInPath(JSContext* aCx, const CanvasPath& aPath, double aX, double aY, const CanvasWindingRule& aWinding);
-  bool IsPointInStroke(JSContext* aCx, double aX, double aY);
-  bool IsPointInStroke(JSContext* aCx, const CanvasPath& aPath, double aX, double aY);
+  bool IsPointInPath(double aX, double aY, const CanvasWindingRule& aWinding);
+  bool IsPointInPath(const CanvasPath& aPath, double aX, double aY, const CanvasWindingRule& aWinding);
+  bool IsPointInStroke(double aX, double aY);
+  bool IsPointInStroke(const CanvasPath& aPath, double aX, double aY);
   void FillText(const nsAString& aText, double aX, double aY,
                 const Optional<double>& aMaxWidth,
                 mozilla::ErrorResult& aError);
@@ -466,9 +466,8 @@ public:
   NS_IMETHOD Reset() override;
   already_AddRefed<Layer> GetCanvasLayer(nsDisplayListBuilder* aBuilder,
                                          Layer* aOldLayer,
-                                         LayerManager* aManager) override;
-  bool InitializeCanvasRenderer(nsDisplayListBuilder* aBuilder,
-                                CanvasRenderer* aRenderer) override;
+                                         LayerManager* aManager,
+                                         bool aMirror = false) override;
   virtual bool ShouldForceInactiveLayer(LayerManager* aManager) override;
   void MarkContextClean() override;
   void MarkContextCleanForFrameCapture() override;
@@ -684,8 +683,11 @@ protected:
 
   /**
    * Disposes an old target and prepares to lazily create a new target.
+   *
+   * Parameters are the new dimensions to be used, or if either is negative,
+   * existing dimensions will be left unchanged.
    */
-  void ClearTarget();
+  void ClearTarget(int32_t aWidth = -1, int32_t aHeight = -1);
 
   /*
    * Returns the target to the buffer provider. i.e. this will queue a frame for
@@ -1074,7 +1076,7 @@ protected:
     nsTArray<ClipState> clipsAndTransforms;
 
     RefPtr<gfxFontGroup> fontGroup;
-    RefPtr<nsAtom> fontLanguage;
+    nsCOMPtr<nsIAtom> fontLanguage;
     nsFont fontFont;
 
     EnumeratedArray<Style, Style::MAX, RefPtr<CanvasGradient>> gradientStyles;
@@ -1166,8 +1168,6 @@ protected:
   friend struct CanvasBidiProcessor;
   friend class CanvasDrawObserver;
 };
-
-size_t BindingJSObjectMallocBytes(CanvasRenderingContext2D* aContext);
 
 } // namespace dom
 } // namespace mozilla

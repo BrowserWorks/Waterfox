@@ -14,7 +14,6 @@ info: >
       i. Return ? IntegerIndexedElementGet(O, numericIndex).
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

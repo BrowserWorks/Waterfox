@@ -2,13 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
 import json
 import os
 import subprocess
 import sys
 from abc import ABCMeta, abstractmethod, abstractproperty
+from distutils.spawn import find_executable
 
 GIT_CINNABAR_NOT_FOUND = """
 Could not detect `git-cinnabar`.
@@ -54,12 +53,11 @@ class VCSHelper(object):
         )
 
         for cmd in commands:
-            try:
-                output = subprocess.check_output(cmd, stderr=open(os.devnull, 'w')).strip()
-            except (subprocess.CalledProcessError, OSError):
-                continue
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = proc.communicate()[0].strip()
 
-            return cmd[0], output
+            if proc.returncode == 0:
+                return cmd[0], output
         return None, ''
 
     @classmethod
@@ -78,54 +76,19 @@ class VCSHelper(object):
             print(e.output)
             raise
 
-    def write_task_config(self, labels, templates=None):
+    def write_task_config(self, labels):
         config = os.path.join(self.root, 'try_task_config.json')
         with open(config, 'w') as fh:
-            try_task_config = {'tasks': sorted(labels)}
-            if templates:
-                try_task_config['templates'] = templates
-
-            json.dump(try_task_config, fh, indent=2, separators=(',', ':'))
-            fh.write('\n')
+            json.dump(sorted(labels), fh, indent=2)
         return config
 
-    def check_working_directory(self, push=True):
-        if not push:
-            return
-
+    def check_working_directory(self):
         if self.has_uncommitted_changes:
             print(UNCOMMITTED_CHANGES)
             sys.exit(1)
 
-    def push_to_try(self, method, msg, labels=None, templates=None, push=True,
-                    closed_tree=False):
-        closed_tree_string = " ON A CLOSED TREE" if closed_tree else ""
-        commit_message = ('%s%s\n\nPushed via `mach try %s`' %
-                          (msg, closed_tree_string, method))
-
-        self.check_working_directory(push)
-
-        config = None
-        if labels or labels == []:
-            config = self.write_task_config(labels, templates)
-
-        try:
-            if not push:
-                print("Commit message:")
-                print(commit_message)
-                if config:
-                    print("Calculated try_task_config.json:")
-                    with open(config) as fh:
-                        print(fh.read())
-                return
-
-            self._push_to_try(commit_message, config)
-        finally:
-            if config and os.path.isfile(config):
-                os.remove(config)
-
     @abstractmethod
-    def _push_to_try(self, msg, config):
+    def push_to_try(self, msg, labels=None):
         pass
 
     @abstractproperty
@@ -139,10 +102,14 @@ class VCSHelper(object):
 
 class HgHelper(VCSHelper):
 
-    def _push_to_try(self, msg, config):
+    def push_to_try(self, msg, labels=None):
+        self.check_working_directory()
+
+        if labels:
+            config = self.write_task_config(labels)
+            self.run(['hg', 'add', config])
+
         try:
-            if config:
-                self.run(['hg', 'add', config])
             return subprocess.check_call(['hg', 'push-to-try', '-m', msg])
         except subprocess.CalledProcessError:
             try:
@@ -153,10 +120,13 @@ class HgHelper(VCSHelper):
         finally:
             self.run(['hg', 'revert', '-a'])
 
+            if labels and os.path.isfile(config):
+                os.remove(config)
+
     @property
     def files_changed(self):
         return self.run(['hg', 'log', '-r', '::. and not public()',
-                         '--template', '{join(files, "\n")}\n']).splitlines()
+                         '--template', '{join(files, "\n")}\n'])
 
     @property
     def has_uncommitted_changes(self):
@@ -166,15 +136,17 @@ class HgHelper(VCSHelper):
 
 class GitHelper(VCSHelper):
 
-    def _push_to_try(self, msg, config):
-        try:
-            subprocess.check_output(['git', 'cinnabar', '--version'], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+    def push_to_try(self, msg, labels=None):
+        self.check_working_directory()
+
+        if not find_executable('git-cinnabar'):
             print(GIT_CINNABAR_NOT_FOUND)
             return 1
 
-        if config:
+        if labels:
+            config = self.write_task_config(labels)
             self.run(['git', 'add', config])
+
         subprocess.check_call(['git', 'commit', '--allow-empty', '-m', msg])
         try:
             return subprocess.call(['git', 'push', 'hg::ssh://hg.mozilla.org/try',

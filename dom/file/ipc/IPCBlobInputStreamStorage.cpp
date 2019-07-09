@@ -99,7 +99,6 @@ IPCBlobInputStreamStorage::Observe(nsISupports* aSubject, const char* aTopic,
 void
 IPCBlobInputStreamStorage::AddStream(nsIInputStream* aInputStream,
                                      const nsID& aID,
-                                     uint64_t aSize,
                                      uint64_t aChildID)
 {
   MOZ_ASSERT(aInputStream);
@@ -107,7 +106,6 @@ IPCBlobInputStreamStorage::AddStream(nsIInputStream* aInputStream,
   StreamData* data = new StreamData();
   data->mInputStream = aInputStream;
   data->mChildID = aChildID;
-  data->mSize = aSize;
 
   mozilla::StaticMutexAutoLock lock(gMutex);
   mStorage.Put(aID, data);
@@ -122,13 +120,11 @@ IPCBlobInputStreamStorage::ForgetStream(const nsID& aID)
 
 void
 IPCBlobInputStreamStorage::GetStream(const nsID& aID,
-                                     uint64_t aStart, uint64_t aLength,
                                      nsIInputStream** aInputStream)
 {
   *aInputStream = nullptr;
 
   nsCOMPtr<nsIInputStream> inputStream;
-  uint64_t size;
 
   // NS_CloneInputStream cannot be called when the mutex is locked because it
   // can, recursively call GetStream() in case the child actor lives on the
@@ -141,7 +137,6 @@ IPCBlobInputStreamStorage::GetStream(const nsID& aID,
     }
 
     inputStream = data->mInputStream;
-    size = data->mSize;
   }
 
   MOZ_ASSERT(inputStream);
@@ -168,12 +163,6 @@ IPCBlobInputStreamStorage::GetStream(const nsID& aID,
     }
 
     data->mInputStream = replacementStream;
-  }
-
-  // Now it's the right time to apply a slice if needed.
-  if (aStart > 0 || aLength < size) {
-    clonedStream =
-      new SlicedInputStream(clonedStream.forget(), aStart, aLength);
   }
 
   clonedStream.forget(aInputStream);

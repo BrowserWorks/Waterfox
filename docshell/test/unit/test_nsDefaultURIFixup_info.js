@@ -337,8 +337,8 @@ var testcases = [ {
     inWhitelist: true,
   }, {
     input: "café.local",
-    fixedURI: "http://xn--caf-dma.local/",
-    alternateURI: "http://www.xn--caf-dma.local/",
+    fixedURI: "http://café.local/",
+    alternateURI: "http://www.café.local/",
     protocolChange: true
   }, {
     input: "47.6182,-122.830",

@@ -93,7 +93,7 @@ struct TracerStartClosure {
  */
 void TracerThread(void *arg)
 {
-  AUTO_PROFILER_REGISTER_THREAD("Event Tracer");
+  AutoProfilerRegisterThread registerThread("Event Tracer");
   NS_SetCurrentThreadName("Event Tracer");
 
   TracerStartClosure* threadArgs = static_cast<TracerStartClosure*>(arg);

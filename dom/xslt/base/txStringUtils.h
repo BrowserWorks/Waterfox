@@ -7,7 +7,7 @@
 #define txStringUtils_h__
 
 #include "nsAString.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsUnicharUtils.h"
 #include "nsContentUtils.h" // For ASCIIToLower().
 
@@ -17,13 +17,13 @@ typedef nsCaseInsensitiveStringComparator txCaseInsensitiveStringComparator;
  * Check equality between a string and an atom containing ASCII.
  */
 inline bool
-TX_StringEqualsAtom(const nsAString& aString, nsAtom* aAtom)
+TX_StringEqualsAtom(const nsAString& aString, nsIAtom* aAtom)
 {
   return aAtom->Equals(aString);
 }
 
-inline already_AddRefed<nsAtom>
-TX_ToLowerCaseAtom(nsAtom* aAtom)
+inline already_AddRefed<nsIAtom>
+TX_ToLowerCaseAtom(nsIAtom* aAtom)
 {
   nsAutoString str;
   aAtom->ToString(str);

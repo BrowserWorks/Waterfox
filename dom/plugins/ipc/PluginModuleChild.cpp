@@ -926,6 +926,10 @@ _pushpopupsenabledstate(NPP aNPP, NPBool enabled);
 static void
 _poppopupsenabledstate(NPP aNPP);
 
+static void
+_pluginthreadasynccall(NPP instance, PluginThreadCallback func,
+                       void *userData);
+
 static NPError
 _getvalueforurl(NPP npp, NPNURLVariable variable, const char *url,
                 char **value, uint32_t *len);
@@ -1013,7 +1017,7 @@ const NPNetscapeFuncs PluginModuleChild::sBrowserFuncs = {
     mozilla::plugins::child::_pushpopupsenabledstate,
     mozilla::plugins::child::_poppopupsenabledstate,
     mozilla::plugins::child::_enumerate,
-    nullptr, // pluginthreadasynccall, not used
+    mozilla::plugins::child::_pluginthreadasynccall,
     mozilla::plugins::child::_construct,
     mozilla::plugins::child::_getvalueforurl,
     mozilla::plugins::child::_setvalueforurl,
@@ -1045,7 +1049,13 @@ NPError
 _requestread(NPStream* aStream,
              NPByteRange* aRangeList)
 {
-    return NPERR_STREAM_NOT_SEEKABLE;
+    PLUGIN_LOG_DEBUG_FUNCTION;
+    ENSURE_PLUGIN_THREAD(NPERR_INVALID_PARAM);
+
+    BrowserStreamChild* bs =
+        static_cast<BrowserStreamChild*>(static_cast<AStream*>(aStream->ndata));
+    bs->EnsureCorrectStream(aStream);
+    return bs->NPN_RequestRead(aRangeList);
 }
 
 NPError
@@ -1540,6 +1550,18 @@ _poppopupsenabledstate(NPP aNPP)
     InstCast(aNPP)->CallNPN_PopPopupsEnabledState();
 }
 
+void
+_pluginthreadasynccall(NPP aNPP,
+                       PluginThreadCallback aFunc,
+                       void* aUserData)
+{
+    PLUGIN_LOG_DEBUG_FUNCTION;
+    if (!aFunc)
+        return;
+
+    InstCast(aNPP)->AsyncCall(aFunc, aUserData);
+}
+
 NPError
 _getvalueforurl(NPP npp, NPNURLVariable variable, const char *url,
                 char **value, uint32_t *len)
@@ -1975,9 +1997,9 @@ class GetKeyStateTask : public Runnable
 public:
     explicit GetKeyStateTask(int aVirtKey, HANDLE aSemaphore, SHORT* aKeyState) :
         Runnable("GetKeyStateTask"),
-        mKeyState(aKeyState),
         mVirtKey(aVirtKey),
-        mSemaphore(aSemaphore)
+        mSemaphore(aSemaphore),
+        mKeyState(aKeyState)
     {}
 
     NS_IMETHOD Run() override
@@ -2049,10 +2071,8 @@ class PluginThreadTask : public Runnable
 public:
     explicit PluginThreadTask(PluginThreadTaskData* aTaskData,
                               HANDLE aSemaphore) :
-        Runnable("PluginThreadTask"),
-        mSuccess(false),
-        mTaskData(aTaskData),
-        mSemaphore(aSemaphore)
+        Runnable("PluginThreadTask"), mTaskData(aTaskData),
+        mSemaphore(aSemaphore), mSuccess(false)
     {}
 
     NS_IMETHOD Run() override

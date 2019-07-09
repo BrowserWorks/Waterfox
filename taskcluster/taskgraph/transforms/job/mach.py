@@ -7,7 +7,11 @@ Support for running mach tasks (via run-task)
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from taskgraph.transforms.job import run_job_using, configure_taskdesc_for_run
+from taskgraph.transforms.job import run_job_using
+from taskgraph.transforms.job.run_task import (
+    docker_worker_run_task,
+    native_engine_run_task,
+)
 from taskgraph.util.schema import Schema
 from voluptuous import Required
 
@@ -25,7 +29,10 @@ def docker_worker_mach(config, job, taskdesc):
     run = job['run']
 
     # defer to the run_task implementation
-    run['command'] = 'cd /builds/worker/checkouts/gecko && ./mach ' + run['mach']
-    run['using'] = 'run-task'
+    run['command'] = 'cd ~/checkouts/gecko && ./mach ' + run['mach']
+    run['checkout'] = True
     del run['mach']
-    configure_taskdesc_for_run(config, job, taskdesc, job['worker']['implementation'])
+    if job['worker']['implementation'] == 'docker-worker':
+        docker_worker_run_task(config, job, taskdesc)
+    else:
+        native_engine_run_task(config, job, taskdesc)

@@ -16,8 +16,6 @@ using namespace mozilla;
 class WebMOpusTrackEncoder : public OpusTrackEncoder
 {
 public:
-  explicit WebMOpusTrackEncoder(TrackRate aTrackRate)
-    : OpusTrackEncoder(aTrackRate) {}
   bool TestOpusCreation(int aChannels, int aSamplingRate)
   {
     if (NS_SUCCEEDED(Init(aChannels, aSamplingRate))) {
@@ -54,8 +52,8 @@ public:
     mTimestamp(0)
   {}
 
-  void SetOpusMetadata(int aChannels, int aSampleRate, TrackRate aTrackRate) {
-    WebMOpusTrackEncoder opusEncoder(aTrackRate);
+  void SetOpusMetadata(int aChannels, int aSampleRate) {
+    WebMOpusTrackEncoder opusEncoder;
     EXPECT_TRUE(opusEncoder.TestOpusCreation(aChannels, aSampleRate));
     RefPtr<TrackMetadataBase> opusMeta = opusEncoder.GetMetadata();
     SetMetadata(opusMeta);
@@ -115,8 +113,7 @@ TEST(WebMWriter, Metadata)
   // Set opus metadata.
   int channel = 1;
   int sampleRate = 44100;
-  TrackRate aTrackRate = 90000;
-  writer.SetOpusMetadata(channel, sampleRate, aTrackRate);
+  writer.SetOpusMetadata(channel, sampleRate);
 
   // No output data since we didn't set both audio/video
   // metadata in writer.
@@ -130,6 +127,7 @@ TEST(WebMWriter, Metadata)
   int32_t height = 480;
   int32_t displayWidth = 640;
   int32_t displayHeight = 480;
+  TrackRate aTrackRate = 90000;
   writer.SetVP8Metadata(width, height, displayWidth,
                         displayHeight, aTrackRate);
 
@@ -144,13 +142,13 @@ TEST(WebMWriter, Cluster)
   // Set opus metadata.
   int channel = 1;
   int sampleRate = 48000;
-  TrackRate aTrackRate = 90000;
-  writer.SetOpusMetadata(channel, sampleRate, aTrackRate);
+  writer.SetOpusMetadata(channel, sampleRate);
   // Set vp8 metadata
   int32_t width = 320;
   int32_t height = 240;
   int32_t displayWidth = 320;
   int32_t displayHeight = 240;
+  TrackRate aTrackRate = 90000;
   writer.SetVP8Metadata(width, height, displayWidth,
                         displayHeight, aTrackRate);
 
@@ -187,13 +185,13 @@ TEST(WebMWriter, FLUSH_NEEDED)
   // Set opus metadata.
   int channel = 2;
   int sampleRate = 44100;
-  TrackRate aTrackRate = 100000;
-  writer.SetOpusMetadata(channel, sampleRate, aTrackRate);
+  writer.SetOpusMetadata(channel, sampleRate);
   // Set vp8 metadata
   int32_t width = 176;
   int32_t height = 352;
   int32_t displayWidth = 176;
   int32_t displayHeight = 352;
+  TrackRate aTrackRate = 100000;
   writer.SetVP8Metadata(width, height, displayWidth,
                         displayHeight, aTrackRate);
 
@@ -312,13 +310,13 @@ TEST(WebMWriter, bug970774_aspect_ratio)
   // Set opus metadata.
   int channel = 1;
   int sampleRate = 44100;
-  TrackRate aTrackRate = 90000;
-  writer.SetOpusMetadata(channel, sampleRate, aTrackRate);
+  writer.SetOpusMetadata(channel, sampleRate);
   // Set vp8 metadata
   int32_t width = 640;
   int32_t height = 480;
   int32_t displayWidth = 1280;
   int32_t displayHeight = 960;
+  TrackRate aTrackRate = 90000;
   writer.SetVP8Metadata(width, height, displayWidth,
                         displayHeight, aTrackRate);
 

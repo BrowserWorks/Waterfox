@@ -10,9 +10,7 @@
 
 <script>
   var test = document.getElementById("test");
-  // Force spellcheck by focus then blur
-  test.focus();
-  test.blur();
+  test.focus(); test.blur(); // Alternative to forceSpellCheck(), due to general lack of support
   var child = document.getElementById("child");
   child.setAttribute("spellcheck", false);
 </script>

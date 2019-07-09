@@ -15,8 +15,6 @@
 #if defined(XP_WIN)
 #include "AccessibleWrap.h"
 #include "Compatibility.h"
-#include "mozilla/mscom/PassthruProxy.h"
-#include "mozilla/mscom/Ptr.h"
 #include "nsWinUtils.h"
 #include "RootAccessible.h"
 #endif
@@ -78,11 +76,6 @@ DocAccessibleParent::RecvShowEvent(const ShowEventData& aData,
 #endif
 
   MOZ_ASSERT(CheckDocTree());
-
-  // Just update, no events.
-  if (aData.EventSuppressed()) {
-    return IPC_OK();
-  }
 
   ProxyAccessible* target = parent->ChildAt(newChildIdx);
   ProxyShowHideEvent(target, parent, true, aFromUser);
@@ -631,18 +624,17 @@ DocAccessibleParent::MaybeInitWindowEmulation()
   }
 
   nsWinUtils::NativeWindowCreateProc onCreate([this](HWND aHwnd) -> void {
-    IDispatchHolder hWndAccHolder;
+    IAccessibleHolder hWndAccHolder;
 
     ::SetPropW(aHwnd, kPropNameDocAccParent, reinterpret_cast<HANDLE>(this));
 
     SetEmulatedWindowHandle(aHwnd);
 
-    RefPtr<IAccessible> hwndAcc;
+    IAccessible* rawHWNDAcc = nullptr;
     if (SUCCEEDED(::AccessibleObjectFromWindow(aHwnd, OBJID_WINDOW,
                                                IID_IAccessible,
-                                               getter_AddRefs(hwndAcc)))) {
-      RefPtr<IDispatch> wrapped(mscom::PassthruProxy::Wrap<IDispatch>(WrapNotNull(hwndAcc)));
-      hWndAccHolder.Set(IDispatchHolder::COMPtrType(mscom::ToProxyUniquePtr(Move(wrapped))));
+                                               (void**)&rawHWNDAcc))) {
+      hWndAccHolder.Set(IAccessibleHolder::COMPtrType(rawHWNDAcc));
     }
 
     Unused << SendEmulatedWindow(reinterpret_cast<uintptr_t>(mEmulatedWindowHandle),
@@ -676,14 +668,12 @@ DocAccessibleParent::SendParentCOMProxy()
     return;
   }
 
-  RefPtr<IAccessible> nativeAcc;
-  outerDoc->GetNativeInterface(getter_AddRefs(nativeAcc));
-  MOZ_ASSERT(nativeAcc);
+  IAccessible* rawNative = nullptr;
+  outerDoc->GetNativeInterface((void**) &rawNative);
+  MOZ_ASSERT(rawNative);
 
-  RefPtr<IDispatch> wrapped(mscom::PassthruProxy::Wrap<IDispatch>(WrapNotNull(nativeAcc)));
-
-  IDispatchHolder::COMPtrType ptr(mscom::ToProxyUniquePtr(Move(wrapped)));
-  IDispatchHolder holder(Move(ptr));
+  IAccessibleHolder::COMPtrType ptr(rawNative);
+  IAccessibleHolder holder(Move(ptr));
   if (!PDocAccessibleParent::SendParentCOMProxy(holder)) {
     return;
   }

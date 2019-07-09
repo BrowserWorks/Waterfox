@@ -48,6 +48,7 @@
 #include "vm/CommonPropertyNames.h"
 #include "vm/DateTime.h"
 #include "vm/GeckoProfiler.h"
+#include "vm/MallocProvider.h"
 #include "vm/Scope.h"
 #include "vm/SharedImmutableStringsCache.h"
 #include "vm/Stack.h"
@@ -67,6 +68,8 @@ class EnterDebuggeeNoExecute;
 #ifdef JS_TRACE_LOGGING
 class TraceLoggerThread;
 #endif
+
+typedef Vector<UniquePtr<PromiseTask>, 0, SystemAllocPolicy> PromiseTaskPtrVector;
 
 } // namespace js
 
@@ -95,6 +98,7 @@ ReportOverRecursed(JSContext* cx);
 
 class Activation;
 class ActivationIterator;
+class WasmActivation;
 
 namespace jit {
 class JitRuntime;
@@ -198,7 +202,7 @@ struct JSAtomState
 #define PROPERTYNAME_FIELD(idpart, id, text) js::ImmutablePropertyNamePtr id;
     FOR_EACH_COMMON_PROPERTYNAME(PROPERTYNAME_FIELD)
 #undef PROPERTYNAME_FIELD
-#define PROPERTYNAME_FIELD(name, init, clasp) js::ImmutablePropertyNamePtr name;
+#define PROPERTYNAME_FIELD(name, code, init, clasp) js::ImmutablePropertyNamePtr name;
     JS_FOR_EACH_PROTOTYPE(PROPERTYNAME_FIELD)
 #undef PROPERTYNAME_FIELD
 #define PROPERTYNAME_FIELD(name) js::ImmutablePropertyNamePtr name;
@@ -291,6 +295,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     friend class js::Activation;
     friend class js::ActivationIterator;
     friend class js::jit::JitActivation;
+    friend class js::WasmActivation;
     friend class js::jit::CompileRuntime;
 
   public:
@@ -452,10 +457,6 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
 
     /* Call this to accumulate telemetry data. */
     js::ActiveThreadData<JSAccumulateTelemetryDataCallback> telemetryCallback;
-
-    /* Call this to accumulate use counter data. */
-    js::ActiveThreadData<JSSetUseCounterCallback> useCounterCallback;
-
   public:
     // Accumulates data for Firefox telemetry. |id| is the ID of a JS_TELEMETRY_*
     // histogram. |key| provides an additional key to identify the histogram.
@@ -464,16 +465,10 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
 
     void setTelemetryCallback(JSRuntime* rt, JSAccumulateTelemetryDataCallback callback);
 
-    // Sets the use counter for a specific feature, measuring the presence or
-    // absence of usage of a feature on a specific web page and document which
-    // the passed JSObject belongs to.
-    void setUseCounter(JSObject* obj, JSUseCounter counter);
-
-    void setUseCounterCallback(JSRuntime* rt, JSSetUseCounterCallback callback);
-
   public:
-    js::UnprotectedData<js::OffThreadPromiseRuntimeState> offThreadPromiseState;
-    js::UnprotectedData<JS::ConsumeStreamCallback> consumeStreamCallback;
+    js::ActiveThreadData<JS::StartAsyncTaskCallback> startAsyncTaskCallback;
+    js::UnprotectedData<JS::FinishAsyncTaskCallback> finishAsyncTaskCallback;
+    js::ExclusiveData<js::PromiseTaskPtrVector> promiseTasksToDestroy;
 
     JSObject* getIncumbentGlobal(JSContext* cx);
     bool enqueuePromiseJob(JSContext* cx, js::HandleFunction job, js::HandleObject promise,
@@ -505,12 +500,6 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
 
     /* Call this to get the name of a compartment. */
     js::ActiveThreadData<JSCompartmentNameCallback> compartmentNameCallback;
-
-    /* Realm destroy callback. */
-    js::ActiveThreadData<JS::DestroyRealmCallback> destroyRealmCallback;
-
-    /* Call this to get the name of a realm. */
-    js::ActiveThreadData<JS::RealmNameCallback> realmNameCallback;
 
     /* Callback for doing memory reporting on external strings. */
     js::ActiveThreadData<JSExternalStringSizeofCallback> externalStringSizeofCallback;
@@ -580,15 +569,24 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     }
 
     template <typename T>
-    struct GlobalObjectWatchersLinkAccess {
-      static mozilla::DoublyLinkedListElement<T>& Get(T* aThis) {
-        return aThis->onNewGlobalObjectWatchersLink;
+    struct GlobalObjectWatchersSiblingAccess {
+      static T* GetNext(T* elm) {
+        return elm->onNewGlobalObjectWatchersLink.mNext;
+      }
+      static void SetNext(T* elm, T* next) {
+        elm->onNewGlobalObjectWatchersLink.mNext = next;
+      }
+      static T* GetPrev(T* elm) {
+        return elm->onNewGlobalObjectWatchersLink.mPrev;
+      }
+      static void SetPrev(T* elm, T* prev) {
+        elm->onNewGlobalObjectWatchersLink.mPrev = prev;
       }
     };
 
     using WatchersList =
         mozilla::DoublyLinkedList<js::Debugger,
-                                  GlobalObjectWatchersLinkAccess<js::Debugger>>;
+                                  GlobalObjectWatchersSiblingAccess<js::Debugger>>;
   private:
     /*
      * List of all enabled Debuggers that have onNewGlobalObject handler
@@ -613,7 +611,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
 #endif
 
     /* Number of zones which may be operated on by non-cooperating helper threads. */
-    js::UnprotectedData<size_t> numActiveHelperThreadZones;
+    js::UnprotectedData<size_t> numHelperThreadZones;
 
     friend class js::AutoLockForExclusiveAccess;
 
@@ -622,7 +620,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     void clearUsedByHelperThread(JS::Zone* zone);
 
     bool hasHelperThreadZones() const {
-        return numActiveHelperThreadZones > 0;
+        return numHelperThreadZones > 0;
     }
 
 #ifdef DEBUG
@@ -961,6 +959,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
      * the caller must ensure that no deadlock possible during OOM reporting.
      */
     void updateMallocCounter(size_t nbytes);
+    void updateMallocCounter(JS::Zone* zone, size_t nbytes);
 
     void reportAllocationOverflow() { js::ReportAllocationOverflow(nullptr); }
 
@@ -977,8 +976,6 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     /*  onOutOfMemory but can call OnLargeAllocationFailure. */
     JS_FRIEND_API(void*) onOutOfMemoryCanGC(js::AllocFunction allocator, size_t nbytes,
                                             void* reallocPtr = nullptr);
-
-    static const unsigned LARGE_ALLOCATION = 25 * 1024 * 1024;
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes* runtime);
 
@@ -1014,6 +1011,38 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     /* See comment for JS::SetOutOfMemoryCallback in jsapi.h. */
     js::ActiveThreadData<JS::OutOfMemoryCallback> oomCallback;
     js::ActiveThreadData<void*> oomCallbackData;
+
+    /*
+     * These variations of malloc/calloc/realloc will call the
+     * large-allocation-failure callback on OOM and retry the allocation.
+     */
+    static const unsigned LARGE_ALLOCATION = 25 * 1024 * 1024;
+
+    template <typename T>
+    T* pod_callocCanGC(size_t numElems) {
+        T* p = pod_calloc<T>(numElems);
+        if (MOZ_LIKELY(!!p))
+            return p;
+        size_t bytes;
+        if (MOZ_UNLIKELY(!js::CalculateAllocSize<T>(numElems, &bytes))) {
+            reportAllocationOverflow();
+            return nullptr;
+        }
+        return static_cast<T*>(onOutOfMemoryCanGC(js::AllocFunction::Calloc, bytes));
+    }
+
+    template <typename T>
+    T* pod_reallocCanGC(T* p, size_t oldSize, size_t newSize) {
+        T* p2 = pod_realloc<T>(p, oldSize, newSize);
+        if (MOZ_LIKELY(!!p2))
+            return p2;
+        size_t bytes;
+        if (MOZ_UNLIKELY(!js::CalculateAllocSize<T>(newSize, &bytes))) {
+            reportAllocationOverflow();
+            return nullptr;
+        }
+        return static_cast<T*>(onOutOfMemoryCanGC(js::AllocFunction::Realloc, bytes, p));
+    }
 
     /*
      * Debugger.Memory functions like takeCensus use this embedding-provided
@@ -1165,10 +1194,8 @@ FreeOp::appendJitPoisonRange(const jit::JitPoisonRange& range)
 /*
  * RAII class that takes the GC lock while it is live.
  *
- * Usually functions will pass const references of this class.  However
- * non-const references can be used to either temporarily release the lock by
- * use of AutoUnlockGC or to start background allocation when the lock is
- * released.
+ * Note that the lock may be temporarily released by use of AutoUnlockGC when
+ * passed a non-const reference to this class.
  */
 class MOZ_RAII AutoLockGC
 {
@@ -1182,7 +1209,7 @@ class MOZ_RAII AutoLockGC
     }
 
     ~AutoLockGC() {
-        lockGuard_.reset();
+        unlock();
     }
 
     void lock() {
@@ -1199,9 +1226,6 @@ class MOZ_RAII AutoLockGC
         return lockGuard_.ref();
     }
 
-  protected:
-    JSRuntime* runtime() const { return runtime_; }
-
   private:
     JSRuntime* runtime_;
     mozilla::Maybe<js::LockGuard<js::Mutex>> lockGuard_;
@@ -1209,46 +1233,6 @@ class MOZ_RAII AutoLockGC
 
     AutoLockGC(const AutoLockGC&) = delete;
     AutoLockGC& operator=(const AutoLockGC&) = delete;
-};
-
-/*
- * Same as AutoLockGC except it can optionally start a background chunk
- * allocation task when the lock is released.
- */
-class MOZ_RAII AutoLockGCBgAlloc : public AutoLockGC
-{
-  public:
-    explicit AutoLockGCBgAlloc(JSRuntime* rt)
-      : AutoLockGC(rt)
-      , startBgAlloc(false)
-    {}
-
-    ~AutoLockGCBgAlloc() {
-        unlock();
-
-        /*
-         * We have to do this after releasing the lock because it may acquire
-         * the helper lock which could cause lock inversion if we still held
-         * the GC lock.
-         */
-        if (startBgAlloc)
-            runtime()->gc.startBackgroundAllocTaskIfIdle();
-    }
-
-    /*
-     * This can be used to start a background allocation task (if one isn't
-     * already running) that allocates chunks and makes them available in the
-     * free chunks list.  This happens after the lock is released in order to
-     * avoid lock inversion.
-     */
-    void tryToStartBackgroundAllocation() {
-        startBgAlloc = true;
-    }
-
-  private:
-    // true if we should start a background chunk allocation task after the
-    // lock is released.
-    bool startBgAlloc;
 };
 
 class MOZ_RAII AutoUnlockGC
@@ -1338,6 +1322,62 @@ SetValueRangeToNull(Value* vec, size_t len)
 {
     SetValueRangeToNull(vec, vec + len);
 }
+
+/*
+ * Allocation policy that uses JSRuntime::pod_malloc and friends, so that
+ * memory pressure is properly accounted for. This is suitable for
+ * long-lived objects owned by the JSRuntime.
+ *
+ * Since it doesn't hold a JSContext (those may not live long enough), it
+ * can't report out-of-memory conditions itself; the caller must check for
+ * OOM and take the appropriate action.
+ *
+ * FIXME bug 647103 - replace these *AllocPolicy names.
+ */
+class RuntimeAllocPolicy
+{
+    JSRuntime* const runtime;
+
+  public:
+    MOZ_IMPLICIT RuntimeAllocPolicy(JSRuntime* rt) : runtime(rt) {}
+
+    template <typename T>
+    T* maybe_pod_malloc(size_t numElems) {
+        return runtime->maybe_pod_malloc<T>(numElems);
+    }
+
+    template <typename T>
+    T* maybe_pod_calloc(size_t numElems) {
+        return runtime->maybe_pod_calloc<T>(numElems);
+    }
+
+    template <typename T>
+    T* maybe_pod_realloc(T* p, size_t oldSize, size_t newSize) {
+        return runtime->maybe_pod_realloc<T>(p, oldSize, newSize);
+    }
+
+    template <typename T>
+    T* pod_malloc(size_t numElems) {
+        return runtime->pod_malloc<T>(numElems);
+    }
+
+    template <typename T>
+    T* pod_calloc(size_t numElems) {
+        return runtime->pod_calloc<T>(numElems);
+    }
+
+    template <typename T>
+    T* pod_realloc(T* p, size_t oldSize, size_t newSize) {
+        return runtime->pod_realloc<T>(p, oldSize, newSize);
+    }
+
+    void free_(void* p) { js_free(p); }
+    void reportAllocOverflow() const {}
+
+    bool checkSimulatedOOM() const {
+        return !js::oom::ShouldFailWithOOM();
+    }
+};
 
 extern const JSSecurityCallbacks NullSecurityCallbacks;
 

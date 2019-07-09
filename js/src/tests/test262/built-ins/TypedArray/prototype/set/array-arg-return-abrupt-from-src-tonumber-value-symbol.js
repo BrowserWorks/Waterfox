@@ -19,7 +19,7 @@ info: >
     kNumber).
   ...
 includes: [testTypedArray.js, compareArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var obj = {

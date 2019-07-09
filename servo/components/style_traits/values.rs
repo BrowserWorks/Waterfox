@@ -5,9 +5,7 @@
 //! Helper types and traits for the handling of CSS values.
 
 use app_units::Au;
-use cssparser::{ParseError, Parser, Token, UnicodeRange, serialize_string};
-use cssparser::ToCss as CssparserToCss;
-use servo_arc::Arc;
+use cssparser::{BasicParseError, ParseError, Parser, Token, UnicodeRange, serialize_string};
 use std::fmt::{self, Write};
 
 /// Serialises a value according to its CSS representation.
@@ -20,12 +18,8 @@ use std::fmt::{self, Write};
 ///   of their name;
 /// * unit variants whose name starts with "Moz" or "Webkit" are prepended
 ///   with a "-";
-/// * if `#[css(comma)]` is found on a variant, its fields are separated by
-///   commas, otherwise, by spaces;
-/// * if `#[css(function)]` is found on a variant, the variant name gets
-///   serialised like unit variants and its fields are surrounded by parentheses;
-/// * finally, one can put `#[css(derive_debug)]` on the whole type, to
-///   implement `Debug` by a single call to `ToCss::to_css`.
+/// * variants with fields get serialised as the space-separated serialisations
+///   of their fields.
 pub trait ToCss {
     /// Serialize `self` in CSS syntax, writing to `dest`.
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: Write;
@@ -68,24 +62,6 @@ where
     #[inline]
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: Write {
         self.as_ref().map_or(Ok(()), |value| value.to_css(dest))
-    }
-}
-
-#[macro_export]
-macro_rules! serialize_function {
-    ($dest: expr, $name: ident($( $arg: expr, )+)) => {
-        serialize_function!($dest, $name($($arg),+))
-    };
-    ($dest: expr, $name: ident($first_arg: expr $( , $arg: expr )*)) => {
-        {
-            $dest.write_str(concat!(stringify!($name), "("))?;
-            $first_arg.to_css($dest)?;
-            $(
-                $dest.write_str(", ")?;
-                $arg.to_css($dest)?;
-            )*
-            $dest.write_char(')')
-        }
     }
 }
 
@@ -270,16 +246,11 @@ impl Separator for Space {
     where
         F: for<'tt> FnMut(&mut Parser<'i, 'tt>) -> Result<T, ParseError<'i, E>>
     {
-        input.skip_whitespace();  // Unnecessary for correctness, but may help try() rewind less.
         let mut results = vec![parse_one(input)?];
-        loop {
-            input.skip_whitespace();  // Unnecessary for correctness, but may help try() rewind less.
-            if let Ok(item) = input.try(&mut parse_one) {
-                results.push(item);
-            } else {
-                return Ok(results)
-            }
+        while let Ok(item) = input.try(&mut parse_one) {
+            results.push(item);
         }
+        Ok(results)
     }
 }
 
@@ -295,17 +266,13 @@ impl Separator for CommaWithSpace {
     where
         F: for<'tt> FnMut(&mut Parser<'i, 'tt>) -> Result<T, ParseError<'i, E>>
     {
-        input.skip_whitespace();  // Unnecessary for correctness, but may help try() rewind less.
         let mut results = vec![parse_one(input)?];
         loop {
-            input.skip_whitespace();  // Unnecessary for correctness, but may help try() rewind less.
-            let comma_location = input.current_source_location();
             let comma = input.try(|i| i.expect_comma()).is_ok();
-            input.skip_whitespace();  // Unnecessary for correctness, but may help try() rewind less.
             if let Ok(item) = input.try(&mut parse_one) {
                 results.push(item);
             } else if comma {
-                return Err(comma_location.new_unexpected_token_error(Token::Comma));
+                return Err(BasicParseError::UnexpectedToken(Token::Comma).into());
             } else {
                 break;
             }
@@ -345,18 +312,9 @@ impl<T> ToCss for Box<T> where T: ?Sized + ToCss {
     }
 }
 
-impl<T> ToCss for Arc<T> where T: ?Sized + ToCss {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-        where W: Write,
-    {
-        (**self).to_css(dest)
-    }
-}
-
 impl ToCss for Au {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: Write {
-        self.to_f64_px().to_css(dest)?;
-        dest.write_str("px")
+        write!(dest, "{}px", self.to_f64_px())
     }
 }
 
@@ -415,7 +373,7 @@ macro_rules! __define_css_keyword_enum__add_optional_traits {
     ($name: ident [ $( $css: expr => $variant: ident ),+ ]
                   [ $( $alias: expr => $alias_variant: ident),* ]) => {
         __define_css_keyword_enum__actual! {
-            $name [ Deserialize, Serialize, MallocSizeOf ]
+            $name [ Deserialize, Serialize, HeapSizeOf ]
                   [ $( $css => $variant ),+ ]
                   [ $( $alias => $alias_variant ),* ]
         }
@@ -425,12 +383,9 @@ macro_rules! __define_css_keyword_enum__add_optional_traits {
 #[cfg(not(feature = "servo"))]
 #[macro_export]
 macro_rules! __define_css_keyword_enum__add_optional_traits {
-    ($name: ident [ $( $css: expr => $variant: ident ),+ ]
-                  [ $( $alias: expr => $alias_variant: ident),* ]) => {
+    ($name: ident [ $( $css: expr => $variant: ident ),+ ] [ $( $alias: expr => $alias_variant: ident),* ]) => {
         __define_css_keyword_enum__actual! {
-            $name [ MallocSizeOf ]
-                  [ $( $css => $variant ),+ ]
-                  [ $( $alias => $alias_variant ),* ]
+            $name [] [ $( $css => $variant ),+ ] [ $( $alias => $alias_variant ),* ]
         }
     };
 }
@@ -441,7 +396,7 @@ macro_rules! __define_css_keyword_enum__actual {
                   [ $( $css: expr => $variant: ident ),+ ]
                   [ $( $alias: expr => $alias_variant: ident ),* ]) => {
         #[allow(non_camel_case_types, missing_docs)]
-        #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq$(, $derived_trait )* )]
+        #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq $(, $derived_trait )* )]
         pub enum $name {
             $( $variant ),+
         }
@@ -450,16 +405,11 @@ macro_rules! __define_css_keyword_enum__actual {
             /// Parse this property from a CSS input stream.
             pub fn parse<'i, 't>(input: &mut ::cssparser::Parser<'i, 't>)
                                  -> Result<$name, $crate::ParseError<'i>> {
-                use cssparser::Token;
-                let location = input.current_source_location();
-                match *input.next()? {
-                    Token::Ident(ref ident) => {
-                        Self::from_ident(ident).map_err(|()| {
-                            location.new_unexpected_token_error(Token::Ident(ident.clone()))
-                        })
-                    }
-                    ref token => Err(location.new_unexpected_token_error(token.clone()))
-                }
+                let ident = input.expect_ident()?;
+                Self::from_ident(&ident)
+                    .map_err(|()| ::cssparser::ParseError::Basic(
+                        ::cssparser::BasicParseError::UnexpectedToken(
+                            ::cssparser::Token::Ident(ident.clone()))))
             }
 
             /// Parse this property from an already-tokenized identifier.
@@ -487,10 +437,54 @@ macro_rules! __define_css_keyword_enum__actual {
 /// Helper types for the handling of specified values.
 pub mod specified {
     use ParsingMode;
+    use app_units::Au;
+    use std::cmp;
 
     /// Whether to allow negative lengths or not.
     #[repr(u8)]
-    #[derive(Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, PartialOrd)]
+    #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum AllowedLengthType {
+        /// Allow all kind of lengths.
+        All,
+        /// Allow only non-negative lengths.
+        NonNegative
+    }
+
+    impl Default for AllowedLengthType {
+        #[inline]
+        fn default() -> Self {
+            AllowedLengthType::All
+        }
+    }
+
+    impl AllowedLengthType {
+        /// Whether value is valid for this allowed length type.
+        #[inline]
+        pub fn is_ok(&self, parsing_mode: ParsingMode, value: f32) -> bool {
+            if parsing_mode.allows_all_numeric_values() {
+                return true;
+            }
+            match *self {
+                AllowedLengthType::All => true,
+                AllowedLengthType::NonNegative => value >= 0.,
+            }
+        }
+
+        /// Clamp the value following the rules of this numeric type.
+        #[inline]
+        pub fn clamp(&self, val: Au) -> Au {
+            match *self {
+                AllowedLengthType::All => val,
+                AllowedLengthType::NonNegative => cmp::max(Au(0), val),
+            }
+        }
+    }
+
+    /// Whether to allow negative lengths or not.
+    #[repr(u8)]
+    #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+    #[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd)]
     pub enum AllowedNumericType {
         /// Allow all kind of numeric values.
         All,
@@ -498,13 +492,6 @@ pub mod specified {
         NonNegative,
         /// Allow only numeric values greater or equal to 1.0.
         AtLeastOne,
-    }
-
-    impl Default for AllowedNumericType {
-        #[inline]
-        fn default() -> Self {
-            AllowedNumericType::All
-        }
     }
 
     impl AllowedNumericType {
@@ -530,5 +517,16 @@ pub mod specified {
                 _ => val,
             }
         }
+    }
+}
+
+
+/// Wrap CSS types for serialization with `write!` or `format!` macros.
+/// Used by ToCss of SpecifiedOperation.
+pub struct Css<T>(pub T);
+
+impl<T: ToCss> fmt::Display for Css<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.to_css(f)
     }
 }

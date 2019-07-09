@@ -12,7 +12,6 @@
 #include "mozilla/EventListenerManager.h" // for EventListenerManager
 #include "mozilla/IMEStateManager.h"    // for IMEStateManager
 #include "mozilla/Preferences.h"        // for Preferences
-#include "mozilla/TextEditor.h"         // for TextEditor
 #include "mozilla/TextEvents.h"         // for WidgetCompositionEvent
 #include "mozilla/dom/Element.h"        // for Element
 #include "mozilla/dom/Event.h"          // for Event
@@ -37,8 +36,11 @@
 #include "nsIDOMMouseEvent.h"           // for nsIDOMMouseEvent
 #include "nsIDOMNode.h"                 // for nsIDOMNode
 #include "nsIDocument.h"                // for nsIDocument
+#include "nsIEditor.h"                  // for EditorBase::GetSelection, etc.
+#include "nsIEditorMailSupport.h"       // for nsIEditorMailSupport
 #include "nsIFocusManager.h"            // for nsIFocusManager
 #include "nsIFormControl.h"             // for nsIFormControl, etc.
+#include "nsIHTMLEditor.h"              // for nsIHTMLEditor
 #include "nsINode.h"                    // for nsINode, ::NODE_IS_EDITABLE, etc.
 #include "nsIPlaintextEditor.h"         // for nsIPlaintextEditor, etc.
 #include "nsIPresShell.h"               // for nsIPresShell
@@ -81,8 +83,7 @@ DoCommandCallback(Command aCommand, void* aData)
   const char* commandStr = WidgetKeyboardEvent::GetCommandStr(aCommand);
 
   nsCOMPtr<nsIController> controller;
-  root->GetControllerForCommand(commandStr, false /* for any window */,
-                                getter_AddRefs(controller));
+  root->GetControllerForCommand(commandStr, getter_AddRefs(controller));
   if (!controller) {
     return;
   }
@@ -365,7 +366,7 @@ EditorEventListener::EnsureCommitCompoisition()
 {
   MOZ_ASSERT(!DetachedFromEditor());
   RefPtr<EditorBase> editorBase(mEditorBase);
-  editorBase->CommitComposition();
+  editorBase->ForceCompositionEnd();
   return !DetachedFromEditor();
 }
 
@@ -710,12 +711,17 @@ EditorEventListener::HandleMiddleClickPaste(nsIDOMMouseEvent* aMouseEvent)
     return NS_ERROR_NULL_POINTER;
   }
 
-  RefPtr<TextEditor> textEditor = mEditorBase->AsTextEditor();
-  MOZ_ASSERT(textEditor);
-
-  RefPtr<Selection> selection = textEditor->GetSelection();
+  RefPtr<EditorBase> editorBase(mEditorBase);
+  RefPtr<Selection> selection = editorBase->GetSelection();
   if (selection) {
     selection->Collapse(parent, offset);
+  }
+
+  // If the ctrl key is pressed, we'll do paste as quotation.
+  // Would've used the alt key, but the kde wmgr treats alt-middle specially.
+  nsCOMPtr<nsIEditorMailSupport> mailEditor;
+  if (clickEvent->IsControl()) {
+    mailEditor = do_QueryObject(editorBase);
   }
 
   nsresult rv;
@@ -730,12 +736,10 @@ EditorEventListener::HandleMiddleClickPaste(nsIDOMMouseEvent* aMouseEvent)
     }
   }
 
-  // If the ctrl key is pressed, we'll do paste as quotation.
-  // Would've used the alt key, but the kde wmgr treats alt-middle specially.
-  if (clickEvent->IsControl()) {
-    textEditor->PasteAsQuotation(clipboard);
+  if (mailEditor) {
+    mailEditor->PasteAsQuotation(clipboard);
   } else {
-    textEditor->Paste(clipboard);
+    editorBase->Paste(clipboard);
   }
 
   // Prevent the event from propagating up to be possibly handled
@@ -1024,8 +1028,11 @@ EditorEventListener::CanDrop(nsIDOMDragEvent* aEvent)
   rv = aEvent->GetRangeOffset(&offset);
   NS_ENSURE_SUCCESS(rv, false);
 
-  uint32_t rangeCount = selection->RangeCount();
-  for (uint32_t i = 0; i < rangeCount; i++) {
+  int32_t rangeCount;
+  rv = selection->GetRangeCount(&rangeCount);
+  NS_ENSURE_SUCCESS(rv, false);
+
+  for (int32_t i = 0; i < rangeCount; i++) {
     RefPtr<nsRange> range = selection->GetRangeAt(i);
     if (!range) {
       // Don't bail yet, iterate through them all
@@ -1184,8 +1191,11 @@ EditorEventListener::SpellCheckIfNeeded()
   // If the spell check skip flag is still enabled from creation time,
   // disable it because focused editors are allowed to spell check.
   RefPtr<EditorBase> editorBase(mEditorBase);
-  if(editorBase->ShouldSkipSpellCheck()) {
-    editorBase->RemoveFlags(nsIPlaintextEditor::eEditorSkipSpellCheck);
+  uint32_t currentFlags = 0;
+  editorBase->GetFlags(&currentFlags);
+  if(currentFlags & nsIPlaintextEditor::eEditorSkipSpellCheck) {
+    currentFlags ^= nsIPlaintextEditor::eEditorSkipSpellCheck;
+    editorBase->SetFlags(currentFlags);
   }
 }
 

@@ -3,7 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 from setuptools import setup
 
 PACKAGE_NAME = 'mozdevice'
@@ -19,9 +18,7 @@ setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
       description="Mozilla-authored device management",
       long_description="see http://mozbase.readthedocs.org/",
-      classifiers=['Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 2 :: Only'],
-      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
       author='Mozilla Automation and Testing Team',
       author_email='tools@lists.mozilla.org',

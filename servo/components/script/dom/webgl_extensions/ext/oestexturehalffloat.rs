@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use dom::bindings::codegen::Bindings::OESTextureHalfFloatBinding::{self, OESTextureHalfFloatConstants};
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::webglrenderingcontext::WebGLRenderingContext;
 use dom_struct::dom_struct;
 use super::{constants as webgl, ext_constants as gl, WebGLExtension, WebGLExtensions};
@@ -24,8 +24,8 @@ impl OESTextureHalfFloat {
 
 impl WebGLExtension for OESTextureHalfFloat {
     type Extension = OESTextureHalfFloat;
-    fn new(ctx: &WebGLRenderingContext) -> DomRoot<OESTextureHalfFloat> {
-        reflect_dom_object(Box::new(OESTextureHalfFloat::new_inherited()),
+    fn new(ctx: &WebGLRenderingContext) -> Root<OESTextureHalfFloat> {
+        reflect_dom_object(box OESTextureHalfFloat::new_inherited(),
                            &*ctx.global(),
                            OESTextureHalfFloatBinding::Wrap)
     }
@@ -33,8 +33,7 @@ impl WebGLExtension for OESTextureHalfFloat {
     fn is_supported(ext: &WebGLExtensions) -> bool {
         ext.supports_any_gl_extension(&["GL_OES_texture_half_float",
                                         "GL_ARB_half_float_pixel",
-                                        "GL_NV_half_float",
-                                        "GL_EXT_color_buffer_half_float"])
+                                        "GL_NV_half_float"])
     }
 
     fn enable(ext: &WebGLExtensions) {

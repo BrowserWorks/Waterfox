@@ -35,7 +35,7 @@ class PrintTranslator final : public Translator
 public:
   explicit PrintTranslator(nsDeviceContext* aDeviceContext);
 
-  bool TranslateRecording(PRFileDescStream& aRecording);
+  bool TranslateRecording(std::istream& aRecording);
 
   DrawTarget* LookupDrawTarget(ReferencePtr aRefPtr) final
   {

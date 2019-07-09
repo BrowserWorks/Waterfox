@@ -15,6 +15,7 @@
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
 #include "js/Conversions.h"
+#include "vm/ArgumentsObject.h"
 #include "vm/TypedArrayObject.h"
 
 #include "jsopcodeinlines.h"
@@ -1845,9 +1846,9 @@ MArgumentsLength::computeRange(TempAllocator& alloc)
 {
     // This is is a conservative upper bound on what |TooManyActualArguments|
     // checks.  If exceeded, Ion will not be entered in the first place.
-    MOZ_ASSERT(JitOptions.maxStackArgs <= UINT32_MAX,
-               "NewUInt32Range requires a uint32 value");
-    setRange(Range::NewUInt32Range(alloc, 0, JitOptions.maxStackArgs));
+    static_assert(ARGS_LENGTH_MAX <= UINT32_MAX,
+                  "NewUInt32Range requires a uint32 value");
+    setRange(Range::NewUInt32Range(alloc, 0, ARGS_LENGTH_MAX));
 }
 
 void
@@ -2166,7 +2167,7 @@ RangeAnalysis::analyzeLoopPhi(MBasicBlock* header, LoopIterationBound* loopBound
     if (initial->block()->isMarked())
         return;
 
-    SimpleLinearSum modified = ExtractLinearSum(phi->getLoopBackedgeOperand());
+    SimpleLinearSum modified = ExtractLinearSum(phi->getLoopBackedgeOperand(), MathSpace::Infinite);
 
     if (modified.term != phi || modified.constant == 0)
         return;
@@ -3125,12 +3126,12 @@ RangeAnalysis::truncate()
 
             // Remember all bitop instructions for folding after range analysis.
             switch (iter->op()) {
-              case MDefinition::Opcode::BitAnd:
-              case MDefinition::Opcode::BitOr:
-              case MDefinition::Opcode::BitXor:
-              case MDefinition::Opcode::Lsh:
-              case MDefinition::Opcode::Rsh:
-              case MDefinition::Opcode::Ursh:
+              case MDefinition::Op_BitAnd:
+              case MDefinition::Op_BitOr:
+              case MDefinition::Op_BitXor:
+              case MDefinition::Op_Lsh:
+              case MDefinition::Op_Rsh:
+              case MDefinition::Op_Ursh:
                 if (!bitops.append(static_cast<MBinaryBitwiseInstruction*>(*iter)))
                     return false;
                 break;

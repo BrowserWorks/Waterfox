@@ -5,7 +5,7 @@
 
 #include "nsIServiceManager.h"
 #include "nsIStringBundle.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsParserMsgUtils.h"
 #include "nsNetCID.h"
 #include "mozilla/Services.h"
@@ -35,9 +35,9 @@ nsParserMsgUtils::GetLocalizedStringByName(const char * aPropFileName, const cha
   nsCOMPtr<nsIStringBundle> bundle;
   nsresult rv = GetBundle(aPropFileName,getter_AddRefs(bundle));
   if (NS_SUCCEEDED(rv) && bundle) {
-    nsAutoString valUni;
-    rv = bundle->GetStringFromName(aKey, valUni);
-    if (NS_SUCCEEDED(rv)) {
+    nsXPIDLString valUni;
+    rv = bundle->GetStringFromName(aKey, getter_Copies(valUni));
+    if (NS_SUCCEEDED(rv) && valUni) {
       oVal.Assign(valUni);
     }
   }
@@ -53,11 +53,11 @@ nsParserMsgUtils::GetLocalizedStringByID(const char * aPropFileName, uint32_t aI
   nsCOMPtr<nsIStringBundle> bundle;
   nsresult rv = GetBundle(aPropFileName,getter_AddRefs(bundle));
   if (NS_SUCCEEDED(rv) && bundle) {
-    nsAutoString valUni;
-    rv = bundle->GetStringFromID(aID, valUni);
-    if (NS_SUCCEEDED(rv)) {
+    nsXPIDLString valUni;
+    rv = bundle->GetStringFromID(aID, getter_Copies(valUni));
+    if (NS_SUCCEEDED(rv) && valUni) {
       oVal.Assign(valUni);
-    }
+    }  
   }
 
   return rv;

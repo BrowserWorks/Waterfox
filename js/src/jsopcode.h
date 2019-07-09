@@ -12,7 +12,6 @@
  */
 
 #include "mozilla/Attributes.h"
-#include "mozilla/EndianUtils.h"
 
 #include "jsbytecode.h"
 #include "jstypes.h"
@@ -137,26 +136,17 @@ UINT16_LO(uint16_t i)
 static MOZ_ALWAYS_INLINE uint16_t
 GET_UINT16(const jsbytecode* pc)
 {
-#if MOZ_LITTLE_ENDIAN
-    uint16_t result;
-    memcpy(&result, pc + 1, sizeof(result));
-    return result;
-#else
-    return uint16_t((pc[2] << 8) | pc[1]);
-#endif
+    return uint16_t((pc[1] << 8) | pc[2]);
 }
 
 static MOZ_ALWAYS_INLINE void
 SET_UINT16(jsbytecode* pc, uint16_t i)
 {
-#if MOZ_LITTLE_ENDIAN
-    memcpy(pc + 1, &i, sizeof(i));
-#else
-    pc[1] = UINT16_LO(i);
-    pc[2] = UINT16_HI(i);
-#endif
+    pc[1] = UINT16_HI(i);
+    pc[2] = UINT16_LO(i);
 }
 
+static const unsigned UINT16_LEN        = 2;
 static const unsigned UINT16_LIMIT      = 1 << 16;
 
 /* Helpers for accessing the offsets of jump opcodes. */
@@ -164,32 +154,69 @@ static const unsigned JUMP_OFFSET_LEN   = 4;
 static const int32_t JUMP_OFFSET_MIN    = INT32_MIN;
 static const int32_t JUMP_OFFSET_MAX    = INT32_MAX;
 
-static MOZ_ALWAYS_INLINE uint32_t
-GET_UINT24(const jsbytecode* pc)
+static MOZ_ALWAYS_INLINE int32_t
+GET_JUMP_OFFSET(jsbytecode* pc)
 {
-#if MOZ_LITTLE_ENDIAN
-    // Do a single 32-bit load (for opcode and operand), then shift off the
-    // opcode.
-    uint32_t result;
-    memcpy(&result, pc, 4);
-    return result >> 8;
-#else
-    return unsigned((pc[3] << 16) | (pc[2] << 8) | pc[1]);
-#endif
+    return (pc[1] << 24) | (pc[2] << 16) | (pc[3] << 8) | pc[4];
 }
 
 static MOZ_ALWAYS_INLINE void
-SET_UINT24(jsbytecode* pc, uint32_t i)
+SET_JUMP_OFFSET(jsbytecode* pc, int32_t off)
+{
+    pc[1] = jsbytecode(off >> 24);
+    pc[2] = jsbytecode(off >> 16);
+    pc[3] = jsbytecode(off >> 8);
+    pc[4] = jsbytecode(off);
+}
+
+static const unsigned UINT32_INDEX_LEN  = 4;
+
+static MOZ_ALWAYS_INLINE uint32_t
+GET_UINT32_INDEX(const jsbytecode* pc)
+{
+    return (pc[1] << 24) | (pc[2] << 16) | (pc[3] << 8) | pc[4];
+}
+
+static MOZ_ALWAYS_INLINE void
+SET_UINT32_INDEX(jsbytecode* pc, uint32_t index)
+{
+    pc[1] = jsbytecode(index >> 24);
+    pc[2] = jsbytecode(index >> 16);
+    pc[3] = jsbytecode(index >> 8);
+    pc[4] = jsbytecode(index);
+}
+
+static inline jsbytecode
+UINT24_HI(unsigned i)
+{
+    return jsbytecode(i >> 16);
+}
+
+static inline jsbytecode
+UINT24_MID(unsigned i)
+{
+    return jsbytecode(i >> 8);
+}
+
+static inline jsbytecode
+UINT24_LO(unsigned i)
+{
+    return jsbytecode(i);
+}
+
+static MOZ_ALWAYS_INLINE unsigned
+GET_UINT24(const jsbytecode* pc)
+{
+    return unsigned((pc[1] << 16) | (pc[2] << 8) | pc[3]);
+}
+
+static MOZ_ALWAYS_INLINE void
+SET_UINT24(jsbytecode* pc, unsigned i)
 {
     MOZ_ASSERT(i < (1 << 24));
-
-#if MOZ_LITTLE_ENDIAN
-    memcpy(pc + 1, &i, 3);
-#else
-    pc[1] = jsbytecode(i);
-    pc[2] = jsbytecode(i >> 8);
-    pc[3] = jsbytecode(i >> 16);
-#endif
+    pc[1] = UINT24_HI(i);
+    pc[2] = UINT24_MID(i);
+    pc[3] = UINT24_LO(i);
 }
 
 static MOZ_ALWAYS_INLINE int8_t
@@ -201,29 +228,19 @@ GET_INT8(const jsbytecode* pc)
 static MOZ_ALWAYS_INLINE uint32_t
 GET_UINT32(const jsbytecode* pc)
 {
-#if MOZ_LITTLE_ENDIAN
-    uint32_t result;
-    memcpy(&result, pc + 1, sizeof(result));
-    return result;
-#else
-    return  (uint32_t(pc[4]) << 24) |
-            (uint32_t(pc[3]) << 16) |
-            (uint32_t(pc[2]) << 8)  |
-            uint32_t(pc[1]);
-#endif
+    return  (uint32_t(pc[1]) << 24) |
+            (uint32_t(pc[2]) << 16) |
+            (uint32_t(pc[3]) << 8)  |
+            uint32_t(pc[4]);
 }
 
 static MOZ_ALWAYS_INLINE void
 SET_UINT32(jsbytecode* pc, uint32_t u)
 {
-#if MOZ_LITTLE_ENDIAN
-    memcpy(pc + 1, &u, sizeof(u));
-#else
-    pc[1] = jsbytecode(u);
-    pc[2] = jsbytecode(u >> 8);
-    pc[3] = jsbytecode(u >> 16);
-    pc[4] = jsbytecode(u >> 24);
-#endif
+    pc[1] = jsbytecode(u >> 24);
+    pc[2] = jsbytecode(u >> 16);
+    pc[3] = jsbytecode(u >> 8);
+    pc[4] = jsbytecode(u);
 }
 
 static MOZ_ALWAYS_INLINE int32_t
@@ -236,32 +253,6 @@ static MOZ_ALWAYS_INLINE void
 SET_INT32(jsbytecode* pc, int32_t i)
 {
     SET_UINT32(pc, static_cast<uint32_t>(i));
-}
-
-static MOZ_ALWAYS_INLINE int32_t
-GET_JUMP_OFFSET(jsbytecode* pc)
-{
-    return GET_INT32(pc);
-}
-
-static MOZ_ALWAYS_INLINE void
-SET_JUMP_OFFSET(jsbytecode* pc, int32_t off)
-{
-    SET_INT32(pc, off);
-}
-
-static const unsigned UINT32_INDEX_LEN  = 4;
-
-static MOZ_ALWAYS_INLINE uint32_t
-GET_UINT32_INDEX(const jsbytecode* pc)
-{
-    return GET_UINT32(pc);
-}
-
-static MOZ_ALWAYS_INLINE void
-SET_UINT32_INDEX(jsbytecode* pc, uint32_t index)
-{
-    SET_UINT32(pc, index);
 }
 
 /* Index limit is determined by SN_4BYTE_OFFSET_FLAG, see frontend/BytecodeEmitter.h. */
@@ -535,37 +526,11 @@ class SrcNoteLineScanner
     uint32_t getLine() const { return lineno; }
 };
 
-MOZ_ALWAYS_INLINE unsigned
-StackUses(jsbytecode* pc)
-{
-    JSOp op = JSOp(*pc);
-    int nuses = CodeSpec[op].nuses;
-    if (nuses >= 0)
-        return nuses;
+extern unsigned
+StackUses(JSScript* script, jsbytecode* pc);
 
-    MOZ_ASSERT(nuses == -1);
-    switch (op) {
-      case JSOP_POPN:
-        return GET_UINT16(pc);
-      case JSOP_NEW:
-      case JSOP_SUPERCALL:
-        return 2 + GET_ARGC(pc) + 1;
-      default:
-        /* stack: fun, this, [argc arguments] */
-        MOZ_ASSERT(op == JSOP_CALL || op == JSOP_CALL_IGNORES_RV || op == JSOP_EVAL ||
-                   op == JSOP_CALLITER ||
-                   op == JSOP_STRICTEVAL || op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
-        return 2 + GET_ARGC(pc);
-    }
-}
-
-MOZ_ALWAYS_INLINE unsigned
-StackDefs(jsbytecode* pc)
-{
-    int ndefs = CodeSpec[*pc].ndefs;
-    MOZ_ASSERT(ndefs >= 0);
-    return ndefs;
-}
+extern unsigned
+StackDefs(JSScript* script, jsbytecode* pc);
 
 #ifdef DEBUG
 /*

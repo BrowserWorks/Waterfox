@@ -36,13 +36,7 @@ test_flavors = {
     },
     'web-platform-tests': {
         "path": lambda x: os.path.join("tests", x.split("testing" + os.path.sep)[1])
-    },
-    'web-platform-tests-reftests': {
-        "path": lambda x: os.path.join("tests", x.split("testing" + os.path.sep)[1])
-    },
-    'web-platform-tests-wdspec': {
-        "path": lambda x: os.path.join("tests", x.split("testing" + os.path.sep)[1])
-    },
+    }
 }
 
 class TryToolsMixin(TransferMixin):
@@ -163,14 +157,8 @@ class TryToolsMixin(TransferMixin):
         repo_path = None
         if self.buildbot_config and 'properties' in self.buildbot_config:
             repo_path = self.buildbot_config['properties'].get('branch')
-        get_branch = self.config.get('branch', repo_path)
-        if get_branch is not None:
-            on_try = ('try' in get_branch or 'Try' in get_branch)
-        elif os.environ is not None:
-            on_try = ('TRY_COMMIT_MSG' in os.environ)
-        else:
-            on_try = False
-        return on_try
+        return (self.config.get('branch', repo_path) == 'try' or
+                'TRY_COMMIT_MSG' in os.environ)
 
     @PostScriptAction('download-and-extract')
     def set_extra_try_arguments(self, action, success=None):
@@ -258,7 +246,7 @@ class TryToolsMixin(TransferMixin):
             args.extend(['--this-chunk=1', '--total-chunks=1'])
 
             path_func = test_flavors[flavor].get("path", lambda x:x)
-            tests = [path_func(os.path.normpath(item)) for item in self.try_test_paths[flavor]]
+            tests = [path_func(item) for item in self.try_test_paths[flavor]]
         else:
             tests = []
 

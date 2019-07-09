@@ -3,7 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // For SIMD
-#![cfg_attr(feature = "unstable", feature(cfg_target_feature))]
+#![cfg_attr(any(target_os = "linux", target_os = "android"), feature(allocator_api))]
+#![feature(box_syntax)]
+#![feature(cfg_target_feature)]
+#![feature(range_contains)]
+#![feature(unique)]
 
 #![deny(unsafe_code)]
 
@@ -27,23 +31,22 @@ extern crate fnv;
 #[cfg(target_os = "linux")]
 extern crate fontconfig;
 extern crate fontsan;
-#[cfg(any(target_os = "linux", target_os = "android"))] extern crate freetype;
-#[cfg(any(target_os = "linux", target_os = "android"))] extern crate servo_allocator;
+#[cfg(any(target_os = "linux", target_os = "android"))]
+extern crate freetype;
 extern crate gfx_traits;
 
 // Eventually we would like the shaper to be pluggable, as many operating systems have their own
 // shapers. For now, however, this is a hard dependency.
 extern crate harfbuzz_sys as harfbuzz;
 
+extern crate heapsize;
+#[macro_use] extern crate heapsize_derive;
 extern crate ipc_channel;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
 #[macro_use]
 extern crate log;
-#[cfg_attr(target_os = "windows", macro_use)]
-extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
 extern crate msg;
 extern crate net_traits;
 extern crate ordered_float;
@@ -53,7 +56,6 @@ extern crate servo_arc;
 extern crate servo_geometry;
 extern crate servo_url;
 #[macro_use] extern crate servo_atoms;
-#[cfg(feature = "unstable")]
 #[cfg(any(target_feature = "sse2", target_feature = "neon"))]
 extern crate simd;
 extern crate smallvec;

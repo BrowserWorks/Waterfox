@@ -61,16 +61,11 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     bool specialized_;
 
     // Pushes a copy of a local variable or argument.
-    void pushVariable(uint32_t slot) {
-        push(slots_[slot]);
-    }
+    void pushVariable(uint32_t slot);
 
     // Sets a variable slot to the top of the stack, correctly creating copies
     // as needed.
-    void setVariable(uint32_t slot) {
-        MOZ_ASSERT(stackPosition_ > info_.firstStackSlot());
-        setSlot(slot, slots_[stackPosition_ - 1]);
-    }
+    void setVariable(uint32_t slot);
 
     enum ReferencesType {
         RefType_None = 0,
@@ -156,15 +151,8 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Exchange 2 stack slots at the defined depth
     void swapAt(int32_t depth);
 
-    // Note: most of the methods below are hot. Do not un-inline them without
-    // measuring the impact.
-
     // Gets the instruction associated with various slot types.
-    MDefinition* peek(int32_t depth) {
-        MOZ_ASSERT(depth < 0);
-        MOZ_ASSERT(stackPosition_ + depth >= info_.firstStackSlot());
-        return getSlot(stackPosition_ + depth);
-    }
+    MDefinition* peek(int32_t depth);
 
     MDefinition* environmentChain();
     MDefinition* argumentsObject();
@@ -175,11 +163,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
 
     // Initializes a slot value; must not be called for normal stack
     // operations, as it will not create new SSA names for copies.
-    void initSlot(uint32_t slot, MDefinition* ins) {
-        slots_[slot] = ins;
-        if (entryResumePoint())
-            entryResumePoint()->initOperand(slot, ins);
-    }
+    void initSlot(uint32_t index, MDefinition* ins);
 
     // Discard the slot at the given depth, lowering all slots above.
     void shimmySlots(int discardDepth);
@@ -190,63 +174,36 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
 
     // Sets the instruction associated with various slot types. The
     // instruction must lie at the top of the stack.
-    void setLocal(uint32_t local) {
-        setVariable(info_.localSlot(local));
-    }
-    void setArg(uint32_t arg) {
-        setVariable(info_.argSlot(arg));
-    }
-    void setSlot(uint32_t slot, MDefinition* ins) {
-        slots_[slot] = ins;
-    }
+    void setLocal(uint32_t local);
+    void setArg(uint32_t arg);
+    void setSlot(uint32_t slot);
+    void setSlot(uint32_t slot, MDefinition* ins);
 
     // Rewrites a slot directly, bypassing the stack transition. This should
     // not be used under most circumstances.
-    void rewriteSlot(uint32_t slot, MDefinition* ins) {
-        setSlot(slot, ins);
-    }
+    void rewriteSlot(uint32_t slot, MDefinition* ins);
 
     // Rewrites a slot based on its depth (same as argument to peek()).
     void rewriteAtDepth(int32_t depth, MDefinition* ins);
 
     // Tracks an instruction as being pushed onto the operand stack.
-    void push(MDefinition* ins) {
-        MOZ_ASSERT(stackPosition_ < nslots());
-        slots_[stackPosition_++] = ins;
-    }
-    void pushArg(uint32_t arg) {
-        pushVariable(info_.argSlot(arg));
-    }
-    void pushLocal(uint32_t local) {
-        pushVariable(info_.localSlot(local));
-    }
-    void pushSlot(uint32_t slot) {
-        pushVariable(slot);
-    }
+    void push(MDefinition* ins);
+    void pushArg(uint32_t arg);
+    void pushLocal(uint32_t local);
+    void pushSlot(uint32_t slot);
     void setEnvironmentChain(MDefinition* ins);
     void setArgumentsObject(MDefinition* ins);
 
     // Returns the top of the stack, then decrements the virtual stack pointer.
-    MDefinition* pop() {
-        MOZ_ASSERT(stackPosition_ > info_.firstStackSlot());
-        return slots_[--stackPosition_];
-    }
-    void popn(uint32_t n) {
-        MOZ_ASSERT(stackPosition_ - n >= info_.firstStackSlot());
-        MOZ_ASSERT(stackPosition_ >= stackPosition_ - n);
-        stackPosition_ -= n;
-    }
+    MDefinition* pop();
+    void popn(uint32_t n);
 
     // Adds an instruction to this block's instruction list.
-    inline void add(MInstruction* ins);
+    void add(MInstruction* ins);
 
     // Marks the last instruction of the block; no further instructions
     // can be added.
-    void end(MControlInstruction* ins) {
-        MOZ_ASSERT(!hasLastIns()); // Existing control instructions should be removed first.
-        MOZ_ASSERT(ins);
-        add(ins);
-    }
+    void end(MControlInstruction* ins);
 
     // Adds a phi instruction, but does not set successorWithPhis.
     void addPhi(MPhi* phi);
@@ -583,10 +540,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // This function retrieves the internal instruction associated with a
     // slot, and should not be used for normal stack operations. It is an
     // internal helper that is also used to enhance spew.
-    MDefinition* getSlot(uint32_t index) {
-        MOZ_ASSERT(index < stackPosition_);
-        return slots_[index];
-    }
+    MDefinition* getSlot(uint32_t index);
 
     MResumePoint* entryResumePoint() const {
         return entryResumePoint_;
@@ -645,14 +599,8 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     void clearSuccessorWithPhis() {
         successorWithPhis_ = nullptr;
     }
-    size_t numSuccessors() const {
-        MOZ_ASSERT(lastIns());
-        return lastIns()->numSuccessors();
-    }
-    MBasicBlock* getSuccessor(size_t index) const {
-        MOZ_ASSERT(lastIns());
-        return lastIns()->getSuccessor(index);
-    }
+    size_t numSuccessors() const;
+    MBasicBlock* getSuccessor(size_t index) const;
     size_t getSuccessorIndex(MBasicBlock*) const;
     size_t getPredecessorIndex(MBasicBlock*) const;
 
@@ -1115,16 +1063,6 @@ class MNodeIterator
     }
 
 };
-
-void
-MBasicBlock::add(MInstruction* ins)
-{
-    MOZ_ASSERT(!hasLastIns());
-    ins->setBlock(this);
-    graph().allocDefinitionId(ins);
-    instructions_.pushBack(ins);
-    ins->setTrackedSite(trackedSite_);
-}
 
 } // namespace jit
 } // namespace js

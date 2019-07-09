@@ -55,8 +55,6 @@ void UIPruneSavedDumps(const std::string& directory)
     dumpfiles.push_back(fd);
   }
 
-  closedir(dirfd);
-
   sort(dumpfiles.begin(), dumpfiles.end(), CompareFDTime);
 
   while (dumpfiles.size() > kSaveCount) {

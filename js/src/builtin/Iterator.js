@@ -30,6 +30,10 @@ function LegacyIteratorThrow(exn) {
     }
 }
 
+function LegacyIterator(iter) {
+    callFunction(std_WeakMap_set, LegacyIteratorWrapperMap, this, iter);
+}
+
 function LegacyGeneratorIterator(iter) {
     callFunction(std_WeakMap_set, LegacyIteratorWrapperMap, this, iter);
 }
@@ -51,6 +55,9 @@ function InitLegacyIterators() {
     props[std_iterator].configurable = true;
     props[std_iterator].writable = true;
 
+    var LegacyIteratorProto = std_Object_create(GetIteratorPrototype(), props);
+    MakeConstructible(LegacyIterator, LegacyIteratorProto);
+
     props.throw = std_Object_create(null);
     props.throw.value = LegacyIteratorThrow;
     props.throw.enumerable = false;
@@ -63,11 +70,17 @@ function InitLegacyIterators() {
     LegacyIteratorsInitialized.initialized = true;
 }
 
-function LegacyGeneratorIteratorShim() {
-    var iter = ToObject(this);
-
+function NewLegacyIterator(iter, wrapper) {
     if (!LegacyIteratorsInitialized.initialized)
         InitLegacyIterators();
 
-    return new LegacyGeneratorIterator(iter);
+    return new wrapper(iter);
+}
+
+function LegacyIteratorShim() {
+    return NewLegacyIterator(ToObject(this), LegacyIterator);
+}
+
+function LegacyGeneratorIteratorShim() {
+    return NewLegacyIterator(ToObject(this), LegacyGeneratorIterator);
 }

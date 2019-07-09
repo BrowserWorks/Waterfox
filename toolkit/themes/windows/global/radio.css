@@ -53,11 +53,9 @@ radio[disabled="true"] {
   color: GrayText;
 }
 
-@media (-moz-windows-classic) {
-  radio[disabled="true"] {
-    color: ThreeDShadow;
-    text-shadow: 1px 1px ThreeDHighlight;
-  }
+radio[disabled="true"]:-moz-system-metric(windows-classic) {
+  color: ThreeDShadow;
+  text-shadow: 1px 1px ThreeDHighlight;
 }
 
 /* ::::: checkmark image ::::: */

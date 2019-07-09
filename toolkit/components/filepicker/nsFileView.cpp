@@ -16,7 +16,7 @@
 #include "nsCRT.h"
 #include "nsPrintfCString.h"
 #include "nsQuickSort.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIAutoCompleteResult.h"
 #include "nsIAutoCompleteSearch.h"
 #include "nsISimpleEnumerator.h"
@@ -725,8 +725,7 @@ nsFileView::GetCellText(int32_t aRow, nsITreeColumn* aCol,
     curFile->GetLastModifiedTime(&lastModTime);
     // XXX FormatPRTime could take an nsAString&
     nsAutoString temp;
-    mozilla::DateTimeFormat::FormatPRTime(mozilla::kDateFormatShort,
-                                          mozilla::kTimeFormatSeconds,
+    mozilla::DateTimeFormat::FormatPRTime(kDateFormatShort, kTimeFormatSeconds,
                                           lastModTime * 1000, temp);
     aCellText = temp;
   } else {

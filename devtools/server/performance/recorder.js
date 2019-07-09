@@ -8,7 +8,12 @@ const { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "Services");
 loader.lazyRequireGetter(this, "promise");
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
+loader.lazyRequireGetter(this, "Class",
+  "sdk/core/heritage", true);
+loader.lazyRequireGetter(this, "EventTarget",
+  "sdk/event/target", true);
+loader.lazyRequireGetter(this, "events",
+  "sdk/event/core");
 
 loader.lazyRequireGetter(this, "Memory",
   "devtools/server/performance/memory", true);
@@ -45,20 +50,20 @@ const DRAIN_ALLOCATIONS_TIMEOUT = 2000;
  * @param Target target
  *        The target owning this connection.
  */
-function PerformanceRecorder(conn, tabActor) {
-  EventEmitter.decorate(this);
+exports.PerformanceRecorder = Class({
+  extends: EventTarget,
 
-  this.conn = conn;
-  this.tabActor = tabActor;
+  initialize: function (conn, tabActor) {
+    this.conn = conn;
+    this.tabActor = tabActor;
 
-  this._pendingConsoleRecordings = [];
-  this._recordings = [];
+    this._pendingConsoleRecordings = [];
+    this._recordings = [];
 
-  this._onTimelineData = this._onTimelineData.bind(this);
-  this._onProfilerEvent = this._onProfilerEvent.bind(this);
-}
+    this._onTimelineData = this._onTimelineData.bind(this);
+    this._onProfilerEvent = this._onProfilerEvent.bind(this);
+  },
 
-PerformanceRecorder.prototype = {
   /**
    * Initializes a connection to the profiler and other miscellaneous actors.
    * If in the process of opening, or already open, nothing happens.
@@ -151,7 +156,7 @@ PerformanceRecorder.prototype = {
     } else if (topic === "profiler-stopped") {
       this._onProfilerUnexpectedlyStopped();
     } else if (topic === "profiler-status") {
-      this.emit("profiler-status", data);
+      events.emit(this, "profiler-status", data);
     }
   },
 
@@ -174,7 +179,7 @@ PerformanceRecorder.prototype = {
 
     // Immediately emit this so the client can start setting things up,
     // expecting a recording very soon.
-    this.emit("console-profile-start");
+    events.emit(this, "console-profile-start");
 
     yield this.startRecording(Object.assign({}, getPerformanceRecordingPrefs(), {
       console: true,
@@ -271,7 +276,7 @@ PerformanceRecorder.prototype = {
     let activeRecordings = this._recordings.filter(r => r.isRecording());
 
     if (activeRecordings.length) {
-      this.emit("timeline-data", eventName, eventData, activeRecordings);
+      events.emit(this, "timeline-data", eventName, eventData, activeRecordings);
     }
   },
 
@@ -371,7 +376,7 @@ PerformanceRecorder.prototype = {
     let model = new PerformanceRecordingActor(this.conn, options, data);
     this._recordings.push(model);
 
-    this.emit("recording-started", model);
+    events.emit(this, "recording-started", model);
     return model;
   }),
 
@@ -395,7 +400,7 @@ PerformanceRecorder.prototype = {
     // Flag the recording as no longer recording, so that `model.isRecording()`
     // is false. Do this before we fetch all the data, and then subsequently
     // the recording can be considered "completed".
-    this.emit("recording-stopping", model);
+    events.emit(this, "recording-stopping", model);
 
     // Currently there are two ways profiles stop recording. Either manually in the
     // performance tool, or via console.profileEnd. Once a recording is done,
@@ -430,7 +435,7 @@ PerformanceRecorder.prototype = {
       duration: profilerData.currentTime - startTime,
     };
 
-    this.emit("recording-stopped", model, recordingData);
+    events.emit(this, "recording-stopped", model, recordingData);
     return model;
   }),
 
@@ -477,7 +482,7 @@ PerformanceRecorder.prototype = {
   },
 
   toString: () => "[object PerformanceRecorder]"
-};
+});
 
 /**
  * Creates an object of configurations based off of
@@ -496,5 +501,3 @@ function getPerformanceRecordingPrefs() {
       Services.prefs.getIntPref("devtools.performance.memory.max-log-length")
   };
 }
-
-exports.PerformanceRecorder = PerformanceRecorder;

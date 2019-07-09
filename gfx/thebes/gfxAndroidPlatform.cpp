@@ -262,6 +262,12 @@ gfxAndroidPlatform::GetFTLibrary()
     return gPlatformFTLibrary;
 }
 
+already_AddRefed<ScaledFont>
+gfxAndroidPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
+{
+    return GetScaledFontForFontWithCairoSkia(aTarget, aFont);
+}
+
 bool
 gfxAndroidPlatform::FontHintingEnabled()
 {

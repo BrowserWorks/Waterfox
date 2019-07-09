@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use core::nonzero::NonZero;
 use dom::bindings::codegen::Bindings::ImageDataBinding;
 use dom::bindings::codegen::Bindings::ImageDataBinding::ImageDataMethods;
 use dom::bindings::error::{Fallible, Error};
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use euclid::Size2D;
@@ -32,7 +32,7 @@ impl ImageData {
                width: u32,
                height: u32,
                mut data: Option<Vec<u8>>)
-               -> Fallible<DomRoot<ImageData>> {
+               -> Fallible<Root<ImageData>> {
         let len = width * height * 4;
         unsafe {
             let cx = global.get_cx();
@@ -54,7 +54,7 @@ impl ImageData {
                                 width: u32,
                                 mut opt_height: Option<u32>,
                                 opt_jsobject: Option<*mut JSObject>)
-                                -> Fallible<DomRoot<ImageData>> {
+                                -> Fallible<Root<ImageData>> {
         assert!(opt_jsobject.is_some() || opt_height.is_some());
 
         if width == 0 {
@@ -91,12 +91,12 @@ impl ImageData {
             return Err(Error::IndexSize);
         }
 
-        let imagedata = Box::new(ImageData {
+        let imagedata = box ImageData {
             reflector_: Reflector::new(),
             width: width,
             height: height,
             data: Heap::default(),
-        });
+        };
 
         if let Some(jsobject) = opt_jsobject {
             (*imagedata).data.set(jsobject);
@@ -113,7 +113,7 @@ impl ImageData {
 
     // https://html.spec.whatwg.org/multipage/#pixel-manipulation:dom-imagedata-3
     #[allow(unsafe_code)]
-    pub fn Constructor(global: &GlobalScope, width: u32, height: u32) -> Fallible<DomRoot<Self>> {
+    pub fn Constructor(global: &GlobalScope, width: u32, height: u32) -> Fallible<Root<Self>> {
         unsafe { Self::new_with_jsobject(global, width, Some(height), None) }
     }
 
@@ -125,7 +125,7 @@ impl ImageData {
                                jsobject: *mut JSObject,
                                width: u32,
                                opt_height: Option<u32>)
-                               -> Fallible<DomRoot<Self>> {
+                               -> Fallible<Root<Self>> {
         Self::new_with_jsobject(global, width, opt_height, Some(jsobject))
     }
 
@@ -159,8 +159,8 @@ impl ImageDataMethods for ImageData {
 
     #[allow(unsafe_code)]
     // https://html.spec.whatwg.org/multipage/#dom-imagedata-data
-    unsafe fn Data(&self, _: *mut JSContext) -> NonNullJSObjectPtr {
+    unsafe fn Data(&self, _: *mut JSContext) -> NonZero<*mut JSObject> {
         assert!(!self.data.get().is_null());
-        NonNullJSObjectPtr::new_unchecked(self.data.get())
+        NonZero::new_unchecked(self.data.get())
     }
 }

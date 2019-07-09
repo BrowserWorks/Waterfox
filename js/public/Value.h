@@ -214,13 +214,10 @@ typedef enum JSWhyMagic
     JS_WHY_MAGIC_COUNT
 } JSWhyMagic;
 
-namespace js {
-static inline JS::Value PoisonedObjectValue(uintptr_t poison);
-} // namespace js
-
 namespace JS {
 
 static inline constexpr JS::Value UndefinedValue();
+static inline JS::Value PoisonedObjectValue(JSObject* obj);
 
 namespace detail {
 
@@ -354,17 +351,17 @@ class MOZ_NON_PARAM alignas(8) Value
     }
 
     void setString(JSString* str) {
-        MOZ_ASSERT(js::gc::IsCellPointerValid(str));
+        MOZ_ASSERT(uintptr_t(str) > 0x1000);
         data.asBits = bitsFromTagAndPayload(JSVAL_TAG_STRING, PayloadType(str));
     }
 
     void setSymbol(JS::Symbol* sym) {
-        MOZ_ASSERT(js::gc::IsCellPointerValid(sym));
+        MOZ_ASSERT(uintptr_t(sym) > 0x1000);
         data.asBits = bitsFromTagAndPayload(JSVAL_TAG_SYMBOL, PayloadType(sym));
     }
 
     void setObject(JSObject& obj) {
-        MOZ_ASSERT(js::gc::IsCellPointerValid(&obj));
+        MOZ_ASSERT(uintptr_t(&obj) > 0x1000 || uintptr_t(&obj) == 0x48);
 #if defined(JS_PUNBOX64)
         // VisualStudio cannot contain parenthesized C++ style cast and shift
         // inside decltype in template parameter:
@@ -380,7 +377,7 @@ class MOZ_NON_PARAM alignas(8) Value
         data.asBits = bitsFromTagAndPayload(JSVAL_TAG_OBJECT, PayloadType(obj));
     }
 
-    friend inline Value js::PoisonedObjectValue(uintptr_t poison);
+    friend inline Value PoisonedObjectValue(JSObject* obj);
 
   public:
     void setBoolean(bool b) {
@@ -565,6 +562,11 @@ class MOZ_NON_PARAM alignas(8) Value
     bool isMagic(JSWhyMagic why) const {
         MOZ_ASSERT_IF(isMagic(), data.s.payload.why == why);
         return isMagic();
+        if (!isMagic()) {
+              return false;
+        }
+        MOZ_RELEASE_ASSERT(data.s.payload.why == why);
+        return true;
     }
 
     JS::TraceKind traceKind() const {
@@ -756,7 +758,7 @@ class MOZ_NON_PARAM alignas(8) Value
         MOZ_ASSERT(JS::GCThingTraceKind(cell) != JS::TraceKind::Object,
                    "Private GC thing Values must not be objects. Make an ObjectValue instead.");
 
-        MOZ_ASSERT(js::gc::IsCellPointerValid(cell));
+        MOZ_ASSERT(uintptr_t(cell) > 0x1000);
 #if defined(JS_PUNBOX64)
         // VisualStudio cannot contain parenthesized C++ style cast and shift
         // inside decltype in template parameter:
@@ -1085,6 +1087,14 @@ ObjectValue(JSObject& obj)
 }
 
 static inline Value
+ObjectValueCrashOnTouch()
+{
+    Value v;
+    v.setObject(*reinterpret_cast<JSObject*>(0x48));
+    return v;
+}
+
+static inline Value
 MagicValue(JSWhyMagic why)
 {
     Value v;
@@ -1230,6 +1240,14 @@ PrivateGCThingValue(js::gc::Cell* cell)
     return v;
 }
 
+static inline Value
+PoisonedObjectValue(JSObject* obj)
+{
+    Value v;
+    v.setObjectNoCheck(obj);
+    return v;
+}
+
 inline bool
 SameType(const Value& lhs, const Value& rhs)
 {
@@ -1258,9 +1276,6 @@ struct GCPolicy<JS::Value>
     }
     static bool isTenured(const Value& thing) {
         return !thing.isGCThing() || !IsInsideNursery(thing.toGCThing());
-    }
-    static bool isValid(const Value& value) {
-        return !value.isGCThing() || js::gc::IsCellPointerValid(value.toGCThing());
     }
 };
 
@@ -1428,25 +1443,14 @@ auto
 DispatchTyped(F f, const JS::Value& val, Args&&... args)
   -> decltype(f(static_cast<JSObject*>(nullptr), mozilla::Forward<Args>(args)...))
 {
-    if (val.isString()) {
-        JSString* str = val.toString();
-        MOZ_ASSERT(gc::IsCellPointerValid(str));
-        return f(str, mozilla::Forward<Args>(args)...);
-    }
-    if (val.isObject()) {
-        JSObject* obj = &val.toObject();
-        MOZ_ASSERT(gc::IsCellPointerValid(obj));
-        return f(obj, mozilla::Forward<Args>(args)...);
-    }
-    if (val.isSymbol()) {
-        JS::Symbol* sym = val.toSymbol();
-        MOZ_ASSERT(gc::IsCellPointerValid(sym));
-        return f(sym, mozilla::Forward<Args>(args)...);
-    }
-    if (MOZ_UNLIKELY(val.isPrivateGCThing())) {
-        MOZ_ASSERT(gc::IsCellPointerValid(val.toGCThing()));
+    if (val.isString())
+        return f(val.toString(), mozilla::Forward<Args>(args)...);
+    if (val.isObject())
+        return f(&val.toObject(), mozilla::Forward<Args>(args)...);
+    if (val.isSymbol())
+        return f(val.toSymbol(), mozilla::Forward<Args>(args)...);
+    if (MOZ_UNLIKELY(val.isPrivateGCThing()))
         return DispatchTyped(f, val.toGCCellPtr(), mozilla::Forward<Args>(args)...);
-    }
     MOZ_ASSERT(!val.isGCThing());
     return F::defaultValue(val);
 }
@@ -1454,14 +1458,6 @@ DispatchTyped(F f, const JS::Value& val, Args&&... args)
 template <class S> struct VoidDefaultAdaptor { static void defaultValue(const S&) {} };
 template <class S> struct IdentityDefaultAdaptor { static S defaultValue(const S& v) {return v;} };
 template <class S, bool v> struct BoolDefaultAdaptor { static bool defaultValue(const S&) { return v; } };
-
-static inline JS::Value
-PoisonedObjectValue(uintptr_t poison)
-{
-    JS::Value v;
-    v.setObjectNoCheck(reinterpret_cast<JSObject*>(poison));
-    return v;
-}
 
 } // namespace js
 

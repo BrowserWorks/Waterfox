@@ -9,7 +9,6 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/AbstractThread.h"
-#include "nsStringFwd.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
@@ -18,6 +17,7 @@
 #define CHROMIUM_CDM_API "chromium-cdm9-host4"
 
 class nsIFile;
+class nsCString;
 class nsISimpleEnumerator;
 
 namespace mozilla {

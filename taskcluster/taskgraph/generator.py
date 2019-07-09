@@ -18,7 +18,8 @@ from .util.python_path import find_object
 from .transforms.base import TransformSequence, TransformConfig
 from .util.verify import (
     verify_docs,
-    verifications,
+    verify_task_graph_symbol,
+    verify_gecko_v2_routes,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,12 @@ class Kind(object):
         loader = self._get_loader()
         config = copy.deepcopy(self.config)
 
+        if 'parse-commit' in self.config:
+            parse_commit = find_object(config['parse-commit'])
+            config['args'] = parse_commit(parameters['message'])
+        else:
+            config['args'] = None
+
         kind_dependencies = config.get('kind-dependencies', [])
         kind_dependencies_tasks = [task for task in loaded_tasks
                                    if task.kind in kind_dependencies]
@@ -60,7 +67,7 @@ class Kind(object):
                       label=task_dict['label'],
                       attributes=task_dict['attributes'],
                       task=task_dict['task'],
-                      optimization=task_dict.get('optimization'),
+                      optimizations=task_dict.get('optimizations'),
                       dependencies=task_dict.get('dependencies'))
                  for task_dict in transforms(trans_config, inputs)]
         return tasks
@@ -221,7 +228,7 @@ class TaskGraphGenerator(object):
         full_task_set = TaskGraph(all_tasks, Graph(set(all_tasks), set()))
         self.verify_attributes(all_tasks)
         self.verify_run_using()
-        yield verifications('full_task_set', full_task_set)
+        yield 'full_task_set', full_task_set
 
         logger.info("Generating full task graph")
         edges = set()
@@ -231,9 +238,11 @@ class TaskGraphGenerator(object):
 
         full_task_graph = TaskGraph(all_tasks,
                                     Graph(full_task_set.graph.nodes, edges))
+        full_task_graph.for_each_task(verify_task_graph_symbol, scratch_pad={})
+        full_task_graph.for_each_task(verify_gecko_v2_routes, scratch_pad={})
         logger.info("Full task graph contains %d tasks and %d dependencies" % (
             len(full_task_set.graph.nodes), len(edges)))
-        yield verifications('full_task_graph', full_task_graph)
+        yield 'full_task_graph', full_task_graph
 
         logger.info("Generating target task set")
         target_task_set = TaskGraph(dict(all_tasks),
@@ -249,7 +258,7 @@ class TaskGraphGenerator(object):
                 old_len - len(target_tasks),
                 len(target_tasks)))
 
-        yield verifications('target_task_set', target_task_set)
+        yield 'target_task_set', target_task_set
 
         logger.info("Generating target task graph")
         # include all docker-image build tasks here, in case they are needed for a graph morph
@@ -259,7 +268,7 @@ class TaskGraphGenerator(object):
         target_task_graph = TaskGraph(
             {l: all_tasks[l] for l in target_graph.nodes},
             target_graph)
-        yield verifications('target_task_graph', target_task_graph)
+        yield 'target_task_graph', target_task_graph
 
         logger.info("Generating optimized task graph")
         do_not_optimize = set()
@@ -269,13 +278,12 @@ class TaskGraphGenerator(object):
                                                                     self.parameters,
                                                                     do_not_optimize)
 
-        yield verifications('optimized_task_graph', optimized_task_graph)
+        yield 'optimized_task_graph', optimized_task_graph
 
-        morphed_task_graph, label_to_taskid = morph(
-            optimized_task_graph, label_to_taskid, self.parameters)
+        morphed_task_graph, label_to_taskid = morph(optimized_task_graph, label_to_taskid)
 
         yield 'label_to_taskid', label_to_taskid
-        yield verifications('morphed_task_graph', morphed_task_graph)
+        yield 'morphed_task_graph', morphed_task_graph
 
     def _run_until(self, name):
         while name not in self._run_results:

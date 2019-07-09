@@ -54,7 +54,7 @@ function Factory(component) {
   };
   this.unregister = function() {
     Cm.unregisterFactory(component.prototype.classID, this);
-  };
+  }
   Object.freeze(this);
   this.register();
 }
@@ -62,7 +62,7 @@ function Factory(component) {
 let windowListener = {
   onOpenWindow: function(aWindow) {
     // Wait for the window to finish loading
-    let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
+    let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
     domWindow.addEventListener("UIReady", function() {
       loadIntoWindow(domWindow);
     }, {once: true});

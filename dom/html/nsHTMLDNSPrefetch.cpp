@@ -278,7 +278,7 @@ nsHTMLDNSPrefetch::nsDeferrals::nsDeferrals()
     mActiveLoaderCount(0),
     mTimerArmed(false)
 {
-  mTimer = NS_NewTimer();;
+  mTimer = do_CreateInstance("@mozilla.org/timer;1");
 }
 
 nsHTMLDNSPrefetch::nsDeferrals::~nsDeferrals()

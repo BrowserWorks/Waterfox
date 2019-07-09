@@ -7,7 +7,6 @@ set -e
 
 : ${MKDIR:=mkdir}
 : ${TAR:=tar}
-: ${AUTOCONF:=autoconf-2.13}
 : ${SRCDIR:=$(cd $(dirname $0); pwd 2>/dev/null)}
 : ${MOZJS_NAME:=mozjs}
 # The place to gather files to be added to the tarball.
@@ -35,7 +34,6 @@ echo "Environment:"
 echo "    MAKE = $MAKE"
 echo "    MKDIR = $MKDIR"
 echo "    TAR = $TAR"
-echo "    AUTOCONF = $AUTOCONF"
 echo "    STAGING = $STAGING"
 echo "    DIST = $DIST"
 echo "    SRCDIR = $SRCDIR"
@@ -100,17 +98,10 @@ case $cmd in
     ${MKDIR} -p ${tgtpath}/.cargo
     cp -pPR ${TOPSRCDIR}/.cargo/config.in ${tgtpath}/.cargo
 
-    # generate configure files to avoid build dependency on autoconf-2.13
-    cp -PR ${TOPSRCDIR}/js/src/configure.in ${tgtpath}/js/src/configure
-    chmod a+x ${tgtpath}/js/src/configure
-    ${AUTOCONF} --localdir=${TOPSRCDIR}/js/src \
-        ${TOPSRCDIR}/js/src/old-configure.in >${tgtpath}/js/src/old-configure
-
     # put in js itself
     cp -pPR ${TOPSRCDIR}/mfbt ${tgtpath}
     cp -p ${SRCDIR}/../moz.configure ${tgtpath}/js
     cp -pPR ${SRCDIR}/../public ${tgtpath}/js
-    cp -pPR ${SRCDIR}/../rust ${tgtpath}/js
     cp -pPR ${SRCDIR}/../examples ${tgtpath}/js
     find ${SRCDIR} -mindepth 1 -maxdepth 1 -not -path ${STAGING} -a -not -name ${pkg} \
         -exec cp -pPR {} ${tgtpath}/js/src \;
@@ -162,6 +153,7 @@ case $cmd in
         ${TOPSRCDIR}/memory/build \
         ${TOPSRCDIR}/memory/fallible \
         ${TOPSRCDIR}/memory/mozalloc \
+        ${TOPSRCDIR}/memory/mozjemalloc \
         ${tgtpath}/memory
 
     # remove *.pyc and *.pyo files if any

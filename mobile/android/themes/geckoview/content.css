@@ -98,7 +98,7 @@ select[size="1"] xul|scrollbarbutton {
 textarea,
 button,
 xul|button,
-* > input:not(:-moz-any([type="image"], [type="checkbox"], [type="radio"])) {
+* > input:not([type="image"]) {
   -moz-appearance: none !important;  /* See bug 598421 for fixing the platform */
 }
 
@@ -138,6 +138,14 @@ button {
   background-color: var(--form_background);
 }
 
+input[type="checkbox"] {
+  background-color: var(--form_background);
+}
+
+input[type="radio"] {
+  background-color: var(--form_background)
+}
+
 select {
   border-width: 1px;
   padding: 1px;
@@ -150,7 +158,7 @@ select[size="1"] {
   padding: 0 1px 0 1px;
 }
 
-* > input:not(:-moz-any([type="image"], [type="checkbox"], [type="radio"])) {
+* > input:not([type="image"]) {
   border-width: 1px;
   padding: 1px;
 }
@@ -167,13 +175,21 @@ textarea {
 input[type="button"],
 input[type="submit"],
 input[type="reset"],
-input[type="color"],
 button {
   border-width: 1px;
   padding-inline-start: 7px;
   padding-inline-end: 7px;
   padding-block-start: 0;
   padding-block-end: 0;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  border: 1px solid var(--form_border) !important;
+  padding-inline-start: 1px;
+  padding-inline-end: 1px;
+  padding-block-start: 2px;
+  padding-block-end: 2px;
 }
 
 select > button {
@@ -197,7 +213,7 @@ select[multiple]:focus,
 select[size][multiple]:focus,
 textarea:focus,
 input[type="file"]:focus > input[type="text"],
-* > input:not(:-moz-any([type="image"], [type="checkbox"], [type="radio"])):focus {
+* > input:not([type="image"]):focus {
   outline: 0px !important;
   border-style: solid;
   border-color: var(--form_border);
@@ -207,7 +223,6 @@ input[type="file"]:focus > input[type="text"],
 select:not([size]):not([multiple]):focus,
 select[size="0"]:focus,
 select[size="1"]:focus,
-input[type="color"]:focus,
 input[type="button"]:focus,
 input[type="submit"]:focus,
 input[type="reset"]:focus,
@@ -215,6 +230,19 @@ button:focus {
   outline: 0px !important;
   border-style: solid;
   border-color: var(--form_border);
+  background-color: var(--form_background);
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  border-color: var(--form_border) !important;
+}
+
+input[type="checkbox"]:focus {
+  background-color: var(--form_background);
+}
+
+input[type="radio"]:focus {
   background-color: var(--form_background);
 }
 
@@ -228,8 +256,8 @@ select[size="0"]:disabled,
 select[size="1"]:disabled,
 button:disabled,
 button:disabled:active,
-* > input:not(:-moz-any([type="image"], [type="checkbox"], [type="radio"])):disabled,
-* > input:not(:-moz-any([type="image"], [type="checkbox"], [type="radio"])):disabled:active {
+* > input:not([type="image"]):disabled,
+* > input:not([type="image"]):disabled:active {
   color: var(--form_text_disabled);
   border-color: var(--form_border);
   border-style: solid;
@@ -249,8 +277,6 @@ input[type="submit"]:disabled,
 input[type="submit"]:disabled:active,
 input[type="reset"]:disabled,
 input[type="reset"]:disabled:active,
-input[type="color"]:disabled,
-input[type="color"]:disabled:active,
 button:disabled,
 button:disabled:active {
   padding-inline-start: 7px;
@@ -258,6 +284,17 @@ button:disabled:active {
   padding-block-start: 0;
   padding-block-end: 0;
   background-color: var(--form_background_disabled);
+}
+
+input[type="radio"]:disabled,
+input[type="radio"]:disabled:active,
+input[type="radio"]:disabled:hover,
+input[type="radio"]:disabled:hover:active,
+input[type="checkbox"]:disabled,
+input[type="checkbox"]:disabled:active,
+input[type="checkbox"]:disabled:hover,
+input[type="checkbox"]:disabled:hover:active {
+  border:1px solid var(--form_border) !important;
 }
 
 select:disabled > button {
@@ -282,7 +319,7 @@ video:not([controls]) > xul|videocontrols {
 *:any-link:active,
 *[role=button]:active,
 button:not(:disabled):active,
-input:not(:-moz-any([type="checkbox"], [type="radio"])):not(:focus):not(:disabled):active,
+input:not(:focus):not(:disabled):active,
 select:not(:disabled):active,
 textarea:not(:focus):not(:disabled):active,
 option:active,
@@ -292,7 +329,7 @@ xul|menulist:active {
 }
 
 button:active:hover,
-input[type="color"]:active:hover,
+input[type="color"]:-moz-system-metric(color-picker-available):active:hover,
 input[type="reset"]:active:hover,
 input[type="button"]:active:hover,
 input[type="submit"]:active:hover {
@@ -302,10 +339,6 @@ input[type="submit"]:active:hover {
 
 input[type=number] > div > div, /* work around bug 946184 */
 input[type=number]::-moz-number-spin-box {
-  display: none;
-}
-
-button:-moz-native-anonymous.datetime-reset-button {
   display: none;
 }
 

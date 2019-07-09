@@ -2,8 +2,8 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-es6id: 18.2.3
 esid: sec-isnan-number
+es6id: 18.2.3
 description: >
   Return abrupt completion getting number.@@toPrimitive
 info: |

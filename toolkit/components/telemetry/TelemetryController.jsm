@@ -50,25 +50,35 @@ const PING_TYPE_DELETION = "deletion";
 const REASON_GATHER_PAYLOAD = "gather-payload";
 const REASON_GATHER_SUBSESSION_PAYLOAD = "gather-subsession-payload";
 
+XPCOMUtils.defineLazyModuleGetter(this, "ClientID",
+                                  "resource://gre/modules/ClientID.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
                                    "@mozilla.org/base/telemetry;1",
                                    "nsITelemetry");
-
-XPCOMUtils.defineLazyModuleGetters(this, {
-  ClientID: "resource://gre/modules/ClientID.jsm",
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
-  TelemetryStorage: "resource://gre/modules/TelemetryStorage.jsm",
-  ThirdPartyCookieProbe: "resource://gre/modules/ThirdPartyCookieProbe.jsm",
-  TelemetryEnvironment: "resource://gre/modules/TelemetryEnvironment.jsm",
-  UpdateUtils: "resource://gre/modules/UpdateUtils.jsm",
-  TelemetryArchive: "resource://gre/modules/TelemetryArchive.jsm",
-  TelemetrySession: "resource://gre/modules/TelemetrySession.jsm",
-  TelemetrySend: "resource://gre/modules/TelemetrySend.jsm",
-  TelemetryReportingPolicy: "resource://gre/modules/TelemetryReportingPolicy.jsm",
-  TelemetryModules: "resource://gre/modules/TelemetryModules.jsm",
-  UpdatePing: "resource://gre/modules/UpdatePing.jsm",
-  TelemetryHealthPing: "resource://gre/modules/TelemetryHealthPing.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStorage",
+                                  "resource://gre/modules/TelemetryStorage.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ThirdPartyCookieProbe",
+                                  "resource://gre/modules/ThirdPartyCookieProbe.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryEnvironment",
+                                  "resource://gre/modules/TelemetryEnvironment.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                  "resource://gre/modules/UpdateUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryArchive",
+                                  "resource://gre/modules/TelemetryArchive.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySession",
+                                  "resource://gre/modules/TelemetrySession.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
+                                  "resource://gre/modules/TelemetrySend.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryReportingPolicy",
+                                  "resource://gre/modules/TelemetryReportingPolicy.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryModules",
+                                  "resource://gre/modules/TelemetryModules.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdatePing",
+                                  "resource://gre/modules/UpdatePing.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryHealthPing",
+                                  "resource://gre/modules/TelemetryHealthPing.jsm");
 
 /**
  * Setup Telemetry logging. This function also gets called when loggin related
@@ -110,7 +120,7 @@ var Policy = {
   now: () => new Date(),
   generatePingId: () => Utils.generateUUID(),
   getCachedClientID: () => ClientID.getCachedClientID(),
-};
+}
 
 this.EXPORTED_SYMBOLS = ["TelemetryController"];
 
@@ -735,8 +745,7 @@ var Impl = {
       } finally {
         this._delayedInitTask = null;
       }
-    }, this._testMode ? TELEMETRY_TEST_DELAY : TELEMETRY_DELAY,
-       this._testMode ? 0 : undefined);
+    }, this._testMode ? TELEMETRY_TEST_DELAY : TELEMETRY_DELAY);
 
     AsyncShutdown.sendTelemetry.addBlocker("TelemetryController: shutting down",
                                            () => this.shutdown(),
@@ -938,7 +947,7 @@ var Impl = {
   },
 
   getCurrentPingData(aSubsession) {
-    this._log.trace("getCurrentPingData - subsession: " + aSubsession);
+    this._log.trace("getCurrentPingData - subsession: " + aSubsession)
 
     // Telemetry is disabled, don't gather any data.
     if (!Telemetry.canRecordBase) {

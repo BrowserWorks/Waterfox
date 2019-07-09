@@ -135,7 +135,7 @@ AgileReference::ObtainGit()
 {
   // Internally to COM, the Global Interface Table is a singleton, therefore we
   // don't worry about holding onto this reference indefinitely.
-  static IGlobalInterfaceTable* sGit = []() -> IGlobalInterfaceTable* {
+  static IGlobalInterfaceTable * const sGit = []() -> IGlobalInterfaceTable * const {
     IGlobalInterfaceTable* result = nullptr;
     DebugOnly<HRESULT> hr =
       ::CoCreateInstance(CLSID_StdGlobalInterfaceTable, nullptr,

@@ -22,7 +22,7 @@ void  nsEUCJPProber::Reset(void)
 nsProbingState nsEUCJPProber::HandleData(const char* aBuf, uint32_t aLen)
 {
   NS_ASSERTION(aLen, "HandleData called with empty buffer");
-  uint32_t codingState;
+  nsSMState codingState;
 
   for (uint32_t i = 0; i < aLen; i++)
   {

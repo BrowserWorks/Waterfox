@@ -8,7 +8,7 @@
 #include "nsMenuFrame.h"
 #include "nsBoxFrame.h"
 #include "nsIContent.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsPresContext.h"
 #include "nsIPresShell.h"
 #include "nsStyleContext.h"
@@ -25,7 +25,7 @@
 #include "nsIServiceManager.h"
 #include "nsCSSFrameConstructor.h"
 #include "nsIDOMKeyEvent.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsIStringBundle.h"
@@ -116,7 +116,7 @@ private:
 class nsMenuAttributeChangedEvent : public Runnable
 {
 public:
-  nsMenuAttributeChangedEvent(nsIFrame* aFrame, nsAtom* aAttr)
+  nsMenuAttributeChangedEvent(nsIFrame* aFrame, nsIAtom* aAttr)
     : mozilla::Runnable("nsMenuAttributeChangedEvent")
     , mFrame(aFrame)
     , mAttr(aAttr)
@@ -144,7 +144,7 @@ public:
   }
 protected:
   WeakFrame         mFrame;
-  RefPtr<nsAtom> mAttr;
+  nsCOMPtr<nsIAtom> mAttr;
 };
 
 //
@@ -356,15 +356,16 @@ nsMenuFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
 void
 nsMenuFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
+                                         const nsRect&           aDirtyRect,
                                          const nsDisplayListSet& aLists)
 {
   if (!aBuilder->IsForEventDelivery()) {
-    nsBoxFrame::BuildDisplayListForChildren(aBuilder, aLists);
+    nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, aLists);
     return;
   }
 
-  nsDisplayListCollection set(aBuilder);
-  nsBoxFrame::BuildDisplayListForChildren(aBuilder, set);
+  nsDisplayListCollection set;
+  nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, set);
 
   WrapListsInRedirector(aBuilder, set, aLists);
 }
@@ -528,9 +529,10 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
         LookAndFeel::GetInt(LookAndFeel::eIntID_SubmenuDelay, 300); // ms
 
       // We're a menu, we're built, we're closed, and no timer has been kicked off.
-      NS_NewTimerWithCallback(getter_AddRefs(mOpenTimer),
-                              mTimerMediator, menuDelay, nsITimer::TYPE_ONE_SHOT,
-                              mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+      mOpenTimer = do_CreateInstance("@mozilla.org/timer;1");
+      mOpenTimer->SetTarget(
+          mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+      mOpenTimer->InitWithCallback(mTimerMediator, menuDelay, nsITimer::TYPE_ONE_SHOT);
     }
   }
 
@@ -664,7 +666,7 @@ nsMenuFrame::SelectMenu(bool aActivateFlag)
 
 nsresult
 nsMenuFrame::AttributeChanged(int32_t aNameSpaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               int32_t aModType)
 {
   if (aAttribute == nsGkAtoms::acceltext && mIgnoreAccelTextChange) {
@@ -703,7 +705,7 @@ nsMenuFrame::GetAnchor()
   }
 
   // Always return the menu's content if the anchor wasn't set or wasn't found.
-  return anchor && anchor->GetPrimaryFrame() ? anchor : GetContent();
+  return anchor && anchor->GetPrimaryFrame() ? anchor : mContent;
 }
 
 void
@@ -1100,12 +1102,11 @@ nsMenuFrame::BuildAcceleratorText(bool aNotify)
                                          getter_AddRefs(bundle));
 
         if (NS_SUCCEEDED(rv) && bundle) {
-          nsAutoString keyName;
+          nsXPIDLString keyName;
           rv = bundle->GetStringFromName(NS_ConvertUTF16toUTF8(keyCode).get(),
-                                         keyName);
-          if (NS_SUCCEEDED(rv)) {
+                                         getter_Copies(keyName));
+          if (keyName)
             accelString = keyName;
-          }
         }
       }
 
@@ -1241,9 +1242,10 @@ nsMenuFrame::StartBlinking(WidgetGUIEvent* aEvent, bool aFlipChecked)
   }
 
   // Set up a timer to blink back on.
-  NS_NewTimerWithCallback(getter_AddRefs(mBlinkTimer),
-                          mTimerMediator, kBlinkDelay, nsITimer::TYPE_ONE_SHOT,
-                          mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+  mBlinkTimer = do_CreateInstance("@mozilla.org/timer;1");
+  mBlinkTimer->SetTarget(
+      mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+  mBlinkTimer->InitWithCallback(mTimerMediator, kBlinkDelay, nsITimer::TYPE_ONE_SHOT);
   mBlinkState = 1;
 }
 

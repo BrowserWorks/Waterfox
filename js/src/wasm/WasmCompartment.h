@@ -22,8 +22,12 @@
 #include "wasm/WasmJS.h"
 
 namespace js {
+
+class WasmActivation;
+
 namespace wasm {
 
+class Code;
 class CodeSegment;
 typedef Vector<Instance*, 0, SystemAllocPolicy> InstanceVector;
 
@@ -35,6 +39,21 @@ typedef Vector<Instance*, 0, SystemAllocPolicy> InstanceVector;
 class Compartment
 {
     InstanceVector instances_;
+    volatile bool  mutatingInstances_;
+
+    friend class js::WasmActivation;
+
+    struct AutoMutateInstances {
+        Compartment &c;
+        explicit AutoMutateInstances(Compartment& c) : c(c) {
+            MOZ_ASSERT(!c.mutatingInstances_);
+            c.mutatingInstances_ = true;
+        }
+        ~AutoMutateInstances() {
+            MOZ_ASSERT(c.mutatingInstances_);
+            c.mutatingInstances_ = false;
+        }
+    };
 
   public:
     explicit Compartment(Zone* zone);
@@ -55,6 +74,12 @@ class Compartment
     // since instances() is effectively a weak list.
 
     const InstanceVector& instances() const { return instances_; }
+
+    // This methods returns the wasm::Code containing the given pc, if any
+    // exists in the compartment, and the segment for the tier in which the
+    // pc was found.
+
+    const Code* lookupCode(const void* pc, const CodeSegment** segment = nullptr) const;
 
     // Ensure all Instances in this JSCompartment have profiling labels created.
 

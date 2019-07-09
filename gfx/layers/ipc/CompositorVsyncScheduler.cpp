@@ -35,7 +35,6 @@
 #endif
 #include "mozilla/widget/CompositorWidget.h"
 #include "VRManager.h"
-#include "VRThread.h"
 
 namespace mozilla {
 
@@ -84,8 +83,6 @@ CompositorVsyncScheduler::CompositorVsyncScheduler(CompositorVsyncSchedulerOwner
   , mCurrentCompositeTask(nullptr)
   , mSetNeedsCompositeMonitor("SetNeedsCompositeMonitor")
   , mSetNeedsCompositeTask(nullptr)
-  , mCurrentVRListenerTaskMonitor("CurrentVRTaskMonitor")
-  , mCurrentVRListenerTask(nullptr)
 {
   mVsyncObserver = new Observer(this);
 
@@ -132,16 +129,6 @@ CompositorVsyncScheduler::PostCompositeTask(TimeStamp aCompositeTimestamp)
       aCompositeTimestamp);
     mCurrentCompositeTask = task;
     ScheduleTask(task.forget(), 0);
-  }
-  if (mCurrentVRListenerTask == nullptr && VRListenerThreadHolder::Loop()) {
-    RefPtr<CancelableRunnable> task = NewCancelableRunnableMethod<TimeStamp>(
-      "layers::CompositorVsyncScheduler::DispatchVREvents",
-      this,
-      &CompositorVsyncScheduler::DispatchVREvents,
-      aCompositeTimestamp);
-    mCurrentVRListenerTask = task;
-    MOZ_ASSERT(VRListenerThreadHolder::Loop());
-    VRListenerThreadHolder::Loop()->PostDelayedTask(Move(task.forget()), 0);
   }
 }
 
@@ -267,6 +254,7 @@ CompositorVsyncScheduler::Composite(TimeStamp aVsyncTimestamp)
   }
 
   DispatchTouchEvents(aVsyncTimestamp);
+  DispatchVREvents(aVsyncTimestamp);
 
   if (mNeedsComposite || mAsapScheduling) {
     mNeedsComposite = 0;
@@ -339,11 +327,7 @@ CompositorVsyncScheduler::DispatchTouchEvents(TimeStamp aVsyncTimestamp)
 void
 CompositorVsyncScheduler::DispatchVREvents(TimeStamp aVsyncTimestamp)
 {
-  MOZ_ASSERT(VRListenerThreadHolder::IsInVRListenerThread());
-  {
-    MonitorAutoLock lock(mCurrentVRListenerTaskMonitor);
-    mCurrentVRListenerTask = nullptr;
-  }
+  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
 
   VRManager* vm = VRManager::Get();
   vm->NotifyVsync(aVsyncTimestamp);

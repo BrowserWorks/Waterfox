@@ -41,7 +41,7 @@ public:
     MOZ_ASSERT(mDataOwner && mDataOwner->mData, "must have data");
   }
 
-  virtual void CreateInputStream(nsIInputStream** aStream,
+  virtual void GetInternalStream(nsIInputStream** aStream,
                                  ErrorResult& aRv) override;
 
   virtual already_AddRefed<BlobImpl>
@@ -51,11 +51,6 @@ public:
   virtual bool IsMemoryFile() const override
   {
     return true;
-  }
-
-  size_t GetAllocationSize() const override
-  {
-    return mLength;
   }
 
   class DataOwner final : public mozilla::LinkedListElement<DataOwner>

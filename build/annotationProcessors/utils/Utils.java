@@ -327,20 +327,4 @@ public class Utils {
             return null;
         }
     }
-
-    public static String getIfdefHeader(String ifdef) {
-        if (ifdef.isEmpty()) {
-            return "";
-        } else if (ifdef.startsWith("!")) {
-            return "#ifndef " + ifdef.substring(1) + "\n";
-        }
-        return "#ifdef " + ifdef + "\n";
-    }
-
-    public static String getIfdefFooter(String ifdef) {
-        if (ifdef.isEmpty()) {
-            return "";
-        }
-        return "#endif // " + ifdef + "\n";
-    }
 }

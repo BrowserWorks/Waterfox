@@ -471,7 +471,7 @@
           var result = this.result;
           var resultview = this.view;
           var container = result.root;
-          var dropNearNode = null;
+          var dropNearItemId = -1;
           NS_ASSERT(container, "null container");
           // When there's no selection, assume the container is the container
           // the view is populated from (i.e. the result's itemId).
@@ -500,7 +500,7 @@
 
               // Avoid the potentially expensive call to getChildIndex
               // if we know this container doesn't allow insertion
-              if (PlacesControllerDragHelper.disallowInsertion(container, this))
+              if (PlacesControllerDragHelper.disallowInsertion(container))
                 return null;
 
               var queryOptions = PlacesUtils.asQuery(result.root).queryOptions;
@@ -515,7 +515,7 @@
                 // We don't replace index here to avoid requests to the db,
                 // instead it will be calculated later by the controller.
                 index = -1;
-                dropNearNode = lastSelected;
+                dropNearItemId = lastSelected.itemId;
               } else {
                 var lsi = container.getChildIndex(lastSelected);
                 index = orientation == Ci.nsITreeView.DROP_BEFORE ? lsi : lsi + 1;
@@ -523,7 +523,7 @@
             }
           }
 
-          if (PlacesControllerDragHelper.disallowInsertion(container, this))
+          if (PlacesControllerDragHelper.disallowInsertion(container))
             return null;
 
           // TODO (Bug 1160193): properly support dropping on a tag root.
@@ -534,11 +534,10 @@
               return null;
           }
 
-          return new InsertionPoint({
-            parentId: PlacesUtils.getConcreteItemId(container),
-            parentGuid: PlacesUtils.getConcreteItemGuid(container),
-            index, orientation, tagName, dropNearNode
-          });
+          return new InsertionPoint(PlacesUtils.getConcreteItemId(container),
+                                    index, orientation,
+                                    tagName,
+                                    dropNearItemId);
         ]]></body>
       </method>
 
@@ -733,7 +732,7 @@
 
           // If this node is child of a readonly container (e.g. a livemark)
           // or cannot be moved, we must force a copy.
-          if (!PlacesControllerDragHelper.canMoveNode(node, this)) {
+          if (!PlacesControllerDragHelper.canMoveNode(node)) {
             event.dataTransfer.effectAllowed = "copyLink";
             break;
           }

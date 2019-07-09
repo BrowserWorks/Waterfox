@@ -43,8 +43,8 @@ Wrapper::finalizeInBackground(const Value& priv) const
 }
 
 bool
-ForwardingProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                                 MutableHandle<PropertyDescriptor> desc) const
+Wrapper::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                  MutableHandle<PropertyDescriptor> desc) const
 {
     assertEnteredPolicy(cx, proxy, id, GET | SET | GET_PROPERTY_DESCRIPTOR);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -52,9 +52,8 @@ ForwardingProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject pro
 }
 
 bool
-ForwardingProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                                       Handle<PropertyDescriptor> desc,
-                                       ObjectOpResult& result) const
+Wrapper::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
+                        Handle<PropertyDescriptor> desc, ObjectOpResult& result) const
 {
     assertEnteredPolicy(cx, proxy, id, SET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -62,8 +61,7 @@ ForwardingProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, Handle
 }
 
 bool
-ForwardingProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy,
-                                        AutoIdVector& props) const
+Wrapper::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVector& props) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -71,8 +69,7 @@ ForwardingProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy,
 }
 
 bool
-ForwardingProxyHandler::delete_(JSContext* cx, HandleObject proxy, HandleId id,
-                                ObjectOpResult& result) const
+Wrapper::delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult& result) const
 {
     assertEnteredPolicy(cx, proxy, id, SET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -80,7 +77,7 @@ ForwardingProxyHandler::delete_(JSContext* cx, HandleObject proxy, HandleId id,
 }
 
 JSObject*
-ForwardingProxyHandler::enumerate(JSContext* cx, HandleObject proxy) const
+Wrapper::enumerate(JSContext* cx, HandleObject proxy) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
@@ -89,54 +86,51 @@ ForwardingProxyHandler::enumerate(JSContext* cx, HandleObject proxy) const
 }
 
 bool
-ForwardingProxyHandler::getPrototype(JSContext* cx, HandleObject proxy,
-                                     MutableHandleObject protop) const
+Wrapper::getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject protop) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return GetPrototype(cx, target, protop);
 }
 
 bool
-ForwardingProxyHandler::setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
-                                     ObjectOpResult& result) const
+Wrapper::setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
+                                 ObjectOpResult& result) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return SetPrototype(cx, target, proto, result);
 }
 
 bool
-ForwardingProxyHandler::getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy,
-                                               bool* isOrdinary, MutableHandleObject protop) const
+Wrapper::getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy,
+                                           bool* isOrdinary, MutableHandleObject protop) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return GetPrototypeIfOrdinary(cx, target, isOrdinary, protop);
 }
 
 bool
-ForwardingProxyHandler::setImmutablePrototype(JSContext* cx, HandleObject proxy,
-                                              bool* succeeded) const
+Wrapper::setImmutablePrototype(JSContext* cx, HandleObject proxy, bool* succeeded) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return SetImmutablePrototype(cx, target, succeeded);
 }
 
 bool
-ForwardingProxyHandler::preventExtensions(JSContext* cx, HandleObject proxy,
-                                          ObjectOpResult& result) const
+Wrapper::preventExtensions(JSContext* cx, HandleObject proxy, ObjectOpResult& result) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return PreventExtensions(cx, target, result);
 }
 
 bool
-ForwardingProxyHandler::isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const
+Wrapper::isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return IsExtensible(cx, target, extensible);
 }
 
 bool
-ForwardingProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
+Wrapper::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);
     MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
@@ -145,8 +139,8 @@ ForwardingProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool
 }
 
 bool
-ForwardingProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
-                            MutableHandleValue vp) const
+Wrapper::get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
+             MutableHandleValue vp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -154,8 +148,8 @@ ForwardingProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue recei
 }
 
 bool
-ForwardingProxyHandler::set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
-                            HandleValue receiver, ObjectOpResult& result) const
+Wrapper::set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver,
+             ObjectOpResult& result) const
 {
     assertEnteredPolicy(cx, proxy, id, SET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -163,7 +157,7 @@ ForwardingProxyHandler::set(JSContext* cx, HandleObject proxy, HandleId id, Hand
 }
 
 bool
-ForwardingProxyHandler::call(JSContext* cx, HandleObject proxy, const CallArgs& args) const
+Wrapper::call(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, CALL);
     RootedValue target(cx, proxy->as<ProxyObject>().private_());
@@ -176,7 +170,7 @@ ForwardingProxyHandler::call(JSContext* cx, HandleObject proxy, const CallArgs& 
 }
 
 bool
-ForwardingProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const
+Wrapper::construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, CALL);
 
@@ -199,8 +193,8 @@ ForwardingProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallA
 }
 
 bool
-ForwardingProxyHandler::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                              MutableHandle<PropertyDescriptor> desc) const
+Wrapper::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                               MutableHandle<PropertyDescriptor> desc) const
 {
     assertEnteredPolicy(cx, proxy, id, GET | SET | GET_PROPERTY_DESCRIPTOR);
     MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
@@ -209,7 +203,7 @@ ForwardingProxyHandler::getPropertyDescriptor(JSContext* cx, HandleObject proxy,
 }
 
 bool
-ForwardingProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
+Wrapper::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -217,8 +211,8 @@ ForwardingProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, b
 }
 
 bool
-ForwardingProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
-                                                     AutoIdVector& props) const
+Wrapper::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
+                                                 AutoIdVector& props) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -226,8 +220,8 @@ ForwardingProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject
 }
 
 bool
-ForwardingProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                                   const CallArgs& args) const
+Wrapper::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
+                               const CallArgs& args) const
 {
     args.setThis(ObjectValue(*args.thisv().toObject().as<ProxyObject>().target()));
     if (!test(args.thisv())) {
@@ -239,8 +233,8 @@ ForwardingProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeI
 }
 
 bool
-ForwardingProxyHandler::hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
-                                    bool* bp) const
+Wrapper::hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
+                                bool* bp) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -248,21 +242,21 @@ ForwardingProxyHandler::hasInstance(JSContext* cx, HandleObject proxy, MutableHa
 }
 
 bool
-ForwardingProxyHandler::getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls) const
+Wrapper::getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return GetBuiltinClass(cx, target, cls);
 }
 
 bool
-ForwardingProxyHandler::isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const
+Wrapper::isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return IsArray(cx, target, answer);
 }
 
 const char*
-ForwardingProxyHandler::className(JSContext* cx, HandleObject proxy) const
+Wrapper::className(JSContext* cx, HandleObject proxy) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -270,7 +264,7 @@ ForwardingProxyHandler::className(JSContext* cx, HandleObject proxy) const
 }
 
 JSString*
-ForwardingProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
+Wrapper::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
@@ -278,29 +272,28 @@ ForwardingProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, bool isT
 }
 
 RegExpShared*
-ForwardingProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy) const
+Wrapper::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return RegExpToShared(cx, target);
 }
 
 bool
-ForwardingProxyHandler::boxedValue_unbox(JSContext* cx, HandleObject proxy,
-                                         MutableHandleValue vp) const
+Wrapper::boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return Unbox(cx, target, vp);
 }
 
 bool
-ForwardingProxyHandler::isCallable(JSObject* obj) const
+Wrapper::isCallable(JSObject* obj) const
 {
     JSObject * target = obj->as<ProxyObject>().target();
     return target->isCallable();
 }
 
 bool
-ForwardingProxyHandler::isConstructor(JSObject* obj) const
+Wrapper::isConstructor(JSObject* obj) const
 {
     // For now, all wrappers are constructable if they are callable. We will want to eventually
     // decouple this behavior, but none of the Wrapper infrastructure is currently prepared for

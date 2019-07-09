@@ -4,7 +4,6 @@
 
 import types
 
-import mozunit
 import pytest
 
 from marionette_harness.runner import serve
@@ -64,4 +63,6 @@ def test_where_is():
 
 
 if __name__ == "__main__":
-    mozunit.main('--log-tbpl=-')
+    import sys
+    sys.exit(pytest.main(
+        ['--log-tbpl=-', __file__]))

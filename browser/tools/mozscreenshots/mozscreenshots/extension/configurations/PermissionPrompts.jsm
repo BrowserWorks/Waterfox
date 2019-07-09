@@ -28,7 +28,6 @@ this.PermissionPrompts = {
 
   configurations: {
     shareDevices: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#webRTC-shareDevices");
@@ -36,7 +35,6 @@ this.PermissionPrompts = {
     },
 
     shareMicrophone: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#webRTC-shareMicrophone");
@@ -44,7 +42,6 @@ this.PermissionPrompts = {
     },
 
     shareVideoAndMicrophone: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#webRTC-shareDevices2");
@@ -52,7 +49,6 @@ this.PermissionPrompts = {
     },
 
     shareScreen: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#webRTC-shareScreen");
@@ -60,7 +56,6 @@ this.PermissionPrompts = {
     },
 
     geo: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#geo");
@@ -68,7 +63,6 @@ this.PermissionPrompts = {
     },
 
     persistentStorage: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#persistent-storage");
@@ -76,7 +70,6 @@ this.PermissionPrompts = {
     },
 
     loginCapture: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#login-capture");
@@ -84,7 +77,6 @@ this.PermissionPrompts = {
     },
 
     notifications: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         await closeLastTab();
         await clickOn("#web-notifications");
@@ -92,7 +84,6 @@ this.PermissionPrompts = {
     },
 
     addons: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         Services.prefs.setBoolPref("xpinstall.whitelist.required", true);
 
@@ -102,7 +93,6 @@ this.PermissionPrompts = {
     },
 
     addonsNoWhitelist: {
-      selectors: ["#notification-popup"],
       async applyConfig() {
         Services.prefs.setBoolPref("xpinstall.whitelist.required", false);
 

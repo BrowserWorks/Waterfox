@@ -140,8 +140,7 @@ struct nsFont {
   void CopyAlternates(const nsFont& aOther);
 
   // Add featureSettings into style
-  void AddFontFeaturesToStyle(gfxFontStyle *aStyle,
-                              bool aVertical) const;
+  void AddFontFeaturesToStyle(gfxFontStyle *aStyle) const;
 
   void AddFontVariationsToStyle(gfxFontStyle *aStyle) const;
 };

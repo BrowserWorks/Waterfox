@@ -206,10 +206,12 @@ nsSVGViewBox::GetBaseValueString(nsAString& aValue) const
     aValue.AssignLiteral("none");
     return;
   }
-  nsTextFormatter::ssprintf(aValue,
+  char16_t buf[200];
+  nsTextFormatter::snprintf(buf, sizeof(buf)/sizeof(char16_t),
                             u"%g %g %g %g",
                             (double)mBaseVal.x, (double)mBaseVal.y,
                             (double)mBaseVal.width, (double)mBaseVal.height);
+  aValue.Assign(buf);
 }
 
 

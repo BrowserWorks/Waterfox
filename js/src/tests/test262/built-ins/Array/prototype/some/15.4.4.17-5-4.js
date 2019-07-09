@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.some
 es5id: 15.4.4.17-5-4
 description: >
     Array.prototype.some - thisArg is object from object
@@ -14,7 +13,7 @@ description: >
   {
     return this.res;
   }
-
+  
   function foo(){}
   foo.prototype.res = true;
   var f = new foo();

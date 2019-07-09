@@ -20,9 +20,13 @@
 #define asmjs_wasm_baseline_compile_h
 
 #include "wasm/WasmGenerator.h"
+#include "wasm/WasmTypes.h"
 
 namespace js {
 namespace wasm {
+
+class CompileTask;
+class FuncCompileUnit;
 
 // Return whether BaselineCompileFunction can generate code on the current device.
 // Note: asm.js is also currently not supported due to Atomics and SIMD.
@@ -30,10 +34,8 @@ bool
 BaselineCanCompile();
 
 // Generate adequate code quickly.
-MOZ_MUST_USE bool
-BaselineCompileFunctions(const ModuleEnvironment& env, LifoAlloc& lifo,
-                         const FuncCompileInputVector& inputs, CompiledCode* code,
-                         UniqueChars* error);
+bool
+BaselineCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* error);
 
 class BaseLocalIter
 {

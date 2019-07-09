@@ -5,7 +5,7 @@
 use app_units::Au;
 use euclid::Point2D;
 use range::{self, EachIndex, Range, RangeIndex};
-#[cfg(all(feature = "unstable", any(target_feature = "sse2", target_feature = "neon")))]
+#[cfg(any(target_feature = "sse2", target_feature = "neon"))]
 use simd::u32x4;
 use std::{fmt, mem, u16};
 use std::cmp::{Ordering, PartialOrd};
@@ -21,7 +21,7 @@ pub use gfx_traits::ByteIndex;
 /// In the uncommon case (multiple glyphs per unicode character, large glyph index/advance, or
 /// glyph offsets), we pack the glyph count into GlyphEntry, and store the other glyph information
 /// in DetailedGlyphStore.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Copy, Deserialize, Serialize, PartialEq)]
 pub struct GlyphEntry {
     value: u32,
 }
@@ -74,7 +74,6 @@ pub type GlyphId = u32;
 // TODO: make this more type-safe.
 
 const FLAG_CHAR_IS_SPACE: u32       = 0x40000000;
-#[cfg(feature = "unstable")]
 #[cfg(any(target_feature = "sse2", target_feature = "neon"))]
 const FLAG_CHAR_IS_SPACE_SHIFT: u32 = 30;
 const FLAG_IS_SIMPLE_GLYPH: u32     = 0x80000000;
@@ -148,7 +147,7 @@ impl GlyphEntry {
 
 // Stores data for a detailed glyph, in the case that several glyphs
 // correspond to one character, or the glyph's data couldn't be packed.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Copy, Deserialize, Serialize)]
 struct DetailedGlyph {
     id: GlyphId,
     // glyph's advance, in the text's direction (LTR or RTL)
@@ -167,7 +166,7 @@ impl DetailedGlyph {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(PartialEq, Clone, Eq, Debug, Copy, Deserialize, Serialize)]
 struct DetailedGlyphRecord {
     // source string offset/GlyphEntry offset in the TextRun
     entry_offset: ByteIndex,
@@ -309,7 +308,7 @@ impl<'a> DetailedGlyphStore {
 
 // This struct is used by GlyphStore clients to provide new glyph data.
 // It should be allocated on the stack and passed by reference to GlyphStore.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct GlyphData {
     id: GlyphId,
     advance: Au,
@@ -340,7 +339,7 @@ impl GlyphData {
 // through glyphs (either for a particular TextRun offset, or all glyphs).
 // Rather than eagerly assembling and copying glyph data, it only retrieves
 // values as they are needed from the GlyphStore, using provided offsets.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub enum GlyphInfo<'a> {
     Simple(&'a GlyphStore, ByteIndex),
     Detail(&'a GlyphStore, ByteIndex, u16),
@@ -592,7 +591,6 @@ impl<'a> GlyphStore {
     }
 
     #[inline]
-    #[cfg(feature = "unstable")]
     #[cfg(any(target_feature = "sse2", target_feature = "neon"))]
     fn advance_for_byte_range_simple_glyphs(&self, range: &Range<ByteIndex>, extra_word_spacing: Au) -> Au {
         let advance_mask = u32x4::splat(GLYPH_ADVANCE_MASK);
@@ -636,14 +634,13 @@ impl<'a> GlyphStore {
 
     /// When SIMD isn't available, fallback to the slow path.
     #[inline]
-    #[cfg(not(all(feature = "unstable", any(target_feature = "sse2", target_feature = "neon"))))]
+    #[cfg(not(any(target_feature = "sse2", target_feature = "neon")))]
     fn advance_for_byte_range_simple_glyphs(&self, range: &Range<ByteIndex>, extra_word_spacing: Au) -> Au {
         self.advance_for_byte_range_slow_path(range, extra_word_spacing)
     }
 
     /// Used for SIMD.
     #[inline]
-    #[cfg(feature = "unstable")]
     #[cfg(any(target_feature = "sse2", target_feature = "neon"))]
     #[allow(unsafe_code)]
     fn transmute_entry_buffer_to_u32_buffer(&self) -> &[u32] {
@@ -699,7 +696,7 @@ pub struct GlyphIterator<'a> {
     store: &'a GlyphStore,
     byte_index: ByteIndex,
     byte_range: Range<ByteIndex>,
-    glyph_range: Option<EachIndex<ByteIndex>>,
+    glyph_range: Option<EachIndex<isize, ByteIndex>>,
 }
 
 impl<'a> GlyphIterator<'a> {

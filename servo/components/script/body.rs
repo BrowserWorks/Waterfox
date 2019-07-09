@@ -4,8 +4,8 @@
 
 use dom::bindings::codegen::Bindings::FormDataBinding::FormDataMethods;
 use dom::bindings::error::{Error, Fallible};
+use dom::bindings::js::Root;
 use dom::bindings::reflector::DomObject;
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::USVString;
 use dom::blob::{Blob, BlobImpl};
 use dom::formdata::FormData;
@@ -22,7 +22,7 @@ use std::rc::Rc;
 use std::str;
 use url::form_urlencoded;
 
-#[derive(Clone, Copy, JSTraceable, MallocSizeOf)]
+#[derive(Copy, Clone, JSTraceable, HeapSizeOf)]
 pub enum BodyType {
     Blob,
     FormData,
@@ -33,8 +33,8 @@ pub enum BodyType {
 pub enum FetchedData {
     Text(String),
     Json(JSValue),
-    BlobData(DomRoot<Blob>),
-    FormData(DomRoot<FormData>),
+    BlobData(Root<Blob>),
+    FormData(Root<FormData>),
 }
 
 // https://fetch.spec.whatwg.org/#concept-body-consume-body
@@ -44,9 +44,8 @@ pub fn consume_body<T: BodyOperations + DomObject>(object: &T, body_type: BodyTy
 
     // Step 1
     if object.get_body_used() || object.is_locked() {
-        promise.reject_error(Error::Type(
-            "The response's stream is disturbed or locked".to_string(),
-        ));
+        promise.reject_error(promise.global().get_cx(), Error::Type(
+            "The response's stream is disturbed or locked".to_string()));
         return promise;
     }
 
@@ -76,16 +75,17 @@ pub fn consume_body_with_promise<T: BodyOperations + DomObject>(object: &T,
                                                       body_type,
                                                       object.get_mime_type());
 
+    let cx = promise.global().get_cx();
     match pkg_data_results {
         Ok(results) => {
             match results {
-                FetchedData::Text(s) => promise.resolve_native(&USVString(s)),
-                FetchedData::Json(j) => promise.resolve_native(&j),
-                FetchedData::BlobData(b) => promise.resolve_native(&b),
-                FetchedData::FormData(f) => promise.resolve_native(&f),
+                FetchedData::Text(s) => promise.resolve_native(cx, &USVString(s)),
+                FetchedData::Json(j) => promise.resolve_native(cx, &j),
+                FetchedData::BlobData(b) => promise.resolve_native(cx, &b),
+                FetchedData::FormData(f) => promise.resolve_native(cx, &f),
             };
         },
-        Err(err) => promise.reject_error(err),
+        Err(err) => promise.reject_error(cx, err),
     }
 }
 

@@ -48,9 +48,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     private TextView mValidationMessageText;
     private ImageView mValidationMessageArrow;
     private ImageView mValidationMessageArrowInverted;
-
-    private GeckoView mGeckoView;
-    private EventCallback mAutoCompleteCallback;
+    private final GeckoApp geckoApp;
 
     private double mX;
     private double mY;
@@ -90,29 +88,37 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         mAnimation.setDuration(75);
 
         setFocusable(false);
+
+        geckoApp = (GeckoApp) ActivityUtils.getActivityFromContext(context);
     }
 
-    public void create(final GeckoView view) {
-        mGeckoView = view;
-        mGeckoView.getEventDispatcher().registerUiThreadListener(this,
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        geckoApp.getAppEventDispatcher().registerUiThreadListener(this,
             "FormAssist:AutoCompleteResult",
             "FormAssist:ValidationMessage",
             "FormAssist:Hide");
     }
 
-    public void destroy() {
-        mGeckoView.getEventDispatcher().unregisterUiThreadListener(this,
+    void destroy() {
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        geckoApp.getAppEventDispatcher().unregisterUiThreadListener(this,
             "FormAssist:AutoCompleteResult",
             "FormAssist:ValidationMessage",
             "FormAssist:Hide");
-        mGeckoView = null;
+
+        super.onDetachedFromWindow();
     }
 
     @Override // BundleEventListener
     public void handleMessage(final String event, final GeckoBundle message,
                               final EventCallback callback) {
         if ("FormAssist:AutoCompleteResult".equals(event)) {
-            mAutoCompleteCallback = callback;
             showAutoCompleteSuggestions(message.getBundleArray("suggestions"),
                                         message.getBundle("rect"),
                                         message.getBoolean("isEmpty"));
@@ -143,20 +149,13 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
 
             mAutoCompleteList.setOnItemClickListener(new OnItemClickListener() {
                 @Override
-                public void onItemClick(final AdapterView<?> parentView, final View view,
-                                        final int position, final long id) {
-                    if (mAutoCompleteCallback == null) {
-                        hide();
-                        return;
-                    }
-
+                public void onItemClick(AdapterView<?> parentView, View view, int position, long id) {
                     // Use the value stored with the autocomplete view, not the label text,
                     // since they can be different.
                     final TextView textView = (TextView) view;
-                    final GeckoBundle message = new GeckoBundle(2);
-                    message.putString("action", "autocomplete");
+                    final GeckoBundle message = new GeckoBundle(1);
                     message.putString("value", (String) textView.getTag());
-                    mAutoCompleteCallback.sendSuccess(message);
+                    geckoApp.getAppEventDispatcher().dispatch("FormAssist:AutoComplete", message);
                     hide();
                 }
             });
@@ -167,20 +166,15 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
             final SwipeDismissListViewTouchListener touchListener = new SwipeDismissListViewTouchListener(mAutoCompleteList, new OnDismissCallback() {
                 @Override
                 public void onDismiss(ListView listView, final int position) {
-                    if (mAutoCompleteCallback == null) {
-                        return;
-                    }
-
                     // Use the value stored with the autocomplete view, not the label text,
                     // since they can be different.
                     AutoCompleteListAdapter adapter = (AutoCompleteListAdapter) listView.getAdapter();
                     Pair<String, String> item = adapter.getItem(position);
 
                     // Remove the item from form history.
-                    final GeckoBundle message = new GeckoBundle(2);
-                    message.putString("action", "remove");
+                    final GeckoBundle message = new GeckoBundle(1);
                     message.putString("value", item.second);
-                    mAutoCompleteCallback.sendSuccess(message);
+                    geckoApp.getAppEventDispatcher().dispatch("FormAssist:Remove", message);
 
                     // Update the list
                     adapter.remove(item);
@@ -254,7 +248,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     }
 
     private void positionAndShowPopup() {
-        positionAndShowPopup(mGeckoView.getViewportMetrics());
+        positionAndShowPopup(GeckoAppShell.getLayerView().getViewportMetrics());
     }
 
     private void positionAndShowPopup(ImmutableViewportMetrics aMetrics) {
@@ -287,8 +281,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         // These values correspond to the input box for which we want to
         // display the FormAssistPopup.
         int left = (int) (mX * zoom - aMetrics.viewportRectLeft);
-        int top = (int) (mY * zoom - aMetrics.viewportRectTop + mGeckoView.getTop() +
-                         mGeckoView.getCurrentToolbarHeight());
+        int top = (int) (mY * zoom - aMetrics.viewportRectTop + GeckoAppShell.getLayerView().getCurrentToolbarHeight());
         int width = (int) (mW * zoom);
         int height = (int) (mH * zoom);
 
@@ -336,7 +329,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
 
         // If the popup doesn't fit below the input box, shrink its height, or
         // see if we can place it above the input instead.
-        if ((popupTop + popupHeight) > (mGeckoView.getTop() + viewport.height)) {
+        if ((popupTop + popupHeight) > viewport.height) {
             // Find where the maximum space is, and put the popup there.
             if ((viewport.height - popupTop) > top) {
                 // Shrink the height to fit it below the input box.
@@ -373,8 +366,8 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     public void hide() {
         if (isShown()) {
             setVisibility(GONE);
+            geckoApp.getAppEventDispatcher().dispatch("FormAssist:Hidden", null);
         }
-        mAutoCompleteCallback = null;
     }
 
     void onTranslationChanged() {

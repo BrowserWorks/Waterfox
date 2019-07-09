@@ -11,7 +11,6 @@
 #include "mozIPlacesAutoComplete.h"
 #include "SQLFunctions.h"
 #include "nsMathUtils.h"
-#include "nsUnicodeProperties.h"
 #include "nsUTF8Utils.h"
 #include "nsINavHistoryService.h"
 #include "nsPrintfCString.h"
@@ -19,17 +18,10 @@
 #include "mozilla/Likely.h"
 #include "nsVariant.h"
 #include "mozilla/HashFunctions.h"
-#include <algorithm>
 
 // Maximum number of chars to search through.
 // MatchAutoCompleteFunction won't look for matches over this threshold.
 #define MAX_CHARS_TO_SEARCH_THROUGH 255
-
-// Maximum number of chars to use for calculating hashes. This value has been
-// picked to ensure low hash collisions on a real world common places.sqlite.
-// While collisions are not a big deal for functionality, a low ratio allows
-// for slightly more efficient SELECTs.
-#define MAX_CHARS_TO_HASH 1500U
 
 using namespace mozilla::storage;
 
@@ -41,128 +33,41 @@ namespace {
   typedef nsACString::const_char_iterator const_char_iterator;
 
   /**
-   * Scan forward through UTF-8 text until the next potential character that
-   * could match a given codepoint when lower-cased (false positives are okay).
-   * This avoids having to actually parse the UTF-8 text, which is slow.
+   * Get a pointer to the word boundary after aStart if aStart points to an
+   * ASCII letter (i.e. [a-zA-Z]).  Otherwise, return aNext, which we assume
+   * points to the next character in the UTF-8 sequence.
    *
-   * @param aStart
-   *        An iterator pointing to the first character position considered.
-   * @param aEnd
-   *        An interator pointing to past-the-end of the string.
+   * We define a word boundary as anything that's not [a-z] -- this lets us
+   * match CamelCase words.
    *
-   * @return An iterator pointing to the first potential matching character
-   *         within the range [aStart, aEnd).
+   * @param aStart the beginning of the UTF-8 sequence
+   * @param aNext the next character in the sequence
+   * @param aEnd the first byte which is not part of the sequence
+   *
+   * @return a pointer to the next word boundary after aStart
    */
   static
   MOZ_ALWAYS_INLINE const_char_iterator
-  nextSearchCandidate(const_char_iterator aStart,
-                      const_char_iterator aEnd,
-                      uint32_t aSearchFor)
-  {
+  nextWordBoundary(const_char_iterator const aStart,
+                   const_char_iterator const aNext,
+                   const_char_iterator const aEnd) {
+
     const_char_iterator cur = aStart;
+    if (('a' <= *cur && *cur <= 'z') ||
+        ('A' <= *cur && *cur <= 'Z')) {
 
-    // If the character we search for is ASCII, then we can scan until we find
-    // it or its ASCII uppercase character, modulo the special cases
-    // U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE and U+212A KELVIN SIGN
-    // (which are the only non-ASCII characters that lower-case to ASCII ones).
-    // Since false positives are okay, we approximate ASCII lower-casing by
-    // bit-ORing with 0x20, for increased performance.
-    //
-    // If the character we search for is *not* ASCII, we can ignore everything
-    // that is, since all ASCII characters lower-case to ASCII.
-    //
-    // Because of how UTF-8 uses high-order bits, this will never land us
-    // in the middle of a codepoint.
-    //
-    // The assumptions about Unicode made here are verified in the test_casing
-    // gtest.
-    if (aSearchFor < 128) {
-      // When searching for I or K, we pick out the first byte of the UTF-8
-      // encoding of the corresponding special case character, and look for it
-      // in the loop below.  For other characters we fall back to 0xff, which
-      // is not a valid UTF-8 byte.
-      unsigned char target = (unsigned char)(aSearchFor | 0x20);
-      unsigned char special = 0xff;
-      if (target == 'i' || target == 'k') {
-        special = (target == 'i' ? 0xc4 : 0xe2);
-      }
-
-      while (cur < aEnd && (unsigned char)(*cur | 0x20) != target &&
-          (unsigned char)*cur != special) {
+      // Since we'll halt as soon as we see a non-ASCII letter, we can do a
+      // simple byte-by-byte comparison here and avoid the overhead of a
+      // UTF8CharEnumerator.
+      do {
         cur++;
-      }
-    } else {
-      const_char_iterator cur = aStart;
-      while (cur < aEnd && (unsigned char)(*cur) < 128) {
-        cur++;
-      }
+      } while (cur < aEnd && 'a' <= *cur && *cur <= 'z');
+    }
+    else {
+      cur = aNext;
     }
 
     return cur;
-  }
-
-  /**
-   * Check whether a character position is on a word boundary of a UTF-8 string
-   * (rather than within a word).  We define "within word" to be any position
-   * between [a-zA-Z] and [a-z] -- this lets us match CamelCase words.
-   * TODO: support non-latin alphabets.
-   *
-   * @param aPos
-   *        An iterator pointing to the character position considered.  It must
-   *        *not* be the first byte of a string.
-   *
-   * @return true if boundary, false otherwise.
-   */
-  static
-  MOZ_ALWAYS_INLINE bool
-  isOnBoundary(const_char_iterator aPos) {
-    if ('a' <= *aPos && *aPos <= 'z') {
-      char prev = *(aPos - 1) | 0x20;
-      return !('a' <= prev && prev <= 'z');
-    }
-    return true;
-  }
-
-  /**
-   * Check whether a token string matches a particular position of a source
-   * string, case insensitively.
-   *
-   * @param aTokenStart
-   *        An iterator pointing to the start of the token string.
-   * @param aTokenEnd
-   *        An iterator pointing past-the-end of the token string.
-   * @param aSourceStart
-   *        An iterator pointing to the position of source string to start
-   *        matching at.
-   * @param aSourceEnd
-   *        An iterator pointing past-the-end of the source string.
-   *
-   * @return true if the string [aTokenStart, aTokenEnd) matches the start of
-   *         the string [aSourceStart, aSourceEnd, false otherwise.
-   */
-  static
-  MOZ_ALWAYS_INLINE bool
-  stringMatch(const_char_iterator aTokenStart,
-              const_char_iterator aTokenEnd,
-              const_char_iterator aSourceStart,
-              const_char_iterator aSourceEnd)
-  {
-    const_char_iterator tokenCur = aTokenStart, sourceCur = aSourceStart;
-
-    while (tokenCur < aTokenEnd) {
-      if (sourceCur >= aSourceEnd) {
-        return false;
-      }
-
-      bool error;
-      if (!CaseInsensitiveUTF8CharsEqual(sourceCur, tokenCur,
-                                         aSourceEnd, aTokenEnd,
-                                         &sourceCur, &tokenCur, &error)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   enum FindInStringBehavior {
@@ -171,7 +76,11 @@ namespace {
   };
 
   /**
-   * Common implementation for findAnywhere and findOnBoundary.
+   * findAnywhere and findOnBoundary do almost the same thing, so it's natural
+   * to implement them in terms of a single function.  They're both
+   * performance-critical functions, however, and checking aBehavior makes them
+   * a bit slower.  Our solution is to define findInString as MOZ_ALWAYS_INLINE
+   * and rely on the compiler to optimize out the aBehavior check.
    *
    * @param aToken
    *        The token we're searching for
@@ -185,13 +94,13 @@ namespace {
    * @return true if aToken was found in aSourceString, false otherwise.
    */
   static
-  bool
+  MOZ_ALWAYS_INLINE bool
   findInString(const nsDependentCSubstring &aToken,
                const nsACString &aSourceString,
                FindInStringBehavior aBehavior)
   {
-    // GetLowerUTF8Codepoint assumes that there's at least one byte in
-    // the string, so don't pass an empty token here.
+    // CaseInsensitiveUTF8CharsEqual assumes that there's at least one byte in
+    // the both strings, so don't pass an empty token here.
     NS_PRECONDITION(!aToken.IsEmpty(), "Don't search for an empty token!");
 
     // We cannot match anything if there is nothing to search.
@@ -201,51 +110,73 @@ namespace {
 
     const_char_iterator tokenStart(aToken.BeginReading()),
                         tokenEnd(aToken.EndReading()),
-                        tokenNext,
                         sourceStart(aSourceString.BeginReading()),
-                        sourceEnd(aSourceString.EndReading()),
-                        sourceCur(sourceStart),
-                        sourceNext;
+                        sourceEnd(aSourceString.EndReading());
 
-    uint32_t tokenFirstChar =
-      GetLowerUTF8Codepoint(tokenStart, tokenEnd, &tokenNext);
-    if (tokenFirstChar == uint32_t(-1)) {
-      return false;
-    }
-
-    for (;;) {
-      // Scan forward to the next viable candidate (if any).
-      sourceCur = nextSearchCandidate(sourceCur, sourceEnd, tokenFirstChar);
-      if (sourceCur == sourceEnd) {
-        break;
-      }
+    do {
+      // We are on a word boundary (if aBehavior == eFindOnBoundary).  See if
+      // aToken matches sourceStart.
 
       // Check whether the first character in the token matches the character
-      // at sourceCur.  At the same time, get a pointer to the next character
-      // in the source.
-      uint32_t sourceFirstChar =
-        GetLowerUTF8Codepoint(sourceCur, sourceEnd, &sourceNext);
-      if (sourceFirstChar == uint32_t(-1)) {
+      // at sourceStart.  At the same time, get a pointer to the next character
+      // in both the token and the source.
+      const_char_iterator sourceNext, tokenCur;
+      bool error;
+      if (CaseInsensitiveUTF8CharsEqual(sourceStart, tokenStart,
+                                        sourceEnd, tokenEnd,
+                                        &sourceNext, &tokenCur, &error)) {
+
+        // We don't need to check |error| here -- if
+        // CaseInsensitiveUTF8CharCompare encounters an error, it'll also
+        // return false and we'll catch the error outside the if.
+
+        const_char_iterator sourceCur = sourceNext;
+        while (true) {
+          if (tokenCur >= tokenEnd) {
+            // We matched the whole token!
+            return true;
+          }
+
+          if (sourceCur >= sourceEnd) {
+            // We ran into the end of source while matching a token.  This
+            // means we'll never find the token we're looking for.
+            return false;
+          }
+
+          if (!CaseInsensitiveUTF8CharsEqual(sourceCur, tokenCur,
+                                             sourceEnd, tokenEnd,
+                                             &sourceCur, &tokenCur, &error)) {
+            // sourceCur doesn't match tokenCur (or there's an error), so break
+            // out of this loop.
+            break;
+          }
+        }
+      }
+
+      // If something went wrong above, get out of here!
+      if (MOZ_UNLIKELY(error)) {
         return false;
       }
 
-      if (sourceFirstChar == tokenFirstChar &&
-          (aBehavior != eFindOnBoundary || sourceCur == sourceStart ||
-              isOnBoundary(sourceCur)) &&
-          stringMatch(tokenNext, tokenEnd, sourceNext, sourceEnd))
-      {
-        return true;
+      // We didn't match the token.  If we're searching for matches on word
+      // boundaries, skip to the next word boundary.  Otherwise, advance
+      // forward one character, using the sourceNext pointer we saved earlier.
+
+      if (aBehavior == eFindOnBoundary) {
+        sourceStart = nextWordBoundary(sourceStart, sourceNext, sourceEnd);
+      }
+      else {
+        sourceStart = sourceNext;
       }
 
-      sourceCur = sourceNext;
-    }
+    } while (sourceStart < sourceEnd);
 
     return false;
   }
 
   static
   MOZ_ALWAYS_INLINE nsDependentCString
-  getSharedUTF8String(mozIStorageValueArray* aValues, uint32_t aIndex) {
+  getSharedString(mozIStorageValueArray* aValues, uint32_t aIndex) {
     uint32_t len;
     const char* str = aValues->AsSharedUTF8String(aIndex, &len);
     if (!str) {
@@ -404,14 +335,6 @@ namespace places {
     mozIStorageFunction
   )
 
-  MatchAutoCompleteFunction::MatchAutoCompleteFunction()
-    : mCachedZero(new IntegerVariant(0))
-    , mCachedOne(new IntegerVariant(1))
-  {
-    static_assert(IntegerVariant::HasThreadSafeRefCnt::value,
-        "Caching assumes that variants have thread-safe refcounting");
-  }
-
   NS_IMETHODIMP
   MatchAutoCompleteFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
                                             nsIVariant **_result)
@@ -423,9 +346,9 @@ namespace places {
       (searchBehavior & mozIPlacesAutoComplete::BEHAVIOR_##aBitName)
 
     nsDependentCString searchString =
-      getSharedUTF8String(aArguments, kArgSearchString);
+      getSharedString(aArguments, kArgSearchString);
     nsDependentCString url =
-      getSharedUTF8String(aArguments, kArgIndexURL);
+      getSharedString(aArguments, kArgIndexURL);
 
     int32_t matchBehavior = aArguments->AsInt32(kArgIndexMatchBehavior);
 
@@ -435,14 +358,14 @@ namespace places {
         StringBeginsWith(url, NS_LITERAL_CSTRING("javascript:")) &&
         !HAS_BEHAVIOR(JAVASCRIPT) &&
         !StringBeginsWith(searchString, NS_LITERAL_CSTRING("javascript:"))) {
-      NS_ADDREF(*_result = mCachedZero);
+      NS_ADDREF(*_result = new IntegerVariant(0));
       return NS_OK;
     }
 
     int32_t visitCount = aArguments->AsInt32(kArgIndexVisitCount);
     bool typed = aArguments->AsInt32(kArgIndexTyped) ? true : false;
     bool bookmark = aArguments->AsInt32(kArgIndexBookmark) ? true : false;
-    nsDependentCString tags = getSharedUTF8String(aArguments, kArgIndexTags);
+    nsDependentCString tags = getSharedString(aArguments, kArgIndexTags);
     int32_t openPageCount = aArguments->AsInt32(kArgIndexOpenPageCount);
     bool matches = false;
     if (HAS_BEHAVIOR(RESTRICT)) {
@@ -464,7 +387,7 @@ namespace places {
     }
 
     if (!matches) {
-      NS_ADDREF(*_result = mCachedZero);
+      NS_ADDREF(*_result = new IntegerVariant(0));
       return NS_OK;
     }
 
@@ -479,7 +402,7 @@ namespace places {
     const nsDependentCSubstring& trimmedUrl =
       Substring(fixedUrl, 0, MAX_CHARS_TO_SEARCH_THROUGH);
 
-    nsDependentCString title = getSharedUTF8String(aArguments, kArgIndexTitle);
+    nsDependentCString title = getSharedString(aArguments, kArgIndexTitle);
     // Limit the number of chars we search through.
     const nsDependentCSubstring& trimmedTitle =
       Substring(title, 0, MAX_CHARS_TO_SEARCH_THROUGH);
@@ -509,7 +432,7 @@ namespace places {
       }
     }
 
-    NS_ADDREF(*_result = (matches ? mCachedOne : mCachedZero));
+    NS_ADDREF(*_result = new IntegerVariant(matches ? 1 : 0));
     return NS_OK;
     #undef HAS_BEHAVIOR
   }
@@ -772,40 +695,6 @@ namespace places {
   }
 
 ////////////////////////////////////////////////////////////////////////////////
-//// GUID Validation Function
-
-  /* static */
-  nsresult
-  IsValidGUIDFunction::create(mozIStorageConnection *aDBConn)
-  {
-    RefPtr<IsValidGUIDFunction> function = new IsValidGUIDFunction();
-    return aDBConn->CreateFunction(
-      NS_LITERAL_CSTRING("is_valid_guid"), 1, function
-    );
-  }
-
-  NS_IMPL_ISUPPORTS(
-    IsValidGUIDFunction,
-    mozIStorageFunction
-  )
-
-  NS_IMETHODIMP
-  IsValidGUIDFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
-                                      nsIVariant **_result)
-  {
-    // Must have non-null function arguments.
-    MOZ_ASSERT(aArguments);
-
-    nsAutoCString guid;
-    aArguments->GetUTF8String(0, guid);
-
-    RefPtr<nsVariant> result = new nsVariant();
-    result->SetAsBool(IsValidGUID(guid));
-    result.forget(_result);
-    return NS_OK;
-  }
-
-////////////////////////////////////////////////////////////////////////////////
 //// Get Unreversed Host Function
 
   /* static */
@@ -1045,16 +934,13 @@ namespace places {
     NS_ENSURE_SUCCESS(rv, rv);
     NS_ENSURE_TRUE(numEntries >= 1  && numEntries <= 2, NS_ERROR_FAILURE);
 
-    nsDependentCString str = getSharedUTF8String(aArguments, 0);
+    nsString str;
+    aArguments->GetString(0, str);
     nsAutoCString mode;
     if (numEntries > 1) {
       aArguments->GetUTF8String(1, mode);
     }
 
-    // HashString doesn't stop at the string boundaries if a length is passed to
-    // it, so ensure to pass a proper value.
-    const uint32_t maxLenToHash = std::min(static_cast<uint32_t>(str.Length()),
-                                           MAX_CHARS_TO_HASH);
     RefPtr<nsVariant> result = new nsVariant();
     if (mode.IsEmpty()) {
       // URI-like strings (having a prefix before a colon), are handled specially,
@@ -1062,30 +948,28 @@ namespace places {
       // other 32 are the string hash.
       // The 16 bits have been decided based on the fact hashing all of the IANA
       // known schemes, plus "places", does not generate collisions.
-      // Since we only care about schemes, we just search in the first 50 chars.
-      // The longest known IANA scheme, at this time, is 30 chars.
-      const nsDependentCSubstring& strHead = StringHead(str, 50);
-      nsACString::const_iterator start, tip, end;
-      strHead.BeginReading(tip);
+      nsAString::const_iterator start, tip, end;
+      str.BeginReading(tip);
       start = tip;
-      strHead.EndReading(end);
-      uint32_t strHash = HashString(str.get(), maxLenToHash);
-      if (FindCharInReadable(':', tip, end)) {
-        const nsDependentCSubstring& prefix = Substring(start, tip);
+      str.EndReading(end);
+      if (FindInReadable(NS_LITERAL_STRING(":"), tip, end)) {
+        const nsDependentSubstring& prefix = Substring(start, tip);
         uint64_t prefixHash = static_cast<uint64_t>(HashString(prefix) & 0x0000FFFF);
         // The second half of the url is more likely to be unique, so we add it.
-        uint64_t hash = (prefixHash << 32) + strHash;
+        uint32_t srcHash = HashString(str);
+        uint64_t hash = (prefixHash << 32) + srcHash;
         result->SetAsInt64(hash);
       } else {
-        result->SetAsInt64(strHash);
+        uint32_t hash = HashString(str);
+        result->SetAsInt64(hash);
       }
-    } else if (mode.EqualsLiteral("prefix_lo")) {
+    } else if (mode.Equals(NS_LITERAL_CSTRING("prefix_lo"))) {
       // Keep only 16 bits.
-      uint64_t hash = static_cast<uint64_t>(HashString(str.get(), maxLenToHash) & 0x0000FFFF) << 32;
+      uint64_t hash = static_cast<uint64_t>(HashString(str) & 0x0000FFFF) << 32;
       result->SetAsInt64(hash);
-    } else if (mode.EqualsLiteral("prefix_hi")) {
+    } else if (mode.Equals(NS_LITERAL_CSTRING("prefix_hi"))) {
       // Keep only 16 bits.
-      uint64_t hash = static_cast<uint64_t>(HashString(str.get(), maxLenToHash) & 0x0000FFFF) << 32;
+      uint64_t hash = static_cast<uint64_t>(HashString(str) & 0x0000FFFF) << 32;
       // Make this a prefix upper bound by filling the lowest 32 bits.
       hash +=  0xFFFFFFFF;
       result->SetAsInt64(hash);

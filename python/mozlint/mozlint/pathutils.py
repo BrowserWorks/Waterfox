@@ -22,8 +22,7 @@ class FilterPath(object):
         if self._finder:
             return self._finder
         self._finder = FileFinder(
-            mozpath.normsep(self.path),
-            ignore=[mozpath.normsep(e) for e in self.exclude])
+            self.path, ignore=self.exclude)
         return self._finder
 
     @property
@@ -43,17 +42,10 @@ class FilterPath(object):
         return os.path.isdir(self.path)
 
     def join(self, *args):
-        return FilterPath(os.path.join(self.path, *args))
+        return FilterPath(os.path.join(self, *args))
 
     def match(self, patterns):
-        a = mozpath.normsep(self.path)
-        for p in patterns:
-            if isinstance(p, FilterPath):
-                p = p.path
-            p = mozpath.normsep(p)
-            if mozpath.match(a, p):
-                return True
-        return False
+        return any(mozpath.match(self.path, pattern.path) for pattern in patterns)
 
     def contains(self, other):
         """Return True if other is a subdirectory of self or equals self."""
@@ -90,7 +82,7 @@ def filterpaths(paths, linter, **lintargs):
         return paths
 
     def normalize(path):
-        if '*' not in path and not os.path.isabs(path):
+        if not os.path.isabs(path):
             path = os.path.join(root, path)
         return FilterPath(path)
 
@@ -147,18 +139,16 @@ def filterpaths(paths, linter, **lintargs):
             # If the specified path is a file it must be both
             # matched by an include directive and not matched
             # by an exclude directive.
-            if not path.match(includeglobs) or any(e.contains(path) for e in excludepaths):
+            if not path.match(includeglobs):
                 continue
 
             keep.add(path)
         elif path.isdir:
             # If the specified path is a directory, use a
             # FileFinder to resolve all relevant globs.
-            path.exclude = [os.path.relpath(e.path, root) for e in exclude]
+            path.exclude = [e.path for e in excludeglobs]
             for pattern in includeglobs:
                 for p, f in path.finder.find(pattern.path):
-                    if extensions and os.path.splitext(p)[1][1:] not in extensions:
-                        continue
                     keep.add(path.join(p))
 
     # Only pass paths we couldn't exclude here to the underlying linter
@@ -186,26 +176,3 @@ def findobject(path):
     for a in objectpath.split('.'):
         obj = getattr(obj, a)
     return obj
-
-
-def ancestors(path):
-    while path:
-        yield path
-        (path, child) = os.path.split(path)
-        if child == "":
-            break
-
-
-def get_ancestors_by_name(name, path, root):
-    """Returns a list of files called `name` in `path`'s ancestors,
-    sorted from closest->furthest. This can be useful for finding
-    relevant configuration files.
-    """
-    configs = []
-    for path in ancestors(path):
-        config = os.path.join(path, name)
-        if os.path.isfile(config):
-            configs.append(config)
-        if path == root:
-            break
-    return configs

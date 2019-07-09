@@ -156,14 +156,9 @@ async function testPopupSize(standardsMode, browserWin = window, arrowSide = "to
   let widget = getBrowserActionWidget(extension);
   CustomizableUI.addWidgetToArea(widget.id, getCustomizableUIPanelID());
 
-  let panel = browserWin.PanelUI.overflowPanel;
-  let panelMultiView = panel.firstChild;
-  let widgetId = makeWidgetId(extension.id);
-  // The 'ViewShown' event is the only way to correctly determine when the extensions'
-  // panelview has finished transitioning and is fully in view.
-  let shownPromise = BrowserTestUtils.waitForEvent(panelMultiView, "ViewShown",
-    e => (e.originalTarget.id || "").includes(widgetId));
   let browser = await openPanel(extension, browserWin);
+
+  let panel = gPhotonStructure ? browserWin.PanelUI.overflowPanel : browserWin.PanelUI.panel;
   let origPanelRect = panel.getBoundingClientRect();
 
   // Check that the panel is still positioned as expected.
@@ -188,10 +183,16 @@ async function testPopupSize(standardsMode, browserWin = window, arrowSide = "to
   };
 
   await awaitBrowserLoaded(browser);
-  await shownPromise;
+
+  let panelview = browser.closest("panelview");
+  // Need to wait first for the forced panel width and for the panelview's border to be gone,
+  // then for layout to happen again. Otherwise the removal of the border between views in the
+  // panelmultiview trips up our width checking causing it to be off-by-one.
+  await BrowserTestUtils.waitForCondition(() => (!panel.hasAttribute("width") && (!panelview || !panelview.style.borderInlineStart)));
+  await promiseAnimationFrame(browserWin);
   // Wait long enough to make sure the initial resize debouncing timer has
   // expired.
-  await delay(500);
+  await delay(100);
 
   let dims = await promiseContentDimensions(browser);
 
@@ -251,9 +252,7 @@ async function testPopupSize(standardsMode, browserWin = window, arrowSide = "to
 
   is(win.innerWidth, innerWidth, "Window width should not change");
   ok(win.innerHeight > innerHeight, `Window height should increase (${win.innerHeight} > ${innerHeight})`);
-  // Commented out check for the window height here which mysteriously breaks
-  // on infra but not locally. bug 1396843 covers re-enabling this.
-  // ok(win.innerHeight < screen.height, `Window height be less than the screen height (${win.innerHeight} < ${screen.height})`);
+  ok(win.innerHeight < screen.height, `Window height be less than the screen height (${win.innerHeight} < ${screen.height})`);
   ok(win.scrollMaxY > 0, `Document should be vertically scrollable (${win.scrollMaxY} > 0)`);
 
   checkPanelPosition();

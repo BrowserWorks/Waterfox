@@ -21,6 +21,5 @@ info: |
     4. Return the result of performing BindingInitialization for
        BindingPattern passing rval and undefined as arguments.
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 0, { eval = 0 } = {};

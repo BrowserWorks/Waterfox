@@ -14,7 +14,7 @@ const l10n = require("gcli/l10n");
 loader.lazyGetter(this, "prefBranch", function () {
   let prefService = Cc["@mozilla.org/preferences-service;1"]
                       .getService(Ci.nsIPrefService);
-  return prefService.getBranch(null).QueryInterface(Ci.nsIPrefBranch);
+  return prefService.getBranch(null).QueryInterface(Ci.nsIPrefBranch2);
 });
 
 loader.lazyImporter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");

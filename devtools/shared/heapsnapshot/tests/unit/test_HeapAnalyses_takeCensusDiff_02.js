@@ -5,6 +5,10 @@
 // Test that the HeapAnalyses{Client,Worker} can take diffs between censuses as
 // inverted trees.
 
+function run_test() {
+  run_next_test();
+}
+
 const BREAKDOWN = {
   by: "coarseType",
   objects: {

@@ -14,6 +14,7 @@
 
 #include "nsGkAtoms.h"
 
+#include "nsCSSParser.h"
 #include "nsHostObjectProtocolHandler.h"
 
 #include "mozilla/Preferences.h"
@@ -38,7 +39,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLSourceElement, nsGenericHTMLElement,
 NS_IMPL_ADDREF_INHERITED(HTMLSourceElement, nsGenericHTMLElement)
 NS_IMPL_RELEASE_INHERITED(HTMLSourceElement, nsGenericHTMLElement)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(HTMLSourceElement)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(HTMLSourceElement)
   NS_INTERFACE_MAP_ENTRY(nsIDOMHTMLSourceElement)
 NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 
@@ -88,21 +89,15 @@ HTMLSourceElement::UpdateMediaList(const nsAttrValue* aValue)
     return;
   }
 
+  nsCSSParser cssParser;
   mMediaList = MediaList::Create(OwnerDoc()->GetStyleBackendType(), mediaStr);
 }
 
 nsresult
-HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aMaybeScriptedPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
-  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::srcset) {
-    mSrcsetTriggeringPrincipal = nsContentUtils::GetAttrTriggeringPrincipal(
-        this, aValue ? aValue->GetStringValue() : EmptyString(),
-        aMaybeScriptedPrincipal);
-  }
   // If we are associated with a <picture> with a valid <img>, notify it of
   // responsive parameter changes
   Element *parent = nsINode::GetParentElement();
@@ -134,9 +129,6 @@ HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   } else if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::media) {
     UpdateMediaList(aValue);
   } else if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::src) {
-    mSrcTriggeringPrincipal = nsContentUtils::GetAttrTriggeringPrincipal(
-        this, aValue ? aValue->GetStringValue() : EmptyString(),
-        aMaybeScriptedPrincipal);
     mSrcMediaSource = nullptr;
     if (aValue) {
       nsString srcStr = aValue->GetStringValue();
@@ -149,9 +141,7 @@ HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName,
-                                            aValue, aOldValue,
-                                            aMaybeScriptedPrincipal,
-                                            aNotify);
+                                            aValue, aOldValue, aNotify);
 }
 
 nsresult

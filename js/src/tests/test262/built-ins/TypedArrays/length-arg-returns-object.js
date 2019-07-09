@@ -20,7 +20,6 @@ info: >
   ...
   7. Return obj
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -137,7 +137,7 @@ CreateSeekableStreams(uint32_t aSize, uint64_t aStart, uint64_t aLength,
 
   nsCOMPtr<nsIInputStream> stream;
   NS_NewCStringInputStream(getter_AddRefs(stream), aBuffer);
-  return new SlicedInputStream(stream.forget(), aStart, aLength);
+  return new SlicedInputStream(stream, aStart, aLength);
 }
 
 // Helper function for creating a non-seekable nsIInputStream + a
@@ -152,7 +152,7 @@ CreateNonSeekableStreams(uint32_t aSize, uint64_t aStart, uint64_t aLength,
   }
 
   RefPtr<NonSeekableStringStream> stream = new NonSeekableStringStream(aBuffer);
-  return new SlicedInputStream(stream.forget(), aStart, aLength);
+  return new SlicedInputStream(stream, aStart, aLength);
 }
 
 // Same start, same length.
@@ -332,14 +332,12 @@ TEST(TestSlicedInputStream, Length0) {
 // Seek test NS_SEEK_SET
 TEST(TestSlicedInputStream, Seek_SET) {
   nsCString buf;
-  buf.AssignLiteral("Hello world");
+  buf.Assign("Hello world");
 
-  RefPtr<SlicedInputStream> sis;
-  {
-    nsCOMPtr<nsIInputStream> stream;
-    NS_NewCStringInputStream(getter_AddRefs(stream), buf);
-    sis = new SlicedInputStream(stream.forget(), 1, buf.Length());
-  }
+  nsCOMPtr<nsIInputStream> stream;
+  NS_NewCStringInputStream(getter_AddRefs(stream), buf);
+
+  RefPtr<SlicedInputStream> sis = new SlicedInputStream(stream, 1, buf.Length());
 
   ASSERT_EQ(NS_OK, sis->Seek(nsISeekableStream::NS_SEEK_SET, 1));
 
@@ -357,15 +355,12 @@ TEST(TestSlicedInputStream, Seek_SET) {
 // Seek test NS_SEEK_CUR
 TEST(TestSlicedInputStream, Seek_CUR) {
   nsCString buf;
-  buf.AssignLiteral("Hello world");
+  buf.Assign("Hello world");
 
-  RefPtr<SlicedInputStream> sis;
-  {
-    nsCOMPtr<nsIInputStream> stream;
-    NS_NewCStringInputStream(getter_AddRefs(stream), buf);
+  nsCOMPtr<nsIInputStream> stream;
+  NS_NewCStringInputStream(getter_AddRefs(stream), buf);
 
-    sis = new SlicedInputStream(stream.forget(), 1, buf.Length());
-  }
+  RefPtr<SlicedInputStream> sis = new SlicedInputStream(stream, 1, buf.Length());
 
   ASSERT_EQ(NS_OK, sis->Seek(nsISeekableStream::NS_SEEK_CUR, 1));
 
@@ -389,19 +384,15 @@ TEST(TestSlicedInputStream, Seek_CUR) {
 // Seek test NS_SEEK_END - length > real one
 TEST(TestSlicedInputStream, Seek_END_Bigger) {
   nsCString buf;
-  buf.AssignLiteral("Hello world");
+  buf.Assign("Hello world");
 
-  RefPtr<SlicedInputStream> sis;
-  {
-    nsCOMPtr<nsIInputStream> stream;
-    NS_NewCStringInputStream(getter_AddRefs(stream), buf);
+  nsCOMPtr<nsIInputStream> stream;
+  NS_NewCStringInputStream(getter_AddRefs(stream), buf);
 
-    sis = new SlicedInputStream(stream.forget(), 2, buf.Length());
-  }
+  RefPtr<SlicedInputStream> sis = new SlicedInputStream(stream, 2, buf.Length());
 
   ASSERT_EQ(NS_OK, sis->Seek(nsISeekableStream::NS_SEEK_END, -5));
 
-  nsCOMPtr<nsIInputStream> stream;
   NS_NewCStringInputStream(getter_AddRefs(stream), buf);
   nsCOMPtr<nsISeekableStream> seekStream = do_QueryInterface(stream);
   ASSERT_EQ(NS_OK, seekStream->Seek(nsISeekableStream::NS_SEEK_END, -5));
@@ -427,15 +418,12 @@ TEST(TestSlicedInputStream, Seek_END_Bigger) {
 // Seek test NS_SEEK_END - length < real one
 TEST(TestSlicedInputStream, Seek_END_Lower) {
   nsCString buf;
-  buf.AssignLiteral("Hello world");
+  buf.Assign("Hello world");
 
-  RefPtr<SlicedInputStream> sis;
-  {
-    nsCOMPtr<nsIInputStream> stream;
-    NS_NewCStringInputStream(getter_AddRefs(stream), buf);
+  nsCOMPtr<nsIInputStream> stream;
+  NS_NewCStringInputStream(getter_AddRefs(stream), buf);
 
-    sis = new SlicedInputStream(stream.forget(), 2, 6);
-  }
+  RefPtr<SlicedInputStream> sis = new SlicedInputStream(stream, 2, 6);
 
   ASSERT_EQ(NS_OK, sis->Seek(nsISeekableStream::NS_SEEK_END, -3));
 
@@ -480,14 +468,10 @@ TEST(TestSlicedInputStream, AsyncInputStream) {
 
   // We have to wrap the reader because it implements only a partial
   // nsISeekableStream interface. When ::Seek() is called, it does a MOZ_CRASH.
-  nsCOMPtr<nsIInputStream> sis;
-  {
-    RefPtr<NonSeekableStringStream> wrapper =
-      new NonSeekableStringStream(reader);
+  RefPtr<NonSeekableStringStream> wrapper =
+    new NonSeekableStringStream(reader);
 
-    sis = new SlicedInputStream(wrapper.forget(), 500, 500);
-  }
-
+  nsCOMPtr<nsIInputStream> sis = new SlicedInputStream(wrapper, 500, 500);
   nsCOMPtr<nsIAsyncInputStream> async = do_QueryInterface(sis);
   ASSERT_TRUE(!!async);
 

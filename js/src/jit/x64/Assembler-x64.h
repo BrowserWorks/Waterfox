@@ -92,6 +92,7 @@ static constexpr FloatRegister ScratchDoubleReg = FloatRegister(X86Encoding::xmm
 static constexpr FloatRegister ScratchSimd128Reg = xmm15;
 
 // Avoid rbp, which is the FramePointer, which is unavailable in some modes.
+static constexpr Register ArgumentsRectifierReg = r8;
 static constexpr Register CallTempReg0 = rax;
 static constexpr Register CallTempReg1 = rdi;
 static constexpr Register CallTempReg2 = rbx;
@@ -189,21 +190,15 @@ class ABIArgGenerator
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
 };
 
-// These registers may be volatile or nonvolatile.
 // Avoid r11, which is the MacroAssembler's ScratchReg.
 static constexpr Register ABINonArgReg0 = rax;
 static constexpr Register ABINonArgReg1 = rbx;
 static constexpr Register ABINonArgReg2 = r10;
 
-// These registers may be volatile or nonvolatile.
 // Note: these three registers are all guaranteed to be different
 static constexpr Register ABINonArgReturnReg0 = r10;
 static constexpr Register ABINonArgReturnReg1 = r12;
 static constexpr Register ABINonVolatileReg = r13;
-
-// This register is guaranteed to be clobberable during the prologue of an ABI
-// call which must preserve both ABI argument and non-volatile registers.
-static constexpr Register NativeABIPrologueClobberable = rax;
 
 // TLS pointer argument register for WebAssembly functions. This must not alias
 // any other register used for passing function arguments or return values.
@@ -483,9 +478,6 @@ class Assembler : public AssemblerX86Shared
 
     void movsbq(const Operand& src, Register dest) {
         switch (src.kind()) {
-          case Operand::REG:
-            masm.movsbq_rr(src.reg(), dest.encoding());
-            break;
           case Operand::MEM_REG_DISP:
             masm.movsbq_mr(src.disp(), src.base(), dest.encoding());
             break;
@@ -505,9 +497,6 @@ class Assembler : public AssemblerX86Shared
 
     void movswq(const Operand& src, Register dest) {
         switch (src.kind()) {
-          case Operand::REG:
-            masm.movswq_rr(src.reg(), dest.encoding());
-            break;
           case Operand::MEM_REG_DISP:
             masm.movswq_mr(src.disp(), src.base(), dest.encoding());
             break;

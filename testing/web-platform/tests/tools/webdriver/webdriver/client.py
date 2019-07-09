@@ -1,12 +1,8 @@
-import json
 import urlparse
 
 import error
 import transport
 
-from mozlog import get_default_logger
-
-logger = get_default_logger()
 
 element_key = "element-6066-11e4-a52e-4f735466cecf"
 
@@ -243,50 +239,34 @@ class Window(object):
 
     @property
     @command
-    def rect(self):
-        return self.session.send_session_command("GET", "window/rect")
-
-    @property
-    @command
     def size(self):
-        """Gets the window size as a tuple of `(width, height)`."""
-        rect = self.rect
-        return (rect["width"], rect["height"])
+        resp = self.session.send_session_command("GET", "window/rect")
+        return (resp["width"], resp["height"])
 
     @size.setter
     @command
-    def size(self, new_size):
-        """Set window size by passing a tuple of `(width, height)`."""
-        width, height = new_size
+    def size(self, data):
+        width, height = data
         body = {"width": width, "height": height}
         self.session.send_session_command("POST", "window/rect", body)
 
     @property
     @command
     def position(self):
-        """Gets the window position as a tuple of `(x, y)`."""
-        rect = self.rect
-        return (rect["x"], rect["y"])
+        resp = self.session.send_session_command("GET", "window/rect")
+        return (resp["x"], resp["y"])
 
     @position.setter
     @command
-    def position(self, new_position):
-        """Set window position by passing a tuple of `(x, y)`."""
-        x, y = new_position
+    def position(self, data):
+        data = x, y
         body = {"x": x, "y": y}
         self.session.send_session_command("POST", "window/rect", body)
 
+    @property
     @command
     def maximize(self):
         return self.session.send_session_command("POST", "window/maximize")
-
-    @command
-    def minimize(self):
-        return self.session.send_session_command("POST", "window/minimize")
-
-    @command
-    def fullscreen(self):
-        return self.session.send_session_command("POST", "window/fullscreen")
 
 
 class Find(object):
@@ -396,7 +376,6 @@ class Session(object):
 
         value = self.send_command("POST", "session", body=body)
         self.session_id = value["sessionId"]
-        self.capabilities = value["capabilities"]
 
         if self.extension_cls:
             self.extension = self.extension_cls(self)
@@ -411,6 +390,10 @@ class Session(object):
         self.send_command("DELETE", url)
 
         self.session_id = None
+        self.timeouts = None
+        self.window = None
+        self.find = None
+        self.extension = None
 
     def send_command(self, method, url, body=None):
         """
@@ -428,12 +411,7 @@ class Session(object):
             an error.
         """
         response = self.transport.send(method, url, body)
-
-        if "value" in response.body:
-            value = response.body["value"]
-        else:
-            raise error.UnknownErrorException("No 'value' key in response body:\n%s" %
-                                              json.dumps(response.body))
+        value = response.body["value"]
 
         if response.status != 200:
             cls = error.get(value.get("error"))
@@ -622,7 +600,7 @@ class Element(object):
                 "value": selector}
 
         elem = self.send_element_command("POST", "element", body)
-        return self.session._element(elem)
+        return self.session.element(elem)
 
     @command
     def click(self):

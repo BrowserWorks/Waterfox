@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/ErrorResult.h"
 
 #include "mozilla/dom/SVGUseElement.h"
 #include "mozilla/dom/SVGUseElementBinding.h"
@@ -17,8 +16,7 @@
 #include "nsContentUtils.h"
 #include "nsIURI.h"
 #include "mozilla/URLExtraData.h"
-#include "SVGObserverUtils.h"
-#include "nsSVGUseFrame.h"
+#include "nsSVGEffects.h"
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Use)
 
@@ -57,24 +55,28 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(SVGUseElement,
                                                 SVGUseElementBase)
   nsAutoScriptBlocker scriptBlocker;
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOriginal)
+  tmp->DestroyAnonymousContent();
   tmp->UnlinkSource();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(SVGUseElement,
                                                   SVGUseElementBase)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOriginal)
-  tmp->mReferencedElementTracker.Traverse(&cb);
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mClone)
+  tmp->mSource.Traverse(&cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(SVGUseElement,
-                                             SVGUseElementBase,
-                                             nsIMutationObserver)
+NS_IMPL_ADDREF_INHERITED(SVGUseElement,SVGUseElementBase)
+NS_IMPL_RELEASE_INHERITED(SVGUseElement,SVGUseElementBase)
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(SVGUseElement)
+  NS_INTERFACE_TABLE_INHERITED(SVGUseElement, nsIMutationObserver)
+NS_INTERFACE_TABLE_TAIL_INHERITING(SVGUseElementBase)
 
 //----------------------------------------------------------------------
 // Implementation
 
 SVGUseElement::SVGUseElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-  : SVGUseElementBase(aNodeInfo)
-  , mReferencedElementTracker(this)
+  : SVGUseElementBase(aNodeInfo), mSource(this)
 {
 }
 
@@ -159,7 +161,7 @@ void
 SVGUseElement::AttributeChanged(nsIDocument* aDocument,
                                 Element* aElement,
                                 int32_t aNameSpaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 int32_t aModType,
                                 const nsAttrValue* aOldValue)
 {
@@ -171,7 +173,8 @@ SVGUseElement::AttributeChanged(nsIDocument* aDocument,
 void
 SVGUseElement::ContentAppended(nsIDocument *aDocument,
                                nsIContent *aContainer,
-                               nsIContent *aFirstNewContent)
+                               nsIContent *aFirstNewContent,
+                               int32_t aNewIndexInContainer)
 {
   if (nsContentUtils::IsInSameAnonymousTree(this, aContainer)) {
     TriggerReclone();
@@ -181,7 +184,8 @@ SVGUseElement::ContentAppended(nsIDocument *aDocument,
 void
 SVGUseElement::ContentInserted(nsIDocument *aDocument,
                                nsIContent *aContainer,
-                               nsIContent *aChild)
+                               nsIContent *aChild,
+                               int32_t aIndexInContainer)
 {
   if (nsContentUtils::IsInSameAnonymousTree(this, aChild)) {
     TriggerReclone();
@@ -192,6 +196,7 @@ void
 SVGUseElement::ContentRemoved(nsIDocument *aDocument,
                               nsIContent *aContainer,
                               nsIContent *aChild,
+                              int32_t aIndexInContainer,
                               nsIContent *aPreviousSibling)
 {
   if (nsContentUtils::IsInSameAnonymousTree(this, aChild)) {
@@ -208,15 +213,17 @@ SVGUseElement::NodeWillBeDestroyed(const nsINode *aNode)
 
 //----------------------------------------------------------------------
 
-already_AddRefed<nsIContent>
+nsIContent*
 SVGUseElement::CreateAnonymousContent()
 {
-  if (mReferencedElementTracker.get()) {
-    mReferencedElementTracker.get()->RemoveMutationObserver(this);
+  mClone = nullptr;
+
+  if (mSource.get()) {
+    mSource.get()->RemoveMutationObserver(this);
   }
 
   LookupHref();
-  nsIContent* targetContent = mReferencedElementTracker.get();
+  nsIContent* targetContent = mSource.get();
   if (!targetContent)
     return nullptr;
 
@@ -255,12 +262,13 @@ SVGUseElement::CreateAnonymousContent()
     }
   }
 
+  nsCOMPtr<nsINode> newnode;
   nsNodeInfoManager* nodeInfoManager =
     targetContent->OwnerDoc() == OwnerDoc() ?
       nullptr : OwnerDoc()->NodeInfoManager();
-  IgnoredErrorResult rv;
-  nsCOMPtr<nsINode> newnode =
-    nsNodeUtils::Clone(targetContent, true, nodeInfoManager, nullptr, rv);
+  nsNodeUtils::Clone(targetContent, true, nodeInfoManager, nullptr,
+                     getter_AddRefs(newnode));
+
   nsCOMPtr<nsIContent> newcontent = do_QueryInterface(newnode);
 
   if (!newcontent)
@@ -285,61 +293,61 @@ SVGUseElement::CreateAnonymousContent()
                                      do_AddRef(NodePrincipal()));
 
   targetContent->AddMutationObserver(this);
+  mClone = newcontent;
 
 #ifdef DEBUG
   // Our anonymous clone can get restyled by various things
   // (e.g. SMIL).  Reconstructing its frame is OK, though, because
   // it's going to be our _only_ child in the frame tree, so can't get
   // mis-ordered with anything.
-  newcontent->SetProperty(nsGkAtoms::restylableAnonymousNode,
-                          reinterpret_cast<void*>(true));
+  mClone->SetProperty(nsGkAtoms::restylableAnonymousNode,
+                      reinterpret_cast<void*>(true));
 #endif // DEBUG
 
-  return newcontent.forget();
+  return mClone;
 }
 
 nsIURI*
 SVGUseElement::GetSourceDocURI()
 {
-  nsIContent* targetContent = mReferencedElementTracker.get();
+  nsIContent* targetContent = mSource.get();
   if (!targetContent)
     return nullptr;
 
   return targetContent->OwnerDoc()->GetDocumentURI();
 }
 
+void
+SVGUseElement::DestroyAnonymousContent()
+{
+  nsContentUtils::DestroyAnonymousContent(&mClone);
+}
+
 bool
 SVGUseElement::OurWidthAndHeightAreUsed() const
 {
-  auto* frame = GetFrame();
-  if (!frame || !frame->GetContentClone()) {
-    return false;
-  }
-  return frame->GetContentClone()->IsAnyOfSVGElements(nsGkAtoms::svg, nsGkAtoms::symbol);
+  return mClone && mClone->IsAnyOfSVGElements(nsGkAtoms::svg, nsGkAtoms::symbol);
 }
 
 //----------------------------------------------------------------------
 // implementation helpers
 
 void
-SVGUseElement::SyncWidthOrHeight(nsAtom* aName)
+SVGUseElement::SyncWidthOrHeight(nsIAtom* aName)
 {
   NS_ASSERTION(aName == nsGkAtoms::width || aName == nsGkAtoms::height,
                "The clue is in the function name");
   NS_ASSERTION(OurWidthAndHeightAreUsed(), "Don't call this");
 
-  auto* frame = GetFrame();
-  nsIContent* clone = frame ? frame->GetContentClone() : nullptr;
-
   if (OurWidthAndHeightAreUsed()) {
-    auto* target = static_cast<nsSVGElement*>(clone);
+    nsSVGElement *target = static_cast<nsSVGElement*>(mClone.get());
     uint32_t index = *sLengthInfo[ATTR_WIDTH].mName == aName ? ATTR_WIDTH : ATTR_HEIGHT;
 
     if (mLengthAttributes[index].IsExplicitlySet()) {
       target->SetLength(aName, mLengthAttributes[index]);
       return;
     }
-    if (clone->IsSVGElement(nsGkAtoms::svg)) {
+    if (mClone->IsSVGElement(nsGkAtoms::svg)) {
       // Our width/height attribute is now no longer explicitly set, so we
       // need to revert the clone's width/height to the width/height of the
       // content that's being cloned.
@@ -373,13 +381,13 @@ SVGUseElement::LookupHref()
   nsCOMPtr<nsIURI> originURI =
     mOriginal ? mOriginal->GetBaseURI() : GetBaseURI();
   nsCOMPtr<nsIURI> baseURI = nsContentUtils::IsLocalRefURL(href)
-    ? SVGObserverUtils::GetBaseURLForLocalRef(this, originURI)
+    ? nsSVGEffects::GetBaseURLForLocalRef(this, originURI)
     : originURI;
 
   nsCOMPtr<nsIURI> targetURI;
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
                                             GetComposedDoc(), baseURI);
-  mReferencedElementTracker.Reset(this, targetURI);
+  mSource.Reset(this, targetURI);
 }
 
 void
@@ -397,10 +405,10 @@ SVGUseElement::TriggerReclone()
 void
 SVGUseElement::UnlinkSource()
 {
-  if (mReferencedElementTracker.get()) {
-    mReferencedElementTracker.get()->RemoveMutationObserver(this);
+  if (mSource.get()) {
+    mSource.get()->RemoveMutationObserver(this);
   }
-  mReferencedElementTracker.Unlink();
+  mSource.Unlink();
 }
 
 //----------------------------------------------------------------------
@@ -466,19 +474,11 @@ SVGUseElement::GetStringInfo()
                               ArrayLength(sStringInfo));
 }
 
-nsSVGUseFrame*
-SVGUseElement::GetFrame() const
-{
-  nsIFrame* frame = GetPrimaryFrame();
-  MOZ_ASSERT_IF(frame, frame->IsSVGUseFrame());
-  return static_cast<nsSVGUseFrame*>(frame);
-}
-
 //----------------------------------------------------------------------
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGUseElement::IsAttributeMapped(const nsAtom* name) const
+SVGUseElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sFEFloodMap,

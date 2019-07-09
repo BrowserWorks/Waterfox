@@ -6,7 +6,6 @@
 #include "GMPCrashHelper.h"
 #include "runnable_utils.h"
 #include "nsThreadUtils.h"
-#include "SystemGroup.h"
 
 namespace mozilla {
 

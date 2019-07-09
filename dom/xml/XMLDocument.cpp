@@ -21,7 +21,7 @@
 #include "nsIDOMWindow.h"
 #include "nsIDOMDocumentType.h"
 #include "nsCOMPtr.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIURI.h"
 #include "nsIServiceManager.h"
@@ -69,8 +69,7 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
                   nsIPrincipal* aPrincipal,
                   bool aLoadedAsData,
                   nsIGlobalObject* aEventObject,
-                  DocumentFlavor aFlavor,
-                  StyleBackendType aStyleBackend)
+                  DocumentFlavor aFlavor)
 {
   // Note: can't require that aDocumentURI/aBaseURI/aPrincipal be non-null,
   // since at least one caller (XMLHttpRequest) doesn't have decent args to
@@ -129,12 +128,6 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     return rv;
   }
 
-  // If we were passed an explicit style backend for this document set it
-  // immediately after creation, before any content is inserted.
-  if (aStyleBackend != StyleBackendType::None) {
-    d->SetStyleBackendType(aStyleBackend);
-  }
-
   if (isHTML) {
     nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(d);
     NS_ASSERTION(htmlDoc, "HTML Document doesn't implement nsIHTMLDocument?");
@@ -164,10 +157,6 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     nsCOMPtr<nsINode> doctypeAsNode = do_QueryInterface(aDoctype);
     ErrorResult result;
     d->AppendChild(*doctypeAsNode, result);
-    // Need to WouldReportJSException() if our callee can throw a JS
-    // exception (which it can) and we're neither propagating the
-    // error out nor unconditionally suppressing it.
-    result.WouldReportJSException();
     if (NS_WARN_IF(result.Failed())) {
       return result.StealNSResult();
     }
@@ -185,10 +174,6 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     }
 
     d->AppendChild(*root, result);
-    // Need to WouldReportJSException() if our callee can throw a JS
-    // exception (which it can) and we're neither propagating the
-    // error out nor unconditionally suppressing it.
-    result.WouldReportJSException();
     if (NS_WARN_IF(result.Failed())) {
       return result.StealNSResult();
     }
@@ -224,15 +209,13 @@ nsresult
 NS_NewXBLDocument(nsIDOMDocument** aInstancePtrResult,
                   nsIURI* aDocumentURI,
                   nsIURI* aBaseURI,
-                  nsIPrincipal* aPrincipal,
-                  StyleBackendType aStyleBackend)
+                  nsIPrincipal* aPrincipal)
 {
   nsresult rv = NS_NewDOMDocument(aInstancePtrResult,
                                   NS_LITERAL_STRING("http://www.mozilla.org/xbl"),
                                   NS_LITERAL_STRING("bindings"), nullptr,
                                   aDocumentURI, aBaseURI, aPrincipal, false,
-                                  nullptr, DocumentFlavorLegacyGuess,
-                                  aStyleBackend);
+                                  nullptr, DocumentFlavorLegacyGuess);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIDocument> idoc = do_QueryInterface(*aInstancePtrResult);
@@ -356,6 +339,9 @@ XMLDocument::Load(const nsAString& aUrl, CallerType aCallerType,
 
     bool isChrome = false;
     if (NS_FAILED(uri->SchemeIs("chrome", &isChrome)) || !isChrome) {
+      nsAutoCString spec;
+      if (mDocumentURI)
+        mDocumentURI->GetSpec(spec);
 
       nsAutoString error;
       error.AssignLiteral("Cross site loading using document.load is no "
@@ -367,15 +353,14 @@ XMLDocument::Load(const nsAString& aUrl, CallerType aCallerType,
         return false;
       }
 
-      rv = errorObject->InitWithSourceURI(error,
-                                          mDocumentURI,
-                                          EmptyString(),
-                                          0, 0,
-                                          nsIScriptError::warningFlag,
-                                          "DOM",
-                                          callingDoc ?
-                                          callingDoc->InnerWindowID() :
-                                          this->InnerWindowID());
+      rv = errorObject->InitWithWindowID(error,
+                                         NS_ConvertUTF8toUTF16(spec),
+                                         EmptyString(),
+                                         0, 0, nsIScriptError::warningFlag,
+                                         "DOM",
+                                         callingDoc ?
+                                           callingDoc->InnerWindowID() :
+                                           this->InnerWindowID());
 
       if (NS_FAILED(rv)) {
         aRv.Throw(rv);
@@ -609,7 +594,7 @@ XMLDocument::EndLoad()
 }
 
 /* virtual */ void
-XMLDocument::DocAddSizeOfExcludingThis(nsWindowSizes& aWindowSizes) const
+XMLDocument::DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const
 {
   nsDocument::DocAddSizeOfExcludingThis(aWindowSizes);
 }

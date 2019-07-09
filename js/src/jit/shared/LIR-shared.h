@@ -3364,34 +3364,19 @@ class LShiftI64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, 0>
 };
 
 // Sign extension
-class LSignExtendInt32 : public LInstructionHelper<1, 1, 0>
+class LSignExtend : public LInstructionHelper<1, 1, 0>
 {
-    MSignExtendInt32::Mode mode_;
+    MSignExtend::Mode mode_;
 
   public:
-    LIR_HEADER(SignExtendInt32);
-    explicit LSignExtendInt32(const LAllocation& num, MSignExtendInt32::Mode mode)
+    LIR_HEADER(SignExtend);
+    explicit LSignExtend(const LAllocation& num, MSignExtend::Mode mode)
       : mode_(mode)
     {
         setOperand(0, num);
     }
 
-    MSignExtendInt32::Mode mode() { return mode_; }
-};
-
-class LSignExtendInt64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES, 0>
-{
-  public:
-    LIR_HEADER(SignExtendInt64)
-    explicit LSignExtendInt64(const LInt64Allocation& input) {
-        setInt64Operand(0, input);
-    }
-
-    const MSignExtendInt64* mir() const {
-        return mir_->toSignExtendInt64();
-    }
-
-    MSignExtendInt64::Mode mode() const { return mir()->mode(); }
+    MSignExtend::Mode mode() { return mode_; }
 };
 
 class LUrshD : public LBinaryMath<1>
@@ -4123,26 +4108,6 @@ class LFromCodePoint : public LInstructionHelper<1, 1, 2>
 
     const LDefinition* temp2() {
         return this->getTemp(1);
-    }
-};
-
-// Calls the ToLowerCase or ToUpperCase case conversion function.
-class LStringConvertCase : public LCallInstructionHelper<1, 1, 0>
-{
-  public:
-    LIR_HEADER(StringConvertCase)
-
-    explicit LStringConvertCase(const LAllocation& string)
-    {
-        setOperand(0, string);
-    }
-
-    const MStringConvertCase* mir() const {
-        return mir_->toStringConvertCase();
-    }
-
-    const LAllocation* string() {
-        return this->getOperand(0);
     }
 };
 
@@ -5271,6 +5236,72 @@ class LSetInitializedLength : public LInstructionHelper<0, 2, 0>
     }
 };
 
+class LUnboxedArrayLength : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(UnboxedArrayLength)
+
+    explicit LUnboxedArrayLength(const LAllocation& object) {
+        setOperand(0, object);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+};
+
+class LUnboxedArrayInitializedLength : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(UnboxedArrayInitializedLength)
+
+    explicit LUnboxedArrayInitializedLength(const LAllocation& object) {
+        setOperand(0, object);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+};
+
+class LIncrementUnboxedArrayInitializedLength : public LInstructionHelper<0, 1, 0>
+{
+  public:
+    LIR_HEADER(IncrementUnboxedArrayInitializedLength)
+
+    explicit LIncrementUnboxedArrayInitializedLength(const LAllocation& object) {
+        setOperand(0, object);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+};
+
+class LSetUnboxedArrayInitializedLength : public LInstructionHelper<0, 2, 1>
+{
+  public:
+    LIR_HEADER(SetUnboxedArrayInitializedLength)
+
+    explicit LSetUnboxedArrayInitializedLength(const LAllocation& object,
+                                               const LAllocation& length,
+                                               const LDefinition& temp) {
+        setOperand(0, object);
+        setOperand(1, length);
+        setTemp(0, temp);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+    const LAllocation* length() {
+        return getOperand(1);
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
+};
+
 // Load the length from an elements header.
 class LArrayLength : public LInstructionHelper<1, 1, 0>
 {
@@ -5816,17 +5847,19 @@ class LStoreElementT : public LInstructionHelper<0, 3, 0>
 };
 
 // Like LStoreElementV, but supports indexes >= initialized length.
-class LStoreElementHoleV : public LInstructionHelper<0, 3 + BOX_PIECES, 0>
+class LStoreElementHoleV : public LInstructionHelper<0, 3 + BOX_PIECES, 1>
 {
   public:
     LIR_HEADER(StoreElementHoleV)
 
     LStoreElementHoleV(const LAllocation& object, const LAllocation& elements,
-                       const LAllocation& index, const LBoxAllocation& value) {
+                       const LAllocation& index, const LBoxAllocation& value,
+                       const LDefinition& temp) {
         setOperand(0, object);
         setOperand(1, elements);
         setOperand(2, index);
         setBoxOperand(Value, value);
+        setTemp(0, temp);
     }
 
     static const size_t Value = 3;
@@ -5846,17 +5879,19 @@ class LStoreElementHoleV : public LInstructionHelper<0, 3 + BOX_PIECES, 0>
 };
 
 // Like LStoreElementT, but supports indexes >= initialized length.
-class LStoreElementHoleT : public LInstructionHelper<0, 4, 0>
+class LStoreElementHoleT : public LInstructionHelper<0, 4, 1>
 {
   public:
     LIR_HEADER(StoreElementHoleT)
 
     LStoreElementHoleT(const LAllocation& object, const LAllocation& elements,
-                       const LAllocation& index, const LAllocation& value) {
+                       const LAllocation& index, const LAllocation& value,
+                       const LDefinition& temp) {
         setOperand(0, object);
         setOperand(1, elements);
         setOperand(2, index);
         setOperand(3, value);
+        setTemp(0, temp);
     }
 
     const MStoreElementHole* mir() const {
@@ -5877,17 +5912,19 @@ class LStoreElementHoleT : public LInstructionHelper<0, 4, 0>
 };
 
 // Like LStoreElementV, but can just ignore assignment (for eg. frozen objects)
-class LFallibleStoreElementV : public LInstructionHelper<0, 3 + BOX_PIECES, 0>
+class LFallibleStoreElementV : public LInstructionHelper<0, 3 + BOX_PIECES, 1>
 {
   public:
     LIR_HEADER(FallibleStoreElementV)
 
     LFallibleStoreElementV(const LAllocation& object, const LAllocation& elements,
-                           const LAllocation& index, const LBoxAllocation& value) {
+                           const LAllocation& index, const LBoxAllocation& value,
+                           const LDefinition& temp) {
         setOperand(0, object);
         setOperand(1, elements);
         setOperand(2, index);
         setBoxOperand(Value, value);
+        setTemp(0, temp);
     }
 
     static const size_t Value = 3;
@@ -5907,17 +5944,19 @@ class LFallibleStoreElementV : public LInstructionHelper<0, 3 + BOX_PIECES, 0>
 };
 
 // Like LStoreElementT, but can just ignore assignment (for eg. frozen objects)
-class LFallibleStoreElementT : public LInstructionHelper<0, 4, 0>
+class LFallibleStoreElementT : public LInstructionHelper<0, 4, 1>
 {
   public:
     LIR_HEADER(FallibleStoreElementT)
 
     LFallibleStoreElementT(const LAllocation& object, const LAllocation& elements,
-                           const LAllocation& index, const LAllocation& value) {
+                           const LAllocation& index, const LAllocation& value,
+                           const LDefinition& temp) {
         setOperand(0, object);
         setOperand(1, elements);
         setOperand(2, index);
         setOperand(3, value);
+        setTemp(0, temp);
     }
 
     const MFallibleStoreElement* mir() const {
@@ -6120,33 +6159,24 @@ class LArraySlice : public LCallInstructionHelper<1, 3, 2>
     }
 };
 
-class LArrayJoin : public LCallInstructionHelper<1, 2, 1>
+class LArrayJoin : public LCallInstructionHelper<1, 2, 0>
 {
   public:
     LIR_HEADER(ArrayJoin)
 
-    LArrayJoin(const LAllocation& array, const LAllocation& sep,
-               const LDefinition& temp)
-    {
+    LArrayJoin(const LAllocation& array, const LAllocation& sep) {
         setOperand(0, array);
         setOperand(1, sep);
-        setTemp(0, temp);
     }
 
     const MArrayJoin* mir() const {
         return mir_->toArrayJoin();
-    }
-    const LDefinition* output() {
-        return getDef(0);
     }
     const LAllocation* array() {
         return getOperand(0);
     }
     const LAllocation* separator() {
         return getOperand(1);
-    }
-    const LDefinition* temp() {
-        return getTemp(0);
     }
 };
 
@@ -6718,28 +6748,6 @@ class LCallGetIntrinsicValue : public LCallInstructionHelper<BOX_PIECES, 0, 0>
     }
 };
 
-class LGetPropSuperCacheV : public LInstructionHelper<BOX_PIECES, 1 + 2 * BOX_PIECES, 0>
-{
-  public:
-    LIR_HEADER(GetPropSuperCacheV)
-
-    static const size_t Receiver = 1;
-    static const size_t Id = Receiver + BOX_PIECES;
-
-    LGetPropSuperCacheV(const LAllocation& obj, const LBoxAllocation& receiver,
-                        const LBoxAllocation& id) {
-        setOperand(0, obj);
-        setBoxOperand(Receiver, receiver);
-        setBoxOperand(Id, id);
-    }
-    const LAllocation* obj() {
-        return getOperand(0);
-    }
-    const MGetPropSuperCache* mir() const {
-        return mir_->toGetPropSuperCache();
-    }
-};
-
 // Patchable jump to stubs generated for a GetProperty cache, which loads a
 // boxed value.
 class LGetPropertyCacheV : public LInstructionHelper<BOX_PIECES, 2 * BOX_PIECES, 1>
@@ -7161,34 +7169,6 @@ class LFunctionEnvironment : public LInstructionHelper<1, 1, 0>
         setOperand(0, function);
     }
     const LAllocation* function() {
-        return getOperand(0);
-    }
-};
-
-class LHomeObject : public LInstructionHelper<1, 1, 0>
-{
-  public:
-    LIR_HEADER(HomeObject)
-
-    explicit LHomeObject(const LAllocation& function) {
-        setOperand(0, function);
-    }
-    const LAllocation* function() {
-        return getOperand(0);
-    }
-};
-
-class LHomeObjectSuperBase : public LInstructionHelper<1, 1, 0>
-{
-  public:
-    LIR_HEADER(HomeObjectSuperBase)
-
-    explicit LHomeObjectSuperBase(const LAllocation& homeObject)
-    {
-        setOperand(0, homeObject);
-    }
-
-    const LAllocation* homeObject() {
         return getOperand(0);
     }
 };
@@ -7999,34 +7979,16 @@ class LCallInstanceOf : public LCallInstructionHelper<1, BOX_PIECES+1, 0>
     static const size_t RHS = BOX_PIECES;
 };
 
-class LIsCallableO : public LInstructionHelper<1, 1, 0>
+class LIsCallable : public LInstructionHelper<1, 1, 0>
 {
   public:
-    LIR_HEADER(IsCallableO);
-    explicit LIsCallableO(const LAllocation& object) {
+    LIR_HEADER(IsCallable);
+    explicit LIsCallable(const LAllocation& object) {
         setOperand(0, object);
     }
 
     const LAllocation* object() {
         return getOperand(0);
-    }
-    MIsCallable* mir() const {
-        return mir_->toIsCallable();
-    }
-};
-
-class LIsCallableV : public LInstructionHelper<1, BOX_PIECES, 1>
-{
-  public:
-    LIR_HEADER(IsCallableV);
-    static const size_t Value = 0;
-
-    LIsCallableV(const LBoxAllocation& value, const LDefinition& temp) {
-        setBoxOperand(0, value);
-        setTemp(0, temp);
-    }
-    const LDefinition* temp() {
-        return getTemp(0);
     }
     MIsCallable* mir() const {
         return mir_->toIsCallable();

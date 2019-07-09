@@ -22,7 +22,7 @@
 
 struct ElementDependentRuleProcessorData;
 class nsIXPConnectWrappedJS;
-class nsAtom;
+class nsIAtom;
 class nsIDOMNodeList;
 class nsIDocument;
 class nsIURI;
@@ -79,7 +79,7 @@ public:
                                    nsIDocument* aOldDocument,
                                    DestructorHandling aDestructorHandling);
 
-  nsAtom* ResolveTag(nsIContent* aContent, int32_t* aNameSpaceID);
+  nsIAtom* ResolveTag(nsIContent* aContent, int32_t* aNameSpaceID);
 
   /**
    * Return the nodelist of "anonymous" kids for this node.  This might
@@ -130,16 +130,13 @@ public:
 
   void WalkAllRules(nsIStyleRuleProcessor::EnumFunc aFunc,
                     ElementDependentRuleProcessorData* aData);
-
-  // Do any processing that needs to happen as a result of a change in the
-  // characteristics of the medium, and return whether this rule processor's
-  // rules or the servo style set have changed (e.g., because of media
-  // queries).
-  bool MediumFeaturesChanged(nsPresContext* aPresContext);
-
-  // Update the content bindings in mBoundContentSet due to medium features
-  // changed.
-  void UpdateBoundContentBindingsForServo(nsPresContext* aPresContext);
+  /**
+   * Do any processing that needs to happen as a result of a change in
+   * the characteristics of the medium, and return whether this rule
+   * processor's rules have changed (e.g., because of media queries).
+   */
+  nsresult MediumFeaturesChanged(nsPresContext* aPresContext,
+                                 bool* aRulesChanged);
 
   void AppendAllSheets(nsTArray<mozilla::StyleSheet*>& aArray);
 
@@ -181,9 +178,10 @@ protected:
 
   // Called by ContentAppended and ContentInserted to handle a single child
   // insertion.  aChild must not be null.  aContainer may be null.
-  // aAppend is true if this child is being appended, not inserted.
+  // aIndexInContainer is the index of the child in the parent.  aAppend is
+  // true if this child is being appended, not inserted.
   void HandleChildInsertion(nsIContent* aContainer, nsIContent* aChild,
-                            bool aAppend);
+                            uint32_t aIndexInContainer, bool aAppend);
 
   // Same as ProcessAttachedQueue, but also nulls out
   // mProcessAttachedQueueEvent
@@ -194,12 +192,6 @@ protected:
 
   // Call PostProcessAttachedQueueEvent() on a timer.
   static void PostPAQEventCallback(nsITimer* aTimer, void* aClosure);
-
-  // Enumerate each bound content's bindings (including its base bindings)
-  // in mBoundContentSet.
-  using BoundContentBindingCallback = std::function<void (nsXBLBinding*)>;
-  void EnumerateBoundContentBindings(
-    const BoundContentBindingCallback& aCallback) const;
 
 // MEMBER VARIABLES
 protected:

@@ -55,6 +55,7 @@ const PREF_FORCE_SAMPLE         = "force-sample-value"; // experiments.force-sam
 const PREF_TELEMETRY_ENABLED      = "toolkit.telemetry.enabled";
 
 const URI_EXTENSION_STRINGS     = "chrome://mozapps/locale/extensions/extensions.properties";
+const STRING_TYPE_NAME          = "type.%ID%.name";
 
 const CACHE_WRITE_RETRY_DELAY_SEC = 60 * 3;
 const MANIFEST_FETCH_TIMEOUT_MSEC = 60 * 3 * 1000; // 3 minutes
@@ -537,7 +538,7 @@ Experiments.Experiments.prototype = {
       AddonManagerPrivate.registerProvider(gAddonProvider, [
           new AddonManagerPrivate.AddonType("experiment",
                                             URI_EXTENSION_STRINGS,
-                                            "type.experiment.name",
+                                            STRING_TYPE_NAME,
                                             AddonManager.VIEW_TYPE_LIST,
                                             11000,
                                             AddonManager.TYPE_UI_HIDE_EMPTY),
@@ -1040,12 +1041,11 @@ Experiments.Experiments.prototype = {
       let result = await loadJSONAsync(path, { compression: "lz4" });
       this._populateFromCache(result);
     } catch (e) {
-      this._experiments = new Map();
       if (e instanceof OS.File.Error && e.becauseNoSuchFile) {
         // No cached manifest yet.
-        this._log.trace("_loadFromCache - no cached manifest yet");
+        this._experiments = new Map();
       } else {
-        this._log.error("_loadFromCache - caught error", e);
+        throw e;
       }
     }
   },
@@ -1874,7 +1874,7 @@ Experiments.ExperimentEntry.prototype = {
 
       ["onDownloadCancelled", "onDownloadFailed", "onInstallCancelled", "onInstallFailed"]
         .forEach(what => {
-          listener[what] = eventInstall => failureHandler(eventInstall, what);
+          listener[what] = eventInstall => failureHandler(eventInstall, what)
         });
 
       install.addListener(listener);
@@ -2157,7 +2157,7 @@ this.Experiments.PreviousExperimentProvider = function(experiments) {
   this._log = Log.repository.getLoggerWithMessagePrefix(
     "Browser.Experiments.Experiments",
     "PreviousExperimentProvider #" + gPreviousProviderCounter++ + "::");
-};
+}
 
 this.Experiments.PreviousExperimentProvider.prototype = Object.freeze({
   name: "PreviousExperimentProvider",
@@ -2262,7 +2262,7 @@ PreviousExperimentAddon.prototype = Object.freeze({
   },
 
   get blocklistState() {
-    Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
+    Ci.nsIBlocklistService.STATE_NOT_BLOCKED
   },
 
   get creator() {

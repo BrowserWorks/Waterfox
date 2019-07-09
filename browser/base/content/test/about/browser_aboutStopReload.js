@@ -60,37 +60,17 @@ add_task(async function checkDontShowStopFromNonLocalURI() {
 
 add_task(async function checkDoShowStopOnNewTab() {
   let stopReloadContainer = document.getElementById("stop-reload-button");
-  let reloadButton = document.getElementById("reload-button");
-  let stopPromise = BrowserTestUtils.waitForAttribute("displaystop", reloadButton);
+  let animatePromise = getAnimatePromise(stopReloadContainer);
 
   await waitForNoAnimation(stopReloadContainer);
-
   let tab = await BrowserTestUtils.openNewForegroundTab({gBrowser,
                                                         opening: "https://example.com",
                                                         waitForStateStop: true});
-  await stopPromise;
-  await waitForNoAnimation(stopReloadContainer);
-  await BrowserTestUtils.removeTab(tab);
-
-  info("Test finished: stop-reload shows stop when navigating to non-local URI during tab opening");
-});
-
-add_task(async function checkAnimateStopOnTabAfterTabFinishesOpening() {
-  let stopReloadContainer = document.getElementById("stop-reload-button");
-
-  await waitForNoAnimation(stopReloadContainer);
-  let tab = await BrowserTestUtils.openNewForegroundTab({gBrowser,
-                                                        waitForStateStop: true});
-  await BrowserTestUtils.waitForCondition(() => {
-    info("Waiting for tabAnimationsInProgress to equal 0, currently " + gBrowser.tabAnimationsInProgress);
-    return !gBrowser.tabAnimationsInProgress;
-  });
-  let animatePromise = getAnimatePromise(stopReloadContainer);
-  await BrowserTestUtils.loadURI(tab.linkedBrowser, "https://example.com");
   await animatePromise;
+  await waitForNoAnimation(stopReloadContainer);
   await BrowserTestUtils.removeTab(tab);
 
-  info("Test finished: stop-reload animates when navigating to non-local URI on new tab after tab has opened");
+  info("Test finished: stop-reload animates when navigating to non-local URI on new tab");
 });
 
 add_task(async function checkDoShowStopFromLocalURI() {
@@ -100,10 +80,6 @@ add_task(async function checkDoShowStopFromLocalURI() {
   let tab = await BrowserTestUtils.openNewForegroundTab({gBrowser,
                                                         opening: "about:robots",
                                                         waitForStateStop: true});
-  await BrowserTestUtils.waitForCondition(() => {
-    info("Waiting for tabAnimationsInProgress to equal 0, currently " + gBrowser.tabAnimationsInProgress);
-    return !gBrowser.tabAnimationsInProgress;
-  });
   let animatePromise = getAnimatePromise(stopReloadContainer);
   await BrowserTestUtils.loadURI(tab.linkedBrowser, "https://example.com");
   await animatePromise;

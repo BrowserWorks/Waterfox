@@ -887,7 +887,8 @@ ReadWasmModule(JSContext* aCx,
   MOZ_ASSERT(aHolder->CloneScope() == StructuredCloneHolder::StructuredCloneScope::SameProcessSameThread ||
              aHolder->CloneScope() == StructuredCloneHolder::StructuredCloneScope::SameProcessDifferentThread);
 
-  return aHolder->WasmModules()[aIndex]->createObject(aCx);
+  RefPtr<JS::WasmModule> wasmModule = aHolder->WasmModules()[aIndex];
+  return wasmModule->createObject(aCx);
 }
 
 bool
@@ -976,9 +977,9 @@ StructuredCloneHolder::CustomReadHandler(JSContext* aCx,
     return ReadFormData(aCx, aReader, aIndex, this);
   }
 
-  if (aTag == SCTAG_DOM_IMAGEBITMAP) {
-    MOZ_ASSERT(mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
-               mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread);
+  if (aTag == SCTAG_DOM_IMAGEBITMAP &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
 
     // Get the current global object.
     // This can be null.
@@ -992,7 +993,9 @@ StructuredCloneHolder::CustomReadHandler(JSContext* aCx,
     return StructuredCloneBlob::ReadStructuredClone(aCx, aReader, this);
   }
 
-  if (aTag == SCTAG_DOM_WASM) {
+  if (aTag == SCTAG_DOM_WASM &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
     return ReadWasmModule(aCx, aIndex, this);
   }
 
@@ -1122,9 +1125,9 @@ StructuredCloneHolder::CustomReadTransferHandler(JSContext* aCx,
     return true;
   }
 
-  if (aTag == SCTAG_DOM_CANVAS) {
-    MOZ_ASSERT(mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
-               mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread);
+  if (aTag == SCTAG_DOM_CANVAS &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
     MOZ_ASSERT(aContent);
     OffscreenCanvasCloneData* data =
       static_cast<OffscreenCanvasCloneData*>(aContent);
@@ -1142,9 +1145,9 @@ StructuredCloneHolder::CustomReadTransferHandler(JSContext* aCx,
     return true;
   }
 
-  if (aTag == SCTAG_DOM_IMAGEBITMAP) {
-    MOZ_ASSERT(mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
-               mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread);
+  if (aTag == SCTAG_DOM_IMAGEBITMAP &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
     MOZ_ASSERT(aContent);
     ImageBitmapCloneData* data =
       static_cast<ImageBitmapCloneData*>(aContent);
@@ -1248,9 +1251,9 @@ StructuredCloneHolder::CustomFreeTransferHandler(uint32_t aTag,
     return;
   }
 
-  if (aTag == SCTAG_DOM_CANVAS) {
-    MOZ_ASSERT(mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
-               mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread);
+  if (aTag == SCTAG_DOM_CANVAS &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
     MOZ_ASSERT(aContent);
     OffscreenCanvasCloneData* data =
       static_cast<OffscreenCanvasCloneData*>(aContent);
@@ -1258,9 +1261,9 @@ StructuredCloneHolder::CustomFreeTransferHandler(uint32_t aTag,
     return;
   }
 
-  if (aTag == SCTAG_DOM_IMAGEBITMAP) {
-    MOZ_ASSERT(mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
-               mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread);
+  if (aTag == SCTAG_DOM_IMAGEBITMAP &&
+      (mStructuredCloneScope == StructuredCloneScope::SameProcessSameThread ||
+       mStructuredCloneScope == StructuredCloneScope::SameProcessDifferentThread)) {
     MOZ_ASSERT(aContent);
     ImageBitmapCloneData* data =
       static_cast<ImageBitmapCloneData*>(aContent);

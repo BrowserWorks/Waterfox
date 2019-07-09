@@ -11,7 +11,6 @@ info: |
        a. If SameValue(func, %eval%) is true, then
           [...]
 flags: [noStrict]
-features: [cross-realm]
 ---*/
 
 var x = 'outside';

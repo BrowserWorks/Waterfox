@@ -128,7 +128,7 @@ var PluginHost = {
 
     throw Components.results.NS_ERROR_NO_INTERFACE;
   }
-};
+}
 
 function registerFakePluginHost() {
   MockRegistrar.register("@mozilla.org/plugin/host;1", PluginHost);
@@ -402,9 +402,6 @@ function checkBuildSection(data) {
       Assert.ok(checkString(data.build.architecturesInBinary));
     }
   }
-
-  Assert.equal(data.build.updaterAvailable, AppConstants.MOZ_UPDATER,
-               "build.updaterAvailable must equal AppConstants.MOZ_UPDATER");
 }
 
 function checkSettingsSection(data) {
@@ -450,7 +447,7 @@ function checkSettingsSection(data) {
     Assert.equal(typeof data.settings.defaultSearchEngineData, "object");
   }
 
-  if (gIsWindows && AppConstants.MOZ_BUILD_APP == "browser") {
+  if ("attribution" in data.settings) {
     Assert.equal(typeof data.settings.attribution, "object");
     Assert.equal(data.settings.attribution.source, "google.com");
   }
@@ -512,8 +509,7 @@ function checkGfxAdapter(data) {
 }
 
 function checkSystemSection(data) {
-  const EXPECTED_FIELDS = [ "memoryMB", "cpu", "os", "hdd", "gfx",
-                            "appleModelId" ];
+  const EXPECTED_FIELDS = [ "memoryMB", "cpu", "os", "hdd", "gfx" ];
   const EXPECTED_HDD_FIELDS = [ "profile", "binary", "system" ];
 
   Assert.ok("system" in data, "There must be a system section in Environment.");
@@ -580,18 +576,18 @@ function checkSystemSection(data) {
 
   // Service pack is only available on Windows.
   if (gIsWindows) {
-    Assert.ok(Number.isFinite(osData.servicePackMajor),
+    Assert.ok(Number.isFinite(osData["servicePackMajor"]),
               "ServicePackMajor must be a number.");
-    Assert.ok(Number.isFinite(osData.servicePackMinor),
+    Assert.ok(Number.isFinite(osData["servicePackMinor"]),
               "ServicePackMinor must be a number.");
     if ("windowsBuildNumber" in osData) {
       // This might not be available on all Windows platforms.
-      Assert.ok(Number.isFinite(osData.windowsBuildNumber),
+      Assert.ok(Number.isFinite(osData["windowsBuildNumber"]),
                 "windowsBuildNumber must be a number.");
     }
     if ("windowsUBR" in osData) {
       // This might not be available on all Windows platforms.
-      Assert.ok((osData.windowsUBR === null) || Number.isFinite(osData.windowsUBR),
+      Assert.ok((osData["windowsUBR"] === null) || Number.isFinite(osData["windowsUBR"]),
                 "windowsUBR must be null or a number.");
     }
   } else if (gIsAndroid) {
@@ -661,12 +657,6 @@ function checkSystemSection(data) {
     Assert.equal(features.opengl, gfxData.features.opengl);
     Assert.equal(features.webgl, gfxData.features.webgl);
   } catch (e) {}
-
-  if (gIsMac) {
-    Assert.ok(checkString(data.system.appleModelId));
-  } else {
-    Assert.ok(checkNullOrString(data.system.appleModelId));
-  }
 }
 
 function checkActiveAddon(data, partialRecord) {
@@ -829,7 +819,7 @@ function checkExperimentsSection(data) {
 
     // Check that we have valid experiment info.
     let experimentData = experiments[id];
-    Assert.ok("branch" in experimentData, "The experiment must have branch data.");
+    Assert.ok("branch" in experimentData, "The experiment must have branch data.")
     Assert.ok(checkString(experimentData.branch), "The experiment data must be valid.");
     if ("type" in experimentData) {
       Assert.ok(checkString(experimentData.type));
@@ -876,9 +866,7 @@ add_task(async function setup() {
   // For test_addonsStartup below, we want to test a "warm" startup where
   // there is already a database on disk.  Simulate that here by just
   // restarting the AddonManager.
-  await AddonTestUtils.promiseShutdownManager();
-  await AddonTestUtils.overrideBuiltIns({"system": []});
-  await AddonTestUtils.promiseStartupManager();
+  await AddonTestUtils.promiseRestartManager();
 
   // Register a fake plugin host for consistent flash version data.
   registerFakePluginHost();
@@ -1877,7 +1865,7 @@ add_task(async function test_experimentsAPI_limits() {
   const longType = "a0123456678901234567890123456789";
   TelemetryEnvironment.setExperimentActive("exp", "some-branch", {type: longType});
   data = TelemetryEnvironment.currentEnvironment;
-  Assert.equal(data.experiments.exp.type, longType.substring(0, 20));
+  Assert.equal(data.experiments["exp"].type, longType.substring(0, 20));
 });
 
 add_task(async function test_environmentShutdown() {

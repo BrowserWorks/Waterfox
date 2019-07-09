@@ -1,5 +1,8 @@
 "use strict";
 
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+                                  "resource://gre/modules/PrivateBrowsingUtils.jsm");
+
 this.extension = class extends ExtensionAPI {
   getAPI(context) {
     let api = {

@@ -794,12 +794,14 @@ public:
 
     static uint32_t
     FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
-                          uint32_t *aTableOffset, uint32_t *aUVSTableOffset);
+                          uint32_t *aTableOffset, uint32_t *aUVSTableOffset,
+                          bool *aSymbolEncoding);
 
     static nsresult
     ReadCMAP(const uint8_t *aBuf, uint32_t aBufLength,
              gfxSparseBitSet& aCharacterMap,
-             uint32_t& aUVSOffset);
+             uint32_t& aUVSOffset,
+             bool& aUnicodeFont, bool& aSymbolFont);
 
     static uint32_t
     MapCharToGlyphFormat4(const uint8_t *aBuf, char16_t aCh);
@@ -903,12 +905,8 @@ public:
         return (ch == 0x200D);
     }
 
-    // We treat Combining Grapheme Joiner (U+034F) together with the join
-    // controls (ZWJ, ZWNJ) here, because (like them) it is an invisible
-    // char that will be handled by the shaper even if not explicitly
-    // supported by the font. (See bug 1408366.)
     static inline bool IsJoinControl(uint32_t ch) {
-        return (ch == 0x200C || ch == 0x200D || ch == 0x034f);
+        return (ch == 0x200C || ch == 0x200D);
     }
 
     enum {

@@ -12,21 +12,21 @@ const fm = Services.focus;
 
 function EventStore() {
   this["main-window"] = [];
-  this.window1 = [];
-  this.window2 = [];
+  this["window1"] = [];
+  this["window2"] = [];
 }
 
 EventStore.prototype = {
   "push": function(event) {
     if (event.indexOf("1") > -1) {
-      this.window1.push(event);
+      this["window1"].push(event);
     } else if (event.indexOf("2") > -1) {
-      this.window2.push(event);
+      this["window2"].push(event);
     } else {
       this["main-window"].push(event);
     }
   }
-};
+}
 
 var tab1 = null;
 var tab2 = null;
@@ -465,8 +465,8 @@ function compareFocusResults() {
 
 async function expectFocusShiftAfterTabSwitch(tab, expectedWindow, expectedElement, focusChanged, testid) {
   let tabSwitchPromise = null;
-  await expectFocusShift(() => { tabSwitchPromise = BrowserTestUtils.switchTab(gBrowser, tab); },
-                         expectedWindow, expectedElement, focusChanged, testid);
+  await expectFocusShift(() => { tabSwitchPromise = BrowserTestUtils.switchTab(gBrowser, tab) },
+                         expectedWindow, expectedElement, focusChanged, testid)
   await tabSwitchPromise;
 }
 
@@ -543,7 +543,7 @@ function expectFocusShift(callback, expectedWindow, expectedElement, focusChange
     callback();
 
     // No events are expected, so resolve the promise immediately.
-    if (expectedEvents["main-window"].length + expectedEvents.window1.length + expectedEvents.window2.length == 0) {
+    if (expectedEvents["main-window"].length + expectedEvents["window1"].length + expectedEvents["window2"].length == 0) {
       currentPromiseResolver();
       currentPromiseResolver = null;
     }

@@ -441,7 +441,7 @@ public:
     if (aData->Length() < 8) {
       return NS_ERROR_NOT_AVAILABLE;
     }
-    AtomParser parser(mType, aData, AtomParser::StopAt::eInitSegment);
+    AtomParser parser(mType, aData);
     if (!parser.IsValid()) {
       return MediaResult(
         NS_ERROR_FAILURE,
@@ -455,7 +455,7 @@ public:
     if (aData->Length() < 8) {
       return NS_ERROR_NOT_AVAILABLE;
     }
-    AtomParser parser(mType, aData, AtomParser::StopAt::eMediaSegment);
+    AtomParser parser(mType, aData);
     if (!parser.IsValid()) {
       return MediaResult(
         NS_ERROR_FAILURE,
@@ -465,24 +465,14 @@ public:
   }
 
 private:
-  class AtomParser
-  {
+  class AtomParser {
   public:
-    enum class StopAt
-    {
-      eInitSegment,
-      eMediaSegment,
-      eEnd
-    };
-
-    AtomParser(const MediaContainerType& aType, const MediaByteBuffer* aData,
-               StopAt aStop = StopAt::eEnd)
+    AtomParser(const MediaContainerType& aType, const MediaByteBuffer* aData)
     {
       const MediaContainerType mType(aType); // for logging macro.
       mp4_demuxer::ByteReader reader(aData);
       mp4_demuxer::AtomType initAtom("moov");
       mp4_demuxer::AtomType mediaAtom("moof");
-      mp4_demuxer::AtomType dataAtom("mdat");
 
       // Valid top-level boxes defined in ISO/IEC 14496-12 (Table 1)
       static const mp4_demuxer::AtomType validBoxes[] = {
@@ -521,9 +511,9 @@ private:
             mp4_demuxer::AtomType(type) == mediaAtom) {
           mMediaOffset = Some(reader.Offset());
         }
-        if (mDataOffset.isNothing() &&
-            mp4_demuxer::AtomType(type) == dataAtom) {
-          mDataOffset = Some(reader.Offset());
+        if (mInitOffset.isSome() && mMediaOffset.isSome()) {
+          // We have everything we need.
+          break;
         }
         if (size == 1) {
           // 64 bits size.
@@ -541,20 +531,6 @@ private:
           break;
         }
         reader.Read(size - 8);
-
-        if (aStop == StopAt::eInitSegment && (mInitOffset || mMediaOffset)) {
-          // When we're looking for an init segment, if we encountered a media
-          // segment, it we will need to be processed first. So we can stop
-          // right away if we have found a media segment.
-          break;
-        }
-        if (aStop == StopAt::eMediaSegment &&
-            (mInitOffset || (mMediaOffset && mDataOffset))) {
-          // When we're looking for a media segment, if we encountered an init
-          // segment, it we will need to be processed first. So we can stop
-          // right away if we have found an init segment.
-          break;
-        }
       }
     }
 
@@ -573,7 +549,6 @@ private:
   private:
     Maybe<size_t> mInitOffset;
     Maybe<size_t> mMediaOffset;
-    Maybe<size_t> mDataOffset;
     bool mValid = true;
     char mLastInvalidBox[5];
   };

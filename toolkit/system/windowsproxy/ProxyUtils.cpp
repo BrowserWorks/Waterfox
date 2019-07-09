@@ -26,12 +26,12 @@ NormalizeAddr(const nsACString& aAddr, nsCString& aNormalized)
   aNormalized = "";
   for (uint32_t i = 0; i < 4; ++i) {
     if (i != 0) {
-      aNormalized.AppendLiteral(".");
+      aNormalized.Append(".");
     }
     if (i < addr.Length()) {
       aNormalized.Append(addr[i]);
     } else {
-      aNormalized.AppendLiteral("0");
+      aNormalized.Append("0");
     }
   }
   return true;
@@ -158,7 +158,7 @@ IsMatchWildcard(const nsACString& aHost, const nsACString& aOverride)
         tokenEnd = overrideLength; // no '*' char, match rest of string
       }
       nsAutoCString token(Substring(override, tokenStart, tokenEnd - tokenStart));
-      offset = host.Find(token, /* aIgnoreCase = */ false, offset);
+      offset = host.Find(token, offset);
       if (offset == -1 || (!star && offset)) {
         return false;
       }

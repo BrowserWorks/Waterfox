@@ -44,7 +44,7 @@ public:
   GetFormat(nsString& aRetVal) const;
 
   void
-  GetClientDataJSON(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal);
+  GetClientDataJSON(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal) const;
 
   nsresult
   SetClientDataJSON(CryptoBuffer& aBuffer);
@@ -52,7 +52,6 @@ public:
 private:
   nsCOMPtr<nsPIDOMWindowInner> mParent;
   CryptoBuffer mClientDataJSON;
-  JS::Heap<JSObject*> mClientDataJSONCachedObj;
 };
 
 } // namespace dom

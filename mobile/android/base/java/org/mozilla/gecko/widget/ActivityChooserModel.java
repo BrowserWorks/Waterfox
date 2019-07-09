@@ -24,6 +24,8 @@ package org.mozilla.gecko.widget;
 import android.accounts.Account;
 import android.content.pm.PackageManager;
 
+import org.mozilla.gecko.db.BrowserDB;
+import org.mozilla.gecko.db.TabsAccessor;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
@@ -38,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.database.DataSetObservable;
 import android.os.AsyncTask;
 import android.text.TextUtils;
@@ -49,9 +52,6 @@ import android.util.Xml;
  */
 //import com.android.internal.content.PackageMonitor;
 
-import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
-import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -62,7 +62,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1315,14 +1314,18 @@ public class ActivityChooserModel extends DataSetObservable {
             return false;
         }
 
-        final ClientsDatabaseAccessor clientsDatabaseAccessor = new ClientsDatabaseAccessor(mContext.getApplicationContext());
-        try {
-            final String[] remoteDevicesIds = clientsDatabaseAccessor.getRemoteDevicesIds(mContext);
-            return clientsDatabaseAccessor.hasNonStaleClients(remoteDevicesIds);
-        } catch (NullCursorException e) {
+        final BrowserDB browserDB = BrowserDB.from(mContext);
+        final TabsAccessor tabsAccessor = browserDB.getTabsAccessor();
+        final Cursor remoteClientsCursor = tabsAccessor
+                .getRemoteClientsNoStaleSorted(mContext);
+        if (remoteClientsCursor == null) {
             return false;
+        }
+
+        try {
+            return remoteClientsCursor.getCount() > 0;
         } finally {
-            clientsDatabaseAccessor.close();
+            remoteClientsCursor.close();
         }
     }
 

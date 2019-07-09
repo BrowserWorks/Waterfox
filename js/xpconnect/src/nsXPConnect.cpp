@@ -454,9 +454,9 @@ xpc::TraceXPCGlobal(JSTracer* trc, JSObject* obj)
     // We might be called from a GC during the creation of a global, before we've
     // been able to set up the compartment private or the XPCWrappedNativeScope,
     // so we need to null-check those.
-    xpc::RealmPrivate* realmPrivate = xpc::RealmPrivate::Get(obj);
-    if (realmPrivate && realmPrivate->scope)
-        realmPrivate->scope->TraceInside(trc);
+    xpc::CompartmentPrivate* compartmentPrivate = xpc::CompartmentPrivate::Get(obj);
+    if (compartmentPrivate && compartmentPrivate->scope)
+        compartmentPrivate->scope->TraceInside(trc);
 }
 
 
@@ -546,30 +546,33 @@ InitGlobalObject(JSContext* aJSContext, JS::Handle<JSObject*> aGlobal, uint32_t 
     // Stuff coming through this path always ends up as a DOM global.
     MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL);
 
-    if (!(aFlags & xpc::OMIT_COMPONENTS_OBJECT)) {
+    if (!(aFlags & nsIXPConnect::OMIT_COMPONENTS_OBJECT)) {
         // XPCCallContext gives us an active request needed to save/restore.
-        if (!RealmPrivate::Get(aGlobal)->scope->AttachComponentsObject(aJSContext) ||
+        if (!CompartmentPrivate::Get(aGlobal)->scope->AttachComponentsObject(aJSContext) ||
             !XPCNativeWrapper::AttachNewConstructorObject(aJSContext, aGlobal)) {
             return UnexpectedFailure(false);
         }
     }
 
-    if (!(aFlags & xpc::DONT_FIRE_ONNEWGLOBALHOOK))
+    if (!(aFlags & nsIXPConnect::DONT_FIRE_ONNEWGLOBALHOOK))
         JS_FireOnNewGlobalObject(aJSContext, aGlobal);
 
     return true;
 }
 
-nsresult
-InitClassesWithNewWrappedGlobal(JSContext* aJSContext,
-                                nsISupports* aCOMObj,
-                                nsIPrincipal* aPrincipal,
-                                uint32_t aFlags,
-                                JS::CompartmentOptions& aOptions,
-                                MutableHandleObject aNewGlobal)
+} // namespace xpc
+
+NS_IMETHODIMP
+nsXPConnect::InitClassesWithNewWrappedGlobal(JSContext * aJSContext,
+                                             nsISupports* aCOMObj,
+                                             nsIPrincipal * aPrincipal,
+                                             uint32_t aFlags,
+                                             JS::CompartmentOptions& aOptions,
+                                             nsIXPConnectJSObjectHolder** _retval)
 {
     MOZ_ASSERT(aJSContext, "bad param");
     MOZ_ASSERT(aCOMObj, "bad param");
+    MOZ_ASSERT(_retval, "bad param");
 
     // We pass null for the 'extra' pointer during global object creation, so
     // we need to have a principal.
@@ -584,7 +587,7 @@ InitClassesWithNewWrappedGlobal(JSContext* aJSContext,
     RefPtr<XPCWrappedNative> wrappedGlobal;
     nsresult rv =
         XPCWrappedNative::WrapNewGlobal(helper, aPrincipal,
-                                        aFlags & xpc::INIT_JS_STANDARD_CLASSES,
+                                        aFlags & nsIXPConnect::INIT_JS_STANDARD_CLASSES,
                                         aOptions, getter_AddRefs(wrappedGlobal));
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -595,11 +598,9 @@ InitClassesWithNewWrappedGlobal(JSContext* aJSContext,
     if (!InitGlobalObject(aJSContext, global, aFlags))
         return UnexpectedFailure(NS_ERROR_FAILURE);
 
-    aNewGlobal.set(global);
+    wrappedGlobal.forget(_retval);
     return NS_OK;
 }
-
-} // namespace xpc
 
 static nsresult
 NativeInterface2JSObject(HandleObject aScope,
@@ -607,14 +608,16 @@ NativeInterface2JSObject(HandleObject aScope,
                          nsWrapperCache* aCache,
                          const nsIID * aIID,
                          bool aAllowWrapping,
-                         MutableHandleValue aVal)
+                         MutableHandleValue aVal,
+                         nsIXPConnectJSObjectHolder** aHolder)
 {
     AutoJSContext cx;
     JSAutoCompartment ac(cx, aScope);
 
     nsresult rv;
     xpcObjectHelper helper(aCOMObj, aCache);
-    if (!XPCConvert::NativeInterface2JSObject(aVal, helper, aIID, aAllowWrapping, &rv))
+    if (!XPCConvert::NativeInterface2JSObject(aVal, aHolder, helper, aIID,
+                                              aAllowWrapping, &rv))
         return rv;
 
     MOZ_ASSERT(aAllowWrapping || !xpc::WrapperFactory::IsXrayWrapper(&aVal.toObject()),
@@ -637,7 +640,7 @@ nsXPConnect::WrapNative(JSContext * aJSContext,
     RootedObject aScope(aJSContext, aScopeArg);
     RootedValue v(aJSContext);
     nsresult rv = NativeInterface2JSObject(aScope, aCOMObj, nullptr, &aIID,
-                                           true, &v);
+                                           true, &v, nullptr);
     if (NS_FAILED(rv))
         return rv;
 
@@ -646,6 +649,24 @@ nsXPConnect::WrapNative(JSContext * aJSContext,
 
     *aRetVal = v.toObjectOrNull();
     return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPConnect::WrapNativeHolder(JSContext * aJSContext,
+                              JSObject * aScopeArg,
+                              nsISupports* aCOMObj,
+                              const nsIID & aIID,
+                              nsIXPConnectJSObjectHolder **aHolder)
+{
+    MOZ_ASSERT(aHolder, "bad param");
+    MOZ_ASSERT(aJSContext, "bad param");
+    MOZ_ASSERT(aScopeArg, "bad param");
+    MOZ_ASSERT(aCOMObj, "bad param");
+
+    RootedObject aScope(aJSContext, aScopeArg);
+    RootedValue v(aJSContext);
+    return NativeInterface2JSObject(aScope, aCOMObj, nullptr, &aIID,
+                                    true, &v, aHolder);
 }
 
 NS_IMETHODIMP
@@ -663,7 +684,7 @@ nsXPConnect::WrapNativeToJSVal(JSContext* aJSContext,
 
     RootedObject aScope(aJSContext, aScopeArg);
     return NativeInterface2JSObject(aScope, aCOMObj, aCache, aIID,
-                                    aAllowWrapping, aVal);
+                                    aAllowWrapping, aVal, nullptr);
 }
 
 NS_IMETHODIMP
@@ -1348,9 +1369,7 @@ bool
 IsChromeOrXBL(JSContext* cx, JSObject* /* unused */)
 {
     MOZ_ASSERT(NS_IsMainThread());
-    JS::Realm* realm = JS::GetCurrentRealmOrNull(cx);
-    MOZ_ASSERT(realm);
-    JSCompartment* c = JS::GetCompartmentForRealm(realm);
+    JSCompartment* c = js::GetContextCompartment(cx);
 
     // For remote XUL, we run XBL in the XUL scope. Given that we care about
     // compat and not security for remote XUL, we just always claim to be XBL.
@@ -1358,7 +1377,7 @@ IsChromeOrXBL(JSContext* cx, JSObject* /* unused */)
     // Note that, for performance, we don't check AllowXULXBLForPrincipal here,
     // and instead rely on the fact that AllowContentXBLScope() only returns false in
     // remote XUL situations.
-    return AccessCheck::isChrome(c) || IsContentXBLCompartment(c) || !AllowContentXBLScope(realm);
+    return AccessCheck::isChrome(c) || IsContentXBLScope(c) || !AllowContentXBLScope(c);
 }
 
 namespace workers {

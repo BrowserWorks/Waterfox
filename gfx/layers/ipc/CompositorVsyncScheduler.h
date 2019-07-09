@@ -117,9 +117,6 @@ private:
 
   mozilla::Monitor mSetNeedsCompositeMonitor;
   RefPtr<CancelableRunnable> mSetNeedsCompositeTask;
-
-  mozilla::Monitor mCurrentVRListenerTaskMonitor;
-  RefPtr<CancelableRunnable> mCurrentVRListenerTask;
 };
 
 } // namespace layers

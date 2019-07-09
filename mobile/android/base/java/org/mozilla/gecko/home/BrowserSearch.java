@@ -33,6 +33,7 @@ import org.mozilla.gecko.db.BrowserContract.URLColumns;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.SearchLoader.SearchCursorLoader;
 import org.mozilla.gecko.preferences.GeckoPreferences;
+import org.mozilla.gecko.skin.SkinConfig;
 import org.mozilla.gecko.toolbar.AutocompleteHandler;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
@@ -598,7 +599,7 @@ public class BrowserSearch extends HomeFragment
 
     private String searchDomains(String search) {
         for (String domain : getDomains()) {
-            if (StringUtils.caseInsensitiveStartsWith(domain, search)) {
+            if (domain.startsWith(search)) {
                 return domain;
             }
         }
@@ -627,7 +628,7 @@ public class BrowserSearch extends HomeFragment
 
             // Does the completion match against the whole URL? This will match
             // about: pages, as well as user input including "http://...".
-            if (StringUtils.caseInsensitiveStartsWith(url, searchTerm)) {
+            if (url.startsWith(searchTerm)) {
                 return uriSubstringUpToMatchedPath(url, 0,
                         (searchLength > HTTPS_PREFIX_LENGTH) ? searchLength : HTTPS_PREFIX_LENGTH);
             }
@@ -640,12 +641,12 @@ public class BrowserSearch extends HomeFragment
                 continue;
             }
 
-            if (StringUtils.caseInsensitiveStartsWith(host, searchTerm)) {
+            if (host.startsWith(searchTerm)) {
                 return host + "/";
             }
 
             final String strippedHost = StringUtils.stripCommonSubdomains(host);
-            if (StringUtils.caseInsensitiveStartsWith(strippedHost, searchTerm)) {
+            if (strippedHost.startsWith(searchTerm)) {
                 return strippedHost + "/";
             }
 
@@ -666,7 +667,7 @@ public class BrowserSearch extends HomeFragment
             // We already matched the non-stripped host, so now we're
             // substring-searching in the part of the URL without the common
             // subdomains.
-            if (StringUtils.caseInsensitiveStartsWith(url, searchTerm, hostOffset)) {
+            if (url.startsWith(searchTerm, hostOffset)) {
                 // Great! Return including the rest of the path segment.
                 return uriSubstringUpToMatchedPath(url, hostOffset, hostOffset + searchLength);
             }
@@ -1197,9 +1198,10 @@ public class BrowserSearch extends HomeFragment
                 final Cursor c = getCursor(position);
                 final TwoLinePageRow row = (TwoLinePageRow) view;
 
-                // Highlight all substrings in title field if they matches the search term.
-                row.setTitleFormatter(mTwoLinePageRowTitleFormatter);
-
+                if (SkinConfig.isPhoton()) {
+                    // Highlight all substrings in title field if they matches the search term.
+                    row.setTitleFormatter(mTwoLinePageRowTitleFormatter);
+                }
                 row.updateFromCursor(c);
                 row.setPrivateMode(isPrivate);
             }

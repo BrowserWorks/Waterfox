@@ -3,9 +3,6 @@
 == bug1375518-3.html bug1375518-ref.html
 == bug1375518-4.html bug1375518-4-ref.html
 == bug1375518-5.html bug1375518-5-ref.html
-== bug1379306.html bug1379306-ref.html
-== bug1394226.html bug1394226-ref.html
-!= bug1394226.html bug1394226-notref.html
 == bc_dyn_cell1.html bc_dyn_cell1_ref.html
 == bc_dyn_cell2.html bc_dyn_cell2_ref.html
 == bc_dyn_cell3.html bc_dyn_cell3_ref.html
@@ -31,38 +28,38 @@
 == frame_above_rules_all.html frame_above_rules_all_ref.html
 == frame_above_rules_cols.html frame_above_rules_cols_ref.html
 == frame_above_rules_groups.html frame_above_rules_groups_ref.html
-fails-if(webrender) == frame_above_rules_none.html frame_above_rules_none_ref.html # bug 1382896 for webrender
+== frame_above_rules_none.html frame_above_rules_none_ref.html
 == frame_above_rules_rows.html frame_above_rules_rows_ref.html
 == frame_below_rules_all.html frame_below_rules_all_ref.html
 == frame_below_rules_cols.html frame_below_rules_cols_ref.html
 == frame_below_rules_groups.html frame_below_rules_groups_ref.html
-fails-if(webrender) == frame_below_rules_none.html frame_below_rules_none_ref.html # bug 1382896 for webrender
+== frame_below_rules_none.html frame_below_rules_none_ref.html
 == frame_below_rules_rows.html frame_below_rules_rows_ref.html
 == frame_border_rules_all.html frame_border_rules_all_ref.html
 == frame_border_rules_cols.html frame_border_rules_cols_ref.html
 == frame_border_rules_groups.html frame_border_rules_groups_ref.html
-fails-if(webrender) == frame_border_rules_none.html frame_border_rules_none_ref.html # bug 1382896 for webrender
+== frame_border_rules_none.html frame_border_rules_none_ref.html
 == frame_border_rules_rows.html frame_border_rules_rows_ref.html
 == frame_box_rules_all.html frame_box_rules_all_ref.html
 == frame_box_rules_cols.html frame_box_rules_cols_ref.html
 == frame_box_rules_groups.html frame_box_rules_groups_ref.html
-fails-if(webrender) == frame_box_rules_none.html frame_box_rules_none_ref.html # bug 1382896 for webrender
+== frame_box_rules_none.html frame_box_rules_none_ref.html
 == frame_box_rules_none-collapse.html frame_box_rules_none-collapse-ref.html
 == frame_box_rules_rows.html frame_box_rules_rows_ref.html
 == frame_hsides_rules_all.html frame_hsides_rules_all_ref.html
 == frame_hsides_rules_cols.html frame_hsides_rules_cols_ref.html
 == frame_hsides_rules_groups.html frame_hsides_rules_groups_ref.html
-fails-if(webrender) == frame_hsides_rules_none.html frame_hsides_rules_none_ref.html # bug 1382896 for webrender
+== frame_hsides_rules_none.html frame_hsides_rules_none_ref.html
 == frame_hsides_rules_rows.html frame_hsides_rules_rows_ref.html
 == frame_lhs_rules_all.html frame_lhs_rules_all_ref.html
 == frame_lhs_rules_cols.html frame_lhs_rules_cols_ref.html
 == frame_lhs_rules_groups.html frame_lhs_rules_groups_ref.html
-fails-if(webrender) == frame_lhs_rules_none.html frame_lhs_rules_none_ref.html # bug 1382896 for webrender
+== frame_lhs_rules_none.html frame_lhs_rules_none_ref.html
 == frame_lhs_rules_rows.html frame_lhs_rules_rows_ref.html
 == frame_rhs_rules_all.html frame_rhs_rules_all_ref.html
 == frame_rhs_rules_cols.html frame_rhs_rules_cols_ref.html
 == frame_rhs_rules_groups.html frame_rhs_rules_groups_ref.html
-fails-if(webrender) == frame_rhs_rules_none.html  frame_rhs_rules_none_ref.html # bug 1382896 for webrender
+== frame_rhs_rules_none.html  frame_rhs_rules_none_ref.html
 == frame_rhs_rules_rows.html frame_rhs_rules_rows_ref.html
 == frame_void_rules_all.html frame_void_rules_all_ref.html
 == frame_void_rules_cols.html frame_void_rules_cols_ref.html
@@ -72,7 +69,7 @@ fails-if(webrender) == frame_rhs_rules_none.html  frame_rhs_rules_none_ref.html 
 == frame_vsides_rules_all.html frame_vsides_rules_all_ref.html
 == frame_vsides_rules_cols.html frame_vsides_rules_cols_ref.html
 == frame_vsides_rules_groups.html frame_vsides_rules_groups_ref.html
-fails-if(webrender) == frame_vsides_rules_none.html frame_vsides_rules_none_ref.html # bug 1382896 for webrender
+== frame_vsides_rules_none.html frame_vsides_rules_none_ref.html
 == frame_vsides_rules_rows.html frame_vsides_rules_rows_ref.html
 == borderhandling-1.html borderhandling-ref.html
 == borderhandling-2.html borderhandling-ref.html
@@ -113,5 +110,3 @@ fuzzy(255,40) == border-style-outset-becomes-groove.html border-style-outset-bec
 # is 20px).
 fuzzy(255,40) == border-style-inset-becomes-ridge.html border-style-inset-becomes-ridge-ref.html
 fuzzy(2,11000) == 1324524.html 1324524-ref.html
-== 1384602-1a.html 1384602-1-ref.html
-== 1384602-1b.html 1384602-1-ref.html

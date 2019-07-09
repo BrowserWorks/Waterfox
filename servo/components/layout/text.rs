@@ -289,10 +289,9 @@ impl TextRunScanner {
             // example, `finally` with a wide `letter-spacing` renders as `f i n a l l y` and not
             // `ﬁ n a l l y`.
             let mut flags = ShapingFlags::empty();
-            if let Some(v) = letter_spacing.value() {
-                if v.px() != 0. {
-                    flags.insert(IGNORE_LIGATURES_SHAPING_FLAG);
-                }
+            match letter_spacing.value() {
+                Some(&Au(0)) | None => {}
+                Some(_) => flags.insert(IGNORE_LIGATURES_SHAPING_FLAG),
             }
             if text_rendering == text_rendering::T::optimizespeed {
                 flags.insert(IGNORE_LIGATURES_SHAPING_FLAG);
@@ -302,7 +301,7 @@ impl TextRunScanner {
                 flags.insert(KEEP_ALL_FLAG);
             }
             let options = ShapingOptions {
-                letter_spacing: letter_spacing.value().cloned().map(Au::from),
+                letter_spacing: letter_spacing.value().cloned(),
                 word_spacing: word_spacing,
                 script: Script::Common,
                 flags: flags,
@@ -377,13 +376,12 @@ impl TextRunScanner {
                     None
                 };
 
-                let mut new_text_fragment_info = Box::new(ScannedTextFragmentInfo::new(
+                let mut new_text_fragment_info = box ScannedTextFragmentInfo::new(
                     scanned_run.run,
                     byte_range,
                     text_size,
                     insertion_point,
-                    flags
-                ));
+                    flags);
 
                 let new_metrics = new_text_fragment_info.run.metrics_for_range(&byte_range);
                 let writing_mode = old_fragment.style.writing_mode;
@@ -448,11 +446,11 @@ pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: ::Serv
 
 /// Returns the line block-size needed by the given computed style and font size.
 pub fn line_height_from_style(style: &ComputedValues, metrics: &FontMetrics) -> Au {
-    let font_size = style.get_font().font_size.size();
+    let font_size = style.get_font().font_size;
     match style.get_inheritedtext().line_height {
-        LineHeight::Normal => Au::from(metrics.line_gap),
-        LineHeight::Number(l) => font_size.scale_by(l.0),
-        LineHeight::Length(l) => Au::from(l)
+        LineHeight::Normal => metrics.line_gap,
+        LineHeight::Number(l) => font_size.scale_by(l),
+        LineHeight::Length(l) => l
     }
 }
 
@@ -507,12 +505,10 @@ fn split_first_fragment_at_newline_if_necessary(fragments: &mut LinkedList<Fragm
                 }
             };
         }
-        first_fragment.transform(
-            first_fragment.border_box.size,
-            SpecificFragmentInfo::UnscannedText(Box::new(
-                UnscannedTextFragmentInfo::new(string_before, selection_before)
-            ))
-        )
+        first_fragment.transform(first_fragment.border_box.size,
+                                 SpecificFragmentInfo::UnscannedText(
+                                     box UnscannedTextFragmentInfo::new(string_before,
+                                                                        selection_before)))
     };
 
     fragments.push_front(new_fragment);
@@ -566,7 +562,7 @@ impl RunInfo {
 
 /// A mapping from a portion of an unscanned text fragment to the text run we're going to create
 /// for it.
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 struct RunMapping {
     /// The range of byte indices within the text fragment.
     byte_range: Range<usize>,

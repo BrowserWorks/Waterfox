@@ -7,7 +7,6 @@
 menupopup,
 panel {
   -moz-appearance: menupopup;
-  -moz-font-smoothing-background-color: -moz-mac-menupopup;
   background-color: Menu;
 }
 
@@ -103,7 +102,6 @@ panel[type="arrow"][side="right"] {
 
 tooltip {
   -moz-appearance: tooltip;
-  -moz-font-smoothing-background-color: -moz-mac-tooltip;
   margin-top: 18px;
   padding: 2px 3px;
   max-width: 40em;

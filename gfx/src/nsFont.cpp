@@ -166,15 +166,13 @@ FontFeatureTagForVariantWidth(uint32_t aVariantWidth)
   }
 }
 
-void nsFont::AddFontFeaturesToStyle(gfxFontStyle *aStyle,
-                                    bool aVertical) const
+void nsFont::AddFontFeaturesToStyle(gfxFontStyle *aStyle) const
 {
   // add in font-variant features
   gfxFontFeature setting;
 
   // -- kerning
-  setting.mTag = aVertical ? TRUETYPE_TAG('v','k','r','n')
-                           : TRUETYPE_TAG('k','e','r','n');
+  setting.mTag = TRUETYPE_TAG('k','e','r','n');
   switch (kerning) {
     case NS_FONT_KERNING_NONE:
       setting.mValue = 0;

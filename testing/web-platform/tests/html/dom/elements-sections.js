@@ -1,3 +1,4 @@
+// Up-to-date as of 2013-04-12.
 var sectionElements = {
   body: {
     // Obsolete
@@ -53,8 +54,6 @@ extraTests.push(function() {
   ReflectionTests.reflects({type: "string", treatNullAsEmptyString: true}, "vlinkColor", document, "vlink", document.body);
   ReflectionTests.reflects({type: "string", treatNullAsEmptyString: true}, "alinkColor", document, "alink", document.body);
   ReflectionTests.reflects({type: "string", treatNullAsEmptyString: true}, "bgColor", document, "bgcolor", document.body);
-  // Edge remains RTL if we don't do this, despite removing the attribute
-  document.dir = "ltr";
   // Don't mess up the colors :)
   document.documentElement.removeAttribute("dir");
   var attrs = ["text", "bgcolor", "link", "alink", "vlink"];

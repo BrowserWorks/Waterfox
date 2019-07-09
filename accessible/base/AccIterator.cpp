@@ -76,12 +76,12 @@ AccIterator::IteratorState::IteratorState(Accessible* aParent,
 
 RelatedAccIterator::
   RelatedAccIterator(DocAccessible* aDocument, nsIContent* aDependentContent,
-                     nsAtom* aRelAttr) :
+                     nsIAtom* aRelAttr) :
   mDocument(aDocument), mRelAttr(aRelAttr), mProviders(nullptr),
   mBindingParent(nullptr), mIndex(0)
 {
   mBindingParent = aDependentContent->GetBindingParent();
-  nsAtom* IDAttr = mBindingParent ?
+  nsIAtom* IDAttr = mBindingParent ?
     nsGkAtoms::anonid : nsGkAtoms::id;
 
   nsAutoString id;
@@ -254,7 +254,7 @@ XULDescriptionIterator::Next()
 
 IDRefsIterator::
   IDRefsIterator(DocAccessible* aDoc, nsIContent* aContent,
-                 nsAtom* aIDRefsAttr) :
+                 nsIAtom* aIDRefsAttr) :
   mContent(aContent), mDoc(aDoc), mCurrIdx(0)
 {
   if (mContent->IsInUncomposedDoc())

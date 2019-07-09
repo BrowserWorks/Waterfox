@@ -27,7 +27,6 @@
 #endif
 #include "vtune/VTuneWrapper.h"
 #include "wasm/WasmModule.h"
-#include "wasm/WasmProcess.h"
 #include "wasm/WasmSerialize.h"
 
 #include "jit/MacroAssembler-inl.h"
@@ -90,9 +89,12 @@ static bool
 StaticallyLink(const CodeSegment& cs, const LinkDataTier& linkData)
 {
     for (LinkDataTier::InternalLink link : linkData.internalLinks) {
-        CodeOffset patchAt(link.patchAtOffset);
-        CodeOffset target(link.targetOffset);
-        Assembler::Bind(cs.base(), patchAt, target);
+        uint8_t* patchAt = cs.base() + link.patchAtOffset;
+        void* target = cs.base() + link.targetOffset;
+        if (link.isRawPointerPatch())
+            *(void**)(patchAt) = target;
+        else
+            Assembler::PatchInstructionImmediate(patchAt, PatchedImmPtr(target));
     }
 
     if (!EnsureBuiltinThunksInitialized())
@@ -119,9 +121,12 @@ static void
 StaticallyUnlink(uint8_t* base, const LinkDataTier& linkData)
 {
     for (LinkDataTier::InternalLink link : linkData.internalLinks) {
-        CodeOffset patchAt(link.patchAtOffset);
-        CodeOffset target(-size_t(base));  // to reset immediate to null
-        Assembler::Bind(base, patchAt, target);
+        uint8_t* patchAt = base + link.patchAtOffset;
+        void* target = 0;
+        if (link.isRawPointerPatch())
+            *(void**)(patchAt) = target;
+        else
+            Assembler::PatchInstructionImmediate(patchAt, PatchedImmPtr(target));
     }
 
     for (auto imm : MakeEnumeratedRange(SymbolicAddress::Limit)) {
@@ -185,7 +190,7 @@ SendCodeRangesToProfiler(const CodeSegment& cs, const Bytes& bytecode, const Met
     }
 }
 
-/* static */ UniqueCodeSegment
+/* static */ UniqueConstCodeSegment
 CodeSegment::create(Tier tier,
                     MacroAssembler& masm,
                     const ShareableBytes& bytecode,
@@ -197,6 +202,8 @@ CodeSegment::create(Tier tier,
     uint32_t bytesNeeded = masm.bytesNeeded();
     uint32_t padding = ComputeByteAlignment(bytesNeeded, gc::SystemPageSize());
     uint32_t codeLength = bytesNeeded + padding;
+
+    MOZ_ASSERT(linkData.functionCodeLength < codeLength);
 
     UniqueCodeBytes codeBytes = AllocateCodeBytes(codeLength);
     if (!codeBytes)
@@ -211,7 +218,7 @@ CodeSegment::create(Tier tier,
     return create(tier, Move(codeBytes), codeLength, bytecode, linkData, metadata);
 }
 
-/* static */ UniqueCodeSegment
+/* static */ UniqueConstCodeSegment
 CodeSegment::create(Tier tier,
                     const Bytes& unlinkedBytes,
                     const ShareableBytes& bytecode,
@@ -233,7 +240,7 @@ CodeSegment::create(Tier tier,
     return create(tier, Move(codeBytes), codeLength, bytecode, linkData, metadata);
 }
 
-/* static */ UniqueCodeSegment
+/* static */ UniqueConstCodeSegment
 CodeSegment::create(Tier tier,
                     UniqueCodeBytes codeBytes,
                     uint32_t codeLength,
@@ -253,7 +260,7 @@ CodeSegment::create(Tier tier,
     if (!cs->initialize(tier, Move(codeBytes), codeLength, bytecode, linkData, metadata))
         return nullptr;
 
-    return UniqueCodeSegment(cs.release());
+    return UniqueConstCodeSegment(cs.release());
 }
 
 bool
@@ -265,12 +272,11 @@ CodeSegment::initialize(Tier tier,
                         const Metadata& metadata)
 {
     MOZ_ASSERT(bytes_ == nullptr);
-    MOZ_ASSERT(linkData.interruptOffset);
-    MOZ_ASSERT(linkData.outOfBoundsOffset);
-    MOZ_ASSERT(linkData.unalignedAccessOffset);
+    MOZ_ASSERT(tier == Tier::Baseline || tier == Tier::Ion);
 
     tier_ = tier;
     bytes_ = Move(codeBytes);
+    functionLength_ = linkData.functionCodeLength;
     length_ = codeLength;
     interruptCode_ = bytes_.get() + linkData.interruptOffset;
     outOfBoundsCode_ = bytes_.get() + linkData.outOfBoundsOffset;
@@ -285,19 +291,9 @@ CodeSegment::initialize(Tier tier,
     if (!ExecutableAllocator::makeExecutable(bytes_.get(), RoundupCodeLength(codeLength)))
         return false;
 
-    if (!RegisterCodeSegment(this))
-        return false;
-    registered_ = true;
-
     SendCodeRangesToProfiler(*this, bytecode.bytes, metadata);
 
     return true;
-}
-
-CodeSegment::~CodeSegment()
-{
-    if (registered_)
-        UnregisterCodeSegment(this);
 }
 
 size_t
@@ -316,7 +312,7 @@ CodeSegment::addSizeOfMisc(mozilla::MallocSizeOf mallocSizeOf, size_t* code, siz
 uint8_t*
 CodeSegment::serialize(uint8_t* cursor, const LinkDataTier& linkData) const
 {
-    MOZ_ASSERT(tier() == Tier::Serialized);
+    MOZ_ASSERT(tier() == Tier::Ion);
 
     cursor = WriteScalar<uint32_t>(cursor, length_);
     uint8_t* base = cursor;
@@ -343,7 +339,7 @@ CodeSegment::deserialize(const uint8_t* cursor, const ShareableBytes& bytecode,
     if (!cursor)
         return nullptr;
 
-    if (!initialize(Tier::Serialized, Move(bytes), length, bytecode, linkData, metadata))
+    if (!initialize(Tier::Ion, Move(bytes), length, bytecode, linkData, metadata))
         return nullptr;
 
     return cursor;
@@ -498,44 +494,25 @@ MetadataTier::deserialize(const uint8_t* cursor)
     return cursor;
 }
 
-void
-Metadata::commitTier2() const
-{
-    MOZ_RELEASE_ASSERT(metadata2_.get());
-    MOZ_RELEASE_ASSERT(!hasTier2_);
-    hasTier2_ = true;
-}
-
-void
-Metadata::setTier2(UniqueMetadataTier metadata) const
-{
-    MOZ_RELEASE_ASSERT(metadata->tier == Tier::Ion && metadata1_->tier != Tier::Ion);
-    MOZ_RELEASE_ASSERT(!metadata2_.get());
-    metadata2_ = Move(metadata);
-}
-
 Tiers
 Metadata::tiers() const
 {
-    if (hasTier2())
-        return Tiers(metadata1_->tier, metadata2_->tier);
-    return Tiers(metadata1_->tier);
+    return Tiers(tier_->tier);
 }
 
 const MetadataTier&
 Metadata::metadata(Tier t) const
 {
     switch (t) {
+      case Tier::Debug:
       case Tier::Baseline:
-        if (metadata1_->tier == Tier::Baseline)
-            return *metadata1_;
-        MOZ_CRASH("No metadata at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier == Tier::Baseline);
+        return *tier_;
       case Tier::Ion:
-        if (metadata1_->tier == Tier::Ion)
-            return *metadata1_;
-        if (hasTier2())
-            return *metadata2_;
-        MOZ_CRASH("No metadata at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier == Tier::Ion);
+        return *tier_;
+      case Tier::TBD:
+        return *tier_;
       default:
         MOZ_CRASH();
     }
@@ -545,16 +522,15 @@ MetadataTier&
 Metadata::metadata(Tier t)
 {
     switch (t) {
+      case Tier::Debug:
       case Tier::Baseline:
-        if (metadata1_->tier == Tier::Baseline)
-            return *metadata1_;
-        MOZ_CRASH("No metadata at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier == Tier::Baseline);
+        return *tier_;
       case Tier::Ion:
-        if (metadata1_->tier == Tier::Ion)
-            return *metadata1_;
-        if (hasTier2())
-            return *metadata2_;
-        MOZ_CRASH("No metadata at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier == Tier::Ion);
+        return *tier_;
+      case Tier::TBD:
+        return *tier_;
       default:
         MOZ_CRASH();
     }
@@ -564,13 +540,14 @@ size_t
 Metadata::serializedSize() const
 {
     return sizeof(pod()) +
-           metadata(Tier::Serialized).serializedSize() +
+           metadata(Tier::Ion).serializedSize() +
            SerializedVectorSize(sigIds) +
            SerializedPodVectorSize(globals) +
            SerializedPodVectorSize(tables) +
            SerializedPodVectorSize(funcNames) +
            SerializedPodVectorSize(customSections) +
-           filename.serializedSize();
+           filename.serializedSize() +
+           sizeof(hash);
 }
 
 size_t
@@ -595,13 +572,14 @@ Metadata::serialize(uint8_t* cursor) const
 {
     MOZ_ASSERT(!debugEnabled && debugFuncArgTypes.empty() && debugFuncReturnTypes.empty());
     cursor = WriteBytes(cursor, &pod(), sizeof(pod()));
-    cursor = metadata(Tier::Serialized).serialize(cursor);
+    cursor = metadata(Tier::Ion).serialize(cursor);
     cursor = SerializeVector(cursor, sigIds);
     cursor = SerializePodVector(cursor, globals);
     cursor = SerializePodVector(cursor, tables);
     cursor = SerializePodVector(cursor, funcNames);
     cursor = SerializePodVector(cursor, customSections);
     cursor = filename.serialize(cursor);
+    cursor = WriteBytes(cursor, hash, sizeof(hash));
     return cursor;
 }
 
@@ -609,13 +587,14 @@ Metadata::serialize(uint8_t* cursor) const
 Metadata::deserialize(const uint8_t* cursor)
 {
     (cursor = ReadBytes(cursor, &pod(), sizeof(pod()))) &&
-    (cursor = metadata(Tier::Serialized).deserialize(cursor)) &&
+    (cursor = metadata(Tier::Ion).deserialize(cursor)) &&
     (cursor = DeserializeVector(cursor, &sigIds)) &&
     (cursor = DeserializePodVector(cursor, &globals)) &&
     (cursor = DeserializePodVector(cursor, &tables)) &&
     (cursor = DeserializePodVector(cursor, &funcNames)) &&
     (cursor = DeserializePodVector(cursor, &customSections)) &&
-    (cursor = filename.deserialize(cursor));
+    (cursor = filename.deserialize(cursor)) &&
+    (cursor = ReadBytes(cursor, hash, sizeof(hash)));
     debugEnabled = false;
     debugFuncArgTypes.clear();
     debugFuncReturnTypes.clear();
@@ -634,20 +613,14 @@ struct ProjectFuncIndex
     }
 };
 
-FuncExport&
-MetadataTier::lookupFuncExport(uint32_t funcIndex)
+const FuncExport&
+MetadataTier::lookupFuncExport(uint32_t funcIndex) const
 {
     size_t match;
     if (!BinarySearch(ProjectFuncIndex(funcExports), 0, funcExports.length(), funcIndex, &match))
         MOZ_CRASH("missing function export");
 
     return funcExports[match];
-}
-
-const FuncExport&
-MetadataTier::lookupFuncExport(uint32_t funcIndex) const
-{
-    return const_cast<MetadataTier*>(this)->lookupFuncExport(funcIndex);
 }
 
 bool
@@ -677,12 +650,11 @@ Metadata::getFuncName(const Bytes* maybeBytecode, uint32_t funcIndex, UTF8Bytes*
            name->append(afterFuncIndex, strlen(afterFuncIndex));
 }
 
-Code::Code(UniqueCodeSegment tier, const Metadata& metadata, UniqueJumpTable maybeJumpTable)
-  : metadata_(&metadata),
-    profilingLabels_(mutexid::WasmCodeProfilingLabels, CacheableCharsVector()),
-    jumpTable_(Move(maybeJumpTable))
+Code::Code(UniqueConstCodeSegment tier, const Metadata& metadata)
+  : tier_(Move(tier)),
+    metadata_(&metadata),
+    profilingLabels_(mutexid::WasmCodeProfilingLabels, CacheableCharsVector())
 {
-    segment1_ = takeOwnership(Move(tier));
 }
 
 Code::Code()
@@ -690,70 +662,60 @@ Code::Code()
 {
 }
 
-void
-Code::setTier2(UniqueCodeSegment segment) const
+Tier
+Code::anyTier() const
 {
-    MOZ_RELEASE_ASSERT(segment->tier() == Tier::Ion && segment1_->tier() != Tier::Ion);
-    MOZ_RELEASE_ASSERT(!segment2_.get());
-    segment2_ = takeOwnership(Move(segment));
+    return tier_->tier();
 }
 
 Tiers
 Code::tiers() const
 {
-    if (hasTier2())
-        return Tiers(segment1_->tier(), segment2_->tier());
-    return Tiers(segment1_->tier());
-}
-
-bool
-Code::hasTier(Tier t) const
-{
-    if (hasTier2() && segment2_->tier() == t)
-        return true;
-    return segment1_->tier() == t;
-}
-
-Tier
-Code::stableTier() const
-{
-    return segment1_->tier();
-}
-
-Tier
-Code::bestTier() const
-{
-    if (hasTier2())
-        return segment2_->tier();
-    return segment1_->tier();
+    return Tiers(tier_->tier());
 }
 
 const CodeSegment&
 Code::segment(Tier tier) const
 {
     switch (tier) {
+      case Tier::Debug:
       case Tier::Baseline:
-        if (segment1_->tier() == Tier::Baseline)
-            return *segment1_;
-        MOZ_CRASH("No code segment at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier() == Tier::Baseline);
+        return *tier_;
       case Tier::Ion:
-        if (segment1_->tier() == Tier::Ion)
-            return *segment1_;
-        if (hasTier2())
-            return *segment2_;
-        MOZ_CRASH("No code segment at this tier");
+        MOZ_RELEASE_ASSERT(tier_->tier() == Tier::Ion);
+        return *tier_;
+      case Tier::TBD:
+        return *tier_;
       default:
         MOZ_CRASH();
     }
 }
 
 bool
-Code::containsCodePC(const void* pc) const
+Code::containsFunctionPC(const void* pc, const CodeSegment** segmentp) const
 {
     for (auto t : tiers()) {
         const CodeSegment& cs = segment(t);
-        if (cs.containsCodePC(pc))
+        if (cs.containsFunctionPC(pc)) {
+            if (segmentp)
+                *segmentp = &cs;
             return true;
+        }
+    }
+    return false;
+}
+
+bool
+Code::containsCodePC(const void* pc, const CodeSegment** segmentp) const
+{
+    for (auto t : tiers()) {
+        const CodeSegment& cs = segment(t);
+        if (cs.containsCodePC(pc)) {
+            if (segmentp)
+                *segmentp = &cs;
+            return true;
+        }
     }
     return false;
 }
@@ -771,7 +733,7 @@ size_t
 Code::serializedSize() const
 {
     return metadata().serializedSize() +
-           segment(Tier::Serialized).serializedSize();
+           segment(Tier::Ion).serializedSize();
 }
 
 uint8_t*
@@ -780,15 +742,28 @@ Code::serialize(uint8_t* cursor, const LinkData& linkData) const
     MOZ_RELEASE_ASSERT(!metadata().debugEnabled);
 
     cursor = metadata().serialize(cursor);
-    cursor = segment(Tier::Serialized).serialize(cursor, linkData.linkData(Tier::Serialized));
+    cursor = segment(Tier::Ion).serialize(cursor, linkData.linkData(Tier::Ion));
     return cursor;
 }
 
 const uint8_t*
 Code::deserialize(const uint8_t* cursor, const SharedBytes& bytecode, const LinkData& linkData,
-                  Metadata& metadata)
+                  Metadata* maybeMetadata)
 {
-    cursor = metadata.deserialize(cursor);
+    MutableMetadata metadata;
+    if (maybeMetadata) {
+        metadata = maybeMetadata;
+    } else {
+        auto tier = js::MakeUnique<MetadataTier>(Tier::Ion);
+        if (!tier)
+            return nullptr;
+
+        metadata = js_new<Metadata>(Move(tier));
+        if (!metadata)
+            return nullptr;
+    }
+
+    cursor = metadata->deserialize(cursor);
     if (!cursor)
         return nullptr;
 
@@ -796,19 +771,18 @@ Code::deserialize(const uint8_t* cursor, const SharedBytes& bytecode, const Link
     if (!codeSegment)
         return nullptr;
 
-    cursor = codeSegment->deserialize(cursor, *bytecode, linkData.linkData(Tier::Serialized),
-                                      metadata);
+    cursor = codeSegment->deserialize(cursor, *bytecode, linkData.linkData(Tier::Ion), *metadata);
     if (!cursor)
         return nullptr;
 
-    segment1_ = takeOwnership(Move(codeSegment));
-    metadata_ = &metadata;
+    tier_ = UniqueConstCodeSegment(codeSegment.release());
+    metadata_ = metadata;
 
     return cursor;
 }
 
 const CallSite*
-Code::lookupCallSite(void* returnAddress) const
+Code::lookupCallSite(void* returnAddress, const CodeSegment** segmentp) const
 {
     for (auto t : tiers()) {
         uint32_t target = ((uint8_t*)returnAddress) - segment(t).base();
@@ -818,20 +792,27 @@ Code::lookupCallSite(void* returnAddress) const
         size_t match;
         if (BinarySearch(CallSiteRetAddrOffset(metadata(t).callSites), lowerBound, upperBound,
                          target, &match))
+        {
+            if (segmentp)
+                *segmentp = &segment(t);
             return &metadata(t).callSites[match];
+        }
     }
 
     return nullptr;
 }
 
 const CodeRange*
-Code::lookupRange(void* pc) const
+Code::lookupRange(void* pc, const CodeSegment** segmentp) const
 {
     for (auto t : tiers()) {
         CodeRange::OffsetInCode target((uint8_t*)pc - segment(t).base());
         const CodeRange* result = LookupInSorted(metadata(t).codeRanges, target);
-        if (result)
+        if (result) {
+            if (segmentp)
+                *segmentp = &segment(t);
             return result;
+        }
     }
 
     return nullptr;
@@ -847,9 +828,11 @@ struct MemoryAccessOffset
 };
 
 const MemoryAccess*
-Code::lookupMemoryAccess(void* pc) const
+Code::lookupMemoryAccess(void* pc, const CodeSegment** segmentp) const
 {
     for (auto t : tiers()) {
+        MOZ_ASSERT(segment(t).containsFunctionPC(pc));
+
         const MemoryAccessVector& memoryAccesses = metadata(t).memoryAccesses;
 
         uint32_t target = ((uint8_t*)pc) - segment(t).base();
@@ -860,7 +843,8 @@ Code::lookupMemoryAccess(void* pc) const
         if (BinarySearch(MemoryAccessOffset(memoryAccesses), lowerBound, upperBound, target,
                          &match))
         {
-            MOZ_ASSERT(segment(t).containsCodePC(pc));
+            if (segmentp)
+                *segmentp = &segment(t);
             return &memoryAccesses[match];
         }
     }
@@ -887,7 +871,7 @@ Code::ensureProfilingLabels(const Bytes* maybeBytecode, bool profilingEnabled) c
     // Any tier will do, we only need tier-invariant data that are incidentally
     // stored with the code ranges.
 
-    for (const CodeRange& codeRange : metadata(stableTier()).codeRanges) {
+    for (const CodeRange& codeRange : metadata(anyTier()).codeRanges) {
         if (!codeRange.isFunction())
             continue;
 

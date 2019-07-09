@@ -72,3 +72,4 @@ class TerminalFooter(object):
 
     def draw(self):
         raise Exception('draw() must be implemented.')
+

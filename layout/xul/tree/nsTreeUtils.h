@@ -6,12 +6,11 @@
 #ifndef nsTreeUtils_h__
 #define nsTreeUtils_h__
 
-#include "mozilla/AtomArray.h"
 #include "nsError.h"
 #include "nsString.h"
 #include "nsTreeStyleCache.h"
 
-class nsAtom;
+class nsIAtom;
 class nsIContent;
 
 class nsTreeUtils
@@ -22,14 +21,13 @@ class nsTreeUtils
      * of atoms.
      */
     static nsresult
-    TokenizeProperties(const nsAString& aProperties,
-                       mozilla::AtomArray& aPropertiesArray);
+    TokenizeProperties(const nsAString& aProperties, AtomArray & aPropertiesArray);
 
     static nsIContent*
-    GetImmediateChild(nsIContent* aContainer, nsAtom* aTag);
+    GetImmediateChild(nsIContent* aContainer, nsIAtom* aTag);
 
     static nsIContent*
-    GetDescendantChild(nsIContent* aContainer, nsAtom* aTag);
+    GetDescendantChild(nsIContent* aContainer, nsIAtom* aTag);
 
     static nsresult
     UpdateSortIndicators(nsIContent* aColumn, const nsAString& aDirection);

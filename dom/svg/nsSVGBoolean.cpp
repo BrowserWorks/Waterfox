@@ -41,7 +41,7 @@ GetValueFromString(const nsAString& aValueAsString,
 }
 
 static nsresult
-GetValueFromAtom(const nsAtom* aValueAsAtom, bool *aValue)
+GetValueFromAtom(const nsIAtom* aValueAsAtom, bool *aValue)
 {
   if (aValueAsAtom == nsGkAtoms::_true) {
     *aValue = true;
@@ -55,7 +55,7 @@ GetValueFromAtom(const nsAtom* aValueAsAtom, bool *aValue)
 }
 
 nsresult
-nsSVGBoolean::SetBaseValueAtom(const nsAtom* aValue, nsSVGElement *aSVGElement)
+nsSVGBoolean::SetBaseValueAtom(const nsIAtom* aValue, nsSVGElement *aSVGElement)
 {
   bool val = false;
 
@@ -78,7 +78,7 @@ nsSVGBoolean::SetBaseValueAtom(const nsAtom* aValue, nsSVGElement *aSVGElement)
   return NS_OK;
 }
 
-nsAtom*
+nsIAtom*
 nsSVGBoolean::GetBaseValueAtom() const
 {
   return mBaseVal ? nsGkAtoms::_true : nsGkAtoms::_false;

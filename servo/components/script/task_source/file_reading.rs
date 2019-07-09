@@ -5,8 +5,8 @@
 use dom::domexception::DOMErrorName;
 use dom::filereader::{FileReader, TrustedFileReader, GenerationId, ReadMetaData};
 use script_runtime::{CommonScriptMsg, ScriptThreadEventCategory, ScriptChan};
+use script_thread::{Runnable, RunnableWrapper};
 use std::sync::Arc;
-use task::{TaskCanceller, TaskOnce};
 use task_source::TaskSource;
 
 #[derive(JSTraceable)]
@@ -19,24 +19,31 @@ impl Clone for FileReadingTaskSource {
 }
 
 impl TaskSource for FileReadingTaskSource {
-    fn queue_with_canceller<T>(
-        &self,
-        task: T,
-        canceller: &TaskCanceller,
-    ) -> Result<(), ()>
-    where
-        T: TaskOnce + 'static,
-    {
-        self.0.send(CommonScriptMsg::Task(
-            ScriptThreadEventCategory::FileRead,
-            Box::new(canceller.wrap_task(task)),
-        ))
+    fn queue_with_wrapper<T>(&self,
+                             msg: Box<T>,
+                             wrapper: &RunnableWrapper)
+                             -> Result<(), ()>
+                             where T: Runnable + Send + 'static {
+        self.0.send(CommonScriptMsg::RunnableMsg(ScriptThreadEventCategory::FileRead,
+                                                 wrapper.wrap_runnable(msg)))
     }
 }
 
-impl TaskOnce for FileReadingTask {
-    fn run_once(self) {
-        self.handle_task();
+pub struct FileReadingRunnable {
+    task: FileReadingTask,
+}
+
+impl FileReadingRunnable {
+    pub fn new(task: FileReadingTask) -> Box<FileReadingRunnable> {
+        box FileReadingRunnable {
+            task: task
+        }
+    }
+}
+
+impl Runnable for FileReadingRunnable {
+    fn handler(self: Box<FileReadingRunnable>) {
+        self.task.handle_task();
     }
 }
 

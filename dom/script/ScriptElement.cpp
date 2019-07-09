@@ -89,7 +89,7 @@ void
 ScriptElement::AttributeChanged(nsIDocument* aDocument,
                                 Element* aElement,
                                 int32_t aNameSpaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 int32_t aModType,
                                 const nsAttrValue* aOldValue)
 {
@@ -99,7 +99,8 @@ ScriptElement::AttributeChanged(nsIDocument* aDocument,
 void
 ScriptElement::ContentAppended(nsIDocument* aDocument,
                                nsIContent* aContainer,
-                               nsIContent* aFirstNewContent)
+                               nsIContent* aFirstNewContent,
+                               int32_t aNewIndexInContainer)
 {
   MaybeProcessScript();
 }
@@ -107,7 +108,8 @@ ScriptElement::ContentAppended(nsIDocument* aDocument,
 void
 ScriptElement::ContentInserted(nsIDocument* aDocument,
                                nsIContent* aContainer,
-                               nsIContent* aChild)
+                               nsIContent* aChild,
+                               int32_t aIndexInContainer)
 {
   MaybeProcessScript();
 }

@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.TextViewCompat;
@@ -25,7 +24,6 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
-import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
 
 import java.util.Locale;
@@ -89,8 +87,6 @@ public abstract class DoorHanger extends LinearLayout {
     protected boolean mPersistWhileVisible;
     protected int mPersistenceCount;
     protected long mTimeout;
-
-    public EventCallback callback;
 
     protected DoorHanger(Context context, DoorhangerConfig config, Type type) {
         super(context);
@@ -228,13 +224,8 @@ public abstract class DoorHanger extends LinearLayout {
 
     public void showTitle(@Nullable Bitmap favicon, String title) {
         mDoorhangerTitle.setText(title);
-
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(mDoorhangerTitle, new BitmapDrawable(getResources(), favicon), null, null, null);
         if (favicon != null) {
-            final Drawable faviconDrawable = new BitmapDrawable(mResources, favicon);
-            final int dimen = (int) mResources.getDimension(R.dimen.browser_toolbar_favicon_size);
-            faviconDrawable.setBounds(0, 0, dimen, dimen);
-
-            TextViewCompat.setCompoundDrawablesRelative(mDoorhangerTitle, faviconDrawable, null, null, null);
             mDoorhangerTitle.setCompoundDrawablePadding((int) mContext.getResources().getDimension(R.dimen.doorhanger_drawable_padding));
         }
         mDoorhangerTitle.setVisibility(VISIBLE);

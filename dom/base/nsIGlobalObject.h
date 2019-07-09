@@ -9,7 +9,6 @@
 
 #include "mozilla/dom/DispatcherTrait.h"
 #include "nsISupports.h"
-#include "nsStringFwd.h"
 #include "nsTArray.h"
 #include "js/TypeDecls.h"
 
@@ -17,6 +16,8 @@
 { 0x11afa8be, 0xd997, 0x4e07, \
 { 0xa6, 0xa3, 0x6f, 0x87, 0x2e, 0xc3, 0xee, 0x7f } }
 
+class nsACString;
+class nsCString;
 class nsCycleCollectionTraversalCallback;
 class nsIPrincipal;
 
@@ -73,8 +74,6 @@ public:
   // exposes the URL API.
   void UnlinkHostObjectURIs();
   void TraverseHostObjectURIs(nsCycleCollectionTraversalCallback &aCb);
-
-  virtual bool IsInSyncOperation() { return false; }
 
 protected:
   virtual ~nsIGlobalObject();

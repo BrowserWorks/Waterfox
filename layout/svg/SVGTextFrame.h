@@ -203,8 +203,7 @@ protected:
     , mLastContextScale(1.0f)
     , mLengthAdjustScaleFactor(1.0f)
   {
-    AddStateBits(NS_STATE_SVG_TEXT_CORRESPONDENCE_DIRTY |
-                 NS_STATE_SVG_POSITIONING_DIRTY);
+    AddStateBits(NS_STATE_SVG_POSITIONING_DIRTY);
   }
 
   ~SVGTextFrame() {}
@@ -219,7 +218,7 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 
   virtual nsresult AttributeChanged(int32_t aNamespaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t aModType) override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override
@@ -228,6 +227,7 @@ public:
   }
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
 #ifdef DEBUG_FRAME_DUMP
@@ -258,6 +258,9 @@ public:
   virtual SVGBBox GetBBoxContribution(const Matrix& aToBBoxUserspace,
                                       uint32_t aFlags) override;
 
+  // nsSVGContainerFrame methods:
+  virtual gfxMatrix GetCanvasTM() override;
+
   // SVG DOM text methods:
   uint32_t GetNumberOfChars(nsIContent* aContent);
   float GetComputedTextLength(nsIContent* aContent);
@@ -283,7 +286,7 @@ public:
    */
   void HandleAttributeChangeInDescendant(mozilla::dom::Element* aElement,
                                          int32_t aNameSpaceID,
-                                         nsAtom* aAttribute);
+                                         nsIAtom* aAttribute);
 
   /**
    * Schedules mPositions to be recomputed and the covered region to be
@@ -391,11 +394,6 @@ private:
   };
 
   /**
-   * Resolves Bidi for the anonymous block child if it needs it.
-   */
-  void MaybeResolveBidiForAnonymousBlockChild();
-
-  /**
    * Reflows the anonymous block child if it is dirty or has dirty
    * children, or if the SVGTextFrame itself is dirty.
    */
@@ -417,18 +415,6 @@ private:
    * within the <text>.
    */
   void DoGlyphPositioning();
-
-  /**
-   * This fallback version of GetSubStringLength that flushes layout and takes
-   * into account glyph positioning.  As per the SVG 2 spec, typically glyph
-   * positioning does not affect the results of getSubStringLength, but one
-   * exception is text in a textPath where we need to ignore characters that
-   * fall off the end of the textPath path.
-   */
-  nsresult GetSubStringLengthSlowFallback(nsIContent* aContent,
-                                          uint32_t charnum,
-                                          uint32_t nchars,
-                                          float* aResult);
 
   /**
    * Converts the specified index into mPositions to an addressable
@@ -547,6 +533,11 @@ private:
    * The MutationObserver we have registered for the <text> element subtree.
    */
   RefPtr<MutationObserver> mMutationObserver;
+
+  /**
+   * Cached canvasTM value.
+   */
+  nsAutoPtr<gfxMatrix> mCanvasTM;
 
   /**
    * The number of characters in the DOM after the final nsTextFrame.  For

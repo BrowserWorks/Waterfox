@@ -125,38 +125,47 @@ MacIOSurfaceTextureHostOGL::CreateRenderTexture(const wr::ExternalImageId& aExte
   wr::RenderThread::Get()->RegisterExternalImage(wr::AsUint64(aExternalImageId), texture.forget());
 }
 
-uint32_t
-MacIOSurfaceTextureHostOGL::NumSubTextures() const
+void
+MacIOSurfaceTextureHostOGL::GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                                           const std::function<wr::ImageKey()>& aImageKeyAllocator)
 {
+  MOZ_ASSERT(aImageKeys.IsEmpty());
+
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
     case gfx::SurfaceFormat::B8G8R8A8:
-    case gfx::SurfaceFormat::B8G8R8X8:
+    case gfx::SurfaceFormat::B8G8R8X8: {
+      // 1 image key
+      aImageKeys.AppendElement(aImageKeyAllocator());
+      MOZ_ASSERT(aImageKeys.Length() == 1);
+      break;
+    }
     case gfx::SurfaceFormat::YUV422: {
-      return 1;
+      // 1 image key
+      aImageKeys.AppendElement(aImageKeyAllocator());
+      MOZ_ASSERT(aImageKeys.Length() == 1);
+      break;
     }
     case gfx::SurfaceFormat::NV12: {
-      return 2;
+      // 2 image key
+      aImageKeys.AppendElement(aImageKeyAllocator());
+      aImageKeys.AppendElement(aImageKeyAllocator());
+      MOZ_ASSERT(aImageKeys.Length() == 2);
+      break;
     }
     default: {
-      MOZ_ASSERT_UNREACHABLE("unexpected format");
-      return 1;
+      MOZ_ASSERT_UNREACHABLE("unexpected to be called");
     }
   }
 }
 
 void
-MacIOSurfaceTextureHostOGL::PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                                ResourceUpdateOp aOp,
-                                                const Range<wr::ImageKey>& aImageKeys,
-                                                const wr::ExternalImageId& aExtID)
+MacIOSurfaceTextureHostOGL::AddWRImage(wr::WebRenderAPI* aAPI,
+                                       Range<const wr::ImageKey>& aImageKeys,
+                                       const wr::ExternalImageId& aExtID)
 {
   MOZ_ASSERT(mSurface);
-
-  auto method = aOp == TextureHost::ADD_IMAGE ? &wr::ResourceUpdateQueue::AddExternalImage
-                                              : &wr::ResourceUpdateQueue::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::TextureRectHandle;
 
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
@@ -166,7 +175,11 @@ MacIOSurfaceTextureHostOGL::PushResourceUpdates(wr::ResourceUpdateQueue& aResour
       MOZ_ASSERT(aImageKeys.length() == 1);
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
       wr::ImageDescriptor descriptor(GetSize(), GetFormat());
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      aAPI->AddExternalImage(aImageKeys[0],
+                             descriptor,
+                             aExtID,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
+                             0);
       break;
     }
     case gfx::SurfaceFormat::YUV422: {
@@ -177,7 +190,11 @@ MacIOSurfaceTextureHostOGL::PushResourceUpdates(wr::ResourceUpdateQueue& aResour
       MOZ_ASSERT(aImageKeys.length() == 1);
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
       wr::ImageDescriptor descriptor(GetSize(), gfx::SurfaceFormat::R8G8B8X8);
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      aAPI->AddExternalImage(aImageKeys[0],
+                             descriptor,
+                             aExtID,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
+                             0);
       break;
     }
     case gfx::SurfaceFormat::NV12: {
@@ -187,8 +204,16 @@ MacIOSurfaceTextureHostOGL::PushResourceUpdates(wr::ResourceUpdateQueue& aResour
                                       gfx::SurfaceFormat::A8);
       wr::ImageDescriptor descriptor1(gfx::IntSize(mSurface->GetDevicePixelWidth(1), mSurface->GetDevicePixelHeight(1)),
                                       gfx::SurfaceFormat::R8G8);
-      (aResources.*method)(aImageKeys[0], descriptor0, aExtID, bufferType, 0);
-      (aResources.*method)(aImageKeys[1], descriptor1, aExtID, bufferType, 1);
+      aAPI->AddExternalImage(aImageKeys[0],
+                             descriptor0,
+                             aExtID,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
+                             0);
+      aAPI->AddExternalImage(aImageKeys[1],
+                             descriptor1,
+                             aExtID,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
+                             1);
       break;
     }
     default: {
@@ -198,11 +223,11 @@ MacIOSurfaceTextureHostOGL::PushResourceUpdates(wr::ResourceUpdateQueue& aResour
 }
 
 void
-MacIOSurfaceTextureHostOGL::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                             const wr::LayoutRect& aBounds,
-                                             const wr::LayoutRect& aClip,
-                                             wr::ImageRendering aFilter,
-                                             const Range<wr::ImageKey>& aImageKeys)
+MacIOSurfaceTextureHostOGL::PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                              const wr::LayoutRect& aBounds,
+                                              const wr::LayoutRect& aClip,
+                                              wr::ImageRendering aFilter,
+                                              Range<const wr::ImageKey>& aImageKeys)
 {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
@@ -211,7 +236,7 @@ MacIOSurfaceTextureHostOGL::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
     case gfx::SurfaceFormat::B8G8R8X8: {
       MOZ_ASSERT(aImageKeys.length() == 1);
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
-      aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0]);
+      aBuilder.PushImage(aBounds, aClip, aFilter, aImageKeys[0]);
       break;
     }
     case gfx::SurfaceFormat::YUV422: {
@@ -219,7 +244,6 @@ MacIOSurfaceTextureHostOGL::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
       aBuilder.PushYCbCrInterleavedImage(aBounds,
                                          aClip,
-                                         true,
                                          aImageKeys[0],
                                          wr::WrYuvColorSpace::Rec601,
                                          aFilter);
@@ -230,7 +254,6 @@ MacIOSurfaceTextureHostOGL::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
       MOZ_ASSERT(mSurface->GetPlaneCount() == 2);
       aBuilder.PushNV12Image(aBounds,
                              aClip,
-                             true,
                              aImageKeys[0],
                              aImageKeys[1],
                              wr::WrYuvColorSpace::Rec601,

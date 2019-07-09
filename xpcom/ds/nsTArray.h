@@ -13,7 +13,6 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/BinarySearch.h"
-#include "mozilla/CheckedInt.h"
 #include "mozilla/fallible.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
@@ -1149,13 +1148,6 @@ public:
     return IndexOf(aItem, 0, aComp) != NoIndex;
   }
 
-  // Like Contains(), but assumes a sorted array.
-  template<class Item, class Comparator>
-  bool ContainsSorted(const Item& aItem, const Comparator& aComp) const
-  {
-    return BinaryIndexOf(aItem, aComp) != NoIndex;
-  }
-
   // This method searches for the first element in this array that is equal
   // to the given element.  This method assumes that 'operator==' is defined
   // for elem_type.
@@ -1165,13 +1157,6 @@ public:
   bool Contains(const Item& aItem) const
   {
     return IndexOf(aItem) != NoIndex;
-  }
-
-  // Like Contains(), but assumes a sorted array.
-  template<class Item>
-  bool ContainsSorted(const Item& aItem) const
-  {
-    return BinaryIndexOf(aItem) != NoIndex;
   }
 
   // This method searches for the offset of the first element in this
@@ -2068,14 +2053,9 @@ void
 nsTArray_Impl<E, Alloc>::RemoveElementsAt(index_type aStart, size_type aCount)
 {
   MOZ_ASSERT(aCount == 0 || aStart < Length(), "Invalid aStart index");
-
-  mozilla::CheckedInt<index_type> rangeEnd = aStart;
-  rangeEnd += aCount;
-
-  if (MOZ_UNLIKELY(!rangeEnd.isValid() || rangeEnd.value() > Length())) {
-    InvalidArrayIndex_CRASH(aStart, Length());
-  }
-
+  MOZ_ASSERT(aStart + aCount <= Length(), "Invalid length");
+  // Check that the previous assert didn't overflow
+  MOZ_ASSERT(aStart <= aStart + aCount, "Start index plus length overflows");
   DestructRange(aStart, aCount);
   this->template ShiftData<InfallibleAlloc>(aStart, aCount, 0,
                                             sizeof(elem_type),
@@ -2220,7 +2200,7 @@ nsTArray_Impl<E, Alloc>::AppendElement(Item&& aItem) -> elem_type*
   }
   elem_type* elem = Elements() + Length();
   elem_traits::Construct(elem, mozilla::Forward<Item>(aItem));
-  this->mHdr->mLength += 1;
+  this->IncrementLength(1);
   return elem;
 }
 

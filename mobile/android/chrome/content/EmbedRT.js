@@ -13,7 +13,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
 var EmbedRT = {
   _scopes: {},
 
-  onEvent: function(event, data, callback) {
+  onEvent: function (event, data, callback) {
     switch (event) {
       case "GeckoView:ImportScript":
         this.importScript(data.scriptURL);
@@ -38,7 +38,7 @@ var EmbedRT = {
       }
     );
 
-    sandbox.console = new ConsoleAPI({ consoleID: "script/" + scriptURL });
+    sandbox["console"] = new ConsoleAPI({ consoleID: "script/" + scriptURL });
 
     // As we don't want our caller to control the JS version used for the
     // script file, we run loadSubScript within the context of the
@@ -55,8 +55,8 @@ var EmbedRT = {
       };
 
       try {
-        sandbox.load(params);
-      } catch (e) {
+        sandbox["load"](params);
+      } catch(e) {
         dump("Exception calling 'load' method in script: " + scriptURL + "\n" + e);
       }
     }

@@ -4,6 +4,10 @@
 
 Cu.import("resource://gre/modules/PromiseUtils.jsm", this);
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function test_no_condition() {
   for (let kind of ["phase", "barrier", "xpcom-barrier", "xpcom-barrier-unwrapped"]) {
     do_print("Testing a barrier with no condition (" + kind + ")");
@@ -69,7 +73,7 @@ add_task(async function test_reentrant() {
       do_print("Waiting until we have entered the inner blocker");
       await deferredInner.promise;
 
-      do_print("Allowing the lock to resolve");
+      do_print("Allowing the lock to resolve")
       deferredBlockInner.resolve();
     })();
 

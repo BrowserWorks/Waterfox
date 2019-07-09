@@ -506,7 +506,6 @@ MacroAssemblerMIPS::ma_b(Address addr, ImmGCPtr imm, Label* label, Condition c, 
 void
 MacroAssemblerMIPS::ma_bal(Label* label, DelaySlotFill delaySlotFill)
 {
-    spew("branch .Llabel %p\n", label);
     if (label->bound()) {
         // Generate the long jump for calls because return address has to be
         // the address after the reserved block.
@@ -524,7 +523,6 @@ MacroAssemblerMIPS::ma_bal(Label* label, DelaySlotFill delaySlotFill)
     // Make the whole branch continous in the buffer.
     m_buffer.ensureSpace(4 * sizeof(uint32_t));
 
-    spew("bal .Llabel %p\n", label);
     BufferOffset bo = writeInst(getBranchCode(BranchIsCall).encode());
     writeInst(nextInChain);
     if (!oom())
@@ -538,7 +536,6 @@ MacroAssemblerMIPS::ma_bal(Label* label, DelaySlotFill delaySlotFill)
 void
 MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind)
 {
-    spew("branch .Llabel %p", label);
     MOZ_ASSERT(code.encode() != InstImm(op_regimm, zero, rt_bgezal, BOffImm16(0)).encode());
     InstImm inst_beq = InstImm(op_beq, zero, zero, BOffImm16(0));
 
@@ -551,9 +548,6 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
         if (jumpKind == ShortJump) {
             MOZ_ASSERT(BOffImm16::IsInRange(offset));
             code.setBOffImm16(BOffImm16(offset));
-#ifdef JS_JITSPEW
-            decodeBranchInstAndSpew(code);
-#endif
             writeInst(code.encode());
             as_nop();
             return;
@@ -569,13 +563,7 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
         }
 
         // Handle long conditional branch
-        spew("invert branch .Llabel %p", label);
-        InstImm code_r = invertBranch(code, BOffImm16(5 * sizeof(uint32_t)));
-#ifdef JS_JITSPEW
-        decodeBranchInstAndSpew(code_r);
-#endif
-        writeInst(code_r.encode());
-
+        writeInst(invertBranch(code, BOffImm16(5 * sizeof(uint32_t))).encode());
         // No need for a "nop" here because we can clobber scratch.
         addLongJump(nextOffset());
         ma_liPatchable(ScratchRegister, Imm32(label->offset()));
@@ -595,9 +583,6 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
 
         // Indicate that this is short jump with offset 4.
         code.setBOffImm16(BOffImm16(4));
-#ifdef JS_JITSPEW
-        decodeBranchInstAndSpew(code);
-#endif
         BufferOffset bo = writeInst(code.encode());
         writeInst(nextInChain);
         if (!oom())
@@ -610,9 +595,6 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
     // Make the whole branch continous in the buffer.
     m_buffer.ensureSpace((conditional ? 5 : 4) * sizeof(uint32_t));
 
-#ifdef JS_JITSPEW
-    decodeBranchInstAndSpew(code);
-#endif
     BufferOffset bo = writeInst(code.encode());
     writeInst(nextInChain);
     if (!oom())
@@ -1368,7 +1350,7 @@ MacroAssemblerMIPSCompat::unboxPrivate(const ValueOperand& src, Register dest)
 }
 
 void
-MacroAssemblerMIPSCompat::boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister)
+MacroAssemblerMIPSCompat::boxDouble(FloatRegister src, const ValueOperand& dest)
 {
     moveFromDoubleLo(src, dest.payloadReg());
     moveFromDoubleHi(src, dest.typeReg());
@@ -1848,14 +1830,13 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     // Call the handler.
     asMasm().setupUnalignedABICall(a1);
     asMasm().passABIArg(a0);
-    asMasm().callWithABI(handler, MoveOp::GENERAL, CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    asMasm().callWithABI(handler);
 
     Label entryFrame;
     Label catch_;
     Label finally;
     Label return_;
     Label bailout;
-    Label wasm;
 
     // Already clobbered a0, so use it...
     load32(Address(StackPointer, offsetof(ResumeFromException, kind)), a0);
@@ -1866,7 +1847,6 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     asMasm().branch32(Assembler::Equal, a0, Imm32(ResumeFromException::RESUME_FORCED_RETURN),
                       &return_);
     asMasm().branch32(Assembler::Equal, a0, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
-    asMasm().branch32(Assembler::Equal, a0, Imm32(ResumeFromException::RESUME_WASM), &wasm);
 
     breakpoint(); // Invalid kind.
 
@@ -1935,14 +1915,6 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     ma_li(ReturnReg, Imm32(BAILOUT_RETURN_OK));
     loadPtr(Address(sp, offsetof(ResumeFromException, target)), a1);
     jump(a1);
-
-    // If we are throwing and the innermost frame was a wasm frame, reset SP and
-    // FP; SP is pointing to the unwound return address to the wasm entry, so
-    // we can just ret().
-    bind(&wasm);
-    loadPtr(Address(StackPointer, offsetof(ResumeFromException, framePointer)), FramePointer);
-    loadPtr(Address(StackPointer, offsetof(ResumeFromException, stackPointer)), StackPointer);
-    ret();
 }
 
 template<typename T>
@@ -2147,39 +2119,6 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
     MOZ_ASSERT(diffG == 0);
 }
 
-void
-MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest, Register)
-{
-    FloatRegisterSet fpuSet(set.fpus().reduceSetForPush());
-    unsigned numFpu = fpuSet.size();
-    int32_t diffF = fpuSet.getPushSizeInBytes();
-    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
-
-    MOZ_ASSERT(dest.offset >= diffG + diffF);
-
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
-        diffG -= sizeof(intptr_t);
-        dest.offset -= sizeof(intptr_t);
-        storePtr(*iter, dest);
-    }
-    MOZ_ASSERT(diffG == 0);
-
-    for (FloatRegisterBackwardIterator iter(fpuSet); iter.more(); ++iter) {
-        FloatRegister reg = *iter;
-        diffF -= reg.size();
-        numFpu -= 1;
-        dest.offset -= reg.size();
-        if (reg.isDouble())
-            storeDouble(reg, dest);
-        else if (reg.isSingle())
-            storeFloat32(reg, dest);
-        else
-            MOZ_CRASH("Unknown register type.");
-    }
-    MOZ_ASSERT(numFpu == 0);
-    diffF -= diffF % sizeof(uintptr_t);
-    MOZ_ASSERT(diffF == 0);
-}
 // ===============================================================
 // ABI function calls.
 
@@ -2281,77 +2220,6 @@ MacroAssembler::callWithABINoProfiler(const Address& fun, MoveOp::Type result)
     call(t9);
     callWithABIPost(stackAdjust, result);
 }
-// ===============================================================
-// Move instructions
-
-void
-MacroAssembler::moveValue(const TypedOrValueRegister& src, const ValueOperand& dest)
-{
-    if (src.hasValue()) {
-        moveValue(src.valueReg(), dest);
-        return;
-    }
-
-    MIRType type = src.type();
-    AnyRegister reg = src.typedReg();
-
-    if (!IsFloatingPointType(type)) {
-        mov(ImmWord(MIRTypeToTag(type)), dest.typeReg());
-        if (reg.gpr() != dest.payloadReg())
-            move32(reg.gpr(), dest.payloadReg());
-        return;
-    }
-
-    ScratchDoubleScope scratch(*this);
-    FloatRegister freg = reg.fpu();
-    if (type == MIRType::Float32) {
-        convertFloat32ToDouble(freg, scratch);
-        freg = scratch;
-    }
-    boxDouble(freg, dest, scratch);
-}
-
-void
-MacroAssembler::moveValue(const ValueOperand& src, const ValueOperand& dest)
-{
-    Register s0 = src.typeReg();
-    Register s1 = src.payloadReg();
-    Register d0 = dest.typeReg();
-    Register d1 = dest.payloadReg();
-
-    // Either one or both of the source registers could be the same as a
-    // destination register.
-    if (s1 == d0) {
-        if (s0 == d1) {
-            // If both are, this is just a swap of two registers.
-            ScratchRegisterScope scratch(*this);
-            MOZ_ASSERT(d1 != scratch);
-            MOZ_ASSERT(d0 != scratch);
-            move32(d1, scratch);
-            move32(d0, d1);
-            move32(scratch, d0);
-            return;
-        }
-        // If only one is, copy that source first.
-        mozilla::Swap(s0, s1);
-        mozilla::Swap(d0, d1);
-    }
-
-    if (s0 != d0)
-        move32(s0, d0);
-    if (s1 != d1)
-        move32(s1, d1);
-}
-
-void
-MacroAssembler::moveValue(const Value& src, const ValueOperand& dest)
-{
-    move32(Imm32(src.toNunboxTag()), dest.typeReg());
-    if (src.isGCThing())
-        movePtr(ImmGCPtr(src.toGCThing()), dest.payloadReg());
-    else
-        move32(Imm32(src.toNunboxPayload()), dest.payloadReg());
-}
 
 // ===============================================================
 // Branch functions
@@ -2436,53 +2304,5 @@ MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType value
 template void
 MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
                                   const BaseIndex& dest, MIRType slotType);
-
-
-void
-MacroAssembler::wasmTruncateDoubleToUInt32(FloatRegister input, Register output, Label* oolEntry)
-{
-
-    loadConstantDouble(double(-1.0), ScratchDoubleReg);
-    branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg, oolEntry);
-
-    loadConstantDouble(double(UINT32_MAX) + 1.0, ScratchDoubleReg);
-    branchDouble(Assembler::DoubleGreaterThanOrEqualOrUnordered, input, ScratchDoubleReg, oolEntry);
-    Label done, simple;
-    loadConstantDouble(double(0x80000000UL), ScratchDoubleReg);
-    branchDouble(Assembler::DoubleLessThan, input, ScratchDoubleReg, &simple);
-    as_subd(ScratchDoubleReg, input, ScratchDoubleReg);
-    as_truncwd(ScratchDoubleReg, ScratchDoubleReg);
-    moveFromFloat32(ScratchDoubleReg, output);
-    ma_li(ScratchRegister, Imm32(0x80000000UL));
-    ma_or(output, ScratchRegister);
-    ma_b(&done);
-    bind(&simple);
-    as_truncwd(ScratchDoubleReg, input);
-    moveFromFloat32(ScratchDoubleReg, output);
-    bind(&done);
-}
-
-void
-MacroAssembler::wasmTruncateFloat32ToUInt32(FloatRegister input, Register output, Label* oolEntry)
-{
-    loadConstantFloat32(double(-1.0), ScratchDoubleReg);
-    branchFloat(Assembler::DoubleLessThanOrEqualOrUnordered, input, ScratchDoubleReg, oolEntry);
-
-    loadConstantFloat32(double(UINT32_MAX) + 1.0, ScratchDoubleReg);
-    branchFloat(Assembler::DoubleGreaterThanOrEqualOrUnordered, input, ScratchDoubleReg, oolEntry);
-    Label done, simple;
-    loadConstantFloat32(double(0x80000000UL), ScratchDoubleReg);
-    branchFloat(Assembler::DoubleLessThan, input, ScratchDoubleReg, &simple);
-    as_subs(ScratchDoubleReg, input, ScratchDoubleReg);
-    as_truncws(ScratchDoubleReg, ScratchDoubleReg);
-    moveFromFloat32(ScratchDoubleReg, output);
-    ma_li(ScratchRegister, Imm32(0x80000000UL));
-    ma_or(output, ScratchRegister);
-    ma_b(&done);
-    bind(&simple);
-    as_truncws(ScratchDoubleReg, input);
-    moveFromFloat32(ScratchDoubleReg, output);
-    bind(&done);
-}
 
 //}}} check_macroassembler_style

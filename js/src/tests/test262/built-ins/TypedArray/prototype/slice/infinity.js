@@ -4,7 +4,6 @@
 esid: sec-%typedarray%.prototype.slice
 description: Infinity values on start and end
 includes: [testTypedArray.js, compareArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

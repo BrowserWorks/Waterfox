@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.prototype.toisostring
 es5id: 15.9.5.43-0-14
 description: >
     Date.prototype.toISOString - when value of year is -Infinity

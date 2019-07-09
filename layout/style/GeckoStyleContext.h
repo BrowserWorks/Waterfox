@@ -23,7 +23,7 @@ public:
   }
 
   GeckoStyleContext(GeckoStyleContext* aParent,
-                    nsAtom* aPseudoTag,
+                    nsIAtom* aPseudoTag,
                     CSSPseudoElementType aPseudoType,
                     already_AddRefed<nsRuleNode> aRuleNode,
                     bool aSkipParentDisplayBasedStyleFixup);
@@ -37,7 +37,9 @@ public:
   void AddChild(GeckoStyleContext* aChild);
   void RemoveChild(GeckoStyleContext* aChild);
 
-  GeckoStyleContext* GetParent() const { return mParent; }
+  GeckoStyleContext* GetParent() const {
+    return mParent ? mParent->AsGecko() : nullptr;
+  }
 
   bool IsLinkContext() const {
     return GetStyleIfVisited() &&
@@ -91,7 +93,7 @@ public:
   //    non-null, GetStyleIfVisited()->mRuleNode == aSourceIfVisited
   //  * RelevantLinkVisited() == aRelevantLinkVisited
   already_AddRefed<GeckoStyleContext>
-  FindChildWithRules(const nsAtom* aPseudoTag,
+  FindChildWithRules(const nsIAtom* aPseudoTag,
                      nsRuleNode* aSource,
                      nsRuleNode* aSourceIfVisited,
                      bool aRelevantLinkVisited);
@@ -245,8 +247,6 @@ private:
   // Helper for ClearCachedInheritedStyleDataOnDescendants.
   void DoClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs);
   void Destroy();
-  void SetStyleBits();
-  void FinishConstruction();
 
   // Children are kept in two circularly-linked lists.  The list anchor
   // is not part of the list (null for empty), and we point to the first
@@ -259,8 +259,6 @@ private:
   GeckoStyleContext* mPrevSibling;
   GeckoStyleContext* mNextSibling;
   RefPtr<nsRuleNode> mRuleNode;
-
-  RefPtr<GeckoStyleContext> mParent;
 
   // Style to be used instead for the R, G, and B components of color,
   // background-color, and border-*-color if the nearest ancestor link
@@ -288,26 +286,14 @@ public:
     {
       mStyleContext->mComputingStruct = mOuterSID;
     }
+
   };
 
-  void FrameAddRef() {
-    ++mFrameRefCnt;
-  }
-
-  void FrameRelease() {
-    --mFrameRefCnt;
-  }
-
-  uint32_t FrameRefCnt() const {
-    return mFrameRefCnt;
-  }
 private:
   // Used to check for undeclared dependencies.
   // See AUTO_CHECK_DEPENDENCY in nsStyleContextInlines.h.
   nsStyleStructID         mComputingStruct;
 
-  uint32_t                mFrameRefCnt; // number of frames that use this
-                                        // as their style context
 #define AUTO_CHECK_DEPENDENCY(gecko_, sid_) \
   mozilla::GeckoStyleContext::AutoCheckDependency checkNesting_(gecko_, sid_)
 #else

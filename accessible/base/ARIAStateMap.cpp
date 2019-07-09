@@ -20,11 +20,11 @@ using namespace mozilla::a11y::aria;
 struct EnumTypeData
 {
   // ARIA attribute name.
-  nsAtom* const mAttrName;
+  nsIAtom* const mAttrName;
 
   // States if the attribute value is matched to the enum value. Used as
   // nsIContent::AttrValuesArray, last item must be nullptr.
-  nsAtom* const* const mValues[4];
+  nsIAtom* const* const mValues[4];
 
   // States applied if corresponding enum values are matched.
   const uint64_t mStates[3];
@@ -46,7 +46,7 @@ enum ETokenType
  */
 struct TokenTypeData
 {
-  TokenTypeData(nsAtom* aAttrName, uint32_t aType,
+  TokenTypeData(nsIAtom* aAttrName, uint32_t aType,
                 uint64_t aPermanentState,
                 uint64_t aTrueState,
                 uint64_t aFalseState = 0) :
@@ -55,7 +55,7 @@ struct TokenTypeData
   { }
 
   // ARIA attribute name.
-  nsAtom* const mAttrName;
+  nsIAtom* const mAttrName;
 
   // Type.
   const uint32_t mType;

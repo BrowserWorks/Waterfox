@@ -11,7 +11,7 @@ use webrender_api::NativeFontHandle;
 /// The identifier is an absolute path, and the bytes
 /// field is the loaded data that can be passed to
 /// freetype and azure directly.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct FontTemplateData {
     pub bytes: Vec<u8>,
     pub identifier: Atom,

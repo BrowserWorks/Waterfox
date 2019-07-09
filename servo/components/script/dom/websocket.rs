@@ -2,17 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::BlobBinding::BlobMethods;
+use dom::bindings::codegen::Bindings::EventHandlerBinding::EventHandlerNonNull;
 use dom::bindings::codegen::Bindings::WebSocketBinding;
 use dom::bindings::codegen::Bindings::WebSocketBinding::{BinaryType, WebSocketMethods};
 use dom::bindings::codegen::UnionTypes::StringOrStringSequence;
 use dom::bindings::conversions::ToJSValConvertible;
 use dom::bindings::error::{Error, ErrorResult, Fallible};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::Root;
 use dom::bindings::refcounted::Trusted;
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::{DOMString, USVString, is_token};
 use dom::blob::{Blob, BlobImpl};
 use dom::closeevent::CloseEvent;
@@ -31,17 +32,16 @@ use net_traits::CoreResourceMsg::WebsocketConnect;
 use net_traits::MessageData;
 use script_runtime::CommonScriptMsg;
 use script_runtime::ScriptThreadEventCategory::WebSocketEvent;
+use script_thread::{Runnable, RunnableWrapper};
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use std::borrow::ToOwned;
 use std::cell::Cell;
 use std::ptr;
 use std::thread;
-use task::{TaskOnce, TaskCanceller};
 use task_source::TaskSource;
 use task_source::networking::NetworkingTaskSource;
 
-#[derive(Clone, Copy, Debug, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(JSTraceable, PartialEq, Copy, Clone, Debug, HeapSizeOf)]
 enum WebSocketRequestState {
     Connecting = 0,
     Open = 1,
@@ -67,34 +67,30 @@ mod close_code {
     pub const TLS_FAILED: u16 = 1015;
 }
 
-pub fn close_the_websocket_connection(
-    address: Trusted<WebSocket>,
-    task_source: &NetworkingTaskSource,
-    canceller: &TaskCanceller,
-    code: Option<u16>,
-    reason: String,
-) {
-    let close_task = CloseTask {
+pub fn close_the_websocket_connection(address: Trusted<WebSocket>,
+                                      task_source: &NetworkingTaskSource,
+                                      wrapper: &RunnableWrapper,
+                                      code: Option<u16>,
+                                      reason: String) {
+    let close_task = box CloseTask {
         address: address,
         failed: false,
         code: code,
         reason: Some(reason),
     };
-    task_source.queue_with_canceller(close_task, &canceller).unwrap();
+    task_source.queue_with_wrapper(close_task, &wrapper).unwrap();
 }
 
-pub fn fail_the_websocket_connection(
-    address: Trusted<WebSocket>,
-    task_source: &NetworkingTaskSource,
-    canceller: &TaskCanceller,
-) {
-    let close_task = CloseTask {
+pub fn fail_the_websocket_connection(address: Trusted<WebSocket>,
+                                     task_source: &NetworkingTaskSource,
+                                     wrapper: &RunnableWrapper) {
+    let close_task = box CloseTask {
         address: address,
         failed: true,
         code: Some(close_code::ABNORMAL),
         reason: None,
     };
-    task_source.queue_with_canceller(close_task, &canceller).unwrap();
+    task_source.queue_with_wrapper(close_task, &wrapper).unwrap();
 }
 
 #[dom_struct]
@@ -104,10 +100,10 @@ pub struct WebSocket {
     ready_state: Cell<WebSocketRequestState>,
     buffered_amount: Cell<u64>,
     clearing_buffer: Cell<bool>, //Flag to tell if there is a running thread to clear buffered_amount
-    #[ignore_malloc_size_of = "Defined in std"]
-    sender: DomRefCell<Option<IpcSender<WebSocketDomAction>>>,
+    #[ignore_heap_size_of = "Defined in std"]
+    sender: DOMRefCell<Option<IpcSender<WebSocketDomAction>>>,
     binary_type: Cell<BinaryType>,
-    protocol: DomRefCell<String>, //Subprotocol selected by server
+    protocol: DOMRefCell<String>, //Subprotocol selected by server
 }
 
 impl WebSocket {
@@ -118,22 +114,22 @@ impl WebSocket {
             ready_state: Cell::new(WebSocketRequestState::Connecting),
             buffered_amount: Cell::new(0),
             clearing_buffer: Cell::new(false),
-            sender: DomRefCell::new(None),
+            sender: DOMRefCell::new(None),
             binary_type: Cell::new(BinaryType::Blob),
-            protocol: DomRefCell::new("".to_owned()),
+            protocol: DOMRefCell::new("".to_owned()),
         }
     }
 
-    fn new(global: &GlobalScope, url: ServoUrl) -> DomRoot<WebSocket> {
-        reflect_dom_object(Box::new(WebSocket::new_inherited(url)),
+    fn new(global: &GlobalScope, url: ServoUrl) -> Root<WebSocket> {
+        reflect_dom_object(box WebSocket::new_inherited(url),
                            global, WebSocketBinding::Wrap)
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#dom-websocket>
+    /// https://html.spec.whatwg.org/multipage/#dom-websocket
     pub fn Constructor(global: &GlobalScope,
                        url: DOMString,
                        protocols: Option<StringOrStringSequence>)
-                       -> Fallible<DomRoot<WebSocket>> {
+                       -> Fallible<Root<WebSocket>> {
         // Steps 1-2.
         let url_record = ServoUrl::parse(&url).or(Err(Error::Syntax))?;
 
@@ -201,31 +197,31 @@ impl WebSocket {
         *ws.sender.borrow_mut() = Some(dom_action_sender);
 
         let task_source = global.networking_task_source();
-        let canceller = global.task_canceller();
+        let wrapper = global.get_runnable_wrapper();
         thread::spawn(move || {
             while let Ok(event) = dom_event_receiver.recv() {
                 match event {
                     WebSocketNetworkEvent::ConnectionEstablished { protocol_in_use } => {
-                        let open_thread = ConnectionEstablishedTask {
+                        let open_thread = box ConnectionEstablishedTask {
                             address: address.clone(),
                             protocol_in_use,
                         };
-                        task_source.queue_with_canceller(open_thread, &canceller).unwrap();
+                        task_source.queue_with_wrapper(open_thread, &wrapper).unwrap();
                     },
                     WebSocketNetworkEvent::MessageReceived(message) => {
-                        let message_thread = MessageReceivedTask {
+                        let message_thread = box MessageReceivedTask {
                             address: address.clone(),
                             message: message,
                         };
-                        task_source.queue_with_canceller(message_thread, &canceller).unwrap();
+                        task_source.queue_with_wrapper(message_thread, &wrapper).unwrap();
                     },
                     WebSocketNetworkEvent::Fail => {
                         fail_the_websocket_connection(address.clone(),
-                            &task_source, &canceller);
+                            &task_source, &wrapper);
                     },
                     WebSocketNetworkEvent::Close(code, reason) => {
                         close_the_websocket_connection(address.clone(),
-                            &task_source, &canceller, code, reason);
+                            &task_source, &wrapper, code, reason);
                     },
                 }
             }
@@ -259,13 +255,13 @@ impl WebSocket {
         if !self.clearing_buffer.get() && self.ready_state.get() == WebSocketRequestState::Open {
             self.clearing_buffer.set(true);
 
-            let task = Box::new(BufferedAmountTask {
+            let task = box BufferedAmountTask {
                 address: address,
-            });
+            };
 
             self.global()
                 .script_chan()
-                .send(CommonScriptMsg::Task(WebSocketEvent, task))
+                .send(CommonScriptMsg::RunnableMsg(WebSocketEvent, task))
                 .unwrap();
         }
 
@@ -372,7 +368,7 @@ impl WebSocketMethods for WebSocket {
 
                 let address = Trusted::new(self);
                 let task_source = self.global().networking_task_source();
-                fail_the_websocket_connection(address, &task_source, &self.global().task_canceller());
+                fail_the_websocket_connection(address, &task_source, &self.global().get_runnable_wrapper());
             }
             WebSocketRequestState::Open => {
                 self.ready_state.set(WebSocketRequestState::Closing);
@@ -391,15 +387,17 @@ impl WebSocketMethods for WebSocket {
 
 
 /// Task queued when *the WebSocket connection is established*.
-/// <https://html.spec.whatwg.org/multipage/#feedback-from-the-protocol:concept-websocket-established>
+/// https://html.spec.whatwg.org/multipage/#feedback-from-the-protocol:concept-websocket-established
 struct ConnectionEstablishedTask {
     address: Trusted<WebSocket>,
     protocol_in_use: Option<String>,
 }
 
-impl TaskOnce for ConnectionEstablishedTask {
-    /// <https://html.spec.whatwg.org/multipage/#feedback-from-the-protocol:concept-websocket-established>
-    fn run_once(self) {
+impl Runnable for ConnectionEstablishedTask {
+    fn name(&self) -> &'static str { "ConnectionEstablishedTask" }
+
+    /// https://html.spec.whatwg.org/multipage/#feedback-from-the-protocol:concept-websocket-established
+    fn handler(self: Box<Self>) {
         let ws = self.address.root();
 
         // Step 1.
@@ -422,13 +420,15 @@ struct BufferedAmountTask {
     address: Trusted<WebSocket>,
 }
 
-impl TaskOnce for BufferedAmountTask {
+impl Runnable for BufferedAmountTask {
     // See https://html.spec.whatwg.org/multipage/#dom-websocket-bufferedamount
     //
     // To be compliant with standards, we need to reset bufferedAmount only when the event loop
     // reaches step 1.  In our implementation, the bytes will already have been sent on a background
     // thread.
-    fn run_once(self) {
+    fn name(&self) -> &'static str { "BufferedAmountTask" }
+
+    fn handler(self: Box<Self>) {
         let ws = self.address.root();
 
         ws.buffered_amount.set(0);
@@ -443,8 +443,10 @@ struct CloseTask {
     reason: Option<String>,
 }
 
-impl TaskOnce for CloseTask {
-    fn run_once(self) {
+impl Runnable for CloseTask {
+    fn name(&self) -> &'static str { "CloseTask" }
+
+    fn handler(self: Box<Self>) {
         let ws = self.address.root();
 
         if ws.ready_state.get() == WebSocketRequestState::Closed {
@@ -483,9 +485,11 @@ struct MessageReceivedTask {
     message: MessageData,
 }
 
-impl TaskOnce for MessageReceivedTask {
+impl Runnable for MessageReceivedTask {
+    fn name(&self) -> &'static str { "MessageReceivedTask" }
+
     #[allow(unsafe_code)]
-    fn run_once(self) {
+    fn handler(self: Box<Self>) {
         let ws = self.address.root();
         debug!("MessageReceivedTask::handler({:p}): readyState={:?}", &*ws,
                ws.ready_state.get());

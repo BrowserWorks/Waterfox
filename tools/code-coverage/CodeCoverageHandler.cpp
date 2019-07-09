@@ -8,37 +8,19 @@
 #include <unistd.h>
 #include "mozilla/CodeCoverageHandler.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/DebugOnly.h"
 #include "nsAppRunner.h"
 
 using namespace mozilla;
+using namespace mozilla::ipc;
 
 // The __gcov_dump function writes the coverage counters to gcda files.
 // The __gcov_reset function resets the coverage counters to zero.
-// They are defined at https://github.com/gcc-mirror/gcc/blob/aad93da1a579b9ae23ede6b9cf8523360f0a08b4/libgcc/libgcov-interface.c.
+// They are defined at https://github.com/gcc-mirror/gcc/blob/aad93da1a579b9ae23ede6b9cf8523360f0a08b4/libgcc/libgcov-interface.c
 // __gcov_flush is protected by a mutex, __gcov_dump and __gcov_reset aren't.
 // So we are using a CrossProcessMutex to protect them.
 
-#if defined(__GNUC__) && !defined(__clang__)
 extern "C" void __gcov_dump();
 extern "C" void __gcov_reset();
-
-void counters_dump() {
-  __gcov_dump();
-}
-
-void counters_reset() {
-  __gcov_reset();
-}
-#else
-void counters_dump() {
-  /* Do nothing */
-}
-
-void counters_reset() {
-  /* Do nothing */
-}
-#endif
 
 StaticAutoPtr<CodeCoverageHandler> CodeCoverageHandler::instance;
 
@@ -47,7 +29,7 @@ void CodeCoverageHandler::DumpCounters(int)
   CrossProcessMutexAutoLock lock(*CodeCoverageHandler::Get()->GetMutex());
 
   printf_stderr("[CodeCoverage] Requested dump.\n");
-  counters_dump();
+  __gcov_dump();
   printf_stderr("[CodeCoverage] Dump completed.\n");
 }
 
@@ -56,7 +38,7 @@ void CodeCoverageHandler::ResetCounters(int)
   CrossProcessMutexAutoLock lock(*CodeCoverageHandler::Get()->GetMutex());
 
   printf_stderr("[CodeCoverage] Requested reset.\n");
-  counters_reset();
+  __gcov_reset();
   printf_stderr("[CodeCoverage] Reset completed.\n");
 }
 
@@ -68,15 +50,13 @@ void CodeCoverageHandler::SetSignalHandlers()
   dump_sa.sa_handler = CodeCoverageHandler::DumpCounters;
   dump_sa.sa_flags = SA_RESTART;
   sigemptyset(&dump_sa.sa_mask);
-  DebugOnly<int> r1 = sigaction(SIGUSR1, &dump_sa, nullptr);
-  MOZ_ASSERT(r1 == 0, "Failed to install GCOV SIGUSR1 handler");
+  MOZ_ASSERT(sigaction(SIGUSR1, &dump_sa, nullptr) == 0);
 
   struct sigaction reset_sa;
   reset_sa.sa_handler = CodeCoverageHandler::ResetCounters;
   reset_sa.sa_flags = SA_RESTART;
   sigemptyset(&reset_sa.sa_mask);
-  DebugOnly<int> r2 = sigaction(SIGUSR2, &reset_sa, nullptr);
-  MOZ_ASSERT(r2 == 0, "Failed to install GCOV SIGUSR2 handler");
+  MOZ_ASSERT(sigaction(SIGUSR2, &reset_sa, nullptr) == 0);
 }
 
 CodeCoverageHandler::CodeCoverageHandler()

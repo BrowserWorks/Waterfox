@@ -18,7 +18,6 @@
 #include "LayerState.h"
 #include "Layers.h"
 #include "LayerUserData.h"
-#include "nsDisplayItemTypes.h"
 
 class nsDisplayListBuilder;
 class nsDisplayList;
@@ -340,7 +339,6 @@ public:
 
   void Init(nsDisplayListBuilder* aBuilder, LayerManager* aManager,
             PaintedLayerData* aLayerData = nullptr,
-            bool aIsInactiveLayerManager = false,
             const DisplayItemClip* aInactiveLayerClip = nullptr);
 
   /**
@@ -424,7 +422,7 @@ public:
    * for the given display item key. If there isn't one, we return null,
    * otherwise we return the layer.
    */
-  static Layer* GetDedicatedLayer(nsIFrame* aFrame, DisplayItemType aDisplayItemType);
+  static Layer* GetDedicatedLayer(nsIFrame* aFrame, uint32_t aDisplayItemKey);
 
   /**
    * This callback must be provided to EndTransaction. The callback data
@@ -675,6 +673,7 @@ protected:
   void PaintItems(nsTArray<ClippedDisplayItem>& aItems,
                   const nsIntRect& aRect,
                   gfxContext* aContext,
+                  gfxContext* aRC,
                   nsDisplayListBuilder* aBuilder,
                   nsPresContext* aPresContext,
                   const nsIntPoint& aOffset,
@@ -731,7 +730,7 @@ public:
 
   bool IsBuildingRetainedLayers()
   {
-    return !mIsInactiveLayerManager && mRetainingManager;
+    return !mContainingPaintedLayer && mRetainingManager;
   }
 
   /**
@@ -799,8 +798,6 @@ protected:
   bool                                mInvalidateAllLayers;
 
   bool                                mInLayerTreeCompressionMode;
-
-  bool                                mIsInactiveLayerManager;
 
   uint32_t                            mContainerLayerGeneration;
   uint32_t                            mMaxContainerLayerGeneration;

@@ -30,11 +30,7 @@ DebuggerPanel.prototype = {
       threadClient: this.toolbox.threadClient,
       tabTarget: this.toolbox.target,
       debuggerClient: this.toolbox.target.client,
-      sourceMaps: this.toolbox.sourceMapService,
-      toolboxActions: {
-        // Open a link in a new browser tab.
-        openLink: this.openLink.bind(this)
-      }
+      sourceMaps: this.toolbox.sourceMapService
     });
 
     this._actions = actions;
@@ -56,25 +52,6 @@ DebuggerPanel.prototype = {
 
   _getState: function() {
     return this._store.getState();
-  },
-
-  openLink: function(url) {
-    const parentDoc = this.toolbox.doc;
-    if (!parentDoc) {
-      return;
-    }
-
-    const win = parentDoc.querySelector("window");
-    if (!win) {
-      return;
-    }
-
-    const top = win.ownerDocument.defaultView.top;
-    if (!top || typeof top.openUILinkIn !== "function") {
-      return;
-    }
-
-    top.openUILinkIn(url, "tab");
   },
 
   getFrames: function() {

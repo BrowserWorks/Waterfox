@@ -9,11 +9,10 @@ use hyper::header::{AccessControlExposeHeaders, ContentType, Headers};
 use hyper::status::StatusCode;
 use hyper_serde::Serde;
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use std::sync::{Arc, Mutex};
 
 /// [Response type](https://fetch.spec.whatwg.org/#concept-response-type)
-#[derive(Clone, Debug, Deserialize, MallocSizeOf, PartialEq, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize, HeapSizeOf)]
 pub enum ResponseType {
     Basic,
     Cors,
@@ -24,7 +23,7 @@ pub enum ResponseType {
 }
 
 /// [Response termination reason](https://fetch.spec.whatwg.org/#concept-response-termination-reason)
-#[derive(Clone, Copy, Debug, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, HeapSizeOf)]
 pub enum TerminationReason {
     EndUserAbort,
     Fatal,
@@ -33,7 +32,7 @@ pub enum TerminationReason {
 
 /// The response body can still be pushed to after fetch
 /// This provides a way to store unfinished response bodies
-#[derive(Clone, Debug, MallocSizeOf, PartialEq)]
+#[derive(Clone, Debug, PartialEq, HeapSizeOf)]
 pub enum ResponseBody {
     Empty, // XXXManishearth is this necessary, or is Done(vec![]) enough?
     Receiving(Vec<u8>),
@@ -52,7 +51,7 @@ impl ResponseBody {
 
 
 /// [Cache state](https://fetch.spec.whatwg.org/#concept-response-cache-state)
-#[derive(Clone, Debug, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, HeapSizeOf)]
 pub enum CacheState {
     None,
     Local,
@@ -61,7 +60,7 @@ pub enum CacheState {
 }
 
 /// [Https state](https://fetch.spec.whatwg.org/#concept-response-https-state)
-#[derive(Clone, Copy, Debug, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Debug, Clone, Copy, HeapSizeOf, Deserialize, Serialize)]
 pub enum HttpsState {
     None,
     Deprecated,
@@ -74,45 +73,40 @@ pub enum ResponseMsg {
     Errored,
 }
 
-#[derive(Clone, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Serialize, Deserialize, Clone, HeapSizeOf)]
 pub struct ResponseInit {
     pub url: ServoUrl,
     #[serde(deserialize_with = "::hyper_serde::deserialize",
             serialize_with = "::hyper_serde::serialize")]
-    #[ignore_malloc_size_of = "Defined in hyper"]
+    #[ignore_heap_size_of = "Defined in hyper"]
     pub headers: Headers,
     pub referrer: Option<ServoUrl>,
-    pub location_url: Option<Result<ServoUrl, String>>,
 }
 
 /// A [Response](https://fetch.spec.whatwg.org/#concept-response) as defined by the Fetch spec
-#[derive(Clone, Debug, MallocSizeOf)]
+#[derive(Debug, Clone, HeapSizeOf)]
 pub struct Response {
     pub response_type: ResponseType,
     pub termination_reason: Option<TerminationReason>,
     url: Option<ServoUrl>,
     pub url_list: Vec<ServoUrl>,
     /// `None` can be considered a StatusCode of `0`.
-    #[ignore_malloc_size_of = "Defined in hyper"]
+    #[ignore_heap_size_of = "Defined in hyper"]
     pub status: Option<StatusCode>,
     pub raw_status: Option<(u16, Vec<u8>)>,
-    #[ignore_malloc_size_of = "Defined in hyper"]
+    #[ignore_heap_size_of = "Defined in hyper"]
     pub headers: Headers,
-    #[ignore_malloc_size_of = "Mutex heap size undefined"]
+    #[ignore_heap_size_of = "Mutex heap size undefined"]
     pub body: Arc<Mutex<ResponseBody>>,
     pub cache_state: CacheState,
     pub https_state: HttpsState,
     pub referrer: Option<ServoUrl>,
-    pub referrer_policy: Option<ReferrerPolicy>,
-    /// [CORS-exposed header-name list](https://fetch.spec.whatwg.org/#concept-response-cors-exposed-header-name-list)
-    pub cors_exposed_header_name_list: Vec<String>,
-    /// [Location URL](https://fetch.spec.whatwg.org/#concept-response-location-url)
-    pub location_url: Option<Result<ServoUrl, String>>,
     /// [Internal response](https://fetch.spec.whatwg.org/#concept-internal-response), only used if the Response
     /// is a filtered response
     pub internal_response: Option<Box<Response>>,
     /// whether or not to try to return the internal_response when asked for actual_response
     pub return_internal: bool,
+    pub referrer_policy: Option<ReferrerPolicy>,
 }
 
 impl Response {
@@ -130,8 +124,6 @@ impl Response {
             https_state: HttpsState::None,
             referrer: None,
             referrer_policy: None,
-            cors_exposed_header_name_list: vec![],
-            location_url: None,
             internal_response: None,
             return_internal: true,
         }
@@ -139,7 +131,6 @@ impl Response {
 
     pub fn from_init(init: ResponseInit) -> Response {
         let mut res = Response::new(init.url);
-        res.location_url = init.location_url;
         res.headers = init.headers;
         res.referrer = init.referrer;
         res
@@ -159,8 +150,6 @@ impl Response {
             https_state: HttpsState::None,
             referrer: None,
             referrer_policy: None,
-            cors_exposed_header_name_list: vec![],
-            location_url: None,
             internal_response: None,
             return_internal: true,
         }
@@ -289,7 +278,6 @@ impl Response {
                 Some(&ContentType(ref mime)) => Some(mime),
                 None => None,
             });
-            metadata.location_url = response.location_url.clone();
             metadata.headers = Some(Serde(response.headers.clone()));
             metadata.status = response.raw_status.clone();
             metadata.https_state = response.https_state;

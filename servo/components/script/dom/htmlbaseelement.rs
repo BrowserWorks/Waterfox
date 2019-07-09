@@ -6,7 +6,7 @@ use dom::attr::Attr;
 use dom::bindings::codegen::Bindings::HTMLBaseElementBinding;
 use dom::bindings::codegen::Bindings::HTMLBaseElementBinding::HTMLBaseElementMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::element::{AttributeMutation, Element};
@@ -16,6 +16,7 @@ use dom::virtualmethods::VirtualMethods;
 use dom_struct::dom_struct;
 use html5ever::{LocalName, Prefix};
 use servo_url::ServoUrl;
+use style::attr::AttrValue;
 
 #[dom_struct]
 pub struct HTMLBaseElement {
@@ -32,13 +33,13 @@ impl HTMLBaseElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLBaseElement> {
-        Node::reflect_node(Box::new(HTMLBaseElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLBaseElement> {
+        Node::reflect_node(box HTMLBaseElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLBaseElementBinding::Wrap)
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#frozen-base-url>
+    /// https://html.spec.whatwg.org/multipage/#frozen-base-url
     pub fn frozen_base_url(&self) -> ServoUrl {
         let href = self.upcast::<Element>().get_attribute(&ns!(), &local_name!("href"))
             .expect("The frozen base url is only defined for base elements \
@@ -66,31 +67,28 @@ impl HTMLBaseElement {
 impl HTMLBaseElementMethods for HTMLBaseElement {
     // https://html.spec.whatwg.org/multipage/#dom-base-href
     fn Href(&self) -> DOMString {
-        // Step 1.
         let document = document_from_node(self);
 
+        // Step 1.
+        if !self.upcast::<Element>().has_attribute(&local_name!("href")) {
+            return DOMString::from(document.base_url().as_str());
+        }
+
         // Step 2.
-        let attr = self.upcast::<Element>().get_attribute(&ns!(), &local_name!("href"));
-        let value = attr.as_ref().map(|attr| attr.value());
-        let url = value.as_ref().map_or("", |value| &**value);
+        let fallback_base_url = document.fallback_base_url();
 
         // Step 3.
-        let url_record = document.fallback_base_url().join(url);
+        let url = self.upcast::<Element>().get_url_attribute(&local_name!("href"));
 
-        match url_record {
-            Err(_) => {
-                // Step 4.
-                url.into()
-            }
-            Ok(url_record) => {
-                // Step 5.
-                url_record.into_string().into()
-            },
-        }
+        // Step 4.
+        let url_record = fallback_base_url.join(&*url);
+
+        // Step 5, 6.
+        DOMString::from(url_record.as_ref().map(|url| url.as_str()).unwrap_or(""))
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-base-href
-    make_setter!(SetHref, "href");
+    make_url_setter!(SetHref, "href");
 }
 
 impl VirtualMethods for HTMLBaseElement {

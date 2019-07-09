@@ -136,12 +136,11 @@ nsresult
 gfxSVGGlyphsDocument::SetupPresentation()
 {
     nsCOMPtr<nsICategoryManager> catMan = do_GetService(NS_CATEGORYMANAGER_CONTRACTID);
-    nsCString contractId;
+    nsXPIDLCString contractId;
     nsresult rv = catMan->GetCategoryEntry("Gecko-Content-Viewers", "image/svg+xml", getter_Copies(contractId));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsIDocumentLoaderFactory> docLoaderFactory =
-      do_GetService(contractId.get());
+    nsCOMPtr<nsIDocumentLoaderFactory> docLoaderFactory = do_GetService(contractId);
     NS_ASSERTION(docLoaderFactory, "Couldn't get DocumentLoaderFactory");
 
     nsCOMPtr<nsIContentViewer> viewer;
@@ -168,9 +167,9 @@ gfxSVGGlyphsDocument::SetupPresentation()
 
     mDocument->FlushPendingNotifications(FlushType::Layout);
 
-    if (mDocument->HasAnimationController()) {
-      mDocument->GetAnimationController()
-               ->Resume(nsSMILTimeContainer::PAUSE_IMAGE);
+    nsSMILAnimationController* controller = mDocument->GetAnimationController();
+    if (controller) {
+      controller->Resume(nsSMILTimeContainer::PAUSE_IMAGE);
     }
     mDocument->ImageTracker()->SetAnimatingState(true);
 
@@ -333,8 +332,7 @@ CreateBufferedStream(const uint8_t *aBuffer, uint32_t aBufLen,
 
     nsCOMPtr<nsIInputStream> aBufferedStream;
     if (!NS_InputStreamIsBuffered(stream)) {
-        rv = NS_NewBufferedInputStream(getter_AddRefs(aBufferedStream),
-                                       stream.forget(), 4096);
+        rv = NS_NewBufferedInputStream(getter_AddRefs(aBufferedStream), stream, 4096);
         NS_ENSURE_SUCCESS(rv, rv);
         stream = aBufferedStream;
     }
@@ -363,8 +361,6 @@ gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer, uint32_t aBufLen)
 
     nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
 
-    auto styleBackend = nsLayoutUtils::StyloEnabled() ? StyleBackendType::Servo
-                                                      : StyleBackendType::Gecko;
     nsCOMPtr<nsIDOMDocument> domDoc;
     rv = NS_NewDOMDocument(getter_AddRefs(domDoc),
                            EmptyString(),   // aNamespaceURI
@@ -373,8 +369,7 @@ gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer, uint32_t aBufLen)
                            uri, uri, principal,
                            false,           // aLoadedAsData
                            nullptr,          // aEventObject
-                           DocumentFlavorSVG,
-                           styleBackend);
+                           DocumentFlavorSVG);
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIDocument> document(do_QueryInterface(domDoc));

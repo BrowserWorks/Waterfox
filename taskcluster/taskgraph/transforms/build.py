@@ -20,6 +20,7 @@ def set_defaults(config, jobs):
     for job in jobs:
         job['treeherder'].setdefault('kind', 'build')
         job['treeherder'].setdefault('tier', 1)
+        job.setdefault('needs-sccache', True)
         _, worker_os = worker_type_implementation(job['worker-type'])
         worker = job.setdefault('worker', {})
         if worker_os == "linux":
@@ -28,10 +29,9 @@ def set_defaults(config, jobs):
             extra = job.setdefault('extra', {})
             extra.setdefault('chainOfTrust', {})
             extra['chainOfTrust'].setdefault('inputs', {})
-            if 'in-tree' in worker['docker-image']:
-                extra['chainOfTrust']['inputs']['docker-image'] = {
-                    "task-reference": "<docker-image>"
-                }
+            extra['chainOfTrust']['inputs']['docker-image'] = {
+                "task-reference": "<docker-image>"
+            }
         elif worker_os == "windows":
             worker.setdefault('env', {})
             worker['chain-of-trust'] = True
@@ -44,10 +44,8 @@ def set_defaults(config, jobs):
 @transforms.add
 def set_env(config, jobs):
     """Set extra environment variables from try command line."""
-    env = {}
-    if config.params['try_mode'] == 'try_option_syntax':
-        env = config.params['try_options']['env'] or {}
     for job in jobs:
+        env = config.config['args'].env
         if env:
             job_env = {}
             if 'worker' in job:

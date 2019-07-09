@@ -24,7 +24,6 @@ info: >
     d. Decrease k by 1.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

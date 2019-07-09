@@ -4,7 +4,7 @@
 
 //! The `servo` test application.
 //!
-//! Creates a `Servo` instance with a simple implementation of
+//! Creates a `Browser` instance with a simple implementation of
 //! the compositor's `WindowMethods` to create a working web browser.
 //!
 //! This browser's implementation of `WindowMethods` is built on top
@@ -15,7 +15,7 @@
 //!
 //! [glutin]: https://github.com/tomaka/glutin
 
-#![cfg_attr(feature = "unstable", feature(core_intrinsics))]
+#![feature(start, core_intrinsics)]
 
 #[cfg(target_os = "android")]
 extern crate android_injected_glue;
@@ -26,18 +26,17 @@ extern crate glutin_app as app;
 extern crate log;
 // The Servo engine
 extern crate servo;
-#[cfg(all(feature = "unstable", not(target_os = "android")))]
+#[cfg(not(target_os = "android"))]
 #[macro_use]
 extern crate sig;
 
 use backtrace::Backtrace;
-use servo::Servo;
+use servo::Browser;
 use servo::compositing::windowing::WindowEvent;
 #[cfg(target_os = "android")]
 use servo::config;
 use servo::config::opts::{self, ArgumentParsingResult, parse_url_or_filename};
 use servo::config::servo_version;
-use servo::ipc_channel::ipc;
 use servo::servo_config::prefs::PREFS;
 use servo::servo_url::ServoUrl;
 use std::env;
@@ -57,7 +56,7 @@ pub mod platform {
     pub fn deinit() {}
 }
 
-#[cfg(all(feature = "unstable", not(target_os = "android")))]
+#[cfg(not(target_os = "android"))]
 fn install_crash_handler() {
     use backtrace::Backtrace;
     use sig::ffi::Sig;
@@ -83,7 +82,7 @@ fn install_crash_handler() {
     signal!(Sig::BUS, handler); // handle invalid memory access
 }
 
-#[cfg(any(not(feature = "unstable"), target_os = "android"))]
+#[cfg(target_os = "android")]
 fn install_crash_handler() {}
 
 fn main() {
@@ -156,26 +155,20 @@ fn main() {
 
     let target_url = cmdline_url.or(pref_url).or(blank_url).unwrap();
 
-    // Our wrapper around `ServoWrapper` that also implements some
+    // Our wrapper around `Browser` that also implements some
     // callbacks required by the glutin window implementation.
-    let mut servo_wrapper = ServoWrapper {
-        servo: Servo::new(window.clone())
+    let mut browser = BrowserWrapper {
+        browser: Browser::new(window.clone(), target_url)
     };
 
-    let (sender, receiver) = ipc::channel().unwrap();
-    servo_wrapper.servo.handle_events(vec![WindowEvent::NewBrowser(target_url, sender)]);
-    let browser_id = receiver.recv().unwrap();
-    window.set_browser_id(browser_id);
-    servo_wrapper.servo.handle_events(vec![WindowEvent::SelectBrowser(browser_id)]);
+    browser.browser.setup_logging();
 
-    servo_wrapper.servo.setup_logging();
-
-    register_glutin_resize_handler(&window, &mut servo_wrapper);
+    register_glutin_resize_handler(&window, &mut browser);
 
     // Feed events from the window to the browser until the browser
     // says to stop.
     loop {
-        let should_continue = servo_wrapper.servo.handle_events(window.wait_events());
+        let should_continue = browser.browser.handle_events(window.wait_events());
         if !should_continue {
             break;
         }
@@ -183,12 +176,10 @@ fn main() {
 
     unregister_glutin_resize_handler(&window);
 
-    servo_wrapper.servo.deinit();
-
     platform::deinit()
 }
 
-fn register_glutin_resize_handler(window: &Rc<app::window::Window>, browser: &mut ServoWrapper) {
+fn register_glutin_resize_handler(window: &Rc<app::window::Window>, browser: &mut BrowserWrapper) {
     unsafe {
         window.set_nested_event_loop_listener(browser);
     }
@@ -200,21 +191,21 @@ fn unregister_glutin_resize_handler(window: &Rc<app::window::Window>) {
     }
 }
 
-struct ServoWrapper {
-    servo: Servo<app::window::Window>,
+struct BrowserWrapper {
+    browser: Browser<app::window::Window>,
 }
 
-impl app::NestedEventLoopListener for ServoWrapper {
+impl app::NestedEventLoopListener for BrowserWrapper {
     fn handle_event_from_nested_event_loop(&mut self, event: WindowEvent) -> bool {
         let is_resize = match event {
             WindowEvent::Resize(..) => true,
             _ => false,
         };
-        if !self.servo.handle_events(vec![event]) {
+        if !self.browser.handle_events(vec![event]) {
             return false;
         }
         if is_resize {
-            self.servo.repaint_synchronously()
+            self.browser.repaint_synchronously()
         }
         true
     }

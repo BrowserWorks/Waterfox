@@ -7,21 +7,21 @@ const {utils: Cu} = Components;
 Cu.import("chrome://marionette/content/error.js");
 Cu.import("chrome://marionette/content/message.js");
 
-add_test(function test_Message_Origin() {
-  equal(0, Message.Origin.Client);
-  equal(1, Message.Origin.Server);
+add_test(function test_MessageOrigin() {
+  equal(0, MessageOrigin.Client);
+  equal(1, MessageOrigin.Server);
 
   run_next_test();
 });
 
-add_test(function test_Message_fromPacket() {
+add_test(function test_Message_fromMsg() {
   let cmd = new Command(4, "foo");
   let resp = new Response(5, () => {});
   resp.error = "foo";
 
-  ok(Message.fromPacket(cmd.toPacket()) instanceof Command);
-  ok(Message.fromPacket(resp.toPacket()) instanceof Response);
-  Assert.throws(() => Message.fromPacket([3, 4, 5, 6]),
+  ok(Message.fromMsg(cmd.toMsg()) instanceof Command);
+  ok(Message.fromMsg(resp.toMsg()) instanceof Response);
+  Assert.throws(() => Message.fromMsg([3, 4, 5, 6]),
       /Unrecognised message type in packet/);
 
   run_next_test();
@@ -34,7 +34,7 @@ add_test(function test_Command() {
   deepEqual({bar: "baz"}, cmd.parameters);
   equal(null, cmd.onerror);
   equal(null, cmd.onresult);
-  equal(Message.Origin.Client, cmd.origin);
+  equal(MessageOrigin.Client, cmd.origin);
   equal(false, cmd.sent);
 
   run_next_test();
@@ -66,9 +66,9 @@ add_test(function test_Command_onresponse() {
 
 add_test(function test_Command_ctor() {
   let cmd = new Command(42, "bar", {bar: "baz"});
-  let msg = cmd.toPacket();
+  let msg = cmd.toMsg();
 
-  equal(Command.Type, msg[0]);
+  equal(Command.TYPE, msg[0]);
   equal(cmd.id, msg[1]);
   equal(cmd.name, msg[2]);
   equal(cmd.parameters, msg[3]);
@@ -78,35 +78,38 @@ add_test(function test_Command_ctor() {
 
 add_test(function test_Command_toString() {
   let cmd = new Command(42, "foo", {bar: "baz"});
-  equal(JSON.stringify(cmd.toPacket()), cmd.toString());
+  equal(`Command {id: ${cmd.id}, ` +
+      `name: ${JSON.stringify(cmd.name)}, ` +
+      `parameters: ${JSON.stringify(cmd.parameters)}}`,
+      cmd.toString());
 
   run_next_test();
 });
 
-add_test(function test_Command_fromPacket() {
+add_test(function test_Command_fromMsg() {
   let c1 = new Command(42, "foo", {bar: "baz"});
 
-  let msg = c1.toPacket();
-  let c2 = Command.fromPacket(msg);
+  let msg = c1.toMsg();
+  let c2 = Command.fromMsg(msg);
 
   equal(c1.id, c2.id);
   equal(c1.name, c2.name);
   equal(c1.parameters, c2.parameters);
 
-  Assert.throws(() => Command.fromPacket([null, 2, "foo", {}]));
-  Assert.throws(() => Command.fromPacket([1, 2, "foo", {}]));
-  Assert.throws(() => Command.fromPacket([0, null, "foo", {}]));
-  Assert.throws(() => Command.fromPacket([0, 2, null, {}]));
-  Assert.throws(() => Command.fromPacket([0, 2, "foo", false]));
+  Assert.throws(() => Command.fromMsg([null, 2, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([1, 2, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([0, null, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([0, 2, null, {}]));
+  Assert.throws(() => Command.fromMsg([0, 2, "foo", false]));
 
-  let nullParams = Command.fromPacket([0, 2, "foo", null]);
+  let nullParams = Command.fromMsg([0, 2, "foo", null]);
   equal("[object Object]", Object.prototype.toString.call(nullParams.parameters));
 
   run_next_test();
 });
 
-add_test(function test_Command_Type() {
-  equal(0, Command.Type);
+add_test(function test_Command_TYPE() {
+  equal(0, Command.TYPE);
   run_next_test();
 });
 
@@ -117,7 +120,7 @@ add_test(function test_Response_ctor() {
   equal(42, resp.id);
   equal(null, resp.error);
   ok("origin" in resp);
-  equal(Message.Origin.Server, resp.origin);
+  equal(MessageOrigin.Server, resp.origin);
   equal(false, resp.sent);
   equal(handler, resp.respHandler_);
 
@@ -196,11 +199,11 @@ add_test(function test_Response_sendError_wrapInternalError() {
   run_next_test();
 });
 
-add_test(function test_Response_toPacket() {
+add_test(function test_Response_toMsg() {
   let resp = new Response(42, () => {});
-  let msg = resp.toPacket();
+  let msg = resp.toMsg();
 
-  equal(Response.Type, msg[0]);
+  equal(Response.TYPE, msg[0]);
   equal(resp.id, msg[1]);
   equal(resp.error, msg[2]);
   equal(resp.body, msg[3]);
@@ -213,33 +216,36 @@ add_test(function test_Response_toString() {
   resp.error = "foo";
   resp.body = "bar";
 
-  equal(JSON.stringify(resp.toPacket()), resp.toString());
+  equal(`Response {id: ${resp.id}, ` +
+      `error: ${JSON.stringify(resp.error)}, ` +
+      `body: ${JSON.stringify(resp.body)}}`,
+      resp.toString());
 
   run_next_test();
 });
 
-add_test(function test_Response_fromPacket() {
+add_test(function test_Response_fromMsg() {
   let r1 = new Response(42, () => {});
   r1.error = "foo";
   r1.body = "bar";
 
-  let msg = r1.toPacket();
-  let r2 = Response.fromPacket(msg);
+  let msg = r1.toMsg();
+  let r2 = Response.fromMsg(msg);
 
   equal(r1.id, r2.id);
   equal(r1.error, r2.error);
   equal(r1.body, r2.body);
 
-  Assert.throws(() => Response.fromPacket([null, 2, "foo", {}]));
-  Assert.throws(() => Response.fromPacket([0, 2, "foo", {}]));
-  Assert.throws(() => Response.fromPacket([1, null, "foo", {}]));
-  Assert.throws(() => Response.fromPacket([1, 2, null, {}]));
-  Response.fromPacket([1, 2, "foo", null]);
+  Assert.throws(() => Response.fromMsg([null, 2, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([0, 2, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([1, null, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([1, 2, null, {}]));
+  Response.fromMsg([1, 2, "foo", null]);
 
   run_next_test();
 });
 
-add_test(function test_Response_Type() {
-  equal(1, Response.Type);
+add_test(function test_Response_TYPE() {
+  equal(1, Response.TYPE);
   run_next_test();
 });

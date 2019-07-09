@@ -38,6 +38,7 @@ public:
   virtual mozilla::ipc::IPCResult RecvWrite(const int32_t& offset,
                                             const uint32_t& newsize,
                                             const Buffer& data) override;
+  virtual mozilla::ipc::IPCResult RecvNPP_StreamAsFile(const nsCString& fname) override;
   virtual mozilla::ipc::IPCResult RecvNPP_DestroyStream(const NPReason& reason) override;
   virtual mozilla::ipc::IPCResult Recv__delete__() override;
 
@@ -51,6 +52,8 @@ public:
     if (s != &mStream)
       MOZ_CRASH("Incorrect stream data");
   }
+
+  NPError NPN_RequestRead(NPByteRange* aRangeList);
 
   void NotifyPending() {
     NS_ASSERTION(!mNotifyPending, "Pending twice?");
@@ -127,6 +130,8 @@ private:
     DESTROYED // NPP_DestroyStream delivered, NPP_URLNotify may still be pending
   } mDestroyPending;
   bool mNotifyPending;
+  bool mStreamAsFilePending;
+  nsCString mStreamAsFileName;
 
   // When NPP_Destroy is called for our instance (manager), this flag is set
   // cancels the stream and avoids sending StreamDestroyed.

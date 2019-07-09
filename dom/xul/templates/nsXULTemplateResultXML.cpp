@@ -24,7 +24,7 @@ nsXULTemplateResultXML::nsXULTemplateResultXML(nsXMLQuery* aQuery,
 {
     // If the node has an id, create the uri from it. Otherwise, there isn't
     // anything to identify the node with so just use a somewhat random number.
-    RefPtr<nsAtom> id = mNode->GetID();
+    nsCOMPtr<nsIAtom> id = mNode->GetID();
     if (id) {
       nsCOMPtr<nsIURI> uri = mNode->GetBaseURI();
       nsAutoCString spec;
@@ -103,7 +103,7 @@ nsXULTemplateResultXML::GetType(nsAString& aType)
 }
 
 NS_IMETHODIMP
-nsXULTemplateResultXML::GetBindingFor(nsAtom* aVar, nsAString& aValue)
+nsXULTemplateResultXML::GetBindingFor(nsIAtom* aVar, nsAString& aValue)
 {
     NS_ENSURE_ARG_POINTER(aVar);
 
@@ -138,7 +138,7 @@ nsXULTemplateResultXML::GetBindingFor(nsAtom* aVar, nsAString& aValue)
 }
 
 NS_IMETHODIMP
-nsXULTemplateResultXML::GetBindingObjectFor(nsAtom* aVar, nsISupports** aValue)
+nsXULTemplateResultXML::GetBindingObjectFor(nsIAtom* aVar, nsISupports** aValue)
 {
     NS_ENSURE_ARG_POINTER(aVar);
 

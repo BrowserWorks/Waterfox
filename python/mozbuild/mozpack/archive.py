@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import bz2
 import gzip
+import io
 import stat
 import tarfile
 
@@ -36,7 +37,7 @@ def create_tar_from_files(fp, files):
                 f = File(f)
 
             ti = tarfile.TarInfo(archive_path)
-            ti.mode = f.mode or 0o0644
+            ti.mode = f.mode or 0644
             ti.type = tarfile.REGTYPE
 
             if not ti.isreg():

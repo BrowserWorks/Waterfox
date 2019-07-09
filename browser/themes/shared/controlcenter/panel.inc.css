@@ -3,8 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
-%filter substitution
-%define identityPopupExpanderWidth 38px
 
 /* Hide all conditional elements by default. */
 :-moz-any([when-connection],[when-mixedcontent],[when-ciphers],[when-loginforms]) {
@@ -128,7 +126,7 @@
   margin: 0;
   padding: 4px 0;
   min-width: auto;
-  width: @identityPopupExpanderWidth@;
+  width: var(--identity-popup-expander-width);
   border-style: none;
   -moz-appearance: none;
   background: url("chrome://browser/skin/arrow-left.svg") center no-repeat;
@@ -196,7 +194,7 @@
   word-wrap: break-word;
   /* 1em + 2em + 24px is #identity-popup-security-content padding
    * 30em is .panel-mainview:not([panelid="PanelUI-popup"]) width */
-  max-width: calc(30rem - 3rem - 24px - @identityPopupExpanderWidth@);
+  max-width: calc(30rem - 3rem - 24px - var(--identity-popup-expander-width))
 }
 
 .identity-popup-warning-gray {
@@ -215,7 +213,11 @@
 }
 /* SECURITY */
 .identity-popup-connection-secure {
+%ifdef MOZ_PHOTON_THEME
   color: #058B00;
+%else
+  color: #418220;
+%endif
 }
 .identity-popup-connection-not-secure {
   color: #d74345;
@@ -235,17 +237,20 @@
 }
 #identity-popup[connection^=secure] #identity-popup-securityView,
 #identity-popup[connection^=secure] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/connection.svg);
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-secure);
   -moz-context-properties: fill;
+%ifdef MOZ_PHOTON_THEME
   fill: #12BC00;
+%else
+  fill: #4d9a26;
+%endif
 }
 /* Use [isbroken] to make sure we don't show a lock on an http page. See Bug 1192162. */
 #identity-popup[ciphers=weak] #identity-popup-securityView,
 #identity-popup[ciphers=weak] #identity-popup-security-content,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/connection.svg);
-  -moz-context-properties: fill, fill-opacity;
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-degraded);
 }
 
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-securityView,
@@ -259,7 +264,6 @@
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-security-content {
   background-image: url(chrome://browser/skin/controlcenter/mcb-disabled.svg);
-  -moz-context-properties: fill, fill-opacity;
 }
 
 #identity-popup[connection=extension] #identity-popup-securityView,

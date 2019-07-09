@@ -49,7 +49,7 @@ js::AtomToPrintableString(JSContext* cx, JSAtom* atom, JSAutoByteString* bytes)
     return bytes->encodeLatin1(cx, str);
 }
 
-#define DEFINE_PROTO_STRING(name,init,clasp) const char js_##name##_str[] = #name;
+#define DEFINE_PROTO_STRING(name,code,init,clasp) const char js_##name##_str[] = #name;
 JS_FOR_EACH_PROTOTYPE(DEFINE_PROTO_STRING)
 #undef DEFINE_PROTO_STRING
 
@@ -81,7 +81,7 @@ struct CommonNameInfo
 bool
 JSRuntime::initializeAtoms(JSContext* cx)
 {
-    atoms_ = js_new<AtomSet>();
+    atoms_ = cx->new_<AtomSet>();
     if (!atoms_ || !atoms_->init(JS_STRING_HASH_COUNT))
         return false;
 
@@ -97,7 +97,7 @@ JSRuntime::initializeAtoms(JSContext* cx)
         return true;
     }
 
-    staticStrings = js_new<StaticStrings>();
+    staticStrings = cx->new_<StaticStrings>();
     if (!staticStrings || !staticStrings->init(cx))
         return false;
 
@@ -105,7 +105,7 @@ JSRuntime::initializeAtoms(JSContext* cx)
 #define COMMON_NAME_INFO(idpart, id, text) { js_##idpart##_str, sizeof(text) - 1 },
         FOR_EACH_COMMON_PROPERTYNAME(COMMON_NAME_INFO)
 #undef COMMON_NAME_INFO
-#define COMMON_NAME_INFO(name, init, clasp) { js_##name##_str, sizeof(#name) - 1 },
+#define COMMON_NAME_INFO(name, code, init, clasp) { js_##name##_str, sizeof(#name) - 1 },
         JS_FOR_EACH_PROTOTYPE(COMMON_NAME_INFO)
 #undef COMMON_NAME_INFO
 #define COMMON_NAME_INFO(name) { #name, sizeof(#name) - 1 },
@@ -116,7 +116,7 @@ JSRuntime::initializeAtoms(JSContext* cx)
 #undef COMMON_NAME_INFO
     };
 
-    commonNames = js_new<JSAtomState>();
+    commonNames = cx->new_<JSAtomState>();
     if (!commonNames)
         return false;
 
@@ -132,7 +132,7 @@ JSRuntime::initializeAtoms(JSContext* cx)
     emptyString = commonNames->empty;
 
     // Create the well-known symbols.
-    wellKnownSymbols = js_new<WellKnownSymbols>();
+    wellKnownSymbols = cx->new_<WellKnownSymbols>();
     if (!wellKnownSymbols)
         return false;
 
@@ -242,9 +242,9 @@ JSRuntime::transformToPermanentAtoms(JSContext* cx)
     // of the atoms table into permanentAtoms and mark each as permanent.
 
     MOZ_ASSERT(!permanentAtoms);
-    permanentAtoms = js_new<FrozenAtomSet>(atoms_);   // takes ownership of atoms_
+    permanentAtoms = cx->new_<FrozenAtomSet>(atoms_);   // takes ownership of atoms_
 
-    atoms_ = js_new<AtomSet>();
+    atoms_ = cx->new_<AtomSet>();
     if (!atoms_ || !atoms_->init(JS_STRING_HASH_COUNT))
         return false;
 

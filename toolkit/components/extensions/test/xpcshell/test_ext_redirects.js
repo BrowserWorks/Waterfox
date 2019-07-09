@@ -5,6 +5,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "TestUtils",
                                   "resource://testing-common/TestUtils.jsm");
 const XMLHttpRequest = Components.Constructor("@mozilla.org/xmlextras/xmlhttprequest;1", "nsIXMLHttpRequest");
 
+// nsIWebRequestListener is a nsIThreadRetargetableStreamListener that handles
+// forwarding of nsIRequestObserver for JS consumers.  It does nothing more
+// than that.
+let WebRequestListener = Components.Constructor("@mozilla.org/webextensions/webRequestListener;1",
+                                                "nsIWebRequestListener", "init");
+
 const server = createHttpServer();
 const gServerUrl = `http://localhost:${server.identity.primaryPort}`;
 
@@ -21,25 +27,20 @@ server.registerPathHandler("/dummy", (request, response) => {
 
 function onStopListener(channel) {
   return new Promise(resolve => {
-    let orig = channel.QueryInterface(Ci.nsITraceableChannel).setNewListener({
+    new WebRequestListener({
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIRequestObserver,
                                              Ci.nsIStreamListener]),
       getFinalURI(request) {
         let {loadInfo} = request;
         return (loadInfo && loadInfo.resultPrincipalURI) || request.originalURI;
       },
-      onDataAvailable(...args) {
-        orig.onDataAvailable(...args);
-      },
       onStartRequest(request, context) {
-        orig.onStartRequest(request, context);
       },
       onStopRequest(request, context, statusCode) {
-        orig.onStopRequest(request, context, statusCode);
         let URI = this.getFinalURI(request.QueryInterface(Ci.nsIChannel));
         resolve(URI && URI.spec);
       },
-    });
+    }, channel);
   });
 }
 
@@ -147,7 +148,7 @@ add_task(async function test_content_redirect_to_non_accessible_resource() {
   let watcher = onModifyListener(url).then(channel => {
     return onStopListener(channel);
   });
-  let contentPage = await ExtensionTestUtils.loadContentPage(url, {redirectUrl: "about:blank"});
+  let contentPage = await ExtensionTestUtils.loadContentPage(url, undefined, "about:blank");
   equal(contentPage.browser.documentURI.spec, "about:blank", `expected no redirect`);
   equal(await watcher, url, "expected no redirect");
   await contentPage.close();
@@ -160,7 +161,7 @@ add_task(async function test_content_302_redirect_to_extension() {
   await extension.startup();
   let redirectUrl = await extension.awaitMessage("redirectURI");
   let url = `${gServerUrl}/redirect?redirect_uri=${redirectUrl}`;
-  let contentPage = await ExtensionTestUtils.loadContentPage(url, {redirectUrl});
+  let contentPage = await ExtensionTestUtils.loadContentPage(url, undefined, redirectUrl);
   equal(contentPage.browser.documentURI.spec, redirectUrl, `expected redirect`);
   await contentPage.close();
   await extension.unload();
@@ -174,7 +175,7 @@ add_task(async function test_content_channel_redirect_to_extension() {
   let redirectUrl = await extension.awaitMessage("redirectURI");
   let url = `${gServerUrl}/dummy?r=${Math.random()}`;
   onModifyListener(url, redirectUrl);
-  let contentPage = await ExtensionTestUtils.loadContentPage(url, {redirectUrl});
+  let contentPage = await ExtensionTestUtils.loadContentPage(url, undefined, redirectUrl);
   equal(contentPage.browser.documentURI.spec, redirectUrl, `expected redirect`);
   await contentPage.close();
   await extension.unload();
@@ -204,7 +205,7 @@ add_task(async function test_extension_302_redirect() {
   let redirectUrl = await extension.awaitMessage("redirectURI");
   let completed = extension.awaitFinish("requestCompleted");
   let url = `${gServerUrl}/redirect?r=${Math.random()}&redirect_uri=${redirectUrl}`;
-  let contentPage = await ExtensionTestUtils.loadContentPage(url, {redirectUrl});
+  let contentPage = await ExtensionTestUtils.loadContentPage(url, undefined, redirectUrl);
   equal(contentPage.browser.documentURI.spec, redirectUrl, `expected content redirect`);
   await completed;
   await contentPage.close();
@@ -238,7 +239,7 @@ add_task(async function test_extension_redirect() {
   let redirectUrl = await extension.awaitMessage("redirectURI");
   let completed = extension.awaitFinish("requestCompleted");
   let url = `${gServerUrl}/dummy?r=${Math.random()}`;
-  let contentPage = await ExtensionTestUtils.loadContentPage(url, {redirectUrl});
+  let contentPage = await ExtensionTestUtils.loadContentPage(url, undefined, redirectUrl);
   equal(contentPage.browser.documentURI.spec, redirectUrl, `expected redirect`);
   await completed;
   await contentPage.close();

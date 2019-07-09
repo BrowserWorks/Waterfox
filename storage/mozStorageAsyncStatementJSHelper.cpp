@@ -33,6 +33,7 @@ AsyncStatementJSHelper::getParams(AsyncStatement *aStatement,
                                   JS::Value *_params)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  nsresult rv;
 
 #ifdef DEBUG
   int32_t state;
@@ -41,32 +42,32 @@ AsyncStatementJSHelper::getParams(AsyncStatement *aStatement,
                "Invalid state to get the params object - all calls will fail!");
 #endif
 
-  JS::RootedObject scope(aCtx, aScopeObj);
-
   if (!aStatement->mStatementParamsHolder) {
-    dom::GlobalObject global(aCtx, scope);
-    if (global.Failed()) {
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(global.GetAsSupports());
-
-    RefPtr<AsyncStatementParams> params(new AsyncStatementParams(window, aStatement));
+    nsCOMPtr<mozIStorageStatementParams> params =
+      new AsyncStatementParams(aStatement);
     NS_ENSURE_TRUE(params, NS_ERROR_OUT_OF_MEMORY);
 
-    RefPtr<AsyncStatementParamsHolder> paramsHolder = new AsyncStatementParamsHolder(params);
-    NS_ENSURE_TRUE(paramsHolder, NS_ERROR_OUT_OF_MEMORY);
-
+    JS::RootedObject scope(aCtx, aScopeObj);
+    nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
+    nsCOMPtr<nsIXPConnect> xpc(Service::getXPConnect());
+    rv = xpc->WrapNativeHolder(
+      aCtx,
+      ::JS_GetGlobalForObject(aCtx, scope),
+      params,
+      NS_GET_IID(mozIStorageStatementParams),
+      getter_AddRefs(holder)
+    );
+    NS_ENSURE_SUCCESS(rv, rv);
+    RefPtr<AsyncStatementParamsHolder> paramsHolder =
+      new AsyncStatementParamsHolder(holder);
     aStatement->mStatementParamsHolder =
-      new nsMainThreadPtrHolder<AsyncStatementParamsHolder>(
-        "Statement::mStatementParamsHolder", paramsHolder);
+      new nsMainThreadPtrHolder<nsIXPConnectJSObjectHolder>(
+        "AsyncStatement::mStatementParamsHolder", paramsHolder);
   }
 
-  RefPtr<AsyncStatementParams> params(aStatement->mStatementParamsHolder->Get());
-  JSObject* obj = params->WrapObject(aCtx, nullptr);
-  if (!obj) {
-    return NS_ERROR_UNEXPECTED;
-  }
+  JS::Rooted<JSObject*> obj(aCtx);
+  obj = aStatement->mStatementParamsHolder->GetJSObject();
+  NS_ENSURE_STATE(obj);
 
   _params->setObject(*obj);
   return NS_OK;
@@ -84,17 +85,17 @@ NS_INTERFACE_MAP_END
 
 #define XPC_MAP_CLASSNAME         AsyncStatementJSHelper
 #define XPC_MAP_QUOTED_CLASSNAME "AsyncStatementJSHelper"
-#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_GETPROPERTY | \
                        XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h"
 
 NS_IMETHODIMP
-AsyncStatementJSHelper::Resolve(nsIXPConnectWrappedNative *aWrapper,
-                                JSContext *aCtx,
-                                JSObject *aScopeObj,
-                                jsid aId,
-                                bool *resolvedp,
-                                bool *_retval)
+AsyncStatementJSHelper::GetProperty(nsIXPConnectWrappedNative *aWrapper,
+                                    JSContext *aCtx,
+                                    JSObject *aScopeObj,
+                                    jsid aId,
+                                    JS::Value *_result,
+                                    bool *_retval)
 {
   if (!JSID_IS_STRING(aId))
     return NS_OK;
@@ -114,14 +115,8 @@ AsyncStatementJSHelper::Resolve(nsIXPConnectWrappedNative *aWrapper,
   }
 #endif
 
-  if (::JS_FlatStringEqualsAscii(JSID_TO_FLAT_STRING(id), "params")) {
-    JS::RootedValue val(aCtx);
-    nsresult rv = getParams(stmt, aCtx, scope, val.address());
-    NS_ENSURE_SUCCESS(rv, rv);
-    *_retval = ::JS_DefinePropertyById(aCtx, scope, id, val, JSPROP_RESOLVING);
-    *resolvedp = true;
-    return NS_OK;
-  }
+  if (::JS_FlatStringEqualsAscii(JSID_TO_FLAT_STRING(id), "params"))
+    return getParams(stmt, aCtx, scope, _result);
 
   return NS_OK;
 }
@@ -129,14 +124,30 @@ AsyncStatementJSHelper::Resolve(nsIXPConnectWrappedNative *aWrapper,
 ////////////////////////////////////////////////////////////////////////////////
 //// AsyncStatementParamsHolder
 
-NS_IMPL_ISUPPORTS0(AsyncStatementParamsHolder);
+NS_IMPL_ISUPPORTS(AsyncStatementParamsHolder, nsIXPConnectJSObjectHolder);
+
+JSObject*
+AsyncStatementParamsHolder::GetJSObject()
+{
+  return mHolder->GetJSObject();
+}
+
+AsyncStatementParamsHolder::AsyncStatementParamsHolder(nsIXPConnectJSObjectHolder* aHolder)
+  : mHolder(aHolder)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mHolder);
+}
 
 AsyncStatementParamsHolder::~AsyncStatementParamsHolder()
 {
   MOZ_ASSERT(NS_IsMainThread());
   // We are considered dead at this point, so any wrappers for row or params
   // need to lose their reference to the statement.
-  mParams->mStatement = nullptr;
+  nsCOMPtr<nsIXPConnectWrappedNative> wrapper = do_QueryInterface(mHolder);
+  nsCOMPtr<mozIStorageStatementParams> iObj = do_QueryWrappedNative(wrapper);
+  AsyncStatementParams *obj = static_cast<AsyncStatementParams *>(iObj.get());
+  obj->mStatement = nullptr;
 }
 
 } // namespace storage

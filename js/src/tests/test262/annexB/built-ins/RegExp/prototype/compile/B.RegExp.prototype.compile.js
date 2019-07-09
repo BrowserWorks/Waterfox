@@ -9,10 +9,8 @@ description: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(RegExp.prototype, "compile", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyWritable(RegExp.prototype, "compile");
+verifyNotEnumerable(RegExp.prototype, "compile");
+verifyConfigurable(RegExp.prototype, "compile");
 
 reportCompare(0, 0);

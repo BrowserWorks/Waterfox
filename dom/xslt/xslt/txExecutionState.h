@@ -56,16 +56,15 @@ class txLoadedDocumentsHash : public nsTHashtable<txLoadedDocumentEntry>
 {
 public:
     txLoadedDocumentsHash()
-        : nsTHashtable<txLoadedDocumentEntry>(4),
-          mSourceDocument(nullptr)
+        : nsTHashtable<txLoadedDocumentEntry>(4)
     {
     }
     ~txLoadedDocumentsHash();
-    MOZ_MUST_USE nsresult init(txXPathNode* aSourceDocument);
+    MOZ_MUST_USE nsresult init(const txXPathNode& aSource);
 
 private:
     friend class txExecutionState;
-    txXPathNode* mSourceDocument;
+    nsAutoPtr<txXPathNode> mSourceDocument;
 };
 
 
@@ -87,8 +86,8 @@ public:
     public:
         txStylesheet::ImportFrame* mFrame;
         int32_t mModeNsId;
-        RefPtr<nsAtom> mModeLocalName;
-        RefPtr<txParameterMap> mParams;
+        nsCOMPtr<nsIAtom> mModeLocalName;
+        txVariableMap* mParams;
     };
 
     // Stack functions
@@ -108,10 +107,10 @@ public:
     txAXMLEventHandler* popResultHandler();
     void pushTemplateRule(txStylesheet::ImportFrame* aFrame,
                           const txExpandedName& aMode,
-                          txParameterMap* aParams);
+                          txVariableMap* aParams);
     void popTemplateRule();
-    void pushParamMap(txParameterMap* aParams);
-    already_AddRefed<txParameterMap> popParamMap();
+    nsresult pushParamMap(txVariableMap* aParams);
+    txVariableMap* popParamMap();
 
     // state-getting functions
     txIEvalContext* getEvalContext();
@@ -145,7 +144,7 @@ public:
     nsAutoPtr<txAXMLEventHandler> mObsoleteHandler;
     txAOutputHandlerFactory* mOutputHandlerFactory;
 
-    RefPtr<txParameterMap> mTemplateParams;
+    nsAutoPtr<txVariableMap> mTemplateParams;
 
     RefPtr<txStylesheet> mStylesheet;
 
@@ -155,7 +154,7 @@ private:
     txStack mEvalContextStack;
     nsTArray<bool> mBoolStack;
     txStack mResultHandlerStack;
-    nsTArray<RefPtr<txParameterMap>> mParamStack;
+    txStack mParamStack;
     txInstruction* mNextInstruction;
     txVariableMap* mLocalVariables;
     txVariableMap mGlobalVariableValues;

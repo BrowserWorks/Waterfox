@@ -11,10 +11,8 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype, "fontcolor", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyNotEnumerable(String.prototype, 'fontcolor');
+verifyWritable(String.prototype, 'fontcolor');
+verifyConfigurable(String.prototype, 'fontcolor');
 
 reportCompare(0, 0);

@@ -99,7 +99,6 @@ config = {
                 "--log-errorsummary=%(error_summary_file)s",
                 "--screenshot-on-fail",
                 "--cleanup-crashes",
-                "--marionette-startup-timeout=180",
             ],
             "run_filename": "runtests.py",
             "testsdir": "mochitest"
@@ -131,7 +130,6 @@ config = {
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--cleanup-crashes",
-                "--marionette-startup-timeout=180",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -180,7 +178,12 @@ config = {
         "mochitest-devtools-chrome": ["--flavor=browser", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--flavor=browser", "--subsuite=devtools", "--chunk-by-runtime"],
         "mochitest-metro-chrome": ["--flavor=browser", "--metro-immersive"],
+        "jetpack-package": ["--flavor=jetpack-package"],
+        "jetpack-package-clipboard": ["--flavor=jetpack-package", "--subsuite=clipboard"],
+        "jetpack-addon": ["--flavor=jetpack-addon"],
         "a11y": ["--flavor=a11y"],
+        "plain-style": ["--failure-pattern-file=stylo-failures.md", "layout/style/test", "dom/smil/test", "dom/animation/test"],
+        "chrome-style": ["--flavor=chrome", "--failure-pattern-file=../stylo-failures.md", "layout/style/test/chrome", "dom/animation/test"],
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -257,20 +260,10 @@ config = {
                 os.path.join(os.getcwd(),
                     'mozharness', 'external_tools', 'machine-configuration.json')
             ],
-            'architectures': ['32bit', '64bit'],
+            'architectures': ['32bit'],
             'halt_on_failure': True,
             'enabled': ADJUST_MOUSE_AND_SCREEN
-        },
-        {
-            'name': 'hide win 10 taskbar',
-            'cmd': [
-                'powershell', '-command',
-                '"&{$p=\'HKCU:SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3\';$v=(Get-ItemProperty -Path $p).Settings;$v[8]=3;&Set-ItemProperty -Path $p -Name Settings -Value $v;&Stop-Process -ProcessName explorer}"'
-            ],
-            'architectures': ['32bit', '64bit'],
-            'halt_on_failure': True,
-            'enabled': os.environ.get('ProgramFiles(x86)', False)
-        },
+        }
     ],
     "vcs_output_timeout": 1000,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",

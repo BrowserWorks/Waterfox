@@ -85,6 +85,8 @@ MapGIOResult(gint code)
     default:
       return NS_ERROR_FAILURE;
   }
+
+  return NS_ERROR_FAILURE;
 }
 
 static nsresult
@@ -826,17 +828,17 @@ mount_operation_ask_password (GMountOperation   *mount_op,
       if (!realm.IsEmpty()) {
         const char16_t *strings[] = { realm.get(), dispHost.get() };
         bundle->FormatStringFromName("EnterLoginForRealm3",
-                                     strings, 2, nsmessage);
+                                     strings, 2, getter_Copies(nsmessage));
       } else {
         const char16_t *strings[] = { dispHost.get() };
         bundle->FormatStringFromName("EnterUserPasswordFor2",
-                                     strings, 1, nsmessage);
+                                     strings, 1, getter_Copies(nsmessage));
       }
     } else {
       NS_ConvertUTF8toUTF16 userName(default_user);
       const char16_t *strings[] = { userName.get(), dispHost.get() };
       bundle->FormatStringFromName("EnterPasswordFor",
-                                   strings, 2, nsmessage);
+                                   strings, 2, getter_Copies(nsmessage));
     }
   } else {
     g_warning("Unknown mount operation request (flags: %x)", flags);
@@ -961,7 +963,7 @@ nsGIOProtocolHandler::IsSupportedProtocol(const nsCString &aSpec)
 NS_IMETHODIMP
 nsGIOProtocolHandler::GetScheme(nsACString &aScheme)
 {
-  aScheme.AssignLiteral(MOZ_GIO_SCHEME);
+  aScheme.Assign(MOZ_GIO_SCHEME);
   return NS_OK;
 }
 

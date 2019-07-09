@@ -110,12 +110,13 @@ GamepadManager::StopMonitoring()
   for (uint32_t i = 0; i < mChannelChildren.Length(); ++i) {
     mChannelChildren[i]->SendGamepadListenerRemoved();
   }
+  mChannelChildren.Clear();
+  mGamepads.Clear();
+
   if (gfx::VRManagerChild::IsCreated()) {
     gfx::VRManagerChild* vm = gfx::VRManagerChild::Get();
     vm->SendControllerListenerRemoved();
   }
-  mChannelChildren.Clear();
-  mGamepads.Clear();
 }
 
 void
@@ -333,6 +334,7 @@ GamepadManager::NewConnectionEvent(uint32_t aIndex, bool aConnected)
   // Hold on to listeners in a separate array because firing events
   // can mutate the mListeners array.
   nsTArray<RefPtr<nsGlobalWindow>> listeners(mListeners);
+  MOZ_ASSERT(!listeners.IsEmpty());
 
   if (aConnected) {
     for (uint32_t i = 0; i < listeners.Length(); i++) {
@@ -530,6 +532,7 @@ GamepadManager::Update(const GamepadChangeEvent& aEvent)
   // Hold on to listeners in a separate array because firing events
   // can mutate the mListeners array.
   nsTArray<RefPtr<nsGlobalWindow>> listeners(mListeners);
+  MOZ_ASSERT(!listeners.IsEmpty());
 
   for (uint32_t i = 0; i < listeners.Length(); i++) {
     MOZ_ASSERT(listeners[i]->IsInnerWindow());

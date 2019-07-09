@@ -28,7 +28,6 @@
 #include "nsITooltipListener.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/TabContext.h"
-#include "mozilla/dom/CoalescedMouseData.h"
 #include "mozilla/dom/CoalescedWheelData.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EventDispatcher.h"
@@ -41,16 +40,12 @@
 #include "AudioChannelService.h"
 #include "PuppetWidget.h"
 #include "mozilla/layers/GeckoContentController.h"
-#include "nsDeque.h"
 #include "nsISHistoryListener.h"
 #include "nsIPartialSHistoryListener.h"
 
 class nsIDOMWindowUtils;
 class nsIHttpChannel;
 class nsISerialEventTarget;
-
-template<typename T> class nsTHashtable;
-template<typename T> class nsPtrHashKey;
 
 namespace mozilla {
 class AbstractThread;
@@ -64,7 +59,6 @@ class APZEventState;
 class AsyncDragMetrics;
 class IAPZCTreeManager;
 class ImageCompositeNotification;
-class PCompositorBridgeChild;
 } // namespace layers
 
 namespace widget {
@@ -76,7 +70,6 @@ namespace dom {
 class TabChild;
 class TabGroup;
 class ClonedMessageData;
-class CoalescedMouseData;
 class CoalescedWheelData;
 
 class TabChildGlobal : public DOMEventTargetHelper,
@@ -276,7 +269,6 @@ class TabChild final : public TabChildBase,
                        public mozilla::ipc::IShmemAllocator
 {
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
-  typedef mozilla::dom::CoalescedMouseData CoalescedMouseData;
   typedef mozilla::dom::CoalescedWheelData CoalescedWheelData;
   typedef mozilla::layout::RenderFrameChild RenderFrameChild;
   typedef mozilla::layers::APZEventState APZEventState;
@@ -378,6 +370,8 @@ public:
 
   mozilla::ipc::IPCResult RecvDeactivate();
 
+  mozilla::ipc::IPCResult RecvParentActivated(const bool& aActivated);
+
   virtual mozilla::ipc::IPCResult RecvMouseEvent(const nsString& aType,
                                                  const float& aX,
                                                  const float& aY,
@@ -390,26 +384,13 @@ public:
                                                          const ScrollableLayerGuid& aGuid,
                                                          const uint64_t& aInputBlockId) override;
 
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityRealMouseMoveEvent(const mozilla::WidgetMouseEvent& aEvent,
-                                       const ScrollableLayerGuid& aGuid,
-                                       const uint64_t& aInputBlockId) override;
-
   virtual mozilla::ipc::IPCResult RecvSynthMouseMoveEvent(const mozilla::WidgetMouseEvent& aEvent,
                                                           const ScrollableLayerGuid& aGuid,
                                                           const uint64_t& aInputBlockId) override;
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPrioritySynthMouseMoveEvent(const mozilla::WidgetMouseEvent& aEvent,
-                                        const ScrollableLayerGuid& aGuid,
-                                        const uint64_t& aInputBlockId) override;
 
   virtual mozilla::ipc::IPCResult RecvRealMouseButtonEvent(const mozilla::WidgetMouseEvent& aEvent,
                                                            const ScrollableLayerGuid& aGuid,
                                                            const uint64_t& aInputBlockId) override;
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityRealMouseButtonEvent(const mozilla::WidgetMouseEvent& aEvent,
-                                         const ScrollableLayerGuid& aGuid,
-                                         const uint64_t& aInputBlockId) override;
 
   virtual mozilla::ipc::IPCResult RecvRealDragEvent(const WidgetDragEvent& aEvent,
                                                     const uint32_t& aDragAction,
@@ -418,17 +399,9 @@ public:
   virtual mozilla::ipc::IPCResult
   RecvRealKeyEvent(const mozilla::WidgetKeyboardEvent& aEvent) override;
 
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityRealKeyEvent(const mozilla::WidgetKeyboardEvent& aEvent) override;
-
   virtual mozilla::ipc::IPCResult RecvMouseWheelEvent(const mozilla::WidgetWheelEvent& aEvent,
                                                       const ScrollableLayerGuid& aGuid,
                                                       const uint64_t& aInputBlockId) override;
-
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityMouseWheelEvent(const mozilla::WidgetWheelEvent& aEvent,
-                                    const ScrollableLayerGuid& aGuid,
-                                    const uint64_t& aInputBlockId) override;
 
   virtual mozilla::ipc::IPCResult RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
                                                      const ScrollableLayerGuid& aGuid,
@@ -436,22 +409,10 @@ public:
                                                      const nsEventStatus& aApzResponse) override;
 
   virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityRealTouchEvent(const WidgetTouchEvent& aEvent,
-                                   const ScrollableLayerGuid& aGuid,
-                                   const uint64_t& aInputBlockId,
-                                   const nsEventStatus& aApzResponse) override;
-
-  virtual mozilla::ipc::IPCResult
   RecvRealTouchMoveEvent(const WidgetTouchEvent& aEvent,
                          const ScrollableLayerGuid& aGuid,
                          const uint64_t& aInputBlockId,
                          const nsEventStatus& aApzResponse) override;
-
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityRealTouchMoveEvent(const WidgetTouchEvent& aEvent,
-                                       const ScrollableLayerGuid& aGuid,
-                                       const uint64_t& aInputBlockId,
-                                       const nsEventStatus& aApzResponse) override;
 
   virtual mozilla::ipc::IPCResult RecvKeyEvent(const nsString& aType,
                                                const int32_t& aKeyCode,
@@ -468,15 +429,7 @@ public:
   RecvCompositionEvent(const mozilla::WidgetCompositionEvent& aEvent) override;
 
   virtual mozilla::ipc::IPCResult
-  RecvNormalPriorityCompositionEvent(
-    const mozilla::WidgetCompositionEvent& aEvent) override;
-
-  virtual mozilla::ipc::IPCResult
   RecvSelectionEvent(const mozilla::WidgetSelectionEvent& aEvent) override;
-
-  virtual mozilla::ipc::IPCResult
-  RecvNormalPrioritySelectionEvent(
-    const mozilla::WidgetSelectionEvent& aEvent) override;
 
   virtual mozilla::ipc::IPCResult
   RecvPasteTransferable(const IPCDataTransfer& aDataTransfer,
@@ -493,6 +446,7 @@ public:
                                                    InfallibleTArray<CpowEntry>&& aCpows,
                                                    const IPC::Principal& aPrincipal,
                                                    const ClonedMessageData& aData) override;
+
   virtual mozilla::ipc::IPCResult
   RecvSwappedWithOtherRemoteLoader(const IPCTabContext& aContext) override;
 
@@ -611,7 +565,7 @@ public:
   static TabChild* GetFrom(uint64_t aLayersId);
 
   uint64_t LayersId() { return mLayersId; }
-  Maybe<bool> IsLayersConnected() { return mLayersConnected; }
+  bool IsLayersConnected() { return mLayersConnected; }
 
   void DidComposite(uint64_t aTransactionId,
                     const TimeStamp& aCompositeStart,
@@ -704,14 +658,6 @@ public:
                                         const Modifiers& aModifiers,
                                         const ScrollableLayerGuid& aGuid,
                                         const uint64_t& aInputBlockId) override;
-
-  mozilla::ipc::IPCResult
-  RecvNormalPriorityHandleTap(const layers::GeckoContentController::TapType& aType,
-                              const LayoutDevicePoint& aPoint,
-                              const Modifiers& aModifiers,
-                              const ScrollableLayerGuid& aGuid,
-                              const uint64_t& aInputBlockId) override;
-
   void SetAllowedTouchBehavior(uint64_t aInputBlockId,
                                const nsTArray<TouchBehaviorFlags>& aFlags) const;
 
@@ -762,34 +708,6 @@ public:
     return mWidgetNativeData;
   }
 
-  // Prepare to dispatch all coalesced mousemove events. We'll move all data
-  // in mCoalescedMouseData to a nsDeque; then we start processing them. We
-  // can't fetch the coalesced event one by one and dispatch it because we may
-  // reentry the event loop and access to the same hashtable. It's called when
-  // dispatching some mouse events other than mousemove.
-  void FlushAllCoalescedMouseData();
-  void ProcessPendingCoalescedMouseDataAndDispatchEvents();
-
-  void HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
-                                  const ScrollableLayerGuid& aGuid,
-                                  const uint64_t& aInputBlockId);
-
-  static bool HasActiveTabs()
-  {
-    return sActiveTabs && !sActiveTabs->IsEmpty();
-  }
-
-  // Returns the set of TabChilds that are currently in the foreground. There
-  // can be multiple foreground TabChilds if Firefox has multiple windows
-  // open. There can also be zero foreground TabChilds if the foreground tab is
-  // in a different content process. Note that this function should only be
-  // called if HasActiveTabs() returns true.
-  static const nsTHashtable<nsPtrHashKey<TabChild>>& GetActiveTabs()
-  {
-    MOZ_ASSERT(HasActiveTabs());
-    return *sActiveTabs;
-  }
-
 protected:
   virtual ~TabChild();
 
@@ -810,12 +728,13 @@ protected:
 
   virtual mozilla::ipc::IPCResult RecvSuppressDisplayport(const bool& aEnabled) override;
 
-  virtual mozilla::ipc::IPCResult RecvParentActivated(const bool& aActivated) override;
-
   virtual mozilla::ipc::IPCResult RecvSetKeyboardIndicators(const UIStateChangeType& aShowAccelerators,
                                                             const UIStateChangeType& aShowFocusRings) override;
 
   virtual mozilla::ipc::IPCResult RecvStopIMEStateManagement() override;
+
+  virtual mozilla::ipc::IPCResult RecvMenuKeyboardListenerInstalled(
+    const bool& aInstalled) override;
 
   virtual mozilla::ipc::IPCResult RecvNotifyAttachGroupedSHistory(const uint32_t& aOffset) override;
 
@@ -895,8 +814,6 @@ private:
   void InternalSetDocShellIsActive(bool aIsActive,
                                    bool aPreserveLayers);
 
-  bool CreateRemoteLayerManager(mozilla::layers::PCompositorBridgeChild* aCompositorChild);
-
   class DelayedDeleteRunnable;
 
   TextureFactoryIdentifier mTextureFactoryIdentifier;
@@ -914,7 +831,7 @@ private:
   int64_t mBeforeUnloadListeners;
   CSSRect mUnscaledOuterRect;
   nscolor mLastBackgroundColor;
-  Maybe<bool> mLayersConnected;
+  bool mLayersConnected;
   bool mDidFakeShow;
   bool mNotified;
   bool mTriedBrowserInit;
@@ -958,14 +875,7 @@ private:
   // takes time, some repeated events can be skipped to not flood child process.
   mozilla::TimeStamp mLastWheelProcessedTimeFromParent;
   mozilla::TimeDuration mLastWheelProcessingDuration;
-
-  // Hash table to track coalesced mousemove events for different pointers.
-  nsClassHashtable<nsUint32HashKey, CoalescedMouseData> mCoalescedMouseData;
-
-  nsDeque mToBeDispatchedMouseData;
-
   CoalescedWheelData mCoalescedWheelData;
-  RefPtr<CoalescedMouseMoveFlusher> mCoalescedMouseEventFlusher;
 
   RefPtr<layers::IAPZCTreeManager> mApzcTreeManager;
 
@@ -980,7 +890,6 @@ private:
 #if defined(ACCESSIBILITY)
   PDocAccessibleChild* mTopLevelDocAccessibleChild;
 #endif
-  bool mCoalesceMouseMoveEvents;
 
   bool mPendingDocShellIsActive;
   bool mPendingDocShellPreserveLayers;
@@ -988,12 +897,6 @@ private:
   uint32_t mPendingDocShellBlockers;
 
   WindowsHandle mWidgetNativeData;
-
-  // This state is used to keep track of the current active tabs (the ones in
-  // the foreground). There may be more than one if there are multiple browser
-  // windows open. There may be none if this process does not host any
-  // foreground tabs.
-  static nsTHashtable<nsPtrHashKey<TabChild>>* sActiveTabs;
 
   DISALLOW_EVIL_CONSTRUCTORS(TabChild);
 };

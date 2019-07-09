@@ -174,7 +174,7 @@ class ScopedXPCOM : public nsIDirectoryServiceProvider2
 #ifdef XP_MACOSX
       nsAutoCString leafName;
       mGREBinD->GetNativeLeafName(leafName);
-      if (leafName.EqualsLiteral("Resources")) {
+      if (leafName.Equals("Resources")) {
         mGREBinD->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
       }
 #endif

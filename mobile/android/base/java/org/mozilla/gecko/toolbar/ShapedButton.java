@@ -31,11 +31,7 @@ public class ShapedButton extends ThemedImageButton
     protected final CanvasDelegate mCanvasDelegate;
 
     public ShapedButton(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public ShapedButton(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
+        super(context, attrs);
 
         // Path is clipped.
         mPath = new Path();

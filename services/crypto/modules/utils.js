@@ -113,15 +113,6 @@ this.CryptoUtils = {
     return CommonUtils.bytesAsHex(CryptoUtils.digestUTF8(message, hasher));
   },
 
-  sha256Base64(message) {
-    let data = this._utf8Converter.convertToByteArray(message, {});
-    let hasher = Cc["@mozilla.org/security/hash;1"]
-                 .createInstance(Ci.nsICryptoHash);
-    hasher.init(hasher.SHA256);
-    hasher.update(data, data.length);
-    return hasher.finish(true);
-  },
-
   /**
    * Produce an HMAC key object from a key string.
    */
@@ -328,7 +319,7 @@ this.CryptoUtils = {
     let requestString = ts.toString(10) + "\n" +
                         nonce + "\n" +
                         usedMethod + "\n" +
-                        uri.pathQueryRef + "\n" +
+                        uri.path + "\n" +
                         host + "\n" +
                         port + "\n" +
                         ext + "\n";
@@ -482,7 +473,7 @@ this.CryptoUtils = {
       ts,
       nonce: options.nonce || btoa(CryptoUtils.generateRandomBytes(8)),
       method: method.toUpperCase(),
-      resource: uri.pathQueryRef, // This includes both path and search/queryarg.
+      resource: uri.path, // This includes both path and search/queryarg.
       host: uri.asciiHost.toLowerCase(), // This includes punycoding.
       port: port.toString(10),
       hash: options.hash,

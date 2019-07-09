@@ -40,8 +40,6 @@ class WrapperHandler(object):
 
     __meta__ = abc.ABCMeta
 
-    headers = []
-
     def __init__(self, base_path=None, url_base="/"):
         self.base_path = base_path
         self.url_base = url_base
@@ -51,9 +49,6 @@ class WrapperHandler(object):
         self.handler(request, response)
 
     def handle_request(self, request, response):
-        for header_name, header_value in self.headers:
-            response.headers.set(header_name, header_value)
-
         path = self._get_path(request.url_parts.path, True)
         meta = "\n".join(self._get_meta(request))
         response.content = self.wrapper % {"meta": meta, "path": path}
@@ -174,7 +169,6 @@ self.GLOBAL = {
 
 
 class AnyWorkerHandler(WrapperHandler):
-    headers = [('Content-Type', 'text/javascript')]
     path_replace = [(".any.worker.js", ".any.js")]
     wrapper = """%(meta)s
 self.GLOBAL = {
@@ -768,9 +762,10 @@ def get_parser():
     return parser
 
 
-def run(**kwargs):
-    config = load_config(os.path.join(repo_root, "config.default.json"),
-                         os.path.join(repo_root, "config.json"),
+def main():
+    kwargs = vars(get_parser().parse_args())
+    config = load_config("config.default.json",
+                         "config.json",
                          **kwargs)
 
     setup_logger(config["log_level"])
@@ -789,8 +784,3 @@ def run(**kwargs):
                         item.join(1)
             except KeyboardInterrupt:
                 logger.info("Shutting down")
-
-
-def main():
-    kwargs = vars(get_parser().parse_args())
-    return run(**kwargs)

@@ -9,6 +9,7 @@
 
 #include "mozilla/MozPromise.h"
 #include "mozilla/Pair.h"
+#include "mozilla/RefPtr.h"
 #include "SourceBufferAttributes.h"
 #include "TimeUnits.h"
 #include "MediaResult.h"
@@ -32,7 +33,6 @@ public:
   typedef MozPromise<bool, nsresult, /* IsExclusive = */ true> RangeRemovalPromise;
 
   virtual Type GetType() const = 0;
-  virtual const char* GetTypeName() const = 0;
 
   template<typename ReturnType>
   ReturnType* As()
@@ -55,7 +55,6 @@ public:
 
   static const Type sType = Type::AppendBuffer;
   Type GetType() const override { return Type::AppendBuffer; }
-  const char* GetTypeName() const override { return "AppendBuffer"; }
 
   RefPtr<MediaByteBuffer> mBuffer;
   SourceBufferAttributes mAttributes;
@@ -66,14 +65,12 @@ class AbortTask : public SourceBufferTask {
 public:
   static const Type sType = Type::Abort;
   Type GetType() const override { return Type::Abort; }
-  const char* GetTypeName() const override { return "Abort"; }
 };
 
 class ResetTask : public SourceBufferTask {
 public:
   static const Type sType = Type::Reset;
   Type GetType() const override { return Type::Reset; }
-  const char* GetTypeName() const override { return "Reset"; }
 };
 
 class RangeRemovalTask : public SourceBufferTask {
@@ -84,7 +81,6 @@ public:
 
   static const Type sType = Type::RangeRemoval;
   Type GetType() const override { return Type::RangeRemoval; }
-  const char* GetTypeName() const override { return "RangeRemoval"; }
 
   media::TimeInterval mRange;
   MozPromiseHolder<RangeRemovalPromise> mPromise;
@@ -99,7 +95,6 @@ public:
 
   static const Type sType = Type::EvictData;
   Type GetType() const override { return Type::EvictData; }
-  const char* GetTypeName() const override { return "EvictData"; }
 
   media::TimeUnit mPlaybackTime;
   int64_t mSizeToEvict;
@@ -109,7 +104,6 @@ class DetachTask : public SourceBufferTask {
 public:
   static const Type sType = Type::Detach;
   Type GetType() const override { return Type::Detach; }
-  const char* GetTypeName() const override { return "Detach"; }
 };
 
 } // end mozilla namespace

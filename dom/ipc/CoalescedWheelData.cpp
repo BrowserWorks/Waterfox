@@ -6,6 +6,7 @@
 #include "base/basictypes.h"
 
 #include "CoalescedWheelData.h"
+#include "FrameMetrics.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -16,22 +17,22 @@ CoalescedWheelData::Coalesce(const WidgetWheelEvent& aEvent,
                              const uint64_t& aInputBlockId)
 {
   if (IsEmpty()) {
-    mCoalescedInputEvent = MakeUnique<WidgetWheelEvent>(aEvent);
+    mCoalescedWheelEvent = MakeUnique<WidgetWheelEvent>(aEvent);
     mGuid = aGuid;
     mInputBlockId = aInputBlockId;
   } else {
     MOZ_ASSERT(mGuid == aGuid);
     MOZ_ASSERT(mInputBlockId == aInputBlockId);
-    MOZ_ASSERT(mCoalescedInputEvent->mModifiers == aEvent.mModifiers);
-    MOZ_ASSERT(mCoalescedInputEvent->mDeltaMode == aEvent.mDeltaMode);
-    MOZ_ASSERT(mCoalescedInputEvent->mCanTriggerSwipe ==
+    MOZ_ASSERT(mCoalescedWheelEvent->mModifiers == aEvent.mModifiers);
+    MOZ_ASSERT(mCoalescedWheelEvent->mDeltaMode == aEvent.mDeltaMode);
+    MOZ_ASSERT(mCoalescedWheelEvent->mCanTriggerSwipe ==
                aEvent.mCanTriggerSwipe);
-    mCoalescedInputEvent->mDeltaX += aEvent.mDeltaX;
-    mCoalescedInputEvent->mDeltaY += aEvent.mDeltaY;
-    mCoalescedInputEvent->mDeltaZ += aEvent.mDeltaZ;
-    mCoalescedInputEvent->mLineOrPageDeltaX += aEvent.mLineOrPageDeltaX;
-    mCoalescedInputEvent->mLineOrPageDeltaY += aEvent.mLineOrPageDeltaY;
-    mCoalescedInputEvent->mTimeStamp = aEvent.mTimeStamp;
+    mCoalescedWheelEvent->mDeltaX += aEvent.mDeltaX;
+    mCoalescedWheelEvent->mDeltaY += aEvent.mDeltaY;
+    mCoalescedWheelEvent->mDeltaZ += aEvent.mDeltaZ;
+    mCoalescedWheelEvent->mLineOrPageDeltaX += aEvent.mLineOrPageDeltaX;
+    mCoalescedWheelEvent->mLineOrPageDeltaY += aEvent.mLineOrPageDeltaY;
+    mCoalescedWheelEvent->mTimeStamp = aEvent.mTimeStamp;
   }
 }
 
@@ -41,11 +42,11 @@ CoalescedWheelData::CanCoalesce(const WidgetWheelEvent& aEvent,
                                 const uint64_t& aInputBlockId)
 {
   MOZ_ASSERT(!IsEmpty());
-  return !mCoalescedInputEvent ||
-         (mCoalescedInputEvent->mRefPoint == aEvent.mRefPoint &&
-          mCoalescedInputEvent->mModifiers == aEvent.mModifiers &&
-          mCoalescedInputEvent->mDeltaMode == aEvent.mDeltaMode &&
-          mCoalescedInputEvent->mCanTriggerSwipe == aEvent.mCanTriggerSwipe &&
+  return !mCoalescedWheelEvent ||
+         (mCoalescedWheelEvent->mRefPoint == aEvent.mRefPoint &&
+          mCoalescedWheelEvent->mModifiers == aEvent.mModifiers &&
+          mCoalescedWheelEvent->mDeltaMode == aEvent.mDeltaMode &&
+          mCoalescedWheelEvent->mCanTriggerSwipe == aEvent.mCanTriggerSwipe &&
           mGuid == aGuid &&
           mInputBlockId == aInputBlockId);
 }

@@ -2,6 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+.tabbrowser-tabbox {
+  -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-tabbox");
+}
+
 .tabbrowser-tabpanels {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-tabpanels");
 }
@@ -15,7 +19,7 @@
 }
 
 .tab-close-button[pinned],
-#tabbrowser-tabs[closebuttons="activetab"] > .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button:not([selected="true"]),
+.tabbrowser-tabs[closebuttons="activetab"] > * > * > * > .tab-close-button:not([selected="true"]),
 .tab-icon-image:not([src]):not([pinned]):not([crashed])[selected],
 .tab-icon-image:not([src]):not([pinned]):not([crashed]):not([sharing]),
 .tab-icon-image[busy],
@@ -59,12 +63,12 @@
   mask-image: linear-gradient(to right, transparent, black 2em);
 }
 
-tabpanels {
-  background-color: transparent;
+.tab-stack {
+  vertical-align: top; /* for pinned tabs */
 }
 
-.tab-drop-indicator-box {
-  -moz-box-align: end;
+tabpanels {
+  background-color: transparent;
 }
 
 .tab-drop-indicator {
@@ -83,7 +87,7 @@ tabpanels {
   pointer-events: none;
 }
 
-#tabbrowser-tabs:not(:hover) > .tabbrowser-arrowscrollbox > .closing-tabs-spacer {
+.tabbrowser-tabs:not(:hover) > .tabbrowser-arrowscrollbox > .closing-tabs-spacer {
   transition: width .15s ease-out;
 }
 

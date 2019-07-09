@@ -11,9 +11,8 @@ use rustc_serialize::json::{self, Json, ToJson};
 #[cfg(feature = "bench")]
 use self::test::Bencher;
 
-use super::{Parser, Delimiter, Token, SourceLocation,
-            ParseError, ParseErrorKind, BasicParseError, BasicParseErrorKind,
-            DeclarationListParser, DeclarationParser, RuleListParser,
+use super::{Parser, Delimiter, Token, SourceLocation, ParseError,
+            DeclarationListParser, DeclarationParser, RuleListParser, BasicParseError,
             AtRuleType, AtRuleParser, QualifiedRuleParser, ParserInput,
             parse_one_declaration, parse_one_rule, parse_important,
             stylesheet_encoding, EncodingSupport,
@@ -32,7 +31,7 @@ fn almost_equals(a: &Json, b: &Json) -> bool {
         (_, &Json::I64(b)) => almost_equals(a, &Json::F64(b as f64)),
         (_, &Json::U64(b)) => almost_equals(a, &Json::F64(b as f64)),
 
-        (&Json::F64(a), &Json::F64(b)) => (a - b).abs() <= a.abs() * 1e-6,
+        (&Json::F64(a), &Json::F64(b)) => (a - b).abs() < 1e-6,
 
         (&Json::Boolean(a), &Json::Boolean(b)) => a == b,
         (&Json::String(ref a), &Json::String(ref b)) => a == b,
@@ -264,7 +263,9 @@ fn outer_block_end_consumed() {
     let mut input = Parser::new(&mut input);
     assert!(input.expect_parenthesis_block().is_ok());
     assert!(input.parse_nested_block(|input| {
-        input.expect_function_matching("calc").map_err(Into::<ParseError<()>>::into)
+        let result: Result<_, ParseError<()>> = input.expect_function_matching("calc")
+            .map_err(|e| ParseError::Basic(e));
+        result
     }).is_ok());
     println!("{:?}", input.position());
     assert!(input.next().is_err());
@@ -299,10 +300,10 @@ fn unquoted_url_escaping() {
     let serialized = token.to_css_string();
     assert_eq!(serialized, "\
         url(\
-            \\1 \\2 \\3 \\4 \\5 \\6 \\7 \\8 \\9 \\a \\b \\c \\d \\e \\f \\10 \
-            \\11 \\12 \\13 \\14 \\15 \\16 \\17 \\18 \\19 \\1a \\1b \\1c \\1d \\1e \\1f \\20 \
+            \\1 \\2 \\3 \\4 \\5 \\6 \\7 \\8 \\9 \\A \\B \\C \\D \\E \\F \\10 \
+            \\11 \\12 \\13 \\14 \\15 \\16 \\17 \\18 \\19 \\1A \\1B \\1C \\1D \\1E \\1F \\20 \
             !\\\"#$%&\\'\\(\\)*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]\
-            ^_`abcdefghijklmnopqrstuvwxyz{|}~\\7f é\
+            ^_`abcdefghijklmnopqrstuvwxyz{|}~\\7F é\
         )\
         ");
     let mut input = ParserInput::new(&serialized);
@@ -336,7 +337,7 @@ fn test_expect_url() {
 fn run_color_tests<F: Fn(Result<Color, ()>) -> Json>(json_data: &str, to_json: F) {
     run_json_tests(json_data, |input| {
         let result: Result<_, ParseError<()>> = input.parse_entirely(|i| {
-            Color::parse(i).map_err(Into::into)
+            Color::parse(i).map_err(|e| ParseError::Basic(e))
         });
         to_json(result.map_err(|_| ()))
     });
@@ -366,7 +367,7 @@ fn color3_keywords() {
 fn nth() {
     run_json_tests(include_str!("css-parsing-tests/An+B.json"), |input| {
         input.parse_entirely(|i| {
-            let result: Result<_, ParseError<()>> = parse_nth(i).map_err(Into::into);
+            let result: Result<_, ParseError<()>> = parse_nth(i).map_err(|e| ParseError::Basic(e));
             result
         }).ok().to_json()
     });
@@ -441,26 +442,6 @@ fn serializer(preserve_comments: bool) {
 }
 
 #[test]
-fn serialize_bad_tokens() {
-    let mut input = ParserInput::new("url(foo\\) b\\)ar)'ba\\'\"z\n4");
-    let mut parser = Parser::new(&mut input);
-
-    let token = parser.next().unwrap().clone();
-    assert!(matches!(token, Token::BadUrl(_)));
-    assert_eq!(token.to_css_string(), "url(foo\\) b\\)ar)");
-
-    let token = parser.next().unwrap().clone();
-    assert!(matches!(token, Token::BadString(_)));
-    assert_eq!(token.to_css_string(), "\"ba'\\\"z");
-
-    let token = parser.next().unwrap().clone();
-    assert!(matches!(token, Token::Number { .. }));
-    assert_eq!(token.to_css_string(), "4");
-
-    assert!(parser.next().is_err());
-}
-
-#[test]
 fn serialize_current_color() {
     let c = Color::CurrentColor;
     assert!(c.to_css_string() == "currentcolor");
@@ -486,40 +467,28 @@ fn serialize_rgba_two_digit_float_if_roundtrips() {
 
 #[test]
 fn line_numbers() {
-    let mut input = ParserInput::new(concat!(
-        "fo\\30\r\n",
-        "0o bar/*\n",
-        "*/baz\r\n",
-        "\n",
-        "url(\r\n",
-        "  u \r\n",
-        ")\"a\\\r\n",
-        "b\""
-    ));
+    let mut input = ParserInput::new("foo bar\nbaz\r\n\n\"a\\\r\nb\"");
     let mut input = Parser::new(&mut input);
-    assert_eq!(input.current_source_location(), SourceLocation { line: 0, column: 1 });
-    assert_eq!(input.next_including_whitespace(), Ok(&Token::Ident("fo00o".into())));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 1, column: 3 });
+    assert_eq!(input.current_source_location(), SourceLocation { line: 0, column: 0 });
+    assert_eq!(input.next_including_whitespace(), Ok(&Token::Ident("foo".into())));
+    assert_eq!(input.current_source_location(), SourceLocation { line: 0, column: 3 });
     assert_eq!(input.next_including_whitespace(), Ok(&Token::WhiteSpace(" ")));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 1, column: 4 });
+    assert_eq!(input.current_source_location(), SourceLocation { line: 0, column: 4 });
     assert_eq!(input.next_including_whitespace(), Ok(&Token::Ident("bar".into())));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 1, column: 7 });
-    assert_eq!(input.next_including_whitespace_and_comments(), Ok(&Token::Comment("\n")));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 2, column: 3 });
+    assert_eq!(input.current_source_location(), SourceLocation { line: 0, column: 7 });
+    assert_eq!(input.next_including_whitespace(), Ok(&Token::WhiteSpace("\n")));
+    assert_eq!(input.current_source_location(), SourceLocation { line: 1, column: 0 });
     assert_eq!(input.next_including_whitespace(), Ok(&Token::Ident("baz".into())));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 2, column: 6 });
-    let state = input.state();
+    assert_eq!(input.current_source_location(), SourceLocation { line: 1, column: 3 });
+    let position = input.position();
 
     assert_eq!(input.next_including_whitespace(), Ok(&Token::WhiteSpace("\r\n\n")));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 4, column: 1 });
+    assert_eq!(input.current_source_location(), SourceLocation { line: 3, column: 0 });
 
-    assert_eq!(state.source_location(), SourceLocation { line: 2, column: 6 });
-
-    assert_eq!(input.next_including_whitespace(), Ok(&Token::UnquotedUrl("u".into())));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 6, column: 2 });
+    assert_eq!(input.source_location(position), SourceLocation { line: 1, column: 3 });
 
     assert_eq!(input.next_including_whitespace(), Ok(&Token::QuotedString("ab".into())));
-    assert_eq!(input.current_source_location(), SourceLocation { line: 7, column: 3 });
+    assert_eq!(input.current_source_location(), SourceLocation { line: 4, column: 2 });
     assert!(input.next_including_whitespace().is_err());
 }
 
@@ -732,21 +701,21 @@ impl<'i> DeclarationParser<'i> for JsonParser {
         let mut value = vec![];
         let mut important = false;
         loop {
-            let start = input.state();
+            let start_position = input.position();
             if let Ok(mut token) = input.next_including_whitespace().map(|t| t.clone()) {
                 // Hack to deal with css-parsing-tests assuming that
                 // `!important` in the middle of a declaration value is OK.
                 // This can never happen per spec
                 // (even CSS Variables forbid top-level `!`)
                 if token == Token::Delim('!') {
-                    input.reset(&start);
+                    input.reset(start_position);
                     if parse_important(input).is_ok() {
                         if input.is_exhausted() {
                             important = true;
                             break
                         }
                     }
-                    input.reset(&start);
+                    input.reset(start_position);
                     token = input.next_including_whitespace().unwrap().clone();
                 }
                 value.push(one_component_value_to_json(token, input));
@@ -764,36 +733,28 @@ impl<'i> DeclarationParser<'i> for JsonParser {
 }
 
 impl<'i> AtRuleParser<'i> for JsonParser {
-    type PreludeNoBlock = Vec<Json>;
-    type PreludeBlock = Vec<Json>;
+    type Prelude = Vec<Json>;
     type AtRule = Json;
     type Error = ();
 
     fn parse_prelude<'t>(&mut self, name: CowRcStr<'i>, input: &mut Parser<'i, 't>)
-                         -> Result<AtRuleType<Vec<Json>, Vec<Json>>, ParseError<'i, ()>> {
-        let prelude = vec![
+                         -> Result<AtRuleType<Vec<Json>, Json>, ParseError<'i, ()>> {
+        Ok(AtRuleType::OptionalBlock(vec![
             "at-rule".to_json(),
             name.to_json(),
             Json::Array(component_values_to_json(input)),
-        ];
-        match_ignore_ascii_case! { &*name,
-            "media" | "foo-with-block" => Ok(AtRuleType::WithBlock(prelude)),
-            "charset" => {
-                Err(input.new_error(BasicParseErrorKind::AtRuleInvalid(name.clone()).into()))
-            }
-            _ => Ok(AtRuleType::WithoutBlock(prelude)),
-        }
-    }
-
-    fn rule_without_block(&mut self, mut prelude: Vec<Json>) -> Json {
-        prelude.push(Json::Null);
-        Json::Array(prelude)
+        ]))
     }
 
     fn parse_block<'t>(&mut self, mut prelude: Vec<Json>, input: &mut Parser<'i, 't>)
                        -> Result<Json, ParseError<'i, ()>> {
         prelude.push(Json::Array(component_values_to_json(input)));
         Ok(Json::Array(prelude))
+    }
+
+    fn rule_without_block(&mut self, mut prelude: Vec<Json>) -> Json {
+        prelude.push(Json::Null);
+        Json::Array(prelude)
     }
 }
 
@@ -998,162 +959,11 @@ fn parser_maintains_current_line() {
 }
 
 #[test]
-fn parser_with_line_number_offset() {
-    let mut input = ParserInput::new_with_line_number_offset("ident\nident", 72);
-    let mut parser = Parser::new(&mut input);
-    assert_eq!(parser.current_source_location(), SourceLocation { line: 72, column: 1 });
-    assert_eq!(parser.next_including_whitespace_and_comments(), Ok(&Token::Ident("ident".into())));
-    assert_eq!(parser.current_source_location(), SourceLocation { line: 72, column: 6 });
-    assert_eq!(parser.next_including_whitespace_and_comments(),
-               Ok(&Token::WhiteSpace("\n".into())));
-    assert_eq!(parser.current_source_location(), SourceLocation { line: 73, column: 1 });
-    assert_eq!(parser.next_including_whitespace_and_comments(), Ok(&Token::Ident("ident".into())));
-    assert_eq!(parser.current_source_location(), SourceLocation { line: 73, column: 6 });
-}
-
-#[test]
-fn cdc_regression_test() {
-    let mut input = ParserInput::new("-->x");
-    let mut parser = Parser::new(&mut input);
-    parser.skip_cdc_and_cdo();
-    assert_eq!(parser.next(), Ok(&Token::Ident("x".into())));
-    assert_eq!(parser.next(), Err(BasicParseError {
-        kind: BasicParseErrorKind::EndOfInput,
-        location: SourceLocation { line: 0, column: 5 }
-    }));
-}
-
-#[test]
 fn parse_entirely_reports_first_error() {
     #[derive(PartialEq, Debug)]
     enum E { Foo }
     let mut input = ParserInput::new("ident");
     let mut parser = Parser::new(&mut input);
-    let result: Result<(), _> = parser.parse_entirely(|p| Err(p.new_custom_error(E::Foo)));
-    assert_eq!(result, Err(ParseError {
-        kind: ParseErrorKind::Custom(E::Foo),
-        location: SourceLocation { line: 0, column: 1 },
-    }));
-}
-
-#[test]
-fn parse_sourcemapping_comments() {
-    let tests = vec![
-        ("/*# sourceMappingURL=here*/", Some("here")),
-        ("/*# sourceMappingURL=here  */", Some("here")),
-        ("/*@ sourceMappingURL=here*/", Some("here")),
-        ("/*@ sourceMappingURL=there*/ /*# sourceMappingURL=here*/", Some("here")),
-        ("/*# sourceMappingURL=here there  */", Some("here")),
-        ("/*# sourceMappingURL=  here  */", Some("")),
-        ("/*# sourceMappingURL=*/", Some("")),
-        ("/*# sourceMappingUR=here  */", None),
-        ("/*! sourceMappingURL=here  */", None),
-        ("/*# sourceMappingURL = here  */", None),
-        ("/*   # sourceMappingURL=here   */", None)
-    ];
-
-    for test in tests {
-        let mut input = ParserInput::new(test.0);
-        let mut parser = Parser::new(&mut input);
-        while let Ok(_) = parser.next_including_whitespace() {
-        }
-        assert_eq!(parser.current_source_map_url(), test.1);
-    }
-}
-
-#[test]
-fn parse_sourceurl_comments() {
-    let tests = vec![
-        ("/*# sourceURL=here*/", Some("here")),
-        ("/*# sourceURL=here  */", Some("here")),
-        ("/*@ sourceURL=here*/", Some("here")),
-        ("/*@ sourceURL=there*/ /*# sourceURL=here*/", Some("here")),
-        ("/*# sourceURL=here there  */", Some("here")),
-        ("/*# sourceURL=  here  */", Some("")),
-        ("/*# sourceURL=*/", Some("")),
-        ("/*# sourceMappingUR=here  */", None),
-        ("/*! sourceURL=here  */", None),
-        ("/*# sourceURL = here  */", None),
-        ("/*   # sourceURL=here   */", None)
-    ];
-
-    for test in tests {
-        let mut input = ParserInput::new(test.0);
-        let mut parser = Parser::new(&mut input);
-        while let Ok(_) = parser.next_including_whitespace() {
-        }
-        assert_eq!(parser.current_source_url(), test.1);
-    }
-}
-
-#[test]
-fn roundtrip_percentage_token() {
-    fn test_roundtrip(value: &str) {
-        let mut input = ParserInput::new(value);
-        let mut parser = Parser::new(&mut input);
-        let token = parser.next().unwrap();
-        assert_eq!(token.to_css_string(), value);
-    }
-    // Test simple number serialization
-    for i in 0..101 {
-        test_roundtrip(&format!("{}%", i));
-        for j in 0..10 {
-            if j != 0 {
-                test_roundtrip(&format!("{}.{}%", i, j));
-            }
-            for k in 1..10 {
-                test_roundtrip(&format!("{}.{}{}%", i, j, k));
-            }
-        }
-    }
-}
-
-#[test]
-fn utf16_columns() {
-    // This particular test serves two purposes.  First, it checks
-    // that the column number computations are correct.  Second, it
-    // checks that tokenizer code paths correctly differentiate
-    // between the different UTF-8 encoding bytes.  In particular
-    // different leader bytes and continuation bytes are treated
-    // differently, so we make sure to include all lengths in the
-    // tests, using the string "QΡ✈🆒".  Also, remember that because
-    // the column is in units of UTF-16, the 4-byte sequence results
-    // in two columns.
-    let tests = vec![
-        ("", 1),
-        ("ascii", 6),
-        ("/*QΡ✈🆒*/", 10),
-        ("'QΡ✈🆒*'", 9),
-        ("\"\\\"'QΡ✈🆒*'", 12),
-        ("\\Q\\Ρ\\✈\\🆒", 10),
-        ("QΡ✈🆒", 6),
-        ("QΡ✈🆒\\Q\\Ρ\\✈\\🆒", 15),
-        ("newline\r\nQΡ✈🆒", 6),
-        ("url(QΡ✈🆒\\Q\\Ρ\\✈\\🆒)", 20),
-        ("url(QΡ✈🆒)", 11),
-        ("url(\r\nQΡ✈🆒\\Q\\Ρ\\✈\\🆒)", 16),
-        ("url(\r\nQΡ✈🆒\\Q\\Ρ\\✈\\🆒", 15),
-        ("url(\r\nQΡ✈🆒\\Q\\Ρ\\✈\\🆒 x", 17),
-        ("QΡ✈🆒()", 8),
-        // Test that under/over-flow of current_line_start_position is
-        // handled properly; see the special case in consume_4byte_intro.
-        ("🆒", 3),
-    ];
-
-    for test in tests {
-        let mut input = ParserInput::new(test.0);
-        let mut parser = Parser::new(&mut input);
-
-        // Read all tokens.
-        loop {
-            match parser.next() {
-                Err(BasicParseError { kind: BasicParseErrorKind::EndOfInput, .. }) => { break; }
-                Err(_) => { assert!(false); }
-                Ok(_) => {}
-            };
-        }
-
-        // Check the resulting column.
-        assert_eq!(parser.current_source_location().column, test.1);
-    }
+    let result: Result<(), _> = parser.parse_entirely(|_| Err(ParseError::Custom(E::Foo)));
+    assert_eq!(result, Err(ParseError::Custom(E::Foo)));
 }

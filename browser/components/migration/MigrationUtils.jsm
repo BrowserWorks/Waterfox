@@ -48,14 +48,14 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
       "firefox", "edge", "ie", "chrome", "chromium", "360se",
-      "canary"
+      "canary", "waterfox"
     ];
   }
   if (AppConstants.platform == "macosx") {
-    return ["firefox", "safari", "chrome", "chromium", "canary"];
+    return ["firefox", "safari", "chrome", "chromium", "canary", "waterfox"];
   }
   if (AppConstants.XP_UNIX) {
-    return ["firefox", "chrome", "chromium"];
+    return ["firefox", "chrome", "chromium", "waterfox"];
   }
   return [];
 });
@@ -536,7 +536,9 @@ this.MigrationUtils = Object.freeze({
 
     const OVERRIDES = {
       "4_firefox": "4_firefox_history_and_bookmarks",
-      "64_firefox": "64_firefox_other"
+      "64_firefox": "64_firefox_other",
+      "4_waterfox": "4_waterfox_history_and_bookmarks",
+      "64_waterfox": "64_waterfox_other"
     };
     aKey = OVERRIDES[aKey] || aKey;
 
@@ -562,6 +564,8 @@ this.MigrationUtils = Object.freeze({
         return "sourceNameChromium";
       case "firefox":
         return "sourceNameFirefox";
+      case "waterfox":
+        return "sourceNameWaterfox";
       case "360se":
         return "sourceName360se";
     }
@@ -721,6 +725,7 @@ this.MigrationUtils = Object.freeze({
       "Safari":                            "safari",
       "Firefox":                           "firefox",
       "Nightly":                           "firefox",
+      "Waterfox":                          "waterfox",
       "Google Chrome":                     "chrome",  // Windows, Linux
       "Chrome":                            "chrome",  // OS X
       "Chromium":                          "chromium", // Windows, OS X
@@ -1122,6 +1127,7 @@ this.MigrationUtils = Object.freeze({
     "canary":     7,
     "safari":     8,
     "360se":      9,
+    "waterfox":   10,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;

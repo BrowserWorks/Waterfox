@@ -180,6 +180,12 @@ APZCTreeManagerChild::UpdateZoomConstraints(
 }
 
 void
+APZCTreeManagerChild::CancelAnimation(const ScrollableLayerGuid &aGuid)
+{
+  SendCancelAnimation(aGuid);
+}
+
+void
 APZCTreeManagerChild::SetDPI(float aDpiValue)
 {
   SendSetDPI(aDpiValue);
@@ -201,12 +207,12 @@ APZCTreeManagerChild::StartScrollbarDrag(
   SendStartScrollbarDrag(aGuid, aDragMetrics);
 }
 
-bool
+void
 APZCTreeManagerChild::StartAutoscroll(
     const ScrollableLayerGuid& aGuid,
     const ScreenPoint& aAnchorLocation)
 {
-  return SendStartAutoscroll(aGuid, aAnchorLocation);
+  SendStartAutoscroll(aGuid, aAnchorLocation);
 }
 
 void
@@ -285,18 +291,6 @@ APZCTreeManagerChild::RecvNotifyPinchGesture(const PinchGestureType& aType,
       mCompositorSession->GetWidget()) {
     APZCCallbackHelper::NotifyPinchGesture(aType, aSpanChange, aModifiers, mCompositorSession->GetWidget());
   }
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-APZCTreeManagerChild::RecvCancelAutoscroll(const FrameMetrics::ViewID& aScrollId)
-{
-  // This will only get sent from the GPU process to the parent process, so
-  // this function should never get called in the content process.
-  MOZ_ASSERT(XRE_IsParentProcess());
-  MOZ_ASSERT(NS_IsMainThread());
-
-  APZCCallbackHelper::CancelAutoscroll(aScrollId);
   return IPC_OK();
 }
 

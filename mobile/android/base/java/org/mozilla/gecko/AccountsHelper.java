@@ -88,6 +88,10 @@ public class AccountsHelper implements BundleEventListener {
         }
 
         if ("Accounts:CreateFirefoxAccountFromJSON".equals(event)) {
+            // As we are about to create a new account, let's ensure our in-memory accounts cache
+            // is empty so that there are no undesired side-effects.
+            AndroidFxAccount.invalidateCaches();
+
             AndroidFxAccount fxAccount = null;
             try {
                 final GeckoBundle json = message.getBundle("json");
@@ -106,7 +110,6 @@ public class AccountsHelper implements BundleEventListener {
                 // TODO: handle choose what to Sync.
                 State state = new Engaged(email, uid, verified, unwrapkB, sessionToken, keyFetchToken);
                 fxAccount = AndroidFxAccount.addAndroidAccount(mContext,
-                        uid,
                         email,
                         mProfile.getName(),
                         authServerEndpoint,
@@ -150,6 +153,10 @@ public class AccountsHelper implements BundleEventListener {
             }
 
         } else if ("Accounts:UpdateFirefoxAccountFromJSON".equals(event)) {
+            // We might be significantly changing state of the account; let's ensure our in-memory
+            // accounts cache is empty so that there are no undesired side-effects.
+            AndroidFxAccount.invalidateCaches();
+
             final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
             if (account == null) {
                 if (callback != null) {

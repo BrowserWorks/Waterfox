@@ -107,8 +107,12 @@ android {
              dimension "audience"
         }
 
-        // Since Firefox 57, the mobile user interface has followed the Photon design.
-        // Before Firefox 57, the user interface followed the Australis design.
+        // The default user interface.
+        australis {
+            dimension "skin"
+        }
+
+        // A new user interface, currently under development.
         photon {
             dimension "skin"
         }
@@ -141,6 +145,8 @@ android {
                     exclude 'org/mozilla/gecko/GeckoMediaPlayer.java'
                     exclude 'org/mozilla/gecko/GeckoPresentationDisplay.java'
                     exclude 'org/mozilla/gecko/MediaPlayerManager.java'
+                    exclude 'org/mozilla/gecko/PresentationMediaPlayerManager.java'
+                    exclude 'org/mozilla/gecko/RemotePresentationService.java'
                 }
 
                 if (mozconfig.substs.MOZ_INSTALL_TRACKING) {
@@ -262,12 +268,8 @@ dependencies {
     officialCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta1'
     testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta1'
 
-    // With a simple "compile", Gradle will always build these libraries in their default configuration
-    // (i.e. release), so we need to explicitly forward our own build configuration here (bug 1385695).
-    debugCompile project(path: ':geckoview', configuration: "debug")
-    releaseCompile project(path: ':geckoview', configuration: "release")
-    debugCompile project(path: ':thirdparty', configuration: "debug")
-    releaseCompile project(path: ':thirdparty', configuration: "release")
+    compile project(':geckoview')
+    compile project(':thirdparty')
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.1.2'
@@ -355,10 +357,6 @@ android.applicationVariants.all { variant ->
     }
 }
 
-android.applicationVariants.all { variant ->
-    configureVariantWithJNIWrappers(variant, "Fennec")
-}
-
 apply plugin: 'spoon'
 
 spoon {
@@ -419,6 +417,26 @@ def makeTaskExecutionListener(artifactRootUrl) {
             case ':app:checkstyle':
                 def url = "${artifactRootUrl}/public/android/checkstyle/checkstyle.xml"
                 println "TEST-UNEXPECTED-FAIL | android-checkstyle | Checkstyle rule violations were found. See the report at: $url"
+                break
+
+            case ':app:lintOfficialAustralisDebug':
+                def url = "${artifactRootUrl}/public/android/lint/lint-results-officialAustralisDebug.html"
+                println "TEST-UNEXPECTED-FAIL | android-lint | Lint found errors in the project; aborting build. See the report at: $url"
+                break
+
+            case ':app:testOfficialAustralisDebugUnitTest':
+                def url = "${artifactRootUrl}/public/android/unittest/officialAustralisDebug/index.html"
+                println "TEST-UNEXPECTED-FAIL | android-test | There were failing tests. See the reports at: $url"
+                break
+
+            case ':app:findbugsHtmlOfficialAustralisDebug':
+                def url = "${artifactRootUrl}/public/android/findbugs/findbugs-officialAustralisDebug-output.html"
+                println "TEST-UNEXPECTED-FAIL | android-findbugs | Findbugs found issues in the project. See the report at: $url"
+                break
+
+            case ':app:findbugsXmlOfficialAustralisDebug':
+                def url = "${artifactRootUrl}/public/android/findbugs/findbugs-officialAustralisDebug-output.xml"
+                println "TEST-UNEXPECTED-FAIL | android-findbugs | Findbugs found issues in the project. See the report at: $url"
                 break
 
             case ':app:lintOfficialPhotonDebug':
@@ -486,7 +504,7 @@ android.applicationVariants.all { variant ->
 
         reports {
             html.enabled = true // HTML reports for humans.
-            html.destination = "$project.buildDir/reports/findbugs/findbugs-${variant.name}-output.html"
+            html.destination = "$project.buildDir/outputs/findbugs/findbugs-${variant.name}-output.html"
             xml.enabled = false
         }
     }
@@ -510,7 +528,7 @@ android.applicationVariants.all { variant ->
 
         reports {
             xml.enabled = true // XML reports for machines.
-            xml.destination = "$project.buildDir/reports/findbugs/findbugs-${variant.name}-output.xml"
+            xml.destination = "$project.buildDir/outputs/findbugs/findbugs-${variant.name}-output.xml"
             html.enabled = false
         }
     }

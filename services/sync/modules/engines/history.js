@@ -14,7 +14,6 @@ const THIRTY_DAYS_IN_MS = 2592000000; // 30 days in milliseconds
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://services-common/async.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/record.js");
@@ -28,7 +27,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesSyncUtils",
 
 this.HistoryRec = function HistoryRec(collection, id) {
   CryptoWrapper.call(this, collection, id);
-};
+}
 HistoryRec.prototype = {
   __proto__: CryptoWrapper.prototype,
   _logName: "Sync.Record.History",
@@ -40,7 +39,7 @@ Utils.deferGetSet(HistoryRec, "cleartext", ["histUri", "title", "visits"]);
 
 this.HistoryEngine = function HistoryEngine(service) {
   SyncEngine.call(this, "History", service);
-};
+}
 HistoryEngine.prototype = {
   __proto__: SyncEngine.prototype,
   _recordObj: HistoryRec,
@@ -159,11 +158,7 @@ HistoryStore.prototype = {
   },
 
   async changeItemID(oldID, newID) {
-    let info = await PlacesSyncUtils.history.fetchURLInfoForGuid(oldID);
-    if (!info) {
-      throw new Error(`Can't change ID for nonexistent history entry ${oldID}`);
-    }
-    this.setGUID(info.url, newID);
+    this.setGUID(await PlacesSyncUtils.history.fetchURLInfoForGuid(oldID).url, newID);
   },
 
   async getAllIDs() {
@@ -179,6 +174,7 @@ HistoryStore.prototype = {
 
   async applyIncomingBatch(records) {
     let failed = [];
+    let blockers = [];
 
     // Convert incoming records to mozIPlaceInfo objects. Some records can be
     // ignored or handled directly, so we're rewriting the array in-place.
@@ -189,7 +185,9 @@ HistoryStore.prototype = {
 
       try {
         if (record.deleted) {
-          await this.remove(record);
+          let promise = this.remove(record);
+          promise = promise.catch(ex => failed.push(record.id));
+          blockers.push(promise);
 
           // No further processing needed. Remove it from the list.
           shouldApply = false;
@@ -211,9 +209,20 @@ HistoryStore.prototype = {
     records.length = k; // truncate array
 
     if (records.length) {
-      await PlacesUtils.history.insertMany(records);
+      blockers.push(new Promise(resolve => {
+        let updatePlacesCallback = {
+          handleResult: function handleResult() {},
+          handleError: function handleError(resultCode, placeInfo) {
+            failed.push(placeInfo.guid);
+          },
+          handleCompletion: resolve,
+        };
+        this._asyncHistory.updatePlaces(records, updatePlacesCallback);
+      }));
     }
 
+    // failed is updated asynchronously, hence the await on blockers.
+    await Promise.all(blockers);
     return failed;
   },
 
@@ -226,8 +235,11 @@ HistoryStore.prototype = {
    */
   async _recordToPlaceInfo(record) {
     // Sort out invalid URIs and ones Places just simply doesn't want.
-    record.url = PlacesUtils.normalizeToURLOrGUID(record.histUri);
-    record.uri = CommonUtils.makeURI(record.histUri);
+    record.uri = Utils.makeURI(record.histUri);
+    if (!record.uri) {
+      this._log.warn("Attempted to process invalid URI, skipping.");
+      throw new Error("Invalid URI in record");
+    }
 
     if (!Utils.checkGUID(record.id)) {
       this._log.warn("Encountered record with invalid GUID: " + record.id);
@@ -245,17 +257,16 @@ HistoryStore.prototype = {
     // the same timestamp and type as a local one won't get applied.
     // To avoid creating new objects, we rewrite the query result so we
     // can simply check for containment below.
-    let curVisitsAsArray = [];
-    let curVisits = new Set();
+    let curVisits = [];
     try {
-      curVisitsAsArray = await PlacesSyncUtils.history.fetchVisitsForURL(record.histUri);
+      curVisits = await PlacesSyncUtils.history.fetchVisitsForURL(record.histUri);
     } catch (e) {
       this._log.error("Error while fetching visits for URL ${record.histUri}", record.histUri);
     }
 
     let i, k;
-    for (i = 0; i < curVisitsAsArray.length; i++) {
-      curVisits.add(curVisitsAsArray[i].date + "," + curVisitsAsArray[i].type);
+    for (i = 0; i < curVisits.length; i++) {
+      curVisits[i] = curVisits[i].date + "," + curVisits[i].type;
     }
 
     // Walk through the visits, make sure we have sound data, and eliminate
@@ -276,24 +287,17 @@ HistoryStore.prototype = {
         continue;
       }
 
-      // Dates need to be integers. Future and far past dates are clamped to the
-      // current date and earliest sensible date, respectively.
-      let originalVisitDate = PlacesUtils.toDate(Math.round(visit.date));
-      visit.date = PlacesSyncUtils.history.clampVisitDate(originalVisitDate);
+      // Dates need to be integers.
+      visit.date = Math.round(visit.date);
 
-      let visitDateAsPRTime = PlacesUtils.toPRTime(visit.date);
-      let visitKey = visitDateAsPRTime + "," + visit.type;
-      if (curVisits.has(visitKey)) {
+      if (curVisits.indexOf(visit.date + "," + visit.type) != -1) {
         // Visit is a dupe, don't increment 'k' so the element will be
         // overwritten.
         continue;
       }
 
-      // Note the visit key, so that we don't add duplicate visits with
-      // clamped timestamps.
-      curVisits.add(visitKey);
-
-      visit.transition = visit.type;
+      visit.visitDate = visit.date;
+      visit.transitionType = visit.type;
       k += 1;
     }
     record.visits.length = k; // truncate array

@@ -7,10 +7,9 @@
 "use strict";
 
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 
-loader.lazyRequireGetter(this, "HUDService", "devtools/client/webconsole/hudservice", true);
-loader.lazyGetter(this, "EventEmitter", () => require("devtools/shared/old-event-emitter"));
+loader.lazyGetter(this, "HUDService", () => require("devtools/client/webconsole/hudservice"));
+loader.lazyGetter(this, "EventEmitter", () => require("devtools/shared/event-emitter"));
 
 /**
  * A DevToolPanel that controls the Web Console.
@@ -46,7 +45,7 @@ WebConsolePanel.prototype = {
     let iframe = parentDoc.getElementById("toolbox-panel-iframe-webconsole");
 
     // Make sure the iframe content window is ready.
-    let deferredIframe = defer();
+    let deferredIframe = promise.defer();
     let win, doc;
     if ((win = iframe.contentWindow) &&
         (doc = win.document) &&
@@ -88,7 +87,7 @@ WebConsolePanel.prototype = {
         let msg = "WebConsolePanel open failed. " +
                   reason.error + ": " + reason.message;
         dump(msg + "\n");
-        console.error(msg, reason);
+        console.error(msg);
       });
   },
 

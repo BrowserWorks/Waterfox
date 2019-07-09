@@ -1,4 +1,6 @@
-// |reftest| skip-if(!this.hasOwnProperty("Intl"))
+// |reftest| skip-if(!this.hasOwnProperty("Intl")||!this.hasOwnProperty('addIntlExtras'))
+
+addIntlExtras(Intl);
 
 const optionsList = [
     {minimumFractionDigits: -0, maximumFractionDigits: -0},

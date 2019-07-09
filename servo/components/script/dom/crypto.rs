@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use dom::bindings::cell::DomRefCell;
+use core::nonzero::NonZero;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::CryptoBinding;
 use dom::bindings::codegen::Bindings::CryptoBinding::CryptoMethods;
 use dom::bindings::error::{Error, Fallible};
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use js::jsapi::{JSContext, JSObject};
@@ -21,20 +21,20 @@ unsafe_no_jsmanaged_fields!(ServoRng);
 #[dom_struct]
 pub struct Crypto {
     reflector_: Reflector,
-    #[ignore_malloc_size_of = "Defined in rand"]
-    rng: DomRefCell<ServoRng>,
+    #[ignore_heap_size_of = "Defined in rand"]
+    rng: DOMRefCell<ServoRng>,
 }
 
 impl Crypto {
     fn new_inherited() -> Crypto {
         Crypto {
             reflector_: Reflector::new(),
-            rng: DomRefCell::new(ServoRng::new()),
+            rng: DOMRefCell::new(ServoRng::new()),
         }
     }
 
-    pub fn new(global: &GlobalScope) -> DomRoot<Crypto> {
-        reflect_dom_object(Box::new(Crypto::new_inherited()), global, CryptoBinding::Wrap)
+    pub fn new(global: &GlobalScope) -> Root<Crypto> {
+        reflect_dom_object(box Crypto::new_inherited(), global, CryptoBinding::Wrap)
     }
 }
 
@@ -44,7 +44,7 @@ impl CryptoMethods for Crypto {
     unsafe fn GetRandomValues(&self,
                        _cx: *mut JSContext,
                        input: *mut JSObject)
-                       -> Fallible<NonNullJSObjectPtr> {
+                       -> Fallible<NonZero<*mut JSObject>> {
         assert!(!input.is_null());
         typedarray!(in(_cx) let mut array_buffer_view: ArrayBufferView = input);
         let (array_type, mut data) = match array_buffer_view.as_mut() {
@@ -65,7 +65,7 @@ impl CryptoMethods for Crypto {
 
         self.rng.borrow_mut().fill_bytes(&mut data);
 
-        Ok(NonNullJSObjectPtr::new_unchecked(input))
+        Ok(NonZero::new_unchecked(input))
     }
 }
 

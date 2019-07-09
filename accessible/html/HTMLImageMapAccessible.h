@@ -8,6 +8,7 @@
 
 #include "HTMLLinkAccessible.h"
 #include "ImageAccessibleWrap.h"
+#include "nsIDOMHTMLMapElement.h"
 
 namespace mozilla {
 namespace a11y {

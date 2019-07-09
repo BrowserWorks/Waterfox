@@ -11,10 +11,10 @@
 #include "mozilla/dom/MediaKeyMessageEvent.h"
 #include "mozilla/dom/MediaKeyError.h"
 #include "mozilla/dom/MediaKeySession.h"
-#include "mozilla/dom/MediaKeyStatusMap.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/UnionTypes.h"
 #include "mozilla/Telemetry.h"
+#include "GMPCDMProxy.h"
 #ifdef MOZ_WIDGET_ANDROID
 #include "mozilla/MediaDrmCDMProxy.h"
 #endif
@@ -22,6 +22,9 @@
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsContentTypeParser.h"
+#ifdef MOZ_FMP4
+#include "MP4Decoder.h"
+#endif
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
 #endif
@@ -341,13 +344,23 @@ MediaKeys::CreateCDMProxy(nsIEventTarget* aMainThread)
   } else
 #endif
   {
-    proxy = new ChromiumCDMProxy(
-      this,
-      mKeySystem,
-      new MediaKeysGMPCrashHelper(this),
-      mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
-      mConfig.mPersistentState == MediaKeysRequirement::Required,
-      aMainThread);
+    if (MediaPrefs::EMEChromiumAPIEnabled()) {
+      proxy = new ChromiumCDMProxy(
+        this,
+        mKeySystem,
+        new MediaKeysGMPCrashHelper(this),
+        mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
+        mConfig.mPersistentState == MediaKeysRequirement::Required,
+        aMainThread);
+    } else {
+      proxy = new GMPCDMProxy(
+        this,
+        mKeySystem,
+        new MediaKeysGMPCrashHelper(this),
+        mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
+        mConfig.mPersistentState == MediaKeysRequirement::Required,
+        aMainThread);
+    }
   }
   return proxy.forget();
 }
@@ -452,6 +465,8 @@ MediaKeys::OnCDMCreated(PromiseId aId, const uint32_t aPluginId)
   MediaKeySystemAccess::NotifyObservers(mParent,
                                         mKeySystem,
                                         MediaKeySystemStatus::Cdm_created);
+
+  Telemetry::Accumulate(Telemetry::VIDEO_CDM_CREATED, ToCDMTypeTelemetryEnum(mKeySystem));
 }
 
 static bool

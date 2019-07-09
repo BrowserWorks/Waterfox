@@ -7,68 +7,34 @@
 #ifndef MOZSTORAGESTATEMENTPARAMS_H
 #define MOZSTORAGESTATEMENTPARAMS_H
 
+#include "mozIStorageStatementParams.h"
+#include "nsIXPCScriptable.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/ErrorResult.h"
-#include "nsPIDOMWindow.h"
-#include "nsWrapperCache.h"
+
+class mozIStorageStatement;
 
 namespace mozilla {
 namespace storage {
 
-class Statement;
-
-class StatementParams final : public nsISupports
-                            , public nsWrapperCache
+class StatementParams final : public mozIStorageStatementParams
+                            , public nsIXPCScriptable
 {
 public:
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(StatementParams)
+  explicit StatementParams(mozIStorageStatement *aStatement);
 
-  explicit StatementParams(nsPIDOMWindowInner* aWindow, Statement* aStatement);
+  // interfaces
+  NS_DECL_ISUPPORTS
+  NS_DECL_MOZISTORAGESTATEMENTPARAMS
+  NS_DECL_NSIXPCSCRIPTABLE
 
-  void NamedGetter(JSContext* aCx,
-                   const nsAString& aName,
-                   bool& aFound,
-                   JS::MutableHandle<JS::Value> aResult,
-                   mozilla::ErrorResult& aRv);
-
-  void NamedSetter(JSContext* aCx,
-                   const nsAString& aName,
-                   JS::Handle<JS::Value> aValue,
-                   mozilla::ErrorResult& aRv);
-
-  uint32_t Length() const {
-    return mParamCount;
-  }
-
-  void IndexedGetter(JSContext* aCx,
-                     uint32_t aIndex,
-                     bool& aFound,
-                     JS::MutableHandle<JS::Value> aResult,
-                     mozilla::ErrorResult& aRv);
-
-  void IndexedSetter(JSContext* aCx,
-                     uint32_t aIndex,
-                     JS::Handle<JS::Value> aValue,
-                     mozilla::ErrorResult& aRv);
-
-  void GetSupportedNames(nsTArray<nsString>& aNames);
-
-  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
-
-  nsPIDOMWindowInner* GetParentObject() const
-  {
-    return mWindow;
-  }
-
-private:
+protected:
   ~StatementParams() {}
 
-  nsCOMPtr<nsPIDOMWindowInner> mWindow;
-  Statement* mStatement;
+  mozIStorageStatement *mStatement;
   uint32_t mParamCount;
 
   friend class StatementParamsHolder;
+  friend class StatementRowHolder;
 };
 
 } // namespace storage

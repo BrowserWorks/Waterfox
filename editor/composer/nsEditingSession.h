@@ -43,10 +43,6 @@ class nsIDocShell;
 class nsIEditor;
 class nsIWebProgress;
 
-namespace mozilla {
-class HTMLEditor;
-} // namespace mozilla
-
 class nsEditingSession final : public nsIEditingSession,
                                public nsIWebProgressListener,
                                public nsSupportsWeakReference
@@ -96,9 +92,8 @@ protected:
   void            RemoveEditorControllers(nsPIDOMWindowOuter* aWindow);
   void            RemoveWebProgressListener(nsPIDOMWindowOuter* aWindow);
   void            RestoreAnimationMode(nsPIDOMWindowOuter* aWindow);
-  void            RemoveListenersAndControllers(
-                    nsPIDOMWindowOuter* aWindow,
-                    mozilla::HTMLEditor* aHTMLEditor);
+  void            RemoveListenersAndControllers(nsPIDOMWindowOuter* aWindow,
+                                                nsIEditor *aEditor);
 
 protected:
 

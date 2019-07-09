@@ -12,7 +12,7 @@
 #include "nsIWidget.h"
 
 #include "nsIStringBundle.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIServiceManager.h"
 #include "nsCOMArray.h"
 #include "nsIFile.h"
@@ -64,10 +64,10 @@ LocalFileToDirectoryOrBlob(nsPIDOMWindowInner* aWindow,
  * A runnable to dispatch from the main thread to the main thread to display
  * the file picker while letting the showAsync method return right away.
 */
-class nsBaseFilePicker::AsyncShowFilePicker : public mozilla::Runnable
+class AsyncShowFilePicker : public mozilla::Runnable
 {
 public:
-  AsyncShowFilePicker(nsBaseFilePicker* aFilePicker,
+  AsyncShowFilePicker(nsIFilePicker* aFilePicker,
                       nsIFilePickerShownCallback* aCallback)
     : mozilla::Runnable("AsyncShowFilePicker")
     , mFilePicker(aFilePicker)
@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  RefPtr<nsBaseFilePicker> mFilePicker;
+  RefPtr<nsIFilePicker> mFilePicker;
   RefPtr<nsIFilePickerShownCallback> mCallback;
 };
 
@@ -211,51 +211,51 @@ nsBaseFilePicker::AppendFilters(int32_t aFilterMask)
   if (NS_FAILED(rv))
     return NS_ERROR_FAILURE;
 
-  nsAutoString title;
-  nsAutoString filter;
+  nsXPIDLString title;
+  nsXPIDLString filter;
 
   if (aFilterMask & filterAll) {
-    titleBundle->GetStringFromName("allTitle", title);
-    filterBundle->GetStringFromName("allFilter", filter);
+    titleBundle->GetStringFromName("allTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("allFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterHTML) {
-    titleBundle->GetStringFromName("htmlTitle", title);
-    filterBundle->GetStringFromName("htmlFilter", filter);
+    titleBundle->GetStringFromName("htmlTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("htmlFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterText) {
-    titleBundle->GetStringFromName("textTitle", title);
-    filterBundle->GetStringFromName("textFilter", filter);
+    titleBundle->GetStringFromName("textTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("textFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterImages) {
-    titleBundle->GetStringFromName("imageTitle", title);
-    filterBundle->GetStringFromName("imageFilter", filter);
+    titleBundle->GetStringFromName("imageTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("imageFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterAudio) {
-    titleBundle->GetStringFromName("audioTitle", title);
-    filterBundle->GetStringFromName("audioFilter", filter);
+    titleBundle->GetStringFromName("audioTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("audioFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterVideo) {
-    titleBundle->GetStringFromName("videoTitle", title);
-    filterBundle->GetStringFromName("videoFilter", filter);
+    titleBundle->GetStringFromName("videoTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("videoFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterXML) {
-    titleBundle->GetStringFromName("xmlTitle", title);
-    filterBundle->GetStringFromName("xmlFilter", filter);
+    titleBundle->GetStringFromName("xmlTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("xmlFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterXUL) {
-    titleBundle->GetStringFromName("xulTitle", title);
-    filterBundle->GetStringFromName("xulFilter", filter);
+    titleBundle->GetStringFromName("xulTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("xulFilter", getter_Copies(filter));
     AppendFilter(title, filter);
   }
   if (aFilterMask & filterApps) {
-    titleBundle->GetStringFromName("appsTitle", title);
+    titleBundle->GetStringFromName("appsTitle", getter_Copies(title));
     // Pass the magic string "..apps" to the platform filepicker, which it
     // should recognize and do the correct platform behavior for.
     AppendFilter(title, NS_LITERAL_STRING("..apps"));

@@ -17,7 +17,6 @@
 #include "nsRefPtrHashtable.h"
 
 #include "nsBaseWidget.h"
-#include "CompositorWidget.h"
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
@@ -35,6 +34,8 @@
 #include "mozilla/TouchEvents.h"
 
 #include "IMContextWrapper.h"
+
+#include "nsMenuBar.h"
 
 #undef LOG
 #ifdef MOZ_LOGGING
@@ -74,7 +75,6 @@ class nsWindow final : public nsBaseWidget
 public:
     typedef mozilla::gfx::DrawTarget DrawTarget;
     typedef mozilla::WidgetEventTime WidgetEventTime;
-    typedef mozilla::widget::PlatformCompositorWidgetDelegate PlatformCompositorWidgetDelegate;
 
     nsWindow();
 
@@ -158,6 +158,8 @@ public:
     virtual nsresult   MakeFullScreen(bool aFullScreen,
                                       nsIScreen* aTargetScreen = nullptr) override;
     virtual void       HideWindowChrome(bool aShouldHide) override;
+
+    void               SetMenuBar(mozilla::UniquePtr<nsMenuBar> aMenuBar);
 
     /**
      * GetLastUserInputTime returns a timestamp for the most recent user input
@@ -418,7 +420,7 @@ private:
     void               SetDefaultIcon(void);
     void               InitButtonEvent(mozilla::WidgetMouseEvent& aEvent,
                                        GdkEventButton* aGdkEvent);
-    bool               DispatchCommandEvent(nsAtom* aCommand);
+    bool               DispatchCommandEvent(nsIAtom* aCommand);
     bool               DispatchContentCommandEvent(mozilla::EventMessage aMsg);
     bool               CheckForRollup(gdouble aMouseX, gdouble aMouseY,
                                       bool aIsWheel, bool aAlwaysRollup);
@@ -438,8 +440,6 @@ private:
     GtkWidget          *mShell;
     MozContainer       *mContainer;
     GdkWindow          *mGdkWindow;
-    PlatformCompositorWidgetDelegate* mCompositorWidgetDelegate;
-
 
     uint32_t            mHasMappedToplevel : 1,
                         mIsFullyObscured : 1,
@@ -545,8 +545,6 @@ private:
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
 
-    void SetCompositorWidgetDelegate(CompositorWidgetDelegate* delegate) override;
-
     void CleanLayerManagerRecursive();
 
     virtual int32_t RoundsWidgetCoordinatesTo() override;
@@ -567,6 +565,8 @@ private:
     RefPtr<mozilla::widget::IMContextWrapper> mIMContext;
 
     mozilla::UniquePtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
+
+    mozilla::UniquePtr<nsMenuBar> mMenuBar;
 };
 
 #endif /* __nsWindow_h__ */

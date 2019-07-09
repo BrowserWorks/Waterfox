@@ -9,8 +9,7 @@
 use app_units::Au;
 use block::BlockFlow;
 use context::LayoutContext;
-use display_list_builder::{BlockFlowDisplayListBuilding, DisplayListBuildState};
-use display_list_builder::{StackingContextCollectionFlags, StackingContextCollectionState};
+use display_list_builder::DisplayListBuildState;
 use euclid::Point2D;
 use flow::{Flow, FlowClass, OpaqueFlow};
 use fragment::{Fragment, FragmentBorderBoxIterator, Overflow};
@@ -19,11 +18,7 @@ use std::fmt;
 use style::logical_geometry::LogicalSize;
 use style::properties::ComputedValues;
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for TableCaptionFlow {}
-
 /// A table formatting context.
-#[repr(C)]
 pub struct TableCaptionFlow {
     pub block_flow: BlockFlow,
 }
@@ -67,8 +62,8 @@ impl Flow for TableCaptionFlow {
         self.block_flow.assign_block_size(layout_context);
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn update_late_computed_inline_position_if_necessary(&mut self, inline_position: Au) {
@@ -84,9 +79,8 @@ impl Flow for TableCaptionFlow {
         self.block_flow.build_display_list(state);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
-        self.block_flow.collect_stacking_contexts_for_block(state,
-                                                            StackingContextCollectionFlags::empty());
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
+        self.block_flow.collect_stacking_contexts(state);
     }
 
     fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>) {
@@ -95,14 +89,6 @@ impl Flow for TableCaptionFlow {
 
     fn compute_overflow(&self) -> Overflow {
         self.block_flow.compute_overflow()
-    }
-
-    fn contains_roots_of_absolute_flow_tree(&self) -> bool {
-        self.block_flow.contains_roots_of_absolute_flow_tree()
-    }
-
-    fn is_absolute_containing_block(&self) -> bool {
-        self.block_flow.is_absolute_containing_block()
     }
 
     fn generated_containing_block_size(&self, flow: OpaqueFlow) -> LogicalSize<Au> {

@@ -233,9 +233,9 @@ public:
     bool TestJoinConnection(const nsACString &hostname, int32_t port);
     bool JoinConnection(const nsACString &hostname, int32_t port);
 
-    void SetFastOpenStatus(uint8_t tfoStatus);
-
-    void SetEvent(nsresult aStatus);
+    void SetFastOpenStatus(uint8_t tfoStatus) {
+        mFastOpenStatus = tfoStatus;
+    }
 
 private:
     // Value (set in mTCPKeepaliveConfig) indicates which set of prefs to use.

@@ -9,9 +9,6 @@ with Files("**"):
 
 EXPORTS += [
     'BRNameMatchingPolicy.h',
-    'BTInclusionProof.h',
-    'BTVerifier.h',
-    'Buffer.h',
     'CertVerifier.h',
     'CTLog.h',
     'CTPolicyEnforcer.h',
@@ -23,8 +20,6 @@ EXPORTS += [
 
 UNIFIED_SOURCES += [
     'BRNameMatchingPolicy.cpp',
-    'BTVerifier.cpp',
-    'Buffer.cpp',
     'CertVerifier.cpp',
     'CTDiversityPolicy.cpp',
     'CTLogVerifier.cpp',
@@ -44,9 +39,6 @@ if not CONFIG['NSS_NO_EV_CERTS']:
     UNIFIED_SOURCES += [
         'ExtendedValidation.cpp',
     ]
-
-for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
-    DEFINES[var] = '"%s"' % CONFIG[var]
 
 LOCAL_INCLUDES += [
     '/security/manager/ssl',
@@ -83,11 +75,6 @@ if CONFIG['_MSC_VER']:
                    # class copy constructor is inaccessible or deleted
         '-wd4626', # assignment operator could not be generated because a base
                    # class assignment operator is inaccessible or deleted
-        '-wd4628', # digraphs not supported with -Ze (nsThreadUtils.h includes
-                   # what would be the digraph "<:" in the expression
-                   # "mozilla::EnableIf<::detail::...". Since we don't want it
-                   # interpreted as a digraph anyway, we can disable the
-                   # warning.)
         '-wd4640', # construction of local static object is not thread-safe
         '-wd4710', # 'function': function not inlined
         '-wd4711', # function 'function' selected for inline expansion

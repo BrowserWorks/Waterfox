@@ -22,11 +22,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(Date.prototype.getYear, "length", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: 0
-});
+assert.sameValue(Date.prototype.getYear.length, 0);
+
+verifyNotEnumerable(Date.prototype.getYear, "length");
+verifyNotWritable(Date.prototype.getYear, "length");
+verifyConfigurable(Date.prototype.getYear, "length");
 
 reportCompare(0, 0);

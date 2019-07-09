@@ -17,7 +17,6 @@ namespace gfx {
 
 SourceSurfaceSkia::SourceSurfaceSkia()
   : mDrawTarget(nullptr)
-  , mChangeMutex("SourceSurfaceSkia::mChangeMutex")
 {
 }
 
@@ -39,14 +38,6 @@ SurfaceFormat
 SourceSurfaceSkia::GetFormat() const
 {
   return mFormat;
-}
-
-sk_sp<SkImage>
-SourceSurfaceSkia::GetImage()
-{
-  MutexAutoLock lock(mChangeMutex);
-  sk_sp<SkImage> image = mImage;
-  return image;
 }
 
 static sk_sp<SkData>
@@ -164,28 +155,9 @@ SourceSurfaceSkia::GetData()
   return reinterpret_cast<uint8_t*>(pixmap.writable_addr());
 }
 
-bool
-SourceSurfaceSkia::Map(MapType, MappedSurface *aMappedSurface)
-{
-  mChangeMutex.Lock();
-  aMappedSurface->mData = GetData();
-  aMappedSurface->mStride = Stride();
-  mIsMapped = !!aMappedSurface->mData;
-  return mIsMapped;
-}
-
-void
-SourceSurfaceSkia::Unmap()
-{
-  mChangeMutex.Unlock();
-  MOZ_ASSERT(mIsMapped);
-  mIsMapped = false;
-}
-
 void
 SourceSurfaceSkia::DrawTargetWillChange()
 {
-  MutexAutoLock lock(mChangeMutex);
   if (mDrawTarget) {
     // Raster snapshots do not use Skia's internal copy-on-write mechanism,
     // so we need to do an explicit copy here.

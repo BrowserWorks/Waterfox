@@ -17,9 +17,8 @@ use std::ptr;
 
 pub type CGGlyph = libc::c_ushort;
 
-// This is an enum due to zero-sized types warnings.
-// For more details see https://github.com/rust-lang/rust/issues/27303
-pub enum __CGFont {}
+#[repr(C)]
+pub struct __CGFont;
 
 pub type CGFontRef = *const __CGFont;
 

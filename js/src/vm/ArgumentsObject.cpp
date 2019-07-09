@@ -371,7 +371,7 @@ ArgumentsObject::finishForIon(JSContext* cx, jit::JitFrameLayout* frame,
 {
     // JIT code calls this directly (no callVM), because it's faster, so we're
     // not allowed to GC in here.
-    AutoUnsafeCallWithABI unsafe;
+    JS::AutoCheckCannotGC nogc;
 
     JSFunction* callee = jit::CalleeTokenToFunction(frame->calleeToken());
     RootedObject callObj(cx, scopeChain->is<CallObject>() ? scopeChain : nullptr);
@@ -476,7 +476,7 @@ MappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue
 }
 
 static bool
-MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
+MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
                 ObjectOpResult& result)
 {
     if (!obj->is<MappedArgumentsObject>())
@@ -499,9 +499,9 @@ MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
     if (JSID_IS_INT(id)) {
         unsigned arg = unsigned(JSID_TO_INT(id));
         if (arg < argsobj->initialLength() && !argsobj->isElementDeleted(arg)) {
-            argsobj->setElement(cx, arg, v);
+            argsobj->setElement(cx, arg, vp);
             if (arg < script->functionNonDelazifying()->nargs())
-                TypeScript::SetArgument(cx, script, arg, v);
+                TypeScript::SetArgument(cx, script, arg, vp);
             return result.succeed();
         }
     } else {
@@ -518,7 +518,7 @@ MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
      */
     ObjectOpResult ignored;
     return NativeDeleteProperty(cx, argsobj, id, ignored) &&
-           NativeDefineDataProperty(cx, argsobj, id, v, attrs, result);
+           NativeDefineProperty(cx, argsobj, id, vp, nullptr, nullptr, attrs, result);
 }
 
 static bool
@@ -530,7 +530,7 @@ DefineArgumentsIterator(JSContext* cx, Handle<ArgumentsObject*> argsobj)
     RootedValue val(cx);
     if (!GlobalObject::getSelfHostedFunction(cx, cx->global(), shName, name, 0, &val))
         return false;
-    return NativeDefineDataProperty(cx, argsobj, iteratorId, val, JSPROP_RESOLVING);
+    return NativeDefineProperty(cx, argsobj, iteratorId, val, nullptr, nullptr, JSPROP_RESOLVING);
 }
 
 /* static */ bool
@@ -541,7 +541,7 @@ ArgumentsObject::reifyLength(JSContext* cx, Handle<ArgumentsObject*> obj)
 
     RootedId id(cx, NameToId(cx->names().length));
     RootedValue val(cx, Int32Value(obj->initialLength()));
-    if (!NativeDefineDataProperty(cx, obj, id, val, JSPROP_RESOLVING))
+    if (!NativeDefineProperty(cx, obj, id, val, nullptr, nullptr, JSPROP_RESOLVING))
         return false;
 
     obj->markLengthOverridden();
@@ -576,7 +576,7 @@ MappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId id,
         return true;
     }
 
-    unsigned attrs = JSPROP_SHADOWABLE | JSPROP_RESOLVING;
+    unsigned attrs = JSPROP_SHARED | JSPROP_SHADOWABLE | JSPROP_RESOLVING;
     if (JSID_IS_INT(id)) {
         uint32_t arg = uint32_t(JSID_TO_INT(id));
         if (arg >= argsobj->initialLength() || argsobj->isElementDeleted(arg))
@@ -594,8 +594,11 @@ MappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId id,
             return true;
     }
 
-    if (!NativeDefineAccessorProperty(cx, argsobj, id, MappedArgGetter, MappedArgSetter, attrs))
+    if (!NativeDefineProperty(cx, argsobj, id, UndefinedHandleValue,
+                              MappedArgGetter, MappedArgSetter, attrs))
+    {
         return false;
+    }
 
     *resolvedp = true;
     return true;
@@ -648,29 +651,14 @@ MappedArgumentsObject::obj_defineProperty(JSContext* cx, HandleObject obj, Handl
 
     // Step 4.
     Rooted<PropertyDescriptor> newArgDesc(cx, desc);
-
-    // Step 5.
     if (!desc.isAccessorDescriptor() && isMapped) {
-        // Step 5.a.
-        if (desc.hasWritable() && !desc.writable()) {
-            if (!desc.hasValue()) {
-                RootedValue v(cx, argsobj->element(JSID_TO_INT(id)));
-                newArgDesc.setValue(v);
-            }
-            newArgDesc.setGetter(nullptr);
-            newArgDesc.setSetter(nullptr);
-        } else {
-            // In this case the live mapping is supposed to keep working,
-            // we have to pass along the Getter/Setter otherwise they are
-            // overwritten.
-            newArgDesc.setGetter(MappedArgGetter);
-            newArgDesc.setSetter(MappedArgSetter);
-            newArgDesc.value().setUndefined();
-            newArgDesc.attributesRef() |= JSPROP_IGNORE_VALUE;
-        }
+        // In this case the live mapping is supposed to keep working,
+        // we have to pass along the Getter/Setter otherwise they are overwritten.
+        newArgDesc.setGetter(MappedArgGetter);
+        newArgDesc.setSetter(MappedArgSetter);
     }
 
-    // Step 6. NativeDefineProperty will lookup [[Value]] for us.
+    // Steps 5-6. NativeDefineProperty will lookup [[Value]] for us.
     if (!NativeDefineProperty(cx, obj.as<NativeObject>(), id, newArgDesc, result))
         return false;
     // Step 7.
@@ -726,7 +714,7 @@ UnmappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleVal
 }
 
 static bool
-UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
+UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
                   ObjectOpResult& result)
 {
     if (!obj->is<UnmappedArgumentsObject>())
@@ -744,7 +732,7 @@ UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
     if (JSID_IS_INT(id)) {
         unsigned arg = unsigned(JSID_TO_INT(id));
         if (arg < argsobj->initialLength()) {
-            argsobj->setElement(cx, arg, v);
+            argsobj->setElement(cx, arg, vp);
             return result.succeed();
         }
     } else {
@@ -758,7 +746,7 @@ UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
      */
     ObjectOpResult ignored;
     return NativeDeleteProperty(cx, argsobj, id, ignored) &&
-           NativeDefineDataProperty(cx, argsobj, id, v, attrs, result);
+           NativeDefineProperty(cx, argsobj, id, vp, nullptr, nullptr, attrs, result);
 }
 
 /* static */ bool
@@ -776,7 +764,7 @@ UnmappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId i
         return true;
     }
 
-    unsigned attrs = JSPROP_SHADOWABLE;
+    unsigned attrs = JSPROP_SHARED | JSPROP_SHADOWABLE;
     GetterOp getter = UnmappedArgGetter;
     SetterOp setter = UnmappedArgSetter;
 
@@ -793,13 +781,13 @@ UnmappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId i
         if (!JSID_IS_ATOM(id, cx->names().callee))
             return true;
 
-        attrs = JSPROP_PERMANENT | JSPROP_GETTER | JSPROP_SETTER;
+        attrs = JSPROP_PERMANENT | JSPROP_GETTER | JSPROP_SETTER | JSPROP_SHARED;
         getter = CastAsGetterOp(argsobj->global().getThrowTypeError());
         setter = CastAsSetterOp(argsobj->global().getThrowTypeError());
     }
 
     attrs |= JSPROP_RESOLVING;
-    if (!NativeDefineAccessorProperty(cx, argsobj, id, getter, setter, attrs))
+    if (!NativeDefineProperty(cx, argsobj, id, UndefinedHandleValue, getter, setter, attrs))
         return false;
 
     *resolvedp = true;
@@ -855,14 +843,11 @@ ArgumentsObject::trace(JSTracer* trc, JSObject* obj)
 }
 
 /* static */ size_t
-ArgumentsObject::objectMoved(JSObject* dst, JSObject* src)
+ArgumentsObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObject* src)
 {
     ArgumentsObject* ndst = &dst->as<ArgumentsObject>();
-    const ArgumentsObject* nsrc = &src->as<ArgumentsObject>();
+    ArgumentsObject* nsrc = &src->as<ArgumentsObject>();
     MOZ_ASSERT(ndst->data() == nsrc->data());
-
-    if (!IsInsideNursery(src))
-        return 0;
 
     Nursery& nursery = dst->zone()->group()->nursery();
 
@@ -909,6 +894,8 @@ ArgumentsObject::objectMoved(JSObject* dst, JSObject* src)
 const ClassOps MappedArgumentsObject::classOps_ = {
     nullptr,                 /* addProperty */
     ArgumentsObject::obj_delProperty,
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     MappedArgumentsObject::obj_enumerate,
     nullptr,                 /* newEnumerate */
     MappedArgumentsObject::obj_resolve,
@@ -918,11 +905,6 @@ const ClassOps MappedArgumentsObject::classOps_ = {
     nullptr,                 /* hasInstance */
     nullptr,                 /* construct   */
     ArgumentsObject::trace
-};
-
-const js::ClassExtension MappedArgumentsObject::classExt_ = {
-    nullptr,                      /* weakmapKeyDelegateOp */
-    ArgumentsObject::objectMoved  /* objectMovedOp */
 };
 
 const ObjectOps MappedArgumentsObject::objectOps_ = {
@@ -939,7 +921,7 @@ const Class MappedArgumentsObject::class_ = {
     JSCLASS_BACKGROUND_FINALIZE,
     &MappedArgumentsObject::classOps_,
     nullptr,
-    &MappedArgumentsObject::classExt_,
+    nullptr,
     &MappedArgumentsObject::objectOps_
 };
 
@@ -950,6 +932,8 @@ const Class MappedArgumentsObject::class_ = {
 const ClassOps UnmappedArgumentsObject::classOps_ = {
     nullptr,                 /* addProperty */
     ArgumentsObject::obj_delProperty,
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     UnmappedArgumentsObject::obj_enumerate,
     nullptr,                 /* newEnumerate */
     UnmappedArgumentsObject::obj_resolve,
@@ -961,11 +945,6 @@ const ClassOps UnmappedArgumentsObject::classOps_ = {
     ArgumentsObject::trace
 };
 
-const js::ClassExtension UnmappedArgumentsObject::classExt_ = {
-    nullptr,                      /* weakmapKeyDelegateOp */
-    ArgumentsObject::objectMoved  /* objectMovedOp */
-};
-
 const Class UnmappedArgumentsObject::class_ = {
     "Arguments",
     JSCLASS_DELAY_METADATA_BUILDER |
@@ -973,7 +952,5 @@ const Class UnmappedArgumentsObject::class_ = {
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
     JSCLASS_SKIP_NURSERY_FINALIZE |
     JSCLASS_BACKGROUND_FINALIZE,
-    &UnmappedArgumentsObject::classOps_,
-    nullptr,
-    &UnmappedArgumentsObject::classExt_
+    &UnmappedArgumentsObject::classOps_
 };

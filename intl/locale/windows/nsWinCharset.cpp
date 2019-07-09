@@ -8,6 +8,7 @@
 #include "nsIPlatformCharset.h"
 #include "nsUConvPropertySearch.h"
 #include <windows.h>
+#include "nsWin32Locale.h"
 #include "nsString.h"
 #include "nsPlatformCharset.h"
 

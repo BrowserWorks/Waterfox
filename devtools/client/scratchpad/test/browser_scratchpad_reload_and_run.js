@@ -53,7 +53,7 @@ function runTests()
 
   let browser = gBrowser.selectedBrowser;
 
-  let deferred = defer();
+  let deferred = promise.defer();
   browser.addEventListener("DOMWindowCreated", function () {
     browser.contentWindow.addEventListener("foo", function () {
       is(browser.contentWindow.document.body.innerHTML, "Modified text",

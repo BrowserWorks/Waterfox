@@ -6,7 +6,7 @@
 
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
-use selectors::parser::SelectorParseErrorKind;
+use selectors::parser::SelectorParseError;
 use style_traits::ParseError;
 use values::generics::background::BackgroundSize as GenericBackgroundSize;
 use values::specified::length::LengthOrPercentageOrAuto;
@@ -20,24 +20,13 @@ impl Parse for BackgroundSize {
             let height = input
                 .try(|i| LengthOrPercentageOrAuto::parse_non_negative(context, i))
                 .unwrap_or(LengthOrPercentageOrAuto::Auto);
-            return Ok(GenericBackgroundSize::Explicit { width, height });
+            return Ok(GenericBackgroundSize::Explicit { width: width, height: height });
         }
-        let location = input.current_source_location();
         let ident = input.expect_ident()?;
         (match_ignore_ascii_case! { &ident,
             "cover" => Ok(GenericBackgroundSize::Cover),
             "contain" => Ok(GenericBackgroundSize::Contain),
             _ => Err(()),
-        }).map_err(|()| location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())))
-    }
-}
-
-impl BackgroundSize {
-    /// Returns `auto auto`.
-    pub fn auto() -> Self {
-        GenericBackgroundSize::Explicit {
-            width: LengthOrPercentageOrAuto::Auto,
-            height: LengthOrPercentageOrAuto::Auto,
-        }
+        }).map_err(|()| SelectorParseError::UnexpectedIdent(ident.clone()).into())
     }
 }

@@ -22,7 +22,7 @@ XPCOMUtils.defineLazyGetter(this, "ContentAreaUtils", function() {
   return ContentAreaUtils;
 });
 
-this.EXPORTED_SYMBOLS = ["App", "HelperApps"];
+this.EXPORTED_SYMBOLS = ["App","HelperApps"];
 
 function App(data) {
   this.name = data.name;
@@ -38,7 +38,7 @@ App.prototype = {
     HelperApps._launchApp(this, uri, callback);
     return false;
   }
-};
+}
 
 var HelperApps =  {
   get defaultBrowsers() {
@@ -98,7 +98,7 @@ var HelperApps =  {
           name: protoApp.name,
           description: protoApp.detailedDescription,
         });
-      } catch (e) {}
+      } catch(e) {}
     }
 
     return results;
@@ -136,7 +136,7 @@ var HelperApps =  {
       // file extension.
       if (flags.filterHtml) {
         // Matches from the first '.' to the end of the string, '?', or '#'
-        let ext = /\.([^\?#]*)/.exec(uri.pathQueryRef);
+        let ext = /\.([^\?#]*)/.exec(uri.path);
         if (ext && (ext[1] === "html" || ext[1] === "htm")) {
           apps = apps.filter(function(app) {
             return app.name && !this.defaultHtmlHandlers[app.name];
@@ -158,11 +158,11 @@ var HelperApps =  {
         throw new Error("Intent:GetHandler did not return data");
       }
       return parseData(data);
-    }
+    } else {
       EventDispatcher.instance.sendRequestForResult(msg).then(function(data) {
         callback(parseData(data));
       });
-
+    }
   },
 
   launchUri: function launchUri(uri) {
@@ -177,10 +177,10 @@ var HelperApps =  {
 
     let apps = [];
     for (let i = 0; i < appInfo.length; i += numAttr) {
-      apps.push(new App({"name": appInfo[i],
-                 "isDefault": appInfo[i + 1],
-                 "packageName": appInfo[i + 2],
-                 "activityName": appInfo[i + 3]}));
+      apps.push(new App({"name" : appInfo[i],
+                 "isDefault" : appInfo[i+1],
+                 "packageName" : appInfo[i+2],
+                 "activityName" : appInfo[i+3]}));
     }
 
     return apps;
@@ -196,7 +196,7 @@ var HelperApps =  {
       type: type,
       mime: mimeType,
       action: options.action || "", // empty action string defaults to android.intent.action.VIEW
-      url: uri ? uri.displaySpec : "",
+      url: uri ? uri.spec : "",
       packageName: options.packageName || "",
       className: options.className || ""
     };

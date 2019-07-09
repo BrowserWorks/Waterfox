@@ -25,7 +25,7 @@ interface IDBTransaction : EventTarget {
     readonly    attribute IDBTransactionMode mode;
     readonly    attribute IDBDatabase        db;
 
-    readonly    attribute DOMException?      error;
+    readonly    attribute DOMError?          error;
 
     [Throws]
     IDBObjectStore objectStore (DOMString name);

@@ -17,7 +17,6 @@
 #include "nsDOMNavigationTiming.h"
 #include "nsWrapperCache.h"
 
-class nsIGlobalObject;
 class nsPIDOMWindowInner;
 
 namespace mozilla {
@@ -31,10 +30,7 @@ public:
   IdleDeadline(nsPIDOMWindowInner* aWindow, bool aDidTimeout,
                DOMHighResTimeStamp aDeadline);
 
-  IdleDeadline(nsIGlobalObject* aGlobal, bool aDidTimeout,
-               DOMHighResTimeStamp aDeadline);
-
-  nsIGlobalObject* GetParentObject() const { return mGlobal; }
+  nsPIDOMWindowInner* GetParentObject() const { return mWindow; }
 
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
@@ -49,7 +45,6 @@ private:
   ~IdleDeadline();
 
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
-  nsCOMPtr<nsIGlobalObject> mGlobal;
   const bool mDidTimeout;
   const DOMHighResTimeStamp mDeadline;
 };

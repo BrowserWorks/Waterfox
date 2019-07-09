@@ -35,7 +35,6 @@
 #include "VRManager.h"                  // for VRManager
 #include "mozilla/ipc/Transport.h"      // for Transport
 #include "mozilla/gfx/gfxVars.h"
-#include "mozilla/gfx/GPUParent.h"
 #include "mozilla/layers/AnimationHelper.h" // for CompositorAnimationStorage
 #include "mozilla/layers/APZCTreeManager.h"  // for APZCTreeManager
 #include "mozilla/layers/APZCTreeManagerParent.h"  // for APZCTreeManagerParent
@@ -84,12 +83,10 @@
 #include "mozilla/HalTypes.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
-#ifdef MOZ_GECKO_PROFILER
-# include "ProfilerMarkerPayload.h"
-#endif
+#include "ProfilerMarkerPayload.h"
 #include "mozilla/VsyncDispatcher.h"
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-# include "VsyncSource.h"
+#include "VsyncSource.h"
 #endif
 #include "mozilla/widget/CompositorWidget.h"
 #ifdef MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING
@@ -263,6 +260,11 @@ CompositorBridgeParent::Setup()
 
   MOZ_ASSERT(!sCompositorMap);
   sCompositorMap = new CompositorMap;
+
+  gfxPrefs::SetWebRenderProfilerEnabledChangeCallback(
+    [](const GfxPrefValue& aValue) -> void {
+      CompositorBridgeParent::SetWebRenderProfilerEnabled(aValue.get_bool());
+  });
 }
 
 void
@@ -271,6 +273,7 @@ CompositorBridgeParent::Shutdown()
   MOZ_ASSERT(sCompositorMap);
   MOZ_ASSERT(sCompositorMap->empty());
   sCompositorMap = nullptr;
+  gfxPrefs::SetWebRenderProfilerEnabledChangeCallback(nullptr);
 }
 
 void
@@ -460,11 +463,6 @@ CompositorBridgeParent::StopAndClearResources()
     });
     mWrBridge->Destroy();
     mWrBridge = nullptr;
-    if (mAsyncImageManager) {
-      mAsyncImageManager->Destroy();
-      // WebRenderAPI should be already destructed
-      mAsyncImageManager = nullptr;
-    }
   }
 
   if (mCompositor) {
@@ -539,7 +537,7 @@ CompositorBridgeParent::RecvWaitOnTransactionProcessed()
 mozilla::ipc::IPCResult
 CompositorBridgeParent::RecvFlushRendering()
 {
-  if (mOptions.UseWebRender()) {
+  if (gfxVars::UseWebRender()) {
     mWrBridge->FlushRendering(/* aIsSync */ true);
     return IPC_OK();
   }
@@ -554,7 +552,7 @@ CompositorBridgeParent::RecvFlushRendering()
 mozilla::ipc::IPCResult
 CompositorBridgeParent::RecvFlushRenderingAsync()
 {
-  if (mOptions.UseWebRender()) {
+  if (gfxVars::UseWebRender()) {
     mWrBridge->FlushRendering(/* aIsSync */ false);
     return IPC_OK();
   }
@@ -708,7 +706,7 @@ CompositorBridgeParent::PauseComposition()
   if (!mPaused) {
     mPaused = true;
 
-    if (!mOptions.UseWebRender()) {
+    if (!gfxVars::UseWebRender()) {
       mCompositor->Pause();
     } else {
       mWrBridge->Pause();
@@ -729,7 +727,7 @@ CompositorBridgeParent::ResumeComposition()
 
   MonitorAutoLock lock(mResumeCompositionMonitor);
 
-  bool resumed = mOptions.UseWebRender() ? mWrBridge->Resume() : mCompositor->Resume();
+  bool resumed = gfxVars::UseWebRender() ? mWrBridge->Resume() : mCompositor->Resume();
   if (!resumed) {
 #ifdef MOZ_WIDGET_ANDROID
     // We can't get a surface. This could be because the activity changed between
@@ -939,7 +937,7 @@ CompositorBridgeParent::SetShadowProperties(Layer* aLayer)
 void
 CompositorBridgeParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRect)
 {
-  AUTO_PROFILER_TRACING("Paint", "Composite");
+  AutoProfilerTracing tracing("Paint", "Composite");
   AUTO_PROFILER_LABEL("CompositorBridgeParent::CompositeToTarget", GRAPHICS);
 
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread(),
@@ -1256,8 +1254,6 @@ CompositorBridgeParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
   // Otherwise, it should be continually increasing.
   MOZ_ASSERT(aInfo.id() == 1 || aInfo.id() > mPendingTransaction);
   mPendingTransaction = aInfo.id();
-  mTxnStartTime = aInfo.transactionStart();
-  mFwdTime = aInfo.fwdTime();
 
   if (root) {
     SetShadowProperties(root);
@@ -1658,9 +1654,8 @@ CompositorBridgeParent::RecvAdoptChild(const uint64_t& child)
       ScheduleComposition();
     }
     if (mWrBridge && sIndirectLayerTrees[child].mWrBridge) {
-      RefPtr<wr::WebRenderAPI> api = mWrBridge->GetWebRenderAPI()->Clone();
       sIndirectLayerTrees[child].mWrBridge->UpdateWebRender(mWrBridge->CompositorScheduler(),
-                                                            api,
+                                                            mWrBridge->GetWebRenderAPI(),
                                                             mWrBridge->AsyncImageManager(),
                                                             GetAnimationStorage());
       // Pretend we composited, since parent CompositorBridgeParent was replaced.
@@ -1698,24 +1693,24 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipel
 
   MOZ_ASSERT(mWidget);
   RefPtr<widget::CompositorWidget> widget = mWidget;
-  RefPtr<wr::WebRenderAPI> api = wr::WebRenderAPI::Create(this, Move(widget), aSize);
+  RefPtr<wr::WebRenderAPI> api = wr::WebRenderAPI::Create(
+    gfxPrefs::WebRenderProfilerEnabled(), this, Move(widget), aSize);
+  RefPtr<AsyncImagePipelineManager> asyncMgr =
+    new AsyncImagePipelineManager(WebRenderBridgeParent::AllocIdNameSpace());
   if (!api) {
-    mWrBridge = WebRenderBridgeParent::CreateDestroyed(aPipelineId);
-    mWrBridge.get()->AddRef(); // IPDL reference
+    mWrBridge = WebRenderBridgeParent::CreateDestroyed();
     *aIdNamespace = mWrBridge->GetIdNamespace();
     *aTextureFactoryIdentifier = TextureFactoryIdentifier(LayersBackend::LAYERS_NONE);
     return mWrBridge;
   }
-  mAsyncImageManager = new AsyncImagePipelineManager(api->Clone());
-  RefPtr<AsyncImagePipelineManager> asyncMgr = mAsyncImageManager;
   api->SetRootPipeline(aPipelineId);
   RefPtr<CompositorAnimationStorage> animStorage = GetAnimationStorage();
   mWrBridge = new WebRenderBridgeParent(this, aPipelineId, mWidget, nullptr, Move(api), Move(asyncMgr), Move(animStorage));
-  mWrBridge.get()->AddRef(); // IPDL reference
-
   *aIdNamespace = mWrBridge->GetIdNamespace();
+
   mCompositorScheduler = mWrBridge->CompositorScheduler();
   MOZ_ASSERT(mCompositorScheduler);
+  mWrBridge.get()->AddRef(); // IPDL reference
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
   MOZ_ASSERT(sIndirectLayerTrees[mRootLayerTreeID].mWrBridge == nullptr);
   sIndirectLayerTrees[mRootLayerTreeID].mWrBridge = mWrBridge;
@@ -1753,6 +1748,18 @@ Maybe<TimeStamp>
 CompositorBridgeParent::GetTestingTimeStamp() const
 {
   return mIsTesting ? Some(mTestTime) : Nothing();
+}
+
+void
+CompositorBridgeParent::SetWebRenderProfilerEnabled(bool aEnabled)
+{
+  MonitorAutoLock lock(*sIndirectLayerTreesLock);
+  for (auto it = sIndirectLayerTrees.begin(); it != sIndirectLayerTrees.end(); it++) {
+    LayerTreeState* state = &it->second;
+    if (state->mWrBridge) {
+      state->mWrBridge->SetWebRenderProfilerEnabled(aEnabled);
+    }
+  }
 }
 
 void
@@ -1841,7 +1848,6 @@ CompositorBridgeParent::GetAPZCTreeManager(uint64_t aLayersId)
   return apzctm.forget();
 }
 
-#if defined(MOZ_GECKO_PROFILER)
 static void
 InsertVsyncProfilerMarker(TimeStamp aVsyncTimestamp)
 {
@@ -1850,18 +1856,15 @@ InsertVsyncProfilerMarker(TimeStamp aVsyncTimestamp)
     "VsyncTimestamp",
     MakeUnique<VsyncMarkerPayload>(aVsyncTimestamp));
 }
-#endif
 
 /*static */ void
 CompositorBridgeParent::PostInsertVsyncProfilerMarker(TimeStamp aVsyncTimestamp)
 {
-#if defined(MOZ_GECKO_PROFILER)
   // Called in the vsync thread
   if (profiler_is_active() && CompositorThreadHolder::IsActive()) {
     CompositorLoop()->PostTask(
       NewRunnableFunction(InsertVsyncProfilerMarker, aVsyncTimestamp));
   }
-#endif
 }
 
 widget::PCompositorWidgetParent*
@@ -1942,20 +1945,6 @@ CompositorBridgeParent::DidComposite(TimeStamp& aCompositeStart,
     NotifyDidComposite(mWrBridge->FlushPendingTransactionIds(), aCompositeStart, aCompositeEnd);
   } else {
     NotifyDidComposite(mPendingTransaction, aCompositeStart, aCompositeEnd);
-#if defined(ENABLE_FRAME_LATENCY_LOG)
-    if (mPendingTransaction) {
-      if (mTxnStartTime) {
-        uint32_t latencyMs = round((aCompositeEnd - mTxnStartTime).ToMilliseconds());
-        printf_stderr("From transaction start to end of generate frame latencyMs %d this %p\n", latencyMs, this);
-      }
-      if (mFwdTime) {
-        uint32_t latencyMs = round((aCompositeEnd - mFwdTime).ToMilliseconds());
-        printf_stderr("From forwarding transaction to end of generate frame latencyMs %d this %p\n", latencyMs, this);
-      }
-    }
-    mTxnStartTime = TimeStamp();
-    mFwdTime = TimeStamp();
-#endif
     mPendingTransaction = 0;
   }
 }
@@ -1963,10 +1952,10 @@ CompositorBridgeParent::DidComposite(TimeStamp& aCompositeStart,
 void
 CompositorBridgeParent::NotifyDidCompositeToPipeline(const wr::PipelineId& aPipelineId, const wr::Epoch& aEpoch, TimeStamp& aCompositeStart, TimeStamp& aCompositeEnd)
 {
-  if (!mWrBridge || !mAsyncImageManager) {
+  if (!mWrBridge) {
     return;
   }
-  mAsyncImageManager->Update(aPipelineId, aEpoch);
+  mWrBridge->AsyncImageManager()->Update(aPipelineId, aEpoch);
 
   if (mPaused) {
     return;
@@ -2124,13 +2113,6 @@ bool
 CompositorBridgeParent::IsSameProcess() const
 {
   return OtherPid() == base::GetCurrentProcId();
-}
-
-void
-CompositorBridgeParent::NotifyWebRenderError(wr::WebRenderError aError)
-{
-  MOZ_ASSERT(CompositorLoop() == MessageLoop::current());
-  Unused << SendNotifyWebRenderError(aError);
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)

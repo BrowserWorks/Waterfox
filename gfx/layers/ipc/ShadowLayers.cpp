@@ -32,7 +32,6 @@
 #include "mozilla/layers/LayersTypes.h"  // for MOZ_LAYERS_LOG
 #include "mozilla/layers/LayerTransactionChild.h"
 #include "mozilla/layers/PTextureChild.h"
-#include "mozilla/layers/SyncObject.h"
 #include "ShadowLayerUtils.h"
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "mozilla/mozalloc.h"           // for operator new, etc
@@ -176,7 +175,7 @@ KnowsCompositor::IdentifyTextureHost(const TextureFactoryIdentifier& aIdentifier
 {
   mTextureFactoryIdentifier = aIdentifier;
 
-  mSyncObject = SyncObjectClient::CreateSyncObjectClient(aIdentifier.mSyncHandle);
+  mSyncObject = SyncObject::CreateSyncObject(aIdentifier.mSyncHandle);
 }
 
 KnowsCompositor::KnowsCompositor()
@@ -738,9 +737,6 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
   info.paintSequenceNumber() = aPaintSequenceNumber;
   info.isRepeatTransaction() = aIsRepeatTransaction;
   info.transactionStart() = aTransactionStart;
-#if defined(ENABLE_FRAME_LATENCY_LOG)
-  info.fwdTime() = TimeStamp::Now();
-#endif
 
   TargetConfig targetConfig(mTxn->mTargetBounds,
                             mTxn->mTargetRotation,

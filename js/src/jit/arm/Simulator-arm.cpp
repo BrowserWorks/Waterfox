@@ -1547,14 +1547,14 @@ Simulator::exclusiveMonitorClear()
 }
 
 void
-Simulator::startWasmInterrupt(JitActivation* activation)
+Simulator::startInterrupt(WasmActivation* activation)
 {
     JS::ProfilingFrameIterator::RegisterState state;
     state.pc = (void*) get_pc();
     state.fp = (void*) get_register(fp);
     state.sp = (void*) get_register(sp);
     state.lr = (void*) get_register(lr);
-    activation->startWasmInterrupt(state);
+    activation->startInterrupt(state);
 }
 
 // The signal handler only redirects the PC to the interrupt stub when the PC is
@@ -1565,22 +1565,21 @@ Simulator::startWasmInterrupt(JitActivation* activation)
 void
 Simulator::handleWasmInterrupt()
 {
-    if (!wasm::CodeExists)
-        return;
-
-    uint8_t* pc = (uint8_t*)get_pc();
+    void* pc = (void*)get_pc();
     uint8_t* fp = (uint8_t*)get_register(r11);
 
-    const wasm::CodeSegment* cs = nullptr;
-    if (!wasm::InInterruptibleCode(cx_, pc, &cs))
+    WasmActivation* activation = wasm::ActivationIfInnermost(cx_);
+    const wasm::CodeSegment* segment;
+    const wasm::Code* code = activation->compartment()->wasm.lookupCode(pc, &segment);
+    if (!code || !segment->containsFunctionPC(pc))
         return;
 
     // fp can be null during the prologue/epilogue of the entry function.
     if (!fp)
         return;
 
-    startWasmInterrupt(cx_->activation()->asJit());
-    set_pc(int32_t(cs->interruptCode()));
+    startInterrupt(activation);
+    set_pc(int32_t(segment->interruptCode()));
 }
 
 // WebAssembly memories contain an extra region of guard pages (see
@@ -1592,27 +1591,21 @@ Simulator::handleWasmInterrupt()
 bool
 Simulator::handleWasmFault(int32_t addr, unsigned numBytes)
 {
-    if (!wasm::CodeExists)
+    WasmActivation* act = wasm::ActivationIfInnermost(cx_);
+    if (!act)
         return false;
-    if (!cx_->activation() || !cx_->activation()->isJit())
-        return false;
-    JitActivation* act = cx_->activation()->asJit();
 
     void* pc = reinterpret_cast<void*>(get_pc());
     uint8_t* fp = reinterpret_cast<uint8_t*>(get_register(r11));
-
-    const wasm::CodeSegment* segment = wasm::LookupCodeSegment(pc);
-    if (!segment)
-        return false;
-
-    wasm::Instance* instance = wasm::LookupFaultingInstance(*segment, pc, fp);
+    wasm::Instance* instance = wasm::LookupFaultingInstance(act, pc, fp);
     if (!instance || !instance->memoryAccessInGuardRegion((uint8_t*)addr, numBytes))
         return false;
 
-    const wasm::MemoryAccess* memoryAccess = instance->code().lookupMemoryAccess(pc);
+    const wasm::CodeSegment* segment;
+    const wasm::MemoryAccess* memoryAccess = instance->code().lookupMemoryAccess(pc, &segment);
     if (!memoryAccess) {
-        startWasmInterrupt(act);
-        if (!instance->code().containsCodePC(pc))
+        startInterrupt(act);
+        if (!instance->code().containsCodePC(pc, &segment))
             MOZ_CRASH("Cannot map PC to trap handler");
         set_pc(int32_t(segment->outOfBoundsCode()));
         return true;
@@ -1627,7 +1620,7 @@ uint64_t
 Simulator::readQ(int32_t addr, SimInstruction* instr, UnalignedPolicy f)
 {
     if (handleWasmFault(addr, 8))
-        return UINT64_MAX;
+        return -1;
 
     if ((addr & 3) == 0 || (f == AllowUnaligned && !HasAlignmentFault())) {
         uint64_t* ptr = reinterpret_cast<uint64_t*>(addr);
@@ -1740,34 +1733,34 @@ T compareExchangeRelaxed(SharedMem<T*> addr, T oldval, T newval)
 int
 Simulator::readExW(int32_t addr, SimInstruction* instr)
 {
-    if (addr & 3)
-        MOZ_CRASH("Unaligned exclusive read");
-
-    if (handleWasmFault(addr, 4))
-        return -1;
-
-    SharedMem<int32_t*> ptr = SharedMem<int32_t*>::shared(reinterpret_cast<int32_t*>(addr));
-    int32_t value = loadRelaxed(ptr);
-    exclusiveMonitorSet(value);
-    return value;
+    // The regexp engine emits unaligned loads, so we don't check for them here
+    // like most of the other methods do.
+    if ((addr & 3) == 0 || !HasAlignmentFault()) {
+        SharedMem<int32_t*> ptr = SharedMem<int32_t*>::shared(reinterpret_cast<int32_t*>(addr));
+        int32_t value = loadRelaxed(ptr);
+        exclusiveMonitorSet(value);
+        return value;
+    } else {
+        printf("Unaligned write at 0x%08x, pc=%p\n", addr, instr);
+        MOZ_CRASH();
+    }
 }
 
 int32_t
 Simulator::writeExW(int32_t addr, int value, SimInstruction* instr)
 {
-    if (addr & 3)
-        MOZ_CRASH("Unaligned exclusive write");
+    if ((addr & 3) == 0) {
+        SharedMem<int32_t*> ptr = SharedMem<int32_t*>::shared(reinterpret_cast<int32_t*>(addr));
+        bool held;
+        int32_t expected = int32_t(exclusiveMonitorGetAndClear(&held));
+        if (!held)
+            return 1;
+        int32_t old = compareExchangeRelaxed(ptr, expected, int32_t(value));
+        return old != expected;
+    }
 
-    if (handleWasmFault(addr, 4))
-        return -1;
-
-    SharedMem<int32_t*> ptr = SharedMem<int32_t*>::shared(reinterpret_cast<int32_t*>(addr));
-    bool held;
-    int32_t expected = int32_t(exclusiveMonitorGetAndClear(&held));
-    if (!held)
-        return 1;
-    int32_t old = compareExchangeRelaxed(ptr, expected, int32_t(value));
-    return old != expected;
+    printf("Unaligned write at 0x%08x, pc=%p\n", addr, instr);
+    MOZ_CRASH();
 }
 
 uint16_t
@@ -1869,34 +1862,34 @@ Simulator::writeH(int32_t addr, int16_t value, SimInstruction* instr)
 uint16_t
 Simulator::readExHU(int32_t addr, SimInstruction* instr)
 {
-    if (addr & 1)
-        MOZ_CRASH("Unaligned exclusive read");
-
-    if (handleWasmFault(addr, 2))
-        return UINT16_MAX;
-
-    SharedMem<uint16_t*> ptr = SharedMem<uint16_t*>::shared(reinterpret_cast<uint16_t*>(addr));
-    uint16_t value = loadRelaxed(ptr);
-    exclusiveMonitorSet(value);
-    return value;
+    // The regexp engine emits unaligned loads, so we don't check for them here
+    // like most of the other methods do.
+    if ((addr & 1) == 0 || !HasAlignmentFault()) {
+        SharedMem<uint16_t*> ptr = SharedMem<uint16_t*>::shared(reinterpret_cast<uint16_t*>(addr));
+        uint16_t value = loadRelaxed(ptr);
+        exclusiveMonitorSet(value);
+        return value;
+    }
+    printf("Unaligned atomic unsigned halfword read at 0x%08x, pc=%p\n", addr, instr);
+    MOZ_CRASH();
+    return 0;
 }
 
 int32_t
 Simulator::writeExH(int32_t addr, uint16_t value, SimInstruction* instr)
 {
-    if (addr & 1)
-        MOZ_CRASH("Unaligned exclusive write");
-
-    if (handleWasmFault(addr, 2))
-        return -1;
-
-    SharedMem<uint16_t*> ptr = SharedMem<uint16_t*>::shared(reinterpret_cast<uint16_t*>(addr));
-    bool held;
-    uint16_t expected = uint16_t(exclusiveMonitorGetAndClear(&held));
-    if (!held)
-        return 1;
-    uint16_t old = compareExchangeRelaxed(ptr, expected, value);
-    return old != expected;
+    if ((addr & 1) == 0) {
+        SharedMem<uint16_t*> ptr = SharedMem<uint16_t*>::shared(reinterpret_cast<uint16_t*>(addr));
+        bool held;
+        uint16_t expected = uint16_t(exclusiveMonitorGetAndClear(&held));
+        if (!held)
+            return 1;
+        uint16_t old = compareExchangeRelaxed(ptr, expected, value);
+        return old != expected;
+    } else {
+        printf("Unaligned atomic unsigned halfword write at 0x%08x, pc=%p\n", addr, instr);
+        MOZ_CRASH();
+    }
 }
 
 uint8_t
@@ -1912,9 +1905,6 @@ Simulator::readBU(int32_t addr)
 uint8_t
 Simulator::readExBU(int32_t addr)
 {
-    if (handleWasmFault(addr, 1))
-        return UINT8_MAX;
-
     SharedMem<uint8_t*> ptr = SharedMem<uint8_t*>::shared(reinterpret_cast<uint8_t*>(addr));
     uint8_t value = loadRelaxed(ptr);
     exclusiveMonitorSet(value);
@@ -1924,9 +1914,6 @@ Simulator::readExBU(int32_t addr)
 int32_t
 Simulator::writeExB(int32_t addr, uint8_t value)
 {
-    if (handleWasmFault(addr, 1))
-        return -1;
-
     SharedMem<uint8_t*> ptr = SharedMem<uint8_t*>::shared(reinterpret_cast<uint8_t*>(addr));
     bool held;
     uint8_t expected = uint8_t(exclusiveMonitorGetAndClear(&held));
@@ -1969,77 +1956,69 @@ Simulator::writeB(int32_t addr, int8_t value)
 int32_t*
 Simulator::readDW(int32_t addr)
 {
-    if (handleWasmFault(addr, 8))
-        return nullptr;
-
     if ((addr & 3) == 0) {
         int32_t* ptr = reinterpret_cast<int32_t*>(addr);
         return ptr;
     }
-
     printf("Unaligned read at 0x%08x\n", addr);
     MOZ_CRASH();
+    return 0;
 }
 
 void
 Simulator::writeDW(int32_t addr, int32_t value1, int32_t value2)
 {
-    if (handleWasmFault(addr, 8))
-        return;
-
     if ((addr & 3) == 0) {
         int32_t* ptr = reinterpret_cast<int32_t*>(addr);
         *ptr++ = value1;
         *ptr = value2;
-        return;
+    } else {
+        printf("Unaligned write at 0x%08x\n", addr);
+        MOZ_CRASH();
     }
-
-    printf("Unaligned write at 0x%08x\n", addr);
-    MOZ_CRASH();
 }
 
 int32_t
 Simulator::readExDW(int32_t addr, int32_t* hibits)
 {
-    if (addr & 3)
-        MOZ_CRASH("Unaligned exclusive read");
-
-    if (handleWasmFault(addr, 8))
-        return -1;
-
-    SharedMem<uint64_t*> ptr = SharedMem<uint64_t*>::shared(reinterpret_cast<uint64_t*>(addr));
-    // The spec says that the low part of value shall be read from addr and
-    // the high part shall be read from addr+4.  On a little-endian system
-    // where we read a 64-bit quadword the low part of the value will be in
-    // the low part of the quadword, and the high part of the value in the
-    // high part of the quadword.
-    uint64_t value = loadRelaxed(ptr);
-    exclusiveMonitorSet(value);
-    *hibits = int32_t(value >> 32);
-    return int32_t(value);
+#if defined(__clang__) && defined(__i386)
+    // This is OK for now, we don't yet generate LDREXD.
+    MOZ_CRASH("Unimplemented - 8-byte atomics are unsupported in Clang on i386");
+#else
+    if ((addr & 3) == 0) {
+        SharedMem<uint64_t*> ptr = SharedMem<uint64_t*>::shared(reinterpret_cast<uint64_t*>(addr));
+        uint64_t value = loadRelaxed(ptr);
+        exclusiveMonitorSet(value);
+        *hibits = int32_t(value);
+        return int32_t(value >> 32);
+    }
+    printf("Unaligned read at 0x%08x\n", addr);
+    MOZ_CRASH();
+    return 0;
+#endif
 }
 
 int32_t
 Simulator::writeExDW(int32_t addr, int32_t value1, int32_t value2)
 {
-    if (addr & 3)
-        MOZ_CRASH("Unaligned exclusive write");
-
-    if (handleWasmFault(addr, 8))
-        return -1;
-
-    SharedMem<uint64_t*> ptr = SharedMem<uint64_t*>::shared(reinterpret_cast<uint64_t*>(addr));
-    // The spec says that value1 shall be stored at addr and value2 at
-    // addr+4.  On a little-endian system that means constructing a 64-bit
-    // value where value1 is in the low half of a 64-bit quadword and value2
-    // is in the high half of the quadword.
-    uint64_t value = (uint64_t(value2) << 32) | uint32_t(value1);
-    bool held;
-    uint64_t expected = exclusiveMonitorGetAndClear(&held);
-    if (!held)
-        return 1;
-    uint64_t old = compareExchangeRelaxed(ptr, expected, value);
-    return old != expected;
+#if defined(__clang__) && defined(__i386)
+    // This is OK for now, we don't yet generate STREXD.
+    MOZ_CRASH("Unimplemented - 8-byte atomics are unsupported in Clang on i386");
+#else
+    if ((addr & 3) == 0) {
+        SharedMem<uint64_t*> ptr = SharedMem<uint64_t*>::shared(reinterpret_cast<uint64_t*>(addr));
+        uint64_t value = (uint64_t(value1) << 32) | uint32_t(value2);
+        bool held;
+        uint64_t expected = exclusiveMonitorGetAndClear(&held);
+        if (!held)
+            return 1;
+        uint64_t old = compareExchangeRelaxed(ptr, expected, value);
+        return old != expected;
+    } else {
+        printf("Unaligned write at 0x%08x\n", addr);
+        MOZ_CRASH();
+    }
+#endif
 }
 
 uintptr_t
@@ -3176,8 +3155,7 @@ Simulator::decodeType01(SimInstruction* instr)
                 } else {
                     // The ldrd instruction.
                     int* rn_data = readDW(addr);
-                    if (rn_data)
-                        set_dw_register(rd, rn_data);
+                    set_dw_register(rd, rn_data);
                 }
             } else if (instr->hasH()) {
                 if (instr->hasSign()) {
@@ -4706,9 +4684,6 @@ Simulator::decodeSpecialCondition(SimInstruction* instr)
       case 0xA:
         if (instr->bits(31,20) == 0xf57) {
             switch (instr->bits(7,4)) {
-              case 1: // CLREX
-                exclusiveMonitorClear();
-                break;
               case 5: // DMB
                 AtomicOperations::fenceSeqCst();
                 break;

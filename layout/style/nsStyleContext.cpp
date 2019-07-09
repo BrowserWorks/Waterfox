@@ -78,10 +78,33 @@ const uint32_t nsStyleContext::sDependencyTable[] = {
 
 #endif
 
-nsStyleContext::nsStyleContext(nsAtom* aPseudoTag,
+nsStyleContext::nsStyleContext(nsStyleContext* aParent,
+                               nsIAtom* aPseudoTag,
                                CSSPseudoElementType aPseudoType)
-  : mPseudoTag(aPseudoTag)
+  : mParent(aParent)
+  , mPseudoTag(aPseudoTag)
   , mBits(((uint64_t)aPseudoType) << NS_STYLE_CONTEXT_TYPE_SHIFT)
+#ifdef DEBUG
+  , mFrameRefCnt(0)
+#endif
+{}
+
+void
+nsStyleContext::AddChild(nsStyleContext* aChild)
+{
+  if (auto gecko = GetAsGecko())
+    gecko->AddChild(aChild->AsGecko());
+}
+
+void
+nsStyleContext::RemoveChild(nsStyleContext* aChild)
+{
+  if (auto gecko = GetAsGecko())
+    gecko->RemoveChild(aChild->AsGecko());
+}
+
+void
+nsStyleContext::FinishConstruction()
 {
   // This check has to be done "backward", because if it were written the
   // more natural way it wouldn't fail even when it needed to.
@@ -90,34 +113,49 @@ nsStyleContext::nsStyleContext(nsAtom* aPseudoTag,
                    CSSPseudoElementType::MAX),
                 "pseudo element bits no longer fit in a uint64_t");
 
-#define eStyleStruct_LastItem (nsStyleStructID_Length - 1)
-  static_assert(NS_STYLE_INHERIT_MASK & NS_STYLE_INHERIT_BIT(LastItem),
-                "NS_STYLE_INHERIT_MASK must be bigger, and other bits shifted");
-#undef eStyleStruct_LastItem
-
 #ifdef DEBUG
+  if (auto servo = GetAsServo()) {
+    MOZ_ASSERT(servo->ComputedData());
+  } else {
+    MOZ_ASSERT(RuleNode());
+  }
+
   static_assert(MOZ_ARRAY_LENGTH(nsStyleContext::sDependencyTable)
                   == nsStyleStructID_Length,
                 "Number of items in dependency table doesn't match IDs");
 #endif
+
+  if (mParent) {
+    mParent->AddChild(this);
+  }
+
+  SetStyleBits();
+
+  #define eStyleStruct_LastItem (nsStyleStructID_Length - 1)
+  static_assert(NS_STYLE_INHERIT_MASK & NS_STYLE_INHERIT_BIT(LastItem),
+                "NS_STYLE_INHERIT_MASK must be bigger, and other bits shifted");
+  #undef eStyleStruct_LastItem
 }
 
 nsChangeHint
 nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
                                     uint32_t* aEqualStructs,
                                     uint32_t* aSamePointerStructs,
-                                    bool aIgnoreVariables)
+                                    uint32_t aRelevantStructs)
 {
   AUTO_PROFILER_LABEL("nsStyleContext::CalcStyleDifference", CSS);
 
   static_assert(nsStyleStructID_Length <= 32,
                 "aEqualStructs is not big enough");
 
-  MOZ_ASSERT(!aIgnoreVariables || IsServo(),
-             "aIgnoreVariables must be false for Gecko contexts");
+  MOZ_ASSERT(aRelevantStructs == kAllResolvedStructs || IsServo(),
+             "aRelevantStructs must be kAllResolvedStructs for Gecko contexts");
+
+  if (aRelevantStructs == kAllResolvedStructs) {
+    aRelevantStructs = mBits & NS_STYLE_INHERIT_MASK;
+  }
 
   *aEqualStructs = 0;
-  *aSamePointerStructs = 0;
 
   nsChangeHint hint = nsChangeHint(0);
   NS_ENSURE_TRUE(aNewContext, hint);
@@ -144,18 +182,14 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
     if (thisVariables) {
       structsFound |= NS_STYLE_INHERIT_BIT(Variables);
       const nsStyleVariables* otherVariables = aNewContext->StyleVariables();
-      if (thisVariables == otherVariables) {
-        *aSamePointerStructs |= NS_STYLE_INHERIT_BIT(Variables);
-        *aEqualStructs |= NS_STYLE_INHERIT_BIT(Variables);
-      } else if (thisVariables->mVariables == otherVariables->mVariables) {
+      if (thisVariables->mVariables == otherVariables->mVariables) {
         *aEqualStructs |= NS_STYLE_INHERIT_BIT(Variables);
       }
     } else {
       *aEqualStructs |= NS_STYLE_INHERIT_BIT(Variables);
     }
   } else {
-    if (aIgnoreVariables ||
-        Servo_ComputedValues_EqualCustomProperties(
+    if (Servo_ComputedValues_EqualCustomProperties(
           AsServo()->ComputedData(),
           aNewContext->ComputedData())) {
       *aEqualStructs |= NS_STYLE_INHERIT_BIT(Variables);
@@ -167,13 +201,10 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
   // Servo's optimization to stop the cascade when there are no style changes
   // that children need to be recascade for relies on comparing all of the
   // structs, not just those that are returned from PeekStyleData, although
-  // if PeekStyleData does return null we could avoid to accumulate any change
-  // hints for those structs.
-  //
-  // FIXME(emilio): Reintroduce that optimization either for all kind of structs
-  // after bug 1368290 with a weak parent pointer from text, or just for reset
-  // structs.
-  //
+  // if PeekStyleData does return null we still don't want to accumulate
+  // any change hints for those structs.
+  bool checkUnrequestedServoStructs = IsServo();
+
   // For Gecko structs, we just defer to PeekStyleXXX.  But for Servo structs,
   // we need to use the aRelevantStructs bitfield passed in to determine
   // whether to return a struct or not, since this->mBits might not yet
@@ -181,15 +212,26 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
 #define PEEK(struct_)                                                         \
   (IsGecko()                                                                  \
    ? PeekStyle##struct_()                                                     \
-   : AsServo()->ComputedData()->GetStyle##struct_())                          \
+   : ((aRelevantStructs & NS_STYLE_INHERIT_BIT(struct_))                      \
+      ? AsServo()->ComputedData()->GetStyle##struct_()                      \
+      : nullptr))
 
 #define EXPAND(...) __VA_ARGS__
 #define DO_STRUCT_DIFFERENCE_WITH_ARGS(struct_, extra_args_)                  \
   PR_BEGIN_MACRO                                                              \
     const nsStyle##struct_* this##struct_ = PEEK(struct_);                    \
+    bool unrequestedStruct;                                                   \
     if (this##struct_) {                                                      \
+      unrequestedStruct = false;                                              \
       structsFound |= NS_STYLE_INHERIT_BIT(struct_);                          \
-                                                                              \
+    } else if (checkUnrequestedServoStructs) {                                \
+      this##struct_ =                                                         \
+        AsServo()->ComputedData()->GetStyle##struct_();                     \
+      unrequestedStruct = true;                                               \
+    } else {                                                                  \
+      unrequestedStruct = false;                                              \
+    }                                                                         \
+    if (this##struct_) {                                                      \
       const nsStyle##struct_* other##struct_ =                                \
         aNewContext->ThreadsafeStyle##struct_();                              \
       if (this##struct_ == other##struct_) {                                  \
@@ -199,7 +241,9 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
       } else {                                                                \
         nsChangeHint difference =                                             \
           this##struct_->CalcDifference(*other##struct_ EXPAND extra_args_);  \
-        hint |= difference;                                                   \
+        if (!unrequestedStruct) {                                             \
+          hint |= difference;                                                 \
+        }                                                                     \
         if (!difference) {                                                    \
           *aEqualStructs |= NS_STYLE_INHERIT_BIT(struct_);                    \
         }                                                                     \
@@ -247,7 +291,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
              "missing a call to DO_STRUCT_DIFFERENCE");
 
 #ifdef DEBUG
-  #define STYLE_STRUCT_LIST_IGNORE_VARIABLES
   #define STYLE_STRUCT(name_, callback_)                                      \
     MOZ_ASSERT(!!(structsFound & NS_STYLE_INHERIT_BIT(name_)) ==              \
                (PEEK(name_) != nullptr),                                      \
@@ -255,7 +298,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
                "difference calculation.");
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
-  #undef STYLE_STRUCT_LIST_IGNORE_VARIABLES
 #endif
 
   // We check for struct pointer equality here rather than as part of the
@@ -268,7 +310,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
   // pointers.
   *aSamePointerStructs = 0;
 
-#define STYLE_STRUCT_LIST_IGNORE_VARIABLES
 #define STYLE_STRUCT(name_, callback_)                                        \
   {                                                                           \
     const nsStyle##name_* data = PEEK(name_);                                 \
@@ -277,7 +318,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
     }                                                                         \
   }
 #include "nsStyleStructList.h"
-#undef STYLE_STRUCT_LIST_IGNORE_VARIABLES
 #undef STYLE_STRUCT
 
   // Note that we do not check whether this->RelevantLinkVisited() !=
@@ -296,8 +336,8 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
   // here, we add nsChangeHint_RepaintFrame hints (the maximum for
   // things that can depend on :visited) for the properties on which we
   // call GetVisitedDependentColor.
-  nsStyleContext* thisVis = GetStyleIfVisited();
-  nsStyleContext* otherVis = aNewContext->GetStyleIfVisited();
+  nsStyleContext *thisVis = GetStyleIfVisited(),
+                *otherVis = aNewContext->GetStyleIfVisited();
   if (!thisVis != !otherVis) {
     // One style context has a style-if-visited and the other doesn't.
     // Presume a difference.
@@ -395,7 +435,7 @@ void nsStyleContext::List(FILE* out, int32_t aIndent, bool aListDescendants)
   }
   str.Append(nsPrintfCString("%p(%d) parent=%p ",
                              (void*)this, IsGecko() ? AsGecko()->mRefCnt : 0,
-                             IsGecko() ? AsGecko()->GetParent() : nullptr));
+                             (void *)mParent));
   if (mPseudoTag) {
     nsAutoString  buffer;
     mPseudoTag->ToString(buffer);
@@ -434,7 +474,7 @@ void nsStyleContext::List(FILE* out, int32_t aIndent, bool aListDescendants)
 
 already_AddRefed<GeckoStyleContext>
 NS_NewStyleContext(GeckoStyleContext* aParentContext,
-                   nsAtom* aPseudoTag,
+                   nsIAtom* aPseudoTag,
                    CSSPseudoElementType aPseudoType,
                    nsRuleNode* aRuleNode,
                    bool aSkipParentDisplayBasedStyleFixup)
@@ -560,21 +600,5 @@ nsStyleContext::LookupStruct(const nsACString& aName, nsStyleStructID& aResult)
   else
     return false;
   return true;
-}
-
-void
-nsStyleContext::FrameAddRef()
-{
-  if (auto gecko = GetAsGecko()) {
-    gecko->FrameAddRef();
-  }
-}
-
-void
-nsStyleContext::FrameRelease()
-{
-  if (auto gecko = GetAsGecko()) {
-    gecko->FrameRelease();
-  }
 }
 #endif

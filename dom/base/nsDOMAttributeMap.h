@@ -20,7 +20,7 @@
 #include "nsString.h"
 #include "nsWrapperCache.h"
 
-class nsAtom;
+class nsIAtom;
 class nsIDocument;
 
 /**
@@ -40,7 +40,7 @@ public:
    */
   void* mLocalName;
 
-  nsAttrKey(int32_t aNs, nsAtom* aName)
+  nsAttrKey(int32_t aNs, nsIAtom* aName)
     : mNamespaceID(aNs), mLocalName(aName) {}
 
   nsAttrKey(const nsAttrKey& aAttr)
@@ -115,7 +115,7 @@ public:
    * Drop an attribute from the map's cache (does not remove the attribute
    * from the node!)
    */
-  void DropAttribute(int32_t aNamespaceID, nsAtom* aLocalName);
+  void DropAttribute(int32_t aNamespaceID, nsIAtom* aLocalName);
 
   /**
    * Returns the number of attribute nodes currently in the map.

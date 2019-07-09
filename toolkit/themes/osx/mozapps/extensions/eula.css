@@ -10,19 +10,19 @@
 }
 
 #eula-dialog[addontype="theme"] #icon {
-  list-style-image: url("chrome://mozapps/skin/extensions/themeGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/themeGeneric.png");
 }
 
 #eula-dialog[addontype="locale"] #icon {
-  list-style-image: url("chrome://mozapps/skin/extensions/localeGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/localeGeneric.png");
 }
 
 #eula-dialog[addontype="plugin"] #icon {
-  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric.png");
 }
 
 #eula-dialog[addontype="dictionary"] #icon {
-  list-style-image: url("chrome://mozapps/skin/extensions/dictionaryGeneric.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/dictionaryGeneric.png");
 }
 
 #heading-container {

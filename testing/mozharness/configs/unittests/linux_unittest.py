@@ -36,7 +36,8 @@ else:
 config = {
     "buildbot_json_path": "buildprops.json",
     "exes": {
-        "virtualenv": "/tools/virtualenv/bin/virtualenv",
+        "python": "/tools/buildbot/bin/python",
+        "virtualenv": ["/tools/buildbot/bin/python", "/tools/misc-python/virtualenv.py"],
         "tooltool.py": "/tools/tooltool.py",
     },
     "find_links": [
@@ -116,7 +117,7 @@ config = {
                 "--screenshot-on-fail",
                 "--cleanup-crashes",
                 "--marionette-startup-timeout=180",
-                "--sandbox-read-whitelist=%(abs_work_dir)s",
+                "--work-path=%(abs_work_dir)s",
             ],
             "run_filename": "runtests.py",
             "testsdir": "mochitest"
@@ -148,8 +149,7 @@ config = {
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--cleanup-crashes",
-                "--marionette-startup-timeout=180",
-                "--sandbox-read-whitelist=%(abs_work_dir)s",
+                "--work-path=%(abs_work_dir)s",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -203,7 +203,12 @@ config = {
         "mochitest-devtools-chrome": ["--flavor=browser", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--flavor=browser", "--subsuite=devtools", "--chunk-by-runtime"],
         "mochitest-devtools-chrome-coverage": ["--flavor=browser", "--subsuite=devtools", "--chunk-by-runtime", "--timeout=1200"],
+        "jetpack-package": ["--flavor=jetpack-package"],
+        "jetpack-package-clipboard": ["--flavor=jetpack-package", "--subsuite=clipboard"],
+        "jetpack-addon": ["--flavor=jetpack-addon"],
         "a11y": ["--flavor=a11y"],
+        "plain-style": ["--failure-pattern-file=stylo-failures.md", "layout/style/test", "dom/smil/test", "dom/animation/test"],
+        "chrome-style": ["--flavor=chrome", "--failure-pattern-file=../stylo-failures.md", "layout/style/test/chrome", "dom/animation/test"],
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -217,13 +222,12 @@ config = {
             "tests": ["tests/jsreftest/tests/jstests.list"]
         },
         "reftest": {
-            "options": ["--suite=reftest",
-                        "--setpref=layers.acceleration.force-enabled=true"],
+            "options": ["--suite=reftest"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]
         },
         "reftest-no-accel": {
             "options": ["--suite=reftest",
-                        "--setpref=layers.acceleration.disabled=true"],
+                        "--setpref=layers.acceleration.force-enabled=disabled"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]
         },
         "reftest-stylo": {
@@ -295,7 +299,8 @@ config = {
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],
-    "unstructured_flavors": {"xpcshell": [],
+    "unstructured_flavors": {"mochitest": ['jetpack'],
+                            "xpcshell": [],
                             "gtest": [],
                             "mozmill": [],
                             "cppunittest": [],
@@ -306,7 +311,7 @@ config = {
     "download_minidump_stackwalk": True,
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_tooltool_manifest_path": TOOLTOOL_MANIFEST_PATH,
-    "tooltool_cache": "/builds/worker/tooltool-cache",
+    "tooltool_cache": "/home/worker/tooltool-cache",
     "download_nodejs": True,
     "nodejs_path": NODEJS_PATH,
     "nodejs_tooltool_manifest_path": NODEJS_TOOLTOOL_MANIFEST_PATH,

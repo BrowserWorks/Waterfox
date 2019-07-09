@@ -33,7 +33,6 @@ namespace jit {
     _(JSOP_NOP)                \
     _(JSOP_NOP_DESTRUCTURING)  \
     _(JSOP_LABEL)              \
-    _(JSOP_ITERNEXT)           \
     _(JSOP_POP)                \
     _(JSOP_POPN)               \
     _(JSOP_DUPAT)              \
@@ -101,6 +100,7 @@ namespace jit {
     _(JSOP_BITNOT)             \
     _(JSOP_NEG)                \
     _(JSOP_NEWARRAY)           \
+    _(JSOP_SPREADCALLARRAY)    \
     _(JSOP_NEWARRAY_COPYONWRITE) \
     _(JSOP_INITELEM_ARRAY)     \
     _(JSOP_NEWOBJECT)          \

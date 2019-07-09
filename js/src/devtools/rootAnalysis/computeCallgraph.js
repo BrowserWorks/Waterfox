@@ -128,7 +128,7 @@ function processBody(functionName, body)
     }
 }
 
-var typeInfo = loadTypeInfo(typeInfo_filename);
+GCSuppressionTypes = loadTypeInfo(typeInfo_filename)["Suppress GC"] || [];
 
 loadTypes("src_comp.xdb");
 
@@ -155,7 +155,7 @@ function process(functionName, functionBodies)
         body.suppressed = [];
 
     for (var body of functionBodies) {
-        for (var [pbody, id] of allRAIIGuardedCallPoints(typeInfo, functionBodies, body, isSuppressConstructor))
+        for (var [pbody, id] of allRAIIGuardedCallPoints(functionBodies, body, isSuppressConstructor))
             pbody.suppressed[id] = true;
     }
 

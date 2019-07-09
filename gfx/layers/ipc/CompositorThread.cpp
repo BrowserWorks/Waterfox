@@ -22,6 +22,9 @@ namespace layers {
 static StaticRefPtr<CompositorThreadHolder> sCompositorThreadHolder;
 static bool sFinishedCompositorShutDown = false;
 
+// See ImageBridgeChild.cpp
+void ReleaseImageBridgeParentSingleton();
+
 CompositorThreadHolder* GetCompositorThreadHolder()
 {
   return sCompositorThreadHolder;
@@ -123,7 +126,7 @@ CompositorThreadHolder::Shutdown()
   MOZ_ASSERT(NS_IsMainThread(), "Should be on the main Thread!");
   MOZ_ASSERT(sCompositorThreadHolder, "The compositor thread has already been shut down!");
 
-  ImageBridgeParent::Shutdown();
+  ReleaseImageBridgeParentSingleton();
   gfx::ReleaseVRManagerParentSingleton();
   MediaSystemResourceService::Shutdown();
   CompositorManagerParent::Shutdown();

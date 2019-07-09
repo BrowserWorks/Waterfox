@@ -1,4 +1,3 @@
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict"; // -*- js-indent-level: 2; indent-tabs-mode: nil -*-
 var Cc = Components.classes;
 var Ci = Components.interfaces;
@@ -57,7 +56,7 @@ function one_test(delay, continuation) {
         ok(true, "Finished save (" + delayStr + ") but might have crashed.");
         continuation();
       }
-    };
+    }
 
     function doSave() {
       wbp.saveDocument(doc, tmpFile, tmpDir, null, 0, 0);

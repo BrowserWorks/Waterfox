@@ -7,7 +7,7 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 
-/* globals MAX_URI_LENGTH, MAX_TITLE_LENGTH */
+/*globals MAX_URI_LENGTH, MAX_TITLE_LENGTH */
 
 var Reader = {
   // These values should match those defined in BrowserContract.java.
@@ -150,9 +150,7 @@ var Reader = {
     readerModeCallback: function(browser) {
       let url = browser.currentURI.spec;
       if (url.startsWith("about:reader")) {
-        UITelemetry.addEvent("action.1", "button", null, "reader_exit");
       } else {
-        UITelemetry.addEvent("action.1", "button", null, "reader_enter");
       }
       browser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
     },
@@ -168,43 +166,36 @@ var Reader = {
       delete this.pageAction.id;
     }
 
-    let showPageAction = (icon, title, useTint) => {
+    let showPageAction = (icon, title) => {
       this.pageAction.id = PageActions.add({
         icon: icon,
         title: title,
         clickCallback: () => this.pageAction.readerModeCallback(browser),
-        important: true,
-        useTint: useTint
+        important: true
       });
     };
 
     let browser = tab.browser;
     if (browser.currentURI.spec.startsWith("about:reader")) {
-      showPageAction("drawable://ic_readermode_on", Strings.reader.GetStringFromName("readerView.close"), false);
+      showPageAction("drawable://ic_readermode_on", Strings.reader.GetStringFromName("readerView.close"));
       // Only start a reader session if the viewer is in the foreground. We do
       // not track background reader viewers.
-      UITelemetry.startSession("reader.1", null);
       return;
     }
 
     // not in ReaderMode, to make sure System UI is visible, not dimmed.
     this._showSystemUI(true);
 
-    // Only stop a reader session if the foreground viewer is not visible.
-    UITelemetry.stopSession("reader.1", "", null);
-
     if (browser.isArticle) {
-      showPageAction("drawable://ic_readermode", Strings.reader.GetStringFromName("readerView.enter"), true);
-      UITelemetry.addEvent("show.1", "button", null, "reader_available");
+      showPageAction("drawable://ic_readermode", Strings.reader.GetStringFromName("readerView.enter"));
       this._sendMmaEvent("reader_available");
     } else {
-      UITelemetry.addEvent("show.1", "button", null, "reader_unavailable");
     }
   },
 
   _sendMmaEvent: function(event) {
       WindowEventDispatcher.sendRequest({
-          type: "Mma:" + event,
+          type: "Mma:"+event,
       });
   },
 

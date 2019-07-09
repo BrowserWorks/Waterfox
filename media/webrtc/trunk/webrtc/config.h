@@ -101,12 +101,6 @@ struct RtpExtension {
   static const char* kRtpStreamIdUri;
   static const int kRtpStreamIdDefaultId;
 
-  static const char* kRepairedRtpStreamIdUri;
-  static const int kRepairedRtpStreamIdDefaultId;
-
-  static const char* kMIdUri;
-  static const int kMIdDefaultId;
-
   std::string uri;
   int id;
 };

@@ -564,25 +564,13 @@ NullHttpChannel::SetTimingEnabled(bool aTimingEnabled)
 }
 
 NS_IMETHODIMP
-NullHttpChannel::GetRedirectCount(uint8_t *aRedirectCount)
+NullHttpChannel::GetRedirectCount(uint16_t *aRedirectCount)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-NullHttpChannel::SetRedirectCount(uint8_t aRedirectCount)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::GetInternalRedirectCount(uint8_t *aRedirectCount)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::SetInternalRedirectCount(uint8_t aRedirectCount)
+NullHttpChannel::SetRedirectCount(uint16_t aRedirectCount)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -703,13 +691,6 @@ NS_IMETHODIMP
 NullHttpChannel::GetConnectStart(mozilla::TimeStamp *aConnectStart)
 {
   *aConnectStart = mAsyncOpenTime;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::GetTcpConnectEnd(mozilla::TimeStamp *aTcpConnectEnd)
-{
-  *aTcpConnectEnd = mAsyncOpenTime;
   return NS_OK;
 }
 
@@ -904,7 +885,6 @@ IMPL_TIMING_ATTR(HandleFetchEventEnd)
 IMPL_TIMING_ATTR(DomainLookupStart)
 IMPL_TIMING_ATTR(DomainLookupEnd)
 IMPL_TIMING_ATTR(ConnectStart)
-IMPL_TIMING_ATTR(TcpConnectEnd)
 IMPL_TIMING_ATTR(SecureConnectionStart)
 IMPL_TIMING_ATTR(ConnectEnd)
 IMPL_TIMING_ATTR(RequestStart)

@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 'use strict';
 
 (function() {
@@ -19,19 +18,13 @@
   var associatedBindings = mojo;
   var codec = mojo.internal;
   var validator = mojo.internal;
-
-  var exports = mojo.internal.exposeNamespace('device.mojom');
   var device$ =
       mojo.internal.exposeNamespace('device.mojom');
   if (mojo.config.autoLoadMojomDeps) {
     mojo.internal.loadMojomIfNecessary(
-        'device/usb/public/interfaces/device.mojom', 'device.mojom.js');
-  }
-  var string16$ =
-      mojo.internal.exposeNamespace('mojo.common.mojom');
-  if (mojo.config.autoLoadMojomDeps) {
-    mojo.internal.loadMojomIfNecessary(
-        'mojo/common/string16.mojom', '../../../../mojo/common/string16.mojom.js');
+        'device/usb/public/interfaces/device.mojom',
+        new URL('device.mojom.js',
+                document.currentScript.src).href);
   }
 
 
@@ -88,7 +81,7 @@
 
     
     // validate UsbDeviceFilter.serialNumber
-    err = messageValidator.validateStructPointer(offset + codec.kStructHeaderSize + 8, string16$.String16, true);
+    err = messageValidator.validateStringPointer(offset + codec.kStructHeaderSize + 8, true)
     if (err !== validator.validationError.NONE)
         return err;
 
@@ -113,7 +106,7 @@
     val.productId = decoder.decodeStruct(codec.Uint16);
     val.subclassCode = decoder.decodeStruct(codec.Uint8);
     val.protocolCode = decoder.decodeStruct(codec.Uint8);
-    val.serialNumber = decoder.decodeStructPointer(string16$.String16);
+    val.serialNumber = decoder.decodeStruct(codec.NullableString);
     return val;
   };
 
@@ -133,7 +126,7 @@
     encoder.encodeStruct(codec.Uint16, val.productId);
     encoder.encodeStruct(codec.Uint8, val.subclassCode);
     encoder.encodeStruct(codec.Uint8, val.protocolCode);
-    encoder.encodeStructPointer(string16$.String16, val.serialNumber);
+    encoder.encodeStruct(codec.NullableString, val.serialNumber);
   };
   function UsbEnumerationOptions(values) {
     this.initDefaults_();
@@ -845,6 +838,7 @@
   };
   UsbDeviceManagerClientStub.prototype.validator = validateUsbDeviceManagerClientRequest;
   UsbDeviceManagerClientProxy.prototype.validator = null;
+  var exports = mojo.internal.exposeNamespace("device.mojom");
   exports.UsbDeviceFilter = UsbDeviceFilter;
   exports.UsbEnumerationOptions = UsbEnumerationOptions;
   exports.UsbDeviceManager = UsbDeviceManager;

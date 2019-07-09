@@ -24,7 +24,7 @@ const PREF_TASKBAR_REFRESH   = "refreshInSeconds";
 const LIST_TYPE = {
   FREQUENT: 0,
   RECENT: 1
-};
+}
 
 /**
  * Exports
@@ -362,7 +362,7 @@ this.WinTaskbarJumpList =
   _getHandlerAppItem: function WTBJL__getHandlerAppItem(name, description,
                                                         args, iconIndex,
                                                         faviconPageUri) {
-    var file = Services.dirsvc.get("XREExeF", Ci.nsIFile);
+    var file = Services.dirsvc.get("XREExeF", Ci.nsILocalFile);
 
     var handlerApp = Cc["@mozilla.org/uriloader/local-handler-app;1"].
                      createInstance(Ci.nsILocalHandlerApp);
@@ -516,7 +516,7 @@ this.WinTaskbarJumpList =
   notify: function WTBJL_notify(aTimer) {
     // Add idle observer on the first notification so it doesn't hit startup.
     this._updateIdleObserver();
-    Services.tm.idleDispatchToMainThread(() => { this.update(); });
+    this.update();
   },
 
   observe: function WTBJL_observe(aSubject, aTopic, aData) {
@@ -527,7 +527,7 @@ this.WinTaskbarJumpList =
         this._refreshPrefs();
         this._updateTimer();
         this._updateIdleObserver();
-        Services.tm.idleDispatchToMainThread(() => { this.update(); });
+        this.update();
       break;
 
       case "profile-before-change":

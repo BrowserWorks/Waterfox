@@ -42,7 +42,7 @@
       return function(aPublicKeyCredential) {
         gTrackedCredential[aIdentifier] = {
           type: "public-key",
-          id: new Uint8Array(aPublicKeyCredential.rawId),
+          id: Uint8Array.from(aPublicKeyCredential.rawId),
           transports: [ "usb" ],
         }
         return Promise.resolve(aPublicKeyCredential);
@@ -60,15 +60,15 @@
       let chall = new Uint8Array(16);
       window.crypto.getRandomValues(chall);
 
-      let user = {id: new Uint8Array(16), name: "none", icon: "none", displayName: "none"};
-      let param = {type: "public-key", alg: cose_alg_ECDSA_w_SHA256};
+      let user = {id: "none", name: "none", icon: "none", displayName: "none"};
+      let param = {type: "public-key", algorithm: "Es256"};
 
       var testFuncs = [
         function() {
           // Test basic good call
           let rp = {id: document.domain};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(keepThisPublicKeyCredential("basic"))
@@ -78,7 +78,7 @@
         function() {
           // Test rp.id being unset
           let makeCredentialOptions = {
-            rp: {}, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: {}, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsGood)
@@ -88,7 +88,7 @@
           // Test this origin with optional fields
           let rp = {id: "user:pass@" + document.domain + ":8888"};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsBad)
@@ -98,7 +98,7 @@
           // Test blank rp.id
           let rp = {id: ""};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsBad)
@@ -108,7 +108,7 @@
           // Test subdomain of this origin
           let rp = {id: "subdomain." + document.domain};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsBad)
@@ -118,7 +118,7 @@
           // Test the same origin
           let rp = {id: "example.com"};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsGood)
@@ -128,7 +128,7 @@
           // Test the eTLD
           let rp = {id: "com"};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsBad)
@@ -138,7 +138,7 @@
           // Test a different domain within the same TLD
           let rp = {id: "alt.test"};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
                       .then(arrivingHereIsBad)
@@ -149,7 +149,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: document.domain,
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsGood)
@@ -159,7 +159,7 @@
           // Test rpId being unset
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsGood)
@@ -170,7 +170,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "user:pass@" + document.origin + ":8888",
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -181,7 +181,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "",
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -192,7 +192,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "subdomain." + document.domain,
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -203,7 +203,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "example.com",
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsGood)
@@ -214,7 +214,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "com",
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -225,33 +225,36 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "alt.test",
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
                       .catch(expectSecurityError);
         },
+        // These next two tests should be removed in Bug 1381126.
         function () {
           // Test basic good Create call but using an origin (Bug 1380421)
           let rp = {id: window.origin};
           let makeCredentialOptions = {
-            rp: rp, user: user, challenge: chall, pubKeyCredParams: [param]
+            rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
-                      .then(arrivingHereIsBad)
-                      .catch(expectSecurityError);
+                      .then(keepThisPublicKeyCredential("origin"))
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
         },
         function () {
           // Test basic good Get call but using an origin (Bug 1380421)
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: window.origin,
-            allowCredentials: [gTrackedCredential["basic"]]
+            allowList: [gTrackedCredential["origin"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
-                      .then(arrivingHereIsBad)
-                      .catch(expectSecurityError);
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
         }
+        // End remove in Bug 1381126.
       ];
       var i = 0;
       var runNextTest = () => {

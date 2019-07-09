@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.tolocalestring
 info: The toLocaleString property of Array can't be used as constructor
 es5id: 15.4.4.3_A4.7
 description: >

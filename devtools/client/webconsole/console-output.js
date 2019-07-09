@@ -11,9 +11,10 @@ const {Ci} = require("chrome");
 loader.lazyImporter(this, "VariablesView", "resource://devtools/client/shared/widgets/VariablesView.jsm");
 loader.lazyImporter(this, "escapeHTML", "resource://devtools/client/shared/widgets/VariablesView.jsm");
 
+loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 loader.lazyRequireGetter(this, "TableWidget", "devtools/client/shared/widgets/TableWidget", true);
-loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/object-client");
+loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/main", true);
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -24,7 +25,6 @@ const l10n = require("devtools/client/webconsole/webconsole-l10n");
 const nodeConstants = require("devtools/shared/dom-node-constants");
 const {PluralForm} = require("devtools/shared/plural-form");
 const {extend} = require("devtools/shared/extend");
-const defer = require("devtools/shared/defer");
 
 const MAX_STRING_GRIP_LENGTH = 36;
 const {ELLIPSIS} = require("devtools/shared/l10n");
@@ -1724,7 +1724,7 @@ Messages.ConsoleTable.prototype = extend(Messages.Extended.prototype, {
    *         null if the arguments are invalid.
    */
   _populateTableData: function () {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     if (this._arguments.length <= 0) {
       return deferred.reject();
@@ -3072,7 +3072,7 @@ Widgets.ObjectRenderers.add({
     // the message is destroyed.
     this.message.widgets.add(this);
 
-    this.linkToInspector().catch(console.error);
+    this.linkToInspector().catch(e => console.error(e));
   },
 
   /**
@@ -3160,7 +3160,7 @@ Widgets.ObjectRenderers.add({
   unhighlightDomNode: function () {
     return this.linkToInspector().then(() => {
       return this.toolbox.highlighterUtils.unhighlight();
-    }).catch(console.error);
+    }).catch(e => console.error(e));
   },
 
   /**
@@ -3176,7 +3176,7 @@ Widgets.ObjectRenderers.add({
 
     let isAttached = yield this.toolbox.walker.isInDOMTree(this._nodeFront);
     if (isAttached) {
-      let onReady = defer();
+      let onReady = promise.defer();
       this.toolbox.inspector.once("inspector-updated", onReady.resolve);
       yield this.toolbox.selection.setNodeFront(this._nodeFront, "console");
       yield onReady.promise;

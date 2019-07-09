@@ -33,15 +33,14 @@ CreateCSSNode(const char*      aName,
               GtkStyleContext* aParentStyle,
               GType            aType = G_TYPE_NONE);
 
-/*
- * Returns a pointer to a style context for the specified node and state.
- * The context is owned by WidgetStyleCache.  Do not unref.
- */
+// Callers must call ReleaseStyleContext() on the returned context.
 GtkStyleContext*
-GetStyleContext(WidgetNodeType aNodeType,
-                GtkTextDirection aDirection = GTK_TEXT_DIR_NONE,
-                GtkStateFlags aStateFlags = GTK_STATE_FLAG_NORMAL,
-                StyleFlags aFlags = NO_STYLE_FLAGS);
+ClaimStyleContext(WidgetNodeType aNodeType,
+                  GtkTextDirection aDirection = GTK_TEXT_DIR_NONE,
+                  GtkStateFlags aStateFlags = GTK_STATE_FLAG_NORMAL,
+                  StyleFlags aFlags = NO_STYLE_FLAGS);
+void
+ReleaseStyleContext(GtkStyleContext* style);
 
 void
 ResetWidgetCache(void);

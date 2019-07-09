@@ -7,7 +7,7 @@
 #define nsXMLBinding_h__
 
 #include "nsAutoPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/XPathExpression.h"
 
@@ -28,12 +28,12 @@ class XPathResult;
  * a <binding> description
  */
 struct nsXMLBinding {
-  RefPtr<nsAtom> mVar;
+  nsCOMPtr<nsIAtom> mVar;
   nsAutoPtr<mozilla::dom::XPathExpression> mExpr;
 
   nsAutoPtr<nsXMLBinding> mNext;
 
-  nsXMLBinding(nsAtom* aVar, nsAutoPtr<mozilla::dom::XPathExpression>&& aExpr)
+  nsXMLBinding(nsIAtom* aVar, nsAutoPtr<mozilla::dom::XPathExpression>&& aExpr)
     : mVar(aVar), mExpr(aExpr), mNext(nullptr)
   {
     MOZ_COUNT_CTOR(nsXMLBinding);
@@ -63,7 +63,7 @@ public:
    * Add a binding to the set
    */
   void
-  AddBinding(nsAtom* aVar, nsAutoPtr<mozilla::dom::XPathExpression>&& aExpr);
+  AddBinding(nsIAtom* aVar, nsAutoPtr<mozilla::dom::XPathExpression>&& aExpr);
 
   /**
    * The nsXMLBindingValues class stores an array of values, one for each
@@ -72,7 +72,7 @@ public:
    * target symbol.
    */
   int32_t
-  LookupTargetIndex(nsAtom* aTargetVariable, nsXMLBinding** aBinding);
+  LookupTargetIndex(nsIAtom* aTargetVariable, nsXMLBinding** aBinding);
 };
 
 /**
@@ -102,7 +102,7 @@ public:
   void SetBindingSet(nsXMLBindingSet* aBindings) { mBindings = aBindings; }
 
   int32_t
-  LookupTargetIndex(nsAtom* aTargetVariable, nsXMLBinding** aBinding)
+  LookupTargetIndex(nsIAtom* aTargetVariable, nsXMLBinding** aBinding)
   {
     return mBindings ?
            mBindings->LookupTargetIndex(aTargetVariable, aBinding) : -1;

@@ -19,7 +19,7 @@ namespace widget {
 
 using namespace mozilla::gfx;
 
-WinCompositorWidget::WinCompositorWidget(const WinCompositorWidgetInitData& aInitData,
+WinCompositorWidget::WinCompositorWidget(const CompositorWidgetInitData& aInitData,
                                          const layers::CompositorOptions& aOptions)
  : CompositorWidget(aOptions)
  , mWidgetKey(aInitData.widgetKey()),

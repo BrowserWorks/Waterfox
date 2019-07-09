@@ -81,7 +81,7 @@ let gSiteDataSettings = {
    * @param col {XULElement} the <treecol> being sorted on
    */
   _sortSites(sites, col) {
-    let isCurrentSortCol = col.getAttribute("data-isCurrentSortCol");
+    let isCurrentSortCol = col.getAttribute("data-isCurrentSortCol")
     let sortDirection = col.getAttribute("data-last-sortDirection") || "ascending";
     if (isCurrentSortCol) {
       // Sort on the current column, flip the sorting direction
@@ -95,7 +95,7 @@ let gSiteDataSettings = {
           let aHost = a.host.toLowerCase();
           let bHost = b.host.toLowerCase();
           return aHost.localeCompare(bHost);
-        };
+        }
         break;
 
       case "statusCol":
@@ -296,12 +296,6 @@ let gSiteDataSettings = {
     let siteItems = this._list.getElementsByTagName("richlistitem");
     if (siteItems.length > 0) {
       this._removeSiteItems(siteItems);
-    }
-  },
-
-  onKeyPress(e) {
-    if (e.keyCode == KeyEvent.DOM_VK_ESCAPE) {
-      this.close();
     }
   }
 };

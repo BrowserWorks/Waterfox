@@ -879,7 +879,8 @@ RecordStackFrame(uint32_t /*aFrameNumber*/, void* aPC, void* /*aSP*/,
 void
 nsTraceRefcnt::WalkTheStack(FILE* aStream)
 {
-  MozStackWalk(PrintStackFrame, /* skipFrames */ 2, /* maxFrames */ 0, aStream);
+  MozStackWalk(PrintStackFrame, /* skipFrames */ 2, /* maxFrames */ 0, aStream,
+               0, nullptr);
 }
 
 /**
@@ -897,7 +898,7 @@ WalkTheStackCached(FILE* aStream)
     gCodeAddressService = new WalkTheStackCodeAddressService();
   }
   MozStackWalk(PrintStackFrameCached, /* skipFrames */ 2, /* maxFrames */ 0,
-               aStream);
+               aStream, 0, nullptr);
 }
 
 static void
@@ -910,7 +911,8 @@ WalkTheStackSavingLocations(std::vector<void*>& aLocations)
     0 +                         // this frame gets inlined
     1 +                         // GetSerialNumber
     1;                          // NS_LogCtor
-  MozStackWalk(RecordStackFrame, kFramesToSkip, /* maxFrames */ 0, &aLocations);
+  MozStackWalk(RecordStackFrame, kFramesToSkip, /* maxFrames */ 0,
+               &aLocations, 0, nullptr);
 }
 
 //----------------------------------------------------------------------
@@ -921,6 +923,7 @@ NS_LogInit()
   NS_SetMainThread();
 
   // FIXME: This is called multiple times, we should probably not allow that.
+  StackWalkInitCriticalAddress();
   if (++gInitCount) {
     nsTraceRefcnt::SetActivityIsLegal(true);
   }

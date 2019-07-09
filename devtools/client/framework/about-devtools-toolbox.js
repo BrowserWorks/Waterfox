@@ -31,9 +31,7 @@ AboutURL.prototype = {
   },
 
   getURIFlags: function (aURI) {
-    return nsIAboutModule.ALLOW_SCRIPT |
-           nsIAboutModule.ENABLE_INDEXED_DB |
-           nsIAboutModule.HIDE_FROM_ABOUTABOUT;
+    return nsIAboutModule.ALLOW_SCRIPT || nsIAboutModule.ENABLE_INDEXED_DB;
   }
 };
 

@@ -23,7 +23,7 @@
 
 #define nsHtml5HtmlAttributes_cpp__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsHtml5AtomTable.h"
 #include "nsHtml5String.h"
 #include "nsNameSpaceManager.h"
@@ -93,7 +93,7 @@ nsHtml5HtmlAttributes::getLength()
   return mStorage.Length();
 }
 
-nsAtom*
+nsIAtom*
 nsHtml5HtmlAttributes::getLocalNameNoBoundsCheck(int32_t aIndex)
 {
   MOZ_ASSERT(aIndex < int32_t(mStorage.Length()) && aIndex >= 0,
@@ -109,7 +109,7 @@ nsHtml5HtmlAttributes::getURINoBoundsCheck(int32_t aIndex)
   return mStorage[aIndex].GetUri(mMode);
 }
 
-nsAtom*
+nsIAtom*
 nsHtml5HtmlAttributes::getPrefixNoBoundsCheck(int32_t aIndex)
 {
   MOZ_ASSERT(aIndex < int32_t(mStorage.Length()) && aIndex >= 0,
@@ -145,7 +145,7 @@ nsHtml5HtmlAttributes::addAttribute(nsHtml5AttributeName* aName,
 
 // Isindex-only, so doesn't need to deal with SVG and MathML
 void
-nsHtml5HtmlAttributes::AddAttributeWithLocal(nsAtom* aName,
+nsHtml5HtmlAttributes::AddAttributeWithLocal(nsIAtom* aName,
                                              nsHtml5String aValue,
                                              int32_t aLine)
 {
@@ -221,7 +221,7 @@ nsHtml5HtmlAttributes::equalsAnother(nsHtml5HtmlAttributes* aOther)
   }
   for (nsHtml5AttributeEntry& entry : mStorage) {
     bool found = false;
-    nsAtom* ownLocal = entry.GetLocal(nsHtml5AttributeName::HTML);
+    nsIAtom* ownLocal = entry.GetLocal(nsHtml5AttributeName::HTML);
     for (nsHtml5AttributeEntry& otherEntry : aOther->mStorage) {
       if (ownLocal == otherEntry.GetLocal(nsHtml5AttributeName::HTML)) {
         found = true;

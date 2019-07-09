@@ -21,7 +21,7 @@ info: |
      [...]
   2. Else,
      a. Let result be ? Invoke(iterator, "next", « value »).
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var thrown = new Test262Error();

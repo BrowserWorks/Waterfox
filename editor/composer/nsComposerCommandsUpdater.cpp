@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/mozalloc.h"           // for operator new
-#include "mozilla/dom/Selection.h"
 #include "nsAString.h"
 #include "nsComponentManagerUtils.h"    // for do_CreateInstance
 #include "nsComposerCommandsUpdater.h"
@@ -225,8 +224,9 @@ nsresult
 nsComposerCommandsUpdater::PrimeUpdateTimer()
 {
   if (!mUpdateTimer) {
-    mUpdateTimer = NS_NewTimer();;
-    NS_ENSURE_TRUE(mUpdateTimer, NS_ERROR_OUT_OF_MEMORY);
+    nsresult rv = NS_OK;
+    mUpdateTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
 
   const uint32_t kUpdateTimerDelay = 150;
@@ -341,7 +341,9 @@ nsComposerCommandsUpdater::SelectionIsCollapsed()
     return false;
   }
 
-  return domSelection->AsSelection()->IsCollapsed();
+  bool selectionCollapsed = false;
+  domSelection->GetIsCollapsed(&selectionCollapsed);
+  return selectionCollapsed;
 }
 
 already_AddRefed<nsPICommandUpdater>

@@ -34,15 +34,6 @@ ContentDispatchChooser.prototype =
     }
   },
 
-  _closeBlankWindow: function(aWindow) {
-    if (!aWindow || aWindow.history.length) {
-      return;
-    }
-    if (!aWindow.location.href || aWindow.location.href === "about:blank") {
-      aWindow.close();
-    }
-  },
-
   ask: function ask(aHandler, aWindowContext, aURI, aReason) {
     let window = null;
     try {
@@ -58,8 +49,6 @@ ContentDispatchChooser.prototype =
     // If we have more than one option, let the OS handle showing a list (if needed).
     if (aHandler.possibleApplicationHandlers.length > 1) {
       aHandler.launchWithURI(aURI, aWindowContext);
-      this._closeBlankWindow(window);
-
     } else {
       // xpcshell tests do not have an Android Bridge but we require Android
       // Bridge when using Messaging so we guard against this case. xpcshell
@@ -76,24 +65,15 @@ ContentDispatchChooser.prototype =
 
       EventDispatcher.instance.sendRequestForResult(msg).then(() => {
         // Java opens an app on success: take no action.
-        this._closeBlankWindow(window);
-
-      }, (data) => {
-        if (data.isFallback) {
-          // We always want to open a fallback url
-          window.location.href = data.uri;
-          return;
-        }
-
+      }, (uri) => {
         // We couldn't open this. If this was from a click, it's likely that we just
         // want this to fail silently. If the user entered this on the address bar, though,
         // we want to show the neterror page.
+
         let dwu = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
         let millis = dwu.millisSinceLastUserInput;
         if (millis > 0 && millis >= 1000) {
-          window.location.href = data.uri;
-        } else {
-          this._closeBlankWindow(window);
+          window.location.href = uri;
         }
       });
     }

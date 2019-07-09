@@ -86,9 +86,9 @@ APZChild::RecvNotifyAsyncScrollbarDragRejected(const ViewID& aScrollId)
 }
 
 mozilla::ipc::IPCResult
-APZChild::RecvNotifyAsyncAutoscrollRejected(const ViewID& aScrollId)
+APZChild::RecvNotifyAutoscrollHandledByAPZ(const ViewID& aScrollId)
 {
-  mController->NotifyAsyncAutoscrollRejected(aScrollId);
+  mController->NotifyAutoscrollHandledByAPZ(aScrollId);
   return IPC_OK();
 }
 

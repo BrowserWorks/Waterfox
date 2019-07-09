@@ -13,7 +13,6 @@ info: >
   this object's [[ArrayLength]] internal slot is accessed in place of performing
   a [[Get]] of "length"
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

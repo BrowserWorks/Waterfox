@@ -6,7 +6,6 @@
  * 1. add watch expressions
  * 2. edit watch expressions
  * 3. delete watch expressions
- * 4. expanding properties when not paused
  */
 
 const expressionSelectors = {
@@ -19,16 +18,6 @@ function getLabel(dbg, index) {
 
 function getValue(dbg, index) {
   return findElement(dbg, "expressionValue", index).innerText;
-}
-
-function assertEmptyValue(dbg, index) {
-  const value = findElement(dbg, "expressionValue", index);
-  if (value) {
-    is(value.innerText, "");
-    return;
-  }
-
-  is(value, null);
 }
 
 function toggleExpression(dbg, index) {
@@ -54,41 +43,29 @@ async function editExpression(dbg, input) {
   await waitForDispatch(dbg, "EVALUATE_EXPRESSION");
 }
 
-add_task(async function() {
-  const dbg = await initDebugger("doc-script-switching.html");
+add_task(function*() {
+  const dbg = yield initDebugger("doc-script-switching.html");
 
   invokeInTab("firstCall");
-  await waitForPaused(dbg);
+  yield waitForPaused(dbg);
 
-  await addExpression(dbg, "f");
+  yield addExpression(dbg, "f");
   is(getLabel(dbg, 1), "f");
   is(getValue(dbg, 1), "(unavailable)");
 
-  await editExpression(dbg, "oo");
+  yield editExpression(dbg, "oo");
   is(getLabel(dbg, 1), "foo()");
+  is(getValue(dbg, 1), "");
 
-  // There is no "value" element for functions.
-  assertEmptyValue(dbg, 1);
-
-  await addExpression(dbg, "location");
+  yield addExpression(dbg, "location");
   is(getLabel(dbg, 2), "location");
   ok(getValue(dbg, 2).includes("Location"), "has a value");
 
   // can expand an expression
   toggleExpression(dbg, 2);
-  await waitForDispatch(dbg, "LOAD_OBJECT_PROPERTIES");
+  yield waitForDispatch(dbg, "LOAD_OBJECT_PROPERTIES");
 
-  await deleteExpression(dbg, "foo");
-  await deleteExpression(dbg, "location");
-  is(findAllElements(dbg, "expressionNodes").length, 0);
-
-  // Test expanding properties when the debuggee is active
-  await resume(dbg);
-  await addExpression(dbg, "location");
-  toggleExpression(dbg, 1);
-  await waitForDispatch(dbg, "LOAD_OBJECT_PROPERTIES");
-  is(findAllElements(dbg, "expressionNodes").length, 17);
-
-  await deleteExpression(dbg, "location");
+  yield deleteExpression(dbg, "foo");
+  yield deleteExpression(dbg, "location");
   is(findAllElements(dbg, "expressionNodes").length, 0);
 });

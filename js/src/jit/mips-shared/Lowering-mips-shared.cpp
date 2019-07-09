@@ -74,11 +74,9 @@ void
 LIRGeneratorMIPSShared::lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* lhs, MDefinition* rhs)
 {
     bool needsTemp = false;
-    bool cannotAliasRhs = false;
 
 #ifdef JS_CODEGEN_MIPS32
     needsTemp = true;
-    cannotAliasRhs = true;
     if (rhs->isConstant()) {
         int64_t constant = rhs->toConstant()->toInt64();
         int32_t shift = mozilla::FloorLog2(constant);
@@ -89,10 +87,10 @@ LIRGeneratorMIPSShared::lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* l
             needsTemp = false;
     }
 #endif
+
     ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
     ins->setInt64Operand(INT64_PIECES,
-                         (lhs != rhs || cannotAliasRhs) ? useInt64OrConstant(rhs) : useInt64OrConstantAtStart(rhs));
-
+                         lhs != rhs ? useInt64OrConstant(rhs) : useInt64OrConstantAtStart(rhs));
     if (needsTemp)
         ins->setTemp(0, temp());
 
@@ -104,16 +102,10 @@ void
 LIRGeneratorMIPSShared::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, Temps>* ins,
                                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
 {
-#ifdef JS_CODEGEN_MIPS32
-    if (mir->isRotate()) {
-        if (!rhs->isConstant())
-            ins->setTemp(0, temp());
-        ins->setInt64Operand(0, useInt64Register(lhs));
-    } else {
-        ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
-    }
-#else
     ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
+#if defined(JS_NUNBOX32)
+    if (mir->isRotate())
+        ins->setTemp(0, temp());
 #endif
 
     static_assert(LShiftI64::Rhs == INT64_PIECES, "Assume Rhs is located at INT64_PIECES.");
@@ -121,14 +113,7 @@ LIRGeneratorMIPSShared::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT6
 
     ins->setOperand(INT64_PIECES, useRegisterOrConstant(rhs));
 
-#ifdef JS_CODEGEN_MIPS32
-    if (mir->isRotate())
-        defineInt64(ins, mir);
-    else
-        defineInt64ReuseInput(ins, mir, 0);
-#else
     defineInt64ReuseInput(ins, mir, 0);
-#endif
 }
 
 template void LIRGeneratorMIPSShared::lowerForShiftInt64(
@@ -337,13 +322,7 @@ LIRGeneratorMIPSShared::visitWasmLoad(MWasmLoad* ins)
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
 
-    LAllocation ptr;
-#ifdef JS_CODEGEN_MIPS32
-    if (ins->type() == MIRType::Int64)
-        ptr = useRegister(base);
-    else
-#endif
-        ptr = useRegisterAtStart(base);
+    LAllocation ptr = useRegisterAtStart(base);
 
     if (IsUnaligned(ins->access())) {
         if (ins->type() == MIRType::Int64) {
@@ -389,7 +368,7 @@ LIRGeneratorMIPSShared::visitWasmStore(MWasmStore* ins)
     LAllocation baseAlloc = useRegisterAtStart(base);
 
     if (IsUnaligned(ins->access())) {
-        if (ins->access().type() == Scalar::Int64) {
+        if (ins->type() == MIRType::Int64) {
             LInt64Allocation valueAlloc = useInt64RegisterAtStart(value);
             auto* lir = new(alloc()) LWasmUnalignedStoreI64(baseAlloc, valueAlloc, temp());
             if (ins->access().offset())
@@ -408,7 +387,7 @@ LIRGeneratorMIPSShared::visitWasmStore(MWasmStore* ins)
         return;
     }
 
-    if (ins->access().type() == Scalar::Int64) {
+    if (ins->type() == MIRType::Int64) {
         LInt64Allocation valueAlloc = useInt64RegisterAtStart(value);
         auto* lir = new(alloc()) LWasmStoreI64(baseAlloc, valueAlloc);
         if (ins->access().offset())
@@ -499,23 +478,17 @@ LIRGeneratorMIPSShared::visitAsmJSLoadHeap(MAsmJSLoadHeap* ins)
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
     LAllocation baseAlloc;
-    LAllocation limitAlloc;
+
     // For MIPS it is best to keep the 'base' in a register if a bounds check
     // is needed.
     if (base->isConstant() && !ins->needsBoundsCheck()) {
         // A bounds check is only skipped for a positive index.
         MOZ_ASSERT(base->toConstant()->toInt32() >= 0);
         baseAlloc = LAllocation(base->toConstant());
-    } else {
+    } else
         baseAlloc = useRegisterAtStart(base);
-        if (ins->needsBoundsCheck()) {
-            MDefinition* boundsCheckLimit = ins->boundsCheckLimit();
-            MOZ_ASSERT(boundsCheckLimit->type() == MIRType::Int32);
-            limitAlloc = useRegisterAtStart(boundsCheckLimit);
-        }
-    }
 
-    define(new(alloc()) LAsmJSLoadHeap(baseAlloc, limitAlloc), ins);
+    define(new(alloc()) LAsmJSLoadHeap(baseAlloc), ins);
 }
 
 void
@@ -526,20 +499,14 @@ LIRGeneratorMIPSShared::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
     LAllocation baseAlloc;
-    LAllocation limitAlloc;
+
     if (base->isConstant() && !ins->needsBoundsCheck()) {
         MOZ_ASSERT(base->toConstant()->toInt32() >= 0);
         baseAlloc = LAllocation(base->toConstant());
-    } else{
+    } else
         baseAlloc = useRegisterAtStart(base);
-        if (ins->needsBoundsCheck()) {
-            MDefinition* boundsCheckLimit = ins->boundsCheckLimit();
-            MOZ_ASSERT(boundsCheckLimit->type() == MIRType::Int32);
-            limitAlloc = useRegisterAtStart(boundsCheckLimit);
-        }
-    }
 
-    add(new(alloc()) LAsmJSStoreHeap(baseAlloc, useRegisterAtStart(ins->value()), limitAlloc), ins);
+    add(new(alloc()) LAsmJSStoreHeap(baseAlloc, useRegisterAtStart(ins->value())), ins);
 }
 
 void
@@ -736,6 +703,24 @@ LIRGeneratorMIPSShared::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayEleme
     define(lir, ins);
 }
 
+void
+LIRGeneratorMIPSShared::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
+{
+    MDefinition* opd = ins->input();
+    MOZ_ASSERT(opd->type() == MIRType::Double || opd->type() == MIRType::Float32);
+
+    defineInt64(new(alloc()) LWasmTruncateToInt64(useRegister(opd)), ins);
+}
+
+void
+LIRGeneratorMIPSShared::visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins)
+{
+    MDefinition* opd = ins->input();
+    MOZ_ASSERT(opd->type() == MIRType::Int64);
+    MOZ_ASSERT(IsFloatingPointType(ins->type()));
+
+    define(new(alloc()) LInt64ToFloatingPoint(useInt64Register(opd)), ins);
+}
 
 void
 LIRGeneratorMIPSShared::visitCopySign(MCopySign* ins)
@@ -756,7 +741,7 @@ LIRGeneratorMIPSShared::visitCopySign(MCopySign* ins)
     lir->setTemp(0, temp());
     lir->setTemp(1, temp());
 
-    lir->setOperand(0, useRegisterAtStart(lhs));
+    lir->setOperand(0, useRegister(lhs));
     lir->setOperand(1, useRegister(rhs));
     defineReuseInput(lir, ins, 0);
 }
@@ -765,10 +750,4 @@ void
 LIRGeneratorMIPSShared::visitExtendInt32ToInt64(MExtendInt32ToInt64* ins)
 {
     defineInt64(new(alloc()) LExtendInt32ToInt64(useRegisterAtStart(ins->input())), ins);
-}
-
-void
-LIRGeneratorMIPSShared::visitSignExtendInt64(MSignExtendInt64* ins)
-{
-    defineInt64(new(alloc()) LSignExtendInt64(useInt64RegisterAtStart(ins->input())), ins);
 }

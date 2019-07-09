@@ -42,10 +42,14 @@ var testObserver = {
     let additionalDumps = extraData.additional_minidumps.split(',');
     ok(additionalDumps.indexOf('browser') >= 0, "browser in additional_minidumps");
 
+    let additionalDumpFiles = [];
     for (let name of additionalDumps) {
       let file = profD.clone();
       file.append(pluginId + "-" + name + ".dmp");
       ok(file.exists(), "additional dump '"+name+"' exists");
+      if (file.exists()) {
+        additionalDumpFiles.push(file);
+      }
     }
 
     // check cpu usage field
@@ -99,5 +103,7 @@ function onPluginCrashed(aEvent) {
            getService(Ci.nsIObserverService);
   os.removeObserver(testObserver, "plugin-crashed");
 
-  SimpleTest.finish();
+  Services.crashmanager.ensureCrashIsPresent(aEvent.pluginDumpID).then(() => {
+    SimpleTest.finish();
+  });
 }

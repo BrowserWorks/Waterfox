@@ -19,11 +19,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(Object.prototype.__lookupGetter__, "name", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: "__lookupGetter__"
-});
+assert.sameValue(Object.prototype.__lookupGetter__.name, '__lookupGetter__');
+
+verifyNotEnumerable(Object.prototype.__lookupGetter__, 'name');
+verifyNotWritable(Object.prototype.__lookupGetter__, 'name');
+verifyConfigurable(Object.prototype.__lookupGetter__, 'name');
 
 reportCompare(0, 0);

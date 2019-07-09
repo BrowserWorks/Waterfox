@@ -75,7 +75,7 @@ function minOverloadLength(overloads)
 }
 
 //@}
-function throwOrReject(a_test, operation, fn, obj, args, message, cb)
+function throwOrReject(a_test, operation, fn, obj, args,  message, cb)
 //@{
 {
     if (operation.idlType.generic !== "Promise") {
@@ -85,7 +85,7 @@ function throwOrReject(a_test, operation, fn, obj, args, message, cb)
         cb();
     } else {
         try {
-            promise_rejects(a_test, new TypeError(), fn.apply(obj, args), message).then(cb, cb);
+            promise_rejects(a_test, new TypeError(), fn.apply(obj, args)).then(cb, cb);
         } catch (e){
             a_test.step(function() {
                 assert_unreached("Throws \"" + e + "\" instead of rejecting promise");
@@ -332,7 +332,7 @@ IdlArray.prototype.is_json_type = function(type)
      */
 
     var idlType = type.idlType;
-
+    
     if (type.generic == "Promise") { return false; }
 
     //  nullable and annotated types don't need to be handled separately,
@@ -392,11 +392,8 @@ IdlArray.prototype.is_json_type = function(type)
        default:
            var thing = this.members[idlType];
            if (!thing) { throw new Error("Type " + idlType + " not found"); }
-           if (thing instanceof IdlEnum) { return true; }
 
-           if (thing instanceof IdlTypedef) {
-               return this.is_json_type(thing.idlType);
-           }
+           if (thing instanceof IdlEnum) { return true; }
 
            //  dictionaries where all of their members are JSON types
            if (thing instanceof IdlDictionary) {
@@ -404,13 +401,11 @@ IdlArray.prototype.is_json_type = function(type)
                var map = new Map();
                while (stack.length)
                {
-                   stack.pop().members.forEach(function(m) {
-                       map.set(m.name, m.idlType)
-                   });
+                   stack.pop().members.forEach(m => map.set(m.name, m.idlType));
                }
-               return Array.from(map.values()).every(this.is_json_type, this);
+               return [...map.values()].every(this.is_json_type, this);
            }
-
+           
            //  interface types that have a toJSON operation declared on themselves or
            //  one of their inherited or consequential interfaces.
            if (thing instanceof IdlInterface) {
@@ -420,14 +415,14 @@ IdlArray.prototype.is_json_type = function(type)
                    if (thing.has_to_json_regular_operation()) { return true; }
                    var mixins = this.implements[thing.name];
                    if (mixins) {
-                       mixins = mixins.map(function(id) {
+                       mixins = mixins.map(id => {
                            var mixin = this.members[id];
                            if (!mixin) {
                                throw new Error("Interface " + id + " not found (implemented by " + thing.name + ")");
                            }
                            return mixin;
-                       }, this);
-                       if (mixins.some(function(m) { return m.has_to_json_regular_operation() } )) { return true; }
+                       });
+                       if (mixins.some(m => m.has_to_json_regular_operation())) { return true; }
                    }
                    if (!thing.base) { return false; }
                    base = this.members[thing.base];
@@ -933,7 +928,7 @@ IdlInterface.prototype.get_inheritance_stack = function() {
      * and B.get_inheritance_stack() should return [B, C].
      *
      * Note: as dictionary inheritance is expressed identically by the AST,
-     * this works just as well for getting a stack of inherited dictionaries.
+     * this works just as well for getting a stack of inherited dictionaries. 
      */
 
     var stack = [this];
@@ -1011,7 +1006,7 @@ function _traverse_inherited_and_consequential_interfaces(stack, callback) {
     callback(I);
     var mixins = I.array["implements"][I.name];
     if (mixins) {
-        mixins.forEach(function(id) {
+        mixins.forEach(id => {
             var mixin = I.array.members[id];
             if (!mixin) {
                 throw new Error("Interface " + id + " not found (implemented by " + I.name + ")");
@@ -1327,14 +1322,6 @@ IdlInterface.prototype.test_self = function()
         // "Otherwise, if A is declared with the [LegacyArrayClass] extended
         // attribute, then return %ArrayPrototype%.
         // "Otherwise, return %ObjectPrototype%.
-        //
-        // "In the ECMAScript binding, the DOMException type has some additional
-        // requirements:
-        //
-        //     "Unlike normal interface types, the interface prototype object
-        //     for DOMException must have as its [[Prototype]] the intrinsic
-        //     object %ErrorPrototype%."
-        //
         if (this.name === "Window") {
             assert_class_string(Object.getPrototypeOf(self[this.name].prototype),
                                 'WindowProperties',
@@ -1350,9 +1337,6 @@ IdlInterface.prototype.test_self = function()
                          .has_extended_attribute("NoInterfaceObject");
             } else if (this.has_extended_attribute('LegacyArrayClass')) {
                 inherit_interface = 'Array';
-                inherit_interface_has_interface_object = true;
-            } else if (this.name === "DOMException") {
-                inherit_interface = 'Error';
                 inherit_interface_has_interface_object = true;
             } else {
                 inherit_interface = 'Object';
@@ -1396,14 +1380,81 @@ IdlInterface.prototype.test_self = function()
         }
     }.bind(this), this.name + " interface: existence and properties of interface prototype object");
 
-    // "If the interface is declared with the [Global] or [PrimaryGlobal]
-    // extended attribute, or the interface is in the set of inherited
-    // interfaces for any other interface that is declared with one of these
-    // attributes, then the interface prototype object must be an immutable
-    // prototype exotic object."
-    // https://heycam.github.io/webidl/#interface-prototype-object
-    if (this.is_global()) {
-        this.test_immutable_prototype("interface prototype object", self[this.name].prototype);
+    if (this.is_global() && typeof Object.setPrototypeOf === "function") {
+        // These functions test WebIDL as of 2017-06-06.
+        // https://heycam.github.io/webidl/#platform-object-setprototypeof
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+            var newValue = Object.create(null);
+
+            assert_throws(new TypeError(), function() {
+                Object.setPrototypeOf(self[this.name].prototype, newValue);
+            });
+
+            assert_equals(
+                    Object.getPrototypeOf(self[this.name].prototype),
+                    originalValue,
+                    "original value not modified"
+                );
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to a new value via Object.setPrototypeOf " +
+            "should throw a TypeError");
+
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+            var newValue = Object.create(null);
+
+            assert_throws(new TypeError(), function() {
+                self[this.name].prototype.__proto__ = newValue;
+            });
+
+            assert_equals(
+                    Object.getPrototypeOf(self[this.name].prototype),
+                    originalValue,
+                    "original value not modified"
+                );
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to a new value via __proto__ " +
+            "should throw a TypeError");
+
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+            var newValue = Object.create(null);
+
+            assert_false(Reflect.setPrototypeOf(self[this.name].prototype.__proto__, newValue));
+
+            assert_equals(
+                    Object.getPrototypeOf(self[this.name].prototype),
+                    originalValue,
+                    "original value not modified"
+                );
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to a new value via Reflect.setPrototypeOf " +
+            "should return false");
+
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+
+            Object.setPrototypeOf(self[this.name].prototype, originalValue);
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to its original value via Object.setPrototypeOf " +
+            "should not throw");
+
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+
+            self[this.name].prototype.__proto__ = originalValue;
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to its original value via __proto__ " +
+            "should not throw");
+
+        test(function() {
+            var originalValue = Object.getPrototypeOf(self[this.name].prototype);
+
+            assert_true(Reflect.setPrototypeOf(self[this.name].prototype, originalValue));
+        }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
+            "of global platform object - setting to its original value via Reflect.setPrototypeOf " +
+            "should return true");
     }
 
     test(function()
@@ -1440,110 +1491,6 @@ IdlInterface.prototype.test_self = function()
         assert_equals(self[this.name].prototype.constructor, self[this.name],
                       this.name + '.prototype.constructor is not the same object as ' + this.name);
     }.bind(this), this.name + ' interface: existence and properties of interface prototype object\'s "constructor" property');
-};
-
-//@}
-IdlInterface.prototype.test_immutable_prototype = function(type, obj)
-//@{
-{
-    if (typeof Object.setPrototypeOf !== "function") {
-        return;
-    }
-
-    test(function(t) {
-        var originalValue = Object.getPrototypeOf(obj);
-        var newValue = Object.create(null);
-
-        t.add_cleanup(function() {
-            try {
-                Object.setPrototypeOf(obj, originalValue);
-            } catch (err) {}
-        });
-
-        assert_throws(new TypeError(), function() {
-            Object.setPrototypeOf(obj, newValue);
-        });
-
-        assert_equals(
-                Object.getPrototypeOf(obj),
-                originalValue,
-                "original value not modified"
-            );
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to a new value via Object.setPrototypeOf " +
-        "should throw a TypeError");
-
-    test(function(t) {
-        var originalValue = Object.getPrototypeOf(obj);
-        var newValue = Object.create(null);
-
-        t.add_cleanup(function() {
-            var setter = Object.getOwnPropertyDescriptor(
-                Object.prototype, '__proto__'
-            ).set;
-
-            try {
-                setter.call(obj, originalValue);
-            } catch (err) {}
-        });
-
-        assert_throws(new TypeError(), function() {
-            obj.__proto__ = newValue;
-        });
-
-        assert_equals(
-                Object.getPrototypeOf(obj),
-                originalValue,
-                "original value not modified"
-            );
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to a new value via __proto__ " +
-        "should throw a TypeError");
-
-    test(function(t) {
-        var originalValue = Object.getPrototypeOf(obj);
-        var newValue = Object.create(null);
-
-        t.add_cleanup(function() {
-            try {
-                Reflect.setPrototypeOf(obj, originalValue);
-            } catch (err) {}
-        });
-
-        assert_false(Reflect.setPrototypeOf(obj, newValue));
-
-        assert_equals(
-                Object.getPrototypeOf(obj),
-                originalValue,
-                "original value not modified"
-            );
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to a new value via Reflect.setPrototypeOf " +
-        "should return false");
-
-    test(function() {
-        var originalValue = Object.getPrototypeOf(obj);
-
-        Object.setPrototypeOf(obj, originalValue);
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to its original value via Object.setPrototypeOf " +
-        "should not throw");
-
-    test(function() {
-        var originalValue = Object.getPrototypeOf(obj);
-
-        obj.__proto__ = originalValue;
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to its original value via __proto__ " +
-        "should not throw");
-
-    test(function() {
-        var originalValue = Object.getPrototypeOf(obj);
-
-        assert_true(Reflect.setPrototypeOf(obj, originalValue));
-    }.bind(this), this.name + " interface: internal [[SetPrototypeOf]] method " +
-        "of " + type + " - setting to its original value via Reflect.setPrototypeOf " +
-        "should return true");
 };
 
 //@}
@@ -1701,7 +1648,7 @@ IdlInterface.prototype.test_member_operation = function(member)
 {
     var a_test = async_test(this.name + " interface: operation " + member.name +
                             "(" + member.arguments.map(
-                                function(m) {return m.idlType.idlType; } ).join(", ")
+                                function(m) {return m.idlType.idlType; } )
                             +")");
     a_test.step(function()
     {
@@ -1791,6 +1738,10 @@ IdlInterface.prototype.do_member_operation_asserts = function(memberHolderObject
         })),
         "property has wrong .length");
 
+    if (member.is_to_json_regular_operation()) {
+        this.test_to_json_operation(memberHolderObject, member);
+    }
+
     // Make some suitable arguments
     var args = member.arguments.map(function(arg) {
         return create_suitable_object(arg.idlType);
@@ -1853,7 +1804,7 @@ IdlInterface.prototype.test_to_json_operation = function(memberHolderObject, mem
         test(function() {
             var json = memberHolderObject.toJSON();
             map.forEach(function(type, k) {
-                assert_true(k in json, "property " + JSON.stringify(k) + " should be present in the output of " + this.name + ".prototype.toJSON()");
+                assert_true(k in json, "property " + k + " should be present in the output of " + this.name + ".prototype.toJSON()");
                 var descriptor = Object.getOwnPropertyDescriptor(json, k);
                 assert_true(descriptor.writable, "property " + k + " should be writable");
                 assert_true(descriptor.configurable, "property " + k + " should be configurable");
@@ -1862,7 +1813,7 @@ IdlInterface.prototype.test_to_json_operation = function(memberHolderObject, mem
                 delete json[k];
             }, this);
             for (var k in json) {
-                assert_unreached("property " + JSON.stringify(k) + " should not be present in the output of " + this.name + ".prototype.toJSON()");
+                assert_unreached("property " + k + " should not be present in the output of " + this.name + ".prototype.toJSON()");
             }
         }.bind(this), "Test default toJSON operation of " + this.name);
     } else {
@@ -2064,7 +2015,6 @@ IdlInterface.prototype.test_object = function(desc)
         : "object";
 
     this.test_primary_interface_of(desc, obj, exception, expected_typeof);
-
     var current_interface = this;
     while (current_interface)
     {
@@ -2091,18 +2041,6 @@ IdlInterface.prototype.test_primary_interface_of = function(desc, obj, exception
     {
         return;
     }
-
-    // "The internal [[SetPrototypeOf]] method of every platform object that
-    // implements an interface with the [Global] or [PrimaryGlobal] extended
-    // attribute must execute the same algorithm as is defined for the
-    // [[SetPrototypeOf]] internal method of an immutable prototype exotic
-    // object."
-    // https://heycam.github.io/webidl/#platform-object-setprototypeof
-    if (this.is_global())
-    {
-        this.test_immutable_prototype("global platform object", obj);
-    }
-
 
     // We can't easily test that its prototype is correct if there's no
     // interface object, or the object is from a different global environment
@@ -2193,11 +2131,6 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
         || member.type == "operation")
         && member.name)
         {
-            var described_name = member.name;
-            if (member.type == "operation")
-            {
-                described_name += "(" + member.arguments.map(arg => arg.idlType.idlType).join(", ") + ")";
-            }
             test(function()
             {
                 assert_equals(exception, null, "Unexpected exception when evaluating object");
@@ -2237,7 +2170,7 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
                         assert_equals(typeof obj[member.name], "function");
                     }
                 }
-            }.bind(this), this.name + " interface: " + desc + ' must inherit property "' + described_name + '" with the proper type');
+            }.bind(this), this.name + " interface: " + desc + ' must inherit property "' + member.name + '" with the proper type (' + i + ')');
         }
         // TODO: This is wrong if there are multiple operations with the same
         // identifier.
@@ -2245,25 +2178,22 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
         if (member.type == "operation" && member.name && member.arguments.length)
         {
             var a_test = async_test( this.name + " interface: calling " + member.name +
-            "(" + member.arguments.map(function(m) { return m.idlType.idlType; }).join(", ") +
+            "(" + member.arguments.map(function(m) { return m.idlType.idlType; }) +
             ") on " + desc + " with too few arguments must throw TypeError");
             a_test.step(function()
             {
                 assert_equals(exception, null, "Unexpected exception when evaluating object");
                 assert_equals(typeof obj, expected_typeof, "wrong typeof object");
-                var fn;
                 if (!member["static"]) {
                     if (!this.is_global() && !member.isUnforgeable) {
                         assert_inherits(obj, member.name);
                     } else {
                         assert_own_property(obj, member.name);
                     }
-                    fn = obj[member.name];
                 }
                 else
                 {
-                    assert_own_property(obj.constructor, member.name, "interface object must have static operation as own property");
-                    fn = obj.constructor[member.name];
+                    assert_false(member.name in obj);
                 }
 
                 var minLength = minOverloadLength(this.members.filter(function(m) {
@@ -2272,7 +2202,7 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
                 var args = [];
                 var cb = awaitNCallbacks(minLength, a_test.done.bind(a_test));
                 for (var i = 0; i < minLength; i++) {
-                    throwOrReject(a_test, member, fn, obj, args, "Called with " + i + " arguments", cb);
+                    throwOrReject(a_test, member, obj[member.name], obj, args,  "Called with " + i + " arguments", cb);
 
                     args.push(create_suitable_object(member.arguments[i].idlType));
                 }
@@ -2281,10 +2211,6 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
                 }
             }.bind(this));
         }
-
-        if (member.is_to_json_regular_operation()) {
-            this.test_to_json_operation(obj, member);
-        }
     }
 };
 
@@ -2292,11 +2218,6 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
 IdlInterface.prototype.has_stringifier = function()
 //@{
 {
-    if (this.name === "DOMException") {
-        // toString is inherited from Error, so don't assume we have the
-        // default stringifer
-        return true;
-    }
     if (this.members.some(function(member) { return member.stringifier; })) {
         return true;
     }

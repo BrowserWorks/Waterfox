@@ -352,7 +352,14 @@ nsStringBuffer::SizeOfIncludingThisEvenIfShared(mozilla::MallocSizeOf aMallocSiz
 // ---------------------------------------------------------------------------
 
 // define nsAString
+#include "string-template-def-unichar.h"
 #include "nsTSubstring.cpp"
+#include "string-template-undef.h"
+
+// define nsACString
+#include "string-template-def-char.h"
+#include "nsTSubstring.cpp"
+#include "string-template-undef.h"
 
 // Provide rust bindings to the nsA[C]String types
 extern "C" {
@@ -380,11 +387,6 @@ void Gecko_AssignCString(nsACString* aThis, const nsACString* aOther)
   aThis->Assign(*aOther);
 }
 
-void Gecko_TakeFromCString(nsACString* aThis, nsACString* aOther)
-{
-  aThis->Assign(mozilla::Move(*aOther));
-}
-
 void Gecko_AppendCString(nsACString* aThis, const nsACString* aOther)
 {
   aThis->Append(*aOther);
@@ -398,11 +400,6 @@ void Gecko_SetLengthCString(nsACString* aThis, uint32_t aLength)
 bool Gecko_FallibleAssignCString(nsACString* aThis, const nsACString* aOther)
 {
   return aThis->Assign(*aOther, mozilla::fallible);
-}
-
-bool Gecko_FallibleTakeFromCString(nsACString* aThis, nsACString* aOther)
-{
-  return aThis->Assign(mozilla::Move(*aOther), mozilla::fallible);
 }
 
 bool Gecko_FallibleAppendCString(nsACString* aThis, const nsACString* aOther)
@@ -435,11 +432,6 @@ void Gecko_AssignString(nsAString* aThis, const nsAString* aOther)
   aThis->Assign(*aOther);
 }
 
-void Gecko_TakeFromString(nsAString* aThis, nsAString* aOther)
-{
-  aThis->Assign(mozilla::Move(*aOther));
-}
-
 void Gecko_AppendString(nsAString* aThis, const nsAString* aOther)
 {
   aThis->Append(*aOther);
@@ -453,11 +445,6 @@ void Gecko_SetLengthString(nsAString* aThis, uint32_t aLength)
 bool Gecko_FallibleAssignString(nsAString* aThis, const nsAString* aOther)
 {
   return aThis->Assign(*aOther, mozilla::fallible);
-}
-
-bool Gecko_FallibleTakeFromString(nsAString* aThis, nsAString* aOther)
-{
-  return aThis->Assign(mozilla::Move(*aOther), mozilla::fallible);
 }
 
 bool Gecko_FallibleAppendString(nsAString* aThis, const nsAString* aOther)

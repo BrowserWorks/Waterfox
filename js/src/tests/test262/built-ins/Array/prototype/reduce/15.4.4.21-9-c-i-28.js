@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.reduce
 es5id: 15.4.4.21-9-c-i-28
 description: >
     Array.prototype.reduce - applied to String object, which
@@ -18,7 +17,7 @@ description: >
         }
 
         var str = new String("012");
-
+     
         Array.prototype.reduce.call(str, callbackfn, initialValue);
 
 assert(testResult, 'testResult !== true');

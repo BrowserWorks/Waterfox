@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/ary-ptrn-elision-step-err.case
 // - src/dstr-binding/error/async-gen-meth.template
 /*---
 description: Elision advances iterator and forwards abrupt completions (async generator method)
 esid: sec-asyncgenerator-definitions-propertydefinitionevaluation
-features: [generators, async-iteration]
+features: [generator, async-iteration]
 flags: [generated]
 info: |
     AsyncGeneratorMethod :

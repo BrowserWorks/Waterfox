@@ -22,7 +22,9 @@
 #ifndef rdfutil_h__
 #define rdfutil_h__
 
-#include "nsStringFwd.h"
+
+class nsACString;
+class nsCString;
 
 nsresult
 rdf_MakeRelativeRef(const nsACString& aBaseURI, nsCString& aURI);

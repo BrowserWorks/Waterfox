@@ -3,7 +3,11 @@
 const TEST_ENGINE_NAME = "Foo";
 const TEST_ENGINE_BASENAME = "testEngine.xml";
 
+const searchbar = document.getElementById("searchbar");
 const searchPopup = document.getElementById("PopupSearchAutoComplete");
+const searchIcon = document.getAnonymousElementByAttribute(
+  searchbar, "anonid", "searchbar-search-button"
+);
 const oneOffBinding = document.getAnonymousElementByAttribute(
   searchPopup, "anonid", "search-one-off-buttons"
 );
@@ -17,19 +21,7 @@ const searchInNewTabMenuItem = document.getAnonymousElementByAttribute(
   oneOffBinding, "anonid", "search-one-offs-context-open-in-new-tab"
 );
 
-let searchbar;
-let searchIcon;
-
 add_task(async function init() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
-
-  searchbar = document.getElementById("searchbar");
-  searchIcon = document.getAnonymousElementByAttribute(
-    searchbar, "anonid", "searchbar-search-button"
-  );
-
   await promiseNewEngine(TEST_ENGINE_BASENAME, {
     setAsCurrent: false,
   });
@@ -86,21 +78,4 @@ async function doTest() {
 
   // Move the cursor out of the panel area to avoid messing with other tests.
   await EventUtils.synthesizeNativeMouseMove(searchbar);
-}
-
-function checkTelemetry(expectedEngineName) {
-  let propertyPath = [
-    "countableEvents",
-    "__DEFAULT__",
-    "search-oneoff",
-    expectedEngineName + ".oneoff-context-searchbar",
-    "unknown",
-    "tab-background",
-  ];
-  let telem = BrowserUITelemetry.getToolbarMeasures();
-  for (let prop of propertyPath) {
-    Assert.ok(prop in telem, "Property " + prop + " should be in the telemetry");
-    telem = telem[prop];
-  }
-  Assert.equal(telem, 1, "Click count");
 }

@@ -49,7 +49,6 @@ info: |
         [ BindingElementList[?Yield] ]
         [ BindingElementList[?Yield] , Elisionopt BindingRestElement[?Yield]opt ]
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 var callCount = 0;
 function f([...{ x } = []] = []) {

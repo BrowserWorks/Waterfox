@@ -22,7 +22,7 @@ import org.mozilla.gecko.util.UIAsyncTask;
 
 import java.lang.ref.WeakReference;
 
-public class EditBookmarkTask extends UIAsyncTask.WithoutParams<Integer> {
+public class EditBookmarkTask extends UIAsyncTask.WithoutParams<Void> {
     private final WeakReference<Activity> activityWeakReference;
     private final BrowserDB db;
     private final ContentResolver contentResolver;
@@ -38,7 +38,7 @@ public class EditBookmarkTask extends UIAsyncTask.WithoutParams<Integer> {
     }
 
     @Override
-    public Integer doInBackground() {
+    public Void doInBackground() {
         final long bookmarkId = bundle.getLong(BrowserContract.Bookmarks._ID);
         final String url = bundle.getString(BrowserContract.Bookmarks.URL);
         final String title = bundle.getString(BrowserContract.Bookmarks.TITLE);
@@ -67,24 +67,18 @@ public class EditBookmarkTask extends UIAsyncTask.WithoutParams<Integer> {
         }
         Telemetry.sendUIEvent(TelemetryContract.Event.EDIT, TelemetryContract.Method.DIALOG, extras);
 
-        return type;
+        return null;
     }
 
     @Override
-    public void onPostExecute(Integer type) {
+    public void onPostExecute(Void result) {
         final Activity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
         }
 
-        final int messageResId;
-        if (type == BrowserContract.Bookmarks.TYPE_FOLDER) {
-            messageResId = R.string.bookmark_folder_updated;
-        } else {
-            messageResId = R.string.bookmark_updated;
-        }
         SnackbarBuilder.builder(activity)
-                .message(messageResId)
+                .message(R.string.bookmark_updated)
                 .duration(Snackbar.LENGTH_LONG)
                 .buildAndShow();
     }

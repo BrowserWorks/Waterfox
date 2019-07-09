@@ -69,12 +69,13 @@
         }});
 
     function Results(name) {
-        this.details = document.createElement("details");
-        this.summary = appendChildElement(this.details, "summary");
+        var block = document.createElement("details");
+        this.summary = appendChildElement(block, "summary");
         this.summary.textContent = name;
-        var typeList = appendChildElement(this.details, "ul");
+        var typeList = appendChildElement(block, "ul");
         this.failList = appendChildElement(appendChildElement(typeList, "li", "Failures"), "ol");
         this.inconclusiveList = appendChildElement(appendChildElement(typeList, "li", "Inconclusives"), "ol");
+        details.appendChild(block);
         this.passCount = 0;
         this.failCount = 0;
         this.inconclusiveCount = 0;
@@ -100,7 +101,6 @@
             this.summary.textContent += " (" + this.passCount + " passes, " +
                 this.failCount + " fails, " +
                 this.inconclusiveCount + " inconclusives)";
-            details.appendChild(this.details);
             assert_equals(this.failCount, 0, "Fail count");
             assert_greater_than(this.passCount, 0, "Pass count");
             test.done();

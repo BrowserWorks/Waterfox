@@ -12,6 +12,10 @@ var gBrowserGlue = Cc["@mozilla.org/browser/browserglue;1"]
                      .getService(Ci.nsIObserver);
 var gGetBoolPref = Services.prefs.getBoolPref;
 
+function run_test() {
+  run_next_test();
+}
+
 do_register_cleanup(cleanup);
 
 function cleanup() {

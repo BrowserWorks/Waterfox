@@ -11,7 +11,7 @@ testserver.registerDirectory("/data/", do_get_file("data/system_addons"));
 testserver.start();
 var root = testserver.identity.primaryScheme + "://" +
            testserver.identity.primaryHost + ":" +
-           testserver.identity.primaryPort + "/data/";
+           testserver.identity.primaryPort + "/data/"
 Services.prefs.setCharPref(PREF_SYSTEM_ADDON_UPDATE_URL, root + "update.xml");
 
 let distroDir = FileUtils.getDir("ProfD", ["sysfeatures", "empty"], true);
@@ -85,6 +85,7 @@ const TEST_CONDITIONS = {
     ]
   },
 };
+
 
 /**
  * The tests to run. Each test must define an updateList or test. The following
@@ -161,11 +162,10 @@ const TESTS = {
       { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
     ],
   }
-};
+}
 
 add_task(async function setup() {
   // Initialise the profile
-  await overrideBuiltIns({ "system": [] });
   startupManager();
   await promiseShutdownManager();
 });

@@ -19,6 +19,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -67,15 +68,21 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    public void fetchModified(RepositorySessionFetchRecordsDelegate delegate) {
-      final long fetchSince = getLastSyncTimestamp();
+    public void guidsSince(long timestamp,
+                           RepositorySessionGuidsSinceDelegate delegate) {
+      throw new RuntimeException("guidsSince not implemented.");
+    }
+
+    @Override
+    public void fetchSince(long timestamp,
+                           RepositorySessionFetchRecordsDelegate delegate) {
       long fetchBegan  = now();
       stats.fetchBegan = fetchBegan;
       RecordFilter filter = storeTracker.getFilter();
 
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
-        if (record.lastModified >= fetchSince) {
+        if (record.lastModified >= timestamp) {
           if (filter != null &&
               filter.excludeRecord(record)) {
             Logger.debug(LOG_TAG, "Excluding record " + record.guid);
@@ -86,8 +93,7 @@ public class WBORepository extends Repository {
       }
       long fetchCompleted  = now();
       stats.fetchCompleted = fetchCompleted;
-      setLastFetchTimestamp(fetchCompleted);
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted();
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
@@ -102,8 +108,7 @@ public class WBORepository extends Repository {
       }
       long fetchCompleted  = now();
       stats.fetchCompleted = fetchCompleted;
-      setLastFetchTimestamp(fetchCompleted);
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted();
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
@@ -116,8 +121,7 @@ public class WBORepository extends Repository {
       }
       long fetchCompleted  = now();
       stats.fetchCompleted = fetchCompleted;
-      setLastFetchTimestamp(fetchCompleted);
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted();
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
@@ -191,8 +195,7 @@ public class WBORepository extends Repository {
         stats.storeBegan = end;
       }
       stats.storeCompleted = end;
-      setLastStoreTimestamp(end);
-      storeDelegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted();
+      storeDelegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted(end);
     }
   }
 

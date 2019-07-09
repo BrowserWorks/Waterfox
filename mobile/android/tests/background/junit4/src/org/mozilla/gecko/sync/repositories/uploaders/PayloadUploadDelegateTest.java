@@ -8,7 +8,6 @@ import android.net.Uri;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mozilla.gecko.background.testhelpers.TestRunner;
 import org.mozilla.gecko.sync.CollectionConcurrentModificationException;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -18,6 +17,7 @@ import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.RepositoryStateProvider;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 
 import static org.mockito.Mockito.mock;
@@ -35,13 +35,9 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @RunWith(TestRunner.class)
 public class PayloadUploadDelegateTest {
-    private RepositorySession repositorySession;
     private PayloadDispatcher payloadDispatcher;
     private AuthHeaderProvider authHeaderProvider;
 
@@ -49,7 +45,7 @@ public class PayloadUploadDelegateTest {
 
     class MockPayloadDispatcher extends PayloadDispatcher {
         public final HashMap<String, Exception> failedRecords = new HashMap<>();
-        public boolean didPayloadFail = false;
+        public boolean didLastPayloadFail = false;
 
         public ArrayList<SyncStorageResponse> successResponses = new ArrayList<>();
         public int commitPayloadsSucceeded = 0;
@@ -62,19 +58,15 @@ public class PayloadUploadDelegateTest {
         }
 
         @Override
-        public void payloadSucceeded(final SyncStorageResponse response, final boolean isCommit, final boolean isLastPayload) {
-            final String[] guids = batchWhiteboard.getSuccessRecordGuids();
+        public void payloadSucceeded(final SyncStorageResponse response, String[] guids, final boolean isCommit, final boolean isLastPayload) {
             successResponses.add(response);
-            if (!batchWhiteboard.getInBatchingMode() || isCommit) {
-                committedGuids += guids.length;
-            }
             if (isCommit) {
                 ++commitPayloadsSucceeded;
+                committedGuids += guids.length;
             }
             if (isLastPayload) {
                 ++lastPayloadsSucceeded;
             }
-            super.payloadSucceeded(response, isCommit, isLastPayload);
         }
 
         @Override
@@ -84,13 +76,13 @@ public class PayloadUploadDelegateTest {
 
         @Override
         public void recordFailed(final Exception e, final String recordGuid) {
+            recordUploadFailed = true;
             failedRecords.put(recordGuid, e);
         }
 
         @Override
-        public void payloadFailed(Exception e) {
-            didPayloadFail = true;
-            super.payloadFailed(e);
+        public void lastPayloadFailed() {
+            didLastPayloadFail = true;
         }
     }
 
@@ -110,7 +102,9 @@ public class PayloadUploadDelegateTest {
         }
 
         @Override
-        public void onStoreCompleted() {}
+        public void onStoreCompleted(long storeEnd) {
+
+        }
 
         @Override
         public void onStoreFailed(Exception e) {
@@ -118,33 +112,22 @@ public class PayloadUploadDelegateTest {
         }
 
         @Override
-        public void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion) {
+        public void onRecordStoreReconciled(String guid) {
         }
 
         @Override
         public RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService executor) {
-            return this;
+            return null;
         }
     }
 
     @Before
     public void setUp() throws Exception {
-        sessionStoreDelegate = spy(new MockRepositorySessionStoreDelegate());
-
-        repositorySession = mock(RepositorySession.class);
+        sessionStoreDelegate = new MockRepositorySessionStoreDelegate();
 
         payloadDispatcher = new MockPayloadDispatcher(
                 null,
-                new BatchingUploader(
-                        repositorySession,
-                        null,
-                        sessionStoreDelegate,
-                        Uri.parse("https://example.com"),
-                        0L,
-                        mock(InfoConfiguration.class),
-                        mock(AuthHeaderProvider.class),
-                        false
-                )
+                new BatchingUploader(mock(RepositorySession.class), null, sessionStoreDelegate, Uri.parse("https://example.com"), 0L, mock(InfoConfiguration.class), mock(AuthHeaderProvider.class))
         );
 
         authHeaderProvider = mock(AuthHeaderProvider.class);
@@ -161,7 +144,7 @@ public class PayloadUploadDelegateTest {
         // Test that non-2* responses aren't processed
         payloadUploadDelegate.handleRequestSuccess(makeSyncStorageResponse(404, null, null));
         assertEquals(2, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(IllegalStateException.class,
                 ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid1").getClass());
         assertEquals(IllegalStateException.class,
@@ -179,7 +162,7 @@ public class PayloadUploadDelegateTest {
         // Test that responses without X-Last-Modified header aren't processed
         payloadUploadDelegate.handleRequestSuccess(makeSyncStorageResponse(200, null, null));
         assertEquals(2, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(IllegalStateException.class,
                 ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid1").getClass());
         assertEquals(IllegalStateException.class,
@@ -197,7 +180,7 @@ public class PayloadUploadDelegateTest {
         // Test that we catch json processing errors
         payloadUploadDelegate.handleRequestSuccess(makeSyncStorageResponse(200, "non json body", "123"));
         assertEquals(2, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(NonObjectJSONException.class,
                 ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid1").getClass());
         assertEquals(NonObjectJSONException.class,
@@ -251,7 +234,8 @@ public class PayloadUploadDelegateTest {
         payloadUploadDelegate.handleRequestSuccess(
                 makeSyncStorageResponse(200, "{\"success\": [\"guid1\", \"guid2\", \"guid3\"]}", "123"));
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertEquals(3, payloadDispatcher.batchWhiteboard.getSuccessRecordGuids().length);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).commitPayloadsSucceeded);
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
@@ -264,7 +248,8 @@ public class PayloadUploadDelegateTest {
         payloadUploadDelegate.handleRequestSuccess(
                 makeSyncStorageResponse(200, "{\"success\": [\"guid4\", 5, \"guid6\"]}", "123"));
         assertEquals(5, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertEquals(3, payloadDispatcher.batchWhiteboard.getSuccessRecordGuids().length);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).commitPayloadsSucceeded);
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
@@ -283,8 +268,6 @@ public class PayloadUploadDelegateTest {
         payloadUploadDelegate.handleRequestSuccess(
                 makeSyncStorageResponse(200, "{\"success\": [\"guid1\", \"guid2\", \"guid3\"], \"failed\": {}}", "123"));
 
-        assertEquals(3, ((MockPayloadDispatcher) payloadDispatcher).committedGuids);
-
         postedGuids = new ArrayList<>();
         postedGuids.add("guid4");
         postedGuids.add("guid5");
@@ -292,8 +275,6 @@ public class PayloadUploadDelegateTest {
                 authHeaderProvider, payloadDispatcher, postedGuids, false, false);
         payloadUploadDelegate.handleRequestSuccess(
                 makeSyncStorageResponse(200, "{\"success\": [\"guid4\", \"guid5\"], \"failed\": {}}", "333"));
-
-        assertEquals(5, ((MockPayloadDispatcher) payloadDispatcher).committedGuids);
 
         postedGuids = new ArrayList<>();
         postedGuids.add("guid6");
@@ -303,15 +284,13 @@ public class PayloadUploadDelegateTest {
                 makeSyncStorageResponse(200, "{\"success\": [\"guid6\"], \"failed\": {}}", "444"));
 
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertEquals(6, ((MockPayloadDispatcher) payloadDispatcher).committedGuids);
-        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertEquals(6, payloadDispatcher.batchWhiteboard.getSuccessRecordGuids().length);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(3, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).commitPayloadsSucceeded);
         assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
         assertFalse(payloadDispatcher.batchWhiteboard.getInBatchingMode());
 
-        // Encountering records in the "failed" array is treated as a store failure for all posted
-        // records in the non-batching mode as well.
         postedGuids = new ArrayList<>();
         postedGuids.add("guid7");
         postedGuids.add("guid8");
@@ -319,14 +298,13 @@ public class PayloadUploadDelegateTest {
                 authHeaderProvider, payloadDispatcher, postedGuids, false, true);
         payloadUploadDelegate.handleRequestSuccess(
                 makeSyncStorageResponse(200, "{\"success\": [\"guid8\"], \"failed\": {\"guid7\": \"reason\"}}", "555"));
-        assertEquals(6, ((MockPayloadDispatcher) payloadDispatcher).committedGuids);
         assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
         assertTrue(((MockPayloadDispatcher) payloadDispatcher).failedRecords.containsKey("guid7"));
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
-        assertTrue(payloadDispatcher.storeFailed.get());
-        assertEquals(3, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
+        assertEquals(7, payloadDispatcher.batchWhiteboard.getSuccessRecordGuids().length);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
+        assertEquals(4, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).commitPayloadsSucceeded);
-        assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
+        assertEquals(2, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
         assertFalse(payloadDispatcher.batchWhiteboard.getInBatchingMode());
     }
 
@@ -381,7 +359,7 @@ public class PayloadUploadDelegateTest {
 
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
         assertEquals(8, ((MockPayloadDispatcher) payloadDispatcher).committedGuids);
-        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
         assertEquals(4, ((MockPayloadDispatcher) payloadDispatcher).successResponses.size());
         assertEquals(2, ((MockPayloadDispatcher) payloadDispatcher).commitPayloadsSucceeded);
         assertEquals(1, ((MockPayloadDispatcher) payloadDispatcher).lastPayloadsSucceeded);
@@ -404,13 +382,13 @@ public class PayloadUploadDelegateTest {
         assertEquals(e, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid1"));
         assertEquals(e, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid2"));
         assertEquals(e, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid3"));
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertFalse(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
 
         payloadUploadDelegate = new PayloadUploadDelegate(
                 authHeaderProvider, payloadDispatcher, postedGuids, false, true);
         payloadUploadDelegate.handleRequestError(e);
         assertEquals(3, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
+        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
     }
 
     @Test
@@ -432,19 +410,13 @@ public class PayloadUploadDelegateTest {
                 ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid2").getClass());
         assertEquals(HTTPFailureException.class,
                 ((MockPayloadDispatcher) payloadDispatcher).failedRecords.get("testGuid3").getClass());
-        verify(repositorySession, times(1)).abort();
-        verify(sessionStoreDelegate, times(1)).onStoreFailed((Exception) Mockito.any());
 
         payloadUploadDelegate = new PayloadUploadDelegate(
                 authHeaderProvider, payloadDispatcher, postedGuids, false, true);
         payloadUploadDelegate.handleRequestFailure(new SyncStorageResponse(response));
         assertEquals(3, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didPayloadFail);
-        assertTrue(payloadDispatcher.storeFailed.get());
-
-        // Ensure we'd only ever call .abort and .onStoreFailed once.
-        verify(repositorySession, times(1)).abort();
-        verify(sessionStoreDelegate, times(1)).onStoreFailed((Exception) Mockito.any());
+        assertTrue(((MockPayloadDispatcher) payloadDispatcher).didLastPayloadFail);
+        assertTrue(payloadDispatcher.recordUploadFailed);
     }
 
     @Test
@@ -460,11 +432,10 @@ public class PayloadUploadDelegateTest {
         payloadUploadDelegate.handleRequestFailure(new SyncStorageResponse(response));
 
         assertEquals(0, ((MockPayloadDispatcher) payloadDispatcher).failedRecords.size());
-        assertTrue(payloadDispatcher.storeFailed.get());
+        assertTrue(payloadDispatcher.recordUploadFailed);
+        assertTrue(payloadDispatcher.storeFailed);
 
         assertTrue(((MockRepositorySessionStoreDelegate) sessionStoreDelegate).storeFailedException instanceof CollectionConcurrentModificationException);
-        verify(repositorySession, times(1)).abort();
-        verify(sessionStoreDelegate, times(1)).onStoreFailed((Exception) Mockito.any());
     }
 
     @Test

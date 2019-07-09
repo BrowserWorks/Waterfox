@@ -56,10 +56,8 @@ function startTest() {
       SimpleTest.finish();
     };
     document.getElementById("content").appendChild(video);
-    helper.pixelMustBecome(video, helper.red, {
-      threshold: 128,
-      infoString: "Should become red",
-    }).then(SimpleTest.finish);
+    helper.waitForPixelColor(video, helper.red, 128, "Should become red")
+      .then(SimpleTest.finish);
   };
 
   mediaRecorder.start();

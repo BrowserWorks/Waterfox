@@ -11,7 +11,6 @@ info: >
   2. If IsConstructor(C) is false, throw a TypeError exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var from = TypedArray.from;

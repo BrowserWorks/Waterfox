@@ -41,13 +41,13 @@
       <groupbox flex="1">
         <caption><label>&color;</label></caption>
         <hbox align="center">
-          <label accesskey="&textColor2.accesskey;" control="foregroundtextmenu">&textColor2.label;</label>
+          <label accesskey="&textColor.accesskey;" control="foregroundtextmenu">&textColor.label;</label>
           <spacer flex="1"/>
           <colorpicker type="button" id="foregroundtextmenu" palettename="standard"
                        preference="browser.display.foreground_color"/>
         </hbox>
         <hbox align="center" style="margin-top: 5px">
-          <label accesskey="&backgroundColor2.accesskey;" control="backgroundmenu">&backgroundColor2.label;</label>
+          <label accesskey="&backgroundColor.accesskey;" control="backgroundmenu">&backgroundColor.label;</label>
           <spacer flex="1"/>
           <colorpicker type="button" id="backgroundmenu" palettename="standard"
                        preference="browser.display.background_color"/>
@@ -62,13 +62,13 @@
       <groupbox flex="1">
         <caption><label>&links;</label></caption>
         <hbox align="center">
-          <label accesskey="&linkColor2.accesskey;" control="unvisitedlinkmenu">&linkColor2.label;</label>
+          <label accesskey="&linkColor.accesskey;" control="unvisitedlinkmenu">&linkColor.label;</label>
           <spacer flex="1"/>
           <colorpicker type="button" id="unvisitedlinkmenu" palettename="standard"
                        preference="browser.anchor_color"/>
         </hbox>
         <hbox align="center" style="margin-top: 5px">
-          <label accesskey="&visitedLinkColor2.accesskey;" control="visitedlinkmenu">&visitedLinkColor2.label;</label>
+          <label accesskey="&visitedLinkColor.accesskey;" control="visitedlinkmenu">&visitedLinkColor.label;</label>
           <spacer flex="1"/>
           <colorpicker type="button" id="visitedlinkmenu" palettename="standard"
                        preference="browser.visited_color"/>
@@ -85,8 +85,8 @@
 #else
     <vbox>
 #endif
-      <label accesskey="&overrideDefaultPageColors2.accesskey;"
-             control="useDocumentColors">&overrideDefaultPageColors2.label;</label>
+      <label accesskey="&overrideDefaultPageColors.accesskey;"
+             control="useDocumentColors">&overrideDefaultPageColors.label;</label>
       <hbox>
         <menulist id="useDocumentColors" preference="browser.display.document_color_use" flex="1">
           <menupopup>

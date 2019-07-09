@@ -16,7 +16,6 @@ info: |
        GeneratorBody, funcEnv, strict).
     [...]
 flags: [noStrict]
-features: [generators]
 ---*/
 
 var g = 'outside';

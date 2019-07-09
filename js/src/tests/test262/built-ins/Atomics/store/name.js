@@ -3,7 +3,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.store
 description: >
   Atomics.store.name is "store".
 includes: [propertyHelper.js]

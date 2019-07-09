@@ -183,7 +183,7 @@ public:
   struct Listener
   {
     EventListenerHolder mListener;
-    RefPtr<nsAtom> mTypeAtom; // for the main thread
+    nsCOMPtr<nsIAtom> mTypeAtom; // for the main thread
     nsString mTypeString; // for non-main-threads
     EventMessage mEventMessage;
 
@@ -338,7 +338,7 @@ public:
    */
   // XXXbz does that play correctly with nodes being adopted across
   // documents?  Need to double-check the spec here.
-  nsresult SetEventHandler(nsAtom *aName,
+  nsresult SetEventHandler(nsIAtom *aName,
                            const nsAString& aFunc,
                            bool aDeferCompilation,
                            bool aPermitUntrustedEvents,
@@ -346,7 +346,7 @@ public:
   /**
    * Remove the current "inline" event listener for aName.
    */
-  void RemoveEventHandler(nsAtom *aName, const nsAString& aTypeString);
+  void RemoveEventHandler(nsIAtom *aName, const nsAString& aTypeString);
 
   void HandleEvent(nsPresContext* aPresContext,
                    WidgetEvent* aEvent,
@@ -411,7 +411,7 @@ public:
    * Returns true if there is at least one event listener for aEventNameWithOn.
    * Note that aEventNameWithOn must start with "on"!
    */
-  bool HasListenersFor(nsAtom* aEventNameWithOn);
+  bool HasListenersFor(nsIAtom* aEventNameWithOn);
 
   /**
    * Returns true if there is at least one event listener.
@@ -424,7 +424,7 @@ public:
    */
   nsresult GetListenerInfo(nsCOMArray<nsIEventListenerInfo>* aList);
 
-  uint32_t GetIdentifierForEvent(nsAtom* aEvent);
+  uint32_t GetIdentifierForEvent(nsIAtom* aEvent);
 
   static void Shutdown();
 
@@ -470,12 +470,11 @@ public:
 
   dom::EventTarget* GetTarget() { return mTarget; }
 
-  bool HasNonSystemGroupListenersForUntrustedKeyEvents();
-  bool HasNonPassiveNonSystemGroupListenersForUntrustedKeyEvents();
+  bool HasUntrustedOrNonSystemGroupKeyEventListeners();
 
   bool HasApzAwareListeners();
   bool IsApzAwareListener(Listener* aListener);
-  bool IsApzAwareEvent(nsAtom* aEvent);
+  bool IsApzAwareEvent(nsIAtom* aEvent);
 
 protected:
   void HandleEventInternal(nsPresContext* aPresContext,
@@ -511,7 +510,7 @@ protected:
    * Find the Listener for the "inline" event listener for aTypeAtom.
    */
   Listener* FindEventHandler(EventMessage aEventMessage,
-                             nsAtom* aTypeAtom,
+                             nsIAtom* aTypeAtom,
                              const nsAString& aTypeString);
 
   /**
@@ -521,7 +520,7 @@ protected:
    * aScopeGlobal must be non-null.  Otherwise, aContext and aScopeGlobal are
    * allowed to be null.
    */
-  Listener* SetEventHandlerInternal(nsAtom* aName,
+  Listener* SetEventHandlerInternal(nsIAtom* aName,
                                     const nsAString& aTypeString,
                                     const TypedEventHandler& aHandler,
                                     bool aPermitUntrustedEvents);
@@ -535,7 +534,7 @@ public:
    * Set the "inline" event listener for aEventName to aHandler.  If
    * aHandler is null, this will actually remove the event listener
    */
-  void SetEventHandler(nsAtom* aEventName,
+  void SetEventHandler(nsIAtom* aEventName,
                        const nsAString& aTypeString,
                        dom::EventHandlerNonNull* aHandler);
   void SetEventHandler(dom::OnErrorEventHandlerNonNull* aHandler);
@@ -550,7 +549,7 @@ public:
    * OnErrorEventHandlerNonNull for some event targets and EventHandlerNonNull
    * for others.
    */
-  dom::EventHandlerNonNull* GetEventHandler(nsAtom* aEventName,
+  dom::EventHandlerNonNull* GetEventHandler(nsIAtom* aEventName,
                                             const nsAString& aTypeString)
   {
     const TypedEventHandler* typedHandler =
@@ -578,7 +577,7 @@ protected:
    * Helper method for implementing the various Get*EventHandler above.  Will
    * return null if we don't have an event handler for this event name.
    */
-  const TypedEventHandler* GetTypedEventHandler(nsAtom* aEventName,
+  const TypedEventHandler* GetTypedEventHandler(nsIAtom* aEventName,
                                                 const nsAString& aTypeString);
 
   void AddEventListener(const nsAString& aType,
@@ -598,22 +597,22 @@ protected:
 
   void AddEventListenerInternal(EventListenerHolder aListener,
                                 EventMessage aEventMessage,
-                                nsAtom* aTypeAtom,
+                                nsIAtom* aTypeAtom,
                                 const nsAString& aTypeString,
                                 const EventListenerFlags& aFlags,
                                 bool aHandler = false,
                                 bool aAllEvents = false);
   void RemoveEventListenerInternal(EventListenerHolder aListener,
                                    EventMessage aEventMessage,
-                                   nsAtom* aUserType,
+                                   nsIAtom* aUserType,
                                    const nsAString& aTypeString,
                                    const EventListenerFlags& aFlags,
                                    bool aAllEvents = false);
   void RemoveAllListeners();
-  void NotifyEventListenerRemoved(nsAtom* aUserType,
+  void NotifyEventListenerRemoved(nsIAtom* aUserType,
                                   const nsAString& aTypeString);
   const EventTypeData* GetTypeDataForIID(const nsIID& aIID);
-  const EventTypeData* GetTypeDataForEventName(nsAtom* aName);
+  const EventTypeData* GetTypeDataForEventName(nsIAtom* aName);
   nsPIDOMWindowInner* GetInnerWindowForTarget();
   already_AddRefed<nsPIDOMWindowInner> GetTargetAsInnerWindow() const;
 
@@ -631,7 +630,7 @@ protected:
 
   nsAutoTObserverArray<Listener, 2> mListeners;
   dom::EventTarget* MOZ_NON_OWNING_REF mTarget;
-  RefPtr<nsAtom> mNoListenerForEventAtom;
+  nsCOMPtr<nsIAtom> mNoListenerForEventAtom;
 
   friend class ELMCreationDetector;
   static uint32_t sMainThreadCreatedCount;

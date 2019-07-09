@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {utils: Cu} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -32,7 +32,7 @@ this.navigate = {};
 navigate.isLoadEventExpected = function(current, future = undefined) {
   // assume we will go somewhere exciting
   if (typeof current == "undefined") {
-    throw new TypeError("Expected at least one URL");
+    throw TypeError("Expected at least one URL");
   }
 
   // Assume we will go somewhere exciting

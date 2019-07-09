@@ -37,6 +37,7 @@
 #include "gc/Policy.h"
 #include "jit/InlinableNatives.h"
 #include "jit/Ion.h"
+#include "jit/JitFrameIterator.h"
 #include "js/CallNonGenericMethod.h"
 #include "js/Proxy.h"
 #include "vm/AsyncFunction.h"
@@ -80,17 +81,13 @@ fun_enumerate(JSContext* cx, HandleObject obj)
             return false;
     }
 
-    if (!obj->as<JSFunction>().hasResolvedLength()) {
-        id = NameToId(cx->names().length);
-        if (!HasOwnProperty(cx, obj, id, &found))
-            return false;
-    }
+    id = NameToId(cx->names().length);
+    if (!HasOwnProperty(cx, obj, id, &found))
+        return false;
 
-    if (!obj->as<JSFunction>().hasResolvedName()) {
-        id = NameToId(cx->names().name);
-        if (!HasOwnProperty(cx, obj, id, &found))
-            return false;
-    }
+    id = NameToId(cx->names().name);
+    if (!HasOwnProperty(cx, obj, id, &found))
+        return false;
 
     return true;
 }
@@ -442,14 +439,15 @@ ResolveInterpretedFunctionPrototype(JSContext* cx, HandleFunction fun, HandleId 
     // back with a .constructor.
     if (!isStarGenerator && !isAsyncGenerator) {
         RootedValue objVal(cx, ObjectValue(*fun));
-        if (!DefineDataProperty(cx, proto, cx->names().constructor, objVal, 0))
+        if (!DefineProperty(cx, proto, cx->names().constructor, objVal, nullptr, nullptr, 0))
             return false;
     }
 
     // Per ES5 15.3.5.2 a user-defined function's .prototype property is
     // initially non-configurable, non-enumerable, and writable.
     RootedValue protoVal(cx, ObjectValue(*proto));
-    return DefineDataProperty(cx, fun, id, protoVal, JSPROP_PERMANENT | JSPROP_RESOLVING);
+    return DefineProperty(cx, fun, id, protoVal, nullptr, nullptr,
+                          JSPROP_PERMANENT | JSPROP_RESOLVING);
 }
 
 bool
@@ -549,8 +547,11 @@ fun_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
             v.setString(name);
         }
 
-        if (!NativeDefineDataProperty(cx, fun, id, v, JSPROP_READONLY | JSPROP_RESOLVING))
+        if (!NativeDefineProperty(cx, fun, id, v, nullptr, nullptr,
+                                  JSPROP_READONLY | JSPROP_RESOLVING))
+        {
             return false;
+        }
 
         if (isLength)
             fun->setResolvedLength();
@@ -857,7 +858,7 @@ CreateFunctionPrototype(JSContext* cx, JSProtoKey key)
     size_t sourceLen = strlen(rawSource);
     size_t begin = 9;
     MOZ_ASSERT(rawSource[begin] == '(');
-    mozilla::UniquePtr<char16_t[], JS::FreePolicy> source(InflateString(cx, rawSource, sourceLen));
+    mozilla::UniquePtr<char16_t[], JS::FreePolicy> source(InflateString(cx, rawSource, &sourceLen));
     if (!source)
         return nullptr;
 
@@ -954,6 +955,8 @@ CreateFunctionPrototype(JSContext* cx, JSProtoKey key)
 static const ClassOps JSFunctionClassOps = {
     nullptr,                 /* addProperty */
     nullptr,                 /* delProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     fun_enumerate,
     nullptr,                 /* newEnumerate */
     fun_resolve,
@@ -1154,7 +1157,7 @@ js::FunctionHasDefaultHasInstance(JSFunction* fun, const WellKnownSymbols& symbo
     jsid id = SYMBOL_TO_JSID(symbols.hasInstance);
     Shape* shape = fun->lookupPure(id);
     if (shape) {
-        if (!shape->isDataProperty())
+        if (!shape->hasSlot() || !shape->hasDefaultGetter())
             return false;
         const Value hasInstance = fun->as<NativeObject>().getSlot(shape->slot());
         return IsNativeFunction(hasInstance, js::fun_symbolHasInstance);
@@ -1766,13 +1769,11 @@ const JSFunctionSpec js::function_methods[] = {
     JS_FS_END
 };
 
-// ES2018 draft rev 2aea8f3e617b49df06414eb062ab44fad87661d3
-// 19.2.1.1.1 CreateDynamicFunction( constructor, newTarget, kind, args )
+// ES 2017 draft rev 0f10dba4ad18de92d47d421f378233a2eae8f077 19.2.1.1.1.
 static bool
-CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generatorKind,
-                      FunctionAsyncKind asyncKind)
+FunctionConstructor(JSContext* cx, const CallArgs& args, GeneratorKind generatorKind,
+                    FunctionAsyncKind asyncKind)
 {
-    // Steps 1-5.
     // Block this call if security callbacks forbid it.
     Rooted<GlobalObject*> global(cx, &args.callee().global());
     if (!GlobalObject::isRuntimeCodeGenEnabled(cx, global)) {
@@ -1831,22 +1832,22 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
     if (args.length() > 1) {
         RootedString str(cx);
 
-        // Steps 10, 14.d.
+        // Steps 5-6, 9.
         unsigned n = args.length() - 1;
 
         for (unsigned i = 0; i < n; i++) {
-            // Steps 14.a-b, 14.d.i-ii.
+            // Steps 9.a-b, 9.d.i-ii.
             str = ToString<CanGC>(cx, args[i]);
             if (!str)
                 return false;
 
-            // Steps 14.b, 14.d.iii.
+            // Steps 9.b, 9.d.iii.
             if (!sb.append(str))
                  return false;
 
             if (i < args.length() - 2) {
-                // Step 14.d.iii.
-                if (!sb.append(','))
+                // Step 9.d.iii.
+                if (!sb.append(","))
                     return false;
             }
         }
@@ -1863,7 +1864,7 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
         return false;
 
     if (args.length() > 0) {
-        // Steps 13, 14.e, 15.
+        // Steps 7-8, 10.
         RootedString body(cx, ToString<CanGC>(cx, args[args.length() - 1]));
         if (!body || !sb.append(body))
              return false;
@@ -1888,18 +1889,22 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
      */
     RootedAtom anonymousAtom(cx, cx->names().anonymous);
 
-    // Initialize the function with the default prototype:
-    // Leave as nullptr to get the default from clasp for normal functions.
-    // Use %Generator% for generators and the unwrapped function of async
-    // functions and async generators.
-    RootedObject defaultProto(cx);
-    if (isStarGenerator || isAsync) {
-        defaultProto = GlobalObject::getOrCreateStarGeneratorFunctionPrototype(cx, global);
-        if (!defaultProto)
+    // Step 24.
+    RootedObject proto(cx);
+    if (!isAsync) {
+        if (!GetPrototypeFromBuiltinConstructor(cx, args, &proto))
             return false;
     }
 
-    // Step 30-37 (reordered).
+    // Step 4.d, use %Generator% as the fallback prototype.
+    // Also use %Generator% for the unwrapped function of async functions.
+    if (!proto && (isStarGenerator || isAsync)) {
+        proto = GlobalObject::getOrCreateStarGeneratorFunctionPrototype(cx, global);
+        if (!proto)
+            return false;
+    }
+
+    // Step 25-32 (reordered).
     RootedObject globalLexical(cx, &global->lexicalEnvironment());
     JSFunction::Flags flags = (isStarGenerator || isAsync)
                               ? JSFunction::INTERPRETED_LAMBDA_GENERATOR_OR_ASYNC
@@ -1907,7 +1912,7 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
     AllocKind allocKind = isAsync ? AllocKind::FUNCTION_EXTENDED : AllocKind::FUNCTION;
     RootedFunction fun(cx, NewFunctionWithProto(cx, nullptr, 0,
                                                 flags, globalLexical,
-                                                anonymousAtom, defaultProto,
+                                                anonymousAtom, proto,
                                                 allocKind, TenuredObject));
     if (!fun)
         return false;
@@ -1915,7 +1920,7 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
     if (!JSFunction::setTypeForScriptedFunction(cx, fun))
         return false;
 
-    // Steps 7.a-b, 8.a-b, 9.a-b, 16-28.
+    // Steps 2.a-b, 3.a-b, 4.a-b, 11-23.
     AutoStableStringChars stableChars(cx);
     if (!stableChars.initTwoByte(cx, functionText))
         return false;
@@ -1924,85 +1929,111 @@ CreateDynamicFunction(JSContext* cx, const CallArgs& args, GeneratorKind generat
     SourceBufferHolder::Ownership ownership = stableChars.maybeGiveOwnershipToCaller()
                                               ? SourceBufferHolder::GiveOwnership
                                               : SourceBufferHolder::NoOwnership;
+    bool ok;
     SourceBufferHolder srcBuf(chars.begin().get(), chars.length(), ownership);
     if (isAsync) {
         if (isStarGenerator) {
-            if (!CompileStandaloneAsyncGenerator(cx, &fun, options, srcBuf, parameterListEnd))
-                return false;
+            ok = frontend::CompileStandaloneAsyncGenerator(cx, &fun, options, srcBuf,
+                                                           parameterListEnd);
         } else {
-            if (!CompileStandaloneAsyncFunction(cx, &fun, options, srcBuf, parameterListEnd))
-                return false;
+            ok = frontend::CompileStandaloneAsyncFunction(cx, &fun, options, srcBuf,
+                                                          parameterListEnd);
         }
     } else {
-        if (isStarGenerator) {
-            if (!CompileStandaloneGenerator(cx, &fun, options, srcBuf, parameterListEnd))
-                return false;
-        } else {
-            if (!CompileStandaloneFunction(cx, &fun, options, srcBuf, parameterListEnd))
-                return false;
-        }
+        if (isStarGenerator)
+            ok = frontend::CompileStandaloneGenerator(cx, &fun, options, srcBuf, parameterListEnd);
+        else
+            ok = frontend::CompileStandaloneFunction(cx, &fun, options, srcBuf, parameterListEnd);
     }
 
-    // Steps 6, 29.
-    RootedObject proto(cx);
-    if (!GetPrototypeFromBuiltinConstructor(cx, args, &proto))
-        return false;
-
-    if (isAsync) {
-        // Create the async function wrapper.
-        JSObject* wrapped;
-        if (isStarGenerator) {
-            wrapped = proto
-                      ? WrapAsyncGeneratorWithProto(cx, fun, proto)
-                      : WrapAsyncGenerator(cx, fun);
-        } else {
-            // Step 9.d, use %AsyncFunctionPrototype% as the fallback prototype.
-            wrapped = proto
-                      ? WrapAsyncFunctionWithProto(cx, fun, proto)
-                      : WrapAsyncFunction(cx, fun);
-        }
-        if (!wrapped)
-            return false;
-
-        fun = &wrapped->as<JSFunction>();
-    } else {
-        // Steps 7.d, 8.d (implicit).
-        // Call SetPrototype if an explicit prototype was given.
-        if (proto && !SetPrototype(cx, fun, proto))
-            return false;
-    }
-
-    // Step 38.
+    // Step 33.
     args.rval().setObject(*fun);
-    return true;
+    return ok;
 }
 
 bool
 js::Function(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    return CreateDynamicFunction(cx, args, NotGenerator, SyncFunction);
+    return FunctionConstructor(cx, args, NotGenerator, SyncFunction);
 }
 
 bool
 js::Generator(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    return CreateDynamicFunction(cx, args, StarGenerator, SyncFunction);
+    return FunctionConstructor(cx, args, StarGenerator, SyncFunction);
 }
 
 bool
 js::AsyncFunctionConstructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    return CreateDynamicFunction(cx, args, NotGenerator, AsyncFunction);
+
+    // Save the callee before it's reset in FunctionConstructor().
+    RootedObject newTarget(cx);
+    if (args.isConstructing())
+        newTarget = &args.newTarget().toObject();
+    else
+        newTarget = &args.callee();
+
+    if (!FunctionConstructor(cx, args, NotGenerator, AsyncFunction))
+        return false;
+
+    // ES2017, draft rev 0f10dba4ad18de92d47d421f378233a2eae8f077
+    // 19.2.1.1.1 Runtime Semantics: CreateDynamicFunction, step 24.
+    RootedObject proto(cx);
+    if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+        return false;
+
+    // 19.2.1.1.1, step 4.d, use %AsyncFunctionPrototype% as the fallback.
+    if (!proto) {
+        proto = GlobalObject::getOrCreateAsyncFunctionPrototype(cx, cx->global());
+        if (!proto)
+            return false;
+    }
+
+    RootedFunction unwrapped(cx, &args.rval().toObject().as<JSFunction>());
+    RootedObject wrapped(cx, WrapAsyncFunctionWithProto(cx, unwrapped, proto));
+    if (!wrapped)
+        return false;
+
+    args.rval().setObject(*wrapped);
+    return true;
 }
 
 bool
 js::AsyncGeneratorConstructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    return CreateDynamicFunction(cx, args, StarGenerator, AsyncFunction);
+
+    // Save the callee before its reset in FunctionConstructor().
+    RootedObject newTarget(cx);
+    if (args.isConstructing())
+        newTarget = &args.newTarget().toObject();
+    else
+        newTarget = &args.callee();
+
+    if (!FunctionConstructor(cx, args, StarGenerator, AsyncFunction))
+        return false;
+
+    RootedObject proto(cx);
+    if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+        return false;
+
+    if (!proto) {
+        proto = GlobalObject::getOrCreateAsyncGenerator(cx, cx->global());
+        if (!proto)
+            return false;
+    }
+
+    RootedFunction unwrapped(cx, &args.rval().toObject().as<JSFunction>());
+    RootedObject wrapped(cx, WrapAsyncGeneratorWithProto(cx, unwrapped, proto));
+    if (!wrapped)
+        return false;
+
+    args.rval().setObject(*wrapped);
+    return true;
 }
 
 bool
@@ -2041,6 +2072,28 @@ JSFunction::needsNamedLambdaEnvironment() const
 }
 
 JSFunction*
+js::NewNativeFunction(JSContext* cx, Native native, unsigned nargs, HandleAtom atom,
+                      gc::AllocKind allocKind /* = AllocKind::FUNCTION */,
+                      NewObjectKind newKind /* = SingletonObject */)
+{
+    MOZ_ASSERT(native);
+    return NewFunctionWithProto(cx, native, nargs, JSFunction::NATIVE_FUN,
+                                nullptr, atom, nullptr, allocKind, newKind);
+}
+
+JSFunction*
+js::NewNativeConstructor(JSContext* cx, Native native, unsigned nargs, HandleAtom atom,
+                         gc::AllocKind allocKind /* = AllocKind::FUNCTION */,
+                         NewObjectKind newKind /* = SingletonObject */,
+                         JSFunction::Flags flags /* = JSFunction::NATIVE_CTOR */)
+{
+    MOZ_ASSERT(native);
+    MOZ_ASSERT(flags & JSFunction::NATIVE_CTOR);
+    return NewFunctionWithProto(cx, native, nargs, flags, nullptr, atom,
+                                nullptr, allocKind, newKind);
+}
+
+JSFunction*
 js::NewScriptedFunction(JSContext* cx, unsigned nargs,
                         JSFunction::Flags flags, HandleAtom atom,
                         HandleObject proto /* = nullptr */,
@@ -2074,15 +2127,25 @@ js::NewFunctionWithProto(JSContext* cx, Native native,
                          unsigned nargs, JSFunction::Flags flags, HandleObject enclosingEnv,
                          HandleAtom atom, HandleObject proto,
                          gc::AllocKind allocKind /* = AllocKind::FUNCTION */,
-                         NewObjectKind newKind /* = GenericObject */)
+                         NewObjectKind newKind /* = GenericObject */,
+                         NewFunctionProtoHandling protoHandling /* = NewFunctionClassProto */)
 {
     MOZ_ASSERT(allocKind == AllocKind::FUNCTION || allocKind == AllocKind::FUNCTION_EXTENDED);
     MOZ_ASSERT_IF(native, !enclosingEnv);
     MOZ_ASSERT(NewFunctionEnvironmentIsWellFormed(cx, enclosingEnv));
 
-    JSFunction* fun = NewObjectWithClassProto<JSFunction>(cx, proto, allocKind, newKind);
-    if (!fun)
+    RootedObject funobj(cx);
+    if (protoHandling == NewFunctionClassProto) {
+        funobj = NewObjectWithClassProto(cx, &JSFunction::class_, proto, allocKind,
+                                         newKind);
+    } else {
+        funobj = NewObjectWithGivenTaggedProto(cx, &JSFunction::class_, AsTaggedProto(proto),
+                                               allocKind, newKind);
+    }
+    if (!funobj)
         return nullptr;
+
+    RootedFunction fun(cx, &funobj->as<JSFunction>());
 
     if (allocKind == AllocKind::FUNCTION_EXTENDED)
         flags = JSFunction::Flags(flags | JSFunction::EXTENDED);
@@ -2378,9 +2441,11 @@ js::SetFunctionNameIfNoOwnName(JSContext* cx, HandleFunction fun, HandleValue na
         return false;
 
     RootedValue funNameVal(cx, StringValue(funNameAtom));
-    if (!NativeDefineDataProperty(cx, fun, cx->names().name, funNameVal, JSPROP_READONLY))
+    if (!NativeDefineProperty(cx, fun, cx->names().name, funNameVal, nullptr, nullptr,
+                              JSPROP_READONLY))
+    {
         return false;
-
+    }
     return true;
 }
 
@@ -2388,6 +2453,25 @@ JSFunction*
 js::DefineFunction(JSContext* cx, HandleObject obj, HandleId id, Native native,
                    unsigned nargs, unsigned flags, AllocKind allocKind /* = AllocKind::FUNCTION */)
 {
+    GetterOp gop;
+    SetterOp sop;
+    if (flags & JSFUN_STUB_GSOPS) {
+        /*
+         * JSFUN_STUB_GSOPS is a request flag only, not stored in fun->flags or
+         * the defined property's attributes. This allows us to encode another,
+         * internal flag using the same bit, JSFUN_EXPR_CLOSURE -- see jsfun.h
+         * for more on this.
+         */
+        flags &= ~JSFUN_STUB_GSOPS;
+        gop = nullptr;
+        sop = nullptr;
+    } else {
+        gop = obj->getClass()->getGetProperty();
+        sop = obj->getClass()->getSetProperty();
+        MOZ_ASSERT(gop != JS_PropertyStub);
+        MOZ_ASSERT(sop != JS_StrictPropertyStub);
+    }
+
     RootedAtom atom(cx, IdToFunctionName(cx, id));
     if (!atom)
         return nullptr;
@@ -2407,7 +2491,7 @@ js::DefineFunction(JSContext* cx, HandleObject obj, HandleId id, Native native,
         return nullptr;
 
     RootedValue funVal(cx, ObjectValue(*fun));
-    if (!DefineDataProperty(cx, obj, id, funVal, flags & ~JSFUN_FLAGS_MASK))
+    if (!DefineProperty(cx, obj, id, funVal, gop, sop, flags & ~JSFUN_FLAGS_MASK))
         return nullptr;
 
     return fun;

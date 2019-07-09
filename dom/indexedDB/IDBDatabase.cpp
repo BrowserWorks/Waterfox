@@ -695,10 +695,7 @@ IDBDatabase::Transaction(JSContext* aCx,
 
   RefPtr<IDBTransaction> transaction =
     IDBTransaction::Create(aCx, this, sortedStoreNames, mode);
-  if (NS_WARN_IF(!transaction)) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
+  MOZ_ASSERT(transaction);
 
   BackgroundTransactionChild* actor =
     new BackgroundTransactionChild(transaction);
@@ -1177,7 +1174,7 @@ IDBDatabase::LogWarning(const char* aMessageName,
 NS_IMPL_ADDREF_INHERITED(IDBDatabase, IDBWrapperCache)
 NS_IMPL_RELEASE_INHERITED(IDBDatabase, IDBWrapperCache)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IDBDatabase)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBDatabase)
 NS_INTERFACE_MAP_END_INHERITING(IDBWrapperCache)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBDatabase)

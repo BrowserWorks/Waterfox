@@ -17,10 +17,10 @@
 
 #include "mozilla/Move.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/Telemetry.h"
 
 #include "webrtc/config.h"
 
+#include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTransport.h"
 #include "signaling/src/sdp/Sdp.h"
@@ -127,7 +127,7 @@ JsepSessionImpl::AddTrack(const RefPtr<JsepTrack>& track)
     std::vector<JsepTrack::JsConstraints> constraints;
     track->GetJsConstraints(&constraints);
     for (auto constraint : constraints) {
-      if (!constraint.rid.empty()) {
+      if (constraint.rid != "") {
         minimumSsrcCount++;
       }
     }
@@ -231,13 +231,6 @@ JsepSessionImpl::AddRtpExtension(std::vector<SdpExtmapAttributeList::Extmap>& ex
     return NS_ERROR_FAILURE;
   }
 
-  // Avoid adding duplicate entries
-  for (auto ext = extensions.begin(); ext != extensions.end(); ++ext) {
-    if (ext->direction == direction && ext->extensionname == extensionName) {
-      return NS_OK;
-    }
-  }
-
   SdpExtmapAttributeList::Extmap extmap =
       { static_cast<uint16_t>(extensions.size() + 1),
         direction,
@@ -318,7 +311,7 @@ JsepSessionImpl::SetParameters(const std::string& streamId,
   SdpDirectionAttribute::Direction addVideoExt = SdpDirectionAttribute::kInactive;
   SdpDirectionAttribute::Direction addAudioExt = SdpDirectionAttribute::kInactive;
   for (auto constraintEntry: constraints) {
-    if (!constraintEntry.rid.empty()) {
+    if (constraintEntry.rid != "") {
       switch (it->mTrack->GetMediaType()) {
         case SdpMediaSection::kVideo: {
           addVideoExt = static_cast<SdpDirectionAttribute::Direction>(addVideoExt
@@ -338,7 +331,7 @@ JsepSessionImpl::SetParameters(const std::string& streamId,
     }
   }
   if (addVideoExt != SdpDirectionAttribute::kInactive) {
-    AddVideoRtpExtension(webrtc::RtpExtension::kRtpStreamIdUri, addVideoExt);
+    AddVideoRtpExtension("urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id", addVideoExt);
   }
 
   it->mTrack->SetJsConstraints(constraints);
@@ -351,7 +344,7 @@ JsepSessionImpl::SetParameters(const std::string& streamId,
     std::vector<JsepTrack::JsConstraints> constraints;
     track->GetJsConstraints(&constraints);
     for (auto constraint : constraints) {
-      if (!constraint.rid.empty()) {
+      if (constraint.rid != "") {
         minimumSsrcCount++;
       }
     }
@@ -648,8 +641,7 @@ JsepSessionImpl::SetupBundle(Sdp* sdp) const
 
   for (size_t i = 0; i < sdp->GetMediaSectionCount(); ++i) {
     auto& attrs = sdp->GetMediaSection(i).GetAttributeList();
-    if ((sdp->GetMediaSection(i).GetPort() != 0) &&
-        attrs.HasAttribute(SdpAttribute::kMidAttribute)) {
+    if (attrs.HasAttribute(SdpAttribute::kMidAttribute)) {
       bool useBundleOnly = false;
       switch (mBundlePolicy) {
         case kBundleMaxCompat:
@@ -681,7 +673,7 @@ JsepSessionImpl::SetupBundle(Sdp* sdp) const
     }
   }
 
-  if (!mids.empty()) {
+  if (mids.size() >= 1) {
     UniquePtr<SdpGroupAttributeList> groupAttr(new SdpGroupAttributeList);
     groupAttr->PushEntry(SdpGroupAttributeList::kBundle, mids);
     sdp->GetAttributeList().SetAttribute(groupAttr.release());
@@ -727,7 +719,6 @@ JsepSessionImpl::CreateOffer(const JsepOfferOptions& options,
                              std::string* offer)
 {
   mLastError.clear();
-  mLocalIceIsRestarting = options.mIceRestart.isSome() && *(options.mIceRestart);
 
   if (mState != kJsepStateStable) {
     JSEP_SET_ERROR("Cannot create offer in state " << GetStateStr(mState));
@@ -1535,11 +1526,6 @@ JsepSessionImpl::MakeNegotiatedTrackPair(const SdpMediaSection& remote,
     trackPairOut->mRtcpTransport = transport;
   }
 
-  if (local.GetMediaType() != SdpMediaSection::kApplication) {
-    Telemetry::Accumulate(Telemetry::WEBRTC_RTCP_MUX,
-        transport->mComponents == 1);
-  }
-
   return NS_OK;
 }
 
@@ -1995,15 +1981,6 @@ JsepSessionImpl::ValidateRemoteDescription(const Sdp& description)
     }
 
     bool differ = mSdpHelper.IceCredentialsDiffer(newMsection, oldMsection);
-
-    // Detect bad answer ICE restart when offer doesn't request ICE restart
-    if (mIsOfferer && differ && !mLocalIceIsRestarting) {
-      JSEP_SET_ERROR("Remote description indicates ICE restart but offer did not "
-                     "request ICE restart (new remote description changes either "
-                     "the ice-ufrag or ice-pwd)");
-      return NS_ERROR_INVALID_ARG;
-    }
-
     // Detect whether all the creds are the same or all are different
     if (!iceCredsDiffer.isSome()) {
       // for the first msection capture whether creds are different or same
@@ -2282,8 +2259,12 @@ JsepSessionImpl::SetupDefaultCodecs()
       48000,
       2,
       960,
+#ifdef WEBRTC_GONK
       // TODO Move this elsewhere to be adaptive to rate - Bug 1207925
+      16000 // B2G uses lower capture sampling rate
+#else
       40000
+#endif
       ));
 
   mSupportedCodecs.values.push_back(new JsepAudioCodecDescription(
@@ -2386,7 +2367,9 @@ JsepSessionImpl::SetupDefaultCodecs()
       "webrtc-datachannel",
       WEBRTC_DATACHANNEL_STREAMS_DEFAULT,
       WEBRTC_DATACHANNEL_PORT_DEFAULT,
-      WEBRTC_DATACHANNEL_MAX_MESSAGE_SIZE_LOCAL
+      // TODO: Bug 979417 needs to change this to
+      // WEBRTC_DATACHANELL_MAX_MESSAGE_SIZE_DEFAULT
+      0
       ));
 
   // Update the redundant encodings for the RED codec with the supported
@@ -2397,15 +2380,12 @@ JsepSessionImpl::SetupDefaultCodecs()
 void
 JsepSessionImpl::SetupDefaultRtpExtensions()
 {
-  AddAudioRtpExtension(webrtc::RtpExtension::kAudioLevelUri,
+  AddAudioRtpExtension("urn:ietf:params:rtp-hdrext:ssrc-audio-level",
                        SdpDirectionAttribute::Direction::kSendonly);
-  AddAudioRtpExtension(webrtc::RtpExtension::kMIdUri,
+  AddVideoRtpExtension(
+    "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
                        SdpDirectionAttribute::Direction::kSendrecv);
-  AddVideoRtpExtension(webrtc::RtpExtension::kAbsSendTimeUri,
-                       SdpDirectionAttribute::Direction::kSendrecv);
-  AddVideoRtpExtension(webrtc::RtpExtension::kTimestampOffsetUri,
-                       SdpDirectionAttribute::Direction::kSendrecv);
-  AddVideoRtpExtension(webrtc::RtpExtension::kMIdUri,
+  AddVideoRtpExtension("urn:ietf:params:rtp-hdrext:toffset",
                        SdpDirectionAttribute::Direction::kSendrecv);
 }
 

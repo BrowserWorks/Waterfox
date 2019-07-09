@@ -62,12 +62,8 @@ add_test_pair(async function read_write_all() {
         opt.noOverwrite = true;
         await OS.File.writeAtomic(DEST_PATH, view, opt);
         do_throw("With noOverwrite, writeAtomic should have refused to overwrite file (" + suffix + ")");
-      } catch (err) {
-        if (err instanceof OS.File.Error && err.becauseExists) {
-          do_print("With noOverwrite, writeAtomic correctly failed (" + suffix + ")");
-        } else {
-          throw err;
-        }
+      } catch (err if err instanceof OS.File.Error && err.becauseExists) {
+        do_print("With noOverwrite, writeAtomic correctly failed (" + suffix + ")");
       }
       await reference_compare_files(pathSource, DEST_PATH, TEST);
 
@@ -78,7 +74,7 @@ add_test_pair(async function read_write_all() {
       let START = 10;
       let LENGTH = 100;
       contents = new Uint8Array(300);
-      for (let i = 0; i < contents.byteLength; i++)
+      for (var i = 0; i < contents.byteLength; i++)
         contents[i] = i % 256;
       view = new Uint8Array(contents.buffer, START, LENGTH);
       bytesWritten = await OS.File.writeAtomic(DEST_PATH, view, options);
@@ -86,8 +82,8 @@ add_test_pair(async function read_write_all() {
 
       let array2 = await OS.File.read(DEST_PATH);
       do_check_eq(LENGTH, array2.length);
-      for (let j = 0; j < LENGTH; j++)
-        do_check_eq(array2[j], (j + START) % 256);
+      for (var i = 0; i < LENGTH; i++)
+        do_check_eq(array2[i], (i + START) % 256);
 
       // Cleanup.
       await OS.File.remove(DEST_PATH);
@@ -100,3 +96,8 @@ add_test_pair(async function read_write_all() {
   await test_with_options({}, "Not renaming, not flushing");
   await test_with_options({flush: true}, "Not renaming, flushing");
 });
+
+
+function run_test() {
+  run_next_test();
+}

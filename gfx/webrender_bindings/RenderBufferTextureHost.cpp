@@ -47,10 +47,6 @@ bool
 RenderBufferTextureHost::Lock()
 {
   if (!mLocked) {
-    if (!GetBuffer()) {
-      // We hit some problems to get the shmem.
-      return false;
-    }
     if (mFormat != gfx::SurfaceFormat::YUV) {
       mSurface = gfx::Factory::CreateWrappingDataSourceSurface(GetBuffer(),
                                                                layers::ImageDataSerializer::GetRGBStride(mDescriptor.get_RGBDescriptor()),
@@ -67,15 +63,15 @@ RenderBufferTextureHost::Lock()
       const layers::YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
 
       mYSurface = gfx::Factory::CreateWrappingDataSourceSurface(layers::ImageDataSerializer::GetYChannel(GetBuffer(), desc),
-                                                                desc.yStride(),
+                                                                desc.ySize().width,
                                                                 desc.ySize(),
                                                                 gfx::SurfaceFormat::A8);
       mCbSurface = gfx::Factory::CreateWrappingDataSourceSurface(layers::ImageDataSerializer::GetCbChannel(GetBuffer(), desc),
-                                                                 desc.cbCrStride(),
+                                                                 desc.cbCrSize().width,
                                                                  desc.cbCrSize(),
                                                                  gfx::SurfaceFormat::A8);
       mCrSurface = gfx::Factory::CreateWrappingDataSourceSurface(layers::ImageDataSerializer::GetCrChannel(GetBuffer(), desc),
-                                                                 desc.cbCrStride(),
+                                                                 desc.cbCrSize().width,
                                                                  desc.cbCrSize(),
                                                                  gfx::SurfaceFormat::A8);
       if (NS_WARN_IF(!mYSurface || !mCbSurface || !mCrSurface)) {

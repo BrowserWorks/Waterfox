@@ -5,6 +5,7 @@
 "use strict";
 
 const { Cc, CC } = require("chrome");
+const Promise = require("promise");
 const { Task } = require("devtools/shared/task");
 const { executeSoon } = require("devtools/shared/DevToolsUtils");
 const { delimitedRead } = require("devtools/shared/transport/stream-utils");

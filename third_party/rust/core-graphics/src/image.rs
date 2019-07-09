@@ -27,9 +27,8 @@ pub enum CGImageByteOrderInfo {
     CGImageByteOrder32Big = (4 << 12)
 }
 
-// This is an enum due to zero-sized types warnings.
-// For more details see https://github.com/rust-lang/rust/issues/27303
-pub enum __CGImage {}
+#[repr(C)]
+pub struct __CGImage;
 
 pub type CGImageRef = *const __CGImage;
 

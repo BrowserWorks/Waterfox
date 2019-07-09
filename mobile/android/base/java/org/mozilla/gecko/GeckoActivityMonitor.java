@@ -19,6 +19,7 @@ public class GeckoActivityMonitor implements Application.ActivityLifecycleCallba
 
     private GeckoApplication appContext;
     private WeakReference<Activity> currentActivity = new WeakReference<>(null);
+    private boolean mInitialized;
 
     public static GeckoActivityMonitor getInstance() {
         return instance;
@@ -28,7 +29,7 @@ public class GeckoActivityMonitor implements Application.ActivityLifecycleCallba
 
     private void updateActivity(final Activity activity) {
         if (currentActivity.get() == null) {
-            ((GeckoApplication) activity.getApplication()).onApplicationForeground();
+            appContext.onApplicationForeground();
         }
         currentActivity = new WeakReference<>(activity);
     }
@@ -37,8 +38,15 @@ public class GeckoActivityMonitor implements Application.ActivityLifecycleCallba
         return currentActivity.get();
     }
 
-    public synchronized void initialize(final GeckoApplication app) {
-        app.registerActivityLifecycleCallbacks(this);
+    public synchronized void initialize(final Context context) {
+        if (mInitialized) {
+            return;
+        }
+
+        appContext = (GeckoApplication) context.getApplicationContext();
+
+        appContext.registerActivityLifecycleCallbacks(this);
+        mInitialized = true;
     }
 
     @Override
@@ -66,7 +74,7 @@ public class GeckoActivityMonitor implements Application.ActivityLifecycleCallba
         // If it doesn't, it means we've been backgrounded.
         if (currentActivity.get() == activity) {
             currentActivity.clear();
-            ((GeckoApplication) activity.getApplication()).onApplicationBackground();
+            appContext.onApplicationBackground();
         }
     }
 

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.some
 es5id: 15.4.4.17-7-b-13
 description: >
     Array.prototype.some - deleting own property with prototype
@@ -16,8 +15,8 @@ description: >
                 return false;
             }
         }
-        var arr = [0, 111, 2];
-
+        var arr = [0, 111, 2]; 
+        
         Object.defineProperty(arr, "0", {
             get: function () {
                 delete arr[1];

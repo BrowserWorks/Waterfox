@@ -114,12 +114,12 @@ GetZeroValueForUnit(StyleAnimationValue::Unit aUnit)
   }
 }
 
+// This method requires at least one of its arguments to be non-null.
+//
 // If one argument is null, this method updates it to point to "zero"
 // for the other argument's Unit (if applicable; otherwise, we return false).
 //
-// If neither argument is null, this method simply returns true.
-//
-// If both arguments are null, this method returns false.
+// If neither argument is null, this method does nothing.
 //
 // |aZeroValueStorage| should be a reference to a RefPtr<RawServoAnimationValue>.
 // This is used where we may need to allocate a new ServoAnimationValue to
@@ -131,9 +131,7 @@ FinalizeServoAnimationValues(const RefPtr<RawServoAnimationValue>*& aValue1,
                              const RefPtr<RawServoAnimationValue>*& aValue2,
                              RefPtr<RawServoAnimationValue>& aZeroValueStorage)
 {
-  if (!aValue1 && !aValue2) {
-    return false;
-  }
+  MOZ_ASSERT(aValue1 || aValue2, "expecting at least one non-null value");
 
   // Are we missing either val? (If so, it's an implied 0 in other val's units)
 
@@ -151,9 +149,8 @@ static bool
 FinalizeStyleAnimationValues(const StyleAnimationValue*& aValue1,
                              const StyleAnimationValue*& aValue2)
 {
-  if (!aValue1 && !aValue2) {
-    return false;
-  }
+  MOZ_ASSERT(aValue1 || aValue2,
+             "expecting at least one non-null value");
 
   if (!aValue1) {
     aValue1 = GetZeroValueForUnit(aValue2->GetUnit());
@@ -301,7 +298,7 @@ AddOrAccumulateForServo(nsSMILValue& aDest,
   MOZ_ASSERT(!aValueToAddWrapper || !aDestWrapper ||
              aValueToAddWrapper->mServoValues.Length() ==
                aDestWrapper->mServoValues.Length(),
-             "Both of values' length in the wrappers should be the same if "
+             "Both of values'length in the wrappers should be the same if "
              "both of them exist");
 
   for (size_t i = 0; i < len; i++) {
@@ -362,15 +359,8 @@ AddOrAccumulate(nsSMILValue& aDest, const nsSMILValue& aValueToAdd,
 
   ValueWrapper* destWrapper = ExtractValueWrapper(aDest);
   const ValueWrapper* valueToAddWrapper = ExtractValueWrapper(aValueToAdd);
-
-  // If both of the values are empty just fail. This can happen in rare cases
-  // such as when the underlying animation produced an empty value.
-  //
-  // Technically, it doesn't matter what we return here since in either case it
-  // will produce the same result: an empty value.
-  if (!destWrapper && !valueToAddWrapper) {
-    return false;
-  }
+  MOZ_ASSERT(destWrapper || valueToAddWrapper,
+             "need at least one fully-initialized value");
 
   nsCSSPropertyID property = valueToAddWrapper
                              ? valueToAddWrapper->mPropID
@@ -466,10 +456,6 @@ ComputeDistanceForServo(const ValueWrapper* aFromWrapper,
     }
 
     double distance = Servo_AnimationValues_ComputeDistance(*fromValue, *toValue);
-    if (distance < 0.0) {
-      return NS_ERROR_FAILURE;
-    }
-
     if (len == 1) {
       aDistance = distance;
       return NS_OK;
@@ -546,27 +532,12 @@ InterpolateForServo(const ValueWrapper* aStartWrapper,
                     double aUnitDistance,
                     nsSMILValue& aResult)
 {
-  // For discretely-animated properties Servo_AnimationValues_Interpolate will
-  // perform the discrete animation (i.e. 50% flip) and return a success result.
-  // However, SMIL has its own special discrete animation behavior that it uses
-  // when keyTimes are specified, but we won't run that unless that this method
-  // returns a failure to indicate that the property cannot be smoothly
-  // interpolated, i.e. that we need to use a discrete calcMode.
-  //
-  // For shorthands, Servo_Property_IsDiscreteAnimatable will always return
-  // false. That's fine since most shorthands (like 'font' and
-  // 'text-decoration') include non-discrete components. If authors want to
-  // treat all components as discrete then they should use calcMode="discrete".
-  if (Servo_Property_IsDiscreteAnimatable(aEndWrapper.mPropID)) {
-    return NS_ERROR_FAILURE;
-  }
-
   ServoAnimationValues results;
   size_t len = aEndWrapper.mServoValues.Length();
   results.SetCapacity(len);
   MOZ_ASSERT(!aStartWrapper || aStartWrapper->mServoValues.Length() == len,
              "Start and end values length should be the same if "
-             "the start value exists");
+             "The start value exists");
   for (size_t i = 0; i < len; i++) {
     const RefPtr<RawServoAnimationValue>*
       startValue = aStartWrapper
@@ -734,6 +705,18 @@ ValueFromStringHelper(nsCSSPropertyID aPropID,
                                                           aTargetElement,
                                                           aStyleContext->AsServo(),
                                                           result);
+  if (result.IsEmpty()) {
+    return result;
+  }
+
+  if (aPropID == eCSSProperty_font_size) {
+    // FIXME (bug 1357296): Divide out text-zoom, since SVG is supposed to
+    // ignore it.
+    if (aPresContext->EffectiveTextZoom() != 1.0) {
+      NS_WARNING("stylo: Dividing out text-zoom not yet supported"
+                 " (bug 1357296)");
+    }
+  }
 
   return result;
 }
@@ -871,52 +854,4 @@ nsSMILCSSValueType::PropertyFromValue(const nsSMILValue& aValue)
   }
 
   return wrapper->mPropID;
-}
-
-// static
-void
-nsSMILCSSValueType::FinalizeValue(nsSMILValue& aValue,
-                                  const nsSMILValue& aValueToMatch)
-{
-  MOZ_ASSERT(aValue.mType == aValueToMatch.mType, "Incompatible SMIL types");
-  MOZ_ASSERT(aValue.mType == &nsSMILCSSValueType::sSingleton,
-             "Unexpected SMIL value type");
-
-  ValueWrapper* valueWrapper = ExtractValueWrapper(aValue);
-  // If |aValue| already has a value, there's nothing to do here.
-  if (valueWrapper) {
-    return;
-  }
-
-  const ValueWrapper* valueToMatchWrapper = ExtractValueWrapper(aValueToMatch);
-  if (!valueToMatchWrapper) {
-    MOZ_ASSERT_UNREACHABLE("Value to match is empty");
-    return;
-  }
-
-  bool isServo = !valueToMatchWrapper->mServoValues.IsEmpty();
-
-  if (isServo) {
-    ServoAnimationValues zeroValues;
-    zeroValues.SetCapacity(valueToMatchWrapper->mServoValues.Length());
-
-    for (auto& valueToMatch : valueToMatchWrapper->mServoValues) {
-      RefPtr<RawServoAnimationValue> zeroValue =
-        Servo_AnimationValues_GetZeroValue(valueToMatch).Consume();
-      if (!zeroValue) {
-        return;
-      }
-      zeroValues.AppendElement(Move(zeroValue));
-    }
-    aValue.mU.mPtr = new ValueWrapper(valueToMatchWrapper->mPropID,
-                                      Move(zeroValues));
-  } else {
-    const StyleAnimationValue* zeroValue =
-      GetZeroValueForUnit(valueToMatchWrapper->mGeckoValue.GetUnit());
-    if (!zeroValue) {
-      return;
-    }
-    aValue.mU.mPtr = new ValueWrapper(valueToMatchWrapper->mPropID,
-                                      *zeroValue);
-  }
 }

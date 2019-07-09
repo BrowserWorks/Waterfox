@@ -10,6 +10,7 @@ FINAL_TARGET = 'dist/bin/gmp-fakeopenh264/1.0'
 
 FINAL_TARGET_FILES += [
     'fakeopenh264.info',
+    'fakeopenh264.voucher',
 ]
 
 SOURCES += [
@@ -27,4 +28,3 @@ USE_STATIC_LIBS = True
 NoVisibilityFlags()
 # Don't use STL wrappers; this isn't Gecko code
 DisableStlWrapping()
-NO_PGO = True

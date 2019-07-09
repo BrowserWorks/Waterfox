@@ -119,16 +119,16 @@ nsresult
 xptiInterfaceEntry::GetName(char **name)
 {
     // It is not necessary to Resolve because this info is read from manifest.
-    *name = moz_xstrdup(mName);
-    return NS_OK;
+    *name = (char*) nsMemory::Clone(mName, strlen(mName)+1);
+    return *name ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
 nsresult
 xptiInterfaceEntry::GetIID(nsIID **iid)
 {
     // It is not necessary to Resolve because this info is read from manifest.
-    *iid = mIID.Clone();
-    return NS_OK;
+    *iid = (nsIID*) nsMemory::Clone(&mIID, sizeof(nsIID));
+    return *iid ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
 nsresult

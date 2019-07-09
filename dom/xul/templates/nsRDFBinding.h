@@ -6,7 +6,7 @@
 #ifndef nsRDFBinding_h__
 #define nsRDFBinding_h__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIRDFResource.h"
 #include "nsISupportsImpl.h"
 
@@ -24,9 +24,9 @@ class RDFBinding {
 
 public:
 
-    RefPtr<nsAtom>        mSubjectVariable;
+    nsCOMPtr<nsIAtom>        mSubjectVariable;
     nsCOMPtr<nsIRDFResource> mPredicate;
-    RefPtr<nsAtom>        mTargetVariable;
+    nsCOMPtr<nsIAtom>        mTargetVariable;
 
     // indicates whether a binding is dependant on the result from a
     // previous binding
@@ -38,9 +38,9 @@ private:
 
     friend class RDFBindingSet;
 
-    RDFBinding(nsAtom* aSubjectVariable,
+    RDFBinding(nsIAtom* aSubjectVariable,
                nsIRDFResource* aPredicate,
-               nsAtom* aTargetVariable)
+               nsIAtom* aTargetVariable)
       : mSubjectVariable(aSubjectVariable),
         mPredicate(aPredicate),
         mTargetVariable(aTargetVariable),
@@ -89,7 +89,7 @@ public:
      * Add a binding (aRef -> aPredicate -> aVar) to the set
      */
     nsresult
-    AddBinding(nsAtom* aVar, nsAtom* aRef, nsIRDFResource* aPredicate);
+    AddBinding(nsIAtom* aVar, nsIAtom* aRef, nsIRDFResource* aPredicate);
 
     /*
      * Return true if the binding set contains a binding which would cause
@@ -111,7 +111,7 @@ public:
     SyncAssignments(nsIRDFResource* aSubject,
                     nsIRDFResource* aPredicate,
                     nsIRDFNode* aTarget,
-                    nsAtom* aMemberVariable,
+                    nsIAtom* aMemberVariable,
                     nsXULTemplateResultRDF* aResult,
                     nsBindingValues& aBindingValues);
 
@@ -140,7 +140,7 @@ public:
      * target symbol.
      */
     int32_t
-    LookupTargetIndex(nsAtom* aTargetVariable, RDFBinding** aBinding);
+    LookupTargetIndex(nsIAtom* aTargetVariable, RDFBinding** aBinding);
 };
 
 /*
@@ -202,7 +202,7 @@ public:
      */
     void
     GetAssignmentFor(nsXULTemplateResultRDF* aResult,
-                     nsAtom* aVar,
+                     nsIAtom* aVar,
                      nsIRDFNode** aValue);
 
     /*

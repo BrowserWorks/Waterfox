@@ -31,7 +31,7 @@ public:
     mImmutable = true;
   }
 
-  virtual void CreateInputStream(nsIInputStream** aStream,
+  virtual void GetInternalStream(nsIInputStream** aStream,
                                  ErrorResult& aRv) override;
 
   virtual already_AddRefed<BlobImpl>

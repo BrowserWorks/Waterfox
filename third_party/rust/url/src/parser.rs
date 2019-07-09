@@ -57,9 +57,6 @@ simple_enum_error! {
     Overflow => "URLs more than 4 GB are not supported",
 }
 
-#[cfg(feature = "heapsize")]
-known_heap_size!(0, ParseError);
-
 impl fmt::Display for ParseError {
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         self.description().fmt(fmt)

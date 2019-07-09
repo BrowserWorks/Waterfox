@@ -6,13 +6,18 @@
 
 this.EXPORTED_SYMBOLS = ["ExtensionUtils"];
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+const Ci = Components.interfaces;
+const Cc = Components.classes;
+const Cu = Components.utils;
+const Cr = Components.results;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
                                   "resource://gre/modules/Console.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
+                                  "resource://gre/modules/MessageChannel.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 
@@ -28,17 +33,15 @@ XPCOMUtils.defineLazyGetter(this, "console", getConsole);
 const appinfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
 
 let nextId = 0;
-const uniqueProcessID = appinfo.uniqueProcessID;
-// Store the process ID in a 16 bit field left shifted to end of a
-// double's mantissa.
-// Note: We can't use bitwise ops here, since they truncate to a 32 bit
-// integer and we need all 53 mantissa bits.
-const processIDMask = (uniqueProcessID & 0xffff) * (2 ** 37);
+XPCOMUtils.defineLazyGetter(this, "uniqueProcessID", () => appinfo.uniqueProcessID);
 
 function getUniqueId() {
-  // Note: We can't use bitwise ops here, since they truncate to a 32 bit
-  // integer and we need all 53 mantissa bits.
-  return processIDMask + nextId++;
+  return `${nextId++}-${uniqueProcessID}`;
+}
+
+async function promiseFileContents(file) {
+  let res = await OS.File.read(file.path);
+  return res.buffer;
 }
 
 
@@ -62,11 +65,55 @@ function runSafeSyncWithoutClone(f, ...args) {
   }
 }
 
+// Run a function and report exceptions.
+function runSafeWithoutClone(f, ...args) {
+  if (typeof(f) != "function") {
+    dump(`Extension error: expected function\n${filterStack(Error())}`);
+    return;
+  }
+
+  Promise.resolve().then(() => {
+    runSafeSyncWithoutClone(f, ...args);
+  });
+}
+
+// Run a function, cloning arguments into context.cloneScope, and
+// report exceptions. |f| is expected to be in context.cloneScope.
+function runSafeSync(context, f, ...args) {
+  if (context.unloaded) {
+    Cu.reportError("runSafeSync called after context unloaded");
+    return;
+  }
+
+  try {
+    args = Cu.cloneInto(args, context.cloneScope);
+  } catch (e) {
+    Cu.reportError(e);
+    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${filterStack(Error())}`);
+  }
+  return runSafeSyncWithoutClone(f, ...args);
+}
+
+// Run a function, cloning arguments into context.cloneScope, and
+// report exceptions. |f| is expected to be in context.cloneScope.
+function runSafe(context, f, ...args) {
+  try {
+    args = Cu.cloneInto(args, context.cloneScope);
+  } catch (e) {
+    Cu.reportError(e);
+    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${filterStack(Error())}`);
+  }
+  if (context.unloaded) {
+    dump(`runSafe failure: context is already unloaded ${filterStack(new Error())}\n`);
+    return undefined;
+  }
+  return runSafeWithoutClone(f, ...args);
+}
+
 // Return true if the given value is an instance of the given
 // native type.
 function instanceOf(value, type) {
-  return (value && typeof value === "object" &&
-          ChromeUtils.getClassName(value) === type);
+  return {}.toString.call(value) == `[object ${type}]`;
 }
 
 /**
@@ -74,38 +121,30 @@ function instanceOf(value, type) {
  * constructor if one is not present.
  */
 class DefaultWeakMap extends WeakMap {
-  constructor(defaultConstructor = undefined, init = undefined) {
+  constructor(defaultConstructor, init) {
     super(init);
-    if (defaultConstructor) {
-      this.defaultConstructor = defaultConstructor;
-    }
+    this.defaultConstructor = defaultConstructor;
   }
 
   get(key) {
-    let value = super.get(key);
-    if (value === undefined && !this.has(key)) {
-      value = this.defaultConstructor(key);
-      this.set(key, value);
+    if (!this.has(key)) {
+      this.set(key, this.defaultConstructor(key));
     }
-    return value;
+    return super.get(key);
   }
 }
 
 class DefaultMap extends Map {
-  constructor(defaultConstructor = undefined, init = undefined) {
+  constructor(defaultConstructor, init) {
     super(init);
-    if (defaultConstructor) {
-      this.defaultConstructor = defaultConstructor;
-    }
+    this.defaultConstructor = defaultConstructor;
   }
 
   get(key) {
-    let value = super.get(key);
-    if (value === undefined && !this.has(key)) {
-      value = this.defaultConstructor(key);
-      this.set(key, value);
+    if (!this.has(key)) {
+      this.set(key, this.defaultConstructor(key));
     }
-    return value;
+    return super.get(key);
   }
 }
 
@@ -150,13 +189,11 @@ class EventEmitter {
    *        The listener to call when events are emitted.
    */
   on(event, listener) {
-    let listeners = this[LISTENERS].get(event);
-    if (!listeners) {
-      listeners = new Set();
-      this[LISTENERS].set(event, listeners);
+    if (!this[LISTENERS].has(event)) {
+      this[LISTENERS].set(event, new Set());
     }
 
-    listeners.add(listener);
+    this[LISTENERS].get(event).add(listener);
   }
 
   /**
@@ -168,8 +205,9 @@ class EventEmitter {
    *        The listener function to remove.
    */
   off(event, listener) {
-    let set = this[LISTENERS].get(event);
-    if (set) {
+    if (this[LISTENERS].has(event)) {
+      let set = this[LISTENERS].get(event);
+
       set.delete(listener);
       set.delete(this[ONCE_MAP].get(listener));
       if (!set.size) {
@@ -200,38 +238,25 @@ class EventEmitter {
 
 
   /**
-   * Triggers all listeners for the given event. If any listeners return
-   * a value, returns a promise which resolves when all returned
-   * promises have resolved. Otherwise, returns undefined.
+   * Triggers all listeners for the given event, and returns a promise
+   * which resolves when all listeners have been called, and any
+   * promises they have returned have likewise resolved.
    *
    * @param {string} event
    *       The name of the event to emit.
    * @param {any} args
    *        Arbitrary arguments to pass to the listener functions, after
    *        the event name.
-   * @returns {Promise?}
+   * @returns {Promise}
    */
   emit(event, ...args) {
-    let listeners = this[LISTENERS].get(event);
+    let listeners = this[LISTENERS].get(event) || new Set();
 
-    if (listeners) {
-      let promises = [];
+    let promises = Array.from(listeners, listener => {
+      return runSafeSyncWithoutClone(listener, event, ...args);
+    });
 
-      for (let listener of listeners) {
-        try {
-          let result = listener(event, ...args);
-          if (result !== undefined) {
-            promises.push(result);
-          }
-        } catch (e) {
-          Cu.reportError(e);
-        }
-      }
-
-      if (promises.length) {
-        return Promise.all(promises);
-      }
-    }
+    return Promise.all(promises);
   }
 }
 
@@ -268,7 +293,7 @@ class LimitedSet extends Set {
   }
 
   add(item) {
-    if (this.size >= this.limit + this.slop && !this.has(item)) {
+    if (!this.has(item) && this.size >= this.limit + this.slop) {
       this.truncate(this.limit - 1);
     }
     super.add(item);
@@ -310,7 +335,9 @@ function promiseDocumentLoaded(doc) {
   }
 
   return new Promise(resolve => {
-    doc.defaultView.addEventListener("load", () => resolve(doc), {once: true});
+    doc.defaultView.addEventListener("load", function(event) {
+      resolve(doc);
+    }, {once: true});
   });
 }
 
@@ -368,8 +395,8 @@ function promiseObserved(topic, test = () => true) {
 }
 
 function getMessageManager(target) {
-  if (target.frameLoader) {
-    return target.frameLoader.messageManager;
+  if (target instanceof Ci.nsIFrameLoaderOwner) {
+    return target.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader.messageManager;
   }
   return target.QueryInterface(Ci.nsIMessageSender);
 }
@@ -451,7 +478,11 @@ class MessageManagerProxy {
     this.listeners = new DefaultMap(() => new Map());
 
     if (target instanceof Ci.nsIMessageSender) {
-      this.messageManager = target;
+      Object.defineProperty(this, "messageManager", {
+        value: target,
+        configurable: true,
+        writable: true,
+      });
     } else {
       this.addListeners(target);
     }
@@ -469,8 +500,9 @@ class MessageManagerProxy {
     if (this.eventTarget) {
       this.removeListeners(this.eventTarget);
       this.eventTarget = null;
+    } else {
+      this.messageManager = null;
     }
-    this.messageManager = null;
   }
 
   /**
@@ -498,6 +530,9 @@ class MessageManagerProxy {
    *        may change during the life of the proxy object, so should
    *        not be stored elsewhere.
    */
+  get messageManager() {
+    return this.eventTarget && this.eventTarget.messageManager;
+  }
 
   /**
    * Sends a message on the proxied message manager.
@@ -576,12 +611,11 @@ class MessageManagerProxy {
   addListeners(target) {
     target.addEventListener("SwapDocShells", this);
 
-    this.eventTarget = target;
-    this.messageManager = target.messageManager;
-
     for (let {message, listener, listenWhenClosed} of this.iterListeners()) {
-      this.messageManager.addMessageListener(message, listener, listenWhenClosed);
+      target.addMessageListener(message, listener, listenWhenClosed);
     }
+
+    this.eventTarget = target;
   }
 
   /**
@@ -595,7 +629,7 @@ class MessageManagerProxy {
     target.removeEventListener("SwapDocShells", this);
 
     for (let {message, listener} of this.iterListeners()) {
-      this.messageManager.removeMessageListener(message, listener);
+      target.removeMessageListener(message, listener);
     }
   }
 
@@ -607,32 +641,7 @@ class MessageManagerProxy {
   }
 }
 
-function checkLoadURL(url, principal, options) {
-  let ssm = Services.scriptSecurityManager;
-
-  let flags = ssm.STANDARD;
-  if (!options.allowScript) {
-    flags |= ssm.DISALLOW_SCRIPT;
-  }
-  if (!options.allowInheritsPrincipal) {
-    flags |= ssm.DISALLOW_INHERIT_PRINCIPAL;
-  }
-  if (options.dontReportErrors) {
-    flags |= ssm.DONT_REPORT_ERRORS;
-  }
-
-  try {
-    ssm.checkLoadURIWithPrincipal(principal,
-                                  Services.io.newURI(url),
-                                  flags);
-  } catch (e) {
-    return false;
-  }
-  return true;
-}
-
 this.ExtensionUtils = {
-  checkLoadURL,
   defineLazyGetter,
   flushJarCache,
   getConsole,
@@ -646,8 +655,12 @@ this.ExtensionUtils = {
   promiseDocumentLoaded,
   promiseDocumentReady,
   promiseEvent,
+  promiseFileContents,
   promiseObserved,
+  runSafe,
+  runSafeSync,
   runSafeSyncWithoutClone,
+  runSafeWithoutClone,
   withHandlingUserInput,
   DefaultMap,
   DefaultWeakMap,

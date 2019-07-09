@@ -33,14 +33,5 @@ function runUpdateFinished() {
   standardInit();
   checkPostUpdateRunningFile(false);
   checkFilesAfterUpdateFailure(getApplyDirFile);
-  do_execute_soon(waitForUpdateXMLFiles);
-}
-
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
-  checkUpdateManager(STATE_NONE, false, STATE_FAILED,
-                     INVALID_CALLBACK_DIR_ERROR, 1);
   waitForFilesInUse();
 }

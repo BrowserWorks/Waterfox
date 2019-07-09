@@ -6,10 +6,8 @@
 # exceptions that occur in mach command modules themselves and in the things
 # they call.
 
-
 def throw_deep(message):
     return throw_real(message)
-
 
 def throw_real(message):
     raise Exception(message)

@@ -7,15 +7,14 @@ MOZ_AUTOMATION_PACKAGE_TESTS=0
 MOZ_AUTOMATION_UPDATE_PACKAGING=0
 MOZ_AUTOMATION_UPLOAD=0
 MOZ_AUTOMATION_UPLOAD_SYMBOLS=0
-MOZ_AUTOMATION_PACKAGE_GENERATED_SOURCES=0
 
 NO_CACHE=1
 NO_NDK=1
 
 . "$topsrcdir/mobile/android/config/mozconfigs/common"
 
-ac_add_options --with-gradle="$topsrcdir/android-gradle-dependencies/gradle-dist/bin/gradle"
-export GRADLE_MAVEN_REPOSITORIES="file://$topsrcdir/android-gradle-dependencies/jcenter","file://$topsrcdir/android-gradle-dependencies/google"
+ac_add_options --with-gradle="$topsrcdir/gradle-dist/bin/gradle"
+export GRADLE_MAVEN_REPOSITORIES="file://$topsrcdir/jcenter","file://$topsrcdir/google"
 
 unset HOST_CC
 unset HOST_CXX
@@ -46,6 +45,5 @@ STRIP_FLAGS="--strip-debug"
 
 export MOZILLA_OFFICIAL=1
 export MOZ_TELEMETRY_REPORTING=1
-export MOZ_ANDROID_POCKET=1
 
 . "$topsrcdir/mobile/android/config/mozconfigs/common.override"

@@ -3,14 +3,12 @@
 const kOverflowPanel = document.getElementById("widget-overflow");
 
 var gOriginalWidth;
-async function stopOverflowing() {
+registerCleanupFunction(async function() {
   kOverflowPanel.removeAttribute("animate");
   window.resizeTo(gOriginalWidth, window.outerHeight);
   await waitForCondition(() => !document.getElementById("nav-bar").hasAttribute("overflowing"));
   CustomizableUI.reset();
-}
-
-registerCleanupFunction(stopOverflowing);
+});
 
 /**
  * This checks that subview-compatible items show up as subviews rather than
@@ -22,10 +20,14 @@ add_task(async function check_developer_subview_in_overflow() {
   gOriginalWidth = window.outerWidth;
 
   CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_NAVBAR);
+  if (isNotReleaseOrBeta()) {
+    CustomizableUI.addWidgetToArea("webcompat-reporter-button", CustomizableUI.AREA_NAVBAR);
+  }
+
 
   let navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
   ok(!navbar.hasAttribute("overflowing"), "Should start with a non-overflowing toolbar.");
-  window.resizeTo(kForceOverflowWidthPx, window.outerHeight);
+  window.resizeTo(400, window.outerHeight);
 
   await waitForCondition(() => navbar.hasAttribute("overflowing"));
 
@@ -44,7 +46,6 @@ add_task(async function check_developer_subview_in_overflow() {
   is(developerView.closest("panel"), expectedPanel, "Should be inside the panel");
   expectedPanel.hidePopup();
   await Promise.resolve(); // wait for popup to hide fully.
-  await stopOverflowing();
 });
 
 /**
@@ -54,15 +55,14 @@ add_task(async function check_developer_subview_in_overflow() {
  * simplify some of the subview anchoring code.
  */
 add_task(async function check_downloads_panel_in_overflow() {
-  let button = document.getElementById("downloads-button");
-  await gCustomizeMode.addToPanel(button);
-  await waitForOverflowButtonShown();
-
+  let navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
+  ok(navbar.hasAttribute("overflowing"), "Should still be overflowing");
   let chevron = document.getElementById("nav-bar-overflow-button");
   let shownPanelPromise = promisePanelElementShown(window, kOverflowPanel);
   chevron.click();
   await shownPanelPromise;
 
+  let button = document.getElementById("downloads-button");
   button.click();
   await waitForCondition(() => {
     let panel = document.getElementById("downloadsPanel");

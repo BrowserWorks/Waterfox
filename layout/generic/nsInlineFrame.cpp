@@ -193,7 +193,8 @@ nsInlineFrame::DestroyFrom(nsIFrame* aDestructRoot)
     // Fixup the parent pointers for any child frames on the OverflowList.
     // nsIFrame::DestroyFrom depends on that to find the sticky scroll
     // container (an ancestor).
-    overflowFrames->ApplySetParent(this);
+    nsIFrame* lineContainer = nsLayoutUtils::FindNearestBlockAncestor(this);
+    DrainSelfOverflowListInternal(eForDestroy, lineContainer);
   }
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
@@ -237,9 +238,10 @@ nsInlineFrame::StealFrame(nsIFrame* aChild)
 
 void
 nsInlineFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists)
 {
-  BuildDisplayListForInline(aBuilder, aLists);
+  BuildDisplayListForInline(aBuilder, aDirtyRect, aLists);
 
   // The sole purpose of this is to trigger display of the selection
   // window for Named Anchors, which don't have any children and
@@ -316,8 +318,6 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsInlineFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aMetrics, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   if (nullptr == aReflowInput.mLineLayout) {
     NS_ERROR("must have non-null aReflowInput.mLineLayout");
     return;
@@ -327,6 +327,8 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
   }
 
   bool    lazilySetParentPointer = false;
+
+  nsIFrame* lineContainer = aReflowInput.mLineLayout->LineContainerFrame();
 
    // Check for an overflow list with our prev-in-flow
   nsInlineFrame* prevInFlow = (nsInlineFrame*)GetPrevInFlow();
@@ -353,6 +355,12 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
         mFrames.SetFrames(*prevOverflowFrames);
         lazilySetParentPointer = true;
       } else {
+        // Assign all floats to our block if necessary
+        if (lineContainer && lineContainer->GetPrevContinuation()) {
+          ReparentFloatsForInlineChild(lineContainer,
+                                       prevOverflowFrames->FirstChild(),
+                                       true);
+        }
         // Insert the new frames at the beginning of the child list
         // and set their parent pointer
         const nsFrameList::Slice& newFrames =
@@ -386,13 +394,14 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
     if (aReflowInput.mLineLayout->GetInFirstLine()) {
       flags = DrainFlags(flags | eInFirstLine);
     }
-    DrainSelfOverflowListInternal(flags);
+    DrainSelfOverflowListInternal(flags, lineContainer);
   }
 
-  // Set our own reflow state (additional state above and beyond aReflowInput).
+  // Set our own reflow state (additional state above and beyond
+  // aReflowInput)
   InlineReflowInput irs;
   irs.mPrevFrame = nullptr;
-  irs.mLineContainer = aReflowInput.mLineLayout->LineContainerFrame();
+  irs.mLineContainer = lineContainer;
   irs.mLineLayout = aReflowInput.mLineLayout;
   irs.mNextInFlow = (nsInlineFrame*) GetNextInFlow();
   irs.mSetParentPointer = lazilySetParentPointer;
@@ -416,7 +425,7 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
 
 nsresult
 nsInlineFrame::AttributeChanged(int32_t aNameSpaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 int32_t aModType)
 {
   nsresult rv =
@@ -437,7 +446,8 @@ nsInlineFrame::AttributeChanged(int32_t aNameSpaceID,
 }
 
 bool
-nsInlineFrame::DrainSelfOverflowListInternal(DrainFlags aFlags)
+nsInlineFrame::DrainSelfOverflowListInternal(DrainFlags aFlags,
+                                             nsIFrame* aLineContainer)
 {
   AutoFrameListPtr overflowFrames(PresContext(), StealOverflowFrames());
   if (overflowFrames) {
@@ -446,7 +456,11 @@ nsInlineFrame::DrainSelfOverflowListInternal(DrainFlags aFlags)
     // correct parent pointer.  This is sometimes skipped by Reflow.
     if (!(aFlags & eDontReparentFrames)) {
       nsIFrame* firstChild = overflowFrames->FirstChild();
-      const bool doReparentSC = (aFlags & eInFirstLine);
+      if (aLineContainer && aLineContainer->GetPrevContinuation()) {
+        ReparentFloatsForInlineChild(aLineContainer, firstChild, true);
+      }
+      const bool doReparentSC =
+        (aFlags & eInFirstLine) && !(aFlags & eForDestroy);
       RestyleManager* restyleManager = PresContext()->RestyleManager();
       for (nsIFrame* f = firstChild; f; f = f->GetNextSibling()) {
         f->SetParent(this);
@@ -476,7 +490,7 @@ nsInlineFrame::DrainSelfOverflowList()
       break;
     }
   }
-  return DrainSelfOverflowListInternal(flags);
+  return DrainSelfOverflowListInternal(flags, lineContainer);
 }
 
 /* virtual */ bool
@@ -510,7 +524,7 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
                             ReflowOutput& aMetrics,
                             nsReflowStatus& aStatus)
 {
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
+  aStatus.Reset();
 
   nsLineLayout* lineLayout = aReflowInput.mLineLayout;
   bool inFirstLine = aReflowInput.mLineLayout->GetInFirstLine();
@@ -545,8 +559,23 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
   while (frame) {
     // Check if we should lazily set the child frame's parent pointer.
     if (irs.mSetParentPointer) {
+      bool havePrevBlock =
+        irs.mLineContainer && irs.mLineContainer->GetPrevContinuation();
       nsIFrame* child = frame;
       do {
+        // If our block is the first in flow, then any floats under the pulled
+        // frame must already belong to our block.
+        if (havePrevBlock) {
+          // This has to happen before we update frame's parent; we need to
+          // know frame's ancestry under its old block.
+          // The blockChildren.ContainsFrame check performed by
+          // ReparentFloatsForInlineChild here may be slow, but we can't
+          // easily avoid it because we don't know where 'frame' originally
+          // came from. If we really really have to optimize this we could
+          // cache whether frame->GetParent() is under its containing blocks
+          // overflowList or not.
+          ReparentFloatsForInlineChild(irs.mLineContainer, child, false);
+        }
         child->SetParent(this);
         if (inFirstLine) {
           restyleManager->ReparentStyleContext(child);
@@ -722,7 +751,6 @@ nsInlineFrame::ReflowInlineFrame(nsPresContext* aPresContext,
   nsLineLayout* lineLayout = aReflowInput.mLineLayout;
   bool reflowingFirstLetter = lineLayout->GetFirstLetterStyleOK();
   bool pushedFrame;
-  aStatus.Reset();
   lineLayout->ReflowFrame(aFrame, aStatus, nullptr, pushedFrame);
 
   if (aStatus.IsInlineBreakBefore()) {
@@ -1067,11 +1095,11 @@ nsFirstLineFrame::Reflow(nsPresContext* aPresContext,
                          nsReflowStatus& aStatus)
 {
   MarkInReflow();
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   if (nullptr == aReflowInput.mLineLayout) {
     return;  // XXX does this happen? why?
   }
+
+  nsIFrame* lineContainer = aReflowInput.mLineLayout->LineContainerFrame();
 
   // Check for an overflow list with our prev-in-flow
   nsFirstLineFrame* prevInFlow = (nsFirstLineFrame*)GetPrevInFlow();
@@ -1079,7 +1107,12 @@ nsFirstLineFrame::Reflow(nsPresContext* aPresContext,
     AutoFrameListPtr prevOverflowFrames(aPresContext,
                                         prevInFlow->StealOverflowFrames());
     if (prevOverflowFrames) {
-      // Reparent the new frames and their style contexts.
+      // Assign all floats to our block if necessary
+      if (lineContainer && lineContainer->GetPrevContinuation()) {
+        ReparentFloatsForInlineChild(lineContainer,
+                                     prevOverflowFrames->FirstChild(),
+                                     true);
+      }
       const nsFrameList::Slice& newFrames =
         mFrames.InsertFrames(this, nullptr, *prevOverflowFrames);
       ReparentChildListStyle(aPresContext, newFrames, this);
@@ -1089,10 +1122,11 @@ nsFirstLineFrame::Reflow(nsPresContext* aPresContext,
   // It's also possible that we have an overflow list for ourselves.
   DrainSelfOverflowList();
 
-  // Set our own reflow state (additional state above and beyond aReflowInput).
+  // Set our own reflow state (additional state above and beyond
+  // aReflowInput)
   InlineReflowInput irs;
   irs.mPrevFrame = nullptr;
-  irs.mLineContainer = aReflowInput.mLineLayout->LineContainerFrame();
+  irs.mLineContainer = lineContainer;
   irs.mLineLayout = aReflowInput.mLineLayout;
   irs.mNextInFlow = (nsInlineFrame*) GetNextInFlow();
 

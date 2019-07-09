@@ -13,28 +13,17 @@ nserror = { path = "../../../../xpcom/rust/nserror" }
 rust_url_capi = { path = "../../../../netwerk/base/rust-url-capi" }
 webrender_bindings = { path = "../../../../gfx/webrender_bindings", optional = true }
 cubeb-pulse = { path = "../../../../media/libcubeb/cubeb-pulse-rs", optional = true, features=["pulse-dlopen"] }
-cubeb-core = { path = "../../../../media/cubeb-rs/cubeb-core", optional = true }
-cubeb = { path = "../../../../media/cubeb-rs/cubeb-api", optional = true }
-cubeb-backend = { path = "../../../../media/cubeb-rs/cubeb-backend", optional = true }
-encoding_c = "0.8.0"
+encoding_c = "0.9.0"
 encoding_glue = { path = "../../../../intl/encoding_glue" }
-audioipc-client = { path = "../../../../media/audioipc/client", optional = true }
-audioipc-server = { path = "../../../../media/audioipc/server", optional = true }
-u2fhid = { path = "../../../../dom/webauthn/u2f-hid-rs" }
-# We have these to enforce common feature sets for said crates.
-log = {version = "0.3", features = ["release_max_level_info"]}
-syn = { version = "0.11", features = ["full", "visit", "parsing"] }
 
 [features]
 default = []
 bindgen = ["geckoservo/bindgen"]
 servo = ["geckoservo"]
 quantum_render = ["webrender_bindings"]
-cubeb-remoting = ["cubeb-core", "cubeb", "cubeb-backend", "audioipc-client", "audioipc-server"]
 cubeb_pulse_rust = ["cubeb-pulse"]
 gecko_debug = ["geckoservo/gecko_debug"]
 simd-accel = ["encoding_c/simd-accel", "encoding_glue/simd-accel"]
-no-static-ideograph-encoder-tables = ["encoding_c/no-static-ideograph-encoder-tables", "encoding_glue/no-static-ideograph-encoder-tables"]
 
 [lib]
 path = "lib.rs"

@@ -40,11 +40,9 @@ checkbox[disabled="true"] {
   color: GrayText;
 }
 
-@media (-moz-windows-classic) {
-  checkbox[disabled="true"] {
-    color: ThreeDShadow;
-    text-shadow: 1px 1px ThreeDHighlight;
-  }
+checkbox[disabled="true"]:-moz-system-metric(windows-classic) {
+  color: ThreeDShadow;
+  text-shadow: 1px 1px ThreeDHighlight;
 }
 
 /* ::::: checkmark image ::::: */

@@ -96,11 +96,11 @@ function getTypeObject(type) {
 this.PlacesItem = function PlacesItem(collection, id, type) {
   CryptoWrapper.call(this, collection, id);
   this.type = type || "item";
-};
+}
 PlacesItem.prototype = {
-  async decrypt(keyBundle) {
+  decrypt: function PlacesItem_decrypt(keyBundle) {
     // Do the normal CryptoWrapper decrypt, but change types before returning
-    let clear = await CryptoWrapper.prototype.decrypt.call(this, keyBundle);
+    let clear = CryptoWrapper.prototype.decrypt.call(this, keyBundle);
 
     // Convert the abstract places item to the actual object type
     if (!this.deleted)
@@ -153,7 +153,7 @@ Utils.deferGetSet(PlacesItem,
 
 this.Bookmark = function Bookmark(collection, id, type) {
   PlacesItem.call(this, collection, id, type || "bookmark");
-};
+}
 Bookmark.prototype = {
   __proto__: PlacesItem.prototype,
   _logName: "Sync.Record.Bookmark",
@@ -187,7 +187,7 @@ Utils.deferGetSet(Bookmark,
 
 this.BookmarkQuery = function BookmarkQuery(collection, id) {
   Bookmark.call(this, collection, id, "query");
-};
+}
 BookmarkQuery.prototype = {
   __proto__: Bookmark.prototype,
   _logName: "Sync.Record.BookmarkQuery",
@@ -212,7 +212,7 @@ Utils.deferGetSet(BookmarkQuery,
 
 this.BookmarkFolder = function BookmarkFolder(collection, id, type) {
   PlacesItem.call(this, collection, id, type || "folder");
-};
+}
 BookmarkFolder.prototype = {
   __proto__: PlacesItem.prototype,
   _logName: "Sync.Record.Folder",
@@ -237,7 +237,7 @@ Utils.deferGetSet(BookmarkFolder, "cleartext", ["description", "title",
 
 this.Livemark = function Livemark(collection, id) {
   BookmarkFolder.call(this, collection, id, "livemark");
-};
+}
 Livemark.prototype = {
   __proto__: BookmarkFolder.prototype,
   _logName: "Sync.Record.Livemark",
@@ -262,7 +262,7 @@ Utils.deferGetSet(Livemark, "cleartext", ["siteUri", "feedUri"]);
 
 this.BookmarkSeparator = function BookmarkSeparator(collection, id) {
   PlacesItem.call(this, collection, id, "separator");
-};
+}
 BookmarkSeparator.prototype = {
   __proto__: PlacesItem.prototype,
   _logName: "Sync.Record.Separator",
@@ -277,7 +277,7 @@ Utils.deferGetSet(BookmarkSeparator, "cleartext", "pos");
 
 this.BookmarksEngine = function BookmarksEngine(service) {
   SyncEngine.call(this, "Bookmarks", service);
-};
+}
 BookmarksEngine.prototype = {
   __proto__: SyncEngine.prototype,
   _recordObj: PlacesItem,
@@ -357,9 +357,6 @@ BookmarksEngine.prototype = {
         guidMap[parentName] = {};
 
       // If the entry already exists, remember that there are explicit dupes.
-
-      // Changes below need to be processed in bug 1295510 that's why eslint is ignored
-      // eslint-disable-next-line no-new-wrappers
       let entry = new String(guid);
       entry.hasDupe = guidMap[parentName][key] != null;
 
@@ -975,18 +972,13 @@ BookmarksTracker.prototype = {
       case "bookmarks-restore-success":
         this._log.debug("Tracking all items on successful import.");
 
-        if (data == "json") {
-          this._log.debug("Restore succeeded: wiping server and other clients.");
-          Async.promiseSpinningly((async () => {
-            await this.engine.service.resetClient([this.name]);
-            await this.engine.service.wipeServer([this.name]);
-            await this.engine.service.clientsEngine.sendCommand("wipeEngine", [this.name],
-                                                                null, { reason: "bookmark-restore" });
-          })());
-        } else {
-          // "html", "html-initial", or "json-append"
-          this._log.debug("Import succeeded.");
-        }
+        this._log.debug("Restore succeeded: wiping server and other clients.");
+        Async.promiseSpinningly((async () => {
+          await this.engine.service.resetClient([this.name]);
+          await this.engine.service.wipeServer([this.name]);
+          await this.engine.service.clientsEngine.sendCommand("wipeEngine", [this.name],
+                                                              null, { reason: "bookmark-restore" });
+        })());
         break;
       case "bookmarks-restore-failed":
         this._log.debug("Tracking all items on failed import.");

@@ -72,6 +72,7 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Likely.h"
+#include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
 #include "nsIPrefService.h"
 #include "nsIGConfService.h"
@@ -97,7 +98,7 @@ using namespace mozilla::widget;
 
 /* For SetIcon */
 #include "nsAppDirectoryServiceDefs.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIFile.h"
 
 /* SetCursor(imgIContainer*) */
@@ -176,7 +177,7 @@ static GdkWindow *get_inner_gdk_window (GdkWindow *aWindow,
 static int    is_parent_ungrab_enter(GdkEventCrossing *aEvent);
 static int    is_parent_grab_leave(GdkEventCrossing *aEvent);
 
-static void GetBrandName(nsAString& brandName);
+static void GetBrandName(nsXPIDLString& brandName);
 
 /* callbacks from widgets */
 #if (MOZ_WIDGET_GTK == 2)
@@ -440,7 +441,6 @@ nsWindow::nsWindow()
     mContainer           = nullptr;
     mGdkWindow           = nullptr;
     mShell               = nullptr;
-    mCompositorWidgetDelegate = nullptr;
     mHasMappedToplevel   = false;
     mIsFullyObscured     = false;
     mRetryPointerGrab    = false;
@@ -1623,7 +1623,7 @@ nsWindow::SetCursor(imgIContainer* aCursor,
         return window->SetCursor(aCursor, aHotspotX, aHotspotY);
     }
 
-    mCursor = eCursorInvalid;
+    mCursor = nsCursor(-1);
 
     // Get the image's current frame
     GdkPixbuf* pixbuf = nsImageToPixbuf::ImageToPixbuf(aCursor);
@@ -1767,7 +1767,7 @@ nsWindow::SetIcon(const nsAString& aIconSpec)
     nsAutoCString iconName;
 
     if (aIconSpec.EqualsLiteral("default")) {
-        nsAutoString brandName;
+        nsXPIDLString brandName;
         GetBrandName(brandName);
         AppendUTF16toUTF8(brandName, iconName);
         ToLowerCase(iconName);
@@ -1789,18 +1789,18 @@ nsWindow::SetIcon(const nsAString& aIconSpec)
         // The last two entries (for the old XPM format) will be ignored unless
         // no icons are found using other suffixes. XPM icons are deprecated.
 
-        const char extensions[6][7] = { ".png", "16.png", "32.png", "48.png",
-                                    ".xpm", "16.xpm" };
+        const char16_t extensions[9][8] = { u".png", u"16.png", u"32.png",
+                                            u"48.png", u"64.png", u"128.png",
+                                            u"256.png",
+                                            u".xpm", u"16.xpm" };
 
         for (uint32_t i = 0; i < ArrayLength(extensions); i++) {
             // Don't bother looking for XPM versions if we found a PNG.
             if (i == ArrayLength(extensions) - 2 && foundIcon)
                 break;
 
-            nsAutoString extension;
-            extension.AppendASCII(extensions[i]);
-
-            ResolveIconName(aIconSpec, extension, getter_AddRefs(iconFile));
+            ResolveIconName(aIconSpec, nsDependentString(extensions[i]),
+                            getter_AddRefs(iconFile));
             if (iconFile) {
                 iconFile->GetNativePath(path);
                 GdkPixbuf *icon = gdk_pixbuf_new_from_file(path.get(), nullptr);
@@ -2914,7 +2914,7 @@ nsWindow::OnContainerFocusOutEvent(GdkEventFocus *aEvent)
 }
 
 bool
-nsWindow::DispatchCommandEvent(nsAtom* aCommand)
+nsWindow::DispatchCommandEvent(nsIAtom* aCommand)
 {
     nsEventStatus status;
     WidgetCommandEvent event(true, nsGkAtoms::onAppCommand, aCommand, this);
@@ -3498,7 +3498,7 @@ nsWindow::OnTouchEvent(GdkEventTouch* aEvent)
 #endif
 
 static void
-GetBrandName(nsAString& aBrandName)
+GetBrandName(nsXPIDLString& brandName)
 {
     nsCOMPtr<nsIStringBundleService> bundleService =
         do_GetService(NS_STRINGBUNDLE_CONTRACTID);
@@ -3510,10 +3510,12 @@ GetBrandName(nsAString& aBrandName)
             getter_AddRefs(bundle));
 
     if (bundle)
-        bundle->GetStringFromName("brandShortName", aBrandName);
+        bundle->GetStringFromName(
+            "brandShortName",
+            getter_Copies(brandName));
 
-    if (aBrandName.IsEmpty())
-        aBrandName.AssignLiteral(u"Mozilla");
+    if (brandName.IsEmpty())
+        brandName.AssignLiteral(u"Mozilla");
 }
 
 static GdkWindow *
@@ -5091,6 +5093,11 @@ nsWindow::HideWindowChrome(bool aShouldHide)
 #endif /* MOZ_X11 */
 }
 
+void
+nsWindow::SetMenuBar(UniquePtr<nsMenuBar> aMenuBar) {
+    mMenuBar = mozilla::Move(aMenuBar);
+}
+
 bool
 nsWindow::CheckForRollup(gdouble aMouseX, gdouble aMouseY,
                          bool aIsWheel, bool aAlwaysRollup)
@@ -5341,14 +5348,10 @@ get_gtk_cursor(nsCursor aCursor)
             newType = MOZ_CURSOR_SPINNING;
         break;
     case eCursor_zoom_in:
-        gdkcursor = gdk_cursor_new_from_name(defaultDisplay, "zoom-in");
-        if (!gdkcursor)
-            newType = MOZ_CURSOR_ZOOM_IN;
+        newType = MOZ_CURSOR_ZOOM_IN;
         break;
     case eCursor_zoom_out:
-        gdkcursor = gdk_cursor_new_from_name(defaultDisplay, "zoom-out");
-        if (!gdkcursor)
-            newType = MOZ_CURSOR_ZOOM_OUT;
+        newType = MOZ_CURSOR_ZOOM_OUT;
         break;
     case eCursor_not_allowed:
         gdkcursor = gdk_cursor_new_from_name(defaultDisplay, "not-allowed");
@@ -5923,13 +5926,7 @@ check_resize_cb (GtkContainer* container, gpointer user_data)
 static void
 screen_composited_changed_cb (GdkScreen* screen, gpointer user_data)
 {
-    // This callback can run before gfxPlatform::Init() in rare
-    // cases involving the profile manager. When this happens,
-    // we have no reason to reset any compositors as graphics
-    // hasn't been initialized yet.
-    if (GPUProcessManager::Get()) {
-        GPUProcessManager::Get()->ResetCompositors();
-    }
+    GPUProcessManager::Get()->ResetCompositors();
 }
 
 static void
@@ -6444,22 +6441,6 @@ nsWindow::GetDragInfo(WidgetMouseEvent* aMouseEvent,
         return false;
     }
 
-    if (mIsX11Display) {
-      // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=789054
-      // To avoid crashes disable double-click on WM without _NET_WM_MOVERESIZE.
-      // See _should_perform_ewmh_drag() at gdkwindow-x11.c
-      GdkScreen* screen = gdk_window_get_screen(gdk_window);
-      GdkAtom atom = gdk_atom_intern("_NET_WM_MOVERESIZE", FALSE);
-      if (!gdk_x11_screen_supports_net_wm_hint(screen, atom)) {
-          static unsigned int lastTimeStamp = 0;
-          if (lastTimeStamp != aMouseEvent->mTime) {
-              lastTimeStamp = aMouseEvent->mTime;
-          } else {
-              return false;
-          }
-      }
-    }
-
     // FIXME: It would be nice to have the widget position at the time
     // of the event, but it's relatively unlikely that the widget has
     // moved since the mousedown.  (On the other hand, it's quite likely
@@ -6566,18 +6547,6 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     }
 
     return nsBaseWidget::GetLayerManager(aShadowManager, aBackendHint, aPersistence);
-}
-
-void
-nsWindow::SetCompositorWidgetDelegate(CompositorWidgetDelegate* delegate)
-{
-    if (delegate) {
-        mCompositorWidgetDelegate = delegate->AsPlatformSpecificDelegate();
-        MOZ_ASSERT(mCompositorWidgetDelegate,
-                   "nsWindow::SetCompositorWidgetDelegate called with a non-PlatformCompositorWidgetDelegate");
-    } else {
-        mCompositorWidgetDelegate = nullptr;
-    }
 }
 
 void
@@ -6876,7 +6845,7 @@ nsWindow::RoundsWidgetCoordinatesTo()
 void nsWindow::GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData)
 {
   #ifdef MOZ_X11
-  *aInitData = mozilla::widget::X11CompositorWidgetInitData(
+  *aInitData = mozilla::widget::CompositorWidgetInitData(
                                   mXWindow,
                                   nsCString(XDisplayString(mXDisplay)),
                                   GetClientSize());

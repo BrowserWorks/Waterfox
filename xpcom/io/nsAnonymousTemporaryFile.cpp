@@ -17,7 +17,6 @@
 #ifdef XP_WIN
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
-#include "mozilla/ResultExtensions.h"
 #include "mozilla/Services.h"
 #include "nsIIdleService.h"
 #include "nsISimpleEnumerator.h"
@@ -82,11 +81,11 @@ GetTempDir(nsIFile** aTempDir)
 }
 
 nsresult
-NS_OpenAnonymousTemporaryNsIFile(nsIFile** aFile)
+NS_OpenAnonymousTemporaryFile(PRFileDesc** aOutFileDesc)
 {
   MOZ_ASSERT(XRE_IsParentProcess());
 
-  if (NS_WARN_IF(!aFile)) {
+  if (NS_WARN_IF(!aOutFileDesc)) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -112,19 +111,6 @@ NS_OpenAnonymousTemporaryNsIFile(nsIFile** aFile)
   }
 
   rv = tmpFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0700);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  tmpFile.forget(aFile);
-  return NS_OK;
-}
-
-nsresult
-NS_OpenAnonymousTemporaryFile(PRFileDesc** aOutFileDesc)
-{
-  nsCOMPtr<nsIFile> tmpFile;
-  nsresult rv = NS_OpenAnonymousTemporaryNsIFile(getter_AddRefs(tmpFile));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -175,9 +161,16 @@ public:
     // idle observer too early, it will be registered before the fake idle
     // service is installed when running in xpcshell, and this interferes with
     // the fake idle service, causing xpcshell-test failures.
-    MOZ_TRY_VAR(mTimer, NS_NewTimerWithObserver(this,
-                                                SCHEDULE_TIMEOUT_MS,
-                                                nsITimer::TYPE_ONE_SHOT));
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    if (NS_WARN_IF(!mTimer)) {
+      return NS_ERROR_FAILURE;
+    }
+    nsresult rv = mTimer->Init(this,
+                               SCHEDULE_TIMEOUT_MS,
+                               nsITimer::TYPE_ONE_SHOT);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
 
     // Register shutdown observer so we can cancel the timer if we shutdown before
     // the timer runs.

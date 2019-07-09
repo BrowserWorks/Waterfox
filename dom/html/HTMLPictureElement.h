@@ -8,18 +8,23 @@
 #define mozilla_dom_HTMLPictureElement_h
 
 #include "mozilla/Attributes.h"
+#include "nsIDOMHTMLPictureElement.h"
 #include "nsGenericHTMLElement.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLPictureElement final : public nsGenericHTMLElement
+class HTMLPictureElement final : public nsGenericHTMLElement,
+                                 public nsIDOMHTMLPictureElement
 {
 public:
   explicit HTMLPictureElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
+
+  // nsIDOMHTMLPictureElement
+  NS_DECL_NSIDOMHTMLPICTUREELEMENT
 
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
                          bool aPreallocateChildren) const override;

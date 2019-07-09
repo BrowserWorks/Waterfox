@@ -5,8 +5,8 @@
 use dom::bindings::codegen::Bindings::StyleSheetBinding;
 use dom::bindings::codegen::Bindings::StyleSheetBinding::StyleSheetMethods;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::cssstylesheet::CSSStyleSheet;
 use dom::window::Window;
@@ -36,8 +36,8 @@ impl StyleSheet {
     #[allow(unrooted_must_root)]
     pub fn new(window: &Window, type_: DOMString,
                href: Option<DOMString>,
-               title: Option<DOMString>) -> DomRoot<StyleSheet> {
-        reflect_dom_object(Box::new(StyleSheet::new_inherited(type_, href, title)),
+               title: Option<DOMString>) -> Root<StyleSheet> {
+        reflect_dom_object(box StyleSheet::new_inherited(type_, href, title),
                            window,
                            StyleSheetBinding::Wrap)
     }

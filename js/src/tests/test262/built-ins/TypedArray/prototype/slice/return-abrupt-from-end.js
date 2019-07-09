@@ -11,7 +11,6 @@ info: >
   ToInteger(end).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var o1 = {

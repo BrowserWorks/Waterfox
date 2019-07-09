@@ -16,7 +16,6 @@ info: >
     a. Let newLength be ? ToLength(length).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var buffer = new ArrayBuffer(8);

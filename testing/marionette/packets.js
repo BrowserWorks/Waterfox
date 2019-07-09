@@ -85,8 +85,8 @@ Packet.prototype = {
 
   set length(length) {
     if (length > PACKET_LENGTH_MAX) {
-      throw new Error("Packet length " + length +
-                      " exceeds the max length of " + PACKET_LENGTH_MAX);
+      throw Error("Packet length " + length + " exceeds the max length of " +
+                  PACKET_LENGTH_MAX);
     }
     this._length = length;
   },
@@ -390,9 +390,9 @@ function RawPacket(transport, data) {
 
 RawPacket.prototype = Object.create(Packet.prototype);
 
-RawPacket.prototype.read = function() {
-  // this has not yet been needed for testing
-  throw new Error("Not implemented");
+RawPacket.prototype.read = function(stream) {
+  // This hasn't yet been needed for testing.
+  throw Error("Not implmented.");
 };
 
 RawPacket.prototype.write = function(stream) {

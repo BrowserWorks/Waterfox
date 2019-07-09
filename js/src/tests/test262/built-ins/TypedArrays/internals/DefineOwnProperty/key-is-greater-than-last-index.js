@@ -17,7 +17,7 @@ info: >
       vi. If intIndex ≥ length, return false.
   ...
 includes: [testTypedArray.js]
-features: [Reflect, TypedArray]
+features: [Reflect]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

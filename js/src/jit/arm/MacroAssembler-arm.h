@@ -13,6 +13,7 @@
 
 #include "jit/arm/Assembler-arm.h"
 #include "jit/AtomicOp.h"
+#include "jit/IonCaches.h"
 #include "jit/JitFrames.h"
 #include "jit/MoveResolver.h"
 
@@ -1008,8 +1009,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void load32(const BaseIndex& address, Register dest);
     void load32(AbsoluteAddress address, Register dest);
     void load64(const Address& address, Register64 dest) {
-        load32(LowWord(address), dest.low);
-        load32(HighWord(address), dest.high);
+        load32(Address(address.base, address.offset + INT64LOW_OFFSET), dest.low);
+        int32_t highOffset = (address.offset < 0) ? -int32_t(INT64HIGH_OFFSET) : INT64HIGH_OFFSET;
+        load32(Address(address.base, address.offset + highOffset), dest.high);
     }
 
     void loadPtr(const Address& address, Register dest);
@@ -1079,13 +1081,13 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void store32(Imm32 src, const BaseIndex& address);
 
     void store64(Register64 src, Address address) {
-        store32(src.low, LowWord(address));
-        store32(src.high, HighWord(address));
+        store32(src.low, Address(address.base, address.offset + INT64LOW_OFFSET));
+        store32(src.high, Address(address.base, address.offset + INT64HIGH_OFFSET));
     }
 
     void store64(Imm64 imm, Address address) {
-        store32(imm.low(), LowWord(address));
-        store32(imm.hi(), HighWord(address));
+        store32(imm.low(), Address(address.base, address.offset + INT64LOW_OFFSET));
+        store32(imm.hi(), Address(address.base, address.offset + INT64HIGH_OFFSET));
     }
 
     void storePtr(ImmWord imm, const Address& address);

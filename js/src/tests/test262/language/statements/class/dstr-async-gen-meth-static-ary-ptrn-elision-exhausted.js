@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/ary-ptrn-elision-exhausted.case
 // - src/dstr-binding/default/cls-decl-async-gen-meth-static.template
 /*---
 description: Elision accepts exhausted iterator (static class expression async generator method)
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
-features: [generators, async-iteration]
+features: [generator, async-iteration]
 flags: [generated, async]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail

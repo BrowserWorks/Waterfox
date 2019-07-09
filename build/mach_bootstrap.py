@@ -34,6 +34,7 @@ Press ENTER/RETURN to continue or CTRL+c to abort.
 
 # Individual files providing mach commands.
 MACH_MODULES = [
+    'addon-sdk/mach_commands.py',
     'build/valgrind/mach_commands.py',
     'devtools/shared/css/generated/mach_commands.py',
     'dom/bindings/mach_commands.py',
@@ -106,9 +107,7 @@ CATEGORIES = {
     },
     'disabled': {
         'short': 'Disabled',
-        'long': 'The disabled commands are hidden by default. Use -v to display them. '
-        'These commands are unavailable for your current context, '
-        'run "mach <command>" to see why.',
+        'long': 'The disabled commands are hidden by default. Use -v to display them. These commands are unavailable for your current context, run "mach <command>" to see why.',
         'priority': 0,
     }
 }
@@ -156,24 +155,11 @@ def bootstrap(topsrcdir, mozilla_dir=None):
     sys.path[0:0] = [os.path.join(mozilla_dir, path)
                      for path in search_path(mozilla_dir,
                                              'build/virtualenv_packages.txt')]
-    import mach.base
     import mach.main
     from mozboot.util import get_state_dir
 
     from mozbuild.util import patch_main
     patch_main()
-
-    def resolve_repository():
-        import mozversioncontrol
-
-        try:
-            # This API doesn't respect the vcs binary choices from configure.
-            # If we ever need to use the VCS binary here, consider something
-            # more robust.
-            return mozversioncontrol.get_repository_object(path=mozilla_dir)
-        except (mozversioncontrol.InvalidRepoPath,
-                mozversioncontrol.MissingVCSTool):
-            return None
 
     def telemetry_handler(context, data):
         # We have not opted-in to telemetry
@@ -208,7 +194,7 @@ def bootstrap(topsrcdir, mozilla_dir=None):
             dist = list(platform.linux_distribution())
             data['system']['linux_distribution'] = dist
         elif platform.system() == 'Windows':
-            win32_ver = list((platform.win32_ver())),
+            win32_ver=list((platform.win32_ver())),
             data['system']['win32_ver'] = win32_ver
         elif platform.system() == 'Darwin':
             # mac version is a special Cupertino snowflake
@@ -262,7 +248,7 @@ def bootstrap(topsrcdir, mozilla_dir=None):
                               os.path.join(topsrcdir, 'build',
                                            'submit_telemetry_data.py'),
                               get_state_dir()[0]],
-                             stdout=devnull, stderr=devnull)
+                              stdout=devnull, stderr=devnull)
 
     def populate_context(context, key=None):
         if key is None:
@@ -297,36 +283,25 @@ def bootstrap(topsrcdir, mozilla_dir=None):
         if key == 'post_dispatch_handler':
             return post_dispatch_handler
 
-        if key == 'repository':
-            return resolve_repository()
-
         raise AttributeError(key)
 
-    driver = mach.main.Mach(os.getcwd())
-    driver.populate_context_handler = populate_context
+    mach = mach.main.Mach(os.getcwd())
+    mach.populate_context_handler = populate_context
 
-    if not driver.settings_paths:
+    if not mach.settings_paths:
         # default global machrc location
-        driver.settings_paths.append(get_state_dir()[0])
+        mach.settings_paths.append(get_state_dir()[0])
     # always load local repository configuration
-    driver.settings_paths.append(mozilla_dir)
+    mach.settings_paths.append(mozilla_dir)
 
     for category, meta in CATEGORIES.items():
-        driver.define_category(category, meta['short'], meta['long'],
-                               meta['priority'])
-
-    repo = resolve_repository()
+        mach.define_category(category, meta['short'], meta['long'],
+            meta['priority'])
 
     for path in MACH_MODULES:
-        # Sparse checkouts may not have all mach_commands.py files. Ignore
-        # errors from missing files.
-        try:
-            driver.load_commands_from_file(os.path.join(mozilla_dir, path))
-        except mach.base.MissingFileError:
-            if not repo or not repo.sparse_checkout_present():
-                raise
+        mach.load_commands_from_file(os.path.join(mozilla_dir, path))
 
-    return driver
+    return mach
 
 
 # Hook import such that .pyc/.pyo files without a corresponding .py file in

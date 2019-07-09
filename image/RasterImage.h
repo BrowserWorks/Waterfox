@@ -161,7 +161,6 @@ public:
 #endif
 
   nsresult GetNativeSizes(nsTArray<gfx::IntSize>& aNativeSizes) const override;
-  size_t GetNativeSizesLength() const override;
   virtual nsresult StartAnimation() override;
   virtual nsresult StopAnimation() override;
 
@@ -316,11 +315,6 @@ private:
     GetCurrentImage(layers::ImageContainer* aContainer, uint32_t aFlags);
 
   void UpdateImageContainer();
-
-#ifdef DEBUG
-  // Records the image drawing for startup performance testing.
-  void NotifyDrawingObservers();
-#endif
 
   //////////////////////////////////////////////////////////////////////////////
   // Decoding.

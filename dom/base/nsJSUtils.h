@@ -68,10 +68,8 @@ public:
 
   // ExecutionContext is used to switch compartment.
   class MOZ_STACK_CLASS ExecutionContext {
-#ifdef MOZ_GECKO_PROFILER
     // Register stack annotations for the Gecko profiler.
     mozilla::AutoProfilerLabel mAutoProfilerLabel;
-#endif
 
     JSContext* mCx;
 
@@ -185,11 +183,11 @@ public:
                                 JS::CompileOptions &aCompileOptions,
                                 JS::MutableHandle<JSObject*> aModule);
 
-  static nsresult ModuleInstantiate(JSContext* aCx,
-                                    JS::Handle<JSObject*> aModule);
+  static nsresult ModuleDeclarationInstantiation(JSContext* aCx,
+                                                 JS::Handle<JSObject*> aModule);
 
-  static nsresult ModuleEvaluate(JSContext* aCx,
-                                 JS::Handle<JSObject*> aModule);
+  static nsresult ModuleEvaluation(JSContext* aCx,
+                                   JS::Handle<JSObject*> aModule);
 
   // Returns false if an exception got thrown on aCx.  Passing a null
   // aElement is allowed; that wil produce an empty aScopeChain.

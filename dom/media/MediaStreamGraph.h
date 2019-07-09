@@ -14,6 +14,7 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TaskQueue.h"
+#include "mozilla/dom/AudioChannelBinding.h"
 #include "nsAutoPtr.h"
 #include "nsAutoRef.h"
 #include "nsIRunnable.h"
@@ -157,6 +158,7 @@ class AudioNodeEngine;
 class AudioNodeExternalInputStream;
 class AudioNodeStream;
 class AudioSegment;
+class DirectMediaStreamListener;
 class DirectMediaStreamTrackListener;
 class MediaInputPort;
 class MediaStreamGraphImpl;
@@ -525,6 +527,9 @@ public:
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
+  void SetAudioChannelType(dom::AudioChannel aType) { mAudioChannelType = aType; }
+  dom::AudioChannel AudioChannelType() const { return mAudioChannelType; }
+
   bool IsSuspended() { return mSuspendedCount > 0; }
   void IncrementSuspendCount();
   void DecrementSuspendCount();
@@ -657,6 +662,8 @@ protected:
 
   // Our media stream graph.  null if destroyed on the graph thread.
   MediaStreamGraphImpl* mGraph;
+
+  dom::AudioChannel mAudioChannelType;
 };
 
 /**
@@ -702,6 +709,8 @@ public:
    */
   void NotifyListenersEventImpl(MediaStreamGraphEvent aEvent);
   void NotifyListenersEvent(MediaStreamGraphEvent aEvent);
+  void AddDirectListener(DirectMediaStreamListener* aListener);
+  void RemoveDirectListener(DirectMediaStreamListener* aListener);
 
   enum {
     ADDTRACK_QUEUED    = 0x01 // Queue track add until FinishAddTracks()
@@ -890,6 +899,7 @@ protected:
   TimeStamp mStreamTracksStartTimeStamp;
   nsTArray<TrackData> mUpdateTracks;
   nsTArray<TrackData> mPendingTracks;
+  nsTArray<RefPtr<DirectMediaStreamListener>> mDirectListeners;
   nsTArray<TrackBound<DirectMediaStreamTrackListener>> mDirectTrackListeners;
   bool mPullEnabled;
   bool mUpdateFinished;
@@ -1265,6 +1275,7 @@ public:
 
   // Main thread only
   static MediaStreamGraph* GetInstance(GraphDriverType aGraphDriverRequested,
+                                       dom::AudioChannel aChannel,
                                        nsPIDOMWindowInner* aWindow);
   static MediaStreamGraph* CreateNonRealtimeInstance(
     TrackRate aSampleRate,
@@ -1367,10 +1378,7 @@ public:
   void NotifyOutputData(AudioDataValue* aBuffer, size_t aFrames,
                         TrackRate aRate, uint32_t aChannels);
 
-  void AssertOnGraphThreadOrNotRunning() const
-  {
-    MOZ_ASSERT(OnGraphThreadOrNotRunning());
-  }
+  void AssertOnGraphThreadOrNotRunning() const;
 
 protected:
   explicit MediaStreamGraph(TrackRate aSampleRate)
@@ -1382,10 +1390,6 @@ protected:
   {
     MOZ_COUNT_DTOR(MediaStreamGraph);
   }
-
-  // Intended only for assertions, either on graph thread, not running, or
-  // with monitor held.
-  bool OnGraphThreadOrNotRunning() const;
 
   // Media graph thread only
   nsTArray<nsCOMPtr<nsIRunnable> > mPendingUpdateRunnables;

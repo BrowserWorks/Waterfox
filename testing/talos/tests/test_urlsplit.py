@@ -8,10 +8,8 @@
 test URL parsing; see
 https://bugzilla.mozilla.org/show_bug.cgi?id=793875
 """
-from __future__ import absolute_import
 
 import unittest
-
 import talos.utils
 
 

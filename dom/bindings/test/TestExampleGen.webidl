@@ -632,11 +632,11 @@ interface TestExampleInterface {
   void exerciseTypedefInterfaces3(YetAnotherNameForTestInterface arg);
 
   // Deprecated methods and attributes
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   attribute boolean deprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   void deprecatedMethod(boolean arg);
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   void deprecatedMethodWithContext(any arg);
 
   // Static methods and attributes
@@ -645,11 +645,11 @@ interface TestExampleInterface {
   static void staticMethodWithContext(any arg);
 
   // Deprecated methods and attributes;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static attribute boolean staticDeprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static void staticDeprecatedMethod(boolean arg);
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static void staticDeprecatedMethodWithContext(any arg);
 
   // Overload resolution tests
@@ -801,14 +801,6 @@ interface TestExampleInterface {
 
   attribute byte dashed-attribute;
   void dashed-method();
-
-  // [NonEnumerable] tests
-  [NonEnumerable]
-  attribute boolean nonEnumerableAttr;
-  [NonEnumerable]
-  const boolean nonEnumerableConst = true;
-  [NonEnumerable]
-  void nonEnumerableMethod();
 
   // If you add things here, add them to TestCodeGen and TestJSImplGen as well
 };

@@ -12,7 +12,6 @@
 #include "mozilla/ServoBindings.h"
 #include "mozilla/ServoDeclarationBlock.h"
 #include "mozilla/dom/CSSStyleRuleBinding.h"
-#include "nsCSSPseudoClasses.h"
 
 #include "mozAutoDocUpdate.h"
 
@@ -119,7 +118,7 @@ ServoStyleRule::ServoStyleRule(already_AddRefed<RawServoStyleRule> aRawRule,
 }
 
 // QueryInterface implementation for ServoStyleRule
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServoStyleRule)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServoStyleRule)
   NS_INTERFACE_MAP_ENTRY(nsICSSStyleRuleDOMWrapper)
   NS_INTERFACE_MAP_ENTRY(nsIDOMCSSStyleRule)
 NS_INTERFACE_MAP_END_INHERITING(css::Rule)
@@ -280,28 +279,15 @@ ServoStyleRule::SelectorMatchesElement(Element* aElement,
                                        const nsAString& aPseudo,
                                        bool* aMatches)
 {
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
-  if (!aPseudo.IsEmpty()) {
-    RefPtr<nsAtom> pseudoElt = NS_Atomize(aPseudo);
-    pseudoType = nsCSSPseudoElements::GetPseudoType(
-        pseudoElt, CSSEnabledState::eIgnoreEnabledState);
-
-    if (pseudoType == CSSPseudoElementType::NotPseudo) {
-      *aMatches = false;
-      return NS_OK;
-    }
-  }
-
-  *aMatches = Servo_StyleRule_SelectorMatchesElement(mRawRule, aElement,
-                                                     aSelectorIndex, pseudoType);
-
+  nsCOMPtr<nsIAtom> pseudoElt = NS_Atomize(aPseudo);
+  const CSSPseudoElementType pseudoType =
+    nsCSSPseudoElements::GetPseudoType(pseudoElt,
+                                       CSSEnabledState::eIgnoreEnabledState);
+  *aMatches = Servo_StyleRule_SelectorMatchesElement(mRawRule,
+                                                     aElement,
+                                                     aSelectorIndex,
+                                                     pseudoType);
   return NS_OK;
-}
-
-NotNull<DeclarationBlock*>
-ServoStyleRule::GetDeclarationBlock() const
-{
-  return WrapNotNull(mDecls.mDecls);
 }
 
 } // namespace mozilla

@@ -7,22 +7,58 @@
 #ifndef mozilla_dom_CoalescedWheelData_h
 #define mozilla_dom_CoalescedWheelData_h
 
-#include "CoalescedInputData.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace dom {
 
-class CoalescedWheelData final : public CoalescedInputData<WidgetWheelEvent>
+class CoalescedWheelData final
 {
+protected:
+  typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
+
 public:
+  UniquePtr<WidgetWheelEvent> mCoalescedWheelEvent;
+  ScrollableLayerGuid mGuid;
+  uint64_t mInputBlockId;
+
+  CoalescedWheelData()
+    : mInputBlockId(0)
+  {
+  }
+
   void Coalesce(const WidgetWheelEvent& aEvent,
                 const ScrollableLayerGuid& aGuid,
                 const uint64_t& aInputBlockId);
+  void Reset()
+  {
+    mCoalescedWheelEvent = nullptr;
+  }
+
+  bool IsEmpty()
+  {
+    return !mCoalescedWheelEvent;
+  }
 
   bool CanCoalesce(const WidgetWheelEvent& aEvent,
                    const ScrollableLayerGuid& aGuid,
                    const uint64_t& aInputBlockId);
+
+  const WidgetWheelEvent* GetCoalescedWheelEvent()
+  {
+    return mCoalescedWheelEvent.get();
+  }
+
+  ScrollableLayerGuid GetScrollableLayerGuid()
+  {
+    return mGuid;
+  }
+
+  uint64_t GetInputBlockId()
+  {
+    return mInputBlockId;
+  }
 };
 
 } // namespace dom

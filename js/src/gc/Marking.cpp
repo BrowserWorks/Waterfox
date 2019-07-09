@@ -38,7 +38,6 @@
 #include "jsobjinlines.h"
 
 #include "gc/Nursery-inl.h"
-#include "vm/NativeObject-inl.h"
 #include "vm/String-inl.h"
 #include "vm/UnboxedObject-inl.h"
 
@@ -1286,14 +1285,9 @@ ModuleScope::Data::trace(JSTracer* trc)
     TraceBindingNames(trc, names, length);
 }
 void
-WasmInstanceScope::Data::trace(JSTracer* trc)
-{
-    TraceNullableEdge(trc, &instance, "wasm instance");
-    TraceBindingNames(trc, names, length);
-}
-void
 WasmFunctionScope::Data::trace(JSTracer* trc)
 {
+    TraceNullableEdge(trc, &instance, "wasm function");
     TraceBindingNames(trc, names, length);
 }
 void
@@ -1328,9 +1322,6 @@ Scope::traceChildren(JSTracer* trc)
         reinterpret_cast<ModuleScope::Data*>(data_)->trace(trc);
         break;
       case ScopeKind::With:
-        break;
-      case ScopeKind::WasmInstance:
-        reinterpret_cast<WasmInstanceScope::Data*>(data_)->trace(trc);
         break;
       case ScopeKind::WasmFunction:
         reinterpret_cast<WasmFunctionScope::Data*>(data_)->trace(trc);
@@ -1401,16 +1392,9 @@ js::GCMarker::eagerlyMarkChildren(Scope* scope)
       case ScopeKind::With:
         break;
 
-      case ScopeKind::WasmInstance: {
-        WasmInstanceScope::Data* data = reinterpret_cast<WasmInstanceScope::Data*>(scope->data_);
-        traverseEdge(scope, static_cast<JSObject*>(data->instance));
-        names = data->names;
-        length = data->length;
-        break;
-      }
-
       case ScopeKind::WasmFunction: {
         WasmFunctionScope::Data* data = reinterpret_cast<WasmFunctionScope::Data*>(scope->data_);
+        traverseEdge(scope, static_cast<JSObject*>(data->instance));
         names = data->names;
         length = data->length;
         break;
@@ -1663,18 +1647,6 @@ ObjectDenseElementsMayBeMarkable(NativeObject* nobj)
     return mayBeMarkable;
 }
 
-static inline void
-CheckForCompartmentMismatch(JSObject* obj, JSObject* obj2)
-{
-#ifdef DEBUG
-    if (MOZ_UNLIKELY(obj->compartment() != obj2->compartment())) {
-        fprintf(stderr, "Compartment mismatch in pointer from %s object slot to %s object\n",
-                obj->getClass()->name, obj2->getClass()->name);
-        MOZ_CRASH("Compartment mismatch");
-    }
-#endif
-}
-
 inline void
 GCMarker::processMarkStackTop(SliceBudget& budget)
 {
@@ -1745,7 +1717,7 @@ GCMarker::processMarkStackTop(SliceBudget& budget)
             traverseEdge(obj, v.toString());
         } else if (v.isObject()) {
             JSObject* obj2 = &v.toObject();
-            CheckForCompartmentMismatch(obj, obj2);
+            MOZ_ASSERT(obj->compartment() == obj2->compartment());
             if (mark(obj2)) {
                 // Save the rest of this value array for later and start scanning obj2's children.
                 pushValueArray(obj, vp, end);
@@ -2375,7 +2347,7 @@ MarkStackIter::saveValueArray(NativeObject* obj, uintptr_t index, HeapSlot::Kind
  */
 GCMarker::GCMarker(JSRuntime* rt)
   : JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
-    stack(),
+    stack(size_t(-1)),
     color(MarkColor::Black),
     unmarkedArenaStackTop(nullptr)
 #ifdef DEBUG
@@ -2494,7 +2466,7 @@ GCMarker::enterWeakMarkingMode()
     if (weakMapAction() == ExpandWeakMaps) {
         tag_ = TracerKindTag::WeakMarking;
 
-        for (SweepGroupZonesIter zone(runtime()); !zone.done(); zone.next()) {
+        for (GCSweepGroupIter zone(runtime()); !zone.done(); zone.next()) {
             for (WeakMapBase* m : zone->gcWeakMapList()) {
                 if (m->marked)
                     (void) m->markIteratively(this);
@@ -2669,18 +2641,8 @@ TenuringTracer::traverse(JSObject** objp)
     // We only ever visit the internals of objects after moving them to tenured.
     MOZ_ASSERT(!nursery().isInside(objp));
 
-    JSObject* obj = *objp;
-    if (!IsInsideNursery(obj) || nursery().getForwardedPointer(objp))
-        return;
-
-    // Take a fast path for tenuring a plain object which is by far the most
-    // common case.
-    if (obj->is<PlainObject>()) {
-        *objp = movePlainObjectToTenured(&obj->as<PlainObject>());
-        return;
-    }
-
-    *objp = moveToTenuredSlow(obj);
+    if (IsInsideNursery(*objp) && !nursery().getForwardedPointer(objp))
+        *objp = moveToTenured(*objp);
 }
 
 template <typename S>
@@ -2727,7 +2689,6 @@ void
 js::gc::StoreBuffer::SlotsEdge::trace(TenuringTracer& mover) const
 {
     NativeObject* obj = object();
-    MOZ_ASSERT(IsCellPointerValid(obj));
 
     // Beware JSObject::swap exchanging a native object for a non-native one.
     if (!obj->isNative())
@@ -2737,18 +2698,21 @@ js::gc::StoreBuffer::SlotsEdge::trace(TenuringTracer& mover) const
         return;
 
     if (kind() == ElementKind) {
-        int32_t initLen = obj->getDenseInitializedLength();
-        int32_t numShifted = obj->getElementsHeader()->numShiftedElements();
-        int32_t clampedStart = Min(Max(0, start_ - numShifted), initLen);
-        int32_t clampedEnd = Min(Max(0, start_ + count_ - numShifted), initLen);
-        MOZ_ASSERT(clampedStart >= 0);
+        uint32_t initLen = obj->getDenseInitializedLength();
+        uint32_t numShifted = obj->getElementsHeader()->numShiftedElements();
+        uint32_t clampedStart = start_;
+        clampedStart = numShifted < clampedStart ? clampedStart - numShifted : 0;
+        clampedStart = Min(clampedStart, initLen);
+        uint32_t clampedEnd = start_ + count_;
+        clampedEnd = numShifted < clampedEnd ? clampedEnd - numShifted : 0;
+        clampedEnd = Min(clampedEnd, initLen);
         MOZ_ASSERT(clampedStart <= clampedEnd);
         mover.traceSlots(static_cast<HeapSlot*>(obj->getDenseElements() + clampedStart)
                             ->unsafeUnbarrieredForTracing(), clampedEnd - clampedStart);
     } else {
-        int32_t start = Min(uint32_t(start_), obj->slotSpan());
-        int32_t end = Min(uint32_t(start_) + count_, obj->slotSpan());
-        MOZ_ASSERT(end >= start);
+        uint32_t start = Min(start_, obj->slotSpan());
+        uint32_t end = Min(start_ + count_, obj->slotSpan());
+        MOZ_ASSERT(start <= end);
         mover.traceObjectSlots(obj, start, end - start);
     }
 }
@@ -2800,7 +2764,6 @@ js::gc::StoreBuffer::traceWholeCells(TenuringTracer& mover)
 {
     for (ArenaCellSet* cells = bufferWholeCell; cells; cells = cells->next) {
         Arena* arena = cells->arena;
-        MOZ_ASSERT(IsCellPointerValid(arena));
 
         MOZ_ASSERT(arena->bufferedCells() == cells);
         arena->bufferedCells() = &ArenaCellSet::Empty;
@@ -2830,7 +2793,6 @@ js::gc::StoreBuffer::CellPtrEdge::trace(TenuringTracer& mover) const
     if (!*edge)
         return;
 
-    MOZ_ASSERT(IsCellPointerValid(*edge));
     MOZ_ASSERT((*edge)->getTraceKind() == JS::TraceKind::Object);
     mover.traverse(reinterpret_cast<JSObject**>(edge));
 }
@@ -2840,6 +2802,59 @@ js::gc::StoreBuffer::ValueEdge::trace(TenuringTracer& mover) const
 {
     if (deref())
         mover.traverse(edge);
+}
+
+/* Insert the given relocation entry into the list of things to visit. */
+void
+js::TenuringTracer::insertIntoFixupList(RelocationOverlay* entry) {
+    *tail = entry;
+    tail = &entry->nextRef();
+    *tail = nullptr;
+}
+
+JSObject*
+js::TenuringTracer::moveToTenured(JSObject* src)
+{
+    MOZ_ASSERT(IsInsideNursery(src));
+    MOZ_ASSERT(!src->zone()->usedByHelperThread());
+
+    AllocKind dstKind = src->allocKindForTenure(nursery());
+    Zone* zone = src->zone();
+
+    TenuredCell* t = zone->arenas.allocateFromFreeList(dstKind, Arena::thingSize(dstKind));
+    if (!t) {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        t = runtime()->gc.refillFreeListInGC(zone, dstKind);
+        if (!t)
+            oomUnsafe.crash(ChunkSize, "Failed to allocate object while tenuring.");
+    }
+    JSObject* dst = reinterpret_cast<JSObject*>(t);
+    tenuredSize += moveObjectToTenured(dst, src, dstKind);
+
+    RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
+    overlay->forwardTo(dst);
+    insertIntoFixupList(overlay);
+
+    TracePromoteToTenured(src, dst);
+    MemProfiler::MoveNurseryToTenured(src, dst);
+    return dst;
+}
+
+void
+js::Nursery::collectToFixedPoint(TenuringTracer& mover, TenureCountCache& tenureCounts)
+{
+    for (RelocationOverlay* p = mover.head; p; p = p->next()) {
+        JSObject* obj = static_cast<JSObject*>(p->forwardingAddress());
+        mover.traceObject(obj);
+
+        TenureCount& entry = tenureCounts.findEntry(obj->groupRaw());
+        if (entry.group == obj->groupRaw()) {
+            entry.count++;
+        } else if (!entry.group) {
+            entry.group = obj->groupRaw();
+            entry.count = 1;
+        }
+    }
 }
 
 struct TenuringFunctor
@@ -2901,39 +2916,11 @@ OffsetToChunkEnd(void* p)
 }
 #endif
 
-/* Insert the given relocation entry into the list of things to visit. */
-inline void
-js::TenuringTracer::insertIntoFixupList(RelocationOverlay* entry) {
-    *tail = entry;
-    tail = &entry->nextRef();
-    *tail = nullptr;
-}
-
-template <typename T>
-inline T*
-js::TenuringTracer::allocTenured(Zone* zone, AllocKind kind) {
-    TenuredCell* t = zone->arenas.allocateFromFreeList(kind, Arena::thingSize(kind));
-    if (!t) {
-        AutoEnterOOMUnsafeRegion oomUnsafe;
-        t = runtime()->gc.refillFreeListInGC(zone, kind);
-        if (!t)
-            oomUnsafe.crash(ChunkSize, "Failed to allocate object while tenuring.");
-    }
-    return static_cast<T*>(static_cast<Cell*>(t));
-}
-
-JSObject*
-js::TenuringTracer::moveToTenuredSlow(JSObject* src)
+size_t
+js::TenuringTracer::moveObjectToTenured(JSObject* dst, JSObject* src, AllocKind dstKind)
 {
-    MOZ_ASSERT(IsInsideNursery(src));
-    MOZ_ASSERT(!src->zone()->usedByHelperThread());
-    MOZ_ASSERT(!src->is<PlainObject>());
-
-    AllocKind dstKind = src->allocKindForTenure(nursery());
-    auto dst = allocTenured<JSObject>(src->zone(), dstKind);
-
     size_t srcSize = Arena::thingSize(dstKind);
-    size_t dstSize = srcSize;
+    size_t tenuredSize = srcSize;
 
     /*
      * Arrays do not necessarily have the same AllocKind between src and dst.
@@ -2945,7 +2932,7 @@ js::TenuringTracer::moveToTenuredSlow(JSObject* src)
      * even if they are inlined.
      */
     if (src->is<ArrayObject>()) {
-        dstSize = srcSize = sizeof(NativeObject);
+        tenuredSize = srcSize = sizeof(NativeObject);
     } else if (src->is<TypedArrayObject>()) {
         TypedArrayObject* tarray = &src->as<TypedArrayObject>();
         // Typed arrays with inline data do not necessarily have the same
@@ -2963,11 +2950,12 @@ js::TenuringTracer::moveToTenuredSlow(JSObject* src)
         }
     }
 
-    tenuredSize += dstSize;
-
     // Copy the Cell contents.
     MOZ_ASSERT(OffsetToChunkEnd(src) >= ptrdiff_t(srcSize));
     js_memcpy(dst, src, srcSize);
+
+    // Move any hash code attached to the object.
+    src->zone()->transferUniqueId(dst, src);
 
     // Move the slots and elements, if we need to.
     if (src->isNative()) {
@@ -2976,59 +2964,39 @@ js::TenuringTracer::moveToTenuredSlow(JSObject* src)
         tenuredSize += moveSlotsToTenured(ndst, nsrc, dstKind);
         tenuredSize += moveElementsToTenured(ndst, nsrc, dstKind);
 
-        // There is a pointer into a dictionary mode object from the head of its
-        // shape list. This is updated in Nursery::sweepDictionaryModeObjects().
+        // The shape's list head may point into the old object. This can only
+        // happen for dictionaries, which are native objects.
+        if (&nsrc->shape_ == ndst->shape_->listp) {
+            MOZ_ASSERT(nsrc->shape_->inDictionary());
+            ndst->shape_->listp = &ndst->shape_;
+        }
     }
 
-    JSObjectMovedOp op = dst->getClass()->extObjectMovedOp();
-    MOZ_ASSERT_IF(src->is<ProxyObject>(), op == proxy_ObjectMoved);
-    if (op) {
-        // Tell the hazard analysis that the object moved hook can't GC.
-        JS::AutoSuppressGCAnalysis nogc;
-        tenuredSize += op(dst, src);
-    } else {
-        MOZ_ASSERT_IF(src->getClass()->hasFinalize(),
-                      CanNurseryAllocateFinalizedClass(src->getClass()));
+    if (src->is<InlineTypedObject>()) {
+        InlineTypedObject::objectMovedDuringMinorGC(this, dst, src);
+    } else if (src->is<TypedArrayObject>()) {
+        tenuredSize += TypedArrayObject::objectMovedDuringMinorGC(this, dst, src, dstKind);
+    } else if (src->is<UnboxedArrayObject>()) {
+        tenuredSize += UnboxedArrayObject::objectMovedDuringMinorGC(this, dst, src, dstKind);
+    } else if (src->is<ArgumentsObject>()) {
+        tenuredSize += ArgumentsObject::objectMovedDuringMinorGC(this, dst, src);
+    } else if (src->is<ProxyObject>()) {
+        // Objects in the nursery are never swapped so the proxy must have an
+        // inline ProxyValueArray.
+        MOZ_ASSERT(src->as<ProxyObject>().usingInlineValueArray());
+        dst->as<ProxyObject>().setInlineValueArray();
+        if (JSObjectMovedOp op = dst->getClass()->extObjectMovedOp())
+            op(dst, src);
+    } else if (JSObjectMovedOp op = dst->getClass()->extObjectMovedOp()) {
+        op(dst, src);
+    } else if (src->getClass()->hasFinalize()) {
+        // Such objects need to be handled specially above to ensure any
+        // additional nursery buffers they hold are moved.
+        MOZ_RELEASE_ASSERT(CanNurseryAllocateFinalizedClass(src->getClass()));
+        MOZ_CRASH("Unhandled JSCLASS_SKIP_NURSERY_FINALIZE Class");
     }
 
-    RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
-    overlay->forwardTo(dst);
-    insertIntoFixupList(overlay);
-
-    TracePromoteToTenured(src, dst);
-    return dst;
-}
-
-inline JSObject*
-js::TenuringTracer::movePlainObjectToTenured(PlainObject* src)
-{
-    // Fast path version of moveToTenuredSlow() for specialized for PlainObject.
-
-    MOZ_ASSERT(IsInsideNursery(src));
-    MOZ_ASSERT(!src->zone()->usedByHelperThread());
-
-    AllocKind dstKind = src->allocKindForTenure();
-    auto dst = allocTenured<PlainObject>(src->zone(), dstKind);
-
-    size_t srcSize = Arena::thingSize(dstKind);
-    tenuredSize += srcSize;
-
-    // Copy the Cell contents.
-    MOZ_ASSERT(OffsetToChunkEnd(src) >= ptrdiff_t(srcSize));
-    js_memcpy(dst, src, srcSize);
-
-    // Move the slots and elements.
-    tenuredSize += moveSlotsToTenured(dst, src, dstKind);
-    tenuredSize += moveElementsToTenured(dst, src, dstKind);
-
-    MOZ_ASSERT(!dst->getClass()->extObjectMovedOp());
-
-    RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
-    overlay->forwardTo(dst);
-    insertIntoFixupList(overlay);
-
-    TracePromoteToTenured(src, dst);
-    return dst;
+    return tenuredSize;
 }
 
 size_t
@@ -3107,23 +3075,6 @@ js::TenuringTracer::moveElementsToTenured(NativeObject* dst, NativeObject* src, 
     nursery().setElementsForwardingPointer(srcHeader, dst->getElementsHeader(),
                                            srcHeader->capacity);
     return nslots * sizeof(HeapSlot);
-}
-
-void
-js::Nursery::collectToFixedPoint(TenuringTracer& mover, TenureCountCache& tenureCounts)
-{
-    for (RelocationOverlay* p = mover.head; p; p = p->next()) {
-        JSObject* obj = static_cast<JSObject*>(p->forwardingAddress());
-        mover.traceObject(obj);
-
-        TenureCount& entry = tenureCounts.findEntry(obj->groupRaw());
-        if (entry.group == obj->groupRaw()) {
-            entry.count++;
-        } else if (!entry.group) {
-            entry.group = obj->groupRaw();
-            entry.count = 1;
-        }
-    }
 }
 
 

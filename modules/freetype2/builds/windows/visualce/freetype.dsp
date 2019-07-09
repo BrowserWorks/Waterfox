@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype281.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype291.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug"
 
@@ -78,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype281_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype291_D.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug Multithreaded"
 
@@ -102,8 +102,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"lib\freetype281_D.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype281MT_D.lib"
+# ADD BASE LIB32 /nologo /out:"lib\freetype291_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype291MT_D.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Release Multithreaded"
 
@@ -126,8 +126,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"lib\freetype281.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype281MT.lib"
+# ADD BASE LIB32 /nologo /out:"lib\freetype291.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype291MT.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Release Singlethreaded"
 
@@ -151,8 +151,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype281.lib"
-# ADD LIB32 /out:"..\..\..\objs\freetype281ST.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype291.lib"
+# ADD LIB32 /out:"..\..\..\objs\freetype291ST.lib"
 # SUBTRACT LIB32 /nologo
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug Singlethreaded"
@@ -177,8 +177,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype281_D.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype281ST_D.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype291_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype291ST_D.lib"
 
 !ENDIF
 
@@ -200,17 +200,14 @@ SOURCE=..\..\..\src\autofit\autofit.c
 # Begin Source File
 
 SOURCE=..\..\..\src\bdf\bdf.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\cff\cff.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftbase.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
@@ -226,7 +223,7 @@ SOURCE=..\..\..\src\base\ftbitmap.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\src\base\ftfntfmt.c
+SOURCE=..\..\..\src\base\ftcid.c
 # End Source File
 # Begin Source File
 
@@ -239,18 +236,15 @@ SOURCE=..\..\..\src\base\ftgasp.c
 # Begin Source File
 
 SOURCE=..\..\..\src\cache\ftcache.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\ftdebug.c
 # ADD CPP /Ze
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftglyph.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
@@ -263,7 +257,6 @@ SOURCE=..\..\..\src\gzip\ftgzip.c
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftinit.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
@@ -272,11 +265,14 @@ SOURCE=..\..\..\src\lzw\ftlzw.c
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftmm.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftotval.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\src\base\ftpatent.c
 # End Source File
 # Begin Source File
 
@@ -293,7 +289,6 @@ SOURCE=..\..\..\src\base\ftsynth.c
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftsystem.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
@@ -306,7 +301,6 @@ SOURCE=..\..\..\src\base\ftwinfnt.c
 # Begin Source File
 
 SOURCE=..\..\..\src\pcf\pcf.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
@@ -315,57 +309,46 @@ SOURCE=..\..\..\src\pfr\pfr.c
 # Begin Source File
 
 SOURCE=..\..\..\src\psaux\psaux.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\pshinter\pshinter.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\psnames\psmodule.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\raster\raster.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\sfnt\sfnt.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\smooth\smooth.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\truetype\truetype.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\type1\type1.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\cid\type1cid.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\type42\type42.c
-# SUBTRACT CPP /Fr
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\src\winfonts\winfnt.c
-# SUBTRACT CPP /Fr
 # End Source File
 # End Group
 # Begin Group "Header Files"

@@ -37,12 +37,8 @@ let gFirstPartyBasicPage = TEST_URL_PATH + "file_firstPartyBasic.html";
  *         browser - The browser object of this tab.
  */
 async function openTabInUserContext(aURL, aUserContextId) {
-  let originAttributes =  {
-    userContextId: aUserContextId
-  };
-  let triggeringPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(makeURI(aURL), originAttributes);
   // Open the tab in the correct userContextId.
-  let tab = BrowserTestUtils.addTab(gBrowser, aURL, {userContextId: aUserContextId, triggeringPrincipal});
+  let tab = BrowserTestUtils.addTab(gBrowser, aURL, {userContextId: aUserContextId});
 
   // Select tab and make sure its browser is focused.
   gBrowser.selectedTab = tab;
@@ -215,6 +211,7 @@ this.IsolationTestTools = {
       await SpecialPowers.pushPrefEnv({"set": aPref});
 
       await SpecialPowers.pushPrefEnv({"set": [["dom.ipc.processCount", 1]]});
+      await SpecialPowers.pushPrefEnv({"set": [["network.auth.non-web-content-triggered-resources-http-auth-allow", true]]});
 
       await aTask(aMode);
     });

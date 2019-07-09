@@ -20,7 +20,7 @@
 namespace mozilla {
 namespace net {
 
-class RustURL final
+class RustURL
   : public nsIFileURL
   , public nsIStandardURL
   , public nsISerializable

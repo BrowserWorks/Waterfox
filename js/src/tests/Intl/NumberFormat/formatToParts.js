@@ -1,4 +1,4 @@
-// |reftest| skip-if(!this.hasOwnProperty("Intl"))
+// |reftest| skip-if(!this.hasOwnProperty("Intl")||typeof(newGlobal)!=="function"||!newGlobal({experimentalNumberFormatFormatToPartsEnabled:true}).Intl.NumberFormat().formatToParts)
 // Any copyright is dedicated to the Public Domain.
 // http://creativecommons.org/licenses/publicdomain/
 
@@ -10,6 +10,11 @@ print(BUGNUMBER + ": " + summary);
 
 //-----------------------------------------------------------------------------
 
+// Once Intl.NumberFormat.prototype.formatToParts isn't feature-guarded, remove
+// this bit.
+assertEq(typeof newGlobal, "function");
+assertEq("formatToParts" in Intl.NumberFormat(), false);
+Intl = newGlobal({ experimentalNumberFormatFormatToPartsEnabled: true }).Intl;
 assertEq("formatToParts" in Intl.NumberFormat(), true);
 
 // NOTE: Some of these tests exercise standard behavior (e.g. that format and

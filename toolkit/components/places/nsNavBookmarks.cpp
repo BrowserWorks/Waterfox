@@ -22,11 +22,11 @@
 using namespace mozilla;
 
 // These columns sit to the right of the kGetInfoIndex_* columns.
-const int32_t nsNavBookmarks::kGetChildrenIndex_Guid = 18;
-const int32_t nsNavBookmarks::kGetChildrenIndex_Position = 19;
-const int32_t nsNavBookmarks::kGetChildrenIndex_Type = 20;
-const int32_t nsNavBookmarks::kGetChildrenIndex_PlaceID = 21;
-const int32_t nsNavBookmarks::kGetChildrenIndex_SyncStatus = 22;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Guid = 20;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Position = 21;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Type = 22;
+const int32_t nsNavBookmarks::kGetChildrenIndex_PlaceID = 23;
+const int32_t nsNavBookmarks::kGetChildrenIndex_SyncStatus = 24;
 
 using namespace mozilla::places;
 
@@ -51,7 +51,7 @@ bool SkipTags(nsCOMPtr<nsINavBookmarkObserver> obs) {
 }
 bool SkipDescendants(nsCOMPtr<nsINavBookmarkObserver> obs) {
   bool skipDescendantsOnItemRemoval = false;
-  (void) obs->GetSkipDescendantsOnItemRemoval(&skipDescendantsOnItemRemoval);
+  (void) obs->GetSkipTags(&skipDescendantsOnItemRemoval);
   return skipDescendantsOnItemRemoval;
 }
 
@@ -156,7 +156,8 @@ NeedsTombstone(const BookmarkData& aBookmark) {
 
 
 nsNavBookmarks::nsNavBookmarks()
-  : mRoot(0)
+  : mItemCount(0)
+  , mRoot(0)
   , mMenuRoot(0)
   , mTagsRoot(0)
   , mUnfiledRoot(0)
@@ -286,6 +287,28 @@ nsNavBookmarks::EnsureRoots()
 
   return NS_OK;
 }
+
+// nsNavBookmarks::IsBookmarkedInDatabase
+//
+//    This checks to see if the specified place_id is actually bookmarked.
+
+nsresult
+nsNavBookmarks::IsBookmarkedInDatabase(int64_t aPlaceId,
+                                       bool* aIsBookmarked)
+{
+  nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement(
+    "SELECT 1 FROM moz_bookmarks WHERE fk = :page_id"
+  );
+  NS_ENSURE_STATE(stmt);
+  mozStorageStatementScoper scoper(stmt);
+
+  nsresult rv = stmt->BindInt64ByName(NS_LITERAL_CSTRING("page_id"), aPlaceId);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = stmt->ExecuteStep(aIsBookmarked);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return NS_OK;
+}
+
 
 nsresult
 nsNavBookmarks::AdjustIndices(int64_t aFolderId,
@@ -1103,6 +1126,7 @@ nsNavBookmarks::GetDescendantChildren(int64_t aFolderId,
       "SELECT h.id, h.url, b.title, h.rev_host, h.visit_count, "
              "h.last_visit_date, null, b.id, b.dateAdded, b.lastModified, "
              "b.parent, null, h.frecency, h.hidden, h.guid, null, null, null, "
+             "null, null, "
              "b.guid, b.position, b.type, b.fk, b.syncStatus "
       "FROM moz_bookmarks b "
       "LEFT JOIN moz_places h ON b.fk = h.id "
@@ -2149,6 +2173,7 @@ nsNavBookmarks::QueryFolderChildren(
     "SELECT h.id, h.url, b.title, h.rev_host, h.visit_count, "
            "h.last_visit_date, null, b.id, b.dateAdded, b.lastModified, "
            "b.parent, null, h.frecency, h.hidden, h.guid, null, null, null, "
+           "null, null, "
            "b.guid, b.position, b.type, b.fk "
     "FROM moz_bookmarks b "
     "LEFT JOIN moz_places h ON b.fk = h.id "
@@ -2356,6 +2381,117 @@ nsNavBookmarks::FetchFolderInfo(int64_t aFolderId,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
+  return NS_OK;
+}
+
+
+NS_IMETHODIMP
+nsNavBookmarks::IsBookmarked(nsIURI* aURI, bool* aBookmarked)
+{
+  NS_ENSURE_ARG(aURI);
+  NS_ENSURE_ARG_POINTER(aBookmarked);
+
+  nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement(
+    "SELECT 1 FROM moz_bookmarks b "
+    "JOIN moz_places h ON b.fk = h.id "
+    "WHERE h.url_hash = hash(:page_url) AND h.url = :page_url"
+  );
+  NS_ENSURE_STATE(stmt);
+  mozStorageStatementScoper scoper(stmt);
+
+  nsresult rv = URIBinder::Bind(stmt, NS_LITERAL_CSTRING("page_url"), aURI);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = stmt->ExecuteStep(aBookmarked);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return NS_OK;
+}
+
+
+NS_IMETHODIMP
+nsNavBookmarks::GetBookmarkedURIFor(nsIURI* aURI, nsIURI** _retval)
+{
+  NS_ENSURE_ARG(aURI);
+  NS_ENSURE_ARG_POINTER(_retval);
+
+  *_retval = nullptr;
+
+  nsNavHistory* history = nsNavHistory::GetHistoryService();
+  NS_ENSURE_TRUE(history, NS_ERROR_OUT_OF_MEMORY);
+  int64_t placeId;
+  nsAutoCString placeGuid;
+  nsresult rv = history->GetIdForPage(aURI, &placeId, placeGuid);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!placeId) {
+    // This URI is unknown, just return null.
+    return NS_OK;
+  }
+
+  // Check if a bookmark exists in the redirects chain for this URI.
+  // The query will also check if the page is directly bookmarked, and return
+  // the first found bookmark in case.  The check is directly on moz_bookmarks
+  // without special filtering.
+  // The next query finds the bookmarked ancestors in a redirects chain.
+  // It won't go further than 3 levels of redirects (a->b->c->your_place_id).
+  // To make this path 100% correct (up to any level) we would need either:
+  //  - A separate hash, build through recursive querying of the database.
+  //    This solution was previously implemented, but it had a negative effect
+  //    on startup since at each startup we have to recursively query the
+  //    database to rebuild a hash that is always the same across sessions.
+  //    It must be updated at each visit and bookmarks change too.  The code to
+  //    manage it is complex and prone to errors, sometimes causing incorrect
+  //    data fetches (for example wrong favicon for a redirected bookmark).
+  //  - A better way to track redirects for a visit.
+  //    We would need a separate table to track redirects, in the table we would
+  //    have visit_id, redirect_session.  To get all sources for
+  //    a visit then we could just join this table and get all visit_id that
+  //    are in the same redirect_session as our visit.  This has the drawback
+  //    that we can't ensure data integrity in the downgrade -> upgrade path,
+  //    since an old version would not update the table on new visits.
+  //
+  // For most cases these levels of redirects should be fine though, it's hard
+  // to hit a page that is 4 or 5 levels of redirects below a bookmarked page.
+  //
+  // As a bonus the query also checks first if place_id is already a bookmark,
+  // so you don't have to check that apart.
+
+  nsCString query = nsPrintfCString(
+    "SELECT url FROM moz_places WHERE id = ( "
+      "SELECT :page_id FROM moz_bookmarks WHERE fk = :page_id "
+      "UNION ALL "
+      "SELECT COALESCE(grandparent.place_id, parent.place_id) AS r_place_id "
+      "FROM moz_historyvisits dest "
+      "LEFT JOIN moz_historyvisits parent ON parent.id = dest.from_visit "
+                                        "AND dest.visit_type IN (%d, %d) "
+      "LEFT JOIN moz_historyvisits grandparent ON parent.from_visit = grandparent.id "
+                                             "AND parent.visit_type IN (%d, %d) "
+      "WHERE dest.place_id = :page_id "
+      "AND EXISTS(SELECT 1 FROM moz_bookmarks WHERE fk = r_place_id) "
+      "LIMIT 1 "
+    ")",
+    nsINavHistoryService::TRANSITION_REDIRECT_PERMANENT,
+    nsINavHistoryService::TRANSITION_REDIRECT_TEMPORARY,
+    nsINavHistoryService::TRANSITION_REDIRECT_PERMANENT,
+    nsINavHistoryService::TRANSITION_REDIRECT_TEMPORARY
+  );
+
+  nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement(query);
+  NS_ENSURE_STATE(stmt);
+  mozStorageStatementScoper scoper(stmt);
+
+  rv = stmt->BindInt64ByName(NS_LITERAL_CSTRING("page_id"), placeId);
+  NS_ENSURE_SUCCESS(rv, rv);
+  bool hasBookmarkedOrigin;
+  if (NS_SUCCEEDED(stmt->ExecuteStep(&hasBookmarkedOrigin)) &&
+      hasBookmarkedOrigin) {
+    nsAutoCString spec;
+    rv = stmt->GetUTF8String(0, spec);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_NewURI(_retval, spec);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  // If there is no bookmarked origin, we will just return null.
   return NS_OK;
 }
 
@@ -3319,18 +3455,16 @@ nsNavBookmarks::OnPageAnnotationSet(nsIURI* aPage, const nsACString& aName)
 
 NS_IMETHODIMP
 nsNavBookmarks::OnItemAnnotationSet(int64_t aItemId, const nsACString& aName,
-                                    uint16_t aSource, bool aDontUpdateLastModified)
+                                    uint16_t aSource)
 {
   BookmarkData bookmark;
   nsresult rv = FetchItemInfo(aItemId, bookmark);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!aDontUpdateLastModified) {
-    bookmark.lastModified = RoundedPRNow();
-    rv = SetItemDateInternal(LAST_MODIFIED, DetermineSyncChangeDelta(aSource),
-                             bookmark.id, bookmark.lastModified);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
+  bookmark.lastModified = RoundedPRNow();
+  rv = SetItemDateInternal(LAST_MODIFIED, DetermineSyncChangeDelta(aSource),
+                           bookmark.id, bookmark.lastModified);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
                    nsINavBookmarkObserver,
@@ -3362,7 +3496,7 @@ nsNavBookmarks::OnItemAnnotationRemoved(int64_t aItemId, const nsACString& aName
 {
   // As of now this is doing the same as OnItemAnnotationSet, so just forward
   // the call.
-  nsresult rv = OnItemAnnotationSet(aItemId, aName, aSource, false);
+  nsresult rv = OnItemAnnotationSet(aItemId, aName, aSource);
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }

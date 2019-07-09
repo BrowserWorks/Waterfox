@@ -23,16 +23,8 @@ ClientCanvasLayer::RenderLayer()
 
   RenderMaskLayers(this);
 
-  ClientCanvasRenderer* canvasRenderer = mCanvasRenderer->AsClientCanvasRenderer();
-  MOZ_ASSERT(canvasRenderer);
-  canvasRenderer->UpdateCompositableClient();
+  UpdateCompositableClient();
   ClientManager()->Hold(this);
-}
-
-CanvasRenderer*
-ClientCanvasLayer::CreateCanvasRendererInternal()
-{
-  return new ClientCanvasRenderer(this);
 }
 
 already_AddRefed<CanvasLayer>

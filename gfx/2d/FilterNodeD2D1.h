@@ -69,10 +69,6 @@ protected:
   std::vector<RefPtr<FilterNodeD2D1>> mInputFilters;
   std::vector<RefPtr<SourceSurface>> mInputSurfaces;
   FilterType mType;
-
-private:
-  using FilterNode::SetAttribute;
-  using FilterNode::SetInput;
 };
 
 class FilterNodeConvolveD2D1 : public FilterNodeD2D1
@@ -91,9 +87,6 @@ public:
   virtual ID2D1Effect* InputEffect() override;
 
 private:
-  using FilterNode::SetAttribute;
-  using FilterNode::SetInput;
-
   void UpdateChain();
   void UpdateOffset();
   void UpdateSourceRect();

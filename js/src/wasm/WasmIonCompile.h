@@ -21,16 +21,17 @@
 
 #include "mozilla/Attributes.h"
 
-#include "wasm/WasmGenerator.h"
+#include "wasm/WasmTypes.h"
 
 namespace js {
 namespace wasm {
 
+class CompileTask;
+class FuncCompileUnit;
+
 // Generates very fast code at the expense of compilation time.
 MOZ_MUST_USE bool
-IonCompileFunctions(const ModuleEnvironment& env, LifoAlloc& lifo,
-                    const FuncCompileInputVector& inputs, CompiledCode* code,
-                    UniqueChars* error);
+IonCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* error);
 
 } // namespace wasm
 } // namespace js

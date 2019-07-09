@@ -114,13 +114,14 @@ SourceBuffer::GetBuffered(ErrorResult& aRv)
   media::TimeIntervals intersection = mTrackBuffersManager->Buffered();
   MSE_DEBUGV("intersection=%s", DumpTimeRanges(intersection).get());
   if (mBuffered) {
-    media::TimeIntervals currentValue(mBuffered->ToTimeIntervals());
+    media::TimeIntervals currentValue(mBuffered);
     rangeChanged = (intersection != currentValue);
     MSE_DEBUGV("currentValue=%s", DumpTimeRanges(currentValue).get());
   }
   // 5. If intersection ranges does not contain the exact same range information as the current value of this attribute, then update the current value of this attribute to intersection ranges.
   if (rangeChanged) {
-    mBuffered = new TimeRanges(ToSupports(this), intersection);
+    mBuffered = new TimeRanges(ToSupports(this));
+    intersection.ToTimeRanges(mBuffered);
   }
   // 6. Return the current value of this attribute.
   return mBuffered;
@@ -280,9 +281,9 @@ SourceBuffer::Detach()
   }
   AbortBufferAppend();
   if (mTrackBuffersManager) {
-    mMediaSource->GetDecoder()->GetDemuxer()->DetachSourceBuffer(
-      mTrackBuffersManager);
     mTrackBuffersManager->Detach();
+    mMediaSource->GetDecoder()->GetDemuxer()->DetachSourceBuffer(
+      mTrackBuffersManager.get());
   }
   mTrackBuffersManager = nullptr;
   mMediaSource = nullptr;
@@ -324,7 +325,7 @@ SourceBuffer::SourceBuffer(MediaSource* aMediaSource,
     SetMode(SourceBufferAppendMode::Segments, dummy);
   }
   mMediaSource->GetDecoder()->GetDemuxer()->AttachSourceBuffer(
-    mTrackBuffersManager);
+    mTrackBuffersManager.get());
 }
 
 SourceBuffer::~SourceBuffer()
@@ -579,7 +580,11 @@ SourceBuffer::HighestEndTime()
 NS_IMPL_CYCLE_COLLECTION_CLASS(SourceBuffer)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(SourceBuffer)
-  tmp->Detach();
+  // Tell the TrackBuffer to end its current SourceBufferResource.
+  TrackBuffersManager* manager = tmp->mTrackBuffersManager;
+  if (manager) {
+    manager->Detach();
+  }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mMediaSource)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mBuffered)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(DOMEventTargetHelper)
@@ -593,7 +598,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_ADDREF_INHERITED(SourceBuffer, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(SourceBuffer, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(SourceBuffer)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(SourceBuffer)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 #undef MSE_DEBUG

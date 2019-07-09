@@ -18,7 +18,7 @@ info: >
      c. If succeeded is false and IsStrictReference(V) is true, throw a
         TypeError exception.
      d. Return.
-features: [cross-realm, Symbol, Proxy]
+features: [Symbol, Proxy]
 ---*/
 
 var other = $262.createRealm().global;

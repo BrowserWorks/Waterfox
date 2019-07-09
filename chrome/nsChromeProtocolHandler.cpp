@@ -186,7 +186,7 @@ nsChromeProtocolHandler::NewChannel2(nsIURI* aURI,
     // property of the result
     nsCOMPtr<nsIURL> url = do_QueryInterface(aURI);
     nsAutoCString path;
-    rv = url->GetPathQueryRef(path);
+    rv = url->GetPath(path);
     if (StringBeginsWith(path, NS_LITERAL_CSTRING("/content/"))) {
         result->SetOwner(nsContentUtils::GetSystemPrincipal());
     }

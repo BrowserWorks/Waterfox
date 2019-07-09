@@ -69,13 +69,13 @@ fn generate_properties() {
         }
     }
 
-    let script = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("properties").join("build.py");
+    let script = Path::new(file!()).parent().unwrap().join("properties").join("build.py");
     let product = if cfg!(feature = "gecko") { "gecko" } else { "servo" };
     let status = Command::new(&*PYTHON)
         .arg(&script)
         .arg(product)
         .arg("style-crate")
+        .arg(if cfg!(feature = "testing") { "testing" } else { "regular" })
         .status()
         .unwrap();
     if !status.success() {

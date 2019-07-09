@@ -100,22 +100,20 @@ public class PanelsPreferenceCategory extends CustomListCategory {
         int index = 0;
         for (PanelConfig panelConfig : configState) {
             final boolean isRemovable = panelConfig.isDynamic();
-            final boolean isHidden = panelConfig.isDisabled();
 
             // Create and add the pref.
             final String panelId = panelConfig.getId();
             final boolean animate = TextUtils.equals(animatePanelId, panelId);
 
-            final PanelsPreference pref;
-            if (TextUtils.equals(panelId, HomeConfig.getIdForBuiltinPanelType(HomeConfig.PanelType.TOP_SITES))) {
-                pref = new TopSitesPanelsPreference(getContext(), PanelsPreferenceCategory.this, isRemovable, isHidden, index, animate);
-            } else {
-                pref = new PanelsPreference(getContext(), PanelsPreferenceCategory.this, isRemovable, isHidden, index, animate);
-            }
+            final PanelsPreference pref = new PanelsPreference(getContext(), PanelsPreferenceCategory.this, isRemovable, index, animate);
             pref.setTitle(panelConfig.getTitle());
             pref.setKey(panelConfig.getId());
             // XXX: Pull icon from PanelInfo.
             addPreference(pref);
+
+            if (panelConfig.isDisabled()) {
+                pref.setHidden(true);
+            }
 
             index++;
         }

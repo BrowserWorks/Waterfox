@@ -38,7 +38,6 @@
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"
 #include "jit/IonAnalysis.h"
-#include "jit/Jit.h"
 #include "vm/AsyncFunction.h"
 #include "vm/AsyncIteration.h"
 #include "vm/Debugger.h"
@@ -96,7 +95,7 @@ js::BoxNonStrictThis(JSContext* cx, HandleValue thisv, MutableHandleValue vp)
     MOZ_ASSERT(!thisv.isMagic());
 
     if (thisv.isNullOrUndefined()) {
-        vp.set(cx->global()->lexicalEnvironment().thisValue());
+        vp.set(GetThisValue(cx->global()));
         return true;
     }
 
@@ -128,32 +127,6 @@ js::GetFunctionThis(JSContext* cx, AbstractFramePtr frame, MutableHandleValue re
     }
 
     RootedValue thisv(cx, frame.thisArgument());
-
-    // If there is a NSVO on environment chain, use it as basis for fallback
-    // global |this|. This gives a consistent definition of global lexical
-    // |this| between function and global contexts.
-    //
-    // NOTE: If only non-syntactic WithEnvironments are on the chain, we use the
-    // global lexical |this| value. This is for compatibility with the Subscript
-    // Loader.
-    if (frame.script()->hasNonSyntacticScope() && thisv.isNullOrUndefined()) {
-        RootedObject env(cx, frame.environmentChain());
-        while (true) {
-            if (IsNSVOLexicalEnvironment(env) || IsGlobalLexicalEnvironment(env)) {
-                res.set(GetThisValueOfLexical(env));
-                return true;
-            }
-            if (!env->enclosingEnvironment()) {
-                // This can only happen in Debugger eval frames: in that case we
-                // don't always have a global lexical env, see EvaluateInEnv.
-                MOZ_ASSERT(env->is<GlobalObject>());
-                res.set(GetThisValue(env));
-                return true;
-            }
-            env = env->enclosingEnvironment();
-        }
-    }
-
     return BoxNonStrictThis(cx, thisv, res);
 }
 
@@ -163,7 +136,7 @@ js::GetNonSyntacticGlobalThis(JSContext* cx, HandleObject envChain, MutableHandl
     RootedObject env(cx, envChain);
     while (true) {
         if (IsExtensibleLexicalEnvironment(env)) {
-            res.set(GetThisValueOfLexical(env));
+            res.set(env->as<LexicalEnvironmentObject>().thisValue());
             return;
         }
         if (!env->enclosingEnvironment()) {
@@ -335,18 +308,30 @@ js::ValueToCallable(JSContext* cx, HandleValue v, int numToSkip, MaybeConstruct 
     return nullptr;
 }
 
-static bool
-MaybeCreateThisForConstructor(JSContext* cx, JSScript* calleeScript, const CallArgs& args,
-                              bool createSingleton)
+bool
+RunState::maybeCreateThisForConstructor(JSContext* cx)
 {
-    if (args.thisv().isObject())
-        return true;
-
-    RootedObject callee(cx, &args.callee());
-    RootedObject newTarget(cx, &args.newTarget().toObject());
-    NewObjectKind newKind = createSingleton ? SingletonObject : GenericObject;
-
-    return CreateThis(cx, callee, calleeScript, newTarget, newKind, args.mutableThisv());
+    if (isInvoke()) {
+        InvokeState& invoke = *asInvoke();
+        if (invoke.constructing() && invoke.args().thisv().isPrimitive()) {
+            RootedObject callee(cx, &invoke.args().callee());
+            if (callee->isBoundFunction()) {
+                invoke.args().setThis(MagicValue(JS_UNINITIALIZED_LEXICAL));
+            } else if (script()->isDerivedClassConstructor()) {
+                MOZ_ASSERT(callee->as<JSFunction>().isClassConstructor());
+                invoke.args().setThis(MagicValue(JS_UNINITIALIZED_LEXICAL));
+            } else {
+                MOZ_ASSERT(invoke.args().thisv().isMagic(JS_IS_CONSTRUCTING));
+                RootedObject newTarget(cx, &invoke.args().newTarget().toObject());
+                NewObjectKind newKind = invoke.createSingleton() ? SingletonObject : GenericObject;
+                JSObject* obj = CreateThisForFunction(cx, callee, newTarget, newKind);
+                if (!obj)
+                    return false;
+                invoke.args().setThis(ObjectValue(*obj));
+            }
+        }
+    }
+    return true;
 }
 
 static MOZ_NEVER_INLINE bool
@@ -364,15 +349,6 @@ ExecuteState::pushInterpreterFrame(JSContext* cx)
     return cx->interpreterStack().pushExecuteFrame(cx, script_, newTargetValue_,
                                                    envChain_, evalInFrame_);
 }
-
-InterpreterFrame*
-RunState::pushInterpreterFrame(JSContext* cx)
-{
-    if (isInvoke())
-        return asInvoke()->pushInterpreterFrame(cx);
-    return asExecute()->pushInterpreterFrame(cx);
-}
-
 // MSVC with PGO inlines a lot of functions in RunScript, resulting in large
 // stack frames and stack overflow issues, see bug 1167883. Turn off PGO to
 // avoid this.
@@ -405,14 +381,24 @@ js::RunScript(JSContext* cx, RunState& state)
 
     state.script()->ensureNonLazyCanonicalFunction();
 
-    jit::EnterJitStatus status = jit::MaybeEnterJit(cx, state);
-    switch (status) {
-      case jit::EnterJitStatus::Error:
-        return false;
-      case jit::EnterJitStatus::Ok:
-        return true;
-      case jit::EnterJitStatus::NotEntered:
-        break;
+    if (jit::IsIonEnabled(cx)) {
+        jit::MethodStatus status = jit::CanEnter(cx, state);
+        if (status == jit::Method_Error)
+            return false;
+        if (status == jit::Method_Compiled) {
+            jit::JitExecStatus status = jit::IonCannon(cx, state);
+            return !IsErrorStatus(status);
+        }
+    }
+
+    if (jit::IsBaselineEnabled(cx)) {
+        jit::MethodStatus status = jit::CanEnterBaselineMethod(cx, state);
+        if (status == jit::Method_Error)
+            return false;
+        if (status == jit::Method_Compiled) {
+            jit::JitExecStatus status = jit::EnterBaselineMethod(cx, state);
+            return !IsErrorStatus(status);
+        }
     }
 
     if (state.isInvoke()) {
@@ -425,6 +411,13 @@ js::RunScript(JSContext* cx, RunState& state)
 #ifdef _MSC_VER
 # pragma optimize("", on)
 #endif
+
+struct AutoGCIfRequested
+{
+    JSRuntime* runtime;
+    explicit AutoGCIfRequested(JSRuntime* rt) : runtime(rt) {}
+    ~AutoGCIfRequested() { runtime->gc.gcIfRequested(); }
+};
 
 /*
  * Find a function reference and its 'this' value implicit first parameter
@@ -441,6 +434,9 @@ js::InternalCallOrConstruct(JSContext* cx, const CallArgs& args, MaybeConstruct 
 {
     MOZ_ASSERT(args.length() <= ARGS_LENGTH_MAX);
     MOZ_ASSERT(!cx->zone()->types.activeAnalysis);
+
+    /* Perform GC if necessary on exit from the function. */
+    AutoGCIfRequested gcIfRequested(cx->runtime());
 
     unsigned skipForCallee = args.length() + 1 + (construct == CONSTRUCT);
     if (args.calleev().isPrimitive())
@@ -481,15 +477,11 @@ js::InternalCallOrConstruct(JSContext* cx, const CallArgs& args, MaybeConstruct 
 
     // Check to see if createSingleton flag should be set for this frame.
     if (construct) {
-        bool createSingleton = false;
         jsbytecode* pc;
         if (JSScript* script = cx->currentScript(&pc)) {
             if (ObjectGroup::useSingletonForNewObject(cx, script, pc))
-                createSingleton = true;
+                state.setCreateSingleton();
         }
-
-        if (!MaybeCreateThisForConstructor(cx, state.script(), args, createSingleton))
-            return false;
     }
 
     bool ok = RunScript(cx, state);
@@ -1079,7 +1071,6 @@ PopEnvironment(JSContext* cx, EnvironmentIter& ei)
       case ScopeKind::NonSyntactic:
       case ScopeKind::Module:
         break;
-      case ScopeKind::WasmInstance:
       case ScopeKind::WasmFunction:
         MOZ_CRASH("wasm is not interpreted");
         break;
@@ -1447,37 +1438,44 @@ JS_STATIC_ASSERT(JSOP_IFNE_LENGTH == JSOP_IFEQ_LENGTH);
 JS_STATIC_ASSERT(JSOP_IFNE == JSOP_IFEQ + 1);
 
 /*
- * Compute the implicit |this| value used by a call expression with an
- * unqualified name reference. The environment the binding was found on is
- * passed as argument, env.
+ * Compute the implicit |this| parameter for a call expression where the callee
+ * funval was resolved from an unqualified name reference to a property on obj
+ * (an object on the env chain).
  *
- * The implicit |this| is |undefined| for all environment types except
- * WithEnvironmentObject. This is the case for |with(...) {...}| expressions or
- * if the embedding uses a non-syntactic WithEnvironmentObject.
+ * We can avoid computing |this| eagerly and push the implicit callee-coerced
+ * |this| value, undefined, if either of these conditions hold:
  *
- * NOTE: A non-syntactic WithEnvironmentObject may have a corresponding
- * extensible LexicalEnviornmentObject, but it will not be considered as an
- * implicit |this|. This is for compatibility with the Gecko subscript loader.
+ * 1. The nominal |this|, obj, is a global object.
+ *
+ * 2. The nominal |this|, obj, has one of LexicalEnvironment or Call class (this
+ *    is what IsCacheableEnvironment tests). Such objects-as-envs must be
+ *    censored with undefined.
+ *
+ * Otherwise, we bind |this| to the result of GetThisValue(). Only names inside
+ * |with| statements and embedding-specific environment objects fall into this
+ * category.
+ *
+ * If the callee is a strict mode function, then code implementing JSOP_THIS
+ * in the interpreter and JITs will leave undefined as |this|. If funval is a
+ * function not in strict mode, JSOP_THIS code replaces undefined with funval's
+ * global.
  */
 static inline Value
-ComputeImplicitThis(JSObject* env)
+ComputeImplicitThis(JSObject* obj)
 {
-    // Fast-path for GlobalObject
-    if (env->is<GlobalObject>())
+    if (obj->is<GlobalObject>())
         return UndefinedValue();
 
-    // WithEnvironmentObjects have an actual implicit |this|
-    if (env->is<WithEnvironmentObject>())
-        return GetThisValueOfWith(env);
+    if (IsCacheableEnvironment(obj))
+        return UndefinedValue();
 
     // Debugger environments need special casing, as despite being
     // non-syntactic, they wrap syntactic environments and should not be
     // treated like other embedding-specific non-syntactic environments.
-    if (env->is<DebugEnvironmentProxy>())
-        return ComputeImplicitThis(&env->as<DebugEnvironmentProxy>().environment());
+    if (obj->is<DebugEnvironmentProxy>())
+        return ComputeImplicitThis(&obj->as<DebugEnvironmentProxy>().environment());
 
-    MOZ_ASSERT(env->is<EnvironmentObject>());
-    return UndefinedValue();
+    return GetThisValue(obj);
 }
 
 static MOZ_ALWAYS_INLINE bool
@@ -1612,10 +1610,10 @@ SetObjectElementOperation(JSContext* cx, HandleObject obj, HandleId id, HandleVa
     if (obj->isNative() &&
         JSID_IS_ATOM(id) &&
         !obj->as<NativeObject>().inDictionaryMode() &&
-        !obj->as<NativeObject>().hadElementsAccess() &&
+        !obj->hadElementsAccess() &&
         obj->as<NativeObject>().slotSpan() > PropertyTree::MAX_HEIGHT_WITH_ELEMENTS_ACCESS / 3)
     {
-        if (!NativeObject::setHadElementsAccess(cx, obj.as<NativeObject>()))
+        if (!JSObject::setHadElementsAccess(cx, obj))
             return false;
     }
 
@@ -1986,8 +1984,7 @@ CASE(EnableInterruptsPseudoOpcode)
 CASE(JSOP_NOP)
 CASE(JSOP_NOP_DESTRUCTURING)
 CASE(JSOP_TRY_DESTRUCTURING_ITERCLOSE)
-CASE(JSOP_ITERNEXT)
-CASE(JSOP_UNUSED126)
+CASE(JSOP_UNUSED222)
 CASE(JSOP_UNUSED223)
 CASE(JSOP_CONDSWITCH)
 {
@@ -2500,24 +2497,24 @@ CASE(JSOP_GE)
 }
 END_CASE(JSOP_GE)
 
-#define SIGNED_SHIFT_OP(OP, TYPE)                                             \
+#define SIGNED_SHIFT_OP(OP)                                                   \
     JS_BEGIN_MACRO                                                            \
         int32_t i, j;                                                         \
         if (!ToInt32(cx, REGS.stackHandleAt(-2), &i))                         \
             goto error;                                                       \
         if (!ToInt32(cx, REGS.stackHandleAt(-1), &j))                         \
             goto error;                                                       \
-        i = TYPE(i) OP (j & 31);                                              \
+        i = i OP (j & 31);                                                    \
         REGS.sp--;                                                            \
         REGS.sp[-1].setInt32(i);                                              \
     JS_END_MACRO
 
 CASE(JSOP_LSH)
-    SIGNED_SHIFT_OP(<<, uint32_t);
+    SIGNED_SHIFT_OP(<<);
 END_CASE(JSOP_LSH)
 
 CASE(JSOP_RSH)
-    SIGNED_SHIFT_OP(>>, int32_t);
+    SIGNED_SHIFT_OP(>>);
 END_CASE(JSOP_RSH)
 
 #undef SIGNED_SHIFT_OP
@@ -3080,37 +3077,52 @@ CASE(JSOP_FUNCALL)
         if (!funScript)
             goto error;
 
-        bool createSingleton = false;
-        if (construct) {
-            createSingleton = ObjectGroup::useSingletonForNewObject(cx, script, REGS.pc);
-
-            if (!MaybeCreateThisForConstructor(cx, funScript, args, createSingleton))
-                goto error;
-        }
+        bool createSingleton = ObjectGroup::useSingletonForNewObject(cx, script, REGS.pc);
 
         TypeMonitorCall(cx, args, construct);
 
-        {
-            InvokeState state(cx, args, construct);
+        mozilla::Maybe<InvokeState> state;
+        state.emplace(cx, args, construct);
 
-            jit::EnterJitStatus status = jit::MaybeEnterJit(cx, state);
-            switch (status) {
-              case jit::EnterJitStatus::Error:
+        if (createSingleton)
+            state->setCreateSingleton();
+
+        if (!createSingleton && jit::IsIonEnabled(cx)) {
+            jit::MethodStatus status = jit::CanEnter(cx, state.ref());
+            if (status == jit::Method_Error)
                 goto error;
-              case jit::EnterJitStatus::Ok:
-                interpReturnOK = true;
-                CHECK_BRANCH();
+            if (status == jit::Method_Compiled) {
+                jit::JitExecStatus exec = jit::IonCannon(cx, state.ref());
+                interpReturnOK = !IsErrorStatus(exec);
+                if (interpReturnOK)
+                    CHECK_BRANCH();
                 REGS.sp = args.spAfterCall();
                 goto jit_return;
-              case jit::EnterJitStatus::NotEntered:
-                break;
             }
         }
 
+        if (jit::IsBaselineEnabled(cx)) {
+            jit::MethodStatus status = jit::CanEnterBaselineMethod(cx, state.ref());
+            if (status == jit::Method_Error)
+                goto error;
+            if (status == jit::Method_Compiled) {
+                jit::JitExecStatus exec = jit::EnterBaselineMethod(cx, state.ref());
+                interpReturnOK = !IsErrorStatus(exec);
+                if (interpReturnOK)
+                    CHECK_BRANCH();
+                REGS.sp = args.spAfterCall();
+                goto jit_return;
+            }
+        }
+
+        state.reset();
         funScript = fun->nonLazyScript();
 
         if (!activation.pushInlineFrame(args, funScript, construct))
             goto error;
+
+        if (createSingleton)
+            REGS.fp()->setCreateSingleton();
     }
 
     SET_SCRIPT(REGS.fp()->script());
@@ -3288,7 +3300,7 @@ CASE(JSOP_CALLSITEOBJ)
     ReservedRooted<JSObject*> cso(&rootObject0, script->getObject(REGS.pc));
     ReservedRooted<JSObject*> raw(&rootObject1, script->getObject(GET_UINT32_INDEX(REGS.pc) + 1));
 
-    if (!cx->compartment()->getTemplateLiteralObject(cx, raw.as<ArrayObject>(), &cso))
+    if (!cx->compartment()->getTemplateLiteralObject(cx, raw, &cso))
         goto error;
 
     PUSH_OBJECT(*cso);
@@ -3720,6 +3732,7 @@ CASE(JSOP_NEWINIT)
 END_CASE(JSOP_NEWINIT)
 
 CASE(JSOP_NEWARRAY)
+CASE(JSOP_SPREADCALLARRAY)
 {
     uint32_t length = GET_UINT32(REGS.pc);
     JSObject* obj = NewArrayOperation(cx, script, REGS.pc, length);
@@ -4456,7 +4469,7 @@ js::DefFunOperation(JSContext* cx, HandleScript script, HandleObject envChain,
 
     /* Steps 5d, 5f. */
     if (!prop || pobj != parent) {
-        if (!DefineDataProperty(cx, parent, name, rval, attrs))
+        if (!DefineProperty(cx, parent, name, rval, nullptr, nullptr, attrs))
             return false;
 
         return parent->is<GlobalObject>() ? parent->compartment()->addToVarNames(cx, name) : true;
@@ -4475,7 +4488,7 @@ js::DefFunOperation(JSContext* cx, HandleScript script, HandleObject envChain,
     if (parent->is<GlobalObject>()) {
         Shape* shape = prop.shape();
         if (shape->configurable()) {
-            if (!DefineDataProperty(cx, parent, name, rval, attrs))
+            if (!DefineProperty(cx, parent, name, rval, nullptr, nullptr, attrs))
                 return false;
         } else {
             MOZ_ASSERT(shape->isDataDescriptor());
@@ -4679,7 +4692,7 @@ js::AtomicIsLockFree(JSContext* cx, HandleValue in, int* out)
     int i;
     if (!ToInt32(cx, in, &i))
         return false;
-    *out = js::jit::AtomicOperations::isLockfreeJS(i);
+    *out = js::jit::AtomicOperations::isLockfree(i);
     return true;
 }
 
@@ -4772,10 +4785,10 @@ js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc, HandleObject obj, H
     MOZ_ASSERT(val->isCallable());
     GetterOp getter;
     SetterOp setter;
+    unsigned attrs = JSPROP_SHARED;
 
     JSOp op = JSOp(*pc);
 
-    unsigned attrs = 0;
     if (!IsHiddenInitOp(op))
         attrs |= JSPROP_ENUMERATE;
 
@@ -4793,7 +4806,8 @@ js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc, HandleObject obj, H
         attrs |= JSPROP_SETTER;
     }
 
-    return DefineAccessorProperty(cx, obj, id, getter, setter, attrs);
+    RootedValue scratch(cx);
+    return DefineProperty(cx, obj, id, scratch, getter, setter, attrs);
 }
 
 bool
@@ -4954,7 +4968,7 @@ js::NewObjectOperation(JSContext* cx, HandleScript script, jsbytecode* pc,
             return UnboxedPlainObject::create(cx, group, newKind);
     }
 
-    RootedPlainObject obj(cx);
+    RootedObject obj(cx);
 
     if (*pc == JSOP_NEWOBJECT) {
         RootedPlainObject baseObject(cx, &script->getObject(pc)->as<PlainObject>());
@@ -5022,16 +5036,23 @@ js::NewArrayOperation(JSContext* cx, HandleScript script, jsbytecode* pc, uint32
 
         if (group->shouldPreTenure() || group->maybePreliminaryObjects())
             newKind = TenuredObject;
+
+        if (group->maybeUnboxedLayout())
+            return UnboxedArrayObject::create(cx, group, length, newKind);
     }
 
     ArrayObject* obj = NewDenseFullyAllocatedArray(cx, length, nullptr, newKind);
     if (!obj)
         return nullptr;
 
-    if (newKind == SingletonObject)
+    if (newKind == SingletonObject) {
         MOZ_ASSERT(obj->isSingleton());
-    else
+    } else {
         obj->setGroup(group);
+
+        if (PreliminaryObjectArray* preliminaryObjects = group->maybePreliminaryObjects())
+            preliminaryObjects->registerNewObject(obj);
+    }
 
     return obj;
 }
@@ -5042,6 +5063,12 @@ js::NewArrayOperationWithTemplate(JSContext* cx, HandleObject templateObject)
     MOZ_ASSERT(!templateObject->isSingleton());
 
     NewObjectKind newKind = templateObject->group()->shouldPreTenure() ? TenuredObject : GenericObject;
+
+    if (templateObject->is<UnboxedArrayObject>()) {
+        uint32_t length = templateObject->as<UnboxedArrayObject>().length();
+        RootedObjectGroup group(cx, templateObject->group());
+        return UnboxedArrayObject::create(cx, group, length, newKind);
+    }
 
     ArrayObject* obj = NewDenseFullyAllocatedArray(cx, templateObject->as<ArrayObject>().length(),
                                                    nullptr, newKind);
@@ -5160,8 +5187,6 @@ js::ThrowUninitializedThis(JSContext* cx, AbstractFramePtr frame)
         Scope* startingScope;
         if (frame.isDebuggerEvalFrame()) {
             AbstractFramePtr evalInFramePrev = frame.asInterpreterFrame()->evalInFramePrev();
-            while (evalInFramePrev.isDebuggerEvalFrame())
-                evalInFramePrev = evalInFramePrev.asInterpreterFrame()->evalInFramePrev();
             startingScope = evalInFramePrev.script()->bodyScope();
         } else {
             MOZ_ASSERT(frame.isEvalFrame());

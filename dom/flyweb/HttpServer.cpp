@@ -687,7 +687,7 @@ HttpServer::Connection::ConsumeLine(const char* aBuffer,
       NS_ENSURE_SUCCESS(rv, rv);
 
       mCurrentRequestBody = do_QueryInterface(output);
-      mPendingReq->SetBody(input, -1);
+      mPendingReq->SetBody(input);
     } else {
       LOG_V("HttpServer::Connection::ConsumeLine(%p) - No body", this);
       mState = eRequestLine;
@@ -924,7 +924,7 @@ HttpServer::Connection::QueueResponse(InternalResponse* aResponse)
                 NS_LITERAL_CSTRING("\r\n"));
   }
 
-  head.AppendLiteral("\r\n");
+  head.Append(NS_LITERAL_CSTRING("\r\n"));
 
   mOutputBuffers.AppendElement()->mString = head;
   if (body) {

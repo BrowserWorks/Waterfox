@@ -4,13 +4,11 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  EventDispatcher: "resource://gre/modules/Messaging.jsm",
-  GeckoViewUtils: "resource://gre/modules/GeckoViewUtils.jsm",
-  Services: "resource://gre/modules/Services.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
+                                  "resource://gre/modules/Messaging.jsm");
 
 // See: http://developer.android.com/reference/android/Manifest.permission.html
 const PERM_ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
@@ -18,7 +16,6 @@ const PERM_CAMERA = "android.permission.CAMERA";
 const PERM_RECORD_AUDIO = "android.permission.RECORD_AUDIO";
 
 function GeckoViewPermission() {
-  this.wrappedJSObject = this;
 }
 
 GeckoViewPermission.prototype = {
@@ -32,6 +29,12 @@ GeckoViewPermission.prototype = {
   /* ----------  nsIObserver  ---------- */
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {
+      case "app-startup": {
+        Services.obs.addObserver(this, "getUserMedia:ask-device-permission");
+        Services.obs.addObserver(this, "getUserMedia:request");
+        Services.obs.addObserver(this, "PeerConnection:request");
+        break;
+      }
       case "getUserMedia:ask-device-permission": {
         this.handleMediaAskDevicePermission(aData, aSubject);
         break;
@@ -56,7 +59,7 @@ GeckoViewPermission.prototype = {
       perms.push(PERM_RECORD_AUDIO);
     }
 
-    let dispatcher = GeckoViewUtils.getActiveDispatcher();
+    let dispatcher = this.getActiveDispatcher();
     let callback = _ => {
       Services.obs.notifyObservers(aCallback, "getUserMedia:got-device-permission");
     };
@@ -104,11 +107,11 @@ GeckoViewPermission.prototype = {
         throw "no audio source";
       }
 
-      let dispatcher = GeckoViewUtils.getDispatcherForWindow(win);
+      let dispatcher = this.getDispatcherForWindow(win);
       let uri = win.document.documentURIObject;
       return dispatcher.sendRequestForResult({
         type: "GeckoView:MediaPermission",
-        uri: uri.displaySpec,
+        uri: uri.spec,
         video: constraints.video ? sources.filter(source => source.type === "video") : null,
         audio: constraints.audio ? sources.filter(source => source.type === "audio") : null,
       }).then(response => {
@@ -150,6 +153,42 @@ GeckoViewPermission.prototype = {
     Services.obs.notifyObservers(null, "PeerConnection:response:allow", aRequest.callID);
   },
 
+  getActiveDispatcher: function() {
+    let getDispatcher = win => {
+      try {
+        let dispatcher = win.WindowEventDispatcher || EventDispatcher.for(win);
+        if (!win.closed && dispatcher) {
+          return dispatcher;
+        }
+      } catch (e) {
+        // Ignore.
+      }
+      return null;
+    };
+
+    let dispatcher = getDispatcher(Services.focus.activeWindow.top);
+    if (dispatcher) {
+      return dispatcher;
+    }
+
+    let iter = Services.wm.getEnumerator(/* windowType */ null);
+    while (iter.hasMoreElements()) {
+      dispatcher = getDispatcher(iter.getNext().QueryInterface(Ci.nsIDOMWindow).top);
+      if (dispatcher) {
+        return dispatcher;
+      }
+    }
+    return null;
+  },
+
+  getDispatcherForWindow: function(aWin) {
+    aWin = aWin.QueryInterface(Ci.nsIInterfaceRequestor)
+               .getInterface(Ci.nsIDocShell).QueryInterface(Ci.nsIDocShellTreeItem)
+               .rootTreeItem.QueryInterface(Ci.nsIInterfaceRequestor)
+               .getInterface(Ci.nsIDOMWindow);
+    return aWin.WindowEventDispatcher || EventDispatcher.for(aWin);
+  },
+
   checkAppPermissions: function(aPerms) {
     return aPerms.every(perm => this._appPermissions[perm]);
   },
@@ -181,11 +220,11 @@ GeckoViewPermission.prototype = {
     }
 
     let perm = types.queryElementAt(0, Ci.nsIContentPermissionType);
-    let dispatcher = GeckoViewUtils.getDispatcherForWindow(
-        aRequest.window ? aRequest.window : aRequest.element.ownerGlobal);
+    let dispatcher = this.getDispatcherForWindow(
+        aRequest.window ? aRequest.window.top : aRequest.element.ownerGlobal.top);
     let promise = dispatcher.sendRequestForResult({
         type: "GeckoView:ContentPermission",
-        uri: aRequest.principal.URI.displaySpec,
+        uri: aRequest.principal.URI.spec,
         perm: perm.type,
         access: perm.access !== "unused" ? perm.access : null,
     }).then(granted => {

@@ -243,15 +243,6 @@ struct VectorImpl<T, N, AP, true>
     if (aV.usingInlineStorage() || aV.mLength == aV.mTail.mCapacity) {
       return;
     }
-    if (!aV.mLength) {
-      aV.free_(aV.mBegin);
-      aV.mBegin = aV.inlineStorage();
-      aV.mTail.mCapacity = aV.kInlineCapacity;
-#ifdef DEBUG
-      aV.mTail.mReserved = 0;
-#endif
-      return;
-    }
     T* newbuf =
       aV.template pod_realloc<T>(aV.mBegin, aV.mTail.mCapacity, aV.mLength);
     if (MOZ_UNLIKELY(!newbuf)) {
@@ -259,9 +250,6 @@ struct VectorImpl<T, N, AP, true>
     }
     aV.mBegin = newbuf;
     aV.mTail.mCapacity = aV.mLength;
-#ifdef DEBUG
-    aV.mTail.mReserved = aV.mLength;
-#endif
   }
 };
 
@@ -777,17 +765,6 @@ public:
    * enables), behavior is undefined.
    */
   MOZ_MUST_USE T* extractOrCopyRawBuffer();
-
-  /**
-   * Transfer ownership of an array of objects into the vector.  The caller
-   * must have allocated the array in accordance with this vector's
-   * AllocPolicy.
-   *
-   * N.B. This call assumes that there are no uninitialized elements in the
-   *      passed range [aP, aP + aLength). The range [aP + aLength, aP +
-   *      aCapacity) must be allocated uninitialized memory.
-   */
-  void replaceRawBuffer(T* aP, size_t aLength, size_t aCapacity);
 
   /**
    * Transfer ownership of an array of objects into the vector.  The caller
@@ -1504,7 +1481,7 @@ Vector<T, N, AP>::extractOrCopyRawBuffer()
 
 template<typename T, size_t N, class AP>
 inline void
-Vector<T, N, AP>::replaceRawBuffer(T* aP, size_t aLength, size_t aCapacity)
+Vector<T, N, AP>::replaceRawBuffer(T* aP, size_t aLength)
 {
   MOZ_REENTRANCY_GUARD_ET_AL;
 
@@ -1515,7 +1492,7 @@ Vector<T, N, AP>::replaceRawBuffer(T* aP, size_t aLength, size_t aCapacity)
   }
 
   /* Take in the new buffer. */
-  if (aCapacity <= kInlineCapacity) {
+  if (aLength <= kInlineCapacity) {
     /*
      * We convert to inline storage if possible, even though aP might
      * otherwise be acceptable.  Maybe this behaviour should be
@@ -1530,18 +1507,11 @@ Vector<T, N, AP>::replaceRawBuffer(T* aP, size_t aLength, size_t aCapacity)
   } else {
     mBegin = aP;
     mLength = aLength;
-    mTail.mCapacity = aCapacity;
+    mTail.mCapacity = aLength;
   }
 #ifdef DEBUG
-  mTail.mReserved = aCapacity;
+  mTail.mReserved = aLength;
 #endif
-}
-
-template<typename T, size_t N, class AP>
-inline void
-Vector<T, N, AP>::replaceRawBuffer(T* aP, size_t aLength)
-{
-  replaceRawBuffer(aP, aLength, aLength);
 }
 
 template<typename T, size_t N, class AP>

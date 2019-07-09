@@ -3,30 +3,31 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use dom::abstractworker::SimpleWorkerErrorHandler;
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
+use dom::bindings::codegen::Bindings::EventHandlerBinding::EventHandlerNonNull;
 use dom::bindings::codegen::Bindings::ServiceWorkerBinding::{ServiceWorkerMethods, ServiceWorkerState, Wrap};
 use dom::bindings::error::{ErrorResult, Error};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::Root;
 use dom::bindings::refcounted::Trusted;
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::USVString;
 use dom::bindings::structuredclone::StructuredCloneData;
 use dom::eventtarget::EventTarget;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use js::jsapi::{HandleValue, JSContext};
+use script_thread::Runnable;
 use script_traits::{ScriptMsg, DOMMessage};
 use servo_url::ServoUrl;
 use std::cell::Cell;
-use task::TaskOnce;
 
 pub type TrustedServiceWorkerAddress = Trusted<ServiceWorker>;
 
 #[dom_struct]
 pub struct ServiceWorker {
     eventtarget: EventTarget,
-    script_url: DomRefCell<String>,
+    script_url: DOMRefCell<String>,
     scope_url: ServoUrl,
     state: Cell<ServiceWorkerState>,
     skip_waiting: Cell<bool>
@@ -38,7 +39,7 @@ impl ServiceWorker {
                      scope_url: ServoUrl) -> ServiceWorker {
         ServiceWorker {
             eventtarget: EventTarget::new_inherited(),
-            script_url: DomRefCell::new(String::from(script_url)),
+            script_url: DOMRefCell::new(String::from(script_url)),
             state: Cell::new(ServiceWorkerState::Installing),
             scope_url: scope_url,
             skip_waiting: Cell::new(skip_waiting)
@@ -48,14 +49,10 @@ impl ServiceWorker {
     pub fn install_serviceworker(global: &GlobalScope,
                                  script_url: ServoUrl,
                                  scope_url: ServoUrl,
-                                 skip_waiting: bool) -> DomRoot<ServiceWorker> {
-        reflect_dom_object(
-            Box::new(ServiceWorker::new_inherited(
-                script_url.as_str(), skip_waiting, scope_url
-            )),
-            global,
-            Wrap
-        )
+                                 skip_waiting: bool) -> Root<ServiceWorker> {
+        reflect_dom_object(box ServiceWorker::new_inherited(script_url.as_str(),
+                                                            skip_waiting,
+                                                            scope_url), global, Wrap)
     }
 
     pub fn dispatch_simple_error(address: TrustedServiceWorkerAddress) {
@@ -96,7 +93,7 @@ impl ServiceWorkerMethods for ServiceWorker {
         let msg_vec = DOMMessage(data.move_to_arraybuffer());
         let _ =
             self.global()
-                .script_to_constellation_chan()
+                .constellation_chan()
                 .send(ScriptMsg::ForwardDOMMessage(msg_vec, self.scope_url.clone()));
         Ok(())
     }
@@ -108,9 +105,10 @@ impl ServiceWorkerMethods for ServiceWorker {
     event_handler!(statechange, GetOnstatechange, SetOnstatechange);
 }
 
-impl TaskOnce for SimpleWorkerErrorHandler<ServiceWorker> {
+impl Runnable for SimpleWorkerErrorHandler<ServiceWorker> {
     #[allow(unrooted_must_root)]
-    fn run_once(self) {
-        ServiceWorker::dispatch_simple_error(self.addr);
+    fn handler(self: Box<SimpleWorkerErrorHandler<ServiceWorker>>) {
+        let this = *self;
+        ServiceWorker::dispatch_simple_error(this.addr);
     }
 }

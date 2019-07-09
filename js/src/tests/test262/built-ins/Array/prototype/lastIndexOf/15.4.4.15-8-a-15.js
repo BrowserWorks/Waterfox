@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.lastindexof
 es5id: 15.4.4.15-8-a-15
 description: >
     Array.prototype.lastIndexOf -  deleting own property with
@@ -11,7 +10,7 @@ description: >
 ---*/
 
         var arr = { 0: 0, 1: 111, 2: 2, length: 10 };
-
+        
         Object.defineProperty(arr, "6", {
             get: function () {
                 delete arr[1];

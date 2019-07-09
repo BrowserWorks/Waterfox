@@ -3,6 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifdef MOZILLA_INTERNAL_API
+#ifdef ENABLE_INTL_API
 
 #include "ICUUtils.h"
 #include "mozilla/Preferences.h"
@@ -273,5 +274,6 @@ ICUUtils::ToICUString(nsAString& aMozString, UnicodeString& aICUString)
 }
 #endif
 
+#endif /* ENABLE_INTL_API */
 #endif /* MOZILLA_INTERNAL_API */
 

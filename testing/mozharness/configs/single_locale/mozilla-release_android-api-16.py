@@ -2,7 +2,7 @@ import os
 BRANCH = "mozilla-release"
 MOZ_UPDATE_CHANNEL = "release"
 MOZILLA_DIR = BRANCH
-OBJDIR = "obj-firefox"
+OBJDIR = "obj-l10n"
 EN_US_BINARY_URL = None
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
@@ -41,20 +41,22 @@ config = {
         "branch": "default",
         "dest": "tools"
     }],
-    "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/%s" % BRANCH,
     "hg_l10n_tag": "default",
     'vcs_share_base': HG_SHARE_BASE_DIR,
-    "l10n_dir": "l10n-central",
+    "l10n_dir": MOZILLA_DIR,
 
     "repack_env": {
         # so ugly, bug 951238
         "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
         "EN_US_BINARY_URL": os.environ.get("EN_US_BINARY_URL", EN_US_BINARY_URL),
         "MOZ_OBJDIR": OBJDIR,
+        "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
     "upload_branch": "%s-android-api-16" % BRANCH,
     "ssh_key_dir": "~/.ssh",
+    "merge_locales": True,
     "mozilla_dir": MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
     "key_alias": "release",

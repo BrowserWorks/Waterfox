@@ -61,14 +61,6 @@ public:
     return static_cast<DataTransfer*>(aArg);
   }
 
-  /// An enum which represents which "Drag Data Store Mode" the DataTransfer is
-  /// in according to the spec.
-  enum class Mode : uint8_t {
-    ReadWrite,
-    ReadOnly,
-    Protected,
-  };
-
 protected:
 
   // hide the default constructor
@@ -76,7 +68,6 @@ protected:
 
   // this constructor is used only by the Clone method to copy the fields as
   // needed to a new data transfer.
-  // NOTE: Do not call this method directly.
   DataTransfer(nsISupports* aParent,
                EventMessage aEventMessage,
                const uint32_t aEffectAllowed,
@@ -223,23 +214,13 @@ public:
     return mItems;
   }
 
-  // Returns the current "Drag Data Store Mode" of the DataTransfer. This
-  // determines what modifications may be performed on the DataTransfer, and
-  // what data may be read from it.
-  Mode GetMode() const {
-    return mMode;
-  }
-  void SetMode(Mode aMode);
-
-  // Helper method. Is true if the DataTransfer's mode is ReadOnly or Protected,
-  // which means that the DataTransfer cannot be modified.
+  // a readonly dataTransfer cannot have new data added or existing data
+  // removed. Only the dropEffect and effectAllowed may be modified.
   bool IsReadOnly() const {
-    return mMode != Mode::ReadWrite;
+    return mReadOnly;
   }
-  // Helper method. Is true if the DataTransfer's mode is Protected, which means
-  // that DataTransfer type information may be read, but data may not be.
-  bool IsProtected() const {
-    return mMode == Mode::Protected;
+  void SetReadOnly() {
+    mReadOnly = true;
   }
 
   int32_t ClipboardType() const {
@@ -270,12 +251,6 @@ public:
                           nsISupports** aSupports,
                           uint32_t* aLength) const;
 
-  // Disconnects the DataTransfer from the Drag Data Store. If the
-  // dom.dataTransfer.disconnect pref is enabled, this will clear the
-  // DataTransfer and set it to the `Protected` state, otherwise this method is
-  // a no-op.
-  void Disconnect();
-
   // clears all of the data
   void ClearAll();
 
@@ -303,12 +278,6 @@ public:
     return mDragImage;
   }
 
-  // This method makes a copy of the DataTransfer object, with a few properties
-  // changed, and the mode updated to reflect the correct mode for the given
-  // event. This method is used during the drag operation to generate the
-  // DataTransfer objects for each event after `dragstart`. Event objects will
-  // lazily clone the DataTransfer stored in the DragSession (which is a clone
-  // of the DataTransfer used in the `dragstart` event) when requested.
   nsresult Clone(nsISupports* aParent, EventMessage aEventMessage,
                  bool aUserCancelled, bool aIsCrossDomainSubFrameDrop,
                  DataTransfer** aResult);
@@ -325,11 +294,6 @@ public:
   // changed.  This can happen due to items we care about for purposes of
   // GetTypes being added or removed or changing item kinds.
   void TypesListMayHaveChanged();
-
-  // Testing method used to emulate internal DataTransfer management.
-  // NOTE: Please don't use this. See the comments in the webidl for more.
-  already_AddRefed<DataTransfer> MozCloneForEvent(const nsAString& aEvent,
-                                                  ErrorResult& aRv);
 
 protected:
 
@@ -379,8 +343,9 @@ protected:
   // Indicates the behavior of the cursor during drag operations
   bool mCursorState;
 
-  // The current "Drag Data Store Mode" which the DataTransfer is in.
-  Mode mMode;
+  // readonly data transfers may not be modified except the drop effect and
+  // effect allowed.
+  bool mReadOnly;
 
   // true for drags started without a data transfer, for example, those from
   // another application.

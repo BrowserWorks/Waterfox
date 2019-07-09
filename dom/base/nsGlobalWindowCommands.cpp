@@ -783,7 +783,7 @@ nsClipboardGetContentsCommand::DoClipboardCommand(const char *aCommandName, nsIC
 
   nsAutoCString mimeType("text/plain");
 
-  nsCString format;    // nsICommandParams needs to use nsACString
+  nsXPIDLCString format;    // nsICommandParams needs to use nsACString
   if (NS_SUCCEEDED(aParams->GetCStringValue("format", getter_Copies(format))))
     mimeType.Assign(format);
 

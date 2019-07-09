@@ -35,7 +35,6 @@
 // Drag & Drop, Clipboard
 #include "nsClipboardHelper.h"
 #include "nsClipboard.h"
-#include "HeadlessClipboard.h"
 #include "nsBidiKeyboard.h"
 #include "nsDragService.h"
 #include "nsTransferable.h"
@@ -49,7 +48,6 @@
 
 #ifdef NS_PRINTING
 #include "nsDeviceContextSpecWin.h"
-#include "nsPrintDialogWin.h"
 #include "nsPrintOptionsWin.h"
 #include "nsPrintSession.h"
 #endif
@@ -105,25 +103,9 @@ ColorPickerConstructor(nsISupports *aOuter, REFNSIID aIID,
   return picker->QueryInterface(aIID, aResult);
 }
 
-static nsresult
-nsClipboardConstructor(nsISupports *aOuter, REFNSIID aIID,
-                       void **aResult)
-{
-  *aResult = nullptr;
-  if (aOuter != nullptr) {
-    return NS_ERROR_NO_AGGREGATION;
-  }
-  nsCOMPtr<nsIClipboard> inst;
-  if (gfxPlatform::IsHeadless()) {
-    inst = new HeadlessClipboard();
-  } else {
-    inst = new nsClipboard();
-  }
-  return inst->QueryInterface(aIID, aResult);
-}
-
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(ScreenManager, ScreenManager::GetAddRefedSingleton)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIdleServiceWin, nsIdleServiceWin::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIClipboard, nsClipboard::GetInstance)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISound, nsSound::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
 NS_GENERIC_FACTORY_CONSTRUCTOR(WinTaskbar)
@@ -139,7 +121,6 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsBidiKeyboard)
 NS_GENERIC_FACTORY_CONSTRUCTOR(TaskbarPreviewCallback)
 #ifdef NS_PRINTING
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintDialogServiceWin, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsWin, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsPrinterEnumeratorWin)
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintSession, Init)
@@ -178,7 +159,6 @@ NS_DEFINE_NAMED_CID(NS_DRAGSERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_BIDIKEYBOARD_CID);
 NS_DEFINE_NAMED_CID(NS_TASKBARPREVIEWCALLBACK_CID);
 #ifdef NS_PRINTING
-NS_DEFINE_NAMED_CID(NS_PRINTDIALOGSERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_PRINTSETTINGSSERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_PRINTER_ENUMERATOR_CID);
 NS_DEFINE_NAMED_CID(NS_PRINTSESSION_CID);
@@ -194,10 +174,10 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_APPSHELL_CID, false, nullptr, nsAppShellConstructor, Module::ALLOW_IN_GPU_PROCESS },
   { &kNS_SCREENMANAGER_CID, false, nullptr, ScreenManagerConstructor,
     Module::MAIN_PROCESS_ONLY },
-  { &kNS_GFXINFO_CID, false, nullptr, GfxInfoConstructor, Module::ALLOW_IN_GPU_PROCESS },
+  { &kNS_GFXINFO_CID, false, nullptr, GfxInfoConstructor },
   { &kNS_THEMERENDERER_CID, false, nullptr, NS_NewNativeTheme },
   { &kNS_IDLE_SERVICE_CID, false, nullptr, nsIdleServiceWinConstructor },
-  { &kNS_CLIPBOARD_CID, false, nullptr, nsClipboardConstructor, Module::MAIN_PROCESS_ONLY },
+  { &kNS_CLIPBOARD_CID, false, nullptr, nsIClipboardConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_CLIPBOARDHELPER_CID, false, nullptr, nsClipboardHelperConstructor },
   { &kNS_SOUND_CID, false, nullptr, nsISoundConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_TRANSFERABLE_CID, false, nullptr, nsTransferableConstructor },
@@ -213,7 +193,6 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_BIDIKEYBOARD_CID, false, nullptr, nsBidiKeyboardConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_TASKBARPREVIEWCALLBACK_CID, false, nullptr, TaskbarPreviewCallbackConstructor },
 #ifdef NS_PRINTING
-  { &kNS_PRINTDIALOGSERVICE_CID, false, nullptr, nsPrintDialogServiceWinConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_PRINTSETTINGSSERVICE_CID, false, nullptr, nsPrintOptionsWinConstructor },
   { &kNS_PRINTER_ENUMERATOR_CID, false, nullptr, nsPrinterEnumeratorWinConstructor },
   { &kNS_PRINTSESSION_CID, false, nullptr, nsPrintSessionConstructor },
@@ -248,7 +227,6 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
   { "@mozilla.org/widget/bidikeyboard;1", &kNS_BIDIKEYBOARD_CID, Module::MAIN_PROCESS_ONLY },
   { "@mozilla.org/widget/taskbar-preview-callback;1", &kNS_TASKBARPREVIEWCALLBACK_CID },
 #ifdef NS_PRINTING
-  { NS_PRINTDIALOGSERVICE_CONTRACTID, &kNS_PRINTDIALOGSERVICE_CID },
   { "@mozilla.org/gfx/printsettings-service;1", &kNS_PRINTSETTINGSSERVICE_CID },
   { "@mozilla.org/gfx/printerenumerator;1", &kNS_PRINTER_ENUMERATOR_CID },
   { "@mozilla.org/gfx/printsession;1", &kNS_PRINTSESSION_CID },

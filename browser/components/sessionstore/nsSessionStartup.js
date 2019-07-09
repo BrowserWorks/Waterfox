@@ -42,8 +42,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
   "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionFile",
   "resource:///modules/sessionstore/SessionFile.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "StartupPerformance",
-  "resource:///modules/sessionstore/StartupPerformance.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CrashMonitor",
   "resource://gre/modules/CrashMonitor.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
@@ -90,8 +88,6 @@ SessionStartup.prototype = {
   // Stores whether the previous session crashed.
   _previousSessionCrashed: null,
 
-  _resumeSessionEnabled: null,
-
 /* ........ Global Event Handlers .............. */
 
   /**
@@ -99,7 +95,6 @@ SessionStartup.prototype = {
    */
   init: function sss_init() {
     Services.obs.notifyObservers(null, "sessionstore-init-started");
-    StartupPerformance.init();
 
     // do not need to initialize anything in auto-started private browsing sessions
     if (PrivateBrowsingUtils.permanentPrivateBrowsing) {
@@ -107,10 +102,6 @@ SessionStartup.prototype = {
       gOnceInitializedDeferred.resolve();
       return;
     }
-
-    this._resumeSessionEnabled =
-      Services.prefs.getBoolPref("browser.sessionstore.resume_session_once") ||
-      Services.prefs.getIntPref("browser.startup.page") == BROWSER_STARTUP_RESUME_SESSION;
 
     SessionFile.read().then(
       this._onSessionFileRead.bind(this),
@@ -172,8 +163,12 @@ SessionStartup.prototype = {
       Services.telemetry.scalarSet("browser.engagement.restored_pinned_tabs_count", pinnedTabCount);
     }, 60000);
 
+    let shouldResumeSessionOnce = Services.prefs.getBoolPref("browser.sessionstore.resume_session_once");
+    let shouldResumeSession = shouldResumeSessionOnce ||
+          Services.prefs.getIntPref("browser.startup.page") == BROWSER_STARTUP_RESUME_SESSION;
+
     // If this is a normal restore then throw away any previous session
-    if (!this._resumeSessionEnabled && this._initialState) {
+    if (!shouldResumeSessionOnce && this._initialState) {
       delete this._initialState.lastSessionState;
     }
 
@@ -218,7 +213,7 @@ SessionStartup.prototype = {
       // set the startup type
       if (this._previousSessionCrashed && resumeFromCrash)
         this._sessionType = Ci.nsISessionStartup.RECOVER_SESSION;
-      else if (!this._previousSessionCrashed && this._resumeSessionEnabled)
+      else if (!this._previousSessionCrashed && shouldResumeSession)
         this._sessionType = Ci.nsISessionStartup.RESUME_SESSION;
       else if (this._initialState)
         this._sessionType = Ci.nsISessionStartup.DEFER_SESSION;
@@ -314,32 +309,25 @@ SessionStartup.prototype = {
   },
 
   /**
-   * Returns a promise that resolves to a boolean, indicating whether we will
-   * restore a session that ends up replacing the homepage. True guarantees
-   * that we'll restore a session; false means that we /probably/ won't do so.
-   * The browser uses this to avoid unnecessarily loading the homepage when
-   * restoring a session.
+   * Returns whether we will restore a session that ends up replacing the
+   * homepage. The browser uses this to not start loading the homepage if
+   * we're going to stop its load anyway shortly after.
+   *
+   * This is meant to be an optimization for the average case that loading the
+   * session file finishes before we may want to start loading the default
+   * homepage. Should this be called before the session file has been read it
+   * will just return false.
+   *
+   * @returns bool
    */
-  get willOverrideHomepagePromise() {
-    // If the session file hasn't been read yet and resuming the session isn't
-    // enabled via prefs, go ahead and load the homepage. We may still replace
-    // it when recovering from a crash, which we'll only know after reading the
-    // session file, but waiting for that would delay loading the homepage in
-    // the non-crash case.
-    if (!this._initialState && !this._resumeSessionEnabled) {
-      return Promise.resolve(false);
+  get willOverrideHomepage() {
+    if (this._initialState && this._willRestore()) {
+      let windows = this._initialState.windows || null;
+      // If there are valid windows with not only pinned tabs, signal that we
+      // will override the default homepage by restoring a session.
+      return windows && windows.some(w => w.tabs.some(t => !t.pinned));
     }
-
-    return new Promise(resolve => {
-      this.onceInitialized.then(() => {
-        // If there are valid windows with not only pinned tabs, signal that we
-        // will override the default homepage by restoring a session.
-        resolve(this._willRestore() &&
-                this._initialState &&
-                this._initialState.windows &&
-                this._initialState.windows.some(w => w.tabs.some(t => !t.pinned)));
-      });
-    });
+    return false;
   },
 
   /**

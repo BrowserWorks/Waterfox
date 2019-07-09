@@ -9,9 +9,9 @@
 "use strict";
 
 const { PromisesFront } = require("devtools/shared/fronts/promises");
-const { setTimeout } = Cu.import("resource://gre/modules/Timer.jsm", {});
+const { setTimeout } = require("sdk/timers");
 
-var EventEmitter = require("devtools/shared/event-emitter");
+var events = require("sdk/event/core");
 
 add_task(function* () {
   let client = yield startTestDebuggerServer("test-promises-timetosettle");
@@ -48,7 +48,7 @@ function* testGetTimeToSettle(client, form, makePromise) {
   yield front.listPromises();
 
   let onNewPromise = new Promise(resolve => {
-    EventEmitter.on(front, "promises-settled", promises => {
+    events.on(front, "promises-settled", promises => {
       for (let p of promises) {
         if (p.promiseState.state === "fulfilled" &&
             p.promiseState.value === resolution) {

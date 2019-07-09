@@ -104,11 +104,4 @@ test(() => {
 
 }, 'ByteLengthQueuingStrategy\'s highWaterMark property can be set to anything');
 
-test(() => {
-
-  assert_equals(ByteLengthQueuingStrategy.name, 'ByteLengthQueuingStrategy',
-                'ByteLengthQueuingStrategy.name must be "ByteLengthQueuingStrategy"');
-
-}, 'ByteLengthQueuingStrategy.name is correct');
-
 done();

@@ -38,7 +38,7 @@ add_task(async function test_isOriginPotentiallyTrustworthy() {
     ["chrome://example.net/content/messenger.xul", false],
   ]) {
     let uri = NetUtil.newURI(uriSpec);
-    let principal = gScriptSecurityManager.createCodebasePrincipal(uri, {});
+    let principal = gScriptSecurityManager.getCodebasePrincipal(uri);
     Assert.equal(gContentSecurityManager.isOriginPotentiallyTrustworthy(principal),
                  expectedResult);
   }

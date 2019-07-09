@@ -645,10 +645,6 @@ PresentationControllingInfo::Shutdown(nsresult aReason)
 nsresult
 PresentationControllingInfo::GetAddress()
 {
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    return NS_ERROR_FAILURE;
-  }
-
 #if defined(MOZ_WIDGET_ANDROID)
   RefPtr<PresentationNetworkHelper> networkHelper =
     new PresentationNetworkHelper(this,
@@ -1172,8 +1168,11 @@ PresentationPresentingInfo::Init(nsIPresentationControlChannel* aControlChannel)
   nsresult rv;
   int32_t timeout =
     Preferences::GetInt("presentation.receiver.loading.timeout", 10000);
-  rv = NS_NewTimerWithCallback(getter_AddRefs(mTimer),
-                               this, timeout, nsITimer::TYPE_ONE_SHOT);
+  mTimer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  rv = mTimer->InitWithCallback(this, timeout, nsITimer::TYPE_ONE_SHOT);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

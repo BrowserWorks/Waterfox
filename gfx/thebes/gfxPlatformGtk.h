@@ -22,6 +22,8 @@ struct _XDisplay;
 typedef struct _XDisplay Display;
 #endif // MOZ_X11
 
+class gfxFontconfigUtils;
+
 class gfxPlatformGtk : public gfxPlatform {
 public:
     gfxPlatformGtk();
@@ -35,7 +37,10 @@ public:
       CreateOffscreenSurface(const IntSize& aSize,
                              gfxImageFormat aFormat) override;
 
-    virtual nsresult GetFontList(nsAtom *aLangGroup,
+    virtual already_AddRefed<mozilla::gfx::ScaledFont>
+      GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont) override;
+
+    virtual nsresult GetFontList(nsIAtom *aLangGroup,
                                  const nsACString& aGenericFamily,
                                  nsTArray<nsString>& aListOfFonts) override;
 
@@ -133,6 +138,8 @@ public:
 #endif // MOZ_X11
 
 protected:
+    static gfxFontconfigUtils *sFontconfigUtils;
+
     int8_t mMaxGenericSubstitutions;
 
 private:

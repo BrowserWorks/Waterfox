@@ -26,6 +26,7 @@
 #include "npfunctions.h"
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
+#include "ChildAsyncCall.h"
 #include "ChildTimer.h"
 #include "nsRect.h"
 #include "nsTHashtable.h"
@@ -237,6 +238,10 @@ public:
     uint32_t ScheduleTimer(uint32_t interval, bool repeat, TimerFunc func);
     void UnscheduleTimer(uint32_t id);
 
+    void AsyncCall(PluginThreadCallback aFunc, void* aUserData);
+    // This function is a more general version of AsyncCall
+    void PostChildAsyncCall(already_AddRefed<ChildAsyncCall> aTask);
+
     int GetQuirks();
 
     void NPN_URLRedirectResponse(void* notifyData, NPBool allow);
@@ -342,6 +347,8 @@ private:
                                                  LPCANDIDATEFORM plCandidate);
     static BOOL WINAPI ImmNotifyIME(HIMC aIMC, DWORD aAction, DWORD aIndex,
                                     DWORD aValue);
+    static BOOL WINAPI ImmAssociateContextExProc(HWND hWnd, HIMC aIMC,
+                                                 DWORD dwFlags);
 
     class FlashThrottleMsg : public CancelableRunnable
     {
@@ -443,9 +450,13 @@ private:
     HWND mWinlessHiddenMsgHWND;
 #endif
 
+    friend class ChildAsyncCall;
+
 #if defined(OS_WIN)
     nsTArray<FlashThrottleMsg*> mPendingFlashThrottleMsgs;
 #endif
+    Mutex mAsyncCallMutex;
+    nsTArray<ChildAsyncCall*> mPendingAsyncCalls;
     nsTArray<nsAutoPtr<ChildTimer> > mTimers;
 
     /**
@@ -647,6 +658,10 @@ private:
     // shortcut key in the chrome process, we shouldn't send the following
     // WM_*CHAR messages to the plugin.
     bool mLastKeyEventConsumed;
+
+    // Store the last IME state by ImmAssociateContextEx.  This will reset by
+    // WM_KILLFOCUS;
+    bool mLastEnableIMEState;
 #endif // #ifdef XP_WIN
 
     // While IME in the process has composition, this is set to true.

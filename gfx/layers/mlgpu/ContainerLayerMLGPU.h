@@ -13,7 +13,6 @@ namespace mozilla {
 namespace layers {
 
 class MLGDevice;
-class RenderViewMLGPU;
 
 class ContainerLayerMLGPU final : public ContainerLayer
                                 , public LayerMLGPU
@@ -31,7 +30,7 @@ public:
   void ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSurface) override {
     DefaultComputeEffectiveTransforms(aTransformToSurface);
   }
-  void SetInvalidCompositeRect(const gfx::IntRect* aRect) override;
+  void SetInvalidCompositeRect(const gfx::IntRect &aRect) override;
   void ClearCachedResources() override;
 
   RefPtr<MLGRenderTarget> UpdateRenderTarget(
@@ -54,17 +53,6 @@ public:
     mInvalidRect.SetEmpty();
   }
   bool IsContentOpaque() override;
-  bool NeedsSurfaceCopy() const {
-    return mSurfaceCopyNeeded;
-  }
-
-  RenderViewMLGPU* GetRenderView() const {
-    return mView;
-  }
-  void SetRenderView(RenderViewMLGPU* aView) {
-    MOZ_ASSERT(!mView);
-    mView = aView;
-  }
 
 protected:
   bool OnPrepareToRender(FrameBuilder* aBuilder) override;
@@ -83,11 +71,6 @@ private:
   // is in layer coordinates.
   gfx::IntRect mInvalidRect;
   bool mInvalidateEntireSurface;
-  bool mSurfaceCopyNeeded;
-
-  // This is only valid for intermediate surfaces while an instance of
-  // FrameBuilder is live.
-  RenderViewMLGPU* mView;
 };
 
 } // namespace layers

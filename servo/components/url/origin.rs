@@ -11,7 +11,7 @@ use url_serde;
 use uuid::Uuid;
 
 /// The origin of an URL
-#[derive(Clone, Debug, Deserialize, Eq, MallocSizeOf, PartialEq, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, HeapSizeOf, Deserialize, Serialize)]
 pub enum ImmutableOrigin {
     /// A globally unique identifier
     Opaque(OpaqueOrigin),
@@ -83,28 +83,28 @@ impl ImmutableOrigin {
         }
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#ascii-serialisation-of-an-origin>
+    /// https://html.spec.whatwg.org/multipage/#ascii-serialisation-of-an-origin
     pub fn ascii_serialization(&self) -> String {
         self.clone().into_url_origin().ascii_serialization()
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#unicode-serialisation-of-an-origin>
+    /// https://html.spec.whatwg.org/multipage/#unicode-serialisation-of-an-origin
     pub fn unicode_serialization(&self) -> String {
         self.clone().into_url_origin().unicode_serialization()
     }
 }
 
 /// Opaque identifier for URLs that have file or other schemes
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct OpaqueOrigin(Uuid);
 
-malloc_size_of_is_0!(OpaqueOrigin);
+known_heap_size!(0, OpaqueOrigin);
 
 /// A representation of an [origin](https://html.spec.whatwg.org/multipage/#origin-2).
 #[derive(Clone, Debug)]
 pub struct MutableOrigin(Rc<(ImmutableOrigin, RefCell<Option<Host>>)>);
 
-malloc_size_of_is_0!(MutableOrigin);
+known_heap_size!(0, MutableOrigin);
 
 impl MutableOrigin {
     pub fn new(origin: ImmutableOrigin) -> MutableOrigin {

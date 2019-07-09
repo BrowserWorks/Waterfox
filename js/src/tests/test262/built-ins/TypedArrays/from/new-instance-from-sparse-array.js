@@ -5,7 +5,7 @@ esid: sec-%typedarray%.from
 description: >
   Return a new TypedArray from a sparse array
 includes: [testTypedArray.js]
-features: [Array.prototype.values, TypedArray]
+features: [Array.prototype.values]
 ---*/
 
 var source = [,,42,,44,,];

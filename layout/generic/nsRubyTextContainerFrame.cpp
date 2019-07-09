@@ -122,13 +122,13 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsRubyTextContainerFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   // Although a ruby text container may have continuations, returning
   // complete reflow status is still safe, since its parent, ruby frame,
   // ignores the status, and continuations of the ruby base container
   // will take care of our continuations.
-  WritingMode rtcWM = GetWritingMode();
+  aStatus.Reset();
+  WritingMode lineWM = aReflowInput.mLineLayout->GetWritingMode();
 
   nscoord minBCoord = nscoord_MAX;
   nscoord maxBCoord = nscoord_MIN;
@@ -139,37 +139,37 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
     nsIFrame* child = e.get();
     MOZ_ASSERT(child->IsRubyTextFrame());
-    LogicalRect rect = child->GetLogicalRect(rtcWM, dummyContainerSize);
-    LogicalMargin margin = child->GetLogicalUsedMargin(rtcWM);
-    nscoord blockStart = rect.BStart(rtcWM) - margin.BStart(rtcWM);
+    LogicalRect rect = child->GetLogicalRect(lineWM, dummyContainerSize);
+    LogicalMargin margin = child->GetLogicalUsedMargin(lineWM);
+    nscoord blockStart = rect.BStart(lineWM) - margin.BStart(lineWM);
     minBCoord = std::min(minBCoord, blockStart);
-    nscoord blockEnd = rect.BEnd(rtcWM) + margin.BEnd(rtcWM);
+    nscoord blockEnd = rect.BEnd(lineWM) + margin.BEnd(lineWM);
     maxBCoord = std::max(maxBCoord, blockEnd);
   }
 
-  LogicalSize size(rtcWM, mISize, 0);
+  LogicalSize size(lineWM, mISize, 0);
   if (!mFrames.IsEmpty()) {
     if (MOZ_UNLIKELY(minBCoord > maxBCoord)) {
       // XXX When bug 765861 gets fixed, this warning should be upgraded.
       NS_WARNING("bad block coord");
       minBCoord = maxBCoord = 0;
     }
-    size.BSize(rtcWM) = maxBCoord - minBCoord;
-    nsSize containerSize = size.GetPhysicalSize(rtcWM);
+    size.BSize(lineWM) = maxBCoord - minBCoord;
+    nsSize containerSize = size.GetPhysicalSize(lineWM);
     for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
       nsIFrame* child = e.get();
       // We reflowed the child with a dummy container size, as the true size
       // was not yet known at that time.
-      LogicalPoint pos = child->GetLogicalPosition(rtcWM, dummyContainerSize);
+      LogicalPoint pos = child->GetLogicalPosition(lineWM, dummyContainerSize);
       // Adjust block position to account for minBCoord,
       // then reposition child based on the true container width.
-      pos.B(rtcWM) -= minBCoord;
+      pos.B(lineWM) -= minBCoord;
       // Relative positioning hasn't happened yet.
       // So MovePositionBy should not be used here.
-      child->SetPosition(rtcWM, pos, containerSize);
+      child->SetPosition(lineWM, pos, containerSize);
       nsContainerFrame::PlaceFrameView(child);
     }
   }
 
-  aDesiredSize.SetSize(rtcWM, size);
+  aDesiredSize.SetSize(lineWM, size);
 }

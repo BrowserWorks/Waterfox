@@ -167,11 +167,10 @@ add_task(async function test_onDeleteVisits() {
   let msecs24hrsAgo = Date.now() - (86400 * 1000);
   let [testuri] = await task_add_visit(undefined, msecs24hrsAgo * 1000);
   // Add a bookmark so the page is not removed.
-  await PlacesUtils.bookmarks.insert({
-    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-    title: "test",
-    url: testuri,
-  });
+  PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
+                                       testuri,
+                                       PlacesUtils.bookmarks.DEFAULT_INDEX,
+                                       "test");
   let testguid = do_get_guid_for_uri(testuri);
   await PlacesUtils.history.remove(testuri);
   await promiseNotify;

@@ -66,6 +66,7 @@ WEBIDL_STANDARDS = [
     "//dev.w3.org/fxtf",
     "//dvcs.w3.org/hg",
     "//dom.spec.whatwg.org",
+    "//domparsing.spec.whatwg.org",
     "//drafts.csswg.org",
     "//drafts.css-houdini.org",
     "//drafts.fxtf.org",
@@ -78,7 +79,6 @@ WEBIDL_STANDARDS = [
     "//heycam.github.io/webidl",
     "//webbluetoothcg.github.io/web-bluetooth/",
     "//svgwg.org/svg2-draft",
-    "//wicg.github.io",
     # Not a URL
     "// This interface is entirely internal to Servo, and should not be" +
     " accessible to\n// web pages."
@@ -466,6 +466,15 @@ def check_rust(file_name, lines):
         prev_indent = indent
         indent = len(original_line) - len(line)
 
+        # Hack for components/selectors/build.rs
+        if multi_line_string:
+            if line.startswith('"#'):
+                multi_line_string = False
+            else:
+                continue
+        if line.endswith('r#"'):
+            multi_line_string = True
+
         is_attribute = re.search(r"#\[.*\]", line)
         is_comment = re.search(r"^//|^/\*|^\*", line)
 
@@ -484,14 +493,6 @@ def check_rust(file_name, lines):
             line = merged_lines + line
             merged_lines = ''
 
-        if multi_line_string:
-            line, count = re.subn(
-                r'^(\\.|[^"\\])*?"', '', line, count=1)
-            if count == 1:
-                multi_line_string = False
-            else:
-                continue
-
         # Ignore attributes, comments, and imports
         # Keep track of whitespace to enable checking for a merged import block
         if import_block:
@@ -502,17 +503,9 @@ def check_rust(file_name, lines):
                     import_block = False
 
         # get rid of strings and chars because cases like regex expression, keep attributes
-        if not is_attribute and not is_comment:
+        if not is_attribute:
             line = re.sub(r'"(\\.|[^\\"])*?"', '""', line)
-            line = re.sub(
-                r"'(\\.|[^\\']|(\\x[0-9a-fA-F]{2})|(\\u{[0-9a-fA-F]{1,6}}))'",
-                "''", line)
-            # If, after parsing all single-line strings, we still have
-            # an odd number of double quotes, this line starts a
-            # multiline string
-            if line.count('"') % 2 == 1:
-                line = re.sub(r'"(\\.|[^\\"])*?$', '""', line)
-                multi_line_string = True
+            line = re.sub(r"'(\\.|[^\\'])*?'", "''", line)
 
         # get rid of comments
         line = re.sub('//.*?$|/\*.*?$|^\*.*?$', '//', line)
@@ -573,11 +566,11 @@ def check_rust(file_name, lines):
             # No benefit over using &str
             (r": &String", "use &str instead of &String", no_filter),
             # There should be any use of banned types:
-            # Cell<JSVal>, Cell<Dom<T>>, DomRefCell<Dom<T>>, DomRefCell<HEAP<T>>
-            (r"(\s|:)+Cell<JSVal>", "Banned type Cell<JSVal> detected. Use MutDom<JSVal> instead", no_filter),
-            (r"(\s|:)+Cell<Dom<.+>>", "Banned type Cell<Dom<T>> detected. Use MutDom<T> instead", no_filter),
-            (r"DomRefCell<Dom<.+>>", "Banned type DomRefCell<Dom<T>> detected. Use MutDom<T> instead", no_filter),
-            (r"DomRefCell<Heap<.+>>", "Banned type DomRefCell<Heap<T>> detected. Use MutDom<T> instead", no_filter),
+            # Cell<JSVal>, Cell<JS<T>>, DOMRefCell<JS<T>>, DOMRefCell<HEAP<T>>
+            (r"(\s|:)+Cell<JSVal>", "Banned type Cell<JSVal> detected. Use MutJS<JSVal> instead", no_filter),
+            (r"(\s|:)+Cell<JS<.+>>", "Banned type Cell<JS<T>> detected. Use MutJS<JS<T>> instead", no_filter),
+            (r"DOMRefCell<JS<.+>>", "Banned type DOMRefCell<JS<T>> detected. Use MutJS<JS<T>> instead", no_filter),
+            (r"DOMRefCell<Heap<.+>>", "Banned type DOMRefCell<Heap<T>> detected. Use MutJS<JS<T>> instead", no_filter),
             # No benefit to using &Root<T>
             (r": &Root<", "use &T instead of &Root<T>", no_filter),
             (r"^&&", "operators should go at the end of the first line", no_filter),
@@ -625,10 +618,6 @@ def check_rust(file_name, lines):
                       + decl_expected.format(prev_crate[indent])
                       + decl_found.format(crate_name))
             prev_crate[indent] = crate_name
-
-        if line == "}":
-            for i in [i for i in prev_crate.keys() if i > indent]:
-                del prev_crate[i]
 
         # check alphabetical order of feature attributes in lib.rs files
         if is_lib_rs_file:
@@ -701,19 +690,6 @@ def check_rust(file_name, lines):
         else:
             # we now erase previous entries
             prev_mod = {}
-
-        # derivable traits should be alphabetically ordered
-        if is_attribute:
-            # match the derivable traits filtering out macro expansions
-            match = re.search(r"#\[derive\(([a-zA-Z, ]*)", line)
-            if match:
-                derives = map(lambda w: w.strip(), match.group(1).split(','))
-                # sort, compare and report
-                sorted_derives = sorted(derives)
-                if sorted_derives != derives:
-                    yield(idx + 1, decl_message.format("derivable traits list")
-                              + decl_expected.format(", ".join(sorted_derives))
-                              + decl_found.format(", ".join(derives)))
 
 
 # Avoid flagging <Item=Foo> constructs
@@ -856,7 +832,7 @@ def check_spec(file_name, lines):
     macro_patt = re.compile("^\s*\S+!(.*)$")
 
     # Pattern representing a line with comment containing a spec link
-    link_patt = re.compile("^\s*///? (<https://.+>|https://.+)$")
+    link_patt = re.compile("^\s*///? https://.+$")
 
     # Pattern representing a line with comment or attribute
     comment_patt = re.compile("^\s*(///?.+|#\[.+\])$")

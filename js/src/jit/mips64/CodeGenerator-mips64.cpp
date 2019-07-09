@@ -247,7 +247,7 @@ CodeGeneratorMIPS64::visitCompareB(LCompareB* lir)
 
     // Load boxed boolean in ScratchRegister.
     if (rhs->isConstant())
-        masm.moveValue(rhs->toConstant()->toJSValue(), ValueOperand(ScratchRegister));
+        masm.moveValue(rhs->toConstant()->toJSValue(), ScratchRegister);
     else
         masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), ScratchRegister);
 
@@ -266,7 +266,7 @@ CodeGeneratorMIPS64::visitCompareBAndBranch(LCompareBAndBranch* lir)
 
     // Load boxed boolean in ScratchRegister.
     if (rhs->isConstant())
-        masm.moveValue(rhs->toConstant()->toJSValue(), ValueOperand(ScratchRegister));
+        masm.moveValue(rhs->toConstant()->toJSValue(), ScratchRegister);
     else
         masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), ScratchRegister);
 
@@ -606,24 +606,6 @@ CodeGeneratorMIPS64::visitWrapInt64ToInt32(LWrapInt64ToInt32* lir)
 }
 
 void
-CodeGeneratorMIPS64::visitSignExtendInt64(LSignExtendInt64* lir)
-{
-    Register64 input = ToRegister64(lir->getInt64Operand(0));
-    Register64 output = ToOutRegister64(lir);
-    switch (lir->mode()) {
-      case MSignExtendInt64::Byte:
-        masm.move8SignExtend(input.reg, output.reg);
-        break;
-      case MSignExtendInt64::Half:
-        masm.move16SignExtend(input.reg, output.reg);
-        break;
-      case MSignExtendInt64::Word:
-        masm.ma_sll(output.reg, input.reg, Imm32(0));
-        break;
-    }
-}
-
-void
 CodeGeneratorMIPS64::visitClzI64(LClzI64* lir)
 {
     Register64 input = ToRegister64(lir->getInt64Operand(0));
@@ -682,8 +664,7 @@ CodeGeneratorMIPS64::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
         // Check that the result is in the uint64_t range.
         masm.moveFromDouble(ScratchDoubleReg, output);
         masm.as_cfc1(ScratchRegister, Assembler::FCSR);
-        // extract invalid operation flag (bit 6) from FCSR
-        masm.ma_ext(ScratchRegister, ScratchRegister, 6, 1);
+        masm.as_ext(ScratchRegister, ScratchRegister, 16, 1);
         masm.ma_dsrl(SecondScratchReg, output, Imm32(63));
         masm.ma_or(SecondScratchReg, ScratchRegister);
         masm.ma_b(SecondScratchReg, Imm32(0), ool->entry(), Assembler::NotEqual);
@@ -703,7 +684,7 @@ CodeGeneratorMIPS64::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
         // Check that the result is in the uint64_t range.
         masm.moveFromDouble(ScratchDoubleReg, output);
         masm.as_cfc1(ScratchRegister, Assembler::FCSR);
-        masm.ma_ext(ScratchRegister, ScratchRegister, 6, 1);
+        masm.as_ext(ScratchRegister, ScratchRegister, 16, 1);
         masm.ma_dsrl(SecondScratchReg, output, Imm32(63));
         masm.ma_or(SecondScratchReg, ScratchRegister);
         masm.ma_b(SecondScratchReg, Imm32(0), ool->entry(), Assembler::NotEqual);
@@ -724,7 +705,7 @@ CodeGeneratorMIPS64::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
 
     // Check that the result is in the int64_t range.
     masm.as_cfc1(output, Assembler::FCSR);
-    masm.ma_ext(output, output, 6, 1);
+    masm.as_ext(output, output, 16, 1);
     masm.ma_b(output, Imm32(0), ool->entry(), Assembler::NotEqual);
 
     masm.bind(ool->rejoin());

@@ -27,6 +27,7 @@ class CacheObserver : public nsIObserver
   static CacheObserver* Self() { return sSelf; }
 
   // Access to preferences
+  static bool UseNewCache();
   static bool UseDiskCache()
     { return sUseDiskCache; }
   static bool UseMemoryCache()
@@ -85,6 +86,7 @@ private:
   void StoreHashStatsReported();
   void AttachToPreferences();
 
+  static uint32_t sUseNewCache;
   static bool sUseMemoryCache;
   static bool sUseDiskCache;
   static uint32_t sMetadataMemoryLimit;

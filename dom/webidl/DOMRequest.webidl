@@ -10,7 +10,7 @@ interface DOMRequestShared {
   readonly attribute DOMRequestReadyState readyState;
 
   readonly attribute any result;
-  readonly attribute DOMException? error;
+  readonly attribute DOMError? error;
 
   attribute EventHandler onsuccess;
   attribute EventHandler onerror;

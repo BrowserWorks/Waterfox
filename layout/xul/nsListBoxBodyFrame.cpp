@@ -122,19 +122,20 @@ nsListScrollSmoother::Start()
   };
 
   Stop();
-  nsIEventTarget* target = nullptr;
+  mRepeatTimer = do_CreateInstance("@mozilla.org/timer;1");
+  nsIContent* content = nullptr;
   if (mOuter) {
-    if (nsIContent* content = mOuter->GetContent()) {
-      target = content->OwnerDoc()->EventTargetFor(TaskCategory::Other);
-    }
+    content = mOuter->GetContent();
   }
-  NS_NewTimerWithFuncCallback(getter_AddRefs(mRepeatTimer),
-                              scrollSmootherCallback,
-                              this,
-                              SMOOTH_INTERVAL,
-                              nsITimer::TYPE_ONE_SHOT,
-                              "scrollSmootherCallback",
-                              target);
+  if (content) {
+    mRepeatTimer->SetTarget(
+        content->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+  }
+  mRepeatTimer->InitWithNamedFuncCallback(scrollSmootherCallback,
+                                          this,
+                                          SMOOTH_INTERVAL,
+                                          nsITimer::TYPE_ONE_SHOT,
+                                          "scrollSmootherCallback");
 }
 
 void
@@ -232,7 +233,7 @@ nsListBoxBodyFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
 nsresult
 nsListBoxBodyFrame::AttributeChanged(int32_t aNameSpaceID,
-                                     nsAtom* aAttribute,
+                                     nsIAtom* aAttribute,
                                      int32_t aModType)
 {
   nsresult rv = NS_OK;

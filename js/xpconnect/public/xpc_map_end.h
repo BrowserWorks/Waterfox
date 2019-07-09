@@ -23,9 +23,10 @@
 
 /**************************************************************/
 
-NS_IMETHODIMP XPC_MAP_CLASSNAME::GetClassName(nsACString& aClassName)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::GetClassName(char * *aClassName)
 {
-    aClassName.AssignLiteral(XPC_MAP_QUOTED_CLASSNAME);
+    static const char sName[] = XPC_MAP_QUOTED_CLASSNAME;
+    *aClassName = (char*) nsMemory::Clone(sName, sizeof(sName));
     return NS_OK;
 }
 
@@ -62,6 +63,16 @@ XPC_MAP_CLASSNAME::GetJSClass()
 #if !((XPC_MAP_FLAGS) & XPC_SCRIPTABLE_WANT_PRECREATE)
 NS_IMETHODIMP XPC_MAP_CLASSNAME::PreCreate(nsISupports* nativeObj, JSContext * cx, JSObject * globalObj, JSObject * *parentObj)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
+#endif
+
+#if !((XPC_MAP_FLAGS) & XPC_SCRIPTABLE_WANT_GETPROPERTY)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::GetProperty(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool* _retval)
+    {NS_WARNING("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
+#endif
+
+#if !((XPC_MAP_FLAGS) & XPC_SCRIPTABLE_WANT_SETPROPERTY)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::SetProperty(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool* _retval)
+    {NS_WARNING("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #if !((XPC_MAP_FLAGS) & XPC_SCRIPTABLE_WANT_NEWENUMERATE)

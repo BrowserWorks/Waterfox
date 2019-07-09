@@ -77,7 +77,13 @@ public class TestRecordsChannel {
       }
 
       @Override
-      public void onFlowCompleted(RecordsChannel recordsChannel) {
+      public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
+        flowFinishFailed.set(true);
+        WaitHelper.getTestWaiter().performNotify();
+      }
+
+      @Override
+      public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
         numFlowCompleted.incrementAndGet();
         try {
           sinkSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(WaitHelper.getTestWaiter()) {

@@ -170,7 +170,7 @@ LayerTransactionParent::RecvInitReadLocks(ReadLockArray&& aReadLocks)
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
 {
-  AUTO_PROFILER_TRACING("Paint", "LayerTransaction");
+  AutoProfilerTracing tracing("Paint", "LayerTransaction");
   AUTO_PROFILER_LABEL("LayerTransactionParent::RecvUpdate", GRAPHICS);
 
   TimeStamp updateStart = TimeStamp::Now();
@@ -180,7 +180,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
   UpdateFwdTransactionId(aInfo.fwdTransactionId());
   AutoClearReadLocks clearLocks(mReadLocks);
 
-  if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     for (const auto& op : aInfo.toDestroy()) {
       DestroyActor(op);
     }
@@ -193,7 +193,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
 
   {
     AutoResolveRefLayers resolve(mCompositorBridge->GetCompositionManager(this));
-    mLayerManager->BeginTransaction();
+    layer_manager()->BeginTransaction();
   }
 
   // Not all edits require an update to the hit testing tree.
@@ -207,7 +207,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreatePaintedLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreatePaintedLayer"));
 
-      RefPtr<PaintedLayer> layer = mLayerManager->CreatePaintedLayer();
+      RefPtr<PaintedLayer> layer = layer_manager()->CreatePaintedLayer();
       if (!BindLayer(layer, edit.get_OpCreatePaintedLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -218,7 +218,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateContainerLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateContainerLayer"));
 
-      RefPtr<ContainerLayer> layer = mLayerManager->CreateContainerLayer();
+      RefPtr<ContainerLayer> layer = layer_manager()->CreateContainerLayer();
       if (!BindLayer(layer, edit.get_OpCreateContainerLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -229,7 +229,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateImageLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateImageLayer"));
 
-      RefPtr<ImageLayer> layer = mLayerManager->CreateImageLayer();
+      RefPtr<ImageLayer> layer = layer_manager()->CreateImageLayer();
       if (!BindLayer(layer, edit.get_OpCreateImageLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -240,7 +240,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateColorLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateColorLayer"));
 
-      RefPtr<ColorLayer> layer = mLayerManager->CreateColorLayer();
+      RefPtr<ColorLayer> layer = layer_manager()->CreateColorLayer();
       if (!BindLayer(layer, edit.get_OpCreateColorLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -251,7 +251,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateTextLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateTextLayer"));
 
-      RefPtr<TextLayer> layer = mLayerManager->CreateTextLayer();
+      RefPtr<TextLayer> layer = layer_manager()->CreateTextLayer();
       if (!BindLayer(layer, edit.get_OpCreateTextLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -262,7 +262,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateBorderLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateBorderLayer"));
 
-      RefPtr<BorderLayer> layer = mLayerManager->CreateBorderLayer();
+      RefPtr<BorderLayer> layer = layer_manager()->CreateBorderLayer();
       if (!BindLayer(layer, edit.get_OpCreateBorderLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -273,7 +273,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateCanvasLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateCanvasLayer"));
 
-      RefPtr<CanvasLayer> layer = mLayerManager->CreateCanvasLayer();
+      RefPtr<CanvasLayer> layer = layer_manager()->CreateCanvasLayer();
       if (!BindLayer(layer, edit.get_OpCreateCanvasLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -284,7 +284,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
     case Edit::TOpCreateRefLayer: {
       MOZ_LAYERS_LOG(("[ParentSide] CreateRefLayer"));
 
-      RefPtr<RefLayer> layer = mLayerManager->CreateRefLayer();
+      RefPtr<RefLayer> layer = layer_manager()->CreateRefLayer();
       if (!BindLayer(layer, edit.get_OpCreateRefLayer())) {
         return IPC_FAIL_NO_REASON(this);
       }
@@ -482,7 +482,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
 
   {
     AutoResolveRefLayers resolve(mCompositorBridge->GetCompositionManager(this));
-    mLayerManager->EndTransaction(TimeStamp(), LayerManager::END_NO_IMMEDIATE_REDRAW);
+    layer_manager()->EndTransaction(TimeStamp(), LayerManager::END_NO_IMMEDIATE_REDRAW);
   }
 
   if (!IsSameProcess()) {
@@ -736,7 +736,7 @@ LayerTransactionParent::RecvGetAnimationOpacity(const uint64_t& aCompositorAnima
                                                 bool* aHasAnimationOpacity)
 {
   *aHasAnimationOpacity = false;
-  if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     return IPC_FAIL_NO_REASON(this);
   }
 
@@ -758,7 +758,7 @@ mozilla::ipc::IPCResult
 LayerTransactionParent::RecvGetAnimationTransform(const uint64_t& aCompositorAnimationsId,
                                                   MaybeTransform* aTransform)
 {
-  if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     return IPC_FAIL_NO_REASON(this);
   }
 
@@ -804,7 +804,7 @@ mozilla::ipc::IPCResult
 LayerTransactionParent::RecvSetAsyncScrollOffset(const FrameMetrics::ViewID& aScrollID,
                                                  const float& aX, const float& aY)
 {
-  if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     return IPC_FAIL_NO_REASON(this);
   }
 
@@ -820,7 +820,7 @@ mozilla::ipc::IPCResult
 LayerTransactionParent::RecvSetAsyncZoom(const FrameMetrics::ViewID& aScrollID,
                                          const float& aValue)
 {
-  if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     return IPC_FAIL_NO_REASON(this);
   }
 
@@ -853,10 +853,17 @@ LayerTransactionParent::RecvRequestProperty(const nsString& aProperty, float* aV
   return IPC_OK();
 }
 
-mozilla::ipc::IPCResult
-LayerTransactionParent::RecvSetConfirmedTargetAPZC(const uint64_t& aBlockId,
-                                                   nsTArray<ScrollableLayerGuid>&& aTargets)
-{
+mozilla::ipc::IPCResult LayerTransactionParent::RecvSetConfirmedTargetAPZC(
+    const uint64_t& aBlockId, nsTArray<ScrollableLayerGuid>&& aTargets) {
+  for (size_t i = 0; i < aTargets.Length(); i++) {
+    if (aTargets[i].mLayersId != GetId()) {
+      // Guard against bad data from hijacked child processes
+      NS_ERROR(
+          "Unexpected layers id in RecvSetConfirmedTargetAPZC; dropping "
+          "message...");
+      return IPC_FAIL(this, "Bad layers id");
+    }
+  }
   mCompositorBridge->SetConfirmedTargetAPZC(GetId(), aBlockId, aTargets);
   return IPC_OK();
 }
@@ -954,28 +961,6 @@ bool LayerTransactionParent::IsSameProcess() const
   return OtherPid() == base::GetCurrentProcId();
 }
 
-uint64_t
-LayerTransactionParent::FlushTransactionId(TimeStamp& aCompositeEnd)
-{
-#if defined(ENABLE_FRAME_LATENCY_LOG)
-  if (mPendingTransaction) {
-    if (mTxnStartTime) {
-      uint32_t latencyMs = round((aCompositeEnd - mTxnStartTime).ToMilliseconds());
-      printf_stderr("From transaction start to end of generate frame latencyMs %d this %p\n", latencyMs, this);
-    }
-    if (mFwdTime) {
-      uint32_t latencyMs = round((aCompositeEnd - mFwdTime).ToMilliseconds());
-      printf_stderr("From forwarding transaction to end of generate frame latencyMs %d this %p\n", latencyMs, this);
-    }
-  }
-  mTxnStartTime = TimeStamp();
-  mFwdTime = TimeStamp();
-#endif
-  uint64_t id = mPendingTransaction;
-  mPendingTransaction = 0;
-  return id;
-}
-
 void
 LayerTransactionParent::SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage)
 {
@@ -1026,7 +1011,7 @@ LayerTransactionParent::AsLayer(const LayerHandle& aHandle)
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvNewCompositable(const CompositableHandle& aHandle, const TextureInfo& aInfo)
 {
-  if (!AddCompositable(aHandle, aInfo, /* aUseWebRender */ false)) {
+  if (!AddCompositable(aHandle, aInfo)) {
     return IPC_FAIL_NO_REASON(this);
   }
   return IPC_OK();

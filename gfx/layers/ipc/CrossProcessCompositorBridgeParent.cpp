@@ -212,28 +212,24 @@ CrossProcessCompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::Pipeli
   MOZ_ASSERT(sIndirectLayerTrees.find(layersId) != sIndirectLayerTrees.end());
   MOZ_ASSERT(sIndirectLayerTrees[layersId].mWrBridge == nullptr);
   WebRenderBridgeParent* parent = nullptr;
-  WebRenderBridgeParent* root = nullptr;
   CompositorBridgeParent* cbp = sIndirectLayerTrees[layersId].mParent;
-  if (cbp) {
-    root = sIndirectLayerTrees[cbp->RootLayerTreeId()].mWrBridge.get();
-  }
-  if (!root) {
+  if (!cbp) {
     // This could happen when this function is called after CompositorBridgeParent destruction.
     // This was observed during Tab move between different windows.
     NS_WARNING("Created child without a matching parent?");
-    parent = WebRenderBridgeParent::CreateDestroyed(aPipelineId);
-    parent->AddRef(); // IPDL reference
+    parent = WebRenderBridgeParent::CreateDestroyed();
     *aIdNamespace = parent->GetIdNamespace();
     *aTextureFactoryIdentifier = TextureFactoryIdentifier(LayersBackend::LAYERS_NONE);
     return parent;
   }
+  WebRenderBridgeParent* root = sIndirectLayerTrees[cbp->RootLayerTreeId()].mWrBridge.get();
 
-  RefPtr<wr::WebRenderAPI> api = root->GetWebRenderAPI()->Clone();
+  RefPtr<wr::WebRenderAPI> api = root->GetWebRenderAPI();
   RefPtr<AsyncImagePipelineManager> holder = root->AsyncImageManager();
   RefPtr<CompositorAnimationStorage> animStorage = cbp->GetAnimationStorage();
   parent = new WebRenderBridgeParent(this, aPipelineId, nullptr, root->CompositorScheduler(), Move(api), Move(holder), Move(animStorage));
-  parent->AddRef(); // IPDL reference
 
+  parent->AddRef(); // IPDL reference
   sIndirectLayerTrees[layersId].mCrossProcessParent = this;
   sIndirectLayerTrees[layersId].mWrBridge = parent;
   *aTextureFactoryIdentifier = parent->GetTextureFactoryIdentifier();
@@ -357,7 +353,7 @@ CrossProcessCompositorBridgeParent::ShadowLayersUpdated(
     Unused << state->mParent->SendObserveLayerUpdate(id, aLayerTree->GetChildEpoch(), true);
   }
 
-  aLayerTree->SetPendingTransactionId(aInfo.id(), aInfo.transactionStart(), aInfo.fwdTime());
+  aLayerTree->SetPendingTransactionId(aInfo.id());
 }
 
 void
@@ -378,9 +374,10 @@ CrossProcessCompositorBridgeParent::DidCompositeLocked(
 {
   sIndirectLayerTreesLock->AssertCurrentThreadOwns();
   if (LayerTransactionParent *layerTree = sIndirectLayerTrees[aId].mLayerTree) {
-    uint64_t transactionId = layerTree->FlushTransactionId(aCompositeEnd);
+    uint64_t transactionId = layerTree->GetPendingTransactionId();
     if (transactionId) {
       Unused << SendDidComposite(aId, transactionId, aCompositeStart, aCompositeEnd);
+      layerTree->SetPendingTransactionId(0);
     }
   } else if (WebRenderBridgeParent* wrbridge = sIndirectLayerTrees[aId].mWrBridge) {
     uint64_t transactionId = wrbridge->FlushPendingTransactionIds();

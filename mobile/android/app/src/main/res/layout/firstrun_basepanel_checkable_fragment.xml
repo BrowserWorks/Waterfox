@@ -20,8 +20,8 @@
         <ImageView android:id="@+id/firstrun_image"
                    android:layout_width="wrap_content"
                    android:layout_height="@dimen/firstrun_background_height"
-                   android:layout_marginTop="30dp"
-                   android:layout_marginBottom="18dp"
+                   android:layout_marginTop="40dp"
+                   android:layout_marginBottom="40dp"
                    android:scaleType="fitCenter"
                    android:layout_gravity="center"
                    android:adjustViewBounds="true"/>
@@ -36,6 +36,7 @@
                   android:layout_width="@dimen/firstrun_content_width"
                   android:layout_height="wrap_content"
                   android:paddingTop="20dp"
+                  android:paddingBottom="30dp"
                   android:gravity="center"
                   android:textAppearance="@style/TextAppearance.FirstrunRegular.Body"/>
 
@@ -49,10 +50,9 @@
         <TextView android:id="@+id/firstrun_link"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:layout_marginBottom="30dp"
+                  android:padding="30dp"
                   android:gravity="center"
-                  android:textAppearance="@style/TextAppearance.Link"
-                  android:textAllCaps="true"
+                  android:textAppearance="@style/TextAppearance.FirstrunRegular.Link"
                   android:text="@string/firstrun_button_next"/>
     </LinearLayout>
 </ScrollView>

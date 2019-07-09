@@ -1,15 +1,12 @@
-from __future__ import absolute_import
-
-import argparse
-import collections
-import csv
-import os
-import sys
-from calendar import day_name
 from datetime import datetime
-
-import compare
+import sys
+import os
+import csv
 import numpy
+import collections
+import argparse
+import compare
+from calendar import day_name
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 

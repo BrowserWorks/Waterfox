@@ -14,7 +14,7 @@
 #define nsAttrName_h___
 
 #include "mozilla/dom/NodeInfo.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsDOMString.h"
 
 #define NS_ATTRNAME_NODEINFO_BIT 1
@@ -27,7 +27,7 @@ public:
     AddRefInternalName();
   }
 
-  explicit nsAttrName(nsAtom* aAtom)
+  explicit nsAttrName(nsIAtom* aAtom)
     : mBits(reinterpret_cast<uintptr_t>(aAtom))
   {
     NS_ASSERTION(aAtom, "null atom-name in nsAttrName");
@@ -69,7 +69,7 @@ public:
     }
   }
 
-  void SetTo(nsAtom* aAtom)
+  void SetTo(nsIAtom* aAtom)
   {
     NS_ASSERTION(aAtom, "null atom-name in nsAttrName");
 
@@ -89,10 +89,10 @@ public:
     return reinterpret_cast<mozilla::dom::NodeInfo*>(mBits & ~NS_ATTRNAME_NODEINFO_BIT);
   }
 
-  nsAtom* Atom() const
+  nsIAtom* Atom() const
   {
     NS_ASSERTION(IsAtom(), "getting atom-value of nodeinfo-name");
-    return reinterpret_cast<nsAtom*>(mBits);
+    return reinterpret_cast<nsIAtom*>(mBits);
   }
 
   bool Equals(const nsAttrName& aOther) const
@@ -105,7 +105,7 @@ public:
   // call this function on nsAttrName structs with 0 mBits, so no attempt
   // must be made to do anything with mBits besides comparing it with the
   // incoming aAtom argument.
-  bool Equals(nsAtom* aAtom) const
+  bool Equals(nsIAtom* aAtom) const
   {
     return reinterpret_cast<uintptr_t>(aAtom) == mBits;
   }
@@ -116,7 +116,7 @@ public:
     return IsAtom() && Atom()->Equals(aLocalName);
   }
 
-  bool Equals(nsAtom* aLocalName, int32_t aNamespaceID) const
+  bool Equals(nsIAtom* aLocalName, int32_t aNamespaceID) const
   {
     if (aNamespaceID == kNameSpaceID_None) {
       return Equals(aLocalName);
@@ -141,12 +141,12 @@ public:
            (!IsAtom() && NodeInfo()->NamespaceEquals(aNamespaceID));
   }
 
-  nsAtom* LocalName() const
+  nsIAtom* LocalName() const
   {
     return IsAtom() ? Atom() : NodeInfo()->NameAtom();
   }
 
-  nsAtom* GetPrefix() const
+  nsIAtom* GetPrefix() const
   {
     return IsAtom() ? nullptr : NodeInfo()->GetPrefixAtom();
   }
@@ -187,7 +187,7 @@ public:
     return mBits - 0;
   }
 
-  bool IsSmaller(nsAtom* aOther) const
+  bool IsSmaller(nsIAtom* aOther) const
   {
     return mBits < reinterpret_cast<uintptr_t>(aOther);
   }

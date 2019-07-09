@@ -10,11 +10,55 @@ const UNFILTERED_URI_COUNT = "browser.engagement.unfiltered_uri_count";
 
 const TELEMETRY_SUBSESSION_TOPIC = "internal-telemetry-after-subsession-split";
 
-XPCOMUtils.defineLazyModuleGetter(this, "MINIMUM_TAB_COUNT_INTERVAL_MS",
-                                  "resource:///modules/BrowserUsageTelemetry.jsm");
-
 // Reset internal URI counter in case URIs were opened by other tests.
 Services.obs.notifyObservers(null, TELEMETRY_SUBSESSION_TOPIC);
+
+/**
+ * Waits for the web progress listener associated with this tab to fire an
+ * onLocationChange for a non-error page.
+ *
+ * @param {xul:browser} browser
+ *        A xul:browser.
+ *
+ * @return {Promise}
+ * @resolves When navigating to a non-error page.
+ */
+function browserLocationChanged(browser) {
+  return new Promise(resolve => {
+    let wpl = {
+      onStateChange() {},
+      onSecurityChange() {},
+      onStatusChange() {},
+      onLocationChange(aWebProgress, aRequest, aURI, aFlags) {
+        if (!(aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_ERROR_PAGE)) {
+          browser.webProgress.removeProgressListener(filter);
+          filter.removeProgressListener(wpl);
+          resolve();
+        }
+      },
+      QueryInterface: XPCOMUtils.generateQI([
+        Ci.nsIWebProgressListener,
+        Ci.nsIWebProgressListener2,
+      ]),
+    };
+    const filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
+                     .createInstance(Ci.nsIWebProgress);
+    filter.addProgressListener(wpl, Ci.nsIWebProgress.NOTIFY_ALL);
+    browser.webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
+  });
+}
+
+/**
+ * An helper that checks the value of a scalar if it's expected to be > 0,
+ * otherwise makes sure that the scalar it's not reported.
+ */
+let checkScalar = (scalars, scalarName, value, msg) => {
+  if (value > 0) {
+    is(scalars[scalarName], value, msg);
+    return;
+  }
+  ok(!(scalarName in scalars), scalarName + " must not be reported.");
+};
 
 /**
  * Get a snapshot of the scalars and check them against the provided values.
@@ -136,84 +180,90 @@ add_task(async function test_subsessionSplit() {
   await BrowserTestUtils.closeWindow(win);
 });
 
-function checkTabCountHistogram(result, expected, message) {
-  let expectedPadded = result.counts.map((val, idx) => idx < expected.length ? expected[idx] : 0);
-  Assert.deepEqual(result.counts, expectedPadded, message);
-}
+add_task(async function test_URIAndDomainCounts() {
+  // Let's reset the counts.
+  Services.telemetry.clearScalars();
 
-add_task(async function test_tabsHistogram() {
-  let openedTabs = [];
-  let tabCountHist = getAndClearHistogram("TAB_COUNT");
+  let checkCounts = (countsObject) => {
+    // Get a snapshot of the scalars and then clear them.
+    const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN);
+    checkScalar(scalars, TOTAL_URI_COUNT, countsObject.totalURIs,
+                "The URI scalar must contain the expected value.");
+    checkScalar(scalars, UNIQUE_DOMAINS_COUNT, countsObject.domainCount,
+                "The unique domains scalar must contain the expected value.");
+    checkScalar(scalars, UNFILTERED_URI_COUNT, countsObject.totalUnfilteredURIs,
+                "The unfiltered URI scalar must contain the expected value.");
+  };
 
-  checkTabCountHistogram(tabCountHist.snapshot(), [0, 0], "TAB_COUNT telemetry - initial tab counts");
-
-  // Add a new tab and check that the count is right.
-  BrowserUsageTelemetry._lastRecordTabCount = 0;
-  openedTabs.push(await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank"));
-  checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1], "TAB_COUNT telemetry - opening tabs");
+  // Check that about:blank doesn't get counted in the URI total.
+  let firstTab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  checkCounts({totalURIs: 0, domainCount: 0, totalUnfilteredURIs: 0});
 
   // Open a different page and check the counts.
-  BrowserUsageTelemetry._lastRecordTabCount = 0;
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
-  openedTabs.push(tab);
-  BrowserUsageTelemetry._lastRecordTabCount = 0;
-  await BrowserTestUtils.loadURI(tab.linkedBrowser, "http://example.com/");
-  await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
-  checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2], "TAB_COUNT telemetry - loading page");
+  await BrowserTestUtils.loadURI(firstTab.linkedBrowser, "http://example.com/");
+  await BrowserTestUtils.browserLoaded(firstTab.linkedBrowser);
+  checkCounts({totalURIs: 1, domainCount: 1, totalUnfilteredURIs: 1});
 
-  // Open another tab
-  BrowserUsageTelemetry._lastRecordTabCount = 0;
-  openedTabs.push(await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank"));
-  checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1], "TAB_COUNT telemetry - opening more tabs");
+  // Activating a different tab must not increase the URI count.
+  let secondTab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  await BrowserTestUtils.switchTab(gBrowser, firstTab);
+  checkCounts({totalURIs: 1, domainCount: 1, totalUnfilteredURIs: 1});
+  await BrowserTestUtils.removeTab(secondTab);
 
-  // Add a new window and then some tabs in it. A new window starts with one tab.
-  BrowserUsageTelemetry._lastRecordTabCount = 0;
-  let win = await BrowserTestUtils.openNewBrowserWindow();
-  checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1, 1], "TAB_COUNT telemetry - opening window");
+  // Open a new window and set the tab to a new address.
+  let newWin = await BrowserTestUtils.openNewBrowserWindow();
+  await BrowserTestUtils.loadURI(newWin.gBrowser.selectedBrowser, "http://example.com/");
+  await BrowserTestUtils.browserLoaded(newWin.gBrowser.selectedBrowser);
+  checkCounts({totalURIs: 2, domainCount: 1, totalUnfilteredURIs: 2});
 
-  // Do not trigger a recount if _lastRecordTabCount is recent on new tab
-  BrowserUsageTelemetry._lastRecordTabCount = Date.now() - (MINIMUM_TAB_COUNT_INTERVAL_MS / 2);
-  {
-    let oldLastRecordTabCount = BrowserUsageTelemetry._lastRecordTabCount;
-    openedTabs.push(await BrowserTestUtils.openNewForegroundTab(win.gBrowser, "about:blank"));
-    checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1, 1, 0], "TAB_COUNT telemetry - new tab, recount event ignored");
-    ok(BrowserUsageTelemetry._lastRecordTabCount == oldLastRecordTabCount, "TAB_COUNT telemetry - _lastRecordTabCount unchanged");
-  }
+  // We should not count AJAX requests.
+  const XHR_URL = "http://example.com/r";
+  await ContentTask.spawn(newWin.gBrowser.selectedBrowser, XHR_URL, function(url) {
+    return new Promise(resolve => {
+      var xhr = new content.window.XMLHttpRequest();
+      xhr.open("GET", url);
+      xhr.onload = () => resolve();
+      xhr.send();
+    });
+  });
+  checkCounts({totalURIs: 2, domainCount: 1, totalUnfilteredURIs: 2});
 
-  // Trigger a recount if _lastRecordTabCount has passed on new tab
-  BrowserUsageTelemetry._lastRecordTabCount = Date.now() - (MINIMUM_TAB_COUNT_INTERVAL_MS + 1000);
-  {
-    let oldLastRecordTabCount = BrowserUsageTelemetry._lastRecordTabCount;
-    openedTabs.push(await BrowserTestUtils.openNewForegroundTab(win.gBrowser, "about:blank"));
-    checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1, 1, 0, 1], "TAB_COUNT telemetry - new tab, recount event included");
-    ok(BrowserUsageTelemetry._lastRecordTabCount != oldLastRecordTabCount, "TAB_COUNT telemetry - _lastRecordTabCount updated");
-    ok(BrowserUsageTelemetry._lastRecordTabCount > Date.now() - MINIMUM_TAB_COUNT_INTERVAL_MS, "TAB_COUNT telemetry - _lastRecordTabCount invariant");
-  }
+  // Check that we're counting page fragments.
+  let loadingStopped = browserLocationChanged(newWin.gBrowser.selectedBrowser);
+  await BrowserTestUtils.loadURI(newWin.gBrowser.selectedBrowser, "http://example.com/#2");
+  await loadingStopped;
+  checkCounts({totalURIs: 3, domainCount: 1, totalUnfilteredURIs: 3});
 
-  // Do not trigger a recount if _lastRecordTabCount is recent on page load
-  BrowserUsageTelemetry._lastRecordTabCount = Date.now() - (MINIMUM_TAB_COUNT_INTERVAL_MS / 2);
-  {
-    let oldLastRecordTabCount = BrowserUsageTelemetry._lastRecordTabCount;
-    await BrowserTestUtils.loadURI(tab.linkedBrowser, "http://example.com/");
-    await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
-    checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1, 1, 0, 1], "TAB_COUNT telemetry - page load, recount event ignored");
-    ok(BrowserUsageTelemetry._lastRecordTabCount == oldLastRecordTabCount, "TAB_COUNT telemetry - _lastRecordTabCount unchanged");
-  }
+  // Check that a different URI from the example.com domain doesn't increment the unique count.
+  await BrowserTestUtils.loadURI(newWin.gBrowser.selectedBrowser, "http://test1.example.com/");
+  await BrowserTestUtils.browserLoaded(newWin.gBrowser.selectedBrowser);
+  checkCounts({totalURIs: 4, domainCount: 1, totalUnfilteredURIs: 4});
 
-  // Trigger a recount if _lastRecordTabCount has passed on page load
-  BrowserUsageTelemetry._lastRecordTabCount = Date.now() - (MINIMUM_TAB_COUNT_INTERVAL_MS + 1000);
-  {
-    let oldLastRecordTabCount = BrowserUsageTelemetry._lastRecordTabCount;
-    await BrowserTestUtils.loadURI(tab.linkedBrowser, "http://example.com/");
-    await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
-    checkTabCountHistogram(tabCountHist.snapshot(), [0, 0, 1, 2, 1, 1, 0, 2], "TAB_COUNT telemetry - page load, recount event included");
-    ok(BrowserUsageTelemetry._lastRecordTabCount != oldLastRecordTabCount, "TAB_COUNT telemetry - _lastRecordTabCount updated");
-    ok(BrowserUsageTelemetry._lastRecordTabCount > Date.now() - MINIMUM_TAB_COUNT_INTERVAL_MS, "TAB_COUNT telemetry - _lastRecordTabCount invariant");
-  }
+  // Make sure that the unique domains counter is incrementing for a different domain.
+  await BrowserTestUtils.loadURI(newWin.gBrowser.selectedBrowser, "https://example.org/");
+  await BrowserTestUtils.browserLoaded(newWin.gBrowser.selectedBrowser);
+  checkCounts({totalURIs: 5, domainCount: 2, totalUnfilteredURIs: 5});
 
-  // Remove all the extra windows and tabs.
-  for (let openTab of openedTabs) {
-    await BrowserTestUtils.removeTab(openTab);
-  }
-  await BrowserTestUtils.closeWindow(win);
+  // Check that we only account for top level loads (e.g. we don't count URIs from
+  // embedded iframes).
+  await ContentTask.spawn(newWin.gBrowser.selectedBrowser, null, async function() {
+    let doc = content.document;
+    let iframe = doc.createElement("iframe");
+    let promiseIframeLoaded = ContentTaskUtils.waitForEvent(iframe, "load", false);
+    iframe.src = "https://example.org/test";
+    doc.body.insertBefore(iframe, doc.body.firstChild);
+    await promiseIframeLoaded;
+  });
+  checkCounts({totalURIs: 5, domainCount: 2, totalUnfilteredURIs: 5});
+
+  // Check that uncommon protocols get counted in the unfiltered URI probe.
+  const TEST_PAGE =
+    "data:text/html,<a id='target' href='%23par1'>Click me</a><a name='par1'>The paragraph.</a>";
+  await BrowserTestUtils.loadURI(newWin.gBrowser.selectedBrowser, TEST_PAGE);
+  await BrowserTestUtils.browserLoaded(newWin.gBrowser.selectedBrowser);
+  checkCounts({totalURIs: 5, domainCount: 2, totalUnfilteredURIs: 6});
+
+  // Clean up.
+  await BrowserTestUtils.removeTab(firstTab);
+  await BrowserTestUtils.closeWindow(newWin);
 });

@@ -28,7 +28,7 @@ function* testSteps()
   db.onversionchange = function(event) {
     info("Got versionchange event for db 1");
     event.target.close();
-  };
+  }
 
   executeSoon(continueToNextStepSync);
   yield undefined;
@@ -47,7 +47,7 @@ function* testSteps()
   event.preventDefault();
 
   is(event.type, "error", "Got an error event for db 2");
-  ok(event.target.error instanceof DOMException, "Request has a DOMException");
+  ok(event.target.error instanceof DOMError, "Request has a DOMError");
   is(event.target.error.name, "AbortError", "Request has AbortError");
 
   finishTest();

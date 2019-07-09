@@ -53,6 +53,7 @@
 #include "nsIPageSequenceFrame.h"
 #include "nsNetUtil.h"
 #include "nsIContentViewerEdit.h"
+#include "nsIContentViewerFile.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Loader.h"
 #include "nsIInterfaceRequestor.h"
@@ -64,6 +65,8 @@
 #include "mozilla/ReflowInput.h"
 #include "nsIImageLoadingContent.h"
 #include "nsCopySupport.h"
+#include "nsIDOMHTMLFrameSetElement.h"
+#include "nsIDOMHTMLImageElement.h"
 #ifdef MOZ_XUL
 #include "nsIXULDocument.h"
 #include "nsXULPopupManager.h"
@@ -211,6 +214,7 @@ private:
 //-------------------------------------------------------------
 class nsDocumentViewer final : public nsIContentViewer,
                                public nsIContentViewerEdit,
+                               public nsIContentViewerFile,
                                public nsIDocumentViewerPrint
 
 #ifdef NS_PRINTING
@@ -233,6 +237,9 @@ public:
 
   // nsIContentViewerEdit
   NS_DECL_NSICONTENTVIEWEREDIT
+
+  // nsIContentViewerFile
+  NS_DECL_NSICONTENTVIEWERFILE
 
 #ifdef NS_PRINTING
   // nsIWebBrowserPrint
@@ -386,6 +393,9 @@ protected:
   nsAutoPtr<AutoPrintEventDispatcher> mAutoBeforeAndAfterPrint;
 #endif // NS_PRINT_PREVIEW
 
+#ifdef DEBUG
+  FILE* mDebugFile;
+#endif // DEBUG
 #endif // NS_PRINTING
 
   /* character set member data */
@@ -491,6 +501,10 @@ void nsDocumentViewer::PrepareToStartLoad()
 #endif
   }
 
+#ifdef DEBUG
+  mDebugFile = nullptr;
+#endif
+
 #endif // NS_PRINTING
 }
 
@@ -518,6 +532,9 @@ nsDocumentViewer::nsDocumentViewer()
     mOriginalPrintPreviewScale(0.0),
     mPrintPreviewZoom(1.0),
 #endif // NS_PRINT_PREVIEW
+#ifdef DEBUG
+    mDebugFile(nullptr),
+#endif // DEBUG
 #endif // NS_PRINTING
     mHintCharsetSource(kCharsetUninitialized),
     mHintCharset(nullptr),
@@ -534,6 +551,7 @@ NS_IMPL_RELEASE(nsDocumentViewer)
 
 NS_INTERFACE_MAP_BEGIN(nsDocumentViewer)
     NS_INTERFACE_MAP_ENTRY(nsIContentViewer)
+    NS_INTERFACE_MAP_ENTRY(nsIContentViewerFile)
     NS_INTERFACE_MAP_ENTRY(nsIContentViewerEdit)
     NS_INTERFACE_MAP_ENTRY(nsIDocumentViewerPrint)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIContentViewer)
@@ -548,7 +566,13 @@ nsDocumentViewer::~nsDocumentViewer()
     Close(nullptr);
     mDocument->Destroy();
   }
-
+  
+  if (mPrintEngine) {
+    mPrintEngine->Destroy();
+    mPrintEngine = nullptr;
+  }
+  
+  MOZ_RELEASE_ASSERT(mDestroyRefCount == 0);
   NS_ASSERTION(!mPresShell && !mPresContext,
                "User did not call nsIContentViewer::Destroy");
   if (mPresShell || mPresContext) {
@@ -1250,7 +1274,7 @@ nsDocumentViewer::PermitUnloadInternal(bool *aShouldPrompt,
                                      isTabModalPromptAllowed);
       }
 
-      nsAutoString title, message, stayLabel, leaveLabel;
+      nsXPIDLString title, message, stayLabel, leaveLabel;
       rv  = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                                "OnBeforeUnloadTitle",
                                                title);
@@ -1273,7 +1297,7 @@ nsDocumentViewer::PermitUnloadInternal(bool *aShouldPrompt,
         rv = tmp;
       }
 
-      if (NS_FAILED(rv)) {
+      if (NS_FAILED(rv) || !title || !message || !stayLabel || !leaveLabel) {
         NS_ERROR("Failed to get strings from dom.properties!");
         return NS_OK;
       }
@@ -1289,9 +1313,9 @@ nsDocumentViewer::PermitUnloadInternal(bool *aShouldPrompt,
       nsAutoSyncOperation sync(mDocument);
       mInPermitUnloadPrompt = true;
       mozilla::Telemetry::Accumulate(mozilla::Telemetry::ONBEFOREUNLOAD_PROMPT_COUNT, 1);
-      rv = prompt->ConfirmEx(title.get(), message.get(), buttonFlags,
-                             leaveLabel.get(), stayLabel.get(),
-                             nullptr, nullptr, &dummy, &buttonPressed);
+      rv = prompt->ConfirmEx(title, message, buttonFlags,
+                             leaveLabel, stayLabel, nullptr, nullptr,
+                             &dummy, &buttonPressed);
       mInPermitUnloadPrompt = false;
 
       // If the prompt aborted, we tell our consumer that it is not allowed
@@ -1490,8 +1514,6 @@ nsDocumentViewer::Open(nsISupports *aState, nsISHEntry *aSHEntry)
   SyncParentSubDocMap();
 
   if (mFocusListener && mDocument) {
-    // The focus listener may have been disconnected.
-    mFocusListener->Init(this);
     mDocument->AddEventListener(NS_LITERAL_STRING("focus"), mFocusListener,
                                 false, false);
     mDocument->AddEventListener(NS_LITERAL_STRING("blur"), mFocusListener,
@@ -2304,7 +2326,7 @@ nsDocumentViewer::CreateStyleSet(nsIDocument* aDocument)
   if (backendType == StyleBackendType::Gecko) {
     styleSet = new nsStyleSet();
   } else {
-    styleSet = new ServoStyleSet(ServoStyleSet::Kind::Master);
+    styleSet = new ServoStyleSet();
   }
 
   styleSet->BeginUpdate();
@@ -2821,6 +2843,59 @@ NS_IMETHODIMP nsDocumentViewer::SetCommandNode(nsIDOMNode* aNode)
   return NS_OK;
 }
 
+/* ========================================================================================
+ * nsIContentViewerFile
+ * ======================================================================================== */
+/** ---------------------------------------------------
+ *  See documentation above in the nsIContentViewerfile class definition
+ *	@update 01/24/00 dwc
+ */
+NS_IMETHODIMP
+nsDocumentViewer::Print(bool              aSilent,
+                          FILE *            aDebugFile,
+                          nsIPrintSettings* aPrintSettings)
+{
+#ifdef NS_PRINTING
+  nsCOMPtr<nsIPrintSettings> printSettings;
+
+#ifdef DEBUG
+  nsresult rv = NS_ERROR_FAILURE;
+
+  mDebugFile = aDebugFile;
+  // if they don't pass in a PrintSettings, then make one
+  // it will have all the default values
+  printSettings = aPrintSettings;
+  nsCOMPtr<nsIPrintSettingsService> printSettingsSvc
+    = do_GetService("@mozilla.org/gfx/printsettings-service;1", &rv);
+  if (NS_SUCCEEDED(rv)) {
+    // if they don't pass in a PrintSettings, then make one
+    if (printSettings == nullptr) {
+      printSettingsSvc->GetNewPrintSettings(getter_AddRefs(printSettings));
+    }
+    NS_ASSERTION(printSettings, "You can't PrintPreview without a PrintSettings!");
+  }
+  if (printSettings) printSettings->SetPrintSilent(aSilent);
+  if (printSettings) printSettings->SetShowPrintProgress(false);
+#endif
+
+
+  return Print(printSettings, nullptr);
+#else
+  return NS_ERROR_FAILURE;
+#endif
+}
+
+// nsIContentViewerFile interface
+NS_IMETHODIMP
+nsDocumentViewer::GetPrintable(bool *aPrintable)
+{
+  NS_ENSURE_ARG_POINTER(aPrintable);
+
+  *aPrintable = !GetIsPrinting();
+
+  return NS_OK;
+}
+
 NS_IMETHODIMP nsDocumentViewer::ScrollToNode(nsIDOMNode* aNode)
 {
   NS_ENSURE_ARG(aNode);
@@ -3157,25 +3232,6 @@ nsDocumentViewer::GetFullZoom(float* aFullZoom)
 }
 
 NS_IMETHODIMP
-nsDocumentViewer::GetDeviceFullZoom(float* aDeviceFullZoom)
-{
-  NS_ENSURE_ARG_POINTER(aDeviceFullZoom);
-#ifdef NS_PRINT_PREVIEW
-  if (GetIsPrintPreview()) {
-    // Print Preview overrides all zoom; if specified, we use the print preview
-    // zoom, no matter what.
-    *aDeviceFullZoom = mPrintPreviewZoom;
-    return NS_OK;
-  }
-#endif
-  // If not in print preview, ask the prescontext for the device zoom, if a
-  // prescontext is available.
-  nsPresContext* pc = GetPresContext();
-  *aDeviceFullZoom = pc ? pc->GetDeviceFullZoom() : mPageZoom;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsDocumentViewer::SetOverrideDPPX(float aDPPX)
 {
   // If we don't have a document, then we need to bail.
@@ -3340,10 +3396,15 @@ SetChildForceCharacterSet(nsIContentViewer* aChild, void* aClosure)
 NS_IMETHODIMP
 nsDocumentViewer::SetForceCharacterSet(const nsACString& aForceCharacterSet)
 {
-  // The empty string means no hint.
+  // This method is scriptable, so add-ons could pass in something other
+  // than a canonical name. However, in case where the input is a canonical
+  // name, "replacement" doesn't survive label resolution. Additionally, the
+  // empty string means no hint.
   const Encoding* encoding = nullptr;
   if (!aForceCharacterSet.IsEmpty()) {
-    if (!(encoding = Encoding::ForLabel(aForceCharacterSet))) {
+    if (aForceCharacterSet.EqualsLiteral("replacement")) {
+      encoding = REPLACEMENT_ENCODING;
+    } else if (!(encoding = Encoding::ForLabel(aForceCharacterSet))) {
       // Reject unknown labels
       return NS_ERROR_INVALID_ARG;
     }
@@ -3418,10 +3479,15 @@ SetChildHintCharacterSet(nsIContentViewer* aChild, void* aClosure)
 NS_IMETHODIMP
 nsDocumentViewer::SetHintCharacterSet(const nsACString& aHintCharacterSet)
 {
-  // The empty string means no hint.
+  // This method is scriptable, so add-ons could pass in something other
+  // than a canonical name. However, in case where the input is a canonical
+  // name, "replacement" doesn't survive label resolution. Additionally, the
+  // empty string means no hint.
   const Encoding* encoding = nullptr;
   if (!aHintCharacterSet.IsEmpty()) {
-    if (!(encoding = Encoding::ForLabel(aHintCharacterSet))) {
+    if (aHintCharacterSet.EqualsLiteral("replacement")) {
+      encoding = REPLACEMENT_ENCODING;
+    } else if (!(encoding = Encoding::ForLabel(aHintCharacterSet))) {
       // Reject unknown labels
       return NS_ERROR_INVALID_ARG;
     }
@@ -3937,7 +4003,13 @@ nsDocumentViewer::Print(nsIPrintSettings*       aPrintSettings,
     rv = printEngine->Initialize(this, mContainer, mDocument,
                                  float(mDeviceContext->AppUnitsPerCSSInch()) /
                                  float(mDeviceContext->AppUnitsPerDevPixel()) /
-                                 mPageZoom);
+                                 mPageZoom,
+#ifdef DEBUG
+                                 mDebugFile
+#else
+                                 nullptr
+#endif
+                                 );
     if (NS_FAILED(rv)) {
       printEngine->Destroy();
       return rv;
@@ -4023,7 +4095,13 @@ nsDocumentViewer::PrintPreview(nsIPrintSettings* aPrintSettings,
     rv = printEngine->Initialize(this, mContainer, doc,
                                  float(mDeviceContext->AppUnitsPerCSSInch()) /
                                  float(mDeviceContext->AppUnitsPerDevPixel()) /
-                                 mPageZoom);
+                                 mPageZoom,
+#ifdef DEBUG
+                                 mDebugFile
+#else
+                                 nullptr
+#endif
+                                 );
     if (NS_FAILED(rv)) {
       printEngine->Destroy();
       return rv;

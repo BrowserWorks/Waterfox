@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/engines.js");
@@ -13,8 +12,8 @@ const kDBName = "places.sqlite";
 const storageSvc = Cc["@mozilla.org/storage/service;1"]
                      .getService(Ci.mozIStorageService);
 
-const fxuri = CommonUtils.makeURI("http://getfirefox.com/");
-const tburi = CommonUtils.makeURI("http://getthunderbird.com/");
+const fxuri = Utils.makeURI("http://getfirefox.com/");
+const tburi = Utils.makeURI("http://getthunderbird.com/");
 
 function setPlacesDatabase(aFileName) {
   removePlacesDatabase();
@@ -110,10 +109,17 @@ add_task(async function test_history_guids() {
       }]
     }
   ];
+  PlacesUtils.asyncHistory.updatePlaces(places, {
+    handleError: function handleError() {
+      do_throw("Unexpected error in adding visit.");
+    },
+    handleResult: function handleResult() {},
+    handleCompletion: onVisitAdded
+  });
 
-  async function onVisitAdded() {
-    let fxguid = await store.GUIDForUri(fxuri, true);
-    let tbguid = await store.GUIDForUri(tburi, true);
+  function onVisitAdded() {
+    let fxguid = store.GUIDForUri(fxuri, true);
+    let tbguid = store.GUIDForUri(tburi, true);
     dump("fxguid: " + fxguid + "\n");
     dump("tbguid: " + tbguid + "\n");
 
@@ -145,17 +151,9 @@ add_task(async function test_history_guids() {
     result = Async.querySpinningly(stmt, ["guid"]);
     do_check_eq(result.length, 0);
     stmt.finalize();
-  }
 
-  await new Promise((resolve, reject) => {
-    PlacesUtils.asyncHistory.updatePlaces(places, {
-      handleError: function handleError() {
-        do_throw("Unexpected error in adding visit.");
-      },
-      handleResult: function handleResult() {},
-      handleCompletion: () => { onVisitAdded().then(resolve, reject); },
-    });
-  });
+    run_next_test();
+  }
 });
 
 add_task(async function test_bookmark_guids() {

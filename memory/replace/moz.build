@@ -6,6 +6,7 @@
 
 DIRS += [
     'logalloc',
+    'replace',
 ]
 
 if CONFIG['MOZ_DMD']:

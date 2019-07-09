@@ -20,7 +20,7 @@ using namespace mozilla;
 
 // define storage for all atoms
 #define CSS_PSEUDO_CLASS(_name, _value, _flags, _pref) \
-  static nsAtom* sPseudoClass_##_name;
+  static nsIAtom* sPseudoClass_##_name;
 #include "nsCSSPseudoClassList.h"
 #undef CSS_PSEUDO_CLASS
 
@@ -89,6 +89,8 @@ bool
 nsCSSPseudoClasses::HasStringArg(Type aType)
 {
   return aType == Type::lang ||
+         aType == Type::mozEmptyExceptChildrenWithLocalname ||
+         aType == Type::mozSystemMetric ||
          aType == Type::mozLocaleDir ||
          aType == Type::dir;
 }
@@ -111,7 +113,7 @@ nsCSSPseudoClasses::PseudoTypeToString(Type aType, nsAString& aString)
 }
 
 /* static */ CSSPseudoClassType
-nsCSSPseudoClasses::GetPseudoType(nsAtom* aAtom, EnabledState aEnabledState)
+nsCSSPseudoClasses::GetPseudoType(nsIAtom* aAtom, EnabledState aEnabledState)
 {
   for (uint32_t i = 0; i < ArrayLength(CSSPseudoClasses_info); ++i) {
     if (*CSSPseudoClasses_info[i].mAtom == aAtom) {

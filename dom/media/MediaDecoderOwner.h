@@ -6,8 +6,8 @@
 #ifndef MediaDecoderOwner_h_
 #define MediaDecoderOwner_h_
 
-#include "mozilla/UniquePtr.h"
 #include "MediaInfo.h"
+#include "nsAutoPtr.h"
 
 namespace mozilla {
 
@@ -41,6 +41,16 @@ public:
    */
   virtual void FireTimeUpdate(bool aPeriodic) = 0;
 
+  // Get the HTMLMediaElement object if the decoder is being used from an
+  // HTML media element, and null otherwise.
+  virtual dom::HTMLMediaElement* GetMediaElement()
+  {
+    return nullptr;
+  }
+
+  // Return an abstract thread on which to run main thread runnables.
+  virtual AbstractThread* AbstractMainThread() const = 0;
+
   // Return true if decoding should be paused
   virtual bool GetPaused() = 0;
 
@@ -49,7 +59,7 @@ public:
   // etc.
   // Must take ownership of MetadataTags aTags argument.
   virtual void MetadataLoaded(const MediaInfo* aInfo,
-                              UniquePtr<const MetadataTags> aTags) = 0;
+                              nsAutoPtr<const MetadataTags> aTags) = 0;
 
   // Called by the decoder object, on the main thread,
   // when it has read the first frame of the video or audio.
@@ -96,9 +106,18 @@ public:
   // asked the decoder to suspend the download.
   virtual void DownloadSuspended() = 0;
 
+  // Called by the media stream, on the main thread, when the download
+  // has been resumed by the cache or because the element itself
+  // asked the decoder to resumed the download.
+  // If aForceNetworkLoading is True, ignore the fact that the download has
+  // previously finished. We are downloading the middle of the media after
+  // having downloaded the end, we need to notify the element a download in
+  // ongoing.
+  virtual void DownloadResumed(bool aForceNetworkLoading = false) = 0;
+
   // Called by the media decoder to indicate whether the media cache has
   // suspended the channel.
-  virtual void NotifySuspendedByCache(bool aSuspendedByCache) = 0;
+  virtual void NotifySuspendedByCache(bool aIsSuspended) = 0;
 
   // called to notify that the principal of the decoder's media resource has changed.
   virtual void NotifyDecoderPrincipalChanged() = 0;
@@ -124,6 +143,10 @@ public:
   // Check if the decoder owner is hidden.
   virtual bool IsHidden() const = 0;
 
+  // Called by the media decoder and the video frame to get the
+  // ImageContainer containing the video data.
+  virtual VideoFrameContainer* GetVideoFrameContainer() = 0;
+
   // Called by media decoder when the audible state changed
   virtual void SetAudibleState(bool aAudible) = 0;
 
@@ -138,6 +161,9 @@ public:
   virtual void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
                                  const nsAString& aInitDataType) = 0;
 
+  // Return the decoder owner's owner document.
+  virtual nsIDocument* GetDocument() const = 0;
+
   // Called by the media decoder to create audio/video tracks and add to its
   // owner's track list.
   virtual void ConstructMediaTracks(const MediaInfo* aInfo) = 0;
@@ -145,6 +171,9 @@ public:
   // Called by the media decoder to removes all audio/video tracks from its
   // owner's track list.
   virtual void RemoveMediaTracks() = 0;
+
+  // Called by the media decoder to create a GMPCrashHelper.
+  virtual already_AddRefed<GMPCrashHelper> CreateGMPCrashHelper() = 0;
 
   // Called by the media decoder to notify the owner to resolve a seek promise.
   virtual void AsyncResolveSeekDOMPromiseIfExists() = 0;
@@ -155,35 +184,6 @@ public:
   // Notified by the decoder that a decryption key is required before emitting
   // further output.
   virtual void NotifyWaitingForKey() {}
-
-  /*
-   * Methods that are used only in Gecko go here. We provide defaul
-   * implementations so they can compile in Servo without modification.
-   */
-  // Return an abstract thread on which to run main thread runnables.
-  virtual AbstractThread* AbstractMainThread() const { return nullptr; }
-
-  // Get the HTMLMediaElement object if the decoder is being used from an
-  // HTML media element, and null otherwise.
-  virtual dom::HTMLMediaElement* GetMediaElement() { return nullptr; }
-
-  // Called by the media decoder and the video frame to get the
-  // ImageContainer containing the video data.
-  virtual VideoFrameContainer* GetVideoFrameContainer() { return nullptr; }
-
-  // Return the decoder owner's owner document.
-  virtual nsIDocument* GetDocument() const { return nullptr; }
-
-  // Called by the media decoder to create a GMPCrashHelper.
-  virtual already_AddRefed<GMPCrashHelper> CreateGMPCrashHelper()
-  {
-    return nullptr;
-  }
-
-  /*
-   * Servo only methods go here. Please provide default implementations so they
-   * can build in Gecko without any modification.
-   */
 };
 
 } // namespace mozilla

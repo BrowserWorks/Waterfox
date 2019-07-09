@@ -4,10 +4,11 @@
 
 "use strict";
 
-const {interfaces: Ci, utils: Cu} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 Cu.import("chrome://marionette/content/assert.js");
 Cu.import("chrome://marionette/content/capture.js");
@@ -68,27 +69,27 @@ reftest.Runner = class {
    * @param {string} screenshotMode
    *     String enum representing when screenshots should be taken
    */
-  async setup(urlCount, screenshotMode) {
+  *setup(urlCount, screenshotMode) {
     this.parentWindow =  assert.window(this.driver.getCurrentWindow());
 
     this.screenshotMode = SCREENSHOT_MODE[screenshotMode] ||
-        SCREENSHOT_MODE.unexpected;
+        SCREENSHOT_MODE["unexpected"];
 
     this.urlCount = Object.keys(urlCount || {})
         .reduce((map, key) => map.set(key, urlCount[key]), new Map());
 
-    await this.ensureWindow();
+    yield this.ensureWindow();
   }
 
-  async ensureWindow() {
+  *ensureWindow() {
     if (this.reftestWin && !this.reftestWin.closed) {
       return this.reftestWin;
     }
 
-    let reftestWin = await this.openWindow();
+    let reftestWin = yield this.openWindow();
 
     let found = this.driver.findWindow([reftestWin], () => true);
-    await this.driver.setWindowHandle(found, true);
+    yield this.driver.setWindowHandle(found, true);
 
     this.windowUtils = reftestWin.QueryInterface(Ci.nsIInterfaceRequestor)
       .getInterface(Ci.nsIDOMWindowUtils);
@@ -96,14 +97,14 @@ reftest.Runner = class {
     return reftestWin;
   }
 
-  async openWindow() {
+  *openWindow() {
     let reftestWin;
-    await new Promise(resolve => {
+    yield new Promise(resolve => {
       reftestWin = this.parentWindow.openDialog(
           "chrome://marionette/content/reftest.xul",
           "reftest",
           "chrome,dialog,height=600,width=600,all",
-          resolve);
+          () => resolve());
     });
 
     let browser = reftestWin.document.createElementNS(XUL_NS, "xul:browser");
@@ -119,9 +120,9 @@ reftest.Runner = class {
     }
     // Make sure the browser element is exactly 600x600, no matter
     // what size our window is
-    const windowStyle = `padding: 0px; margin: 0px; border:none;
+    const window_style = `padding: 0px; margin: 0px; border:none;
 min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
-    browser.setAttribute("style", windowStyle);
+    browser.setAttribute("style", window_style);
 
     let doc = reftestWin.document.documentElement;
     while (doc.firstChild) {
@@ -151,19 +152,14 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
    * @param {string} testUrl
    *     URL of the test itself.
    * @param {Array.<Array>} references
-   *     Array representing a tree of references to try.
-   *
-   *     Each item in the array represents a single reference node and
-   *     has the form <code>[referenceUrl, references, relation]</code>,
-   *     where <var>referenceUrl</var> is a string to the URL, relation
-   *     is either <code>==</code> or <code>!=</code> depending on the
-   *     type of reftest, and references is another array containing
+   *     Array representing a tree of references to try. Each item in
+   *     the array represents a single reference node and has the form
+   *     [referenceUrl, references, relation], where referenceUrl is a
+   *     string to the url, relation is either "==" or "!=" depending on
+   *     the type of reftest, and references is another array containing
    *     items of the same form, representing further comparisons treated
    *     as AND with the current item. Sibling entries are treated as OR.
-   *
    *     For example with testUrl of T:
-   *
-   *     <pre><code>
    *       references = [[A, [[B, [], ==]], ==]]
    *       Must have T == A AND A == B to pass
    *
@@ -172,17 +168,15 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
    *
    *       references = [[A, [[B, [], ==], [C, [], ==]], ==], [D, [], ]]
    *       Must have (T == A AND A == B) OR (T == A AND A == C) OR (T == D)
-   *     </code></pre>
-   *
    * @param {string} expected
-   *     Expected test outcome (e.g. <tt>PASS</tt>, <tt>FAIL</tt>).
+   *     Expected test outcome (e.g. PASS, FAIL).
    * @param {number} timeout
-   *     Test timeout in milliseconds.
+   *     Test timeout in ms
    *
    * @return {Object}
    *     Result object with fields status, message and extra.
    */
-  async run(testUrl, references, expected, timeout) {
+  *run(testUrl, references, expected, timeout) {
 
     let timeoutHandle;
 
@@ -192,17 +186,17 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
       }, timeout);
     });
 
-    let testRunner = (async () => {
+    let testRunner = Task.spawn(function*() {
       let result;
       try {
-        result = await this.runTest(testUrl, references, expected, timeout);
+        result = yield this.runTest(testUrl, references, expected, timeout);
       } catch (e) {
         result = {status: STATUS.ERROR, message: e.stack, extra: {}};
       }
       return result;
-    })();
+    }.bind(this));
 
-    let result = await Promise.race([testRunner, timeoutPromise]);
+    let result = yield Promise.race([testRunner, timeoutPromise]);
     this.parentWindow.clearTimeout(timeoutHandle);
     if (result.status === STATUS.TIMEOUT) {
       this.abort();
@@ -211,8 +205,8 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
     return result;
   }
 
-  async runTest(testUrl, references, expected, timeout) {
-    let win = await this.ensureWindow();
+  *runTest(testUrl, references, expected, timeout) {
+    let win = yield this.ensureWindow();
 
     function toBase64(screenshot) {
       let dataURL = screenshot.canvas.toDataURL();
@@ -238,7 +232,7 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
       let [lhsUrl, rhsUrl, references, relation] = stack.pop();
       message += `Testing ${lhsUrl} ${relation} ${rhsUrl}\n`;
 
-      let comparison = await this.compareUrls(
+      let comparison = yield this.compareUrls(
           win, lhsUrl, rhsUrl, relation, timeout);
 
       function recordScreenshot() {
@@ -293,20 +287,19 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
       // For now the tbpl formatter only accepts one screenshot, so just
       // return the last one we took.
       let lastScreenshot = screenshotData[screenshotData.length - 1];
-      // eslint-disable-next-line camelcase
       result.extra.reftest_screenshots = lastScreenshot;
     }
 
     return result;
   }
 
-  async compareUrls(win, lhsUrl, rhsUrl, relation, timeout) {
+  *compareUrls(win, lhsUrl, rhsUrl, relation, timeout) {
     logger.info(`Testing ${lhsUrl} ${relation} ${rhsUrl}`);
 
     // Take the reference screenshot first so that if we pause
     // we see the test rendering
-    let rhs = await this.screenshot(win, rhsUrl, timeout);
-    let lhs = await this.screenshot(win, lhsUrl, timeout);
+    let rhs = yield this.screenshot(win, rhsUrl, timeout);
+    let lhs = yield this.screenshot(win, lhsUrl, timeout);
 
     let maxDifferences = {};
 
@@ -334,7 +327,7 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
     return {lhs, rhs, passed};
   }
 
-  async screenshot(win, url, timeout) {
+  *screenshot(win, url, timeout) {
     let canvas = null;
     let remainingCount = this.urlCount.get(url) || 1;
     let cache = remainingCount > 1;
@@ -368,16 +361,16 @@ min-width: 600px; min-height: 600px; max-width: 600px; max-height: 600px`;
       };
       if (this.lastURL === url) {
         logger.debug(`Refreshing page`);
-        await this.driver.listener.refresh(navigateOpts);
+        yield this.driver.listener.refresh(navigateOpts);
       } else {
         navigateOpts.url = url;
         navigateOpts.loadEventExpected = false;
-        await this.driver.listener.get(navigateOpts);
+        yield this.driver.listener.get(navigateOpts);
         this.lastURL = url;
       }
 
       this.driver.curBrowser.contentBrowser.focus();
-      await this.driver.listener.reftestWait(url, this.remote);
+      yield this.driver.listener.reftestWait(url, this.remote);
 
       canvas = capture.canvas(
           win,

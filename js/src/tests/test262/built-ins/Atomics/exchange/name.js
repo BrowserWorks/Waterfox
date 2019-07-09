@@ -3,7 +3,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.exchange
 description: >
   Atomics.exchange.name is "exchange".
 includes: [propertyHelper.js]

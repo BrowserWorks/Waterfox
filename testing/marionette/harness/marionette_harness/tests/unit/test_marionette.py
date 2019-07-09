@@ -2,9 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import itertools
 import time
 
 from marionette_driver import errors
+
 from marionette_harness import MarionetteTestCase, run_if_manage_instance, skip_if_mobile
 
 
@@ -31,32 +33,35 @@ class TestMarionette(MarionetteTestCase):
         self.assertLess(time.time() - start_time, 5)
 
 
-class TestContext(MarionetteTestCase):
-
+class TestProtocol2Errors(MarionetteTestCase):
     def setUp(self):
         MarionetteTestCase.setUp(self)
-        self.marionette.set_context(self.marionette.CONTEXT_CONTENT)
+        self.op = self.marionette.protocol
+        self.marionette.protocol = 2
 
-    def get_context(self):
-        return self.marionette._send_message("getContext", key="value")
+    def tearDown(self):
+        self.marionette.protocol = self.op
+        MarionetteTestCase.tearDown(self)
 
-    def set_context(self, value):
-        return self.marionette._send_message("setContext", {"value": value})
+    def test_malformed_packet(self):
+        req = ["error", "message", "stacktrace"]
+        ps = []
+        for p in [p for i in range(0, len(req) + 1) for p in itertools.permutations(req, i)]:
+            ps.append(dict((x, None) for x in p))
 
-    def test_set_context(self):
-        self.assertEqual(self.set_context("content"), {})
-        self.assertEqual(self.set_context("chrome"), {})
+        for p in filter(lambda p: len(p) < 3, ps):
+            self.assertRaises(KeyError, self.marionette._handle_error, p)
 
-        for typ in [True, 42, [], {}, None]:
-            with self.assertRaises(errors.InvalidArgumentException):
-                self.set_context(typ)
+    def test_known_error_status(self):
+        with self.assertRaises(errors.NoSuchElementException):
+            self.marionette._handle_error(
+                {"error": errors.NoSuchElementException.status,
+                 "message": None,
+                 "stacktrace": None})
 
+    def test_unknown_error_status(self):
         with self.assertRaises(errors.MarionetteException):
-            self.set_context("foo")
-
-    def test_get_context(self):
-        self.assertEqual(self.get_context(), "content")
-        self.set_context("chrome")
-        self.assertEqual(self.get_context(), "chrome")
-        self.set_context("content")
-        self.assertEqual(self.get_context(), "content")
+            self.marionette._handle_error(
+                {"error": "barbera",
+                 "message": None,
+                 "stacktrace": None})

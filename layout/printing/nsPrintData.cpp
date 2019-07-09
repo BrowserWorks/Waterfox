@@ -26,6 +26,7 @@ static mozilla::LazyLogModule gPrintingLog("printing");
 //---------------------------------------------------
 nsPrintData::nsPrintData(ePrintDataType aType)
   : mType(aType)
+  , mDebugFilePtr(nullptr)
   , mPrintDocList(0)
   , mIsIFrameSelected(false)
   , mIsParentAFrameSet(false)
@@ -40,6 +41,7 @@ nsPrintData::nsPrintData(ePrintDataType aType)
   , mShrinkRatio(1.0)
   , mOrigDCScale(1.0)
   , mPPEventListeners(nullptr)
+  , mBrandName(nullptr)
 {
   nsCOMPtr<nsIStringBundle> brandBundle;
   nsCOMPtr<nsIStringBundleService> svc =
@@ -47,13 +49,14 @@ nsPrintData::nsPrintData(ePrintDataType aType)
   if (svc) {
     svc->CreateBundle( "chrome://branding/locale/brand.properties", getter_AddRefs( brandBundle ) );
     if (brandBundle) {
-      brandBundle->GetStringFromName("brandShortName", mBrandName);
+      brandBundle->GetStringFromName("brandShortName", &mBrandName );
     }
   }
 
-  if (mBrandName.IsEmpty()) {
-    mBrandName.AssignLiteral(u"Mozilla Document");
+  if (!mBrandName) {
+    mBrandName = ToNewUnicode(NS_LITERAL_STRING("Mozilla Document"));
   }
+
 }
 
 nsPrintData::~nsPrintData()
@@ -69,7 +72,7 @@ nsPrintData::~nsPrintData()
     OnEndPrinting();
   }
 
-  if (mPrintDC) {
+  if (mPrintDC && !mDebugFilePtr) {
     PR_PL(("****************** End Document ************************\n"));
     PR_PL(("\n"));
     bool isCancelled = false;
@@ -87,6 +90,10 @@ nsPrintData::~nsPrintData()
         // XXX nsPrintData::ShowPrintErrorDialog(rv);
       }
     }
+  }
+
+  if (mBrandName) {
+    free(mBrandName);
   }
 }
 

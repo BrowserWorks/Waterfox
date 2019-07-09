@@ -12,6 +12,7 @@
 #include "nsJARURI.h"
 #include "nsIURL.h"
 #include "nsJARChannel.h"
+#include "nsXPIDLString.h"
 #include "nsString.h"
 #include "nsNetCID.h"
 #include "nsIMIMEService.h"

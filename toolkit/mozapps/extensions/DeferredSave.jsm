@@ -164,7 +164,7 @@ this.DeferredSave = function(aPath, aDataProvider, aOptions = {}) {
   this._finalize = this._finalize.bind(this);
   this._finalizeAt.addBlocker(`DeferredSave: writing data to ${aPath}`,
                               this._finalize);
-};
+}
 
 this.DeferredSave.prototype = {
   get dirty() {
@@ -188,7 +188,7 @@ this.DeferredSave.prototype = {
       this.logger.debug("Starting timer");
     if (!this._timer)
       this._timer = MakeTimer();
-    this._timer.initWithCallback(() => this._timerCallback(),
+    this._timer.initWithCallback(() => this._deferredSave(),
                                  this._delay, Ci.nsITimer.TYPE_ONE_SHOT);
   },
 
@@ -210,10 +210,6 @@ this.DeferredSave.prototype = {
       this._writing.then(count => this._startTimer(), error => this._startTimer());
     }
     return this._pending.promise;
-  },
-
-  _timerCallback() {
-    Services.tm.idleDispatchToMainThread(() => this._deferredSave());
   },
 
   _deferredSave() {

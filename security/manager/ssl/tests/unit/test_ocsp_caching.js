@@ -24,7 +24,7 @@ function respondWithSHA1OCSP(request, response) {
   response.setStatusLine(request.httpVersion, 200, "OK");
   response.setHeader("Content-Type", "application/ocsp-response");
 
-  let args = [ ["good-delegated", "default-ee", "delegatedSHA1Signer", 0 ] ];
+  let args = [ ["good-delegated", "default-ee", "delegatedSHA1Signer" ] ];
   let responses = generateOCSPResponses(args, "ocsp_certs");
   response.write(responses[0]);
 }
@@ -36,8 +36,8 @@ function respondWithError(request, response) {
   response.bodyOutputStream.write(body, body.length);
 }
 
-function generateGoodOCSPResponse(thisUpdateSkew) {
-  let args = [ ["good", "default-ee", "unused", thisUpdateSkew ] ];
+function generateGoodOCSPResponse() {
+  let args = [ ["good", "default-ee", "unused" ] ];
   let responses = generateOCSPResponses(args, "ocsp_certs");
   return responses[0];
 }
@@ -148,7 +148,13 @@ function add_tests() {
   // response will be seen as "not newer" and it won't replace the existing
   // entry.
   add_test(function() {
-    gGoodOCSPResponse = generateGoodOCSPResponse(1200);
+    let duration = 1200;
+    do_print("Sleeping for " + duration + "ms");
+    let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    timer.initWithCallback(run_next_test, duration, Ci.nsITimer.TYPE_ONE_SHOT);
+  });
+  add_test(function() {
+    gGoodOCSPResponse = generateGoodOCSPResponse();
     run_next_test();
   });
   add_ocsp_test("ocsp-stapling-none.example.com", PRErrorCodeSuccess,

@@ -27,18 +27,10 @@ pub fn set_resources_path(path: Option<String>) {
 #[cfg(target_os = "android")]
 #[allow(unsafe_code)]
 pub fn resources_dir_path() -> io::Result<PathBuf> {
-    let mut dir = CMD_RESOURCE_DIR.lock().unwrap();
-
-    if let Some(ref path) = *dir {
-        return Ok(PathBuf::from(path));
-    }
-
-    let data_path = unsafe {
+    let dir = unsafe {
         CStr::from_ptr((*android_injected_glue::get_app().activity).externalDataPath)
     };
-    let path = PathBuf::from(data_path.to_str().unwrap());
-    *dir = Some(path.to_str().unwrap().to_owned());
-    Ok(path)
+    Ok(PathBuf::from(dir.to_str().unwrap()))
 }
 
 #[cfg(not(target_os = "android"))]

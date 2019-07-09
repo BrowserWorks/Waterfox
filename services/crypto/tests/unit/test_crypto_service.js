@@ -122,3 +122,7 @@ add_test(test_dsa);
 add_test(test_rsa);
 add_test(test_base64UrlEncode);
 add_test(test_base64UrlDecode);
+
+function run_test() {
+  run_next_test();
+}

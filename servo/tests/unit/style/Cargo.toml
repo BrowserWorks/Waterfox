@@ -9,12 +9,15 @@ name = "style_tests"
 path = "lib.rs"
 doctest = false
 
+[features]
+testing = ["style/testing"]
+
 [dependencies]
 byteorder = "1.0"
 app_units = "0.5"
-cssparser = "0.22.0"
+cssparser = "0.18"
 euclid = "0.15"
-html5ever = "0.21"
+html5ever = "0.18"
 parking_lot = "0.4"
 rayon = "0.8"
 rustc-serialize = "0.3"

@@ -35,19 +35,27 @@ protected:
   typedef std::vector<std::string> StringVector;
 
 public:
+  typedef base::ChildPrivileges ChildPrivileges;
   typedef base::ProcessHandle ProcessHandle;
 
+  static ChildPrivileges DefaultChildPrivileges();
+
   explicit GeckoChildProcessHost(GeckoProcessType aProcessType,
-                                 bool aIsFileContent = false);
+                                 ChildPrivileges aPrivileges=base::PRIVILEGES_DEFAULT);
 
   ~GeckoChildProcessHost();
+
+  static nsresult GetArchitecturesForBinary(const char *path, uint32_t *result);
+
+  static uint32_t GetSupportedArchitecturesForProcessType(GeckoProcessType type);
 
   static uint32_t GetUniqueID();
 
   // Block until the IPC channel for our subprocess is initialized,
   // but no longer.  The child process may or may not have been
   // created when this method returns.
-  bool AsyncLaunch(StringVector aExtraOpts=StringVector());
+  bool AsyncLaunch(StringVector aExtraOpts=StringVector(),
+                   base::ProcessArchitecture arch=base::GetCurrentProcessArchitecture());
 
   virtual bool WaitUntilConnected(int32_t aTimeoutMs = 0);
 
@@ -69,9 +77,11 @@ public:
   // the IPC channel, meaning it's fully initialized.  (Or until an
   // error occurs.)
   bool SyncLaunch(StringVector aExtraOpts=StringVector(),
-                  int32_t timeoutMs=0);
+                  int32_t timeoutMs=0,
+                  base::ProcessArchitecture arch=base::GetCurrentProcessArchitecture());
 
-  virtual bool PerformAsyncLaunch(StringVector aExtraOpts=StringVector());
+  virtual bool PerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
+                                  base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
   virtual void OnChannelConnected(int32_t peer_pid);
   virtual void OnMessageReceived(IPC::Message&& aMsg);
@@ -115,7 +125,7 @@ public:
 
 protected:
   GeckoProcessType mProcessType;
-  bool mIsFileContent;
+  ChildPrivileges mPrivileges;
   Monitor mMonitor;
   FilePath mProcessPath;
 
@@ -167,9 +177,11 @@ private:
   DISALLOW_EVIL_CONSTRUCTORS(GeckoChildProcessHost);
 
   // Does the actual work for AsyncLaunch, on the IO thread.
-  bool PerformAsyncLaunchInternal(std::vector<std::string>& aExtraOpts);
+  bool PerformAsyncLaunchInternal(std::vector<std::string>& aExtraOpts,
+                                  base::ProcessArchitecture arch);
 
-  bool RunPerformAsyncLaunch(StringVector aExtraOpts=StringVector());
+  bool RunPerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
+                             base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
   enum class BinaryPathType {
     Self,
@@ -197,7 +209,6 @@ private:
   // the current environment).
   nsCString mRestoreOrigNSPRLogName;
   nsCString mRestoreOrigMozLogName;
-  nsCString mRestoreOrigRustLog;
 
   static uint32_t sNextUniqueID;
 

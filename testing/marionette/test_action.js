@@ -7,16 +7,8 @@
 const {utils: Cu} = Components;
 
 Cu.import("chrome://marionette/content/action.js");
-const {ContentWebElement} = Cu.import("chrome://marionette/content/element.js", {});
+Cu.import("chrome://marionette/content/element.js");
 Cu.import("chrome://marionette/content/error.js");
-
-const XHTMLNS = "http://www.w3.org/1999/xhtml";
-
-const domEl = {
-  nodeType: 1,
-  ELEMENT_NODE: 1,
-  namespaceURI: XHTMLNS,
-};
 
 action.inputStateMap = new Map();
 
@@ -34,14 +26,14 @@ add_test(function test_createAction() {
 
 add_test(function test_defaultPointerParameters() {
   let defaultParameters = {pointerType: action.PointerType.Mouse};
-  deepEqual(action.PointerParameters.fromJSON(), defaultParameters);
+  deepEqual(action.PointerParameters.fromJson(), defaultParameters);
 
   run_next_test();
 });
 
 add_test(function test_processPointerParameters() {
   let check = (regex, message, arg) => checkErrors(
-      regex, action.PointerParameters.fromJSON, [arg], message);
+      regex, action.PointerParameters.fromJson, [arg], message);
   let parametersData;
   for (let d of ["foo", "", "get", "Get"]) {
     parametersData = {pointerType: d};
@@ -49,7 +41,7 @@ add_test(function test_processPointerParameters() {
     check(/Unknown pointerType/, message, parametersData);
   }
   parametersData.pointerType = "mouse"; //TODO "pen";
-  deepEqual(action.PointerParameters.fromJSON(parametersData),
+  deepEqual(action.PointerParameters.fromJson(parametersData),
       {pointerType: "mouse"}); //TODO action.PointerType.Pen});
 
   run_next_test();
@@ -61,11 +53,11 @@ add_test(function test_processPointerUpDownAction() {
   for (let d of [-1, "a"]) {
     actionItem.button = d;
     checkErrors(
-        /Expected 'button' \(.*\) to be >= 0/, action.Action.fromJSON, [actionSequence, actionItem],
+        /Expected 'button' \(.*\) to be >= 0/, action.Action.fromJson, [actionSequence, actionItem],
         `button: ${actionItem.button}`);
   }
   actionItem.button = 5;
-  let act = action.Action.fromJSON(actionSequence, actionItem);
+  let act = action.Action.fromJson(actionSequence, actionItem);
   equal(act.button, actionItem.button);
 
   run_next_test();
@@ -79,7 +71,7 @@ add_test(function test_validateActionDurationAndCoordinates() {
     actionItem.type = subtype;
     actionSequence.type = type;
     checkErrors(/Expected '.*' \(.*\) to be >= 0/,
-        action.Action.fromJSON, [actionSequence, actionItem], message);
+        action.Action.fromJson, [actionSequence, actionItem], message);
   };
   for (let d of [-1, "a"]) {
     actionItem.duration = d;
@@ -92,7 +84,7 @@ add_test(function test_validateActionDurationAndCoordinates() {
     actionItem.type = "pointerMove";
     actionSequence.type = "pointer";
     checkErrors(/Expected '.*' \(.*\) to be an Integer/,
-        action.Action.fromJSON, [actionSequence, actionItem],
+        action.Action.fromJson, [actionSequence, actionItem],
         `duration: ${actionItem.duration}, subtype: pointerMove`);
   }
   run_next_test();
@@ -104,8 +96,8 @@ add_test(function test_processPointerMoveActionOriginValidation() {
   for (let d of [-1, {a: "blah"}, []]) {
     actionItem.origin = d;
 
-    checkErrors(/Expected \'origin\' to be undefined, "viewport", "pointer", or an element/,
-        action.Action.fromJSON,
+    checkErrors(/Expected \'origin\' to be a string or a web element reference/,
+        action.Action.fromJson,
         [actionSequence, actionItem],
         `actionItem.origin: (${getTypeString(d)})`);
   }
@@ -119,7 +111,7 @@ add_test(function test_processPointerMoveActionOriginStringValidation() {
   for (let d of ["a", "", "get", "Get"]) {
     actionItem.origin = d;
     checkErrors(/Unknown pointer-move origin/,
-        action.Action.fromJSON,
+        action.Action.fromJson,
         [actionSequence, actionItem],
         `actionItem.origin: ${d}`);
   }
@@ -130,8 +122,8 @@ add_test(function test_processPointerMoveActionOriginStringValidation() {
 add_test(function test_processPointerMoveActionElementOrigin() {
   let actionSequence = {type: "pointer", id: "some_id"};
   let actionItem = {duration: 5000, type: "pointerMove"};
-  actionItem.origin = domEl;
-  let a = action.Action.fromJSON(actionSequence, actionItem);
+  actionItem.origin = {[element.Key]: "something"};
+  let a = action.Action.fromJson(actionSequence, actionItem);
   deepEqual(a.origin, actionItem.origin);
   run_next_test();
 });
@@ -140,7 +132,7 @@ add_test(function test_processPointerMoveActionDefaultOrigin() {
   let actionSequence = {type: "pointer", id: "some_id"};
   // origin left undefined
   let actionItem = {duration: 5000, type: "pointerMove"};
-  let a = action.Action.fromJSON(actionSequence, actionItem);
+  let a = action.Action.fromJson(actionSequence, actionItem);
   deepEqual(a.origin, action.PointerOrigin.Viewport);
   run_next_test();
 });
@@ -158,7 +150,7 @@ add_test(function test_processPointerMoveAction() {
     {
       duration: undefined,
       type: "pointerMove",
-      origin: domEl,
+      origin: {[element.Key]: "id", [element.LegacyKey]: "id"},
       x: undefined,
       y: undefined,
     },
@@ -178,7 +170,7 @@ add_test(function test_processPointerMoveAction() {
     },
   ];
   for (let expected of actionItems) {
-    let actual = action.Action.fromJSON(actionSequence, expected);
+    let actual = action.Action.fromJson(actionSequence, expected);
     ok(actual instanceof action.Action);
     equal(actual.duration, expected.duration);
     equal(actual.x, expected.x);
@@ -266,7 +258,7 @@ add_test(function test_processPointerAction() {
     }
   ];
   for (let expected of actionItems) {
-    let actual = action.Action.fromJSON(actionSequence, expected);
+    let actual = action.Action.fromJson(actionSequence, expected);
     equal(actual.type, actionSequence.type);
     equal(actual.subtype, expected.type);
     equal(actual.id, actionSequence.id);
@@ -288,7 +280,7 @@ add_test(function test_processPauseAction() {
   let actionSequence = {id: "some_id"};
   for (let type of ["none", "key", "pointer"]) {
     actionSequence.type = type;
-    let act = action.Action.fromJSON(actionSequence, actionItem);
+    let act = action.Action.fromJson(actionSequence, actionItem);
     ok(act instanceof action.Action);
     equal(act.type, type);
     equal(act.subtype, actionItem.type);
@@ -296,7 +288,7 @@ add_test(function test_processPauseAction() {
     equal(act.duration, actionItem.duration);
   }
   actionItem.duration = undefined;
-  let act = action.Action.fromJSON(actionSequence, actionItem);
+  let act = action.Action.fromJson(actionSequence, actionItem);
   equal(act.duration, actionItem.duration);
 
   run_next_test();
@@ -307,7 +299,7 @@ add_test(function test_processActionSubtypeValidation() {
   let actionSequence = {id: "some_id"};
   let check = function (regex) {
     let message = `type: ${actionSequence.type}, subtype: ${actionItem.type}`;
-    checkErrors(regex, action.Action.fromJSON, [actionSequence, actionItem], message);
+    checkErrors(regex, action.Action.fromJson, [actionSequence, actionItem], message);
   };
   for (let type of ["none", "key", "pointer"]) {
     actionSequence.type = type;
@@ -323,14 +315,14 @@ add_test(function test_processKeyActionUpDown() {
   for (let v of [-1, undefined, [], ["a"], {length: 1}, null]) {
     actionItem.value = v;
     let message = `actionItem.value: (${getTypeString(v)})`;
-    Assert.throws(() => action.Action.fromJSON(actionSequence, actionItem),
+    Assert.throws(() => action.Action.fromJson(actionSequence, actionItem),
         InvalidArgumentError, message);
-    Assert.throws(() => action.Action.fromJSON(actionSequence, actionItem),
+    Assert.throws(() => action.Action.fromJson(actionSequence, actionItem),
         /Expected 'value' to be a string that represents single code point/, message);
   }
 
   actionItem.value = "\uE004";
-  let act = action.Action.fromJSON(actionSequence, actionItem);
+  let act = action.Action.fromJson(actionSequence, actionItem);
   ok(act instanceof action.Action);
   equal(act.type, actionSequence.type);
   equal(act.subtype, actionItem.type);
@@ -343,7 +335,7 @@ add_test(function test_processKeyActionUpDown() {
 add_test(function test_processInputSourceActionSequenceValidation() {
   let actionSequence = {type: "swim", id: "some id"};
   let check = (message, regex) => checkErrors(
-      regex, action.Sequence.fromJSON, [actionSequence], message);
+      regex, action.Sequence.fromJson, [actionSequence], message);
   check(`actionSequence.type: ${actionSequence.type}`, /Unknown action type/);
   action.inputStateMap.clear();
 
@@ -361,7 +353,7 @@ add_test(function test_processInputSourceActionSequenceValidation() {
   actionSequence.id = "some_id";
   actionSequence.actions = -1;
   check(`actionSequence.actions: ${getTypeString(actionSequence.actions)}`,
-      /Expected 'actionSequence.actions' to be an array/);
+      /Expected 'actionSequence.actions' to be an Array/);
   action.inputStateMap.clear();
 
   run_next_test();
@@ -376,7 +368,7 @@ add_test(function test_processInputSourceActionSequence() {
   };
   let expectedAction = new action.Action(actionSequence.id, "none", actionItem.type);
   expectedAction.duration = actionItem.duration;
-  let actions = action.Sequence.fromJSON(actionSequence);
+  let actions = action.Sequence.fromJson(actionSequence);
   equal(actions.length, 1);
   deepEqual(actions[0], expectedAction);
   action.inputStateMap.clear();
@@ -397,7 +389,7 @@ add_test(function test_processInputSourceActionSequencePointer() {
       actionSequence.id, actionSequence.type, actionItem.type);
   expectedAction.pointerType = actionSequence.parameters.pointerType;
   expectedAction.button = actionItem.button;
-  let actions = action.Sequence.fromJSON(actionSequence);
+  let actions = action.Sequence.fromJson(actionSequence);
   equal(actions.length, 1);
   deepEqual(actions[0], expectedAction);
   action.inputStateMap.clear();
@@ -414,7 +406,7 @@ add_test(function test_processInputSourceActionSequenceKey() {
   let expectedAction = new action.Action(
       actionSequence.id, actionSequence.type, actionItem.type);
   expectedAction.value = actionItem.value;
-  let actions = action.Sequence.fromJSON(actionSequence);
+  let actions = action.Sequence.fromJson(actionSequence);
   equal(actions.length, 1);
   deepEqual(actions[0], expectedAction);
   action.inputStateMap.clear();
@@ -432,12 +424,12 @@ add_test(function test_processInputSourceActionSequenceInputStateMap() {
   };
   let wrongInputState = new action.InputState.Null();
   action.inputStateMap.set(actionSequence.id, wrongInputState);
-  checkErrors(/to be mapped to/, action.Sequence.fromJSON, [actionSequence],
+  checkErrors(/to be mapped to/, action.Sequence.fromJson, [actionSequence],
       `${actionSequence.type} using ${wrongInputState}`);
   action.inputStateMap.clear();
   let rightInputState = new action.InputState.Key();
   action.inputStateMap.set(id, rightInputState);
-  let acts = action.Sequence.fromJSON(actionSequence);
+  let acts = action.Sequence.fromJson(actionSequence);
   equal(acts.length, 1);
   action.inputStateMap.clear();
   run_next_test();
@@ -497,16 +489,16 @@ add_test(function test_createInputState() {
 add_test(function test_extractActionChainValidation() {
   for (let actions of [-1, "a", undefined, null]) {
     let message = `actions: ${getTypeString(actions)}`;
-    Assert.throws(() => action.Chain.fromJSON(actions),
+    Assert.throws(() => action.Chain.fromJson(actions),
         InvalidArgumentError, message);
-    Assert.throws(() => action.Chain.fromJSON(actions),
-        /Expected 'actions' to be an array/, message);
+    Assert.throws(() => action.Chain.fromJson(actions),
+        /Expected 'actions' to be an Array/, message);
   }
   run_next_test();
 });
 
 add_test(function test_extractActionChainEmpty() {
-  deepEqual(action.Chain.fromJSON([]), []);
+  deepEqual(action.Chain.fromJson([]), []);
   run_next_test();
 });
 
@@ -519,7 +511,7 @@ add_test(function test_extractActionChain_oneTickOneInput() {
   };
   let expectedAction = new action.Action(actionSequence.id, "none", actionItem.type);
   expectedAction.duration = actionItem.duration;
-  let actionsByTick = action.Chain.fromJSON([actionSequence]);
+  let actionsByTick = action.Chain.fromJson([actionSequence]);
   equal(1, actionsByTick.length);
   equal(1, actionsByTick[0].length);
   deepEqual(actionsByTick, [[expectedAction]]);
@@ -565,7 +557,7 @@ add_test(function test_extractActionChain_twoAndThreeTicks() {
     id: "1",
     actions: keyActionItems,
   };
-  let actionsByTick = action.Chain.fromJSON([keyActionSequence, mouseActionSequence]);
+  let actionsByTick = action.Chain.fromJson([keyActionSequence, mouseActionSequence]);
   // number of ticks is same as longest action sequence
   equal(keyActionItems.length, actionsByTick.length);
   equal(2, actionsByTick[0].length);
@@ -577,7 +569,7 @@ add_test(function test_extractActionChain_twoAndThreeTicks() {
   action.inputStateMap.clear();
 
   // one empty action sequence
-  actionsByTick = action.Chain.fromJSON(
+  actionsByTick = action.Chain.fromJson(
       [keyActionSequence, {type: "none", id: "some", actions: []}]);
   equal(keyActionItems.length, actionsByTick.length);
   equal(1, actionsByTick[0].length);

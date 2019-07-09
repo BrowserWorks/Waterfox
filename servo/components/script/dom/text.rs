@@ -9,7 +9,8 @@ use dom::bindings::codegen::Bindings::TextBinding::{self, TextMethods};
 use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
 use dom::bindings::error::{Error, Fallible};
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{DomRoot, RootedReference};
+use dom::bindings::js::Root;
+use dom::bindings::js::RootedReference;
 use dom::bindings::str::DOMString;
 use dom::characterdata::CharacterData;
 use dom::document::Document;
@@ -30,12 +31,12 @@ impl Text {
         }
     }
 
-    pub fn new(text: DOMString, document: &Document) -> DomRoot<Text> {
-        Node::reflect_node(Box::new(Text::new_inherited(text, document)),
+    pub fn new(text: DOMString, document: &Document) -> Root<Text> {
+        Node::reflect_node(box Text::new_inherited(text, document),
                            document, TextBinding::Wrap)
     }
 
-    pub fn Constructor(window: &Window, text: DOMString) -> Fallible<DomRoot<Text>> {
+    pub fn Constructor(window: &Window, text: DOMString) -> Fallible<Root<Text>> {
         let document = window.Document();
         Ok(Text::new(text, &document))
     }
@@ -44,7 +45,7 @@ impl Text {
 impl TextMethods for Text {
     // https://dom.spec.whatwg.org/#dom-text-splittext
     // https://dom.spec.whatwg.org/#concept-text-split
-    fn SplitText(&self, offset: u32) -> Fallible<DomRoot<Text>> {
+    fn SplitText(&self, offset: u32) -> Fallible<Root<Text>> {
         let cdata = self.upcast::<CharacterData>();
         // Step 1.
         let length = cdata.Length();

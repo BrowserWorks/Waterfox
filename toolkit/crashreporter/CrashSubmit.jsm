@@ -83,11 +83,11 @@ async function getL10nStrings() {
     crstrings = parseINIStrings(path);
 
     if ("CrashID" in crstrings) {
-      strings.crashid = crstrings.CrashID;
+      strings["crashid"] = crstrings.CrashID;
     }
 
     if ("CrashDetailsURL" in crstrings) {
-      strings.reporturl = crstrings.CrashDetailsURL;
+      strings["reporturl"] = crstrings.CrashDetailsURL;
     }
   }
 
@@ -227,7 +227,7 @@ Submitter.prototype = {
                    .createInstance(Ci.nsIDOMFormData);
     // add the data
     for (let [name, value] of Object.entries(this.extraKeyVals)) {
-      if (name != "ServerURL" && name != "StackTraces") {
+      if (name != "ServerURL") {
         formData.append(name, value);
       }
     }

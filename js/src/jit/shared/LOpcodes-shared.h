@@ -112,8 +112,7 @@
     _(BitOpV)                       \
     _(ShiftI)                       \
     _(ShiftI64)                     \
-    _(SignExtendInt32)              \
-    _(SignExtendInt64)              \
+    _(SignExtend)                   \
     _(UrshD)                        \
     _(Return)                       \
     _(Throw)                        \
@@ -198,7 +197,6 @@
     _(CharCodeAt)                   \
     _(FromCharCode)                 \
     _(FromCodePoint)                \
-    _(StringConvertCase)            \
     _(SinCos)                       \
     _(StringSplit)                  \
     _(Int32ToDouble)                \
@@ -273,6 +271,10 @@
     _(PostWriteElementBarrierV)     \
     _(InitializedLength)            \
     _(SetInitializedLength)         \
+    _(UnboxedArrayLength)           \
+    _(UnboxedArrayInitializedLength) \
+    _(IncrementUnboxedArrayInitializedLength) \
+    _(SetUnboxedArrayInitializedLength) \
     _(BoundsCheck)                  \
     _(BoundsCheckRange)             \
     _(BoundsCheckLower)             \
@@ -321,9 +323,6 @@
     _(FunctionEnvironment)          \
     _(NewLexicalEnvironmentObject)  \
     _(CopyLexicalEnvironmentObject) \
-    _(HomeObject)                   \
-    _(HomeObjectSuperBase)          \
-    _(GetPropSuperCacheV)           \
     _(GetPropertyCacheV)            \
     _(GetPropertyCacheT)            \
     _(GetPropertyPolymorphicV)      \
@@ -390,8 +389,7 @@
     _(GetDOMMemberT)                \
     _(SetDOMProperty)               \
     _(CallDOMNative)                \
-    _(IsCallableO)                  \
-    _(IsCallableV)                  \
+    _(IsCallable)                   \
     _(IsConstructor)                \
     _(IsArrayO)                     \
     _(IsArrayV)                     \

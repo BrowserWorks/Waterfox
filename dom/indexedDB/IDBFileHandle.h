@@ -203,7 +203,7 @@ public:
   ReadAsArrayBuffer(uint64_t aSize, ErrorResult& aRv)
   {
     AssertIsOnOwningThread();
-    return Read(aSize, false, VoidString(), aRv);
+    return Read(aSize, false, NullString(), aRv);
   }
 
   already_AddRefed<IDBFileRequest>

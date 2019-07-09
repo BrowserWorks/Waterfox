@@ -7,7 +7,7 @@ use dom::bindings::codegen::Bindings::DOMTokenListBinding::DOMTokenListMethods;
 use dom::bindings::codegen::Bindings::HTMLAreaElementBinding;
 use dom::bindings::codegen::Bindings::HTMLAreaElementBinding::HTMLAreaElementMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{DomRoot, MutNullableDom};
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::domtokenlist::DOMTokenList;
@@ -217,7 +217,7 @@ impl Area {
 #[dom_struct]
 pub struct HTMLAreaElement {
     htmlelement: HTMLElement,
-    rel_list: MutNullableDom<DOMTokenList>,
+    rel_list: MutNullableJS<DOMTokenList>,
 }
 
 impl HTMLAreaElement {
@@ -231,8 +231,8 @@ impl HTMLAreaElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLAreaElement> {
-        Node::reflect_node(Box::new(HTMLAreaElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLAreaElement> {
+        Node::reflect_node(box HTMLAreaElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLAreaElementBinding::Wrap)
     }
@@ -240,7 +240,7 @@ impl HTMLAreaElement {
     pub fn get_shape_from_coords(&self) -> Option<Area> {
        let elem = self.upcast::<Element>();
        let shape = elem.get_string_attribute(&"shape".into());
-       let shp: Shape = match_ignore_ascii_case! { &shape,
+       let shp: Shape = match shape.to_lowercase().as_ref() {
            "circle" => Shape::Circle,
            "circ" => Shape::Circle,
            "rectangle" => Shape::Rectangle,
@@ -273,7 +273,7 @@ impl VirtualMethods for HTMLAreaElement {
 
 impl HTMLAreaElementMethods for HTMLAreaElement {
     // https://html.spec.whatwg.org/multipage/#dom-area-rellist
-    fn RelList(&self) -> DomRoot<DOMTokenList> {
+    fn RelList(&self) -> Root<DOMTokenList> {
         self.rel_list.or_init(|| {
             DOMTokenList::new(self.upcast(), &local_name!("rel"))
         })

@@ -13,7 +13,6 @@
 <pre id="test">
 
 <script class="testbody" type="text/javascript">
-/* import-globals-from classifierHelper.js */
 
 var firstLoad = true;
 
@@ -34,10 +33,7 @@ var testData = [
   },
   { url: "blocked.example.com/",
     db: "test-block-simple"
-  },
-  { url: "harmful.example.com/",
-    db: "test-harmful-simple"
-  },
+  }
 ];
 
 const Cc = SpecialPowers.Cc;
@@ -85,16 +81,6 @@ var testURLs = [
     table: "test-phish-simple",
     result: Cr.NS_ERROR_PHISHING_URI
   },
-  { url: "http://harmful.example.com",
-    trackingProtection: false,
-    table: "test-harmful-simple",
-    result: Cr.NS_ERROR_HARMFUL_URI
-  },
-  { url: "http://harmful.example.com",
-    trackingProtection: true,
-    table: "test-harmful-simple",
-    result: Cr.NS_ERROR_HARMFUL_URI
-  },
   { url: "http://tracking.example.com",
     trackingProtection: false,
     table: "test-track-simple",
@@ -126,7 +112,7 @@ SimpleTest.waitForExplicitFinish();
 
 function updateSuccess() {
   return SpecialPowers.pushPrefEnv(
-    {"set": [["browser.safebrowsing.malware.enabled", true]]});
+    {"set" : [["browser.safebrowsing.malware.enabled", true]]});
 }
 
 function updateError(errorCode) {
@@ -149,18 +135,18 @@ function testService() {
         return;
       }
       let test = testURLs.shift();
-      let tables = "test-malware-simple,test-unwanted-simple,test-phish-simple,test-track-simple,test-block-simple,test-harmful-simple";
+      let tables = "test-malware-simple,test-unwanted-simple,test-phish-simple,test-track-simple,test-block-simple";
       let uri = ios.newURI(test.url);
       let prin = ssm.createCodebasePrincipal(uri, {});
       is(service.classifyLocal(uri, tables), test.table,
          `Successful synchronous classification of ${test.url} with TP=${test.trackingProtection}`);
-      SpecialPowers.doUrlClassify(prin, null, test.trackingProtection, function(errorCode) {
+      let result = SpecialPowers.doUrlClassify(prin, null, test.trackingProtection, function(errorCode) {
         is(errorCode, test.result,
            `Successful asynchronous classification of ${test.url} with TP=${test.trackingProtection}`);
 
         // Same as classifyLocal except for the 'async' call.
-        SpecialPowers.doUrlClassifyLocal(uri, tables, function(errorCode1, tables1) {
-          is(tables1, test.table,
+        SpecialPowers.doUrlClassifyLocal(uri, tables, function(errorCode, tables) {
+          is(tables, test.table,
              `Successful asynchronous local classification of ${test.url} with TP=${test.trackingProtection}`);
           runNextTest();
         });
@@ -172,12 +158,11 @@ function testService() {
 }
 
 SpecialPowers.pushPrefEnv(
-  {"set": [["urlclassifier.malwareTable", "test-malware-simple,test-unwanted-simple,test-harmful-simple"],
-           ["urlclassifier.phishTable", "test-phish-simple"],
-           ["urlclassifier.downloadBlockTable", "test-block-simple"],
-           ["urlclassifier.trackingTable", "test-track-simple"],
-           ["browser.safebrowsing.debug", true],
-           ["privacy.trackingprotection.annotate_channels", true]]},
+  {"set" : [["urlclassifier.malwareTable", "test-malware-simple,test-unwanted-simple"],
+            ["urlclassifier.phishTable", "test-phish-simple"],
+            ["urlclassifier.downloadBlockTable", "test-block-simple"],
+            ["urlclassifier.trackingTable", "test-track-simple"],
+            ["privacy.trackingprotection.annotate_channels", true]]},
   function() {
     classifierHelper.waitForInit()
       .then(() => classifierHelper.addUrlToDB(testData))

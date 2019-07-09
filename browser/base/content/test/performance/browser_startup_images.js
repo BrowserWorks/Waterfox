@@ -17,12 +17,48 @@
  *  - intermittentShown: An array of platforms where this image is
  *                       intermittently shown, contrary to what our
  *                       whitelist says.
+ *  - photon: If true, this entry only applies for builds with the Photon theme.
+ *            If false, this entry only applies for builds without the Photon theme.
+ *            If undefined, this entry applies for both Photon and non-Photon builds.
  *
  * Please don't add items to this list. Please remove items from this list.
  */
 const whitelist = [
+  // Photon-only entries
+  {
+    file: "chrome://browser/skin/stop.svg",
+    platforms: ["linux", "win", "macosx"],
+    photon: true,
+  },
+  {
+    file: "chrome://browser/skin/bookmark-hollow.svg",
+    platforms: ["linux", "win", "macosx"],
+    photon: true,
+  },
+  {
+    file: "chrome://browser/skin/page-action.svg",
+    platforms: ["linux", "win", "macosx"],
+    photon: true,
+  },
+
+  // Non-Photon-only entries
+  {
+    file: "chrome://browser/skin/toolbarbutton-dropdown-arrow.png",
+    platforms: ["linux", "win", "macosx"],
+    photon: false,
+  },
+
+  // Shared entries
   {
     file: "chrome://browser/skin/arrow-left.svg",
+    platforms: ["linux", "win", "macosx"],
+  },
+  {
+    file: "chrome://browser/skin/arrow-dropdown.svg",
+    platforms: ["linux", "win", "macosx"],
+  },
+  {
+    file: "chrome://browser/skin/fxa/sync-illustration.svg",
     platforms: ["linux", "win", "macosx"],
   },
   {
@@ -34,23 +70,34 @@ const whitelist = [
     file: "chrome://browser/skin/places/toolbarDropMarker.png",
     platforms: ["linux", "win", "macosx"],
   },
-
-  // Bug 1363040
   {
     file: "chrome://browser/skin/tracking-protection-16.svg#enabled",
     platforms: ["linux", "win", "macosx"],
   },
-
   {
-    file: "chrome://browser/skin/tabbrowser/tabDragIndicator.png",
-    hidpi: "chrome://browser/skin/tabbrowser/tabDragIndicator@2x.png",
-    platforms: ["macosx"],
+    file: "chrome://global/skin/icons/autoscroll.png",
+    platforms: ["linux", "win", "macosx"],
   },
 
   {
+    file: "chrome://browser/skin/tabbrowser/tab-background-end.png",
+    hidpi: "chrome://browser/skin/tabbrowser/tab-background-end@2x.png",
+    platforms: ["linux", "win", "macosx"],
+  },
+  {
+    file: "chrome://browser/skin/tabbrowser/tab-background-middle.png",
+    hidpi: "chrome://browser/skin/tabbrowser/tab-background-middle@2x.png",
+    platforms: ["linux", "win", "macosx"],
+  },
+  {
+    file: "chrome://browser/skin/tabbrowser/tab-background-start.png",
+    hidpi: "chrome://browser/skin/tabbrowser/tab-background-start@2x.png",
+    platforms: ["linux", "win", "macosx"],
+  },
+  {
     file: "chrome://browser/skin/tabbrowser/tabDragIndicator.png",
-    hidpi: "<not loaded>",
-    platforms: ["linux", "win"],
+    hidpi: "chrome://browser/skin/tabbrowser/tabDragIndicator@2x.png",
+    platforms: ["linux", "win", "macosx"],
   },
 
   {
@@ -65,37 +112,93 @@ const whitelist = [
   },
 
   {
-    file: "chrome://browser/skin/chevron.svg",
-    platforms: ["win", "linux", "macosx"],
+    file: "chrome://browser/skin/places/unfiledBookmarks.png",
+    hidpi: "<not loaded>",
+    platforms: ["win", "macosx"],
+    intermittentNotLoaded: ["win", "macosx"],
+  },
+  {
+    file: "chrome://browser/skin/urlbar-history-dropmarker.png",
+    hidpi: "<not loaded>",
+    platforms: ["win", "macosx"],
+    intermittentShown: ["win", "macosx"],
+  },
+
+  {
+    file: "chrome://browser/skin/yosemite/tab-selected-start-inactive.svg",
+    platforms: ["macosx"],
+    intermittentShown: ["macosx"],
+  },
+  {
+    file: "chrome://browser/skin/yosemite/tab-active-middle-inactive.png",
+    hidpi: "<not loaded>",
+    platforms: ["macosx"],
+  },
+  {
+    file: "chrome://browser/skin/yosemite/tab-selected-end-inactive.svg",
+    platforms: ["macosx"],
+    intermittentShown: ["macosx"],
+  },
+  {
+    file: "chrome://browser/skin/yosemite/tab-stroke-start-inactive.png",
+    hidpi: "<not loaded>",
+    platforms: ["macosx"],
+  },
+  {
+    file: "chrome://browser/skin/yosemite/tab-stroke-end-inactive.png",
+    hidpi: "<not loaded>",
+    platforms: ["macosx"],
+  },
+
+  {
+    file: "chrome://global/skin/icons/chevron.png",
+    hidpi: "chrome://global/skin/icons/chevron@2x.png",
+    platforms: ["macosx"],
+  },
+
+  {
+    file: "chrome://pocket/content/panels/img/pocketmenuitem16.png",
+    hidpi: "chrome://pocket/content/panels/img/pocketmenuitem16@2x.png",
+    platforms: ["macosx"],
+  },
+
+  {
+    file: "chrome://browser/skin/places/bookmarksToolbar.png",
+    hidpi: "chrome://browser/skin/places/bookmarksToolbar@2x.png",
+    platforms: ["macosx"],
+  },
+
+  {
+    file: "chrome://global/skin/tree/folder.png",
+    hidpi: "chrome://global/skin/tree/folder@2x.png",
+    platforms: ["macosx"],
+  },
+
+  {
+    file: "chrome://global/skin/toolbar/chevron.gif",
+    platforms: ["win", "linux"],
+  },
+
+  {
+    file: "chrome://browser/skin/reload-stop-go.png",
+    platforms: ["win", "linux"],
+    intermittentShown: ["win", "linux"],
   },
 
   {
     file: "chrome://global/skin/icons/resizer.png",
     platforms: ["win"],
   },
-
-  {
-    file: "chrome://browser/skin/window-controls/maximize.svg",
-    platforms: ["win"],
-    // This is to prevent perma-fails in case Windows machines
-    // go back to running tests in non-maximized windows.
-    intermittentShown: ["win"],
-    // This file is not loaded on Windows 7/8.
-    intermittentNotLoaded: ["win"],
-  },
 ];
 
 add_task(async function() {
-  if (!AppConstants.DEBUG) {
-    ok(false, "You need to run this test on a debug build.");
-  }
-
   let startupRecorder = Cc["@mozilla.org/test/startuprecorder;1"].getService().wrappedJSObject;
   await startupRecorder.done;
 
   let data = startupRecorder.data.images;
   let filteredWhitelist = whitelist.filter(el => {
-    return el.platforms.includes(AppConstants.platform);
+    return el.platforms.includes(AppConstants.platform) &&
+           (el.photon === undefined || el.photon == AppConstants.MOZ_PHOTON_THEME);
   });
 
   let loadedImages = data["image-loading"];

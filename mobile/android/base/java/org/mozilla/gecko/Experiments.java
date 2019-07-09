@@ -25,6 +25,11 @@ public class Experiments {
     // Show a system notification linking to a "What's New" page on app update.
     public static final String WHATSNEW_NOTIFICATION = "whatsnew-notification";
 
+    // Subscribe to known, bookmarked sites and show a notification if new content is available.
+    public static final String CONTENT_NOTIFICATIONS_12HRS = "content-notifications-12hrs";
+    public static final String CONTENT_NOTIFICATIONS_8AM = "content-notifications-8am";
+    public static final String CONTENT_NOTIFICATIONS_5PM = "content-notifications-5pm";
+
     // Onboarding: "Features and Story". These experiments are determined
     // on the client, they are not part of the server config.
     public static final String ONBOARDING3_A = "onboarding3-a"; // Control: No first run
@@ -51,11 +56,20 @@ public class Experiments {
     // Play HLS videos in a VideoView (Bug 1313391)
     public static final String HLS_VIDEO_PLAYBACK = "hls-video-playback";
 
+    // Make new activity stream panel available (to replace top sites) (Bug 1313316)
+    public static final String ACTIVITY_STREAM = "activity-stream";
+
+    // Show a setting in "experimental features" for enabling/disabling activity stream.
+    public static final String ACTIVITY_STREAM_SETTING = "activity-stream-setting";
+
+    // Enable Activity stream by default for users in the "opt out" group.
+    public static final String ACTIVITY_STREAM_OPT_OUT = "activity-stream-opt-out";
+
     // Show AddOns menu-item in top level menu
     public static final String TOP_ADDONS_MENU = "top-addons-menu";
 
-    // User in this group will enable Custom Tabs
-    public static final String CUSTOM_TABS = "custom-tabs";
+    // Tabs tray: Arrange tabs in two columns in portrait mode
+    public static final String COMPACT_TABS = "compact-tabs";
 
     // Enable full bookmark management(full-page dialog, bookmark/folder modification, etc.)
     public static final String FULL_BOOKMARK_MANAGEMENT = "full-bookmark-management";
@@ -63,11 +77,25 @@ public class Experiments {
     // Enable Leanplum SDK
     public static final String LEANPLUM = "leanplum-start";
 
-    // Enable to use testing user id for Leanplum
-    public static final String LEANPLUM_DEBUG = "leanplum-debug";
-
     // Enable processing of background telemetry.
     public static final String ENABLE_PROCESSING_BACKGROUND_TELEMETRY = "process-background-telemetry";
+
+    /**
+     * Returns if a user is in certain local experiment.
+     * @param experiment Name of experiment to look up
+     * @return returns value for experiment or false if experiment does not exist.
+     */
+    public static boolean isInExperimentLocal(Context context, String experiment) {
+        if (SwitchBoard.isInBucket(context, 0, 20)) {
+            return Experiments.ONBOARDING3_A.equals(experiment);
+        } else if (SwitchBoard.isInBucket(context, 20, 60)) {
+            return Experiments.ONBOARDING3_B.equals(experiment);
+        } else if (SwitchBoard.isInBucket(context, 60, 100)) {
+            return Experiments.ONBOARDING3_C.equals(experiment);
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Returns list of all active experiments, remote and local.

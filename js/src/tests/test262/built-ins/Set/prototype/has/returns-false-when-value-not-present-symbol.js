@@ -8,7 +8,6 @@ description: >
     ...
     6. Return false.
 
-features: [Symbol]
 ---*/
 
 var s = new Set();

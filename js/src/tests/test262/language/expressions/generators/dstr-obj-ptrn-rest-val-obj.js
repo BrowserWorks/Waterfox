@@ -5,7 +5,7 @@
 description: Rest object contains just unextracted data (generator function expression)
 esid: sec-generator-function-definitions-runtime-semantics-evaluation
 es6id: 14.4.14
-features: [object-rest, generators, destructuring-binding]
+features: [object-rest, destructuring-binding]
 flags: [generated]
 includes: [propertyHelper.js]
 info: |
@@ -43,22 +43,19 @@ info: |
 var callCount = 0;
 var f;
 f = function*({a, b, ...rest}) {
+  assert.sameValue(rest.x, 1);
+  assert.sameValue(rest.y, 2);
   assert.sameValue(rest.a, undefined);
   assert.sameValue(rest.b, undefined);
 
-  verifyProperty(rest, "x", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 1
-  });
+  verifyEnumerable(rest, "x");
+  verifyWritable(rest, "x");
+  verifyConfigurable(rest, "x");
 
-  verifyProperty(rest, "y", {
-    enumerable: true,
-    writable: true,
-    configurable: true,
-    value: 2
-  });
+  verifyEnumerable(rest, "y");
+  verifyWritable(rest, "y");
+  verifyConfigurable(rest, "y");
+
   callCount = callCount + 1;
 };
 

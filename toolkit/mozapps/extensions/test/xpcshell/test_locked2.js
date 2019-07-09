@@ -290,3 +290,7 @@ add_task(async function() {
   do_check_true(isExtensionInAddonsList(profileDir, a6.id));
 });
 
+function run_test() {
+  run_next_test();
+}
+

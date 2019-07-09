@@ -32,17 +32,16 @@
 #include "mozilla/layers/MemoryReportingMLGPU.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "nsDebugImpl.h"
+#include "nsExceptionHandler.h"
 #include "nsThreadManager.h"
 #include "prenv.h"
 #include "ProcessUtils.h"
 #include "VRManager.h"
 #include "VRManagerParent.h"
-#include "VRThread.h"
 #include "VsyncBridgeParent.h"
 #if defined(XP_WIN)
 # include "mozilla/gfx/DeviceManagerDx.h"
 # include <process.h>
-# include <dwrite.h>
 #endif
 #ifdef MOZ_WIDGET_GTK
 # include <gtk/gtk.h>
@@ -94,11 +93,6 @@ GPUParent::Init(base::ProcessId aParentPid,
 
   nsDebugImpl::SetMultiprocessMode("GPU");
 
-  // This must be sent before any IPDL message, which may hit sentinel
-  // errors due to parent and content processes having different
-  // versions.
-  GetIPCChannel()->SendBuildID();
-
 #ifdef MOZ_CRASHREPORTER
   // Init crash reporter support.
   CrashReporterClient::InitSingleton(this);
@@ -121,8 +115,6 @@ GPUParent::Init(base::ProcessId aParentPid,
   }
 
   CompositorThreadHolder::Start();
-  // TODO: Bug 1406327, Start VRListenerThreadHolder when loading VR content.
-  VRListenerThreadHolder::Start();
   APZThreadUtils::SetControllerThread(CompositorThreadHolder::Loop());
   APZCTreeManager::InitializeGlobalState();
   LayerTreeOwnerTracker::Initialize();
@@ -189,9 +181,6 @@ GPUParent::RecvInit(nsTArray<GfxPrefSetting>&& prefs,
 #if defined(XP_WIN)
   if (gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING)) {
     DeviceManagerDx::Get()->CreateCompositorDevices();
-  }
-  if (gfxVars::UseWebRender()) {
-    Factory::EnsureDWriteFactory();
   }
 #endif
 
@@ -434,7 +423,6 @@ GPUParent::ActorDestroy(ActorDestroyReason aWhy)
   }
   dom::VideoDecoderManagerParent::ShutdownVideoBridge();
   CompositorThreadHolder::Shutdown();
-  VRListenerThreadHolder::Shutdown();
   if (gfxVars::UseWebRender()) {
     wr::RenderThread::ShutDown();
   }

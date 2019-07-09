@@ -8,30 +8,28 @@
 
 use Namespace;
 use context::QuirksMode;
-use cssparser::{Parser, Token, serialize_identifier};
+use cssparser::{Parser, Token, serialize_identifier, BasicParseError};
 use parser::{ParserContext, Parse};
 use self::url::SpecifiedUrl;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::f32;
 use std::fmt;
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
+use style_traits::{ToCss, ParseError, StyleParseError};
 use style_traits::values::specified::AllowedNumericType;
 use super::{Auto, CSSFloat, CSSInteger, Either, None_};
-use super::computed::{Context, ToComputedValue};
-use super::generics::{GreaterThanOrEqualToOne, NonNegative};
-use super::generics::grid::{GridLine as GenericGridLine, TrackBreadth as GenericTrackBreadth};
-use super::generics::grid::{TrackSize as GenericTrackSize, TrackList as GenericTrackList};
+use super::computed::{self, Context, ToComputedValue};
+use super::generics::grid::{TrackBreadth as GenericTrackBreadth, TrackSize as GenericTrackSize};
+use super::generics::grid::TrackList as GenericTrackList;
+use values::computed::ComputedValueAsSpecified;
 use values::specified::calc::CalcNode;
 
 pub use properties::animated_properties::TransitionProperty;
-pub use self::angle::Angle;
 #[cfg(feature = "gecko")]
 pub use self::align::{AlignItems, AlignJustifyContent, AlignJustifySelf, JustifyItems};
 pub use self::background::BackgroundSize;
 pub use self::border::{BorderCornerRadius, BorderImageSlice, BorderImageWidth};
-pub use self::border::{BorderImageSideWidth, BorderRadius, BorderSideWidth, BorderSpacing};
-pub use self::box_::VerticalAlign;
-pub use self::color::{Color, ColorPropertyValue, RGBAColor};
+pub use self::border::{BorderImageSideWidth, BorderRadius, BorderSideWidth};
+pub use self::color::{Color, RGBAColor};
 pub use self::effects::{BoxShadow, Filter, SimpleShadow};
 pub use self::flex::FlexBasis;
 #[cfg(feature = "gecko")]
@@ -42,41 +40,31 @@ pub use self::length::{AbsoluteLength, CalcLengthOrPercentage, CharacterWidth};
 pub use self::length::{FontRelativeLength, Length, LengthOrNone, LengthOrNumber};
 pub use self::length::{LengthOrPercentage, LengthOrPercentageOrAuto};
 pub use self::length::{LengthOrPercentageOrNone, MaxLength, MozLength};
-pub use self::length::{NoCalcLength, ViewportPercentageLength};
-pub use self::length::NonNegativeLengthOrPercentage;
+pub use self::length::{NoCalcLength, Percentage, ViewportPercentageLength};
 pub use self::rect::LengthOrNumberRect;
-pub use self::percentage::Percentage;
 pub use self::position::{Position, PositionComponent};
-pub use self::svg::{SVGLength, SVGOpacity, SVGPaint, SVGPaintKind, SVGStrokeDashArray, SVGWidth};
 pub use self::text::{InitialLetter, LetterSpacing, LineHeight, WordSpacing};
-pub use self::time::Time;
 pub use self::transform::{TimingFunction, TransformOrigin};
+pub use super::generics::grid::GridLine;
 pub use super::generics::grid::GridTemplateComponent as GenericGridTemplateComponent;
 
 #[cfg(feature = "gecko")]
 pub mod align;
-pub mod angle;
 pub mod background;
 pub mod basic_shape;
 pub mod border;
-#[path = "box.rs"]
-pub mod box_;
 pub mod calc;
 pub mod color;
 pub mod effects;
 pub mod flex;
-pub mod font;
 #[cfg(feature = "gecko")]
 pub mod gecko;
 pub mod grid;
 pub mod image;
 pub mod length;
-pub mod percentage;
 pub mod position;
 pub mod rect;
-pub mod svg;
 pub mod text;
-pub mod time;
 pub mod transform;
 
 /// Common handling for the specified value CSS url() values.
@@ -84,6 +72,7 @@ pub mod url {
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
 use style_traits::ParseError;
+use values::computed::ComputedValueAsSpecified;
 
 #[cfg(feature = "servo")]
 pub use ::servo::url::*;
@@ -98,17 +87,21 @@ impl Parse for SpecifiedUrl {
 }
 
 impl Eq for SpecifiedUrl {}
+
+// TODO(emilio): Maybe consider ComputedUrl to save a word in style structs?
+impl ComputedValueAsSpecified for SpecifiedUrl {}
+
+no_viewport_percentage!(SpecifiedUrl);
 }
 
 /// Parse an `<integer>` value, handling `calc()` correctly.
 pub fn parse_integer<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                              -> Result<Integer, ParseError<'i>> {
-    let location = input.current_source_location();
     // FIXME: remove early returns when lifetimes are non-lexical
     match *input.next()? {
         Token::Number { int_value: Some(v), .. } => return Ok(Integer::new(v)),
         Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {}
-        ref t => return Err(location.new_unexpected_token_error(t.clone()))
+        ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into())
     }
 
     let result = input.parse_nested_block(|i| {
@@ -130,7 +123,6 @@ pub fn parse_number_with_clamping_mode<'i, 't>(context: &ParserContext,
                                                input: &mut Parser<'i, 't>,
                                                clamping_mode: AllowedNumericType)
                                                -> Result<Number, ParseError<'i>> {
-    let location = input.current_source_location();
     // FIXME: remove early returns when lifetimes are non-lexical
     match *input.next()? {
         Token::Number { value, .. } if clamping_mode.is_ok(context.parsing_mode, value) => {
@@ -140,7 +132,7 @@ pub fn parse_number_with_clamping_mode<'i, 't>(context: &ParserContext,
             })
         }
         Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {}
-        ref t => return Err(location.new_unexpected_token_error(t.clone()))
+        ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into())
     }
 
     let result = input.parse_nested_block(|i| {
@@ -151,6 +143,146 @@ pub fn parse_number_with_clamping_mode<'i, 't>(context: &ParserContext,
         value: result.min(f32::MAX).max(f32::MIN),
         calc_clamping_mode: Some(clamping_mode),
     })
+}
+
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf, Deserialize, Serialize))]
+/// An angle consisting of a value and a unit.
+///
+/// Computed Angle is essentially same as specified angle except calc
+/// value serialization. Therefore we are using computed Angle enum
+/// to hold the value and unit type.
+pub struct Angle {
+    value: computed::Angle,
+    was_calc: bool,
+}
+
+impl ToCss for Angle {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        if self.was_calc {
+            dest.write_str("calc(")?;
+        }
+        self.value.to_css(dest)?;
+        if self.was_calc {
+            dest.write_str(")")?;
+        }
+        Ok(())
+    }
+}
+
+impl ToComputedValue for Angle {
+    type ComputedValue = computed::Angle;
+
+    fn to_computed_value(&self, _context: &Context) -> Self::ComputedValue {
+        self.value
+    }
+
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        Angle {
+            value: *computed,
+            was_calc: false,
+        }
+    }
+}
+
+impl Angle {
+    /// Returns an angle with the given value in degrees.
+    pub fn from_degrees(value: CSSFloat, was_calc: bool) -> Self {
+        Angle { value: computed::Angle::Degree(value), was_calc: was_calc }
+    }
+
+    /// Returns an angle with the given value in gradians.
+    pub fn from_gradians(value: CSSFloat, was_calc: bool) -> Self {
+        Angle { value: computed::Angle::Gradian(value), was_calc: was_calc }
+    }
+
+    /// Returns an angle with the given value in turns.
+    pub fn from_turns(value: CSSFloat, was_calc: bool) -> Self {
+        Angle { value: computed::Angle::Turn(value), was_calc: was_calc }
+    }
+
+    /// Returns an angle with the given value in radians.
+    pub fn from_radians(value: CSSFloat, was_calc: bool) -> Self {
+        Angle { value: computed::Angle::Radian(value), was_calc: was_calc }
+    }
+
+    #[inline]
+    #[allow(missing_docs)]
+    pub fn radians(self) -> f32 {
+        self.value.radians()
+    }
+
+    /// Returns an angle value that represents zero.
+    pub fn zero() -> Self {
+        Self::from_degrees(0.0, false)
+    }
+
+    /// Returns an `Angle` parsed from a `calc()` expression.
+    pub fn from_calc(radians: CSSFloat) -> Self {
+        Angle {
+            value: computed::Angle::Radian(radians),
+            was_calc: true,
+        }
+    }
+}
+
+impl Parse for Angle {
+    /// Parses an angle according to CSS-VALUES § 6.1.
+    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
+        // FIXME: remove clone() when lifetimes are non-lexical
+        let token = input.next()?.clone();
+        match token {
+            Token::Dimension { value, ref unit, .. } => {
+                Angle::parse_dimension(value, unit, /* from_calc = */ false)
+            }
+            Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
+                return input.parse_nested_block(|i| CalcNode::parse_angle(context, i))
+            }
+            _ => Err(())
+        }.map_err(|()| BasicParseError::UnexpectedToken(token.clone()).into())
+    }
+}
+
+impl Angle {
+    /// Parse an `<angle>` value given a value and an unit.
+    pub fn parse_dimension(
+        value: CSSFloat,
+        unit: &str,
+        from_calc: bool)
+        -> Result<Angle, ()>
+    {
+        let angle = match_ignore_ascii_case! { unit,
+            "deg" => Angle::from_degrees(value, from_calc),
+            "grad" => Angle::from_gradians(value, from_calc),
+            "turn" => Angle::from_turns(value, from_calc),
+            "rad" => Angle::from_radians(value, from_calc),
+             _ => return Err(())
+        };
+        Ok(angle)
+    }
+    /// Parse an angle, including unitless 0 degree.
+    ///
+    /// Note that numbers without any AngleUnit, including unitless 0 angle,
+    /// should be invalid. However, some properties still accept unitless 0
+    /// angle and stores it as '0deg'.
+    ///
+    /// We can remove this and get back to the unified version Angle::parse once
+    /// https://github.com/w3c/csswg-drafts/issues/1162 is resolved.
+    pub fn parse_with_unitless<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                                       -> Result<Self, ParseError<'i>> {
+        // FIXME: remove clone() when lifetimes are non-lexical
+        let token = input.next()?.clone();
+        match token {
+            Token::Dimension { value, ref unit, .. } => {
+                Angle::parse_dimension(value, unit, /* from_calc = */ false)
+            }
+            Token::Number { value, .. } if value == 0. => Ok(Angle::zero()),
+            Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
+                return input.parse_nested_block(|i| CalcNode::parse_angle(context, i))
+            }
+            _ => Err(())
+        }.map_err(|()| BasicParseError::UnexpectedToken(token.clone()).into())
+    }
 }
 
 // The integer values here correspond to the border conflict resolution rules in CSS 2.1 §
@@ -168,6 +300,7 @@ define_numbered_css_keyword_enum! { BorderStyle:
     "outset" => outset = 2,
 }
 
+no_viewport_percentage!(BorderStyle);
 
 impl BorderStyle {
     /// Whether this border style is either none or hidden.
@@ -176,7 +309,130 @@ impl BorderStyle {
     }
 }
 
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, PartialOrd)]
+/// A time in seconds according to CSS-VALUES § 6.2.
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+pub struct Time {
+    seconds: CSSFloat,
+    was_calc: bool,
+}
+
+impl Time {
+    /// Return a `<time>` value that represents `seconds` seconds.
+    pub fn from_seconds(seconds: CSSFloat) -> Self {
+        Time {
+            seconds: seconds,
+            was_calc: false,
+        }
+    }
+
+    /// Returns a time that represents a duration of zero.
+    pub fn zero() -> Self {
+        Self::from_seconds(0.0)
+    }
+
+    /// Returns the time in fractional seconds.
+    pub fn seconds(self) -> CSSFloat {
+        self.seconds
+    }
+
+    /// Parses a time according to CSS-VALUES § 6.2.
+    pub fn parse_dimension(
+        value: CSSFloat,
+        unit: &str,
+        from_calc: bool)
+        -> Result<Time, ()>
+    {
+        let seconds = match_ignore_ascii_case! { unit,
+            "s" => value,
+            "ms" => value / 1000.0,
+            _ => return Err(())
+        };
+
+        Ok(Time {
+            seconds: seconds,
+            was_calc: from_calc,
+        })
+    }
+
+    /// Returns a `Time` value from a CSS `calc()` expression.
+    pub fn from_calc(seconds: CSSFloat) -> Self {
+        Time {
+            seconds: seconds,
+            was_calc: true,
+        }
+    }
+
+    fn parse_with_clamping_mode<'i, 't>(context: &ParserContext,
+                                        input: &mut Parser<'i, 't>,
+                                        clamping_mode: AllowedNumericType)
+                                        -> Result<Self, ParseError<'i>> {
+        use style_traits::PARSING_MODE_DEFAULT;
+
+        // FIXME: remove early returns when lifetimes are non-lexical
+        match input.next() {
+            // Note that we generally pass ParserContext to is_ok() to check
+            // that the ParserMode of the ParserContext allows all numeric
+            // values for SMIL regardless of clamping_mode, but in this Time
+            // value case, the value does not animate for SMIL at all, so we use
+            // PARSING_MODE_DEFAULT directly.
+            Ok(&Token::Dimension { value, ref unit, .. }) if clamping_mode.is_ok(PARSING_MODE_DEFAULT, value) => {
+                return Time::parse_dimension(value, unit, /* from_calc = */ false)
+                    .map_err(|()| StyleParseError::UnspecifiedError.into())
+            }
+            Ok(&Token::Function(ref name)) if name.eq_ignore_ascii_case("calc") => {}
+            Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
+            Err(e) => return Err(e.into())
+        }
+        match input.parse_nested_block(|i| CalcNode::parse_time(context, i)) {
+            Ok(time) if clamping_mode.is_ok(PARSING_MODE_DEFAULT, time.seconds) => Ok(time),
+            _ => Err(StyleParseError::UnspecifiedError.into()),
+        }
+    }
+
+    /// Parse <time> that values are non-negative.
+    pub fn parse_non_negative<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                                      -> Result<Self, ParseError<'i>> {
+        Self::parse_with_clamping_mode(context, input, AllowedNumericType::NonNegative)
+    }
+}
+
+impl ToComputedValue for Time {
+    type ComputedValue = computed::Time;
+
+    fn to_computed_value(&self, _context: &Context) -> Self::ComputedValue {
+        computed::Time::from_seconds(self.seconds())
+    }
+
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        Time {
+            seconds: computed.seconds(),
+            was_calc: false,
+        }
+    }
+}
+
+impl Parse for Time {
+    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
+        Self::parse_with_clamping_mode(context, input, AllowedNumericType::All)
+    }
+}
+
+impl ToCss for Time {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        if self.was_calc {
+            dest.write_str("calc(")?;
+        }
+        write!(dest, "{}s", self.seconds)?;
+        if self.was_calc {
+            dest.write_str(")")?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[allow(missing_docs)]
 pub struct Number {
     /// The numeric value itself.
@@ -186,6 +442,7 @@ pub struct Number {
     calc_clamping_mode: Option<AllowedNumericType>,
 }
 
+no_viewport_percentage!(Number);
 
 impl Parse for Number {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
@@ -217,15 +474,6 @@ impl Number {
     pub fn parse_at_least_one<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                       -> Result<Number, ParseError<'i>> {
         parse_number_with_clamping_mode(context, input, AllowedNumericType::AtLeastOne)
-    }
-
-    /// Clamp to 1.0 if the value is over 1.0.
-    #[inline]
-    pub fn clamp_to_one(self) -> Self {
-        Number {
-            value: self.value.min(1.),
-            calc_clamping_mode: self.calc_clamping_mode,
-        }
     }
 }
 
@@ -259,45 +507,20 @@ impl ToCss for Number {
     }
 }
 
-/// A Number which is >= 0.0.
-pub type NonNegativeNumber = NonNegative<Number>;
-
-impl Parse for NonNegativeNumber {
-    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        parse_number_with_clamping_mode(context, input, AllowedNumericType::NonNegative)
-            .map(NonNegative::<Number>)
-    }
-}
-
-impl NonNegativeNumber {
-    /// Returns a new non-negative number with the value `val`.
-    pub fn new(val: CSSFloat) -> Self {
-        NonNegative::<Number>(Number::new(val.max(0.)))
-    }
-}
-
-/// A Number which is >= 1.0.
-pub type GreaterThanOrEqualToOneNumber = GreaterThanOrEqualToOne<Number>;
-
-impl Parse for GreaterThanOrEqualToOneNumber {
-    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        parse_number_with_clamping_mode(context, input, AllowedNumericType::AtLeastOne)
-            .map(GreaterThanOrEqualToOne::<Number>)
-    }
-}
-
 /// <number> | <percentage>
 ///
 /// Accepts only non-negative numbers.
 ///
 /// FIXME(emilio): Should probably use Either.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, PartialEq, ToCss)]
 pub enum NumberOrPercentage {
     Percentage(Percentage),
     Number(Number),
 }
 
+no_viewport_percentage!(NumberOrPercentage);
 
 impl NumberOrPercentage {
     fn parse_with_clamping_mode<'i, 't>(
@@ -326,9 +549,11 @@ impl Parse for NumberOrPercentage {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, PartialOrd, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, ToCss)]
 pub struct Opacity(Number);
 
+no_viewport_percentage!(Opacity);
 
 impl Parse for Opacity {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
@@ -357,10 +582,9 @@ impl ToComputedValue for Opacity {
     }
 }
 
-/// An specified `<integer>`, optionally coming from a `calc()` expression.
-///
-/// <https://drafts.csswg.org/css-values/#integers>
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[allow(missing_docs)]
 pub struct Integer {
     value: CSSInteger,
     was_calc: bool,
@@ -389,6 +613,8 @@ impl Integer {
     }
 }
 
+no_viewport_percentage!(Integer);
+
 impl Parse for Integer {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         parse_integer(context, input)
@@ -396,37 +622,25 @@ impl Parse for Integer {
 }
 
 impl Integer {
-    /// Parse an integer value which is at least `min`.
-    pub fn parse_with_minimum<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-        min: i32
-    ) -> Result<Integer, ParseError<'i>> {
+    #[allow(missing_docs)]
+    pub fn parse_with_minimum<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>, min: i32)
+                                      -> Result<Integer, ParseError<'i>> {
         match parse_integer(context, input) {
-            // FIXME(emilio): The spec asks us to avoid rejecting it at parse
-            // time except until computed value time.
-            //
-            // It's not totally clear it's worth it though, and no other browser
-            // does this.
             Ok(value) if value.value() >= min => Ok(value),
-            Ok(_value) => Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError)),
+            Ok(_value) => Err(StyleParseError::UnspecifiedError.into()),
             Err(e) => Err(e),
         }
     }
 
-    /// Parse a non-negative integer.
-    pub fn parse_non_negative<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Integer, ParseError<'i>> {
+    #[allow(missing_docs)]
+    pub fn parse_non_negative<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                                      -> Result<Integer, ParseError<'i>> {
         Integer::parse_with_minimum(context, input, 0)
     }
 
-    /// Parse a positive integer (>= 1).
-    pub fn parse_positive<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>
-    ) -> Result<Integer, ParseError<'i>> {
+    #[allow(missing_docs)]
+    pub fn parse_positive<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                                  -> Result<Integer, ParseError<'i>> {
         Integer::parse_with_minimum(context, input, 1)
     }
 }
@@ -450,7 +664,7 @@ impl ToCss for Integer {
         if self.was_calc {
             dest.write_str("calc(")?;
         }
-        self.value.to_css(dest)?;
+        write!(dest, "{}", self.value)?;
         if self.was_calc {
             dest.write_str(")")?;
         }
@@ -467,26 +681,11 @@ impl IntegerOrAuto {
                                   input: &mut Parser<'i, 't>)
                                   -> Result<IntegerOrAuto, ParseError<'i>> {
         match IntegerOrAuto::parse(context, input) {
-            Ok(Either::First(integer)) if integer.value() <= 0 => {
-                Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-            }
+            Ok(Either::First(integer)) if integer.value() <= 0 => Err(StyleParseError::UnspecifiedError.into()),
             result => result,
         }
     }
 }
-
-/// A wrapper of Integer, with value >= 1.
-pub type PositiveInteger = GreaterThanOrEqualToOne<Integer>;
-
-impl Parse for PositiveInteger {
-    #[inline]
-    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        Integer::parse_positive(context, input).map(GreaterThanOrEqualToOne::<Integer>)
-    }
-}
-
-/// PositiveInteger | auto
-pub type PositiveIntegerOrAuto = Either<PositiveInteger, Auto>;
 
 #[allow(missing_docs)]
 pub type UrlOrNone = Either<SpecifiedUrl, None_>;
@@ -499,21 +698,38 @@ pub type TrackSize = GenericTrackSize<LengthOrPercentage>;
 
 /// The specified value of a grid `<track-list>`
 /// (could also be `<auto-track-list>` or `<explicit-track-list>`)
-pub type TrackList = GenericTrackList<LengthOrPercentage, Integer>;
-
-/// The specified value of a `<grid-line>`.
-pub type GridLine = GenericGridLine<Integer>;
+pub type TrackList = GenericTrackList<LengthOrPercentage>;
 
 /// `<grid-template-rows> | <grid-template-columns>`
-pub type GridTemplateComponent = GenericGridTemplateComponent<LengthOrPercentage, Integer>;
+pub type GridTemplateComponent = GenericGridTemplateComponent<LengthOrPercentage>;
+
+no_viewport_percentage!(SVGPaint);
+
+/// Specified SVG Paint value
+pub type SVGPaint = ::values::generics::SVGPaint<RGBAColor>;
+
+/// Specified SVG Paint Kind value
+pub type SVGPaintKind = ::values::generics::SVGPaintKind<RGBAColor>;
 
 /// <length> | <percentage> | <number>
 pub type LengthOrPercentageOrNumber = Either<Number, LengthOrPercentage>;
 
-/// NonNegativeLengthOrPercentage | NonNegativeNumber
-pub type NonNegativeLengthOrPercentageOrNumber = Either<NonNegativeNumber, NonNegativeLengthOrPercentage>;
+impl LengthOrPercentageOrNumber {
+    /// parse a <length-percentage> | <number> enforcing that the contents aren't negative
+    pub fn parse_non_negative<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                                      -> Result<Self, ParseError<'i>> {
+        // NB: Parse numbers before Lengths so we are consistent about how to
+        // recognize and serialize "0".
+        if let Ok(num) = input.try(|i| Number::parse_non_negative(context, i)) {
+            return Ok(Either::First(num))
+        }
 
-#[derive(Clone, Debug, MallocSizeOf, PartialEq)]
+        LengthOrPercentage::parse_non_negative(context, input).map(Either::Second)
+    }
+}
+
+#[derive(Clone, Debug, HasViewportPercentage, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 /// rect(<top>, <left>, <bottom>, <right>) used by clip and image-region
 pub struct ClipRect {
     /// <top> (<length> | <auto>)
@@ -683,7 +899,8 @@ pub type NamespaceId = ();
 /// An attr(...) rule
 ///
 /// `[namespace? `|`]? ident`
-#[derive(Clone, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue)]
+#[derive(Clone, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct Attr {
     /// Optional namespace
     pub namespace: Option<(Namespace, NamespaceId)>,
@@ -732,33 +949,28 @@ impl Attr {
         let first = input.try(|i| i.expect_ident_cloned()).ok();
         if let Ok(token) = input.try(|i| i.next_including_whitespace().map(|t| t.clone())) {
             match token {
-                Token::Delim('|') => {
-                    let location = input.current_source_location();
-                    // must be followed by an ident
-                    let second_token = match *input.next_including_whitespace()? {
-                        Token::Ident(ref second) => second,
-                        ref t => return Err(location.new_unexpected_token_error(t.clone())),
-                    };
-
-                    let ns_with_id = if let Some(ns) = first {
-                        let ns = Namespace::from(ns.as_ref());
-                        let id: Result<_, ParseError> =
-                            get_id_for_namespace(&ns, context)
-                            .map_err(|()| location.new_custom_error(StyleParseErrorKind::UnspecifiedError));
-                        Some((ns, id?))
-                    } else {
-                        None
-                    };
-                    return Ok(Attr {
-                        namespace: ns_with_id,
-                        attribute: second_token.as_ref().to_owned(),
-                    })
-                }
-                // In the case of attr(foobar    ) we don't want to error out
-                // because of the trailing whitespace
-                Token::WhiteSpace(_) => (),
-                ref t => return Err(input.new_unexpected_token_error(t.clone())),
+                Token::Delim('|') => {}
+                ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
             }
+            // must be followed by an ident
+            let second_token = match *input.next_including_whitespace()? {
+                Token::Ident(ref second) => second,
+                ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
+            };
+
+            let ns_with_id = if let Some(ns) = first {
+                let ns = Namespace::from(ns.as_ref());
+                let id: Result<_, ParseError> =
+                    get_id_for_namespace(&ns, context)
+                    .map_err(|()| StyleParseError::UnspecifiedError.into());
+                Some((ns, id?))
+            } else {
+                None
+            };
+            return Ok(Attr {
+                namespace: ns_with_id,
+                attribute: second_token.as_ref().to_owned(),
+            })
         }
 
         if let Some(first) = first {
@@ -767,7 +979,7 @@ impl Attr {
                 attribute: first.as_ref().to_owned(),
             })
         } else {
-            Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            Err(StyleParseError::UnspecifiedError.into())
         }
     }
 }
@@ -783,3 +995,5 @@ impl ToCss for Attr {
         dest.write_str(")")
     }
 }
+
+impl ComputedValueAsSpecified for Attr {}

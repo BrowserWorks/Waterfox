@@ -446,12 +446,10 @@ void WebMBufferedState::UpdateIndex(const MediaByteRangeSet& aRanges, MediaResou
         }
       }
     }
-
-    MediaResourceIndex res(aResource);
     while (length > 0) {
       static const uint32_t BLOCK_SIZE = 1048576;
       uint32_t block = std::min(length, BLOCK_SIZE);
-      RefPtr<MediaByteBuffer> bytes = res.CachedMediaReadAt(offset, block);
+      RefPtr<MediaByteBuffer> bytes = aResource->CachedReadAt(offset, block);
       if (!bytes) {
         break;
       }

@@ -10,7 +10,7 @@ use self::std_time::precise_time_ns;
 use servo_config::opts;
 use signpost;
 
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(PartialEq, Clone, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize)]
 pub struct TimerMetadata {
     pub url:         String,
     pub iframe:      TimerMetadataFrameType,
@@ -39,7 +39,7 @@ pub enum ProfilerMsg {
 }
 
 #[repr(u32)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(PartialEq, Clone, Copy, PartialOrd, Eq, Ord, Deserialize, Serialize, Debug, Hash)]
 pub enum ProfilerCategory {
     Compositing = 0x00,
     LayoutPerform = 0x10,
@@ -90,19 +90,18 @@ pub enum ProfilerCategory {
     ScriptExitFullscreen = 0x78,
     ScriptWebVREvent = 0x79,
     ScriptWorkletEvent = 0x7a,
-    ScriptPerformanceEvent = 0x7b,
     TimeToFirstPaint = 0x80,
     TimeToFirstContentfulPaint = 0x81,
     ApplicationHeartbeat = 0x90,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
 pub enum TimerMetadataFrameType {
     RootWindow,
     IFrame,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
 pub enum TimerMetadataReflowType {
     Incremental,
     FirstReflow,

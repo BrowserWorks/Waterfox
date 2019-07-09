@@ -9,7 +9,6 @@ const Services = require("Services");
 const {
   CLEAR_REQUESTS,
   OPEN_NETWORK_DETAILS,
-  ENABLE_PERSISTENT_LOGS,
   DISABLE_BROWSER_CACHE,
   OPEN_STATISTICS,
   REMOVE_SELECTED_CUSTOM_REQUEST,
@@ -20,7 +19,6 @@ const {
   SELECT_REQUEST,
   TOGGLE_COLUMN,
   WATERFALL_RESIZE,
-  PANELS,
 } = require("../constants");
 
 const cols = {
@@ -53,9 +51,8 @@ const Columns = I.Record(
 
 const UI = I.Record({
   columns: new Columns(),
-  detailsPanelSelectedTab: PANELS.HEADERS,
+  detailsPanelSelectedTab: "headers",
   networkDetailsOpen: false,
-  persistentLogsEnabled: Services.prefs.getBoolPref("devtools.netmonitor.persistlog"),
   browserCacheDisabled: Services.prefs.getBoolPref("devtools.cache.disabled"),
   statisticsOpen: false,
   waterfallWidth: null,
@@ -71,10 +68,6 @@ function resizeWaterfall(state, action) {
 
 function openNetworkDetails(state, action) {
   return state.set("networkDetailsOpen", action.open);
-}
-
-function enablePersistentLogs(state, action) {
-  return state.set("persistentLogsEnabled", action.enabled);
 }
 
 function disableBrowserCache(state, action) {
@@ -108,8 +101,6 @@ function ui(state = new UI(), action) {
       return openNetworkDetails(state, { open: false });
     case OPEN_NETWORK_DETAILS:
       return openNetworkDetails(state, action);
-    case ENABLE_PERSISTENT_LOGS:
-      return enablePersistentLogs(state, action);
     case DISABLE_BROWSER_CACHE:
       return disableBrowserCache(state, action);
     case OPEN_STATISTICS:

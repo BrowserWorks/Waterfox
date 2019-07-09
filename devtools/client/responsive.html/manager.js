@@ -7,34 +7,29 @@
 const { Ci } = require("chrome");
 const promise = require("promise");
 const { Task } = require("devtools/shared/task");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
+const { startup } = require("./utils/window");
+const message = require("./utils/message");
+const { swapToInnerBrowser } = require("./browser/swap");
+const { EmulationFront } = require("devtools/shared/fronts/emulation");
+const { getStr } = require("./utils/l10n");
 
 const TOOL_URL = "chrome://devtools/content/responsive.html/index.xhtml";
 
-loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/debugger-client", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/main", true);
 loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
 loader.lazyRequireGetter(this, "TargetFactory", "devtools/client/framework/target", true);
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 loader.lazyRequireGetter(this, "throttlingProfiles",
   "devtools/client/shared/network-throttling-profiles");
-loader.lazyRequireGetter(this, "swapToInnerBrowser",
-  "devtools/client/responsive.html/browser/swap", true);
-loader.lazyRequireGetter(this, "startup",
-  "devtools/client/responsive.html/utils/window", true);
-loader.lazyRequireGetter(this, "message",
-  "devtools/client/responsive.html/utils/message");
-loader.lazyRequireGetter(this, "getStr",
-  "devtools/client/responsive.html/utils/l10n", true);
-loader.lazyRequireGetter(this, "EmulationFront",
-  "devtools/shared/fronts/emulation", true);
-
-function debug(msg) {
-  // console.log(`RDM manager: ${msg}`);
-}
 
 /**
  * ResponsiveUIManager is the external API for the browser UI, etc. to use when
  * opening and closing the responsive UI.
+ *
+ * While the HTML UI is in an experimental stage, the older ResponsiveUIManager
+ * from devtools/client/responsivedesign/responsivedesign.jsm delegates to this
+ * object when the pref "devtools.responsive.html.enabled" is true.
  */
 const ResponsiveUIManager = exports.ResponsiveUIManager = {
   activeTabs: new Map(),
@@ -194,7 +189,7 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
         break;
       default:
     }
-    completed.catch(console.error);
+    completed.catch(e => console.error(e));
   },
 
   handleMenuCheck({target}) {
@@ -261,8 +256,8 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
   },
 };
 
-// GCLI commands in ./commands.js listen for events from this object to know
-// when the UI for a tab has opened or closed.
+// GCLI commands in ../responsivedesign/resize-commands.js listen for events
+// from this object to know when the UI for a tab has opened or closed.
 EventEmitter.decorate(ResponsiveUIManager);
 
 /**
@@ -321,8 +316,6 @@ ResponsiveUI.prototype = {
    * For more details, see /devtools/docs/responsive-design-mode.md.
    */
   init: Task.async(function* () {
-    debug("Init start");
-
     let ui = this;
 
     // Watch for tab close and window close so we can clean up RDM synchronously
@@ -330,38 +323,30 @@ ResponsiveUI.prototype = {
     this.browserWindow.addEventListener("unload", this);
 
     // Swap page content from the current tab into a viewport within RDM
-    debug("Create browser swapper");
     this.swap = swapToInnerBrowser({
       tab: this.tab,
       containerURL: TOOL_URL,
       getInnerBrowser: Task.async(function* (containerBrowser) {
         let toolWindow = ui.toolWindow = containerBrowser.contentWindow;
         toolWindow.addEventListener("message", ui);
-        debug("Yield to init from inner");
         yield message.request(toolWindow, "init");
         toolWindow.addInitialViewport("about:blank");
-        debug("Yield to browser mounted");
         yield message.wait(toolWindow, "browser-mounted");
         return ui.getViewportBrowser();
       })
     });
-    debug("Yield to swap start");
     yield this.swap.start();
 
     this.tab.addEventListener("BeforeTabRemotenessChange", this);
 
     // Notify the inner browser to start the frame script
-    debug("Yield to start frame script");
     yield message.request(this.toolWindow, "start-frame-script");
 
     // Get the protocol ready to speak with emulation actor
-    debug("Yield to RDP server connect");
     yield this.connectToServer();
 
     // Non-blocking message to tool UI to start any delayed init activities
     message.post(this.toolWindow, "post-init");
-
-    debug("Init done");
   }),
 
   /**
@@ -511,8 +496,6 @@ ResponsiveUI.prototype = {
   onChangeTouchSimulation(event) {
     let { enabled } = event.data;
     this.updateTouchSimulation(enabled);
-    // Used by tests
-    this.emit("touch-simulation-changed");
   },
 
   onContentResize(event) {
@@ -567,14 +550,13 @@ ResponsiveUI.prototype = {
   }),
 
   updateTouchSimulation: Task.async(function* (enabled) {
-    let reloadNeeded;
-    if (enabled) {
-      reloadNeeded = yield this.emulationFront.setTouchEventsOverride(
-        Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED
-      );
-    } else {
-      reloadNeeded = yield this.emulationFront.clearTouchEventsOverride();
+    if (!enabled) {
+      yield this.emulationFront.clearTouchEventsOverride();
+      return;
     }
+    let reloadNeeded = yield this.emulationFront.setTouchEventsOverride(
+      Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED
+    );
     if (reloadNeeded) {
       this.getViewportBrowser().reload();
     }

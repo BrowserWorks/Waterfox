@@ -25,7 +25,7 @@ nsNameSpaceMap::~nsNameSpaceMap()
 }
 
 nsresult
-nsNameSpaceMap::Put(const nsAString& aURI, nsAtom* aPrefix)
+nsNameSpaceMap::Put(const nsAString& aURI, nsIAtom* aPrefix)
 {
     nsCString uriUTF8;
     AppendUTF16toUTF8(aURI, uriUTF8);
@@ -33,7 +33,7 @@ nsNameSpaceMap::Put(const nsAString& aURI, nsAtom* aPrefix)
 }
 
 nsresult
-nsNameSpaceMap::Put(const nsACString& aURI, nsAtom* aPrefix)
+nsNameSpaceMap::Put(const nsACString& aURI, nsIAtom* aPrefix)
 {
     Entry* entry;
 

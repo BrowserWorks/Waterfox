@@ -165,9 +165,7 @@ HarBuilder.prototype = {
 
     request.queryString = parseQueryString(getUrlQuery(file.url)) || [];
 
-    if (file.requestPostData) {
-      request.postData = this.buildPostData(file);
-    }
+    request.postData = this.buildPostData(file);
 
     request.headersSize = file.requestHeaders.headersSize;
 

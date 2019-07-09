@@ -161,12 +161,6 @@ Connection::Clone(bool aReadOnly, mozIStorageConnection** aConnectionOut)
 }
 
 NS_IMETHODIMP
-Connection::Interrupt()
-{
-  return mBase->Interrupt();
-}
-
-NS_IMETHODIMP
 Connection::GetDefaultPageSize(int32_t* aSizeOut)
 {
   return mBase->GetDefaultPageSize(aSizeOut);

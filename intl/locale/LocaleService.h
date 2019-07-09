@@ -9,7 +9,6 @@
 #include "nsIObserver.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "nsWeakReference.h"
 
 #include "mozILocaleService.h"
 
@@ -69,8 +68,7 @@ namespace intl {
  * but we negotiate between languages etc.
  */
 class LocaleService : public mozILocaleService,
-                      public nsIObserver,
-                      public nsSupportsWeakReference
+                      public nsIObserver
 {
 public:
   NS_DECL_ISUPPORTS
@@ -213,9 +211,9 @@ public:
    *
    * This code should be called only in the server mode..
    */
-  void AvailableLocalesChanged();
-  void RequestedLocalesChanged();
-  void LocalesChanged();
+  void OnAvailableLocalesChanged();
+  void OnRequestedLocalesChanged();
+  void OnLocalesChanged();
 
   /**
    * Negotiates the best locales out of an ordered list of requested locales and
@@ -306,7 +304,6 @@ private:
 
   virtual ~LocaleService();
 
-  nsAutoCStringN<16>  mDefaultLocale;
   nsTArray<nsCString> mAppLocales;
   nsTArray<nsCString> mRequestedLocales;
   nsTArray<nsCString> mAvailableLocales;

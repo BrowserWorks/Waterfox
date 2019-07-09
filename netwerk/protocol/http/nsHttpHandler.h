@@ -11,7 +11,6 @@
 #include "nsHttpConnectionMgr.h"
 #include "ASpdySession.h"
 
-#include "mozilla/StaticPtr.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsWeakReference.h"
@@ -66,8 +65,9 @@ public:
     NS_DECL_NSIOBSERVER
     NS_DECL_NSISPECULATIVECONNECT
 
-    static already_AddRefed<nsHttpHandler> GetInstance();
+    nsHttpHandler();
 
+    MOZ_MUST_USE nsresult Init();
     MOZ_MUST_USE nsresult AddStandardRequestHeaders(nsHttpRequestHead *,
                                                     bool isSecure);
     MOZ_MUST_USE nsresult AddConnectionHeader(nsHttpRequestHead *,
@@ -95,7 +95,7 @@ public:
     PRIntervalTime ResponseTimeoutEnabled()  { return mResponseTimeoutEnabled; }
     uint32_t       NetworkChangedTimeout()   { return mNetworkChangedTimeout; }
     uint16_t       MaxRequestAttempts()      { return mMaxRequestAttempts; }
-    const char    *DefaultSocketType()       { return mDefaultSocketType.IsVoid() ? nullptr : mDefaultSocketType.get(); }
+    const char    *DefaultSocketType()       { return mDefaultSocketType.get(); /* ok to return null */ }
     uint32_t       PhishyUserPassLength()    { return mPhishyUserPassLength; }
     uint8_t        GetQoSBits()              { return mQoSBits; }
     uint16_t       GetIdleSynTimeout()       { return mIdleSynTimeout; }
@@ -124,7 +124,6 @@ public:
     bool           AllowAltSvcOE() { return mEnableAltSvcOE; }
     bool           AllowOriginExtension() { return mEnableOriginExtension; }
     uint32_t       ConnectTimeout()  { return mConnectTimeout; }
-    uint32_t       TLSHandshakeTimeout()  { return mTLSHandshakeTimeout; }
     uint32_t       ParallelSpeculativeConnectLimit() { return mParallelSpeculativeConnectLimit; }
     bool           CriticalRequestPrioritization() { return mCriticalRequestPrioritization; }
     bool           UseH2Deps() { return mUseH2Deps; }
@@ -137,11 +136,6 @@ public:
 
     bool           PromptTempRedirect()      { return mPromptTempRedirect; }
     bool           IsUrgentStartEnabled() { return mUrgentStartEnabled; }
-    bool           IsTailBlockingEnabled() { return mTailBlockingEnabled; }
-    uint32_t       TailBlockingDelayQuantum(bool aAfterDOMContentLoaded) {
-      return aAfterDOMContentLoaded ? mTailDelayQuantumAfterDCL : mTailDelayQuantum;
-    }
-    uint32_t       TailBlockingDelayMax() { return mTailDelayMax; }
 
     // TCP Keepalive configuration values.
 
@@ -318,22 +312,10 @@ public:
         NotifyObservers(chan, NS_HTTP_ON_MODIFY_REQUEST_TOPIC);
     }
 
-    // Called by the channel before writing a request
-    void OnStopRequest(nsIHttpChannel *chan)
-    {
-        NotifyObservers(chan, NS_HTTP_ON_STOP_REQUEST_TOPIC);
-    }
-
     // Called by the channel and cached in the loadGroup
     void OnUserAgentRequest(nsIHttpChannel *chan)
     {
       NotifyObservers(chan, NS_HTTP_ON_USERAGENT_REQUEST_TOPIC);
-    }
-
-    // Called by the channel before setting up the transaction
-    void OnBeforeConnect(nsIHttpChannel *chan)
-    {
-        NotifyObservers(chan, NS_HTTP_ON_BEFORE_CONNECT_TOPIC);
     }
 
     // Called by the channel once headers are available
@@ -383,6 +365,11 @@ public:
 
     void ShutdownConnectionManager();
 
+    bool KeepEmptyResponseHeadersAsEmtpyString() const
+    {
+        return mKeepEmptyResponseHeadersAsEmtpyString;
+    }
+
     uint32_t DefaultHpackBuffer() const
     {
         return mDefaultHpackBuffer;
@@ -404,11 +391,7 @@ public:
     }
 
 private:
-    nsHttpHandler();
-
     virtual ~nsHttpHandler();
-
-    MOZ_MUST_USE nsresult Init();
 
     //
     // Useragent/prefs helper methods
@@ -480,10 +463,6 @@ private:
     uint32_t mThrottleTimeWindow;
 
     bool mUrgentStartEnabled;
-    bool mTailBlockingEnabled;
-    uint32_t mTailDelayQuantum;
-    uint32_t mTailDelayQuantumAfterDCL;
-    uint32_t mTailDelayMax;
 
     uint8_t  mRedirectionLimit;
 
@@ -502,7 +481,7 @@ private:
     nsCString mHttpAcceptEncodings;
     nsCString mHttpsAcceptEncodings;
 
-    nsCString mDefaultSocketType;
+    nsXPIDLCString mDefaultSocketType;
 
     // cache support
     uint32_t                  mLastUniqueID;
@@ -515,17 +494,17 @@ private:
     nsCString      mOscpu;
     nsCString      mMisc;
     nsCString      mProduct;
-    nsCString      mProductSub;
-    nsCString      mAppName;
-    nsCString      mAppVersion;
+    nsXPIDLCString mProductSub;
+    nsXPIDLCString mAppName;
+    nsXPIDLCString mAppVersion;
     nsCString      mCompatFirefox;
     bool           mCompatFirefoxEnabled;
-    nsCString      mCompatDevice;
+    nsXPIDLCString mCompatDevice;
     nsCString      mDeviceModelId;
 
     nsCString      mUserAgent;
     nsCString      mSpoofedUserAgent;
-    nsCString      mUserAgentOverride;
+    nsXPIDLCString mUserAgentOverride;
     bool           mUserAgentIsDirty; // true if mUserAgent should be rebuilt
     bool           mAcceptLanguagesIsDirty;
 
@@ -580,17 +559,9 @@ private:
     // established. In milliseconds.
     uint32_t       mConnectTimeout;
 
-    // The maximum amount of time to wait for a tls handshake to be
-    // established. In milliseconds.
-    uint32_t       mTLSHandshakeTimeout;
-
     // The maximum number of current global half open sockets allowable
     // when starting a new speculative connection.
     uint32_t       mParallelSpeculativeConnectLimit;
-
-    // We may disable speculative connect if the browser has user certificates
-    // installed as that might randomly popup the certificate choosing window.
-    bool           mSpeculativeConnectEnabled;
 
     // For Rate Pacing of HTTP/1 requests through a netwerk/base/EventTokenBucket
     // Active requests <= *MinParallelism are not subject to the rate pacing
@@ -622,6 +593,13 @@ private:
     FrameCheckLevel mEnforceH1Framing;
 
     nsCOMPtr<nsIRequestContextService> mRequestContextService;
+
+    // If it is set to false, headers with empty value will not appear in the
+    // header array - behavior as it used to be. If it is true: empty headers
+    // coming from the network will exits in header array as empty string.
+    // Call SetHeader with an empty value will still delete the header.
+    // (Bug 6699259)
+    bool mKeepEmptyResponseHeadersAsEmtpyString;
 
     // The default size (in bytes) of the HPACK decompressor table.
     uint32_t mDefaultHpackBuffer;
@@ -693,7 +671,7 @@ public:
     MOZ_MUST_USE nsresult NewChannelId(uint64_t& channelId);
 };
 
-extern StaticRefPtr<nsHttpHandler> gHttpHandler;
+extern nsHttpHandler *gHttpHandler;
 
 //-----------------------------------------------------------------------------
 // nsHttpsHandler - thin wrapper to distinguish the HTTP handler from the

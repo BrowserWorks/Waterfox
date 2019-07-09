@@ -4,8 +4,10 @@
 
 "use strict";
 
-const {Constructor: CC, interfaces: Ci, utils: Cu} = Components;
+const {Constructor: CC, classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+const loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+    .getService(Ci.mozIJSSubScriptLoader);
 const ServerSocket = CC(
     "@mozilla.org/network/server-socket;1",
     "nsIServerSocket",
@@ -14,6 +16,7 @@ const ServerSocket = CC(
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 Cu.import("chrome://marionette/content/assert.js");
@@ -22,11 +25,7 @@ const {
   error,
   UnknownCommandError,
 } = Cu.import("chrome://marionette/content/error.js", {});
-const {
-  Command,
-  Message,
-  Response,
-} = Cu.import("chrome://marionette/content/message.js", {});
+Cu.import("chrome://marionette/content/message.js");
 const {DebuggerTransport} =
     Cu.import("chrome://marionette/content/transport.js", {});
 
@@ -118,7 +117,6 @@ const RECOMMENDED_PREFS = new Map([
   // as it is picked up at runtime.
   ["browser.safebrowsing.blockedURIs.enabled", false],
   ["browser.safebrowsing.downloads.enabled", false],
-  ["browser.safebrowsing.passwords.enabled", false],
   ["browser.safebrowsing.malware.enabled", false],
   ["browser.safebrowsing.phishing.enabled", false],
 
@@ -164,14 +162,6 @@ const RECOMMENDED_PREFS = new Map([
   // Should be set in profile.
   ["browser.uitour.enabled", false],
 
-  // Turn off search suggestions in the location bar so as not to trigger
-  // network connections.
-  ["browser.urlbar.suggest.searches", false],
-
-  // Turn off the location bar search suggestions opt-in.  It interferes with
-  // tests that don't expect it to be there.
-  ["browser.urlbar.userMadeSearchSuggestionsChoice", true],
-
   // Do not show datareporting policy notifications which can
   // interfere with tests
   [
@@ -210,16 +200,15 @@ const RECOMMENDED_PREFS = new Map([
   ["extensions.autoDisableScopes", 0],
   ["extensions.enabledScopes", 5],
 
+  // Do not block add-ons for e10s
+  ["extensions.e10sBlocksEnabling", false],
+
   // Disable metadata caching for installed add-ons by default
   ["extensions.getAddons.cache.enabled", false],
 
-  // Disable installing any distribution extensions or add-ons.
+  // Disable intalling any distribution extensions or add-ons.
   // Should be set in profile.
   ["extensions.installDistroAddons", false],
-
-  // Make sure Shield doesn't hit the network.
-  ["extensions.shield-recipe-client.api_url", ""],
-
   ["extensions.showMismatchUI", false],
 
   // Turn off extension updates so they do not bother tests
@@ -316,14 +305,14 @@ server.TCPListener = class {
   /**
    * Function produces a GeckoDriver.
    *
-   * Determines the application to initialise the driver with.
+   * Determines application name to initialise the driver with.
    *
    * @return {GeckoDriver}
    *     A driver instance.
    */
   driverFactory() {
     Preferences.set(PREF_CONTENT_LISTENER, false);
-    return new GeckoDriver(Services.appinfo.ID, this);
+    return new GeckoDriver(Services.appinfo.name, this);
   }
 
   set acceptConnections(value) {
@@ -459,7 +448,7 @@ server.TCPConnection = class {
    * Debugger transport callback that cleans up
    * after a connection is closed.
    */
-  onClosed() {
+  onClosed(reason) {
     this.driver.deleteSession();
     if (this.onclose) {
       this.onclose(this);
@@ -490,8 +479,8 @@ server.TCPConnection = class {
     // return immediately with any error trying to unmarshal message
     let msg;
     try {
-      msg = Message.fromPacket(data);
-      msg.origin = Message.Origin.Client;
+      msg = Message.fromMsg(data);
+      msg.origin = MessageOrigin.Client;
       this.log_(msg);
     } catch (e) {
       let resp = this.createResponse(data[1]);
@@ -507,67 +496,58 @@ server.TCPConnection = class {
 
     // execute new command
     } else if (msg instanceof Command) {
-      (async () => {
-        await this.execute(msg);
-      })();
+      this.lastID = msg.id;
+      this.execute(msg);
     }
   }
 
   /**
-   * Executes a Marionette command and sends back a response when it
-   * has finished executing.
+   * Executes a WebDriver command and sends back a response when it has
+   * finished executing.
+   *
+   * Commands implemented in GeckoDriver and registered in its
+   * {@code GeckoDriver.commands} attribute.  The return values from
+   * commands are expected to be Promises.  If the resolved value of said
+   * promise is not an object, the response body will be wrapped in
+   * an object under a "value" field.
    *
    * If the command implementation sends the response itself by calling
-   * <code>resp.send()</code>, the response is guaranteed to not be
-   * sent twice.
+   * {@code resp.send()}, the response is guaranteed to not be sent twice.
    *
    * Errors thrown in commands are marshaled and sent back, and if they
-   * are not {@link WebDriverError} instances, they are additionally
-   * propagated and reported to {@link Components.utils.reportError}.
+   * are not WebDriverError instances, they are additionally propagated
+   * and reported to {@code Components.utils.reportError}.
    *
    * @param {Command} cmd
-   *     Command to execute.
+   *     The requested command to execute.
    */
-  async execute(cmd) {
+  execute(cmd) {
     let resp = this.createResponse(cmd.id);
     let sendResponse = () => resp.sendConditionally(resp => !resp.sent);
     let sendError = resp.sendError.bind(resp);
 
-    await this.despatch(cmd, resp)
-        .then(sendResponse, sendError).catch(error.report);
-  }
-
-  /**
-   * Despatches command to appropriate Marionette service.
-   *
-   * @param {Command} cmd
-   *     Command to run.
-   * @param {Response} resp
-   *     Mutable response where the command's return value will be
-   *     assigned.
-   *
-   * @throws {Error}
-   *     A command's implementation may throw at any time.
-   */
-  async despatch(cmd, resp) {
-    let fn = this.driver.commands[cmd.name];
-    if (typeof fn == "undefined") {
-      throw new UnknownCommandError(cmd.name);
-    }
-
-    if (!["newSession", "WebDriver:NewSession"].includes(cmd.name)) {
-      assert.session(this.driver);
-    }
-
-    let rv = await fn.bind(this.driver)(cmd, resp);
-
-    if (typeof rv != "undefined") {
-      if (typeof rv != "object") {
-        resp.body = {value: rv};
-      } else {
-        resp.body = rv;
+    let req = Task.spawn(function* () {
+      let fn = this.driver.commands[cmd.name];
+      if (typeof fn == "undefined") {
+        throw new UnknownCommandError(cmd.name);
       }
-    }
+
+      if (cmd.name !== "newSession") {
+        assert.session(this.driver);
+      }
+
+      let rv = yield fn.bind(this.driver)(cmd, resp);
+
+      if (typeof rv != "undefined") {
+        if (typeof rv != "object") {
+          resp.body = {value: rv};
+        } else {
+          resp.body = rv;
+        }
+      }
+    }.bind(this));
+
+    req.then(sendResponse, sendError).catch(error.report);
   }
 
   /**
@@ -620,7 +600,7 @@ server.TCPConnection = class {
    *     The command or response to send.
    */
   send(msg) {
-    msg.origin = Message.Origin.Server;
+    msg.origin = MessageOrigin.Server;
     if (msg instanceof Command) {
       this.commands_.set(msg.id, msg);
       this.sendToEmulator(msg);
@@ -650,7 +630,7 @@ server.TCPConnection = class {
    */
   sendMessage(msg) {
     this.log_(msg);
-    let payload = msg.toPacket();
+    let payload = msg.toMsg();
     this.sendRaw(payload);
   }
 
@@ -666,8 +646,9 @@ server.TCPConnection = class {
   }
 
   log_(msg) {
-    let dir = (msg.origin == Message.Origin.Client ? "->" : "<-");
-    logger.trace(`${this.id} ${dir} ${msg}`);
+    let a = (msg.origin == MessageOrigin.Client ? " -> " : " <- ");
+    let s = JSON.stringify(msg.toMsg());
+    logger.trace(this.id + a + s);
   }
 
   toString() {

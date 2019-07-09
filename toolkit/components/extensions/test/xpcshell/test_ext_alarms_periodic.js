@@ -9,15 +9,14 @@ add_task(async function test_periodic_alarm_fires() {
     let count = 0;
     let timer;
 
-    browser.alarms.onAlarm.addListener(alarm => {
+    browser.alarms.onAlarm.addListener(async alarm => {
       browser.test.assertEq(alarm.name, ALARM_NAME, "alarm has the expected name");
       if (count++ === 3) {
         clearTimeout(timer);
-        browser.alarms.clear(ALARM_NAME).then(wasCleared => {
-          browser.test.assertTrue(wasCleared, "alarm was cleared");
+        let wasCleared = await browser.alarms.clear(ALARM_NAME);
+        browser.test.assertTrue(wasCleared, "alarm was cleared");
 
-          browser.test.notifyPass("alarm-periodic");
-        });
+        browser.test.notifyPass("alarm-periodic");
       }
     });
 

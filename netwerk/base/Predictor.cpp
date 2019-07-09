@@ -451,8 +451,8 @@ Predictor::InstallObserver()
   Preferences::AddBoolVarCache(&mDoingTests, PREDICTOR_DOING_TESTS_PREF, false);
 
   if (!mCleanedUp) {
-    NS_NewTimerWithObserver(getter_AddRefs(mCleanupTimer),
-                            this, 60 * 1000, nsITimer::TYPE_ONE_SHOT);
+    mCleanupTimer = do_CreateInstance("@mozilla.org/timer;1");
+    mCleanupTimer->Init(this, 60 * 1000, nsITimer::TYPE_ONE_SHOT);
   }
 
   return rv;
@@ -1311,9 +1311,9 @@ Predictor::CalculatePredictions(nsICacheEntry *entry, nsIURI *referrer,
     const char *key = keysToOperateOn[i].BeginReading();
     const char *value = valuesToOperateOn[i].BeginReading();
 
-    nsCString uri;
+    nsCOMPtr<nsIURI> uri;
     uint32_t hitCount, lastHit, flags;
-    if (!ParseMetaDataEntry(key, value, uri, hitCount, lastHit, flags)) {
+    if (!ParseMetaDataEntry(key, value, getter_AddRefs(uri), hitCount, lastHit, flags)) {
       // This failed, get rid of it so we don't waste space
       entry->SetMetaDataElement(key, nullptr);
       continue;
@@ -1351,42 +1351,24 @@ Predictor::CalculatePredictions(nsICacheEntry *entry, nsIURI *referrer,
 // (Maybe) adds a predictive action to the prediction runner, based on our
 // calculated confidence for the subresource in question.
 void
-Predictor::SetupPrediction(int32_t confidence, uint32_t flags, const nsCString &uri)
+Predictor::SetupPrediction(int32_t confidence, uint32_t flags, nsIURI *uri)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsresult rv = NS_OK;
+  nsAutoCString uriStr;
+  uri->GetAsciiSpec(uriStr);
   PREDICTOR_LOG(("SetupPrediction mEnablePrefetch=%d mPrefetchMinConfidence=%d "
                  "mPreconnectMinConfidence=%d mPreresolveMinConfidence=%d "
                  "flags=%d confidence=%d uri=%s", mEnablePrefetch,
                  mPrefetchMinConfidence, mPreconnectMinConfidence,
-                 mPreresolveMinConfidence, flags, confidence, uri.get()));
+                 mPreresolveMinConfidence, flags, confidence, uriStr.get()));
   if (mEnablePrefetch && (flags & FLAG_PREFETCHABLE) &&
       (mPrefetchRollingLoadCount || (confidence >= mPrefetchMinConfidence))) {
-    nsCOMPtr<nsIURI> prefetchURI;
-    rv = NS_NewURI(getter_AddRefs(prefetchURI), uri, nullptr, nullptr,
-                   mIOService);
-    if (NS_SUCCEEDED(rv)) {
-      mPrefetches.AppendElement(prefetchURI);
-    }
+    mPrefetches.AppendElement(uri);
   } else if (confidence >= mPreconnectMinConfidence) {
-    nsCOMPtr<nsIURI> preconnectURI;
-    rv = NS_NewURI(getter_AddRefs(preconnectURI), uri, nullptr, nullptr,
-                   mIOService);
-    if (NS_SUCCEEDED(rv)) {
-      mPreconnects.AppendElement(preconnectURI);
-    }
+    mPreconnects.AppendElement(uri);
   } else if (confidence >= mPreresolveMinConfidence) {
-    nsCOMPtr<nsIURI> preresolveURI;
-    rv = NS_NewURI(getter_AddRefs(preresolveURI), uri, nullptr, nullptr,
-                   mIOService);
-    if (NS_SUCCEEDED(rv)) {
-      mPreresolves.AppendElement(preresolveURI);
-    }
-  }
-
-  if (NS_FAILED(rv)) {
-    PREDICTOR_LOG(("    NS_NewURI returned 0x%" PRIx32, static_cast<uint32_t>(rv)));
+    mPreresolves.AppendElement(uri);
   }
 }
 
@@ -1772,9 +1754,9 @@ Predictor::LearnInternal(PredictorLearnReason reason, nsICacheEntry *entry,
           const char *key = keysToOperateOn[i].BeginReading();
           const char *value = valuesToOperateOn[i].BeginReading();
 
-          nsCString uri;
+          nsCOMPtr<nsIURI> uri;
           uint32_t hitCount, lastHit, flags;
-          if (!ParseMetaDataEntry(key, value, uri, hitCount, lastHit, flags)) {
+          if (!ParseMetaDataEntry(nullptr, value, nullptr, hitCount, lastHit, flags)) {
             // This failed, get rid of it so we don't waste space
             entry->SetMetaDataElement(key, nullptr);
             continue;
@@ -1814,9 +1796,9 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
     return NS_OK;
   }
 
-  nsCString uri;
   uint32_t hitCount, lastHit, flags;
-  bool ok = mPredictor->ParseMetaDataEntry(key, value, uri, hitCount, lastHit, flags);
+  bool ok = mPredictor->ParseMetaDataEntry(nullptr, value, nullptr,
+                                           hitCount, lastHit, flags);
 
   if (!ok) {
     // Couldn't parse this one, just get rid of it
@@ -1826,6 +1808,7 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
     return NS_OK;
   }
 
+  nsCString uri(key + (sizeof(META_DATA_PREFIX) - 1));
   uint32_t uriLength = uri.Length();
   if (uriLength > mPredictor->mMaxURILength) {
     // Default to getting rid of URIs that are too long and were put in before
@@ -1892,9 +1875,8 @@ Predictor::LearnForSubresource(nsICacheEntry *entry, nsIURI *targetURI)
 
   uint32_t hitCount, lastHit, flags;
   bool isNewResource = (NS_FAILED(rv) ||
-                        !ParseMetaDataEntry(key.BeginReading(),
-                                            value.BeginReading(), uri,
-                                            hitCount, lastHit, flags));
+                        !ParseMetaDataEntry(nullptr, value.BeginReading(),
+                                            nullptr, hitCount, lastHit, flags));
 
   int32_t resourceCount = 0;
   if (isNewResource) {
@@ -1986,7 +1968,7 @@ Predictor::LearnForStartup(nsICacheEntry *entry, nsIURI *targetURI)
 }
 
 bool
-Predictor::ParseMetaDataEntry(const char *key, const char *value, nsCString &uri,
+Predictor::ParseMetaDataEntry(const char *key, const char *value, nsIURI **uri,
                               uint32_t &hitCount, uint32_t &lastHit,
                               uint32_t &flags)
 {
@@ -2036,10 +2018,12 @@ Predictor::ParseMetaDataEntry(const char *key, const char *value, nsCString &uri
 
   if (key) {
     const char *uriStart = key + (sizeof(META_DATA_PREFIX) - 1);
-    uri.AssignASCII(uriStart);
+    nsresult rv = NS_NewURI(uri, uriStart, nullptr, mIOService);
+    if (NS_FAILED(rv)) {
+      PREDICTOR_LOG(("    NS_NewURI returned 0x%" PRIX32, static_cast<uint32_t>(rv)));
+      return false;
+    }
     PREDICTOR_LOG(("    uri -> %s", uriStart));
-  } else {
-    uri.Truncate();
   }
 
   return true;
@@ -2586,7 +2570,7 @@ Predictor::UpdateCacheability(nsIURI *sourceURI, nsIURI *targetURI,
                               uint32_t httpStatus,
                               nsHttpRequestHead &requestHead,
                               nsHttpResponseHead *responseHead,
-                              nsILoadContextInfo *lci, bool isTracking)
+                              nsILoadContextInfo *lci)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -2609,11 +2593,8 @@ Predictor::UpdateCacheability(nsIURI *sourceURI, nsIURI *targetURI,
   if (self) {
     nsAutoCString method;
     requestHead.Method(method);
-    nsAutoCString vary;
-    Unused << responseHead->GetHeader(nsHttp::Vary, vary);
     self->UpdateCacheabilityInternal(sourceURI, targetURI, httpStatus,
-                                     method, *lci->OriginAttributesPtr(),
-                                     isTracking, !vary.IsEmpty());
+                                     method, *lci->OriginAttributesPtr());
   }
 }
 
@@ -2621,8 +2602,7 @@ void
 Predictor::UpdateCacheabilityInternal(nsIURI *sourceURI, nsIURI *targetURI,
                                       uint32_t httpStatus,
                                       const nsCString &method,
-                                      const OriginAttributes& originAttributes,
-                                      bool isTracking, bool couldVary)
+                                      const OriginAttributes& originAttributes)
 {
   PREDICTOR_LOG(("Predictor::UpdateCacheability httpStatus=%u", httpStatus));
 
@@ -2659,8 +2639,7 @@ Predictor::UpdateCacheabilityInternal(nsIURI *sourceURI, nsIURI *targetURI,
                        nsICacheStorage::OPEN_SECRETLY |
                        nsICacheStorage::CHECK_MULTITHREADED;
   RefPtr<Predictor::CacheabilityAction> action =
-    new Predictor::CacheabilityAction(targetURI, httpStatus, method, isTracking,
-                                      couldVary, this);
+    new Predictor::CacheabilityAction(targetURI, httpStatus, method, this);
   nsAutoCString uri;
   targetURI->GetAsciiSpec(uri);
   PREDICTOR_LOG(("    uri=%s action=%p", uri.get(), action.get()));
@@ -2698,14 +2677,7 @@ Predictor::CacheabilityAction::OnCacheEntryAvailable(nsICacheEntry *entry,
     return NS_OK;
   }
 
-  nsCString strTargetURI;
-  nsresult rv = mTargetURI->GetAsciiSpec(strTargetURI);
-  if (NS_FAILED(rv)) {
-    PREDICTOR_LOG(("    GetAsciiSpec returned %" PRIx32, static_cast<uint32_t>(rv)));
-    return NS_OK;
-  }
-
-  rv = entry->VisitMetaData(this);
+  nsresult rv = entry->VisitMetaData(this);
   if (NS_FAILED(rv)) {
     PREDICTOR_LOG(("    VisitMetaData returned %" PRIx32, static_cast<uint32_t>(rv)));
     return NS_OK;
@@ -2725,20 +2697,18 @@ Predictor::CacheabilityAction::OnCacheEntryAvailable(nsICacheEntry *entry,
   for (size_t i = 0; i < keysToCheck.Length(); ++i) {
     const char *key = keysToCheck[i].BeginReading();
     const char *value = valuesToCheck[i].BeginReading();
-    nsCString uri;
+    nsCOMPtr<nsIURI> uri;
     uint32_t hitCount, lastHit, flags;
 
-    if (!mPredictor->ParseMetaDataEntry(key, value, uri, hitCount, lastHit,
-                                        flags)) {
+    if (!mPredictor->ParseMetaDataEntry(key, value, getter_AddRefs(uri),
+                                        hitCount, lastHit, flags)) {
       PREDICTOR_LOG(("    failed to parse key=%s value=%s", key, value));
       continue;
     }
 
-    if (strTargetURI.Equals(uri)) {
-      if (mHttpStatus == 200 && mMethod.EqualsLiteral("GET") &&
-          !hasQueryString &&
-          !mIsTracking &&
-          !mCouldVary) {
+    bool eq = false;
+    if (NS_SUCCEEDED(uri->Equals(mTargetURI, &eq)) && eq) {
+      if (mHttpStatus == 200 && mMethod.EqualsLiteral("GET") && !hasQueryString) {
         PREDICTOR_LOG(("    marking %s cacheable", key));
         flags |= FLAG_PREFETCHABLE;
       } else {

@@ -8,12 +8,10 @@ var initialLocation = gBrowser.currentURI.spec;
 var newTab = null;
 
 add_task(async function() {
-  CustomizableUI.addWidgetToArea("add-ons-button", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   info("Check addons button existence and functionality");
 
-  await waitForOverflowButtonShown();
-
-  await document.getElementById("nav-bar").overflowable.show();
+  await PanelUI.show();
   info("Menu panel was opened");
 
   let addonsButton = document.getElementById("add-ons-button");
@@ -30,7 +28,6 @@ add_task(async function() {
 });
 
 add_task(async function asyncCleanup() {
-  CustomizableUI.reset();
   BrowserTestUtils.addTab(gBrowser, initialLocation);
   gBrowser.removeTab(gBrowser.selectedTab);
   info("Tabs were restored");

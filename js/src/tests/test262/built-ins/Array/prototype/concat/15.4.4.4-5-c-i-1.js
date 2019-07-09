@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.concat
 es5id: 15.4.4.4-5-c-i-1
 description: >
     Array.prototype.concat will concat an Array when index property
@@ -20,7 +19,7 @@ description: >
             var hasProperty = newArr.hasOwnProperty("0");
 
 	    var instanceOfVerify = typeof newArr[0]==="object";
-
+            
             var verifyValue = false;
             verifyValue = newArr[0] == 101;
 

@@ -53,7 +53,7 @@ public:
   ActorState
   State();
 
-  already_AddRefed<IPCBlobInputStream>
+  already_AddRefed<nsIInputStream>
   CreateStream();
 
   void

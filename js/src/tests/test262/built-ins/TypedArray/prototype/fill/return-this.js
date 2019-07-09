@@ -6,7 +6,6 @@ es6id: 22.2.3.8
 description: >
   Returns `this`.
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

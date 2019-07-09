@@ -26,7 +26,7 @@ private:
 
     nsCOMPtr<mozIStorageStatement> mStatement;
 
-    nsTArray<RefPtr<nsAtom>> mColumnNames;
+    nsCOMArray<nsIAtom> mColumnNames;
 
     ~nsXULTemplateResultSetStorage() {}
 
@@ -40,7 +40,7 @@ public:
 
     explicit nsXULTemplateResultSetStorage(mozIStorageStatement* aStatement);
 
-    int32_t GetColumnIndex(nsAtom* aColumnName);
+    int32_t GetColumnIndex(nsIAtom* aColumnName);
 
     void FillColumnValues(nsCOMArray<nsIVariant>& aArray);
 

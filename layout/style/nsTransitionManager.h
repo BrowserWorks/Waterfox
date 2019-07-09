@@ -285,15 +285,15 @@ protected:
 template <>
 struct AnimationTypeTraits<dom::CSSTransition>
 {
-  static nsAtom* ElementPropertyAtom()
+  static nsIAtom* ElementPropertyAtom()
   {
     return nsGkAtoms::transitionsProperty;
   }
-  static nsAtom* BeforePropertyAtom()
+  static nsIAtom* BeforePropertyAtom()
   {
     return nsGkAtoms::transitionsOfBeforeProperty;
   }
-  static nsAtom* AfterPropertyAtom()
+  static nsIAtom* AfterPropertyAtom()
   {
     return nsGkAtoms::transitionsOfAfterProperty;
   }

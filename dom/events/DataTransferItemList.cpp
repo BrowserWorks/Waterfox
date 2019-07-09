@@ -562,14 +562,6 @@ DataTransferItemList::GenerateFiles(FileList* aFiles,
 {
   MOZ_ASSERT(aFiles);
   MOZ_ASSERT(aFilesPrincipal);
-
-  // For non-system principals, the Files list should be empty if the
-  // DataTransfer is protected.
-  if (!nsContentUtils::IsSystemPrincipal(aFilesPrincipal) &&
-      mDataTransfer->IsProtected()) {
-    return;
-  }
-
   uint32_t count = Length();
   for (uint32_t i = 0; i < count; i++) {
     bool found;

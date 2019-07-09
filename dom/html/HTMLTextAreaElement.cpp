@@ -84,13 +84,20 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLTextAreaElement,
                                    mControllers,
                                    mState)
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLTextAreaElement,
-                                             nsGenericHTMLFormElementWithState,
-                                             nsIDOMHTMLTextAreaElement,
-                                             nsITextControlElement,
-                                             nsIDOMNSEditableElement,
-                                             nsIMutationObserver,
-                                             nsIConstraintValidation)
+NS_IMPL_ADDREF_INHERITED(HTMLTextAreaElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLTextAreaElement, Element)
+
+
+// QueryInterface implementation for HTMLTextAreaElement
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLTextAreaElement)
+  NS_INTERFACE_TABLE_INHERITED(HTMLTextAreaElement,
+                               nsIDOMHTMLTextAreaElement,
+                               nsITextControlElement,
+                               nsIDOMNSEditableElement,
+                               nsIMutationObserver,
+                               nsIConstraintValidation)
+NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLFormElementWithState)
+
 
 // nsIDOMHTMLTextAreaElement
 
@@ -293,6 +300,13 @@ HTMLTextAreaElement::GetRootEditorNode()
 }
 
 NS_IMETHODIMP_(Element*)
+HTMLTextAreaElement::CreatePlaceholderNode()
+{
+  NS_ENSURE_SUCCESS(mState.CreatePlaceholderNode(), nullptr);
+  return mState.GetPlaceholderNode();
+}
+
+NS_IMETHODIMP_(Element*)
 HTMLTextAreaElement::GetPlaceholderNode()
 {
   return mState.GetPlaceholderNode();
@@ -308,6 +322,13 @@ NS_IMETHODIMP_(bool)
 HTMLTextAreaElement::GetPlaceholderVisibility()
 {
   return mState.GetPlaceholderVisibility();
+}
+
+NS_IMETHODIMP_(Element*)
+HTMLTextAreaElement::CreatePreviewNode()
+{
+  NS_ENSURE_SUCCESS(mState.CreatePreviewNode(), nullptr);
+  return mState.GetPreviewNode();
 }
 
 NS_IMETHODIMP_(Element*)
@@ -455,7 +476,7 @@ HTMLTextAreaElement::SetDefaultValue(const nsAString& aDefaultValue, ErrorResult
 
 bool
 HTMLTextAreaElement::ParseAttribute(int32_t aNamespaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     const nsAString& aValue,
                                     nsAttrValue& aResult)
 {
@@ -495,7 +516,7 @@ HTMLTextAreaElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes
 }
 
 nsChangeHint
-HTMLTextAreaElement::GetAttributeChangeHint(const nsAtom* aAttribute,
+HTMLTextAreaElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
                                             int32_t aModType) const
 {
   nsChangeHint retval =
@@ -512,7 +533,7 @@ HTMLTextAreaElement::GetAttributeChangeHint(const nsAtom* aAttribute,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLTextAreaElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLTextAreaElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::wrap },
@@ -937,6 +958,12 @@ HTMLTextAreaElement::IntrinsicState() const
 {
   EventStates state = nsGenericHTMLFormElementWithState::IntrinsicState();
 
+  if (HasAttr(kNameSpaceID_None, nsGkAtoms::required)) {
+    state |= NS_EVENT_STATE_REQUIRED;
+  } else {
+    state |= NS_EVENT_STATE_OPTIONAL;
+  }
+
   if (IsCandidateForConstraintValidation()) {
     if (IsValid()) {
       state |= NS_EVENT_STATE_VALID;
@@ -1011,7 +1038,7 @@ HTMLTextAreaElement::UnbindFromTree(bool aDeep, bool aNullParent)
 }
 
 nsresult
-HTMLTextAreaElement::BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLTextAreaElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                    const nsAttrValueOrString* aValue,
                                    bool aNotify)
 {
@@ -1035,7 +1062,8 @@ HTMLTextAreaElement::CharacterDataChanged(nsIDocument* aDocument,
 void
 HTMLTextAreaElement::ContentAppended(nsIDocument* aDocument,
                                      nsIContent* aContainer,
-                                     nsIContent* aFirstNewContent)
+                                     nsIContent* aFirstNewContent,
+                                     int32_t /* unused */)
 {
   ContentChanged(aFirstNewContent);
 }
@@ -1043,7 +1071,8 @@ HTMLTextAreaElement::ContentAppended(nsIDocument* aDocument,
 void
 HTMLTextAreaElement::ContentInserted(nsIDocument* aDocument,
                                      nsIContent* aContainer,
-                                     nsIContent* aChild)
+                                     nsIContent* aChild,
+                                     int32_t /* unused */)
 {
   ContentChanged(aChild);
 }
@@ -1052,6 +1081,7 @@ void
 HTMLTextAreaElement::ContentRemoved(nsIDocument* aDocument,
                                     nsIContent* aContainer,
                                     nsIContent* aChild,
+                                    int32_t aIndexInContainer,
                                     nsIContent* aPreviousSibling)
 {
   ContentChanged(aChild);
@@ -1070,11 +1100,9 @@ HTMLTextAreaElement::ContentChanged(nsIContent* aContent)
 }
 
 nsresult
-HTMLTextAreaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLTextAreaElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue,
-                                  const nsAttrValue* aOldValue,
-                                  nsIPrincipal* aSubjectPrincipal,
-                                  bool aNotify)
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::required || aName == nsGkAtoms::disabled ||
@@ -1084,13 +1112,6 @@ HTMLTextAreaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
         // UpdateBarredFromConstraintValidation and
         // UpdateValueMissingValidityState depend on our disabled state.
         UpdateDisabledState(aNotify);
-      }
-
-      if (aName == nsGkAtoms::required) {
-        // This *has* to be called *before* UpdateValueMissingValidityState
-        // because UpdateValueMissingValidityState depends on our required
-        // state.
-        UpdateRequiredState(!!aValue, aNotify);
       }
 
       UpdateValueMissingValidityState();
@@ -1107,7 +1128,7 @@ HTMLTextAreaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLFormElementWithState::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                                         aOldValue, aSubjectPrincipal, aNotify);
+                                                         aOldValue, aNotify);
   }
 
 nsresult
@@ -1197,7 +1218,7 @@ HTMLTextAreaElement::IsTooShort()
 bool
 HTMLTextAreaElement::IsValueMissing() const
 {
-  if (!Required() || !IsMutable()) {
+  if (!HasAttr(kNameSpaceID_None, nsGkAtoms::required) || !IsMutable()) {
     return false;
   }
 
@@ -1240,7 +1261,7 @@ HTMLTextAreaElement::GetValidationMessage(nsAString& aValidationMessage,
   {
     case VALIDITY_STATE_TOO_LONG:
       {
-        nsAutoString message;
+        nsXPIDLString message;
         int32_t maxLength = -1;
         int32_t textLength = -1;
         nsAutoString strMaxLength;
@@ -1261,7 +1282,7 @@ HTMLTextAreaElement::GetValidationMessage(nsAString& aValidationMessage,
       break;
     case VALIDITY_STATE_TOO_SHORT:
       {
-        nsAutoString message;
+        nsXPIDLString message;
         int32_t minLength = -1;
         int32_t textLength = -1;
         nsAutoString strMinLength;
@@ -1282,7 +1303,7 @@ HTMLTextAreaElement::GetValidationMessage(nsAString& aValidationMessage,
       break;
     case VALIDITY_STATE_VALUE_MISSING:
       {
-        nsAutoString message;
+        nsXPIDLString message;
         rv = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                                 "FormValidationValueMissing",
                                                 message);
@@ -1305,6 +1326,13 @@ HTMLTextAreaElement::IsSingleLineTextControl() const
 NS_IMETHODIMP_(bool)
 HTMLTextAreaElement::IsTextArea() const
 {
+  return true;
+}
+
+NS_IMETHODIMP_(bool)
+HTMLTextAreaElement::IsPlainTextControl() const
+{
+  // need to check our HTML attribute and/or CSS.
   return true;
 }
 

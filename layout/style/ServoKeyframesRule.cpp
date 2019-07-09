@@ -53,15 +53,11 @@ public:
 
   ServoKeyframeRule* GetRule(uint32_t aIndex) {
     if (!mRules[aIndex]) {
-      uint32_t line = 0, column = 0;
-      RefPtr<RawServoKeyframe> rule =
-        Servo_KeyframesRule_GetKeyframeAt(mRawRule, aIndex,
-                                          &line, &column).Consume();
-      ServoKeyframeRule* ruleObj =
-        new ServoKeyframeRule(rule.forget(), line, column);
-      mRules.ReplaceObjectAt(ruleObj, aIndex);
-      ruleObj->SetStyleSheet(mStyleSheet);
-      ruleObj->SetParentRule(mParentRule);
+      ServoKeyframeRule* rule = new ServoKeyframeRule(
+        Servo_KeyframesRule_GetKeyframe(mRawRule, aIndex).Consume());
+      mRules.ReplaceObjectAt(rule, aIndex);
+      rule->SetStyleSheet(mStyleSheet);
+      rule->SetParentRule(mParentRule);
     }
     return static_cast<ServoKeyframeRule*>(mRules[aIndex]);
   }
@@ -81,6 +77,13 @@ public:
   }
 
   void RemoveRule(uint32_t aIndex) {
+    if (aIndex >= mRules.Length()) {
+      return;
+    }
+    if (css::Rule* child = mRules[aIndex]) {
+      child->SetStyleSheet(nullptr);
+      child->SetParentRule(nullptr);
+    }
     mRules.RemoveObjectAt(aIndex);
   }
 
@@ -125,7 +128,7 @@ private:
 };
 
 // QueryInterface implementation for ServoKeyframeList
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServoKeyframeList)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServoKeyframeList)
 NS_INTERFACE_MAP_END_INHERITING(dom::CSSRuleList)
 
 NS_IMPL_ADDREF_INHERITED(ServoKeyframeList, dom::CSSRuleList)
@@ -168,7 +171,7 @@ ServoKeyframesRule::~ServoKeyframesRule()
 NS_IMPL_ADDREF_INHERITED(ServoKeyframesRule, dom::CSSKeyframesRule)
 NS_IMPL_RELEASE_INHERITED(ServoKeyframesRule, dom::CSSKeyframesRule)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServoKeyframesRule)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServoKeyframesRule)
 NS_INTERFACE_MAP_END_INHERITING(dom::CSSKeyframesRule)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(ServoKeyframesRule)
@@ -253,7 +256,7 @@ ServoKeyframesRule::UpdateRule(Func aCallback)
 NS_IMETHODIMP
 ServoKeyframesRule::GetName(nsAString& aName)
 {
-  nsAtom* name = Servo_KeyframesRule_GetName(mRawRule);
+  nsIAtom* name = Servo_KeyframesRule_GetName(mRawRule);
   aName = nsDependentAtomString(name);
   return NS_OK;
 }
@@ -261,8 +264,8 @@ ServoKeyframesRule::GetName(nsAString& aName)
 NS_IMETHODIMP
 ServoKeyframesRule::SetName(const nsAString& aName)
 {
-  RefPtr<nsAtom> name = NS_Atomize(aName);
-  nsAtom* oldName = Servo_KeyframesRule_GetName(mRawRule);
+  nsCOMPtr<nsIAtom> name = NS_Atomize(aName);
+  nsIAtom* oldName = Servo_KeyframesRule_GetName(mRawRule);
   if (name == oldName) {
     return NS_OK;
   }

@@ -36,7 +36,7 @@ public:
 
   nsAttributeTextNode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                       int32_t aNameSpaceID,
-                      nsAtom* aAttrName) :
+                      nsIAtom* aAttrName) :
     nsTextNode(aNodeInfo),
     mGrandparent(nullptr),
     mNameSpaceID(aNameSpaceID),
@@ -90,17 +90,15 @@ private:
   nsIContent* mGrandparent;
   // What attribute we're showing
   int32_t mNameSpaceID;
-  RefPtr<nsAtom> mAttrName;
+  nsCOMPtr<nsIAtom> mAttrName;
 };
 
 nsTextNode::~nsTextNode()
 {
 }
 
-// Use the CC variant of this, even though this class does not define
-// a new CC participant, to make QIing to the CC interfaces faster.
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(nsTextNode, nsGenericDOMDataNode, nsIDOMNode,
-                                             nsIDOMText, nsIDOMCharacterData)
+NS_IMPL_ISUPPORTS_INHERITED(nsTextNode, nsGenericDOMDataNode, nsIDOMNode,
+                            nsIDOMText, nsIDOMCharacterData)
 
 JSObject*
 nsTextNode::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
@@ -167,15 +165,9 @@ nsTextNode::List(FILE* out, int32_t aIndent) const
   fprintf(out, "Text@%p", static_cast<const void*>(this));
   fprintf(out, " flags=[%08x]", static_cast<unsigned int>(GetFlags()));
   if (IsCommonAncestorForRangeInSelection()) {
-    const LinkedList<nsRange>* ranges = GetExistingCommonAncestorRanges();
-    int32_t count = 0;
-    if (ranges) {
-      // Can't use range-based iteration on a const LinkedList, unfortunately.
-      for (const nsRange* r = ranges->getFirst(); r; r = r->getNext()) {
-        ++count;
-      }
-    }
-    fprintf(out, " ranges:%d", count);
+    const nsTHashtable<nsPtrHashKey<nsRange>>* ranges =
+      GetExistingCommonAncestorRanges();
+    fprintf(out, " ranges:%d", ranges ? ranges->Count() : 0);
   }
   fprintf(out, " primaryframe=%p", static_cast<void*>(GetPrimaryFrame()));
   fprintf(out, " refcount=%" PRIuPTR "<", mRefCnt.get());
@@ -207,7 +199,7 @@ nsTextNode::DumpContent(FILE* out, int32_t aIndent, bool aDumpAll) const
 
 nsresult
 NS_NewAttributeContent(nsNodeInfoManager *aNodeInfoManager,
-                       int32_t aNameSpaceID, nsAtom* aAttrName,
+                       int32_t aNameSpaceID, nsIAtom* aAttrName,
                        nsIContent** aResult)
 {
   NS_PRECONDITION(aNodeInfoManager, "Missing nodeInfoManager");
@@ -270,7 +262,7 @@ void
 nsAttributeTextNode::AttributeChanged(nsIDocument* aDocument,
                                       Element* aElement,
                                       int32_t aNameSpaceID,
-                                      nsAtom* aAttribute,
+                                      nsIAtom* aAttribute,
                                       int32_t aModType,
                                       const nsAttrValue* aOldValue)
 {

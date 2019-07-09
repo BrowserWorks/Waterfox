@@ -18,10 +18,6 @@
 
 #include "ds/LifoAlloc.h"
 
-#ifdef XP_WIN32
-#include "jswin.h"
-#endif
-
 using mozilla::PodCopy;
 
 namespace
@@ -454,18 +450,6 @@ Fprinter::put(const char* s, size_t len)
         reportOutOfMemory();
         return false;
     }
-#ifdef XP_WIN32
-    if ((file_ == stderr) && (IsDebuggerPresent())) {
-        UniqueChars buf(static_cast<char*>(js_malloc(len + 1)));
-        if (!buf) {
-            reportOutOfMemory();
-            return false;
-        }
-        PodCopy(buf.get(), s, len);
-        buf[len] = '\0';
-        OutputDebugStringA(buf.get());
-    }
-#endif
     return true;
 }
 

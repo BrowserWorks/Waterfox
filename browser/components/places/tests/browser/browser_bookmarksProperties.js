@@ -36,6 +36,8 @@ const DIALOG_URL_MINIMAL_UI = "chrome://browser/content/places/bookmarkPropertie
 
 Cu.import("resource:///modules/RecentWindow.jsm");
 var win = RecentWindow.getMostRecentBrowserWindow();
+var ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].
+         getService(Ci.nsIWindowWatcher);
 
 function add_bookmark(url) {
   return PlacesUtils.bookmarks.insert({
@@ -309,7 +311,7 @@ gTests.push({
     folderTree.addEventListener("DOMAttrModified", function onDOMAttrModified(event) {
       if (event.attrName != "place")
         return;
-      folderTree.removeEventListener("DOMAttrModified", onDOMAttrModified);
+      folderTree.removeEventListener("DOMAttrModified", arguments.callee);
       executeSoon(async function() {
         await self._addObserver;
         let bookmark = await PlacesUtils.bookmarks.fetch({url: TEST_URL});
@@ -358,6 +360,10 @@ add_task(async function test_setup() {
   // This test can take some time, if we timeout too early it could run
   // in the middle of other tests, or hang them.
   requestLongerTimeout(2);
+
+  // Sanity checks.
+  Assert.ok(PlacesUtils, "PlacesUtils in context");
+  Assert.ok(PlacesUIUtils, "PlacesUIUtils in context");
 });
 
 add_task(async function test_run() {
@@ -419,7 +425,7 @@ function open_properties_dialog(test) {
     function windowObserver(aSubject, aTopic, aData) {
       if (aTopic != "domwindowopened")
         return;
-      Services.ww.unregisterNotification(windowObserver);
+      ww.unregisterNotification(windowObserver);
       let observerWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
       waitForFocus(async () => {
         // Ensure overlay is loaded
@@ -433,7 +439,7 @@ function open_properties_dialog(test) {
         }
       }, observerWindow);
     }
-    Services.ww.registerNotification(windowObserver);
+    ww.registerNotification(windowObserver);
 
     var command = null;
     switch (test.action) {

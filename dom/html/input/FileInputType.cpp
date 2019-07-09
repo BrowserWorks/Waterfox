@@ -11,7 +11,7 @@
 bool
 FileInputType::IsValueMissing() const
 {
-  if (!mInputElement->IsRequired()) {
+  if (!mInputElement->HasAttr(kNameSpaceID_None, nsGkAtoms::required)) {
     return false;
   }
 
@@ -23,7 +23,7 @@ FileInputType::IsValueMissing() const
 }
 
 nsresult
-FileInputType::GetValueMissingMessage(nsAString& aMessage)
+FileInputType::GetValueMissingMessage(nsXPIDLString& aMessage)
 {
   return nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                             "FormValidationFileMissing",

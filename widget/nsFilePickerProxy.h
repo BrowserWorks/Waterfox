@@ -49,6 +49,7 @@ public:
     NS_IMETHOD GetDomFileOrDirectory(nsISupports** aValue) override;
     NS_IMETHOD GetDomFileOrDirectoryEnumerator(nsISimpleEnumerator** aValue) override;
 
+    NS_IMETHOD Show(int16_t* aReturn) override;
     NS_IMETHOD Open(nsIFilePickerShownCallback* aCallback) override;
 
     // PFilePickerChild
@@ -58,7 +59,6 @@ public:
 private:
     ~nsFilePickerProxy();
     void InitNative(nsIWidget*, const nsAString&) override;
-    nsresult Show(int16_t* aReturn) override;
 
     void
     ActorDestroy(ActorDestroyReason aWhy) override;

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 es6id: 23.3.1.1
-esid: sec-weakmap-iterable
 description: >
   Closes iterator if item second entry completes abruptly.
 info: >

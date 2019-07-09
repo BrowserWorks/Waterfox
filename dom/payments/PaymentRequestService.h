@@ -44,10 +44,7 @@ private:
 
   // this method is only used for testing
   nsresult
-  LaunchUIAction(const nsAString& aRequestId, uint32_t aActionType);
-
-  bool
-  CanMakePayment(const nsAString& aRequestId);
+  CallTestingUIAction(const nsAString& aRequestId, uint32_t aActionType);
 
   bool
   IsBasicCardPayment(const nsAString& aRequestId);

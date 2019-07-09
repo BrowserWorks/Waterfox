@@ -49,7 +49,6 @@
   width: 16px;
   height: 16px;
   border: 0;
-  -moz-context-properties: fill;
 }
 
 .side-menu-widget-item-checkbox:not([checked]) .checkbox-check,
@@ -58,12 +57,12 @@
 }
 
 .side-menu-widget-item:not(.selected) .checkbox-check {
-  fill: var(--theme-toolbar-color);
+  filter: var(--icon-filter);
 }
 
 /* Make sure icon is white when the item is selected */
 .side-menu-widget-item.selected .checkbox-check {
-  fill: var(--theme-toolbar-selected-color);
+  filter: invert(1);
 }
 
 /* Shader source editors */

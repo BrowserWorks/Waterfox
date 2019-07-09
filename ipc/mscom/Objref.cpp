@@ -8,13 +8,10 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/ScopeExit.h"
 #include "mozilla/UniquePtr.h"
 
 #include <guiddef.h>
 #include <objidl.h>
-#include <winnt.h>
 
 namespace {
 
@@ -59,14 +56,9 @@ struct DUALSTRINGARRAY
 
 struct OBJREF_STANDARD
 {
-  static size_t SizeOfFixedLenHeader()
-  {
-    return sizeof(mStd);
-  }
-
   size_t SizeOf() const
   {
-    return SizeOfFixedLenHeader() + mResAddr.SizeOf();
+    return sizeof(mStd) + mResAddr.SizeOf();
   }
 
   STDOBJREF       mStd;
@@ -75,32 +67,14 @@ struct OBJREF_STANDARD
 
 struct OBJREF_HANDLER
 {
-  static size_t SizeOfFixedLenHeader()
-  {
-    return sizeof(mStd) + sizeof(mClsid);
-  }
-
   size_t SizeOf() const
   {
-    return SizeOfFixedLenHeader() + mResAddr.SizeOf();
+    return sizeof(mStd) + sizeof(mClsid) + mResAddr.SizeOf();
   }
 
   STDOBJREF       mStd;
   CLSID           mClsid;
   DUALSTRINGARRAY mResAddr;
-};
-
-struct OBJREF_CUSTOM
-{
-  static size_t SizeOfFixedLenHeader()
-  {
-    return sizeof(mClsid) + sizeof(mCbExtension) + sizeof(mReserved);
-  }
-
-  CLSID           mClsid;
-  uint32_t        mCbExtension;
-  uint32_t        mReserved;
-  uint8_t         mPayload[1];
 };
 
 enum OBJREF_FLAGS
@@ -113,28 +87,6 @@ enum OBJREF_FLAGS
 
 struct OBJREF
 {
-  static size_t SizeOfFixedLenHeader(OBJREF_FLAGS aFlags)
-  {
-    size_t size = sizeof(mSignature) + sizeof(mFlags) + sizeof(mIid);
-
-    switch (aFlags) {
-      case OBJREF_TYPE_STANDARD:
-        size += OBJREF_STANDARD::SizeOfFixedLenHeader();
-        break;
-      case OBJREF_TYPE_HANDLER:
-        size += OBJREF_HANDLER::SizeOfFixedLenHeader();
-        break;
-      case OBJREF_TYPE_CUSTOM:
-        size += OBJREF_CUSTOM::SizeOfFixedLenHeader();
-        break;
-      default:
-        MOZ_ASSERT_UNREACHABLE("Unsupported OBJREF type");
-        return 0;
-    }
-
-    return size;
-  }
-
   size_t SizeOf() const
   {
     size_t size = sizeof(mSignature) + sizeof(mFlags) + sizeof(mIid);
@@ -160,7 +112,6 @@ struct OBJREF
   union {
     OBJREF_STANDARD mObjRefStd;
     OBJREF_HANDLER  mObjRefHandler;
-    OBJREF_CUSTOM   mObjRefCustom;
     // There are others but we're not supporting them here
   };
 };
@@ -189,14 +140,15 @@ namespace mozilla {
 namespace mscom {
 
 bool
-StripHandlerFromOBJREF(NotNull<IStream*> aStream, const uint64_t aStartPos,
-                       const uint64_t aEndPos)
+StripHandlerFromOBJREF(NotNull<IStream*> aStream)
 {
-  // Ensure that the current stream position is set to the beginning
+  // Get current stream position
   LARGE_INTEGER seekTo;
-  seekTo.QuadPart = aStartPos;
+  seekTo.QuadPart = 0;
 
-  HRESULT hr = aStream->Seek(seekTo, STREAM_SEEK_SET, nullptr);
+  ULARGE_INTEGER objrefPos;
+
+  HRESULT hr = aStream->Seek(seekTo, STREAM_SEEK_CUR, &objrefPos);
   if (FAILED(hr)) {
     return false;
   }
@@ -212,14 +164,10 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream, const uint64_t aStartPos,
 
   uint32_t type;
   hr = aStream->Read(&type, sizeof(type), &bytesRead);
-  if (FAILED(hr) || bytesRead != sizeof(type)) {
-    return false;
-  }
-  if (type != OBJREF_TYPE_HANDLER) {
-    // If we're not a handler then just seek to the end of the OBJREF and return
-    // success; there is nothing left to do.
-    seekTo.QuadPart = aEndPos;
-    return SUCCEEDED(aStream->Seek(seekTo, STREAM_SEEK_SET, nullptr));
+  if (FAILED(hr) || bytesRead != sizeof(type) ||
+      type != OBJREF_TYPE_HANDLER) {
+    // If we're not a handler then just return success
+    return true;
   }
 
   IID iid;
@@ -232,7 +180,7 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream, const uint64_t aStartPos,
   seekTo.QuadPart = sizeof(STDOBJREF) + sizeof(CLSID);
   hr = aStream->Seek(seekTo, STREAM_SEEK_CUR, nullptr);
   if (FAILED(hr)) {
-    return false;
+    return hr;
   }
 
   uint16_t numEntries;
@@ -269,7 +217,7 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream, const uint64_t aStartPos,
   }
 
   // Signature doesn't change so we'll seek past that
-  seekTo.QuadPart = aStartPos + sizeof(signature);
+  seekTo.QuadPart = objrefPos.QuadPart + sizeof(signature);
   hr = aStream->Seek(seekTo, STREAM_SEEK_SET, nullptr);
   if (FAILED(hr)) {
     return false;
@@ -303,140 +251,7 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream, const uint64_t aStartPos,
     return false;
   }
 
-  // Back up to just before the zeros we just wrote
-  seekTo.QuadPart = -static_cast<int64_t>(sizeof(CLSID));
-  return SUCCEEDED(aStream->Seek(seekTo, STREAM_SEEK_CUR, nullptr));
-}
-
-uint32_t
-GetOBJREFSize(NotNull<IStream*> aStream)
-{
-  // Make a clone so that we don't manipulate aStream's seek pointer
-  RefPtr<IStream> cloned;
-  HRESULT hr = aStream->Clone(getter_AddRefs(cloned));
-  if (FAILED(hr)) {
-    return 0;
-  }
-
-  uint32_t accumulatedSize = 0;
-
-  ULONG bytesRead;
-
-  uint32_t signature;
-  hr = cloned->Read(&signature, sizeof(signature), &bytesRead);
-  if (FAILED(hr) || bytesRead != sizeof(signature) ||
-      signature != OBJREF_SIGNATURE) {
-    return 0;
-  }
-
-  accumulatedSize += bytesRead;
-
-  uint32_t type;
-  hr = cloned->Read(&type, sizeof(type), &bytesRead);
-  if (FAILED(hr) || bytesRead != sizeof(type)) {
-    return 0;
-  }
-
-  accumulatedSize += bytesRead;
-
-  IID iid;
-  hr = cloned->Read(&iid, sizeof(iid), &bytesRead);
-  if (FAILED(hr) || bytesRead != sizeof(iid) || !IsValidGUID(iid)) {
-    return 0;
-  }
-
-  accumulatedSize += bytesRead;
-
-  LARGE_INTEGER seekTo;
-
-  if (type == OBJREF_TYPE_CUSTOM) {
-    CLSID clsid;
-    hr = cloned->Read(&clsid, sizeof(CLSID), &bytesRead);
-    if (FAILED(hr) || bytesRead != sizeof(CLSID)) {
-      return 0;
-    }
-
-    if (clsid != CLSID_StdMarshal) {
-      // We can only calulate the size if the payload is a standard OBJREF as
-      // identified by clsid == CLSID_StdMarshal.
-      return 0;
-    }
-
-    accumulatedSize += bytesRead;
-
-    seekTo.QuadPart = sizeof(OBJREF_CUSTOM::mCbExtension) +
-                      sizeof(OBJREF_CUSTOM::mReserved);
-    hr = cloned->Seek(seekTo, STREAM_SEEK_CUR, nullptr);
-    if (FAILED(hr)) {
-      return 0;
-    }
-
-    accumulatedSize += seekTo.LowPart;
-
-    uint32_t payloadLen = GetOBJREFSize(WrapNotNull(cloned.get()));
-    if (!payloadLen) {
-      return 0;
-    }
-
-    accumulatedSize += payloadLen;
-    return accumulatedSize;
-  }
-
-  switch (type) {
-    case OBJREF_TYPE_STANDARD:
-      seekTo.QuadPart = OBJREF_STANDARD::SizeOfFixedLenHeader();
-      break;
-    case OBJREF_TYPE_HANDLER:
-      seekTo.QuadPart = OBJREF_HANDLER::SizeOfFixedLenHeader();
-      break;
-    default:
-      return 0;
-  }
-
-  hr = cloned->Seek(seekTo, STREAM_SEEK_CUR, nullptr);
-  if (FAILED(hr)) {
-    return 0;
-  }
-
-  accumulatedSize += seekTo.LowPart;
-
-  uint16_t numEntries;
-  hr = cloned->Read(&numEntries, sizeof(numEntries), &bytesRead);
-  if (FAILED(hr) || bytesRead != sizeof(numEntries)) {
-    return 0;
-  }
-
-  accumulatedSize += DUALSTRINGARRAY::SizeFromNumEntries(numEntries);
-  return accumulatedSize;
-}
-
-bool
-SetIID(NotNull<IStream*> aStream, const uint64_t aStart, REFIID aNewIid)
-{
-  ULARGE_INTEGER initialStreamPos;
-
-  LARGE_INTEGER seekTo;
-  seekTo.QuadPart = 0LL;
-  HRESULT hr = aStream->Seek(seekTo, STREAM_SEEK_CUR, &initialStreamPos);
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  auto resetStreamPos = MakeScopeExit([&]() {
-    seekTo.QuadPart = initialStreamPos.QuadPart;
-    hr = aStream->Seek(seekTo, STREAM_SEEK_SET, nullptr);
-    MOZ_DIAGNOSTIC_ASSERT(SUCCEEDED(hr));
-  });
-
-  seekTo.QuadPart = aStart + sizeof(OBJREF::mSignature) + sizeof(OBJREF::mFlags);
-  hr = aStream->Seek(seekTo, STREAM_SEEK_SET, nullptr);
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  ULONG bytesWritten;
-  hr = aStream->Write(&aNewIid, sizeof(IID), &bytesWritten);
-  return SUCCEEDED(hr) && bytesWritten == sizeof(IID);
+  return true;
 }
 
 } // namespace mscom

@@ -2,311 +2,104 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use {BuiltDisplayList, BuiltDisplayListDescriptor, ClipId, ColorF, DeviceIntPoint, DeviceUintRect};
-use {DeviceUintSize, FontInstance, FontInstanceKey, FontInstanceOptions};
-use {FontInstancePlatformOptions, FontKey, FontVariation, GlyphDimensions, GlyphKey, ImageData};
-use {ImageDescriptor, ImageKey, ItemTag, LayoutPoint, LayoutSize, LayoutTransform, LayoutVector2D};
-use {NativeFontHandle, WorldPoint};
-use app_units::Au;
-use channel::{self, MsgSender, Payload, PayloadSender, PayloadSenderHelperMethods};
+use channel::{self, MsgSender, Payload, PayloadSenderHelperMethods, PayloadSender};
+#[cfg(feature = "webgl")]
+use offscreen_gl_context::{GLContextAttributes, GLLimits};
 use std::cell::Cell;
 use std::fmt;
 use std::marker::PhantomData;
+use {BuiltDisplayList, BuiltDisplayListDescriptor, ClipId, ColorF, DeviceIntPoint, DeviceIntSize};
+use {DeviceUintRect, DeviceUintSize, FontKey, GlyphDimensions, GlyphKey};
+use {ImageData, ImageDescriptor, ImageKey, LayoutPoint, LayoutVector2D, LayoutSize, LayoutTransform};
+use {FontInstanceKey, NativeFontHandle, WorldPoint};
+#[cfg(feature = "webgl")]
+use {WebGLCommand, WebGLContextId};
 
 pub type TileSize = u16;
 
-/// The resource updates for a given transaction (they must be applied in the same frame).
 #[derive(Clone, Deserialize, Serialize)]
-pub struct ResourceUpdates {
-    pub updates: Vec<ResourceUpdate>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub enum ResourceUpdate {
-    AddImage(AddImage),
-    UpdateImage(UpdateImage),
-    DeleteImage(ImageKey),
-    AddFont(AddFont),
+pub enum ApiMsg {
+    AddRawFont(FontKey, Vec<u8>, u32),
+    AddNativeFont(FontKey, NativeFontHandle),
     DeleteFont(FontKey),
-    AddFontInstance(AddFontInstance),
-    DeleteFontInstance(FontInstanceKey),
-}
-
-impl ResourceUpdates {
-    pub fn new() -> Self {
-        ResourceUpdates {
-            updates: Vec::new(),
-        }
-    }
-
-    pub fn add_image(
-        &mut self,
-        key: ImageKey,
-        descriptor: ImageDescriptor,
-        data: ImageData,
-        tiling: Option<TileSize>,
-    ) {
-        self.updates.push(ResourceUpdate::AddImage(AddImage {
-            key,
-            descriptor,
-            data,
-            tiling,
-        }));
-    }
-
-    pub fn update_image(
-        &mut self,
-        key: ImageKey,
-        descriptor: ImageDescriptor,
-        data: ImageData,
-        dirty_rect: Option<DeviceUintRect>,
-    ) {
-        self.updates.push(ResourceUpdate::UpdateImage(UpdateImage {
-            key,
-            descriptor,
-            data,
-            dirty_rect,
-        }));
-    }
-
-    pub fn delete_image(&mut self, key: ImageKey) {
-        self.updates.push(ResourceUpdate::DeleteImage(key));
-    }
-
-    pub fn add_raw_font(&mut self, key: FontKey, bytes: Vec<u8>, index: u32) {
-        self.updates
-            .push(ResourceUpdate::AddFont(AddFont::Raw(key, bytes, index)));
-    }
-
-    pub fn add_native_font(&mut self, key: FontKey, native_handle: NativeFontHandle) {
-        self.updates
-            .push(ResourceUpdate::AddFont(AddFont::Native(key, native_handle)));
-    }
-
-    pub fn delete_font(&mut self, key: FontKey) {
-        self.updates.push(ResourceUpdate::DeleteFont(key));
-    }
-
-    pub fn add_font_instance(
-        &mut self,
-        key: FontInstanceKey,
-        font_key: FontKey,
-        glyph_size: Au,
-        options: Option<FontInstanceOptions>,
-        platform_options: Option<FontInstancePlatformOptions>,
-        variations: Vec<FontVariation>,
-    ) {
-        self.updates
-            .push(ResourceUpdate::AddFontInstance(AddFontInstance {
-                key,
-                font_key,
-                glyph_size,
-                options,
-                platform_options,
-                variations,
-            }));
-    }
-
-    pub fn delete_font_instance(&mut self, key: FontInstanceKey) {
-        self.updates.push(ResourceUpdate::DeleteFontInstance(key));
-    }
-
-    pub fn merge(&mut self, mut other: ResourceUpdates) {
-        self.updates.append(&mut other.updates);
-    }
-
-    pub fn clear(&mut self) {
-        self.updates.clear()
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct AddImage {
-    pub key: ImageKey,
-    pub descriptor: ImageDescriptor,
-    pub data: ImageData,
-    pub tiling: Option<TileSize>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct UpdateImage {
-    pub key: ImageKey,
-    pub descriptor: ImageDescriptor,
-    pub data: ImageData,
-    pub dirty_rect: Option<DeviceUintRect>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub enum AddFont {
-    Raw(FontKey, Vec<u8>, u32),
-    Native(FontKey, NativeFontHandle),
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct HitTestItem {
-    /// The pipeline that the display item that was hit belongs to.
-    pub pipeline: PipelineId,
-
-    /// The tag of the hit display item.
-    pub tag: ItemTag,
-
-    /// The hit point in the coordinate space of the "viewport" of the display item. The
-    /// viewport is the scroll node formed by the root reference frame of the display item's
-    /// pipeline.
-    pub point_in_viewport: LayoutPoint,
-
-    /// The coordinates of the original hit test point relative to the origin of this item.
-    /// This is useful for calculating things like text offsets in the client.
-    pub point_relative_to_item: LayoutPoint,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct HitTestResult {
-    pub items: Vec<HitTestItem>,
-}
-
-bitflags! {
-    #[derive(Deserialize, Serialize)]
-    pub struct HitTestFlags: u8 {
-        const FIND_ALL = 0b00000001;
-        const POINT_RELATIVE_TO_PIPELINE_VIEWPORT = 0b00000010;
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct AddFontInstance {
-    pub key: FontInstanceKey,
-    pub font_key: FontKey,
-    pub glyph_size: Au,
-    pub options: Option<FontInstanceOptions>,
-    pub platform_options: Option<FontInstancePlatformOptions>,
-    pub variations: Vec<FontVariation>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub enum DocumentMsg {
-    HitTest(Option<PipelineId>, WorldPoint, HitTestFlags, MsgSender<HitTestResult>),
-    SetDisplayList {
-        list_descriptor: BuiltDisplayListDescriptor,
-        epoch: Epoch,
-        pipeline_id: PipelineId,
-        background: Option<ColorF>,
-        viewport_size: LayoutSize,
-        content_size: LayoutSize,
-        preserve_frame_state: bool,
-        resources: ResourceUpdates,
-    },
-    UpdatePipelineResources {
-        resources: ResourceUpdates,
-        pipeline_id: PipelineId,
-        epoch: Epoch,
-    },
+    /// Gets the glyph dimensions
+    GetGlyphDimensions(FontInstanceKey, Vec<GlyphKey>, MsgSender<Vec<Option<GlyphDimensions>>>),
+    /// Gets the glyph indices from a string
+    GetGlyphIndices(FontKey, String, MsgSender<Vec<Option<u32>>>),
+    /// Adds an image from the resource cache.
+    AddImage(ImageKey, ImageDescriptor, ImageData, Option<TileSize>),
+    /// Updates the the resource cache with the new image data.
+    UpdateImage(ImageKey, ImageDescriptor, ImageData, Option<DeviceUintRect>),
+    /// Drops an image from the resource cache.
+    DeleteImage(ImageKey),
+    CloneApi(MsgSender<IdNamespace>),
+    /// Supplies a new frame to WebRender.
+    ///
+    /// After receiving this message, WebRender will read the display list from the payload channel.
+    // TODO: We should consider using named members to avoid confusion.
+    SetDisplayList(Option<ColorF>,
+                   Epoch,
+                   PipelineId,
+                   LayoutSize, // viewport_size
+                   LayoutSize, // content size
+                   BuiltDisplayListDescriptor,
+                   bool),
     SetPageZoom(ZoomFactor),
     SetPinchZoom(ZoomFactor),
     SetPan(DeviceIntPoint),
     SetRootPipeline(PipelineId),
-    RemovePipeline(PipelineId),
-    EnableFrameOutput(PipelineId, bool),
-    SetWindowParameters {
-        window_size: DeviceUintSize,
-        inner_rect: DeviceUintRect,
-        device_pixel_ratio: f32,
-    },
+    SetWindowParameters(DeviceUintSize, DeviceUintRect),
     Scroll(ScrollLocation, WorldPoint, ScrollEventPhase),
     ScrollNodeWithId(LayoutPoint, ClipId, ScrollClamping),
     TickScrollingBounce,
+    TranslatePointToLayerSpace(WorldPoint, MsgSender<(LayoutPoint, PipelineId)>),
     GetScrollNodeState(MsgSender<Vec<ScrollLayerState>>),
+    RequestWebGLContext(DeviceIntSize, GLContextAttributes, MsgSender<Result<(WebGLContextId, GLLimits), String>>),
+    ResizeWebGLContext(WebGLContextId, DeviceIntSize),
+    WebGLCommand(WebGLContextId, WebGLCommand),
     GenerateFrame(Option<DynamicProperties>),
-}
-
-impl fmt::Debug for DocumentMsg {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(match *self {
-            DocumentMsg::SetDisplayList { .. } => "DocumentMsg::SetDisplayList",
-            DocumentMsg::UpdatePipelineResources { .. } => "DocumentMsg::UpdatePipelineResources",
-            DocumentMsg::HitTest(..) => "DocumentMsg::HitTest",
-            DocumentMsg::SetPageZoom(..) => "DocumentMsg::SetPageZoom",
-            DocumentMsg::SetPinchZoom(..) => "DocumentMsg::SetPinchZoom",
-            DocumentMsg::SetPan(..) => "DocumentMsg::SetPan",
-            DocumentMsg::SetRootPipeline(..) => "DocumentMsg::SetRootPipeline",
-            DocumentMsg::RemovePipeline(..) => "DocumentMsg::RemovePipeline",
-            DocumentMsg::SetWindowParameters { .. } => "DocumentMsg::SetWindowParameters",
-            DocumentMsg::Scroll(..) => "DocumentMsg::Scroll",
-            DocumentMsg::ScrollNodeWithId(..) => "DocumentMsg::ScrollNodeWithId",
-            DocumentMsg::TickScrollingBounce => "DocumentMsg::TickScrollingBounce",
-            DocumentMsg::GetScrollNodeState(..) => "DocumentMsg::GetScrollNodeState",
-            DocumentMsg::GenerateFrame(..) => "DocumentMsg::GenerateFrame",
-            DocumentMsg::EnableFrameOutput(..) => "DocumentMsg::EnableFrameOutput",
-        })
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum DebugCommand {
-    // Display the frame profiler on screen.
-    EnableProfiler(bool),
-    // Display all texture cache pages on screen.
-    EnableTextureCacheDebug(bool),
-    // Display intermediate render targets on screen.
-    EnableRenderTargetDebug(bool),
-    // Display alpha primitive rects.
-    EnableAlphaRectsDebug(bool),
-    // Fetch current documents and display lists.
-    FetchDocuments,
-    // Fetch current passes and batches.
-    FetchPasses,
-    // Fetch clip-scroll tree.
-    FetchClipScrollTree,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub enum ApiMsg {
-    /// Add/remove/update images and fonts.
-    UpdateResources(ResourceUpdates),
-    /// Gets the glyph dimensions
-    GetGlyphDimensions(
-        FontInstance,
-        Vec<GlyphKey>,
-        MsgSender<Vec<Option<GlyphDimensions>>>,
-    ),
-    /// Gets the glyph indices from a string
-    GetGlyphIndices(FontKey, String, MsgSender<Vec<Option<u32>>>),
-    /// Adds a new document namespace.
-    CloneApi(MsgSender<IdNamespace>),
-    /// Adds a new document with given initial size.
-    AddDocument(DocumentId, DeviceUintSize),
-    /// A message targeted at a particular document.
-    UpdateDocument(DocumentId, DocumentMsg),
-    /// Deletes an existing document.
-    DeleteDocument(DocumentId),
+    // WebVR commands that must be called in the WebGL render thread.
+    VRCompositorCommand(WebGLContextId, VRCompositorCommand),
     /// An opaque handle that must be passed to the render notifier. It is used by Gecko
     /// to forward gecko-specific messages to the render thread preserving the ordering
     /// within the other messages.
     ExternalEvent(ExternalEvent),
-    /// Removes all resources associated with a namespace.
+    /// Remove all resources associated with this namespace.
     ClearNamespace(IdNamespace),
-    /// Flush from the caches anything that isn't necessary, to free some memory.
-    MemoryPressure,
-    /// Change debugging options.
-    DebugCommand(DebugCommand),
     ShutDown,
 }
 
 impl fmt::Debug for ApiMsg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
-            ApiMsg::UpdateResources(..) => "ApiMsg::UpdateResources",
+            ApiMsg::AddRawFont(..) => "ApiMsg::AddRawFont",
+            ApiMsg::AddNativeFont(..) => "ApiMsg::AddNativeFont",
+            ApiMsg::DeleteFont(..) => "ApiMsg::DeleteFont",
             ApiMsg::GetGlyphDimensions(..) => "ApiMsg::GetGlyphDimensions",
             ApiMsg::GetGlyphIndices(..) => "ApiMsg::GetGlyphIndices",
+            ApiMsg::AddImage(..) => "ApiMsg::AddImage",
+            ApiMsg::UpdateImage(..) => "ApiMsg::UpdateImage",
+            ApiMsg::DeleteImage(..) => "ApiMsg::DeleteImage",
             ApiMsg::CloneApi(..) => "ApiMsg::CloneApi",
-            ApiMsg::AddDocument(..) => "ApiMsg::AddDocument",
-            ApiMsg::UpdateDocument(..) => "ApiMsg::UpdateDocument",
-            ApiMsg::DeleteDocument(..) => "ApiMsg::DeleteDocument",
+            ApiMsg::SetDisplayList(..) => "ApiMsg::SetDisplayList",
+            ApiMsg::SetRootPipeline(..) => "ApiMsg::SetRootPipeline",
+            ApiMsg::Scroll(..) => "ApiMsg::Scroll",
+            ApiMsg::ScrollNodeWithId(..) => "ApiMsg::ScrollNodeWithId",
+            ApiMsg::TickScrollingBounce => "ApiMsg::TickScrollingBounce",
+            ApiMsg::TranslatePointToLayerSpace(..) => "ApiMsg::TranslatePointToLayerSpace",
+            ApiMsg::GetScrollNodeState(..) => "ApiMsg::GetScrollNodeState",
+            ApiMsg::RequestWebGLContext(..) => "ApiMsg::RequestWebGLContext",
+            ApiMsg::ResizeWebGLContext(..) => "ApiMsg::ResizeWebGLContext",
+            ApiMsg::WebGLCommand(..) => "ApiMsg::WebGLCommand",
+            ApiMsg::GenerateFrame(..) => "ApiMsg::GenerateFrame",
+            ApiMsg::VRCompositorCommand(..) => "ApiMsg::VRCompositorCommand",
             ApiMsg::ExternalEvent(..) => "ApiMsg::ExternalEvent",
-            ApiMsg::ClearNamespace(..) => "ApiMsg::ClearNamespace",
-            ApiMsg::MemoryPressure => "ApiMsg::MemoryPressure",
-            ApiMsg::DebugCommand(..) => "ApiMsg::DebugCommand",
             ApiMsg::ShutDown => "ApiMsg::ShutDown",
+            ApiMsg::SetPageZoom(..) => "ApiMsg::SetPageZoom",
+            ApiMsg::SetPinchZoom(..) => "ApiMsg::SetPinchZoom",
+            ApiMsg::SetPan(..) => "ApiMsg::SetPan",
+            ApiMsg::SetWindowParameters(..) => "ApiMsg::SetWindowParameters",
+            ApiMsg::ClearNamespace(..) => "ApiMsg::ClearNamespace",
         })
     }
 }
@@ -315,32 +108,31 @@ impl fmt::Debug for ApiMsg {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct Epoch(pub u32);
 
+#[cfg(not(feature = "webgl"))]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+pub struct WebGLContextId(pub usize);
+
+#[cfg(not(feature = "webgl"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GLContextAttributes([u8; 0]);
+
+#[cfg(not(feature = "webgl"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GLLimits([u8; 0]);
+
+#[cfg(not(feature = "webgl"))]
+#[derive(Clone, Deserialize, Serialize)]
+pub enum WebGLCommand {
+    Flush,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct PipelineId(pub u32, pub u32);
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, Deserialize, Serialize)]
 pub struct IdNamespace(pub u32);
-
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct DocumentId(pub IdNamespace, pub u32);
-
-/// This type carries no valuable semantics for WR. However, it reflects the fact that
-/// clients (Servo) may generate pipelines by different semi-independent sources.
-/// These pipelines still belong to the same `IdNamespace` and the same `DocumentId`.
-/// Having this extra Id field enables them to generate `PipelineId` without collision.
-pub type PipelineSourceId = u32;
-
-/// From the point of view of WR, `PipelineId` is completely opaque and generic as long as
-/// it's clonable, serializable, comparable, and hashable.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct PipelineId(pub PipelineSourceId, pub u32);
-
-impl PipelineId {
-    pub fn dummy() -> Self {
-        PipelineId(0, 0)
-    }
-}
-
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -356,13 +148,9 @@ pub struct ExternalEvent {
 unsafe impl Send for ExternalEvent {}
 
 impl ExternalEvent {
-    pub fn from_raw(raw: usize) -> Self {
-        ExternalEvent { raw: raw }
-    }
+    pub fn from_raw(raw: usize) -> Self { ExternalEvent { raw: raw } }
     /// Consumes self to make it obvious that the event should be forwarded only once.
-    pub fn unwrap(self) -> usize {
-        self.raw
-    }
+    pub fn unwrap(self) -> usize { self.raw }
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -378,66 +166,62 @@ pub struct RenderApiSender {
 }
 
 impl RenderApiSender {
-    pub fn new(api_sender: MsgSender<ApiMsg>, payload_sender: PayloadSender) -> Self {
+    pub fn new(api_sender: MsgSender<ApiMsg>,
+               payload_sender: PayloadSender)
+               -> RenderApiSender {
         RenderApiSender {
             api_sender,
             payload_sender,
         }
     }
 
-    /// Creates a new resource API object with a dedicated namespace.
     pub fn create_api(&self) -> RenderApi {
+        let RenderApiSender {
+            ref api_sender,
+            ref payload_sender
+        } = *self;
         let (sync_tx, sync_rx) = channel::msg_channel().unwrap();
         let msg = ApiMsg::CloneApi(sync_tx);
-        self.api_sender.send(msg).unwrap();
+        api_sender.send(msg).unwrap();
         RenderApi {
-            api_sender: self.api_sender.clone(),
-            payload_sender: self.payload_sender.clone(),
-            namespace_id: sync_rx.recv().unwrap(),
+            api_sender: api_sender.clone(),
+            payload_sender: payload_sender.clone(),
+            id_namespace: sync_rx.recv().unwrap(),
             next_id: Cell::new(ResourceId(0)),
         }
     }
 }
 
 pub struct RenderApi {
-    api_sender: MsgSender<ApiMsg>,
-    payload_sender: PayloadSender,
-    namespace_id: IdNamespace,
-    next_id: Cell<ResourceId>,
+    pub api_sender: MsgSender<ApiMsg>,
+    pub payload_sender: PayloadSender,
+    pub id_namespace: IdNamespace,
+    pub next_id: Cell<ResourceId>,
 }
 
 impl RenderApi {
-    pub fn get_namespace_id(&self) -> IdNamespace {
-        self.namespace_id
-    }
-
     pub fn clone_sender(&self) -> RenderApiSender {
         RenderApiSender::new(self.api_sender.clone(), self.payload_sender.clone())
     }
 
-    pub fn add_document(&self, initial_size: DeviceUintSize) -> DocumentId {
-        let new_id = self.next_unique_id();
-        let document_id = DocumentId(self.namespace_id, new_id);
-
-        let msg = ApiMsg::AddDocument(document_id, initial_size);
-        self.api_sender.send(msg).unwrap();
-
-        document_id
-    }
-
-    pub fn delete_document(&self, document_id: DocumentId) {
-        let msg = ApiMsg::DeleteDocument(document_id);
-        self.api_sender.send(msg).unwrap();
-    }
-
     pub fn generate_font_key(&self) -> FontKey {
         let new_id = self.next_unique_id();
-        FontKey::new(self.namespace_id, new_id)
+        FontKey::new(new_id.0, new_id.1)
     }
 
-    pub fn generate_font_instance_key(&self) -> FontInstanceKey {
-        let new_id = self.next_unique_id();
-        FontInstanceKey::new(self.namespace_id, new_id)
+    pub fn add_raw_font(&self, key: FontKey, bytes: Vec<u8>, index: u32) {
+        let msg = ApiMsg::AddRawFont(key, bytes, index);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn add_native_font(&self, key: FontKey, native_font_handle: NativeFontHandle) {
+        let msg = ApiMsg::AddNativeFont(key, native_font_handle);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn delete_font(&self, key: FontKey) {
+        let msg = ApiMsg::DeleteFont(key);
+        self.api_sender.send(msg).unwrap();
     }
 
     /// Gets the dimensions for the supplied glyph keys
@@ -445,11 +229,10 @@ impl RenderApi {
     /// Note: Internally, the internal texture cache doesn't store
     /// 'empty' textures (height or width = 0)
     /// This means that glyph dimensions e.g. for spaces (' ') will mostly be None.
-    pub fn get_glyph_dimensions(
-        &self,
-        font: FontInstance,
-        glyph_keys: Vec<GlyphKey>,
-    ) -> Vec<Option<GlyphDimensions>> {
+    pub fn get_glyph_dimensions(&self,
+                                font: FontInstanceKey,
+                                glyph_keys: Vec<GlyphKey>)
+                                -> Vec<Option<GlyphDimensions>> {
         let (tx, rx) = channel::msg_channel().unwrap();
         let msg = ApiMsg::GetGlyphDimensions(font, glyph_keys, tx);
         self.api_sender.send(msg).unwrap();
@@ -458,7 +241,9 @@ impl RenderApi {
 
     /// Gets the glyph indices for the supplied string. These
     /// can be used to construct GlyphKeys.
-    pub fn get_glyph_indices(&self, font_key: FontKey, text: &str) -> Vec<Option<u32>> {
+    pub fn get_glyph_indices(&self,
+                             font_key: FontKey,
+                             text: &str) -> Vec<Option<u32>> {
         let (tx, rx) = channel::msg_channel().unwrap();
         let msg = ApiMsg::GetGlyphIndices(font_key, text.to_string(), tx);
         self.api_sender.send(msg).unwrap();
@@ -468,44 +253,191 @@ impl RenderApi {
     /// Creates an `ImageKey`.
     pub fn generate_image_key(&self) -> ImageKey {
         let new_id = self.next_unique_id();
-        ImageKey::new(self.namespace_id, new_id)
+        ImageKey::new(new_id.0, new_id.1)
     }
 
-    /// Add/remove/update resources such as images and fonts.
-    pub fn update_resources(&self, resources: ResourceUpdates) {
-        if resources.updates.is_empty() {
-            return;
-        }
-        self.api_sender
-            .send(ApiMsg::UpdateResources(resources))
-            .unwrap();
+    /// Adds an image identified by the `ImageKey`.
+    pub fn add_image(&self,
+                     key: ImageKey,
+                     descriptor: ImageDescriptor,
+                     data: ImageData,
+                     tiling: Option<TileSize>) {
+        let msg = ApiMsg::AddImage(key, descriptor, data, tiling);
+        self.api_sender.send(msg).unwrap();
     }
 
-    /// Add/remove/update resources such as images and fonts.
+    /// Updates a specific image.
     ///
-    /// This is similar to update_resources with the addition that it allows updating
-    /// a pipeline's epoch.
-    pub fn update_pipeline_resources(
-        &self,
-        resources: ResourceUpdates,
-        document_id: DocumentId,
-        pipeline_id: PipelineId,
-        epoch: Epoch,
-    ) {
-        self.send(document_id, DocumentMsg::UpdatePipelineResources {
-            resources,
-            pipeline_id,
+    /// Currently doesn't support changing dimensions or format by updating.
+    // TODO: Support changing dimensions (and format) during image update?
+    pub fn update_image(&self,
+                        key: ImageKey,
+                        descriptor: ImageDescriptor,
+                        data: ImageData,
+                        dirty_rect: Option<DeviceUintRect>) {
+        let msg = ApiMsg::UpdateImage(key, descriptor, data, dirty_rect);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    /// Deletes the specific image.
+    pub fn delete_image(&self, key: ImageKey) {
+        let msg = ApiMsg::DeleteImage(key);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    /// Sets the root pipeline.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use webrender_api::{PipelineId, RenderApiSender};
+    /// # fn example(sender: RenderApiSender) {
+    /// let api = sender.create_api();
+    /// // ...
+    /// let pipeline_id = PipelineId(0, 0);
+    /// api.set_root_pipeline(pipeline_id);
+    /// # }
+    /// ```
+    pub fn set_root_pipeline(&self, pipeline_id: PipelineId) {
+        let msg = ApiMsg::SetRootPipeline(pipeline_id);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    /// Supplies a new frame to WebRender.
+    ///
+    /// Non-blocking, it notifies a worker process which processes the display list.
+    /// When it's done and a RenderNotifier has been set in `webrender::renderer::Renderer`,
+    /// [new_frame_ready()][notifier] gets called.
+    ///
+    /// Note: Scrolling doesn't require an own Frame.
+    ///
+    /// Arguments:
+    ///
+    /// * `background_color`: The background color of this pipeline.
+    /// * `epoch`: The unique Frame ID, monotonically increasing.
+    /// * `viewport_size`: The size of the viewport for this frame.
+    /// * `pipeline_id`: The ID of the pipeline that is supplying this display list.
+    /// * `content_size`: The total screen space size of this display list's display items.
+    /// * `display_list`: The root Display list used in this frame.
+    /// * `preserve_frame_state`: If a previous frame exists which matches this pipeline
+    ///                           id, this setting determines if frame state (such as scrolling
+    ///                           position) should be preserved for this new display list.
+    ///
+    /// [notifier]: trait.RenderNotifier.html#tymethod.new_frame_ready
+    pub fn set_display_list(&self,
+                            background_color: Option<ColorF>,
+                            epoch: Epoch,
+                            viewport_size: LayoutSize,
+                            (pipeline_id, content_size, display_list): (PipelineId, LayoutSize, BuiltDisplayList),
+                            preserve_frame_state: bool) {
+        let (display_list_data, display_list_descriptor) = display_list.into_data();
+        let msg = ApiMsg::SetDisplayList(background_color,
+                                         epoch,
+                                         pipeline_id,
+                                         viewport_size,
+                                         content_size,
+                                         display_list_descriptor,
+                                         preserve_frame_state);
+        self.api_sender.send(msg).unwrap();
+
+        self.payload_sender.send_payload(Payload {
             epoch,
-        });
+            pipeline_id,
+            display_list_data,
+        }).unwrap();
+    }
+
+    /// Scrolls the scrolling layer under the `cursor`
+    ///
+    /// WebRender looks for the layer closest to the user
+    /// which has `ScrollPolicy::Scrollable` set.
+    pub fn scroll(&self, scroll_location: ScrollLocation, cursor: WorldPoint, phase: ScrollEventPhase) {
+        let msg = ApiMsg::Scroll(scroll_location, cursor, phase);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn scroll_node_with_id(&self, origin: LayoutPoint, id: ClipId, clamp: ScrollClamping) {
+        let msg = ApiMsg::ScrollNodeWithId(origin, id, clamp);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn set_page_zoom(&self, page_zoom: ZoomFactor) {
+        let msg = ApiMsg::SetPageZoom(page_zoom);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn set_pinch_zoom(&self, pinch_zoom: ZoomFactor) {
+        let msg = ApiMsg::SetPinchZoom(pinch_zoom);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn set_pan(&self, pan: DeviceIntPoint) {
+        let msg = ApiMsg::SetPan(pan);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn set_window_parameters(&self,
+                                 window_size: DeviceUintSize,
+                                 inner_rect: DeviceUintRect) {
+        let msg = ApiMsg::SetWindowParameters(window_size, inner_rect);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn tick_scrolling_bounce_animations(&self) {
+        let msg = ApiMsg::TickScrollingBounce;
+        self.api_sender.send(msg).unwrap();
+    }
+
+    /// Translates a point from viewport coordinates to layer space
+    pub fn translate_point_to_layer_space(&self, point: &WorldPoint)
+                                          -> (LayoutPoint, PipelineId) {
+        let (tx, rx) = channel::msg_channel().unwrap();
+        let msg = ApiMsg::TranslatePointToLayerSpace(*point, tx);
+        self.api_sender.send(msg).unwrap();
+        rx.recv().unwrap()
+    }
+
+    pub fn get_scroll_node_state(&self) -> Vec<ScrollLayerState> {
+        let (tx, rx) = channel::msg_channel().unwrap();
+        let msg = ApiMsg::GetScrollNodeState(tx);
+        self.api_sender.send(msg).unwrap();
+        rx.recv().unwrap()
+    }
+
+    pub fn request_webgl_context(&self, size: &DeviceIntSize, attributes: GLContextAttributes)
+                                 -> Result<(WebGLContextId, GLLimits), String> {
+        let (tx, rx) = channel::msg_channel().unwrap();
+        let msg = ApiMsg::RequestWebGLContext(*size, attributes, tx);
+        self.api_sender.send(msg).unwrap();
+        rx.recv().unwrap()
+    }
+
+    pub fn resize_webgl_context(&self, context_id: WebGLContextId, size: &DeviceIntSize) {
+        let msg = ApiMsg::ResizeWebGLContext(context_id, *size);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn send_webgl_command(&self, context_id: WebGLContextId, command: WebGLCommand) {
+        let msg = ApiMsg::WebGLCommand(context_id, command);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    /// Generate a new frame. Optionally, supply a list of animated
+    /// property bindings that should be used to resolve bindings
+    /// in the current display list.
+    pub fn generate_frame(&self, property_bindings: Option<DynamicProperties>) {
+        let msg = ApiMsg::GenerateFrame(property_bindings);
+        self.api_sender.send(msg).unwrap();
+    }
+
+    pub fn send_vr_compositor_command(&self, context_id: WebGLContextId, command: VRCompositorCommand) {
+        let msg = ApiMsg::VRCompositorCommand(context_id, command);
+        self.api_sender.send(msg).unwrap();
     }
 
     pub fn send_external_event(&self, evt: ExternalEvent) {
         let msg = ApiMsg::ExternalEvent(evt);
         self.api_sender.send(msg).unwrap();
-    }
-
-    pub fn notify_memory_pressure(&self) {
-        self.api_sender.send(ApiMsg::MemoryPressure).unwrap();
     }
 
     pub fn shut_down(&self) {
@@ -518,237 +450,24 @@ impl RenderApi {
         let new_id = self.next_unique_id();
         PropertyBindingKey {
             id: PropertyBindingId {
-                namespace: self.namespace_id,
-                uid: new_id,
+                namespace: new_id.0,
+                uid: new_id.1,
             },
             _phantom: PhantomData,
         }
     }
 
     #[inline]
-    fn next_unique_id(&self) -> u32 {
+    fn next_unique_id(&self) -> (IdNamespace, u32) {
         let ResourceId(id) = self.next_id.get();
         self.next_id.set(ResourceId(id + 1));
-        id
-    }
-
-    // For use in Wrench only
-    #[doc(hidden)]
-    pub fn send_message(&self, msg: ApiMsg) {
-        self.api_sender.send(msg).unwrap();
-    }
-
-    // For use in Wrench only
-    #[doc(hidden)]
-    pub fn send_payload(&self, data: &[u8]) {
-        self.payload_sender
-            .send_payload(Payload::from_data(data))
-            .unwrap();
-    }
-
-    /// A helper method to send document messages.
-    fn send(&self, document_id: DocumentId, msg: DocumentMsg) {
-        // This assertion fails on Servo use-cases, because it creates different
-        // `RenderApi` instances for layout and compositor.
-        //assert_eq!(document_id.0, self.namespace_id);
-        self.api_sender
-            .send(ApiMsg::UpdateDocument(document_id, msg))
-            .unwrap()
-    }
-
-    /// Sets the root pipeline.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use webrender_api::{DeviceUintSize, PipelineId, RenderApiSender};
-    /// # fn example(sender: RenderApiSender) {
-    /// let api = sender.create_api();
-    /// let document_id = api.add_document(DeviceUintSize::zero());
-    /// let pipeline_id = PipelineId(0, 0);
-    /// api.set_root_pipeline(document_id, pipeline_id);
-    /// # }
-    /// ```
-    pub fn set_root_pipeline(&self, document_id: DocumentId, pipeline_id: PipelineId) {
-        self.send(document_id, DocumentMsg::SetRootPipeline(pipeline_id));
-    }
-
-    /// Removes data associated with a pipeline from the internal data structures.
-    /// If the specified `pipeline_id` is for the root pipeline, the root pipeline
-    /// is reset back to `None`.
-    pub fn remove_pipeline(&self, document_id: DocumentId, pipeline_id: PipelineId) {
-        self.send(document_id, DocumentMsg::RemovePipeline(pipeline_id));
-    }
-
-    /// Supplies a new frame to WebRender.
-    ///
-    /// Non-blocking, it notifies a worker process which processes the display list.
-    /// When it's done and a RenderNotifier has been set in `webrender::Renderer`,
-    /// [new_frame_ready()][notifier] gets called.
-    ///
-    /// Note: Scrolling doesn't require an own Frame.
-    ///
-    /// Arguments:
-    ///
-    /// * `document_id`: Target Document ID.
-    /// * `epoch`: The unique Frame ID, monotonically increasing.
-    /// * `background`: The background color of this pipeline.
-    /// * `viewport_size`: The size of the viewport for this frame.
-    /// * `pipeline_id`: The ID of the pipeline that is supplying this display list.
-    /// * `content_size`: The total screen space size of this display list's display items.
-    /// * `display_list`: The root Display list used in this frame.
-    /// * `preserve_frame_state`: If a previous frame exists which matches this pipeline
-    ///                           id, this setting determines if frame state (such as scrolling
-    ///                           position) should be preserved for this new display list.
-    /// * `resources`: A set of resource updates that must be applied at the same time as the
-    ///                display list.
-    ///
-    /// [notifier]: trait.RenderNotifier.html#tymethod.new_frame_ready
-    pub fn set_display_list(
-        &self,
-        document_id: DocumentId,
-        epoch: Epoch,
-        background: Option<ColorF>,
-        viewport_size: LayoutSize,
-        (pipeline_id, content_size, display_list): (PipelineId, LayoutSize, BuiltDisplayList),
-        preserve_frame_state: bool,
-        resources: ResourceUpdates,
-    ) {
-        let (display_list_data, list_descriptor) = display_list.into_data();
-        self.send(
-            document_id,
-            DocumentMsg::SetDisplayList {
-                epoch,
-                pipeline_id,
-                background,
-                viewport_size,
-                content_size,
-                list_descriptor,
-                preserve_frame_state,
-                resources,
-            },
-        );
-
-        self.payload_sender
-            .send_payload(Payload {
-                epoch,
-                pipeline_id,
-                display_list_data,
-            })
-            .unwrap();
-    }
-
-    /// Scrolls the scrolling layer under the `cursor`
-    ///
-    /// WebRender looks for the layer closest to the user
-    /// which has `ScrollPolicy::Scrollable` set.
-    pub fn scroll(
-        &self,
-        document_id: DocumentId,
-        scroll_location: ScrollLocation,
-        cursor: WorldPoint,
-        phase: ScrollEventPhase,
-    ) {
-        self.send(
-            document_id,
-            DocumentMsg::Scroll(scroll_location, cursor, phase),
-        );
-    }
-
-    pub fn scroll_node_with_id(
-        &self,
-        document_id: DocumentId,
-        origin: LayoutPoint,
-        id: ClipId,
-        clamp: ScrollClamping,
-    ) {
-        self.send(
-            document_id,
-            DocumentMsg::ScrollNodeWithId(origin, id, clamp),
-        );
-    }
-
-    /// Does a hit test as the given point
-    pub fn hit_test(&self,
-                    document_id: DocumentId,
-                    pipeline_id: Option<PipelineId>,
-                    point: WorldPoint,
-                    flags: HitTestFlags)
-                    -> HitTestResult {
-        let (tx, rx) = channel::msg_channel().unwrap();
-        self.send(document_id, DocumentMsg::HitTest(pipeline_id, point, flags, tx));
-        rx.recv().unwrap()
-    }
-
-    pub fn set_page_zoom(&self, document_id: DocumentId, page_zoom: ZoomFactor) {
-        self.send(document_id, DocumentMsg::SetPageZoom(page_zoom));
-    }
-
-    pub fn set_pinch_zoom(&self, document_id: DocumentId, pinch_zoom: ZoomFactor) {
-        self.send(document_id, DocumentMsg::SetPinchZoom(pinch_zoom));
-    }
-
-    pub fn set_pan(&self, document_id: DocumentId, pan: DeviceIntPoint) {
-        self.send(document_id, DocumentMsg::SetPan(pan));
-    }
-
-    pub fn set_window_parameters(
-        &self,
-        document_id: DocumentId,
-        window_size: DeviceUintSize,
-        inner_rect: DeviceUintRect,
-        device_pixel_ratio: f32,
-    ) {
-        self.send(
-            document_id,
-            DocumentMsg::SetWindowParameters {
-                window_size,
-                inner_rect,
-                device_pixel_ratio,
-            },
-        );
-    }
-
-    pub fn tick_scrolling_bounce_animations(&self, document_id: DocumentId) {
-        self.send(document_id, DocumentMsg::TickScrollingBounce);
-    }
-
-    pub fn get_scroll_node_state(&self, document_id: DocumentId) -> Vec<ScrollLayerState> {
-        let (tx, rx) = channel::msg_channel().unwrap();
-        self.send(document_id, DocumentMsg::GetScrollNodeState(tx));
-        rx.recv().unwrap()
-    }
-
-    /// Enable copying of the output of this pipeline id to
-    /// an external texture for callers to consume.
-    pub fn enable_frame_output(
-        &self,
-        document_id: DocumentId,
-        pipeline_id: PipelineId,
-        enable: bool,
-    ) {
-        self.send(
-            document_id,
-            DocumentMsg::EnableFrameOutput(pipeline_id, enable),
-        );
-    }
-
-    /// Generate a new frame. Optionally, supply a list of animated
-    /// property bindings that should be used to resolve bindings
-    /// in the current display list.
-    pub fn generate_frame(
-        &self,
-        document_id: DocumentId,
-        property_bindings: Option<DynamicProperties>,
-    ) {
-        self.send(document_id, DocumentMsg::GenerateFrame(property_bindings));
+        (self.id_namespace, id)
     }
 }
 
 impl Drop for RenderApi {
     fn drop(&mut self) {
-        let msg = ApiMsg::ClearNamespace(self.namespace_id);
-        let _ = self.api_sender.send(msg);
+        let _ = self.api_sender.send(ApiMsg::ClearNamespace(self.id_namespace));
     }
 }
 
@@ -776,7 +495,7 @@ pub enum ScrollLocation {
     /// Scroll to very top of element.
     Start,
     /// Scroll to very bottom of element.
-    End,
+    End
 }
 
 /// Represents a zoom factor.
@@ -804,7 +523,7 @@ pub struct PropertyBindingId {
 impl PropertyBindingId {
     pub fn new(value: u64) -> Self {
         PropertyBindingId {
-            namespace: IdNamespace((value >> 32) as u32),
+            namespace: IdNamespace((value>>32) as u32),
             uid: value as u32,
         }
     }
@@ -821,7 +540,10 @@ pub struct PropertyBindingKey<T> {
 /// Construct a property value from a given key and value.
 impl<T: Copy> PropertyBindingKey<T> {
     pub fn with(&self, value: T) -> PropertyValue<T> {
-        PropertyValue { key: *self, value }
+        PropertyValue {
+            key: *self,
+            value,
+        }
     }
 }
 
@@ -872,11 +594,31 @@ pub struct DynamicProperties {
     pub floats: Vec<PropertyValue<f32>>,
 }
 
+pub type VRCompositorId = u64;
+
+// WebVR commands that must be called in the WebGL render thread.
+#[derive(Clone, Deserialize, Serialize)]
+pub enum VRCompositorCommand {
+    Create(VRCompositorId),
+    SyncPoses(VRCompositorId, f64, f64, MsgSender<Result<Vec<u8>,()>>),
+    SubmitFrame(VRCompositorId, [f32; 4], [f32; 4]),
+    Release(VRCompositorId)
+}
+
+// Trait object that handles WebVR commands.
+// Receives the texture id and size associated to the WebGLContext.
+pub trait VRCompositorHandler: Send {
+    fn handle(&mut self, command: VRCompositorCommand, texture: Option<(u32, DeviceIntSize)>);
+}
+
 pub trait RenderNotifier: Send {
     fn new_frame_ready(&mut self);
     fn new_scroll_frame_ready(&mut self, composite_needed: bool);
-    fn external_event(&mut self, _evt: ExternalEvent) {
-        unimplemented!()
-    }
+    fn external_event(&mut self, _evt: ExternalEvent) { unimplemented!() }
     fn shut_down(&mut self) {}
+}
+
+/// Trait to allow dispatching functions to a specific thread or event loop.
+pub trait RenderDispatcher: Send {
+    fn dispatch(&self, Box<Fn() + Send>);
 }

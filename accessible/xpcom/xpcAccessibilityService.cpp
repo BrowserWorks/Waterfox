@@ -77,18 +77,22 @@ xpcAccessibilityService::Release(void)
   // xpcAccessibilityService and we can attempt to shut down acceessiblity
   // service.
   if (count == 1 && !mShutdownTimer) {
-    NS_NewTimerWithFuncCallback(getter_AddRefs(mShutdownTimer),
-                                ShutdownCallback,
-                                this,
-                                100,
-                                nsITimer::TYPE_ONE_SHOT,
-                                "xpcAccessibilityService::Release");
+    mShutdownTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    if (mShutdownTimer) {
+      mShutdownTimer->InitWithNamedFuncCallback(
+        ShutdownCallback,
+        this,
+        100,
+        nsITimer::TYPE_ONE_SHOT,
+        "xpcAccessibilityService::Release");
+    }
   }
 
   return count;
 }
 
-NS_IMPL_QUERY_INTERFACE(xpcAccessibilityService, nsIAccessibilityService)
+NS_IMPL_QUERY_INTERFACE(xpcAccessibilityService, nsIAccessibilityService,
+                                                 nsIAccessibleRetrieval)
 
 NS_IMETHODIMP
 xpcAccessibilityService::GetApplicationAccessible(nsIAccessible** aAccessibleApplication)

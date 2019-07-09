@@ -6,9 +6,8 @@
 "use strict";
 
 const {Cu} = require("chrome");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 
 
 function ScratchpadPanel(iframeWindow, toolbox) {
@@ -20,7 +19,7 @@ function ScratchpadPanel(iframeWindow, toolbox) {
   Scratchpad.target = this.target;
   Scratchpad.hideMenu();
 
-  let deferred = defer();
+  let deferred = promise.defer();
   this._readyObserver = deferred.promise;
   Scratchpad.addObserver({
     onReady: function () {

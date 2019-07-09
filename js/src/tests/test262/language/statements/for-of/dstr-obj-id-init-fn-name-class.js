@@ -43,12 +43,10 @@ for ({ xCls = class x {}, cls = class {}, xCls2 = class { static name() {} } } o
   assert.notSameValue(xCls.name, 'xCls');
   assert.notSameValue(xCls2.name, 'xCls2');
 
-  verifyProperty(cls, 'name', {
-    enumerable: false,
-    writable: false,
-    configurable: true,
-    value: 'cls'
-  });
+  assert.sameValue(cls.name, 'cls');
+  verifyNotEnumerable(cls, 'name');
+  verifyNotWritable(cls, 'name');
+  verifyConfigurable(cls, 'name');
   counter += 1;
 }
 

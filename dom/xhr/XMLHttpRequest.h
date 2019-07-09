@@ -77,12 +77,32 @@ public:
   GetUpload(ErrorResult& aRv) = 0;
 
   virtual void
-  Send(JSContext* aCx,
-       const Nullable<DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>& aData,
+  Send(JSContext* aCx, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, const ArrayBuffer& aArrayBuffer, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, const ArrayBufferView& aArrayBufferView,
        ErrorResult& aRv) = 0;
 
   virtual void
-  SendInputStream(nsIInputStream* aInputStream, ErrorResult& aRv) = 0;
+  Send(JSContext* aCx, Blob& aBlob, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, URLSearchParams& aURLSearchParams, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, nsIDocument& aDoc, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, const nsAString& aString, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, FormData& aFormData, ErrorResult& aRv) = 0;
+
+  virtual void
+  Send(JSContext* aCx, nsIInputStream* aStream, ErrorResult& aRv) = 0;
 
   virtual void
   Abort(ErrorResult& aRv) = 0;

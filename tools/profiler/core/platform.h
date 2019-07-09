@@ -41,6 +41,7 @@
 #include "mozilla/Unused.h"
 #include "PlatformMacros.h"
 #include <vector>
+#include "StackTop.h"
 
 // We need a definition of gettid(), but glibc doesn't provide a
 // wrapper for it.
@@ -97,7 +98,13 @@ typedef uint8_t* Address;
 
 class Thread {
 public:
-  static int GetCurrentId();
+#if defined(GP_OS_windows)
+  typedef DWORD tid_t;
+#else
+  typedef ::pid_t tid_t;
+#endif
+
+  static tid_t GetCurrentId();
 };
 
 // ----------------------------------------------------------------------------

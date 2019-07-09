@@ -7,6 +7,7 @@
 
 include protocol PHttpChannel;
 include protocol PFTPChannel;
+include protocol PRtspChannel;
 include protocol PChildToParentStream;
 include BlobTypes;
 include URIParams;
@@ -47,11 +48,11 @@ struct LoadInfoArgs
   bool                        upgradeInsecureRequests;
   bool                        verifySignedContent;
   bool                        enforceSRI;
+  bool                        allowDocumentToBeAgnosticToCSP;
   bool                        forceInheritPrincipalDropped;
   uint64_t                    innerWindowID;
   uint64_t                    outerWindowID;
   uint64_t                    parentOuterWindowID;
-  uint64_t                    topOuterWindowID;
   uint64_t                    frameOuterWindowID;
   bool                        enforceSecurity;
   bool                        initialSecurityCheckDone;
@@ -59,14 +60,6 @@ struct LoadInfoArgs
   OriginAttributes            originAttributes;
   RedirectHistoryEntryInfo[]  redirectChainIncludingInternalRedirects;
   RedirectHistoryEntryInfo[]  redirectChain;
-
-  /**
-   * Ancestor data for use with the WebRequest API.
-   * See nsILoadInfo.idl for details.
-   */
-  PrincipalInfo[]             ancestorPrincipals;
-  uint64_t[]                  ancestorOuterWindowIDs;
-
   nsCString[]                 corsUnsafeHeaders;
   bool                        forcePreflight;
   bool                        isPreflight;
@@ -136,7 +129,6 @@ struct HttpChannelOpenArgs
   bool                        allowSpdy;
   bool                        allowAltSvc;
   bool                        beConservative;
-  uint32_t                    tlsFlags;
   OptionalLoadInfoArgs        loadInfo;
   OptionalHttpResponseHead    synthesizedResponseHead;
   nsCString                   synthesizedSecurityInfoSerialization;
@@ -158,7 +150,6 @@ struct HttpChannelOpenArgs
   TimeStamp                   dispatchFetchEventEnd;
   TimeStamp                   handleFetchEventStart;
   TimeStamp                   handleFetchEventEnd;
-  bool                        forceMainDocumentChannel;
 };
 
 struct HttpChannelConnectArgs
@@ -209,18 +200,14 @@ union ChannelDiverterArgs
   PFTPChannel;
 };
 
-struct CookieStruct
+//-----------------------------------------------------------------------------
+// RTSP IPDL structs
+//-----------------------------------------------------------------------------
+
+struct RtspChannelConnectArgs
 {
-  nsCString name;
-  nsCString value;
-  nsCString host;
-  nsCString path;
-  int64_t   expiry;
-  int64_t   lastAccessed;
-  int64_t   creationTime;
-  bool      isSession;
-  bool      isSecure;
-  int8_t    sameSite;
+  URIParams uri;
+  uint32_t channelId;
 };
 
 } // namespace ipc

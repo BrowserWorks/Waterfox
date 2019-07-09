@@ -1,5 +1,9 @@
 Components.utils.import("resource://gre/modules/ObjectUtils.jsm");
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function test_deepEqual() {
   let deepEqual = ObjectUtils.deepEqual.bind(ObjectUtils);
   // CommonJS 7.2

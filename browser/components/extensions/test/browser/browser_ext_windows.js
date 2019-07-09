@@ -11,43 +11,22 @@ add_task(async function testWindowGetAll() {
                                 subject => subject == raisedWin);
 
   let extension = ExtensionTestUtils.loadExtension({
-    background: async function() {
-      let wins = await browser.windows.getAll();
-      browser.test.assertEq(2, wins.length, "Expect two windows");
+    background: function() {
+      browser.windows.getAll((wins) => {
+        browser.test.assertEq(wins.length, 2, "Expect two windows");
 
-      browser.test.assertEq(false, wins[0].alwaysOnTop,
-                            "Expect first window not to be always on top");
-      browser.test.assertEq(true, wins[1].alwaysOnTop,
-                            "Expect first window to be always on top");
+        browser.test.assertEq(false, wins[0].alwaysOnTop,
+                              "Expect first window not to be always on top");
+        browser.test.assertEq(true, wins[1].alwaysOnTop,
+                              "Expect first window to be always on top");
 
-      let win = await browser.windows.create({url: "http://example.com", type: "popup"});
-
-      wins = await browser.windows.getAll();
-      browser.test.assertEq(3, wins.length, "Expect three windows");
-
-      wins = await browser.windows.getAll({windowTypes: ["popup"]});
-      browser.test.assertEq(1, wins.length, "Expect one window");
-      browser.test.assertEq("popup", wins[0].type,
-                            "Expect type to be popup");
-
-      wins = await browser.windows.getAll({windowTypes: ["normal"]});
-      browser.test.assertEq(2, wins.length, "Expect two windows");
-      browser.test.assertEq("normal", wins[0].type,
-                            "Expect type to be normal");
-      browser.test.assertEq("normal", wins[1].type,
-                            "Expect type to be normal");
-
-      wins = await browser.windows.getAll({windowTypes: ["popup", "normal"]});
-      browser.test.assertEq(3, wins.length, "Expect three windows");
-
-      await browser.windows.remove(win.id);
-
-      browser.test.notifyPass("getAll");
+        browser.test.notifyPass("alwaysOnTop");
+      });
     },
   });
 
   await extension.startup();
-  await extension.awaitFinish("getAll");
+  await extension.awaitFinish("alwaysOnTop");
   await extension.unload();
 
   await BrowserTestUtils.closeWindow(raisedWin);
@@ -85,9 +64,6 @@ add_task(async function testWindowTitle() {
 
   let extension = ExtensionTestUtils.loadExtension({
     background,
-    manifest: {
-      permissions: ["tabs"],
-    },
   });
 
   await extension.startup();
@@ -161,57 +137,6 @@ add_task(async function testWindowTitle() {
   await updateWindow({titlePreface: PREFACE2}, apiWin, expected);
 
   await extension.unload();
-});
-
-// Test that the window title is only available with the correct tab
-// permissions.
-add_task(async function testWindowTitlePermissions() {
-  let tab = await BrowserTestUtils.openNewForegroundTab(window.gBrowser, "http://example.com/");
-
-  let extension = ExtensionTestUtils.loadExtension({
-    async background() {
-      function awaitMessage(name) {
-        return new Promise(resolve => {
-          browser.test.onMessage.addListener(function listener(...msg) {
-            if (msg[0] === name) {
-              browser.test.onMessage.removeListener(listener);
-              resolve(msg[1]);
-            }
-          });
-        });
-      }
-
-      let window = await browser.windows.getCurrent();
-
-      browser.test.assertEq(undefined, window.title,
-                            "Window title should be null without tab permission");
-
-      browser.test.sendMessage("grant-activeTab");
-      let expectedTitle = await awaitMessage("title");
-
-      window = await browser.windows.getCurrent();
-      browser.test.assertEq(expectedTitle, window.title,
-                            "Window should have the expected title with tab permission granted");
-
-      await browser.test.notifyPass("window-title-permissions");
-    },
-    manifest: {
-      permissions: ["activeTab"],
-      browser_action: {},
-    },
-  });
-
-  await extension.startup();
-
-  await extension.awaitMessage("grant-activeTab");
-  await clickBrowserAction(extension);
-  extension.sendMessage("title", document.title);
-
-  await extension.awaitFinish("window-title-permissions");
-
-  await extension.unload();
-
-  await BrowserTestUtils.removeTab(tab);
 });
 
 add_task(async function testInvalidWindowId() {

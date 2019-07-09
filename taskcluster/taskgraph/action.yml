@@ -1,0 +1,68 @@
+---
+created: '{{now}}'
+deadline: '{{#from_now}}1 day{{/from_now}}'
+expires: '{{#from_now}}14 day{{/from_now}}'
+metadata:
+  owner: mozilla-taskcluster-maintenance@mozilla.com
+  source: 'https://hg.mozilla.org/{{project}}/file/{{head_rev}}/taskcluster/taskgraph/action.yml'
+  name: "[tc] Action Task"
+  description: Helps schedule new jobs without new push
+
+workerType: "gecko-decision"
+provisionerId: "aws-provisioner-v1"
+schedulerId: "gecko-level-{{level}}"
+
+tags:
+  createdForUser: {{owner}}
+
+scopes:
+  - {{repo_scope}}
+
+routes:
+  - "tc-treeherder.v2.{{project}}.{{head_rev}}.{{pushlog_id}}"
+  - "tc-treeherder-stage.v2.{{project}}.{{head_rev}}.{{pushlog_id}}"
+
+payload:
+  env:
+    GECKO_BASE_REPOSITORY: 'https://hg.mozilla.org/mozilla-unified'
+    GECKO_HEAD_REPOSITORY: '{{{head_repository}}}'
+    GECKO_HEAD_REF: '{{head_ref}}'
+    GECKO_HEAD_REV: '{{head_rev}}'
+    HG_STORE_PATH: /home/worker/checkouts/hg-store
+
+  cache:
+    level-{{level}}-checkouts: /home/worker/checkouts
+
+  features:
+    taskclusterProxy: true
+
+  # Note: This task is built server side without the context or tooling that
+  # exist in tree so we must hard code the version
+  image: 'taskcluster/decision:0.1.7'
+
+  # Virtually no network or other potentially risky operations happen as part
+  # of the task timeout aside from the initial clone. We intentionally have
+  # set this to a lower value _all_ decision tasks should use a root
+  # repository which is cached.
+  maxRunTime: 1800
+
+  command:
+    - /home/worker/bin/run-task
+    - '--vcs-checkout=/home/worker/checkouts/gecko'
+    - '--'
+    - bash
+    - -cx
+    - >
+        cd /home/worker/checkouts/gecko &&
+        ln -s /home/worker/artifacts artifacts &&
+        ./mach --log-no-times taskgraph {{action}} {{action_args}}
+
+  artifacts:
+    'public':
+      type: 'directory'
+      path: '/home/worker/artifacts'
+      expires: '{{#from_now}}7 days{{/from_now}}'
+
+extra:
+  treeherder:
+    symbol: A

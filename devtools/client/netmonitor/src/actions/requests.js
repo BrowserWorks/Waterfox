@@ -4,13 +4,13 @@
 
 "use strict";
 
+const { sendHTTPRequest } = require("../connector/index");
 const {
   ADD_REQUEST,
   CLEAR_REQUESTS,
   CLONE_SELECTED_REQUEST,
   REMOVE_SELECTED_CUSTOM_REQUEST,
   SEND_CUSTOM_REQUEST,
-  TOGGLE_RECORDING,
   UPDATE_REQUEST,
 } = require("../constants");
 const { getSelectedRequest } = require("../selectors/index");
@@ -46,7 +46,7 @@ function cloneSelectedRequest() {
 /**
  * Send a new HTTP request using the data in the custom request form.
  */
-function sendCustomRequest(connector) {
+function sendCustomRequest() {
   return (dispatch, getState) => {
     const selected = getSelectedRequest(getState());
 
@@ -67,7 +67,7 @@ function sendCustomRequest(connector) {
       data.body = selected.requestPostData.postData.text;
     }
 
-    connector.sendHTTPRequest(data, (response) => {
+    sendHTTPRequest(data, (response) => {
       return dispatch({
         type: SEND_CUSTOM_REQUEST,
         id: response.eventActor.actor,
@@ -92,21 +92,11 @@ function clearRequests() {
   };
 }
 
-/**
- * Toggle monitoring
- */
-function toggleRecording() {
-  return {
-    type: TOGGLE_RECORDING
-  };
-}
-
 module.exports = {
   addRequest,
   clearRequests,
   cloneSelectedRequest,
   removeSelectedCustomRequest,
   sendCustomRequest,
-  toggleRecording,
   updateRequest,
 };

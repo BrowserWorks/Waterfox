@@ -31,7 +31,7 @@ var _lastTopLevelWindowID = 0;
 // Exported symbol
 this.trackBrowserWindow = function trackBrowserWindow(aWindow) {
   WindowHelper.addWindow(aWindow);
-};
+}
 
 // Global methods
 function debug(s) {
@@ -78,9 +78,10 @@ function _handleEvent(aEvent) {
 
 function _handleMessage(aMessage) {
   let browser = aMessage.target;
-  if (aMessage.name === "Browser:Init" &&
-      browser === browser.ownerGlobal.gBrowser.selectedBrowser) {
-    _updateCurrentContentOuterWindowID(browser);
+  if (aMessage.name === "Browser:Init") {
+    if (browser === browser.ownerGlobal.gBrowser.selectedBrowser) {
+      _updateCurrentContentOuterWindowID(browser);
+    }
   }
 }
 

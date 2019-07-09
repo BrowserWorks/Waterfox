@@ -380,12 +380,12 @@ WebBrowserChrome2Stub::SetVisibility(bool aVisibility)
 }
 
 NS_IMETHODIMP
-WebBrowserChrome2Stub::GetTitle(nsAString& aTitle)
+WebBrowserChrome2Stub::GetTitle(char16_t** aTitle)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 NS_IMETHODIMP
-WebBrowserChrome2Stub::SetTitle(const nsAString& aTitle)
+WebBrowserChrome2Stub::SetTitle(const char16_t* aTitle)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

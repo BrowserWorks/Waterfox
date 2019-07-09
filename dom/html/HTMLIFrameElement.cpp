@@ -37,13 +37,34 @@ HTMLIFrameElement::~HTMLIFrameElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLIFrameElement, nsGenericHTMLFrameElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLIFrameElement, nsGenericHTMLFrameElement,
+                            nsIDOMHTMLIFrameElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLIFrameElement)
 
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Align, align)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, FrameBorder, frameborder)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Height, height)
+NS_IMPL_URI_ATTR(HTMLIFrameElement, LongDesc, longdesc)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, MarginHeight, marginheight)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, MarginWidth, marginwidth)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Name, name)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Scrolling, scrolling)
+NS_IMPL_URI_ATTR(HTMLIFrameElement, Src, src)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Width, width)
+NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowFullscreen, allowfullscreen)
+NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowPaymentRequest, allowpaymentrequest)
+NS_IMPL_STRING_ATTR(HTMLIFrameElement, Srcdoc, srcdoc)
+
+NS_IMETHODIMP
+HTMLIFrameElement::GetContentDocument(nsIDOMDocument** aContentDocument)
+{
+  return nsGenericHTMLFrameElement::GetContentDocument(aContentDocument);
+}
+
 bool
 HTMLIFrameElement::ParseAttribute(int32_t aNamespaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   const nsAString& aValue,
                                   nsAttrValue& aResult)
 {
@@ -107,7 +128,7 @@ HTMLIFrameElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLIFrameElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLIFrameElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::width },
@@ -134,11 +155,9 @@ HTMLIFrameElement::GetAttributeMappingFunction() const
 }
 
 nsresult
-HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aMaybeScriptedPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
   AfterMaybeChangeAttr(aNameSpaceID, aName, aNotify);
 
@@ -152,14 +171,12 @@ HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
       }
     }
   }
-  return nsGenericHTMLFrameElement::AfterSetAttr(aNameSpaceID, aName,
-                                                 aValue, aOldValue,
-                                                 aMaybeScriptedPrincipal,
-                                                 aNotify);
+  return nsGenericHTMLFrameElement::AfterSetAttr(aNameSpaceID, aName, aValue,
+                                                 aOldValue, aNotify);
 }
 
 nsresult
-HTMLIFrameElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsAtom* aName,
+HTMLIFrameElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
                                           const nsAttrValueOrString& aValue,
                                           bool aNotify)
 {
@@ -171,7 +188,7 @@ HTMLIFrameElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsAtom* aName,
 
 void
 HTMLIFrameElement::AfterMaybeChangeAttr(int32_t aNamespaceID,
-                                        nsAtom* aName,
+                                        nsIAtom* aName,
                                         bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {

@@ -175,17 +175,23 @@ HTMLTableCellAccessible::Table() const
 uint32_t
 HTMLTableCellAccessible::ColIdx() const
 {
-  nsTableCellFrame* cellFrame = GetCellFrame();
-  NS_ENSURE_TRUE(cellFrame, 0);
-  return cellFrame->ColIndex();
+  nsITableCellLayout* cellLayout = GetCellLayout();
+  NS_ENSURE_TRUE(cellLayout, 0);
+
+  int32_t colIdx = 0;
+  cellLayout->GetColIndex(colIdx);
+  return colIdx > 0 ? static_cast<uint32_t>(colIdx) : 0;
 }
 
 uint32_t
 HTMLTableCellAccessible::RowIdx() const
 {
-  nsTableCellFrame* cellFrame = GetCellFrame();
-  NS_ENSURE_TRUE(cellFrame, 0);
-  return cellFrame->RowIndex();
+  nsITableCellLayout* cellLayout = GetCellLayout();
+  NS_ENSURE_TRUE(cellLayout, 0);
+
+  int32_t rowIdx = 0;
+  cellLayout->GetRowIndex(rowIdx);
+  return rowIdx > 0 ? static_cast<uint32_t>(rowIdx) : 0;
 }
 
 uint32_t
@@ -275,12 +281,6 @@ HTMLTableCellAccessible::Selected()
 
 nsITableCellLayout*
 HTMLTableCellAccessible::GetCellLayout() const
-{
-  return do_QueryFrame(mContent->GetPrimaryFrame());
-}
-
-nsTableCellFrame*
-HTMLTableCellAccessible::GetCellFrame() const
 {
   return do_QueryFrame(mContent->GetPrimaryFrame());
 }
@@ -520,9 +520,11 @@ HTMLTableAccessible::SelectedCellCount()
       if (!cellFrame || !cellFrame->IsSelected())
         continue;
 
-      uint32_t startRow = cellFrame->RowIndex();
-      uint32_t startCol = cellFrame->ColIndex();
-      if (startRow == rowIdx && startCol == colIdx)
+      int32_t startRow = -1, startCol = -1;
+      cellFrame->GetRowIndex(startRow);
+      cellFrame->GetColIndex(startCol);
+      if (startRow >= 0 && (uint32_t)startRow == rowIdx &&
+          startCol >= 0 && (uint32_t)startCol == colIdx)
         count++;
     }
   }
@@ -568,9 +570,11 @@ HTMLTableAccessible::SelectedCells(nsTArray<Accessible*>* aCells)
       if (!cellFrame || !cellFrame->IsSelected())
         continue;
 
-      uint32_t startRow = cellFrame->RowIndex();
-      uint32_t startCol = cellFrame->ColIndex();
-      if (startRow != rowIdx || startCol != colIdx)
+      int32_t startCol = -1, startRow = -1;
+      cellFrame->GetRowIndex(startRow);
+      cellFrame->GetColIndex(startCol);
+      if ((startRow >= 0 && (uint32_t)startRow != rowIdx) ||
+          (startCol >= 0 && (uint32_t)startCol != colIdx))
         continue;
 
       Accessible* cell = mDoc->GetAccessible(cellFrame->GetContent());
@@ -593,9 +597,11 @@ HTMLTableAccessible::SelectedCellIndices(nsTArray<uint32_t>* aCells)
       if (!cellFrame || !cellFrame->IsSelected())
         continue;
 
-      uint32_t startCol = cellFrame->ColIndex();
-      uint32_t startRow = cellFrame->RowIndex();
-      if (startRow == rowIdx && startCol == colIdx)
+      int32_t startRow = -1, startCol = -1;
+      cellFrame->GetColIndex(startCol);
+      cellFrame->GetRowIndex(startRow);
+      if (startRow >= 0 && (uint32_t)startRow == rowIdx &&
+          startCol >= 0 && (uint32_t)startCol == colIdx)
         aCells->AppendElement(CellIndexAt(rowIdx, colIdx));
     }
   }
@@ -1103,8 +1109,9 @@ HTMLTableAccessible::IsProbablyLayoutTable()
 
   if (HasDescendant(NS_LITERAL_STRING("embed")) ||
       HasDescendant(NS_LITERAL_STRING("object")) ||
+      HasDescendant(NS_LITERAL_STRING("applet")) ||
       HasDescendant(NS_LITERAL_STRING("iframe"))) {
-    RETURN_LAYOUT_ANSWER(true, "Has no borders, and has iframe, object, or iframe, typical of advertisements");
+    RETURN_LAYOUT_ANSWER(true, "Has no borders, and has iframe, object, applet or iframe, typical of advertisements");
   }
 
   RETURN_LAYOUT_ANSWER(false, "no layout factor strong enough, so will guess data");

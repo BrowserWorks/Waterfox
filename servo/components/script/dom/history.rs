@@ -8,32 +8,32 @@ use dom::bindings::codegen::Bindings::LocationBinding::LocationBinding::Location
 use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
 use dom::bindings::error::{Error, ErrorResult, Fallible};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::globalscope::GlobalScope;
 use dom::window::Window;
 use dom_struct::dom_struct;
 use ipc_channel::ipc;
 use msg::constellation_msg::TraversalDirection;
-use script_traits::ScriptMsg;
+use script_traits::ScriptMsg as ConstellationMsg;
 
 // https://html.spec.whatwg.org/multipage/#the-history-interface
 #[dom_struct]
 pub struct History {
     reflector_: Reflector,
-    window: Dom<Window>,
+    window: JS<Window>,
 }
 
 impl History {
     pub fn new_inherited(window: &Window) -> History {
         History {
             reflector_: Reflector::new(),
-            window: Dom::from_ref(&window),
+            window: JS::from_ref(&window),
         }
     }
 
-    pub fn new(window: &Window) -> DomRoot<History> {
-        reflect_dom_object(Box::new(History::new_inherited(window)),
+    pub fn new(window: &Window) -> Root<History> {
+        reflect_dom_object(box History::new_inherited(window),
                            window,
                            HistoryBinding::Wrap)
     }
@@ -44,8 +44,9 @@ impl History {
         if !self.window.Document().is_fully_active() {
             return Err(Error::Security);
         }
-        let msg = ScriptMsg::TraverseHistory(direction);
-        let _ = self.window.upcast::<GlobalScope>().script_to_constellation_chan().send(msg);
+        let top_level_browsing_context_id = self.window.window_proxy().top_level_browsing_context_id();
+        let msg = ConstellationMsg::TraverseHistory(top_level_browsing_context_id, direction);
+        let _ = self.window.upcast::<GlobalScope>().constellation_chan().send(msg);
         Ok(())
     }
 }
@@ -56,9 +57,10 @@ impl HistoryMethods for History {
         if !self.window.Document().is_fully_active() {
             return Err(Error::Security);
         }
+        let top_level_browsing_context_id = self.window.window_proxy().top_level_browsing_context_id();
         let (sender, recv) = ipc::channel().expect("Failed to create channel to send jsh length.");
-        let msg = ScriptMsg::JointSessionHistoryLength(sender);
-        let _ = self.window.upcast::<GlobalScope>().script_to_constellation_chan().send(msg);
+        let msg = ConstellationMsg::JointSessionHistoryLength(top_level_browsing_context_id, sender);
+        let _ = self.window.upcast::<GlobalScope>().constellation_chan().send(msg);
         Ok(recv.recv().unwrap())
 }
 

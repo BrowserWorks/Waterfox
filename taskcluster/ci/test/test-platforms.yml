@@ -22,38 +22,33 @@ linux32/debug:
 linux32/opt:
     build-platform: linux/opt
     test-sets:
-        - linux32-tests
-        - linux32-opt-tests
+        -  linux32-tests
+        -  linux32-opt-tests
 linux32-nightly/opt:
     build-platform: linux-nightly/opt
     test-sets:
-        - linux32-tests
-        - linux32-opt-tests
+        -  linux32-tests
+        -  linux32-opt-tests
 linux32-devedition/opt:
     build-platform: linux-devedition-nightly/opt
     test-sets:
-        - linux32-tests
-        - linux32-opt-tests
+        -  linux32-tests
+        -  linux32-opt-tests
 
 linux64/debug:
     build-platform: linux64/debug
     test-sets:
         - common-tests
         - web-platform-tests
-        - reftest-stylo
-        - mochitest-headless
 linux64/opt:
     build-platform: linux64/opt
     test-sets:
         - common-tests
         - web-platform-tests
         - opt-only-tests
-        - reftest-stylo
         - desktop-screenshot-capture
         - talos
-        - linux-talos-stylo-disabled
         - awsy
-        - mochitest-headless
 linux64-nightly/opt:
     build-platform: linux64-nightly/opt
     test-sets:
@@ -77,67 +72,66 @@ linux64-pgo/opt:
         - common-tests
         - web-platform-tests
         - talos
-        - linux-talos-stylo-disabled
 
 linux64-asan/opt:
     build-platform: linux64-asan/opt
     test-sets:
         - common-tests
 
-# Stylo disabled mode only runs a subset of tests.
-linux32-stylo-disabled/debug:
-    build-platform: linux/debug
-    test-sets:
-        - stylo-disabled-tests
-linux32-stylo-disabled/opt:
-    build-platform: linux/opt
-    test-sets:
-        - awsy-stylo-disabled
-        - stylo-disabled-tests
-linux64-stylo-disabled/debug:
+# Stylo builds only run a subset of tests for the moment. So give them
+# their own test set.
+# Stylo doesn't work on 32-bit Linux yet (bug 1385025)
+# linux32-stylo/debug:
+#     build-platform: linux/debug
+#     test-sets:
+#         - stylo-tests
+# linux32-stylo/opt:
+#     build-platform: linux/opt
+#     test-sets:
+#         - stylo-tests
+linux64-stylo/debug:
     build-platform: linux64/debug
     test-sets:
-        - stylo-disabled-tests
-        - devtools-tests
-linux64-stylo-disabled/opt:
+        - stylo-tests
+linux64-stylo/opt:
     build-platform: linux64/opt
     test-sets:
-        - awsy-stylo-disabled
-        - stylo-disabled-tests
-        - devtools-tests
-macosx64-stylo-disabled/debug:
-    build-platform: macosx64/debug
+        - stylo-tests
+        - talos
+linux64-stylo-sequential/debug:
+    build-platform: linux64/debug
     test-sets:
-        - stylo-disabled-tests
-macosx64-stylo-disabled/opt:
-    build-platform: macosx64/opt
-    test-sets:
-        - awsy-stylo-disabled
-        - stylo-disabled-tests
-windows7-32-stylo-disabled/debug:
-    build-platform: win32/debug
-    test-sets:
-        - stylo-disabled-tests
-windows7-32-stylo-disabled/opt:
-    build-platform: win32/opt
-    test-sets:
-        - awsy-stylo-disabled
-        - stylo-disabled-tests
-windows10-64-stylo-disabled/debug:
-    build-platform: win64/debug
-    test-sets:
-        - stylo-disabled-tests
-windows10-64-stylo-disabled/opt:
-    build-platform: win64/opt
-    test-sets:
-        - awsy-stylo-disabled
-        - stylo-disabled-tests
-
-# Stylo sequential runs check memory and performance when using a single thread.
+        - stylo-sequential-tests
 linux64-stylo-sequential/opt:
     build-platform: linux64/opt
     test-sets:
-        - awsy-stylo-sequential
+        - stylo-sequential-tests
+        - talos
+macosx64-stylo/debug:
+    build-platform: macosx64/debug
+    test-sets:
+        - stylo-tests
+macosx64-stylo/opt:
+    build-platform: macosx64/opt
+    test-sets:
+        - stylo-tests
+# Windows needs more work to green up (bug 1385027)
+# windows7-32-stylo/debug:
+#     build-platform: win32/debug
+#     test-sets:
+#         - stylo-tests
+# windows7-32-stylo/opt:
+#     build-platform: win32/opt
+#     test-sets:
+#         - stylo-tests
+# windows10-64-stylo/debug:
+#     build-platform: win64/debug
+#     test-sets:
+#         - stylo-tests
+# windows10-64-stylo/opt:
+#     build-platform: win64/opt
+#     test-sets:
+#         - stylo-tests
 
 # QR builds just run a subset right now. Note that the tests in this
 # test set are further restricted in tests.yml to run on certain projects
@@ -146,7 +140,6 @@ linux64-qr/opt:
     build-platform: linux64/opt
     test-sets:
         - qr-tests
-        - qr-talos
 linux64-qr/debug:
     build-platform: linux64/debug
     test-sets:
@@ -171,17 +164,13 @@ linux64-jsdcov/opt:
 windows7-32/debug:
     build-platform: win32/debug
     test-sets:
-        - windows-reftest-gpu
         - windows-tests
-
 windows7-32/opt:
     build-platform: win32/opt
     test-sets:
         - awsy
         - desktop-screenshot-capture
-        - windows-reftest-gpu
         - windows-talos
-        - windows-talos-stylo-disabled
         - windows-tests
 
 windows7-32-pgo/opt:
@@ -189,24 +178,20 @@ windows7-32-pgo/opt:
     test-sets:
         - awsy
         - desktop-screenshot-capture
-        - windows-reftest-gpu
-        - windows-talos
-        - windows-talos-stylo-disabled
         - windows-tests
+        - windows-talos
 
 windows7-32-nightly/opt:
     build-platform: win32-nightly/opt
     test-sets:
         - awsy
         - desktop-screenshot-capture
-        - windows-reftest-gpu
         - windows-tests
 
 windows7-32-devedition/opt:
     build-platform: win32-devedition-nightly/opt
     test-sets:
         - desktop-screenshot-capture
-        - windows-reftest-gpu
         - windows-tests
 
 # win64
@@ -214,7 +199,6 @@ windows10-64/debug:
     build-platform: win64/debug
     test-sets:
         - windows-tests
-        - mochitest-headless
 
 windows10-64/opt:
     build-platform: win64/opt
@@ -222,9 +206,7 @@ windows10-64/opt:
         - awsy
         - desktop-screenshot-capture
         - windows-talos
-        - windows-talos-stylo-disabled
         - windows-tests
-        - mochitest-headless
 
 windows10-64-pgo/opt:
     build-platform: win64-pgo/opt
@@ -232,7 +214,6 @@ windows10-64-pgo/opt:
         - awsy
         - desktop-screenshot-capture
         - windows-talos
-        - windows-talos-stylo-disabled
         - windows-tests
 
 windows10-64-nightly/opt:
@@ -253,6 +234,28 @@ windows10-64-asan/opt:
     test-sets:
         - common-tests
 
+# Windows8 tests; all via BBB
+windows8-64/debug:
+    build-platform: win64/debug
+    test-sets:
+        - windows8-tests
+windows8-64/opt:
+    build-platform: win64/opt
+    test-sets:
+        - windows8-tests
+windows8-64-pgo/opt:
+    build-platform: win64-pgo/opt
+    test-sets:
+        - windows8-tests
+windows8-64-nightly/opt:
+    build-platform: win64-nightly/opt
+    test-sets:
+        - windows8-tests
+windows8-64-devedition/opt:
+    build-platform: win64-devedition-nightly/opt
+    test-sets:
+        - windows8-tests
+
 ##
 # MacOS X platforms (matching /macosx.*/)
 
@@ -264,8 +267,7 @@ macosx64/debug:
 macosx64/opt:
     build-platform: macosx64/opt
     test-sets:
-        - macosx64-talos
-        - macosx64-talos-stylo-disabled
+        - macosx64-tests-talos
         - macosx64-tests
         - desktop-screenshot-capture
         - awsy

@@ -4,8 +4,7 @@
 
 extern crate app_units;
 extern crate euclid;
-extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
+#[macro_use] extern crate heapsize;
 
 use app_units::{Au, MAX_AU, MIN_AU};
 use euclid::{Point2D, Rect, Size2D};
@@ -25,8 +24,10 @@ use euclid::{Point2D, Rect, Size2D};
 ///
 /// The ratio between DeviceIndependentPixel and DevicePixel for a given display be found by calling
 /// `servo::windowing::WindowMethods::hidpi_factor`.
-#[derive(Clone, Copy, Debug, MallocSizeOf)]
+#[derive(Clone, Copy, Debug)]
 pub enum DeviceIndependentPixel {}
+
+known_heap_size!(0, DeviceIndependentPixel);
 
 // An Au is an "App Unit" and represents 1/60th of a CSS pixel.  It was
 // originally proposed in 2002 as a standard unit of measure in Gecko.

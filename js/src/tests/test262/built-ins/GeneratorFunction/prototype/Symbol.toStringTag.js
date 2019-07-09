@@ -12,7 +12,7 @@ info: >
     false, [[Configurable]]: true }.
 es6id: 25.2.3.3
 includes: [propertyHelper.js]
-features: [generators, Symbol.toStringTag]
+features: [Symbol.toStringTag]
 ---*/
 
 var GeneratorFunctionPrototype = Object.getPrototypeOf(function*() {});

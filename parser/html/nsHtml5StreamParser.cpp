@@ -18,7 +18,6 @@
 #include "nsHtml5StreamParserPtr.h"
 #include "nsIScriptError.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "nsHtml5Highlighter.h"
 #include "expat_config.h"
@@ -31,7 +30,6 @@
 #include "nsNetUtil.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/SchedulerGroup.h"
-#include "nsJSEnvironment.h"
 
 using namespace mozilla;
 
@@ -181,7 +179,7 @@ nsHtml5StreamParser::nsHtml5StreamParser(nsHtml5TreeOpExecutor* aExecutor,
   , mLoadFlusher(new nsHtml5LoadFlusher(aExecutor))
   , mFeedChardet(false)
   , mInitialEncodingWasFromParentFrame(false)
-  , mFlushTimer(NS_NewTimer())
+  , mFlushTimer(do_CreateInstance("@mozilla.org/timer;1"))
   , mFlushTimerMutex("nsHtml5StreamParser mFlushTimerMutex")
   , mFlushTimerArmed(false)
   , mFlushTimerEverFired(false)
@@ -868,29 +866,11 @@ nsHtml5StreamParser::WriteStreamBytes(const uint8_t* aFromSegment,
   }
 }
 
-class MaybeRunCollector : public Runnable
-{
-public:
-  explicit MaybeRunCollector(nsIDocShell* aDocShell)
-    : Runnable("MaybeRunCollector")
-    , mDocShell(aDocShell)
-  {
-  }
-
-  NS_IMETHOD Run()
-  {
-    nsJSContext::MaybeRunNextCollectorSlice(mDocShell, JS::gcreason::HTML_PARSER);
-    return NS_OK;
-  }
-
-  nsCOMPtr<nsIDocShell> mDocShell;
-};
-
 nsresult
 nsHtml5StreamParser::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
 {
-  MOZ_RELEASE_ASSERT(STREAM_NOT_STARTED == mStreamState,
-                     "Got OnStartRequest when the stream had already started.");
+  NS_PRECONDITION(STREAM_NOT_STARTED == mStreamState,
+                  "Got OnStartRequest when the stream had already started.");
   NS_PRECONDITION(
     !mExecutor->HasStarted(),
     "Got OnStartRequest at the wrong stage in the executor life cycle.");
@@ -991,16 +971,6 @@ nsHtml5StreamParser::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
     do_QueryInterface(mRequest, &rv);
   if (threadRetargetableRequest) {
     rv = threadRetargetableRequest->RetargetDeliveryTo(mEventTarget);
-    if (NS_SUCCEEDED(rv)) {
-      // Parser thread should be now ready to get data from necko and parse it
-      // and main thread might have a chance to process a collector slice.
-      // We need to do this asynchronously so that necko may continue processing
-      // the request.
-      nsCOMPtr<nsIRunnable> runnable =
-        new MaybeRunCollector(mExecutor->GetDocument()->GetDocShell());
-      mozilla::SystemGroup::Dispatch(mozilla::TaskCategory::GarbageCollection,
-                                     runnable.forget());
-    }
   }
 
   if (NS_FAILED(rv)) {
@@ -1054,8 +1024,8 @@ void
 nsHtml5StreamParser::DoStopRequest()
 {
   NS_ASSERTION(IsParserThread(), "Wrong thread!");
-  MOZ_RELEASE_ASSERT(STREAM_BEING_READ == mStreamState,
-                     "Stream ended without being open.");
+  NS_PRECONDITION(STREAM_BEING_READ == mStreamState,
+                  "Stream ended without being open.");
   mTokenizerMutex.AssertCurrentThreadOwns();
 
   if (IsTerminated()) {
@@ -1158,8 +1128,8 @@ void
 nsHtml5StreamParser::DoDataAvailable(const uint8_t* aBuffer, uint32_t aLength)
 {
   NS_ASSERTION(IsParserThread(), "Wrong thread!");
-  MOZ_RELEASE_ASSERT(STREAM_BEING_READ == mStreamState,
-                     "DoDataAvailable called when stream not open.");
+  NS_PRECONDITION(STREAM_BEING_READ == mStreamState,
+                  "DoDataAvailable called when stream not open.");
   mTokenizerMutex.AssertCurrentThreadOwns();
 
   if (IsTerminated()) {

@@ -71,25 +71,11 @@ private:
   // Fetches the next request, from mPendingRequests
   nsresult FetchNextRequest();
 
-  struct UpdateRequest {
-    nsCString mTables;
-    nsCString mRequestPayload;
-    bool mIsPostRequest;
-    nsCString mUrl;
-    nsCOMPtr<nsIUrlClassifierCallback> mSuccessCallback;
-    nsCOMPtr<nsIUrlClassifierCallback> mUpdateErrorCallback;
-    nsCOMPtr<nsIUrlClassifierCallback> mDownloadErrorCallback;
+  enum UpdateTimeout {
+    eNoTimeout = 0,
+    eResponseTimeout = 1,
+    eDownloadTimeout = 2,
   };
-  // Utility function to create an update request.
-  void
-  BuildUpdateRequest(const nsACString &aRequestTables,
-                     const nsACString &aRequestPayload,
-                     bool aIsPostRequest,
-                     const nsACString &aUpdateUrl,
-                     nsIUrlClassifierCallback *aSuccessCallback,
-                     nsIUrlClassifierCallback *aUpdateErrorCallback,
-                     nsIUrlClassifierCallback *aDownloadErrorCallback,
-                     UpdateRequest* aRequest);
 
   bool mIsUpdating;
   bool mInitialized;
@@ -119,8 +105,16 @@ private:
   // Timer to abort the download if it takes too long.
   nsCOMPtr<nsITimer> mTimeoutTimer;
 
-  mozilla::UniquePtr<UpdateRequest> mCurrentRequest;
-  nsTArray<UpdateRequest> mPendingRequests;
+  struct PendingRequest {
+    nsCString mTables;
+    nsCString mRequestPayload;
+    bool mIsPostRequest;
+    nsCString mUrl;
+    nsCOMPtr<nsIUrlClassifierCallback> mSuccessCallback;
+    nsCOMPtr<nsIUrlClassifierCallback> mUpdateErrorCallback;
+    nsCOMPtr<nsIUrlClassifierCallback> mDownloadErrorCallback;
+  };
+  nsTArray<PendingRequest> mPendingRequests;
 
   struct PendingUpdate {
     nsCString mUrl;
@@ -128,6 +122,9 @@ private:
   };
   nsTArray<PendingUpdate> mPendingUpdates;
 
+  nsCOMPtr<nsIUrlClassifierCallback> mSuccessCallback;
+  nsCOMPtr<nsIUrlClassifierCallback> mUpdateErrorCallback;
+  nsCOMPtr<nsIUrlClassifierCallback> mDownloadErrorCallback;
 
   // The provider for current update request and should be only used by telemetry
   // since it would show up as "other" for any other providers.

@@ -20,7 +20,6 @@ info: >
     object has the attributes { [[Writable]]: false, [[Enumerable]]: false,
     [[Configurable]]: true }.
 includes: [propertyHelper.js]
-features: [generators]
 ---*/
 
 function* g() {}

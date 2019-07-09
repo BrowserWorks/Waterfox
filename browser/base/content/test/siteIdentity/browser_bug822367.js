@@ -19,7 +19,7 @@ add_task(async function test() {
   var newTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = newTab;
   gTestBrowser = gBrowser.selectedBrowser;
-  newTab.linkedBrowser.stop();
+  newTab.linkedBrowser.stop()
 
   // Mixed Script Test
   var url = HTTPS_TEST_ROOT + "file_bug822367_1.html";
@@ -29,7 +29,7 @@ add_task(async function test() {
 
 // Mixed Script Test
 add_task(async function MixedTest1A() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   gIdentityHandler.disableMixedContentProtection();
@@ -50,7 +50,7 @@ add_task(async function MixedTest2() {
   BrowserTestUtils.loadURI(gTestBrowser, url);
   await BrowserTestUtils.browserLoaded(gTestBrowser, false, url);
 
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: false, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: false, passiveLoaded: false});
 });
 
 // Mixed Script and Display Test - User Override should cause both the script and the image to load.
@@ -61,7 +61,7 @@ add_task(async function MixedTest3() {
 });
 
 add_task(async function MixedTest3A() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   gIdentityHandler.disableMixedContentProtection();
@@ -79,7 +79,7 @@ add_task(async function MixedTest3B() {
     await Promise.all([ p1, p2 ]);
   });
 
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: true, activeBlocked: false, passiveLoaded: true});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: true, activeBlocked: false, passiveLoaded: true});
 });
 
 // Location change - User override on one page doesn't propogate to another page after location change.
@@ -90,7 +90,7 @@ add_task(async function MixedTest4() {
 });
 
 add_task(async function MixedTest4A() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   gIdentityHandler.disableMixedContentProtection();
@@ -107,7 +107,7 @@ add_task(async function MixedTest4B() {
 });
 
 add_task(async function MixedTest4C() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     await ContentTaskUtils.waitForCondition(
@@ -124,7 +124,7 @@ add_task(async function MixedTest5() {
 });
 
 add_task(async function MixedTest5A() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   gIdentityHandler.disableMixedContentProtection();
@@ -156,7 +156,7 @@ add_task(async function MixedTest6A() {
 });
 
 add_task(async function MixedTest6B() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
   let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   gIdentityHandler.disableMixedContentProtection();
@@ -179,7 +179,7 @@ add_task(async function MixedTest6C() {
 });
 
 add_task(async function MixedTest6D() {
-  await assertMixedContentBlockingState(gTestBrowser, {activeLoaded: true, activeBlocked: false, passiveLoaded: false});
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: true, activeBlocked: false, passiveLoaded: false});
 });
 
 add_task(async function cleanup() {

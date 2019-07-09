@@ -8,15 +8,15 @@
 
 #include "jit/BaselineIC.h"
 #include "jit/CacheIRCompiler.h"
+#include "jit/IonCaches.h"
 #include "jit/IonIC.h"
-#include "jit/JSJitFrameIter.h"
+
 #include "jit/Linker.h"
 #include "jit/SharedICHelpers.h"
 #include "proxy/Proxy.h"
 
 #include "jscompartmentinlines.h"
 
-#include "jit/JSJitFrameIter-inl.h"
 #include "jit/MacroAssembler-inl.h"
 #include "vm/TypeInference-inl.h"
 
@@ -324,21 +324,6 @@ CacheRegisterAllocator::restoreIonLiveRegisters(MacroAssembler& masm, LiveRegist
     availableRegsAfterSpill_.set() = GeneralRegisterSet::All();
 }
 
-static void*
-GetReturnAddressToIonCode(JSContext* cx)
-{
-    JSJitFrameIter frame(cx);
-    MOZ_ASSERT(frame.type() == JitFrame_Exit,
-               "An exit frame is expected as update functions are called with a VMFunction.");
-
-    void* returnAddr = frame.returnAddress();
-#ifdef DEBUG
-    ++frame;
-    MOZ_ASSERT(frame.isIonJS());
-#endif
-    return returnAddr;
-}
-
 void
 IonCacheIRCompiler::prepareVMCall(MacroAssembler& masm)
 {
@@ -412,32 +397,6 @@ IonCacheIRCompiler::init()
         allocator.initInputLocation(0, ic->value());
         if (numInputs > 1)
             allocator.initInputLocation(1, ic->id());
-        break;
-      }
-      case CacheKind::GetPropSuper:
-      case CacheKind::GetElemSuper: {
-        IonGetPropSuperIC* ic = ic_->asGetPropSuperIC();
-        TypedOrValueRegister output = ic->output();
-
-        available.add(output.valueReg());
-
-        liveRegs_.emplace(ic->liveRegs());
-        outputUnchecked_.emplace(output);
-
-        allowDoubleResult_.emplace(true);
-
-        MOZ_ASSERT(numInputs == 2 || numInputs == 3);
-
-        allocator.initInputLocation(0, ic->object(), JSVAL_TYPE_OBJECT);
-
-        if (ic->kind() == CacheKind::GetPropSuper) {
-            MOZ_ASSERT(numInputs == 2);
-            allocator.initInputLocation(1, ic->receiver());
-        } else {
-            MOZ_ASSERT(numInputs == 3);
-            allocator.initInputLocation(1, ic->id());
-            allocator.initInputLocation(2, ic->receiver());
-        }
         break;
       }
       case CacheKind::SetProp:
@@ -535,6 +494,8 @@ IonCacheIRCompiler::init()
       case CacheKind::Call:
       case CacheKind::Compare:
       case CacheKind::TypeOf:
+      case CacheKind::GetPropSuper:
+      case CacheKind::GetElemSuper:
         MOZ_CRASH("Unsupported IC");
     }
 
@@ -1095,15 +1056,14 @@ IonCacheIRCompiler::emitCallNativeGetterResult()
 
     if (!masm.icBuildOOLFakeExitFrame(GetReturnAddressToIonCode(cx_), save))
         return false;
-    masm.enterFakeExitFrame(argJSContext, scratch, ExitFrameToken::IonOOLNative);
+    masm.enterFakeExitFrame(argJSContext, scratch, IonOOLNativeExitFrameLayoutToken);
 
     // Construct and execute call.
     masm.setupUnalignedABICall(scratch);
     masm.passABIArg(argJSContext);
     masm.passABIArg(argUintN);
     masm.passABIArg(argVp);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, target->native()), MoveOp::GENERAL,
-                     CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, target->native()));
 
     // Test for failure.
     masm.branchIfFalseBool(ReturnReg, masm.exceptionLabel());
@@ -1153,7 +1113,7 @@ IonCacheIRCompiler::emitCallProxyGetResult()
 
     if (!masm.icBuildOOLFakeExitFrame(GetReturnAddressToIonCode(cx_), save))
         return false;
-    masm.enterFakeExitFrame(argJSContext, scratch, ExitFrameToken::IonOOLProxy);
+    masm.enterFakeExitFrame(argJSContext, scratch, IonOOLProxyExitFrameLayoutToken);
 
     // Make the call.
     masm.setupUnalignedABICall(scratch);
@@ -1161,8 +1121,7 @@ IonCacheIRCompiler::emitCallProxyGetResult()
     masm.passABIArg(argProxy);
     masm.passABIArg(argId);
     masm.passABIArg(argVp);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, ProxyGetProperty), MoveOp::GENERAL,
-                     CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, ProxyGetProperty));
 
     // Test for failure.
     masm.branchIfFalseBool(ReturnReg, masm.exceptionLabel());
@@ -1203,21 +1162,17 @@ IonCacheIRCompiler::emitCallProxyGetByValueResult()
     return true;
 }
 
-typedef bool (*ProxyHasFn)(JSContext*, HandleObject, HandleValue, MutableHandleValue);
-static const VMFunction ProxyHasInfo = FunctionInfo<ProxyHasFn>(ProxyHas, "ProxyHas");
-
 typedef bool (*ProxyHasOwnFn)(JSContext*, HandleObject, HandleValue, MutableHandleValue);
 static const VMFunction ProxyHasOwnInfo = FunctionInfo<ProxyHasOwnFn>(ProxyHasOwn, "ProxyHasOwn");
 
 bool
-IonCacheIRCompiler::emitCallProxyHasPropResult()
+IonCacheIRCompiler::emitCallProxyHasOwnResult()
 {
     AutoSaveLiveRegisters save(*this);
     AutoOutputRegister output(*this);
 
     Register obj = allocator.useRegister(masm, reader.objOperandId());
     ValueOperand idVal = allocator.useValueRegister(masm, reader.valOperandId());
-    bool hasOwn = reader.readBool();
 
     allocator.discardStack(masm);
 
@@ -1226,13 +1181,8 @@ IonCacheIRCompiler::emitCallProxyHasPropResult()
     masm.Push(idVal);
     masm.Push(obj);
 
-    if (hasOwn) {
-        if (!callVM(masm, ProxyHasOwnInfo))
-            return false;
-    } else {
-        if (!callVM(masm, ProxyHasInfo))
-            return false;
-    }
+    if (!callVM(masm, ProxyHasOwnInfo))
+        return false;
 
     masm.storeCallResultValue(output);
     return true;
@@ -1359,10 +1309,9 @@ IonCacheIRCompiler::emitCallStringSplitResult()
 static bool
 GroupHasPropertyTypes(ObjectGroup* group, jsid* id, Value* v)
 {
-    AutoUnsafeCallWithABI unsafe;
-    if (group->unknownPropertiesDontCheckGeneration())
+    if (group->unknownProperties())
         return true;
-    HeapTypeSet* propTypes = group->maybeGetPropertyDontCheckGeneration(*id);
+    HeapTypeSet* propTypes = group->maybeGetProperty(*id);
     if (!propTypes)
         return true;
     if (!propTypes->nonConstantProperty())
@@ -1720,60 +1669,6 @@ IonCacheIRCompiler::emitStoreTypedObjectScalarProperty()
     return true;
 }
 
-static void
-EmitStoreDenseElement(MacroAssembler& masm, const ConstantOrRegister& value,
-                      Register elements, BaseObjectElementIndex target)
-{
-    // If the ObjectElements::CONVERT_DOUBLE_ELEMENTS flag is set, int32 values
-    // have to be converted to double first. If the value is not int32, it can
-    // always be stored directly.
-
-    Address elementsFlags(elements, ObjectElements::offsetOfFlags());
-    if (value.constant()) {
-        Value v = value.value();
-        Label done;
-        if (v.isInt32()) {
-            Label dontConvert;
-            masm.branchTest32(Assembler::Zero, elementsFlags,
-                              Imm32(ObjectElements::CONVERT_DOUBLE_ELEMENTS),
-                              &dontConvert);
-            masm.storeValue(DoubleValue(v.toInt32()), target);
-            masm.jump(&done);
-            masm.bind(&dontConvert);
-        }
-        masm.storeValue(v, target);
-        masm.bind(&done);
-        return;
-    }
-
-    TypedOrValueRegister reg = value.reg();
-    if (reg.hasTyped() && reg.type() != MIRType::Int32) {
-        masm.storeTypedOrValue(reg, target);
-        return;
-    }
-
-    Label convert, storeValue, done;
-    masm.branchTest32(Assembler::NonZero, elementsFlags,
-                      Imm32(ObjectElements::CONVERT_DOUBLE_ELEMENTS),
-                      &convert);
-    masm.bind(&storeValue);
-    masm.storeTypedOrValue(reg, target);
-    masm.jump(&done);
-
-    masm.bind(&convert);
-    if (reg.hasValue()) {
-        masm.branchTestInt32(Assembler::NotEqual, reg.valueReg(), &storeValue);
-        masm.int32ValueToDouble(reg.valueReg(), ScratchDoubleReg);
-        masm.storeDouble(ScratchDoubleReg, target);
-    } else {
-        MOZ_ASSERT(reg.type() == MIRType::Int32);
-        masm.convertInt32ToDouble(reg.typedReg().gpr(), ScratchDoubleReg);
-        masm.storeDouble(ScratchDoubleReg, target);
-    }
-
-    masm.bind(&done);
-}
-
 bool
 IonCacheIRCompiler::emitStoreDenseElement()
 {
@@ -1801,7 +1696,7 @@ IonCacheIRCompiler::emitStoreDenseElement()
     masm.branchTestMagic(Assembler::Equal, element, failure->label());
 
     EmitPreBarrier(masm, element, MIRType::Value);
-    EmitStoreDenseElement(masm, val, scratch, element);
+    EmitIonStoreDenseElement(masm, val, scratch, element);
     if (needsPostBarrier())
         emitPostBarrierElement(obj, val, scratch, index);
     return true;
@@ -1887,7 +1782,7 @@ IonCacheIRCompiler::emitStoreDenseElementHole()
     EmitPreBarrier(masm, element, MIRType::Value);
 
     masm.bind(&doStore);
-    EmitStoreDenseElement(masm, val, scratch, element);
+    EmitIonStoreDenseElement(masm, val, scratch, element);
     if (needsPostBarrier())
         emitPostBarrierElement(obj, val, scratch, index);
     return true;
@@ -1968,6 +1863,20 @@ IonCacheIRCompiler::emitStoreTypedElement()
 }
 
 bool
+IonCacheIRCompiler::emitStoreUnboxedArrayElement()
+{
+    // --unboxed-arrays is currently untested and broken.
+    MOZ_CRASH("Baseline-specific op");
+}
+
+bool
+IonCacheIRCompiler::emitStoreUnboxedArrayElementHole()
+{
+    // --unboxed-arrays is currently untested and broken.
+    MOZ_CRASH("Baseline-specific op");
+}
+
+bool
 IonCacheIRCompiler::emitCallNativeSetter()
 {
     AutoSaveLiveRegisters save(*this);
@@ -2006,15 +1915,14 @@ IonCacheIRCompiler::emitCallNativeSetter()
 
     if (!masm.icBuildOOLFakeExitFrame(GetReturnAddressToIonCode(cx_), save))
         return false;
-    masm.enterFakeExitFrame(argJSContext, scratch, ExitFrameToken::IonOOLNative);
+    masm.enterFakeExitFrame(argJSContext, scratch, IonOOLNativeExitFrameLayoutToken);
 
     // Make the call.
     masm.setupUnalignedABICall(scratch);
     masm.passABIArg(argJSContext);
     masm.passABIArg(argUintN);
     masm.passABIArg(argVp);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, target->native()), MoveOp::GENERAL,
-                     CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, target->native()));
 
     // Test for failure.
     masm.branchIfFalseBool(ReturnReg, masm.exceptionLabel());
@@ -2156,28 +2064,6 @@ IonCacheIRCompiler::emitCallProxySetByValue()
     masm.Push(obj);
 
     return callVM(masm, ProxySetPropertyByValueInfo);
-}
-
-bool
-IonCacheIRCompiler::emitMegamorphicSetElement()
-{
-    AutoSaveLiveRegisters save(*this);
-
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    ConstantOrRegister idVal = allocator.useConstantOrRegister(masm, reader.valOperandId());
-    ConstantOrRegister val = allocator.useConstantOrRegister(masm, reader.valOperandId());
-    bool strict = reader.readBool();
-
-    allocator.discardStack(masm);
-    prepareVMCall(masm);
-
-    masm.Push(Imm32(strict));
-    masm.Push(TypedOrValueRegister(MIRType::Object, AnyRegister(obj)));
-    masm.Push(val);
-    masm.Push(idVal);
-    masm.Push(obj);
-
-    return callVM(masm, SetObjectElementInfo);
 }
 
 bool

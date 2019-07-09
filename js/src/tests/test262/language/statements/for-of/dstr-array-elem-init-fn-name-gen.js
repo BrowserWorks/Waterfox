@@ -43,12 +43,10 @@ var counter = 0;
 for ([ xGen = function* x() {}, gen = function*() {} ] of [[]]) {
   assert.notSameValue(xGen.name, 'xGen');
 
-  verifyProperty(gen, 'name', {
-    enumerable: false,
-    writable: false,
-    configurable: true,
-    value: 'gen'
-  });
+  assert.sameValue(gen.name, 'gen');
+  verifyNotEnumerable(gen, 'name');
+  verifyNotWritable(gen, 'name');
+  verifyConfigurable(gen, 'name');
   counter += 1;
 }
 

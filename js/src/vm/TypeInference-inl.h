@@ -369,10 +369,10 @@ TypeMonitorCall(JSContext* cx, const js::CallArgs& args, bool constructing)
 MOZ_ALWAYS_INLINE bool
 TrackPropertyTypes(JSObject* obj, jsid id)
 {
-    if (obj->hasLazyGroup() || obj->group()->unknownPropertiesDontCheckGeneration())
+    if (obj->hasLazyGroup() || obj->group()->unknownProperties())
         return false;
 
-    if (obj->isSingleton() && !obj->group()->maybeGetPropertyDontCheckGeneration(id))
+    if (obj->isSingleton() && !obj->group()->maybeGetProperty(id))
         return false;
 
     return true;
@@ -410,7 +410,7 @@ HasTrackedPropertyType(JSObject* obj, jsid id, TypeSet::Type type)
     MOZ_ASSERT(id == IdToTypeId(id));
     MOZ_ASSERT(TrackPropertyTypes(obj, id));
 
-    if (HeapTypeSet* types = obj->group()->maybeGetPropertyDontCheckGeneration(id)) {
+    if (HeapTypeSet* types = obj->group()->maybeGetProperty(id)) {
         if (!types->hasType(type))
             return false;
         // Non-constant properties are only relevant for singleton objects.
@@ -646,7 +646,7 @@ TypeScript::SetThis(JSContext* cx, JSScript* script, TypeSet::Type type)
         AutoEnterAnalysis enter(cx);
 
         InferSpew(ISpewOps, "externalType: setThis %p: %s",
-                  script, TypeSet::TypeString(type).get());
+                  script, TypeSet::TypeString(type));
         types->addType(cx, type);
     }
 }
@@ -670,7 +670,7 @@ TypeScript::SetArgument(JSContext* cx, JSScript* script, unsigned arg, TypeSet::
         AutoEnterAnalysis enter(cx);
 
         InferSpew(ISpewOps, "externalType: setArg %p %u: %s",
-                  script, arg, TypeSet::TypeString(type).get());
+                  script, arg, TypeSet::TypeString(type));
         types->addType(cx, type);
     }
 }
@@ -679,6 +679,21 @@ TypeScript::SetArgument(JSContext* cx, JSScript* script, unsigned arg, TypeSet::
 TypeScript::SetArgument(JSContext* cx, JSScript* script, unsigned arg, const js::Value& value)
 {
     SetArgument(cx, script, arg, TypeSet::GetValueType(value));
+}
+
+inline
+AutoKeepTypeScripts::AutoKeepTypeScripts(JSContext* cx)
+  : zone_(cx->zone()->types),
+    prev_(zone_.keepTypeScripts)
+{
+    zone_.keepTypeScripts = true;
+}
+
+inline
+AutoKeepTypeScripts::~AutoKeepTypeScripts()
+{
+    MOZ_ASSERT(zone_.keepTypeScripts);
+    zone_.keepTypeScripts = prev_;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1075,17 +1090,9 @@ TypeSet::getObjectClass(unsigned i) const
 /////////////////////////////////////////////////////////////////////
 
 inline uint32_t
-ObjectGroup::basePropertyCountDontCheckGeneration()
-{
-    uint32_t flags = flagsDontCheckGeneration();
-    return (flags & OBJECT_FLAG_PROPERTY_COUNT_MASK) >> OBJECT_FLAG_PROPERTY_COUNT_SHIFT;
-}
-
-inline uint32_t
 ObjectGroup::basePropertyCount()
 {
-    maybeSweep(nullptr);
-    return basePropertyCountDontCheckGeneration();
+    return (flags() & OBJECT_FLAG_PROPERTY_COUNT_MASK) >> OBJECT_FLAG_PROPERTY_COUNT_SHIFT;
 }
 
 inline void
@@ -1142,27 +1149,20 @@ ObjectGroup::getProperty(JSContext* cx, JSObject* obj, jsid id)
 }
 
 MOZ_ALWAYS_INLINE HeapTypeSet*
-ObjectGroup::maybeGetPropertyDontCheckGeneration(jsid id)
+ObjectGroup::maybeGetProperty(jsid id)
 {
     MOZ_ASSERT(JSID_IS_VOID(id) || JSID_IS_EMPTY(id) || JSID_IS_STRING(id) || JSID_IS_SYMBOL(id));
     MOZ_ASSERT_IF(!JSID_IS_EMPTY(id), id == IdToTypeId(id));
-    MOZ_ASSERT(!unknownPropertiesDontCheckGeneration());
+    MOZ_ASSERT(!unknownProperties());
 
     Property* prop = TypeHashSet::Lookup<jsid, Property, Property>
-                         (propertySet, basePropertyCountDontCheckGeneration(), id);
+                         (propertySet, basePropertyCount(), id);
 
     if (!prop)
         return nullptr;
 
     prop->types.checkMagic();
     return &prop->types;
-}
-
-MOZ_ALWAYS_INLINE HeapTypeSet*
-ObjectGroup::maybeGetProperty(jsid id)
-{
-    maybeSweep(nullptr);
-    return maybeGetPropertyDontCheckGeneration(id);
 }
 
 inline unsigned
@@ -1200,7 +1200,7 @@ JSScript::types()
 }
 
 inline bool
-JSScript::ensureHasTypes(JSContext* cx)
+JSScript::ensureHasTypes(JSContext* cx, js::AutoKeepTypeScripts&)
 {
     return types() || makeTypes(cx);
 }

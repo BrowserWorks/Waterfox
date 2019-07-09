@@ -4,7 +4,6 @@
 es6id: 7.2.12
 description: >
     Abstract Equality Comparison: Symbol
-features: [Symbol]
 ---*/
 var symA = Symbol('66');
 var symB = Symbol('66');

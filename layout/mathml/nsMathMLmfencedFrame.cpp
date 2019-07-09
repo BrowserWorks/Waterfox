@@ -60,7 +60,7 @@ nsMathMLmfencedFrame::SetInitialChildList(ChildListID     aListID,
 
 nsresult
 nsMathMLmfencedFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                       nsAtom*        aAttribute,
+                                       nsIAtom*        aAttribute,
                                        int32_t         aModType)
 {
   RemoveFencesAndSeparators();
@@ -160,11 +160,12 @@ nsMathMLmfencedFrame::CreateFencesAndSeparators(nsPresContext* aPresContext)
 
 void
 nsMathMLmfencedFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                       const nsRect&           aDirtyRect,
                                        const nsDisplayListSet& aLists)
 {
   /////////////
   // display the content
-  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aLists);
+  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 
   ////////////
   // display fences and separators
@@ -213,8 +214,6 @@ nsMathMLmfencedFrame::Reflow(nsPresContext*          aPresContext,
                              nsReflowStatus&          aStatus)
 {
   MarkInReflow();
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   mPresentationData.flags &= ~NS_MATHML_ERROR;
   aDesiredSize.ClearSize();
   aDesiredSize.SetBlockStartAscent(0);
@@ -446,7 +445,7 @@ nsMathMLmfencedFrame::Reflow(nsPresContext*          aPresContext,
   // Set our overflow area
   GatherAndStoreOverflow(&aDesiredSize);
 
-  MOZ_ASSERT(aStatus.IsEmpty(), "This type of frame can't be split.");
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 

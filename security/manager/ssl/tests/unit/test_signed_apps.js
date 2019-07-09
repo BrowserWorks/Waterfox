@@ -114,6 +114,10 @@ function truncateEntry(entry, entryInput) {
   return [entry, content];
 }
 
+function run_test() {
+  run_next_test();
+}
+
 function check_open_result(name, expectedRv) {
   return function openSignedAppFileCallback(rv, aZipReader, aSignerCert) {
     do_print("openSignedAppFileCallback called for " + name);
@@ -136,19 +140,19 @@ function tampered_app_path(test_name) {
 
 add_test(function () {
   certdb.openSignedAppFileAsync(
-    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("signed_app"),
+    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("valid_app_1"),
     check_open_result("valid", Cr.NS_OK));
 });
 
 add_test(function () {
   certdb.openSignedAppFileAsync(
-    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("unsigned_app"),
+    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("unsigned_app_1"),
     check_open_result("unsigned", Cr.NS_ERROR_SIGNED_JAR_NOT_SIGNED));
 });
 
 add_test(function () {
   certdb.openSignedAppFileAsync(
-    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("unknown_issuer_app"),
+    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("unknown_issuer_app_1"),
     check_open_result("unknown_issuer",
                       getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER)));
 });
@@ -156,15 +160,15 @@ add_test(function () {
 // Sanity check to ensure a no-op tampering gives a valid result
 add_test(function () {
   let tampered = tampered_app_path("identity_tampering");
-  tamper(original_app_path("signed_app"), tampered, { }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { }, []);
   certdb.openSignedAppFileAsync(
-    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("signed_app"),
+    Ci.nsIX509CertDB.AppXPCShellRoot, original_app_path("valid_app_1"),
     check_open_result("identity_tampering", Cr.NS_OK));
 });
 
 add_test(function () {
   let tampered = tampered_app_path("missing_rsa");
-  tamper(original_app_path("signed_app"), tampered, { "META-INF/A.RSA": removeEntry }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { "META-INF/A.RSA": removeEntry }, []);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
     check_open_result("missing_rsa", Cr.NS_ERROR_SIGNED_JAR_NOT_SIGNED));
@@ -172,7 +176,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("missing_sf");
-  tamper(original_app_path("signed_app"), tampered, { "META-INF/A.SF": removeEntry }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { "META-INF/A.SF": removeEntry }, []);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
     check_open_result("missing_sf", Cr.NS_ERROR_SIGNED_JAR_MANIFEST_INVALID));
@@ -180,7 +184,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("missing_manifest_mf");
-  tamper(original_app_path("signed_app"), tampered, { "META-INF/MANIFEST.MF": removeEntry }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { "META-INF/MANIFEST.MF": removeEntry }, []);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
     check_open_result("missing_manifest_mf",
@@ -189,7 +193,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("missing_entry");
-  tamper(original_app_path("signed_app"), tampered, { "manifest.json": removeEntry }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { "manifest.webapp": removeEntry }, []);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
     check_open_result("missing_entry", Cr.NS_ERROR_SIGNED_JAR_ENTRY_MISSING));
@@ -197,7 +201,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("truncated_entry");
-  tamper(original_app_path("signed_app"), tampered, { "manifest.json": truncateEntry }, []);
+  tamper(original_app_path("valid_app_1"), tampered, { "manifest.webapp": truncateEntry }, []);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
     check_open_result("truncated_entry", Cr.NS_ERROR_SIGNED_JAR_MODIFIED_ENTRY));
@@ -205,7 +209,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("unsigned_entry");
-  tamper(original_app_path("signed_app"), tampered, {},
+  tamper(original_app_path("valid_app_1"), tampered, {},
     [ { "name": "unsigned.txt", "content": "unsigned content!" } ]);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,
@@ -214,7 +218,7 @@ add_test(function () {
 
 add_test(function () {
   let tampered = tampered_app_path("unsigned_metainf_entry");
-  tamper(original_app_path("signed_app"), tampered, {},
+  tamper(original_app_path("valid_app_1"), tampered, {},
     [ { name: "META-INF/unsigned.txt", content: "unsigned content!" } ]);
   certdb.openSignedAppFileAsync(
     Ci.nsIX509CertDB.AppXPCShellRoot, tampered,

@@ -56,7 +56,7 @@ XPCNativeMember::Resolve(XPCCallContext& ccx, XPCNativeInterface* iface,
     MOZ_ASSERT(iface == GetInterface());
     if (IsConstant()) {
         RootedValue resultVal(ccx);
-        nsCString name;
+        nsXPIDLCString name;
         if (NS_FAILED(iface->GetInterfaceInfo()->GetConstant(mIndex, &resultVal,
                                                              getter_Copies(name))))
             return false;
@@ -333,13 +333,13 @@ XPCNativeInterface::NewInstance(nsIInterfaceInfo* aInfo)
     if (!failed) {
         for (i = 0; i < constCount; i++) {
             RootedValue constant(cx);
-            nsCString namestr;
+            nsXPIDLCString namestr;
             if (NS_FAILED(aInfo->GetConstant(i, &constant, getter_Copies(namestr)))) {
                 failed = true;
                 break;
             }
 
-            str = JS_AtomizeAndPinString(cx, namestr.get());
+            str = JS_AtomizeAndPinString(cx, namestr);
             if (!str) {
                 NS_ERROR("bad constant name");
                 failed = true;

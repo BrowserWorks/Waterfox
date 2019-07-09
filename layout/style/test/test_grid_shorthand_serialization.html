@@ -26,8 +26,6 @@ var initial_values = {
     gridColumnGap: "0px",
 };
 
-const isStylo = SpecialPowers.DOMWindowUtils.isStyledByServo;
-
 // For various specified values of the grid-template subproperties,
 // test the serialization of the shorthand.
 var grid_template_test_cases = [
@@ -70,13 +68,13 @@ var grid_template_test_cases = [
     {
         gridTemplateAreas: "\"a\"",
         gridTemplateRows: "[foo] repeat(1, 20px) [bar]",
-        shorthand: isStylo ? "" : "[foo] \"a\" 20px [bar]",
+        shorthand: "[foo] \"a\" 20px [bar]",
     },
     {
         gridTemplateAreas: "\"a a\"",
         gridTemplateColumns: "repeat(2, 100px)",
         gridTemplateRows: "auto",
-        shorthand: isStylo ? "" : "\"a a\" auto / 100px 100px",
+        shorthand: "\"a a\" auto / 100px 100px",
     },
     // Combinations of longhands that make the shorthand non-serializable:
     {
@@ -164,22 +162,30 @@ grid_test_cases = grid_template_test_cases.concat([
     },
     {
         gridAutoFlow: "row",
+        gridRowGap: "0px",
         shorthand: "none / none",
     },
-    // Test that grid-gap properties don't affect serialization.
     {
+        gridAutoFlow: "row",
         gridRowGap: "1px",
-        shorthand: "none / none",
+        shorthand: "",
     },
     {
+        gridAutoFlow: "row",
         gridColumnGap: "1px",
-        shorthand: "none / none",
+        shorthand: "",
     },
 ]);
 
 var grid_important_test_cases = [
     {
         "grid-auto-flow": "row",
+        "grid-row-gap": "0px",
+        shorthand: "",
+    },
+    {
+        "grid-auto-flow": "row",
+        "grid-column-gap": "1px",
         shorthand: "",
     },
 ];
@@ -219,11 +225,11 @@ run_tests(grid_template_test_cases, "gridTemplate", [
 
 run_tests(grid_test_cases, "grid", [
     "gridTemplateAreas", "gridTemplateColumns", "gridTemplateRows",
-    "gridAutoFlow", "gridAutoColumns", "gridAutoRows"]);
+    "gridAutoFlow", "gridAutoColumns", "gridAutoRows", "gridColumnGap", "gridRowGap"]);
 
 run_important_tests(grid_important_test_cases, "grid", [
     "grid-template-areas", "grid-template-columns", "grid-template-rows",
-    "grid-auto-flow", "grid-auto-columns", "grid-auto-rows"]);
+    "grid-auto-flow", "grid-auto-columns", "grid-auto-rows", "grid-column-gap", "grid-row-gap"]);
 
 </script>
 </body>

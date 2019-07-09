@@ -73,6 +73,7 @@ namespace network {
 class Connection;
 } // namespace network
 
+class PowerManager;
 class Presentation;
 class LegacyMozTCPSocket;
 class VRDisplay;
@@ -174,6 +175,7 @@ public:
   bool CookieEnabled();
   void GetBuildID(nsAString& aBuildID, CallerType aCallerType,
                   ErrorResult& aRv) const;
+  PowerManager* GetMozPower(ErrorResult& aRv);
   bool JavaEnabled(CallerType aCallerType, ErrorResult& aRv);
   uint64_t HardwareConcurrency();
   bool CpuHasSSE2();
@@ -290,6 +292,7 @@ private:
   RefPtr<DesktopNotificationCenter> mNotification;
   RefPtr<battery::BatteryManager> mBatteryManager;
   RefPtr<Promise> mBatteryPromise;
+  RefPtr<PowerManager> mPowerManager;
   RefPtr<network::Connection> mConnection;
   RefPtr<CredentialsContainer> mCredentials;
   RefPtr<MediaDevices> mMediaDevices;

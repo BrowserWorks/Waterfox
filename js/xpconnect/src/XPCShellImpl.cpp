@@ -392,7 +392,8 @@ Version(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
     args.rval().setInt32(JS_GetVersion(cx));
     if (args.get(0).isInt32())
-        SetVersionForCurrentRealm(cx, JSVersion(args[0].toInt32()));
+        JS_SetVersionForCompartment(js::GetContextCompartment(cx),
+                                    JSVersion(args[0].toInt32()));
     return true;
 }
 
@@ -658,28 +659,156 @@ RegisterXPCTestComponents(JSContext* cx, unsigned argc, Value* vp)
 #endif
 
 static const JSFunctionSpec glob_functions[] = {
-    JS_FN("print",           Print,          0,0),
-    JS_FN("readline",        ReadLine,       1,0),
-    JS_FN("load",            Load,           1,0),
-    JS_FN("quit",            Quit,           0,0),
-    JS_FN("version",         Version,        1,0),
-    JS_FN("dumpXPC",         DumpXPC,        1,0),
-    JS_FN("dump",            Dump,           1,0),
-    JS_FN("gc",              GC,             0,0),
+    JS_FS("print",           Print,          0,0),
+    JS_FS("readline",        ReadLine,       1,0),
+    JS_FS("load",            Load,           1,0),
+    JS_FS("quit",            Quit,           0,0),
+    JS_FS("version",         Version,        1,0),
+    JS_FS("dumpXPC",         DumpXPC,        1,0),
+    JS_FS("dump",            Dump,           1,0),
+    JS_FS("gc",              GC,             0,0),
 #ifdef JS_GC_ZEAL
-    JS_FN("gczeal",          GCZeal,         1,0),
+    JS_FS("gczeal",          GCZeal,         1,0),
 #endif
-    JS_FN("options",         Options,        0,0),
-    JS_FN("sendCommand",     SendCommand,    1,0),
-    JS_FN("atob",            xpc::Atob,      1,0),
-    JS_FN("btoa",            xpc::Btoa,      1,0),
-    JS_FN("setInterruptCallback", SetInterruptCallback, 1,0),
-    JS_FN("simulateActivityCallback", SimulateActivityCallback, 1,0),
-    JS_FN("registerAppManifest", RegisterAppManifest, 1, 0),
+    JS_FS("options",         Options,        0,0),
+    JS_FS("sendCommand",     SendCommand,    1,0),
+    JS_FS("atob",            xpc::Atob,      1,0),
+    JS_FS("btoa",            xpc::Btoa,      1,0),
+    JS_FS("setInterruptCallback", SetInterruptCallback, 1,0),
+    JS_FS("simulateActivityCallback", SimulateActivityCallback, 1,0),
+    JS_FS("registerAppManifest", RegisterAppManifest, 1, 0),
 #ifdef ENABLE_TESTS
-    JS_FN("registerXPCTestComponents", RegisterXPCTestComponents, 0, 0),
+    JS_FS("registerXPCTestComponents", RegisterXPCTestComponents, 0, 0),
 #endif
     JS_FS_END
+};
+
+static bool
+env_setProperty(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
+                ObjectOpResult& result)
+{
+/* XXX porting may be easy, but these don't seem to supply setenv by default */
+#if !defined SOLARIS
+    RootedString valstr(cx);
+    RootedString idstr(cx);
+    int rv;
+
+    RootedValue idval(cx);
+    if (!JS_IdToValue(cx, id, &idval))
+        return false;
+
+    idstr = ToString(cx, idval);
+    valstr = ToString(cx, vp);
+    if (!idstr || !valstr)
+        return false;
+    JSAutoByteString name(cx, idstr);
+    if (!name)
+        return false;
+    JSAutoByteString value(cx, valstr);
+    if (!value)
+        return false;
+#if defined XP_WIN || defined HPUX || defined OSF1 || defined SCO
+    {
+        char* waste = JS_smprintf("%s=%s", name.ptr(), value.ptr()).release();
+        if (!waste) {
+            JS_ReportOutOfMemory(cx);
+            return false;
+        }
+        rv = putenv(waste);
+#ifdef XP_WIN
+        /*
+         * HPUX9 at least still has the bad old non-copying putenv.
+         *
+         * Per mail from <s.shanmuganathan@digital.com>, OSF1 also has a putenv
+         * that will crash if you pass it an auto char array (so it must place
+         * its argument directly in the char* environ[] array).
+         */
+        free(waste);
+#endif
+    }
+#else
+    rv = setenv(name.ptr(), value.ptr(), 1);
+#endif
+    if (rv < 0) {
+        name.clear();
+        value.clear();
+        if (!name.encodeUtf8(cx, idstr))
+            return false;
+        if (!value.encodeUtf8(cx, valstr))
+            return false;
+        JS_ReportErrorUTF8(cx, "can't set envariable %s to %s", name.ptr(), value.ptr());
+        return false;
+    }
+    vp.setString(valstr);
+#endif /* !defined SOLARIS */
+    return result.succeed();
+}
+
+static bool
+env_enumerate(JSContext* cx, HandleObject obj)
+{
+    static bool reflected;
+    char** evp;
+    char* name;
+    char* value;
+    RootedString valstr(cx);
+    bool ok;
+
+    if (reflected)
+        return true;
+
+    for (evp = (char**)JS_GetPrivate(obj); (name = *evp) != nullptr; evp++) {
+        value = strchr(name, '=');
+        if (!value)
+            continue;
+        *value++ = '\0';
+        valstr = JS_NewStringCopyZ(cx, value);
+        ok = valstr ? JS_DefineProperty(cx, obj, name, valstr, JSPROP_ENUMERATE) : false;
+        value[-1] = '=';
+        if (!ok)
+            return false;
+    }
+
+    reflected = true;
+    return true;
+}
+
+static bool
+env_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
+{
+    JSString* idstr;
+
+    RootedValue idval(cx);
+    if (!JS_IdToValue(cx, id, &idval))
+        return false;
+
+    idstr = ToString(cx, idval);
+    if (!idstr)
+        return false;
+    JSAutoByteString name(cx, idstr);
+    if (!name)
+        return false;
+    const char* value = getenv(name.ptr());
+    if (value) {
+        RootedString valstr(cx, JS_NewStringCopyZ(cx, value));
+        if (!valstr)
+            return false;
+        if (!JS_DefinePropertyById(cx, obj, id, valstr, JSPROP_ENUMERATE)) {
+            return false;
+        }
+        *resolvedp = true;
+    }
+    return true;
+}
+
+static const JSClassOps env_classOps = {
+    nullptr, nullptr, nullptr, env_setProperty,
+    env_enumerate, nullptr, env_resolve
+};
+
+static const JSClass env_class = {
+    "environment", JSCLASS_HAS_PRIVATE,
+    &env_classOps
 };
 
 /***************************************************************************/
@@ -957,7 +1086,8 @@ ProcessArgs(AutoJSAPI& jsapi, char** argv, int argc, XPCShellDirProvider* aDirPr
             if (++i == argc) {
                 return printUsageAndSetExitCode();
             }
-            SetVersionForCurrentRealm(cx, JSVersion(atoi(argv[i])));
+            JS_SetVersionForCompartment(js::GetContextCompartment(cx),
+                                        JSVersion(atoi(argv[i])));
             break;
         case 'W':
             reportWarnings = false;
@@ -1093,10 +1223,8 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 
     mozilla::LogModule::Init();
 
-#ifdef MOZ_GECKO_PROFILER
     char aLocal;
     profiler_init(&aLocal);
-#endif
 
     if (PR_GetEnv("MOZ_CHAOSMODE")) {
         ChaosFeature feature = ChaosFeature::Any;
@@ -1117,7 +1245,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 
     { // Start scoping nsCOMPtrs
         nsCOMPtr<nsIFile> appFile;
-        rv = XRE_GetBinaryPath(getter_AddRefs(appFile));
+        rv = XRE_GetBinaryPath(argv[0], getter_AddRefs(appFile));
         if (NS_FAILED(rv)) {
             printf("Couldn't find application file.\n");
             return 1;
@@ -1307,14 +1435,15 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
         options.creationOptions().setNewZoneInSystemZoneGroup();
         if (xpc::SharedMemoryEnabled())
             options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
-        options.behaviors().setVersion(JSVERSION_DEFAULT);
-        JS::Rooted<JSObject*> glob(cx);
-        rv = xpc::InitClassesWithNewWrappedGlobal(cx,
-                                                  static_cast<nsIGlobalObject*>(backstagePass),
-                                                  systemprincipal,
-                                                  0,
-                                                  options,
-                                                  &glob);
+        options.behaviors().setVersion(JSVERSION_LATEST);
+        nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
+        rv = nsXPConnect::XPConnect()->
+            InitClassesWithNewWrappedGlobal(cx,
+                                            static_cast<nsIGlobalObject*>(backstagePass),
+                                            systemprincipal,
+                                            0,
+                                            options,
+                                            getter_AddRefs(holder));
         if (NS_FAILED(rv))
             return 1;
 
@@ -1344,6 +1473,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 #endif
 
         {
+            JS::Rooted<JSObject*> glob(cx, holder->GetJSObject());
             if (!glob) {
                 return 1;
             }
@@ -1366,13 +1496,22 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
                 return 1;
             }
 
+            JS::Rooted<JSObject*> envobj(cx);
+            envobj = JS_DefineObject(cx, glob, "environment", &env_class);
+            if (!envobj) {
+                return 1;
+            }
+
+            JS_SetPrivate(envobj, envp);
+
             nsAutoString workingDirectory;
             if (GetCurrentWorkingDirectory(workingDirectory))
                 gWorkingDirectory = &workingDirectory;
 
-            JS_DefineProperty(cx, glob, "__LOCATION__",
-                              GetLocationProperty, nullptr,
-                              0);
+            JS_DefineProperty(cx, glob, "__LOCATION__", JS::UndefinedHandleValue,
+                              JSPROP_SHARED,
+                              GetLocationProperty,
+                              nullptr);
 
             {
                 // We are almost certainly going to run script here, so we need an
@@ -1419,11 +1558,9 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
         CrashReporter::UnsetExceptionHandler();
 #endif
 
-#ifdef MOZ_GECKO_PROFILER
     // This must precede NS_LogTerm(), otherwise xpcshell return non-zero
     // during some tests, which causes failures.
     profiler_shutdown();
-#endif
 
     NS_LogTerm();
 
@@ -1435,11 +1572,10 @@ XPCShellDirProvider::SetGREDirs(nsIFile* greDir)
 {
     mGREDir = greDir;
     mGREDir->Clone(getter_AddRefs(mGREBinDir));
-
 #ifdef XP_MACOSX
     nsAutoCString leafName;
     mGREDir->GetNativeLeafName(leafName);
-    if (leafName.EqualsLiteral("Resources")) {
+    if (leafName.Equals("Resources")) {
         mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
     }
 #endif

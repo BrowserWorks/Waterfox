@@ -20,7 +20,7 @@ info: >
   7. If index = -0, return false.
   ...
 includes: [testTypedArray.js]
-features: [Reflect, TypedArray]
+features: [Reflect]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

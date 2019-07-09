@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-id-init-fn-name-gen.case
-// - src/dstr-binding-for-await/default/for-await-of-async-func-var.template
+// - src/dstr-binding/obj-ptrn-id-init-fn-name-gen.case
+// - src/dstr-binding/default/for-await-of-async-func-var.template
 /*---
 description: SingleNameBinding assigns name to "anonymous" generator functions (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
-features: [generators, destructuring-binding, async-iteration]
+features: [destructuring-binding, async-iteration]
 flags: [generated, async]
 info: |
     IterationStatement :
@@ -34,7 +35,7 @@ info: |
 
     13.3.3.7 Runtime Semantics: KeyedBindingInitialization
 
-    SingleNameBinding : BindingIdentifier Initializer_opt
+    SingleNameBinding : BindingIdentifier Initializeropt
 
     [...]
     6. If Initializer is present and v is undefined, then
@@ -44,7 +45,6 @@ info: |
           ii. ReturnIfAbrupt(hasNameProperty).
           iii. If hasNameProperty is false, perform SetFunctionName(v,
                bindingId).
-
 ---*/
 
 var iterCount = 0;

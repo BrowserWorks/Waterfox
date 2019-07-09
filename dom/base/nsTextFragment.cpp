@@ -85,10 +85,8 @@ nsTextFragment::~nsTextFragment()
 void
 nsTextFragment::ReleaseText()
 {
-  if (mState.mIs2b) {
-    NS_RELEASE(m2b);
-  } else if (mState.mLength && m1b && mState.mInHeap) {
-    free(const_cast<char*>(m1b));
+  if (mState.mLength && m1b && mState.mInHeap) {
+    free(m2b); // m1b == m2b as far as free is concerned
   }
 
   m1b = nullptr;
@@ -105,32 +103,31 @@ nsTextFragment::operator=(const nsTextFragment& aOther)
 
   if (aOther.mState.mLength) {
     if (!aOther.mState.mInHeap) {
-      MOZ_ASSERT(!aOther.mState.mIs2b);
-      m1b = aOther.m1b;
-    } else if (aOther.mState.mIs2b) {
-      m2b = aOther.m2b;
-      NS_ADDREF(m2b);
-    } else {
-      m1b = static_cast<char*>(malloc(aOther.mState.mLength));
-      if (m1b) {
-        memcpy(const_cast<char*>(m1b), aOther.m1b, aOther.mState.mLength);
+      m1b = aOther.m1b; // This will work even if aOther is using m2b
+    }
+    else {
+      CheckedUint32 m2bSize = aOther.mState.mLength;
+      m2bSize *= (aOther.mState.mIs2b ? sizeof(char16_t) : sizeof(char));
+      m2b = nullptr;
+      if (m2bSize.isValid()) {
+        m2b = static_cast<char16_t*>(malloc(m2bSize.value()));
+      }
+
+      if (m2b) {
+        memcpy(m2b, aOther.m2b, m2bSize.value());
       } else {
         // allocate a buffer for a single REPLACEMENT CHARACTER
-        m2b = nsStringBuffer::Alloc(sizeof(char16_t) * 2).take();
-        if (!m2b) {
-          MOZ_CRASH("OOM!");
-        }
-        char16_t* data = static_cast<char16_t*>(m2b->Data());
-        data[0] = 0xFFFD; // REPLACEMENT CHARACTER
-        data[1] = char16_t(0);
+        m2b = static_cast<char16_t*>(moz_xmalloc(sizeof(char16_t)));
+        m2b[0] = 0xFFFD; // REPLACEMENT CHARACTER
         mState.mIs2b = true;
         mState.mInHeap = true;
         mState.mLength = 1;
-        return *this;
       }
     }
 
-    mAllBits = aOther.mAllBits;
+    if (m1b) {
+      mAllBits = aOther.mAllBits;
+    }
   }
 
   return *this;
@@ -199,8 +196,7 @@ FirstNon8Bit(const char16_t *str, const char16_t *end)
 }
 
 bool
-nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
-                      bool aUpdateBidi, bool aForce2b)
+nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi)
 {
   ReleaseText();
 
@@ -209,7 +205,7 @@ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
   }
 
   char16_t firstChar = *aBuffer;
-  if (!aForce2b && aLength == 1 && firstChar < 256) {
+  if (aLength == 1 && firstChar < 256) {
     m1b = sSingleCharSharedString + firstChar;
     mState.mInHeap = false;
     mState.mIs2b = false;
@@ -222,8 +218,7 @@ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
   const char16_t *uend = aBuffer + aLength;
 
   // Check if we can use a shared string
-  if (!aForce2b &&
-      aLength <= 1 + TEXTFRAG_WHITE_AFTER_NEWLINE + TEXTFRAG_MAX_NEWLINES &&
+  if (aLength <= 1 + TEXTFRAG_WHITE_AFTER_NEWLINE + TEXTFRAG_MAX_NEWLINES &&
      (firstChar == ' ' || firstChar == '\n' || firstChar == '\t')) {
     if (firstChar == ' ') {
       ++ucp;
@@ -260,22 +255,21 @@ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
   }
 
   // See if we need to store the data in ucs2 or not
-  int32_t first16bit = aForce2b ? 0 : FirstNon8Bit(ucp, uend);
+  int32_t first16bit = FirstNon8Bit(ucp, uend);
 
   if (first16bit != -1) { // aBuffer contains no non-8bit character
     // Use ucs2 storage because we have to
-    CheckedUint32 m2bSize = aLength + 1;
+    CheckedUint32 m2bSize = aLength;
     m2bSize *= sizeof(char16_t);
     if (!m2bSize.isValid()) {
       return false;
     }
 
-    m2b = nsStringBuffer::Alloc(m2bSize.value()).take();
+    m2b = static_cast<char16_t*>(malloc(m2bSize.value()));
     if (!m2b) {
       return false;
     }
-    memcpy(m2b->Data(), aBuffer, aLength * sizeof(char16_t));
-    static_cast<char16_t*>(m2b->Data())[aLength] = char16_t(0);
+    memcpy(m2b, aBuffer, m2bSize.value());
 
     mState.mIs2b = true;
     if (aUpdateBidi) {
@@ -319,7 +313,7 @@ nsTextFragment::CopyTo(char16_t *aDest, int32_t aOffset, int32_t aCount)
 
   if (aCount != 0) {
     if (mState.mIs2b) {
-      memcpy(aDest, Get2b() + aOffset, sizeof(char16_t) * aCount);
+      memcpy(aDest, m2b + aOffset, sizeof(char16_t) * aCount);
     } else {
       const char *cp = m1b + aOffset;
       const char *end = cp + aCount;
@@ -330,56 +324,38 @@ nsTextFragment::CopyTo(char16_t *aDest, int32_t aOffset, int32_t aCount)
 }
 
 bool
-nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
-                       bool aUpdateBidi, bool aForce2b)
+nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength, bool aUpdateBidi)
 {
   // This is a common case because some callsites create a textnode
   // with a value by creating the node and then calling AppendData.
   if (mState.mLength == 0) {
-    return SetTo(aBuffer, aLength, aUpdateBidi, aForce2b);
+    return SetTo(aBuffer, aLength, aUpdateBidi);
   }
 
   // Should we optimize for aData.Length() == 0?
 
-  // FYI: Don't use CheckedInt in this method since here is very hot path
-  //      in some performance tests.
-  if (NS_MAX_TEXT_FRAGMENT_LENGTH - mState.mLength < aLength) {
-    return false;  // Would be overflown if we'd keep handling.
+  CheckedUint32 length = mState.mLength;
+  length += aLength;
+
+  if (!length.isValid()) {
+    return false;
   }
 
   if (mState.mIs2b) {
-    size_t size = mState.mLength + aLength + 1;
-    if (SIZE_MAX / sizeof(char16_t) < size) {
-      return false;  // Would be overflown if we'd keep handling.
+    length *= sizeof(char16_t);
+    if (!length.isValid()) {
+      return false;
     }
-    size *= sizeof(char16_t);
 
     // Already a 2-byte string so the result will be too
-    nsStringBuffer* buff = nullptr;
-    nsStringBuffer* bufferToRelease = nullptr;
-    if (m2b->IsReadonly()) {
-      buff = nsStringBuffer::Alloc(size).take();
-      if (!buff) {
-        return false;
-      }
-      bufferToRelease = m2b;
-      memcpy(static_cast<char16_t*>(buff->Data()), m2b->Data(),
-             mState.mLength * sizeof(char16_t));
-    } else {
-      buff = nsStringBuffer::Realloc(m2b, size);
-      if (!buff) {
-        return false;
-      }
+    char16_t* buff = static_cast<char16_t*>(realloc(m2b, length.value()));
+    if (!buff) {
+      return false;
     }
 
-    char16_t* data = static_cast<char16_t*>(buff->Data());
-    memcpy(data + mState.mLength, aBuffer,
-           aLength * sizeof(char16_t));
+    memcpy(buff + mState.mLength, aBuffer, aLength * sizeof(char16_t));
     mState.mLength += aLength;
     m2b = buff;
-    data[mState.mLength] = char16_t(0);
-
-    NS_IF_RELEASE(bufferToRelease);
 
     if (aUpdateBidi) {
       UpdateBidiFlag(aBuffer, aLength);
@@ -389,35 +365,32 @@ nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
   }
 
   // Current string is a 1-byte string, check if the new data fits in one byte too.
-  int32_t first16bit = aForce2b ? 0 : FirstNon8Bit(aBuffer, aBuffer + aLength);
+  int32_t first16bit = FirstNon8Bit(aBuffer, aBuffer + aLength);
 
   if (first16bit != -1) { // aBuffer contains no non-8bit character
-    size_t size = mState.mLength + aLength + 1;
-    if (SIZE_MAX / sizeof(char16_t) < size) {
-      return false;  // Would be overflown if we'd keep handling.
+    length *= sizeof(char16_t);
+    if (!length.isValid()) {
+      return false;
     }
-    size *= sizeof(char16_t);
 
     // The old data was 1-byte, but the new is not so we have to expand it
     // all to 2-byte
-    nsStringBuffer* buff = nsStringBuffer::Alloc(size).take();
+    char16_t* buff = static_cast<char16_t*>(malloc(length.value()));
     if (!buff) {
       return false;
     }
 
     // Copy data into buff
-    char16_t* data = static_cast<char16_t*>(buff->Data());
-    LossyConvertEncoding8to16 converter(data);
+    LossyConvertEncoding8to16 converter(buff);
     copy_string(m1b, m1b+mState.mLength, converter);
 
-    memcpy(data + mState.mLength, aBuffer, aLength * sizeof(char16_t));
+    memcpy(buff + mState.mLength, aBuffer, aLength * sizeof(char16_t));
     mState.mLength += aLength;
     mState.mIs2b = true;
 
     if (mState.mInHeap) {
-      free(const_cast<char*>(m1b));
+      free(m2b);
     }
-    data[mState.mLength] = char16_t(0);
     m2b = buff;
 
     mState.mInHeap = true;
@@ -430,17 +403,15 @@ nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
   }
 
   // The new and the old data is all 1-byte
-  size_t size = mState.mLength + aLength;
-  MOZ_ASSERT(sizeof(char) == 1);
   char* buff;
   if (mState.mInHeap) {
-    buff = static_cast<char*>(realloc(const_cast<char*>(m1b), size));
+    buff = static_cast<char*>(realloc(const_cast<char*>(m1b), length.value()));
     if (!buff) {
       return false;
     }
   }
   else {
-    buff = static_cast<char*>(malloc(size));
+    buff = static_cast<char*>(malloc(length.value()));
     if (!buff) {
       return false;
     }
@@ -463,7 +434,7 @@ nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
 nsTextFragment::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   if (Is2b()) {
-    return m2b->SizeOfIncludingThisIfUnshared(aMallocSizeOf);
+    return aMallocSizeOf(m2b);
   }
 
   if (mState.mInHeap) {

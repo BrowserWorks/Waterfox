@@ -83,10 +83,10 @@ class RobocopTestRunner(MochitestDesktop):
         # Despite our efforts to clean up servers started by this script, in practice
         # we still see infrequent cases where a process is orphaned and interferes
         # with future tests, typically because the old server is keeping the port in use.
-        # Try to avoid those failures by checking for and killing servers before
+        # Try to avoid those failures by checking for and killing orphan servers before
         # trying to start new ones.
-        self.killNamedProc('ssltunnel')
-        self.killNamedProc('xpcshell')
+        self.killNamedOrphans('ssltunnel')
+        self.killNamedOrphans('xpcshell')
         self.auto.deleteANRs()
         self.auto.deleteTombstones()
         procName = self.options.app.split('/')[-1]
@@ -226,6 +226,7 @@ class RobocopTestRunner(MochitestDesktop):
         self.options.extraPrefs.append('layout.css.devPixelsPerPx=1.0')
         self.options.extraPrefs.append('browser.chrome.dynamictoolbar=false')
         self.options.extraPrefs.append('browser.snippets.enabled=false')
+        self.options.extraPrefs.append('browser.casting.enabled=true')
         self.options.extraPrefs.append('extensions.autoupdate.enabled=false')
 
         # Override the telemetry init delay for integration testing.

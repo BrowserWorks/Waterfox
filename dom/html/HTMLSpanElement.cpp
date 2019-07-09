@@ -10,7 +10,7 @@
 #include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsGkAtoms.h"
 #include "nsStyleConsts.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(Span)
 

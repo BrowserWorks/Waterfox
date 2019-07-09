@@ -100,7 +100,9 @@ EventTokenBucket::EventTokenBucket(uint32_t eventsPerSecond,
   if (NS_SUCCEEDED(rv))
     sts = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
   if (NS_SUCCEEDED(rv))
-    mTimer = NS_NewTimer(sts);
+    mTimer = do_CreateInstance("@mozilla.org/timer;1");
+  if (mTimer)
+    mTimer->SetTarget(sts);
   SetRate(eventsPerSecond, burstSize);
 }
 
@@ -428,7 +430,7 @@ EventTokenBucket::WantNormalTimers()
     }
 
     if (!mFineGrainResetTimer)
-      mFineGrainResetTimer = NS_NewTimer();
+      mFineGrainResetTimer = do_CreateInstance("@mozilla.org/timer;1");
 
     // if we can't delay the reset, just do it now
     if (!mFineGrainResetTimer) {

@@ -11,7 +11,6 @@
 #include "mozilla/ServoStyleRule.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/ServoImportRule.h"
-#include "mozilla/StyleSheetInlines.h"
 
 #include "nsDocument.h"
 #include "nsStyleSheetService.h"
@@ -176,10 +175,7 @@ void
 ServoStyleRuleMap::FillTableFromStyleSheet(ServoStyleSheet* aSheet)
 {
   if (aSheet->IsComplete()) {
-    // XBL stylesheets are not expected to ever change, so it's a waste
-    // to make its inner unique.
-    FillTableFromRuleList(aSheet->GetCssRulesInternal(
-        /* aRequireUniqueInner = */ !mStyleSet->IsForXBL()));
+    FillTableFromRuleList(aSheet->GetCssRulesInternal());
   }
 }
 

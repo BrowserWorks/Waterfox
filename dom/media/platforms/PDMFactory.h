@@ -45,6 +45,8 @@ public:
   // This is called on the decode task queue.
   void SetCDMProxy(CDMProxy* aProxy);
 
+  static void EnsureInit();
+
   static constexpr int kYUV400 = 0;
   static constexpr int kYUV420 = 1;
   static constexpr int kYUV422 = 2;
@@ -73,8 +75,8 @@ private:
   bool mFFmpegFailedToLoad = false;
   bool mGMPPDMFailedToStartup = false;
 
-  void EnsureInit() const;
-  template<class T> friend class StaticAutoPtr;
+  template <class T>
+  friend class StaticAutoPtr;
   static StaticAutoPtr<PDMFactoryImpl> sInstance;
   static StaticMutex sMonitor;
 };

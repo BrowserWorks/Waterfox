@@ -19,13 +19,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/ioctl.h>
 #include <linux/ipc.h>
 #include <linux/net.h>
 #include <linux/prctl.h>
 #include <linux/sched.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
@@ -62,10 +60,6 @@ using namespace sandbox::bpf_dsl;
 #ifndef PR_SET_PTRACER
 #define PR_SET_PTRACER 0x59616d61
 #endif
-
-// The headers define O_LARGEFILE as 0 on x86_64, but we need the
-// actual value because it shows up in file flags.
-#define O_LARGEFILE_REAL 00100000
 
 // To avoid visual confusion between "ifdef ANDROID" and "ifndef ANDROID":
 #ifndef ANDROID
@@ -321,11 +315,14 @@ public:
     case __NR_exit_group:
       return Allow();
 
+      case __NR_getrandom:
+        return Allow();
+
 #ifdef MOZ_ASAN
       // ASAN's error reporter wants to know if stderr is a tty.
     case __NR_ioctl: {
       Arg<int> fd(0);
-      return If(fd == STDERR_FILENO, Error(ENOTTY))
+      return If(fd == STDERR_FILENO, Allow())
         .Else(InvalidSyscall());
     }
 
@@ -500,20 +497,6 @@ private:
     return broker->Readlink(path, buf, size);
   }
 
-  static intptr_t ReadlinkAtTrap(ArgsRef aArgs, void* aux) {
-    auto broker = static_cast<SandboxBrokerClient*>(aux);
-    auto fd = static_cast<int>(aArgs.args[0]);
-    auto path = reinterpret_cast<const char*>(aArgs.args[1]);
-    auto buf = reinterpret_cast<char*>(aArgs.args[2]);
-    auto size = static_cast<size_t>(aArgs.args[3]);
-    if (fd != AT_FDCWD && path[0] != '/') {
-      SANDBOX_LOG_ERROR("unsupported fd-relative readlinkat(%d, %s, %p, %u)",
-                        fd, path, buf, size);
-      return BlockedSyscallTrap(aArgs, nullptr);
-    }
-    return broker->Readlink(path, buf, size);
-  }
-
   static intptr_t GetPPidTrap(ArgsRef aArgs, void* aux) {
     // In a pid namespace, getppid() will return 0. We will return 0 instead
     // of the real parent pid to see what breaks when we introduce the
@@ -537,6 +520,11 @@ public:
     : mBroker(aBroker),
       mSyscallWhitelist(aSyscallWhitelist) {}
   ~ContentSandboxPolicy() override = default;
+  ResultExpr PrctlPolicy() const override {
+    // Ideally this should be restricted to a whitelist, but content
+    // uses enough things that it's not trivial to determine it.
+    return Allow();
+  }
   Maybe<ResultExpr> EvaluateSocketCall(int aCall) const override {
     switch(aCall) {
     case SYS_RECVFROM:
@@ -552,7 +540,7 @@ public:
       }
       Arg<int> domain(0), type(1);
       return Some(If(domain == AF_UNIX,
-                     Switch(type & ~SOCK_CLOEXEC)
+                     Switch(type)
                      .Case(SOCK_STREAM, Allow())
                      .Case(SOCK_SEQPACKET, Allow())
                      .Case(SOCK_DGRAM, Trap(SocketpairDatagramTrap, nullptr))
@@ -644,8 +632,6 @@ public:
         return Trap(UnlinkTrap, mBroker);
       case __NR_readlink:
         return Trap(ReadlinkTrap, mBroker);
-      case __NR_readlinkat:
-        return Trap(ReadlinkAtTrap, mBroker);
       }
     } else {
       // No broker; allow the syscalls directly.  )-:
@@ -665,7 +651,6 @@ public:
       case __NR_rmdir:
       case __NR_unlink:
       case __NR_readlink:
-      case __NR_readlinkat:
         return Allow();
       }
     }
@@ -699,6 +684,15 @@ public:
       return Error(EPERM);
 #endif
 
+    case __NR_readlinkat:
+#ifdef DESKTOP
+      // Bug 1290896
+      return Allow();
+#else
+      // Workaround for bug 964455:
+      return Error(EINVAL);
+#endif
+
     CASES_FOR_select:
     case __NR_pselect6:
       return Allow();
@@ -713,71 +707,17 @@ public:
 #endif
       return Allow();
 
-#ifdef MOZ_ALSA
     case __NR_ioctl:
+      // ioctl() is for GL. Remove when GL proxy is implemented.
+      // Additionally ioctl() might be a place where we want to have
+      // argument filtering
       return Allow();
-#else
-    case __NR_ioctl: {
-      static const unsigned long kTypeMask = _IOC_TYPEMASK << _IOC_TYPESHIFT;
-      static const unsigned long kTtyIoctls = TIOCSTI & kTypeMask;
-      // On some older architectures (but not x86 or ARM), ioctls are
-      // assigned type fields differently, and the TIOC/TC/FIO group
-      // isn't all the same type.  If/when we support those archs,
-      // this would need to be revised (but really this should be a
-      // default-deny policy; see below).
-      static_assert(kTtyIoctls == (TCSETA & kTypeMask) &&
-                    kTtyIoctls == (FIOASYNC & kTypeMask),
-                    "tty-related ioctls use the same type");
 
-      Arg<unsigned long> request(1);
-      auto shifted_type = request & kTypeMask;
-
-      // Rust's stdlib seems to use FIOCLEX instead of equivalent fcntls.
-      return If(request == FIOCLEX, Allow())
-        // Rust's stdlib also uses FIONBIO instead of equivalent fcntls.
-        .ElseIf(request == FIONBIO, Allow())
-        // ffmpeg, and anything else that calls isatty(), will be told
-        // that nothing is a typewriter:
-        .ElseIf(request == TCGETS, Error(ENOTTY))
-        // Bug 1408498: libgio uses FIONREAD on inotify fds.
-        // (We should stop using inotify: bug 1408497.)
-        .ElseIf(request == FIONREAD, Allow())
-        // Allow anything that isn't a tty ioctl, for now; bug 1302711
-        // will cover changing this to a default-deny policy.
-        .ElseIf(shifted_type != kTtyIoctls, Allow())
-        .Else(SandboxPolicyCommon::EvaluateSyscall(sysno));
-    }
-#endif // !MOZ_ALSA
-
-    CASES_FOR_fcntl: {
-      Arg<int> cmd(1);
-      Arg<int> flags(2);
-      // Typical use of F_SETFL is to modify the flags returned by
-      // F_GETFL and write them back, including some flags that
-      // F_SETFL ignores.  This is a default-deny policy in case any
-      // new SETFL-able flags are added.  (In particular we want to
-      // forbid O_ASYNC; see bug 1328896, but also see bug 1408438.)
-      static const int ignored_flags = O_ACCMODE | O_LARGEFILE_REAL | O_CLOEXEC;
-      static const int allowed_flags = ignored_flags | O_APPEND | O_NONBLOCK;
-      return Switch(cmd)
-        // Close-on-exec is meaningless when execve isn't allowed, but
-        // NSPR reads the bit and asserts that it has the expected value.
-        .Case(F_GETFD, Allow())
-        .Case(F_SETFD,
-              If((flags & ~FD_CLOEXEC) == 0, Allow())
-              .Else(InvalidSyscall()))
-        .Case(F_GETFL, Allow())
-        .Case(F_SETFL,
-              If((flags & ~allowed_flags) == 0, Allow())
-              .Else(InvalidSyscall()))
-        .Case(F_DUPFD_CLOEXEC, Allow())
-        // Pulseaudio uses F_SETLKW.
-        .Case(F_SETLKW, Allow())
-#ifdef F_SETLKW64
-        .Case(F_SETLKW64, Allow())
-#endif
-        .Default(SandboxPolicyCommon::EvaluateSyscall(sysno));
-    }
+    CASES_FOR_fcntl:
+      // Some fcntls have significant side effects like sending
+      // arbitrary signals, and there's probably nontrivial kernel
+      // attack surface; this should be locked down more if possible.
+      return Allow();
 
     case __NR_mprotect:
     case __NR_brk:
@@ -846,29 +786,16 @@ public:
         .Else(InvalidSyscall());
     }
 
-      // PulseAudio calls umask, even though it's unsafe in
-      // multithreaded applications.  But, allowing it here doesn't
-      // really do anything one way or the other, now that file
-      // accesses are brokered to another process.
     case __NR_umask:
-      return Allow();
-
-    case __NR_kill: {
-      Arg<int> sig(1);
-      // PulseAudio uses kill(pid, 0) to check if purported owners of
-      // shared memory files are still alive; see bug 1397753 for more
-      // details.
-      return If(sig == 0, Error(EPERM))
-        .Else(InvalidSyscall());
-    }
-
+    case __NR_kill:
     case __NR_wait4:
 #ifdef __NR_waitpid
     case __NR_waitpid:
 #endif
-      // NSPR will start a thread to wait for child processes even if
-      // fork() fails; see bug 227246 and bug 1299581.
-      return Error(ECHILD);
+#ifdef __NR_arch_prctl
+    case __NR_arch_prctl:
+#endif
+      return Allow();
 
     case __NR_eventfd2:
     case __NR_inotify_init:

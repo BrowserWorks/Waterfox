@@ -31,8 +31,9 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     performNotify("Fetch failed.", ex);
   }
 
-  protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected) {
+  protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
     Logger.debug(LOG_TAG, "onDone.");
+    Logger.debug(LOG_TAG, "End timestamp is " + end);
     Logger.debug(LOG_TAG, "Expected is " + expected);
     Logger.debug(LOG_TAG, "Records is " + records);
     Set<String> foundGuids = new HashSet<String>();
@@ -94,7 +95,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchCompleted() {
+  public void onFetchCompleted(final long fetchEnd) {
     Logger.debug(LOG_TAG, "onFetchCompleted. Doing nothing.");
   }
 

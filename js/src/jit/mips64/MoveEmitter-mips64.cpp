@@ -128,6 +128,10 @@ MoveEmitterMIPS64::completeCycle(const MoveOperand& from, const MoveOperand& to,
 void
 MoveEmitterMIPS64::emitDoubleMove(const MoveOperand& from, const MoveOperand& to)
 {
+    // Ensure that we can use ScratchDoubleReg in memory move.
+    MOZ_ASSERT_IF(from.isFloatReg(), from.floatReg() != ScratchDoubleReg);
+    MOZ_ASSERT_IF(to.isFloatReg(), to.floatReg() != ScratchDoubleReg);
+
     if (from.isFloatReg()) {
         if (to.isFloatReg()) {
             masm.moveDouble(from.floatReg(), to.floatReg());

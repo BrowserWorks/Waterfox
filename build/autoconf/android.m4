@@ -5,12 +5,18 @@ dnl file, You can obtain one at http://mozilla.org/MPL/2.0/.
 AC_DEFUN([MOZ_ANDROID_NDK],
 [
 
+MOZ_ARG_WITH_STRING(android-cxx-stl,
+[  --with-android-cxx-stl=VALUE
+                          use the specified C++ STL (libstdc++, libc++)],
+    android_cxx_stl=$withval,
+    android_cxx_stl=libc++)
+
 case "$target" in
 *-android*|*-linuxandroid*)
     dnl $android_platform will be set for us by Python configure.
     CPPFLAGS="-idirafter $android_platform/usr/include $CPPFLAGS"
     CFLAGS="-fno-short-enums -fno-exceptions $CFLAGS"
-    CXXFLAGS="-fno-short-enums -fno-exceptions $CXXFLAGS $stlport_cppflags"
+    CXXFLAGS="-fno-short-enums -fno-exceptions $CXXFLAGS"
     ASFLAGS="-idirafter $android_platform/usr/include -DANDROID $ASFLAGS"
 
     dnl Add --allow-shlib-undefined, because libGLESv2 links to an
@@ -57,28 +63,79 @@ AC_DEFUN([MOZ_ANDROID_STLPORT],
 [
 
 if test "$OS_TARGET" = "Android"; then
-    if test -z "$STLPORT_LIBS"; then
-        # android-ndk-r8b and later
-        cxx_libs="$android_ndk/sources/cxx-stl/llvm-libc++/libs/$ANDROID_CPU_ARCH"
-        # NDK r12 removed the arm/thumb library split and just made
-        # everything thumb by default.  Attempt to compensate.
-        if test "$MOZ_THUMB2" = 1 -a -d "$cxx_libs/thumb"; then
-            cxx_libs="$cxx_libs/thumb"
-        fi
-
-        if ! test -e "$cxx_libs/libc++_static.a"; then
-            AC_MSG_ERROR([Couldn't find path to llvm-libc++ in the android ndk])
-        fi
-
-        STLPORT_LIBS="-L$cxx_libs -lc++_static"
-        # NDK r12 split the libc++ runtime libraries into pieces.
-        for lib in c++abi unwind android_support; do
-            if test -e "$cxx_libs/lib${lib}.a"; then
-                 STLPORT_LIBS="$STLPORT_LIBS -l${lib}"
-            fi
-        done
+    cpu_arch_dir="$ANDROID_CPU_ARCH"
+    # NDK r12 removed the arm/thumb library split and just made everything
+    # thumb by default.  Attempt to compensate.
+    if test "$MOZ_THUMB2" = 1 -a -d "$cpu_arch_dir/thumb"; then
+        cpu_arch_dir="$cpu_arch_dir/thumb"
     fi
+
+    if test -z "$STLPORT_CPPFLAGS$STLPORT_LIBS"; then
+        case "$android_cxx_stl" in
+        libstdc++)
+            # android-ndk-r8b and later
+            ndk_base="$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version"
+            ndk_libs_include="$ndk_base/libs/$ANDROID_CPU_ARCH"
+            ndk_libs="$ndk_base/libs/$cpu_arch_dir"
+            ndk_include="$ndk_base/include"
+
+            if ! test -e "$ndk_libs/libgnustl_static.a"; then
+                AC_MSG_ERROR([Couldn't find path to gnu-libstdc++ in the android ndk])
+            fi
+
+            STLPORT_LIBS="-L$ndk_libs -lgnustl_static"
+            STLPORT_CPPFLAGS="-I$ndk_include -I$ndk_include/backward -I$ndk_libs_include/include"
+            ;;
+        libc++)
+            # android-ndk-r8b and later
+            ndk_base="$android_ndk/sources/cxx-stl"
+            cxx_base="$ndk_base/llvm-libc++"
+            cxx_libs="$cxx_base/libs/$cpu_arch_dir"
+            cxx_include="$cxx_base/libcxx/include"
+            cxxabi_base="$ndk_base/llvm-libc++abi"
+            cxxabi_include="$cxxabi_base/libcxxabi/include"
+
+            if ! test -e "$cxx_libs/libc++_static.a"; then
+                AC_MSG_ERROR([Couldn't find path to llvm-libc++ in the android ndk])
+            fi
+
+            if ! test -e "$cxx_include"; then
+                # NDK r13 removes the inner "libcxx" directory.
+                cxx_include="$cxx_base/include"
+                if ! test -e "$cxx_include"; then
+                    AC_MSG_ERROR([Couldn't find path to libc++ includes in the android ndk])
+                fi
+            fi
+
+            if ! test -e "$cxxabi_include"; then
+                # NDK r13 removes the inner "libcxxabi" directory.
+                cxxabi_include="$cxxabi_base/include"
+                if ! test -e "$cxxabi_include"; then
+                    AC_MSG_ERROR([Couldn't find path to libc++abi includes in the android ndk])
+                fi
+            fi
+
+            STLPORT_LIBS="-L$cxx_libs -lc++_static"
+            # NDK r12 split the libc++ runtime libraries into pieces.
+            for lib in c++abi unwind android_support; do
+                if test -e "$cxx_libs/lib${lib}.a"; then
+                     STLPORT_LIBS="$STLPORT_LIBS -l${lib}"
+                fi
+            done
+            # Add android/support/include/ for prototyping long double math
+            # functions, locale-specific C library functions, multibyte support,
+            # etc.
+            STLPORT_CPPFLAGS="-I$cxx_include -I$android_ndk/sources/android/support/include -I$cxxabi_include"
+            ;;
+        *)
+            AC_MSG_ERROR([Bad value for --enable-android-cxx-stl])
+            ;;
+        esac
+    fi
+    CXXFLAGS="$CXXFLAGS $STLPORT_CPPFLAGS"
 fi
+MOZ_ANDROID_CXX_STL=$android_cxx_stl
+AC_SUBST([MOZ_ANDROID_CXX_STL])
 AC_SUBST([STLPORT_LIBS])
 
 ])
@@ -316,7 +373,6 @@ for version in $4; do
         ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/repository-$version.jar"
         ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/common-$version.jar"
         ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/lint-api-$version.jar"
-        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/manifest-merger-$version.jar"
         break
     fi
 done

@@ -8,6 +8,7 @@
 #include "nsCOMPtr.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
+#include "nsXPIDLString.h"
 #include "nsEscape.h"
 #include "nsIParser.h"
 #include "nsIDTD.h"
@@ -86,8 +87,7 @@ nsParserUtils::Sanitize(const nsAString& aFromStr,
                                   principal,
                                   true,
                                   nullptr,
-                                  DocumentFlavorHTML,
-                                  mozilla::StyleBackendType::None);
+                                  DocumentFlavorHTML);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIDocument> document = do_QueryInterface(domDocument);

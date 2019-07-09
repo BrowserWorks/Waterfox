@@ -196,7 +196,7 @@ function showFilePicker(path, toSave, parentWindow, callback,
     }
     try {
       let file =
-          Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+          Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
       file.initWithPath(path);
       callback(file);
       return;

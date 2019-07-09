@@ -57,7 +57,7 @@ public:
                                   outputSize);
     } else {
       mSurface =
-        ImageOps::DecodeToSurface(mInputStream.forget(),
+        ImageOps::DecodeToSurface(mInputStream,
                                   nsDependentCString(mTestCase.mMimeType),
                                   imgIContainer::DECODE_FLAGS_DEFAULT,
                                   outputSize);
@@ -125,6 +125,7 @@ TEST_F(ImageDecodeToSurface, JPG) { RunDecodeToSurface(GreenJPGTestCase()); }
 TEST_F(ImageDecodeToSurface, BMP) { RunDecodeToSurface(GreenBMPTestCase()); }
 TEST_F(ImageDecodeToSurface, ICO) { RunDecodeToSurface(GreenICOTestCase()); }
 TEST_F(ImageDecodeToSurface, Icon) { RunDecodeToSurface(GreenIconTestCase()); }
+TEST_F(ImageDecodeToSurface, WebP) { RunDecodeToSurface(GreenWebPTestCase()); }
 
 TEST_F(ImageDecodeToSurface, AnimatedGIF)
 {
@@ -144,7 +145,7 @@ TEST_F(ImageDecodeToSurface, Corrupt)
   ASSERT_TRUE(inputStream != nullptr);
 
   RefPtr<SourceSurface> surface =
-    ImageOps::DecodeToSurface(inputStream.forget(),
+    ImageOps::DecodeToSurface(inputStream,
                               nsDependentCString(testCase.mMimeType),
                               imgIContainer::DECODE_FLAGS_DEFAULT);
   EXPECT_TRUE(surface == nullptr);
@@ -158,7 +159,7 @@ TEST_F(ImageDecodeToSurface, ICOMultipleSizes)
   ASSERT_TRUE(inputStream != nullptr);
 
   RefPtr<ImageOps::ImageBuffer> buffer =
-    ImageOps::CreateImageBuffer(inputStream.forget());
+    ImageOps::CreateImageBuffer(inputStream);
   ASSERT_TRUE(buffer != nullptr);
 
   ImageMetadata metadata;

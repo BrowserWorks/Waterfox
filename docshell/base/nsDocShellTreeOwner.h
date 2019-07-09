@@ -89,6 +89,11 @@ protected:
   NS_IMETHOD AddChromeListeners();
   NS_IMETHOD RemoveChromeListeners();
 
+  nsresult FindItemWithNameAcrossWindows(
+    const char16_t* aName,
+    nsIDocShellTreeItem* aRequestor, nsIDocShellTreeItem* aOriginalRequestor,
+    nsIDocShellTreeItem** aFoundItem);
+
   void EnsurePrompter();
   void EnsureAuthPrompter();
 

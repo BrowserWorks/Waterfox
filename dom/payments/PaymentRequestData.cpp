@@ -6,7 +6,6 @@
 #include "nsArrayUtils.h"
 #include "nsIMutableArray.h"
 #include "nsISupportsPrimitives.h"
-#include "nsUnicharUtils.h"
 #include "PaymentRequestData.h"
 #include "PaymentRequestUtils.h"
 
@@ -65,14 +64,9 @@ NS_IMPL_ISUPPORTS(PaymentCurrencyAmount,
 
 PaymentCurrencyAmount::PaymentCurrencyAmount(const nsAString& aCurrency,
                                              const nsAString& aValue)
-  : mValue(aValue)
+  : mCurrency(aCurrency)
+  , mValue(aValue)
 {
-  /*
-   *  According to the spec
-   *  https://w3c.github.io/payment-request/#validity-checkers
-   *  Set amount.currency to the result of ASCII uppercasing amount.currency.
-   */
-  ToUpperCase(aCurrency, mCurrency);
 }
 
 nsresult
@@ -596,13 +590,11 @@ NS_IMPL_ISUPPORTS(PaymentRequest,
 
 PaymentRequest::PaymentRequest(const uint64_t aTabId,
                                const nsAString& aRequestId,
-                               nsIPrincipal* aTopLevelPrincipal,
                                nsIArray* aPaymentMethods,
                                nsIPaymentDetails* aPaymentDetails,
                                nsIPaymentOptions* aPaymentOptions)
   : mTabId(aTabId)
   , mRequestId(aRequestId)
-  , mTopLevelPrincipal(aTopLevelPrincipal)
   , mPaymentMethods(aPaymentMethods)
   , mPaymentDetails(aPaymentDetails)
   , mPaymentOptions(aPaymentOptions)
@@ -614,16 +606,6 @@ PaymentRequest::GetTabId(uint64_t* aTabId)
 {
   NS_ENSURE_ARG_POINTER(aTabId);
   *aTabId = mTabId;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-PaymentRequest::GetTopLevelPrincipal(nsIPrincipal** aTopLevelPrincipal)
-{
-  NS_ENSURE_ARG_POINTER(aTopLevelPrincipal);
-  MOZ_ASSERT(mTopLevelPrincipal);
-  nsCOMPtr<nsIPrincipal> principal = mTopLevelPrincipal;
-  principal.forget(aTopLevelPrincipal);
   return NS_OK;
 }
 

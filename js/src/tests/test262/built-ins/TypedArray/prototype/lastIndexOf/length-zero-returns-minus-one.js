@@ -18,7 +18,6 @@ info: >
   3. If len is 0, return -1.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var fromIndex = {

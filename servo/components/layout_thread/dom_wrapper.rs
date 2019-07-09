@@ -12,7 +12,7 @@
 //!
 //! 1. Layout is not allowed to mutate the DOM.
 //!
-//! 2. Layout is not allowed to see anything with `LayoutDom` in the name, because it could hang
+//! 2. Layout is not allowed to see anything with `LayoutJS` in the name, because it could hang
 //!    onto these objects and cause use-after-free.
 //!
 //! When implementing wrapper functions, be careful that you do not touch the borrow flags, or you
@@ -31,27 +31,27 @@
 #![allow(unsafe_code)]
 
 use atomic_refcell::{AtomicRef, AtomicRefMut, AtomicRefCell};
+use core::nonzero::NonZero;
 use gfx_traits::ByteIndex;
 use html5ever::{LocalName, Namespace};
 use layout::data::StyleAndLayoutData;
 use layout::wrapper::GetRawData;
 use msg::constellation_msg::{BrowsingContextId, PipelineId};
-use nonzero::NonZero;
 use range::Range;
-use script::layout_exports::{CAN_BE_FRAGMENTED, HAS_DIRTY_DESCENDANTS, IS_IN_DOC};
+use script::layout_exports::{CAN_BE_FRAGMENTED, DIRTY_ON_VIEWPORT_SIZE_CHANGE, HAS_DIRTY_DESCENDANTS, IS_IN_DOC};
 use script::layout_exports::{CharacterDataTypeId, ElementTypeId, HTMLElementTypeId, NodeTypeId};
 use script::layout_exports::{Document, Element, Node, Text};
 use script::layout_exports::{HANDLED_SNAPSHOT, HAS_SNAPSHOT};
 use script::layout_exports::{LayoutCharacterDataHelpers, LayoutDocumentHelpers};
 use script::layout_exports::{LayoutElementHelpers, LayoutNodeHelpers, RawLayoutElementHelpers};
-use script::layout_exports::LayoutDom;
+use script::layout_exports::LayoutJS;
 use script::layout_exports::PendingRestyle;
 use script_layout_interface::{HTMLCanvasData, LayoutNodeType, SVGSVGData, TrustedNodeAddress};
 use script_layout_interface::{OpaqueStyleAndLayoutData, StyleData};
 use script_layout_interface::wrapper_traits::{DangerousThreadSafeLayoutNode, GetLayoutData, LayoutNode};
 use script_layout_interface::wrapper_traits::{PseudoElementType, ThreadSafeLayoutElement, ThreadSafeLayoutNode};
 use selectors::attr::{AttrSelectorOperation, NamespaceConstraint, CaseSensitivity};
-use selectors::matching::{ElementSelectorFlags, MatchingContext, RelevantLinkStatus};
+use selectors::matching::{ElementSelectorFlags, LocalMatchingContext, MatchingContext, RelevantLinkStatus};
 use selectors::matching::VisitedHandlingMode;
 use selectors::sink::Push;
 use servo_arc::{Arc, ArcBorrow};
@@ -61,15 +61,17 @@ use std::fmt;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
+use std::mem::transmute;
 use std::sync::atomic::Ordering;
+use style;
 use style::CaseSensitivityExt;
 use style::applicable_declarations::ApplicableDeclarationBlock;
 use style::attr::AttrValue;
 use style::computed_values::display;
-use style::context::SharedStyleContext;
+use style::context::{QuirksMode, SharedStyleContext};
 use style::data::ElementData;
-use style::dom::{DomChildren, LayoutIterator, NodeInfo, OpaqueNode};
-use style::dom::{PresentationalHintsSynthesizer, TElement, TNode};
+use style::dom::{DescendantsBit, DirtyDescendants, LayoutIterator, NodeInfo, OpaqueNode};
+use style::dom::{PresentationalHintsSynthesizer, TElement, TNode, UnsafeNode};
 use style::element_state::*;
 use style::font_metrics::ServoMetricsProvider;
 use style::properties::{ComputedValues, PropertyDeclarationBlock};
@@ -79,15 +81,15 @@ use style::shared_lock::{SharedRwLock as StyleSharedRwLock, Locked as StyleLocke
 use style::str::is_whitespace;
 
 pub unsafe fn drop_style_and_layout_data(data: OpaqueStyleAndLayoutData) {
-    let ptr = data.ptr.get() as *mut StyleData;
+    let ptr: *mut StyleData = data.ptr.get();
     let non_opaque: *mut StyleAndLayoutData = ptr as *mut _;
     let _ = Box::from_raw(non_opaque);
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct ServoLayoutNode<'a> {
     /// The wrapped node.
-    node: LayoutDom<Node>,
+    node: LayoutJS<Node>,
 
     /// Being chained to a PhantomData prevents `LayoutNode`s from escaping.
     chain: PhantomData<&'a ()>,
@@ -115,7 +117,7 @@ impl<'a> PartialEq for ServoLayoutNode<'a> {
 }
 
 impl<'ln> ServoLayoutNode<'ln> {
-    fn from_layout_js(n: LayoutDom<Node>) -> ServoLayoutNode<'ln> {
+    fn from_layout_js(n: LayoutJS<Node>) -> ServoLayoutNode<'ln> {
         ServoLayoutNode {
             node: n,
             chain: PhantomData,
@@ -123,11 +125,11 @@ impl<'ln> ServoLayoutNode<'ln> {
     }
 
     pub unsafe fn new(address: &TrustedNodeAddress) -> ServoLayoutNode {
-        ServoLayoutNode::from_layout_js(LayoutDom::from_trusted_node_address(*address))
+        ServoLayoutNode::from_layout_js(LayoutJS::from_trusted_node_address(*address))
     }
 
     /// Creates a new layout node with the same lifetime as this layout node.
-    pub unsafe fn new_with_this_lifetime(&self, node: &LayoutDom<Node>) -> ServoLayoutNode<'ln> {
+    pub unsafe fn new_with_this_lifetime(&self, node: &LayoutJS<Node>) -> ServoLayoutNode<'ln> {
         ServoLayoutNode {
             node: *node,
             chain: self.chain,
@@ -159,6 +161,18 @@ impl<'ln> NodeInfo for ServoLayoutNode<'ln> {
 
 impl<'ln> TNode for ServoLayoutNode<'ln> {
     type ConcreteElement = ServoLayoutElement<'ln>;
+    type ConcreteChildrenIterator = ServoChildrenIterator<'ln>;
+
+    fn to_unsafe(&self) -> UnsafeNode {
+        unsafe {
+            (self.node.unsafe_get() as usize, 0)
+        }
+    }
+
+    unsafe fn from_unsafe(n: &UnsafeNode) -> Self {
+        let (node, _) = *n;
+        transmute(node)
+    }
 
     fn parent_node(&self) -> Option<Self> {
         unsafe {
@@ -166,32 +180,18 @@ impl<'ln> TNode for ServoLayoutNode<'ln> {
         }
     }
 
-    fn first_child(&self) -> Option<Self> {
-        unsafe {
-            self.node.first_child_ref().map(|node| self.new_with_this_lifetime(&node))
-        }
-    }
-
-    fn last_child(&self) -> Option<Self> {
-        unsafe {
-            self.node.last_child_ref().map(|node| self.new_with_this_lifetime(&node))
-        }
-    }
-
-    fn prev_sibling(&self) -> Option<Self> {
-        unsafe {
-            self.node.prev_sibling_ref().map(|node| self.new_with_this_lifetime(&node))
-        }
-    }
-
-    fn next_sibling(&self) -> Option<Self> {
-        unsafe {
-            self.node.next_sibling_ref().map(|node| self.new_with_this_lifetime(&node))
-        }
+    fn children(&self) -> LayoutIterator<ServoChildrenIterator<'ln>> {
+        LayoutIterator(ServoChildrenIterator {
+            current: self.first_child(),
+        })
     }
 
     fn traversal_parent(&self) -> Option<ServoLayoutElement<'ln>> {
         self.parent_element()
+    }
+
+    fn traversal_children(&self) -> LayoutIterator<ServoChildrenIterator<'ln>> {
+        self.children()
     }
 
     fn opaque(&self) -> OpaqueNode {
@@ -206,12 +206,37 @@ impl<'ln> TNode for ServoLayoutNode<'ln> {
         as_element(self.node)
     }
 
+    fn needs_dirty_on_viewport_size_changed(&self) -> bool {
+        unsafe { self.node.get_flag(DIRTY_ON_VIEWPORT_SIZE_CHANGE) }
+    }
+
+    unsafe fn set_dirty_on_viewport_size_changed(&self) {
+        self.node.set_flag(DIRTY_ON_VIEWPORT_SIZE_CHANGE, true);
+    }
+
     fn can_be_fragmented(&self) -> bool {
         unsafe { self.node.get_flag(CAN_BE_FRAGMENTED) }
     }
 
     unsafe fn set_can_be_fragmented(&self, value: bool) {
         self.node.set_flag(CAN_BE_FRAGMENTED, value)
+    }
+
+    fn is_in_doc(&self) -> bool {
+        unsafe { (*self.node.unsafe_get()).is_in_doc() }
+    }
+}
+
+pub struct ServoChildrenIterator<'a> {
+    current: Option<ServoLayoutNode<'a>>,
+}
+
+impl<'a> Iterator for ServoChildrenIterator<'a> {
+    type Item = ServoLayoutNode<'a>;
+    fn next(&mut self) -> Option<ServoLayoutNode<'a>> {
+        let node = self.current;
+        self.current = node.and_then(|node| node.next_sibling());
+        node
     }
 }
 
@@ -244,6 +269,30 @@ impl<'ln> LayoutNode for ServoLayoutNode<'ln> {
     unsafe fn take_style_and_layout_data(&self) -> OpaqueStyleAndLayoutData {
         self.get_jsmanaged().take_style_and_layout_data()
     }
+
+    fn first_child(&self) -> Option<ServoLayoutNode<'ln>> {
+        unsafe {
+            self.node.first_child_ref().map(|node| self.new_with_this_lifetime(&node))
+        }
+    }
+
+    fn last_child(&self) -> Option<ServoLayoutNode<'ln>> {
+        unsafe {
+            self.node.last_child_ref().map(|node| self.new_with_this_lifetime(&node))
+        }
+    }
+
+    fn prev_sibling(&self) -> Option<ServoLayoutNode<'ln>> {
+        unsafe {
+            self.node.prev_sibling_ref().map(|node| self.new_with_this_lifetime(&node))
+        }
+    }
+
+    fn next_sibling(&self) -> Option<ServoLayoutNode<'ln>> {
+        unsafe {
+            self.node.next_sibling_ref().map(|node| self.new_with_this_lifetime(&node))
+        }
+    }
 }
 
 impl<'ln> GetLayoutData for ServoLayoutNode<'ln> {
@@ -273,17 +322,17 @@ impl<'le> GetLayoutData for ServoThreadSafeLayoutElement<'le> {
 }
 
 impl<'ln> ServoLayoutNode<'ln> {
-    /// Returns the interior of this node as a `LayoutDom`. This is highly unsafe for layout to
+    /// Returns the interior of this node as a `LayoutJS`. This is highly unsafe for layout to
     /// call and as such is marked `unsafe`.
-    pub unsafe fn get_jsmanaged(&self) -> &LayoutDom<Node> {
+    pub unsafe fn get_jsmanaged(&self) -> &LayoutJS<Node> {
         &self.node
     }
 }
 
 // A wrapper around documents that ensures ayout can only ever access safe properties.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct ServoLayoutDocument<'ld> {
-    document: LayoutDom<Document>,
+    document: LayoutJS<Document>,
     chain: PhantomData<&'ld ()>,
 }
 
@@ -292,8 +341,8 @@ impl<'ld> ServoLayoutDocument<'ld> {
         ServoLayoutNode::from_layout_js(self.document.upcast())
     }
 
-    pub fn root_element(&self) -> Option<ServoLayoutElement<'ld>> {
-        self.as_node().dom_children().flat_map(|n| n.as_element()).next()
+    pub fn root_node(&self) -> Option<ServoLayoutNode<'ld>> {
+        self.as_node().children().find(ServoLayoutNode::is_element)
     }
 
     pub fn drain_pending_restyles(&self) -> Vec<(ServoLayoutElement<'ld>, PendingRestyle)> {
@@ -309,11 +358,15 @@ impl<'ld> ServoLayoutDocument<'ld> {
         unsafe { self.document.will_paint(); }
     }
 
+    pub fn quirks_mode(&self) -> QuirksMode {
+        unsafe { self.document.quirks_mode() }
+    }
+
     pub fn style_shared_lock(&self) -> &StyleSharedRwLock {
         unsafe { self.document.style_shared_lock() }
     }
 
-    pub fn from_layout_js(doc: LayoutDom<Document>) -> ServoLayoutDocument<'ld> {
+    pub fn from_layout_js(doc: LayoutJS<Document>) -> ServoLayoutDocument<'ld> {
         ServoLayoutDocument {
             document: doc,
             chain: PhantomData,
@@ -322,9 +375,9 @@ impl<'ld> ServoLayoutDocument<'ld> {
 }
 
 /// A wrapper around elements that ensures layout can only ever access safe properties.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct ServoLayoutElement<'le> {
-    element: LayoutDom<Element>,
+    element: LayoutJS<Element>,
     chain: PhantomData<&'le ()>,
 }
 
@@ -352,16 +405,11 @@ impl<'le> PresentationalHintsSynthesizer for ServoLayoutElement<'le> {
 
 impl<'le> TElement for ServoLayoutElement<'le> {
     type ConcreteNode = ServoLayoutNode<'le>;
-    type TraversalChildrenIterator = DomChildren<Self::ConcreteNode>;
 
     type FontMetricsProvider = ServoMetricsProvider;
 
     fn as_node(&self) -> ServoLayoutNode<'le> {
         ServoLayoutNode::from_layout_js(self.element.upcast())
-    }
-
-    fn traversal_children(&self) -> LayoutIterator<Self::TraversalChildrenIterator> {
-        LayoutIterator(self.as_node().dom_children())
     }
 
     fn style_attribute(&self) -> Option<ArcBorrow<StyleLocked<PropertyDeclarationBlock>>> {
@@ -397,6 +445,14 @@ impl<'le> TElement for ServoLayoutElement<'le> {
         }
     }
 
+    #[inline]
+    fn existing_style_for_restyle_damage<'a>(&'a self,
+                                             current_cv: &'a ComputedValues,
+                                             _pseudo_element: Option<&PseudoElement>)
+                                             -> Option<&'a ComputedValues> {
+        Some(current_cv)
+    }
+
     fn has_dirty_descendants(&self) -> bool {
         unsafe { self.as_node().node.get_flag(HAS_DIRTY_DESCENDANTS) }
     }
@@ -411,6 +467,11 @@ impl<'le> TElement for ServoLayoutElement<'le> {
 
     unsafe fn set_handled_snapshot(&self) {
         self.as_node().node.set_flag(HANDLED_SNAPSHOT, true);
+    }
+
+    unsafe fn note_descendants<B: DescendantsBit<Self>>(&self) {
+        debug_assert!(self.get_data().is_some());
+        style::dom::raw_note_descendants::<Self, B>(*self);
     }
 
     unsafe fn set_dirty_descendants(&self) {
@@ -448,7 +509,7 @@ impl<'le> TElement for ServoLayoutElement<'le> {
     fn get_data(&self) -> Option<&AtomicRefCell<ElementData>> {
         unsafe {
             self.get_style_and_layout_data().map(|d| {
-                &(*(d.ptr.get() as *mut StyleData)).element_data
+                &(*d.ptr.get()).element_data
             })
         }
     }
@@ -512,14 +573,6 @@ impl<'le> TElement for ServoLayoutElement<'le> {
         };
         extended_filtering(&element_lang, &*value)
     }
-
-    fn is_html_document_body_element(&self) -> bool {
-        // This is only used for the "tables inherit from body" quirk, which we
-        // don't implement.
-        //
-        // FIXME(emilio): We should be able to give the right answer though!
-        false
-    }
 }
 
 impl<'le> PartialEq for ServoLayoutElement<'le> {
@@ -537,7 +590,7 @@ impl<'le> Hash for ServoLayoutElement<'le> {
 impl<'le> Eq for ServoLayoutElement<'le> {}
 
 impl<'le> ServoLayoutElement<'le> {
-    fn from_layout_js(el: LayoutDom<Element>) -> ServoLayoutElement<'le> {
+    fn from_layout_js(el: LayoutJS<Element>) -> ServoLayoutElement<'le> {
         ServoLayoutElement {
             element: el,
             chain: PhantomData,
@@ -560,7 +613,7 @@ impl<'le> ServoLayoutElement<'le> {
 
     fn get_style_data(&self) -> Option<&StyleData> {
         unsafe {
-            self.get_style_and_layout_data().map(|d| &*(d.ptr.get() as *mut StyleData))
+            self.get_style_and_layout_data().map(|d| &*d.ptr.get())
         }
     }
 
@@ -572,6 +625,12 @@ impl<'le> ServoLayoutElement<'le> {
         self.as_node().node.set_flag(HAS_SNAPSHOT, true);
     }
 
+    // FIXME(bholley): This should be merged with TElement::note_descendants,
+    // but that requires re-testing and possibly fixing the broken callers given
+    // the FIXME below, which I don't have time to do right now.
+    //
+    // FIXME(emilio): We'd also need to relax the invariant in note_descendants
+    // re. the data already available I think.
     pub unsafe fn note_dirty_descendant(&self) {
         use ::selectors::Element;
 
@@ -585,19 +644,17 @@ impl<'le> ServoLayoutElement<'le> {
             el.set_dirty_descendants();
             current = el.parent_element();
         }
+
+        debug_assert!(self.descendants_bit_is_propagated::<DirtyDescendants>());
     }
 }
 
-fn as_element<'le>(node: LayoutDom<Node>) -> Option<ServoLayoutElement<'le>> {
+fn as_element<'le>(node: LayoutJS<Node>) -> Option<ServoLayoutElement<'le>> {
     node.downcast().map(ServoLayoutElement::from_layout_js)
 }
 
 impl<'le> ::selectors::Element for ServoLayoutElement<'le> {
     type Impl = SelectorImpl;
-
-    fn opaque(&self) -> ::selectors::OpaqueElement {
-        ::selectors::OpaqueElement::new(self.as_node().opaque().0 as *const ())
-    }
 
     fn parent_element(&self) -> Option<ServoLayoutElement<'le>> {
         unsafe {
@@ -606,7 +663,7 @@ impl<'le> ::selectors::Element for ServoLayoutElement<'le> {
     }
 
     fn first_child_element(&self) -> Option<ServoLayoutElement<'le>> {
-        self.as_node().dom_children().filter_map(|n| n.as_element()).next()
+        self.as_node().children().filter_map(|n| n.as_element()).next()
     }
 
     fn last_child_element(&self) -> Option<ServoLayoutElement<'le>> {
@@ -667,7 +724,7 @@ impl<'le> ::selectors::Element for ServoLayoutElement<'le> {
     }
 
     fn is_empty(&self) -> bool {
-        self.as_node().dom_children().all(|node| match node.script_type_id() {
+        self.as_node().children().all(|node| match node.script_type_id() {
             NodeTypeId::Element(..) => false,
             NodeTypeId::CharacterData(CharacterDataTypeId::Text) => unsafe {
                 node.node.downcast().unwrap().data_for_layout().is_empty()
@@ -686,23 +743,21 @@ impl<'le> ::selectors::Element for ServoLayoutElement<'le> {
         self.element.namespace()
     }
 
-    fn match_pseudo_element(
-        &self,
-        _pseudo: &PseudoElement,
-        _context: &mut MatchingContext<Self::Impl>,
-    ) -> bool {
+    fn match_pseudo_element(&self,
+                            _pseudo: &PseudoElement,
+                            _context: &mut MatchingContext)
+                            -> bool
+    {
         false
     }
 
-    fn match_non_ts_pseudo_class<F>(
-        &self,
-        pseudo_class: &NonTSPseudoClass,
-        _: &mut MatchingContext<Self::Impl>,
-        _: &RelevantLinkStatus,
-        _: &mut F,
-    ) -> bool
-    where
-        F: FnMut(&Self, ElementSelectorFlags),
+    fn match_non_ts_pseudo_class<F>(&self,
+                                    pseudo_class: &NonTSPseudoClass,
+                                    _: &mut LocalMatchingContext<Self::Impl>,
+                                    _: &RelevantLinkStatus,
+                                    _: &mut F)
+                                    -> bool
+        where F: FnMut(&Self, ElementSelectorFlags),
     {
         match *pseudo_class {
             // https://github.com/servo/servo/issues/8718
@@ -777,7 +832,7 @@ impl<'le> ::selectors::Element for ServoLayoutElement<'le> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct ServoThreadSafeLayoutNode<'ln> {
     /// The wrapped node.
     node: ServoLayoutNode<'ln>,
@@ -807,7 +862,7 @@ impl<'ln> DangerousThreadSafeLayoutNode for ServoThreadSafeLayoutNode<'ln> {
 
 impl<'ln> ServoThreadSafeLayoutNode<'ln> {
     /// Creates a new layout node with the same lifetime as this layout node.
-    pub unsafe fn new_with_this_lifetime(&self, node: &LayoutDom<Node>) -> ServoThreadSafeLayoutNode<'ln> {
+    pub unsafe fn new_with_this_lifetime(&self, node: &LayoutJS<Node>) -> ServoThreadSafeLayoutNode<'ln> {
         ServoThreadSafeLayoutNode {
             node: self.node.new_with_this_lifetime(node),
             pseudo: PseudoElementType::Normal,
@@ -822,20 +877,26 @@ impl<'ln> ServoThreadSafeLayoutNode<'ln> {
         }
     }
 
-    /// Returns the interior of this node as a `LayoutDom`. This is highly unsafe for layout to
+    /// Returns the interior of this node as a `LayoutJS`. This is highly unsafe for layout to
     /// call and as such is marked `unsafe`.
-    unsafe fn get_jsmanaged(&self) -> &LayoutDom<Node> {
+    unsafe fn get_jsmanaged(&self) -> &LayoutJS<Node> {
         self.node.get_jsmanaged()
     }
 }
 
+// NB: The implementation here is a bit tricky because elements implementing
+// pseudos are supposed to return false for is_element().
 impl<'ln> NodeInfo for ServoThreadSafeLayoutNode<'ln> {
     fn is_element(&self) -> bool {
-        self.node.is_element()
+        self.pseudo == PseudoElementType::Normal && self.node.is_element()
     }
 
     fn is_text_node(&self) -> bool {
         self.node.is_text_node()
+    }
+
+    fn needs_layout(&self) -> bool {
+        self.node.is_text_node() || self.node.is_element()
     }
 }
 
@@ -854,6 +915,11 @@ impl<'ln> ThreadSafeLayoutNode for ServoThreadSafeLayoutNode<'ln> {
         } else {
             None
         }
+    }
+
+    #[inline]
+    fn type_id_without_excluding_pseudo_elements(&self) -> LayoutNodeType {
+        self.node.type_id()
     }
 
     fn parent_style(&self) -> Arc<ComputedValues> {
@@ -883,7 +949,7 @@ impl<'ln> ThreadSafeLayoutNode for ServoThreadSafeLayoutNode<'ln> {
 
     fn is_ignorable_whitespace(&self, context: &SharedStyleContext) -> bool {
         unsafe {
-            let text: LayoutDom<Text> = match self.get_jsmanaged().downcast() {
+            let text: LayoutJS<Text> = match self.get_jsmanaged().downcast() {
                 Some(text) => text,
                 None => return false
             };
@@ -939,14 +1005,12 @@ impl<'ln> ThreadSafeLayoutNode for ServoThreadSafeLayoutNode<'ln> {
         this.svg_data()
     }
 
-    // Can return None if the iframe has no nested browsing context
-    fn iframe_browsing_context_id(&self) -> Option<BrowsingContextId> {
+    fn iframe_browsing_context_id(&self) -> BrowsingContextId {
         let this = unsafe { self.get_jsmanaged() };
         this.iframe_browsing_context_id()
     }
 
-    // Can return None if the iframe has no nested browsing context
-    fn iframe_pipeline_id(&self) -> Option<PipelineId> {
+    fn iframe_pipeline_id(&self) -> PipelineId {
         let this = unsafe { self.get_jsmanaged() };
         this.iframe_pipeline_id()
     }
@@ -1061,7 +1125,7 @@ impl<ConcreteNode> Iterator for ThreadSafeLayoutNodeChildrenIterator<ConcreteNod
 
 /// A wrapper around elements that ensures layout can only
 /// ever access safe properties and cannot race on elements.
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct ServoThreadSafeLayoutElement<'le> {
     element: ServoLayoutElement<'le>,
 
@@ -1130,11 +1194,6 @@ impl<'le> ThreadSafeLayoutElement for ServoThreadSafeLayoutElement<'le> {
 impl<'le> ::selectors::Element for ServoThreadSafeLayoutElement<'le> {
     type Impl = SelectorImpl;
 
-    fn opaque(&self) -> ::selectors::OpaqueElement {
-        ::selectors::OpaqueElement::new(self.as_node().opaque().0 as *const ())
-    }
-
-
     fn parent_element(&self) -> Option<Self> {
         warn!("ServoThreadSafeLayoutElement::parent_element called");
         None
@@ -1178,11 +1237,11 @@ impl<'le> ::selectors::Element for ServoThreadSafeLayoutElement<'le> {
         self.element.get_namespace()
     }
 
-    fn match_pseudo_element(
-        &self,
-        _pseudo: &PseudoElement,
-        _context: &mut MatchingContext<Self::Impl>
-    ) -> bool {
+    fn match_pseudo_element(&self,
+                            _pseudo: &PseudoElement,
+                            _context: &mut MatchingContext)
+                            -> bool
+    {
         false
     }
 
@@ -1205,15 +1264,13 @@ impl<'le> ::selectors::Element for ServoThreadSafeLayoutElement<'le> {
         }
     }
 
-    fn match_non_ts_pseudo_class<F>(
-        &self,
-        _: &NonTSPseudoClass,
-        _: &mut MatchingContext<Self::Impl>,
-        _: &RelevantLinkStatus,
-        _: &mut F,
-    ) -> bool
-    where
-        F: FnMut(&Self, ElementSelectorFlags),
+    fn match_non_ts_pseudo_class<F>(&self,
+                                    _: &NonTSPseudoClass,
+                                    _: &mut LocalMatchingContext<Self::Impl>,
+                                    _: &RelevantLinkStatus,
+                                    _: &mut F)
+                                    -> bool
+        where F: FnMut(&Self, ElementSelectorFlags),
     {
         // NB: This could maybe be implemented
         warn!("ServoThreadSafeLayoutElement::match_non_ts_pseudo_class called");

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 es6id: 23.3.3.1
-esid: sec-weakmap.prototype.constructor
 description: >
   WeakMap.prototype.constructor value and property descriptor
 info: >

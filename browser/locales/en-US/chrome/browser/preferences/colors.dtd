@@ -6,25 +6,25 @@
 <!ENTITY  window.width                    "38em">
 <!ENTITY  window.macWidth                 "41em">
 
-<!ENTITY  overrideDefaultPageColors2.label       "Override the colors specified by the page with your selections above">
-<!ENTITY  overrideDefaultPageColors2.accesskey   "O">
+<!ENTITY  overrideDefaultPageColors.label        "Override the colors specified by the page with your selections above:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
 
 <!ENTITY  overrideDefaultPageColors.always.label "Always">
 <!ENTITY  overrideDefaultPageColors.auto.label   "Only with High Contrast themes">
 <!ENTITY  overrideDefaultPageColors.never.label  "Never">
 
 <!ENTITY  color                           "Text and Background">
-<!ENTITY  textColor2.label                "Text">
-<!ENTITY  textColor2.accesskey            "T">
-<!ENTITY  backgroundColor2.label          "Background">
-<!ENTITY  backgroundColor2.accesskey      "B">
+<!ENTITY  textColor.label                 "Text:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Background:">
+<!ENTITY  backgroundColor.accesskey       "B">
 <!ENTITY  useSystemColors.label           "Use system colors">
 <!ENTITY  useSystemColors.accesskey       "s">
 
 <!ENTITY  underlineLinks.label            "Underline links">
 <!ENTITY  underlineLinks.accesskey        "U">
 <!ENTITY  links                           "Link Colors">
-<!ENTITY  linkColor2.label                "Unvisited Links">
-<!ENTITY  linkColor2.accesskey            "L">
-<!ENTITY  visitedLinkColor2.label         "Visited Links">
-<!ENTITY  visitedLinkColor2.accesskey     "V">
+<!ENTITY  linkColor.label                 "Unvisited Links:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "Visited Links:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

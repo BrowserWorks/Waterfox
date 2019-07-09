@@ -4,7 +4,6 @@
 es6id: 25.2
 description: >
     Attributes of the `arguments` object are valid yield expression operands.
-features: [generators]
 ---*/
 
 function* g() {

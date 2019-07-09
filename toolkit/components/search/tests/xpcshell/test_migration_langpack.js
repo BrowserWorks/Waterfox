@@ -24,7 +24,7 @@ function run_test() {
 }
 
 add_task(async function async_init() {
-  let commitPromise = promiseAfterCache();
+  let commitPromise = promiseAfterCache()
   await asyncInit();
 
   let engine = Services.search.getEngineByName("bug645970");
@@ -33,5 +33,5 @@ add_task(async function async_init() {
 
   await commitPromise;
   let metadata = await promiseEngineMetadata();
-  do_check_eq(metadata.bug645970.alias, "lp");
+  do_check_eq(metadata["bug645970"].alias, "lp");
 });

@@ -8,7 +8,6 @@
 <body>
 <div id=log></div>
 <script>
-    "use strict";
 
     var TargetPort = null;
     var description = "The postMessage() method - Make new ports into a read only array.";
@@ -28,9 +27,9 @@
     function TestMessageEvent(evt)
     {
         var channel3 = new MessageChannel();
-        assert_throws(new TypeError(), () => {
-            evt.ports.push(channel3.port1);
-        }, "ports is a frozen object");
+        evt.ports.push(channel3.port1);
+        evt.ports.push(channel3.port1);
+
         assert_equals(evt.ports.length, 1, "ports is a read only array with length == 1.");
         t.done();
     }

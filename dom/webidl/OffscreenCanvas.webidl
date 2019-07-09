@@ -20,7 +20,6 @@ interface OffscreenCanvas : EventTarget {
   nsISupports? getContext(DOMString contextId,
                           optional any contextOptions = null);
 
-  [Throws]
   ImageBitmap transferToImageBitmap();
   [Throws]
   Promise<Blob> toBlob(optional DOMString type = "",

@@ -6,7 +6,7 @@
     "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
-    "message": "Фати слика"
+    "message": "Фатете слика"
   },
   "myShotsLink": {
     "message": "Мои слики"
@@ -33,17 +33,9 @@
     "message": "Врската е ископирана"
   },
   "notificationLinkCopiedDetails": {
-    "message": "Врската до вашата слика е ископирана во меморија. Притиснете $META_KEY$-V за да ја вметнете.",
+    "message": "Врската до Вашата слика е ископирана во меморија. Притиснете $META_KEY$-V за да ја вметнете.",
     "placeholders": {
       "meta_key": {
-        "content": "$1"
-      }
-    }
-  },
-  "imageCroppedWarning": {
-    "message": "Оваа слика е скратена до $PIXELS$px.",
-    "placeholders": {
-      "pixels": {
         "content": "$1"
       }
     }
@@ -52,16 +44,16 @@
     "message": "Не работи."
   },
   "requestErrorDetails": {
-    "message": "Извинете! Не можевме да ја снимиме вашата слика. Ве молиме обидете се повторно подоцна."
+    "message": "Извинете! Не можевме да ја снимиме Вашата слика. Ве молиме обидете се повторно подоцна."
   },
   "connectionErrorTitle": {
-    "message": "Не можеме да пристапиме до вашите слики од екран."
+    "message": "Не можеме да пристапиме до Вашите слики од екран."
   },
   "connectionErrorDetails": {
-    "message": "Ве молиме проверете ја вашата Интернет-врска. Ако можете да се поврзете на Интернет, тогаш можно е да има привремен проблем со сервисот Firefox Screenshots."
+    "message": "Ве молиме проверете ја Вашата Интернет-врска. Ако можете да се поврзете на Интернет, тогаш можно е да има привремен проблем со сервисот Firefox Screenshots."
   },
   "loginErrorDetails": {
-    "message": "Не можевме да ја зачуваме вашата слика бидејќи има проблем со сервисот Firefox Screenshots. Ве молиме обидете се повторно подоцна."
+    "message": "Не можевме да ја зачуваме Вашата слика бидејќи има проблем со сервисот Firefox Screenshots. Ве молиме обидете се повторно подоцна."
   },
   "unshootablePageErrorTitle": {
     "message": "Не можеме да фатиме слика од оваа страница."
@@ -87,32 +79,26 @@
   "genericErrorDetails": {
     "message": "Не сме баш сигурни што се случи. Сакате да се обидете повторно или да направите слика од друга страница?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Фаќајте, снимајте и споделувајте слики од екран без да го напуштите Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Нов начин за снимање"
+  "tourHeaderTwo": {
+    "message": "Фатете слика од тоа што сакате"
   },
-  "tourBodyPageAction": {
-    "message": "Отворете го менито со активности за страница во адресната лента кога и да сакате да фатите слика."
-  },
-  "tourHeaderClickAndDrag": {
-    "message": "Фати слика од тоа што сакаш"
-  },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Кликнете и влечете за да фатите само дел од страницата. Исто така можете да означите дел и со покажувачот."
   },
-  "tourHeaderFullPage": {
-    "message": "Фати слики од прозорци или цели страници"
+  "tourHeaderThree": {
+    "message": "Фатете слика од прозорци или цели страници"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Кликнете на копчињата во горниот десен дел за да го снимите видливиот дел на прозорецот или пак, целата страница."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Како што Вие сакате"
   },
-  "tourBodyDownloadUpload": {
-    "message": "Снимете ги вашите исечоци на Интернет за полесно споделување или преземете ги на вашиот компјутер. Исто така можете да кликнете на копчето Мои слики за да ги најдете сите слики што ги имате направено."
+  "tourBodyFour": {
+    "message": "Снимете ги Вашите исечоци на Интернет за полесно споделување или преземете ги на Вашиот компјутер. Исто така можете да кликнете на копчето Мои слики за да ги најдете сите слики што ги имате направено."
   },
   "tourSkip": {
     "message": "ПРЕСКОКНИ"
@@ -126,7 +112,7 @@
   "tourDone": {
     "message": "Готово"
   },
-  "termsAndPrivacyNotice2": {
+  "termsAndPrivacyNoticeCloudServices": {
     "message": "Со користење на Firefox Screenshots, се согласувате со нашите $TERMSANDPRIVACYNOTICETERMSLINK$ и $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Известување за приватност"
-  },
-  "libraryLabel": {
-    "message": "Слики од екран"
   }
 }

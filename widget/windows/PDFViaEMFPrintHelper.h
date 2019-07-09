@@ -29,16 +29,15 @@ class PDFViaEMFPrintHelper
 {
 public:
   PDFViaEMFPrintHelper();
-  virtual ~PDFViaEMFPrintHelper();
+  ~PDFViaEMFPrintHelper();
 
   /** Loads the specified PDF file. */
   NS_IMETHOD OpenDocument(nsIFile *aFile);
-  NS_IMETHOD OpenDocument(const char* aFileName);
 
   /** Releases document buffer. */
   void CloseDocument();
 
-  int GetPageCount() const { return mPDFiumEngine->GetPageCount(mPDFDoc); }
+  int GetPageCount() { return mPDFiumEngine->GetPageCount(mPDFDoc); }
 
   /** Convert specified PDF page to EMF and draw the EMF onto the given DC. */
   bool DrawPage(HDC aPrinterDC, unsigned int aPageIndex,
@@ -48,8 +47,10 @@ public:
   bool DrawPageToFile(const wchar_t* aFilePath, unsigned int aPageIndex,
                       int aPageWidth, int aPageHeight);
 
-protected:
-  virtual bool CreatePDFiumEngineIfNeed();
+private:
+
+  bool LoadPDFDataToBuffer(nsIFile *aFile);
+
   bool RenderPageToDC(HDC aDC, unsigned int aPageIndex,
                       int aPageWidth, int aPageHeight);
 

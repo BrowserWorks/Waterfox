@@ -17,6 +17,9 @@ var CustomizationHandler = {
       case "customizationstarting":
         this._customizationStarting();
         break;
+      case "customizationchange":
+        this._customizationChange();
+        break;
       case "customizationending":
         this._customizationEnding(aEvent.detail);
         break;
@@ -38,7 +41,21 @@ var CustomizationHandler = {
 
     UpdateUrlbarSearchSplitterState();
 
+    CombinedStopReload.uninit();
     PlacesToolbarHelper.customizeStart();
+    DownloadsButton.customizeStart();
+
+    // The additional padding on the sides of the browser
+    // can cause the customize tab to get clipped.
+    let tabContainer = gBrowser.tabContainer;
+    if (tabContainer.getAttribute("overflow") == "true") {
+      let tabstrip = tabContainer.mTabstrip;
+      tabstrip.ensureElementIsVisible(gBrowser.selectedTab, true);
+    }
+  },
+
+  _customizationChange() {
+    PlacesToolbarHelper.customizeChange();
   },
 
   _customizationEnding(aDetails) {
@@ -47,6 +64,7 @@ var CustomizationHandler = {
       gURLBar = document.getElementById("urlbar");
 
       gHomeButton.updateTooltip();
+      XULBrowserWindow.init();
 
       if (AppConstants.platform != "macosx")
         updateEditUIVisibility();
@@ -62,7 +80,11 @@ var CustomizationHandler = {
     }
 
     PlacesToolbarHelper.customizeDone();
+    DownloadsButton.customizeDone();
 
+    // The url bar splitter state is dependent on whether stop/reload
+    // and the location bar are combined, so we need this ordering
+    CombinedStopReload.init();
     UpdateUrlbarSearchSplitterState();
 
     // Update the urlbar
@@ -78,4 +100,4 @@ var CustomizationHandler = {
 
     gBrowser.selectedBrowser.focus();
   }
-};
+}

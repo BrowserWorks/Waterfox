@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/clients.js");
@@ -38,9 +37,9 @@ function sync_httpd_setup() {
 
 async function setUp(server) {
   await configureIdentity({username: "johndoe"}, server);
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
   let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
-  await serverKeys.encrypt(Service.identity.syncKeyBundle);
+  serverKeys.encrypt(Service.identity.syncKeyBundle);
   serverKeys.upload(Service.resource(Service.cryptoKeysURL));
 }
 
@@ -386,7 +385,7 @@ add_task(async function test_bug671378_scenario() {
   Svc.Obs.add("weave:service:sync:start", function onSyncStart() {
     // Wait for other sync:start observers to be called so that
     // nextSync is set to 0.
-    CommonUtils.nextTick(function() {
+    Utils.nextTick(function() {
       Svc.Obs.remove("weave:service:sync:start", onSyncStart);
 
       scheduler.scheduleNextSync();

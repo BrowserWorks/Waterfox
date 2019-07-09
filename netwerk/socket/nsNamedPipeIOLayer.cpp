@@ -298,8 +298,7 @@ NamedPipeInfo::Disconnect()
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
   nsresult rv = mNamedPipeService->RemoveDataObserver(mPipe, this);
-  Unused << NS_WARN_IF(NS_FAILED(rv));
-
+  NS_WARN_IF(NS_FAILED(rv));
   mPipe = nullptr;
 
   if (mReadOverlapped.hEvent &&
@@ -314,7 +313,7 @@ NamedPipeInfo::Disconnect()
     mWriteOverlapped.hEvent = nullptr;
   }
 
-  return rv;
+  return NS_OK;
 }
 
 int32_t

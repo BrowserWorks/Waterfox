@@ -21,7 +21,9 @@ namespace TestNsDeque {
 
   class _Dealloc: public nsDequeFunctor
   {
-    virtual void operator()(void* aObject) {}
+    virtual void* operator()(void* aObject) {
+      return 0;
+    }
   };
 
   static bool VerifyContents(const nsDeque& aDeque, const int* aContents, size_t aLength)
@@ -36,24 +38,28 @@ namespace TestNsDeque {
 
   class Deallocator: public nsDequeFunctor
   {
-    virtual void operator()(void* aObject)
+    virtual void* operator()(void* aObject)
     {
       if (aObject)
       {
         // Set value to -1, to use in test function.
         *((int*)aObject) = -1;
       }
+
+      return nullptr;
     }
   };
 
   class ForEachAdder: public nsDequeFunctor
   {
-    virtual void operator()(void* aObject)
+    virtual void* operator()(void* aObject)
     {
       if (aObject)
       {
         sum += *(int*)aObject;
       }
+
+      return aObject;
     }
 
     private:

@@ -27,8 +27,9 @@ add_task(function* () {
        " is in paused state");
 
   // sending the key will lead to render animation timeline
+  let onUpdated = waitForAnimationTimelineRendering(panel);
   EventUtils.sendKey("SPACE", window);
-  yield waitForAnimationTimelineRendering(panel);
+  yield onUpdated;
   ok(playTimelineButtonEl.classList.contains("paused"),
     "The play/resume button is in its paused state");
 
@@ -36,8 +37,9 @@ add_task(function* () {
        " is in playing state");
 
   // sending the key will lead to render animation timeline
+  onUpdated = waitForAnimationTimelineRendering(panel);
   EventUtils.sendKey("SPACE", window);
-  yield waitForAnimationTimelineRendering(panel);
+  yield onUpdated;
   ok(!playTimelineButtonEl.classList.contains("paused"),
     "The play/resume button is in its play state again");
 });

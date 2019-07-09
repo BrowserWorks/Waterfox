@@ -6,8 +6,8 @@
 package org.mozilla.gecko.customtabs;
 
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -17,12 +17,10 @@ import android.os.Bundle;
 import android.provider.Browser;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -30,18 +28,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import org.mozilla.gecko.ActivityHandlerHelper;
-import org.mozilla.gecko.BrowserApp;
-import org.mozilla.gecko.DoorHangerPopup;
 import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.FormAssistPopup;
-import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.GeckoView;
 import org.mozilla.gecko.GeckoViewSettings;
-import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SnackbarBuilder;
 import org.mozilla.gecko.Telemetry;
@@ -49,27 +41,17 @@ import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.GeckoMenuInflater;
 import org.mozilla.gecko.mozglue.SafeIntent;
-import org.mozilla.gecko.permissions.Permissions;
-import org.mozilla.gecko.prompts.Prompt;
-import org.mozilla.gecko.prompts.PromptListItem;
 import org.mozilla.gecko.prompts.PromptService;
-import org.mozilla.gecko.text.TextSelection;
-import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.ColorUtil;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.IntentUtils;
-import org.mozilla.gecko.util.PackageUtil;
-import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.webapps.WebApps;
-import org.mozilla.gecko.widget.ActionModePresenter;
 import org.mozilla.gecko.widget.GeckoPopupMenu;
 
 import java.util.List;
 
 public class CustomTabsActivity extends AppCompatActivity
-                                implements ActionModePresenter,
-                                           GeckoMenu.Callback,
+                                implements GeckoMenu.Callback,
                                            GeckoView.ContentListener,
                                            GeckoView.NavigationListener,
                                            GeckoView.ProgressListener {
@@ -88,18 +70,13 @@ public class CustomTabsActivity extends AppCompatActivity
 
     private GeckoView mGeckoView;
     private PromptService mPromptService;
-    private DoorHangerPopup mDoorHangerPopup;
-    private FormAssistPopup mFormAssistPopup;
-
-    private ActionMode mActionMode;
-    private TextSelection mTextSelection;
 
     private boolean mCanGoBack = false;
     private boolean mCanGoForward = false;
     private boolean mCanStop = false;
     private String mCurrentUrl;
     private String mCurrentTitle;
-    private SecurityInformation mSecurityInformation = null;
+    private boolean mIsSecure = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -130,20 +107,9 @@ public class CustomTabsActivity extends AppCompatActivity
         mGeckoView.setContentListener(this);
 
         mPromptService = new PromptService(this, mGeckoView.getEventDispatcher());
-        mDoorHangerPopup = new DoorHangerPopup(this, mGeckoView.getEventDispatcher());
-
-        mFormAssistPopup = (FormAssistPopup) findViewById(R.id.form_assist_popup);
-        mFormAssistPopup.create(mGeckoView);
-
-        mTextSelection = TextSelection.Factory.create(mGeckoView, this);
-        mTextSelection.create();
 
         final GeckoViewSettings settings = mGeckoView.getSettings();
         settings.setBoolean(GeckoViewSettings.USE_MULTIPROCESS, false);
-        settings.setBoolean(
-            GeckoViewSettings.USE_REMOTE_DEBUGGER,
-            GeckoSharedPrefs.forApp(this).getBoolean(
-                GeckoPreferences.PREFS_DEVTOOLS_REMOTE_USB_ENABLED, false));
 
         if (intent != null && !TextUtils.isEmpty(intent.getDataString())) {
             mGeckoView.loadUri(intent.getDataString());
@@ -151,28 +117,10 @@ public class CustomTabsActivity extends AppCompatActivity
             Log.w(LOGTAG, "No intend found for custom tab");
             finish();
         }
-
-        sendTelemetry();
-        recordCustomTabUsage(getReferrerHost());
-    }
-
-    @Override
-    public void onResume() {
-        mGeckoView.setActive(true);
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        mGeckoView.setActive(false);
-        super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        mTextSelection.destroy();
-        mFormAssistPopup.destroy();
-        mDoorHangerPopup.destroy();
         mPromptService.destroy();
 
         super.onDestroy();
@@ -183,12 +131,6 @@ public class CustomTabsActivity extends AppCompatActivity
         if (!ActivityHandlerHelper.handleActivityResult(requestCode, resultCode, data)) {
             super.onActivityResult(requestCode, resultCode, data);
         }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(final int requestCode, final String[] permissions,
-                                           final int[] grantResults) {
-        Permissions.onRequestPermissionsResult(this, permissions, grantResults);
     }
 
     private void sendTelemetry() {
@@ -240,10 +182,6 @@ public class CustomTabsActivity extends AppCompatActivity
 
     @Override
     public void finish() {
-        if (mGeckoView != null) {
-            mGeckoView.loadUri("about:blank");
-        }
-
         super.finish();
 
         final SafeIntent intent = new SafeIntent(getIntent());
@@ -417,11 +355,10 @@ public class CustomTabsActivity extends AppCompatActivity
         // insert default browser name to title of menu-item-Open-In
         final MenuItem openItem = geckoMenu.findItem(R.id.custom_tabs_menu_open_in);
         if (openItem != null) {
-            final ResolveInfo info = PackageUtil.getDefaultBrowser(this);
-
-            final String name = (info == null)
-                    ? getString(R.string.ellipsis)
-                    : info.loadLabel(getPackageManager()).toString();
+            final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://"));
+            final ResolveInfo info = getPackageManager()
+                    .resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            final String name = info.loadLabel(getPackageManager()).toString();
             openItem.setTitle(getString(R.string.custom_tabs_menu_item_open_in, name));
         }
 
@@ -460,9 +397,9 @@ public class CustomTabsActivity extends AppCompatActivity
      * @param progress The current loading progress; must be between 0 and 100
      */
     private void updateProgress(final int progress) {
-        mProgressView.setProgress(progress);
         if (mCanStop) {
             mProgressView.setVisibility(View.VISIBLE);
+            mProgressView.setProgress(progress);
         } else {
             mProgressView.setVisibility(View.GONE);
         }
@@ -486,7 +423,7 @@ public class CustomTabsActivity extends AppCompatActivity
      * Update the state of the action bar
      */
     private void updateActionBar() {
-        actionBarPresenter.update(mCurrentTitle, mCurrentUrl, mSecurityInformation);
+        actionBarPresenter.update(mCurrentTitle, mCurrentUrl, mIsSecure);
     }
 
     /**
@@ -510,9 +447,6 @@ public class CustomTabsActivity extends AppCompatActivity
      * Callback for Open-in menu item.
      */
     private void onOpenInClicked() {
-        if (TextUtils.isEmpty(mCurrentUrl)) {
-            return;
-        }
         final Intent intent = new Intent();
         intent.setData(Uri.parse(mCurrentUrl));
         intent.setAction(Intent.ACTION_VIEW);
@@ -595,26 +529,6 @@ public class CustomTabsActivity extends AppCompatActivity
         updateMenuItemForward();
     }
 
-    @Override
-    public boolean onLoadUri(final GeckoView view, final String urlStr,
-                             final TargetWindow where) {
-        if (where != TargetWindow.NEW) {
-            return false;
-        }
-
-        final Uri url = Uri.parse(urlStr);
-        if (url == null) {
-            // We can't handle this, so deny it.
-            Log.w(LOGTAG, "Failed to parse URL for navigation: " + urlStr);
-            return true;
-        }
-
-        final Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(url);
-        startActivity(intent);
-        return true;
-    }
-
     /* GeckoView.ProgressListener */
     @Override
     public void onPageStart(GeckoView view, String url) {
@@ -634,7 +548,7 @@ public class CustomTabsActivity extends AppCompatActivity
 
     @Override
     public void onSecurityChange(GeckoView view, SecurityInformation securityInfo) {
-        mSecurityInformation = securityInfo;
+        mIsSecure = securityInfo.isSecure;
         updateActionBar();
     }
 
@@ -646,45 +560,9 @@ public class CustomTabsActivity extends AppCompatActivity
     }
 
     @Override
-    public void onFullScreen(GeckoView view, boolean fullScreen) {
-        ActivityUtils.setFullScreen(this, fullScreen);
-        if (fullScreen) {
-            getSupportActionBar().hide();
-        } else {
-            getSupportActionBar().show();
-        }
-    }
+    public void onFullScreen(GeckoView view, boolean fullScreen) {}
 
     @Override
     public void onContextMenu(GeckoView view, int screenX, int screenY,
-                              final String uri, final String elementSrc) {
-
-        final String content = uri != null ? uri : elementSrc != null ? elementSrc : "";
-        final Uri validUri = WebApps.getValidURL(content);
-        if (validUri == null) {
-            return;
-        }
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                WebApps.openInFennec(validUri, CustomTabsActivity.this);
-            }
-        });
-    }
-
-
-    @Override // ActionModePresenter
-    public void startActionMode(final ActionMode.Callback callback) {
-        endActionMode();
-        mActionMode = startSupportActionMode(callback);
-    }
-
-    @Override // ActionModePresenter
-    public void endActionMode() {
-        if (mActionMode != null) {
-            mActionMode.finish();
-            mActionMode = null;
-        }
-    }
+                              String uri, String elementSrc) {}
 }

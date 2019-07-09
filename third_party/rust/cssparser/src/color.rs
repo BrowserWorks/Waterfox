@@ -100,26 +100,18 @@ impl ToCss for RGBA {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
         where W: fmt::Write,
     {
-        let serialize_alpha = self.alpha != 255;
-
-        dest.write_str(if serialize_alpha { "rgba(" } else { "rgb(" })?;
-        self.red.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.green.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.blue.to_css(dest)?;
-        if serialize_alpha {
-            dest.write_str(", ")?;
-
-            // Try first with two decimal places, then with three.
-            let mut rounded_alpha = (self.alpha_f32() * 100.).round() / 100.;
-            if clamp_unit_f32(rounded_alpha) != self.alpha {
-                rounded_alpha = (self.alpha_f32() * 1000.).round() / 1000.;
-            }
-
-            rounded_alpha.to_css(dest)?;
+        // Try first with two decimal places, then with three.
+        let mut rounded_alpha = (self.alpha_f32() * 100.).round() / 100.;
+        if clamp_unit_f32(rounded_alpha) != self.alpha {
+            rounded_alpha = (self.alpha_f32() * 1000.).round() / 1000.;
         }
-        dest.write_char(')')
+
+        if self.alpha == 255 {
+            write!(dest, "rgb({}, {}, {})", self.red, self.green, self.blue)
+        } else {
+            write!(dest, "rgba({}, {}, {}, {})",
+                   self.red, self.green, self.blue, rounded_alpha)
+        }
     }
 }
 
@@ -150,7 +142,6 @@ impl Color {
     /// FIXME(#2) Deprecated CSS2 System Colors are not supported yet.
     pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Color, BasicParseError<'i>> {
         // FIXME: remove clone() when lifetimes are non-lexical
-        let location = input.current_source_location();
         let token = input.next()?.clone();
         match token {
             Token::Hash(ref value) | Token::IDHash(ref value) => {
@@ -159,11 +150,12 @@ impl Color {
             Token::Ident(ref value) => parse_color_keyword(&*value),
             Token::Function(ref name) => {
                 return input.parse_nested_block(|arguments| {
-                    parse_color_function(&*name, arguments).map_err(|e| e.into())
+                    parse_color_function(&*name, arguments)
+                        .map_err(|e| ParseError::Basic(e))
                 }).map_err(ParseError::<()>::basic);
             }
             _ => Err(())
-        }.map_err(|()| location.new_basic_unexpected_token_error(token))
+        }.map_err(|()| BasicParseError::UnexpectedToken(token))
     }
 
     /// Parse a color hash, without the leading '#' character.
@@ -424,7 +416,7 @@ fn parse_color_function<'i, 't>(name: &str, arguments: &mut Parser<'i, 't>) -> R
     let (red, green, blue, uses_commas) = match_ignore_ascii_case! { name,
         "rgb" | "rgba" => parse_rgb_components_rgb(arguments)?,
         "hsl" | "hsla" => parse_rgb_components_hsl(arguments)?,
-        _ => return Err(arguments.new_basic_unexpected_token_error(Token::Ident(name.to_owned().into()))),
+        _ => return Err(BasicParseError::UnexpectedToken(Token::Ident(name.to_owned().into()))),
     };
 
     let alpha = if !arguments.is_exhausted() {
@@ -433,7 +425,6 @@ fn parse_color_function<'i, 't>(name: &str, arguments: &mut Parser<'i, 't>) -> R
         } else {
             arguments.expect_delim('/')?;
         };
-        let location = arguments.current_source_location();
         match *arguments.next()? {
             Token::Number { value: v, .. } => {
                 clamp_unit_f32(v)
@@ -442,7 +433,7 @@ fn parse_color_function<'i, 't>(name: &str, arguments: &mut Parser<'i, 't>) -> R
                 clamp_unit_f32(v)
             }
             ref t => {
-                return Err(location.new_basic_unexpected_token_error(t.clone()))
+                return Err(BasicParseError::UnexpectedToken(t.clone()))
             }
         }
     } else {
@@ -463,8 +454,6 @@ fn parse_rgb_components_rgb<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
 
     // Either integers or percentages, but all the same type.
     // https://drafts.csswg.org/css-color/#rgb-functions
-    // FIXME: remove .clone() when lifetimes are non-lexical.
-    let location = arguments.current_source_location();
     match arguments.next()?.clone() {
         Token::Number { value: v, .. } => {
             red = clamp_floor_256_f32(v);
@@ -474,7 +463,7 @@ fn parse_rgb_components_rgb<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
                     uses_commas = true;
                     arguments.expect_number()?
                 }
-                t => return Err(location.new_basic_unexpected_token_error(t))
+                t => return Err(BasicParseError::UnexpectedToken(t))
             });
             if uses_commas {
                 arguments.expect_comma()?;
@@ -489,14 +478,14 @@ fn parse_rgb_components_rgb<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
                     uses_commas = true;
                     arguments.expect_percentage()?
                 }
-                t => return Err(location.new_basic_unexpected_token_error(t))
+                t => return Err(BasicParseError::UnexpectedToken(t))
             });
             if uses_commas {
                 arguments.expect_comma()?;
             }
             blue = clamp_unit_f32(arguments.expect_percentage()?);
         }
-        t => return Err(location.new_basic_unexpected_token_error(t))
+        t => return Err(BasicParseError::UnexpectedToken(t))
     };
     return Ok((red, green, blue, uses_commas));
 }
@@ -506,7 +495,6 @@ fn parse_rgb_components_hsl<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
     let mut uses_commas = false;
     // Hue given as an angle
     // https://drafts.csswg.org/css-values/#angles
-    let location = arguments.current_source_location();
     let hue_degrees = match *arguments.next()? {
         Token::Number { value: v, .. } => v,
         Token::Dimension { value: v, ref unit, .. } => {
@@ -515,10 +503,10 @@ fn parse_rgb_components_hsl<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
                 "grad" => v * 360. / 400.,
                 "rad" => v * 360. / (2. * PI),
                 "turn" => v * 360.,
-                _ => return Err(location.new_basic_unexpected_token_error(Token::Ident(unit.clone()))),
+                _ => return Err(BasicParseError::UnexpectedToken(Token::Ident(unit.clone()))),
             }
         }
-        ref t => return Err(location.new_basic_unexpected_token_error(t.clone()))
+        ref t => return Err(BasicParseError::UnexpectedToken(t.clone()))
     };
     // Subtract an integer before rounding, to avoid some rounding errors:
     let hue_normalized_degrees = hue_degrees - 360. * (hue_degrees / 360.).floor();
@@ -526,14 +514,13 @@ fn parse_rgb_components_hsl<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u
 
     // Saturation and lightness are clamped to 0% ... 100%
     // https://drafts.csswg.org/css-color/#the-hsl-notation
-    let location = arguments.current_source_location();
     let saturation = match arguments.next()?.clone() {
         Token::Percentage { unit_value, .. } => unit_value,
         Token::Comma => {
             uses_commas = true;
             arguments.expect_percentage()?
         }
-        t => return Err(location.new_basic_unexpected_token_error(t))
+        t => return Err(BasicParseError::UnexpectedToken(t))
     };
     let saturation = saturation.max(0.).min(1.);
 

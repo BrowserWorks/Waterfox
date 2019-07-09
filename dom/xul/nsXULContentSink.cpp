@@ -38,7 +38,7 @@
 #include "nsLayoutCID.h"
 #include "nsNetUtil.h"
 #include "nsRDFCID.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsXULElement.h"
 #include "mozilla/Logging.h"
@@ -396,7 +396,7 @@ XULContentSinkImpl::NormalizeAttributeString(const char16_t *aExpatName,
                                              nsAttrName &aName)
 {
     int32_t nameSpaceID;
-    RefPtr<nsAtom> prefix, localName;
+    nsCOMPtr<nsIAtom> prefix, localName;
     nsContentUtils::SplitExpatName(aExpatName, getter_AddRefs(prefix),
                                    getter_AddRefs(localName), &nameSpaceID);
 
@@ -450,7 +450,7 @@ XULContentSinkImpl::HandleStartElement(const char16_t *aName,
   }
 
   int32_t nameSpaceID;
-  RefPtr<nsAtom> prefix, localName;
+  nsCOMPtr<nsIAtom> prefix, localName;
   nsContentUtils::SplitExpatName(aName, getter_AddRefs(prefix),
                                  getter_AddRefs(localName), &nameSpaceID);
 
@@ -835,7 +835,7 @@ XULContentSinkImpl::OpenScript(const char16_t** aAttributes,
                                const uint32_t aLineNumber)
 {
   bool isJavaScript = true;
-  uint32_t version = JSVERSION_DEFAULT;
+  uint32_t version = JSVERSION_LATEST;
   nsresult rv;
 
   // Look for SRC attribute and look for a LANGUAGE attribute
@@ -861,14 +861,14 @@ XULContentSinkImpl::OpenScript(const char16_t** aAttributes,
 
           if (nsContentUtils::IsJavascriptMIMEType(mimeType)) {
               isJavaScript = true;
-              version = JSVERSION_DEFAULT;
+              version = JSVERSION_LATEST;
 
               // Get the version string, and ensure that JavaScript supports it.
               nsAutoString versionName;
               rv = parser.GetParameter("version", versionName);
 
               if (NS_SUCCEEDED(rv)) {
-                  version = JSVERSION_UNKNOWN;
+                  version = nsContentUtils::ParseJavascriptVersion(versionName);
               } else if (rv != NS_ERROR_INVALID_ARG) {
                   return rv;
               }

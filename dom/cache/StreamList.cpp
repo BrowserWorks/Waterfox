@@ -26,27 +26,6 @@ StreamList::StreamList(Manager* aManager, Context* aContext)
   mContext->AddActivity(this);
 }
 
-Manager*
-StreamList::GetManager() const
-{
-  MOZ_DIAGNOSTIC_ASSERT(mManager);
-  return mManager;
-}
-
-bool
-StreamList::ShouldOpenStreamFor(const nsID& aId) const
-{
-  NS_ASSERT_OWNINGTHREAD(StreamList);
-
-  for (auto entry : mList) {
-    if (entry.mId == aId) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 void
 StreamList::SetStreamControl(CacheStreamControlParent* aStreamControl)
 {
@@ -91,12 +70,15 @@ StreamList::Activate(CacheId aCacheId)
 }
 
 void
-StreamList::Add(const nsID& aId, nsCOMPtr<nsIInputStream>&& aStream)
+StreamList::Add(const nsID& aId, nsIInputStream* aStream)
 {
   // All streams should be added on IO thread before we set the stream
   // control on the owning IPC thread.
   MOZ_DIAGNOSTIC_ASSERT(!mStreamControl);
-  mList.AppendElement(Entry(aId, Move(aStream)));
+  MOZ_DIAGNOSTIC_ASSERT(aStream);
+  Entry* entry = mList.AppendElement();
+  entry->mId = aId;
+  entry->mStream = aStream;
 }
 
 already_AddRefed<nsIInputStream>

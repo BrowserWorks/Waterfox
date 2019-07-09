@@ -53,6 +53,7 @@ class MachCommands(MachCommandBase):
     @CommandArgument('args', nargs=argparse.REMAINDER)
     def android_test(self, args):
         gradle_targets = [
+            'app:testOfficialAustralisDebugUnitTest',
             'app:testOfficialPhotonDebugUnitTest',
         ]
         ret = self.gradle(gradle_targets + ["--continue"] + args, verbose=True)
@@ -72,7 +73,8 @@ class MachCommands(MachCommandBase):
         else:
             root_url = os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/reports/tests')
 
-        reports = ('officialPhotonDebug',)
+        reports = ('officialAustralisDebug',
+                   'officialPhotonDebug',)
         for report in reports:
             finder = FileFinder(os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/test-results/', report))
             for p, _ in finder.find('TEST-*.xml'):
@@ -123,6 +125,7 @@ class MachCommands(MachCommandBase):
     @CommandArgument('args', nargs=argparse.REMAINDER)
     def android_lint(self, args):
         gradle_targets = [
+            'app:lintOfficialAustralisDebug',
             'app:lintOfficialPhotonDebug',
         ]
         ret = self.gradle(gradle_targets + ["--continue"] + args, verbose=True)
@@ -135,11 +138,12 @@ class MachCommands(MachCommandBase):
         if 'TASK_ID' in os.environ and 'RUN_ID' in os.environ:
             root_url = "https://queue.taskcluster.net/v1/task/{}/runs/{}/artifacts/public/android/lint".format(os.environ['TASK_ID'], os.environ['RUN_ID'])
         else:
-            root_url = os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/reports')
+            root_url = os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/outputs')
 
-        reports = ('officialPhotonDebug',)
+        reports = ('officialAustralisDebug',
+                   'officialPhotonDebug',)
         for report in reports:
-            f = open(os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/reports/lint-results-{}.xml'.format(report)), 'rt')
+            f = open(os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/outputs/lint-results-{}.xml'.format(report)), 'rt')
             tree = ET.parse(f)
             root = tree.getroot()
 
@@ -217,6 +221,8 @@ class MachCommands(MachCommandBase):
     @CommandArgument('args', nargs=argparse.REMAINDER)
     def android_findbugs(self, dryrun=False, args=[]):
         gradle_targets = [
+            'app:findbugsXmlOfficialAustralisDebug',
+            'app:findbugsHtmlOfficialAustralisDebug',
             'app:findbugsXmlOfficialPhotonDebug',
             'app:findbugsHtmlOfficialPhotonDebug',
         ]
@@ -230,12 +236,13 @@ class MachCommands(MachCommandBase):
         if 'TASK_ID' in os.environ and 'RUN_ID' in os.environ:
             root_url = "https://queue.taskcluster.net/v1/task/{}/runs/{}/artifacts/public/artifacts/findbugs".format(os.environ['TASK_ID'], os.environ['RUN_ID'])
         else:
-            root_url = os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/reports/findbugs')
+            root_url = os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/outputs/findbugs')
 
-        reports = ('findbugs-officialPhotonDebug-output.xml',)
+        reports = ('findbugs-officialAustralisDebug-output.xml',
+                   'findbugs-officialPhotonDebug-output.xml',)
         for report in reports:
             try:
-                f = open(os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/reports/findbugs', report), 'rt')
+                f = open(os.path.join(self.topobjdir, 'gradle/build/mobile/android/app/outputs/findbugs', report), 'rt')
             except IOError:
                 continue
 
@@ -262,13 +269,19 @@ class MachCommands(MachCommandBase):
 
     @SubCommand('android', 'gradle-dependencies',
         """Collect Android Gradle dependencies.
-        See http://firefox-source-docs.mozilla.org/build/buildsystem/toolchains.html#firefox-for-android-with-gradle""")
+        See https://gecko.readthedocs.io/en/latest/build/buildsystem/toolchains.html#firefox-for-android-with-gradle""")
     @CommandArgument('args', nargs=argparse.REMAINDER)
     def android_gradle_dependencies(self, args):
         # The union, plus a bit more, of all of the Gradle tasks
         # invoked by the android-* automation jobs.
         gradle_targets = [
             'app:checkstyle',
+            'app:assembleOfficialAustralisRelease',
+            'app:assembleOfficialAustralisDebug',
+            'app:assembleOfficialAustralisDebugAndroidTest',
+            'app:findbugsXmlOfficialAustralisDebug',
+            'app:findbugsHtmlOfficialAustralisDebug',
+            'app:lintOfficialAustralisDebug',
             'app:assembleOfficialPhotonRelease',
             'app:assembleOfficialPhotonDebug',
             'app:assembleOfficialPhotonDebugAndroidTest',
@@ -316,7 +329,7 @@ class MachCommands(MachCommandBase):
         # Android tools expect UTF-8: see
         # http://tools.android.com/knownissues/encoding.  See
         # http://stackoverflow.com/a/21267635 for discussion of this approach.
-        return self.run_process([self.substs['GRADLE']] + gradle_flags + ['--console=plain'] + args,
+        return self.run_process([self.substs['GRADLE']] + gradle_flags + args,
             append_env={
                 'GRADLE_OPTS': '-Dfile.encoding=utf-8',
                 'JAVA_HOME': java_home,

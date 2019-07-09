@@ -662,8 +662,7 @@ MOZ_MUST_USE bool StringSplitHelper(JSContext* cx, HandleString str, HandleStrin
                                     MutableHandleValue result);
 
 MOZ_MUST_USE bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
-MOZ_MUST_USE bool ArrayPushDense(JSContext* cx, HandleArrayObject arr, HandleValue v,
-                                 uint32_t* length);
+MOZ_MUST_USE bool ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length);
 MOZ_MUST_USE bool ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
 JSString* ArrayJoin(JSContext* cx, HandleObject array, HandleString sep);
 MOZ_MUST_USE bool SetArrayLength(JSContext* cx, HandleObject obj, HandleValue value, bool strict);
@@ -680,7 +679,7 @@ SetProperty(JSContext* cx, HandleObject obj, HandlePropertyName name, HandleValu
 MOZ_MUST_USE bool
 InterruptCheck(JSContext* cx);
 
-void* MallocWrapper(JS::Zone* zone, size_t nbytes);
+void* MallocWrapper(JSRuntime* rt, size_t nbytes);
 JSObject* NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group);
 JSObject* NewSingletonCallObject(JSContext* cx, HandleShape shape);
 JSObject* NewStringObject(JSContext* cx, HandleString str);
@@ -797,8 +796,8 @@ ForcedRecompile(JSContext* cx);
 JSString* StringReplace(JSContext* cx, HandleString string, HandleString pattern,
                         HandleString repl);
 
-MOZ_MUST_USE bool SetDenseElement(JSContext* cx, HandleNativeObject obj, int32_t index,
-                                  HandleValue value, bool strict);
+MOZ_MUST_USE bool SetDenseOrUnboxedArrayElement(JSContext* cx, HandleObject obj, int32_t index,
+                                                HandleValue value, bool strict);
 
 void AssertValidObjectPtr(JSContext* cx, JSObject* obj);
 void AssertValidObjectOrNullPtr(JSContext* cx, JSObject* obj);
@@ -877,9 +876,8 @@ template <bool HandleMissing>
 bool
 GetNativeDataPropertyByValue(JSContext* cx, JSObject* obj, Value* vp);
 
-template <bool HasOwn>
 bool
-HasNativeDataProperty(JSContext* cx, JSObject* obj, Value* vp);
+HasOwnNativeDataProperty(JSContext* cx, JSObject* obj, Value* vp);
 
 template <bool NeedsTypeBarrier>
 bool
@@ -893,8 +891,6 @@ TypeOfObject(JSObject* obj, JSRuntime* rt);
 
 bool
 GetPrototypeOf(JSContext* cx, HandleObject target, MutableHandleValue rval);
-
-extern const VMFunction SetObjectElementInfo;
 
 } // namespace jit
 } // namespace js

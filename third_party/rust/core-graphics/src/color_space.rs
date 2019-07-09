@@ -10,9 +10,8 @@
 use core_foundation::base::{CFRelease, CFRetain, CFTypeID, CFTypeRef, TCFType};
 use std::mem;
 
-// This is an enum due to zero-sized types warnings.
-// For more details see https://github.com/rust-lang/rust/issues/27303
-pub enum __CGColorSpace {}
+#[repr(C)]
+pub struct __CGColorSpace;
 
 pub type CGColorSpaceRef = *const __CGColorSpace;
 

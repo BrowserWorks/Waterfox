@@ -32,15 +32,7 @@
 const { Cc, Ci, Cu } = require("chrome");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const nodeConstants = require("devtools/shared/dom-node-constants");
-const {
-  getBindingElementAndPseudo,
-  getCSSStyleRules,
-  l10n,
-  isContentStylesheet,
-  shortSource,
-  FILTER,
-  STATUS
-} = require("devtools/shared/inspector/css-logic");
+const {l10n, isContentStylesheet, shortSource, FILTER, STATUS} = require("devtools/shared/inspector/css-logic");
 
 /**
  * @param {function} isInherited A function that determines if the CSS property
@@ -545,7 +537,11 @@ CssLogic.prototype = {
                    STATUS.MATCHED : STATUS.PARENT_MATCH;
 
       try {
-        domRules = getCSSStyleRules(element);
+        // Handle finding rules on pseudo by reading style rules
+        // on the parent node with proper pseudo arg to getCSSStyleRules.
+        let {bindingElement, pseudo} =
+            CssLogic.getBindingElementAndPseudo(element);
+        domRules = domUtils.getCSSStyleRules(bindingElement, pseudo);
       } catch (ex) {
         console.log("CL__buildMatchedRules error: " + ex);
         continue;
@@ -658,7 +654,21 @@ CssLogic.getSelectors = function (domRule) {
  *            - {DOMNode} node The non-anonymous node
  *            - {string} pseudo One of ':before', ':after', or null.
  */
-CssLogic.getBindingElementAndPseudo = getBindingElementAndPseudo;
+CssLogic.getBindingElementAndPseudo = function (node) {
+  let bindingElement = node;
+  let pseudo = null;
+  if (node.nodeName == "_moz_generated_content_before") {
+    bindingElement = node.parentNode;
+    pseudo = ":before";
+  } else if (node.nodeName == "_moz_generated_content_after") {
+    bindingElement = node.parentNode;
+    pseudo = ":after";
+  }
+  return {
+    bindingElement: bindingElement,
+    pseudo: pseudo
+  };
+};
 
 /**
  * Get the computed style on a node.  Automatically handles reading
@@ -905,7 +915,6 @@ function CssRule(cssSheet, domRule, element) {
     // parse domRule.selectorText on call to this.selectors
     this._selectors = null;
     this.line = domUtils.getRuleLine(this.domRule);
-    this.column = domUtils.getRuleColumn(this.domRule);
     this.source = this._cssSheet.shortSource + ":" + this.line;
     if (this.mediaText) {
       this.source += " @media " + this.mediaText;
@@ -1099,16 +1108,6 @@ CssSelector.prototype = {
   },
 
   /**
-   * Retrieve the column of the parent CSSStyleRule in the parent CSSStyleSheet.
-   *
-   * @return {number} the column of the parent CSSStyleRule in the parent
-   * stylesheet.
-   */
-  get ruleColumn() {
-    return this.cssRule.column;
-  },
-
-  /**
    * Retrieve specificity information for the current selector.
    *
    * @see http://www.w3.org/TR/css3-selectors/#specificity
@@ -1120,9 +1119,9 @@ CssSelector.prototype = {
     if (this.elementStyle) {
       // We can't ask specificity from DOMUtils as element styles don't provide
       // CSSStyleRule interface DOMUtils expect. However, specificity of element
-      // style is constant, 1,0,0,0 or 0x40000000, just return the constant
+      // style is constant, 1,0,0,0 or 0x01000000, just return the constant
       // directly. @see http://www.w3.org/TR/CSS2/cascade.html#specificity
-      return 0x40000000;
+      return 0x01000000;
     }
 
     if (this._specificity) {
@@ -1393,16 +1392,6 @@ CssSelectorInfo.prototype = {
   },
 
   /**
-   * Retrieve the column of the parent CSSStyleRule in the parent CSSStyleSheet.
-   *
-   * @return {number} the column of the parent CSSStyleRule in the parent
-   * stylesheet.
-   */
-  get ruleColumn() {
-    return this.selector.ruleColumn;
-  },
-
-  /**
    * Check if the selector comes from a browser-provided stylesheet.
    *
    * @return {boolean} true if the selector comes from a browser-provided
@@ -1466,13 +1455,6 @@ CssSelectorInfo.prototype = {
       return -1;
     }
     if (that.ruleLine > this.ruleLine) {
-      return 1;
-    }
-
-    if (this.ruleColumn > that.ruleColumn) {
-      return -1;
-    }
-    if (that.ruleColumn > this.ruleColumn) {
       return 1;
     }
 

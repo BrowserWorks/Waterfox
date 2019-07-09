@@ -19,7 +19,7 @@ add_task(function* () {
 });
 
 function testClosingAfterCompletion(hud, browser) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let errorWhileClosing = false;
   function errorListener() {

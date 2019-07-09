@@ -47,7 +47,7 @@ NS_IMPL_ISUPPORTS(JumpListBuilder, nsIJumpListBuilder, nsIObserver)
 
 namespace detail {
 
-class DoneCommitListBuildCallback final : public nsIRunnable
+class DoneCommitListBuildCallback : public nsIRunnable
 {
   NS_DECL_THREADSAFE_ISUPPORTS
 

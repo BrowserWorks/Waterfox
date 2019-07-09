@@ -99,7 +99,7 @@ SessionStore.prototype = {
     loggingEnabled = Services.prefs.getBoolPref("browser.sessionstore.debug_logging");
 
     // Get file references
-    this._sessionFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    this._sessionFile = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
     this._sessionFileBackup = this._sessionFile.clone();
     this._sessionFilePrevious = this._sessionFile.clone();
     this._sessionFileTemp = this._sessionFile.clone();
@@ -523,6 +523,7 @@ SessionStore.prototype = {
         }
         break;
       }
+      case "change":
       case "input":
       case "DOMAutoComplete": {
         let browser = aEvent.currentTarget;
@@ -630,6 +631,7 @@ SessionStore.prototype = {
     aBrowser.addEventListener("AboutReaderContentReady", this, true);
 
     // Use a combination of events to watch for text data changes
+    aBrowser.addEventListener("change", this, true);
     aBrowser.addEventListener("input", this, true);
     aBrowser.addEventListener("DOMAutoComplete", this, true);
 
@@ -658,6 +660,7 @@ SessionStore.prototype = {
     aBrowser.removeEventListener("load", this, true);
     aBrowser.removeEventListener("pageshow", this, true);
     aBrowser.removeEventListener("AboutReaderContentReady", this, true);
+    aBrowser.removeEventListener("change", this, true);
     aBrowser.removeEventListener("input", this, true);
     aBrowser.removeEventListener("DOMAutoComplete", this, true);
     aBrowser.removeEventListener("scroll", this, true);
@@ -704,7 +707,7 @@ SessionStore.prototype = {
       }
 
       log("onTabClose() ran for tab " + tab.id);
-      let evt = new Event("SSTabCloseProcessed", {"bubbles": true, "cancelable": false});
+      let evt = new Event("SSTabCloseProcessed", {"bubbles":true, "cancelable":false});
       aBrowser.dispatchEvent(evt);
     }
   },
@@ -784,7 +787,7 @@ SessionStore.prototype = {
     }
 
     log("onTabLoad() ran for tab " + aWindow.BrowserApp.getTabForBrowser(aBrowser).id);
-    let evt = new Event("SSTabDataUpdated", {"bubbles": true, "cancelable": false});
+    let evt = new Event("SSTabDataUpdated", {"bubbles":true, "cancelable":false});
     aBrowser.dispatchEvent(evt);
     this.saveStateDelayed();
 
@@ -963,7 +966,7 @@ SessionStore.prototype = {
     // Save zoom and scroll data.
     data.scrolldata = scrolldata;
     log("onTabScroll() ran for tab " + aWindow.BrowserApp.getTabForBrowser(aBrowser).id);
-    let evt = new Event("SSTabScrollCaptured", {"bubbles": true, "cancelable": false});
+    let evt = new Event("SSTabScrollCaptured", {"bubbles":true, "cancelable":false});
     aBrowser.dispatchEvent(evt);
     this.saveStateDelayed();
   },
@@ -1477,7 +1480,7 @@ SessionStore.prototype = {
     }
 
     // If the tab data is in the closedTabs array, remove it.
-    closedTabs.find(function(tabData, i) {
+    closedTabs.find(function (tabData, i) {
       if (tabData == aCloseTabData) {
         closedTabs.splice(i, 1);
         return true;
@@ -1551,7 +1554,7 @@ SessionStore.prototype = {
 
     let tabs = closedTabs
       .filter(tab => tab.isPrivate == isPrivate)
-      .map(function(tab) {
+      .map(function (tab) {
         // Get the url and title for the current entry in the session history.
         let entry = tab.entries[tab.index - 1];
         return {

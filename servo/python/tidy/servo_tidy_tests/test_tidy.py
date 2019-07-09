@@ -107,7 +107,6 @@ class CheckTidiness(unittest.TestCase):
         self.assertTrue('mod declaration is not in alphabetical order' in errors.next()[2])
         self.assertEqual('mod declaration spans multiple lines', errors.next()[2])
         self.assertTrue('extern crate declaration is not in alphabetical order' in errors.next()[2])
-        self.assertTrue('derivable traits list is not in alphabetical order' in errors.next()[2])
         self.assertEqual('found an empty line following a {', errors.next()[2])
         self.assertEqual('missing space before ->', errors.next()[2])
         self.assertEqual('missing space after ->', errors.next()[2])
@@ -147,11 +146,11 @@ class CheckTidiness(unittest.TestCase):
         self.assertNoMoreErrors(feature_errors)
 
         ban_errors = tidy.collect_errors_for_files(iterFile('ban.rs'), [], [tidy.check_rust], print_text=False)
-        self.assertEqual('Banned type Cell<JSVal> detected. Use MutDom<JSVal> instead', ban_errors.next()[2])
+        self.assertEqual('Banned type Cell<JSVal> detected. Use MutJS<JSVal> instead', ban_errors.next()[2])
         self.assertNoMoreErrors(ban_errors)
 
         ban_errors = tidy.collect_errors_for_files(iterFile('ban-domrefcell.rs'), [], [tidy.check_rust], print_text=False)
-        self.assertEqual('Banned type DomRefCell<Dom<T>> detected. Use MutDom<T> instead', ban_errors.next()[2])
+        self.assertEqual('Banned type DOMRefCell<JS<T>> detected. Use MutJS<JS<T>> instead', ban_errors.next()[2])
         self.assertNoMoreErrors(ban_errors)
 
     def test_spec_link(self):
@@ -265,11 +264,6 @@ class CheckTidiness(unittest.TestCase):
                                   exclude_dirs=[os.path.join(base_path, 'whee', 'foo')])
         lst = list(file_list)
         self.assertEqual([os.path.join(base_path, 'whee', 'test.rs')], lst)
-
-    def test_multiline_string(self):
-        errors = tidy.collect_errors_for_files(iterFile('multiline_string.rs'), [], [tidy.check_rust], print_text=True)
-        self.assertNoMoreErrors(errors)
-
 
 def do_tests():
     suite = unittest.TestLoader().loadTestsFromTestCase(CheckTidiness)

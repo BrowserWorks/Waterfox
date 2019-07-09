@@ -14,7 +14,7 @@
 #include "nsGlobalWindow.h"
 #include "nsGlobalWindowCommands.h"
 #include "nsIContent.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsNameSpaceManager.h"
@@ -33,7 +33,7 @@
 #include "nsIDOMWindow.h"
 #include "nsIServiceManager.h"
 #include "nsIScriptError.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsGkAtoms.h"
 #include "nsIXPConnect.h"
@@ -294,7 +294,7 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
 
   // Look for a compiled handler on the element.
   // Should be compiled and bound with "on" in front of the name.
-  RefPtr<nsAtom> onEventAtom = NS_Atomize(NS_LITERAL_STRING("onxbl") +
+  nsCOMPtr<nsIAtom> onEventAtom = NS_Atomize(NS_LITERAL_STRING("onxbl") +
                                              nsDependentAtomString(mEventName));
 
   // Compile the handler and bind it to the element.
@@ -395,7 +395,7 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
 }
 
 nsresult
-nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsAtom* aName,
+nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsIAtom* aName,
                                           JS::MutableHandle<JSObject*> aHandler)
 {
   JSContext* cx = jsapi.cx();
@@ -435,7 +435,7 @@ nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsAtom* aName,
   JSAutoCompartment ac(cx, scopeObject);
   JS::CompileOptions options(cx);
   options.setFileAndLine(bindingURI.get(), mLineNumber)
-         .setVersion(JSVERSION_DEFAULT);
+         .setVersion(JSVERSION_LATEST);
 
   JS::Rooted<JSObject*> handlerFun(cx);
   JS::AutoObjectVector emptyVector(cx);
@@ -516,14 +516,10 @@ nsXBLPrototypeHandler::DispatchXBLCommand(EventTarget* aTarget, nsIDOMEvent* aEv
   }
 
   NS_LossyConvertUTF16toASCII command(mHandlerText);
-  if (windowRoot) {
-    // If user tries to do something, user must try to do it in visible window.
-    // So, let's retrieve controller of visible window.
-    windowRoot->GetControllerForCommand(command.get(), true,
-                                        getter_AddRefs(controller));
-  } else {
+  if (windowRoot)
+    windowRoot->GetControllerForCommand(command.get(), getter_AddRefs(controller));
+  else
     controller = GetController(aTarget); // We're attached to the receiver possibly.
-  }
 
   // We are the default action for this command.
   // Stop any other default action from executing.
@@ -545,10 +541,7 @@ nsXBLPrototypeHandler::DispatchXBLCommand(EventTarget* aTarget, nsIDOMEvent* aEv
     if (windowToCheck) {
       nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
       focusedContent =
-        nsFocusManager::GetFocusedDescendant(
-                          windowToCheck,
-                          nsFocusManager::eIncludeAllDescendants,
-                          getter_AddRefs(focusedWindow));
+        nsFocusManager::GetFocusedDescendant(windowToCheck, true, getter_AddRefs(focusedWindow));
     }
 
     // If the focus is in an editable region, don't scroll.
@@ -658,10 +651,10 @@ nsXBLPrototypeHandler::GetModifiersMask() const
   return modifiersMask;
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 nsXBLPrototypeHandler::GetEventName()
 {
-  RefPtr<nsAtom> eventName = mEventName;
+  nsCOMPtr<nsIAtom> eventName = mEventName;
   return eventName.forget();
 }
 

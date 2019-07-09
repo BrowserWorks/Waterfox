@@ -144,9 +144,6 @@ public:
 
     // nsHttp.h version
     virtual uint32_t Version() = 0;
-
-    // A notification of the current active tab id change.
-    virtual void TopLevelOuterContentWindowIdChanged(uint64_t windowId) = 0;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
@@ -166,7 +163,6 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
     MOZ_MUST_USE nsresult PushBack(const char *, uint32_t) override; \
     already_AddRefed<nsHttpConnection> TakeHttpConnection() override; \
     already_AddRefed<nsHttpConnection> HttpConnection() override; \
-    void TopLevelOuterContentWindowIdChanged(uint64_t windowId) override; \
     /*                                                                  \
        Thes methods below have automatic definitions that just forward the \
        function to a lower level connection object        \

@@ -8,6 +8,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import json
 import logging
+import re
 
 import time
 import yaml
@@ -16,9 +17,14 @@ from .generator import TaskGraphGenerator
 from .create import create_tasks
 from .parameters import Parameters
 from .taskgraph import TaskGraph
-from .try_option_syntax import parse_message
 from .actions import render_actions_json
-from taskgraph.util.partials import populate_release_history
+from . import GECKO
+
+from taskgraph.util.templates import Templates
+from taskgraph.util.time import (
+    json_time_from_now,
+    current_json_time,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +35,10 @@ ARTIFACTS_DIR = 'artifacts'
 PER_PROJECT_PARAMETERS = {
     'try': {
         'target_tasks_method': 'try_tasks',
+        # Always perform optimization.  This makes it difficult to use try
+        # pushes to run a task that would otherwise be optimized, but is a
+        # compromise to avoid essentially disabling optimization in try.
+        'optimize_target_tasks': True,
         # By default, the `try_option_syntax` `target_task_method` ignores this
         # parameter, and enables/disables nightlies depending whether
         # `--include-nightly` is specified in the commit message.
@@ -97,7 +107,6 @@ def taskgraph_decision(options):
     """
 
     parameters = get_decision_parameters(options)
-
     # create a TaskGraphGenerator instance
     tgg = TaskGraphGenerator(
         root_dir=options['root'],
@@ -105,6 +114,9 @@ def taskgraph_decision(options):
 
     # write out the parameters used to generate this graph
     write_artifact('parameters.yml', dict(**parameters))
+
+    # write out the yml file for action tasks
+    write_artifact('action.yml', get_action_yml(parameters))
 
     # write out the public/actions.json file
     write_artifact('actions.json', render_actions_json(parameters))
@@ -148,15 +160,6 @@ def get_decision_parameters(options):
         'target_tasks_method',
     ] if n in options}
 
-    for n in (
-        'comm_base_repository',
-        'comm_head_repository',
-        'comm_head_rev',
-        'comm_head_ref',
-    ):
-        if n in options and options[n] is not None:
-            parameters[n] = options[n]
-
     # Define default filter list, as most configurations shouldn't need
     # custom filters.
     parameters['filters'] = [
@@ -188,49 +191,7 @@ def get_decision_parameters(options):
     if options.get('target_tasks_method'):
         parameters['target_tasks_method'] = options['target_tasks_method']
 
-    # If the target method is nightly, we should build partials. This means
-    # knowing what has been released previously.
-    # An empty release_history is fine, it just means no partials will be built
-    parameters.setdefault('release_history', dict())
-    if 'nightly' in parameters.get('target_tasks_method', ''):
-        parameters['release_history'] = populate_release_history('Firefox', project)
-
-    # if try_task_config.json is present, load it
-    task_config_file = os.path.join(os.getcwd(), 'try_task_config.json')
-
-    # load try settings
-    if project == 'try':
-        parameters['try_mode'] = None
-        if os.path.isfile(task_config_file):
-            parameters['try_mode'] = 'try_task_config'
-            with open(task_config_file, 'r') as fh:
-                parameters['try_task_config'] = json.load(fh)
-        else:
-            parameters['try_task_config'] = None
-
-        if 'try:' in parameters['message']:
-            parameters['try_mode'] = 'try_option_syntax'
-            args = parse_message(parameters['message'])
-            parameters['try_options'] = args
-        else:
-            parameters['try_options'] = None
-
-        if parameters['try_mode']:
-            # The user has explicitly requested a set of jobs, so run them all
-            # regardless of optimization.  Their dependencies can be optimized,
-            # though.
-            parameters['optimize_target_tasks'] = False
-        else:
-            # For a try push with no task selection, apply the default optimization
-            # process to all of the tasks.
-            parameters['optimize_target_tasks'] = True
-
-    else:
-        parameters['try_mode'] = None
-        parameters['try_task_config'] = None
-        parameters['try_options'] = None
-
-    return Parameters(**parameters)
+    return Parameters(parameters)
 
 
 def write_artifact(filename, data):
@@ -246,3 +207,23 @@ def write_artifact(filename, data):
             json.dump(data, f, sort_keys=True, indent=2, separators=(',', ': '))
     else:
         raise TypeError("Don't know how to write to {}".format(filename))
+
+
+def get_action_yml(parameters):
+    templates = Templates(os.path.join(GECKO, "taskcluster/taskgraph"))
+    action_parameters = parameters.copy()
+
+    match = re.match(r'https://(hg.mozilla.org)/(.*?)/?$', action_parameters['head_repository'])
+    if not match:
+        raise Exception('Unrecognized head_repository')
+    repo_scope = 'assume:repo:{}/{}:*'.format(
+        match.group(1), match.group(2))
+
+    action_parameters.update({
+        "action": "{{action}}",
+        "action_args": "{{action_args}}",
+        "repo_scope": repo_scope,
+        "from_now": json_time_from_now,
+        "now": current_json_time()
+    })
+    return templates.load('action.yml', action_parameters)

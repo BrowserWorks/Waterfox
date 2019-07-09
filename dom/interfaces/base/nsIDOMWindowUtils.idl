@@ -34,6 +34,7 @@ interface nsICycleCollectorListener;
 interface nsIDOMNode;
 interface nsIDOMNodeList;
 interface nsIDOMElement;
+interface nsIDOMHTMLCanvasElement;
 interface nsIDOMEvent;
 interface nsIPreloadedStyleSheet;
 interface nsITransferable;
@@ -78,6 +79,12 @@ interface nsIDOMWindowUtils : nsISupports {
    * Cannot be accessed from unprivileged context (not content-accessible)
    */
   readonly attribute boolean docCharsetIsForced;
+
+  /**
+   * Get current cursor type from this window
+   * @return the current value of nsCursor
+   */
+  short getCursorType();
 
   /**
    * Function to get metadata associated with the window's current document
@@ -524,6 +531,8 @@ interface nsIDOMWindowUtils : nsISupports {
    * @param aOptions           Set following flags.
    */
   const unsigned long WHEEL_EVENT_CAUSED_BY_NO_LINE_OR_PAGE_DELTA_DEVICE = 0x0001;
+  // @deprecated Use WHEEL_EVENT_CAUSED_BY_NO_LINE_OR_PAGE_DELTA_DEVICE.
+  const unsigned long WHEEL_EVENT_CAUSED_BY_PIXEL_ONLY_DEVICE            = 0x0001;
   const unsigned long WHEEL_EVENT_CAUSED_BY_MOMENTUM                     = 0x0002;
   const unsigned long WHEEL_EVENT_CUSTOMIZED_BY_USER_PREFS               = 0x0004;
   // If any of the following flags is specified this method will throw an
@@ -714,7 +723,8 @@ interface nsIDOMWindowUtils : nsISupports {
    * drag - msg1-n:TOUCH_CONTACT (moving), msgn+1:TOUCH_REMOVE
    * hover drag - msg1-n:TOUCH_HOVER (moving), msgn+1:TOUCH_REMOVE
    *
-   * Widget support: Windows 8.0+, Winrt/Win32. Other widgets will throw.
+   * Widget support: Windows 8.0+, Winrt/Win32. Gonk supports CONTACT, REMOVE,
+   * and CANCEL but no HOVER. Other widgets will throw.
    *
    * NOTE: The synthesized native event will be fired asynchronously, and upon
    * completion the observer, if provided, will be notified with a "touchpoint"
@@ -927,8 +937,8 @@ interface nsIDOMWindowUtils : nsISupports {
    *
    * This method requires chrome privileges.
    */
-  uint32_t compareCanvases(in nsISupports aCanvas1,
-                           in nsISupports aCanvas2,
+  uint32_t compareCanvases(in nsIDOMHTMLCanvasElement aCanvas1,
+                           in nsIDOMHTMLCanvasElement aCanvas2,
                            out unsigned long aMaxDifference);
 
   /**
@@ -1414,6 +1424,14 @@ interface nsIDOMWindowUtils : nsISupports {
   readonly attribute boolean usingAdvancedLayers;
 
   /**
+   * Returns a Promise that will be resolved with a string once the capabilities
+   * of the h264 decoder have been determined.
+   * Success does not mean that all h264 video decoding will be done
+   * in hardware.
+   */
+  readonly attribute jsval supportsHardwareH264Decoding;
+
+  /**
    * Returns the current audio backend as a free-form string.
    */
   readonly attribute AString currentAudioBackend;
@@ -1470,6 +1488,12 @@ interface nsIDOMWindowUtils : nsISupports {
    * The DPI of the display
    */
   readonly attribute float displayDPI;
+
+  /**
+   * Return the outer window with the given ID, if any.  Can return null.
+   * @deprecated Use nsIWindowMediator.getOuterWindowWithId.  See bug 865664.
+   */
+  nsIDOMWindow getOuterWindowWithId(in unsigned long long aOuterWindowID);
 
   /**
    * Return this window's frame element.
@@ -2045,20 +2069,6 @@ interface nsIDOMWindowUtils : nsISupports {
    * This calls nsIDocument::IsStyledByServo().
    */
   readonly attribute boolean isStyledByServo;
-
-  /**
-   * Add a domain to the existing stylo blocklist.
-   *
-   * This calls nsLayoutUtils::AddToStyloBlocklist().
-   */
-  void addToStyloBlocklist(in ACString aBlockedDomain);
-
-  /**
-   * Remove a domain from the existing stylo blocklist.
-   *
-   * This calls nsLayoutUtils::RemoveFromStyloBlocklist().
-   */
-  void removeFromStyloBlocklist(in ACString aBlockedDomain);
 
   // These consts are only for testing purposes.
   const long DEFAULT_MOUSE_POINTER_ID = 0;

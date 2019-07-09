@@ -120,6 +120,8 @@ void Finalize(JSFreeOp *fop, JSObject *objSelf)
 static const JSClassOps sWitnessClassOps = {
   nullptr /* addProperty */,
   nullptr /* delProperty */,
+  nullptr /* getProperty */,
+  nullptr /* setProperty */,
   nullptr /* enumerate */,
   nullptr /* newEnumerate */,
   nullptr /* resolve */,

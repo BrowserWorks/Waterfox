@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.map
 es5id: 15.4.4.19-5-6
 description: Array.prototype.map - thisArg is function
 ---*/
@@ -15,7 +14,7 @@ description: Array.prototype.map - thisArg is function
 
   function foo(){}
   foo.res = true;
-
+  
   var srcArr = [1];
   var resArr = srcArr.map(callbackfn,foo);
 

@@ -2,13 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#![cfg_attr(feature = "unstable", feature(core_intrinsics))]
-#![cfg_attr(feature = "unstable", feature(on_unimplemented))]
+#![feature(box_syntax)]
 #![feature(conservative_impl_trait)]
 #![feature(const_fn)]
+#![feature(core_intrinsics)]
 #![feature(mpsc_select)]
+#![feature(nonzero)]
+#![feature(on_unimplemented)]
 #![feature(plugin)]
 #![feature(proc_macro)]
+#![feature(stmt_expr_attributes)]
+#![feature(try_from)]
+#![feature(unboxed_closures)]
+#![feature(untagged_unions)]
 
 #![deny(unsafe_code)]
 #![allow(non_snake_case)]
@@ -28,6 +34,7 @@ extern crate byteorder;
 extern crate canvas_traits;
 extern crate caseless;
 extern crate cookie as cookie_rs;
+extern crate core;
 #[macro_use] extern crate cssparser;
 #[macro_use] extern crate deny_public_fields;
 extern crate devtools_traits;
@@ -39,6 +46,8 @@ extern crate euclid;
 extern crate fnv;
 extern crate gleam;
 extern crate half;
+#[macro_use] extern crate heapsize;
+#[macro_use] extern crate heapsize_derive;
 #[macro_use] extern crate html5ever;
 #[macro_use]
 extern crate hyper;
@@ -54,16 +63,12 @@ extern crate lazy_static;
 extern crate libc;
 #[macro_use]
 extern crate log;
-#[macro_use] extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
 extern crate metrics;
 #[macro_use]
 extern crate mime;
 extern crate mime_guess;
-extern crate mitochondria;
 extern crate msg;
 extern crate net_traits;
-extern crate nonzero;
 extern crate num_traits;
 extern crate offscreen_gl_context;
 extern crate open;
@@ -78,7 +83,6 @@ extern crate script_layout_interface;
 extern crate script_traits;
 extern crate selectors;
 extern crate serde;
-extern crate servo_allocator;
 extern crate servo_arc;
 #[macro_use] extern crate servo_atoms;
 extern crate servo_config;
@@ -100,9 +104,6 @@ extern crate uuid;
 extern crate webrender_api;
 extern crate webvr_traits;
 extern crate xml5ever;
-
-#[macro_use]
-mod task;
 
 mod body;
 pub mod clipboard_provider;
@@ -136,11 +137,11 @@ mod webdriver_handlers;
 pub mod layout_exports {
     pub use dom::bindings::inheritance::{CharacterDataTypeId, ElementTypeId};
     pub use dom::bindings::inheritance::{HTMLElementTypeId, NodeTypeId};
-    pub use dom::bindings::root::LayoutDom;
+    pub use dom::bindings::js::LayoutJS;
     pub use dom::characterdata::LayoutCharacterDataHelpers;
     pub use dom::document::{Document, LayoutDocumentHelpers, PendingRestyle};
     pub use dom::element::{Element, LayoutElementHelpers, RawLayoutElementHelpers};
-    pub use dom::node::{CAN_BE_FRAGMENTED, HAS_DIRTY_DESCENDANTS, IS_IN_DOC};
+    pub use dom::node::{CAN_BE_FRAGMENTED, DIRTY_ON_VIEWPORT_SIZE_CHANGE, HAS_DIRTY_DESCENDANTS, IS_IN_DOC};
     pub use dom::node::{HANDLED_SNAPSHOT, HAS_SNAPSHOT};
     pub use dom::node::{LayoutNodeHelpers, Node};
     pub use dom::text::Text;

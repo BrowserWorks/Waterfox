@@ -18,7 +18,7 @@ info: >
   5. If len is zero, return the empty String.
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var s = Symbol("");

@@ -15,7 +15,7 @@ const TargetList = createFactory(require("../target-list"));
 const TabTarget = createFactory(require("./target"));
 
 loader.lazyRequireGetter(this, "DebuggerClient",
-  "devtools/shared/client/debugger-client", true);
+  "devtools/shared/client/main", true);
 
 const Strings = Services.strings.createBundle(
   "chrome://devtools/locale/aboutdebugging.properties");

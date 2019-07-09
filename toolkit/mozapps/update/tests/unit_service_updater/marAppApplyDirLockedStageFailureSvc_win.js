@@ -37,13 +37,5 @@ function stageUpdateFinished() {
   checkFilesAfterUpdateFailure(getApplyDirFile);
   checkUpdateLogContains(PERFORMING_STAGED_UPDATE);
   checkUpdateLogContains(ERR_UPDATE_IN_PROGRESS);
-  do_execute_soon(() => waitForUpdateXMLFiles(true, false));
-}
-
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
-  checkUpdateManager(STATE_AFTER_STAGE, true, STATE_AFTER_STAGE, 0, 0);
   waitForFilesInUse();
 }

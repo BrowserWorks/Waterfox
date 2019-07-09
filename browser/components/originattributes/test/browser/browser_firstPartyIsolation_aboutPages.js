@@ -68,11 +68,6 @@ function frame_script() {
  * Check if data: URI inherits firstPartyDomain from about:blank correctly.
  */
 add_task(async function test_remote_window_open_data_uri() {
-  // allow top level data: URI navigations, otherwise
-  // <a href="data:" would fail.
-  await SpecialPowers.pushPrefEnv({
-    "set": [["security.data_uri.block_toplevel_data_uri_navigations", false]]
-  });
   let win = await BrowserTestUtils.openNewBrowserWindow({ remote: true });
   let browser = win.gBrowser.selectedBrowser;
   let mm = browser.messageManager;
@@ -141,6 +136,7 @@ add_task(async function test_aboutURL() {
     "credits",
   ];
 
+  let ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
   for (let cid in Cc) {
     let result = cid.match(/@mozilla.org\/network\/protocol\/about;1\?what\=(.*)$/);
     if (!result) {
@@ -151,7 +147,7 @@ add_task(async function test_aboutURL() {
     let contract = "@mozilla.org/network/protocol/about;1?what=" + aboutType;
     try {
       let am = Cc[contract].getService(Ci.nsIAboutModule);
-      let uri = Services.io.newURI("about:" + aboutType);
+      let uri = ios.newURI("about:" + aboutType);
       let flags = am.getURIFlags(uri);
 
       // We load pages with URI_SAFE_FOR_UNTRUSTED_CONTENT set, this means they
@@ -161,7 +157,7 @@ add_task(async function test_aboutURL() {
       if ((flags & Ci.nsIAboutModule.URI_SAFE_FOR_UNTRUSTED_CONTENT) &&
           !(flags & Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT) &&
           networkURLs.indexOf(aboutType) == -1 &&
-          // handle about:newtab in browser_firstPartyIsolation_about_newtab.js
+          // Exclude about:newtab see Bug 1021667
           aboutType !== "newtab") {
         aboutURLs.push(aboutType);
       }

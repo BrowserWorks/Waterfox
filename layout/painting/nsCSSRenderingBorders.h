@@ -31,6 +31,7 @@ class GradientStops;
 } // namespace gfx
 namespace layers {
 class StackingContextHelper;
+class WebRenderDisplayItemLayer;
 } // namespace layers
 } // namespace mozilla
 
@@ -99,17 +100,14 @@ public:
                       const Float* aBorderWidths,
                       RectCornerRadii& aBorderRadii,
                       const nscolor* aBorderColors,
-                      const nsBorderColors* aCompositeColors,
-                      nscolor aBackgroundColor,
-                      bool aBackfaceIsVisible,
-                      const mozilla::Maybe<Rect>& aClipRect);
+                      nsBorderColors* const* aCompositeColors,
+                      nscolor aBackgroundColor);
 
   // draw the entire border
   void DrawBorders();
 
   bool CanCreateWebRenderCommands();
   void CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                               mozilla::wr::IpcResourceUpdateQueue& aResources,
                                const mozilla::layers::StackingContextHelper& aSc);
 
   // utility function used for background painting as well as borders
@@ -148,25 +146,17 @@ private:
   Float mBorderWidths[4];
   RectCornerRadii mBorderRadii;
 
-  // the colors for 'border-top-color' et. al.
+  // colors
   nscolor mBorderColors[4];
-
-  // the lists of colors for '-moz-border-top-colors' et. al.
-  // the pointers here are either nullptr, or referring to a non-empty
-  // nsTArray, so no additional empty check is needed.
-  const nsTArray<nscolor>* mCompositeColors[4];
+  nsBorderColors* mCompositeColors[4];
 
   // the background color
   nscolor mBackgroundColor;
 
   // calculated values
-  bool mAllBordersSameStyle;
-  bool mAllBordersSameWidth;
   bool mOneUnitBorder;
   bool mNoBorderRadius;
   bool mAvoidStroke;
-  bool mBackfaceIsVisible;
-  mozilla::Maybe<Rect> mLocalClip;
 
   // For all the sides in the bitmask, would they be rendered
   // in an identical color and style?
@@ -240,8 +230,7 @@ private:
   void DrawBorderSides (int aSides);
 
   // function used by the above to handle -moz-border-colors
-  void DrawBorderSidesCompositeColors(
-    int aSides, const nsTArray<nscolor>& compositeColors);
+  void DrawBorderSidesCompositeColors(int aSides, const nsBorderColors *compositeColors);
 
   // Setup the stroke options for the given dashed/dotted side
   void SetupDashedOptions(StrokeOptions* aStrokeOptions,
@@ -309,14 +298,6 @@ public:
                   gfxContext& aRenderingContext,
                   nsIFrame* aForFrame,
                   const nsRect& aDirtyRect);
-  void
-  CreateWebRenderCommands(nsDisplayItem* aItem,
-                          nsIFrame* aForFrame,
-                          mozilla::wr::DisplayListBuilder& aBuilder,
-                          mozilla::wr::IpcResourceUpdateQueue& aResources,
-                          const mozilla::layers::StackingContextHelper& aSc,
-                          mozilla::layers::WebRenderLayerManager* aManager,
-                          nsDisplayListBuilder* aDisplayListBuilder);
 
   nsCSSBorderImageRenderer(const nsCSSBorderImageRenderer& aRhs);
   nsCSSBorderImageRenderer& operator=(const nsCSSBorderImageRenderer& aRhs);
@@ -340,7 +321,6 @@ private:
   uint8_t mFill;
 
   friend class nsDisplayBorder;
-  friend struct nsCSSRendering;
 };
 
 namespace mozilla {

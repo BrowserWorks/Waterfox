@@ -145,12 +145,6 @@ ImageWrapper::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
   return mInnerImage->GetNativeSizes(aNativeSizes);
 }
 
-size_t
-ImageWrapper::GetNativeSizesLength() const
-{
-  return mInnerImage->GetNativeSizesLength();
-}
-
 NS_IMETHODIMP
 ImageWrapper::GetIntrinsicSize(nsSize* aSize)
 {

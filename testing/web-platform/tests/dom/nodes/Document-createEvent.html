@@ -71,7 +71,6 @@ test(function() {
  * interfaces that it is known some UA does or did not throw for.
  */
 var someNonCreateableEvents = [
-  "AnimationEvent",
   "AnimationPlaybackEvent",
   "AnimationPlayerEvent",
   "ApplicationCacheErrorEvent",
@@ -80,17 +79,14 @@ var someNonCreateableEvents = [
   "BeforeInstallPromptEvent",
   "BlobEvent",
   "ClipboardEvent",
-  "CloseEvent",
   "CommandEvent",
   "DataContainerEvent",
-  "ErrorEvent",
   "ExtendableEvent",
   "ExtendableMessageEvent",
   "FetchEvent",
   "FontFaceSetLoadEvent",
   "GamepadEvent",
   "GeofencingEvent",
-  "IDBVersionChangeEvent",
   "InstallEvent",
   "KeyEvent",
   "MIDIConnectionEvent",
@@ -108,9 +104,7 @@ var someNonCreateableEvents = [
   "OfflineAudioCompletionEvent",
   "OrientationEvent",
   "PageTransition", // Yes, with no "Event"
-  "PageTransitionEvent",
   "PointerEvent",
-  "PopStateEvent",
   "PopUpEvent",
   "PresentationConnectionAvailableEvent",
   "PresentationConnectionCloseEvent",
@@ -134,12 +128,8 @@ var someNonCreateableEvents = [
   "SpeechSynthesisEvent",
   "SyncEvent",
   "TimeEvent",
-  "TrackEvent",
-  "TransitionEvent",
-  "WebGLContextEvent",
   "WebKitAnimationEvent",
   "WebKitTransitionEvent",
-  "WheelEvent",
   "XULCommandEvent",
 ];
 someNonCreateableEvents.forEach(function (eventInterface) {

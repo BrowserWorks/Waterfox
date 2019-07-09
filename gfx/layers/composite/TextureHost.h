@@ -41,7 +41,7 @@ class Shmem;
 
 namespace wr {
 class DisplayListBuilder;
-class ResourceUpdateQueue;
+class WebRenderAPI;
 }
 
 namespace layers {
@@ -439,11 +439,6 @@ public:
   virtual YUVColorSpace GetYUVColorSpace() const { return YUVColorSpace::UNKNOWN; }
 
   /**
-   * Return the bit depth of the image. Used with YUV textures.
-   */
-  virtual uint32_t GetBitDepth() const { return 8; }
-
-  /**
    * Called during the transaction. The TextureSource may or may not be composited.
    *
    * Note that this is called outside of lock/unlock.
@@ -626,32 +621,35 @@ public:
     MOZ_RELEASE_ASSERT(false, "No CreateRenderTexture() implementation for this TextureHost type.");
   }
 
-  /// Returns the number of actual textures that will be used to render this.
-  /// For example in a lot of YUV cases it will be 3
-  virtual uint32_t NumSubTextures() const { return 1; }
-
-  enum ResourceUpdateOp {
-    ADD_IMAGE,
-    UPDATE_IMAGE,
-  };
-
-  // Add all necessary TextureHost informations to the resource update queue.
-  virtual void PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                   ResourceUpdateOp aOp,
-                                   const Range<wr::ImageKey>& aImageKeys,
-                                   const wr::ExternalImageId& aExtID)
+  // Create all necessary image keys for this textureHost rendering.
+  // @param aImageKeys - [out] The set of ImageKeys used for this textureHost
+  // composing.
+  // @param aImageKeyAllocator - [in] The function which is used for creating
+  // the new ImageKey.
+  virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                              const std::function<wr::ImageKey()>& aImageKeyAllocator)
   {
-    MOZ_ASSERT_UNREACHABLE("Unimplemented");
+    MOZ_ASSERT(aImageKeys.IsEmpty());
+    MOZ_ASSERT_UNREACHABLE("No GetWRImageKeys() implementation for this TextureHost type.");
+  }
+
+  // Add all necessary textureHost informations to WebrenderAPI. Then, WR could
+  // use these informations to compose this textureHost.
+  virtual void AddWRImage(wr::WebRenderAPI* aAPI,
+                          Range<const wr::ImageKey>& aImageKeys,
+                          const wr::ExternalImageId& aExtID)
+  {
+    MOZ_ASSERT_UNREACHABLE("No AddWRImage() implementation for this TextureHost type.");
   }
 
   // Put all necessary WR commands into DisplayListBuilder for this textureHost rendering.
-  virtual void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                const wr::LayoutRect& aBounds,
-                                const wr::LayoutRect& aClip,
-                                wr::ImageRendering aFilter,
-                                const Range<wr::ImageKey>& aKeys)
+  virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                 const wr::LayoutRect& aBounds,
+                                 const wr::LayoutRect& aClip,
+                                 wr::ImageRendering aFilter,
+                                 Range<const wr::ImageKey>& aKeys)
   {
-    MOZ_ASSERT_UNREACHABLE("No PushDisplayItems() implementation for this TextureHost type.");
+    MOZ_ASSERT_UNREACHABLE("No PushExternalImage() implementation for this TextureHost type.");
   }
 
   /**
@@ -737,8 +735,6 @@ public:
 
   virtual YUVColorSpace GetYUVColorSpace() const override;
 
-  virtual uint32_t GetBitDepth() const override;
-
   virtual gfx::IntSize GetSize() const override { return mSize; }
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
@@ -751,18 +747,18 @@ public:
 
   virtual void CreateRenderTexture(const wr::ExternalImageId& aExternalImageId) override;
 
-  virtual uint32_t NumSubTextures() const override;
+  virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                              const std::function<wr::ImageKey()>& aImageKeyAllocator) override;
 
-  virtual void PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                   ResourceUpdateOp aOp,
-                                   const Range<wr::ImageKey>& aImageKeys,
-                                   const wr::ExternalImageId& aExtID) override;
+  virtual void AddWRImage(wr::WebRenderAPI* aAPI,
+                          Range<const wr::ImageKey>& aImageKeys,
+                          const wr::ExternalImageId& aExtID) override;
 
-  virtual void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                const wr::LayoutRect& aBounds,
-                                const wr::LayoutRect& aClip,
-                                wr::ImageRendering aFilter,
-                                const Range<wr::ImageKey>& aImageKeys) override;
+  virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                 const wr::LayoutRect& aBounds,
+                                 const wr::LayoutRect& aClip,
+                                 wr::ImageRendering aFilter,
+                                 Range<const wr::ImageKey>& aImageKeys) override;
 
 protected:
   bool Upload(nsIntRegion *aRegion = nullptr);

@@ -52,14 +52,14 @@
 #include "nsIXMLContentSink.h"
 #include "nsRDFCID.h"
 #include "nsTArray.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "mozilla/Logging.h"
 #include "rdf.h"
 #include "rdfutil.h"
 #include "nsReadableUtils.h"
 #include "nsIExpatSink.h"
 #include "nsCRT.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsStaticAtom.h"
 #include "nsIScriptError.h"
 #include "nsIDTD.h"
@@ -126,7 +126,7 @@ public:
     static nsIRDFResource* kRDF_Seq;
     static nsIRDFResource* kRDF_nextVal;
 
-#define RDF_ATOM(name_, value_) static nsAtom* name_;
+#define RDF_ATOM(name_, value_) static nsIAtom* name_;
 #include "nsRDFContentSinkAtomList.h"
 #undef RDF_ATOM
 
@@ -177,7 +177,7 @@ protected:
      * The return value is a dependent string containing just the namespace.
      */
     const nsDependentSubstring SplitExpatName(const char16_t *aExpatName,
-                                              nsAtom **aLocalName);
+                                              nsIAtom **aLocalName);
 
     enum eContainerType { eBag, eSeq, eAlt };
     nsresult InitContainer(nsIRDFResource* aContainerType, nsIRDFResource* aContainer);
@@ -235,7 +235,7 @@ mozilla::LazyLogModule RDFContentSinkImpl::gLog("nsRDFContentSink");
 
 ////////////////////////////////////////////////////////////////////////
 
-#define RDF_ATOM(name_, value_) nsAtom* RDFContentSinkImpl::name_;
+#define RDF_ATOM(name_, value_) nsIAtom* RDFContentSinkImpl::name_;
 #include "nsRDFContentSinkAtomList.h"
 #undef RDF_ATOM
 
@@ -315,10 +315,10 @@ RDFContentSinkImpl::~RDFContentSinkImpl()
             // XXX we should save line numbers on the context stack: this'd
             // be about 1000x more helpful.
             if (resource && MOZ_LOG_TEST(gLog, LogLevel::Debug)) {
-                nsCString uri;
+                nsXPIDLCString uri;
                 resource->GetValue(getter_Copies(uri));
                 MOZ_LOG(gLog, LogLevel::Debug,
-                       ("rdfxml:   uri=%s", uri.get()));
+                       ("rdfxml:   uri=%s", (const char*) uri));
             }
 
             NS_IF_RELEASE(resource);
@@ -782,7 +782,7 @@ RDFContentSinkImpl::GetIdAboutAttribute(const char16_t** aAttributes,
 
     nsAutoString nodeID;
 
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     for (; *aAttributes; aAttributes += 2) {
         const nsDependentSubstring& nameSpaceURI =
             SplitExpatName(aAttributes[0], getter_AddRefs(localName));
@@ -870,7 +870,7 @@ nsresult
 RDFContentSinkImpl::GetResourceAttribute(const char16_t** aAttributes,
                                          nsIRDFResource** aResource)
 {
-  RefPtr<nsAtom> localName;
+  nsCOMPtr<nsIAtom> localName;
 
   nsAutoString nodeID;
 
@@ -938,7 +938,7 @@ RDFContentSinkImpl::AddProperties(const char16_t** aAttributes,
   if (aCount)
       *aCount = 0;
 
-  RefPtr<nsAtom> localName;
+  nsCOMPtr<nsIAtom> localName;
   for (; *aAttributes; aAttributes += 2) {
       const nsDependentSubstring& nameSpaceURI =
           SplitExpatName(aAttributes[0], getter_AddRefs(localName));
@@ -987,7 +987,7 @@ RDFContentSinkImpl::AddProperties(const char16_t** aAttributes,
 void
 RDFContentSinkImpl::SetParseMode(const char16_t **aAttributes)
 {
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     for (; *aAttributes; aAttributes += 2) {
         const nsDependentSubstring& nameSpaceURI =
             SplitExpatName(aAttributes[0], getter_AddRefs(localName));
@@ -1023,7 +1023,7 @@ RDFContentSinkImpl::OpenRDF(const char16_t* aName)
     // ensure that we're actually reading RDF by making sure that the
     // opening tag is <rdf:RDF>, where "rdf:" corresponds to whatever
     // they've declared the standard RDF namespace to be.
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     const nsDependentSubstring& nameSpaceURI =
         SplitExpatName(aName, getter_AddRefs(localName));
 
@@ -1047,7 +1047,7 @@ RDFContentSinkImpl::OpenObject(const char16_t* aName,
     // an "object" non-terminal is either a "description", a "typed
     // node", or a "container", so this change the content sink's
     // state appropriately.
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     const nsDependentSubstring& nameSpaceURI =
         SplitExpatName(aName, getter_AddRefs(localName));
 
@@ -1122,7 +1122,7 @@ RDFContentSinkImpl::OpenProperty(const char16_t* aName, const char16_t** aAttrib
     // an "object" non-terminal is either a "description", a "typed
     // node", or a "container", so this change the content sink's
     // state appropriately.
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     const nsDependentSubstring& nameSpaceURI =
         SplitExpatName(aName, getter_AddRefs(localName));
 
@@ -1196,7 +1196,7 @@ RDFContentSinkImpl::OpenMember(const char16_t* aName,
     // to whatever they've declared the standard RDF namespace to be.
     nsresult rv;
 
-    RefPtr<nsAtom> localName;
+    nsCOMPtr<nsIAtom> localName;
     const nsDependentSubstring& nameSpaceURI =
         SplitExpatName(aName, getter_AddRefs(localName));
 
@@ -1279,7 +1279,7 @@ RDFContentSinkImpl::RegisterNamespaces(const char16_t **aAttributes)
             ++endLocal;
         }
         nsDependentSubstring lname(attr, endLocal);
-        RefPtr<nsAtom> preferred = NS_Atomize(lname);
+        nsCOMPtr<nsIAtom> preferred = NS_Atomize(lname);
         if (preferred == kXMLNSAtom) {
             preferred = nullptr;
         }
@@ -1292,7 +1292,7 @@ RDFContentSinkImpl::RegisterNamespaces(const char16_t **aAttributes)
 
 const nsDependentSubstring
 RDFContentSinkImpl::SplitExpatName(const char16_t *aExpatName,
-                                   nsAtom **aLocalName)
+                                   nsIAtom **aLocalName)
 {
     /**
      *  Expat can send the following:

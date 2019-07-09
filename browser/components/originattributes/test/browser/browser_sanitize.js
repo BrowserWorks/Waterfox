@@ -66,11 +66,13 @@ function checkCacheExists(aShouldExist) {
       is(cacheURIs.includes(TEST_DOMAIN), aShouldExist, TEST_DOMAIN + " should "
         + (aShouldExist ? "not " : "") + "be cached for all origin attributes." + i++);
     }
-  };
+  }
 }
 
 add_task(async function setup() {
-  Services.cache2.clear();
+  let networkCache = Cc["@mozilla.org/netwerk/cache-storage-service;1"]
+    .getService(Ci.nsICacheStorageService);
+  networkCache.clear();
 });
 
 // This will set the cookies and the cache.

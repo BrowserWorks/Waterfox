@@ -17,7 +17,6 @@ interface ServiceWorkerRegistration : EventTarget {
   [Unforgeable] readonly attribute ServiceWorker? active;
 
   readonly attribute USVString scope;
-  readonly attribute ServiceWorkerUpdateViaCache updateViaCache;
 
   [Throws, NewObject]
   Promise<void> update();
@@ -27,12 +26,6 @@ interface ServiceWorkerRegistration : EventTarget {
 
   // event
   attribute EventHandler onupdatefound;
-};
-
-enum ServiceWorkerUpdateViaCache {
-  "imports",
-  "all",
-  "none"
 };
 
 // https://w3c.github.io/push-api/

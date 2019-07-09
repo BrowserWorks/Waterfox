@@ -19,6 +19,7 @@ class nsXBLBinding;
 class nsXBLDocumentInfo;
 class nsIContent;
 class nsIDocument;
+class nsString;
 class nsIURI;
 class nsIPrincipal;
 

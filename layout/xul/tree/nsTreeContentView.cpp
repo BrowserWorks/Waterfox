@@ -940,7 +940,7 @@ void
 nsTreeContentView::AttributeChanged(nsIDocument*  aDocument,
                                     dom::Element* aElement,
                                     int32_t       aNameSpaceID,
-                                    nsAtom*      aAttribute,
+                                    nsIAtom*      aAttribute,
                                     int32_t       aModType,
                                     const nsAttrValue* aOldValue)
 {
@@ -1095,18 +1095,20 @@ nsTreeContentView::AttributeChanged(nsIDocument*  aDocument,
 void
 nsTreeContentView::ContentAppended(nsIDocument *aDocument,
                                    nsIContent* aContainer,
-                                   nsIContent* aFirstNewContent)
+                                   nsIContent* aFirstNewContent,
+                                   int32_t     /* unused */)
 {
   for (nsIContent* cur = aFirstNewContent; cur; cur = cur->GetNextSibling()) {
     // Our contentinserted doesn't use the index
-    ContentInserted(aDocument, aContainer, cur);
+    ContentInserted(aDocument, aContainer, cur, 0);
   }
 }
 
 void
 nsTreeContentView::ContentInserted(nsIDocument *aDocument,
                                    nsIContent* aContainer,
-                                   nsIContent* aChild)
+                                   nsIContent* aChild,
+                                   int32_t /* unused */)
 {
   NS_ASSERTION(aChild, "null ptr");
 
@@ -1175,6 +1177,7 @@ void
 nsTreeContentView::ContentRemoved(nsIDocument *aDocument,
                                   nsIContent* aContainer,
                                   nsIContent* aChild,
+                                  int32_t aIndexInContainer,
                                   nsIContent* aPreviousSibling)
 {
   NS_ASSERTION(aChild, "null ptr");
@@ -1567,7 +1570,7 @@ nsTreeContentView::UpdateParentIndexes(int32_t aIndex, int32_t aSkip, int32_t aC
 nsIContent*
 nsTreeContentView::GetCell(nsIContent* aContainer, nsTreeColumn& aCol)
 {
-  RefPtr<nsAtom> colAtom(aCol.GetAtom());
+  nsCOMPtr<nsIAtom> colAtom(aCol.GetAtom());
   int32_t colIndex(aCol.GetIndex());
 
   // Traverse through cells, try to find the cell by "ref" attribute or by cell

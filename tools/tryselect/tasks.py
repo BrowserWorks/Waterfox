@@ -5,32 +5,16 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os
-import sys
 
 from mozboot.util import get_state_dir
 from mozbuild.base import MozbuildObject
 from mozpack.files import FileFinder
 
 from taskgraph.generator import TaskGraphGenerator
-from taskgraph.parameters import (
-    ParameterMismatch,
-    load_parameters_file,
-)
+from taskgraph.parameters import load_parameters_file
 
 here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
-
-
-PARAMETER_MISMATCH = """
-ERROR - The parameters being used to generate tasks differ from those defined
-in your working copy:
-
-    {}
-
-To fix this, either rebase onto the latest mozilla-central or pass in
--p/--parameters. For more information on how to define parameters, see:
-https://firefox-source-docs.mozilla.org/taskcluster/taskcluster/mach.html#parameters
-"""
 
 
 def invalidate(cache):
@@ -45,12 +29,9 @@ def invalidate(cache):
         os.remove(cache)
 
 
-def generate_tasks(params=None, full=False):
-    params = params or "project=mozilla-central"
-
+def generate_target(params='project=mozilla-central'):
     cache_dir = os.path.join(get_state_dir()[0], 'cache', 'taskgraph')
-    attr = 'full_task_set' if full else 'target_task_set'
-    cache = os.path.join(cache_dir, attr)
+    cache = os.path.join(cache_dir, 'target_task_set')
 
     invalidate(cache)
     if os.path.isfile(cache):
@@ -60,22 +41,13 @@ def generate_tasks(params=None, full=False):
     if not os.path.isdir(cache_dir):
         os.makedirs(cache_dir)
 
-    print("Task configuration changed, generating {}".format(attr.replace('_', ' ')))
-    try:
-        params = load_parameters_file(params, strict=False)
-        params.check()
-    except ParameterMismatch as e:
-        print(PARAMETER_MISMATCH.format(e.args[0]))
-        sys.exit(1)
-
-    cwd = os.getcwd()
-    os.chdir(build.topsrcdir)
+    print("Task configuration changed, generating target tasks")
+    params = load_parameters_file(params)
+    params.check()
 
     root = os.path.join(build.topsrcdir, 'taskcluster', 'ci')
-    tg = getattr(TaskGraphGenerator(root_dir=root, parameters=params), attr)
+    tg = TaskGraphGenerator(root_dir=root, parameters=params).target_task_set
     labels = [label for label in tg.graph.visit_postorder()]
-
-    os.chdir(cwd)
 
     with open(cache, 'w') as fh:
         fh.write('\n'.join(labels))

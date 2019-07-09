@@ -46,15 +46,6 @@ DeclarationBlock::EnsureMutable()
     AsGecko()->AssertNotExpanded();
   }
 #endif
-  if (IsServo() && !IsDirty()) {
-    // In stylo, the old DeclarationBlock is stored in element's rule node tree
-    // directly, to avoid new values replacing the DeclarationBlock in the tree
-    // directly, we need to copy the old one here if we haven't yet copied.
-    // As a result the new value does not replace rule node tree until traversal
-    // happens.
-    return Clone();
-  }
-
   if (!IsMutable()) {
     return Clone();
   }
@@ -93,6 +84,13 @@ DeclarationBlock::GetPropertyValueByID(nsCSSPropertyID aPropID,
   MOZ_STYLO_FORWARD(GetPropertyValueByID, (aPropID, aValue))
 }
 
+void
+DeclarationBlock::GetAuthoredPropertyValue(const nsAString& aProperty,
+                                           nsAString& aValue) const
+{
+  MOZ_STYLO_FORWARD(GetAuthoredPropertyValue, (aProperty, aValue))
+}
+
 bool
 DeclarationBlock::GetPropertyIsImportant(const nsAString& aProperty) const
 {
@@ -105,7 +103,7 @@ DeclarationBlock::RemoveProperty(const nsAString& aProperty)
   MOZ_STYLO_FORWARD(RemoveProperty, (aProperty))
 }
 
-bool
+void
 DeclarationBlock::RemovePropertyByID(nsCSSPropertyID aProperty)
 {
   MOZ_STYLO_FORWARD(RemovePropertyByID, (aProperty))

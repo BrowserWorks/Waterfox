@@ -15,9 +15,6 @@ class Statement;
 namespace mozilla {
 namespace storage {
 
-class StatementParams;
-class StatementRow;
-
 class StatementJSHelper : public nsIXPCScriptable
 {
 public:
@@ -34,45 +31,37 @@ private:
  * For cycle-avoidance reasons they do not hold reference-counted references,
  * so it is important we do this.
  */
-
-class StatementParamsHolder final: public nsISupports {
+class StatementJSObjectHolder : public nsIXPConnectJSObjectHolder
+{
 public:
   NS_DECL_ISUPPORTS
+  NS_DECL_NSIXPCONNECTJSOBJECTHOLDER
 
-  explicit StatementParamsHolder(StatementParams* aParams)
-    : mParams(aParams)
-  {
-  }
+  explicit StatementJSObjectHolder(nsIXPConnectJSObjectHolder* aHolder);
 
-  StatementParams* Get() const {
-    MOZ_ASSERT(mParams);
-    return mParams;
+protected:
+  virtual ~StatementJSObjectHolder() {};
+  nsCOMPtr<nsIXPConnectJSObjectHolder> mHolder;
+};
+
+class StatementParamsHolder final: public StatementJSObjectHolder {
+public:
+  explicit StatementParamsHolder(nsIXPConnectJSObjectHolder* aHolder)
+    : StatementJSObjectHolder(aHolder) {
   }
 
 private:
   virtual ~StatementParamsHolder();
-
-  RefPtr<StatementParams> mParams;
 };
 
-class StatementRowHolder final: public nsISupports {
+class StatementRowHolder final: public StatementJSObjectHolder {
 public:
-  NS_DECL_ISUPPORTS
-
-  explicit StatementRowHolder(StatementRow* aRow)
-    : mRow(aRow)
-  {
-  }
-
-  StatementRow* Get() const {
-    MOZ_ASSERT(mRow);
-    return mRow;
+  explicit StatementRowHolder(nsIXPConnectJSObjectHolder* aHolder)
+    : StatementJSObjectHolder(aHolder) {
   }
 
 private:
   virtual ~StatementRowHolder();
-
-  RefPtr<StatementRow> mRow;
 };
 
 } // namespace storage

@@ -9,11 +9,7 @@
 
 const BROWSER_SEARCH_PREF = "browser.search.";
 
-add_task(async function test() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
-
+function test() {
   let engine = Services.search.getEngineByName("Yahoo");
   ok(engine, "Yahoo");
 
@@ -133,4 +129,4 @@ add_task(async function test() {
   };
 
   isSubObjectOf(EXPECTED_ENGINE, engine, "Yahoo");
-});
+}

@@ -10,7 +10,7 @@
     <script>
         promise_test(t => {
           return promise_rejects(
-              t, 'NotAllowedError',
+              t, 'SecurityError',
               navigator.share({title: 'the title', text: 'the message',
                                url: 'data:the url'}));
         }, 'share without a user gesture');

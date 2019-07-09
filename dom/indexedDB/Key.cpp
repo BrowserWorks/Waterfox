@@ -22,8 +22,11 @@
 #include "nsAlgorithm.h"
 #include "nsJSUtils.h"
 #include "ReportInternalError.h"
-#include "unicode/ucol.h"
 #include "xpcpublic.h"
+
+#ifdef ENABLE_INTL_API
+#include "unicode/ucol.h"
+#endif
 
 namespace mozilla {
 namespace dom {
@@ -107,7 +110,7 @@ namespace indexedDB {
  [1, 2]        // 0x60 bf f0 0 0 0 0 0 0 0x10 c0
  [[]]          // 0x80
 */
-
+#ifdef ENABLE_INTL_API
 nsresult
 Key::ToLocaleBasedKey(Key& aTarget, const nsCString& aLocale) const
 {
@@ -204,6 +207,7 @@ Key::ToLocaleBasedKey(Key& aTarget, const nsCString& aLocale) const
   aTarget.TrimBuffer();
   return NS_OK;
 }
+#endif
 
 nsresult
 Key::EncodeJSValInternal(JSContext* aCx, JS::Handle<JS::Value> aVal,
@@ -503,6 +507,7 @@ Key::EncodeAsString(const T* aStart, const T* aEnd, uint8_t aType)
   return NS_OK;
 }
 
+#ifdef ENABLE_INTL_API
 nsresult
 Key::EncodeLocaleString(const nsDependentString& aString, uint8_t aTypeOffset,
                         const nsCString& aLocale)
@@ -540,6 +545,7 @@ Key::EncodeLocaleString(const nsDependentString& aString, uint8_t aTypeOffset,
                       keyBuffer.Elements()+sortKeyLength,
                       aTypeOffset);
 }
+#endif
 
 // static
 nsresult

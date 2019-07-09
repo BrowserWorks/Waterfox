@@ -2,7 +2,6 @@
 // Copyright 2015 Microsoft Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 /*---
-esid: sec-array.from
 es6id: 22.1.2.1
 description: Map function without thisArg on strict mode
 info: >
@@ -66,5 +65,4 @@ assert.sameValue(calls[2].args.length, 2, 'calls[2].args.length');
 assert.sameValue(calls[2].args[0], 43, 'calls[2].args[0]');
 assert.sameValue(calls[2].args[1], 2, 'calls[2].args[1]');
 assert.sameValue(calls[2].thisArg, undefined, 'calls[2].thisArg');
-
 reportCompare(0, 0);

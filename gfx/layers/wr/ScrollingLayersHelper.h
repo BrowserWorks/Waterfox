@@ -7,11 +7,8 @@
 #define GFX_SCROLLINGLAYERSHELPER_H
 
 #include "mozilla/Attributes.h"
-#include "mozilla/layers/WebRenderCommandBuilder.h"
 
 namespace mozilla {
-
-struct DisplayItemClipChain;
 
 namespace wr {
 class DisplayListBuilder;
@@ -19,38 +16,26 @@ class DisplayListBuilder;
 
 namespace layers {
 
-struct FrameMetrics;
+struct LayerClip;
 class StackingContextHelper;
+class WebRenderLayer;
 
 class MOZ_RAII ScrollingLayersHelper
 {
 public:
-  ScrollingLayersHelper(nsDisplayItem* aItem,
+  ScrollingLayersHelper(WebRenderLayer* aLayer,
                         wr::DisplayListBuilder& aBuilder,
-                        const StackingContextHelper& aStackingContext,
-                        WebRenderCommandBuilder::ClipIdMap& aCache,
-                        bool aApzEnabled);
+                        const StackingContextHelper& aSc);
   ~ScrollingLayersHelper();
 
 private:
-  void DefineAndPushScrollLayers(nsDisplayItem* aItem,
-                                 const ActiveScrolledRoot* aAsr,
-                                 const DisplayItemClipChain* aChain,
-                                 wr::DisplayListBuilder& aBuilder,
-                                 int32_t aAppUnitsPerDevPixel,
-                                 const StackingContextHelper& aStackingContext,
-                                 WebRenderCommandBuilder::ClipIdMap& aCache);
-  void DefineAndPushChain(const DisplayItemClipChain* aChain,
-                          wr::DisplayListBuilder& aBuilder,
-                          const StackingContextHelper& aStackingContext,
-                          int32_t aAppUnitsPerDevPixel,
-                          WebRenderCommandBuilder::ClipIdMap& aCache);
-  bool DefineAndPushScrollLayer(const FrameMetrics& aMetrics,
-                                const StackingContextHelper& aStackingContext);
+  void PushLayerLocalClip(const StackingContextHelper& aStackingContext);
+  void PushLayerClip(const LayerClip& aClip,
+                     const StackingContextHelper& aSc);
 
+  WebRenderLayer* mLayer;
   wr::DisplayListBuilder* mBuilder;
-  bool mPushedClipAndScroll;
-  std::vector<wr::ScrollOrClipId> mPushedClips;
+  bool mPushedLayerLocalClip;
 };
 
 } // namespace layers

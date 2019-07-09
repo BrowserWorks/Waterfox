@@ -16,7 +16,7 @@
 #include "nsIRDFDataSource.h"
 #include "nsIRDFObserver.h"
 #include "nsIServiceManager.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsRDFCID.h"
 #include "rdfutil.h"
 #include "rdf.h"
@@ -212,9 +212,15 @@ FileSystemDataSource::Create(nsISupports* aOuter, const nsIID& aIID, void **aRes
 NS_IMPL_ISUPPORTS(FileSystemDataSource, nsIRDFDataSource)
 
 NS_IMETHODIMP
-FileSystemDataSource::GetURI(nsACString& aURI)
+FileSystemDataSource::GetURI(char **uri)
 {
-    aURI.AssignLiteral("rdf:files");
+    NS_PRECONDITION(uri != nullptr, "null ptr");
+    if (! uri)
+        return NS_ERROR_NULL_POINTER;
+
+    if ((*uri = NS_strdup("rdf:files")) == nullptr)
+        return NS_ERROR_OUT_OF_MEMORY;
+
     return NS_OK;
 }
 
@@ -1013,7 +1019,7 @@ FileSystemDataSource::GetFolderList(nsIRDFResource *source, bool allowHidden,
         while ((aOffset = leaf.FindChar('/')) >= 0)
         {
             leaf.Cut((uint32_t)aOffset, 1);
-            leaf.InsertLiteral("%2F", (uint32_t)aOffset);
+            leaf.Insert("%2F", (uint32_t)aOffset);
         }
 
         // append the encoded name

@@ -24,6 +24,14 @@ menulist > menupopup {
   --focus-ring-box-shadow: @focusRingShadow@;
 }
 
+%ifndef MOZ_PHOTON_THEME
+@media (-moz-mac-yosemite-theme) {
+  :root {
+    --focus-ring-box-shadow: @yosemiteFocusRingShadow@;
+  }
+}
+%endif
+
 /* ::::: root elements ::::: */
 
 window,
@@ -296,21 +304,19 @@ popupnotificationcontent {
   border: none;
   margin: -14px;
   padding: 0;
-  background-image: url("chrome://global/skin/icons/autoscroll.svg");
-  background-size: contain;
+  background-image: url("chrome://global/skin/icons/autoscroll.png");
   background-color: transparent;
   background-position: right top;
-  background-repeat: no-repeat;
   -moz-appearance: none;
   -moz-window-shadow: none;
 }
 
 .autoscroller[scrolldir="NS"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-vertical.svg");
+  background-position: right center;
 }
 
 .autoscroller[scrolldir="EW"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-horizontal.svg");
+  background-position: right bottom;
 }
 
 /* autorepeatbuttons in menus */
@@ -355,4 +361,36 @@ popupnotificationcontent {
 
 /* :::::: Close button icons ::::: */
 
-%include ../../shared/close-icon.inc.css
+.close-icon {
+  list-style-image: url("chrome://global/skin/icons/close.png");
+  -moz-image-region: rect(0, 16px, 16px, 0);
+}
+
+.close-icon:hover {
+  -moz-image-region: rect(0, 32px, 16px, 16px);
+}
+
+.close-icon:hover:active {
+  -moz-image-region: rect(0, 48px, 16px, 32px);
+}
+
+@media (min-resolution: 2dppx) {
+  .close-icon > .button-icon,
+  .close-icon > .button-box > .button-icon,
+  .close-icon > .toolbarbutton-icon {
+    width: 16px;
+  }
+
+  .close-icon {
+    list-style-image: url("chrome://global/skin/icons/close@2x.png");
+    -moz-image-region: rect(0, 32px, 32px, 0);
+  }
+
+  .close-icon:hover {
+    -moz-image-region: rect(0, 64px, 32px, 32px);
+  }
+
+  .close-icon:hover:active {
+    -moz-image-region: rect(0, 96px, 32px, 64px);
+  }
+}

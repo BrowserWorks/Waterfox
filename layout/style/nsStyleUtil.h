@@ -10,11 +10,11 @@
 #include "nsString.h"
 #include "nsTArrayForwardDeclare.h"
 #include "gfxFontFamilyList.h"
-#include "nsStringFwd.h"
 #include "nsStyleStruct.h"
 #include "nsCRT.h"
 
 class nsCSSValue;
+class nsStringComparator;
 class nsStyleCoord;
 class nsIContent;
 class nsIPrincipal;
@@ -51,19 +51,7 @@ public:
   static void
   AppendEscapedCSSFontFamilyList(const mozilla::FontFamilyList& aFamilyList,
                                  nsAString& aResult);
-  static void
-  AppendEscapedCSSFontFamilyList(mozilla::SharedFontList* aFontlist,
-                                 nsAString& aResult)
-  {
-    AppendEscapedCSSFontFamilyList(aFontlist->mNames, aResult);
-  }
 
-private:
-  static void
-  AppendEscapedCSSFontFamilyList(const nsTArray<mozilla::FontFamilyName>& aNames,
-                                 nsAString& aResult);
-
-public:
   // Append a bitmask-valued property's value(s) (space-separated) to aResult.
   static void AppendBitmaskCSSValue(nsCSSPropertyID aProperty,
                                     int32_t aMaskedValue,
@@ -216,7 +204,7 @@ public:
   }
 
   template<size_t N>
-  static bool MatchesLanguagePrefix(const nsAtom* aLang,
+  static bool MatchesLanguagePrefix(const nsIAtom* aLang,
                                     const char16_t (&aPrefix)[N])
   {
     MOZ_ASSERT(aLang);

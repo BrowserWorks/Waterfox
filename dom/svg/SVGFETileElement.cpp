@@ -59,7 +59,7 @@ SVGFETileElement::GetPrimitiveDescription(nsSVGFilterInstance* aInstance,
 
 bool
 SVGFETileElement::AttributeAffectsRendering(int32_t aNameSpaceID,
-                                            nsAtom* aAttribute) const
+                                            nsIAtom* aAttribute) const
 {
   return SVGFETileElementBase::AttributeAffectsRendering(aNameSpaceID,
                                                          aAttribute) ||

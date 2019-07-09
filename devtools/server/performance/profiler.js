@@ -5,8 +5,9 @@
 
 const { Cc, Ci, Cu } = require("chrome");
 const Services = require("Services");
-
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
+const { Class } = require("sdk/core/heritage");
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
+loader.lazyRequireGetter(this, "EventTarget", "sdk/event/target", true);
 loader.lazyRequireGetter(this, "DevToolsUtils", "devtools/shared/DevToolsUtils");
 loader.lazyRequireGetter(this, "DeferredTask", "resource://gre/modules/DeferredTask.jsm", true);
 loader.lazyRequireGetter(this, "Task", "devtools/shared/task", true);
@@ -352,7 +353,7 @@ const ProfilerManager = (function () {
       });
 
       for (let subscriber of subscribers) {
-        subscriber.emit(eventName, data);
+        events.emit(subscriber, eventName, data);
       }
     },
 
@@ -387,7 +388,7 @@ const ProfilerManager = (function () {
       if (this._profilerStatusSubscribers > 0 && nsIProfilerModule.IsActive()) {
         if (!this._poller) {
           this._poller = new DeferredTask(this._emitProfilerStatus.bind(this),
-                                          this._profilerStatusInterval, 0);
+                                          this._profilerStatusInterval);
         }
         this._poller.arm();
       } else if (this._poller) {
@@ -406,83 +407,82 @@ const ProfilerManager = (function () {
 /**
  * The profiler actor provides remote access to the built-in nsIProfiler module.
  */
-class Profiler {
-  constructor() {
-    EventEmitter.decorate(this);
+var Profiler = exports.Profiler = Class({
+  extends: EventTarget,
 
+  initialize: function () {
     this.subscribedEvents = new Set();
     ProfilerManager.addInstance(this);
-  }
+  },
 
-  destroy() {
+  destroy: function () {
     this.unregisterEventNotifications({ events: Array.from(this.subscribedEvents) });
     this.subscribedEvents = null;
-
     ProfilerManager.removeInstance(this);
-  }
+  },
 
   /**
    * @see ProfilerManager.start
    */
-  start(options) {
+  start: function (options) {
     return ProfilerManager.start(options);
-  }
+  },
 
   /**
    * @see ProfilerManager.stop
    */
-  stop() {
+  stop: function () {
     return ProfilerManager.stop();
-  }
+  },
 
   /**
    * @see ProfilerManager.getProfile
    */
-  getProfile(request = {}) {
+  getProfile: function (request = {}) {
     return ProfilerManager.getProfile(request);
-  }
+  },
 
   /**
    * @see ProfilerManager.getFeatures
    */
-  getFeatures() {
+  getFeatures: function () {
     return ProfilerManager.getFeatures();
-  }
+  },
 
   /**
    * @see ProfilerManager.getBufferInfo
    */
-  getBufferInfo() {
+  getBufferInfo: function () {
     return ProfilerManager.getBufferInfo();
-  }
+  },
 
   /**
    * @see ProfilerManager.getStartOptions
    */
-  getStartOptions() {
+  getStartOptions: function () {
     return ProfilerManager.getStartOptions();
-  }
+  },
 
   /**
    * @see ProfilerManager.isActive
    */
-  isActive() {
+  isActive: function () {
     return ProfilerManager.isActive();
-  }
+  },
 
   /**
    * @see ProfilerManager.sharedLibraries
    */
-  sharedLibraries() {
+  sharedLibraries: function () {
     return ProfilerManager.sharedLibraries;
-  }
+  },
 
   /**
    * @see ProfilerManager.setProfilerStatusInterval
    */
-  setProfilerStatusInterval(interval) {
+  setProfilerStatusInterval: function (interval) {
     return ProfilerManager.setProfilerStatusInterval(interval);
-  }
+  },
 
   /**
    * Subscribes this instance to one of several events defined in
@@ -495,7 +495,7 @@ class Profiler {
    * @param {Array<string>} data.event
    * @return {object}
    */
-  registerEventNotifications(data = {}) {
+  registerEventNotifications: function (data = {}) {
     let response = [];
     (data.events || []).forEach(e => {
       if (!this.subscribedEvents.has(e)) {
@@ -507,7 +507,7 @@ class Profiler {
       }
     });
     return { registered: response };
-  }
+  },
 
   /**
    * Unsubscribes this instance to one of several events defined in
@@ -516,7 +516,7 @@ class Profiler {
    * @param {Array<string>} data.event
    * @return {object}
    */
-  unregisterEventNotifications(data = {}) {
+  unregisterEventNotifications: function (data = {}) {
     let response = [];
     (data.events || []).forEach(e => {
       if (this.subscribedEvents.has(e)) {
@@ -528,16 +528,16 @@ class Profiler {
       }
     });
     return { registered: response };
-  }
+  },
+});
 
-  /**
-   * Checks whether or not the profiler module can currently run.
-   * @return boolean
-   */
-  static canProfile() {
-    return nsIProfilerModule.CanProfile();
-  }
-}
+/**
+ * Checks whether or not the profiler module can currently run.
+ * @return boolean
+ */
+Profiler.canProfile = function () {
+  return nsIProfilerModule.CanProfile();
+};
 
 /**
  * JSON.stringify callback used in Profiler.prototype.observe.
@@ -573,5 +573,3 @@ function sanitizeHandler(handler, identifier) {
     return handler.call(this, subject, topic, data);
   }, identifier);
 }
-
-exports.Profiler = Profiler;

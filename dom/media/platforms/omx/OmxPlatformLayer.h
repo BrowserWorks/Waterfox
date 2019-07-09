@@ -10,8 +10,9 @@
 #include "OMX_Core.h"
 #include "OMX_Types.h"
 
-#include "nsStringFwd.h"
 #include "OmxPromiseLayer.h"
+
+class nsACString;
 
 namespace mozilla {
 
@@ -26,8 +27,7 @@ class TrackInfo;
  * For other platforms like Raspberry Pi, it will be easy to implement this layer
  * with the standard OpenMax IL api.
  */
-class OmxPlatformLayer
-{
+class OmxPlatformLayer {
 public:
   typedef OmxPromiseLayer::BUFFERLIST BUFFERLIST;
   typedef OmxPromiseLayer::BufferData BufferData;
@@ -44,9 +44,9 @@ public:
                                     OMX_U32 aParam1,
                                     OMX_PTR aCmdData) = 0;
 
-  // Buffer could be platform dependent. Therefore, derived class needs to
-  // implement its owned buffer allocate/release API according to its platform
-  // type.
+  // Buffer could be platform dependent; for example, video decoding needs gralloc
+  // on Gonk. Therefore, derived class needs to implement its owned buffer
+  // allocate/release API according to its platform type.
   virtual nsresult AllocateOmxBuffer(OMX_DIRTYPE aType, BUFFERLIST* aBufferList) = 0;
 
   virtual nsresult ReleaseOmxBuffer(OMX_DIRTYPE aType, BUFFERLIST* aBufferList) = 0;

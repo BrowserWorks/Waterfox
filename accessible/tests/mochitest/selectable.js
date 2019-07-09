@@ -4,7 +4,8 @@
  * @param aIdentifier        [in] selectable container accessible
  * @param aSelectedChildren  [in] array of selected children
  */
-function testSelectableSelection(aIdentifier, aSelectedChildren, aMsg) {
+function testSelectableSelection(aIdentifier, aSelectedChildren, aMsg)
+{
   var acc = getAccessible(aIdentifier, [nsIAccessibleSelectable]);
   if (!acc)
     return;
@@ -46,7 +47,8 @@ function testSelectableSelection(aIdentifier, aSelectedChildren, aMsg) {
 /**
  * Test isItemSelected method, helper for testSelectableSelection
  */
-function testIsItemSelected(aSelectAcc, aTraversedAcc, aIndexObj, aSelectedChildren, aMsg) {
+function testIsItemSelected(aSelectAcc, aTraversedAcc, aIndexObj, aSelectedChildren, aMsg)
+{
   var childCount = aTraversedAcc.childCount;
   for (var idx = 0; idx < childCount; idx++) {
     var child = aTraversedAcc.getChildAt(idx);

@@ -15,10 +15,10 @@
 #include "nsIDOMElement.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
-#include "nsElementTable.h"
 #include "nsNameSpaceManager.h"
 #include "nsString.h"
 #include "nsUnicharUtils.h"
+#include "nsXPIDLString.h"
 #include "nsIServiceManager.h"
 #include "nsIDocumentEncoder.h"
 #include "nsGkAtoms.h"
@@ -26,6 +26,7 @@
 #include "nsNetUtil.h"
 #include "nsEscape.h"
 #include "nsCRT.h"
+#include "nsIParserService.h"
 #include "nsContentUtils.h"
 #include "nsLWBrkCIID.h"
 #include "nsIScriptElement.h"
@@ -68,7 +69,7 @@ nsHTMLContentSerializer::SerializeHTMLAttributes(nsIContent* aContent,
                                                  nsIContent *aOriginalElement,
                                                  nsAString& aTagPrefix,
                                                  const nsAString& aTagNamespaceURI,
-                                                 nsAtom* aTagName,
+                                                 nsIAtom* aTagName,
                                                  int32_t aNamespace,
                                                  nsAString& aStr)
 {
@@ -83,7 +84,7 @@ nsHTMLContentSerializer::SerializeHTMLAttributes(nsIContent* aContent,
   for (int32_t index = 0; index < count; index++) {
     const nsAttrName* name = aContent->GetAttrNameAt(index);
     int32_t namespaceID = name->NamespaceID();
-    nsAtom* attrName = name->LocalName();
+    nsIAtom* attrName = name->LocalName();
 
     // Filter out any attribute starting with [-|_]moz
     nsDependentAtomString attrNameStr(attrName);
@@ -117,9 +118,10 @@ nsHTMLContentSerializer::SerializeHTMLAttributes(nsIContent* aContent,
          (attrName == nsGkAtoms::src && namespaceID == kNameSpaceID_None))) {
       // Make all links absolute when converting only the selection:
       if (mFlags & nsIDocumentEncoder::OutputAbsoluteLinks) {
-        // Would be nice to handle OBJECT tags, but that gets more complicated
-        // since we have to search the tag list for CODEBASE as well. For now,
-        // just leave them relative.
+        // Would be nice to handle OBJECT and APPLET tags,
+        // but that gets more complicated since we have to
+        // search the tag list for CODEBASE as well.
+        // For now, just leave them relative.
         nsCOMPtr<nsIURI> uri = aContent->GetBaseURI();
         if (uri) {
           nsAutoString absURI;
@@ -187,7 +189,7 @@ nsHTMLContentSerializer::AppendElementStart(Element* aElement,
 
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAtom *name = content->NodeInfo()->NameAtom();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
   int32_t ns = content->GetNameSpaceID();
 
   bool lineBreakBeforeOpen = LineBreakBeforeOpen(ns, name);
@@ -300,7 +302,7 @@ nsHTMLContentSerializer::AppendElementEnd(Element* aElement,
 
   nsIContent* content = aElement;
 
-  nsAtom *name = content->NodeInfo()->NameAtom();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
   int32_t ns = content->GetNameSpaceID();
 
   if (ns == kNameSpaceID_XHTML &&
@@ -339,13 +341,20 @@ nsHTMLContentSerializer::AppendElementEnd(Element* aElement,
   }
 
   if (ns == kNameSpaceID_XHTML) {
-    bool isContainer =
-      nsHTMLElement::IsContainer(nsHTMLTags::CaseSensitiveAtomTagToId(name));
-    if (!isContainer) {
-      // Keep this in sync with the cleanup at the end of this method.
-      MOZ_ASSERT(name != nsGkAtoms::body);
-      MaybeLeaveFromPreContent(content);
-      return NS_OK;
+    nsIParserService* parserService = nsContentUtils::GetParserService();
+
+    if (parserService) {
+      bool isContainer;
+
+      parserService->
+        IsContainer(parserService->HTMLCaseSensitiveAtomTagToId(name),
+                    isContainer);
+      if (!isContainer) {
+        // Keep this in sync with the cleanup at the end of this method.
+        MOZ_ASSERT(name != nsGkAtoms::body);
+        MaybeLeaveFromPreContent(content);
+        return NS_OK;
+      }
     }
   }
 
@@ -480,7 +489,13 @@ nsHTMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
     return aOutputStr.Append(aStr, mozilla::fallible);
   }
 
-  if (mFlags & (nsIDocumentEncoder::OutputEncodeBasicEntities)) {
+  bool nonBasicEntities =
+    !!(mFlags & (nsIDocumentEncoder::OutputEncodeLatin1Entities |
+                 nsIDocumentEncoder::OutputEncodeHTMLEntities   |
+                 nsIDocumentEncoder::OutputEncodeW3CEntities));
+
+  if (!nonBasicEntities &&
+      (mFlags & (nsIDocumentEncoder::OutputEncodeBasicEntities))) {
     const uint8_t* entityTable = mInAttribute ? kAttrEntities : kEntities;
     uint32_t start = 0;
     const uint32_t len = aStr.Length();
@@ -498,6 +513,102 @@ nsHTMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
       }
     }
     return true;
+  } else if (nonBasicEntities) {
+    nsIParserService* parserService = nsContentUtils::GetParserService();
+
+    if (!parserService) {
+      NS_ERROR("Can't get parser service");
+      return true;
+    }
+
+    nsReadingIterator<char16_t> done_reading;
+    aStr.EndReading(done_reading);
+
+    // for each chunk of |aString|...
+    uint32_t advanceLength = 0;
+    nsReadingIterator<char16_t> iter;
+
+    const uint8_t* entityTable = mInAttribute ? kAttrEntities : kEntities;
+    nsAutoCString entityReplacement;
+
+    for (aStr.BeginReading(iter);
+         iter != done_reading;
+         iter.advance(int32_t(advanceLength))) {
+      uint32_t fragmentLength = done_reading - iter;
+      uint32_t lengthReplaced = 0; // the number of UTF-16 codepoints
+                                    //  replaced by a particular entity
+      const char16_t* c = iter.get();
+      const char16_t* fragmentStart = c;
+      const char16_t* fragmentEnd = c + fragmentLength;
+      const char* entityText = nullptr;
+      const char* fullConstEntityText = nullptr;
+      char* fullEntityText = nullptr;
+
+      advanceLength = 0;
+      // for each character in this chunk, check if it
+      // needs to be replaced
+      for (; c < fragmentEnd; c++, advanceLength++) {
+        char16_t val = *c;
+        if (val <= kValNBSP && entityTable[val]) {
+          fullConstEntityText = kEntityStrings[entityTable[val]];
+          break;
+        } else if (val > 127 &&
+                  ((val < 256 &&
+                    mFlags & nsIDocumentEncoder::OutputEncodeLatin1Entities) ||
+                    mFlags & nsIDocumentEncoder::OutputEncodeHTMLEntities)) {
+          entityReplacement.Truncate();
+          parserService->HTMLConvertUnicodeToEntity(val, entityReplacement);
+
+          if (!entityReplacement.IsEmpty()) {
+            entityText = entityReplacement.get();
+            break;
+          }
+        }
+        else if (val > 127 &&
+                  mFlags & nsIDocumentEncoder::OutputEncodeW3CEntities &&
+                  mEntityConverter) {
+          if (NS_IS_HIGH_SURROGATE(val) &&
+              c + 1 < fragmentEnd &&
+              NS_IS_LOW_SURROGATE(*(c + 1))) {
+            uint32_t valUTF32 = SURROGATE_TO_UCS4(val, *(++c));
+            if (NS_SUCCEEDED(mEntityConverter->ConvertUTF32ToEntity(valUTF32,
+                              nsIEntityConverter::entityW3C, &fullEntityText))) {
+              lengthReplaced = 2;
+              break;
+            }
+            else {
+              advanceLength++;
+            }
+          }
+          else if (NS_SUCCEEDED(mEntityConverter->ConvertToEntity(val,
+                                nsIEntityConverter::entityW3C,
+                                &fullEntityText))) {
+            lengthReplaced = 1;
+            break;
+          }
+        }
+      }
+
+      bool result = aOutputStr.Append(fragmentStart, advanceLength, mozilla::fallible);
+      if (entityText) {
+        NS_ENSURE_TRUE(aOutputStr.Append(char16_t('&'), mozilla::fallible), false);
+        NS_ENSURE_TRUE(AppendASCIItoUTF16(entityText, aOutputStr, mozilla::fallible), false);
+        NS_ENSURE_TRUE(aOutputStr.Append(char16_t(';'), mozilla::fallible), false);
+        advanceLength++;
+      }
+      else if (fullConstEntityText) {
+        NS_ENSURE_TRUE(aOutputStr.AppendASCII(fullConstEntityText, mozilla::fallible), false);
+        ++advanceLength;
+      }
+      // if it comes from nsIEntityConverter, it already has '&' and ';'
+      else if (fullEntityText) {
+        bool ok = AppendASCIItoUTF16(fullEntityText, aOutputStr, mozilla::fallible);
+        free(fullEntityText);
+        advanceLength += lengthReplaced;
+        NS_ENSURE_TRUE(ok, false);
+      }
+      NS_ENSURE_TRUE(result, false);
+    }
   } else {
     NS_ENSURE_TRUE(nsXMLContentSerializer::AppendAndTranslateEntities(aStr, aOutputStr), false);
   }

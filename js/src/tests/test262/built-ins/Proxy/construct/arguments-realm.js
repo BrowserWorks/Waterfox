@@ -10,7 +10,6 @@ info: |
   7. Let argArray be CreateArrayFromList(argumentsList).
   8. Let newObj be ? Call(trap, handler, « target, argArray, newTarget »).
   [...]
-features: [cross-realm]
 ---*/
 
 var C = $262.createRealm().global.eval(

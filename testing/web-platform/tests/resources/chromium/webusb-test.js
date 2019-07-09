@@ -19,21 +19,6 @@ let internal = {
   chooserCrossFrameProxy: null,
 };
 
-// Converts an ECMAScript String object to an instance of
-// mojo.common.mojom.String16.
-function mojoString16ToString(string16) {
-  return String.fromCharCode.apply(null, string16.data);
-}
-
-// Converts an instance of mojo.common.mojom.String16 to an ECMAScript String.
-function stringToMojoString16(string) {
-  let array = new Array(string.length);
-  for (var i = 0; i < string.length; ++i) {
-    array[i] = string.charCodeAt(i);
-  }
-  return { data: array }
-}
-
 function fakeDeviceInitToDeviceInfo(guid, init) {
   let deviceInfo = {
     guid: guid + "",
@@ -48,16 +33,16 @@ function fakeDeviceInitToDeviceInfo(guid, init) {
     deviceVersionMajor: init.deviceVersionMajor,
     deviceVersionMinor: init.deviceVersionMinor,
     deviceVersionSubminor: init.deviceVersionSubminor,
-    manufacturerName: stringToMojoString16(init.manufacturerName),
-    productName: stringToMojoString16(init.productName),
-    serialNumber: stringToMojoString16(init.serialNumber),
+    manufacturerName: init.manufacturerName,
+    productName: init.productName,
+    serialNumber: init.serialNumber,
     activeConfiguration: init.activeConfigurationValue,
     configurations: []
   };
   init.configurations.forEach(config => {
     var configInfo = {
       configurationValue: config.configurationValue,
-      configurationName: stringToMojoString16(config.configurationName),
+      configurationName: config.configurationName,
       interfaces: []
     };
     config.interfaces.forEach(iface => {
@@ -71,7 +56,7 @@ function fakeDeviceInitToDeviceInfo(guid, init) {
           classCode: alternate.interfaceClass,
           subclassCode: alternate.interfaceSubclass,
           protocolCode: alternate.interfaceProtocol,
-          interfaceName: stringToMojoString16(alternate.interfaceName),
+          interfaceName: alternate.interfaceName,
           endpoints: []
         };
         alternate.endpoints.forEach(endpoint => {
@@ -130,7 +115,7 @@ function convertMojoDeviceFilter(input) {
   if (input.hasProtocolCode)
     output.protocolCode = input.protocolCode;
   if (input.serialNumber)
-    output.serialNumber = mojoString16ToString(input.serialNumber);
+    output.serialNumber = input.serialNumber;
   return output;
 }
 
@@ -379,46 +364,31 @@ class FakeDeviceManager {
   }
 }
 
-class USBDeviceRequestEvent {
-  constructor(deviceFilters, resolve) {
-    this.filters = convertMojoDeviceFilters(deviceFilters);
-    this.resolveFunc_ = resolve;
-  }
-
-  respondWith(value) {
-    // Wait until |value| resolves (if it is a Promise). This function returns
-    // no value.
-    Promise.resolve(value).then(fakeDevice => {
-      let device = internal.deviceManager.devices_.get(fakeDevice);
-      let result = null;
-      if (device) {
-        result = fakeDeviceInitToDeviceInfo(device.guid, device.info);
-      }
-      this.resolveFunc_({ result: result });
-    }, () => {
-      this.resolveFunc_({ result: null });
-    });
-  }
-}
-
 class FakeChooserService {
   constructor() {
     this.bindingSet_ = new mojo.BindingSet(device.mojom.UsbChooserService);
+    this.chosenDevice_ = null;
+    this.lastFilters_ = null;
   }
 
   addBinding(handle) {
     this.bindingSet_.addBinding(this, handle);
   }
 
+  setChosenDevice(fakeDevice) {
+    this.chosenDevice_ = fakeDevice;
+  }
+
   getPermission(deviceFilters) {
-    return new Promise(resolve => {
-      if (navigator.usb.test.onrequestdevice) {
-        navigator.usb.test.onrequestdevice(
-            new USBDeviceRequestEvent(deviceFilters, resolve));
-      } else {
-        resolve({ result: null });
-      }
-    });
+    this.lastFilters_ = convertMojoDeviceFilters(deviceFilters);
+    let device = internal.deviceManager.devices_.get(this.chosenDevice_);
+    if (device) {
+      return Promise.resolve({
+        result: fakeDeviceInitToDeviceInfo(device.guid, device.info)
+      });
+    } else {
+      return Promise.resolve({ result: null });
+    }
   }
 }
 
@@ -453,13 +423,11 @@ class CrossFrameHandleProxy {
 }
 
 class USBTest {
-  constructor() {
-    this.onrequestdevice = undefined;
-  }
+  constructor() {}
 
-  async initialize() {
+  initialize() {
     if (internal.initialized)
-      return;
+      return Promise.resolve();
 
     internal.deviceManager = new FakeDeviceManager();
     internal.deviceManagerInterceptor =
@@ -479,13 +447,11 @@ class USBTest {
     internal.chooserCrossFrameProxy = new CrossFrameHandleProxy(
         handle => internal.chooser.addBinding(handle));
 
-    // Wait for a call to GetDevices() to pass between the renderer and the
-    // mock in order to establish that everything is set up.
-    await navigator.usb.getDevices();
     internal.initialized = true;
+    return Promise.resolve();
   }
 
-  async attachToWindow(otherWindow) {
+  attachToWindow(otherWindow) {
     if (!internal.initialized)
       throw new Error('Call initialize() before attachToWindow().');
 
@@ -502,10 +468,7 @@ class USBTest {
     otherWindow.chooserInterceptor.oninterfacerequest =
         e => internal.chooserCrossFrameProxy.forwardHandle(e.handle);
     otherWindow.chooserInterceptor.start();
-
-    // Wait for a call to GetDevices() to pass between the renderer and the
-    // mock in order to establish that everything is set up.
-    await otherWindow.navigator.usb.getDevices();
+    return Promise.resolve();
   }
 
   addFakeDevice(deviceInit) {
@@ -521,6 +484,20 @@ class USBTest {
     return fakeDevice;
   }
 
+  set chosenDevice(fakeDevice) {
+    if (!internal.initialized)
+      throw new Error('Call initialize() before setting chosenDevice.');
+
+    internal.chooser.setChosenDevice(fakeDevice);
+  }
+
+  get lastFilters() {
+    if (!internal.initialized)
+      throw new Error('Call initialize() before getting lastFilters.');
+
+    return internal.chooser.lastFilters_;
+  }
+
   reset() {
     if (!internal.initialized)
       throw new Error('Call initialize() before reset().');
@@ -530,6 +507,7 @@ class USBTest {
     return new Promise(resolve => {
       setTimeout(() => {
         internal.deviceManager.removeAllDevices();
+        internal.chooser.setChosenDevice(null);
         resolve();
       }, 0);
     });

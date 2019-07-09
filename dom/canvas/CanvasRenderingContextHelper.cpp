@@ -25,7 +25,6 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                      BlobCallback& aCallback,
                                      const nsAString& aType,
                                      JS::Handle<JS::Value> aParams,
-                                     bool aUsePlaceholder,
                                      ErrorResult& aRv)
 {
   // Encoder callback when encoding is complete.
@@ -41,9 +40,19 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
     {
       RefPtr<Blob> blob = aBlob;
 
+      ErrorResult rv;
+      uint64_t size = blob->GetSize(rv);
+      if (rv.Failed()) {
+        rv.SuppressException();
+      } else {
+        AutoJSAPI jsapi;
+        if (jsapi.Init(mGlobal)) {
+          JS_updateMallocCounter(jsapi.cx(), size);
+        }
+      }
+
       RefPtr<Blob> newBlob = Blob::Create(mGlobal, blob->Impl());
 
-      ErrorResult rv;
       mBlobCallback->Call(newBlob, rv);
 
       mGlobal = nullptr;
@@ -59,7 +68,7 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
   RefPtr<EncodeCompleteCallback> callback =
     new EncodeCallback(aGlobal, &aCallback);
 
-  ToBlob(aCx, aGlobal, callback, aType, aParams, aUsePlaceholder, aRv);
+  ToBlob(aCx, aGlobal, callback, aType, aParams, aRv);
 }
 
 void
@@ -68,7 +77,6 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                      EncodeCompleteCallback* aCallback,
                                      const nsAString& aType,
                                      JS::Handle<JS::Value> aParams,
-                                     bool aUsePlaceholder,
                                      ErrorResult& aRv)
 {
   nsAutoString type;
@@ -109,7 +117,6 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                        Move(imageBuffer),
                                        format,
                                        GetWidthHeight(),
-                                       aUsePlaceholder,
                                        callback);
 }
 

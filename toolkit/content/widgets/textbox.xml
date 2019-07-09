@@ -217,7 +217,7 @@
 
           // don't trigger clickSelectsAll when switching application windows
           if (window == window.top &&
-              window.isChromeWindow &&
+              window.constructor == ChromeWindow &&
               document.activeElement == this.inputField)
             this.mIgnoreFocus = true;
         ]]>

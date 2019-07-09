@@ -3598,14 +3598,13 @@ MacroAssemblerARMCompat::handleFailureWithHandlerTail(void* handler)
     // Call the handler.
     asMasm().setupUnalignedABICall(r1);
     asMasm().passABIArg(r0);
-    asMasm().callWithABI(handler, MoveOp::GENERAL, CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    asMasm().callWithABI(handler);
 
     Label entryFrame;
     Label catch_;
     Label finally;
     Label return_;
     Label bailout;
-    Label wasm;
 
     {
         ScratchRegisterScope scratch(asMasm());
@@ -3619,7 +3618,6 @@ MacroAssemblerARMCompat::handleFailureWithHandlerTail(void* handler)
     asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_FORCED_RETURN),
                       &return_);
     asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
-    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_WASM), &wasm);
 
     breakpoint(); // Invalid kind.
 
@@ -3699,17 +3697,6 @@ MacroAssemblerARMCompat::handleFailureWithHandlerTail(void* handler)
         ma_ldr(Address(sp, offsetof(ResumeFromException, target)), r1, scratch);
     }
     jump(r1);
-
-    // If we are throwing and the innermost frame was a wasm frame, reset SP and
-    // FP; SP is pointing to the unwound return address to the wasm entry, so
-    // we can just ret().
-    bind(&wasm);
-    {
-        ScratchRegisterScope scratch(asMasm());
-        ma_ldr(Address(sp, offsetof(ResumeFromException, framePointer)), r11, scratch);
-        ma_ldr(Address(sp, offsetof(ResumeFromException, stackPointer)), sp, scratch);
-    }
-    as_dtr(IsLoad, 32, PostIndex, pc, DTRAddr(sp, DtrOffImm(4)));
 }
 
 Assembler::Condition
@@ -5048,7 +5035,10 @@ void
 MacroAssembler::patchCall(uint32_t callerOffset, uint32_t calleeOffset)
 {
     BufferOffset inst(callerOffset - 4);
-    as_bl(BufferOffset(calleeOffset).diffB<BOffImm>(inst), Always, inst);
+    BOffImm off = BufferOffset(calleeOffset).diffB<BOffImm>(inst);
+    MOZ_RELEASE_ASSERT(!off.isInvalid(),
+                       "Failed to insert necessary far jump islands");
+    as_bl(off, Always, inst);
 }
 
 CodeOffset

@@ -108,14 +108,10 @@ const { BreadcrumbsWidget } = require("resource://devtools/client/shared/widgets
 const { SideMenuWidget } = require("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
 const { VariablesView } = require("resource://devtools/client/shared/widgets/VariablesView.jsm");
 const { VariablesViewController, StackFrameUtils } = require("resource://devtools/client/shared/widgets/VariablesViewController.jsm");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const { gDevTools } = require("devtools/client/framework/devtools");
 const { ViewHelpers, Heritage, WidgetMethods, setNamedTimeout,
         clearNamedTimeout } = require("devtools/client/shared/widgets/view-helpers");
-
-// Use privileged promise in panel documents to prevent having them to freeze
-// during toolbox destruction. See bug 1402779.
-const Promise = require("Promise");
 
 // React
 const React = require("devtools/client/shared/vendor/react");

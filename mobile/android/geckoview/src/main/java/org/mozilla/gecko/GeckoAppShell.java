@@ -28,9 +28,9 @@ import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.gfx.BitmapUtils;
+import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.permissions.Permissions;
 import org.mozilla.gecko.process.GeckoProcessManager;
-import org.mozilla.gecko.SysInfo;
 import org.mozilla.gecko.util.HardwareCodecCapabilityUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.IOUtils;
@@ -70,7 +70,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -84,7 +83,6 @@ import android.os.SystemClock;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.util.SimpleArrayMap;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -130,12 +128,19 @@ public class GeckoAppShell
             extras.putString("BuildID", AppConstants.MOZ_APP_BUILDID);
             extras.putString("Vendor", AppConstants.MOZ_APP_VENDOR);
             extras.putString("ReleaseChannel", AppConstants.MOZ_UPDATE_CHANNEL);
-
-            final String appNotes = getAppNotes();
-            if (appNotes != null) {
-                extras.putString("Notes", appNotes);
-            }
             return extras;
+        }
+
+        @Override
+        public void uncaughtException(final Thread thread, final Throwable exc) {
+            if (GeckoThread.isState(GeckoThread.State.EXITING) ||
+                    GeckoThread.isState(GeckoThread.State.EXITED)) {
+                // We've called System.exit. All exceptions after this point are Android
+                // berating us for being nasty to it.
+                return;
+            }
+
+            super.uncaughtException(thread, exc);
         }
 
         @Override
@@ -167,24 +172,9 @@ public class GeckoAppShell
         }
     };
 
-    private static String sAppNotes;
-
     public static CrashHandler ensureCrashHandling() {
         // Crash handling is automatically enabled when GeckoAppShell is loaded.
         return CRASH_HANDLER;
-    }
-
-    @WrapForJNI(exceptionMode = "ignore")
-    /* package */ static synchronized String getAppNotes() {
-        return sAppNotes;
-    }
-
-    public static synchronized void appendAppNotesToCrashReport(final String notes) {
-        if (sAppNotes == null) {
-            sAppNotes = notes;
-        } else {
-            sAppNotes += '\n' + notes;
-        }
     }
 
     private static volatile boolean locationHighAccuracyEnabled;
@@ -244,7 +234,20 @@ public class GeckoAppShell
     @WrapForJNI(dispatchTo = "gecko")
     public static native void notifyUriVisited(String uri);
 
+    private static LayerView sLayerView;
     private static Rect sScreenSize;
+
+    public static void setLayerView(LayerView lv) {
+        if (sLayerView == lv) {
+            return;
+        }
+        sLayerView = lv;
+    }
+
+    @RobocopTarget
+    public static LayerView getLayerView() {
+        return sLayerView;
+    }
 
     @WrapForJNI(stubName = "NotifyObservers", dispatchTo = "gecko")
     private static native void nativeNotifyObservers(String topic, String data);
@@ -390,8 +393,7 @@ public class GeckoAppShell
                                                      LocationListener,
                                                      NotificationListener,
                                                      ScreenOrientationDelegate,
-                                                     WakeLockDelegate,
-                                                     HapticFeedbackDelegate {
+                                                     WakeLockDelegate {
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
@@ -540,21 +542,13 @@ public class GeckoAppShell
 
             PowerManager.WakeLock wl = mWakeLocks.get(lock);
 
-            // we should still hold the lock for background audio.
-            if (WakeLockDelegate.LOCK_AUDIO_PLAYING.equals(lock) &&
-                state == WakeLockDelegate.STATE_LOCKED_BACKGROUND) {
-                return;
-            }
-
             if (state == WakeLockDelegate.STATE_LOCKED_FOREGROUND && wl == null) {
                 final PowerManager pm = (PowerManager)
                         getApplicationContext().getSystemService(Context.POWER_SERVICE);
 
-                if (WakeLockDelegate.LOCK_CPU.equals(lock) ||
-                    WakeLockDelegate.LOCK_AUDIO_PLAYING.equals(lock)) {
+                if (WakeLockDelegate.LOCK_CPU.equals(lock)) {
                   wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, lock);
-                } else if (WakeLockDelegate.LOCK_SCREEN.equals(lock) ||
-                           WakeLockDelegate.LOCK_VIDEO_PLAYING.equals(lock)) {
+                } else if (WakeLockDelegate.LOCK_SCREEN.equals(lock)) {
                   // ON_AFTER_RELEASE is set, the user activity timer will be reset when the
                   // WakeLock is released, causing the illumination to remain on a bit longer.
                   wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
@@ -571,22 +565,6 @@ public class GeckoAppShell
                 mWakeLocks.remove(lock);
             }
         }
-
-        @Override
-        public void performHapticFeedback(final int effect) {
-            final int[] pattern;
-            // Use default platform values.
-            if (effect == HapticFeedbackConstants.KEYBOARD_TAP) {
-                pattern = new int[] { 40 };
-            } else if (effect == HapticFeedbackConstants.LONG_PRESS) {
-                pattern = new int[] { 0, 1, 20, 21 };
-            } else if (effect == HapticFeedbackConstants.VIRTUAL_KEY) {
-                pattern = new int[] { 0, 10, 20, 30 };
-            } else {
-                return;
-            }
-            vibrateOnHapticFeedbackEnabled(pattern);
-        }
     }
 
     private static final DefaultListeners DEFAULT_LISTENERS = new DefaultListeners();
@@ -594,7 +572,6 @@ public class GeckoAppShell
     private static LocationListener sLocationListener = DEFAULT_LISTENERS;
     private static NotificationListener sNotificationListener = DEFAULT_LISTENERS;
     private static WakeLockDelegate sWakeLockDelegate = DEFAULT_LISTENERS;
-    private static HapticFeedbackDelegate sHapticFeedbackDelegate = DEFAULT_LISTENERS;
 
     /**
      * A delegate for supporting the Screen Orientation API.
@@ -629,7 +606,7 @@ public class GeckoAppShell
         return sScreenOrientationDelegate;
     }
 
-    public static void setScreenOrientationDelegate(@Nullable ScreenOrientationDelegate screenOrientationDelegate) {
+    public static void setScreenOrientationDelegate(ScreenOrientationDelegate screenOrientationDelegate) {
         sScreenOrientationDelegate = (screenOrientationDelegate != null) ? screenOrientationDelegate : DEFAULT_LISTENERS;
     }
 
@@ -639,14 +616,6 @@ public class GeckoAppShell
 
     public void setWakeLockDelegate(final WakeLockDelegate delegate) {
         sWakeLockDelegate = (delegate != null) ? delegate : DEFAULT_LISTENERS;
-    }
-
-    public static HapticFeedbackDelegate getHapticFeedbackDelegate() {
-        return sHapticFeedbackDelegate;
-    }
-
-    public static void setHapticFeedbackDelegate(final HapticFeedbackDelegate delegate) {
-        sHapticFeedbackDelegate = (delegate != null) ? delegate : DEFAULT_LISTENERS;
     }
 
     @WrapForJNI(calledFrom = "gecko")
@@ -1037,11 +1006,10 @@ public class GeckoAppShell
         // Don't perform haptic feedback if a vibration is currently playing,
         // because the haptic feedback will nuke the vibration.
         if (!sVibrationMaybePlaying || System.nanoTime() >= sVibrationEndTime) {
-            getHapticFeedbackDelegate().performHapticFeedback(
-                    aIsLongPress ? HapticFeedbackConstants.LONG_PRESS
-                                 : HapticFeedbackConstants.VIRTUAL_KEY);
-            sVibrationMaybePlaying = false;
-            sVibrationEndTime = 0;
+            LayerView layerView = getLayerView();
+            layerView.performHapticFeedback(aIsLongPress ?
+                                            HapticFeedbackConstants.LONG_PRESS :
+                                            HapticFeedbackConstants.VIRTUAL_KEY);
         }
     }
 
@@ -1059,14 +1027,10 @@ public class GeckoAppShell
     }
 
     // Vibrate only if haptic feedback is enabled.
-    private static void vibrateOnHapticFeedbackEnabled(int[] milliseconds) {
+    public static void vibrateOnHapticFeedbackEnabled(int[] milliseconds) {
         if (Settings.System.getInt(getApplicationContext().getContentResolver(),
                                    Settings.System.HAPTIC_FEEDBACK_ENABLED, 0) > 0) {
-            if (milliseconds.length == 1) {
-                vibrate(milliseconds[0]);
-            } else {
-                vibrate(convertIntToLongArray(milliseconds), -1);
-            }
+            vibrate(convertIntToLongArray(milliseconds), -1);
         }
     }
 
@@ -1079,10 +1043,10 @@ public class GeckoAppShell
 
     @WrapForJNI(calledFrom = "gecko")
     private static void vibrate(long[] pattern, int repeat) {
-        // If pattern.length is odd, the last element in the pattern is a
+        // If pattern.length is even, the last element in the pattern is a
         // meaningless delay, so don't include it in vibrationDuration.
         long vibrationDuration = 0;
-        int iterLen = pattern.length & ~1;
+        int iterLen = pattern.length - (pattern.length % 2 == 0 ? 1 : 0);
         for (int i = 0; i < iterLen; i++) {
           vibrationDuration += pattern[i];
         }
@@ -1593,6 +1557,21 @@ public class GeckoAppShell
         return HardwareUtils.isTablet();
     }
 
+    private static boolean sImeWasEnabledOnLastResize = false;
+    public static void viewSizeChanged() {
+        GeckoView v = (GeckoView) getLayerView();
+        if (v == null) {
+            return;
+        }
+        boolean imeIsEnabled = v.isIMEEnabled();
+        if (imeIsEnabled && !sImeWasEnabledOnLastResize) {
+            // The IME just came up after not being up, so let's scroll
+            // to the focused input.
+            EventDispatcher.getInstance().dispatch("ScrollTo:FocusedInput", null);
+        }
+        sImeWasEnabledOnLastResize = imeIsEnabled;
+    }
+
     @WrapForJNI(calledFrom = "gecko")
     private static double[] getCurrentNetworkInformation() {
         return GeckoNetworkManager.getInstance().getCurrentInformation();
@@ -1831,37 +1810,8 @@ public class GeckoAppShell
         return sScreenSize;
     }
 
-    @WrapForJNI(calledFrom = "gecko")
-    public static int getAudioOutputFramesPerBuffer() {
-        if (SysInfo.getVersion() < 17) {
-            return 0;
-        }
-        final AudioManager am = (AudioManager)getApplicationContext()
-                                .getSystemService(Context.AUDIO_SERVICE);
-        if (am == null) {
-            return 0;
-        }
-        final String prop = am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-        if (prop == null) {
-            return 0;
-        }
-        return Integer.parseInt(prop);
-    }
-
-    @WrapForJNI(calledFrom = "gecko")
-    public static int getAudioOutputSampleRate() {
-        if (SysInfo.getVersion() < 17) {
-            return 0;
-        }
-        final AudioManager am = (AudioManager)getApplicationContext()
-                                .getSystemService(Context.AUDIO_SERVICE);
-        if (am == null) {
-            return 0;
-        }
-        final String prop = am.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-        if (prop == null) {
-            return 0;
-        }
-        return Integer.parseInt(prop);
+    @WrapForJNI
+    private static int startGeckoServiceChildProcess(String type, String[] args, int crashFd, int ipcFd) {
+        return GeckoProcessManager.getInstance().start(type, args, crashFd, ipcFd);
     }
 }

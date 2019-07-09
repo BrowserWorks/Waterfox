@@ -17,7 +17,7 @@ info: |
      a. Let method be ? GetMethod(obj, @@iterator).
   2. Let iterator be ? Call(method, obj).
   3. If Type(iterator) is not Object, throw a TypeError exception.
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var badIter = {};

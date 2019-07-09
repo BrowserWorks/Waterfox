@@ -11,13 +11,11 @@
 
 #include "Logging.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/StaticMutex.h"
 
 namespace mozilla {
 namespace gfx {
 
-static StaticMutex sFontFileStreamsMutex;
-static uint64_t sNextFontFileKey = 0;
+static Atomic<uint64_t> sNextFontFileKey;
 static std::unordered_map<uint64_t, IDWriteFontFileStream*> sFontFileStreams;
 
 class DWriteFontFileLoader : public IDWriteFontFileLoader
@@ -81,7 +79,7 @@ private:
   static IDWriteFontFileLoader* mInstance;
 };
 
-class DWriteFontFileStream final : public IDWriteFontFileStream
+class DWriteFontFileStream : public IDWriteFontFileStream
 {
 public:
   /**
@@ -93,6 +91,7 @@ public:
     * @param aData Font data
     */
   DWriteFontFileStream(uint8_t *aData, uint32_t aSize, uint64_t aFontFileKey);
+  ~DWriteFontFileStream();
 
   // IUnknown interface
   IFACEMETHOD(QueryInterface)(IID const& iid, OUT void** ppObject)
@@ -110,16 +109,18 @@ public:
 
   IFACEMETHOD_(ULONG, AddRef)()
   {
-    return ++mRefCnt;
+    ++mRefCnt;
+    return mRefCnt;
   }
 
   IFACEMETHOD_(ULONG, Release)()
   {
-    uint32_t count = --mRefCnt;
-    if (count == 0) {
+    --mRefCnt;
+    if (mRefCnt == 0) {
       delete this;
+      return 0;
     }
-    return count;
+    return mRefCnt;
   }
 
   // IDWriteFontFileStream methods
@@ -136,10 +137,8 @@ public:
 
 private:
   std::vector<uint8_t> mData;
-  Atomic<uint32_t> mRefCnt;
+  uint32_t mRefCnt;
   uint64_t mFontFileKey;
-
-  ~DWriteFontFileStream();
 };
 
 IDWriteFontFileLoader* DWriteFontFileLoader::mInstance = nullptr;
@@ -153,7 +152,6 @@ DWriteFontFileLoader::CreateStreamFromKey(const void *fontFileReferenceKey,
     return E_POINTER;
   }
 
-  StaticMutexAutoLock lock(sFontFileStreamsMutex);
   uint64_t fontFileKey = *static_cast<const uint64_t*>(fontFileReferenceKey);
   auto found = sFontFileStreams.find(fontFileKey);
   if (found == sFontFileStreams.end()) {
@@ -177,7 +175,6 @@ DWriteFontFileStream::DWriteFontFileStream(uint8_t *aData, uint32_t aSize,
 
 DWriteFontFileStream::~DWriteFontFileStream()
 {
-  StaticMutexAutoLock lock(sFontFileStreamsMutex);
   sFontFileStreams.erase(mFontFileKey);
 }
 
@@ -230,12 +227,10 @@ NativeFontResourceDWrite::Create(uint8_t *aFontData, uint32_t aDataLength,
     return nullptr;
   }
 
-  sFontFileStreamsMutex.Lock();
   uint64_t fontFileKey = sNextFontFileKey++;
   RefPtr<IDWriteFontFileStream> ffsRef =
     new DWriteFontFileStream(aFontData, aDataLength, fontFileKey);
   sFontFileStreams[fontFileKey] = ffsRef;
-  sFontFileStreamsMutex.Unlock();
 
   RefPtr<IDWriteFontFile> fontFile;
   HRESULT hr =

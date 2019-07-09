@@ -20,10 +20,7 @@ import mozhttpd
 import mozlog.unstructured as mozlog
 
 # Make logs go away
-try:
-    log = mozlog.getLogger("mozcrash", handler=mozlog.FileHandler(os.devnull))
-except ValueError:
-    pass
+log = mozlog.getLogger("mozcrash", handler=mozlog.FileHandler(os.devnull))
 
 
 def popen_factory(stdouts):

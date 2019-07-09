@@ -58,7 +58,6 @@ JS::Zone::Zone(JSRuntime* rt, ZoneGroup* group)
 #endif
     jitZone_(group, nullptr),
     gcScheduled_(false),
-    gcScheduledSaved_(false),
     gcPreserveCode_(group, false),
     keepShapeTables_(group, false),
     listNext_(group, NotOnList)
@@ -69,8 +68,8 @@ JS::Zone::Zone(JSRuntime* rt, ZoneGroup* group)
 
     AutoLockGC lock(rt);
     threshold.updateAfterGC(8192, GC_NORMAL, rt->gc.tunables, rt->gc.schedulingState, lock);
-    setGCMaxMallocBytes(rt->gc.maxMallocBytesAllocated() * 0.9, lock);
-    jitCodeCounter.setMax(jit::MaxCodeBytesPerProcess * 0.8, lock);
+    setGCMaxMallocBytes(rt->gc.maxMallocBytesAllocated() * 0.9);
+    jitCodeCounter.setMax(jit::MaxCodeBytesPerProcess * 0.8);
 }
 
 Zone::~Zone()
@@ -83,12 +82,9 @@ Zone::~Zone()
     js_delete(jitZone_.ref());
 
 #ifdef DEBUG
-    // Avoid assertions failures warning that not everything has been destroyed
-    // if the embedding leaked GC things.
-    if (!rt->gc.shutdownCollectedEverything()) {
+    // Avoid assertion destroying the weak map list if the embedding leaked GC things.
+    if (!rt->gc.shutdownCollectedEverything())
         gcWeakMapList().clear();
-        regExps.clear();
-    }
 #endif
 }
 
@@ -108,6 +104,8 @@ Zone::init(bool isSystemArg)
 void
 Zone::setNeedsIncrementalBarrier(bool needs)
 {
+    MOZ_ASSERT_IF(needs && isAtomsZone(),
+                  !runtimeFromActiveCooperatingThread()->hasHelperThreadZones());
     MOZ_ASSERT_IF(needs, canCollect());
     needsIncrementalBarrier_ = needs;
 }
@@ -300,14 +298,13 @@ Zone::hasMarkedCompartments()
 bool
 Zone::canCollect()
 {
-    // The atoms zone cannot be collected while off-thread parsing is taking
-    // place.
-    if (isAtomsZone())
-        return !runtimeFromAnyThread()->hasHelperThreadZones();
-
-    // Zones that will be or are currently used by other threads cannot be
-    // collected.
-    return !group()->createdForHelperThread();
+    // Zones cannot be collected while in use by other threads.
+    if (usedByHelperThread())
+        return false;
+    JSRuntime* rt = runtimeFromAnyThread();
+    if (isAtomsZone() && rt->hasHelperThreadZones())
+        return false;
+    return true;
 }
 
 void

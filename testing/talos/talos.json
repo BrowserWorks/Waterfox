@@ -3,101 +3,42 @@
         "chromez-e10s": {
             "tests": ["tresize", "tcanvasmark"]
         },
-        "chromez-stylo-disabled-e10s": {
-            "talos_options": ["--disable-stylo"],
-            "tests": ["tresize", "tcanvasmark"]
-        },
         "dromaeojs-e10s": {
             "tests": ["dromaeo_css", "kraken"]
         },
-        "dromaeojs-stylo-disabled-e10s": {
-            "talos_options": ["--disable-stylo"],
-            "tests": ["dromaeo_css", "kraken"]
-        },
         "other-e10s": {
-            "tests": ["a11yr", "ts_paint", "tpaint", "sessionrestore", "sessionrestore_many_windows", "sessionrestore_no_auto_restore", "tabpaint", "cpstartup"]
-        },
-        "other-stylo-disabled-e10s": {
-            "talos_options": ["--disable-stylo"],
-            "tests": ["a11yr", "ts_paint", "tpaint", "sessionrestore", "sessionrestore_many_windows", "sessionrestore_no_auto_restore", "tabpaint", "cpstartup"]
+            "tests": ["a11yr", "ts_paint", "tpaint", "sessionrestore", "sessionrestore_many_windows", "sessionrestore_no_auto_restore", "tabpaint"]
         },
         "g1-e10s": {
             "tests": ["tp5o_scroll", "glterrain"],
-            "pagesets_name": "tp5n.zip"
-        },
-        "g1-stylo-disabled-e10s": {
-            "tests": ["tp5o_scroll", "glterrain"],
-            "talos_options": ["--disable-stylo"],
             "pagesets_name": "tp5n.zip"
         },
         "g2-e10s": {
             "tests": ["damp", "tps"],
             "pagesets_name": "tp5n.zip"
         },
-        "g2-stylo-disabled-e10s": {
-            "tests": ["damp", "tps"],
-            "talos_options": ["--disable-stylo"],
-            "pagesets_name": "tp5n.zip"
-        },
         "g3-e10s": {
             "tests": ["dromaeo_dom"]
         },
-        "g3-stylo-disabled-e10s": {
-            "tests": ["dromaeo_dom"],
-            "talos_options": ["--disable-stylo"]
-        },
         "g4-e10s": {
             "tests": ["basic_compositor_video", "glvideo"]
-        },
-        "g4-stylo-disabled-e10s": {
-            "tests": ["basic_compositor_video", "glvideo"],
-            "talos_options": ["--disable-stylo"]
         },
         "g5-e10s": {
             "tests": ["ts_paint_webext", "tp5o_webext"],
             "pagesets_name": "tp5n.zip"
         },
-        "g5-stylo-disabled-e10s": {
-            "tests": ["ts_paint_webext", "tp5o_webext"],
-            "talos_options": ["--disable-stylo"],
-            "pagesets_name": "tp5n.zip"
-        },
         "svgr-e10s": {
-            "tests": ["tsvgx", "tsvgr_opacity", "tart", "tscrollx", "tsvg_static"]
-        },
-        "svgr-stylo-disabled-e10s": {
-            "tests": ["tsvgx", "tsvgr_opacity", "tart", "tscrollx", "tsvg_static"],
-            "talos_options": ["--disable-stylo"]
+            "tests": ["tsvgx", "tsvgr_opacity", "tart", "tscrollx", "cart", "tsvg_static"]
         },
         "perf-reftest-e10s": {
-            "tests": ["perf_reftest"]
-        },
-        "perf-reftest-stylo-disabled-e10s": {
-            "tests": ["perf_reftest"],
-            "talos_options": ["--disable-stylo"]
+            "tests": ["bloom_basic"]
         },
         "perf-reftest-singletons-e10s": {
-            "tests": ["perf_reftest_singletons"]
-        },
-        "perf-reftest-singletons-stylo-disabled-e10s": {
-            "tests": ["perf_reftest_singletons"],
-            "talos_options": ["--disable-stylo"]
-        },
-        "speedometer-e10s": {
-            "tests": ["speedometer"]
-        },
-        "speedometer-stylo-disabled-e10s": {
-            "talos_options": ["--disable-stylo"],
-            "tests": ["speedometer"]
+            "tests": ["bloom_basic_singleton"]
         },
         "tp5o-e10s": {
             "tests": ["tp5o"],
             "pagesets_name": "tp5n.zip"
-        },
-        "tp5o-stylo-disabled-e10s": {
-            "tests": ["tp5o"],
-            "pagesets_name": "tp5n.zip",
-            "talos_options": ["--disable-stylo"]
         },
         "xperf-e10s": {
             "tests": ["tp5n"],
@@ -107,19 +48,8 @@
                 "\"c:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe\""
             ]
         },
-        "xperf-stylo-disabled-e10s": {
-            "tests": ["tp5n"],
-            "pagesets_name": "tp5n.zip",
-            "talos_options": [
-                "--disable-stylo",
-                "--xperf_path",
-                "\"c:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe\""
-            ]
-        },
-        "tp6-e10s": {
-            "tests": ["tp6_google", "tp6_youtube", "tp6_amazon", "tp6_facebook"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
+        "quantum-pageload-e10s": {
+            "tests": ["quantum_pageload_google", "quantum_pageload_youtube", "quantum_pageload_amazon", "quantum_pageload_facebook"],
             "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
             "talos_options": [
                 "--mitmproxy",
@@ -127,13 +57,11 @@
                 "--firstNonBlankPaint"
             ]
         },
-        "tp6-stylo-disabled-e10s": {
-            "tests": ["tp6_google", "tp6_youtube", "tp6_amazon", "tp6_facebook"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
+        "quantum-pageload-stylo-e10s": {
+            "tests": ["quantum_pageload_google", "quantum_pageload_youtube", "quantum_pageload_amazon", "quantum_pageload_facebook"],
             "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
             "talos_options": [
-                "--disable-stylo",
+                "--stylo",
                 "--mitmproxy",
                 "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
                 "--firstNonBlankPaint"
@@ -141,25 +69,10 @@
         },
         "tp6-stylo-threads-e10s": {
             "tests": ["tp6_google", "tp6_youtube", "tp6_amazon", "tp6_facebook"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
             "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
             "talos_options": [
+                "--stylo",
                 "--stylo-threads=1",
-                "--mitmproxy",
-                "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
-                "--firstNonBlankPaint"
-            ]
-        },
-        "h1-e10s": {
-            "tests": ["ts_paint_heavy"]
-            },
-        "h2-e10s": {
-            "tests": ["tp6_google_heavy", "tp6_youtube_heavy", "tp6_amazon_heavy", "tp6_facebook_heavy"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
-            "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
-            "talos_options": [
                 "--mitmproxy",
                 "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
                 "--firstNonBlankPaint"

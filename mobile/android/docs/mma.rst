@@ -19,13 +19,14 @@ There are three major component in Leanplum SDK.
 2. Deep Links : Actions that users can perform to interact with the prompt message.
 3. Messages :  Campaigns that we want to engage with users. Messages is a combination of an Event and a Deep Link.
 
+
 Data collection
 ~~~~~~~~~~~~~~~
 
 Who will have Leanplum enabled?
 ======================================================
 
-* We use Switchboard https://wiki.mozilla.org/Firefox/Kinto to filter users to have Leanplum enabled. Currently, for users in the USA
+* We use Switchboard to filter users to have Leanplum enabled. Currently, for users in the USA
   and whose locale is set to English, 10% of that users will have Leanplum enabled.
 * If the user has "Health Report" setting enabled.
 * If above two are true, when the app starts, and switchboard configure arrived, Fennec will send the
@@ -33,7 +34,7 @@ Who will have Leanplum enabled?
 
 
 Where does data sent to the Leanplum backend go?
-======================================================
+==============================================
 
 The Leanplum SDK is hard-coded to send data to the endpoint https://www.leanplum.com.  The endpoint is
 defined by ``com.leanplum.internal.Constants.API_HOST_NAME`` at
@@ -44,7 +45,7 @@ This unique identifier is only used by Leanplum and can't be tracked back to any
 
 
 What data is collected and sent to the Leanplum backend?
-==========================================================
+======================================================
 
 The Leanplum SDK collects and sends two messages to the Leanplum backend.  The messages have the
 following parameters::
@@ -61,7 +62,6 @@ following parameters::
   "userAttributes" -> "{                // A set of key-value pairs used to describe the user.
     "Focus Installed" -> true           // If Focus for Android is installed.
     "Klar Installed" -> true            // If Klar for Android is installed.
-    "Pocket Installed" -> true          // If Pocket for Android is installed.
     "Signed In Sync" -> true            // If the user has signed in to Mozilla account.
     "Default Browser" -> true           // If the user has set Fennec as default browser.
   }
@@ -94,9 +94,6 @@ following parameters::
   "devMode" -> "true"                   // If the SDK is in developer mode. For official builds, it's false.
   "time" -> "1.497595093902E9"          // System time in second.
   "token" -> "nksZ5pa0R5iegC7wj...."    // Token come from Leanplum backend.
-
-
-  "gcmRegistrationId" -> "APA91...."    // Send GCM token to Leanplum backend. This happens separately when Leanplum SDK gets initialized.
 
 Notes on what data is collected
 -------------------------------
@@ -143,14 +140,7 @@ List of current Events related data that is sent:
 {
   "event" : "E_Opened_New_Tab"
 }
-* App start but Fennec is not set as default browser
-{
-  "event" : "E_Launch_But_Not_Default_Browser"
-}
-* General app start event
-{
-  "event" : "E_Launch_Browser"
-}
+
 Deep Links:
 Deep links are actions that can point Fennec to open certain pages or load features such as `show bookmark list` or
 `open a SUMO page`. When users see a prompt Leanplum message, they can click the button(s) on it. These buttons can
@@ -171,18 +161,11 @@ trigger the following deep links
 * Link to home page setting (firefox://preferences_home)
 
 Messages :
-Messages are prompts to the user from Leanplum. Messages can be in-app prompts or push notifications. The interaction of that prompt will be kept and sent to Leanplum backend (such
+Messages are in-app prompts to the user from Leanplum. The interaction of that prompt will be kept and sent to Leanplum backend (such
 as "Accept" and "Show"). A messages is a combination of an Event and a Deep Link. The combinations are downloaded from Leanplum
 when Leanplum SDK is initialized. When the criteria is met (set in Leanplum backend, could be when an event happens a certain number of times,
 and/or targeting certain user attribute ), a prompt message will show up. And there may be buttons for users to click. Those clicks
 may trigger deep links.
-
-We use another Mozilla's Google Cloud Messaging(GCM) sender ID to send push notifications.
-These push notifications will look like the notifications that Sync sends out.
-Sender ID let GCM knows Mozilla is sending push notifications via Leanplum.
-GCM will generate a token at client side. We'll send this GCM token to Leanplum so Leanplum knows whom to send push notifications.
-This token is only useful to Mozilla's sender ID so it's anonymized to other parties.
-Push Notifications can be triggered by Events, or be sent by Mozilla marketing team manually.
 
 The list of current messages for Android can be found here: https://wiki.mozilla.org/Leanplum_Contextual_Hints#Android
 
@@ -190,14 +173,14 @@ Technical notes
 ~~~~~~~~~~~~~~~
 
 Build flags controlling the Leanplum SDK integration
-======================================================
+==================================================
 
 To test this locally, add lines like:
 
 export MOZ_ANDROID_MMA=1
 ac_add_options --with-leanplum-sdk-keyfile=/path/to/leanplum-sdk-developer.token
 
-MOZ_ANDROID_MMA depends on MOZ_NATIVE_DEVICES and MOZ_ANDROID_GCM.
+MOZ_ANDROID_MMA depends on MOZ_ANDROID_GOOGLE_PLAY_SERVICES and MOZ_ANDROID_GCM.
 Since Leanplum requires Google Play Services library, those flags are a proxy for it, and enable respectively.
 
 We want to enable MOZ_ANDROID_MMA in Nightly, but only for
@@ -207,7 +190,7 @@ mobile/android/moz.configure, and therefore we enable using the
 automation mozconfigs.
 
 Technical notes on the Leanplum SDK integration
-================================================
+=============================================
 
 Just like Adjust, MmaDelegate uses mmaInterface to inject the MmaLeanplumImp and MmaStubImp.
 Constants used by Leanplum is in MmaConstants. Services in AndroidManifest are in
@@ -215,7 +198,7 @@ Constants used by Leanplum is in MmaConstants. Services in AndroidManifest are i
 MOZ_ANDROID_MMA.
 
 Notes and links
-=================
+===============
 
-* Leanplum web page: http://leanplum.com/
-* Leanplum SDK github repo: https://github.com/Leanplum/Leanplum-Android-SDK
+.. _Leanplum web page: http://leanplum.com/
+.. _github repository: https://github.com/Leanplum/Leanplum-Android-SDK

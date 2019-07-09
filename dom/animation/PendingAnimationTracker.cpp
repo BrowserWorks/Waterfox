@@ -173,7 +173,7 @@ PendingAnimationTracker::EnsurePaintIsScheduled()
     return;
   }
 
-  rootFrame->SchedulePaintWithoutInvalidatingObservers();
+  rootFrame->SchedulePaint();
 }
 
 } // namespace mozilla

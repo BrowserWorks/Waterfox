@@ -505,13 +505,6 @@ public:
   bool MustStayActive() override {
     return false;
   }
-
-  /**
-   * @return Whether or not overscrolling is prevented for this keyboard block.
-   */
-  bool AllowScrollHandoff() const {
-    return false;
-  }
 };
 
 } // namespace layers

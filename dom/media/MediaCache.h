@@ -14,7 +14,6 @@
 #include "nsTArray.h"
 #include "nsTHashtable.h"
 
-class nsIEventTarget;
 class nsIPrincipal;
 
 namespace mozilla {
@@ -206,12 +205,10 @@ public:
   nsresult Init(int64_t aContentLength);
 
   // Set up this stream with the cache, assuming it's for the same data
-  // as the aOriginal stream.
+  // as the aOriginal stream. Can fail on OOM.
   // Exactly one of InitAsClone or Init must be called before any other method
-  // on this class.
-  void InitAsClone(MediaCacheStream* aOriginal);
-
-  nsIEventTarget* OwnerThread() const;
+  // on this class. Does nothing if already initialized.
+  nsresult InitAsClone(MediaCacheStream* aOriginal);
 
   // These are called on the main thread.
   // Tell us whether the stream is seekable or not. Non-seekable streams
@@ -224,11 +221,9 @@ public:
   // This must be called (and return) before the ChannelMediaResource
   // used to create this MediaCacheStream is deleted.
   void Close();
-  // This returns true when the stream has been closed.
-  // Must be used on the main thread or while holding the cache lock.
+  // This returns true when the stream has been closed
   bool IsClosed() const { return mClosed; }
-  // Returns true when this stream is can be shared by a new resource load.
-  // Called on the main thread only.
+  // Returns true when this stream is can be shared by a new resource load
   bool IsAvailableForSharing() const
   {
     return !mClosed && !mIsPrivateBrowsing &&
@@ -237,6 +232,11 @@ public:
   // Get the principal for this stream. Anything accessing the contents of
   // this stream must have a principal that subsumes this principal.
   nsIPrincipal* GetCurrentPrincipal() { return mPrincipal; }
+  // Ensure a global media cache update has run with this stream present.
+  // This ensures the cache has had a chance to suspend or unsuspend this stream.
+  // Called only on main thread. This can change the state of streams, fire
+  // notifications, etc.
+  void EnsureCacheUpdate();
 
   // These callbacks are called on the main thread by the client
   // when data has been received via the channel.
@@ -259,13 +259,15 @@ public:
   // offset that the cache requested in
   // ChannelMediaResource::CacheClientSeek. This can be called at any
   // time by the client, not just after a CacheClientSeek.
-  void NotifyDataStarted(uint32_t aLoadID, int64_t aOffset);
+  void NotifyDataStarted(int64_t aOffset);
   // Notifies the cache that data has been received. The stream already
   // knows the offset because data is received in sequence and
   // the starting offset is known via NotifyDataStarted or because
   // the cache requested the offset in
   // ChannelMediaResource::CacheClientSeek, or because it defaulted to 0.
-  void NotifyDataReceived(uint32_t aLoadID, int64_t aSize, const char* aData);
+  // We pass in the principal that was used to load this data.
+  void NotifyDataReceived(int64_t aSize, const char* aData,
+                          nsIPrincipal* aPrincipal);
   // Notifies the cache that the current bytes should be written to disk.
   // Called on the main thread.
   void FlushPartialBlock();
@@ -288,8 +290,6 @@ public:
   // If we've successfully read data beyond the originally reported length,
   // we return the end of the data we've read.
   int64_t GetLength();
-  // Return the offset where next channel data will write to. Main thread only.
-  int64_t GetOffset() const;
   // Returns the unique resource ID. Call only on the main thread or while
   // holding the media cache lock.
   int64_t GetResourceID() { return mResourceID; }
@@ -352,10 +352,6 @@ public:
   void ThrottleReadahead(bool bThrottle);
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
-
-  // Update mPrincipal for all streams of the same resource given that data has
-  // been received from aPrincipal
-  void UpdatePrincipal(nsIPrincipal* aPrincipal);
 
 private:
   friend class MediaCache;
@@ -434,14 +430,27 @@ private:
   // If |aNotifyAll| is true, this function will wake up readers who may be
   // waiting on the media cache monitor. Called on the main thread only.
   void FlushPartialBlockInternal(bool aNotify, ReentrantMonitorAutoEnter& aReentrantMonitor);
+  // A helper function to do the work of closing the stream. Assumes
+  // that the cache monitor is held. Main thread only.
+  // aReentrantMonitor is the nsAutoReentrantMonitor wrapper holding the cache monitor.
+  // This is used to NotifyAll to wake up threads that might be
+  // blocked on reading from this stream.
+  void CloseInternal(ReentrantMonitorAutoEnter& aReentrantMonitor);
+  // Update mPrincipal given that data has been received from aPrincipal
+  bool UpdatePrincipal(nsIPrincipal* aPrincipal);
 
   // Instance of MediaCache to use with this MediaCacheStream.
   RefPtr<MediaCache> mMediaCache;
 
-  ChannelMediaResource* const mClient;
-
   // These fields are main-thread-only.
+  ChannelMediaResource*  mClient;
   nsCOMPtr<nsIPrincipal> mPrincipal;
+  // Set to true when MediaCache::Update() has finished while this stream
+  // was present.
+  bool                   mHasHadUpdate;
+  // Set to true when the stream has been closed either explicitly or
+  // due to an internal cache error
+  bool                   mClosed;
   // True if CacheClientNotifyDataEnded has been called for this stream.
   bool                   mDidNotifyDataEnded;
 
@@ -449,9 +458,6 @@ private:
   // only on the main thread, thus can be read either on the main thread
   // or while holding the cache's monitor.
 
-  // Set to true when the stream has been closed either explicitly or
-  // due to an internal cache error
-  bool mClosed = false;
   // This is a unique ID representing the resource we're loading.
   // All streams with the same mResourceID are loading the same
   // underlying resource and should share data.
@@ -464,14 +470,15 @@ private:
   bool mCacheSuspended;
   // True if the channel ended and we haven't seeked it again.
   bool mChannelEnded;
+  // The offset where the next data from the channel will arrive
+  int64_t      mChannelOffset;
+  // The reported or discovered length of the data, or -1 if nothing is
+  // known
+  int64_t      mStreamLength;
 
-  // The following fields are protected by the cache's monitor and can be written
+  // The following fields are protected by the cache's monitor can can be written
   // by any thread.
 
-  // The reported or discovered length of the data, or -1 if nothing is known
-  int64_t mStreamLength = -1;
-  // The offset where the next data from the channel will arrive
-  int64_t mChannelOffset = 0;
   // The offset where the reader is positioned in the stream
   int64_t           mStreamOffset;
   // For each block in the stream data, maps to the cache entry for the
@@ -497,11 +504,9 @@ private:
   ReadMode          mCurrentMode;
   // True if some data in mPartialBlockBuffer has been read as metadata
   bool              mMetadataInPartialBlockBuffer;
-  // The load ID of the current channel. Used to check whether the data is
-  // coming from an old channel and should be discarded.
-  uint32_t mLoadID = 0;
 
-  bool mThrottleReadahead = false;
+  // The following field is protected by the cache's monitor but are
+  // only written on the main thread.
 
   // Data received for the block containing mChannelOffset. Data needs
   // to wait here so we can write back a complete block. The first
@@ -509,12 +514,12 @@ private:
   // the rest are garbage.
   // Heap allocate this buffer since the exact power-of-2 will cause allocation
   // slop when combined with the rest of the object members.
-  // This partial buffer should always be read/write within the cache's monitor.
-  const UniquePtr<uint8_t[]> mPartialBlockBuffer =
-    MakeUnique<uint8_t[]>(BLOCK_SIZE);
+  UniquePtr<uint8_t[]> mPartialBlockBuffer = MakeUnique<uint8_t[]>(BLOCK_SIZE);
 
   // True if associated with a private browsing window.
   const bool mIsPrivateBrowsing;
+
+  bool mThrottleReadahead = false;
 };
 
 } // namespace mozilla

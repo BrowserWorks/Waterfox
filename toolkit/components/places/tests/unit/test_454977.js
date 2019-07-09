@@ -83,6 +83,9 @@ function check_results(aExpectedCount, aExpectedCountWithHidden) {
 }
 
 // main
+function run_test() {
+  run_next_test();
+}
 
 add_task(async function test_execute() {
   const TEST_URI = uri("http://test.mozilla.org/");

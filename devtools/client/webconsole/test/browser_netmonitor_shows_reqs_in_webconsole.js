@@ -50,7 +50,7 @@ add_task(function* () {
 });
 
 function loadDocument(browser) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   browser.addEventListener("load", function () {
     deferred.resolve();

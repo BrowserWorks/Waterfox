@@ -123,8 +123,9 @@ GetLibrarySaveToPath(int aFallbackFolderId, REFKNOWNFOLDERID aFolderId,
 {
   RefPtr<IShellLibrary> shellLib;
   RefPtr<IShellItem> savePath;
-  SHLoadLibraryFromKnownFolder(aFolderId, STGM_READ,
-                               IID_IShellLibrary, getter_AddRefs(shellLib));
+  HRESULT hr =
+    SHLoadLibraryFromKnownFolder(aFolderId, STGM_READ,
+                                 IID_IShellLibrary, getter_AddRefs(shellLib));
 
   if (shellLib &&
       SUCCEEDED(shellLib->GetDefaultSaveFolder(DSFT_DETECT, IID_IShellItem,

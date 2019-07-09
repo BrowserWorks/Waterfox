@@ -179,8 +179,11 @@ AC_SUBST_LIST(NSPR_CFLAGS)
 AC_SUBST(NSPR_INCLUDE_DIR)
 AC_SUBST(NSPR_LIB_DIR)
 
-PKGCONF_REQUIRES_PRIVATE="Requires.private: nspr"
+NSPR_PKGCONF_CHECK="nspr"
 if test -n "$MOZ_SYSTEM_NSPR"; then
+    # piggy back on $MOZ_SYSTEM_NSPR to set a variable for the nspr check for js.pc
+    NSPR_PKGCONF_CHECK="nspr >= $NSPR_MINVER"
+
     _SAVE_CFLAGS=$CFLAGS
     CFLAGS="$CFLAGS $NSPR_CFLAGS"
     AC_TRY_COMPILE([#include "prlog.h"],
@@ -190,12 +193,8 @@ if test -n "$MOZ_SYSTEM_NSPR"; then
                 ,
                 AC_MSG_ERROR([system NSPR does not support PR_STATIC_ASSERT]))
     CFLAGS=$_SAVE_CFLAGS
-    # piggy back on $MOZ_SYSTEM_NSPR to set a variable for the nspr check for js.pc
-    PKGCONF_REQUIRES_PRIVATE="Requires.private: nspr >= $NSPR_MINVER"
-elif test -n "$JS_POSIX_NSPR"; then
-    PKGCONF_REQUIRES_PRIVATE=
 fi
-AC_SUBST([PKGCONF_REQUIRES_PRIVATE])
+AC_SUBST(NSPR_PKGCONF_CHECK)
 
 fi # _IS_OUTER_CONFIGURE
 

@@ -21,6 +21,7 @@ Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   DefaultMap,
   DefaultWeakMap,
+  instanceOf,
 } = ExtensionUtils;
 
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
@@ -127,7 +128,7 @@ async function readJSONAndBlobbify(url) {
  *        value.
  */
 function exportLazyGetter(object, prop, getter) {
-  object = ChromeUtils.waiveXrays(object);
+  object = Cu.waiveXrays(object);
 
   let redefine = value => {
     if (value === undefined) {
@@ -181,7 +182,7 @@ function exportLazyGetter(object, prop, getter) {
  *        undefined, which will cause the property to be deleted.
  */
 function exportLazyProperty(object, prop, getter) {
-  object = ChromeUtils.waiveXrays(object);
+  object = Cu.waiveXrays(object);
 
   let redefine = obj => {
     let desc = getter.call(obj);
@@ -243,23 +244,21 @@ function parsePattern(pattern) {
 }
 
 function getValueBaseType(value) {
-  let type = typeof value;
-  switch (type) {
-    case "object":
-      if (value === null) {
-        return "null";
-      }
-      if (Array.isArray(value)) {
-        return "array";
-      }
-      break;
-
-    case "number":
-      if (value % 1 === 0) {
-        return "integer";
-      }
+  let t = typeof(value);
+  if (t == "object") {
+    if (value === null) {
+      return "null";
+    } else if (Array.isArray(value)) {
+      return "array";
+    } else if (Object.prototype.toString.call(value) == "[object ArrayBuffer]") {
+      return "binary";
+    }
+  } else if (t == "number") {
+    if (value % 1 == 0) {
+      return "integer";
+    }
   }
-  return type;
+  return t;
 }
 
 // Methods of Context that are used by Schemas.normalize. These methods can be
@@ -278,15 +277,6 @@ const CONTEXT_FOR_INJECTION = [
   "isPermissionRevokable",
   "shouldInject",
 ];
-
-// If the message is a function, call it and return the result.
-// Otherwise, assume it's a string.
-function forceString(msg) {
-  if (typeof msg === "function") {
-    return msg();
-  }
-  return msg;
-}
 
 /**
  * A context for schema validation and error reporting. This class is only used
@@ -356,9 +346,8 @@ class Context {
   checkLoadURL(url) {
     let ssm = Services.scriptSecurityManager;
     try {
-      ssm.checkLoadURIWithPrincipal(this.principal,
-                                    Services.io.newURI(url),
-                                    ssm.DISALLOW_INHERIT_PRINCIPAL);
+      ssm.checkLoadURIStrWithPrincipal(this.principal, url,
+                                       ssm.DISALLOW_INHERIT_PRINCIPAL);
     } catch (e) {
       return false;
     }
@@ -397,12 +386,10 @@ class Context {
    * If the context has a `currentTarget` value, this is prepended to
    * the message to indicate the location of the error.
    *
-   * @param {string|function} errorMessage
+   * @param {string} errorMessage
    *        The error message which will be displayed when this is the
-   *        only possible matching schema. If a function is passed, it
-   *        will be evaluated when the error string is first needed, and
-   *        must return a string.
-   * @param {string|function} choicesMessage
+   *        only possible matching schema.
+   * @param {string} choicesMessage
    *        The message describing the valid what constitutes a valid
    *        value for this schema, which will be displayed when multiple
    *        schema choices are available and none match.
@@ -423,8 +410,7 @@ class Context {
     }
 
     if (this.currentTarget) {
-      let {currentTarget} = this;
-      return {error: () => `Error processing ${currentTarget}: ${forceString(errorMessage)}`};
+      return {error: `Error processing ${this.currentTarget}: ${errorMessage}`};
     }
     return {error: errorMessage};
   }
@@ -441,7 +427,7 @@ class Context {
    * @returns {Error}
    */
   makeError(message) {
-    let error = forceString(this.error(message).error);
+    let {error} = this.error(message);
     if (this.cloneScope) {
       return new this.cloneScope.Error(error);
     }
@@ -492,23 +478,19 @@ class Context {
     try {
       let result = callback();
 
-      return {result, choices};
+      return {result, choices: Array.from(choices)};
     } finally {
       this.currentChoices = currentChoices;
       this.choicePathIndex = choicePathIndex;
 
-      if (choices.size == 1) {
-        for (let choice of choices) {
-          currentChoices.add(choice);
-        }
-      } else if (choices.size) {
-        this.error(null, () => {
-          let array = Array.from(choices, forceString);
-          let n = array.length - 1;
-          array[n] = `or ${array[n]}`;
+      choices = Array.from(choices);
+      if (choices.length == 1) {
+        currentChoices.add(choices[0]);
+      } else if (choices.length) {
+        let n = choices.length - 1;
+        choices[n] = `or ${choices[n]}`;
 
-          return `must either [${array.join(", ")}]`;
-        });
+        this.error(null, `must either [${choices.join(", ")}]`);
       }
     }
   }
@@ -620,7 +602,7 @@ class InjectionEntry {
       }
 
       try {
-        let unwrapped = ChromeUtils.waiveXrays(this.parentObj);
+        let unwrapped = Cu.waiveXrays(this.parentObj);
         delete unwrapped[this.name];
       } catch (e) {
         Cu.reportError(e);
@@ -929,19 +911,6 @@ const FORMATS = {
     throw new SyntaxError(`String ${JSON.stringify(string)} must be a relative URL`);
   },
 
-  imageDataOrStrictRelativeUrl(string, context) {
-    // Do not accept a string which resolves as an absolute URL, or any
-    // protocol-relative URL, except PNG or JPG data URLs
-    if (!string.startsWith("data:image/png;base64,") && !string.startsWith("data:image/jpeg;base64,")) {
-      try {
-        return FORMATS.strictRelativeUrl(string, context);
-      } catch (e) {
-        throw new SyntaxError(`String ${JSON.stringify(string)} must be a relative or PNG or JPG data:image URL`);
-      }
-    }
-    return string;
-  },
-
   contentSecurityPolicy(string, context) {
     let error = contentPolicyService.validateAddonCSP(string);
     if (error != null) {
@@ -1196,13 +1165,13 @@ class Type extends Entry {
     }
 
     let choice;
-    if ("aeiou".includes(type[0])) {
+    if (/^[aeiou]/.test(type)) {
       choice = `be an ${type} value`;
     } else {
       choice = `be a ${type} value`;
     }
 
-    return context.error(() => `Expected ${type} instead of ${JSON.stringify(value)}`,
+    return context.error(`Expected ${type} instead of ${JSON.stringify(value)}`,
                          choice);
   }
 }
@@ -1261,19 +1230,18 @@ class ChoiceType extends Type {
     if (result) {
       return result;
     }
-    if (choices.size <= 1) {
+    if (choices.length <= 1) {
       return error;
     }
 
-    choices = Array.from(choices, forceString);
     let n = choices.length - 1;
     choices[n] = `or ${choices[n]}`;
 
     let message;
     if (typeof value === "object") {
-      message = () => `Value must either: ${choices.join(", ")}`;
+      message = `Value must either: ${choices.join(", ")}`;
     } else {
-      message = () => `Value ${JSON.stringify(value)} must either: ${choices.join(", ")}`;
+      message = `Value ${JSON.stringify(value)} must either: ${choices.join(", ")}`;
     }
 
     return context.error(message, null);
@@ -1399,21 +1367,21 @@ class StringType extends Type {
 
       let choices = this.enumeration.map(JSON.stringify).join(", ");
 
-      return context.error(() => `Invalid enumeration value ${JSON.stringify(value)}`,
+      return context.error(`Invalid enumeration value ${JSON.stringify(value)}`,
                            `be one of [${choices}]`);
     }
 
     if (value.length < this.minLength) {
-      return context.error(() => `String ${JSON.stringify(value)} is too short (must be ${this.minLength})`,
+      return context.error(`String ${JSON.stringify(value)} is too short (must be ${this.minLength})`,
                            `be longer than ${this.minLength}`);
     }
     if (value.length > this.maxLength) {
-      return context.error(() => `String ${JSON.stringify(value)} is too long (must be ${this.maxLength})`,
+      return context.error(`String ${JSON.stringify(value)} is too long (must be ${this.maxLength})`,
                            `be shorter than ${this.maxLength}`);
     }
 
     if (this.pattern && !this.pattern.test(value)) {
-      return context.error(() => `String ${JSON.stringify(value)} must match ${this.pattern}`,
+      return context.error(`String ${JSON.stringify(value)} must match ${this.pattern}`,
                            `match the pattern ${this.pattern.toSource()}`);
     }
 
@@ -1559,13 +1527,28 @@ class ObjectType extends Type {
     // Proxy). Then we copy the properties out of it into a normal
     // object using a waiver wrapper.
 
-    let klass = ChromeUtils.getClassName(value, true);
+    let klass = Cu.getClassName(value, true);
     if (klass != "Object") {
       throw context.error(`Expected a plain JavaScript object, got a ${klass}`,
                           `be a plain JavaScript object`);
     }
 
-    return ChromeUtils.shallowClone(value);
+    let properties = Object.create(null);
+
+    let waived = Cu.waiveXrays(value);
+    for (let prop of Object.getOwnPropertyNames(waived)) {
+      let desc = Object.getOwnPropertyDescriptor(waived, prop);
+      if (desc.get || desc.set) {
+        throw context.error("Objects cannot have getters or setters on properties",
+                            "contain no getter or setter properties");
+      }
+      // Chrome ignores non-enumerable properties.
+      if (desc.enumerable) {
+        properties[prop] = Cu.unwaiveXrays(desc.value);
+      }
+    }
+
+    return properties;
   }
 
   checkProperty(context, prop, propType, result, properties, remainingProps) {
@@ -1599,7 +1582,7 @@ class ObjectType extends Type {
 
     if (error) {
       if (onError == "warn") {
-        context.logError(forceString(error.error));
+        context.logError(error.error);
       } else if (onError != "ignore") {
         throw error;
       }
@@ -1626,7 +1609,7 @@ class ObjectType extends Type {
           }
         }
 
-        if (ChromeUtils.getClassName(value) !== this.isInstanceOf) {
+        if (!instanceOf(value, this.isInstanceOf)) {
           return context.error(`Object must be an instance of ${this.isInstanceOf}`,
                                `be an instance of ${this.isInstanceOf}`);
         }
@@ -1824,7 +1807,7 @@ class ArrayType extends Type {
       element = context.withPath(String(i), () => this.itemType.normalize(element, context));
       if (element.error) {
         if (this.onError == "warn") {
-          context.logError(forceString(element.error));
+          context.logError(element.error);
         } else if (this.onError != "ignore") {
           return element;
         }
@@ -1978,7 +1961,7 @@ class TypeProperty extends Entry {
       let setStub = (value) => {
         let normalized = this.type.normalize(value, context);
         if (normalized.error) {
-          this.throwError(context, forceString(normalized.error));
+          this.throwError(context, normalized.error);
         }
 
         apiImpl.setProperty(normalized.value);
@@ -2052,7 +2035,7 @@ class SubModuleProperty extends Entry {
     return {
       descriptor: {value: obj},
       revoke() {
-        let unwrapped = ChromeUtils.waiveXrays(obj);
+        let unwrapped = Cu.waiveXrays(obj);
         for (let fun of functions) {
           try {
             delete unwrapped[fun.name];
@@ -2146,7 +2129,7 @@ class CallEntry extends Entry {
       let parameter = this.parameters[parameterIndex];
       let r = parameter.type.normalize(arg, context);
       if (r.error) {
-        this.throwError(context, `Type error for parameter ${parameter.name} (${forceString(r.error)})`);
+        this.throwError(context, `Type error for parameter ${parameter.name} (${r.error})`);
       }
       return r.value;
     });
@@ -2194,16 +2177,14 @@ FunctionEntry = class FunctionEntry extends CallEntry {
     if (optional && value == null) {
       return;
     }
-    if (type.reference === "ExtensionPanel" ||
-        type.reference === "ExtensionSidebarPane" ||
-        type.reference === "Port") {
+    if (type.reference === "ExtensionPanel" || type.reference === "Port") {
       // TODO: We currently treat objects with functions as SubModuleType,
       // which is just wrong, and a bigger yak.  Skipping for now.
       return;
     }
     const {error} = type.normalize(value, context);
     if (error) {
-      this.throwError(context, `Type error for ${name} value (${forceString(error)})`);
+      this.throwError(context, `Type error for ${name} value (${error})`);
     }
   }
 
@@ -2346,7 +2327,7 @@ Event = class Event extends CallEntry { // eslint-disable-line no-native-reassig
         apiImpl.revoke();
         apiImpl = null;
 
-        let unwrapped = ChromeUtils.waiveXrays(obj);
+        let unwrapped = Cu.waiveXrays(obj);
         delete unwrapped.addListener;
         delete unwrapped.removeListener;
         delete unwrapped.hasListener;
@@ -2660,10 +2641,6 @@ this.Schemas = {
   // is useful for sending the JSON across processes.
   schemaJSON: new Map(),
 
-  // A separate map of schema JSON which should be available in all
-  // content processes.
-  contentSchemaJSON: new Map(),
-
   // Map[<schema-name> -> Map[<symbol-name> -> Entry]]
   // This keeps track of all the schemas that have been loaded so far.
   rootNamespace: new Namespace("", []),
@@ -2718,25 +2695,14 @@ this.Schemas = {
   },
 
   receiveMessage(msg) {
-    let {data} = msg;
     switch (msg.name) {
       case "Schema:Add":
-        // If we're given a Map, the ordering of the initial items
-        // matters, so swap with our current data to make sure its
-        // entries appear first.
-        if (typeof data.get === "function") {
-          // Create a new Map so we're sure it's in the same compartment.
-          [this.schemaJSON, data] = [new Map(data), this.schemaJSON];
-        }
-
-        for (let [url, schema] of data) {
-          this.schemaJSON.set(url, schema);
-        }
+        this.schemaJSON.set(msg.data.url, msg.data.schema);
         this.flushSchemas();
         break;
 
       case "Schema:Delete":
-        this.schemaJSON.delete(data.url);
+        this.schemaJSON.delete(msg.data.url);
         this.flushSchemas();
         break;
     }
@@ -2801,24 +2767,18 @@ this.Schemas = {
     return this._loadCachedSchemasPromise;
   },
 
-  addSchema(url, schema, content = false) {
+  addSchema(url, schema) {
     this.schemaJSON.set(url, schema);
 
-    if (content) {
-      this.contentSchemaJSON.set(url, schema);
+    let data = Services.ppmm.initialProcessData;
+    data["Extension:Schemas"] = this.schemaJSON;
 
-      let data = Services.ppmm.initialProcessData;
-      data["Extension:Schemas"] = this.contentSchemaJSON;
-
-      Services.ppmm.broadcastAsyncMessage("Schema:Add", [[url, schema]]);
-    } else if (this.schemaHook) {
-      this.schemaHook([[url, schema]]);
-    }
+    Services.ppmm.broadcastAsyncMessage("Schema:Add", {url, schema});
 
     this.flushSchemas();
   },
 
-  async load(url, content = false) {
+  async load(url) {
     if (!isParentProcess) {
       return;
     }
@@ -2829,7 +2789,7 @@ this.Schemas = {
                 await StartupCache.schemas.get(url, readJSONAndBlobbify));
 
     if (!this.schemaJSON.has(url)) {
-      this.addSchema(url, blob, content);
+      this.addSchema(url, blob);
     }
   },
 
@@ -2908,10 +2868,6 @@ this.Schemas = {
     let ns = this.getNamespace(namespaceName);
     let type = ns.get(prop);
 
-    let result = type.normalize(obj, new Context(context));
-    if (result.error) {
-      return {error: forceString(result.error)};
-    }
-    return result;
+    return type.normalize(obj, new Context(context));
   },
 };

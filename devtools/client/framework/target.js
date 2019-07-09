@@ -6,13 +6,13 @@
 
 const { Ci } = require("chrome");
 const defer = require("devtools/shared/defer");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const Services = require("Services");
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 
 loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
 loader.lazyRequireGetter(this, "DebuggerClient",
-  "devtools/shared/client/debugger-client", true);
+  "devtools/shared/client/main", true);
 loader.lazyRequireGetter(this, "gDevTools",
   "devtools/client/framework/devtools", true);
 

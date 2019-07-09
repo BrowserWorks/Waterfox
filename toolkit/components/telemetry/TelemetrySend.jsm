@@ -53,7 +53,6 @@ const TOPIC_IDLE_DAILY = "idle-daily";
 const TOPIC_QUIT_APPLICATION_GRANTED = "quit-application-granted";
 const TOPIC_QUIT_APPLICATION_FORCED = "quit-application-forced";
 const PREF_CHANGED_TOPIC = "nsPref:changed";
-const TOPIC_PROFILE_CHANGE_NET_TEARDOWN = "profile-change-net-teardown";
 
 // Whether the FHR/Telemetry unification features are enabled.
 // Changing this pref requires a restart.
@@ -107,7 +106,6 @@ const XHR_ERROR_TYPE = [
 var Policy = {
   now: () => new Date(),
   midnightPingFuzzingDelay: () => MIDNIGHT_FUZZING_DELAY_MS,
-  pingSubmissionTimeout: () => PING_SUBMIT_TIMEOUT_MS,
   setSchedulerTickTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
   clearSchedulerTickTimeout: (id) => clearTimeout(id),
 };
@@ -180,6 +178,14 @@ this.TelemetrySend = {
 
   get pendingPingCount() {
     return TelemetrySendImpl.pendingPingCount;
+  },
+
+  testSetTimeoutForPingSubmit(timeoutInMS) {
+    TelemetrySendImpl._pingSubmissionTimeout = timeoutInMS;
+  },
+
+  testResetTimeOutToDefault() {
+    TelemetrySendImpl._pingSubmissionTimeout = PING_SUBMIT_TIMEOUT_MS;
   },
 
   /**
@@ -266,13 +272,6 @@ this.TelemetrySend = {
    */
   testWaitOnOutgoingPings() {
     return TelemetrySendImpl.promisePendingPingActivity();
-  },
-
-  /**
-   * Only used in tests to set whether it is too late in shutdown to send pings.
-   */
-  testTooLateToSend(tooLate) {
-    TelemetrySendImpl._tooLateToSend = tooLate;
   },
 
   /**
@@ -530,7 +529,7 @@ var SendScheduler = {
         nextSendDelay = this._backoffDelay;
       }
 
-      this._log.trace("_doSendTask - waiting for next send opportunity, timeout is " + nextSendDelay);
+      this._log.trace("_doSendTask - waiting for next send opportunity, timeout is " + nextSendDelay)
       this._sendTaskState = "wait on next send opportunity";
       const cancelled = await CancellableTimeout.promiseWaitOnTimeout(nextSendDelay);
       if (cancelled) {
@@ -594,14 +593,13 @@ var TelemetrySendImpl = {
   _isOSShutdown: false,
   // Count of pending pings that were overdue.
   _overduePingCount: 0,
-  // Has the network shut down, making it too late to send pings?
-  _tooLateToSend: false,
+
+  _pingSubmissionTimeout: PING_SUBMIT_TIMEOUT_MS,
 
   OBSERVER_TOPICS: [
     TOPIC_IDLE_DAILY,
     TOPIC_QUIT_APPLICATION_GRANTED,
     TOPIC_QUIT_APPLICATION_FORCED,
-    TOPIC_PROFILE_CHANGE_NET_TEARDOWN,
   ],
 
   OBSERVED_PREFERENCES: [
@@ -653,12 +651,11 @@ var TelemetrySendImpl = {
     this._log.trace("setup");
 
     this._testMode = testing;
+    this._sendingEnabled = true;
 
     Services.obs.addObserver(this, TOPIC_IDLE_DAILY);
-    Services.obs.addObserver(this, TOPIC_PROFILE_CHANGE_NET_TEARDOWN);
 
     this._server = Services.prefs.getStringPref(TelemetryUtils.Preferences.Server, undefined);
-    this._sendingEnabled = true;
 
     // Annotate crash reports so that crash pings are sent correctly and listen
     // to pref changes to adjust the annotations accordingly.
@@ -779,7 +776,6 @@ var TelemetrySendImpl = {
     this._shutdown = false;
     this._currentPings = new Map();
     this._overduePingCount = 0;
-    this._tooLateToSend = false;
     this._isOSShutdown = false;
 
     const histograms = [
@@ -797,10 +793,6 @@ var TelemetrySendImpl = {
    * Notify that we can start submitting data to the servers.
    */
   notifyCanUpload() {
-    if (!this._sendingEnabled) {
-      this._log.trace("notifyCanUpload - notifying before sending is enabled. Ignoring.");
-      return Promise.resolve();
-    }
     // Let the scheduler trigger sending pings if possible, also inform the
     // crash reporter that it can send crash pings if appropriate.
     SendScheduler.triggerSendingPings(true);
@@ -813,6 +805,7 @@ var TelemetrySendImpl = {
     let setOSShutdown = () => {
       this._log.trace("setOSShutdown - in OS shutdown");
       this._isOSShutdown = true;
+      Telemetry.scalarSet("telemetry.os_shutting_down", true);
     };
 
     switch (topic) {
@@ -831,9 +824,6 @@ var TelemetrySendImpl = {
       if (this.OBSERVED_PREFERENCES.includes(data)) {
         this._annotateCrashReport();
       }
-      break;
-    case TOPIC_PROFILE_CHANGE_NET_TEARDOWN:
-      this._tooLateToSend = true;
       break;
     }
   },
@@ -956,12 +946,6 @@ var TelemetrySendImpl = {
 
   sendPings(currentPings, persistedPingIds) {
     let pingSends = [];
-
-    // Prioritize health pings to enable low-latency monitoring.
-    currentPings = [
-      ...currentPings.filter(ping => ping.type === "health"),
-      ...currentPings.filter(ping => ping.type !== "health"),
-    ];
 
     for (let current of currentPings) {
       let ping = current;
@@ -1096,12 +1080,6 @@ var TelemetrySendImpl = {
       return Promise.resolve();
     }
 
-    if (this._tooLateToSend) {
-      this._log.trace("_doPing - Too late to send ping " + ping.id);
-      Telemetry.getHistogramById("TELEMETRY_SEND_FAILURE_TYPE").add("eTooLate");
-      return Promise.resolve();
-    }
-
     this._log.trace("_doPing - server: " + this._server + ", persisted: " + isPersisted +
                     ", id: " + id);
 
@@ -1109,7 +1087,7 @@ var TelemetrySendImpl = {
 
     let request = new ServiceRequest();
     request.mozBackgroundRequest = true;
-    request.timeout = Policy.pingSubmissionTimeout();
+    request.timeout = this._pingSubmissionTimeout;
 
     request.open("POST", url, true);
     request.overrideMimeType("text/plain");
@@ -1224,7 +1202,7 @@ var TelemetrySendImpl = {
 
     const compressedPingSizeKB = Math.floor(payloadStream.data.length / 1024);
     Telemetry.getHistogramById("TELEMETRY_COMPRESS").add(Utils.monotonicNow() - startTime);
-    request.sendInputStream(payloadStream);
+    request.send(payloadStream);
 
     return deferred.promise;
   },
@@ -1346,7 +1324,6 @@ var TelemetrySendImpl = {
                   .createInstance(Ci.nsIProcess);
     process.init(exe);
     process.startHidden = true;
-    process.noShell = true;
     process.run(/* blocking */ false, [url, pingPath], 2);
   },
 };

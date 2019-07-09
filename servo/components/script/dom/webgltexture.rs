@@ -3,20 +3,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://www.khronos.org/registry/webgl/specs/latest/1.0/webgl.idl
-
-use canvas_traits::webgl::{webgl_channel, WebGLCommand, WebGLError, WebGLMsgSender, WebGLResult, WebGLTextureId};
-use canvas_traits::webgl::DOMToTextureCommand;
-use dom::bindings::cell::DomRefCell;
+use canvas_traits::CanvasMsg;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::WebGLRenderingContextBinding::WebGLRenderingContextConstants as constants;
 use dom::bindings::codegen::Bindings::WebGLTextureBinding;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::reflect_dom_object;
-use dom::bindings::root::DomRoot;
 use dom::webgl_validations::types::{TexImageTarget, TexFormat, TexDataType};
 use dom::webglobject::WebGLObject;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use ipc_channel::ipc::IpcSender;
 use std::cell::Cell;
 use std::cmp;
+use webrender_api;
+use webrender_api::{WebGLCommand, WebGLError, WebGLResult, WebGLTextureId};
 
 pub enum TexParameterValue {
     Float(f32),
@@ -36,22 +37,20 @@ pub struct WebGLTexture {
     target: Cell<Option<u32>>,
     is_deleted: Cell<bool>,
     /// Stores information about mipmap levels and cubemap faces.
-    #[ignore_malloc_size_of = "Arrays are cumbersome"]
-    image_info_array: DomRefCell<[ImageInfo; MAX_LEVEL_COUNT * MAX_FACE_COUNT]>,
+    #[ignore_heap_size_of = "Arrays are cumbersome"]
+    image_info_array: DOMRefCell<[ImageInfo; MAX_LEVEL_COUNT * MAX_FACE_COUNT]>,
     /// Face count can only be 1 or 6
     face_count: Cell<u8>,
     base_mipmap_level: u32,
     // Store information for min and mag filters
     min_filter: Cell<Option<u32>>,
     mag_filter: Cell<Option<u32>>,
-    #[ignore_malloc_size_of = "Defined in ipc-channel"]
-    renderer: WebGLMsgSender,
-    /// True if this texture is used for the DOMToTexture feature.
-    attached_to_dom: Cell<bool>,
+    #[ignore_heap_size_of = "Defined in ipc-channel"]
+    renderer: IpcSender<CanvasMsg>,
 }
 
 impl WebGLTexture {
-    fn new_inherited(renderer: WebGLMsgSender,
+    fn new_inherited(renderer: IpcSender<CanvasMsg>,
                      id: WebGLTextureId)
                      -> WebGLTexture {
         WebGLTexture {
@@ -63,26 +62,25 @@ impl WebGLTexture {
             base_mipmap_level: 0,
             min_filter: Cell::new(None),
             mag_filter: Cell::new(None),
-            image_info_array: DomRefCell::new([ImageInfo::new(); MAX_LEVEL_COUNT * MAX_FACE_COUNT]),
+            image_info_array: DOMRefCell::new([ImageInfo::new(); MAX_LEVEL_COUNT * MAX_FACE_COUNT]),
             renderer: renderer,
-            attached_to_dom: Cell::new(false),
         }
     }
 
-    pub fn maybe_new(window: &Window, renderer: WebGLMsgSender)
-                     -> Option<DomRoot<WebGLTexture>> {
-        let (sender, receiver) = webgl_channel().unwrap();
-        renderer.send(WebGLCommand::CreateTexture(sender)).unwrap();
+    pub fn maybe_new(window: &Window, renderer: IpcSender<CanvasMsg>)
+                     -> Option<Root<WebGLTexture>> {
+        let (sender, receiver) = webrender_api::channel::msg_channel().unwrap();
+        renderer.send(CanvasMsg::WebGL(WebGLCommand::CreateTexture(sender))).unwrap();
 
         let result = receiver.recv().unwrap();
         result.map(|texture_id| WebGLTexture::new(window, renderer, texture_id))
     }
 
     pub fn new(window: &Window,
-               renderer: WebGLMsgSender,
+               renderer: IpcSender<CanvasMsg>,
                id: WebGLTextureId)
-               -> DomRoot<WebGLTexture> {
-        reflect_dom_object(Box::new(WebGLTexture::new_inherited(renderer, id)),
+               -> Root<WebGLTexture> {
+        reflect_dom_object(box WebGLTexture::new_inherited(renderer, id),
                            window,
                            WebGLTextureBinding::Wrap)
     }
@@ -115,7 +113,7 @@ impl WebGLTexture {
             self.target.set(Some(target));
         }
 
-        let msg = WebGLCommand::BindTexture(target, Some(self.id));
+        let msg = CanvasMsg::WebGL(WebGLCommand::BindTexture(target, Some(self.id)));
         self.renderer.send(msg).unwrap();
 
         Ok(())
@@ -170,7 +168,7 @@ impl WebGLTexture {
             return Err(WebGLError::InvalidOperation);
         }
 
-        self.renderer.send(WebGLCommand::GenerateMipmap(target)).unwrap();
+        self.renderer.send(CanvasMsg::WebGL(WebGLCommand::GenerateMipmap(target))).unwrap();
 
         if self.base_mipmap_level + base_image_info.get_max_mimap_levels() == 0 {
             return Err(WebGLError::InvalidOperation);
@@ -183,11 +181,7 @@ impl WebGLTexture {
     pub fn delete(&self) {
         if !self.is_deleted.get() {
             self.is_deleted.set(true);
-            // Notify WR to release the frame output when using DOMToTexture feature
-            if self.attached_to_dom.get() {
-                let _ = self.renderer.send_dom_to_texture(DOMToTextureCommand::Detach(self.id));
-            }
-            let _ = self.renderer.send(WebGLCommand::DeleteTexture(self.id));
+            let _ = self.renderer.send(CanvasMsg::WebGL(WebGLCommand::DeleteTexture(self.id)));
         }
     }
 
@@ -222,7 +216,7 @@ impl WebGLTexture {
                     constants::LINEAR_MIPMAP_LINEAR => {
                         self.min_filter.set(Some(int_value as u32));
                         self.renderer
-                            .send(WebGLCommand::TexParameteri(target, name, int_value))
+                            .send(CanvasMsg::WebGL(WebGLCommand::TexParameteri(target, name, int_value)))
                             .unwrap();
                         Ok(())
                     },
@@ -236,7 +230,7 @@ impl WebGLTexture {
                     constants::LINEAR => {
                         self.mag_filter.set(Some(int_value as u32));
                         self.renderer
-                            .send(WebGLCommand::TexParameteri(target, name, int_value))
+                            .send(CanvasMsg::WebGL(WebGLCommand::TexParameteri(target, name, int_value)))
                             .unwrap();
                         Ok(())
                     },
@@ -251,7 +245,7 @@ impl WebGLTexture {
                     constants::MIRRORED_REPEAT |
                     constants::REPEAT => {
                         self.renderer
-                            .send(WebGLCommand::TexParameteri(target, name, int_value))
+                            .send(CanvasMsg::WebGL(WebGLCommand::TexParameteri(target, name, int_value)))
                             .unwrap();
                         Ok(())
                     },
@@ -382,10 +376,6 @@ impl WebGLTexture {
 
         Some(self.image_info_at_face(0, self.base_mipmap_level))
     }
-
-    pub fn set_attached_to_dom(&self) {
-        self.attached_to_dom.set(true);
-    }
 }
 
 impl Drop for WebGLTexture {
@@ -394,7 +384,7 @@ impl Drop for WebGLTexture {
     }
 }
 
-#[derive(Clone, Copy, Debug, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug, JSTraceable, HeapSizeOf)]
 pub struct ImageInfo {
     width: u32,
     height: u32,

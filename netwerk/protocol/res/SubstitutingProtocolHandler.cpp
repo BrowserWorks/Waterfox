@@ -123,6 +123,7 @@ SubstitutingProtocolHandler::CollectSubstitutions(InfallibleTArray<SubstitutionM
     if (uri) {
       nsresult rv = uri->GetSpec(serialized.spec);
       NS_ENSURE_SUCCESS(rv, rv);
+      uri->GetOriginCharset(serialized.charset);
     }
     SubstitutionMapping substitution = { mScheme, nsCString(iter.Key()), serialized, entry.flags };
     aMappings.AppendElement(substitution);
@@ -150,6 +151,7 @@ SubstitutingProtocolHandler::SendSubstitution(const nsACString& aRoot, nsIURI* a
   if (aBaseURI) {
     nsresult rv = aBaseURI->GetSpec(mapping.resolvedURI.spec);
     NS_ENSURE_SUCCESS(rv, rv);
+    aBaseURI->GetOriginCharset(mapping.resolvedURI.charset);
   }
   mapping.flags = aFlags;
 
@@ -398,7 +400,7 @@ SubstitutingProtocolHandler::ResolveURI(nsIURI *uri, nsACString &result)
   rv = uri->GetAsciiHost(host);
   if (NS_FAILED(rv)) return rv;
 
-  rv = uri->GetPathQueryRef(path);
+  rv = uri->GetPath(path);
   if (NS_FAILED(rv)) return rv;
 
   rv = url->GetFilePath(pathname);
@@ -425,27 +427,8 @@ SubstitutingProtocolHandler::ResolveURI(nsIURI *uri, nsACString &result)
     rv = baseURI->GetSpec(result);
   } else {
     // Make sure we always resolve the path as file-relative to our target URI.
-    // When the baseURI is a nsIFileURL, and the directory it points to doesn't
-    // exist, it doesn't end with a /. In that case, a file-relative resolution
-    // is going to pick something in the parent directory, so we resolve using
-    // an absolute path derived from the full path in that case.
-    nsCOMPtr<nsIFileURL> baseDir = do_QueryInterface(baseURI);
-    if (baseDir) {
-      nsAutoCString basePath;
-      rv = baseURI->GetFilePath(basePath);
-      if (NS_SUCCEEDED(rv) && !StringEndsWith(basePath, NS_LITERAL_CSTRING("/"))) {
-        // Cf. the assertion above, path already starts with a /, so prefixing
-        // with a string that doesn't end with one will leave us wit the right
-        // amount of /.
-        path.Insert(basePath, 0);
-      } else {
-        // Allow to fall through below.
-        baseDir = nullptr;
-      }
-    }
-    if (!baseDir) {
-      path.Insert('.', 0);
-    }
+    path.InsertLiteral(".", 0);
+
     rv = baseURI->Resolve(path, result);
   }
 

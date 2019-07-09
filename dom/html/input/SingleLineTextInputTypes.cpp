@@ -58,7 +58,7 @@ SingleLineTextInputTypeBase::IsTooShort() const
 bool
 SingleLineTextInputTypeBase::IsValueMissing() const
 {
-  if (!mInputElement->IsRequired()) {
+  if (!mInputElement->HasAttr(kNameSpaceID_None, nsGkAtoms::required)) {
     return false;
   }
 
@@ -72,12 +72,8 @@ SingleLineTextInputTypeBase::IsValueMissing() const
 bool
 SingleLineTextInputTypeBase::HasPatternMismatch() const
 {
-  if (!mInputElement->HasPatternAttribute()) {
-    return false;
-  }
-
   nsAutoString pattern;
-  if (!mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::pattern, pattern)) {
+ if (!mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::pattern, pattern)) {
     return false;
   }
 
@@ -125,7 +121,7 @@ URLInputType::HasTypeMismatch() const
 }
 
 nsresult
-URLInputType::GetTypeMismatchMessage(nsAString& aMessage)
+URLInputType::GetTypeMismatchMessage(nsXPIDLString& aMessage)
 {
   return nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                             "FormValidationInvalidURL",
@@ -169,7 +165,7 @@ EmailInputType::HasBadInput() const
 }
 
 nsresult
-EmailInputType::GetTypeMismatchMessage(nsAString& aMessage)
+EmailInputType::GetTypeMismatchMessage(nsXPIDLString& aMessage)
 {
   return nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                             "FormValidationInvalidEmail",
@@ -177,7 +173,7 @@ EmailInputType::GetTypeMismatchMessage(nsAString& aMessage)
 }
 
 nsresult
-EmailInputType::GetBadInputMessage(nsAString& aMessage)
+EmailInputType::GetBadInputMessage(nsXPIDLString& aMessage)
 {
   return nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                             "FormValidationInvalidEmail",

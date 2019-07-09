@@ -14,12 +14,11 @@
 
 #include "mozilla/Base64.h"
 #include "mozilla/CheckedInt.h"
-#include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileReaderBinding.h"
 #include "mozilla/dom/ProgressEvent.h"
 #include "mozilla/Encoding.h"
-#include "nsAlgorithm.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsDOMJSUtils.h"
 #include "nsError.h"
@@ -68,7 +67,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(FileReader,
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mResultArrayBuffer)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(FileReader)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FileReader)
   NS_INTERFACE_MAP_ENTRY(nsITimerCallback)
   NS_INTERFACE_MAP_ENTRY(nsIInputStreamCallback)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
@@ -188,6 +187,27 @@ FileReader::GetResult(JSContext* aCx,
   }
 }
 
+static nsresult
+ReadFuncBinaryString(nsIInputStream* in,
+                     void* closure,
+                     const char* fromRawSegment,
+                     uint32_t toOffset,
+                     uint32_t count,
+                     uint32_t *writeCount)
+{
+  char16_t* dest = static_cast<char16_t*>(closure) + toOffset;
+  char16_t* end = dest + count;
+  const unsigned char* source = (const unsigned char*)fromRawSegment;
+  while (dest != end) {
+    *dest = *source;
+    ++dest;
+    ++source;
+  }
+  *writeCount = count;
+
+  return NS_OK;
+}
+
 void
 FileReader::OnLoadEndArrayBuffer()
 {
@@ -234,12 +254,9 @@ FileReader::OnLoadEndArrayBuffer()
     AssignJSFlatString(errorName, name);
   }
 
-  nsAutoCString errorMsg(er->message().c_str());
-  nsAutoCString errorNameC = NS_LossyConvertUTF16toASCII(errorName);
-  // XXX Code selected arbitrarily
   mError =
-    new DOMException(NS_ERROR_DOM_INVALID_STATE_ERR, errorMsg,
-                     errorNameC, DOMException::INVALID_STATE_ERR);
+    new DOMError(GetOwner(), errorName,
+                 NS_ConvertUTF8toUTF16(er->message().c_str()));
 
   FreeDataAndDispatchError();
 }
@@ -264,37 +281,6 @@ FileReader::DoAsyncWait()
   return NS_OK;
 }
 
-namespace {
-
-void
-PopulateBufferForBinaryString(char16_t* aDest, const char* aSource,
-                              uint32_t aCount)
-{
-  const unsigned char* source = (const unsigned char*)aSource;
-  char16_t* end = aDest + aCount;
-  while (aDest != end) {
-    *aDest = *source;
-    ++aDest;
-    ++source;
-  }
-}
-
-nsresult
-ReadFuncBinaryString(nsIInputStream* aInputStream,
-                     void* aClosure,
-                     const char* aFromRawSegment,
-                     uint32_t aToOffset,
-                     uint32_t aCount,
-                     uint32_t* aWriteCount)
-{
-  char16_t* dest = static_cast<char16_t*>(aClosure) + aToOffset;
-  PopulateBufferForBinaryString(dest, aFromRawSegment, aCount);
-  *aWriteCount = aCount;
-  return NS_OK;
-}
-
-} // anonymous
-
 nsresult
 FileReader::DoReadData(uint64_t aCount)
 {
@@ -304,57 +290,32 @@ FileReader::DoReadData(uint64_t aCount)
 
   if (mDataFormat == FILE_AS_BINARY) {
     //Continuously update our binary string as data comes in
-    CheckedInt<uint64_t> size = mResult.Length();
-    size += aCount;
-
-    if (!size.isValid() ||
-        size.value() > UINT32_MAX ||
-        size.value() > mTotal) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-
     uint32_t oldLen = mResult.Length();
-    MOZ_ASSERT(oldLen == mDataLen, "unexpected mResult length");
+    MOZ_ASSERT(mResult.Length() == mDataLen, "unexpected mResult length");
+    if (uint64_t(oldLen) + aCount > UINT32_MAX)
+      return NS_ERROR_OUT_OF_MEMORY;
+    char16_t *buf = nullptr;
+    mResult.GetMutableData(&buf, oldLen + aCount, fallible);
+    NS_ENSURE_TRUE(buf, NS_ERROR_OUT_OF_MEMORY);
 
-    char16_t* dest = nullptr;
-    mResult.GetMutableData(&dest, size.value(), fallible);
-    NS_ENSURE_TRUE(dest, NS_ERROR_OUT_OF_MEMORY);
+    nsresult rv;
 
-    dest += oldLen;
-
-    if (NS_InputStreamIsBuffered(mAsyncStream)) {
-      nsresult rv = mAsyncStream->ReadSegments(ReadFuncBinaryString, dest,
-                                               aCount, &bytesRead);
+    // nsFileStreams do not implement ReadSegment. In case here we are dealing
+    // with a nsIAsyncInputStream, in content process, we need to wrap a
+    // nsIBufferedInputStream around it.
+    if (!mBufferedStream) {
+      rv = NS_NewBufferedInputStream(getter_AddRefs(mBufferedStream),
+                                     mAsyncStream, 8192);
       NS_ENSURE_SUCCESS(rv, rv);
-    } else {
-      while (aCount > 0) {
-        char tmpBuffer[4096];
-        uint32_t minCount =
-          XPCOM_MIN(aCount, static_cast<uint64_t>(sizeof(tmpBuffer)));
-        uint32_t read;
-
-        nsresult rv = mAsyncStream->Read(tmpBuffer, minCount, &read);
-        if (rv == NS_BASE_STREAM_CLOSED) {
-          rv = NS_OK;
-        }
-
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        if (read == 0) {
-          // The stream finished too early.
-          return NS_ERROR_OUT_OF_MEMORY;
-        }
-
-        PopulateBufferForBinaryString(dest, tmpBuffer, read);
-
-        dest += read;
-        aCount -= read;
-        bytesRead += read;
-      }
     }
 
-    MOZ_ASSERT(size.value() == oldLen + bytesRead);
-    mResult.Truncate(size.value());
+    rv = mBufferedStream->ReadSegments(ReadFuncBinaryString, buf + oldLen,
+                                       aCount, &bytesRead);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    mResult.Truncate(oldLen + bytesRead);
   }
   else {
     CheckedInt<uint64_t> size = mDataLen;
@@ -402,6 +363,7 @@ FileReader::ReadFileContent(Blob& aBlob,
   mResultArrayBuffer = nullptr;
 
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
 
   mTransferred = 0;
   mTotal = 0;
@@ -413,7 +375,7 @@ FileReader::ReadFileContent(Blob& aBlob,
   CopyUTF16toUTF8(aCharset, mCharset);
 
   nsCOMPtr<nsIInputStream> stream;
-  mBlob->CreateInputStream(getter_AddRefs(stream), aRv);
+  mBlob->GetInternalStream(getter_AddRefs(stream), aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -438,6 +400,8 @@ FileReader::ReadFileContent(Blob& aBlob,
 
     nsCOMPtr<nsITransport> transport;
     aRv = sts->CreateInputTransport(stream,
+                                    /* aStartOffset */ 0,
+                                    /* aReadLimit */ -1,
                                     /* aCloseWhenDone */ true,
                                     getter_AddRefs(transport));
     if (NS_WARN_IF(aRv.Failed())) {
@@ -564,7 +528,7 @@ void
 FileReader::StartProgressEventTimer()
 {
   if (!mProgressNotifier) {
-    mProgressNotifier = NS_NewTimer();
+    mProgressNotifier = do_CreateInstance(NS_TIMER_CONTRACTID);
   }
 
   if (mProgressNotifier) {
@@ -593,6 +557,7 @@ FileReader::FreeDataAndDispatchSuccess()
   FreeFileData();
   mResult.SetIsVoid(false);
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   // Dispatch event to signify end of a successful operation
@@ -608,6 +573,7 @@ FileReader::FreeDataAndDispatchError()
   FreeFileData();
   mResult.SetIsVoid(true);
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   // Dispatch error event to signify load failure
@@ -621,13 +587,13 @@ FileReader::FreeDataAndDispatchError(nsresult aRv)
   // Set the status attribute, and dispatch the error event
   switch (aRv) {
   case NS_ERROR_FILE_NOT_FOUND:
-    mError = DOMException::Create(NS_ERROR_DOM_NOT_FOUND_ERR);
+    mError = new DOMError(GetOwner(), NS_LITERAL_STRING("NotFoundError"));
     break;
   case NS_ERROR_FILE_ACCESS_DENIED:
-    mError = DOMException::Create(NS_ERROR_DOM_SECURITY_ERR);
+    mError = new DOMError(GetOwner(), NS_LITERAL_STRING("SecurityError"));
     break;
   default:
-    mError = DOMException::Create(NS_ERROR_DOM_FILE_NOT_READABLE_ERR);
+    mError = new DOMError(GetOwner(), NS_LITERAL_STRING("NotReadableError"));
     break;
   }
 
@@ -653,8 +619,7 @@ FileReader::DispatchProgressEvent(const nsAString& aType)
     ProgressEvent::Constructor(this, aType, init);
   event->SetTrusted(true);
 
-  bool dummy;
-  return DispatchEvent(event, &dummy);
+  return DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 // nsITimerCallback
@@ -795,13 +760,14 @@ FileReader::Abort()
   mReadyState = DONE;
 
   // XXX The spec doesn't say this
-  mError = DOMException::Create(NS_ERROR_DOM_ABORT_ERR);
+  mError = new DOMError(GetOwner(), NS_LITERAL_STRING("AbortError"));
 
   // Revert status and result attributes
   SetDOMStringToNull(mResult);
   mResultArrayBuffer = nullptr;
 
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   //Clean up memory buffer
@@ -853,6 +819,11 @@ FileReader::Shutdown()
   if (mAsyncStream) {
     mAsyncStream->Close();
     mAsyncStream = nullptr;
+  }
+
+  if (mBufferedStream) {
+    mBufferedStream->Close();
+    mBufferedStream = nullptr;
   }
 
   FreeFileData();

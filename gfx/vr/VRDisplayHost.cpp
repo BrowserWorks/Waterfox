@@ -4,19 +4,16 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "VRDisplayHost.h"
-#include "gfxPrefs.h"
 #include "gfxVR.h"
 #include "ipc/VRLayerParent.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/dom/GamepadBinding.h" // For GamepadMappingType
-#include "VRThread.h"
 
 #if defined(XP_WIN)
 
 #include <d3d11.h>
 #include "gfxWindowsPlatform.h"
 #include "../layers/d3d11/CompositorD3D11.h"
-#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/layers/TextureD3D11.h"
 
 #elif defined(XP_MACOSX)
@@ -28,37 +25,6 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
-
-VRDisplayHost::AutoRestoreRenderState::AutoRestoreRenderState(VRDisplayHost* aDisplay)
-  : mDisplay(aDisplay)
-  , mSuccess(true)
-{
-#if defined(XP_WIN)
-  ID3D11DeviceContext1* context = mDisplay->GetD3DDeviceContext();
-  ID3DDeviceContextState* state = mDisplay->GetD3DDeviceContextState();
-  if (!context || !state) {
-    mSuccess = false;
-    return;
-  }
-  context->SwapDeviceContextState(state, getter_AddRefs(mPrevDeviceContextState));
-#endif
-}
-
-VRDisplayHost::AutoRestoreRenderState::~AutoRestoreRenderState()
-{
-#if defined(XP_WIN)
-  ID3D11DeviceContext1* context = mDisplay->GetD3DDeviceContext();
-  if (context && mSuccess) {
-    context->SwapDeviceContextState(mPrevDeviceContextState, nullptr);
-  }
-#endif
-}
-
-bool
-VRDisplayHost::AutoRestoreRenderState::IsSuccess()
-{
-  return mSuccess;
-}
 
 VRDisplayHost::VRDisplayHost(VRDeviceType aType)
  : mFrameStarted(false)
@@ -75,68 +41,6 @@ VRDisplayHost::~VRDisplayHost()
 {
   MOZ_COUNT_DTOR(VRDisplayHost);
 }
-
-#if defined(XP_WIN)
-bool
-VRDisplayHost::CreateD3DObjects()
-{
-  if (!mDevice) {
-    RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetCompositorDevice();
-    if (!device) {
-      NS_WARNING("VRDisplayHost::CreateD3DObjects failed to get a D3D11Device");
-      return false;
-    }
-    if (FAILED(device->QueryInterface(__uuidof(ID3D11Device1), getter_AddRefs(mDevice)))) {
-      NS_WARNING("VRDisplayHost::CreateD3DObjects failed to get a D3D11Device1");
-      return false;
-    }
-  }
-  if (!mContext) {
-    mDevice->GetImmediateContext1(getter_AddRefs(mContext));
-    if (!mContext) {
-      NS_WARNING("VRDisplayHost::CreateD3DObjects failed to get an immediate context");
-      return false;
-    }
-  }
-  if (!mDeviceContextState) {
-    D3D_FEATURE_LEVEL featureLevels[] {
-      D3D_FEATURE_LEVEL_11_1,
-      D3D_FEATURE_LEVEL_11_0
-    };
-    mDevice->CreateDeviceContextState(0,
-                                      featureLevels,
-                                      2,
-                                      D3D11_SDK_VERSION,
-                                      __uuidof(ID3D11Device1),
-                                      nullptr,
-                                      getter_AddRefs(mDeviceContextState));
-  }
-  if (!mDeviceContextState) {
-    NS_WARNING("VRDisplayHost::CreateD3DObjects failed to get a D3D11DeviceContextState");
-    return false;
-  }
-  return true;
-}
-
-ID3D11Device1*
-VRDisplayHost::GetD3DDevice()
-{
-  return mDevice;
-}
-
-ID3D11DeviceContext1*
-VRDisplayHost::GetD3DDeviceContext()
-{
-  return mContext;
-}
-
-ID3DDeviceContextState*
-VRDisplayHost::GetD3DDeviceContextState()
-{
-  return mDeviceContextState;
-}
-
-#endif // defined(XP_WIN)
 
 void
 VRDisplayHost::SetGroupMask(uint32_t aGroupMask)
@@ -184,8 +88,6 @@ VRDisplayHost::RemoveLayer(VRLayerParent *aLayer)
 void
 VRDisplayHost::StartFrame()
 {
-  AUTO_PROFILER_TRACING("VR", "GetSensorState");
-
   mLastFrameStart = TimeStamp::Now();
   ++mDisplayInfo.mFrameId;
   mDisplayInfo.mLastSensorState[mDisplayInfo.mFrameId % kVRMaxLatencyFrames] = GetSensorState();
@@ -198,7 +100,7 @@ VRDisplayHost::NotifyVSync()
   /**
    * We will trigger a new frame immediately after a successful frame texture
    * submission.  If content fails to call VRDisplay.submitFrame after
-   * dom.vr.display.rafMaxDuration milliseconds has elapsed since the last
+   * kVRDisplayRAFMaxDuration milliseconds has elapsed since the last
    * VRDisplay.requestAnimationFrame, we act as a "watchdog" and kick-off
    * a new VRDisplay.requestAnimationFrame to avoid a render loop stall and
    * to give content a chance to recover.
@@ -210,7 +112,13 @@ VRDisplayHost::NotifyVSync()
    * potentially extreme frame rates.  To ensure that content has a chance to
    * resume its presentation when the frames are accepted once again, we rely
    * on this "watchdog" to act as a VR refresh driver cycling at a rate defined
-   * by dom.vr.display.rafMaxDuration.
+   * by kVRDisplayRAFMaxDuration.
+   *
+   * kVRDisplayRAFMaxDuration is the number of milliseconds since last frame
+   * start before triggering a new frame.  When content is failing to submit
+   * frames on time or the lower level VR platform API's are rejecting frames,
+   * kVRDisplayRAFMaxDuration determines the rate at which RAF callbacks
+   * will be called.
    *
    * This number must be larger than the slowest expected frame time during
    * normal VR presentation, but small enough not to break content that
@@ -218,10 +126,12 @@ VRDisplayHost::NotifyVSync()
    *
    * The slowest expected refresh rate for a VR display currently is an
    * Oculus CV1 when ASW (Asynchronous Space Warp) is enabled, at 45hz.
-   * A dom.vr.display.rafMaxDuration value of 50 milliseconds results in a 20hz
+   * A kVRDisplayRAFMaxDuration value of 50 milliseconds results in a 20hz
    * rate, which avoids inadvertent triggering of the watchdog during
    * Oculus ASW even if every second frame is dropped.
    */
+  const double kVRDisplayRAFMaxDuration = 50;
+
   bool bShouldStartFrame = false;
 
   if (mDisplayInfo.mPresentingGroups == 0) {
@@ -235,7 +145,7 @@ VRDisplayHost::NotifyVSync()
       bShouldStartFrame = true;
     } else {
       TimeDuration duration = TimeStamp::Now() - mLastFrameStart;
-      if (duration.ToMilliseconds() > gfxPrefs::VRDisplayRafMaxDuration()) {
+      if (duration.ToMilliseconds() > kVRDisplayRAFMaxDuration) {
         bShouldStartFrame = true;
       }
     }
@@ -249,14 +159,11 @@ VRDisplayHost::NotifyVSync()
 }
 
 void
-VRDisplayHost::SubmitFrame(VRLayerParent* aLayer,
-                           const layers::SurfaceDescriptor &aTexture,
+VRDisplayHost::SubmitFrame(VRLayerParent* aLayer, PTextureParent* aTexture,
                            uint64_t aFrameId,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect)
 {
-  AUTO_PROFILER_TRACING("VR", "SubmitFrameAtVRDisplayHost");
-
   if ((mDisplayInfo.mGroupMask & aLayer->GetGroup()) == 0) {
     // Suppress layers hidden by the group mask
     return;
@@ -267,77 +174,63 @@ VRDisplayHost::SubmitFrame(VRLayerParent* aLayer,
     return;
   }
   mFrameStarted = false;
-  switch (aTexture.type()) {
 
 #if defined(XP_WIN)
-    case SurfaceDescriptor::TSurfaceDescriptorD3D10: {
-      if (!CreateD3DObjects()) {
-        return;
-      }
-      const SurfaceDescriptorD3D10& surf = aTexture.get_SurfaceDescriptorD3D10();
-      RefPtr<ID3D11Texture2D> dxTexture;
-      HRESULT hr = mDevice->OpenSharedResource((HANDLE)surf.handle(),
-        __uuidof(ID3D11Texture2D),
-        (void**)(ID3D11Texture2D**)getter_AddRefs(dxTexture));
-      if (FAILED(hr) || !dxTexture) {
-        NS_WARNING("Failed to open shared texture");
-        return;
-      }
 
-      // Similar to LockD3DTexture in TextureD3D11.cpp
-      RefPtr<IDXGIKeyedMutex> mutex;
-      dxTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
-      if (mutex) {
-        HRESULT hr = mutex->AcquireSync(0, 1000);
-        if (hr == WAIT_TIMEOUT) {
-          gfxDevCrash(LogReason::D3DLockTimeout) << "D3D lock mutex timeout";
-        }
-        else if (hr == WAIT_ABANDONED) {
-          gfxCriticalNote << "GFX: D3D11 lock mutex abandoned";
-        }
-        if (FAILED(hr)) {
-          NS_WARNING("Failed to lock the texture");
-          return;
-        }
-      }
-      bool success = SubmitFrame(dxTexture, surf.size(),
-                                 aLeftEyeRect, aRightEyeRect);
-      if (mutex) {
-        HRESULT hr = mutex->ReleaseSync(0);
-        if (FAILED(hr)) {
-          NS_WARNING("Failed to unlock the texture");
-        }
-      }
-      if (!success) {
-        return;
-      }
-      break;
-    }
-#elif defined(XP_MACOSX)
-    case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface: {
-      const auto& desc = aTexture.get_SurfaceDescriptorMacIOSurface();
-      RefPtr<MacIOSurface> surf = MacIOSurface::LookupSurface(desc.surfaceId(),
-                                                              desc.scaleFactor(),
-                                                              !desc.isOpaque());
-      if (!surf) {
-        NS_WARNING("VRDisplayHost::SubmitFrame failed to get a MacIOSurface");
-        return;
-      }
-      IntSize texSize = gfx::IntSize(surf->GetDevicePixelWidth(),
-                                     surf->GetDevicePixelHeight());
-      if (!SubmitFrame(surf, texSize, aLeftEyeRect, aRightEyeRect)) {
-        return;
-      }
-      break;
-    }
-#endif
-    default: {
-      NS_WARNING("Unsupported SurfaceDescriptor type for VR layer texture");
-      return;
-    }
+  TextureHost* th = TextureHost::AsTextureHost(aTexture);
+
+  // WebVR doesn't use the compositor to compose the frame, so use
+  // AutoLockTextureHostWithoutCompositor here.
+  AutoLockTextureHostWithoutCompositor autoLock(th);
+  if (autoLock.Failed()) {
+    NS_WARNING("Failed to lock the VR layer texture");
+    return;
   }
 
+  CompositableTextureSourceRef source;
+  if (!th->BindTextureSource(source)) {
+    NS_WARNING("The TextureHost was successfully locked but can't provide a TextureSource");
+    return;
+  }
+  MOZ_ASSERT(source);
+
+  IntSize texSize = source->GetSize();
+
+  TextureSourceD3D11* sourceD3D11 = source->AsSourceD3D11();
+  if (!sourceD3D11) {
+    NS_WARNING("VRDisplayHost::SubmitFrame failed to get a TextureSourceD3D11");
+    return;
+  }
+
+  if (!SubmitFrame(sourceD3D11, texSize, aLeftEyeRect, aRightEyeRect)) {
+    return;
+  }
+
+#elif defined(XP_MACOSX)
+
+  TextureHost* th = TextureHost::AsTextureHost(aTexture);
+
+  MacIOSurface* surf = th->GetMacIOSurface();
+  if (!surf) {
+    NS_WARNING("VRDisplayHost::SubmitFrame failed to get a MacIOSurface");
+    return;
+  }
+
+  IntSize texSize = gfx::IntSize(surf->GetDevicePixelWidth(),
+                                 surf->GetDevicePixelHeight());
+
+  if (!SubmitFrame(surf, texSize, aLeftEyeRect, aRightEyeRect)) {
+    return;
+  }
+
+#else
+
+  NS_WARNING("WebVR is not supported on this platform.");
+  return;
+#endif
+
 #if defined(XP_WIN) || defined(XP_MACOSX)
+
   /**
    * Trigger the next VSync immediately after we are successfully
    * submitting frames.  As SubmitFrame is responsible for throttling
@@ -348,13 +241,9 @@ VRDisplayHost::SubmitFrame(VRLayerParent* aLayer,
    * frames to continue at a lower refresh rate until frame submission
    * succeeds again.
    */
-  VRManager* vm = VRManager::Get();
-  MessageLoop* loop = VRListenerThreadHolder::Loop();
-
-  loop->PostTask(NewRunnableMethod<const uint32_t>(
-    "gfx::VRManager::NotifyVRVsync",
-    vm, &VRManager::NotifyVRVsync, mDisplayInfo.mDisplayID
-  ));
+  VRManager *vm = VRManager::Get();
+  MOZ_ASSERT(vm);
+  vm->NotifyVRVsync(mDisplayInfo.mDisplayID);
 #endif
 }
 

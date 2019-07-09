@@ -6,10 +6,11 @@
 "use strict";
 
 const { Cu } = require("chrome");
-const ObjectClient = require("devtools/shared/client/object-client");
-
 const defer = require("devtools/shared/defer");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const { ObjectClient } = require("devtools/shared/client/main");
+
+const promise = require("promise");
+const EventEmitter = require("devtools/shared/event-emitter");
 const { Task } = require("devtools/shared/task");
 
 /**
@@ -41,7 +42,7 @@ DomPanel.prototype = {
       return this._opening;
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     this._opening = deferred.promise;
 
     // Local monitoring needs to make the target remote.
@@ -67,10 +68,8 @@ DomPanel.prototype = {
     this.target.on("navigate", this.onTabNavigated);
     this._toolbox.on("select", this.onPanelVisibilityChange);
 
-    // Export provider object with useful API for DOM panel.
     let provider = {
-      getPrototypeAndProperties: this.getPrototypeAndProperties.bind(this),
-      openLink: this.openLink.bind(this),
+      getPrototypeAndProperties: this.getPrototypeAndProperties.bind(this)
     };
 
     exportIntoContentScope(this.panelWin, provider, "DomProvider");
@@ -83,7 +82,7 @@ DomPanel.prototype = {
       return this._destroying;
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     this._destroying = deferred.promise;
 
     this.target.off("navigate", this.onTabNavigated);
@@ -118,7 +117,7 @@ DomPanel.prototype = {
 
   /**
    * Make sure the panel is refreshed when the page is reloaded.
-   * The panel is refreshed immediately if it's currently selected
+   * The panel is refreshed immediatelly if it's currently selected
    * or lazily  when the user actually selects it.
    */
   onTabNavigated: function () {
@@ -177,13 +176,6 @@ DomPanel.prototype = {
     this.pendingRequests.set(grip.actor, deferred.promise);
 
     return deferred.promise;
-  },
-
-  openLink: function (url) {
-    let parentDoc = this._toolbox.doc;
-    let iframe = parentDoc.getElementById("this._toolbox");
-    let top = iframe.ownerDocument.defaultView.top;
-    top.openUILinkIn(url, "tab");
   },
 
   getRootGrip: function () {

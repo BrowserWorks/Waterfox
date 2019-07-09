@@ -5,9 +5,10 @@ const TEST_VALUE = "example.com";
 const START_VALUE = "example.org";
 
 add_task(async function setup() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.altClickSave", true],
-          ["browser.urlbar.autoFill", false]],
+  Services.prefs.setBoolPref("browser.altClickSave", true);
+
+  registerCleanupFunction(() => {
+    Services.prefs.clearUserPref("browser.altClickSave");
   });
 });
 
@@ -157,15 +158,12 @@ add_task(async function load_in_new_tab_test() {
 });
 
 function triggerCommand(shouldClick, event) {
+  gURLBar.value = TEST_VALUE;
   gURLBar.focus();
-  gURLBar.value = "";
-  for (let c of TEST_VALUE) {
-    EventUtils.synthesizeKey(c, {});
-  }
 
   if (shouldClick) {
-    ok(gURLBar.hasAttribute("usertyping"),
-       "usertyping attribute must be set for the go button to be visible");
+    is(gURLBar.getAttribute("pageproxystate"), "invalid",
+       "page proxy state must be invalid for go button to be visible");
 
     EventUtils.synthesizeMouseAtCenter(gURLBar.goButton, event);
   } else {

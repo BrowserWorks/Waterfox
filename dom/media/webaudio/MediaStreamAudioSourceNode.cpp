@@ -11,8 +11,6 @@
 #include "AudioStreamTrack.h"
 #include "nsIDocument.h"
 #include "mozilla/CORSMode.h"
-#include "nsContentUtils.h"
-#include "nsIScriptError.h"
 
 namespace mozilla {
 namespace dom {
@@ -30,7 +28,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(MediaStreamAudioSourceNode, Au
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mInputTrack)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaStreamAudioSourceNode)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaStreamAudioSourceNode)
 NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 
 NS_IMPL_ADDREF_INHERITED(MediaStreamAudioSourceNode, AudioNode)

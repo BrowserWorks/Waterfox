@@ -20,26 +20,25 @@ loader.lazyRequireGetter(this, "NetworkMonitor", "devtools/shared/webconsole/net
 loader.lazyRequireGetter(this, "NetworkMonitorChild", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "ConsoleProgressListener", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "StackTraceCollector", "devtools/shared/webconsole/network-monitor", true);
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "ServerLoggingListener", "devtools/shared/webconsole/server-logger", true);
 loader.lazyRequireGetter(this, "JSPropertyProvider", "devtools/shared/webconsole/js-property-provider", true);
 loader.lazyRequireGetter(this, "Parser", "resource://devtools/shared/Parser.jsm", true);
 loader.lazyRequireGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm", true);
-loader.lazyRequireGetter(this, "addWebConsoleCommands", "devtools/server/actors/webconsole/utils", true);
-loader.lazyRequireGetter(this, "CONSOLE_WORKER_IDS", "devtools/server/actors/webconsole/utils", true);
-loader.lazyRequireGetter(this, "WebConsoleUtils", "devtools/server/actors/webconsole/utils", true);
+loader.lazyRequireGetter(this, "addWebConsoleCommands", "devtools/server/actors/utils/webconsole-utils", true);
+loader.lazyRequireGetter(this, "CONSOLE_WORKER_IDS", "devtools/server/actors/utils/webconsole-utils", true);
+loader.lazyRequireGetter(this, "WebConsoleUtils", "devtools/server/actors/utils/webconsole-utils", true);
 loader.lazyRequireGetter(this, "EnvironmentActor", "devtools/server/actors/environment", true);
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 
 // Overwrite implemented listeners for workers so that we don't attempt
 // to load an unsupported module.
 if (isWorker) {
-  loader.lazyRequireGetter(this, "ConsoleAPIListener", "devtools/server/actors/webconsole/worker-listeners", true);
-  loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/webconsole/worker-listeners", true);
+  loader.lazyRequireGetter(this, "ConsoleAPIListener", "devtools/server/actors/utils/webconsole-worker-listeners", true);
+  loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/utils/webconsole-worker-listeners", true);
 } else {
-  loader.lazyRequireGetter(this, "ConsoleAPIListener", "devtools/server/actors/webconsole/listeners", true);
-  loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/webconsole/listeners", true);
-  loader.lazyRequireGetter(this, "ConsoleReflowListener", "devtools/server/actors/webconsole/listeners", true);
-  loader.lazyRequireGetter(this, "ContentProcessListener", "devtools/server/actors/webconsole/listeners", true);
+  loader.lazyRequireGetter(this, "ConsoleAPIListener", "devtools/server/actors/utils/webconsole-listeners", true);
+  loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/utils/webconsole-listeners", true);
+  loader.lazyRequireGetter(this, "ConsoleReflowListener", "devtools/server/actors/utils/webconsole-listeners", true);
 }
 
 /**
@@ -71,7 +70,7 @@ function WebConsoleActor(connection, parentActor) {
   this.objectGrip = this.objectGrip.bind(this);
   this._onWillNavigate = this._onWillNavigate.bind(this);
   this._onChangedToplevelDocument = this._onChangedToplevelDocument.bind(this);
-  EventEmitter.on(this.parentActor, "changed-toplevel-document",
+  events.on(this.parentActor, "changed-toplevel-document",
             this._onChangedToplevelDocument);
   this._onObserverNotification = this._onObserverNotification.bind(this);
   if (this.parentActor.isRootActor) {
@@ -249,7 +248,7 @@ WebConsoleActor.prototype =
     this._evalWindow = window;
 
     if (!this._progressListenerActive) {
-      EventEmitter.on(this.parentActor, "will-navigate", this._onWillNavigate);
+      events.on(this.parentActor, "will-navigate", this._onWillNavigate);
       this._progressListenerActive = true;
     }
   },
@@ -369,12 +368,8 @@ WebConsoleActor.prototype =
       this.serverLoggingListener.destroy();
       this.serverLoggingListener = null;
     }
-    if (this.contentProcessListener) {
-      this.contentProcessListener.destroy();
-      this.contentProcessListener = null;
-    }
 
-    EventEmitter.off(this.parentActor, "changed-toplevel-document",
+    events.off(this.parentActor, "changed-toplevel-document",
                this._onChangedToplevelDocument);
 
     this.conn.removeActorPool(this._actorPool);
@@ -443,8 +438,7 @@ WebConsoleActor.prototype =
    *         Debuggee value for |value|.
    */
   makeDebuggeeValue: function (value, useObjectGlobal) {
-    let isObject = Object(value) === value;
-    if (useObjectGlobal && isObject) {
+    if (useObjectGlobal && typeof value == "object") {
       try {
         let global = Cu.getGlobalForObject(value);
         let dbgGlobal = this.dbg.makeGlobalObjectReference(global);
@@ -670,16 +664,6 @@ WebConsoleActor.prototype =
           }
           startedListeners.push(listener);
           break;
-        case "ContentProcessMessages":
-          // Workers don't support this message type
-          if (isWorker) {
-            break;
-          }
-          if (!this.contentProcessListener) {
-            this.contentProcessListener = new ContentProcessListener(this);
-          }
-          startedListeners.push(listener);
-          break;
       }
     }
 
@@ -709,7 +693,7 @@ WebConsoleActor.prototype =
     // listeners.
     let toDetach = request.listeners ||
       ["PageError", "ConsoleAPI", "NetworkActivity",
-       "FileActivity", "ServerLogging", "ContentProcessMessages"];
+       "FileActivity", "ServerLogging"];
 
     while (toDetach.length > 0) {
       let listener = toDetach.shift();
@@ -765,13 +749,6 @@ WebConsoleActor.prototype =
           }
           stoppedListeners.push(listener);
           break;
-        case "ContentProcessMessages":
-          if (this.contentProcessListener) {
-            this.contentProcessListener.destroy();
-            this.contentProcessListener = null;
-          }
-          stoppedListeners.push(listener);
-          break;
       }
     }
 
@@ -811,8 +788,8 @@ WebConsoleActor.prototype =
           }
 
           // See `window` definition. It isn't always a DOM Window.
-          let winStartTime = this.window && this.window.performance ?
-            this.window.performance.timing.navigationStart : 0;
+          let requestStartTime = this.window && this.window.performance ?
+            this.window.performance.timing.requestStart : 0;
 
           let cache = this.consoleAPIListener
                       .getCachedMessages(!this.parentActor.isRootActor);
@@ -820,7 +797,7 @@ WebConsoleActor.prototype =
             // Filter out messages that came from a ServiceWorker but happened
             // before the page was requested.
             if (cachedMessage.innerID === "ServiceWorker" &&
-                winStartTime > cachedMessage.timeStamp) {
+                requestStartTime > cachedMessage.timeStamp) {
               return;
             }
 
@@ -1803,6 +1780,7 @@ WebConsoleActor.prototype =
     delete result.ID;
     delete result.innerID;
     delete result.consoleID;
+    delete result.originAttributes;
 
     result.arguments = Array.map(message.arguments || [], (obj) => {
       let dbgObj = this.makeDebuggeeValue(obj, useObjectGlobal);
@@ -1866,7 +1844,7 @@ WebConsoleActor.prototype =
   _onWillNavigate: function ({ window, isTopLevel }) {
     if (isTopLevel) {
       this._evalWindow = null;
-      EventEmitter.off(this.parentActor, "will-navigate", this._onWillNavigate);
+      events.off(this.parentActor, "will-navigate", this._onWillNavigate);
       this._progressListenerActive = false;
     }
   },
@@ -2124,8 +2102,7 @@ NetworkEventActor.prototype =
     return {
       from: this.actorID,
       timings: this._timings,
-      totalTime: this._totalTime,
-      offsets: this._offsets
+      totalTime: this._totalTime
     };
   },
 
@@ -2334,10 +2311,9 @@ NetworkEventActor.prototype =
    * @param object timings
    *        Timing details about the network event.
    */
-  addEventTimings: function (total, timings, offsets) {
+  addEventTimings: function (total, timings) {
     this._totalTime = total;
     this._timings = timings;
-    this._offsets = offsets;
 
     let packet = {
       from: this.actorID,

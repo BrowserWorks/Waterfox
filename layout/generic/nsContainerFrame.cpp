@@ -361,14 +361,17 @@ nsContainerFrame::GetChildLists(nsTArray<ChildList>* aLists) const
 
 void
 nsContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                   const nsRect&           aDirtyRect,
                                    const nsDisplayListSet& aLists)
 {
   DisplayBorderBackgroundOutline(aBuilder, aLists);
-  BuildDisplayListForNonBlockChildren(aBuilder, aLists);
+
+  BuildDisplayListForNonBlockChildren(aBuilder, aDirtyRect, aLists);
 }
 
 void
 nsContainerFrame::BuildDisplayListForNonBlockChildren(nsDisplayListBuilder*   aBuilder,
+                                                      const nsRect&           aDirtyRect,
                                                       const nsDisplayListSet& aLists,
                                                       uint32_t                aFlags)
 {
@@ -377,7 +380,7 @@ nsContainerFrame::BuildDisplayListForNonBlockChildren(nsDisplayListBuilder*   aB
   nsDisplayListSet set(aLists, aLists.Content());
   // The children should be in content order
   while (kid) {
-    BuildDisplayListForChild(aBuilder, kid, set, aFlags);
+    BuildDisplayListForChild(aBuilder, kid, aDirtyRect, set, aFlags);
     kid = kid->GetNextSibling();
   }
 }
@@ -1232,12 +1235,13 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
 
 void
 nsContainerFrame::DisplayOverflowContainers(nsDisplayListBuilder*   aBuilder,
+                                            const nsRect&           aDirtyRect,
                                             const nsDisplayListSet& aLists)
 {
   nsFrameList* overflowconts = GetPropTableFrames(OverflowContainersProperty());
   if (overflowconts) {
     for (nsIFrame* frame : *overflowconts) {
-      BuildDisplayListForChild(aBuilder, frame, aLists);
+      BuildDisplayListForChild(aBuilder, frame, aDirtyRect, aLists);
     }
   }
 }
@@ -1516,7 +1520,7 @@ nsContainerFrame::PushChildren(nsIFrame* aFromChild,
 }
 
 bool
-nsContainerFrame::MoveOverflowToChildList()
+nsContainerFrame::MoveOverflowToChildList(nsIFrame* aLineContainer)
 {
   bool result = false;
 
@@ -1526,9 +1530,23 @@ nsContainerFrame::MoveOverflowToChildList()
     AutoFrameListPtr prevOverflowFrames(PresContext(),
                                         prevInFlow->StealOverflowFrames());
     if (prevOverflowFrames) {
-      // Tables are special; they can have repeated header/footer
-      // frames on mFrames at this point.
-      NS_ASSERTION(mFrames.IsEmpty() || IsTableFrame(), "bad overflow list");
+      // Overflow frames from prev-in-flow should have been pushed to
+      // this frame directly if we have already existed, so there should
+      // be no frame in mFrames when we steal frames from overflow list
+      // of prev-in-flow. However, there are two special cases:
+      // * tables can have repeated header/footer frames at this point,
+      // * inline frames always push frames into overflow list rather
+      //   than next-in-flow, so that floats reparenting can be handled
+      //   properly below.
+      NS_ASSERTION(mFrames.IsEmpty() || IsTableFrame() || aLineContainer,
+                   "bad overflow list");
+      // If we are on a frame which has line container, we may need to
+      // reparent floats from prev-in-flow to our line container.
+      if (aLineContainer && aLineContainer->GetPrevContinuation()) {
+        ReparentFloatsForInlineChild(aLineContainer,
+                                     prevOverflowFrames->FirstChild(),
+                                     true);
+      }
       // When pushing and pulling frames we need to check for whether any
       // views need to be reparented.
       nsContainerFrame::ReparentFrameViewList(*prevOverflowFrames,
@@ -1539,39 +1557,6 @@ nsContainerFrame::MoveOverflowToChildList()
   }
 
   // It's also possible that we have an overflow list for ourselves.
-  return DrainSelfOverflowList() || result;
-}
-
-bool
-nsContainerFrame::MoveInlineOverflowToChildList(nsIFrame* aLineContainer)
-{
-  MOZ_ASSERT(aLineContainer,
-             "Must have line container for moving inline overflows");
-
-  bool result = false;
-
-  // Check for an overflow list with our prev-in-flow
-  if (auto prevInFlow = static_cast<nsContainerFrame*>(GetPrevInFlow())) {
-    AutoFrameListPtr prevOverflowFrames(PresContext(),
-                                        prevInFlow->StealOverflowFrames());
-    if (prevOverflowFrames) {
-      // We may need to reparent floats from prev-in-flow to our line
-      // container if the container has prev continuation.
-      if (aLineContainer->GetPrevContinuation()) {
-        ReparentFloatsForInlineChild(aLineContainer,
-                                     prevOverflowFrames->FirstChild(), true);
-      }
-      // When pushing and pulling frames we need to check for whether
-      // any views need to be reparented.
-      nsContainerFrame::ReparentFrameViewList(*prevOverflowFrames,
-                                              prevInFlow, this);
-      // Prepend overflow frames to the list.
-      mFrames.InsertFrames(this, nullptr, *prevOverflowFrames);
-      result = true;
-    }
-  }
-
-  // It's also possible that we have overflow list for ourselves.
   return DrainSelfOverflowList() || result;
 }
 
@@ -1779,7 +1764,7 @@ nsContainerFrame::FrameStartsCounterScope(nsIFrame* aFrame)
   if (!content || !content->IsHTMLElement())
     return false;
 
-  nsAtom* localName = content->NodeInfo()->NameAtom();
+  nsIAtom* localName = content->NodeInfo()->NameAtom();
   return localName == nsGkAtoms::ol ||
          localName == nsGkAtoms::ul ||
          localName == nsGkAtoms::dir ||
@@ -1968,7 +1953,7 @@ nsContainerFrame::CSSAlignmentForAbsPosChild(const ReflowInput& aChildRI,
 
 nsresult
 nsContainerFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                   nsAtom*        aAttribute,
+                                   nsIAtom*        aAttribute,
                                    int32_t         aModType)
 {
   nsresult rv = nsSplittableFrame::AttributeChanged(aNameSpaceID,

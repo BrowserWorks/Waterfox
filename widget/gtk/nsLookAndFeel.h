@@ -33,6 +33,9 @@ public:
     virtual bool GetEchoPasswordImpl();
 
 protected:
+#if (MOZ_WIDGET_GTK == 2)
+    struct _GtkStyle *mStyle;
+#endif
 
     // Cached fonts
     bool mDefaultFontCached;
@@ -58,10 +61,9 @@ protected:
     nscolor sMenuTextInactive;
     nscolor sMenuHover;
     nscolor sMenuHoverText;
-    nscolor sButtonDefault;
     nscolor sButtonText;
     nscolor sButtonHoverText;
-    nscolor sButtonHoverFace;
+    nscolor sButtonBackground;
     nscolor sFrameOuterLightBorder;
     nscolor sFrameInnerDarkBorder;
     nscolor sOddCellBackground;
@@ -72,13 +74,12 @@ protected:
     nscolor sMozFieldBackground;
     nscolor sMozWindowText;
     nscolor sMozWindowBackground;
-    nscolor sMozWindowActiveBorder;
-    nscolor sMozWindowInactiveBorder;
-    nscolor sMozWindowInactiveCaption;
     nscolor sTextSelectedText;
     nscolor sTextSelectedBackground;
     nscolor sMozScrollbar;
+#if (MOZ_WIDGET_GTK == 3)
     nscolor sInfoBarText;
+#endif
     char16_t sInvisibleCharacter;
     float   sCaretRatio;
     bool    sMenuSupportsDrag;

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals LoadContextInfo, FormHistory, Accounts */
+/*globals LoadContextInfo, FormHistory, Accounts */
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
@@ -33,41 +33,24 @@ this.EXPORTED_SYMBOLS = ["Sanitizer"];
 
 function Sanitizer() {}
 Sanitizer.prototype = {
-  clearItem: function(aItemName, startTime) {
-    // Only a subset of items support deletion with startTime.
-    // Those who do not will be rejected with error message.
-    if (typeof startTime != "undefined") {
-      switch (aItemName) {
-        // Normal call to DownloadFiles remove actual data from storage, but our web-extension consumer
-        // deletes only download history. So, for this reason we are passing a flag 'deleteFiles'.
-        case "downloadHistory":
-          return this._clear("downloadFiles", { startTime, deleteFiles: false });
-        case "formdata":
-          return this._clear(aItemName, { startTime });
-        default:
-          return Promise.reject({message: `Invalid argument: ${aItemName} does not support startTime argument.`});
-      }
-    } else {
-      return this._clear(aItemName);
-    }
-  },
-
- _clear: function(aItemName, options) {
+  clearItem: function (aItemName)
+  {
     let item = this.items[aItemName];
     let canClear = item.canClear;
     if (typeof canClear == "function") {
       canClear(function clearCallback(aCanClear) {
         if (aCanClear)
-          return item.clear(options);
+          return item.clear();
       });
     } else if (canClear) {
-      return item.clear(options);
+      return item.clear();
     }
   },
 
   items: {
     cache: {
-      clear: function() {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           let refObj = {};
           TelemetryStopwatch.start("FX_SANITIZE_CACHE", refObj);
@@ -75,26 +58,28 @@ Sanitizer.prototype = {
           var cache = Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(Ci.nsICacheStorageService);
           try {
             cache.clear();
-          } catch (er) {}
+          } catch(er) {}
 
           let imageCache = Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools)
                                                            .getImgCacheForDocument(null);
           try {
             imageCache.clearCache(false); // true=chrome, false=content
-          } catch (er) {}
+          } catch(er) {}
 
           TelemetryStopwatch.finish("FX_SANITIZE_CACHE", refObj);
           resolve();
         });
       },
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     cookies: {
-      clear: function() {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           let refObj = {};
           TelemetryStopwatch.start("FX_SANITIZE_COOKIES_2", refObj);
@@ -106,7 +91,8 @@ Sanitizer.prototype = {
         });
       },
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
@@ -145,31 +131,35 @@ Sanitizer.prototype = {
         TelemetryStopwatch.finish("FX_SANITIZE_SITESETTINGS", refObj);
       }),
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     offlineApps: {
-      clear: function() {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           var cacheService = Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(Ci.nsICacheStorageService);
           var appCacheStorage = cacheService.appCacheStorage(LoadContextInfo.default, null);
           try {
             appCacheStorage.asyncEvictStorage(null);
-          } catch (er) {}
+          } catch(er) {}
 
           resolve();
         });
       },
 
-      get canClear() {
+      get canClear()
+      {
           return true;
       }
     },
 
     history: {
-      clear: function() {
+      clear: function ()
+      {
         let refObj = {};
         TelemetryStopwatch.start("FX_SANITIZE_HISTORY", refObj);
 
@@ -179,7 +169,8 @@ Sanitizer.prototype = {
             TelemetryStopwatch.finish("FX_SANITIZE_HISTORY", refObj);
             try {
               Services.obs.notifyObservers(null, "browser:purge-session-history");
-            } catch (e) { }
+            }
+            catch (e) { }
 
             try {
               var predictor = Cc["@mozilla.org/network/predictor;1"].getService(Ci.nsINetworkPredictor);
@@ -188,7 +179,8 @@ Sanitizer.prototype = {
           });
       },
 
-      get canClear() {
+      get canClear()
+      {
         // bug 347231: Always allow clearing history due to dependencies on
         // the browser:purge-session-history notification. (like error console)
         return true;
@@ -196,7 +188,8 @@ Sanitizer.prototype = {
     },
 
     openTabs: {
-      clear: function() {
+      clear: function ()
+      {
         let refObj = {};
         TelemetryStopwatch.start("FX_SANITIZE_OPENWINDOWS", refObj);
 
@@ -206,46 +199,47 @@ Sanitizer.prototype = {
             try {
               // clear "Recently Closed" tabs in Android App
               Services.obs.notifyObservers(null, "browser:purge-session-tabs");
-            } catch (e) { }
+            }
+            catch (e) { }
             TelemetryStopwatch.finish("FX_SANITIZE_OPENWINDOWS", refObj);
           });
       },
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     searchHistory: {
-      clear: function() {
+      clear: function ()
+      {
         return EventDispatcher.instance.sendRequestForResult({ type: "Sanitize:ClearHistory", clearSearchHistory: true })
-          .catch(e => Cu.reportError("Java-side search history clearing failed: " + e));
+          .catch(e => Cu.reportError("Java-side search history clearing failed: " + e))
       },
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     formdata: {
-      clear: function({ startTime = 0 } = {}) {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           let refObj = {};
           TelemetryStopwatch.start("FX_SANITIZE_FORMDATA", refObj);
 
-          // Conver time to microseconds
-          let time = startTime * 1000;
-          FormHistory.update({
-            op: "remove",
-            firstUsedStart: time
-          });
+          FormHistory.update({ op: "remove" });
 
           TelemetryStopwatch.finish("FX_SANITIZE_FORMDATA", refObj);
           resolve();
         });
       },
 
-      canClear: function(aCallback) {
+      canClear: function (aCallback)
+      {
         let count = 0;
         let countDone = {
           handleResult: function(aResult) { count = aResult; },
@@ -257,7 +251,7 @@ Sanitizer.prototype = {
     },
 
     downloadFiles: {
-      clear: Task.async(function* ({ startTime = 0, deleteFiles = true} = {}) {
+      clear: Task.async(function* () {
         let refObj = {};
         TelemetryStopwatch.start("FX_SANITIZE_DOWNLOADS", refObj);
 
@@ -271,10 +265,8 @@ Sanitizer.prototype = {
         for (let download of downloads) {
           // Remove downloads that have been canceled, even if the cancellation
           // operation hasn't completed yet so we don't check "stopped" here.
-          // Failed downloads with partial data are also removed. The startTime
-          // check is provided for addons that may want to delete only recent downloads.
-          if (download.stopped && (!download.hasPartialData || download.error) &&
-              download.startTime.getTime() >= startTime) {
+          // Failed downloads with partial data are also removed.
+          if (download.stopped && (!download.hasPartialData || download.error)) {
             // Remove the download first, so that the views don't get the change
             // notifications that may occur during finalization.
             yield list.remove(download);
@@ -284,14 +276,12 @@ Sanitizer.prototype = {
             // processing the other downloads in the list.
             finalizePromises.push(download.finalize(true).then(() => null, Cu.reportError));
 
-            if (deleteFiles) {
-              // Delete the downloaded files themselves.
-              OS.File.remove(download.target.path).then(() => null, ex => {
-                if (!(ex instanceof OS.File.Error && ex.becauseNoSuchFile)) {
-                  Cu.reportError(ex);
-                }
-              });
-            }
+            // Delete the downloaded files themselves.
+            OS.File.remove(download.target.path).then(() => null, ex => {
+              if (!(ex instanceof OS.File.Error && ex.becauseNoSuchFile)) {
+                Cu.reportError(ex);
+              }
+            });
           }
         }
 
@@ -300,27 +290,31 @@ Sanitizer.prototype = {
         TelemetryStopwatch.finish("FX_SANITIZE_DOWNLOADS", refObj);
       }),
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     passwords: {
-      clear: function() {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           Services.logins.removeAllLogins();
           resolve();
         });
       },
 
-      get canClear() {
+      get canClear()
+      {
         let count = Services.logins.countLogins("", "", ""); // count all logins
         return (count > 0);
       }
     },
 
     sessions: {
-      clear: function() {
+      clear: function ()
+      {
         return new Promise(function(resolve, reject) {
           let refObj = {};
           TelemetryStopwatch.start("FX_SANITIZE_SESSIONS", refObj);
@@ -337,21 +331,24 @@ Sanitizer.prototype = {
         });
       },
 
-      get canClear() {
+      get canClear()
+      {
         return true;
       }
     },
 
     syncedTabs: {
-      clear: function() {
+      clear: function ()
+      {
         return EventDispatcher.instance.sendRequestForResult({ type: "Sanitize:ClearSyncedTabs" })
           .catch(e => Cu.reportError("Java-side synced tabs clearing failed: " + e));
       },
 
-      canClear: function(aCallback) {
+      canClear: function(aCallback)
+      {
         Accounts.anySyncAccountsExist().then(aCallback)
           .catch(function(err) {
-            Cu.reportError("Java-side synced tabs clearing failed: " + err);
+            Cu.reportError("Java-side synced tabs clearing failed: " + err)
             aCallback(false);
           });
       }

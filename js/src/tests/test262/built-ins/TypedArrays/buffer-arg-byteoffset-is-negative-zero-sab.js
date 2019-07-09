@@ -1,3 +1,4 @@
+// |reftest| skip-if(!this.hasOwnProperty('SharedArrayBuffer')) -- SharedArrayBuffer not yet riding the trains
 // Copyright (C) 2015 André Bargull. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -14,7 +15,7 @@ info: >
   8. If offset is -0, let offset be +0.
   ...
 includes: [testTypedArray.js]
-features: [SharedArrayBuffer, TypedArray]
+features: [SharedArrayBuffer]
 ---*/
 
 testWithTypedArrayConstructors(function(TAConstructor) {

@@ -4,22 +4,22 @@
 
 //! Specified types for CSS values related to borders.
 
+use app_units::Au;
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
 use style_traits::ParseError;
-use values::computed::{self, Context, ToComputedValue};
+use values::computed::{Context, ToComputedValue};
 use values::generics::border::BorderCornerRadius as GenericBorderCornerRadius;
 use values::generics::border::BorderImageSideWidth as GenericBorderImageSideWidth;
 use values::generics::border::BorderImageSlice as GenericBorderImageSlice;
 use values::generics::border::BorderRadius as GenericBorderRadius;
-use values::generics::border::BorderSpacing as GenericBorderSpacing;
 use values::generics::rect::Rect;
-use values::generics::size::Size;
 use values::specified::{AllowQuirks, Number, NumberOrPercentage};
-use values::specified::length::{Length, LengthOrPercentage, NonNegativeLength};
+use values::specified::length::{Length, LengthOrPercentage};
 
 /// A specified value for a single side of the `border-width` property.
-#[derive(Clone, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Debug, HasViewportPercentage, PartialEq, ToCss)]
 pub enum BorderSideWidth {
     /// `thin`
     Thin,
@@ -46,9 +46,6 @@ pub type BorderRadius = GenericBorderRadius<LengthOrPercentage>;
 /// A specified value for the `border-*-radius` longhand properties.
 pub type BorderCornerRadius = GenericBorderCornerRadius<LengthOrPercentage>;
 
-/// A specified value for the `border-spacing` longhand properties.
-pub type BorderSpacing = GenericBorderSpacing<NonNegativeLength>;
-
 impl BorderSideWidth {
     /// Parses, with quirks.
     pub fn parse_quirky<'i, 't>(
@@ -60,7 +57,7 @@ impl BorderSideWidth {
         if let Ok(length) = input.try(|i| Length::parse_non_negative_quirky(context, i, allow_quirks)) {
             return Ok(BorderSideWidth::Length(length));
         }
-        try_match_ident_ignore_ascii_case! { input,
+        try_match_ident_ignore_ascii_case! { input.expect_ident()?,
             "thin" => Ok(BorderSideWidth::Thin),
             "medium" => Ok(BorderSideWidth::Medium),
             "thick" => Ok(BorderSideWidth::Thick),
@@ -75,7 +72,7 @@ impl Parse for BorderSideWidth {
 }
 
 impl ToComputedValue for BorderSideWidth {
-    type ComputedValue = computed::NonNegativeLength;
+    type ComputedValue = Au;
 
     #[inline]
     fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
@@ -86,13 +83,13 @@ impl ToComputedValue for BorderSideWidth {
             BorderSideWidth::Thin => Length::from_px(1.).to_computed_value(context),
             BorderSideWidth::Medium => Length::from_px(3.).to_computed_value(context),
             BorderSideWidth::Thick => Length::from_px(5.).to_computed_value(context),
-            BorderSideWidth::Length(ref length) => length.to_computed_value(context),
-        }.into()
+            BorderSideWidth::Length(ref length) => length.to_computed_value(context)
+        }
     }
 
     #[inline]
     fn from_computed_value(computed: &Self::ComputedValue) -> Self {
-        BorderSideWidth::Length(ToComputedValue::from_computed_value(&computed.0))
+        BorderSideWidth::Length(ToComputedValue::from_computed_value(computed))
     }
 }
 
@@ -152,22 +149,11 @@ impl Parse for BorderRadius {
 }
 
 impl Parse for BorderCornerRadius {
-    fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>
-    ) -> Result<Self, ParseError<'i>> {
-        Size::parse_with(context, input, LengthOrPercentage::parse_non_negative)
-            .map(GenericBorderCornerRadius)
-    }
-}
-
-impl Parse for BorderSpacing {
-    fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>
-    ) -> Result<Self, ParseError<'i>> {
-        Size::parse_with(context, input, |context, input| {
-            Length::parse_non_negative_quirky(context, input, AllowQuirks::Yes).map(From::from)
-        }).map(GenericBorderSpacing)
+    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
+        let first = LengthOrPercentage::parse_non_negative(context, input)?;
+        let second = input
+            .try(|i| LengthOrPercentage::parse_non_negative(context, i))
+            .unwrap_or_else(|_| first.clone());
+        Ok(Self::new(first, second))
     }
 }

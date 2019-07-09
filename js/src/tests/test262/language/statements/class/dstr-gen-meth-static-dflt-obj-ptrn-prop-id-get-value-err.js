@@ -5,7 +5,7 @@
 description: Error thrown when accessing the corresponding property of the value object (static class expression generator method (default parameter))
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
 es6id: 14.5.15
-features: [generators, destructuring-binding, default-parameters]
+features: [destructuring-binding, default-parameters]
 flags: [generated]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail

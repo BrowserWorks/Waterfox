@@ -13,7 +13,6 @@ info: >
   16. Let targetByteOffset be target.[[ByteOffset]].
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var getCalls = 0;

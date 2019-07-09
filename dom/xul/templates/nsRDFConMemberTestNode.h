@@ -22,8 +22,8 @@ class nsRDFConMemberTestNode : public nsRDFTestNode
 public:
     nsRDFConMemberTestNode(TestNode* aParent,
                            nsXULTemplateQueryProcessorRDF* aProcessor,
-                           nsAtom* aContainerVariable,
-                           nsAtom* aMemberVariable);
+                           nsIAtom* aContainerVariable,
+                           nsIAtom* aMemberVariable);
 
     virtual nsresult FilterInstantiations(InstantiationSet& aInstantiations,
                                           bool* aCantHandleYet) const override;
@@ -70,8 +70,8 @@ public:
 
 protected:
     nsXULTemplateQueryProcessorRDF* mProcessor;
-    RefPtr<nsAtom> mContainerVariable;
-    RefPtr<nsAtom> mMemberVariable;
+    nsCOMPtr<nsIAtom> mContainerVariable;
+    nsCOMPtr<nsIAtom> mMemberVariable;
 };
 
 #endif // nsRDFConMemberTestNode_h__

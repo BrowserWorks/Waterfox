@@ -47,14 +47,14 @@ GenericSpecifiedValues::SetIdentStringValueIfUnset(nsCSSPropertyID aId,
 }
 
 void
-GenericSpecifiedValues::SetIdentAtomValue(nsCSSPropertyID aId, nsAtom* aValue)
+GenericSpecifiedValues::SetIdentAtomValue(nsCSSPropertyID aId, nsIAtom* aValue)
 {
   MOZ_STYLO_FORWARD(SetIdentAtomValue, (aId, aValue))
 }
 
 void
 GenericSpecifiedValues::SetIdentAtomValueIfUnset(nsCSSPropertyID aId,
-                                                 nsAtom* aValue)
+                                                 nsIAtom* aValue)
 {
   if (!PropertyIsSet(aId)) {
     SetIdentAtomValue(aId, aValue);

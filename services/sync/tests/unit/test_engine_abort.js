@@ -22,7 +22,7 @@ add_task(async function test_processIncoming_abort() {
   });
 
   await SyncTestingInfrastructure(server);
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   _("Create some server data.");
   let meta_global = Service.recordManager.set(engine.metaURL,
@@ -66,3 +66,7 @@ add_task(async function test_processIncoming_abort() {
   engine._tracker.clearChangedIDs();
   await engine.finalize();
 });
+
+function run_test() {
+  run_next_test();
+}

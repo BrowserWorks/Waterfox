@@ -3,7 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #![deny(unsafe_code)]
-#![cfg_attr(feature = "unstable", feature(conservative_impl_trait))]
+#![feature(box_syntax)]
+#![feature(conservative_impl_trait)]
 #![feature(mpsc_select)]
 
 extern crate backtrace;
@@ -15,7 +16,7 @@ extern crate compositing;
 extern crate debugger;
 extern crate devtools_traits;
 extern crate euclid;
-#[cfg(all(not(target_os = "windows"), not(target_os = "ios")))]
+#[cfg(not(target_os = "windows"))]
 extern crate gaol;
 extern crate gfx;
 extern crate gfx_traits;
@@ -29,6 +30,7 @@ extern crate metrics;
 extern crate msg;
 extern crate net;
 extern crate net_traits;
+extern crate offscreen_gl_context;
 extern crate profile_traits;
 extern crate script_traits;
 #[macro_use] extern crate serde;
@@ -45,11 +47,11 @@ mod constellation;
 mod event_loop;
 mod network_listener;
 mod pipeline;
-#[cfg(all(not(target_os = "windows"), not(target_os = "ios")))]
+#[cfg(not(target_os = "windows"))]
 mod sandboxing;
 mod timer_scheduler;
 
 pub use constellation::{Constellation, FromCompositorLogger, FromScriptLogger, InitialConstellationState};
 pub use pipeline::UnprivilegedPipelineContent;
-#[cfg(all(not(target_os = "windows"), not(target_os = "ios")))]
+#[cfg(not(target_os = "windows"))]
 pub use sandboxing::content_process_sandbox_profile;

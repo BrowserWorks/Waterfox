@@ -95,7 +95,7 @@ imgRequest::Init(nsIURI *aURI,
                  nsIChannel *aChannel,
                  imgCacheEntry *aCacheEntry,
                  nsISupports* aCX,
-                 nsIPrincipal* aTriggeringPrincipal,
+                 nsIPrincipal* aLoadingPrincipal,
                  int32_t aCORSMode,
                  ReferrerPolicy aReferrerPolicy)
 {
@@ -121,7 +121,7 @@ imgRequest::Init(nsIURI *aURI,
   mChannel = aChannel;
   mTimedChannel = do_QueryInterface(mChannel);
 
-  mTriggeringPrincipal = aTriggeringPrincipal;
+  mLoadingPrincipal = aLoadingPrincipal;
   mCORSMode = aCORSMode;
   mReferrerPolicy = aReferrerPolicy;
 
@@ -347,10 +347,7 @@ imgRequest::Cancel(nsresult aStatus)
   if (NS_IsMainThread()) {
     ContinueCancel(aStatus);
   } else {
-    RefPtr<ProgressTracker> progressTracker = GetProgressTracker();
-    nsCOMPtr<nsIEventTarget> eventTarget = progressTracker->GetEventTarget();
-    nsCOMPtr<nsIRunnable> ev = new imgRequestMainThreadCancel(this, aStatus);
-    eventTarget->Dispatch(ev.forget(), NS_DISPATCH_NORMAL);
+    NS_DispatchToMainThread(new imgRequestMainThreadCancel(this, aStatus));
   }
 }
 
@@ -459,26 +456,13 @@ imgRequest::GetCurrentURI(nsIURI** aURI)
 }
 
 bool
-imgRequest::IsScheme(const char* aScheme) const
-{
-  MOZ_ASSERT(aScheme);
-  bool isScheme = false;
-  if (NS_WARN_IF(NS_FAILED(mURI->SchemeIs(aScheme, &isScheme)))) {
-    return false;
-  }
-  return isScheme;
-}
-
-bool
 imgRequest::IsChrome() const
 {
-  return IsScheme("chrome");
-}
-
-bool
-imgRequest::IsData() const
-{
-  return IsScheme("data");
+  bool isChrome = false;
+  if (NS_WARN_IF(NS_FAILED(mURI->SchemeIs("chrome", &isChrome)))) {
+    return false;
+  }
+  return isChrome;
 }
 
 nsresult
@@ -832,17 +816,13 @@ imgRequest::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt)
     this->Cancel(NS_IMAGELIB_ERROR_FAILURE);
   }
 
-  // Try to retarget OnDataAvailable to a decode thread. We must process data
-  // URIs synchronously as per the spec however.
-  if (!channel || IsData()) {
-    return NS_OK;
-  }
-
+  // Try to retarget OnDataAvailable to a decode thread.
+  nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(aRequest);
   nsCOMPtr<nsIThreadRetargetableRequest> retargetable =
     do_QueryInterface(aRequest);
-  if (retargetable) {
+  if (httpChannel && retargetable) {
     nsAutoCString mimeType;
-    nsresult rv = channel->GetContentType(mimeType);
+    nsresult rv = httpChannel->GetContentType(mimeType);
     if (NS_SUCCEEDED(rv) && !mimeType.EqualsLiteral(IMAGE_SVG_XML)) {
       // Retarget OnDataAvailable to the DecodePool's IO thread.
       nsCOMPtr<nsIEventTarget> target =
@@ -1161,35 +1141,22 @@ imgRequest::OnDataAvailable(nsIRequest* aRequest, nsISupports* aContext,
 
     if (result.mImage) {
       image = result.mImage;
-      nsCOMPtr<nsIEventTarget> eventTarget;
 
       // Update our state to reflect this new part.
       {
         MutexAutoLock lock(mMutex);
         mImage = image;
-
-        // We only get an event target if we are not on the main thread, because
-        // we have to dispatch in that case. If we are on the main thread, but
-        // on a different scheduler group than ProgressTracker would give us,
-        // that is okay because nothing in imagelib requires that, just our
-        // listeners (which have their own checks).
-        if (!NS_IsMainThread()) {
-          eventTarget = mProgressTracker->GetEventTarget();
-          MOZ_ASSERT(eventTarget);
-        }
-
         mProgressTracker = nullptr;
       }
 
       // Some property objects are not threadsafe, and we need to send
       // OnImageAvailable on the main thread, so finish on the main thread.
-      if (!eventTarget) {
-        MOZ_ASSERT(NS_IsMainThread());
+      if (NS_IsMainThread()) {
         FinishPreparingForNewPart(result);
       } else {
         nsCOMPtr<nsIRunnable> runnable =
           new FinishPreparingForNewPartRunnable(this, Move(result));
-        eventTarget->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL);
+        NS_DispatchToMainThread(runnable);
       }
     }
 

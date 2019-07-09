@@ -51,13 +51,14 @@ const PREF_BLOCKLIST_LEVEL            = "extensions.blocklist.level";
 const PREF_BLOCKLIST_PINGCOUNTTOTAL   = "extensions.blocklist.pingCountTotal";
 const PREF_BLOCKLIST_PINGCOUNTVERSION = "extensions.blocklist.pingCountVersion";
 const PREF_BLOCKLIST_SUPPRESSUI       = "extensions.blocklist.suppressUI";
+const PREF_ONECRL_VIA_AMO             = "security.onecrl.via.amo";
 const PREF_BLOCKLIST_UPDATE_ENABLED   = "services.blocklist.update_enabled";
 const PREF_APP_DISTRIBUTION           = "distribution.id";
 const PREF_APP_DISTRIBUTION_VERSION   = "distribution.version";
 const PREF_EM_LOGGING_ENABLED         = "extensions.logging.enabled";
 const XMLURI_BLOCKLIST                = "http://www.mozilla.org/2006/addons-blocklist";
-const XMLURI_PARSE_ERROR              = "http://www.mozilla.org/newlayout/xml/parsererror.xml";
-const URI_BLOCKLIST_DIALOG            = "chrome://mozapps/content/extensions/blocklist.xul";
+const XMLURI_PARSE_ERROR              = "http://www.mozilla.org/newlayout/xml/parsererror.xml"
+const URI_BLOCKLIST_DIALOG            = "chrome://mozapps/content/extensions/blocklist.xul"
 const DEFAULT_SEVERITY                = 3;
 const DEFAULT_LEVEL                   = 2;
 const MAX_BLOCK_LEVEL                 = 3;
@@ -79,6 +80,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gConsole",
 XPCOMUtils.defineLazyServiceGetter(this, "gVersionChecker",
                                    "@mozilla.org/xpcom/version-comparator;1",
                                    "nsIVersionComparator");
+
+XPCOMUtils.defineLazyServiceGetter(this, "gCertBlocklistService",
+                                   "@mozilla.org/security/certblocklist;1",
+                                   "nsICertBlocklist");
 
 XPCOMUtils.defineLazyGetter(this, "gPref", function() {
   return Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).
@@ -622,6 +627,7 @@ Blocklist.prototype = {
     request.channel.notificationCallbacks = new gCertUtils.BadCertHandler();
     request.overrideMimeType("text/xml");
     request.setRequestHeader("Cache-Control", "no-cache");
+    request.QueryInterface(Components.interfaces.nsIJSXMLHttpRequest);
 
     request.addEventListener("error", event => this.onXMLError(event));
     request.addEventListener("load", event => this.onXMLLoad(event));
@@ -860,7 +866,7 @@ Blocklist.prototype = {
       await this._preloadBlocklistFile(profPath);
       return;
     } catch (e) {
-      LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e);
+      LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e)
     }
 
     var appFile = FileUtils.getFile(KEY_APPDIR, [FILE_BLOCKLIST]);
@@ -868,7 +874,7 @@ Blocklist.prototype = {
       await this._preloadBlocklistFile(appFile.path);
       return;
     } catch (e) {
-      LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e);
+      LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e)
     }
 
     LOG("Blocklist::_preloadBlocklist: no XML File found");
@@ -905,6 +911,8 @@ Blocklist.prototype = {
         return;
       }
 
+      var populateCertBlocklist = getPref("getBoolPref", PREF_ONECRL_VIA_AMO, true);
+
       var childNodes = doc.documentElement.childNodes;
       for (let element of childNodes) {
         if (!(element instanceof Ci.nsIDOMElement))
@@ -915,8 +923,18 @@ Blocklist.prototype = {
                                                       this._handleEmItemNode);
           break;
         case "pluginItems":
+          // We don't support plugins on b2g.
+          if (AppConstants.MOZ_B2G) {
+            return;
+          }
           this._pluginEntries = this._processItemNodes(element.childNodes, "pluginItem",
                                                        this._handlePluginItemNode);
+          break;
+        case "certItems":
+          if (populateCertBlocklist) {
+            this._processItemNodes(element.childNodes, "certItem",
+                                   this._handleCertItemNode.bind(this));
+          }
           break;
         case "gfxItems":
           // Parse as simple list of objects.
@@ -926,6 +944,9 @@ Blocklist.prototype = {
         default:
           LOG("Blocklist::_loadBlocklistFromString: ignored entries " + element.localName);
         }
+      }
+      if (populateCertBlocklist) {
+        gCertBlocklistService.saveEntries();
       }
       if (this._gfxEntries.length > 0) {
         this._notifyObserversBlocklistGFX();
@@ -946,6 +967,33 @@ Blocklist.prototype = {
       handler(blocklistElement, result);
     }
     return result;
+  },
+
+  _handleCertItemNode(blocklistElement, result) {
+    let issuer = blocklistElement.getAttribute("issuerName");
+    if (issuer) {
+      for (let snElement of blocklistElement.children) {
+        try {
+          gCertBlocklistService.revokeCertByIssuerAndSerial(issuer, snElement.textContent);
+        } catch (e) {
+          // we want to keep trying other elements since missing all items
+          // is worse than missing one
+          LOG("Blocklist::_handleCertItemNode: Error adding revoked cert by Issuer and Serial" + e);
+        }
+      }
+      return;
+    }
+
+    let pubKeyHash = blocklistElement.getAttribute("pubKeyHash");
+    let subject = blocklistElement.getAttribute("subject");
+
+    if (pubKeyHash && subject) {
+      try {
+        gCertBlocklistService.revokeCertBySubjectAndPubKey(subject, pubKeyHash);
+      } catch (e) {
+        LOG("Blocklist::_handleCertItemNode: Error adding revoked cert by Subject and PubKey" + e);
+      }
+    }
   },
 
   _handleEmItemNode(blocklistElement, result) {
@@ -1114,7 +1162,8 @@ Blocklist.prototype = {
 
   /* See nsIBlocklistService */
   getPluginBlocklistState(plugin, appVersion, toolkitVersion) {
-    if (AppConstants.platform == "android") {
+    if (AppConstants.platform == "android" ||
+        AppConstants.MOZ_B2G) {
       return Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
     }
     if (!this._isBlocklistLoaded())
@@ -1276,6 +1325,10 @@ Blocklist.prototype = {
   },
 
   _blocklistUpdated(oldAddonEntries, oldPluginEntries) {
+    if (AppConstants.MOZ_B2G) {
+      return;
+    }
+
     var addonList = [];
 
     // A helper function that reverts the prefs passed to default values.
@@ -1375,7 +1428,7 @@ Blocklist.prototype = {
             addonList.push({
               name: plugin.name,
               version: plugin.version,
-              icon: "chrome://mozapps/skin/plugins/pluginGeneric.svg",
+              icon: "chrome://mozapps/skin/plugins/pluginGeneric.png",
               disable: false,
               blocked: state == Ci.nsIBlocklistService.STATE_BLOCKED,
               item: plugin,
@@ -1434,7 +1487,7 @@ Blocklist.prototype = {
 
         this._notifyObserversBlocklistUpdated();
         Services.obs.removeObserver(applyBlocklistChanges, "addon-blocklist-closed");
-      };
+      }
 
       Services.obs.addObserver(applyBlocklistChanges, "addon-blocklist-closed");
 

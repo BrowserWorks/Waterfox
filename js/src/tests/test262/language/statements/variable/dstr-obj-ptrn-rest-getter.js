@@ -21,13 +21,12 @@ var count = 0;
 
 var {...x} = { get v() { count++; return 2; } };
 
+assert.sameValue(x.v, 2);
 assert.sameValue(count, 1);
 
-verifyProperty(x, "v", {
-  enumerable: true,
-  writable: true,
-  configurable: true,
-  value: 2
-});
+verifyEnumerable(x, "v");
+verifyWritable(x, "v");
+verifyConfigurable(x, "v");
+
 
 reportCompare(0, 0);

@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/util.js");
 
 function run_test() {
@@ -80,12 +79,12 @@ add_test(function test_basic_http() {
   do_check_true(server.userExists("john"));
   server.start(null, function() {
     _("Started on " + server.port);
-    CommonUtils.nextTick(function() {
+    Utils.nextTick(function() {
       let req = localRequest(server, "/1.1/john/storage/crypto/keys");
       _("req is " + req);
       req.get(function(err) {
         do_check_eq(null, err);
-        CommonUtils.nextTick(function() {
+        Utils.nextTick(function() {
           server.stop(run_next_test);
         });
       });
@@ -105,7 +104,7 @@ add_test(function test_info_collections() {
 
   server.registerUser("john", "password");
   server.start(null, function() {
-    CommonUtils.nextTick(function() {
+    Utils.nextTick(function() {
       let req = localRequest(server, "/1.1/john/info/collections");
       req.get(function(err) {
         // Initial info/collections fetch is empty.
@@ -113,7 +112,7 @@ add_test(function test_info_collections() {
         responseHasCorrectHeaders(this.response);
 
         do_check_eq(this.response.body, "{}");
-        CommonUtils.nextTick(function() {
+        Utils.nextTick(function() {
           // When we PUT something to crypto/keys, "crypto" appears in the response.
           function cb(err2) {
             do_check_eq(null, err2);
@@ -131,7 +130,7 @@ add_test(function test_info_collections() {
               do_check_true(modified > 0);
               do_check_eq(putResponseBody, modified);
               do_check_eq(JSON.parse(this.response.body).crypto, modified);
-              CommonUtils.nextTick(function() {
+              Utils.nextTick(function() {
                 server.stop(run_next_test);
               });
             });
@@ -170,7 +169,7 @@ add_test(function test_storage_request() {
       do_check_eq(null, err);
       do_check_eq(this.response.status, 404);
       do_check_eq(this.response.body, "Not found");
-      CommonUtils.nextTick(next);
+      Utils.nextTick(next);
     });
   }
   function retrieveWBOExists(next) {
@@ -182,7 +181,7 @@ add_test(function test_storage_request() {
       do_check_eq(parsedBody.id, "foos");
       do_check_eq(parsedBody.modified, coll.wbo("foos").modified);
       do_check_eq(JSON.parse(parsedBody.payload).foo, "bar");
-      CommonUtils.nextTick(next);
+      Utils.nextTick(next);
     });
   }
   function deleteWBONotExists(next) {
@@ -196,7 +195,7 @@ add_test(function test_storage_request() {
       _("Modified is " + this.response.newModified);
       do_check_eq(this.response.status, 200);
       delete server.callback.onItemDeleted;
-      CommonUtils.nextTick(next);
+      Utils.nextTick(next);
     });
   }
   function deleteWBOExists(next) {
@@ -207,7 +206,7 @@ add_test(function test_storage_request() {
       do_check_eq(username, "john");
       do_check_eq(collection, "crypto");
       do_check_eq(wboID, "foos");
-      CommonUtils.nextTick(next);
+      Utils.nextTick(next);
     };
 
     req.delete(function(err) {
@@ -226,8 +225,8 @@ add_test(function test_storage_request() {
       _("Modified is " + this.response.newModified);
       let parsedBody = JSON.parse(this.response.body);
       do_check_true(parsedBody >= now);
-      do_check_empty(server.users.john.collections);
-      CommonUtils.nextTick(next);
+      do_check_empty(server.users["john"].collections);
+      Utils.nextTick(next);
     });
   }
   function getStorageFails(next) {
@@ -235,8 +234,8 @@ add_test(function test_storage_request() {
     let req = localRequest(server, storageURL);
     req.get(function(err) {
       do_check_eq(this.response.status, 405);
-      do_check_eq(this.response.headers.allow, "DELETE");
-      CommonUtils.nextTick(next);
+      do_check_eq(this.response.headers["allow"], "DELETE");
+      Utils.nextTick(next);
     });
   }
   function getMissingCollectionWBO(next) {
@@ -244,7 +243,7 @@ add_test(function test_storage_request() {
     let req = localRequest(server, storageURL + "/foobar/baz");
     req.get(function(err) {
       do_check_eq(this.response.status, 404);
-      CommonUtils.nextTick(next);
+      Utils.nextTick(next);
     });
   }
 

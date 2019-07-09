@@ -107,8 +107,7 @@ typedef struct aom_codec_dec_cfg {
   unsigned int threads; /**< Maximum number of threads to use, default 1 */
   unsigned int w;       /**< Width */
   unsigned int h;       /**< Height */
-  unsigned int allow_lowbitdepth; /**< Allow use of low-bitdepth coding path */
-} aom_codec_dec_cfg_t;            /**< alias for struct aom_codec_dec_cfg */
+} aom_codec_dec_cfg_t;  /**< alias for struct aom_codec_dec_cfg */
 
 /*!\brief Initialize a decoder instance
  *

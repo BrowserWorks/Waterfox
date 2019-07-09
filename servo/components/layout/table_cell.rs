@@ -9,9 +9,7 @@
 use app_units::Au;
 use block::{BlockFlow, ISizeAndMarginsComputer, MarginsMayCollapseFlag};
 use context::LayoutContext;
-use display_list_builder::{BlockFlowDisplayListBuilding, BorderPaintingMode};
-use display_list_builder::{DisplayListBuildState, StackingContextCollectionFlags};
-use display_list_builder::StackingContextCollectionState;
+use display_list_builder::{BlockFlowDisplayListBuilding, BorderPaintingMode, DisplayListBuildState};
 use euclid::{Point2D, Rect, SideOffsets2D, Size2D};
 use flow::{self, Flow, FlowClass, IS_ABSOLUTELY_POSITIONED, OpaqueFlow};
 use fragment::{Fragment, FragmentBorderBoxIterator, Overflow};
@@ -20,20 +18,15 @@ use layout_debug;
 use model::MaybeAuto;
 use script_layout_interface::wrapper_traits::ThreadSafeLayoutNode;
 use std::fmt;
-use style::computed_values::{border_collapse, border_top_style};
+use style::computed_values::{border_collapse, border_top_style, vertical_align};
 use style::logical_geometry::{LogicalMargin, LogicalRect, LogicalSize, WritingMode};
 use style::properties::ComputedValues;
 use style::values::computed::Color;
-use style::values::generics::box_::VerticalAlign;
 use table::InternalTable;
 use table_row::{CollapsedBorder, CollapsedBorderProvenance};
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for TableCellFlow {}
-
 /// A table formatting context.
 #[derive(Serialize)]
-#[repr(C)]
 pub struct TableCellFlow {
     /// Data common to all block flows.
     pub block_flow: BlockFlow,
@@ -131,11 +124,11 @@ impl TableCellFlow {
             self.block_flow.fragment.border_padding.block_start_end();
         let kids_self_gap = self_size - kids_size;
 
-        // This offset should also account for VerticalAlign::Baseline.
+        // This offset should also account for vertical_align::T::baseline.
         // Need max cell ascent from the first row of this cell.
         let offset = match self.block_flow.fragment.style().get_box().vertical_align {
-            VerticalAlign::Middle => kids_self_gap / 2,
-            VerticalAlign::Bottom => kids_self_gap,
+            vertical_align::T::middle => kids_self_gap / 2,
+            vertical_align::T::bottom => kids_self_gap,
             _ => Au(0),
         };
         if offset == Au(0) {
@@ -237,8 +230,8 @@ impl Flow for TableCellFlow {
         self.assign_block_size_table_cell_base(layout_context);
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn update_late_computed_inline_position_if_necessary(&mut self, inline_position: Au) {
@@ -266,9 +259,8 @@ impl Flow for TableCellFlow {
         self.block_flow.build_display_list_for_block(state, border_painting_mode)
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
-        self.block_flow.collect_stacking_contexts_for_block(state,
-                                                            StackingContextCollectionFlags::empty());
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
+        self.block_flow.collect_stacking_contexts(state);
     }
 
     fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>) {
@@ -277,14 +269,6 @@ impl Flow for TableCellFlow {
 
     fn compute_overflow(&self) -> Overflow {
         self.block_flow.compute_overflow()
-    }
-
-    fn contains_roots_of_absolute_flow_tree(&self) -> bool {
-        self.block_flow.contains_roots_of_absolute_flow_tree()
-    }
-
-    fn is_absolute_containing_block(&self) -> bool {
-        self.block_flow.is_absolute_containing_block()
     }
 
     fn generated_containing_block_size(&self, flow: OpaqueFlow) -> LogicalSize<Au> {
@@ -313,7 +297,7 @@ impl fmt::Debug for TableCellFlow {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Copy, Clone, Debug, Serialize)]
 pub struct CollapsedBordersForCell {
     pub inline_start_border: CollapsedBorder,
     pub inline_end_border: CollapsedBorder,

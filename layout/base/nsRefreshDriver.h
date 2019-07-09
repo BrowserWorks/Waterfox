@@ -37,7 +37,6 @@ class nsIRunnable;
 
 namespace mozilla {
 class RefreshDriverTimer;
-class Runnable;
 namespace layout {
 class VsyncChild;
 } // namespace layout
@@ -126,9 +125,6 @@ public:
   bool RemoveRefreshObserver(nsARefreshObserver *aObserver,
                              mozilla::FlushType aFlushType);
 
-  void PostScrollEvent(mozilla::Runnable* aScrollEvent);
-  void DispatchScrollEvents();
-
   /**
    * Add an observer that will be called after each refresh. The caller
    * must remove the observer before it is deleted. This does not trigger
@@ -164,11 +160,9 @@ public:
     // a stack is expensive. This is still useful if (1) you're trying to remove
     // all flushes for a particial frame or (2) the costly flush is triggered
     // near the call site where the first observer is triggered.
-#ifdef MOZ_GECKO_PROFILER
     if (!mStyleCause) {
       mStyleCause = profiler_get_backtrace();
     }
-#endif
     bool appended = mStyleFlushObservers.AppendElement(aShell) != nullptr;
     EnsureTimerStarted();
 
@@ -180,7 +174,6 @@ public:
   bool AddLayoutFlushObserver(nsIPresShell* aShell) {
     NS_ASSERTION(!IsLayoutFlushObserver(aShell),
                  "Double-adding layout flush observer");
-#ifdef MOZ_GECKO_PROFILER
     // We only get the cause for the first observer each frame because capturing
     // a stack is expensive. This is still useful if (1) you're trying to remove
     // all flushes for a particial frame or (2) the costly flush is triggered
@@ -188,7 +181,6 @@ public:
     if (!mReflowCause) {
       mReflowCause = profiler_get_backtrace();
     }
-#endif
     bool appended = mLayoutFlushObservers.AppendElement(aShell) != nullptr;
     EnsureTimerStarted();
     return appended;
@@ -220,9 +212,6 @@ public:
   }
   bool ViewManagerFlushIsPending() {
     return mViewManagerFlushIsPending;
-  }
-  bool HasScheduleFlush() {
-    return mHasScheduleFlush;
   }
 
   /**
@@ -356,12 +345,6 @@ public:
    */
   static mozilla::TimeStamp GetIdleDeadlineHint(mozilla::TimeStamp aDefault);
 
-  /**
-   * It returns the expected timestamp of the next tick or nothing if the next
-   * tick is missed.
-   */
-  static mozilla::Maybe<mozilla::TimeStamp> GetNextTickHint();
-
   static void DispatchIdleRunnableAfterTick(nsIRunnable* aRunnable,
                                             uint32_t aDelay);
   static void CancelIdleRunnable(nsIRunnable* aRunnable);
@@ -373,7 +356,6 @@ public:
 
 private:
   typedef nsTObserverArray<nsARefreshObserver*> ObserverArray;
-  typedef nsTArray<RefPtr<mozilla::Runnable>> ScrollEventArray;
   typedef nsTHashtable<nsISupportsHashKey> RequestTable;
   struct ImageStartData {
     ImageStartData()
@@ -420,10 +402,8 @@ private:
   mozilla::RefreshDriverTimer* ChooseTimer() const;
   mozilla::RefreshDriverTimer* mActiveTimer;
 
-#ifdef MOZ_GECKO_PROFILER
   UniqueProfilerBacktrace mReflowCause;
   UniqueProfilerBacktrace mStyleCause;
-#endif
 
   // nsPresContext passed in constructor and unset in Disconnect.
   mozilla::WeakPtr<nsPresContext> mPresContext;
@@ -451,11 +431,6 @@ private:
   bool mNeedToRecomputeVisibility;
   bool mTestControllingRefreshes;
   bool mViewManagerFlushIsPending;
-
-  // True if the view manager needs a flush. Layers-free mode uses this value
-  // to know when to notify invalidation.
-  bool mHasScheduleFlush;
-
   bool mInRefresh;
 
   // True if the refresh driver is suspended waiting for transaction
@@ -483,11 +458,10 @@ private:
   mozilla::TimeStamp mNextRecomputeVisibilityTick;
 
   // separate arrays for each flush type we support
-  ObserverArray mObservers[4];
+  ObserverArray mObservers[3];
   RequestTable mRequests;
   ImageStartTable mStartTable;
   AutoTArray<nsCOMPtr<nsIRunnable>, 16> mEarlyRunners;
-  ScrollEventArray mScrollEvents;
 
   struct PendingEvent {
     nsCOMPtr<nsINode> mTarget;

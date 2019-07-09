@@ -36,6 +36,7 @@
 #include "jit/MacroAssembler-inl.h"
 #include "vm/Interpreter-inl.h"
 #include "vm/NativeObject-inl.h"
+#include "vm/TypeInference-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -98,7 +99,8 @@ BaselineCompiler::compile()
     AutoTraceLog logScript(logger, scriptEvent);
     AutoTraceLog logCompile(logger, TraceLogger_BaselineCompilation);
 
-    if (!script->ensureHasTypes(cx) || !script->ensureHasAnalyzedArgsUsage(cx))
+    AutoKeepTypeScripts keepTypes(cx);
+    if (!script->ensureHasTypes(cx, keepTypes) || !script->ensureHasAnalyzedArgsUsage(cx))
         return Method_Error;
 
     // When code coverage is only enabled for optimizations, or when a Debugger
@@ -1022,7 +1024,7 @@ BaselineCompiler::emitBody()
             // Intentionally not implemented.
           case JSOP_SETINTRINSIC:
             // Run-once opcode during self-hosting initialization.
-          case JSOP_UNUSED126:
+          case JSOP_UNUSED222:
           case JSOP_UNUSED223:
           case JSOP_LIMIT:
             // === !! WARNING WARNING WARNING !! ===
@@ -1065,12 +1067,6 @@ OPCODE_LIST(EMIT_OP)
 
 bool
 BaselineCompiler::emit_JSOP_NOP()
-{
-    return true;
-}
-
-bool
-BaselineCompiler::emit_JSOP_ITERNEXT()
 {
     return true;
 }
@@ -1694,7 +1690,7 @@ bool
 BaselineCompiler::emit_JSOP_CALLSITEOBJ()
 {
     RootedObject cso(cx, script->getObject(pc));
-    RootedArrayObject raw(cx, &script->getObject(GET_UINT32_INDEX(pc) + 1)->as<ArrayObject>());
+    RootedObject raw(cx, script->getObject(GET_UINT32_INDEX(pc) + 1));
     if (!cso || !raw)
         return false;
 
@@ -2088,7 +2084,13 @@ BaselineCompiler::emit_JSOP_NEWARRAY()
     return true;
 }
 
-typedef ArrayObject* (*NewArrayCopyOnWriteFn)(JSContext*, HandleArrayObject, gc::InitialHeap);
+bool
+BaselineCompiler::emit_JSOP_SPREADCALLARRAY()
+{
+    return emit_JSOP_NEWARRAY();
+}
+
+typedef JSObject* (*NewArrayCopyOnWriteFn)(JSContext*, HandleArrayObject, gc::InitialHeap);
 const VMFunction jit::NewArrayCopyOnWriteInfo =
     FunctionInfo<NewArrayCopyOnWriteFn>(js::NewDenseCopyOnWriteArray, "NewDenseCopyOnWriteArray");
 
@@ -2307,21 +2309,21 @@ BaselineCompiler::emit_JSOP_GETELEM()
 bool
 BaselineCompiler::emit_JSOP_GETELEM_SUPER()
 {
-    // Store obj in the scratch slot.
-    storeValue(frame.peek(-1), frame.addressOfScratchValue(), R2);
-    frame.pop();
+    // Index -> R1, Receiver -> R2, Object -> R0
+    frame.popRegsAndSync(1);
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R2);
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-2)), R1);
 
-    // Keep index and receiver in R0 and R1.
-    frame.popRegsAndSync(2);
-
-    // Keep obj on the stack.
-    frame.pushScratchValue();
+    // Keep receiver on stack.
+    frame.popn(2);
+    frame.push(R2);
+    frame.syncStack(0);
 
     ICGetElem_Fallback::Compiler stubCompiler(cx, /* hasReceiver = */ true);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
-    frame.pop(); // This value is also popped in InitFromBailout.
+    frame.pop();
     frame.push(R0);
     return true;
 }
@@ -2358,6 +2360,11 @@ BaselineCompiler::emit_JSOP_STRICTSETELEM()
 {
     return emit_JSOP_SETELEM();
 }
+
+typedef bool (*SetObjectElementFn)(JSContext*, HandleObject, HandleValue,
+                                  HandleValue, HandleValue, bool);
+static const VMFunction SetObjectElementInfo =
+    FunctionInfo<SetObjectElementFn>(js::SetObjectElement, "SetObjectElement");
 
 bool
 BaselineCompiler::emit_JSOP_SETELEM_SUPER()
@@ -4487,14 +4494,14 @@ BaselineCompiler::emit_JSOP_REST()
 {
     frame.syncStack(0);
 
-    ArrayObject* templateObject =
+    JSObject* templateObject =
         ObjectGroup::newArrayObject(cx, nullptr, 0, TenuredObject,
                                     ObjectGroup::NewArrayKind::UnknownIndex);
     if (!templateObject)
         return false;
 
     // Call IC.
-    ICRest_Fallback::Compiler compiler(cx, templateObject);
+    ICRest_Fallback::Compiler compiler(cx, &templateObject->as<ArrayObject>());
     if (!emitOpIC(compiler.getStub(&stubSpace_)))
         return false;
 

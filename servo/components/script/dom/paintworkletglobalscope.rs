@@ -2,8 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use canvas_traits::CanvasData;
 use dom::bindings::callback::CallbackContainer;
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::PaintWorkletGlobalScopeBinding;
 use dom::bindings::codegen::Bindings::PaintWorkletGlobalScopeBinding::PaintWorkletGlobalScopeMethods;
 use dom::bindings::codegen::Bindings::VoidFunctionBinding::VoidFunction;
@@ -12,8 +13,9 @@ use dom::bindings::conversions::get_property_jsval;
 use dom::bindings::error::Error;
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::JS;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::DomObject;
-use dom::bindings::root::{Dom, DomRoot};
 use dom::bindings::str::DOMString;
 use dom::cssstylevalue::CSSStyleValue;
 use dom::paintrenderingcontext2d::PaintRenderingContext2D;
@@ -45,6 +47,7 @@ use js::rust::Runtime;
 use msg::constellation_msg::PipelineId;
 use net_traits::image::base::PixelFormat;
 use net_traits::image_cache::ImageCache;
+use script_layout_interface::message::Msg;
 use script_traits::DrawAPaintImageResult;
 use script_traits::Painter;
 use servo_atoms::Atom;
@@ -62,30 +65,30 @@ use style_traits::CSSPixel;
 use style_traits::DevicePixel;
 use style_traits::SpeculativePainter;
 
-/// <https://drafts.css-houdini.org/css-paint-api/#paintworkletglobalscope>
+/// https://drafts.css-houdini.org/css-paint-api/#paintworkletglobalscope
 #[dom_struct]
 pub struct PaintWorkletGlobalScope {
     /// The worklet global for this object
     worklet_global: WorkletGlobalScope,
     /// The image cache
-    #[ignore_malloc_size_of = "Arc"]
+    #[ignore_heap_size_of = "Arc"]
     image_cache: Arc<ImageCache>,
-    /// <https://drafts.css-houdini.org/css-paint-api/#paint-definitions>
-    paint_definitions: DomRefCell<HashMap<Atom, Box<PaintDefinition>>>,
-    /// <https://drafts.css-houdini.org/css-paint-api/#paint-class-instances>
-    paint_class_instances: DomRefCell<HashMap<Atom, Box<Heap<JSVal>>>>,
+    /// https://drafts.css-houdini.org/css-paint-api/#paint-definitions
+    paint_definitions: DOMRefCell<HashMap<Atom, Box<PaintDefinition>>>,
+    /// https://drafts.css-houdini.org/css-paint-api/#paint-class-instances
+    paint_class_instances: DOMRefCell<HashMap<Atom, Box<Heap<JSVal>>>>,
     /// The most recent name the worklet was called with
-    cached_name: DomRefCell<Atom>,
+    cached_name: DOMRefCell<Atom>,
     /// The most recent size the worklet was drawn at
     cached_size: Cell<TypedSize2D<f32, CSSPixel>>,
     /// The most recent device pixel ratio the worklet was drawn at
     cached_device_pixel_ratio: Cell<ScaleFactor<f32, CSSPixel, DevicePixel>>,
     /// The most recent properties the worklet was drawn at
-    cached_properties: DomRefCell<Vec<(Atom, String)>>,
+    cached_properties: DOMRefCell<Vec<(Atom, String)>>,
     /// The most recent arguments the worklet was drawn at
-    cached_arguments: DomRefCell<Vec<String>>,
+    cached_arguments: DOMRefCell<Vec<String>>,
     /// The most recent result
-    cached_result: DomRefCell<DrawAPaintImageResult>,
+    cached_result: DOMRefCell<DrawAPaintImageResult>,
 }
 
 impl PaintWorkletGlobalScope {
@@ -95,26 +98,26 @@ impl PaintWorkletGlobalScope {
                base_url: ServoUrl,
                executor: WorkletExecutor,
                init: &WorkletGlobalScopeInit)
-               -> DomRoot<PaintWorkletGlobalScope> {
+               -> Root<PaintWorkletGlobalScope> {
         debug!("Creating paint worklet global scope for pipeline {}.", pipeline_id);
-        let global = Box::new(PaintWorkletGlobalScope {
+        let global = box PaintWorkletGlobalScope {
             worklet_global: WorkletGlobalScope::new_inherited(pipeline_id, base_url, executor, init),
             image_cache: init.image_cache.clone(),
             paint_definitions: Default::default(),
             paint_class_instances: Default::default(),
-            cached_name: DomRefCell::new(Atom::from("")),
+            cached_name: DOMRefCell::new(Atom::from("")),
             cached_size: Cell::new(TypedSize2D::zero()),
             cached_device_pixel_ratio: Cell::new(ScaleFactor::new(1.0)),
             cached_properties: Default::default(),
             cached_arguments: Default::default(),
-            cached_result: DomRefCell::new(DrawAPaintImageResult {
+            cached_result: DOMRefCell::new(DrawAPaintImageResult {
                 width: 0,
                 height: 0,
                 format: PixelFormat::BGRA8,
                 image_key: None,
                 missing_image_urls: Vec::new(),
             }),
-        });
+        };
         unsafe { PaintWorkletGlobalScopeBinding::Wrap(runtime.cx(), global) }
     }
 
@@ -169,7 +172,7 @@ impl PaintWorkletGlobalScope {
         }
     }
 
-    /// <https://drafts.css-houdini.org/css-paint-api/#draw-a-paint-image>
+    /// https://drafts.css-houdini.org/css-paint-api/#draw-a-paint-image
     fn draw_a_paint_image(&self,
                           name: &Atom,
                           size_in_px: TypedSize2D<f32, CSSPixel>,
@@ -187,7 +190,7 @@ impl PaintWorkletGlobalScope {
         self.invoke_a_paint_callback(name, size_in_px, size_in_dpx, device_pixel_ratio, properties, arguments)
     }
 
-    /// <https://drafts.css-houdini.org/css-paint-api/#invoke-a-paint-callback>
+    /// https://drafts.css-houdini.org/css-paint-api/#invoke-a-paint-callback
     #[allow(unsafe_code)]
     fn invoke_a_paint_callback(&self,
                                name: &Atom,
@@ -222,7 +225,7 @@ impl PaintWorkletGlobalScope {
                 }
                 class_constructor.set(definition.class_constructor.get());
                 paint_function.set(definition.paint_function.get());
-                DomRoot::from_ref(&*definition.context)
+                Root::from_ref(&*definition.context)
             }
         };
 
@@ -295,7 +298,7 @@ impl PaintWorkletGlobalScope {
         let (sender, receiver) = ipc::channel().expect("IPC channel creation.");
         rendering_context.send_data(sender);
         let image_key = match receiver.recv() {
-            Ok(data) => Some(data.image_key),
+            Ok(CanvasData::Image(data)) => Some(data.image_key),
             _ => None,
         };
 
@@ -367,7 +370,7 @@ impl PaintWorkletGlobalScope {
 impl PaintWorkletGlobalScopeMethods for PaintWorkletGlobalScope {
     #[allow(unsafe_code)]
     #[allow(unrooted_must_root)]
-    /// <https://drafts.css-houdini.org/css-paint-api/#dom-paintworkletglobalscope-registerpaint>
+    /// https://drafts.css-houdini.org/css-paint-api/#dom-paintworkletglobalscope-registerpaint
     fn RegisterPaint(&self, name: DOMString, paint_ctor: Rc<VoidFunction>) -> Fallible<()> {
         let name = Atom::from(name);
         let cx = self.worklet_global.get_cx();
@@ -441,7 +444,8 @@ impl PaintWorkletGlobalScopeMethods for PaintWorkletGlobalScope {
         // Inform layout that there is a registered paint worklet.
         // TODO: layout will end up getting this message multiple times.
         let painter = self.painter(name.clone());
-        self.worklet_global.register_paint_worklet(name, properties, painter);
+        let msg = Msg::RegisterPaint(name, properties, painter);
+        self.worklet_global.send_to_layout(msg);
 
         Ok(())
     }
@@ -461,10 +465,10 @@ pub enum PaintWorkletTask {
 }
 
 /// A paint definition
-/// <https://drafts.css-houdini.org/css-paint-api/#paint-definition>
+/// https://drafts.css-houdini.org/css-paint-api/#paint-definition
 /// This type is dangerous, because it contains uboxed `Heap<JSVal>` values,
 /// which can't be moved.
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 #[must_root]
 struct PaintDefinition {
     class_constructor: Heap<JSVal>,
@@ -476,7 +480,7 @@ struct PaintDefinition {
     // TODO: the spec calls for fresh rendering contexts each time a paint image is drawn,
     // but to avoid having the primary worklet thread create a new renering context,
     // we recycle them.
-    context: Dom<PaintRenderingContext2D>,
+    context: JS<PaintRenderingContext2D>,
 }
 
 impl PaintDefinition {
@@ -493,7 +497,7 @@ impl PaintDefinition {
             constructor_valid_flag: Cell::new(true),
             context_alpha_flag: alpha,
             input_arguments_len: input_arguments_len,
-            context: Dom::from_ref(context),
+            context: JS::from_ref(context),
         });
         result.class_constructor.set(class_constructor.get());
         result.paint_function.set(paint_function.get());

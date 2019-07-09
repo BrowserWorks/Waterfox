@@ -19,13 +19,10 @@
 #include "mozilla/Casting.h"
 #include "mozilla/Move.h"
 #include "mozilla/PodOperations.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Unused.h"
-#include "nsCRTGlue.h"
 #include "nsNSSCertificate.h"
 #include "nsServiceManagerUtils.h"
-#include "nsThreadUtils.h"
 #include "nss.h"
 #include "pk11pub.h"
 #include "pkix/Result.h"
@@ -34,6 +31,7 @@
 #include "prerror.h"
 #include "secerr.h"
 
+#include "CNNICHashWhitelist.inc"
 #include "StartComAndWoSignData.inc"
 
 using namespace mozilla;
@@ -60,6 +58,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            NetscapeStepUpPolicy netscapeStepUpPolicy,
                                            const OriginAttributes& originAttributes,
                                            UniqueCERTCertList& builtChain,
+                              /*optional*/ UniqueCERTCertList* peerCertChain,
                               /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo,
                               /*optional*/ const char* hostname)
   : mCertDBTrustType(certDBTrustType)
@@ -77,6 +76,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
   , mNetscapeStepUpPolicy(netscapeStepUpPolicy)
   , mOriginAttributes(originAttributes)
   , mBuiltChain(builtChain)
+  , mPeerCertChain(peerCertChain)
   , mPinningTelemetryInfo(pinningTelemetryInfo)
   , mHostname(hostname)
   , mCertBlocklist(do_GetService(NS_CERTBLOCKLIST_CONTRACTID))
@@ -141,10 +141,93 @@ FindIssuerInner(const UniqueCERTCertList& candidates, bool useRoots,
   return Success;
 }
 
+// Remove from newCandidates any CERTCertificates in alreadyTried.
+// alreadyTried is likely to be small or empty.
+static void
+RemoveCandidatesAlreadyTried(UniqueCERTCertList& newCandidates,
+                             const UniqueCERTCertList& alreadyTried)
+{
+  for (const CERTCertListNode* triedNode = CERT_LIST_HEAD(alreadyTried);
+       !CERT_LIST_END(triedNode, alreadyTried);
+       triedNode = CERT_LIST_NEXT(triedNode)) {
+    CERTCertListNode* newNode = CERT_LIST_HEAD(newCandidates);
+    while (!CERT_LIST_END(newNode, newCandidates)) {
+      CERTCertListNode* savedNode = CERT_LIST_NEXT(newNode);
+      if (CERT_CompareCerts(triedNode->cert, newNode->cert)) {
+        CERT_RemoveCertListNode(newNode);
+      }
+      newNode = savedNode;
+    }
+  }
+}
+
+// Add to matchingCandidates any CERTCertificates from candidatesIn that have a
+// DER-encoded subject name equal to the given subject name.
+static Result
+AddMatchingCandidates(UniqueCERTCertList& matchingCandidates,
+                      const UniqueCERTCertList& candidatesIn,
+                      Input subjectName)
+{
+  for (const CERTCertListNode* node = CERT_LIST_HEAD(candidatesIn);
+       !CERT_LIST_END(node, candidatesIn); node = CERT_LIST_NEXT(node)) {
+    Input candidateSubjectName;
+    Result rv = candidateSubjectName.Init(node->cert->derSubject.data,
+                                          node->cert->derSubject.len);
+    if (rv != Success) {
+      continue; // probably just too big - continue processing other candidates
+    }
+    if (InputsAreEqual(candidateSubjectName, subjectName)) {
+      UniqueCERTCertificate certDuplicate(CERT_DupCertificate(node->cert));
+      if (!certDuplicate) {
+        return Result::FATAL_ERROR_NO_MEMORY;
+      }
+      SECStatus srv = CERT_AddCertToListTail(matchingCandidates.get(),
+                                             certDuplicate.get());
+      if (srv != SECSuccess) {
+        return MapPRErrorCodeToResult(PR_GetError());
+      }
+      // matchingCandidates now owns certDuplicate
+      Unused << certDuplicate.release();
+    }
+  }
+  return Success;
+}
+
 Result
 NSSCertDBTrustDomain::FindIssuer(Input encodedIssuerName,
                                  IssuerChecker& checker, Time)
 {
+  // If the peer certificate chain was specified, try to use it before falling
+  // back to CERT_CreateSubjectCertList.
+  bool keepGoing;
+  UniqueCERTCertList peerCertChainCandidates(CERT_NewCertList());
+  if (!peerCertChainCandidates) {
+    return Result::FATAL_ERROR_NO_MEMORY;
+  }
+  if (mPeerCertChain) {
+    // Build a candidate list that consists only of certificates with a subject
+    // matching the issuer we're looking for.
+    Result rv = AddMatchingCandidates(peerCertChainCandidates, *mPeerCertChain,
+                                      encodedIssuerName);
+    if (rv != Success) {
+      return rv;
+    }
+    rv = FindIssuerInner(peerCertChainCandidates, true, encodedIssuerName,
+                         checker, keepGoing);
+    if (rv != Success) {
+      return rv;
+    }
+    if (keepGoing) {
+      rv = FindIssuerInner(peerCertChainCandidates, false, encodedIssuerName,
+                           checker, keepGoing);
+      if (rv != Success) {
+        return rv;
+      }
+    }
+    if (!keepGoing) {
+      return Success;
+    }
+  }
   // TODO: NSS seems to be ambiguous between "no potential issuers found" and
   // "there was an error trying to retrieve the potential issuers."
   SECItem encodedIssuerNameItem = UnsafeMapInputToSECItem(encodedIssuerName);
@@ -153,8 +236,8 @@ NSSCertDBTrustDomain::FindIssuer(Input encodedIssuerName,
                                           &encodedIssuerNameItem, 0,
                                           false));
   if (candidates) {
+    RemoveCandidatesAlreadyTried(candidates, peerCertChainCandidates);
     // First, try all the root certs; then try all the non-root certs.
-    bool keepGoing;
     Result rv = FindIssuerInner(candidates, true, encodedIssuerName, checker,
                                 keepGoing);
     if (rv != Success) {
@@ -708,6 +791,40 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
   return rv;
 }
 
+static const uint8_t CNNIC_ROOT_CA_SUBJECT_DATA[] =
+  "\x30\x32\x31\x0B\x30\x09\x06\x03\x55\x04\x06\x13\x02\x43\x4E\x31\x0E\x30"
+  "\x0C\x06\x03\x55\x04\x0A\x13\x05\x43\x4E\x4E\x49\x43\x31\x13\x30\x11\x06"
+  "\x03\x55\x04\x03\x13\x0A\x43\x4E\x4E\x49\x43\x20\x52\x4F\x4F\x54";
+
+static const uint8_t CNNIC_EV_ROOT_CA_SUBJECT_DATA[] =
+  "\x30\x81\x8A\x31\x0B\x30\x09\x06\x03\x55\x04\x06\x13\x02\x43\x4E\x31\x32"
+  "\x30\x30\x06\x03\x55\x04\x0A\x0C\x29\x43\x68\x69\x6E\x61\x20\x49\x6E\x74"
+  "\x65\x72\x6E\x65\x74\x20\x4E\x65\x74\x77\x6F\x72\x6B\x20\x49\x6E\x66\x6F"
+  "\x72\x6D\x61\x74\x69\x6F\x6E\x20\x43\x65\x6E\x74\x65\x72\x31\x47\x30\x45"
+  "\x06\x03\x55\x04\x03\x0C\x3E\x43\x68\x69\x6E\x61\x20\x49\x6E\x74\x65\x72"
+  "\x6E\x65\x74\x20\x4E\x65\x74\x77\x6F\x72\x6B\x20\x49\x6E\x66\x6F\x72\x6D"
+  "\x61\x74\x69\x6F\x6E\x20\x43\x65\x6E\x74\x65\x72\x20\x45\x56\x20\x43\x65"
+  "\x72\x74\x69\x66\x69\x63\x61\x74\x65\x73\x20\x52\x6F\x6F\x74";
+
+class WhitelistedCNNICHashBinarySearchComparator
+{
+public:
+  explicit WhitelistedCNNICHashBinarySearchComparator(const uint8_t* aTarget,
+                                                      size_t aTargetLength)
+    : mTarget(aTarget)
+  {
+    MOZ_ASSERT(aTargetLength == CNNIC_WHITELIST_HASH_LEN,
+               "Hashes should be of the same length.");
+  }
+
+  int operator()(const WhitelistedCNNICHash val) const {
+    return memcmp(mTarget, val.hash, CNNIC_WHITELIST_HASH_LEN);
+  }
+
+private:
+  const uint8_t* mTarget;
+};
+
 static bool
 CertIsStartComOrWoSign(const CERTCertificate* cert)
 {
@@ -884,6 +1001,8 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time,
     return rv;
   }
 
+  // If the certificate appears to have been issued by a CNNIC root, only allow
+  // it if it is on the whitelist.
   CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
   if (!rootNode) {
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
@@ -892,6 +1011,39 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time,
   if (!root) {
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
+  if ((root->derSubject.len == sizeof(CNNIC_ROOT_CA_SUBJECT_DATA) - 1 &&
+       memcmp(root->derSubject.data, CNNIC_ROOT_CA_SUBJECT_DATA,
+              root->derSubject.len) == 0) ||
+      (root->derSubject.len == sizeof(CNNIC_EV_ROOT_CA_SUBJECT_DATA) - 1 &&
+       memcmp(root->derSubject.data, CNNIC_EV_ROOT_CA_SUBJECT_DATA,
+              root->derSubject.len) == 0)) {
+    CERTCertListNode* certNode = CERT_LIST_HEAD(certList);
+    if (!certNode) {
+      return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    }
+    CERTCertificate* cert = certNode->cert;
+    if (!cert) {
+      return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    }
+    Digest digest;
+    nsresult nsrv = digest.DigestBuf(SEC_OID_SHA256, cert->derCert.data,
+                                     cert->derCert.len);
+    if (NS_FAILED(nsrv)) {
+      return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    }
+    const uint8_t* certHash(
+      BitwiseCast<uint8_t*, unsigned char*>(digest.get().data));
+    size_t certHashLen = digest.get().len;
+    size_t unused;
+    if (!mozilla::BinarySearchIf(WhitelistedCNNICHashes, 0,
+                                 ArrayLength(WhitelistedCNNICHashes),
+                                 WhitelistedCNNICHashBinarySearchComparator(
+                                   certHash, certHashLen),
+                                 &unused)) {
+      return Result::ERROR_REVOKED_CERTIFICATE;
+    }
+  }
+
   bool isBuiltInRoot = false;
   rv = IsCertBuiltInRoot(root, isBuiltInRoot);
   if (rv != Success) {
@@ -1145,10 +1297,8 @@ NSSCertDBTrustDomain::NoteAuxiliaryExtension(AuxiliaryExtension extension,
 }
 
 SECStatus
-InitializeNSS(const nsACString& dir, bool readOnly, bool loadPKCS11Modules)
+InitializeNSS(const char* dir, bool readOnly, bool loadPKCS11Modules)
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   // The NSS_INIT_NOROOTINIT flag turns off the loading of the root certs
   // module by NSS_Initialize because we will load it in InstallLoadableRoots
   // later.  It also allows us to work around a bug in the system NSS in
@@ -1161,40 +1311,9 @@ InitializeNSS(const nsACString& dir, bool readOnly, bool loadPKCS11Modules)
   if (!loadPKCS11Modules) {
     flags |= NSS_INIT_NOMODDB;
   }
-  bool useSQLDB = Preferences::GetBool("security.use_sqldb", false);
-  nsAutoCString dbTypeAndDirectory;
-  // Don't change any behavior if the user has specified an alternative database
-  // location with MOZPSM_NSSDBDIR_OVERRIDE.
-  const char* dbDirOverride = getenv("MOZPSM_NSSDBDIR_OVERRIDE");
-  if (useSQLDB && (!dbDirOverride || strlen(dbDirOverride) == 0)) {
-    dbTypeAndDirectory.Append("sql:");
-  }
-  dbTypeAndDirectory.Append(dir);
   MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
-          ("InitializeNSS(%s, %d, %d)", dbTypeAndDirectory.get(), readOnly,
-           loadPKCS11Modules));
-  SECStatus srv = NSS_Initialize(dbTypeAndDirectory.get(), "", "",
-                                 SECMOD_DB, flags);
-  if (srv != SECSuccess) {
-    return srv;
-  }
-
-  if (!readOnly) {
-    UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
-    if (!slot) {
-      return SECFailure;
-    }
-    // If the key DB doesn't have a password set, PK11_NeedUserInit will return
-    // true. For the SQL DB, we need to set a password or we won't be able to
-    // import any certificates or change trust settings.
-    if (PK11_NeedUserInit(slot.get())) {
-      srv = PK11_InitPin(slot.get(), nullptr, nullptr);
-      MOZ_ASSERT(srv == SECSuccess);
-      Unused << srv;
-    }
-  }
-
-  return SECSuccess;
+          ("InitializeNSS(%s, %d, %d)", dir, readOnly, loadPKCS11Modules));
+  return ::NSS_Initialize(dir, "", "", SECMOD_DB, flags);
 }
 
 void
@@ -1211,33 +1330,32 @@ DisableMD5()
 bool
 LoadLoadableRoots(const nsCString& dir, const nsCString& modNameUTF8)
 {
+  UniquePRLibraryName fullLibraryPath(
+    PR_GetLibraryName(dir.IsEmpty() ? nullptr : dir.get(), "nssckbi"));
+  if (!fullLibraryPath) {
+    return false;
+  }
+
+  // Escape the \ and " characters.
+  nsAutoCString escapedFullLibraryPath(fullLibraryPath.get());
+  escapedFullLibraryPath.ReplaceSubstring("\\", "\\\\");
+  escapedFullLibraryPath.ReplaceSubstring("\"", "\\\"");
+  if (escapedFullLibraryPath.IsEmpty()) {
+    return false;
+  }
+
   // If a module exists with the same name, make a best effort attempt to delete
   // it. Note that it isn't possible to delete the internal module, so checking
   // the return value would be detrimental in that case.
   int unusedModType;
   Unused << SECMOD_DeleteModule(modNameUTF8.get(), &unusedModType);
-  // Some NSS command-line utilities will load a roots module under the name
-  // "Root Certs" if there happens to be a `DLL_PREFIX "nssckbi" DLL_SUFFIX`
-  // file in the directory being operated on. In some cases this can cause us to
-  // fail to load our roots module. In these cases, deleting the "Root Certs"
-  // module allows us to load the correct one. See bug 1406396.
-  Unused << SECMOD_DeleteModule("Root Certs", &unusedModType);
 
-  nsAutoCString fullLibraryPath;
-  if (!dir.IsEmpty()) {
-    fullLibraryPath.Assign(dir);
-    fullLibraryPath.AppendLiteral(FILE_PATH_SEPARATOR);
+  nsAutoCString pkcs11ModuleSpec;
+  pkcs11ModuleSpec.AppendPrintf("name=\"%s\" library=\"%s\"", modNameUTF8.get(),
+                                escapedFullLibraryPath.get());
+  if (pkcs11ModuleSpec.IsEmpty()) {
+    return false;
   }
-  fullLibraryPath.Append(DLL_PREFIX "nssckbi" DLL_SUFFIX);
-  // Escape the \ and " characters.
-  fullLibraryPath.ReplaceSubstring("\\", "\\\\");
-  fullLibraryPath.ReplaceSubstring("\"", "\\\"");
-
-  nsAutoCString pkcs11ModuleSpec("name=\"");
-  pkcs11ModuleSpec.Append(modNameUTF8);
-  pkcs11ModuleSpec.AppendLiteral("\" library=\"");
-  pkcs11ModuleSpec.Append(fullLibraryPath);
-  pkcs11ModuleSpec.AppendLiteral("\"");
 
   UniqueSECMODModule rootsModule(
     SECMOD_LoadUserModule(const_cast<char*>(pkcs11ModuleSpec.get()), nullptr,

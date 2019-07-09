@@ -89,7 +89,7 @@ ServiceWorkerPrivate::ServiceWorkerPrivate(ServiceWorkerInfo* aInfo)
   AssertIsOnMainThread();
   MOZ_ASSERT(aInfo);
 
-  mIdleWorkerTimer = NS_NewTimer();
+  mIdleWorkerTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   MOZ_ASSERT(mIdleWorkerTimer);
 }
 
@@ -459,8 +459,7 @@ public:
     aEvent->SetKeepAliveHandler(keepAliveHandler);
 
     ErrorResult result;
-    bool dummy;
-    result = aWorkerScope->DispatchEvent(aEvent, &dummy);
+    result = aWorkerScope->DispatchDOMEvent(nullptr, aEvent, nullptr, nullptr);
     if (NS_WARN_IF(result.Failed())) {
       result.SuppressException();
       return NS_ERROR_FAILURE;
@@ -1100,8 +1099,13 @@ class AllowWindowInteractionHandler final : public ExtendableEventCallback
     MOZ_ASSERT(!mTimer);
 
     nsresult rv;
-    nsCOMPtr<nsITimer> timer = NS_NewTimer(aWorkerPrivate->ControlEventTarget());
-    if (NS_WARN_IF(!timer)) {
+    nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+
+    rv = timer->SetTarget(aWorkerPrivate->ControlEventTarget());
+    if (NS_WARN_IF(NS_FAILED(rv))) {
       return;
     }
 
@@ -1247,18 +1251,22 @@ public:
     }
 
     event->SetTrusted(true);
-    aWorkerPrivate->GlobalScope()->AllowWindowInteraction();
-    RefPtr<AllowWindowInteractionHandler> allowWindowInteraction =
-      new AllowWindowInteractionHandler(aWorkerPrivate);
+
+    RefPtr<AllowWindowInteractionHandler> allowWindowInteraction;
+    if (mEventName.EqualsLiteral(NOTIFICATION_CLICK_EVENT_NAME)) {
+      allowWindowInteraction =
+        new AllowWindowInteractionHandler(aWorkerPrivate);
+    }
+
     nsresult rv = DispatchExtendableEventOnWorkerScope(aCx,
                                                        aWorkerPrivate->GlobalScope(),
                                                        event,
                                                        allowWindowInteraction);
     // Don't reject when catching an exception
-    if (NS_FAILED(rv) && rv != NS_ERROR_XPC_JS_THREW_EXCEPTION) {
+    if (NS_FAILED(rv) && rv != NS_ERROR_XPC_JS_THREW_EXCEPTION &&
+        allowWindowInteraction) {
       allowWindowInteraction->FinishedWithResult(Rejected);
     }
-    aWorkerPrivate->GlobalScope()->ConsumeWindowInteraction();
 
     return true;
   }
@@ -1505,15 +1513,6 @@ public:
 
     if (mMarkLaunchServiceWorkerEnd) {
       mInterceptedChannel->SetLaunchServiceWorkerEnd(TimeStamp::Now());
-
-      // A probe to measure sw launch time for telemetry.
-      TimeStamp launchStartTime = TimeStamp();
-      mInterceptedChannel->GetLaunchServiceWorkerStart(&launchStartTime);
-
-      TimeStamp launchEndTime = TimeStamp();
-      mInterceptedChannel->GetLaunchServiceWorkerEnd(&launchEndTime);
-      Telemetry::AccumulateTimeDelta(Telemetry::SERVICE_WORKER_LAUNCH_TIME,
-                                     launchStartTime, launchEndTime);
     }
 
     mInterceptedChannel->SetDispatchFetchEventEnd(TimeStamp::Now());
@@ -1598,7 +1597,7 @@ private:
                                                               mReferrerPolicy,
                                                               mContentPolicyType,
                                                               mIntegrity);
-    internalReq->SetBody(mUploadStream, -1);
+    internalReq->SetBody(mUploadStream);
     // For Telemetry, note that this Request object was created by a Fetch event.
     internalReq->SetCreatedByFetchEvent();
 
@@ -1606,10 +1605,7 @@ private:
     if (NS_WARN_IF(!global)) {
       return false;
     }
-
-    // TODO This request object should be created with a AbortSignal object
-    // which should be aborted if the loading is aborted. See bug 1394102.
-    RefPtr<Request> request = new Request(global, internalReq, nullptr);
+    RefPtr<Request> request = new Request(global, internalReq);
 
     MOZ_ASSERT_IF(internalReq->IsNavigationRequest(),
                   request->Redirect() == RequestRedirect::Manual);
@@ -1813,7 +1809,7 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   // If we are loading a script for a ServiceWorker then we must not
   // try to intercept it.  If the interception matches the current
   // ServiceWorker's scope then we could deadlock the load.
-  info.mLoadFlags = mInfo->GetImportsLoadFlags() |
+  info.mLoadFlags = mInfo->GetLoadFlags() |
                     nsIChannel::LOAD_BYPASS_SERVICE_WORKER;
 
   rv = info.mBaseURI->GetHost(info.mDomain);
@@ -1873,7 +1869,7 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   mWorkerPrivate = WorkerPrivate::Constructor(jsapi.cx(),
                                               scriptSpec,
                                               false, WorkerTypeService,
-                                              VoidString(),
+                                              NullString(),
                                               mInfo->Scope(),
                                               &info, error);
   if (NS_WARN_IF(error.Failed())) {

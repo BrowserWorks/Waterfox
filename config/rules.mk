@@ -565,10 +565,6 @@ alltags:
 	$(RM) TAGS
 	find $(topsrcdir) -name dist -prune -o \( -name '*.[hc]' -o -name '*.cp' -o -name '*.cpp' -o -name '*.idl' \) -print | $(TAG_PROGRAM)
 
-define EXPAND_CC_OR_CXX
-$(if $(PROG_IS_C_ONLY_$(1)),$(EXPAND_CC),$(EXPAND_CCC))
-endef
-
 #
 # PROGRAM = Foo
 # creates OBJS, links with LIBS to create Foo
@@ -598,7 +594,7 @@ ifdef MOZ_PROFILE_GENERATE
 	touch -t `date +%Y%m%d%H%M.%S -d 'now+5seconds'` pgo.relink
 endif
 else # !WINNT || GNU_CC
-	$(call EXPAND_CC_OR_CXX,$@) -o $@ $(CXXFLAGS) $(PROGOBJS) $(RESFILE) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS) $(BIN_FLAGS) $(EXE_DEF_FILE)
+	$(EXPAND_CCC) -o $@ $(CXXFLAGS) $(PROGOBJS) $(RESFILE) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS) $(BIN_FLAGS) $(EXE_DEF_FILE)
 	$(call CHECK_BINARY,$@)
 endif # WINNT && !GNU_CC
 
@@ -657,7 +653,7 @@ ifdef MSMANIFEST_TOOL
 	fi
 endif	# MSVC with manifest tool
 else
-	$(call EXPAND_CC_OR_CXX,$@) $(CXXFLAGS) -o $@ $< $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS) $(BIN_FLAGS)
+	$(EXPAND_CCC) $(CXXFLAGS) -o $@ $< $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS) $(BIN_FLAGS)
 	$(call CHECK_BINARY,$@)
 endif # WINNT && !GNU_CC
 
@@ -920,7 +916,12 @@ sccache_wrap := RUSTC_WRAPPER='$(CCACHE)'
 endif
 
 ifdef MOZ_DEBUG_SYMBOLS
+# XXX hack to work around dsymutil failing on cross-OSX builds (bug 1380381)
+ifeq ($(HOST_OS_ARCH)-$(OS_ARCH),Linux-Darwin)
+default_rustflags += -C debuginfo=1
+else
 default_rustflags += -C debuginfo=2
+endif
 endif
 
 # We use the + prefix to pass down the jobserver fds to cargo, but we
@@ -935,7 +936,7 @@ $(if $(findstring n,$(filter-out --%, $(MAKEFLAGS))),,+)env $(environment_cleane
 	LIBCLANG_PATH="$(MOZ_LIBCLANG_PATH)" \
 	CLANG_PATH="$(MOZ_CLANG_PATH)" \
 	PKG_CONFIG_ALLOW_CROSS=1 \
-	RUST_BACKTRACE=full \
+	RUST_BACKTRACE=1 \
 	MOZ_TOPOBJDIR=$(topobjdir) \
 	$(2) \
 	$(CARGO) $(1) $(cargo_build_flags)
@@ -1004,18 +1005,6 @@ else
 force-cargo-library-check:
 	@true
 endif # RUST_LIBRARY_FILE
-
-ifdef RUST_TEST
-
-ifdef RUST_TEST_FEATURES
-rust_features_flag := --features "$(RUST_TEST_FEATURES)"
-endif
-
-force-cargo-test-run:
-	$(call RUN_CARGO,test $(cargo_target_flag) -p $(RUST_TEST) $(rust_features_flag),$(target_cargo_env_vars))
-
-check:: force-cargo-test-run
-endif
 
 ifdef HOST_RUST_LIBRARY_FILE
 

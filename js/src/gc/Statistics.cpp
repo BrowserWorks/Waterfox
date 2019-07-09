@@ -887,7 +887,7 @@ Statistics::endGC()
     TimeDuration sccTotal, sccLongest;
     sccDurations(&sccTotal, &sccLongest);
 
-    runtime->addTelemetry(JS_TELEMETRY_GC_IS_ZONE_GC, !zoneStats.isFullCollection());
+    runtime->addTelemetry(JS_TELEMETRY_GC_IS_ZONE_GC, !zoneStats.isCollectingAllZones());
     TimeDuration markTotal = SumPhase(PhaseKind::MARK, phaseTimes);
     TimeDuration markRootsTotal = SumPhase(PhaseKind::MARK_ROOTS, phaseTimes);
     runtime->addTelemetry(JS_TELEMETRY_GC_MARK_MS, t(markTotal));
@@ -966,7 +966,7 @@ Statistics::beginSlice(const ZoneGCStats& zoneStats, JSGCInvocationKind gckind,
     runtime->addTelemetry(JS_TELEMETRY_GC_REASON, reason);
 
     // Slice callbacks should only fire for the outermost level.
-    bool wasFullGC = zoneStats.isFullCollection();
+    bool wasFullGC = zoneStats.isCollectingAllZones();
     if (sliceCallback) {
         JSContext* cx = TlsContext.get();
         JS::GCDescription desc(!wasFullGC, false, gckind, reason);
@@ -1037,7 +1037,7 @@ Statistics::endSlice()
 
     // Slice callbacks should only fire for the outermost level.
     if (!aborted) {
-        bool wasFullGC = zoneStats.isFullCollection();
+        bool wasFullGC = zoneStats.isCollectingAllZones();
         if (sliceCallback) {
             JSContext* cx = TlsContext.get();
             JS::GCDescription desc(!wasFullGC, last, gckind, slices_.back().reason);
@@ -1319,7 +1319,7 @@ Statistics::printProfileHeader()
     if (!enableProfiling_)
         return;
 
-    fprintf(stderr, "MajorGC:               Reason States FSNR ");
+    fprintf(stderr, "MajorGC:               Reason States SRN  ");
     fprintf(stderr, " %6s", "budget");
     fprintf(stderr, " %6s", "total");
 #define PRINT_PROFILE_HEADER(name, text, phase)                               \
@@ -1347,15 +1347,13 @@ Statistics::printSliceProfile()
     bool shrinking = gckind == GC_SHRINK;
     bool reset = slice.resetReason != AbortReason::None;
     bool nonIncremental = nonincrementalReason_ != AbortReason::None;
-    bool full = zoneStats.isFullCollection();
 
-    fprintf(stderr, "MajorGC: %20s %1d -> %1d %1s%1s%1s%1s ",
+    fprintf(stderr, "MajorGC: %20s %1d -> %1d %1s%1s%1s  ",
             ExplainReason(slice.reason),
             int(slice.initialState), int(slice.finalState),
-            full ? "F": "",
             shrinking ? "S" : "",
-            nonIncremental ? "N" : "",
-            reset ? "R" : "");
+            reset ? "R" : "",
+            nonIncremental ? "N" : "");
 
     if (!nonIncremental && !slice.budget.isUnlimited() && slice.budget.isTimeBudget())
         fprintf(stderr, " %6" PRIi64, static_cast<int64_t>(slice.budget.timeBudget.budget));

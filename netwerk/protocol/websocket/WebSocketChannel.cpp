@@ -265,14 +265,18 @@ public:
         if (remainingDelay) {
           // reconnecting within delay interval: delay by remaining time
           nsresult rv;
-          rv = NS_NewTimerWithCallback(getter_AddRefs(ws->mReconnectDelayTimer),
-                                       ws, remainingDelay, nsITimer::TYPE_ONE_SHOT);
+          ws->mReconnectDelayTimer =
+            do_CreateInstance("@mozilla.org/timer;1", &rv);
           if (NS_SUCCEEDED(rv)) {
-            LOG(("WebSocket: delaying websocket [this=%p] by %lu ms, changing"
-                 " state to CONNECTING_DELAYED", ws,
-                 (unsigned long)remainingDelay));
-            ws->mConnecting = CONNECTING_DELAYED;
-            return;
+            rv = ws->mReconnectDelayTimer->InitWithCallback(
+                          ws, remainingDelay, nsITimer::TYPE_ONE_SHOT);
+            if (NS_SUCCEEDED(rv)) {
+              LOG(("WebSocket: delaying websocket [this=%p] by %lu ms, changing"
+                   " state to CONNECTING_DELAYED", ws,
+                   (unsigned long)remainingDelay));
+              ws->mConnecting = CONNECTING_DELAYED;
+              return;
+            }
           }
           // if timer fails (which is very unlikely), drop down to BeginOpen call
         } else if (fail->IsExpired(rightNow)) {
@@ -1058,6 +1062,9 @@ public:
     nsresult rv = NS_ReadInputStreamToString(mMsg.pStream, *temp, mLength);
 
     NS_ENSURE_SUCCESS(rv, rv);
+    if (temp->Length() != mLength) {
+      return NS_ERROR_UNEXPECTED;
+    }
 
     mMsg.pStream->Close();
     mMsg.pStream->Release();
@@ -1324,11 +1331,12 @@ WebSocketChannel::OnNetworkChanged()
   if (!mPingTimer) {
     // The ping timer is only conditionally running already. If it wasn't
     // already created do it here.
-    mPingTimer = NS_NewTimer();
-    if (!mPingTimer) {
+    nsresult rv;
+    mPingTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+    if (NS_FAILED(rv)) {
       LOG(("WebSocket: unable to create ping timer!"));
       NS_WARNING("unable to create ping timer!");
-      return NS_ERROR_OUT_OF_MEMORY;
+      return rv;
     }
   }
   // Trigger the ping timeout asap to fire off a new ping. Wait just
@@ -1423,9 +1431,15 @@ WebSocketChannel::BeginOpenInternal()
   }
   mOpenedHttpChannel = 1;
 
-  rv = NS_NewTimerWithCallback(getter_AddRefs(mOpenTimer),
-                               this, mOpenTimeout,
-                               nsITimer::TYPE_ONE_SHOT);
+  mOpenTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+  if (NS_FAILED(rv)) {
+    LOG(("WebSocketChannel::BeginOpenInternal: cannot create open timer\n"));
+    AbortSession(NS_ERROR_UNEXPECTED);
+    return;
+  }
+
+  rv = mOpenTimer->InitWithCallback(this, mOpenTimeout,
+                                    nsITimer::TYPE_ONE_SHOT);
   if (NS_FAILED(rv)) {
     LOG(("WebSocketChannel::BeginOpenInternal: cannot initialize open "
          "timer\n"));
@@ -1734,7 +1748,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
         }
 
         // Section 8.1 says to fail connection if invalid utf-8 in text message
-        if (!IsUTF8(utf8Data)) {
+        if (!IsUTF8(utf8Data, false)) {
           LOG(("WebSocketChannel:: text frame invalid utf-8\n"));
           return NS_ERROR_CANNOT_CONVERT_DATA;
         }
@@ -1785,7 +1799,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
             // (which are non-conformant to send) with u+fffd,
             // but secteam feels that silently rewriting messages is
             // inappropriate - so we will fail the connection instead.
-            if (!IsUTF8(mServerCloseReason)) {
+            if (!IsUTF8(mServerCloseReason, false)) {
               LOG(("WebSocketChannel:: close frame invalid utf-8\n"));
               return NS_ERROR_CANNOT_CONVERT_DATA;
             }
@@ -2124,10 +2138,11 @@ WebSocketChannel::PrimeNewOutgoingMessage()
       StopSession(mStopOnClose);
     } else {
       /* wait for reciprocal close from server */
-      rv = NS_NewTimerWithCallback(getter_AddRefs(mCloseTimer),
-                                   this, mCloseTimeout,
-                                   nsITimer::TYPE_ONE_SHOT);
-      if (NS_FAILED(rv)) {
+      mCloseTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+      if (NS_SUCCEEDED(rv)) {
+        mCloseTimer->InitWithCallback(this, mCloseTimeout,
+                                      nsITimer::TYPE_ONE_SHOT);
+      } else {
         StopSession(rv);
       }
     }
@@ -2438,10 +2453,11 @@ WebSocketChannel::StopSession(nsresult reason)
     LOG(("WebSocketChannel::StopSession: Wait for Server TCP close"));
 
     nsresult rv;
-    rv = NS_NewTimerWithCallback(getter_AddRefs(mLingeringCloseTimer),
-                                 this, kLingeringCloseTimeout,
-                                 nsITimer::TYPE_ONE_SHOT);
-    if (NS_FAILED(rv))
+    mLingeringCloseTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+    if (NS_SUCCEEDED(rv))
+      mLingeringCloseTimer->InitWithCallback(this, kLingeringCloseTimeout,
+                                             nsITimer::TYPE_ONE_SHOT);
+    else
       CleanupConnection();
   } else {
     CleanupConnection();
@@ -2550,7 +2566,7 @@ ParseWebSocketExtension(const nsACString& aExtension,
   nsCCharSeparatedTokenizer tokens(aExtension, ';');
 
   if (!tokens.hasMoreTokens() ||
-      !tokens.nextToken().EqualsLiteral("permessage-deflate")) {
+      !tokens.nextToken().Equals(NS_LITERAL_CSTRING("permessage-deflate"))) {
     LOG(("WebSocketChannel::ParseWebSocketExtension: "
          "HTTP Sec-WebSocket-Extensions negotiated unknown value %s\n",
          PromiseFlatCString(aExtension).get()));
@@ -3004,14 +3020,13 @@ WebSocketChannel::StartPinging()
   MOZ_ASSERT(!mPingTimer);
 
   nsresult rv;
-  rv = NS_NewTimerWithCallback(getter_AddRefs(mPingTimer),
-                               this, mPingInterval,
-                               nsITimer::TYPE_ONE_SHOT);
-  if (NS_SUCCEEDED(rv)) {
+  mPingTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("unable to create ping timer. Carrying on.");
+  } else {
     LOG(("WebSocketChannel will generate ping after %d ms of receive silence\n",
          mPingInterval));
-  } else {
-    NS_WARNING("unable to create ping timer. Carrying on.");
+    mPingTimer->InitWithCallback(this, mPingInterval, nsITimer::TYPE_ONE_SHOT);
   }
 
   return NS_OK;

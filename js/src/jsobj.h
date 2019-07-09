@@ -24,7 +24,6 @@
 #include "js/GCAPI.h"
 #include "js/GCVector.h"
 #include "js/HeapAPI.h"
-#include "vm/Printer.h"
 #include "vm/Shape.h"
 #include "vm/String.h"
 #include "vm/Xdr.h"
@@ -42,6 +41,30 @@ class Nursery;
 namespace gc {
 class RelocationOverlay;
 } // namespace gc
+
+inline JSObject*
+CastAsObject(GetterOp op)
+{
+    return JS_FUNC_TO_DATA_PTR(JSObject*, op);
+}
+
+inline JSObject*
+CastAsObject(SetterOp op)
+{
+    return JS_FUNC_TO_DATA_PTR(JSObject*, op);
+}
+
+inline Value
+CastAsObjectJsval(GetterOp op)
+{
+    return ObjectOrNullValue(CastAsObject(op));
+}
+
+inline Value
+CastAsObjectJsval(SetterOp op)
+{
+    return ObjectOrNullValue(CastAsObject(op));
+}
 
 /******************************************************************************/
 
@@ -236,6 +259,21 @@ class JSObject : public js::gc::Cell
     }
 
     /*
+     * Whether SETLELEM was used to access this object. See also the comment near
+     * PropertyTree::MAX_HEIGHT.
+     */
+    inline bool hadElementsAccess() const;
+    static bool setHadElementsAccess(JSContext* cx, JS::HandleObject obj) {
+        return setFlags(cx, obj, js::BaseShape::HAD_ELEMENTS_ACCESS);
+    }
+
+    /*
+     * Whether there may be indexed properties on this object, excluding any in
+     * the object's elements.
+     */
+    inline bool isIndexed() const;
+
+    /*
      * Whether there may be "interesting symbol" properties on this object. An
      * interesting symbol is a symbol for which symbol->isInterestingSymbol()
      * returns true.
@@ -398,6 +436,12 @@ class JSObject : public js::gc::Cell
     inline bool isNewGroupUnknown() const;
     static bool setNewGroupUnknown(JSContext* cx, const js::Class* clasp, JS::HandleObject obj);
 
+    // Mark an object as having its 'new' script information cleared.
+    inline bool wasNewScriptCleared() const;
+    static bool setNewScriptCleared(JSContext* cx, JS::HandleObject obj) {
+        return setFlags(cx, obj, js::BaseShape::NEW_SCRIPT_CLEARED);
+    }
+
     /* Set a new prototype for an object with a singleton type. */
     static bool splicePrototype(JSContext* cx, js::HandleObject obj, const js::Class* clasp,
                                 js::Handle<js::TaggedProto> proto);
@@ -539,7 +583,7 @@ class JSObject : public js::gc::Cell
     }
 
 #ifdef DEBUG
-    void dump(js::GenericPrinter& fp) const;
+    void dump(FILE* fp) const;
     void dump() const;
 #endif
 
@@ -726,31 +770,16 @@ DefineProperty(JSContext* cx, HandleObject obj, HandleId id,
                Handle<JS::PropertyDescriptor> desc, ObjectOpResult& result);
 
 extern bool
-DefineAccessorProperty(JSContext* cx, HandleObject obj, HandleId id,
-                       JSGetterOp getter, JSSetterOp setter, unsigned attrs,
-                       ObjectOpResult& result);
+DefineProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue value,
+               JSGetterOp getter, JSSetterOp setter, unsigned attrs, ObjectOpResult& result);
 
 extern bool
-DefineDataProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue value,
-                   unsigned attrs, ObjectOpResult& result);
+DefineProperty(JSContext* cx, HandleObject obj, PropertyName* name, HandleValue value,
+               JSGetterOp getter, JSSetterOp setter, unsigned attrs, ObjectOpResult& result);
 
 extern bool
-DefineAccessorProperty(JSContext* cx, HandleObject obj, PropertyName* name,
-                       JSGetterOp getter, JSSetterOp setter, unsigned attrs,
-                       ObjectOpResult& result);
-
-extern bool
-DefineDataProperty(JSContext* cx, HandleObject obj, PropertyName* name, HandleValue value,
-                   unsigned attrs, ObjectOpResult& result);
-
-extern bool
-DefineAccessorElement(JSContext* cx, HandleObject obj, uint32_t index,
-                      JSGetterOp getter, JSSetterOp setter, unsigned attrs,
-                      ObjectOpResult& result);
-
-extern bool
-DefineDataElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue value,
-                  unsigned attrs, ObjectOpResult& result);
+DefineElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue value,
+              JSGetterOp getter, JSSetterOp setter, unsigned attrs, ObjectOpResult& result);
 
 /*
  * When the 'result' out-param is omitted, the behavior is the same as above, except
@@ -760,28 +789,22 @@ extern bool
 DefineProperty(JSContext* cx, HandleObject obj, HandleId id, Handle<JS::PropertyDescriptor> desc);
 
 extern bool
-DefineAccessorProperty(JSContext* cx, HandleObject obj, HandleId id,
-                       JSGetterOp getter, JSSetterOp setter, unsigned attrs = JSPROP_ENUMERATE);
+DefineProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue value,
+               JSGetterOp getter = nullptr,
+               JSSetterOp setter = nullptr,
+               unsigned attrs = JSPROP_ENUMERATE);
 
 extern bool
-DefineDataProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue value,
-                   unsigned attrs = JSPROP_ENUMERATE);
+DefineProperty(JSContext* cx, HandleObject obj, PropertyName* name, HandleValue value,
+               JSGetterOp getter = nullptr,
+               JSSetterOp setter = nullptr,
+               unsigned attrs = JSPROP_ENUMERATE);
 
 extern bool
-DefineAccessorProperty(JSContext* cx, HandleObject obj, PropertyName* name,
-                       JSGetterOp getter, JSSetterOp setter, unsigned attrs = JSPROP_ENUMERATE);
-
-extern bool
-DefineDataProperty(JSContext* cx, HandleObject obj, PropertyName* name, HandleValue value,
-                   unsigned attrs = JSPROP_ENUMERATE);
-
-extern bool
-DefineAccessorElement(JSContext* cx, HandleObject obj, uint32_t index,
-                      JSGetterOp getter, JSSetterOp setter, unsigned attrs = JSPROP_ENUMERATE);
-
-extern bool
-DefineDataElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue value,
-                  unsigned attrs = JSPROP_ENUMERATE);
+DefineElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue value,
+              JSGetterOp getter = nullptr,
+              JSSetterOp setter = nullptr,
+              unsigned attrs = JSPROP_ENUMERATE);
 
 /*
  * ES6 [[Has]]. Set *foundp to true if `id in obj` (that is, if obj has an own
@@ -841,13 +864,28 @@ inline bool
 GetPropertyNoGC(JSContext* cx, JSObject* obj, const Value& receiver, jsid id, Value* vp);
 
 inline bool
+GetPropertyNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, jsid id, Value* vp)
+{
+    return GetPropertyNoGC(cx, obj, ObjectValue(*receiver), id, vp);
+}
+
+inline bool
 GetPropertyNoGC(JSContext* cx, JSObject* obj, const Value& receiver, PropertyName* name, Value* vp)
 {
     return GetPropertyNoGC(cx, obj, receiver, NameToId(name), vp);
 }
 
 inline bool
+GetPropertyNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, PropertyName* name, Value* vp)
+{
+    return GetPropertyNoGC(cx, obj, ObjectValue(*receiver), name, vp);
+}
+
+inline bool
 GetElementNoGC(JSContext* cx, JSObject* obj, const Value& receiver, uint32_t index, Value* vp);
+
+inline bool
+GetElementNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, uint32_t index, Value* vp);
 
 // Returns whether |obj| or an object on its proto chain may have an interesting
 // symbol property (see JSObject::hasInterestingSymbolProperty). If it returns
@@ -1036,20 +1074,18 @@ MOZ_ALWAYS_INLINE const char*
 GetObjectClassName(JSContext* cx, HandleObject obj);
 
 /*
- * Prepare a |this| value to be returned to script. This includes replacing
- * Windows with their corresponding WindowProxy.
+ * Return an object that may be used as `this` in place of obj. For most
+ * objects this just returns obj.
  *
- * Helpers are also provided to first extract the |this| from specific
- * types of environment.
+ * Some JSObjects shouldn't be exposed directly to script. This includes (at
+ * least) WithEnvironmentObjects and Window objects. However, since both of
+ * those can be on scope chains, we sometimes would expose those as `this` if
+ * we were not so vigilant about calling GetThisValue where appropriate.
+ *
+ * See comments at ComputeImplicitThis.
  */
 Value
 GetThisValue(JSObject* obj);
-
-Value
-GetThisValueOfLexical(JSObject* env);
-
-Value
-GetThisValueOfWith(JSObject* env);
 
 /* * */
 
@@ -1066,9 +1102,29 @@ JSObject*
 GetBuiltinPrototypePure(GlobalObject* global, JSProtoKey protoKey);
 
 extern bool
+SetClassAndProto(JSContext* cx, HandleObject obj,
+                 const Class* clasp, Handle<TaggedProto> proto);
+
+extern bool
 IsStandardPrototype(JSObject* obj, JSProtoKey key);
 
 } /* namespace js */
+
+/*
+ * Select Object.prototype method names shared between jsapi.cpp and jsobj.cpp.
+ */
+extern const char js_watch_str[];
+extern const char js_unwatch_str[];
+extern const char js_hasOwnProperty_str[];
+extern const char js_isPrototypeOf_str[];
+extern const char js_propertyIsEnumerable_str[];
+
+#ifdef JS_OLD_GETTER_SETTER_METHODS
+extern const char js_defineGetter_str[];
+extern const char js_defineSetter_str[];
+extern const char js_lookupGetter_str[];
+extern const char js_lookupSetter_str[];
+#endif
 
 namespace js {
 
@@ -1205,6 +1261,9 @@ LookupNameUnqualified(JSContext* cx, HandlePropertyName name, HandleObject scope
 
 namespace js {
 
+extern JSObject*
+FindVariableScope(JSContext* cx, JSFunction** funp);
+
 bool
 LookupPropertyPure(JSContext* cx, JSObject* obj, jsid id, JSObject** objp,
                    PropertyResult* propp);
@@ -1215,9 +1274,6 @@ LookupOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id, PropertyResult* pro
 
 bool
 GetPropertyPure(JSContext* cx, JSObject* obj, jsid id, Value* vp);
-
-bool
-GetOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id, Value* vp);
 
 bool
 GetGetterPure(JSContext* cx, JSObject* obj, jsid id, JSFunction** fp);
@@ -1234,6 +1290,9 @@ HasOwnDataPropertyPure(JSContext* cx, JSObject* obj, jsid id, bool* result);
 bool
 GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
                          MutableHandle<JS::PropertyDescriptor> desc);
+
+bool
+GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp);
 
 /*
  * Like JS::FromPropertyDescriptor, but ignore desc.object() and always set vp
@@ -1330,9 +1389,12 @@ extern bool
 GetFirstArgumentAsObject(JSContext* cx, const CallArgs& args, const char* method,
                          MutableHandleObject objp);
 
-/* Helper for throwing, always returns false. */
+/* Helpers for throwing. These always return false. */
 extern bool
-Throw(JSContext* cx, jsid id, unsigned errorNumber, const char* details = nullptr);
+Throw(JSContext* cx, jsid id, unsigned errorNumber);
+
+extern bool
+Throw(JSContext* cx, JSObject* obj, unsigned errorNumber);
 
 /*
  * ES6 rev 29 (6 Dec 2014) 7.3.13. Mark obj as non-extensible, and adjust each
@@ -1356,13 +1418,11 @@ FreezeObject(JSContext* cx, HandleObject obj)
 extern bool
 TestIntegrityLevel(JSContext* cx, HandleObject obj, IntegrityLevel level, bool* resultp);
 
-extern MOZ_MUST_USE JSObject*
-SpeciesConstructor(JSContext* cx, HandleObject obj, HandleObject defaultCtor,
-                   bool (*isDefaultSpecies)(JSContext*, JSFunction*));
+extern bool
+SpeciesConstructor(JSContext* cx, HandleObject obj, HandleValue defaultCtor, MutableHandleValue pctor);
 
-extern MOZ_MUST_USE JSObject*
-SpeciesConstructor(JSContext* cx, HandleObject obj, JSProtoKey ctorKey,
-                   bool (*isDefaultSpecies)(JSContext*, JSFunction*));
+extern bool
+SpeciesConstructor(JSContext* cx, HandleObject obj, JSProtoKey ctorKey, MutableHandleValue pctor);
 
 extern bool
 GetObjectFromIncumbentGlobal(JSContext* cx, MutableHandleObject obj);

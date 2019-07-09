@@ -148,11 +148,12 @@ nsMathMLmfracFrame::CalcLineThickness(nsPresContext*  aPresContext,
 
 void
 nsMathMLmfracFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                     const nsRect&           aDirtyRect,
                                      const nsDisplayListSet& aLists)
 {
   /////////////
   // paint the numerator and denominator
-  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aLists);
+  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 
   /////////////
   // paint the fraction line
@@ -166,7 +167,7 @@ nsMathMLmfracFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
 nsresult
 nsMathMLmfracFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                     nsAtom* aAttribute,
+                                     nsIAtom* aAttribute,
                                      int32_t  aModType)
 {
   if (nsGkAtoms::linethickness_ == aAttribute) {

@@ -9,6 +9,7 @@
 const promise = require("promise");
 const Services = require("Services");
 const {Task} = require("devtools/shared/task");
+const {Tools} = require("devtools/client/definitions");
 const {l10n} = require("devtools/shared/inspector/css-logic");
 const {ELEMENT_STYLE} = require("devtools/shared/specs/styles");
 const OutputParser = require("devtools/client/shared/output-parser");
@@ -17,6 +18,7 @@ const ElementStyle = require("devtools/client/inspector/rules/models/element-sty
 const Rule = require("devtools/client/inspector/rules/models/rule");
 const RuleEditor = require("devtools/client/inspector/rules/views/rule-editor");
 const ClassListPreviewer = require("devtools/client/inspector/rules/views/class-list-previewer");
+const {gDevTools} = require("devtools/client/framework/devtools");
 const {getCssProperties} = require("devtools/shared/fronts/css-properties");
 const {
   VIEW_NODE_SELECTOR_TYPE,
@@ -28,9 +30,8 @@ const {
 } = require("devtools/client/inspector/shared/node-types");
 const StyleInspectorMenu = require("devtools/client/inspector/shared/style-inspector-menu");
 const TooltipsOverlay = require("devtools/client/inspector/shared/tooltips-overlay");
-const {createChild, promiseWarn} = require("devtools/client/inspector/shared/utils");
-const {debounce} = require("devtools/shared/debounce");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const {createChild, promiseWarn, debounce} = require("devtools/client/inspector/shared/utils");
+const EventEmitter = require("devtools/shared/event-emitter");
 const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const clipboardHelper = require("devtools/shared/platform/clipboard");
 const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
@@ -38,7 +39,10 @@ const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const PREF_UA_STYLES = "devtools.inspector.showUserAgentStyles";
 const PREF_DEFAULT_COLOR_UNIT = "devtools.defaultColorUnit";
+const PREF_ENABLE_MDN_DOCS_TOOLTIP =
+      "devtools.inspector.mdnDocsTooltip.enabled";
 const FILTER_CHANGED_TIMEOUT = 150;
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 // This is used to parse user input when filtering.
 const FILTER_PROP_RE = /\s*([^:\s]*)\s*:\s*(.*?)\s*;?$/;
@@ -146,6 +150,7 @@ function CssRuleView(inspector, document, store, pageStyle) {
   this.element.addEventListener("contextmenu", this._onContextMenu);
   this.addRuleButton.addEventListener("click", this._onAddRule);
   this.searchField.addEventListener("input", this._onFilterStyles);
+  this.searchField.addEventListener("contextmenu", this.inspector.onTextBoxContextMenu);
   this.searchClearButton.addEventListener("click", this._onClearSearch);
   this.pseudoClassToggle.addEventListener("click", this._onTogglePseudoClassPanel);
   this.classToggle.addEventListener("click", this._onToggleClassPanel);
@@ -154,12 +159,17 @@ function CssRuleView(inspector, document, store, pageStyle) {
   this.focusCheckbox.addEventListener("click", this._onTogglePseudoClass);
 
   this._handlePrefChange = this._handlePrefChange.bind(this);
+  this._onSourcePrefChanged = this._onSourcePrefChanged.bind(this);
 
   this._prefObserver = new PrefObserver("devtools.");
+  this._prefObserver.on(PREF_ORIG_SOURCES, this._onSourcePrefChanged);
   this._prefObserver.on(PREF_UA_STYLES, this._handlePrefChange);
   this._prefObserver.on(PREF_DEFAULT_COLOR_UNIT, this._handlePrefChange);
+  this._prefObserver.on(PREF_ENABLE_MDN_DOCS_TOOLTIP, this._handlePrefChange);
 
   this.showUserAgentStyles = Services.prefs.getBoolPref(PREF_UA_STYLES);
+  this.enableMdnDocsTooltip =
+    Services.prefs.getBoolPref(PREF_ENABLE_MDN_DOCS_TOOLTIP);
 
   // The popup will be attached to the toolbox document.
   this.popup = new AutocompletePopup(inspector._toolbox.doc, {
@@ -388,15 +398,6 @@ CssRuleView.prototype = {
    * Context menu handler.
    */
   _onContextMenu: function (event) {
-    if (event.originalTarget.closest("input[type=text]") ||
-        event.originalTarget.closest("input:not([type])") ||
-        event.originalTarget.closest("textarea")) {
-      return;
-    }
-
-    event.stopPropagation();
-    event.preventDefault();
-
     this._contextmenu.show(event);
   },
 
@@ -553,6 +554,20 @@ CssRuleView.prototype = {
   },
 
   /**
+   * Update source links when pref for showing original sources changes
+   */
+  _onSourcePrefChanged: function () {
+    if (this._elementStyle && this._elementStyle.rules) {
+      for (let rule of this._elementStyle.rules) {
+        if (rule.editor) {
+          rule.editor.updateSourceLink();
+        }
+      }
+      this.inspector.emit("rule-view-sourcelinks-updated");
+    }
+  },
+
+  /**
    * Set the filter style search value.
    * @param {String} value
    *        The search value.
@@ -663,6 +678,7 @@ CssRuleView.prototype = {
 
     this._dummyElement = null;
 
+    this._prefObserver.off(PREF_ORIG_SOURCES, this._onSourcePrefChanged);
     this._prefObserver.off(PREF_UA_STYLES, this._handlePrefChange);
     this._prefObserver.off(PREF_DEFAULT_COLOR_UNIT, this._handlePrefChange);
     this._prefObserver.destroy();
@@ -685,6 +701,8 @@ CssRuleView.prototype = {
     this.element.removeEventListener("contextmenu", this._onContextMenu);
     this.addRuleButton.removeEventListener("click", this._onAddRule);
     this.searchField.removeEventListener("input", this._onFilterStyles);
+    this.searchField.removeEventListener("contextmenu",
+      this.inspector.onTextBoxContextMenu);
     this.searchClearButton.removeEventListener("click", this._onClearSearch);
     this.pseudoClassToggle.removeEventListener("click", this._onTogglePseudoClassPanel);
     this.classToggle.removeEventListener("click", this._onToggleClassPanel);
@@ -882,7 +900,7 @@ CssRuleView.prototype = {
       // Notify anyone that cares that we refreshed.
       return onEditorsReady.then(() => {
         this.emit("ruleview-refreshed");
-      }, console.error);
+      }, e => console.error(e));
     }).catch(promiseWarn);
   },
 
@@ -896,7 +914,6 @@ CssRuleView.prototype = {
 
     createChild(this.element, "div", {
       id: "ruleview-no-results",
-      class: "devtools-sidepanel-no-result",
       textContent: l10n("rule.empty")
     });
   },
@@ -989,7 +1006,12 @@ CssRuleView.prototype = {
     container.hidden = false;
     this.element.appendChild(container);
 
-    header.addEventListener("click", () => {
+    header.addEventListener("dblclick", () => {
+      this._toggleContainerVisibility(twisty, container, isPseudo,
+        !this.showPseudoElements);
+    });
+
+    twisty.addEventListener("click", () => {
       this._toggleContainerVisibility(twisty, container, isPseudo,
         !this.showPseudoElements);
     });
@@ -1038,7 +1060,7 @@ CssRuleView.prototype = {
   },
 
   _getRuleViewHeaderClassName: function (isPseudo) {
-    let baseClassName = "ruleview-header";
+    let baseClassName = "theme-gutter ruleview-header";
     return isPseudo ? baseClassName + " ruleview-expandable-header" :
       baseClassName;
   },
@@ -1586,6 +1608,7 @@ function RuleViewTool(inspector, window) {
 
   this.clearUserProperties = this.clearUserProperties.bind(this);
   this.refresh = this.refresh.bind(this);
+  this.onLinkClicked = this.onLinkClicked.bind(this);
   this.onMutations = this.onMutations.bind(this);
   this.onPanelSelected = this.onPanelSelected.bind(this);
   this.onPropertyChanged = this.onPropertyChanged.bind(this);
@@ -1595,6 +1618,7 @@ function RuleViewTool(inspector, window) {
 
   this.view.on("ruleview-changed", this.onPropertyChanged);
   this.view.on("ruleview-refreshed", this.onViewRefreshed);
+  this.view.on("ruleview-linked-clicked", this.onLinkClicked);
 
   this.inspector.selection.on("detached-front", this.onSelected);
   this.inspector.selection.on("new-node-front", this.onSelected);
@@ -1666,6 +1690,33 @@ RuleViewTool.prototype = {
     }
   },
 
+  onLinkClicked: function (e, rule) {
+    let sheet = rule.parentStyleSheet;
+
+    // Chrome stylesheets are not listed in the style editor, so show
+    // these sheets in the view source window instead.
+    if (!sheet || sheet.isSystem) {
+      let href = rule.nodeHref || rule.href;
+      let toolbox = gDevTools.getToolbox(this.inspector.target);
+      toolbox.viewSource(href, rule.line);
+      return;
+    }
+
+    let location = promise.resolve(rule.location);
+    if (Services.prefs.getBoolPref(PREF_ORIG_SOURCES)) {
+      location = rule.getOriginalLocation();
+    }
+    location.then(({ source, href, line, column }) => {
+      let target = this.inspector.target;
+      if (Tools.styleEditor.isTargetSupported(target)) {
+        gDevTools.showToolbox(target, "styleeditor").then(function (toolbox) {
+          let url = source || href;
+          toolbox.getCurrentPanel().selectStyleSheet(url, line, column);
+        });
+      }
+    });
+  },
+
   onPropertyChanged: function () {
     this.inspector.markDirty();
   },
@@ -1708,6 +1759,7 @@ RuleViewTool.prototype = {
       this.inspector.pageStyle.off("stylesheet-updated", this.refresh);
     }
 
+    this.view.off("ruleview-linked-clicked", this.onLinkClicked);
     this.view.off("ruleview-changed", this.onPropertyChanged);
     this.view.off("ruleview-refreshed", this.onViewRefreshed);
 

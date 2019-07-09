@@ -307,6 +307,7 @@ struct ParamTraits<mozilla::layers::TextureFactoryIdentifier>
     WriteParam(aMsg, aParam.mSupportsTextureBlitting);
     WriteParam(aMsg, aParam.mSupportsPartialUploads);
     WriteParam(aMsg, aParam.mSupportsComponentAlpha);
+    WriteParam(aMsg, aParam.mSupportsBackdropCopyForComponentAlpha);
     WriteParam(aMsg, aParam.mUsingAdvancedLayers);
     WriteParam(aMsg, aParam.mSyncHandle);
   }
@@ -320,6 +321,7 @@ struct ParamTraits<mozilla::layers::TextureFactoryIdentifier>
                   ReadParam(aMsg, aIter, &aResult->mSupportsTextureBlitting) &&
                   ReadParam(aMsg, aIter, &aResult->mSupportsPartialUploads) &&
                   ReadParam(aMsg, aIter, &aResult->mSupportsComponentAlpha) &&
+                  ReadParam(aMsg, aIter, &aResult->mSupportsBackdropCopyForComponentAlpha) &&
                   ReadParam(aMsg, aIter, &aResult->mUsingAdvancedLayers) &&
                   ReadParam(aMsg, aIter, &aResult->mSyncHandle);
     return result;
@@ -438,8 +440,11 @@ struct ParamTraits<mozilla::layers::FocusTarget::ScrollTargets>
 };
 
 template <>
-struct ParamTraits<mozilla::layers::FocusTarget::NoFocusTarget>
-  : public EmptyStructSerializer<mozilla::layers::FocusTarget::NoFocusTarget>
+struct ParamTraits<mozilla::layers::FocusTarget::FocusTargetType>
+  : public ContiguousEnumSerializerInclusive<
+             mozilla::layers::FocusTarget::FocusTargetType,
+             mozilla::layers::FocusTarget::eNone,
+             mozilla::layers::FocusTarget::sHighestFocusTargetType>
 {};
 
 template <>
@@ -451,16 +456,28 @@ struct ParamTraits<mozilla::layers::FocusTarget>
   {
     WriteParam(aMsg, aParam.mSequenceNumber);
     WriteParam(aMsg, aParam.mFocusHasKeyEventListeners);
-    WriteParam(aMsg, aParam.mData);
+    WriteParam(aMsg, aParam.mType);
+    if (aParam.mType == mozilla::layers::FocusTarget::eRefLayer) {
+      WriteParam(aMsg, aParam.mData.mRefLayerId);
+    } else if (aParam.mType == mozilla::layers::FocusTarget::eScrollLayer) {
+      WriteParam(aMsg, aParam.mData.mScrollTargets);
+    }
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &aResult->mSequenceNumber) ||
         !ReadParam(aMsg, aIter, &aResult->mFocusHasKeyEventListeners) ||
-        !ReadParam(aMsg, aIter, &aResult->mData)) {
+        !ReadParam(aMsg, aIter, &aResult->mType)) {
       return false;
     }
+
+    if (aResult->mType == mozilla::layers::FocusTarget::eRefLayer) {
+      return ReadParam(aMsg, aIter, &aResult->mData.mRefLayerId);
+    } else if (aResult->mType == mozilla::layers::FocusTarget::eScrollLayer) {
+      return ReadParam(aMsg, aIter, &aResult->mData.mScrollTargets);
+    }
+
     return true;
   }
 };

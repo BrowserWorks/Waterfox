@@ -62,11 +62,11 @@ pub fn fetch_image_for_layout(url: ServoUrl,
     let listener = NetworkListener {
         context: context,
         task_source: window.networking_task_source(),
-        canceller: Some(window.task_canceller()),
+        wrapper: Some(window.get_runnable_wrapper()),
     };
-    ROUTER.add_route(action_receiver.to_opaque(), Box::new(move |message| {
+    ROUTER.add_route(action_receiver.to_opaque(), box move |message| {
         listener.notify_fetch(message.to().unwrap());
-    }));
+    });
 
     let request = FetchRequestInit {
         url: url,
@@ -77,5 +77,5 @@ pub fn fetch_image_for_layout(url: ServoUrl,
     };
 
     // Layout image loads do not delay the document load event.
-    document.loader().fetch_async_background(request, action_sender);
+    document.mut_loader().fetch_async_background(request, action_sender);
 }

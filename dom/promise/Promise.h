@@ -27,6 +27,7 @@ namespace mozilla {
 namespace dom {
 
 class AnyCallback;
+class DOMError;
 class MediaStreamError;
 class PromiseInit;
 class PromiseNativeHandler;
@@ -94,11 +95,11 @@ public:
 
   // DO NOT USE MaybeRejectBrokenly with in new code.  Promises should be
   // rejected with Error instances.
-  // Note: MaybeRejectBrokenly is a template so we can use it with DOMException
-  // without instantiating the DOMException specialization of MaybeSomething in
+  // Note: MaybeRejectBrokenly is a template so we can use it with DOMError
+  // without instantiating the DOMError specialization of MaybeSomething in
   // every translation unit that includes this header, because that would
-  // require use to include DOMException.h either here or in all those
-  // translation units.
+  // require use to include DOMError.h either here or in all those translation
+  // units.
   template<typename T>
   void MaybeRejectBrokenly(const T& aArg); // Not implemented by default; see
                                            // specializations in the .cpp for
@@ -111,7 +112,6 @@ public:
   static void PerformWorkerMicroTaskCheckpoint();
 
   static void PerformWorkerDebuggerMicroTaskCheckpoint();
-  static bool IsWorkerDebuggerMicroTaskEmpty();
 
   // WebIDL
 

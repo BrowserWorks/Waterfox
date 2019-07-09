@@ -20,6 +20,7 @@
 #include "nsGkAtoms.h"
 #include "nsIComboboxControlFrame.h"
 #include "nsIDocument.h"
+#include "nsIDOMHTMLOptGroupElement.h"
 #include "nsIFormControlFrame.h"
 #include "nsIForm.h"
 #include "nsIFormProcessor.h"
@@ -281,7 +282,7 @@ HTMLOptionsCollection::NamedItem(const nsAString& aName,
 void
 HTMLOptionsCollection::GetSupportedNames(nsTArray<nsString>& aNames)
 {
-  AutoTArray<nsAtom*, 8> atoms;
+  AutoTArray<nsIAtom*, 8> atoms;
   for (uint32_t i = 0; i < mElements.Length(); ++i) {
     HTMLOptionElement* content = mElements.ElementAt(i);
     if (content) {
@@ -289,13 +290,13 @@ HTMLOptionsCollection::GetSupportedNames(nsTArray<nsString>& aNames)
       // which is false for options, so we don't check it here.
       const nsAttrValue* val = content->GetParsedAttr(nsGkAtoms::name);
       if (val && val->Type() == nsAttrValue::eAtom) {
-        nsAtom* name = val->GetAtomValue();
+        nsIAtom* name = val->GetAtomValue();
         if (!atoms.Contains(name)) {
           atoms.AppendElement(name);
         }
       }
       if (content->HasID()) {
-        nsAtom* id = content->GetID();
+        nsIAtom* id = content->GetID();
         if (!atoms.Contains(id)) {
           atoms.AppendElement(id);
         }

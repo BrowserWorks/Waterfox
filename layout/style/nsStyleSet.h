@@ -12,7 +12,6 @@
 #ifndef nsStyleSet_h_
 #define nsStyleSet_h_
 
-#include "mozilla/AtomArray.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/EnumeratedArray.h"
@@ -107,7 +106,7 @@ class nsStyleSet final
   nsStyleSet();
   ~nsStyleSet();
 
-  void AddSizeOfIncludingThis(nsWindowSizes& aSizes) const;
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
   void Init(nsPresContext* aPresContext, nsBindingManager* aBindingManager);
 
@@ -291,24 +290,24 @@ class nsStyleSet final
   // use and must be non-null.  It must be an anon box, and must be one that
   // inherits style from the given aParentContext.
   already_AddRefed<mozilla::GeckoStyleContext>
-  ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
+  ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
                                      mozilla::GeckoStyleContext* aParentContext);
 
   // Get a style context for an anonymous box that does not inherit style from
   // anything.  aPseudoTag is the pseudo-tag to use and must be non-null.  It
   // must be an anon box, and must be a non-inheriting one.
   already_AddRefed<mozilla::GeckoStyleContext>
-  ResolveNonInheritingAnonymousBoxStyle(nsAtom* aPseudoTag);
+  ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag);
 
 #ifdef MOZ_XUL
   // Get a style context for a XUL tree pseudo.  aPseudoTag is the
   // pseudo-tag to use and must be non-null.  aParentContent must be
-  // non-null.
+  // non-null.  aComparator must be non-null.
   already_AddRefed<mozilla::GeckoStyleContext>
   ResolveXULTreePseudoStyle(mozilla::dom::Element* aParentElement,
                             nsICSSAnonBoxPseudo* aPseudoTag,
                             mozilla::GeckoStyleContext* aParentContext,
-                            const mozilla::AtomArray& aInputWord);
+                            nsICSSPseudoComparator* aComparator);
 #endif
 
   // Append all the currently-active font face rules to aArray.  Return
@@ -316,13 +315,13 @@ class nsStyleSet final
   bool AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
 
   // Return the winning (in the cascade) @keyframes rule for the given name.
-  nsCSSKeyframesRule* KeyframesRuleForName(nsAtom* aName);
+  nsCSSKeyframesRule* KeyframesRuleForName(const nsString& aName);
 
   // Return the winning (in the cascade) @counter-style rule for the given name.
-  nsCSSCounterStyleRule* CounterStyleRuleForName(nsAtom* aName);
+  nsCSSCounterStyleRule* CounterStyleRuleForName(nsIAtom* aName);
 
-  // Return gfxFontFeatureValueSet from font feature values rules.
-  already_AddRefed<gfxFontFeatureValueSet> BuildFontFeatureValueSet();
+  // Fetch object for looking up font feature values
+  already_AddRefed<gfxFontFeatureValueSet> GetFontFeatureValuesLookup();
 
   // Append all the currently-active font feature values rules to aArray.
   // Return true for success and false for failure.
@@ -380,7 +379,7 @@ class nsStyleSet final
   // Test if style is dependent on the presence of an attribute.
   nsRestyleHint HasAttributeDependentStyle(mozilla::dom::Element* aElement,
                                            int32_t        aNameSpaceID,
-                                           nsAtom*       aAttribute,
+                                           nsIAtom*       aAttribute,
                                            int32_t        aModType,
                                            bool           aAttrHasChanged,
                                            const nsAttrValue* aOtherValue,
@@ -574,7 +573,7 @@ private:
   GetContext(mozilla::GeckoStyleContext* aParentContext,
              nsRuleNode* aRuleNode,
              nsRuleNode* aVisitedRuleNode,
-             nsAtom* aPseudoTag,
+             nsIAtom* aPseudoTag,
              mozilla::CSSPseudoElementType aPseudoType,
              mozilla::dom::Element* aElementForAnimation,
              uint32_t aFlags);
@@ -644,6 +643,7 @@ private:
   unsigned mInGC : 1;
   unsigned mAuthorStyleDisabled: 1;
   unsigned mInReconstruct : 1;
+  unsigned mInitFontFeatureValuesLookup : 1;
   unsigned mNeedsRestyleAfterEnsureUniqueInner : 1;
   // Does the associated document use viewport units (vw/vh/vmin/vmax)?
   unsigned mUsesViewportUnits : 1;
@@ -677,6 +677,9 @@ private:
   // Style rule that sets the internal -x-text-zoom property on
   // <svg:text> elements to disable the effect of text zooming.
   RefPtr<nsDisableTextZoomStyleRule> mDisableTextZoomStyleRule;
+
+  // whether font feature values lookup object needs initialization
+  RefPtr<gfxFontFeatureValueSet> mFontFeatureValuesLookup;
 
   // Stores pointers to our cached style contexts for non-inheriting anonymous
   // boxes.

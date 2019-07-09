@@ -41,7 +41,7 @@ DateTimeInputTypeBase::IsMutable() const
 bool
 DateTimeInputTypeBase::IsValueMissing() const
 {
-  if (!mInputElement->IsRequired()) {
+  if (!mInputElement->HasAttr(kNameSpaceID_None, nsGkAtoms::required)) {
     return false;
   }
 
@@ -118,7 +118,7 @@ DateTimeInputTypeBase::HasBadInput() const
 }
 
 nsresult
-DateTimeInputTypeBase::GetRangeOverflowMessage(nsAString& aMessage)
+DateTimeInputTypeBase::GetRangeOverflowMessage(nsXPIDLString& aMessage)
 {
   nsAutoString maxStr;
   mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::max, maxStr);
@@ -129,7 +129,7 @@ DateTimeInputTypeBase::GetRangeOverflowMessage(nsAString& aMessage)
 }
 
 nsresult
-DateTimeInputTypeBase::GetRangeUnderflowMessage(nsAString& aMessage)
+DateTimeInputTypeBase::GetRangeUnderflowMessage(nsXPIDLString& aMessage)
 {
   nsAutoString minStr;
   mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::min, minStr);
@@ -176,7 +176,7 @@ DateTimeInputTypeBase::GetTimeFromMs(double aValue, uint16_t* aHours,
 // input type=date
 
 nsresult
-DateInputType::GetBadInputMessage(nsAString& aMessage)
+DateInputType::GetBadInputMessage(nsXPIDLString& aMessage)
 {
   if (!IsInputDateTimeEnabled()) {
     return NS_ERROR_UNEXPECTED;

@@ -39,7 +39,7 @@ add_task(async function testEmailEndEntity() {
 add_task(async function testCodeSignEndEntity() {
   let cert = await readCertificate("code-ee.pem", ",,");
   let win = await displayCertificate(cert);
-  checkError(win, "Could not verify this certificate for unknown reasons.");
+  checkUsages(win, ["Object Signer"]);
   await BrowserTestUtils.closeWindow(win);
 });
 
@@ -48,15 +48,15 @@ add_task(async function testExpired() {
   let win = await displayCertificate(cert);
   checkError(win, "Could not verify this certificate because it has expired.");
   await BrowserTestUtils.closeWindow(win);
+});
 
-  // These tasks may run in any order, so we run this additional testcase in the
-  // same task.
-  let eeCert = await readCertificate("ee-from-expired-ca.pem", ",,");
-  let eeWin = await displayCertificate(eeCert);
-  checkError(eeWin,
+add_task(async function testIssuerExpired() {
+  let cert = await readCertificate("ee-from-expired-ca.pem", ",,");
+  let win = await displayCertificate(cert);
+  checkError(win,
              "Could not verify this certificate because the CA certificate " +
              "is invalid.");
-  await BrowserTestUtils.closeWindow(eeWin);
+  await BrowserTestUtils.closeWindow(win);
 });
 
 add_task(async function testUnknownIssuer() {
@@ -84,15 +84,15 @@ add_task(async function testUntrusted() {
   checkError(win,
              "Could not verify this certificate because it is not trusted.");
   await BrowserTestUtils.closeWindow(win);
+});
 
-  // These tasks may run in any order, so we run this additional testcase in the
-  // same task.
-  let eeCert = await readCertificate("ee-from-untrusted-ca.pem", ",,");
-  let eeWin = await displayCertificate(eeCert);
-  checkError(eeWin,
+add_task(async function testUntrustedIssuer() {
+  let cert = await readCertificate("ee-from-untrusted-ca.pem", ",,");
+  let win = await displayCertificate(cert);
+  checkError(win,
              "Could not verify this certificate because the issuer is not " +
              "trusted.");
-  await BrowserTestUtils.closeWindow(eeWin);
+  await BrowserTestUtils.closeWindow(win);
 });
 
 add_task(async function testRevoked() {
@@ -110,7 +110,7 @@ add_task(async function testRevoked() {
   // this certificate will actually verify successfully for every end-entity
   // usage except TLS web server.
   checkUsages(win, ["Email Recipient Certificate", "Email Signer Certificate",
-                    "SSL Client Certificate"]);
+                    "Object Signer", "SSL Client Certificate"]);
   await BrowserTestUtils.closeWindow(win);
 });
 
@@ -122,14 +122,6 @@ add_task(async function testInvalid() {
   let cert = await readCertificate("invalid.pem", ",,");
   let win = await displayCertificate(cert);
   checkError(win, "Could not verify this certificate for unknown reasons.");
-  await BrowserTestUtils.closeWindow(win);
-});
-
-add_task(async function testLongOID() {
-  // This certificate has a certificatePolicies extension with a policy with a
-  // very long OID. This tests that we don't crash when looking at it.
-  let cert = await readCertificate("longOID.pem", ",,");
-  let win = await displayCertificate(cert);
   await BrowserTestUtils.closeWindow(win);
 });
 

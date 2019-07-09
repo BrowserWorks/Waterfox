@@ -2,15 +2,13 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-from __future__ import absolute_import
-
 import os
-import subprocess
 import sys
+import subprocess
 import time
 
 import mozinfo
-import psutil
+
 from mozlog import get_proxy_logger
 
 here = os.path.dirname(os.path.realpath(__file__))
@@ -72,22 +70,9 @@ def _read_certificate(certificate_path):
     return ''.join(contents.splitlines()[1:-1])
 
 
-def is_mitmproxy_cert_installed(browser_install):
+def is_mitmproxy_cert_installed():
     """Verify mitmxproy CA cert was added to Firefox"""
-    from mozharness.mozilla.firefox.autoconfig import read_autoconfig_file
-    try:
-        # read autoconfig file, confirm mitmproxy cert is in there
-        certificate = _read_certificate(DEFAULT_CERT_PATH)
-        contents = read_autoconfig_file(browser_install)
-        if (MITMPROXY_SETTINGS % {'cert': certificate}) in contents:
-            LOG.info("Verified mitmproxy CA certificate is installed in Firefox")
-        else:
-            LOG.info("Firefox autoconfig file contents:")
-            LOG.info(contents)
-            return False
-    except:
-        LOG.info("Failed to read Firefox autoconfig file, when verifying CA certificate install")
-        return False
+    # TODO: Bug 1366071
     return True
 
 
@@ -96,14 +81,10 @@ def install_mitmproxy_cert(mitmproxy_proc, browser_path, scripts_path):
     LOG.info("Installing mitmxproxy CA certficate into Firefox")
     # browser_path is exe, we want install dir
     browser_install = os.path.dirname(browser_path)
-    # on macosx we need to remove the last folders 'Content/MacOS'
-    if mozinfo.os == 'mac':
-        browser_install = browser_install[:-14]
-
     LOG.info('Calling configure_mitmproxy with browser folder: %s' % browser_install)
     configure_mitmproxy(browser_install, scripts_path)
     # cannot continue if failed to add CA cert to Firefox, need to check
-    if not is_mitmproxy_cert_installed(browser_install):
+    if not is_mitmproxy_cert_installed():
         LOG.error('Aborting: failed to install mitmproxy CA cert into Firefox')
         stop_mitmproxy_playback(mitmproxy_proc)
         sys.exit()
@@ -123,19 +104,19 @@ def start_mitmproxy_playback(mitmdump_path,
     # <path>/mitmdump -s "<path>mitmdump-alternate-server-replay/alternate-server-replay.py
     #  <path>recording-1.mp <path>recording-2.mp..."
     param = os.path.join(here, 'alternate-server-replay.py')
-    env = os.environ.copy()
 
     # this part is platform-specific
     if mozinfo.os == 'win':
         param2 = '""' + param.replace('\\', '\\\\\\') + ' ' + \
                  ' '.join(mitmproxy_recordings).replace('\\', '\\\\\\') + '""'
+        env = os.environ.copy()
         sys.path.insert(1, mitmdump_path)
         # mitmproxy needs some DLL's that are a part of Firefox itself, so add to path
         env["PATH"] = os.path.dirname(browser_path) + ";" + env["PATH"]
     else:
-        # mac and linux
-        param2 = param + ' ' + ' '.join(mitmproxy_recordings)
-        env["PATH"] = os.path.dirname(browser_path)
+        # TODO: support other platforms, Bug 1366355
+        LOG.error('Aborting: talos mitmproxy is currently only supported on Windows')
+        sys.exit()
 
     command = [mitmdump_path, '-k', '-s', param2]
 
@@ -144,7 +125,7 @@ def start_mitmproxy_playback(mitmdump_path,
     # to turn off mitmproxy log output, use these params for Popen:
     # Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     mitmproxy_proc = subprocess.Popen(command, env=env)
-    time.sleep(10)
+    time.sleep(5)
     data = mitmproxy_proc.poll()
     if data is None:
         LOG.info("Mitmproxy playback successfully started as pid %d" % mitmproxy_proc.pid)
@@ -157,15 +138,13 @@ def start_mitmproxy_playback(mitmdump_path,
 def stop_mitmproxy_playback(mitmproxy_proc):
     """Stop the mitproxy server playback"""
     LOG.info("Stopping mitmproxy playback, klling process %d" % mitmproxy_proc.pid)
-    if mozinfo.os == 'win':
-        mitmproxy_proc.kill()
+    mitmproxy_proc.kill()
+    time.sleep(5)
+    exit_code = mitmproxy_proc.poll()
+    if exit_code:
+        LOG.info("Successfully killed the mitmproxy playback process")
     else:
-        mitmproxy_proc.terminate()
-    time.sleep(10)
-    if mitmproxy_proc.pid in psutil.pids():
         # I *think* we can still continue, as process will be automatically
         # killed anyway when mozharness is done (?) if not, we won't be able
         # to startup mitmxproy next time if it is already running
         LOG.error("Failed to kill the mitmproxy playback process")
-    else:
-        LOG.info("Successfully killed the mitmproxy playback process")

@@ -83,3 +83,15 @@ MockPermissionPromptInstance.prototype = {
     request.allow();
   }
 };
+
+// Expose everything to content. We call reset() here so that all of the relevant
+// lazy expandos get added.
+MockPermissionPrompt.reset();
+function exposeAll(obj) {
+  var props = {};
+  for (var prop in obj)
+    props[prop] = "rw";
+  obj.__exposedProps__ = props;
+}
+exposeAll(MockPermissionPrompt);
+exposeAll(MockPermissionPromptInstance.prototype);

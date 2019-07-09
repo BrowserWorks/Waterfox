@@ -43,12 +43,12 @@
 // Audio Engine
 #include "webrtc/voice_engine/include/voe_base.h"
 #include "webrtc/voice_engine/include/voe_codec.h"
+#include "webrtc/voice_engine/include/voe_hardware.h"
 #include "webrtc/voice_engine/include/voe_network.h"
 #include "webrtc/voice_engine/include/voe_audio_processing.h"
 #include "webrtc/voice_engine/include/voe_volume_control.h"
 #include "webrtc/voice_engine/include/voe_external_media.h"
 #include "webrtc/voice_engine/include/voe_audio_processing.h"
-#include "webrtc/modules/audio_device/include/audio_device.h"
 #include "webrtc/modules/audio_processing/include/audio_processing.h"
 
 // Video Engine
@@ -100,6 +100,8 @@ public:
                    const MediaEnginePrefs &aPrefs,
                    const nsString& aDeviceId,
                    const char** aOutBadConstraint) override;
+  void SetDirectListeners(bool aDirect) override
+  {}
   void NotifyOutputData(MediaStreamGraph* aGraph,
                         AudioDataValue* aBuffer, size_t aFrames,
                         TrackRate aRate, uint32_t aChannels) override
@@ -376,36 +378,35 @@ public:
 
   int GetNumOfRecordingDevices(int& aDevices)
   {
-    ScopedCustomReleasePtr<webrtc::VoEBase> ptrVoEBase;
-    ptrVoEBase = webrtc::VoEBase::GetInterface(mVoiceEngine);
-    if (!ptrVoEBase)  {
+    ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw;
+    ptrVoEHw = webrtc::VoEHardware::GetInterface(mVoiceEngine);
+    if (!ptrVoEHw)  {
       return 1;
     }
-    aDevices = ptrVoEBase->audio_device_module()->RecordingDevices();
-    return 0;
+    return ptrVoEHw->GetNumOfRecordingDevices(aDevices);
   }
 
   int GetRecordingDeviceName(int aIndex, char (&aStrNameUTF8)[128],
                              char aStrGuidUTF8[128])
   {
-    ScopedCustomReleasePtr<webrtc::VoEBase> ptrVoEBase;
-    ptrVoEBase = webrtc::VoEBase::GetInterface(mVoiceEngine);
-    if (!ptrVoEBase)  {
+    ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw;
+    ptrVoEHw = webrtc::VoEHardware::GetInterface(mVoiceEngine);
+    if (!ptrVoEHw)  {
       return 1;
     }
-    return ptrVoEBase->audio_device_module()->RecordingDeviceName(aIndex,
-                                                                  aStrNameUTF8,
-                                                                  aStrGuidUTF8);
+    return ptrVoEHw->GetRecordingDeviceName(aIndex, aStrNameUTF8,
+                                            aStrGuidUTF8);
   }
 
   int GetRecordingDeviceStatus(bool& aIsAvailable)
   {
-    ScopedCustomReleasePtr<webrtc::VoEBase> ptrVoEBase;
-    ptrVoEBase = webrtc::VoEBase::GetInterface(mVoiceEngine);
-    if (!ptrVoEBase)  {
+    ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw;
+    ptrVoEHw = webrtc::VoEHardware::GetInterface(mVoiceEngine);
+    if (!ptrVoEHw)  {
       return 1;
     }
-    return ptrVoEBase->audio_device_module()->RecordingIsAvailable(&aIsAvailable);
+    ptrVoEHw->GetRecordingDeviceStatus(aIsAvailable);
+    return 0;
   }
 
   void GetChannelCount(uint32_t& aChannels)
@@ -427,12 +428,12 @@ public:
 
   int SetRecordingDevice(int aIndex)
   {
-    ScopedCustomReleasePtr<webrtc::VoEBase> ptrVoEBase;
-    ptrVoEBase = webrtc::VoEBase::GetInterface(mVoiceEngine);
-    if (!ptrVoEBase)  {
+    ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw;
+    ptrVoEHw = webrtc::VoEHardware::GetInterface(mVoiceEngine);
+    if (!ptrVoEHw)  {
       return 1;
     }
-    return ptrVoEBase->audio_device_module()->SetRecordingDevice(aIndex);
+    return ptrVoEHw->SetRecordingDevice(aIndex);
   }
 
 protected:
@@ -499,9 +500,7 @@ public:
                                     mozilla::AudioInput* aAudioInput,
                                     int aIndex,
                                     const char* name,
-                                    const char* uuid,
-                                    bool aDelayAgnostic,
-                                    bool aExtendedFilter);
+                                    const char* uuid);
 
   void GetName(nsAString& aName) const override;
   void GetUUID(nsACString& aUUID) const override;
@@ -516,6 +515,7 @@ public:
                    const MediaEnginePrefs &aPrefs,
                    const nsString& aDeviceId,
                    const char** aOutBadConstraint) override;
+  void SetDirectListeners(bool aHasDirectListeners) override {};
 
   void NotifyPull(MediaStreamGraph* aGraph,
                   SourceMediaStream* aSource,
@@ -623,8 +623,6 @@ private:
 
   int mCapIndex;
   int mChannel;
-  bool mDelayAgnostic;
-  bool mExtendedFilter;
   MOZ_INIT_OUTSIDE_CTOR TrackID mTrackID;
   bool mStarted;
 
@@ -646,8 +644,6 @@ private:
 
   // To only update microphone when needed, we keep track of previous settings.
   MediaEnginePrefs mLastPrefs;
-
-  AlignedShortBuffer mInputDownmixBuffer;
 };
 
 class MediaEngineWebRTC : public MediaEngine
@@ -679,8 +675,6 @@ private:
   webrtc::VoiceEngine* mVoiceEngine;
   RefPtr<mozilla::AudioInput> mAudioInput;
   bool mFullDuplex;
-  bool mDelayAgnostic;
-  bool mExtendedFilter;
   bool mHasTabVideoSource;
 
   // Store devices we've already seen in a hashtable for quick return.

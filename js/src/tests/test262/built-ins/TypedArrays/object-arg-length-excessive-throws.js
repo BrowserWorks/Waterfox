@@ -16,7 +16,6 @@ info: >
   6. Perform ? AllocateTypedArrayBuffer(O, len).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var obj = {

@@ -7,7 +7,7 @@
 #define nsTemplateRule_h__
 
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIRDFDataSource.h"
 #include "nsIRDFResource.h"
 #include "nsIContent.h"
@@ -42,13 +42,13 @@ public:
         eContains
     };
 
-    nsTemplateCondition(nsAtom* aSourceVariable,
+    nsTemplateCondition(nsIAtom* aSourceVariable,
                         const nsAString& aRelation,
-                        nsAtom* aTargetVariable,
+                        nsIAtom* aTargetVariable,
                         bool mIgnoreCase,
                         bool mNegate);
 
-    nsTemplateCondition(nsAtom* aSourceVariable,
+    nsTemplateCondition(nsIAtom* aSourceVariable,
                         const nsAString& aRelation,
                         const nsAString& aTargets,
                         bool mIgnoreCase,
@@ -57,7 +57,7 @@ public:
 
     nsTemplateCondition(const nsAString& aSource,
                         const nsAString& aRelation,
-                        nsAtom* aTargetVariable,
+                        nsIAtom* aTargetVariable,
                         bool mIgnoreCase,
                         bool mNegate);
 
@@ -76,10 +76,10 @@ public:
                       const nsAString& aRightString);
 protected:
 
-    RefPtr<nsAtom>   mSourceVariable;
+    nsCOMPtr<nsIAtom>   mSourceVariable;
     nsString            mSource;
     ConditionRelation   mRelation;
-    RefPtr<nsAtom>   mTargetVariable;
+    nsCOMPtr<nsIAtom>   mTargetVariable;
     nsTArray<nsString>  mTargetList;
     bool                mIgnoreCase;
     bool                mNegate;
@@ -132,7 +132,7 @@ public:
      */
     nsresult GetRuleNode(nsIDOMNode** aResult) const;
 
-    void SetVars(nsAtom* aRefVariable, nsAtom* aMemberVariable)
+    void SetVars(nsIAtom* aRefVariable, nsIAtom* aMemberVariable)
     {
         mRefVariable = aRefVariable;
         mMemberVariable = aMemberVariable;
@@ -143,10 +143,10 @@ public:
         mRuleFilter = aRuleFilter;
     }
 
-    nsAtom* GetTag() { return mTag; }
-    void SetTag(nsAtom* aTag) { mTag = aTag; }
+    nsIAtom* GetTag() { return mTag; }
+    void SetTag(nsIAtom* aTag) { mTag = aTag; }
 
-    nsAtom* GetMemberVariable() { return mMemberVariable; }
+    nsIAtom* GetMemberVariable() { return mMemberVariable; }
 
     /**
      * Set the first condition for the rule. Other conditions are linked
@@ -167,9 +167,9 @@ public:
      * Determine if the rule has the specified binding
      */
     bool
-    HasBinding(nsAtom* aSourceVariable,
+    HasBinding(nsIAtom* aSourceVariable,
                nsAString& aExpr,
-               nsAtom* aTargetVariable) const;
+               nsIAtom* aTargetVariable) const;
 
     /**
      * Add a binding to the rule. A binding consists of an already-bound
@@ -184,9 +184,9 @@ public:
      *   to the RDF node that is returned when querying the binding
      * @return NS_OK if no errors occur.
      */
-    nsresult AddBinding(nsAtom* aSourceVariable,
+    nsresult AddBinding(nsIAtom* aSourceVariable,
                         nsAString& aExpr,
-                        nsAtom* aTargetVariable);
+                        nsIAtom* aTargetVariable);
 
     /**
      * Inform the query processor of the bindings that are set for a rule.
@@ -204,8 +204,8 @@ public:
 protected:
 
     struct Binding {
-        RefPtr<nsAtom>        mSourceVariable;
-        RefPtr<nsAtom>        mTargetVariable;
+        nsCOMPtr<nsIAtom>        mSourceVariable;
+        nsCOMPtr<nsIAtom>        mTargetVariable;
         nsString                 mExpr;
         Binding*                 mNext;
         Binding*                 mParent;
@@ -226,13 +226,13 @@ protected:
 
     // indicates that the rule will only match when generating content
     // to be inserted into a container with this tag
-    RefPtr<nsAtom> mTag;
+    nsCOMPtr<nsIAtom> mTag;
 
     // linked-list of the bindings for the rule, owned by the rule.
     Binding* mBindings;
 
-    RefPtr<nsAtom> mRefVariable;
-    RefPtr<nsAtom> mMemberVariable;
+    nsCOMPtr<nsIAtom> mRefVariable;
+    nsCOMPtr<nsIAtom> mMemberVariable;
 
     nsTemplateCondition* mConditions; // owned by nsTemplateRule
 };
@@ -267,7 +267,7 @@ public:
 
     // indicates that the query will only generate content to be inserted into
     // a container with this tag
-    RefPtr<nsAtom> mTag;
+    nsCOMPtr<nsIAtom> mTag;
 
     explicit nsTemplateQuerySet(int32_t aPriority)
         : mPriority(aPriority)
@@ -285,8 +285,8 @@ public:
         return mPriority;
     }
 
-    nsAtom* GetTag() { return mTag; }
-    void SetTag(nsAtom* aTag) { mTag = aTag; }
+    nsIAtom* GetTag() { return mTag; }
+    void SetTag(nsIAtom* aTag) { mTag = aTag; }
 
     nsTemplateRule* NewRule(nsIContent* aRuleNode,
                             nsIContent* aAction,

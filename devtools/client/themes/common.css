@@ -2,21 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+
 @import url("resource://devtools/client/themes/splitters.css");
 @namespace html url("http://www.w3.org/1999/xhtml");
 
 :root {
   font: message-box;
-
-  --tab-line-selected-color: var(--blue-50);
-}
-
-:root.theme-light {
-  --tab-line-hover-color: rgba(0,0,0,.2);
-}
-
-:root.theme-dark {
-  --tab-line-hover-color: rgba(255,255,255,.2);
 }
 
 :root[platform="mac"] {
@@ -261,7 +252,8 @@ checkbox:-moz-focusring {
   margin: 0 3px;
   transition: opacity 0.05s ease-in-out;
 
-  color: var(--theme-toolbar-color);
+  /* For text-as-image usage, match the SVG color */
+  color: #0b0b0b;
   direction: ltr;
   font-size: 11px;
 }
@@ -272,10 +264,6 @@ checkbox:-moz-focusring {
   background-size: cover;
   background-repeat: no-repeat;
   vertical-align: middle;
-}
-
-.devtools-button.checked:empty::before {
-  color: var(--theme-toolbar-checked-color);
 }
 
 /* Standalone buttons */
@@ -297,6 +285,11 @@ checkbox:-moz-focusring {
 }
 
 /* Icon-only buttons */
+.devtools-button:empty::before,
+.devtools-toolbarbutton:not([label]):not([disabled]) > image {
+  opacity: 0.8;
+}
+
 .devtools-button:hover:empty:not(:disabled):before,
 .devtools-button.checked:empty::before,
 .devtools-toolbarbutton:not([label]):not([disabled=true]):hover > image,
@@ -313,7 +306,7 @@ checkbox:-moz-focusring {
 .devtools-button.checked::before,
 .devtools-toolbarbutton:not([label])[checked=true] > image,
 .devtools-toolbarbutton:not([label])[open=true] > image {
-  fill: var(--theme-toolbar-checked-color);
+  filter: var(--checked-icon-filter);
 }
 
 /* Button states */
@@ -340,14 +333,13 @@ checkbox:-moz-focusring {
 
 .devtools-button:not(:empty):not(.checked):not(:disabled):hover:active,
 .devtools-toolbarbutton:not(:-moz-any([checked=true],[disabled]))[label]:hover:active {
-  background-color: var(--theme-selection-background-hover);
+  background-color: var(--theme-selection-background-semitransparent);
 }
 
 .devtools-toolbarbutton:not([disabled])[label][checked=true],
 .devtools-toolbarbutton:not([disabled])[label][open],
 .devtools-button:not(:empty).checked,
-.theme-firebug .devtools-toolbarbutton[checked],
-.theme-firebug .devtools-toolbarbutton[open],
+.theme-firebug .devtools-toolbarbutton:-moz-any([checked],[open]),
 .theme-firebug .devtools-button.checked:empty {
   background: var(--toolbarbutton-checked-background);
   border-color: var(--toolbarbutton-checked-border-color);
@@ -381,6 +373,10 @@ checkbox:-moz-focusring {
 
 .devtools-toolbarbutton-group + .devtools-toolbarbutton {
   margin-inline-start: 3px;
+}
+
+.devtools-separator + .devtools-toolbarbutton {
+  margin-inline-start: 1px;
 }
 
 /* Text input */
@@ -689,38 +685,4 @@ checkbox:-moz-focusring {
   background-image: url("chrome://devtools/skin/images/dropmarker.svg");
   background-repeat: no-repeat;
   background-position: center;
-}
-
-.devtools-tab-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: transparent;
-}
-
-.devtools-tab:hover .devtools-tab-line,
-.tabs-menu-item:hover .devtools-tab-line {
-  background: var(--tab-line-hover-color);
-}
-
-.devtools-tab.selected .devtools-tab-line,
-.tabs-menu-item.is-active .devtools-tab-line {
-  background: var(--tab-line-selected-color);
-}
-
-/* Hide the tab line in the firebug theme */
-.theme-firebug .devtools-tab-line {
-  background: transparent !important;
-}
-
-/* No result message styles */
-
-.devtools-sidepanel-no-result {
-  font-style: italic;
-  text-align: center;
-  padding: 0.5em;
-  -moz-user-select: none;
-  font-size: 12px;
 }

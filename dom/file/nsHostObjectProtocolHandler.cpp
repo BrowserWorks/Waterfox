@@ -434,10 +434,18 @@ public:
   Create(nsTArray<nsWeakPtr>&& aArray)
   {
     RefPtr<ReleasingTimerHolder> holder = new ReleasingTimerHolder(Move(aArray));
-    nsresult rv = NS_NewTimerWithCallback(getter_AddRefs(holder->mTimer),
-                                          holder, RELEASING_TIMER,
-                                          nsITimer::TYPE_ONE_SHOT,
-                                          SystemGroup::EventTargetFor(TaskCategory::Other));
+    holder->mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+
+    // If we are shutting down, we are not able to create a timer.
+    if (!holder->mTimer) {
+      return;
+    }
+
+    MOZ_ALWAYS_SUCCEEDS(holder->mTimer->SetTarget(
+      SystemGroup::EventTargetFor(TaskCategory::Other)));
+
+    nsresult rv = holder->mTimer->InitWithCallback(holder, RELEASING_TIMER,
+                                                   nsITimer::TYPE_ONE_SHOT);
     NS_ENSURE_SUCCESS_VOID(rv);
   }
 
@@ -837,7 +845,7 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
 
   ErrorResult rv;
   nsCOMPtr<nsIInputStream> stream;
-  blobImpl->CreateInputStream(getter_AddRefs(stream), rv);
+  blobImpl->GetInternalStream(getter_AddRefs(stream), rv);
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
   }
@@ -953,7 +961,7 @@ NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream)
     return rv.StealNSResult();
   }
 
-  blobImpl->CreateInputStream(aStream, rv);
+  blobImpl->GetInternalStream(aStream, rv);
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
   }

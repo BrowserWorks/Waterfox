@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-prop-obj-init.case
-// - src/dstr-binding-for-await/default/for-await-of-async-func-var-async.template
+// - src/dstr-binding/obj-ptrn-prop-obj-init.case
+// - src/dstr-binding/default/for-await-of-async-func-var-async.template
 /*---
 description: Object binding pattern with "nested" object binding pattern using initializer (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -38,9 +39,10 @@ info: |
     13.3.3.7 Runtime Semantics: KeyedBindingInitialization
 
     [...]
-    4. If Initializer is present and v is undefined, then
+    3. If Initializer is present and v is undefined, then
        a. Let defaultValue be the result of evaluating Initializer.
-       b. Set v to ? GetValue(defaultValue).
+       b. Let v be GetValue(defaultValue).
+       c. ReturnIfAbrupt(v).
     4. Return the result of performing BindingInitialization for BindingPattern
        passing v and environment as arguments.
 ---*/

@@ -10,7 +10,6 @@ info: >
   3. Let len be the value of O's [[ArrayLength]] internal slot.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var getCalls = 0;

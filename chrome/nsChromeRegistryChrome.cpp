@@ -128,7 +128,7 @@ nsChromeRegistryChrome::Init()
   if (!prefs) {
     NS_WARNING("Could not get pref service!");
   } else {
-    nsCString provider;
+    nsXPIDLCString provider;
     rv = prefs->GetCharPref(SELECTED_SKIN_PREF, getter_Copies(provider));
     if (NS_SUCCEEDED(rv))
       mSelectedSkin = provider;
@@ -219,7 +219,7 @@ nsChromeRegistryChrome::GetSelectedLocale(const nsACString& aPackage,
                                           nsACString& aLocale)
 {
   nsAutoCString reqLocale;
-  if (aPackage.EqualsLiteral("global")) {
+  if (aPackage.Equals("global")) {
     LocaleService::GetInstance()->GetAppLocaleAsLangTag(reqLocale);
   } else {
     AutoTArray<nsCString, 10> requestedLocales;
@@ -275,7 +275,7 @@ nsChromeRegistryChrome::Observe(nsISupports *aSubject, const char *aTopic,
     NS_ConvertUTF16toUTF8 pref(someData);
 
     if (pref.EqualsLiteral(SELECTED_SKIN_PREF)) {
-      nsCString provider;
+      nsXPIDLCString provider;
       rv = prefs->GetCharPref(pref.get(), getter_Copies(provider));
       if (NS_FAILED(rv)) {
         NS_ERROR("Couldn't get new skin pref!");
@@ -329,6 +329,7 @@ SerializeURI(nsIURI* aURI,
     return;
 
   aURI->GetSpec(aSerializedURI.spec);
+  aURI->GetOriginCharset(aSerializedURI.charset);
 }
 
 void
@@ -739,7 +740,7 @@ nsChromeRegistryChrome::ManifestLocale(ManifestProcessingContext& cx, int lineno
   if (mainPackage.Equals(package)) {
     // We should refresh the LocaleService, since the available
     // locales changed.
-    LocaleService::GetInstance()->AvailableLocalesChanged();
+    LocaleService::GetInstance()->OnAvailableLocalesChanged();
   }
 }
 
@@ -858,8 +859,8 @@ nsChromeRegistryChrome::ManifestOverride(ManifestProcessingContext& cx, int line
     }
     if (chromeSkinOnly) {
       nsAutoCString chromePath, resolvedPath;
-      chromeuri->GetPathQueryRef(chromePath);
-      resolveduri->GetPathQueryRef(resolvedPath);
+      chromeuri->GetPath(chromePath);
+      resolveduri->GetPath(resolvedPath);
       chromeSkinOnly = StringBeginsWith(chromePath, NS_LITERAL_CSTRING("/skin/")) &&
                        StringBeginsWith(resolvedPath, NS_LITERAL_CSTRING("/skin/"));
     }

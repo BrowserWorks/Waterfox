@@ -51,15 +51,9 @@ class BaseCompileChecks(unittest.TestCase):
             def extra_toolchain_flags():
                 return []
 
-            target = depends(when=True)(lambda: True)
-
             include('%s/compilers-util.configure')
 
-            @template
-            def wrap_compiler(compiler):
-                return compiler_class(compiler, False)
-
-            @wrap_compiler
+            @compiler_class
             @depends(when=True)
             def c_compiler():
                 return namespace(
@@ -70,7 +64,7 @@ class BaseCompileChecks(unittest.TestCase):
                     language='C',
                 )
 
-            @wrap_compiler
+            @compiler_class
             @depends(when=True)
             def cxx_compiler():
                 return namespace(

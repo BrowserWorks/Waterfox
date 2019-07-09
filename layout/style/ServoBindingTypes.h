@@ -16,9 +16,7 @@
 #include "nsTArray.h"
 
 struct RawServoStyleSet;
-struct RawServoSelectorList;
 struct RawServoAnimationValueMap;
-struct RustString;
 
 #define SERVO_ARC_TYPE(name_, type_) struct type_;
 #include "mozilla/ServoArcTypeList.h"
@@ -38,7 +36,6 @@ struct ComputedTiming;
 struct Keyframe;
 struct PropertyValuePair;
 struct PropertyStyleAnimationValuePair;
-enum class OriginFlags : uint8_t;
 using ComputedKeyframeValues = nsTArray<PropertyStyleAnimationValuePair>;
 } // namespace mozilla
 namespace nsStyleTransformMatrix {
@@ -167,7 +164,6 @@ DECL_BORROWED_REF_TYPE_FOR(RawGeckoKeyframeList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoPropertyValuePairList)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoPropertyValuePairList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoComputedKeyframeValuesList)
-DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoStyleAnimationList)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoStyleAnimationList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(nsTimingFunction)
 DECL_BORROWED_REF_TYPE_FOR(nsTimingFunction)
@@ -179,8 +175,6 @@ DECL_BORROWED_MUT_REF_TYPE_FOR(nsCSSPropertyIDSet)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoCSSPropertyIDList)
 DECL_BORROWED_REF_TYPE_FOR(nsXBLBinding)
 DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoStyleChildrenIterator)
-DECL_OWNED_REF_TYPE_FOR(RawServoSelectorList)
-DECL_BORROWED_REF_TYPE_FOR(RawServoSelectorList)
 
 #undef DECL_ARC_REF_TYPE_FOR
 #undef DECL_OWNED_REF_TYPE_FOR
@@ -223,7 +217,6 @@ DECL_BORROWED_REF_TYPE_FOR(RawServoSelectorList)
   }
 
 DEFINE_BOXED_TYPE(StyleSet, RawServoStyleSet);
-DEFINE_BOXED_TYPE(SelectorList, RawServoSelectorList);
 
 #undef DEFINE_BOXED_TYPE
 

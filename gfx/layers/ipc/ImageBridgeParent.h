@@ -58,7 +58,6 @@ public:
   static ImageBridgeParent* CreateSameProcess();
   static bool CreateForGPUProcess(Endpoint<PImageBridgeParent>&& aEndpoint);
   static bool CreateForContent(Endpoint<PImageBridgeParent>&& aEndpoint);
-  static void Shutdown();
 
   virtual ShmemAllocator* AsShmemAllocator() override { return this; }
 
@@ -88,8 +87,7 @@ public:
   virtual bool DeallocPTextureParent(PTextureParent* actor) override;
 
   virtual mozilla::ipc::IPCResult RecvNewCompositable(const CompositableHandle& aHandle,
-                                                      const TextureInfo& aInfo,
-                                                      const LayersBackend& aLayersBackend) override;
+                                                      const TextureInfo& aInfo) override;
   virtual mozilla::ipc::IPCResult RecvReleaseCompositable(const CompositableHandle& aHandle) override;
 
   PMediaSystemResourceManagerParent* AllocPMediaSystemResourceManagerParent() override;
@@ -123,11 +121,11 @@ public:
   virtual bool IPCOpen() const override { return !mClosed; }
 
 protected:
+  void OnChannelConnected(int32_t pid) override;
+
   void Bind(Endpoint<PImageBridgeParent>&& aEndpoint);
 
 private:
-  static void ShutdownInternal();
-
   void DeferredDestroy();
   MessageLoop* mMessageLoop;
   // This keeps us alive until ActorDestroy(), at which point we do a

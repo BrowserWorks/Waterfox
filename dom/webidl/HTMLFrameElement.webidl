@@ -17,7 +17,7 @@ interface HTMLFrameElement : HTMLElement {
            attribute DOMString name;
            [CEReactions, SetterThrows]
            attribute DOMString scrolling;
-           [CEReactions, NeedsSubjectPrincipal, SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString src;
            [CEReactions, SetterThrows]
            attribute DOMString frameBorder;

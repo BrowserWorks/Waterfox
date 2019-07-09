@@ -14,10 +14,11 @@
         if side[1]:
             spec = "https://drafts.csswg.org/css-logical-props/#propdef-padding-%s" % side[1]
     %>
-    ${helpers.predefined_type("padding-%s" % side[0], "NonNegativeLengthOrPercentage",
-                              "computed::NonNegativeLengthOrPercentage::zero()",
+    ${helpers.predefined_type("padding-%s" % side[0], "LengthOrPercentage",
+                              "computed::LengthOrPercentage::Length(Au(0))",
+                              "parse_non_negative",
                               alias=maybe_moz_logical_alias(product, side, "-moz-padding-%s"),
-                              animation_value_type="NonNegativeLengthOrPercentage",
+                              animation_value_type="ComputedValue",
                               logical = side[1],
                               spec = spec,
                               flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_PLACEHOLDER",

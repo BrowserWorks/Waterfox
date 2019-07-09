@@ -54,10 +54,6 @@ public class BatchMeta {
         successRecordGuids.add(recordGuid);
     }
 
-    void clearSuccessRecordGuids() {
-        successRecordGuids.clear();
-    }
-
     /* package-local */ void setInBatchingMode(boolean inBatchingMode) {
         this.inBatchingMode = inBatchingMode;
     }

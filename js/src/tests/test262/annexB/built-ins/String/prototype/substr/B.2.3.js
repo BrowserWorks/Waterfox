@@ -9,10 +9,8 @@ description: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype, "substr", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyWritable(String.prototype, "substr");
+verifyNotEnumerable(String.prototype, "substr");
+verifyConfigurable(String.prototype, "substr");
 
 reportCompare(0, 0);

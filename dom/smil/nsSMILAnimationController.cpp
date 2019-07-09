@@ -235,11 +235,9 @@ nsSMILAnimationController::Unlink()
 //----------------------------------------------------------------------
 // Refresh driver lifecycle related methods
 
-void
-nsSMILAnimationController::NotifyRefreshDriverCreated(
-    nsRefreshDriver* aRefreshDriver)
-{
-  if (!mPauseState) {
+void nsSMILAnimationController::NotifyRefreshDriverCreated(
+    nsRefreshDriver* aRefreshDriver) {
+  if (!mPauseState && mChildContainerTable.Count()) {
     MaybeStartSampling(aRefreshDriver);
   }
 }
@@ -652,7 +650,7 @@ nsSMILAnimationController::AddAnimationToCompositorTable(
 }
 
 static inline bool
-IsTransformAttribute(int32_t aNamespaceID, nsAtom *aAttributeName)
+IsTransformAttribute(int32_t aNamespaceID, nsIAtom *aAttributeName)
 {
   return aNamespaceID == kNameSpaceID_None &&
          (aAttributeName == nsGkAtoms::transform ||
@@ -676,7 +674,7 @@ nsSMILAnimationController::GetTargetIdentifierForAnimation(
   // Look up target (animated) attribute
   // SMILANIM section 3.1, attributeName may
   // have an XMLNS prefix to indicate the XML namespace.
-  RefPtr<nsAtom> attributeName;
+  nsCOMPtr<nsIAtom> attributeName;
   int32_t attributeNamespaceID;
   if (!aAnimElem->GetTargetAttributeName(&attributeNamespaceID,
                                          getter_AddRefs(attributeName)))

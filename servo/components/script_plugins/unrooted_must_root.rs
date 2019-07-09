@@ -55,7 +55,6 @@ fn is_unrooted_ty(cx: &LateContext, ty: &ty::TyS, in_new_function: bool) -> bool
                         || match_def_path(cx, did.did, &["std", "collections", "hash", "map", "Entry"])
                         || match_def_path(cx, did.did, &["std", "collections", "hash", "map", "OccupiedEntry"])
                         || match_def_path(cx, did.did, &["std", "collections", "hash", "map", "VacantEntry"])
-                        || match_def_path(cx, did.did, &["std", "collections", "hash", "map", "Iter"])
                         || match_def_path(cx, did.did, &["std", "collections", "hash", "set", "Iter"]) {
                     // Structures which are semantically similar to an &ptr.
                     false
@@ -164,7 +163,7 @@ impl<'a, 'tcx> LateLintPass<'a, 'tcx> for UnrootedPass {
     }
 }
 
-struct FnDefVisitor<'a, 'b: 'a, 'tcx: 'a + 'b> {
+struct FnDefVisitor<'a, 'b: 'a, 'tcx: 'a+'b> {
     cx: &'a LateContext<'b, 'tcx>,
     in_new_function: bool,
 }
@@ -187,11 +186,11 @@ impl<'a, 'b, 'tcx> visit::Visitor<'tcx> for FnDefVisitor<'a, 'b, 'tcx> {
             hir::ExprCast(ref subexpr, _) => require_rooted(cx, self.in_new_function, &*subexpr),
             // This catches assignments... the main point of this would be to catch mutable
             // references to `JS<T>`.
-            // FIXME: Enable this? Triggers on certain kinds of uses of DomRefCell.
+            // FIXME: Enable this? Triggers on certain kinds of uses of DOMRefCell.
             // hir::ExprAssign(_, ref rhs) => require_rooted(cx, self.in_new_function, &*rhs),
             // This catches calls; basically, this enforces the constraint that only constructors
             // can call other constructors.
-            // FIXME: Enable this? Currently triggers with constructs involving DomRefCell, and
+            // FIXME: Enable this? Currently triggers with constructs involving DOMRefCell, and
             // constructs like Vec<JS<T>> and RootedVec<JS<T>>.
             // hir::ExprCall(..) if !self.in_new_function => {
             //     require_rooted(cx, self.in_new_function, expr);

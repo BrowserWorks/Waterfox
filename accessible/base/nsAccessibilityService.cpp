@@ -112,7 +112,7 @@ MustBeAccessible(nsIContent* aContent, DocAccessible* aDocument)
   for (uint32_t attrIdx = 0; attrIdx < attrCount; attrIdx++) {
     const nsAttrName* attr = aContent->GetAttrNameAt(attrIdx);
     if (attr->NamespaceEquals(kNameSpaceID_None)) {
-      nsAtom* attrAtom = attr->Atom();
+      nsIAtom* attrAtom = attr->Atom();
       nsDependentAtomString attrStr(attrAtom);
       if (!StringBeginsWith(attrStr, NS_LITERAL_STRING("aria-")))
         continue; // not ARIA
@@ -160,9 +160,6 @@ static Accessible* New_HTMLFigcaption(nsIContent* aContent, Accessible* aContext
 
 static Accessible* New_HTMLFigure(nsIContent* aContent, Accessible* aContext)
   { return new HTMLFigureAccessible(aContent, aContext->Document()); }
-
-static Accessible* New_HTMLHeaderOrFooter(nsIContent* aContent, Accessible* aContext)
-  { return new HTMLHeaderOrFooterAccessible(aContent, aContext->Document()); }
 
 static Accessible* New_HTMLLegend(nsIContent* aContent, Accessible* aContext)
   { return new HTMLLegendAccessible(aContent, aContext->Document()); }
@@ -313,12 +310,24 @@ nsAccessibilityService::ListenersChanged(nsIArray* aEventChanges)
     if (!node || !node->IsHTMLElement()) {
       continue;
     }
+    nsCOMPtr<nsIArray> listenerNames;
+    change->GetChangedListenerNames(getter_AddRefs(listenerNames));
 
     uint32_t changeCount;
-    change->GetCountOfEventListenerChangesAffectingAccessibility(&changeCount);
+    rv = listenerNames->GetLength(&changeCount);
     NS_ENSURE_SUCCESS(rv, rv);
 
     for (uint32_t i = 0 ; i < changeCount ; i++) {
+      nsCOMPtr<nsIAtom> listenerName = do_QueryElementAt(listenerNames, i);
+
+      // We are only interested in event listener changes which may
+      // make an element accessible or inaccessible.
+      if (listenerName != nsGkAtoms::onclick &&
+          listenerName != nsGkAtoms::onmousedown &&
+          listenerName != nsGkAtoms::onmouseup) {
+        continue;
+      }
+
       nsIDocument* ownerDoc = node->OwnerDoc();
       DocAccessible* document = GetExistingDocAccessible(ownerDoc);
 
@@ -468,10 +477,9 @@ nsAccessibilityService::CreatePluginAccessible(nsPluginFrame* aFrame,
     if (!sPendingPlugins->Contains(aContent) &&
         (Preferences::GetBool("accessibility.delay_plugins") ||
          Compatibility::IsJAWS() || Compatibility::IsWE())) {
+      nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
       RefPtr<PluginTimerCallBack> cb = new PluginTimerCallBack(aContent);
-      nsCOMPtr<nsITimer> timer;
-      NS_NewTimerWithCallback(getter_AddRefs(timer),
-                              cb, Preferences::GetUint("accessibility.delay_plugin_time"),
+      timer->InitWithCallback(cb, Preferences::GetUint("accessibility.delay_plugin_time"),
                               nsITimer::TYPE_ONE_SHOT);
       sPluginTimers->AppendElement(timer);
       sPendingPlugins->AppendElement(aContent);
@@ -922,21 +930,6 @@ nsAccessibilityService::GetStringEventType(uint32_t aEventType,
 }
 
 void
-nsAccessibilityService::GetStringEventType(uint32_t aEventType,
-                                           nsACString& aString)
-{
-  MOZ_ASSERT(nsIAccessibleEvent::EVENT_LAST_ENTRY == ArrayLength(kEventTypeNames),
-             "nsIAccessibleEvent constants are out of sync to kEventTypeNames");
-
-  if (aEventType >= ArrayLength(kEventTypeNames)) {
-    aString.AssignLiteral("unknown");
-    return;
-  }
-
-  aString = nsDependentCString(kEventTypeNames[aEventType]);
-}
-
-void
 nsAccessibilityService::GetStringRelationType(uint32_t aRelationType,
                                               nsAString& aString)
 {
@@ -1255,13 +1248,6 @@ nsAccessibilityService::Init()
 
   observerService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 
-#if defined(XP_WIN)
-  // This information needs to be initialized before the observer fires.
-  if (XRE_IsParentProcess()) {
-    Compatibility::Init();
-  }
-#endif // defined(XP_WIN)
-
   static const char16_t kInitIndicator[] = { '1', 0 };
   observerService->NotifyObservers(nullptr, "a11y-init-or-shutdown", kInitIndicator);
 
@@ -1296,11 +1282,9 @@ nsAccessibilityService::Init()
       // obtain a MSAA content process id.
       contentChild->SendGetA11yContentId();
     }
-
-    gApplicationAccessible = new ApplicationAccessibleWrap();
-#else
-    gApplicationAccessible = new ApplicationAccessible();
 #endif // defined(XP_WIN)
+
+    gApplicationAccessible = new ApplicationAccessible();
   }
 
   NS_ADDREF(gApplicationAccessible); // will release in Shutdown()

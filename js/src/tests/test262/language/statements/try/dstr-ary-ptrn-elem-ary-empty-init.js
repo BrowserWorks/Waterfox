@@ -5,7 +5,7 @@
 description: BindingElement with array binding pattern and initializer is used (try statement)
 esid: sec-runtime-semantics-catchclauseevaluation
 es6id: 13.15.7
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     Catch : catch ( CatchParameter ) Block
@@ -26,7 +26,6 @@ info: |
        b. Let v be ? GetValue(defaultValue).
     4. Return the result of performing BindingInitialization of BindingPattern
        with v and environment as the arguments.
-
 ---*/
 var initCount = 0;
 var iterCount = 0;

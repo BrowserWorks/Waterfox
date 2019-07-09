@@ -34,9 +34,9 @@ public:
    : mKey(*aKey),
      mForceCompositing(false)
   { }
-  nsSMILCompositor(nsSMILCompositor&& toMove)
-    : mKey(mozilla::Move(toMove.mKey)),
-      mAnimationFunctions(mozilla::Move(toMove.mAnimationFunctions)),
+  nsSMILCompositor(const nsSMILCompositor& toCopy)
+    : mKey(toCopy.mKey),
+      mAnimationFunctions(toCopy.mAnimationFunctions),
       mForceCompositing(false)
   { }
   ~nsSMILCompositor() { }

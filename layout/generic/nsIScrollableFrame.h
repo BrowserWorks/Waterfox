@@ -28,7 +28,7 @@ class nsIScrollPositionListener;
 class nsIFrame;
 class nsPresContext;
 class nsIContent;
-class nsAtom;
+class nsIAtom;
 class nsDisplayListBuilder;
 
 namespace mozilla {
@@ -240,7 +240,7 @@ public:
    * number of layer pixels (so the operation is fast and looks clean).
    */
   virtual void ScrollToCSSPixelsApproximate(const mozilla::CSSPoint& aScrollPosition,
-                                            nsAtom *aOrigin = nullptr) = 0;
+                                            nsIAtom *aOrigin = nullptr) = 0;
 
   /**
    * Returns the scroll position in integer CSS pixels, rounded to the nearest
@@ -263,7 +263,7 @@ public:
    */
   virtual void ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit, ScrollMode aMode,
                         nsIntPoint* aOverflow = nullptr,
-                        nsAtom* aOrigin = nullptr,
+                        nsIAtom* aOrigin = nullptr,
                         ScrollMomentum aMomentum = NOT_MOMENTUM,
                         nsIScrollbarMediator::ScrollSnapMode aSnap
                           = nsIScrollbarMediator::DISABLE_SNAP) = 0;
@@ -316,11 +316,6 @@ public:
    */
   virtual bool IsScrollingActive(nsDisplayListBuilder* aBuilder) = 0;
   /**
-   * Same as the above except doesn't take into account will-change budget,
-   * which means that it can be called during display list building.
-   */
-  virtual bool IsMaybeScrollingActive() const = 0;
-  /**
    * Returns true if the scrollframe is currently processing an async
    * or smooth scroll.
    */
@@ -355,7 +350,7 @@ public:
    * nsGkAtoms::apz when the compositor's replica frame metrics includes the
    * latest instant scroll.
    */
-  virtual nsAtom* LastScrollOrigin() = 0;
+  virtual nsIAtom* LastScrollOrigin() = 0;
   /**
    * Sets a flag on the scrollframe that indicates the current scroll origin
    * has been sent over in a layers transaction, and subsequent changes to
@@ -379,7 +374,7 @@ public:
    * by an instant scroll before the smooth scroll could be started by the
    * compositor, this is set to nullptr to clear the smooth scroll.
    */
-  virtual nsAtom* LastSmoothScrollOrigin() = 0;
+  virtual nsIAtom* LastSmoothScrollOrigin() = 0;
   /**
    * Returns the current generation counter for the scroll. This counter
    * increments every time the scroll position is set.
@@ -447,13 +442,13 @@ public:
    * return the result. It will also record this result on the scroll frame.
    * Pass the dirty rect in aDirtyRect. On return it will be set to the
    * displayport if there is one (ie the dirty rect that should be used).
-   * This function will set the display port base rect if aSetBase is true.
-   * aSetBase is only allowed to be false if there has been a call with it
-   * set to true before on the same paint.
+   * This function may create a display port where one did not exist before if
+   * aAllowCreateDisplayPort is true. It is only allowed to be false if there
+   * has been a call with it set to true before on the same paint.
    */
   virtual bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                                      nsRect* aDirtyRect,
-                                     bool aSetBase) = 0;
+                                     bool aAllowCreateDisplayPort) = 0;
 
   /**
    * Notification that this scroll frame is getting its frame visibility updated.

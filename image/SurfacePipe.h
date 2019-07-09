@@ -514,6 +514,44 @@ private:
   uint8_t  mPixelSize;      /// How large each pixel in the surface is, in bytes.
 };
 
+class NullSurfaceSink;
+
+/// A trivial configuration struct for NullSurfaceSink.
+struct NullSurfaceConfig
+{
+  using Filter = NullSurfaceSink;
+};
+
+/**
+ * NullSurfaceSink is a trivial SurfaceFilter implementation that behaves as if
+ * it were a zero-size SurfaceSink. It's used as the default filter chain for an
+ * uninitialized SurfacePipe.
+ *
+ * To avoid unnecessary allocations when creating SurfacePipe objects,
+ * NullSurfaceSink is a singleton. (This implies that the implementation must be
+ * stateless.)
+ */
+class NullSurfaceSink final : public SurfaceFilter
+{
+public:
+  /// Returns the singleton instance of NullSurfaceSink.
+  static NullSurfaceSink* Singleton();
+
+  virtual ~NullSurfaceSink() { }
+
+  nsresult Configure(const NullSurfaceConfig& aConfig);
+
+  Maybe<SurfaceInvalidRect> TakeInvalidRect() override { return Nothing(); }
+
+protected:
+  uint8_t* DoResetToFirstRow() override { return nullptr; }
+  uint8_t* DoAdvanceRow() override { return nullptr; }
+
+private:
+  static UniquePtr<NullSurfaceSink> sSingleton;  /// The singleton instance.
+};
+
+
 /**
  * SurfacePipe is the public API that decoders should use to interact with a
  * SurfaceFilter pipeline.
@@ -521,7 +559,11 @@ private:
 class SurfacePipe
 {
 public:
+  /// Initialize global state used by all SurfacePipes.
+  static void Initialize() { NullSurfaceSink::Singleton(); }
+
   SurfacePipe()
+    : mHead(NullSurfaceSink::Singleton())
   { }
 
   SurfacePipe(SurfacePipe&& aOther)
@@ -529,21 +571,28 @@ public:
   { }
 
   ~SurfacePipe()
-  { }
+  {
+    // Ensure that we don't free the NullSurfaceSink singleton.
+    if (mHead.get() == NullSurfaceSink::Singleton()) {
+      Unused << mHead.release();
+    }
+  }
 
   SurfacePipe& operator=(SurfacePipe&& aOther)
   {
     MOZ_ASSERT(this != &aOther);
+
+    // Ensure that we don't free the NullSurfaceSink singleton.
+    if (mHead.get() == NullSurfaceSink::Singleton()) {
+      Unused << mHead.release();
+    }
+
     mHead = Move(aOther.mHead);
     return *this;
   }
 
   /// Begins a new pass, seeking to the first row of the surface.
-  void ResetToFirstRow()
-  {
-    MOZ_ASSERT(mHead, "Use before configured!");
-    mHead->ResetToFirstRow();
-  }
+  void ResetToFirstRow() { mHead->ResetToFirstRow(); }
 
   /**
    * Write pixels to the surface one at a time by repeatedly calling a lambda
@@ -554,7 +603,6 @@ public:
   template <typename PixelType, typename Func>
   WriteState WritePixels(Func aFunc)
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->WritePixels<PixelType>(Forward<Func>(aFunc));
   }
 
@@ -568,7 +616,6 @@ public:
   template <typename PixelType, typename Func>
   WriteState WritePixelsToRow(Func aFunc)
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->WritePixelsToRow<PixelType>(Forward<Func>(aFunc));
   }
 
@@ -584,7 +631,6 @@ public:
   template <typename PixelType>
   WriteState WriteBuffer(const PixelType* aSource)
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->WriteBuffer<PixelType>(aSource);
   }
 
@@ -603,7 +649,6 @@ public:
                          const size_t aStartColumn,
                          const size_t aLength)
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->WriteBuffer<PixelType>(aSource, aStartColumn, aLength);
   }
 
@@ -615,7 +660,6 @@ public:
    */
   WriteState WriteEmptyRow()
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->WriteEmptyRow();
   }
 
@@ -625,7 +669,6 @@ public:
   /// @see SurfaceFilter::TakeInvalidRect() for the canonical documentation.
   Maybe<SurfaceInvalidRect> TakeInvalidRect() const
   {
-    MOZ_ASSERT(mHead, "Use before configured!");
     return mHead->TakeInvalidRect();
   }
 

@@ -230,6 +230,67 @@ enum class StyleOrient : uint8_t {
   Vertical,
 };
 
+// Azimuth - See nsStyleAural
+#define NS_STYLE_AZIMUTH_LEFT_SIDE        0x00
+#define NS_STYLE_AZIMUTH_FAR_LEFT         0x01
+#define NS_STYLE_AZIMUTH_LEFT             0x02
+#define NS_STYLE_AZIMUTH_CENTER_LEFT      0x03
+#define NS_STYLE_AZIMUTH_CENTER           0x04
+#define NS_STYLE_AZIMUTH_CENTER_RIGHT     0x05
+#define NS_STYLE_AZIMUTH_RIGHT            0x06
+#define NS_STYLE_AZIMUTH_FAR_RIGHT        0x07
+#define NS_STYLE_AZIMUTH_RIGHT_SIDE       0x08
+#define NS_STYLE_AZIMUTH_BEHIND           0x80  // bits
+#define NS_STYLE_AZIMUTH_LEFTWARDS        0x10  // bits
+#define NS_STYLE_AZIMUTH_RIGHTWARDS       0x20  // bits
+
+// See nsStyleAural
+#define NS_STYLE_ELEVATION_BELOW          1
+#define NS_STYLE_ELEVATION_LEVEL          2
+#define NS_STYLE_ELEVATION_ABOVE          3
+#define NS_STYLE_ELEVATION_HIGHER         4
+#define NS_STYLE_ELEVATION_LOWER          5
+
+// See nsStyleAural
+#define NS_STYLE_PITCH_X_LOW              1
+#define NS_STYLE_PITCH_LOW                2
+#define NS_STYLE_PITCH_MEDIUM             3
+#define NS_STYLE_PITCH_HIGH               4
+#define NS_STYLE_PITCH_X_HIGH             5
+
+// See nsStyleAural
+#define NS_STYLE_SPEAK_NONE               0
+#define NS_STYLE_SPEAK_NORMAL             1
+#define NS_STYLE_SPEAK_SPELL_OUT          2
+
+// See nsStyleAural
+#define NS_STYLE_SPEAK_HEADER_ONCE        0
+#define NS_STYLE_SPEAK_HEADER_ALWAYS      1
+
+// See nsStyleAural
+#define NS_STYLE_SPEAK_NUMERAL_DIGITS     0
+#define NS_STYLE_SPEAK_NUMERAL_CONTINUOUS 1
+
+// See nsStyleAural
+#define NS_STYLE_SPEAK_PUNCTUATION_NONE   0
+#define NS_STYLE_SPEAK_PUNCTUATION_CODE   1
+
+// See nsStyleAural
+#define NS_STYLE_SPEECH_RATE_X_SLOW       0
+#define NS_STYLE_SPEECH_RATE_SLOW         1
+#define NS_STYLE_SPEECH_RATE_MEDIUM       2
+#define NS_STYLE_SPEECH_RATE_FAST         3
+#define NS_STYLE_SPEECH_RATE_X_FAST       4
+#define NS_STYLE_SPEECH_RATE_FASTER       10
+#define NS_STYLE_SPEECH_RATE_SLOWER       11
+
+// See nsStyleAural
+#define NS_STYLE_VOLUME_SILENT            0
+#define NS_STYLE_VOLUME_X_SOFT            1
+#define NS_STYLE_VOLUME_SOFT              2
+#define NS_STYLE_VOLUME_MEDIUM            3
+#define NS_STYLE_VOLUME_LOUD              4
+#define NS_STYLE_VOLUME_X_LOUD            5
 
 // See nsStyleColor
 #define NS_STYLE_COLOR_INHERIT_FROM_BODY  2  /* Can't come from CSS directly */
@@ -345,13 +406,11 @@ enum class StyleImageLayerRepeat : uint8_t {
 #define NS_STYLE_BORDER_IMAGE_SLICE_FILL        1
 
 // See nsStyleContent
-enum class StyleContent : uint8_t {
-  OpenQuote,
-  CloseQuote,
-  NoOpenQuote,
-  NoCloseQuote,
-  AltContent
-};
+#define NS_STYLE_CONTENT_OPEN_QUOTE             0
+#define NS_STYLE_CONTENT_CLOSE_QUOTE            1
+#define NS_STYLE_CONTENT_NO_OPEN_QUOTE          2
+#define NS_STYLE_CONTENT_NO_CLOSE_QUOTE         3
+#define NS_STYLE_CONTENT_ALT_CONTENT            4
 
 // See nsStyleColor
 #define NS_STYLE_CURSOR_AUTO                    1
@@ -588,7 +647,6 @@ enum class StyleDisplay : uint8_t {
 #define NS_STYLE_FONT_SIZE_XXXLARGE             7  // Only used by <font size="7">. Not specifiable in CSS.
 #define NS_STYLE_FONT_SIZE_LARGER               8
 #define NS_STYLE_FONT_SIZE_SMALLER              9
-#define NS_STYLE_FONT_SIZE_NO_KEYWORD          10 // Used by Servo to track the "no keyword" case
 
 // See nsStyleFont
 // We should eventually stop using the NS_STYLE_* variants here.
@@ -718,23 +776,24 @@ enum class StyleGridTrackBreadth : uint8_t {
 // See nsStyleList
 #define NS_STYLE_LIST_STYLE_CUSTOM                -1 // for @counter-style
 #define NS_STYLE_LIST_STYLE_NONE                  0
-#define NS_STYLE_LIST_STYLE_DECIMAL               1
-#define NS_STYLE_LIST_STYLE_DISC                  2
-#define NS_STYLE_LIST_STYLE_CIRCLE                3
-#define NS_STYLE_LIST_STYLE_SQUARE                4
-#define NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED     5
-#define NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN       6
-#define NS_STYLE_LIST_STYLE_HEBREW                7
-#define NS_STYLE_LIST_STYLE_JAPANESE_INFORMAL     8
-#define NS_STYLE_LIST_STYLE_JAPANESE_FORMAL       9
-#define NS_STYLE_LIST_STYLE_KOREAN_HANGUL_FORMAL  10
-#define NS_STYLE_LIST_STYLE_KOREAN_HANJA_INFORMAL 11
-#define NS_STYLE_LIST_STYLE_KOREAN_HANJA_FORMAL   12
-#define NS_STYLE_LIST_STYLE_SIMP_CHINESE_INFORMAL 13
-#define NS_STYLE_LIST_STYLE_SIMP_CHINESE_FORMAL   14
-#define NS_STYLE_LIST_STYLE_TRAD_CHINESE_INFORMAL 15
-#define NS_STYLE_LIST_STYLE_TRAD_CHINESE_FORMAL   16
-#define NS_STYLE_LIST_STYLE_ETHIOPIC_NUMERIC      17
+#define NS_STYLE_LIST_STYLE_DISC                  1
+#define NS_STYLE_LIST_STYLE_CIRCLE                2
+#define NS_STYLE_LIST_STYLE_SQUARE                3
+#define NS_STYLE_LIST_STYLE_DECIMAL               4
+#define NS_STYLE_LIST_STYLE_HEBREW                5
+#define NS_STYLE_LIST_STYLE_JAPANESE_INFORMAL     6
+#define NS_STYLE_LIST_STYLE_JAPANESE_FORMAL       7
+#define NS_STYLE_LIST_STYLE_KOREAN_HANGUL_FORMAL  8
+#define NS_STYLE_LIST_STYLE_KOREAN_HANJA_INFORMAL 9
+#define NS_STYLE_LIST_STYLE_KOREAN_HANJA_FORMAL   10
+#define NS_STYLE_LIST_STYLE_SIMP_CHINESE_INFORMAL 11
+#define NS_STYLE_LIST_STYLE_SIMP_CHINESE_FORMAL   12
+#define NS_STYLE_LIST_STYLE_TRAD_CHINESE_INFORMAL 13
+#define NS_STYLE_LIST_STYLE_TRAD_CHINESE_FORMAL   14
+#define NS_STYLE_LIST_STYLE_ETHIOPIC_NUMERIC      15
+#define NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED     16
+#define NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN       17
+#define NS_STYLE_LIST_STYLE__MAX                  18
 // These styles are handled as custom styles defined in counterstyles.css.
 // They are preserved here only for html attribute map.
 #define NS_STYLE_LIST_STYLE_LOWER_ROMAN           100

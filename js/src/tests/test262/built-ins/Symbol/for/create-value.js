@@ -15,7 +15,6 @@ info: >
     5. Append the Record { [[Key]]: stringKey, [[Symbol]]: newSymbol } to the
        GlobalSymbolRegistry List.
     6. Return newSymbol. 
-features: [Symbol]
 ---*/
 
 var canonical = Symbol.for('s');

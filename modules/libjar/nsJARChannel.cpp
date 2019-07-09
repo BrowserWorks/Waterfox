@@ -600,7 +600,7 @@ nsJARChannel::GetContentType(nsACString &result)
     // If the Jar file has not been open yet,
     // We return application/x-unknown-content-type
     if (!mOpened) {
-      result.AssignLiteral(UNKNOWN_CONTENT_TYPE);
+      result.Assign(UNKNOWN_CONTENT_TYPE);
       return NS_OK;
     }
 
@@ -1172,19 +1172,6 @@ nsJARChannel::RetargetDeliveryTo(nsIEventTarget* aEventTarget)
   }
 
   return request->RetargetDeliveryTo(aEventTarget);
-}
-
-NS_IMETHODIMP
-nsJARChannel::GetDeliveryTarget(nsIEventTarget** aEventTarget)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsCOMPtr<nsIThreadRetargetableRequest> request = do_QueryInterface(mRequest);
-  if (!request) {
-    return NS_ERROR_NO_INTERFACE;
-  }
-
-  return request->GetDeliveryTarget(aEventTarget);
 }
 
 NS_IMETHODIMP

@@ -3,10 +3,11 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 
-<!ENTITY migrationWizard.title          "Import Wizard">
+<!ENTITY migrationWizard.title          "Waterfox Wizard">
+<!ENTITY migrationWizard.text1          "Waterfox now uses its own profile location to store your personal data. If you are coming from an older version of Waterfox, you will need to import your existing Waterfox data as previously this data was shared with your Firefox profile.">
 
-<!ENTITY importFrom.label               "Import Options, Bookmarks, History, Passwords and other data from:">
-<!ENTITY importFromUnix.label           "Import Preferences, Bookmarks, History, Passwords and other data from:">
+<!ENTITY importFrom.label               "Import from:">
+<!ENTITY importFromUnix.label           "Import from:">
 <!ENTITY importFromBookmarks.label      "Import Bookmarks from:">
 
 <!ENTITY importFromIE.label             "Microsoft Internet Explorer">
@@ -25,12 +26,14 @@
 <!ENTITY importFromChromium.accesskey   "u">
 <!ENTITY importFromFirefox.label        "Firefox">
 <!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFromWaterfox.label        "Firefox or previous Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "W">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
 
 <!ENTITY noMigrationSources.label       "No programs that contain bookmarks, history or password data could be found.">
 
-<!ENTITY importSource.title             "Import Settings and Data">
+<!ENTITY importSource.title             "Welcome to the new Waterfox!">
 <!ENTITY importItems.title              "Items to Import">
 <!ENTITY importItems.label              "Select which items to import:">
 

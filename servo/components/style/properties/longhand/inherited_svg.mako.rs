@@ -39,12 +39,13 @@ ${helpers.predefined_type(
     boxed=True,
     spec="https://www.w3.org/TR/SVG2/painting.html#SpecifyingFillPaint")}
 
-${helpers.predefined_type("fill-opacity", "SVGOpacity", "Default::default()",
+${helpers.predefined_type("fill-opacity", "Opacity", "1.0",
                           products="gecko", animation_value_type="ComputedValue",
                           spec="https://www.w3.org/TR/SVG11/painting.html#FillOpacityProperty")}
 
 ${helpers.single_keyword("fill-rule", "nonzero evenodd",
                          gecko_enum_prefix="StyleFillRule",
+                         gecko_inexhaustive=True,
                          products="gecko", animation_value_type="discrete",
                          spec="https://www.w3.org/TR/SVG11/painting.html#FillRuleProperty")}
 
@@ -63,11 +64,11 @@ ${helpers.predefined_type(
     spec="https://www.w3.org/TR/SVG2/painting.html#SpecifyingStrokePaint")}
 
 ${helpers.predefined_type(
-    "stroke-width", "SVGWidth",
-    "::values::computed::NonNegativeLength::new(1.).into()",
+    "stroke-width", "LengthOrPercentageOrNumber",
+    "Either::First(1.0)",
+    "parse_non_negative",
     products="gecko",
-    boxed="True",
-    animation_value_type="::values::computed::SVGWidth",
+    animation_value_type="ComputedValue",
     spec="https://www.w3.org/TR/SVG2/painting.html#StrokeWidth")}
 
 ${helpers.single_keyword("stroke-linecap", "butt round square",
@@ -78,30 +79,31 @@ ${helpers.single_keyword("stroke-linejoin", "miter round bevel",
                          products="gecko", animation_value_type="discrete",
                          spec="https://www.w3.org/TR/SVG11/painting.html#StrokeLinejoinProperty")}
 
-${helpers.predefined_type("stroke-miterlimit", "GreaterThanOrEqualToOneNumber",
-                          "From::from(4.0)",
-                          products="gecko",
-                          animation_value_type="::values::computed::GreaterThanOrEqualToOneNumber",
+${helpers.predefined_type("stroke-miterlimit", "Number", "4.0",
+                          "parse_at_least_one", products="gecko",
+                          animation_value_type="ComputedValue",
                           spec="https://www.w3.org/TR/SVG11/painting.html#StrokeMiterlimitProperty")}
 
-${helpers.predefined_type("stroke-opacity", "SVGOpacity", "Default::default()",
+${helpers.predefined_type("stroke-opacity", "Opacity", "1.0",
                           products="gecko", animation_value_type="ComputedValue",
                           spec="https://www.w3.org/TR/SVG11/painting.html#StrokeOpacityProperty")}
 
 ${helpers.predefined_type(
     "stroke-dasharray",
-    "SVGStrokeDashArray",
-    "Default::default()",
+    "LengthOrPercentageOrNumber",
+    None,
+    "parse_non_negative",
+    vector=True,
     products="gecko",
-    animation_value_type="::values::computed::SVGStrokeDashArray",
+    animation_value_type="ComputedValue",
+    separator="CommaWithSpace",
     spec="https://www.w3.org/TR/SVG2/painting.html#StrokeDashing",
 )}
 
 ${helpers.predefined_type(
-    "stroke-dashoffset", "SVGLength",
-    "Au(0).into()",
+    "stroke-dashoffset", "LengthOrPercentageOrNumber",
+    "Either::First(0.0)",
     products="gecko",
-    boxed="True",
     animation_value_type="ComputedValue",
     spec="https://www.w3.org/TR/SVG2/painting.html#StrokeDashing")}
 
@@ -109,6 +111,7 @@ ${helpers.predefined_type(
 ${helpers.single_keyword("clip-rule", "nonzero evenodd",
                          products="gecko",
                          gecko_enum_prefix="StyleFillRule",
+                         gecko_inexhaustive=True,
                          animation_value_type="discrete",
                          spec="https://www.w3.org/TR/SVG11/masking.html#ClipRuleProperty")}
 
@@ -131,33 +134,29 @@ ${helpers.predefined_type("marker-end", "UrlOrNone", "Either::Second(None_)",
                           spec="https://www.w3.org/TR/SVG2/painting.html#VertexMarkerProperties")}
 
 <%helpers:longhand name="paint-order"
-                   animation_value_type="discrete"
+                   animation_value_type="none"
                    products="gecko"
                    spec="https://www.w3.org/TR/SVG2/painting.html#PaintOrder">
+
+    use values::computed::ComputedValueAsSpecified;
     use std::fmt;
     use style_traits::ToCss;
 
-    /// The specified value for a single CSS paint-order property.
-    #[repr(u8)]
-    #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, ToCss)]
-    pub enum PaintOrder {
-        Normal = 0,
-        Fill = 1,
-        Stroke = 2,
-        Markers = 3,
-    }
+    pub const NORMAL: u8 = 0;
+    pub const FILL: u8 = 1;
+    pub const STROKE: u8 = 2;
+    pub const MARKERS: u8 = 3;
 
-    /// Number of non-normal components.
-    const COUNT: u8 = 3;
+    // number of bits for each component
+    pub const SHIFT: u8 = 2;
+    // mask with above bits set
+    pub const MASK: u8 = 0b11;
+    // number of non-normal keyword values
+    pub const COUNT: u8 = 3;
+    // all keywords
+    pub const ALL: [u8; 3] = [FILL, STROKE, MARKERS];
 
-    /// Number of bits for each component
-    const SHIFT: u8 = 2;
-
-    /// Mask with above bits set
-    const MASK: u8 = 0b11;
-
-    /// The specified value is tree `PaintOrder` values packed into the
-    /// bitfields below, as a six-bit field, of 3 two-bit pairs
+    /// Represented as a six-bit field, of 3 two-bit pairs
     ///
     /// Each pair can be set to FILL, STROKE, or MARKERS
     /// Lowest significant bit pairs are highest priority.
@@ -166,86 +165,78 @@ ${helpers.predefined_type("marker-end", "UrlOrNone", "Either::Second(None_)",
     ///
     /// Higher priority values, i.e. the values specified first,
     /// will be painted first (and may be covered by paintings of lower priority)
-    #[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue)]
+    #[derive(PartialEq, Clone, Copy, Debug)]
+    #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
     pub struct SpecifiedValue(pub u8);
-
-    impl SpecifiedValue {
-        fn normal() -> Self {
-            SpecifiedValue(0)
-        }
-    }
 
     pub mod computed_value {
         pub use super::SpecifiedValue as T;
     }
 
     pub fn get_initial_value() -> SpecifiedValue {
-        SpecifiedValue::normal()
+      SpecifiedValue(NORMAL)
     }
 
     impl SpecifiedValue {
-        fn order_at(&self, pos: u8) -> PaintOrder {
-            // Safe because PaintOrder covers all possible patterns.
-            unsafe { ::std::mem::transmute((self.0 >> pos * SHIFT) & MASK) }
+        pub fn bits_at(&self, pos: u8) -> u8 {
+            (self.0 >> pos * SHIFT) & MASK
         }
     }
 
-    pub fn parse<'i, 't>(
-        _context: &ParserContext,
-        input: &mut Parser<'i, 't>
-    ) -> Result<SpecifiedValue,ParseError<'i>> {
+    pub fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
+                         -> Result<SpecifiedValue,ParseError<'i>> {
         if let Ok(()) = input.try(|i| i.expect_ident_matching("normal")) {
-            return Ok(SpecifiedValue::normal())
-        }
+            Ok(SpecifiedValue(0))
+        } else {
+            let mut value = 0;
+            // bitfield representing what we've seen so far
+            // bit 1 is fill, bit 2 is stroke, bit 3 is markers
+            let mut seen = 0;
+            let mut pos = 0;
 
-        let mut value = 0;
-        // bitfield representing what we've seen so far
-        // bit 1 is fill, bit 2 is stroke, bit 3 is markers
-        let mut seen = 0;
-        let mut pos = 0;
-
-        loop {
-            let result: Result<_, ParseError> = input.try(|input| {
-                try_match_ident_ignore_ascii_case! { input,
-                    "fill" => Ok(PaintOrder::Fill),
-                    "stroke" => Ok(PaintOrder::Stroke),
-                    "markers" => Ok(PaintOrder::Markers),
-                }
-            });
-
-            match result {
-                Ok(val) => {
-                    if (seen & (1 << val as u8)) != 0 {
-                        // don't parse the same ident twice
-                        return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            loop {
+                let result: Result<_, ParseError> = input.try(|i| {
+                    try_match_ident_ignore_ascii_case! { i.expect_ident()?,
+                        "fill" => Ok(FILL),
+                        "stroke" => Ok(STROKE),
+                        "markers" => Ok(MARKERS),
                     }
+                });
 
-                    value |= (val as u8) << (pos * SHIFT);
-                    seen |= 1 << (val as u8);
-                    pos += 1;
-                }
-                Err(_) => break,
-            }
-        }
-
-        if value == 0 {
-            // Couldn't find any keyword
-            return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-        }
-
-        // fill in rest
-        for i in pos..COUNT {
-            for paint in 0..COUNT {
-                // if not seen, set bit at position, mark as seen
-                if (seen & (1 << paint)) == 0 {
-                    seen |= 1 << paint;
-                    value |= paint << (i * SHIFT);
-                    break;
+                match result {
+                    Ok(val) => {
+                        if (seen & (1 << val)) != 0 {
+                            // don't parse the same ident twice
+                            return Err(StyleParseError::UnspecifiedError.into())
+                        } else {
+                            value |= val << (pos * SHIFT);
+                            seen |= 1 << val;
+                            pos += 1;
+                        }
+                    }
+                    Err(_) => break,
                 }
             }
-        }
 
-        Ok(SpecifiedValue(value))
+            if value == 0 {
+                // couldn't find any keyword
+                Err(StyleParseError::UnspecifiedError.into())
+            } else {
+                // fill in rest
+                for i in pos..COUNT {
+                    for paint in &ALL {
+                        // if not seen, set bit at position, mark as seen
+                        if (seen & (1 << paint)) == 0 {
+                            seen |= 1 << paint;
+                            value |= paint << (i * SHIFT);
+                            break;
+                        }
+                    }
+                }
+
+                Ok(SpecifiedValue(value))
+            }
+        }
     }
 
     impl ToCss for SpecifiedValue {
@@ -254,33 +245,36 @@ ${helpers.predefined_type("marker-end", "UrlOrNone", "Either::Second(None_)",
                 return dest.write_str("normal")
             }
 
-            let mut last_pos_to_serialize = 0;
-            for i in (1..COUNT).rev() {
-                let component = self.order_at(i);
-                let earlier_component = self.order_at(i - 1);
-                if component < earlier_component {
-                    last_pos_to_serialize = i - 1;
-                    break;
-                }
-            }
-
-            for pos in 0..last_pos_to_serialize + 1 {
+            for pos in 0..COUNT {
                 if pos != 0 {
                     dest.write_str(" ")?
                 }
-                self.order_at(pos).to_css(dest)?;
+                match self.bits_at(pos) {
+                    FILL => dest.write_str("fill")?,
+                    STROKE => dest.write_str("stroke")?,
+                    MARKERS => dest.write_str("markers")?,
+                    _ => unreachable!(),
+                }
             }
             Ok(())
         }
     }
-</%helpers:longhand>
 
+    no_viewport_percentage!(SpecifiedValue);
+
+    impl ComputedValueAsSpecified for SpecifiedValue { }
+</%helpers:longhand>
 <%helpers:vector_longhand name="-moz-context-properties"
                    animation_value_type="none"
                    products="gecko"
                    spec="Nonstandard (Internal-only)"
                    allow_empty="True">
     use values::CustomIdent;
+    use values::computed::ComputedValueAsSpecified;
+
+    no_viewport_percentage!(SpecifiedValue);
+
+    impl ComputedValueAsSpecified for SpecifiedValue { }
 
     pub type SpecifiedValue = CustomIdent;
 
@@ -291,8 +285,7 @@ ${helpers.predefined_type("marker-end", "UrlOrNone", "Either::Second(None_)",
 
     pub fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<SpecifiedValue, ParseError<'i>> {
-        let location = input.current_source_location();
         let i = input.expect_ident()?;
-        CustomIdent::from_ident(location, i, &["all", "none", "auto"])
+        CustomIdent::from_ident(i, &["all", "none", "auto"])
     }
 </%helpers:vector_longhand>

@@ -27,10 +27,16 @@ HTMLMetaElement::~HTMLMetaElement()
 }
 
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLMetaElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLMetaElement, nsGenericHTMLElement,
+                            nsIDOMHTMLMetaElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLMetaElement)
 
+
+NS_IMPL_STRING_ATTR(HTMLMetaElement, Content, content)
+NS_IMPL_STRING_ATTR(HTMLMetaElement, HttpEquiv, httpEquiv)
+NS_IMPL_STRING_ATTR(HTMLMetaElement, Name, name)
+NS_IMPL_STRING_ATTR(HTMLMetaElement, Scheme, scheme)
 
 nsresult
 HTMLMetaElement::SetMetaReferrer(nsIDocument* aDocument)
@@ -53,11 +59,9 @@ HTMLMetaElement::SetMetaReferrer(nsIDocument* aDocument)
 }
 
 nsresult
-HTMLMetaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLMetaElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue,
-                              const nsAttrValue* aOldValue,
-                              nsIPrincipal* aSubjectPrincipal,
-                              bool aNotify)
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     nsIDocument *document = GetUncomposedDoc();
@@ -79,7 +83,7 @@ HTMLMetaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 nsresult
@@ -99,7 +103,7 @@ HTMLMetaElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     nsContentUtils::ProcessViewportInfo(aDocument, content);
   }
 
-  if (CSPService::sCSPEnabled && aDocument && !aDocument->IsLoadedAsData() &&
+  if (CSPService::sCSPEnabled && aDocument &&
       AttrValueIs(kNameSpaceID_None, nsGkAtoms::httpEquiv, nsGkAtoms::headerCSP, eIgnoreCase)) {
 
     // only accept <meta http-equiv="Content-Security-Policy" content=""> if it appears

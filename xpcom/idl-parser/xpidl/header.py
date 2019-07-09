@@ -66,10 +66,12 @@ def attributeParamlist(a, getter):
 
 
 def attributeAsNative(a, getter, declType = 'NS_IMETHOD'):
-        params = {'returntype': attributeReturnType(a, declType),
+        deprecated = a.deprecated and "NS_DEPRECATED " or ""
+        params = {'deprecated': deprecated,
+                  'returntype': attributeReturnType(a, declType),
                   'binaryname': attributeNativeName(a, getter),
                   'paramlist': attributeParamlist(a, getter)}
-        return "%(returntype)s %(binaryname)s(%(paramlist)s)" % params
+        return "%(deprecated)s%(returntype)s %(binaryname)s(%(paramlist)s)" % params
 
 
 def methodNativeName(m):
@@ -292,6 +294,53 @@ iface_forward_safe = """
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_%(macroname)s(_to) """
 
+iface_template_prolog = """
+
+#if 0
+/* Use the code below as a template for the implementation class for this interface. */
+
+/* Header file */
+class %(implclass)s : public %(name)s
+{
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_%(macroname)s
+
+  %(implclass)s();
+
+private:
+  ~%(implclass)s();
+
+protected:
+  /* additional members */
+};
+
+/* Implementation file */
+NS_IMPL_ISUPPORTS(%(implclass)s, %(name)s)
+
+%(implclass)s::%(implclass)s()
+{
+  /* member initializers and constructor code */
+}
+
+%(implclass)s::~%(implclass)s()
+{
+  /* destructor code */
+}
+
+"""
+
+example_tmpl = """%(returntype)s %(implclass)s::%(nativeName)s(%(paramList)s)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+"""
+
+iface_template_epilog = """/* End of implementation class template. */
+#endif
+
+"""
+
 attr_infallible_tmpl = """\
   inline %(realtype)s%(nativename)s(%(args)s)
   {
@@ -391,6 +440,8 @@ def write_interface(iface, fd):
     if not foundcdata:
         fd.write("NS_NO_VTABLE ")
 
+    if iface.attributes.deprecated:
+        fd.write("MOZ_DEPRECATED ")
     fd.write(iface.name)
     if iface.base:
         fd.write(" : public %s" % iface.base)
@@ -474,7 +525,30 @@ def write_interface(iface, fd):
                  "\\\n  %(asNative)s override { return !_to ? NS_ERROR_NULL_POINTER : _to->%(nativeName)s(%(paramList)s); } ",
                  "\\\n  %(asNative)s override; ")
 
-    fd.write('\n\n')
+    fd.write(iface_template_prolog % names)
+
+    for member in iface.members:
+        if isinstance(member, xpidl.ConstMember) or isinstance(member, xpidl.CDATA):
+            continue
+        fd.write("/* %s */\n" % member.toIDL())
+        if isinstance(member, xpidl.Attribute):
+            fd.write(example_tmpl % {'implclass': implclass,
+                                     'returntype': attributeReturnType(member, 'NS_IMETHODIMP'),
+                                     'nativeName': attributeNativeName(member, True),
+                                     'paramList': attributeParamlist(member, True)})
+            if not member.readonly:
+                fd.write(example_tmpl % {'implclass': implclass,
+                                         'returntype': attributeReturnType(member, 'NS_IMETHODIMP'),
+                                         'nativeName': attributeNativeName(member, False),
+                                         'paramList': attributeParamlist(member, False)})
+        elif isinstance(member, xpidl.Method):
+            fd.write(example_tmpl % {'implclass': implclass,
+                                     'returntype': methodReturnType(member, 'NS_IMETHODIMP'),
+                                     'nativeName': methodNativeName(member),
+                                     'paramList': paramlistAsNative(member, empty='')})
+        fd.write('\n')
+
+    fd.write(iface_template_epilog)
 
 
 def main(outputfile):

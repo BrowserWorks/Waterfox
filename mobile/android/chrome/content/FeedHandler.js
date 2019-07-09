@@ -18,7 +18,7 @@ var FeedHandler = {
 
     return this._contentTypes[contentType];
   },
-
+  
   loadContentHandlers: function fh_loadContentHandlers() {
     this._contentTypes = {};
 
@@ -52,7 +52,8 @@ var FeedHandler = {
         if (!(type in this._contentTypes))
           this._contentTypes[type] = [];
         this._contentTypes[type].push({ contentType: type, uri: uri, name: title });
-      } catch (ex) {}
+      }
+      catch(ex) {}
     }
   },
 
@@ -74,7 +75,7 @@ var FeedHandler = {
           window: browser.contentWindow,
           title: Strings.browser.GetStringFromName("feedHandler.chooseFeed")
         }).setSingleChoiceItems(feeds.map(function(feed) {
-          return { label: feed.title || feed.href };
+          return { label: feed.title || feed.href }
         })).show(data => {
           feedIndex = data.button;
           if (feedIndex == -1)

@@ -15,5 +15,4 @@ config = {
         ],
     ],
     'artifact_flag_build_variant_in_try': 'api-16-gradle-artifact',
-    'max_build_output_timeout': 0,
 }

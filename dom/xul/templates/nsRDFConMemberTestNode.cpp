@@ -20,8 +20,8 @@ extern mozilla::LazyLogModule gXULTemplateLog;
 
 nsRDFConMemberTestNode::nsRDFConMemberTestNode(TestNode* aParent,
                                                nsXULTemplateQueryProcessorRDF* aProcessor,
-                                               nsAtom *aContainerVariable,
-                                               nsAtom *aMemberVariable)
+                                               nsIAtom *aContainerVariable,
+                                               nsIAtom *aMemberVariable)
     : nsRDFTestNode(aParent),
       mProcessor(aProcessor),
       mContainerVariable(aContainerVariable),
@@ -352,7 +352,7 @@ nsRDFConMemberTestNode::FilterInstantiations(InstantiationSet& aInstantiations,
                     rv = results->GetNext(getter_AddRefs(isupports));
                     if (NS_FAILED(rv)) return rv;
 
-                    nsAtom* variable;
+                    nsIAtom* variable;
                     nsCOMPtr<nsIRDFNode> value;
                     nsCOMPtr<nsIRDFResource> valueRes;
 

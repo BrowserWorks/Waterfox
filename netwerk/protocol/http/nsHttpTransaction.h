@@ -160,7 +160,6 @@ public:
     mozilla::TimeStamp GetDomainLookupStart();
     mozilla::TimeStamp GetDomainLookupEnd();
     mozilla::TimeStamp GetConnectStart();
-    mozilla::TimeStamp GetTcpConnectEnd();
     mozilla::TimeStamp GetSecureConnectionStart();
 
     mozilla::TimeStamp GetConnectEnd();

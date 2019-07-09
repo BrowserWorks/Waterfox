@@ -86,5 +86,6 @@ SECStatus tls13_NegotiateVersion(sslSocket *ss,
                                  const TLSExtension *supported_versions);
 SECStatus tls13_SendNewSessionTicket(sslSocket *ss);
 SECStatus SSLExp_UseAltServerHelloType(PRFileDesc *fd, PRBool enable);
+void tls13_SetSpecRecordVersion(sslSocket *ss, ssl3CipherSpec *spec);
 
 #endif /* __tls13con_h_ */

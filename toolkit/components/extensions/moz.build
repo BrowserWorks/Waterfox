@@ -4,12 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'WebExtensions: General')
 
 EXTRA_JS_MODULES += [
     'Extension.jsm',
+    'ExtensionAPI.jsm',
     'ExtensionChild.jsm',
     'ExtensionChildDevToolsUtils.jsm',
     'ExtensionCommon.jsm',
@@ -21,11 +21,10 @@ EXTRA_JS_MODULES += [
     'ExtensionSettingsStore.jsm',
     'ExtensionStorage.jsm',
     'ExtensionStorageSync.jsm',
+    'ExtensionTabs.jsm',
     'ExtensionUtils.jsm',
-    'FindContent.jsm',
     'LegacyExtensionsUtils.jsm',
     'MessageChannel.jsm',
-    'NativeManifests.jsm',
     'NativeMessaging.jsm',
     'ProxyScriptContext.jsm',
     'Schemas.jsm',

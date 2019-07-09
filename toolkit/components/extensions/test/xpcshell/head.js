@@ -2,7 +2,7 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-/* exported createHttpServer, promiseConsoleOutput, cleanupDir, clearCache, testEnv */
+/* exported createHttpServer, promiseConsoleOutput, cleanupDir, testEnv */
 
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -10,17 +10,22 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Timer.jsm");
 Components.utils.import("resource://testing-common/AddonTestUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  ContentTask: "resource://testing-common/ContentTask.jsm",
-  Extension: "resource://gre/modules/Extension.jsm",
-  ExtensionData: "resource://gre/modules/Extension.jsm",
-  ExtensionParent: "resource://gre/modules/ExtensionParent.jsm",
-  ExtensionTestUtils: "resource://testing-common/ExtensionXPCShellUtils.jsm",
-  FileUtils: "resource://gre/modules/FileUtils.jsm",
-  HttpServer: "resource://testing-common/httpd.js",
-  NetUtil: "resource://gre/modules/NetUtil.jsm",
-  Schemas: "resource://gre/modules/Schemas.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "ContentTask",
+                                  "resource://testing-common/ContentTask.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionData",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionTestUtils",
+                                  "resource://testing-common/ExtensionXPCShellUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+                                  "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "HttpServer",
+                                  "resource://testing-common/httpd.js");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
+                                  "resource://gre/modules/Schemas.jsm");
 
 // These values may be changed in later head files and tested in check_remote
 // below.
@@ -62,20 +67,6 @@ function createHttpServer(port = -1) {
 
 if (AppConstants.platform === "android") {
   Services.io.offline = true;
-}
-
-/**
- * Clears the HTTP and content image caches.
- */
-function clearCache() {
-  let cache = Cc["@mozilla.org/netwerk/cache-storage-service;1"]
-      .getService(Ci.nsICacheStorageService);
-  cache.clear();
-
-  let imageCache = Cc["@mozilla.org/image/tools;1"]
-      .getService(Ci.imgITools)
-      .getImgCacheForDocument(null);
-  imageCache.clearCache(false);
 }
 
 var promiseConsoleOutput = async function(task) {

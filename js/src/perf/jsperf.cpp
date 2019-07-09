@@ -166,6 +166,8 @@ static const JSClassOps pm_classOps = {
     nullptr,
     nullptr,
     nullptr,
+    nullptr,
+    nullptr,
     pm_finalize
 };
 
@@ -261,7 +263,8 @@ RegisterPerfMeasurement(JSContext* cx, HandleObject globalArg)
         return 0;
 
     for (const pm_const* c = pm_consts; c->name; c++) {
-        if (!JS_DefineProperty(cx, ctor, c->name, c->value, PM_CATTRS))
+        if (!JS_DefineProperty(cx, ctor, c->name, c->value, PM_CATTRS,
+                               JS_STUBGETTER, JS_STUBSETTER))
             return 0;
     }
 

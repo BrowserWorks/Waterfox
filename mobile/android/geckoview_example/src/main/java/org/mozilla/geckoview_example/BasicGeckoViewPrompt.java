@@ -5,7 +5,6 @@
 
 package org.mozilla.geckoview_example;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -107,9 +106,14 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity)
                 .setTitle(title)
                 .setMessage(msg)
-                .setPositiveButton(android.R.string.ok, /* onClickListener */ null);
-        createStandardDialog(addCheckbox(builder, /* parent */ null, callback),
-                             callback).show();
+                .setPositiveButton(android.R.string.ok, /* onClickListener */ null)
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(final DialogInterface dialog) {
+                        callback.dismiss();
+                    }
+                });
+        addCheckbox(builder, /* parent */ null, callback).show();
     }
 
     public void promptForButton(final GeckoView view, final String title, final String msg,
@@ -122,7 +126,13 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity)
                 .setTitle(title)
-                .setMessage(msg);
+                .setMessage(msg)
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(final DialogInterface dialog) {
+                        callback.dismiss();
+                    }
+                });
         final DialogInterface.OnClickListener listener =
             new DialogInterface.OnClickListener() {
                 @Override
@@ -147,20 +157,18 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         if (btnMsg[BUTTON_TYPE_NEGATIVE] != null) {
             builder.setNegativeButton(btnMsg[BUTTON_TYPE_NEGATIVE], listener);
         }
-        createStandardDialog(addCheckbox(builder, /* parent */ null, callback),
-                             callback).show();
+        addCheckbox(builder, /* parent */ null, callback).show();
     }
 
     private int getViewPadding(final AlertDialog.Builder builder) {
         final TypedArray attr = builder.getContext().obtainStyledAttributes(
                 new int[] { android.R.attr.listPreferredItemPaddingLeft });
-        final int padding = attr.getDimensionPixelSize(0, 1);
-        attr.recycle();
-        return padding;
+        return attr.getDimensionPixelSize(0, 1);
     }
 
     private LinearLayout addStandardLayout(final AlertDialog.Builder builder,
-                                           final String title, final String msg) {
+                                           final String title, final String msg,
+                                           final AlertCallback callback) {
         final ScrollView scrollView = new ScrollView(builder.getContext());
         final LinearLayout container = new LinearLayout(builder.getContext());
         final int horizontalPadding = getViewPadding(builder);
@@ -171,20 +179,14 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         scrollView.addView(container);
         builder.setTitle(title)
                .setMessage(msg)
-               .setView(scrollView);
-        return container;
-    }
-
-    private AlertDialog createStandardDialog(final AlertDialog.Builder builder,
-                                             final AlertCallback callback) {
-        final AlertDialog dialog = builder.create();
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+               .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(final DialogInterface dialog) {
                         callback.dismiss();
                     }
-                });
-        return dialog;
+                })
+               .setView(scrollView);
+        return container;
     }
 
     public void promptForText(final GeckoView view, final String title, final String msg,
@@ -196,7 +198,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             return;
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final LinearLayout container = addStandardLayout(builder, title, msg);
+        final LinearLayout container = addStandardLayout(builder, title, msg, callback);
         final EditText editText = new EditText(builder.getContext());
         editText.setText(value);
         container.addView(editText);
@@ -210,7 +212,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
                     }
                 });
 
-        createStandardDialog(addCheckbox(builder, container, callback), callback).show();
+        addCheckbox(builder, container, callback).show();
     }
 
     public void promptForAuth(final GeckoView view, final String title, final String msg,
@@ -222,7 +224,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             return;
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final LinearLayout container = addStandardLayout(builder, title, msg);
+        final LinearLayout container = addStandardLayout(builder, title, msg, callback);
 
         final int flags = options.getInt("flags");
         final int level = options.getInt("level");
@@ -262,7 +264,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
                         }
                     }
                 });
-        createStandardDialog(addCheckbox(builder, container, callback), callback).show();
+        addCheckbox(builder, container, callback).show();
     }
 
     private void addChoiceItems(final int type, final ArrayAdapter<GeckoBundle> list,
@@ -301,7 +303,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             return;
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        addStandardLayout(builder, title, msg);
+        addStandardLayout(builder, title, msg, callback);
 
         final ListView list = new ListView(builder.getContext());
         if (type == CHOICE_TYPE_MULTIPLE) {
@@ -411,7 +413,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
 
         final AlertDialog dialog;
         if (type == CHOICE_TYPE_SINGLE || type == CHOICE_TYPE_MENU) {
-            dialog = createStandardDialog(builder, callback);
+            dialog = builder.create();
             list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(final AdapterView<?> parent, final View v,
@@ -458,7 +460,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
                     callback.confirm(items.toArray(new String[items.size()]));
                 }
             });
-            dialog = createStandardDialog(builder, callback);
+            dialog = builder.create();
         } else {
             throw new UnsupportedOperationException();
         }
@@ -482,7 +484,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             return;
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        addStandardLayout(builder, title, /* msg */ null);
+        addStandardLayout(builder, title, /* msg */ null, callback);
 
         final int initial = parseColor(value, /* def */ 0);
         final ArrayAdapter<Integer> adapter = new ArrayAdapter<Integer>(
@@ -535,7 +537,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         list.setAdapter(adapter);
         builder.setView(list);
 
-        final AlertDialog dialog = createStandardDialog(builder, callback);
+        final AlertDialog dialog = builder.create();
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(final AdapterView<?> parent, final View v,
@@ -663,7 +665,8 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             timePicker = null;
         }
 
-        final LinearLayout container = addStandardLayout(builder, title, /* msg */ null);
+        final LinearLayout container = addStandardLayout(builder, title,
+                                                         /* msg */ null, callback);
         container.setPadding(/* left */ 0, /* top */ 0, /* right */ 0, /* bottom */ 0);
         if (datePicker != null) {
             container.addView(datePicker);
@@ -693,11 +696,10 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         };
         builder.setNegativeButton(android.R.string.cancel, /* listener */ null)
                .setNeutralButton(R.string.clear_field, listener)
-               .setPositiveButton(android.R.string.ok, listener);
-        createStandardDialog(builder, callback).show();
+               .setPositiveButton(android.R.string.ok, listener)
+               .show();
     }
 
-    @TargetApi(19)
     public void promptForFile(GeckoView view, String title, int type,
                               String[] mimeTypes, FileCallback callback)
     {
@@ -736,10 +738,10 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
                        (mimeSubtype != null ? mimeSubtype : "*"));
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        if (Build.VERSION.SDK_INT >= 18 && type == FILE_TYPE_MULTIPLE) {
+        if (type == FILE_TYPE_MULTIPLE) {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
-        if (Build.VERSION.SDK_INT >= 19 && mimeTypes.length > 0) {
+        if (mimeTypes.length > 0) {
             intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         }
 
@@ -797,22 +799,20 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(title)
+               .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                   @Override
+                   public void onDismiss(final DialogInterface dialog) {
+                       callback.reject();
+                   }
+               })
                .setNegativeButton(android.R.string.cancel, /* onClickListener */ null)
                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                    @Override
                    public void onClick(final DialogInterface dialog, final int which) {
                        callback.grant();
                    }
-               });
-
-        final AlertDialog dialog = builder.create();
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                   @Override
-                   public void onDismiss(final DialogInterface dialog) {
-                       callback.reject();
-                   }
-               });
-        dialog.show();
+               })
+               .show();
     }
 
     private Spinner addMediaSpinner(final Context context, final ViewGroup container,
@@ -858,7 +858,8 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             return;
         }
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final LinearLayout container = addStandardLayout(builder, title, /* msg */ null);
+        final LinearLayout container = addStandardLayout(builder, title, /* msg */ null,
+                                                         /* callback */ null);
 
         final Spinner videoSpinner;
         if (video != null) {
@@ -874,7 +875,13 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
             audioSpinner = null;
         }
 
-        builder.setNegativeButton(android.R.string.cancel, /* listener */ null)
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(final DialogInterface dialog) {
+                        callback.reject();
+                    }
+                })
+               .setNegativeButton(android.R.string.cancel, /* listener */ null)
                .setPositiveButton(android.R.string.ok,
                                   new DialogInterface.OnClickListener() {
                     @Override
@@ -885,15 +892,7 @@ final class BasicGeckoViewPrompt implements GeckoView.PromptDelegate {
                                 ? (GeckoBundle) audioSpinner.getSelectedItem() : null;
                         callback.grant(video, audio);
                     }
-                });
-
-        final AlertDialog dialog = builder.create();
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(final DialogInterface dialog) {
-                        callback.reject();
-                    }
-                });
-        dialog.show();
+                })
+               .show();
     }
 }

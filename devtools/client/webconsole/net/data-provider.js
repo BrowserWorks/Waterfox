@@ -4,7 +4,6 @@
 "use strict";
 
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 
 /**
  * Map of pending requests. Used mainly by tests to wait
@@ -29,7 +28,7 @@ var DataProvider = {
       return p;
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     let realMethodName = "get" + method.charAt(0).toUpperCase() +
       method.slice(1);
 

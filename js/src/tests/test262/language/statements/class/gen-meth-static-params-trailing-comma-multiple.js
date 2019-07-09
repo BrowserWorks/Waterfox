@@ -4,7 +4,6 @@
 /*---
 description: A trailing comma should not increase the respective length, using multiple parameters (static class expression generator method)
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
-features: [generators]
 flags: [generated]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail
@@ -57,7 +56,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     Trailing comma in the parameters list
 

@@ -179,9 +179,9 @@ var AnimationsPanel = {
     // the page if the selected node does not have any animation on it.
     if (event.keyCode === KeyCodes.DOM_VK_SPACE) {
       if (AnimationsController.animationPlayers.length > 0) {
-        this.playPauseTimeline().catch(console.error);
+        this.playPauseTimeline().catch(ex => console.error(ex));
       } else {
-        this.toggleAll().catch(console.error);
+        this.toggleAll().catch(ex => console.error(ex));
       }
       event.preventDefault();
     }
@@ -208,7 +208,7 @@ var AnimationsPanel = {
   },
 
   onToggleAllClicked: function () {
-    this.toggleAll().catch(console.error);
+    this.toggleAll().catch(ex => console.error(ex));
   },
 
   /**
@@ -221,7 +221,7 @@ var AnimationsPanel = {
   }),
 
   onTimelinePlayClicked: function () {
-    this.playPauseTimeline().catch(console.error);
+    this.playPauseTimeline().catch(ex => console.error(ex));
   },
 
   /**
@@ -241,7 +241,7 @@ var AnimationsPanel = {
   },
 
   onTimelineRewindClicked: function () {
-    this.rewindTimeline().catch(console.error);
+    this.rewindTimeline().catch(ex => console.error(ex));
   },
 
   /**
@@ -260,17 +260,17 @@ var AnimationsPanel = {
    * Set the playback rate of all current animations shown in the timeline to
    * the value of this.rateSelectorEl.
    */
-  onRateChanged: function (rate) {
+  onRateChanged: function (e, rate) {
     AnimationsController.setPlaybackRateAll(rate)
                         .then(() => this.refreshAnimationsStateAndUI())
-                        .catch(console.error);
+                        .catch(ex => console.error(ex));
   },
 
   onTabNavigated: function () {
     this.toggleAllButtonEl.classList.remove("paused");
   },
 
-  onTimelineDataChanged: function (data) {
+  onTimelineDataChanged: function (e, data) {
     this.timelineData = data;
     let {isMoving, isUserDrag, time} = data;
 
@@ -289,7 +289,7 @@ var AnimationsPanel = {
     if (isUserDrag && !this.setCurrentTimeAllPromise) {
       this.setCurrentTimeAllPromise =
         AnimationsController.setCurrentTimeAll(time, true)
-                            .catch(console.error)
+                            .catch(error => console.error(error))
                             .then(() => {
                               this.setCurrentTimeAllPromise = null;
                             });

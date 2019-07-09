@@ -5,17 +5,47 @@
 
 const { Front, FrontClassWithSpec } = require("devtools/shared/protocol");
 const {
+  getIndentationFromPrefs,
+  getIndentationFromString
+} = require("devtools/shared/indentation");
+const {
+  originalSourceSpec,
   mediaRuleSpec,
   styleSheetSpec,
   styleSheetsSpec
 } = require("devtools/shared/specs/stylesheets");
 const promise = require("promise");
 const { Task } = require("devtools/shared/task");
+const events = require("sdk/event/core");
 
-loader.lazyRequireGetter(this, "getIndentationFromPrefs",
-  "devtools/shared/indentation", true);
-loader.lazyRequireGetter(this, "getIndentationFromString",
-  "devtools/shared/indentation", true);
+/**
+ * The client-side counterpart for an OriginalSourceActor.
+ */
+const OriginalSourceFront = FrontClassWithSpec(originalSourceSpec, {
+  initialize: function (client, form) {
+    Front.prototype.initialize.call(this, client, form);
+
+    this.isOriginalSource = true;
+  },
+
+  form: function (form, detail) {
+    if (detail === "actorid") {
+      this.actorID = form;
+      return;
+    }
+    this.actorID = form.actor;
+    this._form = form;
+  },
+
+  get href() {
+    return this._form.url;
+  },
+  get url() {
+    return this._form.url;
+  }
+});
+
+exports.OriginalSourceFront = OriginalSourceFront;
 
 /**
  * Corresponding client-side front for a MediaRuleActor.
@@ -25,7 +55,7 @@ const MediaRuleFront = FrontClassWithSpec(mediaRuleSpec, {
     Front.prototype.initialize.call(this, client, form);
 
     this._onMatchesChange = this._onMatchesChange.bind(this);
-    this.on("matches-change", this._onMatchesChange);
+    events.on(this, "matches-change", this._onMatchesChange);
   },
 
   _onMatchesChange: function (matches) {
@@ -71,11 +101,11 @@ const StyleSheetFront = FrontClassWithSpec(styleSheetSpec, {
     Front.prototype.initialize.call(this, conn, form);
 
     this._onPropertyChange = this._onPropertyChange.bind(this);
-    this.on("property-change", this._onPropertyChange);
+    events.on(this, "property-change", this._onPropertyChange);
   },
 
   destroy: function () {
-    this.off("property-change", this._onPropertyChange);
+    events.off(this, "property-change", this._onPropertyChange);
     Front.prototype.destroy.call(this);
   },
 
@@ -112,9 +142,6 @@ const StyleSheetFront = FrontClassWithSpec(styleSheetSpec, {
   },
   get ruleCount() {
     return this._form.ruleCount;
-  },
-  get sourceMapURL() {
-    return this._form.sourceMapURL;
   },
 
   /**

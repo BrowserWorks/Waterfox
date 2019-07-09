@@ -57,7 +57,7 @@ void MessagePumpDefault::Run(Delegate* delegate) {
       hangMonitor.NotifyWait();
       AUTO_PROFILER_LABEL("MessagePumpDefault::Run:Wait", OTHER);
       {
-        AUTO_PROFILER_THREAD_SLEEP;
+        mozilla::AutoProfilerThreadSleep sleep;
         event_.Wait();
       }
     } else {
@@ -66,7 +66,7 @@ void MessagePumpDefault::Run(Delegate* delegate) {
         hangMonitor.NotifyWait();
         AUTO_PROFILER_LABEL("MessagePumpDefault::Run:Wait", OTHER);
         {
-          AUTO_PROFILER_THREAD_SLEEP;
+          mozilla::AutoProfilerThreadSleep sleep;
           event_.TimedWait(delay);
         }
       } else {

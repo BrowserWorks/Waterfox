@@ -14,7 +14,8 @@
           src="../role.js"></script>
 
   <script type="application/javascript">
-  function doTest() {
+  function doTest()
+  {
     // Menuitem with no popup.
     tree =
       { SECTION: [ // container
@@ -24,7 +25,7 @@
             { TEXT_LEAF: [] }
           ] }
         ] }
-      ] };
+      ] }
     testAccessibleTree("menu", tree);
 
     // Menuitem with explicit no popup.
@@ -36,7 +37,7 @@
             { TEXT_LEAF: [] }
           ] }
         ] }
-      ] };
+      ] }
     testAccessibleTree("menu_nopopup", tree);
 
     // Menuitem with popup.
@@ -48,7 +49,7 @@
             { TEXT_LEAF: [] }
           ] }
         ] }
-      ] };
+      ] }
     testAccessibleTree("menu_popup", tree);
 
     SimpleTest.finish();

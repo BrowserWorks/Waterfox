@@ -64,45 +64,17 @@
 //!
 //! Since there is only one constellation, and its responsibilities include crash reporting,
 //! it is very important that it does not panic.
-//!
-//! It's also important that the constellation not deadlock. In particular, we need
-//! to be careful that we don't introduce any cycles in the can-block-on relation.
-//! Blocking is typically introduced by `receiver.recv()`, which blocks waiting for the
-//! sender to send some data. Servo tries to achieve deadlock-freedom by using the following
-//! can-block-on relation:
-//!
-//! * Layout can block on canvas
-//! * Layout can block on font cache
-//! * Layout can block on image cache
-//! * Constellation can block on compositor
-//! * Constellation can block on embedder
-//! * Constellation can block on layout
-//! * Script can block on anything (other than script)
-//! * Blocking is transitive (if T1 can block on T2 and T2 can block on T3 then T1 can block on T3)
-//! * Nothing can block on itself!
-//!
-//! There is a complexity intoduced by IPC channels, since they do not support
-//! non-blocking send. This means that as well as `receiver.recv()` blocking,
-//! `sender.send(data)` can also block when the IPC buffer is full. For this reason it is
-//! very important that all IPC receivers where we depend on non-blocking send
-//! use a router to route IPC messages to an mpsc channel. The reason why that solves
-//! the problem is that under the hood, the router uses a dedicated thread to forward
-//! messages, and:
-//!
-//! * Anything (other than a routing thread) can block on a routing thread
-//!
-//! See https://github.com/servo/servo/issues/14704
 
 use backtrace::Backtrace;
 use bluetooth_traits::BluetoothRequest;
 use browsingcontext::{BrowsingContext, SessionHistoryChange, SessionHistoryEntry};
 use browsingcontext::{FullyActiveBrowsingContextsIterator, AllBrowsingContextsIterator};
 use canvas::canvas_paint_thread::CanvasPaintThread;
-use canvas::webgl_thread::WebGLThreads;
-use canvas_traits::canvas::CanvasMsg;
+use canvas::webgl_paint_thread::WebGLPaintThread;
+use canvas_traits::CanvasMsg;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use compositing::SendableFrameTree;
-use compositing::compositor_thread::{CompositorProxy, EmbedderMsg, EmbedderProxy};
+use compositing::compositor_thread::CompositorProxy;
 use compositing::compositor_thread::Msg as ToCompositorMsg;
 use debugger;
 use devtools_traits::{ChromeToDevtoolsControlMsg, DevtoolsControlMsg};
@@ -124,6 +96,7 @@ use net_traits::pub_domains::reg_host;
 use net_traits::request::RequestInit;
 use net_traits::storage_thread::{StorageThreadMsg, StorageType};
 use network_listener::NetworkListener;
+use offscreen_gl_context::{GLContextAttributes, GLLimits};
 use pipeline::{InitialPipelineState, Pipeline};
 use profile_traits::mem;
 use profile_traits::time;
@@ -132,7 +105,7 @@ use script_traits::{ConstellationControlMsg, ConstellationMsg as FromCompositorM
 use script_traits::{DocumentActivity, DocumentState, LayoutControlMsg, LoadData};
 use script_traits::{IFrameLoadInfo, IFrameLoadInfoWithData, IFrameSandboxState, TimerSchedulerMsg};
 use script_traits::{LayoutMsg as FromLayoutMsg, ScriptMsg as FromScriptMsg, ScriptThreadFactory};
-use script_traits::{LogEntry, ScriptToConstellationChan, ServiceWorkerMsg, webdriver_msg};
+use script_traits::{LogEntry, ServiceWorkerMsg, webdriver_msg};
 use script_traits::{MozBrowserErrorType, MozBrowserEvent, WebDriverCommandMsg, WindowSizeData};
 use script_traits::{SWManagerMsg, ScopeThings, UpdatePipelineIdReason, WindowSizeType};
 use serde::{Deserialize, Serialize};
@@ -174,11 +147,11 @@ use webvr_traits::{WebVREvent, WebVRMsg};
 pub struct Constellation<Message, LTF, STF> {
     /// An IPC channel for script threads to send messages to the constellation.
     /// This is the script threads' view of `script_receiver`.
-    script_sender: IpcSender<(PipelineId, FromScriptMsg)>,
+    script_sender: IpcSender<FromScriptMsg>,
 
     /// A channel for the constellation to receive messages from script threads.
     /// This is the constellation's view of `script_sender`.
-    script_receiver: Receiver<Result<(PipelineId, FromScriptMsg), IpcError>>,
+    script_receiver: Receiver<Result<FromScriptMsg, IpcError>>,
 
     /// An IPC channel for layout threads to send messages to the constellation.
     /// This is the layout threads' view of `layout_receiver`.
@@ -197,15 +170,9 @@ pub struct Constellation<Message, LTF, STF> {
     /// A channel for the constellation to receive messages from the compositor thread.
     compositor_receiver: Receiver<FromCompositorMsg>,
 
-    /// A channel through which messages can be sent to the embedder.
-    embedder_proxy: EmbedderProxy,
-
     /// A channel (the implementation of which is port-specific) for the
     /// constellation to send messages to the compositor thread.
     compositor_proxy: CompositorProxy,
-
-    /// The last frame tree sent to WebRender.
-    active_browser_id: Option<TopLevelBrowsingContextId>,
 
     /// Channels for the constellation to send messages to the public
     /// resource-related threads.  There are two groups of resource
@@ -328,18 +295,12 @@ pub struct Constellation<Message, LTF, STF> {
     /// Phantom data that keeps the Rust type system happy.
     phantom: PhantomData<(Message, LTF, STF)>,
 
-    /// Entry point to create and get channels to a WebGLThread.
-    webgl_threads: WebGLThreads,
-
     /// A channel through which messages can be sent to the webvr thread.
-    webvr_chan: Option<IpcSender<WebVRMsg>>,
+    webvr_thread: Option<IpcSender<WebVRMsg>>,
 }
 
 /// State needed to construct a constellation.
 pub struct InitialConstellationState {
-    /// A channel through which messages can be sent to the embedder.
-    pub embedder_proxy: EmbedderProxy,
-
     /// A channel through which messages can be sent to the compositor.
     pub compositor_proxy: CompositorProxy,
 
@@ -372,12 +333,6 @@ pub struct InitialConstellationState {
 
     /// Webrender API.
     pub webrender_api_sender: webrender_api::RenderApiSender,
-
-    /// Entry point to create and get channels to a WebGLThread.
-    pub webgl_threads: WebGLThreads,
-
-    /// A channel to the webgl thread.
-    pub webvr_chan: Option<IpcSender<WebVRMsg>>,
 
     /// Whether the constellation supports the clipboard.
     /// TODO: this field is not used, remove it?
@@ -430,14 +385,14 @@ enum ExitPipelineMode {
 #[derive(Clone)]
 pub struct FromScriptLogger {
     /// A channel to the constellation
-    pub script_to_constellation_chan: Arc<ReentrantMutex<ScriptToConstellationChan>>,
+    pub constellation_chan: Arc<ReentrantMutex<IpcSender<FromScriptMsg>>>,
 }
 
 impl FromScriptLogger {
     /// Create a new constellation logger.
-    pub fn new(script_to_constellation_chan: ScriptToConstellationChan) -> FromScriptLogger {
+    pub fn new(constellation_chan: IpcSender<FromScriptMsg>) -> FromScriptLogger {
         FromScriptLogger {
-            script_to_constellation_chan: Arc::new(ReentrantMutex::new(script_to_constellation_chan))
+            constellation_chan: Arc::new(ReentrantMutex::new(constellation_chan))
         }
     }
 
@@ -455,9 +410,10 @@ impl Log for FromScriptLogger {
     fn log(&self, record: &LogRecord) {
         if let Some(entry) = log_entry(record) {
             debug!("Sending log entry {:?}.", entry);
+            let top_level_id = TopLevelBrowsingContextId::installed();
             let thread_name = thread::current().name().map(ToOwned::to_owned);
-            let msg = FromScriptMsg::LogEntry(thread_name, entry);
-            let chan = self.script_to_constellation_chan.lock().unwrap_or_else(|err| err.into_inner());
+            let msg = FromScriptMsg::LogEntry(top_level_id, thread_name, entry);
+            let chan = self.constellation_chan.lock().unwrap_or_else(|err| err.into_inner());
             let _ = chan.send(msg);
         }
     }
@@ -571,9 +527,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                 layout_receiver: layout_receiver,
                 network_listener_sender: network_listener_sender,
                 network_listener_receiver: network_listener_receiver,
-                embedder_proxy: state.embedder_proxy,
                 compositor_proxy: state.compositor_proxy,
-                active_browser_id: None,
                 debugger_chan: state.debugger_chan,
                 devtools_chan: state.devtools_chan,
                 bluetooth_thread: state.bluetooth_thread,
@@ -624,8 +578,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                     info!("Using seed {} for random pipeline closure.", seed);
                     (rng, prob)
                 }),
-                webgl_threads: state.webgl_threads,
-                webvr_chan: state.webvr_chan,
+                webvr_thread: None
             };
 
             constellation.run();
@@ -721,13 +674,10 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             browsing_context_id,
             top_level_browsing_context_id,
             parent_info,
-            script_to_constellation_chan: ScriptToConstellationChan {
-                sender: self.script_sender.clone(),
-                pipeline_id: pipeline_id,
-            },
+            constellation_chan: self.script_sender.clone(),
             layout_to_constellation_chan: self.layout_sender.clone(),
             scheduler_chan: self.scheduler_chan.clone(),
-            compositor_proxy: self.compositor_proxy.clone(),
+            compositor_proxy: self.compositor_proxy.clone_compositor_proxy(),
             devtools_chan: self.devtools_chan.clone(),
             bluetooth_thread: self.bluetooth_thread.clone(),
             swmanager_thread: self.swmanager_sender.clone(),
@@ -744,8 +694,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             webrender_api_sender: self.webrender_api_sender.clone(),
             webrender_document: self.webrender_document,
             is_private,
-            webgl_chan: self.webgl_threads.pipeline(),
-            webvr_chan: self.webvr_chan.clone()
+            webvr_thread: self.webvr_thread.clone()
         });
 
         let pipeline = match result {
@@ -800,7 +749,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         self.all_descendant_browsing_contexts_iter(BrowsingContextId::from(top_level_browsing_context_id))
     }
 
-    #[cfg(feature = "unstable")]
     /// The joint session future is the merge of the session future of every
     /// browsing_context, sorted chronologically.
     fn joint_session_future<'a>(&'a self, top_level_browsing_context_id: TopLevelBrowsingContextId)
@@ -811,26 +759,12 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             .kmerge_by(|a, b| a.instant.cmp(&b.instant) == Ordering::Less)
     }
 
-    #[cfg(not(feature = "unstable"))]
-    /// The joint session future is the merge of the session future of every
-    /// browsing_context, sorted chronologically.
-    fn joint_session_future<'a>(&'a self, top_level_browsing_context_id: TopLevelBrowsingContextId)
-                                -> Box<Iterator<Item = &'a SessionHistoryEntry> + 'a>
-    {
-        Box::new(
-            self.all_browsing_contexts_iter(top_level_browsing_context_id)
-                .map(|browsing_context| browsing_context.next.iter().rev())
-                .kmerge_by(|a, b| a.instant.cmp(&b.instant) == Ordering::Less)
-        )
-    }
-
     /// Is the joint session future empty?
     fn joint_session_future_is_empty(&self, top_level_browsing_context_id: TopLevelBrowsingContextId) -> bool {
         self.all_browsing_contexts_iter(top_level_browsing_context_id)
             .all(|browsing_context| browsing_context.next.is_empty())
     }
 
-    #[cfg(feature = "unstable")]
     /// The joint session past is the merge of the session past of every
     /// browsing_context, sorted reverse chronologically.
     fn joint_session_past<'a>(&'a self, top_level_browsing_context_id: TopLevelBrowsingContextId)
@@ -845,25 +779,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                  }))
             .kmerge_by(|a, b| a.0.cmp(&b.0) == Ordering::Greater)
             .map(|(_, entry)| entry)
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    /// The joint session past is the merge of the session past of every
-    /// browsing_context, sorted reverse chronologically.
-    fn joint_session_past<'a>(&'a self, top_level_browsing_context_id: TopLevelBrowsingContextId)
-                              -> Box<Iterator<Item = &'a SessionHistoryEntry> + 'a>
-    {
-        Box::new(
-            self.all_browsing_contexts_iter(top_level_browsing_context_id)
-                .map(|browsing_context| browsing_context.prev.iter().rev()
-                     .scan(browsing_context.instant, |prev_instant, entry| {
-                         let instant = *prev_instant;
-                         *prev_instant = entry.instant;
-                         Some((instant, entry))
-                     }))
-                .kmerge_by(|a, b| a.0.cmp(&b.0) == Ordering::Greater)
-                .map(|(_, entry)| entry)
-        )
     }
 
     /// Is the joint session past empty?
@@ -892,8 +807,9 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         }
     }
 
-    fn add_pending_change(&mut self, change: SessionHistoryChange) {
-        self.handle_load_start_msg(change.top_level_browsing_context_id, change.new_pipeline_id);
+    fn add_pending_change(&mut self, change: SessionHistoryChange)
+    {
+        self.handle_load_start_msg(change.new_pipeline_id);
         self.pending_changes.push(change);
     }
 
@@ -901,7 +817,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
     #[allow(unsafe_code)]
     fn handle_request(&mut self) {
         enum Request {
-            Script((PipelineId, FromScriptMsg)),
+            Script(FromScriptMsg),
             Compositor(FromCompositorMsg),
             Layout(FromLayoutMsg),
             NetworkListener((PipelineId, FetchResponseMsg)),
@@ -1018,15 +934,9 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             // Load a new page from a typed url
             // If there is already a pending page (self.pending_changes), it will not be overridden;
             // However, if the id is not encompassed by another change, it will be.
-            FromCompositorMsg::LoadUrl(top_level_browsing_context_id, url) => {
+            FromCompositorMsg::LoadUrl(source_id, load_data) => {
                 debug!("constellation got URL load message from compositor");
-                let load_data = LoadData::new(url, None, None, None);
-                let ctx_id = BrowsingContextId::from(top_level_browsing_context_id);
-                let pipeline_id = match self.browsing_contexts.get(&ctx_id) {
-                    Some(ctx) => ctx.pipeline_id,
-                    None => return warn!("LoadUrl for unknow browsing context: {:?}", top_level_browsing_context_id),
-                };
-                self.handle_load_url_msg(top_level_browsing_context_id, pipeline_id, load_data, false);
+                self.handle_load_url_msg(source_id, load_data, false);
             }
             FromCompositorMsg::IsReadyToSaveImage(pipeline_states) => {
                 let is_ready = self.handle_is_ready_to_save_image(pipeline_states);
@@ -1040,20 +950,10 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                     println!("sent response");
                 }
             }
-            // Create a new top level browsing context. Will use response_chan to return
-            // the browsing context id.
-            FromCompositorMsg::NewBrowser(url, response_chan) => {
-                debug!("constellation got NewBrowser message");
-                self.handle_new_top_level_browsing_context(url, response_chan);
-            }
-            // Close a top level browsing context.
-            FromCompositorMsg::CloseBrowser(top_level_browsing_context_id) => {
-                debug!("constellation got CloseBrowser message");
-                self.handle_close_top_level_browsing_context(top_level_browsing_context_id);
-            }
-            // Send frame tree to WebRender. Make it visible.
-            FromCompositorMsg::SelectBrowser(top_level_browsing_context_id) => {
-                self.send_frame_tree(top_level_browsing_context_id);
+            // This should only be called once per constellation, and only by the browser
+            FromCompositorMsg::InitLoadUrl(url) => {
+                debug!("constellation got init load URL message");
+                self.handle_init_load(url);
             }
             // Handle a forward or back request
             FromCompositorMsg::TraverseHistory(top_level_browsing_context_id, direction) => {
@@ -1078,39 +978,25 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             FromCompositorMsg::LogEntry(top_level_browsing_context_id, thread_name, entry) => {
                 self.handle_log_entry(top_level_browsing_context_id, thread_name, entry);
             }
+            FromCompositorMsg::SetWebVRThread(webvr_thread) => {
+                assert!(self.webvr_thread.is_none());
+                self.webvr_thread = Some(webvr_thread)
+            }
             FromCompositorMsg::WebVREvents(pipeline_ids, events) => {
                 debug!("constellation got {:?} WebVR events", events.len());
                 self.handle_webvr_events(pipeline_ids, events);
             }
-            FromCompositorMsg::ForwardEvent(destination_pipeline_id, event) => {
-                self.forward_event(destination_pipeline_id, event);
-            }
-            FromCompositorMsg::SetCursor(cursor) => {
-                self.handle_set_cursor_msg(cursor)
-            }
         }
     }
 
-    fn handle_request_from_script(&mut self, message: (PipelineId, FromScriptMsg)) {
-        let (source_pipeline_id, content) = message;
-        let source_top_ctx_id = match self.pipelines.get(&source_pipeline_id)
-            .map(|pipeline| pipeline.top_level_browsing_context_id) {
-                None => return warn!("ScriptMsg from closed pipeline {:?}.", source_pipeline_id),
-                Some(ctx) => ctx,
-        };
-
-        let source_is_top_level_pipeline = self.browsing_contexts
-            .get(&BrowsingContextId::from(source_top_ctx_id))
-            .map(|ctx| ctx.pipeline_id == source_pipeline_id)
-            .unwrap_or(false);
-
-        match content {
-            FromScriptMsg::PipelineExited => {
-                self.handle_pipeline_exited(source_pipeline_id);
+    fn handle_request_from_script(&mut self, message: FromScriptMsg) {
+        match message {
+            FromScriptMsg::PipelineExited(pipeline_id) => {
+                self.handle_pipeline_exited(pipeline_id);
             }
-            FromScriptMsg::InitiateNavigateRequest(req_init) => {
+            FromScriptMsg::InitiateNavigateRequest(req_init, pipeline_id) => {
                 debug!("constellation got initiate navigate request message");
-                self.handle_navigate_request(source_pipeline_id, req_init);
+                self.handle_navigate_request(req_init, pipeline_id);
             }
             FromScriptMsg::ScriptLoadedURLInIFrame(load_info) => {
                 debug!("constellation got iframe URL load message {:?} {:?} {:?}",
@@ -1125,44 +1011,40 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                        load_info.new_pipeline_id);
                 self.handle_script_new_iframe(load_info, layout_sender);
             }
-            FromScriptMsg::ChangeRunningAnimationsState(animation_state) => {
-                self.handle_change_running_animations_state(source_pipeline_id, animation_state)
+            FromScriptMsg::ChangeRunningAnimationsState(pipeline_id, animation_state) => {
+                self.handle_change_running_animations_state(pipeline_id, animation_state)
             }
             // Load a new page from a mouse click
             // If there is already a pending page (self.pending_changes), it will not be overridden;
             // However, if the id is not encompassed by another change, it will be.
-            FromScriptMsg::LoadUrl(load_data, replace) => {
+            FromScriptMsg::LoadUrl(source_id, load_data, replace) => {
                 debug!("constellation got URL load message from script");
-                self.handle_load_url_msg(source_top_ctx_id, source_pipeline_id, load_data, replace);
-            }
-            FromScriptMsg::AbortLoadUrl => {
-                debug!("constellation got abort URL load message from script");
-                self.handle_abort_load_url_msg(source_pipeline_id);
+                self.handle_load_url_msg(source_id, load_data, replace);
             }
             // A page loaded has completed all parsing, script, and reflow messages have been sent.
-            FromScriptMsg::LoadComplete => {
+            FromScriptMsg::LoadComplete(pipeline_id) => {
                 debug!("constellation got load complete message");
-                self.handle_load_complete_msg(source_top_ctx_id, source_pipeline_id)
+                self.handle_load_complete_msg(pipeline_id)
             }
             // Handle a forward or back request
-            FromScriptMsg::TraverseHistory(direction) => {
+            FromScriptMsg::TraverseHistory(top_level_browsing_context_id, direction) => {
                 debug!("constellation got traverse history message from script");
-                self.handle_traverse_history_msg(source_top_ctx_id, direction);
+                self.handle_traverse_history_msg(top_level_browsing_context_id, direction);
             }
             // Handle a joint session history length request.
-            FromScriptMsg::JointSessionHistoryLength(sender) => {
+            FromScriptMsg::JointSessionHistoryLength(top_level_browsing_context_id, sender) => {
                 debug!("constellation got joint session history length message from script");
-                self.handle_joint_session_history_length(source_top_ctx_id, sender);
+                self.handle_joint_session_history_length(top_level_browsing_context_id, sender);
             }
             // Notification that the new document is ready to become active
-            FromScriptMsg::ActivateDocument => {
+            FromScriptMsg::ActivateDocument(pipeline_id) => {
                 debug!("constellation got activate document message");
-                self.handle_activate_document_msg(source_pipeline_id);
+                self.handle_activate_document_msg(pipeline_id);
             }
             // Update pipeline url after redirections
-            FromScriptMsg::SetFinalUrl(final_url) => {
+            FromScriptMsg::SetFinalUrl(pipeline_id, final_url) => {
                 // The script may have finished loading after we already started shutting down.
-                if let Some(ref mut pipeline) = self.pipelines.get_mut(&source_pipeline_id) {
+                if let Some(ref mut pipeline) = self.pipelines.get_mut(&pipeline_id) {
                     debug!("constellation got set final url message");
                     pipeline.url = final_url;
                 } else {
@@ -1173,16 +1055,23 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                 debug!("constellation got postMessage message");
                 self.handle_post_message_msg(browsing_context_id, origin, data);
             }
-            FromScriptMsg::MozBrowserEvent(pipeline_id, event) => {
+            FromScriptMsg::MozBrowserEvent(pipeline_id, top_level_browsing_context_id, event) => {
                 debug!("constellation got mozbrowser event message");
-                self.handle_mozbrowser_event_msg(pipeline_id, source_top_ctx_id, event);
+                self.handle_mozbrowser_event_msg(pipeline_id, top_level_browsing_context_id, event);
             }
-            FromScriptMsg::Focus => {
+            FromScriptMsg::Focus(pipeline_id) => {
                 debug!("constellation got focus message");
-                self.handle_focus_msg(source_pipeline_id);
+                self.handle_focus_msg(pipeline_id);
             }
-            FromScriptMsg::ForwardEvent(destination_pipeline_id, event) => {
-                self.forward_event(destination_pipeline_id, event);
+            FromScriptMsg::ForwardEvent(pipeline_id, event) => {
+                let msg = ConstellationControlMsg::SendEvent(pipeline_id, event);
+                let result = match self.pipelines.get(&pipeline_id) {
+                    None => { debug!("Pipeline {:?} got event after closure.", pipeline_id); return; }
+                    Some(pipeline) => pipeline.event_loop.send(msg),
+                };
+                if let Err(e) = result {
+                    self.handle_send_error(pipeline_id, e);
+                }
             }
             FromScriptMsg::GetClipboardContents(sender) => {
                 let contents = match self.clipboard_ctx {
@@ -1206,13 +1095,13 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                     }
                 }
             }
-            FromScriptMsg::SetVisible(visible) => {
+            FromScriptMsg::SetVisible(pipeline_id, visible) => {
                 debug!("constellation got set visible messsage");
-                self.handle_set_visible_msg(source_pipeline_id, visible);
+                self.handle_set_visible_msg(pipeline_id, visible);
             }
-            FromScriptMsg::VisibilityChangeComplete(visible) => {
+            FromScriptMsg::VisibilityChangeComplete(pipeline_id, visible) => {
                 debug!("constellation got set visibility change complete message");
-                self.handle_visibility_change_complete(source_pipeline_id, visible);
+                self.handle_visibility_change_complete(pipeline_id, visible);
             }
             FromScriptMsg::RemoveIFrame(browsing_context_id, sender) => {
                 debug!("constellation got remove iframe message");
@@ -1223,60 +1112,64 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             }
             FromScriptMsg::NewFavicon(url) => {
                 debug!("constellation got new favicon message");
-                if source_is_top_level_pipeline {
-                    self.embedder_proxy.send(EmbedderMsg::NewFavicon(source_top_ctx_id, url));
-                }
+                self.compositor_proxy.send(ToCompositorMsg::NewFavicon(url));
             }
             FromScriptMsg::HeadParsed => {
                 debug!("constellation got head parsed message");
-                if source_is_top_level_pipeline {
-                    self.embedder_proxy.send(EmbedderMsg::HeadParsed(source_top_ctx_id));
-                }
+                self.compositor_proxy.send(ToCompositorMsg::HeadParsed);
             }
             FromScriptMsg::CreateCanvasPaintThread(size, sender) => {
                 debug!("constellation got create-canvas-paint-thread message");
                 self.handle_create_canvas_paint_thread_msg(&size, sender)
             }
+            FromScriptMsg::CreateWebGLPaintThread(size, attributes, sender) => {
+                debug!("constellation got create-WebGL-paint-thread message");
+                self.handle_create_webgl_paint_thread_msg(&size, attributes, sender)
+            }
             FromScriptMsg::NodeStatus(message) => {
                 debug!("constellation got NodeStatus message");
-                self.embedder_proxy.send(EmbedderMsg::Status(source_top_ctx_id, message));
+                self.compositor_proxy.send(ToCompositorMsg::Status(message));
             }
-            FromScriptMsg::SetDocumentState(state) => {
+            FromScriptMsg::SetDocumentState(pipeline_id, state) => {
                 debug!("constellation got SetDocumentState message");
-                self.document_states.insert(source_pipeline_id, state);
+                self.document_states.insert(pipeline_id, state);
             }
-            FromScriptMsg::Alert(message, sender) => {
+            FromScriptMsg::Alert(pipeline_id, message, sender) => {
                 debug!("constellation got Alert message");
-                self.handle_alert(source_top_ctx_id, message, sender);
+                self.handle_alert(pipeline_id, message, sender);
             }
+
+            FromScriptMsg::ScrollFragmentPoint(scroll_root_id, point, smooth) => {
+                self.compositor_proxy.send(ToCompositorMsg::ScrollFragmentPoint(scroll_root_id,
+                                                                                point,
+                                                                                smooth));
+            }
+
             FromScriptMsg::GetClientWindow(send) => {
-                self.embedder_proxy.send(EmbedderMsg::GetClientWindow(source_top_ctx_id, send));
+                self.compositor_proxy.send(ToCompositorMsg::GetClientWindow(send));
             }
 
             FromScriptMsg::MoveTo(point) => {
-                self.embedder_proxy.send(EmbedderMsg::MoveTo(source_top_ctx_id, point));
+                self.compositor_proxy.send(ToCompositorMsg::MoveTo(point));
             }
 
             FromScriptMsg::ResizeTo(size) => {
-                self.embedder_proxy.send(EmbedderMsg::ResizeTo(source_top_ctx_id, size));
+                self.compositor_proxy.send(ToCompositorMsg::ResizeTo(size));
             }
 
             FromScriptMsg::Exit => {
                 self.compositor_proxy.send(ToCompositorMsg::Exit);
             }
-            FromScriptMsg::LogEntry(thread_name, entry) => {
-                self.handle_log_entry(Some(source_top_ctx_id), thread_name, entry);
+            FromScriptMsg::LogEntry(top_level_browsing_context_id, thread_name, entry) => {
+                self.handle_log_entry(top_level_browsing_context_id, thread_name, entry);
             }
 
-            FromScriptMsg::SetTitle(title) => {
-                if source_is_top_level_pipeline {
-                    self.embedder_proxy.send(EmbedderMsg::ChangePageTitle(source_top_ctx_id, title))
-                }
+            FromScriptMsg::SetTitle(pipeline_id, title) => {
+                self.compositor_proxy.send(ToCompositorMsg::ChangePageTitle(pipeline_id, title))
             }
 
             FromScriptMsg::SendKeyEvent(ch, key, key_state, key_modifiers) => {
-                let event = EmbedderMsg::KeyEvent(Some(source_top_ctx_id), ch, key, key_state, key_modifiers);
-                self.embedder_proxy.send(event);
+                self.compositor_proxy.send(ToCompositorMsg::KeyEvent(ch, key, key_state, key_modifiers))
             }
 
             FromScriptMsg::TouchEventProcessed(result) => {
@@ -1305,11 +1198,11 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                     warn!("Unable to forward DOMMessage for postMessage call");
                 }
             }
-            FromScriptMsg::BroadcastStorageEvent(storage, url, key, old_value, new_value) => {
-                self.handle_broadcast_storage_event(source_pipeline_id, storage, url, key, old_value, new_value);
+            FromScriptMsg::BroadcastStorageEvent(pipeline_id, storage, url, key, old_value, new_value) => {
+                self.handle_broadcast_storage_event(pipeline_id, storage, url, key, old_value, new_value);
             }
             FromScriptMsg::SetFullscreenState(state) => {
-                self.embedder_proxy.send(EmbedderMsg::SetFullscreenState(source_top_ctx_id, state));
+                self.compositor_proxy.send(ToCompositorMsg::SetFullscreenState(state));
             }
         }
     }
@@ -1324,10 +1217,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             FromLayoutMsg::IFrameSizes(iframe_sizes) => {
                 debug!("constellation got iframe size message");
                 self.handle_iframe_size_msg(iframe_sizes);
-            }
-            FromLayoutMsg::PendingPaintMetric(pipeline_id, epoch) => {
-                debug!("constellation got a pending paint metric message");
-                self.handle_pending_paint_metric(pipeline_id, epoch);
             }
             FromLayoutMsg::SetCursor(cursor) => {
                 self.handle_set_cursor_msg(cursor)
@@ -1443,12 +1332,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             }
         }
 
-        debug!("Exiting WebGL thread.");
-        if let Err(e) = self.webgl_threads.exit() {
-            warn!("Exit WebGL Thread failed ({})", e);
-        }
-
-        if let Some(chan) = self.webvr_chan.as_ref() {
+        if let Some(chan) = self.webvr_thread.as_ref() {
             debug!("Exiting WebVR thread.");
             if let Err(e) = chan.send(WebVRMsg::Exit) {
                 warn!("Exit WebVR thread failed ({})", e);
@@ -1584,33 +1468,14 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         }
     }
 
-    fn forward_event(&mut self, destination_pipeline_id: PipelineId, event: CompositorEvent) {
-        let msg = ConstellationControlMsg::SendEvent(destination_pipeline_id, event);
-        let result = match self.pipelines.get(&destination_pipeline_id) {
-            None => {
-                debug!("Pipeline {:?} got event after closure.", destination_pipeline_id);
-                return;
-            }
-            Some(pipeline) => pipeline.event_loop.send(msg),
-        };
-        if let Err(e) = result {
-            self.handle_send_error(destination_pipeline_id, e);
-        }
-    }
-
-    fn handle_new_top_level_browsing_context(&mut self, url: ServoUrl, reply: IpcSender<TopLevelBrowsingContextId>) {
+    fn handle_init_load(&mut self, url: ServoUrl) {
         let window_size = self.window_size.initial_viewport;
         let pipeline_id = PipelineId::new();
         let top_level_browsing_context_id = TopLevelBrowsingContextId::new();
-        if let Err(e) = reply.send(top_level_browsing_context_id) {
-            warn!("Failed to send newly created top level browsing context ({}).", e);
-        }
         let browsing_context_id = BrowsingContextId::from(top_level_browsing_context_id);
         let load_data = LoadData::new(url.clone(), None, None, None);
         let sandbox = IFrameSandboxState::IFrameUnsandboxed;
-        if self.focus_pipeline_id.is_none() {
-            self.focus_pipeline_id = Some(pipeline_id);
-        }
+        self.focus_pipeline_id = Some(pipeline_id);
         self.new_pipeline(pipeline_id,
                           browsing_context_id,
                           top_level_browsing_context_id,
@@ -1626,11 +1491,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             load_data: load_data,
             replace_instant: None,
         });
-    }
-
-    fn handle_close_top_level_browsing_context(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId) {
-        let browsing_context_id = BrowsingContextId::from(top_level_browsing_context_id);
-        self.close_browsing_context(browsing_context_id, ExitPipelineMode::Normal);
     }
 
     fn handle_iframe_size_msg(&mut self,
@@ -1668,8 +1528,8 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
     }
 
     fn handle_navigate_request(&self,
-                              id: PipelineId,
-                              req_init: RequestInit) {
+                              req_init: RequestInit,
+                              id: PipelineId) {
         let listener = NetworkListener::new(
                            req_init,
                            id,
@@ -1766,7 +1626,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                           Some((parent_pipeline_id, frame_type)),
                           script_sender,
                           layout_sender,
-                          self.compositor_proxy.clone(),
+                          self.compositor_proxy.clone_compositor_proxy(),
                           is_private || parent_pipeline.is_private,
                           url.clone(),
                           parent_pipeline.visible)
@@ -1793,12 +1653,8 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         });
     }
 
-    fn handle_pending_paint_metric(&self, pipeline_id: PipelineId, epoch: Epoch) {
-        self.compositor_proxy.send(ToCompositorMsg::PendingPaintMetric(pipeline_id, epoch))
-    }
-
     fn handle_set_cursor_msg(&mut self, cursor: Cursor) {
-        self.embedder_proxy.send(EmbedderMsg::SetCursor(cursor))
+        self.compositor_proxy.send(ToCompositorMsg::SetCursor(cursor))
     }
 
     fn handle_change_running_animations_state(&mut self,
@@ -1831,10 +1687,14 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
     }
 
     fn handle_alert(&mut self,
-                    top_level_browsing_context_id: TopLevelBrowsingContextId,
+                    pipeline_id: PipelineId,
                     message: String,
                     sender: IpcSender<bool>) {
-        let browser_pipeline_id = self.browsing_contexts.get(&BrowsingContextId::from(top_level_browsing_context_id))
+        let top_level_browsing_context_id = self.pipelines.get(&pipeline_id)
+            .map(|pipeline| pipeline.top_level_browsing_context_id);
+        let browser_pipeline_id = top_level_browsing_context_id
+            .map(BrowsingContextId::from)
+            .and_then(|browsing_context_id| self.browsing_contexts.get(&browsing_context_id))
             .and_then(|browsing_context| self.pipelines.get(&browsing_context.pipeline_id))
             .and_then(|pipeline| pipeline.parent_info)
             .map(|(browser_pipeline_id, _)| browser_pipeline_id);
@@ -1848,32 +1708,24 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             let event = MozBrowserEvent::ShowModalPrompt(prompt_type, title, message, return_value);
             match browser_pipeline_id.and_then(|id| self.pipelines.get(&id)) {
                 None => warn!("Alert sent after browser pipeline closure."),
-                Some(pipeline) => pipeline.trigger_mozbrowser_event(Some(top_level_browsing_context_id), event),
+                Some(pipeline) => pipeline.trigger_mozbrowser_event(top_level_browsing_context_id, event),
             }
         }
 
         let result = sender.send(!mozbrowser_modal_prompt);
         if let Err(e) = result {
-            let ctx_id = BrowsingContextId::from(top_level_browsing_context_id);
-            let pipeline_id = match self.browsing_contexts.get(&ctx_id) {
-                Some(ctx) => ctx.pipeline_id,
-                None => return warn!("Alert sent for unknown browsing context."),
-            };
             self.handle_send_error(pipeline_id, e);
         }
     }
 
-    fn handle_load_url_msg(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId, source_id: PipelineId,
-                           load_data: LoadData, replace: bool) {
-        self.load_url(top_level_browsing_context_id, source_id, load_data, replace);
+    fn handle_load_url_msg(&mut self, source_id: PipelineId, load_data: LoadData, replace: bool) {
+        self.load_url(source_id, load_data, replace);
     }
 
-    fn load_url(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId, source_id: PipelineId,
-                load_data: LoadData, replace: bool) -> Option<PipelineId> {
+    fn load_url(&mut self, source_id: PipelineId, load_data: LoadData, replace: bool) -> Option<PipelineId> {
         // Allow the embedder to handle the url itself
         let (chan, port) = ipc::channel().expect("Failed to create IPC channel!");
-        let msg = EmbedderMsg::AllowNavigation(top_level_browsing_context_id, load_data.url.clone(), chan);
-        self.embedder_proxy.send(msg);
+        self.compositor_proxy.send(ToCompositorMsg::AllowNavigation(load_data.url.clone(), chan));
         if let Ok(false) = port.recv() {
             return None;
         }
@@ -1963,28 +1815,11 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         }
     }
 
-    fn handle_abort_load_url_msg(&mut self, new_pipeline_id: PipelineId) {
-        let pending_index = self.pending_changes.iter().rposition(|change| {
-            change.new_pipeline_id == new_pipeline_id
-        });
-
-        // If it is found, remove it from the pending changes.
-        if let Some(pending_index) = pending_index {
-            self.pending_changes.remove(pending_index);
-            self.close_pipeline(new_pipeline_id, DiscardBrowsingContext::No, ExitPipelineMode::Normal);
-        }
+    fn handle_load_start_msg(&mut self, _pipeline_id: PipelineId) {
+        self.compositor_proxy.send(ToCompositorMsg::LoadStart);
     }
 
-    fn handle_load_start_msg(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId,
-                             pipeline_id: PipelineId) {
-        if self.pipelines.get(&pipeline_id).and_then(|p| p.parent_info).is_none() {
-            // Notify embedder top level document started loading.
-            self.embedder_proxy.send(EmbedderMsg::LoadStart(top_level_browsing_context_id));
-        }
-    }
-
-    fn handle_load_complete_msg(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId,
-                                pipeline_id: PipelineId) {
+    fn handle_load_complete_msg(&mut self, pipeline_id: PipelineId) {
         let mut webdriver_reset = false;
         if let Some((expected_pipeline_id, ref reply_chan)) = self.webdriver.load_channel {
             debug!("Sending load to WebDriver");
@@ -1996,26 +1831,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         if webdriver_reset {
             self.webdriver.load_channel = None;
         }
-
-        // Notify the embedder that the TopLevelBrowsingContext current document
-        // has finished loading.
-        // We need to make sure the pipeline that has finished loading is the current
-        // pipeline and that no pending pipeline will replace the current one.
-        let pipeline_is_top_level_pipeline = self.browsing_contexts
-            .get(&BrowsingContextId::from(top_level_browsing_context_id))
-            .map(|ctx| ctx.pipeline_id == pipeline_id)
-            .unwrap_or(false);
-        if pipeline_is_top_level_pipeline {
-            // Is there any pending pipeline that will replace the current top level pipeline
-            let current_top_level_pipeline_will_be_replaced = self.pending_changes.iter()
-                .any(|change| change.browsing_context_id == top_level_browsing_context_id);
-
-            if !current_top_level_pipeline_will_be_replaced {
-                // Notify embedder and compositor top level document finished loading.
-                self.compositor_proxy.send(ToCompositorMsg::LoadComplete(top_level_browsing_context_id));
-                self.embedder_proxy.send(EmbedderMsg::LoadComplete(top_level_browsing_context_id));
-            }
-        }
+        self.compositor_proxy.send(ToCompositorMsg::LoadComplete);
         self.handle_subframe_loaded(pipeline_id);
     }
 
@@ -2081,8 +1897,8 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                 }
             },
             None => {
-                let event = EmbedderMsg::KeyEvent(None, ch, key, state, mods);
-                self.embedder_proxy.clone().send(event);
+                let event = ToCompositorMsg::KeyEvent(ch, key, state, mods);
+                self.compositor_proxy.clone_compositor_proxy().send(event);
             }
         }
     }
@@ -2252,6 +2068,19 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         }
     }
 
+    fn handle_create_webgl_paint_thread_msg(
+            &mut self,
+            size: &Size2D<i32>,
+            attributes: GLContextAttributes,
+            response_sender: IpcSender<Result<(IpcSender<CanvasMsg>, GLLimits), String>>) {
+        let webrender_api = self.webrender_api_sender.clone();
+        let response = WebGLPaintThread::start(*size, attributes, webrender_api);
+
+        if let Err(e) = response_sender.send(response) {
+            warn!("Create WebGL paint thread response failed ({})", e);
+        }
+    }
+
     fn handle_webdriver_msg(&mut self, msg: WebDriverCommandMsg) {
         // Find the script channel for the given parent pipeline,
         // and pass the event to that script thread.
@@ -2259,9 +2088,9 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             WebDriverCommandMsg::GetWindowSize(_, reply) => {
                let _ = reply.send(self.window_size);
             },
-            WebDriverCommandMsg::SetWindowSize(top_level_browsing_context_id, size, reply) => {
+            WebDriverCommandMsg::SetWindowSize(_, size, reply) => {
                 self.webdriver.resize_channel = Some(reply);
-                self.embedder_proxy.send(EmbedderMsg::ResizeTo(top_level_browsing_context_id, size));
+                self.compositor_proxy.send(ToCompositorMsg::ResizeTo(size));
             },
             WebDriverCommandMsg::LoadUrl(top_level_browsing_context_id, load_data, reply) => {
                 self.load_url_for_webdriver(top_level_browsing_context_id, load_data, reply, false);
@@ -2417,7 +2246,8 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         self.update_activity(pipeline_id);
         self.notify_history_changed(top_level_id);
 
-        self.update_frame_tree_if_active(top_level_id);
+        // Set paint permissions correctly for the compositor layers.
+        self.send_frame_tree(top_level_id);
 
         // Update the owning iframe to point to the new pipeline id.
         // This makes things like contentDocument work correctly.
@@ -2494,8 +2324,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                        .map(&keep_load_data_if_top_browsing_context)
                        .scan(current_load_data.clone(), &resolve_load_data));
 
-        let msg = EmbedderMsg::HistoryChanged(top_level_browsing_context_id, entries, current_index);
-        self.embedder_proxy.send(msg);
+        self.compositor_proxy.send(ToCompositorMsg::HistoryChanged(entries, current_index));
     }
 
     fn load_url_for_webdriver(&mut self,
@@ -2509,7 +2338,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             Some(browsing_context) => browsing_context.pipeline_id,
             None => return warn!("Webdriver load for closed browsing context {}.", browsing_context_id),
         };
-        if let Some(new_pipeline_id) = self.load_url(top_level_browsing_context_id, pipeline_id, load_data, replace) {
+        if let Some(new_pipeline_id) = self.load_url(pipeline_id, load_data, replace) {
             self.webdriver.load_channel = Some((new_pipeline_id, reply));
         }
     }
@@ -2575,7 +2404,8 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             self.trigger_mozbrowserlocationchange(change.top_level_browsing_context_id);
         }
 
-        self.update_frame_tree_if_active(change.top_level_browsing_context_id);
+        // Build frame tree
+        self.send_frame_tree(change.top_level_browsing_context_id);
     }
 
     fn handle_activate_document_msg(&mut self, pipeline_id: PipelineId) {
@@ -2970,21 +2800,12 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         // In order to get repeatability, we sort the pipeline ids.
         let mut pipeline_ids: Vec<&PipelineId> = self.pipelines.keys().collect();
         pipeline_ids.sort();
-        if let Some((ref mut rng, probability)) = self.random_pipeline_closure {
+        if let Some((ref mut rng, _)) = self.random_pipeline_closure {
             if let Some(pipeline_id) = rng.choose(&*pipeline_ids) {
                 if let Some(pipeline) = self.pipelines.get(pipeline_id) {
                     // Don't kill the mozbrowser pipeline
                     if PREFS.is_mozbrowser_enabled() && pipeline.parent_info.is_none() {
                         info!("Not closing mozbrowser pipeline {}.", pipeline_id);
-                    } else if
-                        self.pending_changes.iter().any(|change| change.new_pipeline_id == pipeline.id) &&
-                        probability <= rng.gen::<f32>()
-                    {
-                        // We tend not to close pending pipelines, as that almost always
-                        // results in pipelines being closed early in their lifecycle,
-                        // and not stressing the constellation as much.
-                        // https://github.com/servo/servo/issues/18852
-                        info!("Not closing pending pipeline {}.", pipeline_id);
                     } else {
                         // Note that we deliberately do not do any of the tidying up
                         // associated with closing a pipeline. The constellation should cope!
@@ -3017,12 +2838,11 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         })
     }
 
-    /// Re-send the frame tree to the compositor.
-    fn update_frame_tree_if_active(&mut self, mut top_level_browsing_context_id: TopLevelBrowsingContextId) {
+    // Send the current frame tree to compositor
+    fn send_frame_tree(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId) {
         // This might be a mozbrowser iframe, so we need to climb the parent hierarchy,
         // even though it's a top-level browsing context.
-        // FIXME(paul): to remove once mozbrowser API is removed.
-        let browsing_context_id = BrowsingContextId::from(top_level_browsing_context_id);
+        let mut browsing_context_id = BrowsingContextId::from(top_level_browsing_context_id);
         let mut pipeline_id = match self.browsing_contexts.get(&browsing_context_id) {
             Some(browsing_context) => browsing_context.pipeline_id,
             None => return warn!("Sending frame tree for discarded browsing context {}.", browsing_context_id),
@@ -3032,24 +2852,11 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             match pipeline.parent_info {
                 Some((parent_id, _)) => pipeline_id = parent_id,
                 None => {
-                    top_level_browsing_context_id = pipeline.top_level_browsing_context_id;
+                    browsing_context_id = pipeline.browsing_context_id;
                     break;
                 },
             }
         }
-
-        // Only send the frame tree if it's the active one or if no frame tree
-        // has been sent yet.
-        if self.active_browser_id.is_none() || Some(top_level_browsing_context_id) == self.active_browser_id {
-            self.send_frame_tree(top_level_browsing_context_id);
-        }
-
-    }
-
-    /// Send the current frame tree to compositor
-    fn send_frame_tree(&mut self, top_level_browsing_context_id: TopLevelBrowsingContextId) {
-        self.active_browser_id = Some(top_level_browsing_context_id);
-        let browsing_context_id = BrowsingContextId::from(top_level_browsing_context_id);
 
         // Note that this function can panic, due to ipc-channel creation failure.
         // avoiding this panic would require a mechanism for dealing

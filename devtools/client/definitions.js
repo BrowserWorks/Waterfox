@@ -27,13 +27,13 @@ loader.lazyGetter(this, "DomPanel", () => require("devtools/client/dom/dom-panel
 // Other dependencies
 loader.lazyRequireGetter(this, "CommandUtils", "devtools/client/shared/developer-toolbar", true);
 loader.lazyRequireGetter(this, "CommandState", "devtools/shared/gcli/command-state", true);
-loader.lazyRequireGetter(this, "ResponsiveUIManager", "devtools/client/responsive.html/manager", true);
+loader.lazyImporter(this, "ResponsiveUIManager", "resource://devtools/client/responsivedesign/responsivedesign.jsm");
 loader.lazyImporter(this, "ScratchpadManager", "resource://devtools/client/scratchpad/scratchpad-manager.jsm");
 
 const {MultiLocalizationHelper} = require("devtools/shared/l10n");
 const L10N = new MultiLocalizationHelper(
   "devtools/client/locales/startup.properties",
-  "devtools/shim/locales/key-shortcuts.properties"
+  "devtools/client/locales/key-shortcuts.properties"
 );
 
 var Tools = {};
@@ -45,6 +45,7 @@ Tools.options = {
   ordinal: 0,
   url: "chrome://devtools/content/framework/toolbox-options.xhtml",
   icon: "chrome://devtools/skin/images/tool-options.svg",
+  invertIconForDarkTheme: true,
   bgTheme: "theme-body",
   label: l10n("options.label"),
   iconOnly: true,
@@ -66,6 +67,7 @@ Tools.inspector = {
   accesskey: l10n("inspector.accesskey"),
   ordinal: 1,
   icon: "chrome://devtools/skin/images/tool-inspector.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/inspector/inspector.xhtml",
   label: l10n("inspector.label"),
   panelLabel: l10n("inspector.panelLabel"),
@@ -76,7 +78,7 @@ Tools.inspector = {
   },
   inMenu: true,
   commands: [
-    "devtools/client/responsive.html/commands",
+    "devtools/client/responsivedesign/resize-commands",
     "devtools/client/inspector/inspector-commands"
   ],
 
@@ -98,8 +100,9 @@ Tools.webConsole = {
   accesskey: l10n("webConsoleCmd.accesskey"),
   ordinal: 2,
   oldWebConsoleURL: "chrome://devtools/content/webconsole/webconsole.xul",
-  newWebConsoleURL: "chrome://devtools/content/webconsole/webconsole.html",
+  newWebConsoleURL: "chrome://devtools/content/webconsole/webconsole.xhtml",
   icon: "chrome://devtools/skin/images/tool-webconsole.svg",
+  invertIconForDarkTheme: true,
   label: l10n("ToolboxTabWebconsole.label"),
   menuLabel: l10n("MenuWebconsole.label"),
   panelLabel: l10n("ToolboxWebConsole.panelLabel"),
@@ -147,6 +150,8 @@ Tools.jsdebugger = {
   accesskey: l10n("debuggerMenu.accesskey"),
   ordinal: 3,
   icon: "chrome://devtools/skin/images/tool-debugger.svg",
+  invertIconForDarkTheme: true,
+  highlightedicon: "chrome://devtools/skin/images/tool-debugger-paused.svg",
   url: "chrome://devtools/content/debugger/debugger.xul",
   label: l10n("ToolboxDebugger.label"),
   panelLabel: l10n("ToolboxDebugger.panelLabel"),
@@ -193,6 +198,7 @@ Tools.styleEditor = {
   visibilityswitch: "devtools.styleeditor.enabled",
   accesskey: l10n("open.accesskey"),
   icon: "chrome://devtools/skin/images/tool-styleeditor.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/styleeditor/styleeditor.xul",
   label: l10n("ToolboxStyleEditor.label"),
   panelLabel: l10n("ToolboxStyleEditor.panelLabel"),
@@ -204,7 +210,7 @@ Tools.styleEditor = {
   commands: "devtools/client/styleeditor/styleeditor-commands",
 
   isTargetSupported: function (target) {
-    return target.hasActor("styleSheets");
+    return target.hasActor("styleEditor") || target.hasActor("styleSheets");
   },
 
   build: function (iframeWindow, toolbox) {
@@ -217,6 +223,7 @@ Tools.shaderEditor = {
   ordinal: 5,
   visibilityswitch: "devtools.shadereditor.enabled",
   icon: "chrome://devtools/skin/images/tool-shadereditor.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/shadereditor/shadereditor.xul",
   label: l10n("ToolboxShaderEditor.label"),
   panelLabel: l10n("ToolboxShaderEditor.panelLabel"),
@@ -236,6 +243,7 @@ Tools.canvasDebugger = {
   ordinal: 6,
   visibilityswitch: "devtools.canvasdebugger.enabled",
   icon: "chrome://devtools/skin/images/tool-canvas.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/canvasdebugger/canvasdebugger.xul",
   label: l10n("ToolboxCanvasDebugger.label"),
   panelLabel: l10n("ToolboxCanvasDebugger.panelLabel"),
@@ -256,6 +264,8 @@ Tools.performance = {
   id: "performance",
   ordinal: 7,
   icon: "chrome://devtools/skin/images/tool-profiler.svg",
+  invertIconForDarkTheme: true,
+  highlightedicon: "chrome://devtools/skin/images/tool-profiler-active.svg",
   url: "chrome://devtools/content/performance/performance.xul",
   visibilityswitch: "devtools.performance.enabled",
   label: l10n("performance.label"),
@@ -268,7 +278,7 @@ Tools.performance = {
   inMenu: true,
 
   isTargetSupported: function (target) {
-    return target.hasActor("performance");
+    return target.hasActor("profiler");
   },
 
   build: function (frame, target) {
@@ -280,6 +290,8 @@ Tools.memory = {
   id: "memory",
   ordinal: 8,
   icon: "chrome://devtools/skin/images/tool-memory.svg",
+  invertIconForDarkTheme: true,
+  highlightedicon: "chrome://devtools/skin/images/tool-memory-active.svg",
   url: "chrome://devtools/content/memory/memory.xhtml",
   visibilityswitch: "devtools.memory.enabled",
   label: l10n("memory.label"),
@@ -301,6 +313,7 @@ Tools.netMonitor = {
   ordinal: 9,
   visibilityswitch: "devtools.netmonitor.enabled",
   icon: "chrome://devtools/skin/images/tool-network.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/netmonitor/index.html",
   label: l10n("netmonitor.label"),
   panelLabel: l10n("netmonitor.panelLabel"),
@@ -326,6 +339,7 @@ Tools.storage = {
   accesskey: l10n("storage.accesskey"),
   visibilityswitch: "devtools.storage.enabled",
   icon: "chrome://devtools/skin/images/tool-storage.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/storage/storage.xul",
   label: l10n("storage.label"),
   menuLabel: l10n("storage.menuLabel"),
@@ -351,6 +365,7 @@ Tools.webAudioEditor = {
   ordinal: 11,
   visibilityswitch: "devtools.webaudioeditor.enabled",
   icon: "chrome://devtools/skin/images/tool-webaudio.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/webaudioeditor/webaudioeditor.xul",
   label: l10n("ToolboxWebAudioEditor1.label"),
   panelLabel: l10n("ToolboxWebAudioEditor1.panelLabel"),
@@ -370,6 +385,7 @@ Tools.scratchpad = {
   ordinal: 12,
   visibilityswitch: "devtools.scratchpad.enabled",
   icon: "chrome://devtools/skin/images/tool-scratchpad.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/scratchpad/scratchpad.xul",
   label: l10n("scratchpad.label"),
   panelLabel: l10n("scratchpad.panelLabel"),
@@ -392,6 +408,7 @@ Tools.dom = {
   ordinal: 13,
   visibilityswitch: "devtools.dom.enabled",
   icon: "chrome://devtools/skin/images/tool-dom.svg",
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/dom/dom.html",
   label: l10n("dom.label"),
   panelLabel: l10n("dom.panelLabel"),

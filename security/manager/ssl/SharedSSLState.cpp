@@ -117,18 +117,16 @@ PrivateBrowsingObserver::Observe(nsISupports     *aSubject,
   return NS_OK;
 }
 
-SharedSSLState::SharedSSLState(uint32_t aTlsFlags)
-: mIOLayerHelpers(aTlsFlags)
+SharedSSLState::SharedSSLState()
+: mClientAuthRemember(new nsClientAuthRememberService)
 , mMutex("SharedSSLState::mMutex")
 , mSocketCreated(false)
 , mOCSPStaplingEnabled(false)
 , mOCSPMustStapleEnabled(false)
+, mSignedCertTimestampsEnabled(false)
 {
   mIOLayerHelpers.Init();
-  if (!aTlsFlags) { // the per socket flags don't need memory
-    mClientAuthRemember = new nsClientAuthRememberService();
-    mClientAuthRemember->Init();
-  }
+  mClientAuthRemember->Init();
 }
 
 SharedSSLState::~SharedSSLState()
@@ -147,9 +145,6 @@ SharedSSLState::NotePrivateBrowsingStatus()
 void
 SharedSSLState::ResetStoredData()
 {
-  if (!mClientAuthRemember) {
-    return;
-  }
   MOZ_ASSERT(NS_IsMainThread(), "Not on main thread");
   mClientAuthRemember->ClearRememberedDecisions();
   mIOLayerHelpers.clearStoredData();

@@ -70,7 +70,7 @@ add_task(async function run_test() {
     server.registerPathHandler(path, mock(handlers[path]));
     return {
       restore() { server.registerPathHandler(path, handlers[path]); }
-    };
+    }
   }
 
   let server = httpd_setup(handlers);
@@ -128,7 +128,7 @@ add_task(async function run_test() {
           meta: 1
         }
       };
-    };
+    }
 
     _("Checking that remoteSetup recovers on 404 on get /meta/global after clear cached one.");
     mock = mockHandler(GLOBAL_PATH, returnStatusCode("GET", 404));
@@ -184,10 +184,10 @@ add_task(async function run_test() {
     _("Attempting to screw up HMAC by re-encrypting keys.");
     let keys = Service.collectionKeys.asWBO();
     let b = new BulkKeyBundle("hmacerror");
-    await b.generateRandom();
+    b.generateRandom();
     collections.crypto = keys.modified = 100 + (Date.now() / 1000);  // Future modification time.
-    await keys.encrypt(b);
-    await keys.upload(Service.resource(Service.cryptoKeysURL));
+    keys.encrypt(b);
+    keys.upload(Service.resource(Service.cryptoKeysURL));
 
     do_check_false((await Service.verifyAndFetchSymmetricKeys()));
     do_check_eq(Service.status.login, LOGIN_FAILED_INVALID_PASSPHRASE);

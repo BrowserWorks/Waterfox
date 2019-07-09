@@ -1,9 +1,7 @@
 {
   "dom.bluetooth.enabled": false,
   "dom.bluetooth.testing.enabled": false,
-  "dom.canvas-text.enabled": false,
-  "dom.compositionevent.enabled": false,
-  "dom.customelements.enabled": true,
+  "dom.customelements.enabled": false,
   "dom.forcetouch.enabled": false,
   "dom.gamepad.enabled": false,
   "dom.mouseevent.which.enabled": false,
@@ -15,7 +13,6 @@
   "dom.servoparser.async_html_tokenizer.enabled": false,
   "dom.testable_crash.enabled": false,
   "dom.testbinding.enabled": false,
-  "dom.webgl.dom_to_texture.enabled": false,
   "dom.webvr.enabled": false,
   "dom.webvr.event_polling_interval": 500,
   "js.asmjs.enabled": true,

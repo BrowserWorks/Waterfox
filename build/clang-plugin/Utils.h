@@ -5,8 +5,8 @@
 #ifndef Utils_h__
 #define Utils_h__
 
-#include "ThirdPartyPaths.h"
 #include "plugin.h"
+#include "ThirdPartyPaths.h"
 
 // Check if the given expression contains an assignment expression.
 // This can either take the form of a Binary Operator or a
@@ -34,8 +34,7 @@ inline bool hasSideEffectAssignment(const Expr *Expression) {
   return false;
 }
 
-template <class T>
-inline bool ASTIsInSystemHeader(const ASTContext &AC, const T &D) {
+template <class T> inline bool ASTIsInSystemHeader(const ASTContext &AC, const T &D) {
   auto &SourceManager = AC.getSourceManager();
   auto ExpansionLoc = SourceManager.getExpansionLoc(D.getLocStart());
   if (ExpansionLoc.isInvalid()) {
@@ -44,7 +43,8 @@ inline bool ASTIsInSystemHeader(const ASTContext &AC, const T &D) {
   return SourceManager.isInSystemHeader(ExpansionLoc);
 }
 
-template <typename T> inline StringRef getNameChecked(const T &D) {
+template<typename T>
+inline StringRef getNameChecked(const T& D) {
   return D->getIdentifier() ? D->getName() : "";
 }
 
@@ -229,8 +229,7 @@ inline bool isIgnoredPathForImplicitConversion(const Decl *Declaration) {
   return false;
 }
 
-inline bool isIgnoredPathForSprintfLiteral(const CallExpr *Call,
-                                           const SourceManager &SM) {
+inline bool isIgnoredPathForSprintfLiteral(const CallExpr *Call, const SourceManager &SM) {
   SourceLocation Loc = Call->getLocStart();
   SmallString<1024> FileName = SM.getFilename(Loc);
   llvm::sys::fs::make_absolute(FileName);
@@ -321,8 +320,8 @@ inline const Stmt *IgnoreTrivials(const Stmt *s) {
       s = mte->GetTemporaryExpr();
     } else if (auto *bte = dyn_cast<CXXBindTemporaryExpr>(s)) {
       s = bte->getSubExpr();
-    } else if (auto *ce = dyn_cast<CastExpr>(s)) {
-      s = ce->getSubExpr();
+    } else if (auto *ice = dyn_cast<ImplicitCastExpr>(s)) {
+      s = ice->getSubExpr();
     } else if (auto *pe = dyn_cast<ParenExpr>(s)) {
       s = pe->getSubExpr();
     } else {
@@ -334,7 +333,7 @@ inline const Stmt *IgnoreTrivials(const Stmt *s) {
 }
 
 inline const Expr *IgnoreTrivials(const Expr *e) {
-  return cast_or_null<Expr>(IgnoreTrivials(static_cast<const Stmt *>(e)));
+  return cast<Expr>(IgnoreTrivials(static_cast<const Stmt *>(e)));
 }
 
 const FieldDecl *getBaseRefCntMember(QualType T);
@@ -381,7 +380,8 @@ inline bool isPlacementNew(const CXXNewExpr *Expression) {
   if (Expression->getNumPlacementArgs() == 0)
     return false;
   const FunctionDecl *Declaration = Expression->getOperatorNew();
-  if (Declaration && hasCustomAnnotation(Declaration, "moz_heap_allocator")) {
+  if (Declaration && hasCustomAnnotation(Declaration,
+                 "moz_heap_allocator")) {
     return false;
   }
   return true;
@@ -420,65 +420,12 @@ inline bool inThirdPartyPath(SourceLocation Loc, const SourceManager &SM) {
   return false;
 }
 
-inline bool inThirdPartyPath(const Decl *D, ASTContext *context) {
+inline bool inThirdPartyPath(const Decl *D) {
   D = D->getCanonicalDecl();
   SourceLocation Loc = D->getLocation();
-  const SourceManager &SM = context->getSourceManager();
+  const SourceManager &SM = D->getASTContext().getSourceManager();
 
   return inThirdPartyPath(Loc, SM);
-}
-
-inline CXXRecordDecl *getNonTemplateSpecializedCXXRecordDecl(QualType Q) {
-  auto *D = Q->getAsCXXRecordDecl();
-
-  if (!D) {
-    auto TemplateQ = Q->getAs<TemplateSpecializationType>();
-    if (!TemplateQ) {
-      return nullptr;
-    }
-
-    auto TemplateDecl = TemplateQ->getTemplateName().getAsTemplateDecl();
-    if (!TemplateDecl) {
-      return nullptr;
-    }
-
-    D = dyn_cast_or_null<CXXRecordDecl>(TemplateDecl->getTemplatedDecl());
-    if (!D) {
-      return nullptr;
-    }
-  }
-
-  return D;
-}
-
-inline bool inThirdPartyPath(const Decl *D) {
-  return inThirdPartyPath(D, &D->getASTContext());
-}
-
-inline bool inThirdPartyPath(const Stmt *S, ASTContext *context) {
-  SourceLocation Loc = S->getLocStart();
-  const SourceManager &SM = context->getSourceManager();
-
-  return inThirdPartyPath(Loc, SM);
-}
-
-/// Polyfill for CXXOperatorCallExpr::isInfixBinaryOp()
-inline bool isInfixBinaryOp(const CXXOperatorCallExpr *OpCall) {
-#if CLANG_VERSION_FULL >= 400
-  return OpCall->isInfixBinaryOp();
-#else
-  // Taken from clang source.
-  if (OpCall->getNumArgs() != 2)
-    return false;
-
-  switch (OpCall->getOperator()) {
-  case OO_Call:
-  case OO_Subscript:
-    return false;
-  default:
-    return true;
-  }
-#endif
 }
 
 #endif

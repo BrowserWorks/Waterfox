@@ -5,7 +5,7 @@
 description: SingleNameBinding assigns name to "anonymous" generator functions (`var` statement)
 esid: sec-variable-statement-runtime-semantics-evaluation
 es6id: 13.3.2.4
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     VariableDeclaration : BindingPattern Initializer
@@ -29,7 +29,6 @@ info: |
           [...]
     7. If environment is undefined, return PutValue(lhs, v).
     8. Return InitializeReferencedBinding(lhs, v).
-
 ---*/
 
 var [gen = function* () {}, xGen = function* x() {}] = [];

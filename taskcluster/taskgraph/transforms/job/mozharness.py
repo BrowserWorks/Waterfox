@@ -22,10 +22,11 @@ from taskgraph.transforms.job.common import (
     docker_worker_add_gecko_vcs_env_vars,
     docker_worker_setup_secrets,
     docker_worker_add_public_artifacts,
-    docker_worker_add_tooltool,
     generic_worker_add_public_artifacts,
     support_vcs_checkout,
 )
+
+COALESCE_KEY = 'builds.{project}.{name}'
 
 mozharness_run_schema = Schema({
     Required('using'): 'mozharness',
@@ -91,10 +92,6 @@ mozharness_run_schema = Schema({
     # If false don't pass --branch or --skip-buildbot-actions to mozharness script
     # Only disableable on windows
     Required('use-magic-mh-args', default=True): bool,
-
-    # if true, perform a checkout of a comm-central based branch inside the
-    # gecko checkout
-    Required('comm-checkout', default=False): bool,
 })
 
 
@@ -112,12 +109,10 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
         raise NotImplementedError("Cannot disabled mh magic arg passing via"
                                   "'use-magic-mh-args' on docker-workers")
 
-    # Running via mozharness assumes an image that contains build.sh:
-    # by default, desktop-build, but it could be another image (like
-    # android-build) that "inherits" from desktop-build.
-    if not taskdesc['worker']['docker-image']:
-        taskdesc['worker']['docker-image'] = {"in-tree": "desktop-build"}
+    # running via mozharness assumes desktop-build (which contains build.sh)
+    taskdesc['worker']['docker-image'] = {"in-tree": "desktop-build"}
 
+    worker['relengapi-proxy'] = False  # but maybe enabled for tooltool below
     worker['taskcluster-proxy'] = run.get('taskcluster-proxy')
 
     docker_worker_add_public_artifacts(config, job, taskdesc)
@@ -148,9 +143,6 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
     if 'job-script' in run:
         env['JOB_SCRIPT'] = run['job-script']
 
-    if 'try' in config.params['project']:
-        env['TRY_COMMIT_MSG'] = config.params['message']
-
     # if we're not keeping artifacts, set some env variables to empty values
     # that will cause the build process to skip copying the results to the
     # artifacts directory.  This will have no effect for operations that are
@@ -163,9 +155,21 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
     if run['need-xvfb']:
         env['NEED_XVFB'] = 'true'
 
+    # tooltool downloads
     if run['tooltool-downloads']:
-        internal = run['tooltool-downloads'] == 'internal'
-        docker_worker_add_tooltool(config, job, taskdesc, internal=internal)
+        worker['relengapi-proxy'] = True
+        worker['caches'].append({
+            'type': 'persistent',
+            'name': 'tooltool-cache',
+            'mount-point': '/home/worker/tooltool-cache',
+        })
+        taskdesc['scopes'].extend([
+            'docker-worker:relengapi-proxy:tooltool.download.public',
+        ])
+        if run['tooltool-downloads'] == 'internal':
+            taskdesc['scopes'].append(
+                'docker-worker:relengapi-proxy:tooltool.download.internal')
+        env['TOOLTOOL_CACHE'] = '/home/worker/tooltool-cache'
 
     # Retry if mozharness returns TBPL_RETRY
     worker['retry-exit-status'] = 4
@@ -173,19 +177,18 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
     docker_worker_setup_secrets(config, job, taskdesc)
 
     command = [
-        '/builds/worker/bin/run-task',
-        '--vcs-checkout', '/builds/worker/workspace/build/src',
-        '--tools-checkout', '/builds/worker/workspace/build/tools',
-    ]
-    if run['comm-checkout']:
-        command.append('--comm-checkout=/builds/worker/workspace/build/src/comm')
-
-    command += [
+        '/home/worker/bin/run-task',
+        # Various caches/volumes are default owned by root:root.
+        '--chown-recursive', '/home/worker/workspace',
+        '--chown-recursive', '/home/worker/tooltool-cache',
+        '--vcs-checkout', '/home/worker/workspace/build/src',
+        '--tools-checkout', '/home/worker/workspace/build/tools',
         '--',
-        '/builds/worker/workspace/build/src/{}'.format(
-            run.get('job-script', 'taskcluster/scripts/builder/build-linux.sh')
-        ),
     ]
+    command.append("/home/worker/workspace/build/src/{}".format(
+        run.get('job-script',
+                "taskcluster/scripts/builder/build-linux.sh"
+                )))
 
     worker['command'] = command
 
@@ -222,9 +225,6 @@ def mozharness_on_generic_worker(config, job, taskdesc):
     })
     if run['use-simple-package']:
         env.update({'MOZ_SIMPLE_PACKAGE_NAME': 'target'})
-
-    if 'try' in config.params['project']:
-        env['TRY_COMMIT_MSG'] = config.params['message']
 
     if not job['attributes']['build_platform'].startswith('win'):
         raise Exception(

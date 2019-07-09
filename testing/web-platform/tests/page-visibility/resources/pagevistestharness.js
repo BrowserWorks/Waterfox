@@ -117,5 +117,5 @@ function TabSwitch()
 {
     //var open_link = window.open("http://www.bing.com");
     open_link = window.open('', '_blank');
-    step_timeout(function() { open_link.close(); }, 2000);
+    setTimeout(function() { open_link.close(); }, 2000);
 }

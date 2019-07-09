@@ -16,6 +16,7 @@ struct PluginTag
   nsCString[] mimeTypes;
   nsCString[] mimeDescriptions;
   nsCString[] extensions;
+  bool isJavaPlugin;
   bool isFlashPlugin;
   bool supportsAsyncRender; // flash specific
   nsCString filename;

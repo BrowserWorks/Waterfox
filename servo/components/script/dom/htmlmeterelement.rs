@@ -4,7 +4,7 @@
 
 use dom::bindings::codegen::Bindings::HTMLMeterElementBinding::{self, HTMLMeterElementMethods};
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::document::Document;
 use dom::htmlelement::HTMLElement;
 use dom::node::Node;
@@ -29,8 +29,8 @@ impl HTMLMeterElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLMeterElement> {
-        Node::reflect_node(Box::new(HTMLMeterElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLMeterElement> {
+        Node::reflect_node(box HTMLMeterElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLMeterElementBinding::Wrap)
     }
@@ -38,7 +38,7 @@ impl HTMLMeterElement {
 
 impl HTMLMeterElementMethods for HTMLMeterElement {
     // https://html.spec.whatwg.org/multipage/#dom-lfe-labels
-    fn Labels(&self) -> DomRoot<NodeList> {
+    fn Labels(&self) -> Root<NodeList> {
         self.upcast::<HTMLElement>().labels()
     }
 }

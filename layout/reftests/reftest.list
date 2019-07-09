@@ -296,10 +296,7 @@ include ../../dom/plugins/test/reftest/reftest.list
 include position-dynamic-changes/reftest.list
 
 # printing
-# SkiaPDF is required for printing tests to control printing to PDF files.
-skip-if(!skiaPdf||styloVsGecko) include printing/reftest.list
-
-# pagination
+include printing/reftest.list
 include pagination/reftest.list
 
 # <style scoped>
@@ -372,8 +369,7 @@ include ../../toolkit/themes/osx/reftests/reftest.list
 include ../../toolkit/content/tests/reftests/reftest.list
 
 # -moz-transform/
-# skipping on non-e10s windows because of assertion in bug 1401228
-skip-if(winWidget&&!browserIsRemote) include transform/reftest.list
+include transform/reftest.list
 
 # 3d transforms
 include transform-3d/reftest.list

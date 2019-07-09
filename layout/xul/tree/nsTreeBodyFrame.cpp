@@ -13,7 +13,6 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/ResultExtensions.h"
 #include "mozilla/TextEditRules.h"
 
 #include "gfxUtils.h"
@@ -44,7 +43,7 @@
 #include "mozilla/css/StyleRule.h"
 #include "nsCSSRendering.h"
 #include "nsIXULTemplateBuilder.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsContainerFrame.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -362,10 +361,11 @@ nsTreeBodyFrame::EnsureView()
       nsCOMPtr<nsITreeView> treeView;
       mTreeBoxObject->GetView(getter_AddRefs(treeView));
       if (treeView && weakFrame.IsAlive()) {
-        nsString rowStr;
+        nsXPIDLString rowStr;
         box->GetProperty(u"topRow", getter_Copies(rowStr));
+        nsAutoString rowStr2(rowStr);
         nsresult error;
-        int32_t rowIndex = rowStr.ToInteger(&error);
+        int32_t rowIndex = rowStr2.ToInteger(&error);
 
         // Set our view.
         SetView(treeView);
@@ -1811,12 +1811,16 @@ nsTreeBodyFrame::CreateTimer(const LookAndFeel::IntID aID,
   // Create a new timer only if the delay is greater than zero.
   // Zero value means that this feature is completely disabled.
   if (delay > 0) {
-    MOZ_TRY_VAR(timer, NS_NewTimerWithFuncCallback(
-        aFunc, this, delay, aType, aName,
-        mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other)));
+    timer = do_CreateInstance("@mozilla.org/timer;1");
+    if (timer) {
+      timer->SetTarget(
+          mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+      timer->InitWithNamedFuncCallback(aFunc, this, delay, aType, aName);
+    }
   }
 
-  timer.forget(aTimer);
+  NS_IF_ADDREF(*aTimer = timer);
+
   return NS_OK;
 }
 
@@ -2196,7 +2200,6 @@ nsTreeBodyFrame::GetImage(int32_t aRowIndex, nsTreeColumn* aCol, bool aUseContex
                                               mContent,
                                               doc,
                                               mContent->NodePrincipal(),
-                                              0,
                                               doc->GetDocumentURI(),
                                               doc->GetReferrerPolicy(),
                                               imgNotificationObserver,
@@ -2772,9 +2775,9 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
 
 class nsDisplayTreeBody final : public nsDisplayItem {
 public:
-  nsDisplayTreeBody(nsDisplayListBuilder* aBuilder, nsFrame* aFrame)
-    : nsDisplayItem(aBuilder, aFrame)
-  {
+  nsDisplayTreeBody(nsDisplayListBuilder* aBuilder, nsFrame* aFrame) :
+    nsDisplayItem(aBuilder, aFrame),
+    mDisableSubpixelAA(false) {
     MOZ_COUNT_CTOR(nsDisplayTreeBody);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -2790,7 +2793,7 @@ public:
 
   void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                  const nsDisplayItemGeometry* aGeometry,
-                                 nsRegion *aInvalidRegion) const override
+                                 nsRegion *aInvalidRegion) override
   {
     auto geometry =
       static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
@@ -2819,16 +2822,22 @@ public:
 
   NS_DISPLAY_DECL_NAME("XULTreeBody", TYPE_XUL_TREE_BODY)
 
-  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) const override
+  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) override
   {
     bool snap;
     return GetBounds(aBuilder, &snap);
   }
+  virtual void DisableComponentAlpha() override {
+    mDisableSubpixelAA = true;
+  }
+
+  bool mDisableSubpixelAA;
 };
 
 // Painting routines
 void
 nsTreeBodyFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
                                   const nsDisplayListSet& aLists)
 {
   // REVIEW: why did we paint if we were collapsed? that makes no sense!
@@ -2836,7 +2845,7 @@ nsTreeBodyFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     return; // We're invisible.  Don't paint.
 
   // Handles painting our background, border, and outline.
-  nsLeafBoxFrame::BuildDisplayList(aBuilder, aLists);
+  nsLeafBoxFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 
   // Bail out now if there's no view or we can't run script because the
   // document is a zombie
@@ -3057,9 +3066,13 @@ nsTreeBodyFrame::PaintRow(int32_t               aRowIndex,
 
   // Save the current font smoothing background color in case we change it.
   Color originalColor(aRenderingContext.GetFontSmoothingBackgroundColor());
-  aRenderingContext.SetFontSmoothingBackgroundColor(
-    ToDeviceColor(rowContext->StyleUserInterface()->mFontSmoothingBackgroundColor));
   if (theme && theme->ThemeSupportsWidget(aPresContext, nullptr, appearance)) {
+    nscolor color;
+    if (theme->WidgetProvidesFontSmoothingBackgroundColor(this, appearance,
+                                                          &color)) {
+      // Set the font smoothing background color provided by the widget.
+      aRenderingContext.SetFontSmoothingBackgroundColor(ToDeviceColor(color));
+    }
     nsRect dirty;
     dirty.IntersectRect(rowRect, aDirtyRect);
     theme->DrawWidgetBackground(&aRenderingContext, this, appearance, rowRect,
@@ -3315,6 +3328,8 @@ nsTreeBodyFrame::PaintCell(int32_t               aRowIndex,
       twistyContext->StyleMargin()->GetMargin(twistyMargin);
       twistyRect.Inflate(twistyMargin);
 
+      aRenderingContext.Save();
+
       const nsStyleBorder* borderStyle = lineContext->StyleBorder();
       // Resolve currentcolor values against the treeline context
       nscolor color = lineContext->StyleColor()->
@@ -3378,6 +3393,8 @@ nsTreeBodyFrame::PaintCell(int32_t               aRowIndex,
         currentParent = parent;
         srcX -= mIndentation;
       }
+
+      aRenderingContext.Restore();
     }
 
     // Always leave space for the twisty.
@@ -4472,9 +4489,26 @@ nsTreeBodyFrame::ThumbMoved(nsScrollbarFrame* aScrollbar,
 nsStyleContext*
 nsTreeBodyFrame::GetPseudoStyleContext(nsICSSAnonBoxPseudo* aPseudoElement)
 {
-  return mStyleCache.GetStyleContext(PresContext(), mContent,
+  return mStyleCache.GetStyleContext(this, PresContext(), mContent,
                                      mStyleContext, aPseudoElement,
                                      mScratchArray);
+}
+
+// Our comparator for resolving our complex pseudos
+bool
+nsTreeBodyFrame::PseudoMatches(nsCSSSelector* aSelector)
+{
+  // Iterate the class list.  For each item in the list, see if
+  // it is contained in our scratch array.  If we have a miss, then
+  // we aren't a match.  If all items in the class list are
+  // present in the scratch array, then we have a match.
+  nsAtomList* curr = aSelector->mClassList;
+  while (curr) {
+    if (!mScratchArray.Contains(curr->mAtom))
+      return false;
+    curr = curr->mNext;
+  }
+  return true;
 }
 
 nsIContent*

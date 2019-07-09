@@ -77,12 +77,18 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  AddonRepository: "resource://gre/modules/addons/AddonRepository.jsm",
-  Extension: "resource://gre/modules/Extension.jsm",
-  FileUtils: "resource://gre/modules/FileUtils.jsm",
-  PromptUtils: "resource://gre/modules/SharedPromptUtils.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository",
+                                  "resource://gre/modules/addons/AddonRepository.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+                                  "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromptUtils",
+                                  "resource://gre/modules/SharedPromptUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "CertUtils", function() {
   let certUtils = {};
@@ -200,7 +206,7 @@ function safeCall(aCallback, ...aArgs) {
 function makeSafe(aCallback) {
   return function(...aArgs) {
     safeCall(aCallback, ...aArgs);
-  };
+  }
 }
 
 /**
@@ -449,7 +455,7 @@ AddonAuthor.prototype = {
   toString() {
     return this.name || "";
   }
-};
+}
 
 /**
  * This represents an screenshot for an add-on
@@ -493,7 +499,7 @@ AddonScreenshot.prototype = {
   toString() {
     return this.url || "";
   }
-};
+}
 
 
 /**
@@ -566,7 +572,9 @@ AddonCompatibilityOverride.prototype = {
  *         The URI of a localized properties file to get the displayable name
  *         for the type from
  * @param  aLocaleKey
- *         The key for the string in the properties file.
+ *         The key for the string in the properties file or the actual display
+ *         name if aLocaleURI is null. Include %ID% to include the type ID in
+ *         the key
  * @param  aViewType
  *         The optional type of view to use in the UI
  * @param  aUIPriority
@@ -596,7 +604,7 @@ function AddonType(aID, aLocaleURI, aLocaleKey, aViewType, aUIPriority, aFlags) 
   if (aLocaleURI) {
     XPCOMUtils.defineLazyGetter(this, "name", () => {
       let bundle = Services.strings.createBundle(aLocaleURI);
-      return bundle.GetStringFromName(aLocaleKey);
+      return bundle.GetStringFromName(aLocaleKey.replace("%ID%", aID));
     });
   } else {
     this.name = aLocaleKey;
@@ -618,6 +626,7 @@ var gRepoShutdownState = "";
 var gShutdownInProgress = false;
 var gPluginPageListener = null;
 var gBrowserUpdated = null;
+var gNonMpcDisabled = false;
 
 /**
  * This is the real manager, kept here rather than in AddonManager to keep its
@@ -2001,9 +2010,8 @@ var AddonManagerInternal = {
     // Local installs may already be in a failed state in which case
     // we won't get any further events, detect those cases now.
     if (install.state == AddonManager.STATE_DOWNLOADED && install.addon.appDisabled) {
-      install.cancel();
-      this.installNotifyObservers("addon-install-failed", browser, url, install);
-      return;
+          this.installNotifyObservers("addon-install-failed", browser, url, install);
+          return;
     }
 
     let self = this;
@@ -2215,7 +2223,7 @@ var AddonManagerInternal = {
 
    this.getAddonByInstanceID(aInstanceID).then(wrapper => {
      if (!wrapper) {
-       throw Error(`No addon matching instanceID: ${aInstanceID}`);
+       throw Error("No addon matching instanceID:", aInstanceID.toString());
      }
      let addonId = wrapper.id;
      logger.debug(`Registering upgrade listener for ${addonId}`);
@@ -2236,12 +2244,12 @@ var AddonManagerInternal = {
 
     return this.getAddonByInstanceID(aInstanceID).then(addon => {
       if (!addon) {
-        throw Error(`No addon for instanceID: ${aInstanceID}`);
+        throw Error("No addon for instanceID:", aInstanceID.toString());
       }
       if (this.upgradeListeners.has(addon.id)) {
         this.upgradeListeners.delete(addon.id);
       } else {
-        throw Error(`No upgrade listener registered for addon ID: ${addon.id}`);
+        throw Error("No upgrade listener registered for addon ID:", addon.id);
       }
     });
   },
@@ -2678,7 +2686,7 @@ var AddonManagerInternal = {
           // Claim configurability to maintain the proxy invariants.
           configurable: true,
           enumerable: true
-        };
+        }
       },
 
       preventExtensions(target) {
@@ -2834,7 +2842,7 @@ var AddonManagerInternal = {
           } catch (e) {}
         }
 
-        if (Services.prefs.getBoolPref("xpinstall.customConfirmationUI", false)) {
+        if (Preferences.get("xpinstall.customConfirmationUI", false)) {
           this.installNotifyObservers("addon-install-confirmation",
                                       browser, url, proxy);
           return;
@@ -2940,7 +2948,7 @@ var AddonManagerInternal = {
             } else if (event == "onDownloadCancelled" || event == "onInstallCancelled") {
               reject({message: "install cancelled"});
             }
-          };
+          }
         });
       });
 
@@ -3038,9 +3046,9 @@ var AddonManagerInternal = {
 
       return state.installPromise.then(addon => new Promise(resolve => {
         let callback = () => resolve(result);
-        if (Services.prefs.getBoolPref(PREF_WEBEXT_PERM_PROMPTS, false)) {
+        if (Preferences.get(PREF_WEBEXT_PERM_PROMPTS, false)) {
           let subject = {wrappedJSObject: {target, addon, callback}};
-          Services.obs.notifyObservers(subject, "webextension-install-notify");
+          Services.obs.notifyObservers(subject, "webextension-install-notify")
         } else {
           callback();
         }
@@ -3171,11 +3179,6 @@ this.AddonManagerPrivate = {
 
   AddonType,
 
-  get BOOTSTRAP_REASONS() {
-    return AddonManagerInternal._getProviderByName("XPIProvider")
-            .BOOTSTRAP_REASONS;
-  },
-
   recordTimestamp(name, value) {
     AddonManagerInternal.recordTimestamp(name, value);
   },
@@ -3272,6 +3275,10 @@ this.AddonManagerPrivate = {
                                .isTemporaryInstallID(extensionId);
   },
 
+  set nonMpcDisabled(val) {
+    gNonMpcDisabled = val;
+  },
+
   isDBLoaded() {
     let provider = AddonManagerInternal._getProviderByName("XPIProvider");
     return provider ? provider.isDBLoaded : false;
@@ -3333,18 +3340,7 @@ this.AddonManager = {
     // The addon did not have the expected ID
     ["ERROR_INCORRECT_ID", -7],
   ]),
-  // The update check timed out
-  ERROR_TIMEOUT: -1,
-  // There was an error while downloading the update information.
-  ERROR_DOWNLOAD_ERROR: -2,
-  // The update information was malformed in some way.
-  ERROR_PARSE_ERROR: -3,
-  // The update information was not in any known format.
-  ERROR_UNKNOWN_FORMAT: -4,
-  // The update information was not correctly signed or there was an SSL error.
-  ERROR_SECURITY_ERROR: -5,
-  // The update was cancelled
-  ERROR_CANCELLED: -6,
+
   // These must be kept in sync with AddonUpdateChecker.
   // No error was encountered.
   UPDATE_STATUS_NO_ERROR: 0,
@@ -3360,6 +3356,7 @@ this.AddonManager = {
   UPDATE_STATUS_SECURITY_ERROR: -5,
   // The update was cancelled.
   UPDATE_STATUS_CANCELLED: -6,
+
   // Constants to indicate why an update check is being performed
   // Update check has been requested by the user.
   UPDATE_WHEN_USER_REQUESTED: 1,
@@ -3790,6 +3787,10 @@ this.AddonManager = {
 
   get webAPI() {
     return AddonManagerInternal.webAPI;
+  },
+
+  get nonMpcDisabled() {
+    return gNonMpcDisabled;
   },
 
   get shutdown() {

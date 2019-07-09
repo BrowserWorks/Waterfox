@@ -27,11 +27,11 @@ import java.util.TimerTask;
 
 import android.util.Log;
 
-public class ActionBarTextSelection implements TextSelection, BundleEventListener {
+class ActionBarTextSelection implements TextSelection, BundleEventListener {
     private static final String LOGTAG = "GeckoTextSelection";
     private static final int SHUTDOWN_DELAY_MS = 250;
 
-    private final GeckoView geckoView;
+    private final GeckoApp geckoApp;
     private final ActionModePresenter presenter;
 
     private int selectionID; // Unique ID provided for each selection action.
@@ -56,18 +56,23 @@ public class ActionBarTextSelection implements TextSelection, BundleEventListene
     };
     private ActionModeTimerTask mActionModeTimerTask;
 
-    public ActionBarTextSelection(@NonNull final GeckoView geckoView,
-                                  @Nullable final ActionModePresenter presenter) {
-        this.geckoView = geckoView;
+    ActionBarTextSelection(@NonNull final GeckoApp geckoApp,
+                           @Nullable final ActionModePresenter presenter) {
+        this.geckoApp = geckoApp;
         this.presenter = presenter;
     }
 
     @Override
     public void create() {
-        geckoView.getEventDispatcher().registerUiThreadListener(this,
-                "TextSelection:ActionbarInit",
-                "TextSelection:ActionbarStatus",
-                "TextSelection:ActionbarUninit");
+        // Only register listeners if we have valid start/middle/end handles
+        if (geckoApp == null) {
+            Log.e(LOGTAG, "Failed to initialize text selection because at least one context is null");
+        } else {
+            geckoApp.getAppEventDispatcher().registerUiThreadListener(this,
+                    "TextSelection:ActionbarInit",
+                    "TextSelection:ActionbarStatus",
+                    "TextSelection:ActionbarUninit");
+        }
     }
 
     @Override
@@ -78,10 +83,14 @@ public class ActionBarTextSelection implements TextSelection, BundleEventListene
 
     @Override
     public void destroy() {
-        geckoView.getEventDispatcher().unregisterUiThreadListener(this,
-                "TextSelection:ActionbarInit",
-                "TextSelection:ActionbarStatus",
-                "TextSelection:ActionbarUninit");
+        if (geckoApp == null) {
+            Log.e(LOGTAG, "Do not unregister TextSelection:* listeners since context is null");
+        } else {
+            geckoApp.getAppEventDispatcher().unregisterUiThreadListener(this,
+                    "TextSelection:ActionbarInit",
+                    "TextSelection:ActionbarStatus",
+                    "TextSelection:ActionbarUninit");
+        }
     }
 
     @Override
@@ -175,7 +184,7 @@ public class ActionBarTextSelection implements TextSelection, BundleEventListene
                 menuitem.setShowAsAction(actionEnum);
 
                 final String iconString = obj.getString("icon", "");
-                ResourceDrawableUtils.getDrawable(geckoView.getContext(), iconString,
+                ResourceDrawableUtils.getDrawable(geckoApp, iconString,
                         new ResourceDrawableUtils.BitmapLoader() {
                     @Override
                     public void onBitmapFound(Drawable d) {
@@ -199,7 +208,7 @@ public class ActionBarTextSelection implements TextSelection, BundleEventListene
             final GeckoBundle obj = mItems[item.getItemId()];
             final GeckoBundle data = new GeckoBundle(1);
             data.putString("id", obj.getString("id", ""));
-            geckoView.getEventDispatcher().dispatch("TextSelection:Action", data);
+            geckoApp.getAppEventDispatcher().dispatch("TextSelection:Action", data);
             return true;
         }
 
@@ -211,7 +220,7 @@ public class ActionBarTextSelection implements TextSelection, BundleEventListene
 
             final GeckoBundle data = new GeckoBundle(1);
             data.putInt("selectionID", selectionID);
-            geckoView.getEventDispatcher().dispatch("TextSelection:End", data);
+            geckoApp.getAppEventDispatcher().dispatch("TextSelection:End", data);
         }
     }
 }

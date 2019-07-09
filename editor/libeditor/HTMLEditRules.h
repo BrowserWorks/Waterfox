@@ -17,7 +17,7 @@
 #include "nsTArray.h"
 #include "nscore.h"
 
-class nsAtom;
+class nsIAtom;
 class nsIDOMCharacterData;
 class nsIDOMDocument;
 class nsIDOMElement;
@@ -49,7 +49,7 @@ struct StyleCache final : public PropItem
     MOZ_COUNT_CTOR(StyleCache);
   }
 
-  StyleCache(nsAtom* aTag,
+  StyleCache(nsIAtom* aTag,
              const nsAString& aAttr,
              const nsAString& aValue)
     : PropItem(aTag, aAttr, aValue)
@@ -58,7 +58,7 @@ struct StyleCache final : public PropItem
     MOZ_COUNT_CTOR(StyleCache);
   }
 
-  StyleCache(nsAtom* aTag,
+  StyleCache(nsIAtom* aTag,
              const nsAString& aAttr)
     : PropItem(aTag, aAttr, EmptyString())
     , mPresent(false)
@@ -171,18 +171,6 @@ protected:
                               nsIEditor::EDirection aDir,
                               nsresult aResult);
   nsresult InsertBRIfNeeded(Selection* aSelection);
-
-  /**
-   * Insert a normal <br> element or a moz-<br> element to aNode when
-   * aNode is a block and it has no children.
-   *
-   * @param aNode           Reference to a block parent.
-   * @param aInsertMozBR    true if this should insert a moz-<br> element.
-   *                        Otherwise, i.e., this should insert a normal <br>
-   *                        element, false.
-   */
-  nsresult InsertBRIfNeededInternal(nsINode& aNode, bool aInsertMozBR);
-
   mozilla::EditorDOMPoint GetGoodSelPointForNode(nsINode& aNode,
                                                  nsIEditor::EDirection aAction);
 
@@ -270,7 +258,7 @@ protected:
   nsresult WillMakeBasicBlock(Selection& aSelection,
                               const nsAString& aBlockType,
                               bool* aCancel, bool* aHandled);
-  nsresult MakeBasicBlock(Selection& aSelection, nsAtom& aBlockType);
+  nsresult MakeBasicBlock(Selection& aSelection, nsIAtom& aBlockType);
   nsresult DidMakeBasicBlock(Selection* aSelection, RulesInfo* aInfo,
                              nsresult aResult);
   nsresult DidAbsolutePosition();
@@ -286,13 +274,12 @@ protected:
                        int32_t* aIndex, Lists aLists = Lists::yes,
                        Tables aTables = Tables::yes);
   Element* IsInListItem(nsINode* aNode);
-  nsAtom& DefaultParagraphSeparator();
+  nsIAtom& DefaultParagraphSeparator();
   nsresult ReturnInHeader(Selection& aSelection, Element& aHeader,
                           nsINode& aNode, int32_t aOffset);
-  nsresult ReturnInParagraph(Selection* aSelection, nsINode* aHeader,
-                             nsINode* aTextNode, int32_t aOffset,
-                             nsIContent* aChildAtOffset, bool* aCancel,
-                             bool* aHandled);
+  nsresult ReturnInParagraph(Selection* aSelection, nsIDOMNode* aHeader,
+                             nsIDOMNode* aTextNode, int32_t aOffset,
+                             bool* aCancel, bool* aHandled);
   nsresult SplitParagraph(nsIDOMNode* aPara,
                           nsIContent* aBRNode,
                           Selection* aSelection,
@@ -317,8 +304,8 @@ protected:
                               nsIContent** aOutLeftNode,
                               nsIContent** aOutRightNode);
 
-  already_AddRefed<Element> ConvertListType(Element* aList, nsAtom* aListType,
-                                            nsAtom* aItemType);
+  nsresult ConvertListType(Element* aList, Element** aOutList,
+                           nsIAtom* aListType, nsIAtom* aItemType);
 
   nsresult CreateStyleForInsertText(Selection& aSelection, nsIDocument& aDoc);
   enum class MozBRCounts { yes, no };
@@ -377,21 +364,19 @@ protected:
                           nsTArray<bool>& aTransitionArray);
   nsresult RemoveBlockStyle(nsTArray<OwningNonNull<nsINode>>& aNodeArray);
   nsresult ApplyBlockStyle(nsTArray<OwningNonNull<nsINode>>& aNodeArray,
-                           nsAtom& aBlockTag);
+                           nsIAtom& aBlockTag);
   nsresult MakeBlockquote(nsTArray<OwningNonNull<nsINode>>& aNodeArray);
-  nsresult SplitAsNeeded(nsAtom& aTag, OwningNonNull<nsINode>& inOutParent,
-                         int32_t& inOutOffset,
-                         nsCOMPtr<nsIContent>* inOutChildAtOffset = nullptr);
-  nsresult SplitAsNeeded(nsAtom& aTag, nsCOMPtr<nsINode>& inOutParent,
-                         int32_t& inOutOffset,
-                         nsCOMPtr<nsIContent>* inOutChildAtOffset = nullptr);
+  nsresult SplitAsNeeded(nsIAtom& aTag, OwningNonNull<nsINode>& inOutParent,
+                         int32_t& inOutOffset);
+  nsresult SplitAsNeeded(nsIAtom& aTag, nsCOMPtr<nsINode>& inOutParent,
+                         int32_t& inOutOffset);
   nsresult AddTerminatingBR(nsIDOMNode *aBlock);
   EditorDOMPoint JoinNodesSmart(nsIContent& aNodeLeft,
                                 nsIContent& aNodeRight);
   Element* GetTopEnclosingMailCite(nsINode& aNode);
   nsresult PopListItem(nsIContent& aListItem, bool* aOutOfList = nullptr);
   nsresult RemoveListStructure(Element& aList);
-  nsresult CacheInlineStyles(nsINode* aNode);
+  nsresult CacheInlineStyles(nsIDOMNode* aNode);
   nsresult ReapplyCachedStyles();
   void ClearCachedStyles();
   void AdjustSpecialBreaks();
@@ -400,11 +385,10 @@ protected:
   void CheckInterlinePosition(Selection& aSelection);
   nsresult AdjustSelection(Selection* aSelection,
                            nsIEditor::EDirection aAction);
-  nsresult FindNearSelectableNode(nsINode* aSelNode,
+  nsresult FindNearSelectableNode(nsIDOMNode* aSelNode,
                                   int32_t aSelOffset,
-                                  nsINode* aChildAtOffset,
                                   nsIEditor::EDirection& aDirection,
-                                  nsCOMPtr<nsIContent>* outSelectableNode);
+                                  nsCOMPtr<nsIDOMNode>* outSelectableNode);
   /**
    * Returns true if aNode1 or aNode2 or both is the descendant of some type of
    * table element, but their nearest table element ancestors differ.  "Table
@@ -418,25 +402,7 @@ protected:
   nsresult SelectionEndpointInNode(nsINode* aNode, bool* aResult);
   nsresult UpdateDocChangeRange(nsRange* aRange);
   nsresult ConfirmSelectionInBody();
-
-  /**
-   * Insert normal <br> element into aNode when aNode is a block and it has
-   * no children.
-   */
-  nsresult InsertBRIfNeeded(nsINode& aNode)
-  {
-    return InsertBRIfNeededInternal(aNode, false);
-  }
-
-  /**
-   * Insert moz-<br> element (<br type="_moz">) into aNode when aNode is a
-   * block and it has no children.
-   */
-  nsresult InsertMozBRIfNeeded(nsINode& aNode)
-  {
-    return InsertBRIfNeededInternal(aNode, true);
-  }
-
+  nsresult InsertMozBRIfNeeded(nsINode& aNode);
   bool IsEmptyInline(nsINode& aNode);
   bool ListIsEmptyLine(nsTArray<OwningNonNull<nsINode>>& arrayOfNodes);
   nsresult RemoveAlignment(nsINode& aNode, const nsAString& aAlignType,
@@ -459,7 +425,7 @@ protected:
    * GetInlineStyles() retrieves the style of aNode and modifies each item of
    * aStyleCache.
    */
-  nsresult GetInlineStyles(nsINode* aNode,
+  nsresult GetInlineStyles(nsIDOMNode* aNode,
                            StyleCache aStyleCache[SIZE_STYLE_TABLE]);
 
 protected:

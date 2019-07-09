@@ -21,9 +21,9 @@
 function format_mode(mode) {
   if (mode <= 0o777) {
     return ("0000" + mode.toString(8)).slice(-4);
-  }
+  } else {
     return "0" + mode.toString(8);
-
+  }
 }
 
 const _umask = OS.Constants.Sys.umask;
@@ -97,3 +97,7 @@ add_task(async function test_file_setPermissions() {
     await OS.File.remove(path);
   }
 });
+
+function run_test() {
+  run_next_test();
+}

@@ -55,6 +55,9 @@ public:
           const Maybe<ZoomConstraints>& aConstraints) override;
 
   void
+  CancelAnimation(const ScrollableLayerGuid &aGuid) override;
+
+  void
   SetDPI(float aDpiValue) override;
 
   void
@@ -67,7 +70,7 @@ public:
           const ScrollableLayerGuid& aGuid,
           const AsyncDragMetrics& aDragMetrics) override;
 
-  bool
+  void
   StartAutoscroll(
           const ScrollableLayerGuid& aGuid,
           const ScreenPoint& aAnchorLocation) override;
@@ -103,8 +106,6 @@ protected:
                                                  const ScrollableLayerGuid& aGuid,
                                                  const LayoutDeviceCoord& aSpanChange,
                                                  const Modifiers& aModifiers) override;
-
-  mozilla::ipc::IPCResult RecvCancelAutoscroll(const FrameMetrics::ViewID& aScrollId) override;
 
   virtual
   ~APZCTreeManagerChild() { }

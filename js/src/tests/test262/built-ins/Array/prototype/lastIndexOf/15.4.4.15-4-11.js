@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.lastindexof
 es5id: 15.4.4.15-4-11
 description: Array.prototype.lastIndexOf - 'length' is an empty string
 ---*/

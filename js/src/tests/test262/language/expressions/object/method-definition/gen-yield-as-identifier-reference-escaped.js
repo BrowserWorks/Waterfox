@@ -5,7 +5,6 @@
 /*---
 description: yield is a reserved keyword within generator function bodies and may not be used as an identifier reference. (Generator method)
 esid: prod-GeneratorMethod
-features: [generators]
 flags: [generated]
 negative:
   phase: early
@@ -16,14 +15,12 @@ info: |
     GeneratorMethod[Yield, Await]:
       * PropertyName[?Yield, ?Await] ( UniqueFormalParameters[+Yield, ~Await] ) { GeneratorBody }
 
-
     IdentifierReference : Identifier
 
     It is a Syntax Error if this production has a [Yield] parameter and
     StringValue of Identifier is "yield".
 
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 var obj = {
   *method() {

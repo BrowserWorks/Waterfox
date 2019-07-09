@@ -4,7 +4,6 @@
 es6id: 19.1.2.8
 description: >
     Object.getOwnPropertySymbols returns all symbol properties that do not have descriptions
-features: [Symbol]
 ---*/
 
 var sym = Symbol();

@@ -64,12 +64,12 @@ MARKUPMAP(form,
           roles::FORM)
 
 MARKUPMAP(footer,
-          New_HTMLHeaderOrFooter,
-          0)
+          New_HyperText,
+          roles::FOOTER)
 
 MARKUPMAP(header,
-          New_HTMLHeaderOrFooter,
-          0)
+          New_HyperText,
+          roles::HEADER)
 
 MARKUPMAP(h1,
           New_HyperText,
@@ -318,7 +318,8 @@ MARKUPMAP(q,
 
 MARKUPMAP(section,
           New_HyperText,
-          roles::SECTION)
+          roles::SECTION,
+          Attr(xmlroles, region))
 
 MARKUPMAP(summary,
           New_HTMLSummary,

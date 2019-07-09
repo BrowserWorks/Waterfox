@@ -10,6 +10,7 @@
 #include "js/TypeDecls.h"
 #include "LiveResizeListener.h"
 #include "mozilla/ContentCache.h"
+#include "mozilla/dom/AudioChannelBinding.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "mozilla/dom/PBrowserParent.h"
 #include "mozilla/dom/PContent.h"
@@ -194,7 +195,7 @@ public:
   virtual mozilla::ipc::IPCResult
   RecvNotifyIMEFocus(const ContentCache& aContentCache,
                      const widget::IMENotification& aEventMessage,
-                     NotifyIMEFocusResolver&& aResolve) override;
+                     widget::IMENotificationRequests* aRequests) override;
 
   virtual mozilla::ipc::IPCResult
   RecvNotifyIMETextChange(const ContentCache& aContentCache,
@@ -237,6 +238,8 @@ public:
 
   virtual mozilla::ipc::IPCResult RecvSetCandidateWindowForPlugin(
     const widget::CandidateWindowPosition& aPosition) override;
+  virtual mozilla::ipc::IPCResult
+  RecvEnableIMEForPlugin(const bool& aEnable) override;
 
   virtual mozilla::ipc::IPCResult
   RecvDefaultProcOfPluginEvent(const WidgetPluginEvent& aEvent) override;
@@ -249,7 +252,6 @@ public:
                                                       const nsString& aType,
                                                       const nsString& aInputmode,
                                                       const nsString& aActionHint,
-                                                      const bool& aInPrivateBrowsing,
                                                       const int32_t& aCause,
                                                       const int32_t& aFocusChange) override;
 
@@ -275,8 +277,8 @@ public:
                             nsTArray<nsCString>&& aEnabledCommands,
                             nsTArray<nsCString>&& aDisabledCommands) override;
 
-  virtual mozilla::ipc::IPCResult
-  RecvSetCursor(const uint32_t& aValue, const bool& aForce) override;
+  virtual mozilla::ipc::IPCResult RecvSetCursor(const nsCursor& aValue,
+                                                const bool& aForce) override;
 
   virtual mozilla::ipc::IPCResult RecvSetCustomCursor(const nsCString& aUri,
                                                       const uint32_t& aWidth,
@@ -353,8 +355,6 @@ public:
   void UpdateDimensions(const nsIntRect& aRect, const ScreenIntSize& aSize);
 
   DimensionInfo GetDimensionInfo();
-
-  nsresult UpdatePosition();
 
   void SizeModeChanged(const nsSizeMode& aSizeMode);
 
@@ -605,9 +605,6 @@ public:
   void LiveResizeStarted() override;
   void LiveResizeStopped() override;
 
-  void SetReadyToHandleInputEvents() { mIsReadyToHandleInputEvents = true; }
-  bool IsReadyToHandleInputEvents() { return mIsReadyToHandleInputEvents; }
-
 protected:
   bool ReceiveMessage(const nsString& aMessage,
                       bool aSync,
@@ -633,8 +630,6 @@ protected:
 
   virtual mozilla::ipc::IPCResult RecvRemotePaintIsReady() override;
 
-  virtual mozilla::ipc::IPCResult RecvRemoteIsReadyToHandleInputEvents() override;
-
   virtual mozilla::ipc::IPCResult RecvForcePaintNoOp(const uint64_t& aLayerObserverEpoch) override;
 
   virtual mozilla::ipc::IPCResult RecvSetDimensions(const uint32_t& aFlags,
@@ -648,7 +643,6 @@ protected:
                                                      const bool& aTruncate) override;
 
   virtual mozilla::ipc::IPCResult RecvRequestCrossBrowserNavigation(const uint32_t& aGlobalIndex) override;
-  virtual mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI) override;
 
   ContentCacheInParent mContentCache;
 
@@ -671,6 +665,8 @@ private:
 
   RefPtr<nsIContentParent> mManager;
   void TryCacheDPIAndScale();
+
+  nsresult UpdatePosition();
 
   bool AsyncPanZoomEnabled() const;
 
@@ -754,12 +750,6 @@ private:
 
   bool mHasContentOpener;
 
-  // When dropping links we perform a roundtrip from
-  // Parent (SendRealDragEvent) -> Child -> Parent (RecvDropLinks)
-  // and have to ensure that the child did not modify links to be loaded.
-  bool QueryDropLinksForVerification();
-  nsTArray<nsString> mVerifyDropLinks;
-
 #ifdef DEBUG
   int32_t mActiveSupressDisplayportCount;
 #endif
@@ -789,14 +779,6 @@ private:
   // True if at least one window hosted in the TabChild has added a
   // beforeunload event listener.
   bool mHasBeforeUnload;
-
-  // True when the remote browser is created and ready to handle input events.
-  bool mIsReadyToHandleInputEvents;
-
-  // True if we suppress the eMouseEnterIntoWidget event due to the TabChild was
-  // not ready to handle it. We will resend it when the next time we fire a
-  // mouse event and the TabChild is ready.
-  bool mIsMouseEnterIntoWidgetEventSuppressed;
 
 public:
   static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);

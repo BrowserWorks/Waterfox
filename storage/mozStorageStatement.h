@@ -19,14 +19,13 @@
 #include "StorageBaseStatementInternal.h"
 #include "mozilla/Attributes.h"
 
+class nsIXPConnectJSObjectHolder;
 struct sqlite3_stmt;
 
 namespace mozilla {
 namespace storage {
 class StatementJSHelper;
 class Connection;
-class StatementParamsHolder;
-class StatementRowHolder;
 
 class Statement final : public mozIStorageStatement
                       , public mozIStorageValueArray
@@ -97,8 +96,8 @@ private:
      * The following two members are only used with the JS helper.  They cache
      * the row and params objects.
      */
-    nsMainThreadPtrHandle<StatementParamsHolder> mStatementParamsHolder;
-    nsMainThreadPtrHandle<StatementRowHolder> mStatementRowHolder;
+    nsMainThreadPtrHandle<nsIXPConnectJSObjectHolder> mStatementParamsHolder;
+    nsMainThreadPtrHandle<nsIXPConnectJSObjectHolder> mStatementRowHolder;
 
   /**
    * Internal version of finalize that allows us to tell it if it is being
@@ -112,12 +111,6 @@ private:
 
   friend class StatementJSHelper;
 };
-
-inline nsISupports*
-ToSupports(Statement* p)
-{
-  return NS_ISUPPORTS_CAST(mozIStorageStatement*, p);
-}
 
 } // namespace storage
 } // namespace mozilla

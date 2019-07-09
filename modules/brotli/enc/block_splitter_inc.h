@@ -13,7 +13,7 @@ static void FN(InitialEntropyCodes)(const DataType* data, size_t length,
                                     size_t stride,
                                     size_t num_histograms,
                                     HistogramType* histograms) {
-  uint32_t seed = 7;
+  unsigned int seed = 7;
   size_t block_length = length / num_histograms;
   size_t i;
   FN(ClearHistograms)(histograms, num_histograms);
@@ -29,13 +29,14 @@ static void FN(InitialEntropyCodes)(const DataType* data, size_t length,
   }
 }
 
-static void FN(RandomSample)(uint32_t* seed,
+static void FN(RandomSample)(unsigned int* seed,
                              const DataType* data,
                              size_t length,
                              size_t stride,
                              HistogramType* sample) {
   size_t pos = 0;
   if (stride >= length) {
+    pos = 0;
     stride = length;
   } else {
     pos = MyRand(seed) % (length - stride + 1);
@@ -49,7 +50,7 @@ static void FN(RefineEntropyCodes)(const DataType* data, size_t length,
                                    HistogramType* histograms) {
   size_t iters =
       kIterMulForRefining * length / stride + kMinItersForRefining;
-  uint32_t seed = 7;
+  unsigned int seed = 7;
   size_t iter;
   iters = ((iters + num_histograms - 1) / num_histograms) * num_histograms;
   for (iter = 0; iter < iters; ++iter) {

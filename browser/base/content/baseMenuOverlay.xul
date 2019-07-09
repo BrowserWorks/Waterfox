@@ -52,10 +52,6 @@
 #else
                   />
 #endif
-        <menuitem id="menu_openTour"
-                  oncommand="openTourPage();"
-                  label="&helpShowTour2.label;"
-                  accesskey="&helpShowTour2.accesskey;"/>
         <menuitem id="menu_keyboardShortcuts"
                   oncommand="openHelpLink('keyboard-shortcuts')"
                   onclick="checkForMiddleClick(this, event);"
@@ -72,11 +68,6 @@
                   accesskey="&helpTroubleshootingInfo.accesskey;"
                   label="&helpTroubleshootingInfo.label;"
                   oncommand="openTroubleshootingPage()"
-                  onclick="checkForMiddleClick(this, event);"/>
-        <menuitem id="feedbackPage"
-                  accesskey="&helpFeedbackPage.accesskey;"
-                  label="&helpFeedbackPage.label;"
-                  oncommand="openFeedbackPage()"
                   onclick="checkForMiddleClick(this, event);"/>
         <menuitem id="helpSafeMode"
                   accesskey="&helpSafeMode.accesskey;"

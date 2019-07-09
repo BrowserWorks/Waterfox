@@ -1005,8 +1005,11 @@ EventSourceImpl::InitChannelAndRequestEventSource()
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
+  // The html spec requires we use fetch cache mode of "no-store".  This
+  // maps to LOAD_BYPASS_CACHE and LOAD_INHIBIT_CACHING in necko.
   nsLoadFlags loadFlags;
-  loadFlags = nsIRequest::LOAD_BACKGROUND | nsIRequest::LOAD_BYPASS_CACHE;
+  loadFlags = nsIRequest::LOAD_BACKGROUND | nsIRequest::LOAD_BYPASS_CACHE
+                                          | nsIRequest::INHIBIT_CACHING;
 
   nsCOMPtr<nsIDocument> doc = mEventSource->GetDocumentIfCurrent();
 
@@ -1202,7 +1205,7 @@ EventSourceImpl::SetReconnectionTimeout()
 
   // the timer will be used whenever the requests are going finished.
   if (!mTimer) {
-    mTimer = NS_NewTimer();
+    mTimer = do_CreateInstance("@mozilla.org/timer;1");
     NS_ENSURE_STATE(mTimer);
   }
 
@@ -1243,12 +1246,13 @@ EventSourceImpl::PrintErrorOnConsole(const char* aBundleURI,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Localize the error message
-  nsAutoString message;
+  nsXPIDLString message;
   if (aFormatStrings) {
     rv = strBundle->FormatStringFromName(aError, aFormatStrings,
-                                         aFormatStringsLen, message);
+                                         aFormatStringsLen,
+                                         getter_Copies(message));
   } else {
-    rv = strBundle->GetStringFromName(aError, message);
+    rv = strBundle->GetStringFromName(aError, getter_Copies(message));
   }
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1501,8 +1505,8 @@ EventSourceImpl::DispatchAllMessageEvents()
                             Sequence<OwningNonNull<MessagePort>>());
     event->SetTrusted(true);
 
-    bool dummy;
-    rv = mEventSource->DispatchEvent(static_cast<Event*>(event), &dummy);
+    rv = mEventSource->DispatchDOMEvent(nullptr, static_cast<Event*>(event),
+                                        nullptr, nullptr);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to dispatch the message event!!!");
       return;
@@ -1940,8 +1944,7 @@ EventSource::CreateAndDispatchSimpleEvent(const nsAString& aName)
   // it doesn't bubble, and it isn't cancelable
   event->InitEvent(aName, false, false);
   event->SetTrusted(true);
-  bool dummy;
-  return DispatchEvent(event, &dummy);
+  return DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 /* static */ already_AddRefed<EventSource>
@@ -2060,7 +2063,7 @@ EventSource::IsCertainlyAliveForCC() const
   return mKeepingAlive;
 }
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(EventSource)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(EventSource)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(EventSource, DOMEventTargetHelper)

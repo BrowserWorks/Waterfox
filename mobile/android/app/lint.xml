@@ -40,9 +40,6 @@
     <issue id="ValidFragment" severity="warning" />
     <issue id="WrongConstant" severity="warning" />
 
-    <!-- New Android-Gradle lint integration regressed this check. -->
-    <issue id="MissingRegistered" severity="warning" />
-
     <!-- Fixes are in progress but we would like to block future candidates.
          The ** in the path are wildcards. We need these wildcards to not change our code structure.
          See: http://stackoverflow.com/questions/43994420/what-path-is-the-issue-ignore-path-element-in-lint-xml-relative-to -->
@@ -56,12 +53,14 @@
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/animation/PropertyAnimator.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/RemotePresentationService.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/db/SharedBrowserDatabaseProvider.java"/>
+        <ignore path="src/australis/java/org/mozilla/gecko/toolbar/TabCounter.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/tabs/TabPanelBackButton.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/toolbar/ToolbarEditText.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/util/ViewUtil.java"/>
         <ignore path="**/mobile/android/base/java/org/mozilla/gecko/IntentHelper.java"/>
         <ignore path="**/media/webrtc/trunk/webrtc/modules/audio_device/android/java/src/org/webrtc/voiceengine/WebRtcAudioEffects.java"/>
         <ignore path="**/media/webrtc/trunk/webrtc/modules/audio_device/android/java/src/org/webrtc/voiceengine/WebRtcAudioRecord.java"/>
+        <ignore path="src/australis/res/values/styles.xml"/>
         <ignore path="src/photon/res/values/styles.xml"/>
     </issue>
 
@@ -69,30 +68,6 @@
          it ignores @SuppressLint annotations for this check. See CrashReporter class and
          https://code.google.com/p/android/issues/detail?id=204846 -->
     <issue id="Registered" severity="warning" />
-
-    <issue id="ObjectAnimatorBinding" severity="error">
-        <!-- Two animated properties are provided by the underlying
-             View implementation. -->
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/firstrun/FirstrunPager.java"/>
-    </issue>
-
-    <!-- Tracked by Bug 1409550. -->
-    <issue id="AppCompatCustomView" severity="error">
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/firstrun/FirstrunPager.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/home/PanelHeaderView.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/menu/MenuItemDefault.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/tabs/TabPanelBackButton.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/AllCapsTextView.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/ClickableWhenDisabledEditText.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/EllipsisTextView.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/SquaredImageView.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/themed/ThemedEditText.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/themed/ThemedImageButton.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/themed/ThemedImageView.java"/>
-        <ignore path="**/mobile/android/base/java/org/mozilla/gecko/widget/themed/ThemedTextView.java"/>
-        <ignore path="**/mobile/android/search/java/org/mozilla/search/ui/BackCaptureEditText.java"/>
-        <ignore path="**/mobile/android/search/java/org/mozilla/search/ui/FacetBar.java"/>
-    </issue>
 
     <!-- WHEN YOU FIX A LINT WARNING, ADD IT TO THIS LIST.
 
@@ -178,6 +153,7 @@
     <issue id="MissingId" severity="error" />
     <issue id="MissingPrefix" severity="error" />
     <issue id="MissingQuantity" severity="error" />
+    <issue id="MissingRegistered" severity="error" />
     <issue id="MissingSuperCall" severity="error" />
     <issue id="MissingTranslation" severity="error" />
     <issue id="MissingVersion" severity="error" />
@@ -245,6 +221,10 @@
              preprocessed_resources res/raw folder. Lint reports it as unused. We should get
              rid of the file eventually. See bug 1268948. -->
         <ignore path="**/raw/.mkdir.done" />
+        <!-- bug 1375351 - To clean unused color codes -->
+        <ignore path="src/photon/res/values/colors.xml"/>
+        <ignore path="src/australis/res/values/skin_strings.xml"/>
+        <ignore path="src/photon/res/values/skin_strings.xml"/>
     </issue>
     <issue id="Usability" severity="error" />
     <issue id="UseCheckPermission" severity="error" />

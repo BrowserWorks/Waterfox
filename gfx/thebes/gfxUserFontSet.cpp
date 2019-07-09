@@ -171,7 +171,7 @@ gfxUserFontEntry::CreateFontInstance(const gfxFontStyle* aFontStyle, bool aNeeds
     return nullptr;
 }
 
-class MOZ_STACK_CLASS gfxOTSContext : public ots::OTSContext {
+class gfxOTSContext : public ots::OTSContext {
 public:
     explicit gfxOTSContext(gfxUserFontEntry* aUserFontEntry)
         : mUserFontEntry(aUserFontEntry)
@@ -197,6 +197,11 @@ public:
               aTag == TRUETYPE_TAG('H', 'V', 'A', 'R') ||
               aTag == TRUETYPE_TAG('M', 'V', 'A', 'R') ||
               aTag == TRUETYPE_TAG('V', 'V', 'A', 'R'))) ||
+            aTag == TRUETYPE_TAG('S', 'i', 'l', 'f') ||
+            aTag == TRUETYPE_TAG('S', 'i', 'l', 'l') ||
+            aTag == TRUETYPE_TAG('G', 'l', 'o', 'c') ||
+            aTag == TRUETYPE_TAG('G', 'l', 'a', 't') ||
+            aTag == TRUETYPE_TAG('F', 'e', 'a', 't') ||
             aTag == TRUETYPE_TAG('S', 'V', 'G', ' ') ||
             aTag == TRUETYPE_TAG('C', 'O', 'L', 'R') ||
             aTag == TRUETYPE_TAG('C', 'P', 'A', 'L')) {
@@ -1074,7 +1079,7 @@ gfxUserFontSet::LookupFamily(const nsAString& aFamilyName) const
 bool
 gfxUserFontSet::ContainsUserFontSetFonts(const FontFamilyList& aFontList) const
 {
-    for (const FontFamilyName& name : aFontList.GetFontlist()->mNames) {
+    for (const FontFamilyName& name : aFontList.GetFontlist()) {
         if (name.mType != eFamily_named &&
             name.mType != eFamily_named_quoted) {
             continue;
@@ -1453,7 +1458,7 @@ gfxUserFontSet::UserFontCache::Entry::ReportMemory(
             if (NS_SUCCEEDED(mURI->get()->SchemeIs("data", &isData)) && isData &&
                 spec.Length() > 255) {
                 spec.Truncate(252);
-                spec.AppendLiteral("...");
+                spec.Append("...");
             }
             path.AppendPrintf(", url=%s", spec.get());
         }

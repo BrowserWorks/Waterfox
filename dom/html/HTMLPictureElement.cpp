@@ -28,7 +28,8 @@ HTMLPictureElement::~HTMLPictureElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLPictureElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLPictureElement, nsGenericHTMLElement,
+                            nsIDOMHTMLPictureElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLPictureElement)
 

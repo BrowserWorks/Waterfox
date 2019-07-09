@@ -151,9 +151,7 @@
                   { "$ref": "ImageDataType" },
                   {
                     "type": "object",
-                    "patternProperties": {
-                      "^[1-9]\\d*$": {"$ref": "ImageDataType"}
-                    }
+                    "additionalProperties": {"$ref": "ImageDataType"}
                   }
                 ],
                 "optional": true,
@@ -164,9 +162,7 @@
                   { "type": "string" },
                   {
                     "type": "object",
-                    "patternProperties": {
-                      "^[1-9]\\d*$": { "type": "string" }
-                    }
+                    "additionalProperties": {"type": "string"}
                   }
                 ],
                 "optional": true,
@@ -410,10 +406,24 @@
       {
         "name": "openPopup",
         "type": "function",
-        "requireUserInput": true,
-        "description": "Opens the extension popup window in the active window.",
-        "async": true,
-        "parameters": []
+        "description": "Opens the extension popup window in the active window but does not grant tab permissions.",
+        "unsupported": true,
+        "async": "callback",
+        "parameters": [
+          {
+            "type": "function",
+            "name": "callback",
+            "parameters": [
+              {
+                "name": "popupView",
+                "type": "object",
+                "optional": true,
+                "description": "JavaScript 'window' object for the popup window if it was succesfully opened.",
+                "additionalProperties": { "type": "any" }
+              }
+            ]
+          }
+        ]
       }
     ],
     "events": [

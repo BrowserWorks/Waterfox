@@ -32,6 +32,8 @@ using mozilla::dom::Element;
 AutoTArray<RefPtr<nsDOMMutationObserver>, 4>*
   nsDOMMutationObserver::sScheduledMutationObservers = nullptr;
 
+nsDOMMutationObserver* nsDOMMutationObserver::sCurrentObserver = nullptr;
+
 uint32_t nsDOMMutationObserver::sMutationLevel = 0;
 uint64_t nsDOMMutationObserver::sCount = 0;
 
@@ -156,7 +158,7 @@ void
 nsMutationReceiver::AttributeWillChange(nsIDocument* aDocument,
                                         mozilla::dom::Element* aElement,
                                         int32_t aNameSpaceID,
-                                        nsAtom* aAttribute,
+                                        nsIAtom* aAttribute,
                                         int32_t aModType,
                                         const nsAttrValue* aNewValue)
 {
@@ -220,7 +222,8 @@ nsMutationReceiver::CharacterDataWillChange(nsIDocument *aDocument,
 void
 nsMutationReceiver::ContentAppended(nsIDocument* aDocument,
                                     nsIContent* aContainer,
-                                    nsIContent* aFirstNewContent)
+                                    nsIContent* aFirstNewContent,
+                                    int32_t aNewIndexInContainer)
 {
   nsINode* parent = NODE_FROM(aContainer, aDocument);
   bool wantsChildList =
@@ -260,7 +263,8 @@ nsMutationReceiver::ContentAppended(nsIDocument* aDocument,
 void
 nsMutationReceiver::ContentInserted(nsIDocument* aDocument,
                                     nsIContent* aContainer,
-                                    nsIContent* aChild)
+                                    nsIContent* aChild,
+                                    int32_t aIndexInContainer)
 {
   nsINode* parent = NODE_FROM(aContainer, aDocument);
   bool wantsChildList =
@@ -295,6 +299,7 @@ void
 nsMutationReceiver::ContentRemoved(nsIDocument* aDocument,
                                    nsIContent* aContainer,
                                    nsIContent* aChild,
+                                   int32_t aIndexInContainer,
                                    nsIContent* aPreviousSibling)
 {
   if (!IsObservable(aChild)) {
@@ -366,14 +371,11 @@ nsMutationReceiver::ContentRemoved(nsIDocument* aDocument,
       // Already handled case.
       return;
     }
-    MOZ_ASSERT(parent);
-
     m->mTarget = parent;
     m->mRemovedNodes = new nsSimpleContentList(parent);
     m->mRemovedNodes->AppendElement(aChild);
     m->mPreviousSibling = aPreviousSibling;
-    m->mNextSibling = aPreviousSibling ?
-      aPreviousSibling->GetNextSibling() : parent->GetFirstChild();
+    m->mNextSibling = parent->GetChildAt(aIndexInContainer);
   }
   // We need to schedule always, so that after microtask mTransientReceivers
   // can be cleared correctly.
@@ -597,32 +599,10 @@ nsDOMMutationObserver::ScheduleForRun()
   RescheduleForRun();
 }
 
-class MutationObserverMicroTask final : public MicroTaskRunnable
-{
-public:
-  virtual void Run(AutoSlowOperation& aAso) override
-  {
-    nsDOMMutationObserver::HandleMutations(aAso);
-  }
-
-  virtual bool Suppressed() override
-  {
-    return nsDOMMutationObserver::AllScheduledMutationObserversAreSuppressed();
-  }
-};
-
 void
 nsDOMMutationObserver::RescheduleForRun()
 {
   if (!sScheduledMutationObservers) {
-    CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
-    if (!ccjs) {
-      return;
-    }
-
-    RefPtr<MutationObserverMicroTask> momt =
-      new MutationObserverMicroTask();
-    ccjs->DispatchMicroTaskRunnable(momt.forget());
     sScheduledMutationObservers = new AutoTArray<RefPtr<nsDOMMutationObserver>, 4>;
   }
 
@@ -703,7 +683,7 @@ nsDOMMutationObserver::Observe(nsINode& aTarget,
     return;
   }
 
-  nsTArray<RefPtr<nsAtom>> filters;
+  nsCOMArray<nsIAtom> filters;
   bool allAttrs = true;
   if (aOptions.mAttributeFilter.WasPassed()) {
     allAttrs = false;
@@ -787,18 +767,18 @@ nsDOMMutationObserver::GetObservingInfo(
     info.mCharacterDataOldValue.Construct(mr->CharacterDataOldValue());
     info.mNativeAnonymousChildList = mr->NativeAnonymousChildList();
     info.mAnimations = mr->Animations();
-    nsTArray<RefPtr<nsAtom>>& filters = mr->AttributeFilter();
-    if (filters.Length()) {
+    nsCOMArray<nsIAtom>& filters = mr->AttributeFilter();
+    if (filters.Count()) {
       info.mAttributeFilter.Construct();
       mozilla::dom::Sequence<nsString>& filtersAsStrings =
         info.mAttributeFilter.Value();
-      nsString* strings = filtersAsStrings.AppendElements(filters.Length(),
+      nsString* strings = filtersAsStrings.AppendElements(filters.Count(),
                                                           mozilla::fallible);
       if (!strings) {
         aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
         return;
       }
-      for (size_t j = 0; j < filters.Length(); ++j) {
+      for (int32_t j = 0; j < filters.Count(); ++j) {
         filters[j]->ToString(strings[j]);
       }
     }
@@ -884,9 +864,37 @@ nsDOMMutationObserver::HandleMutation()
   mCallback->Call(this, mutations, *this);
 }
 
-void
-nsDOMMutationObserver::HandleMutationsInternal(AutoSlowOperation& aAso)
+class AsyncMutationHandler : public mozilla::Runnable
 {
+public:
+  AsyncMutationHandler() : mozilla::Runnable("AsyncMutationHandler") {}
+  NS_IMETHOD Run() override
+  {
+    nsDOMMutationObserver::HandleMutations();
+    return NS_OK;
+  }
+};
+
+void
+nsDOMMutationObserver::HandleMutationsInternal()
+{
+  if (!nsContentUtils::IsSafeToRunScript()) {
+    nsContentUtils::AddScriptRunner(new AsyncMutationHandler());
+    return;
+  }
+  static RefPtr<nsDOMMutationObserver> sCurrentObserver;
+  if (sCurrentObserver && !sCurrentObserver->Suppressed()) {
+    // In normal cases sScheduledMutationObservers will be handled
+    // after previous mutations are handled. But in case some
+    // callback calls a sync API, which spins the eventloop, we need to still
+    // process other mutations happening during that sync call.
+    // This does *not* catch all cases, but should work for stuff running
+    // in separate tabs.
+    return;
+  }
+
+  mozilla::AutoSlowOperation aso;
+
   nsTArray<RefPtr<nsDOMMutationObserver> >* suppressedObservers = nullptr;
 
   while (sScheduledMutationObservers) {
@@ -894,21 +902,20 @@ nsDOMMutationObserver::HandleMutationsInternal(AutoSlowOperation& aAso)
       sScheduledMutationObservers;
     sScheduledMutationObservers = nullptr;
     for (uint32_t i = 0; i < observers->Length(); ++i) {
-      RefPtr<nsDOMMutationObserver> currentObserver =
-        static_cast<nsDOMMutationObserver*>((*observers)[i]);
-      if (!currentObserver->Suppressed()) {
-        currentObserver->HandleMutation();
+      sCurrentObserver = static_cast<nsDOMMutationObserver*>((*observers)[i]);
+      if (!sCurrentObserver->Suppressed()) {
+        sCurrentObserver->HandleMutation();
       } else {
         if (!suppressedObservers) {
           suppressedObservers = new nsTArray<RefPtr<nsDOMMutationObserver> >;
         }
-        if (!suppressedObservers->Contains(currentObserver)) {
-          suppressedObservers->AppendElement(currentObserver);
+        if (!suppressedObservers->Contains(sCurrentObserver)) {
+          suppressedObservers->AppendElement(sCurrentObserver);
         }
       }
     }
     delete observers;
-    aAso.CheckForInterrupt();
+    aso.CheckForInterrupt();
   }
 
   if (suppressedObservers) {
@@ -919,10 +926,11 @@ nsDOMMutationObserver::HandleMutationsInternal(AutoSlowOperation& aAso)
     delete suppressedObservers;
     suppressedObservers = nullptr;
   }
+  sCurrentObserver = nullptr;
 }
 
 nsDOMMutationRecord*
-nsDOMMutationObserver::CurrentRecord(nsAtom* aType)
+nsDOMMutationObserver::CurrentRecord(nsIAtom* aType)
 {
   NS_ASSERTION(sMutationLevel > 0, "Unexpected mutation level!");
 

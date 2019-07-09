@@ -38,6 +38,10 @@ function applicableFromManifestData(data, policy) {
   return entry.isApplicable();
 }
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function test_setup() {
   createAppInfo();
   do_get_profile();
@@ -79,7 +83,7 @@ const sanityFilter = function filter(c) {
     throw Error("No .telemetryEnvironment.build");
   }
   return true;
-};
+}
 
 // Utility function to generate build ID for previous/next date.
 function addDate(buildId, diff) {

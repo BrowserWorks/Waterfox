@@ -129,6 +129,8 @@ namespace {
 static const ClassOps MapIteratorObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */
@@ -136,19 +138,11 @@ static const ClassOps MapIteratorObjectClassOps = {
     MapIteratorObject::finalize
 };
 
-static const ClassExtension MapIteratorObjectClassExtension = {
-    nullptr, /* weakmapKeyDelegateOp */
-    MapIteratorObject::objectMoved
-};
-
 const Class MapIteratorObject::class_ = {
     "Map Iterator",
     JSCLASS_HAS_RESERVED_SLOTS(MapIteratorObject::SlotCount) |
-    JSCLASS_FOREGROUND_FINALIZE |
-    JSCLASS_SKIP_NURSERY_FINALIZE,
-    &MapIteratorObjectClassOps,
-    JS_NULL_CLASS_SPEC,
-    &MapIteratorObjectClassExtension
+    JSCLASS_FOREGROUND_FINALIZE,
+    &MapIteratorObjectClassOps
 };
 
 const JSFunctionSpec MapIteratorObject::methods[] = {
@@ -160,11 +154,7 @@ static inline ValueMap::Range*
 MapIteratorObjectRange(NativeObject* obj)
 {
     MOZ_ASSERT(obj->is<MapIteratorObject>());
-    Value value = obj->getSlot(MapIteratorObject::RangeSlot);
-    if (value.isUndefined())
-        return nullptr;
-
-    return static_cast<ValueMap::Range*>(value.toPrivate());
+    return static_cast<ValueMap::Range*>(obj->getSlot(MapIteratorObject::RangeSlot).toPrivate());
 }
 
 inline MapObject::IteratorKind
@@ -193,73 +183,27 @@ GlobalObject::initMapIteratorProto(JSContext* cx, Handle<GlobalObject*> global)
     return true;
 }
 
-template <typename TableObject>
-static inline bool
-HasNurseryMemory(TableObject* t)
-{
-    return t->getReservedSlot(TableObject::HasNurseryMemorySlot).toBoolean();
-}
-
-template <typename TableObject>
-static inline void
-SetHasNurseryMemory(TableObject* t, bool b)
-{
-    t->setReservedSlot(TableObject::HasNurseryMemorySlot, JS::BooleanValue(b));
-}
-
 MapIteratorObject*
-MapIteratorObject::create(JSContext* cx, HandleObject obj, ValueMap* data,
+MapIteratorObject::create(JSContext* cx, HandleObject mapobj, ValueMap* data,
                           MapObject::IteratorKind kind)
 {
-    Handle<MapObject*> mapobj(obj.as<MapObject>());
     Rooted<GlobalObject*> global(cx, &mapobj->global());
     Rooted<JSObject*> proto(cx, GlobalObject::getOrCreateMapIteratorPrototype(cx, global));
     if (!proto)
         return nullptr;
 
-    Nursery& nursery = cx->nursery();
+    ValueMap::Range* range = cx->new_<ValueMap::Range>(data->all());
+    if (!range)
+        return nullptr;
 
-    MapIteratorObject* iterobj;
-    void *buffer;
-    NewObjectKind objectKind = GenericObject;
-    while (true) {
-        iterobj = NewObjectWithGivenProto<MapIteratorObject>(cx, proto, objectKind);
-        if (!iterobj)
-            return nullptr;
-
-        iterobj->setSlot(TargetSlot, ObjectValue(*mapobj));
-        iterobj->setSlot(RangeSlot, PrivateValue(nullptr));
-        iterobj->setSlot(KindSlot, Int32Value(int32_t(kind)));
-
-        const size_t size = JS_ROUNDUP(sizeof(ValueMap::Range), gc::CellAlignBytes);
-        buffer = nursery.allocateBufferSameLocation(iterobj, size);
-        if (buffer)
-            break;
-
-        if (!IsInsideNursery(iterobj)) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
-
-        // There was space in the nursery for the object but not the
-        // Range. Try again in the tenured heap.
-        MOZ_ASSERT(objectKind == GenericObject);
-        objectKind = TenuredObject;
+    MapIteratorObject* iterobj = NewObjectWithGivenProto<MapIteratorObject>(cx, proto);
+    if (!iterobj) {
+        js_delete(range);
+        return nullptr;
     }
-
-    bool insideNursery = IsInsideNursery(iterobj);
-    MOZ_ASSERT(insideNursery == nursery.isInside(buffer));
-    if (insideNursery && !HasNurseryMemory(mapobj.get())) {
-        if (!cx->compartment()->addMapWithNurseryMemory(mapobj)) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
-        SetHasNurseryMemory(mapobj.get(), true);
-    }
-
-    auto range = data->createRange(buffer, insideNursery);
+    iterobj->setSlot(TargetSlot, ObjectValue(*mapobj));
     iterobj->setSlot(RangeSlot, PrivateValue(range));
-
+    iterobj->setSlot(KindSlot, Int32Value(int32_t(kind)));
     return iterobj;
 }
 
@@ -267,49 +211,7 @@ void
 MapIteratorObject::finalize(FreeOp* fop, JSObject* obj)
 {
     MOZ_ASSERT(fop->onActiveCooperatingThread());
-    MOZ_ASSERT(!IsInsideNursery(obj));
-
-    auto range = MapIteratorObjectRange(&obj->as<NativeObject>());
-    MOZ_ASSERT(!obj->zone()->group()->nursery().isInside(range));
-
-    fop->delete_(range);
-}
-
-size_t
-MapIteratorObject::objectMoved(JSObject* obj, JSObject* old)
-{
-    if (!IsInsideNursery(old))
-        return 0;
-
-    MapIteratorObject* iter = &obj->as<MapIteratorObject>();
-    ValueMap::Range* range = MapIteratorObjectRange(iter);
-    if (!range)
-        return 0;
-
-    Nursery& nursery = iter->zone()->group()->nursery();
-    if (!nursery.isInside(range)) {
-        nursery.removeMallocedBuffer(range);
-        return 0;
-    }
-
-    AutoEnterOOMUnsafeRegion oomUnsafe;
-    auto newRange = iter->zone()->pod_malloc<ValueMap::Range>();
-    if (!newRange)
-        oomUnsafe.crash("MapIteratorObject failed to allocate Range data while tenuring.");
-
-    new (newRange) ValueMap::Range(*range);
-    range->~Range();
-    iter->setReservedSlot(MapIteratorObject::RangeSlot, PrivateValue(newRange));
-    return sizeof(ValueMap::Range);
-}
-
-template <typename Range>
-static void
-DestroyRange(JSObject* iterator, Range* range)
-{
-    range->~Range();
-    if (!IsInsideNursery(iterator))
-        js_free(range);
+    fop->delete_(MapIteratorObjectRange(static_cast<NativeObject*>(obj)));
 }
 
 bool
@@ -327,15 +229,11 @@ MapIteratorObject::next(Handle<MapIteratorObject*> mapIterator, HandleArrayObjec
     MOZ_ASSERT(resultPairObj->getDenseCapacity() >= 2);
 
     ValueMap::Range* range = MapIteratorObjectRange(mapIterator);
-    if (!range)
-        return true;
-
-    if (range->empty()) {
-        DestroyRange<ValueMap::Range>(mapIterator, range);
+    if (!range || range->empty()) {
+        js_delete(range);
         mapIterator->setReservedSlot(RangeSlot, PrivateValue(nullptr));
         return true;
     }
-
     switch (mapIterator->kind()) {
       case MapObject::Keys:
         resultPairObj->setDenseElementWithType(cx, 0, range->front().key.get());
@@ -390,6 +288,8 @@ CreateMapPrototype(JSContext* cx, JSProtoKey key)
 const ClassOps MapObject::classOps_ = {
     nullptr, // addProperty
     nullptr, // delProperty
+    nullptr, // getProperty
+    nullptr, // setProperty
     nullptr, // enumerate
     nullptr, // newEnumerate
     nullptr, // resolve
@@ -415,8 +315,7 @@ const Class MapObject::class_ = {
     JSCLASS_HAS_PRIVATE |
     JSCLASS_HAS_RESERVED_SLOTS(MapObject::SlotCount) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Map) |
-    JSCLASS_FOREGROUND_FINALIZE |
-    JSCLASS_SKIP_NURSERY_FINALIZE,
+    JSCLASS_FOREGROUND_FINALIZE,
     &MapObject::classOps_,
     &MapObject::classSpec_
 };
@@ -533,7 +432,6 @@ class js::OrderedHashTableRef : public gc::BufferableRef
     explicit OrderedHashTableRef(ObjectT* obj) : object(obj) {}
 
     void trace(JSTracer* trc) override {
-        MOZ_ASSERT(!IsInsideNursery(object));
         auto realTable = object->getData();
         auto unbarrieredTable = reinterpret_cast<typename ObjectT::UnbarrieredTable*>(realTable);
         NurseryKeysVector* keys = GetNurseryKeys(object);
@@ -556,9 +454,6 @@ inline static MOZ_MUST_USE bool
 WriteBarrierPostImpl(JSRuntime* rt, ObjectT* obj, const Value& keyValue)
 {
     if (MOZ_LIKELY(!keyValue.isObject()))
-        return true;
-
-    if (IsInsideNursery(obj))
         return true;
 
     JSObject* key = &keyValue.toObject();
@@ -622,8 +517,9 @@ MapObject::set(JSContext* cx, HandleObject obj, HandleValue k, HandleValue v)
     if (!key.setValue(cx, k))
         return false;
 
+    HeapPtr<Value> rval(v);
     if (!WriteBarrierPost(cx->runtime(), &obj->as<MapObject>(), key.value()) ||
-        !map->put(key, v))
+        !map->put(key, rval))
     {
         ReportOutOfMemory(cx);
         return false;
@@ -635,7 +531,7 @@ MapObject::set(JSContext* cx, HandleObject obj, HandleValue k, HandleValue v)
 MapObject*
 MapObject::create(JSContext* cx, HandleObject proto /* = nullptr */)
 {
-    auto map = cx->make_unique<ValueMap>(cx->zone(),
+    auto map = cx->make_unique<ValueMap>(cx->runtime(),
                                          cx->compartment()->randomHashCodeScrambler());
     if (!map || !map->init()) {
         ReportOutOfMemory(cx);
@@ -646,15 +542,8 @@ MapObject::create(JSContext* cx, HandleObject proto /* = nullptr */)
     if (!mapObj)
         return nullptr;
 
-    bool insideNursery = IsInsideNursery(mapObj);
-    if (insideNursery && !cx->compartment()->addMapWithNurseryMemory(mapObj)) {
-        ReportOutOfMemory(cx);
-        return nullptr;
-    }
-
-    mapObj->initPrivate(map.release());
-    mapObj->initReservedSlot(NurseryKeysSlot, PrivateValue(nullptr));
-    mapObj->initReservedSlot(HasNurseryMemorySlot, JS::BooleanValue(insideNursery));
+    mapObj->setPrivate(map.release());
+    mapObj->setReservedSlot(NurseryKeysSlot, PrivateValue(nullptr));
     return mapObj;
 }
 
@@ -664,19 +553,6 @@ MapObject::finalize(FreeOp* fop, JSObject* obj)
     MOZ_ASSERT(fop->onActiveCooperatingThread());
     if (ValueMap* map = obj->as<MapObject>().getData())
         fop->delete_(map);
-}
-
-/* static */ void
-MapObject::sweepAfterMinorGC(FreeOp* fop, MapObject* mapobj)
-{
-    if (IsInsideNursery(mapobj) && !IsForwarded(mapobj)) {
-        finalize(fop, mapobj);
-        return;
-    }
-
-    mapobj = MaybeForwarded(mapobj);
-    mapobj->getData()->destroyNurseryRanges();
-    SetHasNurseryMemory(mapobj, false);
 }
 
 bool
@@ -835,8 +711,9 @@ MapObject::set_impl(JSContext* cx, const CallArgs& args)
 
     ValueMap& map = extract(args);
     ARG0_KEY(cx, args, key);
+    HeapPtr<Value> rval(args.get(1));
     if (!WriteBarrierPost(cx->runtime(), &args.thisv().toObject().as<MapObject>(), key.value()) ||
-        !map.put(key, args.get(1)))
+        !map.put(key, rval))
     {
         ReportOutOfMemory(cx);
         return false;
@@ -991,6 +868,8 @@ MapObject::clear(JSContext* cx, HandleObject obj)
 static const ClassOps SetIteratorObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */
@@ -998,19 +877,11 @@ static const ClassOps SetIteratorObjectClassOps = {
     SetIteratorObject::finalize
 };
 
-static const ClassExtension SetIteratorObjectClassExtension = {
-    nullptr, /* weakmapKeyDelegateOp */
-    SetIteratorObject::objectMoved
-};
-
 const Class SetIteratorObject::class_ = {
     "Set Iterator",
     JSCLASS_HAS_RESERVED_SLOTS(SetIteratorObject::SlotCount) |
-    JSCLASS_FOREGROUND_FINALIZE |
-    JSCLASS_SKIP_NURSERY_FINALIZE,
-    &SetIteratorObjectClassOps,
-    JS_NULL_CLASS_SPEC,
-    &SetIteratorObjectClassExtension
+    JSCLASS_FOREGROUND_FINALIZE,
+    &SetIteratorObjectClassOps
 };
 
 const JSFunctionSpec SetIteratorObject::methods[] = {
@@ -1022,11 +893,7 @@ static inline ValueSet::Range*
 SetIteratorObjectRange(NativeObject* obj)
 {
     MOZ_ASSERT(obj->is<SetIteratorObject>());
-    Value value = obj->getSlot(SetIteratorObject::RangeSlot);
-    if (value.isUndefined())
-        return nullptr;
-
-    return static_cast<ValueSet::Range*>(value.toPrivate());
+    return static_cast<ValueSet::Range*>(obj->getSlot(SetIteratorObject::RangeSlot).toPrivate());
 }
 
 inline SetObject::IteratorKind
@@ -1056,60 +923,28 @@ GlobalObject::initSetIteratorProto(JSContext* cx, Handle<GlobalObject*> global)
 }
 
 SetIteratorObject*
-SetIteratorObject::create(JSContext* cx, HandleObject obj, ValueSet* data,
+SetIteratorObject::create(JSContext* cx, HandleObject setobj, ValueSet* data,
                           SetObject::IteratorKind kind)
 {
     MOZ_ASSERT(kind != SetObject::Keys);
 
-    Handle<SetObject*> setobj(obj.as<SetObject>());
     Rooted<GlobalObject*> global(cx, &setobj->global());
     Rooted<JSObject*> proto(cx, GlobalObject::getOrCreateSetIteratorPrototype(cx, global));
     if (!proto)
         return nullptr;
 
-    Nursery& nursery = cx->nursery();
+    ValueSet::Range* range = cx->new_<ValueSet::Range>(data->all());
+    if (!range)
+        return nullptr;
 
-    SetIteratorObject* iterobj;
-    void *buffer;
-    NewObjectKind objectKind = GenericObject;
-    while (true) {
-        iterobj = NewObjectWithGivenProto<SetIteratorObject>(cx, proto, objectKind);
-        if (!iterobj)
-            return nullptr;
-
-        iterobj->setSlot(TargetSlot, ObjectValue(*setobj));
-        iterobj->setSlot(RangeSlot, PrivateValue(nullptr));
-        iterobj->setSlot(KindSlot, Int32Value(int32_t(kind)));
-
-        const size_t size = JS_ROUNDUP(sizeof(ValueSet::Range), gc::CellAlignBytes);
-        buffer = nursery.allocateBufferSameLocation(iterobj, size);
-        if (buffer)
-            break;
-
-        if (!IsInsideNursery(iterobj)) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
-
-        // There was space in the nursery for the object but not the
-        // Range. Try again in the tenured heap.
-        MOZ_ASSERT(objectKind == GenericObject);
-        objectKind = TenuredObject;
+    SetIteratorObject* iterobj = NewObjectWithGivenProto<SetIteratorObject>(cx, proto);
+    if (!iterobj) {
+        js_delete(range);
+        return nullptr;
     }
-
-    bool insideNursery = IsInsideNursery(iterobj);
-    MOZ_ASSERT(insideNursery == nursery.isInside(buffer));
-    if (insideNursery && !HasNurseryMemory(setobj.get())) {
-        if (!cx->compartment()->addSetWithNurseryMemory(setobj)) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
-        SetHasNurseryMemory(setobj.get(), true);
-    }
-
-    auto range = data->createRange(buffer, insideNursery);
+    iterobj->setSlot(TargetSlot, ObjectValue(*setobj));
     iterobj->setSlot(RangeSlot, PrivateValue(range));
-
+    iterobj->setSlot(KindSlot, Int32Value(int32_t(kind)));
     return iterobj;
 }
 
@@ -1117,40 +952,7 @@ void
 SetIteratorObject::finalize(FreeOp* fop, JSObject* obj)
 {
     MOZ_ASSERT(fop->onActiveCooperatingThread());
-    MOZ_ASSERT(!IsInsideNursery(obj));
-
-    auto range = SetIteratorObjectRange(&obj->as<NativeObject>());
-    MOZ_ASSERT(!obj->zone()->group()->nursery().isInside(range));
-
-    fop->delete_(range);
-}
-
-size_t
-SetIteratorObject::objectMoved(JSObject* obj, JSObject* old)
-{
-    if (!IsInsideNursery(old))
-        return 0;
-
-    SetIteratorObject* iter = &obj->as<SetIteratorObject>();
-    ValueSet::Range* range = SetIteratorObjectRange(iter);
-    if (!range)
-        return 0;
-
-    Nursery& nursery = iter->zone()->group()->nursery();
-    if (!nursery.isInside(range)) {
-        nursery.removeMallocedBuffer(range);
-        return 0;
-    }
-
-    AutoEnterOOMUnsafeRegion oomUnsafe;
-    auto newRange = iter->zone()->pod_malloc<ValueSet::Range>();
-    if (!newRange)
-        oomUnsafe.crash("SetIteratorObject failed to allocate Range data while tenuring.");
-
-    new (newRange) ValueSet::Range(*range);
-    range->~Range();
-    iter->setReservedSlot(SetIteratorObject::RangeSlot, PrivateValue(newRange));
-    return sizeof(ValueSet::Range);
+    fop->delete_(SetIteratorObjectRange(static_cast<NativeObject*>(obj)));
 }
 
 bool
@@ -1168,15 +970,11 @@ SetIteratorObject::next(Handle<SetIteratorObject*> setIterator, HandleArrayObjec
     MOZ_ASSERT(resultObj->getDenseCapacity() >= 1);
 
     ValueSet::Range* range = SetIteratorObjectRange(setIterator);
-    if (!range)
-        return true;
-
-    if (range->empty()) {
-        DestroyRange<ValueSet::Range>(setIterator, range);
+    if (!range || range->empty()) {
+        js_delete(range);
         setIterator->setReservedSlot(RangeSlot, PrivateValue(nullptr));
         return true;
     }
-
     resultObj->setDenseElementWithType(cx, 0, range->front().get());
     range->popFront();
     return false;
@@ -1216,6 +1014,8 @@ CreateSetPrototype(JSContext* cx, JSProtoKey key)
 const ClassOps SetObject::classOps_ = {
     nullptr, // addProperty
     nullptr, // delProperty
+    nullptr, // getProperty
+    nullptr, // setProperty
     nullptr, // enumerate
     nullptr, // newEnumerate
     nullptr, // resolve
@@ -1241,8 +1041,7 @@ const Class SetObject::class_ = {
     JSCLASS_HAS_PRIVATE |
     JSCLASS_HAS_RESERVED_SLOTS(SetObject::SlotCount) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Set) |
-    JSCLASS_FOREGROUND_FINALIZE |
-    JSCLASS_SKIP_NURSERY_FINALIZE,
+    JSCLASS_FOREGROUND_FINALIZE,
     &SetObject::classOps_,
     &SetObject::classSpec_,
 };
@@ -1318,7 +1117,7 @@ SetObject::add(JSContext* cx, HandleObject obj, HandleValue k)
 SetObject*
 SetObject::create(JSContext* cx, HandleObject proto /* = nullptr */)
 {
-    auto set = cx->make_unique<ValueSet>(cx->zone(),
+    auto set = cx->make_unique<ValueSet>(cx->runtime(),
                                          cx->compartment()->randomHashCodeScrambler());
     if (!set || !set->init()) {
         ReportOutOfMemory(cx);
@@ -1329,15 +1128,8 @@ SetObject::create(JSContext* cx, HandleObject proto /* = nullptr */)
     if (!obj)
         return nullptr;
 
-    bool insideNursery = IsInsideNursery(obj);
-    if (insideNursery && !cx->compartment()->addSetWithNurseryMemory(obj)) {
-        ReportOutOfMemory(cx);
-        return nullptr;
-    }
-
-    obj->initPrivate(set.release());
-    obj->initReservedSlot(NurseryKeysSlot, PrivateValue(nullptr));
-    obj->initReservedSlot(HasNurseryMemorySlot, JS::BooleanValue(insideNursery));
+    obj->setPrivate(set.release());
+    obj->setReservedSlot(NurseryKeysSlot, PrivateValue(nullptr));
     return obj;
 }
 
@@ -1358,19 +1150,6 @@ SetObject::finalize(FreeOp* fop, JSObject* obj)
     SetObject* setobj = static_cast<SetObject*>(obj);
     if (ValueSet* set = setobj->getData())
         fop->delete_(set);
-}
-
-/* static */ void
-SetObject::sweepAfterMinorGC(FreeOp* fop, SetObject* setobj)
-{
-    if (IsInsideNursery(setobj) && !IsForwarded(setobj)) {
-        finalize(fop, setobj);
-        return;
-    }
-
-    setobj = MaybeForwarded(setobj);
-    setobj->getData()->destroyNurseryRanges();
-    SetHasNurseryMemory(setobj, false);
 }
 
 bool

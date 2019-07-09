@@ -277,7 +277,7 @@ DocAccessibleChild::RecvLandmarkRole(const uint64_t& aID, nsString* aLandmark)
     return IPC_OK();
   }
 
-  if (nsAtom* roleAtom = acc->LandmarkRole()) {
+  if (nsIAtom* roleAtom = acc->LandmarkRole()) {
     roleAtom->ToString(*aLandmark);
   }
 
@@ -293,7 +293,7 @@ DocAccessibleChild::RecvARIARoleAtom(const uint64_t& aID, nsString* aRole)
   }
 
   if (const nsRoleMapEntry* roleMap = acc->ARIARoleMap()) {
-    if (nsAtom* roleAtom = *(roleMap->roleAtom)) {
+    if (nsIAtom* roleAtom = *(roleMap->roleAtom)) {
       roleAtom->ToString(*aRole);
     }
   }
@@ -1996,7 +1996,7 @@ DocAccessibleChild::RecvDOMNodeID(const uint64_t& aID, nsString* aDOMNodeID)
     return IPC_OK();
   }
 
-  nsAtom* id = content->GetID();
+  nsIAtom* id = content->GetID();
   if (id) {
     id->ToString(*aDOMNodeID);
   }

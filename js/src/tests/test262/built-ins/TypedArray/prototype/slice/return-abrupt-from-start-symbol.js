@@ -10,7 +10,7 @@ info: >
   4. Let relativeStart be ? ToInteger(start).
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var s = Symbol("1");

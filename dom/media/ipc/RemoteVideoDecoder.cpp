@@ -23,7 +23,6 @@ using namespace gfx;
 
 RemoteVideoDecoder::RemoteVideoDecoder()
   : mActor(new VideoDecoderChild())
-  , mDescription("RemoteVideoDecoder")
 {
 }
 
@@ -46,8 +45,7 @@ RemoteVideoDecoder::~RemoteVideoDecoder()
   actor = nullptr;
   mActor = nullptr;
 
-  VideoDecoderManagerChild::GetManagerThread()->Dispatch(task.forget(),
-                                                         NS_DISPATCH_NORMAL);
+  VideoDecoderManagerChild::GetManagerThread()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 RefPtr<MediaDataDecoder::InitPromise>
@@ -55,21 +53,7 @@ RemoteVideoDecoder::Init()
 {
   RefPtr<RemoteVideoDecoder> self = this;
   return InvokeAsync(VideoDecoderManagerChild::GetManagerAbstractThread(),
-                     __func__,
-                     [self, this]() { return mActor->Init(); })
-    ->Then(VideoDecoderManagerChild::GetManagerAbstractThread(),
-           __func__,
-           [self, this](TrackType aTrack) {
-             mDescription =
-               mActor->GetDescriptionName() + NS_LITERAL_CSTRING(" (remote)");
-             mIsHardwareAccelerated =
-               mActor->IsHardwareAccelerated(mHardwareAcceleratedReason);
-             mConversion = mActor->NeedsConversion();
-             return InitPromise::CreateAndResolve(aTrack, __func__);
-           },
-           [self](const MediaResult& aError) {
-             return InitPromise::CreateAndReject(aError, __func__);
-           });
+                     __func__, [self, this]() { return mActor->Init(); });
 }
 
 RefPtr<MediaDataDecoder::DecodePromise>
@@ -112,8 +96,7 @@ RemoteVideoDecoder::Shutdown()
 bool
 RemoteVideoDecoder::IsHardwareAccelerated(nsACString& aFailureReason) const
 {
-  aFailureReason = mHardwareAcceleratedReason;
-  return mIsHardwareAccelerated;
+  return mActor->IsHardwareAccelerated(aFailureReason);
 }
 
 void
@@ -133,7 +116,7 @@ RemoteVideoDecoder::SetSeekThreshold(const media::TimeUnit& aTime)
 MediaDataDecoder::ConversionRequired
 RemoteVideoDecoder::NeedsConversion() const
 {
-  return mConversion;
+  return mActor->NeedsConversion();
 }
 
 nsresult
@@ -180,34 +163,24 @@ RemoteDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
   RefPtr<RemoteVideoDecoder> object = new RemoteVideoDecoder();
 
   SynchronousTask task("InitIPDL");
-  MediaResult result(NS_OK);
+  bool success;
   VideoDecoderManagerChild::GetManagerThread()->Dispatch(
     NS_NewRunnableFunction(
       "dom::RemoteDecoderModule::CreateVideoDecoder",
       [&]() {
         AutoCompleteTask complete(&task);
-        result = object->mActor->InitIPDL(
+        success = object->mActor->InitIPDL(
           aParams.VideoConfig(),
-          aParams.mRate.mValue,
           aParams.mKnowsCompositor->GetTextureFactoryIdentifier());
       }),
     NS_DISPATCH_NORMAL);
   task.Wait();
 
-  if (NS_FAILED(result)) {
-    if (aParams.mError) {
-      *aParams.mError = result;
-    }
+  if (!success) {
     return nullptr;
   }
 
   return object.forget();
-}
-
-nsCString
-RemoteVideoDecoder::GetDescriptionName() const
-{
-  return mDescription;
 }
 
 } // namespace dom

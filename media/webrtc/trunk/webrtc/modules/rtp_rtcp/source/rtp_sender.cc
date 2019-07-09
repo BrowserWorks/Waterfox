@@ -220,15 +220,6 @@ int32_t RTPSender::SetRID(const char* rid) {
   return 0;
 }
 
-int32_t RTPSender::SetMId(const char* mid) {
-  rtc::CritScope lock(&send_critsect_);
-  const size_t len = (mid && mid[0]) ? strlen(mid) : 0;
-  if (len) {
-    mId.Set(mid, len);
-  }
-  return 0;
-}
-
 int32_t RTPSender::RegisterRtpHeaderExtension(RTPExtensionType type,
                                               uint8_t id) {
   rtc::CritScope lock(&send_critsect_);
@@ -443,8 +434,7 @@ bool RTPSender::SendOutgoingData(FrameType frame_type,
            frame_type == kEmptyFrame);
 
     result = audio_->SendAudio(frame_type, payload_type, rtp_timestamp,
-                               payload_data, payload_size, fragmentation,
-                               &mId);
+                               payload_data, payload_size, fragmentation);
   } else {
     TRACE_EVENT_ASYNC_STEP1("webrtc", "Video", capture_time_ms,
                             "Send", "type", FrameTypeToString(frame_type));
@@ -461,7 +451,7 @@ bool RTPSender::SendOutgoingData(FrameType frame_type,
     result = video_->SendVideo(video_type, frame_type, payload_type,
                                rtp_timestamp, capture_time_ms, payload_data,
                                payload_size, fragmentation, rtp_header,
-                               &rtpStreamId, &mId);
+                               &rtpStreamId);
   }
 
   rtc::CritScope cs(&statistics_crit_);

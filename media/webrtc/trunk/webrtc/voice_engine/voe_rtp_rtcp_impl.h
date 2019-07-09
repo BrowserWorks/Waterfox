@@ -28,8 +28,6 @@ class VoERTP_RTCPImpl : public VoERTP_RTCP {
 
   int GetRemoteRTCP_CNAME(int channel, char cName[256]) override;
 
-  int SetLocalMID(int channel, const char* mid) override;
-
   // SSRC
   int SetLocalSSRC(int channel, unsigned int ssrc) override;
 
@@ -41,7 +39,6 @@ class VoERTP_RTCPImpl : public VoERTP_RTCP {
   int SetSendAudioLevelIndicationStatus(int channel,
                                         bool enable,
                                         unsigned char id) override;
-  int SetSendMIDStatus(int channel, bool enable, unsigned char id = 1) override;
   int SetReceiveAudioLevelIndicationStatus(int channel,
                                            bool enable,
                                            unsigned char id) override;

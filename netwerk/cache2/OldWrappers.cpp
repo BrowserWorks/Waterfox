@@ -207,7 +207,7 @@ NS_IMETHODIMP _OldVisitCallbackWrapper::VisitEntry(const char * deviceID,
   *_retval = true;
 
   // Read all informative properties from the entry.
-  nsCString clientId;
+  nsXPIDLCString clientId;
   rv = entryInfo->GetClientID(getter_Copies(clientId));
   if (NS_FAILED(rv))
     return NS_OK;
@@ -346,13 +346,13 @@ _OldGetDiskConsumption::VisitEntry(const char * deviceID,
 // _OldCacheEntryWrapper
 
 _OldCacheEntryWrapper::_OldCacheEntryWrapper(nsICacheEntryDescriptor* desc)
-: mOldDesc(desc), mOldInfo(desc), mCacheEntryId(CacheEntry::GetNextId())
+: mOldDesc(desc), mOldInfo(desc)
 {
   LOG(("Creating _OldCacheEntryWrapper %p for descriptor %p", this, desc));
 }
 
 _OldCacheEntryWrapper::_OldCacheEntryWrapper(nsICacheEntryInfo* info)
-: mOldDesc(nullptr), mOldInfo(info), mCacheEntryId(CacheEntry::GetNextId())
+: mOldDesc(nullptr), mOldInfo(info)
 {
   LOG(("Creating _OldCacheEntryWrapper %p for info %p", this, info));
 }

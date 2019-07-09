@@ -2,10 +2,9 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 es6id: 23.4.3.1_S2
-esid: sec-weakset.prototype.add
 description: >
   Symbol may not be used as a WeakSet entry
-features: [Symbol, WeakSet]
+features: [WeakSet]
 ---*/
 var weakset = new WeakSet();
 var sym = Symbol();
@@ -13,5 +12,7 @@ var sym = Symbol();
 assert.throws(TypeError, function() {
   weakset.add(sym);
 });
+
+
 
 reportCompare(0, 0);

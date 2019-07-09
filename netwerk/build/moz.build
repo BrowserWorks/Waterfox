@@ -22,23 +22,15 @@ LOCAL_INCLUDES += [
     '/netwerk/dns',
     '/netwerk/mime',
     '/netwerk/protocol/about',
-    '/netwerk/protocol/data',
-    '/netwerk/protocol/file',
-    '/netwerk/protocol/ftp',
-    '/netwerk/protocol/http',
-    '/netwerk/protocol/res',
-    '/netwerk/protocol/viewsource',
-    '/netwerk/protocol/websocket',
-    '/netwerk/protocol/wyciwyg',
     '/netwerk/socket',
     '/netwerk/streamconv',
     '/netwerk/streamconv/converters',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
-    LOCAL_INCLUDES += [
-        '/netwerk/protocol/gio',
-    ]
+protocols = CONFIG['NECKO_PROTOCOLS']
+LOCAL_INCLUDES += sorted([
+    '/netwerk/protocol/%s' % d for d in protocols if d != 'about'
+])
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [
@@ -68,6 +60,11 @@ if CONFIG['NECKO_COOKIES']:
 if CONFIG['NECKO_WIFI']:
     LOCAL_INCLUDES += [
         '/netwerk/wifi',
+    ]
+
+if CONFIG['MOZ_RTSP']:
+    LOCAL_INCLUDES += [
+        '/netwerk/protocol/rtsp',
     ]
 
 LOCAL_INCLUDES += [

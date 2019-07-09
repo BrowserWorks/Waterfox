@@ -14,7 +14,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(PaymentRequestUpdateEvent, Event, mRequest)
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(PaymentRequestUpdateEvent, Event)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PaymentRequestUpdateEvent)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(PaymentRequestUpdateEvent)
 NS_INTERFACE_MAP_END_INHERITING(Event)
 
 NS_IMPL_ADDREF_INHERITED(PaymentRequestUpdateEvent, Event)
@@ -54,7 +54,6 @@ PaymentRequestUpdateEvent::PaymentRequestUpdateEvent(EventTarget* aOwner)
 void
 PaymentRequestUpdateEvent::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue)
 {
-  MOZ_ASSERT(aCx);
   MOZ_ASSERT(mRequest);
 
   if (NS_WARN_IF(!aValue.isObject()) || !mWaitForUpdate) {
@@ -68,18 +67,18 @@ PaymentRequestUpdateEvent::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value
   }
 
   // Validate and canonicalize the details
-  // requestShipping must be true here. PaymentRequestUpdateEvent is only
-  // dispatched when shippingAddress/shippingOption is changed, and it also means
-  // Options.RequestShipping must be true while creating the corresponding
-  // PaymentRequest.
-  nsresult rv = mRequest->IsValidDetailsUpdate(details, true/*aRequestShipping*/);
-  if (NS_FAILED(rv)) {
-    mRequest->AbortUpdate(rv);
+  if (!mRequest->IsValidDetailsUpdate(details)) {
+    mRequest->AbortUpdate(NS_ERROR_TYPE_ERR);
     return;
   }
 
+  // [TODO]
+  // If the data member of modifier is present,
+  // let serializedData be the result of JSON-serializing modifier.data into a string.
+  // null if it is not.
+
   // Update the PaymentRequest with the new details
-  if (NS_FAILED(mRequest->UpdatePayment(aCx, details))) {
+  if (NS_FAILED(mRequest->UpdatePayment(details))) {
     mRequest->AbortUpdate(NS_ERROR_DOM_ABORT_ERR);
     return;
   }

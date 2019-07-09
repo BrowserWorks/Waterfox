@@ -152,6 +152,10 @@ ShowInstDetails nevershow
 !define MUI_PAGE_CUSTOMFUNCTION_PRE preWelcome
 !insertmacro MUI_PAGE_WELCOME
 
+; License Page
+!define MUI_LICENSEPAGE_BUTTON "$(^AgreeBtn)"
+!insertmacro MUI_PAGE_LICENSE "License.rtf"
+
 ; Custom Options Page
 Page custom preOptions leaveOptions
 
@@ -247,6 +251,10 @@ Section "-InstallStartCleanup"
 
   ; setup the application model id registration value
   ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
+  
+  ; Remove old application model id stored under the Firefox key
+  DeleteRegValue HKCU "Software\Mozilla\Firefox\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKLM "Software\Mozilla\Firefox\TaskBarIDs" "$INSTDIR"
 
   ; Remove the updates directory
   ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
@@ -326,7 +334,7 @@ Section "-Application" APP_IDX
   ; Default for creating Quick Launch shortcut (1 = create, 0 = don't create)
   ${If} $AddQuickLaunchSC == ""
     ; Don't install the quick launch shortcut on Windows 7
-    ${If} ${AtLeastWin7}
+    ${If} ${AtLeastWinXP}
       StrCpy $AddQuickLaunchSC "0"
     ${Else}
       StrCpy $AddQuickLaunchSC "1"
@@ -381,17 +389,17 @@ Section "-Application" APP_IDX
   ; it doesn't cause problems always add them.
   ${SetUninstallKeys}
 
-  ; On install always add the FirefoxHTML and FirefoxURL keys.
-  ; An empty string is used for the 5th param because FirefoxHTML is not a
+  ; On install always add the WaterfoxHTML and WaterfoxURL keys.
+  ; An empty string is used for the 5th param because WaterfoxHTML is not a
   ; protocol handler.
   ${GetLongPath} "$INSTDIR\${FileMainEXE}" $8
   StrCpy $2 "$\"$8$\" -osint -url $\"%1$\""
 
-  ; In Win8, the delegate execute handler picks up the value in FirefoxURL and
-  ; FirefoxHTML to launch the desktop browser when it needs to.
-  ${AddDisabledDDEHandlerValues} "FirefoxHTML-$AppUserModelID" "$2" "$8,1" \
+  ; In Win8, the delegate execute handler picks up the value in WaterfoxURL and
+  ; WaterfoxHTML to launch the desktop browser when it needs to.
+  ${AddDisabledDDEHandlerValues} "WaterfoxHTML-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} Document" ""
-  ${AddDisabledDDEHandlerValues} "FirefoxURL-$AppUserModelID" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxURL-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} URL" "true"
 
   ; For pre win8, the following keys should only be set if we can write to HKLM.
@@ -499,7 +507,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                            "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -510,18 +518,10 @@ Section "-Application" APP_IDX
   ${EndIf}
 
   ; Update lastwritetime of the Start Menu shortcut to clear the tile cache.
-  ; Do this for both shell contexts in case the user has shortcuts in multiple
-  ; locations, then restore the previous context at the end.
   ${If} ${AtLeastWin8}
-    SetShellVarContext all
-    ${TouchStartMenuShortcut}
-    SetShellVarContext current
-    ${TouchStartMenuShortcut}
-    ${If} $TmpVal == "HKLM"
-      SetShellVarContext all
-    ${ElseIf} $TmpVal == "HKCU"
-      SetShellVarContext current
-    ${EndIf}
+  ${AndIf} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
+    FileOpen $0 "$SMPROGRAMS\${BrandFullName}.lnk" a
+    FileClose $0
   ${EndIf}
 
   ${If} $AddDesktopSC == 1
@@ -529,7 +529,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID"  "true"
       ${EndIf}
@@ -542,7 +542,7 @@ Section "-Application" APP_IDX
   ; If elevated the Quick Launch shortcut must be added from the unelevated
   ; original process.
   ${If} $AddQuickLaunchSC == 1
-    ${Unless} ${AtLeastWin7}
+    ${Unless} ${AtLeastWinXP}
       ClearErrors
       ${GetParameters} $0
       ${GetOptions} "$0" "/UAC:" $0
@@ -599,7 +599,7 @@ Section "-InstallEndCleanup"
       ; If we have something other than empty string now, write the value.
       ${If} "$0" != ""
         ClearErrors
-        WriteRegStr HKCU "Software\Mozilla\Firefox" "OldDefaultBrowserCommand" "$0"
+        WriteRegStr HKCU "Software\Mozilla\Waterfox" "OldDefaultBrowserCommand" "$0"
       ${EndIf}
 
       ${LogHeader} "Setting as the default browser"
@@ -615,7 +615,7 @@ Section "-InstallEndCleanup"
     ${ElseIfNot} ${Errors}
       ${LogHeader} "Writing default-browser opt-out"
       ClearErrors
-      WriteRegStr HKCU "Software\Mozilla\Firefox" "DefaultBrowserOptOut" "True"
+      WriteRegStr HKCU "Software\Mozilla\Waterfox" "DefaultBrowserOptOut" "True"
       ${If} ${Errors}
         ${LogMsg} "Error writing default-browser opt-out"
       ${EndIf}
@@ -912,7 +912,7 @@ Function leaveShortcuts
   ${MUI_INSTALLOPTIONS_READ} $AddStartMenuSC "shortcuts.ini" "Field 3" "State"
 
   ; Don't install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${MUI_INSTALLOPTIONS_READ} $AddQuickLaunchSC "shortcuts.ini" "Field 4" "State"
   ${EndUnless}
 
@@ -1016,14 +1016,14 @@ Function preSummary
   WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
   ${Unless} ${Errors}
     DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
-    ; Check if Firefox is the http handler for this user.
+    ; Check if Waterfox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9
     ${If} $TmpVal == "HKLM"
       SetShellVarContext all ; Set SHCTX to all users
     ${EndIf}
-    ; If Firefox isn't the http handler for this user show the option to set
-    ; Firefox as the default browser.
+    ; If Waterfox isn't the http handler for this user show the option to set
+    ; Waterfox as the default browser.
     ${If} "$R9" != "true"
     ${AndIf} ${AtMostWin2008R2}
       WriteINIStr "$PLUGINSDIR\summary.ini" "Settings" NumFields "4"
@@ -1110,7 +1110,7 @@ Function .onInit
   System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
 
   ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${If} "$R7" == "0"
       strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
     ${Else}
@@ -1186,7 +1186,7 @@ Function .onInit
 
   ; Setup the shortcuts.ini file for the Custom Shortcuts Page
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "3"
   ${Else}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "4"
@@ -1217,7 +1217,7 @@ Function .onInit
   WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 3" State  "1"
 
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Type   "checkbox"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Text   "$(ICONS_QUICKLAUNCH)"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Left   "0"

@@ -71,22 +71,6 @@ using mozilla::PodCopy;
 using mozilla::PodZero;
 using mozilla::RotateLeft;
 
-
-// Check that JSScript::data hasn't experienced obvious memory corruption.
-// This is a diagnositic for Bug 1367896.
-static void
-CheckScriptDataIntegrity(JSScript* script)
-{
-    ScopeArray* sa = script->scopes();
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(sa->vector);
-
-    // Check that scope data - who's pointer is stored in data region - also
-    // points within the data region.
-    MOZ_RELEASE_ASSERT(ptr >= script->data &&
-                       ptr + sa->length <= script->data + script->dataSize(),
-                       "Corrupt JSScript::data");
-}
-
 template<XDRMode mode>
 bool
 js::XDRScriptConst(XDRState<mode>* xdr, MutableHandleValue vp)
@@ -377,8 +361,6 @@ js::XDRScript(XDRState<mode>* xdr, HandleScope scriptEnclosingScope,
     if (mode == XDR_ENCODE) {
         script = scriptp.get();
         MOZ_ASSERT(script->functionNonDelazifying() == fun);
-
-        CheckScriptDataIntegrity(script);
 
         if (!fun && script->treatAsRunOnce() && script->hasRunOnce()) {
             // This is a toplevel or eval script that's runOnce.  We want to
@@ -808,7 +790,6 @@ js::XDRScript(XDRState<mode>* xdr, HandleScope scriptEnclosingScope,
                     return false;
                 break;
               case ScopeKind::Module:
-              case ScopeKind::WasmInstance:
                 MOZ_CRASH("NYI");
                 break;
               case ScopeKind::WasmFunction:
@@ -955,8 +936,6 @@ js::XDRScript(XDRState<mode>* xdr, HandleScope scriptEnclosingScope,
     }
 
     if (mode == XDR_DECODE) {
-        CheckScriptDataIntegrity(script);
-
         scriptp.set(script);
 
         /* see BytecodeEmitter::tellDebuggerAboutCompiledScript */
@@ -1429,6 +1408,8 @@ ScriptSourceObject::finalize(FreeOp* fop, JSObject* obj)
 static const ClassOps ScriptSourceObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */
@@ -2090,10 +2071,6 @@ ScriptSource::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
 bool
 ScriptSource::xdrEncodeTopLevel(JSContext* cx, HandleScript script)
 {
-    // Encoding failures are reported by the xdrFinalizeEncoder function.
-    if (containsAsmJS())
-        return true;
-
     xdrEncoder_ = js::MakeUnique<XDRIncrementalEncoder>(cx);
     if (!xdrEncoder_) {
         ReportOutOfMemory(cx);
@@ -2111,12 +2088,8 @@ ScriptSource::xdrEncodeTopLevel(JSContext* cx, HandleScript script)
     }
 
     RootedScript s(cx, script);
-    if (!xdrEncoder_->codeScript(&s)) {
-        if (xdrEncoder_->resultCode() == JS::TranscodeResult_Throw)
-            return false;
-        // Encoding failures are reported by the xdrFinalizeEncoder function.
-        return true;
-    }
+    if (!xdrEncoder_->codeScript(&s))
+        return false;
 
     failureCase.release();
     return true;
@@ -2434,10 +2407,6 @@ js::SharedScriptData::new_(JSContext* cx, uint32_t codeLength,
         ReportOutOfMemory(cx);
         return nullptr;
     }
-
-    /* Diagnostic for Bug 1399373.
-     * We expect bytecode is always non-empty. */
-    MOZ_DIAGNOSTIC_ASSERT(codeLength > 0);
 
     entry->refCount_ = 0;
     entry->dataLength_ = dataLength;
@@ -3157,7 +3126,7 @@ JSScript::sizeOfData(mozilla::MallocSizeOf mallocSizeOf) const
 size_t
 JSScript::sizeOfTypeScript(mozilla::MallocSizeOf mallocSizeOf) const
 {
-    return types_ ? types_->sizeOfIncludingThis(mallocSizeOf) : 0;
+    return types_->sizeOfIncludingThis(mallocSizeOf);
 }
 
 /*
@@ -3512,8 +3481,6 @@ js::detail::CopyScript(JSContext* cx, HandleScript src, HandleScript dst,
     }
 
     /* NB: Keep this in sync with XDRScript. */
-
-    CheckScriptDataIntegrity(src);
 
     /* Some embeddings are not careful to use ExposeObjectToActiveJS as needed. */
     MOZ_ASSERT(!src->sourceObject()->isMarkedGray());
@@ -3934,7 +3901,7 @@ JSScript::getOrCreateBreakpointSite(JSContext* cx, jsbytecode* pc)
     BreakpointSite*& site = debug->breakpoints[pcToOffset(pc)];
 
     if (!site) {
-        site = cx->zone()->new_<JSBreakpointSite>(this, pc);
+        site = cx->runtime()->new_<JSBreakpointSite>(this, pc);
         if (!site) {
             ReportOutOfMemory(cx);
             return nullptr;

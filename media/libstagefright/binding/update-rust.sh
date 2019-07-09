@@ -2,7 +2,7 @@
 # Script to update mp4parse-rust sources to latest upstream
 
 # Default version.
-VER=7a10a8349b7dc098210deb0872de801e30f2d65e
+VER=1d2d69df3380139ee208f58181c73b1947c91ac2
 
 # Accept version or commit from the command line.
 if test -n "$1"; then
@@ -12,7 +12,6 @@ fi
 echo "Fetching sources..."
 rm -rf _upstream
 git clone https://github.com/mozilla/mp4parse-rust _upstream/mp4parse
-git clone https://github.com/alfredoyang/mp4parse_fallible _upstream/mp4parse_fallible
 pushd _upstream/mp4parse
 git checkout ${VER}
 echo "Verifying sources..."
@@ -41,7 +40,7 @@ cp _upstream/mp4parse/mp4parse_capi/include/mp4parse.h include/
 cp _upstream/mp4parse/mp4parse_capi/src/*.rs mp4parse_capi/src/
 rm -rf mp4parse_fallible
 mkdir -p mp4parse_fallible
-cp _upstream/mp4parse_fallible/* mp4parse_fallible/
+cp _upstream/mp4parse/mp4parse_fallible/* mp4parse_fallible/
 
 echo "Applying patches..."
 patch -p4 < mp4parse-cargo.patch

@@ -30,80 +30,6 @@ MacroAssembler::move64(Register64 src, Register64 dest)
     movl(src.high, dest.high);
 }
 
-void
-MacroAssembler::moveDoubleToGPR64(FloatRegister src, Register64 dest)
-{
-    ScratchDoubleScope scratch(*this);
-
-    if (Assembler::HasSSE41()) {
-        vmovd(src, dest.low);
-        vpextrd(1, src, dest.high);
-    } else {
-        vmovd(src, dest.low);
-        moveDouble(src, scratch);
-        vpsrldq(Imm32(4), scratch, scratch);
-        vmovd(scratch, dest.high);
-    }
-}
-
-void
-MacroAssembler::moveGPR64ToDouble(Register64 src, FloatRegister dest)
-{
-    ScratchDoubleScope scratch(*this);
-
-    if (Assembler::HasSSE41()) {
-        vmovd(src.low, dest);
-        vpinsrd(1, src.high, dest, dest);
-    } else {
-        vmovd(src.low, dest);
-        vmovd(src.high, ScratchDoubleReg);
-        vunpcklps(ScratchDoubleReg, dest, dest);
-    }
-}
-
-void
-MacroAssembler::move64To32(Register64 src, Register dest)
-{
-    if (src.low != dest)
-        movl(src.low, dest);
-}
-
-void
-MacroAssembler::move32To64ZeroExtend(Register src, Register64 dest)
-{
-    if (src != dest.low)
-        movl(src, dest.low);
-    movl(Imm32(0), dest.high);
-}
-
-void
-MacroAssembler::move8To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_ASSERT(dest.low == eax);
-    MOZ_ASSERT(dest.high == edx);
-    move8SignExtend(src, eax);
-    masm.cdq();
-}
-
-void
-MacroAssembler::move16To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_ASSERT(dest.low == eax);
-    MOZ_ASSERT(dest.high == edx);
-    move16SignExtend(src, eax);
-    masm.cdq();
-}
-
-void
-MacroAssembler::move32To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_ASSERT(dest.low == eax);
-    MOZ_ASSERT(dest.high == edx);
-    if (src != eax)
-        movl(src, eax);
-    masm.cdq();
-}
-
 // ===============================================================
 // Logical functions
 
@@ -1024,7 +950,7 @@ MacroAssembler::truncateFloat32ToUInt64(Address src, Address dest, Register temp
     truncateFloat32ToInt64(src, dest, temp);
 
     // For unsigned conversion the case of [INT64, UINT64] needs to get handle seperately.
-    load32(HighWord(dest), temp);
+    load32(Address(dest.base, dest.offset + INT64HIGH_OFFSET), temp);
     branch32(Assembler::Condition::NotSigned, temp, Imm32(0), &done);
 
     // Move the value inside INT64 range.
@@ -1034,9 +960,9 @@ MacroAssembler::truncateFloat32ToUInt64(Address src, Address dest, Register temp
     storeFloat32(floatTemp, dest);
     truncateFloat32ToInt64(dest, dest, temp);
 
-    load32(HighWord(dest), temp);
+    load32(Address(dest.base, dest.offset + INT64HIGH_OFFSET), temp);
     orl(Imm32(0x80000000), temp);
-    store32(temp, HighWord(dest));
+    store32(temp, Address(dest.base, dest.offset + INT64HIGH_OFFSET));
 
     bind(&done);
 }
@@ -1052,7 +978,7 @@ MacroAssembler::truncateDoubleToUInt64(Address src, Address dest, Register temp,
     truncateDoubleToInt64(src, dest, temp);
 
     // For unsigned conversion the case of [INT64, UINT64] needs to get handle seperately.
-    load32(HighWord(dest), temp);
+    load32(Address(dest.base, dest.offset + INT64HIGH_OFFSET), temp);
     branch32(Assembler::Condition::NotSigned, temp, Imm32(0), &done);
 
     // Move the value inside INT64 range.
@@ -1062,9 +988,9 @@ MacroAssembler::truncateDoubleToUInt64(Address src, Address dest, Register temp,
     storeDouble(floatTemp, dest);
     truncateDoubleToInt64(dest, dest, temp);
 
-    load32(HighWord(dest), temp);
+    load32(Address(dest.base, dest.offset + INT64HIGH_OFFSET), temp);
     orl(Imm32(0x80000000), temp);
-    store32(temp, HighWord(dest));
+    store32(temp, Address(dest.base, dest.offset + INT64HIGH_OFFSET));
 
     bind(&done);
 }

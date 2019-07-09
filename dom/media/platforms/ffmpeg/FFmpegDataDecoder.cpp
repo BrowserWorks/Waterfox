@@ -38,22 +38,22 @@ FFmpegDataDecoder<LIBAV_VER>::~FFmpegDataDecoder()
   MOZ_COUNT_DTOR(FFmpegDataDecoder);
 }
 
-MediaResult
+nsresult
 FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
 {
   FFMPEG_LOG("Initialising FFmpeg decoder.");
 
   AVCodec* codec = FindAVCodec(mLib, mCodecID);
   if (!codec) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("Couldn't find ffmpeg decoder"));
+    NS_WARNING("Couldn't find ffmpeg decoder");
+    return NS_ERROR_FAILURE;
   }
 
   StaticMutexAutoLock mon(sMonitor);
 
   if (!(mCodecContext = mLib->avcodec_alloc_context3(codec))) {
-    return MediaResult(NS_ERROR_OUT_OF_MEMORY,
-                       RESULT_DETAIL("Couldn't init ffmpeg context"));
+    NS_WARNING("Couldn't init ffmpeg context");
+    return NS_ERROR_FAILURE;
   }
 
   mCodecContext->opaque = this;
@@ -64,21 +64,27 @@ FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
     mCodecContext->extradata_size = mExtraData->Length();
     // FFmpeg may use SIMD instructions to access the data which reads the
     // data in 32 bytes block. Must ensure we have enough data to read.
+#if LIBAVCODEC_VERSION_MAJOR >= 58
+    mExtraData->AppendElements(AV_INPUT_BUFFER_PADDING_SIZE);
+#else
     mExtraData->AppendElements(FF_INPUT_BUFFER_PADDING_SIZE);
+#endif
     mCodecContext->extradata = mExtraData->Elements();
   } else {
     mCodecContext->extradata_size = 0;
   }
 
+#if LIBAVCODEC_VERSION_MAJOR < 57
   if (codec->capabilities & CODEC_CAP_DR1) {
     mCodecContext->flags |= CODEC_FLAG_EMU_EDGE;
   }
+#endif
 
   if (mLib->avcodec_open2(mCodecContext, codec, nullptr) < 0) {
+    NS_WARNING("Couldn't initialise ffmpeg decoder");
     mLib->avcodec_close(mCodecContext);
     mLib->av_freep(&mCodecContext);
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("Couldn't initialise ffmpeg decoder"));
+    return NS_ERROR_FAILURE;
   }
 
   FFMPEG_LOG("FFmpeg init successful.");

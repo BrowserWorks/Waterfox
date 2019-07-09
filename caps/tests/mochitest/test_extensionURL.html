@@ -13,7 +13,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1161831
   /** Test for Bug 1161831 **/
   SimpleTest.waitForExplicitFinish();
 
-  let module = SpecialPowers.Cu.getGlobalForObject(SpecialPowers.Cu.import("resource://gre/modules/Services.jsm", {}));
+  let module = SpecialPowers.Cu.import("resource://gre/modules/Services.jsm", {});
   var {MatchGlob, MatchPatternSet, WebExtensionPolicy} = module;
 
   var policy1, policy2;
@@ -48,7 +48,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1161831
 
     // Gets a normalized (de-symlinked) path in the parent process
     this.addMessageListener("ResolvePath", (path) => {
-      let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+      let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
       file.initWithPath(path);
       file.normalize();
       return file.path;
@@ -133,7 +133,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1161831
     // resolve in the child process.
     let resolvedPath = script.sendSyncMessage("ResolvePath", resFile.path);
     let file = SpecialPowers.Cc["@mozilla.org/file/local;1"]
-                            .createInstance(SpecialPowers.Ci.nsIFile);
+                            .createInstance(SpecialPowers.Ci.nsILocalFile);
     info(`resolved test file path: ${resolvedPath}`);
     file.initWithPath(resolvedPath);
 
@@ -225,8 +225,13 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1161831
           function stripPath(s) { return s.replace(/(.*\/\/.+)\/.*/, "$1"); }
           is(prin.originNoSuffix, stripPath(url), "Principal origin is correct: " + prin.originNoSuffix);
           is(prin.addonId, "imaginaryaddon-" + url[url.indexOf("/") + 2], "addonId is correct");
-          is(SpecialPowers.wrap(ifr.contentWindow).document.title, "resource test file",
-             "document looks right");
+          if (/_blank/.test(url)) {
+            is(SpecialPowers.wrap(ifr.contentWindow).document.documentElement.innerHTML,
+               "<head></head><body></body>", "blank document looks right");
+          } else {
+            is(SpecialPowers.wrap(ifr.contentWindow).document.title, "resource test file",
+               "document looks right");
+          }
           ifr.remove();
           resolve();
         };
@@ -275,8 +280,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1161831
     .then(testLoad.bind(null, liebchenURIStr, navigateWithLocation))
     .then(testLoad.bind(null, liebchenURIStr, navigateWithSrc))
     .then(testLoad.bind(null, cheriseURIStr, navigateWithSrc))
+    .then(testLoad.bind(null, "moz-extension://cherise/_blank.html", navigateWithSrc))
     .then(SimpleTest.finish.bind(SimpleTest),
-          function(e) { ok(false, "rejected promise: " + e); SimpleTest.finish(); }
+          function(e) { ok(false, "rejected promise: " + e); SimpleTest.finish() }
     );
   });
 

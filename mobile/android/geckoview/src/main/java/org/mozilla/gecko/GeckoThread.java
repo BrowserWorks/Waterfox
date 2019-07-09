@@ -8,7 +8,6 @@ package org.mozilla.gecko;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.mozglue.GeckoLoader;
-import org.mozilla.gecko.process.GeckoProcessManager;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -110,19 +109,14 @@ public class GeckoThread extends Thread {
     private static final ClassLoader clsLoader = GeckoThread.class.getClassLoader();
     @WrapForJNI
     private static MessageQueue msgQueue;
-    @WrapForJNI
-    private static int uiThreadId;
 
     private boolean mInitialized;
     private String[] mArgs;
 
     // Main process parameters
-    public static final int FLAG_DEBUGGING = 1; // Debugging mode.
-    public static final int FLAG_PRELOAD_CHILD = 2; // Preload child during main thread start.
-
     private GeckoProfile mProfile;
     private String mExtraArgs;
-    private int mFlags;
+    private boolean mDebugging;
 
     // Child process parameters
     private int mCrashFileDescriptor = -1;
@@ -138,10 +132,9 @@ public class GeckoThread extends Thread {
     }
 
     private synchronized boolean init(final GeckoProfile profile, final String[] args,
-                                      final String extraArgs, final int flags,
+                                      final String extraArgs, final boolean debugging,
                                       final int crashFd, final int ipcFd) {
         ThreadUtils.assertOnUiThread();
-        uiThreadId = android.os.Process.myTid();
 
         if (mInitialized) {
             return false;
@@ -150,7 +143,7 @@ public class GeckoThread extends Thread {
         mProfile = profile;
         mArgs = args;
         mExtraArgs = extraArgs;
-        mFlags = flags;
+        mDebugging = debugging;
         mCrashFileDescriptor = crashFd;
         mIPCFileDescriptor = ipcFd;
 
@@ -160,15 +153,15 @@ public class GeckoThread extends Thread {
     }
 
     public static boolean initMainProcess(final GeckoProfile profile, final String extraArgs,
-                                          final int flags) {
-        return INSTANCE.init(profile, /* args */ null, extraArgs, flags,
+                                          final boolean debugging) {
+        return INSTANCE.init(profile, /* args */ null, extraArgs, debugging,
                                  /* crashFd */ -1, /* ipcFd */ -1);
     }
 
     public static boolean initChildProcess(final String[] args, final int crashFd,
                                            final int ipcFd) {
         return INSTANCE.init(/* profile */ null, args, /* extraArgs */ null,
-                                 /* flags */ 0, crashFd, ipcFd);
+                                 /* debugging */ false, crashFd, ipcFd);
     }
 
     private static boolean canUseProfile(final Context context, final GeckoProfile profile,
@@ -223,7 +216,7 @@ public class GeckoThread extends Thread {
 
         // We haven't initialized yet; okay to initialize now.
         return initMainProcess(GeckoProfile.get(context, profileName, profileDir),
-                               args, /* flags */ 0);
+                               args, /* debugging */ false);
     }
 
     public static boolean launch() {
@@ -368,15 +361,13 @@ public class GeckoThread extends Thread {
 
         initGeckoEnvironment();
 
-        if ((mFlags & FLAG_PRELOAD_CHILD) != 0) {
-            ThreadUtils.postToBackgroundThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Preload the content ("tab") child process.
-                    GeckoProcessManager.getInstance().preload("tab");
-                }
-            });
-        }
+        // This can only happen after the call to initGeckoEnvironment
+        // above, because otherwise the JNI code hasn't been loaded yet.
+        ThreadUtils.postToUiThread(new Runnable() {
+            @Override public void run() {
+                registerUiThread();
+            }
+        });
 
         // Wait until initialization before calling Gecko entry point.
         synchronized (this) {
@@ -390,7 +381,7 @@ public class GeckoThread extends Thread {
 
         final String[] args = isChildProcess() ? mArgs : getMainProcessArgs();
 
-        if ((mFlags & FLAG_DEBUGGING) != 0) {
+        if (mDebugging) {
             try {
                 Thread.sleep(5 * 1000 /* 5 seconds */);
             } catch (final InterruptedException e) {
@@ -399,7 +390,7 @@ public class GeckoThread extends Thread {
 
         Log.w(LOGTAG, "zerdatime " + SystemClock.elapsedRealtime() + " - runGecko");
 
-        if ((mFlags & FLAG_DEBUGGING) != 0) {
+        if (mDebugging) {
             Log.i(LOGTAG, "RunGecko - args = " + TextUtils.join(" ", args));
         }
 
@@ -541,6 +532,9 @@ public class GeckoThread extends Thread {
                                  String.class, category, String.class, data);
         }
     }
+
+    // Implemented in mozglue/android/APKOpen.cpp.
+    /* package */ static native void registerUiThread();
 
     @WrapForJNI(calledFrom = "ui")
     /* package */ static native long runUiThreadCallback();

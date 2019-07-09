@@ -187,20 +187,11 @@ add_task(async function observePushTopicDeviceDisconnected_current_device() {
     }
   };
 
-  let signoutCalled = false;
   let { FxAccounts } = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
-  const fxAccountsMock = new FxAccounts({
-    newAccountState() {
-      return {
-        async getUserAccountData() {
-          return { deviceId };
-        }
-      };
-    },
-    signOut() {
-      signoutCalled = true;
-    }
-  });
+  const fxAccountsMock = new FxAccounts({});
+  fxAccountsMock.internal.currentAccountState.getUserAccountData = async () => {
+    return { deviceId };
+  };
 
   const deviceDisconnectedNotificationObserved = new Promise(resolve => {
     Services.obs.addObserver(function obs(subject, topic, data) {
@@ -218,7 +209,6 @@ add_task(async function observePushTopicDeviceDisconnected_current_device() {
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
 
   await deviceDisconnectedNotificationObserved;
-  ok(signoutCalled);
 });
 
 add_task(async function observePushTopicDeviceDisconnected_another_device() {
@@ -237,20 +227,11 @@ add_task(async function observePushTopicDeviceDisconnected_another_device() {
     }
   };
 
-  let signoutCalled = false;
   let { FxAccounts } = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
-  const fxAccountsMock = new FxAccounts({
-    newAccountState() {
-      return {
-        async getUserAccountData() {
-          return { deviceId: "thelocaldevice" };
-        }
-      };
-    },
-    signOut() {
-      signoutCalled = true;
-    }
-  });
+  const fxAccountsMock = new FxAccounts({});
+  fxAccountsMock.internal.currentAccountState.getUserAccountData = async () => {
+    return { deviceId: "thelocaldevice" };
+  };
 
   const deviceDisconnectedNotificationObserved = new Promise(resolve => {
     Services.obs.addObserver(function obs(subject, topic, data) {
@@ -268,7 +249,6 @@ add_task(async function observePushTopicDeviceDisconnected_another_device() {
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
 
   await deviceDisconnectedNotificationObserved;
-  ok(!signoutCalled);
 });
 
 add_test(function observePushTopicAccountDestroyed() {
@@ -378,7 +358,7 @@ add_test(function observePushTopicPasswordChanged() {
 
   pushService._onPasswordChanged = function() {
     run_next_test();
-  };
+  }
 
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
 });
@@ -401,7 +381,7 @@ add_test(function observePushTopicPasswordReset() {
 
   pushService._onPasswordChanged = function() {
     run_next_test();
-  };
+  }
 
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
 });

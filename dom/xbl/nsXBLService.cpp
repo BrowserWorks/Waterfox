@@ -16,7 +16,7 @@
 #include "nsIDOMElement.h"
 #include "nsIURL.h"
 #include "nsIChannel.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "plstr.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
@@ -125,10 +125,38 @@ public:
     // Destroy the frames for mBoundElement. Do this after getting the binding,
     // since if the binding fetch fails then we don't want to destroy the
     // frames.
-    if (nsIPresShell* shell = doc->GetShell()) {
-      shell->DestroyFramesFor(mBoundElement->AsElement());
+    nsIContent* destroyedFramesFor = nullptr;
+    nsIPresShell* shell = doc->GetShell();
+    if (shell) {
+      shell->DestroyFramesFor(mBoundElement, &destroyedFramesFor);
     }
     MOZ_ASSERT(!mBoundElement->GetPrimaryFrame());
+
+    // If |mBoundElement| is (in addition to having binding |mBinding|)
+    // also a descendant of another element with binding |mBinding|,
+    // then we might have just constructed it due to the
+    // notification of its parent.  (We can know about both if the
+    // binding loads were triggered from the DOM rather than frame
+    // construction.)  So we have to check both whether the element
+    // has a primary frame and whether it's in the frame manager maps
+    // before sending a ContentInserted notification, or bad things
+    // will happen.
+    MOZ_ASSERT(shell == doc->GetShell());
+    if (shell) {
+      nsIFrame* childFrame = mBoundElement->GetPrimaryFrame();
+      if (!childFrame) {
+        // Check to see if it's in the undisplayed content map...
+        nsFrameManager* fm = shell->FrameManager();
+        nsStyleContext* sc = fm->GetUndisplayedContent(mBoundElement);
+        if (!sc) {
+          // or in the display:contents map.
+          sc = fm->GetDisplayContentsStyleFor(mBoundElement);
+        }
+        if (!sc) {
+          shell->CreateFramesFor(destroyedFramesFor);
+        }
+      }
+    }
   }
 
   nsXBLBindingRequest(nsIURI* aURI, nsIContent* aBoundElement)
@@ -1116,8 +1144,7 @@ nsXBLService::FetchBindingDocument(nsIContent* aBoundElement, nsIDocument* aBoun
   rv = channel->Open2(getter_AddRefs(in));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = nsSyncLoadService::PushSyncStreamToListener(in.forget(), listener,
-                                                   channel);
+  rv = nsSyncLoadService::PushSyncStreamToListener(in, listener, channel);
   NS_ENSURE_SUCCESS(rv, rv);
 
   doc.swap(*aResult);

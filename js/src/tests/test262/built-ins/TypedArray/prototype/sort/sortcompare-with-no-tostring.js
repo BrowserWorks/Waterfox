@@ -15,7 +15,6 @@ info: >
     ...
   ...
 includes: [testTypedArray.js, compareArray.js]
-features: [TypedArray]
 ---*/
 
 var origToString = Number.prototype.toString;

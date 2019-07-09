@@ -106,17 +106,16 @@ nsRubyFrame::Reflow(nsPresContext* aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsRubyFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   if (!aReflowInput.mLineLayout) {
     NS_ASSERTION(aReflowInput.mLineLayout,
                  "No line layout provided to RubyFrame reflow method.");
+    aStatus.Reset();
     return;
   }
 
   // Grab overflow frames from prev-in-flow and its own.
-  MoveInlineOverflowToChildList(
-    aReflowInput.mLineLayout->LineContainerFrame());
+  MoveOverflowToChildList(aReflowInput.mLineLayout->LineContainerFrame());
 
   // Clear leadings
   mLeadings.Reset();
@@ -161,6 +160,7 @@ nsRubyFrame::Reflow(nsPresContext* aPresContext,
   aReflowInput.mLineLayout->BeginSpan(this, &aReflowInput,
                                       startEdge, availableISize, &mBaseline);
 
+  aStatus.Reset();
   for (RubySegmentEnumerator e(this); !e.AtEnd(); e.Next()) {
     ReflowSegment(aPresContext, aReflowInput, e.GetBaseContainer(), aStatus);
 
@@ -315,6 +315,11 @@ nsRubyFrame::ReflowSegment(nsPresContext* aPresContext,
     ReflowOutput textMetrics(aReflowInput);
     ReflowInput textReflowInput(aPresContext, aReflowInput, textContainer,
                                       availSize.ConvertTo(rtcWM, lineWM));
+    // FIXME We probably shouldn't be using the same nsLineLayout for
+    //       the text containers. But it should be fine now as we are
+    //       not actually using this line layout to reflow something,
+    //       but just read the writing mode from it.
+    textReflowInput.mLineLayout = aReflowInput.mLineLayout;
     textContainer->Reflow(aPresContext, textMetrics,
                           textReflowInput, textReflowStatus);
     // Ruby text containers always return complete reflow status even when
@@ -345,18 +350,7 @@ nsRubyFrame::ReflowSegment(nsPresContext* aPresContext,
 
     LogicalPoint position(lineWM);
     if (side.isSome()) {
-      if (nsLayoutUtils::IsInterCharacterRubyEnabled() &&
-          rtcWM.IsVerticalRL() &&
-          lineWM.GetInlineDir() == WritingMode::eInlineLTR) {
-        // Inter-character ruby annotations are only supported for vertical-rl
-        // in ltr horizontal writing. Fall back to non-inter-character behavior
-        // otherwise.
-        LogicalPoint offset(lineWM, offsetRect.ISize(lineWM),
-          offsetRect.BSize(lineWM) > size.BSize(lineWM) ?
-          (offsetRect.BSize(lineWM) - size.BSize(lineWM)) / 2 : 0);
-        position = offsetRect.Origin(lineWM) + offset;
-        aReflowInput.mLineLayout->AdvanceICoord(size.ISize(lineWM));
-      } else if (side.value() == eLogicalSideBStart) {
+      if (side.value() == eLogicalSideBStart) {
         offsetRect.BStart(lineWM) -= size.BSize(lineWM);
         offsetRect.BSize(lineWM) += size.BSize(lineWM);
         position = offsetRect.Origin(lineWM);

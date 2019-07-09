@@ -101,7 +101,7 @@ this.DownloadLastDir = function DownloadLastDir(aWindow) {
   this.fakeContext = loadContext.usePrivateBrowsing ?
                        privateLoadContext :
                        nonPrivateLoadContext;
-};
+}
 
 DownloadLastDir.prototype = {
   isPrivate: function DownloadLastDir_isPrivate() {
@@ -112,6 +112,25 @@ DownloadLastDir.prototype = {
   set file(val) { this.setFile(null, val); },
   cleanupPrivateFile() {
     gDownloadLastDirFile = null;
+  },
+  // This function is now deprecated as it uses the sync nsIContentPrefService
+  // interface. New consumers should use the getFileAsync function.
+  getFile(aURI) {
+    let Deprecated = Components.utils.import("resource://gre/modules/Deprecated.jsm", {}).Deprecated;
+    Deprecated.warning("DownloadLastDir.getFile is deprecated. Please use getFileAsync instead.",
+                       "https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/DownloadLastDir.jsm",
+                       Components.stack.caller);
+
+    if (aURI && isContentPrefEnabled()) {
+      let lastDir = Services.contentPrefs.getPref(aURI, LAST_DIR_PREF, this.fakeContext);
+      if (lastDir) {
+        var lastDirFile = Components.classes["@mozilla.org/file/local;1"]
+                                    .createInstance(Components.interfaces.nsIFile);
+        lastDirFile.initWithPath(lastDir);
+        return lastDirFile;
+      }
+    }
+    return this._getLastFile();
   },
 
   _getLastFile() {
@@ -143,13 +162,9 @@ DownloadLastDir.prototype = {
         let file = plainPrefFile;
         if (aReason == Components.interfaces.nsIContentPrefCallback2.COMPLETE_OK &&
            result instanceof Components.interfaces.nsIContentPref) {
-          try {
-            file = Components.classes["@mozilla.org/file/local;1"]
-                             .createInstance(Components.interfaces.nsIFile);
-            file.initWithPath(result.value);
-          } catch (e) {
-            file = plainPrefFile;
-          }
+          file = Components.classes["@mozilla.org/file/local;1"]
+                           .createInstance(Components.interfaces.nsIFile);
+          file.initWithPath(result.value);
         }
         aCallback(file);
       }

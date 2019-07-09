@@ -49,13 +49,11 @@ async function reportTimes() {
   }
 }
 
-window.addEventListener("message", childIsOpen);
 async function childIsOpen() {
   kidEndTime = window.performance.now();
   openTime = kidEndTime - kidStartTime;
   await TalosContentProfiler.pause("tpaint", true);
 
-  window.removeEventListener("message", childIsOpen);
   window.setTimeout(reportTimes, 0);
 }
 
@@ -64,7 +62,7 @@ var kidHTML = "<html><meta charset='utf-8'><script>" +
               "var e = 'MozAfterPaint';" +
               "function done() {" +
               "  window.removeEventListener(e, done, true);" +
-              "  window.opener.postMessage({msg: 'childIsOpen'}, '*');" +
+              "  window.opener.childIsOpen();" +
               "  window.close();" +
               "}" +
               "window.addEventListener(e, done, true);" +

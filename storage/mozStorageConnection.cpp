@@ -73,8 +73,6 @@ namespace storage {
 
 using mozilla::dom::quota::QuotaObject;
 
-const char *GetVFSName();
-
 namespace {
 
 int
@@ -629,7 +627,7 @@ Connection::initialize()
   AUTO_PROFILER_LABEL("Connection::initialize", STORAGE);
 
   // in memory database requested, sqlite uses a magic file name
-  int srv = ::sqlite3_open_v2(":memory:", &mDBConn, mFlags, GetVFSName());
+  int srv = ::sqlite3_open_v2(":memory:", &mDBConn, mFlags, nullptr);
   if (srv != SQLITE_OK) {
     mDBConn = nullptr;
     return convertResultCode(srv);
@@ -662,7 +660,7 @@ Connection::initialize(nsIFile *aDatabaseFile)
 #else
   static const char* sIgnoreLockingVFS = "unix-none";
 #endif
-  const char* vfs = mIgnoreLockingMode ? sIgnoreLockingVFS : GetVFSName();
+  const char* vfs = mIgnoreLockingMode ? sIgnoreLockingVFS : nullptr;
 
   int srv = ::sqlite3_open_v2(NS_ConvertUTF16toUTF8(path).get(), &mDBConn,
                               mFlags, vfs);
@@ -696,7 +694,7 @@ Connection::initialize(nsIFileURL *aFileURL)
   rv = aFileURL->GetSpec(spec);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  int srv = ::sqlite3_open_v2(spec.get(), &mDBConn, mFlags, GetVFSName());
+  int srv = ::sqlite3_open_v2(spec.get(), &mDBConn, mFlags, nullptr);
   if (srv != SQLITE_OK) {
     mDBConn = nullptr;
     return convertResultCode(srv);
@@ -1453,8 +1451,8 @@ Connection::AsyncClone(bool aReadOnly,
     flags = (~SQLITE_OPEN_CREATE & flags);
   }
 
-  // Force the cloned connection to only implement the async connection API.
-  RefPtr<Connection> clone = new Connection(mStorageService, flags, true);
+  RefPtr<Connection> clone = new Connection(mStorageService, flags,
+                                              mAsyncOnly);
 
   RefPtr<AsyncInitializeClone> initEvent =
     new AsyncInitializeClone(this, clone, aReadOnly, aCallback);
@@ -1487,8 +1485,8 @@ Connection::initializeClone(Connection* aClone, bool aReadOnly)
     while (stmt && NS_SUCCEEDED(stmt->ExecuteStep(&hasResult)) && hasResult) {
       nsAutoCString name;
       rv = stmt->GetUTF8String(1, name);
-      if (NS_SUCCEEDED(rv) && !name.EqualsLiteral("main") &&
-                              !name.EqualsLiteral("temp")) {
+      if (NS_SUCCEEDED(rv) && !name.Equals(NS_LITERAL_CSTRING("main")) &&
+                              !name.Equals(NS_LITERAL_CSTRING("temp"))) {
         nsCString path;
         rv = stmt->GetUTF8String(2, path);
         if (NS_SUCCEEDED(rv) && !path.IsEmpty()) {
@@ -1593,7 +1591,8 @@ Connection::Clone(bool aReadOnly,
     flags = (~SQLITE_OPEN_CREATE & flags);
   }
 
-  RefPtr<Connection> clone = new Connection(mStorageService, flags, mAsyncOnly);
+  RefPtr<Connection> clone = new Connection(mStorageService, flags,
+                                              mAsyncOnly);
 
   nsresult rv = initializeClone(clone, aReadOnly);
   if (NS_FAILED(rv)) {
@@ -1601,20 +1600,6 @@ Connection::Clone(bool aReadOnly,
   }
 
   NS_IF_ADDREF(*_connection = clone);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-Connection::Interrupt()
-{
-  MOZ_ASSERT(threadOpenedOn == NS_GetCurrentThread());
-  if (!mDBConn) {
-    return NS_ERROR_NOT_INITIALIZED;
-  }
-  if (!mAsyncOnly || !(mFlags & SQLITE_OPEN_READONLY)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-  ::sqlite3_interrupt(mDBConn);
   return NS_OK;
 }
 

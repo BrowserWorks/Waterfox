@@ -9,6 +9,7 @@ const kHelpButtonId = "appMenu-help-button";
 let gHelperInstance;
 
 add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", true]]});
   gHelperInstance = new PanelMultiView(PanelUI.panel, true);
 });
 
@@ -133,12 +134,7 @@ add_task(async function testLeftRightKeys() {
   EventUtils.synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft" });
   await promise;
 
-  focusedElement = document.commandDispatcher.focusedElement;
-  Assert.equal(focusedElement.id, kHelpButtonId,
-               "Help button should be focused again now that we're back in the main view");
-
   promise = promisePanelHidden(window);
   PanelUI.hide();
   await promise;
 });
-

@@ -9,14 +9,11 @@
 
 #include "MediaDecoder.h"
 #include "MediaResourceCallback.h"
-#include "MediaChannelStatistics.h"
 
 class nsIChannel;
 class nsIStreamListener;
 
 namespace mozilla {
-
-class BaseMediaResource;
 
 class ChannelMediaDecoder : public MediaDecoder
 {
@@ -37,13 +34,13 @@ class ChannelMediaDecoder : public MediaDecoder
 
   private:
     /* MediaResourceCallback functions */
-    AbstractThread* AbstractMainThread() const override;
     MediaDecoderOwner* GetMediaOwner() const override;
+    void SetInfinite(bool aInfinite) override;
     void NotifyNetworkError() override;
     void NotifyDataArrived() override;
     void NotifyDataEnded(nsresult aStatus) override;
     void NotifyPrincipalChanged() override;
-    void NotifySuspendedStatusChanged(bool aSuspendedByCache) override;
+    void NotifySuspendedStatusChanged() override;
     void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) override;
 
     static void TimerCallback(nsITimer* aTimer, void* aClosure);
@@ -56,106 +53,24 @@ class ChannelMediaDecoder : public MediaDecoder
   };
 
 protected:
-  void OnPlaybackEvent(MediaEventType aEvent) override;
-  void DurationChanged() override;
-  void DownloadProgressed() override;
-  void MetadataLoaded(UniquePtr<MediaInfo> aInfo,
-                      UniquePtr<MetadataTags> aTags,
-                      MediaDecoderEventVisibility aEventVisibility) override;
-
   RefPtr<ResourceCallback> mResourceCallback;
-  RefPtr<BaseMediaResource> mResource;
-
-  explicit ChannelMediaDecoder(MediaDecoderInit& aInit);
 
 public:
-
-  // Create a decoder for the given aType. Returns null if we were unable
-  // to create the decoder, for example because the requested MIME type in
-  // the init struct was unsupported.
-  static already_AddRefed<ChannelMediaDecoder> Create(
-    MediaDecoderInit& aInit,
-    DecoderDoctorDiagnostics* aDiagnostics);
+  explicit ChannelMediaDecoder(MediaDecoderInit& aInit);
 
   void Shutdown() override;
 
-  bool CanClone();
-
   // Create a new decoder of the same type as this one.
-  already_AddRefed<ChannelMediaDecoder> Clone(MediaDecoderInit& aInit);
+  // Subclasses must implement this.
+  virtual ChannelMediaDecoder* Clone(MediaDecoderInit& aInit) = 0;
 
-  nsresult Load(nsIChannel* aChannel,
-                bool aIsPrivateBrowsing,
-                nsIStreamListener** aStreamListener);
-
-  void AddSizeOfResources(ResourceSizes* aSizes) override;
-  already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
-  bool IsTransportSeekable() override;
-  void SetLoadInBackground(bool aLoadInBackground) override;
-  void Suspend() override;
-  void Resume() override;
+  virtual nsresult Load(nsIChannel* aChannel,
+                        bool aIsPrivateBrowsing,
+                        nsIStreamListener** aStreamListener);
+  virtual nsresult Load(MediaResource* aOriginal);
 
 private:
-  void PinForSeek() override;
-  void UnpinForSeek() override;
-
-  // Create a new state machine to run this decoder.
-  MediaDecoderStateMachine* CreateStateMachine();
-
-  nsresult Load(BaseMediaResource* aOriginal);
-
-  // Called by MediaResource when the download has ended.
-  // Called on the main thread only. aStatus is the result from OnStopRequest.
-  void NotifyDownloadEnded(nsresult aStatus);
-
-  // Called by the MediaResource to keep track of the number of bytes read
-  // from the resource. Called on the main by an event runner dispatched
-  // by the MediaResource read functions.
-  void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset);
-
-  void SeekingChanged();
-
-  bool CanPlayThroughImpl() override final;
-
-  bool IsLiveStream() override final;
-
-  // The actual playback rate computation.
-  void ComputePlaybackRate();
-
-  // Something has changed that could affect the computed playback rate,
-  // so recompute it.
-  void UpdatePlaybackRate();
-
-  // Return statistics. This is used for progress events and other things.
-  // This can be called from any thread. It's only a snapshot of the
-  // current state, since other threads might be changing the state
-  // at any time.
-  MediaStatistics GetStatistics();
-
-  bool ShouldThrottleDownload();
-
-  WatchManager<ChannelMediaDecoder> mWatchManager;
-
-  // True when seeking or otherwise moving the play position around in
-  // such a manner that progress event data is inaccurate. This is set
-  // during seek and duration operations to prevent the progress indicator
-  // from jumping around. Read/Write on the main thread only.
-  bool mIgnoreProgressData = false;
-
-  // Data needed to estimate playback data rate. The timeline used for
-  // this estimate is "decode time" (where the "current time" is the
-  // time of the last decoded video frame).
-  MediaChannelStatistics mPlaybackStatistics;
-
-  // Estimate of the current playback rate (bytes/second).
-  double mPlaybackBytesPerSecond = 0;
-
-  // True if mPlaybackBytesPerSecond is a reliable estimate.
-  bool mPlaybackRateReliable = true;
-
-  // True when our media stream has been pinned. We pin the stream
-  // while seeking.
-  bool mPinnedForSeek = false;
+  nsresult OpenResource(nsIStreamListener** aStreamListener);
 };
 
 } // namespace mozilla

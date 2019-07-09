@@ -44,7 +44,6 @@
 #include "nsPrintfCString.h"
 #include "mozilla/AbstractThread.h"
 #include "ContentPrincipal.h"
-#include "ExpandedPrincipal.h"
 
 static nsPermissionManager *gPermissionManager = nullptr;
 
@@ -128,31 +127,6 @@ static const char* kPreloadPermissions[] = {
   "image",
   "manifest"
 };
-
-// A list of permissions that can have a fallback default permission
-// set under the permissions.default.* pref.
-static const char* kPermissionsWithDefaults[] = {
-  "camera",
-  "microphone",
-  "geo",
-  "desktop-notification"
-};
-
-// NOTE: nullptr can be passed as aType - if it is this function will return
-// "false" unconditionally.
-bool
-HasDefaultPref(const char* aType)
-{
-  if (aType) {
-    for (const char* perm : kPermissionsWithDefaults) {
-      if (!strcmp(aType, perm)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 // NOTE: nullptr can be passed as aType - if it is this function will return
 // "false" unconditionally.
@@ -687,7 +661,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsCString& aType,
 
   // If we didn't find any origins for this host in the poermissions database,
   // we can insert the default http:// and https:// permissions into the database.
-  // This has a relatively high likelihood of applying the permission to the correct
+  // This has a relatively high liklihood of applying the permission to the correct
   // origin.
   if (!foundHistory) {
     nsAutoCString hostSegment;
@@ -697,9 +671,9 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsCString& aType,
     // If this is an ipv6 URI, we need to surround it in '[', ']' before trying to
     // parse it as a URI.
     if (aHost.FindChar(':') != -1) {
-      hostSegment.AssignLiteral("[");
+      hostSegment.Assign("[");
       hostSegment.Append(aHost);
-      hostSegment.AppendLiteral("]");
+      hostSegment.Append("]");
     } else {
       hostSegment.Assign(aHost);
     }
@@ -957,13 +931,6 @@ nsPermissionManager::Init()
   // If the 'permissions.memory_only' pref is set to true, then don't write any
   // permission settings to disk, but keep them in a memory-only database.
   mMemoryOnlyDB = mozilla::Preferences::GetBool("permissions.memory_only", false);
-
-  nsresult rv;
-  nsCOMPtr<nsIPrefService> prefService = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = prefService->GetBranch("permissions.default.", getter_AddRefs(mDefaultPrefBranch));
-  NS_ENSURE_SUCCESS(rv, rv);
 
   if (IsChildProcess()) {
     // Stop here; we don't need the DB in the child process. Instead we will be
@@ -1835,6 +1802,18 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         id = aID;
       }
 
+#ifdef MOZ_B2G
+      // When we do the initial addition of the permissions we don't want to
+      // inherit session specific permissions from other tabs or apps
+      // so we ignore them and set the permission to PROMPT_ACTION if it was
+      // previously allowed or denied by the user.
+      if (aIgnoreSessionPermissions &&
+          aExpireType == nsIPermissionManager::EXPIRE_SESSION) {
+        aPermission = nsIPermissionManager::PROMPT_ACTION;
+        aExpireType = nsIPermissionManager::EXPIRE_NEVER;
+      }
+#endif // MOZ_B2G
+
       entry->GetPermissions().AppendElement(PermissionEntry(id, typeIndex, aPermission,
                                                             aExpireType, aExpireTime,
                                                             aModificationTime));
@@ -2264,26 +2243,18 @@ nsPermissionManager::CommonTestPermissionInternal(nsIPrincipal* aPrincipal,
   // Set the default.
   *aPermission = nsIPermissionManager::UNKNOWN_ACTION;
 
-  // For some permissions, query the default from a pref. We want to avoid
-  // doing this for all permissions so that permissions can opt into having
-  // the pref lookup overhead on each call.
-  if (HasDefaultPref(aType)) {
-    int32_t defaultPermission = nsIPermissionManager::UNKNOWN_ACTION;
-    nsresult rv = mDefaultPrefBranch->GetIntPref(aType, &defaultPermission);
-    if (NS_SUCCEEDED(rv)) {
-      *aPermission = defaultPermission;
-    }
-  }
-
   // For expanded principals, we want to iterate over the whitelist and see
   // if the permission is granted for any of them.
-  auto* basePrin = BasePrincipal::Cast(aPrincipal);
-  if (basePrin && basePrin->Is<ExpandedPrincipal>()) {
-    auto ep = basePrin->As<ExpandedPrincipal>();
-    for (auto& prin : ep->WhiteList()) {
+  nsCOMPtr<nsIExpandedPrincipal> ep = do_QueryInterface(aPrincipal);
+  if (ep) {
+    nsTArray<nsCOMPtr<nsIPrincipal>>* whitelist;
+    nsresult rv = ep->GetWhiteList(&whitelist);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    for (size_t i = 0; i < whitelist->Length(); ++i) {
       uint32_t perm;
-      nsresult rv = CommonTestPermission(prin, aType, &perm,
-                                         aExactHostMatch, aIncludingSession);
+      rv = CommonTestPermission(whitelist->ElementAt(i), aType, &perm,
+                                aExactHostMatch, aIncludingSession);
       NS_ENSURE_SUCCESS(rv, rv);
       if (perm == nsIPermissionManager::ALLOW_ACTION) {
         *aPermission = perm;

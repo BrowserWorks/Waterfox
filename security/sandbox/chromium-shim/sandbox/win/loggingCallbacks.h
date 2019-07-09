@@ -59,7 +59,7 @@ Log(const char* aMessageType,
     if (sStackTraceDepth) {
       msgStream << std::endl << "Stack Trace:";
       MozStackWalk(StackFrameToOStringStream, aFramesToSkip, sStackTraceDepth,
-                   &msgStream);
+                   &msgStream, 0, nullptr);
     }
   }
 

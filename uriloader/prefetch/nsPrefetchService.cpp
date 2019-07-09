@@ -24,6 +24,7 @@
 #include "nsISupportsPriority.h"
 #include "nsNetUtil.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsStreamUtils.h"
 #include "nsAutoPtr.h"

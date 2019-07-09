@@ -104,7 +104,7 @@ function readJsonFile(jsonFile = DIRECTORY_LINKS_FILE) {
   return OS.File.read(directoryLinksFilePath).then(array => {
     let json = decoder.decode(array);
     return JSON.parse(json);
-  }, () => { return ""; });
+  }, () => { return "" });
 }
 
 function cleanJsonFile(jsonFile = DIRECTORY_LINKS_FILE) {
@@ -213,9 +213,9 @@ add_task(async function test_fetchAndCacheLinks_malformedURI() {
   let someJunk = "some junk";
   try {
     await DirectoryLinksProvider._fetchAndCacheLinks(someJunk);
-    do_throw("Malformed URIs should fail");
+    do_throw("Malformed URIs should fail")
   } catch (e) {
-    do_check_eq(e, "Error fetching " + someJunk);
+    do_check_eq(e, "Error fetching " + someJunk)
   }
 
   // File should be empty.
@@ -231,7 +231,7 @@ add_task(async function test_fetchAndCacheLinks_unknownHost() {
     await DirectoryLinksProvider._fetchAndCacheLinks(nonExistentServer);
     do_throw("BAD URIs should fail");
   } catch (e) {
-    do_check_true(e.startsWith("Fetching " + nonExistentServer + " results in error code: "));
+    do_check_true(e.startsWith("Fetching " + nonExistentServer + " results in error code: "))
   }
 
   // File should be empty.
@@ -437,8 +437,8 @@ add_task(async function test_DirectoryLinksProvider_getAllowedLinks() {
   do_check_eq(links.length, 2);
 
   // The only remaining url should be http and https
-  do_check_eq(links[0].url, data.directory[1].url);
-  do_check_eq(links[1].url, data.directory[3].url);
+  do_check_eq(links[0].url, data["directory"][1].url);
+  do_check_eq(links[1].url, data["directory"][3].url);
 });
 
 add_task(async function test_DirectoryLinksProvider_getAllowedImages() {
@@ -458,8 +458,8 @@ add_task(async function test_DirectoryLinksProvider_getAllowedImages() {
   do_check_eq(links.length, 2);
 
   // The only remaining images should be https and data
-  do_check_eq(links[0].imageURI, data.directory[3].imageURI);
-  do_check_eq(links[1].imageURI, data.directory[5].imageURI);
+  do_check_eq(links[0].imageURI, data["directory"][3].imageURI);
+  do_check_eq(links[1].imageURI, data["directory"][5].imageURI);
 });
 
 add_task(async function test_DirectoryLinksProvider_getAllowedImages_base() {
@@ -480,10 +480,10 @@ add_task(async function test_DirectoryLinksProvider_getAllowedImages_base() {
   do_check_eq(links.length, 4);
 
   // The only remaining images should be https with mozilla.net or data URI
-  do_check_eq(links[0].url, data.directory[1].url);
-  do_check_eq(links[1].url, data.directory[2].url);
-  do_check_eq(links[2].url, data.directory[3].url);
-  do_check_eq(links[3].url, data.directory[4].url);
+  do_check_eq(links[0].url, data["directory"][1].url);
+  do_check_eq(links[1].url, data["directory"][2].url);
+  do_check_eq(links[2].url, data["directory"][3].url);
+  do_check_eq(links[3].url, data["directory"][4].url);
 });
 
 add_task(async function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
@@ -503,8 +503,8 @@ add_task(async function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
   do_check_eq(links.length, 2);
 
   // The only remaining enhancedImages should be http and https and data
-  do_check_eq(links[0].enhancedImageURI, data.directory[3].enhancedImageURI);
-  do_check_eq(links[1].enhancedImageURI, data.directory[5].enhancedImageURI);
+  do_check_eq(links[0].enhancedImageURI, data["directory"][3].enhancedImageURI);
+  do_check_eq(links[1].enhancedImageURI, data["directory"][5].enhancedImageURI);
 });
 
 add_task(function test_DirectoryLinksProvider_setDefaultEnhanced() {

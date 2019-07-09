@@ -35,12 +35,12 @@ class TabChild;
     if (e)                                                                     \
       abort = (*e == '0') ? false : true;                                      \
     if (abort) {                                                               \
-      msg.AppendLiteral(" (set NECKO_ERRORS_ARE_FATAL=0 in your environment "  \
-                        "to convert this error into a warning.)");             \
+      msg.Append(" (set NECKO_ERRORS_ARE_FATAL=0 in your environment to "      \
+                      "convert this error into a warning.)");                  \
       NS_RUNTIMEABORT(msg.get());                                              \
     } else {                                                                   \
-      msg.AppendLiteral(" (set NECKO_ERRORS_ARE_FATAL=1 in your environment "  \
-                        "to convert this warning into a fatal error.)");       \
+      msg.Append(" (set NECKO_ERRORS_ARE_FATAL=1 in your environment to "      \
+                      "convert this warning into a fatal error.)");            \
       NS_WARNING(msg.get());                                                   \
     }                                                                          \
   } while (0)
@@ -122,7 +122,9 @@ MissingRequiredTabChild(mozilla::dom::TabChild* tabChild,
   return false;
 }
 
+
 } // namespace net
 } // namespace mozilla
 
 #endif // mozilla_net_NeckoCommon_h
+

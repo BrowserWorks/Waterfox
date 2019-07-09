@@ -6,7 +6,7 @@
 
 "use strict";
 
-var EventEmitter = require("devtools/shared/old-event-emitter");
+var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
 var { Task } = require("devtools/shared/task");
 
@@ -73,7 +73,7 @@ ToolSidebar.prototype = {
 
   render: function () {
     let Tabbar = this.React.createFactory(this.browserRequire(
-      "devtools/client/shared/components/tabs/TabBar"));
+      "devtools/client/shared/components/tabs/tabbar"));
 
     let sidebar = Tabbar({
       menuDocument: this._toolPanel._toolbox.doc,
@@ -87,14 +87,13 @@ ToolSidebar.prototype = {
   /**
    * Register a side-panel tab.
    *
-   * @param {String} tab uniq id
-   * @param {String} title tab title
+   * @param {string} tab uniq id
+   * @param {string} title tab title
    * @param {React.Component} panel component. See `InspectorPanelTab` as an example.
-   * @param {Boolean} selected true if the panel should be selected
-   * @param {Number} index the position where the tab should be inserted
+   * @param {boolean} selected true if the panel should be selected
    */
-  addTab: function (id, title, panel, selected, index) {
-    this._tabbar.addTab(id, title, selected, panel, null, index);
+  addTab: function (id, title, panel, selected) {
+    this._tabbar.addTab(id, title, selected, panel);
     this.emit("new-tab-registered", id);
   },
 
@@ -102,12 +101,11 @@ ToolSidebar.prototype = {
    * Helper API for adding side-panels that use existing DOM nodes
    * (defined within inspector.xhtml) as the content.
    *
-   * @param {String} tab uniq id
-   * @param {String} title tab title
-   * @param {Boolean} selected true if the panel should be selected
-   * @param {Number} index the position where the tab should be inserted
+   * @param {string} tab uniq id
+   * @param {string} title tab title
+   * @param {boolean} selected true if the panel should be selected
    */
-  addExistingTab: function (id, title, selected, index) {
+  addExistingTab: function (id, title, selected) {
     let panel = this.InspectorTabPanel({
       id: id,
       idPrefix: this.TABPANEL_ID_PREFIX,
@@ -115,7 +113,7 @@ ToolSidebar.prototype = {
       title: title,
     });
 
-    this.addTab(id, title, panel, selected, index);
+    this.addTab(id, title, panel, selected);
   },
 
   /**
@@ -123,13 +121,12 @@ ToolSidebar.prototype = {
    * (defined within inspector.xhtml) as the content.
    * The document must have a title, which will be used as the name of the tab.
    *
-   * @param {String} tab uniq id
-   * @param {String} title tab title
-   * @param {String} url
-   * @param {Boolean} selected true if the panel should be selected
-   * @param {Number} index the position where the tab should be inserted
+   * @param {string} tab uniq id
+   * @param {string} title tab title
+   * @param {string} url
+   * @param {boolean} selected true if the panel should be selected
    */
-  addFrameTab: function (id, title, url, selected, index) {
+  addFrameTab: function (id, title, url, selected) {
     let panel = this.InspectorTabPanel({
       id: id,
       idPrefix: this.TABPANEL_ID_PREFIX,
@@ -139,7 +136,7 @@ ToolSidebar.prototype = {
       onMount: this.onSidePanelMounted.bind(this),
     });
 
-    this.addTab(id, title, panel, selected, index);
+    this.addTab(id, title, panel, selected);
   },
 
   onSidePanelMounted: function (content, props) {

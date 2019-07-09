@@ -737,25 +737,6 @@ TokenStreamAnyChars::fillExcludingContext(ErrorMetadata* err, uint32_t offset)
 }
 
 bool
-TokenStreamAnyChars::hasTokenizationStarted() const
-{
-    return isCurrentTokenType(TOK_EOF) && !isEOF();
-}
-
-void
-TokenStreamAnyChars::lineNumAndColumnIndex(size_t offset, uint32_t* line, uint32_t* column) const
-{
-    srcCoords.lineNumAndColumnIndex(offset, line, column);
-}
-
-size_t
-TokenStreamAnyChars::offset() const
-{
-    // Default implementation. Overridden by `TokenStream`.
-    return 0;
-}
-
-bool
 TokenStream::computeErrorMetadata(ErrorMetadata* err, uint32_t offset)
 {
     if (offset == NoOffset) {
@@ -824,13 +805,6 @@ TokenStream::computeLineOfContext(ErrorMetadata* err, uint32_t offset)
     err->lineLength = windowLength;
     err->tokenOffset = offset - windowStart;
     return true;
-}
-
-
-size_t
-TokenStream::offset() const
-{
-    return userbuf.offset();
 }
 
 bool
@@ -1177,7 +1151,7 @@ IsTokenSane(Token* tp)
 {
     // Nb: TOK_EOL should never be used in an actual Token;  it should only be
     // returned as a TokenKind from peekTokenSameLine().
-    if (tp->type >= TOK_LIMIT || tp->type == TOK_EOL)
+    if (tp->type < 0 || tp->type >= TOK_LIMIT || tp->type == TOK_EOL)
         return false;
 
     if (tp->pos.end < tp->pos.begin)
@@ -1730,10 +1704,6 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
       case '|':
         if (matchChar('|'))
             tp->type = TOK_OR;
-#ifdef ENABLE_PIPELINE_OPERATOR
-        else if (matchChar('>'))
-            tp->type = TOK_PIPELINE;
-#endif
         else
             tp->type = matchChar('=') ? TOK_BITORASSIGN : TOK_BITOR;
         goto out;

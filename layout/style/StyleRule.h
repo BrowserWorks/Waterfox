@@ -23,7 +23,7 @@
 #include "nsIStyleRule.h"
 #include "nsICSSStyleRuleDOMWrapper.h"
 
-class nsAtom;
+class nsIAtom;
 struct nsCSSSelectorList;
 
 namespace mozilla {
@@ -33,7 +33,7 @@ class CSSStyleSheet;
 
 struct nsAtomList {
 public:
-  explicit nsAtomList(nsAtom* aAtom);
+  explicit nsAtomList(nsIAtom* aAtom);
   explicit nsAtomList(const nsString& aAtomValue);
   ~nsAtomList(void);
 
@@ -42,7 +42,7 @@ public:
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
-  RefPtr<nsAtom> mAtom;
+  nsCOMPtr<nsIAtom> mAtom;
   nsAtomList*       mNext;
 private:
   nsAtomList* Clone(bool aDeep) const;
@@ -111,8 +111,8 @@ public:
   nsAttrSelector(int32_t aNameSpace, const nsString& aAttr, uint8_t aFunction,
                  const nsString& aValue,
                  ValueCaseSensitivity aValueCaseSensitivity);
-  nsAttrSelector(int32_t aNameSpace, nsAtom* aLowercaseAttr,
-                 nsAtom* aCasedAttr, uint8_t aFunction,
+  nsAttrSelector(int32_t aNameSpace, nsIAtom* aLowercaseAttr,
+                 nsIAtom* aCasedAttr, uint8_t aFunction,
                  const nsString& aValue,
                  ValueCaseSensitivity aValueCaseSensitivity);
   ~nsAttrSelector(void);
@@ -130,8 +130,8 @@ public:
 
   nsString        mValue;
   nsAttrSelector* mNext;
-  RefPtr<nsAtom> mLowercaseAttr;
-  RefPtr<nsAtom> mCasedAttr;
+  nsCOMPtr<nsIAtom> mLowercaseAttr;
+  nsCOMPtr<nsIAtom> mCasedAttr;
   int32_t         mNameSpace;
   uint8_t         mFunction;
   ValueCaseSensitivity mValueCaseSensitivity;
@@ -226,8 +226,8 @@ public:
   // but in case-insensitive documents (HTML) mLowercaseTag is lowercase.
   // Also, for pseudo-elements mCasedTag will be null but mLowercaseTag
   // contains their name.
-  RefPtr<nsAtom> mLowercaseTag;
-  RefPtr<nsAtom> mCasedTag;
+  nsCOMPtr<nsIAtom> mLowercaseTag;
+  nsCOMPtr<nsIAtom> mCasedTag;
   nsAtomList*     mIDList;
   nsAtomList*     mClassList;
   nsPseudoClassList* mPseudoClassList; // atom for the pseudo, string for
@@ -347,7 +347,6 @@ public:
                                   uint32_t aSelectorIndex,
                                   const nsAString& aPseudo,
                                   bool* aMatches) override;
-  mozilla::NotNull<DeclarationBlock*> GetDeclarationBlock() const override;
 
   // WebIDL interface
   uint16_t Type() const override;

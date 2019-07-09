@@ -8,7 +8,7 @@
 
 inline bool
 nsSMILSetAnimationFunction::IsDisallowedAttribute(
-    const nsAtom* aAttribute) const
+    const nsIAtom* aAttribute) const
 {
   //
   // A <set> element is similar to <animate> but lacks:
@@ -31,7 +31,7 @@ nsSMILSetAnimationFunction::IsDisallowedAttribute(
 }
 
 bool
-nsSMILSetAnimationFunction::SetAttr(nsAtom* aAttribute,
+nsSMILSetAnimationFunction::SetAttr(nsIAtom* aAttribute,
                                     const nsAString& aValue,
                                     nsAttrValue& aResult,
                                     nsresult* aParseResult)
@@ -57,7 +57,7 @@ nsSMILSetAnimationFunction::SetAttr(nsAtom* aAttribute,
 }
 
 bool
-nsSMILSetAnimationFunction::UnsetAttr(nsAtom* aAttribute)
+nsSMILSetAnimationFunction::UnsetAttr(nsIAtom* aAttribute)
 {
   if (IsDisallowedAttribute(aAttribute)) {
     return true;
@@ -67,7 +67,7 @@ nsSMILSetAnimationFunction::UnsetAttr(nsAtom* aAttribute)
 }
 
 bool
-nsSMILSetAnimationFunction::HasAttr(nsAtom* aAttName) const
+nsSMILSetAnimationFunction::HasAttr(nsIAtom* aAttName) const
 {
   if (IsDisallowedAttribute(aAttName))
     return false;
@@ -76,7 +76,7 @@ nsSMILSetAnimationFunction::HasAttr(nsAtom* aAttName) const
 }
 
 const nsAttrValue*
-nsSMILSetAnimationFunction::GetAttr(nsAtom* aAttName) const
+nsSMILSetAnimationFunction::GetAttr(nsIAtom* aAttName) const
 {
   if (IsDisallowedAttribute(aAttName))
     return nullptr;
@@ -85,7 +85,7 @@ nsSMILSetAnimationFunction::GetAttr(nsAtom* aAttName) const
 }
 
 bool
-nsSMILSetAnimationFunction::GetAttr(nsAtom* aAttName,
+nsSMILSetAnimationFunction::GetAttr(nsIAtom* aAttName,
                                     nsAString& aResult) const
 {
   if (IsDisallowedAttribute(aAttName))

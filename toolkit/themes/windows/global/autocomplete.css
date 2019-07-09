@@ -107,7 +107,7 @@ treechildren.autocomplete-treebody::-moz-tree-cell-text(selected) {
   height: 16px;
   max-width: 16px;
   max-height: 16px;
-  margin-inline-start: 6px;
+  margin-inline-start: 14px;
   margin-inline-end: 6px;
 }
 
@@ -117,7 +117,7 @@ treechildren.autocomplete-treebody::-moz-tree-cell-text(selected) {
   max-width: 16px;
   max-height: 16px;
   margin-inline-start: 0;
-  margin-inline-end: 9px;
+  margin-inline-end: 11px;
   list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
 }
 

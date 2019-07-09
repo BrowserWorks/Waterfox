@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-date.prototype.getfullyear
 info: >
     The Date.prototype.getFullYear property "length" has { ReadOnly, !
     DontDelete, DontEnum } attributes

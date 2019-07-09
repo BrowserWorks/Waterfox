@@ -97,7 +97,6 @@ public:
    * @param enabled: enable extension
    */
   virtual MediaConduitErrorCode EnableAudioLevelExtension(bool enabled, uint8_t id) override;
-  virtual MediaConduitErrorCode EnableMIDExtension(bool enabled, uint8_t id) override;
 
   /**
    * Register External Transport to this Conduit. RTP and RTCP frames from the VoiceEngine
@@ -126,7 +125,6 @@ public:
   virtual MediaConduitErrorCode SendAudioFrame(const int16_t speechData[],
                                                int32_t lengthSamples,
                                                int32_t samplingFreqHz,
-                                               uint32_t channels,
                                                int32_t capture_time) override;
 
   /**
@@ -167,7 +165,7 @@ public:
                         size_t len) override;
 
   virtual uint64_t CodecPluginID() override { return 0; }
-  virtual void SetPCHandle(const std::string& aPCHandle) override {}
+  virtual void SetPCHandle(const std::string& aPCHandle) {}
 
   explicit WebrtcAudioConduit():
                       mVoiceEngine(nullptr),
@@ -205,7 +203,6 @@ public:
   }
   bool GetRemoteSSRC(unsigned int* ssrc) override;
   bool SetLocalCNAME(const char* cname) override;
-  bool SetLocalMID(const std::string& mid) override;
 
   bool GetSendPacketTypeStats(
       webrtc::RtcpPacketTypeCounter* aPacketCounts) override;

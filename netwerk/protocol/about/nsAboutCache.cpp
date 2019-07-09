@@ -105,14 +105,16 @@ nsAboutCache::Channel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo)
         "<label><input id='anon' type='checkbox'/> Anonymous</label>\n"
     );
 
-    // Visit scoping by browser and appid is not implemented for
-    // the old cache, simply don't add these controls.
-    // The appid/inbrowser entries are already mixed in the default
-    // view anyway.
-    mBuffer.AppendLiteral(
-        "<label><input id='appid' type='text' size='6'/> AppID</label>\n"
-        "<label><input id='inbrowser' type='checkbox'/> In Browser Element</label>\n"
-    );
+    if (CacheObserver::UseNewCache()) {
+        // Visit scoping by browser and appid is not implemented for
+        // the old cache, simply don't add these controls.
+        // The appid/inbrowser entries are already mixed in the default
+        // view anyway.
+        mBuffer.AppendLiteral(
+            "<label><input id='appid' type='text' size='6'/> AppID</label>\n"
+            "<label><input id='inbrowser' type='checkbox'/> In Browser Element</label>\n"
+        );
+    }
 
     mBuffer.AppendLiteral(
         "<label><input id='submit' type='button' value='Update' onclick='navigate()'/></label>\n"
@@ -120,7 +122,9 @@ nsAboutCache::Channel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo)
 
     if (!mOverview) {
         mBuffer.AppendLiteral("<a href=\"about:cache?storage=&amp;context=");
-        nsAppendEscapedHTML(mContextString, mBuffer);
+        char* escapedContext = nsEscapeHTML(mContextString.get());
+        mBuffer.Append(escapedContext);
+        free(escapedContext);
         mBuffer.AppendLiteral("\">Back to overview</a>");
     }
 
@@ -175,7 +179,7 @@ nsAboutCache::Channel::ParseURI(nsIURI * uri, nsACString & storage)
     nsresult rv;
 
     nsAutoCString path;
-    rv = uri->GetPathQueryRef(path);
+    rv = uri->GetPath(path);
     if (NS_FAILED(rv)) return rv;
 
     mContextString.Truncate();
@@ -234,17 +238,17 @@ nsAboutCache::Channel::FireVisitStorage()
     rv = VisitStorage(mStorageName);
     if (NS_FAILED(rv)) {
         if (mLoadInfo) {
-            nsAutoCString escaped;
-            nsAppendEscapedHTML(mStorageName, escaped);
+            char* escaped = nsEscapeHTML(mStorageName.get());
             mBuffer.Append(
                 nsPrintfCString("<p>Unrecognized storage name '%s' in about:cache URL</p>",
-                                escaped.get()));
+                                escaped));
+            free(escaped);
         } else {
-            nsAutoCString escaped;
-            nsAppendEscapedHTML(mContextString, escaped);
+            char* escaped = nsEscapeHTML(mContextString.get());
             mBuffer.Append(
                 nsPrintfCString("<p>Unrecognized context key '%s' in about:cache URL</p>",
-                                escaped.get()));
+                                escaped));
+            free(escaped);
         }
 
         rv = FlushBuffer();
@@ -363,7 +367,9 @@ nsAboutCache::Channel::OnCacheStorageInfo(uint32_t aEntryCount, uint64_t aConsum
                                   "    <th><a href=\"about:cache?storage=");
             mBuffer.Append(mStorageName);
             mBuffer.AppendLiteral("&amp;context=");
-            nsAppendEscapedHTML(mContextString, mBuffer);
+            char* escapedContext = nsEscapeHTML(mContextString.get());
+            mBuffer.Append(escapedContext);
+            free(escapedContext);
             mBuffer.AppendLiteral("\">List Cache Entries</a></th>\n"
                                   "  </tr>\n");
         }
@@ -432,15 +438,18 @@ nsAboutCache::Channel::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnha
     url.Append(mStorageName);
 
     url.AppendLiteral("&amp;context=");
-    nsAppendEscapedHTML(mContextString, url);
+    char* escapedContext = nsEscapeHTML(mContextString.get());
+    url += escapedContext;
+    free(escapedContext);
 
     url.AppendLiteral("&amp;eid=");
-    nsAppendEscapedHTML(aIdEnhance, url);
+    char* escapedEID = nsEscapeHTML(aIdEnhance.BeginReading());
+    url += escapedEID;
+    free(escapedEID);
 
     nsAutoCString cacheUriSpec;
     aURI->GetAsciiSpec(cacheUriSpec);
-    nsAutoCString escapedCacheURI;
-    nsAppendEscapedHTML(cacheUriSpec, escapedCacheURI);
+    char* escapedCacheURI = nsEscapeHTML(cacheUriSpec.get());
     url.AppendLiteral("&amp;uri=");
     url += escapedCacheURI;
 
@@ -457,6 +466,8 @@ nsAboutCache::Channel::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnha
     }
     mBuffer.Append(escapedCacheURI);
     mBuffer.AppendLiteral("</a></td>\n");
+
+    free(escapedCacheURI);
 
     // Content length
     mBuffer.AppendLiteral("    <td>");
@@ -500,9 +511,9 @@ nsAboutCache::Channel::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnha
     // Pinning
     mBuffer.AppendLiteral("    <td>");
     if (aPinned) {
-      mBuffer.AppendLiteral("Pinned");
+      mBuffer.Append(NS_LITERAL_CSTRING("Pinned"));
     } else {
-      mBuffer.AppendLiteral("&nbsp;");
+      mBuffer.Append(NS_LITERAL_CSTRING("&nbsp;"));
     }
     mBuffer.AppendLiteral("</td>\n");
 

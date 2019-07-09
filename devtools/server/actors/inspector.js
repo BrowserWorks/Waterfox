@@ -53,48 +53,34 @@
 const {Cc, Ci, Cu} = require("chrome");
 const Services = require("Services");
 const protocol = require("devtools/shared/protocol");
+const {LayoutActor} = require("devtools/server/actors/layout");
 const {LongStringActor} = require("devtools/server/actors/string");
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const {Task} = require("devtools/shared/task");
-const EventEmitter = require("devtools/shared/event-emitter");
+const events = require("sdk/event/core");
+const {WalkerSearch} = require("devtools/server/actors/utils/walker-search");
+const {PageStyleActor, getFontPreviewData} = require("devtools/server/actors/styles");
+const {
+  HighlighterActor,
+  CustomHighlighterActor,
+  isTypeRegistered,
+  HighlighterEnvironment
+} = require("devtools/server/actors/highlighters");
+const {EyeDropper} = require("devtools/server/actors/highlighters/eye-dropper");
+const {
+  isAnonymous,
+  isNativeAnonymous,
+  isXBLAnonymous,
+  isShadowAnonymous,
+  getFrameElement,
+  loadSheet
+} = require("devtools/shared/layout/utils");
+const {getLayoutChangesObserver, releaseLayoutChangesObserver} = require("devtools/server/actors/reflow");
+const nodeFilterConstants = require("devtools/shared/dom-node-filter-constants");
+const {colorUtils} = require("devtools/shared/css/color");
 
-const {walkerSpec, inspectorSpec} = require("devtools/shared/specs/inspector");
-const {nodeSpec, nodeListSpec} = require("devtools/shared/specs/node");
-
-loader.lazyRequireGetter(this, "DevToolsUtils", "devtools/shared/DevToolsUtils");
-loader.lazyRequireGetter(this, "AsyncUtils", "devtools/shared/async-utils");
-loader.lazyRequireGetter(this, "CssLogic", "devtools/server/css-logic", true);
-loader.lazyRequireGetter(this, "findCssSelector", "devtools/shared/inspector/css-logic", true);
-loader.lazyRequireGetter(this, "getCssPath", "devtools/shared/inspector/css-logic", true);
-loader.lazyRequireGetter(this, "getXPath", "devtools/shared/inspector/css-logic", true);
-loader.lazyRequireGetter(this, "colorUtils", "devtools/shared/css/color", true);
-loader.lazyRequireGetter(this, "EyeDropper", "devtools/server/actors/highlighters/eye-dropper", true);
-loader.lazyRequireGetter(this, "WalkerSearch", "devtools/server/actors/utils/walker-search", true);
-loader.lazyRequireGetter(this, "PageStyleActor", "devtools/server/actors/styles", true);
-loader.lazyRequireGetter(this, "getFontPreviewData", "devtools/server/actors/styles", true);
-loader.lazyRequireGetter(this, "flags", "devtools/shared/flags");
-loader.lazyRequireGetter(this, "LayoutActor", "devtools/server/actors/layout", true);
-loader.lazyRequireGetter(this, "HighlighterActor", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "CustomHighlighterActor", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "isTypeRegistered", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "HighlighterEnvironment", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "EventParsers", "devtools/server/event-parsers", true);
-loader.lazyRequireGetter(this, "isAnonymous", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "isNativeAnonymous", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "isXBLAnonymous", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "isShadowAnonymous", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "getFrameElement", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "loadSheet", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "getLayoutChangesObserver", "devtools/server/actors/reflow", true);
-loader.lazyRequireGetter(this, "releaseLayoutChangesObserver", "devtools/server/actors/reflow", true);
-loader.lazyRequireGetter(this, "nodeFilterConstants", "devtools/shared/dom-node-filter-constants");
-
-loader.lazyServiceGetter(this, "DOMParser",
-  "@mozilla.org/xmlextras/domparser;1", "nsIDOMParser");
-
-loader.lazyServiceGetter(this, "eventListenerService",
-  "@mozilla.org/eventlistenerservice;1", "nsIEventListenerService");
+const {EventParsers} = require("devtools/server/event-parsers");
+const {nodeSpec, nodeListSpec, walkerSpec, inspectorSpec} = require("devtools/shared/specs/inspector");
 
 const FONT_FAMILY_PREVIEW_TEXT = "The quick brown fox jumps over the lazy dog";
 const FONT_FAMILY_PREVIEW_TEXT_SIZE = 20;
@@ -152,6 +138,28 @@ var HELPER_SHEET = "data:text/css;charset=utf-8," + encodeURIComponent(`
     outline-offset: -2px !important;
   }
 `);
+
+const flags = require("devtools/shared/flags");
+
+loader.lazyRequireGetter(this, "DevToolsUtils",
+                         "devtools/shared/DevToolsUtils");
+
+loader.lazyRequireGetter(this, "AsyncUtils", "devtools/shared/async-utils");
+
+loader.lazyGetter(this, "DOMParser", function () {
+  return Cc["@mozilla.org/xmlextras/domparser;1"]
+           .createInstance(Ci.nsIDOMParser);
+});
+
+loader.lazyGetter(this, "eventListenerService", function () {
+  return Cc["@mozilla.org/eventlistenerservice;1"]
+           .getService(Ci.nsIEventListenerService);
+});
+
+loader.lazyRequireGetter(this, "CssLogic", "devtools/server/css-logic", true);
+loader.lazyRequireGetter(this, "findCssSelector", "devtools/shared/inspector/css-logic", true);
+loader.lazyRequireGetter(this, "getCssPath", "devtools/shared/inspector/css-logic", true);
+loader.lazyRequireGetter(this, "getXPath", "devtools/shared/inspector/css-logic", true);
 
 /**
  * We only send nodeValue up to a certain size by default.  This stuff
@@ -289,7 +297,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
 
     // Fire an event so, other modules can create its own properties
     // that should be passed to the client (within the form.props field).
-    EventEmitter.emit(NodeActor, "form", {
+    events.emit(NodeActor, "form", {
       target: this,
       data: form
     });
@@ -881,8 +889,8 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     this.onFrameLoad = this.onFrameLoad.bind(this);
     this.onFrameUnload = this.onFrameUnload.bind(this);
 
-    tabActor.on("will-navigate", this.onFrameUnload);
-    tabActor.on("window-ready", this.onFrameLoad);
+    events.on(tabActor, "will-navigate", this.onFrameUnload);
+    events.on(tabActor, "window-ready", this.onFrameLoad);
 
     // Ensure that the root document node actor is ready and
     // managed.
@@ -972,8 +980,8 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       this._retainedOrphans = null;
       this._refMap = null;
 
-      this.tabActor.off("will-navigate", this.onFrameUnload);
-      this.tabActor.off("window-ready", this.onFrameLoad);
+      events.off(this.tabActor, "will-navigate", this.onFrameUnload);
+      events.off(this.tabActor, "window-ready", this.onFrameLoad);
 
       this.onFrameLoad = null;
       this.onFrameUnload = null;
@@ -993,7 +1001,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       this.layoutActor = null;
       this.tabActor = null;
 
-      this.emit("destroyed");
+      events.emit(this, "destroyed");
     } catch (e) {
       console.error(e);
     }
@@ -1068,7 +1076,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     if (changes.length) {
-      this.emit("display-change", changes);
+      events.emit(this, "display-change", changes);
     }
   },
 
@@ -1076,7 +1084,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
    * When the browser window gets resized, relay the event to the front.
    */
   _onResize: function () {
-    this.emit("resize");
+    events.emit(this, "resize");
   },
 
   /**
@@ -2324,7 +2332,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     this._pendingMutations.push(mutation);
 
     if (needEvent) {
-      this.emit("new-mutations");
+      events.emit(this, "new-mutations");
     }
   },
 
@@ -2338,7 +2346,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     // Notify any observers that want *all* mutations (even on nodes that aren't
     // referenced).  This is not sent over the protocol so can only be used by
     // scripts running in the server process.
-    this.emit("any-mutation");
+    events.emit(this, "any-mutation");
 
     for (let change of mutations) {
       let targetActor = this.getNode(change.target);
@@ -2618,31 +2626,6 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   },
 
   /**
-   * Given a windowID return the NodeActor for the corresponding frameElement,
-   * unless it's the root window
-   */
-  getNodeActorFromWindowID: function (windowID) {
-    let win;
-
-    try {
-      win = Services.wm.getOuterWindowWithId(windowID);
-    } catch (e) {
-      // ignore
-    }
-
-    if (!win) {
-      return { error: "noWindow",
-               message: "The related docshell is destroyed or not found" };
-    } else if (!win.frameElement) {
-      // the frame element of the root document is privileged & thus
-      // inaccessible, so return the document body/element instead
-      return this.attachElement(win.document.body || win.document.documentElement);
-    }
-
-    return this.attachElement(win.frameElement);
-  },
-
-  /**
    * Given a StyleSheetActor (identified by its ID), commonly used in the
    * style-editor, get its ownerNode and return the corresponding walker's
    * NodeActor.
@@ -2767,7 +2750,7 @@ exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
       return this._walkerPromise;
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     this._walkerPromise = deferred.promise;
 
     let window = this.window;
@@ -2776,7 +2759,7 @@ exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
       window.removeEventListener("DOMContentLoaded", domReady, true);
       this.walker = WalkerActor(this.conn, tabActor, options);
       this.manage(this.walker);
-      this.walker.once("destroyed", () => {
+      events.once(this.walker, "destroyed", () => {
         this._walkerPromise = null;
         this._pageStylePromise = null;
       });
@@ -2929,7 +2912,7 @@ exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
     this._eyeDropper.show(this.window.document.documentElement, options);
     this._eyeDropper.once("selected", this._onColorPicked);
     this._eyeDropper.once("canceled", this._onColorPickCanceled);
-    this.tabActor.once("will-navigate", this.destroyEyeDropper);
+    events.once(this.tabActor, "will-navigate", this.destroyEyeDropper);
   },
 
   /**
@@ -2942,7 +2925,7 @@ exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
       this._eyeDropper.hide();
       this._eyeDropper.off("selected", this._onColorPicked);
       this._eyeDropper.off("canceled", this._onColorPickCanceled);
-      this.tabActor.off("will-navigate", this.destroyEyeDropper);
+      events.off(this.tabActor, "will-navigate", this.destroyEyeDropper);
     }
   },
 
@@ -2970,11 +2953,11 @@ exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
   },
 
   _onColorPicked: function (e, color) {
-    this.emit("color-picked", color);
+    events.emit(this, "color-picked", color);
   },
 
   _onColorPickCanceled: function () {
-    this.emit("color-pick-canceled");
+    events.emit(this, "color-pick-canceled");
   }
 });
 

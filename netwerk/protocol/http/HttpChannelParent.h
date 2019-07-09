@@ -151,7 +151,6 @@ protected:
               const bool&                allowSpdy,
               const bool&                allowAltSvc,
               const bool&                beConservative,
-              const uint32_t&            tlsFlags,
               const OptionalLoadInfoArgs& aLoadInfoArgs,
               const OptionalHttpResponseHead& aSynthesizedResponseHead,
               const nsCString&           aSecurityInfoSerialization,
@@ -172,8 +171,7 @@ protected:
               const TimeStamp&           aDispatchFetchEventStart,
               const TimeStamp&           aDispatchFetchEventEnd,
               const TimeStamp&           aHandleFetchEventStart,
-              const TimeStamp&           aHandleFetchEventEnd,
-              const bool&                aForceMainDocumentChannel);
+              const TimeStamp&           aHandleFetchEventEnd);
 
   virtual mozilla::ipc::IPCResult RecvSetPriority(const int16_t& priority) override;
   virtual mozilla::ipc::IPCResult RecvSetClassOfService(const uint32_t& cos) override;
@@ -260,7 +258,7 @@ private:
   friend class DivertStopRequestEvent;
   friend class DivertCompleteEvent;
 
-  RefPtr<HttpBaseChannel>       mChannel;
+  RefPtr<nsHttpChannel>       mChannel;
   nsCOMPtr<nsICacheEntry>       mCacheEntry;
   nsCOMPtr<nsIAssociatedContentSecurity>  mAssociatedContentSecurity;
   bool mIPCClosed;                // PHttpChannel actor has been Closed()

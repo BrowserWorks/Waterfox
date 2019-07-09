@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from marionette_driver.errors import InvalidArgumentException
+
 from marionette_harness import MarionetteTestCase
 
 
@@ -37,13 +39,17 @@ class TestWindowMaximize(MarionetteTestCase):
         self.assertGreaterEqual(
             actual["width"], self.max["width"] - delta,
             msg="Window width is not within {delta} px of availWidth: "
-                "current width {current} should be greater than or equal to max width {max}"
-                .format(delta=delta, current=actual["width"], max=self.max["width"] - delta))
+                "current width {expected} should be greater than max width {max}"
+                .format(delta=delta, expected=actual["width"], max=self.max["width"] - delta))
         self.assertGreaterEqual(
-            actual["height"], self.max["height"] - delta,
+            actual["height"], self.max["height"],
             msg="Window height is not within {delta} px of availHeight: "
-                "current height {current} should be greater than or equal to max height {max}"
-                .format(delta=delta, current=actual["height"], max=self.max["height"] - delta))
+                "current height {expected} should be greater than max width {max}"
+                .format(delta=delta, expected=actual["height"], max=self.max["height"] - delta))
+
+    def assert_window_restored(self, actual):
+        self.assertEqual(self.original_size["width"], actual["width"])
+        self.assertEqual(self.original_size["height"], actual["height"])
 
     def assert_window_rect(self, rect):
         self.assertIn("width", rect)
@@ -56,27 +62,25 @@ class TestWindowMaximize(MarionetteTestCase):
         self.assertIsInstance(rect["y"], int)
 
     def test_maximize(self):
-        maximize_resp = self.marionette.maximize_window()
-        self.assert_window_rect(maximize_resp)
-        window_rect_resp = self.marionette.window_rect
-        self.assertEqual(maximize_resp, window_rect_resp)
-        self.assert_window_maximized(maximize_resp)
+        rect = self.marionette.maximize_window()
+        self.assert_window_rect(rect)
+        size = self.marionette.window_size
+        self.assertEqual(size, rect)
+        self.assert_window_maximized(size)
 
-    def test_maximize_twice_is_idempotent(self):
+    def test_maximize_twice_restores(self):
         maximized = self.marionette.maximize_window()
         self.assert_window_maximized(maximized)
 
-        still_maximized = self.marionette.maximize_window()
-        self.assert_window_maximized(still_maximized)
+        restored = self.marionette.maximize_window()
+        self.assert_window_restored(restored)
 
     def test_stress(self):
         for i in range(1, 25):
             expect_maximized = bool(i % 2)
 
+            rect = self.marionette.maximize_window()
             if expect_maximized:
-                rect = self.marionette.maximize_window()
                 self.assert_window_maximized(rect)
             else:
-                rect = self.marionette.set_window_rect(width=800, height=600)
-                self.assertEqual(800, rect["width"])
-                self.assertEqual(600, rect["height"])
+                self.assert_window_restored(rect)

@@ -11,9 +11,9 @@
 #include "gfxUtils.h"
 #include "nsSVGDisplayableFrame.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
-#include "mozilla/dom/IDTracker.h"
 #include "mozilla/dom/SVGFilterElement.h"
-#include "SVGObserverUtils.h"
+#include "nsReferencedElement.h"
+#include "nsSVGEffects.h"
 #include "nsSVGFilterFrame.h"
 #include "nsSVGUtils.h"
 #include "SVGContentUtils.h"
@@ -126,7 +126,7 @@ nsSVGFilterInstance::GetFilterFrame(nsIFrame* aTargetFrame)
   // aTargetFrame can be null if this filter belongs to a
   // CanvasRenderingContext2D.
   nsCOMPtr<nsIURI> url = aTargetFrame
-    ? SVGObserverUtils::GetFilterURI(aTargetFrame, mFilter)
+    ? nsSVGEffects::GetFilterURI(aTargetFrame, mFilter)
     : mFilter.GetURL()->ResolveLocalRef(mTargetContent);
 
   if (!url) {
@@ -135,7 +135,7 @@ nsSVGFilterInstance::GetFilterFrame(nsIFrame* aTargetFrame)
   }
 
   // Look up the filter element by URL.
-  IDTracker filterElement;
+  nsReferencedElement filterElement;
   bool watch = false;
   filterElement.Reset(mTargetContent, url, watch);
   Element* element = filterElement.get();

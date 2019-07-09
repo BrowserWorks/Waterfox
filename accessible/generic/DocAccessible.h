@@ -16,6 +16,7 @@
 #include "nsDataHashtable.h"
 #include "nsIDocument.h"
 #include "nsIDocumentObserver.h"
+#include "nsIEditor.h"
 #include "nsIObserver.h"
 #include "nsIScrollPositionListener.h"
 #include "nsITimer.h"
@@ -26,9 +27,6 @@ class nsAccessiblePivot;
 const uint32_t kDefaultCacheLength = 128;
 
 namespace mozilla {
-
-class TextEditor;
-
 namespace a11y {
 
 class DocManager;
@@ -88,7 +86,7 @@ public:
   virtual nsRect RelativeBounds(nsIFrame** aRelativeFrame) const override;
 
   // HyperTextAccessible
-  virtual already_AddRefed<TextEditor> GetEditor() const override;
+  virtual already_AddRefed<nsIEditor> GetEditor() const override;
 
   // DocAccessible
 
@@ -448,7 +446,7 @@ protected:
    * @param aRelAttr     [in, optional] relation attribute
    */
   void AddDependentIDsFor(Accessible* aRelProvider,
-                          nsAtom* aRelAttr = nullptr);
+                          nsIAtom* aRelAttr = nullptr);
 
   /**
    * Remove dependent IDs pointed by accessible element by relation attribute
@@ -459,7 +457,7 @@ protected:
    * @param aRelAttr     [in, optional] relation attribute
    */
   void RemoveDependentIDsFor(Accessible* aRelProvider,
-                             nsAtom* aRelAttr = nullptr);
+                             nsIAtom* aRelAttr = nullptr);
 
   /**
    * Update or recreate an accessible depending on a changed attribute.
@@ -469,7 +467,7 @@ protected:
    * @return            true if an action was taken on the attribute change
    */
   bool UpdateAccessibleOnAttrChange(mozilla::dom::Element* aElement,
-                                    nsAtom* aAttribute);
+                                    nsIAtom* aAttribute);
 
   /**
    * Fire accessible events when attribute is changed.
@@ -479,7 +477,7 @@ protected:
    * @param aAttribute    [in] changed attribute
    */
   void AttributeChangedImpl(Accessible* aAccessible,
-                            int32_t aNameSpaceID, nsAtom* aAttribute);
+                            int32_t aNameSpaceID, nsIAtom* aAttribute);
 
   /**
    * Fire accessible events when ARIA attribute is changed.
@@ -487,7 +485,7 @@ protected:
    * @param aAccessible  [in] accesislbe the DOM attribute is changed for
    * @param aAttribute   [in] changed attribute
    */
-  void ARIAAttributeChanged(Accessible* aAccessible, nsAtom* aAttribute);
+  void ARIAAttributeChanged(Accessible* aAccessible, nsIAtom* aAttribute);
 
   /**
    * Process ARIA active-descendant attribute change.
@@ -626,7 +624,7 @@ protected:
    */
   union {
     // ARIA attribute value
-    nsAtom* mARIAAttrOldValue;
+    nsIAtom* mARIAAttrOldValue;
 
     // True if the accessible state bit was on
     bool mStateBitWasOn;
@@ -645,10 +643,10 @@ protected:
   class AttrRelProvider
   {
   public:
-    AttrRelProvider(nsAtom* aRelAttr, nsIContent* aContent) :
+    AttrRelProvider(nsIAtom* aRelAttr, nsIContent* aContent) :
       mRelAttr(aRelAttr), mContent(aContent) { }
 
-    nsAtom* mRelAttr;
+    nsIAtom* mRelAttr;
     nsCOMPtr<nsIContent> mContent;
 
   private:

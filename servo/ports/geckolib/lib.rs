@@ -2,16 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#![deny(warnings)]
 
+extern crate atomic_refcell;
 extern crate cssparser;
 extern crate env_logger;
 extern crate libc;
 #[macro_use] extern crate log;
-extern crate malloc_size_of;
 extern crate selectors;
 extern crate servo_arc;
-extern crate smallvec;
 #[macro_use] extern crate style;
 extern crate style_traits;
 

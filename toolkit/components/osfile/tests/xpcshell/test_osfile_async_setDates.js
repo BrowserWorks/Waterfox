@@ -1,7 +1,5 @@
 "use strict";
 
-/* eslint-disable no-lone-blocks */
-
 Components.utils.import("resource://gre/modules/osfile.jsm");
 
 /**
@@ -9,6 +7,10 @@ Components.utils.import("resource://gre/modules/osfile.jsm");
  * working correctly.
  * (see bug 924916)
  */
+
+function run_test() {
+  run_next_test();
+}
 
 // Non-prototypical tests, operating on path names.
 add_task(async function test_nonproto() {
@@ -93,8 +95,8 @@ add_task(async function test_nonproto() {
 
 // Prototypical tests, operating on |File| handles.
 add_task(async function test_proto() {
-  if (OS.Constants.Sys.Name == "Android") {
-    do_print("File.prototype.setDates is not implemented for Android");
+  if (OS.Constants.Sys.Name == "Android" || OS.Constants.Sys.Name == "Gonk") {
+    do_print("File.prototype.setDates is not implemented for Android/B2G");
     do_check_eq(OS.File.prototype.setDates, undefined);
     return;
   }
@@ -104,7 +106,7 @@ add_task(async function test_proto() {
                               "test_osfile_async_setDates_proto.tmp");
   await OS.File.writeAtomic(path, new Uint8Array(1));
 
-  try {
+  try {
     let fd = await OS.File.open(path, {write: true});
 
     try {

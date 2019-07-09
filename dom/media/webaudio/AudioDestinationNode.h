@@ -25,6 +25,7 @@ public:
   // whether it's in offline mode.
   AudioDestinationNode(AudioContext* aContext,
                        bool aIsOffline,
+                       AudioChannel aChannel = AudioChannel::Normal,
                        uint32_t aNumberOfChannels = 0,
                        uint32_t aLength = 0,
                        float aSampleRate = 0.0f);
@@ -59,6 +60,8 @@ public:
 
   void OfflineShutdown();
 
+  AudioChannel MozAudioChannelType() const;
+
   void NotifyMainThreadStreamFinished() override;
   void FireOfflineCompletionEvent();
 
@@ -86,6 +89,9 @@ protected:
   virtual ~AudioDestinationNode();
 
 private:
+  void SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv);
+  bool CheckAudioChannelPermissions(AudioChannel aValue);
+
   SelfReference<AudioDestinationNode> mOfflineRenderingRef;
   uint32_t mFramesToProduce;
 
@@ -94,6 +100,8 @@ private:
 
   RefPtr<Promise> mOfflineRenderingPromise;
 
+  // Audio Channel Type.
+  AudioChannel mAudioChannel;
   bool mIsOffline;
   bool mAudioChannelSuspended;
 

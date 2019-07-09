@@ -17,7 +17,6 @@
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/FocusTarget.h"  // for FocusTarget
 #include "mozilla/layers/LayersTypes.h"  // for BufferMode, LayersBackend, etc
-#include "mozilla/layers/PaintThread.h" // For PaintThread
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowLayerForwarder, etc
 #include "mozilla/layers/APZTestData.h" // for APZTestData
 #include "nsCOMPtr.h"                   // for already_AddRefed
@@ -159,7 +158,6 @@ public:
   bool IsRepeatTransaction() { return mIsRepeatTransaction; }
 
   void SetTransactionIncomplete() { mTransactionIncomplete = true; }
-  void SetNeedTextureSyncOnPaintThread() { mTextureSyncOnPaintThread = true; }
 
   bool HasShadowTarget() { return !!mShadowTarget; }
 
@@ -201,6 +199,7 @@ public:
                             const mozilla::TimeStamp& aCompositeEnd) override;
 
   virtual bool AreComponentAlphaLayersEnabled() override;
+  virtual bool SupportsBackdropCopyForComponentAlpha() override;
 
   // Log APZ test data for the current paint. We supply the paint sequence
   // number ourselves, and take care of calling APZTestData::StartNewPaint()
@@ -350,7 +349,6 @@ private:
   bool mTransactionIncomplete;
   bool mCompositorMightResample;
   bool mNeedsComposite;
-  bool mTextureSyncOnPaintThread;
 
   // An incrementing sequence number for paints.
   // Incremented in BeginTransaction(), but not for repeat transactions.

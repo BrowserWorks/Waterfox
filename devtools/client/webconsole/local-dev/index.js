@@ -21,17 +21,11 @@ try {
 
 EventEmitter.decorate(window);
 
-require("../../themes/widgets.css");
-require("../../themes/webconsole.css");
-require("../../themes/components-frame.css");
-require("../../themes/light-theme.css");
+require("../../themes/new-webconsole.css");
 require("../../shared/components/reps/reps.css");
-require("../../shared/components/tabs/Tabs.css");
-require("../../shared/components/tabs/TabBar.css");
-require("../../netmonitor/src/assets/styles/netmonitor.css");
 
 pref("devtools.debugger.remote-timeout", 10000);
-pref("devtools.hud.loglimit", 10000);
+pref("devtools.hud.loglimit", 1000);
 pref("devtools.webconsole.filter.error", true);
 pref("devtools.webconsole.filter.warn", true);
 pref("devtools.webconsole.filter.info", true);
@@ -48,6 +42,18 @@ pref("devtools.webconsole.autoMultiline", true);
 
 const NewConsoleOutputWrapper = require("../new-console-output/new-console-output-wrapper");
 const NewWebConsoleFrame = require("../new-webconsole").NewWebConsoleFrame;
+
+// Replicate the DOM that the root component lives within
+const el = document.createElement("div");
+el.style.flex = "1";
+el.innerHTML = `
+  <div id="app-wrapper" class="theme-body">
+    <div id="output-container" role="document" aria-live="polite" />
+  </div>
+`;
+document.querySelector("#mount").appendChild(el);
+
+document.documentElement.classList.add("theme-light");
 
 // Copied from netmonitor/index.js:
 window.addEventListener("DOMContentLoaded", () => {
@@ -70,13 +76,6 @@ function onConnect(connection) {
   if (!connection || !connection.tabConnection || !connection.tabConnection.tabTarget) {
     return;
   }
-
-  // Replicate the DOM that the root component lives within
-  document.querySelector("#mount").innerHTML = `
-    <div id="app-wrapper" class="theme-body">
-      <div id="output-container" role="document" aria-live="polite" />
-    </div>
-  `;
 
   // Stub out properties that are received from hudservice
   const owner = {
@@ -102,5 +101,4 @@ window.evaluateJS = function (input) {
   }, {});
 };
 
-document.documentElement.classList.add("theme-light");
-bootstrap(React, ReactDOM).then(onConnect);
+bootstrap(React, ReactDOM, el).then(onConnect);

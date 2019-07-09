@@ -6,7 +6,6 @@
 
 #include "Base64.h"
 
-#include "mozilla/ArrayUtils.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "nsIInputStream.h"
@@ -23,26 +22,16 @@ const unsigned char* base =
                   "abcdefghijklmnopqrstuvwxyz"
                   "0123456789+/";
 
-// The Base64 encoder assumes all characters are less than 256; for 16-bit
-// strings, that means assuming that all characters are within range, and
-// masking off high bits if necessary.
 template<typename T>
-uint8_t
-CharTo8Bit(T aChar)
-{
-  return uint8_t(aChar);
-}
-
-template<typename SrcT, typename DestT>
 static void
-Encode3to4(const SrcT* aSrc, DestT* aDest)
+Encode3to4(const unsigned char* aSrc, T* aDest)
 {
   uint32_t b32 = (uint32_t)0;
   int i, j = 18;
 
   for (i = 0; i < 3; ++i) {
     b32 <<= 8;
-    b32 |= CharTo8Bit(aSrc[i]);
+    b32 |= (uint32_t)aSrc[i];
   }
 
   for (i = 0; i < 4; ++i) {
@@ -51,32 +40,29 @@ Encode3to4(const SrcT* aSrc, DestT* aDest)
   }
 }
 
-template<typename SrcT, typename DestT>
+template<typename T>
 static void
-Encode2to4(const SrcT* aSrc, DestT* aDest)
+Encode2to4(const unsigned char* aSrc, T* aDest)
 {
-  uint8_t src0 = CharTo8Bit(aSrc[0]);
-  uint8_t src1 = CharTo8Bit(aSrc[1]);
-  aDest[0] = base[(uint32_t)((src0 >> 2) & 0x3F)];
-  aDest[1] = base[(uint32_t)(((src0 & 0x03) << 4) | ((src1 >> 4) & 0x0F))];
-  aDest[2] = base[(uint32_t)((src1 & 0x0F) << 2)];
-  aDest[3] = DestT('=');
+  aDest[0] = base[(uint32_t)((aSrc[0] >> 2) & 0x3F)];
+  aDest[1] = base[(uint32_t)(((aSrc[0] & 0x03) << 4) | ((aSrc[1] >> 4) & 0x0F))];
+  aDest[2] = base[(uint32_t)((aSrc[1] & 0x0F) << 2)];
+  aDest[3] = (unsigned char)'=';
 }
 
-template<typename SrcT, typename DestT>
+template<typename T>
 static void
-Encode1to4(const SrcT* aSrc, DestT* aDest)
+Encode1to4(const unsigned char* aSrc, T* aDest)
 {
-  uint8_t src0 = CharTo8Bit(aSrc[0]);
-  aDest[0] = base[(uint32_t)((src0 >> 2) & 0x3F)];
-  aDest[1] = base[(uint32_t)((src0 & 0x03) << 4)];
-  aDest[2] = DestT('=');
-  aDest[3] = DestT('=');
+  aDest[0] = base[(uint32_t)((aSrc[0] >> 2) & 0x3F)];
+  aDest[1] = base[(uint32_t)((aSrc[0] & 0x03) << 4)];
+  aDest[2] = (unsigned char)'=';
+  aDest[3] = (unsigned char)'=';
 }
 
-template<typename SrcT, typename DestT>
+template<typename T>
 static void
-Encode(const SrcT* aSrc, uint32_t aSrcLen, DestT* aDest)
+Encode(const unsigned char* aSrc, uint32_t aSrcLen, T* aDest)
 {
   while (aSrcLen >= 3) {
     Encode3to4(aSrc, aDest);
@@ -242,49 +228,6 @@ EncodeInputStream(nsIInputStream* aInputStream,
   return NS_OK;
 }
 
-// Maps an encoded character to a value in the Base64 alphabet, per
-// RFC 4648, Table 1. Invalid input characters map to UINT8_MAX.
-static const uint8_t kBase64DecodeTable[] = {
-  /* 0 */  255, 255, 255, 255, 255, 255, 255, 255,
-  /* 8 */  255, 255, 255, 255, 255, 255, 255, 255,
-  /* 16 */ 255, 255, 255, 255, 255, 255, 255, 255,
-  /* 24 */ 255, 255, 255, 255, 255, 255, 255, 255,
-  /* 32 */ 255, 255, 255, 255, 255, 255, 255, 255,
-  /* 40 */ 255, 255, 255,
-  62 /* + */,
-  255, 255, 255,
-  63 /* / */,
-
-  /* 48 */ /* 0 - 9 */ 52, 53, 54, 55, 56, 57, 58, 59,
-  /* 56 */ 60, 61, 255, 255, 255, 255, 255, 255,
-
-  /* 64 */ 255, /* A - Z */ 0, 1, 2, 3, 4, 5, 6,
-  /* 72 */ 7, 8, 9, 10, 11, 12, 13, 14,
-  /* 80 */ 15, 16, 17, 18, 19, 20, 21, 22,
-  /* 88 */ 23, 24, 25, 255, 255, 255, 255, 255,
-  /* 96 */ 255, /* a - z */ 26, 27, 28, 29, 30, 31, 32,
-  /* 104 */ 33, 34, 35, 36, 37, 38, 39, 40,
-  /* 112 */ 41, 42, 43, 44, 45, 46, 47, 48,
-  /* 120 */ 49, 50, 51, 255, 255, 255, 255, 255,
-};
-
-template<typename T>
-MOZ_MUST_USE bool
-Base64CharToValue(T aChar, uint8_t* aValue)
-{
-  static const size_t mask = 0x7f;
-  static_assert((mask + 1) == sizeof(kBase64DecodeTable)/sizeof(kBase64DecodeTable[0]),
-                "wrong mask");
-  size_t index = static_cast<uint8_t>(aChar);
-
-  if (index & ~mask) {
-    return false;
-  }
-  *aValue = kBase64DecodeTable[index & mask];
-
-  return *aValue != 255;
-}
-
 static const char kBase64URLAlphabet[] =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
@@ -348,6 +291,7 @@ Base64Encode(const char* aBinary, uint32_t aBinaryLen, char** aBase64)
     return NS_ERROR_FAILURE;
   }
 
+  // Don't ask PR_Base64Encode to encode empty strings.
   if (aBinaryLen == 0) {
     *aBase64 = (char*)moz_xmalloc(1);
     (*aBase64)[0] = '\0';
@@ -363,22 +307,27 @@ Base64Encode(const char* aBinary, uint32_t aBinaryLen, char** aBase64)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  Encode(aBinary, aBinaryLen, base64.get());
+  if (!PL_Base64Encode(aBinary, aBinaryLen, base64.get())) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  // PL_Base64Encode doesn't null terminate the buffer for us when we pass
+  // the buffer in. Do that manually.
   base64[base64Len] = '\0';
 
   *aBase64 = base64.release();
   return NS_OK;
 }
 
-template<typename T>
-static nsresult
-Base64EncodeHelper(const T& aBinary, T& aBase64)
+nsresult
+Base64Encode(const nsACString& aBinary, nsACString& aBase64)
 {
   // Check for overflow.
   if (aBinary.Length() > (UINT32_MAX / 4) * 3) {
     return NS_ERROR_FAILURE;
   }
 
+  // Don't ask PR_Base64Encode to encode empty strings.
   if (aBinary.IsEmpty()) {
     aBase64.Truncate();
     return NS_OK;
@@ -391,8 +340,14 @@ Base64EncodeHelper(const T& aBinary, T& aBase64)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  typename T::char_type* base64 = aBase64.BeginWriting();
-  Encode(aBinary.BeginReading(), aBinary.Length(), base64);
+  char* base64 = aBase64.BeginWriting();
+  if (!PL_Base64Encode(aBinary.BeginReading(), aBinary.Length(), base64)) {
+    aBase64.Truncate();
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  // PL_Base64Encode doesn't null terminate the buffer for us when we pass
+  // the buffer in. Do that manually.
   base64[base64Len] = '\0';
 
   aBase64.SetLength(base64Len);
@@ -400,120 +355,52 @@ Base64EncodeHelper(const T& aBinary, T& aBase64)
 }
 
 nsresult
-Base64Encode(const nsACString& aBinary, nsACString& aBase64)
-{
-  return Base64EncodeHelper(aBinary, aBase64);
-}
-
-nsresult
 Base64Encode(const nsAString& aBinary, nsAString& aBase64)
 {
-  return Base64EncodeHelper(aBinary, aBase64);
-}
+  auto truncater = mozilla::MakeScopeExit([&]() { aBase64.Truncate(); });
 
-template<typename T, typename U, typename Decoder>
-static bool
-Decode4to3(const T* aSrc, U* aDest, Decoder aToVal)
-{
-  uint8_t w, x, y, z;
-  if (!aToVal(aSrc[0], &w) ||
-      !aToVal(aSrc[1], &x) ||
-      !aToVal(aSrc[2], &y) ||
-      !aToVal(aSrc[3], &z)) {
-    return false;
+  // XXX We should really consider decoding directly from the string, rather
+  // than making a separate copy here.
+  nsAutoCString binary;
+  if (!binary.SetCapacity(aBinary.Length(), mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-  aDest[0] = U(uint8_t(w << 2 | x >> 4));
-  aDest[1] = U(uint8_t(x << 4 | y >> 2));
-  aDest[2] = U(uint8_t(y << 6 | z));
-  return true;
-}
+  LossyCopyUTF16toASCII(aBinary, binary);
 
-template<typename T, typename U, typename Decoder>
-static bool
-Decode3to2(const T* aSrc, U* aDest, Decoder aToVal)
-{
-  uint8_t w, x, y;
-  if (!aToVal(aSrc[0], &w) ||
-      !aToVal(aSrc[1], &x) ||
-      !aToVal(aSrc[2], &y)) {
-    return false;
+  nsAutoCString base64;
+
+  nsresult rv = Base64Encode(binary, base64);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!CopyASCIItoUTF16(base64, aBase64, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-  aDest[0] = U(uint8_t(w << 2 | x >> 4));
-  aDest[1] = U(uint8_t(x << 4 | y >> 2));
-  return true;
+
+  truncater.release();
+
+  return rv;
 }
 
-template<typename T, typename U, typename Decoder>
-static bool
-Decode2to1(const T* aSrc, U* aDest, Decoder aToVal)
-{
-  uint8_t w, x;
-  if (!aToVal(aSrc[0], &w) ||
-      !aToVal(aSrc[1], &x)) {
-    return false;
-  }
-  aDest[0] = U(uint8_t(w << 2 | x >> 4));
-  return true;
-}
-
-template<typename SrcT, typename DestT>
 static nsresult
-Base64DecodeHelper(const SrcT* aBase64, uint32_t aBase64Len, DestT* aBinary,
+Base64DecodeHelper(const char* aBase64, uint32_t aBase64Len, char* aBinary,
                    uint32_t* aBinaryLen)
 {
   MOZ_ASSERT(aBinary);
-
-  const SrcT* input = aBase64;
-  uint32_t inputLength = aBase64Len;
-  DestT* binary = aBinary;
-  uint32_t binaryLength = 0;
-
-  // Handle trailing '=' characters.
-  if (inputLength && (inputLength % 4 == 0)) {
-    if (aBase64[inputLength - 1] == SrcT('=')) {
-      if (aBase64[inputLength - 2] == SrcT('=')) {
-        inputLength -= 2;
-      } else {
-        inputLength -= 1;
-      }
-    }
-  }
-
-  while (inputLength >= 4) {
-    if (!Decode4to3(input, binary, Base64CharToValue<SrcT>)) {
-      return NS_ERROR_INVALID_ARG;
-    }
-
-    input += 4;
-    inputLength -= 4;
-    binary += 3;
-    binaryLength += 3;
-  }
-
-  switch (inputLength) {
-  case 3:
-    if (!Decode3to2(input, binary, Base64CharToValue<SrcT>)) {
-      return NS_ERROR_INVALID_ARG;
-    }
-    binaryLength += 2;
-    break;
-  case 2:
-    if (!Decode2to1(input, binary, Base64CharToValue<SrcT>)) {
-      return NS_ERROR_INVALID_ARG;
-    }
-    binaryLength += 1;
-    break;
-  case 1:
+  if (!PL_Base64Decode(aBase64, aBase64Len, aBinary)) {
     return NS_ERROR_INVALID_ARG;
-  case 0:
-    break;
-  default:
-    MOZ_CRASH("Too many characters leftover");
   }
 
-  aBinary[binaryLength] = DestT('\0');
-  *aBinaryLen = binaryLength;
-
+  // PL_Base64Decode doesn't null terminate the buffer for us when we pass
+  // the buffer in. Do that manually, taking into account the number of '='
+  // characters we were passed.
+  if (aBase64Len != 0 && aBase64[aBase64Len - 1] == '=') {
+    if (aBase64Len > 1 && aBase64[aBase64Len - 2] == '=') {
+      *aBinaryLen -= 2;
+    } else {
+      *aBinaryLen -= 1;
+    }
+  }
+  aBinary[*aBinaryLen] = '\0';
   return NS_OK;
 }
 
@@ -553,16 +440,15 @@ Base64Decode(const char* aBase64, uint32_t aBase64Len, char** aBinary,
   return NS_OK;
 }
 
-template<typename T>
-static nsresult
-Base64DecodeString(const T& aBase64, T& aBinary)
+nsresult
+Base64Decode(const nsACString& aBase64, nsACString& aBinary)
 {
   // Check for overflow.
   if (aBase64.Length() > UINT32_MAX / 3) {
     return NS_ERROR_FAILURE;
   }
 
-  // Don't decode the empty string
+  // Don't ask PR_Base64Decode to decode the empty string
   if (aBase64.IsEmpty()) {
     aBinary.Truncate();
     return NS_OK;
@@ -575,7 +461,7 @@ Base64DecodeString(const T& aBase64, T& aBinary)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  typename T::char_type* binary = aBinary.BeginWriting();
+  char* binary = aBinary.BeginWriting();
   nsresult rv = Base64DecodeHelper(aBase64.BeginReading(), aBase64.Length(),
                                    binary, &binaryLen);
   if (NS_FAILED(rv)) {
@@ -588,15 +474,30 @@ Base64DecodeString(const T& aBase64, T& aBinary)
 }
 
 nsresult
-Base64Decode(const nsACString& aBase64, nsACString& aBinary)
-{
-  return Base64DecodeString(aBase64, aBinary);
-}
-
-nsresult
 Base64Decode(const nsAString& aBase64, nsAString& aBinary)
 {
-  return Base64DecodeString(aBase64, aBinary);
+  auto truncater = mozilla::MakeScopeExit([&]() { aBinary.Truncate(); });
+
+  // XXX We should really consider decoding directly from the string, rather
+  // than making a separate copy here.
+  nsAutoCString base64;
+  if (!base64.SetCapacity(aBase64.Length(), mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  LossyCopyUTF16toASCII(aBase64, base64);
+
+  nsAutoCString binary;
+
+  nsresult rv = Base64Decode(base64, binary);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!CopyASCIItoUTF16(binary, aBinary, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  truncater.release();
+
+  return rv;
 }
 
 nsresult
@@ -658,23 +559,34 @@ Base64URLDecode(const nsACString& aBase64,
   uint8_t* binary = aBinary.Elements();
 
   for (; base64Len >= 4; base64Len -= 4) {
-    if (!Decode4to3(base64, binary, Base64URLCharToValue)) {
+    uint8_t w, x, y, z;
+    if (!Base64URLCharToValue(*base64++, &w) ||
+        !Base64URLCharToValue(*base64++, &x) ||
+        !Base64URLCharToValue(*base64++, &y) ||
+        !Base64URLCharToValue(*base64++, &z)) {
       return NS_ERROR_INVALID_ARG;
     }
-    base64 += 4;
-    binary += 3;
+    *binary++ = w << 2 | x >> 4;
+    *binary++ = x << 4 | y >> 2;
+    *binary++ = y << 6 | z;
   }
 
   if (base64Len == 3) {
-    if (!Decode3to2(base64, binary, Base64URLCharToValue)) {
+    uint8_t w, x, y;
+    if (!Base64URLCharToValue(*base64++, &w) ||
+        !Base64URLCharToValue(*base64++, &x) ||
+        !Base64URLCharToValue(*base64++, &y)) {
       return NS_ERROR_INVALID_ARG;
     }
-    binary += 2;
+    *binary++ = w << 2 | x >> 4;
+    *binary++ = x << 4 | y >> 2;
   } else if (base64Len == 2) {
-    if (!Decode2to1(base64, binary, Base64URLCharToValue)) {
+    uint8_t w, x;
+    if (!Base64URLCharToValue(*base64++, &w) ||
+        !Base64URLCharToValue(*base64++, &x)) {
       return NS_ERROR_INVALID_ARG;
     }
-    binary += 1;
+    *binary++ = w << 2 | x >> 4;
   } else if (base64Len) {
     return NS_ERROR_INVALID_ARG;
   }

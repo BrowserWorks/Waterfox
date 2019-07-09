@@ -23,7 +23,6 @@
 #include "jscntxt.h"
 #include "jspubtd.h"
 
-#include "frontend/ErrorReporter.h"
 #include "frontend/TokenKind.h"
 #include "js/UniquePtr.h"
 #include "js/Vector.h"
@@ -265,7 +264,7 @@ class StrictModeGetter {
     virtual bool strictMode() = 0;
 };
 
-class TokenStreamAnyChars: public ErrorReporter
+class TokenStreamAnyChars
 {
   protected:
     TokenStreamAnyChars(JSContext* cx, const ReadOnlyCompileOptions& options, StrictModeGetter* smg);
@@ -282,6 +281,7 @@ class TokenStreamAnyChars: public ErrorReporter
         return currentToken().type == type;
     }
 
+    const char* getFilename() const { return filename; }
     bool getMutedErrors() const { return mutedErrors; }
     JSVersion versionNumber() const { return VersionNumber(options().version); }
     JSVersion versionWithFlags() const { return options().version; }
@@ -549,7 +549,7 @@ class TokenStreamAnyChars: public ErrorReporter
         return cx;
     }
 
-    virtual const ReadOnlyCompileOptions& options() const override final {
+    const ReadOnlyCompileOptions& options() const {
         return options_;
     }
 
@@ -573,14 +573,10 @@ class TokenStreamAnyChars: public ErrorReporter
     MOZ_MUST_USE bool compileWarning(ErrorMetadata&& metadata, UniquePtr<JSErrorNotes> notes,
                                      unsigned flags, unsigned errorNumber, va_list args);
 
+    void reportErrorNoOffset(unsigned errorNumber, ...);
+
     // Compute error metadata for an error at no offset.
     void computeErrorMetadataNoOffset(ErrorMetadata* err);
-
-    virtual const char* getFilename() const override { return filename; }
-    virtual bool hasTokenizationStarted() const override;
-    virtual void lineNumAndColumnIndex(size_t offset, uint32_t* line, uint32_t* column) const override;
-    virtual void reportErrorNoOffset(unsigned errorNumber, ...) override;
-    virtual size_t offset() const override;
 
   protected:
     // Options used for parsing/tokenizing.
@@ -1105,9 +1101,6 @@ class MOZ_STACK_CLASS TokenStream final : public TokenStreamAnyChars
 
     TokenBuf            userbuf;            // user input buffer
     CharBuffer          tokenbuf;           // current token string buffer
-
-public:
-    virtual size_t offset() const override;
 };
 
 extern const char*

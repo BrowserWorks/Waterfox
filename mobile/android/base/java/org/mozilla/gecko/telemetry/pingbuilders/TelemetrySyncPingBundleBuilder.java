@@ -26,10 +26,7 @@ import java.util.TimeZone;
 
 /**
  * Responsible for building a Sync Ping, based on the telemetry docs:
- * https://firefox-source-docs.mozilla.org/toolkit/components/telemetry/telemetry/data/sync-ping.html
- *
- * Fields common to all pings are documented here:
- * https://firefox-source-docs.mozilla.org/toolkit/components/telemetry/telemetry/data/common-ping.html
+ * http://gecko.readthedocs.io/en/latest/toolkit/components/telemetry/telemetry/data/sync-ping.html
  *
  * This builder takes two stores ('sync' and 'event') and produces a single "sync ping".
  *
@@ -43,7 +40,7 @@ import java.util.TimeZone;
  */
 public class TelemetrySyncPingBundleBuilder extends TelemetryPingBuilder {
     private static final String PING_TYPE = "sync";
-    private static final int PING_BUNDLE_VERSION = 4; // Bug 1410145
+    private static final int PING_BUNDLE_VERSION = 5; // Bug 1374758
     private static final int PING_SYNC_DATA_FORMAT_VERSION = 1; // Bug 1374758
 
     public static final String UPLOAD_REASON_FIRST = "first";
@@ -98,8 +95,8 @@ public class TelemetrySyncPingBundleBuilder extends TelemetryPingBuilder {
         os.put("locale", Locales.getLanguageTag(Locale.getDefault()));
 
         payload.put("application", application);
+        payload.put("os", os);
 
-        pingData.put("os", os);
         pingData.put("version", PING_SYNC_DATA_FORMAT_VERSION);
 
         payload.put("payload", pingData);

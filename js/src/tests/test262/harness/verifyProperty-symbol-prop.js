@@ -5,7 +5,6 @@
 description: >
   Verify symbol named property descriptor
 includes: [propertyHelper.js]
-features: [Symbol]
 ---*/
 
 var obj;

@@ -240,7 +240,7 @@ nsSplitterFrame::GetCursor(const nsPoint&    aPoint,
 
 nsresult
 nsSplitterFrame::AttributeChanged(int32_t aNameSpaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   int32_t aModType)
 {
   nsresult rv = nsBoxFrame::AttributeChanged(aNameSpaceID, aAttribute,
@@ -365,9 +365,10 @@ nsSplitterFrame::HandleRelease(nsPresContext* aPresContext,
 
 void
 nsSplitterFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
                                   const nsDisplayListSet& aLists)
 {
-  nsBoxFrame::BuildDisplayList(aBuilder, aLists);
+  nsBoxFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 
   // if the mouse is captured always return us as the frame.
   if (mInner->mDragging)
@@ -670,7 +671,7 @@ nsSplitterFrameInner::MouseDown(nsIDOMEvent* aMouseEvent)
     nsIContent* content = childBox->GetContent();
     nsIDocument* doc = content->OwnerDoc();
     int32_t dummy;
-    nsAtom* atom = doc->BindingManager()->ResolveTag(content, &dummy);
+    nsIAtom* atom = doc->BindingManager()->ResolveTag(content, &dummy);
 
     // skip over any splitters
     if (atom != nsGkAtoms::splitter) {
@@ -884,9 +885,9 @@ nsSplitterFrameInner::EnsureOrient()
 {
   bool isHorizontal = !(mParentBox->GetStateBits() & NS_STATE_IS_HORIZONTAL);
   if (isHorizontal)
-    mOuter->AddStateBits(NS_STATE_IS_HORIZONTAL);
+    mOuter->mState |= NS_STATE_IS_HORIZONTAL;
   else
-    mOuter->RemoveStateBits(NS_STATE_IS_HORIZONTAL);
+    mOuter->mState &= ~NS_STATE_IS_HORIZONTAL;
 }
 
 void
@@ -962,7 +963,7 @@ nsSplitterFrameInner::SetPreferredSize(nsBoxLayoutState& aState, nsIFrame* aChil
   nsMargin margin(0,0,0,0);
   aChildBox->GetXULMargin(margin);
 
-  RefPtr<nsAtom> attribute;
+  nsCOMPtr<nsIAtom> attribute;
 
   if (aIsHorizontal) {
     pref -= (margin.left + margin.right);

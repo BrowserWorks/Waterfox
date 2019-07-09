@@ -6,9 +6,10 @@
 #include "nsColorControlFrame.h"
 
 #include "nsContentCreatorFunctions.h"
+#include "nsContentList.h"
 #include "nsContentUtils.h"
 #include "nsCSSPseudoElements.h"
-#include "nsCheckboxRadioFrame.h"
+#include "nsFormControlFrame.h"
 #include "nsGkAtoms.h"
 #include "nsIDOMNode.h"
 #include "nsIFormControl.h"
@@ -42,8 +43,8 @@ NS_QUERYFRAME_TAIL_INHERITING(nsHTMLButtonControlFrame)
 
 void nsColorControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
-  nsCheckboxRadioFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
-  DestroyAnonymousContent(mColorContent.forget());
+  nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
+  nsContentUtils::DestroyAnonymousContent(&mColorContent);
   nsHTMLButtonControlFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -90,36 +91,22 @@ nsresult
 nsColorControlFrame::UpdateColor()
 {
   // Get the color from the "value" property of our content; it will return the
-  // default color (through the sanitization algorithm) if the value is empty.
+  // default color (through the sanitization algorithm) if there is none.
   nsAutoString color;
   HTMLInputElement* elt = HTMLInputElement::FromContent(mContent);
   elt->GetValue(color, CallerType::System);
+  MOZ_ASSERT(!color.IsEmpty(),
+             "Content node's GetValue() should return a valid color string "
+             "(the default color, in case no valid color is set)");
 
-  if (color.IsEmpty()) {
-    // OK, there is one case the color string might be empty -- if our content
-    // is still being created, i.e. if it has mDoneCreating==false.  In that
-    // case, we simply do nothing, because we'll be called again with a complete
-    // content node before we ever reflow or paint. Specifically: we can expect
-    // that HTMLInputElement::DoneCreatingElement() will set mDoneCreating to
-    // true (which enables sanitization) and then it'll call SetValueInternal(),
-    // which produces a nonempty color (via sanitization), and then it'll call
-    // this function here, and we'll get the nonempty default color.
-    MOZ_ASSERT(HasAnyStateBits(NS_FRAME_FIRST_REFLOW),
-               "Content node's GetValue() should return a valid color string "
-               "by the time we've been reflowed (the default color, in case "
-               "no valid color is set)");
-    return NS_OK;
-  }
-
-  // Set the background-color CSS property of the swatch element to this color.
+  // Set the background-color style property of the swatch element to this color
   return mColorContent->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
-                                NS_LITERAL_STRING("background-color:") + color,
-                                /* aNotify */ true);
+      NS_LITERAL_STRING("background-color:") + color, true);
 }
 
 nsresult
 nsColorControlFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                      nsAtom* aAttribute,
+                                      nsIAtom* aAttribute,
                                       int32_t  aModType)
 {
   NS_ASSERTION(mColorContent, "The color div must exist");

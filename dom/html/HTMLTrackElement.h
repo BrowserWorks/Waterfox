@@ -95,7 +95,7 @@ public:
 
   // Override ParseAttribute() to convert kind strings to enum values.
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
 

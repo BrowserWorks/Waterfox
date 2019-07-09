@@ -30,26 +30,8 @@ const reqShared = require.context("raw!devtools/shared/locales/",
                                   true, /^.*\.properties$/);
 const reqClient = require.context("raw!devtools/client/locales/",
                                   true, /^.*\.properties$/);
-const reqShim = require.context("raw!devtools/shim/locales/",
-                                  true, /^.*\.properties$/);
 const reqGlobal = require.context("raw!toolkit/locales/",
                                   true, /^.*\.properties$/);
-
-// Map used to memoize Number formatters.
-const numberFormatters = new Map();
-const getNumberFormatter = function (decimals) {
-  let formatter = numberFormatters.get(decimals);
-  if (!formatter) {
-    // Create and memoize a formatter for the provided decimals
-    formatter = Intl.NumberFormat(undefined, {
-      maximumFractionDigits: decimals,
-      minimumFractionDigits: decimals
-    });
-    numberFormatters.set(decimals, formatter);
-  }
-
-  return formatter;
-};
 
 /**
  * Memoized getter for properties files that ensures a given url is only required and
@@ -74,8 +56,6 @@ function getProperties(url) {
       reqFn = reqGlobal;
     } else if (/^devtools\/shared/.test(url)) {
       reqFn = reqShared;
-    } else if (/^devtools\/shim/.test(url)) {
-      reqFn = reqShim;
     } else {
       reqFn = reqClient;
     }
@@ -151,28 +131,27 @@ LocalizationHelper.prototype = {
    *         The localized number as a string.
    */
   numberWithDecimals: function (number, decimals = 0) {
-    // Do not show decimals for integers.
+    // If this is an integer, don't do anything special.
     if (number === (number|0)) {
-      return getNumberFormatter(0).format(number);
+      return number;
     }
-
     // If this isn't a number (and yes, `isNaN(null)` is false), return zero.
     if (isNaN(number) || number === null) {
-      return getNumberFormatter(0).format(0);
+      return "0";
     }
 
-    // Localize the number using a memoized Intl.NumberFormat formatter.
-    let localized = getNumberFormatter(decimals).format(number);
+    let localized = number.toLocaleString();
 
-    // Convert the localized number to a number again.
-    let localizedNumber = localized * 1;
-    // Check if this number is now equal to an integer.
-    if (localizedNumber === (localizedNumber|0)) {
-    // If it is, remove the fraction part.
-      return getNumberFormatter(0).format(localizedNumber);
+    // If no grouping or decimal separators are available, bail out, because
+    // padding with zeros at the end of the string won't make sense anymore.
+    if (!localized.match(/[^\d]/)) {
+      return localized;
     }
 
-    return localized;
+    return number.toLocaleString(undefined, {
+      maximumFractionDigits: decimals,
+      minimumFractionDigits: decimals
+    });
   }
 };
 

@@ -98,7 +98,8 @@ void KeyedStackCapturer::Capture(const nsACString& aKey) {
       static_cast<std::vector<uintptr_t>*>(aClosure);
     stack->push_back(reinterpret_cast<uintptr_t>(aPC));
   };
-  MozStackWalk(callback, /* skipFrames */ 0, /* maxFrames */ 0, &rawStack);
+  MozStackWalk(callback, /* skipFrames */ 0,
+              /* maxFrames */ 0, reinterpret_cast<void*>(&rawStack), 0, nullptr);
   ProcessedStack stack = GetStackAndModules(rawStack);
 
   // Store the new stack info.

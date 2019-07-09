@@ -32,6 +32,7 @@
 #include "nsIDOMDocument.h"
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
+#include "nsIParserService.h"
 #include "nsIScriptContext.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIScriptSecurityManager.h"
@@ -39,7 +40,6 @@
 #include "nsISelectionPrivate.h"
 #include "nsITransferable.h" // for kUnicodeMime
 #include "nsContentUtils.h"
-#include "nsElementTable.h"
 #include "nsNodeUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsReadableUtils.h"
@@ -1730,6 +1730,9 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
       rv = GetNodeLocation(node, address_of(parent), &offset);
       NS_ENSURE_SUCCESS(rv, rv);
       if (offset == -1) return NS_OK; // we hit generated content; STOP
+      nsIParserService *parserService = nsContentUtils::GetParserService();
+      if (!parserService)
+        return NS_ERROR_OUT_OF_MEMORY;
       while ((IsFirstNode(node)) && (!IsRoot(parent)) && (parent != common))
       {
         if (bResetPromotion)
@@ -1737,8 +1740,11 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
           nsCOMPtr<nsIContent> content = do_QueryInterface(parent);
           if (content && content->IsHTMLElement())
           {
-            if (nsHTMLElement::IsBlock(nsHTMLTags::AtomTagToId(
-                                       content->NodeInfo()->NameAtom()))) {
+            bool isBlock = false;
+            parserService->IsBlock(parserService->HTMLAtomTagToId(
+                                     content->NodeInfo()->NameAtom()), isBlock);
+            if (isBlock)
+            {
               bResetPromotion = false;
             }
           }
@@ -1807,6 +1813,9 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
       rv = GetNodeLocation(node, address_of(parent), &offset);
       NS_ENSURE_SUCCESS(rv, rv);
       if (offset == -1) return NS_OK; // we hit generated content; STOP
+      nsIParserService *parserService = nsContentUtils::GetParserService();
+      if (!parserService)
+        return NS_ERROR_OUT_OF_MEMORY;
       while ((IsLastNode(node)) && (!IsRoot(parent)) && (parent != common))
       {
         if (bResetPromotion)
@@ -1814,8 +1823,11 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
           nsCOMPtr<nsIContent> content = do_QueryInterface(parent);
           if (content && content->IsHTMLElement())
           {
-            if (nsHTMLElement::IsBlock(nsHTMLTags::AtomTagToId(
-                                       content->NodeInfo()->NameAtom()))) {
+            bool isBlock = false;
+            parserService->IsBlock(parserService->HTMLAtomTagToId(
+                                     content->NodeInfo()->NameAtom()), isBlock);
+            if (isBlock)
+            {
               bResetPromotion = false;
             }
           }

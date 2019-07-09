@@ -61,8 +61,6 @@ class Compiler(NodeVisitor):
         self.tree = tree
         self.output_node = self._initial_output_node(tree, **kwargs)
         self.visit(tree)
-        if hasattr(self.output_node, "set_defaults"):
-            self.output_node.set_defaults()
         assert self.output_node is not None
         return self.output_node
 

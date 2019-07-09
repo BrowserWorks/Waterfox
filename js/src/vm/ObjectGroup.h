@@ -85,7 +85,7 @@ enum NewObjectKind {
 /* Type information about an object accessed by a script. */
 class ObjectGroup : public gc::TenuredCell
 {
-    friend class gc::GCRuntime;
+    friend void gc::MergeCompartments(JSCompartment* source, JSCompartment* target);
 
     /* Class shared by objects in this group. */
     const Class* clasp_;
@@ -97,6 +97,7 @@ class ObjectGroup : public gc::TenuredCell
     JSCompartment* compartment_;
 
   public:
+
     const Class* clasp() const {
         return clasp_;
     }
@@ -390,7 +391,6 @@ class ObjectGroup : public gc::TenuredCell
 
     /* Get a property only if it already exists. */
     MOZ_ALWAYS_INLINE HeapTypeSet* maybeGetProperty(jsid id);
-    MOZ_ALWAYS_INLINE HeapTypeSet* maybeGetPropertyDontCheckGeneration(jsid id);
 
     /*
      * Iterate through the group's properties. getPropertyCount overapproximates
@@ -472,7 +472,6 @@ class ObjectGroup : public gc::TenuredCell
     }
 
     inline uint32_t basePropertyCount();
-    inline uint32_t basePropertyCountDontCheckGeneration();
 
   private:
     inline void setBasePropertyCount(uint32_t count);
@@ -516,11 +515,11 @@ class ObjectGroup : public gc::TenuredCell
         UnknownIndex  // Make an array with an unknown element type.
     };
 
-    // Create an ArrayObject with the specified elements and a group specialized
-    // for the elements.
-    static ArrayObject* newArrayObject(JSContext* cx, const Value* vp, size_t length,
-                                       NewObjectKind newKind,
-                                       NewArrayKind arrayKind = NewArrayKind::Normal);
+    // Create an ArrayObject or UnboxedArrayObject with the specified elements
+    // and a group specialized for the elements.
+    static JSObject* newArrayObject(JSContext* cx, const Value* vp, size_t length,
+                                    NewObjectKind newKind,
+                                    NewArrayKind arrayKind = NewArrayKind::Normal);
 
     // Create a PlainObject or UnboxedPlainObject with the specified properties
     // and a group specialized for those properties.

@@ -8,16 +8,18 @@ var Cr = Components.results;
 var Ci = Components.interfaces;
 
 var CC = Components.Constructor;
-var LocalFile = CC("@mozilla.org/file/local;1", "nsIFile", "initWithPath");
+var LocalFile = CC("@mozilla.org/file/local;1", "nsILocalFile", "initWithPath");
 
-function run_test() {
+function run_test()
+{
   test_normalized_vs_non_normalized();
 }
 
-function test_normalized_vs_non_normalized() {
+function test_normalized_vs_non_normalized()
+{
   // get a directory that exists on all platforms
   var dirProvider = Components.classes["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
-  var tmp1 = dirProvider.get("TmpD", Ci.nsIFile);
+  var tmp1 = dirProvider.get("TmpD", Ci.nsILocalFile);
   var exists = tmp1.exists();
   do_check_true(exists);
   if (!exists)

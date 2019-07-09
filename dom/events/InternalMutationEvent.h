@@ -9,7 +9,7 @@
 
 #include "mozilla/BasicEvents.h"
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIDOMNode.h"
 
 namespace mozilla {
@@ -37,9 +37,9 @@ public:
   }
 
   nsCOMPtr<nsIDOMNode> mRelatedNode;
-  RefPtr<nsAtom>    mAttrName;
-  RefPtr<nsAtom>    mPrevAttrValue;
-  RefPtr<nsAtom>    mNewAttrValue;
+  nsCOMPtr<nsIAtom>    mAttrName;
+  nsCOMPtr<nsIAtom>    mPrevAttrValue;
+  nsCOMPtr<nsIAtom>    mNewAttrValue;
   unsigned short       mAttrChange;
 
   void AssignMutationEventData(const InternalMutationEvent& aEvent,

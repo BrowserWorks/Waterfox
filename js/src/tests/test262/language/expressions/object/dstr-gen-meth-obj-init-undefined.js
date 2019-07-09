@@ -5,7 +5,7 @@
 description: Value specifed for object binding pattern must be object coercible (undefined) (generator method)
 esid: sec-generator-function-definitions-runtime-semantics-propertydefinitionevaluation
 es6id: 14.4.13
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     GeneratorMethod :

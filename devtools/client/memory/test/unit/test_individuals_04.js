@@ -21,6 +21,10 @@ const {
   setFilterString,
 } = require("devtools/client/memory/actions/filter");
 
+function run_test() {
+  run_next_test();
+}
+
 const EXPECTED_INDIVIDUAL_STATES = [
   individualsState.COMPUTING_DOMINATOR_TREE,
   individualsState.FETCHING,

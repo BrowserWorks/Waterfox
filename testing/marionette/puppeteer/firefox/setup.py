@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 import os
 import re
 from setuptools import setup, find_packages
@@ -24,9 +23,7 @@ setup(name='firefox-puppeteer',
       version=get_version(),
       description="Firefox Puppeteer",
       long_description='See http://firefox-puppeteer.readthedocs.org/',
-      classifiers=['Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 2 :: Only'],
-      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='mozilla',
       author='Auto-tools',
       author_email='tools-marionette@lists.mozilla.org',

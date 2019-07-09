@@ -11,7 +11,6 @@ use app_units::Au;
 use block::BlockFlow;
 use context::{LayoutContext, with_thread_local_font_context};
 use display_list_builder::{DisplayListBuildState, ListItemFlowDisplayListBuilding};
-use display_list_builder::StackingContextCollectionState;
 use euclid::Point2D;
 use floats::FloatKind;
 use flow::{Flow, FlowClass, OpaqueFlow};
@@ -24,12 +23,8 @@ use style::logical_geometry::LogicalSize;
 use style::properties::ComputedValues;
 use style::servo::restyle_damage::RESOLVE_GENERATED_CONTENT;
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for ListItemFlow {}
-
 /// A block with the CSS `display` property equal to `list-item`.
 #[derive(Debug)]
-#[repr(C)]
 pub struct ListItemFlow {
     /// Data common to all block flows.
     pub block_flow: BlockFlow,
@@ -124,16 +119,12 @@ impl Flow for ListItemFlow {
         }
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn place_float_if_applicable<'a>(&mut self) {
         self.block_flow.place_float_if_applicable()
-    }
-
-    fn contains_roots_of_absolute_flow_tree(&self) -> bool {
-        self.block_flow.contains_roots_of_absolute_flow_tree()
     }
 
     fn is_absolute_containing_block(&self) -> bool {
@@ -152,7 +143,7 @@ impl Flow for ListItemFlow {
         self.build_display_list_for_list_item(state);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
         self.block_flow.collect_stacking_contexts(state);
     }
 
@@ -239,7 +230,7 @@ impl ListStyleTypeContent {
                 let text = generated_content::static_representation(list_style_type);
                 ListStyleTypeContent::StaticText(text)
             }
-            _ => ListStyleTypeContent::GeneratedContent(Box::new(GeneratedContentInfo::ListItem)),
+            _ => ListStyleTypeContent::GeneratedContent(box GeneratedContentInfo::ListItem),
         }
     }
 }

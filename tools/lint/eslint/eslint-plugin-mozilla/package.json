@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-mozilla",
-  "version": "0.4.5",
+  "version": "0.4.2",
   "description": "A collection of rules that help enforce JavaScript coding standard in the Mozilla project.",
   "keywords": [
     "eslint",
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://bugzilla.mozilla.org/enter_bug.cgi?product=Testing&component=Lint"
   },
-  "homepage": "http://firefox-source-docs.mozilla.org/tools/lint/linters/eslint-plugin-mozilla.html",
+  "homepage": "http://gecko.readthedocs.io/en/latest/tools/lint/linters/eslint-plugin-mozilla.html",
   "repository": {
     "type": "hg",
     "url": "https://hg.mozilla.org/mozilla-central/"
@@ -20,6 +20,10 @@
   "author": "Mike Ratcliffe",
   "main": "lib/index.js",
   "dependencies": {
+    "escope": "3.6.0",
+    "espree": "3.4.3",
+    "estraverse": "4.2.0",
+    "globals": "9.18.0",
     "ini-parser": "0.0.2",
     "sax": "1.2.4"
   },

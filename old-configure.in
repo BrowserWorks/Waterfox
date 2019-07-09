@@ -48,7 +48,7 @@ dnl ========================================================
 MOZJPEG=62
 MOZPNG=10634
 NSPR_VERSION=4
-NSPR_MINVER=4.17
+NSPR_MINVER=4.16
 NSS_VERSION=3
 
 dnl Set the minimum version of toolkit libs used by mozilla
@@ -66,7 +66,7 @@ W32API_VERSION=3.14
 GCONF_VERSION=1.2.1
 STARTUP_NOTIFICATION_VERSION=0.8
 DBUS_VERSION=0.60
-SQLITE_VERSION=3.20.1
+SQLITE_VERSION=3.19.3
 
 dnl Set various checks
 dnl ========================================================
@@ -451,7 +451,7 @@ AR_EXTRACT='$(AR) x'
 AS='$(CC)'
 AS_DASH_C_FLAG='-c'
 DIRENT_INO=d_ino
-MOZ_USER_DIR=".mozilla"
+MOZ_USER_DIR=".waterfox"
 
 MOZ_FIX_LINK_PATHS="-Wl,-rpath-link,${DIST}/bin -Wl,-rpath-link,${prefix}/lib"
 
@@ -837,6 +837,11 @@ case "$target" in
         if test -z "$CLANG_CC"; then
            MOZ_OPTIMIZE_FLAGS="-freorder-blocks $MOZ_OPTIMIZE_FLAGS"
         fi
+        if test "$CLANG_CC"; then
+           MOZ_OPTIMIZE_FLAGS="-O3"
+           CXXFLAGS="$CXXFLAGS -static-libstdc++"
+           CFLAGS="$CFLAGS"
+        fi
     fi
 
     case "${target_cpu}" in
@@ -1020,6 +1025,22 @@ case "$target" in
         if test -z "$DEVELOPER_OPTIONS"; then
             LDFLAGS="$LDFLAGS -RELEASE"
         fi
+        dnl For profile-guided optimization
+        PROFILE_GEN_CFLAGS="-GL"
+        num_cores=$($PYTHON -c 'import multiprocessing; print(min(8,multiprocessing.cpu_count()))')
+        cgthreads="-CGTHREADS:${num_cores}"
+        PROFILE_GEN_LDFLAGS="-LTCG:PGINSTRUMENT -PogoSafeMode $cgthreads"
+        dnl XXX: PGO builds can fail with warnings treated as errors,
+        dnl specifically "no profile data available" appears to be
+        dnl treated as an error sometimes. This might be a consequence
+        dnl of using WARNINGS_AS_ERRORS in some modules, combined
+        dnl with the linker doing most of the work in the whole-program
+        dnl optimization/PGO case. I think it's probably a compiler bug,
+        dnl but we work around it here.
+        PROFILE_USE_CFLAGS="-GL -wd4624 -wd4952"
+        dnl XXX: should be -LTCG:PGOPTIMIZE, but that fails on libxul.
+        dnl Probably also a compiler bug, but what can you do?
+        PROFILE_USE_LDFLAGS="-LTCG:PGUPDATE $cgthreads"
         LDFLAGS="$LDFLAGS -DYNAMICBASE"
         RCFLAGS="-nologo"
         dnl Minimum reqiurement of Gecko is VS2015 or later which supports
@@ -1906,9 +1927,7 @@ if test -n "$_USE_SYSTEM_NSS"; then
     AM_PATH_NSS(3.34, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
-if test -n "$MOZ_SYSTEM_NSS"; then
-   NSS_LIBS="$NSS_LIBS -lcrmf"
-else
+if test -z "$MOZ_SYSTEM_NSS"; then
    NSS_CFLAGS="-I${DIST}/include/nss"
    case "${OS_ARCH}" in
         # Only few platforms have been tested with GYP
@@ -2067,7 +2086,11 @@ MOZ_VORBIS=
 MOZ_TREMOR=
 MOZ_SAMPLE_TYPE_FLOAT32=
 MOZ_SAMPLE_TYPE_S16=
+MOZ_WEBRTC=1
+MOZ_PEERCONNECTION=
 MOZ_SRTP=
+MOZ_WEBRTC_SIGNALING=
+MOZ_WEBRTC_ASSERT_ALWAYS=1
 MOZ_WEBRTC_HARDWARE_AEC_NS=
 MOZ_SCTP=
 VPX_USE_YASM=
@@ -2083,6 +2106,7 @@ MOZ_SPELLCHECK=1
 MOZ_TOOLKIT_SEARCH=1
 MOZ_UI_LOCALE=en-US
 MOZ_UNIVERSALCHARDET=1
+MOZ_URL_CLASSIFIER=
 MOZ_XUL=1
 MOZ_ZIPWRITER=1
 MOZ_NO_SMART_CARDS=
@@ -2194,6 +2218,10 @@ xulrunner)
   ;;
 esac
 
+if test -n "$MOZ_B2G"; then
+    AC_DEFINE(MOZ_B2G)
+fi
+
 # Graphene is a desktop runtime for running applications with a HTML UI.
 if test -n "$MOZ_GRAPHENE"; then
     AC_DEFINE(MOZ_GRAPHENE)
@@ -2211,18 +2239,22 @@ fi
 
 AC_SUBST(MOZ_PHOENIX)
 AC_SUBST(MOZ_XULRUNNER)
+AC_SUBST(MOZ_B2G)
 AC_SUBST(MOZ_MULET)
+AC_SUBST(MOZ_B2G_VERSION)
 
 dnl ========================================================
 dnl Ensure Android SDK and build-tools versions depending on
 dnl mobile target.
 dnl ========================================================
 
+if test -z "$gonkdir" ; then
 case "$MOZ_BUILD_APP" in
 mobile/android)
-    MOZ_ANDROID_SDK(23, 23, 25.0.3, 26.0.0 26.0.0-dev 25.3.2 25.3.1)
+    MOZ_ANDROID_SDK(23, 23, 23.0.3, 25.3.1)
     ;;
 esac
+fi
 
 dnl ========================================================
 dnl =
@@ -2531,14 +2563,60 @@ if test "${MOZ_WIDGET_TOOLKIT}" = "linuxgl" -a "$ACCESSIBILITY" != "1"; then
     AC_MSG_ERROR(["Accessibility is required for the linuxgl widget backend"])
 fi
 
+dnl Turn off webrtc for OS's we don't handle yet, but allow
+dnl --enable-webrtc to override.  Can disable for everything in
+dnl the master list above.
+if test -n "$MOZ_WEBRTC"; then
+    case "$target" in
+    *-linux*|*-mingw*|*-darwin*|*-android*|*-linuxandroid*|*-dragonfly*|*-freebsd*|*-netbsd*|*-openbsd*)
+        dnl Leave enabled
+        ;;
+    *)
+        dnl default to disabled for all others
+        MOZ_WEBRTC=
+        ;;
+    esac
+fi
+
 AC_TRY_COMPILE([#include <linux/ethtool.h>],
                [ struct ethtool_cmd cmd; cmd.speed_hi = 0; ],
                MOZ_WEBRTC_HAVE_ETHTOOL_SPEED_HI=1)
 
 AC_SUBST(MOZ_WEBRTC_HAVE_ETHTOOL_SPEED_HI)
 
+# target_arch is from {ia32|x64|arm|ppc}
+case "$CPU_ARCH" in
+x86_64 | arm | aarch64 | x86 | ppc* | ia64)
+    :
+    ;;
+*)
+# unsupported arch for webrtc
+    MOZ_WEBRTC=
+    ;;
+
+esac
+
+dnl ========================================================
+dnl = Disable WebRTC code
+dnl ========================================================
+MOZ_ARG_DISABLE_BOOL(webrtc,
+[  --disable-webrtc        Disable support for WebRTC],
+    MOZ_WEBRTC=,
+    MOZ_WEBRTC=1)
+
 if test -n "$MOZ_WEBRTC"; then
+    AC_DEFINE(MOZ_WEBRTC)
+    dnl MOZ_WEBRTC_ASSERT_ALWAYS turns on a number of safety asserts in
+    dnl opt/production builds (via MOZ_CRASH())
+    AC_DEFINE(MOZ_WEBRTC_ASSERT_ALWAYS)
     MOZ_RAW=1
+
+dnl enable once Signaling lands
+    MOZ_WEBRTC_SIGNALING=1
+    AC_DEFINE(MOZ_WEBRTC_SIGNALING)
+dnl enable once PeerConnection lands
+    MOZ_PEERCONNECTION=1
+    AC_DEFINE(MOZ_PEERCONNECTION)
     MOZ_SCTP=1
     MOZ_SRTP=1
     AC_DEFINE(MOZ_SCTP)
@@ -2562,6 +2640,10 @@ if test -n "$MOZ_WEBRTC_HARDWARE_AEC_NS"; then
     AC_DEFINE(MOZ_WEBRTC_HARDWARE_AEC_NS)
 fi
 
+AC_SUBST(MOZ_WEBRTC)
+AC_SUBST(MOZ_WEBRTC_SIGNALING)
+AC_SUBST(MOZ_PEERCONNECTION)
+AC_SUBST(MOZ_WEBRTC_ASSERT_ALWAYS)
 AC_SUBST(MOZ_WEBRTC_HARDWARE_AEC_NS)
 AC_SUBST(MOZ_SCTP)
 AC_SUBST(MOZ_SRTP)
@@ -2992,27 +3074,8 @@ esac
 AC_SUBST(MOZ_GAMEPAD_BACKEND)
 
 dnl ========================================================
-dnl = Breakpad crash reporting (on by default on supported platforms)
+dnl = Breakpad crash reporting
 dnl ========================================================
-
-case $target in
-i?86-*-mingw*|x86_64-*-mingw*)
-  MOZ_CRASHREPORTER=1
-  ;;
-i?86-apple-darwin*|x86_64-apple-darwin*)
-  if test -z "$MOZ_IOS"; then
-    MOZ_CRASHREPORTER=1
-  fi
-  ;;
-i?86-*-linux*|x86_64-*-linux*|arm-*-linux*)
-  if test "$MOZ_ENABLE_GTK"; then
-    MOZ_CRASHREPORTER=1
-  fi
-  ;;
-*-android*|*-linuxandroid*)
-  MOZ_CRASHREPORTER=1
-  ;;
-esac
 
 MOZ_ARG_DISABLE_BOOL(crashreporter,
 [  --disable-crashreporter Disable breakpad crash reporting],
@@ -3643,18 +3706,24 @@ then
     if test "x$ac_cv_sqlite_dbstat_vtab" = "xno"; then
         AC_MSG_ERROR([System SQLite library is not compiled with SQLITE_ENABLE_DBSTAT_VTAB.])
     fi
-else
-    dnl ==============================
-    dnl === SQLite fdatasync check ===
-    dnl ==============================
-    dnl Check to see if fdatasync is available
-    AC_CHECK_FUNC(fdatasync)
 fi
 
 if test -n "$MOZ_SYSTEM_SQLITE"; then
     AC_DEFINE(MOZ_SYSTEM_SQLITE)
 fi
 AC_SUBST(MOZ_SYSTEM_SQLITE)
+
+dnl ========================================================
+dnl = Enable url-classifier
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(url-classifier,
+[  --enable-url-classifier Enable url classifier module],
+    MOZ_URL_CLASSIFIER=1,
+    MOZ_URL_CLASSIFIER= )
+if test -n "$MOZ_URL_CLASSIFIER"; then
+    AC_DEFINE(MOZ_URL_CLASSIFIER)
+fi
+AC_SUBST(MOZ_URL_CLASSIFIER)
 
 dnl ========================================================
 dnl = Disable zipwriter
@@ -3971,13 +4040,17 @@ MOZ_ARG_DISABLE_BOOL(startupcache,
     MOZ_DISABLE_STARTUPCACHE=1,
     MOZ_DISABLE_STARTUPCACHE=)
 
+dnl bug 988880: disable startup cache on b2g
+if test -n "$MOZ_B2G"; then
+  MOZ_DISABLE_STARTUPCACHE=1
+fi
 if test -n "$MOZ_DISABLE_STARTUPCACHE"; then
   AC_DEFINE(MOZ_DISABLE_STARTUPCACHE)
 fi
 AC_SUBST(MOZ_DISABLE_STARTUPCACHE)
 
 dnl ========================================================
-dnl = Enable Pico Speech Synthesis
+dnl = Enable Pico Speech Synthesis (Gonk usually)
 dnl ========================================================
 MOZ_ARG_ENABLE_BOOL(synth-pico,
 [  --enable-synth-pico  Set compile flags necessary for compiling Pico Web Speech API ],
@@ -4051,11 +4124,32 @@ MOZ_ARG_WITH_STRING(jitreport-granularity,
 AC_DEFINE_UNQUOTED(JS_DEFAULT_JITREPORT_GRANULARITY, $JITREPORT_GRANULARITY)
 
 dnl ========================================================
+dnl = Disable Mozilla's versions of RIL and Geolocation
+dnl ========================================================
+MOZ_ARG_DISABLE_BOOL(mozril-geoloc,
+[  --disable-mozril-geoloc         Disable Mozilla's RIL and geolocation],
+    DISABLE_MOZ_RIL_GEOLOC=1,
+    DISABLE_MOZ_RIL_GEOLOC= )
+if test -n "$DISABLE_MOZ_RIL_GEOLOC"; then
+   AC_DEFINE(DISABLE_MOZ_RIL_GEOLOC)
+fi
+AC_SUBST(DISABLE_MOZ_RIL_GEOLOC)
+
+dnl ========================================================
 dnl =
 dnl = Misc. Options
 dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(Misc. Options)
+
+dnl ========================================================
+dnl = Define default location for MOZILLA_FIVE_HOME
+dnl ========================================================
+MOZ_ARG_WITH_STRING(default-mozilla-five-home,
+[  --with-default-mozilla-five-home
+                          Set the default value for MOZILLA_FIVE_HOME],
+[ val=`echo $withval`
+  AC_DEFINE_UNQUOTED(MOZ_DEFAULT_MOZILLA_FIVE_HOME,"$val") ])
 
 dnl ========================================================
 dnl = Location of the mozilla user directory (default is ~/.mozilla).],
@@ -4117,6 +4211,34 @@ if test -n "$GNU_CC" -a -n "$GNU_CXX"; then
 else
     AC_MSG_RESULT([no])
 fi
+
+dnl ========================================================
+dnl Profile guided optimization (gcc checks)
+dnl ========================================================
+dnl Test for profiling options
+dnl Under gcc 3.4+, use -fprofile-generate/-fprofile-use
+
+_SAVE_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fprofile-generate -fprofile-correction"
+
+AC_MSG_CHECKING([whether C compiler supports -fprofile-generate])
+AC_TRY_COMPILE([], [return 0;],
+               [ PROFILE_GEN_CFLAGS="-fprofile-generate"
+                 result="yes" ], result="no")
+AC_MSG_RESULT([$result])
+
+if test $result = "yes"; then
+  PROFILE_GEN_LDFLAGS="-fprofile-generate"
+  PROFILE_USE_CFLAGS="-fprofile-use -fprofile-correction -Wcoverage-mismatch"
+  PROFILE_USE_LDFLAGS="-fprofile-use"
+fi
+
+CFLAGS="$_SAVE_CFLAGS"
+
+AC_SUBST(PROFILE_GEN_CFLAGS)
+AC_SUBST(PROFILE_GEN_LDFLAGS)
+AC_SUBST(PROFILE_USE_CFLAGS)
+AC_SUBST(PROFILE_USE_LDFLAGS)
 
 fi # ! SKIP_COMPILER_CHECKS
 
@@ -4395,6 +4517,9 @@ AC_SUBST_LIST(MOZ_CAIRO_LIBS)
 AC_SUBST_LIST(MOZ_CAIRO_OSLIBS)
 AC_SUBST(MOZ_TREE_PIXMAN)
 
+BINDGEN_SYSTEM_FLAGS="$_BINDGEN_CFLAGS $NSPR_CFLAGS $NSS_CFLAGS $MOZ_PIXMAN_CFLAGS $MOZ_CAIRO_CFLAGS"
+AC_SUBST_TOML_LIST(BINDGEN_SYSTEM_FLAGS)
+
 dnl ========================================================
 dnl disable xul
 dnl ========================================================
@@ -4418,24 +4543,20 @@ dnl
 dnl option to disable necko's wifi scanner
 dnl
 
-if test "$MOZ_WIDGET_TOOLKIT"; then
-
-  case "$OS_TARGET" in
-    Darwin)
-      if test -z "$MOZ_IOS"; then
-	NECKO_WIFI=1
-      fi
-      ;;
-    DragonFly|FreeBSD|WINNT)
+case "$OS_TARGET" in
+  Darwin)
+    if test -z "$MOZ_IOS"; then
       NECKO_WIFI=1
-      ;;
-    Linux)
-      NECKO_WIFI=1
-      NECKO_WIFI_DBUS=1
-      ;;
-  esac
-
-fi
+    fi
+    ;;
+  DragonFly|FreeBSD|WINNT)
+    NECKO_WIFI=1
+    ;;
+  Linux)
+    NECKO_WIFI=1
+    NECKO_WIFI_DBUS=1
+    ;;
+esac
 
 MOZ_ARG_DISABLE_BOOL(necko-wifi,
 [  --disable-necko-wifi    Disable necko wifi scanner],
@@ -4622,7 +4743,6 @@ AC_SUBST(MOZ_CHILD_PROCESS_BUNDLENAME)
 # packages produced.
 # - MOZ_ANDROID_GCM_SENDERID: On Android, the Android GCM Sender ID used.  GCM
 # sender IDs are not sensitive: see, http://stackoverflow.com/a/18216063.
-# - MOZ_MMA_GCM_SENDERID: This GCM Sender ID is used for MMA integration.
 # - MOZ_PROFILE_MIGRATOR: When set, enables profile migrator.
 
 if test -z "$MOZ_APP_NAME"; then
@@ -4680,6 +4800,10 @@ else
   MOZ_APP_MAXVERSION=$MOZ_APP_VERSION
 fi
 
+MOZ_B2G_VERSION=${MOZ_B2G_VERSION:-"1.0.0"}
+AC_DEFINE_UNQUOTED(MOZ_B2G_VERSION,"$MOZ_B2G_VERSION")
+AC_DEFINE_UNQUOTED(MOZ_B2G_OS_NAME,"$MOZ_B2G_OS_NAME")
+
 AC_SUBST(MOZ_APP_NAME)
 AC_SUBST(MOZ_APP_REMOTINGNAME)
 AC_SUBST(MOZ_APP_DISPLAYNAME)
@@ -4690,7 +4814,6 @@ AC_SUBST(MOZ_APP_ID)
 AC_SUBST(MOZ_APP_ANDROID_VERSION_CODE)
 AC_SUBST(MOZ_ANDROID_SHARED_ID)
 AC_SUBST(MOZ_ANDROID_GCM_SENDERID)
-AC_SUBST(MOZ_MMA_GCM_SENDERID)
 AC_SUBST(MAR_CHANNEL_ID)
 AC_SUBST(ACCEPTED_MAR_CHANNEL_IDS)
 AC_SUBST(MOZ_PROFILE_MIGRATOR)
@@ -4720,24 +4843,6 @@ fi
 AC_SUBST(MOZ_SOURCE_REPO)
 AC_SUBST(MOZ_SOURCE_CHANGESET)
 AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
-
-if test "$MOZ_TELEMETRY_REPORTING"; then
-    AC_DEFINE(MOZ_TELEMETRY_REPORTING)
-
-    # Enable Telemetry by default for nightly and aurora channels
-    if test -z "$RELEASE_OR_BETA"; then
-      AC_DEFINE(MOZ_TELEMETRY_ON_BY_DEFAULT)
-    fi
-fi
-
-dnl If we have any service that uploads data (and requires data submission
-dnl policy alert), set MOZ_DATA_REPORTING.
-dnl We need SUBST for build system and DEFINE for xul preprocessor.
-if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=1
-  AC_DEFINE(MOZ_DATA_REPORTING)
-  AC_SUBST(MOZ_DATA_REPORTING)
-fi
 
 dnl win32 options
 AC_SUBST(WIN32_REDIST_DIR)
@@ -4964,6 +5069,7 @@ dnl The following defines are used by xpcom
 _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES
 CPP_THROW_NEW
 HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR
+HAVE_CPP_PARTIAL_SPECIALIZATION
 HAVE_GETPAGESIZE
 HAVE_ICONV
 HAVE_ICONV_WITH_CONST_INPUT
@@ -4990,6 +5096,16 @@ else
 fi
 
 AC_SUBST(PREPROCESS_OPTION)
+
+dnl ========================================================
+dnl mask as shorthand property
+dnl ========================================================
+
+# The control structure code will be removed as soon as the feature is stable
+# Refer to bug 1281101 for more details.
+MOZ_ENABLE_MASK_AS_SHORTHAND=1
+AC_DEFINE(MOZ_ENABLE_MASK_AS_SHORTHAND)
+AC_SUBST(MOZ_ENABLE_MASK_AS_SHORTHAND)
 
 # Avoid using obsolete NSPR features
 AC_DEFINE(NO_NSPR_10_SUPPORT)
@@ -5032,7 +5148,7 @@ if test -n "$_subconfigure_subdir"; then
   srcdir="$_save_srcdir"
 fi
 
-if test "$COMPILE_ENVIRONMENT" -a "$MOZ_WIDGET_TOOLKIT"; then
+if test "$COMPILE_ENVIRONMENT"; then
 
 export WRAP_LDFLAGS
 
@@ -5077,7 +5193,6 @@ export MOZ_ZLIB_CFLAGS
 export MOZ_ZLIB_LIBS
 export MOZ_APP_NAME
 export MOZ_APP_REMOTINGNAME
-export MOZ_DEV_EDITION
 export RUSTC
 export MOZILLA_CENTRAL_PATH=$_topsrcdir
 export STLPORT_CPPFLAGS

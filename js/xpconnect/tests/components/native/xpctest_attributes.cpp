@@ -20,11 +20,13 @@ xpcTestObjectReadOnly :: xpcTestObjectReadOnly() {
 }
 
 NS_IMETHODIMP xpcTestObjectReadOnly :: GetStrReadOnly(char * *aStrReadOnly){
+    char aString[] = "XPConnect Read-Only String";
 
     if (!aStrReadOnly)
         return NS_ERROR_NULL_POINTER;
-    *aStrReadOnly = moz_xstrdup("XPConnect Read-Only String");
-    return NS_OK;
+    *aStrReadOnly = (char*) nsMemory::Clone(aString,
+                                            sizeof(char)*(strlen(aString)+1));
+    return *aStrReadOnly ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
 NS_IMETHODIMP xpcTestObjectReadOnly :: GetBoolReadOnly(bool* aBoolReadOnly) {
@@ -55,7 +57,8 @@ NS_IMETHODIMP xpcTestObjectReadOnly :: GetTimeReadOnly(PRTime* aTimeReadOnly){
 NS_IMPL_ISUPPORTS(xpcTestObjectReadWrite, nsIXPCTestObjectReadWrite)
 
 xpcTestObjectReadWrite :: xpcTestObjectReadWrite() {
-    stringProperty = moz_xstrdup("XPConnect Read-Writable String");
+    const char s[] = "XPConnect Read-Writable String";
+    stringProperty = (char*) nsMemory::Clone(s, sizeof(char)*(strlen(s)+1));
     boolProperty = true;
     shortProperty = 32767;
     longProperty =  2147483647;
@@ -72,16 +75,17 @@ xpcTestObjectReadWrite :: ~xpcTestObjectReadWrite()
 }
 
 NS_IMETHODIMP xpcTestObjectReadWrite :: GetStringProperty(char * *aStringProperty) {
-    if (!aStringProperty) {
+    if (!aStringProperty)
         return NS_ERROR_NULL_POINTER;
-    }
-    *aStringProperty = moz_xstrdup(stringProperty);
-    return NS_OK;
+    *aStringProperty = (char*) nsMemory::Clone(stringProperty,
+                                               sizeof(char)*(strlen(stringProperty)+1));
+    return *aStringProperty ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 
 }
 NS_IMETHODIMP xpcTestObjectReadWrite :: SetStringProperty(const char * aStringProperty) {
     free(stringProperty);
-    stringProperty = moz_xstrdup(aStringProperty);
+    stringProperty = (char*) nsMemory::Clone(aStringProperty,
+                                             sizeof(char)*(strlen(aStringProperty)+1));
     return NS_OK;
 }
 

@@ -18,7 +18,6 @@ import org.mozilla.gecko.webapps.WebAppActivity;
 import org.mozilla.gecko.widget.ExternalIntentDuringPrivateBrowsingPromptFragment;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -66,14 +65,17 @@ public final class IntentHelper implements BundleEventListener {
 
     private static IntentHelper instance;
 
-    private IntentHelper() {
+    private final FragmentActivity activity;
+
+    private IntentHelper(final FragmentActivity activity) {
+        this.activity = activity;
         EventDispatcher.getInstance().registerGeckoThreadListener(this, GECKO_EVENTS);
         EventDispatcher.getInstance().registerUiThreadListener(this, UI_EVENTS);
     }
 
-    public static IntentHelper init() {
+    public static IntentHelper init(final FragmentActivity activity) {
         if (instance == null) {
-            instance = new IntentHelper();
+            instance = new IntentHelper(activity);
         } else {
             Log.w(LOGTAG, "IntentHelper.init() called twice, ignoring.");
         }
@@ -81,17 +83,12 @@ public final class IntentHelper implements BundleEventListener {
         return instance;
     }
 
-    private static FragmentActivity getActivity() {
-        final Activity activity = GeckoActivityMonitor.getInstance().getCurrentActivity();
-        if (activity instanceof FragmentActivity) {
-            return (FragmentActivity) activity;
+    public static void destroy() {
+        if (instance != null) {
+            EventDispatcher.getInstance().unregisterGeckoThreadListener(instance, GECKO_EVENTS);
+            EventDispatcher.getInstance().unregisterUiThreadListener(instance, UI_EVENTS);
+            instance = null;
         }
-        return null;
-    }
-
-    private static Context getContext() {
-        final Activity activity = GeckoActivityMonitor.getInstance().getCurrentActivity();
-        return (activity != null) ? activity : GeckoAppShell.getApplicationContext();
     }
 
     /**
@@ -121,7 +118,10 @@ public final class IntentHelper implements BundleEventListener {
                                           String action,
                                           String title,
                                           final boolean showPromptInPrivateBrowsing) {
-        final Context context = getContext();
+        final Context activityContext =
+                GeckoActivityMonitor.getInstance().getCurrentActivity();
+        final Context context = (activityContext != null) ?
+                activityContext : GeckoAppShell.getApplicationContext();
         final Intent intent = getOpenURIIntent(context, targetURI,
                                                mimeType, action, title);
 
@@ -138,9 +138,8 @@ public final class IntentHelper implements BundleEventListener {
             }
         }
 
-        final FragmentActivity activity = getActivity();
-        if (!showPromptInPrivateBrowsing || activity == null) {
-            if (activity == null) {
+        if (!showPromptInPrivateBrowsing || !(activityContext instanceof FragmentActivity)) {
+            if (activityContext == null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             }
             return ActivityHandlerHelper.startIntentAndCatch(LOGTAG, context, intent);
@@ -148,8 +147,9 @@ public final class IntentHelper implements BundleEventListener {
             // Ideally we retrieve the Activity from the calling args, rather than
             // statically, but since this method is called from Gecko and I'm
             // unfamiliar with that code, this is a simpler solution.
+            final FragmentActivity fragmentActivity = (FragmentActivity) activityContext;
             return ExternalIntentDuringPrivateBrowsingPromptFragment.showDialogOrAndroidChooser(
-                    context, activity.getSupportFragmentManager(), intent);
+                    context, fragmentActivity.getSupportFragmentManager(), intent);
         }
     }
 
@@ -432,7 +432,7 @@ public final class IntentHelper implements BundleEventListener {
     }
 
     private void getHandlers(final GeckoBundle message, final EventCallback callback) {
-        final Intent intent = getOpenURIIntent(getContext(),
+        final Intent intent = getOpenURIIntent(activity,
                                                message.getString("url", ""),
                                                message.getString("mime", ""),
                                                message.getString("action", ""),
@@ -450,7 +450,7 @@ public final class IntentHelper implements BundleEventListener {
     }
 
     private void openForResult(final GeckoBundle message, final EventCallback callback) {
-        Intent intent = getOpenURIIntent(getContext(),
+        Intent intent = getOpenURIIntent(activity,
                                          message.getString("url", ""),
                                          message.getString("mime", ""),
                                          message.getString("action", ""),
@@ -459,11 +459,6 @@ public final class IntentHelper implements BundleEventListener {
                             message.getString("className", ""));
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            callback.sendError(null);
-            return;
-        }
         final ResultHandler handler = new ResultHandler(callback);
         try {
             ActivityHandlerHelper.startIntentForActivity(activity, intent, handler);
@@ -484,13 +479,10 @@ public final class IntentHelper implements BundleEventListener {
      */
     private void openNoHandler(final GeckoBundle msg, final EventCallback callback) {
         final String uri = msg.getString("uri");
-        final GeckoBundle errorResponse = new GeckoBundle();
 
         if (TextUtils.isEmpty(uri)) {
             Log.w(LOGTAG, "Received empty URL - loading about:neterror");
-            errorResponse.putString("uri", getUnknownProtocolErrorPageUri(""));
-            errorResponse.putBoolean("isFallback", false);
-            callback.sendError(errorResponse);
+            callback.sendError(getUnknownProtocolErrorPageUri(""));
             return;
         }
 
@@ -508,9 +500,7 @@ public final class IntentHelper implements BundleEventListener {
 
             // Don't log the exception to prevent leaking URIs.
             Log.w(LOGTAG, "Unable to parse Intent URI - loading about:neterror");
-            errorResponse.putString("uri", errorUri);
-            errorResponse.putBoolean("isFallback", false);
-            callback.sendError(errorResponse);
+            callback.sendError(errorUri);
             return;
         }
 
@@ -518,10 +508,9 @@ public final class IntentHelper implements BundleEventListener {
         //   https://developer.chrome.com/multidevice/android/intents
         final String fallbackUrl = intent.getStringExtra(EXTRA_BROWSER_FALLBACK_URL);
         if (isFallbackUrlValid(fallbackUrl)) {
-            errorResponse.putString("uri", fallbackUrl);
-            errorResponse.putBoolean("isFallback", true);
             // Opens the page in JS.
-            callback.sendError(errorResponse);
+            callback.sendError(fallbackUrl);
+
         } else if (intent.getPackage() != null) {
             // Note on alternative flows: we could get the intent package from a component, however, for
             // security reasons, components are ignored when opening URIs (bug 1168998) so we should
@@ -538,11 +527,6 @@ public final class IntentHelper implements BundleEventListener {
 
             // (Bug 1192436) We don't know if marketIntent matches any Activities (e.g. non-Play
             // Store devices). If it doesn't, clicking the link will cause no action to occur.
-            final FragmentActivity activity = getActivity();
-            if (activity == null) {
-                callback.sendError(null);
-                return;
-            }
             ExternalIntentDuringPrivateBrowsingPromptFragment.showDialogOrAndroidChooser(
                     activity, activity.getSupportFragmentManager(), marketIntent);
             callback.sendSuccess(null);
@@ -558,9 +542,7 @@ public final class IntentHelper implements BundleEventListener {
             //
             // Don't log the URI to prevent leaking it.
             Log.w(LOGTAG, "Unable to open URI, maybe showing neterror");
-            errorResponse.putString("uri", getUnknownProtocolErrorPageUri(intent.getData().toString()));
-            errorResponse.putBoolean("isFallback", false);
-            callback.sendError(errorResponse);
+            callback.sendError(getUnknownProtocolErrorPageUri(intent.getData().toString()));
         }
     }
 

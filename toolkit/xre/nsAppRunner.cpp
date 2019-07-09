@@ -34,6 +34,7 @@
 #endif
 
 #ifdef XP_MACOSX
+#include "nsCocoaFeatures.h"
 #include "nsVersionComparator.h"
 #include "MacLaunchHelper.h"
 #include "MacApplicationDelegate.h"
@@ -133,7 +134,7 @@
 #include "nsReadableUtils.h"
 #include "nsXPCOM.h"
 #include "nsXPCOMCIDInternal.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsPrintfCString.h"
 #include "nsVersionComparator.h"
 
@@ -230,6 +231,12 @@
 
 extern uint32_t gRestartMode;
 extern void InstallSignalHandlers(const char *ProgramName);
+
+// This workaround is fixed in Rust 1.19. For details, see bug 1358151.
+// Implementation in toolkit/library/rust/shared/lib.rs
+extern "C" {
+  void rust_init_please_remove_this_after_updating_rust_1_19();
+}
 
 #define FILE_COMPATIBILITY_INFO NS_LITERAL_CSTRING("compatibility.ini")
 #define FILE_INVALIDATE_CACHES NS_LITERAL_CSTRING(".purgecaches")
@@ -564,50 +571,6 @@ CheckArg(const char* aArg, bool aCheckOSInt = false, const char **aParam = nullp
   return ar;
 }
 
-/**
- * Check for a commandline flag. Ignore data that's passed in with the flag.
- * Flags may be in the form -arg or --arg (or /arg on win32).
- * Will not remove flag if found.
- *
- * @param aArg the parameter to check. Must be lowercase.
- */
-static ArgResult
-CheckArgExists(const char* aArg)
-{
-  char **curarg = gArgv + 1; // skip argv[0]
-  while (*curarg) {
-    char *arg = curarg[0];
-
-    if (arg[0] == '-'
-#if defined(XP_WIN)
-        || *arg == '/'
-#endif
-        ) {
-      ++arg;
-      if (*arg == '-')
-        ++arg;
-
-      char delimiter = '=';
-#if defined(XP_WIN)
-      delimiter = ':';
-#endif
-      int i;
-      for (i = 0; arg[i] && arg[i] != delimiter; i++) {}
-      char tmp = arg[i];
-      arg[i] = '\0';
-      bool found = strimatch(aArg, arg);
-      arg[i] = tmp;
-      if (found) {
-        return ARG_FOUND;
-      }
-    }
-
-    ++curarg;
-  }
-
-  return ARG_NONE;
-}
-
 #if defined(XP_WIN)
 /**
  * Check for a commandline flag from the windows shell and remove it from the
@@ -667,6 +630,7 @@ ProcessDDE(nsINativeAppSupport* aNative, bool aWait)
   if (ar == ARG_FOUND) {
     aNative->Enable(); // enable win32 DDE responses
     if (aWait) {
+      nsIThread *thread = NS_GetCurrentThread();
       // This is just a guesstimate based on testing different values.
       // If count is 8 or less windows will display an error dialog.
       int32_t count = 20;
@@ -955,6 +919,7 @@ nsXULAppInfo::GetRemoteType(nsAString& aRemoteType)
 static bool gBrowserTabsRemoteAutostart = false;
 static uint64_t gBrowserTabsRemoteStatus = 0;
 static bool gBrowserTabsRemoteAutostartInitialized = false;
+static bool gListeningForCohortChange = false;
 
 NS_IMETHODIMP
 nsXULAppInfo::Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) {
@@ -985,6 +950,13 @@ nsXULAppInfo::GetMaxWebProcessCount(uint32_t* aResult)
 }
 
 NS_IMETHODIMP
+nsXULAppInfo::GetMultiprocessBlockPolicy(uint32_t* aResult)
+{
+  *aResult = MultiprocessBlockPolicy();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsXULAppInfo::GetAccessibilityEnabled(bool* aResult)
 {
 #ifdef ACCESSIBILITY
@@ -1003,26 +975,6 @@ nsXULAppInfo::GetAccessibleHandlerUsed(bool* aResult)
     a11y::IsHandlerRegistered();
 #else
   *aResult = false;
-#endif
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsXULAppInfo::GetAccessibilityInstantiator(nsAString &aInstantiator)
-{
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-  if (!GetAccService()) {
-    aInstantiator = NS_LITERAL_STRING("");
-    return NS_OK;
-  }
-  nsAutoString oopClientInfo, ipClientInfo;
-  a11y::Compatibility::GetHumanReadableConsumersStr(ipClientInfo);
-  aInstantiator.Append(ipClientInfo);
-  aInstantiator.AppendLiteral("|");
-  a11y::GetInstantiator(oopClientInfo);
-  aInstantiator.Append(oopClientInfo);
-#else
-  aInstantiator = NS_LITERAL_STRING("");
 #endif
   return NS_OK;
 }
@@ -1150,6 +1102,17 @@ NS_IMETHODIMP
 nsXULAppInfo::GetDistributionID(nsACString& aResult)
 {
   aResult.AssignLiteral(MOZ_DISTRIBUTION_ID);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAppInfo::GetIsOfficial(bool* aResult)
+{
+#ifdef MOZILLA_OFFICIAL
+  *aResult = true;
+#else
+  *aResult = false;
+#endif
   return NS_OK;
 }
 
@@ -1506,7 +1469,7 @@ ScopedXPCOMStartup::~ScopedXPCOMStartup()
       appStartup->DestroyHiddenWindow();
 
     gDirServiceProvider->DoShutdown();
-    PROFILER_ADD_MARKER("Shutdown early");
+    profiler_add_marker("Shutdown early");
 
     WriteConsoleLog();
 
@@ -1833,7 +1796,7 @@ StartRemoteClient(const char* aDesktopStartupID,
   if (NS_FAILED(rv))
     return REMOTE_NOT_FOUND;
 
-  nsCString response;
+  nsXPIDLCString response;
   bool success = false;
   rv = client.SendCommandLine(program.get(), username, profile,
                               gArgc, gArgv, aDesktopStartupID,
@@ -1861,9 +1824,9 @@ XRE_InitOmnijar(nsIFile* greOmni, nsIFile* appOmni)
 }
 
 nsresult
-XRE_GetBinaryPath(nsIFile* *aResult)
+XRE_GetBinaryPath(const char* argv0, nsIFile* *aResult)
 {
-  return mozilla::BinaryPath::GetFile(aResult);
+  return mozilla::BinaryPath::GetFile(argv0, aResult);
 }
 
 #ifdef XP_WIN
@@ -1902,7 +1865,7 @@ static nsresult LaunchChild(nsINativeAppSupport* aNative,
   LaunchChildMac(gRestartArgc, gRestartArgv);
 #else
   nsCOMPtr<nsIFile> lf;
-  nsresult rv = XRE_GetBinaryPath(getter_AddRefs(lf));
+  nsresult rv = XRE_GetBinaryPath(gArgv[0], getter_AddRefs(lf));
   if (NS_FAILED(rv))
     return rv;
 
@@ -2006,21 +1969,23 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
     NS_ConvertUTF8toUTF16 appName(gAppData->name);
     const char16_t* params[] = {appName.get(), appName.get()};
 
-    nsAutoString killMessage;
+    nsXPIDLString killMessage;
 #ifndef XP_MACOSX
-    rv = sb->FormatStringFromName(aUnlocker ? "restartMessageUnlocker"
-                                            : "restartMessageNoUnlocker",
-                                  params, 2, killMessage);
+    sb->FormatStringFromName(aUnlocker ? "restartMessageUnlocker"
+                                       : "restartMessageNoUnlocker",
+                             params, 2, getter_Copies(killMessage));
 #else
-    rv = sb->FormatStringFromName(aUnlocker ? "restartMessageUnlockerMac"
-                                            : "restartMessageNoUnlockerMac",
-                                  params, 2, killMessage);
+    sb->FormatStringFromName(aUnlocker ? "restartMessageUnlockerMac"
+                                       : "restartMessageNoUnlockerMac",
+                             params, 2, getter_Copies(killMessage));
 #endif
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
-    nsAutoString killTitle;
-    rv = sb->FormatStringFromName("restartTitle", params, 1, killTitle);
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+    nsXPIDLString killTitle;
+    sb->FormatStringFromName("restartTitle",
+                             params, 1, getter_Copies(killTitle));
+
+    if (!killMessage || !killTitle)
+      return NS_ERROR_FAILURE;
 
     if (gfxPlatform::IsHeadless()) {
       // TODO: make a way to turn off all dialogs when headless.
@@ -2045,8 +2010,8 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
          nsIPromptService::BUTTON_POS_1);
 
       bool checkState = false;
-      rv = ps->ConfirmEx(nullptr, killTitle.get(), killMessage.get(), flags,
-                         killTitle.get(), nullptr, nullptr, nullptr,
+      rv = ps->ConfirmEx(nullptr, killTitle, killMessage, flags,
+                         killTitle, nullptr, nullptr, nullptr,
                          &checkState, &button);
       NS_ENSURE_SUCCESS_LOG(rv, rv);
 #endif
@@ -2069,7 +2034,7 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
                                   nullptr, aResult);
       }
 #else
-      rv = ps->Alert(nullptr, killTitle.get(), killMessage.get());
+      rv = ps->Alert(nullptr, killTitle, killMessage);
       NS_ENSURE_SUCCESS_LOG(rv, rv);
 #endif
     }
@@ -2102,19 +2067,23 @@ ProfileMissingDialog(nsINativeAppSupport* aNative)
     NS_ConvertUTF8toUTF16 appName(gAppData->name);
     const char16_t* params[] = {appName.get(), appName.get()};
 
+    nsXPIDLString missingMessage;
+
     // profileMissing
-    nsAutoString missingMessage;
-    rv = sb->FormatStringFromName("profileMissing", params, 2, missingMessage);
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_ABORT);
+    sb->FormatStringFromName("profileMissing",
+                             params, 2, getter_Copies(missingMessage));
 
-    nsAutoString missingTitle;
-    rv = sb->FormatStringFromName("profileMissingTitle", params, 1, missingTitle);
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_ABORT);
+    nsXPIDLString missingTitle;
+    sb->FormatStringFromName("profileMissingTitle",
+                             params, 1, getter_Copies(missingTitle));
 
-    nsCOMPtr<nsIPromptService> ps(do_GetService(NS_PROMPTSERVICE_CONTRACTID));
-    NS_ENSURE_TRUE(ps, NS_ERROR_FAILURE);
+    if (missingMessage && missingTitle) {
+      nsCOMPtr<nsIPromptService> ps
+        (do_GetService(NS_PROMPTSERVICE_CONTRACTID));
+      NS_ENSURE_TRUE(ps, NS_ERROR_FAILURE);
 
-    ps->Alert(nullptr, missingTitle.get(), missingMessage.get());
+      ps->Alert(nullptr, missingTitle, missingMessage);
+    }
 
     return NS_ERROR_ABORT;
   }
@@ -2576,9 +2545,7 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
 #endif
 
   if (!count) {
-    // For a fresh install, we would like to let users decide
-    // to do profile migration on their own later after using.
-    gDoMigration = false;
+    gDoMigration = true;
     gDoProfileReset = false;
 
     // create a default profile
@@ -3188,6 +3155,9 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     return 1;
   *aExitFlag = false;
 
+  // This workaround is fixed in Rust 1.19. For details, see bug 1358151.
+  rust_init_please_remove_this_after_updating_rust_1_19();
+
   atexit(UnexpectedExit);
   auto expectedShutdown = mozilla::MakeScopeExit([&] {
     MozExpectedExit();
@@ -3209,7 +3179,7 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     printf_stderr("*** You are running in chaos test mode. See ChaosMode.h. ***\n");
   }
 
-  if (CheckArg("headless") || CheckArgExists("screenshot")) {
+  if (CheckArg("headless")) {
     PR_SetEnv("MOZ_HEADLESS=1");
   }
 
@@ -3757,27 +3727,6 @@ AnnotateLSBRelease(void*)
 
 #endif // defined(XP_LINUX) && !defined(ANDROID)
 
-#endif
-
-#ifdef XP_WIN
-static void ReadAheadDll(const wchar_t* dllName) {
-  wchar_t dllPath[MAX_PATH];
-  if (ConstructSystem32Path(dllName, dllPath, MAX_PATH)) {
-    ReadAheadLib(dllPath);
-  }
-}
-
-static void PR_CALLBACK ReadAheadDlls_ThreadStart(void *) {
-  // Load DataExchange.dll and twinapi.appcore.dll for nsWindow::EnableDragDrop
-  ReadAheadDll(L"DataExchange.dll");
-  ReadAheadDll(L"twinapi.appcore.dll");
-
-  // Load twinapi.dll for WindowsUIUtils::UpdateTabletModeState
-  ReadAheadDll(L"twinapi.dll");
-
-  // Load explorerframe.dll for WinTaskbar::Initialize
-  ReadAheadDll(L"ExplorerFrame.dll");
-}
 #endif
 
 namespace mozilla {
@@ -4359,7 +4308,7 @@ XREMain::XRE_mainRun()
     rv = prefs->GetDefaultBranch(nullptr, getter_AddRefs(defaultPrefBranch));
 
     if (NS_SUCCEEDED(rv)) {
-      nsCString sval;
+      nsXPIDLCString sval;
       rv = defaultPrefBranch->GetCharPref("app.update.channel", getter_Copies(sval));
       if (NS_SUCCEEDED(rv)) {
         CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("ReleaseChannel"),
@@ -4396,15 +4345,17 @@ XREMain::XRE_mainRun()
     io->SetOffline(true);
   }
 
-
-#ifdef XP_WIN
-  if (!PR_GetEnv("XRE_NO_DLL_READAHEAD"))
   {
-    PR_CreateThread(PR_USER_THREAD, ReadAheadDlls_ThreadStart, 0,
-                    PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD,
-                    PR_UNJOINABLE_THREAD, 0);
+    nsCOMPtr<nsIObserver> startupNotifier
+      (do_CreateInstance(NS_APPSTARTUPNOTIFIER_CONTRACTID, &rv));
+    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+
+    startupNotifier->Observe(nullptr, APPSTARTUP_TOPIC, nullptr);
   }
-#endif
+
+  nsCOMPtr<nsIAppStartup> appStartup
+    (do_GetService(NS_APPSTARTUP_CONTRACTID));
+  NS_ENSURE_TRUE(appStartup, NS_ERROR_FAILURE);
 
   if (gDoMigration) {
     nsCOMPtr<nsIFile> file;
@@ -4495,22 +4446,6 @@ XREMain::XRE_mainRun()
       mProfileSvc->Flush();
     }
   }
-
-  // Initialize user preferences before notifying startup observers so they're
-  // ready in time for early consumers, such as the component loader.
-  mDirProvider.InitializeUserPrefs();
-
-  {
-    nsCOMPtr<nsIObserver> startupNotifier
-      (do_CreateInstance(NS_APPSTARTUPNOTIFIER_CONTRACTID, &rv));
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
-
-    startupNotifier->Observe(nullptr, APPSTARTUP_TOPIC, nullptr);
-  }
-
-  nsCOMPtr<nsIAppStartup> appStartup
-    (do_GetService(NS_APPSTARTUP_CONTRACTID));
-  NS_ENSURE_TRUE(appStartup, NS_ERROR_FAILURE);
 
   mDirProvider.DoStartup();
 
@@ -4732,7 +4667,9 @@ XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
   CodeCoverageHandler::Init();
 #endif
 
-  AUTO_PROFILER_INIT;
+  char aLocal;
+  AutoProfilerInit profilerInit(&aLocal);
+
   AUTO_PROFILER_LABEL("XREMain::XRE_main", OTHER);
 
   nsresult rv = NS_OK;
@@ -4768,7 +4705,7 @@ XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
   gAppData = mAppData.get();
 
   nsCOMPtr<nsIFile> binFile;
-  rv = XRE_GetBinaryPath(getter_AddRefs(binFile));
+  rv = XRE_GetBinaryPath(argv[0], getter_AddRefs(binFile));
   NS_ENSURE_SUCCESS(rv, 1);
 
   rv = binFile->GetPath(gAbsoluteArgv0Path);
@@ -4776,7 +4713,7 @@ XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
 
   if (!mAppData->xreDirectory) {
     nsCOMPtr<nsIFile> lf;
-    rv = XRE_GetBinaryPath(getter_AddRefs(lf));
+    rv = XRE_GetBinaryPath(gArgv[0], getter_AddRefs(lf));
     if (NS_FAILED(rv))
       return 2;
 
@@ -4941,7 +4878,6 @@ XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
   XREMain main;
 
   int result = main.XRE_main(argc, argv, aConfig);
-  mozilla::RecordShutdownEndTimeStamp();
   return result;
 }
 
@@ -4959,7 +4895,7 @@ XRE_InitCommandLine(int aArgc, char* aArgv[])
 
   // get the canonical version of the binary's path
   nsCOMPtr<nsIFile> binFile;
-  rv = XRE_GetBinaryPath(getter_AddRefs(binFile));
+  rv = XRE_GetBinaryPath(aArgv[0], getter_AddRefs(binFile));
   if (NS_FAILED(rv))
     return NS_ERROR_FAILURE;
 
@@ -4984,10 +4920,13 @@ XRE_InitCommandLine(int aArgc, char* aArgv[])
   delete[] canonArgs;
 #endif
 
-  const char *path = nullptr;
-  ArgResult ar = CheckArg("greomni", false, &path);
+  const char* path = nullptr;
+  ArgResult ar = CheckArg("greomni", true, &path);
   if (ar == ARG_BAD) {
-    PR_fprintf(PR_STDERR, "Error: argument --greomni requires a path argument\n");
+    PR_fprintf(PR_STDERR,
+               "Error: argument --greomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 
@@ -5001,9 +4940,12 @@ XRE_InitCommandLine(int aArgc, char* aArgv[])
     return rv;
   }
 
-  ar = CheckArg("appomni", false, &path);
+  ar = CheckArg("appomni", true, &path);
   if (ar == ARG_BAD) {
-    PR_fprintf(PR_STDERR, "Error: argument --appomni requires a path argument\n");
+    PR_fprintf(PR_STDERR,
+               "Error: argument --appomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 
@@ -5064,43 +5006,116 @@ XRE_IsContentProcess()
   return XRE_GetProcessType() == GeckoProcessType_Content;
 }
 
-bool
-XRE_UseNativeEventProcessing()
-{
-  if (XRE_IsContentProcess()) {
-    static bool sInited = false;
-    static bool sUseNativeEventProcessing = false;
-    if (!sInited) {
-      Preferences::AddBoolVarCache(&sUseNativeEventProcessing,
-                                   "dom.ipc.useNativeEventProcessing.content");
-      sInited = true;
-    }
-
-    return sUseNativeEventProcessing;
-  }
-
-  return true;
-}
-
 // If you add anything to this enum, please update about:support to reflect it
 enum {
   kE10sEnabledByUser = 0,
   kE10sEnabledByDefault = 1,
   kE10sDisabledByUser = 2,
   // kE10sDisabledInSafeMode = 3, was removed in bug 1172491.
-  // kE10sDisabledForAccessibility = 4,
+  kE10sDisabledForAccessibility = 4,
   // kE10sDisabledForMacGfx = 5, was removed in bug 1068674.
   // kE10sDisabledForBidi = 6, removed in bug 1309599
-  // kE10sDisabledForAddons = 7, removed in bug 1406212
+  kE10sDisabledForAddons = 7,
   kE10sForceDisabled = 8,
   // kE10sDisabledForXPAcceleration = 9, removed in bug 1296353
   // kE10sDisabledForOperatingSystem = 10, removed due to xp-eol
 };
 
+const char* kAccessibilityLastRunDatePref = "accessibility.lastLoadDate";
+const char* kAccessibilityLoadedLastSessionPref = "accessibility.loadedInLastSession";
+
+#if defined(XP_WIN)
+static inline uint32_t
+PRTimeToSeconds(PRTime t_usec)
+{
+  PRTime usec_per_sec = PR_USEC_PER_SEC;
+  return uint32_t(t_usec /= usec_per_sec);
+}
+#endif
+
 const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
 const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
 
+uint32_t
+MultiprocessBlockPolicy()
+{
+  if (XRE_IsContentProcess()) {
+    // If we're in a content process, we're not blocked.
+    return 0;
+  }
+
+  /**
+   * Avoids enabling e10s if there are add-ons installed.
+   */
+  bool addonsCanDisable = Preferences::GetBool("extensions.e10sBlocksEnabling", false);
+  bool disabledByAddons = Preferences::GetBool("extensions.e10sBlockedByAddons", false);
+
+#ifdef MOZ_CRASHREPORTER
+  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AddonsShouldHaveBlockedE10s"),
+                                     disabledByAddons ? NS_LITERAL_CSTRING("1")
+                                                      : NS_LITERAL_CSTRING("0"));
+#endif
+
+  if (addonsCanDisable && disabledByAddons) {
+    return kE10sDisabledForAddons;
+  }
+
+#if defined(XP_WIN) && defined(RELEASE_OR_BETA)
+  bool disabledForA11y = false;
+  /**
+    * Avoids enabling e10s if accessibility has recently loaded. Performs the
+    * following checks:
+    * 1) Checks a pref indicating if a11y loaded in the last session. This pref
+    * is set in nsBrowserGlue.js. If a11y was loaded in the last session we
+    * do not enable e10s in this session.
+    * 2) Accessibility stores a last run date (PR_IntervalNow) when it is
+    * initialized (see nsBaseWidget.cpp). We check if this pref exists and
+    * compare it to now. If a11y hasn't run in an extended period of time or
+    * if the date pref does not exist we load e10s.
+    */
+  disabledForA11y = Preferences::GetBool(kAccessibilityLoadedLastSessionPref, false);
+  if (!disabledForA11y  &&
+      Preferences::HasUserValue(kAccessibilityLastRunDatePref)) {
+    const uint32_t oneWeekInSeconds = 60 * 60 * 24 * 7;
+    uint32_t a11yRunDate = Preferences::GetInt(kAccessibilityLastRunDatePref, 0);
+    MOZ_ASSERT(0 != a11yRunDate);
+    // If a11y hasn't run for a period of time, clear the pref and load e10s
+    uint32_t now = PRTimeToSeconds(PR_Now());
+    uint32_t difference = now - a11yRunDate;
+    if (difference > oneWeekInSeconds || !a11yRunDate) {
+      Preferences::ClearUser(kAccessibilityLastRunDatePref);
+    } else {
+      disabledForA11y = true;
+    }
+  }
+
+  if (disabledForA11y) {
+    return kE10sDisabledForAccessibility;
+  }
+#endif
+
+#if defined(XP_MACOSX)
+  if (!nsCocoaFeatures::OnYosemiteOrLater()) {
+    return kE10sForceDisabled;
+  }
+#endif
+  /*
+   * None of the blocking policies matched, so e10s is allowed to run. Return
+   * 0, indicating success.
+   */
+  return 0;
+}
+
 namespace mozilla {
+
+static void
+CohortChanged(const char* aPref, void* aClosure)
+{
+  // Reset to the default state and recompute on the next call.
+  gBrowserTabsRemoteAutostartInitialized = false;
+  gBrowserTabsRemoteAutostart = false;
+  Preferences::UnregisterCallback(CohortChanged, "e10s.rollout.cohort");
+}
 
 bool
 BrowserTabsRemoteAutostart()
@@ -5116,18 +5131,40 @@ BrowserTabsRemoteAutostart()
     return gBrowserTabsRemoteAutostart;
   }
 
-  bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", true);
-  int status = kE10sEnabledByDefault;
+  // This is a pretty heinous hack. On the first launch, we end up retrieving
+  // whether e10s is enabled setting up a document very early in startup. This
+  // caches that e10s is off before the e10srollout extension can run. See
+  // bug 1372824 comment 3 for a more thorough explanation.
+  if (!gListeningForCohortChange) {
+    gListeningForCohortChange = true;
+    Preferences::RegisterCallback(CohortChanged, "e10s.rollout.cohort");
+  }
 
+  bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", false);
+  bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.2", false);
+  bool prefEnabled = optInPref || trialPref;
+  int status;
   if (optInPref) {
-    gBrowserTabsRemoteAutostart = true;
+    status = kE10sEnabledByUser;
+  } else if (trialPref) {
+    status = kE10sEnabledByDefault;
   } else {
     status = kE10sDisabledByUser;
+  }
+
+  if (prefEnabled) {
+    uint32_t blockPolicy = MultiprocessBlockPolicy();
+    if (blockPolicy != 0) {
+      status = blockPolicy;
+    } else {
+      gBrowserTabsRemoteAutostart = true;
+    }
   }
 
   // Uber override pref for manual testing purposes
   if (Preferences::GetBool(kForceEnableE10sPref, false)) {
     gBrowserTabsRemoteAutostart = true;
+    prefEnabled = true;
     status = kE10sEnabledByUser;
   }
 
@@ -5142,6 +5179,10 @@ BrowserTabsRemoteAutostart()
   gBrowserTabsRemoteStatus = status;
 
   mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_STATUS, status);
+  if (prefEnabled) {
+    mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_BLOCKED_FROM_RUNNING,
+                                    !gBrowserTabsRemoteAutostart);
+  }
   return gBrowserTabsRemoteAutostart;
 }
 
@@ -5157,7 +5198,30 @@ GetMaxWebProcessCount()
 
   const char* optInPref = "dom.ipc.processCount";
   uint32_t optInPrefValue = Preferences::GetInt(optInPref, 1);
-  return std::max(1u, optInPrefValue);
+  const char* useDefaultPerformanceSettings =
+    "browser.preferences.defaultPerformanceSettings.enabled";
+  bool useDefaultPerformanceSettingsValue =
+    Preferences::GetBool(useDefaultPerformanceSettings, true);
+
+  // If the user has set dom.ipc.processCount, or if they have opt out of
+  // default performances settings from about:preferences, respect their
+  // decision regardless of add-ons that might affect their experience or
+  // experiment cohort.
+  if (Preferences::HasUserValue(optInPref) || !useDefaultPerformanceSettingsValue) {
+    return std::max(1u, optInPrefValue);
+  }
+
+#ifdef RELEASE_OR_BETA
+  // For our rollout on Release and Beta, we set this pref from the
+  // e10srollout extension. On Nightly, we don't touch the pref at all,
+  // allowing stale values to disable e10s-multi for certain users.
+  if (Preferences::HasUserValue("dom.ipc.processCount.web")) {
+    // The user didn't opt in or out so read the .web version of the pref.
+    return std::max(1, Preferences::GetInt("dom.ipc.processCount.web", 1));
+  }
+#endif
+
+  return optInPrefValue;
 }
 
 const char*

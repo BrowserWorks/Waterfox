@@ -5,10 +5,12 @@ if (typeof(classifierHelper) == "undefined") {
 const CLASSIFIER_COMMON_URL = SimpleTest.getTestFileURL("classifierCommon.js");
 var gScript = SpecialPowers.loadChromeScript(CLASSIFIER_COMMON_URL);
 
+const HASHLEN = 32;
+
 const PREFS = {
-  PROVIDER_LISTS: "browser.safebrowsing.provider.mozilla.lists",
-  DISALLOW_COMPLETIONS: "urlclassifier.disallow_completions",
-  PROVIDER_GETHASHURL: "browser.safebrowsing.provider.mozilla.gethashURL"
+  PROVIDER_LISTS : "browser.safebrowsing.provider.mozilla.lists",
+  DISALLOW_COMPLETIONS : "urlclassifier.disallow_completions",
+  PROVIDER_GETHASHURL : "browser.safebrowsing.provider.mozilla.gethashURL"
 };
 
 classifierHelper._curAddChunkNum = 1;
@@ -30,7 +32,7 @@ classifierHelper.waitForInit = function() {
     classifierHelper._initsCB.push(resolve);
     gScript.sendAsyncMessage("waitForInit");
   });
-};
+}
 
 // This function is used to allow completion for specific "list",
 // some lists like "test-malware-simple" is default disabled to ask for complete.
@@ -51,7 +53,7 @@ classifierHelper.allowCompletion = function(lists, url) {
 
   // Set get hash url
   SpecialPowers.setCharPref(PREFS.PROVIDER_GETHASHURL, url);
-};
+}
 
 // Pass { url: ..., db: ... } to add url to database,
 // onsuccess/onerror will be called when update complete.
@@ -78,7 +80,7 @@ classifierHelper.addUrlToDB = function(updateData) {
 
     classifierHelper._update(testUpdate, resolve, reject);
   });
-};
+}
 
 // This API is used to expire all add/sub chunks we have updated
 // by using addUrlToDB.
@@ -107,13 +109,13 @@ classifierHelper.resetDatabase = function() {
 classifierHelper.reloadDatabase = function() {
   return new Promise(function(resolve, reject) {
     gScript.addMessageListener("reloadSuccess", function handler() {
-      gScript.removeMessageListener("reloadSuccess", handler);
+      gScript.removeMessageListener('reloadSuccess', handler);
       resolve();
     });
 
     gScript.sendAsyncMessage("doReload");
   });
-};
+}
 
 classifierHelper._update = function(testUpdate, onsuccess, onerror) {
   // Queue the task if there is still an on-going update
@@ -148,7 +150,7 @@ classifierHelper._updateError = function(errorCode) {
 };
 
 classifierHelper._inited = function() {
-  classifierHelper._initsCB.forEach(function(cb) {
+  classifierHelper._initsCB.forEach(function (cb) {
     cb();
   });
   classifierHelper._initsCB = [];

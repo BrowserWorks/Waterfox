@@ -4,17 +4,15 @@
 
 //! [@supports rules](https://drafts.csswg.org/css-conditional-3/#at-supports)
 
+use cssparser::{BasicParseError, ParseError as CssParseError, ParserInput};
 use cssparser::{Delimiter, parse_important, Parser, SourceLocation, Token};
-use cssparser::{ParseError as CssParseError, ParserInput};
-#[cfg(feature = "gecko")]
-use malloc_size_of::{MallocSizeOfOps, MallocUnconditionalShallowSizeOf};
 use parser::ParserContext;
-use properties::{PropertyId, PropertyDeclaration, PropertyParserContext, SourcePropertyDeclaration};
-use selectors::parser::SelectorParseErrorKind;
+use properties::{PropertyId, PropertyDeclaration, SourcePropertyDeclaration};
+use selectors::parser::SelectorParseError;
 use servo_arc::Arc;
 use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
-use style_traits::{ToCss, ParseError};
+use style_traits::{ToCss, ParseError, StyleParseError};
 use stylesheets::{CssRuleType, CssRules};
 
 /// An [`@supports`][supports] rule.
@@ -30,16 +28,6 @@ pub struct SupportsRule {
     pub enabled: bool,
     /// The line and column of the rule's source code.
     pub source_location: SourceLocation,
-}
-
-impl SupportsRule {
-    /// Measure heap usage.
-    #[cfg(feature = "gecko")]
-    pub fn size_of(&self, guard: &SharedRwLockReadGuard, ops: &mut MallocSizeOfOps) -> usize {
-        // Measurement of other fields may be added later.
-        self.rules.unconditional_shallow_size_of(ops) +
-            self.rules.read_with(guard).size_of(guard, ops)
-    }
 }
 
 impl ToCssWithGuard for SupportsRule {
@@ -75,7 +63,7 @@ impl DeepCloneWithLock for SupportsRule {
 
 /// An @supports condition
 ///
-/// <https://drafts.csswg.org/css-conditional-3/#at-supports>
+/// https://drafts.csswg.org/css-conditional-3/#at-supports
 #[derive(Clone, Debug)]
 pub enum SupportsCondition {
     /// `not (condition)`
@@ -95,7 +83,7 @@ pub enum SupportsCondition {
 impl SupportsCondition {
     /// Parse a condition
     ///
-    /// <https://drafts.csswg.org/css-conditional/#supports_condition>
+    /// https://drafts.csswg.org/css-conditional/#supports_condition
     pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<SupportsCondition, ParseError<'i>> {
         if let Ok(_) = input.try(|i| i.expect_ident_matching("not")) {
             let inner = SupportsCondition::parse_in_parens(input)?;
@@ -104,7 +92,6 @@ impl SupportsCondition {
 
         let in_parens = SupportsCondition::parse_in_parens(input)?;
 
-        let location = input.current_source_location();
         let (keyword, wrapper) = match input.next() {
             Err(_) => {
                 // End of input
@@ -114,10 +101,10 @@ impl SupportsCondition {
                 match_ignore_ascii_case! { &ident,
                     "and" => ("and", SupportsCondition::And as fn(_) -> _),
                     "or" => ("or", SupportsCondition::Or as fn(_) -> _),
-                    _ => return Err(location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())))
+                    _ => return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into())
                 }
             }
-            Ok(t) => return Err(location.new_unexpected_token_error(t.clone()))
+            Ok(t) => return Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t.clone())))
         };
 
         let mut conditions = Vec::with_capacity(2);
@@ -133,13 +120,12 @@ impl SupportsCondition {
         }
     }
 
-    /// <https://drafts.csswg.org/css-conditional-3/#supports_condition_in_parens>
+    /// https://drafts.csswg.org/css-conditional-3/#supports_condition_in_parens
     fn parse_in_parens<'i, 't>(input: &mut Parser<'i, 't>) -> Result<SupportsCondition, ParseError<'i>> {
         // Whitespace is normally taken care of in `Parser::next`,
         // but we want to not include it in `pos` for the SupportsCondition::FutureSyntax cases.
         while input.try(Parser::expect_whitespace).is_ok() {}
         let pos = input.position();
-        let location = input.current_source_location();
         // FIXME: remove clone() when lifetimes are non-lexical
         match input.next()?.clone() {
             Token::ParenthesisBlock => {
@@ -151,7 +137,7 @@ impl SupportsCondition {
                 }
             }
             Token::Function(_) => {}
-            t => return Err(location.new_unexpected_token_error(t)),
+            t => return Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t))),
         }
         input.parse_nested_block(|i| consume_any_value(i))?;
         Ok(SupportsCondition::FutureSyntax(input.slice_from(pos).to_owned()))
@@ -171,7 +157,7 @@ impl SupportsCondition {
 }
 
 /// supports_condition | declaration
-/// <https://drafts.csswg.org/css-conditional/#dom-css-supports-conditiontext-conditiontext>
+/// https://drafts.csswg.org/css-conditional/#dom-css-supports-conditiontext-conditiontext
 pub fn parse_condition_or_declaration<'i, 't>(input: &mut Parser<'i, 't>)
                                               -> Result<SupportsCondition, ParseError<'i>> {
     if let Ok(condition) = input.try(SupportsCondition::parse) {
@@ -237,7 +223,7 @@ impl ToCss for Declaration {
     }
 }
 
-/// <https://drafts.csswg.org/css-syntax-3/#typedef-any-value>
+/// https://drafts.csswg.org/css-syntax-3/#typedef-any-value
 fn consume_any_value<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), ParseError<'i>> {
     input.expect_no_error_token().map_err(|err| err.into())
 }
@@ -254,24 +240,20 @@ impl Declaration {
 
     /// Determine if a declaration parses
     ///
-    /// <https://drafts.csswg.org/css-conditional-3/#support-definition>
-    pub fn eval(&self, context: &ParserContext) -> bool {
-        debug_assert_eq!(context.rule_type(), CssRuleType::Style);
-
+    /// https://drafts.csswg.org/css-conditional-3/#support-definition
+    pub fn eval(&self, cx: &ParserContext) -> bool {
         let mut input = ParserInput::new(&self.0);
         let mut input = Parser::new(&mut input);
-        input.parse_entirely(|input| -> Result<(), CssParseError<()>> {
+        input.parse_entirely(|input| {
             let prop = input.expect_ident().unwrap().as_ref().to_owned();
             input.expect_colon().unwrap();
-
-            let property_context = PropertyParserContext::new(&context);
-            let id = PropertyId::parse(&prop, Some(&property_context))
-                        .map_err(|()| input.new_custom_error(()))?;
-
+            let id = PropertyId::parse(&prop)
+                .map_err(|_| StyleParseError::UnspecifiedError)?;
             let mut declarations = SourcePropertyDeclaration::new();
+            let context = ParserContext::new_with_rule_type(cx, Some(CssRuleType::Style));
             input.parse_until_before(Delimiter::Bang, |input| {
-                PropertyDeclaration::parse_into(&mut declarations, id, prop.into(), &context, input)
-                    .map_err(|_| input.new_custom_error(()))
+                PropertyDeclaration::parse_into(&mut declarations, id, &context, input)
+                    .map_err(|e| StyleParseError::PropertyDeclaration(e).into())
             })?;
             let _ = input.try(parse_important);
             Ok(())

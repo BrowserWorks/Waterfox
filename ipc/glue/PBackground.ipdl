@@ -18,7 +18,6 @@ include protocol PGamepadTestChannel;
 include protocol PHttpBackgroundChannel;
 include protocol PIPCBlobInputStream;
 include protocol PPendingIPCBlob;
-include protocol PTemporaryIPCBlob;
 include protocol PMessagePort;
 include protocol PCameras;
 include protocol PQuota;
@@ -68,7 +67,6 @@ sync protocol PBackground
   manages PHttpBackgroundChannel;
   manages PIPCBlobInputStream;
   manages PPendingIPCBlob;
-  manages PTemporaryIPCBlob;
   manages PMessagePort;
   manages PCameras;
   manages PQuota;
@@ -133,8 +131,6 @@ parent:
   async PHttpBackgroundChannel(uint64_t channelId);
 
   async PWebAuthnTransaction();
-
-  async PTemporaryIPCBlob();
 
 child:
   async PCache();

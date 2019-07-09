@@ -32,7 +32,8 @@ target.setAttribute("onbeforeunload", "++window.handledCount; return window.test
 target2.setAttribute("onbeforeunload", "++window.parent.handledCount; return window.parent.testReturnValue;");
 target.setAttribute("onmousemove", "++window.handledCount; return window.testReturnValue;");                     
 
-var e = new ErrorEvent("error", {bubbles: true, cancelable: true});
+var e = document.createEvent("ErrorEvent");
+e.initEvent("error", true, true);
 window.testReturnValue = true;
 is(target.dispatchEvent(e), window.testReturnValue,
    "error event should not have reverse return value handling on div!");
@@ -42,7 +43,8 @@ is(target.dispatchEvent(e), window.testReturnValue,
    "error event should not have reverse return value handling on div (2)!");
 is(handledCount, 2, "Wrong event count!");
 
-var e = new ErrorEvent("error", {bubbles: true, cancelable: true});
+var e = document.createEvent("ErrorEvent");
+e.initEvent("error", true, true);
 window.testReturnValue = false;
 is(target2.dispatchEvent(e), !window.testReturnValue,
    "error event should have reverse return value handling!");

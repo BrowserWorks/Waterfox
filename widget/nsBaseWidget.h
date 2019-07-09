@@ -174,6 +174,7 @@ public:
     return mIsFullyOccluded;
   }
 
+  virtual nsCursor        GetCursor() override;
   virtual void            SetCursor(nsCursor aCursor) override;
   virtual nsresult        SetCursor(imgIContainer* aCursor,
                                     uint32_t aHotspotX, uint32_t aHotspotY) override;
@@ -213,7 +214,6 @@ public:
   void            CreateCompositorVsyncDispatcher();
   virtual void            CreateCompositor();
   virtual void            CreateCompositor(int aWidth, int aHeight);
-  virtual void            SetCompositorWidgetDelegate(CompositorWidgetDelegate* delegate) {}
   virtual void            PrepareWindowEffects() override {}
   virtual void            UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override {}
   virtual void            SetModal(bool aModal) override {}
@@ -249,7 +249,6 @@ public:
   virtual nsresult        SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   virtual LayoutDeviceIntPoint GetClientOffset() override;
   virtual void            EnableDragDrop(bool aEnable) override {};
-  virtual nsresult        AsyncEnableDragDrop(bool aEnable) override;
   virtual MOZ_MUST_USE nsresult
                           GetAttention(int32_t aCycleCount) override
                           { return NS_OK; }
@@ -367,7 +366,7 @@ public:
 
   virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
-  virtual bool StartAsyncAutoscroll(const ScreenPoint& aAnchorLocation,
+  virtual void StartAsyncAutoscroll(const ScreenPoint& aAnchorLocation,
                                     const ScrollableLayerGuid& aGuid) override;
 
   virtual void StopAsyncAutoscroll(const ScrollableLayerGuid& aGuid) override;
@@ -691,10 +690,15 @@ protected:
   SizeConstraints   mSizeConstraints;
   bool              mHasRemoteContent;
 
+  CompositorWidgetDelegate* mCompositorWidgetDelegate;
+
   bool              mUpdateCursor;
   bool              mUseAttachedEvents;
   bool              mIMEHasFocus;
   bool              mIsFullyOccluded;
+#if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
+  bool              mAccessibilityInUseFlag;
+#endif
   static nsIRollupListener* gRollupListener;
 
   struct InitialZoomConstraints {

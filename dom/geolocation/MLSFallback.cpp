@@ -28,8 +28,11 @@ MLSFallback::Startup(nsIGeolocationUpdate* aWatcher)
   }
 
   mUpdateWatcher = aWatcher;
-  return NS_NewTimerWithCallback(getter_AddRefs(mHandoffTimer),
-                                 this, mDelayMs, nsITimer::TYPE_ONE_SHOT);
+  nsresult rv;
+  mHandoffTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = mHandoffTimer->InitWithCallback(this, mDelayMs, nsITimer::TYPE_ONE_SHOT);
+  return rv;
 }
 
 nsresult

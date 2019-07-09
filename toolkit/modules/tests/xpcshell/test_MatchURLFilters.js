@@ -3,7 +3,7 @@
 
 "use strict";
 
-Components.utils.import("resource://gre/modules/MatchURLFilters.jsm");
+Components.utils.import("resource://gre/modules/MatchPattern.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
 function createTestFilter({url, filters}) {
@@ -386,7 +386,7 @@ add_task(async function test_match_url_filters() {
     } = currentTest;
 
     if (currentTest.shouldThrow) {
-      expectThrow({url, filters, exceptionMessageContains});
+      expectThrow({url, filters, exceptionMessageContains})
     } else if (currentTest.shouldFail) {
       expectFail({url, filters});
     } else {

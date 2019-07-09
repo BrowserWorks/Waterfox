@@ -232,10 +232,10 @@ public class TestSynchronizerSession {
     assertFirstDoesNotContainSecond(repoA.wbos, originalWbosB);
     assertFirstDoesNotContainSecond(repoB.wbos, originalWbosA);
 
-    // Timestamps not updated.
+    // Timestamps updated.
     SynchronizerConfiguration sc = syncSession.getSynchronizer().save();
-    assertEquals(0L, sc.localBundle.getTimestamp());
-    assertEquals(0L, sc.remoteBundle.getTimestamp());
+    TestSynchronizer.assertInRangeInclusive(before, sc.localBundle.getTimestamp(), after);
+    TestSynchronizer.assertInRangeInclusive(before, sc.remoteBundle.getTimestamp(), after);
   }
 
   protected void doSkipTest(boolean remoteShouldSkip, boolean localShouldSkip) {

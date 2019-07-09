@@ -23,7 +23,7 @@ Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", false);
 registerCleanupFunction(function() {
   while (gBrowser.tabs.length > 1)
     gBrowser.removeTab(gBrowser.tabs[1]);
-  Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", oldEnabledPref);
+  Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", oldEnabledPref)
 });
 
 /**
@@ -221,7 +221,7 @@ function whenFileExists(aURL, aCallback = next) {
     callback = () => whenFileExists(aURL, aCallback);
   }
 
-  setTimeout(callback, 0);
+  executeSoon(callback);
 }
 
 /**

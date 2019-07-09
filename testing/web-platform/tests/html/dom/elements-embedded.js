@@ -1,5 +1,5 @@
+// Up-to-date as of 2013-04-06.
 var embeddedElements = {
-  picture: {},
   img: {
     // Conforming
     alt: "string",
@@ -92,6 +92,7 @@ var embeddedElements = {
     preload: {type: "enum", keywords: ["none", "metadata", "auto"], nonCanon: {"": "auto"}, defaultVal: null},
     autoplay: "boolean",
     loop: "boolean",
+    mediaGroup: "string",
     controls: "boolean",
     defaultMuted: {type: "boolean", domAttrName: "muted"},
 
@@ -107,14 +108,13 @@ var embeddedElements = {
     preload: {type: "enum", keywords: ["none", "metadata", "auto"], nonCanon: {"": "auto"}, defaultVal: null},
     autoplay: "boolean",
     loop: "boolean",
+    mediaGroup: "string",
     controls: "boolean",
     defaultMuted: {type: "boolean", domAttrName: "muted"}
   },
   source: {
     src: "url",
     type: "string",
-    srcset: "string",
-    sizes: "string",
     media: "string"
   },
   track: {

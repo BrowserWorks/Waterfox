@@ -11,7 +11,7 @@ const TEST_URI = "data:text/html;charset=utf-8,<p>Web Console test for " +
 add_task(function* () {
   yield loadTab(TEST_URI);
 
-  let consoleOpened = defer();
+  let consoleOpened = promise.defer();
   let gotEvents = waitForEvents(consoleOpened.promise);
   yield openConsole().then(() => {
     consoleOpened.resolve();
@@ -21,7 +21,7 @@ add_task(function* () {
 });
 
 function waitForEvents(onConsoleOpened) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   function webConsoleCreated(id) {
     Services.obs.removeObserver(observer, "web-console-created");

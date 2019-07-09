@@ -20,7 +20,7 @@ interface nsIWebProgressListener;
 interface nsIGroupedSHistory;
 interface nsIPartialSHistory;
 
-[builtinclass, uuid(1645af04-1bc7-4363-8f2c-eb9679220ab1)]
+[scriptable, builtinclass, uuid(1645af04-1bc7-4363-8f2c-eb9679220ab1)]
 interface nsIFrameLoader : nsISupports
 {
   /**

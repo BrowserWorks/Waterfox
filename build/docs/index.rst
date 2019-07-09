@@ -27,7 +27,6 @@ Important Concepts
    toolchains
    locales
    rust
-   sparse
 
 integrated development environment (IDE)
 ========================================

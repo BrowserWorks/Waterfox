@@ -4,12 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['ENABLE_TESTS']:
-    DIRS += [
-        '/toolkit/library/gtest/rust',
-    ]
-
 DIRS += [
+    '/toolkit/library/gtest/rust',
     '/toolkit/library/rust',
 ]
 
@@ -112,6 +108,7 @@ DIRS += [
     '/tools/code-coverage',
     '/tools/power',
     '/tools/profiler',
+    '/tools/memory-profiler',
     '/xpfe/components',
 ]
 
@@ -141,6 +138,8 @@ DIRS += [
 
 if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     DIRS += ['/toolkit/system/gnome']
+
+DIRS += ['/addon-sdk']
 
 if CONFIG['ENABLE_MARIONETTE']:
     DIRS += [

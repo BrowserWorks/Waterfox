@@ -15,7 +15,7 @@ info: >
     c. Let mappedValue be ? Call(callbackfn, T, « kValue, k, O »).
   ...
 includes: [testTypedArray.js, compareArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

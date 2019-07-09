@@ -8,7 +8,7 @@
 #include "mozilla/Attributes.h"
 #include "nscore.h"
 #include "nsContainerFrame.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsILineIterator.h"
 #include "nsTArray.h"
 #include "nsTableFrame.h"
@@ -78,6 +78,7 @@ public:
   virtual nsMargin GetUsedPadding() const override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
    /** calls Reflow for all of its child rows.

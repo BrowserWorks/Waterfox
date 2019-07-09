@@ -59,8 +59,6 @@ namespace places {
 class MatchAutoCompleteFunction final : public mozIStorageFunction
 {
 public:
-  MatchAutoCompleteFunction();
-
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_MOZISTORAGEFUNCTION
 
@@ -74,13 +72,6 @@ public:
 
 private:
   ~MatchAutoCompleteFunction() {}
-
-  /**
-   * IntegerVariants for 0 and 1 are frequently used in awesomebar queries,
-   * so we cache them to avoid allocating memory repeatedly.
-   */
-  nsCOMPtr<nsIVariant> mCachedZero;
-  nsCOMPtr<nsIVariant> mCachedOne;
 
   /**
    * Argument Indexes
@@ -239,29 +230,6 @@ public:
   static nsresult create(mozIStorageConnection *aDBConn);
 private:
   ~GenerateGUIDFunction() {}
-};
-
-/**
- * SQL function to check if a GUID is valid.  This is just a wrapper around
- * IsValidGUID in Helpers.h.
- *
- * @return true if valid, false otherwise.
- */
-class IsValidGUIDFunction final : public mozIStorageFunction
-{
-public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_MOZISTORAGEFUNCTION
-
-  /**
-   * Registers the function with the specified database connection.
-   *
-   * @param aDBConn
-   *        The database connection to register with.
-   */
-  static nsresult create(mozIStorageConnection *aDBConn);
-private:
-  ~IsValidGUIDFunction() {}
 };
 
 /**

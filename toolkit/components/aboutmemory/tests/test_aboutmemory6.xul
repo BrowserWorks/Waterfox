@@ -29,7 +29,7 @@
     // is present.
     function checkForFileAndRemove(aFilename) {
       let localFile = Cc["@mozilla.org/file/local;1"]
-                        .createInstance(Ci.nsIFile);
+                        .createInstance(Ci.nsILocalFile);
       localFile.initWithPath(aFilename);
 
       let exists = localFile.exists();

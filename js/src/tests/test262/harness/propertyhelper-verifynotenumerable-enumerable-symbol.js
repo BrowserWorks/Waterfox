@@ -5,9 +5,10 @@
 description: |
     Objects whose specified symbol property is enumerable do not satisfy the
     assertion.
-includes: [propertyHelper.js,sta.js]
+includes: [propertyHelper.js]
 features: [Symbol]
 ---*/
+
 var threw = false;
 var obj = {};
 var s = Symbol('1');

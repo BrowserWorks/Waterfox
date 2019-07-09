@@ -15,7 +15,6 @@
 
 // template <class T> class RefPtrGetterAddRefs;
 
-class nsQueryReferent;
 class nsCOMPtr_helper;
 
 namespace mozilla {
@@ -45,7 +44,7 @@ struct RefPtrTraits
 } // namespace mozilla
 
 template <class T>
-class MOZ_IS_REFPTR RefPtr
+class RefPtr
 {
 private:
   void
@@ -149,7 +148,6 @@ public:
   {
   }
 
-  MOZ_IMPLICIT RefPtr(const nsQueryReferent& aHelper);
   MOZ_IMPLICIT RefPtr(const nsCOMPtr_helper& aHelper);
 
   // Defined in OwningNonNull.h
@@ -212,7 +210,6 @@ public:
     return *this;
   }
 
-  RefPtr<T>& operator=(const nsQueryReferent& aQueryReferent);
   RefPtr<T>& operator=(const nsCOMPtr_helper& aHelper);
 
   RefPtr<T>&

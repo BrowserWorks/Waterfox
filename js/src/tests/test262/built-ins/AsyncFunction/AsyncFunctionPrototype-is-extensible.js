@@ -3,7 +3,7 @@
 
 /*---
 author: Brian Terlson <brian.terlson@microsoft.com>
-esid: sec-sync-function-prototype-properties
+esid: pending
 description: >
   %AsyncFunctionPrototype% has a [[Extensible]] of true
 ---*/

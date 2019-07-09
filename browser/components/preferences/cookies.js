@@ -7,7 +7,7 @@ const nsICookie = Components.interfaces.nsICookie;
 
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/PluralForm.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm")
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "SiteDataManager",
@@ -16,14 +16,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
                                   "resource://gre/modules/ContextualIdentityService.jsm");
 
 var gCookiesWindow = {
+  _cm: Components.classes["@mozilla.org/cookiemanager;1"]
+                    .getService(Components.interfaces.nsICookieManager),
   _hosts: {},
   _hostOrder: [],
   _tree: null,
   _bundle: null,
 
   init() {
-    Services.obs.addObserver(this, "cookie-changed");
-    Services.obs.addObserver(this, "perm-changed");
+    var os = Components.classes["@mozilla.org/observer-service;1"]
+                       .getService(Components.interfaces.nsIObserverService);
+    os.addObserver(this, "cookie-changed");
+    os.addObserver(this, "perm-changed");
 
     this._bundle = document.getElementById("bundlePreferences");
     this._tree = document.getElementById("cookiesList");
@@ -43,8 +47,10 @@ var gCookiesWindow = {
   },
 
   uninit() {
-    Services.obs.removeObserver(this, "cookie-changed");
-    Services.obs.removeObserver(this, "perm-changed");
+    var os = Components.classes["@mozilla.org/observer-service;1"]
+                       .getService(Components.interfaces.nsIObserverService);
+    os.removeObserver(this, "cookie-changed");
+    os.removeObserver(this, "perm-changed");
   },
 
   _populateList(aInitialLoad) {
@@ -208,8 +214,8 @@ var gCookiesWindow = {
       var cacheIndex = Math.min(this._cacheValid, aIndex);
       if (cacheIndex > 0) {
         var cacheItem = this._cacheItems[cacheIndex];
-        start = cacheItem.start;
-        count = hostIndex = cacheItem.count;
+        start = cacheItem["start"];
+        count = hostIndex = cacheItem["count"];
       }
 
       for (let i = start; i < gCookiesWindow._hostOrder.length; ++i) { // var host in gCookiesWindow._hosts) {
@@ -469,7 +475,7 @@ var gCookiesWindow = {
   },
 
   _loadCookies() {
-    var e = Services.cookies.enumerator;
+    var e = this._cm.enumerator;
     var hostCount = { value: 0 };
     this._hosts = {};
     this._hostOrder = [];
@@ -570,11 +576,13 @@ var gCookiesWindow = {
   },
 
   performDeletion: function gCookiesWindow_performDeletion(deleteItems) {
+    var psvc = Components.classes["@mozilla.org/preferences-service;1"]
+                         .getService(Components.interfaces.nsIPrefBranch);
     var blockFutureCookies = false;
-    if (Services.prefs.prefHasUserValue("network.cookie.blockFutureCookies"))
-      blockFutureCookies = Services.prefs.getBoolPref("network.cookie.blockFutureCookies");
+    if (psvc.prefHasUserValue("network.cookie.blockFutureCookies"))
+      blockFutureCookies = psvc.getBoolPref("network.cookie.blockFutureCookies");
     for (let item of deleteItems) {
-      Services.cookies.remove(item.host, item.name, item.path,
+      this._cm.remove(item.host, item.name, item.path,
                       blockFutureCookies, item.originAttributes);
     }
   },
@@ -714,7 +722,7 @@ var gCookiesWindow = {
       this._tree.treeBoxObject.rowCountChanged(0, -rowCount);
       this.performDeletion(deleteItems);
     } else {
-      Services.cookies.removeAll();
+      this._cm.removeAll();
     }
     this._updateRemoveAllButton();
     this.focusFilterBox();

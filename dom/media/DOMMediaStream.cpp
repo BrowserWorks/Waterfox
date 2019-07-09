@@ -368,7 +368,7 @@ NS_IMPL_ADDREF_INHERITED(DOMMediaStream::PlaybackTrackListener,
                          MediaStreamTrackConsumer)
 NS_IMPL_RELEASE_INHERITED(DOMMediaStream::PlaybackTrackListener,
                           MediaStreamTrackConsumer)
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMMediaStream::PlaybackTrackListener)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DOMMediaStream::PlaybackTrackListener)
 NS_INTERFACE_MAP_END_INHERITING(MediaStreamTrackConsumer)
 NS_IMPL_CYCLE_COLLECTION_INHERITED(DOMMediaStream::PlaybackTrackListener,
                                    MediaStreamTrackConsumer,
@@ -404,7 +404,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_ADDREF_INHERITED(DOMMediaStream, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(DOMMediaStream, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMMediaStream)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DOMMediaStream)
   NS_INTERFACE_MAP_ENTRY(DOMMediaStream)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
@@ -421,7 +421,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(DOMAudioNodeMediaStream, DOMMediaStream,
 NS_IMPL_ADDREF_INHERITED(DOMAudioNodeMediaStream, DOMMediaStream)
 NS_IMPL_RELEASE_INHERITED(DOMAudioNodeMediaStream, DOMMediaStream)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMAudioNodeMediaStream)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DOMAudioNodeMediaStream)
 NS_INTERFACE_MAP_END_INHERITING(DOMMediaStream)
 
 DOMMediaStream::DOMMediaStream(nsPIDOMWindowInner* aWindow,
@@ -563,7 +563,8 @@ DOMMediaStream::Constructor(const GlobalObject& aGlobal,
   if (!newStream->GetPlaybackStream()) {
     MOZ_ASSERT(aTracks.IsEmpty());
     MediaStreamGraph* graph =
-      MediaStreamGraph::GetInstance(MediaStreamGraph::SYSTEM_THREAD_DRIVER, ownerWindow);
+      MediaStreamGraph::GetInstance(MediaStreamGraph::SYSTEM_THREAD_DRIVER,
+                                    AudioChannel::Normal, ownerWindow);
     newStream->InitPlaybackStreamCommon(graph);
   }
 
@@ -726,7 +727,7 @@ NS_IMPL_ADDREF_INHERITED(ClonedStreamSourceGetter,
                          MediaStreamTrackSourceGetter)
 NS_IMPL_RELEASE_INHERITED(ClonedStreamSourceGetter,
                           MediaStreamTrackSourceGetter)
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ClonedStreamSourceGetter)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ClonedStreamSourceGetter)
 NS_INTERFACE_MAP_END_INHERITING(MediaStreamTrackSourceGetter)
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ClonedStreamSourceGetter,
                                    MediaStreamTrackSourceGetter,
@@ -842,20 +843,27 @@ DOMMediaStream::OwnsTrack(const MediaStreamTrack& aTrack) const
 }
 
 bool
+DOMMediaStream::AddDirectListener(DirectMediaStreamListener* aListener)
+{
+  if (GetInputStream() && GetInputStream()->AsSourceStream()) {
+    GetInputStream()->AsSourceStream()->AddDirectListener(aListener);
+    return true; // application should ignore NotifyQueuedTrackData
+  }
+  return false;
+}
+
+void
+DOMMediaStream::RemoveDirectListener(DirectMediaStreamListener* aListener)
+{
+  if (GetInputStream() && GetInputStream()->AsSourceStream()) {
+    GetInputStream()->AsSourceStream()->RemoveDirectListener(aListener);
+  }
+}
+
+bool
 DOMMediaStream::IsFinished() const
 {
   return !mPlaybackStream || mPlaybackStream->IsFinished();
-}
-
-TrackRate
-DOMMediaStream::GraphRate()
-{
-  if (mPlaybackStream) { return mPlaybackStream->GraphRate(); }
-  if (mOwnedStream) { return mOwnedStream->GraphRate(); }
-  if (mInputStream) { return mInputStream->GraphRate(); }
-
-  MOZ_ASSERT(false, "Not hooked up to a graph");
-  return 0;
 }
 
 void

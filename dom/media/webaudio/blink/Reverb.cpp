@@ -38,21 +38,21 @@ using namespace mozilla;
 namespace WebCore {
 
 // Empirical gain calibration tested across many impulse responses to ensure perceived volume is same as dry (unprocessed) signal
-const float GainCalibration = 0.00125f;
+const float GainCalibration = -58;
 const float GainCalibrationSampleRate = 44100;
 
 // A minimum power value to when normalizing a silent (or very quiet) impulse response
 const float MinPower = 0.000125f;
 
-static float calculateNormalizationScale(const nsTArray<const float*>& response, size_t aLength, float sampleRate)
+static float calculateNormalizationScale(ThreadSharedFloatArrayBufferList* response, size_t aLength, float sampleRate)
 {
     // Normalize by RMS power
-    size_t numberOfChannels = response.Length();
+    size_t numberOfChannels = response->GetChannels();
 
     float power = 0;
 
     for (size_t i = 0; i < numberOfChannels; ++i) {
-        float channelPower = AudioBufferSumOfSquares(response[i], aLength);
+        float channelPower = AudioBufferSumOfSquares(static_cast<const float*>(response->GetData(i)), aLength);
         power += channelPower;
     }
 
@@ -64,43 +64,45 @@ static float calculateNormalizationScale(const nsTArray<const float*>& response,
 
     float scale = 1 / power;
 
-    scale *= GainCalibration; // calibrate to make perceived volume same as unprocessed
+    scale *= powf(10, GainCalibration * 0.05f); // calibrate to make perceived volume same as unprocessed
 
     // Scale depends on sample-rate.
     if (sampleRate)
         scale *= GainCalibrationSampleRate / sampleRate;
 
     // True-stereo compensation
-    if (numberOfChannels == 4)
+    if (response->GetChannels() == 4)
         scale *= 0.5f;
 
     return scale;
 }
 
-Reverb::Reverb(const AudioChunk& impulseResponse, size_t maxFFTSize, bool useBackgroundThreads, bool normalize, float sampleRate)
+Reverb::Reverb(ThreadSharedFloatArrayBufferList* impulseResponse, size_t impulseResponseBufferLength, size_t maxFFTSize, size_t numberOfChannels, bool useBackgroundThreads, bool normalize, float sampleRate)
 {
-    size_t impulseResponseBufferLength = impulseResponse.mDuration;
-    float scale = impulseResponse.mVolume;
+    float scale = 1;
 
-    AutoTArray<const float*,4> irChannels(impulseResponse.ChannelData<float>());
+    AutoTArray<const float*,4> irChannels;
+    for (size_t i = 0; i < impulseResponse->GetChannels(); ++i) {
+        irChannels.AppendElement(impulseResponse->GetData(i));
+    }
     AutoTArray<float,1024> tempBuf;
 
     if (normalize) {
-        scale = calculateNormalizationScale(irChannels, impulseResponseBufferLength, sampleRate);
-    }
+        scale = calculateNormalizationScale(impulseResponse, impulseResponseBufferLength, sampleRate);
 
-    if (scale != 1.0f) {
-        tempBuf.SetLength(irChannels.Length()*impulseResponseBufferLength);
-        for (uint32_t i = 0; i < irChannels.Length(); ++i) {
-            float* buf = &tempBuf[i*impulseResponseBufferLength];
-            AudioBufferCopyWithScale(irChannels[i], scale, buf,
-                                     impulseResponseBufferLength);
-            irChannels[i] = buf;
+        if (scale) {
+            tempBuf.SetLength(irChannels.Length()*impulseResponseBufferLength);
+            for (uint32_t i = 0; i < irChannels.Length(); ++i) {
+                float* buf = &tempBuf[i*impulseResponseBufferLength];
+                AudioBufferCopyWithScale(irChannels[i], scale, buf,
+                                         impulseResponseBufferLength);
+                irChannels[i] = buf;
+            }
         }
     }
 
     initialize(irChannels, impulseResponseBufferLength,
-               maxFFTSize, useBackgroundThreads);
+               maxFFTSize, numberOfChannels, useBackgroundThreads);
 }
 
 size_t Reverb::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
@@ -120,13 +122,13 @@ size_t Reverb::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
 void Reverb::initialize(const nsTArray<const float*>& impulseResponseBuffer,
                         size_t impulseResponseBufferLength,
-                        size_t maxFFTSize, bool useBackgroundThreads)
+                        size_t maxFFTSize, size_t numberOfChannels, bool useBackgroundThreads)
 {
     m_impulseResponseLength = impulseResponseBufferLength;
 
     // The reverb can handle a mono impulse response and still do stereo processing
     size_t numResponseChannels = impulseResponseBuffer.Length();
-    m_convolvers.SetCapacity(numResponseChannels);
+    m_convolvers.SetCapacity(numberOfChannels);
 
     int convolverRenderPhase = 0;
     for (size_t i = 0; i < numResponseChannels; ++i) {
@@ -151,12 +153,8 @@ void Reverb::process(const AudioBlock* sourceBus, AudioBlock* destinationBus)
 {
     // Do a fairly comprehensive sanity check.
     // If these conditions are satisfied, all of the source and destination pointers will be valid for the various matrixing cases.
-    bool isSafeToProcess =
-      sourceBus && destinationBus && sourceBus->ChannelCount() > 0 &&
-      destinationBus->mChannelData.Length() > 0 &&
-      WEBAUDIO_BLOCK_SIZE <= MaxFrameSize &&
-      WEBAUDIO_BLOCK_SIZE <= size_t(sourceBus->GetDuration()) &&
-      WEBAUDIO_BLOCK_SIZE <= size_t(destinationBus->GetDuration());
+    bool isSafeToProcess = sourceBus && destinationBus && sourceBus->ChannelCount() > 0 && destinationBus->mChannelData.Length() > 0
+        && WEBAUDIO_BLOCK_SIZE <= MaxFrameSize && WEBAUDIO_BLOCK_SIZE <= size_t(sourceBus->GetDuration()) && WEBAUDIO_BLOCK_SIZE <= size_t(destinationBus->GetDuration());
 
     MOZ_ASSERT(isSafeToProcess);
     if (!isSafeToProcess)

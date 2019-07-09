@@ -5,7 +5,7 @@
 description: Destructuring initializer is not evaluated when value is not `undefined` (static class expression generator method)
 esid: sec-class-definitions-runtime-semantics-evaluation
 es6id: 14.5.16
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     ClassExpression : class BindingIdentifieropt ClassTail

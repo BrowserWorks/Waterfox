@@ -4,10 +4,10 @@
 
 use cssparser::ToCss;
 use parser::SelectorImpl;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::fmt;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct AttrSelectorWithNamespace<Impl: SelectorImpl> {
     pub namespace: NamespaceConstraint<(Impl::NamespacePrefix, Impl::NamespaceUrl)>,
     pub local_name: Impl::LocalName,
@@ -27,7 +27,7 @@ impl<Impl: SelectorImpl> AttrSelectorWithNamespace<Impl> {
     }
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum NamespaceConstraint<NamespaceUrl> {
     Any,
 
@@ -35,7 +35,7 @@ pub enum NamespaceConstraint<NamespaceUrl> {
     Specific(NamespaceUrl),
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum ParsedAttrSelectorOperation<AttrValue> {
     Exists,
     WithValue {
@@ -45,7 +45,7 @@ pub enum ParsedAttrSelectorOperation<AttrValue> {
     }
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum AttrSelectorOperation<AttrValue> {
     Exists,
     WithValue {
@@ -66,7 +66,7 @@ impl<AttrValue> AttrSelectorOperation<AttrValue> {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub enum AttrSelectorOperator {
     Equal,
     Includes,
@@ -127,7 +127,7 @@ impl AttrSelectorOperator {
 /// The definition of whitespace per CSS Selectors Level 3 § 4.
 pub static SELECTOR_WHITESPACE: &'static [char] = &[' ', '\t', '\n', '\r', '\x0C'];
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ParsedCaseSensitivity {
     CaseSensitive,
     AsciiCaseInsensitive,
@@ -150,7 +150,7 @@ impl ParsedCaseSensitivity {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum CaseSensitivity {
     CaseSensitive,
     AsciiCaseInsensitive,

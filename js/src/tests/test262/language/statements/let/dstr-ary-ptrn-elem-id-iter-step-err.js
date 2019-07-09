@@ -5,7 +5,7 @@
 description: Error forwarding when IteratorStep returns an abrupt completion (`let` statement)
 esid: sec-let-and-const-declarations-runtime-semantics-evaluation
 es6id: 13.3.1.4
-features: [Symbol.iterator, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     LexicalBinding : BindingPattern Initializer
@@ -26,7 +26,6 @@ info: |
        a. Let next be IteratorStep(iteratorRecord.[[iterator]]).
        b. If next is an abrupt completion, set iteratorRecord.[[done]] to true.
        c. ReturnIfAbrupt(next).
-
 ---*/
 var g = {};
 g[Symbol.iterator] = function() {

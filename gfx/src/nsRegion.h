@@ -58,8 +58,8 @@ public:
   MOZ_IMPLICIT nsRegion (const nsRect& aRect) { pixman_region32_init_rect(&mImpl,
                                                                           aRect.x,
                                                                           aRect.y,
-                                                                          aRect.Width(),
-                                                                          aRect.Height()); }
+                                                                          aRect.width,
+                                                                          aRect.height); }
   explicit nsRegion (mozilla::gfx::ArrayView<pixman_box32_t> aRects)
   {
     pixman_region32_init_rects(&mImpl, aRects.Data(), aRects.Length());
@@ -121,7 +121,7 @@ public:
   }
   nsRegion& And(const nsRegion& aRegion, const nsRect& aRect)
   {
-    pixman_region32_intersect_rect(&mImpl, aRegion.Impl(), aRect.x, aRect.y, aRect.Width(), aRect.Height());
+    pixman_region32_intersect_rect(&mImpl, aRegion.Impl(), aRect.x, aRect.y, aRect.width, aRect.height);
     return *this;
   }
   nsRegion& And(const nsRect& aRect1, const nsRect& aRect2)
@@ -147,7 +147,7 @@ public:
   }
   nsRegion& Or(const nsRegion& aRegion, const nsRect& aRect)
   {
-    pixman_region32_union_rect(&mImpl, aRegion.Impl(), aRect.x, aRect.y, aRect.Width(), aRect.Height());
+    pixman_region32_union_rect(&mImpl, aRegion.Impl(), aRect.x, aRect.y, aRect.width, aRect.height);
     return *this;
   }
   nsRegion& Or(const nsRect& aRect, const nsRegion& aRegion)
@@ -394,26 +394,6 @@ public:
 
   RectIterator RectIter() const { return RectIterator(*this); }
 
-  static inline pixman_box32_t RectToBox(const nsRect &aRect)
-  {
-    pixman_box32_t box = { aRect.X(), aRect.Y(), aRect.XMost(), aRect.YMost() };
-    return box;
-  }
-
-  static inline pixman_box32_t RectToBox(const mozilla::gfx::IntRect &aRect)
-  {
-    pixman_box32_t box = { aRect.X(), aRect.Y(), aRect.XMost(), aRect.YMost() };
-    return box;
-  }
-
-
-  static inline nsRect BoxToRect(const pixman_box32_t &aBox)
-  {
-    return nsRect(aBox.x1, aBox.y1,
-                  aBox.x2 - aBox.x1,
-                  aBox.y2 - aBox.y1);
-  }
-
 private:
   pixman_region32_t mImpl;
 
@@ -449,6 +429,26 @@ private:
       pixman_region32_reset(&mImpl, &box);
     }
     return *this;
+  }
+
+  static inline pixman_box32_t RectToBox(const nsRect &aRect)
+  {
+    pixman_box32_t box = { aRect.x, aRect.y, aRect.XMost(), aRect.YMost() };
+    return box;
+  }
+
+  static inline pixman_box32_t RectToBox(const mozilla::gfx::IntRect &aRect)
+  {
+    pixman_box32_t box = { aRect.x, aRect.y, aRect.XMost(), aRect.YMost() };
+    return box;
+  }
+
+
+  static inline nsRect BoxToRect(const pixman_box32_t &aBox)
+  {
+    return nsRect(aBox.x1, aBox.y1,
+                  aBox.x2 - aBox.x1,
+                  aBox.y2 - aBox.y1);
   }
 
   pixman_region32_t* Impl() const
@@ -794,11 +794,11 @@ private:
 
   static nsRect ToRect(const Rect& aRect)
   {
-    return nsRect (aRect.x, aRect.y, aRect.Width(), aRect.Height());
+    return nsRect (aRect.x, aRect.y, aRect.width, aRect.height);
   }
   static Rect FromRect(const nsRect& aRect)
   {
-    return Rect (aRect.x, aRect.y, aRect.Width(), aRect.Height());
+    return Rect (aRect.x, aRect.y, aRect.width, aRect.height);
   }
 
   Derived& This()

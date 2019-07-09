@@ -23,6 +23,9 @@ def make_beetmover_description(config, jobs):
             yield job
             continue
 
+        label = job.get('label',
+                        "beetmover-{}-{}".format(locale, dep_job.label))
+
         group = 'tc-BMR-L10n'
 
         # add the locale code
@@ -33,9 +36,9 @@ def make_beetmover_description(config, jobs):
         }
 
         beet_description = {
-            'label': job['label'],
             'dependent-task': dep_job,
             'treeherder': treeherder,
+            'label': label,
             'locale': locale,
         }
         yield beet_description

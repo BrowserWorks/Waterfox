@@ -453,7 +453,7 @@ function getFrameContentOffset(frame) {
 function getElementFromPoint(document, x, y) {
   let node = document.elementFromPoint(x, y);
   if (node && node.contentDocument) {
-    if (ChromeUtils.getClassName(node) === "HTMLIFrameElement") {
+    if (node instanceof Ci.nsIDOMHTMLIFrameElement) {
       let rect = node.getBoundingClientRect();
 
       // Gap between the frame and its content window.
@@ -467,8 +467,8 @@ function getElementFromPoint(document, x, y) {
         return node;
       }
     }
-    if (ChromeUtils.getClassName(node) === "HTMLIFrameElement" ||
-        ChromeUtils.getClassName(node) === "HTMLFrameElement") {
+    if (node instanceof Ci.nsIDOMHTMLIFrameElement ||
+        node instanceof Ci.nsIDOMHTMLFrameElement) {
       let subnode = getElementFromPoint(node.contentDocument, x, y);
       if (subnode) {
         node = subnode;

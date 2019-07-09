@@ -1,13 +1,12 @@
 "use strict";
 
-const profileDir = do_get_profile();
+do_get_profile();
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/ContextualIdentityService.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
 
-const TEST_STORE_FILE_PATH = OS.Path.join(profileDir.path, "test-containers.json");
+const TEST_STORE_FILE_NAME = "test-containers.json";
 
 let cis;
 
@@ -15,7 +14,7 @@ let cis;
 add_task(function() {
   ok(!!ContextualIdentityService, "ContextualIdentityService exists");
 
-  cis = ContextualIdentityService.createNewInstanceForTesting(TEST_STORE_FILE_PATH);
+  cis = ContextualIdentityService.createNewInstanceForTesting(TEST_STORE_FILE_NAME);
   ok(!!cis, "We have our instance of ContextualIdentityService");
 
   equal(cis.getPublicIdentities().length, 4, "By default, 4 containers.");

@@ -58,11 +58,7 @@ static void
 NormalizeDefaultFont(nsFont& aFont, float aFontSizeInflation)
 {
   if (aFont.fontlist.GetDefaultFontType() != eFamily_none) {
-    nsTArray<FontFamilyName> names;
-    names.AppendElements(aFont.fontlist.GetFontlist()->mNames);
-    names.AppendElement(FontFamilyName(aFont.fontlist.GetDefaultFontType()));
-
-    aFont.fontlist.SetFontlist(Move(names));
+    aFont.fontlist.Append(FontFamilyName(aFont.fontlist.GetDefaultFontType()));
     aFont.fontlist.SetDefaultFontType(eFamily_none);
   }
   aFont.size = NSToCoordRound(aFont.size * aFontSizeInflation);
@@ -978,9 +974,7 @@ nsMathMLChar::SetFontFamily(nsPresContext*          aPresContext,
   FontFamilyList glyphCodeFont;
 
   if (aGlyphCode.font) {
-    nsTArray<FontFamilyName> names;
-    names.AppendElement(aGlyphTable->FontNameFor(aGlyphCode));
-    glyphCodeFont.SetFontlist(Move(names));
+    glyphCodeFont.Append(aGlyphTable->FontNameFor(aGlyphCode));
   }
 
   const FontFamilyList& familyList =
@@ -1000,8 +994,9 @@ nsMathMLChar::SetFontFamily(nsPresContext*          aPresContext,
     // Set the font if it is an unicode table
     // or if the same family name has been found
     gfxFont *firstFont = fm->GetThebesFontGroup()->GetFirstValidFont();
-    FontFamilyList firstFontList(
-      firstFont->GetFontEntry()->FamilyName(), eUnquotedName);
+    FontFamilyList firstFontList;
+    firstFontList.Append(
+      FontFamilyName(firstFont->GetFontEntry()->FamilyName(), eUnquotedName));
     if (aGlyphTable == &gGlyphTableList->mUnicodeTable ||
         firstFontList == familyList) {
       aFont.fontlist = familyList;
@@ -1423,7 +1418,8 @@ nsMathMLChar::StretchEnumContext::EnumCallback(const FontFamilyName& aFamily,
   nsFont font = sc->StyleFont()->mFont;
   NormalizeDefaultFont(font, context->mFontSizeInflation);
   RefPtr<gfxFontGroup> fontGroup;
-  FontFamilyList family(unquotedFamilyName);
+  FontFamilyList family;
+  family.Append(unquotedFamilyName);
   if (!aGeneric && !context->mChar->SetFontFamily(context->mPresContext,
                                                   nullptr, kNullGlyph, family,
                                                   font, &fontGroup))
@@ -1473,36 +1469,30 @@ nsMathMLChar::StretchEnumContext::EnumCallback(const FontFamilyName& aFamily,
   return true; // true means continue
 }
 
-static void
-AppendFallbacks(nsTArray<FontFamilyName>& aNames,
-                const nsTArray<nsString>& aFallbacks)
-{
-  for (const nsString& fallback : aFallbacks) {
-    aNames.AppendElement(FontFamilyName(fallback, eUnquotedName));
-  }
-}
-
 // insert math fallback families just before the first generic or at the end
 // when no generic present
 static void
 InsertMathFallbacks(FontFamilyList& aFamilyList,
                     nsTArray<nsString>& aFallbacks)
 {
-  nsTArray<FontFamilyName> mergedList;
+  FontFamilyList aMergedList;
 
   bool inserted = false;
-  for (const FontFamilyName& name : aFamilyList.GetFontlist()->mNames) {
+  const nsTArray<FontFamilyName>& fontlist = aFamilyList.GetFontlist();
+  uint32_t i, num = fontlist.Length();
+  for (i = 0; i < num; i++) {
+    const FontFamilyName& name = fontlist[i];
     if (!inserted && name.IsGeneric()) {
       inserted = true;
-      AppendFallbacks(mergedList, aFallbacks);
+      aMergedList.Append(aFallbacks);
     }
-    mergedList.AppendElement(name);
+    aMergedList.Append(name);
   }
 
   if (!inserted) {
-    AppendFallbacks(mergedList, aFallbacks);
+    aMergedList.Append(aFallbacks);
   }
-  aFamilyList.SetFontlist(Move(mergedList));
+  aFamilyList = aMergedList;
 }
 
 nsresult
@@ -1666,7 +1656,7 @@ nsMathMLChar::StretchInternal(nsIFrame*                aForFrame,
                                 aDesiredStretchSize, font.fontlist, glyphFound);
     enumData.mTryParts = !largeopOnly;
 
-    const nsTArray<FontFamilyName>& fontlist = font.fontlist.GetFontlist()->mNames;
+    const nsTArray<FontFamilyName>& fontlist = font.fontlist.GetFontlist();
     uint32_t i, num = fontlist.Length();
     bool next = true;
     for (i = 0; i < num && next; i++) {
@@ -1877,9 +1867,7 @@ public:
   }
 #endif
 
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
-  {
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override {
     *aSnap = false;
     nsRect rect;
     mChar->GetRect(rect);
@@ -1901,14 +1889,15 @@ public:
 
   NS_DISPLAY_DECL_NAME("MathMLCharForeground", TYPE_MATHML_CHAR_FOREGROUND)
 
-  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) const override
+  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) override
   {
     bool snap;
     return GetBounds(aBuilder, &snap);
   }
 
-  virtual uint32_t GetPerFrameKey() const override {
-    return (mIndex << TYPE_BITS) | nsDisplayItem::GetPerFrameKey();
+  virtual uint32_t GetPerFrameKey() override {
+    return (mIndex << nsDisplayItem::TYPE_BITS)
+      | nsDisplayItem::GetPerFrameKey();
   }
 
 private:

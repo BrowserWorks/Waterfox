@@ -16,7 +16,7 @@
         <item
             android:id="@+id/dismiss"
             android:icon="@drawable/as_dismiss"
-            android:title="@string/activity_stream_remove"/>
+            android:title="@string/activity_stream_dismiss"/>
 
         <item
             android:id="@+id/delete"
@@ -45,6 +45,6 @@
         <item
             android:id="@+id/add_homescreen"
             android:icon="@drawable/as_home"
-            android:title="@string/contextmenu_add_page_shortcut"/>
+            android:title="@string/contextmenu_add_to_launcher"/>
     </group>
 </menu>

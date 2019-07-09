@@ -8,7 +8,7 @@
 
 const Services = require("Services");
 const {Task} = require("devtools/shared/task");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {
   VIEW_NODE_VALUE_TYPE,
   VIEW_NODE_SHAPE_POINT_TYPE
@@ -535,7 +535,7 @@ HighlightersOverlay.prototype = {
     // whether the result is truthy before installing the handler.
     let onHidden = this.highlighters[this.hoveredHighlighterShown].hide();
     if (onHidden) {
-      onHidden.catch(console.error);
+      onHidden.catch(e => console.error(e));
     }
 
     this.hoveredHighlighterShown = null;

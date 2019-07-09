@@ -19,7 +19,7 @@
 
 class nsXBLPrototypeBinding;
 class nsIContent;
-class nsAtom;
+class nsIAtom;
 class nsIDocument;
 
 namespace mozilla {
@@ -105,11 +105,10 @@ public:
   bool ImplementsInterface(REFNSIID aIID) const;
 
   void GenerateAnonymousContent();
-  void BindAnonymousContent(nsIContent* aAnonParent, nsIContent* aElement,
-                            bool aNativeAnon);
-  static void UnbindAnonymousContent(nsIDocument* aDocument,
-                                     nsIContent* aAnonParent,
-                                     bool aNullParent = true);
+  void InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElement,
+                               bool aNativeAnon);
+  static void UninstallAnonymousContent(nsIDocument* aDocument,
+                                        nsIContent* aAnonParent);
   void InstallEventHandlers();
   nsresult InstallImplementation();
 
@@ -117,21 +116,21 @@ public:
   void ExecuteDetachedHandler();
   void UnhookEventHandlers();
 
-  nsAtom* GetBaseTag(int32_t* aNameSpaceID);
+  nsIAtom* GetBaseTag(int32_t* aNameSpaceID);
   nsXBLBinding* RootBinding();
 
   // Resolve all the fields for this binding and all ancestor bindings on the
   // object |obj|.  False return means a JS exception was set.
   bool ResolveAllFields(JSContext *cx, JS::Handle<JSObject*> obj) const;
 
-  void AttributeChanged(nsAtom* aAttribute, int32_t aNameSpaceID,
+  void AttributeChanged(nsIAtom* aAttribute, int32_t aNameSpaceID,
                         bool aRemoveFlag, bool aNotify);
 
   void ChangeDocument(nsIDocument* aOldDocument, nsIDocument* aNewDocument);
 
   void WalkRules(nsIStyleRuleProcessor::EnumFunc aFunc, void* aData);
 
-  mozilla::ServoStyleSet* GetServoStyleSet() const;
+  const mozilla::ServoStyleSet* GetServoStyleSet() const;
 
   static nsresult DoInitJSClass(JSContext *cx, JS::Handle<JSObject*> obj,
                                 const nsString& aClassName,

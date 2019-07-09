@@ -94,6 +94,9 @@ public:
 
   virtual bool SendDeactivate(PBrowserParent* aTab) = 0;
 
+  virtual bool SendParentActivated(PBrowserParent* aTab,
+                                   const bool& aActivated) = 0;
+
   virtual int32_t Pid() const = 0;
 
   virtual mozilla::ipc::PParentToChildStreamParent*
@@ -113,15 +116,6 @@ protected: // IPDL methods
                                               const ContentParentId& aCpId,
                                               const bool& aIsForBrowser);
   virtual bool DeallocPBrowserParent(PBrowserParent* frame);
-
-  virtual mozilla::ipc::IPCResult
-  RecvPBrowserConstructor(PBrowserParent* actor,
-                          const TabId& tabId,
-                          const TabId& sameTabGroupAs,
-                          const IPCTabContext& context,
-                          const uint32_t& chromeFlags,
-                          const ContentParentId& cpId,
-                          const bool& isForBrowser);
 
   virtual mozilla::ipc::PIPCBlobInputStreamParent*
   AllocPIPCBlobInputStreamParent(const nsID& aID, const uint64_t& aSize);

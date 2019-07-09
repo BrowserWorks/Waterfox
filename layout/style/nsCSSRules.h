@@ -180,9 +180,9 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
 #ifdef DEBUG
-  void List(FILE* out = stdout, int32_t aIndent = 0) const final;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
-  already_AddRefed<mozilla::css::Rule> Clone() const final;
+  virtual already_AddRefed<mozilla::css::Rule> Clone() const override;
 
   // nsIDOMCSSFontFeatureValuesRule interface
   NS_DECL_NSIDOMCSSFONTFEATUREVALUESRULE
@@ -190,11 +190,8 @@ public:
   // WebIDL interface
   void GetCssTextImpl(nsAString& aCssText) const final;
 
-  mozilla::SharedFontList* GetFamilyList() const { return mFamilyList; }
-  void SetFamilyList(mozilla::SharedFontList* aFamilyList)
-  {
-    mFamilyList = aFamilyList;
-  }
+  const mozilla::FontFamilyList& GetFamilyList() { return mFamilyList; }
+  void SetFamilyList(const mozilla::FontFamilyList& aFamilyList);
 
   void AddValueList(int32_t aVariantAlternate,
                     nsTArray<gfxFontFeatureValueSet::ValueList>& aValueList);
@@ -204,12 +201,12 @@ public:
     return mFeatureValues;
   }
 
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const final;
+  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
 protected:
   ~nsCSSFontFeatureValuesRule() {}
 
-  RefPtr<mozilla::SharedFontList> mFamilyList;
+  mozilla::FontFamilyList mFamilyList;
   nsTArray<gfxFontFeatureValueSet::FeatureValues> mFeatureValues;
 };
 
@@ -296,7 +293,7 @@ private:
 class nsCSSKeyframesRule final : public mozilla::dom::CSSKeyframesRule
 {
 public:
-  nsCSSKeyframesRule(already_AddRefed<nsAtom> aName,
+  nsCSSKeyframesRule(const nsAString& aName,
                      uint32_t aLineNumber, uint32_t aColumnNumber)
     : mozilla::dom::CSSKeyframesRule(aLineNumber, aColumnNumber)
     , mName(aName)
@@ -326,14 +323,14 @@ public:
   mozilla::dom::CSSRuleList* CssRules() final { return GroupRule::CssRules(); }
   nsCSSKeyframeRule* FindRule(const nsAString& aKey) final;
 
-  const nsAtom* GetName() const { return mName; }
+  const nsString& GetName() { return mName; }
 
   virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
 private:
   uint32_t FindRuleIndexForKey(const nsAString& aKey);
 
-  RefPtr<nsAtom> mName;
+  nsString                                   mName;
 };
 
 class nsCSSPageRule;

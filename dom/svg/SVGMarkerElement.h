@@ -113,9 +113,9 @@ protected:
 
 public:
   // nsIContent interface
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* name) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* name) const override;
 
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsAtom* aAttribute,
+  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
 
   // nsSVGSVGElement methods:
@@ -149,11 +149,11 @@ public:
 
 protected:
 
-  virtual bool ParseAttribute(int32_t aNameSpaceID, nsAtom* aName,
+  virtual bool ParseAttribute(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
 
-  void SetParentCoordCtxProvider(SVGViewportElement *aContext);
+  void SetParentCoordCtxProvider(SVGSVGElement *aContext);
 
   virtual LengthAttributesInfo GetLengthInfo() override;
   virtual AngleAttributesInfo GetAngleInfo() override;
@@ -180,7 +180,7 @@ protected:
   // derived properties (from 'orient') handled separately
   nsSVGOrientType                        mOrientType;
 
-  SVGViewportElement*                    mCoordCtx;
+  SVGSVGElement                         *mCoordCtx;
   nsAutoPtr<gfx::Matrix>                 mViewBoxToViewportTransform;
 };
 

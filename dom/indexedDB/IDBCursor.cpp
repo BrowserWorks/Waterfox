@@ -65,11 +65,13 @@ IDBCursor::IDBCursor(Type aType,
   }
 }
 
+#ifdef ENABLE_INTL_API
 bool
 IDBCursor::IsLocaleAware() const
 {
   return mSourceIndex && !mSourceIndex->Locale().IsEmpty();
 }
+#endif
 
 IDBCursor::~IDBCursor()
 {
@@ -435,6 +437,7 @@ IDBCursor::Continue(JSContext* aCx,
     return;
   }
 
+#ifdef ENABLE_INTL_API
   if (IsLocaleAware() && !key.IsUnset()) {
     Key tmp;
     aRv = key.ToLocaleBasedKey(tmp, mSourceIndex->Locale());
@@ -445,6 +448,9 @@ IDBCursor::Continue(JSContext* aCx,
   }
 
   const Key& sortKey = IsLocaleAware() ? mSortKey : mKey;
+#else
+  const Key& sortKey = mKey;
+#endif
 
   if (!key.IsUnset()) {
     switch (mDirection) {
@@ -541,6 +547,7 @@ IDBCursor::ContinuePrimaryKey(JSContext* aCx,
     return;
   }
 
+#ifdef ENABLE_INTL_API
   if (IsLocaleAware() && !key.IsUnset()) {
     Key tmp;
     aRv = key.ToLocaleBasedKey(tmp, mSourceIndex->Locale());
@@ -551,6 +558,9 @@ IDBCursor::ContinuePrimaryKey(JSContext* aCx,
   }
 
   const Key& sortKey = IsLocaleAware() ? mSortKey : mKey;
+#else
+  const Key& sortKey = mKey;
+#endif
 
   if (key.IsUnset()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_DATA_ERR);

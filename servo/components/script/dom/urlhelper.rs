@@ -7,7 +7,7 @@ use servo_url::ServoUrl;
 use std::borrow::ToOwned;
 use url::quirks;
 
-#[derive(MallocSizeOf)]
+#[derive(HeapSizeOf)]
 pub struct UrlHelper;
 
 impl UrlHelper {

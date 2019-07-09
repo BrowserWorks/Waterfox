@@ -28,20 +28,13 @@
 // Assertions and debug printing, defined here instead of in the header above
 // to make `assert` invisible to C++.
 #ifdef DEBUG
-#define assert(b, info) \
-    do { \
-        if (!(b)) \
-            AssertionFailed(__FILE__ + ":" + __LINE__ + ": " + info) \
-    } while (false)
-#define dbg(msg) \
-    do { \
-        DumpMessage(callFunction(std_Array_pop, \
-                                 StringSplitString(__FILE__, '/')) + \
-                    '#' + __LINE__ + ': ' + msg) \
-    } while (false)
+#define assert(b, info) if (!(b)) AssertionFailed(__FILE__ + ":" + __LINE__ + ": " + info)
+#define dbg(msg) DumpMessage(callFunction(std_Array_pop, \
+                                          StringSplitString(__FILE__, '/')) \
+                             + '#' + __LINE__ + ': ' + msg)
 #else
-#define assert(b, info) do {} while (false) // Elided assertion.
-#define dbg(msg) do {} while (false) // Elided debugging output.
+#define assert(b, info) // Elided assertion.
+#define dbg(msg) // Elided debugging output.
 #endif
 
 // All C++-implemented standard builtins library functions used in self-hosted
@@ -171,14 +164,11 @@ function GetIterator(obj, method) {
 
     // Step 5.
     if (!IsObject(iterator))
-        ThrowTypeError(JSMSG_GET_ITER_RETURNED_PRIMITIVE);
+        ThrowTypeError(JSMSG_NOT_ITERATOR, ToString(iterator));
 
     // Step 6.
     return iterator;
 }
-
-#define TO_PROPERTY_KEY(name) \
-(typeof name !== "string" && typeof name !== "number" && typeof name !== "symbol" ? ToPropertyKey(name) : name)
 
 var _builtinCtorsCache = {__proto__: null};
 

@@ -8,6 +8,7 @@
 
 #include "GeckoProfiler.h"
 #include "nsRFPService.h"
+#include "ProfilerMarkerPayload.h"
 #include "PerformanceEntry.h"
 #include "PerformanceMainThread.h"
 #include "PerformanceMark.h"
@@ -21,15 +22,10 @@
 #include "mozilla/dom/PerformanceEntryEvent.h"
 #include "mozilla/dom/PerformanceNavigationBinding.h"
 #include "mozilla/dom/PerformanceObserverBinding.h"
-#include "mozilla/dom/PerformanceNavigationTiming.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Preferences.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
-
-#ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkerPayload.h"
-#endif
 
 #define PERFLOG(msg, ...) printf_stderr(msg, ##__VA_ARGS__)
 
@@ -39,6 +35,27 @@ namespace dom {
 using namespace workers;
 
 namespace {
+
+// Helper classes
+class MOZ_STACK_CLASS PerformanceEntryComparator final
+{
+public:
+  bool Equals(const PerformanceEntry* aElem1,
+              const PerformanceEntry* aElem2) const
+  {
+    MOZ_ASSERT(aElem1 && aElem2,
+               "Trying to compare null performance entries");
+    return aElem1->StartTime() == aElem2->StartTime();
+  }
+
+  bool LessThan(const PerformanceEntry* aElem1,
+                const PerformanceEntry* aElem2) const
+  {
+    MOZ_ASSERT(aElem1 && aElem2,
+               "Trying to compare null performance entries");
+    return aElem1->StartTime() < aElem2->StartTime();
+  }
+};
 
 class PrefEnabledRunnable final
   : public WorkerCheckAPIExposureOnMainThreadRunnable
@@ -70,7 +87,7 @@ private:
 
 } // anonymous namespace
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Performance)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(Performance)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(Performance,
@@ -243,10 +260,9 @@ Performance::ClearResourceTimings()
 DOMHighResTimeStamp
 Performance::RoundTime(double aTime) const
 {
-  // Round down to the nearest 5us, because if the timer is too accurate people
-  // can do nasty timing attacks with it.  See similar code in the worker
-  // Performance implementation.
-  const double maxResolutionMs = 0.005;
+  // Round down to the nearest 20us, because if the timer is too accurate people
+  // can do nasty timing attacks with it.
+  const double maxResolutionMs = 0.020;
   return nsRFPService::ReduceTimePrecisionAsMSecs(
     floor(aTime / maxResolutionMs) * maxResolutionMs);
 }
@@ -269,13 +285,11 @@ Performance::Mark(const nsAString& aName, ErrorResult& aRv)
     new PerformanceMark(GetParentObject(), aName, Now());
   InsertUserEntry(performanceMark);
 
-#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
     profiler_add_marker(
       "UserTiming",
       MakeUnique<UserTimingMarkerPayload>(aName, TimeStamp::Now()));
   }
-#endif
 }
 
 void
@@ -357,7 +371,6 @@ Performance::Measure(const nsAString& aName,
     new PerformanceMeasure(GetParentObject(), aName, startTime, endTime);
   InsertUserEntry(performanceMeasure);
 
-#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
     TimeStamp startTimeStamp = CreationTimeStamp() +
                                TimeDuration::FromMilliseconds(startTime);
@@ -367,7 +380,6 @@ Performance::Measure(const nsAString& aName,
       "UserTiming",
       MakeUnique<UserTimingMarkerPayload>(aName, startTimeStamp, endTimeStamp));
   }
-#endif
 }
 
 void

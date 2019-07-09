@@ -2,7 +2,6 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
 Cu.import("resource://services-sync/service.js");
@@ -41,13 +40,6 @@ let engine;
 let store;
 
 add_task(async function setup() {
-  initTestLogging("Trace");
-  Log.repository.getLogger("Sync.Engine.Bookmarks").level = Log.Level.Trace;
-
-  await generateNewKeys(Service.collectionKeys);
-});
-
-add_task(async function setup() {
   await Service.engineManager.register(BookmarksEngine);
   engine = Service.engineManager.get("bookmarks");
   store = engine._store;
@@ -56,7 +48,7 @@ add_task(async function setup() {
 // Verify that Places smart bookmarks have their annotation uploaded and
 // handled locally.
 add_task(async function test_annotation_uploaded() {
-  let server = await serverForFoo(engine);
+  let server = serverForFoo(engine);
   await SyncTestingInfrastructure(server);
 
   let startCount = smartBookmarkCount();
@@ -72,7 +64,7 @@ add_task(async function test_annotation_uploaded() {
   _("Create a smart bookmark in the toolbar.");
   let parent = PlacesUtils.toolbarFolderId;
   let uri =
-    CommonUtils.makeURI("place:sort=" +
+    Utils.makeURI("place:sort=" +
                   Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING +
                   "&maxResults=10");
   let title = "Most Visited";
@@ -131,7 +123,7 @@ add_task(async function test_annotation_uploaded() {
     // around as a deleted record...
     PlacesUtils.bookmarks.setItemTitle(mostVisitedID, "Not Most Visited");
     PlacesUtils.bookmarks.changeBookmarkURI(
-      mostVisitedID, CommonUtils.makeURI("http://something/else"));
+      mostVisitedID, Utils.makeURI("http://something/else"));
     PlacesUtils.annotations.removeItemAnnotation(mostVisitedID,
                                                  SMART_BOOKMARKS_ANNO);
     await store.wipe();
@@ -171,12 +163,12 @@ add_task(async function test_annotation_uploaded() {
 });
 
 add_task(async function test_smart_bookmarks_duped() {
-  let server = await serverForFoo(engine);
+  let server = serverForFoo(engine);
   await SyncTestingInfrastructure(server);
 
   let parent = PlacesUtils.toolbarFolderId;
   let uri =
-    CommonUtils.makeURI("place:sort=" +
+    Utils.makeURI("place:sort=" +
                   Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING +
                   "&maxResults=10");
   let title = "Most Visited";
@@ -220,3 +212,12 @@ add_task(async function test_smart_bookmarks_duped() {
     Service.recordManager.clearCache();
   }
 });
+
+function run_test() {
+  initTestLogging("Trace");
+  Log.repository.getLogger("Sync.Engine.Bookmarks").level = Log.Level.Trace;
+
+  generateNewKeys(Service.collectionKeys);
+
+  run_next_test();
+}

@@ -87,7 +87,8 @@ CreateGlobalAndRunTest(JSContext* cx)
   static const JSClassOps GlobalClassOps = {
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, JS_GlobalObjectTraceHook
+    nullptr, nullptr, nullptr, nullptr,
+    JS_GlobalObjectTraceHook
   };
 
   static const JSClass GlobalClass = {
@@ -96,7 +97,7 @@ CreateGlobalAndRunTest(JSContext* cx)
   };
 
   JS::CompartmentOptions options;
-  options.behaviors().setVersion(JSVERSION_DEFAULT);
+  options.behaviors().setVersion(JSVERSION_LATEST);
   JS::PersistentRootedObject global(cx);
   global = JS_NewGlobalObject(cx, &GlobalClass, nullptr, JS::FireOnNewGlobalHook, options);
   ASSERT_TRUE(global != nullptr);

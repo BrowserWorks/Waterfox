@@ -64,9 +64,6 @@ class WidgetRenderingContext;
 // has been present in the same form since at least OS X 10.2.8.
 - (EventRef)_eventRef;
 
-// stage From 10.10.3 for force touch event
-@property (readonly) NSInteger stage;
-
 @end
 
 @interface NSView (Undocumented)
@@ -170,7 +167,7 @@ class WidgetRenderingContext;
 
   NSOpenGLContext *mGLContext;
 
-  // Gestures support
+  // Simple gestures support
   //
   // mGestureState is used to detect when Cocoa has called both
   // magnifyWithEvent and rotateWithEvent within the same
@@ -193,6 +190,7 @@ class WidgetRenderingContext;
   float mCumulativeMagnification;
   float mCumulativeRotation;
 
+  BOOL mDidForceRefreshOpenGL;
   BOOL mWaitingForPaint;
 
 #ifdef __LP64__
@@ -206,9 +204,6 @@ class WidgetRenderingContext;
   // The mask image that's used when painting into the titlebar using basic
   // CGContext painting (i.e. non-accelerated).
   CGImageRef mTopLeftCornerMask;
-
-  // Last pressure stage by trackpad's force click
-  NSInteger mLastPressureStage;
 }
 
 // class initialization
@@ -222,6 +217,8 @@ class WidgetRenderingContext;
 
 // Stop NSView hierarchy being changed during [ChildView drawRect:]
 - (void)delayedTearDown;
+
+- (void)sendFocusEvent:(mozilla::EventMessage)eventMessage;
 
 - (void)handleMouseMoved:(NSEvent*)aEvent;
 
@@ -241,16 +238,18 @@ class WidgetRenderingContext;
 - (void)viewDidEndLiveResize;
 
 - (NSColor*)vibrancyFillColorForThemeGeometryType:(nsITheme::ThemeGeometryType)aThemeGeometryType;
+- (NSColor*)vibrancyFontSmoothingBackgroundColorForThemeGeometryType:(nsITheme::ThemeGeometryType)aThemeGeometryType;
 
-/*
- * Gestures support
- *
- * The prototypes swipeWithEvent, beginGestureWithEvent, smartMagnifyWithEvent,
- * rotateWithEvent and endGestureWithEvent were obtained from the following
- * links:
- * https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSResponder_Class/Reference/Reference.html
- * https://developer.apple.com/library/mac/#releasenotes/Cocoa/AppKit.html
- */
+// Simple gestures support
+//
+// XXX - The swipeWithEvent, beginGestureWithEvent, magnifyWithEvent,
+// rotateWithEvent, and endGestureWithEvent methods are part of a
+// PRIVATE interface exported by nsResponder and reverse-engineering
+// was necessary to obtain the methods' prototypes. Thus, Apple may
+// change the interface in the future without notice.
+//
+// The prototypes were obtained from the following link:
+// http://cocoadex.com/2008/02/nsevent-modifications-swipe-ro.html
 - (void)swipeWithEvent:(NSEvent *)anEvent;
 - (void)beginGestureWithEvent:(NSEvent *)anEvent;
 - (void)magnifyWithEvent:(NSEvent *)anEvent;
@@ -455,11 +454,9 @@ public:
   virtual void CleanupWindowEffects() override;
 
   virtual void AddWindowOverlayWebRenderCommands(mozilla::layers::WebRenderBridgeChild* aWrBridge,
-                                                 mozilla::wr::DisplayListBuilder& aBuilder,
-                                                 mozilla::wr::IpcResourceUpdateQueue& aResourceUpdates) override;
+                                                  mozilla::wr::DisplayListBuilder& aBuilder) override;
 
-  virtual void CleanupWebRenderWindowOverlay(mozilla::layers::WebRenderBridgeChild* aWrBridge,
-                                             mozilla::wr::IpcResourceUpdateQueue& aResources) override;
+  virtual void CleanupWebRenderWindowOverlay(mozilla::layers::WebRenderBridgeChild* aWrBridge) override;
 
   virtual bool PreRender(mozilla::widget::WidgetRenderingContext* aContext) override;
   virtual void PostRender(mozilla::widget::WidgetRenderingContext* aContext) override;
@@ -487,7 +484,7 @@ public:
 
   NSView<mozView>* GetEditorView();
 
-  nsCocoaWindow*    GetXULWindowWidget() const;
+  nsCocoaWindow*    GetXULWindowWidget();
 
   virtual void      ReparentNativeWidget(nsIWidget* aNewParent) override;
 

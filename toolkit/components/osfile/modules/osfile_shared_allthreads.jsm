@@ -17,8 +17,6 @@
  * - a few additional utilities.
  */
 
-/* eslint-env worker */
-
 // Boilerplate used to be able to import this module both from the main
 // thread and from worker threads.
 
@@ -69,7 +67,7 @@ var EXPORTED_SYMBOLS = [
   "OS" // Warning: this exported symbol will disappear
 ];
 
-// //////////////////// Configuration of OS.File
+////////////////////// Configuration of OS.File
 
 var Config = {
   /**
@@ -86,12 +84,11 @@ var Config = {
 };
 exports.Config = Config;
 
-// //////////////////// OS Constants
+////////////////////// OS Constants
 
 if (typeof Components != "undefined") {
   // On the main thread, OS.Constants is defined by a xpcom
   // component. On other threads, it is available automatically
-  /* global OS */
   Cu.import("resource://gre/modules/ctypes.jsm");
   Cc["@mozilla.org/net/osfileconstantsservice;1"].
     getService(Ci.nsIOSFileConstantsService).init();
@@ -99,7 +96,7 @@ if (typeof Components != "undefined") {
 
 exports.Constants = OS.Constants;
 
-// /////////////////// Utilities
+///////////////////// Utilities
 
 // Define a lazy getter for a property
 var defineLazyGetter = function defineLazyGetter(object, name, getter) {
@@ -109,7 +106,7 @@ var defineLazyGetter = function defineLazyGetter(object, name, getter) {
       delete this[name];
       let value = getter.call(this);
       Object.defineProperty(object, name, {
-        value
+        value: value
       });
       return value;
     }
@@ -118,7 +115,7 @@ var defineLazyGetter = function defineLazyGetter(object, name, getter) {
 exports.defineLazyGetter = defineLazyGetter;
 
 
-// /////////////////// Logging
+///////////////////// Logging
 
 /**
  * The default implementation of the logger.
@@ -159,21 +156,21 @@ var stringifyArg = function stringifyArg(arg) {
     if (argToString === "[object Object]") {
       return JSON.stringify(arg, function(key, value) {
         if (isTypedArray(value)) {
-          return "[" + value.constructor.name + " " + value.byteOffset + " " + value.byteLength + "]";
+          return "["+ value.constructor.name + " " + value.byteOffset + " " + value.byteLength + "]";
         }
         if (isArrayBuffer(arg)) {
           return "[" + value.constructor.name + " " + value.byteLength + "]";
         }
         return value;
       });
-    }
+    } else {
       return argToString;
-
+    }
   }
   return arg;
 };
 
-var LOG = function(...args) {
+var LOG = function (...args) {
   if (!Config.DEBUG) {
     // If logging is deactivated, don't log
     return;
@@ -207,16 +204,16 @@ exports.LOG = LOG;
  * @param {Array} refs An optional array of field names to be passed by
  * reference instead of copying.
  */
-var clone = function(object, refs = []) {
+var clone = function (object, refs = []) {
   let result = {};
   // Make a reference between result[key] and object[key].
   let refer = function refer(result, key, object) {
     Object.defineProperty(result, key, {
       enumerable: true,
-      get() {
+      get: function() {
         return object[key];
       },
-      set(value) {
+      set: function(value) {
         object[key] = value;
       }
     });
@@ -233,7 +230,7 @@ var clone = function(object, refs = []) {
 
 exports.clone = clone;
 
-// /////////////////// Abstractions above js-ctypes
+///////////////////// Abstractions above js-ctypes
 
 /**
  * Abstraction above js-ctypes types.
@@ -254,7 +251,7 @@ function Type(name, implementation) {
                         + name);
   }
   if (!(implementation instanceof ctypes.CType)) {
-    throw new TypeError("Type expects as second argument a ctypes.CType" +
+    throw new TypeError("Type expects as second argument a ctypes.CType"+
                         ", got: " + implementation);
   }
   Object.defineProperty(this, "name", { value: name });
@@ -301,7 +298,7 @@ Type.prototype = {
       this);
     Object.defineProperty(this, "in_ptr",
     {
-      get() {
+      get: function() {
         return ptr_t;
       }
     });
@@ -319,7 +316,7 @@ Type.prototype = {
       this);
     Object.defineProperty(this, "out_ptr",
     {
-      get() {
+      get: function() {
         return ptr_t;
       }
     });
@@ -341,7 +338,7 @@ Type.prototype = {
       this);
     Object.defineProperty(this, "inout_ptr",
     {
-      get() {
+      get: function() {
         return ptr_t;
       }
     });
@@ -434,7 +431,7 @@ exports.isArrayBuffer = isArrayBuffer;
  */
 function PtrType(name, implementation, targetType) {
   Type.call(this, name, implementation);
-  if (targetType == null || !(targetType instanceof Type)) {
+  if (targetType == null || !targetType instanceof Type) {
     throw new TypeError("targetType must be an instance of Type");
   }
   /**
@@ -537,7 +534,7 @@ var projectValue = function projectValue(x) {
 
 function projector(type, signed) {
   LOG("Determining best projection for", type,
-    "(size: ", type.size, ")", signed ? "signed" : "unsigned");
+    "(size: ", type.size, ")", signed?"signed":"unsigned");
   if (type instanceof Type) {
     type = type.implementation;
   }
@@ -557,14 +554,14 @@ function projector(type, signed) {
     if (signed) {
       LOG("Projected as a large signed integer");
       return projectLargeInt;
-    }
+    } else {
       LOG("Projected as a large unsigned integer");
       return projectLargeUInt;
-
+    }
   }
   LOG("Projected as a regular number");
   return projectValue;
-}
+};
 exports.projectValue = projectValue;
 
 /**
@@ -648,7 +645,7 @@ function IntType(name, implementation, signed) {
   Type.call(this, name, implementation);
   this.importFromC = projector(implementation, signed);
   this.project = this.importFromC;
-}
+};
 IntType.prototype = Object.create(Type.prototype);
 IntType.prototype.toMsg = function toMsg(value) {
   if (typeof value == "number") {
@@ -865,7 +862,7 @@ HollowStructure.prototype = {
                       " at offset " + offset +
                       " without exceeding its size of " + this.size);
     }
-    let field = {name, type};
+    let field = {name: name, type:type};
     this.offset_to_field_info[offset] = field;
   },
 
@@ -963,7 +960,7 @@ exports.HollowStructure = HollowStructure;
 function Library(name, ...candidates) {
   this.name = name;
   this._candidates = candidates;
-}
+};
 Library.prototype = Object.freeze({
   /**
    * The native library as a js-ctypes object.
@@ -991,7 +988,7 @@ Library.prototype = Object.freeze({
     }
     let error = new Error("Could not open library " + this.name);
     Object.defineProperty(this, "library", {
-      get() {
+      get: function() {
         throw error;
       }
     });
@@ -1010,10 +1007,10 @@ Library.prototype = Object.freeze({
    * @param {Type} returnType The type of values returned by the function.
    * @param {...Type} argTypes The type of arguments to the function.
    */
-  declareLazyFFI(object, field, ...args) {
+  declareLazyFFI: function(object, field, ...args) {
     let lib = this;
     Object.defineProperty(object, field, {
-      get() {
+      get: function() {
         delete this[field];
         let ffi = declareFFI(lib.library, ...args);
         if (ffi) {
@@ -1037,10 +1034,10 @@ Library.prototype = Object.freeze({
    * @param {ctypes.CType} returnType The type of values returned by the function.
    * @param {...ctypes.CType} argTypes The type of arguments to the function.
    */
-  declareLazy(object, field, ...args) {
+  declareLazy: function(object, field, ...args) {
     let lib = this;
     Object.defineProperty(object, field, {
-      get() {
+      get: function() {
         delete this[field];
         let ffi = lib.library.declare(...args);
         if (ffi) {
@@ -1067,10 +1064,10 @@ Library.prototype = Object.freeze({
    * @param {ctypes.CType} returnType The type of values returned by the function.
    * @param {...ctypes.CType} argTypes The type of arguments to the function.
    */
-  declareLazyWithFallback(fallbacklibrary, object, field, ...args) {
+  declareLazyWithFallback: function(fallbacklibrary, object, field, ...args) {
     let lib = this;
     Object.defineProperty(object, field, {
-      get() {
+      get: function() {
         delete this[field];
         try {
           let ffi = lib.library.declare(...args);
@@ -1089,7 +1086,7 @@ Library.prototype = Object.freeze({
     });
   },
 
-  toString() {
+  toString: function() {
     return "[Library " + this.name + "]";
   }
 });
@@ -1110,7 +1107,7 @@ exports.Library = Library;
  * and any type conversion required.
  */
 var declareFFI = function declareFFI(lib, symbol, abi,
-                                     returnType /* , argTypes ...*/) {
+                                     returnType /*, argTypes ...*/) {
   LOG("Attempting to declare FFI ", symbol);
   // We guard agressively, to avoid any late surprise
   if (typeof symbol != "string") {
@@ -1126,6 +1123,7 @@ var declareFFI = function declareFFI(lib, symbol, abi,
     throw new TypeError("declareFFI expects as third argument an instance of Type");
   }
   let signature = [symbol, abi];
+  let argtypes  = [];
   for (let i = 3; i < arguments.length; ++i) {
     let current = arguments[i];
     if (!current) {
@@ -1175,7 +1173,7 @@ exports.declareFFI = declareFFI;
  */
 function declareLazyFFI(object, field, ...declareFFIArgs) {
   Object.defineProperty(object, field, {
-    get() {
+    get: function() {
       delete this[field];
       let ffi = declareFFI(...declareFFIArgs);
       if (ffi) {
@@ -1203,7 +1201,7 @@ exports.declareLazyFFI = declareLazyFFI;
  */
 function declareLazy(object, field, lib, ...declareArgs) {
   Object.defineProperty(object, field, {
-    get() {
+    get: function() {
       delete this[field];
       try {
         let ffi = lib.declare(...declareArgs);
@@ -1244,10 +1242,10 @@ function normalizeBufferArgs(candidate, bytes) {
                         "bytes");
   }
   return bytes;
-}
+};
 exports.normalizeBufferArgs = normalizeBufferArgs;
 
-// /////////////////// OS interactions
+///////////////////// OS interactions
 
 /**
  * An OS error.
@@ -1271,44 +1269,44 @@ OSError.prototype = Object.create(Error.prototype);
 exports.OSError = OSError;
 
 
-// /////////////////// Temporary boilerplate
+///////////////////// Temporary boilerplate
 // Boilerplate, to simplify the transition to require()
 // Do not rely upon this symbol, it will disappear with
 // bug 883050.
 exports.OS = {
   Constants: exports.Constants,
   Shared: {
-    LOG,
-    clone,
-    Type,
-    HollowStructure,
+    LOG: LOG,
+    clone: clone,
+    Type: Type,
+    HollowStructure: HollowStructure,
     Error: OSError,
-    declareFFI,
-    projectValue,
-    isTypedArray,
-    defineLazyGetter
+    declareFFI: declareFFI,
+    projectValue: projectValue,
+    isTypedArray: isTypedArray,
+    defineLazyGetter: defineLazyGetter
   }
 };
 
 Object.defineProperty(exports.OS.Shared, "DEBUG", {
-  get() {
+  get: function() {
     return Config.DEBUG;
   },
-  set(x) {
+  set: function(x) {
     return Config.DEBUG = x;
   }
 });
 Object.defineProperty(exports.OS.Shared, "TEST", {
-  get() {
+  get: function() {
     return Config.TEST;
   },
-  set(x) {
+  set: function(x) {
     return Config.TEST = x;
   }
 });
 
 
-// /////////////////// Permanent boilerplate
+///////////////////// Permanent boilerplate
 if (typeof Components != "undefined") {
   this.EXPORTED_SYMBOLS = EXPORTED_SYMBOLS;
   for (let symbol of EXPORTED_SYMBOLS) {

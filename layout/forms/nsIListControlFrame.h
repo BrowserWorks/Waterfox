@@ -7,7 +7,8 @@
 #define nsIListControlFrame_h___
 
 #include "nsQueryFrame.h"
-#include "nsStringFwd.h"
+
+class nsAString;
 
 namespace mozilla {
 namespace dom {

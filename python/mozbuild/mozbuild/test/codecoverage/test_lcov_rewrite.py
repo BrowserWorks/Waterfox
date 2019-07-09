@@ -105,10 +105,13 @@ class TestLcovParser(unittest.TestCase):
         fh = StringIO(lcov_string)
         return lcov_rewriter.LcovFile(fh)
 
-    def parser_roundtrip(self, lcov_string):
+    def parser_roundtrip(self, lcov_string, resummarize=False):
         file_obj = self.get_lcov(lcov_string)
+        if resummarize:
+            for r in file_obj.records:
+                r.resummarize()
         out = StringIO()
-        file_obj.print_file(out, lambda s: (s, False), lambda x: x)
+        file_obj.print_file(out)
         return out.getvalue()
 
     def test_basic_parse(self):
@@ -118,8 +121,15 @@ class TestLcovParser(unittest.TestCase):
         output = self.parser_roundtrip(multiple_records)
         self.assertEqual(multiple_records, output)
 
+    def test_resummarize(self):
+        output = self.parser_roundtrip(basic_file, True)
+        self.assertEqual(basic_file, output)
+
+        output = self.parser_roundtrip(multiple_records, True)
+        self.assertEqual(multiple_records, output)
+
     def test_multiple_commas(self):
-        output = self.parser_roundtrip(fn_with_multiple_commas)
+        output = self.parser_roundtrip(fn_with_multiple_commas, True)
         self.assertEqual(fn_with_multiple_commas, output)
 
 multiple_included_files = """//@line 1 "foo.js"
@@ -161,6 +171,12 @@ class TestLineRemapping(unittest.TestCase):
         if self._old_chrome_info_file:
             shutil.move(self._old_chrome_info_file, self._chrome_map_file)
 
+    def get_lcov_file(self, name):
+        fpath = os.path.join(here, name)
+        with open(fpath) as fh:
+            lcov_file = lcov_rewriter.LcovFile(fh)
+        return lcov_file
+
     def test_map_multiple_included(self):
         self.pp_rewriter.populate_pp_info(StringIO(multiple_included_files),
                                           '')
@@ -198,55 +214,35 @@ class TestLineRemapping(unittest.TestCase):
             (986, 1401): ('sites.js', 6)
         }
 
+        lcov_file = self.get_lcov_file('sample_lcov.info')
+
+        self.assertEqual(len(lcov_file.records), 1)
+
+        # This summarization changes values due multiple reports per line coming
+        # from the JS engine (bug 1198356).
+        for r in lcov_file.records:
+            r.resummarize()
+            original_line_count = r.line_count
+            original_covered_line_count = r.covered_line_count
+            original_function_count = r.function_count
+            original_covered_function_count = r.covered_function_count
+
         self.pp_rewriter.pp_info['lcov_test_newTab.js'] = pp_remap
-
-        fpath = os.path.join(here, 'sample_lcov.info')
-
-        # Read original records
-        with open(fpath) as fh:
-            lcov_file = lcov_rewriter.LcovFile(fh)
-            records = [lcov_file.parse_record(r) for _, _, r in lcov_file.iterate_records()]
-
-            # This summarization changes values due multiple reports per line coming
-            # from the JS engine (bug 1198356).
-            for r in records:
-                r.resummarize()
-                original_line_count = r.line_count
-                original_covered_line_count = r.covered_line_count
-                original_function_count = r.function_count
-                original_covered_function_count = r.covered_function_count
-
-            self.assertEqual(len(records), 1)
-
-        # Rewrite preprocessed entries.
-        with open(fpath) as fh:
-            lcov_file = lcov_rewriter.LcovFile(fh)
-            r_num = []
-            def rewrite_source(s):
-                r_num.append(1)
-                return s, self.pp_rewriter.has_pp_info(s)
-
-            out = StringIO()
-            lcov_file.print_file(out, rewrite_source, self.pp_rewriter.rewrite_record)
-            self.assertEqual(len(r_num), 1)
-
-        # Read rewritten lcov.
-        fh = StringIO(out.getvalue())
-        lcov_file = lcov_rewriter.LcovFile(fh)
-
-        records = [lcov_file.parse_record(r) for _, _, r in lcov_file.iterate_records()]
-
-        self.assertEqual(len(records), 17)
+        additions = []
+        for r in lcov_file.records:
+            additions += self.pp_rewriter.rewrite_record(r)
+        lcov_file.records = lcov_file.records + additions
+        self.assertEqual(len(lcov_file.records), 17)
 
         # Lines/functions are only "moved" between records, not duplicated or omited.
         self.assertEqual(original_line_count,
-                         sum(r.line_count for r in records))
+                         sum(r.line_count for r in lcov_file.records))
         self.assertEqual(original_covered_line_count,
-                         sum(r.covered_line_count for r in records))
+                         sum(r.covered_line_count for r in lcov_file.records))
         self.assertEqual(original_function_count,
-                         sum(r.function_count for r in records))
+                         sum(r.function_count for r in lcov_file.records))
         self.assertEqual(original_covered_function_count,
-                         sum(r.covered_function_count for r in records))
+                         sum(r.covered_function_count for r in lcov_file.records))
 
 class TestUrlFinder(unittest.TestCase):
     def setUp(self):
@@ -268,6 +264,10 @@ class TestUrlFinder(unittest.TestCase):
                 ],
                 'dist/bin/browser/components/nsSessionStartup.js': [
                     'path2',
+                    False
+                ],
+                'dist/bin/browser/features/e10srollout@mozilla.org/bootstrap.js': [
+                    'path3',
                     False
                 ],
                 'dist/bin/browser/features/firefox@getpocket.com/bootstrap.js': [
@@ -294,6 +294,7 @@ class TestUrlFinder(unittest.TestCase):
         paths = [
             ('jar:file:///home/worker/workspace/build/application/' + app_name + '/' + omnijar_name + '!/components/MainProcessSingleton.js', 'path1'),
             ('jar:file:///home/worker/workspace/build/application/' + app_name + '/browser/' + omnijar_name + '!/components/nsSessionStartup.js', 'path2'),
+            ('jar:file:///home/worker/workspace/build/application/' + app_name + '/browser/features/e10srollout@mozilla.org.xpi!/bootstrap.js', 'path3'),
             ('jar:file:///home/worker/workspace/build/application/' + app_name + '/browser/features/firefox@getpocket.com.xpi!/bootstrap.js', 'path4'),
             ('jar:file:///tmp/tmpMdo5gV.mozrunner/extensions/workerbootstrap-test@mozilla.org.xpi!/bootstrap.js', 'path5'),
         ]

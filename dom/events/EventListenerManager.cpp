@@ -13,6 +13,9 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
+#ifdef MOZ_B2G
+#include "mozilla/Hal.h"
+#endif // #ifdef MOZ_B2G
 #include "mozilla/HalSensor.h"
 #include "mozilla/InternalMutationEvent.h"
 #include "mozilla/JSEventHandler.h"
@@ -30,6 +33,7 @@
 
 #include "EventListenerService.h"
 #include "GeckoProfiler.h"
+#include "ProfilerMarkerPayload.h"
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
@@ -42,7 +46,6 @@
 #include "nsIDOMEventListener.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsISupports.h"
-#include "nsISupportsPrimitives.h"
 #include "nsIXPConnect.h"
 #include "nsJSUtils.h"
 #include "nsNameSpaceManager.h"
@@ -51,10 +54,6 @@
 #include "xpcpublic.h"
 #include "nsIFrame.h"
 #include "nsDisplayList.h"
-
-#ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkerPayload.h"
-#endif
 
 namespace mozilla {
 
@@ -243,7 +242,7 @@ void
 EventListenerManager::AddEventListenerInternal(
                         EventListenerHolder aListenerHolder,
                         EventMessage aEventMessage,
-                        nsAtom* aTypeAtom,
+                        nsIAtom* aTypeAtom,
                         const nsAString& aTypeString,
                         const EventListenerFlags& aFlags,
                         bool aHandler,
@@ -350,6 +349,14 @@ EventListenerManager::AddEventListenerInternal(
   } else if (aTypeAtom == nsGkAtoms::onorientationchange) {
     EnableDevice(eOrientationChange);
 #endif
+#ifdef MOZ_B2G
+  } else if (aTypeAtom == nsGkAtoms::onmoztimechange) {
+    EnableDevice(eTimeChange);
+  } else if (aTypeAtom == nsGkAtoms::onmoznetworkupload) {
+    EnableDevice(eNetworkUpload);
+  } else if (aTypeAtom == nsGkAtoms::onmoznetworkdownload) {
+    EnableDevice(eNetworkDownload);
+#endif // MOZ_B2G
   } else if (aTypeAtom == nsGkAtoms::ontouchstart ||
              aTypeAtom == nsGkAtoms::ontouchend ||
              aTypeAtom == nsGkAtoms::ontouchmove ||
@@ -485,6 +492,11 @@ EventListenerManager::IsDeviceType(EventMessage aEventMessage)
 #if defined(MOZ_WIDGET_ANDROID)
     case eOrientationChange:
 #endif
+#ifdef MOZ_B2G
+    case eTimeChange:
+    case eNetworkUpload:
+    case eNetworkDownload:
+#endif
       return true;
     default:
       break;
@@ -536,6 +548,15 @@ EventListenerManager::EnableDevice(EventMessage aEventMessage)
       window->EnableOrientationChangeListener();
       break;
 #endif
+#ifdef MOZ_B2G
+    case eTimeChange:
+      window->EnableTimeChangeNotifications();
+      break;
+    case eNetworkUpload:
+    case eNetworkDownload:
+      window->EnableNetworkEvent(aEventMessage);
+      break;
+#endif
     default:
       NS_WARNING("Enabling an unknown device sensor.");
       break;
@@ -582,6 +603,15 @@ EventListenerManager::DisableDevice(EventMessage aEventMessage)
       window->DisableOrientationChangeListener();
       break;
 #endif
+#ifdef MOZ_B2G
+    case eTimeChange:
+      window->DisableTimeChangeNotifications();
+      break;
+    case eNetworkUpload:
+    case eNetworkDownload:
+      window->DisableNetworkEvent(aEventMessage);
+      break;
+#endif // MOZ_B2G
     default:
       NS_WARNING("Disabling an unknown device sensor.");
       break;
@@ -589,7 +619,7 @@ EventListenerManager::DisableDevice(EventMessage aEventMessage)
 }
 
 void
-EventListenerManager::NotifyEventListenerRemoved(nsAtom* aUserType,
+EventListenerManager::NotifyEventListenerRemoved(nsIAtom* aUserType,
                                                  const nsAString& aTypeString)
 {
   // If the following code is changed, other callsites of EventListenerRemoved
@@ -613,7 +643,7 @@ void
 EventListenerManager::RemoveEventListenerInternal(
                         EventListenerHolder aListenerHolder,
                         EventMessage aEventMessage,
-                        nsAtom* aUserType,
+                        nsIAtom* aUserType,
                         const nsAString& aTypeString,
                         const EventListenerFlags& aFlags,
                         bool aAllEvents)
@@ -693,7 +723,7 @@ EventListenerManager::AddEventListenerByType(
                         const nsAString& aType,
                         const EventListenerFlags& aFlags)
 {
-  RefPtr<nsAtom> atom;
+  nsCOMPtr<nsIAtom> atom;
   EventMessage message = mIsMainThreadELM ?
     nsContentUtils::GetEventMessageAndAtomForListener(aType,
                                                       getter_AddRefs(atom)) :
@@ -708,7 +738,7 @@ EventListenerManager::RemoveEventListenerByType(
                         const nsAString& aType,
                         const EventListenerFlags& aFlags)
 {
-  RefPtr<nsAtom> atom;
+  nsCOMPtr<nsIAtom> atom;
   EventMessage message = mIsMainThreadELM ?
     nsContentUtils::GetEventMessageAndAtomForListener(aType,
                                                       getter_AddRefs(atom)) :
@@ -719,7 +749,7 @@ EventListenerManager::RemoveEventListenerByType(
 
 EventListenerManager::Listener*
 EventListenerManager::FindEventHandler(EventMessage aEventMessage,
-                                       nsAtom* aTypeAtom,
+                                       nsIAtom* aTypeAtom,
                                        const nsAString& aTypeString)
 {
   // Run through the listeners for this type and see if a script
@@ -739,7 +769,7 @@ EventListenerManager::FindEventHandler(EventMessage aEventMessage,
 
 EventListenerManager::Listener*
 EventListenerManager::SetEventHandlerInternal(
-                        nsAtom* aName,
+                        nsIAtom* aName,
                         const nsAString& aTypeString,
                         const TypedEventHandler& aTypedHandler,
                         bool aPermitUntrustedEvents)
@@ -794,7 +824,7 @@ EventListenerManager::SetEventHandlerInternal(
 }
 
 nsresult
-EventListenerManager::SetEventHandler(nsAtom* aName,
+EventListenerManager::SetEventHandler(nsIAtom* aName,
                                       const nsAString& aBody,
                                       bool aDeferCompilation,
                                       bool aPermitUntrustedEvents,
@@ -846,16 +876,12 @@ EventListenerManager::SetEventHandler(nsAtom* aName,
       scriptSample.AppendLiteral(" attribute on ");
       scriptSample.Append(tagName);
       scriptSample.AppendLiteral(" element");
-      nsCOMPtr<nsISupportsString> sampleIString(do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID));
-      if (sampleIString) {
-        sampleIString->SetData(scriptSample);
-      }
 
       bool allowsInlineScript = true;
       rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_SCRIPT,
                                 EmptyString(), // aNonce
                                 true, // aParserCreated (true because attribute event handler)
-                                sampleIString,
+                                scriptSample,
                                 0,             // aLineNumber
                                 &allowsInlineScript);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -891,7 +917,7 @@ EventListenerManager::SetEventHandler(nsAtom* aName,
 }
 
 void
-EventListenerManager::RemoveEventHandler(nsAtom* aName,
+EventListenerManager::RemoveEventHandler(nsIAtom* aName,
                                          const nsAString& aTypeString)
 {
   if (mClearingListeners) {
@@ -935,8 +961,8 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
   }
   JSContext* cx = jsapi.cx();
 
-  RefPtr<nsAtom> typeAtom = aListener->mTypeAtom;
-  nsAtom* attrName = typeAtom;
+  nsCOMPtr<nsIAtom> typeAtom = aListener->mTypeAtom;
+  nsIAtom* attrName = typeAtom;
 
   // Flag us as not a string so we don't keep trying to compile strings which
   // can't be compiled.
@@ -1103,10 +1129,7 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
 
   if (NS_SUCCEEDED(result)) {
     if (mIsMainThreadELM) {
-      CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
-      if (ccjs) {
-        ccjs->EnterMicroTask();
-      }
+      nsContentUtils::EnterMicroTask();
     }
     // nsIDOMEvent::currentTarget is set in EventDispatcher.
     if (listenerHolder.HasWebIDLCallback()) {
@@ -1118,10 +1141,7 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
       result = listenerHolder.GetXPCOMCallback()->HandleEvent(aDOMEvent);
     }
     if (mIsMainThreadELM) {
-      CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
-      if (ccjs) {
-        ccjs->LeaveMicroTask();
-      }
+      nsContentUtils::LeaveMicroTask();
     }
   }
 
@@ -1265,7 +1285,6 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
             }
 
             nsresult rv = NS_OK;
-#ifdef MOZ_GECKO_PROFILER
             if (profiler_is_active()) {
               // Add a profiler label and a profiler marker for the actual
               // dispatch of the event.
@@ -1287,11 +1306,8 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
               profiler_add_marker(
                 "DOMEvent",
                 MakeUnique<DOMEventMarkerPayload>(typeStr, phase,
-                                                  aEvent->mTimeStamp,
                                                   startTime, endTime));
-            } else
-#endif
-            {
+            } else {
               rv = HandleEventSubType(listener, *aDOMEvent, aCurrentTarget);
             }
 
@@ -1510,7 +1526,7 @@ bool
 EventListenerManager::HasListenersFor(const nsAString& aEventName)
 {
   if (mIsMainThreadELM) {
-    RefPtr<nsAtom> atom = NS_Atomize(NS_LITERAL_STRING("on") + aEventName);
+    nsCOMPtr<nsIAtom> atom = NS_Atomize(NS_LITERAL_STRING("on") + aEventName);
     return HasListenersFor(atom);
   }
 
@@ -1525,7 +1541,7 @@ EventListenerManager::HasListenersFor(const nsAString& aEventName)
 }
 
 bool
-EventListenerManager::HasListenersFor(nsAtom* aEventNameWithOn)
+EventListenerManager::HasListenersFor(nsIAtom* aEventNameWithOn)
 {
 #ifdef DEBUG
   nsAutoString name;
@@ -1606,7 +1622,7 @@ EventListenerManager::HasUnloadListeners()
 }
 
 void
-EventListenerManager::SetEventHandler(nsAtom* aEventName,
+EventListenerManager::SetEventHandler(nsIAtom* aEventName,
                                       const nsAString& aTypeString,
                                       EventHandlerNonNull* aHandler)
 {
@@ -1666,7 +1682,7 @@ EventListenerManager::SetEventHandler(
 }
 
 const TypedEventHandler*
-EventListenerManager::GetTypedEventHandler(nsAtom* aEventName,
+EventListenerManager::GetTypedEventHandler(nsIAtom* aEventName,
                                            const nsAString& aTypeString)
 {
   EventMessage eventMessage = nsContentUtils::GetEventMessage(aEventName);
@@ -1749,30 +1765,12 @@ EventListenerManager::TraceListeners(JSTracer* aTrc)
 }
 
 bool
-EventListenerManager::HasNonSystemGroupListenersForUntrustedKeyEvents()
+EventListenerManager::HasUntrustedOrNonSystemGroupKeyEventListeners()
 {
   uint32_t count = mListeners.Length();
   for (uint32_t i = 0; i < count; ++i) {
     Listener* listener = &mListeners.ElementAt(i);
     if (!listener->mFlags.mInSystemGroup &&
-        listener->mFlags.mAllowUntrustedEvents &&
-        (listener->mTypeAtom == nsGkAtoms::onkeydown ||
-         listener->mTypeAtom == nsGkAtoms::onkeypress ||
-         listener->mTypeAtom == nsGkAtoms::onkeyup)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool
-EventListenerManager::HasNonPassiveNonSystemGroupListenersForUntrustedKeyEvents()
-{
-  uint32_t count = mListeners.Length();
-  for (uint32_t i = 0; i < count; ++i) {
-    Listener* listener = &mListeners.ElementAt(i);
-    if (!listener->mFlags.mPassive &&
-        !listener->mFlags.mInSystemGroup &&
         listener->mFlags.mAllowUntrustedEvents &&
         (listener->mTypeAtom == nsGkAtoms::onkeydown ||
          listener->mTypeAtom == nsGkAtoms::onkeypress ||
@@ -1803,7 +1801,7 @@ EventListenerManager::IsApzAwareListener(Listener* aListener)
 }
 
 bool
-EventListenerManager::IsApzAwareEvent(nsAtom* aEvent)
+EventListenerManager::IsApzAwareEvent(nsIAtom* aEvent)
 {
   if (aEvent == nsGkAtoms::onwheel || aEvent == nsGkAtoms::onDOMMouseScroll ||
       aEvent == nsGkAtoms::onmousewheel ||

@@ -15,8 +15,6 @@
 #include "nsXULElement.h"
 #include "nsIDOMXULMenuListElement.h"
 #include "nsIXULDocument.h"
-#include "nsIDOMXULDocument.h"
-#include "nsIDOMXULCommandDispatcher.h"
 #include "nsIXULTemplateBuilder.h"
 #include "nsCSSFrameConstructor.h"
 #include "nsGlobalWindow.h"
@@ -970,6 +968,7 @@ nsXULPopupManager::ShowPopupCallback(nsIContent* aPopup,
   item->SetParent(mPopups);
   mPopups = item;
   SetCaptureState(oldmenu);
+  NS_ENSURE_TRUE_VOID(weakFrame.IsAlive());
 
   item->UpdateFollowAnchor();
 
@@ -1245,19 +1244,18 @@ nsXULPopupManager::HidePopupAfterDelay(nsMenuPopupFrame* aPopup)
     LookAndFeel::GetInt(LookAndFeel::eIntID_SubmenuDelay, 300); // ms
 
   // Kick off the timer.
-  nsIEventTarget* target = nullptr;
-  if (nsIContent* content = aPopup->GetContent()) {
-    target = content->OwnerDoc()->EventTargetFor(TaskCategory::Other);
+  mCloseTimer = do_CreateInstance("@mozilla.org/timer;1");
+  nsIContent* content = aPopup->GetContent();
+  if (content) {
+    mCloseTimer->SetTarget(
+        content->OwnerDoc()->EventTargetFor(TaskCategory::Other));
   }
-  NS_NewTimerWithFuncCallback(
-    getter_AddRefs(mCloseTimer),
-    [](nsITimer* aTimer, void* aClosure) {
-      nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
-      if (pm) {
-        pm->KillMenuTimer();
-      }
-    }, nullptr, menuDelay, nsITimer::TYPE_ONE_SHOT, "KillMenuTimer",
-    target);
+  mCloseTimer->InitWithNamedFuncCallback([](nsITimer* aTimer, void* aClosure) {
+    nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+    if (pm) {
+      pm->KillMenuTimer();
+    }
+  }, nullptr, menuDelay, nsITimer::TYPE_ONE_SHOT, "KillMenuTimer");
 
   // the popup will call PopupDestroyed if it is destroyed, which checks if it
   // is set to mTimerMenu, so it should be safe to keep a reference to it
@@ -1975,16 +1973,6 @@ nsXULPopupManager::UpdateMenuItems(nsIContent* aPopup)
   nsCOMPtr<nsIDocument> document = aPopup->GetUncomposedDoc();
   if (!document) {
     return;
-  }
-
-  // When a menu is opened, make sure that command updating is unlocked first.
-  nsCOMPtr<nsIDOMXULDocument> xulDoc = do_QueryInterface(document);
-  if (xulDoc) {
-    nsCOMPtr<nsIDOMXULCommandDispatcher> xulCommandDispatcher;
-    xulDoc->GetCommandDispatcher(getter_AddRefs(xulCommandDispatcher));
-    if (xulCommandDispatcher) {
-      xulCommandDispatcher->Unlock();
-    }
   }
 
   for (nsCOMPtr<nsIContent> grandChild = aPopup->GetFirstChild();

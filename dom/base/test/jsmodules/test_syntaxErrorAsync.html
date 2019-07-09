@@ -4,27 +4,20 @@
 <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
 <script>
   var wasRun = false;
-  var errorCount = 0;
-  var syntaxErrorCount = 0;
-  var eventCount = 0;
+  var hadSyntaxError = false;
 
   SimpleTest.waitForExplicitFinish();
   window.onerror = handleError;
 
   function handleError(message, url, line, column, error) {
-    errorCount++;
-    if (error instanceof SyntaxError) {
-      syntaxErrorCount++;
-    }
+    hadSyntaxError = error instanceof SyntaxError;
   }
 
   function testError() {
     ok(!wasRun, 'Check script was not run');
-    ok(errorCount == 1, 'Check that an error was reported');
-    ok(syntaxErrorCount == 1, 'Check that a syntax error was reported');
-    ok(eventCount == 0, 'Check that no error event was fired');
+    ok(hadSyntaxError, 'Check that a SyntaxError was thrown');
     SimpleTest.finish();
   }
 </script>
-<script type="module" src="module_badSyntax.js" async onerror="eventCount++"></script>
+<script type="module" src="module_badSyntax.js" async></script>
 <body onload='testError()'></body>

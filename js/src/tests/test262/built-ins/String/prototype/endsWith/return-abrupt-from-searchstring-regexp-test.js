@@ -16,7 +16,7 @@ info: >
 
   2. Let isRegExp be Get(argument, @@match).
   3. ReturnIfAbrupt(isRegExp).
-features: [Symbol.match, String.prototype.endsWith]
+features: [Symbol.match]
 ---*/
 
 var obj = {};

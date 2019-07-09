@@ -34,7 +34,6 @@ public:
         mIsOfferer(false),
         mWasOffererLastTime(false),
         mIceControlling(false),
-        mLocalIceIsRestarting(false),
         mRemoteIsIceLite(false),
         mRemoteIceIsRestarting(false),
         mBundlePolicy(kBundleBalanced),
@@ -323,7 +322,6 @@ private:
   bool mIceControlling;
   std::string mIceUfrag;
   std::string mIcePwd;
-  bool mLocalIceIsRestarting;
   bool mRemoteIsIceLite;
   bool mRemoteIceIsRestarting;
   std::vector<std::string> mIceOptions;

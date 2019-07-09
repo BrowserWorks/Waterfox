@@ -60,14 +60,14 @@ public:
   // Forwarded nsIMutationObserver method, to handle restyling.
   void AttributeWillChange(Element* aElement,
                            int32_t  aNameSpaceID,
-                           nsAtom* aAttribute,
+                           nsIAtom* aAttribute,
                            int32_t  aModType,
                            const nsAttrValue* aNewValue);
   // Forwarded nsIMutationObserver method, to handle restyling (and
   // passing the notification to the frame).
   void AttributeChanged(Element* aElement,
                         int32_t  aNameSpaceID,
-                        nsAtom* aAttribute,
+                        nsIAtom* aAttribute,
                         int32_t  aModType,
                         const nsAttrValue* aOldValue);
 
@@ -88,16 +88,6 @@ public:
    */
   nsresult ReparentStyleContext(nsIFrame* aFrame);
 
-private:
-  /**
-   * Reparent the descendants of aFrame.  This is used by ReparentStyleContext
-   * and shouldn't be called by anyone else.  aProviderChild, if non-null, is a
-   * child that was the style parent for aFrame and hence shouldn't be
-   * reparented.
-   */
-  void ReparentFrameDescendants(nsIFrame* aFrame, nsIFrame* aProviderChild);
-
-public:
   void ClearSelectors() {
     mPendingRestyles.ClearSelectors();
   }
@@ -345,7 +335,6 @@ public:
 #endif
 
   bool IsProcessingRestyles() { return mIsProcessingRestyles; }
-  bool HasPendingRestyles() const;
 
 private:
   inline nsStyleSet* StyleSet() const {

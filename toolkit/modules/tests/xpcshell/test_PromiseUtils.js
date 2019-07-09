@@ -9,6 +9,9 @@ Components.utils.import("resource://gre/modules/Timer.jsm");
 Components.utils.import("resource://testing-common/PromiseTestUtils.jsm");
 
 // Tests for PromiseUtils.jsm
+function run_test() {
+  run_next_test();
+}
 
 // Tests for PromiseUtils.defer()
 

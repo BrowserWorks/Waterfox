@@ -9,7 +9,6 @@
 
 #include "nsISupports.h"
 #include "nsCOMPtr.h"
-#include "mozilla/RangeBoundary.h"
 
 class nsINode;
 class nsIDOMRange;
@@ -31,21 +30,6 @@ public:
      Subclasses should make sure they implement both of these!
    */
   virtual nsresult Init(nsIDOMRange* aRange) = 0;
-
-  /* Initializes an iterator for the subtree between
-     aStartContainer/aStartOffset and aEndContainer/aEndOffset
-     Callers should guarantee that the start point and end point are in
-     document order.
-   */
-  virtual nsresult Init(nsINode* aStartContainer, uint32_t aStartOffset,
-                        nsINode* aEndContainer, uint32_t aEndOffset) = 0;
-
-  /* Initializes an iterator for the subtree between aStart and aEnd.
-     Callers should guarantee that the start point and end point are in
-     document order.
-   */
-  virtual nsresult Init(const mozilla::RawRangeBoundary& aStart,
-                        const mozilla::RawRangeBoundary& aEnd) = 0;
 
   /** First will reset the list.
    */

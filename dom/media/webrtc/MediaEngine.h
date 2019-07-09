@@ -30,7 +30,8 @@ enum {
  * Abstract interface for managing audio and video devices. Each platform
  * must implement a concrete class that will map these classes and methods
  * to the appropriate backend. For example, on Desktop platforms, these will
- * correspond to equivalent webrtc (GIPS) calls.
+ * correspond to equivalent webrtc (GIPS) calls, and on B2G they will map to
+ * a Gonk interface.
  */
 class MediaEngineVideoSource;
 class MediaEngineAudioSource;
@@ -54,8 +55,11 @@ public:
   static const int DEFAULT_169_VIDEO_WIDTH = 1280;
   static const int DEFAULT_169_VIDEO_HEIGHT = 720;
 
+#ifndef MOZ_B2G
   static const int DEFAULT_SAMPLE_RATE = 32000;
-
+#else
+  static const int DEFAULT_SAMPLE_RATE = 16000;
+#endif
   // This allows using whatever rate the graph is using for the
   // MediaStreamTrack. This is useful for microphone data, we know it's already
   // at the correct rate for insertion in the MSG.
@@ -275,6 +279,9 @@ public:
    * immediately after. */
   virtual nsresult Start(SourceMediaStream*, TrackID, const PrincipalHandle&) = 0;
 
+  /* tell the source if there are any direct listeners attached */
+  virtual void SetDirectListeners(bool) = 0;
+
   /* Called when the stream wants more data */
   virtual void NotifyPull(MediaStreamGraph* aGraph,
                           SourceMediaStream *aSource,
@@ -302,6 +309,7 @@ public:
 
   /* If implementation of MediaEngineSource supports TakePhoto(), the picture
    * should be return via aCallback object. Otherwise, it returns NS_ERROR_NOT_IMPLEMENTED.
+   * Currently, only Gonk MediaEngineSource implementation supports it.
    */
   virtual nsresult TakePhoto(MediaEnginePhotoCallback* aCallback) = 0;
 

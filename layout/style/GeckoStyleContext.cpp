@@ -32,20 +32,18 @@ GeckoStyleContext::Initialize()
 #endif
 
 GeckoStyleContext::GeckoStyleContext(GeckoStyleContext* aParent,
-                                     nsAtom* aPseudoTag,
+                                     nsIAtom* aPseudoTag,
                                      CSSPseudoElementType aPseudoType,
                                      already_AddRefed<nsRuleNode> aRuleNode,
                                      bool aSkipParentDisplayBasedStyleFixup)
-  : nsStyleContext(aPseudoTag, aPseudoType)
+  : nsStyleContext(aParent, aPseudoTag, aPseudoType)
   , mCachedResetData(nullptr)
   , mRefCnt(0)
   , mChild(nullptr)
   , mEmptyChild(nullptr)
   , mRuleNode(Move(aRuleNode))
-  , mParent(aParent)
 #ifdef DEBUG
   , mComputingStruct(nsStyleStructID_None)
-  , mFrameRefCnt(0)
 #endif
 {
   mBits |= NS_STYLE_CONTEXT_IS_GECKO;
@@ -318,7 +316,7 @@ GeckoStyleContext::DoClearCachedInheritedStyleDataOnDescendants(uint32_t aStruct
 }
 
 already_AddRefed<GeckoStyleContext>
-GeckoStyleContext::FindChildWithRules(const nsAtom* aPseudoTag,
+GeckoStyleContext::FindChildWithRules(const nsIAtom* aPseudoTag,
                                    nsRuleNode* aSource,
                                    nsRuleNode* aSourceIfVisited,
                                    bool aRelevantLinkVisited)
@@ -633,21 +631,15 @@ ShouldSuppressLineBreak(const nsStyleContext* aContext,
   return false;
 }
 
+// FIXME(emilio): Why in GeckoStyleContext.cpp?
 void
-GeckoStyleContext::FinishConstruction()
+nsStyleContext::SetStyleBits()
 {
-  MOZ_ASSERT(RuleNode());
+  // Here we set up various style bits for both the Gecko and Servo paths.
+  // _Only_ change the bits here.  For fixups of the computed values, you can
+  // add to ApplyStyleFixups in Gecko and StyleAdjuster as part of Servo's
+  // cascade.
 
-  if (mParent) {
-    mParent->AddChild(this);
-  }
-
-  SetStyleBits();
-}
-
-void
-GeckoStyleContext::SetStyleBits()
-{
   if ((mParent && mParent->HasPseudoElementData()) || IsPseudoElement()) {
     AddStyleBit(NS_STYLE_HAS_PSEUDO_ELEMENT_DATA);
   }

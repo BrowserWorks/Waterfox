@@ -252,7 +252,7 @@ PrintParameterUsage(void)
                     "%-20s The following values are valid:\n"
                     "%-20s P256, P384, P521, x25519, FF2048, FF3072, FF4096, FF6144, FF8192\n",
             "-I", "", "");
-    fprintf(stderr, "%-20s Enable alternate content type for TLS 1.3 ServerHello\n", "-X alt-server-hello");
+    fprintf(stderr, "%-20s Enable alternative TLS 1.3 handshake\n", "-X alt-server-hello");
 }
 
 static void

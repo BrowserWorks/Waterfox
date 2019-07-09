@@ -15,7 +15,7 @@ namespace mozilla {
 
 class MediaRawData;
 class DecryptJob;
-class ChromiumCDMCallbackProxy;
+
 class ChromiumCDMProxy : public CDMProxy
 {
 public:
@@ -68,10 +68,10 @@ public:
 
   void OnSessionMessage(const nsAString& aSessionId,
                         dom::MediaKeyMessageType aMessageType,
-                        const nsTArray<uint8_t>& aMessage) override;
+                        nsTArray<uint8_t>& aMessage) override;
 
   void OnExpirationChange(const nsAString& aSessionId,
-                          UnixTime aExpiryTime) override;
+                          GMPTimestamp aExpiryTime) override;
 
   void OnSessionClosed(const nsAString& aSessionId) override;
 
@@ -125,9 +125,8 @@ private:
   Mutex mCDMMutex;
   RefPtr<gmp::ChromiumCDMParent> mCDM;
   RefPtr<AbstractThread> mGMPThread;
-  UniquePtr<ChromiumCDMCallbackProxy> mCallback;
 };
 
 } // namespace mozilla
 
-#endif // ChromiumCDMProxy_h_
+#endif // GMPCDMProxy_h_

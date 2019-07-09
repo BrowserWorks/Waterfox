@@ -89,7 +89,7 @@ function testOnNetActivity() {
 }
 
 function onNetworkMessage(results) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   outputNode.focus();
   let msg = [...results[0].matched][0];
@@ -125,7 +125,7 @@ function onNetworkMessage(results) {
 }
 
 function testOnNetActivityContextMenu(msg) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   outputNode.focus();
   HUD.ui.output.selectMessage(msg);

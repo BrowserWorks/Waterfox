@@ -23,6 +23,7 @@
 #include "mozilla/dom/FileList.h"
 #include "nsIDOMDragEvent.h"
 #include "nsIDOMFileList.h"
+#include "nsContentList.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsTextNode.h"
 
@@ -67,8 +68,8 @@ nsFileControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
                                         mMouseListener, false);
   }
 
-  DestroyAnonymousContent(mTextContent.forget());
-  DestroyAnonymousContent(mBrowseFilesOrDirs.forget());
+  nsContentUtils::DestroyAnonymousContent(&mTextContent);
+  nsContentUtils::DestroyAnonymousContent(&mBrowseFilesOrDirs);
 
   mMouseListener->ForgetFrame();
   nsBlockFrame::DestroyFrom(aDestructRoot);
@@ -87,7 +88,7 @@ MakeAnonButton(nsIDocument* aDoc, const char* labelKey,
                   NS_LITERAL_STRING("button"), false);
 
   // Set the file picking button text depending on the current locale.
-  nsAutoString buttonTxt;
+  nsXPIDLString buttonTxt;
   nsContentUtils::GetLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
                                      labelKey, buttonTxt);
 
@@ -445,7 +446,7 @@ nsFileControlFrame::SyncDisabledState()
 
 nsresult
 nsFileControlFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                     nsAtom* aAttribute,
+                                     nsIAtom* aAttribute,
                                      int32_t  aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None && aAttribute == nsGkAtoms::tabindex) {
@@ -484,7 +485,7 @@ nsFileControlFrame::UpdateDisplayedValue(const nsAString& aValue, bool aNotify)
 }
 
 nsresult
-nsFileControlFrame::SetFormProperty(nsAtom* aName,
+nsFileControlFrame::SetFormProperty(nsIAtom* aName,
                                     const nsAString& aValue)
 {
   if (nsGkAtoms::value == aName) {
@@ -495,9 +496,10 @@ nsFileControlFrame::SetFormProperty(nsAtom* aName,
 
 void
 nsFileControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                     const nsRect&           aDirtyRect,
                                      const nsDisplayListSet& aLists)
 {
-  BuildDisplayListForInline(aBuilder, aLists);
+  BuildDisplayListForInline(aBuilder, aDirtyRect, aLists);
 }
 
 #ifdef ACCESSIBILITY

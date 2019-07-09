@@ -1,25 +1,5 @@
-with Files("awsy/**"):
-    BUG_COMPONENT = ("Testing", "AWSY")
-    SCHEDULES.exclusive = ["awsy"]
-
-with Files("config/**"):
-    BUG_COMPONENT = ("Testing", "General")
-
-with Files("*.py"):
-    BUG_COMPONENT = ("Testing", "General")
-
-with Files("moz.build"):
-    BUG_COMPONENT = ("Testing", "General")
-
-with Files("*.mk"):
-    BUG_COMPONENT = ("Testing", "General")
-
-with Files("README.txt"):
-    BUG_COMPONENT = ("Testing", "General")
-
 with Files("talos/**"):
     BUG_COMPONENT = ("Testing", "Talos")
-    SCHEDULES.exclusive = ['talos']
 
 with Files("talos/talos/tests/v8_7/**"):
     BUG_COMPONENT = ("Core", "Javascript Engine")
@@ -48,9 +28,6 @@ with Files("talos/talos/tests/scroll/**"):
 with Files("talos/talos/tests/tabpaint/**"):
     BUG_COMPONENT = ("Firefox", "Tabbed Browser")
 
-with Files("talos/talos/tests/cpstartup/**"):
-    BUG_COMPONENT = ("Firefox", "Tabbed Browser")
-
 with Files("talos/talos/tests/tart/**"):
     BUG_COMPONENT = ("Firefox", "Tabbed Browser")
 
@@ -77,18 +54,15 @@ with Files("config/tooltool-manifests/**"):
 
 with Files("*cppunittest*"):
     BUG_COMPONENT = ("Testing", "General")
-    SCHEDULES.exclusive = ['cppunittest']
 
 with Files("gtest/**"):
     BUG_COMPONENT = ("Testing", "General")
-    SCHEDULES.exclusive = ['gtest']
 
 with Files("specialpowers/**"):
     BUG_COMPONENT = ("Testing", "Mochitest")
 
 with Files("crashtest/**"):
     BUG_COMPONENT = ("Testing", "Reftest")
-    SCHEDULES.exclusive = ['reftest']
 
 with Files("config/marionette*"):
     BUG_COMPONENT = ("Testing", "Marionette")

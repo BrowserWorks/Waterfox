@@ -11,7 +11,6 @@ var blacklist = {
     'readline': true,
     'terminate': true,
     'nestedShell': true,
-    'nukeAllCCWs': true,
 };
 
 function f(y) {}

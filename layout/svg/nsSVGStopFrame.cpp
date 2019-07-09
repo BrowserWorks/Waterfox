@@ -8,7 +8,7 @@
 #include "nsFrame.h"
 #include "nsGkAtoms.h"
 #include "nsStyleContext.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 
 // This is a very simple frame whose only purpose is to capture style change
 // events and propagate them to the parent.  Most of the heavy lifting is done
@@ -36,10 +36,11 @@ public:
 #endif
 
   void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
                         const nsDisplayListSet& aLists) override {}
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
@@ -77,7 +78,7 @@ nsSVGStopFrame::Init(nsIContent*       aContent,
 
 nsresult
 nsSVGStopFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                 nsAtom*        aAttribute,
+                                 nsIAtom*        aAttribute,
                                  int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -85,7 +86,7 @@ nsSVGStopFrame::AttributeChanged(int32_t         aNameSpaceID,
     MOZ_ASSERT(GetParent()->IsSVGLinearGradientFrame() ||
                GetParent()->IsSVGRadialGradientFrame(),
                "Observers observe the gradient, so that's what we must invalidate");
-    SVGObserverUtils::InvalidateDirectRenderingObservers(GetParent());
+    nsSVGEffects::InvalidateDirectRenderingObservers(GetParent());
   }
 
   return nsFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);

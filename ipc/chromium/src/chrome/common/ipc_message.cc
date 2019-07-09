@@ -38,31 +38,41 @@ Message::~Message() {
 Message::Message()
     : Pickle(MSG_HEADER_SZ) {
   MOZ_COUNT_CTOR(IPC::Message);
-  header()->routing = header()->type = 0;
+  header()->routing = header()->type = header()->flags = 0;
 #if defined(OS_POSIX)
   header()->num_fds = 0;
 #endif
 #ifdef MOZ_TASK_TRACER
   if (UseTaskTracerHeader()) {
-    header()->flags.SetTaskTracer();
+    header()->flags |= TASKTRACER_BIT;
     HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
     GetCurTraceInfo(&_header->source_event_id,
                     &_header->parent_task_id,
                     &_header->source_event_type);
   }
 #endif
+  InitLoggingVariables();
 }
 
 Message::Message(int32_t routing_id,
                  msgid_t type,
                  uint32_t segment_capacity,
-                 HeaderFlags flags,
+                 NestedLevel nestedLevel,
+                 PriorityValue priority,
+                 MessageCompression compression,
+                 const char* const aName,
                  bool recordWriteLatency)
     : Pickle(MSG_HEADER_SZ, segment_capacity) {
   MOZ_COUNT_CTOR(IPC::Message);
   header()->routing = routing_id;
   header()->type = type;
-  header()->flags = flags;
+  header()->flags = nestedLevel;
+  if (priority == HIGH_PRIORITY)
+    header()->flags |= PRIO_BIT;
+  if (compression == COMPRESSION_ENABLED)
+    header()->flags |= COMPRESS_BIT;
+  else if (compression == COMPRESSION_ALL)
+    header()->flags |= COMPRESSALL_BIT;
 #if defined(OS_POSIX)
   header()->num_fds = 0;
 #endif
@@ -74,7 +84,7 @@ Message::Message(int32_t routing_id,
 #endif
 #ifdef MOZ_TASK_TRACER
   if (UseTaskTracerHeader()) {
-    header()->flags.SetTaskTracer();
+    header()->flags |= TASKTRACER_BIT;
     HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
     GetCurTraceInfo(&_header->source_event_id,
                     &_header->parent_task_id,
@@ -84,13 +94,14 @@ Message::Message(int32_t routing_id,
   if (recordWriteLatency) {
     create_time_ = mozilla::TimeStamp::Now();
   }
+  InitLoggingVariables(aName);
 }
 
 #ifndef MOZ_TASK_TRACER
 #define MSG_HEADER_SZ_DATA sizeof(Header)
 #else
 #define MSG_HEADER_SZ_DATA                                            \
-  (reinterpret_cast<const Header*>(data)->flags.IsTaskTracer() ? \
+  (reinterpret_cast<const Header*>(data)->flags & TASKTRACER_BIT ?  \
    sizeof(HeaderTaskTracer) : sizeof(Header))
 #endif
 
@@ -98,47 +109,24 @@ Message::Message(const char* data, int data_len)
   : Pickle(MSG_HEADER_SZ_DATA, data, data_len)
 {
   MOZ_COUNT_CTOR(IPC::Message);
+  InitLoggingVariables();
 }
 
 Message::Message(Message&& other) : Pickle(mozilla::Move(other)) {
   MOZ_COUNT_CTOR(IPC::Message);
+  InitLoggingVariables(other.name_);
 #if defined(OS_POSIX)
   file_descriptor_set_ = other.file_descriptor_set_.forget();
 #endif
 }
 
-/*static*/ Message*
-Message::IPDLMessage(int32_t routing_id,
-                     msgid_t type,
-                     HeaderFlags flags)
-{
-  return new Message(routing_id, type, 0, flags, true);
-}
-
-/*static*/ Message*
-Message::ForSyncDispatchError(NestedLevel level)
-{
-  auto* m = new Message(0, 0, 0, HeaderFlags(level));
-  auto& flags = m->header()->flags;
-  flags.SetSync();
-  flags.SetReply();
-  flags.SetReplyError();
-  return m;
-}
-
-/*static*/ Message*
-Message::ForInterruptDispatchError()
-{
-  auto* m = new Message();
-  auto& flags = m->header()->flags;
-  flags.SetInterrupt();
-  flags.SetReply();
-  flags.SetReplyError();
-  return m;
+void Message::InitLoggingVariables(const char* const aName) {
+  name_ = aName;
 }
 
 Message& Message::operator=(Message&& other) {
   *static_cast<Pickle*>(this) = mozilla::Move(other);
+  InitLoggingVariables(other.name_);
 #if defined(OS_POSIX)
   file_descriptor_set_.swap(other.file_descriptor_set_);
 #endif
@@ -194,7 +182,7 @@ void *MessageTask() {
 
 void
 Message::TaskTracerDispatch() {
-  if (header()->flags.IsTaskTracer()) {
+  if (header()->flags & TASKTRACER_BIT) {
     HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
     _header->task_id = GenNewUniqueTaskId();
     uintptr_t* vtab = reinterpret_cast<uintptr_t*>(&MessageTask);
@@ -212,7 +200,7 @@ Message::AutoTaskTracerRun::AutoTaskTracerRun(Message& aMsg)
   : mMsg(aMsg)
   , mTaskId(0)
   , mSourceEventId(0) {
-  if (mMsg.header()->flags.IsTaskTracer()) {
+  if (mMsg.header()->flags & TASKTRACER_BIT) {
     const HeaderTaskTracer* _header =
       static_cast<HeaderTaskTracer*>(mMsg.header());
     LogBegin(_header->task_id,

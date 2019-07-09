@@ -11,7 +11,6 @@ info: >
   3. Let _value_ be ? ToNumber(_value_).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

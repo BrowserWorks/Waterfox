@@ -1,5 +1,5 @@
 /* globals log, catcher, util, ui, slides */
-/* globals shooter, callBackground, selectorLoader, assertIsTrusted, buildSettings */
+/* globals shooter, callBackground, selectorLoader, assertIsTrusted */
 
 "use strict";
 
@@ -24,8 +24,6 @@ this.uicontrol = (function() {
     The user is resizing the selection
   "cancelled":
     Everything has been cancelled
-  "previewing":
-    The user is previewing the full-screen/visible image
 
   A mousedown goes from crosshairs to dragging.
   A mouseup goes from dragging to selected
@@ -45,8 +43,8 @@ this.uicontrol = (function() {
 
   const { watchFunction, watchPromise } = catcher;
 
-  const MAX_PAGE_HEIGHT = buildSettings.maxImageHeight;
-  const MAX_PAGE_WIDTH = buildSettings.maxImageWidth;
+  const MAX_PAGE_HEIGHT = 5000;
+  const MAX_PAGE_WIDTH = 5000;
   // An autoselection smaller than these will be ignored entirely:
   const MIN_DETECT_ABSOLUTE_HEIGHT = 10;
   const MIN_DETECT_ABSOLUTE_WIDTH = 30;
@@ -122,8 +120,6 @@ this.uicontrol = (function() {
     H6: true
   };
 
-  let captureType;
-
   let standardDisplayCallbacks = {
     cancel: () => {
       sendEvent("cancel-shot", "overlay-cancel-button");
@@ -138,10 +134,6 @@ this.uicontrol = (function() {
   };
 
   let standardOverlayCallbacks = {
-    cancel: () => {
-      sendEvent("cancel-shot", "cancel-preview-button");
-      exports.deactivate();
-    },
     onOpenMyShots: () => {
       sendEvent("goto-myshots", "selection-button");
       callBackground("openMyShots")
@@ -155,44 +147,28 @@ this.uicontrol = (function() {
       selectedPos = new Selection(
         window.scrollX, window.scrollY,
         window.scrollX + window.innerWidth, window.scrollY + window.innerHeight);
-      captureType = 'visible';
-      setState("previewing");
+      shooter.takeShot("visible", selectedPos);
     },
     onClickFullPage: () => {
       sendEvent("capture-full-page", "selection-button");
-      captureType = "fullPage";
       let width = Math.max(
         document.body.clientWidth,
         document.documentElement.clientWidth,
         document.body.scrollWidth,
         document.documentElement.scrollWidth);
-      if (width > MAX_PAGE_WIDTH) {
-        captureType = "fullPageTruncated";
-      }
       width = Math.min(width, MAX_PAGE_WIDTH);
       let height = Math.max(
         document.body.clientHeight,
         document.documentElement.clientHeight,
         document.body.scrollHeight,
         document.documentElement.scrollHeight);
-      if (height > MAX_PAGE_HEIGHT) {
-        captureType = "fullPageTruncated";
-      }
       height = Math.min(height, MAX_PAGE_HEIGHT);
       selectedPos = new Selection(
         0, 0,
         width, height);
-      setState("previewing");
-    },
-    onSavePreview: () => {
-      sendEvent(`save-${captureType.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`, "save-preview-button");
-      shooter.takeShot(captureType, selectedPos, dataUrl);
-    },
-    onDownloadPreview: () => {
-      sendEvent(`download-${captureType.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`, "download-preview-button");
-      shooter.downloadShot(selectedPos);
+      shooter.takeShot("fullPage", selectedPos);
     }
-  };
+  }
 
   /** Holds all the objects that handle events for each state: */
   let stateHandlers = {};
@@ -367,16 +343,6 @@ this.uicontrol = (function() {
   /** *********************************************
    * all stateHandlers
    */
-
-  let dataUrl;
-
-  stateHandlers.previewing = {
-    start() {
-      dataUrl = shooter.screenshotPage(selectedPos, captureType);
-      ui.iframe.usePreview();
-      ui.Preview.display(dataUrl, captureType == "fullPageTruncated");
-    }
-  };
 
   stateHandlers.onboarding = {
     start() {

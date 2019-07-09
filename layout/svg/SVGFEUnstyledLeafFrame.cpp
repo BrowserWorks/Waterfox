@@ -7,7 +7,7 @@
 #include "nsContainerFrame.h"
 #include "nsFrame.h"
 #include "nsGkAtoms.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGFilters.h"
 
 class SVGFEUnstyledLeafFrame : public nsFrame
@@ -25,6 +25,7 @@ public:
   NS_DECL_FRAMEARENA_HELPERS(SVGFEUnstyledLeafFrame)
 
   virtual void BuildDisplayList(nsDisplayListBuilder* aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {}
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
@@ -40,7 +41,7 @@ public:
 #endif
 
   virtual nsresult AttributeChanged(int32_t  aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t  aModType) override;
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override {
@@ -59,14 +60,14 @@ NS_IMPL_FRAMEARENA_HELPERS(SVGFEUnstyledLeafFrame)
 
 nsresult
 SVGFEUnstyledLeafFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                         nsAtom* aAttribute,
+                                         nsIAtom* aAttribute,
                                          int32_t  aModType)
 {
-  SVGFEUnstyledElement *element = static_cast<SVGFEUnstyledElement*>(GetContent());
+  SVGFEUnstyledElement *element = static_cast<SVGFEUnstyledElement*>(mContent);
   if (element->AttributeAffectsRendering(aNameSpaceID, aAttribute)) {
     MOZ_ASSERT(GetParent()->GetParent()->IsSVGFilterFrame(),
                "Observers observe the filter, so that's what we must invalidate");
-    SVGObserverUtils::InvalidateDirectRenderingObservers(GetParent()->GetParent());
+    nsSVGEffects::InvalidateDirectRenderingObservers(GetParent()->GetParent());
   }
 
   return nsFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);

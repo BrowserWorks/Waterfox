@@ -17,7 +17,6 @@ from mach.decorators import (
 from mozbuild.base import MachCommandBase
 import mozpack.path as mozpath
 
-TOPSRCDIR = os.path.abspath(os.path.join(__file__, '../../../../../'))
 
 class InvalidPathException(Exception):
     """Represents an error due to an invalid path."""
@@ -160,8 +159,18 @@ class MozbuildFileCommands(MachCommandBase):
             return 1
 
 
+    def _get_reader(self, finder):
+        from mozbuild.frontend.reader import (
+            BuildReader,
+            EmptyConfig,
+        )
+
+        config = EmptyConfig(self.topsrcdir)
+        return BuildReader(config, finder=finder)
+
     def _get_files_info(self, paths, rev=None):
-        reader = self.mozbuild_reader(config_mode='empty', vcs_revision=rev)
+        from mozbuild.frontend.reader import default_finder
+        from mozpack.files import FileFinder, MercurialRevisionFinder
 
         # Normalize to relative from topsrcdir.
         relpaths = []
@@ -171,6 +180,24 @@ class MozbuildFileCommands(MachCommandBase):
                 raise InvalidPathException('path is outside topsrcdir: %s' % p)
 
             relpaths.append(mozpath.relpath(a, self.topsrcdir))
+
+        repo = None
+        if rev:
+            hg_path = os.path.join(self.topsrcdir, '.hg')
+            if not os.path.exists(hg_path):
+                raise InvalidPathException('a Mercurial repo is required '
+                        'when specifying a revision')
+
+            repo = self.topsrcdir
+
+        # We need two finders because the reader's finder operates on
+        # absolute paths.
+        finder = FileFinder(self.topsrcdir)
+        if repo:
+            reader_finder = MercurialRevisionFinder(repo, rev=rev,
+                                                    recognize_repo_paths=True)
+        else:
+            reader_finder = default_finder
 
         # Expand wildcards.
         # One variable is for ordering. The other for membership tests.
@@ -184,32 +211,13 @@ class MozbuildFileCommands(MachCommandBase):
                     allpaths.append(p)
                 continue
 
-            if rev:
+            if repo:
                 raise InvalidPathException('cannot use wildcard in version control mode')
 
-            for path, f in reader.finder.find(p):
+            for path, f in finder.find(p):
                 if path not in all_paths_set:
                     all_paths_set.add(path)
                     allpaths.append(path)
 
+        reader = self._get_reader(finder=reader_finder)
         return reader.files_info(allpaths)
-
-
-    @SubCommand('file-info', 'schedules',
-                'Show the combined SCHEDULES for the files listed.')
-    @CommandArgument('paths', nargs='+',
-                     help='Paths whose data to query')
-    def file_info_schedules(self, paths):
-        """Show what is scheduled by the given files.
-
-        Given a requested set of files (which can be specified using
-        wildcards), print the total set of scheduled components.
-        """
-        from mozbuild.frontend.reader import EmptyConfig, BuildReader
-        config = EmptyConfig(TOPSRCDIR)
-        reader = BuildReader(config)
-        schedules = set()
-        for p, m in reader.files_info(paths).items():
-            schedules |= set(m['SCHEDULES'].components)
-
-        print(", ".join(schedules))

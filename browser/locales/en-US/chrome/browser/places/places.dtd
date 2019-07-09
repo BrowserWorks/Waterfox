@@ -84,9 +84,10 @@
 <!ENTITY col.description.label   "Description">
 <!ENTITY col.dateadded.label     "Added">
 <!ENTITY col.lastmodified.label  "Last Modified">
+<!ENTITY col.parentfolder.label  "Parent Folder">
+<!ENTITY col.parentpath.label  "Parent Path">
 
-<!ENTITY historySearch.placeholder  "Search history">
-<!ENTITY bookmarksSearch.placeholder  "Search bookmarks">
+<!ENTITY search.placeholder  "Search">
 
 <!ENTITY cmd.find.key  "f">
 

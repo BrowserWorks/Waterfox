@@ -27,6 +27,8 @@ IPDL_SOURCES = [
     'PDataChannel.ipdl',
     'PFileChannel.ipdl',
     'PNecko.ipdl',
+    'PRtspChannel.ipdl',
+    'PRtspController.ipdl',
     'PSimpleChannel.ipdl',
 ]
 

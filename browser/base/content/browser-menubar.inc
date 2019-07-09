@@ -5,7 +5,11 @@
 
        <menubar id="main-menubar"
                 onpopupshowing="if (event.target.parentNode.parentNode == this &amp;&amp;
+#ifdef MOZ_WIDGET_GTK
+                                    document.documentElement.getAttribute('shellshowingmenubar') != 'true')
+#else
                                     !('@mozilla.org/widget/nativemenuservice;1' in Cc))
+#endif
                                   this.setAttribute('openedwithkey',
                                                     event.target.parentNode.openedWithKey);"
                 style="border:0px;padding:0px;margin:0px;-moz-appearance:none">
@@ -34,6 +38,12 @@
                           accesskey="&newPrivateWindow.accesskey;"
                           command="Tools:PrivateBrowsing"
                           key="key_privatebrowsing"/>
+#ifdef E10S_TESTING_ONLY
+                <menuitem id="menu_newNonRemoteWindow"
+                          label="&newNonRemoteWindow.label;"
+                          hidden="true"
+                          command="Tools:NonRemoteWindow"/>
+#endif
 #ifdef MAC_NON_BROWSER_WINDOW
                 <menuitem id="menu_openLocation"
                           label="&openLocationCmd.label;"
@@ -379,7 +389,6 @@
 #endif
                context="placesContext"
                openInTabs="children"
-               onmouseup="BookmarksEventHandler.onMouseUp(event);"
                oncommand="BookmarksEventHandler.onCommand(event);"
                onclick="BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
                onpopupshowing="BookmarkingUI.onMainMenuPopupShowing(event);
@@ -419,6 +428,10 @@
                 class="show-only-for-keyboard"
                 command="Browser:BookmarkAllTabs"
                 key="bookmarkAllTabsKb"/>
+      <menuseparator/>
+      <menuitem label="&recentBookmarks.label;"
+                id="menu_recentBookmarks"
+                disabled="true"/>
       <menuseparator id="bookmarksToolbarSeparator"/>
       <menu id="bookmarksToolbarFolderMenu"
             class="menu-iconic bookmark-item"
@@ -464,7 +477,8 @@
 
             <menu id="tools-menu"
                   label="&toolsMenu.label;"
-                  accesskey="&toolsMenu.accesskey;">
+                  accesskey="&toolsMenu.accesskey;"
+                  onpopupshowing="mirrorShow(this)">
               <menupopup id="menu_ToolsPopup">
               <menuitem id="menu_openDownloads"
                         label="&downloads.label;"
@@ -510,6 +524,13 @@
                         key="key_viewInfo"
 #endif
                         command="View:PageInfo"/>
+              <menu id="menu_mirrorTabCmd"
+                    hidden="true"
+                    accesskey="&mirrorTabCmd.accesskey;"
+                    label="&mirrorTabCmd.label;">
+                <menupopup id="menu_mirrorTab-popup"
+                           onpopupshowing="populateMirrorTabMenu(this)"/>
+              </menu>
 #ifndef XP_UNIX
               <menuseparator id="prefSep"/>
               <menuitem id="menu_preferences"

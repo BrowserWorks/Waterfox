@@ -24,7 +24,6 @@ info: >
     c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var predicate = function() {

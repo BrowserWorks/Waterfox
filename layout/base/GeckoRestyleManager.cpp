@@ -28,7 +28,7 @@
 #include "nsStyleSet.h"
 #include "nsStyleUtil.h"
 #include "nsCSSFrameConstructor.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSRendering.h"
 #include "nsAnimationManager.h"
@@ -222,9 +222,8 @@ GeckoRestyleManager::RestyleElement(Element*               aElement,
   }
 
   if (aMinHint & nsChangeHint_ReconstructFrame) {
-    FrameConstructor()->RecreateFramesForContent(
-      aElement,
-      nsCSSFrameConstructor::InsertionKind::Sync);
+    FrameConstructor()->RecreateFramesForContent(aElement, false,
+      nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION, nullptr);
   } else if (aPrimaryFrame) {
     ComputeAndProcessStyleChange(aPrimaryFrame, aMinHint, aRestyleTracker,
                                  aRestyleHint, aRestyleHintData);
@@ -292,36 +291,8 @@ GeckoRestyleManager::ContentStateChanged(nsIContent* aContent,
   Element* aElement = aContent->AsElement();
 
   nsChangeHint changeHint;
-  ContentStateChangedInternal(aElement, aStateMask, &changeHint);
-
-  // Assemble what we'll need to calculate the nsRestyleHint.
-  nsIFrame* primaryFrame = aElement->GetPrimaryFrame();
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
-  if (primaryFrame) {
-    pseudoType = primaryFrame->StyleContext()->GetPseudoType();
-  }
-
-  nsStyleSet* styleSet = PresContext()->StyleSet()->AsGecko();
-  MOZ_ASSERT(styleSet);
-
   nsRestyleHint restyleHint;
-  if (pseudoType >= CSSPseudoElementType::Count) {
-    restyleHint = styleSet->HasStateDependentStyle(aElement, aStateMask);
-  } else if (nsCSSPseudoElements::PseudoElementSupportsUserActionState(
-               pseudoType)) {
-    // If aElement is a pseudo-element, we want to check to see whether there
-    // are any state-dependent rules applying to that pseudo.
-    Element* ancestor =
-      ElementForStyleContext(nullptr, primaryFrame, pseudoType);
-    restyleHint = styleSet->HasStateDependentStyle(ancestor, pseudoType,
-                                                   aElement, aStateMask);
-  } else {
-    restyleHint = nsRestyleHint(0);
-  }
-
-  if (aStateMask.HasState(NS_EVENT_STATE_HOVER) && restyleHint != 0) {
-    IncrementHoverGeneration();
-  }
+  ContentStateChangedInternal(aElement, aStateMask, &changeHint, &restyleHint);
 
   PostRestyleEvent(aElement, restyleHint, changeHint);
 }
@@ -330,7 +301,7 @@ GeckoRestyleManager::ContentStateChanged(nsIContent* aContent,
 void
 GeckoRestyleManager::AttributeWillChange(Element* aElement,
                                          int32_t aNameSpaceID,
-                                         nsAtom* aAttribute,
+                                         nsIAtom* aAttribute,
                                          int32_t aModType,
                                          const nsAttrValue* aNewValue)
 {
@@ -353,7 +324,7 @@ GeckoRestyleManager::AttributeWillChange(Element* aElement,
 void
 GeckoRestyleManager::AttributeChanged(Element* aElement,
                                       int32_t aNameSpaceID,
-                                      nsAtom* aAttribute,
+                                      nsIAtom* aAttribute,
                                       int32_t aModType,
                                       const nsAttrValue* aOldValue)
 {
@@ -385,7 +356,7 @@ GeckoRestyleManager::AttributeChanged(Element* aElement,
   // happen otherwise).
   if (!primaryFrame && !reframe) {
     int32_t namespaceID;
-    nsAtom* tag = PresContext()->Document()->BindingManager()->
+    nsIAtom* tag = PresContext()->Document()->BindingManager()->
                      ResolveTag(aElement, &namespaceID);
 
     if (namespaceID == kNameSpaceID_XUL &&
@@ -1023,13 +994,16 @@ GeckoRestyleManager::ReparentStyleContext(nsIFrame* aFrame)
 #endif
 
   if (!newParentContext && !oldContext->GetParent()) {
-    // No need to do anything here for this frame, but we should still reparent
-    // its descendants, because those may have styles that inherit from the
-    // parent of this frame (e.g. non-anonymous columns in an anonymous
-    // colgroup).
-    MOZ_ASSERT(aFrame->StyleContext()->IsNonInheritingAnonBox(),
-               "Why did this frame not end up with a parent context?");
-    ReparentFrameDescendants(aFrame, providerChild);
+    // No need to do anything here.
+#ifdef DEBUG
+    // Make sure we have no children, so we really know there is nothing to do.
+    nsIFrame::ChildListIterator lists(aFrame);
+    for (; !lists.IsDone(); lists.Next()) {
+      MOZ_ASSERT(lists.CurrentList().IsEmpty(),
+                 "Failing to reparent style context for child of "
+                 "non-inheriting anon box");
+    }
+#endif // DEBUG
     return NS_OK;
   }
 
@@ -1087,7 +1061,26 @@ GeckoRestyleManager::ReparentStyleContext(nsIFrame* aFrame)
 
       aFrame->SetStyleContext(newContext);
 
-      ReparentFrameDescendants(aFrame, providerChild);
+      nsIFrame::ChildListIterator lists(aFrame);
+      for (; !lists.IsDone(); lists.Next()) {
+        for (nsIFrame* child : lists.CurrentList()) {
+          // only do frames that are in flow
+          if (!(child->GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
+              child != providerChild) {
+#ifdef DEBUG
+            if (child->IsPlaceholderFrame()) {
+              nsIFrame* outOfFlowFrame =
+                nsPlaceholderFrame::GetRealFrameForPlaceholder(child);
+              NS_ASSERTION(outOfFlowFrame, "no out-of-flow frame");
+
+              NS_ASSERTION(outOfFlowFrame != providerChild,
+                           "Out of flow provider?");
+            }
+#endif
+            ReparentStyleContext(child);
+          }
+        }
+      }
 
       // If this frame is part of an IB split, then the style context of
       // the next part of the split might be a child of our style context.
@@ -1129,32 +1122,6 @@ GeckoRestyleManager::ReparentStyleContext(nsIFrame* aFrame)
   }
 
   return NS_OK;
-}
-
-void
-GeckoRestyleManager::ReparentFrameDescendants(nsIFrame* aFrame,
-                                              nsIFrame* aProviderChild)
-{
-  nsIFrame::ChildListIterator lists(aFrame);
-  for (; !lists.IsDone(); lists.Next()) {
-    for (nsIFrame* child : lists.CurrentList()) {
-      // only do frames that are in flow
-      if (!(child->GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
-          child != aProviderChild) {
-#ifdef DEBUG
-        if (child->IsPlaceholderFrame()) {
-          nsIFrame* outOfFlowFrame =
-            nsPlaceholderFrame::GetRealFrameForPlaceholder(child);
-          NS_ASSERTION(outOfFlowFrame, "no out-of-flow frame");
-
-          NS_ASSERTION(outOfFlowFrame != aProviderChild,
-                       "Out of flow provider?");
-        }
-#endif
-        ReparentStyleContext(child);
-      }
-    }
-  }
 }
 
 ElementRestyler::ElementRestyler(nsPresContext* aPresContext,
@@ -1550,10 +1517,10 @@ ElementRestyler::DoConditionallyRestyleUndisplayedDescendants(
     Element* aRestyleRoot)
 {
   nsCSSFrameConstructor* fc = mPresContext->FrameConstructor();
-  UndisplayedNode* nodes = fc->GetAllRegisteredDisplayNoneStylesIn(aParent);
+  UndisplayedNode* nodes = fc->GetAllUndisplayedContentIn(aParent);
   ConditionallyRestyleUndisplayedNodes(nodes, aParent,
                                        StyleDisplay::None, aRestyleRoot);
-  nodes = fc->GetAllRegisteredDisplayContentsStylesIn(aParent);
+  nodes = fc->GetAllDisplayContentsIn(aParent);
   ConditionallyRestyleUndisplayedNodes(nodes, aParent,
                                        StyleDisplay::Contents, aRestyleRoot);
 }
@@ -1728,7 +1695,7 @@ ElementRestyler::MoveStyleContextsForContentChildren(
         // XXX Not sure if we need this?
         return false;
       }
-      nsAtom* pseudoTag = sc->GetPseudo();
+      nsIAtom* pseudoTag = sc->GetPseudo();
       if (pseudoTag && !nsCSSAnonBoxes::IsNonElement(pseudoTag)) {
         return false;
       }
@@ -1757,8 +1724,8 @@ ElementRestyler::MoveStyleContextsForChildren(GeckoStyleContext* aOldContext)
   nsIContent* undisplayedParent;
   if (MustCheckUndisplayedContent(mFrame, undisplayedParent)) {
     nsCSSFrameConstructor* fc = mPresContext->FrameConstructor();
-    if (fc->GetAllRegisteredDisplayNoneStylesIn(undisplayedParent) ||
-        fc->GetAllRegisteredDisplayContentsStylesIn(undisplayedParent)) {
+    if (fc->GetAllUndisplayedContentIn(undisplayedParent) ||
+        fc->GetAllDisplayContentsIn(undisplayedParent)) {
       return false;
     }
   }
@@ -2179,7 +2146,7 @@ ElementRestyler::ComputeRestyleResultFromFrame(nsIFrame* aSelf,
   // structure.  To avoid enumerating and checking all of the cases
   // where we have this kind of inheritance, we keep restyling past
   // pseudos.
-  nsAtom* pseudoTag = oldContext->GetPseudo();
+  nsIAtom* pseudoTag = oldContext->GetPseudo();
   if (pseudoTag && !nsCSSAnonBoxes::IsNonElement(pseudoTag)) {
     LOG_RESTYLE_CONTINUE("the old style context is for a pseudo");
     aRestyleResult = RestyleResult::eContinue;
@@ -2193,7 +2160,7 @@ ElementRestyler::ComputeRestyleResultFromFrame(nsIFrame* aSelf,
     // Also if the parent has a pseudo, as this frame's style context will
     // be inheriting from a grandparent frame's style context (or a further
     // ancestor).
-    nsAtom* parentPseudoTag = parent->StyleContext()->GetPseudo();
+    nsIAtom* parentPseudoTag = parent->StyleContext()->GetPseudo();
     if (parentPseudoTag &&
         parentPseudoTag != nsCSSAnonBoxes::firstLetterContinuation) {
       MOZ_ASSERT(parentPseudoTag != nsCSSAnonBoxes::mozText,
@@ -2517,7 +2484,7 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
     oldContext->StyleVisibility()->IsVisible() : false;
 #endif
 
-  nsAtom* const pseudoTag = oldContext->GetPseudo();
+  nsIAtom* const pseudoTag = oldContext->GetPseudo();
   const CSSPseudoElementType pseudoType = oldContext->GetPseudoType();
 
   // Get the frame providing the parent style context.  If it is a
@@ -2934,7 +2901,7 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
     LOG_RESTYLE("extra context %d", contextIndex);
     LOG_RESTYLE_INDENT();
     RefPtr<GeckoStyleContext> newExtraContext;
-    nsAtom* const extraPseudoTag = oldExtraContext->GetPseudo();
+    nsIAtom* const extraPseudoTag = oldExtraContext->GetPseudo();
     const CSSPseudoElementType extraPseudoType =
       oldExtraContext->GetPseudoType();
     NS_ASSERTION(extraPseudoTag &&
@@ -3224,10 +3191,10 @@ ElementRestyler::DoRestyleUndisplayedDescendants(nsRestyleHint aChildRestyleHint
                                                  GeckoStyleContext* aParentContext)
 {
   nsCSSFrameConstructor* fc = mPresContext->FrameConstructor();
-  UndisplayedNode* nodes = fc->GetAllRegisteredDisplayNoneStylesIn(aParent);
+  UndisplayedNode* nodes = fc->GetAllUndisplayedContentIn(aParent);
   RestyleUndisplayedNodes(aChildRestyleHint, nodes, aParent,
                           aParentContext, StyleDisplay::None);
-  nodes = fc->GetAllRegisteredDisplayContentsStylesIn(aParent);
+  nodes = fc->GetAllDisplayContentsIn(aParent);
   RestyleUndisplayedNodes(aChildRestyleHint, nodes, aParent,
                           aParentContext, StyleDisplay::Contents);
 }
@@ -3649,12 +3616,6 @@ GeckoRestyleManager::ComputeAndProcessStyleChange(
                                             aRestyleHint, aRestyleHintData);
   ProcessRestyledFrames(changeList);
   ClearCachedInheritedStyleDataOnDescendants(contextsToClear);
-}
-
-bool
-GeckoRestyleManager::HasPendingRestyles() const
-{
-  return mPendingRestyles.Count() != 0;
 }
 
 nsStyleSet*

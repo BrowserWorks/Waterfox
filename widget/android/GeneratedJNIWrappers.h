@@ -7,9 +7,7 @@
 #ifndef GeneratedJNIWrappers_h
 #define GeneratedJNIWrappers_h
 
-#ifndef MOZ_PREPROCESSOR
 #include "mozilla/jni/Refs.h"
-#endif
 
 namespace mozilla {
 namespace java {
@@ -669,25 +667,6 @@ public:
 
     static auto EnableSensor(int32_t) -> void;
 
-    struct GetAppNotes_t {
-        typedef GeckoAppShell Owner;
-        typedef mozilla::jni::String::LocalRef ReturnType;
-        typedef mozilla::jni::String::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "getAppNotes";
-        static constexpr char signature[] =
-                "()Ljava/lang/String;";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::IGNORE;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto GetAppNotes() -> mozilla::jni::String::LocalRef;
-
     struct GetApplicationContext_t {
         typedef GeckoAppShell Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
@@ -706,44 +685,6 @@ public:
     };
 
     static auto GetApplicationContext() -> mozilla::jni::Object::LocalRef;
-
-    struct GetAudioOutputFramesPerBuffer_t {
-        typedef GeckoAppShell Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "getAudioOutputFramesPerBuffer";
-        static constexpr char signature[] =
-                "()I";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::GECKO;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto GetAudioOutputFramesPerBuffer() -> int32_t;
-
-    struct GetAudioOutputSampleRate_t {
-        typedef GeckoAppShell Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "getAudioOutputSampleRate";
-        static constexpr char signature[] =
-                "()I";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::GECKO;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto GetAudioOutputSampleRate() -> int32_t;
 
     struct GetConnection_t {
         typedef GeckoAppShell Owner;
@@ -1590,6 +1531,29 @@ public:
 
     static auto ShowNotification(mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param) -> void;
 
+    struct StartGeckoServiceChildProcess_t {
+        typedef GeckoAppShell Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param,
+                mozilla::jni::ObjectArray::Param,
+                int32_t,
+                int32_t> Args;
+        static constexpr char name[] = "startGeckoServiceChildProcess";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;[Ljava/lang/String;II)I";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto StartGeckoServiceChildProcess(mozilla::jni::String::Param, mozilla::jni::ObjectArray::Param, int32_t, int32_t) -> int32_t;
+
     struct UnlockProfile_t {
         typedef GeckoAppShell Owner;
         typedef bool ReturnType;
@@ -1867,12 +1831,10 @@ public:
                 int32_t,
                 mozilla::jni::String::Param,
                 mozilla::jni::String::Param,
-                mozilla::jni::String::Param,
-                bool,
-                bool> Args;
+                mozilla::jni::String::Param> Args;
         static constexpr char name[] = "notifyIMEContext";
         static constexpr char signature[] =
-                "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZ)V";
+                "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1882,7 +1844,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    auto NotifyIMEContext(int32_t, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param, bool, bool) const -> void;
+    auto NotifyIMEContext(int32_t, mozilla::jni::String::Param, mozilla::jni::String::Param, mozilla::jni::String::Param) const -> void;
 
     struct OnDefaultKeyEvent_t {
         typedef GeckoEditableChild Owner;
@@ -2503,27 +2465,6 @@ public:
     static auto MsgQueue() -> mozilla::jni::Object::LocalRef;
 
     static auto MsgQueue(mozilla::jni::Object::Param) -> void;
-
-    struct UiThreadId_t {
-        typedef GeckoThread Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "uiThreadId";
-        static constexpr char signature[] =
-                "I";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto UiThreadId() -> int32_t;
-
-    static auto UiThreadId(int32_t) -> void;
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::ANY;
@@ -5208,25 +5149,6 @@ public:
 
     auto IsAdaptivePlaybackSupported() const -> bool;
 
-    struct IsTunneledPlaybackSupported_t {
-        typedef CodecProxy Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "isTunneledPlaybackSupported";
-        static constexpr char signature[] =
-                "()Z";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto IsTunneledPlaybackSupported() const -> bool;
-
     struct Release_t {
         typedef CodecProxy Owner;
         typedef bool ReturnType;
@@ -7016,29 +6938,6 @@ public:
         static const mozilla::jni::DispatchTarget dispatchTarget =
                 mozilla::jni::DispatchTarget::CURRENT;
     };
-
-    struct Start_t {
-        typedef GeckoProcessManager Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<
-                mozilla::jni::String::Param,
-                mozilla::jni::ObjectArray::Param,
-                int32_t,
-                int32_t> Args;
-        static constexpr char name[] = "start";
-        static constexpr char signature[] =
-                "(Ljava/lang/String;[Ljava/lang/String;II)I";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto Start(mozilla::jni::String::Param, mozilla::jni::ObjectArray::Param, int32_t, int32_t) -> int32_t;
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::ANY;

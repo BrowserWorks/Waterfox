@@ -25,21 +25,26 @@ const {
 } = require("devtools/shared/css/parsing-utils");
 const promise = require("promise");
 const Services = require("Services");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {Task} = require("devtools/shared/task");
-const {Tools} = require("devtools/client/definitions");
-const {gDevTools} = require("devtools/client/framework/devtools");
-const CssLogic = require("devtools/shared/inspector/css-logic");
 
 const STYLE_INSPECTOR_PROPERTIES = "devtools/shared/locales/styleinspector.properties";
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
+
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 /**
  * RuleEditor is responsible for the following:
  *   Owns a Rule object and creates a list of TextPropertyEditors
  *     for its TextProperties.
  *   Manages creation of new text properties.
+ *
+ * One step of a RuleEditor's instantiation is figuring out what's the original
+ * source link to the parent stylesheet (in case of source maps). This step is
+ * asynchronous and is triggered as soon as the RuleEditor is instantiated (see
+ * updateSourceLink). If you need to know when the RuleEditor is done with this,
+ * you need to listen to the source-link-updated event.
  *
  * @param {CssRuleView} ruleView
  *        The CssRuleView containg the document holding this rule editor.
@@ -52,9 +57,6 @@ function RuleEditor(ruleView, rule) {
   this.ruleView = ruleView;
   this.doc = this.ruleView.styleDocument;
   this.toolbox = this.ruleView.inspector.toolbox;
-  // We stash this locally so that we can refer to it from |destroy|
-  // without accidentally reinstantiating the service during shutdown.
-  this.sourceMapURLService = this.toolbox.sourceMapURLService;
   this.rule = rule;
 
   this.isEditable = !rule.isSystem;
@@ -67,13 +69,10 @@ function RuleEditor(ruleView, rule) {
   this._onSelectorDone = this._onSelectorDone.bind(this);
   this._locationChanged = this._locationChanged.bind(this);
   this.updateSourceLink = this.updateSourceLink.bind(this);
-  this._onToolChanged = this._onToolChanged.bind(this);
-  this._updateLocation = this._updateLocation.bind(this);
-  this._onSourceClick = this._onSourceClick.bind(this);
 
   this.rule.domRule.on("location-changed", this._locationChanged);
-  this.toolbox.on("tool-registered", this._onToolChanged);
-  this.toolbox.on("tool-unregistered", this._onToolChanged);
+  this.toolbox.on("tool-registered", this.updateSourceLink);
+  this.toolbox.on("tool-unregistered", this.updateSourceLink);
 
   this._create();
 }
@@ -81,21 +80,8 @@ function RuleEditor(ruleView, rule) {
 RuleEditor.prototype = {
   destroy: function () {
     this.rule.domRule.off("location-changed");
-    this.toolbox.off("tool-registered", this._onToolChanged);
-    this.toolbox.off("tool-unregistered", this._onToolChanged);
-
-    let url = null;
-    if (this.rule.sheet) {
-      url = this.rule.sheet.href || this.rule.sheet.nodeHref;
-    }
-    if (url && !this.rule.isSystem && this.rule.domRule.type !== ELEMENT_STYLE) {
-      // Only get the original source link if the rule isn't a system
-      // rule and if it isn't an inline rule.
-      let sourceLine = this.rule.ruleLine;
-      let sourceColumn = this.rule.ruleColumn;
-      this.sourceMapURLService.unsubscribe(url, sourceLine, sourceColumn,
-                                           this._updateLocation);
-    }
+    this.toolbox.off("tool-registered", this.updateSourceLink);
+    this.toolbox.off("tool-unregistered", this.updateSourceLink);
   },
 
   get isSelectorEditable() {
@@ -111,7 +97,7 @@ RuleEditor.prototype = {
 
   _create: function () {
     this.element = this.doc.createElement("div");
-    this.element.className = "ruleview-rule devtools-monospace";
+    this.element.className = "ruleview-rule theme-separator";
     this.element.setAttribute("uneditable", !this.isEditable);
     this.element.setAttribute("unmatched", this.rule.isUnmatched);
     this.element._ruleEditor = this;
@@ -124,8 +110,13 @@ RuleEditor.prototype = {
     this.source = createChild(this.element, "div", {
       class: "ruleview-rule-source theme-link"
     });
-    this.source.addEventListener("click", this._onSourceClick);
-
+    this.source.addEventListener("click", () => {
+      if (this.source.hasAttribute("unselectable")) {
+        return;
+      }
+      let rule = this.rule.domRule;
+      this.ruleView.emit("ruleview-linked-clicked", rule);
+    });
     let sourceLabel = this.doc.createElement("span");
     sourceLabel.classList.add("ruleview-rule-source-label");
     this.source.appendChild(sourceLabel);
@@ -139,7 +130,7 @@ RuleEditor.prototype = {
     let header = createChild(code, "div", {});
 
     this.selectorText = createChild(header, "span", {
-      class: "ruleview-selectorcontainer",
+      class: "ruleview-selectorcontainer theme-fg-color3",
       tabindex: this.isSelectorEditable ? "0" : "-1",
     });
 
@@ -153,6 +144,7 @@ RuleEditor.prototype = {
         element: this.selectorText,
         done: this._onSelectorDone,
         cssProperties: this.rule.cssProperties,
+        contextMenu: this.ruleView.inspector.onTextBoxContextMenu
       });
     }
 
@@ -235,23 +227,6 @@ RuleEditor.prototype = {
   },
 
   /**
-   * Called when a tool is registered or unregistered.
-   */
-  _onToolChanged: function () {
-    // When the source editor is registered, update the source links
-    // to be clickable; and if it is unregistered, update the links to
-    // be unclickable.  However, some links are never clickable, so
-    // filter those out first.
-    if (this.source.getAttribute("unselectable") === "permanent") {
-      // Nothing.
-    } else if (this.toolbox.isToolRegistered("styleeditor")) {
-      this.source.removeAttribute("unselectable");
-    } else {
-      this.source.setAttribute("unselectable", "true");
-    }
-  },
-
-  /**
    * Event handler called when a property changes on the
    * StyleRuleActor.
    */
@@ -259,79 +234,22 @@ RuleEditor.prototype = {
     this.updateSourceLink();
   },
 
-  _onSourceClick: function () {
-    if (this.source.hasAttribute("unselectable") || !this._currentLocation) {
-      return;
-    }
-
-    let target = this.ruleView.inspector.target;
-    if (Tools.styleEditor.isTargetSupported(target)) {
-      gDevTools.showToolbox(target, "styleeditor").then(toolbox => {
-        let {url, line, column} = this._currentLocation;
-        toolbox.getCurrentPanel().selectStyleSheet(url, line, column);
-      });
-    }
-  },
-
-  /**
-   * Update the text of the source link to reflect whether we're showing
-   * original sources or not.  This is a callback for
-   * SourceMapURLService.subscribe, which see.
-   *
-   * @param {Boolean} enabled
-   *        True if the passed-in location should be used; this means
-   *        that source mapping is in use and the remaining arguments
-   *        are the original location.  False if the already-known
-   *        (stored) location should be used.
-   * @param {String} url
-   *        The original URL
-   * @param {Number} line
-   *        The original line number
-   * @param {number} column
-   *        The original column number
-   */
-  _updateLocation: function (enabled, url, line, column) {
-    let displayURL = url;
-    if (!enabled) {
-      url = null;
-      displayURL = null;
-      if (this.rule.sheet) {
-        url = this.rule.sheet.href || this.rule.sheet.nodeHref;
-        displayURL = this.rule.sheet.href;
-      }
-      line = this.rule.ruleLine;
-      column = this.rule.ruleColumn;
-    }
-
-    this._currentLocation = {
-      url,
-      line,
-      column
-    };
-
-    let sourceTextContent = CssLogic.shortSource({href: displayURL});
-    let title = displayURL ? displayURL : sourceTextContent;
-    if (line > 0) {
-      sourceTextContent += ":" + line;
-      title += ":" + line;
-    }
-    if (this.rule.mediaText) {
-      sourceTextContent += " @" + this.rule.mediaText;
-      title += " @" + this.rule.mediaText;
-    }
-
-    let sourceLabel = this.element.querySelector(".ruleview-rule-source-label");
-    sourceLabel.setAttribute("title", title);
-    sourceLabel.textContent = sourceTextContent;
-  },
-
   updateSourceLink: function () {
-    if (this.rule.isSystem) {
-      let sourceLabel = this.element.querySelector(".ruleview-rule-source-label");
-      let title = this.rule.title;
-      let sourceHref = (this.rule.sheet && this.rule.sheet.href) ?
-          this.rule.sheet.href : title;
+    let sourceLabel = this.element.querySelector(".ruleview-rule-source-label");
+    let title = this.rule.title;
+    let sourceHref = (this.rule.sheet && this.rule.sheet.href) ?
+      this.rule.sheet.href : title;
+    let sourceLine = this.rule.ruleLine > 0 ? ":" + this.rule.ruleLine : "";
 
+    sourceLabel.setAttribute("title", sourceHref + sourceLine);
+
+    if (this.toolbox.isToolRegistered("styleeditor")) {
+      this.source.removeAttribute("unselectable");
+    } else {
+      this.source.setAttribute("unselectable", true);
+    }
+
+    if (this.rule.isSystem) {
       let uaLabel = STYLE_INSPECTOR_L10N.getStr("rule.userAgentStyles");
       sourceLabel.textContent = uaLabel + " " + title;
 
@@ -339,37 +257,36 @@ RuleEditor.prototype = {
       // fly and the URI is not registered with the about: handler.
       // https://bugzilla.mozilla.org/show_bug.cgi?id=935803#c37
       if (sourceHref === "about:PreferenceStyleSheet") {
-        this.source.setAttribute("unselectable", "permanent");
+        this.source.setAttribute("unselectable", "true");
         sourceLabel.textContent = uaLabel;
         sourceLabel.removeAttribute("title");
       }
     } else {
-      this._updateLocation(false);
+      sourceLabel.textContent = title;
+      if (this.rule.ruleLine === -1 && this.rule.domRule.parentStyleSheet) {
+        this.source.setAttribute("unselectable", "true");
+      }
     }
 
-    let url = null;
-    if (this.rule.sheet) {
-      url = this.rule.sheet.href || this.rule.sheet.nodeHref;
-    }
-    if (url && !this.rule.isSystem && this.rule.domRule.type !== ELEMENT_STYLE) {
-      // Only get the original source link if the rule isn't a system
-      // rule and if it isn't an inline rule.
-      let sourceLine = this.rule.ruleLine;
-      let sourceColumn = this.rule.ruleColumn;
-      this.sourceMapURLService.subscribe(url, sourceLine, sourceColumn,
-                                         this._updateLocation);
-      // Set "unselectable" appropriately.
-      this._onToolChanged();
-    } else if (this.rule.domRule.type === ELEMENT_STYLE) {
-      this.source.setAttribute("unselectable", "permanent");
+    let showOrig = Services.prefs.getBoolPref(PREF_ORIG_SOURCES);
+    if (showOrig && !this.rule.isSystem &&
+        this.rule.domRule.type !== ELEMENT_STYLE) {
+      // Only get the original source link if the right pref is set, if the rule
+      // isn't a system rule and if it isn't an inline rule.
+      this.rule.getOriginalSourceStrings().then((strings) => {
+        sourceLabel.textContent = strings.short;
+        sourceLabel.setAttribute("title", strings.full);
+      }, e => console.error(e)).then(() => {
+        this.emit("source-link-updated");
+      });
     } else {
-      // Set "unselectable" appropriately.
-      this._onToolChanged();
+      // If we're not getting the original source link, then we can emit the
+      // event immediately (but still asynchronously to give consumers a chance
+      // to register it after having instantiated the RuleEditor).
+      promise.resolve().then(() => {
+        this.emit("source-link-updated");
+      });
     }
-
-    promise.resolve().then(() => {
-      this.emit("source-link-updated");
-    });
   },
 
   /**
@@ -546,6 +463,7 @@ RuleEditor.prototype = {
       contentType: InplaceEditor.CONTENT_TYPES.CSS_PROPERTY,
       popup: this.ruleView.popup,
       cssProperties: this.rule.cssProperties,
+      contextMenu: this.ruleView.inspector.onTextBoxContextMenu
     });
 
     // Auto-close the input if multiple rules get pasted into new property.

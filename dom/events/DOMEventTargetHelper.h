@@ -113,11 +113,19 @@ public:
     return mListenerManager && mListenerManager->HasListenersFor(aType);
   }
 
-  bool HasListenersFor(nsAtom* aTypeWithOn)
+  bool HasListenersFor(nsIAtom* aTypeWithOn)
   {
     return mListenerManager && mListenerManager->HasListenersFor(aTypeWithOn);
   }
 
+  nsresult SetEventHandler(nsIAtom* aType,
+                           JSContext* aCx,
+                           const JS::Value& aValue);
+  using dom::EventTarget::SetEventHandler;
+  void GetEventHandler(nsIAtom* aType,
+                       JSContext* aCx,
+                       JS::Value* aValue);
+  using dom::EventTarget::GetEventHandler;
   virtual nsPIDOMWindowOuter* GetOwnerGlobalForBindings() override
   {
     return nsPIDOMWindowOuter::GetFromCurrentInner(GetOwner());
@@ -154,10 +162,10 @@ public:
   }
   bool HasOrHasHadOwner() { return mHasOrHasHadOwnerWindow; }
 
-  virtual void EventListenerAdded(nsAtom* aType) override;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
   virtual void EventListenerAdded(const nsAString& aType) override;
 
-  virtual void EventListenerRemoved(nsAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
   virtual void EventListenerRemoved(const nsAString& aType) override;
 
   virtual void EventListenerWasAdded(const nsAString& aType,
@@ -192,10 +200,10 @@ protected:
   virtual void LastRelease() {}
 
   void KeepAliveIfHasListenersFor(const nsAString& aType);
-  void KeepAliveIfHasListenersFor(nsAtom* aType);
+  void KeepAliveIfHasListenersFor(nsIAtom* aType);
 
   void IgnoreKeepAliveIfHasListenersFor(const nsAString& aType);
-  void IgnoreKeepAliveIfHasListenersFor(nsAtom* aType);
+  void IgnoreKeepAliveIfHasListenersFor(nsIAtom* aType);
 
 private:
   // Inner window or sandbox.
@@ -208,7 +216,7 @@ private:
 
   struct {
     nsTArray<nsString> mStrings;
-    nsTArray<RefPtr<nsAtom>> mAtoms;
+    nsTArray<nsCOMPtr<nsIAtom>> mAtoms;
   } mKeepingAliveTypes;
 
   bool mIsKeptAlive;
@@ -218,6 +226,32 @@ NS_DEFINE_STATIC_IID_ACCESSOR(DOMEventTargetHelper,
                               NS_DOMEVENTTARGETHELPER_IID)
 
 } // namespace mozilla
+
+// XPIDL event handlers
+#define NS_IMPL_EVENT_HANDLER(_class, _event)                                 \
+    NS_IMETHODIMP _class::GetOn##_event(JSContext* aCx,                       \
+                                        JS::MutableHandle<JS::Value> aValue)  \
+    {                                                                         \
+      GetEventHandler(nsGkAtoms::on##_event, aCx, aValue.address());          \
+      return NS_OK;                                                           \
+    }                                                                         \
+    NS_IMETHODIMP _class::SetOn##_event(JSContext* aCx,                       \
+                                        JS::Handle<JS::Value> aValue)         \
+    {                                                                         \
+      return SetEventHandler(nsGkAtoms::on##_event, aCx, aValue);             \
+    }
+
+#define NS_IMPL_FORWARD_EVENT_HANDLER(_class, _event, _baseclass)             \
+    NS_IMETHODIMP _class::GetOn##_event(JSContext* aCx,                       \
+                                        JS::MutableHandle<JS::Value> aValue)  \
+    {                                                                         \
+      return _baseclass::GetOn##_event(aCx, aValue);                          \
+    }                                                                         \
+    NS_IMETHODIMP _class::SetOn##_event(JSContext* aCx,                       \
+                                        JS::Handle<JS::Value> aValue)         \
+    {                                                                         \
+      return _baseclass::SetOn##_event(aCx, aValue);                          \
+    }
 
 // WebIDL event handlers
 #define IMPL_EVENT_HANDLER(_event)                                        \

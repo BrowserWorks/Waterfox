@@ -7,10 +7,10 @@
 #ifndef mozilla_dom_SVGMPathElement_h
 #define mozilla_dom_SVGMPathElement_h
 
-#include "mozilla/dom/IDTracker.h"
 #include "nsSVGElement.h"
 #include "nsStubMutationObserver.h"
 #include "nsSVGString.h"
+#include "nsReferencedElement.h"
 
 nsresult NS_NewSVGMPathElement(nsIContent **aResult,
                                already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
@@ -49,11 +49,11 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
 
-  virtual nsresult UnsetAttr(int32_t aNamespaceID, nsAtom* aAttribute,
+  virtual nsresult UnsetAttr(int32_t aNamespaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
   // Element specializations
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
 
@@ -66,24 +66,16 @@ public:
   already_AddRefed<SVGAnimatedString> Href();
 
 protected:
-  /**
-   * Helper that provides a reference to the 'path' element with the ID that is
-   * referenced by the 'mpath' element's 'href' attribute, and that will
-   * invalidate the parent of the 'mpath' and update mutation observers to the
-   * new path element if the element that that ID identifies changes to a
-   * different element (or none).
-   */
-  class PathElementTracker final : public IDTracker {
+  class PathReference : public nsReferencedElement {
   public:
-    explicit PathElementTracker(SVGMPathElement* aMpathElement)
-      : mMpathElement(aMpathElement)
-    {}
+    explicit PathReference(SVGMPathElement* aMpathElement) :
+      mMpathElement(aMpathElement) {}
   protected:
     // We need to be notified when target changes, in order to request a sample
     // (which will clear animation effects that used the old target-path
     // and recompute the animation effects using the new target-path).
     virtual void ElementChanged(Element* aFrom, Element* aTo) override {
-      IDTracker::ElementChanged(aFrom, aTo);
+      nsReferencedElement::ElementChanged(aFrom, aTo);
       if (aFrom) {
         aFrom->RemoveMutationObserver(mMpathElement);
       }
@@ -109,7 +101,7 @@ protected:
   enum { HREF, XLINK_HREF };
   nsSVGString        mStringAttributes[2];
   static StringInfo  sStringInfo[2];
-  PathElementTracker mPathTracker;
+  PathReference      mHrefTarget;
 };
 
 } // namespace dom

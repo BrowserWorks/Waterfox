@@ -1,4 +1,4 @@
-generate:
+sphinx:
     description: Generate the Sphinx documentation
     platform: lint/opt
     treeherder:
@@ -12,38 +12,15 @@ generate:
         artifacts:
             - type: file
               name: public/docs.tar.gz
-              path: /builds/worker/checkouts/gecko/docs-out/main.tar.gz
+              path: /home/worker/checkouts/gecko/docs.tar.gz
     run:
         using: run-task
         command: >
-            cd /builds/worker/checkouts/gecko &&
-            ./mach doc --outdir docs-out --no-open --archive
-        sparse-profile: sphinx-docs
-    when:
-        files-changed:
-            - '**/*.py'
-            - '**/*.rst'
-            - 'tools/docs/**'
-
-upload:
-    description: Generate and upload the Sphinx documentation
-    platform: lint/opt
-    treeherder:
-        symbol: tc(DocUp)
-        kind: test
-        tier: 3
-    run-on-projects: [mozilla-central]
-    worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
-    worker:
-        docker-image: {in-tree: "lint"}
-        max-run-time: 1800
-        taskcluster-proxy: true
-    run:
-        using: run-task
-        command: cd /builds/worker/checkouts/gecko && ./mach doc --upload --no-open
-        sparse-profile: sphinx-docs
-    scopes:
-        - secrets:get:project/releng/gecko/build/level-{level}/gecko-docs-upload
+            cd /home/worker/checkouts/gecko &&
+            ./mach doc --outdir docs-out --no-open &&
+            rm -rf docs-out/html/Mozilla_Source_Tree_Docs/_venv &&
+            mv docs-out/html/Mozilla_Source_Tree_Docs docs &&
+            tar -czf docs.tar.gz docs
     when:
         files-changed:
             - '**/*.py'

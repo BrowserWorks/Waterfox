@@ -1026,11 +1026,11 @@ nsCSSGradientRenderer::BuildWebRenderParameters(float aOpacity,
 void
 nsCSSGradientRenderer::BuildWebRenderDisplayItems(wr::DisplayListBuilder& aBuilder,
                                                   const layers::StackingContextHelper& aSc,
+                                                  layers::WebRenderDisplayItemLayer* aLayer,
                                                   const nsRect& aDest,
                                                   const nsRect& aFillArea,
                                                   const nsSize& aRepeatSize,
                                                   const CSSIntRect& aSrc,
-                                                  bool aIsBackfaceVisible,
                                                   float aOpacity)
 {
   if (aDest.IsEmpty() || aFillArea.IsEmpty()) {
@@ -1065,6 +1065,8 @@ nsCSSGradientRenderer::BuildWebRenderDisplayItems(wr::DisplayListBuilder& aBuild
 
   // Make the rects relative to the parent stacking context
   wr::LayoutRect wrClipBounds = aSc.ToRelativeLayoutRect(clipBounds);
+  LayerSize layerFirstTileSize = ViewAs<LayerPixel>(firstTileBounds.Size(),
+      PixelCastJustification::WebRenderHasUnitResolution);
   wr::LayoutRect wrGradientBounds = aSc.ToRelativeLayoutRect(gradientBounds);
 
   // srcTransform is used for scaling the gradient to match aSrc
@@ -1083,12 +1085,11 @@ nsCSSGradientRenderer::BuildWebRenderDisplayItems(wr::DisplayListBuilder& aBuild
     aBuilder.PushLinearGradient(
       wrGradientBounds,
       wrClipBounds,
-      aIsBackfaceVisible,
       mozilla::wr::ToLayoutPoint(lineStart),
       mozilla::wr::ToLayoutPoint(lineEnd),
       stops,
       extendMode,
-      mozilla::wr::ToLayoutSize(firstTileBounds.Size()),
+      mozilla::wr::ToLayoutSize(layerFirstTileSize),
       mozilla::wr::ToLayoutSize(tileSpacing));
   } else {
     gradientRadius.width *= srcTransform.width;
@@ -1097,12 +1098,11 @@ nsCSSGradientRenderer::BuildWebRenderDisplayItems(wr::DisplayListBuilder& aBuild
     aBuilder.PushRadialGradient(
       wrGradientBounds,
       wrClipBounds,
-      aIsBackfaceVisible,
       mozilla::wr::ToLayoutPoint(lineStart),
       mozilla::wr::ToLayoutSize(gradientRadius),
       stops,
       extendMode,
-      mozilla::wr::ToLayoutSize(firstTileBounds.Size()),
+      mozilla::wr::ToLayoutSize(layerFirstTileSize),
       mozilla::wr::ToLayoutSize(tileSpacing));
   }
 }

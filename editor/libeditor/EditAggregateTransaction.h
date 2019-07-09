@@ -9,7 +9,7 @@
 #include "mozilla/EditTransactionBase.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
 #include "nscore.h"
@@ -44,13 +44,13 @@ public:
   /**
    * Get the name assigned to this transaction.
    */
-  NS_IMETHOD GetName(nsAtom** aName);
+  NS_IMETHOD GetName(nsIAtom** aName);
 
 protected:
   virtual ~EditAggregateTransaction();
 
   nsTArray<RefPtr<EditTransactionBase>> mChildren;
-  RefPtr<nsAtom> mName;
+  nsCOMPtr<nsIAtom> mName;
 };
 
 } // namespace mozilla

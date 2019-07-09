@@ -35,12 +35,12 @@ public:
   RefPtr<FlushPromise> Flush() override;
   RefPtr<ShutdownPromise> Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
-  nsCString GetDescriptionName() const override
+  const char* GetDescriptionName() const override
   {
     if (mDecoder) {
       return mDecoder->GetDescriptionName();
     }
-    return NS_LITERAL_CSTRING("H264Converter decoder (pending)");
+    return "H264Converter decoder (pending)";
   }
   void SetSeekThreshold(const media::TimeUnit& aTime) override;
   bool SupportDecoderRecycling() const override
@@ -104,7 +104,6 @@ private:
   const TrackInfo::TrackType mType;
   MediaEventProducer<TrackInfo::TrackType>* const mOnWaitingForKeyEvent;
   const CreateDecoderParams::OptionSet mDecoderOptions;
-  const CreateDecoderParams::VideoFrameRate mRate;
   Maybe<bool> mCanRecycleDecoder;
 };
 

@@ -3,7 +3,7 @@
 
 /*---
 author: Brian Terlson <brian.terlson@microsoft.com>
-esid: sec-async-function-instances
+esid: pending
 description: >
   Async function instances do not have a prototype property.
 ---*/

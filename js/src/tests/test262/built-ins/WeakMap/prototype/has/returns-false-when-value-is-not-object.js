@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 es6id: 23.3.3.4
-esid: sec-weakmap.prototype.has
 description: >
   Returns false if value is not an Object.
 info: >

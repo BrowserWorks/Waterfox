@@ -290,9 +290,9 @@ MatchInPutList(InternalRequest* aRequest,
 } // namespace
 
 void
-AutoChildOpArgs::Add(JSContext* aCx, InternalRequest* aRequest,
-                     BodyAction aBodyAction, SchemeAction aSchemeAction,
-                     Response& aResponse, ErrorResult& aRv)
+AutoChildOpArgs::Add(InternalRequest* aRequest, BodyAction aBodyAction,
+                     SchemeAction aSchemeAction, Response& aResponse,
+                     ErrorResult& aRv)
 {
   MOZ_DIAGNOSTIC_ASSERT(!mSent);
 
@@ -330,7 +330,7 @@ AutoChildOpArgs::Add(JSContext* aCx, InternalRequest* aRequest,
       mTypeUtils->ToCacheRequest(pair.request(), aRequest, aBodyAction,
                                  aSchemeAction, mStreamCleanupList, aRv);
       if (!aRv.Failed()) {
-        mTypeUtils->ToCacheResponse(aCx, pair.response(), aResponse,
+        mTypeUtils->ToCacheResponse(pair.response(), aResponse,
                                     mStreamCleanupList, aRv);
       }
 
@@ -353,7 +353,7 @@ AutoChildOpArgs::SendAsOpArgs()
   MOZ_DIAGNOSTIC_ASSERT(!mSent);
   mSent = true;
   for (UniquePtr<AutoIPCStream>& autoStream : mStreamCleanupList) {
-    autoStream->TakeOptionalValue();
+    autoStream->TakeValue();
   }
   return mOpArgs;
 }
@@ -506,7 +506,7 @@ AutoParentOpResult::SendAsOpResult()
   MOZ_DIAGNOSTIC_ASSERT(!mSent);
   mSent = true;
   for (UniquePtr<AutoIPCStream>& autoStream : mStreamCleanupList) {
-    autoStream->TakeOptionalValue();
+    autoStream->TakeValue();
   }
   return mOpResult;
 }
@@ -537,6 +537,7 @@ AutoParentOpResult::SerializeReadStream(const nsID& aId, StreamList* aStreamList
   MOZ_DIAGNOSTIC_ASSERT(!mSent);
 
   nsCOMPtr<nsIInputStream> stream = aStreamList->Extract(aId);
+  MOZ_DIAGNOSTIC_ASSERT(stream);
 
   if (!mStreamControl) {
     mStreamControl = static_cast<CacheStreamControlParent*>(

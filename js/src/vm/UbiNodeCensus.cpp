@@ -102,11 +102,11 @@ SimpleCount::report(JSContext* cx, CountBase& countBase, MutableHandleValue repo
         return false;
 
     RootedValue countValue(cx, NumberValue(count.total_));
-    if (reportCount && !DefineDataProperty(cx, obj, cx->names().count, countValue))
+    if (reportCount && !DefineProperty(cx, obj, cx->names().count, countValue))
         return false;
 
     RootedValue bytesValue(cx, NumberValue(count.totalBytes_));
-    if (reportBytes && !DefineDataProperty(cx, obj, cx->names().bytes, bytesValue))
+    if (reportBytes && !DefineProperty(cx, obj, cx->names().bytes, bytesValue))
         return false;
 
     if (label) {
@@ -114,7 +114,7 @@ SimpleCount::report(JSContext* cx, CountBase& countBase, MutableHandleValue repo
         if (!labelString)
             return false;
         RootedValue labelValue(cx, StringValue(labelString));
-        if (!DefineDataProperty(cx, obj, cx->names().label, labelValue))
+        if (!DefineProperty(cx, obj, cx->names().label, labelValue))
             return false;
     }
 
@@ -290,22 +290,22 @@ ByCoarseType::report(JSContext* cx, CountBase& countBase, MutableHandleValue rep
 
     RootedValue objectsReport(cx);
     if (!count.objects->report(cx, &objectsReport) ||
-        !DefineDataProperty(cx, obj, cx->names().objects, objectsReport))
+        !DefineProperty(cx, obj, cx->names().objects, objectsReport))
         return false;
 
     RootedValue scriptsReport(cx);
     if (!count.scripts->report(cx, &scriptsReport) ||
-        !DefineDataProperty(cx, obj, cx->names().scripts, scriptsReport))
+        !DefineProperty(cx, obj, cx->names().scripts, scriptsReport))
         return false;
 
     RootedValue stringsReport(cx);
     if (!count.strings->report(cx, &stringsReport) ||
-        !DefineDataProperty(cx, obj, cx->names().strings, stringsReport))
+        !DefineProperty(cx, obj, cx->names().strings, stringsReport))
         return false;
 
     RootedValue otherReport(cx);
     if (!count.other->report(cx, &otherReport) ||
-        !DefineDataProperty(cx, obj, cx->names().other, otherReport))
+        !DefineProperty(cx, obj, cx->names().other, otherReport))
         return false;
 
     report.setObject(*obj);
@@ -378,7 +378,7 @@ countMapToObject(JSContext* cx, Map& map, GetName getName) {
             return nullptr;
 
         RootedId entryId(cx, AtomToId(atom));
-        if (!DefineDataProperty(cx, obj, entryId, thenReport))
+        if (!DefineProperty(cx, obj, entryId, thenReport))
             return nullptr;
     }
 
@@ -484,7 +484,7 @@ ByObjectClass::report(JSContext* cx, CountBase& countBase, MutableHandleValue re
 
     RootedValue otherReport(cx);
     if (!count.other->report(cx, &otherReport) ||
-        !DefineDataProperty(cx, obj, cx->names().other, otherReport))
+        !DefineProperty(cx, obj, cx->names().other, otherReport))
         return false;
 
     report.setObject(*obj);
@@ -595,7 +595,7 @@ ByUbinodeType::report(JSContext* cx, CountBase& countBase, MutableHandleValue re
             return false;
         RootedId entryId(cx, AtomToId(atom));
 
-        if (!DefineDataProperty(cx, obj, entryId, typeReport))
+        if (!DefineProperty(cx, obj, entryId, typeReport))
             return false;
     }
 
@@ -903,7 +903,7 @@ ByFilename::report(JSContext* cx, CountBase& countBase, MutableHandleValue repor
 
     RootedValue noFilenameReport(cx);
     if (!count.noFilename->report(cx, &noFilenameReport) ||
-        !DefineDataProperty(cx, obj, cx->names().noFilename, noFilenameReport))
+        !DefineProperty(cx, obj, cx->names().noFilename, noFilenameReport))
     {
         return false;
     }

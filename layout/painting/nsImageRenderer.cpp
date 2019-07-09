@@ -14,14 +14,13 @@
 #include "gfxDrawable.h"
 #include "ImageOps.h"
 #include "mozilla/layers/StackingContextHelper.h"
-#include "mozilla/layers/WebRenderLayerManager.h"
 #include "nsContentUtils.h"
 #include "nsCSSRendering.h"
 #include "nsCSSRenderingGradients.h"
 #include "nsIFrame.h"
 #include "nsStyleStructInlines.h"
 #include "nsSVGDisplayableFrame.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGIntegrationUtils.h"
 
 using namespace mozilla;
@@ -181,9 +180,9 @@ nsImageRenderer::PrepareImage()
       nsCOMPtr<nsIURI> base = mForFrame->GetContent()->GetBaseURI();
       nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), elementId,
                                                 mForFrame->GetContent()->GetUncomposedDoc(), base);
-      nsSVGPaintingProperty* property = SVGObserverUtils::GetPaintingPropertyForURI(
+      nsSVGPaintingProperty* property = nsSVGEffects::GetPaintingPropertyForURI(
           targetURI, mForFrame->FirstContinuation(),
-          SVGObserverUtils::BackgroundImageProperty());
+          nsSVGEffects::BackgroundImageProperty());
       if (!property) {
         mPrepareResult = DrawResult::BAD_IMAGE;
         return false;
@@ -494,7 +493,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
   IntRect tmpDTRect;
 
   if (ctx->CurrentOp() != CompositionOp::OP_OVER || mMaskOp == NS_STYLE_MASK_MODE_LUMINANCE) {
-    gfxRect clipRect = ctx->GetClipExtents(gfxContext::eDeviceSpace);
+    gfxRect clipRect = ctx->GetClipExtents();
     tmpDTRect = RoundedOut(ToRect(clipRect));
     if (tmpDTRect.IsEmpty()) {
       return DrawResult::SUCCESS;
@@ -507,7 +506,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
       gfxDevCrash(LogReason::InvalidContext) << "ImageRenderer::Draw problem " << gfx::hexa(tempDT);
       return DrawResult::TEMPORARY_ERROR;
     }
-    tempDT->SetTransform(ctx->GetDrawTarget()->GetTransform() * Matrix::Translation(-tmpDTRect.TopLeft()));
+    tempDT->SetTransform(Matrix::Translation(-tmpDTRect.TopLeft()));
     ctx = gfxContext::CreatePreservingTransformOrNull(tempDT);
     if (!ctx) {
       gfxDevCrash(LogReason::InvalidContext) << "ImageRenderer::Draw problem " << gfx::hexa(tempDT);
@@ -566,7 +565,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
     if (mMaskOp == NS_STYLE_MASK_MODE_LUMINANCE) {
       RefPtr<DataSourceSurface> maskData = surf->GetDataSurface();
       DataSourceSurface::MappedSurface map;
-      if (!maskData->Map(DataSourceSurface::MapType::READ_WRITE, &map)) {
+      if (!maskData->Map(DataSourceSurface::MapType::WRITE, &map)) {
         return result;
       }
 
@@ -576,32 +575,30 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
     }
 
     DrawTarget* dt = aRenderingContext.GetDrawTarget();
-    Matrix oldTransform = dt->GetTransform();
-    dt->SetTransform(Matrix());
     dt->DrawSurface(surf, Rect(tmpDTRect.x, tmpDTRect.y, tmpDTRect.width, tmpDTRect.height),
                     Rect(0, 0, tmpDTRect.width, tmpDTRect.height),
                     DrawSurfaceOptions(SamplingFilter::POINT),
                     DrawOptions(1.0f, aRenderingContext.CurrentOp()));
-    dt->SetTransform(oldTransform);
   }
 
   return result;
 }
 
 DrawResult
-nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext* aPresContext,
-                                            mozilla::wr::DisplayListBuilder& aBuilder,
-                                            mozilla::wr::IpcResourceUpdateQueue& aResources,
+nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext*       aPresContext,
+                                            mozilla::wr::DisplayListBuilder&            aBuilder,
                                             const mozilla::layers::StackingContextHelper& aSc,
+                                            nsTArray<WebRenderParentCommand>&           aParentCommands,
+                                            mozilla::layers::WebRenderDisplayItemLayer* aLayer,
                                             mozilla::layers::WebRenderLayerManager* aManager,
-                                            nsDisplayItem* aItem,
-                                            const nsRect& aDirtyRect,
-                                            const nsRect& aDest,
-                                            const nsRect& aFill,
-                                            const nsPoint& aAnchor,
-                                            const nsSize& aRepeatSize,
-                                            const CSSIntRect& aSrc,
-                                            float aOpacity)
+                                            nsDisplayItem*       aItem,
+                                            const nsRect&        aDirtyRect,
+                                            const nsRect&        aDest,
+                                            const nsRect&        aFill,
+                                            const nsPoint&       aAnchor,
+                                            const nsSize&        aRepeatSize,
+                                            const CSSIntRect&    aSrc,
+                                            float                aOpacity)
 {
   if (!IsReady()) {
     NS_NOTREACHED("Ensure PrepareImage() has returned true before calling me");
@@ -618,8 +615,7 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext* aPresContext,
       nsCSSGradientRenderer renderer =
         nsCSSGradientRenderer::Create(aPresContext, mGradientData, mSize);
 
-      renderer.BuildWebRenderDisplayItems(aBuilder, aSc, aDest, aFill,
-                                          aRepeatSize, aSrc, !aItem->BackfaceIsHidden(), aOpacity);
+      renderer.BuildWebRenderDisplayItems(aBuilder, aSc, aLayer, aDest, aFill, aRepeatSize, aSrc, aOpacity);
       break;
     }
     case eStyleImageType_Image:
@@ -638,8 +634,7 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext* aPresContext,
       }
 
       gfx::IntSize size;
-      Maybe<wr::ImageKey> key = aManager->CommandBuilder().CreateImageKey(aItem, container, aBuilder,
-                                                                          aResources, aSc, size, Nothing());
+      Maybe<wr::ImageKey> key = aManager->CreateImageKey(aItem, container, aBuilder, aSc, size);
 
       if (key.isNothing()) {
         return DrawResult::BAD_IMAGE;
@@ -662,11 +657,9 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext* aPresContext,
 
       LayoutDeviceSize gapSize = LayoutDeviceSize::FromAppUnits(
           aRepeatSize - aDest.Size(), appUnitsPerDevPixel);
-
-      SamplingFilter samplingFilter = nsLayoutUtils::GetSamplingFilterForFrame(mForFrame);
-      aBuilder.PushImage(fill, clip, !aItem->BackfaceIsHidden(),
+      aBuilder.PushImage(fill, clip,
                          wr::ToLayoutSize(destRect.Size()), wr::ToLayoutSize(gapSize),
-                         wr::ToImageRendering(samplingFilter), key.value());
+                         wr::ImageRendering::Auto, key.value());
       break;
     }
     default:
@@ -739,8 +732,9 @@ nsImageRenderer::DrawLayer(nsPresContext*       aPresContext,
 DrawResult
 nsImageRenderer::BuildWebRenderDisplayItemsForLayer(nsPresContext*       aPresContext,
                                                     mozilla::wr::DisplayListBuilder& aBuilder,
-                                                    mozilla::wr::IpcResourceUpdateQueue& aResources,
                                                     const mozilla::layers::StackingContextHelper& aSc,
+                                                    nsTArray<WebRenderParentCommand>& aParentCommands,
+                                                    WebRenderDisplayItemLayer*       aLayer,
                                                     mozilla::layers::WebRenderLayerManager* aManager,
                                                     nsDisplayItem*       aItem,
                                                     const nsRect&        aDest,
@@ -758,8 +752,8 @@ nsImageRenderer::BuildWebRenderDisplayItemsForLayer(nsPresContext*       aPresCo
       mSize.width <= 0 || mSize.height <= 0) {
     return DrawResult::SUCCESS;
   }
-  return BuildWebRenderDisplayItems(aPresContext, aBuilder, aResources, aSc,
-                                    aManager, aItem,
+  return BuildWebRenderDisplayItems(aPresContext, aBuilder, aSc, aParentCommands,
+                                    aLayer, aManager, aItem,
                                     aDirty, aDest, aFill, aAnchor, aRepeatSize,
                                     CSSIntRect(0, 0,
                                                nsPresContext::AppUnitsToIntCSSPixels(mSize.width),

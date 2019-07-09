@@ -21,9 +21,9 @@ public:
      */
     nsRDFPropertyTestNode(TestNode* aParent,
                           nsXULTemplateQueryProcessorRDF* aProcessor,
-                          nsAtom* aSourceVariable,
+                          nsIAtom* aSourceVariable,
                           nsIRDFResource* aProperty,
-                          nsAtom* aTargetVariable);
+                          nsIAtom* aTargetVariable);
 
     /**
      * Source bound, target unbound (source ^property ?target)
@@ -32,14 +32,14 @@ public:
                           nsXULTemplateQueryProcessorRDF* aProcessor,
                           nsIRDFResource* aSource,
                           nsIRDFResource* aProperty,
-                          nsAtom* aTargetVariable);
+                          nsIAtom* aTargetVariable);
 
     /**
      * Source unbound, target bound (?source ^property target)
      */
     nsRDFPropertyTestNode(TestNode* aParent,
                           nsXULTemplateQueryProcessorRDF* aProcessor,
-                          nsAtom* aSourceVariable,
+                          nsIAtom* aSourceVariable,
                           nsIRDFResource* aProperty,
                           nsIRDFNode* aTarget);
 
@@ -94,10 +94,10 @@ public:
 
 protected:
     nsXULTemplateQueryProcessorRDF* mProcessor;
-    RefPtr<nsAtom>        mSourceVariable;
+    nsCOMPtr<nsIAtom>        mSourceVariable;
     nsCOMPtr<nsIRDFResource> mSource;
     nsCOMPtr<nsIRDFResource> mProperty;
-    RefPtr<nsAtom>        mTargetVariable;
+    nsCOMPtr<nsIAtom>        mTargetVariable;
     nsCOMPtr<nsIRDFNode>     mTarget;
 };
 

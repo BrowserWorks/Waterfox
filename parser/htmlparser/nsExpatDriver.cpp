@@ -827,8 +827,16 @@ CreateErrorText(const char16_t* aDescription,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // XML Parsing Error: %1$S\nLocation: %2$S\nLine Number %3$u, Column %4$u:
-  nsTextFormatter::ssprintf(aErrorString, msg.get(), aDescription,
-                            aSourceURL, aLineNumber, aColNumber);
+  char16_t *message = nsTextFormatter::smprintf(msg.get(), aDescription,
+                                                 aSourceURL, aLineNumber,
+                                                 aColNumber);
+  if (!message) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  aErrorString.Assign(message);
+  free(message);
+
   return NS_OK;
 }
 
@@ -911,9 +919,14 @@ nsExpatDriver::HandleError()
                                                "Expected", msg);
 
     // . Expected: </%S>.
-    nsAutoString message;
-    nsTextFormatter::ssprintf(message, msg.get(), tagName.get());
+    char16_t *message = nsTextFormatter::smprintf(msg.get(), tagName.get());
+    if (!message) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
     description.Append(message);
+
+    free(message);
   }
 
   // Adjust the column number so that it is one based rather than zero based.

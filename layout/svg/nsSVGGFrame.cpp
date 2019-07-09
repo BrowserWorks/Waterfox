@@ -44,9 +44,39 @@ nsSVGGFrame::Init(nsIContent*       aContent,
 //----------------------------------------------------------------------
 // nsSVGDisplayableFrame methods
 
+void
+nsSVGGFrame::NotifySVGChanged(uint32_t aFlags)
+{
+  MOZ_ASSERT(aFlags & (TRANSFORM_CHANGED | COORD_CONTEXT_CHANGED),
+             "Invalidation logic may need adjusting");
+
+  if (aFlags & TRANSFORM_CHANGED) {
+    // make sure our cached transform matrix gets (lazily) updated
+    mCanvasTM = nullptr;
+  }
+
+  nsSVGDisplayContainerFrame::NotifySVGChanged(aFlags);
+}
+
+gfxMatrix
+nsSVGGFrame::GetCanvasTM()
+{
+  if (!mCanvasTM) {
+    NS_ASSERTION(GetParent(), "null parent");
+
+    nsSVGContainerFrame *parent = static_cast<nsSVGContainerFrame*>(GetParent());
+    SVGGraphicsElement *content = static_cast<SVGGraphicsElement*>(mContent);
+
+    gfxMatrix tm = content->PrependLocalTransformsTo(parent->GetCanvasTM());
+
+    mCanvasTM = new gfxMatrix(tm);
+  }
+  return *mCanvasTM;
+}
+
 nsresult
 nsSVGGFrame::AttributeChanged(int32_t         aNameSpaceID,
-                              nsAtom*        aAttribute,
+                              nsIAtom*        aAttribute,
                               int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&

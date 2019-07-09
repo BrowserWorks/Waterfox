@@ -29,6 +29,7 @@ ThreadInfo::ThreadInfo(const char* aName, int aThreadId, bool aIsMainThread,
   , mPlatformData(AllocPlatformData(aThreadId))
   , mStackTop(aStackTop)
   , mIsBeingProfiled(false)
+  , mFirstSavedStreamedSampleTime{0.0}
   , mContext(nullptr)
   , mJSSampling(INACTIVE)
   , mLastSample()
@@ -82,7 +83,7 @@ ThreadInfo::StreamJSON(const ProfileBuffer& aBuffer,
 
   double firstSampleTime = 0.0;
 
-  aWriter.Start();
+  aWriter.Start(SpliceableJSONWriter::SingleLineStyle);
   {
     StreamSamplesAndMarkers(Name(), ThreadId(), aBuffer, aWriter,
                             aProcessStartTime,

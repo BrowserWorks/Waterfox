@@ -35,7 +35,7 @@ class gfxFontEntry;
 class gfxPlatformFontList;
 class gfxTextRun;
 class nsIURI;
-class nsAtom;
+class nsIAtom;
 class nsIObserver;
 class SRGBOverrideObserver;
 class gfxTextPerfMetrics;
@@ -116,8 +116,6 @@ GetBackendName(mozilla::gfx::BackendType aBackend)
         return "recording";
       case mozilla::gfx::BackendType::DIRECT2D1_1:
         return "direct2d 1.1";
-      case mozilla::gfx::BackendType::WEBRENDER_TEXT:
-        return "webrender text";
       case mozilla::gfx::BackendType::NONE:
         return "none";
       case mozilla::gfx::BackendType::BACKEND_LAST:
@@ -233,13 +231,16 @@ public:
      */
     static already_AddRefed<SourceSurface> GetSourceSurfaceForSurface(
       RefPtr<mozilla::gfx::DrawTarget> aTarget,
-      gfxASurface* aSurface,
+      gfxASurface *aSurface,
       bool aIsPlugin = false);
 
     static void ClearSourceSurfaceForSurface(gfxASurface *aSurface);
 
     static already_AddRefed<DataSourceSurface>
         GetWrappedDataSourceSurface(gfxASurface *aSurface);
+
+    virtual already_AddRefed<mozilla::gfx::ScaledFont>
+      GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
     already_AddRefed<DrawTarget> CreateOffscreenContentDrawTarget(
       const mozilla::gfx::IntSize& aSize,
@@ -332,7 +333,7 @@ public:
      * that correspond to the given language group or generic font family
      * (or both, or neither).
      */
-    virtual nsresult GetFontList(nsAtom *aLangGroup,
+    virtual nsresult GetFontList(nsIAtom *aLangGroup,
                                  const nsACString& aGenericFamily,
                                  nsTArray<nsString>& aListOfFonts);
 
@@ -559,14 +560,6 @@ public:
 
     int32_t GetBidiNumeralOption();
 
-    /**
-     * This is a bit ugly, but useful... force all presContexts to reflow,
-     * by toggling a preference that they observe. This is used when
-     * something about platform settings changes that might have an effect
-     * on layout, such as font rendering settings that influence metrics.
-     */
-    static void ForceGlobalReflow();
-
     static void
     FlushFontAndWordCaches();
 
@@ -606,6 +599,8 @@ public:
     mozilla::gl::SkiaGLGlue* GetSkiaGLGlue();
     void PurgeSkiaGPUCache();
     static void PurgeSkiaFontCache();
+
+    virtual bool IsInGonkEmulator() const { return false; }
 
     static bool UsesOffMainThreadCompositing();
 
@@ -652,7 +647,6 @@ public:
     bool SupportsApzTouchInput() const;
     bool SupportsApzDragInput() const;
     bool SupportsApzKeyboardInput() const;
-    bool SupportsApzAutoscrolling() const;
 
     virtual void FlushContentDrawing() {}
 
@@ -787,6 +781,9 @@ protected:
      * Decode the backend enumberation from a string.
      */
     static mozilla::gfx::BackendType BackendTypeForName(const nsCString& aName);
+
+    static already_AddRefed<mozilla::gfx::ScaledFont>
+      GetScaledFontForFontWithCairoSkia(mozilla::gfx::DrawTarget* aTarget, gfxFont* aFont);
 
     virtual bool CanUseHardwareVideoDecoding();
 

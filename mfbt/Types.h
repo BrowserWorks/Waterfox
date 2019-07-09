@@ -78,28 +78,23 @@
  * export mfbt declarations when building mfbt, and they expose import mfbt
  * declarations when using mfbt.
  */
-#if defined(IMPL_MFBT) || (defined(JS_STANDALONE) && !defined(MOZ_MEMORY) && (defined(EXPORT_JS_API) || defined(STATIC_EXPORTABLE_JS_API)))
+#if defined(IMPL_MFBT)
 #  define MFBT_API     MOZ_EXPORT
 #  define MFBT_DATA    MOZ_EXPORT
 #else
-#  if defined(JS_STANDALONE) && !defined(MOZ_MEMORY) && defined(STATIC_JS_API)
-#    define MFBT_API
-#    define MFBT_DATA
+  /*
+   * On linux mozglue is linked in the program and we link libxul.so with
+   * -z,defs. Normally that causes the linker to reject undefined references in
+   * libxul.so, but as a loophole it allows undefined references to weak
+   * symbols. We add the weak attribute to the import version of the MFBT API
+   * macros to exploit this.
+   */
+#  if defined(MOZ_GLUE_IN_PROGRAM)
+#    define MFBT_API   __attribute__((weak)) MOZ_IMPORT_API
+#    define MFBT_DATA  __attribute__((weak)) MOZ_IMPORT_DATA
 #  else
-    /*
-     * On linux mozglue is linked in the program and we link libxul.so with
-     * -z,defs. Normally that causes the linker to reject undefined references in
-     * libxul.so, but as a loophole it allows undefined references to weak
-     * symbols. We add the weak attribute to the import version of the MFBT API
-     * macros to exploit this.
-     */
-#    if defined(MOZ_GLUE_IN_PROGRAM)
-#      define MFBT_API   __attribute__((weak)) MOZ_IMPORT_API
-#      define MFBT_DATA  __attribute__((weak)) MOZ_IMPORT_DATA
-#    else
-#      define MFBT_API   MOZ_IMPORT_API
-#      define MFBT_DATA  MOZ_IMPORT_DATA
-#    endif
+#    define MFBT_API   MOZ_IMPORT_API
+#    define MFBT_DATA  MOZ_IMPORT_DATA
 #  endif
 #endif
 

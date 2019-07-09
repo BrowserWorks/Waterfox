@@ -110,8 +110,8 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
     }
 
     @Override
-    public void onFetchCompleted() {
-      next.onFetchCompleted();
+    public void onFetchCompleted(final long fetchEnd) {
+      next.onFetchCompleted(fetchEnd);
     }
 
     @Override
@@ -135,8 +135,9 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
   }
 
   @Override
-  public void fetchModified(RepositorySessionFetchRecordsDelegate delegate) {
-    inner.fetchModified(makeUnwrappingDelegate(delegate));
+  public void fetchSince(long timestamp,
+                         RepositorySessionFetchRecordsDelegate delegate) {
+    inner.fetchSince(timestamp, makeUnwrappingDelegate(delegate));
   }
 
   @Override

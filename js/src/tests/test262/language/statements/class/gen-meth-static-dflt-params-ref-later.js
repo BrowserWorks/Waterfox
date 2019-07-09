@@ -4,7 +4,7 @@
 /*---
 description: Referencing a parameter that occurs later in the ParameterList (static class expression generator method)
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail
@@ -57,7 +57,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     14.1.19 Runtime Semantics: IteratorBindingInitialization
 

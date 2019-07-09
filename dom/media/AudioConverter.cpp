@@ -65,9 +65,6 @@ AudioConverter::CanWorkInPlace() const
 size_t
 AudioConverter::ProcessInternal(void* aOut, const void* aIn, size_t aFrames)
 {
-  if (!aFrames) {
-    return 0;
-  }
   if (mIn.Channels() > mOut.Channels()) {
     return DownmixAudio(aOut, aIn, aFrames);
   } else if (mIn.Channels() < mOut.Channels()) {
@@ -365,15 +362,13 @@ size_t
 AudioConverter::ResampleRecipientFrames(size_t aFrames) const
 {
   if (!aFrames && mIn.Rate() != mOut.Rate()) {
-    // The resampler will be drained, account for frames currently buffered
-    // in the resampler.
     if (!mResampler) {
       return 0;
     }
-    return speex_resampler_get_output_latency(mResampler);
-  } else {
-    return (uint64_t)aFrames * mOut.Rate() / mIn.Rate() + 1;
+    // We drain by pushing in get_input_latency() samples of 0
+    aFrames = speex_resampler_get_input_latency(mResampler);
   }
+  return (uint64_t)aFrames * mOut.Rate() / mIn.Rate() + 1;
 }
 
 size_t

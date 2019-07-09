@@ -52,7 +52,7 @@ exports.testBasic = function (options) {
         current: "hello",
         status: "ERROR",
         predictions: [
-          "Shalom", "Namast\u{00E9}", "Hallo", "Dydd-da", "Ch\u{00E0}o", "Hej",
+          "Shalom", "Namasté", "Hallo", "Dydd-da", "Chào", "Hej",
           "Saluton", "Sawubona"
         ],
         unassigned: [ ],
@@ -74,7 +74,7 @@ exports.testBasic = function (options) {
         cursor: 8,
         current: "hello",
         status: "ERROR",
-        predictions: [ "Shalom", "Saluton", "Sawubona", "Namast\u{00E9}" ],
+        predictions: [ "Shalom", "Saluton", "Sawubona", "Namasté" ],
         unassigned: [ ],
         args: {
           command: { name: "tsslow" },

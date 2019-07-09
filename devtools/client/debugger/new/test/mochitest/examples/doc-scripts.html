@@ -6,7 +6,7 @@
     <meta charset="utf-8"/>
     <title>Debugger test page</title>
   </head>
-
+ 
   <body>
     <script src="simple1.js"></script>
     <script src="simple2.js"></script>
@@ -15,7 +15,7 @@
       // This inline script allows this HTML page to show up as a
       // source. It also needs to introduce a new global variable so
       // it's not immediately garbage collected.
-      inline_script = function () { var x = 5; };
+      function inline_script() { var x = 5; }
     </script>
   </body>
 </html>

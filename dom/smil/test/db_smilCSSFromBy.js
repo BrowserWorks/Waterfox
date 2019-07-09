@@ -8,8 +8,6 @@
 
 // NOTE: This js file requires db_smilCSSPropertyList.js
 
-const isServoEnabled = SpecialPowers.DOMWindowUtils.isStyledByServo;
-
 // Lists of testcases for re-use across multiple properties of the same type
 var _fromByTestLists =
 {
@@ -26,30 +24,17 @@ var _fromByTestLists =
                            { midComp: "rgba(45, 48, 52, 0.6)",
                              // (rgb(10, 20, 30) * 0.2 + rgb(50, 50, 50) * 1) / 1.0
                              toComp:  "rgb(52, 54, 56)"}),
-
-    // The "from" and "by" values in the test case below overflow the maxium
-    // color-channel values when added together.
+    // Note: technically, the "from" and "by" values in the test case below
+    // would overflow the maxium color-channel values when added together.
     // (e.g. for red [ignoring alpha for now], 100 + 240 = 340 which is > 255)
     // The SVG Animation spec says we should clamp color values "as late as
-    // possible" i.e. allow the channel overflow and clamp at paint-time.
-    //
-    // Servo does this, and gives us:
-    //
-    //   to-value = (rgb(100, 100, 100) * 0.6 + rgb(240, 240, 240) * 1.0)) * 1
-    //            = rgb(300, 300, 300)
-    //   midComp  = (rgb(100, 100, 100) * 0.6 * 0.5 + rgb(300, 300, 300) * 1.0 * 0.5) * (1 / 0.8)
-    //            = rgb(225, 225, 225)
-    //
-    // Gecko, however, clamps the "to" value and interpolates up to that
-    // clamped result giving:
-    //
-    //   midComp  = (rgb(100, 100, 100) * 0.6 * 0.5 + rgb(255, 255, 255) * 1.0 * 0.5) * (1 / 0.8)
-    //            = rgb(197, 197, 197)
-    //
+    // possible," i.e. allow the channel overflow and clamp at paint-time.
+    // But for now, we instead clamp the implicit "to" value for the animation
+    // and interpolate up to that clamped result.
     new AnimTestcaseFromBy("rgba(100, 100, 100, 0.6)", "rgba(240, 240, 240, 1)",
-                           { midComp:
-                             isServoEnabled ? "rgba(225, 225, 225, 0.8)"
-                                            : "rgba(197, 197, 197, 0.8)",
+                             // (rgb(100, 100, 100) * 0.6 * 0.5 + rgb(255, 255, 255) * 1.0 * 0.5) * (1 / 0.8)
+                           { midComp: "rgba(197, 197, 197, 0.8)",
+                             // (rgb(100, 100, 100) * 0.6 + rgb(240, 240, 240) is overflowed
                              toComp:  "rgb(255, 255, 255)"}),
   ],
   lengthNoUnits: [
@@ -60,13 +45,27 @@ var _fromByTestLists =
                                          midComp:  "35px",
                                          toComp:   "40px"}),
   ],
+  lengthNoUnitsSVG: [
+    new AnimTestcaseFromBy("0", "50",  { fromComp: "0",
+                                         midComp:  "25",
+                                         toComp:   "50"}),
+    new AnimTestcaseFromBy("30", "10", { fromComp: "30",
+                                         midComp:  "35",
+                                         toComp:   "40"}),
+  ],
   lengthPx: [
     new AnimTestcaseFromBy("0px", "8px", { fromComp: "0px",
                                            midComp: "4px",
                                            toComp: "8px"}),
-    new AnimTestcaseFromBy("1px", "10px", { fromComp: "1px",
-                                            midComp: "6px",
-                                            toComp: "11px"}),
+    new AnimTestcaseFromBy("1px", "10px", { midComp: "6px", toComp: "11px"}),
+  ],
+  lengthPxSVG: [
+    new AnimTestcaseFromBy("0px", "8px", { fromComp: "0",
+                                           midComp: "4",
+                                           toComp: "8"}),
+    new AnimTestcaseFromBy("1px", "10px", { fromComp: "1",
+                                            midComp: "6",
+                                            toComp: "11"}),
   ],
   opacity: [
     new AnimTestcaseFromBy("1", "-1", { midComp: "0.5", toComp: "0"}),
@@ -162,6 +161,6 @@ var gFromByBundles =
     new AnimTestcaseFromBy("1", "2, 3"),
   ]),
   new TestcaseBundle(gPropList.stroke_width,
-                     [].concat(_fromByTestLists.lengthNoUnits,
-                               _fromByTestLists.lengthPx))
+                     [].concat(_fromByTestLists.lengthNoUnitsSVG,
+                               _fromByTestLists.lengthPxSVG))
 ];

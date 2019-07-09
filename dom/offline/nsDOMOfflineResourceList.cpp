@@ -61,7 +61,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(nsDOMOfflineResourceList,
                                    mCacheUpdate,
                                    mPendingEvents)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsDOMOfflineResourceList)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsDOMOfflineResourceList)
   NS_INTERFACE_MAP_ENTRY(nsIDOMOfflineResourceList)
   NS_INTERFACE_MAP_ENTRY(nsIOfflineCacheUpdateObserver)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
@@ -70,6 +70,15 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(nsDOMOfflineResourceList, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(nsDOMOfflineResourceList, DOMEventTargetHelper)
+
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, checking)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, error)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, noupdate)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, downloading)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, progress)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, cached)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, updateready)
+NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, obsolete)
 
 nsDOMOfflineResourceList::nsDOMOfflineResourceList(nsIURI *aManifestURI,
                                                    nsIURI *aDocumentURI,

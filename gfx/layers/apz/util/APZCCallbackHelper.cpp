@@ -210,8 +210,8 @@ SetDisplayPortMargins(nsIPresShell* aPresShell,
 
   CSSRect baseCSS = aMetrics.CalculateCompositedRectInCssPixels();
   nsRect base(0, 0,
-              baseCSS.Width() * nsPresContext::AppUnitsPerCSSPixel(),
-              baseCSS.Height() * nsPresContext::AppUnitsPerCSSPixel());
+              baseCSS.width * nsPresContext::AppUnitsPerCSSPixel(),
+              baseCSS.height * nsPresContext::AppUnitsPerCSSPixel());
   nsLayoutUtils::SetDisplayPortBaseIfNotSet(aContent, base);
 }
 
@@ -251,17 +251,11 @@ APZCCallbackHelper::UpdateRootFrame(FrameMetrics& aMetrics)
 
   MOZ_ASSERT(aMetrics.GetUseDisplayPortMargins());
 
-  if (gfxPrefs::APZAllowZooming() && aMetrics.GetScrollOffsetUpdated()) {
+  if (gfxPrefs::APZAllowZooming()) {
     // If zooming is disabled then we don't really want to let APZ fiddle
     // with these things. In theory setting the resolution here should be a
     // no-op, but setting the SPCSPS is bad because it can cause a stale value
     // to be returned by window.innerWidth/innerHeight (see bug 1187792).
-    //
-    // We also skip this codepath unless the metrics has a scroll offset update
-    // type other eNone, because eNone just means that this repaint request
-    // was triggered by APZ in response to a main-thread update. In this
-    // scenario we don't want to update the main-thread resolution because
-    // it can trigger unnecessary reflows.
 
     float presShellResolution = shell->GetResolution();
 
@@ -965,7 +959,7 @@ APZCCallbackHelper::NotifyAsyncScrollbarDragRejected(const FrameMetrics::ViewID&
 }
 
 /* static */ void
-APZCCallbackHelper::NotifyAsyncAutoscrollRejected(const FrameMetrics::ViewID& aScrollId)
+APZCCallbackHelper::NotifyAutoscrollHandledByAPZ(const FrameMetrics::ViewID& aScrollId)
 {
   MOZ_ASSERT(NS_IsMainThread());
   nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
@@ -973,19 +967,7 @@ APZCCallbackHelper::NotifyAsyncAutoscrollRejected(const FrameMetrics::ViewID& aS
 
   nsAutoString data;
   data.AppendInt(aScrollId);
-  observerService->NotifyObservers(nullptr, "autoscroll-rejected-by-apz", data.get());
-}
-
-/* static */ void
-APZCCallbackHelper::CancelAutoscroll(const FrameMetrics::ViewID& aScrollId)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-  MOZ_ASSERT(observerService);
-
-  nsAutoString data;
-  data.AppendInt(aScrollId);
-  observerService->NotifyObservers(nullptr, "apz:cancel-autoscroll", data.get());
+  observerService->NotifyObservers(nullptr, "autoscroll-handled-by-apz", data.get());
 }
 
 /* static */ void

@@ -16,7 +16,7 @@
 #include "nsISupportsPrimitives.h"
 #include "IEnumFE.h"
 #include "nsPrimitiveHelpers.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsImageClipboard.h"
 #include "nsCRT.h"
 #include "nsPrintfCString.h"
@@ -439,7 +439,7 @@ STDMETHODIMP_(ULONG) nsDataObj::AddRef()
 }
 
 namespace {
-class RemoveTempFileHelper final : public nsIObserver
+class RemoveTempFileHelper : public nsIObserver
 {
 public:
   explicit RemoveTempFileHelper(nsIFile* aTempFile)
@@ -455,11 +455,11 @@ public:
     // We need to listen to both the xpcom shutdown message and our timer, and
     // fire when the first of either of these two messages is received.
     nsresult rv;
-    rv = NS_NewTimerWithObserver(getter_AddRefs(mTimer),
-                                 this, 500, nsITimer::TYPE_ONE_SHOT);
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return;
     }
+    mTimer->Init(this, 500, nsITimer::TYPE_ONE_SHOT);
 
     nsCOMPtr<nsIObserverService> observerService =
       do_GetService("@mozilla.org/observer-service;1");
@@ -1079,7 +1079,7 @@ CreateFilenameFromTextW(nsString & aText, const wchar_t * aExtension,
 #define PAGEINFO_PROPERTIES "chrome://navigator/locale/pageInfo.properties"
 
 static bool
-GetLocalizedString(const char* aName, nsAString& aString)
+GetLocalizedString(const char* aName, nsXPIDLString & aString)
 {
   nsCOMPtr<nsIStringBundleService> stringService =
     mozilla::services::GetStringBundleService();
@@ -1092,7 +1092,7 @@ GetLocalizedString(const char* aName, nsAString& aString)
   if (NS_FAILED(rv))
     return false;
 
-  rv = stringBundle->GetStringFromName(aName, aString);
+  rv = stringBundle->GetStringFromName(aName, getter_Copies(aString));
   return NS_SUCCEEDED(rv);
 }
 
@@ -1124,7 +1124,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutA ( FORMATETC& aFE, STGMEDIUM& aST
   // 2) localized string for an untitled page, 3) just use "Untitled.URL"
   if (!CreateFilenameFromTextA(title, ".URL", 
                                fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
-    nsAutoString untitled;
+    nsXPIDLString untitled;
     if (!GetLocalizedString("noPageTitle", untitled) ||
         !CreateFilenameFromTextA(untitled, ".URL", 
                                  fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
@@ -1165,7 +1165,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutW ( FORMATETC& aFE, STGMEDIUM& aST
   // 2) localized string for an untitled page, 3) just use "Untitled.URL"
   if (!CreateFilenameFromTextW(title, L".URL",
                                fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
-    nsAutoString untitled;
+    nsXPIDLString untitled;
     if (!GetLocalizedString("noPageTitle", untitled) ||
         !CreateFilenameFromTextW(untitled, L".URL",
                                  fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
@@ -1341,8 +1341,7 @@ HRESULT nsDataObj::GetText(const nsACString & aDataFlavor, FORMATETC& aFE, STGME
   mTransferable->GetTransferData(flavorStr, getter_AddRefs(genericDataWrapper), &len);
   if ( !len )
     return E_FAIL;
-  nsPrimitiveHelpers::CreateDataFromPrimitive(
-    nsDependentCString(flavorStr), genericDataWrapper, &data, len);
+  nsPrimitiveHelpers::CreateDataFromPrimitive ( flavorStr, genericDataWrapper, &data, len );
   if ( !data )
     return E_FAIL;
 

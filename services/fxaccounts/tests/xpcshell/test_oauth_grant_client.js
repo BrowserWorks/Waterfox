@@ -7,7 +7,7 @@ Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
 
 const CLIENT_OPTIONS = {
-  serverURL: "https://127.0.0.1:9010/v1",
+  serverURL: "http://127.0.0.1:9010/v1",
   client_id: "abc123"
 };
 
@@ -51,13 +51,13 @@ var mockResponseError = function(error) {
 add_test(function missingParams() {
   let client = new FxAccountsOAuthGrantClient(CLIENT_OPTIONS);
   try {
-    client.getTokenFromAssertion();
+    client.getTokenFromAssertion()
   } catch (e) {
     do_check_eq(e.message, "Missing 'assertion' parameter");
   }
 
   try {
-    client.getTokenFromAssertion("assertion");
+    client.getTokenFromAssertion("assertion")
   } catch (e) {
     do_check_eq(e.message, "Missing 'scope' parameter");
   }
@@ -136,7 +136,7 @@ add_test(function serverErrorResponse() {
 
 add_test(function networkErrorResponse() {
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://domain.dummy",
+    serverURL: "http://domain.dummy",
     client_id: "abc123"
   });
   Services.prefs.setBoolPref("identity.fxaccounts.skipDeviceRegistration", true);
@@ -205,26 +205,14 @@ add_test(function constructorTests() {
   validationHelper({},
     "Error: Missing 'serverURL' parameter");
 
-  validationHelper({ serverURL: "https://example.com" },
-    "Error: Missing 'client_id' parameter");
-
-  validationHelper({ serverURL: "https://example.com" },
+  validationHelper({ serverURL: "http://example.com" },
     "Error: Missing 'client_id' parameter");
 
   validationHelper({ client_id: "123ABC" },
     "Error: Missing 'serverURL' parameter");
 
-  validationHelper({ client_id: "123ABC", serverURL: "http://example.com" },
-    "Error: 'serverURL' must be HTTPS");
-
-  try {
-    Services.prefs.setBoolPref("identity.fxaccounts.allowHttp", true);
-    validationHelper({ client_id: "123ABC", serverURL: "http://example.com" }, null);
-  } finally {
-    Services.prefs.clearUserPref("identity.fxaccounts.allowHttp");
-  }
-
-
+  validationHelper({ client_id: "123ABC", serverURL: "badUrl" },
+    "Error: Invalid 'serverURL'");
 
   run_next_test();
 });
@@ -262,24 +250,9 @@ add_test(function errorTests() {
   run_next_test();
 });
 
-
-add_test(function networkErrorResponse() {
-  let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://domain.dummy",
-    client_id: "abc123"
-  });
-  Services.prefs.setBoolPref("identity.fxaccounts.skipDeviceRegistration", true);
-  client.getTokenFromAssertion("assertion", "scope")
-    .catch(function(e) {
-      do_check_eq(e.name, "FxAccountsOAuthGrantClientError");
-      do_check_eq(e.code, null);
-      do_check_eq(e.errno, ERRNO_NETWORK);
-      do_check_eq(e.error, ERROR_NETWORK);
-      run_next_test();
-    }).catch(() => {}).then(() =>
-      Services.prefs.clearUserPref("identity.fxaccounts.skipDeviceRegistration"));
-});
-
+function run_test() {
+  run_next_test();
+}
 
 /**
  * Quick way to test the "FxAccountsOAuthGrantClient" constructor.
@@ -287,7 +260,7 @@ add_test(function networkErrorResponse() {
  * @param {Object} options
  *        FxAccountsOAuthGrantClient constructor options
  * @param {String} expected
- *        Expected error message, or null if it's expected to pass.
+ *        Expected error message
  * @returns {*}
  */
 function validationHelper(options, expected) {
@@ -296,5 +269,5 @@ function validationHelper(options, expected) {
   } catch (e) {
     return do_check_eq(e.toString(), expected);
   }
-  return do_check_eq(expected, null);
+  throw new Error("Validation helper error");
 }

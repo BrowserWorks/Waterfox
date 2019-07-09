@@ -20,7 +20,6 @@
 #include "mozilla/dom/cache/SavedTypes.h"
 #include "mozilla/dom/cache/StreamList.h"
 #include "mozilla/dom/cache/Types.h"
-#include "mozilla/dom/cache/QuotaClient.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozStorageHelper.h"
 #include "nsIInputStream.h"
@@ -51,8 +50,6 @@ public:
   RunSyncWithDBOnTarget(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
                         mozIStorageConnection* aConn) override
   {
-    MOZ_DIAGNOSTIC_ASSERT(aDBDir);
-
     nsresult rv = BodyCreateDir(aDBDir);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -80,24 +77,13 @@ public:
       nsresult rv = db::FindOrphanedCacheIds(aConn, orphanedCacheIdList);
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-      int64_t overallDeletedPaddingSize = 0;
       for (uint32_t i = 0; i < orphanedCacheIdList.Length(); ++i) {
         AutoTArray<nsID, 16> deletedBodyIdList;
-        int64_t deletedPaddingSize = 0;
-        rv = db::DeleteCacheId(aConn, orphanedCacheIdList[i], deletedBodyIdList,
-                               &deletedPaddingSize);
+        rv = db::DeleteCacheId(aConn, orphanedCacheIdList[i], deletedBodyIdList);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
         rv = BodyDeleteFiles(aQuotaInfo, aDBDir, deletedBodyIdList);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-        if (deletedPaddingSize > 0) {
-          DecreaseUsageForQuotaInfo(aQuotaInfo, deletedPaddingSize);
-        }
-
-        MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - deletedPaddingSize >=
-                              overallDeletedPaddingSize);
-        overallDeletedPaddingSize += deletedPaddingSize;
       }
 
       // Clean up orphaned body objects
@@ -105,20 +91,6 @@ public:
       rv = db::GetKnownBodyIds(aConn, knownBodyIdList);
 
       rv = BodyDeleteOrphanedFiles(aQuotaInfo, aDBDir, knownBodyIdList);
-      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-      // Commit() explicitly here, because we want to ensure the padding file
-      // has the correct content.
-      rv = MaybeUpdatePaddingFile(aDBDir, aConn, /* aIncreaceSize */ 0,
-                                  overallDeletedPaddingSize,
-                                  [&trans]() mutable { return trans.Commit(); });
-      // We'll restore padding file below, so just warn here if failure happens.
-      Unused << NS_WARN_IF(NS_FAILED(rv));
-    }
-
-    if (DirectoryPaddingFileExists(aDBDir, DirPaddingFile::TMP_FILE) ||
-        !DirectoryPaddingFileExists(aDBDir, DirPaddingFile::FILE)) {
-      rv = RestorePaddingFile(aDBDir, aConn);
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     }
 
@@ -468,26 +440,20 @@ public:
     : SyncDBAction(DBAction::Existing)
     , mManager(aManager)
     , mCacheId(aCacheId)
-    , mDeletedPaddingSize(0)
   { }
 
   virtual nsresult
   RunSyncWithDBOnTarget(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
                         mozIStorageConnection* aConn) override
   {
-    mQuotaInfo.emplace(aQuotaInfo);
-
     mozStorageTransaction trans(aConn, false,
                                 mozIStorageConnection::TRANSACTION_IMMEDIATE);
 
-    nsresult rv = db::DeleteCacheId(aConn, mCacheId, mDeletedBodyIdList,
-                                    &mDeletedPaddingSize);
+    nsresult rv = db::DeleteCacheId(aConn, mCacheId, mDeletedBodyIdList);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = MaybeUpdatePaddingFile(aDBDir, aConn, /* aIncreaceSize */ 0,
-                                mDeletedPaddingSize,
-                                [&trans]() mutable { return trans.Commit(); });
-    Unused << NS_WARN_IF(NS_FAILED(rv));
+    rv = trans.Commit();
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
     return rv;
   }
@@ -495,18 +461,7 @@ public:
   virtual void
   CompleteOnInitiatingThread(nsresult aRv) override
   {
-    // If the transaction fails, we shouldn't delete the body files and decrease
-    // their padding size.
-    if (NS_FAILED(aRv)) {
-      mDeletedBodyIdList.Clear();
-      mDeletedPaddingSize = 0;
-    }
-
     mManager->NoteOrphanedBodyIdList(mDeletedBodyIdList);
-
-    if (mDeletedPaddingSize > 0) {
-      DecreaseUsageForQuotaInfo(mQuotaInfo.ref(), mDeletedPaddingSize);
-    }
 
     // ensure we release the manager on the initiating thread
     mManager = nullptr;
@@ -516,9 +471,6 @@ private:
   RefPtr<Manager> mManager;
   const CacheId mCacheId;
   nsTArray<nsID> mDeletedBodyIdList;
-  Maybe<QuotaInfo> mQuotaInfo;
-  // Track any pad amount associated with orphaned entries.
-  int64_t mDeletedPaddingSize;
 };
 
 // ----------------------------------------------------------------------------
@@ -551,13 +503,11 @@ public:
     }
 
     nsCOMPtr<nsIInputStream> stream;
-    if (mArgs.openMode() == OpenMode::Eager) {
-      rv = BodyOpen(aQuotaInfo, aDBDir, mResponse.mBodyId, getter_AddRefs(stream));
-      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-      if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
-    }
+    rv = BodyOpen(aQuotaInfo, aDBDir, mResponse.mBodyId, getter_AddRefs(stream));
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+    if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
 
-    mStreamList->Add(mResponse.mBodyId, Move(stream));
+    mStreamList->Add(mResponse.mBodyId, stream);
 
     return rv;
   }
@@ -618,14 +568,12 @@ public:
       }
 
       nsCOMPtr<nsIInputStream> stream;
-      if (mArgs.openMode() == OpenMode::Eager) {
-        rv = BodyOpen(aQuotaInfo, aDBDir, mSavedResponses[i].mBodyId,
-                      getter_AddRefs(stream));
-        if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-        if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
-      }
+      rv = BodyOpen(aQuotaInfo, aDBDir, mSavedResponses[i].mBodyId,
+                    getter_AddRefs(stream));
+      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+      if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
 
-      mStreamList->Add(mSavedResponses[i].mBodyId, Move(stream));
+      mStreamList->Add(mSavedResponses[i].mBodyId, stream);
     }
 
     return rv;
@@ -673,8 +621,6 @@ public:
     , mExpectedAsyncCopyCompletions(1)
     , mAsyncResult(NS_OK)
     , mMutex("cache::Manager::CachePutAllAction")
-    , mUpdatedPaddingSize(0)
-    , mDeletedPaddingSize(0)
   {
     MOZ_DIAGNOSTIC_ASSERT(!aPutList.IsEmpty());
     MOZ_DIAGNOSTIC_ASSERT(aPutList.Length() == aRequestStreamList.Length());
@@ -734,6 +680,7 @@ private:
         break;
       }
     }
+
 
     // Always call OnAsyncCopyComplete() manually here.  This covers the
     // case where there is no async copying and also reports any startup
@@ -815,23 +762,6 @@ private:
         }
       }
       if (e.mResponseStream) {
-        // Gerenate padding size for opaque response if needed.
-        if (e.mResponse.type() == ResponseType::Opaque) {
-          // It'll generate padding if we've not set it yet.
-          rv = BodyMaybeUpdatePaddingSize(mQuotaInfo.ref(), mDBDir,
-                                          e.mResponseBodyId,
-                                          e.mResponse.paddingInfo(),
-                                          &e.mResponse.paddingSize());
-          if (NS_WARN_IF(NS_FAILED(rv))) {
-            DoResolve(rv);
-            return;
-          }
-
-          MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - e.mResponse.paddingSize() >=
-                                mUpdatedPaddingSize);
-          mUpdatedPaddingSize += e.mResponse.paddingSize();
-        }
-
         rv = BodyFinalizeWrite(mDBDir, e.mResponseBodyId);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           DoResolve(rv);
@@ -839,26 +769,18 @@ private:
         }
       }
 
-      int64_t deletedPaddingSize = 0;
       rv = db::CachePut(mConn, mCacheId, e.mRequest,
                         e.mRequestStream ? &e.mRequestBodyId : nullptr,
                         e.mResponse,
                         e.mResponseStream ? &e.mResponseBodyId : nullptr,
-                        mDeletedBodyIdList, &deletedPaddingSize);
+                        mDeletedBodyIdList);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         DoResolve(rv);
         return;
       }
-
-      MOZ_DIAGNOSTIC_ASSERT(INT64_MAX - mDeletedPaddingSize >=
-                            deletedPaddingSize);
-      mDeletedPaddingSize += deletedPaddingSize;
     }
 
-    // Update padding file when it's necessary
-    rv = MaybeUpdatePaddingFile(mDBDir, mConn, mUpdatedPaddingSize,
-                                mDeletedPaddingSize,
-                                [&trans]() mutable { return trans.Commit(); });
+    rv = trans.Commit();
     Unused << NS_WARN_IF(NS_FAILED(rv));
 
     DoResolve(rv);
@@ -874,18 +796,7 @@ private:
       mList[i].mResponseStream = nullptr;
     }
 
-    // If the transaction fails, we shouldn't delete the body files and decrease
-    // their padding size.
-    if (NS_FAILED(aRv)) {
-      mDeletedBodyIdList.Clear();
-      mDeletedPaddingSize = 0;
-    }
-
     mManager->NoteOrphanedBodyIdList(mDeletedBodyIdList);
-
-    if (mDeletedPaddingSize > 0) {
-      DecreaseUsageForQuotaInfo(mQuotaInfo.ref(), mDeletedPaddingSize);
-    }
 
     Listener* listener = mManager->GetListener(mListenerId);
     mManager = nullptr;
@@ -1026,9 +937,6 @@ private:
     // Clean up any files we might have written before hitting the error.
     if (NS_FAILED(aRv)) {
       BodyDeleteFiles(mQuotaInfo.ref(), mDBDir, mBodyIdWrittenList);
-      if (mUpdatedPaddingSize > 0) {
-        DecreaseUsageForQuotaInfo(mQuotaInfo.ref(), mUpdatedPaddingSize);
-      }
     }
 
     // Must be released on the target thread where it was opened.
@@ -1072,11 +980,6 @@ private:
   nsTArray<nsCOMPtr<nsISupports>> mCopyContextList;
 
   Maybe<QuotaInfo> mQuotaInfo;
-  // Track how much pad amount has been added for new entries so that it can be
-  // removed if an error occurs.
-  int64_t mUpdatedPaddingSize;
-  // Track any pad amount associated with overwritten entries.
-  int64_t mDeletedPaddingSize;
 };
 
 // ----------------------------------------------------------------------------
@@ -1090,26 +993,21 @@ public:
     , mCacheId(aCacheId)
     , mArgs(aArgs)
     , mSuccess(false)
-    , mDeletedPaddingSize(0)
   { }
 
   virtual nsresult
   RunSyncWithDBOnTarget(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
                         mozIStorageConnection* aConn) override
   {
-    mQuotaInfo.emplace(aQuotaInfo);
-
     mozStorageTransaction trans(aConn, false,
                                 mozIStorageConnection::TRANSACTION_IMMEDIATE);
 
     nsresult rv = db::CacheDelete(aConn, mCacheId, mArgs.request(),
                                   mArgs.params(), mDeletedBodyIdList,
-                                  &mDeletedPaddingSize, &mSuccess);
+                                  &mSuccess);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = MaybeUpdatePaddingFile(aDBDir, aConn, /* aIncreaceSize */ 0,
-                                mDeletedPaddingSize,
-                                [&trans]() mutable { return trans.Commit(); });
+    rv = trans.Commit();
     if (NS_WARN_IF(NS_FAILED(rv))) {
       mSuccess = false;
       return rv;
@@ -1121,19 +1019,7 @@ public:
   virtual void
   Complete(Listener* aListener, ErrorResult&& aRv) override
   {
-    // If the transaction fails, we shouldn't delete the body files and decrease
-    // their padding size.
-    if (aRv.Failed()) {
-      mDeletedBodyIdList.Clear();
-      mDeletedPaddingSize = 0;
-    }
-
     mManager->NoteOrphanedBodyIdList(mDeletedBodyIdList);
-
-    if (mDeletedPaddingSize > 0) {
-      DecreaseUsageForQuotaInfo(mQuotaInfo.ref(), mDeletedPaddingSize);
-    }
-
     aListener->OnOpComplete(Move(aRv), CacheDeleteResult(mSuccess));
   }
 
@@ -1147,9 +1033,6 @@ private:
   const CacheDeleteArgs mArgs;
   bool mSuccess;
   nsTArray<nsID> mDeletedBodyIdList;
-  Maybe<QuotaInfo> mQuotaInfo;
-  // Track any pad amount associated with deleted entries.
-  int64_t mDeletedPaddingSize;
 };
 
 // ----------------------------------------------------------------------------
@@ -1182,14 +1065,12 @@ public:
       }
 
       nsCOMPtr<nsIInputStream> stream;
-      if (mArgs.openMode() == OpenMode::Eager) {
-        rv = BodyOpen(aQuotaInfo, aDBDir, mSavedRequests[i].mBodyId,
-                      getter_AddRefs(stream));
-        if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-        if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
-      }
+      rv = BodyOpen(aQuotaInfo, aDBDir, mSavedRequests[i].mBodyId,
+                    getter_AddRefs(stream));
+      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+      if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
 
-      mStreamList->Add(mSavedRequests[i].mBodyId, Move(stream));
+      mStreamList->Add(mSavedRequests[i].mBodyId, stream);
     }
 
     return rv;
@@ -1248,14 +1129,12 @@ public:
     }
 
     nsCOMPtr<nsIInputStream> stream;
-    if (mArgs.openMode() == OpenMode::Eager) {
-      rv = BodyOpen(aQuotaInfo, aDBDir, mSavedResponse.mBodyId,
-                    getter_AddRefs(stream));
-      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-      if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
-    }
+    rv = BodyOpen(aQuotaInfo, aDBDir, mSavedResponse.mBodyId,
+                  getter_AddRefs(stream));
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+    if (NS_WARN_IF(!stream)) { return NS_ERROR_FILE_NOT_FOUND; }
 
-    mStreamList->Add(mSavedResponse.mBodyId, Move(stream));
+    mStreamList->Add(mSavedResponse.mBodyId, stream);
 
     return rv;
   }
@@ -1363,9 +1242,7 @@ public:
   Complete(Listener* aListener, ErrorResult&& aRv) override
   {
     MOZ_DIAGNOSTIC_ASSERT(aRv.Failed() || mCacheId != INVALID_CACHE_ID);
-    aListener->OnOpComplete(Move(aRv),
-                            StorageOpenResult(nullptr, nullptr, mNamespace),
-                            mCacheId);
+    aListener->OnOpComplete(Move(aRv), StorageOpenResult(), mCacheId);
   }
 
 private:
@@ -1405,8 +1282,6 @@ public:
       return NS_OK;
     }
 
-    // Don't delete the removing padding size here, we'll delete it on
-    // DeleteOrphanedCacheAction.
     rv = db::StorageForgetCache(aConn, mNamespace, mArgs.key());
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -1479,43 +1354,6 @@ public:
 private:
   const Namespace mNamespace;
   nsTArray<nsString> mKeys;
-};
-
-// ----------------------------------------------------------------------------
-
-class Manager::OpenStreamAction final : public Manager::BaseAction
-{
-public:
-  OpenStreamAction(Manager* aManager, ListenerId aListenerId,
-                   InputStreamResolver&& aResolver, const nsID& aBodyId)
-    : BaseAction(aManager, aListenerId)
-    , mResolver(Move(aResolver))
-    , mBodyId(aBodyId)
-  { }
-
-  virtual nsresult
-  RunSyncWithDBOnTarget(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
-                        mozIStorageConnection* aConn) override
-  {
-    nsresult rv = BodyOpen(aQuotaInfo, aDBDir, mBodyId,
-                           getter_AddRefs(mBodyStream));
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-    if (NS_WARN_IF(!mBodyStream)) { return NS_ERROR_FILE_NOT_FOUND; }
-
-    return rv;
-  }
-
-  virtual void
-  Complete(Listener* aListener, ErrorResult&& aRv) override
-  {
-    mResolver(Move(mBodyStream));
-    mResolver = nullptr;
-  }
-
-private:
-  InputStreamResolver mResolver;
-  const nsID mBodyId;
-  nsCOMPtr<nsIInputStream> mBodyStream;
 };
 
 // ----------------------------------------------------------------------------
@@ -1882,34 +1720,6 @@ Manager::ExecuteStorageOp(Listener* aListener, Namespace aNamespace,
     default:
       MOZ_CRASH("Unknown CacheStorage operation!");
   }
-
-  context->Dispatch(action);
-}
-
-void
-Manager::ExecuteOpenStream(Listener* aListener, InputStreamResolver&& aResolver,
-                           const nsID& aBodyId)
-{
-  NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_DIAGNOSTIC_ASSERT(aListener);
-  MOZ_DIAGNOSTIC_ASSERT(aResolver);
-
-  if (NS_WARN_IF(mState == Closing)) {
-    aResolver(nullptr);
-    return;
-  }
-
-  RefPtr<Context> context = mContext;
-  MOZ_DIAGNOSTIC_ASSERT(!context->IsCanceled());
-
-  // We save the listener simply to track the existence of the caller here.
-  // Our returned value will really be passed to the resolver when the
-  // operation completes.  In the future we should remove the Listener
-  // mechanism in favor of std::function or MozPromise.
-  ListenerId listenerId = SaveListener(aListener);
-
-  RefPtr<Action> action =
-    new OpenStreamAction(this, listenerId, Move(aResolver), aBodyId);
 
   context->Dispatch(action);
 }

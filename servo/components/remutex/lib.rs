@@ -10,11 +10,13 @@
 //! It provides the same interface as https://github.com/rust-lang/rust/blob/master/src/libstd/sys/common/remutex.rs
 //! so if those types are ever exported, we should be able to replace this implemtation.
 
-extern crate nonzero;
+#![feature(nonzero)]
+
+extern crate core;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate log;
 
-use nonzero::NonZero;
+use core::nonzero::NonZero;
 use std::cell::{Cell, UnsafeCell};
 use std::ops::Deref;
 use std::sync::{LockResult, Mutex, MutexGuard, PoisonError, TryLockError, TryLockResult};
@@ -24,7 +26,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 // TODO: can we use the thread-id crate for this?
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ThreadId(NonZero<usize>);
 
 lazy_static!{ static ref THREAD_COUNT: AtomicUsize = AtomicUsize::new(1); }

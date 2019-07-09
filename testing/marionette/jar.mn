@@ -17,7 +17,7 @@ marionette.jar:
   content/cert.js (cert.js)
   content/event.js  (event.js)
   content/error.js (error.js)
-  content/sync.js (sync.js)
+  content/wait.js (wait.js)
   content/message.js (message.js)
   content/modal.js (modal.js)
   content/proxy.js (proxy.js)
@@ -35,9 +35,6 @@ marionette.jar:
   content/stream-utils.js (stream-utils.js)
   content/reftest.js (reftest.js)
   content/reftest.xul (reftest.xul)
-  content/dom.js (dom.js)
-  content/format.js (format.js)
-  content/wm.js (wm.js)
 #ifdef ENABLE_TESTS
   content/test.xul (chrome/test.xul)
   content/test2.xul (chrome/test2.xul)

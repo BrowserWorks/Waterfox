@@ -15,7 +15,6 @@
 #include "nsIContentPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIURI.h"
-#include "nsISupportsPrimitives.h"
 #include "nsPrintfCString.h"
 #include <cctype>
 
@@ -94,8 +93,8 @@ void nsStyleUtil::AppendEscapedCSSString(const nsAString& aString,
   const char16_t* in = aString.BeginReading();
   const char16_t* const end = aString.EndReading();
   for (; in != end; in++) {
-    if (*in < 0x20 || *in == 0x7F) {
-      // Escape U+0000 through U+001F and U+007F numerically.
+    if (*in < 0x20 || (*in >= 0x7F && *in < 0xA0)) {
+      // Escape U+0000 through U+001F and U+007F through U+009F numerically.
       aReturn.AppendPrintf("\\%x ", *in);
     } else {
       if (*in == '"' || *in == '\'' || *in == '\\') {
@@ -158,8 +157,8 @@ nsStyleUtil::AppendEscapedCSSIdent(const nsAString& aIdent, nsAString& aReturn)
     char16_t ch = *in;
     if (ch == 0x00) {
       aReturn.Append(char16_t(0xFFFD));
-    } else if (ch < 0x20 || 0x7F == ch) {
-      // Escape U+0000 through U+001F and U+007F numerically.
+    } else if (ch < 0x20 || (0x7F <= ch && ch < 0xA0)) {
+      // Escape U+0000 through U+001F and U+007F through U+009F numerically.
       aReturn.AppendPrintf("\\%x ", *in);
     } else {
       // Escape ASCII non-identifier printables as a backslash plus
@@ -206,15 +205,16 @@ AppendUnquotedFamilyName(const nsAString& aFamilyName, nsAString& aResult)
 
 /* static */ void
 nsStyleUtil::AppendEscapedCSSFontFamilyList(
-  const nsTArray<mozilla::FontFamilyName>& aNames,
+  const mozilla::FontFamilyList& aFamilyList,
   nsAString& aResult)
 {
-  size_t i, len = aNames.Length();
+  const nsTArray<FontFamilyName>& fontlist = aFamilyList.GetFontlist();
+  size_t i, len = fontlist.Length();
   for (i = 0; i < len; i++) {
     if (i != 0) {
-      aResult.AppendLiteral(", ");
+      aResult.Append(',');
     }
-    const FontFamilyName& name = aNames[i];
+    const FontFamilyName& name = fontlist[i];
     switch (name.mType) {
       case eFamily_named:
         AppendUnquotedFamilyName(name.mName, aResult);
@@ -226,26 +226,6 @@ nsStyleUtil::AppendEscapedCSSFontFamilyList(
         name.AppendToString(aResult);
     }
   }
-}
-
-/* static */ void
-nsStyleUtil::AppendEscapedCSSFontFamilyList(
-  const mozilla::FontFamilyList& aFamilyList,
-  nsAString& aResult)
-{
-  if (aFamilyList.IsEmpty()) {
-    FontFamilyType defaultGeneric = aFamilyList.GetDefaultFontType();
-    // If the font list is empty, then serialize the default generic.
-    // See also: gfxFontGroup::BuildFontList()
-    if (defaultGeneric != eFamily_none) {
-      FontFamilyName(defaultGeneric).AppendToString(aResult);
-    } else {
-      NS_NOTREACHED("No fonts to serialize");
-    }
-    return;
-  }
-
-  AppendEscapedCSSFontFamilyList(aFamilyList.GetFontlist().get(), aResult);
 }
 
 
@@ -869,16 +849,11 @@ nsStyleUtil::CSPAllowsInlineStyle(nsIContent* aContent,
     aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::nonce, nonce);
   }
 
-  nsCOMPtr<nsISupportsString> styleText(do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID));
-  if (styleText) {
-    styleText->SetData(aStyleText);
-  }
-
   bool allowInlineStyle = true;
   rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_STYLESHEET,
                             nonce,
                             false, // aParserCreated only applies to scripts
-                            styleText, aLineNumber,
+                            aStyleText, aLineNumber,
                             &allowInlineStyle);
   NS_ENSURE_SUCCESS(rv, false);
 

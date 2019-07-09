@@ -170,7 +170,7 @@ CalcTableChecksum(const uint32_t *tableStart, uint32_t length, bool skipChecksum
 {
     uint32_t sum = 0L;
     const uint32_t *table = tableStart;
-    const uint32_t *end = table+((length+3) & ~3) / sizeof(uint32_t);
+    const uint32_t *end = table + length / sizeof(uint32_t);
     while (table < end) {
         if (skipChecksumAdjust && (table - tableStart) == 2) {
             table++;
@@ -178,6 +178,15 @@ CalcTableChecksum(const uint32_t *tableStart, uint32_t length, bool skipChecksum
             sum += CFSwapInt32BigToHost(*table++);
         }
     }
+
+    // The length is not 4-byte aligned, but we still must process the remaining bytes.
+    if (length & 3) {
+        // Pad with zero before adding to the checksum.
+        uint32_t last = 0;
+        memcpy(&last, end, length & 3);
+        sum += CFSwapInt32BigToHost(last);
+    }
+
     return sum;
 }
 
@@ -234,6 +243,24 @@ struct writeBuf
     unsigned char *data;
     int offset;
 };
+
+static void CollectVariationSetting(const void *key, const void *value, void *context)
+{
+  auto keyPtr = static_cast<const CFTypeRef>(key);
+  auto valuePtr = static_cast<const CFTypeRef>(value);
+  auto vpp = static_cast<FontVariation**>(context);
+  if (CFGetTypeID(keyPtr) == CFNumberGetTypeID() &&
+      CFGetTypeID(valuePtr) == CFNumberGetTypeID()) {
+    uint64_t t;
+    double v;
+    if (CFNumberGetValue(static_cast<CFNumberRef>(keyPtr), kCFNumberSInt64Type, &t) &&
+        CFNumberGetValue(static_cast<CFNumberRef>(valuePtr), kCFNumberDoubleType, &v)) {
+      (*vpp)->mTag = t;
+      (*vpp)->mValue = v;
+      (*vpp)++;
+    }
+  }
+}
 
 bool
 UnscaledFontMac::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
@@ -309,63 +336,33 @@ UnscaledFontMac::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
     return true;
 }
 
-static void
-CollectVariationsFromDictionary(const void* aKey, const void* aValue, void* aContext)
-{
-  auto keyPtr = static_cast<const CFTypeRef>(aKey);
-  auto valuePtr = static_cast<const CFTypeRef>(aValue);
-  auto outVariations = static_cast<std::vector<FontVariation>*>(aContext);
-  if (CFGetTypeID(keyPtr) == CFNumberGetTypeID() &&
-      CFGetTypeID(valuePtr) == CFNumberGetTypeID()) {
-    uint64_t t;
-    double v;
-    if (CFNumberGetValue(static_cast<CFNumberRef>(keyPtr), kCFNumberSInt64Type, &t) &&
-        CFNumberGetValue(static_cast<CFNumberRef>(valuePtr), kCFNumberDoubleType, &v)) {
-      outVariations->push_back(FontVariation{uint32_t(t), float(v)});
-    }
-  }
-}
-
-static bool
-GetVariationsForCTFont(CTFontRef aCTFont, std::vector<FontVariation>* aOutVariations)
-{
-  // Avoid calling potentially buggy variation APIs on pre-Sierra macOS
-  // versions (see bug 1331683)
-  if (!nsCocoaFeatures::OnSierraOrLater()) {
-    return true;
-  }
-  if (!aCTFont) {
-    return true;
-  }
-  AutoRelease<CFDictionaryRef> dict(CTFontCopyVariation(aCTFont));
-  CFIndex count = dict ? CFDictionaryGetCount(dict) : 0;
-  if (count > 0) {
-    aOutVariations->reserve(count);
-    CFDictionaryApplyFunction(dict, CollectVariationsFromDictionary, aOutVariations);
-  }
-  return true;
-}
-
 bool
 ScaledFontMac::GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton)
 {
     // Collect any variation settings that were incorporated into the CTFont.
-    std::vector<FontVariation> variations;
-    if (!GetVariationsForCTFont(mCTFont, &variations)) {
-      return false;
+    uint32_t variationCount = 0;
+    FontVariation* variations = nullptr;
+    // Avoid calling potentially buggy variation APIs on pre-Sierra macOS
+    // versions (see bug 1331683)
+    if (nsCocoaFeatures::OnSierraOrLater()) {
+      if (mCTFont) {
+        CFDictionaryRef dict = CTFontCopyVariation(mCTFont);
+        if (dict) {
+          CFIndex count = CFDictionaryGetCount(dict);
+          if (count > 0) {
+            variations = new FontVariation[count];
+            FontVariation* vPtr = variations;
+            CFDictionaryApplyFunction(dict, CollectVariationSetting, &vPtr);
+            variationCount = vPtr - variations;
+          }
+          CFRelease(dict);
+        }
+      }
     }
-    aCb(nullptr, 0, variations.data(), variations.size(), aBaton);
-    return true;
-}
 
-bool
-ScaledFontMac::GetWRFontInstanceOptions(Maybe<wr::FontInstanceOptions>* aOutOptions,
-                                        Maybe<wr::FontInstancePlatformOptions>* aOutPlatformOptions,
-                                        std::vector<FontVariation>* aOutVariations)
-{
-    if (!GetVariationsForCTFont(mCTFont, aOutVariations)) {
-      return false;
-    }
+    aCb(reinterpret_cast<uint8_t*>(variations), variationCount * sizeof(FontVariation), aBaton);
+    delete[] variations;
+
     return true;
 }
 
@@ -490,15 +487,17 @@ UnscaledFontMac::CreateCGFontWithVariations(CGFontRef aFont,
 already_AddRefed<ScaledFont>
 UnscaledFontMac::CreateScaledFont(Float aGlyphSize,
                                   const uint8_t* aInstanceData,
-                                  uint32_t aInstanceDataLength,
-                                  const FontVariation* aVariations,
-                                  uint32_t aNumVariations)
-
+                                  uint32_t aInstanceDataLength)
 {
+  uint32_t variationCount =
+    aInstanceDataLength / sizeof(FontVariation);
+  const FontVariation* variations =
+    reinterpret_cast<const FontVariation*>(aInstanceData);
+
   CGFontRef fontRef = mFont;
-  if (aNumVariations > 0) {
+  if (variationCount > 0) {
     CGFontRef varFont =
-      CreateCGFontWithVariations(mFont, aNumVariations, aVariations);
+      CreateCGFontWithVariations(mFont, variationCount, variations);
     if (varFont) {
       fontRef = varFont;
     }

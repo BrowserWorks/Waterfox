@@ -20,7 +20,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(FetchObserver,
                                                 DOMEventTargetHelper)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(FetchObserver)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FetchObserver)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(FetchObserver, DOMEventTargetHelper)
@@ -45,7 +45,7 @@ FetchObserver::IsEnabled(JSContext* aCx, JSObject* aGlobal)
 }
 
 FetchObserver::FetchObserver(nsIGlobalObject* aGlobal,
-                             AbortSignal* aSignal)
+                             FetchSignal* aSignal)
   : DOMEventTargetHelper(aGlobal)
   , mState(FetchState::Requesting)
 {
@@ -67,7 +67,7 @@ FetchObserver::State() const
 }
 
 void
-FetchObserver::Abort()
+FetchObserver::Aborted()
 {
   SetState(FetchState::Aborted);
 }

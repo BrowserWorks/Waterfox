@@ -41,7 +41,6 @@ private:
 
     nsresult ReadScriptAsync(nsIURI* uri,
                              JS::HandleObject targetObj,
-                             JS::HandleObject loadScope,
                              const nsAString& charset,
                              nsIIOService* serv,
                              bool wantReturnValue,

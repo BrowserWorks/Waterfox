@@ -210,6 +210,7 @@ function unload(reason) {
   Cu.unload("resource://devtools/shared/Parser.jsm");
   Cu.unload("resource://devtools/client/shared/DOMHelpers.jsm");
   Cu.unload("resource://devtools/client/shared/widgets/VariablesView.jsm");
+  Cu.unload("resource://devtools/client/responsivedesign/responsivedesign.jsm");
   Cu.unload("resource://devtools/client/shared/widgets/AbstractTreeItem.jsm");
   Cu.unload("resource://devtools/shared/deprecated-sync-thenables.js");
 }
@@ -303,7 +304,7 @@ function reload(event) {
   // HUDService is going to close it on unload.
   // Instead we have to manually toggle it.
   if (reopenBrowserConsole) {
-    let {HUDService} = devtools.require("devtools/client/webconsole/hudservice");
+    let HUDService = devtools.require("devtools/client/webconsole/hudservice");
     HUDService.toggleBrowserConsole();
   }
 

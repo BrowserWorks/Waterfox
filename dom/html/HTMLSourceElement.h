@@ -59,23 +59,13 @@ public:
   MediaSource* GetSrcMediaSource() { return mSrcMediaSource; };
 
   // WebIDL
-  void GetSrc(nsString& aSrc, nsIPrincipal&)
+  void GetSrc(nsString& aSrc)
   {
     GetURIAttr(nsGkAtoms::src, nullptr, aSrc);
   }
-  void SetSrc(const nsAString& aSrc, nsIPrincipal& aTriggeringPrincipal, mozilla::ErrorResult& rv)
+  void SetSrc(const nsAString& aSrc, mozilla::ErrorResult& rv)
   {
-    SetHTMLAttr(nsGkAtoms::src, aSrc, aTriggeringPrincipal, rv);
-  }
-
-  nsIPrincipal* GetSrcTriggeringPrincipal() const
-  {
-    return mSrcTriggeringPrincipal;
-  }
-
-  nsIPrincipal* GetSrcsetTriggeringPrincipal() const
-  {
-    return mSrcsetTriggeringPrincipal;
+    SetHTMLAttr(nsGkAtoms::src, aSrc, rv);
   }
 
   void GetType(DOMString& aType)
@@ -87,13 +77,13 @@ public:
     SetHTMLAttr(nsGkAtoms::type, aType, rv);
   }
 
-  void GetSrcset(DOMString& aSrcset, nsIPrincipal&)
+  void GetSrcset(DOMString& aSrcset)
   {
     GetHTMLAttr(nsGkAtoms::srcset, aSrcset);
   }
-  void SetSrcset(const nsAString& aSrcset, nsIPrincipal& aTriggeringPrincipal, mozilla::ErrorResult& rv)
+  void SetSrcset(const nsAString& aSrcset, mozilla::ErrorResult& rv)
   {
-    SetHTMLAttr(nsGkAtoms::srcset, aSrcset, aTriggeringPrincipal, rv);
+    SetHTMLAttr(nsGkAtoms::srcset, aSrcset, rv);
   }
 
   void GetSizes(DOMString& aSizes)
@@ -120,21 +110,14 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aMaybeScriptedPrincipal,
                                 bool aNotify) override;
 
 private:
   RefPtr<MediaList> mMediaList;
   RefPtr<MediaSource> mSrcMediaSource;
-
-  // The triggering principal for the src attribute.
-  nsCOMPtr<nsIPrincipal> mSrcTriggeringPrincipal;
-
-  // The triggering principal for the srcset attribute.
-  nsCOMPtr<nsIPrincipal> mSrcsetTriggeringPrincipal;
 
   // Generates a new MediaList using the given input
   void UpdateMediaList(const nsAttrValue* aValue);

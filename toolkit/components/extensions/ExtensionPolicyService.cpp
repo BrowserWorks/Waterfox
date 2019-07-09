@@ -258,7 +258,10 @@ ExtensionPolicyService::CheckDocument(nsIDocument* aDocument)
 
     nsIPrincipal* principal = aDocument->NodePrincipal();
 
-    RefPtr<WebExtensionPolicy> policy = BasePrincipal::Cast(principal)->AddonPolicy();
+    nsAutoString addonId;
+    Unused << principal->GetAddonId(addonId);
+
+    RefPtr<WebExtensionPolicy> policy = GetByID(addonId);
     if (policy) {
       nsCOMPtr<nsIDOMDocument> doc = do_QueryInterface(aDocument);
       ProcessScript().InitExtensionDocument(policy, doc);
@@ -377,17 +380,6 @@ ExtensionPolicyService::AddonMayLoadURI(const nsAString& aAddonId,
 {
   if (WebExtensionPolicy* policy = GetByID(aAddonId)) {
     *aResult = policy->CanAccessURI(aURI, aExplicit);
-    return NS_OK;
-  }
-  return NS_ERROR_INVALID_ARG;
-}
-
-nsresult
-ExtensionPolicyService::GetExtensionName(const nsAString& aAddonId,
-                                         nsAString& aName)
-{
-  if (WebExtensionPolicy* policy = GetByID(aAddonId)) {
-    aName.Assign(policy->Name());
     return NS_OK;
   }
   return NS_ERROR_INVALID_ARG;

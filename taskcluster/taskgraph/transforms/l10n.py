@@ -97,16 +97,6 @@ l10n_description_schema = Schema({
     # Tooltool visibility required for task.
     Required('tooltool'): _by_platform(Any('internal', 'public')),
 
-    # Docker image required for task.  We accept only in-tree images
-    # -- generally desktop-build or android-build -- for now.
-    Required('docker-image'): _by_platform(Any(
-        # an in-tree generated docker image (from `taskcluster/docker/<name>`)
-        {'in-tree': basestring},
-        None,
-    )),
-
-    Optional('toolchains'): _by_platform([basestring]),
-
     # Information for treeherder
     Required('treeherder'): {
         # Platform to display the task on in treeherder
@@ -122,8 +112,8 @@ l10n_description_schema = Schema({
     # Extra environment values to pass to the worker
     Optional('env'): _by_platform({basestring: taskref_or_string}),
 
-    # Max number locales per chunk
-    Optional('locales-per-chunk'): _by_platform(int),
+    # Number of chunks to split the locale repacks up into
+    Optional('chunks'): _by_platform(int),
 
     # Task deps to chain this task with, added in transforms from dependent-task
     # if this is a nightly
@@ -142,8 +132,9 @@ l10n_description_schema = Schema({
 transforms = TransformSequence()
 
 
-def _parse_locales_file(locales_file, platform):
+def _parse_locales_file(locales_file, platform=None):
     """ Parse the passed locales file for a list of locales.
+        If platform is unset matches all platforms.
     """
     locales = []
 
@@ -154,7 +145,7 @@ def _parse_locales_file(locales_file, platform):
             locales = {
                 locale: data['revision']
                 for locale, data in all_locales.items()
-                if platform in data['platforms']
+                if 'android' in data['platforms']
             }
         else:
             all_locales = f.read().split()
@@ -224,19 +215,11 @@ def setup_nightly_dependency(config, jobs):
             yield job
             continue  # do not add a dep unless we're a nightly
         job['dependencies'] = {'unsigned-build': job['dependent-task'].label}
-        if job['attributes']['build_platform'].startswith('win') or \
-                job['attributes']['build_platform'].startswith('linux'):
+        if job['attributes']['build_platform'].startswith('win'):
             # Weave these in and just assume they will be there in the resulting graph
             job['dependencies'].update({
-                'signed-build': 'build-signing-{}'.format(job['name']),
-            })
-        if job['attributes']['build_platform'].startswith('macosx'):
-            job['dependencies'].update({
-                'repackage': 'repackage-{}'.format(job['name'])
-            })
-        if job['attributes']['build_platform'].startswith('win'):
-            job['dependencies'].update({
-                'repackage-signed': 'repackage-signing-{}'.format(job['name'])
+                'signed-build': 'signing-{}'.format(job['name']),
+                'repackage-signed': 'repackage-signing-repackage-{}'.format(job['name'])
             })
         yield job
 
@@ -246,12 +229,10 @@ def handle_keyed_by(config, jobs):
     """Resolve fields that can be keyed by platform, etc."""
     fields = [
         "locales-file",
-        "locales-per-chunk",
+        "chunks",
         "worker-type",
         "description",
         "run-time",
-        "docker-image",
-        "toolchains",
         "tooltool",
         "env",
         "ignore-locales",
@@ -275,9 +256,7 @@ def handle_keyed_by(config, jobs):
 @transforms.add
 def all_locales_attribute(config, jobs):
     for job in jobs:
-        locales_platform = job['attributes']['build_platform'].rstrip("-nightly")
-        locales_with_changesets = _parse_locales_file(job["locales-file"],
-                                                      platform=locales_platform)
+        locales_with_changesets = _parse_locales_file(job["locales-file"])
         locales_with_changesets = _remove_locales(locales_with_changesets,
                                                   to_remove=job['ignore-locales'])
 
@@ -292,12 +271,12 @@ def all_locales_attribute(config, jobs):
 def chunk_locales(config, jobs):
     """ Utilizes chunking for l10n stuff """
     for job in jobs:
-        locales_per_chunk = job.get('locales-per-chunk')
+        chunks = job.get('chunks')
         locales_with_changesets = job['attributes']['all_locales_with_changesets']
-        if locales_per_chunk:
-            chunks, remainder = divmod(len(locales_with_changesets), locales_per_chunk)
-            if remainder:
-                chunks = int(chunks + 1)
+        if chunks:
+            if chunks > len(locales_with_changesets):
+                # Reduce chunks down to the number of locales
+                chunks = len(locales_with_changesets)
             for this_chunk in range(1, chunks + 1):
                 chunked = copy.deepcopy(job)
                 chunked['name'] = chunked['name'].replace(
@@ -305,7 +284,7 @@ def chunk_locales(config, jobs):
                 )
                 chunked['mozharness']['options'] = chunked['mozharness'].get('options', [])
                 # chunkify doesn't work with dicts
-                locales_with_changesets_as_list = sorted(locales_with_changesets.items())
+                locales_with_changesets_as_list = locales_with_changesets.items()
                 chunked_locales = chunkify(locales_with_changesets_as_list, this_chunk, chunks)
                 chunked['mozharness']['options'].extend([
                     'locale={}:{}'.format(locale, changeset)
@@ -325,7 +304,7 @@ def chunk_locales(config, jobs):
             job['mozharness']['options'] = job['mozharness'].get('options', [])
             job['mozharness']['options'].extend([
                 'locale={}:{}'.format(locale, changeset)
-                for locale, changeset in sorted(locales_with_changesets.items())
+                for locale, changeset in locales_with_changesets.items()
             ])
             yield job
 
@@ -408,17 +387,12 @@ def make_job_description(config, jobs):
             job_description['run']['use-magic-mh-args'] = False
         else:
             job_description['worker'] = {
+                'docker-image': {'in-tree': 'desktop-build'},
                 'max-run-time': job['run-time'],
                 'chain-of-trust': True,
             }
             job_description['run']['tooltool-downloads'] = job['tooltool']
             job_description['run']['need-xvfb'] = True
-
-        if job.get('docker-image'):
-            job_description['worker']['docker-image'] = job['docker-image']
-
-        if job.get('toolchains'):
-            job_description['toolchains'] = job['toolchains']
 
         if job.get('index'):
             job_description['index'] = {

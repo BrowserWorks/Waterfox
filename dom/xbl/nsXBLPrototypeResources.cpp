@@ -44,7 +44,7 @@ nsXBLPrototypeResources::~nsXBLPrototypeResources()
 }
 
 void
-nsXBLPrototypeResources::AddResource(nsAtom* aResourceType, const nsAString& aSrc)
+nsXBLPrototypeResources::AddResource(nsIAtom* aResourceType, const nsAString& aSrc)
 {
   if (mLoader)
     mLoader->AddResource(aResourceType, aSrc);
@@ -111,18 +111,7 @@ nsXBLPrototypeResources::FlushSkinSheets()
     mStyleSheetList.AppendElement(newSheet);
   }
 
-  if (doc->IsStyledByServo()) {
-    // There may be no shell during unlink.
-    //
-    // FIXME(emilio): We shouldn't skip shadow root style updates just because?
-    // Though during unlink is fine I guess...
-    if (auto* shell = doc->GetShell()) {
-      MOZ_ASSERT(shell->GetPresContext());
-      ComputeServoStyleSet(shell->GetPresContext());
-    }
-  } else {
-    GatherRuleProcessor();
-  }
+  GatherRuleProcessor();
 
   return NS_OK;
 }
@@ -178,14 +167,18 @@ nsXBLPrototypeResources::GatherRuleProcessor()
 void
 nsXBLPrototypeResources::ComputeServoStyleSet(nsPresContext* aPresContext)
 {
-  nsTArray<RefPtr<ServoStyleSheet>> sheets(mStyleSheetList.Length());
+  mServoStyleSet.reset(new ServoStyleSet());
+  mServoStyleSet->Init(aPresContext, nullptr);
   for (StyleSheet* sheet : mStyleSheetList) {
     MOZ_ASSERT(sheet->IsServo(),
                "This should only be called with Servo-flavored style backend!");
-    sheets.AppendElement(sheet->AsServo());
+    // The XBL style sheets aren't document level sheets, but we need to
+    // decide a particular SheetType to add them to style set. This type
+    // doesn't affect the place where we pull those rules from
+    // stylist::push_applicable_declarations_as_xbl_only_stylist().
+    mServoStyleSet->AppendStyleSheet(SheetType::Doc, sheet->AsServo());
   }
-
-  mServoStyleSet = ServoStyleSet::CreateXBLServoStyleSet(aPresContext, sheets);
+  mServoStyleSet->UpdateStylistIfNeeded();
 }
 
 void

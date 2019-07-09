@@ -150,44 +150,6 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser = gBrowser.selectedBrows
   });
 }
 
-/**
- * Wait for the search engine to change.
- */
-function promiseContentSearchChange(browser, newEngineName) {
-  return ContentTask.spawn(browser, { newEngineName }, async function(args) {
-    return new Promise(resolve => {
-      content.addEventListener("ContentSearchService", function listener(aEvent) {
-        if (aEvent.detail.type == "CurrentState" &&
-            content.wrappedJSObject.gContentSearchController.defaultEngine.name == args.newEngineName) {
-          content.removeEventListener("ContentSearchService", listener);
-          resolve();
-        }
-      });
-    });
-  });
-}
-
-/**
- * Wait for the search engine to be added.
- */
-function promiseNewEngine(basename) {
-  info("Waiting for engine to be added: " + basename);
-  return new Promise((resolve, reject) => {
-    let url = getRootDirectory(gTestPath) + basename;
-    Services.search.addEngine(url, null, "", false, {
-      onSuccess(engine) {
-        info("Search engine added: " + basename);
-        registerCleanupFunction(() => {
-          try {
-            Services.search.removeEngine(engine);
-          } catch (ex) { /* Can't remove the engine more than once */ }
-        });
-        resolve(engine);
-      },
-      onError(errCode) {
-        ok(false, "addEngine failed with error code " + errCode);
-        reject();
-      },
-    });
-  });
+function promiseDisableOnboardingTours() {
+  return SpecialPowers.pushPrefEnv({set: [["browser.onboarding.enabled", false]]});
 }

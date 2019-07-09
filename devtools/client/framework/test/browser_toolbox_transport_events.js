@@ -5,8 +5,8 @@
 
 "use strict";
 
-const { on, off } = require("devtools/shared/event-emitter");
-const { DebuggerClient } = require("devtools/shared/client/debugger-client");
+const { on, off } = require("sdk/event/core");
+const { DebuggerClient } = require("devtools/shared/client/main");
 
 function test() {
   gDevTools.on("toolbox-created", onToolboxCreated);

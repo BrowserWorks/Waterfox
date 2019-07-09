@@ -5,7 +5,48 @@
 
 package org.mozilla.gecko.preferences;
 
-import android.Manifest;
+import org.json.JSONArray;
+import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.AdjustConstants;
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.BrowserApp;
+import org.mozilla.gecko.BrowserLocaleManager;
+import org.mozilla.gecko.DataReportingNotification;
+import org.mozilla.gecko.DynamicToolbar;
+import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.Experiments;
+import org.mozilla.gecko.GeckoApplication;
+import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.GeckoSharedPrefs;
+import org.mozilla.gecko.LocaleManager;
+import org.mozilla.gecko.Locales;
+import org.mozilla.gecko.PrefsHelper;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.SnackbarBuilder;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.TelemetryContract.Method;
+import org.mozilla.gecko.activitystream.ActivityStream;
+import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
+import org.mozilla.gecko.feeds.FeedService;
+import org.mozilla.gecko.feeds.action.CheckForUpdatesAction;
+import org.mozilla.gecko.mma.MmaDelegate;
+import org.mozilla.gecko.permissions.Permissions;
+import org.mozilla.gecko.restrictions.Restrictable;
+import org.mozilla.gecko.restrictions.Restrictions;
+import org.mozilla.gecko.tabqueue.TabQueueHelper;
+import org.mozilla.gecko.tabqueue.TabQueuePrompt;
+import org.mozilla.gecko.updater.UpdateService;
+import org.mozilla.gecko.updater.UpdateServiceHelper;
+import org.mozilla.gecko.util.BundleEventListener;
+import org.mozilla.gecko.util.ContextUtils;
+import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.GeckoBundle;
+import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.InputOptionsUtils;
+import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.gecko.util.ViewUtil;
+
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -19,6 +60,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
+import android.Manifest;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -47,43 +90,7 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import org.json.JSONArray;
-import org.mozilla.gecko.AboutPages;
-import org.mozilla.gecko.AdjustConstants;
-import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.BrowserApp;
-import org.mozilla.gecko.BrowserLocaleManager;
-import org.mozilla.gecko.DataReportingNotification;
-import org.mozilla.gecko.DynamicToolbar;
-import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoApplication;
-import org.mozilla.gecko.GeckoProfile;
-import org.mozilla.gecko.GeckoSharedPrefs;
-import org.mozilla.gecko.LocaleManager;
-import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.PrefsHelper;
-import org.mozilla.gecko.R;
-import org.mozilla.gecko.SnackbarBuilder;
-import org.mozilla.gecko.Telemetry;
-import org.mozilla.gecko.TelemetryContract;
-import org.mozilla.gecko.TelemetryContract.Method;
-import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
-import org.mozilla.gecko.mma.MmaDelegate;
-import org.mozilla.gecko.permissions.Permissions;
-import org.mozilla.gecko.restrictions.Restrictable;
-import org.mozilla.gecko.restrictions.Restrictions;
-import org.mozilla.gecko.tabqueue.TabQueueHelper;
-import org.mozilla.gecko.tabqueue.TabQueuePrompt;
-import org.mozilla.gecko.updater.UpdateService;
-import org.mozilla.gecko.updater.UpdateServiceHelper;
-import org.mozilla.gecko.util.BundleEventListener;
-import org.mozilla.gecko.util.ContextUtils;
-import org.mozilla.gecko.util.EventCallback;
-import org.mozilla.gecko.util.GeckoBundle;
-import org.mozilla.gecko.util.HardwareUtils;
-import org.mozilla.gecko.util.InputOptionsUtils;
-import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.util.ViewUtil;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,11 +137,14 @@ public class GeckoPreferences
     private static final String PREFS_GEO_REPORTING = NON_PREF_PREFIX + "app.geo.reportdata";
     private static final String PREFS_GEO_LEARN_MORE = NON_PREF_PREFIX + "geo.learn_more";
     private static final String PREFS_HEALTHREPORT_LINK = NON_PREF_PREFIX + "healthreport.link";
-    public static final String PREFS_DEVTOOLS_REMOTE_USB_ENABLED = "devtools.remote.usb.enabled";
-    public static final String PREFS_DEVTOOLS_REMOTE_WIFI_ENABLED = "devtools.remote.wifi.enabled";
+    private static final String PREFS_DEVTOOLS_REMOTE_USB_ENABLED = "devtools.remote.usb.enabled";
+    private static final String PREFS_DEVTOOLS_REMOTE_WIFI_ENABLED = "devtools.remote.wifi.enabled";
     private static final String PREFS_DEVTOOLS_REMOTE_LINK = NON_PREF_PREFIX + "remote_debugging.link";
+    private static final String PREFS_TRACKING_PROTECTION = "privacy.trackingprotection.state";
+    private static final String PREFS_TRACKING_PROTECTION_PB = "privacy.trackingprotection.pbmode.enabled";
     public static final String PREFS_VOICE_INPUT_ENABLED = NON_PREF_PREFIX + "voice_input_enabled";
     public static final String PREFS_QRCODE_ENABLED = NON_PREF_PREFIX + "qrcode_enabled";
+    private static final String PREFS_TRACKING_PROTECTION_PRIVATE_BROWSING = "privacy.trackingprotection.pbmode.enabled";
     private static final String PREFS_TRACKING_PROTECTION_LEARN_MORE = NON_PREF_PREFIX + "trackingprotection.learn_more";
     private static final String PREFS_CLEAR_PRIVATE_DATA = NON_PREF_PREFIX + "privacy.clear";
     private static final String PREFS_CLEAR_PRIVATE_DATA_EXIT = NON_PREF_PREFIX + "history.clear_on_exit";
@@ -145,12 +155,15 @@ public class GeckoPreferences
     public static final String PREFS_HISTORY_SAVED_SEARCH = NON_PREF_PREFIX + "search.search_history.enabled";
     private static final String PREFS_FAQ_LINK = NON_PREF_PREFIX + "faq.link";
     private static final String PREFS_FEEDBACK_LINK = NON_PREF_PREFIX + "feedback.link";
+    public static final String PREFS_NOTIFICATIONS_CONTENT = NON_PREF_PREFIX + "notifications.content";
+    public static final String PREFS_NOTIFICATIONS_CONTENT_LEARN_MORE = NON_PREF_PREFIX + "notifications.content.learn_more";
     public static final String PREFS_NOTIFICATIONS_WHATS_NEW = NON_PREF_PREFIX + "notifications.whats_new";
     public static final String PREFS_APP_UPDATE_LAST_BUILD_ID = "app.update.last_build_id";
     public static final String PREFS_READ_PARTNER_CUSTOMIZATIONS_PROVIDER = NON_PREF_PREFIX + "distribution.read_partner_customizations_provider";
     public static final String PREFS_READ_PARTNER_BOOKMARKS_PROVIDER = NON_PREF_PREFIX + "distribution.read_partner_bookmarks_provider";
-    public static final String PREFS_CUSTOM_TABS = NON_PREF_PREFIX + "customtabs_58";
+    public static final String PREFS_CUSTOM_TABS = NON_PREF_PREFIX + "customtabs";
     public static final String PREFS_PWA = NON_PREF_PREFIX + "pwa";
+    public static final String PREFS_ACTIVITY_STREAM = NON_PREF_PREFIX + "experiments.activitystream";
     public static final String PREFS_CATEGORY_EXPERIMENTAL_FEATURES = NON_PREF_PREFIX + "category_experimental";
     public static final String PREFS_COMPACT_TABS = NON_PREF_PREFIX + "compact_tabs";
     public static final String PREFS_SHOW_QUIT_MENU = NON_PREF_PREFIX + "distribution.show_quit_menu";
@@ -403,6 +416,13 @@ public class GeckoPreferences
             NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(DataReportingNotification.ALERT_NAME_DATAREPORTING_NOTIFICATION.hashCode());
         }
+
+        // Launched from "Notifications settings" action button in a notification.
+        if (intentExtras != null && intentExtras.containsKey(CheckForUpdatesAction.EXTRA_CONTENT_NOTIFICATION)) {
+            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, FeedService.getEnabledExperiment(this));
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, Method.BUTTON, "notification-settings");
+            Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, FeedService.getEnabledExperiment(this));
+        }
     }
 
     /**
@@ -510,6 +530,8 @@ public class GeckoPreferences
 
     @Override
     public void onPause() {
+        EventDispatcher.getInstance().unregisterUiThreadListener(this, "Snackbar:Show");
+
         // Symmetric with onResume.
         if (isMultiPane()) {
             SharedPreferences prefs = GeckoSharedPrefs.forApp(this);
@@ -522,6 +544,8 @@ public class GeckoPreferences
     @Override
     public void onResume() {
         super.onResume();
+
+        EventDispatcher.getInstance().registerUiThreadListener(this, "Snackbar:Show");
 
         // Watch prefs, otherwise we don't reliably get told when they change.
         // See documentation for onSharedPreferenceChange for more.
@@ -594,7 +618,13 @@ public class GeckoPreferences
     @Override
     public void handleMessage(final String event, final GeckoBundle message,
                               final EventCallback callback) {
-        if ("Sanitize:Finished".equals(event)) {
+        if ("Snackbar:Show".equals(event)) {
+            SnackbarBuilder.builder(this)
+                    .fromEvent(message)
+                    .callback(callback)
+                    .buildAndShow();
+
+        } else if ("Sanitize:Finished".equals(event)) {
             final boolean success = message.getBoolean("success");
             final int stringRes = success ? R.string.private_data_success : R.string.private_data_fail;
 
@@ -646,7 +676,9 @@ public class GeckoPreferences
                     i--;
                     continue;
                 } else if (PREFS_CATEGORY_EXPERIMENTAL_FEATURES.equals(key)
-                        && !AppConstants.MOZ_ANDROID_PWA) {
+                        && !AppConstants.MOZ_ANDROID_PWA
+                        && !AppConstants.MOZ_ANDROID_CUSTOM_TABS
+                        && !ActivityStream.isUserSwitchable(this)) {
                     preferences.removePreference(pref);
                     i--;
                     continue;
@@ -665,6 +697,20 @@ public class GeckoPreferences
                 pref.setOnPreferenceChangeListener(this);
                 if (PREFS_UPDATER_AUTODOWNLOAD.equals(key)) {
                     if (!AppConstants.MOZ_UPDATER || ContextUtils.isInstalledFromGooglePlay(this)) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
+                } else if (PREFS_TRACKING_PROTECTION.equals(key)) {
+                    // Remove UI for global TP pref in non-Nightly builds.
+                    if (!AppConstants.NIGHTLY_BUILD) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
+                } else if (PREFS_TRACKING_PROTECTION_PB.equals(key)) {
+                    // Remove UI for private-browsing-only TP pref in Nightly builds.
+                    if (AppConstants.NIGHTLY_BUILD) {
                         preferences.removePreference(pref);
                         i--;
                         continue;
@@ -768,6 +814,12 @@ public class GeckoPreferences
                         i--;
                         continue;
                     }
+                } else if (PREFS_TRACKING_PROTECTION_PRIVATE_BROWSING.equals(key)) {
+                    if (!Restrictions.isAllowed(this, Restrictable.PRIVATE_BROWSING)) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
                 } else if (PREFS_TRACKING_PROTECTION_LEARN_MORE.equals(key)) {
                     if (!Restrictions.isAllowed(this, Restrictable.PRIVATE_BROWSING)) {
                         preferences.removePreference(pref);
@@ -809,7 +861,23 @@ public class GeckoPreferences
                         i--;
                         continue;
                     }
+                } else if (PREFS_NOTIFICATIONS_CONTENT.equals(key) ||
+                        PREFS_NOTIFICATIONS_CONTENT_LEARN_MORE.equals(key)) {
+                    if (!FeedService.isInExperiment(this)) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
+                } else if (PREFS_CUSTOM_TABS.equals(key) && !AppConstants.MOZ_ANDROID_CUSTOM_TABS) {
+                    preferences.removePreference(pref);
+                    i--;
+                    continue;
                 } else if (PREFS_PWA.equals(key) && !AppConstants.MOZ_ANDROID_PWA) {
+                    preferences.removePreference(pref);
+                    i--;
+                    continue;
+                } else if (PREFS_ACTIVITY_STREAM.equals(key)
+                        && !ActivityStream.isUserSwitchable(this)) {
                     preferences.removePreference(pref);
                     i--;
                     continue;
@@ -818,6 +886,12 @@ public class GeckoPreferences
                         preferences.removePreference(pref);
                         i--;
                         continue;
+                    } else {
+                        final boolean value = GeckoSharedPrefs.forApp(this).getBoolean(GeckoPreferences.PREFS_COMPACT_TABS,
+                                SwitchBoard.isInExperiment(this, Experiments.COMPACT_TABS));
+
+                        pref.setDefaultValue(value);
+                        ((SwitchPreference) pref).setChecked(value);
                     }
                 }
 
@@ -1128,6 +1202,8 @@ public class GeckoPreferences
                 startActivityForResult(promptIntent, REQUEST_CODE_TAB_QUEUE);
                 return false;
             }
+        } else if (PREFS_NOTIFICATIONS_CONTENT.equals(prefName)) {
+            FeedService.setup(this);
         } else if (HANDLERS.containsKey(prefName)) {
             PrefHandler handler = HANDLERS.get(prefName);
             handler.onChange(this, preference, newValue);

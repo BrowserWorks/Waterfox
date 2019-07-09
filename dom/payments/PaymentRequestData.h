@@ -179,7 +179,6 @@ public:
 
   PaymentRequest(const uint64_t aTabId,
                  const nsAString& aRequestId,
-                 nsIPrincipal* aPrincipal,
                  nsIArray* aPaymentMethods,
                  nsIPaymentDetails* aPaymentDetails,
                  nsIPaymentOptions* aPaymentOptions);
@@ -189,7 +188,6 @@ private:
 
   uint64_t mTabId;
   nsString mRequestId;
-  nsCOMPtr<nsIPrincipal> mTopLevelPrincipal;
   nsCOMPtr<nsIArray> mPaymentMethods;
   nsCOMPtr<nsIPaymentDetails> mPaymentDetails;
   nsCOMPtr<nsIPaymentOptions> mPaymentOptions;

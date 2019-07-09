@@ -11,8 +11,6 @@ negative:
   type: SyntaxError
 ---*/
 
-throw "Test262: This statement should not be evaluated.";
-
 var x=0,y=0;
 
 try{

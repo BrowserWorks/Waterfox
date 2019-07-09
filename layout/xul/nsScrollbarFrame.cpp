@@ -51,7 +51,7 @@ nsScrollbarFrame::Init(nsIContent*       aContent,
   // slider.  Any reflow inside the scrollbar frame will be a reflow to
   // move the slider and will thus not change anything outside of the
   // scrollbar or change the size of the scrollbar frame.
-  AddStateBits(NS_FRAME_REFLOW_ROOT);
+  mState |= NS_FRAME_REFLOW_ROOT;
 }
 
 void
@@ -60,8 +60,6 @@ nsScrollbarFrame::Reflow(nsPresContext*          aPresContext,
                          const ReflowInput& aReflowInput,
                          nsReflowStatus&          aStatus)
 {
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   nsBoxFrame::Reflow(aPresContext, aDesiredSize, aReflowInput, aStatus);
 
   // nsGfxScrollFrame may have told us to shrink to nothing. If so, make sure our
@@ -76,7 +74,7 @@ nsScrollbarFrame::Reflow(nsPresContext*          aPresContext,
 
 nsresult
 nsScrollbarFrame::AttributeChanged(int32_t aNameSpaceID,
-                                   nsAtom* aAttribute,
+                                   nsIAtom* aAttribute,
                                    int32_t aModType)
 {
   nsresult rv = nsBoxFrame::AttributeChanged(aNameSpaceID, aAttribute,
@@ -171,14 +169,15 @@ nsScrollbarFrame::GetXULMargin(nsMargin& aMargin)
   if (LookAndFeel::GetInt(LookAndFeel::eIntID_UseOverlayScrollbars) != 0) {
     nsPresContext* presContext = PresContext();
     nsITheme* theme = presContext->GetTheme();
-    if (theme && theme->ThemeSupportsWidget(presContext, this, NS_THEME_SCROLLBAR)) {
+    if (theme) {
       LayoutDeviceIntSize size;
       bool isOverridable;
       theme->GetMinimumWidgetSize(presContext, this, NS_THEME_SCROLLBAR, &size,
                                   &isOverridable);
       if (IsXULHorizontal()) {
         aMargin.top = -presContext->DevPixelsToAppUnits(size.height);
-      } else {
+      }
+      else {
         aMargin.left = -presContext->DevPixelsToAppUnits(size.width);
       }
       rv = NS_OK;

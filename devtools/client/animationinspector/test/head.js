@@ -90,19 +90,15 @@ function* reloadTab(inspector) {
  */
 var selectNodeAndWaitForAnimations = Task.async(
   function* (data, inspector, reason = "test") {
-    // We want to make sure the rest of the test waits for the animations to
-    // be properly displayed (wait for all target DOM nodes to be previewed).
-    let {AnimationsController, AnimationsPanel} =
-      inspector.sidebar.getWindowForTab(TAB_NAME);
-    let onUiUpdated = AnimationsPanel.once(AnimationsPanel.UI_UPDATED_EVENT);
-
     yield selectNode(data, inspector, reason);
 
-    yield onUiUpdated;
-    if (AnimationsController.animationPlayers.length !== 0) {
-      yield waitForAnimationTimelineRendering(AnimationsPanel);
-      yield waitForAllAnimationTargets(AnimationsPanel);
-    }
+    // We want to make sure the rest of the test waits for the animations to
+    // be properly displayed (wait for all target DOM nodes to be previewed).
+    let {AnimationsPanel} = inspector.sidebar.getWindowForTab(TAB_NAME);
+    yield waitForAllAnimationTargets(AnimationsPanel);
+
+    // Wait for animation timeline rendering.
+    yield waitForAnimationTimelineRendering(AnimationsPanel);
   }
 );
 
@@ -164,10 +160,12 @@ var openAnimationInspector = Task.async(function* () {
     yield AnimationsPanel.once(AnimationsPanel.PANEL_INITIALIZED);
   }
 
-  if (AnimationsController.animationPlayers.length !== 0) {
-    yield waitForAnimationTimelineRendering(AnimationsPanel);
-    yield waitForAllAnimationTargets(AnimationsPanel);
-  }
+  // Make sure we wait for all animations to be loaded (especially their target
+  // nodes to be lazily displayed). This is safe to do even if there are no
+  // animations displayed.
+  yield waitForAllAnimationTargets(AnimationsPanel);
+  // Also, wait for timeline redering.
+  yield waitForAnimationTimelineRendering(AnimationsPanel);
 
   return {
     toolbox: toolbox,
@@ -254,13 +252,11 @@ function isNodeVisible(node) {
 /**
  * Wait for all AnimationTargetNode instances to be fully loaded
  * (fetched their related actor and rendered), and return them.
- * This method should be called after "animation-timeline-rendering-completed" is emitted,
- * since we get all the AnimationTargetNode instances using getAnimationTargetNodes().
  * @param {AnimationsPanel} panel
  * @return {Array} all AnimationTargetNode instances
  */
 var waitForAllAnimationTargets = Task.async(function* (panel) {
-  let targets = getAnimationTargetNodes(panel);
+  let targets = panel.animationsTimelineComponent.targetNodes;
   yield promise.all(targets.map(t => {
     if (!t.previewer.nodeFront) {
       return t.once("target-retrieved");
@@ -303,14 +299,14 @@ function* assertScrubberMoving(panel, isMoving) {
  */
 function* clickTimelinePlayPauseButton(panel) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
-  let onRendered = waitForAnimationTimelineRendering(panel);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let btn = panel.playTimelineButtonEl;
   let win = btn.ownerDocument.defaultView;
   EventUtils.sendMouseEvent({type: "click"}, btn, win);
 
   yield onUiUpdated;
-  yield onRendered;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 }
 
@@ -321,14 +317,14 @@ function* clickTimelinePlayPauseButton(panel) {
  */
 function* clickTimelineRewindButton(panel) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
-  let onRendered = waitForAnimationTimelineRendering(panel);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let btn = panel.rewindTimelineButtonEl;
   let win = btn.ownerDocument.defaultView;
   EventUtils.sendMouseEvent({type: "click"}, btn, win);
 
   yield onUiUpdated;
-  yield onRendered;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 }
 
@@ -340,7 +336,7 @@ function* clickTimelineRewindButton(panel) {
  */
 function* changeTimelinePlaybackRate(panel, rate) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
-  let onRendered = waitForAnimationTimelineRendering(panel);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let select = panel.rateSelectorEl.firstChild;
   let win = select.ownerDocument.defaultView;
@@ -359,7 +355,7 @@ function* changeTimelinePlaybackRate(panel, rate) {
   EventUtils.synthesizeMouseAtCenter(option, {type: "mouseup"}, win);
 
   yield onUiUpdated;
-  yield onRendered;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 
   // Simulate a mousemove outside of the rate selector area to avoid subsequent
@@ -381,7 +377,11 @@ function* waitForAnimationSelecting(panel) {
  * @param {AnimationsPanel} panel
  */
 function* waitForAnimationTimelineRendering(panel) {
-  return panel.animationsTimelineComponent.once("animation-timeline-rendering-completed");
+  const ready =
+    panel.animationsTimelineComponent.animations.length === 0
+    ? Promise.resolve()
+    : panel.animationsTimelineComponent.once("animation-timeline-rendering-completed");
+  yield ready;
 }
 
 /**
@@ -440,16 +440,8 @@ function* clickOnAnimation(panel, index, shouldAlreadySelected) {
 
   info("Click on animation " + index + " in the timeline");
   let timeBlock = timeline.rootWrapperEl.querySelectorAll(".time-block")[index];
-  // Scroll to show the timeBlock since the element may be out of displayed area.
-  timeBlock.scrollIntoView(false);
-  let timeBlockBounds = timeBlock.getBoundingClientRect();
-  let x = timeBlockBounds.width / 2;
-  let y = timeBlockBounds.height / 2;
-  if (timeBlock != timeBlock.ownerDocument.elementFromPoint(x, y)) {
-    // Move the mouse pointer a little since scrubber element may be at the point.
-    x += timeBlockBounds.width / 4;
-  }
-  EventUtils.synthesizeMouse(timeBlock, x, y, {}, timeBlock.ownerDocument.defaultView);
+  EventUtils.sendMouseEvent({type: "click"}, timeBlock,
+                            timeBlock.ownerDocument.defaultView);
 
   return yield onSelectionChanged;
 }
@@ -493,17 +485,18 @@ function* setStyle(animation, panel, name, value, selector) {
        name + " to " + value + " of " + selector);
 
   const onAnimationChanged = animation ? once(animation, "changed") : Promise.resolve();
-  const onRendered = waitForAnimationTimelineRendering(panel);
-
   yield executeInContent("devtools:test:setStyle", {
     selector: selector,
     propertyName: name,
     propertyValue: value
   });
-
   yield onAnimationChanged;
-  yield onRendered;
+
+  // Also wait for the target node previews to be loaded if the panel got
+  // refreshed as a result of this animation mutation.
   yield waitForAllAnimationTargets(panel);
+  // And wait for animation timeline rendering.
+  yield waitForAnimationTimelineRendering(panel);
 }
 
 /**
@@ -598,29 +591,5 @@ function isPassingThrough(pathSegList, x, y) {
 function findStopElement(svgEl, offset) {
   return [...svgEl.querySelectorAll("stop")].find(stopEl => {
     return stopEl.getAttribute("offset") == offset;
-  });
-}
-
-/*
- * Returns all AnimationTargetNode instances.
- * This method should be called after emit "animation-timeline-rendering-completed".
- * @param {AnimationsPanel} panel The panel instance.
- * @return {Array} all AnimationTargetNode instances.
- */
-function getAnimationTargetNodes(panel) {
-  return panel.animationsTimelineComponent.animations.map(animation => {
-    return panel.animationsTimelineComponent.componentsMap[animation.actorID].targetNode;
-  });
-}
-
-/*
- * Returns all AnimationTargetBlock instances.
- * This method should be called after emit "animation-timeline-rendering-completed".
- * @param {AnimationsPanel} panel The panel instance.
- * @return {Array} all AnimationTargetBlock instances.
- */
-function getAnimationTimeBlocks(panel) {
-  return panel.animationsTimelineComponent.animations.map(animation => {
-    return panel.animationsTimelineComponent.componentsMap[animation.actorID].timeBlock;
   });
 }

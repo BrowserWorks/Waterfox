@@ -11,6 +11,7 @@ with Files('*DWrite*'):
     BUG_COMPONENT = ('Core', 'Graphics: Text')
 
 EXPORTS += [
+    'ContextStateTracker.h',
     'DrawMode.h',
     'gfx2DGlue.h',
     'gfxAlphaRecovery.h',
@@ -166,6 +167,7 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['gfxAlphaRecoverySSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
 
 SOURCES += [
+    'ContextStateTracker.cpp',
     # Includes mac system header conflicting with point/size,
     # and includes glxXlibSurface.h which drags in Xrender.h
     'gfxASurface.cpp',
@@ -231,10 +233,12 @@ if CONFIG['MOZ_ENABLE_SKIA_PDF']:
         'PrintTargetSkPDF.cpp',
     ]
 
-# We use ICU for normalization functions:
-USE_LIBS += [
-    'icu',
-]
+# We prefer to use ICU for normalization functions, but currently it is only
+# available if we're building with the Intl API enabled:
+if CONFIG['ENABLE_INTL_API']:
+    USE_LIBS += [
+        'icu',
+    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

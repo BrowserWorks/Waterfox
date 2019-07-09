@@ -13,7 +13,7 @@
 #include "IDBRequest.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/EventDispatcher.h"
-#include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/DOMStringList.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "nsAutoPtr.h"
@@ -230,26 +230,6 @@ IDBTransaction::Create(JSContext* aCx, IDBDatabase* aDatabase,
 
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
 
-  if (!NS_IsMainThread()) {
-    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-    MOZ_ASSERT(workerPrivate);
-
-    workerPrivate->AssertIsOnWorkerThread();
-
-    nsAutoPtr<WorkerHolder> workerHolder(
-      new WorkerHolder(workerPrivate, transaction));
-    if (NS_WARN_IF(!workerHolder->HoldWorker(workerPrivate, Canceling))) {
-      // Silence the destructor assertion if we never made this object live.
-#ifdef DEBUG
-      MOZ_ASSERT(!transaction->mSentCommitOrAbort);
-      transaction->mSentCommitOrAbort = true;
-#endif
-      return nullptr;
-    }
-
-    transaction->mWorkerHolder = Move(workerHolder);
-  }
-
   nsCOMPtr<nsIRunnable> runnable = do_QueryObject(transaction);
   nsContentUtils::RunInMetastableState(runnable.forget());
 
@@ -257,6 +237,16 @@ IDBTransaction::Create(JSContext* aCx, IDBDatabase* aDatabase,
 
   aDatabase->RegisterTransaction(transaction);
   transaction->mRegistered = true;
+
+  if (!NS_IsMainThread()) {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+
+    workerPrivate->AssertIsOnWorkerThread();
+
+    transaction->mWorkerHolder = new WorkerHolder(workerPrivate, transaction);
+    MOZ_ALWAYS_TRUE(transaction->mWorkerHolder->HoldWorker(workerPrivate, Canceling));
+  }
 
   return transaction.forget();
 }
@@ -673,13 +663,13 @@ IDBTransaction::RenameIndex(IDBObjectStore* aObjectStore,
 
 void
 IDBTransaction::AbortInternal(nsresult aAbortCode,
-                              already_AddRefed<DOMException> aError)
+                              already_AddRefed<DOMError> aError)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(NS_FAILED(aAbortCode));
   MOZ_ASSERT(!IsCommittingOrDone());
 
-  RefPtr<DOMException> error = aError;
+  RefPtr<DOMError> error = aError;
 
   const bool isVersionChange = mMode == VERSION_CHANGE;
   const bool isInvalidated = mDatabase->IsInvalidated();
@@ -777,7 +767,7 @@ IDBTransaction::Abort(IDBRequest* aRequest)
   }
 
   ErrorResult rv;
-  RefPtr<DOMException> error = aRequest->GetError(rv);
+  RefPtr<DOMError> error = aRequest->GetError(rv);
 
   AbortInternal(aRequest->GetErrorCode(), error.forget());
 }
@@ -793,7 +783,7 @@ IDBTransaction::Abort(nsresult aErrorCode)
     return;
   }
 
-  RefPtr<DOMException> error = DOMException::Create(aErrorCode);
+  RefPtr<DOMError> error = new DOMError(GetOwner(), aErrorCode);
   AbortInternal(aErrorCode, error.forget());
 }
 
@@ -841,7 +831,7 @@ IDBTransaction::FireCompleteOrAbortEvents(nsresult aResult)
     }
 
     if (!mError && !mAbortedByScript) {
-      mError = DOMException::Create(aResult);
+      mError = new DOMError(GetOwner(), aResult);
     }
 
     event = CreateGenericEvent(this,
@@ -935,7 +925,7 @@ IDBTransaction::GetMode(ErrorResult& aRv) const
   }
 }
 
-DOMException*
+DOMError*
 IDBTransaction::GetError() const
 {
   AssertIsOnOwningThread();
@@ -1018,7 +1008,7 @@ IDBTransaction::ObjectStore(const nsAString& aName, ErrorResult& aRv)
 NS_IMPL_ADDREF_INHERITED(IDBTransaction, IDBWrapperCache)
 NS_IMPL_RELEASE_INHERITED(IDBTransaction, IDBWrapperCache)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IDBTransaction)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBTransaction)
   NS_INTERFACE_MAP_ENTRY(nsIRunnable)
 NS_INTERFACE_MAP_END_INHERITING(IDBWrapperCache)
 

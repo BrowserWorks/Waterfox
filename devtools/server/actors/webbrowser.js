@@ -9,7 +9,6 @@
 var { Ci } = require("chrome");
 var Services = require("Services");
 var promise = require("promise");
-const defer = require("devtools/shared/defer");
 var { DebuggerServer } = require("devtools/server/main");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
@@ -328,7 +327,7 @@ BrowserTabList.prototype.getTab = function ({ outerWindowID, tabId }) {
     // First look for in-process frames with this ID
     let window = Services.wm.getOuterWindowWithId(outerWindowID);
     // Safety check to prevent debugging top level window via getTab
-    if (window && window.isChromeWindow) {
+    if (window instanceof Ci.nsIDOMChromeWindow) {
       return promise.reject({
         error: "forbidden",
         message: "Window with outerWindowID '" + outerWindowID + "' is chrome"
@@ -743,7 +742,7 @@ BrowserTabActor.prototype = {
     // so only request form update if some code is still listening on the other
     // side.
     if (!this.exited) {
-      this._deferredUpdate = defer();
+      this._deferredUpdate = promise.defer();
       let onFormUpdate = msg => {
         // There may be more than just one childtab.js up and running
         if (this._form.actor != msg.json.actor) {
@@ -830,7 +829,7 @@ function BrowserAddonList(connection) {
 }
 
 BrowserAddonList.prototype.getList = function () {
-  let deferred = defer();
+  let deferred = promise.defer();
   AddonManager.getAllAddons((addons) => {
     for (let addon of addons) {
       let actor = this._actorByAddonId.get(addon.id);

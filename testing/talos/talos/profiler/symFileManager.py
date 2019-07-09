@@ -1,7 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-from __future__ import absolute_import
+
+from symLogging import LogTrace, LogError, LogMessage
 
 import itertools
 import os
@@ -9,8 +10,6 @@ import re
 import threading
 import time
 from bisect import bisect
-
-from .symLogging import LogTrace, LogError, LogMessage
 
 # Libraries to keep prefetched
 PREFETCHED_LIBS = ["xul.pdb", "firefox.pdb"]

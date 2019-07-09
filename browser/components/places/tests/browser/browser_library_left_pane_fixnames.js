@@ -34,6 +34,12 @@ function onLibraryReady(organizer) {
 
 function test() {
   waitForExplicitFinish();
+  // Sanity checks.
+  ok(PlacesUtils, "PlacesUtils is running in chrome context");
+  ok(PlacesUIUtils, "PlacesUIUtils is running in chrome context");
+  ok(PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION > 0,
+     "Left pane version in chrome context, current version is: " + PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION );
+
   // Ensure left pane is initialized.
   ok(PlacesUIUtils.leftPaneFolderId > 0, "left pane folder is initialized");
 
@@ -59,7 +65,7 @@ function test() {
                                                   PlacesUIUtils.ORGANIZER_QUERY_ANNO);
     var query = { name: queryName,
                   itemId,
-                  correctTitle: PlacesUtils.bookmarks.getItemTitle(itemId) };
+                  correctTitle: PlacesUtils.bookmarks.getItemTitle(itemId) }
     switch (queryName) {
       case "BookmarksToolbar":
         query.concreteId = PlacesUtils.toolbarFolderId;
@@ -81,7 +87,7 @@ function test() {
       PlacesUtils.bookmarks.setItemTitle(query.concreteId, "badName");
   }
 
-  restoreLeftPaneGetters();
+  PlacesUIUtils.__defineGetter__("leftPaneFolderId", cachedLeftPaneFolderIdGetter);
 
   // Open Library, this will kick-off left pane code.
   openLibrary(onLibraryReady);

@@ -85,18 +85,6 @@ this.test = class extends ExtensionAPI {
       extension.emit("test-result", Boolean(value), String(msg), getStack());
     }
 
-    class TestEventManager extends EventManager {
-      addListener(callback, ...args) {
-        super.addListener(function(...args) {
-          try {
-            callback.call(this, ...args);
-          } catch (e) {
-            assertTrue(false, `${e}\n${e.stack}`);
-          }
-        }, ...args);
-      }
-    }
-
     return {
       test: {
         sendMessage(...args) {
@@ -180,7 +168,7 @@ this.test = class extends ExtensionAPI {
           }
         },
 
-        onMessage: new TestEventManager(context, "test.onMessage", fire => {
+        onMessage: new EventManager(context, "test.onMessage", fire => {
           let handler = (event, ...args) => {
             fire.async(...args);
           };

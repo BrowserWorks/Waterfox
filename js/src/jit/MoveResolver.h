@@ -216,8 +216,7 @@ class MoveOp
         cycleEnd_(false),
         cycleBeginSlot_(-1),
         cycleEndSlot_(-1),
-        type_(type),
-        endCycleType_(GENERAL) // initialize to silence UBSan warning
+        type_(type)
     { }
 
     bool isCycleBegin() const {

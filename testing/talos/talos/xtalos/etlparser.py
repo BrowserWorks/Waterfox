@@ -3,18 +3,17 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-from __future__ import absolute_import, print_function
 
 import csv
-import json
-import os
 import re
-import shutil
-import subprocess
+import os
 import sys
-
-import mozfile
 import xtalos
+import subprocess
+import json
+import mozfile
+import shutil
+
 
 EVENTNAME_INDEX = 0
 PROCESS_INDEX = 2

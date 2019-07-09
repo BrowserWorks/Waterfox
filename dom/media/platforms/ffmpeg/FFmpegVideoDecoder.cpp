@@ -17,16 +17,12 @@
 #define AVPixelFormat PixelFormat
 #define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
 #define AV_PIX_FMT_YUVJ420P PIX_FMT_YUVJ420P
-#define AV_PIX_FMT_YUV422P PIX_FMT_YUV422P
 #define AV_PIX_FMT_YUV444P PIX_FMT_YUV444P
-#define AV_PIX_FMT_YUV420P10LE PIX_FMT_YUV420P10LE
-#define AV_PIX_FMT_YUV444P10LE PIX_FMT_YUV444P10LE
 #define AV_PIX_FMT_NONE PIX_FMT_NONE
 #endif
 #include "mozilla/PodOperations.h"
 #include "mozilla/TaskQueue.h"
 #include "nsThreadUtils.h"
-#include "prsystem.h"
 
 
 typedef mozilla::layers::Image Image;
@@ -51,26 +47,12 @@ ChoosePixelFormat(AVCodecContext* aCodecContext, const AVPixelFormat* aFormats)
       case AV_PIX_FMT_YUV444P:
         FFMPEG_LOG("Requesting pixel format YUV444P.");
         return AV_PIX_FMT_YUV444P;
-      case AV_PIX_FMT_YUV422P:
-        FFMPEG_LOG("Requesting pixel format YUV422P.");
-        return AV_PIX_FMT_YUV422P;
       case AV_PIX_FMT_YUV420P:
         FFMPEG_LOG("Requesting pixel format YUV420P.");
         return AV_PIX_FMT_YUV420P;
       case AV_PIX_FMT_YUVJ420P:
         FFMPEG_LOG("Requesting pixel format YUVJ420P.");
         return AV_PIX_FMT_YUVJ420P;
-      case AV_PIX_FMT_YUV420P10LE:
-        FFMPEG_LOG("Requesting pixel format YUV420P10LE.");
-        return AV_PIX_FMT_YUV420P10LE;
-      case AV_PIX_FMT_YUV444P10LE:
-        FFMPEG_LOG("Requesting pixel format YUV444P10LE.");
-        return AV_PIX_FMT_YUV444P10LE;
-#if LIBAVCODEC_VERSION_MAJOR >= 57
-      case AV_PIX_FMT_YUV444P12LE:
-        FFMPEG_LOG("Requesting pixel format YUV444P12LE.");
-        return AV_PIX_FMT_YUV444P12LE;
-#endif
       default:
         break;
     }
@@ -102,8 +84,8 @@ FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::GuessCorrectPts(
     mNumFaultyPts += aPts <= mLastPts;
     mLastPts = aPts;
   }
-  if ((mNumFaultyPts <= mNumFaultyDts || aDts == int64_t(AV_NOPTS_VALUE)) &&
-      aPts != int64_t(AV_NOPTS_VALUE)) {
+  if ((mNumFaultyPts <= mNumFaultyDts || aDts == int64_t(AV_NOPTS_VALUE))
+      && aPts != int64_t(AV_NOPTS_VALUE)) {
     pts = aPts;
   } else {
     pts = aDts;
@@ -142,9 +124,8 @@ FFmpegVideoDecoder<LIBAV_VER>::FFmpegVideoDecoder(
 RefPtr<MediaDataDecoder::InitPromise>
 FFmpegVideoDecoder<LIBAV_VER>::Init()
 {
-  MediaResult rv = InitDecoder();
-  if (NS_FAILED(rv)) {
-    return InitPromise::CreateAndReject(rv, __func__);
+  if (NS_FAILED(InitDecoder())) {
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   return InitPromise::CreateAndResolve(TrackInfo::kVideoTrack, __func__);
@@ -169,7 +150,7 @@ FFmpegVideoDecoder<LIBAV_VER>::InitCodecContext()
   }
 
   if (mLowLatency) {
-    mCodecContext->flags |= CODEC_FLAG_LOW_DELAY;
+    mCodecContext->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // ffvp9 and ffvp8 at this stage do not support slice threading, but it may
     // help with the h264 decoder if there's ever one.
     mCodecContext->thread_type = FF_THREAD_SLICE;
@@ -217,8 +198,8 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame,
 #endif
       )) {
     while (inputSize) {
-      uint8_t* data;
-      int size;
+      uint8_t* data = inputData;
+      int size = inputSize;
       int len = mLib->av_parser_parse2(
         mCodecParser, mCodecContext, &data, &size, inputData, inputSize,
         aSample->mTime.ToMicroseconds(), aSample->mTimecode.ToMicroseconds(),
@@ -299,20 +280,6 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
     return NS_OK;
   }
 
-  if ((mCodecContext->pix_fmt == AV_PIX_FMT_YUV420P10LE ||
-       mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P10LE
-#if LIBAVCODEC_VERSION_MAJOR >= 57
-       || mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P12LE
-#endif
-       ) &&
-      (!mImageAllocator || (mImageAllocator->GetCompositorBackendType()
-                            != layers::LayersBackend::LAYERS_BASIC &&
-                            mImageAllocator->GetCompositorBackendType()
-                            != layers::LayersBackend::LAYERS_OPENGL))) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("unsupported format type (hdr)"));
-  }
-
   // If we've decoded a frame then we need to output it
   int64_t pts = mPtsContext.GuessCorrectPts(mFrame->pkt_pts, mFrame->pkt_dts);
   // Retrieve duration from dts.
@@ -348,32 +315,12 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
 
   b.mPlanes[0].mWidth = mFrame->width;
   b.mPlanes[0].mHeight = mFrame->height;
-  if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P ||
-      mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P10LE
-#if LIBAVCODEC_VERSION_MAJOR >= 57
-      ||
-      mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P12LE
-#endif
-      ) {
+  if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P) {
     b.mPlanes[1].mWidth = b.mPlanes[2].mWidth = mFrame->width;
-    b.mPlanes[1].mHeight = b.mPlanes[2].mHeight = mFrame->height;
-    if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P10LE) {
-      b.mBitDepth = 10;
-    }
-#if LIBAVCODEC_VERSION_MAJOR >= 57
-    else if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV444P12LE) {
-      b.mBitDepth = 12;
-    }
-#endif
-  } else if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV422P) {
-    b.mPlanes[1].mWidth = b.mPlanes[2].mWidth = (mFrame->width + 1) >> 1;
     b.mPlanes[1].mHeight = b.mPlanes[2].mHeight = mFrame->height;
   } else {
     b.mPlanes[1].mWidth = b.mPlanes[2].mWidth = (mFrame->width + 1) >> 1;
     b.mPlanes[1].mHeight = b.mPlanes[2].mHeight = (mFrame->height + 1) >> 1;
-    if (mCodecContext->pix_fmt == AV_PIX_FMT_YUV420P10LE) {
-      b.mBitDepth = 10;
-    }
   }
   if (mLib->av_frame_get_colorspace) {
     switch (mLib->av_frame_get_colorspace(mFrame)) {

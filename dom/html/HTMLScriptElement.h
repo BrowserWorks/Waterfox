@@ -48,7 +48,7 @@ public:
                               nsIContent* aBindingParent,
                               bool aCompileEventHandlers) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
 
@@ -56,10 +56,9 @@ public:
                          bool aPreallocateChildren) const override;
 
   // Element
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aMaybeScriptedPrincipal,
                                 bool aNotify) override;
 
   // WebIDL
@@ -67,11 +66,7 @@ public:
   void SetCharset(const nsAString& aCharset, ErrorResult& rv);
   void SetDefer(bool aDefer, ErrorResult& rv);
   bool Defer();
-  void SetSrc(const nsAString& aSrc, nsIPrincipal& aTriggeringPrincipal, ErrorResult& rv);
-  void GetSrc(nsString& aSrc, nsIPrincipal&)
-  {
-    GetSrc(aSrc);
-  };
+  void SetSrc(const nsAString& aSrc, ErrorResult& rv);
   void SetType(const nsAString& aType, ErrorResult& rv);
   void SetHtmlFor(const nsAString& aHtmlFor, ErrorResult& rv);
   void SetEvent(const nsAString& aEvent, ErrorResult& rv);

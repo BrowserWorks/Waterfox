@@ -67,7 +67,7 @@ Object.assign({
   /**
    * Saves the current recording to a file.
    *
-   * @param nsIFile file
+   * @param nsILocalFile file
    *        The file to stream the data into.
    */
   exportRecording: function (file) {

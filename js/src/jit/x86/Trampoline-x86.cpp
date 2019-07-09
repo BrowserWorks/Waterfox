@@ -52,7 +52,7 @@ enum EnterJitEbpArgumentOffset {
 // The trampoline use the EnterJitCode signature, with the standard cdecl
 // calling convention.
 JitCode*
-JitRuntime::generateEnterJIT(JSContext* cx)
+JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
 {
     MacroAssembler masm(cx);
     masm.assertStackAlignment(ABIStackAlignment, -int32_t(sizeof(uintptr_t)) /* return address */);
@@ -157,13 +157,13 @@ JitRuntime::generateEnterJIT(JSContext* cx)
     *****************************************************************/
     // Create a frame descriptor.
     masm.subl(esp, esi);
-    masm.makeFrameDescriptor(esi, JitFrame_CppToJSJit, JitFrameLayout::Size());
+    masm.makeFrameDescriptor(esi, JitFrame_Entry, JitFrameLayout::Size());
     masm.push(esi);
 
     CodeLabel returnLabel;
     CodeLabel oomReturnLabel;
-    {
-        // Handle Interpreter -> Baseline OSR.
+    if (type == EnterJitBaseline) {
+        // Handle OSR.
         AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
         regs.take(JSReturnOperand);
         regs.takeUnchecked(OsrFrameReg);
@@ -226,7 +226,7 @@ JitRuntime::generateEnterJIT(JSContext* cx)
         masm.push(Imm32(0));
         // No GC things to mark on the stack, push a bare token.
         masm.loadJSContext(scratch);
-        masm.enterFakeExitFrame(scratch, scratch, ExitFrameToken::Bare);
+        masm.enterFakeExitFrame(scratch, scratch, ExitFrameLayoutBareToken);
 
         masm.push(framePtr);
         masm.push(jitcode);
@@ -235,8 +235,7 @@ JitRuntime::generateEnterJIT(JSContext* cx)
         masm.passABIArg(framePtr); // BaselineFrame
         masm.passABIArg(OsrFrameReg); // InterpreterFrame
         masm.passABIArg(numStackValues);
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::InitBaselineFrameForOsr), MoveOp::GENERAL,
-                         CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::InitBaselineFrameForOsr));
 
         masm.pop(jitcode);
         masm.pop(framePtr);
@@ -286,8 +285,8 @@ JitRuntime::generateEnterJIT(JSContext* cx)
     ***************************************************************/
     masm.call(Address(ebp, ARG_JITCODE));
 
-    {
-        // Interpreter -> Baseline OSR will return here.
+    if (type == EnterJitBaseline) {
+        // Baseline OSR will return here.
         masm.use(returnLabel.target());
         masm.addCodeLabel(returnLabel);
         masm.use(oomReturnLabel.target());
@@ -369,8 +368,7 @@ JitRuntime::generateInvalidator(JSContext* cx)
     masm.passABIArg(eax);
     masm.passABIArg(ebx);
     masm.passABIArg(ecx);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, InvalidationBailout), MoveOp::GENERAL,
-                     CheckUnsafeCallWithABI::DontCheckOther);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, InvalidationBailout));
 
     masm.pop(ecx); // Get bailoutInfo outparam.
     masm.pop(ebx); // Get the frameSize outparam.
@@ -402,9 +400,11 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     MacroAssembler masm(cx);
     // Caller:
     // [arg2] [arg1] [this] [[argc] [callee] [descr] [raddr]] <- esp
+    // '-- #esi ---'
 
-    // Load argc.
-    masm.loadPtr(Address(esp, RectifierFrameLayout::offsetOfNumActualArgs()), esi);
+    // ArgumentsRectifierReg contains the |nargs| pushed onto the current frame.
+    // Including |this|, there are (|nargs| + 1) arguments to copy.
+    MOZ_ASSERT(ArgumentsRectifierReg == esi);
 
     // Load the number of |undefined|s to push into %ecx.
     masm.loadPtr(Address(esp, RectifierFrameLayout::offsetOfCalleeToken()), eax);
@@ -437,8 +437,8 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     masm.andl(Imm32(~(JitStackValueAlignment - 1)), ecx);
     masm.subl(esi, ecx);
 
-    // Copy the number of actual arguments into edx.
-    masm.mov(esi, edx);
+    // Copy the number of actual arguments.
+    masm.loadPtr(Address(esp, RectifierFrameLayout::offsetOfNumActualArgs()), edx);
 
     masm.moveValue(UndefinedValue(), ValueOperand(ebx, edi));
 
@@ -603,8 +603,7 @@ GenerateBailoutThunk(JSContext* cx, MacroAssembler& masm, uint32_t frameClass)
     masm.setupUnalignedABICall(ecx);
     masm.passABIArg(eax);
     masm.passABIArg(ebx);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, Bailout), MoveOp::GENERAL,
-                     CheckUnsafeCallWithABI::DontCheckOther);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, Bailout));
 
     masm.pop(ecx); // Get bailoutInfo outparam.
 
@@ -796,7 +795,7 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
     if (outReg != InvalidReg)
         masm.passABIArg(outReg);
 
-    masm.callWithABI(f.wrapped, MoveOp::GENERAL, CheckUnsafeCallWithABI::DontCheckHasExitFrame);
+    masm.callWithABI(f.wrapped);
 
     if (!generateTLExitVM(cx, masm, f))
         return nullptr;
@@ -1131,10 +1130,7 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
     masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_BaselineStub), &handle_BaselineStub);
     masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_Rectifier), &handle_Rectifier);
     masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_IonICCall), &handle_IonICCall);
-    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_CppToJSJit), &handle_Entry);
-
-    // The WasmToJSJit is just another kind of entry.
-    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_WasmToJSJit), &handle_Entry);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_Entry), &handle_Entry);
 
     masm.assumeUnreachable("Invalid caller frame type when exiting from Ion frame.");
 
@@ -1214,10 +1210,10 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
     //
     // JitFrame_Rectifier
     //
-    // The rectifier frame can be preceded by either an IonJS, a BaselineStub,
-    // or a CppToJSJit/WasmToJSJit frame.
+    // The rectifier frame can be preceded by either an IonJS or a
+    // BaselineStub frame.
     //
-    // Stack layout if caller of rectifier was Ion or CppToJSJit/WasmToJSJit:
+    // Stack layout if caller of rectifier was Ion:
     //
     //              Ion-Descriptor
     //              Ion-ReturnAddr
@@ -1262,11 +1258,10 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
         // and |scratch2| points to Rectifier frame
         // and |scratch3| contains Rect-Descriptor.Type
 
-        masm.assertRectifierFrameParentType(scratch3);
-
         // Check for either Ion or BaselineStub frame.
-        Label notIonFrame;
-        masm.branch32(Assembler::NotEqual, scratch3, Imm32(JitFrame_IonJS), &notIonFrame);
+        Label handle_Rectifier_BaselineStub;
+        masm.branch32(Assembler::NotEqual, scratch3, Imm32(JitFrame_IonJS),
+                      &handle_Rectifier_BaselineStub);
 
         // Handle Rectifier <- IonJS
         // scratch3 := RectFrame[ReturnAddr]
@@ -1278,13 +1273,16 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
         masm.storePtr(scratch3, lastProfilingFrame);
         masm.ret();
 
-        masm.bind(&notIonFrame);
-
-        // Check for either BaselineStub or a CppToJSJit/WasmToJSJit entry
-        // frame.
-        masm.branch32(Assembler::NotEqual, scratch3, Imm32(JitFrame_BaselineStub), &handle_Entry);
-
         // Handle Rectifier <- BaselineStub <- BaselineJS
+        masm.bind(&handle_Rectifier_BaselineStub);
+#ifdef DEBUG
+        {
+            Label checkOk;
+            masm.branch32(Assembler::Equal, scratch3, Imm32(JitFrame_BaselineStub), &checkOk);
+            masm.assumeUnreachable("Unrecognized frame preceding baselineStub.");
+            masm.bind(&checkOk);
+        }
+#endif
         BaseIndex stubFrameReturnAddr(scratch2, scratch1, TimesOne,
                                          RectifierFrameLayout::Size() +
                                          BaselineStubFrameLayout::offsetOfReturnAddress());
@@ -1346,11 +1344,9 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
     }
 
     //
-    // JitFrame_CppToJSJit / JitFrame_WasmToJSJit
+    // JitFrame_Entry
     //
     // If at an entry frame, store null into both fields.
-    // A fast-path wasm->jit transition frame is an entry frame from the point
-    // of view of the JIT.
     //
     masm.bind(&handle_Entry);
     {

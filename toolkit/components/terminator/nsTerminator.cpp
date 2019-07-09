@@ -216,7 +216,7 @@ PRMonitor* gWriteReady = nullptr;
 
 void RunWriter(void* arg)
 {
-  AUTO_PROFILER_REGISTER_THREAD("Shutdown Statistics Writer");
+  AutoProfilerRegisterThread registerThread("Shutdown Statistics Writer");
   NS_SetCurrentThreadName("Shutdown Statistics Writer");
 
   MOZ_LSAN_INTENTIONALLY_LEAK_OBJECT(arg);
@@ -515,7 +515,7 @@ nsTerminator::UpdateTelemetry()
       continue;
     }
     if (fields++ > 0) {
-      telemetryData->AppendLiteral(", ");
+      telemetryData->Append(", ");
     }
     telemetryData->AppendLiteral(R"(")");
     telemetryData->Append(shutdownStep.mTopic);

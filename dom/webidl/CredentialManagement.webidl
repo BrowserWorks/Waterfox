@@ -17,7 +17,6 @@ interface Credential {
 interface CredentialsContainer {
   Promise<Credential?> get(optional CredentialRequestOptions options);
   Promise<Credential?> create(optional CredentialCreationOptions options);
-  Promise<Credential> store(Credential credential);
 };
 
 dictionary CredentialRequestOptions {
@@ -25,5 +24,5 @@ dictionary CredentialRequestOptions {
 };
 
 dictionary CredentialCreationOptions {
-  MakePublicKeyCredentialOptions publicKey;
+  MakeCredentialOptions publicKey;
 };

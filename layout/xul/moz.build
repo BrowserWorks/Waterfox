@@ -17,6 +17,7 @@ if CONFIG['ENABLE_TESTS']:
 
 XPIDL_SOURCES += [
     'nsIBoxObject.idl',
+    'nsIBrowserBoxObject.idl',
     'nsIContainerBoxObject.idl',
     'nsIListBoxObject.idl',
     'nsIMenuBoxObject.idl',
@@ -93,8 +94,6 @@ if CONFIG['MOZ_XUL']:
 
 if CONFIG['MOZ_XUL']:
     DIRS += ['tree', 'grid']
-
-include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [

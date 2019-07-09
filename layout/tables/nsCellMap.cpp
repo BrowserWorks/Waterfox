@@ -1491,8 +1491,8 @@ nsCellMap::AppendCell(nsTableCellMap&   aMap,
     //the caller depends on the damageArea
     // The special case for zeroRowSpan is to adjust for the '2' in
     // GetRowSpanForNewCell.
-    uint32_t height = std::min(zeroRowSpan ? rowSpan - 1 : rowSpan,
-                               GetRowCount() - aRowIndex);
+    uint32_t height = zeroRowSpan ? endRowIndex - aRowIndex  :
+                                    1 + endRowIndex - aRowIndex;
     SetDamageArea(startColIndex, aRgFirstRowIndex + aRowIndex,
                   1 + endColIndex - startColIndex, height, aDamageArea);
   }
@@ -2431,8 +2431,9 @@ void nsCellMap::Dump(bool aIsBorderCollapse) const
       if (cd) {
         if (cd->IsOrig()) {
           nsTableCellFrame* cellFrame = cd->GetCellFrame();
-          uint32_t cellFrameColIndex = cellFrame->ColIndex();
-          printf("C%d,%d=%p(%u)  ", rIndex, colIndex, (void*)cellFrame,
+          int32_t cellFrameColIndex;
+          cellFrame->GetColIndex(cellFrameColIndex);
+          printf("C%d,%d=%p(%d)  ", rIndex, colIndex, (void*)cellFrame,
                  cellFrameColIndex);
           cellCount++;
         }
@@ -2519,7 +2520,8 @@ nsCellMap::GetCellInfoAt(const nsTableCellMap& aMap,
       cellFrame = GetCellFrame(aRowX, aColX, *data, true);
     }
     if (cellFrame && aColSpan) {
-      uint32_t initialColIndex = cellFrame->ColIndex();
+      int32_t initialColIndex;
+      cellFrame->GetColIndex(initialColIndex);
       *aColSpan = GetEffectiveColSpan(aMap, aRowX, initialColIndex);
     }
   }

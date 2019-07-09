@@ -187,6 +187,7 @@ bool nsNotifyAddrListener::findMac(char *gateway)
 
         if (status == NO_ERROR) {
             for (DWORD i = 0; i < pIpNetTable->dwNumEntries; ++i) {
+                DWORD dwCurrIndex = pIpNetTable->table[i].dwIndex;
                 char hw[256];
 
                 if (!macAddr(pIpNetTable->table[i].bPhysAddr,
@@ -213,11 +214,7 @@ bool nsNotifyAddrListener::findMac(char *gateway)
                     sha1.finish(digest);
                     nsCString newString(reinterpret_cast<char*>(digest),
                                         SHA1Sum::kHashSize);
-                    nsresult rv = Base64Encode(newString, output);
-                    if (NS_FAILED(rv)) {
-                        found = false;
-                        break;
-                    }
+                    Base64Encode(newString, output);
                     LOG(("networkid: id %s\n", output.get()));
                     if (mNetworkId != output) {
                         // new id

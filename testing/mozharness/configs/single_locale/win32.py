@@ -7,8 +7,9 @@ config = {
     "update_platform": "WINNT_x86-msvc",
     "mozconfig": "%(branch)s/browser/config/mozconfigs/win32/l10n-mozconfig",
     "bootstrap_env": {
-        "MOZ_OBJDIR": "obj-firefox",
+        "MOZ_OBJDIR": "obj-l10n",
         "EN_US_BINARY_URL": "%(en_us_binary_url)s",
+        "LOCALE_MERGEDIR": "%(abs_merge_dir)s",
         "MOZ_UPDATE_CHANNEL": "%(update_channel)s",
         "DIST": "%(abs_objdir)s",
         "L10NBASEDIR": "../../l10n",
@@ -23,12 +24,12 @@ config = {
     },
     "ssh_key_dir": "~/.ssh",
     "log_name": "single_locale",
-    "objdir": "obj-firefox",
+    "objdir": "obj-l10n",
     "js_src_dir": "js/src",
     "vcs_share_base": "c:/builds/hg-shared",
 
     # tooltool
-    'tooltool_url': 'https://tooltool.mozilla-releng.net/',
+    'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
     'tooltool_manifest_src': 'browser/config/tooltool-manifests/win32/l10n.manifest',
@@ -41,6 +42,7 @@ config = {
     "locales_file": "%(branch)s/browser/locales/all-locales",
     "locales_dir": "browser/locales",
     "hg_l10n_tag": "default",
+    "merge_locales": True,
 
     # MAR
     "previous_mar_dir": "dist\\previous",

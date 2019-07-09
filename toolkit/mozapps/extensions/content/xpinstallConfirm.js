@@ -60,6 +60,12 @@ XPInstallConfirm.init = function() {
     var type = install.type;
     if (type)
       installItem.type = type;
+    if (install.certName) {
+      installItem.cert = bundle.getFormattedString("signed", [install.certName]);
+    } else {
+      installItem.cert = bundle.getString("unverified");
+    }
+    installItem.signed = install.certName ? "true" : "false";
 
     installMap.set(install.wrapped, installItem);
     install.addListener(installListener);
@@ -164,7 +170,7 @@ XPInstallConfirm.init = function() {
     setWidgetsAfterFocus();
   } else
     okButton.label = bundle.getString("installButtonLabel");
-};
+}
 
 XPInstallConfirm.onOK = function() {
   Components.classes["@mozilla.org/base/telemetry;1"].
@@ -174,10 +180,10 @@ XPInstallConfirm.onOK = function() {
   // Perform the install or cancel after the window has unloaded
   XPInstallConfirm._installOK = true;
   return true;
-};
+}
 
 XPInstallConfirm.onCancel = function() {
   // Perform the install or cancel after the window has unloaded
   XPInstallConfirm._installOK = false;
   return true;
-};
+}

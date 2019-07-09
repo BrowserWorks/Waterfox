@@ -35,7 +35,6 @@
 #include "mozilla/gfx/UserData.h"       // for UserData, etc
 #include "mozilla/layers/AnimationInfo.h" // for AnimationInfo
 #include "mozilla/layers/BSPTree.h"     // for LayerPolygon
-#include "mozilla/layers/CanvasRenderer.h"
 #include "mozilla/layers/LayerAttributes.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
@@ -359,6 +358,12 @@ public:
    * to render blend operations.
    */
   virtual bool BlendingRequiresIntermediateSurface() { return false; }
+
+  /**
+   * Returns true if this LayerManager supports component alpha layers in
+   * situations that require a copy of the backdrop.
+   */
+  virtual bool SupportsBackdropCopyForComponentAlpha() { return true; }
 
   /**
    * CONSTRUCTION PHASE ONLY
@@ -797,8 +802,8 @@ public:
    * per-scrollid basis. This is used for empty transactions that push over
    * scroll position updates to the APZ code.
    */
-  virtual bool SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
-                                                        const ScrollUpdateInfo& aUpdateInfo);
+  bool SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
+                                                const ScrollUpdateInfo& aUpdateInfo);
   Maybe<ScrollUpdateInfo> GetPendingScrollInfoUpdate(FrameMetrics::ViewID aScrollId);
   void ClearPendingScrollInfoUpdate();
 private:
@@ -1081,14 +1086,14 @@ public:
     if (mClipRect) {
       if (!aRect) {
         MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was %d,%d,%d,%d is <none>", this,
-                                            mClipRect->x, mClipRect->y, mClipRect->Width(), mClipRect->Height()));
+                         mClipRect->x, mClipRect->y, mClipRect->width, mClipRect->height));
         mClipRect.reset();
         Mutated();
       } else {
         if (!aRect->IsEqualEdges(*mClipRect)) {
           MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was %d,%d,%d,%d is %d,%d,%d,%d", this,
-                                              mClipRect->x, mClipRect->y, mClipRect->Width(), mClipRect->Height(),
-                                              aRect->x, aRect->y, aRect->Width(), aRect->Height()));
+                           mClipRect->x, mClipRect->y, mClipRect->width, mClipRect->height,
+                           aRect->x, aRect->y, aRect->width, aRect->height));
           mClipRect = aRect;
           Mutated();
         }
@@ -1096,7 +1101,7 @@ public:
     } else {
       if (aRect) {
         MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was <none> is %d,%d,%d,%d", this,
-                                            aRect->x, aRect->y, aRect->Width(), aRect->Height()));
+                         aRect->x, aRect->y, aRect->width, aRect->height));
         mClipRect = aRect;
         Mutated();
       }
@@ -1675,15 +1680,6 @@ public:
   {
     return mEffectiveTransform;
   }
-
-  /**
-   * If the current layers participates in a preserve-3d
-   * context (returns true for Combines3DTransformWithAncestors),
-   * returns the combined transform up to the preserve-3d (nearest
-   * ancestor that doesn't Extend3DContext()). Otherwise returns
-   * the local transform.
-   */
-  gfx::Matrix4x4 ComputeTransformToPreserve3DRoot();
 
   /**
    * @param aTransformToSurface the composition of the transforms
@@ -2334,9 +2330,7 @@ public:
 
   nsTArray<CSSFilter>& GetFilterChain() { return mFilterChain; }
   
-  // If |aRect| is null, the entire layer should be considered invalid for
-  // compositing.
-  virtual void SetInvalidCompositeRect(const gfx::IntRect* aRect) {}
+  virtual void SetInvalidCompositeRect(const gfx::IntRect& aRect) {}
 
 protected:
   friend class ReadbackProcessor;
@@ -2692,7 +2686,56 @@ protected:
  */
 class CanvasLayer : public Layer {
 public:
+  struct Data {
+    Data()
+      : mBufferProvider(nullptr)
+      , mGLContext(nullptr)
+      , mRenderer(nullptr)
+      , mFrontbufferGLTex(0)
+      , mSize(0,0)
+      , mHasAlpha(false)
+      , mIsGLAlphaPremult(true)
+      , mIsMirror(false)
+    { }
+
+    // One of these three must be specified for Canvas2D, but never more than one
+    PersistentBufferProvider* mBufferProvider; // A BufferProvider for the Canvas contents
+    mozilla::gl::GLContext* mGLContext; // or this, for GL.
+    AsyncCanvasRenderer* mRenderer; // or this, for OffscreenCanvas
+
+    // Frontbuffer override
+    uint32_t mFrontbufferGLTex;
+
+    // The size of the canvas content
+    gfx::IntSize mSize;
+
+    // Whether the canvas drawingbuffer has an alpha channel.
+    bool mHasAlpha;
+
+    // Whether mGLContext contains data that is alpha-premultiplied.
+    bool mIsGLAlphaPremult;
+
+    // Whether the canvas front buffer is already being rendered somewhere else.
+    // When true, do not swap buffers or Morph() to another factory on mGLContext
+    bool mIsMirror;
+  };
+
+  /**
+   * CONSTRUCTION PHASE ONLY
+   * Initialize this CanvasLayer with the given data.  The data must
+   * have either mSurface or mGLContext initialized (but not both), as
+   * well as mSize.
+   *
+   * This must only be called once.
+   */
+  virtual void Initialize(const Data& aData) = 0;
+
   void SetBounds(gfx::IntRect aBounds) { mBounds = aBounds; }
+
+  /**
+   * Check the data is owned by this layer is still valid for rendering
+   */
+  virtual bool IsDataValid(const Data& aData) { return true; }
 
   virtual CanvasLayer* AsCanvasLayer() override { return this; }
 
@@ -2700,13 +2743,13 @@ public:
    * Notify this CanvasLayer that the canvas surface contents have
    * changed (or will change) before the next transaction.
    */
-  void Updated() { mCanvasRenderer->SetDirty(); SetInvalidRectToVisibleRegion(); }
+  void Updated() { mDirty = true; SetInvalidRectToVisibleRegion(); }
 
   /**
    * Notify this CanvasLayer that the canvas surface contents have
    * been painted since the last change.
    */
-  void Painted() { mCanvasRenderer->ResetDirty(); }
+  void Painted() { mDirty = false; }
 
   /**
    * Returns true if the canvas surface contents have changed since the
@@ -2719,14 +2762,39 @@ public:
     if (!mManager || !mManager->IsWidgetLayerManager()) {
       return true;
     }
-    return mCanvasRenderer->IsDirty();
+    return mDirty;
+  }
+
+  /**
+   * Register a callback to be called at the start of each transaction.
+   */
+  typedef void PreTransactionCallback(void* closureData);
+  void SetPreTransactionCallback(PreTransactionCallback* callback, void* closureData)
+  {
+    mPreTransCallback = callback;
+    mPreTransCallbackData = closureData;
   }
 
   const nsIntRect& GetBounds() const { return mBounds; }
 
-  CanvasRenderer* CreateOrGetCanvasRenderer();
+protected:
+  void FirePreTransactionCallback()
+  {
+    if (mPreTransCallback) {
+      mPreTransCallback(mPreTransCallbackData);
+    }
+  }
 
 public:
+  /**
+   * Register a callback to be called at the end of each transaction.
+   */
+  typedef void (* DidTransactionCallback)(void* aClosureData);
+  void SetDidTransactionCallback(DidTransactionCallback aCallback, void* aClosureData)
+  {
+    mPostTransCallback = aCallback;
+    mPostTransCallbackData = aClosureData;
+  }
 
   /**
    * CONSTRUCTION PHASE ONLY
@@ -2751,10 +2819,15 @@ public:
     // was drawn into a PaintedLayer (gfxContext would snap using the local
     // transform, then we'd snap again when compositing the PaintedLayer).
     mEffectiveTransform =
-      SnapTransform(GetLocalTransform(), gfxRect(0, 0, mBounds.Width(), mBounds.Height()),
+        SnapTransform(GetLocalTransform(), gfxRect(0, 0, mBounds.width, mBounds.height),
                       nullptr)*
         SnapTransformTranslation(aTransformToSurface, nullptr);
     ComputeEffectiveTransformForMaskLayers(aTransformToSurface);
+  }
+
+  bool GetIsAsyncRenderer() const
+  {
+    return !!mAsyncRenderer;
   }
 
 protected:
@@ -2765,15 +2838,29 @@ protected:
 
   virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent) override;
 
-  virtual CanvasRenderer* CreateCanvasRendererInternal() = 0;
-
-  UniquePtr<CanvasRenderer> mCanvasRenderer;
-  gfx::SamplingFilter mSamplingFilter;
+  void FireDidTransactionCallback()
+  {
+    if (mPostTransCallback) {
+      mPostTransCallback(mPostTransCallbackData);
+    }
+  }
 
   /**
    * 0, 0, canvaswidth, canvasheight
    */
   gfx::IntRect mBounds;
+  PreTransactionCallback* mPreTransCallback;
+  void* mPreTransCallbackData;
+  DidTransactionCallback mPostTransCallback;
+  void* mPostTransCallbackData;
+  gfx::SamplingFilter mSamplingFilter;
+  RefPtr<AsyncCanvasRenderer> mAsyncRenderer;
+
+private:
+  /**
+   * Set to true in Updated(), cleared during a transaction.
+   */
+  bool mDirty;
 };
 
 /**

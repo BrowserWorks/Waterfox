@@ -15,7 +15,8 @@
 #include "nsIImageLoadingContent.h"
 #include "nsLayoutUtils.h"
 #include "imgINotificationObserver.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
+#include "mozilla/dom/SVGSVGElement.h"
 #include "nsSVGUtils.h"
 #include "SVGContentUtils.h"
 #include "SVGGeometryFrame.h"
@@ -48,7 +49,7 @@ nsSVGImageFrame::~nsSVGImageFrame()
 {
   // set the frame to null so we don't send messages to a dead object.
   if (mListener) {
-    nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(GetContent());
+    nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
     if (imageLoader) {
       imageLoader->RemoveNativeObserver(mListener);
     }
@@ -80,7 +81,7 @@ nsSVGImageFrame::Init(nsIContent*       aContent,
   }
 
   mListener = new nsSVGImageListener(this);
-  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(GetContent());
+  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
   if (!imageLoader) {
     MOZ_CRASH("Why is this not an image loading content?");
   }
@@ -119,7 +120,7 @@ nsSVGImageFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
 nsresult
 nsSVGImageFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                  nsAtom*        aAttribute,
+                                  nsIAtom*        aAttribute,
                                   int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
@@ -150,7 +151,7 @@ nsSVGImageFrame::AttributeChanged(int32_t         aNameSpaceID,
       aAttribute == nsGkAtoms::href &&
       (aNameSpaceID == kNameSpaceID_XLink ||
        aNameSpaceID == kNameSpaceID_None)) {
-    SVGImageElement* element = static_cast<SVGImageElement*>(GetContent());
+    SVGImageElement* element = static_cast<SVGImageElement*>(mContent);
 
     bool hrefIsSet =
       element->mStringAttributes[SVGImageElement::HREF].IsExplicitlySet() ||
@@ -170,7 +171,7 @@ void
 nsSVGImageFrame::OnVisibilityChange(Visibility aNewVisibility,
                                     const Maybe<OnNonvisible>& aNonvisibleAction)
 {
-  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(GetContent());
+  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
   if (!imageLoader) {
     SVGGeometryFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
     return;
@@ -186,7 +187,7 @@ nsSVGImageFrame::GetRasterImageTransform(int32_t aNativeWidth,
                                          int32_t aNativeHeight)
 {
   float x, y, width, height;
-  SVGImageElement *element = static_cast<SVGImageElement*>(GetContent());
+  SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
   element->GetAnimatedLengthValues(&x, &y, &width, &height, nullptr);
 
   Matrix viewBoxTM =
@@ -201,7 +202,7 @@ gfx::Matrix
 nsSVGImageFrame::GetVectorImageTransform()
 {
   float x, y, width, height;
-  SVGImageElement *element = static_cast<SVGImageElement*>(GetContent());
+  SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
   element->GetAnimatedLengthValues(&x, &y, &width, &height, nullptr);
 
   // No viewBoxTM needed here -- our height/width overrides any concept of
@@ -257,14 +258,14 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
   }
 
   float x, y, width, height;
-  SVGImageElement *imgElem = static_cast<SVGImageElement*>(GetContent());
+  SVGImageElement *imgElem = static_cast<SVGImageElement*>(mContent);
   imgElem->GetAnimatedLengthValues(&x, &y, &width, &height, nullptr);
   NS_ASSERTION(width > 0 && height > 0,
                "Should only be painting things with valid width/height");
 
   if (!mImageContainer) {
     nsCOMPtr<imgIRequest> currentRequest;
-    nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(GetContent());
+    nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
     if (imageLoader)
       imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
                               getter_AddRefs(currentRequest));
@@ -373,7 +374,7 @@ nsSVGImageFrame::GetFrameForPoint(const gfxPoint& aPoint)
   }
 
   Rect rect;
-  SVGImageElement *element = static_cast<SVGImageElement*>(GetContent());
+  SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
   element->GetAnimatedLengthValues(&rect.x, &rect.y,
                                    &rect.width, &rect.height, nullptr);
 
@@ -431,7 +432,7 @@ nsSVGImageFrame::ReflowSVG()
   }
 
   float x, y, width, height;
-  SVGImageElement *element = static_cast<SVGImageElement*>(GetContent());
+  SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
   element->GetAnimatedLengthValues(&x, &y, &width, &height, nullptr);
 
   Rect extent(x, y, width, height);
@@ -447,7 +448,7 @@ nsSVGImageFrame::ReflowSVG()
     // Make sure we have our filter property (if any) before calling
     // FinishAndStoreOverflow (subsequent filter changes are handled off
     // nsChangeHint_UpdateEffects):
-    SVGObserverUtils::UpdateEffects(this);
+    nsSVGEffects::UpdateEffects(this);
 
     if (!mReflowCallbackPosted) {
       nsIPresShell* shell = PresContext()->PresShell();
@@ -460,8 +461,8 @@ nsSVGImageFrame::ReflowSVG()
   nsOverflowAreas overflowAreas(overflow, overflow);
   FinishAndStoreOverflow(overflowAreas, mRect.Size());
 
-  RemoveStateBits(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
-                  NS_FRAME_HAS_DIRTY_CHILDREN);
+  mState &= ~(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
+              NS_FRAME_HAS_DIRTY_CHILDREN);
 
   // Invalidate, but only if this is not our first reflow (since if it is our
   // first reflow then we haven't had our first paint yet).

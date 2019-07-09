@@ -65,7 +65,7 @@ ReportLengthParseError(const nsString& aValue, nsIDocument* aDocument)
 
 static nsresult
 ReportParseErrorNoTag(const nsString& aValue,
-                      nsAtom*        aAtom,
+                      nsIAtom*        aAtom,
                       nsIDocument*    aDocument)
 {
   const char16_t *argv[] =
@@ -143,7 +143,7 @@ nsMathMLElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 bool
 nsMathMLElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
@@ -216,7 +216,7 @@ static Element::MappedAttributeEntry sDirStyles[] = {
 };
 
 bool
-nsMathMLElement::IsAttributeMapped(const nsAtom* aAttribute) const
+nsMathMLElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   MOZ_ASSERT(IsMathMLElement());
 
@@ -1083,11 +1083,9 @@ nsMathMLElement::GetHrefURI() const
 }
 
 nsresult
-nsMathMLElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+nsMathMLElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue,
-                              const nsAttrValue* aOldValue,
-                              nsIPrincipal* aSubjectPrincipal,
-                              bool aNotify)
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   // It is important that this be done after the attribute is set/unset.
   // We will need the updated attribute value because notifying the document
@@ -1105,7 +1103,7 @@ nsMathMLElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsMathMLElementBase::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                           aOldValue, aSubjectPrincipal, aNotify);
+                                           aOldValue, aNotify);
 }
 
 JSObject*

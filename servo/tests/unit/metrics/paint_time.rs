@@ -5,10 +5,9 @@
 use euclid::Size2D;
 use gfx::display_list::{BaseDisplayItem, WebRenderImageInfo};
 use gfx::display_list::{DisplayItem, DisplayList, ImageDisplayItem};
-use gfx_traits::Epoch;
 use ipc_channel::ipc;
 use metrics::{PaintTimeMetrics, ProfilerMetadataFactory};
-use msg::constellation_msg::TEST_PIPELINE_ID;
+use msg::constellation_msg::{PipelineId, PipelineIndex, PipelineNamespaceId};
 use net_traits::image::base::PixelFormat;
 use profile_traits::time::{ProfilerChan, TimerMetadata};
 use style::computed_values::image_rendering;
@@ -25,56 +24,61 @@ impl ProfilerMetadataFactory for DummyProfilerMetadataFactory {
 fn test_paint_metrics_construction() {
     let (sender, _) = ipc::channel().unwrap();
     let profiler_chan = ProfilerChan(sender);
-    let (layout_sender, _) = ipc::channel().unwrap();
-    let (script_sender, _) = ipc::channel().unwrap();
-    let paint_time_metrics = PaintTimeMetrics::new(TEST_PIPELINE_ID, profiler_chan, layout_sender, script_sender);
+    let paint_time_metrics = PaintTimeMetrics::new(profiler_chan);
     assert_eq!(paint_time_metrics.get_navigation_start(), None, "navigation start is None");
     assert_eq!(paint_time_metrics.get_first_paint(), None, "first paint is None");
     assert_eq!(paint_time_metrics.get_first_contentful_paint(), None, "first contentful paint is None");
 }
 
-fn test_common(display_list: &DisplayList, epoch: Epoch) -> PaintTimeMetrics {
+#[test]
+fn test_first_paint_setter() {
     let (sender, _) = ipc::channel().unwrap();
     let profiler_chan = ProfilerChan(sender);
-    let (layout_sender, _) = ipc::channel().unwrap();
-    let (script_sender, _) = ipc::channel().unwrap();
-    let mut paint_time_metrics = PaintTimeMetrics::new(TEST_PIPELINE_ID, profiler_chan, layout_sender, script_sender);
+    let mut paint_time_metrics = PaintTimeMetrics::new(profiler_chan);
     let dummy_profiler_metadata_factory = DummyProfilerMetadataFactory {};
 
-    paint_time_metrics.maybe_observe_paint_time(&dummy_profiler_metadata_factory,
-                                                epoch,
-                                                &display_list);
-
     // Should not set any metric until navigation start is set.
-    paint_time_metrics.maybe_set_metric(epoch, 0.);
+    paint_time_metrics.maybe_set_first_paint(&dummy_profiler_metadata_factory);
     assert_eq!(paint_time_metrics.get_first_paint(), None, "first paint is None");
-    assert_eq!(paint_time_metrics.get_first_contentful_paint(), None, "first contentful paint is None");
 
     let navigation_start = time::precise_time_ns() as f64;
     paint_time_metrics.set_navigation_start(navigation_start);
     assert_eq!(paint_time_metrics.get_navigation_start().unwrap(),
                navigation_start, "navigation start is set");
 
-    paint_time_metrics
-}
-
-#[test]
-fn test_first_paint_setter() {
-    let empty_display_list = DisplayList {
-        list: Vec::new()
-    };
-    let epoch = Epoch(0);
-    let mut paint_time_metrics = test_common(&empty_display_list, epoch);
-    let now = time::precise_time_ns() as f64;
-    paint_time_metrics.maybe_set_metric(epoch, now);
+    paint_time_metrics.maybe_set_first_paint(&dummy_profiler_metadata_factory);
     assert!(paint_time_metrics.get_first_paint().is_some(), "first paint is set");
     assert_eq!(paint_time_metrics.get_first_contentful_paint(), None, "first contentful paint is None");
 }
 
 #[test]
 fn test_first_contentful_paint_setter() {
+    let (sender, _) = ipc::channel().unwrap();
+    let profiler_chan = ProfilerChan(sender);
+    let mut paint_time_metrics = PaintTimeMetrics::new(profiler_chan);
+    let dummy_profiler_metadata_factory = DummyProfilerMetadataFactory {};
+    let empty_display_list = DisplayList {
+        list: Vec::new()
+    };
+
+    // Should not set any metric until navigation start is set.
+    paint_time_metrics.maybe_set_first_contentful_paint(&dummy_profiler_metadata_factory,
+                                                        &empty_display_list);
+    assert_eq!(paint_time_metrics.get_first_contentful_paint(), None, "first contentful paint is None");
+
+    // Should not set first contentful paint if no appropriate display item is present.
+    let navigation_start = time::precise_time_ns() as f64;
+    paint_time_metrics.set_navigation_start(navigation_start);
+    paint_time_metrics.maybe_set_first_contentful_paint(&dummy_profiler_metadata_factory,
+                                                        &empty_display_list);
+    assert_eq!(paint_time_metrics.get_first_contentful_paint(), None, "first contentful paint is None");
+
+    let pipeline_id = PipelineId {
+        namespace_id: PipelineNamespaceId(1),
+        index: PipelineIndex(1),
+    };
     let image = DisplayItem::Image(Box::new(ImageDisplayItem {
-        base: BaseDisplayItem::empty(TEST_PIPELINE_ID),
+        base: BaseDisplayItem::empty(pipeline_id),
         webrender_image: WebRenderImageInfo {
             width: 1,
             height: 1,
@@ -89,10 +93,8 @@ fn test_first_contentful_paint_setter() {
     let display_list = DisplayList {
         list: vec![image]
     };
-    let epoch = Epoch(0);
-    let mut paint_time_metrics = test_common(&display_list, epoch);
-    let now = time::precise_time_ns() as f64;
-    paint_time_metrics.maybe_set_metric(epoch, now);
+    paint_time_metrics.maybe_set_first_contentful_paint(&dummy_profiler_metadata_factory,
+                                                        &display_list);
     assert!(paint_time_metrics.get_first_contentful_paint().is_some(), "first contentful paint is set");
-    assert!(paint_time_metrics.get_first_paint().is_some(), "first paint is set");
+    assert_eq!(paint_time_metrics.get_first_paint(), None, "first paint is None");
 }

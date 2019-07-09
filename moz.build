@@ -16,6 +16,9 @@ with Files('LEGAL'):
 with Files('aclocal.m4'):
     BUG_COMPONENT = ('Core', 'Build Config')
 
+with Files('Android.mk'):
+    BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
+
 with Files('client.*'):
     BUG_COMPONENT = ('Core', 'Build Config')
 
@@ -36,7 +39,6 @@ with Files('GNUmakefile'):
 
 with Files('*gradle*'):
     BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
-    SCHEDULES.exclusive = ['android']
 
 with Files('**/l10n.toml'):
     BUG_COMPONENT = ('Core', 'Localization')
@@ -48,18 +50,6 @@ with Files('README.txt'):
 with Files('**/Makefile.in'):
     BUG_COMPONENT = ('Core', 'Build Config')
     FINAL = True
-
-with Files("**/*.js"):
-    SCHEDULES.inclusive += ['test-verification']
-
-with Files("**/*.html"):
-    SCHEDULES.inclusive += ['test-verification']
-
-with Files("**/*.xhtml"):
-    SCHEDULES.inclusive += ['test-verification']
-
-with Files("**/*.xul"):
-    SCHEDULES.inclusive += ['test-verification']
 
 FILES_PER_UNIFIED_FILE = 1
 
@@ -79,10 +69,9 @@ DIRS += [
     'third_party/python',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] or not CONFIG['MOZ_BUILD_APP']:
+if not CONFIG['JS_STANDALONE']:
     # These python manifests are included here so they get picked up without an objdir
     PYTHON_UNITTEST_MANIFESTS += [
-        'layout/tools/reftest/selftest/python.ini',
         'testing/marionette/harness/marionette_harness/tests/harness_unit/python.ini',
         'testing/mochitest/tests/python/python.ini',
     ]
@@ -109,11 +98,10 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] or not CONFIG['MOZ_BUILD_APP']:
 
     DIRS += [
         'build',
-        'tools',
+        'probes',
     ]
 
-if CONFIG['COMPILE_ENVIRONMENT'] and (CONFIG['MOZ_WIDGET_TOOLKIT'] or
-                                      CONFIG['JS_STANDALONE']):
+if CONFIG['COMPILE_ENVIRONMENT']:
     DIRS += ['js/src']
 
 DIRS += [
@@ -125,14 +113,14 @@ DIRS += [
     'mozglue',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT']:
+if not CONFIG['JS_STANDALONE']:
     DIRS += ['xpcom/xpidl']
 
 if CONFIG['USE_ICU']:
     DIRS += ['config/external/icu']
 
 if CONFIG['COMPILE_ENVIRONMENT']:
-    if CONFIG['MOZ_WIDGET_TOOLKIT']:
+    if not CONFIG['JS_STANDALONE']:
         DIRS += [
             'config/external',
             'security',

@@ -19,9 +19,9 @@ class WebPlatformTestsRunner(object):
     def run(self, **kwargs):
         from wptrunner import wptrunner
         if kwargs["product"] in ["firefox", None]:
-            kwargs = self.setup.kwargs_firefox(kwargs)
+            self.setup.kwargs_firefox(kwargs)
         elif kwargs["product"] in ("chrome", "edge", "servo"):
-            kwargs = self.setup.kwargs_wptrun(kwargs)
+            self.setup.kwargs_wptrun(kwargs)
         else:
             raise ValueError("Unknown product %s" % kwargs["product"])
         logger = wptrunner.setup_logging(kwargs, {self.setup.default_log_type: sys.stdout})

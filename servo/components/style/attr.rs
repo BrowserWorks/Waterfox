@@ -16,7 +16,7 @@ use selectors::attr::AttrSelectorOperation;
 use servo_arc::Arc;
 use servo_url::ServoUrl;
 use shared_lock::Locked;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::str::FromStr;
 use str::{HTML_SPACE_CHARACTERS, read_exponent, read_fraction};
 use str::{read_numbers, split_commas, split_html_space_chars};
@@ -27,7 +27,7 @@ use values::specified::Length;
 const UNSIGNED_LONG_MAX: u32 = 2147483647;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub enum LengthOrPercentageOrAuto {
     Auto,
     Percentage(f32),
@@ -35,7 +35,7 @@ pub enum LengthOrPercentageOrAuto {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub enum AttrValue {
     String(String),
     TokenList(String, Vec<Atom>),
@@ -46,12 +46,7 @@ pub enum AttrValue {
     Length(String, Option<Length>),
     Color(String, Option<RGBA>),
     Dimension(String, LengthOrPercentageOrAuto),
-
-    /// Stores a URL, computed from the input string and a document's base URL.
-    ///
-    /// The URL is resolved at setting-time, so this kind of attribute value is
-    /// not actually suitable for most URL-reflecting IDL attributes.
-    ResolvedUrl(String, Option<ServoUrl>),
+    Url(String, Option<ServoUrl>),
 
     /// Note that this variant is only used transitively as a fast path to set
     /// the property declaration block relevant to the style of an element when
@@ -66,7 +61,7 @@ pub enum AttrValue {
     /// declaration block), but that avoids keeping a refcounted
     /// declarationblock for longer than needed.
     Declaration(String,
-                #[ignore_malloc_size_of = "Arc"]
+                #[cfg_attr(feature = "servo", ignore_heap_size_of = "Arc")]
                 Arc<Locked<PropertyDeclarationBlock>>)
 }
 
@@ -232,9 +227,9 @@ impl AttrValue {
         AttrValue::Atom(value)
     }
 
-    pub fn from_resolved_url(base: &ServoUrl, url: String) -> AttrValue {
+    pub fn from_url(base: ServoUrl, url: String) -> AttrValue {
         let joined = base.join(&url).ok();
-        AttrValue::ResolvedUrl(url, joined)
+        AttrValue::Url(url, joined)
     }
 
     pub fn from_legacy_color(string: String) -> AttrValue {
@@ -312,14 +307,14 @@ impl AttrValue {
         }
     }
 
-    /// Assumes the `AttrValue` is a `ResolvedUrl` and returns its value.
+    /// Assumes the `AttrValue` is a `Url` and returns its value
     ///
     /// ## Panics
     ///
-    /// Panics if the `AttrValue` is not a `ResolvedUrl`
-    pub fn as_resolved_url(&self) -> Option<&ServoUrl> {
+    /// Panics if the `AttrValue` is not a `Url`
+    pub fn as_url(&self) -> Option<&ServoUrl> {
         match *self {
-            AttrValue::ResolvedUrl(_, ref url) => url.as_ref(),
+            AttrValue::Url(_, ref url) => url.as_ref(),
             _ => panic!("Url not found"),
         }
     }
@@ -370,15 +365,15 @@ impl ::std::ops::Deref for AttrValue {
     fn deref(&self) -> &str {
         match *self {
             AttrValue::String(ref value) |
-            AttrValue::TokenList(ref value, _) |
-            AttrValue::UInt(ref value, _) |
-            AttrValue::Double(ref value, _) |
-            AttrValue::Length(ref value, _) |
-            AttrValue::Color(ref value, _) |
-            AttrValue::Int(ref value, _) |
-            AttrValue::ResolvedUrl(ref value, _) |
-            AttrValue::Declaration(ref value, _) |
-            AttrValue::Dimension(ref value, _) => &value,
+                AttrValue::TokenList(ref value, _) |
+                AttrValue::UInt(ref value, _) |
+                AttrValue::Double(ref value, _) |
+                AttrValue::Length(ref value, _) |
+                AttrValue::Color(ref value, _) |
+                AttrValue::Int(ref value, _) |
+                AttrValue::Url(ref value, _) |
+                AttrValue::Declaration(ref value, _) |
+                AttrValue::Dimension(ref value, _) => &value,
             AttrValue::Atom(ref value) => &value,
         }
     }
@@ -393,7 +388,7 @@ impl PartialEq<Atom> for AttrValue {
     }
 }
 
-/// <https://html.spec.whatwg.org/multipage/#rules-for-parsing-non-zero-dimension-values>
+/// https://html.spec.whatwg.org/multipage/#rules-for-parsing-non-zero-dimension-values
 pub fn parse_nonzero_length(value: &str) -> LengthOrPercentageOrAuto {
     match parse_length(value) {
         LengthOrPercentageOrAuto::Length(x) if x == Au::zero() => LengthOrPercentageOrAuto::Auto,
@@ -596,7 +591,7 @@ pub fn parse_length(mut value: &str) -> LengthOrPercentageOrAuto {
 
 /// A struct that uniquely identifies an element's attribute.
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct AttrIdentifier {
     pub local_name: LocalName,
     pub name: LocalName,

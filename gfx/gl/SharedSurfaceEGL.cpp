@@ -196,9 +196,7 @@ SharedSurface_SurfaceTexture::Create(GLContext* prodGL,
     UniquePtr<SharedSurface_SurfaceTexture> ret;
 
     AndroidNativeWindow window(surface);
-    GLContextEGL* egl = GLContextEGL::Cast(prodGL);
-    MOZ_ASSERT(egl);
-    EGLSurface eglSurface = egl->CreateCompatibleSurface(window.NativeWindow());
+    EGLSurface eglSurface = GLContextProviderEGL::CreateEGLSurface(window.NativeWindow());
     if (!eglSurface) {
         return Move(ret);
     }

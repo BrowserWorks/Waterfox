@@ -172,29 +172,29 @@ SavePage.prototype.onClick = function() {
   FoldEffect.expandAll();
   FilePicker.init(window, getString("save_page_dialog_title"), FilePicker.modeSave);
   FilePicker.defaultString = LOGFILE_NAME_DEFAULT;
-  FilePicker.open(rv => {
-    if (rv == FilePicker.returnOK || rv == FilePicker.returnReplace) {
-      let fout = FileUtils.openAtomicFileOutputStream(
-        FilePicker.file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE);
+  let rv = FilePicker.show();
 
-      let nodes = content.querySelectorAll(".no-print");
-      let noPrintList = [];
-      for (let node of nodes) {
-        noPrintList.push(node);
-        node.style.setProperty("display", "none");
-      }
+  if (rv == FilePicker.returnOK || rv == FilePicker.returnReplace) {
+    let fout = FileUtils.openAtomicFileOutputStream(
+      FilePicker.file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE);
 
-      fout.write(content.outerHTML, content.outerHTML.length);
-      FileUtils.closeAtomicFileOutputStream(fout);
-
-      for (let node of noPrintList) {
-        node.style.removeProperty("display");
-      }
-
-      this._message = formatString("save_page_msg", [FilePicker.file.path], 1);
-      this.update();
+    let nodes = content.querySelectorAll(".no-print");
+    let noPrintList = [];
+    for (let node of nodes) {
+      noPrintList.push(node);
+      node.style.setProperty("display", "none");
     }
-  });
+
+    fout.write(content.outerHTML, content.outerHTML.length);
+    FileUtils.closeAtomicFileOutputStream(fout);
+
+    for (let node of noPrintList) {
+      node.style.removeProperty("display");
+    }
+
+    this._message = formatString("save_page_msg", [FilePicker.file.path], 1);
+    this.update();
+  }
 };
 
 function DebugMode() {
@@ -262,7 +262,7 @@ AecLogging.prototype.constructor = AecLogging;
 AecLogging.prototype.offState = function() {
   this._label = getString("aec_logging_off_state_label");
   try {
-    let file = WebrtcGlobalInformation.aecDebugLogDir;
+    let file = Services.prefs.getCharPref("media.webrtc.debug.aec_log_dir");
     this._message = formatString("aec_logging_off_state_msg", [file], 1);
   } catch (e) {
     this._message = null;

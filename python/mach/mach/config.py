@@ -12,17 +12,40 @@ them. This metadata includes type, default value, valid values, etc.
 The main interface to config data is the ConfigSettings class. 1 or more
 ConfigProvider classes are associated with ConfigSettings and define what
 settings are available.
+
+Descriptions of individual config options can be translated to multiple
+languages using gettext. Each option has associated with it a domain and locale
+directory. By default, the domain is the section the option is in and the
+locale directory is the "locale" directory beneath the directory containing the
+module that defines it.
+
+People implementing ConfigProvider instances are expected to define a complete
+gettext .po and .mo file for the en_US locale. The |mach settings locale-gen|
+command can be used to populate these files.
 """
 
 from __future__ import absolute_import, unicode_literals
 
 import collections
+import gettext
 import os
 import sys
-import six
 from functools import wraps
-from six.moves.configparser import RawConfigParser, NoSectionError
-from six import string_types as str_type
+
+if sys.version_info[0] == 3:
+    from configparser import RawConfigParser, NoSectionError
+    str_type = str
+else:
+    from ConfigParser import RawConfigParser, NoSectionError
+    str_type = basestring
+
+
+TRANSLATION_NOT_FOUND = """
+No translation files detected for {section}, there must at least be a
+translation for the 'en_US' locale. To generate these files, run:
+
+    mach settings locale-gen {section}
+""".lstrip()
 
 
 class ConfigException(Exception):
@@ -140,7 +163,7 @@ def reraise_attribute_error(func):
             return func(*args, **kwargs)
         except KeyError:
             exc_class, exc, tb = sys.exc_info()
-            six.reraise(AttributeError().__class__, exc, tb)
+            raise AttributeError().__class__, exc, tb
     return _
 
 
@@ -274,6 +297,7 @@ class ConfigSettings(collections.Mapping):
         def __delattr__(self, k):
             self.__delitem__(k)
 
+
     def __init__(self):
         self._config = RawConfigParser()
         self._config.optionxform = str
@@ -312,7 +336,7 @@ class ConfigSettings(collections.Mapping):
         self._config.write(fh)
 
     @classmethod
-    def _format_metadata(cls, provider, section, option, type_cls, description,
+    def _format_metadata(cls, provider, section, option, type_cls,
                          default=DefaultValue, extra=None):
         """Formats and returns the metadata for a setting.
 
@@ -326,9 +350,6 @@ class ConfigSettings(collections.Mapping):
 
             type -- a ConfigType-derived type defining the type of the setting.
 
-            description -- str describing how to use the setting and where it
-                applies.
-
         Each setting has the following optional parameters:
 
             default -- The default value for the setting. If None (the default)
@@ -341,8 +362,11 @@ class ConfigSettings(collections.Mapping):
             type_cls = TYPE_CLASSES[type_cls]
 
         meta = {
-            'description': description,
+            'short': '%s.short' % option,
+            'full': '%s.full' % option,
             'type_cls': type_cls,
+            'domain': section,
+            'localedir': provider.config_settings_locale_directory,
         }
 
         if default != DefaultValue:
@@ -385,6 +409,25 @@ class ConfigSettings(collections.Mapping):
                 section[k] = v
 
             self._settings[section_name] = section
+
+    def option_help(self, section, option):
+        """Obtain the translated help messages for an option."""
+
+        meta = self[section].get_meta(option)
+
+        # Providers should always have an en_US translation. If they don't,
+        # they are coded wrong and this will raise.
+        default = gettext.translation(meta['domain'], meta['localedir'],
+                                      ['en_US'])
+
+        t = gettext.translation(meta['domain'], meta['localedir'],
+                                fallback=True)
+        t.add_fallback(default)
+
+        short = t.ugettext('%s.%s.short' % (section, option))
+        full = t.ugettext('%s.%s.full' % (section, option))
+
+        return (short, full)
 
     def _finalize(self):
         if self._finalized:

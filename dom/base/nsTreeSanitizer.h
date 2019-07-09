@@ -92,7 +92,7 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
      * @return true if the element must be replaced with its children and
      *         false if the element is to be kept
      */
-    bool MustFlatten(int32_t aNamespace, nsAtom* aLocal);
+    bool MustFlatten(int32_t aNamespace, nsIAtom* aLocal);
 
     /**
      * Queries if an element including its children must be removed.
@@ -103,7 +103,7 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
      *         false if the element is to be kept
      */
     bool MustPrune(int32_t aNamespace,
-                     nsAtom* aLocal,
+                     nsIAtom* aLocal,
                      mozilla::dom::Element* aElement);
 
     /**
@@ -113,7 +113,7 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
      * @param aLocalName the name to search on the list
      * @return true if aLocalName is on the aURLs list and false otherwise
      */
-    bool IsURL(nsAtom*** aURLs, nsAtom* aLocalName);
+    bool IsURL(nsIAtom*** aURLs, nsIAtom* aLocalName);
 
     /**
      * Removes dangerous attributes from the element. If the style attribute
@@ -130,8 +130,8 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
      *                           attribute unsanitized
      */
     void SanitizeAttributes(mozilla::dom::Element* aElement,
-                            nsTHashtable<nsRefPtrHashKey<nsAtom>>* aAllowed,
-                            nsAtom*** aURLs,
+                            nsTHashtable<nsISupportsHashKey>* aAllowed,
+                            nsIAtom*** aURLs,
                             bool aAllowXLink,
                             bool aAllowStyle,
                             bool aAllowDangerousSrc);
@@ -147,16 +147,19 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
      */
     bool SanitizeURL(mozilla::dom::Element* aElement,
                        int32_t aNamespace,
-                       nsAtom* aLocalName);
+                       nsIAtom* aLocalName);
 
     /**
      * Checks a style rule for the presence of the 'binding' CSS property and
-     * removes that property from the rule.
+     * removes that property from the rule and reserializes in case the
+     * property was found.
      *
      * @param aDeclaration The style declaration to check
+     * @param aRuleText the serialized mutated rule if the method returns true
      * @return true if the rule was modified and false otherwise
      */
-    bool SanitizeStyleDeclaration(mozilla::DeclarationBlock* aDeclaration);
+    bool SanitizeStyleDeclaration(mozilla::css::Declaration* aDeclaration,
+                                  nsAutoString& aRuleText);
 
     /**
      * Parses a style sheet and reserializes it with the 'binding' property
@@ -183,37 +186,37 @@ class MOZ_STACK_CLASS nsTreeSanitizer {
     /**
      * The whitelist of HTML elements.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sElementsHTML;
+    static nsTHashtable<nsISupportsHashKey>* sElementsHTML;
 
     /**
      * The whitelist of non-presentational HTML attributes.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sAttributesHTML;
+    static nsTHashtable<nsISupportsHashKey>* sAttributesHTML;
 
     /**
      * The whitelist of presentational HTML attributes.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sPresAttributesHTML;
+    static nsTHashtable<nsISupportsHashKey>* sPresAttributesHTML;
 
     /**
      * The whitelist of SVG elements.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sElementsSVG;
+    static nsTHashtable<nsISupportsHashKey>* sElementsSVG;
 
     /**
      * The whitelist of SVG attributes.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sAttributesSVG;
+    static nsTHashtable<nsISupportsHashKey>* sAttributesSVG;
 
     /**
      * The whitelist of SVG elements.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sElementsMathML;
+    static nsTHashtable<nsISupportsHashKey>* sElementsMathML;
 
     /**
      * The whitelist of MathML attributes.
      */
-    static nsTHashtable<nsRefPtrHashKey<nsAtom>>* sAttributesMathML;
+    static nsTHashtable<nsISupportsHashKey>* sAttributesMathML;
 
     /**
      * Reusable null principal for URL checks.

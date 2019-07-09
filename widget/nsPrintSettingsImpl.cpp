@@ -192,15 +192,19 @@ NS_IMETHODIMP nsPrintSettings::SetDuplex(const int32_t aDuplex)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetPrinterName(nsAString& aPrinter)
+NS_IMETHODIMP nsPrintSettings::GetPrinterName(char16_t * *aPrinter)
 {
-   aPrinter = mPrinter;
+   NS_ENSURE_ARG_POINTER(aPrinter);
+
+   *aPrinter = ToNewUnicode(mPrinter);
+   NS_ENSURE_TRUE(*aPrinter, NS_ERROR_OUT_OF_MEMORY);
+
    return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::SetPrinterName(const nsAString& aPrinter)
+NS_IMETHODIMP nsPrintSettings::SetPrinterName(const char16_t * aPrinter)
 {
-  if (!mPrinter.Equals(aPrinter)) {
+  if (!aPrinter || !mPrinter.Equals(aPrinter)) {
     mIsInitedFromPrinter = false;
     mIsInitedFromPrefs   = false;
   }
@@ -233,14 +237,19 @@ NS_IMETHODIMP nsPrintSettings::SetPrintToFile(bool aPrintToFile)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetToFileName(nsAString& aToFileName)
+NS_IMETHODIMP nsPrintSettings::GetToFileName(char16_t * *aToFileName)
 {
-  aToFileName = mToFileName;
+  //NS_ENSURE_ARG_POINTER(aToFileName);
+  *aToFileName = ToNewUnicode(mToFileName);
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettings::SetToFileName(const nsAString& aToFileName)
+NS_IMETHODIMP nsPrintSettings::SetToFileName(const char16_t * aToFileName)
 {
-  mToFileName = aToFileName;
+  if (aToFileName) {
+    mToFileName = aToFileName;
+  } else {
+    mToFileName.SetLength(0);
+  }
   return NS_OK;
 }
 
@@ -492,25 +501,43 @@ NS_IMETHODIMP nsPrintSettings::SetPrintRange(int16_t aPrintRange)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetTitle(nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::GetTitle(char16_t * *aTitle)
 {
-  aTitle = mTitle;
+  NS_ENSURE_ARG_POINTER(aTitle);
+  if (!mTitle.IsEmpty()) {
+    *aTitle = ToNewUnicode(mTitle);
+  } else {
+    *aTitle = nullptr;
+  }
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettings::SetTitle(const nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::SetTitle(const char16_t * aTitle)
 {
-  mTitle = aTitle;
+  if (aTitle) {
+    mTitle = aTitle;
+  } else {
+    mTitle.SetLength(0);
+  }
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetDocURL(nsAString& aDocURL)
+NS_IMETHODIMP nsPrintSettings::GetDocURL(char16_t * *aDocURL)
 {
-  aDocURL = mURL;
+  NS_ENSURE_ARG_POINTER(aDocURL);
+  if (!mURL.IsEmpty()) {
+    *aDocURL = ToNewUnicode(mURL);
+  } else {
+    *aDocURL = nullptr;
+  }
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettings::SetDocURL(const nsAString& aDocURL)
+NS_IMETHODIMP nsPrintSettings::SetDocURL(const char16_t * aDocURL)
 {
-  mURL = aDocURL;
+  if (aDocURL) {
+    mURL = aDocURL;
+  } else {
+    mURL.SetLength(0);
+  }
   return NS_OK;
 }
 
@@ -559,70 +586,103 @@ nsPrintSettings::SetPrintOptionsBits(int32_t aBits)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetHeaderStrLeft(nsAString& aTitle)
+nsresult 
+nsPrintSettings::GetMarginStrs(char16_t * *aTitle, 
+                              nsHeaderFooterEnum aType, 
+                              int16_t aJust)
 {
-  aTitle = mHeaderStrs[0];
-  return NS_OK;
-}
-NS_IMETHODIMP nsPrintSettings::SetHeaderStrLeft(const nsAString& aTitle)
-{
-  mHeaderStrs[0] = aTitle;
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsPrintSettings::GetHeaderStrCenter(nsAString& aTitle)
-{
-  aTitle = mHeaderStrs[1];
-  return NS_OK;
-}
-NS_IMETHODIMP nsPrintSettings::SetHeaderStrCenter(const nsAString& aTitle)
-{
-  mHeaderStrs[1] = aTitle;
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsPrintSettings::GetHeaderStrRight(nsAString& aTitle)
-{
-  aTitle = mHeaderStrs[2];
-  return NS_OK;
-}
-NS_IMETHODIMP nsPrintSettings::SetHeaderStrRight(const nsAString& aTitle)
-{
-  mHeaderStrs[2] = aTitle;
+  NS_ENSURE_ARG_POINTER(aTitle);
+  *aTitle = nullptr;
+  if (aType == eHeader) {
+    switch (aJust) {
+      case kJustLeft:   *aTitle = ToNewUnicode(mHeaderStrs[0]);break;
+      case kJustCenter: *aTitle = ToNewUnicode(mHeaderStrs[1]);break;
+      case kJustRight:  *aTitle = ToNewUnicode(mHeaderStrs[2]);break;
+    } //switch
+  } else {
+    switch (aJust) {
+      case kJustLeft:   *aTitle = ToNewUnicode(mFooterStrs[0]);break;
+      case kJustCenter: *aTitle = ToNewUnicode(mFooterStrs[1]);break;
+      case kJustRight:  *aTitle = ToNewUnicode(mFooterStrs[2]);break;
+    } //switch
+  }
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetFooterStrLeft(nsAString& aTitle)
+nsresult
+nsPrintSettings::SetMarginStrs(const char16_t * aTitle, 
+                              nsHeaderFooterEnum aType, 
+                              int16_t aJust)
 {
-  aTitle = mFooterStrs[0];
-  return NS_OK;
-}
-NS_IMETHODIMP nsPrintSettings::SetFooterStrLeft(const nsAString& aTitle)
-{
-  mFooterStrs[0] = aTitle;
+  NS_ENSURE_ARG_POINTER(aTitle);
+  if (aType == eHeader) {
+    switch (aJust) {
+      case kJustLeft:   mHeaderStrs[0] = aTitle;break;
+      case kJustCenter: mHeaderStrs[1] = aTitle;break;
+      case kJustRight:  mHeaderStrs[2] = aTitle;break;
+    } //switch
+  } else {
+    switch (aJust) {
+      case kJustLeft:   mFooterStrs[0] = aTitle;break;
+      case kJustCenter: mFooterStrs[1] = aTitle;break;
+      case kJustRight:  mFooterStrs[2] = aTitle;break;
+    } //switch
+  }
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetFooterStrCenter(nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::GetHeaderStrLeft(char16_t * *aTitle)
 {
-  aTitle = mFooterStrs[1];
-  return NS_OK;
+  return GetMarginStrs(aTitle, eHeader, kJustLeft);
 }
-NS_IMETHODIMP nsPrintSettings::SetFooterStrCenter(const nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::SetHeaderStrLeft(const char16_t * aTitle)
 {
-  mFooterStrs[1] = aTitle;
-  return NS_OK;
+  return SetMarginStrs(aTitle, eHeader, kJustLeft);
 }
 
-NS_IMETHODIMP nsPrintSettings::GetFooterStrRight(nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::GetHeaderStrCenter(char16_t * *aTitle)
 {
-  aTitle = mFooterStrs[2];
-  return NS_OK;
+  return GetMarginStrs(aTitle, eHeader, kJustCenter);
 }
-NS_IMETHODIMP nsPrintSettings::SetFooterStrRight(const nsAString& aTitle)
+NS_IMETHODIMP nsPrintSettings::SetHeaderStrCenter(const char16_t * aTitle)
 {
-  mFooterStrs[2] = aTitle;
-  return NS_OK;
+  return SetMarginStrs(aTitle, eHeader, kJustCenter);
+}
+
+NS_IMETHODIMP nsPrintSettings::GetHeaderStrRight(char16_t * *aTitle)
+{
+  return GetMarginStrs(aTitle, eHeader, kJustRight);
+}
+NS_IMETHODIMP nsPrintSettings::SetHeaderStrRight(const char16_t * aTitle)
+{
+  return SetMarginStrs(aTitle, eHeader, kJustRight);
+}
+
+NS_IMETHODIMP nsPrintSettings::GetFooterStrLeft(char16_t * *aTitle)
+{
+  return GetMarginStrs(aTitle, eFooter, kJustLeft);
+}
+NS_IMETHODIMP nsPrintSettings::SetFooterStrLeft(const char16_t * aTitle)
+{
+  return SetMarginStrs(aTitle, eFooter, kJustLeft);
+}
+
+NS_IMETHODIMP nsPrintSettings::GetFooterStrCenter(char16_t * *aTitle)
+{
+  return GetMarginStrs(aTitle, eFooter, kJustCenter);
+}
+NS_IMETHODIMP nsPrintSettings::SetFooterStrCenter(const char16_t * aTitle)
+{
+  return SetMarginStrs(aTitle, eFooter, kJustCenter);
+}
+
+NS_IMETHODIMP nsPrintSettings::GetFooterStrRight(char16_t * *aTitle)
+{
+  return GetMarginStrs(aTitle, eFooter, kJustRight);
+}
+NS_IMETHODIMP nsPrintSettings::SetFooterStrRight(const char16_t * aTitle)
+{
+  return SetMarginStrs(aTitle, eFooter, kJustRight);
 }
 
 NS_IMETHODIMP nsPrintSettings::GetPrintFrameTypeUsage(int16_t *aPrintFrameTypeUsage)
@@ -685,14 +745,23 @@ NS_IMETHODIMP nsPrintSettings::SetShowPrintProgress(bool aShowPrintProgress)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPrintSettings::GetPaperName(nsAString& aPaperName)
+NS_IMETHODIMP nsPrintSettings::GetPaperName(char16_t * *aPaperName)
 {
-  aPaperName = mPaperName;
+  NS_ENSURE_ARG_POINTER(aPaperName);
+  if (!mPaperName.IsEmpty()) {
+    *aPaperName = ToNewUnicode(mPaperName);
+  } else {
+    *aPaperName = nullptr;
+  }
   return NS_OK;
 }
-NS_IMETHODIMP nsPrintSettings::SetPaperName(const nsAString& aPaperName)
+NS_IMETHODIMP nsPrintSettings::SetPaperName(const char16_t * aPaperName)
 {
-  mPaperName = aPaperName;
+  if (aPaperName) {
+    mPaperName = aPaperName;
+  } else {
+    mPaperName.SetLength(0);
+  }
   return NS_OK;
 }
 

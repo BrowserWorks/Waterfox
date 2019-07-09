@@ -5,7 +5,6 @@
 package org.mozilla.gecko.fxa.authenticator;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -24,7 +23,6 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 
 /**
  * Android deletes Account objects when the Authenticator that owns the Account
@@ -127,10 +125,6 @@ public class AccountPickler {
    * Persist Firefox account to disk as a JSON object.
    * This operation is synchronized to avoid race condition while deleting the account.
    *
-   * Note that pickling is different from bundling, which involves operations on a
-   * {@link android.os.Bundle Bundle} object of miscellaneous data associated with the account.
-   * See {@link AndroidFxAccount#persistBundle} and {@link AndroidFxAccount#unbundle} for more.
-   *
    * @param account the AndroidFxAccount to persist to disk
    * @param filename name of file to persist to; must not contain path separators.
    */
@@ -161,13 +155,6 @@ public class AccountPickler {
     }
   }
 
-  /* package-private */ synchronized static UnpickleParams unpickleParams(final Context context, final String filename)
-          throws IOException, InvalidKeySpecException, SecurityException, NoSuchAlgorithmException, NonObjectJSONException {
-    final String jsonString = Utils.readFile(context, filename);
-    final ExtendedJSONObject json = new ExtendedJSONObject(jsonString);
-    return UnpickleParams.fromJSON(json);
-  }
-
   /**
    * Create Android account from saved JSON object. Assumes that an account does not exist.
    * This operation is synchronized to avoid race condition while deleting the account.
@@ -178,24 +165,32 @@ public class AccountPickler {
    *          name of file to read from; must not contain path separators.
    * @return created Android account, or null on error.
    */
-  @Nullable
   public synchronized static AndroidFxAccount unpickle(final Context context, final String filename) {
-    final UnpickleParams params;
-
-    try {
-      params = unpickleParams(context, filename);
-    } catch (Exception e) {
-      Logger.error(LOG_TAG, "Exception unpickling " + filename, e);
+    final String jsonString = Utils.readFile(context, filename);
+    if (jsonString == null) {
+      Logger.info(LOG_TAG, "Pickle file '" + filename + "' not found; aborting.");
       return null;
     }
 
-    if (params == null) {
+    ExtendedJSONObject json = null;
+    try {
+      json = new ExtendedJSONObject(jsonString);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception reading pickle file '" + filename + "'; aborting.", e);
+      return null;
+    }
+
+    final UnpickleParams params;
+    try {
+      params = UnpickleParams.fromJSON(json);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception extracting unpickle json; aborting.", e);
       return null;
     }
 
     final AndroidFxAccount account;
     try {
-      account = AndroidFxAccount.addAndroidAccount(context, params.state.uid, params.email, params.profile,
+      account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
           params.authServerURI, params.tokenServerURI, params.profileServerURI, params.state,
           params.authoritiesToSyncAutomaticallyMap,
           params.accountVersion,
@@ -210,13 +205,19 @@ public class AccountPickler {
       return null;
     }
 
+    Long timestamp = json.getLong(KEY_PICKLE_TIMESTAMP);
+    if (timestamp == null) {
+      Logger.warn(LOG_TAG, "Did not find timestamp in pickle file; ignoring.");
+      timestamp = -1L;
+    }
+
     Logger.info(LOG_TAG, "Un-pickled Android account named " + params.email + " (version " +
-        params.pickleVersion + ").");
+        params.pickleVersion + ", pickled at " + timestamp + ").");
 
     return account;
   }
 
-  /* package-private */ static class UnpickleParams {
+  private static class UnpickleParams {
     private Long pickleVersion;
 
     private int accountVersion;
@@ -356,11 +357,6 @@ public class AccountPickler {
       } catch (Exception e) {
         throw new IllegalStateException("could not get state", e);
       }
-    }
-
-    @Nullable
-    /* package-private */ String getUID() {
-      return this.state.uid;
     }
   }
 }

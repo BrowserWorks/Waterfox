@@ -4,7 +4,6 @@
 
 #include "nsHtml5SpeculativeLoad.h"
 #include "nsHtml5TreeOpExecutor.h"
-#include "mozilla/Encoding.h"
 
 nsHtml5SpeculativeLoad::nsHtml5SpeculativeLoad()
   :
@@ -29,18 +28,16 @@ nsHtml5SpeculativeLoad::Perform(nsHtml5TreeOpExecutor* aExecutor)
 {
   switch (mOpCode) {
     case eSpeculativeLoadBase:
-      aExecutor->SetSpeculationBase(mUrlOrSizes);
+      aExecutor->SetSpeculationBase(mUrl);
       break;
     case eSpeculativeLoadCSP:
-      aExecutor->AddSpeculationCSP(mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity);
+      aExecutor->AddSpeculationCSP(mMetaCSP);
       break;
     case eSpeculativeLoadMetaReferrer:
-      aExecutor->SetSpeculationReferrerPolicy(mReferrerPolicyOrIntegrity);
+      aExecutor->SetSpeculationReferrerPolicy(mReferrerPolicy);
       break;
     case eSpeculativeLoadImage:
-      aExecutor->PreloadImage(mUrlOrSizes, mCrossOriginOrMedia, mCharsetOrSrcset,
-                              mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity,
-                              mReferrerPolicyOrIntegrity);
+      aExecutor->PreloadImage(mUrl, mCrossOrigin, mSrcset, mSizes, mReferrerPolicy);
       break;
     case eSpeculativeLoadOpenPicture:
       aExecutor->PreloadOpenPicture();
@@ -49,49 +46,43 @@ nsHtml5SpeculativeLoad::Perform(nsHtml5TreeOpExecutor* aExecutor)
       aExecutor->PreloadEndPicture();
       break;
     case eSpeculativeLoadPictureSource:
-      aExecutor->PreloadPictureSource(mCharsetOrSrcset, mUrlOrSizes,
-                                      mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity,
-                                      mCrossOriginOrMedia);
+      aExecutor->PreloadPictureSource(mSrcset, mSizes, mTypeOrCharsetSourceOrDocumentMode,
+                                      mMedia);
       break;
     case eSpeculativeLoadScript:
-      aExecutor->PreloadScript(mUrlOrSizes, mCharsetOrSrcset,
-                               mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity,
-                               mCrossOriginOrMedia, mReferrerPolicyOrIntegrity, false,
-                               mIsAsync, mIsDefer);
+      aExecutor->PreloadScript(mUrl, mCharset, mTypeOrCharsetSourceOrDocumentMode,
+                               mCrossOrigin, mIntegrity, false, mIsAsync, mIsDefer);
       break;
     case eSpeculativeLoadScriptFromHead:
-      aExecutor->PreloadScript(mUrlOrSizes, mCharsetOrSrcset,
-                               mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity,
-                               mCrossOriginOrMedia, mReferrerPolicyOrIntegrity, true,
-                               mIsAsync, mIsDefer);
+      aExecutor->PreloadScript(mUrl, mCharset, mTypeOrCharsetSourceOrDocumentMode,
+                               mCrossOrigin, mIntegrity, true, mIsAsync, mIsDefer);
       break;
     case eSpeculativeLoadStyle:
-      aExecutor->PreloadStyle(mUrlOrSizes, mCharsetOrSrcset, mCrossOriginOrMedia, mReferrerPolicyOrIntegrity,
-                              mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity);
+      aExecutor->PreloadStyle(mUrl, mCharset, mCrossOrigin, mIntegrity);
       break;
     case eSpeculativeLoadManifest:  
-      aExecutor->ProcessOfflineManifest(mUrlOrSizes);
+      aExecutor->ProcessOfflineManifest(mUrl);
       break;
     case eSpeculativeLoadSetDocumentCharset: {
         nsAutoCString narrowName;
-        CopyUTF16toUTF8(mCharsetOrSrcset, narrowName);
-        NS_ASSERTION(mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity.Length() == 1,
+        CopyUTF16toUTF8(mCharset, narrowName);
+        NS_ASSERTION(mTypeOrCharsetSourceOrDocumentMode.Length() == 1,
             "Unexpected charset source string");
-        int32_t intSource = (int32_t)mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity.First();
+        int32_t intSource = (int32_t)mTypeOrCharsetSourceOrDocumentMode.First();
         aExecutor->SetDocumentCharsetAndSource(Encoding::ForName(narrowName),
                                                intSource);
       }
       break;
     case eSpeculativeLoadSetDocumentMode: {
-        NS_ASSERTION(mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity.Length() == 1,
+        NS_ASSERTION(mTypeOrCharsetSourceOrDocumentMode.Length() == 1,
             "Unexpected document mode string");
         nsHtml5DocumentMode mode =
-            (nsHtml5DocumentMode)mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity.First();
+            (nsHtml5DocumentMode)mTypeOrCharsetSourceOrDocumentMode.First();
         aExecutor->SetDocumentMode(mode);
       }
       break;
     case eSpeculativeLoadPreconnect:
-      aExecutor->Preconnect(mUrlOrSizes, mCrossOriginOrMedia);
+      aExecutor->Preconnect(mUrl, mCrossOrigin);
       break;
     default:
       NS_NOTREACHED("Bogus speculative load.");

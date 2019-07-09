@@ -16,6 +16,8 @@ PerformanceMark::PerformanceMark(nsISupports* aParent,
   : PerformanceEntry(aParent, aName, NS_LITERAL_STRING("mark"))
   , mStartTime(aStartTime)
 {
+  // mParent is null in workers.
+  MOZ_ASSERT(mParent || !NS_IsMainThread());
 }
 
 PerformanceMark::~PerformanceMark()

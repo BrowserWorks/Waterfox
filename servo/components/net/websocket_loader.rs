@@ -19,7 +19,6 @@ use net_traits::{CookieSource, MessageData, NetworkError, WebSocketCommunicate, 
 use net_traits::{WebSocketDomAction, WebSocketNetworkEvent};
 use net_traits::request::{Destination, Type};
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use std::io::{self, Write};
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
@@ -352,7 +351,7 @@ fn main_fetch(url: ServoUrl,
         // doesn't need to be filtered at all.
 
         // Step 12.2.
-        scheme_fetch(&url, origin, &mut headers, http_state)
+        basic_fetch(&url, origin, &mut headers, http_state)
     });
 
     // Step 13.
@@ -386,8 +385,8 @@ fn main_fetch(url: ServoUrl,
     response
 }
 
-// https://fetch.spec.whatwg.org/#concept-scheme-fetch
-fn scheme_fetch(url: &ServoUrl,
+// https://fetch.spec.whatwg.org/#concept-basic-fetch
+fn basic_fetch(url: &ServoUrl,
                origin: String,
                headers: &mut Headers,
                http_state: &HttpState)

@@ -20,7 +20,7 @@ class nsAttrValue;
 class nsPresContext;
 class nsDeviceContext;
 class nsIFrame;
-class nsAtom;
+class nsIAtom;
 class nsIWidget;
 
 // IID for the nsITheme interface
@@ -134,7 +134,7 @@ public:
    * null |aOldValue|) for content state changes.
    */
   NS_IMETHOD WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
-                                nsAtom* aAttribute, bool* aShouldRepaint,
+                                nsIAtom* aAttribute, bool* aShouldRepaint,
                                 const nsAttrValue* aOldValue)=0;
 
   NS_IMETHOD ThemeChanged()=0;
@@ -144,6 +144,10 @@ public:
 
   virtual bool NeedToClearBackgroundBehindWidget(nsIFrame* aFrame,
                                                  uint8_t aWidgetType)
+  { return false; }
+
+  virtual bool WidgetProvidesFontSmoothingBackgroundColor(nsIFrame* aFrame,
+                                      uint8_t aWidgetType, nscolor* aColor)
   { return false; }
 
   /**

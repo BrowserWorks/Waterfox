@@ -245,7 +245,8 @@ print >>ipc_msgtype_name, """
 
 } // anonymous namespace
 
-namespace IPC {
+namespace mozilla {
+namespace ipc {
 
 const char* StringFromIPCMessageType(uint32_t aMessageType)
 {
@@ -276,7 +277,8 @@ print >>ipc_msgtype_name, """
   }
 }
 
-} // namespace IPC
+} // namespace ipc
+} // namespace mozilla
 """
 
 ipdl.writeifmodified(ipcmsgstart.getvalue(), ipcmessagestartpath)

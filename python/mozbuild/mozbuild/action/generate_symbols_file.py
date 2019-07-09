@@ -22,7 +22,7 @@ def generate_symbols_file(output, *args):
     input = os.path.abspath(args.input)
 
     pp = Preprocessor()
-    pp.context.update(buildconfig.defines['ALLDEFINES'])
+    pp.context.update(buildconfig.defines)
     if args.D:
         pp.context.update(args.D)
     for undefine in args.U:

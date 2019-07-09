@@ -26,6 +26,7 @@
 #include <process.h>
 #include <shobjidl.h>
 #include "mozilla/ipc/WindowsMessageLoop.h"
+#include "mozilla/TlsAllocationTracker.h"
 #endif
 
 #include "nsAppDirectoryServiceDefs.h"
@@ -72,7 +73,6 @@
 
 #include "mozilla/ipc/TestShellParent.h"
 #include "mozilla/ipc/XPCShellEnvironment.h"
-#include "mozilla/Scheduler.h"
 #include "mozilla/WindowsDllBlocklist.h"
 
 #include "GMPProcessChild.h"
@@ -365,6 +365,14 @@ XRE_InitChildProcess(int aArgc,
 #endif
 
 #if defined(XP_WIN)
+#ifndef DEBUG
+  // XXX Bug 1320134: added for diagnosing the crashes because we're running out
+  // of TLS indices on Windows. Remove after the root cause is found.
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    mozilla::InitTlsAllocationTracker();
+  }
+#endif
+
   // From the --attach-console support in nsNativeAppSupportWin.cpp, but
   // here we are a content child process, so we always attempt to attach
   // to the parent's (ie, the browser's) console.
@@ -399,7 +407,9 @@ XRE_InitChildProcess(int aArgc,
 
   mozilla::LogModule::Init();
 
-  AUTO_PROFILER_INIT;
+  char aLocal;
+  AutoProfilerInit profilerInit(&aLocal);
+
   AUTO_PROFILER_LABEL("XRE_InitChildProcess", OTHER);
 
   // Ensure AbstractThread is minimally setup, so async IPC messages
@@ -561,20 +571,6 @@ XRE_InitChildProcess(int aArgc,
   base::ProcessId parentPID = strtol(parentPIDString, &end, 10);
   MOZ_ASSERT(!*end, "invalid parent PID");
 
-  nsCOMPtr<nsIFile> crashReportTmpDir;
-  if (XRE_GetProcessType() == GeckoProcessType_GPU) {
-    aArgc--;
-    if (strlen(aArgv[aArgc])) { // if it's empty, ignore it
-      nsresult rv = XRE_GetFileFromPath(aArgv[aArgc], getter_AddRefs(crashReportTmpDir));
-      if (NS_FAILED(rv)) {
-        // If we don't have a valid tmp dir we can probably still run ok, but
-        // crash report .extra files might not get picked up by the parent
-        // process. Debug-assert because this shouldn't happen in practice.
-        MOZ_ASSERT(false, "GPU process started without valid tmp dir!");
-      }
-    }
-  }
-
 #ifdef XP_MACOSX
   mozilla::ipc::SharedMemoryBasic::SetupMachMemory(parentPID, ports_in_receiver, ports_in_sender,
                                                    ports_out_sender, ports_out_receiver, true);
@@ -674,7 +670,7 @@ XRE_InitChildProcess(int aArgc,
 
 #ifdef MOZ_CRASHREPORTER
 #if defined(XP_WIN) || defined(XP_MACOSX)
-      CrashReporter::InitChildProcessTmpDir(crashReportTmpDir);
+      CrashReporter::InitChildProcessTmpDir();
 #endif
 #endif
 
@@ -713,6 +709,14 @@ XRE_InitChildProcess(int aArgc,
 #endif
     }
   }
+
+#if defined(XP_WIN) && !defined(DEBUG)
+  // XXX Bug 1320134: added for diagnosing the crashes because we're running out
+  // of TLS indices on Windows. Remove after the root cause is found.
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    mozilla::ShutdownTlsAllocationTracker();
+  }
+#endif
 
   return XRE_DeinitCommandLine();
 }
@@ -770,7 +774,8 @@ XRE_InitParentProcess(int aArgc,
 
   mozilla::LogModule::Init();
 
-  AUTO_PROFILER_INIT;
+  char aLocal;
+  AutoProfilerInit profilerInit(&aLocal);
 
   ScopedXREEmbed embed;
 
@@ -834,7 +839,7 @@ XRE_RunAppShell()
     nsCOMPtr<nsIAppShell> appShell(do_GetService(kAppShellCID));
     NS_ENSURE_TRUE(appShell, NS_ERROR_FAILURE);
 #if defined(XP_MACOSX)
-    if (XRE_UseNativeEventProcessing()) {
+    {
       // In content processes that want XPCOM (and hence want
       // AppShell), we usually run our hybrid event loop through
       // MessagePump::Run(), by way of nsBaseAppShell::Run().  The
@@ -885,8 +890,6 @@ XRE_ShutdownChildProcess()
   mozilla::DebugOnly<MessageLoop*> ioLoop = XRE_GetIOMessageLoop();
   MOZ_ASSERT(!!ioLoop, "Bad shutdown order");
 
-  Scheduler::Shutdown();
-
   // Quit() sets off the following chain of events
   //  (1) UI loop starts quitting
   //  (2) UI loop returns from Run() in XRE_InitChildProcess()
@@ -894,7 +897,6 @@ XRE_ShutdownChildProcess()
   //  (4) ProcessChild joins the IO thread
   //  (5) exit()
   MessageLoop::current()->Quit();
-
 #if defined(XP_MACOSX)
   nsCOMPtr<nsIAppShell> appShell(do_GetService(kAppShellCID));
   if (appShell) {

@@ -5,6 +5,7 @@
 
 #include "domstubs.idl"
 
+interface nsIAtom;
 interface nsIContent;
 interface nsIXULBuilderListener;
 interface nsIXULTemplateResult;
@@ -13,11 +14,6 @@ interface nsIXULTemplateQueryProcessor;
 interface nsIRDFResource;
 interface nsIRDFCompositeDataSource;
 interface nsIDOMDataTransfer;
-
-%{C++
-class nsAtom;
-%}
-[ptr] native nsAtomPtr(nsAtom);
 
 /**
  * A template builder, given an input source of data, a template, and a
@@ -271,8 +267,7 @@ interface nsIXULTemplateBuilder : nsISupports
      * @param aNode node to check
      * @param aTag tag that must match
      */
-    [noscript] boolean hasGeneratedContent(in nsIRDFResource aNode,
-                                           in nsAtomPtr aTag);
+    boolean hasGeneratedContent(in nsIRDFResource aNode, in nsIAtom aTag);
 
     /**
      * Adds a rule filter for a given rule, which may be used for specialized

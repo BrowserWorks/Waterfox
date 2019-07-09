@@ -265,6 +265,12 @@ txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
 
     value = fabs(value) * multiplier;
 
+    // Make sure the multiplier didn't push value to infinity.
+    if (value == mozilla::PositiveInfinity<double>()) {
+        return aContext->recycler()->getStringResult(format->mInfinity,
+                                                     aResult);
+    }
+
     // Prefix
     nsAutoString res(prefix);
 
@@ -389,7 +395,7 @@ txFormatNumberFunctionCall::isSensitiveTo(ContextSensitivity aContext)
 
 #ifdef TX_TO_STRING
 nsresult
-txFormatNumberFunctionCall::getNameAtom(nsAtom** aAtom)
+txFormatNumberFunctionCall::getNameAtom(nsIAtom** aAtom)
 {
     *aAtom = nsGkAtoms::formatNumber;
     NS_ADDREF(*aAtom);

@@ -34,15 +34,5 @@ function runUpdateFinished() {
   standardInit();
   checkPostUpdateRunningFile(false);
   checkFilesAfterUpdateFailure(getApplyDirFile);
-  do_execute_soon(waitForUpdateXMLFiles);
-}
-
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
-  let errorCode = IS_SERVICE_TEST ? SERVICE_INVALID_APPLYTO_DIR_ERROR
-                                  : INVALID_APPLYTO_DIR_ERROR;
-  checkUpdateManager(STATE_NONE, false, STATE_FAILED, errorCode, 1);
   waitForFilesInUse();
 }

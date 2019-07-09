@@ -17,9 +17,6 @@
 #include <stdint.h>
 
 #include "js/Utility.h"
-#include "threading/LockGuard.h"
-#include "threading/Mutex.h"
-#include "vm/MutexIDs.h"
 
 #ifdef XP_WIN
 # define THREAD_RETURN_TYPE unsigned int
@@ -98,8 +95,7 @@ public:
             typename = typename mozilla::EnableIf<mozilla::IsSame<DerefO, Options>::value,
                                                   void*>::Type>
   explicit Thread(O&& options = Options())
-    : idMutex_(mutexid::ThreadId)
-    , id_(Id())
+    : id_(Id())
     , options_(mozilla::Forward<O>(options))
   { }
 
@@ -111,7 +107,7 @@ public:
   // See the comment below on ThreadTrampoline::args for an explanation.
   template <typename F, typename... Args>
   MOZ_MUST_USE bool init(F&& f, Args&&... args) {
-    MOZ_RELEASE_ASSERT(id_ == Id());
+    MOZ_RELEASE_ASSERT(!joinable());
     using Trampoline = detail::ThreadTrampoline<F, Args...>;
     AutoEnterOOMUnsafeRegion oom;
     auto trampoline = js_new<Trampoline>(mozilla::Forward<F>(f),
@@ -122,7 +118,9 @@ public:
   }
 
   // The thread must be joined or detached before destruction.
-  ~Thread();
+  ~Thread() {
+    MOZ_RELEASE_ASSERT(!joinable());
+  }
 
   // Move the thread into the detached state without blocking. In the detatched
   // state, the thread continues to run until it exits, but cannot be joined.
@@ -141,12 +139,14 @@ public:
   // Return true if this thread has not yet been joined or detached. If this
   // method returns false, this Thread does not have an associated thread of
   // execution, for example, if it has been previously moved or joined.
-  bool joinable();
+  bool joinable() const {
+    return get_id() != Id();
+  }
 
   // Returns the id of this thread if this represents a thread of execution or
   // the default constructed Id() if not. The thread ID is guaranteed to
   // uniquely identify a thread and can be compared with the == operator.
-  Id get_id();
+  Id get_id() const { return id_; }
 
   // Allow threads to be moved so that they can be stored in containers.
   Thread(Thread&& aOther);
@@ -156,11 +156,6 @@ private:
   // Disallow copy as that's not sensible for unique resources.
   Thread(const Thread&) = delete;
   void operator=(const Thread&) = delete;
-
-  bool joinable(LockGuard<Mutex>& lock);
-
-  // Synchronize id_ initialization during thread startup.
-  Mutex idMutex_;
 
   // Provide a process global ID to each thread.
   Id id_;

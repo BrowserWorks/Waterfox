@@ -110,9 +110,7 @@ namespace JS {
     D(SHUTDOWN_CC)                              \
     D(UNUSED2)                                  \
     D(USER_INACTIVE)                            \
-    D(XPCONNECT_SHUTDOWN)                       \
-    D(DOCSHELL)                                 \
-    D(HTML_PARSER)
+    D(XPCONNECT_SHUTDOWN)
 
 namespace gcreason {
 
@@ -526,26 +524,40 @@ class JS_PUBLIC_API(AutoRequireNoGC)
  */
 class JS_PUBLIC_API(AutoAssertNoGC) : public AutoRequireNoGC
 {
-#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
     JSContext* cx_;
 
   public:
-    // This gets the context from TLS if it is not passed in.
     explicit AutoAssertNoGC(JSContext* cx = nullptr);
     ~AutoAssertNoGC();
+};
+
+/**
+ * Assert if an allocation of a GC thing occurs while this class is live. This
+ * class does not disable the static rooting hazard analysis.
+ */
+class JS_PUBLIC_API(AutoAssertNoAlloc)
+{
+#ifdef JS_DEBUG
+    js::gc::GCRuntime* gc;
+
+  public:
+    AutoAssertNoAlloc() : gc(nullptr) {}
+    explicit AutoAssertNoAlloc(JSContext* cx);
+    void disallowAlloc(JSRuntime* rt);
+    ~AutoAssertNoAlloc();
 #else
   public:
-    explicit AutoAssertNoGC(JSContext* cx = nullptr) {}
-    ~AutoAssertNoGC() {}
+    AutoAssertNoAlloc() {}
+    explicit AutoAssertNoAlloc(JSContext* cx) {}
+    void disallowAlloc(JSRuntime* rt) {}
 #endif
 };
 
 /**
- * Disable the static rooting hazard analysis in the live region and assert in
- * debug builds if any allocation that could potentially trigger a GC occurs
- * while this guard object is live. This is most useful to help the exact
- * rooting hazard analysis in complex regions, since it cannot understand
- * dataflow.
+ * Disable the static rooting hazard analysis in the live region and assert if
+ * any allocation that could potentially trigger a GC occurs while this guard
+ * object is live. This is most useful to help the exact rooting hazard analysis
+ * in complex regions, since it cannot understand dataflow.
  *
  * Note: GC behavior is unpredictable even when deterministic and is generally
  *       non-deterministic in practice. The fact that this guard has not
@@ -555,19 +567,12 @@ class JS_PUBLIC_API(AutoAssertNoGC) : public AutoRequireNoGC
  *       that the hazard analysis is correct for that code, rather than relying
  *       on this class.
  */
-#ifdef DEBUG
-class JS_PUBLIC_API(AutoSuppressGCAnalysis) : public AutoAssertNoGC
+class JS_PUBLIC_API(AutoSuppressGCAnalysis) : public AutoAssertNoAlloc
 {
   public:
-    explicit AutoSuppressGCAnalysis(JSContext* cx = nullptr) : AutoAssertNoGC(cx) {}
+    AutoSuppressGCAnalysis() : AutoAssertNoAlloc() {}
+    explicit AutoSuppressGCAnalysis(JSContext* cx) : AutoAssertNoAlloc(cx) {}
 } JS_HAZ_GC_SUPPRESSED;
-#else
-class JS_PUBLIC_API(AutoSuppressGCAnalysis) : public AutoRequireNoGC
-{
-  public:
-    explicit AutoSuppressGCAnalysis(JSContext* cx = nullptr) {}
-} JS_HAZ_GC_SUPPRESSED;
-#endif
 
 /**
  * Assert that code is only ever called from a GC callback, disable the static

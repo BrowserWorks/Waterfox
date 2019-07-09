@@ -9,6 +9,7 @@
 
 #include "jsopcode.h"
 
+#include "jit/IonCaches.h"
 #include "jit/JitFrames.h"
 #include "jit/mips-shared/MacroAssembler-mips-shared.h"
 #include "jit/MoveResolver.h"
@@ -212,9 +213,6 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     void mov(ImmPtr imm, Register dest) {
         mov(ImmWord(uintptr_t(imm.value)), dest);
     }
-    void mov(CodeOffset* label, Register dest) {
-        ma_li(dest, label);
-    }
     void mov(Register src, Address dest) {
         MOZ_CRASH("NYI-IC");
     }
@@ -311,13 +309,6 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         return offset;
     }
 
-    void writeCodePointer(CodeOffset* label) {
-        label->bind(currentOffset());
-        ma_liPatchable(ScratchRegister, ImmWord(0));
-        as_jr(ScratchRegister);
-        as_nop();
-    }
-
     void jump(Label* label) {
         ma_b(label);
     }
@@ -386,7 +377,7 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     }
 
     // boxing code
-    void boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister);
+    void boxDouble(FloatRegister src, const ValueOperand& dest);
     void boxNonDouble(JSValueType type, Register src, const ValueOperand& dest);
 
     // Extended unboxing API. If the payload is already in a register, returns
@@ -434,6 +425,8 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         return value;
     }
 
+    void moveValue(const Value& val, Register dest);
+
     CodeOffsetJump backedgeJump(RepatchLabel* label, Label* documentation = nullptr);
     CodeOffsetJump jumpWithPatch(RepatchLabel* label, Label* documentation = nullptr);
 
@@ -466,6 +459,12 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         }
     }
 
+    void moveValue(const Value& val, const ValueOperand& dest);
+
+    void moveValue(const ValueOperand& src, const ValueOperand& dest) {
+        if (src.valueReg() != dest.valueReg())
+          ma_move(dest.valueReg(), src.valueReg());
+    }
     void boxValue(JSValueType type, Register src, Register dest) {
         MOZ_ASSERT(src != dest);
 
@@ -1018,10 +1017,12 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     }
 
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalArea) + globalDataOffset), dest);
+        loadPtr(Address(GlobalReg, globalDataOffset - WasmGlobalRegBias), dest);
     }
     void loadWasmPinnedRegsFromTls() {
         loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
+        ma_daddu(GlobalReg, Imm32(WasmGlobalRegBias));
     }
 
     // Instrumentation for entering and leaving the profiler.

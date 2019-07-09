@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/obj-ptrn-id-init-fn-name-gen.case
 // - src/dstr-binding/default/cls-expr-async-gen-meth-static.template
 /*---
 description: SingleNameBinding assigns name to "anonymous" generator functions (static class expression async generator method)
 esid: sec-class-definitions-runtime-semantics-evaluation
-features: [generators, async-iteration]
+features: [async-iteration]
 flags: [generated, async]
 info: |
     ClassExpression : class BindingIdentifieropt ClassTail
@@ -52,7 +53,6 @@ info: |
           ii. ReturnIfAbrupt(hasNameProperty).
           iii. If hasNameProperty is false, perform SetFunctionName(v,
                bindingId).
-
 ---*/
 
 

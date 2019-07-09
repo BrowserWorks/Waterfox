@@ -282,7 +282,26 @@ OmxPlatformLayer::CompressionFormat()
   }
 }
 
-// For platforms without OMX IL support.
+// Implementations for different platforms will be defined in their own files.
+#ifdef OMX_PLATFORM_GONK
+
+bool
+OmxPlatformLayer::SupportsMimeType(const nsACString& aMimeType)
+{
+  return GonkOmxPlatformLayer::FindComponents(aMimeType);
+}
+
+OmxPlatformLayer*
+OmxPlatformLayer::Create(OmxDataDecoder* aDataDecoder,
+                         OmxPromiseLayer* aPromiseLayer,
+                         TaskQueue* aTaskQueue,
+                         layers::ImageContainer* aImageContainer)
+{
+  return new GonkOmxPlatformLayer(aDataDecoder, aPromiseLayer, aTaskQueue, aImageContainer);
+}
+
+#else // For platforms without OMX IL support.
+
 bool
 OmxPlatformLayer::SupportsMimeType(const nsACString& aMimeType)
 {
@@ -297,5 +316,7 @@ OmxPlatformLayer::Create(OmxDataDecoder* aDataDecoder,
 {
   return nullptr;
 }
+
+#endif
 
 }

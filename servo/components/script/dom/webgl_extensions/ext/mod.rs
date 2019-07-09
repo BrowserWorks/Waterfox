@@ -5,7 +5,6 @@
 use dom::bindings::codegen::Bindings::WebGLRenderingContextBinding::WebGLRenderingContextConstants as constants;
 use super::{ext_constants, WebGLExtension, WebGLExtensions};
 
-pub mod oesstandardderivatives;
 pub mod oestexturefloat;
 pub mod oestexturefloatlinear;
 pub mod oestexturehalffloat;

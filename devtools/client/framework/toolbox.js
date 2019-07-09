@@ -21,7 +21,7 @@ var defer = require("devtools/shared/defer");
 var Services = require("Services");
 var {Task} = require("devtools/shared/task");
 var {gDevTools} = require("devtools/client/framework/devtools");
-var EventEmitter = require("devtools/shared/old-event-emitter");
+var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
 var { attachThread, detachThread } = require("./attach-thread");
 var Menu = require("devtools/client/framework/menu");
@@ -64,11 +64,9 @@ loader.lazyRequireGetter(this, "ToolboxButtons",
 loader.lazyRequireGetter(this, "SourceMapURLService",
   "devtools/client/framework/source-map-url-service", true);
 loader.lazyRequireGetter(this, "HUDService",
-  "devtools/client/webconsole/hudservice", true);
+  "devtools/client/webconsole/hudservice");
 loader.lazyRequireGetter(this, "viewSource",
   "devtools/client/shared/view-source");
-loader.lazyRequireGetter(this, "StyleSheetsFront",
-  "devtools/shared/fronts/stylesheets", true);
 
 loader.lazyGetter(this, "domNodeConstants", () => {
   return require("devtools/shared/dom-node-constants");
@@ -101,12 +99,10 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this.frameId = frameId;
 
   this._toolPanels = new Map();
-  this._inspectorExtensionSidebars = new Map();
   this._telemetry = new Telemetry();
 
   this._initInspector = null;
   this._inspector = null;
-  this._styleSheets = null;
 
   // Map of frames (id => frame-info) and currently selected frame id.
   this.frameMap = new Map();
@@ -117,8 +113,6 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this._refreshHostTitle = this._refreshHostTitle.bind(this);
   this._toggleNoAutohide = this._toggleNoAutohide.bind(this);
   this.showFramesMenu = this.showFramesMenu.bind(this);
-  this.handleKeyDownOnFramesButton = this.handleKeyDownOnFramesButton.bind(this);
-  this.showFramesMenuOnKeyDown = this.showFramesMenuOnKeyDown.bind(this);
   this._updateFrames = this._updateFrames.bind(this);
   this._splitConsoleOnKeypress = this._splitConsoleOnKeypress.bind(this);
   this.destroy = this.destroy.bind(this);
@@ -449,16 +443,6 @@ Toolbox.prototype = {
         this.doc.getElementById("toolbox-textbox-context-popup");
       this.textBoxContextMenuPopup.addEventListener("popupshowing",
         this._updateTextBoxMenuItems, true);
-      this.doc.addEventListener("contextmenu", (e) => {
-        if (e.originalTarget.closest("input[type=text]") ||
-            e.originalTarget.closest("input[type=search]") ||
-            e.originalTarget.closest("input:not([type])") ||
-            e.originalTarget.closest("textarea")) {
-          e.stopPropagation();
-          e.preventDefault();
-          this.openTextBoxContextMenu(e.screenX, e.screenY);
-        }
-      });
 
       this.shortcuts = new KeyShortcuts({
         window: this.doc.defaultView
@@ -500,10 +484,7 @@ Toolbox.prototype = {
 
       // Start rendering the toolbox toolbar before selecting the tool, as the tools
       // can take a few hundred milliseconds seconds to start up.
-      // But wait for toolbar buttons to be set before updating this react component.
-      buttonsPromise.then(() => {
-        this.component.setCanRender();
-      });
+      this.component.setCanRender();
 
       yield this.selectTool(this._defaultToolId);
 
@@ -564,66 +545,8 @@ Toolbox.prototype = {
       return this._sourceMapService;
     }
     // Uses browser loader to access the `Worker` global.
-    let service = this.browserRequire("devtools/client/shared/source-map/index");
-
-    // Provide a wrapper for the service that reports errors more nicely.
-    this._sourceMapService = new Proxy(service, {
-      get: (target, name) => {
-        switch (name) {
-          case "getOriginalURLs":
-            return (urlInfo) => {
-              return target.getOriginalURLs(urlInfo)
-                .catch(text => {
-                  let message = L10N.getFormatStr("toolbox.sourceMapFailure",
-                                                  text, urlInfo.url,
-                                                  urlInfo.sourceMapURL);
-                  this.target.logErrorInPage(message, "source map");
-                  // It's ok to swallow errors here, because a null
-                  // result just means that no source map was found.
-                  return null;
-                });
-            };
-
-          case "getOriginalSourceText":
-            return (originalSource) => {
-              return target.getOriginalSourceText(originalSource)
-                .catch(text => {
-                  let message = L10N.getFormatStr("toolbox.sourceMapSourceFailure",
-                                                  text, originalSource.url);
-                  this.target.logErrorInPage(message, "source map");
-                  // Also replace the result with the error text.
-                  // Note that this result has to have the same form
-                  // as whatever the upstream getOriginalSourceText
-                  // returns.
-                  return {
-                    text: message,
-                    contentType: "text/plain",
-                  };
-                });
-            };
-
-          case "applySourceMap":
-            return (generatedId, url, code, mappings) => {
-              return target.applySourceMap(generatedId, url, code, mappings)
-                .then(result => {
-                  // If a tool has changed or introduced a source map
-                  // (e.g, by pretty-printing a source), tell the
-                  // source map URL service about the change, so that
-                  // subscribers to that service can be updated as
-                  // well.
-                  if (this._sourceMapURLService) {
-                    this._sourceMapURLService.sourceMapChanged(generatedId, url);
-                  }
-                  return result;
-                });
-            };
-
-          default:
-            return target[name];
-        }
-      },
-    });
-
+    this._sourceMapService =
+      this.browserRequire("devtools/client/shared/source-map/index");
     this._sourceMapService.startSourceMapWorker(SOURCE_MAP_WORKER);
     return this._sourceMapService;
   },
@@ -642,17 +565,18 @@ Toolbox.prototype = {
 
   /**
    * Clients wishing to use source maps but that want the toolbox to
-   * track the source and style sheet actor mapping can use this
-   * source map service.  This is a higher-level service than the one
-   * returned by |sourceMapService|, in that it automatically tracks
-   * source and style sheet actor IDs.
+   * track the source actor mapping can use this source map service.
+   * This is a higher-level service than the one returned by
+   * |sourceMapService|, in that it automatically tracks source actor
+   * IDs.
    */
   get sourceMapURLService() {
     if (this._sourceMapURLService) {
       return this._sourceMapURLService;
     }
     let sourceMaps = this._createSourceMapService();
-    this._sourceMapURLService = new SourceMapURLService(this, sourceMaps);
+    this._sourceMapURLService = new SourceMapURLService(this._target, this.threadClient,
+                                                        sourceMaps);
     return this._sourceMapURLService;
   },
 
@@ -715,18 +639,8 @@ Toolbox.prototype = {
    */
   _createButtonState: function (options) {
     let isCheckedValue = false;
-    const {
-      id,
-      className,
-      description,
-      onClick,
-      isInStartContainer,
-      setup,
-      teardown,
-      isTargetSupported,
-      isChecked,
-      onKeyDown
-    } = options;
+    const { id, className, description, onClick, isInStartContainer, setup, teardown,
+            isTargetSupported, isChecked } = options;
     const toolbox = this;
     const button = {
       id,
@@ -735,11 +649,6 @@ Toolbox.prototype = {
       onClick(event) {
         if (typeof onClick == "function") {
           onClick(event, toolbox);
-        }
-      },
-      onKeyDown(event) {
-        if (typeof onKeyDown == "function") {
-          onKeyDown(event, toolbox);
         }
       },
       isTargetSupported,
@@ -1022,7 +931,7 @@ Toolbox.prototype = {
     if (!this._notificationBox) {
       let { NotificationBox, PriorityLevels } =
         this.browserRequire(
-          "devtools/client/shared/components/NotificationBox");
+          "devtools/client/shared/components/notification-box");
 
       NotificationBox = this.React.createFactory(NotificationBox);
 
@@ -1248,8 +1157,7 @@ Toolbox.prototype = {
       onClick: this.showFramesMenu,
       isTargetSupported: target => {
         return target.activeTab && target.activeTab.traits.frames;
-      },
-      onKeyDown: this.handleKeyDownOnFramesButton
+      }
     });
 
     return this.frameButton;
@@ -1501,72 +1409,12 @@ Toolbox.prototype = {
   },
 
   /**
-   * Retrieve the registered inspector extension sidebars
-   * (used by the inspector panel during its deferred initialization).
-   */
-  get inspectorExtensionSidebars() {
-    return this._inspectorExtensionSidebars;
-  },
-
-  /**
-   * Register an extension sidebar for the inspector panel.
-   *
-   * @param {String} id
-   *        An unique sidebar id
-   * @param {Object} options
-   * @param {String} options.title
-   *        A title for the sidebar
-   */
-  async registerInspectorExtensionSidebar(id, options) {
-    this._inspectorExtensionSidebars.set(id, options);
-
-    // Defer the extension sidebar creation if the inspector
-    // has not been created yet (and do not create the inspector
-    // only to register an extension sidebar).
-    if (!this._inspector) {
-      return;
-    }
-
-    const inspector = this.getPanel("inspector");
-    inspector.addExtensionSidebar(id, options);
-  },
-
-  /**
-   * Unregister an extension sidebar for the inspector panel.
-   *
-   * @param {String} id
-   *        An unique sidebar id
-   */
-  unregisterInspectorExtensionSidebar(id) {
-    const sidebarDef = this._inspectorExtensionSidebars.get(id);
-    if (!sidebarDef) {
-      return;
-    }
-
-    this._inspectorExtensionSidebars.delete(id);
-
-    // Remove the created sidebar instance if the inspector panel
-    // has been already created.
-    if (!this._inspector) {
-      return;
-    }
-
-    const inspector = this.getPanel("inspector");
-    inspector.removeExtensionSidebar(id);
-  },
-
-  /**
    * Unregister and unload an additional tool from this particular toolbox.
    *
    * @param {string} toolId
    *        the id of the additional tool to unregister and remove.
    */
   removeAdditionalTool(toolId) {
-    // Early exit if the toolbox is already destroying itself.
-    if (this._destroyer) {
-      return;
-    }
-
     if (!this.hasAdditionalTool(toolId)) {
       throw new Error("Tool definition not registered to this toolbox: " +
                       toolId);
@@ -1586,7 +1434,9 @@ Toolbox.prototype = {
    */
   loadTool: function (id) {
     if (id === "inspector" && !this._inspector) {
-      return this.initInspector().then(() => this.loadTool(id));
+      return this.initInspector().then(() => {
+        return this.loadTool(id);
+      });
     }
 
     let deferred = defer();
@@ -2022,7 +1872,6 @@ Toolbox.prototype = {
     front.setBoolPref(DISABLE_AUTOHIDE_PREF, toggledValue);
 
     this.autohideButton.isChecked = toggledValue;
-    this._autohideHasBeenToggled = true;
   }),
 
   _isDisableAutohideEnabled: Task.async(function* () {
@@ -2054,18 +1903,9 @@ Toolbox.prototype = {
   /**
    * Show a drop down menu that allows the user to switch frames.
    */
-  showFramesMenu: async function (event) {
+  showFramesMenu: function (event) {
     let menu = new Menu();
     let target = event.target;
-
-    // Need to initInspector to check presence of getNodeActorFromWindowID
-    // and use the highlighter later
-    await this.initInspector();
-    if (!("_supportsFrameHighlight" in this)) {
-    // Only works with FF58+ targets
-      this._supportsFrameHighlight =
-        await this.target.actorHasMethod("domwalker", "getNodeActorFromWindowID");
-    }
 
     // Generate list of menu items from the list of frames.
     this.frameMap.forEach(frame => {
@@ -2086,9 +1926,6 @@ Toolbox.prototype = {
         checked,
         click: () => {
           this.onSelectFrame(frame.id);
-        },
-        hover: () => {
-          this.onHightlightFrame(frame.id);
         }
       }));
     });
@@ -2099,7 +1936,6 @@ Toolbox.prototype = {
 
     menu.once("close").then(() => {
       this.frameButton.isChecked = false;
-      this.highlighterUtils.unhighlight();
     });
 
     // Show a drop down menu with frames.
@@ -2116,23 +1952,6 @@ Toolbox.prototype = {
   },
 
   /**
-   * Handle keyDown event on 'frames' button to show available frames
-   */
-  handleKeyDownOnFramesButton: function (event) {
-    this.shortcuts.on(L10N.getStr("toolbox.showFrames.key"),
-      this.showFramesMenuOnKeyDown);
-  },
-
-  /**
-   * Show 'frames' menu on key down
-   */
-  showFramesMenuOnKeyDown: function (name, event) {
-    if (event.target.id == "command-button-frames") {
-      this.showFramesMenu(event);
-    }
-  },
-
-  /**
    * Select a frame by sending 'switchToFrame' packet to the backend.
    */
   onSelectFrame: function (frameId) {
@@ -2144,18 +1963,6 @@ Toolbox.prototype = {
       windowId: frameId
     };
     this._target.client.request(packet);
-  },
-
-  /**
-   * Highlight a frame in the page
-   */
-  onHightlightFrame: async function (frameId) {
-    // Only enable frame highlighting when the top level document is targeted
-    if (this._supportsFrameHighlight &&
-        this.frameMap.get(this.selectedFrameId).parentID === undefined) {
-      let frameActor = await this.walker.getNodeActorFromWindowID(frameId);
-      this.highlighterUtils.highlightNodeFront(frameActor);
-    }
   },
 
   /**
@@ -2452,7 +2259,7 @@ Toolbox.prototype = {
         objectActor.preview.nodeType === domNodeConstants.ELEMENT_NODE) {
       // Open the inspector and select the DOM Element.
       await this.loadTool("inspector");
-      const inspector = this.getPanel("inspector");
+      const inspector = await this.getPanel("inspector");
       const nodeFound = await inspector.inspectNodeActor(objectActor.actor,
                                                          inspectFromAnnotation);
       if (nodeFound) {
@@ -2631,12 +2438,6 @@ Toolbox.prototype = {
     // Destroy the preference front
     outstanding.push(this.destroyPreference());
 
-    // Destroy the style sheet front.
-    if (this._styleSheets) {
-      this._styleSheets.destroy();
-      this._styleSheets = null;
-    }
-
     // Detach the thread
     detachThread(this._threadClient);
     this._threadClient = null;
@@ -2766,9 +2567,9 @@ Toolbox.prototype = {
    * necessary because of the WebConsole's `profile` and `profileEnd` methods.
    */
   initPerformance: Task.async(function* () {
-    // If target does not have performance actor (addons), do not
+    // If target does not have profiler actor (addons), do not
     // even register the shared performance connection.
-    if (!this.target.hasActor("performance")) {
+    if (!this.target.hasActor("profiler")) {
       return promise.resolve();
     }
 
@@ -2808,30 +2609,12 @@ Toolbox.prototype = {
   }),
 
   /**
-   * Return the style sheets front, creating it if necessary.  If the
-   * style sheets front is not supported by the target, returns null.
-   */
-  initStyleSheetsFront: function () {
-    if (!this._styleSheets && this.target.hasActor("styleSheets")) {
-      this._styleSheets = StyleSheetsFront(this.target.client, this.target.form);
-    }
-    return this._styleSheets;
-  },
-
-  /**
    * Destroy the preferences actor when the toolbox is unloaded.
    */
   destroyPreference: Task.async(function* () {
     if (!this._preferenceFront) {
       return;
     }
-
-    // Only reset the autohide pref in the Browser Toolbox if it's been toggled
-    // in the UI (don't reset the pref if it was already set before opening)
-    if (this._autohideHasBeenToggled) {
-      yield this._preferenceFront.clearUserPref(DISABLE_AUTOHIDE_PREF);
-    }
-
     this._preferenceFront.destroy();
     this._preferenceFront = null;
   }),

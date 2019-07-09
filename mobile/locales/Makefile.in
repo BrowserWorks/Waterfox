@@ -22,6 +22,14 @@ tgt-gendir = .deps/generated_$(AB_CD)
 
 GENERATED_DIRS += .deps
 
+ifdef LOCALE_MERGEDIR
+vpath book%.inc $(LOCALE_MERGEDIR)/mobile/profile
+endif
+vpath book%.inc $(LOCALE_SRCDIR)/profile
+ifdef LOCALE_MERGEDIR
+vpath book%.inc @srcdir@/en-US/profile
+endif
+
 $(call errorIfEmpty,MOZ_BRANDING_DIRECTORY)
 SUBMAKEFILES += \
         $(DEPTH)/$(MOZ_BRANDING_DIRECTORY)/Makefile \
@@ -122,16 +130,15 @@ libs-preqs =\
   $(call mkdir-deps,$(DIST)/install) \
   $(NULL)
 
-libs-%: AB_CD=$*
 libs-%: $(libs-preqs)
 	$(display-deps)
 	@$(MAKE) -C $(DEPTH)/toolkit/locales libs-$*
+	@$(MAKE) -C $(DEPTH)/intl/locales AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) -B searchplugins AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) libs AB_CD=$* XPI_NAME=locale-$* PREF_DIR=defaults/pref
 	@$(MAKE) -C $(DEPTH)/$(MOZ_BRANDING_DIRECTORY)/locales AB_CD=$* XPI_NAME=locale-$*
 
 # Tailored target to just add the chrome processing for multi-locale builds
-chrome-%: AB_CD=$*
 chrome-%:
 	$(display-deps)
 	@$(MAKE) -B searchplugins AB_CD=$*

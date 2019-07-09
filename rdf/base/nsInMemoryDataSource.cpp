@@ -2,7 +2,21 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *
+ * This Original Code has been modified by IBM Corporation.
+ * Modifications made by IBM described herein are
+ * Copyright (c) International Business Machines
+ * Corporation, 2000
+ *
+ * Modifications to Mozilla code or documentation
+ * identified per MPL Section 3.3
+ *
+ * Date         Modified by     Description of modification
+ * 03/27/2000   IBM Corp.       Added PR_CALLBACK for Optlink
+ *                               use in OS2
+ */
 
 /*
 
@@ -44,7 +58,7 @@
 #include "nsRDFBaseDataSources.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "rdfutil.h"
 #include "PLDHashTable.h"
 #include "plstr.h"
@@ -790,19 +804,19 @@ InMemoryDataSource::LogOperation(const char* aOperation,
     if (! MOZ_LOG_TEST(gLog, LogLevel::Debug))
         return;
 
-    nsCString uri;
+    nsXPIDLCString uri;
     aSource->GetValue(getter_Copies(uri));
     MOZ_LOG(gLog, LogLevel::Debug,
            ("InMemoryDataSource(%p): %s", this, aOperation));
 
     MOZ_LOG(gLog, LogLevel::Debug,
-           ("  [(%p)%s]--", aSource, uri.get()));
+           ("  [(%p)%s]--", aSource, (const char*) uri));
 
     aProperty->GetValue(getter_Copies(uri));
 
     char tv = (aTruthValue ? '-' : '!');
     MOZ_LOG(gLog, LogLevel::Debug,
-           ("  --%c[(%p)%s]--", tv, aProperty, uri.get()));
+           ("  --%c[(%p)%s]--", tv, aProperty, (const char*) uri));
 
     nsCOMPtr<nsIRDFResource> resource;
     nsCOMPtr<nsIRDFLiteral> literal;
@@ -810,13 +824,18 @@ InMemoryDataSource::LogOperation(const char* aOperation,
     if ((resource = do_QueryInterface(aTarget)) != nullptr) {
         resource->GetValue(getter_Copies(uri));
         MOZ_LOG(gLog, LogLevel::Debug,
-           ("  -->[(%p)%s]", aTarget, uri.get()));
+           ("  -->[(%p)%s]", aTarget, (const char*) uri));
     }
     else if ((literal = do_QueryInterface(aTarget)) != nullptr) {
-        nsString value;
+        nsXPIDLString value;
         literal->GetValue(getter_Copies(value));
+        nsAutoString valueStr(value);
+        char* valueCStr = ToNewCString(valueStr);
+
         MOZ_LOG(gLog, LogLevel::Debug,
-           ("  -->(\"%s\")\n", NS_ConvertUTF16toUTF8(value).get()));
+           ("  -->(\"%s\")\n", valueCStr));
+
+        free(valueCStr);
     }
     else {
         MOZ_LOG(gLog, LogLevel::Debug,
@@ -826,9 +845,13 @@ InMemoryDataSource::LogOperation(const char* aOperation,
 
 
 NS_IMETHODIMP
-InMemoryDataSource::GetURI(nsACString& aURI)
+InMemoryDataSource::GetURI(char* *uri)
 {
-    aURI.SetIsVoid(true);
+    NS_PRECONDITION(uri != nullptr, "null ptr");
+    if (! uri)
+        return NS_ERROR_NULL_POINTER;
+
+    *uri = nullptr;
     return NS_OK;
 }
 

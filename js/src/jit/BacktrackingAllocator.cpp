@@ -71,39 +71,11 @@ InsertSortedList(InlineForwardList<T> &list, T* value)
 // LiveRange
 /////////////////////////////////////////////////////////////////////
 
-inline void
-LiveRange::noteAddedUse(UsePosition* use)
-{
-    LUse::Policy policy = use->usePolicy();
-    usesSpillWeight_ += BacktrackingAllocator::SpillWeightFromUsePolicy(policy);
-    if (policy == LUse::FIXED)
-        ++numFixedUses_;
-}
-
-inline void
-LiveRange::noteRemovedUse(UsePosition* use)
-{
-    LUse::Policy policy = use->usePolicy();
-    usesSpillWeight_ -= BacktrackingAllocator::SpillWeightFromUsePolicy(policy);
-    if (policy == LUse::FIXED)
-        --numFixedUses_;
-    MOZ_ASSERT_IF(!hasUses(), !usesSpillWeight_ && !numFixedUses_);
-}
-
 void
 LiveRange::addUse(UsePosition* use)
 {
     MOZ_ASSERT(covers(use->pos));
     InsertSortedList(uses_, use);
-    noteAddedUse(use);
-}
-
-UsePosition*
-LiveRange::popUse()
-{
-    UsePosition* ret = uses_.popFront();
-    noteRemovedUse(ret);
-    return ret;
 }
 
 void
@@ -117,7 +89,6 @@ LiveRange::distributeUses(LiveRange* other)
         UsePosition* use = *iter;
         if (other->covers(use->pos)) {
             uses_.removeAndIncrement(iter);
-            noteRemovedUse(use);
             other->addUse(use);
         } else {
             iter++;
@@ -271,25 +242,19 @@ LiveBundle::removeRange(LiveRange* range)
 /////////////////////////////////////////////////////////////////////
 
 bool
-VirtualRegister::addInitialRange(TempAllocator& alloc, CodePosition from, CodePosition to,
-                                 size_t* numRanges)
+VirtualRegister::addInitialRange(TempAllocator& alloc, CodePosition from, CodePosition to)
 {
     MOZ_ASSERT(from < to);
 
     // Mark [from,to) as a live range for this register during the initial
     // liveness analysis, coalescing with any existing overlapping ranges.
 
-    // On some pathological graphs there might be a huge number of different
-    // live ranges. Allow non-overlapping live range to be merged if the
-    // number of ranges exceeds the cap below.
-    static const size_t CoalesceLimit = 100000;
-
     LiveRange* prev = nullptr;
     LiveRange* merged = nullptr;
     for (LiveRange::RegisterLinkIterator iter(rangesBegin()); iter; ) {
         LiveRange* existing = LiveRange::get(*iter);
 
-        if (from > existing->to() && *numRanges < CoalesceLimit) {
+        if (from > existing->to()) {
             // The new range should go after this one.
             prev = existing;
             iter++;
@@ -339,8 +304,6 @@ VirtualRegister::addInitialRange(TempAllocator& alloc, CodePosition from, CodePo
             ranges_.insertAfter(&prev->registerLink, &range->registerLink);
         else
             ranges_.pushFront(&range->registerLink);
-
-        (*numRanges)++;
     }
 
     return true;
@@ -556,8 +519,6 @@ BacktrackingAllocator::buildLivenessInfo()
     if (!loopDone.init(alloc()))
         return false;
 
-    size_t numRanges = 0;
-
     for (size_t i = graph.numBlocks(); i > 0; i--) {
         if (mir->shouldCancel("Build Liveness Info (main loop)"))
             return false;
@@ -593,8 +554,7 @@ BacktrackingAllocator::buildLivenessInfo()
         // Registers are assumed alive for the entire block, a define shortens
         // the range to the point of definition.
         for (BitSet::Iterator liveRegId(live); liveRegId; ++liveRegId) {
-            if (!vregs[*liveRegId].addInitialRange(alloc(), entryOf(block), exitOf(block).next(),
-                                                   &numRanges))
+            if (!vregs[*liveRegId].addInitialRange(alloc(), entryOf(block), exitOf(block).next()))
                 return false;
         }
 
@@ -650,7 +610,7 @@ BacktrackingAllocator::buildLivenessInfo()
                     *inputUse = LUse(inputUse->virtualRegister(), LUse::ANY, /* usedAtStart = */ true);
                 }
 
-                if (!vreg(def).addInitialRange(alloc(), from, from.next(), &numRanges))
+                if (!vreg(def).addInitialRange(alloc(), from, from.next()))
                     return false;
                 vreg(def).setInitialDefinition(from);
                 live.remove(def->virtualRegister());
@@ -682,7 +642,7 @@ BacktrackingAllocator::buildLivenessInfo()
 
                 CodePosition to = ins->isCall() ? outputOf(*ins) : outputOf(*ins).next();
 
-                if (!vreg(temp).addInitialRange(alloc(), from, to, &numRanges))
+                if (!vreg(temp).addInitialRange(alloc(), from, to))
                     return false;
                 vreg(temp).setInitialDefinition(from);
             }
@@ -739,7 +699,7 @@ BacktrackingAllocator::buildLivenessInfo()
                         }
                     }
 
-                    if (!vreg(use).addInitialRange(alloc(), entryOf(block), to.next(), &numRanges))
+                    if (!vreg(use).addInitialRange(alloc(), entryOf(block), to.next()))
                         return false;
                     UsePosition* usePosition = new(alloc().fallible()) UsePosition(use, to);
                     if (!usePosition)
@@ -761,7 +721,7 @@ BacktrackingAllocator::buildLivenessInfo()
                 // This is a dead phi, so add a dummy range over all phis. This
                 // can go away if we have an earlier dead code elimination pass.
                 CodePosition entryPos = entryOf(block);
-                if (!vreg(def).addInitialRange(alloc(), entryPos, entryPos.next(), &numRanges))
+                if (!vreg(def).addInitialRange(alloc(), entryPos, entryPos.next()))
                     return false;
             }
         }
@@ -782,7 +742,7 @@ BacktrackingAllocator::buildLivenessInfo()
                 CodePosition to = exitOf(loopBlock->lir()).next();
 
                 for (BitSet::Iterator liveRegId(live); liveRegId; ++liveRegId) {
-                    if (!vregs[*liveRegId].addInitialRange(alloc(), from, to, &numRanges))
+                    if (!vregs[*liveRegId].addInitialRange(alloc(), from, to))
                         return false;
                 }
 
@@ -1918,8 +1878,16 @@ BacktrackingAllocator::resolveControlFlow()
 
                 if (!alloc().ensureBallast())
                     return false;
-                if (!moveAtExit(predecessor, from, to, def->type()))
-                    return false;
+                if (mSuccessor->numPredecessors() > 1) {
+                    MOZ_ASSERT(predecessor->mir()->numSuccessors() == 1);
+                    if (!moveAtExit(predecessor, from, to, def->type())) {
+                        return false;
+                    }
+                } else {
+                    if (!moveAtEntry(successor, from, to, def->type())) {
+                        return false;
+                    }
+                }
             }
         }
     }
@@ -2586,9 +2554,27 @@ BacktrackingAllocator::computeSpillWeight(LiveBundle* bundle)
             }
         }
 
-        usesTotal += range->usesSpillWeight();
-        if (range->numFixedUses() > 0)
-            fixed = true;
+        for (UsePositionIterator iter = range->usesBegin(); iter; iter++) {
+            switch (iter->usePolicy()) {
+              case LUse::ANY:
+                usesTotal += 1000;
+                break;
+
+              case LUse::FIXED:
+                fixed = true;
+                MOZ_FALLTHROUGH;
+              case LUse::REGISTER:
+                usesTotal += 2000;
+                break;
+
+              case LUse::KEEPALIVE:
+                break;
+
+              default:
+                // Note: RECOVERED_INPUT will not appear in UsePositionIterator.
+                MOZ_CRASH("Bad use");
+            }
+        }
     }
 
     // Bundles with fixed uses are given a higher spill weight, since they must

@@ -125,8 +125,7 @@ TooltipToggle.prototype = {
       this.toggleTimer = this.win.setTimeout(() => {
         this.tooltip.hide();
         this.isValidHoverTarget(event.target).then(target => {
-          if (target === null || !this._baseNode) {
-            // bail out if no target or if the toggle has been destroyed.
+          if (target === null) {
             return;
           }
           this.tooltip.show(target);
@@ -155,7 +154,7 @@ TooltipToggle.prototype = {
 
   _onMouseOut: function (event) {
     // Only hide the tooltip if the mouse leaves baseNode.
-    if (event && this._baseNode && this._baseNode.contains(event.relatedTarget)) {
+    if (event && this._baseNode && !this._baseNode.contains(event.relatedTarget)) {
       return;
     }
 

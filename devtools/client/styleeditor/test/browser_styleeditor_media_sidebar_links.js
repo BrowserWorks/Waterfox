@@ -16,8 +16,8 @@ registerCleanupFunction(() => {
   asyncStorage.removeItem("devtools.devices.url_cache");
 });
 
-loader.lazyRequireGetter(this, "ResponsiveUIManager", "devtools/client/responsive.html/manager", true);
-
+const mgr = "resource://devtools/client/responsivedesign/responsivedesign.jsm";
+const {ResponsiveUIManager} = Cu.import(mgr, {});
 const TESTCASE_URI = TEST_BASE_HTTPS + "media-rules.html";
 const responsiveModeToggleClass = ".media-responsive-mode-toggle";
 
@@ -105,12 +105,20 @@ function waitForResizeTo(rdmUI, type, value) {
       if (data[type] != value) {
         return;
       }
-      rdmUI.off("content-resize", onResize);
+      ResponsiveUIManager.off("content-resize", onResize);
+      if (rdmUI.off) {
+        rdmUI.off("content-resize", onResize);
+      }
       info(`Got content-resize to a ${type} of ${value}`);
       resolve();
     };
     info(`Waiting for content-resize to a ${type} of ${value}`);
-    rdmUI.on("content-resize", onResize);
+    // Old RDM emits on manager
+    ResponsiveUIManager.on("content-resize", onResize);
+    // New RDM emits on ui
+    if (rdmUI.on) {
+      rdmUI.on("content-resize", onResize);
+    }
   });
 }
 

@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-"use strict";
+"use strict"
 
 var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
@@ -42,3 +42,6 @@ var setupPlacesDatabase = async function(aFileName) {
 };
 
 // This works provided all tests in this folder use add_task.
+function run_test() {
+  run_next_test();
+}

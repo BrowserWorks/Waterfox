@@ -29,45 +29,15 @@ static inline uint32_t SamplesToFrames(uint32_t aChannels, uint32_t aSamples) {
  * interface to manipulate this buffer, and to ensure we are not missing frames
  * by the end of the callback.
  */
-template<typename T>
+template<typename T, uint32_t CHANNELS>
 class AudioCallbackBufferWrapper
 {
 public:
   AudioCallbackBufferWrapper()
-    : mBuffer(nullptr)
-    , mSamples(0)
-    , mSampleWriteOffset(1)
-    , mChannels(0)
+    : mBuffer(nullptr),
+      mSamples(0),
+      mSampleWriteOffset(1)
   {}
-
-  explicit AudioCallbackBufferWrapper(uint32_t aChannels)
-    : mBuffer(nullptr)
-    , mSamples(0)
-    , mSampleWriteOffset(1)
-    , mChannels(aChannels)
-
-  {
-    MOZ_ASSERT(aChannels);
-  }
-
-  AudioCallbackBufferWrapper& operator=(const AudioCallbackBufferWrapper& aOther)
-  {
-    MOZ_ASSERT(!aOther.mBuffer,
-               "Don't use this ctor after AudioCallbackDriver::Init");
-    MOZ_ASSERT(aOther.mSamples == 0,
-               "Don't use this ctor after AudioCallbackDriver::Init");
-    MOZ_ASSERT(aOther.mSampleWriteOffset == 1,
-               "Don't use this ctor after AudioCallbackDriver::Init");
-    MOZ_ASSERT(aOther.mChannels != 0);
-
-    mBuffer = nullptr;
-    mSamples = 0;
-    mSampleWriteOffset = 1;
-    mChannels = aOther.mChannels;
-
-    return *this;
-  }
-
   /**
    * Set the buffer in this wrapper. This is to be called at the beginning of
    * the callback.
@@ -76,7 +46,7 @@ public:
     MOZ_ASSERT(!mBuffer && !mSamples,
         "SetBuffer called twice.");
     mBuffer = aBuffer;
-    mSamples = FramesToSamples(mChannels, aFrames);
+    mSamples = FramesToSamples(CHANNELS, aFrames);
     mSampleWriteOffset = 0;
   }
 
@@ -88,16 +58,16 @@ public:
     MOZ_ASSERT(aFrames <= Available(),
         "Writing more that we can in the audio buffer.");
 
-    PodCopy(mBuffer + mSampleWriteOffset, aBuffer, FramesToSamples(mChannels,
+    PodCopy(mBuffer + mSampleWriteOffset, aBuffer, FramesToSamples(CHANNELS,
                                                                    aFrames));
-    mSampleWriteOffset += FramesToSamples(mChannels, aFrames);
+    mSampleWriteOffset += FramesToSamples(CHANNELS, aFrames);
   }
 
   /**
    * Number of frames that can be written to the buffer.
    */
   uint32_t Available() {
-    return SamplesToFrames(mChannels, mSamples - mSampleWriteOffset);
+    return SamplesToFrames(CHANNELS, mSamples - mSampleWriteOffset);
   }
 
   /**
@@ -118,7 +88,7 @@ public:
       "Audio Buffer is not full by the end of the callback.");
     // Make sure the data returned is always set and not random!
     if (Available()) {
-      PodZero(mBuffer + mSampleWriteOffset, FramesToSamples(mChannels, Available()));
+      PodZero(mBuffer + mSampleWriteOffset, FramesToSamples(CHANNELS, Available()));
     }
     MOZ_ASSERT(mSamples, "Buffer not set.");
     mSamples = 0;
@@ -135,7 +105,6 @@ private:
   /* The position at which new samples should be written. We want to return to
    * the audio callback iff this is equal to mSamples. */
   uint32_t mSampleWriteOffset;
-  uint32_t mChannels;
 };
 
 /**
@@ -144,57 +113,27 @@ private:
  * because of different rounding constraints, to be used the next time the audio
  * backend calls back.
  */
-template<typename T, uint32_t BLOCK_SIZE>
+template<typename T, uint32_t BLOCK_SIZE, uint32_t CHANNELS>
 class SpillBuffer
 {
 public:
   SpillBuffer()
-    : mBuffer(nullptr)
-    , mPosition(0)
-    , mChannels(0)
-  {}
-
-  explicit SpillBuffer(uint32_t aChannels)
   : mPosition(0)
-  , mChannels(aChannels)
   {
-    MOZ_ASSERT(aChannels);
-    mBuffer = MakeUnique<T[]>(BLOCK_SIZE * mChannels);
-    PodZero(mBuffer.get(), BLOCK_SIZE * mChannels);
+    PodArrayZero(mBuffer);
   }
-
-  SpillBuffer& operator=(SpillBuffer& aOther)
-  {
-    MOZ_ASSERT(aOther.mPosition == 0,
-        "Don't use this ctor after AudioCallbackDriver::Init");
-    MOZ_ASSERT(aOther.mChannels != 0);
-    MOZ_ASSERT(aOther.mBuffer);
-
-    mPosition = aOther.mPosition;
-    mChannels = aOther.mChannels;
-    mBuffer = Move(aOther.mBuffer);
-
-    return *this;
-  }
-
-  SpillBuffer& operator=(SpillBuffer&& aOther)
-  {
-    return this->operator=(aOther);
-  }
-
   /* Empty the spill buffer into the buffer of the audio callback. This returns
    * the number of frames written. */
-  uint32_t Empty(AudioCallbackBufferWrapper<T>& aBuffer) {
+  uint32_t Empty(AudioCallbackBufferWrapper<T, CHANNELS>& aBuffer) {
     uint32_t framesToWrite = std::min(aBuffer.Available(),
-                                      SamplesToFrames(mChannels, mPosition));
+                                      SamplesToFrames(CHANNELS, mPosition));
 
-    aBuffer.WriteFrames(mBuffer.get(), framesToWrite);
+    aBuffer.WriteFrames(mBuffer, framesToWrite);
 
-    mPosition -= FramesToSamples(mChannels, framesToWrite);
+    mPosition -= FramesToSamples(CHANNELS, framesToWrite);
     // If we didn't empty the spill buffer for some reason, shift the remaining data down
     if (mPosition > 0) {
-      MOZ_ASSERT(FramesToSamples(mChannels, framesToWrite) + mPosition <= BLOCK_SIZE * mChannels);
-      PodMove(mBuffer.get(), mBuffer.get() + FramesToSamples(mChannels, framesToWrite),
+      PodMove(mBuffer, mBuffer + FramesToSamples(CHANNELS, framesToWrite),
               mPosition);
     }
 
@@ -204,24 +143,22 @@ public:
    * number of frames written to the spill buffer */
   uint32_t Fill(T* aInput, uint32_t aFrames) {
     uint32_t framesToWrite = std::min(aFrames,
-                                      BLOCK_SIZE - SamplesToFrames(mChannels,
+                                      BLOCK_SIZE - SamplesToFrames(CHANNELS,
                                                                    mPosition));
 
-    MOZ_ASSERT(FramesToSamples(mChannels, framesToWrite) + mPosition <= BLOCK_SIZE * mChannels);
-    PodCopy(mBuffer.get() + mPosition, aInput, FramesToSamples(mChannels,
+    PodCopy(mBuffer + mPosition, aInput, FramesToSamples(CHANNELS,
                                                          framesToWrite));
 
-    mPosition += FramesToSamples(mChannels, framesToWrite);
+    mPosition += FramesToSamples(CHANNELS, framesToWrite);
 
     return framesToWrite;
   }
 private:
   /* The spilled data. */
-  UniquePtr<T[]> mBuffer;
+  T mBuffer[BLOCK_SIZE * CHANNELS];
   /* The current write position, in samples, in the buffer when filling, or the
    * amount of buffer filled when emptying. */
   uint32_t mPosition;
-  uint32_t mChannels;
 };
 
 } // namespace mozilla

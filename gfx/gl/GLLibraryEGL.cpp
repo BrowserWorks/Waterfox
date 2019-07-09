@@ -35,6 +35,9 @@ namespace gl {
 
 StaticMutex GLLibraryEGL::sMutex;
 GLLibraryEGL sEGLLibrary;
+#ifdef MOZ_B2G
+MOZ_THREAD_LOCAL(EGLContext) GLLibraryEGL::sCurrentContext;
+#endif
 
 // should match the order of EGLExtensions, and be null-terminated.
 static const char* sEGLExtensionNames[] = {
@@ -54,11 +57,10 @@ static const char* sEGLExtensionNames[] = {
     "EGL_KHR_create_context",
     "EGL_KHR_stream",
     "EGL_KHR_stream_consumer_gltexture",
+    "EGL_EXT_device_base",
     "EGL_EXT_device_query",
     "EGL_NV_stream_consumer_gltexture_yuv",
     "EGL_ANGLE_stream_producer_d3d_texture_nv12",
-    "EGL_ANGLE_device_creation",
-    "EGL_ANGLE_device_creation_d3d11",
 };
 
 #if defined(ANDROID)
@@ -188,7 +190,7 @@ GetAndInitDisplay(GLLibraryEGL& egl, void* displayType)
     return display;
 }
 
-class AngleErrorReporting {
+class AngleErrorReporting: public angle::Platform {
 public:
     AngleErrorReporting()
     {
@@ -200,7 +202,7 @@ public:
       mFailureId = aFailureId;
     }
 
-    void logError(const char *errorMessage)
+    void logError(const char *errorMessage) override
     {
         if (!mFailureId) {
             return;
@@ -254,6 +256,7 @@ GetAndInitDisplayForAccelANGLE(GLLibraryEGL& egl, nsACString* const out_failureI
         d3d11ANGLE.UserForceEnable("User force-enabled D3D11 ANGLE on disabled hardware");
 
     gAngleErrorReporter.SetFailureId(out_failureId);
+    egl.fANGLEPlatformInitialize(&gAngleErrorReporter);
 
     auto guardShutdown = mozilla::MakeScopeExit([&] {
         gAngleErrorReporter.SetFailureId(nullptr);
@@ -317,6 +320,11 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
     }
 
     mozilla::ScopedGfxFeatureReporter reporter("EGL");
+
+#ifdef MOZ_B2G
+    if (!sCurrentContext.init())
+      MOZ_CRASH("GFX: Tls init failed");
+#endif
 
 #ifdef XP_WIN
     if (!mEGLLibrary) {
@@ -455,6 +463,8 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
     if (mIsANGLE) {
         MOZ_ASSERT(IsExtensionSupported(ANGLE_platform_angle_d3d));
         const GLLibraryLoader::SymLoadStruct angleSymbols[] = {
+            { (PRFuncPtr*)&mSymbols.fANGLEPlatformInitialize, { "ANGLEPlatformInitialize", nullptr } },
+            { (PRFuncPtr*)&mSymbols.fANGLEPlatformShutdown, { "ANGLEPlatformShutdown", nullptr } },
             SYMBOL(GetPlatformDisplayEXT),
             END_OF_SYMBOLS
         };
@@ -607,7 +617,6 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
 
     if (IsExtensionSupported(KHR_stream_consumer_gltexture)) {
         const GLLibraryLoader::SymLoadStruct streamConsumerSymbols[] = {
-            SYMBOL(StreamConsumerGLTextureExternalKHR),
             SYMBOL(StreamConsumerAcquireKHR),
             SYMBOL(StreamConsumerReleaseKHR),
             END_OF_SYMBOLS
@@ -618,9 +627,19 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
         }
     }
 
+    if (IsExtensionSupported(EXT_device_base)) {
+        const GLLibraryLoader::SymLoadStruct deviceBaseSymbols[] = {
+            SYMBOL(QueryDisplayAttribEXT),
+            END_OF_SYMBOLS
+        };
+        if (!fnLoadSymbols(deviceBaseSymbols)) {
+            NS_ERROR("EGL supports EXT_device_base without exposing its functions!");
+            MarkExtensionUnsupported(EXT_device_base);
+        }
+    }
+
     if (IsExtensionSupported(EXT_device_query)) {
         const GLLibraryLoader::SymLoadStruct queryDisplaySymbols[] = {
-            SYMBOL(QueryDisplayAttribEXT),
             SYMBOL(QueryDeviceAttribEXT),
             END_OF_SYMBOLS
         };
@@ -650,18 +669,6 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
         if (!fnLoadSymbols(nvStreamSymbols)) {
             NS_ERROR("EGL supports ANGLE_stream_producer_d3d_texture_nv12 without exposing its functions!");
             MarkExtensionUnsupported(ANGLE_stream_producer_d3d_texture_nv12);
-        }
-    }
-
-    if (IsExtensionSupported(ANGLE_device_creation)) {
-        const GLLibraryLoader::SymLoadStruct createDeviceSymbols[] = {
-            SYMBOL(CreateDeviceANGLE),
-            SYMBOL(ReleaseDeviceANGLE),
-            END_OF_SYMBOLS
-        };
-        if (!fnLoadSymbols(createDeviceSymbols)) {
-            NS_ERROR("EGL supports ANGLE_device_creation without exposing its functions!");
-            MarkExtensionUnsupported(ANGLE_device_creation);
         }
     }
 

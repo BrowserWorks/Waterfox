@@ -5,6 +5,8 @@
 
 const {Arg, RetVal, generateActorSpec} = require("devtools/shared/protocol");
 
+require("devtools/shared/specs/stylesheets");
+
 const cssUsageSpec = generateActorSpec({
   typeName: "cssUsage",
 

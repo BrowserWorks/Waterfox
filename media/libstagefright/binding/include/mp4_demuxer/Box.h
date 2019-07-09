@@ -12,7 +12,7 @@
 #include "MediaResource.h"
 #include "mozilla/EndianUtils.h"
 #include "mp4_demuxer/AtomType.h"
-#include "mp4_demuxer/BufferReader.h"
+#include "mp4_demuxer/ByteReader.h"
 
 using namespace mozilla;
 
@@ -75,11 +75,11 @@ public:
     , mReader(mBuffer.Elements(), mBuffer.Length())
   {
   }
-  BufferReader* operator->() { return &mReader; }
+  ByteReader* operator->() { return &mReader; }
 
 private:
   nsTArray<uint8_t> mBuffer;
-  BufferReader mReader;
+  ByteReader mReader;
 };
 }
 

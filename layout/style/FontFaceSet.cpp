@@ -16,7 +16,6 @@
 #include "mozilla/dom/FontFaceSetLoadEvent.h"
 #include "mozilla/dom/FontFaceSetLoadEventBinding.h"
 #include "mozilla/dom/Promise.h"
-#include "mozilla/net/ReferrerPolicy.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
@@ -94,7 +93,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_ADDREF_INHERITED(FontFaceSet, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(FontFaceSet, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(FontFaceSet)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FontFaceSet)
   NS_INTERFACE_MAP_ENTRY(nsIDOMEventListener)
   NS_INTERFACE_MAP_ENTRY(nsICSSLoaderObserver)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
@@ -199,7 +198,7 @@ FontFaceSet::RemoveDOMContentLoadedListener()
 void
 FontFaceSet::ParseFontShorthandForMatching(
                             const nsAString& aFont,
-                            RefPtr<SharedFontList>& aFamilyList,
+                            RefPtr<FontFamilyListRefCnt>& aFamilyList,
                             uint32_t& aWeight,
                             int32_t& aStretch,
                             uint8_t& aStyle,
@@ -241,7 +240,8 @@ FontFaceSet::ParseFontShorthandForMatching(
     return;
   }
 
-  aFamilyList = family->GetFontFamilyListValue();
+  aFamilyList =
+    static_cast<FontFamilyListRefCnt*>(family->GetFontFamilyListValue());
 
   int32_t weight = data->ValueFor(eCSSProperty_font_weight)->GetIntValue();
 
@@ -281,7 +281,7 @@ FontFaceSet::FindMatchingFontFaces(const nsAString& aFont,
                                    nsTArray<FontFace*>& aFontFaces,
                                    ErrorResult& aRv)
 {
-  RefPtr<SharedFontList> familyList;
+  RefPtr<FontFamilyListRefCnt> familyList;
   uint32_t weight;
   int32_t stretch;
   uint8_t italicStyle;
@@ -303,7 +303,7 @@ FontFaceSet::FindMatchingFontFaces(const nsAString& aFont,
   // Set of FontFaces that we want to return.
   nsTHashtable<nsPtrHashKey<FontFace>> matchingFaces;
 
-  for (const FontFamilyName& fontFamilyName : familyList->mNames) {
+  for (const FontFamilyName& fontFamilyName : familyList->GetFontlist()) {
     RefPtr<gfxFontFamily> family =
       mUserFontSet->LookupFamily(fontFamilyName.mName);
 
@@ -663,7 +663,7 @@ FontFaceSet::StartLoad(gfxUserFontEntry* aUserFontEntry,
 
     nsAutoCString accept("application/font-woff;q=0.9,*/*;q=0.8");
     if (Preferences::GetBool(GFX_PREF_WOFF2_ENABLED)) {
-      accept.InsertLiteral("application/font-woff2;q=1.0,", 0);
+      accept.Insert(NS_LITERAL_CSTRING("application/font-woff2;q=1.0,"), 0);
     }
     rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
                                        accept, false);
@@ -683,7 +683,7 @@ FontFaceSet::StartLoad(gfxUserFontEntry* aUserFontEntry,
     priorityChannel->AdjustPriority(nsISupportsPriority::PRIORITY_HIGH);
   }
 
-  rv = NS_NewStreamLoader(getter_AddRefs(streamLoader), fontLoader, fontLoader);
+  rv = NS_NewStreamLoader(getter_AddRefs(streamLoader), fontLoader);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mozilla::net::PredictorLearn(aFontFaceSrc->mURI->get(),
@@ -983,7 +983,7 @@ FontFaceSet::InsertRuleFontFace(FontFace* aFontFace, SheetType aSheetType,
   mUserFontSet->AddUserFontEntry(fontfamily, entry);
 }
 
-already_AddRefed<gfxUserFontEntry>
+/* static */ already_AddRefed<gfxUserFontEntry>
 FontFaceSet::FindOrCreateUserFontEntryFromFontFace(FontFace* aFontFace)
 {
   nsAutoString fontfamily;
@@ -997,11 +997,13 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(FontFace* aFontFace)
                                                SheetType::Doc);
 }
 
-already_AddRefed<gfxUserFontEntry>
+/* static */ already_AddRefed<gfxUserFontEntry>
 FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
                                                    FontFace* aFontFace,
                                                    SheetType aSheetType)
 {
+  FontFaceSet* set = aFontFace->GetPrimaryFontFaceSet();
+
   nsCSSValue val;
   nsCSSUnit unit;
 
@@ -1100,7 +1102,6 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
 
     face->mSourceType = gfxFontFaceSrc::eSourceType_Buffer;
     face->mBuffer = aFontFace->CreateBufferSource();
-    face->mReferrerPolicy = mozilla::net::RP_Unset;
   } else {
     aFontFace->GetDesc(eCSSFontDesc_Src, val);
     unit = val.GetUnit();
@@ -1122,7 +1123,6 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
           face->mSourceType = gfxFontFaceSrc::eSourceType_Local;
           face->mURI = nullptr;
           face->mFormatFlags = 0;
-          face->mReferrerPolicy = mozilla::net::RP_Unset;
           break;
         case eCSSUnit_URL: {
           face->mSourceType = gfxFontFaceSrc::eSourceType_URL;
@@ -1130,7 +1130,7 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
           face->mURI = uri ? new gfxFontSrcURI(uri) : nullptr;
           URLValue* url = val.GetURLStructValue();
           face->mReferrer = url->mExtraData->GetReferrer();
-          face->mReferrerPolicy = mDocument->GetReferrerPolicy();
+          face->mReferrerPolicy = set->mDocument->GetReferrerPolicy();
           face->mOriginPrincipal =
             new gfxFontSrcPrincipal(url->mExtraData->GetPrincipal());
           NS_ASSERTION(face->mOriginPrincipal, "null origin principal in @font-face rule");
@@ -1197,11 +1197,11 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
   }
 
   RefPtr<gfxUserFontEntry> entry =
-    mUserFontSet->FindOrCreateUserFontEntry(aFamilyName, srcArray, weight,
-                                            stretch, italicStyle,
-                                            featureSettings,
-                                            languageOverride,
-                                            unicodeRanges, fontDisplay);
+    set->mUserFontSet->FindOrCreateUserFontEntry(aFamilyName, srcArray, weight,
+                                                 stretch, italicStyle,
+                                                 featureSettings,
+                                                 languageOverride,
+                                                 unicodeRanges, fontDisplay);
   return entry.forget();
 }
 
@@ -1391,8 +1391,7 @@ FontFaceSet::IsFontLoadAllowed(nsIURI* aFontLocation,
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
   nsresult rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_FONT,
                                           aFontLocation,
-                                          aPrincipal, // loading principal
-                                          aPrincipal, // triggering principal
+                                          aPrincipal,
                                           mDocument,
                                           EmptyCString(), // mime type
                                           nullptr, // aExtra
@@ -1467,7 +1466,7 @@ FontFaceSet::SyncLoadFontData(gfxUserFontEntry* aFontToLoad,
   aBufferLength = static_cast<uint32_t>(bufferLength64);
 
   // read all the decoded data
-  aBuffer = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * aBufferLength));
+  aBuffer = static_cast<uint8_t*> (moz_xmalloc(sizeof(uint8_t) * aBufferLength));
   if (!aBuffer) {
     aBufferLength = 0;
     return NS_ERROR_OUT_OF_MEMORY;

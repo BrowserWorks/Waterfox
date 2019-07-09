@@ -115,9 +115,6 @@ inline bool PrincipalHandleMatches(PrincipalHandle& aPrincipalHandle,
  */
 class MediaSegment {
 public:
-  MediaSegment(const MediaSegment&) = delete;
-  MediaSegment& operator= (const MediaSegment&) = delete;
-
   virtual ~MediaSegment()
   {
     MOZ_COUNT_DTOR(MediaSegment);
@@ -147,11 +144,6 @@ public:
   {
     mLastPrincipalHandle = aLastPrincipalHandle;
   }
-
-  /**
-   * Returns true if all chunks in this segment are null.
-   */
-  virtual bool IsNull() const = 0;
 
   /**
    * Create a MediaSegment of the same type.
@@ -212,14 +204,6 @@ protected:
     MOZ_COUNT_CTOR(MediaSegment);
   }
 
-  MediaSegment(MediaSegment&& aSegment)
-    : mDuration(Move(aSegment.mDuration))
-    , mType(Move(aSegment.mType))
-    , mLastPrincipalHandle(Move(aSegment.mLastPrincipalHandle))
-  {
-    MOZ_COUNT_CTOR(MediaSegment);
-  }
-
   StreamTime mDuration; // total of mDurations of all chunks
   Type mType;
 
@@ -234,15 +218,6 @@ protected:
  */
 template <class C, class Chunk> class MediaSegmentBase : public MediaSegment {
 public:
-  bool IsNull() const override
-  {
-    for (typename C::ConstChunkIterator iter(*this); !iter.IsEnded(); iter.Next()) {
-      if (!iter->IsNull()) {
-        return false;
-      }
-    }
-    return true;
-  }
   MediaSegment* CreateEmptyClone() const override
   {
     return new C();
@@ -438,14 +413,6 @@ public:
 protected:
   explicit MediaSegmentBase(Type aType) : MediaSegment(aType) {}
 
-  MediaSegmentBase(MediaSegmentBase&& aSegment)
-    : MediaSegment(Move(aSegment))
-    , mChunks(Move(aSegment.mChunks))
-#ifdef MOZILLA_INTERNAL_API
-    , mTimeStamp(Move(aSegment.mTimeStamp))
-#endif
-  {}
-
   /**
    * Appends the contents of aSource to this segment, clearing aSource.
    */
@@ -475,14 +442,7 @@ protected:
       StreamTime nextOffset = offset + c.GetDuration();
       StreamTime end = std::min(aEnd, nextOffset);
       if (start < end) {
-        if (!mChunks.IsEmpty() &&
-            mChunks[mChunks.Length() - 1].CanCombineWithFollowing(c)) {
-          MOZ_ASSERT(start - offset >= 0 && end - offset <= aSource.mDuration,
-                     "Slice out of bounds");
-          mChunks[mChunks.Length() - 1].mDuration += end - start;
-        } else {
-          mChunks.AppendElement(c)->SliceTo(start - offset, end - offset);
-        }
+        mChunks.AppendElement(c)->SliceTo(start - offset, end - offset);
       }
       offset = nextOffset;
     }

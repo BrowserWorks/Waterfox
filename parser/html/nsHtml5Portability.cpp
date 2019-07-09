@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "jArray.h"
 #include "nsHtml5Portability.h"
 #include "nsHtml5TreeBuilder.h"
 
-nsAtom*
+nsIAtom*
 nsHtml5Portability::newLocalNameFromBuffer(char16_t* buf, int32_t offset, int32_t length, nsHtml5AtomTable* interner)
 {
   NS_ASSERTION(!offset, "The offset should always be zero here.");
@@ -16,30 +16,12 @@ nsHtml5Portability::newLocalNameFromBuffer(char16_t* buf, int32_t offset, int32_
   return interner->GetAtom(nsDependentSubstring(buf, buf + length));
 }
 
-static bool
-ContainsWhiteSpace(mozilla::Span<char16_t> aSpan)
-{
-  for (char16_t c : aSpan) {
-    if (nsContentUtils::IsHTMLWhitespace(c)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 nsHtml5String
 nsHtml5Portability::newStringFromBuffer(char16_t* buf,
                                         int32_t offset,
                                         int32_t length,
-                                        nsHtml5TreeBuilder* treeBuilder,
-                                        bool maybeAtomize)
+                                        nsHtml5TreeBuilder* treeBuilder)
 {
-  if (!length) {
-    return nsHtml5String::EmptyString();
-  }
-  if (maybeAtomize && !ContainsWhiteSpace(mozilla::MakeSpan(buf + offset, length))) {
-    return nsHtml5String::FromAtom(NS_AtomizeMainThread(nsDependentSubstring(buf + offset, length)));
-  }
   return nsHtml5String::FromBuffer(buf + offset, length, treeBuilder);
 }
 
@@ -62,7 +44,7 @@ nsHtml5Portability::newStringFromString(nsHtml5String string)
 }
 
 jArray<char16_t,int32_t>
-nsHtml5Portability::newCharArrayFromLocal(nsAtom* local)
+nsHtml5Portability::newCharArrayFromLocal(nsIAtom* local)
 {
   nsAutoString temp;
   local->ToString(temp);
@@ -83,8 +65,8 @@ nsHtml5Portability::newCharArrayFromString(nsHtml5String string)
   return arr;
 }
 
-nsAtom*
-nsHtml5Portability::newLocalFromLocal(nsAtom* local, nsHtml5AtomTable* interner)
+nsIAtom*
+nsHtml5Portability::newLocalFromLocal(nsIAtom* local, nsHtml5AtomTable* interner)
 {
   NS_PRECONDITION(local, "Atom was null.");
   NS_PRECONDITION(interner, "Atom table was null");
@@ -97,7 +79,7 @@ nsHtml5Portability::newLocalFromLocal(nsAtom* local, nsHtml5AtomTable* interner)
 }
 
 bool
-nsHtml5Portability::localEqualsBuffer(nsAtom* local, char16_t* buf, int32_t offset, int32_t length)
+nsHtml5Portability::localEqualsBuffer(nsIAtom* local, char16_t* buf, int32_t offset, int32_t length)
 {
   return local->Equals(buf + offset, length);
 }

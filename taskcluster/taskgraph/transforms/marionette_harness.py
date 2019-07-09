@@ -27,4 +27,11 @@ def setup_task(config, tasks):
             'MOZ_SCM_LEVEL': config.params['level'],
         })
 
+        task['worker']['caches'] = [{
+            'type': 'persistent',
+            'name': 'level-{}-{}-tc-vcs'.format(
+                config.params['level'], config.params['project']),
+            'mount-point': "/home/worker/.tc-vcs",
+        }]
+
         yield task

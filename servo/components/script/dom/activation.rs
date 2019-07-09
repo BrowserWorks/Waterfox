@@ -11,7 +11,8 @@ use dom::eventtarget::EventTarget;
 use dom::mouseevent::MouseEvent;
 use dom::node::window_from_node;
 use dom::window::ReflowReason;
-use script_layout_interface::message::ReflowGoal;
+use script_layout_interface::message::ReflowQueryType;
+use style::context::ReflowGoal;
 
 /// Trait for elements with defined activation behavior
 pub trait Activatable {
@@ -37,14 +38,18 @@ pub trait Activatable {
         self.as_element().set_active_state(true);
 
         let win = window_from_node(self.as_element());
-        win.reflow(ReflowGoal::Full, ReflowReason::ElementStateChanged);
+        win.reflow(ReflowGoal::ForDisplay,
+                   ReflowQueryType::NoQuery,
+                   ReflowReason::ElementStateChanged);
     }
 
     fn exit_formal_activation_state(&self) {
         self.as_element().set_active_state(false);
 
         let win = window_from_node(self.as_element());
-        win.reflow(ReflowGoal::Full, ReflowReason::ElementStateChanged);
+        win.reflow(ReflowGoal::ForDisplay,
+                   ReflowQueryType::NoQuery,
+                   ReflowReason::ElementStateChanged);
     }
 }
 
@@ -93,7 +98,6 @@ pub fn synthetic_click_activation(element: &Element,
                                 alt_key,
                                 meta_key,
                                 0,
-                                None,
                                 None);
     let event = mouse.upcast::<Event>();
     if source == ActivationSource::FromClick {

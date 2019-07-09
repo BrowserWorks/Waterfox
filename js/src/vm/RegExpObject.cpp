@@ -187,6 +187,8 @@ CreateRegExpPrototype(JSContext* cx, JSProtoKey key)
 static const ClassOps RegExpObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */
@@ -1222,13 +1224,16 @@ RegExpCompartment::createMatchResultTemplateObject(JSContext* cx)
 
     /* Set dummy index property */
     RootedValue index(cx, Int32Value(0));
-    if (!NativeDefineDataProperty(cx, templateObject, cx->names().index, index, JSPROP_ENUMERATE))
+    if (!NativeDefineProperty(cx, templateObject, cx->names().index, index, nullptr, nullptr,
+                              JSPROP_ENUMERATE))
+    {
         return matchResultTemplateObject_; // = nullptr
+    }
 
     /* Set dummy input property */
     RootedValue inputVal(cx, StringValue(cx->runtime()->emptyString));
-    if (!NativeDefineDataProperty(cx, templateObject, cx->names().input, inputVal,
-                                  JSPROP_ENUMERATE))
+    if (!NativeDefineProperty(cx, templateObject, cx->names().input, inputVal, nullptr, nullptr,
+                              JSPROP_ENUMERATE))
     {
         return matchResultTemplateObject_; // = nullptr
     }
@@ -1319,7 +1324,7 @@ RegExpZone::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
 }
 
 RegExpZone::RegExpZone(Zone* zone)
-  : set_(zone, zone)
+  : set_(zone, zone->runtimeFromActiveCooperatingThread())
 {}
 
 /* Functions */
@@ -1347,39 +1352,47 @@ js::CloneRegExpObject(JSContext* cx, Handle<RegExpObject*> regex)
     return clone;
 }
 
-template <typename CharT>
 static bool
-ParseRegExpFlags(const CharT* chars, size_t length, RegExpFlag* flagsOut, char16_t* invalidFlag)
+HandleRegExpFlag(RegExpFlag flag, RegExpFlag* flags)
+{
+    if (*flags & flag)
+        return false;
+    *flags = RegExpFlag(*flags | flag);
+    return true;
+}
+
+template <typename CharT>
+static size_t
+ParseRegExpFlags(const CharT* chars, size_t length, RegExpFlag* flagsOut, char16_t* lastParsedOut)
 {
     *flagsOut = RegExpFlag(0);
 
     for (size_t i = 0; i < length; i++) {
-        RegExpFlag flag;
+        *lastParsedOut = chars[i];
         switch (chars[i]) {
           case 'i':
-            flag = IgnoreCaseFlag;
+            if (!HandleRegExpFlag(IgnoreCaseFlag, flagsOut))
+                return false;
             break;
           case 'g':
-            flag = GlobalFlag;
+            if (!HandleRegExpFlag(GlobalFlag, flagsOut))
+                return false;
             break;
           case 'm':
-            flag = MultilineFlag;
+            if (!HandleRegExpFlag(MultilineFlag, flagsOut))
+                return false;
             break;
           case 'y':
-            flag = StickyFlag;
+            if (!HandleRegExpFlag(StickyFlag, flagsOut))
+                return false;
             break;
           case 'u':
-            flag = UnicodeFlag;
+            if (!HandleRegExpFlag(UnicodeFlag, flagsOut))
+                return false;
             break;
           default:
-            *invalidFlag = chars[i];
             return false;
         }
-        if (*flagsOut & flag) {
-            *invalidFlag = chars[i];
-            return false;
-        }
-        *flagsOut = RegExpFlag(*flagsOut | flag);
     }
 
     return true;
@@ -1395,17 +1408,17 @@ js::ParseRegExpFlags(JSContext* cx, JSString* flagStr, RegExpFlag* flagsOut)
     size_t len = linear->length();
 
     bool ok;
-    char16_t invalidFlag;
+    char16_t lastParsed;
     if (linear->hasLatin1Chars()) {
         AutoCheckCannotGC nogc;
-        ok = ::ParseRegExpFlags(linear->latin1Chars(nogc), len, flagsOut, &invalidFlag);
+        ok = ::ParseRegExpFlags(linear->latin1Chars(nogc), len, flagsOut, &lastParsed);
     } else {
         AutoCheckCannotGC nogc;
-        ok = ::ParseRegExpFlags(linear->twoByteChars(nogc), len, flagsOut, &invalidFlag);
+        ok = ::ParseRegExpFlags(linear->twoByteChars(nogc), len, flagsOut, &lastParsed);
     }
 
     if (!ok) {
-        TwoByteChars range(&invalidFlag, 1);
+        TwoByteChars range(&lastParsed, 1);
         UniqueChars utf8(JS::CharsToNewUTF8CharsZ(nullptr, range).c_str());
         if (!utf8)
             return false;

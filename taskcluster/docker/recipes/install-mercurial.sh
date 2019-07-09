@@ -21,25 +21,14 @@ if [ -f /etc/lsb-release ]; then
         HG_COMMON_SIZE=2017628
         HG_COMMON_FILENAME=mercurial-common_4.3.1_all.deb
     elif [ "${DISTRIB_ID}" = "Ubuntu" -a "${DISTRIB_RELEASE}" = "12.04" ]; then
-        echo "Ubuntu 12.04 not supported"
-        exit 1
-    fi
+        HG_DEB=1
+        HG_DIGEST=67823aa455c59dbdc24ec1f044b0afdb5c03520ef3601509cb5466dc0ac332846caf96176f07de501c568236f6909e55dfc8f4b02f8c69fa593a4abca9abfeb8
+        HG_SIZE=167880
+        HG_FILENAME=mercurial_4.1.2_amd64.deb
 
-    CERT_PATH=/etc/ssl/certs/ca-certificates.crt
-
-elif [ -f /etc/os-release ]; then
-    . /etc/os-release
-
-    if [ "${ID}" = "debian" -a "${VERSION_ID}" = "9" ]; then
-        if [ -f /usr/bin/pip2 ]; then
-            PIP_PATH=/usr/bin/pip2
-        else
-            echo "We currently require Python 2.7 and /usr/bin/pip2 to run Mercurial"
-            exit 1
-        fi
-    else
-        echo "Unsupported debian-like system with ID '${ID}' and VERSION_ID '${VERSION_ID}'"
-        exit 1
+        HG_COMMON_DIGEST=5e1c462a9b699d2068f7a0c14589f347ca719c216181ef7a625033df757185eeb3a8fed57986829a7943f16af5a8d66ddf457cc7fc4af557be88eb09486fe665
+        HG_COMMON_SIZE=3091596
+        HG_COMMON_FILENAME=mercurial-common_4.1.2_all.deb
     fi
 
     CERT_PATH=/etc/ssl/certs/ca-certificates.crt
@@ -50,6 +39,16 @@ elif [ -f /etc/centos-release ]; then
         if [ -f /usr/bin/pip2.7 ]; then
             PIP_PATH=/usr/bin/pip2.7
         else
+            # The following RPM is "linked" against Python 2.6, which doesn't
+            # support TLS 1.2. Given the security implications of an insecure
+            # version control tool, we choose to prefer a Mercurial built using
+            # Python 2.7 that supports TLS 1.2. Before you uncomment the code
+            # below, think long and hard about the implications of limiting
+            # Mercurial to TLS 1.0.
+            #HG_RPM=1
+            #HG_DIGEST=c64e00c74402cd9c4ef9792177354fa6ff9c8103f41358f0eab2b15dba900d47d04ea582c6c6ebb80cf52495a28433987ffb67a5f39cd843b6638e3fa46921c8
+            #HG_SIZE=4437360
+            #HG_FILENAME=mercurial-4.1.2.x86_64.rpm
             echo "We currently require Python 2.7 and /usr/bin/pip2.7 to run Mercurial"
             exit 1
         fi
@@ -128,7 +127,6 @@ assume-tty = true
 cacerts = ${CERT_PATH}
 
 [extensions]
-sparse =
 robustcheckout = /usr/local/mercurial/robustcheckout.py
 
 [hostsecurity]

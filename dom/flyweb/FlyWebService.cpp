@@ -670,12 +670,12 @@ FlyWebMDNSService::Init()
 {
   MOZ_ASSERT(mDiscoveryState == DISCOVERY_IDLE);
 
-  mDiscoveryStartTimer = NS_NewTimer();
+  mDiscoveryStartTimer = do_CreateInstance("@mozilla.org/timer;1");
   if (!mDiscoveryStartTimer) {
     return NS_ERROR_FAILURE;
   }
 
-  mDiscoveryStopTimer = NS_NewTimer();
+  mDiscoveryStopTimer = do_CreateInstance("@mozilla.org/timer;1");
   if (!mDiscoveryStopTimer) {
     return NS_ERROR_FAILURE;
   }
@@ -802,11 +802,11 @@ FlyWebMDNSService::PairWithService(const nsAString& aServiceId,
   url.Append(aInfo->mService.mHostname);
   if (!discInfo->mService.mPath.IsEmpty()) {
     if (discInfo->mService.mPath.Find("/") != 0) {
-      url.AppendLiteral(u"/");
+      url.Append(NS_LITERAL_STRING("/"));
     }
     url.Append(discInfo->mService.mPath);
   } else {
-    url.AppendLiteral(u"/");
+    url.Append(NS_LITERAL_STRING("/"));
   }
   nsCOMPtr<nsIURI> uiURL;
   NS_NewURI(getter_AddRefs(uiURL), url);

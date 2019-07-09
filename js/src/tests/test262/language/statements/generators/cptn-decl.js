@@ -11,7 +11,6 @@ info: >
     HoistableDeclaration : GeneratorDeclaration
 
     1. Return NormalCompletion(empty).
-features: [generators]
 ---*/
 
 assert.sameValue(eval('function* f() {}'), undefined);

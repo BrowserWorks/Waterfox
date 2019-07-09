@@ -6,15 +6,14 @@
 .theme-dark,
 .theme-light {
   --number-color: var(--theme-highlight-green);
-  --string-color: var(--theme-highlight-red);
+  --string-color: var(--theme-highlight-orange);
   --null-color: var(--theme-comment);
-  --object-color: var(--theme-highlight-blue);
+  --object-color: var(--theme-body-color);
   --caption-color: var(--theme-highlight-blue);
-  --location-color: var(--theme-comment);
+  --location-color: var(--theme-content-color1);
   --source-link-color: var(--theme-highlight-blue);
-  --node-color: var(--theme-highlight-purple);
-  --reference-color: var(--theme-highlight-blue);
-  --comment-node-color: var(--theme-comment);
+  --node-color: var(--theme-highlight-bluegrey);
+  --reference-color: var(--theme-highlight-purple);
 }
 
 .theme-firebug {
@@ -64,26 +63,22 @@
   color: var(--string-color);
 }
 
-.objectBox-string a, .objectBox-string a:visited {
-  color: currentColor;
-}
-
 .objectBox-function,
 .objectBox-stackTrace,
 .objectBox-profile {
   color: var(--object-color);
 }
 
-.objectBox-Location,
-.location {
+.objectBox-Location {
+  font-style: italic;
   color: var(--location-color);
 }
 
 .objectBox-null,
 .objectBox-undefined,
 .objectBox-hint,
-.objectBox-nan,
 .logRowHint {
+  font-style: italic;
   color: var(--null-color);
 }
 
@@ -110,42 +105,25 @@
 .objectBox-event,
 .objectBox-eventLog,
 .objectBox-regexp,
-.objectBox-object {
+.objectBox-object,
+.objectBox-Date {
+  font-weight: bold;
   color: var(--object-color);
-  white-space: pre-wrap;
-}
-
-.objectBox .Date {
-  color: var(--string-color);
   white-space: pre-wrap;
 }
 
 /******************************************************************************/
 
-.objectBox.theme-comment {
-  color: var(--comment-node-color);
-}
-
-.tag-name {
-  color: var(--object-color);
-}
-
-.attrName {
-  color: var(--string-color);
-}
-
-.attrEqual,
-.objectEqual {
-  color: var(--comment-node-color);
-}
-
-.attrValue,
-.attrValue.objectBox-string {
+.objectBox-object .nodeName,
+.objectBox-NamedNodeMap .nodeName,
+.objectBox-NamedNodeMap .objectEqual,
+.objectBox-Attr .attrEqual,
+.objectBox-Attr .attrTitle {
   color: var(--node-color);
 }
 
-.angleBracket {
-  color: var(--theme-body-color);
+.objectBox-object .nodeName {
+  font-weight: normal;
 }
 
 /******************************************************************************/
@@ -154,7 +132,7 @@
 .objectRightBrace,
 .arrayLeftBracket,
 .arrayRightBracket {
-  color: var(--object-color);
+  color: var(--theme-highlight-blue);
 }
 
 /******************************************************************************/
@@ -165,12 +143,14 @@
   color: var(--reference-color);
 }
 
-[class*="objectBox"] > .objectTitle {
-  color: var(--object-color);
+[class*="objectBox-"] > .objectTitle {
+  color: var(--theme-highlight-blue);
+  font-style: italic;
 }
 
 .caption {
-  color: var(--caption-color);
+  font-weight: bold;
+  color:  var(--caption-color);
 }
 
 /******************************************************************************/
@@ -198,7 +178,7 @@
 /* Open DOMNode in inspector button */
 
 .open-inspector svg {
-  fill: var(--comment-node-color);
+  fill: rgb(215, 215, 215);
   height: 16px;
   width: 16px;
   margin-left: .25em;
@@ -209,33 +189,20 @@
 .objectBox-node:hover .open-inspector svg,
 .objectBox-textNode:hover .open-inspector svg,
 .open-inspector svg:hover {
-  fill: var(--theme-highlight-blue);
+  fill: rgb(65, 175, 230);
 }
 
 /******************************************************************************/
 /* "more…" ellipsis */
 .more-ellipsis {
-  color: var(--comment-node-color);
+  color: var(--theme-comment);
 }
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .tree {
-  --arrow-width: 10px;
-  --arrow-single-margin: 5px;
-  --arrow-total-width: calc(var(--arrow-width) + var(--arrow-single-margin));
-  --arrow-fill-color: var(--theme-splitter-color, #9B9B9B);
-  --tree-indent-width: 1em;
-  --tree-indent-border-color: #A2D1FF;
-  --tree-indent-border-width: 1px;
-  --tree-node-hover-background-color: #F0F9FE;
-  --tree-node-focus-color: white;
-  --tree-node-focus-background-color: var(--theme-selection-background, #0a84ff);
   overflow: auto;
-}
-
-.tree.inline {
   display: inline-block;
 }
 
@@ -255,25 +222,22 @@
   display: block;
 }
 
-.tree .tree-node[data-expandable="true"] {
+.tree .node {
+  padding: 0 0.25em;
+  position: relative;
   cursor: pointer;
 }
 
-.tree .tree-node:not(.focused):hover {
-  background-color: var(--tree-node-hover-background-color);
-}
-
-.tree .tree-node.focused {
-  color: var(--tree-node-focus-color);
-  background-color: var(--tree-node-focus-background-color);
-  --arrow-fill-color: currentColor;
+.tree .node.focused {
+  color: white;
+  background-color: var(--theme-selection-background);
 }
 
 .arrow svg {
-  fill: var(--arrow-fill-color);
+  fill: var(--theme-splitter-color);
   transition: transform 0.125s ease;
-  width: var(--arrow-width);
-  margin-inline-end: var(--arrow-single-margin);
+  width: 10px;
+  margin-inline-end: 5px;
   transform: rotate(-90deg);
 }
 
@@ -286,26 +250,12 @@ html[dir="rtl"] .arrow svg,
 .arrow.expanded.expanded svg {
   transform: rotate(0deg);
 }
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.tree.object-inspector .object-label,
-.tree.object-inspector .object-label * {
+.object-label {
   color: var(--theme-highlight-blue);
 }
 
-.tree.object-inspector .node .unavailable {
-  color: var(--theme-comment);
+.lessen {
+  opacity: 0.6;
 }
 
-.tree.object-inspector .lessen,
-.tree.object-inspector .lessen *,
-.tree.object-inspector .lessen .object-label,
-.tree.object-inspector .lessen .object-label * {
-  color: var(--theme-comment);
-}
-
-.object-inspector .object-delimiter {
-  color: var(--theme-comment);
-}

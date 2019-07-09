@@ -65,6 +65,7 @@ public:
                                        !IsDebugFile(aFd))
     , mFd(aFd)
     , mHasQueriedFilename(false)
+    , mFilename(nullptr)
   {
   }
 
@@ -75,45 +76,49 @@ public:
                                        IsValidWrite(aFd, aBuf, aCount))
     , mFd(aFd)
     , mHasQueriedFilename(false)
+    , mFilename(nullptr)
   {
   }
 
   // Custom implementation of IOInterposeObserver::Observation::Filename
-  void Filename(nsAString& aFilename) override;
+  const char16_t* Filename() override;
 
   ~MacIOAutoObservation()
   {
     Report();
+    if (mFilename) {
+      free(mFilename);
+      mFilename = nullptr;
+    }
   }
 
 private:
   int                 mFd;
   bool                mHasQueriedFilename;
-  nsString            mFilename;
+  char16_t*           mFilename;
   static const char*  sReference;
 };
 
 const char* MacIOAutoObservation::sReference = "PoisonIOInterposer";
 
 // Get filename for this observation
-void
-MacIOAutoObservation::Filename(nsAString& aFilename)
+const char16_t*
+MacIOAutoObservation::Filename()
 {
   // If mHasQueriedFilename is true, then we already have it
   if (mHasQueriedFilename) {
-    aFilename = mFilename;
-    return;
+    return mFilename;
   }
-
   char filename[MAXPATHLEN];
   if (fcntl(mFd, F_GETPATH, filename) != -1) {
-    mFilename = NS_ConvertUTF8toUTF16(filename);
+    mFilename = UTF8ToNewUnicode(nsDependentCString(filename));
   } else {
-    mFilename.Truncate();
+    mFilename = nullptr;
   }
   mHasQueriedFilename = true;
 
-  aFilename = mFilename;
+  // Return filename
+  return mFilename;
 }
 
 /****************************** Write Validation ******************************/

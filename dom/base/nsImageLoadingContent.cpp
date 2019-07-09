@@ -39,7 +39,7 @@
 #include "nsContentUtils.h"
 #include "nsLayoutUtils.h"
 #include "nsIContentPolicy.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 
 #include "gfxPrefs.h"
 
@@ -256,7 +256,7 @@ nsImageLoadingContent::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
   }
 
   nsCOMPtr<nsINode> thisNode = do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
-  SVGObserverUtils::InvalidateDirectRenderingObservers(thisNode->AsElement());
+  nsSVGEffects::InvalidateDirectRenderingObservers(thisNode->AsElement());
 
   return NS_OK;
 }
@@ -897,8 +897,7 @@ nsresult
 nsImageLoadingContent::LoadImage(const nsAString& aNewURI,
                                  bool aForce,
                                  bool aNotify,
-                                 ImageLoadType aImageLoadType,
-                                 nsIPrincipal* aTriggeringPrincipal)
+                                 ImageLoadType aImageLoadType)
 {
   // First, get a document (needed for security checks and the like)
   nsIDocument* doc = GetOurOwnerDoc();
@@ -932,8 +931,7 @@ nsImageLoadingContent::LoadImage(const nsAString& aNewURI,
 
   NS_TryToSetImmutable(imageURI);
 
-  return LoadImage(imageURI, aForce, aNotify, aImageLoadType, false, doc,
-                   nsIRequest::LOAD_NORMAL, aTriggeringPrincipal);
+  return LoadImage(imageURI, aForce, aNotify, aImageLoadType, false, doc);
 }
 
 nsresult
@@ -943,8 +941,7 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
                                  ImageLoadType aImageLoadType,
                                  bool aLoadStart,
                                  nsIDocument* aDocument,
-                                 nsLoadFlags aLoadFlags,
-                                 nsIPrincipal* aTriggeringPrincipal)
+                                 nsLoadFlags aLoadFlags)
 {
   MOZ_ASSERT(!mIsStartingImageLoad, "some evil code is reentering LoadImage.");
   if (mIsStartingImageLoad) {
@@ -1021,6 +1018,8 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
              "Principal mismatch?");
 #endif
 
+  nsContentPolicyType policyType = PolicyTypeForLoad(aImageLoadType);
+
   nsLoadFlags loadFlags = aLoadFlags;
   int32_t corsmode = GetCORSMode();
   if (corsmode == CORS_ANONYMOUS) {
@@ -1041,25 +1040,12 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
   RefPtr<imgRequestProxy>& req = PrepareNextRequest(aImageLoadType);
   nsCOMPtr<nsIContent> content =
       do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
-
-  nsCOMPtr<nsIPrincipal> triggeringPrincipal;
-  bool result =
-    nsContentUtils::GetLoadingPrincipalForXULNode(content, aTriggeringPrincipal,
-                                                  getter_AddRefs(triggeringPrincipal));
-
-  // If result is true, which means this node has specified 'loadingprincipal'
-  // attribute on it, so we use favicon as the policy type.
-  nsContentPolicyType policyType = result ?
-                                     nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON:
-                                     PolicyTypeForLoad(aImageLoadType);
-
   nsCOMPtr<nsINode> thisNode =
     do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
   nsresult rv = nsContentUtils::LoadImage(aNewURI,
                                           thisNode,
                                           aDocument,
-                                          triggeringPrincipal,
-                                          0,
+                                          aDocument->NodePrincipal(),
                                           aDocument->GetDocumentURI(),
                                           referrerPolicy,
                                           this, loadFlags,
@@ -1386,6 +1372,8 @@ nsImageLoadingContent::PrepareNextRequest(ImageLoadType aImageLoadType)
   // available. bz says the web depends on this behavior.
   // Otherwise, we get rid of any half-baked request that might be sitting there
   // and make this one current.
+  // TODO: Bug 583491
+  // Investigate/Cleanup NS_ERROR_IMAGE_SRC_CHANGED use in nsImageFrame.cpp
   return HaveSize(mCurrentRequest) ?
            PreparePendingRequest(aImageLoadType) :
            PrepareCurrentRequest(aImageLoadType);

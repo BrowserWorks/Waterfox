@@ -4,9 +4,6 @@
 
 package org.mozilla.gecko.sync.repositories;
 
-import android.support.annotation.Nullable;
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -17,6 +14,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -30,7 +28,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  * <li>Populate with saved information by calling {@link #unbundle(RepositorySessionBundle)}.</li>
  * <li>Begin a sync by calling {@link #begin(RepositorySessionBeginDelegate)}. <code>begin()</code>
  *   is an appropriate place to initialize expensive resources.</li>
- * <li>Perform operations such as {@link #fetchModified(RepositorySessionFetchRecordsDelegate)} and
+ * <li>Perform operations such as {@link #fetchSince(long, RepositorySessionFetchRecordsDelegate)} and
  *   {@link #store(Record)}.</li>
  * <li>Finish by calling {@link #finish(RepositorySessionFinishDelegate)}, retrieving and storing
  *   the current bundle.</li>
@@ -51,6 +49,9 @@ public abstract class RepositorySession {
 
   private static final String LOG_TAG = "RepositorySession";
 
+  protected static void trace(String message) {
+    Logger.trace(LOG_TAG, message);
+  }
 
   private SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
@@ -71,39 +72,6 @@ public abstract class RepositorySession {
   // The time that the last sync on this collection completed, in milliseconds since epoch.
   private long lastSyncTimestamp = 0;
 
-  // As session progresses, it keeps track of the main points of interaction.
-  // If these timestamps aren't set, that means corresponding operation didn't complete.
-  private volatile Long fetchEnd;
-  private volatile Long storeEnd;
-
-  public void setLastFetchTimestamp(long timestamp) {
-    fetchEnd = timestamp;
-  }
-
-  public void setLastStoreTimestamp(long timestamp) {
-    storeEnd = timestamp;
-  }
-
-  /**
-   * @return timestamp of the last "fetch" from this session, or lastSyncTimestamp if fetch didn't happen.
-   */
-  public long getLastFetchTimestamp() {
-    if (fetchEnd != null) {
-      return fetchEnd;
-    }
-    return lastSyncTimestamp;
-  }
-
-  /**
-   * @return timestamp of the last "store" for this session, or lastSyncTimestamp if store didn't happen.
-   */
-  public long getLastStoreTimestamp() {
-    if (storeEnd != null) {
-      return storeEnd;
-    }
-    return lastSyncTimestamp;
-  }
-
   public long getLastSyncTimestamp() {
     return lastSyncTimestamp;
   }
@@ -116,12 +84,8 @@ public abstract class RepositorySession {
     this.repository = repository;
   }
 
-  /**
-   * Fetch modified records, letting repositories define what "modified" means to them.
-   *
-   * @param delegate
-   */
-  public abstract void fetchModified(RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
+  public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate) throws InactiveSessionException;
   public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
 
@@ -172,13 +136,12 @@ public abstract class RepositorySession {
     // For example, a session may choose to build up buffers which will need to be flushed in
     // storeDone, and so it will need to call onStoreComplete with the end timestamp after those
     // operations complete.
-    Logger.debug(LOG_TAG, "Scheduling onStoreCompleted for after storing is done");
     final long end = now();
+    Logger.debug(LOG_TAG, "Scheduling onStoreCompleted for after storing is done: " + end);
     Runnable command = new Runnable() {
       @Override
       public void run() {
-        setLastStoreTimestamp(end);
-        storeDelegate.onStoreCompleted();
+        storeDelegate.onStoreCompleted(end);
       }
     };
     storeWorkQueue.execute(command);
@@ -340,33 +303,6 @@ public abstract class RepositorySession {
   }
 
   /**
-   * Indicate if the specified records should be reconciled.
-   *
-   * @param remoteRecord
-   *        The record retrieved from upstream, already adjusted for clock skew.
-   * @param localRecord
-   *        The record retrieved from local storage.
-   *
-   * @return
-   *        true if the records should be passed to shouldReconcileRecords for
-   *        the actual resolution, false otherwise.
-   */
-  public boolean shouldReconcileRecords(final Record remoteRecord,
-                                        final Record localRecord) {
-    Logger.debug(LOG_TAG, "Checking if we should reconcile remote " + remoteRecord.guid + " against local " + localRecord.guid);
-    if (localRecord.equalPayloads(remoteRecord)) {
-      if (remoteRecord.lastModified > localRecord.lastModified) {
-        Logger.debug(LOG_TAG, "Records are equal (remote is newer). No record application needed.");
-        return false;
-      }
-      // Local wins.
-      Logger.debug(LOG_TAG, "Records are equal (local is newer). No record application needed.");
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * Produce a record that is some combination of the remote and local records
    * provided.
    *
@@ -377,12 +313,11 @@ public abstract class RepositorySession {
    * The returned record *should* have the local androidID and the remote GUID,
    * and some optional merge of data from the two records.
    *
-   * This method should only be called when shouldReconcileRecords returns true
-   * for the specified records.
+   * This method can be called with records that are identical, or differ in
+   * any regard.
    *
    * This method will not be called if:
    *
-   * * shouldReconcileRecords() returns false
    * * either record is marked as deleted, or
    * * there is no local mapping for a new remote record.
    *
@@ -400,19 +335,28 @@ public abstract class RepositorySession {
    * @param lastLocalRetrieval
    *        The timestamp of the last retrieved set of local records.
    * @return
-   *        A Record instance to apply.
+   *        A Record instance to apply, or null to apply nothing.
    */
-  public Record reconcileRecords(final Record remoteRecord,
-                                 final Record localRecord,
-                                 final long lastRemoteRetrieval,
-                                 final long lastLocalRetrieval) {
+  protected Record reconcileRecords(final Record remoteRecord,
+                                    final Record localRecord,
+                                    final long lastRemoteRetrieval,
+                                    final long lastLocalRetrieval) {
     Logger.debug(LOG_TAG, "Reconciling remote " + remoteRecord.guid + " against local " + localRecord.guid);
+
+    if (localRecord.equalPayloads(remoteRecord)) {
+      if (remoteRecord.lastModified > localRecord.lastModified) {
+        Logger.debug(LOG_TAG, "Records are equal. No record application needed.");
+        return null;
+      }
+
+      // Local wins.
+      return null;
+    }
 
     // TODO: Decide what to do based on:
     // * Which of the two records is modified;
     // * Whether they are equal or congruent;
     // * The modified times of each record (interpreted through the lens of clock skew);
-    // * Whether localVersion==syncVersion or localVersion>syncVersion for localRecord
     // * ...
     boolean localIsMoreRecent = localRecord.lastModified > remoteRecord.lastModified;
     Logger.debug(LOG_TAG, "Local record is more recent? " + localIsMoreRecent);

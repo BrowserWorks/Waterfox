@@ -6,9 +6,10 @@
 description: >
     Objects whose specified property is not configurable do not satisfy the
     assertion in strict mode.
-includes: [propertyHelper.js,sta.js]
+includes: [propertyHelper.js]
 flags: [onlyStrict]
 ---*/
+
 var threw = false;
 var obj = {};
 Object.defineProperty(obj, 'a', {

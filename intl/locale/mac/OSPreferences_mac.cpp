@@ -127,6 +127,9 @@ OSPreferences::ReadDateTimePattern(DateTimeFormatStyle aDateStyle,
     CFDateFormatterCreate(kCFAllocatorDefault, locale,
                           ToCFDateFormatterStyle(aDateStyle),
                           ToCFDateFormatterStyle(aTimeStyle));
+  if (!formatter) {
+    return false;
+  }
   CFStringRef format = CFDateFormatterGetFormat(formatter);
   CFRelease(locale);
 

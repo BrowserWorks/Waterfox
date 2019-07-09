@@ -105,6 +105,7 @@
 #include "nsGkAtoms.h"
 #include "nsCRT.h"
 #include "nsAppDirectoryServiceDefs.h"
+#include "nsXPIDLString.h"
 #include "nsWidgetsCID.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
@@ -644,8 +645,6 @@ nsWindow::nsWindow(bool aIsChildWindow)
 
   mTaskbarPreview = nullptr;
 
-  mCompositorWidgetDelegate = nullptr;
-
   // Global initialization
   if (!sInstanceCount) {
     // Global app registration id for Win7 and up. See
@@ -655,6 +654,7 @@ nsWindow::nsWindow(bool aIsChildWindow)
 #if defined(ACCESSIBILITY)
     mozilla::TIPMessageHandler::Initialize();
 #endif // defined(ACCESSIBILITY)
+    IMEHandler::Initialize();
     if (SUCCEEDED(::OleInitialize(nullptr))) {
       sIsOleInitialized = TRUE;
     }
@@ -1713,15 +1713,14 @@ void nsWindow::SetThemeRegion()
 
 void nsWindow::RegisterTouchWindow() {
   mTouchWindow = true;
-  ::RegisterTouchWindow(mWnd, TWF_WANTPALM);
+  mGesture.RegisterTouchWindow(mWnd);
   ::EnumChildWindows(mWnd, nsWindow::RegisterTouchForDescendants, 0);
 }
 
 BOOL CALLBACK nsWindow::RegisterTouchForDescendants(HWND aWnd, LPARAM aMsg) {
   nsWindow* win = WinUtils::GetNSWindowPtr(aWnd);
-  if (win) {
-    ::RegisterTouchWindow(aWnd, TWF_WANTPALM);
-  }
+  if (win)
+    win->mGesture.RegisterTouchWindow(aWnd);
   return TRUE;
 }
 
@@ -3020,7 +3019,7 @@ nsWindow::SetCursor(imgIContainer* aCursor,
   rv = nsWindowGfx::CreateIcon(aCursor, true, aHotspotX, aHotspotY, size, &cursor);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mCursor = eCursorInvalid;
+  mCursor = nsCursor(-1);
   ::SetCursor(cursor);
 
   NS_IF_RELEASE(sCursorImgContainer);
@@ -3771,11 +3770,9 @@ nsWindow::ClientToWindowSize(const LayoutDeviceIntSize& aClientSize)
 void
 nsWindow::EnableDragDrop(bool aEnable)
 {
-  if (!mWnd) {
-    // Return early if the window already closed
-    return;
-  }
+  NS_ASSERTION(mWnd, "nsWindow::EnableDragDrop() called after Destroy()");
 
+  nsresult rv = NS_ERROR_FAILURE;
   if (aEnable) {
     if (!mNativeDragTarget) {
       mNativeDragTarget = new nsNativeDragTarget(this);
@@ -3952,7 +3949,7 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
 
     // Ensure we have a widget proxy even if we're not using the compositor,
     // since all our transparent window handling lives there.
-    WinCompositorWidgetInitData initData(
+    CompositorWidgetInitData initData(
       reinterpret_cast<uintptr_t>(mWnd),
       reinterpret_cast<uintptr_t>(static_cast<nsIWidget*>(this)),
       mTransparencyMode);
@@ -3966,27 +3963,6 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
   NS_ASSERTION(mLayerManager, "Couldn't provide a valid layer manager.");
 
   return mLayerManager;
-}
-
-/**************************************************************
- *
- * SECTION: nsBaseWidget::SetCompositorWidgetDelegate
- *
- * Called to connect the nsWindow to the delegate providing
- * platform compositing API access.
- *
- **************************************************************/
-
-void
-nsWindow::SetCompositorWidgetDelegate(CompositorWidgetDelegate* delegate)
-{
-    if (delegate) {
-        mCompositorWidgetDelegate = delegate->AsPlatformSpecificDelegate();
-        MOZ_ASSERT(mCompositorWidgetDelegate,
-                   "nsWindow::SetCompositorWidgetDelegate called with a non-PlatformCompositorWidgetDelegate");
-    } else {
-        mCompositorWidgetDelegate = nullptr;
-    }
 }
 
 /**************************************************************
@@ -6824,8 +6800,7 @@ nsIntPoint nsWindow::GetTouchCoordinates(WPARAM wParam, LPARAM lParam)
     return ret;
   }
   PTOUCHINPUT pInputs = new TOUCHINPUT[cInputs];
-  if (GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs,
-                        sizeof(TOUCHINPUT))) {
+  if (mGesture.GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs)) {
     ret.x = TOUCH_COORD_TO_PIXEL(pInputs[0].x);
     ret.y = TOUCH_COORD_TO_PIXEL(pInputs[0].y);
   }
@@ -6840,8 +6815,7 @@ bool nsWindow::OnTouch(WPARAM wParam, LPARAM lParam)
   uint32_t cInputs = LOWORD(wParam);
   PTOUCHINPUT pInputs = new TOUCHINPUT[cInputs];
 
-  if (GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs,
-                        sizeof(TOUCHINPUT))) {
+  if (mGesture.GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs)) {
     MultiTouchInput touchInput, touchEndInput;
 
     // Walk across the touch point array processing each contact point.
@@ -6925,7 +6899,7 @@ bool nsWindow::OnTouch(WPARAM wParam, LPARAM lParam)
   }
 
   delete [] pInputs;
-  CloseTouchInputHandle((HTOUCHINPUT)lParam);
+  mGesture.CloseTouchInputHandle((HTOUCHINPUT)lParam);
   return true;
 }
 
@@ -6969,7 +6943,7 @@ bool nsWindow::OnGesture(WPARAM wParam, LPARAM lParam)
       mGesture.PanFeedbackFinalize(mWnd, endFeedback);
     }
 
-    CloseGestureInfoHandle((HGESTUREINFO)lParam);
+    mGesture.CloseGestureInfoHandle((HGESTUREINFO)lParam);
 
     return true;
   }
@@ -6995,7 +6969,7 @@ bool nsWindow::OnGesture(WPARAM wParam, LPARAM lParam)
   }
 
   // Only close this if we process and return true.
-  CloseGestureInfoHandle((HGESTUREINFO)lParam);
+  mGesture.CloseGestureInfoHandle((HGESTUREINFO)lParam);
 
   return true; // Handled
 }
@@ -7179,7 +7153,7 @@ void nsWindow::OnDestroy()
   }
 
   // Destroy any custom cursor resources.
-  if (mCursor == eCursorInvalid)
+  if (mCursor == -1)
     SetCursor(eCursor_standard);
 
   if (mCompositorWidgetDelegate) {
@@ -7307,7 +7281,9 @@ nsWindow::OnDPIChanged(int32_t x, int32_t y, int32_t width, int32_t height)
   if (DefaultScaleOverride() > 0.0) {
     return;
   }
+  double oldScale = mDefaultScale;
   mDefaultScale = -1.0; // force recomputation of scale factor
+  double newScale = GetDefaultScaleInternal();
 
   if (mResizeState != RESIZING && mSizeMode == nsSizeMode_Normal) {
     // Limit the position (if not in the middle of a drag-move) & size,
@@ -7707,7 +7683,7 @@ VOID CALLBACK nsWindow::HookTimerForPopups(HWND hwnd, UINT uMsg, UINT idEvent, D
 {
   if (sHookTimerId != 0) {
     // if the window is nullptr then we need to use the ID to kill the timer
-    DebugOnly<BOOL> status = ::KillTimer(nullptr, sHookTimerId);
+    BOOL status = ::KillTimer(nullptr, sHookTimerId);
     NS_ASSERTION(status, "Hook Timer was not killed.");
     sHookTimerId = 0;
   }
@@ -8257,6 +8233,23 @@ nsWindow::DefaultProcOfPluginEvent(const WidgetPluginEvent& aEvent)
                   pPluginEvent->wParam, pPluginEvent->lParam);
 }
 
+void
+nsWindow::EnableIMEForPlugin(bool aEnable)
+{
+  // Current IME state isn't plugin, ignore this call
+  if (NS_WARN_IF(mInputContext.mIMEState.mEnabled != IMEState::PLUGIN)) {
+    return;
+  }
+
+  InputContext inputContext = GetInputContext();
+  if (aEnable) {
+    inputContext.mHTMLInputType.AssignLiteral("text");
+  } else {
+    inputContext.mHTMLInputType.AssignLiteral("password");
+  }
+  SetInputContext(inputContext, InputContextAction());
+}
+
 nsresult
 nsWindow::OnWindowedPluginKeyEvent(const NativeEventData& aKeyEventData,
                                    nsIKeyEventInPluginCallback* aCallback)
@@ -8404,10 +8397,9 @@ bool nsWindow::OnPointerEvents(UINT msg, WPARAM aWParam, LPARAM aLParam)
 void
 nsWindow::GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData)
 {
-  *aInitData = WinCompositorWidgetInitData(
-      reinterpret_cast<uintptr_t>(mWnd),
-      reinterpret_cast<uintptr_t>(static_cast<nsIWidget*>(this)),
-      mTransparencyMode);
+  aInitData->hWnd() = reinterpret_cast<uintptr_t>(mWnd);
+  aInitData->widgetKey() = reinterpret_cast<uintptr_t>(static_cast<nsIWidget*>(this));
+  aInitData->transparencyMode() = mTransparencyMode;
 }
 
 bool

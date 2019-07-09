@@ -1,4 +1,4 @@
-const DG_BACKGROUND = "/desktop/gnome/background";
+const DG_BACKGROUND = "/desktop/gnome/background"
 const DG_IMAGE_KEY = DG_BACKGROUND + "/picture_filename";
 const DG_OPTION_KEY = DG_BACKGROUND + "/picture_options";
 const DG_DRAW_BG_KEY = DG_BACKGROUND + "/draw_background";
@@ -6,7 +6,9 @@ const DG_DRAW_BG_KEY = DG_BACKGROUND + "/draw_background";
 function onPageLoad() {
   gBrowser.selectedBrowser.removeEventListener("load", onPageLoad, true);
 
-  var brandName = Services.strings.createBundle("chrome://branding/locale/brand.properties").
+  var bs = Cc["@mozilla.org/intl/stringbundle;1"].
+           getService(Ci.nsIStringBundleService);
+  var brandName = bs.createBundle("chrome://branding/locale/brand.properties").
                   GetStringFromName("brandShortName");
 
   var dirSvc = Cc["@mozilla.org/file/directory_service;1"].
@@ -18,7 +20,7 @@ function onPageLoad() {
 
   // Backup the existing wallpaper so that this test doesn't change the user's
   // settings.
-  var wpFileBackup = homeDir.clone();
+  var wpFileBackup = homeDir.clone()
   wpFileBackup.append(brandName + "_wallpaper.png.backup");
 
   if (wpFileBackup.exists())
@@ -39,7 +41,7 @@ function onPageLoad() {
   var image = content.document.images[0];
 
   function checkWallpaper(position, expectedGConfPosition) {
-    shell.setDesktopBackground(image, position, "");
+    shell.setDesktopBackground(image, position);
     ok(wpFile.exists(), "Wallpaper was written to disk");
     is(gconf.getString(DG_IMAGE_KEY), wpFile.path,
        "Wallpaper file GConf key is correct");

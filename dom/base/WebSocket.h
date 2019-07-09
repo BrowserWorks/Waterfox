@@ -53,10 +53,10 @@ public:
 
   // EventTarget
   using EventTarget::EventListenerAdded;
-  virtual void EventListenerAdded(nsAtom* aType) override;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
 
   using EventTarget::EventListenerRemoved;
-  virtual void EventListenerRemoved(nsAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
 
   virtual void DisconnectFromOwner() override;
 

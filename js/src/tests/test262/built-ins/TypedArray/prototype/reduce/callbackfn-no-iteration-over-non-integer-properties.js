@@ -23,7 +23,7 @@ info: >
       k, O »).
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

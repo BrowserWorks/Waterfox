@@ -58,7 +58,7 @@ RustURL::SetSpec(const nsACString & aSpec)
 {
   ENSURE_MUTABLE();
 
-  rusturl* ptr = rusturl_new(&aSpec, nullptr);
+  rusturl* ptr = rusturl_new(&aSpec);
   if (!ptr) {
     return NS_ERROR_FAILURE;
   }
@@ -264,13 +264,13 @@ RustURL::SetPort(int32_t aPort)
 }
 
 NS_IMETHODIMP
-RustURL::GetPathQueryRef(nsACString & aPath)
+RustURL::GetPath(nsACString & aPath)
 {
   return rusturl_get_path(mURL.get(), &aPath);
 }
 
 NS_IMETHODIMP
-RustURL::SetPathQueryRef(const nsACString & aPath)
+RustURL::SetPath(const nsACString & aPath)
 {
   ENSURE_MUTABLE();
 
@@ -365,6 +365,13 @@ RustURL::GetAsciiHost(nsACString & aAsciiHost)
 }
 
 NS_IMETHODIMP
+RustURL::GetOriginCharset(nsACString & aOriginCharset)
+{
+  aOriginCharset.AssignLiteral("UTF-8");
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 RustURL::GetRef(nsACString & aRef)
 {
   return rusturl_get_fragment(mURL.get(), &aRef);
@@ -454,12 +461,6 @@ RustURL::GetDisplayHost(nsACString &aUnicodeHost)
 }
 
 NS_IMETHODIMP
-RustURL::GetDisplayPrePath(nsACString & aPrePath)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 RustURL::GetHasRef(bool *aHasRef)
 {
   *aHasRef = false;
@@ -491,15 +492,6 @@ NS_IMETHODIMP
 RustURL::SetQuery(const nsACString & aQuery)
 {
   ENSURE_MUTABLE();
-  return rusturl_set_query(mURL.get(), &aQuery);
-}
-
-NS_IMETHODIMP
-RustURL::SetQueryWithEncoding(const nsACString& aQuery,
-                              const Encoding* aEncoding)
-{
-  ENSURE_MUTABLE();
-  //XXX rust-url-capi should support the concept of "encoding override"
   return rusturl_set_query(mURL.get(), &aQuery);
 }
 
@@ -681,16 +673,16 @@ RustURL::GetScriptableHelper(nsIXPCScriptable * *_retval)
 }
 
 NS_IMETHODIMP
-RustURL::GetContractID(nsACString& aContractID)
+RustURL::GetContractID(char * *aContractID)
 {
-  aContractID.SetIsVoid(true);
+  *aContractID = nullptr;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-RustURL::GetClassDescription(nsACString& aClassDescription)
+RustURL::GetClassDescription(char * *aClassDescription)
 {
-  aClassDescription.SetIsVoid(true);
+  *aClassDescription = nullptr;
   return NS_OK;
 }
 

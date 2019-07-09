@@ -120,11 +120,11 @@ static T* extractUnbarriered(T* v)
 
 template <class Key, class Value,
           class HashPolicy = DefaultHasher<Key> >
-class WeakMap : public HashMap<Key, Value, HashPolicy, ZoneAllocPolicy>,
+class WeakMap : public HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy>,
                 public WeakMapBase
 {
   public:
-    typedef HashMap<Key, Value, HashPolicy, ZoneAllocPolicy> Base;
+    typedef HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy> Base;
     typedef typename Base::Enum Enum;
     typedef typename Base::Lookup Lookup;
     typedef typename Base::Entry Entry;
@@ -133,7 +133,7 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, ZoneAllocPolicy>,
     typedef typename Base::AddPtr AddPtr;
 
     explicit WeakMap(JSContext* cx, JSObject* memOf = nullptr)
-        : Base(cx->zone()), WeakMapBase(memOf, cx->zone()) { }
+        : Base(cx->runtime()), WeakMapBase(memOf, cx->compartment()->zone()) { }
 
     bool init(uint32_t len = 16) {
         if (!Base::init(len))
@@ -363,6 +363,26 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, ZoneAllocPolicy>,
 #endif
     }
 };
+
+/* WeakMap methods exposed so they can be installed in the self-hosting global. */
+
+extern JSObject*
+InitBareWeakMapCtor(JSContext* cx, js::HandleObject obj);
+
+extern bool
+WeakMap_has(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+WeakMap_get(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+WeakMap_set(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+WeakMap_delete(JSContext* cx, unsigned argc, Value* vp);
+
+extern JSObject*
+InitWeakMapClass(JSContext* cx, HandleObject obj);
 
 
 class ObjectValueMap : public WeakMap<HeapPtr<JSObject*>, HeapPtr<Value>,

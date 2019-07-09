@@ -43,39 +43,39 @@ module.exports = envConfig => {
         {
           test: /event-emitter/,
           exclude: /node_modules/,
-          loaders: ["rewrite-event-emitter"],
+          loaders: [path.join(__dirname, "./webpack/rewrite-event-emitter")],
         }, {
           test: /client(\/|\\)inspector(\/|\\).*\.js$/,
           loaders: [
             // Replace all references to this.browserRequire() by require()
-            "rewrite-browser-require",
+            path.join(__dirname, "./webpack/rewrite-browser-require"),
             // Replace all references to loader.lazyRequire() by require()
-            "rewrite-lazy-require",
+            path.join(__dirname, "./webpack/rewrite-lazy-require"),
           ],
         }, {
           test: /shared(\/|\\)inspector(\/|\\)css-logic\.js$/,
           loaders: [
             // Replace a very specific lazy importer, which should really be moved to
             // /server ...
-            "rewrite-css-logic-importer",
+            path.join(__dirname, "./webpack/rewrite-css-logic-importer"),
           ],
         }, {
           test: /react-redux\.js$/,
           loaders: [
             // Replace dynamic paths in react-redux file
-            "rewrite-react-redux",
+            path.join(__dirname, "./webpack/rewrite-react-redux"),
           ],
         }, {
           // Replace all references sdk's lazyRequire by require()
           test: /sdk(\/|\\).*\.js$/,
-          loaders: ["rewrite-sdk-lazy-require"],
+          loaders: [path.join(__dirname, "./webpack/rewrite-sdk-lazy-require")],
         }
       ]
     },
     resolveLoader: {
       root: [
         path.resolve("./node_modules"),
-        path.resolve("../shared/webpack"),
+        path.resolve("./webpack"),
       ]
     },
     resolve: {
@@ -99,10 +99,7 @@ module.exports = envConfig => {
         "devtools/shared/DevToolsUtils":
           path.join(__dirname, "./webpack/devtools-utils-sham.js"),
         "devtools/shared/locales": path.join(__dirname, "../../shared/locales/en-US"),
-        "devtools/shared/platform/clipboard": path.join(__dirname,
-          "../../client/shared/webpack/shims/platform-clipboard-stub"),
-        "devtools/shared/platform/stack": path.join(__dirname,
-          "../../client/shared/webpack/shims/platform-stack-stub"),
+        "devtools/shared/platform": path.join(__dirname, "../../shared/platform/content"),
         "devtools": path.join(__dirname, "../../"),
         "gcli": path.join(__dirname, "../../shared/gcli/source/lib/gcli"),
         "method": path.join(__dirname, "../../../addon-sdk/source/lib/method"),

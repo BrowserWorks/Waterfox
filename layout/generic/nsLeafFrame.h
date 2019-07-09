@@ -24,6 +24,7 @@ public:
 
   // nsIFrame replacements
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {
     DO_GLOBAL_REFLOW_COUNT_DSP("nsLeafFrame");
     DisplayBorderBackgroundOutline(aBuilder, aLists);
@@ -50,12 +51,23 @@ public:
                   ComputeSizeFlags            aFlags) override;
 
   /**
-   * Each of our subclasses should provide its own Reflow impl:
+   * Reflow our frame.  This will use the computed width plus borderpadding for
+   * the desired width, and use the return value of GetIntrinsicBSize plus
+   * borderpadding for the desired height.  Ascent will be set to the height,
+   * and descent will be set to 0.
    */
   virtual void Reflow(nsPresContext*      aPresContext,
-                      ReflowOutput&       aDesiredSize,
-                      const ReflowInput&  aReflowInput,
-                      nsReflowStatus&     aStatus) override = 0;
+                      ReflowOutput& aDesiredSize,
+                      const ReflowInput& aReflowInput,
+                      nsReflowStatus&      aStatus) override;
+
+  /**
+   * This method does most of the work that Reflow() above need done.
+   */
+  virtual void DoReflow(nsPresContext*      aPresContext,
+                        ReflowOutput& aDesiredSize,
+                        const ReflowInput& aReflowInput,
+                        nsReflowStatus&      aStatus);
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {

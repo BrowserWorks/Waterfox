@@ -127,7 +127,9 @@ async function doInit(aMode) {
                                            ["network.predictor.enable-prefetch", false]]});
   clearAllImageCaches();
 
-  Services.cache2.clear();
+  let networkCache = Cc["@mozilla.org/netwerk/cache-storage-service;1"]
+                        .getService(Ci.nsICacheStorageService);
+  networkCache.clear();
 
   randomSuffix = Math.random();
   stopObservingChannels = startObservingChannels(aMode);

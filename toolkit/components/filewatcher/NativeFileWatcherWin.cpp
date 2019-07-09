@@ -13,7 +13,7 @@
 #include "mozilla/UniquePtr.h"
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
-#include "nsIFile.h"
+#include "nsILocalFile.h"
 #include "nsIObserverService.h"
 #include "nsProxyRelease.h"
 #include "nsTArray.h"
@@ -458,7 +458,7 @@ NativeFileWatcherIOTask::RunInternal()
     nsAutoString resourceName(notificationInfo->FileName,
                               notificationInfo->FileNameLength / sizeof(WCHAR));
 
-    // Handle path normalisation using nsIFile.
+    // Handle path normalisation using nsILocalFile.
     nsString resourcePath;
     nsresult rv = MakeResourcePath(changedRes, resourceName, resourcePath);
     if (NS_SUCCEEDED(rv)) {
@@ -1165,14 +1165,14 @@ NativeFileWatcherIOTask::RemoveCallbacksFromHashtables(
 /**
  * Creates a string representing the native path for the changed resource.
  * It appends the resource name to the path of the changed descriptor by
- * using nsIFile.
+ * using nsILocalFile.
  * @param changedDescriptor
  *        The descriptor of the watched resource.
  * @param resourceName
  *        The resource which triggered the change.
  * @param nativeResourcePath
  *        The full path to the changed resource.
- * @return NS_OK if nsIFile succeeded in building the path.
+ * @return NS_OK if nsILocalFile succeeded in building the path.
  */
 nsresult
 NativeFileWatcherIOTask::MakeResourcePath(
@@ -1180,18 +1180,18 @@ NativeFileWatcherIOTask::MakeResourcePath(
   const nsAString& resourceName,
   nsAString& nativeResourcePath)
 {
-  nsCOMPtr<nsIFile>
+  nsCOMPtr<nsILocalFile>
     localPath(do_CreateInstance("@mozilla.org/file/local;1"));
   if (!localPath) {
     FILEWATCHERLOG(
-      "NativeFileWatcherIOTask::MakeResourcePath - Failed to create a nsIFile instance.");
+      "NativeFileWatcherIOTask::MakeResourcePath - Failed to create a nsILocalFile instance.");
     return NS_ERROR_FAILURE;
   }
 
   nsresult rv = localPath->InitWithPath(changedDescriptor->mPath);
   if (NS_FAILED(rv)) {
     FILEWATCHERLOG(
-      "NativeFileWatcherIOTask::MakeResourcePath - Failed to init nsIFile with %S (%x).",
+      "NativeFileWatcherIOTask::MakeResourcePath - Failed to init nsILocalFile with %S (%x).",
       changedDescriptor->mPath.get(), rv);
     return rv;
   }
@@ -1207,7 +1207,7 @@ NativeFileWatcherIOTask::MakeResourcePath(
   rv = localPath->GetPath(nativeResourcePath);
   if (NS_FAILED(rv)) {
     FILEWATCHERLOG(
-      "NativeFileWatcherIOTask::MakeResourcePath - Failed to get native path from nsIFile (%x).",
+      "NativeFileWatcherIOTask::MakeResourcePath - Failed to get native path from nsILocalFile (%x).",
       rv);
     return rv;
   }
@@ -1339,7 +1339,7 @@ NativeFileWatcherService::AddPath(const nsAString& aPathToWatch,
   }
 
   // Since the dispatch succeeded, we let the runnable own the pointer.
-  Unused << wrappedCallbacks.release();
+  wrappedCallbacks.release();
 
   WakeUpWorkerThread();
 
@@ -1413,7 +1413,7 @@ NativeFileWatcherService::RemovePath(const nsAString& aPathToRemove,
   }
 
   // Since the dispatch succeeded, we let the runnable own the pointer.
-  Unused << wrappedCallbacks.release();
+  wrappedCallbacks.release();
 
   WakeUpWorkerThread();
 
@@ -1493,7 +1493,7 @@ NativeFileWatcherService::Observe(nsISupports* aSubject, const char* aTopic,
   MOZ_ASSERT(NS_IsMainThread());
 
   if (!strcmp("xpcom-shutdown-threads", aTopic)) {
-    DebugOnly<nsresult> rv = Uninit();
+    nsresult rv = Uninit();
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     return NS_OK;
   }

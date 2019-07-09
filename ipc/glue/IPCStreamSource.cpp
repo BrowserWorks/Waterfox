@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "IPCStreamSource.h"
-#include "mozilla/webrender/WebRenderTypes.h"
 #include "nsIAsyncInputStream.h"
 #include "nsICancelableRunnable.h"
 #include "nsIRunnable.h"
@@ -17,7 +16,6 @@ using mozilla::dom::workers::Canceling;
 using mozilla::dom::workers::GetCurrentThreadWorkerPrivate;
 using mozilla::dom::workers::Status;
 using mozilla::dom::workers::WorkerPrivate;
-using mozilla::wr::ByteBuffer;
 
 namespace mozilla {
 namespace ipc {
@@ -192,7 +190,7 @@ void
 IPCStreamSource::Start()
 {
   NS_ASSERT_OWNINGTHREAD(IPCStreamSource);
-  DoRead();
+  DoRead(ReadReason::Starting);
 }
 
 void
@@ -203,7 +201,7 @@ IPCStreamSource::StartDestroy()
 }
 
 void
-IPCStreamSource::DoRead()
+IPCStreamSource::DoRead(ReadReason aReadReason)
 {
   NS_ASSERT_OWNINGTHREAD(IPCStreamSource);
   MOZ_ASSERT(mState == eActorConstructed);
@@ -217,44 +215,70 @@ IPCStreamSource::DoRead()
   static_assert(kMaxBytesPerMessage <= static_cast<uint64_t>(UINT32_MAX),
                 "kMaxBytesPerMessage must cleanly cast to uint32_t");
 
-  char buffer[kMaxBytesPerMessage];
-
+  // Per the nsIInputStream API, having 0 bytes available in a stream is
+  // ambiguous.  It could mean "no data yet, but some coming later" or it could
+  // mean "EOF" (end of stream).
+  //
+  // If we're just starting up, we can't distinguish between those two options.
+  // But if we're being notified that an async stream is ready, then the
+  // first Available() call returning 0 should really mean end of stream.
+  // Subsequent Available() calls, after we read some data, could mean anything.
+  bool noDataMeansEOF = (aReadReason == ReadReason::Notified);
   while (true) {
     // It should not be possible to transition to closed state without
     // this loop terminating via a return.
     MOZ_ASSERT(mState == eActorConstructed);
 
-    // See if the stream is closed by checking the return of Available.
-    uint64_t dummy;
-    nsresult rv = mStream->Available(&dummy);
+    // Use non-auto here as we're unlikely to hit stack storage with the
+    // sizes we are sending.  Also, it would be nice to avoid another copy
+    // to the IPC layer which we avoid if we use COW strings.  Unfortunately
+    // IPC does not seem to support passing dependent storage types.
+    nsCString buffer;
+
+    uint64_t available = 0;
+    nsresult rv = mStream->Available(&available);
     if (NS_FAILED(rv)) {
       OnEnd(rv);
       return;
     }
 
+    if (available == 0) {
+      if (noDataMeansEOF) {
+        OnEnd(rv);
+      } else {
+        Wait();
+      }
+      return;
+    }
+
+    uint32_t expectedBytes =
+      static_cast<uint32_t>(std::min(available, kMaxBytesPerMessage));
+
+    buffer.SetLength(expectedBytes);
+
     uint32_t bytesRead = 0;
-    rv = mStream->Read(buffer, kMaxBytesPerMessage, &bytesRead);
+    rv = mStream->Read(buffer.BeginWriting(), buffer.Length(), &bytesRead);
+    MOZ_ASSERT_IF(NS_FAILED(rv), bytesRead == 0);
+    buffer.SetLength(bytesRead);
+
+    // After this point, having no data tells us nothing about EOF.
+    noDataMeansEOF = false;
+
+    // If we read any data from the stream, send it across.
+    if (!buffer.IsEmpty()) {
+      SendData(buffer);
+    }
 
     if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
-      MOZ_ASSERT(bytesRead == 0);
       Wait();
       return;
     }
 
-    if (NS_FAILED(rv)) {
-      MOZ_ASSERT(bytesRead == 0);
+    // Any other error or zero-byte read indicates end-of-stream
+    if (NS_FAILED(rv) || buffer.IsEmpty()) {
       OnEnd(rv);
       return;
     }
-
-    // Zero-byte read indicates end-of-stream.
-    if (bytesRead == 0) {
-      OnEnd(NS_BASE_STREAM_CLOSED);
-      return;
-    }
-
-    // We read some data from the stream, send it across.
-    SendData(ByteBuffer(bytesRead, reinterpret_cast<uint8_t*>(buffer)));
   }
 }
 
@@ -283,7 +307,7 @@ IPCStreamSource::OnStreamReady(Callback* aCallback)
   MOZ_ASSERT(aCallback == mCallback);
   mCallback->ClearSource();
   mCallback = nullptr;
-  DoRead();
+  DoRead(ReadReason::Notified);
 }
 
 void

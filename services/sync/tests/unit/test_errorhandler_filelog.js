@@ -108,7 +108,7 @@ add_test(function test_logOnSuccess_true() {
     // Exactly one log file was written.
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
     do_check_true(logfile.leafName.startsWith("success-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
@@ -162,13 +162,20 @@ add_test(function test_sync_error_logOnError_true() {
   const MESSAGE = "this WILL show up";
   log.info(MESSAGE);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
     // Exactly one log file was written.
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
     do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
@@ -187,7 +194,6 @@ add_test(function test_sync_error_logOnError_true() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
     });
   });
 
@@ -223,13 +229,20 @@ add_test(function test_login_error_logOnError_true() {
   const MESSAGE = "this WILL show up";
   log.info(MESSAGE);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
     // Exactly one log file was written.
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
     do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
@@ -248,7 +261,6 @@ add_test(function test_login_error_logOnError_true() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
     });
   });
 
@@ -289,13 +301,20 @@ add_test(function test_newFailed_errorLog() {
   const MESSAGE = "this WILL show up 2";
   log.info(MESSAGE);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
     // Exactly one log file was written.
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
     do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
@@ -314,7 +333,7 @@ add_test(function test_newFailed_errorLog() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
+
     });
   });
   // newFailed is nonzero -- should write a log.
@@ -333,12 +352,19 @@ add_test(function test_newFailed_errorLog() {
 add_test(function test_errorLog_dumpAddons() {
   Svc.Prefs.set("log.appender.file.logOnError", true);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
     do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
@@ -357,7 +383,6 @@ add_test(function test_errorLog_dumpAddons() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
     });
   });
 
@@ -395,7 +420,7 @@ add_test(function test_logErrorCleanup_age() {
     // Only the newest created log file remains.
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_true(oldLogs.every(function(e) {
       return e != logfile.leafName;
     }));

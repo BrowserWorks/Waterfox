@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.tolocalestring
 info: >
     The elements of the array are converted to strings using their
     toLocaleString methods, and these strings are then concatenated, separated

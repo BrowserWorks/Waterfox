@@ -39,16 +39,7 @@ txApplyDefaultElementTemplate::execute(txExecutionState& aEs)
 }
 
 nsresult
-txApplyImportsEnd::execute(txExecutionState& aEs)
-{
-    aEs.popTemplateRule();
-    RefPtr<txParameterMap> paramMap = aEs.popParamMap();
-
-    return NS_OK;
-}
-
-nsresult
-txApplyImportsStart::execute(txExecutionState& aEs)
+txApplyImports::execute(txExecutionState& aEs)
 {
     txExecutionState::TemplateRule* rule = aEs.getCurrentTemplateRule();
     // The frame is set to null when there is no current template rule, or
@@ -59,22 +50,23 @@ txApplyImportsStart::execute(txExecutionState& aEs)
         return NS_ERROR_XSLT_EXECUTION_FAILURE;
     }
 
-    aEs.pushParamMap(rule->mParams);
+    nsresult rv = aEs.pushParamMap(rule->mParams);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     txStylesheet::ImportFrame* frame = 0;
     txExpandedName mode(rule->mModeNsId, rule->mModeLocalName);
     txInstruction* templ;
-    nsresult rv = aEs.mStylesheet->findTemplate(aEs.getEvalContext()->getContextNode(),
-                                                mode, &aEs, rule->mFrame, &templ,
-                                                &frame);
+    rv = aEs.mStylesheet->findTemplate(aEs.getEvalContext()->getContextNode(),
+                                       mode, &aEs, rule->mFrame, &templ,
+                                       &frame);
     NS_ENSURE_SUCCESS(rv, rv);
 
     aEs.pushTemplateRule(frame, mode, rule->mParams);
 
     rv = aEs.runTemplate(templ);
-    if (NS_FAILED(rv)) {
-      aEs.popTemplateRule();
-    }
+
+    aEs.popTemplateRule();
+    aEs.popParamMap();
 
     return rv;
 }
@@ -121,7 +113,7 @@ txAttribute::execute(txExecutionState& aEs)
         return NS_OK;
     }
 
-    RefPtr<nsAtom> prefix;
+    nsCOMPtr<nsIAtom> prefix;
     uint32_t lnameStart = 0;
     if (colon) {
         prefix = NS_Atomize(Substring(name.get(), colon));
@@ -237,7 +229,7 @@ txCopyBase::copyNode(const txXPathNode& aNode, txExecutionState& aEs)
             nsAutoString nodeValue;
             txXPathNodeUtils::appendNodeValue(aNode, nodeValue);
 
-            RefPtr<nsAtom> localName =
+            nsCOMPtr<nsIAtom> localName =
                 txXPathNodeUtils::getLocalName(aNode);
             return aEs.mResultHandler->
                 attribute(txXPathNodeUtils::getPrefix(aNode),
@@ -265,7 +257,7 @@ txCopyBase::copyNode(const txXPathNode& aNode, txExecutionState& aEs)
         }
         case txXPathNodeType::ELEMENT_NODE:
         {
-            RefPtr<nsAtom> localName =
+            nsCOMPtr<nsIAtom> localName =
                 txXPathNodeUtils::getLocalName(aNode);
             nsresult rv = aEs.mResultHandler->
                 startElement(txXPathNodeUtils::getPrefix(aNode),
@@ -348,7 +340,7 @@ txCopy::execute(txExecutionState& aEs)
         }
         case txXPathNodeType::ELEMENT_NODE:
         {
-            RefPtr<nsAtom> localName =
+            nsCOMPtr<nsIAtom> localName =
                 txXPathNodeUtils::getLocalName(node);
             rv = aEs.mResultHandler->
                 startElement(txXPathNodeUtils::getPrefix(node),
@@ -495,8 +487,8 @@ txLoopNodeSet::execute(txExecutionState& aEs)
     return NS_OK;
 }
 
-txLREAttribute::txLREAttribute(int32_t aNamespaceID, nsAtom* aLocalName,
-                               nsAtom* aPrefix, nsAutoPtr<Expr>&& aValue)
+txLREAttribute::txLREAttribute(int32_t aNamespaceID, nsIAtom* aLocalName,
+                               nsIAtom* aPrefix, nsAutoPtr<Expr>&& aValue)
     : mNamespaceID(aNamespaceID),
       mLocalName(aLocalName),
       mPrefix(aPrefix),
@@ -581,7 +573,7 @@ txNumber::execute(txExecutionState& aEs)
 nsresult
 txPopParams::execute(txExecutionState& aEs)
 {
-    RefPtr<txParameterMap> paramMap = aEs.popParamMap();
+    delete aEs.popParamMap();
 
     return NS_OK;
 }
@@ -702,8 +694,7 @@ txPushNullTemplateRule::execute(txExecutionState& aEs)
 nsresult
 txPushParams::execute(txExecutionState& aEs)
 {
-    aEs.pushParamMap(nullptr);
-    return NS_OK;
+    return aEs.pushParamMap(nullptr);
 }
 
 nsresult
@@ -769,7 +760,8 @@ txSetParam::execute(txExecutionState& aEs)
 {
     nsresult rv = NS_OK;
     if (!aEs.mTemplateParams) {
-        aEs.mTemplateParams = new txParameterMap;
+        aEs.mTemplateParams = new txVariableMap;
+        NS_ENSURE_TRUE(aEs.mTemplateParams, NS_ERROR_OUT_OF_MEMORY);
     }
 
     RefPtr<txAExprResult> exprRes;
@@ -834,7 +826,7 @@ txStartElement::execute(txExecutionState& aEs)
 
 
     int32_t nsId = kNameSpaceID_None;
-    RefPtr<nsAtom> prefix;
+    nsCOMPtr<nsIAtom> prefix;
     uint32_t lnameStart = 0;
 
     const char16_t* colon;
@@ -889,8 +881,8 @@ txStartElement::execute(txExecutionState& aEs)
 
 
 txStartLREElement::txStartLREElement(int32_t aNamespaceID,
-                                     nsAtom* aLocalName,
-                                     nsAtom* aPrefix)
+                                     nsIAtom* aLocalName,
+                                     nsIAtom* aPrefix)
     : mNamespaceID(aNamespaceID),
       mLocalName(aLocalName),
       mPrefix(aPrefix)

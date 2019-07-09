@@ -60,7 +60,7 @@ add_task(async function test_valid() {
   let { problemData, clientRecords, records, deletedRecords } =
       await validator.compareClientWithServer(client, server);
   equal(clientRecords.length, 3);
-  equal(records.length, 3);
+  equal(records.length, 3)
   equal(deletedRecords.length, 0);
   deepEqual(problemData, validator.emptyProblemData());
 });
@@ -83,3 +83,7 @@ add_task(async function test_formValidatorIgnoresMissingClients() {
   let expected = validator.emptyProblemData();
   deepEqual(problemData, expected);
 });
+
+function run_test() {
+  run_next_test();
+}

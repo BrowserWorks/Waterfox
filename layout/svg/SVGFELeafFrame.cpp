@@ -7,7 +7,7 @@
 #include "nsContainerFrame.h"
 #include "nsFrame.h"
 #include "nsGkAtoms.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGFilters.h"
 
 /*
@@ -47,7 +47,7 @@ public:
 #endif
 
   virtual nsresult AttributeChanged(int32_t  aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t  aModType) override;
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override {
@@ -80,14 +80,14 @@ SVGFELeafFrame::Init(nsIContent*       aContent,
 
 nsresult
 SVGFELeafFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                 nsAtom* aAttribute,
+                                 nsIAtom* aAttribute,
                                  int32_t  aModType)
 {
-  nsSVGFE *element = static_cast<nsSVGFE*>(GetContent());
+  nsSVGFE *element = static_cast<nsSVGFE*>(mContent);
   if (element->AttributeAffectsRendering(aNameSpaceID, aAttribute)) {
     MOZ_ASSERT(GetParent()->IsSVGFilterFrame(),
                "Observers observe the filter, so that's what we must invalidate");
-    SVGObserverUtils::InvalidateDirectRenderingObservers(GetParent());
+    nsSVGEffects::InvalidateDirectRenderingObservers(GetParent());
   }
 
   return nsFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);

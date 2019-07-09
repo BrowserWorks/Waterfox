@@ -13,7 +13,7 @@ info: >
     c. Let selected be ToBoolean(? Call(callbackfn, T, « kValue, k, O »)).
   ...
 includes: [testTypedArray.js]
-features: [Reflect.set, TypedArray]
+features: [Reflect.set]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

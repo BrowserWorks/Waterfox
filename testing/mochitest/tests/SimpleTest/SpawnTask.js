@@ -300,10 +300,9 @@ var add_task = (function () {
             }
           } catch (ex) {
             try {
-              ok(false, "" + ex, "Should not throw any errors", ex.stack);
+              ok(false, "" + ex);
             } catch (ex2) {
-              ok(false, "(The exception cannot be converted to string.)",
-                 "Should not throw any errors", ex.stack);
+              ok(false, "(The exception cannot be converted to string.)");
             }
           }
           // All tasks are finished.

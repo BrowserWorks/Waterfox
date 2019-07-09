@@ -5,7 +5,7 @@
 
 /* globals window, document, PerformanceView, ToolbarView, RecordingsView, DetailsView */
 
-/* exported Cc, Ci, Cu, Cr, loader, Promise */
+/* exported Cc, Ci, Cu, Cr, loader */
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 var BrowserLoaderModule = {};
 Cu.import("resource://devtools/client/shared/browser-loader.js", BrowserLoaderModule);
@@ -17,10 +17,6 @@ var { Task } = require("devtools/shared/task");
 /* exported Heritage, ViewHelpers, WidgetMethods, setNamedTimeout, clearNamedTimeout */
 var { Heritage, ViewHelpers, WidgetMethods, setNamedTimeout, clearNamedTimeout } = require("devtools/client/shared/widgets/view-helpers");
 var { PrefObserver } = require("devtools/client/shared/prefs");
-
-// Use privileged promise in panel documents to prevent having them to freeze
-// during toolbox destruction. See bug 1402779.
-var Promise = require("Promise");
 
 // Events emitted by various objects in the panel.
 var EVENTS = require("devtools/client/performance/events");
@@ -44,8 +40,7 @@ var RecordingListItem = React.createFactory(require("devtools/client/performance
 
 var Services = require("Services");
 var promise = require("promise");
-const defer = require("devtools/shared/defer");
-var EventEmitter = require("devtools/shared/old-event-emitter");
+var EventEmitter = require("devtools/shared/event-emitter");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var flags = require("devtools/shared/flags");
 var system = require("devtools/shared/system");
@@ -296,7 +291,7 @@ var PerformanceController = {
    *
    * @param PerformanceRecording recording
    *        The model that holds the recording data.
-   * @param nsIFile file
+   * @param nsILocalFile file
    *        The file to stream the data into.
    */
   exportRecording: Task.async(function* (_, recording, file) {
@@ -340,7 +335,7 @@ var PerformanceController = {
    * Loads a recording from a file, adding it to the recordings list. Emits
    * `EVENTS.RECORDING_IMPORTED` when the file was loaded.
    *
-   * @param nsIFile file
+   * @param nsILocalFile file
    *        The file to import the data from.
    */
   importRecording: Task.async(function* (_, file) {
@@ -517,17 +512,18 @@ var PerformanceController = {
    * @return {object}
    */
   getMultiprocessStatus: function () {
-    // If testing, set enabled to true so we have realtime rendering tests
-    // in non-e10s. This function is overridden wholesale in tests
-    // when we want to test multiprocess support
+    // If testing, set both supported and enabled to true so we
+    // have realtime rendering tests in non-e10s. This function is
+    // overridden wholesale in tests when we want to test multiprocess support
     // specifically.
     if (flags.testing) {
-      return { enabled: true };
+      return { supported: true, enabled: true };
     }
+    let supported = system.constants.E10S_TESTING_ONLY;
     // This is only checked on tool startup -- requires a restart if
     // e10s subsequently enabled.
     let enabled = this._e10s;
-    return { enabled };
+    return { supported, enabled };
   },
 
   /**
@@ -539,7 +535,7 @@ var PerformanceController = {
    * @return {Promise}
    */
   waitForStateChangeOnRecording: Task.async(function* (recording, expectedState) {
-    let deferred = defer();
+    let deferred = promise.defer();
     this.on(EVENTS.RECORDING_STATE_CHANGE, function handler(state, model) {
       if (state === expectedState && model === recording) {
         this.off(EVENTS.RECORDING_STATE_CHANGE, handler);
@@ -555,9 +551,12 @@ var PerformanceController = {
    * if e10s is not possible on the platform. If e10s is on, no attribute is set.
    */
   _setMultiprocessAttributes: function () {
-    let { enabled } = this.getMultiprocessStatus();
-    if (!enabled) {
+    let { enabled, supported } = this.getMultiprocessStatus();
+    if (!enabled && supported) {
       $("#performance-view").setAttribute("e10s", "disabled");
+    } else if (!enabled && !supported) {
+      // Could be a chance where the directive goes away yet e10s is still on
+      $("#performance-view").setAttribute("e10s", "unsupported");
     }
   },
 

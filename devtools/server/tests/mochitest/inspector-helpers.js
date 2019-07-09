@@ -7,14 +7,12 @@
 var Cu = Components.utils;
 
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const {DebuggerClient} = require("devtools/shared/client/debugger-client");
+const {DebuggerClient} = require("devtools/shared/client/main");
 const {DebuggerServer} = require("devtools/server/main");
 const { Task } = require("devtools/shared/task");
 
 const Services = require("Services");
-// promise is still used in tests using this helper
-const promise = require("promise"); // eslint-disable-line no-unused-vars
-const defer = require("devtools/shared/defer");
+const promise = require("promise");
 const {_documentWalker} = require("devtools/server/actors/inspector");
 
 // Always log packets when running tests.
@@ -91,7 +89,7 @@ function attachURL(url, callback) {
 }
 
 function promiseOnce(target, event) {
-  let deferred = defer();
+  let deferred = promise.defer();
   target.on(event, (...args) => {
     if (args.length === 1) {
       deferred.resolve(args[0]);
@@ -175,11 +173,11 @@ function assertOwnershipTrees(walker) {
 
 // Verify that an actorID is inaccessible both from the client library and the server.
 function checkMissing(client, actorID) {
-  let deferred = defer();
+  let deferred = promise.defer();
   let front = client.getActor(actorID);
   ok(!front, "Front shouldn't be accessible from the client for actorID: " + actorID);
 
-  deferred = defer();
+  deferred = promise.defer();
   client.request({
     to: actorID,
     type: "request",
@@ -192,11 +190,11 @@ function checkMissing(client, actorID) {
 
 // Verify that an actorID is accessible both from the client library and the server.
 function checkAvailable(client, actorID) {
-  let deferred = defer();
+  let deferred = promise.defer();
   let front = client.getActor(actorID);
   ok(front, "Front should be accessible from the client for actorID: " + actorID);
 
-  deferred = defer();
+  deferred = promise.defer();
   client.request({
     to: actorID,
     type: "garbageAvailableTest",
@@ -279,7 +277,7 @@ function assertChildList(mutations) {
 // Load mutations aren't predictable, so keep accumulating mutations until
 // the one we're looking for shows up.
 function waitForMutation(walker, test, mutations = []) {
-  let deferred = defer();
+  let deferred = promise.defer();
   for (let change of mutations) {
     if (test(change)) {
       deferred.resolve(mutations);

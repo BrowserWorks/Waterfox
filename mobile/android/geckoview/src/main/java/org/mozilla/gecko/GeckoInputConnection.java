@@ -8,16 +8,16 @@ package org.mozilla.gecko;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.concurrent.SynchronousQueue;
 
 import org.mozilla.gecko.gfx.DynamicToolbarAnimator;
-import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.GamepadUtils;
 import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.gecko.util.ThreadUtils.AssertBehavior;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Matrix;
@@ -31,7 +31,6 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.method.KeyListener;
 import android.text.method.TextKeyListener;
 import android.util.DisplayMetrics;
@@ -66,13 +65,11 @@ class GeckoInputConnection
     private String mIMETypeHint = "";
     private String mIMEModeHint = "";
     private String mIMEActionHint = "";
-    private boolean mInPrivateBrowsing;
-    private boolean mIsUserAction;
     private boolean mFocused;
 
     private String mCurrentInputMethod = "";
 
-    private final GeckoView mView;
+    private final View mView;
     private final GeckoEditableClient mEditableClient;
     protected int mBatchEditCount;
     private ExtractedTextRequest mUpdateRequest;
@@ -83,7 +80,7 @@ class GeckoInputConnection
     // Prevent showSoftInput and hideSoftInput from causing reentrant calls on some devices.
     private volatile boolean mSoftInputReentrancyGuard;
 
-    public static GeckoEditableListener create(GeckoView targetView,
+    public static GeckoEditableListener create(View targetView,
                                                GeckoEditableClient editable) {
         if (DEBUG)
             return DebugGeckoInputConnection.create(targetView, editable);
@@ -91,7 +88,7 @@ class GeckoInputConnection
             return new GeckoInputConnection(targetView, editable);
     }
 
-    protected GeckoInputConnection(GeckoView targetView,
+    protected GeckoInputConnection(View targetView,
                                    GeckoEditableClient editable) {
         super(targetView, true);
         mView = targetView;
@@ -204,7 +201,7 @@ class GeckoInputConnection
         return extract;
     }
 
-    private GeckoView getView() {
+    private View getView() {
         return mView;
     }
 
@@ -217,7 +214,7 @@ class GeckoInputConnection
         return InputMethods.getInputMethodManager(context);
     }
 
-    private void showSoftInputWithToolbar(final boolean showToolbar) {
+    private void showSoftInput() {
         if (mSoftInputReentrancyGuard) {
             return;
         }
@@ -236,10 +233,7 @@ class GeckoInputConnection
                     v.clearFocus();
                     v.requestFocus();
                 }
-                final GeckoView view = getView();
-                if (view != null && showToolbar) {
-                    view.getDynamicToolbarAnimator().showToolbar(/*immediately*/ true);
-                }
+                GeckoAppShell.getLayerView().getDynamicToolbarAnimator().showToolbar(/*immediately*/true);
                 mSoftInputReentrancyGuard = true;
                 imm.showSoftInput(v, 0);
                 mSoftInputReentrancyGuard = false;
@@ -349,7 +343,6 @@ class GeckoInputConnection
                             getComposingSpanEnd(editable));
     }
 
-    @TargetApi(21)
     @Override
     public void updateCompositionRects(final RectF[] aRects) {
         if (!(Build.VERSION.SDK_INT >= 21)) {
@@ -362,18 +355,18 @@ class GeckoInputConnection
         mCursorAnchorInfoBuilder.reset();
 
         // Calculate Gecko logical coords to screen coords
-        final GeckoView view = getView();
-        if (view == null) {
+        final View v = getView();
+        if (v == null) {
             return;
         }
 
         int[] viewCoords = new int[2];
-        view.getLocationOnScreen(viewCoords);
+        v.getLocationOnScreen(viewCoords);
 
-        DynamicToolbarAnimator animator = view.getDynamicToolbarAnimator();
-        float toolbarHeight = (float) animator.getCurrentToolbarHeight();
+        DynamicToolbarAnimator animator = GeckoAppShell.getLayerView().getDynamicToolbarAnimator();
+        float toolbarHeight = (float)animator.getCurrentToolbarHeight();
 
-        Matrix matrix = view.getMatrixForLayerRectToViewRect();
+        Matrix matrix = GeckoAppShell.getLayerView().getMatrixForLayerRectToViewRect();
         if (matrix == null) {
             if (DEBUG) {
                 Log.d(LOGTAG, "Cannot get Matrix to convert from Gecko coords to layer view coords");
@@ -556,8 +549,7 @@ class GeckoInputConnection
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
         else if (mIMEState == IME_STATE_PLUGIN)
             outAttrs.inputType = InputType.TYPE_NULL; // "send key events" mode
-        else if (mIMETypeHint.equalsIgnoreCase("url") ||
-                 mIMETypeHint.equalsIgnoreCase("mozAwesomebar"))
+        else if (mIMETypeHint.equalsIgnoreCase("url"))
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_URI;
         else if (mIMETypeHint.equalsIgnoreCase("email"))
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
@@ -616,10 +608,6 @@ class GeckoInputConnection
             outAttrs.actionLabel = mIMEActionHint;
         }
 
-        if (mInPrivateBrowsing) {
-            outAttrs.imeOptions |= InputMethods.IME_FLAG_NO_PERSONALIZED_LEARNING;
-        }
-
         Context context = getView().getContext();
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         if (Math.min(metrics.widthPixels, metrics.heightPixels) > INLINE_IME_MIN_DISPLAY_SIZE) {
@@ -651,13 +639,7 @@ class GeckoInputConnection
         outAttrs.initialSelStart = Selection.getSelectionStart(editable);
         outAttrs.initialSelEnd = Selection.getSelectionEnd(editable);
 
-        if (mIsUserAction) {
-            if ((context instanceof Activity) && ActivityUtils.isFullScreen((Activity) context)) {
-                showSoftInputWithToolbar(false);
-            } else {
-                showSoftInputWithToolbar(true);
-            }
-        }
+        showSoftInput();
         return this;
     }
 
@@ -943,32 +925,8 @@ class GeckoInputConnection
                 break;
 
             case NOTIFY_IME_OPEN_VKB:
-                showSoftInputWithToolbar(false);
+                showSoftInput();
                 break;
-
-            case GeckoEditableListener.NOTIFY_IME_TO_COMMIT_COMPOSITION: {
-                // Gecko already committed its composition. However, Android keyboards
-                // have trouble dealing with us removing the composition manually on the
-                // Java side. Therefore, we keep the composition intact on the Java side.
-                // The text content should still be in-sync on both sides.
-                //
-                // Nevertheless, if we somehow lost the composition, we must force the
-                // keyboard to reset.
-                final Editable editable = getEditable();
-                if (editable == null) {
-                    break;
-                }
-                final Object[] spans = editable.getSpans(0, editable.length(), Object.class);
-                for (final Object span : spans) {
-                    if ((editable.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
-                        // Still have composition; no need to reset.
-                        return;
-                    }
-                }
-                // No longer have composition; perform reset.
-                restartInput();
-                break;
-            }
 
             default:
                 if (DEBUG) {
@@ -979,8 +937,7 @@ class GeckoInputConnection
     }
 
     @Override
-    public void notifyIMEContext(int state, String typeHint, String modeHint, String actionHint,
-                                 boolean inPrivateBrowsing, boolean isUserAction) {
+    public void notifyIMEContext(int state, String typeHint, String modeHint, String actionHint) {
         // For some input type we will use a widget to display the ui, for those we must not
         // display the ime. We can display a widget for date and time types and, if the sdk version
         // is 11 or greater, for datetime/month/week as well.
@@ -1007,8 +964,6 @@ class GeckoInputConnection
         mIMETypeHint = (typeHint == null) ? "" : typeHint;
         mIMEModeHint = (modeHint == null) ? "" : modeHint;
         mIMEActionHint = (actionHint == null) ? "" : actionHint;
-        mInPrivateBrowsing = inPrivateBrowsing;
-        mIsUserAction = isUserAction;
 
         // These fields are reset here and will be updated when restartInput is called below
         mUpdateRequest = null;
@@ -1041,13 +996,13 @@ final class DebugGeckoInputConnection
     private InputConnection mProxy;
     private final StringBuilder mCallLevel;
 
-    private DebugGeckoInputConnection(GeckoView targetView,
+    private DebugGeckoInputConnection(View targetView,
                                       GeckoEditableClient editable) {
         super(targetView, editable);
         mCallLevel = new StringBuilder();
     }
 
-    public static GeckoEditableListener create(GeckoView targetView,
+    public static GeckoEditableListener create(View targetView,
                                                GeckoEditableClient editable) {
         final Class<?>[] PROXY_INTERFACES = { InputConnection.class,
                 InputConnectionListener.class,

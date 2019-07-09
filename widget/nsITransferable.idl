@@ -7,7 +7,7 @@
 #include "nsIArray.idl"
 #include "nsISupports.idl"
 #include "nsIFormatConverter.idl"
-#include "nsIContentPolicy.idl"
+#include "nsIContentPolicyBase.idl"
 
 interface nsIPrincipal;
 

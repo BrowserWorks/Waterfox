@@ -297,7 +297,7 @@
           var renameTitle = this.mCustomTitle;
           var result = {value};
           var confirmed = promptService.prompt(window, renameTitle, promptStr, result, null, {value});
-          if (!confirmed || (!result.value) || (result.value == "")) {
+          if (!confirmed || (!result.value) || (result.value == "") || result.value == value) {
             return -1;
           }
           return result.value;
@@ -311,7 +311,7 @@
         <![CDATA[
           var scaleValues = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2];
 
-          aValue = Number(aValue);
+          aValue = new Number(aValue);
 
           for (var i = 0; i < scaleValues.length; i++) {
             if (aValue == scaleValues[i]) {

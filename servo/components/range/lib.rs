@@ -2,15 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#![feature(step_trait)]
+
 #![deny(unsafe_code)]
 
-extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
+extern crate heapsize;
+#[macro_use] extern crate heapsize_derive;
 extern crate num_traits;
 #[macro_use] extern crate serde;
 
 use std::cmp::{self, max, min};
 use std::fmt;
+use std::iter;
+use std::marker::PhantomData;
 use std::ops;
 
 pub trait Int:
@@ -23,7 +27,6 @@ pub trait Int:
     fn one() -> Self;
     fn max_value() -> Self;
     fn from_usize(n: usize) -> Option<Self>;
-    fn to_usize(self) -> usize;
 }
 impl Int for isize {
     #[inline]
@@ -34,8 +37,6 @@ impl Int for isize {
     fn max_value() -> isize { ::std::isize::MAX }
     #[inline]
     fn from_usize(n: usize) -> Option<isize> { num_traits::NumCast::from(n) }
-    #[inline]
-    fn to_usize(self) -> usize { num_traits::NumCast::from(self).unwrap() }
 }
 impl Int for usize {
     #[inline]
@@ -46,8 +47,6 @@ impl Int for usize {
     fn max_value() -> usize { ::std::usize::MAX }
     #[inline]
     fn from_usize(n: usize) -> Option<usize> { Some(n) }
-    #[inline]
-    fn to_usize(self) -> usize { self }
 }
 
 /// An index type to be used by a `Range`
@@ -79,7 +78,7 @@ impl RangeIndex for usize {
 #[macro_export]
 macro_rules! int_range_index {
     ($(#[$attr:meta])* struct $Self_:ident($T:ty)) => (
-        #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+        #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Copy)]
         $(#[$attr])*
         pub struct $Self_(pub $T);
 
@@ -90,7 +89,7 @@ macro_rules! int_range_index {
             }
         }
 
-        impl $crate::RangeIndex for $Self_ {
+        impl RangeIndex for $Self_ {
             type Index = $T;
             #[inline]
             fn new(x: $T) -> $Self_ {
@@ -112,8 +111,6 @@ macro_rules! int_range_index {
             fn max_value() -> $Self_ { $Self_($crate::Int::max_value()) }
             #[inline]
             fn from_usize(n: usize) -> Option<$Self_> { $crate::Int::from_usize(n).map($Self_) }
-            #[inline]
-            fn to_usize(self) -> usize { self.to_usize() }
         }
 
         impl ::std::ops::Add<$Self_> for $Self_ {
@@ -146,7 +143,7 @@ macro_rules! int_range_index {
 }
 
 /// A range of indices
-#[derive(Clone, Copy, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Clone, Copy, Deserialize, HeapSizeOf, Serialize)]
 pub struct Range<I> {
     begin: I,
     length: I,
@@ -159,37 +156,27 @@ impl<I: RangeIndex> fmt::Debug for Range<I> {
 }
 
 /// An iterator over each index in a range
-pub struct EachIndex<I: RangeIndex> {
-    start: I,
-    stop: I,
+pub struct EachIndex<T, I> {
+    it: ops::Range<T>,
+    phantom: PhantomData<I>,
 }
 
-pub fn each_index<I: RangeIndex>(start: I, stop: I) -> EachIndex<I> {
-    EachIndex { start, stop }
+pub fn each_index<T: Int, I: RangeIndex<Index=T>>(start: I, stop: I) -> EachIndex<T, I> {
+    EachIndex { it: start.get()..stop.get(), phantom: PhantomData }
 }
 
-impl<I: RangeIndex> Iterator for EachIndex<I> {
+impl<T: Int, I: RangeIndex<Index=T>> Iterator for EachIndex<T, I>
+where T: Int + iter::Step, for<'a> &'a T: ops::Add<&'a T, Output = T> {
     type Item = I;
 
     #[inline]
     fn next(&mut self) -> Option<I> {
-        if self.start < self.stop {
-            let next = self.start;
-            self.start = next + I::one();
-            Some(next)
-        } else {
-            None
-        }
+        self.it.next().map(RangeIndex::new)
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        if self.start < self.stop {
-            let len = (self.stop - self.start).to_usize();
-            (len, Some(len))
-        } else {
-            (0, Some(0))
-        }
+        self.it.size_hint()
     }
 }
 
@@ -330,10 +317,10 @@ impl<I: RangeIndex> Range<I> {
 }
 
 /// Methods for `Range`s with indices based on integer values
-impl<I: RangeIndex> Range<I> {
+impl<T: Int, I: RangeIndex<Index=T>> Range<I> {
     /// Returns an iterater that increments over `[begin, end)`.
     #[inline]
-    pub fn each_index(&self) -> EachIndex<I> {
+    pub fn each_index(&self) -> EachIndex<T, I> {
         each_index(self.begin(), self.end())
     }
 }

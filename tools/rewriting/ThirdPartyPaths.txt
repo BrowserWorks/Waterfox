@@ -1,5 +1,4 @@
 browser/components/translation/cld2/
-browser/extensions/mortar/ppapi/
 db/sqlite3/src/
 dom/media/platforms/ffmpeg/libav
 extensions/spellcheck/hunspell/src/
@@ -9,7 +8,6 @@ gfx/graphite2/
 gfx/harfbuzz/
 gfx/ots/
 gfx/qcms/
-gfx/sfntly/
 gfx/skia/
 gfx/vr/openvr/
 gfx/webrender
@@ -42,6 +40,7 @@ media/libvpx/
 media/libyuv/
 media/mtransport/third_party/
 media/openmax_dl/
+media/pocketsphinx/
 media/sphinxbase/
 media/webrtc/signaling/src/sdp/sipcc/
 media/webrtc/trunk/
@@ -88,12 +87,9 @@ third_party/python/pyyaml/
 third_party/python/redo/
 third_party/python/requests/
 third_party/python/rsa/
-third_party/python/six/
 third_party/python/which/
 third_party/rust/
 toolkit/components/jsoncpp/
 toolkit/components/protobuf/
-toolkit/components/url-classifier/chromium/
-toolkit/components/url-classifier/protobuf/
 toolkit/crashreporter/google-breakpad/
 tools/fuzzing/libfuzzer

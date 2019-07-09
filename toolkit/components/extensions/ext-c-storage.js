@@ -6,6 +6,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ExtensionStorage",
                                   "resource://gre/modules/ExtensionStorage.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
                                   "resource://gre/modules/TelemetryStopwatch.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 var {
   ExtensionError,
@@ -94,7 +95,7 @@ this.storage = class extends ExtensionAPI {
             try {
               let result = await context.childManager.callParentAsyncFunction("storage.local.get", [
                 serialize(keys),
-              ]).then(deserialize);
+              ], null, {noClone: true}).then(deserialize);
               TelemetryStopwatch.finish(storageGetHistogram, stopwatchKey);
               return result;
             } catch (e) {
@@ -108,7 +109,7 @@ this.storage = class extends ExtensionAPI {
             try {
               let result = await context.childManager.callParentAsyncFunction("storage.local.set", [
                 serialize(items),
-              ]);
+              ], null, {noClone: true});
               TelemetryStopwatch.finish(storageSetHistogram, stopwatchKey);
               return result;
             } catch (e) {
@@ -130,23 +131,6 @@ this.storage = class extends ExtensionAPI {
             return context.childManager.callParentAsyncFunction("storage.sync.set", [
               items,
             ]);
-          },
-        },
-
-        managed: {
-          get(keys) {
-            return context.childManager.callParentAsyncFunction("storage.managed.get", [
-              serialize(keys),
-            ]).then(deserialize);
-          },
-          set(items) {
-            return Promise.reject({message: "storage.managed is read-only"});
-          },
-          remove(keys) {
-            return Promise.reject({message: "storage.managed is read-only"});
-          },
-          clear() {
-            return Promise.reject({message: "storage.managed is read-only"});
           },
         },
 

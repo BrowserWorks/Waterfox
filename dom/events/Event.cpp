@@ -484,15 +484,11 @@ Event::PreventDefault(JSContext* aCx, CallerType aCallerType)
   // Then, JS in content mey be call preventDefault()
   // even in the event is in system event group.  Therefore, don't refer
   // mInSystemGroup here.
-  nsIPrincipal* principal = mIsMainThreadEvent ?
-                              nsContentUtils::SubjectPrincipal(aCx) : nullptr;
-
-  PreventDefaultInternal(aCallerType == CallerType::System, principal);
+  PreventDefaultInternal(aCallerType == CallerType::System);
 }
 
 void
-Event::PreventDefaultInternal(bool aCalledByDefaultHandler,
-                              nsIPrincipal* aPrincipal)
+Event::PreventDefaultInternal(bool aCalledByDefaultHandler)
 {
   if (!mEvent->mFlags.mCancelable) {
     return;
@@ -511,7 +507,7 @@ Event::PreventDefaultInternal(bool aCalledByDefaultHandler,
     return;
   }
 
-  mEvent->PreventDefault(aCalledByDefaultHandler, aPrincipal);
+  mEvent->PreventDefault(aCalledByDefaultHandler);
 
   if (!IsTrusted()) {
     return;
@@ -717,7 +713,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // triggered while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      abuse = openBlocked;
       switch(aEvent->mMessage) {
       case eFormSelect:
         if (PopupAllowedForEvent("select")) {
@@ -739,7 +734,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      abuse = openBlocked;
       switch(aEvent->mMessage) {
       case eEditorInput:
         if (PopupAllowedForEvent("input")) {
@@ -756,7 +750,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      abuse = openBlocked;
       switch(aEvent->mMessage) {
       case eFormChange:
         if (PopupAllowedForEvent("change")) {
@@ -773,7 +766,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     break;
   case eKeyboardEventClass:
     if (aEvent->IsTrusted()) {
-      abuse = openBlocked;
       uint32_t key = aEvent->AsKeyboardEvent()->mKeyCode;
       switch(aEvent->mMessage) {
       case eKeyPress:
@@ -804,7 +796,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     break;
   case eTouchEventClass:
     if (aEvent->IsTrusted()) {
-      abuse = openBlocked;
       switch (aEvent->mMessage) {
       case eTouchStart:
         if (PopupAllowedForEvent("touchstart")) {
@@ -824,7 +815,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
   case eMouseEventClass:
     if (aEvent->IsTrusted() &&
         aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
-      abuse = openBlocked;
       switch(aEvent->mMessage) {
       case eMouseUp:
         if (PopupAllowedForEvent("mouseup")) {
@@ -879,7 +869,6 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // triggered while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      abuse = openBlocked;
       switch(aEvent->mMessage) {
       case eFormSubmit:
         if (PopupAllowedForEvent("submit")) {

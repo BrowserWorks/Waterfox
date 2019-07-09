@@ -3,7 +3,6 @@
 <head>
   <title>Video controls test - VTT</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <script type="text/javascript" src="head.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
@@ -24,87 +23,102 @@
   const ttList = getAnonElementWithinVideoByAttribute(video, "anonid", "textTrackList");
   const testCases = [];
 
-  add_task(async function wait_for_media_ready() {
-    await new Promise(resolve => window.addEventListener("load", resolve, {once: true}));
-    await SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]});
-    await new Promise(resolve => {
-      video.src = "seek_with_sound.ogg";
-      video.addEventListener("loadedmetadata", resolve);
-    });
-  });
-
-  add_task(async function check_inital_state() {
+  testCases.push(() => new Promise(resolve => {
     is(ccBtn.getAttribute("hidden"), "true", "CC button should hide");
-  });
 
-  add_task(async function check_unsupported_type_added() {
+    resolve();
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     video.addTextTrack("descriptions", "English", "en");
     video.addTextTrack("chapters", "English", "en");
     video.addTextTrack("metadata", "English", "en");
 
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.getAttribute("hidden"), "true", "CC button should hide if no supported tracks provided");
-  });
+    SimpleTest.executeSoon(() => {
+      is(ccBtn.getAttribute("hidden"), "true", "CC button should hide if no supported tracks provided");
 
-  add_task(async function check_cc_button_present() {
+      resolve();
+    });
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     const sub = video.addTextTrack("subtitles", "English", "en");
     sub.mode = "disabled";
 
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.hasAttribute("hidden"), false, "CC button should show");
-    is(ccBtn.hasAttribute("enabled"), false, "CC button should be disabled");
-  });
+    SimpleTest.executeSoon(() => {
+      is(ccBtn.hasAttribute("hidden"), false, "CC button should show");
+      is(ccBtn.hasAttribute("enabled"), false, "CC button should be disabled");
 
-  add_task(async function check_cc_button_be_enabled() {
+      resolve();
+    });
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     const subtitle = video.addTextTrack("subtitles", "English", "en");
     subtitle.mode = "showing";
 
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.getAttribute("enabled"), "true", "CC button should be enabled");
-    subtitle.mode = "disabled";
-  });
+    SimpleTest.executeSoon(() => {
+      is(ccBtn.getAttribute("enabled"), "true", "CC button should be enabled");
+      subtitle.mode = "disabled";
 
-  add_task(async function check_cpations_type() {
+      resolve();
+    });
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     const caption = video.addTextTrack("captions", "English", "en");
     caption.mode = "showing";
 
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.getAttribute("enabled"), "true", "CC button should be enabled");
-  });
+    SimpleTest.executeSoon(() => {
+      is(ccBtn.getAttribute("enabled"), "true", "CC button should be enabled");
 
-  add_task(async function check_track_ui_state() {
+      resolve();
+    });
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     synthesizeMouseAtCenter(ccBtn, {});
 
-    await new Promise(SimpleTest.executeSoon);
-    is(ttList.hasAttribute("hidden"), false, "Texttrack menu should show up");
-    is(ttList.lastChild.getAttribute("on"), "true", "The last added item should be highlighted");
-  });
+    SimpleTest.executeSoon(() => {
+      is(ttList.hasAttribute("hidden"), false, "Texttrack menu should show up");
+      is(ttList.lastChild.getAttribute("on"), "true", "The last added item should be highlighted");
 
-  add_task(async function check_select_texttrack() {
+      resolve();
+    });
+  }));
+
+  testCases.push(() => new Promise(resolve => {
     const tt = ttList.children[1];
 
     isnot(tt.getAttribute("on"), "true", "Item should be off before click");
     synthesizeMouseAtCenter(tt, {});
 
-    await new Promise(SimpleTest.executeSoon);
-    is(tt.getAttribute("on"), "true", "Selected item should be enabled");
-    is(ttList.getAttribute("hidden"), "true", "Should hide texttrack menu once clicked on an item");
-  });
+    SimpleTest.executeSoon(() => {
+      is(tt.getAttribute("on"), "true", "Selected item should be enabled");
+      is(ttList.getAttribute("hidden"), "true", "Should hide texttrack menu once clicked on an item");
 
-  add_task(async function check_change_texttrack_mode() {
-    const tts = [...video.textTracks];
+      resolve();
+    });
+  }));
 
-    tts.forEach(tt => tt.mode = "hidden");
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.hasAttribute("enabled"), false, "CC button should be disabled");
+  function executeTestCases(tasks) {
+    return tasks.reduce((promise, task) => promise.then(task), Promise.resolve());
+  }
 
-    // enable the last text track.
-    tts[tts.length - 1].mode = "showing";
-    await new Promise(SimpleTest.executeSoon);
-    is(ccBtn.hasAttribute("enabled"), true, "CC button should be enabled");
-    is(ttList.lastChild.getAttribute("on"), "true", "The last item should be highlighted");
-  });
+  function loadedmetadata() {
+    executeTestCases(testCases).then(SimpleTest.finish);
+  }
 
+  function startMediaLoad() {
+    video.src = "seek_with_sound.ogg";
+    video.addEventListener("loadedmetadata", loadedmetadata);
+  }
+
+  function loadevent() {
+    SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, startMediaLoad);
+  }
+
+  window.addEventListener("load", loadevent);
 </script>
 </pre>
 </body>

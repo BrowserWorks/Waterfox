@@ -28,7 +28,7 @@ function uuid() {
 // Returns a file object for a new file in the home dir ($HOME/<UUID>).
 function fileInHomeDir() {
   // get home directory, make sure it exists
-  let homeDir = Services.dirsvc.get("Home", Ci.nsIFile);
+  let homeDir = Services.dirsvc.get("Home", Ci.nsILocalFile);
   Assert.ok(homeDir.exists(), "Home dir exists");
   Assert.ok(homeDir.isDirectory(), "Home dir is a directory");
 
@@ -48,7 +48,7 @@ function fileInTempDir() {
   }
 
   // get the content temp dir, make sure it exists
-  let ctmp = Services.dirsvc.get(contentTempKey, Ci.nsIFile);
+  let ctmp = Services.dirsvc.get(contentTempKey, Ci.nsILocalFile);
   Assert.ok(ctmp.exists(), "Content temp dir exists");
   Assert.ok(ctmp.isDirectory(), "Content temp dir is a directory");
 
@@ -61,22 +61,14 @@ function fileInTempDir() {
 
 function GetProfileDir() {
   // get profile directory
-  let profileDir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+  let profileDir = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
   return (profileDir);
 }
 
 function GetHomeDir() {
   // get home directory
-  let homeDir = Services.dirsvc.get("Home", Ci.nsIFile);
+  let homeDir = Services.dirsvc.get("Home", Ci.nsILocalFile);
   return (homeDir);
-}
-
-function GetSystemExtensionsDevDir() {
-  return Services.dirsvc.get("XRESysExtDev", Ci.nsIFile);
-}
-
-function GetPerUserExtensionDir() {
-  return Services.dirsvc.get("XREUSysExt", Ci.nsIFile);
 }
 
 // Returns a file object for the file or directory named |name| in the
@@ -88,7 +80,7 @@ function GetProfileEntry(name) {
 }
 
 function GetDir(path) {
-  let dir = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+  let dir = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
   dir.initWithPath(path);
   Assert.ok(dir.isDirectory(), `${path} is a directory`);
   return (dir);

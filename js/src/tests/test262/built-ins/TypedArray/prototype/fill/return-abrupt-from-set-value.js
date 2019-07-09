@@ -34,7 +34,6 @@ info: >
   ...
 
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

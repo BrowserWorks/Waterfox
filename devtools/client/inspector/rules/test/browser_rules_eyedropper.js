@@ -101,11 +101,23 @@ function* testSelect(view, swatch, inspector, testActor) {
   let color = swatch.style.backgroundColor;
   is(color, EXPECTED_COLOR, "swatch changed colors");
 
-  ok(!swatch.eyedropperOpen, "swatch eye dropper is closed");
-  ok(!swatch.activeSwatch, "no active swatch");
-
   is((yield getComputedStyleProperty("div", null, "background-color")),
      EXPECTED_COLOR,
      "div's color set to body color after dropper");
 }
 
+function* openEyedropper(view, swatch) {
+  let tooltip = view.tooltips.getTooltip("colorPicker").tooltip;
+
+  info("Click on the swatch");
+  let onColorPickerReady = view.tooltips.getTooltip("colorPicker").once("ready");
+  swatch.click();
+  yield onColorPickerReady;
+
+  let dropperButton = tooltip.container.querySelector("#eyedropper-button");
+
+  info("Click on the eyedropper icon");
+  let onOpened = tooltip.once("eyedropper-opened");
+  dropperButton.click();
+  yield onOpened;
+}

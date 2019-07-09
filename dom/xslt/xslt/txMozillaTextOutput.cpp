@@ -41,15 +41,15 @@ txMozillaTextOutput::~txMozillaTextOutput()
 }
 
 nsresult
-txMozillaTextOutput::attribute(nsAtom* aPrefix, nsAtom* aLocalName,
-                               nsAtom* aLowercaseLocalName,
+txMozillaTextOutput::attribute(nsIAtom* aPrefix, nsIAtom* aLocalName,
+                               nsIAtom* aLowercaseLocalName,
                                int32_t aNsID, const nsString& aValue)
 {
     return NS_OK;
 }
 
 nsresult
-txMozillaTextOutput::attribute(nsAtom* aPrefix, const nsAString& aName,
+txMozillaTextOutput::attribute(nsIAtom* aPrefix, const nsAString& aName,
                                const int32_t aNsID,
                                const nsString& aValue)
 {
@@ -82,13 +82,8 @@ txMozillaTextOutput::endDocument(nsresult aResult)
     NS_ENSURE_SUCCESS(rv, rv);
 
     // This should really be handled by nsIDocument::EndLoad
-    if (mObserver) {
-        MOZ_ASSERT(mDocument->GetReadyStateEnum() ==
-                   nsIDocument::READYSTATE_LOADING, "Bad readyState");
-    } else {
-        MOZ_ASSERT(mDocument->GetReadyStateEnum() ==
-                   nsIDocument::READYSTATE_INTERACTIVE, "Bad readyState");
-    }
+    MOZ_ASSERT(mDocument->GetReadyStateEnum() ==
+               nsIDocument::READYSTATE_LOADING, "Bad readyState");
     mDocument->SetReadyStateInternal(nsIDocument::READYSTATE_INTERACTIVE);
 
     if (NS_SUCCEEDED(aResult)) {
@@ -158,7 +153,7 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
     NS_ASSERTION(mDocument, "Need document");
 
     // Reset and set up document
-    URIUtils::ResetWithSource(mDocument, aSourceDocument);
+    URIUtils::ResetWithSource(mDocument, source);
     // Only do this after resetting the document to ensure we have the
     // correct principal.
     mDocument->SetScriptHandlingObject(sgo);
@@ -233,14 +228,14 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
 }
 
 nsresult
-txMozillaTextOutput::startElement(nsAtom* aPrefix, nsAtom* aLocalName,
-                                  nsAtom* aLowercaseLocalName, int32_t aNsID)
+txMozillaTextOutput::startElement(nsIAtom* aPrefix, nsIAtom* aLocalName,
+                                  nsIAtom* aLowercaseLocalName, int32_t aNsID)
 {
     return NS_OK;
 }
 
 nsresult
-txMozillaTextOutput::startElement(nsAtom* aPrefix, const nsAString& aName,
+txMozillaTextOutput::startElement(nsIAtom* aPrefix, const nsAString& aName,
                                   const int32_t aNsID)
 {
     return NS_OK;
@@ -252,7 +247,7 @@ void txMozillaTextOutput::getOutputDocument(nsIDOMDocument** aDocument)
 }
 
 nsresult
-txMozillaTextOutput::createXHTMLElement(nsAtom* aName,
+txMozillaTextOutput::createXHTMLElement(nsIAtom* aName,
                                         nsIContent** aResult)
 {
     nsCOMPtr<Element> element = mDocument->CreateHTMLElement(aName);

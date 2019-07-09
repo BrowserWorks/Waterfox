@@ -44,7 +44,7 @@ def explode(aar, destdir):
     assets = mozpath.join(destdir, 'assets')
     try:
         os.rmdir(assets)
-    except OSError as e:
+    except OSError, e:
         if e.errno in (errno.ENOTEMPTY, errno.ENOENT):
             pass
         else:

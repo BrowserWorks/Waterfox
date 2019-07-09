@@ -36,7 +36,7 @@ const TOPICS = [
   "fxaccounts:profilechange",
 ];
 
-const ON_UPDATE = "sync-ui-state:update";
+const ON_UPDATE = "sync-ui-state:update"
 
 const STATUS_NOT_CONFIGURED = "not_configured";
 const STATUS_LOGIN_FAILED = "login_failed";
@@ -130,7 +130,7 @@ const UIStateInternal = {
 
   async _refreshFxAState(newState) {
     let userData = await this._getUserData();
-    await this._populateWithUserData(newState, userData);
+    this._populateWithUserData(newState, userData);
     if (newState.status != STATUS_SIGNED_IN) {
       return;
     }
@@ -141,13 +141,12 @@ const UIStateInternal = {
     this._populateWithProfile(newState, profile);
   },
 
-  async _populateWithUserData(state, userData) {
+  _populateWithUserData(state, userData) {
     let status;
     if (!userData) {
       status = STATUS_NOT_CONFIGURED;
     } else {
-      let loginFailed = await this._loginFailed();
-      if (loginFailed) {
+      if (this._loginFailed()) {
         status = STATUS_LOGIN_FAILED;
       } else if (!userData.verified) {
         status = STATUS_NOT_VERIFIED;
@@ -162,6 +161,9 @@ const UIStateInternal = {
   _populateWithProfile(state, profile) {
     state.displayName = profile.displayName;
     state.avatarURL = profile.avatar;
+    // A hack to handle that the user's email address may have changed.
+    // This can probably be removed as part of bug 1383663.
+    state.email = profile.email;
   },
 
   async _getUserData() {
@@ -196,16 +198,7 @@ const UIStateInternal = {
     }
   },
 
-  async _loginFailed() {
-    // First ask FxA if it thinks the user needs re-authentication. In practice,
-    // this check is probably canonical (ie, we probably don't really need
-    // the check below at all as we drop local session info on the first sign
-    // of a problem) - but we keep it for now to keep the risk down.
-    let hasLocalSession = await this.fxAccounts.hasLocalSession();
-    if (!hasLocalSession) {
-      return true;
-    }
-
+  _loginFailed() {
     // Referencing Weave.Service will implicitly initialize sync, and we don't
     // want to force that - so first check if it is ready.
     let service = Cc["@mozilla.org/weave/service;1"]

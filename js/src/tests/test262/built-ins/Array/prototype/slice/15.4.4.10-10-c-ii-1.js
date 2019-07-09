@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.slice
 es5id: 15.4.4.10-10-c-ii-1
 description: >
     Array.prototype.slice will slice a string from start to end when

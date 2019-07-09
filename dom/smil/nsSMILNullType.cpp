@@ -8,13 +8,6 @@
 #include "nsSMILValue.h"
 #include "nsDebug.h"
 
-/*static*/ nsSMILNullType*
-nsSMILNullType::Singleton()
-{
-  static nsSMILNullType sSingleton;
-  return &sSingleton;
-}
-
 nsresult
 nsSMILNullType::Assign(nsSMILValue& aDest, const nsSMILValue& aSrc) const
 {

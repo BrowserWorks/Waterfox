@@ -13,14 +13,12 @@
 #include "nsIEditingSession.h"
 #include "nsIDocShell.h"
 
-using namespace mozilla;
-
 nsDocShellEditorData::nsDocShellEditorData(nsIDocShell* aOwningDocShell)
   : mDocShell(aOwningDocShell)
-  , mDetachedEditingState(nsIHTMLDocument::eOff)
   , mMakeEditable(false)
   , mIsDetached(false)
   , mDetachedMakeEditable(false)
+  , mDetachedEditingState(nsIHTMLDocument::eOff)
 {
   NS_ASSERTION(mDocShell, "Where is my docShell?");
 }
@@ -33,9 +31,9 @@ nsDocShellEditorData::~nsDocShellEditorData()
 void
 nsDocShellEditorData::TearDownEditor()
 {
-  if (mHTMLEditor) {
-    RefPtr<HTMLEditor> htmlEditor = mHTMLEditor.forget();
-    htmlEditor->PreDestroy(false);
+  if (mEditor) {
+    mEditor->PreDestroy(false);
+    mEditor = nullptr;
   }
   mEditingSession = nullptr;
   mIsDetached = false;
@@ -50,11 +48,11 @@ nsDocShellEditorData::MakeEditable(bool aInWaitForUriLoad)
 
   // if we are already editable, and are getting turned off,
   // nuke the editor.
-  if (mHTMLEditor) {
+  if (mEditor) {
     NS_WARNING("Destroying existing editor on frame");
 
-    RefPtr<HTMLEditor> htmlEditor = mHTMLEditor.forget();
-    htmlEditor->PreDestroy(false);
+    mEditor->PreDestroy(false);
+    mEditor = nullptr;
   }
 
   if (aInWaitForUriLoad) {
@@ -66,7 +64,7 @@ nsDocShellEditorData::MakeEditable(bool aInWaitForUriLoad)
 bool
 nsDocShellEditorData::GetEditable()
 {
-  return mMakeEditable || (mHTMLEditor != nullptr);
+  return mMakeEditable || (mEditor != nullptr);
 }
 
 nsresult
@@ -100,25 +98,29 @@ nsDocShellEditorData::GetEditingSession(nsIEditingSession** aResult)
 }
 
 nsresult
-nsDocShellEditorData::SetHTMLEditor(HTMLEditor* aHTMLEditor)
+nsDocShellEditorData::GetEditor(nsIEditor** aResult)
+{
+  NS_ENSURE_ARG_POINTER(aResult);
+  NS_IF_ADDREF(*aResult = mEditor);
+  return NS_OK;
+}
+
+nsresult
+nsDocShellEditorData::SetEditor(nsIEditor* aEditor)
 {
   // destroy any editor that we have. Checks for equality are
   // necessary to ensure that assigment into the nsCOMPtr does
   // not temporarily reduce the refCount of the editor to zero
-  if (mHTMLEditor == aHTMLEditor) {
-    return NS_OK;
-  }
+  if (mEditor.get() != aEditor) {
+    if (mEditor) {
+      mEditor->PreDestroy(false);
+      mEditor = nullptr;
+    }
 
-  if (mHTMLEditor) {
-    RefPtr<HTMLEditor> htmlEditor = mHTMLEditor.forget();
-    htmlEditor->PreDestroy(false);
-    MOZ_ASSERT(!mHTMLEditor,
-      "Nested call of nsDocShellEditorData::SetHTMLEditor() detected");
-  }
-
-  mHTMLEditor = aHTMLEditor;  // owning addref
-  if (!mHTMLEditor) {
-    mMakeEditable = false;
+    mEditor = aEditor;  // owning addref
+    if (!mEditor) {
+      mMakeEditable = false;
+    }
   }
 
   return NS_OK;

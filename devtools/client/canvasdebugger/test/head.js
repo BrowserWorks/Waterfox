@@ -9,12 +9,12 @@ var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 
 var Services = require("Services");
 var promise = require("promise");
-const defer = require("devtools/shared/defer");
 var { gDevTools } = require("devtools/client/framework/devtools");
-var { DebuggerClient } = require("devtools/shared/client/debugger-client");
+var { DebuggerClient } = require("devtools/shared/client/main");
 var { DebuggerServer } = require("devtools/server/main");
 var { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
 var { CanvasFront } = require("devtools/shared/fronts/canvas");
+var { setTimeout } = require("sdk/timers");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var flags = require("devtools/shared/flags");
 var { TargetFactory } = require("devtools/client/framework/target");
@@ -73,7 +73,7 @@ function loadFrameScripts() {
 function addTab(aUrl, aWindow) {
   info("Adding tab: " + aUrl);
 
-  let deferred = defer();
+  let deferred = promise.defer();
   let targetWindow = aWindow || window;
   let targetBrowser = targetWindow.gBrowser;
 
@@ -93,7 +93,7 @@ function addTab(aUrl, aWindow) {
 function removeTab(aTab, aWindow) {
   info("Removing tab.");
 
-  let deferred = defer();
+  let deferred = promise.defer();
   let targetWindow = aWindow || window;
   let targetBrowser = targetWindow.gBrowser;
   let tabContainer = targetBrowser.tabContainer;
@@ -149,7 +149,7 @@ function isTestingSupported() {
 function once(aTarget, aEventName, aUseCapture = false) {
   info("Waiting for event: '" + aEventName + "' on " + aTarget + ".");
 
-  let deferred = defer();
+  let deferred = promise.defer();
 
   for (let [add, remove] of [
     ["on", "off"], // Use event emitter before DOM events for consistency
@@ -170,7 +170,7 @@ function once(aTarget, aEventName, aUseCapture = false) {
 }
 
 function waitForTick() {
-  let deferred = defer();
+  let deferred = promise.defer();
   executeSoon(deferred.resolve);
   return deferred.promise;
 }
@@ -257,7 +257,7 @@ function teardown({target}) {
  * in potentially a different process.
  */
 function evalInDebuggee(script) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   if (!mm) {
     throw new Error("`loadFrameScripts()` must be called when using MessageManager.");
@@ -296,7 +296,7 @@ function* waitUntil(predicate, interval = 10) {
   if (yield predicate()) {
     return Promise.resolve(true);
   }
-  let deferred = defer();
+  let deferred = Promise.defer();
   setTimeout(function () {
     waitUntil(predicate).then(() => deferred.resolve(true));
   }, interval);

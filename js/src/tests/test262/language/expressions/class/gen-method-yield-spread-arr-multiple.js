@@ -4,7 +4,6 @@
 /*---
 description: Use yield value in a array spread position (Generator method as a ClassExpression element)
 esid: prod-GeneratorMethod
-features: [generators]
 flags: [generated]
 includes: [compareArray.js]
 info: |
@@ -18,7 +17,6 @@ info: |
 
     GeneratorMethod :
       * PropertyName ( UniqueFormalParameters ) { GeneratorBody }
-
 
     Array Initializer
 

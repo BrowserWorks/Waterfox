@@ -15,9 +15,9 @@ macro_rules! define_cursor {
             $( $g_css: expr => $g_variant: ident = $g_value: expr, )+
         ]
     ) => {
-        /// <https://drafts.csswg.org/css-ui/#cursor>
-        #[derive(Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq)]
-        #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+        /// https://drafts.csswg.org/css-ui/#cursor
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        #[cfg_attr(feature = "servo", derive(Deserialize, Serialize, HeapSizeOf))]
         #[repr(u8)]
         #[allow(missing_docs)]
         pub enum Cursor {
@@ -31,15 +31,6 @@ macro_rules! define_cursor {
                 match_ignore_ascii_case! { &keyword,
                     $( $c_css => Ok(Cursor::$c_variant), )+
                     $( #[cfg(feature = "gecko")] $g_css => Ok(Cursor::$g_variant), )+
-                    _ => Err(())
-                }
-            }
-
-            /// From the C u8 value, get the corresponding Cursor enum.
-            pub fn from_u8(value: u8) -> Result<Cursor, ()> {
-                match value {
-                    $( $c_value => Ok(Cursor::$c_variant), )+
-                    $( #[cfg(feature = "gecko")] $g_value => Ok(Cursor::$g_variant), )+
                     _ => Err(())
                 }
             }

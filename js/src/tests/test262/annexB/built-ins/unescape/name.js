@@ -19,11 +19,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(unescape, "name", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: "unescape"
-});
+assert.sameValue(unescape.name, "unescape");
+
+verifyNotEnumerable(unescape, "name");
+verifyNotWritable(unescape, "name");
+verifyConfigurable(unescape, "name");
 
 reportCompare(0, 0);

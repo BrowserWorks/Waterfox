@@ -37,7 +37,7 @@ class gfxUserFontData;
 class gfxSVGGlyphs;
 class FontInfoData;
 struct FontListSizes;
-class nsAtom;
+class nsIAtom;
 
 namespace mozilla {
 class SVGContextPaint;
@@ -108,12 +108,6 @@ public:
 
     explicit gfxFontEntry(const nsAString& aName, bool aIsStandardFace = false);
 
-    // Create a new entry that refers to the same font as this, but without
-    // additional state that may have been set up (such as family name).
-    // (This is only to be used for system fonts in the platform font list,
-    // not user fonts.)
-    virtual gfxFontEntry* Clone() const = 0;
-
     // unique name for the face, *not* the family; not necessarily the
     // "real" or user-friendly name, may be an internal identifier
     const nsString& Name() const { return mName; }
@@ -145,12 +139,14 @@ public:
 
     // whether a feature is supported by the font (limited to a small set
     // of features for which some form of fallback needs to be implemented)
-    virtual bool SupportsOpenTypeFeature(Script aScript, uint32_t aFeatureTag);
+    bool SupportsOpenTypeFeature(Script aScript, uint32_t aFeatureTag);
     bool SupportsGraphiteFeature(uint32_t aFeatureTag);
 
     // returns a set containing all input glyph ids for a given feature
     const hb_set_t*
     InputsForOpenTypeFeature(Script aScript, uint32_t aFeatureTag);
+
+    virtual bool IsSymbolFont();
 
     virtual bool HasFontTable(uint32_t aTableTag);
 
@@ -204,6 +200,13 @@ public:
                                 const mozilla::gfx::Color& aDefaultColor,
                                 nsTArray<uint16_t>& layerGlyphs,
                                 nsTArray<mozilla::gfx::Color>& layerColors);
+
+    virtual bool MatchesGenericFamily(const nsACString& aGeneric) const {
+        return true;
+    }
+    virtual bool SupportsLangGroup(nsIAtom *aLangGroup) const {
+        return true;
+    }
 
     // Access to raw font table data (needed for Harfbuzz):
     // returns a pointer to data owned by the fontEntry or the OS,
@@ -342,6 +345,7 @@ public:
     bool             mIsDataUserFont : 1;      // platform font entry (data)
     bool             mIsLocalUserFont : 1;     // platform font entry (local)
     bool             mStandardFace : 1;
+    bool             mSymbolFont  : 1;
     bool             mIgnoreGDEF  : 1;
     bool             mIgnoreGSUB  : 1;
     bool             mSVGInitialized : 1;
@@ -413,7 +417,8 @@ protected:
     // lookup the cmap in cached font data
     virtual already_AddRefed<gfxCharacterMap>
     GetCMAPFromFontInfo(FontInfoData *aFontInfoData,
-                        uint32_t& aUVSOffset);
+                        uint32_t& aUVSOffset,
+                        bool& aSymbolFont);
 
     // helper for HasCharacter(), which is what client code should call
     virtual bool TestCharacterMap(uint32_t aCh);
@@ -601,23 +606,14 @@ public:
         mIsBadUnderlineFamily(false),
         mFamilyCharacterMapInitialized(false),
         mSkipDefaultFeatureSpaceCheck(false),
-        mCheckForFallbackFaces(false),
-        mCheckedForLegacyFamilyNames(false)
+        mCheckForFallbackFaces(false)
         { }
 
     const nsString& Name() { return mName; }
 
     virtual void LocalizedName(nsAString& aLocalizedName);
     virtual bool HasOtherFamilyNames();
-
-    // See https://bugzilla.mozilla.org/show_bug.cgi?id=835204:
-    // check the font's 'name' table to see if it has a legacy family name
-    // that would have been used by GDI (e.g. to split extra-bold or light
-    // faces in a large family into separate "styled families" because of
-    // GDI's 4-faces-per-family limitation). If found, the styled family
-    // name will be added to the font list's "other family names" table.
-    bool CheckForLegacyFamilyNames(gfxPlatformFontList* aFontList);
-
+    
     nsTArray<RefPtr<gfxFontEntry> >& GetFontList() { return mAvailableFonts; }
     
     void AddFontEntry(RefPtr<gfxFontEntry> aFontEntry) {
@@ -635,18 +631,6 @@ public:
         }
         aFontEntry->mSkipDefaultFeatureSpaceCheck = mSkipDefaultFeatureSpaceCheck;
         mAvailableFonts.AppendElement(aFontEntry);
-
-        // If we're adding a face to a family that has been marked as "simple",
-        // we need to ensure any null entries are removed, as well as clearing
-        // the flag (which may be set again later).
-        if (mIsSimpleFamily) {
-            for (size_t i = mAvailableFonts.Length() - 1; i-- > 0; ) {
-                if (!mAvailableFonts[i]) {
-                    mAvailableFonts.RemoveElementAt(i);
-                }
-            }
-            mIsSimpleFamily = false;
-        }
     }
 
     // note that the styles for this family have been added
@@ -659,14 +643,12 @@ public:
     // aNeedsSyntheticBold is set to true when synthetic bolding is
     // needed, false otherwise
     gfxFontEntry *FindFontForStyle(const gfxFontStyle& aFontStyle, 
-                                   bool& aNeedsSyntheticBold,
-                                   bool aIgnoreSizeTolerance = false);
+                                   bool& aNeedsSyntheticBold);
 
     virtual void
     FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
                          nsTArray<gfxFontEntry*>& aFontEntryList,
-                         bool& aNeedsSyntheticBold,
-                         bool aIgnoreSizeTolerance = false);
+                         bool& aNeedsSyntheticBold);
 
     // checks for a matching font within the family
     // used as part of the font fallback process
@@ -753,17 +735,6 @@ public:
         mSkipDefaultFeatureSpaceCheck = aSkipCheck;
     }
 
-    // Check whether this family is appropriate to include in the Preferences
-    // font list for the given langGroup and CSS generic, if the platform lets
-    // us determine this.
-    // Return true if the family should be included in the list, false to omit.
-    // Default implementation returns true for everything, so no filtering
-    // will occur; individual platforms may override.
-    virtual bool FilterForFontList(nsAtom* aLangGroup,
-                                   const nsACString& aGeneric) const {
-        return true;
-    }
-
 protected:
     // Protected destructor, to discourage deletion outside of Release():
     virtual ~gfxFontFamily();
@@ -794,7 +765,6 @@ protected:
     bool mFamilyCharacterMapInitialized : 1;
     bool mSkipDefaultFeatureSpaceCheck : 1;
     bool mCheckForFallbackFaces : 1;  // check other faces for character
-    bool mCheckedForLegacyFamilyNames : 1;
 
     enum {
         // for "simple" families, the faces are stored in mAvailableFonts

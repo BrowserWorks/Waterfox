@@ -13,7 +13,7 @@
 #include "mozilla/dom/SVGGradientElement.h"
 #include "mozilla/dom/SVGStopElement.h"
 #include "nsContentUtils.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGAnimatedTransformList.h"
 
 // XXX Tight coupling with content classes ahead!
@@ -39,22 +39,22 @@ nsSVGGradientFrame::nsSVGGradientFrame(nsStyleContext* aContext,
 
 nsresult
 nsSVGGradientFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                     nsAtom*        aAttribute,
+                                     nsIAtom*        aAttribute,
                                      int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
       (aAttribute == nsGkAtoms::gradientUnits ||
        aAttribute == nsGkAtoms::gradientTransform ||
        aAttribute == nsGkAtoms::spreadMethod)) {
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   } else if ((aNameSpaceID == kNameSpaceID_XLink ||
               aNameSpaceID == kNameSpaceID_None) &&
              aAttribute == nsGkAtoms::href) {
     // Blow away our reference, if any
-    DeleteProperty(SVGObserverUtils::HrefAsPaintingProperty());
+    DeleteProperty(nsSVGEffects::HrefAsPaintingProperty());
     mNoHRefURI = false;
     // And update whoever references us
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
   return nsSVGPaintServerFrame::AttributeChanged(aNameSpaceID,
@@ -67,7 +67,7 @@ uint16_t
 nsSVGGradientFrame::GetEnumValue(uint32_t aIndex, nsIContent *aDefault)
 {
   const nsSVGEnum& thisEnum =
-    static_cast<dom::SVGGradientElement*>(GetContent())->mEnumAttributes[aIndex];
+    static_cast<dom::SVGGradientElement*>(mContent)->mEnumAttributes[aIndex];
 
   if (thisEnum.IsExplicitlySet())
     return thisEnum.GetAnimValue();
@@ -107,7 +107,7 @@ const nsSVGAnimatedTransformList*
 nsSVGGradientFrame::GetGradientTransformList(nsIContent* aDefault)
 {
   nsSVGAnimatedTransformList *thisTransformList =
-    static_cast<dom::SVGGradientElement*>(GetContent())->GetAnimatedTransformList();
+    static_cast<dom::SVGGradientElement*>(mContent)->GetAnimatedTransformList();
 
   if (thisTransformList && thisTransformList->IsExplicitlySet())
     return thisTransformList;
@@ -152,7 +152,7 @@ nsSVGGradientFrame::GetGradientTransform(nsIFrame *aSource,
   }
 
   const nsSVGAnimatedTransformList* animTransformList =
-    GetGradientTransformList(GetContent());
+    GetGradientTransformList(mContent);
   if (!animTransformList)
     return bboxMatrix;
 
@@ -335,12 +335,12 @@ nsSVGGradientFrame::GetReferencedGradient()
     return nullptr;
 
   nsSVGPaintingProperty *property =
-    GetProperty(SVGObserverUtils::HrefAsPaintingProperty());
+    GetProperty(nsSVGEffects::HrefAsPaintingProperty());
 
   if (!property) {
     // Fetch our gradient element's href or xlink:href attribute
     dom::SVGGradientElement* grad =
-      static_cast<dom::SVGGradientElement*>(GetContent());
+      static_cast<dom::SVGGradientElement*>(mContent);
     nsAutoString href;
     if (grad->mStringAttributes[dom::SVGGradientElement::HREF]
           .IsExplicitlySet()) {
@@ -363,8 +363,8 @@ nsSVGGradientFrame::GetReferencedGradient()
                                               mContent->GetUncomposedDoc(), base);
 
     property =
-      SVGObserverUtils::GetPaintingProperty(targetURI, this,
-                          SVGObserverUtils::HrefAsPaintingProperty());
+      nsSVGEffects::GetPaintingProperty(targetURI, this,
+                                        nsSVGEffects::HrefAsPaintingProperty());
     if (!property)
       return nullptr;
   }
@@ -432,7 +432,7 @@ nsSVGLinearGradientFrame::Init(nsIContent*       aContent,
 
 nsresult
 nsSVGLinearGradientFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                           nsAtom*        aAttribute,
+                                           nsIAtom*        aAttribute,
                                            int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -440,7 +440,7 @@ nsSVGLinearGradientFrame::AttributeChanged(int32_t         aNameSpaceID,
        aAttribute == nsGkAtoms::y1 ||
        aAttribute == nsGkAtoms::x2 ||
        aAttribute == nsGkAtoms::y2)) {
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
   return nsSVGGradientFrame::AttributeChanged(aNameSpaceID,
@@ -454,7 +454,7 @@ nsSVGLinearGradientFrame::GetLengthValue(uint32_t aIndex)
 {
   dom::SVGLinearGradientElement* lengthElement =
     GetLinearGradientWithLength(aIndex,
-      static_cast<dom::SVGLinearGradientElement*>(GetContent()));
+      static_cast<dom::SVGLinearGradientElement*>(mContent));
   // We passed in mContent as a fallback, so, assuming mContent is non-null, the
   // return value should also be non-null.
   MOZ_ASSERT(lengthElement,
@@ -482,7 +482,7 @@ nsSVGLinearGradientFrame::GetLinearGradientWithLength(uint32_t aIndex,
   dom::SVGLinearGradientElement* aDefault)
 {
   dom::SVGLinearGradientElement* thisElement =
-    static_cast<dom::SVGLinearGradientElement*>(GetContent());
+    static_cast<dom::SVGLinearGradientElement*>(mContent);
   const nsSVGLength2 &length = thisElement->mLengthAttributes[aIndex];
 
   if (length.IsExplicitlySet()) {
@@ -534,7 +534,7 @@ nsSVGRadialGradientFrame::Init(nsIContent*       aContent,
 
 nsresult
 nsSVGRadialGradientFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                           nsAtom*        aAttribute,
+                                           nsIAtom*        aAttribute,
                                            int32_t         aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -543,7 +543,7 @@ nsSVGRadialGradientFrame::AttributeChanged(int32_t         aNameSpaceID,
        aAttribute == nsGkAtoms::cy ||
        aAttribute == nsGkAtoms::fx ||
        aAttribute == nsGkAtoms::fy)) {
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
   return nsSVGGradientFrame::AttributeChanged(aNameSpaceID,
@@ -557,7 +557,7 @@ nsSVGRadialGradientFrame::GetLengthValue(uint32_t aIndex)
 {
   dom::SVGRadialGradientElement* lengthElement =
     GetRadialGradientWithLength(aIndex,
-      static_cast<dom::SVGRadialGradientElement*>(GetContent()));
+      static_cast<dom::SVGRadialGradientElement*>(mContent));
   // We passed in mContent as a fallback, so, assuming mContent is non-null,
   // the return value should also be non-null.
   MOZ_ASSERT(lengthElement,
@@ -602,7 +602,7 @@ nsSVGRadialGradientFrame::GetRadialGradientWithLength(uint32_t aIndex,
   dom::SVGRadialGradientElement* aDefault)
 {
   dom::SVGRadialGradientElement* thisElement =
-    static_cast<dom::SVGRadialGradientElement*>(GetContent());
+    static_cast<dom::SVGRadialGradientElement*>(mContent);
   const nsSVGLength2 &length = thisElement->mLengthAttributes[aIndex];
 
   if (length.IsExplicitlySet()) {

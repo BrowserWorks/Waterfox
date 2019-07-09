@@ -5,6 +5,6 @@
 
 tooltool_fetch() {
     cat >manifest.tt
-    python2.7 /setup/tooltool.py fetch
+    python /setup/tooltool.py fetch
     rm manifest.tt
 }

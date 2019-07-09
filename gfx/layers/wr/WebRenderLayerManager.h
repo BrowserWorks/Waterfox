@@ -6,7 +6,6 @@
 #ifndef GFX_WEBRENDERLAYERMANAGER_H
 #define GFX_WEBRENDERLAYERMANAGER_H
 
-#include <unordered_set>
 #include <vector>
 
 #include "gfxPrefs.h"
@@ -16,7 +15,6 @@
 #include "mozilla/layers/FocusTarget.h"
 #include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/TransactionIdAllocator.h"
-#include "mozilla/layers/WebRenderCommandBuilder.h"
 #include "mozilla/layers/WebRenderScrollData.h"
 #include "mozilla/layers/WebRenderUserData.h"
 #include "mozilla/webrender/WebRenderAPI.h"
@@ -29,7 +27,6 @@ namespace mozilla {
 
 struct ActiveScrolledRoot;
 
-
 namespace layers {
 
 class CompositorBridgeChild;
@@ -41,7 +38,6 @@ class WebRenderParentCommand;
 class WebRenderLayerManager final : public LayerManager
 {
   typedef nsTArray<RefPtr<Layer> > LayerRefArray;
-  typedef nsTHashtable<nsRefPtrHashKey<WebRenderUserData>> WebRenderUserDataRefTable;
 
 public:
   explicit WebRenderLayerManager(nsIWidget* aWidget);
@@ -64,8 +60,37 @@ public:
   virtual bool BeginTransactionWithTarget(gfxContext* aTarget) override;
   virtual bool BeginTransaction() override;
   virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) override;
+  Maybe<wr::ImageKey> CreateImageKey(nsDisplayItem* aItem,
+                                     ImageContainer* aContainer,
+                                     mozilla::wr::DisplayListBuilder& aBuilder,
+                                     const StackingContextHelper& aSc,
+                                     gfx::IntSize& aSize);
+  bool PushImage(nsDisplayItem* aItem,
+                 ImageContainer* aContainer,
+                 mozilla::wr::DisplayListBuilder& aBuilder,
+                 const StackingContextHelper& aSc,
+                 const LayerRect& aRect);
+  already_AddRefed<WebRenderFallbackData> GenerateFallbackData(nsDisplayItem* aItem,
+                                                               wr::DisplayListBuilder& aBuilder,
+                                                               nsDisplayListBuilder* aDisplayListBuilder,
+                                                               LayerRect& aImageRect,
+                                                               LayerPoint& aOffset);
+  Maybe<wr::WrImageMask> BuildWrMaskImage(nsDisplayItem* aItem,
+                                          wr::DisplayListBuilder& aBuilder,
+                                          const StackingContextHelper& aSc,
+                                          nsDisplayListBuilder* aDisplayListBuilder,
+                                          const LayerRect& aBounds);
+  bool PushItemAsImage(nsDisplayItem* aItem,
+                       wr::DisplayListBuilder& aBuilder,
+                       const StackingContextHelper& aSc,
+                       nsDisplayListBuilder* aDisplayListBuilder);
+  void CreateWebRenderCommandsFromDisplayList(nsDisplayList* aDisplayList,
+                                              nsDisplayListBuilder* aDisplayListBuilder,
+                                              const StackingContextHelper& aSc,
+                                              wr::DisplayListBuilder& aBuilder);
   void EndTransactionWithoutLayer(nsDisplayList* aDisplayList,
                                   nsDisplayListBuilder* aDisplayListBuilder);
+  bool IsLayersFreeTransaction() { return mEndTransactionWithoutLayers; }
   virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
                               void* aCallbackData,
                               EndTransactionFlags aFlags = END_DEFAULT) override;
@@ -76,13 +101,16 @@ public:
 
   virtual void SetRoot(Layer* aLayer) override;
 
-  already_AddRefed<PaintedLayer> CreatePaintedLayer() override { return nullptr; }
-  already_AddRefed<ContainerLayer> CreateContainerLayer() override { return nullptr; }
-  already_AddRefed<ImageLayer> CreateImageLayer() override { return nullptr; }
-  already_AddRefed<ColorLayer> CreateColorLayer() override { return nullptr; }
-  already_AddRefed<TextLayer> CreateTextLayer() override { return nullptr; }
-  already_AddRefed<BorderLayer> CreateBorderLayer() override { return nullptr; }
-  already_AddRefed<CanvasLayer> CreateCanvasLayer() override { return nullptr; }
+  virtual already_AddRefed<PaintedLayer> CreatePaintedLayer() override;
+  virtual already_AddRefed<ContainerLayer> CreateContainerLayer() override;
+  virtual already_AddRefed<ImageLayer> CreateImageLayer() override;
+  virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() override;
+  virtual already_AddRefed<ReadbackLayer> CreateReadbackLayer() override;
+  virtual already_AddRefed<ColorLayer> CreateColorLayer() override;
+  virtual already_AddRefed<RefLayer> CreateRefLayer() override;
+  virtual already_AddRefed<TextLayer> CreateTextLayer() override;
+  virtual already_AddRefed<BorderLayer> CreateBorderLayer() override;
+  virtual already_AddRefed<DisplayItemLayer> CreateDisplayItemLayer() override;
 
   virtual bool NeedsWidgetInvalidation() override { return false; }
 
@@ -120,22 +148,31 @@ public:
 
   bool AsyncPanZoomEnabled() const override;
 
+  DrawPaintedLayerCallback GetPaintedLayerCallback() const
+  { return mPaintedLayerCallback; }
+
+  void* GetPaintedLayerCallbackData() const
+  { return mPaintedLayerCallbackData; }
+
   // adds an imagekey to a list of keys that will be discarded on the next
   // transaction or destruction
   void AddImageKeyForDiscard(wr::ImageKey);
   void DiscardImages();
   void DiscardLocalImages();
 
-  // Methods to manage the compositor animation ids. Active animations are still
-  // going, and when they end we discard them and remove them from the active
-  // list.
-  void AddActiveCompositorAnimationId(uint64_t aId);
+  // Before destroying a layer with animations, add its compositorAnimationsId
+  // to a list of ids that will be discarded on the next transaction
   void AddCompositorAnimationsIdForDiscard(uint64_t aId);
   void DiscardCompositorAnimations();
 
   WebRenderBridgeChild* WrBridge() const { return mWrChild; }
 
+  virtual void Mutated(Layer* aLayer) override;
+  virtual void MutatedSimple(Layer* aLayer) override;
+
+  void Hold(Layer* aLayer);
   void SetTransactionIncomplete() { mTransactionIncomplete = true; }
+  bool IsMutatedLayer(Layer* aLayer);
 
   // See equivalent function in ClientLayerManager
   void LogTestDataForCurrentPaint(FrameMetrics::ViewID aScrollId,
@@ -148,14 +185,33 @@ public:
   const APZTestData& GetAPZTestData() const
   { return mApzTestData; }
 
-  bool SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
-                                                const ScrollUpdateInfo& aUpdateInfo) override;
+  // Those are data that we kept between transactions. We used to cache some
+  // data in the layer. But in layers free mode, we don't have layer which
+  // means we need some other place to cached the data between transaction.
+  // We store the data in frame's property.
+  template<class T> already_AddRefed<T>
+  CreateOrRecycleWebRenderUserData(nsDisplayItem* aItem)
+  {
+    MOZ_ASSERT(aItem);
+    nsIFrame* frame = aItem->Frame();
 
-  WebRenderCommandBuilder& CommandBuilder() { return mWebRenderCommandBuilder; }
-  WebRenderUserDataRefTable* GetWebRenderUserDataTable() { return mWebRenderCommandBuilder.GetWebRenderUserDataTable(); }
-  WebRenderScrollData& GetScrollData() { return mScrollData; }
+    if (!frame->HasProperty(nsIFrame::WebRenderUserDataProperty())) {
+      frame->AddProperty(nsIFrame::WebRenderUserDataProperty(),
+                         new nsIFrame::WebRenderUserDataTable());
+    }
 
-  void WrUpdated();
+    nsIFrame::WebRenderUserDataTable* userDataTable =
+      frame->GetProperty(nsIFrame::WebRenderUserDataProperty());
+    RefPtr<WebRenderUserData>& data = userDataTable->GetOrInsert(aItem->GetPerFrameKey());
+    if (!data || (data->GetType() != T::Type())) {
+      data = new T(this);
+    }
+
+    MOZ_ASSERT(data);
+    MOZ_ASSERT(data->GetType() == T::Type());
+    RefPtr<T> res = static_cast<T*>(data.get());
+    return res.forget();
+  }
 
 private:
   /**
@@ -166,21 +222,21 @@ private:
 
   void ClearLayer(Layer* aLayer);
 
+  bool EndTransactionInternal(DrawPaintedLayerCallback aCallback,
+                              void* aCallbackData,
+                              EndTransactionFlags aFlags,
+                              nsDisplayList* aDisplayList = nullptr,
+                              nsDisplayListBuilder* aDisplayListBuilder = nullptr);
+
 private:
   nsIWidget* MOZ_NON_OWNING_REF mWidget;
-  nsTArray<wr::ImageKey> mImageKeysToDelete;
-  // TODO - This is needed because we have some code that creates image keys
-  // and enqueues them for deletion right away which is bad not only because
-  // of poor texture cache usage, but also because images end up deleted before
-  // they are used. This should hopfully be temporary.
-  nsTArray<wr::ImageKey> mImageKeysToDeleteLater;
-
-  // Set of compositor animation ids for which there are active animations (as
-  // of the last transaction) on the compositor side.
-  std::unordered_set<uint64_t> mActiveCompositorAnimationIds;
-  // Compositor animation ids for animations that are done now and that we want
-  // the compositor to discard information for.
+  std::vector<wr::ImageKey> mImageKeysToDelete;
   nsTArray<uint64_t> mDiscardedCompositorAnimationsIds;
+
+  /* PaintedLayer callbacks; valid at the end of a transaciton,
+   * while rendering */
+  DrawPaintedLayerCallback mPaintedLayerCallback;
+  void *mPaintedLayerCallbackData;
 
   RefPtr<WebRenderBridgeChild> mWrChild;
 
@@ -189,33 +245,51 @@ private:
 
   nsTArray<DidCompositeObserver*> mDidCompositeObservers;
 
+  LayerRefArray mKeepAlive;
+
+  // These fields are used to save a copy of the display list for
+  // empty transactions in layers-free mode.
+  wr::BuiltDisplayList mBuiltDisplayList;
+  nsTArray<WebRenderParentCommand> mParentCommands;
+
   // This holds the scroll data that we need to send to the compositor for
   // APZ to do it's job
   WebRenderScrollData mScrollData;
+  // We use this as a temporary data structure while building the mScrollData
+  // inside a layers-free transaction.
+  std::vector<WebRenderLayerScrollData> mLayerScrollData;
+  // We use this as a temporary data structure to track the current display
+  // item's ASR as we recurse in CreateWebRenderCommandsFromDisplayList. We
+  // need this so that WebRenderLayerScrollData items that deeper in the
+  // tree don't duplicate scroll metadata that their ancestors already have.
+  std::vector<const ActiveScrolledRoot*> mAsrStack;
 
+  // Layers that have been mutated. If we have an empty transaction
+  // then a display item layer will no longer be valid
+  // if it was a mutated layers.
+  void AddMutatedLayer(Layer* aLayer);
+  void ClearMutatedLayers();
+  LayerRefArray mMutatedLayers;
   bool mTransactionIncomplete;
 
   bool mNeedsComposite;
   bool mIsFirstPaint;
   FocusTarget mFocusTarget;
+  bool mEndTransactionWithoutLayers;
 
-  // When we're doing a transaction in order to draw to a non-default
-  // target, the layers transaction is only performed in order to send
-  // a PLayers:Update.  We save the original non-default target to
-  // mTarget, and then perform the transaction. After the transaction ends,
-  // we send a message to our remote side to capture the actual pixels
-  // being drawn to the default target, and then copy those pixels
-  // back to mTarget.
-  RefPtr<gfxContext> mTarget;
+ // When we're doing a transaction in order to draw to a non-default
+ // target, the layers transaction is only performed in order to send
+ // a PLayers:Update.  We save the original non-default target to
+ // mTarget, and then perform the transaction. After the transaction ends,
+ // we send a message to our remote side to capture the actual pixels
+ // being drawn to the default target, and then copy those pixels
+ // back to mTarget.
+ RefPtr<gfxContext> mTarget;
 
   // See equivalent field in ClientLayerManager
   uint32_t mPaintSequenceNumber;
   // See equivalent field in ClientLayerManager
   APZTestData mApzTestData;
-
-  WebRenderCommandBuilder mWebRenderCommandBuilder;
-
-  size_t mLastDisplayListSize;
 };
 
 } // namespace layers

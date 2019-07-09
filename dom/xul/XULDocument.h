@@ -183,7 +183,7 @@ public:
     static bool
     MatchAttribute(Element* aContent,
                    int32_t aNameSpaceID,
-                   nsAtom* aAttrName,
+                   nsIAtom* aAttrName,
                    void* aData);
 
     NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(XULDocument, XMLDocument)
@@ -273,13 +273,13 @@ protected:
     nsresult
     ExecuteOnBroadcastHandlerFor(Element* aBroadcaster,
                                  Element* aListener,
-                                 nsAtom* aAttr);
+                                 nsIAtom* aAttr);
 
     nsresult
     BroadcastAttributeChangeFromOverlay(nsIContent* aNode,
                                         int32_t aNameSpaceID,
-                                        nsAtom* aAttribute,
-                                        nsAtom* aPrefix,
+                                        nsIAtom* aAttribute,
+                                        nsIAtom* aPrefix,
                                         const nsAString& aValue);
 
     already_AddRefed<nsPIWindowRoot> GetWindowRoot();
@@ -289,7 +289,7 @@ protected:
     // pseudo constants
     static int32_t gRefCnt;
 
-    static nsAtom** kIdentityAttrs[];
+    static nsIAtom** kIdentityAttrs[];
 
     static nsIRDFService* gRDFService;
     static nsIRDFResource* kNC_persist;
@@ -299,10 +299,10 @@ protected:
     static LazyLogModule gXULLog;
 
     nsresult
-    Persist(nsIContent* aElement, int32_t aNameSpaceID, nsAtom* aAttribute);
+    Persist(nsIContent* aElement, int32_t aNameSpaceID, nsIAtom* aAttribute);
     // Just like Persist but ignores the return value so we can use it
     // as a runnable method.
-    void DoPersist(nsIContent* aElement, int32_t aNameSpaceID, nsAtom* aAttribute)
+    void DoPersist(nsIContent* aElement, int32_t aNameSpaceID, nsIAtom* aAttribute)
     {
         Persist(aElement, aNameSpaceID, aAttribute);
     }
@@ -745,7 +745,7 @@ protected:
 
       nsDelayedBroadcastUpdate(Element* aBroadcaster,
                                Element* aListener,
-                               nsAtom* aAttrName,
+                               nsIAtom* aAttrName,
                                const nsAString &aAttr,
                                bool aSetAttr,
                                bool aNeedsAttrChange)
@@ -763,7 +763,7 @@ protected:
       // Note if mAttrName isn't used, this is the name of the attr, otherwise
       // this is the value of the attribute.
       nsString                mAttr;
-      RefPtr<nsAtom>       mAttrName;
+      nsCOMPtr<nsIAtom>       mAttrName;
       bool                    mSetAttr;
       bool                    mNeedsAttrChange;
 

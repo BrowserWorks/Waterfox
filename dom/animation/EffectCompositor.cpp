@@ -28,7 +28,7 @@
 #include "nsCSSPseudoElements.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsCSSProps.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIPresShell.h"
 #include "nsIPresShellInlines.h"
 #include "nsLayoutUtils.h"
@@ -569,20 +569,6 @@ EffectCompositor::HasThrottledStyleUpdates() const
   return false;
 }
 
-bool
-EffectCompositor::HasPendingStyleUpdatesFor(Element* aElement) const
-{
-  for (auto& elementSet : mElementsToRestyle) {
-    for (auto iter = elementSet.ConstIter(); !iter.Done(); iter.Next()) {
-      if (iter.Key().mElement->Contains(aElement)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 void
 EffectCompositor::AddStyleUpdatesTo(RestyleTracker& aTracker)
 {
@@ -996,16 +982,6 @@ EffectCompositor::PreTraverseInSubtree(ServoTraversalFlags aFlags,
              "Traversal root, if provided, should be bound to a display "
              "document");
 
-  // Convert the root element to the parent element if the root element is
-  // pseudo since we check each element in mElementsToRestyle is in the subtree
-  // of the root element later in this function, but for pseudo elements the
-  // element in mElementsToRestyle is the parent of the pseudo.
-  if (aRoot &&
-      (aRoot->IsGeneratedContentContainerForBefore() ||
-       aRoot->IsGeneratedContentContainerForAfter())) {
-    aRoot = aRoot->GetParentElement();
-  }
-
   AutoRestore<bool> guard(mIsInPreTraverse);
   mIsInPreTraverse = true;
 
@@ -1045,8 +1021,9 @@ EffectCompositor::PreTraverseInSubtree(ServoTraversalFlags aFlags,
 
     // Ignore restyles that aren't in the flattened tree subtree rooted at
     // aRoot.
-    if (aRoot && !nsContentUtils::ContentIsFlattenedTreeDescendantOfForStyle(
-          target.mElement, aRoot)) {
+    if (aRoot &&
+        !nsContentUtils::ContentIsFlattenedTreeDescendantOf(target.mElement,
+                                                            aRoot)) {
       return returnTarget;
     }
 

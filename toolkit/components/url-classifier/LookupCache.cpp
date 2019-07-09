@@ -423,7 +423,7 @@ LookupCache::GetHostKeys(const nsACString& aSpec,
       return NS_ERROR_OUT_OF_MEMORY;
 
     key->Assign(host);
-    key->AppendLiteral("/");
+    key->Append("/");
     return NS_OK;
   }
 
@@ -442,9 +442,9 @@ LookupCache::GetHostKeys(const nsACString& aSpec,
     return NS_ERROR_OUT_OF_MEMORY;
 
   lookupHost->Assign(hostComponents[last - 1]);
-  lookupHost->AppendLiteral(".");
+  lookupHost->Append(".");
   lookupHost->Append(hostComponents[last]);
-  lookupHost->AppendLiteral("/");
+  lookupHost->Append("/");
 
   // Now check with three domain components
   if (hostComponents.Length() > 2) {
@@ -452,7 +452,7 @@ LookupCache::GetHostKeys(const nsACString& aSpec,
     if (!lookupHost2)
       return NS_ERROR_OUT_OF_MEMORY;
     lookupHost2->Assign(hostComponents[last - 2]);
-    lookupHost2->AppendLiteral(".");
+    lookupHost2->Append(".");
     lookupHost2->Append(*lookupHost);
   }
 
@@ -582,7 +582,8 @@ LookupCacheV2::Has(const Completion& aCompletion,
   if (found) {
     *aHas = true;
     *aMatchLength = PREFIX_SIZE;
-  } else if (mUpdateCompletions.ContainsSorted(aCompletion)) {
+  } else if (mUpdateCompletions.BinaryIndexOf(aCompletion) !=
+             nsTArray<Completion>::NoIndex) {
     // Completions is found in database, confirm the result
     *aHas = true;
     *aMatchLength = COMPLETE_SIZE;

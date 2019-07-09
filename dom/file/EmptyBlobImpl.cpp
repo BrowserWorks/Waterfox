@@ -28,7 +28,7 @@ EmptyBlobImpl::CreateSlice(uint64_t aStart, uint64_t aLength,
 }
 
 void
-EmptyBlobImpl::CreateInputStream(nsIInputStream** aStream,
+EmptyBlobImpl::GetInternalStream(nsIInputStream** aStream,
                                  ErrorResult& aRv)
 {
   if (NS_WARN_IF(!aStream)) {

@@ -10,8 +10,8 @@ interface nsIInterfaceRequestor;
 interface nsIX509Cert;
 
 %{C++
-#include "nsStringFwd.h"
 #include "nsTArrayForwardDeclare.h"
+class nsCString;
 %}
 [ref] native nsCStringTArrayRef(nsTArray<nsCString>);
 
@@ -101,11 +101,6 @@ interface nsISSLSocketControl : nsISupports {
      * The original flags from the socket provider.
      */
     readonly attribute uint32_t providerFlags;
-
-    /*
-     * The original TLS flags from the socket provider.
-     */
-    readonly attribute uint32_t providerTlsFlags;
 
     /* These values are defined by TLS. */
     const short SSL_VERSION_3   = 0x0300;

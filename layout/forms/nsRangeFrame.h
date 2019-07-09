@@ -42,6 +42,7 @@ public:
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
   void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
                         const nsDisplayListSet& aLists) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,
@@ -65,7 +66,7 @@ public:
                                         uint32_t aFilter) override;
 
   virtual nsresult AttributeChanged(int32_t  aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t  aModType) override;
 
   virtual mozilla::LogicalSize

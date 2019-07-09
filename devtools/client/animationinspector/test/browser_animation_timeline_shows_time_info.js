@@ -26,11 +26,11 @@ add_task(function* () {
     let state = controller.animationPlayers[i].state;
 
     if (state.delay) {
-      ok(title.match(/Delay: [\d.,-]+s/), "The tooltip shows the delay");
+      ok(title.match(/Delay: [\d.-]+s/), "The tooltip shows the delay");
     }
-    ok(title.match(/Duration: [\d.,]+s/), "The tooltip shows the duration");
+    ok(title.match(/Duration: [\d.]+s/), "The tooltip shows the duration");
     if (state.endDelay) {
-      ok(title.match(/End delay: [\d.,-]+s/), "The tooltip shows the endDelay");
+      ok(title.match(/End delay: [\d.-]+s/), "The tooltip shows the endDelay");
     }
     if (state.iterationCount !== 1) {
       ok(title.match(/Repeats: /), "The tooltip shows the iterations");
@@ -42,16 +42,6 @@ add_task(function* () {
     } else {
       ok(!title.match(/Overall easing: /),
          "The tooltip doesn't show the easing if it is 'linear'");
-    }
-    if (state.animationTimingFunction && state.animationTimingFunction !== "ease") {
-      is(state.type, "cssanimation",
-         "The animation type should be CSS Animations if has animation-timing-function");
-      ok(title.match(/Animation timing function: /),
-         "The tooltip shows animation-timing-function");
-    } else {
-      ok(!title.match(/Animation timing function: /),
-         "The tooltip doesn't show the animation-timing-function if it is 'ease'"
-         + " or not CSS Animations");
     }
     if (state.fill) {
       ok(title.match(/Fill: /), "The tooltip shows the fill");

@@ -379,11 +379,13 @@ typedef bool
 /**
  * Set a property named by id in obj, treating the assignment as strict
  * mode code if strict is true. Note the jsid id type -- id may be a string
- * (Unicode property identifier) or an int (element index).
+ * (Unicode property identifier) or an int (element index). The *vp out
+ * parameter, on success, is the new property value after the
+ * set.
  */
 typedef bool
 (* JSSetterOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
-               JS::HandleValue v, JS::ObjectOpResult& result);
+               JS::MutableHandleValue vp, JS::ObjectOpResult& result);
 
 /**
  * Delete a property named by id in obj.
@@ -508,8 +510,8 @@ typedef void
 typedef JSObject*
 (* JSWeakmapKeyDelegateOp)(JSObject* obj);
 
-typedef size_t
-(* JSObjectMovedOp)(JSObject* obj, JSObject* old);
+typedef void
+(* JSObjectMovedOp)(JSObject* obj, const JSObject* old);
 
 /* js::Class operation signatures. */
 
@@ -605,6 +607,8 @@ typedef void
     \
     JSAddPropertyOp    getAddProperty() const { return cOps ? cOps->addProperty : nullptr; } \
     JSDeletePropertyOp getDelProperty() const { return cOps ? cOps->delProperty : nullptr; } \
+    JSGetterOp         getGetProperty() const { return cOps ? cOps->getProperty : nullptr; } \
+    JSSetterOp         getSetProperty() const { return cOps ? cOps->setProperty : nullptr; } \
     JSEnumerateOp      getEnumerate()   const { return cOps ? cOps->enumerate   : nullptr; } \
     JSNewEnumerateOp   getNewEnumerate()const { return cOps ? cOps->newEnumerate: nullptr; } \
     JSResolveOp        getResolve()     const { return cOps ? cOps->resolve     : nullptr; } \
@@ -637,6 +641,8 @@ struct JS_STATIC_CLASS ClassOps
     /* Function pointer members (may be null). */
     JSAddPropertyOp     addProperty;
     JSDeletePropertyOp  delProperty;
+    JSGetterOp          getProperty;
+    JSSetterOp          setProperty;
     JSEnumerateOp       enumerate;
     JSNewEnumerateOp    newEnumerate;
     JSResolveOp         resolve;
@@ -709,8 +715,7 @@ struct JS_STATIC_CLASS ClassExtension
     JSWeakmapKeyDelegateOp weakmapKeyDelegateOp;
 
     /**
-     * Optional hook called when an object is moved by generational or
-     * compacting GC.
+     * Optional hook called when an object is moved by a compacting GC.
      *
      * There may exist weak pointers to an object that are not traced through
      * when the normal trace APIs are used, for example objects in the wrapper
@@ -719,12 +724,6 @@ struct JS_STATIC_CLASS ClassExtension
      * Note that this hook can be called before JS_NewObject() returns if a GC
      * is triggered during construction of the object. This can happen for
      * global objects for example.
-     *
-     * The function should return the difference between nursery bytes used and
-     * tenured bytes used, which may be nonzero e.g. if some nursery-allocated
-     * data beyond the actual GC thing is moved into malloced memory.
-     *
-     * This is used to compute the nursery promotion rate.
      */
     JSObjectMovedOp objectMovedOp;
 };
@@ -760,6 +759,8 @@ struct JS_STATIC_CLASS JSClassOps
     /* Function pointer members (may be null). */
     JSAddPropertyOp     addProperty;
     JSDeletePropertyOp  delProperty;
+    JSGetterOp          getProperty;
+    JSSetterOp          setProperty;
     JSEnumerateOp       enumerate;
     JSNewEnumerateOp    newEnumerate;
     JSResolveOp         resolve;
@@ -859,7 +860,7 @@ static const uint32_t JSCLASS_FOREGROUND_FINALIZE =     1 << (JSCLASS_HIGH_FLAGS
 // application.
 static const uint32_t JSCLASS_GLOBAL_APPLICATION_SLOTS = 5;
 static const uint32_t JSCLASS_GLOBAL_SLOT_COUNT =
-    JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 38;
+    JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 37;
 
 #define JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(n)                              \
     (JSCLASS_IS_GLOBAL | JSCLASS_HAS_RESERVED_SLOTS(JSCLASS_GLOBAL_SLOT_COUNT + (n)))
@@ -983,6 +984,10 @@ struct JS_STATIC_CLASS Class
 static_assert(offsetof(JSClassOps, addProperty) == offsetof(ClassOps, addProperty),
               "ClassOps and JSClassOps must be consistent");
 static_assert(offsetof(JSClassOps, delProperty) == offsetof(ClassOps, delProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, getProperty) == offsetof(ClassOps, getProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, setProperty) == offsetof(ClassOps, setProperty),
               "ClassOps and JSClassOps must be consistent");
 static_assert(offsetof(JSClassOps, enumerate) == offsetof(ClassOps, enumerate),
               "ClassOps and JSClassOps must be consistent");

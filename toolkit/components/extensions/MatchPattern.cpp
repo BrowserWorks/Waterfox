@@ -45,7 +45,7 @@ AtomSet::AtomSet(const char** aElems)
   SortAndUniquify();
 }
 
-AtomSet::AtomSet(std::initializer_list<nsAtom*> aIL)
+AtomSet::AtomSet(std::initializer_list<nsIAtom*> aIL)
 {
   mElems.SetCapacity(aIL.size());
 
@@ -61,8 +61,8 @@ AtomSet::SortAndUniquify()
 {
   mElems.Sort();
 
-  nsAtom* prev = nullptr;
-  mElems.RemoveElementsBy([&prev] (const RefPtr<nsAtom>& aAtom) {
+  nsIAtom* prev = nullptr;
+  mElems.RemoveElementsBy([&prev] (const RefPtr<nsIAtom>& aAtom) {
     bool remove = aAtom == prev;
     prev = aAtom;
     return remove;
@@ -88,7 +88,7 @@ AtomSet::Intersects(const AtomSet& aOther) const
 }
 
 void
-AtomSet::Add(nsAtom* aAtom)
+AtomSet::Add(nsIAtom* aAtom)
 {
   auto index = mElems.IndexOfFirstElementGt(aAtom);
   if (index == 0 || mElems[index - 1] != aAtom) {
@@ -97,7 +97,7 @@ AtomSet::Add(nsAtom* aAtom)
 }
 
 void
-AtomSet::Remove(nsAtom* aAtom)
+AtomSet::Remove(nsIAtom* aAtom)
 {
   auto index = mElems.BinaryIndexOf(aAtom);
   if (index != mElems.NoIndex) {
@@ -110,7 +110,7 @@ AtomSet::Remove(nsAtom* aAtom)
  * URLInfo
  *****************************************************************************/
 
-nsAtom*
+nsIAtom*
 URLInfo::Scheme() const
 {
   if (!mScheme) {
@@ -151,27 +151,21 @@ URLInfo::Path() const
 {
   if (mPath.IsEmpty()) {
     nsCString path;
-    if (NS_SUCCEEDED(URINoRef()->GetPathQueryRef(path))) {
+    if (NS_SUCCEEDED(URINoRef()->GetPath(path))) {
       AppendUTF8toUTF16(path, mPath);
     }
   }
   return mPath;
 }
 
-const nsCString&
-URLInfo::CSpec() const
-{
-  if (mCSpec.IsEmpty()) {
-    Unused << URINoRef()->GetSpec(mCSpec);
-  }
-  return mCSpec;
-}
-
 const nsString&
 URLInfo::Spec() const
 {
   if (mSpec.IsEmpty()) {
-    AppendUTF8toUTF16(CSpec(), mSpec);
+    nsCString spec;
+    if (NS_SUCCEEDED(URINoRef()->GetSpec(spec))) {
+      AppendUTF8toUTF16(spec, mSpec);
+    }
   }
   return mSpec;
 }
@@ -298,7 +292,7 @@ MatchPattern::Init(JSContext* aCx, const nsAString& aPattern, bool aIgnorePath, 
     return;
   }
 
-  RefPtr<nsAtom> scheme = NS_AtomizeMainThread(StringHead(aPattern, index));
+  nsCOMPtr<nsIAtom> scheme = NS_AtomizeMainThread(StringHead(aPattern, index));
   if (scheme == nsGkAtoms::_asterisk) {
     mSchemes = AtomSet::Get<WILDCARD_SCHEMES>();
   } else if (permittedSchemes->Contains(scheme) || scheme == nsGkAtoms::moz_extension) {
@@ -380,19 +374,6 @@ MatchPattern::MatchesDomain(const nsACString& aDomain) const
   }
 
   return false;
-}
-
-bool
-MatchPattern::Matches(const nsAString& aURL, bool aExplicit, ErrorResult& aRv) const
-{
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, nullptr, nullptr);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
-    return false;
-  }
-
-  return Matches(uri.get(), aExplicit);
 }
 
 bool
@@ -529,19 +510,6 @@ MatchPatternSet::Constructor(dom::GlobalObject& aGlobal,
   return patternSet.forget();
 }
 
-
-bool
-MatchPatternSet::Matches(const nsAString& aURL, bool aExplicit, ErrorResult& aRv) const
-{
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, nullptr, nullptr);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
-    return false;
-  }
-
-  return Matches(uri.get(), aExplicit);
-}
 
 bool
 MatchPatternSet::Matches(const URLInfo& aURL, bool aExplicit) const

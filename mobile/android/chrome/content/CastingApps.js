@@ -123,7 +123,7 @@ var CastingApps = {
     return Services.prefs.getBoolPref("browser.casting.enabled");
   },
 
-  onEvent: function(event, message, callback) {
+  onEvent: function (event, message, callback) {
     switch (event) {
       case "Casting:Play":
         if (this.session && this.session.remoteMedia.status == "paused") {
@@ -143,7 +143,7 @@ var CastingApps = {
     }
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe: function (aSubject, aTopic, aData) {
     switch (aTopic) {
       case "ssdp-service-found":
         this.serviceAdded(SimpleServiceDiscovery.findServiceForID(aData));
@@ -247,7 +247,6 @@ var CastingApps = {
     this.closeExternal();
 
     // Start the new session
-    UITelemetry.addEvent("cast.1", "button", null);
     this.openExternal(video, 0, 0);
   },
 
@@ -294,7 +293,7 @@ var CastingApps = {
           return;
         }
       }
-    } catch (e) {}
+    } catch(e) {}
   },
 
   _getContentTypeForURI: function(aURI, aElement, aCallback) {
@@ -313,7 +312,7 @@ var CastingApps = {
         securityFlags: secFlags,
         contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_VIDEO
       });
-    } catch (e) {
+    } catch(e) {
      aCallback(null);
      return;
     }
@@ -334,7 +333,7 @@ var CastingApps = {
             break;
         }
       },
-      onStopRequest: function(request, context, statusCode) {},
+      onStopRequest: function(request, context, statusCode)  {},
       onDataAvailable: function(request, context, stream, offset, count) {}
     };
 
@@ -416,15 +415,17 @@ var CastingApps = {
         if (this.allowableMimeType(aType, aTypes)) {
           // We found a supported mimetype.
           aCallback({ element: aElement, source: sourceURI.spec, poster: posterURL, sourceURI: sourceURI, type: aType });
-        } else if (aURIs.length > 0) {
-          // This URI was not a supported mimetype, so let's try the next, if we have more.
-          _getContentTypeForURIs(aURIs);
         } else {
-          // We were not able to find a supported mimetype.
-          aCallback(null);
+          // This URI was not a supported mimetype, so let's try the next, if we have more.
+          if (aURIs.length > 0) {
+            _getContentTypeForURIs(aURIs);
+          } else {
+            // We were not able to find a supported mimetype.
+            aCallback(null);
+          }
         }
       });
-    };
+    }
 
     // If we didn't find a good URI directly, let's look using async methods.
     if (asyncURIs.length > 0) {
@@ -455,7 +456,7 @@ var CastingApps = {
           return element.mozAllowCasting;
         }
       }
-    } catch (e) {}
+    } catch(e) {}
 
     return false;
   },
@@ -482,7 +483,6 @@ var CastingApps = {
       let videos = browser.contentDocument.querySelectorAll("video");
       for (let video of videos) {
         if (!video.paused && video.mozAllowCasting) {
-          UITelemetry.addEvent("cast.1", "pageaction", null);
           CastingApps.openExternal(video, 0, 0);
           return;
         }
@@ -558,16 +558,14 @@ var CastingApps = {
         title: Strings.browser.GetStringFromName("contextmenu.sendToDevice"),
         icon: "drawable://casting_active",
         clickCallback: this.pageAction.click,
-        important: true,
-        useTint: false
+        important: true
       });
     } else if (aVideo.mozAllowCasting) {
       this.pageAction.id = PageActions.add({
         title: Strings.browser.GetStringFromName("contextmenu.sendToDevice"),
         icon: "drawable://casting",
         clickCallback: this.pageAction.click,
-        important: true,
-        useTint: true
+        important: true
       });
     }
   },
@@ -602,8 +600,6 @@ var CastingApps = {
   },
 
   handleContextMenu: function(aElement, aX, aY) {
-    UITelemetry.addEvent("action.1", "contextmenu", null, "web_cast");
-    UITelemetry.addEvent("cast.1", "contextmenu", null);
     this.openExternal(aElement, aX, aY);
   },
 

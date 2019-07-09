@@ -5,7 +5,6 @@ es6id: 19.1.2.4
 description: >
     Symbol used as property for property definition
 flags: [noStrict]
-features: [Symbol]
 ---*/
 var sym = Symbol();
 var obj = {};

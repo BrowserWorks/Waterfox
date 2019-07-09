@@ -15,7 +15,6 @@ const BrowserLoaderModule = {};
 Cu.import("resource://devtools/client/shared/browser-loader.js", BrowserLoaderModule);
 
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const Services = require("Services");
 const Telemetry = require("devtools/client/shared/telemetry");
 const {PrefObserver} = require("devtools/client/shared/prefs");
@@ -23,11 +22,11 @@ const {PrefObserver} = require("devtools/client/shared/prefs");
 loader.lazyServiceGetter(this, "clipboardHelper",
                          "@mozilla.org/widget/clipboardhelper;1",
                          "nsIClipboardHelper");
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/old-event-emitter");
+loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 loader.lazyRequireGetter(this, "ConsoleOutput", "devtools/client/webconsole/console-output", true);
 loader.lazyRequireGetter(this, "Messages", "devtools/client/webconsole/console-output", true);
-loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/environment-client");
-loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/object-client");
+loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/main", true);
 loader.lazyRequireGetter(this, "system", "devtools/shared/system");
 loader.lazyRequireGetter(this, "JSTerm", "devtools/client/webconsole/jsterm", true);
 loader.lazyRequireGetter(this, "gSequenceId", "devtools/client/webconsole/jsterm", true);
@@ -234,8 +233,8 @@ function WebConsoleFrame(webConsoleOwner) {
 
   this.React = require("devtools/client/shared/vendor/react");
   this.ReactDOM = require("devtools/client/shared/vendor/react-dom");
-  this.FrameView = this.React.createFactory(require("devtools/client/shared/components/Frame"));
-  this.StackTraceView = this.React.createFactory(require("devtools/client/shared/components/StackTrace"));
+  this.FrameView = this.React.createFactory(require("devtools/client/shared/components/frame"));
+  this.StackTraceView = this.React.createFactory(require("devtools/client/shared/components/stack-trace"));
 
   this._telemetry = new Telemetry();
 
@@ -406,7 +405,7 @@ WebConsoleFrame.prototype = {
       return promise.resolve(null);
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     let newValue = !!value;
     let toSet = {
       "NetworkMonitor.saveRequestAndResponseBodies": newValue,
@@ -437,7 +436,7 @@ WebConsoleFrame.prototype = {
       return promise.resolve(null);
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     let toSet = {
       "NetworkMonitor.throttleData": value,
     };
@@ -506,7 +505,7 @@ WebConsoleFrame.prototype = {
       return this._initDefer.promise;
     }
 
-    this._initDefer = defer();
+    this._initDefer = promise.defer();
     this.proxy = new WebConsoleConnectionProxy(this, this.owner.target);
 
     this.proxy.connect().then(() => {
@@ -1849,11 +1848,14 @@ WebConsoleFrame.prototype = {
   openNetworkPanel: function (requestId) {
     let toolbox = gDevTools.getToolbox(this.owner.target);
     // The browser console doesn't have a toolbox.
-    if (toolbox) {
-      return toolbox.selectTool("netmonitor").then(panel => {
-        return panel.panelWin.Netmonitor.inspectRequest(requestId);
-      });
+    if (!toolbox) {
+      return;
     }
+    return toolbox.selectTool("netmonitor").then(panel => {
+      let { inspectRequest } = panel.panelWin.windowRequire(
+        "devtools/client/netmonitor/src/connector/index");
+      return inspectRequest(requestId);
+    });
   },
 
   /**
@@ -2708,7 +2710,7 @@ WebConsoleFrame.prototype = {
       return this._destroyer.promise;
     }
 
-    this._destroyer = defer();
+    this._destroyer = promise.defer();
 
     let toolbox = gDevTools.getToolbox(this.owner.target);
     if (toolbox) {

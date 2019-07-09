@@ -17,7 +17,7 @@ namespace mozilla {
 template <class AnimationType>
 /* static */ void
 AnimationCollection<AnimationType>::PropertyDtor(void* aObject,
-                                                 nsAtom* aPropertyName,
+                                                 nsIAtom* aPropertyName,
                                                  void* aPropertyValue,
                                                  void* aData)
 {
@@ -48,7 +48,7 @@ AnimationCollection<AnimationType>::GetAnimationCollection(
     return nullptr;
   }
 
-  nsAtom* propName = GetPropertyAtomForPseudoType(aPseudoType);
+  nsIAtom* propName = GetPropertyAtomForPseudoType(aPseudoType);
   if (!propName) {
     return nullptr;
   }
@@ -87,7 +87,7 @@ AnimationCollection<AnimationType>::GetOrCreateAnimationCollection(
   MOZ_ASSERT(aCreatedCollection);
   *aCreatedCollection = false;
 
-  nsAtom* propName = GetPropertyAtomForPseudoType(aPseudoType);
+  nsIAtom* propName = GetPropertyAtomForPseudoType(aPseudoType);
   MOZ_ASSERT(propName, "Should only try to create animations for one of the"
              " recognized pseudo types");
 
@@ -142,11 +142,11 @@ AnimationCollection<AnimationType>::UpdateCheckGeneration(
 }
 
 template<class AnimationType>
-/*static*/ nsAtom*
+/*static*/ nsIAtom*
 AnimationCollection<AnimationType>::GetPropertyAtomForPseudoType(
   CSSPseudoElementType aPseudoType)
 {
-  nsAtom* propName = nullptr;
+  nsIAtom* propName = nullptr;
 
   if (aPseudoType == CSSPseudoElementType::NotPseudo) {
     propName = TraitsType::ElementPropertyAtom();

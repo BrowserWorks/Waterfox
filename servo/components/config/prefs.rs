@@ -25,7 +25,7 @@ lazy_static! {
     };
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub enum PrefValue {
     Boolean(bool),
     String(String),
@@ -272,9 +272,5 @@ impl Preferences {
 
     pub fn is_webvr_enabled(&self) -> bool {
         self.get("dom.webvr.enabled").as_boolean().unwrap_or(false)
-    }
-
-    pub fn is_dom_to_texture_enabled(&self) -> bool {
-        self.get("dom.webgl.dom_to_texture.enabled").as_boolean().unwrap_or(false)
     }
 }

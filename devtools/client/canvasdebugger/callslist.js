@@ -288,7 +288,7 @@ var CallsListView = Heritage.extend(WidgetMethods, {
       frameSnapshot.generateScreenshotFor(functionCall).then(screenshot => {
         this.showScreenshot(screenshot);
         this.highlightedThumbnail = screenshot.index;
-      }).catch(console.error);
+      }).catch(e => console.error(e));
     });
   },
 

@@ -41,6 +41,7 @@ public class IconGenerator implements IconLoader {
             0xFF36385A,
     };
 
+    private static final int TEXT_SIZE_DP = 12;
     @Override
     public IconResponse load(IconRequest request) {
         if (request.getIconCount() > 1) {
@@ -49,22 +50,15 @@ public class IconGenerator implements IconLoader {
             return null;
         }
 
-        return generate(request.getContext(), request.getPageUrl(), request.getTargetSize(), request.getTextSize());
-    }
-
-    public static IconResponse generate(Context context, String pageURL) {
-        return generate(context, pageURL, 0, 0);
+        return generate(request.getContext(), request.getPageUrl());
     }
 
     /**
      * Generate default favicon for the given page URL.
      */
-    public static IconResponse generate(final Context context, final String pageURL,
-                                        int widthAndHeight, float textSize) {
+    @VisibleForTesting static IconResponse generate(Context context, String pageURL) {
         final Resources resources = context.getResources();
-        if (widthAndHeight == 0) {
-            widthAndHeight = resources.getDimensionPixelSize(R.dimen.favicon_bg);
-        }
+        final int widthAndHeight = resources.getDimensionPixelSize(R.dimen.favicon_bg);
         final int roundedCorners = resources.getDimensionPixelOffset(R.dimen.favicon_corner_radius);
 
         final Bitmap favicon = Bitmap.createBitmap(widthAndHeight, widthAndHeight, Bitmap.Config.ARGB_8888);
@@ -81,13 +75,7 @@ public class IconGenerator implements IconLoader {
 
         final String character = getRepresentativeCharacter(pageURL);
 
-        if (textSize == 0) {
-            // The text size is calculated dynamically based on the target icon size (1/8th). For an icon
-            // size of 112dp we'd use a text size of 14dp (112 / 8).
-            textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                                                 widthAndHeight / 8,
-                                                 resources.getDisplayMetrics());
-        }
+        final float textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DP, context.getResources().getDisplayMetrics());
 
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(textSize);
@@ -98,7 +86,7 @@ public class IconGenerator implements IconLoader {
                 (int) ((canvas.getHeight() / 2) - ((paint.descent() + paint.ascent()) / 2)),
                 paint);
 
-        return IconResponse.createGenerated(favicon, color);
+        return IconResponse.createGenerated(favicon, color & 0x7FFFFFFF);
     }
 
     /**

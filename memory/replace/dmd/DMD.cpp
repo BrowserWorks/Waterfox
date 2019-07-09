@@ -765,7 +765,7 @@ StackTrace::Get(Thread* aT)
     // frame pointer, and GetStackTop() for the stack end.
     CONTEXT context;
     RtlCaptureContext(&context);
-    void** fp = reinterpret_cast<void**>(context.Ebp);
+    void* fp = reinterpret_cast<void*>(context.Ebp);
 
     // Offset 0x18 from the FS segment register gives a pointer to the thread
     // information block for the current thread.
@@ -784,8 +784,9 @@ StackTrace::Get(Thread* aT)
 #   error "unknown compiler"
 #endif
     void* stackEnd = static_cast<void*>(pTib->StackBase);
-    FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0, MaxFrames,
-                          &tmp, fp, stackEnd);
+    bool ok = FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0,
+                                    MaxFrames, &tmp,
+                                    reinterpret_cast<void**>(fp), stackEnd);
 #elif defined(XP_MACOSX)
     // This avoids MozStackWalk(), which has become unusably slow on Mac due to
     // changes in libunwind.
@@ -793,7 +794,7 @@ StackTrace::Get(Thread* aT)
     // This code is cribbed from the Gecko Profiler, which also uses
     // FramePointerStackWalk() on Mac: Registers::SyncPopulate() for the frame
     // pointer, and GetStackTop() for the stack end.
-    void** fp;
+    void* fp;
     asm (
         // Dereference %rbp to get previous %rbp
         "movq (%%rbp), %0\n\t"
@@ -801,16 +802,21 @@ StackTrace::Get(Thread* aT)
         "=r"(fp)
     );
     void* stackEnd = pthread_get_stackaddr_np(pthread_self());
-    FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0, MaxFrames,
-                          &tmp, fp, stackEnd);
+    bool ok = FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0,
+                                    MaxFrames, &tmp,
+                                    reinterpret_cast<void**>(fp), stackEnd);
 #else
 #if defined(XP_WIN) && defined(_M_X64)
     int skipFrames = 1;
 #else
     int skipFrames = 2;
 #endif
-    MozStackWalk(StackWalkCallback, skipFrames, MaxFrames, &tmp);
+    bool ok = MozStackWalk(StackWalkCallback, skipFrames, MaxFrames, &tmp, 0,
+                           nullptr);
 #endif
+    if (!ok) {
+      tmp.mLength = 0; // re-zero in case the stack walk function changed it
+    }
   }
 
   StackTraceTable::AddPtr p = gStackTraceTable->lookupForAdd(&tmp);
@@ -1561,6 +1567,14 @@ Options::ModeString() const
 // DMD start-up
 //---------------------------------------------------------------------------
 
+#ifdef XP_MACOSX
+static void
+NopStackWalkCallback(uint32_t aFrameNumber, void* aPc, void* aSp,
+                     void* aClosure)
+{
+}
+#endif
+
 static void
 prefork()
 {
@@ -1608,6 +1622,17 @@ Init(const malloc_table_t* aMallocTable)
 
   // Parse $DMD env var.
   gOptions = InfallibleAllocPolicy::new_<Options>(e);
+
+#ifdef XP_MACOSX
+  // On Mac OS X we need to call StackWalkInitCriticalAddress() very early
+  // (prior to the creation of any mutexes, apparently) otherwise we can get
+  // hangs when getting stack traces (bug 821577).  But
+  // StackWalkInitCriticalAddress() isn't exported from xpcom/, so instead we
+  // just call MozStackWalk, because that calls StackWalkInitCriticalAddress().
+  // See the comment above StackWalkInitCriticalAddress() for more details.
+  (void)MozStackWalk(NopStackWalkCallback, /* skipFrames */ 0,
+                     /* maxFrames */ 1, nullptr, 0, nullptr);
+#endif
 
   gStateLock = InfallibleAllocPolicy::new_<Mutex>();
 
@@ -1658,9 +1683,7 @@ ReportHelper(const void* aPtr, bool aReportedOnAlloc)
   } else {
     // We have no record of the block. It must be a bogus pointer. This should
     // be extremely rare because Report() is almost always called in
-    // conjunction with a malloc_size_of-style function. Print a message so
-    // that we get some feedback.
-    StatusMsg("Unknown pointer %p\n", aPtr);
+    // conjunction with a malloc_size_of-style function.
   }
 }
 

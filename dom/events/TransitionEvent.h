@@ -10,7 +10,8 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/TransitionEventBinding.h"
 #include "nsIDOMTransitionEvent.h"
-#include "nsStringFwd.h"
+
+class nsAString;
 
 namespace mozilla {
 namespace dom {

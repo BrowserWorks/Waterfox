@@ -27,7 +27,7 @@ function testFilterButtons(aHud) {
 }
 
 function testRightClick(aCategory, hudBox, aHud) {
-  let deferred = defer();
+  let deferred = promise.defer();
   let selector = ".webconsole-filter-button[category=\"" + aCategory + "\"]";
   let button = hudBox.querySelector(selector);
   let mainButton = getMainButton(button, aHud);

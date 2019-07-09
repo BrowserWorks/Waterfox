@@ -52,6 +52,10 @@
 #include <algorithm>
 #include "chrome/common/ipc_channel.h" // for IPC::Channel::kMaximumMessageSize
 
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
+
 #ifdef ANDROID
 #include <android/log.h>
 #endif
@@ -600,13 +604,11 @@ nsFrameMessageManager::SendMessage(const nsAString& aMessageName,
                                    JS::MutableHandle<JS::Value> aRetval,
                                    bool aIsSync)
 {
-#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
     NS_LossyConvertUTF16toASCII messageNameCStr(aMessageName);
     AUTO_PROFILER_LABEL_DYNAMIC("nsFrameMessageManager::SendMessage", EVENTS,
                                 messageNameCStr.get());
   }
-#endif
 
   NS_ASSERTION(!IsGlobal(), "Should not call SendSyncMessage in chrome");
   NS_ASSERTION(!IsBroadcaster(), "Should not call SendSyncMessage in chrome");
@@ -810,10 +812,6 @@ nsFrameMessageManager::ReleaseCachedProcesses()
 NS_IMETHODIMP
 nsFrameMessageManager::Dump(const nsAString& aStr)
 {
-  if (!nsContentUtils::DOMWindowDumpEnabled()) {
-    return NS_OK;
-  }
-
 #ifdef ANDROID
   __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", NS_ConvertUTF16toUTF8(aStr).get());
 #endif
@@ -1313,16 +1311,6 @@ nsFrameMessageManager::GetProcessMessageManager(nsIMessageSender** aPMM)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsFrameMessageManager::GetRemoteType(nsAString& aRemoteType)
-{
-  aRemoteType.Truncate();
-  if (mCallback) {
-    return mCallback->DoGetRemoteType(aRemoteType);
-  }
-  return NS_OK;
-}
-
 namespace {
 
 struct MessageManagerReferentCount
@@ -1541,14 +1529,12 @@ void
 nsMessageManagerScriptExecutor::LoadScriptInternal(const nsAString& aURL,
                                                    bool aRunInGlobalScope)
 {
-#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
     NS_LossyConvertUTF16toASCII urlCStr(aURL);
     AUTO_PROFILER_LABEL_DYNAMIC(
       "nsMessageManagerScriptExecutor::LoadScriptInternal", OTHER,
       urlCStr.get());
   }
-#endif
 
   if (!mGlobal || !sCachedScripts) {
     return;
@@ -1662,7 +1648,7 @@ nsMessageManagerScriptExecutor::TryCacheLoadAndCompileScript(
       return;
     }
 
-    JS::CompileOptions options(cx, JSVERSION_DEFAULT);
+    JS::CompileOptions options(cx, JSVERSION_LATEST);
     options.setFileAndLine(url.get(), 1);
     options.setNoScriptRval(true);
 
@@ -1723,23 +1709,25 @@ nsMessageManagerScriptExecutor::InitChildGlobalInternal(
   AutoSafeJSContext cx;
   nsContentUtils::GetSecurityManager()->GetSystemPrincipal(getter_AddRefs(mPrincipal));
 
-  const uint32_t flags = xpc::INIT_JS_STANDARD_CLASSES;
+  nsIXPConnect* xpc = nsContentUtils::XPConnect();
+  const uint32_t flags = nsIXPConnect::INIT_JS_STANDARD_CLASSES;
 
   JS::CompartmentOptions options;
   options.creationOptions().setSystemZone();
-  options.behaviors().setVersion(JSVERSION_DEFAULT);
+  options.behaviors().setVersion(JSVERSION_LATEST);
 
   if (xpc::SharedMemoryEnabled()) {
     options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
   }
 
-  JS::Rooted<JSObject*> global(cx);
-  nsresult rv = xpc::InitClassesWithNewWrappedGlobal(cx, aScope, mPrincipal,
-                                                     flags, options,
-                                                     &global);
+  nsCOMPtr<nsIXPConnectJSObjectHolder> globalHolder;
+  nsresult rv =
+    xpc->InitClassesWithNewWrappedGlobal(cx, aScope, mPrincipal,
+                                         flags, options,
+                                         getter_AddRefs(globalHolder));
   NS_ENSURE_SUCCESS(rv, false);
 
-  mGlobal = global;
+  mGlobal = globalHolder->GetJSObject();
   NS_ENSURE_TRUE(mGlobal, false);
 
   // Set the location information for the new global, so that tools like

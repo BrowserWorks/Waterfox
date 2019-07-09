@@ -49,7 +49,6 @@ var snapshotFormatters = {
     $("buildid-box").textContent = data.buildID;
     if (data.updateChannel)
       $("updatechannel-box").textContent = data.updateChannel;
-    $("profile-dir-box").textContent = Services.dirsvc.get("ProfD", Ci.nsIFile).path;
 
     let statusText = strings.GetStringFromName("multiProcessStatus.unknown");
 
@@ -259,7 +258,7 @@ var snapshotFormatters = {
     let apzInfo = [];
     let formatApzInfo = function(info) {
       let out = [];
-      for (let type of ["Wheel", "Touch", "Drag", "Keyboard", "Autoscroll"]) {
+      for (let type of ["Wheel", "Touch", "Drag", "Keyboard"]) {
         let key = "Apz" + type + "Input";
 
         if (!(key in info))
@@ -451,7 +450,6 @@ var snapshotFormatters = {
     addRowFromKey("features", "webgl2Extensions");
     addRowFromKey("features", "supportsHardwareH264", "hardwareH264");
     addRowFromKey("features", "direct2DEnabled", "#Direct2D");
-    addRowFromKey("features", "offMainThreadPaintEnabled");
 
     if ("directWriteEnabled" in data) {
       let message = data.directWriteEnabled;
@@ -607,7 +605,6 @@ var snapshotFormatters = {
         let th = $.new("th", strings.GetStringFromName(key), "column");
         let td = $.new("td", value);
         td.style["white-space"] = "pre-wrap";
-        td.colSpan = 8;
         return $.new("tr", [th, td]);
       }
       $.append($("media-info-tbody"), [createRow(key, value)]);
@@ -712,15 +709,9 @@ var snapshotFormatters = {
   accessibility: function accessibility(data) {
     $("a11y-activated").textContent = data.isActive;
     $("a11y-force-disabled").textContent = data.forceDisabled || 0;
-
     let a11yHandlerUsed = $("a11y-handler-used");
     if (a11yHandlerUsed) {
       a11yHandlerUsed.textContent = data.handlerUsed;
-    }
-
-    let a11yInstantiator = $("a11y-instantiator");
-    if (a11yInstantiator) {
-      a11yInstantiator.textContent = data.instantiator;
     }
   },
 
@@ -765,7 +756,7 @@ var snapshotFormatters = {
     for (let key in data) {
       // Simplify the display a little in the common case.
       if (key === "hasPrivilegedUserNamespaces" &&
-          data[key] === data.hasUserNamespaces) {
+          data[key] === data["hasUserNamespaces"]) {
         continue;
       }
       if (key === "syscallLog") {
@@ -1139,7 +1130,7 @@ function openProfileDirectory() {
 
   // Show the profile directory.
   let nsLocalFile = Components.Constructor("@mozilla.org/file/local;1",
-                                           "nsIFile", "initWithPath");
+                                           "nsILocalFile", "initWithPath");
   new nsLocalFile(profileDir).reveal();
 }
 

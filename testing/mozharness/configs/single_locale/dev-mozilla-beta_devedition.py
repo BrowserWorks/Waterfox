@@ -1,10 +1,10 @@
 config = {
     "branch": "date",
     "nightly_build": True,
-    "update_channel": "aurora",  # devedition uses aurora based branding
+    "update_channel": "aurora-dev",  # devedition uses aurora based branding
 
     # l10n
-    "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/mozilla-beta",
 
     # repositories
     # staging beta dev releases use date repo for now

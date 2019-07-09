@@ -12,7 +12,7 @@
 #include "jscntxt.h"
 #include "jsfun.h"
 
-#include "jit/JSJitFrameIter.h"
+#include "jit/JitFrameIterator.h"
 #include "jit/Safepoints.h"
 
 namespace js {
@@ -269,7 +269,6 @@ struct ResumeFromException
     static const uint32_t RESUME_FINALLY = 2;
     static const uint32_t RESUME_FORCED_RETURN = 3;
     static const uint32_t RESUME_BAILOUT = 4;
-    static const uint32_t RESUME_WASM = 5;
 
     uint8_t* framePointer;
     uint8_t* stackPointer;
@@ -312,17 +311,17 @@ MakeFrameDescriptor(uint32_t frameSize, FrameType type, uint32_t headerSize)
 inline JSScript*
 GetTopJitJSScript(JSContext* cx)
 {
-    JSJitFrameIter frame(cx);
-    MOZ_ASSERT(frame.type() == JitFrame_Exit);
-    ++frame;
+    JitFrameIterator iter(cx);
+    MOZ_ASSERT(iter.type() == JitFrame_Exit);
+    ++iter;
 
-    if (frame.isBaselineStub()) {
-        ++frame;
-        MOZ_ASSERT(frame.isBaselineJS());
+    if (iter.isBaselineStub()) {
+        ++iter;
+        MOZ_ASSERT(iter.isBaselineJS());
     }
 
-    MOZ_ASSERT(frame.isScripted());
-    return frame.script();
+    MOZ_ASSERT(iter.isScripted());
+    return iter.script();
 }
 
 #ifdef JS_CODEGEN_MIPS32
@@ -445,14 +444,6 @@ class RectifierFrameLayout : public JitFrameLayout
     }
 };
 
-class WasmToJSJitFrameLayout : public JitFrameLayout
-{
-  public:
-    static inline size_t Size() {
-        return sizeof(WasmToJSJitFrameLayout);
-    }
-};
-
 class IonICCallFrameLayout : public CommonFrameLayout
 {
   protected:
@@ -503,19 +494,19 @@ class IonOOLPropertyOpExitFrameLayout;
 class IonOOLProxyExitFrameLayout;
 class IonDOMExitFrameLayout;
 
-enum class ExitFrameToken : uint8_t
+enum ExitFrameTokenValues
 {
-    CallNative        = 0x0,
-    ConstructNative   = 0x1,
-    IonDOMGetter      = 0x2,
-    IonDOMSetter      = 0x3,
-    IonDOMMethod      = 0x4,
-    IonOOLNative      = 0x5,
-    IonOOLPropertyOp  = 0x6,
-    IonOOLSetterOp    = 0x7,
-    IonOOLProxy       = 0x8,
-    LazyLink          = 0xFE,
-    Bare              = 0xFF
+    CallNativeExitFrameLayoutToken        = 0x0,
+    ConstructNativeExitFrameLayoutToken   = 0x1,
+    IonDOMExitFrameLayoutGetterToken      = 0x2,
+    IonDOMExitFrameLayoutSetterToken      = 0x3,
+    IonDOMMethodExitFrameLayoutToken      = 0x4,
+    IonOOLNativeExitFrameLayoutToken      = 0x5,
+    IonOOLPropertyOpExitFrameLayoutToken  = 0x6,
+    IonOOLSetterOpExitFrameLayoutToken    = 0x7,
+    IonOOLProxyExitFrameLayoutToken       = 0x8,
+    LazyLinkExitFrameLayoutToken          = 0xFE,
+    ExitFrameLayoutBareToken              = 0xFF
 };
 
 // this is the frame layout when we are exiting ion code, and about to enter platform ABI code
@@ -528,7 +519,7 @@ class ExitFrameLayout : public CommonFrameLayout
   public:
     // Pushed for "bare" fake exit frames that have no GC things on stack to be
     // traced.
-    static JitCode* BareToken() { return (JitCode*)ExitFrameToken::Bare; }
+    static JitCode* BareToken() { return (JitCode*)ExitFrameLayoutBareToken; }
 
     static inline size_t Size() {
         return sizeof(ExitFrameLayout);
@@ -600,13 +591,13 @@ class NativeExitFrameLayout
 class CallNativeExitFrameLayout : public NativeExitFrameLayout
 {
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::CallNative; }
+    static JitCode* Token() { return (JitCode*)CallNativeExitFrameLayoutToken; }
 };
 
 class ConstructNativeExitFrameLayout : public NativeExitFrameLayout
 {
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::ConstructNative; }
+    static JitCode* Token() { return (JitCode*)ConstructNativeExitFrameLayoutToken; }
 };
 
 template<>
@@ -637,7 +628,7 @@ class IonOOLNativeExitFrameLayout
     uint32_t hiThis_;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::IonOOLNative; }
+    static JitCode* Token() { return (JitCode*)IonOOLNativeExitFrameLayoutToken; }
 
     static inline size_t Size(size_t argc) {
         // The frame accounts for the callee/result and |this|, so we only need args.
@@ -683,7 +674,7 @@ class IonOOLPropertyOpExitFrameLayout
     JitCode* stubCode_;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::IonOOLPropertyOp; }
+    static JitCode* Token() { return (JitCode*)IonOOLPropertyOpExitFrameLayoutToken; }
 
     static inline size_t Size() {
         return sizeof(IonOOLPropertyOpExitFrameLayout);
@@ -721,7 +712,7 @@ class IonOOLSetterOpExitFrameLayout : public IonOOLPropertyOpExitFrameLayout
     JS::ObjectOpResult result_;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::IonOOLSetterOp; }
+    static JitCode* Token() { return (JitCode*)IonOOLSetterOpExitFrameLayoutToken; }
 
     static size_t offsetOfObjectOpResult() {
         return offsetof(IonOOLSetterOpExitFrameLayout, result_);
@@ -757,7 +748,7 @@ class IonOOLProxyExitFrameLayout
     JitCode* stubCode_;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::IonOOLProxy; }
+    static JitCode* Token() { return (JitCode*)IonOOLProxyExitFrameLayoutToken; }
 
     static inline size_t Size() {
         return sizeof(IonOOLProxyExitFrameLayout);
@@ -794,8 +785,8 @@ class IonDOMExitFrameLayout
     uint32_t hiCalleeResult_;
 
   public:
-    static JitCode* GetterToken() { return (JitCode*)ExitFrameToken::IonDOMGetter; }
-    static JitCode* SetterToken() { return (JitCode*)ExitFrameToken::IonDOMSetter; }
+    static JitCode* GetterToken() { return (JitCode*)IonDOMExitFrameLayoutGetterToken; }
+    static JitCode* SetterToken() { return (JitCode*)IonDOMExitFrameLayoutSetterToken; }
 
     static inline size_t Size() {
         return sizeof(IonDOMExitFrameLayout);
@@ -834,7 +825,7 @@ class IonDOMMethodExitFrameLayout
     friend struct IonDOMMethodExitFrameLayoutTraits;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::IonDOMMethod; }
+    static JitCode* Token() { return (JitCode*)IonDOMMethodExitFrameLayoutToken; }
 
     static inline size_t Size() {
         return sizeof(IonDOMMethodExitFrameLayout);
@@ -899,7 +890,7 @@ class LazyLinkExitFrameLayout
     JitFrameLayout exit_;
 
   public:
-    static JitCode* Token() { return (JitCode*)ExitFrameToken::LazyLink; }
+    static JitCode* Token() { return (JitCode*) LazyLinkExitFrameLayoutToken; }
 
     static inline size_t Size() {
         return sizeof(LazyLinkExitFrameLayout);

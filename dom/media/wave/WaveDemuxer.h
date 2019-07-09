@@ -5,12 +5,12 @@
 #ifndef WAV_DEMUXER_H_
 #define WAV_DEMUXER_H_
 
+#include "mozilla/Attributes.h"
+#include "mozilla/Maybe.h"
 #include "MediaDataDemuxer.h"
 #include "MediaResource.h"
+#include "mp4_demuxer/ByteReader.h"
 
-namespace mp4_demuxer {
-class ByteReader;
-}
 using mp4_demuxer::ByteReader;
 
 namespace mozilla {
@@ -36,6 +36,7 @@ public:
   // MediaDataDemuxer interface.
   explicit WAVDemuxer(MediaResource* aSource);
   RefPtr<InitPromise> Init() override;
+  bool HasTrackType(TrackInfo::TrackType aType) const override;
   uint32_t GetNumberTracks(TrackInfo::TrackType aType) const override;
   already_AddRefed<MediaTrackDemuxer> GetTrackDemuxer(
     TrackInfo::TrackType aType, uint32_t aTrackNumber) override;

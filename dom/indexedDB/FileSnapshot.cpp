@@ -205,7 +205,7 @@ BlobImplSnapshot::CreateSlice(uint64_t aStart,
 }
 
 void
-BlobImplSnapshot::CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv)
+BlobImplSnapshot::GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> et = do_QueryReferent(mFileHandle);
   RefPtr<IDBFileHandle> fileHandle = static_cast<IDBFileHandle*>(et.get());
@@ -215,7 +215,7 @@ BlobImplSnapshot::CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv)
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  mBlobImpl->CreateInputStream(getter_AddRefs(stream), aRv);
+  mBlobImpl->GetInternalStream(getter_AddRefs(stream), aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }

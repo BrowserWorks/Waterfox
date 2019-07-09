@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use cssparser::{self, SourceLocation};
+use cssparser::{self, Parser as CssParser, SourcePosition, SourceLocation};
 use html5ever::{Namespace as NsAtom};
 use media_queries::CSSErrorReporterTest;
 use parking_lot::RwLock;
@@ -10,21 +10,23 @@ use selectors::attr::*;
 use selectors::parser::*;
 use servo_arc::Arc;
 use servo_atoms::Atom;
-use servo_config::prefs::{PREFS, PrefValue};
 use servo_url::ServoUrl;
 use std::borrow::ToOwned;
-use std::cell::RefCell;
+use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;
+use style::computed_values::font_family::FamilyName;
 use style::context::QuirksMode;
 use style::error_reporting::{ParseErrorReporter, ContextualParseError};
 use style::media_queries::MediaList;
 use style::properties::Importance;
 use style::properties::{CSSWideKeyword, DeclaredValueOwned, PropertyDeclaration, PropertyDeclarationBlock};
-use style::properties::DeclarationSource;
-use style::properties::longhands::{self, animation_timing_function};
+use style::properties::longhands;
+use style::properties::longhands::animation_timing_function;
 use style::shared_lock::SharedRwLock;
 use style::stylesheets::{Origin, Namespaces};
 use style::stylesheets::{Stylesheet, StylesheetContents, NamespaceRule, CssRule, CssRules, StyleRule, KeyframesRule};
+use style::stylesheets::font_feature_values_rule::{FFVDeclaration, FontFeatureValuesRule};
+use style::stylesheets::font_feature_values_rule::{SingleValue, PairValues, VectorValues};
 use style::stylesheets::keyframes_rule::{Keyframe, KeyframeSelector, KeyframePercentage};
 use style::values::{KeyframesName, CustomIdent};
 use style::values::computed::Percentage;
@@ -35,7 +37,7 @@ pub fn block_from<I>(iterable: I) -> PropertyDeclarationBlock
 where I: IntoIterator<Item=(PropertyDeclaration, Importance)> {
     let mut block = PropertyDeclarationBlock::new();
     for (d, i) in iterable {
-        block.push(d, i, DeclarationSource::CssOm);
+        block.push(d, i)
     }
     block
 }
@@ -66,12 +68,20 @@ fn test_parse_stylesheet() {
                 animation-name: 'foo'; /* animation properties not allowed here */
                 animation-timing-function: ease; /* … except animation-timing-function */
             }
+        }
+        @font-feature-values test {
+            @swash { foo: 12; bar: 24; }
+            @swash { bar: 36; baz: 48; }
+            @stylistic { fooo: 14; }
+            @rubbish { shouldnt-parse: 1; }
+            @styleset { hello: 10 11 12; }
+            @character-variant { ok: 78 2; }
         }";
     let url = ServoUrl::parse("about::test").unwrap();
     let lock = SharedRwLock::new();
     let media = Arc::new(lock.wrap(MediaList::empty()));
     let stylesheet = Stylesheet::from_str(css, url.clone(), Origin::UserAgent, media, lock,
-                                          None, &CSSErrorReporterTest, QuirksMode::NoQuirks, 0);
+                                          None, &CSSErrorReporterTest, QuirksMode::NoQuirks, 0u64);
     let mut namespaces = Namespaces::default();
     namespaces.default = Some((ns!(html), ()));
     let expected = Stylesheet {
@@ -79,6 +89,7 @@ fn test_parse_stylesheet() {
             origin: Origin::UserAgent,
             namespaces: RwLock::new(namespaces),
             url_data: RwLock::new(url),
+            dirty_on_viewport_size_change: AtomicBool::new(false),
             quirks_mode: QuirksMode::NoQuirks,
             rules: CssRules::new(vec![
                 CssRule::Namespace(Arc::new(stylesheet.shared_lock.wrap(NamespaceRule {
@@ -218,11 +229,7 @@ fn test_parse_stylesheet() {
                                 (PropertyDeclaration::Width(
                                     LengthOrPercentageOrAuto::Percentage(Percentage(0.))),
                                  Importance::Normal),
-                            ]))),
-                            source_location: SourceLocation {
-                                line: 17,
-                                column: 13,
-                            },
+                            ])))
                         })),
                         Arc::new(stylesheet.shared_lock.wrap(Keyframe {
                             selector: KeyframeSelector::new_for_unit_testing(
@@ -236,10 +243,6 @@ fn test_parse_stylesheet() {
                                         vec![TimingFunction::ease()])),
                                  Importance::Normal),
                             ]))),
-                            source_location: SourceLocation {
-                                line: 18,
-                                column: 13,
-                            },
                         })),
                     ],
                     vendor_prefix: None,
@@ -247,10 +250,53 @@ fn test_parse_stylesheet() {
                         line: 16,
                         column: 19,
                     },
+                }))),
+                CssRule::FontFeatureValues(Arc::new(stylesheet.shared_lock.wrap(FontFeatureValuesRule {
+                    family_names: vec![FamilyName {
+                        name: Atom::from("test"),
+                        quoted: false,
+                    }],
+                    swash: vec![
+                        FFVDeclaration {
+                            name: "foo".into(),
+                            value: SingleValue(12 as u32),
+                        },
+                        FFVDeclaration {
+                            name: "bar".into(),
+                            value: SingleValue(36 as u32),
+                        },
+                        FFVDeclaration {
+                            name: "baz".into(),
+                            value: SingleValue(48 as u32),
+                        }
+                    ],
+                    stylistic: vec![
+                        FFVDeclaration {
+                            name: "fooo".into(),
+                            value: SingleValue(14 as u32),
+                        }
+                    ],
+                    ornaments: vec![],
+                    annotation: vec![],
+                    character_variant: vec![
+                        FFVDeclaration {
+                            name: "ok".into(),
+                            value: PairValues(78 as u32, Some(2 as u32)),
+                        },
+                    ],
+                    styleset: vec![
+                        FFVDeclaration {
+                            name: "hello".into(),
+                            value: VectorValues(vec![10 as u32, 11 as u32, 12 as u32]),
+                        },
+                    ],
+                    source_location: SourceLocation {
+                        line: 25,
+                        column: 29,
+                    },
                 })))
+
             ], &stylesheet.shared_lock),
-            source_map_url: RwLock::new(None),
-            source_url: RwLock::new(None),
         },
         media: Arc::new(stylesheet.shared_lock.wrap(MediaList::empty())),
         shared_lock: stylesheet.shared_lock.clone(),
@@ -260,7 +306,6 @@ fn test_parse_stylesheet() {
     assert_eq!(format!("{:#?}", stylesheet), format!("{:#?}", expected));
 }
 
-#[derive(Debug)]
 struct CSSError {
     pub url : ServoUrl,
     pub line: u32,
@@ -268,103 +313,77 @@ struct CSSError {
     pub message: String
 }
 
-struct TestingErrorReporter {
-    errors: RefCell<Vec<CSSError>>,
+struct CSSInvalidErrorReporterTest {
+    pub errors: Arc<Mutex<Vec<CSSError>>>
 }
 
-impl TestingErrorReporter {
-    pub fn new() -> Self {
-        TestingErrorReporter {
-            errors: RefCell::new(Vec::new()),
-        }
-    }
-
-    fn assert_messages_contain(&self, expected_errors: &[(u32, u32, &str)]) {
-        let errors = self.errors.borrow();
-        for (i, (error, &(line, column, message))) in errors.iter().zip(expected_errors).enumerate() {
-            assert_eq!((error.line, error.column), (line, column),
-                       "line/column numbers of the {}th error: {:?}", i + 1, error.message);
-            assert!(error.message.contains(message),
-                    "{:?} does not contain {:?}", error.message, message);
-        }
-        if errors.len() < expected_errors.len() {
-            panic!("Missing errors: {:#?}", &expected_errors[errors.len()..]);
-        }
-        if errors.len() > expected_errors.len() {
-            panic!("Extra errors: {:#?}", &errors[expected_errors.len()..]);
+impl CSSInvalidErrorReporterTest {
+    pub fn new() -> CSSInvalidErrorReporterTest {
+        return CSSInvalidErrorReporterTest{
+            errors: Arc::new(Mutex::new(Vec::new()))
         }
     }
 }
 
-impl ParseErrorReporter for TestingErrorReporter {
-    fn report_error(&self,
-                    url: &ServoUrl,
-                    location: SourceLocation,
-                    error: ContextualParseError) {
-        self.errors.borrow_mut().push(
+impl ParseErrorReporter for CSSInvalidErrorReporterTest {
+    fn report_error<'a>(&self,
+                        input: &mut CssParser,
+                        position: SourcePosition,
+                        error: ContextualParseError<'a>,
+                        url: &ServoUrl,
+                        line_number_offset: u64) {
+
+        let location = input.source_location(position);
+        let line_offset = location.line + line_number_offset as u32;
+
+        let mut errors = self.errors.lock().unwrap();
+        errors.push(
             CSSError{
                 url: url.clone(),
-                line: location.line,
+                line: line_offset,
                 column: location.column,
-                message: error.to_string(),
+                message: error.to_string()
             }
-        )
+        );
     }
 }
 
 
 #[test]
 fn test_report_error_stylesheet() {
-    PREFS.set("layout.viewport.enabled", PrefValue::Boolean(true));
     let css = r"
     div {
         background-color: red;
         display: invalid;
-        background-image: linear-gradient(0deg, black, invalid, transparent);
         invalid: true;
     }
-    @media (min-width: 10px invalid 1000px) {}
-    @font-face { src: url(), invalid, url(); }
-    @counter-style foo { symbols: a 0invalid b }
-    @font-feature-values Sans Sans { @foo {} @swash { foo: 1 invalid 2 } }
-    @invalid;
-    @media screen { @invalid; }
-    @supports (color: green) and invalid and (margin: 0) {}
-    @keyframes foo { from invalid {} to { margin: 0 invalid 0; } }
-    @viewport { width: 320px invalid auto; }
     ";
     let url = ServoUrl::parse("about::test").unwrap();
-    let error_reporter = TestingErrorReporter::new();
+    let error_reporter = CSSInvalidErrorReporterTest::new();
+
+    let errors = error_reporter.errors.clone();
 
     let lock = SharedRwLock::new();
     let media = Arc::new(lock.wrap(MediaList::empty()));
     Stylesheet::from_str(css, url.clone(), Origin::UserAgent, media, lock,
-                         None, &error_reporter, QuirksMode::NoQuirks, 5);
+                         None, &error_reporter, QuirksMode::NoQuirks, 5u64);
 
-    error_reporter.assert_messages_contain(&[
-        (8, 18, "Unsupported property declaration: 'display: invalid;'"),
-        (9, 27, "Unsupported property declaration: 'background-image:"),  // FIXME: column should be around 56
-        (10, 17, "Unsupported property declaration: 'invalid: true;'"),
-        (12, 28, "Invalid media rule"),
-        (13, 30, "Unsupported @font-face descriptor declaration"),
+    let mut errors = errors.lock().unwrap();
 
-        // When @counter-style is supported, this should be replaced with two errors
-        (14, 19, "Invalid rule: '@counter-style "),
+    let error = errors.pop().unwrap();
+    assert_eq!("Unsupported property declaration: 'invalid: true;', \
+                Custom(PropertyDeclaration(UnknownProperty(\"invalid\")))", error.message);
+    assert_eq!(9, error.line);
+    assert_eq!(8, error.column);
 
-        // When @font-feature-values is supported, this should be replaced with two errors
-        (15, 25, "Invalid rule: '@font-feature-values "),
+    let error = errors.pop().unwrap();
+    assert_eq!("Unsupported property declaration: 'display: invalid;', \
+                Custom(PropertyDeclaration(InvalidValue(\"display\", None)))", error.message);
+    assert_eq!(8, error.line);
+    assert_eq!(8, error.column);
 
-        // FIXME: the message of these two should be consistent
-        (16, 13, "Invalid rule: '@invalid'"),
-        (17, 29, "Unsupported rule: '@invalid'"),
-
-        (18, 34, "Invalid rule: '@supports "),
-        (19, 26, "Invalid keyframe rule: 'from invalid '"),
-        (19, 52, "Unsupported keyframe property declaration: 'margin: 0 invalid 0;'"),
-        (20, 29, "Unsupported @viewport descriptor declaration: 'width: 320px invalid auto;'"),
-    ]);
-
-    assert_eq!(error_reporter.errors.borrow()[0].url, url);
+    // testing for the url
+    assert_eq!(url, error.url);
 }
 
 #[test]
@@ -377,52 +396,19 @@ fn test_no_report_unrecognized_vendor_properties() {
     }
     ";
     let url = ServoUrl::parse("about::test").unwrap();
-    let error_reporter = TestingErrorReporter::new();
+    let error_reporter = CSSInvalidErrorReporterTest::new();
+
+    let errors = error_reporter.errors.clone();
 
     let lock = SharedRwLock::new();
     let media = Arc::new(lock.wrap(MediaList::empty()));
     Stylesheet::from_str(css, url, Origin::UserAgent, media, lock,
-                         None, &error_reporter, QuirksMode::NoQuirks, 0);
+                         None, &error_reporter, QuirksMode::NoQuirks, 0u64);
 
-    error_reporter.assert_messages_contain(&[
-        (4, 31, "Unsupported property declaration: '-moz-background-color: red;'"),
-    ]);
-}
-
-#[test]
-fn test_source_map_url() {
-    let tests = vec![
-        ("", None),
-        ("/*# sourceMappingURL=something */", Some("something".to_string())),
-    ];
-
-    for test in tests {
-        let url = ServoUrl::parse("about::test").unwrap();
-        let lock = SharedRwLock::new();
-        let media = Arc::new(lock.wrap(MediaList::empty()));
-        let stylesheet = Stylesheet::from_str(test.0, url.clone(), Origin::UserAgent, media, lock,
-                                              None, &CSSErrorReporterTest, QuirksMode::NoQuirks,
-                                              0);
-        let url_opt = stylesheet.contents.source_map_url.read();
-        assert_eq!(*url_opt, test.1);
-    }
-}
-
-#[test]
-fn test_source_url() {
-    let tests = vec![
-        ("", None),
-        ("/*# sourceURL=something */", Some("something".to_string())),
-    ];
-
-    for test in tests {
-        let url = ServoUrl::parse("about::test").unwrap();
-        let lock = SharedRwLock::new();
-        let media = Arc::new(lock.wrap(MediaList::empty()));
-        let stylesheet = Stylesheet::from_str(test.0, url.clone(), Origin::UserAgent, media, lock,
-                                              None, &CSSErrorReporterTest, QuirksMode::NoQuirks,
-                                              0);
-        let url_opt = stylesheet.contents.source_url.read();
-        assert_eq!(*url_opt, test.1);
-    }
+    let mut errors = errors.lock().unwrap();
+    let error = errors.pop().unwrap();
+    assert_eq!("Unsupported property declaration: '-moz-background-color: red;', \
+                Custom(PropertyDeclaration(UnknownProperty(\"-moz-background-color\")))",
+               error.message);
+    assert!(errors.is_empty());
 }

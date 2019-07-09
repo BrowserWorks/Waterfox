@@ -5,7 +5,7 @@
 description: Iterator is not closed when exhausted by pattern evaluation (generator method)
 esid: sec-generator-function-definitions-runtime-semantics-propertydefinitionevaluation
 es6id: 14.4.13
-features: [Symbol.iterator, generators, destructuring-binding]
+features: [Symbol.iterator, destructuring-binding]
 flags: [generated]
 info: |
     GeneratorMethod :

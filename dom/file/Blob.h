@@ -59,6 +59,11 @@ public:
   CreateMemoryBlob(nsISupports* aParent, void* aMemoryBuffer, uint64_t aLength,
                    const nsAString& aContentType);
 
+  static already_AddRefed<Blob>
+  CreateTemporaryBlob(nsISupports* aParent, PRFileDesc* aFD,
+                      uint64_t aStartPos, uint64_t aLength,
+                      const nsAString& aContentType);
+
   BlobImpl* Impl() const
   {
     return mImpl;
@@ -83,7 +88,7 @@ public:
               ErrorResult& aRv);
 
   void
-  CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv);
+  GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv);
 
   int64_t
   GetFileId();
@@ -122,10 +127,8 @@ public:
 
   already_AddRefed<Blob> Slice(const Optional<int64_t>& aStart,
                                const Optional<int64_t>& aEnd,
-                               const Optional<nsAString>& aContentType,
+                               const nsAString& aContentType,
                                ErrorResult& aRv);
-
-  size_t GetAllocationSize() const;
 
 protected:
   // File constructor should never be used directly. Use Blob::Create instead.
@@ -143,10 +146,6 @@ protected:
 private:
   nsCOMPtr<nsISupports> mParent;
 };
-
-// Override BindingJSObjectMallocBytes for blobs to tell the JS GC how much
-// memory is held live by the binding object.
-size_t BindingJSObjectMallocBytes(Blob* aBlob);
 
 } // namespace dom
 } // namespace mozilla

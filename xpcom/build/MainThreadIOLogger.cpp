@@ -29,23 +29,19 @@ namespace {
 
 struct ObservationWithStack
 {
-  explicit ObservationWithStack(mozilla::IOInterposeObserver::Observation& aObs
-#ifdef MOZ_GECKO_PROFILER
-                                , ProfilerBacktrace* aStack
-#endif
-                                )
+  ObservationWithStack(mozilla::IOInterposeObserver::Observation& aObs,
+                       ProfilerBacktrace* aStack)
     : mObservation(aObs)
-#ifdef MOZ_GECKO_PROFILER
     , mStack(aStack)
-#endif
   {
-    aObs.Filename(mFilename);
+    const char16_t* filename = aObs.Filename();
+    if (filename) {
+      mFilename = filename;
+    }
   }
 
   mozilla::IOInterposeObserver::Observation mObservation;
-#ifdef MOZ_GECKO_PROFILER
   ProfilerBacktrace*                        mStack;
-#endif
   nsString                                  mFilename;
 };
 
@@ -119,8 +115,7 @@ MainThreadIOLoggerImpl::Init()
 /* static */ void
 MainThreadIOLoggerImpl::sIOThreadFunc(void* aArg)
 {
-  AUTO_PROFILER_REGISTER_THREAD("MainThreadIOLogger");
-
+  AutoProfilerRegisterThread registerThread("MainThreadIOLogger");
   NS_SetCurrentThreadName("MainThreadIOLogger");
   MainThreadIOLoggerImpl* obj = static_cast<MainThreadIOLoggerImpl*>(aArg);
   obj->IOThreadFunc();
@@ -179,10 +174,8 @@ MainThreadIOLoggerImpl::IOThreadFunc()
                        (i->mObservation.Start() - mLogStartTime).ToMilliseconds(),
                        i->mObservation.ObservedOperationString(), durationMs,
                        i->mObservation.Reference(), nativeFilename.get()) > 0) {
-#ifdef MOZ_GECKO_PROFILER
           // TODO: Write out the callstack
           i->mStack = nullptr;
-#endif
         }
       }
     }
@@ -202,11 +195,7 @@ MainThreadIOLoggerImpl::Observe(Observation& aObservation)
     return;
   }
   // Passing nullptr as aStack parameter for now
-  mObservations.push_back(ObservationWithStack(aObservation
-#ifdef MOZ_GECKO_PROFILER
-                                               , nullptr
-#endif
-                                               ));
+  mObservations.push_back(ObservationWithStack(aObservation, nullptr));
   lock.Notify();
 }
 

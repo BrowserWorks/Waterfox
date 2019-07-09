@@ -27,7 +27,7 @@
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "nsViewManager.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsGkAtoms.h"
 #include "nsNetCID.h"
 #include "nsIOfflineCacheUpdate.h"
@@ -300,7 +300,7 @@ nsContentSink::ProcessHTTPHeaders(nsIChannel* aChannel)
 }
 
 nsresult
-nsContentSink::ProcessHeaderData(nsAtom* aHeader, const nsAString& aValue,
+nsContentSink::ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
                                  nsIContent* aContent)
 {
   nsresult rv = NS_OK;
@@ -458,7 +458,6 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
   nsAutoString media;
   nsAutoString anchor;
   nsAutoString crossOrigin;
-  nsAutoString referrerPolicy;
   nsAutoString as;
 
   crossOrigin.SetIsVoid(true);
@@ -647,15 +646,6 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
               as = value;
               as.CompressWhitespace();
             }
-          } else if (attr.LowerCaseEqualsLiteral("referrerpolicy")) {
-            // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#referrer-policy-attribute
-            // Specs says referrer policy attribute is an enumerated attribute,
-            // case insensitive and includes the empty string
-            // We will parse the value with AttributeReferrerPolicyFromString
-            // later, which will handle parsing it as an enumerated attribute.
-            if (referrerPolicy.IsEmpty()) {
-              referrerPolicy = value;
-            }
           }
         }
       }
@@ -669,7 +659,7 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
         rv = ProcessLink(anchor, href, rel,
                          // prefer RFC 5987 variant over non-I18zed version
                          titleStar.IsEmpty() ? title : titleStar,
-                         type, media, crossOrigin, referrerPolicy, as);
+                         type, media, crossOrigin, as);
       }
 
       href.Truncate();
@@ -678,7 +668,6 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
       type.Truncate();
       media.Truncate();
       anchor.Truncate();
-      referrerPolicy.Truncate();
       crossOrigin.SetIsVoid(true);
 
       seenParameters = false;
@@ -692,7 +681,7 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
     rv = ProcessLink(anchor, href, rel,
                      // prefer RFC 5987 variant over non-I18zed version
                      titleStar.IsEmpty() ? title : titleStar,
-                     type, media, crossOrigin, referrerPolicy, as);
+                     type, media, crossOrigin, as);
   }
 
   return rv;
@@ -704,7 +693,6 @@ nsContentSink::ProcessLink(const nsAString& aAnchor, const nsAString& aHref,
                            const nsAString& aRel, const nsAString& aTitle,
                            const nsAString& aType, const nsAString& aMedia,
                            const nsAString& aCrossOrigin,
-                           const nsAString& aReferrerPolicy,
                            const nsAString& aAs)
 {
   uint32_t linkTypes =
@@ -752,7 +740,7 @@ nsContentSink::ProcessLink(const nsAString& aAnchor, const nsAString& aHref,
 
   bool isAlternate = linkTypes & nsStyleLinkElement::eALTERNATE;
   return ProcessStyleLink(nullptr, aHref, isAlternate, aTitle, aType,
-                          aMedia, aReferrerPolicy);
+                          aMedia);
 }
 
 nsresult
@@ -761,8 +749,7 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
                                 bool aAlternate,
                                 const nsAString& aTitle,
                                 const nsAString& aType,
-                                const nsAString& aMedia,
-                                const nsAString& aReferrerPolicy)
+                                const nsAString& aMedia)
 {
   if (aAlternate && aTitle.IsEmpty()) {
     // alternates must have title return without error, for now
@@ -802,16 +789,11 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
              NS_ConvertUTF16toUTF8(integrity).get()));
   }
 
-  mozilla::net::ReferrerPolicy referrerPolicy =
-    mozilla::net::AttributeReferrerPolicyFromString(aReferrerPolicy);
-  if (referrerPolicy == net::RP_Unset) {
-    referrerPolicy = mDocument->GetReferrerPolicy();
-  }
   // If this is a fragment parser, we don't want to observe.
   // We don't support CORS for processing instructions
   bool isAlternate;
-  rv = mCSSLoader->LoadStyleLink(aElement, url, nullptr, aTitle, aMedia, aAlternate,
-                                 CORS_NONE, referrerPolicy,
+  rv = mCSSLoader->LoadStyleLink(aElement, url, aTitle, aMedia, aAlternate,
+                                 CORS_NONE, mDocument->GetReferrerPolicy(),
                                  integrity, mRunsToCompletion ? nullptr : this,
                                  &isAlternate);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -852,7 +834,7 @@ nsContentSink::ProcessMETATag(nsIContent* aContent)
     nsAutoString result;
     aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::content, result);
     if (!result.IsEmpty()) {
-      RefPtr<nsAtom> fieldAtom(NS_Atomize(header));
+      nsCOMPtr<nsIAtom> fieldAtom(NS_Atomize(header));
       rv = ProcessHeaderData(fieldAtom, result, aContent);
     }
   }
@@ -1283,7 +1265,7 @@ nsContentSink::StartLayout(bool aIgnorePendingSheets)
   if (shell && !shell->DidInitialize()) {
     nsRect r = shell->GetPresContext()->GetVisibleArea();
     nsCOMPtr<nsIPresShell> shellGrip = shell;
-    nsresult rv = shell->Initialize(r.Width(), r.Height());
+    nsresult rv = shell->Initialize(r.width, r.height);
     if (NS_FAILED(rv)) {
       return;
     }
@@ -1310,7 +1292,8 @@ nsContentSink::NotifyAppend(nsIContent* aContainer, uint32_t aStartIndex)
     // Scope so we call EndUpdate before we decrease mInNotification
     MOZ_AUTO_DOC_UPDATE(mDocument, UPDATE_CONTENT_MODEL, !mBeganUpdate);
     nsNodeUtils::ContentAppended(aContainer,
-                                 aContainer->GetChildAt(aStartIndex));
+                                 aContainer->GetChildAt(aStartIndex),
+                                 aStartIndex);
     mLastNotificationTime = PR_Now();
   }
 
@@ -1402,14 +1385,20 @@ nsContentSink::WillInterruptImpl()
         // Convert to milliseconds
         delay /= PR_USEC_PER_MSEC;
 
-        NS_NewTimerWithCallback(getter_AddRefs(mNotificationTimer),
-                                this, delay,
-                                nsITimer::TYPE_ONE_SHOT);
-        if (mNotificationTimer) {
+        mNotificationTimer = do_CreateInstance("@mozilla.org/timer;1",
+                                               &result);
+        if (NS_SUCCEEDED(result)) {
           SINK_TRACE(static_cast<LogModule*>(gContentSinkLogModuleInfo),
                      SINK_TRACE_REFLOW,
                      ("nsContentSink::WillInterrupt: setting up timer with "
                       "delay %d", delay));
+
+          result =
+            mNotificationTimer->InitWithCallback(this, delay,
+                                                 nsITimer::TYPE_ONE_SHOT);
+          if (NS_FAILED(result)) {
+            mNotificationTimer = nullptr;
+          }
         }
       }
     }

@@ -11,6 +11,8 @@ const {TargetFactory} = require("devtools/client/framework/target");
 const {Utils: WebConsoleUtils} =
   require("devtools/client/webconsole/utils");
 let { gDevTools } = require("devtools/client/framework/devtools");
+loader.lazyGetter(this, "HUDService", () => require("devtools/client/webconsole/webconsole"));
+loader.lazyGetter(this, "HUDService", () => require("devtools/client/webconsole/hudservice"));
 let promise = require("promise");
 
 /**

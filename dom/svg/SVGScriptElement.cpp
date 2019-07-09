@@ -232,11 +232,9 @@ SVGScriptElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 }
 
 nsresult
-SVGScriptElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+SVGScriptElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                const nsAttrValue* aValue,
-                               const nsAttrValue* aOldValue,
-                               nsIPrincipal* aSubjectPrincipal,
-                               bool aNotify)
+                               const nsAttrValue* aOldValue, bool aNotify)
 {
   if ((aNamespaceID == kNameSpaceID_XLink ||
        aNamespaceID == kNameSpaceID_None) &&
@@ -244,13 +242,12 @@ SVGScriptElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
     MaybeProcessScript();
   }
   return SVGScriptElementBase::AfterSetAttr(aNamespaceID, aName,
-                                            aValue, aOldValue,
-                                            aSubjectPrincipal, aNotify);
+                                            aValue, aOldValue, aNotify);
 }
 
 bool
 SVGScriptElement::ParseAttribute(int32_t aNamespaceID,
-                                 nsAtom* aAttribute,
+                                 nsIAtom* aAttribute,
                                  const nsAString& aValue,
                                  nsAttrValue& aResult)
 {

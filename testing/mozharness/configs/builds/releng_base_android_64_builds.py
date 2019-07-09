@@ -17,6 +17,9 @@ config = {
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
+    'exes': {
+        "buildbot": "/tools/buildbot/bin/buildbot",
+    },
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
@@ -57,16 +60,6 @@ config = {
         {'filename': '/builds/leanplum-sdk-nightly.token',
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/leanplum-sdk-nightly.token',
          'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
-        {'filename': '/builds/pocket-api-release.token',
-         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/pocket-api-release.token',
-         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
-        {'filename': '/builds/pocket-api-beta.token',
-         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/pocket-api-beta.token',
-         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
-        {'filename': '/builds/pocket-api-nightly.token',
-         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/pocket-api-nightly.token',
-         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
-
     ],
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
@@ -94,13 +87,13 @@ config = {
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         'TINDERBOX_OUTPUT': '1',
-        'TOOLTOOL_CACHE': '/builds/worker/tooltool-cache',
+        'TOOLTOOL_CACHE': '/home/worker/tooltool-cache',
         'TOOLTOOL_HOME': '/builds',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',
         'CCACHE_UMASK': '002',
         'LC_ALL': 'C',
-        'PATH': '/usr/local/bin:/bin:/usr/bin',
+        'PATH': '/tools/buildbot/bin:/usr/local/bin:/bin:/usr/bin',
         'SHIP_LICENSED_FONTS': '1',
     },
     'upload_env': {

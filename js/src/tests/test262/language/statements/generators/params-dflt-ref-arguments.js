@@ -4,7 +4,7 @@
 description: Referencing the arguments object from a default parameter (generator function declaration)
 esid: sec-generator-function-definitions-runtime-semantics-instantiatefunctionobject
 es6id: 14.4.12
-features: [generators, default-parameters]
+features: [default-parameters]
 info: |
     GeneratorDeclaration : function * ( FormalParameters ) { GeneratorBody }
 

@@ -56,7 +56,7 @@ ConsoleReportCollector::FlushReportsToConsole(uint64_t aInnerWindowID,
   for (uint32_t i = 0; i < reports.Length(); ++i) {
     PendingReport& report = reports[i];
 
-    nsAutoString errorText;
+    nsXPIDLString errorText;
     nsresult rv;
     if (!report.mStringParams.IsEmpty()) {
       rv = nsContentUtils::FormatLocalizedString(report.mPropertiesFile,

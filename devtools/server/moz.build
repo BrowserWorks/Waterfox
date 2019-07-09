@@ -9,6 +9,7 @@ include('../templates.mozbuild')
 DIRS += [
     'actors',
     'performance',
+    'shims',
 ]
 
 BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']

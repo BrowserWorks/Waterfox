@@ -90,14 +90,12 @@ included_inclnames_to_ignore = set([
     'unicode/ucol.h',           # ICU
     'unicode/udat.h',           # ICU
     'unicode/udatpg.h',         # ICU
-    'unicode/udisplaycontext.h',# ICU
     'unicode/uenum.h',          # ICU
     'unicode/uloc.h',           # ICU
     'unicode/unorm2.h',         # ICU
     'unicode/unum.h',           # ICU
     'unicode/unumsys.h',        # ICU
     'unicode/upluralrules.h',   # ICU
-    'unicode/ureldatefmt.h',    # ICU
     'unicode/ustring.h',        # ICU
     'unicode/utypes.h',         # ICU
     'vtune/VTuneWrapper.h'      # VTune
@@ -251,23 +249,24 @@ def check_style():
     non_js_inclnames = set()        # type: set(inclname)
     js_names = dict()               # type: dict(filename, inclname)
 
-    with get_repository_from_env() as repo:
-        # Select the appropriate files.
-        for filename in repo.get_files_in_working_directory():
-            for non_js_dir in non_js_dirnames:
-                if filename.startswith(non_js_dir) and filename.endswith('.h'):
-                    inclname = 'mozilla/' + filename.split('/')[-1]
-                    non_js_inclnames.add(inclname)
+    repo = get_repository_from_env()
 
-            if filename.startswith('js/public/') and filename.endswith('.h'):
-                inclname = 'js/' + filename[len('js/public/'):]
-                js_names[filename] = inclname
+    # Select the appropriate files.
+    for filename in repo.get_files_in_working_directory():
+        for non_js_dir in non_js_dirnames:
+            if filename.startswith(non_js_dir) and filename.endswith('.h'):
+                inclname = 'mozilla/' + filename.split('/')[-1]
+                non_js_inclnames.add(inclname)
 
-            if filename.startswith('js/src/') and \
-               not filename.startswith(tuple(ignored_js_src_dirs)) and \
-               filename.endswith(('.c', '.cpp', '.h', '.tbl', '.msg')):
-                inclname = filename[len('js/src/'):]
-                js_names[filename] = inclname
+        if filename.startswith('js/public/') and filename.endswith('.h'):
+            inclname = 'js/' + filename[len('js/public/'):]
+            js_names[filename] = inclname
+
+        if filename.startswith('js/src/') and \
+           not filename.startswith(tuple(ignored_js_src_dirs)) and \
+           filename.endswith(('.c', '.cpp', '.h', '.tbl', '.msg')):
+            inclname = filename[len('js/src/'):]
+            js_names[filename] = inclname
 
     all_inclnames = non_js_inclnames | set(js_names.values())
 

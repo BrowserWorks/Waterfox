@@ -34,7 +34,8 @@ EXPORTS.mozilla = [
     'DebugOnly.h',
     'decimal/Decimal.h',
     'DefineEnum.h',
-    'double-conversion.h',
+    'double-conversion/source/double-conversion.h',
+    'double-conversion/source/utils.h',
     'DoublyLinkedList.h',
     'EndianUtils.h',
     'EnumeratedArray.h',
@@ -75,7 +76,6 @@ EXPORTS.mozilla = [
     'RefCountType.h',
     'RefPtr.h',
     'Result.h',
-    'ResultExtensions.h',
     'ReverseIterator.h',
     'RollingMean.h',
     'Saturate.h',
@@ -91,7 +91,6 @@ EXPORTS.mozilla = [
     'TaggedAnonymousMemory.h',
     'TemplateLib.h',
     'ThreadLocal.h',
-    'ThreadSafeWeakPtr.h',
     'ToString.h',
     'Tuple.h',
     'TypedEnumBits.h',
@@ -104,15 +103,6 @@ EXPORTS.mozilla = [
     'Vector.h',
     'WeakPtr.h',
     'XorShift128PlusRNG.h',
-]
-
-EXPORTS["double-conversion"] = [
-    'double-conversion/double-conversion/double-conversion.h',
-    'double-conversion/double-conversion/utils.h',
-]
-
-LOCAL_INCLUDES += [
-    '/mfbt/double-conversion',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':

@@ -1,5 +1,7 @@
 // Tests that keyboard navigation in the search panel works as designed.
 
+const searchbar = document.getElementById("searchbar");
+const textbox = searchbar._textbox;
 const searchPopup = document.getElementById("PopupSearchAutoComplete");
 const oneOffsContainer =
   document.getAnonymousElementByAttribute(searchPopup, "anonid",
@@ -20,17 +22,7 @@ function getOpenSearchItems() {
   return os;
 }
 
-let searchbar;
-let textbox;
-
 add_task(async function init() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
-
-  searchbar = document.getElementById("searchbar");
-  textbox = searchbar._textbox;
-
   await promiseNewEngine("testEngine.xml");
 
   // First cleanup the form history in case other tests left things there.
@@ -46,7 +38,7 @@ add_task(async function init() {
     let addOps = kValues.map(value => {
  return {op: "add",
                                              fieldname: "searchbar-history",
-                                             value};
+                                             value}
                                    });
     searchbar.FormHistory.update(addOps, {
       handleCompletion() {
@@ -56,7 +48,7 @@ add_task(async function init() {
             kValues.map(value => {
  return {op: "remove",
                                            fieldname: "searchbar-history",
-                                           value};
+                                           value}
                                  });
           searchbar.FormHistory.update(removeOps);
         });
@@ -86,7 +78,7 @@ add_task(async function test_arrows() {
   // before-last one-off buttons aren't different. We should always have more
   // than 4 default engines, but it's safer to check this assumption.
   let oneOffs = getOneOffs();
-  ok(oneOffs.length >= 4, "we have at least 4 one-off buttons displayed");
+  ok(oneOffs.length >= 4, "we have at least 4 one-off buttons displayed")
 
   ok(!textbox.selectedButton, "no one-off button should be selected");
 
@@ -400,7 +392,7 @@ add_task(async function test_open_search() {
   await promise;
 
   let engines = getOpenSearchItems();
-  is(engines.length, 2, "the opensearch.html page exposes 2 engines");
+  is(engines.length, 2, "the opensearch.html page exposes 2 engines")
 
   // Check that there's initially no selection.
   is(searchPopup.selectedIndex, -1, "no suggestion should be selected");

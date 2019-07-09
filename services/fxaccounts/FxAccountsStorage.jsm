@@ -29,10 +29,11 @@ this.FxAccountsStorageManager = function(options = {}) {
   this.options = {
     filename: options.filename || DEFAULT_STORAGE_FILENAME,
     baseDir: options.baseDir || OS.Constants.Path.profileDir,
-  };
+  }
   this.plainStorage = new JSONStorage(this.options);
-  // Tests may want to pretend secure storage isn't available.
-  let useSecure = "useSecure" in options ? options.useSecure : true;
+  // On b2g we have no loginManager for secure storage, and tests may want
+  // to pretend secure storage isn't available.
+  let useSecure = "useSecure" in options ? options.useSecure : haveLoginManager;
   if (useSecure) {
     this.secureStorage = new LoginManagerStorage();
   } else {
@@ -43,7 +44,7 @@ this.FxAccountsStorageManager = function(options = {}) {
   this._promiseInitialized = Promise.reject("initialize not called");
   // A promise to avoid storage races - see _queueStorageOperation
   this._promiseStorageComplete = Promise.resolve();
-};
+}
 
 this.FxAccountsStorageManager.prototype = {
   _initialized: false,
@@ -112,7 +113,7 @@ this.FxAccountsStorageManager.prototype = {
       this._promiseInitialized = null;
       this._clearCachedData();
       log.trace("StorageManager finalized");
-    });
+    })
   },
 
   // We want to make sure we don't end up doing multiple storage requests
@@ -208,8 +209,11 @@ this.FxAccountsStorageManager.prototype = {
       // update fields.
       throw new Error("No user is logged in");
     }
-    if (!newFields || "uid" in newFields) {
-      throw new Error("Can't change uid");
+    if (!newFields || "uid" in newFields || "email" in newFields) {
+      // Once we support
+      // user changing email address this may need to change, but it's not
+      // clear how we would be told of such a change anyway...
+      throw new Error("Can't change uid or email address");
     }
     log.debug("_updateAccountData with items", Object.keys(newFields));
     // work out what bucket.
@@ -288,7 +292,7 @@ this.FxAccountsStorageManager.prototype = {
     // XXX - this would be a good use-case for a RuntimeAssert or similar, as
     // being added in bug 1080457.
     if (Object.keys(this.cachedPlain).length != 0) {
-      throw new Error("should be impossible to have cached data already.");
+      throw new Error("should be impossible to have cached data already.")
     }
     for (let [name, value] of Object.entries(got.accountData)) {
       this.cachedPlain[name] = value;
@@ -339,7 +343,7 @@ this.FxAccountsStorageManager.prototype = {
           }
         }
         if (needWrite) {
-          log.debug("successfully read secure data; writing updated data back");
+          log.debug("successfully read secure data; writing updated data back")
           await this._doWriteSecure();
         }
       }
@@ -367,7 +371,7 @@ this.FxAccountsStorageManager.prototype = {
     let toWritePlain = {
       version: DATA_FORMAT_VERSION,
       accountData: this.cachedPlain,
-    };
+    }
     await this.plainStorage.set(toWritePlain);
 
     // If we have no secure storage manager we are done.
@@ -395,7 +399,7 @@ this.FxAccountsStorageManager.prototype = {
     let toWriteSecure = {
       version: DATA_FORMAT_VERSION,
       accountData: this.cachedSecure,
-    };
+    }
     try {
       await this.secureStorage.set(this.cachedPlain.uid, toWriteSecure);
     } catch (ex) {
@@ -424,7 +428,7 @@ this.FxAccountsStorageManager.prototype = {
     this._clearCachedData();
     log.debug("account data reset");
   },
-};
+}
 
 /**
  * JSONStorage constructor that creates instances that may set/get
@@ -596,4 +600,10 @@ LoginManagerStorage.prototype = {
     }
     return null;
   },
-};
+}
+
+// A global variable to indicate if the login manager is available - it doesn't
+// exist on b2g. Defined here as the use of preprocessor directives skews line
+// numbers in the runtime, meaning stack-traces etc end up off by a few lines.
+// Doing it at the end of the file makes that less of a pita.
+var haveLoginManager = !AppConstants.MOZ_B2G;

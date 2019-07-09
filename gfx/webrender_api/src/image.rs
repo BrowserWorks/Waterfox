@@ -2,11 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use {DevicePoint, DeviceUintRect};
-use {TileOffset, TileSize};
-use IdNamespace;
-use font::{FontInstanceKey, FontKey, FontTemplate};
 use std::sync::Arc;
+use {DeviceUintRect, DevicePoint};
+use {IdNamespace};
+use {TileOffset, TileSize};
+use font::{FontKey, FontTemplate};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -32,10 +32,9 @@ pub struct ExternalImageId(pub u64);
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub enum ExternalImageType {
-    Texture2DHandle,       // gl TEXTURE_2D handle
-    Texture2DArrayHandle,  // gl TEXTURE_2D_ARRAY handle
-    TextureRectHandle,     // gl TEXTURE_RECT handle
-    TextureExternalHandle, // gl TEXTURE_EXTERNAL handle
+    Texture2DHandle,        // gl TEXTURE_2D handle
+    TextureRectHandle,      // gl TEXTURE_RECT handle
+    TextureExternalHandle,  // gl TEXTURE_EXTERNAL handle
     ExternalBuffer,
 }
 
@@ -50,23 +49,23 @@ pub struct ExternalImageData {
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub enum ImageFormat {
-    Invalid = 0,
-    A8 = 1,
-    RGB8 = 2,
-    BGRA8 = 3,
-    RGBAF32 = 4,
-    RG8 = 5,
+    Invalid  = 0,
+    A8       = 1,
+    RGB8     = 2,
+    BGRA8    = 3,
+    RGBAF32  = 4,
+    RG8      = 5,
 }
 
 impl ImageFormat {
-    pub fn bytes_per_pixel(self) -> u32 {
+    pub fn bytes_per_pixel(self) -> Option<u32> {
         match self {
-            ImageFormat::A8 => 1,
-            ImageFormat::RGB8 => 3,
-            ImageFormat::BGRA8 => 4,
-            ImageFormat::RGBAF32 => 16,
-            ImageFormat::RG8 => 2,
-            ImageFormat::Invalid => 0,
+            ImageFormat::A8 => Some(1),
+            ImageFormat::RGB8 => Some(3),
+            ImageFormat::BGRA8 => Some(4),
+            ImageFormat::RGBAF32 => Some(16),
+            ImageFormat::RG8 => Some(2),
+            ImageFormat::Invalid => None,
         }
     }
 }
@@ -94,8 +93,7 @@ impl ImageDescriptor {
     }
 
     pub fn compute_stride(&self) -> u32 {
-        self.stride
-            .unwrap_or(self.width * self.format.bytes_per_pixel())
+        self.stride.unwrap_or(self.width * self.format.bytes_per_pixel().unwrap())
     }
 }
 
@@ -130,13 +128,14 @@ impl ImageData {
     #[inline]
     pub fn uses_texture_cache(&self) -> bool {
         match self {
-            &ImageData::External(ext_data) => match ext_data.image_type {
-                ExternalImageType::Texture2DHandle => false,
-                ExternalImageType::Texture2DArrayHandle => false,
-                ExternalImageType::TextureRectHandle => false,
-                ExternalImageType::TextureExternalHandle => false,
-                ExternalImageType::ExternalBuffer => true,
-            },
+            &ImageData::External(ext_data) => {
+                match ext_data.image_type {
+                    ExternalImageType::Texture2DHandle => false,
+                    ExternalImageType::TextureRectHandle => false,
+                    ExternalImageType::TextureExternalHandle => false,
+                    ExternalImageType::ExternalBuffer => true,
+                }
+            }
             &ImageData::Blob(_) => true,
             &ImageData::Raw(_) => true,
         }
@@ -155,19 +154,15 @@ pub trait BlobImageRenderer: Send {
 
     fn delete(&mut self, key: ImageKey);
 
-    fn request(
-        &mut self,
-        services: &BlobImageResources,
-        key: BlobImageRequest,
-        descriptor: &BlobImageDescriptor,
-        dirty_rect: Option<DeviceUintRect>,
-    );
+    fn request(&mut self,
+               services: &BlobImageResources,
+               key: BlobImageRequest,
+               descriptor: &BlobImageDescriptor,
+               dirty_rect: Option<DeviceUintRect>);
 
     fn resolve(&mut self, key: BlobImageRequest) -> BlobImageResult;
 
     fn delete_font(&mut self, key: FontKey);
-
-    fn delete_font_instance(&mut self, key: FontInstanceKey);
 }
 
 pub type BlobImageData = Vec<u8>;

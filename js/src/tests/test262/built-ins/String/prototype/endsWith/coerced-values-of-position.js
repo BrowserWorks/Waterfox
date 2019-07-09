@@ -19,7 +19,6 @@ info: >
   is the same as the full element sequence of searchStr, return true.
   17. Otherwise, return false.
   ...
-features: [String.prototype.endsWith]
 ---*/
 
 var str = 'The future is cool!';

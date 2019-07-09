@@ -41,7 +41,6 @@
 #include "AudioChannelService.h"
 #include "AudioDestinationNode.h"
 #include "AudioListener.h"
-#include "AudioNodeStream.h"
 #include "AudioStream.h"
 #include "BiquadFilterNode.h"
 #include "ChannelMergerNode.h"
@@ -114,7 +113,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_ADDREF_INHERITED(AudioContext, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(AudioContext, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AudioContext)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AudioContext)
   NS_INTERFACE_MAP_ENTRY(nsIMemoryReporter)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
@@ -129,6 +128,7 @@ static float GetSampleRateForAudioContext(bool aIsOffline, float aSampleRate)
 
 AudioContext::AudioContext(nsPIDOMWindowInner* aWindow,
                            bool aIsOffline,
+                           AudioChannel aChannel,
                            uint32_t aNumberOfChannels,
                            uint32_t aLength,
                            float aSampleRate)
@@ -148,7 +148,7 @@ AudioContext::AudioContext(nsPIDOMWindowInner* aWindow,
 
   // Note: AudioDestinationNode needs an AudioContext that must already be
   // bound to the window.
-  mDestination = new AudioDestinationNode(this, aIsOffline,
+  mDestination = new AudioDestinationNode(this, aIsOffline, aChannel,
                                           aNumberOfChannels, aLength, aSampleRate);
 
   // The context can't be muted until it has a destination.
@@ -205,10 +205,9 @@ AudioContext::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  uint32_t maxChannelCount = std::min<uint32_t>(WebAudioUtils::MaxChannelCount,
-      CubebUtils::MaxNumberOfChannels());
   RefPtr<AudioContext> object =
-    new AudioContext(window, false,maxChannelCount);
+    new AudioContext(window, false,
+                     AudioChannelService::GetDefaultAudioChannel());
   aRv = object->Init();
   if (NS_WARN_IF(aRv.Failed())) {
      return nullptr;
@@ -217,18 +216,6 @@ AudioContext::Constructor(const GlobalObject& aGlobal,
   RegisterWeakMemoryReporter(object);
 
   return object.forget();
-}
-
-/* static */ already_AddRefed<AudioContext>
-AudioContext::Constructor(const GlobalObject& aGlobal,
-                          const OfflineAudioContextOptions& aOptions,
-                          ErrorResult& aRv)
-{
-  return Constructor(aGlobal,
-                     aOptions.mNumberOfChannels,
-                     aOptions.mLength,
-                     aOptions.mSampleRate,
-                     aRv);
 }
 
 /* static */ already_AddRefed<AudioContext>
@@ -256,6 +243,7 @@ AudioContext::Constructor(const GlobalObject& aGlobal,
 
   RefPtr<AudioContext> object = new AudioContext(window,
                                                    true,
+                                                   AudioChannel::Normal,
                                                    aNumberOfChannels,
                                                    aLength,
                                                    aSampleRate);
@@ -562,7 +550,7 @@ AudioContext::DecodeAudioData(const ArrayBuffer& aBuffer,
     successCallback = &aSuccessCallback.Value();
   }
   UniquePtr<WebAudioDecodeJob> job(
-    new WebAudioDecodeJob(this,
+    new WebAudioDecodeJob(contentType, this,
                           promise, successCallback, failureCallback));
   AsyncDecodeWebAudio(contentType.get(), data, length, *job);
   // Transfer the ownership to mDecodeJobs
@@ -624,8 +612,7 @@ AudioContext::UpdatePannerSource()
 uint32_t
 AudioContext::MaxChannelCount() const
 {
-  return std::min<uint32_t>(WebAudioUtils::MaxChannelCount,
-      mIsOffline ? mNumberOfChannels : CubebUtils::MaxNumberOfChannels());
+  return mIsOffline ? mNumberOfChannels : CubebUtils::MaxNumberOfChannels();
 }
 
 uint32_t

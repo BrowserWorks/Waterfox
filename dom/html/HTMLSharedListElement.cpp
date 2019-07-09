@@ -25,8 +25,15 @@ HTMLSharedListElement::~HTMLSharedListElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED_0(HTMLSharedListElement,
-                                               nsGenericHTMLElement)
+NS_IMPL_ADDREF_INHERITED(HTMLSharedListElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLSharedListElement, Element)
+
+// QueryInterface implementation for nsHTMLSharedListElement
+NS_INTERFACE_MAP_BEGIN(HTMLSharedListElement)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLOListElement, ol)
+  NS_INTERFACE_MAP_ENTRY_IF_TAG(nsIDOMHTMLUListElement, ul)
+NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
+
 
 NS_IMPL_ELEMENT_CLONE(HTMLSharedListElement)
 
@@ -57,7 +64,7 @@ static const nsAttrValue::EnumTable kOldListTypeTable[] = {
 
 bool
 HTMLSharedListElement::ParseAttribute(int32_t aNamespaceID,
-                                      nsAtom* aAttribute,
+                                      nsIAtom* aAttribute,
                                       const nsAString& aValue,
                                       nsAttrValue& aResult)
 {
@@ -96,7 +103,7 @@ HTMLSharedListElement::MapAttributesIntoRule(const nsMappedAttributes* aAttribut
 }
 
 NS_IMETHODIMP_(bool)
-HTMLSharedListElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLSharedListElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   if (mNodeInfo->Equals(nsGkAtoms::ol) ||
       mNodeInfo->Equals(nsGkAtoms::ul)) {

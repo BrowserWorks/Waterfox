@@ -155,7 +155,7 @@ GetCanonicalClone(nsIURI* aURI)
     NS_ENSURE_SUCCESS(rv, nullptr);
     rv = clone->SetUserPass(EmptyCString());
     NS_ENSURE_SUCCESS(rv, nullptr);
-    rv = clone->SetPathQueryRef(EmptyCString());
+    rv = clone->SetPath(EmptyCString());
     NS_ENSURE_SUCCESS(rv, nullptr);
     return clone.forget();
 }

@@ -28,7 +28,6 @@ info: >
     <USP>
   <USP> ::
     Other category “Zs” code points
-features: [u180e]
 ---*/
 
 // CHECK#1

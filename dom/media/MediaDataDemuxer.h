@@ -44,6 +44,9 @@ public:
   // otherwise.
   virtual RefPtr<InitPromise> Init() = 0;
 
+  // Returns true if a aType track type is available.
+  virtual bool HasTrackType(TrackInfo::TrackType aType) const = 0;
+
   // Returns the number of tracks of aType type available. A value of
   // 0 indicates that no such type is available.
   virtual uint32_t GetNumberTracks(TrackInfo::TrackType aType) const = 0;
@@ -80,7 +83,7 @@ public:
   // since the demuxer was initialized.
   // The demuxer can use this mechanism to inform all track demuxers to update
   // its buffered range.
-  // This will be called should the demuxer be used with MediaSource.
+  // This will be called should the demuxer be used with MediaSourceResource.
   virtual void NotifyDataRemoved() { }
 
   // Indicate to MediaFormatReader if it should compute the start time

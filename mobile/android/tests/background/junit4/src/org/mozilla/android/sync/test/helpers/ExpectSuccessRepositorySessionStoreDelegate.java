@@ -28,8 +28,8 @@ public class ExpectSuccessRepositorySessionStoreDelegate extends
   }
 
   @Override
-  public void onStoreCompleted() {
-    log("Record store completed");
+  public void onStoreCompleted(long storeEnd) {
+    log("Record store completed at " + storeEnd);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class ExpectSuccessRepositorySessionStoreDelegate extends
   }
 
   @Override
-  public void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion) {
+  public void onRecordStoreReconciled(String guid) {
     log("Store reconciled record " + guid);
   }
 

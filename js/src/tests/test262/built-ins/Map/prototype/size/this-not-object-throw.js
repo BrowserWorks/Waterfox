@@ -14,7 +14,6 @@ info: >
   ...
 
 includes: [propertyHelper.js]
-features: [Symbol]
 ---*/
 
 var descriptor = Object.getOwnPropertyDescriptor(Map.prototype, 'size');

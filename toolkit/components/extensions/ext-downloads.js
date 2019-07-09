@@ -13,9 +13,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
+                                  "resource://gre/modules/EventEmitter.jsm");
 
 var {
-  EventEmitter,
   normalizeTime,
 } = ExtensionUtils;
 
@@ -31,8 +34,6 @@ const DOWNLOAD_ITEM_FIELDS = ["id", "url", "referrer", "filename", "incognito",
                               "fileSize", "exists",
                               "byExtensionId", "byExtensionName"];
 
-const DOWNLOAD_DATE_FIELDS = ["startTime", "endTime", "estimatedEndTime"];
-
 // Fields that we generate onChanged events for.
 const DOWNLOAD_ITEM_CHANGE_FIELDS = ["endTime", "state", "paused", "canResume",
                                      "error", "exists"];
@@ -45,8 +46,6 @@ const FORBIDDEN_HEADERS = ["ACCEPT-CHARSET", "ACCEPT-ENCODING",
                            "TRANSFER-ENCODING", "UPGRADE", "VIA"];
 
 const FORBIDDEN_PREFIXES = /^PROXY-|^SEC-/i;
-
-const PROMPTLESS_DOWNLOAD_PREF = "browser.download.useDownloadDir";
 
 class DownloadItem {
   constructor(id, download, extension) {
@@ -64,14 +63,7 @@ class DownloadItem {
   get mime() { return this.download.contentType; }
   get startTime() { return this.download.startTime; }
   get endTime() { return null; } // TODO
-  get estimatedEndTime() {
-    // Based on the code in summarizeDownloads() in DownloadsCommon.jsm
-    if (this.download.hasProgress && this.download.speed > 0) {
-      let sizeLeft = this.download.totalBytes - this.download.currentBytes;
-      let timeLeftInSeconds  = sizeLeft / this.download.speed;
-      return new Date(Date.now() + (timeLeftInSeconds * 1000));
-    }
-  }
+  get estimatedEndTime() { return null; } // TODO
   get state() {
     if (this.download.succeeded) {
       return "complete";
@@ -131,10 +123,8 @@ class DownloadItem {
     for (let field of DOWNLOAD_ITEM_FIELDS) {
       obj[field] = this[field];
     }
-    for (let field of DOWNLOAD_DATE_FIELDS) {
-      if (obj[field]) {
-        obj[field] = obj[field].toISOString();
-      }
+    if (obj.startTime) {
+      obj.startTime = obj.startTime.toISOString();
     }
     return obj;
   }
@@ -154,22 +144,19 @@ class DownloadItem {
 // DownloadMap maps back and forth betwen the numeric identifiers used in
 // the downloads WebExtension API and a Download object from the Downloads jsm.
 // todo: make id and extension info persistent (bug 1247794)
-const DownloadMap = new class extends EventEmitter {
-  constructor() {
-    super();
+const DownloadMap = {
+  currentId: 0,
+  loadPromise: null,
 
-    this.currentId = 0;
-    this.loadPromise = null;
+  // Maps numeric id -> DownloadItem
+  byId: new Map(),
 
-    // Maps numeric id -> DownloadItem
-    this.byId = new Map();
-
-    // Maps Download object -> DownloadItem
-    this.byDownload = new WeakMap();
-  }
+  // Maps Download object -> DownloadItem
+  byDownload: new WeakMap(),
 
   lazyInit() {
     if (this.loadPromise == null) {
+      EventEmitter.decorate(this);
       this.loadPromise = Downloads.getList(Downloads.ALL).then(list => {
         let self = this;
         return list.addView({
@@ -207,15 +194,15 @@ const DownloadMap = new class extends EventEmitter {
       });
     }
     return this.loadPromise;
-  }
+  },
 
   getDownloadList() {
     return this.lazyInit();
-  }
+  },
 
   getAll() {
     return this.lazyInit().then(() => this.byId.values());
-  }
+  },
 
   fromId(id) {
     const download = this.byId.get(id);
@@ -223,7 +210,7 @@ const DownloadMap = new class extends EventEmitter {
       throw new Error(`Invalid download id ${id}`);
     }
     return download;
-  }
+  },
 
   newFromDownload(download, extension) {
     if (this.byDownload.has(download)) {
@@ -235,7 +222,7 @@ const DownloadMap = new class extends EventEmitter {
     this.byId.set(id, item);
     this.byDownload.set(download, item);
     return item;
-  }
+  },
 
   erase(item) {
     // This will need to get more complicated for bug 1255507 but for now we
@@ -243,8 +230,8 @@ const DownloadMap = new class extends EventEmitter {
     return this.getDownloadList().then(list => {
       list.remove(item.download);
     });
-  }
-}();
+  },
+};
 
 // Create a callable function that filters a DownloadItem based on a
 // query object of the type passed to search() or erase().
@@ -430,10 +417,6 @@ this.downloads = class extends ExtensionAPI {
             if (path.components.some(component => component == "..")) {
               return Promise.reject({message: "filename must not contain back-references (..)"});
             }
-
-            if (path.components.some(component => component != DownloadPaths.sanitize(component))) {
-              return Promise.reject({message: "filename must not contain illegal characters"});
-            }
           }
 
           if (options.conflictAction == "prompt") {
@@ -474,24 +457,17 @@ this.downloads = class extends ExtensionAPI {
           }
 
           async function createTarget(downloadsDir) {
-            if (!filename) {
-              let uri = Services.io.newURI(options.url);
-              if (uri instanceof Ci.nsIURL) {
-                filename = DownloadPaths.sanitize(uri.fileName);
-              }
-            }
-
-            let target = OS.Path.join(downloadsDir, filename || "download");
-
-            let saveAs;
-            if (options.saveAs !== null) {
-              saveAs = options.saveAs;
+            let target;
+            if (filename) {
+              target = OS.Path.join(downloadsDir, filename);
             } else {
-              // If options.saveAs was not specified, only show the file chooser
-              // if |browser.download.useDownloadDir == false|. That is to say,
-              // only show the file chooser if Firefox normally shows it when
-              // a file is downloaded.
-              saveAs = !Services.prefs.getBoolPref(PROMPTLESS_DOWNLOAD_PREF, true);
+              let uri = NetUtil.newURI(options.url);
+
+              let remote = "download";
+              if (uri instanceof Ci.nsIURL) {
+                remote = uri.fileName;
+              }
+              target = OS.Path.join(downloadsDir, remote);
             }
 
             // Create any needed subdirectories if required by filename.
@@ -507,7 +483,7 @@ this.downloads = class extends ExtensionAPI {
                 case "uniquify":
                 default:
                   target = DownloadPaths.createNiceUniqueFile(new FileUtils.File(target)).path;
-                  if (saveAs) {
+                  if (options.saveAs) {
                     // createNiceUniqueFile actually creates the file, which
                     // is premature if we need to show a SaveAs dialog.
                     await OS.File.remove(target);
@@ -519,7 +495,7 @@ this.downloads = class extends ExtensionAPI {
               }
             }
 
-            if (!saveAs) {
+            if (!options.saveAs) {
               return target;
             }
 
@@ -549,7 +525,6 @@ this.downloads = class extends ExtensionAPI {
             .then(target => {
               const source = {
                 url: options.url,
-                isPrivate: options.incognito,
               };
 
               if (options.method || options.headers || options.body) {

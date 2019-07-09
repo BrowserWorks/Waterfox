@@ -42,8 +42,6 @@ public:
   // If re-initializing, clear buffer.
   virtual nsresult Init() override;
 
-  void Flush() override;
-
   // Maximum number of blocks allowed in this block cache.
   // Based on initial content length, and minimum usable block cache.
   int32_t GetMaxBlocks() const override { return mMaxBlocks; }
@@ -84,7 +82,7 @@ private:
   Mutex mMutex;
 
   nsTArray<uint8_t> mBuffer;
-  bool mHasGrown = false;
+  bool mHasGrown;
 };
 
 } // End namespace mozilla.

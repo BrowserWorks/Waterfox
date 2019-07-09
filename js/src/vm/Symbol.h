@@ -20,7 +20,6 @@
 #include "js/RootingAPI.h"
 #include "js/TypeDecls.h"
 #include "js/Utility.h"
-#include "vm/Printer.h"
 #include "vm/String.h"
 
 namespace js {
@@ -95,8 +94,7 @@ class Symbol : public js::gc::TenuredCell
     }
 
 #ifdef DEBUG
-    void dump(); // Debugger-friendly stderr dump.
-    void dump(js::GenericPrinter& out);
+    void dump(FILE* fp = stderr);
 #endif
 };
 
@@ -141,9 +139,19 @@ class SymbolRegistry : public GCHashSet<ReadBarrieredSymbol,
     SymbolRegistry() {}
 };
 
+} /* namespace js */
+
+namespace js {
+
 // ES6 rev 27 (2014 Aug 24) 19.4.3.3
 bool
 SymbolDescriptiveString(JSContext* cx, JS::Symbol* sym, JS::MutableHandleValue result);
+
+bool
+IsSymbolOrSymbolWrapper(const JS::Value& v);
+
+JS::Symbol*
+ToSymbolPrimitive(const JS::Value& v);
 
 } /* namespace js */
 

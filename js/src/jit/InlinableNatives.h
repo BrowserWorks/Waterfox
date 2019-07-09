@@ -33,7 +33,6 @@
     _(IntlIsDateTimeFormat)         \
     _(IntlIsNumberFormat)           \
     _(IntlIsPluralRules)            \
-    _(IntlIsRelativeTimeFormat)     \
                                     \
     _(MathAbs)                      \
     _(MathFloor)                    \
@@ -86,13 +85,10 @@
     _(StringFromCharCode)           \
     _(StringFromCodePoint)          \
     _(StringCharAt)                 \
-    _(StringToLowerCase)            \
-    _(StringToUpperCase)            \
                                     \
     _(IntrinsicStringReplaceString) \
     _(IntrinsicStringSplitString)   \
                                     \
-    _(Object)                       \
     _(ObjectCreate)                 \
     _(ObjectToString)               \
                                     \

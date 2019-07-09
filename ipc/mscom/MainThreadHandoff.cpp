@@ -6,16 +6,14 @@
 
 #include "mozilla/mscom/MainThreadHandoff.h"
 
-#include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/DebugOnly.h"
 #include "mozilla/Move.h"
 #include "mozilla/mscom/AgileReference.h"
 #include "mozilla/mscom/InterceptorLog.h"
 #include "mozilla/mscom/Registration.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/TimeStamp.h"
-#include "mozilla/ThreadLocal.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/DebugOnly.h"
 #include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
 
@@ -156,52 +154,6 @@ private:
   HRESULT       mResult;
 };
 
-class MOZ_RAII SavedCallFrame final
-{
-public:
-  explicit SavedCallFrame(mozilla::NotNull<ICallFrame*> aFrame)
-    : mCallFrame(aFrame)
-  {
-    static const bool sIsInit = tlsFrame.init();
-    MOZ_ASSERT(sIsInit);
-    MOZ_ASSERT(!tlsFrame.get());
-    tlsFrame.set(this);
-  }
-
-  ~SavedCallFrame()
-  {
-    MOZ_ASSERT(tlsFrame.get());
-    tlsFrame.set(nullptr);
-  }
-
-  HRESULT GetIidAndMethod(mozilla::NotNull<IID*> aIid,
-                          mozilla::NotNull<ULONG*> aMethod) const
-  {
-    return mCallFrame->GetIIDAndMethod(aIid, aMethod);
-  }
-
-  static const SavedCallFrame& Get()
-  {
-    SavedCallFrame* saved = tlsFrame.get();
-    MOZ_ASSERT(saved);
-
-    return *saved;
-  }
-
-  SavedCallFrame(const SavedCallFrame&) = delete;
-  SavedCallFrame(SavedCallFrame&&) = delete;
-  SavedCallFrame& operator=(const SavedCallFrame&) = delete;
-  SavedCallFrame& operator=(SavedCallFrame&&) = delete;
-
-private:
-  ICallFrame* mCallFrame;
-
-private:
-  static MOZ_THREAD_LOCAL(SavedCallFrame*) tlsFrame;
-};
-
-MOZ_THREAD_LOCAL(SavedCallFrame*) SavedCallFrame::tlsFrame;
-
 } // anonymous namespace
 
 namespace mozilla {
@@ -311,8 +263,6 @@ MainThreadHandoff::FixIServiceProvider(ICallFrame* aFrame)
 HRESULT
 MainThreadHandoff::OnCall(ICallFrame* aFrame)
 {
-  TimeStamp callStart(TimeStamp::Now());
-
   // (1) Get info about the method call
   HRESULT hr;
   IID iid;
@@ -349,14 +299,9 @@ MainThreadHandoff::OnCall(ICallFrame* aFrame)
     return hr;
   }
 
-  TimeStamp callEnd(TimeStamp::Now());
-  TimeDuration totalTime(callEnd - callStart);
-  TimeDuration overhead(totalTime - invoker.GetDuration());
-
   // (3) Log *before* wrapping outputs so that the log will contain pointers to
   // the true target interface, not the wrapped ones.
-  InterceptorLog::Event(aFrame, targetInterface.get(), overhead,
-                        invoker.GetDuration());
+  InterceptorLog::Event(aFrame, targetInterface.get());
 
   // (4) Scan the function call for outparams that contain interface pointers.
   // Those will need to be wrapped with MainThreadHandoff so that they too will
@@ -393,8 +338,6 @@ MainThreadHandoff::OnCall(ICallFrame* aFrame)
       return hr;
     }
   } else {
-    SavedCallFrame savedFrame(WrapNotNull(aFrame));
-
     // (7) Scan the outputs looking for any outparam interfaces that need wrapping.
     // NB: WalkFrame does not correctly handle array outparams. It processes the
     // first element of an array but not the remaining elements (if any).
@@ -623,26 +566,9 @@ MainThreadHandoff::OnWalkInterface(REFIID aIid, PVOID* aInterface,
     }
   }
 
-  IID effectiveIid = aIid;
-
   RefPtr<IHandlerProvider> payload;
   if (mHandlerProvider) {
-    if (aIid == IID_IUnknown) {
-      const SavedCallFrame& curFrame = SavedCallFrame::Get();
-
-      IID callIid;
-      ULONG callMethod;
-      hr = curFrame.GetIidAndMethod(WrapNotNull(&callIid),
-                                    WrapNotNull(&callMethod));
-      if (FAILED(hr)) {
-        return hr;
-      }
-
-      effectiveIid = mHandlerProvider->GetEffectiveOutParamIid(callIid,
-                                                               callMethod);
-    }
-
-    hr = mHandlerProvider->NewInstance(effectiveIid,
+    hr = mHandlerProvider->NewInstance(aIid,
                                        ToInterceptorTargetPtr(origInterface),
                                        WrapNotNull((IHandlerProvider**)getter_AddRefs(payload)));
     MOZ_ASSERT(SUCCEEDED(hr));
@@ -659,8 +585,7 @@ MainThreadHandoff::OnWalkInterface(REFIID aIid, PVOID* aInterface,
     return hr;
   }
 
-  REFIID interceptorIid = payload ? payload->MarshalAs(effectiveIid) :
-                                    effectiveIid;
+  REFIID interceptorIid = payload ? payload->MarshalAs(aIid) : aIid;
 
   RefPtr<IUnknown> wrapped;
   hr = Interceptor::Create(Move(origInterface), handoff, interceptorIid,

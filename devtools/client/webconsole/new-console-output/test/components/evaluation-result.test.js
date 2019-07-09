@@ -13,8 +13,8 @@ const Provider = createFactory(require("react-redux").Provider);
 const { setupStore } = require("devtools/client/webconsole/new-console-output/test/helpers");
 
 // Components under test.
-const EvaluationResult = createFactory(require("devtools/client/webconsole/new-console-output/components/message-types/EvaluationResult"));
-const { INDENT_WIDTH } = require("devtools/client/webconsole/new-console-output/components/MessageIndent");
+const EvaluationResult = createFactory(require("devtools/client/webconsole/new-console-output/components/message-types/evaluation-result"));
+const { INDENT_WIDTH } = require("devtools/client/webconsole/new-console-output/components/message-indent");
 
 // Test fakes.
 const { stubPreparedMessages } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
@@ -23,7 +23,7 @@ const serviceContainer = require("devtools/client/webconsole/new-console-output/
 describe("EvaluationResult component:", () => {
   it("renders a grip result", () => {
     const message = stubPreparedMessages.get("new Date(0)");
-    const wrapper = render(EvaluationResult({ message, serviceContainer }));
+    const wrapper = render(EvaluationResult({ message }));
 
     expect(wrapper.find(".message-body").text()).toBe("Date 1970-01-01T00:00:00.000Z");
 
@@ -32,7 +32,7 @@ describe("EvaluationResult component:", () => {
 
   it("renders an error", () => {
     const message = stubPreparedMessages.get("asdf()");
-    const wrapper = render(EvaluationResult({ message, serviceContainer }));
+    const wrapper = render(EvaluationResult({ message }));
 
     expect(wrapper.find(".message-body").text())
       .toBe("ReferenceError: asdf is not defined[Learn More]");
@@ -42,7 +42,7 @@ describe("EvaluationResult component:", () => {
 
   it("renders an error with a longString exception message", () => {
     const message = stubPreparedMessages.get("longString message Error");
-    const wrapper = render(EvaluationResult({ message, serviceContainer }));
+    const wrapper = render(EvaluationResult({ message }));
 
     const text = wrapper.find(".message-body").text();
     expect(text.startsWith("Error: Long error Long error")).toBe(true);
@@ -51,7 +51,7 @@ describe("EvaluationResult component:", () => {
 
   it("renders an inspect command result", () => {
     const message = stubPreparedMessages.get("inspect({a: 1})");
-    const wrapper = render(EvaluationResult({ message, serviceContainer }));
+    const wrapper = render(EvaluationResult({ message }));
 
     expect(wrapper.find(".message-body").text()).toBe("Object { a: 1 }");
   });
@@ -83,13 +83,12 @@ describe("EvaluationResult component:", () => {
     const indent = 10;
     let wrapper = render(EvaluationResult({
       message: Object.assign({}, message, {indent}),
-      serviceContainer,
     }));
     let indentEl = wrapper.find(".indent");
     expect(indentEl.prop("style").width).toBe(`${indent * INDENT_WIDTH}px`);
     expect(indentEl.prop("data-indent")).toBe(`${indent}`);
 
-    wrapper = render(EvaluationResult({ message, serviceContainer}));
+    wrapper = render(EvaluationResult({ message}));
     indentEl = wrapper.find(".indent");
     expect(indentEl.prop("style").width).toBe(`0`);
     expect(indentEl.prop("data-indent")).toBe(`0`);
@@ -97,7 +96,7 @@ describe("EvaluationResult component:", () => {
 
   it("has location information", () => {
     const message = stubPreparedMessages.get("1 + @");
-    const wrapper = render(EvaluationResult({ message, serviceContainer }));
+    const wrapper = render(EvaluationResult({ message }));
 
     const locationLink = wrapper.find(`.message-location`);
     expect(locationLink.length).toBe(1);
@@ -108,7 +107,6 @@ describe("EvaluationResult component:", () => {
     const message = stubPreparedMessages.get("new Date(0)");
     const wrapper = render(EvaluationResult({
       message,
-      serviceContainer,
       timestampsVisible: true,
     }));
     const { timestampString } = require("devtools/client/webconsole/webconsole-l10n");
@@ -120,7 +118,6 @@ describe("EvaluationResult component:", () => {
     const message = stubPreparedMessages.get("new Date(0)");
     const wrapper = render(EvaluationResult({
       message,
-      serviceContainer,
       timestampsVisible: false,
     }));
 

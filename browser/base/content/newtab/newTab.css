@@ -35,8 +35,6 @@ input[type=button] {
   transition: opacity 100ms ease-out;
   -moz-box-align: center;
   -moz-box-pack: center;
-  position: relative;
-  left: -50%;
 }
 
 #newtab-undo-container[undo-disabled] {
@@ -67,7 +65,7 @@ input[type=button] {
 
 #newtab-margin-undo-container {
   display: -moz-box;
-  left: 50%;
+  left: 6px;
   position: absolute;
   top: 6px;
   z-index: 1;

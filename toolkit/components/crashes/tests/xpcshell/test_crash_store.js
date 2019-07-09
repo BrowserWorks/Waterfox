@@ -46,6 +46,10 @@ function getStore() {
   })();
 }
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function test_constructor() {
   let s = new CrashStore("/some/path");
   Assert.ok(s instanceof CrashStore);

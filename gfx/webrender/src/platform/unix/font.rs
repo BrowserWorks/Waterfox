@@ -2,46 +2,40 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{FontInstance, FontKey, FontRenderMode, GlyphDimensions};
-use api::{FontInstancePlatformOptions, FontLCDFilter, FontHinting};
-use api::{NativeFontHandle, SubpixelDirection, GlyphKey};
-use api::{FONT_FORCE_AUTOHINT, FONT_NO_AUTOHINT, FONT_EMBEDDED_BITMAP};
-use api::{FONT_EMBOLDEN, FONT_VERTICAL_LAYOUT, FONT_SUBPIXEL_BGR};
-use freetype::freetype::{FT_BBox, FT_Outline_Translate, FT_Pixel_Mode, FT_Render_Mode};
-use freetype::freetype::{FT_Done_Face, FT_Error, FT_Get_Char_Index, FT_Int32};
-use freetype::freetype::{FT_Done_FreeType, FT_Library_SetLcdFilter, FT_Pos};
-use freetype::freetype::{FT_F26Dot6, FT_Face, FT_Glyph_Format, FT_Long, FT_UInt};
-use freetype::freetype::{FT_GlyphSlot, FT_LcdFilter, FT_New_Memory_Face};
-use freetype::freetype::{FT_Init_FreeType, FT_Load_Glyph, FT_Render_Glyph};
-use freetype::freetype::{FT_Library, FT_Outline_Get_CBox, FT_Set_Char_Size, FT_Select_Size};
-use freetype::freetype::{FT_LOAD_COLOR, FT_LOAD_DEFAULT, FT_LOAD_FORCE_AUTOHINT};
-use freetype::freetype::{FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH, FT_LOAD_NO_AUTOHINT};
-use freetype::freetype::{FT_LOAD_NO_BITMAP, FT_LOAD_NO_HINTING, FT_LOAD_VERTICAL_LAYOUT};
-use freetype::freetype::{FT_FACE_FLAG_SCALABLE, FT_FACE_FLAG_FIXED_SIZES, FT_Err_Cannot_Render_Glyph};
-use internal_types::FastHashMap;
-use std::{cmp, mem, ptr, slice};
-use std::sync::Arc;
+use app_units::Au;
+use api::{FontInstanceKey, FontKey, FontRenderMode, GlyphDimensions};
+use api::{NativeFontHandle};
+use api::{GlyphKey};
 
-// These constants are not present in the freetype
+use freetype::freetype::{FT_Render_Mode, FT_Pixel_Mode};
+use freetype::freetype::{FT_Done_FreeType, FT_Library_SetLcdFilter};
+use freetype::freetype::{FT_Library, FT_Set_Char_Size};
+use freetype::freetype::{FT_Face, FT_Long, FT_UInt, FT_F26Dot6};
+use freetype::freetype::{FT_Init_FreeType, FT_Load_Glyph, FT_Render_Glyph};
+use freetype::freetype::{FT_New_Memory_Face, FT_GlyphSlot, FT_LcdFilter};
+use freetype::freetype::{FT_Done_Face, FT_Error, FT_Int32, FT_Get_Char_Index};
+
+use std::{cmp, mem, ptr, slice};
+use std::collections::HashMap;
+
+// This constant is not present in the freetype
 // bindings due to bindgen not handling the way
-// the macros are defined.
-//const FT_LOAD_TARGET_NORMAL: FT_UInt = 0 << 16;
-const FT_LOAD_TARGET_LIGHT: FT_UInt  = 1 << 16;
-const FT_LOAD_TARGET_MONO: FT_UInt   = 2 << 16;
-const FT_LOAD_TARGET_LCD: FT_UInt    = 3 << 16;
-const FT_LOAD_TARGET_LCD_V: FT_UInt  = 4 << 16;
+// the macro is defined.
+const FT_LOAD_TARGET_LIGHT: FT_Int32 = 1 << 16;
+
+// Default to slight hinting, which is what most
+// Linux distros use by default, and is a better
+// default than no hinting.
+// TODO(gw): Make this configurable.
+const GLYPH_LOAD_FLAGS: FT_Int32 = FT_LOAD_TARGET_LIGHT;
 
 struct Face {
     face: FT_Face,
-    // Raw byte data has to live until the font is deleted, according to
-    // https://www.freetype.org/freetype2/docs/reference/ft2-base_interface.html#FT_New_Memory_Face
-    _bytes: Arc<Vec<u8>>,
 }
 
 pub struct FontContext {
     lib: FT_Library,
-    faces: FastHashMap<FontKey, Face>,
-    lcd_extra_pixels: i64,
+    faces: HashMap<FontKey, Face>,
 }
 
 // FreeType resources are safe to move between threads as long as they
@@ -54,39 +48,28 @@ pub struct RasterizedGlyph {
     pub left: f32,
     pub width: u32,
     pub height: u32,
-    pub scale: f32,
     pub bytes: Vec<u8>,
 }
 
-extern "C" {
-    fn FT_GlyphSlot_Embolden(slot: FT_GlyphSlot);
-    fn FT_GlyphSlot_Oblique(slot: FT_GlyphSlot);
-}
+const SUCCESS: FT_Error = FT_Error(0);
 
 impl FontContext {
     pub fn new() -> FontContext {
         let mut lib: FT_Library = ptr::null_mut();
-
-        // Using an LCD filter may add one full pixel to each side if support is built in.
-        // As of FreeType 2.8.1, an LCD filter is always used regardless of settings
-        // if support for the patent-encumbered LCD filter algorithms is not built in.
-        // Thus, the only reasonable way to guess padding is to unconditonally add it if
-        // subpixel AA is used.
-        let lcd_extra_pixels = 1;
-
         unsafe {
             let result = FT_Init_FreeType(&mut lib);
-            assert!(
-                result.succeeded(),
-                "Unable to initialize FreeType library {:?}",
-                result
-            );
+            assert!(result.succeeded(), "Unable to initialize FreeType library {:?}", result);
+
+            // TODO(gw): Check result of this to determine if freetype build supports subpixel.
+            let result = FT_Library_SetLcdFilter(lib, FT_LcdFilter::FT_LCD_FILTER_DEFAULT);
+            if !result.succeeded() {
+                println!("WARN: Initializing a FreeType library build without subpixel AA enabled!");
+            }
         }
 
         FontContext {
             lib,
-            faces: FastHashMap::default(),
-            lcd_extra_pixels,
+            faces: HashMap::new(),
         }
     }
 
@@ -94,26 +77,21 @@ impl FontContext {
         self.faces.contains_key(font_key)
     }
 
-    pub fn add_raw_font(&mut self, font_key: &FontKey, bytes: Arc<Vec<u8>>, index: u32) {
+    pub fn add_raw_font(&mut self, font_key: &FontKey, bytes: &[u8], index: u32) {
         if !self.faces.contains_key(&font_key) {
             let mut face: FT_Face = ptr::null_mut();
             let result = unsafe {
-                FT_New_Memory_Face(
-                    self.lib,
-                    bytes.as_ptr(),
-                    bytes.len() as FT_Long,
-                    index as FT_Long,
-                    &mut face,
-                )
+                FT_New_Memory_Face(self.lib,
+                                   bytes.as_ptr(),
+                                   bytes.len() as FT_Long,
+                                   index as FT_Long,
+                                   &mut face)
             };
             if result.succeeded() && !face.is_null() {
-                self.faces.insert(
-                    *font_key,
-                    Face {
-                        face,
-                        _bytes: bytes,
-                    },
-                );
+                self.faces.insert(*font_key, Face {
+                    face,
+                    //_bytes: bytes
+                });
             } else {
                 println!("WARN: webrender failed to load font {:?}", font_key);
             }
@@ -126,205 +104,66 @@ impl FontContext {
 
     pub fn delete_font(&mut self, font_key: &FontKey) {
         if let Some(face) = self.faces.remove(font_key) {
-            let result = unsafe { FT_Done_Face(face.face) };
+            let result = unsafe {
+                FT_Done_Face(face.face)
+            };
             assert!(result.succeeded());
         }
     }
 
-    fn load_glyph(&self, font: &FontInstance, glyph: &GlyphKey) -> Option<FT_GlyphSlot> {
-        debug_assert!(self.faces.contains_key(&font.font_key));
-        let face = self.faces.get(&font.font_key).unwrap();
+    fn load_glyph(&self,
+                  font_key: FontKey,
+                  size: Au,
+                  character: u32) -> Option<FT_GlyphSlot> {
 
-        let mut load_flags = FT_LOAD_DEFAULT;
-        let FontInstancePlatformOptions { flags, hinting, .. } = font.platform_options.unwrap_or_default();
-        match (hinting, font.render_mode) {
-            (FontHinting::None, _) => load_flags |= FT_LOAD_NO_HINTING,
-            (FontHinting::Mono, _) => load_flags = FT_LOAD_TARGET_MONO,
-            (FontHinting::Light, _) => load_flags = FT_LOAD_TARGET_LIGHT,
-            (FontHinting::LCD, FontRenderMode::Subpixel) => {
-                load_flags = match font.subpx_dir {
-                    SubpixelDirection::Vertical => FT_LOAD_TARGET_LCD_V,
-                    _ => FT_LOAD_TARGET_LCD,
-                };
-                if (flags & FONT_FORCE_AUTOHINT) != 0 {
-                    load_flags |= FT_LOAD_FORCE_AUTOHINT;
-                }
-            }
-            _ => {
-                if (flags & FONT_FORCE_AUTOHINT) != 0 {
-                    load_flags |= FT_LOAD_FORCE_AUTOHINT;
-                }
-            }
-        }
+        debug_assert!(self.faces.contains_key(&font_key));
+        let face = self.faces.get(&font_key).unwrap();
+        let char_size = size.to_f64_px() * 64.0 + 0.5;
 
-        if (flags & FONT_NO_AUTOHINT) != 0 {
-            load_flags |= FT_LOAD_NO_AUTOHINT;
-        }
-        if (flags & FONT_EMBEDDED_BITMAP) == 0 {
-            load_flags |= FT_LOAD_NO_BITMAP;
-        }
-        if (flags & FONT_VERTICAL_LAYOUT) != 0 {
-            load_flags |= FT_LOAD_VERTICAL_LAYOUT;
-        }
+        assert_eq!(SUCCESS, unsafe {
+            FT_Set_Char_Size(face.face, char_size as FT_F26Dot6, 0, 0, 0)
+        });
 
-        load_flags |= FT_LOAD_COLOR;
-        load_flags |= FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
-
-        let mut result = if font.render_mode == FontRenderMode::Bitmap {
-            if (load_flags & FT_LOAD_NO_BITMAP) != 0 {
-                FT_Error(FT_Err_Cannot_Render_Glyph as i32)
-            } else {
-                self.choose_bitmap_size(face.face, font.size.to_f64_px())
-            }
-        } else {
-            let char_size = font.size.to_f64_px() * 64.0 + 0.5;
-            unsafe { FT_Set_Char_Size(face.face, char_size as FT_F26Dot6, 0, 0, 0) }
+        let result = unsafe {
+            FT_Load_Glyph(face.face,
+                          character as FT_UInt,
+                          GLYPH_LOAD_FLAGS)
         };
 
-        if result.succeeded() {
-            result = unsafe { FT_Load_Glyph(face.face, glyph.index as FT_UInt, load_flags as FT_Int32) };
-        };
-
-        if result.succeeded() {
+        if result == SUCCESS {
             let slot = unsafe { (*face.face).glyph };
             assert!(slot != ptr::null_mut());
-
-            if (flags & FONT_EMBOLDEN) != 0 {
-                unsafe { FT_GlyphSlot_Embolden(slot) };
-            }
-
-            let format = unsafe { (*slot).format };
-            match format {
-                FT_Glyph_Format::FT_GLYPH_FORMAT_OUTLINE |
-                FT_Glyph_Format::FT_GLYPH_FORMAT_BITMAP => Some(slot),
-                _ => {
-                    error!("Unsupported {:?}", format);
-                    None
-                }
-            }
+            Some(slot)
         } else {
-            error!(
-                "Unable to load glyph for {} of size {:?} from font {:?}, {:?}",
-                glyph.index,
-                font.size,
-                font.font_key,
-                result
-            );
+            error!("Unable to load glyph for {} of size {:?} from font {:?}, {:?}",
+                character, size, font_key, result);
             None
         }
     }
 
-    // Get the bounding box for a glyph, accounting for sub-pixel positioning.
-    fn get_bounding_box(
-        &self,
-        slot: FT_GlyphSlot,
-        font: &FontInstance,
-        glyph: &GlyphKey,
-    ) -> FT_BBox {
-        let mut cbox: FT_BBox = unsafe { mem::uninitialized() };
-
-        // Get the estimated bounding box from FT (control points).
-        unsafe {
-            FT_Outline_Get_CBox(&(*slot).outline, &mut cbox);
-
-            // For spaces and other non-printable characters, early out.
-            if (*slot).outline.n_contours == 0 {
-                return cbox;
-            }
-        }
-
-        // Convert the subpixel offset to floats.
-        let (dx, dy) = font.get_subpx_offset(glyph);
-
-        // Apply extra pixel of padding for subpixel AA, due to the filter.
-        let padding = match font.render_mode {
-            FontRenderMode::Subpixel => (self.lcd_extra_pixels * 64) as FT_Pos,
-            FontRenderMode::Alpha |
-            FontRenderMode::Mono |
-            FontRenderMode::Bitmap => 0 as FT_Pos,
-        };
-
-        // Offset the bounding box by subpixel positioning.
-        // Convert to 26.6 fixed point format for FT.
-        match font.subpx_dir {
-            SubpixelDirection::None => {}
-            SubpixelDirection::Horizontal => {
-                let dx = (dx * 64.0 + 0.5) as FT_Long;
-                cbox.xMin += dx - padding;
-                cbox.xMax += dx + padding;
-            }
-            SubpixelDirection::Vertical => {
-                let dy = (dy * 64.0 + 0.5) as FT_Long;
-                cbox.yMin += dy - padding;
-                cbox.yMax += dy + padding;
-            }
-        }
-
-        // Outset the box to device pixel boundaries
-        cbox.xMin &= !63;
-        cbox.yMin &= !63;
-        cbox.xMax = (cbox.xMax + 63) & !63;
-        cbox.yMax = (cbox.yMax + 63) & !63;
-
-        cbox
-    }
-
-    fn get_glyph_dimensions_impl(
-        &self,
-        slot: FT_GlyphSlot,
-        font: &FontInstance,
-        glyph: &GlyphKey,
-        scale_bitmaps: bool,
-    ) -> Option<GlyphDimensions> {
+    fn get_glyph_dimensions_impl(slot: FT_GlyphSlot) -> Option<GlyphDimensions> {
         let metrics = unsafe { &(*slot).metrics };
-
-        let advance = metrics.horiAdvance as f32 / 64.0;
-        match unsafe { (*slot).format } {
-            FT_Glyph_Format::FT_GLYPH_FORMAT_BITMAP => {
-                let left = unsafe { (*slot).bitmap_left };
-                let top = unsafe { (*slot).bitmap_top };
-                let width = unsafe { (*slot).bitmap.width };
-                let height = unsafe { (*slot).bitmap.rows };
-                if scale_bitmaps {
-                    let y_size = unsafe { (*(*(*slot).face).size).metrics.y_ppem };
-                    let scale = font.size.to_f32_px() / y_size as f32;
-                    let x0 = left as f32 * scale;
-                    let x1 = width as f32 * scale + x0;
-                    let y1 = top as f32 * scale;
-                    let y0 = y1 - height as f32 * scale;
-                    Some(GlyphDimensions {
-                        left: x0.round() as i32,
-                        top: y1.round() as i32,
-                        width: (x1.ceil() - x0.floor()) as u32,
-                        height: (y1.ceil() - y0.floor()) as u32,
-                        advance: advance * scale,
-                    })
-                } else {
-                    Some(GlyphDimensions {
-                        left,
-                        top,
-                        width,
-                        height,
-                        advance,
-                    })
-                }
-            }
-            FT_Glyph_Format::FT_GLYPH_FORMAT_OUTLINE => {
-                let cbox = self.get_bounding_box(slot, font, glyph);
-                Some(GlyphDimensions {
-                    left: (cbox.xMin >> 6) as i32,
-                    top: (cbox.yMax >> 6) as i32,
-                    width: ((cbox.xMax - cbox.xMin) >> 6) as u32,
-                    height: ((cbox.yMax - cbox.yMin) >> 6) as u32,
-                    advance,
-                })
-            }
-            _ => None,
+        if metrics.width == 0 || metrics.height == 0 {
+            None
+        } else {
+            let left = metrics.horiBearingX >> 6;
+            let top = metrics.horiBearingY >> 6;
+            let right = (metrics.horiBearingX + metrics.width + 0x3f) >> 6;
+            let bottom = (metrics.horiBearingY + metrics.height + 0x3f) >> 6;
+            Some(GlyphDimensions {
+                left: left as i32,
+                top: top as i32,
+                width: (right - left) as u32,
+                height: (bottom - top) as u32,
+                advance: metrics.horiAdvance as f32 / 64.0,
+            })
         }
     }
 
     pub fn get_glyph_index(&mut self, font_key: FontKey, ch: char) -> Option<u32> {
-        let face = self.faces.get(&font_key).expect("Unknown font key!");
+        let face = self.faces
+                       .get(&font_key)
+                       .expect("Unknown font key!");
         unsafe {
             let idx = FT_Get_Char_Index(face.face, ch as _);
             if idx != 0 {
@@ -335,276 +174,120 @@ impl FontContext {
         }
     }
 
-    pub fn get_glyph_dimensions(
-        &mut self,
-        font: &FontInstance,
-        key: &GlyphKey,
-    ) -> Option<GlyphDimensions> {
-        let slot = self.load_glyph(font, key);
-        slot.and_then(|slot| self.get_glyph_dimensions_impl(slot, font, key, true))
+    pub fn get_glyph_dimensions(&mut self,
+                                font: &FontInstanceKey,
+                                key: &GlyphKey) -> Option<GlyphDimensions> {
+        self.load_glyph(font.font_key,
+                        font.size,
+                        key.index)
+            .and_then(Self::get_glyph_dimensions_impl)
     }
 
-    pub fn is_bitmap_font(&mut self, font: &FontInstance) -> bool {
-        debug_assert!(self.faces.contains_key(&font.font_key));
-        let face = self.faces.get(&font.font_key).unwrap();
-        let face_flags = unsafe { (*face.face).face_flags };
-        // If the face has embedded bitmaps, they should only be used if either
-        // embedded bitmaps are explicitly requested or if the face has no outline.
-        if (face_flags & (FT_FACE_FLAG_FIXED_SIZES as FT_Long)) != 0 {
-            let FontInstancePlatformOptions { flags, .. } = font.platform_options.unwrap_or_default();
-            if (flags & FONT_EMBEDDED_BITMAP) != 0 {
-                return true;
-            }
-            (face_flags & (FT_FACE_FLAG_SCALABLE as FT_Long)) == 0
-        } else {
-            false
-        }
-    }
+    pub fn rasterize_glyph(&mut self,
+                           font: &FontInstanceKey,
+                           key: &GlyphKey)
+                           -> Option<RasterizedGlyph> {
 
-    fn choose_bitmap_size(&self, face: FT_Face, requested_size: f64) -> FT_Error {
-        let mut best_dist = unsafe { *(*face).available_sizes.offset(0) }.y_ppem as f64 / 64.0 - requested_size;
-        let mut best_size = 0;
-        let num_fixed_sizes = unsafe { (*face).num_fixed_sizes };
-        for i in 1 .. num_fixed_sizes {
-            // Distance is positive if strike is larger than desired size,
-            // or negative if smaller. If previously a found smaller strike,
-            // then prefer a larger strike. Otherwise, minimize distance.
-            let dist = unsafe { *(*face).available_sizes.offset(i as isize) }.y_ppem as f64 / 64.0 - requested_size;
-            if (best_dist < 0.0 && dist >= best_dist) || dist.abs() <= best_dist {
-                best_dist = dist;
-                best_size = i;
-            }
-        }
-        unsafe { FT_Select_Size(face, best_size) }
-    }
-
-    pub fn has_gamma_correct_subpixel_aa() -> bool {
-        // We don't do any preblending with FreeType currently, so the color is not used.
-        false
-    }
-
-    fn rasterize_glyph_outline(
-        &mut self,
-        slot: FT_GlyphSlot,
-        font: &FontInstance,
-        key: &GlyphKey,
-    ) -> bool {
-        // Get the subpixel offsets in FT 26.6 format.
-        let (dx, dy) = font.get_subpx_offset(key);
-        let dx = (dx * 64.0 + 0.5) as FT_Long;
-        let dy = (dy * 64.0 + 0.5) as FT_Long;
-
-        // Move the outline curves to be at the origin, taking
-        // into account the subpixel positioning.
-        unsafe {
-            let outline = &(*slot).outline;
-            let mut cbox: FT_BBox = mem::uninitialized();
-            FT_Outline_Get_CBox(outline, &mut cbox);
-            FT_Outline_Translate(
-                outline,
-                dx - ((cbox.xMin + dx) & !63),
-                dy - ((cbox.yMin + dy) & !63),
-            );
-
-            if font.synthetic_italics {
-                FT_GlyphSlot_Oblique(slot);
-            }
-        }
-
-        if font.render_mode == FontRenderMode::Subpixel {
-            let FontInstancePlatformOptions { lcd_filter, .. } = font.platform_options.unwrap_or_default();
-            let filter = match lcd_filter {
-                FontLCDFilter::None => FT_LcdFilter::FT_LCD_FILTER_NONE,
-                FontLCDFilter::Default => FT_LcdFilter::FT_LCD_FILTER_DEFAULT,
-                FontLCDFilter::Light => FT_LcdFilter::FT_LCD_FILTER_LIGHT,
-                FontLCDFilter::Legacy => FT_LcdFilter::FT_LCD_FILTER_LEGACY,
-            };
-            unsafe { FT_Library_SetLcdFilter(self.lib, filter) };
-        }
-        let render_mode = match (font.render_mode, font.subpx_dir) {
-            (FontRenderMode::Mono, _) => FT_Render_Mode::FT_RENDER_MODE_MONO,
-            (FontRenderMode::Alpha, _) | (FontRenderMode::Bitmap, _) => FT_Render_Mode::FT_RENDER_MODE_NORMAL,
-            (FontRenderMode::Subpixel, SubpixelDirection::Vertical) => FT_Render_Mode::FT_RENDER_MODE_LCD_V,
-            (FontRenderMode::Subpixel, _) => FT_Render_Mode::FT_RENDER_MODE_LCD,
-        };
-        let result = unsafe { FT_Render_Glyph(slot, render_mode) };
-        if !result.succeeded() {
-            error!(
-                "Unable to rasterize {:?} with {:?}, {:?}",
-                key,
-                render_mode,
-                result
-            );
-            false
-        } else {
-            true
-        }
-    }
-
-    pub fn rasterize_glyph(
-        &mut self,
-        font: &FontInstance,
-        key: &GlyphKey,
-    ) -> Option<RasterizedGlyph> {
-        let slot = match self.load_glyph(font, key) {
+        let slot = match self.load_glyph(font.font_key,
+                                         font.size,
+                                         key.index) {
             Some(slot) => slot,
             None => return None,
         };
+        let render_mode = match font.render_mode {
+            FontRenderMode::Mono => FT_Render_Mode::FT_RENDER_MODE_MONO,
+            FontRenderMode::Alpha => FT_Render_Mode::FT_RENDER_MODE_NORMAL,
+            FontRenderMode::Subpixel => FT_Render_Mode::FT_RENDER_MODE_LCD,
+        };
 
-        // Get dimensions of the glyph, to see if we need to rasterize it.
-        let dimensions = match self.get_glyph_dimensions_impl(slot, font, key, false) {
+        let result = unsafe { FT_Render_Glyph(slot, render_mode) };
+        if result != SUCCESS {
+            error!("Unable to rasterize {:?} with {:?}, {:?}", key, render_mode, result);
+            return None;
+        }
+
+        let dimensions = match Self::get_glyph_dimensions_impl(slot) {
             Some(val) => val,
             None => return None,
         };
 
-        // For spaces and other non-printable characters, early out.
-        if dimensions.width == 0 || dimensions.height == 0 {
-            return None;
-        }
-
-        let format = unsafe { (*slot).format };
-        let mut scale = 1.0;
-        match format {
-            FT_Glyph_Format::FT_GLYPH_FORMAT_BITMAP => {
-                let y_size = unsafe { (*(*(*slot).face).size).metrics.y_ppem };
-                scale = font.size.to_f32_px() / y_size as f32;
-            }
-            FT_Glyph_Format::FT_GLYPH_FORMAT_OUTLINE => {
-                if !self.rasterize_glyph_outline(slot, font, key) {
-                    return None;
-                }
-            }
-            _ => {
-                error!("Unsupported {:?}", format);
-                return None;
-            }
-        }
-
         let bitmap = unsafe { &(*slot).bitmap };
         let pixel_mode = unsafe { mem::transmute(bitmap.pixel_mode as u32) };
-        info!(
-            "Rasterizing {:?} as {:?} with dimensions {:?}",
-            key,
-            font.render_mode,
-            dimensions
-        );
+        info!("Rasterizing {:?} as {:?} with dimensions {:?}", key, render_mode, dimensions);
+        // we may be filling only a part of the buffer, so initialize the whole thing with 0
+        let mut final_buffer = Vec::with_capacity(dimensions.width as usize *
+                                                  dimensions.height as usize *
+                                                  4);
 
-        let (actual_width, actual_height) = match pixel_mode {
+        let offset_x = dimensions.left - unsafe { (*slot).bitmap_left };
+        let src_pixel_width = match pixel_mode {
             FT_Pixel_Mode::FT_PIXEL_MODE_LCD => {
                 assert!(bitmap.width % 3 == 0);
-                ((bitmap.width / 3) as i32, bitmap.rows as i32)
-            }
-            FT_Pixel_Mode::FT_PIXEL_MODE_LCD_V => {
-                assert!(bitmap.rows % 3 == 0);
-                (bitmap.width as i32, (bitmap.rows / 3) as i32)
-            }
-            FT_Pixel_Mode::FT_PIXEL_MODE_MONO | FT_Pixel_Mode::FT_PIXEL_MODE_GRAY | FT_Pixel_Mode::FT_PIXEL_MODE_BGRA => {
-                (bitmap.width as i32, bitmap.rows as i32)
-            }
-            _ => panic!("Unsupported {:?}", pixel_mode),
+                bitmap.width / 3
+            },
+            _ => bitmap.width,
         };
-        let (left, top) = unsafe { ((*slot).bitmap_left, (*slot).bitmap_top) };
-        let mut final_buffer = vec![0; (actual_width * actual_height * 4) as usize];
+        // determine the destination range of texels that `bitmap` provides data for
+        let dst_start = cmp::max(0, -offset_x);
+        let dst_end = cmp::min(dimensions.width as i32, src_pixel_width as i32 - offset_x);
 
-        // Extract the final glyph from FT format into RGBA8 format, which is
-        // what WR expects.
-        let FontInstancePlatformOptions { flags, .. } = font.platform_options.unwrap_or_default();
-        let subpixel_bgr = (flags & FONT_SUBPIXEL_BGR) != 0;
-        let mut src_row = bitmap.buffer;
-        let mut dest: usize = 0;
-        while dest < final_buffer.len() {
-            let mut src = src_row;
-            let row_end = dest + actual_width as usize * 4;
+        for y in 0 .. dimensions.height {
+            let src_y = y as i32 - dimensions.top + unsafe { (*slot).bitmap_top };
+            if src_y < 0 || src_y >= bitmap.rows as i32 {
+                for _x in 0 .. dimensions.width {
+                    final_buffer.extend_from_slice(&[0xff, 0xff, 0xff, 0]);
+                }
+                continue
+            }
+            let base = unsafe {
+                bitmap.buffer.offset((src_y * bitmap.pitch) as isize)
+            };
+            for _x in 0 .. dst_start {
+                final_buffer.extend_from_slice(&[0xff, 0xff, 0xff, 0]);
+            }
             match pixel_mode {
                 FT_Pixel_Mode::FT_PIXEL_MODE_MONO => {
-                    while dest < row_end {
-                        // Cast the byte to signed so that we can left shift each bit into
-                        // the top bit, then right shift to fill out the bits with 0s or 1s.
-                        let mut byte: i8 = unsafe { *src as i8 };
-                        src = unsafe { src.offset(1) };
-                        let byte_end = cmp::min(row_end, dest + 8 * 4);
-                        while dest < byte_end {
-                            let alpha = (byte >> 7) as u8;
-                            final_buffer[dest + 0] = alpha;
-                            final_buffer[dest + 1] = alpha;
-                            final_buffer[dest + 2] = alpha;
-                            final_buffer[dest + 3] = alpha;
-                            dest += 4;
-                            byte <<= 1;
-                        }
+                    for x in dst_start .. dst_end {
+                        let src_x = x + offset_x;
+                        let mask = 0x80 >> (src_x & 0x7);
+                        let byte = unsafe {
+                            *base.offset((src_x >> 3) as isize)
+                        };
+                        let alpha = if byte & mask != 0 { 0xff } else { 0 };
+                        final_buffer.extend_from_slice(&[0xff, 0xff, 0xff, alpha]);
                     }
                 }
                 FT_Pixel_Mode::FT_PIXEL_MODE_GRAY => {
-                    while dest < row_end {
-                        let alpha = unsafe { *src };
-                        final_buffer[dest + 0] = alpha;
-                        final_buffer[dest + 1] = alpha;
-                        final_buffer[dest + 2] = alpha;
-                        final_buffer[dest + 3] = alpha;
-                        src = unsafe { src.offset(1) };
-                        dest += 4;
+                    for x in dst_start .. dst_end {
+                        let alpha = unsafe {
+                            *base.offset((x + offset_x) as isize)
+                        };
+                        final_buffer.extend_from_slice(&[0xff, 0xff, 0xff, alpha]);
                     }
                 }
                 FT_Pixel_Mode::FT_PIXEL_MODE_LCD => {
-                    if subpixel_bgr {
-                        while dest < row_end {
-                            final_buffer[dest + 0] = unsafe { *src };
-                            final_buffer[dest + 1] = unsafe { *src.offset(1) };
-                            final_buffer[dest + 2] = unsafe { *src.offset(2) };
-                            final_buffer[dest + 3] = 0xff;
-                            src = unsafe { src.offset(3) };
-                            dest += 4;
-                        }
-                    } else {
-                        while dest < row_end {
-                            final_buffer[dest + 2] = unsafe { *src };
-                            final_buffer[dest + 1] = unsafe { *src.offset(1) };
-                            final_buffer[dest + 0] = unsafe { *src.offset(2) };
-                            final_buffer[dest + 3] = 0xff;
-                            src = unsafe { src.offset(3) };
-                            dest += 4;
-                        }
+                    for x in dst_start .. dst_end {
+                        let src_x = ((x + offset_x) * 3) as isize;
+                        assert!(src_x+2 < bitmap.pitch as isize);
+                        let t = unsafe {
+                            slice::from_raw_parts(base.offset(src_x), 3)
+                        };
+                        final_buffer.extend_from_slice(&[t[2], t[1], t[0], 0xff]);
                     }
                 }
-                FT_Pixel_Mode::FT_PIXEL_MODE_LCD_V => {
-                    if subpixel_bgr {
-                        while dest < row_end {
-                            final_buffer[dest + 0] = unsafe { *src };
-                            final_buffer[dest + 1] = unsafe { *src.offset(bitmap.pitch as isize) };
-                            final_buffer[dest + 2] = unsafe { *src.offset((2 * bitmap.pitch) as isize) };
-                            final_buffer[dest + 3] = 0xff;
-                            src = unsafe { src.offset(1) };
-                            dest += 4;
-                        }
-                    } else {
-                        while dest < row_end {
-                            final_buffer[dest + 2] = unsafe { *src };
-                            final_buffer[dest + 1] = unsafe { *src.offset(bitmap.pitch as isize) };
-                            final_buffer[dest + 0] = unsafe { *src.offset((2 * bitmap.pitch) as isize) };
-                            final_buffer[dest + 3] = 0xff;
-                            src = unsafe { src.offset(1) };
-                            dest += 4;
-                        }
-                    }
-                    src_row = unsafe { src_row.offset((2 * bitmap.pitch) as isize) };
-                }
-                FT_Pixel_Mode::FT_PIXEL_MODE_BGRA => {
-                    // The source is premultiplied BGRA data.
-                    let dest_slice = &mut final_buffer[dest .. row_end];
-                    let src_slice = unsafe { slice::from_raw_parts(src, dest_slice.len()) };
-                    dest_slice.copy_from_slice(src_slice);
-                }
-                _ => panic!("Unsupported {:?}", pixel_mode),
+                _ => panic!("Unsupported {:?}", pixel_mode)
             }
-            src_row = unsafe { src_row.offset(bitmap.pitch as isize) };
+            for _x in dst_end .. dimensions.width as i32 {
+                final_buffer.extend_from_slice(&[0xff, 0xff, 0xff, 0]);
+            }
+            assert_eq!(final_buffer.len(), ((y+1) * dimensions.width * 4) as usize);
         }
 
         Some(RasterizedGlyph {
-            left: ((dimensions.left + left) as f32 * scale).round(),
-            top: ((dimensions.top + top - actual_height) as f32 * scale).round(),
-            width: actual_width as u32,
-            height: actual_height as u32,
-            scale,
+            left: dimensions.left as f32,
+            top: dimensions.top as f32,
+            width: dimensions.width as u32,
+            height: dimensions.height as u32,
             bytes: final_buffer,
         })
     }

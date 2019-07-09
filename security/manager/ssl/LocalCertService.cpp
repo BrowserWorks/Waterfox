@@ -303,8 +303,8 @@ private:
     }
 
     // Check that subject and issuer match nickname
-    nsAutoString subjectName;
-    nsAutoString issuerName;
+    nsXPIDLString subjectName;
+    nsXPIDLString issuerName;
     mCert->GetSubjectName(subjectName);
     mCert->GetIssuerName(issuerName);
     if (!subjectName.Equals(issuerName)) {

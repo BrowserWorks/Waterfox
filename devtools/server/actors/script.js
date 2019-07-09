@@ -28,13 +28,13 @@ loader.lazyGetter(this, "Debugger", () => {
 });
 loader.lazyRequireGetter(this, "CssLogic", "devtools/server/css-logic", true);
 loader.lazyRequireGetter(this, "findCssSelector", "devtools/shared/inspector/css-logic", true);
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "mapURIToAddonID", "devtools/server/actors/utils/map-uri-to-addon-id");
 loader.lazyRequireGetter(this, "BreakpointActor", "devtools/server/actors/breakpoint", true);
 loader.lazyRequireGetter(this, "setBreakpointAtEntryPoints", "devtools/server/actors/breakpoint", true);
 loader.lazyRequireGetter(this, "getSourceURL", "devtools/server/actors/source", true);
 loader.lazyRequireGetter(this, "EnvironmentActor", "devtools/server/actors/environment", true);
 loader.lazyRequireGetter(this, "FrameActor", "devtools/server/actors/frame", true);
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 
 /**
  * A BreakpointActorMap is a map from locations to instances of BreakpointActor.
@@ -452,7 +452,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     this.objectGrip = this.objectGrip.bind(this);
     this.pauseObjectGrip = this.pauseObjectGrip.bind(this);
     this._onWindowReady = this._onWindowReady.bind(this);
-    EventEmitter.on(this._parent, "window-ready", this._onWindowReady);
+    events.on(this._parent, "window-ready", this._onWindowReady);
     // Set a wrappedJSObject property so |this| can be sent via the observer svc
     // for the xpcshell harness.
     this.wrappedJSObject = this;
@@ -579,7 +579,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     // things like breakpoints across connections.
     this._sourceActorStore = null;
 
-    EventEmitter.off(this._parent, "window-ready", this._onWindowReady);
+    events.off(this._parent, "window-ready", this._onWindowReady);
     this.sources.off("newSource", this.onSourceEvent);
     this.sources.off("updatedSource", this.onSourceEvent);
     this.clearDebuggees();
@@ -775,9 +775,9 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     };
   },
 
-  _makeOnPop: function ({ thread, pauseAndRespond, createValueGrip: createValueGripHook,
-                          startLocation }) {
-    const result = function (completion) {
+  _makeOnPop: function (
+    { thread, pauseAndRespond, createValueGrip: createValueGripHook }) {
+    return function (completion) {
       // onPop is called with 'this' set to the current frame.
 
       const generatedLocation = thread.sources.getFrameLocation(this);
@@ -807,17 +807,6 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         return packet;
       });
     };
-
-    // When stepping out, we don't want to stop at a breakpoint that
-    // happened to be set exactly at the spot where we stepped out.
-    // See bug 970469.  We record the original location here and check
-    // it when a breakpoint is hit.  Furthermore we store this on the
-    // function because, while we could store it directly on the
-    // frame, if we did we'd also have to find the appropriate spot to
-    // clear it.
-    result.originalLocation = startLocation;
-
-    return result;
   },
 
   _makeOnStep: function ({ thread, pauseAndRespond, startFrame,

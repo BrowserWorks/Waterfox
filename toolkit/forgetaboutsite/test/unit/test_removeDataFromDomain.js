@@ -94,7 +94,7 @@ function check_cookie_exists(aDomain, aExists) {
     host: aDomain,
     name: COOKIE_NAME,
     path: COOKIE_PATH
-  };
+  }
   let checker = aExists ? do_check_true : do_check_false;
   checker(cm.cookieExists(cookie));
 }
@@ -502,7 +502,7 @@ async function test_push_cleared() {
 // Cache
 async function test_cache_cleared() {
   // Because this test is asynchronous, it should be the last test
-  do_check_true(tests[tests.length - 1] == test_cache_cleared);
+  do_check_true(tests[tests.length - 1] == arguments.callee);
 
   // NOTE: We could be more extensive with this test and actually add an entry
   //       to the cache, and then make sure it is gone.  However, we trust that

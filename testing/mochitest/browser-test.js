@@ -166,31 +166,24 @@ function Tester(aTests, structuredLogger, aCallback) {
 
   this._coverageCollector = null;
 
-  const XPCOMUtilsMod = Components.utils.import("resource://gre/modules/XPCOMUtils.jsm", {});
-
   // Avoid failing tests when XPCOMUtils.defineLazyScriptGetter is used.
-  XPCOMUtilsMod.Services = Object.create(Services, {
-    scriptloader: {
-      configurable: true,
-      writable: true,
-      value: {
-        loadSubScript: (url, obj, charset) => {
-          let before = Object.keys(window);
-          try {
-            return this._scriptLoader.loadSubScript(url, obj, charset);
-          } finally {
-            for (let property of Object.keys(window)) {
-              if (!before.includes(property) && !this._globalProperties.includes(property)) {
-                this._globalProperties.push(property);
-                this.SimpleTest.info("Global property added while loading " + url + ": " + property);
-              }
-            }
+  Services.scriptloader = {
+    loadSubScript: (url, obj, charset) => {
+      let before = Object.keys(window);
+      try {
+        return this._scriptLoader.loadSubScript(url, obj, charset);
+      } finally {
+        for (let property of Object.keys(window)) {
+          if (!before.includes(property) && !this._globalProperties.includes(property)) {
+            this._globalProperties.push(property);
+            this.SimpleTest.info("Global property added while loading " + url + ": " + property);
           }
-        },
-        loadSubScriptWithOptions: this._scriptLoader.loadSubScriptWithOptions.bind(this._scriptLoader),
-      },
+        }
+      }
     },
-  });
+    loadSubScriptWithOptions: this._scriptLoader.loadSubScriptWithOptions.bind(this._scriptLoader),
+    precompileScript: this._scriptLoader.precompileScript.bind(this._scriptLoader)
+  };
 }
 Tester.prototype = {
   EventUtils: {},
@@ -212,7 +205,7 @@ Tester.prototype = {
     return this.tests[this.currentTestIndex];
   },
   get done() {
-    return (this.currentTestIndex == this.tests.length - 1) && (this.repeat <= 0);
+    return this.currentTestIndex == this.tests.length - 1;
   },
 
   start: function Tester_start() {
@@ -336,34 +329,40 @@ Tester.prototype = {
     // Include failures from window state checking prior to running the first test
     failCount += this.failuresFromInitialWindowState;
 
-    TabDestroyObserver.destroy();
-    Services.console.unregisterListener(this);
-
-    // It's important to terminate the module to avoid crashes on shutdown.
-    this.PromiseTestUtils.uninit();
-
-    // In the main process, we print the ShutdownLeaksCollector message here.
-    let pid = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).processID;
-    dump("Completed ShutdownLeaks collections in process " + pid + "\n");
-
-    this.structuredLogger.info("TEST-START | Shutdown");
-
-    if (this.tests.length) {
-      let e10sMode = gMultiProcessBrowser ? "e10s" : "non-e10s";
-      this.structuredLogger.info("Browser Chrome Test Summary");
-      this.structuredLogger.info("Passed:  " + passCount);
-      this.structuredLogger.info("Failed:  " + failCount);
-      this.structuredLogger.info("Todo:    " + todoCount);
-      this.structuredLogger.info("Mode:    " + e10sMode);
+    if (this.repeat > 0) {
+      --this.repeat;
+      this.currentTestIndex = -1;
+      this.nextTest();
     } else {
-      this.structuredLogger.error("browser-test.js | No tests to run. Did you pass invalid test_paths?");
-    }
-    this.structuredLogger.info("*** End BrowserChrome Test Results ***");
+      TabDestroyObserver.destroy();
+      Services.console.unregisterListener(this);
 
-    // Tests complete, notify the callback and return
-    this.callback(this.tests);
-    this.callback = null;
-    this.tests = null;
+      // It's important to terminate the module to avoid crashes on shutdown.
+      this.PromiseTestUtils.uninit();
+
+      // In the main process, we print the ShutdownLeaksCollector message here.
+      let pid = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).processID;
+      dump("Completed ShutdownLeaks collections in process " + pid + "\n");
+
+      this.structuredLogger.info("TEST-START | Shutdown");
+
+      if (this.tests.length) {
+        let e10sMode = gMultiProcessBrowser ? "e10s" : "non-e10s";
+        this.structuredLogger.info("Browser Chrome Test Summary");
+        this.structuredLogger.info("Passed:  " + passCount);
+        this.structuredLogger.info("Failed:  " + failCount);
+        this.structuredLogger.info("Todo:    " + todoCount);
+        this.structuredLogger.info("Mode:    " + e10sMode);
+      } else {
+        this.structuredLogger.error("browser-test.js | No tests to run. Did you pass invalid test_paths?");
+      }
+      this.structuredLogger.info("*** End BrowserChrome Test Results ***");
+
+      // Tests complete, notify the callback and return
+      this.callback(this.tests);
+      this.callback = null;
+      this.tests = null;
+    }
   },
 
   haltTests: function Tester_haltTests() {
@@ -684,18 +683,8 @@ Tester.prototype = {
         return;
       }
 
-      if (this.repeat > 0) {
-        --this.repeat;
-        if (this.currentTestIndex < 0) {
-          this.currentTestIndex = 0;
-        }
-        this.execTest();
-      } else {
-        this.currentTestIndex++;
-        if (gConfig.repeat)
-          this.repeat = gConfig.repeat;
-        this.execTest();
-      }
+      this.currentTestIndex++;
+      this.execTest();
     });
   }),
 

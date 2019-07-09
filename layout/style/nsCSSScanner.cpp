@@ -543,51 +543,13 @@ nsCSSScanner::SkipWhitespace()
 }
 
 /**
- * If the given text appears at the current offset in the buffer,
- * advance over the text and return true.  Otherwise, return false.
- * mLength is the number of characters in mDirective.
- */
-bool
-nsCSSScanner::CheckCommentDirective(const nsAString& aDirective)
-{
-  nsDependentSubstring text(&mBuffer[mOffset], &mBuffer[mCount]);
-
-  if (StringBeginsWith(text, aDirective)) {
-    Advance(aDirective.Length());
-    return true;
-  }
-  return false;
-}
-
-/**
  * Skip over one CSS comment starting at the current read position.
  */
 void
 nsCSSScanner::SkipComment()
 {
-  // Note that these do not start with "#" or "@" -- that is handled
-  // separately, below.
-  static NS_NAMED_LITERAL_STRING(kSourceMappingURLDirective, " sourceMappingURL=");
-  static NS_NAMED_LITERAL_STRING(kSourceURLDirective, " sourceURL=");
-
   MOZ_ASSERT(Peek() == '/' && Peek(1) == '*', "should not have been called");
   Advance(2);
-
-  // If we saw one of the directives, this will be non-NULL and will
-  // point to the string into which the URL will be written.
-  nsString* directive = nullptr;
-  if (Peek() == '#' || Peek() == '@') {
-    // Check for the comment directives.
-    Advance();
-    if (CheckCommentDirective(kSourceMappingURLDirective)) {
-      mSourceMapURL.Truncate();
-      directive = &mSourceMapURL;
-    } else if (CheckCommentDirective(kSourceURLDirective)) {
-      mSourceURL.Truncate();
-      directive = &mSourceURL;
-    }
-  }
-
   for (;;) {
     int32_t ch = Peek();
     if (ch < 0) {
@@ -596,13 +558,10 @@ nsCSSScanner::SkipComment()
       SetEOFCharacters(eEOFCharacters_Asterisk | eEOFCharacters_Slash);
       return;
     }
-
     if (ch == '*') {
       Advance();
       ch = Peek();
       if (ch < 0) {
-        // In this case, even if we saw a source map directive, leave
-        // the "*" out of it.
         if (mReporter)
           mReporter->ReportUnexpectedEOF("PECommentEOF");
         SetEOFCharacters(eEOFCharacters_Slash);
@@ -612,21 +571,9 @@ nsCSSScanner::SkipComment()
         Advance();
         return;
       }
-      if (directive != nullptr) {
-        directive->Append('*');
-      }
     } else if (IsVertSpace(ch)) {
       AdvanceLine();
-      // Done with the directive, so stop copying.
-      directive = nullptr;
-    } else if (IsWhitespace(ch)) {
-      Advance();
-      // Done with the directive, so stop copying.
-      directive = nullptr;
     } else {
-      if (directive != nullptr) {
-        directive->Append(ch);
-      }
       Advance();
     }
   }

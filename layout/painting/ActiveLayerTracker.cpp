@@ -45,6 +45,10 @@ public:
     ACTIVITY_TOP,
     ACTIVITY_RIGHT,
     ACTIVITY_BOTTOM,
+    ACTIVITY_MARGIN_LEFT,
+    ACTIVITY_MARGIN_TOP,
+    ACTIVITY_MARGIN_RIGHT,
+    ACTIVITY_MARGIN_BOTTOM,
     ACTIVITY_BACKGROUND_POSITION,
 
     ACTIVITY_SCALE,
@@ -76,6 +80,10 @@ public:
     case eCSSProperty_top: return ACTIVITY_TOP;
     case eCSSProperty_right: return ACTIVITY_RIGHT;
     case eCSSProperty_bottom: return ACTIVITY_BOTTOM;
+    case eCSSProperty_margin_left: return ACTIVITY_MARGIN_LEFT;
+    case eCSSProperty_margin_top: return ACTIVITY_MARGIN_TOP;
+    case eCSSProperty_margin_right: return ACTIVITY_MARGIN_RIGHT;
+    case eCSSProperty_margin_bottom: return ACTIVITY_MARGIN_BOTTOM;
     case eCSSProperty_background_position: return ACTIVITY_BACKGROUND_POSITION;
     case eCSSProperty_background_position_x: return ACTIVITY_BACKGROUND_POSITION;
     case eCSSProperty_background_position_y: return ACTIVITY_BACKGROUND_POSITION;
@@ -441,14 +449,18 @@ ActiveLayerTracker::IsStyleAnimated(nsDisplayListBuilder* aBuilder,
 }
 
 /* static */ bool
-ActiveLayerTracker::IsOffsetStyleAnimated(nsIFrame* aFrame)
+ActiveLayerTracker::IsOffsetOrMarginStyleAnimated(nsIFrame* aFrame)
 {
   LayerActivity* layerActivity = GetLayerActivity(aFrame);
   if (layerActivity) {
     if (layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_LEFT] >= 2 ||
         layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_TOP] >= 2 ||
         layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_RIGHT] >= 2 ||
-        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_BOTTOM] >= 2) {
+        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_BOTTOM] >= 2 ||
+        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_MARGIN_LEFT] >= 2 ||
+        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_MARGIN_TOP] >= 2 ||
+        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_MARGIN_RIGHT] >= 2 ||
+        layerActivity->mRestyleCounts[LayerActivity::ACTIVITY_MARGIN_BOTTOM] >= 2) {
       return true;
     }
   }

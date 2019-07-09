@@ -17,11 +17,6 @@
 #include <float.h>
 
 namespace mozilla {
-  struct AudioChunk;
-}
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::AudioChunk)
-
-namespace mozilla {
 
 template<typename T>
 class SharedChannelArrayBuffer : public ThreadSharedObject {
@@ -150,6 +145,8 @@ DownmixAndInterleave(const nsTArray<const SrcT*>& aChannelData,
 struct AudioChunk {
   typedef mozilla::AudioSampleFormat SampleFormat;
 
+  AudioChunk() : mPrincipalHandle(PRINCIPAL_HANDLE_NONE) {}
+
   // Generic methods
   void SliceTo(StreamTime aStart, StreamTime aEnd)
   {
@@ -224,40 +221,25 @@ struct AudioChunk {
   }
 
   template<typename T>
-  const nsTArray<const T*>& ChannelData() const
+  const nsTArray<const T*>& ChannelData()
   {
     MOZ_ASSERT(AudioSampleTypeToFormat<T>::Format == mBufferFormat);
-    return *reinterpret_cast<const AutoTArray<const T*,GUESS_AUDIO_CHANNELS>*>
-      (&mChannelData);
-  }
-
-  /**
-   * ChannelFloatsForWrite() should be used only when mBuffer is owned solely
-   * by the calling thread.
-   */
-  template<typename T>
-  T* ChannelDataForWrite(size_t aChannel)
-  {
-    MOZ_ASSERT(AudioSampleTypeToFormat<T>::Format == mBufferFormat);
-    MOZ_ASSERT(!mBuffer->IsShared());
-    return static_cast<T*>(const_cast<void*>(mChannelData[aChannel]));
+    return *reinterpret_cast<nsTArray<const T*>*>(&mChannelData);
   }
 
   PrincipalHandle GetPrincipalHandle() const { return mPrincipalHandle; }
 
-  StreamTime mDuration = 0; // in frames within the buffer
+  StreamTime mDuration; // in frames within the buffer
   RefPtr<ThreadSharedObject> mBuffer; // the buffer object whose lifetime is managed; null means data is all zeroes
-  // one pointer per channel; empty if and only if mBuffer is null
-  AutoTArray<const void*,GUESS_AUDIO_CHANNELS> mChannelData;
-  float mVolume = 1.0f; // volume multiplier to apply
-  // format of frames in mBuffer (or silence if mBuffer is null)
-  SampleFormat mBufferFormat = AUDIO_FORMAT_SILENCE;
+  nsTArray<const void*> mChannelData; // one pointer per channel; empty if and only if mBuffer is null
+  float mVolume; // volume multiplier to apply (1.0f if mBuffer is nonnull)
+  SampleFormat mBufferFormat; // format of frames in mBuffer (only meaningful if mBuffer is nonnull)
 #ifdef MOZILLA_INTERNAL_API
   mozilla::TimeStamp mTimeStamp;           // time at which this has been fetched from the MediaEngine
 #endif
   // principalHandle for the data in this chunk.
   // This can be compared to an nsIPrincipal* when back on main thread.
-  PrincipalHandle mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
+  PrincipalHandle mPrincipalHandle;
 };
 
 /**
@@ -269,15 +251,6 @@ public:
   typedef mozilla::AudioSampleFormat SampleFormat;
 
   AudioSegment() : MediaSegmentBase<AudioSegment, AudioChunk>(AUDIO) {}
-
-  AudioSegment(AudioSegment&& aSegment)
-    : MediaSegmentBase<AudioSegment, AudioChunk>(Move(aSegment))
-  {}
-
-  AudioSegment(const AudioSegment&)=delete;
-  AudioSegment& operator= (const AudioSegment&)=delete;
-
-  ~AudioSegment() {}
 
   // Resample the whole segment in place.
   template<typename T>
@@ -343,6 +316,7 @@ public:
     for (uint32_t channel = 0; channel < aChannelData.Length(); ++channel) {
       chunk->mChannelData.AppendElement(aChannelData[channel]);
     }
+    chunk->mVolume = 1.0f;
     chunk->mBufferFormat = AUDIO_FORMAT_FLOAT32;
 #ifdef MOZILLA_INTERNAL_API
     chunk->mTimeStamp = TimeStamp::Now();
@@ -358,6 +332,7 @@ public:
     for (uint32_t channel = 0; channel < aChannelData.Length(); ++channel) {
       chunk->mChannelData.AppendElement(aChannelData[channel]);
     }
+    chunk->mVolume = 1.0f;
     chunk->mBufferFormat = AUDIO_FORMAT_S16;
 #ifdef MOZILLA_INTERNAL_API
     chunk->mTimeStamp = TimeStamp::Now();
@@ -401,6 +376,16 @@ public:
       }
     }
     return 0;
+  }
+
+  bool IsNull() const {
+    for (ChunkIterator ci(*const_cast<AudioSegment*>(this)); !ci.IsEnded();
+         ci.Next()) {
+      if (!ci->IsNull()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static Type StaticType() { return AUDIO; }

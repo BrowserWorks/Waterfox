@@ -6,11 +6,10 @@ Object.prototype.localeMatcher = "invalid matcher option";
 
 // The Intl API may not be available in the testing environment.
 if (this.hasOwnProperty("Intl")) {
-    // Intl constructors still work perfectly fine. The default options object doesn't inherit
-    // from Object.prototype and the invalid "localeMatcher" value from Object.prototype isn't
-    // consulted.
-    new Intl.Collator().compare("a", "b");
-    new Intl.NumberFormat().format(10);
+    // Intl constructors no longer work properly, because "localeMatcher" defaults to the invalid
+    // value from Object.prototype. Except for Intl.DateTimeFormat, cf. ECMA-402 ToDateTimeOptions.
+    assertThrowsInstanceOf(() => new Intl.Collator(), RangeError);
+    assertThrowsInstanceOf(() => new Intl.NumberFormat(), RangeError);
     new Intl.DateTimeFormat().format(new Date);
 
     // If an explicit "localeMatcher" option is given, the default from Object.prototype is ignored.
@@ -20,7 +19,7 @@ if (this.hasOwnProperty("Intl")) {
 
     delete Object.prototype.localeMatcher;
 
-    // After removing the default option from Object.prototype, everything still works as expected.
+    // After removing the default option from Object.prototype, everything works again as expected.
     new Intl.Collator().compare("a", "b");
     new Intl.NumberFormat().format(10);
     new Intl.DateTimeFormat().format(new Date);

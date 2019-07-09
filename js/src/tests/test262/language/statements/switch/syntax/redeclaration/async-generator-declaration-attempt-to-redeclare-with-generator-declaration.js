@@ -1,11 +1,11 @@
-// |reftest| error:SyntaxError
+// |reftest| skip-if(release_or_beta) error:SyntaxError -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/declarations/redeclare-with-generator-declaration.case
 // - src/declarations/redeclare/switch-attempt-to-redeclare-async-generator-declaration.template
 /*---
 description: redeclaration with GeneratorDeclaration (AsyncGeneratorDeclaration in SwitchStatement)
 esid: sec-switch-statement-static-semantics-early-errors
-features: [generators, async-iteration]
+features: [async-iteration]
 flags: [generated]
 negative:
   phase: early
@@ -18,7 +18,5 @@ info: |
 
 ---*/
 
-
-throw "Test262: This statement should not be evaluated.";
 
 switch (0) { case 1: async function* f() {} default: function* f() {} }

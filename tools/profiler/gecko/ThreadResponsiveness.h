@@ -7,7 +7,6 @@
 #define ThreadResponsiveness_h
 
 #include "nsISupports.h"
-#include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TimeStamp.h"
 
@@ -22,20 +21,16 @@ public:
 
   void Update();
 
-  // The number of milliseconds that elapsed since the last
-  // CheckResponsivenessTask was processed.
-  double GetUnresponsiveDuration(double aStartToNow_ms) const {
-    return aStartToNow_ms - *mStartToPrevTracer_ms;
+  mozilla::TimeDuration GetUnresponsiveDuration(const mozilla::TimeStamp& now) const {
+    return now - mLastTracerTime;
   }
 
   bool HasData() const {
-    return mStartToPrevTracer_ms.isSome();
+    return !mLastTracerTime.IsNull();
   }
 private:
   RefPtr<CheckResponsivenessTask> mActiveTracerEvent;
-  // The time at which the last CheckResponsivenessTask was processed, in
-  // milliseconds since process start (i.e. what you get from profiler_time()).
-  mozilla::Maybe<double> mStartToPrevTracer_ms;
+  mozilla::TimeStamp mLastTracerTime;
 };
 
 #endif

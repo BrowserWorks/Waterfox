@@ -11,7 +11,6 @@
 #include "mozilla/layers/WebRenderImageHost.h"
 #include "mozilla/layers/WebRenderTextureHost.h"
 #include "mozilla/webrender/WebRenderAPI.h"
-#include "mozilla/webrender/WebRenderTypes.h"
 
 namespace mozilla {
 namespace layers {
@@ -24,9 +23,8 @@ AsyncImagePipelineManager::AsyncImagePipeline::AsyncImagePipeline()
  , mMixBlendMode(wr::MixBlendMode::Normal)
 {}
 
-AsyncImagePipelineManager::AsyncImagePipelineManager(already_AddRefed<wr::WebRenderAPI>&& aApi)
- : mApi(aApi)
- , mIdNamespace(mApi->GetNamespace())
+AsyncImagePipelineManager::AsyncImagePipelineManager(wr::IdNamespace aIdNamespace)
+ : mIdNamespace(aIdNamespace)
  , mResourceId(0)
  , mAsyncImageEpoch(0)
  , mDestroyed(false)
@@ -40,11 +38,25 @@ AsyncImagePipelineManager::~AsyncImagePipelineManager()
 }
 
 void
-AsyncImagePipelineManager::Destroy()
+AsyncImagePipelineManager::Destroy(wr::WebRenderAPI* aApi)
 {
-  MOZ_ASSERT(!mDestroyed);
-  mApi = nullptr;
+  DeleteOldAsyncImages(aApi);
   mDestroyed = true;
+}
+
+bool
+AsyncImagePipelineManager::HasKeysToDelete()
+{
+  return !mKeysToDelete.IsEmpty();
+}
+
+void
+AsyncImagePipelineManager::DeleteOldAsyncImages(wr::WebRenderAPI* aApi)
+{
+  for (wr::ImageKey key : mKeysToDelete) {
+    aApi->DeleteImage(key);
+  }
+  mKeysToDelete.Clear();
 }
 
 void
@@ -99,7 +111,7 @@ AsyncImagePipelineManager::AddAsyncImagePipeline(const wr::PipelineId& aPipeline
 }
 
 void
-AsyncImagePipelineManager::RemoveAsyncImagePipeline(const wr::PipelineId& aPipelineId)
+AsyncImagePipelineManager::RemoveAsyncImagePipeline(wr::WebRenderAPI* aApi, const wr::PipelineId& aPipelineId)
 {
   if (mDestroyed) {
     return;
@@ -109,12 +121,10 @@ AsyncImagePipelineManager::RemoveAsyncImagePipeline(const wr::PipelineId& aPipel
   if (auto entry = mAsyncImagePipelines.Lookup(id)) {
     AsyncImagePipeline* holder = entry.Data();
     ++mAsyncImageEpoch; // Update webrender epoch
-    mApi->ClearDisplayList(wr::NewEpoch(mAsyncImageEpoch), aPipelineId);
-    wr::ResourceUpdateQueue resources;
+    aApi->ClearRootDisplayList(wr::NewEpoch(mAsyncImageEpoch), aPipelineId);
     for (wr::ImageKey key : holder->mKeys) {
-      resources.DeleteImage(key);
+      aApi->DeleteImage(key);
     }
-    mApi->UpdateResources(resources);
     entry.Remove();
     RemovePipeline(aPipelineId, wr::NewEpoch(mAsyncImageEpoch));
   }
@@ -122,7 +132,7 @@ AsyncImagePipelineManager::RemoveAsyncImagePipeline(const wr::PipelineId& aPipel
 
 void
 AsyncImagePipelineManager::UpdateAsyncImagePipeline(const wr::PipelineId& aPipelineId,
-                                                    const LayoutDeviceRect& aScBounds,
+                                                    const LayerRect& aScBounds,
                                                     const gfx::Matrix4x4& aScTransform,
                                                     const gfx::MaybeIntSize& aScaleToSize,
                                                     const wr::ImageRendering& aFilter,
@@ -144,112 +154,92 @@ AsyncImagePipelineManager::UpdateAsyncImagePipeline(const wr::PipelineId& aPipel
   pipeline->mMixBlendMode = aMixBlendMode;
 }
 
-Maybe<TextureHost::ResourceUpdateOp>
-AsyncImagePipelineManager::UpdateImageKeys(wr::ResourceUpdateQueue& aResources,
-                                           AsyncImagePipeline* aPipeline,
-                                           nsTArray<wr::ImageKey>& aKeys)
+bool
+AsyncImagePipelineManager::GenerateImageKeyForTextureHost(wr::WebRenderAPI* aApi, TextureHost* aTexture, nsTArray<wr::ImageKey>& aKeys)
 {
   MOZ_ASSERT(aKeys.IsEmpty());
-  MOZ_ASSERT(aPipeline);
-  if (!aPipeline->mInitialised) {
-    return Nothing();
-  }
-
-  TextureHost* texture = aPipeline->mImageHost->GetAsTextureHostForComposite();
-  TextureHost* previousTexture = aPipeline->mCurrentTexture.get();
-
-  if (!aPipeline->mIsChanged && texture == previousTexture) {
-    // The texture has not changed, just reuse previous ImageKeys.
-    // No need to update DisplayList.
-    return Nothing();
-  }
-
-  if (!texture) {
-    // We don't have a new texture, there isn't much we can do.
-    return Nothing();
-  }
-
-  aPipeline->mIsChanged = false;
-  aPipeline->mCurrentTexture = texture;
-
-  WebRenderTextureHost* wrTexture = texture->AsWebRenderTextureHost();
-
-  bool useExternalImage = !gfxEnv::EnableWebRenderRecording() && wrTexture;
-  aPipeline->mUseExternalImage = useExternalImage;
-
-  // The non-external image code path falls back to converting the texture into
-  // an rgb image.
-  auto numKeys = useExternalImage ? texture->NumSubTextures() : 1;
-
-  // If we already had a texture and the format hasn't changed, better to reuse the image keys
-  // than create new ones.
-  bool canUpdate = !!previousTexture
-                   && previousTexture->GetFormat() == texture->GetFormat()
-                   && aPipeline->mKeys.Length() == numKeys;
-
-  if (!canUpdate) {
-    for (auto key : aPipeline->mKeys) {
-      aResources.DeleteImage(key);
-    }
-    aPipeline->mKeys.Clear();
-    for (uint32_t i = 0; i < numKeys; ++i) {
-      aPipeline->mKeys.AppendElement(GenerateImageKey());
-    }
-  }
-
-  aKeys = aPipeline->mKeys;
-
-  auto op = canUpdate ? TextureHost::UPDATE_IMAGE : TextureHost::ADD_IMAGE;
-
-  if (!useExternalImage) {
-    return UpdateWithoutExternalImage(aResources, texture, aKeys[0], op);
-  }
-
-  Range<wr::ImageKey> keys(&aKeys[0], aKeys.Length());
-  wrTexture->PushResourceUpdates(aResources, op, keys, wrTexture->GetExternalImageKey());
-
-  return Some(op);
-}
-
-Maybe<TextureHost::ResourceUpdateOp>
-AsyncImagePipelineManager::UpdateWithoutExternalImage(wr::ResourceUpdateQueue& aResources,
-                                                      TextureHost* aTexture,
-                                                      wr::ImageKey aKey,
-                                                      TextureHost::ResourceUpdateOp aOp)
-{
   MOZ_ASSERT(aTexture);
 
-  RefPtr<gfx::DataSourceSurface> dSurf = aTexture->GetAsSurface();
-  if (!dSurf) {
-    NS_ERROR("TextureHost does not return DataSourceSurface");
-    return Nothing();
-  }
-  gfx::DataSourceSurface::MappedSurface map;
-  if (!dSurf->Map(gfx::DataSourceSurface::MapType::READ, &map)) {
-    NS_ERROR("DataSourceSurface failed to map");
-    return Nothing();
-  }
+  WebRenderTextureHost* wrTexture = aTexture->AsWebRenderTextureHost();
 
-  gfx::IntSize size = dSurf->GetSize();
-  wr::ImageDescriptor descriptor(size, map.mStride, dSurf->GetFormat());
-
-  // Costly copy right here...
-  wr::Vec_u8 bytes;
-  bytes.PushBytes(Range<uint8_t>(map.mData, size.height * map.mStride));
-
-  if (aOp == TextureHost::UPDATE_IMAGE) {
-    aResources.UpdateImageBuffer(aKey, descriptor, bytes);
+  if (!gfxEnv::EnableWebRenderRecording() && wrTexture) {
+    wrTexture->GetWRImageKeys(aKeys, std::bind(&AsyncImagePipelineManager::GenerateImageKey, this));
+    MOZ_ASSERT(!aKeys.IsEmpty());
+    Range<const wr::ImageKey> keys(&aKeys[0], aKeys.Length());
+    wrTexture->AddWRImage(aApi, keys, wrTexture->GetExternalImageKey());
+    return true;
   } else {
-    aResources.AddImage(aKey, descriptor, bytes);
+    RefPtr<gfx::DataSourceSurface> dSurf = aTexture->GetAsSurface();
+    if (!dSurf) {
+      NS_ERROR("TextureHost does not return DataSourceSurface");
+      return false;
+    }
+    gfx::DataSourceSurface::MappedSurface map;
+    if (!dSurf->Map(gfx::DataSourceSurface::MapType::READ, &map)) {
+      NS_ERROR("DataSourceSurface failed to map");
+      return false;
+    }
+    gfx::IntSize size = dSurf->GetSize();
+    wr::ImageDescriptor descriptor(size, map.mStride, dSurf->GetFormat());
+    auto slice = Range<uint8_t>(map.mData, size.height * map.mStride);
+
+    wr::ImageKey key = GenerateImageKey();
+    aKeys.AppendElement(key);
+    aApi->AddImage(key, descriptor, slice);
+    dSurf->Unmap();
+  }
+  return false;
+}
+
+bool
+AsyncImagePipelineManager::UpdateImageKeys(wr::WebRenderAPI* aApi,
+                                           bool& aUseExternalImage,
+                                           AsyncImagePipeline* aImageMgr,
+                                           nsTArray<wr::ImageKey>& aKeys,
+                                           nsTArray<wr::ImageKey>& aKeysToDelete)
+{
+  MOZ_ASSERT(aKeys.IsEmpty());
+  MOZ_ASSERT(aImageMgr);
+  TextureHost* texture = aImageMgr->mImageHost->GetAsTextureHostForComposite();
+
+  if (!aImageMgr->mInitialised) {
+    return false;
   }
 
-  dSurf->Unmap();
+  // No change
+  if (!aImageMgr->mIsChanged && texture == aImageMgr->mCurrentTexture) {
+    // No need to update DisplayList.
+    return false;
+  }
 
-  return Some(aOp);
+  aImageMgr->mIsChanged = false;
+
+  if (texture == aImageMgr->mCurrentTexture) {
+    // Reuse previous ImageKeys.
+    aKeys.AppendElements(aImageMgr->mKeys);
+    aUseExternalImage = aImageMgr->mUseExternalImage;
+    return true;
+  }
+
+  // Delete old ImageKeys
+  aKeysToDelete.AppendElements(aImageMgr->mKeys);
+  aImageMgr->mKeys.Clear();
+  aImageMgr->mCurrentTexture = nullptr;
+
+  // No txture to render
+  if (!texture) {
+    return true;
+  }
+
+  aUseExternalImage = aImageMgr->mUseExternalImage = GenerateImageKeyForTextureHost(aApi, texture, aKeys);
+  MOZ_ASSERT(!aKeys.IsEmpty());
+  aImageMgr->mKeys.AppendElements(aKeys);
+  aImageMgr->mCurrentTexture = texture;
+  return true;
 }
 
 void
-AsyncImagePipelineManager::ApplyAsyncImages()
+AsyncImagePipelineManager::ApplyAsyncImages(wr::WebRenderAPI* aApi)
 {
   if (mDestroyed || mAsyncImagePipelines.Count() == 0) {
     return;
@@ -257,77 +247,71 @@ AsyncImagePipelineManager::ApplyAsyncImages()
 
   ++mAsyncImageEpoch; // Update webrender epoch
   wr::Epoch epoch = wr::NewEpoch(mAsyncImageEpoch);
+  nsTArray<wr::ImageKey> keysToDelete;
 
-  // We use a pipeline with a very small display list for each video element.
-  // Update each of them if needed.
   for (auto iter = mAsyncImagePipelines.Iter(); !iter.Done(); iter.Next()) {
-    wr::ResourceUpdateQueue resourceUpdates;
     wr::PipelineId pipelineId = wr::AsPipelineId(iter.Key());
     AsyncImagePipeline* pipeline = iter.Data();
 
     nsTArray<wr::ImageKey> keys;
-    auto op = UpdateImageKeys(resourceUpdates, pipeline, keys);
-
-    if (op != Some(TextureHost::ADD_IMAGE)) {
-      // We don't need to update the display list, either because we can't or because
-      // the previous one is still up to date.
-      // We may, however, have updated some resources.
-      mApi->UpdatePipelineResources(resourceUpdates, pipelineId, epoch);
-      if (pipeline->mCurrentTexture) {
-        HoldExternalImage(pipelineId, epoch, pipeline->mCurrentTexture->AsWebRenderTextureHost());
-      }
+    bool useExternalImage = false;
+    bool updateDisplayList = UpdateImageKeys(aApi,
+                                             useExternalImage,
+                                             pipeline,
+                                             keys,
+                                             keysToDelete);
+    if (!updateDisplayList) {
       continue;
     }
 
-    wr::LayoutSize contentSize { pipeline->mScBounds.Width(), pipeline->mScBounds.Height() };
+    wr::LayoutSize contentSize { pipeline->mScBounds.width, pipeline->mScBounds.height };
     wr::DisplayListBuilder builder(pipelineId, contentSize);
 
-    MOZ_ASSERT(!keys.IsEmpty());
-    MOZ_ASSERT(pipeline->mCurrentTexture.get());
+    if (!keys.IsEmpty()) {
+      MOZ_ASSERT(pipeline->mCurrentTexture.get());
 
-    float opacity = 1.0f;
-    builder.PushStackingContext(wr::ToLayoutRect(pipeline->mScBounds),
-                                0,
-                                &opacity,
-                                pipeline->mScTransform.IsIdentity() ? nullptr : &pipeline->mScTransform,
-                                wr::TransformStyle::Flat,
-                                nullptr,
-                                pipeline->mMixBlendMode,
-                                nsTArray<wr::WrFilterOp>(),
-                                true);
+      float opacity = 1.0f;
+      builder.PushStackingContext(wr::ToLayoutRect(pipeline->mScBounds),
+                                  0,
+                                  &opacity,
+                                  pipeline->mScTransform.IsIdentity() ? nullptr : &pipeline->mScTransform,
+                                  wr::TransformStyle::Flat,
+                                  pipeline->mMixBlendMode,
+                                  nsTArray<wr::WrFilterOp>());
 
-    LayoutDeviceRect rect(0, 0, pipeline->mCurrentTexture->GetSize().width, pipeline->mCurrentTexture->GetSize().height);
-    if (pipeline->mScaleToSize.isSome()) {
-      rect = LayoutDeviceRect(0, 0, pipeline->mScaleToSize.value().width, pipeline->mScaleToSize.value().height);
+      LayerRect rect(0, 0, pipeline->mCurrentTexture->GetSize().width, pipeline->mCurrentTexture->GetSize().height);
+      if (pipeline->mScaleToSize.isSome()) {
+        rect = LayerRect(0, 0, pipeline->mScaleToSize.value().width, pipeline->mScaleToSize.value().height);
+      }
+
+      if (useExternalImage) {
+        MOZ_ASSERT(pipeline->mCurrentTexture->AsWebRenderTextureHost());
+        Range<const wr::ImageKey> range_keys(&keys[0], keys.Length());
+        pipeline->mCurrentTexture->PushExternalImage(builder,
+                                                     wr::ToLayoutRect(rect),
+                                                     wr::ToLayoutRect(rect),
+                                                     pipeline->mFilter,
+                                                     range_keys);
+        HoldExternalImage(pipelineId, epoch, pipeline->mCurrentTexture->AsWebRenderTextureHost());
+      } else {
+        MOZ_ASSERT(keys.Length() == 1);
+        builder.PushImage(wr::ToLayoutRect(rect),
+                          wr::ToLayoutRect(rect),
+                          pipeline->mFilter,
+                          keys[0]);
+      }
+      builder.PopStackingContext();
     }
-
-    if (pipeline->mUseExternalImage) {
-      MOZ_ASSERT(pipeline->mCurrentTexture->AsWebRenderTextureHost());
-      Range<wr::ImageKey> range_keys(&keys[0], keys.Length());
-      pipeline->mCurrentTexture->PushDisplayItems(builder,
-                                                  wr::ToLayoutRect(rect),
-                                                  wr::ToLayoutRect(rect),
-                                                  pipeline->mFilter,
-                                                  range_keys);
-      HoldExternalImage(pipelineId, epoch, pipeline->mCurrentTexture->AsWebRenderTextureHost());
-    } else {
-      MOZ_ASSERT(keys.Length() == 1);
-      builder.PushImage(wr::ToLayoutRect(rect),
-                        wr::ToLayoutRect(rect),
-                        true,
-                        pipeline->mFilter,
-                        keys[0]);
-    }
-    builder.PopStackingContext();
 
     wr::BuiltDisplayList dl;
     wr::LayoutSize builderContentSize;
     builder.Finalize(builderContentSize, dl);
-    mApi->SetDisplayList(gfx::Color(0.f, 0.f, 0.f, 0.f), epoch, LayerSize(pipeline->mScBounds.Width(), pipeline->mScBounds.Height()),
-                         pipelineId, builderContentSize,
-                         dl.dl_desc, dl.dl.inner.data, dl.dl.inner.length,
-                         resourceUpdates);
+    aApi->SetRootDisplayList(gfx::Color(0.f, 0.f, 0.f, 0.f), epoch, LayerSize(pipeline->mScBounds.width, pipeline->mScBounds.height),
+                             pipelineId, builderContentSize,
+                             dl.dl_desc, dl.dl.inner.data, dl.dl.inner.length);
   }
+  DeleteOldAsyncImages(aApi);
+  mKeysToDelete.SwapElements(keysToDelete);
 }
 
 void

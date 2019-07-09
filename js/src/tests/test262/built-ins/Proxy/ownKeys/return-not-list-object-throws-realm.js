@@ -2,6 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
+es6id: 9.5.12
 description: >
     If return is not a list object, throw a TypeError exception  (honoring
     the Realm of the current execution context)
@@ -12,12 +13,11 @@ info: |
        Symbol »).
     ...
 
-    #sec-createlistfromarraylike
     7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
 
-    2. If Type(obj) is not Object, throw a TypeError exception.
-
-features: [cross-realm, Symbol]
+    ...
+    3. If Type(obj) is not Object, throw a TypeError exception.
+features: [Symbol]
 ---*/
 
 var other = $262.createRealm().global;

@@ -53,15 +53,15 @@ xpcAccessibleApplication* XPCApplicationAcc();
 typedef Accessible* (New_Accessible)(nsIContent* aContent, Accessible* aContext);
 
 struct MarkupAttrInfo {
-  nsAtom** name;
-  nsAtom** value;
+  nsIAtom** name;
+  nsIAtom** value;
 
-  nsAtom** DOMAttrName;
-  nsAtom** DOMAttrValue;
+  nsIAtom** DOMAttrName;
+  nsIAtom** DOMAttrValue;
 };
 
 struct MarkupMapInfo {
-  nsAtom** tag;
+  nsIAtom** tag;
   New_Accessible* new_func;
   a11y::role role;
   MarkupAttrInfo attrs[4];
@@ -122,11 +122,6 @@ public:
    * Get a string equivalent for an accessible event value.
    */
   void GetStringEventType(uint32_t aEventType, nsAString& aString);
-
-  /**
-   * Get a string equivalent for an accessible event value.
-   */
-  void GetStringEventType(uint32_t aEventType, nsACString& aString);
 
   /**
    * Get a string equivalent for an accessible relation type.
@@ -310,7 +305,7 @@ private:
    */
   static uint32_t gConsumers;
 
-  nsDataHashtable<nsPtrHashKey<const nsAtom>, const mozilla::a11y::MarkupMapInfo*> mMarkupMaps;
+  nsDataHashtable<nsPtrHashKey<const nsIAtom>, const mozilla::a11y::MarkupMapInfo*> mMarkupMaps;
 
   friend nsAccessibilityService* GetAccService();
   friend nsAccessibilityService* GetOrCreateAccService(uint32_t);

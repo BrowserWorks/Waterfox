@@ -16,7 +16,7 @@ QuietStore.prototype = {
   async getAllIDs() {
     return [];
   }
-};
+}
 
 function SteamEngine() {
   SyncEngine.call(this, "Steam", Service);
@@ -67,9 +67,9 @@ async function setUp(server) {
   await SyncTestingInfrastructure(server, "johndoe", "ilovejane");
   // Ensure that the server has valid keys so that logging in will work and not
   // result in a server wipe, rendering many of these tests useless.
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
   let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
-  await serverKeys.encrypt(Service.identity.syncKeyBundle);
+  serverKeys.encrypt(Service.identity.syncKeyBundle);
   return serverKeys.upload(Service.resource(Service.cryptoKeysURL)).success;
 }
 
@@ -261,8 +261,8 @@ add_task(async function test_enabledRemotely() {
   // fresh start!
   try {
     _("Upload some keys to avoid a fresh start.");
-    let wbo = await Service.collectionKeys.generateNewKeysWBO();
-    await wbo.encrypt(Service.identity.syncKeyBundle);
+    let wbo = Service.collectionKeys.generateNewKeysWBO();
+    wbo.encrypt(Service.identity.syncKeyBundle);
     do_check_eq(200, (await wbo.upload(Service.resource(Service.cryptoKeysURL))).status);
 
     _("Engine is disabled.");
@@ -311,12 +311,12 @@ add_task(async function test_disabledRemotelyTwoClients() {
 
     _("Disable engine by deleting from meta/global.");
     let d = metaWBO.data;
-    delete d.engines.steam;
+    delete d.engines["steam"];
     metaWBO.payload = JSON.stringify(d);
     metaWBO.modified = Date.now() / 1000;
 
     _("Add a second client and verify that the local pref is changed.");
-    Service.clientsEngine._store._remoteClients.foobar = {name: "foobar", type: "desktop"};
+    Service.clientsEngine._store._remoteClients["foobar"] = {name: "foobar", type: "desktop"};
     await Service.sync();
 
     _("Engine is disabled.");

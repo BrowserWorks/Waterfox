@@ -68,7 +68,7 @@ const PropertyInfo gShorthandProperties[] = {
 #undef LISTCSSPROPERTIES_INNER_MACRO
 #undef CSS_PROP_PUBLIC_OR_PRIVATE
 
-#define CSS_PROP_ALIAS(name_, aliasid_, id_, method_, pref_) \
+#define CSS_PROP_ALIAS(name_, id_, method_, pref_) \
     { #name_, #method_, pref_ },
 
 #include "nsCSSPropAliasList.h"
@@ -89,7 +89,7 @@ const char* gShorthandPropertiesWithDOMProp[] = {
 #undef CSS_PROP_SHORTHAND
 #undef CSS_PROP_LIST_EXCLUDE_INTERNAL
 
-#define CSS_PROP_ALIAS(name_, aliasid_, id_, method_, pref_) \
+#define CSS_PROP_ALIAS(name_, id_, method_, pref_) \
     #name_,
 
 #include "nsCSSPropAliasList.h"
@@ -115,7 +115,6 @@ const char *gInaccessibleProperties[] = {
     "-moz-math-display", // parsed by UA sheets only
     "-moz-top-layer", // parsed by UA sheets only
     "-moz-min-font-size-ratio", // parsed by UA sheets only
-    "-moz-font-smoothing-background-color", // chrome-only internal properties
     "-moz-window-opacity", // chrome-only internal properties
     "-moz-window-transform", // chrome-only internal properties
     "-moz-window-transform-origin", // chrome-only internal properties

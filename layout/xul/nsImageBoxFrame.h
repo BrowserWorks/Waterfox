@@ -61,7 +61,7 @@ public:
                     nsIFrame*         asPrevInFlow) override;
 
   virtual nsresult AttributeChanged(int32_t aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t aModType) override;
 
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
@@ -86,26 +86,14 @@ public:
   void UpdateLoadFlags();
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual ~nsImageBoxFrame();
 
-  already_AddRefed<imgIContainer> GetImageContainerForPainting(const nsPoint& aPt,
-                                                               DrawResult& aDrawResult,
-                                                               Maybe<nsPoint>& aAnchorPoint,
-                                                               nsRect& aDest);
-
   DrawResult PaintImage(gfxContext& aRenderingContext,
                         const nsRect& aDirtyRect,
                         nsPoint aPt, uint32_t aFlags);
-
-  DrawResult CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                     mozilla::wr::IpcResourceUpdateQueue& aResources,
-                                     const mozilla::layers::StackingContextHelper& aSc,
-                                     mozilla::layers::WebRenderLayerManager* aManager,
-                                     nsDisplayItem* aItem,
-                                     nsPoint aPt,
-                                     uint32_t aFlags);
 
   bool CanOptimizeToImageLayer();
 
@@ -157,9 +145,8 @@ public:
   virtual bool CanOptimizeToImageLayer(LayerManager* aManager,
                                        nsDisplayListBuilder* aBuilder) override;
   virtual already_AddRefed<imgIContainer> GetImage() override;
-  virtual nsRect GetDestRect() const override;
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
+  virtual nsRect GetDestRect() override;
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
     *aSnap = true;
     return nsRect(ToReferenceFrame(), Frame()->GetSize());
@@ -167,26 +154,11 @@ public:
   virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion* aInvalidRegion) const override;
+                                         nsRegion* aInvalidRegion) override;
   // Doesn't handle HitTest because nsLeafBoxFrame already creates an
   // event receiver for us
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      gfxContext* aCtx) override;
-
-  virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
-                                   LayerManager* aManager,
-                                   const ContainerLayerParameters& aParameters) override;
-
-  virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
-                                             LayerManager* aManager,
-                                             const ContainerLayerParameters& aContainerParameters) override;
-
-  virtual bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                       mozilla::wr::IpcResourceUpdateQueue& aResources,
-                                       const StackingContextHelper& aSc,
-                                       mozilla::layers::WebRenderLayerManager* aManager,
-                                       nsDisplayListBuilder* aDisplayListBuilder) override;
-
   NS_DISPLAY_DECL_NAME("XULImage", TYPE_XUL_IMAGE)
 };
 

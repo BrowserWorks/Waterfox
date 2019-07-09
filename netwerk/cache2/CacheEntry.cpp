@@ -191,13 +191,6 @@ NS_IMPL_ISUPPORTS(CacheEntry,
                   nsIRunnable,
                   CacheFileListener)
 
-/* static */
-uint64_t CacheEntry::GetNextId()
-{
-  static Atomic<uint64_t, Relaxed> id(0);
-  return ++id;
-}
-
 CacheEntry::CacheEntry(const nsACString& aStorageID,
                        const nsACString& aURI,
                        const nsACString& aEnhanceID,
@@ -224,7 +217,6 @@ CacheEntry::CacheEntry(const nsACString& aStorageID,
 , mWriter(nullptr)
 , mPredictedDataSize(0)
 , mUseCount(0)
-, mCacheEntryId(GetNextId())
 {
   LOG(("CacheEntry::CacheEntry [this=%p]", this));
 
@@ -1056,12 +1048,6 @@ NS_IMETHODIMP CacheEntry::GetKey(nsACString & aKey)
   return NS_OK;
 }
 
-NS_IMETHODIMP CacheEntry::GetCacheEntryId(uint64_t *aCacheEntryId)
-{
-  *aCacheEntryId = mCacheEntryId;
-  return NS_OK;
-}
-
 NS_IMETHODIMP CacheEntry::GetFetchCount(int32_t *aFetchCount)
 {
   NS_ENSURE_SUCCESS(mFileStatus, NS_ERROR_NOT_AVAILABLE);
@@ -1347,14 +1333,14 @@ NS_IMETHODIMP CacheEntry::GetSecurityInfo(nsISupports * *aSecurityInfo)
 
   NS_ENSURE_SUCCESS(mFileStatus, NS_ERROR_NOT_AVAILABLE);
 
-  nsCString info;
+  nsXPIDLCString info;
   nsCOMPtr<nsISupports> secInfo;
   nsresult rv;
 
   rv = mFile->GetElement("security-info", getter_Copies(info));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!info.IsVoid()) {
+  if (info) {
     rv = NS_DeserializeObject(info, getter_AddRefs(secInfo));
     NS_ENSURE_SUCCESS(rv, rv);
   }

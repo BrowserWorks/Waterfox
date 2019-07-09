@@ -9,11 +9,13 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLMetaElement.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLMetaElement final : public nsGenericHTMLElement
+class HTMLMetaElement final : public nsGenericHTMLElement,
+                              public nsIDOMHTMLMetaElement
 {
 public:
   explicit HTMLMetaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -21,16 +23,18 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
+  // nsIDOMHTMLMetaElement
+  NS_DECL_NSIDOMHTMLMETAELEMENT
+
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
 
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   void CreateAndDispatchEvent(nsIDocument* aDoc, const nsAString& aEventName);
@@ -38,35 +42,22 @@ public:
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
 
-  void GetName(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::name, aValue);
-  }
+  // XPCOM GetName is fine.
   void SetName(const nsAString& aName, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::name, aName, aRv);
   }
-  void GetHttpEquiv(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::httpEquiv, aValue);
-  }
+  // XPCOM GetHttpEquiv is fine.
   void SetHttpEquiv(const nsAString& aHttpEquiv, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::httpEquiv, aHttpEquiv, aRv);
   }
-  nsresult GetContent(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::content, aValue);
-    return NS_OK;
-  }
+  // XPCOM GetContent is fine.
   void SetContent(const nsAString& aContent, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::content, aContent, aRv);
   }
-  void GetScheme(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::scheme, aValue);
-  }
+  // XPCOM GetScheme is fine.
   void SetScheme(const nsAString& aScheme, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::scheme, aScheme, aRv);

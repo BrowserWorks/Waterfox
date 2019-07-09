@@ -2582,10 +2582,7 @@ CacheFile::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
   for (auto iter = mCachedChunks.ConstIter(); !iter.Done(); iter.Next()) {
       n += iter.Data()->SizeOfIncludingThis(mallocSizeOf);
   }
-  // Ignore metadata if it's still being read. It's not safe to access buffers
-  // in CacheFileMetadata because they might be reallocated on another thread
-  // outside CacheFile's lock.
-  if (mMetadata && mReady) {
+  if (mMetadata) {
     n += mMetadata->SizeOfIncludingThis(mallocSizeOf);
   }
 

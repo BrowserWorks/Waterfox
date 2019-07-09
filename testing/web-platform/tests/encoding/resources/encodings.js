@@ -431,8 +431,7 @@ var encodings_table =
           "hz-gb-2312",
           "iso-2022-cn",
           "iso-2022-cn-ext",
-          "iso-2022-kr",
-          "replacement"
+          "iso-2022-kr"
         ],
         "name": "replacement"
       },

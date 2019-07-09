@@ -4,7 +4,6 @@
 es6id: 7.2.
 description: >
     Object.is/SameValue: Symbol
-features: [Symbol]
 ---*/
 var symA = Symbol('66');
 var symB = Symbol('66');

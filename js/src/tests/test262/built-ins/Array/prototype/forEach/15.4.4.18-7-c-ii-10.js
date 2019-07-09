@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.foreach
 es5id: 15.4.4.18-7-c-ii-10
 description: >
     Array.prototype.forEach - callbackfn is called with 1 formal
@@ -14,7 +13,7 @@ description: >
             result = (val > 10);
         }
 
-        [11].forEach(callbackfn);
+        [11].forEach(callbackfn); 
 
 assert(result, 'result !== true');
 

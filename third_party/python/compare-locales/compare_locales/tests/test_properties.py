@@ -146,6 +146,5 @@ escaped value
         self.assertEqual(two.value_position(-1), (3, 14))
         self.assertEqual(two.value_position(10), (3, 3))
 
-
 if __name__ == '__main__':
     unittest.main()

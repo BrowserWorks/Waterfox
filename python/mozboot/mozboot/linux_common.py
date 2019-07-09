@@ -5,14 +5,10 @@
 # An easy way for distribution-specific bootstrappers to share the code
 # needed to install Stylo dependencies.  This class must come before
 # BaseBootstrapper in the inheritance list.
-
-from __future__ import absolute_import
-
-
 class StyloInstall(object):
     def __init__(self, **kwargs):
         pass
 
     def ensure_stylo_packages(self, state_dir, checkout_root):
-        from mozboot import stylo
-        self.install_toolchain_artifact(state_dir, checkout_root, stylo.LINUX)
+        import stylo
+        self.install_tooltool_clang_package(state_dir, checkout_root, stylo.LINUX)

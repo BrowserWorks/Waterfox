@@ -17,12 +17,12 @@ const TEST_XHR_ERROR_URI = `http://example.com/404.html?${Date.now()}`;
 const TEST_IMAGE = "http://example.com/browser/devtools/client/webconsole/" +
                    "test/test-image.png";
 
-const ObjectClient = require("devtools/shared/client/object-client");
+const {ObjectClient} = require("devtools/shared/client/main");
 
 add_task(function* () {
   yield loadTab(TEST_URI);
 
-  let opened = waitForBrowserConsole();
+  let opened = waitForConsole();
 
   let hud = HUDService.getBrowserConsole();
   ok(!hud, "browser console is not open");
@@ -197,16 +197,21 @@ function* testCPOWInspection(hud) {
   // Just a sanity check to make sure a valid packet came back
   is(prototypeAndProperties.prototype.class, "XBL prototype JSClass",
     "Looks like a valid response");
+}
 
-  // The CPOW is in the _contentWindow property.
-  let cpow = prototypeAndProperties.ownProperties._contentWindow.value;
+function waitForConsole() {
+  let deferred = promise.defer();
 
-  // But it's only a CPOW in e10s.
-  let e10sCheck = yield hud.jsterm.requestEvaluation(
-    "Cu.isCrossProcessWrapper(gBrowser.selectedBrowser._contentWindow)");
-  if (e10sCheck.result) {
-    is(cpow.class, "CPOW: Window", "The CPOW grip has the right class.");
-  } else {
-    is(cpow.class, "Window", "The object is not a CPOW.");
-  }
+  Services.obs.addObserver(function observer(aSubject) {
+    Services.obs.removeObserver(observer, "web-console-created");
+    aSubject.QueryInterface(Ci.nsISupportsString);
+
+    let hud = HUDService.getBrowserConsole();
+    ok(hud, "browser console is open");
+    is(aSubject.data, hud.hudId, "notification hudId is correct");
+
+    executeSoon(() => deferred.resolve(hud));
+  }, "web-console-created");
+
+  return deferred.promise;
 }

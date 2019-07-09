@@ -75,10 +75,18 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLLinkElement,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mRelList)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLLinkElement,
-                                             nsGenericHTMLElement,
-                                             nsIStyleSheetLinkingElement,
-                                             Link)
+NS_IMPL_ADDREF_INHERITED(HTMLLinkElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLLinkElement, Element)
+
+
+// QueryInterface implementation for HTMLLinkElement
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLLinkElement)
+  NS_INTERFACE_TABLE_INHERITED(HTMLLinkElement,
+                               nsIDOMHTMLLinkElement,
+                               nsIStyleSheetLinkingElement,
+                               Link)
+NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLElement)
+
 
 NS_IMPL_ELEMENT_CLONE(HTMLLinkElement)
 
@@ -89,6 +97,13 @@ HTMLLinkElement::Disabled()
   return ss && ss->Disabled();
 }
 
+NS_IMETHODIMP
+HTMLLinkElement::GetMozDisabled(bool* aDisabled)
+{
+  *aDisabled = Disabled();
+  return NS_OK;
+}
+
 void
 HTMLLinkElement::SetDisabled(bool aDisabled)
 {
@@ -96,6 +111,23 @@ HTMLLinkElement::SetDisabled(bool aDisabled)
     ss->SetDisabled(aDisabled);
   }
 }
+
+NS_IMETHODIMP
+HTMLLinkElement::SetMozDisabled(bool aDisabled)
+{
+  SetDisabled(aDisabled);
+  return NS_OK;
+}
+
+
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Charset, charset)
+NS_IMPL_URI_ATTR(HTMLLinkElement, Href, href)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Hreflang, hreflang)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Media, media)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Rel, rel)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Rev, rev)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Target, target)
+NS_IMPL_STRING_ATTR(HTMLLinkElement, Type, type)
 
 void
 HTMLLinkElement::OnDNSPrefetchRequested()
@@ -190,7 +222,7 @@ HTMLLinkElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 bool
 HTMLLinkElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
@@ -250,7 +282,7 @@ HTMLLinkElement::CreateAndDispatchEvent(nsIDocument* aDoc,
 }
 
 nsresult
-HTMLLinkElement::BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLLinkElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                const nsAttrValueOrString* aValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -265,11 +297,9 @@ HTMLLinkElement::BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
 }
 
 nsresult
-HTMLLinkElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLLinkElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue,
-                              const nsAttrValue* aOldValue,
-                              nsIPrincipal* aSubjectPrincipal,
-                              bool aNotify)
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   // It's safe to call ResetLinkState here because our new attr value has
   // already been set or unset.  ResetLinkState needs the updated attribute
@@ -282,12 +312,6 @@ HTMLLinkElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
     if (IsInUncomposedDoc()) {
       CreateAndDispatchEvent(OwnerDoc(), NS_LITERAL_STRING("DOMLinkChanged"));
     }
-  }
-
-  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::href) {
-    mTriggeringPrincipal = nsContentUtils::GetAttrTriggeringPrincipal(
-        this, aValue ? aValue->GetStringValue() : EmptyString(),
-        aSubjectPrincipal);
   }
 
   if (aValue) {
@@ -346,7 +370,7 @@ HTMLLinkElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 nsresult
@@ -378,8 +402,7 @@ HTMLLinkElement::GetLinkTarget(nsAString& aTarget)
 
 static const DOMTokenListSupportedToken sSupportedRelValues[] = {
   // Keep this in sync with ToLinkMask in nsStyleLinkElement.cpp.
-  // "preload" must come first because it can be disabled.
-  "preload",
+  // "import" must come first because it's conditional.
   "prefetch",
   "dns-prefetch",
   "stylesheet",
@@ -388,6 +411,7 @@ static const DOMTokenListSupportedToken sSupportedRelValues[] = {
   "preconnect",
   "icon",
   "search",
+  "preload",
   nullptr
 };
 
@@ -395,11 +419,7 @@ nsDOMTokenList*
 HTMLLinkElement::RelList()
 {
   if (!mRelList) {
-    if (Preferences::GetBool("network.preload")) {
-      mRelList = new nsDOMTokenList(this, nsGkAtoms::rel, sSupportedRelValues);
-    } else {
-      mRelList = new nsDOMTokenList(this, nsGkAtoms::rel, &sSupportedRelValues[1]);
-    }
+    mRelList = new nsDOMTokenList(this, nsGkAtoms::rel, sSupportedRelValues);
   }
   return mRelList;
 }
@@ -411,20 +431,14 @@ HTMLLinkElement::GetHrefURI() const
 }
 
 already_AddRefed<nsIURI>
-HTMLLinkElement::GetStyleSheetURL(bool* aIsInline, nsIPrincipal** aTriggeringPrincipal)
+HTMLLinkElement::GetStyleSheetURL(bool* aIsInline)
 {
   *aIsInline = false;
-  *aTriggeringPrincipal = nullptr;
-
   nsAutoString href;
   GetAttr(kNameSpaceID_None, nsGkAtoms::href, href);
   if (href.IsEmpty()) {
     return nullptr;
   }
-
-  nsCOMPtr<nsIPrincipal> prin = mTriggeringPrincipal;
-  prin.forget(aTriggeringPrincipal);
-
   nsCOMPtr<nsIURI> uri = Link::GetURI();
   return uri.forget();
 }
@@ -494,12 +508,11 @@ HTMLLinkElement::IntrinsicState() const
   return Link::LinkState() | nsGenericHTMLElement::IntrinsicState();
 }
 
-void
-HTMLLinkElement::AddSizeOfExcludingThis(nsWindowSizes& aSizes,
-                                        size_t* aNodeSize) const
+size_t
+HTMLLinkElement::SizeOfExcludingThis(mozilla::SizeOfState& aState) const
 {
-  nsGenericHTMLElement::AddSizeOfExcludingThis(aSizes, aNodeSize);
-  *aNodeSize += Link::SizeOfExcludingThis(aSizes.mState);
+  return nsGenericHTMLElement::SizeOfExcludingThis(aState) +
+         Link::SizeOfExcludingThis(aState);
 }
 
 JSObject*

@@ -28,7 +28,6 @@ info: >
   ...
   29. Return undefined.
 includes: [testTypedArray.js, compareArray.js]
-features: [TypedArray]
 ---*/
 
 var expected = {

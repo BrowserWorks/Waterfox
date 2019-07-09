@@ -255,7 +255,7 @@ caption {
 
 /******** draggable elements *********/
 
-%ifndef MOZ_WIDGET_GTK
+%ifdef XP_MACOSX
 titlebar,
 toolbar:not([nowindowdrag="true"]):not([customizing="true"]),
 statusbar:not([nowindowdrag="true"]),
@@ -267,7 +267,6 @@ windowdragbox {
 /* The list below is non-comprehensive and will probably need some tweaking. */
 toolbaritem,
 toolbarbutton,
-toolbarseparator,
 button,
 textbox,
 tab,
@@ -317,6 +316,18 @@ toolbar[type="menubar"][autohide="true"][inactive="true"]:not([customizing="true
   height: 0 !important;
   -moz-appearance: none !important;
   border-style: none !important;
+}
+%endif
+
+%ifdef MOZ_WIDGET_GTK
+window[shellshowingmenubar="true"] menubar {
+  display: none !important;
+}
+
+window[shellshowingmenubar="true"]
+toolbar[type="menubar"]:not([customizing="true"]) {
+  min-height: 0 !important;
+  border: 0 !important;
 }
 %endif
 
@@ -452,62 +463,123 @@ panel[type="arrow"] {
    lot faster. In fact, Gecko no longer triggers shadow shape recomputations
    for repaints.
    These properties are not implemented on other platforms. */
-panel[type="arrow"][side]:not([animate="false"]) {
+panel[type="arrow"]:not([animate="false"]) {
+  -moz-window-transform: scale(.4);
   -moz-window-opacity: 0;
-  -moz-window-transform: translateY(-70px);
   transition-property: -moz-window-transform, -moz-window-opacity;
-  transition-duration: 0.18s, 0.18s;
-  transition-timing-function:
-    var(--animation-easing-function), ease-out;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
 }
 
-panel[type="arrow"][side="bottom"]:not([animate="false"]) {
-  -moz-window-transform: translateY(70px);
-}
-
-panel[type="arrow"][side][animate="open"] {
+panel[type="arrow"][animate="open"] {
+  -moz-window-transform: none;
   -moz-window-opacity: 1.0;
-  transition-duration: 0.18s, 0.18s;
-  -moz-window-transform: none;
-  transition-timing-function:
-    var(--animation-easing-function), ease-in-out;
 }
 
-panel[type="arrow"][side][animate="cancel"] {
+panel[type="arrow"][animate="cancel"] {
   -moz-window-transform: none;
+}
+
+panel[arrowposition="after_start"]:-moz-locale-dir(ltr),
+panel[arrowposition="after_end"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: 20px top;
+}
+
+panel[arrowposition="after_end"]:-moz-locale-dir(ltr),
+panel[arrowposition="after_start"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: calc(100% - 20px) top;
+}
+
+panel[arrowposition="before_start"]:-moz-locale-dir(ltr),
+panel[arrowposition="before_end"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: 20px bottom;
+}
+
+panel[arrowposition="before_end"]:-moz-locale-dir(ltr),
+panel[arrowposition="before_start"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: calc(100% - 20px) bottom;
+}
+
+panel[arrowposition="start_before"]:-moz-locale-dir(ltr),
+panel[arrowposition="end_before"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: right 20px;
+}
+
+panel[arrowposition="start_after"]:-moz-locale-dir(ltr),
+panel[arrowposition="end_after"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: right calc(100% - 20px);
+}
+
+panel[arrowposition="end_before"]:-moz-locale-dir(ltr),
+panel[arrowposition="start_before"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: left 20px;
+}
+
+panel[arrowposition="end_after"]:-moz-locale-dir(ltr),
+panel[arrowposition="start_after"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: left calc(100% - 20px);
 }
 
 %elifndef MOZ_WIDGET_GTK
 
-panel[type="arrow"][side]:not([animate="false"]) {
+panel[type="arrow"]:not([animate="false"]) {
+  transform: scale(.4);
   opacity: 0;
-  transform: translateY(-70px);
   transition-property: transform, opacity;
-  transition-duration: 0.18s, 0.18s;
-  transition-timing-function:
-    var(--animation-easing-function), ease-out;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
 }
 
-panel[type="arrow"][side="bottom"]:not([animate="false"]) {
-  transform: translateY(70px);
-}
-
-panel[type="arrow"][side][animate="open"] {
+panel[type="arrow"][animate="open"] {
+  transform: none;
   opacity: 1.0;
-  transition-duration: 0.18s, 0.18s;
-  transform: none;
-  transition-timing-function:
-    var(--animation-easing-function), ease-in-out;
 }
 
-panel[type="arrow"][side][animate="cancel"] {
+panel[type="arrow"][animate="cancel"] {
   transform: none;
+}
+
+panel[arrowposition="after_start"]:-moz-locale-dir(ltr),
+panel[arrowposition="after_end"]:-moz-locale-dir(rtl) {
+  transform-origin: 20px top;
+}
+
+panel[arrowposition="after_end"]:-moz-locale-dir(ltr),
+panel[arrowposition="after_start"]:-moz-locale-dir(rtl) {
+  transform-origin: calc(100% - 20px) top;
+}
+
+panel[arrowposition="before_start"]:-moz-locale-dir(ltr),
+panel[arrowposition="before_end"]:-moz-locale-dir(rtl) {
+  transform-origin: 20px bottom;
+}
+
+panel[arrowposition="before_end"]:-moz-locale-dir(ltr),
+panel[arrowposition="before_start"]:-moz-locale-dir(rtl) {
+  transform-origin: calc(100% - 20px) bottom;
+}
+
+panel[arrowposition="start_before"]:-moz-locale-dir(ltr),
+panel[arrowposition="end_before"]:-moz-locale-dir(rtl) {
+  transform-origin: right 20px;
+}
+
+panel[arrowposition="start_after"]:-moz-locale-dir(ltr),
+panel[arrowposition="end_after"]:-moz-locale-dir(rtl) {
+  transform-origin: right calc(100% - 20px);
+}
+
+panel[arrowposition="end_before"]:-moz-locale-dir(ltr),
+panel[arrowposition="start_before"]:-moz-locale-dir(rtl) {
+  transform-origin: left 20px;
+}
+
+panel[arrowposition="end_after"]:-moz-locale-dir(ltr),
+panel[arrowposition="start_after"]:-moz-locale-dir(rtl) {
+  transform-origin: left calc(100% - 20px);
 }
 
 %endif
-panel[type="arrow"][animating] {
-  pointer-events: none;
-}
 
 %ifdef XP_MACOSX
 .statusbar-resizerpanel {
@@ -834,6 +906,10 @@ panel[type="autocomplete"] {
   -moz-binding: url("chrome://global/content/autocomplete.xml#autocomplete-treebody");
 }
 
+.autocomplete-history-dropmarker {
+  -moz-binding: url("chrome://global/content/autocomplete.xml#history-dropmarker");
+}
+
 panel[type="autocomplete-richlistbox"] {
   -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#autocomplete-rich-result-popup");
 }
@@ -895,6 +971,15 @@ panel[type="autocomplete-richlistbox"] {
 
 .autocomplete-treerows {
   -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#autocomplete-treerows");
+}
+
+.autocomplete-history-dropmarker {
+  display: none;
+}
+
+.autocomplete-history-dropmarker[enablehistory="true"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#history-dropmarker");
 }
 
 %endif
@@ -998,10 +1083,6 @@ scrollbox {
   -moz-binding: url("chrome://global/content/bindings/scrollbox.xml#scrollbox");
   /* This makes it scrollable! */
   overflow: hidden;
-}
-
-scrollbox[smoothscroll=true] {
-  scroll-behavior: smooth;
 }
 
 arrowscrollbox {

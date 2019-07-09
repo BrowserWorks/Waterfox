@@ -291,14 +291,11 @@ function testAttributeChanged() {
 
 function testAttributeChangedExtended() {
   var p = Object.create(HTMLButtonElement.prototype);
-  var callbackCalled = 0;
+  var callbackCalled = false;
   p.attributeChangedCallback = function(name, oldValue, newValue) {
-    callbackCalled++;
-    if (callbackCalled > 2) {
-      is(false, "Got unexpected attribute changed callback.");
-    } else if (callbackCalled === 2) {
-      runNextTest();
-    }
+    is(callbackCalled, false, "Callback should only be called once in this test.");
+    callbackCalled = true;
+    runNextTest();
   };
 
   document.registerElement("x-extended-attribute-change", { prototype: p, extends: "button" });

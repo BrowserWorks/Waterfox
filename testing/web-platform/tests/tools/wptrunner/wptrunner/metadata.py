@@ -29,13 +29,9 @@ def load_test_manifests(serve_root, test_paths):
 
 def update_expected(test_paths, serve_root, log_file_names,
                     rev_old=None, rev_new="HEAD", ignore_existing=False,
-                    sync_root=None, property_order=None, boolean_properties=None,
-                    stability=None):
+                    sync_root=None, property_order=None, boolean_properties=None):
     """Update the metadata files for web-platform-tests based on
-    the results obtained in a previous run or runs
-
-    If stability is not None, assume log_file_names refers to logs from repeated
-    test jobs, disable tests that don't behave as expected on all runs"""
+    the results obtained in a previous run"""
 
     manifests = load_test_manifests(serve_root, test_paths)
 
@@ -49,25 +45,17 @@ def update_expected(test_paths, serve_root, log_file_names,
         if rev_old is not None:
             change_data = load_change_data(rev_old, rev_new, repo=sync_root)
 
+
     expected_map_by_manifest = update_from_logs(manifests,
                                                 *log_file_names,
                                                 ignore_existing=ignore_existing,
                                                 property_order=property_order,
-                                                boolean_properties=boolean_properties,
-                                                stability=stability)
+                                                boolean_properties=boolean_properties)
 
     for test_manifest, expected_map in expected_map_by_manifest.iteritems():
         url_base = manifests[test_manifest]["url_base"]
         metadata_path = test_paths[url_base]["metadata_path"]
         write_changes(metadata_path, expected_map)
-        if stability is not None:
-            for tree in expected_map.itervalues():
-                for test in tree.iterchildren():
-                    for subtest in test.iterchildren():
-                        if subtest.new_disabled:
-                            print os.path.dirname(subtest.root.test_path) + "/" + subtest.name
-                    if test.new_disabled:
-                        print test.root.test_path
 
     results_changed = [item.test_path for item in expected_map.itervalues() if item.modified]
 
@@ -133,9 +121,7 @@ def unexpected_changes(manifests, change_data, files_changed):
 # For each test in the list of tests:
 #   for each conditional:
 #      If all the new values match (or there aren't any) retain that conditional
-#      If any new values mismatch:
-#           If stability and any repeated values don't match, disable the test
-#           else mark the test as needing human attention
+#      If any new values mismatch mark the test as needing human attention
 #   Check if all the RHS values are the same; if so collapse the conditionals
 
 
@@ -143,7 +129,6 @@ def update_from_logs(manifests, *log_filenames, **kwargs):
     ignore_existing = kwargs.get("ignore_existing", False)
     property_order = kwargs.get("property_order")
     boolean_properties = kwargs.get("boolean_properties")
-    stability = kwargs.get("stability")
 
     expected_map = {}
     id_test_map = {}
@@ -167,8 +152,8 @@ def update_from_logs(manifests, *log_filenames, **kwargs):
         for tree in manifest_expected.itervalues():
             for test in tree.iterchildren():
                 for subtest in test.iterchildren():
-                    subtest.coalesce_expected(stability=stability)
-                test.coalesce_expected(stability=stability)
+                    subtest.coalesce_expected()
+                test.coalesce_expected()
 
     return expected_map
 
@@ -246,16 +231,14 @@ class ExpectedUpdater(object):
     def suite_start(self, data):
         self.run_info = data["run_info"]
 
-    def test_type(self, path):
-        for manifest in self.test_manifests.iterkeys():
-            tests = list(manifest.iterpath(path))
-            if len(tests):
-                assert all(test.item_type == tests[0].item_type for test in tests)
-                return tests[0].item_type
-        assert False
+    def test_id(self, id):
+        if type(id) in types.StringTypes:
+            return id
+        else:
+            return tuple(id)
 
     def test_start(self, data):
-        test_id = data["test"]
+        test_id = self.test_id(data["test"])
         try:
             test_manifest, test = self.id_path_map[test_id]
             expected_node = self.expected_tree[test_manifest][test].get_test(test_id)
@@ -270,10 +253,11 @@ class ExpectedUpdater(object):
             self.tests_visited[test_id] = set()
 
     def test_status(self, data):
-        test = self.test_cache.get(data["test"])
+        test_id = self.test_id(data["test"])
+        test = self.test_cache.get(test_id)
         if test is None:
             return
-        test_cls = wpttest.manifest_test_cls[self.test_type(test.root.test_path)]
+        test_cls = wpttest.manifest_test_cls[test.test_type]
 
         subtest = test.get_subtest(data["subtest"])
 
@@ -287,11 +271,11 @@ class ExpectedUpdater(object):
         subtest.set_result(self.run_info, result)
 
     def test_end(self, data):
-        test_id = data["test"]
+        test_id = self.test_id(data["test"])
         test = self.test_cache.get(test_id)
         if test is None:
             return
-        test_cls = wpttest.manifest_test_cls[self.test_type(test.root.test_path)]
+        test_cls = wpttest.manifest_test_cls[test.test_type]
 
         if data["status"] == "SKIP":
             return
@@ -299,6 +283,7 @@ class ExpectedUpdater(object):
         result = test_cls.result_cls(
             data["status"],
             data.get("message"))
+
         test.set_result(self.run_info, result)
         del self.test_cache[test_id]
 
@@ -337,7 +322,7 @@ def create_expected(test_manifest, test_path, tests, property_order=None,
                                                property_order=property_order,
                                                boolean_properties=boolean_properties)
     for test in tests:
-        expected.append(manifestupdate.TestNode.create(test.id))
+        expected.append(manifestupdate.TestNode.create(test.item_type, test.id))
     return expected
 
 
@@ -361,6 +346,6 @@ def load_expected(test_manifest, metadata_path, test_path, tests, property_order
     # Add tests that don't have expected data
     for test in tests:
         if not expected_manifest.has_test(test.id):
-            expected_manifest.append(manifestupdate.TestNode.create(test.id))
+            expected_manifest.append(manifestupdate.TestNode.create(test.item_type, test.id))
 
     return expected_manifest

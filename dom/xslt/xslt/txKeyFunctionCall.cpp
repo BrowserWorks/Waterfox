@@ -111,7 +111,7 @@ txKeyFunctionCall::isSensitiveTo(ContextSensitivity aContext)
 
 #ifdef TX_TO_STRING
 nsresult
-txKeyFunctionCall::getNameAtom(nsAtom** aAtom)
+txKeyFunctionCall::getNameAtom(nsIAtom** aAtom)
 {
     *aAtom = nsGkAtoms::key;
     NS_ADDREF(*aAtom);

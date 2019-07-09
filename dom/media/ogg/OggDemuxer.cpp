@@ -217,6 +217,12 @@ OggDemuxer::Init()
   return InitPromise::CreateAndResolve(NS_OK, __func__);
 }
 
+bool
+OggDemuxer::HasTrackType(TrackInfo::TrackType aType) const
+{
+  return !!GetNumberTracks(aType);
+}
+
 OggCodecState*
 OggDemuxer::GetTrackCodecState(TrackInfo::TrackType aType) const
 {
@@ -669,7 +675,8 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
        newVorbisState->GetInfo()->GetAsAudioInfo()->mChannels)) {
 
     SetupTarget(&mVorbisState, newVorbisState);
-    OGG_DEBUG("New vorbis ogg link, serial=%d\n", mVorbisState->mSerial);
+    LOG(LogLevel::Debug,
+        ("New vorbis ogg link, serial=%d\n", mVorbisState->mSerial));
 
     if (msgInfo) {
       InitTrack(msgInfo, &mInfo.mAudio, true);
@@ -704,7 +711,8 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
        newFlacState->GetInfo()->GetAsAudioInfo()->mChannels)) {
 
     SetupTarget(&mFlacState, newFlacState);
-    OGG_DEBUG("New flac ogg link, serial=%d\n", mFlacState->mSerial);
+    LOG(LogLevel::Debug,
+        ("New flac ogg link, serial=%d\n", mFlacState->mSerial));
 
     if (msgInfo) {
       InitTrack(msgInfo, &mInfo.mAudio, true);
@@ -1170,8 +1178,8 @@ OggDemuxer::SeekToKeyframeUsingIndex(TrackInfo::TrackType aType, int64_t aTarget
     // Index must be invalid.
     return RollbackIndexedSeek(aType, tell);
   }
-  OGG_DEBUG("Seeking using index to keyframe at offset %" PRId64 "\n",
-                     keyframe.mKeyPoint.mOffset);
+  LOG(LogLevel::Debug, ("Seeking using index to keyframe at offset %" PRId64 "\n",
+                     keyframe.mKeyPoint.mOffset));
   nsresult res = Resource(aType)->Seek(nsISeekableStream::NS_SEEK_SET,
                                        keyframe.mKeyPoint.mOffset);
   NS_ENSURE_SUCCESS(res, SEEK_FATAL_ERROR);
@@ -1193,8 +1201,8 @@ OggDemuxer::SeekToKeyframeUsingIndex(TrackInfo::TrackType aType, int64_t aTarget
                                     skippedBytes);
   NS_ENSURE_TRUE(syncres != PAGE_SYNC_ERROR, SEEK_FATAL_ERROR);
   if (syncres != PAGE_SYNC_OK || skippedBytes != 0) {
-    OGG_DEBUG("Indexed-seek failure: Ogg Skeleton Index is invalid "
-              "or sync error after seek");
+    LOG(LogLevel::Debug, ("Indexed-seek failure: Ogg Skeleton Index is invalid "
+                       "or sync error after seek"));
     return RollbackIndexedSeek(aType, tell);
   }
   uint32_t serial = ogg_page_serialno(&page);
@@ -1354,7 +1362,6 @@ OggTrackDemuxer::NextSample()
     // This will also update mSharedAudioTrackInfo.
     mParent->ReadOggChain(data->GetEndTime());
   }
-  data->mTime += mParent->mDecodedAudioDuration;
   return data;
 }
 

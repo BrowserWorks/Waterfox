@@ -76,15 +76,15 @@ function refreshUI() {
   createButton.onclick = createProfileWizard;
 
   let restartSafeModeButton = document.getElementById("restart-in-safe-mode-button");
-  restartSafeModeButton.onclick = function() { restart(true); };
+  restartSafeModeButton.onclick = function() { restart(true); }
 
   let restartNormalModeButton = document.getElementById("restart-button");
-  restartNormalModeButton.onclick = function() { restart(false); };
+  restartNormalModeButton.onclick = function() { restart(false); }
 }
 
 function openDirectory(dir) {
   let nsLocalFile = Components.Constructor("@mozilla.org/file/local;1",
-                                           "nsIFile", "initWithPath");
+                                           "nsILocalFile", "initWithPath");
   new nsLocalFile(dir).reveal();
 }
 
@@ -291,7 +291,7 @@ function removeProfile(profile) {
     }
   }
 
-  profile.removeInBackground(deleteFiles);
+  profile.remove(deleteFiles);
   ProfileService.flush();
   refreshUI();
 }

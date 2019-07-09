@@ -97,32 +97,25 @@ Symbol::for_(JSContext* cx, HandleString description)
 
 #ifdef DEBUG
 void
-Symbol::dump()
-{
-    js::Fprinter out(stderr);
-    dump(out);
-}
-
-void
-Symbol::dump(js::GenericPrinter& out)
+Symbol::dump(FILE* fp)
 {
     if (isWellKnownSymbol()) {
         // All the well-known symbol names are ASCII.
-        description_->dumpCharsNoNewline(out);
+        description_->dumpCharsNoNewline(fp);
     } else if (code_ == SymbolCode::InSymbolRegistry || code_ == SymbolCode::UniqueSymbol) {
-        out.printf(code_ == SymbolCode::InSymbolRegistry ? "Symbol.for(" : "Symbol(");
+        fputs(code_ == SymbolCode::InSymbolRegistry ? "Symbol.for(" : "Symbol(", fp);
 
         if (description_)
-            description_->dumpCharsNoNewline(out);
+            description_->dumpCharsNoNewline(fp);
         else
-            out.printf("undefined");
+            fputs("undefined", fp);
 
-        out.putChar(')');
+        fputc(')', fp);
 
         if (code_ == SymbolCode::UniqueSymbol)
-            out.printf("@%p", (void*) this);
+            fprintf(fp, "@%p", (void*) this);
     } else {
-        out.printf("<Invalid Symbol code=%u>", unsigned(code_));
+        fprintf(fp, "<Invalid Symbol code=%u>", unsigned(code_));
     }
 }
 #endif  // DEBUG
@@ -149,6 +142,20 @@ js::SymbolDescriptiveString(JSContext* cx, Symbol* sym, MutableHandleValue resul
     result.setString(str);
     return true;
 }
+
+bool
+js::IsSymbolOrSymbolWrapper(const Value& v)
+{
+    return v.isSymbol() || (v.isObject() && v.toObject().is<SymbolObject>());
+}
+
+JS::Symbol*
+js::ToSymbolPrimitive(const Value& v)
+{
+    MOZ_ASSERT(IsSymbolOrSymbolWrapper(v));
+    return v.isSymbol() ? v.toSymbol() : v.toObject().as<SymbolObject>().unbox();
+}
+
 
 JS::ubi::Node::Size
 JS::ubi::Concrete<JS::Symbol>::size(mozilla::MallocSizeOf mallocSizeOf) const

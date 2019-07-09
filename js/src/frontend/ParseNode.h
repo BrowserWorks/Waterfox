@@ -11,7 +11,6 @@
 
 #include "builtin/ModuleObject.h"
 #include "frontend/TokenStream.h"
-#include "vm/Printer.h"
 
 namespace js {
 namespace frontend {
@@ -129,7 +128,6 @@ class ObjectBox;
      * Binary operators. \
      * These must be in the same order as TOK_OR and friends in TokenStream.h. \
      */ \
-    F(PIPELINE) \
     F(OR) \
     F(AND) \
     F(BITOR) \
@@ -187,7 +185,7 @@ enum ParseNodeKind : uint16_t
     FOR_EACH_PARSE_NODE_KIND(EMIT_ENUM)
 #undef EMIT_ENUM
     PNK_LIMIT, /* domain size */
-    PNK_BINOP_FIRST = PNK_PIPELINE,
+    PNK_BINOP_FIRST = PNK_OR,
     PNK_BINOP_LAST = PNK_POW,
     PNK_ASSIGNMENT_START = PNK_ASSIGN,
     PNK_ASSIGNMENT_LAST = PNK_POWASSIGN
@@ -268,7 +266,7 @@ IsTypeofKind(ParseNodeKind kind)
  * PNK_FORHEAD  ternary     pn_kid1:  init expr before first ';' or nullptr
  *                          pn_kid2:  cond expr before second ';' or nullptr
  *                          pn_kid3:  update expr after second ';' or nullptr
- * PNK_THROW    unary       pn_kid: exception
+ * PNK_THROW    unary       pn_op: JSOP_THROW, pn_kid: exception
  * PNK_TRY      ternary     pn_kid1: try block
  *                          pn_kid2: null or PNK_CATCHLIST list
  *                          pn_kid3: null or finally block
@@ -348,8 +346,8 @@ IsTypeofKind(ParseNodeKind kind)
  * PNK_STAR,
  * PNK_DIV,
  * PNK_MOD,
- * PNK_POW                  (**) is right-associative, but still forms a list.
- *                          See comments in ParseNode::appendOrCreateList.
+ * PNK_POW                  (**) is right-associative, but forms a list
+ *                          nonetheless. Special hacks everywhere.
  *
  * PNK_POS,     unary       pn_kid: UNARY expr
  * PNK_NEG
@@ -428,7 +426,8 @@ IsTypeofKind(ParseNodeKind kind)
  *                          pn_head: list of 1 element, which is block
  *                          enclosing for loop(s) and optionally
  *                          if-guarded PNK_ARRAYPUSH
- * PNK_ARRAYPUSH    unary   pn_kid: array comprehension expression
+ * PNK_ARRAYPUSH    unary   pn_op: JSOP_ARRAYCOMP
+ *                          pn_kid: array comprehension expression
  * PNK_NOP          nullary
  */
 enum ParseNodeArity
@@ -614,7 +613,7 @@ class ParseNode
      * |right| to it and return |left|.  Otherwise return a [left, right] list.
      */
     static ParseNode*
-    appendOrCreateList(ParseNodeKind kind, ParseNode* left, ParseNode* right,
+    appendOrCreateList(ParseNodeKind kind, JSOp op, ParseNode* left, ParseNode* right,
                        FullParseHandler* handler, ParseContext* pc);
 
     inline PropertyName* name() const;
@@ -819,10 +818,8 @@ class ParseNode
     }
 
 #ifdef DEBUG
-    // Debugger-friendly stderr printer.
     void dump();
-    void dump(GenericPrinter& out);
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -843,20 +840,20 @@ struct NullaryNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out);
+    void dump();
 #endif
 };
 
 struct UnaryNode : public ParseNode
 {
-    UnaryNode(ParseNodeKind kind, const TokenPos& pos, ParseNode* kid)
-      : ParseNode(kind, JSOP_NOP, PN_UNARY, pos)
+    UnaryNode(ParseNodeKind kind, JSOp op, const TokenPos& pos, ParseNode* kid)
+      : ParseNode(kind, op, PN_UNARY, pos)
     {
         pn_kid = kid;
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -877,14 +874,14 @@ struct BinaryNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
 struct TernaryNode : public ParseNode
 {
-    TernaryNode(ParseNodeKind kind, ParseNode* kid1, ParseNode* kid2, ParseNode* kid3)
-      : ParseNode(kind, JSOP_NOP, PN_TERNARY,
+    TernaryNode(ParseNodeKind kind, JSOp op, ParseNode* kid1, ParseNode* kid2, ParseNode* kid3)
+      : ParseNode(kind, op, PN_TERNARY,
                   TokenPos((kid1 ? kid1 : kid2 ? kid2 : kid3)->pn_pos.begin,
                            (kid3 ? kid3 : kid2 ? kid2 : kid1)->pn_pos.end))
     {
@@ -893,9 +890,9 @@ struct TernaryNode : public ParseNode
         pn_kid3 = kid3;
     }
 
-    TernaryNode(ParseNodeKind kind, ParseNode* kid1, ParseNode* kid2, ParseNode* kid3,
+    TernaryNode(ParseNodeKind kind, JSOp op, ParseNode* kid1, ParseNode* kid2, ParseNode* kid3,
                 const TokenPos& pos)
-      : ParseNode(kind, JSOP_NOP, PN_TERNARY, pos)
+      : ParseNode(kind, op, PN_TERNARY, pos)
     {
         pn_kid1 = kid1;
         pn_kid2 = kid2;
@@ -903,7 +900,7 @@ struct TernaryNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -932,7 +929,7 @@ struct ListNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -952,7 +949,7 @@ struct CodeNode : public ParseNode
 
   public:
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -966,7 +963,7 @@ struct NameNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -984,7 +981,7 @@ struct LexicalScopeNode : public ParseNode
     }
 
 #ifdef DEBUG
-    void dump(GenericPrinter& out, int indent);
+    void dump(int indent);
 #endif
 };
 
@@ -1143,7 +1140,7 @@ class ThisLiteral : public UnaryNode
 {
   public:
     ThisLiteral(const TokenPos& pos, ParseNode* thisName)
-      : UnaryNode(PNK_THIS, pos, thisName)
+      : UnaryNode(PNK_THIS, JSOP_NOP, pos, thisName)
     { }
 };
 
@@ -1320,7 +1317,7 @@ struct ClassNames : public BinaryNode {
 struct ClassNode : public TernaryNode {
     ClassNode(ParseNode* names, ParseNode* heritage, ParseNode* methodsOrBlock,
               const TokenPos& pos)
-      : TernaryNode(PNK_CLASS, names, heritage, methodsOrBlock, pos)
+      : TernaryNode(PNK_CLASS, JSOP_NOP, names, heritage, methodsOrBlock, pos)
     {
         MOZ_ASSERT_IF(names, names->is<ClassNames>());
         MOZ_ASSERT(methodsOrBlock->is<LexicalScopeNode>() ||
@@ -1355,7 +1352,7 @@ struct ClassNode : public TernaryNode {
 };
 
 #ifdef DEBUG
-void DumpParseTree(ParseNode* pn, GenericPrinter& out, int indent = 0);
+void DumpParseTree(ParseNode* pn, int indent = 0);
 #endif
 
 class ParseNodeAllocator
@@ -1390,6 +1387,7 @@ ParseNode::isConstant()
         return true;
       case PNK_ARRAY:
       case PNK_OBJECT:
+        MOZ_ASSERT(isOp(JSOP_NEWINIT));
         return !(pn_xflags & PNX_NONCONST);
       default:
         return false;
@@ -1424,27 +1422,6 @@ enum ParseReportKind
     ParseExtraWarning,
     ParseStrictError
 };
-
-enum class AccessorType {
-    None,
-    Getter,
-    Setter
-};
-
-inline JSOp
-AccessorTypeToJSOp(AccessorType atype)
-{
-    switch (atype) {
-      case AccessorType::None:
-        return JSOP_INITPROP;
-      case AccessorType::Getter:
-        return JSOP_INITPROP_GETTER;
-      case AccessorType::Setter:
-        return JSOP_INITPROP_SETTER;
-      default:
-        MOZ_CRASH("unexpected accessor type");
-    }
-}
 
 enum FunctionSyntaxKind
 {

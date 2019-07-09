@@ -30,7 +30,6 @@
 #include "js/RootingAPI.h"
 #include "js/UbiNode.h"
 #include "vm/ObjectGroup.h"
-#include "vm/Printer.h"
 #include "vm/String.h"
 #include "vm/Symbol.h"
 
@@ -712,6 +711,7 @@ class Shape : public gc::TenuredCell
 
   protected:
     GCPtrBaseShape base_;
+    GCPtrShape parent;
     PreBarrieredId propid_;
 
     enum SlotInfo : uint32_t
@@ -733,8 +733,8 @@ class Shape : public gc::TenuredCell
         LINEAR_SEARCHES_MASK   = LINEAR_SEARCHES_MAX << LINEAR_SEARCHES_SHIFT,
 
         /*
-         * Mask to get the index in object slots for isDataProperty() shapes.
-         * For other shapes in the property tree with a parent, stores the
+         * Mask to get the index in object slots for shapes which hasSlot().
+         * For !hasSlot() shapes in the property tree with a parent, stores the
          * parent's slot index (which may be invalid), and invalid for all
          * other shapes.
          */
@@ -745,7 +745,6 @@ class Shape : public gc::TenuredCell
     uint8_t             attrs;          /* attributes, see jsapi.h JSPROP_* */
     uint8_t             flags;          /* flags, see below for defines */
 
-    GCPtrShape   parent;          /* parent node, reverse for..in order */
     /* kids is valid when !inDictionary(), listp is valid when inDictionary(). */
     union {
         KidsPointer kids;         /* null, single child, or a tagged ptr
@@ -788,7 +787,7 @@ class Shape : public gc::TenuredCell
         MOZ_ASSERT_IF(p && !p->hasMissingSlot() && !inDictionary(),
                       p->maybeSlot() <= maybeSlot());
         MOZ_ASSERT_IF(p && !inDictionary(),
-                      isDataProperty() == (p->maybeSlot() != maybeSlot()));
+                      hasSlot() == (p->maybeSlot() != maybeSlot()));
         parent = p;
     }
 
@@ -936,10 +935,9 @@ class Shape : public gc::TenuredCell
 
     /*
      * Whether this shape has a valid slot value. This may be true even if
-     * !isDataProperty() (see SlotInfo comment above), and may be false even if
-     * isDataProperty() if the shape is being constructed and has not had a slot
-     * assigned yet. After construction, isDataProperty() implies
-     * !hasMissingSlot().
+     * !hasSlot() (see SlotInfo comment above), and may be false even if
+     * hasSlot() if the shape is being constructed and has not had a slot
+     * assigned yet. After construction, hasSlot() implies !hasMissingSlot().
      */
     bool hasMissingSlot() const { return maybeSlot() == SHAPE_INVALID_SLOT; }
 
@@ -1013,15 +1011,10 @@ class Shape : public gc::TenuredCell
 
     BaseShape* base() const { return base_.get(); }
 
-    static bool isDataProperty(unsigned attrs, GetterOp getter, SetterOp setter) {
-        return !(attrs & (JSPROP_GETTER | JSPROP_SETTER)) && !getter && !setter;
+    bool hasSlot() const {
+        return (attrs & JSPROP_SHARED) == 0;
     }
-
-    bool isDataProperty() const {
-        MOZ_ASSERT(!isEmptyShape());
-        return isDataProperty(attrs, getter(), setter());
-    }
-    uint32_t slot() const { MOZ_ASSERT(isDataProperty() && !hasMissingSlot()); return maybeSlot(); }
+    uint32_t slot() const { MOZ_ASSERT(hasSlot() && !hasMissingSlot()); return maybeSlot(); }
     uint32_t maybeSlot() const {
         return slotInfo & SLOT_MASK;
     }
@@ -1147,8 +1140,8 @@ class Shape : public gc::TenuredCell
     }
 
 #ifdef DEBUG
-    void dump(js::GenericPrinter& out) const;
-    void dumpSubtree(int level, js::GenericPrinter& out) const;
+    void dump(FILE* fp) const;
+    void dumpSubtree(int level, FILE* fp) const;
 #endif
 
     void sweep();
@@ -1456,6 +1449,7 @@ struct StackShape
         MOZ_ASSERT(base);
         MOZ_ASSERT(!JSID_IS_VOID(propid));
         MOZ_ASSERT(slot <= SHAPE_INVALID_SLOT);
+        MOZ_ASSERT_IF(attrs & (JSPROP_GETTER | JSPROP_SETTER), attrs & JSPROP_SHARED);
     }
 
     explicit StackShape(Shape* shape)
@@ -1478,13 +1472,10 @@ struct StackShape
         this->rawSetter = rawSetter;
     }
 
-    bool isDataProperty() const {
-        MOZ_ASSERT(!JSID_IS_EMPTY(propid));
-        return Shape::isDataProperty(attrs, rawGetter, rawSetter);
-    }
+    bool hasSlot() const { return (attrs & JSPROP_SHARED) == 0; }
     bool hasMissingSlot() const { return maybeSlot() == SHAPE_INVALID_SLOT; }
 
-    uint32_t slot() const { MOZ_ASSERT(isDataProperty() && !hasMissingSlot()); return slot_; }
+    uint32_t slot() const { MOZ_ASSERT(hasSlot() && !hasMissingSlot()); return slot_; }
     uint32_t maybeSlot() const { return slot_; }
 
     void setSlot(uint32_t slot) {
@@ -1513,7 +1504,7 @@ class WrappedPtrOperations<StackShape, Wrapper>
     const StackShape& ss() const { return static_cast<const Wrapper*>(this)->get(); }
 
   public:
-    bool isDataProperty() const { return ss().isDataProperty(); }
+    bool hasSlot() const { return ss().hasSlot(); }
     bool hasMissingSlot() const { return ss().hasMissingSlot(); }
     uint32_t slot() const { return ss().slot(); }
     uint32_t maybeSlot() const { return ss().maybeSlot(); }
@@ -1540,11 +1531,11 @@ class MutableWrappedPtrOperations<StackShape, Wrapper>
 inline
 Shape::Shape(const StackShape& other, uint32_t nfixed)
   : base_(other.base),
+    parent(nullptr),
     propid_(other.propid),
     slotInfo(other.maybeSlot() | (nfixed << FIXED_SLOTS_SHIFT)),
     attrs(other.attrs),
-    flags(other.flags),
-    parent(nullptr)
+    flags(other.flags)
 {
 #ifdef DEBUG
     gc::AllocKind allocKind = getAllocKind();
@@ -1554,6 +1545,7 @@ Shape::Shape(const StackShape& other, uint32_t nfixed)
 
     MOZ_ASSERT_IF(!isEmptyShape(), AtomIsMarked(zone(), propid()));
 
+    MOZ_ASSERT_IF(attrs & (JSPROP_GETTER | JSPROP_SETTER), attrs & JSPROP_SHARED);
     kids.setNull();
 }
 
@@ -1572,11 +1564,11 @@ class NurseryShapesRef : public gc::BufferableRef
 inline
 Shape::Shape(UnownedBaseShape* base, uint32_t nfixed)
   : base_(base),
+    parent(nullptr),
     propid_(JSID_EMPTY),
     slotInfo(SHAPE_INVALID_SLOT | (nfixed << FIXED_SLOTS_SHIFT)),
-    attrs(0),
-    flags(0),
-    parent(nullptr)
+    attrs(JSPROP_SHARED),
+    flags(0)
 {
     MOZ_ASSERT(base);
     kids.setNull();

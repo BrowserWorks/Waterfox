@@ -113,7 +113,7 @@ function testScroll(target, stepSize, opt_reportFunc, opt_numSteps) {
   }
 
   function rAF(fn) {
-    return win.requestAnimationFrame(fn);
+    return content.requestAnimationFrame(fn);
   }
 
   function P_rAF() {

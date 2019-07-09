@@ -191,7 +191,7 @@ AppPicker.prototype =
         startLocation = "Home";
       }
       fp.displayDirectory =
-        fileLoc.get(startLocation, Components.interfaces.nsIFile);
+        fileLoc.get(startLocation, Components.interfaces.nsILocalFile);
 
       fp.open(rv => {
           if (rv == nsIFilePicker.returnOK && fp.file) {
@@ -206,7 +206,7 @@ AppPicker.prototype =
       });
       return true;
     }
-};
+}
 
 // Global object
 var g_dialog = new AppPicker();

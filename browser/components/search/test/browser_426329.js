@@ -1,4 +1,3 @@
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
   "resource://gre/modules/FormHistory.jsm");
 
@@ -131,12 +130,6 @@ async function prepareTest() {
   await focusPromise;
 }
 
-add_task(async function testSetup() {
-  await SpecialPowers.pushPrefEnv({ set: [
-    ["browser.search.widget.inNavBar", true],
-  ]});
-});
-
 add_task(async function testSetupEngine() {
   await promiseSetEngine();
 });
@@ -247,7 +240,7 @@ add_task(async function testClearHistory() {
   // Close the context menu.
   EventUtils.synthesizeKey("VK_ESCAPE", {});
 
-  let controller = searchBar.textbox.controllers.getControllerForCommand("cmd_clearhistory");
+  let controller = searchBar.textbox.controllers.getControllerForCommand("cmd_clearhistory")
   ok(controller.isCommandEnabled("cmd_clearhistory"), "Clear history command enabled");
   controller.doCommand("cmd_clearhistory");
   let count = await countEntries();

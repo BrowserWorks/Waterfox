@@ -8,6 +8,9 @@
 #define mozilla_dom_HTMLSharedElement_h
 
 #include "nsIDOMHTMLBaseElement.h"
+#include "nsIDOMHTMLDirectoryElement.h"
+#include "nsIDOMHTMLQuoteElement.h"
+#include "nsIDOMHTMLHeadElement.h"
 #include "nsIDOMHTMLHtmlElement.h"
 #include "nsGenericHTMLElement.h"
 
@@ -21,6 +24,9 @@ namespace dom {
 
 class HTMLSharedElement final : public nsGenericHTMLElement,
                                 public nsIDOMHTMLBaseElement,
+                                public nsIDOMHTMLDirectoryElement,
+                                public nsIDOMHTMLQuoteElement,
+                                public nsIDOMHTMLHeadElement,
                                 public nsIDOMHTMLHtmlElement
 {
 public:
@@ -39,12 +45,18 @@ public:
   // nsIDOMHTMLBaseElement
   NS_DECL_NSIDOMHTMLBASEELEMENT
 
+  // nsIDOMHTMLQuoteElement
+  NS_DECL_NSIDOMHTMLQUOTEELEMENT
+
+  // nsIDOMHTMLHeadElement
+  NS_DECL_NSIDOMHTMLHEADELEMENT
+
   // nsIDOMHTMLHtmlElement
   NS_DECL_NSIDOMHTMLHTMLELEMENT
 
   // nsIContent
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
 
@@ -56,7 +68,7 @@ public:
                               bool aNullParent = true) override;
 
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
@@ -164,10 +176,9 @@ protected:
 
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 };
 

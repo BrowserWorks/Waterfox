@@ -335,7 +335,7 @@
             // if the scheme is not an exposed protocol, then opening this link
             // should be deferred to the system's external protocol handler
             if (!protocolSvc.isExposedProtocol(uri.scheme)) {
-              protocolSvc.loadURI(uri);
+              protocolSvc.loadUrl(uri);
               aEvent.preventDefault()
               return;
             }
@@ -362,7 +362,7 @@
 
           // otherwise, fall back to opening the anchor directly
           var win = window;
-          if (window.isChromeWindow) {
+          if (window instanceof Components.interfaces.nsIDOMChromeWindow) {
             while (win.opener && !win.opener.closed)
               win = win.opener;
           }

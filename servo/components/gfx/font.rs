@@ -10,7 +10,6 @@ use platform::font::{FontHandle, FontTable};
 use platform::font_context::FontContextHandle;
 use platform::font_template::FontTemplateData;
 use smallvec::SmallVec;
-use std::ascii::AsciiExt;
 use std::borrow::ToOwned;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -112,7 +111,7 @@ pub struct Font {
     shaper: Option<Shaper>,
     shape_cache: RefCell<HashMap<ShapeCacheEntry, Arc<GlyphStore>>>,
     glyph_advance_cache: RefCell<HashMap<u32, FractionalPixel>>,
-    pub font_key: webrender_api::FontInstanceKey,
+    pub font_key: webrender_api::FontKey,
 }
 
 impl Font {
@@ -121,7 +120,7 @@ impl Font {
                descriptor: FontTemplateDescriptor,
                requested_pt_size: Au,
                actual_pt_size: Au,
-               font_key: webrender_api::FontInstanceKey) -> Font {
+               font_key: webrender_api::FontKey) -> Font {
         let metrics = handle.metrics();
         Font {
             handle: handle,
@@ -154,7 +153,7 @@ bitflags! {
 }
 
 /// Various options that control text shaping.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash, Copy, Debug)]
 pub struct ShapingOptions {
     /// Spacing to add between each letter. Corresponds to the CSS 2.1 `letter-spacing` property.
     /// NB: You will probably want to set the `IGNORE_LIGATURES_SHAPING_FLAG` if this is non-null.
@@ -168,7 +167,7 @@ pub struct ShapingOptions {
 }
 
 /// An entry in the shape cache.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 struct ShapeCacheEntry {
     text: String,
     options: ShapingOptions,

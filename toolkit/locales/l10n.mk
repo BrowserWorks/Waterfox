@@ -19,8 +19,6 @@
 #   language pack and zip package.
 #   Other targets like windows installers might be listed, too, and should
 #   be defined in the including makefile.
-#   The installer-% targets should not set AB_CD, so that the unpackaging
-#   step finds the original package.
 # The including makefile should provide values for the variables
 #   MOZ_APP_VERSION and MOZ_LANGPACK_EID.
 
@@ -56,15 +54,7 @@ ACDEFINES += \
 	-DPKG_INST_BASENAME='$(PKG_INST_BASENAME)' \
 	$(NULL)
 
-# export some global defines for l10n repacks
-BASE_MERGE:=$(CURDIR)/merge-dir
-export REAL_LOCALE_MERGEDIR=$(BASE_MERGE)/$(AB_CD)
-# is an l10n repack step:
-export IS_LANGUAGE_REPACK
-# is a language pack:
-export IS_LANGPACK
 
-clobber-%: AB_CD=$*
 clobber-%:
 	$(RM) -rf $(DIST)/xpi-stage/locale-$*
 
@@ -165,15 +155,11 @@ endif
 repackage-zip-%: unpack
 	@$(MAKE) repackage-zip AB_CD=$* ZIP_IN='$(ZIP_IN)'
 
-
-LANGPACK_DEFINES = \
-  $(firstword \
-    $(wildcard $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/defines.inc) \
-    $(MOZILLA_DIR)/toolkit/locales/en-US/defines.inc) \
-  $(firstword \
-    $(wildcard $(LOCALE_SRCDIR)/defines.inc) \
-    $(srcdir)/en-US/defines.inc) \
-$(NULL)
+APP_DEFINES = $(firstword $(wildcard $(LOCALE_SRCDIR)/defines.inc) \
+                          $(srcdir)/en-US/defines.inc)
+TK_DEFINES = $(firstword \
+   $(wildcard $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/defines.inc) \
+   $(MOZILLA_DIR)/toolkit/locales/en-US/defines.inc)
 
 # Dealing with app sub dirs: If DIST_SUBDIRS is defined it contains a
 # listing of app sub-dirs we should include in langpack xpis. If not,
@@ -181,43 +167,15 @@ $(NULL)
 # chrome directory.
 PKG_ZIP_DIRS = chrome $(or $(DIST_SUBDIRS),$(DIST_SUBDIR))
 
-# Clone a l10n repository, either via hg or git
-# Make this a variable as it's embedded in a sh conditional
-ifeq ($(VCS_CHECKOUT_TYPE),hg)
-L10N_CO = $(HG) --cwd $(L10NBASEDIR) clone https://hg.mozilla.org/l10n-central/$(AB_CD)/
-else
-ifeq ($(VCS_CHECKOUT_TYPE),git)
-L10N_CO = $(GIT) -C $(L10NBASEDIR) clone hg://hg.mozilla.org/l10n-central/$(AB_CD)/
-else
-L10N_CO = $(error You need to use either hg or git)
-endif
-endif
-
-
-merge-%: IS_LANGUAGE_REPACK=1
-merge-%: AB_CD=$*
-merge-%:
-# For nightly builds, we automatically check out missing localizations
-# from l10n-central.
-ifdef NIGHTLY_BUILD
-	@if  ! test -d $(L10NBASEDIR)/$(AB_CD) ; then \
-		$(NSINSTALL) -D $(L10NBASEDIR) ; \
-		$(L10N_CO) ; \
-	fi
-endif
-	$(RM) -rf $(REAL_LOCALE_MERGEDIR)
-	-$(MOZILLA_DIR)/mach compare-locales --merge $(BASE_MERGE) $(srcdir)/l10n.toml $(L10NBASEDIR) $*
-
 langpack-%: LANGPACK_FILE=$(ABS_DIST)/$(PKG_LANGPACK_PATH)$(PKG_LANGPACK_BASENAME).xpi
 langpack-%: AB_CD=$*
 langpack-%: XPI_NAME=locale-$*
-langpack-%: IS_LANGUAGE_REPACK=1
-langpack-%: IS_LANGPACK=1
 langpack-%: libs-%
 	@echo 'Making langpack $(LANGPACK_FILE)'
 	$(NSINSTALL) -D $(DIST)/$(PKG_LANGPACK_PATH)
-	$(call py_action,langpack_manifest,--locales $(AB_CD) --min-app-ver $(MOZ_APP_VERSION) --max-app-ver $(MOZ_APP_MAXVERSION) --app-name "$(MOZ_APP_DISPLAYNAME)" --l10n-basedir "$(L10NBASEDIR)" --defines $(LANGPACK_DEFINES) --input $(DIST)/xpi-stage/locale-$(AB_CD))
-	$(call py_action,zip,-C $(DIST)/xpi-stage/locale-$(AB_CD) -x **/*.manifest -x **/*.js -x **/*.ini $(LANGPACK_FILE) $(PKG_ZIP_DIRS) manifest.json)
+	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) \
+	  -DTK_DEFINES=$(TK_DEFINES) -DAPP_DEFINES=$(APP_DEFINES) $(MOZILLA_DIR)/toolkit/locales/generic/install.rdf -o $(DIST)/xpi-stage/$(XPI_NAME)/install.rdf)
+	$(call py_action,zip,-C $(DIST)/xpi-stage/locale-$(AB_CD) $(LANGPACK_FILE) install.rdf $(PKG_ZIP_DIRS) chrome.manifest)
 
 # This variable is to allow the wget-en-US target to know which ftp server to download from
 ifndef EN_US_BINARY_URL 

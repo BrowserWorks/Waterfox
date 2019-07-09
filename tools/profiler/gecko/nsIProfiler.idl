@@ -7,7 +7,7 @@
 
 %{C++
 #include "nsTArrayForwardDeclare.h"
-#include "nsStringFwd.h"
+class nsCString;
 %}
 
 [ref] native nsCString(const nsCString);
@@ -61,12 +61,8 @@ interface nsIProfiler : nsISupports
   [implicit_jscontext]
   nsISupports getProfileDataAsArrayBuffer([optional] in double aSinceTime);
 
-  /**
-   * Returns a promise that resolves once the file has been written.
-   */
-  [implicit_jscontext]
-  nsISupports dumpProfileToFileAsync(in ACString aFilename,
-                                     [optional] in double aSinceTime);
+  void dumpProfileToFileAsync(in ACString aFilename,
+                              [optional] in double aSinceTime);
 
   boolean IsActive();
 

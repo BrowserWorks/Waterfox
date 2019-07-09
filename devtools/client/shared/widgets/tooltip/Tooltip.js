@@ -5,7 +5,7 @@
 "use strict";
 
 const defer = require("devtools/shared/defer");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {KeyCodes} = require("devtools/client/shared/keycodes");
 const {TooltipToggle} = require("devtools/client/shared/widgets/tooltip/TooltipToggle");
 
@@ -87,77 +87,76 @@ const POPUP_EVENTS = ["shown", "hidden", "showing", "hiding"];
  * - hidden : when the tooltip gets hidden
  * - keypress : when any key gets pressed, with keyCode
  */
-
-class Tooltip {
-  constructor(doc, {
+function Tooltip(doc, {
   consumeOutsideClick = false,
   closeOnKeys = [ESCAPE_KEYCODE],
   noAutoFocus = true,
   closeOnEvents = [],
   } = {}) {
-    EventEmitter.decorate(this);
+  EventEmitter.decorate(this);
 
-    this.defaultPosition = "before_start";
-    // px
-    this.defaultOffsetX = 0;
-    // px
-    this.defaultOffsetY = 0;
-    // px
+  this.doc = doc;
+  this.consumeOutsideClick = consumeOutsideClick;
+  this.closeOnKeys = closeOnKeys;
+  this.noAutoFocus = noAutoFocus;
+  this.closeOnEvents = closeOnEvents;
 
-    this.doc = doc;
-    this.consumeOutsideClick = consumeOutsideClick;
-    this.closeOnKeys = closeOnKeys;
-    this.noAutoFocus = noAutoFocus;
-    this.closeOnEvents = closeOnEvents;
+  this.panel = this._createPanel();
 
-    this.panel = this._createPanel();
-
-    // Create tooltip toggle helper and decorate the Tooltip instance with
-    // shortcut methods.
-    this._toggle = new TooltipToggle(this);
-    this.startTogglingOnHover = this._toggle.start.bind(this._toggle);
-    this.stopTogglingOnHover = this._toggle.stop.bind(this._toggle);
+  // Create tooltip toggle helper and decorate the Tooltip instance with
+  // shortcut methods.
+  this._toggle = new TooltipToggle(this);
+  this.startTogglingOnHover = this._toggle.start.bind(this._toggle);
+  this.stopTogglingOnHover = this._toggle.stop.bind(this._toggle);
 
   // Emit show/hide events when the panel does.
-    for (let eventName of POPUP_EVENTS) {
-      this["_onPopup" + eventName] = (name => {
-        return e => {
-          if (e.target === this.panel) {
-            this.emit(name);
-          }
-        };
-      })(eventName);
-      this.panel.addEventListener("popup" + eventName,
-        this["_onPopup" + eventName]);
-    }
+  for (let eventName of POPUP_EVENTS) {
+    this["_onPopup" + eventName] = (name => {
+      return e => {
+        if (e.target === this.panel) {
+          this.emit(name);
+        }
+      };
+    })(eventName);
+    this.panel.addEventListener("popup" + eventName,
+      this["_onPopup" + eventName]);
+  }
 
   // Listen to keypress events to close the tooltip if configured to do so
-    let win = this.doc.querySelector("window");
-    this._onKeyPress = event => {
-      if (this.panel.hidden) {
-        return;
-      }
+  let win = this.doc.querySelector("window");
+  this._onKeyPress = event => {
+    if (this.panel.hidden) {
+      return;
+    }
 
-      this.emit("keypress", event.keyCode);
-      if (this.closeOnKeys.indexOf(event.keyCode) !== -1 &&
-          this.isShown()) {
-        event.stopPropagation();
-        this.hide();
-      }
-    };
-    win.addEventListener("keypress", this._onKeyPress);
+    this.emit("keypress", event.keyCode);
+    if (this.closeOnKeys.indexOf(event.keyCode) !== -1 &&
+        this.isShown()) {
+      event.stopPropagation();
+      this.hide();
+    }
+  };
+  win.addEventListener("keypress", this._onKeyPress);
 
   // Listen to custom emitters' events to close the tooltip
-    this.hide = this.hide.bind(this);
-    for (let {emitter, event, useCapture} of this.closeOnEvents) {
-      for (let add of ["addEventListener", "on"]) {
-        if (add in emitter) {
-          emitter[add](event, this.hide, useCapture);
-          break;
-        }
+  this.hide = this.hide.bind(this);
+  for (let {emitter, event, useCapture} of this.closeOnEvents) {
+    for (let add of ["addEventListener", "on"]) {
+      if (add in emitter) {
+        emitter[add](event, this.hide, useCapture);
+        break;
       }
     }
   }
+}
+
+Tooltip.prototype = {
+  defaultPosition: "before_start",
+  // px
+  defaultOffsetX: 0,
+  // px
+  defaultOffsetY: 0,
+  // px
 
   /**
    * Show the tooltip. It might be wise to append some content first if you
@@ -171,61 +170,61 @@ class Tooltip {
    * @param {number} x, y [optional]
    *        The left and top offset coordinates, in pixels.
    */
-  show(anchor,
+  show: function (anchor,
     position = this.defaultPosition,
     x = this.defaultOffsetX,
     y = this.defaultOffsetY) {
     this.panel.hidden = false;
     this.panel.openPopup(anchor, position, x, y);
-  }
+  },
 
   /**
    * Hide the tooltip
    */
-  hide() {
+  hide: function () {
     this.panel.hidden = true;
     this.panel.hidePopup();
-  }
+  },
 
-  isShown() {
+  isShown: function () {
     return this.panel &&
            this.panel.state !== "closed" &&
            this.panel.state !== "hiding";
-  }
+  },
 
-  setSize(width, height) {
+  setSize: function (width, height) {
     this.panel.sizeTo(width, height);
-  }
+  },
 
   /**
    * Empty the tooltip's content
    */
-  empty() {
+  empty: function () {
     while (this.panel.hasChildNodes()) {
       this.panel.firstChild.remove();
     }
-  }
+  },
 
   /**
    * Gets this panel's visibility state.
    * @return boolean
    */
-  isHidden() {
+  isHidden: function () {
     return this.panel.state == "closed" || this.panel.state == "hiding";
-  }
+  },
 
   /**
    * Gets if this panel has any child nodes.
    * @return boolean
    */
-  isEmpty() {
+  isEmpty: function () {
     return !this.panel.hasChildNodes();
-  }
+  },
 
   /**
    * Get rid of references and event listeners
    */
-  destroy() {
+  destroy: function () {
     this.hide();
 
     for (let eventName of POPUP_EVENTS) {
@@ -253,7 +252,7 @@ class Tooltip {
 
     this.panel.remove();
     this.panel = null;
-  }
+  },
 
   /**
    * Returns the outer container node (that includes the arrow etc.). Happens
@@ -262,7 +261,7 @@ class Tooltip {
    */
   get container() {
     return this.panel;
-  }
+  },
 
   /**
    * Set the content of this tooltip. Will first empty the tooltip and then
@@ -285,11 +284,11 @@ class Tooltip {
     if (content) {
       this.panel.appendChild(content);
     }
-  }
+  },
 
   get content() {
     return this.panel.firstChild;
-  }
+  },
 
   /**
    * Sets some text as the content of this tooltip.
@@ -301,7 +300,7 @@ class Tooltip {
    * @param {string} containerClass [optional]
    *        A style class for the text messages container.
    */
-  setTextContent(
+  setTextContent: function (
     {
       messages,
       messagesClass,
@@ -332,7 +331,7 @@ class Tooltip {
     }
 
     this.content = vbox;
-  }
+  },
 
   /**
    * Load a document into an iframe, and set the iframe
@@ -358,7 +357,7 @@ class Tooltip {
    * When the document is loaded, the function gets the content window
    * and resolves the promise with the content window.
    */
-  setIFrameContent({width, height}, url) {
+  setIFrameContent: function ({width, height}, url) {
     let def = defer();
 
     // Create an iframe
@@ -384,7 +383,7 @@ class Tooltip {
     this.content = iframe;
 
     return def.promise;
-  }
+  },
 
   /**
    * Create the tooltip panel
@@ -406,6 +405,6 @@ class Tooltip {
 
     return panel;
   }
-}
+};
 
 module.exports = Tooltip;

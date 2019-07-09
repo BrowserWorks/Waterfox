@@ -48,12 +48,13 @@ ViewportFrame::Init(nsIContent*       aContent,
   if (parent) {
     nsFrameState state = parent->GetStateBits();
 
-    AddStateBits(state & (NS_FRAME_IN_POPUP));
+    mState |= state & (NS_FRAME_IN_POPUP);
   }
 }
 
 void
 ViewportFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists)
 {
   AUTO_PROFILER_LABEL("ViewportFrame::BuildDisplayList", GRAPHICS);
@@ -62,10 +63,10 @@ ViewportFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     // make the kid's BorderBackground our own. This ensures that the canvas
     // frame's background becomes our own background and therefore appears
     // below negative z-index elements.
-    BuildDisplayListForChild(aBuilder, kid, aLists);
+    BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
   }
 
-  nsDisplayList topLayerList(aBuilder);
+  nsDisplayList topLayerList;
   BuildDisplayListForTopLayer(aBuilder, &topLayerList);
   if (!topLayerList.IsEmpty()) {
     // Wrap the whole top layer in a single item with maximum z-index,
@@ -123,12 +124,8 @@ BuildDisplayListForTopLayerFrame(nsDisplayListBuilder* aBuilder,
     asrSetter.SetCurrentActiveScrolledRoot(
       savedOutOfFlowData->mContainingBlockActiveScrolledRoot);
   }
-  nsDisplayListBuilder::AutoBuildingDisplayList
-    buildingForChild(aBuilder, aFrame, dirty,
-                     aBuilder->IsAtRootOfPseudoStackingContext());
-
-  nsDisplayList list(aBuilder);
-  aFrame->BuildDisplayListForStackingContext(aBuilder, &list);
+  nsDisplayList list;
+  aFrame->BuildDisplayListForStackingContext(aBuilder, dirty, &list);
   aList->AppendToTop(&list);
 }
 
@@ -293,8 +290,10 @@ ViewportFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("ViewportFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   NS_FRAME_TRACE_REFLOW_IN("ViewportFrame::Reflow");
+
+  // Initialize OUT parameters
+  aStatus.Reset();
 
   // Because |Reflow| sets ComputedBSize() on the child to our
   // ComputedBSize().
@@ -421,7 +420,7 @@ void
 ViewportFrame::UpdateStyle(ServoRestyleState& aRestyleState)
 {
   ServoStyleContext* oldContext = StyleContext()->AsServo();
-  nsAtom* pseudo = oldContext->GetPseudo();
+  nsIAtom* pseudo = oldContext->GetPseudo();
   RefPtr<ServoStyleContext> newContext =
     aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(pseudo, nullptr);
 

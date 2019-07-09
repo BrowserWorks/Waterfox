@@ -12,9 +12,7 @@ from distutils.spawn import find_executable
 
 from mozboot.util import get_state_dir
 
-from .. import preset as pset
-from ..cli import BaseTryParser
-from ..tasks import generate_tasks
+from ..tasks import generate_target
 from ..vcs import VCSHelper
 
 try:
@@ -80,35 +78,6 @@ fzf_header_shortcuts = {
     'accept': 'enter',
     'cancel': 'ctrl-c',
 }
-
-
-class FuzzyParser(BaseTryParser):
-    name = 'fuzzy'
-    arguments = [
-        [['-q', '--query'],
-         {'metavar': 'STR',
-          'help': "Use the given query instead of entering the selection "
-                  "interface. Equivalent to typing <query><ctrl-a><enter> "
-                  "from the interface.",
-          }],
-        [['-u', '--update'],
-         {'action': 'store_true',
-          'default': False,
-          'help': "Update fzf before running.",
-          }],
-        [['--full'],
-         {'action': 'store_true',
-          'default': False,
-          'help': "Use the full set of tasks as input to fzf (instead of "
-                  "target tasks).",
-          }],
-        [['-p', '--parameters'],
-         {'default': None,
-          'help': "Use the given parameters.yml to generate tasks, "
-                  "defaults to latest parameters.yml from mozilla-central",
-          }],
-    ]
-    templates = ['artifact', 'env']
 
 
 def run(cmd, cwd=None):
@@ -197,12 +166,7 @@ def format_header():
     return FZF_HEADER.format(shortcuts=', '.join(shortcuts), t=terminal)
 
 
-def run_fuzzy_try(update=False, query=None, templates=None, full=False, parameters=None,
-                  save=False, preset=None, list_presets=False, push=True, message='{msg}',
-                  **kwargs):
-    if list_presets:
-        return pset.list_presets(section='fuzzy')
-
+def run_fuzzy_try(update):
     fzf = fzf_bootstrap(update)
 
     if not fzf:
@@ -210,9 +174,9 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
         return
 
     vcs = VCSHelper.create()
-    vcs.check_working_directory(push)
+    vcs.check_working_directory()
 
-    all_tasks = generate_tasks(parameters, full)
+    all_tasks = generate_target()
 
     key_shortcuts = [k + ':' + v for k, v in fzf_shortcuts.iteritems()]
     cmd = [
@@ -223,31 +187,12 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
         # but is guaranteed to be available on all platforms.
         '--preview', 'python -c "print(\\"\\n\\".join(sorted([s.strip(\\"\'\\") for s in \\"{+}\\".split()])))"',  # noqa
         '--preview-window=right:20%',
-        '--print-query',
     ]
-
-    if query:
-        cmd.extend(['-f', query])
-    elif preset:
-        value = pset.load(preset, section='fuzzy')[0]
-        cmd.extend(['-f', value])
-
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    out = proc.communicate('\n'.join(all_tasks))[0].splitlines()
-
-    selected = []
-    if out:
-        query = out[0]
-        selected = out[1:]
+    selected = proc.communicate('\n'.join(all_tasks))[0].splitlines()
 
     if not selected:
         print("no tasks selected")
         return
 
-    if save:
-        pset.save('fuzzy', save, query)
-
-    query = " with query: {}".format(query) if query else ""
-    msg = "Fuzzy{}".format(query)
-    return vcs.push_to_try('fuzzy', message.format(msg=msg), selected, templates, push=push,
-                           closed_tree=kwargs["closed_tree"])
+    return vcs.push_to_try("Pushed via 'mach try fuzzy', see diff for scheduled tasks", selected)

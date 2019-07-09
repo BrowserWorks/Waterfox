@@ -53,7 +53,7 @@ function logMsg(msg, file, line, flag, winID) {
 let setupPrototype = (_class, dict) => {
   _class.prototype.classDescription = _class.name;
   Object.assign(_class.prototype, dict);
-};
+}
 
 // Global list of PeerConnection objects, so they can be cleaned up when
 // a page is torn down. (Maps inner window ID to an array of PC objects).
@@ -117,6 +117,11 @@ class GlobalPCList {
     if (this._list[winID].length === 0) {
       delete this._list[winID];
     }
+  }
+
+  hasActivePeerConnection(winID) {
+    this.removeNullRefs(winID);
+    return !!this._list[winID];
   }
 
   handleGMPCrash(data) {
@@ -209,7 +214,8 @@ class GlobalPCList {
 setupPrototype(GlobalPCList, {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsIMessageListener,
-                                         Ci.nsISupportsWeakReference]),
+                                         Ci.nsISupportsWeakReference,
+                                         Ci.IPeerConnectionManager]),
   classID: PC_MANAGER_CID,
   _xpcom_factory: {
     createInstance(outer, iid) {
@@ -327,10 +333,6 @@ class RTCStatsReport {
   }
 
   get mozPcid() { return this._pcid; }
-
-  __onget(key, value) {
-    /* Do whatever here */
-  }
 }
 setupPrototype(RTCStatsReport, {
   classID: PC_STATS_CID,
@@ -640,11 +642,6 @@ class RTCPeerConnection {
             throw new this._win.DOMException(msg + " - missing username: " + spec,
                                              "InvalidAccessError");
           }
-          if (username.length > 512) {
-            throw new this._win.DOMException(msg +
-                                             " - username longer then 512 bytes: "
-                                             + username, "InvalidAccessError");
-          }
           if (credential == undefined) {
             throw new this._win.DOMException(msg + " - missing credential: " + spec,
                                              "InvalidAccessError");
@@ -831,7 +828,7 @@ class RTCPeerConnection {
 
   async _getPermission() {
     if (!this._havePermission) {
-      let privileged = this._isChrome ||
+      let privileged = this._isChrome || AppConstants.MOZ_B2G ||
           Services.prefs.getBoolPref("media.navigator.permission.disabled");
 
       if (privileged) {
@@ -852,7 +849,16 @@ class RTCPeerConnection {
     return this._havePermission;
   }
 
-  _sanityCheckSdp(action, type, sdp) {
+  setLocalDescription(desc, onSucc, onErr) {
+    return this._auto(onSucc, onErr, () => this._setLocalDescription(desc));
+  }
+
+  async _setLocalDescription({ type, sdp }) {
+    this._checkClosed();
+
+    this._localType = type;
+
+    let action = this._actions[type];
     if (action === undefined) {
       throw new this._win.DOMException(
           "Invalid type " + type + " provided to setLocalDescription",
@@ -868,29 +874,6 @@ class RTCPeerConnection {
           "Empty or null SDP provided to setLocalDescription",
           "InvalidParameterError");
     }
-
-    // The fippo butter finger filter AKA non-ASCII chars
-    // Note: SDP allows non-ASCII character in the subject (who cares?)
-    let pos = sdp.search(/[^\u0000-\u007f]/);
-    if (pos != -1) {
-      throw new this._win.DOMException(
-          "SDP contains non ASCII characters at position " + pos,
-          "InvalidParameterError");
-    }
-  }
-
-  setLocalDescription(desc, onSucc, onErr) {
-    return this._auto(onSucc, onErr, () => this._setLocalDescription(desc));
-  }
-
-  async _setLocalDescription({ type, sdp }) {
-    this._checkClosed();
-
-    this._localType = type;
-
-    let action = this._actions[type];
-
-    this._sanityCheckSdp(action, type, sdp);
 
     return this._chain(async () => {
       await this._getPermission();
@@ -956,8 +939,21 @@ class RTCPeerConnection {
     this._remoteType = type;
 
     let action = this._actions[type];
+    if (action === undefined) {
+      throw new this._win.DOMException(
+          "Invalid type " + type + " provided to setRemoteDescription",
+          "InvalidParameterError");
+    }
+    if (action == Ci.IPeerConnection.kActionPRAnswer) {
+      throw new this._win.DOMException("pranswer not yet implemented",
+                                       "NotSupportedError");
+    }
 
-    this._sanityCheckSdp(action, type, sdp);
+    if (!sdp && type != "rollback") {
+      throw new this._win.DOMException(
+          "Empty or null SDP provided to setRemoteDescription",
+          "InvalidParameterError");
+    }
 
     // Get caller's origin before hitting the promise chain
     let origin = Cu.getWebIDLCallerPrincipal().origin;
@@ -1176,18 +1172,6 @@ class RTCPeerConnection {
 
   mozAddRIDFilter(receiver, rid) {
     this._impl.addRIDFilter(receiver.track, rid);
-  }
-
-  mozSetPacketCallback(callback) {
-    this._onPacket = callback;
-  }
-
-  mozEnablePacketDump(level, type, sending) {
-    this._impl.enablePacketDump(level, type, sending);
-  }
-
-  mozDisablePacketDump(level, type, sending) {
-    this._impl.disablePacketDump(level, type, sending);
   }
 
   get localDescription() {
@@ -1531,7 +1515,10 @@ class PeerConnectionObserver {
         break;
 
       case "IceConnectionState":
-        this.handleIceConnectionStateChange(this._dompc._pc.iceConnectionState);
+        let connState = this._dompc._pc.iceConnectionState;
+        this._dompc._queueTaskWithClosedCheck(() => {
+          this.handleIceConnectionStateChange(connState);
+        });
         break;
 
       case "IceGatheringState":
@@ -1627,13 +1614,6 @@ class PeerConnectionObserver {
     var sender = pc._senders.find(({track}) => track.id == trackId);
     sender.dtmf.dispatchEvent(new pc._win.RTCDTMFToneChangeEvent("tonechange",
                                                                  { tone }));
-  }
-
-  onPacket(level, type, sending, packet) {
-    var pc = this._dompc;
-    if (pc._onPacket) {
-      pc._onPacket(level, type, sending, packet);
-    }
   }
 }
 setupPrototype(PeerConnectionObserver, {

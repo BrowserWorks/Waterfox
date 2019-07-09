@@ -29,37 +29,44 @@ function checkSeparatorInsertion(menuId, buttonId, subviewId) {
     let menu = document.getElementById(menuId);
     insertTempItemsIntoMenu(menu);
 
-    CustomizableUI.addWidgetToArea(buttonId, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+    let placement = CustomizableUI.getPlacementOfWidget(buttonId);
+    let changedPlacement = false;
+    if (!placement || placement.area != CustomizableUI.AREA_PANEL) {
+      CustomizableUI.addWidgetToArea(buttonId, CustomizableUI.AREA_PANEL);
+      changedPlacement = true;
+    }
+    await PanelUI.show();
 
-    await waitForOverflowButtonShown();
-
-    await document.getElementById("nav-bar").overflowable.show();
-
-    let subview = document.getElementById(subviewId);
     let button = document.getElementById(buttonId);
     button.click();
-    await BrowserTestUtils.waitForEvent(subview, "ViewShown");
 
-    let subviewBody = subview.firstChild;
-    ok(subviewBody.firstChild, "Subview should have a kid");
-    is(subviewBody.firstChild.localName, "toolbarbutton", "There should be no separators to start with");
+    await waitForCondition(() => !PanelUI.multiView.hasAttribute("transitioning"));
+    let subview = document.getElementById(subviewId);
+    ok(subview.firstChild, "Subview should have a kid");
+    is(subview.firstChild.localName, "toolbarbutton", "There should be no separators to start with");
 
-    for (let kid of subviewBody.children) {
+    for (let kid of subview.children) {
       if (kid.localName == "menuseparator") {
         ok(kid.previousSibling && kid.previousSibling.localName != "menuseparator",
            "Separators should never have another separator next to them, and should never be the first node.");
       }
     }
 
-    let panelHiddenPromise = promiseOverflowHidden(window);
-    PanelUI.overflowPanel.hidePopup();
+    let panelHiddenPromise = promisePanelHidden(window);
+    PanelUI.hide();
     await panelHiddenPromise;
 
-    CustomizableUI.reset();
+    if (changedPlacement) {
+      CustomizableUI.reset();
+    }
   };
 }
 
-add_task(checkSeparatorInsertion("menuWebDeveloperPopup", "developer-button", "PanelUI-developer"));
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
+});
+
+add_task(checkSeparatorInsertion("menuWebDeveloperPopup", "developer-button", "PanelUI-developerItems"));
 
 registerCleanupFunction(function() {
   for (let el of tempElements) {

@@ -185,7 +185,7 @@ SVGMarkerElement::SetOrientToAngle(SVGAngle& angle, ErrorResult& rv)
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGMarkerElement::IsAttributeMapped(const nsAtom* name) const
+SVGMarkerElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sFEFloodMap,
@@ -209,7 +209,7 @@ SVGMarkerElement::IsAttributeMapped(const nsAtom* name) const
 // nsSVGElement methods
 
 bool
-SVGMarkerElement::ParseAttribute(int32_t aNameSpaceID, nsAtom* aName,
+SVGMarkerElement::ParseAttribute(int32_t aNameSpaceID, nsIAtom* aName,
                                  const nsAString& aValue,
                                  nsAttrValue& aResult)
 {
@@ -234,7 +234,7 @@ SVGMarkerElement::ParseAttribute(int32_t aNameSpaceID, nsAtom* aName,
 }
 
 nsresult
-SVGMarkerElement::UnsetAttr(int32_t aNamespaceID, nsAtom* aName,
+SVGMarkerElement::UnsetAttr(int32_t aNamespaceID, nsIAtom* aName,
                             bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {
@@ -250,7 +250,7 @@ SVGMarkerElement::UnsetAttr(int32_t aNamespaceID, nsAtom* aName,
 // nsSVGElement methods
 
 void
-SVGMarkerElement::SetParentCoordCtxProvider(SVGViewportElement *aContext)
+SVGMarkerElement::SetParentCoordCtxProvider(SVGSVGElement *aContext)
 {
   mCoordCtx = aContext;
   mViewBoxToViewportTransform = nullptr;

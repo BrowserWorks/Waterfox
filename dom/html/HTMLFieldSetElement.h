@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLFieldSetElement.h"
 #include "nsIConstraintValidation.h"
 #include "mozilla/dom/HTMLFormElement.h"
 #include "mozilla/dom/ValidityState.h"
@@ -18,6 +19,7 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLFieldSetElement final : public nsGenericHTMLFormElement,
+                                  public nsIDOMHTMLFieldSetElement,
                                   public nsIConstraintValidation
 {
 public:
@@ -32,13 +34,15 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
+  // nsIDOMHTMLFieldSetElement
+  NS_DECL_NSIDOMHTMLFIELDSETELEMENT
+
   // nsIContent
   virtual nsresult GetEventTargetParent(
                      EventChainPreVisitor& aVisitor) override;
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   virtual nsresult InsertChildAt(nsIContent* aChild, uint32_t aIndex,
@@ -71,17 +75,14 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::disabled, aValue, aRv);
   }
 
-  void GetName(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::name, aValue);
-  }
+  // XPCOM GetName is OK for us
 
   void SetName(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::name, aValue, aRv);
   }
 
-  NS_IMETHOD GetType(nsAString & aType);
+  // XPCOM GetType is OK for us
 
   nsIHTMLCollection* Elements();
 
@@ -125,7 +126,7 @@ private:
 
   // This function is used to generate the nsContentList (listed form elements).
   static bool MatchListedElements(Element* aElement, int32_t aNamespaceID,
-                                  nsAtom* aAtom, void* aData);
+                                  nsIAtom* aAtom, void* aData);
 
   // listed form controls elements.
   RefPtr<nsContentList> mElements;

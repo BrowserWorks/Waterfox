@@ -26,8 +26,6 @@ from mach.decorators import (
 )
 from mach.registrar import Registrar
 # Note: mako cannot be imported at the top level because it breaks mach bootstrap
-sys.path.append(path.join(path.dirname(__file__), "..", "..",
-                          "components", "style", "properties", "Mako-0.9.1.zip"))
 
 from servo.command_base import (
     archive_deterministically,
@@ -180,10 +178,7 @@ class PackageCommands(CommandBase):
     @CommandArgument('--target', '-t',
                      default=None,
                      help='Package for given target platform')
-    @CommandArgument('--flavor', '-f',
-                     default=None,
-                     help='Package using the given Gradle flavor')
-    def package(self, release=False, dev=False, android=None, debug=False, debugger=None, target=None, flavor=None):
+    def package(self, release=False, dev=False, android=None, debug=False, debugger=None, target=None):
         env = self.build_env()
         if android is None:
             android = self.config["build"]["android"]
@@ -209,11 +204,7 @@ class PackageCommands(CommandBase):
             else:
                 build_mode = "Release"
 
-            flavor_name = "Main"
-            if flavor is not None:
-                flavor_name = flavor.title()
-
-            task_name = "assemble" + flavor_name + build_type + build_mode
+            task_name = "assemble" + build_type + build_mode
             try:
                 with cd(path.join("support", "android", "apk")):
                     subprocess.check_call(["./gradlew", "--no-daemon", task_name], env=env)

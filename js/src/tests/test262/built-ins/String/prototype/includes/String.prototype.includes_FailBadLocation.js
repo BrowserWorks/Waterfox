@@ -6,7 +6,7 @@ author: Ryan Lewis
 description: >
     String should return false if a location is passed that is
     greather than the length of the string.
-features: [String.prototype.includes]
+features: [String#includes]
 ---*/
 
 assert.sameValue('word'.includes('w', 5), false, '"word".includes("w", 5)');

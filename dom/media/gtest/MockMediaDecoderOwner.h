@@ -7,6 +7,7 @@
 
 #include "MediaDecoderOwner.h"
 #include "mozilla/AbstractThread.h"
+#include "nsAutoPtr.h"
 
 namespace mozilla
 {
@@ -21,7 +22,7 @@ public:
   void FireTimeUpdate(bool aPeriodic) override {}
   bool GetPaused() override { return false; }
   void MetadataLoaded(const MediaInfo* aInfo,
-                      UniquePtr<const MetadataTags> aTags) override
+                      nsAutoPtr<const MetadataTags> aTags) override
   {
   }
   void NetworkError() override {}
@@ -42,6 +43,10 @@ public:
   void DownloadResumed(bool aForceNetworkLoading) override {}
   void NotifySuspendedByCache(bool aIsSuspended) override {}
   void NotifyDecoderPrincipalChanged() override {}
+  VideoFrameContainer* GetVideoFrameContainer() override
+  {
+    return nullptr;
+  }
   void SetAudibleState(bool aAudible) override {}
   void NotifyXPCOMShutdown() override {}
   AbstractThread* AbstractMainThread() const override
@@ -49,8 +54,10 @@ public:
     // Non-DocGroup version for Mock.
     return AbstractThread::MainThread();
   }
+  nsIDocument* GetDocument() const { return nullptr; }
   void ConstructMediaTracks(const MediaInfo* aInfo) {}
   void RemoveMediaTracks() {}
+  already_AddRefed<GMPCrashHelper> CreateGMPCrashHelper() { return nullptr; }
   void AsyncResolveSeekDOMPromiseIfExists() override {}
   void AsyncRejectSeekDOMPromiseIfExists() override {}
 };

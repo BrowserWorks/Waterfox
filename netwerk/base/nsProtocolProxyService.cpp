@@ -366,6 +366,7 @@ public:
 private:
     ~AsyncGetPACURIRequest()
     {
+        MOZ_ASSERT(NS_IsMainThread() == mIsMainThreadOnly);
         NS_ReleaseOnMainThreadSystemGroup(
           "AsyncGetPACURIRequest::mServiceHolder", mServiceHolder.forget());
     }
@@ -427,7 +428,7 @@ proxy_GetStringPref(nsIPrefBranch *aPrefBranch,
                     const char    *aPref,
                     nsCString     &aResult)
 {
-    nsCString temp;
+    nsXPIDLCString temp;
     nsresult rv = aPrefBranch->GetCharPref(aPref, getter_Copies(temp));
     if (NS_FAILED(rv))
         aResult.Truncate();
@@ -560,7 +561,7 @@ nsProtocolProxyService::ReloadNetworkPAC()
     }
 
     if (type == PROXYCONFIG_PAC) {
-        nsCString pacSpec;
+        nsXPIDLCString pacSpec;
         prefs->GetCharPref(PROXY_PREF("autoconfig_url"),
                            getter_Copies(pacSpec));
         if (!pacSpec.IsEmpty()) {
@@ -692,7 +693,7 @@ nsProtocolProxyService::PrefsChanged(nsIPrefBranch *prefBranch,
 {
     nsresult rv = NS_OK;
     bool reloadPAC = false;
-    nsCString tempString;
+    nsXPIDLCString tempString;
 
     if (!pref || !strcmp(pref, PROXY_PREF("type"))) {
         int32_t type = -1;
@@ -1246,7 +1247,7 @@ nsProtocolProxyService::ReloadPAC()
     if (NS_FAILED(rv))
         return NS_OK;
 
-    nsCString pacSpec;
+    nsXPIDLCString pacSpec;
     if (type == PROXYCONFIG_PAC)
         prefs->GetCharPref(PROXY_PREF("autoconfig_url"), getter_Copies(pacSpec));
     else if (type == PROXYCONFIG_WPAD)

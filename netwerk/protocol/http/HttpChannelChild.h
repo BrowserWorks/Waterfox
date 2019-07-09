@@ -39,7 +39,6 @@ using mozilla::Telemetry::LABELS_HTTP_CHILD_OMT_STATS;
 
 class nsIEventTarget;
 class nsInputStreamPump;
-class nsIInterceptedBodyCallback;
 
 namespace mozilla {
 namespace net {
@@ -99,6 +98,7 @@ public:
   NS_IMETHOD GetProtocolVersion(nsACString& aProtocolVersion) override;
   // nsIHttpChannelInternal
   NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) override;
+  NS_IMETHOD ForceIntercepted(uint64_t aInterceptionID) override;
   // nsISupportsPriority
   NS_IMETHOD SetPriority(int32_t value) override;
   // nsIClassOfService
@@ -132,7 +132,6 @@ protected:
                                              const nsHttpHeaderArray& requestHeaders,
                                              const bool& isFromCache,
                                              const bool& cacheEntryAvailable,
-                                             const uint64_t& cacheEntryId,
                                              const int32_t& cacheFetchCount,
                                              const uint32_t& cacheExpirationTime,
                                              const nsCString& cachedCharset,
@@ -164,8 +163,6 @@ protected:
                                                       const bool& asError) override;
 
   mozilla::ipc::IPCResult RecvSetPriority(const int16_t& aPriority) override;
-
-  mozilla::ipc::IPCResult RecvAttachStreamFilter(Endpoint<extensions::PStreamFilterParent>&& aEndpoint) override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
@@ -206,7 +203,6 @@ private:
                      HttpChannelChild* aNewChannel,
                      InterceptStreamListener* aListener,
                      nsIInputStream* aInput,
-                     nsIInterceptedBodyCallback* aCallback,
                      nsAutoPtr<nsHttpResponseHead>& aHead);
 
     NS_IMETHOD Run() override;
@@ -216,7 +212,6 @@ private:
     RefPtr<HttpChannelChild> mNewChannel;
     RefPtr<InterceptStreamListener> mListener;
     nsCOMPtr<nsIInputStream> mInput;
-    nsCOMPtr<nsIInterceptedBodyCallback> mCallback;
     nsAutoPtr<nsHttpResponseHead> mHead;
   };
 
@@ -248,7 +243,7 @@ private:
   void ProcessNotifyTrackingResource();
   void ProcessSetClassifierMatchedInfo(const nsCString& aList,
                                        const nsCString& aProvider,
-                                       const nsCString& aFullHash);
+                                       const nsCString& aPrefix);
 
 
   void DoOnStartRequest(nsIRequest* aRequest, nsISupports* aContext);
@@ -268,11 +263,9 @@ private:
   // asynchronously read from the pump.
   void OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead,
                                        nsIInputStream* aSynthesizedInput,
-                                       nsIInterceptedBodyCallback* aSynthesizedCallback,
                                        InterceptStreamListener* aStreamListener);
 
-  void ForceIntercepted(nsIInputStream* aSynthesizedInput,
-                        nsIInterceptedBodyCallback* aSynthesizedCallback);
+  void ForceIntercepted(nsIInputStream* aSynthesizedInput);
 
   // Try send DeletingChannel message to parent side. Dispatch an async task to
   // main thread if invoking on non-main thread.
@@ -282,18 +275,13 @@ private:
   // ensure Cacnel is processed before any other channel events.
   void CancelOnMainThread(nsresult aRv);
 
-  void
-  MaybeCallSynthesizedCallback();
-
   RequestHeaderTuples mClientSetRequestHeaders;
   RefPtr<nsInputStreamPump> mSynthesizedResponsePump;
   nsCOMPtr<nsIInputStream> mSynthesizedInput;
-  nsCOMPtr<nsIInterceptedBodyCallback> mSynthesizedCallback;
   int64_t mSynthesizedStreamLength;
 
   bool mIsFromCache;
   bool mCacheEntryAvailable;
-  uint64_t mCacheEntryId;
   bool mAltDataCacheEntryAvailable;
   int32_t      mCacheFetchCount;
   uint32_t     mCacheExpirationTime;
@@ -390,7 +378,6 @@ private:
                       const nsHttpHeaderArray& requestHeaders,
                       const bool& isFromCache,
                       const bool& cacheEntryAvailable,
-                      const uint64_t& cacheEntryId,
                       const int32_t& cacheFetchCount,
                       const uint32_t& cacheExpirationTime,
                       const nsCString& cachedCharset,

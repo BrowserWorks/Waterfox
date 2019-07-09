@@ -19,10 +19,12 @@
 //// NullPrincipalURI
 
 NullPrincipalURI::NullPrincipalURI()
+  : mPath(mPathBytes, ArrayLength(mPathBytes), ArrayLength(mPathBytes) - 1)
 {
 }
 
 NullPrincipalURI::NullPrincipalURI(const NullPrincipalURI& aOther)
+  : mPath(mPathBytes, ArrayLength(mPathBytes), ArrayLength(mPathBytes) - 1)
 {
   mPath.Assign(aOther.mPath);
 }
@@ -38,9 +40,9 @@ NullPrincipalURI::Init()
   nsresult rv = uuidgen->GenerateUUIDInPlace(&id);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mPath.SetLength(NSID_LENGTH - 1); // -1 because NSID_LENGTH counts the '\0'
-  id.ToProvidedString(
-    *reinterpret_cast<char(*)[NSID_LENGTH]>(mPath.BeginWriting()));
+  MOZ_ASSERT(mPathBytes == mPath.BeginWriting());
+
+  id.ToProvidedString(mPathBytes);
 
   MOZ_ASSERT(mPath.Length() == NSID_LENGTH - 1);
   MOZ_ASSERT(strlen(mPath.get()) == NSID_LENGTH - 1);
@@ -134,6 +136,13 @@ NullPrincipalURI::SetHostAndPort(const nsACString& aHost)
 }
 
 NS_IMETHODIMP
+NullPrincipalURI::GetOriginCharset(nsACString& _charset)
+{
+  _charset.Truncate();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 NullPrincipalURI::GetPassword(nsACString& _password)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -146,14 +155,14 @@ NullPrincipalURI::SetPassword(const nsACString& aPassword)
 }
 
 NS_IMETHODIMP
-NullPrincipalURI::GetPathQueryRef(nsACString& _path)
+NullPrincipalURI::GetPath(nsACString& _path)
 {
   _path = mPath;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-NullPrincipalURI::SetPathQueryRef(const nsACString& aPath)
+NullPrincipalURI::SetPath(const nsACString& aPath)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -180,13 +189,6 @@ NullPrincipalURI::GetQuery(nsACString& aQuery)
 
 NS_IMETHODIMP
 NullPrincipalURI::SetQuery(const nsACString& aQuery)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullPrincipalURI::SetQueryWithEncoding(const nsACString& aQuery,
-                                       const Encoding* aEncoding)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -363,12 +365,6 @@ NS_IMETHODIMP
 NullPrincipalURI::GetDisplayHost(nsACString &aUnicodeHost)
 {
   return GetHost(aUnicodeHost);
-}
-
-NS_IMETHODIMP
-NullPrincipalURI::GetDisplayPrePath(nsACString &aPrePath)
-{
-    return GetPrePath(aPrePath);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

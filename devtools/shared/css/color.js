@@ -6,9 +6,7 @@
 
 const Services = require("Services");
 
-loader.lazyRequireGetter(this, "CSS_ANGLEUNIT",
-  "devtools/shared/css/properties-db", true);
-
+const {CSS_ANGLEUNIT} = require("devtools/shared/css/properties-db");
 const {getAngleValueInDegrees} = require("devtools/shared/css/parsing-utils");
 
 const {getCSSLexer} = require("devtools/shared/css/lexer");

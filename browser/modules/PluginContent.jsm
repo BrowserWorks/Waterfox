@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
 
 this.PluginContent = function(global) {
   this.init(global);
-};
+}
 
 const FLASH_MIME_TYPE = "application/x-shockwave-flash";
 const REPLACEMENT_STYLE_SHEET = Services.io.newURI("chrome://pluginproblem/content/pluginReplaceBinding.css");
@@ -98,14 +98,12 @@ PluginContent.prototype = {
         setTimeout(() => this.updateNotificationUI(), 0);
         break;
       case "BrowserPlugins:ContextMenuCommand":
-        let contextMenu = this.global.contextMenu;
-
         switch (msg.data.command) {
           case "play":
-            this._showClickToPlayNotification(contextMenu.getTarget(msg, "plugin"), true);
+            this._showClickToPlayNotification(msg.objects.plugin, true);
             break;
           case "hide":
-            this.hideClickToPlayOverlay(contextMenu.getTarget(msg, "plugin"));
+            this.hideClickToPlayOverlay(msg.objects.plugin);
             break;
         }
         break;
@@ -120,7 +118,7 @@ PluginContent.prototype = {
         this.NPAPIPluginCrashReportSubmitted({
           runID: msg.data.runID,
           state: msg.data.state,
-        });
+        })
         break;
       case "BrowserPlugins:Test:ClearCrashData":
         // This message should ONLY ever be sent by automated tests.
@@ -175,7 +173,7 @@ PluginContent.prototype = {
   },
 
   _getPluginInfo(pluginElement) {
-    if (ChromeUtils.getClassName(pluginElement) === "HTMLAnchorElement") {
+    if (pluginElement instanceof Ci.nsIDOMHTMLAnchorElement) {
       // Anchor elements are our place holders, and we only have them for Flash
       let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
       return {
@@ -330,21 +328,22 @@ PluginContent.prototype = {
                    [right, bottom],
                    [centerX, centerY]];
 
+    if (right <= 0 || top <= 0) {
+      return false;
+    }
+
     let contentWindow = plugin.ownerGlobal;
     let cwu = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
 
     for (let [x, y] of points) {
-      if (x < 0 || y < 0) {
-        continue;
-      }
       let el = cwu.elementFromPoint(x, y, true, true);
-      if (el === plugin) {
-        return true;
+      if (el !== plugin) {
+        return false;
       }
     }
 
-    return false;
+    return true;
   },
 
   addLinkClickCallback(linkNode, callbackName /* callbackArgs...*/) {
@@ -648,7 +647,7 @@ PluginContent.prototype = {
     let doc = plugin.ownerDocument;
     let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
     let permissionString;
-    if (ChromeUtils.getClassName(plugin) === "HTMLAnchorElement") {
+    if (plugin instanceof Ci.nsIDOMHTMLAnchorElement) {
       // We only have replacement content for Flash installs
       permissionString = pluginHost.getPermissionStringForType(FLASH_MIME_TYPE);
     } else {
@@ -680,9 +679,10 @@ PluginContent.prototype = {
   onOverlayClick(event) {
     let document = event.target.ownerDocument;
     let plugin = document.getBindingParent(event.target);
+    let contentWindow = plugin.ownerGlobal.top;
     let overlay = this.getPluginUI(plugin, "main");
     // Have to check that the target is not the link to update the plugin
-    if (!(ChromeUtils.getClassName(event.originalTarget) === "HTMLAnchorElement") &&
+    if (!(event.originalTarget instanceof contentWindow.HTMLAnchorElement) &&
         (event.originalTarget.getAttribute("anonid") != "closeIcon") &&
         !overlay.hasAttribute("dismissed") &&
         event.button == 0 &&
@@ -728,7 +728,7 @@ PluginContent.prototype = {
       }
       if (pluginInfo.permissionString == pluginHost.getPermissionStringForType(plugin.actualType)) {
         let overlay = this.getPluginUI(plugin, "main");
-        if (ChromeUtils.getClassName(plugin) === "HTMLAnchorElement") {
+        if (plugin instanceof Ci.nsIDOMHTMLAnchorElement) {
           placeHolderFound = true;
         } else {
           pluginFound = true;
@@ -942,7 +942,7 @@ PluginContent.prototype = {
         return getTrueFullScreenElement(fullScreenIframe.contentDocument.mozFullScreenElement);
       }
       return fullScreenIframe;
-    };
+    }
 
     if (fullScreenElement.tagName === "IFRAME") {
       fullScreenElement = getTrueFullScreenElement(fullScreenElement);

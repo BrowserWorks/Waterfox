@@ -18,11 +18,9 @@ addRDMTask(TEST_URL, function* ({ ui }) {
 
   // Click the target="_blank" link and wait for a new tab
   yield waitForFrameLoad(ui, TEST_URL);
-  let newTabPromise = BrowserTestUtils.waitForNewTab(gBrowser, TAB_URL);
+  let newTab = BrowserTestUtils.waitForNewTab(gBrowser, TAB_URL);
   spawnViewportTask(ui, {}, function* () {
     content.document.querySelector("a").click(); // eslint-disable-line
   });
-  let newTab = yield newTabPromise;
-  ok(newTab, "New tab opened from link");
-  yield removeTab(newTab);
+  ok(yield newTab, "New tab opened from link");
 });

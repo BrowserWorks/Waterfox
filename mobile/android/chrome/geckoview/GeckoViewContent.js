@@ -6,11 +6,8 @@
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/GeckoViewContentModule.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewContent"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "ViewContent");
 
 function debug(aMsg) {
   // dump(aMsg);
@@ -86,17 +83,17 @@ class GeckoViewContent extends GeckoViewContentModule {
         let hrefNode = nearestParentHref(node);
         let isImageNode = node instanceof Ci.nsIDOMHTMLImageElement;
         let isMediaNode = node instanceof Ci.nsIDOMHTMLMediaElement;
+        let msg = {
+          screenX: aEvent.screenX,
+          screenY: aEvent.screenY,
+          uri: hrefNode,
+          elementSrc: isImageNode || isMediaNode
+                      ? node.currentSrc || node.src
+                      : null
+        };
 
         if (hrefNode || isImageNode || isMediaNode) {
-          this.eventDispatcher.sendRequest({
-            type: "GeckoView:ContextMenu",
-            screenX: aEvent.screenX,
-            screenY: aEvent.screenY,
-            uri: hrefNode,
-            elementSrc: isImageNode || isMediaNode
-                        ? node.currentSrc || node.src
-                        : null
-          });
+          sendAsyncMessage("GeckoView:ContextMenu", msg);
           aEvent.preventDefault();
         }
         break;
@@ -116,10 +113,8 @@ class GeckoViewContent extends GeckoViewContentModule {
         sendAsyncMessage("GeckoView:DOMFullscreenExit");
         break;
       case "DOMTitleChanged":
-        this.eventDispatcher.sendRequest({
-          type: "GeckoView:DOMTitleChanged",
-          title: content.document.title
-        });
+        sendAsyncMessage("GeckoView:DOMTitleChanged",
+                         { title: content.document.title });
         break;
     }
   }

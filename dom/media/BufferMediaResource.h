@@ -8,6 +8,7 @@
 
 #include "MediaResource.h"
 #include "nsISeekableStream.h"
+#include "nsIPrincipal.h"
 #include <algorithm>
 
 namespace mozilla {
@@ -19,10 +20,13 @@ namespace mozilla {
 class BufferMediaResource : public MediaResource
 {
 public:
-  BufferMediaResource(const uint8_t* aBuffer, uint32_t aLength)
+  BufferMediaResource(const uint8_t* aBuffer,
+                      uint32_t aLength,
+                      nsIPrincipal* aPrincipal)
     : mBuffer(aBuffer)
     , mLength(aLength)
     , mOffset(0)
+    , mPrincipal(aPrincipal)
   {
   }
 
@@ -32,7 +36,19 @@ protected:
   }
 
 private:
+  nsresult Close() override { return NS_OK; }
+  void Suspend(bool aCloseImmediately) override {}
+  void Resume() override {}
+  // Get the current principal for the channel
+  already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override
+  {
+    nsCOMPtr<nsIPrincipal> principal = mPrincipal;
+    return principal.forget();
+  }
   // These methods are called off the main thread.
+  // The mode is initially MODE_PLAYBACK.
+  void SetReadMode(MediaCacheStream::ReadMode aMode) override {}
+  void SetPlaybackRate(uint32_t aBytesPerSecond) override {}
   nsresult ReadAt(int64_t aOffset, char* aBuffer,
                   uint32_t aCount, uint32_t* aBytes) override
   {
@@ -51,6 +67,7 @@ private:
 
   void Pin() override {}
   void Unpin() override {}
+  double GetDownloadRate(bool* aIsReliable) override { *aIsReliable = false; return 0.; }
   int64_t GetLength() override { return mLength; }
   int64_t GetNextCachedData(int64_t aOffset) override { return aOffset; }
   int64_t GetCachedDataEnd(int64_t aOffset) override
@@ -58,6 +75,8 @@ private:
     return std::max(aOffset, int64_t(mLength));
   }
   bool IsDataCachedToEndOfResource(int64_t aOffset) override { return true; }
+  bool IsSuspendedByCache() override { return false; }
+  bool IsSuspended() override { return false; }
   nsresult ReadFromCache(char* aBuffer,
                          int64_t aOffset,
                          uint32_t aCount) override
@@ -71,16 +90,38 @@ private:
     return NS_OK;
   }
 
+  nsresult Open(nsIStreamListener** aStreamListener) override
+  {
+    return NS_ERROR_FAILURE;
+  }
+
   nsresult GetCachedRanges(MediaByteRangeSet& aRanges) override
   {
     aRanges += MediaByteRange(0, int64_t(mLength));
     return NS_OK;
   }
 
+  bool IsTransportSeekable() override { return true; }
+
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
+  {
+    // Not owned:
+    // - mBuffer
+    // - mPrincipal
+    size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
+    return size;
+  }
+
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  {
+    return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
+  }
+
 private:
   const uint8_t * mBuffer;
   uint32_t mLength;
   uint32_t mOffset;
+  nsCOMPtr<nsIPrincipal> mPrincipal;
 };
 
 } // namespace mozilla

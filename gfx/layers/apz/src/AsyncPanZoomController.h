@@ -14,7 +14,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Monitor.h"
-#include "mozilla/RecursiveMutex.h"
+#include "mozilla/ReentrantMonitor.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Atomics.h"
@@ -389,7 +389,7 @@ public:
   /**
    * Returns the matrix that transforms points from global screen space into
    * this APZC's ParentLayer space.
-   * To respect the lock ordering, mRecursiveMutex must NOT be held when calling
+   * To respect the lock ordering, mMonitor must NOT be held when calling
    * this function (since this function acquires the tree lock).
    */
   ScreenToParentLayerMatrix4x4 GetTransformToThis() const;
@@ -399,7 +399,7 @@ public:
    * this APZC's ParentLayer coordinates into screen coordinates.
    * The anchor is necessary because with 3D tranforms, the location of the
    * vector can affect the result of the transform.
-   * To respect the lock ordering, mRecursiveMutex must NOT be held when calling
+   * To respect the lock ordering, mMonitor must NOT be held when calling
    * this function (since this function acquires the tree lock).
    */
   ScreenPoint ToScreenCoordinates(const ParentLayerPoint& aVector,
@@ -410,7 +410,7 @@ public:
    * screen coordinates into this APZC's ParentLayer coordinates.
    * The anchor is necessary because with 3D tranforms, the location of the
    * vector can affect the result of the transform.
-   * To respect the lock ordering, mRecursiveMutex must NOT be held when calling
+   * To respect the lock ordering, mMonitor must NOT be held when calling
    * this function (since this function acquires the tree lock).
    */
   ParentLayerPoint ToParentLayerCoordinates(const ScreenPoint& aVector,
@@ -737,7 +737,7 @@ protected:
   // IMPORTANT: See the note about lock ordering at the top of APZCTreeManager.h.
   // This is mutable to allow entering it from 'const' methods; doing otherwise
   // would significantly limit what methods could be 'const'.
-  mutable RecursiveMutex mRecursiveMutex;
+  mutable ReentrantMonitor mMonitor;
 
 private:
   // Metadata of the container layer corresponding to this APZC. This is
@@ -804,7 +804,7 @@ public:
   template <typename Callable>
   auto CallWithLastContentPaintMetrics(const Callable& callable) const
     -> decltype(callable(mLastContentPaintMetrics)) {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return callable(mLastContentPaintMetrics);
   }
 
@@ -918,7 +918,8 @@ protected:
     KEYBOARD_SCROLL,          /* Smooth scrolling to a destination for a keyboard event. */
     AUTOSCROLL                /* Autoscroll animation. */
   };
-  // This is in theory protected by |mRecursiveMutex|; that is, it should be held whenever
+
+  // This is in theory protected by |mMonitor|; that is, it should be held whenever
   // this is updated. In practice though... see bug 897017.
   PanZoomState mState;
 
@@ -927,7 +928,7 @@ private:
   /**
    * A counter of how many StateChangeNotificationBlockers are active.
    * A non-zero count will prevent state change notifications from
-   * being dispatched. Only code that holds mRecursiveMutex should touch this.
+   * being dispatched. Only code that holds mMonitor should touch this.
    */
   int mNotificationBlockers;
 
@@ -1074,12 +1075,12 @@ public:
   }
 
   bool IsRootForLayersId() const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return mScrollMetadata.IsLayersIdRoot();
   }
 
   bool IsRootContent() const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return mFrameMetrics.IsRootContent();
   }
 
@@ -1323,9 +1324,6 @@ private:
   bool MaybeAdjustDeltaForScrollSnapping(const ScrollWheelInput& aEvent,
                                          ParentLayerPoint& aDelta,
                                          CSSPoint& aStartPosition);
-
-  bool MaybeAdjustDestinationForScrollSnapping(const KeyboardInput& aEvent,
-                                               CSSPoint& aDestination);
 
   // Snap to a snap position nearby the current scroll position, if appropriate.
   void ScrollSnap();

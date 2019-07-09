@@ -9,17 +9,15 @@
 use cssparser::Parser;
 use gecko_bindings::structs;
 use parser::{Parse, ParserContext};
-use selectors::parser::SelectorParseErrorKind;
-use std::ascii::AsciiExt;
+use selectors::parser::SelectorParseError;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::fmt;
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
+use style_traits::{ToCss, ParseError, StyleParseError};
 
 bitflags! {
     /// Constants shared by multiple CSS Box Alignment properties
     ///
     /// These constants match Gecko's `NS_STYLE_ALIGN_*` constants.
-    #[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
-    #[derive(ToComputedValue)]
     pub flags AlignFlags: u8 {
         // Enumeration stored in the lower 5 bits:
         /// 'auto'
@@ -111,12 +109,12 @@ const ALIGN_ALL_SHIFT: u32 = structs::NS_STYLE_ALIGN_ALL_SHIFT;
 
 /// Value of the `align-content` or `justify-content` property.
 ///
-/// <https://drafts.csswg.org/css-align/#content-distribution>
+/// https://drafts.csswg.org/css-align/#content-distribution
 ///
 /// The 16-bit field stores the primary value in its lower 8 bits, and the optional fallback value
 /// in its upper 8 bits.  This matches the representation of these properties in Gecko.
-#[derive(Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue)]
-#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf, Deserialize, Serialize))]
 pub struct AlignJustifyContent(u16);
 
 impl AlignJustifyContent {
@@ -134,7 +132,7 @@ impl AlignJustifyContent {
 
     /// Construct a value including a fallback alignment.
     ///
-    /// <https://drafts.csswg.org/css-align/#fallback-alignment>
+    /// https://drafts.csswg.org/css-align/#fallback-alignment
     #[inline]
     pub fn with_fallback(flags: AlignFlags, fallback: AlignFlags) -> Self {
         AlignJustifyContent(flags.bits() as u16 | ((fallback.bits() as u16) << ALIGN_ALL_SHIFT))
@@ -175,6 +173,7 @@ impl ToCss for AlignJustifyContent {
     }
 }
 
+no_viewport_percentage!(AlignJustifyContent);
 
 impl Parse for AlignJustifyContent {
     // normal | <baseline-position> |
@@ -200,15 +199,14 @@ impl Parse for AlignJustifyContent {
             }
             return Ok(AlignJustifyContent::new(fallback))
         }
-        Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `align-self` or `justify-self` property.
 ///
-/// <https://drafts.csswg.org/css-align/#self-alignment>
-#[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ToComputedValue, ToCss)]
+/// https://drafts.csswg.org/css-align/#self-alignment
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct AlignJustifySelf(pub AlignFlags);
 
 impl AlignJustifySelf {
@@ -225,6 +223,7 @@ impl AlignJustifySelf {
     }
 }
 
+no_viewport_percentage!(AlignJustifySelf);
 
 impl Parse for AlignJustifySelf {
     // auto | normal | stretch | <baseline-position> |
@@ -238,15 +237,14 @@ impl Parse for AlignJustifySelf {
         if let Ok(value) = input.try(parse_overflow_self_position) {
             return Ok(AlignJustifySelf(value))
         }
-        Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `align-items` property
 ///
-/// <https://drafts.csswg.org/css-align/#self-alignment>
-#[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ToComputedValue, ToCss)]
+/// https://drafts.csswg.org/css-align/#self-alignment
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct AlignItems(pub AlignFlags);
 
 impl AlignItems {
@@ -263,6 +261,7 @@ impl AlignItems {
     }
 }
 
+no_viewport_percentage!(AlignItems);
 
 impl Parse for AlignItems {
     // normal | stretch | <baseline-position> |
@@ -276,15 +275,14 @@ impl Parse for AlignItems {
         if let Ok(value) = input.try(parse_overflow_self_position) {
             return Ok(AlignItems(value))
         }
-        Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `justify-items` property
 ///
-/// <https://drafts.csswg.org/css-align/#justify-items-property>
-#[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ToCss)]
+/// https://drafts.csswg.org/css-align/#justify-items-property
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct JustifyItems(pub AlignFlags);
 
 impl JustifyItems {
@@ -307,6 +305,7 @@ impl JustifyItems {
     }
 }
 
+no_viewport_percentage!(JustifyItems);
 
 impl Parse for JustifyItems {
     // auto | normal | stretch | <baseline-position> |
@@ -325,7 +324,7 @@ impl Parse for JustifyItems {
         if let Ok(value) = parse_overflow_self_position(input) {
             return Ok(JustifyItems(value))
         }
-        Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
@@ -350,7 +349,7 @@ fn parse_auto_normal_stretch_baseline<'i, 't>(input: &mut Parser<'i, 't>)
         return Ok(baseline);
     }
 
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "auto" => Ok(ALIGN_AUTO),
         "normal" => Ok(ALIGN_NORMAL),
         "stretch" => Ok(ALIGN_STRETCH),
@@ -363,7 +362,7 @@ fn parse_normal_stretch_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<A
         return Ok(baseline);
     }
 
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "normal" => Ok(ALIGN_NORMAL),
         "stretch" => Ok(ALIGN_STRETCH),
     }
@@ -382,7 +381,7 @@ fn parse_normal_or_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignF
 // <baseline-position>
 fn parse_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
     // FIXME: remove clone() when lifetimes are non-lexical
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?.clone(),
         "baseline" => Ok(ALIGN_BASELINE),
         "first" => {
             input.expect_ident_matching("baseline")?;
@@ -397,7 +396,7 @@ fn parse_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, Pars
 
 // <content-distribution>
 fn parse_content_distribution<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "stretch" => Ok(ALIGN_STRETCH),
         "space-between" => Ok(ALIGN_SPACE_BETWEEN),
         "space-around" => Ok(ALIGN_SPACE_AROUND),
@@ -420,12 +419,12 @@ fn parse_overflow_content_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result
             return Ok(overflow | content)
         }
     }
-    return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+    return Err(StyleParseError::UnspecifiedError.into())
 }
 
 // <content-position>
 fn parse_content_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "start" => Ok(ALIGN_START),
         "end" => Ok(ALIGN_END),
         "flex-start" => Ok(ALIGN_FLEX_START),
@@ -438,7 +437,7 @@ fn parse_content_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFla
 
 // <overflow-position>
 fn parse_overflow_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "safe" => Ok(ALIGN_SAFE),
         "unsafe" => Ok(ALIGN_UNSAFE),
     }
@@ -459,12 +458,12 @@ fn parse_overflow_self_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Al
             return Ok(overflow | self_position)
         }
     }
-    return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+    return Err(StyleParseError::UnspecifiedError.into())
 }
 
 // <self-position>
 fn parse_self_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
-    try_match_ident_ignore_ascii_case! { input,
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "start" => Ok(ALIGN_START),
         "end" => Ok(ALIGN_END),
         "flex-start" => Ok(ALIGN_FLEX_START),
@@ -479,9 +478,7 @@ fn parse_self_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags,
 
 // [ legacy && [ left | right | center ] ]
 fn parse_legacy<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
-    let a_location = input.current_source_location();
     let a = input.expect_ident()?.clone();
-    let b_location = input.current_source_location();
     let b = input.expect_ident()?;
     if a.eq_ignore_ascii_case("legacy") {
         (match_ignore_ascii_case! { &b,
@@ -489,15 +486,15 @@ fn parse_legacy<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseE
             "right" => Ok(ALIGN_LEGACY | ALIGN_RIGHT),
             "center" => Ok(ALIGN_LEGACY | ALIGN_CENTER),
             _ => Err(())
-        }).map_err(|()| b_location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(b.clone())))
+        }).map_err(|()| SelectorParseError::UnexpectedIdent(b.clone()).into())
     } else if b.eq_ignore_ascii_case("legacy") {
         (match_ignore_ascii_case! { &a,
             "left" => Ok(ALIGN_LEGACY | ALIGN_LEFT),
             "right" => Ok(ALIGN_LEGACY | ALIGN_RIGHT),
             "center" => Ok(ALIGN_LEGACY | ALIGN_CENTER),
             _ => Err(())
-        }).map_err(|()| a_location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(a)))
+        }).map_err(|()| SelectorParseError::UnexpectedIdent(a).into())
     } else {
-        Err(a_location.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }

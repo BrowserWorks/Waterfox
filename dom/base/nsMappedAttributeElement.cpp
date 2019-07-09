@@ -15,7 +15,7 @@ nsMappedAttributeElement::WalkContentStyleRules(nsRuleWalker* aRuleWalker)
 }
 
 bool
-nsMappedAttributeElement::SetAndSwapMappedAttribute(nsAtom* aName,
+nsMappedAttributeElement::SetAndSwapMappedAttribute(nsIAtom* aName,
                                                     nsAttrValue& aValue,
                                                     bool* aValueWasSet,
                                                     nsresult* aRetval)

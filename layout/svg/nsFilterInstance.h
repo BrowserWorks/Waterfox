@@ -233,7 +233,7 @@ private:
    * Creates the SourceSurface for the SourceGraphic graph node, paints its
    * contents, and assigns it to mSourceGraphic.mSourceSurface.
    */
-  void BuildSourceImage(DrawTarget *aDest, imgDrawingParams& aImgParams);
+  void BuildSourceImage(imgDrawingParams& aImgParams);
 
   /**
    * Build the list of FilterPrimitiveDescriptions that describes the filter's

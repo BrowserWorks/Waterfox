@@ -10,7 +10,7 @@
 
 #include "mozilla/BasicEvents.h"
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsITransferable.h"
 
 namespace mozilla {
@@ -106,8 +106,8 @@ class WidgetCommandEvent : public WidgetGUIEvent
 public:
   virtual WidgetCommandEvent* AsCommandEvent() override { return this; }
 
-  WidgetCommandEvent(bool aIsTrusted, nsAtom* aEventType,
-                     nsAtom* aCommand, nsIWidget* aWidget)
+  WidgetCommandEvent(bool aIsTrusted, nsIAtom* aEventType,
+                     nsIAtom* aCommand, nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, eUnidentifiedEvent, aWidget,
                      eCommandEventClass)
     , mCommand(aCommand)
@@ -127,7 +127,7 @@ public:
     return result;
   }
 
-  RefPtr<nsAtom> mCommand;
+  nsCOMPtr<nsIAtom> mCommand;
 
   // XXX Not tested by test_assign_event_data.html
   void AssignCommandEventData(const WidgetCommandEvent& aEvent,

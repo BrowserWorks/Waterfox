@@ -19,7 +19,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Move.h"
-#include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/ErrorEventBinding.h"
 #include "mozilla/dom/IDBOpenDBRequestBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -219,7 +219,7 @@ IDBRequest::SetError(nsresult aRv)
   MOZ_ASSERT(!mError);
 
   mHaveResultOrErrorCode = true;
-  mError = DOMException::Create(aRv);
+  mError = new DOMError(GetOwner(), aRv);
   mErrorCode = aRv;
 
   mResultVal.setUndefined();
@@ -236,7 +236,7 @@ IDBRequest::GetErrorCode() const
   return mErrorCode;
 }
 
-DOMException*
+DOMError*
 IDBRequest::GetErrorAfterResult() const
 {
   AssertIsOnOwningThread();
@@ -358,7 +358,7 @@ IDBRequest::SetResultCallback(ResultCallback* aCallback)
   mHaveResultOrErrorCode = true;
 }
 
-DOMException*
+DOMError*
 IDBRequest::GetError(ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
@@ -396,7 +396,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(IDBRequest, IDBWrapperCache)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mResultVal)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IDBRequest)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBRequest)
   if (aIID.Equals(kIDBRequestIID)) {
     foundInterface = this;
   } else
@@ -635,7 +635,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(IDBOpenDBRequest,
   // Don't unlink mFactory!
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IDBOpenDBRequest)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBOpenDBRequest)
 NS_INTERFACE_MAP_END_INHERITING(IDBRequest)
 
 NS_IMPL_ADDREF_INHERITED(IDBOpenDBRequest, IDBRequest)

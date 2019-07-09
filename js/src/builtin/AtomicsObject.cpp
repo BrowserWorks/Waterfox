@@ -518,7 +518,7 @@ js::atomics_isLockFree(JSContext* cx, unsigned argc, Value* vp)
             return true;
         }
     }
-    args.rval().setBoolean(jit::AtomicOperations::isLockfreeJS(size));
+    args.rval().setBoolean(jit::AtomicOperations::isLockfree(size));
     return true;
 }
 
@@ -787,7 +787,7 @@ js::atomics_wait(JSContext* cx, unsigned argc, Value* vp)
     // and it provides the necessary memory fence.
     AutoLockFutexAPI lock;
 
-    SharedMem<int32_t*> addr = view->viewDataShared().cast<int32_t*>() + offset;
+    SharedMem<int32_t*>(addr) = view->viewDataShared().cast<int32_t*>() + offset;
     if (jit::AtomicOperations::loadSafeWhenRacy(addr) != value) {
         r.setString(cx->names().futexNotEqual);
         return true;
@@ -1129,8 +1129,11 @@ AtomicsObject::initClass(JSContext* cx, Handle<GlobalObject*> global)
     RootedValue AtomicsValue(cx, ObjectValue(*Atomics));
 
     // Everything is set up, install Atomics on the global object.
-    if (!DefineDataProperty(cx, global, cx->names().Atomics, AtomicsValue, JSPROP_RESOLVING))
+    if (!DefineProperty(cx, global, cx->names().Atomics, AtomicsValue, nullptr, nullptr,
+                        JSPROP_RESOLVING))
+    {
         return nullptr;
+    }
 
     global->setConstructor(JSProto_Atomics, AtomicsValue);
     return Atomics;

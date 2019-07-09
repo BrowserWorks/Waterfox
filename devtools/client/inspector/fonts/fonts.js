@@ -6,6 +6,7 @@
 
 "use strict";
 
+const Services = require("Services");
 const { Task } = require("devtools/shared/task");
 const { getColor } = require("devtools/client/shared/theme");
 
@@ -27,7 +28,7 @@ function FontInspector(inspector, window) {
   this.document = window.document;
   this.inspector = inspector;
   this.pageStyle = this.inspector.pageStyle;
-  this.store = this.inspector.store;
+  this.store = inspector.store;
 
   this.update = this.update.bind(this);
 
@@ -35,8 +36,6 @@ function FontInspector(inspector, window) {
   this.onPreviewFonts = this.onPreviewFonts.bind(this);
   this.onShowAllFont = this.onShowAllFont.bind(this);
   this.onThemeChanged = this.onThemeChanged.bind(this);
-
-  this.init();
 }
 
 FontInspector.prototype = {
@@ -48,17 +47,24 @@ FontInspector.prototype = {
     let app = App({
       onPreviewFonts: this.onPreviewFonts,
       onShowAllFont: this.onShowAllFont,
+      onTextBoxContextMenu: this.inspector.onTextBoxContextMenu
     });
 
     let provider = createElement(Provider, {
-      id: "fontinspector",
-      key: "fontinspector",
       store: this.store,
+      id: "fontinspector",
       title: INSPECTOR_L10N.getStr("inspector.sidebar.fontInspectorTitle"),
+      key: "fontinspector",
     }, app);
 
-    // Expose the provider to let inspector.js use it in setupSidebar.
-    this.provider = provider;
+    let defaultTab = Services.prefs.getCharPref("devtools.inspector.activeSidebar");
+
+    this.inspector.addSidebarTab(
+      "fontinspector",
+      INSPECTOR_L10N.getStr("inspector.sidebar.fontInspectorTitle"),
+      provider,
+      defaultTab == "fontinspector"
+    );
 
     this.inspector.selection.on("new-node-front", this.onNewNode);
     this.inspector.sidebar.on("fontinspector-selected", this.onNewNode);
@@ -130,26 +136,17 @@ FontInspector.prototype = {
   },
 
   update: Task.async(function* () {
-    // Stop refreshing if the inspector or store is already destroyed.
-    if (!this.inspector || !this.store) {
+    let node = this.inspector.selection.nodeFront;
+
+    if (!node ||
+        !this.isPanelVisible() ||
+        !this.inspector.selection.isConnected() ||
+        !this.inspector.selection.isElementNode()) {
       return;
     }
 
-    let node = this.inspector.selection.nodeFront;
-    let fonts = [];
     let { fontOptions } = this.store.getState();
     let { showAllFonts, previewText } = fontOptions;
-
-    // Clear the list of fonts if the currently selected node is not connected or an
-    // element node unless all fonts are supposed to be shown.
-    if (!showAllFonts &&
-        (!node ||
-         !this.isPanelVisible() ||
-         !this.inspector.selection.isConnected() ||
-         !this.inspector.selection.isElementNode())) {
-      this.store.dispatch(updateFonts(fonts));
-      return;
-    }
 
     let options = {
       includePreviews: true,
@@ -157,6 +154,7 @@ FontInspector.prototype = {
       previewFillStyle: getColor("body-color")
     };
 
+    let fonts = [];
     if (showAllFonts) {
       fonts = yield this.pageStyle.getAllUsedFontFaces(options)
                       .catch(console.error);

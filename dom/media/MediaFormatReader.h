@@ -73,8 +73,6 @@ struct MetadataHolder
   UniquePtr<MetadataTags> mTags;
 };
 
-typedef void* MediaDecoderOwnerID;
-
 struct MOZ_STACK_CLASS MediaFormatReaderInit
 {
   MediaResource* mResource = nullptr;
@@ -82,8 +80,6 @@ struct MOZ_STACK_CLASS MediaFormatReaderInit
   FrameStatistics* mFrameStats = nullptr;
   already_AddRefed<layers::KnowsCompositor> mKnowsCompositor;
   already_AddRefed<GMPCrashHelper> mCrashHelper;
-  // Used in bug 1393399 for temporary telemetry.
-  MediaDecoderOwnerID mMediaDecoderOwnerID = nullptr;
 };
 
 class MediaFormatReader final
@@ -397,7 +393,7 @@ private:
     Mutex mMutex;
     // The platform decoder.
     RefPtr<MediaDataDecoder> mDecoder;
-    nsCString mDescription;
+    const char* mDescription;
     void ShutdownDecoder();
 
     // Only accessed from reader's task queue.
@@ -468,8 +464,8 @@ private:
       if (mError.ref() == NS_ERROR_DOM_MEDIA_DECODE_ERR) {
         // Allow decode errors to be non-fatal, but give up
         // if we have too many, or if warnings should be treated as errors.
-        return mNumOfConsecutiveError > mMaxConsecutiveError ||
-               MediaPrefs::MediaWarningsAsErrors();
+        return mNumOfConsecutiveError > mMaxConsecutiveError
+               || MediaPrefs::MediaWarningsAsErrors();
       } else if (mError.ref() == NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER) {
         // If the caller asked for a new decoder we shouldn't treat
         // it as fatal.
@@ -575,29 +571,6 @@ private:
     // Use NullDecoderModule or not.
     bool mIsNullDecode;
 
-    class
-    {
-    public:
-      float Mean() const { return mMean; }
-
-      void Update(const media::TimeUnit& aValue)
-      {
-        if (aValue == media::TimeUnit::Zero()) {
-          return;
-        }
-        mMean += (1.0f / aValue.ToSeconds() - mMean) / ++mCount;
-      }
-
-      void Reset()
-      {
-        mMean = 0;
-        mCount = 0;
-      }
-
-    private:
-      float mMean = 0;
-      uint64_t mCount = 0;
-    } mMeanRate;
   };
 
   template <typename Type>
@@ -789,9 +762,6 @@ private:
   MediaEventProducer<MediaResult> mOnDecodeWarning;
 
   RefPtr<FrameStatistics> mFrameStats;
-
-  // Used in bug 1393399 for telemetry.
-  const MediaDecoderOwnerID mMediaDecoderOwnerID;
 };
 
 } // namespace mozilla

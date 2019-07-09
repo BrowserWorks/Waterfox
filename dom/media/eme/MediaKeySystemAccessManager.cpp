@@ -281,10 +281,8 @@ MediaKeySystemAccessManager::AwaitInstall(DetailedPromise* aPromise,
     return false;
   }
 
-  nsCOMPtr<nsITimer> timer;
-  NS_NewTimerWithObserver(getter_AddRefs(timer),
-                          this, 60 * 1000, nsITimer::TYPE_ONE_SHOT);
-  if (!timer) {
+  nsCOMPtr<nsITimer> timer(do_CreateInstance("@mozilla.org/timer;1"));
+  if (!timer || NS_FAILED(timer->Init(this, 60 * 1000, nsITimer::TYPE_ONE_SHOT))) {
     NS_WARNING("Failed to create timer to await CDM install.");
     return false;
   }

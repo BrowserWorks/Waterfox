@@ -24,6 +24,8 @@ add_task(async function test_opening_blocked_popups() {
     notification = gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"));
 
   ok(notification, "Should have notification.");
+  ok(!document.getElementById("page-report-button").hidden,
+     "URL bar popup indicator should not be hidden");
 
   await ContentTask.spawn(tab.linkedBrowser, baseURL, async function(uri) {
     let iframe = content.document.createElement("iframe");
@@ -35,6 +37,8 @@ add_task(async function test_opening_blocked_popups() {
 
   notification = gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked");
   ok(notification, "Should still have notification");
+  ok(!document.getElementById("page-report-button").hidden,
+     "URL bar popup indicator should still be visible");
 
   // Now navigate the subframe.
   await ContentTask.spawn(tab.linkedBrowser, null, async function() {
@@ -47,6 +51,8 @@ add_task(async function test_opening_blocked_popups() {
     !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"));
   ok(!gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"),
      "Should no longer have notification");
+  ok(document.getElementById("page-report-button").hidden,
+     "URL bar popup indicator should be hidden");
 
   // Remove the frame and add another one:
   await ContentTask.spawn(tab.linkedBrowser, baseURL + "popup_blocker.html", uri => {
@@ -62,6 +68,8 @@ add_task(async function test_opening_blocked_popups() {
     notification = gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"));
 
   ok(notification, "Should have notification.");
+  ok(!document.getElementById("page-report-button").hidden,
+     "URL bar popup indicator should not be hidden");
 
   await ContentTask.spawn(tab.linkedBrowser, null, () => {
     content.document.getElementById("popupframe").remove();
@@ -71,6 +79,8 @@ add_task(async function test_opening_blocked_popups() {
     !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"));
   ok(!gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"),
      "Should no longer have notification");
+  ok(document.getElementById("page-report-button").hidden,
+     "URL bar popup indicator should be hidden");
 
   await BrowserTestUtils.removeTab(tab);
 });

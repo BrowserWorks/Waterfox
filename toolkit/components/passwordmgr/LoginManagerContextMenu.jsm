@@ -93,7 +93,7 @@ var LoginManagerContextMenu = {
    */
   _findLogins(documentURI) {
     let searchParams = {
-      hostname: documentURI.displayPrePath,
+      hostname: documentURI.prePath,
       schemeUpgrades: LoginHelper.schemeUpgrades,
     };
     let logins = LoginHelper.searchLoginsWithObject(searchParams);
@@ -101,7 +101,7 @@ var LoginManagerContextMenu = {
       "scheme",
       "timePasswordChanged",
     ];
-    logins = LoginHelper.dedupeLogins(logins, ["username", "password"], resolveBy, documentURI.displayPrePath);
+    logins = LoginHelper.dedupeLogins(logins, ["username", "password"], resolveBy, documentURI.prePath);
 
     // Sort logins in alphabetical order and by date.
     logins.sort((loginA, loginB) => {
@@ -162,7 +162,7 @@ var LoginManagerContextMenu = {
   _fillTargetField(login, inputElement, browser, documentURI) {
     LoginManagerParent.fillForm({
       browser,
-      loginFormOrigin: documentURI.displayPrePath,
+      loginFormOrigin: documentURI.prePath,
       login,
       inputElement,
     }).catch(Cu.reportError);

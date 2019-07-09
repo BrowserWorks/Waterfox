@@ -16,14 +16,12 @@
 <pre id="test">
 
 <script class="testbody" type="text/javascript">
-/* import-globals-from classifierHelper.js */
 
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://testing-common/BrowserTestUtils.jsm");
 Cu.import("resource://testing-common/ContentTask.jsm");
-Cu.import("resource://testing-common/TestUtils.jsm");
 
 var mainWindow = window.QueryInterface(Ci.nsIInterfaceRequestor)
                     .getInterface(Ci.nsIWebNavigation)
@@ -67,13 +65,21 @@ function setupTestData(data) {
   return Promise.all(promises);
 }
 
+function whenDelayedStartupFinished(aWindow, aCallback) {
+  Services.obs.addObserver(function observer(aSubject, aTopic) {
+    if (aWindow == aSubject) {
+      Services.obs.removeObserver(observer, aTopic);
+      setTimeout(aCallback, 0);
+    }
+  }, "browser-delayed-startup-finished");
+}
+
 function testOnWindow(aTestData, aCallback, aTestCreater) {
-  return new Promise(resolve => {
+  return new Promise(resolve  => {
     let win = mainWindow.OpenBrowserWindow();
 
     (async function() {
-      await TestUtils.topicObserved("browser-delayed-startup-finished",
-                                    subject => subject == win);
+      await new Promise(resolve => whenDelayedStartupFinished(win, resolve));
 
       let browser = win.gBrowser.selectedBrowser;
       aTestCreater(win, browser, aTestData.topUrl, aTestData.testUrl);
@@ -107,34 +113,34 @@ var createBlockedIframe = function(aWindow, aBrowser, aTopUrl, aUrl) {
     await BrowserTestUtils.loadURI(aBrowser, aTopUrl);
     await BrowserTestUtils.browserLoaded(aBrowser);
 
-    await ContentTask.spawn(aBrowser, aUrl, async function(url) {
+    await ContentTask.spawn(aBrowser, aUrl, async function(aUrl) {
       return new Promise(resolve => {
         let listener = e => {
-          removeEventListener("AboutBlockedLoaded", listener, false, true);
+          removeEventListener('AboutBlockedLoaded', listener, false, true);
           resolve();
         };
-        addEventListener("AboutBlockedLoaded", listener, false, true);
+        addEventListener('AboutBlockedLoaded', listener, false, true);
         let frame = content.document.getElementById("phishingFrame");
-        frame.setAttribute("src", "http://" + url);
+        frame.setAttribute('src', "http://" + aUrl);
       });
     });
 
-    let doc = aWindow.gBrowser.contentDocument.getElementsByTagName("iframe")[0].contentDocument;
-    let ignoreWarningLink = doc.getElementById("ignore_warning_link");
-    ok(ignoreWarningLink, "Ignore warning link should exist");
-    ignoreWarningLink.click();
+    let doc = aWindow.gBrowser.contentDocument.getElementsByTagName('iframe')[0].contentDocument;
+    let ignoreButton = doc.getElementById("ignoreWarningButton");
+    ok(ignoreButton, "ignoreWarningButton should exist");
+    ignoreButton.click();
   })();
 };
 
 var createBlockedPage = function(aWindow, aBrowser, aTopUrl, aUrl) {
   (async function() {
     await BrowserTestUtils.loadURI(aBrowser, aTopUrl);
-    await BrowserTestUtils.waitForContentEvent(aBrowser, "DOMContentLoaded");
+    await BrowserTestUtils.waitForContentEvent(aBrowser, "DOMContentLoaded")
 
     let doc = aWindow.gBrowser.contentDocument;
-    let ignoreWarningLink = doc.getElementById("ignore_warning_link");
-    ok(ignoreWarningLink, "Ignore warning link should exist");
-    ignoreWarningLink.click();
+    let ignoreButton = doc.getElementById("ignoreWarningButton");
+    ok(ignoreButton, "ignoreWarningButton should exist");
+    ignoreButton.click();
   })();
 };
 
@@ -148,7 +154,7 @@ var testDatas = [
     testUrl: "itisaphishingsite.org/phishing.html",
     list: "mochi1-phish-simple",
     provider: "google",
-    blockCreater: createBlockedPage,
+    blockCreater : createBlockedPage,
     expectedReportUri: "http://itisaphishingsite.org/phishing.html"
   },
 
@@ -159,7 +165,7 @@ var testDatas = [
     testUrl: "fakeitisaphishingsite.org/phishing.html",
     list: "fake-phish-simple",
     provider: "mozilla",
-    blockCreater: createBlockedPage
+    blockCreater : createBlockedPage
   },
 
   // Iframe case:
@@ -171,7 +177,7 @@ var testDatas = [
     testUrl: "phishing.example.com/test.html",
     list: "mochi2-phish-simple",
     provider: "google4",
-    blockCreater: createBlockedIframe,
+    blockCreater : createBlockedIframe,
     expectedReportUri: "http://phishing.example.com/test.html"
   },
 
@@ -184,16 +190,16 @@ var testDatas = [
     testUrl: "prefixexample.com/chrome/toolkit/components/url-classifier/tests/mochitest/report.sjs?action=create-blocked-redirect",
     list: "mochi3-phish-simple",
     provider: "google4",
-    blockCreater: createBlockedPage,
+    blockCreater : createBlockedPage,
     expectedReportUri: "http://prefixexample.com/chrome/toolkit/components/url-classifier/tests/mochitest/report.sjs"
   },
 
 ];
 
 SpecialPowers.pushPrefEnv(
-  {"set": [["browser.safebrowsing.provider.google.reportPhishMistakeURL", BASE_URL + "action=reporturl&reporturl="],
-           ["browser.safebrowsing.provider.google4.reportPhishMistakeURL", BASE_URL + "action=reporturl&reporturl="],
-           ["browser.safebrowsing.phishing.enabled", true]]},
+  {"set" : [["browser.safebrowsing.provider.google.reportPhishMistakeURL", BASE_URL + "action=reporturl&reporturl="],
+            ["browser.safebrowsing.provider.google4.reportPhishMistakeURL", BASE_URL + "action=reporturl&reporturl="],
+            ["browser.safebrowsing.phishing.enabled", true]]},
   test);
 
 function test() {

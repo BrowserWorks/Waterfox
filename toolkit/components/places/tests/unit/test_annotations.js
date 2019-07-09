@@ -314,7 +314,7 @@ add_task(async function test_execute() {
   for (var id of invalidIds) {
     try {
       annosvc.setItemAnnotation(id, "foo", "bar", 0, 0);
-      do_throw("setItemAnnotation* should throw for invalid item id: " + id);
+      do_throw("setItemAnnotation* should throw for invalid item id: " + id)
     } catch (ex) { }
   }
 
@@ -334,21 +334,14 @@ add_task(async function test_execute() {
   annosvc.removeObserver(annoObserver);
 });
 
-add_task(async function test_getAnnotationsHavingName() {
-  let url = uri("http://cat.mozilla.org");
-  let bookmark = await PlacesUtils.bookmarks.insert({
-    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-    title: "cat",
-    url,
-  });
-  let id = await PlacesUtils.promiseItemId(bookmark.guid);
-
-  let folder = await PlacesUtils.bookmarks.insert({
-    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-    title: "pillow",
-    type: PlacesUtils.bookmarks.TYPE_FOLDER,
-  });
-  let fid = await PlacesUtils.promiseItemId(folder.guid);
+add_test(function test_getAnnotationsHavingName() {
+  let uri = NetUtil.newURI("http://cat.mozilla.org");
+  let id = PlacesUtils.bookmarks.insertBookmark(
+    PlacesUtils.unfiledBookmarksFolderId, uri,
+    PlacesUtils.bookmarks.DEFAULT_INDEX, "cat");
+  let fid = PlacesUtils.bookmarks.createFolder(
+    PlacesUtils.unfiledBookmarksFolderId, "pillow",
+    PlacesUtils.bookmarks.DEFAULT_INDEX);
 
   const ANNOS = {
     "int": 7,
@@ -357,7 +350,7 @@ add_task(async function test_getAnnotationsHavingName() {
   };
   for (let name in ANNOS) {
     PlacesUtils.annotations.setPageAnnotation(
-      url, name, ANNOS[name], 0,
+      uri, name, ANNOS[name], 0,
       PlacesUtils.annotations.EXPIRE_SESSION);
     PlacesUtils.annotations.setItemAnnotation(
       id, name, ANNOS[name], 0,
@@ -375,7 +368,7 @@ add_task(async function test_getAnnotationsHavingName() {
       do_check_eq(result.annotationName, name);
       do_check_eq(result.annotationValue, ANNOS[name]);
       if (result.uri)
-        do_check_true(result.uri.equals(url));
+        do_check_true(result.uri.equals(uri));
       else
         do_check_true(result.itemId > 0);
 
@@ -390,4 +383,6 @@ add_task(async function test_getAnnotationsHavingName() {
       }
     }
   }
+
+  run_next_test();
 });

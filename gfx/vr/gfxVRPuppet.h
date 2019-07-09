@@ -32,7 +32,7 @@ protected:
   virtual void StartPresentation() override;
   virtual void StopPresentation() override;
 #if defined(XP_WIN)
-  virtual bool SubmitFrame(ID3D11Texture2D* aSource,
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
                            const IntSize& aSize,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect) override;
@@ -56,6 +56,8 @@ private:
 #if defined(XP_WIN)
   bool UpdateConstantBuffers();
 
+  RefPtr<ID3D11Device> mDevice;
+  RefPtr<ID3D11DeviceContext> mContext;
   ID3D11VertexShader* mQuadVS;
   ID3D11PixelShader* mQuadPS;
   RefPtr<ID3D11SamplerState> mLinearSamplerState;

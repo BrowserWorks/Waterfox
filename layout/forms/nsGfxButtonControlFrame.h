@@ -43,15 +43,15 @@ public:
                                         uint32_t aFilter) override;
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
 
 protected:
-  nsresult GetDefaultLabel(nsAString& aLabel) const;
+  nsresult GetDefaultLabel(nsXPIDLString& aLabel) const;
 
-  nsresult GetLabel(nsString& aLabel);
+  nsresult GetLabel(nsXPIDLString& aLabel);
 
   virtual bool IsInput() override { return true; }
 private:

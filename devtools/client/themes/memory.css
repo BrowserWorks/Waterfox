@@ -34,7 +34,7 @@ html, body, #app, #memory-tool {
   --sidebar-width: 185px;
   /**
    * If --heap-tree-row-height changes, be sure to change HEAP_TREE_ROW_HEIGHT
-   * in `devtools/client/memory/components/Heap.js`.
+   * in `devtools/client/memory/components/heap.js`.
    */
   --heap-tree-row-height: 18px;
   --heap-tree-header-height: 18px;
@@ -601,7 +601,7 @@ html, body, #app, #memory-tool {
 
 svg {
   --arrow-color: var(--theme-splitter-color);
-  --text-color: var(--theme-body-color);
+  --text-color: var(--theme-body-color-alt);
 }
 
 .theme-dark svg {

@@ -30,7 +30,7 @@ TestToString(nsRDFConInstanceTestNode::Test aTest) {
 
 nsRDFConInstanceTestNode::nsRDFConInstanceTestNode(TestNode* aParent,
                                                    nsXULTemplateQueryProcessorRDF* aProcessor,
-                                                   nsAtom* aContainerVariable,
+                                                   nsIAtom* aContainerVariable,
                                                    Test aContainer,
                                                    Test aEmpty)
     : nsRDFTestNode(aParent),

@@ -40,8 +40,7 @@ SizeOfFramePrefix = {
     'JitFrame_BaselineJS': 'JitFrameLayout',
     'JitFrame_BaselineStub': 'BaselineStubFrameLayout',
     'JitFrame_IonStub': 'JitStubFrameLayout',
-    'JitFrame_CppToJSJit': 'JitFrameLayout',
-    'JitFrame_WasmToJSJit': 'JitFrameLayout',
+    'JitFrame_Entry': 'JitFrameLayout',
     'JitFrame_Rectifier': 'RectifierFrameLayout',
     'JitFrame_IonAccessorIC': 'IonAccessorICFrameLayout',
     'JitFrame_IonICCall': 'IonICCallFrameLayout',
@@ -368,7 +367,7 @@ class UnwinderState(object):
                        self.typecache.FRAME_HEADER_SIZE_MASK)
         header_size = header_size * self.typecache.void_starstar.sizeof
         frame_type = long(value & self.typecache.FRAMETYPE_MASK)
-        if frame_type == self.typecache.JitFrame_CppToJSJit:
+        if frame_type == self.typecache.JitFrame_Entry:
             # Trampoline-x64.cpp pushes a JitFrameLayout object, but
             # the stack pointer is actually adjusted as if a
             # CommonFrameLayout object was pushed.
@@ -439,20 +438,20 @@ class UnwinderState(object):
         else:
             self.activation = self.activation['prevJitActivation_']
 
-        packedExitFP = self.activation['packedExitFP_']
-        if packedExitFP == 0:
+        exitFP = self.activation['exitFP_']
+        if exitFP == 0:
             return None
 
         exit_sp = pending_frame.read_register(self.SP_REGISTER)
         frame_type = self.typecache.JitFrame_Exit
-        return self.create_frame(pc, exit_sp, packedExitFP, frame_type, pending_frame)
+        return self.create_frame(pc, exit_sp, exitFP, frame_type, pending_frame)
 
     # A wrapper for unwind_entry_frame_registers that handles
     # architecture-independent boilerplate.
     def unwind_entry_frame(self, pc, pending_frame):
         sp = self.next_sp
         # Notify the frame filter.
-        self.add_frame(sp, name = 'JitFrame_CppToJSJit')
+        self.add_frame(sp, name = 'JitFrame_Entry')
         # Make an unwind_info for the per-architecture code to fill in.
         frame_id = SpiderMonkeyFrameId(sp, pc)
         unwind_info = pending_frame.create_unwind_info(frame_id)
@@ -473,7 +472,7 @@ class UnwinderState(object):
             return None
 
         if self.next_sp is not None:
-            if self.next_type == self.typecache.JitFrame_CppToJSJit:
+            if self.next_type == self.typecache.JitFrame_Entry:
                 return self.unwind_entry_frame(pc, pending_frame)
             return self.unwind_ordinary(pc, pending_frame)
         # Maybe we've found an exit frame.  FIXME I currently don't

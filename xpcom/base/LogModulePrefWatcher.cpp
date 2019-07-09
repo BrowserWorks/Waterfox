@@ -73,7 +73,7 @@ LoadPrefValue(const char* aName)
 
       // If the pref value doesn't have a PID placeholder, append it to the end.
       if (!strstr(prefValue.get(), "%PID")) {
-        prefValue.AppendLiteral("%PID");
+        prefValue.Append("%PID");
       }
 
       LogModule::SetLogFile(prefValue.BeginReading());

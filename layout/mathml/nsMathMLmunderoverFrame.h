@@ -38,7 +38,7 @@ public:
   void DestroyFrom(nsIFrame* aRoot) override;
 
   nsresult AttributeChanged(int32_t aNameSpaceID,
-                            nsAtom* aAttribute,
+                            nsIAtom* aAttribute,
                             int32_t aModType) override;
 
   uint8_t ScriptIncrement(nsIFrame* aFrame) override;

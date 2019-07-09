@@ -89,11 +89,11 @@ public:
     , mStop(false)
     , mCount(0)
   {
-    NS_NewTimerWithFuncCallback(getter_AddRefs(mTimer),
-                                FakeAudioStreamTrackGenerateData, this, 20,
-                                nsITimer::TYPE_REPEATING_SLACK,
-                                "FakeAudioStreamTrack::FakeAudioStreamTrackGenerateData",
-                                test_utils->sts_target());
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    mTimer->SetTarget(test_utils->sts_target());
+    mTimer->InitWithNamedFuncCallback(FakeAudioStreamTrackGenerateData, this, 20,
+                                      nsITimer::TYPE_REPEATING_SLACK,
+                                      "FakeAudioStreamTrack::FakeAudioStreamTrackGenerateData");
 
   }
 
@@ -310,7 +310,7 @@ class TestAgent {
   uint32_t GetLocalSSRC() {
     std::vector<uint32_t> res;
     res = audio_conduit_->GetLocalSSRCs();
-    return res.empty() ? 0 : res[0];
+    return res.size() > 0 ? res[0] : 0;
   }
 
   int GetAudioRtpCountSent() {
@@ -355,7 +355,7 @@ class TestAgentSend : public TestAgent {
 
   virtual void CreatePipelines_s(bool aIsRtcpMux) {
 
-    std::string test_pc;
+    std::string test_pc("PC");
 
     if (aIsRtcpMux) {
       ASSERT_FALSE(audio_rtcp_transport_.flow_);
@@ -405,7 +405,7 @@ class TestAgentReceive : public TestAgent {
   }
 
   virtual void CreatePipelines_s(bool aIsRtcpMux) {
-      std::string test_pc;
+      std::string test_pc("PC");
 
     if (aIsRtcpMux) {
       ASSERT_FALSE(audio_rtcp_transport_.flow_);

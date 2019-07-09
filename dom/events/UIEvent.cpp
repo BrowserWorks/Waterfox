@@ -100,7 +100,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(UIEvent, Event,
 NS_IMPL_ADDREF_INHERITED(UIEvent, Event)
 NS_IMPL_RELEASE_INHERITED(UIEvent, Event)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(UIEvent)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(UIEvent)
   NS_INTERFACE_MAP_ENTRY(nsIDOMUIEvent)
 NS_INTERFACE_MAP_END_INHERITING(Event)
 
@@ -123,10 +123,14 @@ UIEvent::GetMovementPoint()
     return mMovementPoint;
   }
 
-  if (!mEvent || !mEvent->AsGUIEvent()->mWidget ||
-      (mEvent->mMessage != eMouseMove && mEvent->mMessage != ePointerMove)) {
-    // Pointer Lock spec defines that movementX/Y must be zero for all mouse
-    // events except mousemove.
+  if (!mEvent ||
+      (mEvent->mClass != eMouseEventClass &&
+       mEvent->mClass != eMouseScrollEventClass &&
+       mEvent->mClass != eWheelEventClass &&
+       mEvent->mClass != eDragEventClass &&
+       mEvent->mClass != ePointerEventClass &&
+       mEvent->mClass != eSimpleGestureEventClass) ||
+       !mEvent->AsGUIEvent()->mWidget) {
     return nsIntPoint(0, 0);
   }
 

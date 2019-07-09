@@ -11,10 +11,8 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype, "big", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyNotEnumerable(String.prototype, 'big');
+verifyWritable(String.prototype, 'big');
+verifyConfigurable(String.prototype, 'big');
 
 reportCompare(0, 0);

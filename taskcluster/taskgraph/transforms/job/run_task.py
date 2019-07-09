@@ -19,16 +19,8 @@ run_task_schema = Schema({
     # tend to hide their caches.  This cache is never added for level-1 jobs.
     Required('cache-dotcache', default=False): bool,
 
-    # if true (the default), perform a checkout in /builds/worker/checkouts/gecko
+    # if true (the default), perform a checkout in /home/worker/checkouts/gecko
     Required('checkout', default=True): bool,
-
-    # The sparse checkout profile to use. Value is the filename relative to the
-    # directory where sparse profiles are defined (build/sparse-profiles/).
-    Required('sparse-profile', default=None): basestring,
-
-    # if true, perform a checkout of a comm-central based branch inside the
-    # gecko checkout
-    Required('comm-checkout', default=False): bool,
 
     # The command arguments to pass to the `run-task` script, after the
     # checkout arguments.  If a list, it will be passed directly; otherwise
@@ -40,21 +32,7 @@ run_task_schema = Schema({
 def common_setup(config, job, taskdesc):
     run = job['run']
     if run['checkout']:
-        support_vcs_checkout(config, job, taskdesc,
-                             sparse=bool(run['sparse-profile']))
-
-    taskdesc['worker'].setdefault('env', {})['MOZ_SCM_LEVEL'] = config.params['level']
-
-
-def add_checkout_to_command(run, command):
-    if not run['checkout']:
-        return
-
-    command.append('--vcs-checkout=/builds/worker/checkouts/gecko')
-
-    if run['sparse-profile']:
-        command.append('--sparse-profile=build/sparse-profiles/%s' %
-                       run['sparse-profile'])
+        support_vcs_checkout(config, job, taskdesc)
 
 
 @run_job_using("docker-worker", "run-task", schema=run_task_schema)
@@ -63,20 +41,19 @@ def docker_worker_run_task(config, job, taskdesc):
     worker = taskdesc['worker'] = job['worker']
     common_setup(config, job, taskdesc)
 
-    worker['caches'].append({
-        'type': 'persistent',
-        'name': 'level-{level}-{project}-dotcache'.format(**config.params),
-        'mount-point': '/builds/worker/.cache',
-        'skip-untrusted': True,
-    })
+    if run.get('cache-dotcache') and int(config.params['level']) > 1:
+        worker['caches'].append({
+            'type': 'persistent',
+            'name': 'level-{level}-{project}-dotcache'.format(**config.params),
+            'mount-point': '/home/worker/.cache',
+        })
 
     run_command = run['command']
     if isinstance(run_command, basestring):
         run_command = ['bash', '-cx', run_command]
-    command = ['/builds/worker/bin/run-task']
-    add_checkout_to_command(run, command)
-    if run['comm-checkout']:
-        command.append('--comm-checkout=/builds/worker/checkouts/gecko/comm')
+    command = ['/home/worker/bin/run-task']
+    if run['checkout']:
+        command.append('--vcs-checkout=~/checkouts/gecko')
     command.append('--fetch-hgfingerprint')
     command.append('--')
     command.extend(run_command)
@@ -100,7 +77,8 @@ def native_engine_run_task(config, job, taskdesc):
     if isinstance(run_command, basestring):
         run_command = ['bash', '-cx', run_command]
     command = ['./run-task']
-    add_checkout_to_command(run, command)
+    if run['checkout']:
+        command.append('--vcs-checkout=~/checkouts/gecko')
     command.append('--')
     command.extend(run_command)
     worker['command'] = command

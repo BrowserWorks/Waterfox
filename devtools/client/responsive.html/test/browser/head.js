@@ -51,16 +51,19 @@ flags.testing = true;
 Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
 Services.prefs.setCharPref("devtools.devices.url",
   TEST_URI_ROOT + "devices.json");
+Services.prefs.setBoolPref("devtools.responsive.html.enabled", true);
 
 registerCleanupFunction(() => {
   flags.testing = false;
   Services.prefs.clearUserPref("devtools.devices.url");
+  Services.prefs.clearUserPref("devtools.responsive.html.enabled");
   Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
   asyncStorage.removeItem("devtools.devices.url_cache");
   asyncStorage.removeItem("devtools.devices.local");
 });
 
-loader.lazyRequireGetter(this, "ResponsiveUIManager", "devtools/client/responsive.html/manager", true);
+// This depends on the "devtools.responsive.html.enabled" pref
+const { ResponsiveUIManager } = require("resource://devtools/client/responsivedesign/responsivedesign.jsm");
 
 /**
  * Open responsive design mode for the given tab.
@@ -366,13 +369,12 @@ function testViewportDeviceSelectLabel(ui, expected) {
      `Device Select value should be: ${expected}`);
 }
 
-function* toggleTouchSimulation(ui) {
+function* enableTouchSimulation(ui) {
   let { document } = ui.toolWindow;
   let touchButton = document.querySelector("#global-touch-simulation-button");
-  let changed = once(ui, "touch-simulation-changed");
   let loaded = waitForViewportLoad(ui);
   touchButton.click();
-  yield Promise.all([ changed, loaded ]);
+  yield loaded;
 }
 
 function* testUserAgent(ui, expected) {

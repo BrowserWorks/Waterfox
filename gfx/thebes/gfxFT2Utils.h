@@ -27,16 +27,16 @@ typedef struct FT_FaceRec_* FT_Face;
  * as that may accidentally try to re-lock the face within Cairo itself
  * and thus deadlock.
  */
-class MOZ_STACK_CLASS gfxFT2LockedFace {
+class gfxFT2LockedFace {
 public:
     explicit gfxFT2LockedFace(gfxFT2FontBase *aFont) :
         mGfxFont(aFont),
-        mFace(cairo_ft_scaled_font_lock_face(aFont->GetCairoScaledFont()))
+        mFace(cairo_ft_scaled_font_lock_face(aFont->CairoScaledFont()))
     { }
     ~gfxFT2LockedFace()
     {
         if (mFace) {
-            cairo_ft_scaled_font_unlock_face(mGfxFont->GetCairoScaledFont());
+            cairo_ft_scaled_font_unlock_face(mGfxFont->CairoScaledFont());
         }
     }
 
@@ -59,7 +59,7 @@ protected:
                                            FT_ULong variantSelector);
     CharVariantFunction FindCharVariantFunction();
 
-    gfxFT2FontBase* MOZ_NON_OWNING_REF mGfxFont; // owned by caller
+    RefPtr<gfxFT2FontBase> mGfxFont;
     FT_Face mFace;
 };
 

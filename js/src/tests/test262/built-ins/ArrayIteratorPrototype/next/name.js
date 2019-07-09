@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.1.5.2.1
-esid: sec-%arrayiteratorprototype%.next
 description: >
   %ArrayIteratorPrototype%.next.name is "next".
 info: >
@@ -18,7 +17,6 @@ info: >
     object, if it exists, has the attributes { [[Writable]]: false,
     [[Enumerable]]: false, [[Configurable]]: true }.
 includes: [propertyHelper.js]
-features: [Symbol.iterator]
 ---*/
 
 var ArrayIteratorProto = Object.getPrototypeOf([][Symbol.iterator]());

@@ -23,7 +23,7 @@ public:
                            const nsACString& aScope,
                            const nsACString& aScriptSpec,
                            nsILoadGroup* aLoadGroup,
-                           ServiceWorkerUpdateViaCache aUpdateViaCache);
+                           nsLoadFlags aLoadFlags);
 
 private:
   // Implement the Register algorithm steps and then call the parent class

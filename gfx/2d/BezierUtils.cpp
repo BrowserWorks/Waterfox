@@ -326,16 +326,13 @@ CalculateDistanceToEllipticArc(const Point& P, const Point& normal,
 
   Float S = sqrt(B * B - A * C);
 
-  Float n1 = - B + S;
-  Float n2 = - B - S;
+  Float n1 = (- B + S) / A;
+  Float n2 = (- B - S) / A;
 
-#ifdef DEBUG
-  Float epsilon = (Float) 0.001;
-  MOZ_ASSERT(n1 >= -epsilon);
-  MOZ_ASSERT(n2 >= -epsilon);
-#endif
+  MOZ_ASSERT(n1 >= 0);
+  MOZ_ASSERT(n2 >= 0);
 
-  return std::max((n1 < n2 ? n1 : n2) / A, (Float) 0.0);
+  return n1 < n2 ? n1 : n2;
 }
 
 } // namespace gfx

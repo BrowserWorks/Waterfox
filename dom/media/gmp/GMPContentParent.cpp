@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPContentParent.h"
+#include "GMPDecryptorParent.h"
 #include "GMPParent.h"
 #include "GMPServiceChild.h"
 #include "GMPVideoDecoderParent.h"
@@ -66,9 +67,8 @@ private:
 void
 GMPContentParent::ActorDestroy(ActorDestroyReason aWhy)
 {
-  MOZ_ASSERT(mVideoDecoders.IsEmpty() &&
-             mVideoEncoders.IsEmpty() &&
-             mChromiumCDMs.IsEmpty());
+  MOZ_ASSERT(mDecryptors.IsEmpty() && mVideoDecoders.IsEmpty() &&
+             mVideoEncoders.IsEmpty() && mChromiumCDMs.IsEmpty());
   NS_DispatchToCurrentThread(new ReleaseGMPContentParent(this));
 }
 
@@ -108,6 +108,15 @@ GMPContentParent::VideoEncoderDestroyed(GMPVideoEncoderParent* aEncoder)
 }
 
 void
+GMPContentParent::DecryptorDestroyed(GMPDecryptorParent* aSession)
+{
+  MOZ_ASSERT(GMPEventTarget()->IsOnCurrentThread());
+
+  MOZ_ALWAYS_TRUE(mDecryptors.RemoveElement(aSession));
+  CloseIfUnused();
+}
+
+void
 GMPContentParent::AddCloseBlocker()
 {
   MOZ_ASSERT(GMPEventTarget()->IsOnCurrentThread());
@@ -125,9 +134,8 @@ GMPContentParent::RemoveCloseBlocker()
 void
 GMPContentParent::CloseIfUnused()
 {
-  if (mVideoDecoders.IsEmpty() &&
-      mVideoEncoders.IsEmpty() &&
-      mChromiumCDMs.IsEmpty() &&
+  if (mDecryptors.IsEmpty() && mVideoDecoders.IsEmpty() &&
+      mVideoEncoders.IsEmpty() && mChromiumCDMs.IsEmpty() &&
       mCloseBlockerCount == 0) {
     RefPtr<GMPContentParent> toClose;
     if (mParent) {
@@ -141,6 +149,23 @@ GMPContentParent::CloseIfUnused()
     NS_DispatchToCurrentThread(NewRunnableMethod(
       "gmp::GMPContentParent::Close", toClose, &GMPContentParent::Close));
   }
+}
+
+nsresult
+GMPContentParent::GetGMPDecryptor(GMPDecryptorParent** aGMPDP)
+{
+  PGMPDecryptorParent* pdp = SendPGMPDecryptorConstructor();
+  if (!pdp) {
+    return NS_ERROR_FAILURE;
+  }
+  GMPDecryptorParent* dp = static_cast<GMPDecryptorParent*>(pdp);
+  // This addref corresponds to the Proxy pointer the consumer is returned.
+  // It's dropped by calling Close() on the interface.
+  NS_ADDREF(dp);
+  mDecryptors.AppendElement(dp);
+  *aGMPDP = dp;
+
+  return NS_OK;
 }
 
 nsCOMPtr<nsISerialEventTarget>
@@ -264,6 +289,22 @@ GMPContentParent::DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor)
 {
   GMPVideoEncoderParent* vep = static_cast<GMPVideoEncoderParent*>(aActor);
   NS_RELEASE(vep);
+  return true;
+}
+
+PGMPDecryptorParent*
+GMPContentParent::AllocPGMPDecryptorParent()
+{
+  GMPDecryptorParent* ksp = new GMPDecryptorParent(this);
+  NS_ADDREF(ksp);
+  return ksp;
+}
+
+bool
+GMPContentParent::DeallocPGMPDecryptorParent(PGMPDecryptorParent* aActor)
+{
+  GMPDecryptorParent* ksp = static_cast<GMPDecryptorParent*>(aActor);
+  NS_RELEASE(ksp);
   return true;
 }
 

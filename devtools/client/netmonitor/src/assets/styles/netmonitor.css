@@ -4,10 +4,10 @@
 
 @import "chrome://devtools/skin/widgets.css";
 @import "resource://devtools/client/themes/light-theme.css";
-@import "resource://devtools/client/shared/components/splitter/SplitBox.css";
-@import "resource://devtools/client/shared/components/tree/TreeView.css";
-@import "resource://devtools/client/shared/components/tabs/Tabs.css";
-@import "resource://devtools/client/shared/components/tabs/TabBar.css";
+@import "resource://devtools/client/shared/components/splitter/split-box.css";
+@import "resource://devtools/client/shared/components/tree/tree-view.css";
+@import "resource://devtools/client/shared/components/tabs/tabs.css";
+@import "resource://devtools/client/shared/components/tabs/tabbar.css";
 @import "chrome://devtools/skin/components-frame.css";
 @import "chrome://devtools/content/sourceeditor/codemirror/lib/codemirror.css";
 @import "chrome://devtools/content/sourceeditor/codemirror/addon/dialog/dialog.css";
@@ -48,12 +48,6 @@
 :root.theme-firebug {
   --sort-ascending-image: url(chrome://devtools/skin/images/firebug/arrow-up.svg);
   --sort-descending-image: url(chrome://devtools/skin/images/firebug/arrow-down.svg);
-}
-
-/* Icons */
-:root {
-  --play-icon-url: url("chrome://devtools/skin/images/play.svg");
-  --pause-icon-url: url("chrome://devtools/skin/images/pause.svg");
 }
 
 /* General */
@@ -100,32 +94,18 @@ body,
 
 .requests-list-filter-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-.devtools-button.devtools-pause-icon::before {
-  background-image: var(--pause-icon-url);
+.learn-more-link {
+  color: var(--theme-highlight-blue);
+  cursor: pointer;
+  margin: 0 5px;
+  white-space: nowrap;
 }
 
-.devtools-button.devtools-play-icon::before {
-  background-image: var(--play-icon-url);
-}
-
-/* Learn more links */
-
-.learn-more-link::before {
-  background-image: url(chrome://devtools/skin/images/help.svg);
-}
-
-.tree-container .treeTable tr .learn-more-link {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 0;
-}
-
-.tree-container .treeTable tr:not(:hover) .learn-more-link {
-  opacity: 0.1;
+.learn-more-link:hover {
+  text-decoration: underline;
 }
 
 /* Status bar */
@@ -152,11 +132,11 @@ body,
 }
 
 .status-bar-label.dom-content-loaded {
-  color: var(--theme-highlight-blue);
+  color: blue;
 }
 
 .status-bar-label.load {
-  color: var(--theme-highlight-red);
+  color: red;
 }
 
 /* Request list empty panel */
@@ -756,7 +736,7 @@ body,
 }
 
 .request-list-item:not(.selected):hover {
-  background-color: var(--theme-selection-background-hover);
+  background-color: var(--theme-selection-background-semitransparent);
 }
 
 .request-list-item.fromCache > .requests-list-column:not(.requests-list-waterfall) {
@@ -799,11 +779,6 @@ body,
   overflow-y: auto;
 }
 
-.panel-container .tree-container .objectBox {
-  white-space: normal;
-  word-wrap: break-word;
-}
-
 .properties-view {
   flex-grow: 1;
 }
@@ -829,20 +804,13 @@ body,
 .devtools-checkbox-label {
   margin-inline-start: 10px;
   margin-inline-end: 3px;
-  white-space: nowrap;
 }
 
 /* Empty notices in tab panels */
 
 .empty-notice {
-  color: var(--theme-body-color-inactive);
+  color: var(--theme-body-color-alt);
   padding: 3px 8px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 24px;
 }
 
 /* Text inputs in tab panels */
@@ -887,7 +855,6 @@ body,
 
 .tree-container .treeTable tr {
   display: block;
-  position: relative;
 }
 
 /* Make right td fill available horizontal space */
@@ -915,9 +882,8 @@ body,
 }
 
 .tree-container .treeTable .treeRow.tree-section > .treeLabelCell > .treeLabel,
-.tree-container .treeTable .treeRow.tree-section > .treeLabelCell > .treeLabel:hover,
-.tree-container .treeTable .treeRow.tree-section > .treeValueCell:not(:hover) * {
-  color: var(--theme-toolbar-color);
+.tree-container .treeTable .treeRow.tree-section > .treeLabelCell > .treeLabel:hover {
+  color: var(--theme-body-color-alt);
 }
 
 .tree-container .treeTable .treeValueCell {
@@ -1016,6 +982,10 @@ body,
 
 .headers-summary .status-text {
     width: auto!important;
+}
+
+.headers-summary .learn-more-link {
+  flex-grow: 1;
 }
 
 /* Response tabpanel */
@@ -1201,8 +1171,7 @@ body,
 
 .requests-list-network-summary-button > .summary-info-icon {
   background: url(chrome://devtools/skin/images/profiler-stopwatch.svg) no-repeat;
-  -moz-context-properties: fill;
-  fill: var(--theme-toolbar-color);
+  filter: var(--icon-filter);
   width: 16px;
   height: 16px;
   opacity: 0.8;

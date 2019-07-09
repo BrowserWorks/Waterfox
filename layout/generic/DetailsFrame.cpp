@@ -83,7 +83,7 @@ DetailsFrame::CheckValidMainSummary(const nsFrameList& aFrameList) const
 void
 DetailsFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
-  DestroyAnonymousContent(mDefaultSummary.forget());
+  nsContentUtils::DestroyAnonymousContent(&mDefaultSummary);
   nsBlockFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -105,7 +105,7 @@ DetailsFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
                                  nsIDOMNode::ELEMENT_NODE);
   mDefaultSummary = new HTMLSummaryElement(nodeInfo);
 
-  nsAutoString defaultSummaryText;
+  nsXPIDLString defaultSummaryText;
   nsContentUtils::GetLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
                                      "DefaultSummary", defaultSummaryText);
   RefPtr<nsTextNode> description = new nsTextNode(nodeInfoManager);

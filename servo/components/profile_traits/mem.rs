@@ -52,11 +52,11 @@ impl ProfilerChan {
     {
         // Register the memory reporter.
         let (reporter_sender, reporter_receiver) = ipc::channel().unwrap();
-        ROUTER.add_route(reporter_receiver.to_opaque(), Box::new(move |message| {
+        ROUTER.add_route(reporter_receiver.to_opaque(), box move |message| {
             // Just injects an appropriate event into the paint thread's queue.
             let request: ReporterRequest = message.to().unwrap();
             channel_for_reporter.send(msg(request.reports_channel));
-        }));
+        });
         self.send(ProfilerMsg::RegisterReporter(reporter_name.clone(),
                                                 Reporter(reporter_sender)));
 
@@ -79,7 +79,7 @@ impl ProfilerChan {
 #[derive(Deserialize, Serialize)]
 pub enum ReportKind {
     /// A size measurement for an explicit allocation on the jemalloc heap. This should be used
-    /// for any measurements done via the `MallocSizeOf` trait.
+    /// for any measurements done via the `HeapSizeOf` trait.
     ExplicitJemallocHeapSize,
 
     /// A size measurement for an explicit allocation on the system heap. Only likely to be used

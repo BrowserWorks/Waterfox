@@ -326,17 +326,13 @@ public:
    */
   void LoadEventFired();
 
-  /**
-   * Destroy and prevent the ScriptLoader or the ScriptLoadRequests from owning
-   * any references to the JSScript or to the Request which might be used for
-   * caching the encoded bytecode.
+  /*
+   * Clear the map of loaded modules. Called when a Document object is reused
+   * for a different global.
    */
-  void Destroy()
-  {
-    GiveUpBytecodeEncoding();
-  }
+  void ClearModuleMap();
 
-private:
+ private:
   virtual ~ScriptLoader();
 
   ScriptLoadRequest* CreateLoadRequest(ScriptKind aKind,
@@ -485,7 +481,6 @@ private:
 
   nsresult CreateModuleScript(ModuleLoadRequest* aRequest);
   nsresult ProcessFetchedModuleSource(ModuleLoadRequest* aRequest);
-  void CheckModuleDependenciesLoaded(ModuleLoadRequest* aRequest);
   void ProcessLoadedModuleTree(ModuleLoadRequest* aRequest);
   bool InstantiateModuleTree(ModuleLoadRequest* aRequest);
   void StartFetchingModuleDependencies(ModuleLoadRequest* aRequest);
@@ -546,7 +541,6 @@ private:
   bool mDocumentParsingDone;
   bool mBlockingDOMContentLoaded;
   bool mLoadEventFired;
-  bool mGiveUpEncoding;
 
   // Module map
   nsRefPtrHashtable<nsURIHashKey, mozilla::GenericPromise::Private> mFetchingModules;

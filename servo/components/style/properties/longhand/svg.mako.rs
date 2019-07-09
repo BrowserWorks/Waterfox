@@ -20,13 +20,11 @@ ${helpers.single_keyword("vector-effect", "none non-scaling-stroke",
 // Section 13 - Gradients and Patterns
 
 ${helpers.predefined_type(
-    "stop-color",
-    "RGBAColor",
+    "stop-color", "RGBAColor",
     "RGBA::new(0, 0, 0, 255)",
     products="gecko",
-    animation_value_type="AnimatedRGBA",
-    spec="https://www.w3.org/TR/SVGTiny12/painting.html#StopColorProperty",
-)}
+    animation_value_type="IntermediateRGBA",
+    spec="https://www.w3.org/TR/SVGTiny12/painting.html#StopColorProperty")}
 
 ${helpers.predefined_type("stop-opacity", "Opacity", "1.0",
                           products="gecko",
@@ -36,26 +34,22 @@ ${helpers.predefined_type("stop-opacity", "Opacity", "1.0",
 // Section 15 - Filter Effects
 
 ${helpers.predefined_type(
-    "flood-color",
-    "RGBAColor",
+    "flood-color", "RGBAColor",
     "RGBA::new(0, 0, 0, 255)",
     products="gecko",
-    animation_value_type="AnimatedRGBA",
-    spec="https://www.w3.org/TR/SVG/filters.html#FloodColorProperty",
-)}
+    animation_value_type="IntermediateRGBA",
+    spec="https://www.w3.org/TR/SVG/filters.html#FloodColorProperty")}
 
 ${helpers.predefined_type("flood-opacity", "Opacity",
                           "1.0", products="gecko", animation_value_type="ComputedValue",
                           spec="https://www.w3.org/TR/SVG/filters.html#FloodOpacityProperty")}
 
 ${helpers.predefined_type(
-    "lighting-color",
-    "RGBAColor",
+    "lighting-color", "RGBAColor",
     "RGBA::new(255, 255, 255, 255)",
     products="gecko",
-    animation_value_type="AnimatedRGBA",
-    spec="https://www.w3.org/TR/SVG/filters.html#LightingColorProperty",
-)}
+    animation_value_type="IntermediateRGBA",
+    spec="https://www.w3.org/TR/SVG/filters.html#LightingColorProperty")}
 
 // CSS Masking Module Level 1
 // https://drafts.fxtf.org/css-masking
@@ -63,16 +57,11 @@ ${helpers.single_keyword("mask-type", "luminance alpha",
                          products="gecko", animation_value_type="discrete",
                          spec="https://drafts.fxtf.org/css-masking/#propdef-mask-type")}
 
-${helpers.predefined_type(
-    "clip-path",
-    "basic_shape::ClippingShape",
-    "generics::basic_shape::ShapeSource::None",
-    products="gecko",
-    boxed=True,
-    animation_value_type="ComputedValue",
-    flags="CREATES_STACKING_CONTEXT",
-    spec="https://drafts.fxtf.org/css-masking/#propdef-clip-path",
-)}
+${helpers.predefined_type("clip-path", "basic_shape::ClippingShape",
+                          "generics::basic_shape::ShapeSource::None",
+                          products="gecko", boxed="True",
+                          animation_value_type="none", flags="CREATES_STACKING_CONTEXT",
+                          spec="https://drafts.fxtf.org/css-masking/#propdef-clip-path")}
 
 ${helpers.single_keyword("mask-mode",
                          "match-source alpha luminance",
@@ -167,4 +156,5 @@ ${helpers.predefined_type("mask-image", "ImageLayer",
     products="gecko",
     extra_prefixes="webkit",
     animation_value_type="discrete",
-    flags="CREATES_STACKING_CONTEXT")}
+    flags="CREATES_STACKING_CONTEXT",
+    has_uncacheable_values="True" if product == "gecko" else "False")}

@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
+loader.lazyRequireGetter(this, "defer",
+  "promise", true);
 
 /**
  * @constructor Poller
@@ -61,20 +63,20 @@ Poller.prototype.on = function pollerOn() {
  * @return {Promise}
  */
 Poller.prototype.off = function pollerOff() {
-  return new Promise((resolve, reject) => {
-    if (this._timer) {
-      clearTimeout(this._timer);
-      this._timer = null;
-    }
+  let { resolve, promise } = defer();
+  if (this._timer) {
+    clearTimeout(this._timer);
+    this._timer = null;
+  }
 
-    // Settle an inflight poll call before resolving
-    // if using a promise-backed poll function
-    if (this._inflight) {
-      this._inflight.then(resolve);
-    } else {
-      resolve();
-    }
-  });
+  // Settle an inflight poll call before resolving
+  // if using a promise-backed poll function
+  if (this._inflight) {
+    this._inflight.then(resolve);
+  } else {
+    resolve();
+  }
+  return promise;
 };
 
 /**

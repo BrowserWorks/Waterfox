@@ -20,7 +20,7 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onStoreCompleted() {
+  public void onStoreCompleted(long storeEnd) {
     performNotify("DefaultStoreDelegate used", null);
   }
 
@@ -30,7 +30,7 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onRecordStoreReconciled(String guid, String oldGuid, Integer newVersion) {}
+  public void onRecordStoreReconciled(String guid) {}
 
   @Override
   public RepositorySessionStoreDelegate deferredStoreDelegate(final ExecutorService executor) {
@@ -58,21 +58,21 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
       }
 
       @Override
-      public void onRecordStoreReconciled(final String guid, String oldGuid, Integer newVersion) {
+      public void onRecordStoreReconciled(final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreReconciled(guid, null, null);
+            self.onRecordStoreReconciled(guid);
           }
         });
       }
 
       @Override
-      public void onStoreCompleted() {
+      public void onStoreCompleted(final long storeEnd) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onStoreCompleted();
+            self.onStoreCompleted(storeEnd);
           }
         });
       }

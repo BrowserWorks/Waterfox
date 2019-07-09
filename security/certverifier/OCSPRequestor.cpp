@@ -155,14 +155,14 @@ DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
   if (pathLen > 0) {
     path.Assign(url + pathPos, static_cast<nsAutoCString::size_type>(pathLen));
   } else {
-    path.AssignLiteral("/");
+    path.Assign("/");
   }
   MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
          ("Setting up OCSP request: pre all path =%s  pathlen=%d\n", path.get(),
           pathLen));
   nsAutoCString method("POST");
   if (useGET) {
-    method.AssignLiteral("GET");
+    method.Assign("GET");
     if (!StringEndsWith(path, NS_LITERAL_CSTRING("/"))) {
       path.Append("/");
     }

@@ -28,7 +28,7 @@ Cu.import("resource:///modules/RecentWindow.jsm");
 
 const ANIMATION_PREF = "toolkit.cosmeticAnimations.enabled";
 
-const MULTI_OPT_OUT_PREF = "dom.ipc.multiOptOut";
+const PROCESS_COUNT_PREF = "dom.ipc.processCount";
 
 const TARGET_URI = "chrome://tabpaint/content/target.html";
 
@@ -72,8 +72,8 @@ var TabPaint = {
 
     this.originalAnimate = Services.prefs.getBoolPref(ANIMATION_PREF);
     Services.prefs.setBoolPref(ANIMATION_PREF, false);
-    Services.prefs.setIntPref(MULTI_OPT_OUT_PREF,
-                              Services.appinfo.E10S_MULTI_EXPERIMENT);
+    this.originalProcessCount = Services.prefs.getIntPref(PROCESS_COUNT_PREF);
+    Services.prefs.setIntPref(PROCESS_COUNT_PREF, 1);
   },
 
   uninit() {
@@ -82,7 +82,7 @@ var TabPaint = {
     }
 
     Services.prefs.setBoolPref(ANIMATION_PREF, this.originalAnimate);
-    Services.prefs.clearUserPref(MULTI_OPT_OUT_PREF);
+    Services.prefs.setIntPref(PROCESS_COUNT_PREF, this.originalProcessCount);
   },
 
   receiveMessage(msg) {
@@ -133,7 +133,7 @@ var TabPaint = {
    *            The time (ms) it took to present a tab that
    *            was opened from content.
    */
-  go: Task.async(function* (gBrowser) {
+  go: Task.async(function*(gBrowser) {
     let fromParent = yield this.openTabFromParent(gBrowser);
     let fromContent = yield this.openTabFromContent(gBrowser);
 

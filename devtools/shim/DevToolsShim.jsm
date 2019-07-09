@@ -33,8 +33,9 @@ function removeItem(array, callback) {
  *
  * DevToolsShim is a singleton that provides a set of helpers to interact with DevTools,
  * that work whether the DevTools addon is installed or not. It can be used to start
- * listening to events. As soon as a DevTools addon is installed the DevToolsShim will
- * forward all the requests received until then to the real DevTools instance.
+ * listening to events, register tools, themes. As soon as a DevTools addon is installed
+ * the DevToolsShim will forward all the requests received until then to the real DevTools
+ * instance.
  *
  * DevToolsShim.isInstalled() can also be used to know if DevTools are currently
  * installed.
@@ -42,6 +43,26 @@ function removeItem(array, callback) {
 this.DevToolsShim = {
   _gDevTools: null,
   listeners: [],
+  tools: [],
+  themes: [],
+
+  /**
+   * Lazy getter for the `gDevTools` instance. Should only be called when users interacts
+   * with DevTools as it will force loading them.
+   *
+   * @return {DevTools} a devtools instance (from client/framework/devtools)
+   */
+  get gDevTools() {
+    if (!this.isInstalled()) {
+      throw new Error(`Trying to interact with DevTools, but they are not installed`);
+    }
+
+    if (!this.isInitialized()) {
+      this._initDevTools();
+    }
+
+    return this._gDevTools;
+  },
 
   /**
    * Check if DevTools are currently installed (but not necessarily initialized).
@@ -89,6 +110,10 @@ this.DevToolsShim = {
    * The following methods can be called before DevTools are initialized:
    * - on
    * - off
+   * - registerTool
+   * - unregisterTool
+   * - registerTheme
+   * - unregisterTheme
    *
    * If DevTools are not initialized when calling the method, DevToolsShim will call the
    * appropriate method as soon as a gDevTools instance is registered.
@@ -120,30 +145,81 @@ this.DevToolsShim = {
   },
 
   /**
+   * This method is only used by the addon-sdk and should be removed when Firefox 56 is
+   * no longer supported.
+   */
+  registerTool: function (tool) {
+    if (this.isInitialized()) {
+      this._gDevTools.registerTool(tool);
+    } else {
+      this.tools.push(tool);
+    }
+  },
+
+  /**
+   * This method is only used by the addon-sdk and should be removed when Firefox 56 is
+   * no longer supported.
+   */
+  unregisterTool: function (tool) {
+    if (this.isInitialized()) {
+      this._gDevTools.unregisterTool(tool);
+    } else {
+      removeItem(this.tools, t => t === tool);
+    }
+  },
+
+  /**
+   * This method is only used by the addon-sdk and should be removed when Firefox 56 is
+   * no longer supported.
+   */
+  registerTheme: function (theme) {
+    if (this.isInitialized()) {
+      this._gDevTools.registerTheme(theme);
+    } else {
+      this.themes.push(theme);
+    }
+  },
+
+  /**
+   * This method is only used by the addon-sdk and should be removed when Firefox 56 is
+   * no longer supported.
+   */
+  unregisterTheme: function (theme) {
+    if (this.isInitialized()) {
+      this._gDevTools.unregisterTheme(theme);
+    } else {
+      removeItem(this.themes, t => t === theme);
+    }
+  },
+
+  /**
    * Called from SessionStore.jsm in mozilla-central when saving the current state.
    *
-   * @param {Object} state
-   *                 A SessionStore state object that gets modified by reference
+   * @return {Array} array of currently opened scratchpad windows. Empty array if devtools
+   *         are not installed
    */
-  saveDevToolsSession: function (state) {
+  getOpenedScratchpads: function () {
     if (!this.isInitialized()) {
-      return;
+      return [];
     }
 
-    this._gDevTools.saveDevToolsSession(state);
+    return this._gDevTools.getOpenedScratchpads();
   },
 
   /**
    * Called from SessionStore.jsm in mozilla-central when restoring a state that contained
-   * opened scratchpad windows and browser console.
+   * opened scratchpad windows.
    */
-  restoreDevToolsSession: function (session) {
-    let devtoolsReady = this._maybeInitializeDevTools();
-    if (!devtoolsReady) {
+  restoreScratchpadSession: function (scratchpads) {
+    if (!this.isInstalled()) {
       return;
     }
 
-    this._gDevTools.restoreDevToolsSession(session);
+    if (!this.isInitialized()) {
+      this._initDevTools();
+    }
+
+    this._gDevTools.restoreScratchpadSession(scratchpads);
   },
 
   /**
@@ -160,18 +236,28 @@ this.DevToolsShim = {
    *         markup view or that resolves immediately if DevTools are not installed.
    */
   inspectNode: function (tab, selectors) {
-    // Record the timing at which this event started in order to compute later in
-    // gDevTools.showToolbox, the complete time it takes to open the toolbox.
-    // i.e. especially take `DevtoolsStartup.initDevTools` into account.
-    let { performance } = Services.appShell.hiddenDOMWindow;
-    let startTime = performance.now();
-
-    let devtoolsReady = this._maybeInitializeDevTools("ContextMenu");
-    if (!devtoolsReady) {
+    if (!this.isInstalled()) {
       return Promise.resolve();
     }
 
-    return this._gDevTools.inspectNode(tab, selectors, startTime);
+    // Initialize DevTools explicitly to pass the "ContextMenu" reason to telemetry.
+    if (!this.isInitialized()) {
+      this._initDevTools("ContextMenu");
+    }
+
+    return this.gDevTools.inspectNode(tab, selectors);
+  },
+
+  /**
+   * Initialize DevTools via the devtools-startup command line handler component.
+   * Overridden in tests.
+   *
+   * @param {String} reason
+   *        optional, if provided should be a valid entry point for DEVTOOLS_ENTRY_POINT
+   *        in toolkit/components/telemetry/Histograms.json
+   */
+  _initDevTools: function (reason) {
+    DevtoolsStartup.initDevTools(reason);
   },
 
   _onDevToolsRegistered: function () {
@@ -180,33 +266,36 @@ this.DevToolsShim = {
       this._gDevTools.on(event, listener);
     }
 
-    this.listeners = [];
-  },
-
-  /**
-   * Should be called if a shim method attempts to initialize devtools.
-   * - if DevTools are already initialized, returns true.
-   * - if DevTools are not initialized, call initDevTools from devtools-startup:
-   *   - if devtools.enabled is true, DevTools will synchronously initialize and the
-   *     method will return true.
-   *   - if devtools.enabled is false, DevTools installation flow will start and the
-   *     method will return false
-   *
-   * @param {String} reason
-   *        optional, if provided should be a valid entry point for DEVTOOLS_ENTRY_POINT
-   *        in toolkit/components/telemetry/Histograms.json
-   */
-  _maybeInitializeDevTools: function (reason) {
-    // Attempt to initialize DevTools, which should be synchronous.
-    if (!this.isInitialized()) {
-      DevtoolsStartup.initDevTools(reason);
+    for (let tool of this.tools) {
+      this._gDevTools.registerTool(tool);
     }
 
-    // The initialization process can lead to show the user installation screen, in this
-    // case this.isInitialized() will still be false after calling initDevTools().
-    return this.isInitialized();
-  }
+    for (let theme of this.themes) {
+      this._gDevTools.registerTheme(theme);
+    }
+
+    this.listeners = [];
+    this.tools = [];
+    this.themes = [];
+  },
 };
+
+/**
+ * Compatibility layer for addon-sdk. Remove when Firefox 57 hits release.
+ *
+ * The methods below are used by classes and tests from addon-sdk/
+ * If DevTools are not installed when calling one of them, the call will throw.
+ */
+
+let addonSdkMethods = [
+  "closeToolbox",
+  "connectDebuggerServer",
+  "createDebuggerClient",
+  "getTargetForTab",
+  "getToolbox",
+  "initBrowserToolboxProcessForAddon",
+  "showToolbox",
+];
 
 /**
  * Compatibility layer for webextensions.
@@ -215,20 +304,11 @@ this.DevToolsShim = {
  * therefore DevTools should always be available when they are called.
  */
 let webExtensionsMethods = [
-  "createTargetForTab",
-  "createWebExtensionInspectedWindowFront",
-  "getTargetForTab",
   "getTheme",
-  "openBrowserConsole",
 ];
 
-for (let method of webExtensionsMethods) {
+for (let method of [...addonSdkMethods, ...webExtensionsMethods]) {
   this.DevToolsShim[method] = function () {
-    let devtoolsReady = this._maybeInitializeDevTools();
-    if (!devtoolsReady) {
-      throw new Error("Could not call a DevToolsShim webextension method ('" + method +
-        "'): DevTools are not initialized.");
-    }
-    return this._gDevTools[method].apply(this._gDevTools, arguments);
+    return this.gDevTools[method].apply(this.gDevTools, arguments);
   };
 }

@@ -15,8 +15,8 @@
 #include "mozilla/ReflowInput.h"
 #include "nsIServiceManager.h"
 #include "nsComponentManagerUtils.h"
-#include "nsString.h"
-#include "nsAtom.h"
+#include "nsXPIDLString.h"
+#include "nsIAtom.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsISimpleEnumerator.h"
@@ -42,6 +42,9 @@
 #include "nsIDOMHTMLInputElement.h"
 #include "nsIDOMHTMLTextAreaElement.h"
 #include "nsIDOMHTMLHtmlElement.h"
+#include "nsIDOMHTMLAppletElement.h"
+#include "nsIDOMHTMLObjectElement.h"
+#include "nsIDOMHTMLEmbedElement.h"
 #include "nsIDOMHTMLDocument.h"
 #include "nsIImageLoadingContent.h"
 #include "nsIWebNavigation.h"
@@ -720,7 +723,7 @@ nsDocShellTreeOwner::SetFocus()
 }
 
 NS_IMETHODIMP
-nsDocShellTreeOwner::GetTitle(nsAString& aTitle)
+nsDocShellTreeOwner::GetTitle(char16_t** aTitle)
 {
   nsCOMPtr<nsIEmbeddingSiteWindow> ownerWin = GetOwnerWin();
   if (ownerWin) {
@@ -730,7 +733,7 @@ nsDocShellTreeOwner::GetTitle(nsAString& aTitle)
 }
 
 NS_IMETHODIMP
-nsDocShellTreeOwner::SetTitle(const nsAString& aTitle)
+nsDocShellTreeOwner::SetTitle(const char16_t* aTitle)
 {
   nsCOMPtr<nsIEmbeddingSiteWindow> ownerWin = GetOwnerWin();
   if (ownerWin) {
@@ -991,6 +994,7 @@ nsDocShellTreeOwner::HandleEvent(nsIDOMEvent* aEvent)
           if (webBrowserChrome) {
             nsCOMPtr<nsITabChild> tabChild = do_QueryInterface(webBrowserChrome);
             if (tabChild) {
+              // Bug 1370843 - Explicitly pass triggeringPrincipal
               nsresult rv = tabChild->RemoteDropLinks(linksCount, links);
               for (uint32_t i = 0; i < linksCount; i++) {
                 NS_RELEASE(links[i]);
@@ -1244,31 +1248,30 @@ ChromeTooltipListener::MouseMove(nsIDOMEvent* aMouseEvent)
   }
 
   if (!mShowingTooltip && !mTooltipShownOnce) {
-    nsIEventTarget* target = nullptr;
-
-    nsCOMPtr<EventTarget> eventTarget =
-      aMouseEvent->InternalDOMEvent()->GetTarget();
-    if (eventTarget) {
-      mPossibleTooltipNode = do_QueryInterface(eventTarget);
-      nsCOMPtr<nsIGlobalObject> global(eventTarget->GetOwnerGlobal());
-      if (global) {
-        target = global->EventTargetFor(TaskCategory::UI);
+    mTooltipTimer = do_CreateInstance("@mozilla.org/timer;1");
+    if (mTooltipTimer) {
+      nsCOMPtr<EventTarget> eventTarget =
+        aMouseEvent->InternalDOMEvent()->GetTarget();
+      if (eventTarget) {
+        mPossibleTooltipNode = do_QueryInterface(eventTarget);
+        nsCOMPtr<nsIGlobalObject> global(eventTarget->GetOwnerGlobal());
+        if (global) {
+          mTooltipTimer->SetTarget(global->EventTargetFor(TaskCategory::UI));
+        }
       }
-    }
-
-    if (mPossibleTooltipNode) {
-      nsresult rv = NS_NewTimerWithFuncCallback(
-        getter_AddRefs(mTooltipTimer),
-        sTooltipCallback,
-        this,
-        LookAndFeel::GetInt(LookAndFeel::eIntID_TooltipDelay, 500),
-        nsITimer::TYPE_ONE_SHOT,
-        "ChromeTooltipListener::MouseMove",
-        target);
-      if (NS_FAILED(rv)) {
-        mPossibleTooltipNode = nullptr;
-        NS_WARNING("Could not create a timer for tooltip tracking");
+      if (mPossibleTooltipNode) {
+        nsresult rv = mTooltipTimer->InitWithNamedFuncCallback(
+          sTooltipCallback,
+          this,
+          LookAndFeel::GetInt(LookAndFeel::eIntID_TooltipDelay, 500),
+          nsITimer::TYPE_ONE_SHOT,
+          "ChromeTooltipListener::MouseMove");
+        if (NS_FAILED(rv)) {
+          mPossibleTooltipNode = nullptr;
+        }
       }
+    } else {
+      NS_WARNING("Could not create a timer for tooltip tracking");
     }
   } else {
     mTooltipShownOnce = true;
@@ -1380,15 +1383,18 @@ ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
     // if there is text associated with the node, show the tip and fire
     // off a timer to auto-hide it.
 
+    nsXPIDLString tooltipText;
+    nsXPIDLString directionText;
     if (self->mTooltipTextProvider) {
-      nsString tooltipText;
-      nsString directionText;
       bool textFound = false;
+
       self->mTooltipTextProvider->GetNodeText(
         self->mPossibleTooltipNode, getter_Copies(tooltipText),
         getter_Copies(directionText), &textFound);
 
       if (textFound) {
+        nsString tipText(tooltipText);
+        nsString dirText(directionText);
         LayoutDeviceIntPoint screenDot = widget->WidgetToScreenOffset();
         double scaleFactor = 1.0;
         if (shell->GetPresContext()) {
@@ -1399,7 +1405,7 @@ ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
         // ShowTooltip expects widget-relative position.
         self->ShowTooltip(self->mMouseScreenX - screenDot.x / scaleFactor,
                           self->mMouseScreenY - screenDot.y / scaleFactor,
-                          tooltipText, directionText);
+                          tipText, dirText);
       }
     }
 
@@ -1543,10 +1549,10 @@ ChromeContextMenuListener::HandleEvent(nsIDOMEvent* aMouseEvent)
 
   // First, checks for nodes that never have children.
   if (nodeType == nsIDOMNode::ELEMENT_NODE) {
-    nsCOMPtr<nsIImageLoadingContent> imageContent(do_QueryInterface(node));
-    if (imageContent) {
+    nsCOMPtr<nsIImageLoadingContent> content(do_QueryInterface(node));
+    if (content) {
       nsCOMPtr<nsIURI> imgUri;
-      imageContent->GetCurrentURI(getter_AddRefs(imgUri));
+      content->GetCurrentURI(getter_AddRefs(imgUri));
       if (imgUri) {
         flags |= nsIContextMenuListener::CONTEXT_IMAGE;
         flags2 |= nsIContextMenuListener2::CONTEXT_IMAGE;
@@ -1578,14 +1584,17 @@ ChromeContextMenuListener::HandleEvent(nsIDOMEvent* aMouseEvent)
       }
     }
 
-    // always consume events for plugins who may throw their own context menus
-    // but not for image objects. Document objects will never be targets or
-    // ancestors of targets, so that's OK.
-    nsCOMPtr<nsIContent> content = do_QueryInterface(node);
-    if (content &&
-        (content->IsHTMLElement(nsGkAtoms::embed) ||
-         (!(flags & nsIContextMenuListener::CONTEXT_IMAGE) &&
-          content->IsHTMLElement(nsGkAtoms::object)))) {
+    // always consume events for plugins and Java who may throw their
+    // own context menus but not for image objects.  Document objects
+    // will never be targets or ancestors of targets, so that's OK.
+    nsCOMPtr<nsIDOMHTMLObjectElement> objectElement;
+    if (!(flags & nsIContextMenuListener::CONTEXT_IMAGE)) {
+      objectElement = do_QueryInterface(node);
+    }
+    nsCOMPtr<nsIDOMHTMLEmbedElement> embedElement(do_QueryInterface(node));
+    nsCOMPtr<nsIDOMHTMLAppletElement> appletElement(do_QueryInterface(node));
+
+    if (objectElement || embedElement || appletElement) {
       return NS_OK;
     }
   }

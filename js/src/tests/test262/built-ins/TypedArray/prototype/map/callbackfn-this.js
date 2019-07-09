@@ -15,7 +15,6 @@ info: >
     c. Let mappedValue be ? Call(callbackfn, T, « kValue, k, O »).
     ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var expected = (function() { return this; })();

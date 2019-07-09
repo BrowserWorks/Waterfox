@@ -3,6 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #![deny(unsafe_code)]
+#![feature(box_patterns)]
+#![feature(box_syntax)]
+#![feature(conservative_impl_trait)]
+#![feature(nonzero)]
+#![feature(raw)]
 
 extern crate app_units;
 extern crate atomic_refcell;
@@ -13,12 +18,12 @@ extern crate euclid;
 extern crate fnv;
 extern crate gfx;
 extern crate gfx_traits;
+extern crate heapsize;
 #[macro_use] extern crate html5ever;
 extern crate ipc_channel;
 extern crate libc;
 #[macro_use]
 extern crate log;
-extern crate malloc_size_of;
 extern crate msg;
 extern crate net_traits;
 extern crate ordered_float;

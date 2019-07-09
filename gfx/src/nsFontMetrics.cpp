@@ -15,7 +15,7 @@
 #include "nsBoundingMetrics.h"          // for nsBoundingMetrics
 #include "nsDebug.h"                    // for NS_ERROR
 #include "nsDeviceContext.h"            // for nsDeviceContext
-#include "nsAtom.h"                    // for nsAtom
+#include "nsIAtom.h"                    // for nsIAtom
 #include "nsMathUtils.h"                // for NS_round
 #include "nsString.h"                   // for nsString
 #include "nsStyleConsts.h"              // for StyleHyphens::None
@@ -134,7 +134,7 @@ nsFontMetrics::nsFontMetrics(const nsFont& aFont, const Params& aParams,
                        aFont.synthesis & NS_FONT_SYNTHESIS_STYLE,
                        aFont.languageOverride);
 
-    aFont.AddFontFeaturesToStyle(&style, mOrientation == gfxFont::eVertical);
+    aFont.AddFontFeaturesToStyle(&style);
     aFont.AddFontVariationsToStyle(&style);
 
     gfxFloat devToCssSize = gfxFloat(mP2A) /

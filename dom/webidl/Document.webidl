@@ -98,6 +98,11 @@ interface Document : Node {
   Attr createAttribute(DOMString name);
   [NewObject, Throws]
   Attr createAttributeNS(DOMString? namespace, DOMString name);
+
+  // Allows setting innerHTML without automatic sanitization.
+  // Do not use this.
+  [ChromeOnly]
+  attribute boolean allowUnsafeHTML;
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-document-object
@@ -385,20 +390,11 @@ partial interface Document {
 
   // Blocks the initial document parser until the given promise is settled.
   [ChromeOnly, Throws]
-  Promise<any> blockParsing(Promise<any> promise,
-                            optional BlockParsingOptions options);
+  Promise<any> blockParsing(Promise<any> promise);
 
   // like documentURI, except that for error pages, it returns the URI we were
   // trying to load when we hit an error, rather than the error page's own URI.
   [ChromeOnly] readonly attribute URI? mozDocumentURIIfNotForErrorPages;
-};
-
-dictionary BlockParsingOptions {
-  /**
-   * If true, blocks script-created parsers (created via document.open()) in
-   * addition to network-created parsers.
-   */
-  boolean blockScriptCreated = true;
 };
 
 // Extension to give chrome JS the ability to determine when a document was
@@ -437,12 +433,6 @@ partial interface Document {
    */
   [ChromeOnly, Throws]
   void removeAnonymousContent(AnonymousContent aContent);
-};
-
-// http://w3c.github.io/selection-api/#extensions-to-document-interface
-partial interface Document {
-  [Throws]
-  Selection? getSelection();
 };
 
 // Extension to give chrome JS the ability to determine whether

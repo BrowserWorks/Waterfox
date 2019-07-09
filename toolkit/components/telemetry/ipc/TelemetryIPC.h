@@ -15,14 +15,12 @@
 // will call this for messages from their respective processes.
 
 namespace mozilla {
-
 namespace Telemetry {
 
-struct HistogramAccumulation;
-struct KeyedHistogramAccumulation;
+struct Accumulation;
+struct KeyedAccumulation;
 struct ScalarAction;
 struct KeyedScalarAction;
-struct DynamicScalarDefinition;
 struct ChildEventData;
 struct DiscardedData;
 
@@ -37,7 +35,7 @@ namespace TelemetryIPC {
  * @param aAccumulations - accumulation actions to perform
  */
 void AccumulateChildHistograms(Telemetry::ProcessID aProcessType,
-                               const nsTArray<Telemetry::HistogramAccumulation>& aAccumulations);
+                               const nsTArray<Telemetry::Accumulation>& aAccumulations);
 
 /**
  * Accumulate child process data into keyed histograms for the given process type.
@@ -46,7 +44,7 @@ void AccumulateChildHistograms(Telemetry::ProcessID aProcessType,
  * @param aAccumulations - accumulation actions to perform
  */
 void AccumulateChildKeyedHistograms(Telemetry::ProcessID aProcessType,
-                                    const nsTArray<Telemetry::KeyedHistogramAccumulation>& aAccumulations);
+                                    const nsTArray<Telemetry::KeyedAccumulation>& aAccumulations);
 
 /**
  * Update scalars for the given process type with the data coming from child process.
@@ -83,19 +81,6 @@ void RecordChildEvents(Telemetry::ProcessID aProcessType,
  */
 void RecordDiscardedData(Telemetry::ProcessID aProcessType,
                          const Telemetry::DiscardedData& aDiscardedData);
-
-/**
- * Get the dynamic scalar definitions from the parent process.
- * @param aDefs - The array that will contain the scalar definitions.
- */
-void GetDynamicScalarDefinitions(nsTArray<mozilla::Telemetry::DynamicScalarDefinition>& aDefs);
-
-/**
- * Add the dynamic scalar definitions coming from the parent process
- * to the current child process.
- * @param aDefs - The array that contains the scalar definitions.
- */
-void AddDynamicScalarDefinitions(const nsTArray<mozilla::Telemetry::DynamicScalarDefinition>& aDefs);
 
 }
 }

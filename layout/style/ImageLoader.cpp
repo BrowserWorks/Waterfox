@@ -13,7 +13,7 @@
 #include "nsError.h"
 #include "nsDisplayList.h"
 #include "FrameLayerBuilder.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "imgIContainer.h"
 #include "Image.h"
 
@@ -268,7 +268,7 @@ ImageLoader::LoadImage(nsIURI* aURI, nsIPrincipal* aOriginPrincipal,
 
   RefPtr<imgRequestProxy> request;
   nsresult rv = nsContentUtils::LoadImage(aURI, mDocument, mDocument,
-                                          aOriginPrincipal, 0, aReferrer,
+                                          aOriginPrincipal, aReferrer,
                                           mDocument->GetReferrerPolicy(),
                                           nullptr, nsIRequest::LOAD_NORMAL,
                                           NS_LITERAL_STRING("css"),
@@ -325,16 +325,16 @@ ImageLoader::GetPresContext()
 void InvalidateImagesCallback(nsIFrame* aFrame,
                               DisplayItemData* aItem)
 {
-  DisplayItemType type = GetDisplayItemTypeFromKey(aItem->GetDisplayItemKey());
-  uint8_t flags = GetDisplayItemFlagsForType(type);
+  nsDisplayItem::Type type = nsDisplayItem::GetDisplayItemTypeFromKey(aItem->GetDisplayItemKey());
+  uint8_t flags = nsDisplayItem::GetDisplayItemFlagsForType(type);
 
-  if (flags & TYPE_RENDERS_NO_IMAGES) {
+  if (flags & nsDisplayItem::TYPE_RENDERS_NO_IMAGES) {
     return;
   }
 
   if (nsLayoutUtils::InvalidationDebuggingIsEnabled()) {
     printf_stderr("Invalidating display item(type=%d) based on frame %p \
-      because it might contain an invalidated image\n", static_cast<uint32_t>(type), aFrame);
+      because it might contain an invalidated image\n", type, aFrame);
   }
   aItem->Invalidate();
   aFrame->SchedulePaint();
@@ -362,7 +362,7 @@ ImageLoader::DoRedraw(FrameSet* aFrameSet, bool aForcePaint)
         // Update ancestor rendering observers (-moz-element etc)
         nsIFrame *f = frame;
         while (f && !f->HasAnyStateBits(NS_FRAME_DESCENDANT_NEEDS_PAINT)) {
-          SVGObserverUtils::InvalidateDirectRenderingObservers(f);
+          nsSVGEffects::InvalidateDirectRenderingObservers(f);
           f = nsLayoutUtils::GetCrossDocParentFrame(f);
         }
 

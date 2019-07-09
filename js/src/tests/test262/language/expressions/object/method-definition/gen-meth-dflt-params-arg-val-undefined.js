@@ -4,7 +4,7 @@
 /*---
 description: Use of intializer when argument value is `undefined` (generator method)
 esid: sec-generator-function-definitions-runtime-semantics-propertydefinitionevaluation
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 info: |
     GeneratorMethod :
@@ -41,7 +41,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     14.1.19 Runtime Semantics: IteratorBindingInitialization
 

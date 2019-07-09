@@ -18,7 +18,6 @@
 #include "mozilla/Sprintf.h"
 #include "mozilla/TimeStamp.h"
 
-#include <chrono>
 #ifdef XP_WIN
 # include <direct.h>
 # include <process.h>
@@ -39,7 +38,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <thread>
 #ifdef XP_UNIX
 # include <sys/mman.h>
 # include <sys/stat.h>
@@ -65,7 +63,6 @@
 #include "shellmoduleloader.out.h"
 
 #include "builtin/ModuleObject.h"
-#include "builtin/RegExp.h"
 #include "builtin/TestingFunctions.h"
 #include "frontend/Parser.h"
 #include "gc/GCInternals.h"
@@ -96,7 +93,6 @@
 #include "vm/HelperThreads.h"
 #include "vm/Monitor.h"
 #include "vm/MutexIDs.h"
-#include "vm/Printer.h"
 #include "vm/Shape.h"
 #include "vm/SharedArrayObject.h"
 #include "vm/StringBuffer.h"
@@ -136,6 +132,8 @@ enum JSShellExitCode {
     EXITCODE_TIMEOUT            = 6
 };
 
+static const size_t gStackChunkSize = 8192;
+
 /*
  * Note: This limit should match the stack limit set by the browser in
  *       js/xpconnect/src/XPCJSContext.cpp
@@ -152,52 +150,8 @@ static const size_t gMaxStackSize = 128 * sizeof(size_t) * 1024;
  */
 static const TimeDuration MAX_TIMEOUT_INTERVAL = TimeDuration::FromSeconds(1800.0);
 
-// SharedArrayBuffer and Atomics are enabled by default (tracking Firefox).
+// Not necessarily in sync with the browser
 #define SHARED_MEMORY_DEFAULT 1
-
-// Code to support GCOV code coverage measurements on standalone shell
-#ifdef MOZ_CODE_COVERAGE
-#if defined(__GNUC__) && !defined(__clang__)
-extern "C" void __gcov_dump();
-extern "C" void __gcov_reset();
-
-void counters_dump(int) {
-    __gcov_dump();
-}
-
-void counters_reset(int) {
-    __gcov_reset();
-}
-#else
-void counters_dump(int) {
-    /* Do nothing */
-}
-
-void counters_reset(int) {
-    /* Do nothing */
-}
-#endif
-
-static void
-InstallCoverageSignalHandlers()
-{
-    fprintf(stderr, "[CodeCoverage] Setting handlers for process %d.\n", getpid());
-
-    struct sigaction dump_sa;
-    dump_sa.sa_handler = counters_dump;
-    dump_sa.sa_flags = SA_RESTART;
-    sigemptyset(&dump_sa.sa_mask);
-    mozilla::DebugOnly<int> r1 = sigaction(SIGUSR1, &dump_sa, nullptr);
-    MOZ_ASSERT(r1 == 0, "Failed to install GCOV SIGUSR1 handler");
-
-    struct sigaction reset_sa;
-    reset_sa.sa_handler = counters_reset;
-    reset_sa.sa_flags = SA_RESTART;
-    sigemptyset(&reset_sa.sa_mask);
-    mozilla::DebugOnly<int> r2 = sigaction(SIGUSR2, &reset_sa, nullptr);
-    MOZ_ASSERT(r2 == 0, "Failed to install GCOV SIGUSR2 handler");
-}
-#endif
 
 bool
 OffThreadState::startIfIdle(JSContext* cx, ScriptKind kind, ScopedJSFreePtr<char16_t>& newSource)
@@ -291,7 +245,9 @@ struct ShellCompartmentPrivate {
 };
 
 struct MOZ_STACK_CLASS EnvironmentPreparer : public js::ScriptEnvironmentPreparer {
+    JSContext* cx;
     explicit EnvironmentPreparer(JSContext* cx)
+      : cx(cx)
     {
         js::SetScriptEnvironmentPreparer(cx, this);
     }
@@ -307,10 +263,9 @@ static bool enableIon = false;
 static bool enableAsmJS = false;
 static bool enableWasm = false;
 static bool enableNativeRegExp = false;
+static bool enableUnboxedArrays = false;
 static bool enableSharedMemory = SHARED_MEMORY_DEFAULT;
-static bool enableWasmBaseline = false;
-static bool enableWasmIon = false;
-static bool enableTestWasmAwaitTier2 = false;
+static bool enableWasmAlwaysBaseline = false;
 static bool enableAsyncStacks = false;
 static bool enableStreams = false;
 #ifdef JS_GC_ZEAL
@@ -605,7 +560,6 @@ SkipUTF8BOM(FILE* file)
 void
 EnvironmentPreparer::invoke(HandleObject scope, Closure& closure)
 {
-    JSContext* cx = TlsContext.get();
     MOZ_ASSERT(!JS_IsExceptionPending(cx));
 
     AutoCompartment ac(cx, scope);
@@ -679,7 +633,7 @@ InitModuleLoader(JSContext* cx)
     options.setFileAndLine("shell/ModuleLoader.js", 1);
     options.setSelfHostingMode(false);
     options.setCanLazilyParse(false);
-    options.setVersion(JSVERSION_DEFAULT);
+    options.setVersion(JSVERSION_LATEST);
     options.werrorOption = true;
     options.strictOption = true;
 
@@ -768,9 +722,6 @@ DrainJobQueue(JSContext* cx, unsigned argc, Value* vp)
 
     js::RunJobs(cx);
 
-    if (GetShellContext(cx)->quitting)
-        return false;
-
     args.rval().setUndefined();
     return true;
 }
@@ -838,10 +789,10 @@ AddIntlExtras(JSContext* cx, unsigned argc, Value* vp)
     if (!JS_DefineFunctions(cx, intl, funcs))
         return false;
 
-    if (!js::AddMozDateTimeFormatConstructor(cx, intl))
+    if (!js::AddPluralRulesConstructor(cx, intl))
         return false;
 
-    if (!js::AddRelativeTimeFormatConstructor(cx, intl))
+    if (!js::AddMozDateTimeFormatConstructor(cx, intl))
         return false;
 
     args.rval().setUndefined();
@@ -1043,7 +994,7 @@ Version(JSContext* cx, unsigned argc, Value* vp)
                                       "version");
             return false;
         }
-        SetVersionForCurrentRealm(cx, JSVersion(v));
+        JS_SetVersionForCompartment(js::GetContextCompartment(cx), JSVersion(v));
         args.rval().setInt32(origVersion);
     }
     return true;
@@ -1496,9 +1447,6 @@ ConvertTranscodeResultToJSException(JSContext* cx, JS::TranscodeResult rv)
 }
 
 static bool
-CooperativeThreadMayYield(JSContext* cx);
-
-static bool
 Evaluate(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -1534,7 +1482,6 @@ Evaluate(JSContext* cx, unsigned argc, Value* vp)
     bool saveBytecode = false;
     bool saveIncrementalBytecode = false;
     bool assertEqBytecode = false;
-    JS::AutoObjectVector envChain(cx);
     RootedObject callerGlobal(cx, cx->global());
 
     options.setIntroductionType("js shell evaluate")
@@ -1589,25 +1536,14 @@ Evaluate(JSContext* cx, unsigned argc, Value* vp)
                 return false;
             }
 
-            // Find all eligible globals to execute in.
+            // Find all eligible globals to execute in: any global in another
+            // zone group which has not been entered by a cooperative thread.
             JS::AutoObjectVector eligibleGlobals(cx);
             for (CompartmentsIter c(cx->runtime(), SkipAtoms); !c.done(); c.next()) {
-                // Compartments without globals and the self hosting global may
-                // not be entered.
-                if (!c->maybeGlobal() || cx->runtime()->isSelfHostingGlobal(c->maybeGlobal()))
-                    continue;
-
-                // Globals in zone groups which are not in use by a cooperative
-                // thread may be entered.
-                if (!c->zone()->group()->ownerContext().context()) {
-                    if (!eligibleGlobals.append(c->maybeGlobal()))
-                        return false;
-                }
-
-                // Globals in zone groups which use exclusive locking may be
-                // entered, in which case this thread will yield until the zone
-                // group is available.
-                if (c->zone()->group()->useExclusiveLocking() && CooperativeThreadMayYield(cx)) {
+                if (!c->zone()->group()->ownerContext().context() &&
+                    c->maybeGlobal() &&
+                    !cx->runtime()->isSelfHostingGlobal(c->maybeGlobal()))
+                {
                     if (!eligibleGlobals.append(c->maybeGlobal()))
                         return false;
                 }
@@ -1651,27 +1587,6 @@ Evaluate(JSContext* cx, unsigned argc, Value* vp)
             return false;
         if (!v.isUndefined())
             assertEqBytecode = ToBoolean(v);
-
-        if (!JS_GetProperty(cx, opts, "envChainObject", &v))
-            return false;
-        if (!v.isUndefined()) {
-            if (loadBytecode) {
-                JS_ReportErrorASCII(cx, "Can't use both loadBytecode and envChainObject");
-                return false;
-            }
-
-            if (!v.isObject()) {
-                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
-                                          "\"envChainObject\" passed to evaluate()", "not an object");
-                return false;
-            } else if (v.toObject().is<GlobalObject>()) {
-                JS_ReportErrorASCII(cx, "\"envChainObject\" passed to evaluate() should not be a global");
-                return false;
-            } else if (!envChain.append(&v.toObject())) {
-                JS_ReportOutOfMemory(cx);
-                return false;
-            }
-        }
 
         // We cannot load or save the bytecode if we have no object where the
         // bytecode cache is stored.
@@ -1730,11 +1645,7 @@ Evaluate(JSContext* cx, unsigned argc, Value* vp)
                     return false;
             } else {
                 mozilla::Range<const char16_t> chars = codeChars.twoByteRange();
-                if (envChain.length() == 0) {
-                    (void) JS::Compile(cx, options, chars.begin().get(), chars.length(), &script);
-                } else {
-                    (void) JS::CompileForNonSyntacticScope(cx, options, chars.begin().get(), chars.length(), &script);
-                }
+                (void) JS::Compile(cx, options, chars.begin().get(), chars.length(), &script);
             }
 
             if (!script)
@@ -1776,7 +1687,7 @@ Evaluate(JSContext* cx, unsigned argc, Value* vp)
                 return false;
         }
 
-        if (!JS_ExecuteScript(cx, envChain, script, args.rval())) {
+        if (!JS_ExecuteScript(cx, script, args.rval())) {
             if (catchTermination && !JS_IsExceptionPending(cx)) {
                 JSAutoCompartment ac1(cx, callerGlobal);
                 JSString* str = JS_NewStringCopyZ(cx, "terminated");
@@ -3096,13 +3007,14 @@ static bool
 Clone(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
+    RootedObject parent(cx);
+    RootedObject funobj(cx);
 
-    if (args.length() == 0) {
+    if (!args.length()) {
         JS_ReportErrorASCII(cx, "Invalid arguments to clone");
         return false;
     }
 
-    RootedObject funobj(cx);
     {
         Maybe<JSAutoCompartment> ac;
         RootedObject obj(cx, args[0].isPrimitive() ? nullptr : &args[0].toObject());
@@ -3122,20 +3034,19 @@ Clone(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    RootedObject env(cx);
     if (args.length() > 1) {
-        if (!JS_ValueToObject(cx, args[1], &env))
+        if (!JS_ValueToObject(cx, args[1], &parent))
             return false;
     } else {
-        env = js::GetGlobalForObjectCrossCompartment(&args.callee());
+        parent = js::GetGlobalForObjectCrossCompartment(&args.callee());
     }
 
     // Should it worry us that we might be getting with wrappers
     // around with wrappers here?
-    JS::AutoObjectVector envChain(cx);
-    if (env && !env->is<GlobalObject>() && !envChain.append(env))
+    JS::AutoObjectVector scopeChain(cx);
+    if (!parent->is<GlobalObject>() && !scopeChain.append(parent))
         return false;
-    JSObject* clone = JS::CloneFunctionObject(cx, funobj, envChain);
+    JSObject* clone = JS::CloneFunctionObject(cx, funobj, scopeChain);
     if (!clone)
         return false;
     args.rval().setObject(*clone);
@@ -3218,8 +3129,8 @@ sandbox_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 }
 
 static const JSClassOps sandbox_classOps = {
-    nullptr, nullptr, nullptr,
-    sandbox_enumerate, sandbox_resolve,
+    nullptr, nullptr, nullptr, nullptr,
+    nullptr, sandbox_enumerate, sandbox_resolve,
     nullptr, nullptr,
     nullptr, nullptr, nullptr,
     JS_GlobalObjectTraceHook
@@ -3399,16 +3310,24 @@ CooperativeYield()
 }
 
 static bool
-CooperativeThreadMayYield(JSContext* cx)
+CooperativeYieldThread(JSContext* cx, unsigned argc, Value* vp)
 {
-    if (!cx->runtime()->gc.canChangeActiveContext(cx))
-        return false;
+    CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (GetShellContext(cx)->isWorker)
+    if (!cx->runtime()->gc.canChangeActiveContext(cx)) {
+        JS_ReportErrorASCII(cx, "Cooperating multithreading context switches are not currently allowed");
         return false;
+    }
 
-    if (cooperationState->singleThreaded)
+    if (GetShellContext(cx)->isWorker) {
+        JS_ReportErrorASCII(cx, "Worker threads cannot yield");
         return false;
+    }
+
+    if (cooperationState->singleThreaded) {
+        JS_ReportErrorASCII(cx, "Yielding is not allowed while single threaded");
+        return false;
+    }
 
     // To avoid contention issues between threads, yields are not allowed while
     // a thread has access to zone groups other than its original one, i.e. if
@@ -3418,30 +3337,10 @@ CooperativeThreadMayYield(JSContext* cx)
     // threads, whereas the browser has more control over which threads are
     // running at different times.
     for (ZoneGroupsIter group(cx->runtime()); !group.done(); group.next()) {
-        if (group->ownerContext().context() == cx && group != cx->zone()->group())
+        if (group->ownerContext().context() == cx && group != cx->zone()->group()) {
+            JS_ReportErrorASCII(cx, "Yielding is not allowed while owning multiple zone groups");
             return false;
-    }
-
-    return true;
-}
-
-static void
-CooperativeYieldCallback(JSContext* cx)
-{
-    MOZ_ASSERT(CooperativeThreadMayYield(cx));
-    CooperativeBeginWait(cx);
-    CooperativeYield();
-    CooperativeEndWait(cx);
-}
-
-static bool
-CooperativeYieldThread(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    if (!CooperativeThreadMayYield(cx)) {
-        JS_ReportErrorASCII(cx, "Yielding is not currently allowed");
-        return false;
+        }
     }
 
     {
@@ -3527,7 +3426,6 @@ struct WorkerInput
 };
 
 static void SetWorkerContextOptions(JSContext* cx);
-static bool ShellBuildId(JS::BuildIdCharVector* buildId);
 
 static void
 WorkerMain(void* arg)
@@ -3541,15 +3439,13 @@ WorkerMain(void* arg)
     if (!cx)
         return;
 
-    SetCooperativeYieldCallback(cx, CooperativeYieldCallback);
-
-    ShellContext* sc = js_new<ShellContext>(cx);
+    UniquePtr<ShellContext> sc = MakeUnique<ShellContext>(cx);
     if (!sc)
         return;
 
     auto guard = mozilla::MakeScopeExit([&] {
-        JS_DestroyContext(cx);
-        js_delete(sc);
+        if (cx)
+            JS_DestroyContext(cx);
         if (input->siblingContext) {
             cooperationState->numThreads--;
             CooperativeYield();
@@ -3559,9 +3455,8 @@ WorkerMain(void* arg)
 
     if (input->parentRuntime)
         sc->isWorker = true;
-    JS_SetContextPrivate(cx, sc);
+    JS_SetContextPrivate(cx, sc.get());
     SetWorkerContextOptions(cx);
-    JS::SetBuildIdOp(cx, ShellBuildId);
 
     Maybe<EnvironmentPreparer> environmentPreparer;
     if (input->parentRuntime) {
@@ -3579,11 +3474,9 @@ WorkerMain(void* arg)
     } else {
         JS_AddInterruptCallback(cx, ShellInterruptCallback);
 
-        js::UseInternalJobQueues(cx, /* cooperative = */true);
-
         // The Gecko Profiler requires that all cooperating contexts have
         // profiling stacks installed.
-        MOZ_ALWAYS_TRUE(EnsureGeckoProfilingStackInstalled(cx, sc));
+        MOZ_ALWAYS_TRUE(EnsureGeckoProfilingStackInstalled(cx, sc.get()));
     }
 
     do {
@@ -4390,9 +4283,8 @@ Parse(JSContext* cx, unsigned argc, Value* vp)
     if (!pn)
         return false;
 #ifdef DEBUG
-    js::Fprinter out(stderr);
-    DumpParseTree(pn, out);
-    out.putChar('\n');
+    DumpParseTree(pn);
+    fputc('\n', stderr);
 #endif
     args.rval().setUndefined();
     return true;
@@ -5068,6 +4960,11 @@ NewGlobal(JSContext* cx, unsigned argc, Value* vp)
         if (v.isBoolean())
             creationOptions.setCloneSingletons(v.toBoolean());
 
+        if (!JS_GetProperty(cx, opts, "experimentalNumberFormatFormatToPartsEnabled", &v))
+            return false;
+        if (v.isBoolean())
+            creationOptions.setExperimentalNumberFormatFormatToPartsEnabled(v.toBoolean());
+
         if (!JS_GetProperty(cx, opts, "sameZoneAs", &v))
             return false;
         if (v.isObject())
@@ -5118,23 +5015,6 @@ NukeCCW(JSContext* cx, unsigned argc, Value* vp)
     }
 
     NukeCrossCompartmentWrapper(cx, &args[0].toObject());
-    args.rval().setUndefined();
-    return true;
-}
-
-static bool
-NukeAllCCWs(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    if (args.length() != 0) {
-        JS_ReportErrorNumberASCII(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
-                                  "nukeAllCCWs");
-        return false;
-    }
-
-    NukeCrossCompartmentWrappers(cx, AllCompartments(), cx->compartment(),
-                                 NukeWindowReferences, NukeAllReferences);
     args.rval().setUndefined();
     return true;
 }
@@ -5565,147 +5445,6 @@ SetSharedArrayBuffer(JSContext* cx, unsigned argc, Value* vp)
         if (oldBuffer)
             oldBuffer->dropReference();
         sharedArrayBufferMailbox = newBuffer;
-    }
-
-    args.rval().setUndefined();
-    return true;
-}
-
-struct BufferStreamJob
-{
-    Vector<uint8_t, 0, SystemAllocPolicy> bytes;
-    Thread thread;
-    JS::StreamConsumer* consumer;
-
-    explicit BufferStreamJob(JS::StreamConsumer* consumer)
-      : consumer(consumer)
-    {}
-};
-
-struct BufferStreamState
-{
-    Vector<UniquePtr<BufferStreamJob>, 0, SystemAllocPolicy> jobs;
-    size_t delayMillis;
-    size_t chunkSize;
-    bool shutdown;
-
-    BufferStreamState()
-      : delayMillis(1),
-        chunkSize(10),
-        shutdown(false)
-    {}
-
-    ~BufferStreamState()
-    {
-        MOZ_ASSERT(jobs.empty());
-    }
-};
-
-ExclusiveWaitableData<BufferStreamState> bufferStreamState(mutexid::BufferStreamState);
-
-static void
-BufferStreamMain(BufferStreamJob* job)
-{
-    const uint8_t* const bytes = job->bytes.begin();
-
-    size_t byteOffset = 0;
-    while (true) {
-        if (byteOffset == job->bytes.length()) {
-            job->consumer->streamClosed(JS::StreamConsumer::EndOfFile);
-            break;
-        }
-
-        bool shutdown;
-        size_t delayMillis;
-        size_t chunkSize;
-        {
-            auto state = bufferStreamState.lock();
-            shutdown = state->shutdown;
-            delayMillis = state->delayMillis;
-            chunkSize = state->chunkSize;
-        }
-
-        if (shutdown) {
-            job->consumer->streamClosed(JS::StreamConsumer::Error);
-            break;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(delayMillis));
-
-        chunkSize = Min(chunkSize, job->bytes.length() - byteOffset);
-
-        if (!job->consumer->consumeChunk(bytes + byteOffset, chunkSize))
-            break;
-
-        byteOffset += chunkSize;
-    }
-
-    auto state = bufferStreamState.lock();
-    size_t jobIndex = 0;
-    while (state->jobs[jobIndex].get() != job)
-        jobIndex++;
-    job->thread.detach();  // quiet assert in ~Thread() called by erase().
-    state->jobs.erase(state->jobs.begin() + jobIndex);
-    if (state->jobs.empty())
-        state.notify_all(/* jobs empty */);
-}
-
-static bool
-ConsumeBufferSource(JSContext* cx, JS::HandleObject obj, JS::MimeType, JS::StreamConsumer* consumer)
-{
-    SharedMem<uint8_t*> dataPointer;
-    size_t byteLength;
-    if (!IsBufferSource(obj, &dataPointer, &byteLength)) {
-        JS_ReportErrorASCII(cx, "shell streaming consumes a buffer source (buffer or view)");
-        return false;
-    }
-
-    auto job = cx->make_unique<BufferStreamJob>(consumer);
-    if (!job || !job->bytes.resize(byteLength))
-        return false;
-
-    memcpy(job->bytes.begin(), dataPointer.unwrap(), byteLength);
-
-    BufferStreamJob* jobPtr = job.get();
-
-    {
-        auto state = bufferStreamState.lock();
-        MOZ_ASSERT(!state->shutdown);
-        if (!state->jobs.append(Move(job)))
-            return false;
-    }
-
-    return jobPtr->thread.init(BufferStreamMain, jobPtr);
-}
-
-static void
-ShutdownBufferStreams()
-{
-    auto state = bufferStreamState.lock();
-    state->shutdown = true;
-    while (!state->jobs.empty())
-        state.wait(/* jobs empty */);
-}
-
-static bool
-SetBufferStreamParams(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (!args.requireAtLeast(cx, "setBufferStreamParams", 2))
-        return false;
-
-    double delayMillis;
-    if (!ToNumber(cx, args[0], &delayMillis))
-        return false;
-
-    double chunkSize;
-    if (!ToNumber(cx, args[1], &chunkSize))
-        return false;
-
-    {
-        auto state = bufferStreamState.lock();
-        state->delayMillis = delayMillis;
-        state->chunkSize = chunkSize;
     }
 
     args.rval().setUndefined();
@@ -6422,10 +6161,6 @@ WasmLoop(JSContext* cx, unsigned argc, Value* vp)
 }
 
 static const JSFunctionSpecWithHelp shell_functions[] = {
-    JS_FN_HELP("clone", Clone, 1, 0,
-"clone(fun[, scope])",
-"  Clone function object."),
-
     JS_FN_HELP("version", Version, 0, 0,
 "version([number])",
 "  Get or force a script compilation version number."),
@@ -6472,8 +6207,8 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "         source map URL to the code (although the code may provide one itself,\n"
 "         via a //#sourceMappingURL comment).\n"
 "      sourceIsLazy: if present and true, indicates that, after compilation, \n"
-"          script source should not be cached by the JS engine and should be \n"
-"          lazily loaded from the embedding as-needed.\n"
+          "script source should not be cached by the JS engine and should be \n"
+          "lazily loaded from the embedding as-needed.\n"
 "      loadBytecode: if true, and if the source is a CacheEntryObject,\n"
 "         the bytecode would be loaded and decoded from the cache entry instead\n"
 "         of being parsed, then it would be executed as usual.\n"
@@ -6483,9 +6218,6 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "      assertEqBytecode: if true, and if both loadBytecode and saveBytecode are \n"
 "         true, then the loaded bytecode and the encoded bytecode are compared.\n"
 "         and an assertion is raised if they differ.\n"
-"      envChainObject: object to put on the scope chain, with its fields added\n"
-"         as var bindings, akin to how elements are added to the environment in\n"
-"         event handlers in Gecko.\n"
 ),
 
     JS_FN_HELP("run", Run, 1, 0,
@@ -6520,7 +6252,7 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "  Return the current time with sub-ms precision."),
 
     JS_FN_HELP("help", Help, 0, 0,
-"help([function or interface object or /pattern/])",
+"help([name ...])",
 "  Display usage and help messages."),
 
     JS_FN_HELP("quit", Quit, 0, 0,
@@ -6787,10 +6519,6 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "nukeCCW(wrapper)",
 "  Nuke a CrossCompartmentWrapper, which turns it into a DeadProxyObject."),
 
-    JS_FN_HELP("nukeAllCCWs", NukeAllCCWs, 0, 0,
-"nukeAllCCWs()",
-"  Like nukeCCW, but for all CrossCompartmentWrappers targeting the current compartment."),
-
     JS_FN_HELP("createMappedArrayBuffer", CreateMappedArrayBuffer, 1, 0,
 "createMappedArrayBuffer(filename, [offset, [size]])",
 "  Create an array buffer that mmaps the given file."),
@@ -6903,13 +6631,18 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "provided object (this should generally be Intl itself).  The added\n"
 "functions and their behavior are experimental: don't depend upon them\n"
 "unless you're willing to update your code if these experimental APIs change\n"
-"underneath you."),
+"underneath you.  Calling this function more than once in a realm/global\n"
+"will throw."),
 #endif // ENABLE_INTL_API
 
     JS_FS_HELP_END
 };
 
 static const JSFunctionSpecWithHelp fuzzing_unsafe_functions[] = {
+    JS_FN_HELP("clone", Clone, 1, 0,
+"clone(fun[, scope])",
+"  Clone function object."),
+
     JS_FN_HELP("getSelfHostedValue", GetSelfHostedValue, 1, 0,
 "getSelfHostedValue()",
 "  Get a self-hosted value by its name. Note that these values don't get \n"
@@ -7015,11 +6748,6 @@ TestAssertRecoveredOnBailout,
 "  Performs an AFL-style persistent loop reading data from the given file and passing it\n"
 "  to the 'wasmEval' function together with the specified imports object."),
 
-    JS_FN_HELP("setBufferStreamParams", SetBufferStreamParams, 2, 0,
-"setBufferStreamParams(delayMillis, chunkByteSize)",
-"  Set the delay time (between calls to StreamConsumer::consumeChunk) and chunk\n"
-"  size (in bytes)."),
-
     JS_FS_HELP_END
 };
 
@@ -7102,56 +6830,22 @@ PrintHelp(JSContext* cx, HandleObject obj)
 }
 
 static bool
-PrintEnumeratedHelp(JSContext* cx, HandleObject obj, HandleObject pattern, bool brief)
+PrintEnumeratedHelp(JSContext* cx, HandleObject obj, bool brief)
 {
     AutoIdVector idv(cx);
     if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN, &idv))
         return false;
-
-    Rooted<RegExpObject*> regex(cx);
-    if (pattern)
-        regex = &UncheckedUnwrap(pattern)->as<RegExpObject>();
 
     for (size_t i = 0; i < idv.length(); i++) {
         RootedValue v(cx);
         RootedId id(cx, idv[i]);
         if (!JS_GetPropertyById(cx, obj, id, &v))
             return false;
-        if (!v.isObject())
-            continue;
-
-        RootedObject funcObj(cx, &v.toObject());
-        if (regex) {
-            // Only pay attention to objects with a 'help' property, which will
-            // either be documented functions or interface objects.
-            if (!JS_GetProperty(cx, funcObj, "help", &v))
+        if (v.isObject()) {
+            RootedObject funcObj(cx, &v.toObject());
+            if (!PrintHelp(cx, funcObj))
                 return false;
-            if (!v.isString())
-                continue;
-
-            // For functions, match against the name. For interface objects,
-            // match against the usage string.
-            if (!JS_GetProperty(cx, funcObj, "name", &v))
-                return false;
-            if (!v.isString()) {
-                if (!JS_GetProperty(cx, funcObj, "usage", &v))
-                    return false;
-                if (!v.isString())
-                    continue;
-            }
-
-            size_t ignored = 0;
-            if (!JSString::ensureLinear(cx, v.toString()))
-                return false;
-            RootedLinearString input(cx, &v.toString()->asLinear());
-            if (!ExecuteRegExpLegacy(cx, nullptr, regex, input, &ignored, true, &v))
-                return false;
-            if (v.isNull())
-                continue;
         }
-
-        if (!PrintHelp(cx, funcObj))
-            return false;
     }
 
     return true;
@@ -7166,42 +6860,28 @@ Help(JSContext* cx, unsigned argc, Value* vp)
     }
 
     CallArgs args = CallArgsFromVp(argc, vp);
-    args.rval().setUndefined();
-    RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
 
-    // help() - display the version and dump out help for all functions on the
-    // global.
+    RootedObject obj(cx);
     if (args.length() == 0) {
         fprintf(gOutFile->fp, "%s\n", JS_GetImplementationVersion());
 
-        if (!PrintEnumeratedHelp(cx, global, nullptr, false))
+        RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
+        if (!PrintEnumeratedHelp(cx, global, false))
             return false;
-        return true;
+    } else {
+        for (unsigned i = 0; i < args.length(); i++) {
+            if (args[i].isPrimitive()) {
+                JS_ReportErrorASCII(cx, "primitive arg");
+                return false;
+            }
+            obj = args[i].toObjectOrNull();
+            if (!PrintHelp(cx, obj))
+                return false;
+        }
     }
 
-    RootedValue v(cx);
-
-    if (args[0].isPrimitive()) {
-        // help("foo")
-        JS_ReportErrorASCII(cx, "primitive arg");
-        return false;
-    }
-
-    RootedObject obj(cx, &args[0].toObject());
-    if (!obj)
-        return true;
-    bool isRegexp;
-    if (!JS_ObjectIsRegExp(cx, obj, &isRegexp))
-        return false;
-
-    if (isRegexp) {
-        // help(/pattern/)
-        return PrintEnumeratedHelp(cx, global, obj, false);
-    }
-
-    // help(function)
-    // help(namespace_obj)
-    return PrintHelp(cx, obj);
+    args.rval().setUndefined();
+    return true;
 }
 
 static const JSErrorFormatString jsShell_ErrorFormatString[JSShellErr_Limit] = {
@@ -7235,22 +6915,22 @@ CreateLastWarningObject(JSContext* cx, JSErrorReport* report)
     if (!nameStr)
         return false;
     RootedValue nameVal(cx, StringValue(nameStr));
-    if (!DefineDataProperty(cx, warningObj, cx->names().name, nameVal))
+    if (!DefineProperty(cx, warningObj, cx->names().name, nameVal))
         return false;
 
     RootedString messageStr(cx, report->newMessageString(cx));
     if (!messageStr)
         return false;
     RootedValue messageVal(cx, StringValue(messageStr));
-    if (!DefineDataProperty(cx, warningObj, cx->names().message, messageVal))
+    if (!DefineProperty(cx, warningObj, cx->names().message, messageVal))
         return false;
 
     RootedValue linenoVal(cx, Int32Value(report->lineno));
-    if (!DefineDataProperty(cx, warningObj, cx->names().lineNumber, linenoVal))
+    if (!DefineProperty(cx, warningObj, cx->names().lineNumber, linenoVal))
         return false;
 
     RootedValue columnVal(cx, Int32Value(report->column));
-    if (!DefineDataProperty(cx, warningObj, cx->names().columnNumber, columnVal))
+    if (!DefineProperty(cx, warningObj, cx->names().columnNumber, columnVal))
         return false;
 
     RootedObject notesArray(cx, CreateErrorNotesArray(cx, report));
@@ -7258,7 +6938,7 @@ CreateLastWarningObject(JSContext* cx, JSErrorReport* report)
         return false;
 
     RootedValue notesArrayVal(cx, ObjectValue(*notesArray));
-    if (!DefineDataProperty(cx, warningObj, cx->names().notes, notesArrayVal))
+    if (!DefineProperty(cx, warningObj, cx->names().notes, notesArrayVal))
         return false;
 
     GetShellContext(cx)->lastWarning.setObject(*warningObj);
@@ -7402,8 +7082,8 @@ global_mayResolve(const JSAtomState& names, jsid id, JSObject* maybeObj)
 }
 
 static const JSClassOps global_classOps = {
-    nullptr, nullptr, nullptr,
-    global_enumerate, global_resolve, global_mayResolve,
+    nullptr, nullptr, nullptr, nullptr,
+    nullptr, global_enumerate, global_resolve, global_mayResolve,
     nullptr,
     nullptr, nullptr, nullptr,
     JS_GlobalObjectTraceHook
@@ -7512,7 +7192,7 @@ static const JSJitInfo doFoo_methodinfo = {
 
 static const JSPropertySpec dom_props[] = {
     {"x",
-     JSPROP_ENUMERATE,
+     JSPROP_SHARED | JSPROP_ENUMERATE,
      { {
         { { dom_genericGetter, &dom_x_getterinfo } },
         { { dom_genericSetter, &dom_x_setterinfo } }
@@ -8130,9 +7810,8 @@ SetContextOptions(JSContext* cx, const OptionParser& op)
     enableAsmJS = !op.getBoolOption("no-asmjs");
     enableWasm = !op.getBoolOption("no-wasm");
     enableNativeRegExp = !op.getBoolOption("no-native-regexp");
-    enableWasmBaseline = !op.getBoolOption("no-wasm-baseline");
-    enableWasmIon = !op.getBoolOption("no-wasm-ion");
-    enableTestWasmAwaitTier2 = op.getBoolOption("test-wasm-await-tier2");
+    enableUnboxedArrays = op.getBoolOption("unboxed-arrays");
+    enableWasmAlwaysBaseline = op.getBoolOption("wasm-always-baseline");
     enableAsyncStacks = !op.getBoolOption("no-async-stacks");
     enableStreams = op.getBoolOption("enable-streams");
 
@@ -8140,12 +7819,14 @@ SetContextOptions(JSContext* cx, const OptionParser& op)
                              .setIon(enableIon)
                              .setAsmJS(enableAsmJS)
                              .setWasm(enableWasm)
-                             .setWasmBaseline(enableWasmBaseline)
-                             .setWasmIon(enableWasmIon)
-                             .setTestWasmAwaitTier2(enableTestWasmAwaitTier2)
+                             .setWasmAlwaysBaseline(enableWasmAlwaysBaseline)
                              .setNativeRegExp(enableNativeRegExp)
+                             .setUnboxedArrays(enableUnboxedArrays)
                              .setAsyncStack(enableAsyncStacks)
                              .setStreams(enableStreams);
+
+    if (op.getBoolOption("wasm-check-bce"))
+        jit::JitOptions.wasmAlwaysCheckBounds = true;
 
     if (op.getBoolOption("wasm-test-mode"))
         jit::JitOptions.wasmTestMode = true;
@@ -8374,7 +8055,7 @@ SetContextOptions(JSContext* cx, const OptionParser& op)
         jit::Simulator::StopSimAt = stopAt;
 #elif defined(JS_SIMULATOR_MIPS32) || defined(JS_SIMULATOR_MIPS64)
     if (op.getBoolOption("mips-sim-icache-checks"))
-        jit::SimulatorProcess::ICacheCheckingDisableCount = 0;
+        jit::Simulator::ICacheCheckingEnabled = true;
 
     int32_t stopAt = op.getIntOption("mips-sim-stop-at");
     if (stopAt >= 0)
@@ -8424,10 +8105,9 @@ SetWorkerContextOptions(JSContext* cx)
                              .setIon(enableIon)
                              .setAsmJS(enableAsmJS)
                              .setWasm(enableWasm)
-                             .setWasmBaseline(enableWasmBaseline)
-                             .setWasmIon(enableWasmIon)
-                             .setTestWasmAwaitTier2(enableTestWasmAwaitTier2)
+                             .setWasmAlwaysBaseline(enableWasmAlwaysBaseline)
                              .setNativeRegExp(enableNativeRegExp)
+                             .setUnboxedArrays(enableUnboxedArrays)
                              .setStreams(enableStreams);
     cx->runtime()->setOffthreadIonCompilationEnabled(offthreadCompilation);
     cx->runtime()->profilingScripts = enableCodeCoverage || enableDisassemblyDumps;
@@ -8448,10 +8128,6 @@ SetWorkerContextOptions(JSContext* cx)
 static int
 Shell(JSContext* cx, OptionParser* op, char** envp)
 {
-#ifdef MOZ_CODE_COVERAGE
-    InstallCoverageSignalHandlers();
-#endif
-
     Maybe<JS::AutoDisableGenerationalGC> noggc;
     if (op->getBoolOption("no-ggc"))
         noggc.emplace(cx);
@@ -8619,22 +8295,17 @@ main(int argc, char** argv, char** envp)
         || !op.addOptionalMultiStringArg("scriptArgs",
                                          "String arguments to bind as |scriptArgs| in the "
                                          "shell's global")
-        || !op.addIntOption('\0', "cpu-count", "COUNT",
-                            "Set the number of CPUs (hardware threads) to COUNT, the "
-                            "default is the actual number of CPUs. The total number of "
-                            "background helper threads is the CPU count plus some constant.",
-                            -1)
-        || !op.addIntOption('\0', "thread-count", "COUNT", "Alias for --cpu-count.", -1)
+        || !op.addIntOption('\0', "thread-count", "COUNT", "Use COUNT auxiliary threads "
+                            "(default: # of cores - 1)", -1)
         || !op.addBoolOption('\0', "ion", "Enable IonMonkey (default)")
         || !op.addBoolOption('\0', "no-ion", "Disable IonMonkey")
         || !op.addBoolOption('\0', "no-asmjs", "Disable asm.js compilation")
         || !op.addBoolOption('\0', "no-wasm", "Disable WebAssembly compilation")
-        || !op.addBoolOption('\0', "no-wasm-baseline", "Disable wasm baseline compiler")
-        || !op.addBoolOption('\0', "no-wasm-ion", "Disable wasm ion compiler")
-        || !op.addBoolOption('\0', "test-wasm-await-tier2", "Forcibly activate tiering and block "
-                                   "instantiation on completion of tier2")
         || !op.addBoolOption('\0', "no-native-regexp", "Disable native regexp compilation")
         || !op.addBoolOption('\0', "no-unboxed-objects", "Disable creating unboxed plain objects")
+        || !op.addBoolOption('\0', "unboxed-arrays", "Allow creating unboxed arrays")
+        || !op.addBoolOption('\0', "wasm-always-baseline", "Enable wasm baseline compiler when possible")
+        || !op.addBoolOption('\0', "wasm-check-bce", "Always generate wasm bounds check, even redundant ones.")
         || !op.addBoolOption('\0', "wasm-test-mode", "Enable wasm testing mode, creating synthetic "
                                    "objects for non-canonical NaNs and i64 returned from wasm.")
         || !op.addBoolOption('\0', "enable-streams", "Enable WHATWG Streams")
@@ -8811,13 +8482,11 @@ main(int argc, char** argv, char** envp)
     if (!InitSharedArrayBufferMailbox())
         return 1;
 
-    // The fake CPU count must be set before initializing the Runtime,
+    // The fake thread count must be set before initializing the Runtime,
     // which spins up the thread pool.
-    int32_t cpuCount = op.getIntOption("cpu-count"); // What we're really setting
-    if (cpuCount < 0)
-        cpuCount = op.getIntOption("thread-count");  // Legacy name
-    if (cpuCount >= 0)
-        SetFakeCPUCount(cpuCount);
+    int32_t threadCount = op.getIntOption("thread-count");
+    if (threadCount >= 0)
+        SetFakeCPUCount(threadCount);
 
     size_t nurseryBytes = JS::DefaultNurseryBytes;
     nurseryBytes = op.getIntOption("nursery-size") * 1024L * 1024L;
@@ -8852,7 +8521,6 @@ main(int argc, char** argv, char** envp)
     JS_AddInterruptCallback(cx, ShellInterruptCallback);
     JS::SetBuildIdOp(cx, ShellBuildId);
     JS::SetAsmJSCacheOps(cx, &asmJSCacheOps);
-    JS::InitConsumeStreamCallback(cx, ConsumeBufferSource);
 
     JS_SetNativeStackQuota(cx, gMaxStackSize);
 
@@ -8886,7 +8554,6 @@ main(int argc, char** argv, char** envp)
     JS::SetSingleThreadedExecutionCallbacks(cx,
                                             CooperativeBeginSingleThreadedExecution,
                                             CooperativeEndSingleThreadedExecution);
-    SetCooperativeYieldCallback(cx, CooperativeYieldCallback);
 
     result = Shell(cx, &op, envp);
 
@@ -8904,7 +8571,6 @@ main(int argc, char** argv, char** envp)
 
     KillWorkerThreads(cx);
 
-    ShutdownBufferStreams();
     DestructSharedArrayBufferMailbox();
 
     JS_DestroyContext(cx);

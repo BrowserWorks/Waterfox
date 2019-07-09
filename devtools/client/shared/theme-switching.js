@@ -9,6 +9,7 @@
   const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
   const Services = require("Services");
   const { gDevTools } = require("devtools/client/framework/devtools");
+  const { watchCSS } = require("devtools/client/shared/css-reload");
   const { appendStyleSheet } = require("devtools/client/shared/stylesheet-utils");
 
   let documentElement = document.documentElement;
@@ -153,4 +154,6 @@
       Services.prefs.removeObserver("devtools.theme", handlePrefChange);
     }, { once: true });
   }
+
+  watchCSS(window);
 })();

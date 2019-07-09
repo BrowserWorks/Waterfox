@@ -16,7 +16,6 @@
 #include "nsTArray.h"
 #include "nsString.h"
 #include "nsPermission.h"
-#include "nsIPrefBranch.h"
 #include "nsHashKeys.h"
 #include "nsCOMArray.h"
 #include "nsDataHashtable.h"
@@ -113,9 +112,9 @@ public:
       : nsRefPtrHashKey<PermissionKey>(aPermissionKey)
     {}
 
-    PermissionHashKey(PermissionHashKey&& toCopy)
-      : nsRefPtrHashKey<PermissionKey>(mozilla::Move(toCopy))
-      , mPermissions(mozilla::Move(toCopy.mPermissions))
+    PermissionHashKey(const PermissionHashKey& toCopy)
+      : nsRefPtrHashKey<PermissionKey>(toCopy)
+      , mPermissions(toCopy.mPermissions)
     {}
 
     bool KeyEquals(const PermissionKey* aKey) const
@@ -389,8 +388,6 @@ private:
   // Initially, |false|. Set to |true| once shutdown has started, to avoid
   // reopening the database.
   bool mIsShuttingDown;
-
-  nsCOMPtr<nsIPrefBranch> mDefaultPrefBranch;
 
   friend class DeleteFromMozHostListener;
   friend class CloseDatabaseListener;

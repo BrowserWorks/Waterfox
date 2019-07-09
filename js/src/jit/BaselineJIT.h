@@ -557,6 +557,9 @@ MethodStatus
 CanEnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, bool newType);
 
 JitExecStatus
+EnterBaselineMethod(JSContext* cx, RunState& state);
+
+JitExecStatus
 EnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, jsbytecode* pc);
 
 void
@@ -627,7 +630,7 @@ struct BaselineBailoutInfo
 };
 
 uint32_t
-BailoutIonToBaseline(JSContext* cx, JitActivation* activation, const JSJitFrameIter& iter,
+BailoutIonToBaseline(JSContext* cx, JitActivation* activation, JitFrameIterator& iter,
                      bool invalidate, BaselineBailoutInfo** bailoutInfo,
                      const ExceptionBailoutInfo* exceptionInfo);
 
@@ -638,8 +641,6 @@ MarkActiveBaselineScripts(Zone* zone);
 
 MethodStatus
 BaselineCompile(JSContext* cx, JSScript* script, bool forceDebugInstrumentation = false);
-
-static const unsigned BASELINE_MAX_ARGS_LENGTH = 20000;
 
 } // namespace jit
 } // namespace js

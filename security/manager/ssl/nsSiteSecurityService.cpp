@@ -495,6 +495,7 @@ nsSiteSecurityService::nsSiteSecurityService()
   : mMaxMaxAge(kSixtyDaysInSeconds)
   , mUsePreloadList(true)
   , mPreloadListTimeOffset(0)
+  , mProcessPKPHeadersFromNonBuiltInRoots(false)
   , mDafsa(kDafsa)
 {
 }
@@ -1143,6 +1144,7 @@ nsSiteSecurityService::ProcessPKPHeader(
                                         now, nullptr, // pinarg
                                         host, // hostname
                                         certList,
+                                        nullptr, // no peerCertChain
                                         false, // don't store intermediates
                                         flags,
                                         aOriginAttributes)

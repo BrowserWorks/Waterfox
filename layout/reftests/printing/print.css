@@ -1,7 +1,0 @@
-@page {
-    margin: 0;
-}
-
-p {
-    page-break-after: always;
-}

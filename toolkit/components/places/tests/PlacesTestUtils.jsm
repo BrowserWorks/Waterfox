@@ -12,8 +12,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "TestUtils",
-                                  "resource://testing-common/TestUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
 
 this.PlacesTestUtils = Object.freeze({
   /**
@@ -45,20 +45,19 @@ this.PlacesTestUtils = Object.freeze({
     } else if (Array.isArray(placeInfo)) {
       places = places.concat(placeInfo);
     } else if (typeof placeInfo == "object" && placeInfo.uri) {
-      places.push(placeInfo);
+      places.push(placeInfo)
     } else {
       throw new Error("Unsupported type passed to addVisits");
     }
 
     // Create a PageInfo for each entry.
-    let lastStoredVisit;
     for (let place of places) {
       let info = {url: place.uri};
       info.title = (typeof place.title === "string") ? place.title : "test visit for " + info.url.spec ;
       if (typeof place.referrer == "string") {
-        place.referrer = Services.io.newURI(place.referrer);
+        place.referrer = NetUtil.newURI(place.referrer);
       } else if (place.referrer && place.referrer instanceof URL) {
-        place.referrer = Services.io.newURI(place.referrer.href);
+        place.referrer = NetUtil.newURI(place.referrer.href);
       }
       let visitDate = place.visitDate;
       if (visitDate) {
@@ -82,16 +81,8 @@ this.PlacesTestUtils = Object.freeze({
         referrer: place.referrer
       }];
       infos.push(info);
-      if (place.transition != PlacesUtils.history.TRANSITIONS.EMBED)
-        lastStoredVisit = info;
     }
-    await PlacesUtils.history.insertMany(infos);
-    if (lastStoredVisit) {
-      await TestUtils.waitForCondition(
-        () => PlacesUtils.history.fetch(lastStoredVisit.url),
-        "Ensure history has been updated and is visible to read-only connections"
-      );
-    }
+    return PlacesUtils.history.insertMany(infos);
   },
 
    /*
@@ -113,8 +104,8 @@ this.PlacesTestUtils = Object.freeze({
         throw new Error("URL does not exist");
       }
       faviconPromises.push(new Promise((resolve, reject) => {
-        let uri = Services.io.newURI(key);
-        let faviconURI = Services.io.newURI(val);
+        let uri = NetUtil.newURI(key);
+        let faviconURI = NetUtil.newURI(val);
         try {
           PlacesUtils.favicons.setAndFetchFaviconForPage(
             uri,
@@ -216,15 +207,14 @@ this.PlacesTestUtils = Object.freeze({
    * @resolves Returns the field value.
    * @rejects JavaScript exception.
    */
-  fieldInDB(aURI, field) {
+  async fieldInDB(aURI, field) {
     let url = aURI instanceof Ci.nsIURI ? new URL(aURI.spec) : new URL(aURI);
-    return PlacesUtils.withConnectionWrapper("PlacesTestUtils.jsm: fieldInDb", async db => {
-      let rows = await db.executeCached(
-        `SELECT ${field} FROM moz_places
-        WHERE url_hash = hash(:url) AND url = :url`,
-        { url: url.href });
-      return rows[0].getResultByIndex(0);
-    });
+    let db = await PlacesUtils.promiseDBConnection();
+    let rows = await db.executeCached(
+      `SELECT ${field} FROM moz_places
+       WHERE url_hash = hash(:url) AND url = :url`,
+      { url: url.href });
+    return rows[0].getResultByIndex(0);
   },
 
   /**
@@ -345,7 +335,7 @@ this.PlacesTestUtils = Object.freeze({
                 PlacesUtils[type].removeObserver(proxifiedObserver);
                 resolve();
               }
-            };
+            }
           if (name == "skipTags" || name == "skipDescendantsOnItemRemoval") {
             return false;
           }

@@ -26,7 +26,7 @@ info: >
   ...
 
 includes: [testTypedArray.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 var sample1 = new Int8Array();

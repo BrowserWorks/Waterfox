@@ -48,6 +48,44 @@ js_memcpy(void* dst_, const void* src_, size_t len)
 namespace js {
 
 template <class T>
+class AlignedPtrAndFlag
+{
+    uintptr_t bits;
+
+  public:
+    AlignedPtrAndFlag(T* t, bool aFlag) {
+        MOZ_ASSERT((uintptr_t(t) & 1) == 0);
+        bits = uintptr_t(t) | uintptr_t(aFlag);
+    }
+
+    T* ptr() const {
+        return (T*)(bits & ~uintptr_t(1));
+    }
+
+    bool flag() const {
+        return (bits & 1) != 0;
+    }
+
+    void setPtr(T* t) {
+        MOZ_ASSERT((uintptr_t(t) & 1) == 0);
+        bits = uintptr_t(t) | uintptr_t(flag());
+    }
+
+    void setFlag() {
+        bits |= 1;
+    }
+
+    void unsetFlag() {
+        bits &= ~uintptr_t(1);
+    }
+
+    void set(T* t, bool aFlag) {
+        MOZ_ASSERT((uintptr_t(t) & 1) == 0);
+        bits = uintptr_t(t) | aFlag;
+    }
+};
+
+template <class T>
 static inline void
 Reverse(T* beg, T* end)
 {
@@ -59,28 +97,6 @@ Reverse(T* beg, T* end)
         *end = tmp;
         ++beg;
     }
-}
-
-template <class T, class Pred>
-static inline T*
-RemoveIf(T* begin, T* end, Pred pred)
-{
-    T* result = begin;
-    for (T* p = begin; p != end; p++) {
-        if (!pred(*p))
-            *result++ = *p;
-    }
-    return result;
-}
-
-template <class Container, class Pred>
-static inline size_t
-EraseIf(Container& c, Pred pred)
-{
-    auto newEnd = RemoveIf(c.begin(), c.end(), pred);
-    size_t removed = c.end() - newEnd;
-    c.shrinkBy(removed);
-    return removed;
 }
 
 template <class T>
@@ -143,6 +159,22 @@ static inline T
 Max(T t1, T t2)
 {
     return t1 > t2 ? t1 : t2;
+}
+
+/* Allows a const variable to be initialized after its declaration. */
+template <class T>
+static T&
+InitConst(const T& t)
+{
+    return const_cast<T&>(t);
+}
+
+template <class T, class U>
+MOZ_ALWAYS_INLINE T&
+ImplicitCast(U& u)
+{
+    T& t = u;
+    return t;
 }
 
 template<typename T>
@@ -309,12 +341,12 @@ Poison(void* ptr, uint8_t value, size_t num)
     // Unfortunately, this adds about 2% more overhead, so we can only enable
     // it in debug.
 #if defined(DEBUG)
-    uintptr_t poison;
-    memset(&poison, value, sizeof(poison));
+    uintptr_t obj;
+    memset(&obj, value, sizeof(obj));
 # if defined(JS_PUNBOX64)
-    poison = poison & ((uintptr_t(1) << JSVAL_TAG_SHIFT) - 1);
+    obj = obj & ((uintptr_t(1) << JSVAL_TAG_SHIFT) - 1);
 # endif
-    JS::Value v = js::PoisonedObjectValue(poison);
+    JS::Value v = JS::PoisonedObjectValue(reinterpret_cast<JSObject*>(obj));
 
     size_t value_count = num / sizeof(v);
     size_t byte_count = num % sizeof(v);

@@ -11,9 +11,7 @@ SOURCES += ['!ThirdPartyPaths.cpp']
 UNIFIED_SOURCES += [
     'ArithmeticArgChecker.cpp',
     'AssertAssignmentChecker.cpp',
-    'CanRunScriptChecker.cpp',
     'CustomTypeAnnotation.cpp',
-    'DanglingOnTemporaryChecker.cpp',
     'DiagnosticsMatcher.cpp',
     'ExplicitImplicitChecker.cpp',
     'ExplicitOperatorBoolChecker.cpp',
@@ -38,7 +36,6 @@ UNIFIED_SOURCES += [
     'ScopeChecker.cpp',
     'SprintfLiteralChecker.cpp',
     'TrivialCtorDtorChecker.cpp',
-    'VariableUsageHelpers.cpp',
 ]
 
 GENERATED_FILES += ['ThirdPartyPaths.cpp']

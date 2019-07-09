@@ -37,7 +37,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(Animation, DOMEventTargetHelper,
 NS_IMPL_ADDREF_INHERITED(Animation, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(Animation, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Animation)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(Animation)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 JSObject*
@@ -603,8 +603,10 @@ Animation::Tick()
     // during the *previous* tick of the refresh driver, it can still be
     // ahead of the *current* timeline time when we are using the
     // vsync timer so we need to clamp it to the timeline time.
-    mPendingReadyTime.SetValue(std::min(mTimeline->GetCurrentTime().Value(),
-                                        mPendingReadyTime.Value()));
+    TimeDuration currentTime = mTimeline->GetCurrentTime().Value();
+    if (currentTime < mPendingReadyTime.Value()) {
+      mPendingReadyTime.SetValue(currentTime);
+    }
     FinishPendingAt(mPendingReadyTime.Value());
     mPendingReadyTime.SetNull();
   }
@@ -1188,9 +1190,9 @@ Animation::ResumeAt(const TimeDuration& aReadyTime)
   // but it's currently not necessary.
   MOZ_ASSERT(mPendingState == PendingState::PlayPending,
              "Expected to resume a play-pending animation");
-  MOZ_ASSERT(!mHoldTime.IsNull() || !mStartTime.IsNull(),
+  MOZ_ASSERT(mHoldTime.IsNull() != mStartTime.IsNull(),
              "An animation in the play-pending state should have either a"
-             " resolved hold time or resolved start time");
+             " resolved hold time or resolved start time (but not both)");
 
   // If we aborted a pending pause operation we will already have a start time
   // we should use. In all other cases, we resolve it from the ready time.

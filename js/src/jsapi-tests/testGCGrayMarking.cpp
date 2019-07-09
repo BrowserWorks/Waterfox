@@ -27,8 +27,11 @@ struct MapTypeToRootKind<js::ObjectWeakMap*> {
 };
 
 template <>
-struct GCPolicy<js::ObjectWeakMap*> : public NonGCPointerPolicy<js::ObjectWeakMap*>
-{};
+struct GCPolicy<js::ObjectWeakMap*> {
+    static void trace(JSTracer* trc, js::ObjectWeakMap** tp, const char* name) {
+        (*tp)->trace(trc);
+    }
+};
 
 } // namespace JS
 

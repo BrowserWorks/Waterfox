@@ -228,19 +228,6 @@ FT2FontEntry::~FT2FontEntry()
 #endif
 }
 
-gfxFontEntry*
-FT2FontEntry::Clone() const
-{
-    MOZ_ASSERT(!IsUserFont(), "we can only clone installed fonts!");
-    FT2FontEntry* fe = new FT2FontEntry(Name());
-    fe->mFilename = mFilename;
-    fe->mFTFontIndex = mFTFontIndex;
-    fe->mWeight = mWeight;
-    fe->mStretch = mStretch;
-    fe->mStyle = mStyle;
-    return fe;
-}
-
 gfxFont*
 FT2FontEntry::CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold)
 {
@@ -249,7 +236,8 @@ FT2FontEntry::CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold
         return nullptr;
     }
 
-    RefPtr<UnscaledFontFreeType> unscaledFont(mUnscaledFont);
+    RefPtr<UnscaledFontFreeType> unscaledFont =
+        static_cast<UnscaledFontFreeType*>(mUnscaledFont.get());
     if (!unscaledFont) {
         unscaledFont =
             mFilename.IsEmpty() ?
@@ -483,8 +471,11 @@ FT2FontEntry::ReadCMAP(FontInfoData *aFontInfoData)
     nsresult rv = CopyFontTable(TTAG_cmap, buffer);
     
     if (NS_SUCCEEDED(rv)) {
+        bool unicodeFont;
+        bool symbolFont;
         rv = gfxFontUtils::ReadCMAP(buffer.Elements(), buffer.Length(),
-                                    *charmap, mUVSOffset);
+                                    *charmap, mUVSOffset,
+                                    unicodeFont, symbolFont);
     }
 
     if (NS_SUCCEEDED(rv) && !HasGraphiteTables()) {
@@ -827,6 +818,15 @@ public:
         : mFontList(aFontList)
     { }
 
+    void Remove()
+    {
+        nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+        if (obs) {
+            obs->RemoveObserver(this, NS_XPCOM_WILL_SHUTDOWN_OBSERVER_ID);
+        }
+        mFontList = nullptr;
+    }
+
 protected:
     virtual ~WillShutdownObserver()
     { }
@@ -862,11 +862,7 @@ gfxFT2FontList::gfxFT2FontList()
 gfxFT2FontList::~gfxFT2FontList()
 {
     if (mObserver) {
-        nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-        if (obs) {
-            obs->RemoveObserver(mObserver, NS_XPCOM_WILL_SHUTDOWN_OBSERVER_ID);
-        }
-        mObserver = nullptr;
+        mObserver->Remove();
     }
 }
 
@@ -1503,12 +1499,6 @@ gfxFT2FontList::GetFontFamilyList(nsTArray<RefPtr<gfxFontFamily> >& aFamilyArray
         RefPtr<gfxFontFamily>& family = iter.Data();
         aFamilyArray.AppendElement(family);
     }
-}
-
-gfxFontFamily*
-gfxFT2FontList::CreateFontFamily(const nsAString& aName) const
-{
-    return new FT2FontFamily(aName);
 }
 
 void

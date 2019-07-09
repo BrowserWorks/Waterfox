@@ -9,7 +9,6 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/gfx/2D.h"
 #include "nsISupportsImpl.h"
-#include "nsStringFwd.h"
 
 namespace mozilla {
 namespace gfx {
@@ -135,11 +134,6 @@ public:
    * called.
    */
   virtual already_AddRefed<DrawTarget> GetReferenceDrawTarget(DrawEventRecorder* aRecorder);
-
-  static void AdjustPrintJobNameForIPP(const nsAString& aJobName,
-                                       nsCString& aAdjustedJobName);
-  static void AdjustPrintJobNameForIPP(const nsAString& aJobName,
-                                       nsString& aAdjustedJobName);
 
 protected:
 

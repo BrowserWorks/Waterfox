@@ -52,7 +52,7 @@ public:
   const static int32_t kWorstPriority = kNormalPriority + nsISupportsPriority::PRIORITY_LOWEST;
   const static int32_t kBestPriority = kNormalPriority + nsISupportsPriority::PRIORITY_HIGHEST;
 
-  Http2Stream(nsAHttpTransaction *, Http2Session *, int32_t, uint64_t);
+  Http2Stream(nsAHttpTransaction *, Http2Session *, int32_t);
 
   uint32_t StreamID() { return mStreamID; }
   Http2PushedStream *PushSource() { return mPushSource; }
@@ -169,8 +169,6 @@ public:
   nsresult Finish0RTT(bool aRestart, bool aAlpnIgnored);
 
   nsresult GetOriginAttributes(mozilla::OriginAttributes *oa);
-
-  void TopLevelOuterContentWindowIdChanged(uint64_t windowId);
 
 protected:
   static void CreatePushHashKey(const nsCString &scheme,
@@ -348,10 +346,6 @@ private:
   SimpleBuffer mSimpleBuffer;
 
   bool mAttempting0RTT;
-
-  uint64_t mCurrentForegroundTabOuterContentWindowId;
-
-  uint64_t mTransactionTabId;
 
 /// connect tunnels
 public:

@@ -20,36 +20,11 @@ let webpackConfig = {
   },
 
   module: {
-    rules: [
+    loaders: [
       {
         test: /\.(png|svg)$/,
         loader: "file-loader?name=[path][name].[ext]",
       },
-      {
-        test: /\.js$/,
-        loaders: [
-          /*
-          * The version of webpack used in the launchpad seems to have trouble
-          * with the require("raw!${file}") that we use for the properties
-          * file in l10.js.
-          * This loader goes through the whole code and remove the "raw!" prefix
-          * so the raw-loader declared in devtools-launchpad config can load
-          * those files.
-          */
-          "rewrite-raw",
-          // Replace all references to this.browserRequire() by require()
-          "rewrite-browser-require",
-          // Replace all references to loader.lazyRequire() by require()
-          "rewrite-lazy-require",
-        ],
-      }
-    ]
-  },
-
-  resolveLoader: {
-    modules: [
-      path.resolve("./node_modules"),
-      path.resolve("../shared/webpack"),
     ]
   },
 
@@ -67,47 +42,43 @@ let webpackConfig = {
 };
 
 webpackConfig.resolve = {
-  modules: [
-    // Make sure webpack is always looking for modules in
-    // `webconsole/node_modules` directory first.
-    path.resolve(__dirname, "node_modules"), "node_modules"
-  ],
   alias: {
-    "Services": "devtools-modules/src/Services",
+    "Services": "devtools-modules/client/shared/shim/Services",
 
-    "devtools/client/webconsole/jsterm": path.join(__dirname, "../../client/shared/webpack/shims/jsterm-stub"),
+    "devtools/client/webconsole/jsterm": path.join(projectPath, "jsterm-stub"),
     "devtools/client/webconsole/utils": path.join(__dirname, "new-console-output/test/fixtures/WebConsoleUtils"),
+    "devtools/client/webconsole/new-console-output": path.join(__dirname, "new-console-output"),
+    "devtools/client/webconsole/webconsole-connection-proxy": path.join(__dirname, "webconsole-connection-proxy"),
+    "devtools/client/webconsole/webconsole-l10n": path.join(__dirname, "webconsole-l10n"),
 
+    "react": path.join(__dirname, "node_modules/react"),
     "devtools/client/shared/vendor/immutable": "immutable",
     "devtools/client/shared/vendor/react": "react",
     "devtools/client/shared/vendor/react-dom": "react-dom",
     "devtools/client/shared/vendor/react-redux": "react-redux",
     "devtools/client/shared/vendor/redux": "redux",
-    "devtools/client/shared/vendor/reselect": "reselect",
 
-    "devtools/shared/system": path.join(__dirname, "../../client/shared/webpack/shims/system-stub"),
-
-    "devtools/client/framework/devtools": path.join(__dirname, "../../client/shared/webpack/shims/framework-devtools-shim"),
-    "devtools/client/framework/menu": "devtools-modules/src/menu",
-    "devtools/client/sourceeditor/editor": "devtools-source-editor/src/source-editor",
-
-    "devtools/client/shared/zoom-keys": "devtools-modules/src/zoom-keys",
-
-    "devtools/shared/fronts/timeline": path.join(__dirname, "../../client/shared/webpack/shims/fronts-timeline-shim"),
-    "devtools/shared/old-event-emitter": "devtools-modules/src/utils/event-emitter",
-    "devtools/shared/client/debugger-client": path.join(__dirname, "new-console-output/test/fixtures/DebuggerClient"),
-    "devtools/shared/platform/clipboard": path.join(__dirname, "../../client/shared/webpack/shims/platform-clipboard-stub"),
-    "devtools/shared/platform/stack": path.join(__dirname, "../../client/shared/webpack/shims/platform-stack-stub"),
-
-    // Locales need to be explicitly mapped to the en-US subfolder
-    "toolkit/locales": path.join(__dirname, "../../../toolkit/locales/en-US"),
     "devtools/client/locales": path.join(__dirname, "../../client/locales/en-US"),
+    "toolkit/locales": path.join(__dirname, "../../../toolkit/locales/en-US"),
     "devtools/shared/locales": path.join(__dirname, "../../shared/locales/en-US"),
-    "devtools/shim/locales": path.join(__dirname, "../../shared/locales/en-US"),
+    "devtools/shared/plural-form": path.join(__dirname, "../../shared/plural-form"),
+    "devtools/shared/l10n": path.join(__dirname, "../../shared/l10n"),
 
-    // Unless a path explicitly needs to be rewritten or shimmed, all devtools paths can
-    // be mapped to ../../
-    "devtools": path.join(__dirname, "../../"),
+    "devtools/client/framework/devtools": path.join(__dirname, "../../client/shims/devtools"),
+    "devtools/client/framework/menu": "devtools-modules/client/framework/menu",
+    "devtools/client/framework/menu-item": path.join(__dirname, "../../client/framework/menu-item"),
+
+    "devtools/client/shared/components/reps/reps": path.join(__dirname, "../../client/shared/components/reps/reps"),
+    "devtools/client/shared/redux/middleware/thunk": path.join(__dirname, "../../client/shared/redux/middleware/thunk"),
+    "devtools/client/shared/redux/middleware/debounce": path.join(__dirname, "../../client/shared/redux/middleware/debounce"),
+    "devtools/client/shared/components/stack-trace": path.join(__dirname, "../../client/shared/components/stack-trace"),
+    "devtools/client/shared/source-utils": path.join(__dirname, "../../client/shared/source-utils"),
+    "devtools/client/shared/components/frame": path.join(__dirname, "../../client/shared/components/frame"),
+
+    "devtools/shared/defer": path.join(__dirname, "../../shared/defer"),
+    "devtools/shared/event-emitter": "devtools-modules/shared/event-emitter",
+    "devtools/shared/client/main": path.join(__dirname, "new-console-output/test/fixtures/ObjectClient"),
+    "devtools/shared/platform/clipboard": path.join(__dirname, "../../shared/platform/content/clipboard"),
   }
 };
 
@@ -141,18 +112,19 @@ const mappings = [
 webpackConfig.plugins = mappings.map(([regex, res]) =>
   new NormalModuleReplacementPlugin(regex, res));
 
+// Exclude to transpile all scripts in devtools/ but not for this folder
 const basePath = path.join(__dirname, "../../").replace(/\\/g, "\\\\");
 const baseName = path.basename(__dirname);
+webpackConfig.babelExcludes = new RegExp(`^${basePath}(.(?!${baseName}))*$`);
 
-let config = toolboxConfig(webpackConfig, getConfig(), {
-  // Exclude to transpile all scripts in devtools/ but not for this folder
-  babelExcludes: new RegExp(`^${basePath}(.(?!${baseName}))*$`)
-});
+let config = toolboxConfig(webpackConfig, getConfig());
 
 // Remove loaders from devtools-launchpad's webpack.config.js
 // * For svg-inline loader:
-//   Webconsole uses file loader to bundle image assets instead of svg-inline-loader
-config.module.rules = config.module.rules
-  .filter((rule) => !["svg-inline-loader"].includes(rule.loader));
+//   Webconsole uses file loader to bundle image assets instead of svg-inline loader
+// * For raw loader:
+//   devtools/shared/l10n has preloaded raw loader in require.context
+config.module.loaders = config.module.loaders
+  .filter((loader) => !["svg-inline", "raw"].includes(loader.loader));
 
 module.exports = config;

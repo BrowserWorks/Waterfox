@@ -363,7 +363,7 @@ txExprParser::createFilterOrStep(txExprLexer& lexer, txIParseContext* aContext,
         case Token::VAR_REFERENCE :
             lexer.nextToken();
             {
-                RefPtr<nsAtom> prefix, lName;
+                nsCOMPtr<nsIAtom> prefix, lName;
                 int32_t nspace;
                 nsresult rv = resolveQName(tok->Value(), getter_AddRefs(prefix),
                                            aContext, getter_AddRefs(lName),
@@ -424,7 +424,7 @@ txExprParser::createFunctionCall(txExprLexer& lexer, txIParseContext* aContext,
                  "FunctionCall expected");
 
     //-- compare function names
-    RefPtr<nsAtom> prefix, lName;
+    nsCOMPtr<nsIAtom> prefix, lName;
     int32_t namespaceID;
     nsresult rv = resolveQName(tok->Value(), getter_AddRefs(prefix), aContext,
                                getter_AddRefs(lName), namespaceID);
@@ -482,7 +482,7 @@ txExprParser::createLocationStep(txExprLexer& lexer, txIParseContext* aContext,
         {
             //-- eat token
             lexer.nextToken();
-            RefPtr<nsAtom> axis = NS_Atomize(tok->Value());
+            nsCOMPtr<nsIAtom> axis = NS_Atomize(tok->Value());
             if (axis == nsGkAtoms::ancestor) {
                 axisIdentifier = LocationStep::ANCESTOR_AXIS;
             }
@@ -556,7 +556,7 @@ txExprParser::createLocationStep(txExprLexer& lexer, txIParseContext* aContext,
         if (tok->mType == Token::CNAME) {
             lexer.nextToken();
             // resolve QName
-            RefPtr<nsAtom> prefix, lName;
+            nsCOMPtr<nsIAtom> prefix, lName;
             int32_t nspace;
             rv = resolveQName(tok->Value(), getter_AddRefs(prefix),
                               aContext, getter_AddRefs(lName),
@@ -887,8 +887,8 @@ txExprParser::precedence(Token* aToken)
 
 nsresult
 txExprParser::resolveQName(const nsAString& aQName,
-                           nsAtom** aPrefix, txIParseContext* aContext,
-                           nsAtom** aLocalName, int32_t& aNamespace,
+                           nsIAtom** aPrefix, txIParseContext* aContext,
+                           nsIAtom** aLocalName, int32_t& aNamespace,
                            bool aIsNameTest)
 {
     aNamespace = kNameSpaceID_None;

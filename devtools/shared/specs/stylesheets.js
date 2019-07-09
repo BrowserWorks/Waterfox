@@ -10,6 +10,20 @@ const {
   types
 } = require("devtools/shared/protocol");
 
+const originalSourceSpec = generateActorSpec({
+  typeName: "originalsource",
+
+  methods: {
+    getText: {
+      response: {
+        text: RetVal("longstring")
+      }
+    }
+  }
+});
+
+exports.originalSourceSpec = originalSourceSpec;
+
 const mediaRuleSpec = generateActorSpec({
   typeName: "mediarule",
 
@@ -54,6 +68,23 @@ const styleSheetSpec = generateActorSpec({
         text: RetVal("longstring")
       }
     },
+    getOriginalSources: {
+      request: {},
+      response: {
+        originalSources: RetVal("nullable:array:originalsource")
+      }
+    },
+    getOriginalLocation: {
+      request: {
+        line: Arg(0, "number"),
+        column: Arg(1, "number")
+      },
+      response: RetVal(types.addDictType("originallocationresponse", {
+        source: "string",
+        line: "number",
+        column: "number"
+      }))
+    },
     getMediaRules: {
       request: {},
       response: {
@@ -73,14 +104,6 @@ exports.styleSheetSpec = styleSheetSpec;
 
 const styleSheetsSpec = generateActorSpec({
   typeName: "stylesheets",
-
-  events: {
-    "stylesheet-added": {
-      type: "stylesheetAdded",
-      sheet: Arg(0, "stylesheet"),
-      isNew: Arg(1, "boolean")
-    },
-  },
 
   methods: {
     getStyleSheets: {

@@ -4,13 +4,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:gecko="http://schemas.android.com/apk/res-auto"
-       xmlns:tools="http://schemas.android.com/tools"
-       tools:parentTag="LinearLayout"
-       tools:layout_width="match_parent"
-       tools:layout_height="match_parent"
-       tools:background="@color/text_and_tabs_tray_grey"
-       tools:orientation="vertical">
+       xmlns:gecko="http://schemas.android.com/apk/res-auto">
 
     <!-- The layout_height value is used in TabsPanel.getTabsLayoutContainerHeight
          and as an offset in PrivateTabsPanel: if you change it here,
@@ -31,32 +25,46 @@
                 android:minWidth="@dimen/tabs_panel_button_width"
                 android:src="@drawable/tabs_panel_nav_back"
                 android:contentDescription="@string/back"
-                android:background="@drawable/action_bar_button_inverse"/>
+                android:background="@drawable/action_bar_button_inverse"
+                gecko:dividerVerticalPadding="@dimen/tab_panel_divider_vertical_padding"
+                gecko:rightDivider="@drawable/tab_indicator_divider"/>
 
             <org.mozilla.gecko.widget.IconTabWidget android:id="@+id/tab_widget"
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="match_parent"
                                                     android:tabStripEnabled="false"
+                                                    android:divider="@drawable/tab_indicator_divider"
+                                                    android:dividerPadding="@dimen/tab_panel_divider_vertical_padding"
                                                     android:layout="@layout/tabs_panel_indicator"/>
 
             <View android:layout_width="0dip"
                   android:layout_height="match_parent"
                   android:layout_weight="1.0"/>
 
-            <org.mozilla.gecko.toolbar.ToolbarRoundButton
-                android:id="@+id/add_tab"
-                style="@style/TabsTray.AddTab"
-                android:background="@drawable/action_bar_button_inverse"
-                android:contentDescription="@string/new_tab"
-                android:src="@drawable/tab_new"/>
+            <ImageButton android:id="@+id/add_tab"
+                         style="@style/UrlBar.ImageButton"
+                         android:layout_width="@dimen/tabs_panel_button_width"
+                         android:padding="@dimen/browser_toolbar_button_padding"
+                         android:src="@drawable/tab_new"
+                         android:contentDescription="@string/new_tab"
+                         android:background="@drawable/action_bar_button_inverse"/>
 
-            <org.mozilla.gecko.toolbar.ToolbarRoundButton
-                android:id="@+id/tabs_menu"
-                style="@style/TabsTray.Menu"
-                android:background="@drawable/action_bar_button_inverse"
-                android:contentDescription="@string/menu"
-                android:src="@drawable/ic_overflow"
-                android:tint="@color/tabs_tray_icon_grey"/>
+            <FrameLayout android:id="@+id/tabs_menu"
+                         style="@style/UrlBar.ImageButton"
+                         android:layout_width="@dimen/tabs_panel_button_width"
+                         android:background="@drawable/action_bar_button_inverse"
+                         android:contentDescription="@string/menu">
+
+                <ImageView
+                        style="@style/UrlBar.ImageButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/browser_toolbar_menu_icon_height"
+                        android:layout_gravity="center"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/menu"
+                        android:tint="@color/tabs_tray_icon_grey"/>
+
+            </FrameLayout>
 
         </view>
 

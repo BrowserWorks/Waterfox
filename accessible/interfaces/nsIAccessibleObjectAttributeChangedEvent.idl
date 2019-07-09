@@ -6,6 +6,8 @@
 
 #include "nsIAccessibleEvent.idl"
 
+interface nsIAtom;
+
 /**
  * Fired when an attribute of an accessible changes.
  */
@@ -15,5 +17,5 @@ interface nsIAccessibleObjectAttributeChangedEvent : nsIAccessibleEvent
   /**
    * Return the accessible attribute that changed.
    */
-  readonly attribute AString changedAttribute;
+  readonly attribute nsIAtom changedAttribute;
 };

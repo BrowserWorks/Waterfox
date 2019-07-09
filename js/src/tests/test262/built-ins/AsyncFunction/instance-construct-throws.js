@@ -3,7 +3,7 @@
 
 /*---
 author: Brian Terlson <brian.terlson@microsoft.com>
-esid: sec-async-function-instances
+esid: pending
 description: >
   Async function instances are not constructors and do not have a
   [[Construct]] slot.

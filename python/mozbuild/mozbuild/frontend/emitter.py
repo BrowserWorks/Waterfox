@@ -42,6 +42,7 @@ from .data import (
     GeneratedFile,
     GeneratedSources,
     GeneratedWebIDLFile,
+    GnProjectData,
     ExampleWebIDLInterface,
     ExternalStaticLibrary,
     ExternalSharedLibrary,
@@ -66,7 +67,6 @@ from .data import (
     RustLibrary,
     HostRustLibrary,
     RustProgram,
-    RustTest,
     SharedLibrary,
     SimpleProgram,
     Sources,
@@ -518,6 +518,26 @@ class TreeMetadataEmitter(LoggingMixin):
                    features, cargo_target_dir, **static_args)
 
 
+    def _handle_gn_dirs(self, context):
+        for target_dir in context.get('GN_DIRS', []):
+            context['DIRS'] += [target_dir]
+            gn_dir = context['GN_DIRS'][target_dir]
+            for v in ('variables',):
+                if not getattr(gn_dir, 'variables'):
+                    raise SandboxValidationError('Missing value for '
+                                                 'GN_DIRS["%s"].%s' % (target_dir, v), context)
+
+            non_unified_sources = set()
+            for s in gn_dir.non_unified_sources:
+                source = SourcePath(context, s)
+                if not os.path.exists(source.full_path):
+                    raise SandboxValidationError('Cannot find %s.' % source,
+                                                 context)
+                non_unified_sources.add(mozpath.join(context.relsrcdir, s))
+
+            yield GnProjectData(context, target_dir, gn_dir, non_unified_sources)
+
+
     def _handle_linkables(self, context, passthru, generated_files):
         linkables = []
         host_linkables = []
@@ -910,6 +930,9 @@ class TreeMetadataEmitter(LoggingMixin):
         if any(k in context for k in ('FINAL_TARGET', 'XPI_NAME', 'DIST_SUBDIR')):
             yield InstallationTarget(context)
 
+        for obj in self._handle_gn_dirs(context):
+            yield obj
+
         # We always emit a directory traversal descriptor. This is needed by
         # the recursive make backend.
         for o in self._emit_directory_traversal_from_context(context): yield o
@@ -1125,15 +1148,6 @@ class TreeMetadataEmitter(LoggingMixin):
                                           Manifest('components',
                                                    mozpath.basename(c)))
 
-        if self.config.substs.get('MOZ_RUST_TESTS', None):
-            rust_test = context.get('RUST_TEST', None)
-            if rust_test:
-                # TODO: more sophisticated checking of the declared name vs.
-                # contents of the Cargo.toml file.
-                features = context.get('RUST_TEST_FEATURES', [])
-
-                yield RustTest(context, rust_test, features)
-
         for obj in self._process_test_manifests(context):
             yield obj
 
@@ -1275,7 +1289,7 @@ class TreeMetadataEmitter(LoggingMixin):
     def _process_test_manifest(self, context, info, manifest_path, mpmanifest):
         flavor, install_root, install_subdir, package_tests = info
 
-        path = manifest_path.full_path
+        path = mozpath.normpath(mozpath.join(context.srcdir, manifest_path))
         manifest_dir = mozpath.dirname(path)
         manifest_reldir = mozpath.dirname(mozpath.relpath(path,
             context.config.topsrcdir))
@@ -1297,11 +1311,14 @@ class TreeMetadataEmitter(LoggingMixin):
 
             filtered = mpmanifest.tests
 
-            missing = [t['name'] for t in filtered if not os.path.exists(t['path'])]
-            if missing:
-                raise SandboxValidationError('Test manifest (%s) lists '
-                    'test that does not exist: %s' % (
-                    path, ', '.join(missing)), context)
+            # Jetpack add-on tests are expected to be generated during the
+            # build process so they won't exist here.
+            if flavor != 'jetpack-addon':
+                missing = [t['name'] for t in filtered if not os.path.exists(t['path'])]
+                if missing:
+                    raise SandboxValidationError('Test manifest (%s) lists '
+                        'test that does not exist: %s' % (
+                        path, ', '.join(missing)), context)
 
             out_dir = mozpath.join(install_prefix, manifest_reldir)
             if 'install-to-subdir' in defaults:
@@ -1375,7 +1392,8 @@ class TreeMetadataEmitter(LoggingMixin):
                 context)
 
     def _process_reftest_manifest(self, context, flavor, manifest_path, manifest):
-        manifest_full_path = manifest_path.full_path
+        manifest_full_path = mozpath.normpath(mozpath.join(
+            context.srcdir, manifest_path))
         manifest_reldir = mozpath.dirname(mozpath.relpath(manifest_full_path,
             context.config.topsrcdir))
 

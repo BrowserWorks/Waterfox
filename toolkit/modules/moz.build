@@ -44,7 +44,7 @@ with Files('tests/xpcshell/test_NewTabUtils.js'):
     BUG_COMPONENT = ('Firefox', 'New Tab Page')
 
 with Files('tests/xpcshell/test_UpdateUtils*.js'):
-    BUG_COMPONENT = ('Toolkit', 'Application Update')
+    BUG_COMPONENT = ('Toolkit', 'General')
 
 with Files('tests/xpcshell/test_client_id.js'):
     BUG_COMPONENT = ('Toolkit', 'Telemetry')
@@ -94,6 +94,9 @@ with Files('LightweightThemeConsumer.jsm'):
 with Files('LoadContextInfo.jsm'):
     BUG_COMPONENT = ('Core', 'Networking: Cache')
 
+with Files('Locale.jsm'):
+    BUG_COMPONENT = ('Core', 'Internationalization')
+
 with Files('Memory.jsm'):
     BUG_COMPONENT = ('Core', 'DOM: Content Processes')
 
@@ -121,7 +124,7 @@ with Files('PrivateBrowsingUtils.jsm'):
 with Files('Promise*.jsm'):
     BUG_COMPONENT = ('Toolkit', 'Async Tooling')
 
-with Files('RemoteController.js'):
+with Files('RemoteController.jsm'):
     BUG_COMPONENT = ('Core', 'Widget')
 
 with Files('RemoteFinder.jsm'):
@@ -143,7 +146,7 @@ with Files('Sqlite.jsm'):
     BUG_COMPONENT = ('Toolkit', 'Storage')
 
 with Files('UpdateUtils.jsm'):
-    BUG_COMPONENT = ('Toolkit', 'Application Update')
+    BUG_COMPONENT = ('Toolkit', 'Add-ons Manager')
 
 with Files('WindowsRegistry.jsm'):
     BUG_COMPONENT = ('Toolkit', 'General')
@@ -154,7 +157,6 @@ BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 
 TESTING_JS_MODULES += [
-    'HiddenFrame.jsm',
     'tests/modules/MockDocument.jsm',
     'tests/modules/PromiseTestUtils.jsm',
     'tests/xpcshell/TestIntegration.jsm',
@@ -163,7 +165,7 @@ TESTING_JS_MODULES += [
 SPHINX_TREES['toolkit_modules'] = 'docs'
 
 EXTRA_JS_MODULES += [
-    'addons/MatchURLFilters.jsm',
+    'addons/MatchPattern.jsm',
     'addons/WebNavigation.jsm',
     'addons/WebNavigationContent.js',
     'addons/WebNavigationFrames.jsm',
@@ -197,6 +199,7 @@ EXTRA_JS_MODULES += [
     'GMPExtractorWorker.js',
     'GMPInstallManager.jsm',
     'GMPUtils.jsm',
+    'HiddenFrame.jsm',
     'Http.jsm',
     'IndexedDB.jsm',
     'InlineSpellChecker.jsm',
@@ -204,6 +207,7 @@ EXTRA_JS_MODULES += [
     'Integration.jsm',
     'JSONFile.jsm',
     'LoadContextInfo.jsm',
+    'Locale.jsm',
     'Log.jsm',
     'Memory.jsm',
     'NewTabUtils.jsm',
@@ -220,7 +224,7 @@ EXTRA_JS_MODULES += [
     'Promise.jsm',
     'PromiseMessage.jsm',
     'PromiseUtils.jsm',
-    'RemoteController.js',
+    'RemoteController.jsm',
     'RemoteFinder.jsm',
     'RemotePageManager.jsm',
     'RemoteSecurityUI.jsm',

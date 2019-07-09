@@ -36,12 +36,10 @@ result = { x: xCover = (0, function() {}), x: cover = (function() {}) } = vals;
 
 assert.notSameValue(xCover.name, 'xCover');
 
-verifyProperty(cover, 'name', {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: 'cover'
-});
+assert.sameValue(cover.name, 'cover');
+verifyNotEnumerable(cover, 'name');
+verifyNotWritable(cover, 'name');
+verifyConfigurable(cover, 'name');
 
 assert.sameValue(result, vals);
 

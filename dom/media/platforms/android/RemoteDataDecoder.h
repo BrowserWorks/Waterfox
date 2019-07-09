@@ -31,9 +31,9 @@ public:
   RefPtr<DecodePromise> Drain() override;
   RefPtr<FlushPromise> Flush() override;
   RefPtr<ShutdownPromise> Shutdown() override;
-  nsCString GetDescriptionName() const override
+  const char* GetDescriptionName() const override
   {
-    return NS_LITERAL_CSTRING("android decoder (remote)");
+    return "android remote decoder";
   }
 
 protected:
@@ -46,7 +46,7 @@ protected:
   // Methods only called on mTaskQueue.
   RefPtr<ShutdownPromise> ProcessShutdown();
   void UpdateInputStatus(int64_t aTimestamp, bool aProcessed);
-  void UpdateOutputStatus(RefPtr<MediaData>&& aSample);
+  void UpdateOutputStatus(MediaData* aSample);
   void ReturnDecodedData();
   void DrainComplete();
   void Error(const MediaResult& aError);
@@ -54,9 +54,6 @@ protected:
   {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
   }
-
-  // Whether the sample will be used.
-  virtual bool IsUsefulData(const RefPtr<MediaData>& aSample) { return true; }
 
   MediaData::Type mType;
 

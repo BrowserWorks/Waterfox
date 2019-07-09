@@ -6,10 +6,11 @@
 /* global XPCNativeWrapper */
 
 const {Cu} = require("chrome");
-const EventEmitter = require("devtools/shared/event-emitter");
-const defer = require("devtools/shared/defer");
+const events = require("sdk/event/core");
+const promise = require("promise");
 const protocol = require("devtools/shared/protocol");
 const { ContentObserver } = require("devtools/shared/content-observer");
+const { on, off, emit } = events;
 const {
   shaderSpec,
   programSpec,
@@ -214,9 +215,9 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
     this._programActorsCache = [];
     this._webglObserver = new WebGLObserver();
 
-    this.tabActor.on("window-ready", this._onGlobalCreated);
-    this.tabActor.on("window-destroyed", this._onGlobalDestroyed);
-    EventEmitter.on(this._webglObserver, "program-linked", this._onProgramLinked);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
+    on(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
+    on(this._webglObserver, "program-linked", this._onProgramLinked);
 
     if (reload) {
       this.tabActor.window.location.reload();
@@ -234,9 +235,9 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
     }
     this._initialized = false;
 
-    this.tabActor.off("window-ready", this._onGlobalCreated);
-    this.tabActor.off("window-destroyed", this._onGlobalDestroyed);
-    EventEmitter.off(this._webglObserver, "program-linked", this._onProgramLinked);
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
+    off(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
+    off(this._webglObserver, "program-linked", this._onProgramLinked);
 
     this._programActorsCache = null;
     this._contentObserver = null;
@@ -257,7 +258,7 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
    * Used in tests.
    */
   waitForFrame: function () {
-    let deferred = defer();
+    let deferred = promise.defer();
     this.tabActor.window.requestAnimationFrame(deferred.resolve);
     return deferred.promise;
   },
@@ -306,7 +307,7 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
   _onGlobalCreated: function ({id, window, isTopLevel}) {
     if (isTopLevel) {
       WebGLInstrumenter.handle(window, this._webglObserver);
-      this.emit("global-created", id);
+      events.emit(this, "global-created", id);
     }
   },
 
@@ -317,7 +318,7 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
     if (isTopLevel && !isFrozen) {
       removeFromArray(this._programActorsCache, e => e.ownerWindow == id);
       this._webglObserver.unregisterContextsForWindow(id);
-      this.emit("global-destroyed", id);
+      events.emit(this, "global-destroyed", id);
     }
   },
 
@@ -327,7 +328,7 @@ exports.WebGLActor = protocol.ActorClassWithSpec(webGLSpec, {
   _onProgramLinked: function (...args) {
     let programActor = new ProgramActor(this.conn, args);
     this._programActorsCache.push(programActor);
-    this.emit("program-linked", programActor);
+    events.emit(this, "program-linked", programActor);
   }
 });
 
@@ -575,7 +576,7 @@ WebGLObserver.prototype = {
     let program = glArgs[0];
     let shaders = proxy.getAttachedShaders(program);
     cache.addProgram(program, PROGRAM_DEFAULT_TRAITS);
-    EventEmitter.emit(this, "program-linked", program, shaders, cache, proxy);
+    emit(this, "program-linked", program, shaders, cache, proxy);
   },
 
   /**

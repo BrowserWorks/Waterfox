@@ -10,7 +10,7 @@
 #include "CertVerifier.h" // For CertificateTransparencyInfo
 #include "nsISSLStatus.h"
 #include "nsCOMPtr.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIX509Cert.h"
 #include "nsISerializable.h"
 #include "nsIClassInfo.h"
@@ -50,8 +50,6 @@ public:
   uint16_t mCipherSuite;
   uint16_t mProtocolVersion;
   uint16_t mCertificateTransparencyStatus;
-  nsCString mKeaGroup;
-  nsCString mSignatureSchemeName;
 
   bool mIsDomainMismatch;
   bool mIsNotValidAtThisTime;

@@ -7,7 +7,8 @@
 with Files("**"):
     BUG_COMPONENT = ("Core", "XPCOM")
 
-TEST_DIRS += ['test']
+if not CONFIG['MOZ_B2G']:
+    TEST_DIRS += ['test']
 
 XPIDL_SOURCES += [
     'nsIStartupCache.idl',

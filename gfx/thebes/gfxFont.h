@@ -19,7 +19,7 @@
 #include "gfxRect.h"
 #include "nsExpirationTracker.h"
 #include "gfxPlatform.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "mozilla/HashFunctions.h"
 #include "nsIMemoryReporter.h"
 #include "nsIObserver.h"
@@ -80,7 +80,7 @@ class GlyphRenderingOptions;
 struct gfxFontStyle {
     gfxFontStyle();
     gfxFontStyle(uint8_t aStyle, uint16_t aWeight, int16_t aStretch,
-                 gfxFloat aSize, nsAtom *aLanguage, bool aExplicitLanguage,
+                 gfxFloat aSize, nsIAtom *aLanguage, bool aExplicitLanguage,
                  float aSizeAdjust, bool aSystemFont,
                  bool aPrinterFont,
                  bool aWeightSynthesis, bool aStyleSynthesis,
@@ -89,7 +89,7 @@ struct gfxFontStyle {
     // the language (may be an internal langGroup code rather than an actual
     // language code) specified in the document or element's lang property,
     // or inferred from the charset
-    RefPtr<nsAtom> language;
+    RefPtr<nsIAtom> language;
 
     // Features are composed of (1) features from style rules (2) features
     // from feature settings rules and (3) family-specific features.  (1) and
@@ -185,7 +185,7 @@ struct gfxFontStyle {
     PLDHashNumber Hash() const {
         return ((style + (systemFont << 7) +
             (weight << 8)) + uint32_t(size*1000) + uint32_t(sizeAdjust*1000)) ^
-            nsRefPtrHashKey<nsAtom>::HashKey(language);
+            nsISupportsHashKey::HashKey(language);
     }
 
     int8_t ComputeWeight() const;
@@ -387,7 +387,7 @@ protected:
 
     static gfxFontCache *gGlobalCache;
 
-    struct MOZ_STACK_CLASS Key {
+    struct Key {
         const gfxFontEntry* mFontEntry;
         const gfxFontStyle* mStyle;
         const gfxCharacterMap* mUnicodeRangeMap;
@@ -417,11 +417,7 @@ protected:
         }
         enum { ALLOW_MEMMOVE = true };
 
-        // The cache tracks gfxFont objects whose refcount has dropped to zero,
-        // so they are not immediately deleted but may be "resurrected" if they
-        // have not yet expired from the tracker when they are needed again.
-        // See the custom AddRef/Release methods in gfxFont.
-        gfxFont* MOZ_UNSAFE_REF("tracking for deferred deletion") mFont;
+        gfxFont* mFont;
     };
 
     nsTHashtable<HashEntry> mFonts;
@@ -597,7 +593,7 @@ public:
     /**
      * This record contains all the parameters needed to initialize a textrun.
      */
-    struct MOZ_STACK_CLASS Parameters {
+    struct Parameters {
         // Shape text params suggesting where the textrun will be rendered
         DrawTarget   *mDrawTarget;
         // Pointer to arbitrary user data (which should outlive the textrun)
@@ -1500,7 +1496,7 @@ public:
     const nsString& GetName() const { return mFontEntry->Name(); }
     const gfxFontStyle *GetStyle() const { return &mStyle; }
 
-    cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
+    virtual cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
 
     virtual mozilla::UniquePtr<gfxFont>
     CopyWithAntialiasOption(AntialiasOption anAAOption) {
@@ -1826,7 +1822,7 @@ public:
                              uint32_t aRunStart,
                              uint32_t aRunLength,
                              Script aRunScript,
-                             mozilla::gfx::ShapedTextFlags aOrientation);
+                             bool aVertical);
 
     // Get a ShapedWord representing the given text (either 8- or 16-bit)
     // for use in setting up a gfxTextRun.
@@ -1885,7 +1881,10 @@ public:
         return mUnscaledFont;
     }
 
-    virtual already_AddRefed<mozilla::gfx::ScaledFont> GetScaledFont(DrawTarget* aTarget) = 0;
+    virtual already_AddRefed<mozilla::gfx::ScaledFont> GetScaledFont(DrawTarget* aTarget)
+    {
+        return gfxPlatform::GetPlatform()->GetScaledFontForFont(aTarget, this);
+    }
 
     bool KerningDisabled() {
         return mKerningSet && !mKerningEnabled;
@@ -2275,7 +2274,7 @@ protected:
 // The TextRunDrawParams are set up once per textrun; the FontDrawParams
 // are dependent on the specific font, so they are set per GlyphRun.
 
-struct MOZ_STACK_CLASS TextRunDrawParams {
+struct TextRunDrawParams {
     RefPtr<mozilla::gfx::DrawTarget> dt;
     gfxContext              *context;
     gfxFont::Spacing        *spacing;
@@ -2294,7 +2293,7 @@ struct MOZ_STACK_CLASS TextRunDrawParams {
     bool                     paintSVGGlyphs;
 };
 
-struct MOZ_STACK_CLASS FontDrawParams {
+struct FontDrawParams {
     RefPtr<mozilla::gfx::ScaledFont>            scaledFont;
     RefPtr<mozilla::gfx::GlyphRenderingOptions> renderingOptions;
     mozilla::SVGContextPaint *contextPaint;
@@ -2308,7 +2307,7 @@ struct MOZ_STACK_CLASS FontDrawParams {
     bool                      haveColorGlyphs;
 };
 
-struct MOZ_STACK_CLASS EmphasisMarkDrawParams {
+struct EmphasisMarkDrawParams {
     gfxContext* context;
     gfxFont::Spacing* spacing;
     gfxTextRun* mark;

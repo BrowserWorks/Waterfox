@@ -14,6 +14,4 @@ negative:
 flags: [onlyStrict]
 ---*/
 
-throw "Test262: This statement should not be evaluated.";
-
 var _7_8_4_2 = '100abc\0110def';

@@ -42,8 +42,10 @@ namespace OT {
 
 struct NameRecord
 {
-  static int cmp (const NameRecord *a, const NameRecord *b)
+  static int cmp (const void *pa, const void *pb)
   {
+    const NameRecord *a = (const NameRecord *) pa;
+    const NameRecord *b = (const NameRecord *) pb;
     int ret;
     ret = b->platformID.cmp (a->platformID);
     if (ret) return ret;
@@ -63,12 +65,12 @@ struct NameRecord
     return_trace (c->check_struct (this) && c->check_range ((char *) base, (unsigned int) length + offset));
   }
 
-  USHORT	platformID;	/* Platform ID. */
-  USHORT	encodingID;	/* Platform-specific encoding ID. */
-  USHORT	languageID;	/* Language ID. */
-  USHORT	nameID;		/* Name ID. */
-  USHORT	length;		/* String length (in bytes). */
-  USHORT	offset;		/* String offset from start of storage area (in bytes). */
+  HBUINT16	platformID;	/* Platform ID. */
+  HBUINT16	encodingID;	/* Platform-specific encoding ID. */
+  HBUINT16	languageID;	/* Language ID. */
+  HBUINT16	nameID;		/* Name ID. */
+  HBUINT16	length;		/* String length (in bytes). */
+  HBUINT16	offset;		/* String offset from start of storage area (in bytes). */
   public:
   DEFINE_SIZE_STATIC (12);
 };
@@ -89,7 +91,7 @@ struct name
     key.encodingID.set (encoding_id);
     key.languageID.set (language_id);
     key.nameID.set (name_id);
-    NameRecord *match = (NameRecord *) bsearch (&key, nameRecord, count, sizeof (nameRecord[0]), (hb_compare_func_t) NameRecord::cmp);
+    NameRecord *match = (NameRecord *) bsearch (&key, nameRecord, count, sizeof (nameRecord[0]), NameRecord::cmp);
 
     if (!match)
       return 0;
@@ -121,9 +123,9 @@ struct name
   }
 
   /* We only implement format 0 for now. */
-  USHORT	format;			/* Format selector (=0/1). */
-  USHORT	count;			/* Number of name records. */
-  Offset<>	stringOffset;		/* Offset to start of string storage (from start of table). */
+  HBUINT16	format;			/* Format selector (=0/1). */
+  HBUINT16	count;			/* Number of name records. */
+  Offset16	stringOffset;		/* Offset to start of string storage (from start of table). */
   NameRecord	nameRecord[VAR];	/* The name records where count is the number of records. */
   public:
   DEFINE_SIZE_ARRAY (6, nameRecord);

@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Слика је исечена на $PIXELS$px.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Не ради."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Нисмо сигурни шта се управо догодило. Желите ли покушати поново или да усликате другачију страницу?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Забележите, сачувајте и поделите снимке екрана без напуштања Firefox-а."
   },
-  "tourHeaderPageAction": {
-    "message": "Нови начин да сачувате"
-  },
-  "tourBodyPageAction": {
-    "message": "Проширите страницу из менија у адресној траци кад год желите да усликате екран."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Усликајте баш оно што желите"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Кликните и превуците да усликате само део странице. Такође можете означити вашу селекцију."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Усликајте прозоре или целе странице"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Изаберите дугмад у горњем десном углу да усликате видљиве делове прозора или да усликате целу страницу."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Као што волите"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Сачувајте ваш исечени снимак на веб ради лакшег дељења или преузимања на ваш рачунар. Такође можете кликнути на дугме \"Моји снимци\" да пронађете све ваше снимке."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Готово"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Коришћењем Firefox Screenshots прихватате наше $TERMSANDPRIVACYNOTICETERMSLINK$ и $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Коришћењем Firefox Screenshots-а, прихватате Firefox Cloud Services $TERMSANDPRIVACYNOTICETERMSLINK$ и $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "обавештење о приватности"
-  },
-  "libraryLabel": {
-    "message": "Снимци екрана"
   }
 }

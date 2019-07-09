@@ -20,7 +20,6 @@ info: >
   exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var values = TypedArray.prototype.values;

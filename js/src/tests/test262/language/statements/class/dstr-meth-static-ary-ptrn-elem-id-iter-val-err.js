@@ -5,7 +5,7 @@
 description: Error forwarding when IteratorValue returns an abrupt completion (static class expression method)
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
 es6id: 14.5.15
-features: [Symbol.iterator, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail
@@ -72,7 +72,6 @@ info: |
           ii. If v is an abrupt completion, set iteratorRecord.[[done]] to
               true.
           iii. ReturnIfAbrupt(v).
-
 ---*/
 var poisonedValue = Object.defineProperty({}, 'value', {
   get: function() {

@@ -10,8 +10,8 @@
 #include "mozilla/OverflowChangedTracker.h"
 #include "nsChangeHint.h"
 #include "nsPresContext.h"
-#include "nsStringFwd.h"
 
+class nsCString;
 class nsCSSFrameConstructor;
 class nsStyleChangeList;
 
@@ -182,12 +182,12 @@ public:
                                   EventStates aStateMask);
   inline void AttributeWillChange(dom::Element* aElement,
                                   int32_t aNameSpaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   int32_t aModType,
                                   const nsAttrValue* aNewValue);
   inline void AttributeChanged(dom::Element* aElement,
                                int32_t aNameSpaceID,
-                               nsAtom* aAttribute,
+                               nsIAtom* aAttribute,
                                int32_t aModType,
                                const nsAttrValue* aOldValue);
   inline nsresult ReparentStyleContext(nsIFrame* aFrame);
@@ -226,7 +226,8 @@ protected:
 
   void ContentStateChangedInternal(Element* aElement,
                                    EventStates aStateMask,
-                                   nsChangeHint* aOutChangeHint);
+                                   nsChangeHint* aOutChangeHint,
+                                   nsRestyleHint* aOutRestyleHint);
 
   bool IsDisconnected() { return mPresContext == nullptr; }
 

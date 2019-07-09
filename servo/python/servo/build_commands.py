@@ -24,7 +24,7 @@ from mach.decorators import (
     Command,
 )
 
-from servo.command_base import CommandBase, cd, call, check_call, BIN_SUFFIX, is_macosx
+from servo.command_base import CommandBase, cd, call, check_call, BIN_SUFFIX
 from servo.util import host_triple
 
 
@@ -243,7 +243,7 @@ class MachCommands(CommandBase):
         env = self.build_env(target=target, is_build=True)
 
         if with_debug_assertions:
-            env['RUSTFLAGS'] = env.get('RUSTFLAGS', "") + " -C debug_assertions"
+            env["RUSTFLAGS"] = "-C debug_assertions"
 
         if android:
             android_platform = self.config["android"]["platform"]
@@ -306,14 +306,6 @@ class MachCommands(CommandBase):
                 "-I" + cxx_include,
                 "-I" + cxxabi_include])
             env["NDK_ANDROID_VERSION"] = android_platform.replace("android-", "")
-            env['CPPFLAGS'] = ' '.join(["--sysroot", env['ANDROID_SYSROOT']])
-            env["CMAKE_ANDROID_ARCH_ABI"] = self.config["android"]["lib"]
-            env["CMAKE_TOOLCHAIN_FILE"] = path.join(self.android_support_dir(), "toolchain.cmake")
-            # Set output dir for gradle aar files
-            aar_out_dir = self.android_aar_dir()
-            if not os.path.exists(aar_out_dir):
-                os.makedirs(aar_out_dir)
-            env["AAR_OUT_DIR"] = aar_out_dir
 
         cargo_binary = "cargo" + BIN_SUFFIX
 
@@ -401,14 +393,8 @@ class MachCommands(CommandBase):
         if with_debug_assertions:
             env["RUSTFLAGS"] = "-C debug_assertions"
 
-        if is_macosx():
-            # Unlike RUSTFLAGS, these are only passed in the final rustc invocation
-            # so that `./mach build` followed by `./mach build-cef` both build
-            # common dependencies with the same flags.
-            opts += ["--", "-C", "link-args=-Xlinker -undefined -Xlinker dynamic_lookup"]
-
         with cd(path.join("ports", "cef")):
-            ret = call(["cargo", "rustc"] + opts,
+            ret = call(["cargo", "build"] + opts,
                        env=env,
                        verbose=verbose)
         elapsed = time() - build_start
@@ -448,6 +434,8 @@ class MachCommands(CommandBase):
             opts += ["-v"]
         if release:
             opts += ["--release"]
+        else:
+            features += ["gecko_debug"]
 
         if features:
             opts += ["--features", ' '.join(features)]

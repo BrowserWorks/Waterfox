@@ -35,7 +35,7 @@ class gfxContext;
 class gfxFontGroup;
 class gfxUserFontEntry;
 class gfxUserFontSet;
-class nsAtom;
+class nsIAtom;
 class nsLanguageAtomService;
 class gfxMissingFontRecorder;
 
@@ -241,7 +241,7 @@ public:
         virtual uint32_t GetAppUnitsPerDevUnit() const = 0;
     };
 
-    struct MOZ_STACK_CLASS DrawParams
+    struct DrawParams
     {
         gfxContext* context;
         DrawMode drawMode = DrawMode::GLYPH_FILL;
@@ -284,8 +284,7 @@ public:
      * from aProvider. The provided point is the baseline origin of the
      * line of emphasis marks.
      */
-    void DrawEmphasisMarks(gfxContext* aContext,
-                           gfxTextRun* aMark,
+    void DrawEmphasisMarks(gfxContext* aContext, gfxTextRun* aMark,
                            gfxFloat aMarkAdvance, gfxPoint aPt,
                            Range aRange, PropertyProvider* aProvider) const;
 
@@ -465,7 +464,7 @@ public:
         uint8_t         mMatchType;
     };
 
-    class MOZ_STACK_CLASS GlyphRunIterator {
+    class GlyphRunIterator {
     public:
         GlyphRunIterator(const gfxTextRun *aTextRun, Range aRange)
           : mTextRun(aTextRun)
@@ -814,12 +813,8 @@ private:
     }
 
     void             *mUserData;
-
-    // mFontGroup is usually a strong reference, but refcounting is managed
-    // manually because it may be explicitly released by ReleaseFontGroup()
-    // in the case where the font group actually owns the textrun.
-    gfxFontGroup* MOZ_OWNING_REF mFontGroup;
-
+    gfxFontGroup     *mFontGroup; // addrefed on creation, but our reference
+                                  // may be released by ReleaseFontGroup()
     gfxSkipChars      mSkipChars;
 
     nsTextFrameUtils::Flags mFlags2; // additional flags (see also gfxShapedText::mFlags)
@@ -1134,10 +1129,8 @@ protected:
         RefPtr<gfxFontFamily> mFamily;
         // either a font or a font entry exists
         union {
-            // Whichever of these fields is actually present will be a strong
-            // reference, with refcounting handled manually.
-            gfxFont* MOZ_OWNING_REF      mFont;
-            gfxFontEntry* MOZ_OWNING_REF mFontEntry;
+            gfxFont*            mFont;
+            gfxFontEntry*       mFontEntry;
         };
         bool                    mNeedsBold   : 1;
         bool                    mFontCreated : 1;

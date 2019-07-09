@@ -17,24 +17,6 @@ function run_test() {
 
   standardInit();
 
-  Assert.ok(!gUpdateManager.activeUpdate,
-            "there should not be an active update");
-  Assert.equal(gUpdateManager.updateCount, 1,
-               "the update manager update count" + MSG_SHOULD_EQUAL);
-  let update = gUpdateManager.getUpdateAt(0);
-  Assert.equal(update.state, STATE_FAILED,
-               "the first update state" + MSG_SHOULD_EQUAL);
-  Assert.equal(update.errorCode, ERR_UPDATE_STATE_NONE,
-               "the first update errorCode" + MSG_SHOULD_EQUAL);
-  Assert.equal(update.statusText, getString("statusFailed"),
-               "the first update statusText " + MSG_SHOULD_EQUAL);
-  do_execute_soon(waitForUpdateXMLFiles);
-}
-
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
   let dir = getUpdatesDir();
   dir.append(DIR_PATCH);
   Assert.ok(dir.exists(), MSG_SHOULD_EXIST);
@@ -42,6 +24,11 @@ function waitForUpdateXMLFilesFinished() {
   let statusFile = dir.clone();
   statusFile.append(FILE_UPDATE_STATUS);
   Assert.ok(!statusFile.exists(), MSG_SHOULD_NOT_EXIST);
+
+  Assert.ok(!gUpdateManager.activeUpdate,
+            "there should not be an active update");
+  Assert.equal(gUpdateManager.updateCount, 0,
+               "the update manager update count" + MSG_SHOULD_EQUAL);
 
   doTestFinish();
 }

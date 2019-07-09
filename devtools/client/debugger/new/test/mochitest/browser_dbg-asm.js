@@ -1,25 +1,15 @@
-add_task(async function() {
-  const dbg = await initDebugger("doc-asm.html");
-  await reload(dbg);
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-  // After reload() we are getting getSources notifiction for old sources,
-  // using the debugger statement to really stop are reloaded page.
-  await waitForPaused(dbg);
-  await resume(dbg);
+// Tests that asm.js AOT can be disabled and debugging of the asm.js code
+// is working.
 
-  await waitForSources(dbg, "doc-asm.html", "asm.js");
+const {
+  setupTestRunner,
+  asm
+} = require("devtools/client/debugger/new/integration-tests");
 
-  // Expand nodes and make sure more sources appear.
-  is(findAllElements(dbg, "sourceNodes").length, 2);
-
-  await clickElement(dbg, "sourceArrow", 2);
-  is(findAllElements(dbg, "sourceNodes").length, 4);
-
-  await selectSource(dbg, "asm.js");
-
-  await addBreakpoint(dbg, "asm.js", 7);
-  invokeInTab("runAsm");
-
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg, "asm.js", 7);
+add_task(function*() {
+  setupTestRunner(this);
+  yield asm(this);
 });

@@ -7,7 +7,6 @@
 #ifndef COMPATIBILITY_MANAGER_H
 #define COMPATIBILITY_MANAGER_H
 
-#include "nsString.h"
 #include <stdint.h>
 
 namespace mozilla {
@@ -46,21 +45,17 @@ public:
    */
   static uint16_t GetActCtxResourceId();
 
-  /**
-   * Return a string describing sConsumers suitable for about:support.
-   * Exposed through nsIXULRuntime.accessibilityInstantiator.
-   */
-  static void GetHumanReadableConsumersStr(nsAString &aResult);
-
-  /**
-   * Initialize compatibility mode information.
-   */
-  static void Init();
-
 private:
   Compatibility();
   Compatibility(const Compatibility&);
   Compatibility& operator = (const Compatibility&);
+
+  /**
+   * Initialize compatibility mode. Called by platform (see Platform.h) during
+   * accessibility initialization.
+   */
+  static void Init();
+  friend void PlatformInit();
 
   /**
    * List of detected consumers of a11y (used for statistics/telemetry and compat)
@@ -79,7 +74,6 @@ private:
     UNKNOWN = 1 << 10,
     UIAUTOMATION = 1 << 11
   };
-  #define CONSUMERS_ENUM_LEN 12
 
 private:
   static uint32_t sConsumers;

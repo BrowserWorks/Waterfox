@@ -11,6 +11,7 @@
 #include "nsICryptoHash.h"
 
 class nsIChannel;
+class nsIUnicharStreamLoader;
 class nsIConsoleReportCollector;
 
 namespace mozilla {
@@ -38,8 +39,8 @@ public:
    * must prevent the resource from loading.
    */
   static nsresult VerifyIntegrity(const SRIMetadata& aMetadata,
-                                  nsIChannel* aChannel,
-                                  const nsACString& aBytes,
+                                  nsIUnicharStreamLoader* aLoader,
+                                  const nsAString& aString,
                                   const nsACString& aSourceFileURI,
                                   nsIConsoleReportCollector* aReporter);
 };

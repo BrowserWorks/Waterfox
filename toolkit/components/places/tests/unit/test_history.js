@@ -18,7 +18,7 @@ var histsvc = Cc["@mozilla.org/browser/nav-history-service;1"].
 function uri_in_db(aURI) {
   var options = histsvc.getNewQueryOptions();
   options.maxResults = 1;
-  options.resultType = options.RESULTS_AS_URI;
+  options.resultType = options.RESULTS_AS_URI
   var query = histsvc.getNewQuery();
   query.uri = aURI;
   var result = histsvc.executeQuery(query, options);
@@ -30,6 +30,9 @@ function uri_in_db(aURI) {
 }
 
 // main
+function run_test() {
+  run_next_test();
+}
 
 add_task(async function test_execute() {
   // we have a new profile, so we should have imported bookmarks

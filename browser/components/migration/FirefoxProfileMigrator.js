@@ -1,6 +1,6 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set sw=2 ts=2 sts=2 et */
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+ * vim: sw=2 ts=2 sts=2 et */
+ /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -126,21 +126,13 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
     };
   };
 
-  function savePrefs() {
-    // If we've used the pref service to write prefs for the new profile, it's too
-    // early in startup for the service to have a profile directory, so we have to
-    // manually tell it where to save the prefs file.
-    let newPrefsFile = currentProfileDir.clone();
-    newPrefsFile.append("prefs.js");
-    Services.prefs.savePrefFile(newPrefsFile);
-  }
-
   let types = MigrationUtils.resourceTypes;
   let places = getFileResource(types.HISTORY, ["places.sqlite", "places.sqlite-wal"]);
   let favicons = getFileResource(types.HISTORY, ["favicons.sqlite", "favicons.sqlite-wal"]);
   let cookies = getFileResource(types.COOKIES, ["cookies.sqlite", "cookies.sqlite-wal"]);
   let passwords = getFileResource(types.PASSWORDS,
-    ["signons.sqlite", "logins.json", "key3.db", "key4.db"]);
+    ["signons.sqlite", "logins.json", "key3.db",
+     "signedInUser.json"]);
   let formData = getFileResource(types.FORMDATA, [
     "formhistory.sqlite",
     "autofill-profiles.json",
@@ -176,7 +168,11 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
             // session with the "what's new" page:
             Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
             Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
-            savePrefs();
+            // It's too early in startup for the pref service to have a profile directory,
+            // so we have to manually tell it where to save the prefs file.
+            let newPrefsFile = currentProfileDir.clone();
+            newPrefsFile.append("prefs.js");
+            Services.prefs.savePrefFile(newPrefsFile);
             aCallback(true);
           }, function() {
             aCallback(false);
@@ -185,37 +181,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
       };
     }
   }
-
-  // Sync/FxA related data
-  let sync = {
-    name: "sync", // name is used only by tests.
-    type: types.OTHERDATA,
-    migrate: async aCallback => {
-        // Try and parse a signedInUser.json file from the source directory and
-        // if we can, copy it to the new profile and set sync's username pref
-        // (which acts as a de-facto flag to indicate if sync is configured)
-      try {
-        let oldPath = OS.Path.join(sourceProfileDir.path, "signedInUser.json");
-        let exists = await OS.File.exists(oldPath);
-        if (exists) {
-          let raw = await OS.File.read(oldPath, {encoding: "utf-8"});
-          let data = JSON.parse(raw);
-          if (data && data.accountData && data.accountData.email) {
-            let username = data.accountData.email;
-            // Write it to prefs.js and flush the file.
-            Services.prefs.setStringPref("services.sync.username", username);
-            savePrefs();
-            // and copy the file itself.
-            await OS.File.copy(oldPath, OS.Path.join(currentProfileDir.path, "signedInUser.json"));
-          }
-        }
-      } catch (ex) {
-        aCallback(false);
-        return;
-      }
-      aCallback(true);
-    }
-  };
 
   // Telemetry related migrations.
   let times = {
@@ -287,7 +252,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
   };
 
   return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-          session, sync, times, telemetry, favicons].filter(r => r);
+          session, times, telemetry, favicons].filter(r => r);
 };
 
 Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {

@@ -40,9 +40,9 @@ interface Element : Node {
   DOMString? getAttribute(DOMString name);
   [Pure]
   DOMString? getAttributeNS(DOMString? namespace, DOMString localName);
-  [CEReactions, NeedsSubjectPrincipal, Throws]
+  [CEReactions, Throws]
   void setAttribute(DOMString name, DOMString value);
-  [CEReactions, NeedsSubjectPrincipal, Throws]
+  [CEReactions, Throws]
   void setAttributeNS(DOMString? namespace, DOMString name, DOMString value);
   [CEReactions, Throws]
   void removeAttribute(DOMString name);
@@ -225,6 +225,16 @@ partial interface Element {
   attribute DOMString outerHTML;
   [CEReactions, Throws]
   void insertAdjacentHTML(DOMString position, DOMString text);
+
+  /**
+   * Like the innerHTML setter, but does not sanitize its values, even in
+   * chrome-privileged documents.
+   *
+   * If you're thinking about using this, don't. You have many, much better
+   * options.
+   */
+  [ChromeOnly, Throws]
+  void unsafeSetInnerHTML(DOMString html);
 };
 
 // http://www.w3.org/TR/selectors-api/#interface-definitions
@@ -237,14 +247,12 @@ partial interface Element {
 
 // http://w3c.github.io/webcomponents/spec/shadow/#extensions-to-element-interface
 partial interface Element {
-  [Throws,Pref="dom.webcomponents.enabled"]
+  [Throws,Func="nsDocument::IsWebComponentsEnabled"]
   ShadowRoot createShadowRoot();
-  [Pref="dom.webcomponents.enabled"]
+  [Func="nsDocument::IsWebComponentsEnabled"]
   NodeList getDestinationInsertionPoints();
-  [Pref="dom.webcomponents.enabled"]
+  [Func="nsDocument::IsWebComponentsEnabled"]
   readonly attribute ShadowRoot? shadowRoot;
-  [Pref="dom.webcomponents.enabled"]
-  readonly attribute HTMLSlotElement? assignedSlot;
 };
 
 Element implements ChildNode;

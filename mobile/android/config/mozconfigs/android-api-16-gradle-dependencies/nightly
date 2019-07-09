@@ -7,7 +7,6 @@ MOZ_AUTOMATION_PACKAGE_TESTS=0
 MOZ_AUTOMATION_UPDATE_PACKAGING=0
 MOZ_AUTOMATION_UPLOAD=0
 MOZ_AUTOMATION_UPLOAD_SYMBOLS=0
-MOZ_AUTOMATION_PACKAGE_GENERATED_SOURCES=0
 
 NO_CACHE=1
 NO_NDK=1
@@ -48,17 +47,11 @@ STRIP_FLAGS="--strip-debug"
 
 export MOZILLA_OFFICIAL=1
 export MOZ_TELEMETRY_REPORTING=1
-export MOZ_ANDROID_POCKET=1
 
 . "$topsrcdir/mobile/android/config/mozconfigs/common.override"
 
 # End ../android-api-16-frontend/nightly.
 
-# Disable Keyfile Loading (and checks) since dependency fetching doesn't need these keys.
-# This overrides the settings in the common android mozconfig
-ac_add_options --without-mozilla-api-keyfile
-ac_add_options --without-google-api-keyfile
-# We need dummy Keyfiles in order to enable features we care about.
-ac_add_options --with-adjust-sdk-keyfile="$topsrcdir/mobile/android/base/adjust-sdk-sandbox.token"
-ac_add_options --with-leanplum-sdk-keyfile="$topsrcdir/mobile/android/base/leanplum-sdk-sandbox.token"
-ac_add_options --with-pocket-api-keyfile="$topsrcdir/mobile/android/base/pocket-api-sandbox.token"
+# Populated after checking out the sources and before building the
+# tree as part of the dependencies task bin/ scripts.
+ac_add_options --with-android-sdk="/home/worker/.mozbuild/android-sdk-linux"

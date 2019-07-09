@@ -11,7 +11,7 @@ info: >
   7. Let searchStr be ToString(searchString).
   8. ReturnIfAbrupt(searchStr).
   ...
-features: [Symbol, String.prototype.endsWith]
+features: [Symbol]
 ---*/
 
 var s = Symbol();

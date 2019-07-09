@@ -27,6 +27,10 @@ body {
   color: var(--theme-selection-color);
 }
 
+.theme-bg-darker {
+  background: var(--theme-selection-background-semitransparent);
+}
+
 .theme-selected,
 .CodeMirror-hint-active {
   background-color: var(--theme-selection-background);
@@ -41,7 +45,7 @@ body {
 .theme-link,
 .cm-s-mozilla .cm-link,
 .CodeMirror-Tern-type {
-  color: var(--theme-comment);
+  color: var(--theme-highlight-blue);
 }
 
 /*
@@ -63,6 +67,16 @@ body {
   color: var(--theme-comment);
 }
 
+.theme-gutter {
+  background-color: var(--theme-tab-toolbar-background);
+  color: var(--theme-content-color3);
+  border-color: var(--theme-splitter-color);
+}
+
+.theme-separator { /* grey */
+  border-color: #cddae5;
+}
+
 .cm-s-mozilla .cm-unused-line {
   text-decoration: line-through;
   text-decoration-color: var(--theme-highlight-bluegrey);
@@ -72,6 +86,7 @@ body {
   background-color: #fcfffc;
 }
 
+.theme-fg-color1,
 .cm-s-mozilla .cm-number,
 .variable-or-property .token-number,
 .variable-or-property[return] > .title > .name,
@@ -83,26 +98,16 @@ body {
   background-color: hsl(72,100%,27%);
 }
 
-.theme-fg-color1,
 .theme-fg-color2,
 .cm-s-mozilla .cm-attribute,
 .cm-s-mozilla .cm-builtin,
-.cm-s-mozilla .cm-keyword,
+.cm-s-mozilla .cm-property,
 .variables-view-variable > .title > .name {
   color: var(--theme-highlight-red);
 }
 
-.cm-s-mozilla .cm-def,
-.cm-s-mozilla .cm-variable-2 {
-  color: var(--blue-55);
-}
-
-.cm-s-mozilla .cm-variable {
-  color: var(--purple-60);
-}
-
-.cm-s-mozilla .cm-property {
-  color: var(--theme-highlight-green);
+.cm-s-mozilla .cm-def {
+  color: var(--theme-body-color);
 }
 
 .CodeMirror-Tern-completion-object:before {
@@ -110,7 +115,7 @@ body {
 }
 
 .theme-fg-color3,
-.theme-fg-color5,
+.cm-s-mozilla .cm-variable,
 .cm-s-mozilla .cm-tag,
 .cm-s-mozilla .cm-header,
 .cm-s-mozilla .cm-bracket,
@@ -125,6 +130,11 @@ body {
 
 .theme-fg-color4 {
   color: var(--theme-highlight-orange);
+}
+
+.theme-fg-color5,
+.cm-s-mozilla .cm-keyword {
+  color: var(--theme-highlight-red);
 }
 
 .theme-fg-color6,
@@ -173,7 +183,7 @@ body {
 }
 
 .ruleview-swatch,
-.computed-colorswatch {
+.computedview-colorswatch {
   box-shadow: 0 0 0 1px #c4c4c4;
 }
 
@@ -188,6 +198,7 @@ body {
 }
 
 .CodeMirror.cm-s-mozilla  pre,
+.cm-s-mozilla .cm-variable-2,
 .cm-s-mozilla .cm-variable-3,
 .cm-s-mozilla .cm-operator,
 .cm-s-mozilla .cm-special {

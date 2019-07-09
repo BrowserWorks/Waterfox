@@ -34,11 +34,6 @@ const callExpressionDefinitions = [
   /^this\.__defineGetter__\("(\w+)"/
 ];
 
-const callExpressionMultiDefinitions = [
-  "XPCOMUtils.defineLazyModuleGetters(this,",
-  "XPCOMUtils.defineLazyServiceGetters(this,"
-];
-
 const imports = [
   /^(?:Cu|Components\.utils)\.import\(".*\/((.*?)\.jsm?)"(?:, this)?\)/
 ];
@@ -286,14 +281,6 @@ module.exports = {
       }
     }
 
-    if (callExpressionMultiDefinitions.some(expr => source.startsWith(expr)) &&
-        node.expression.arguments[1] &&
-        node.expression.arguments[1].type === "ObjectExpression") {
-      return node.expression.arguments[1].properties
-                 .map(p => ({ name: p.type === "Property" && p.key.name, writable: true }))
-                 .filter(g => g.name);
-    }
-
     if (node.expression.callee.type == "MemberExpression" &&
         node.expression.callee.property.type == "Identifier" &&
         node.expression.callee.property.name == "defineLazyScriptGetter") {
@@ -388,8 +375,7 @@ module.exports = {
   getIsGlobalScope(ancestors) {
     for (let parent of ancestors) {
       if (parent.type == "FunctionExpression" ||
-          parent.type == "FunctionDeclaration" ||
-          parent.type == "ArrowFunctionExpression") {
+          parent.type == "FunctionDeclaration") {
         return false;
       }
     }
@@ -672,9 +658,5 @@ module.exports = {
 
   getSavedEnvironmentItems(environment) {
     return require("./environments/saved-globals.json").environments[environment];
-  },
-
-  getSavedRuleData(rule) {
-    return require("./rules/saved-rules-data.json").rulesData[rule];
   }
 };

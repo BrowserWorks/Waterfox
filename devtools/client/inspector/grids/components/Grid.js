@@ -88,7 +88,7 @@ module.exports = createClass({
       :
       dom.div(
         {
-          className: "devtools-sidepanel-no-result",
+          className: "layout-no-grids",
         },
         getStr("layout.noGridsOnThisPage")
       );

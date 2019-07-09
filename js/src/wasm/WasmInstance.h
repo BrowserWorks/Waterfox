@@ -22,7 +22,6 @@
 #include "gc/Barrier.h"
 #include "wasm/WasmCode.h"
 #include "wasm/WasmDebug.h"
-#include "wasm/WasmProcess.h"
 #include "wasm/WasmTable.h"
 
 namespace js {
@@ -72,7 +71,6 @@ class Instance
 {
     JSCompartment* const            compartment_;
     ReadBarrieredWasmInstanceObject object_;
-    GCPtrJitCode                    jsJitArgsRectifier_;
     const SharedCode                code_;
     const UniqueDebugState          debug_;
     const UniqueGlobalSegment       globals_;
@@ -118,13 +116,10 @@ class Instance
     bool isAsmJS() const { return metadata().isAsmJS(); }
     const SharedTableVector& tables() const { return tables_; }
     SharedMem<uint8_t*> memoryBase() const;
-    WasmMemoryObject* memory() const;
     size_t memoryLength() const;
     size_t memoryMappedSize() const;
     bool memoryAccessInGuardRegion(uint8_t* addr, unsigned numBytes) const;
     TlsData* tlsData() const { return globals_->tlsData(); }
-
-    static size_t offsetOfJSJitArgsRectifier() { return offsetof(Instance, jsJitArgsRectifier_); }
 
     // This method returns a pointer to the GC object that owns this Instance.
     // Instances may be reached via weak edges (e.g., Compartment::instances_)

@@ -6,7 +6,7 @@
 
 "use strict";
 
-const {Cc, Ci, Cu, CC} = require("chrome");
+const {Cc, Ci, Cu} = require("chrome");
 const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 const Services = require("Services");
 
@@ -20,12 +20,6 @@ loader.lazyGetter(this, "debug", function () {
 const childProcessMessageManager =
   Cc["@mozilla.org/childprocessmessagemanager;1"]
     .getService(Ci.nsISyncMessageSender);
-const BinaryInput = CC("@mozilla.org/binaryinputstream;1",
-                       "nsIBinaryInputStream", "setInputStream");
-const BufferStream = CC("@mozilla.org/io/arraybuffer-input-stream;1",
-                       "nsIArrayBufferInputStream", "setData");
-const encodingLength = 2;
-const encoder = new TextEncoder();
 
 // Localization
 loader.lazyGetter(this, "jsonViewStrings", () => {
@@ -58,8 +52,8 @@ Converter.prototype = {
    * 1. asyncConvertData captures the listener
    * 2. onStartRequest fires, initializes stuff, modifies the listener
    *    to match our output type
-   * 3. onDataAvailable converts to UTF-8 and spits back to the listener
-   * 4. onStopRequest flushes data and spits back to the listener
+   * 3. onDataAvailable spits it back to the listener
+   * 4. onStopRequest spits it back to the listener
    * 5. convert does nothing, it's just the synchronous version
    *    of asyncConvertData
    */
@@ -72,29 +66,7 @@ Converter.prototype = {
   },
 
   onDataAvailable: function (request, context, inputStream, offset, count) {
-    // If the encoding is not known, store data in an array until we have enough bytes.
-    if (this.encodingArray) {
-      let desired = encodingLength - this.encodingArray.length;
-      let n = Math.min(desired, count);
-      let bytes = new BinaryInput(inputStream).readByteArray(n);
-      offset += n;
-      count -= n;
-      this.encodingArray.push(...bytes);
-      if (n < desired) {
-        // Wait until there is more data.
-        return;
-      }
-      this.determineEncoding(request, context);
-    }
-
-    // Spit back the data if the encoding is UTF-8, otherwise convert it first.
-    if (!this.decoder) {
-      this.listener.onDataAvailable(request, context, inputStream, offset, count);
-    } else {
-      let buffer = new ArrayBuffer(count);
-      new BinaryInput(inputStream).readArrayBuffer(count, buffer);
-      this.convertAndSendBuffer(request, context, buffer);
-    }
+    this.listener.onDataAvailable(...arguments);
   },
 
   onStartRequest: function (request, context) {
@@ -103,6 +75,15 @@ Converter.prototype = {
     // to the plaintext state in order to parse the JSON.
     request.QueryInterface(Ci.nsIChannel);
     request.contentType = "text/html";
+
+    // Enforce strict CSP:
+    try {
+      request.QueryInterface(Ci.nsIHttpChannel);
+      request.setResponseHeader("Content-Security-Policy",
+        "default-src 'none' ; script-src resource:; ", false);
+    } catch (ex) {
+      // If this is not an HTTP channel we can't and won't do anything.
+    }
 
     // Don't honor the charset parameter and use UTF-8 (see bug 741776).
     request.contentCharset = "UTF-8";
@@ -120,80 +101,22 @@ Converter.prototype = {
 
     // Initialize stuff.
     let win = NetworkHelper.getWindowForRequest(request);
-    this.data = exportData(win, request);
+    exportData(win, request);
     win.addEventListener("DOMContentLoaded", event => {
       win.addEventListener("contentMessage", onContentMessage, false, true);
     }, {once: true});
-    keepThemeUpdated(win);
 
-    // Send the initial HTML code.
-    let bytes = encoder.encode(initialHTML(win.document));
-    this.convertAndSendBuffer(request, context, bytes.buffer);
-
-    // Create an array to store data until the encoding is determined.
-    this.encodingArray = [];
+    // Insert the initial HTML code.
+    let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                      .createInstance(Ci.nsIScriptableUnicodeConverter);
+    converter.charset = "UTF-8";
+    let stream = converter.convertToInputStream(initialHTML(win.document));
+    this.listener.onDataAvailable(request, context, stream, 0, stream.available());
   },
 
   onStopRequest: function (request, context, statusCode) {
-    // Flush data.
-    if (this.encodingArray) {
-      this.determineEncoding(request, context, true);
-    } else {
-      this.convertAndSendBuffer(request, context, new ArrayBuffer(0), true);
-    }
-
-    // Stop the request.
     this.listener.onStopRequest(request, context, statusCode);
     this.listener = null;
-    this.decoder = null;
-    this.data = null;
-  },
-
-  // Determines the encoding of the response.
-  determineEncoding: function (request, context, flush = false) {
-    // Determine the encoding using the bytes in encodingArray, defaulting to UTF-8.
-    // An initial byte order mark character (U+FEFF) does the trick.
-    // If there is no BOM, since the first character of valid JSON will be ASCII,
-    // the pattern of nulls in the first two bytes can be used instead.
-    //  - UTF-16BE:  00 xx  or  FE FF
-    //  - UTF-16LE:  xx 00  or  FF FE
-    //  - UTF-8:  anything else.
-    let encoding = "UTF-8";
-    let bytes = this.encodingArray;
-    if (bytes.length >= 2) {
-      if (!bytes[0] && bytes[1] || bytes[0] == 0xFE && bytes[1] == 0xFF) {
-        encoding = "UTF-16BE";
-      } else if (bytes[0] && !bytes[1] || bytes[0] == 0xFF && bytes[1] == 0xFE) {
-        encoding = "UTF-16LE";
-      }
-    }
-
-    // Create a decoder unless the data is already in UTF-8.
-    if (encoding !== "UTF-8") {
-      this.decoder = new TextDecoder(encoding, {ignoreBOM: true});
-    }
-
-    this.data.encoding = encoding;
-
-    // Send the bytes in encodingArray, and remove it.
-    let buffer = new Uint8Array(bytes).buffer;
-    this.convertAndSendBuffer(request, context, buffer, flush);
-    this.encodingArray = null;
-  },
-
-  // Converts an ArrayBuffer to UTF-8 and sends it.
-  convertAndSendBuffer: function (request, context, buffer, flush = false) {
-    // If the encoding is not UTF-8, decode the buffer and encode into UTF-8.
-    if (this.decoder) {
-      let data = this.decoder.decode(buffer, {stream: !flush});
-      buffer = encoder.encode(data).buffer;
-    }
-
-    // Create an input stream that contains the bytes in the buffer.
-    let stream = new BufferStream(buffer, 0, buffer.byteLength);
-
-    // Send the input stream.
-    this.listener.onDataAvailable(request, context, stream, 0, stream.available());
   }
 };
 
@@ -263,8 +186,6 @@ function exportData(win, request) {
     });
   }
   data.headers = Cu.cloneInto(headers, win);
-
-  return data;
 }
 
 // Serializes a qualifiedName and an optional set of attributes into an HTML
@@ -294,8 +215,6 @@ function initialHTML(doc) {
     os = "linux";
   }
 
-  // The base URI is prepended to all URIs instead of using a <base> element
-  // because the latter can be blocked by a CSP base-uri directive (bug 1316393)
   let baseURI = "resource://devtools-client-jsonview/";
 
   let style = doc.createElement("link");
@@ -323,18 +242,6 @@ function initialHTML(doc) {
     startTag("plaintext", {"id": "json"});
 }
 
-function keepThemeUpdated(win) {
-  let listener = function () {
-    let theme = Services.prefs.getCharPref("devtools.theme");
-    win.document.documentElement.className = "theme-" + theme;
-  };
-  Services.prefs.addObserver("devtools.theme", listener);
-  win.addEventListener("unload", function (event) {
-    Services.prefs.removeObserver("devtools.theme", listener);
-    win = null;
-  }, {once: true});
-}
-
 // Chrome <-> Content communication
 function onContentMessage(e) {
   // Do not handle events from different documents.
@@ -354,8 +261,11 @@ function onContentMessage(e) {
       break;
 
     case "save":
+      // The window ID is needed when the JSON Viewer is inside an iframe.
+      let windowID = win.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
       childProcessMessageManager.sendAsyncMessage(
-        "devtools:jsonview:save", value);
+        "devtools:jsonview:save", {url: value, windowID: windowID});
   }
 }
 

@@ -6,13 +6,11 @@
 /* Variable declarations for light and dark devtools themes.
  * Colors are taken from:
  * https://developer.mozilla.org/en-US/docs/Tools/DevToolsColors.
+ * Changes should be kept in sync with commandline.css and commandline.inc.css.
  */
 
-/*
- * IMPORTANT NOTE
- * 1. Changes should be kept in sync with commandline.css and commandline-browser.css.
- *
- * 2. This file is parsed in js (see client/shared/theme.js)
+/* IMPORTANT NOTE:
+ * This file is parsed in js (see client/shared/theme.js)
  * so the formatting should be consistent (i.e. no '}' inside a rule).
  */
 
@@ -21,49 +19,36 @@
   --theme-sidebar-background: white;
   --theme-contrast-background: #e6b064;
 
-  /* Toolbar */
-  --theme-tab-toolbar-background: var(--grey-10);
-  --theme-toolbar-background: var(--grey-10);
-  --theme-toolbar-color: var(--grey-90);
-  --theme-toolbar-selected-color: var(--blue-60);
-  --theme-toolbar-checked-color: var(--blue-60);
-  --theme-toolbar-highlighted-color: var(--green-60);
+  --theme-tab-toolbar-background: #fcfcfc;
+  --theme-toolbar-background: #fcfcfc;
   --theme-toolbar-background-hover: rgba(221, 225, 228, 0.66);
   --theme-toolbar-background-alt: #f5f5f5;
-  --theme-toolbar-hover: var(--grey-20);
-  --theme-toolbar-hover-active: var(--grey-20);
-
-  /* Selection */
-  --theme-selection-background: var(--blue-55);
-  --theme-selection-background-hover: #F0F9FE;
-  --theme-selection-color: #ffffff;
-
-  /* Border color that splits the toolbars/panels/headers.
-   * This needs to be sync with commandline.css and commandline-browser.css. */
-  --theme-splitter-color: #e0e0e1;
-
-  --theme-comment: var(--grey-50);
+  --theme-toolbar-hover: rgba(170, 170, 170, .2);
+  --theme-toolbar-hover-active: rgba(170, 170, 170, .4);
+  --theme-selection-background: #4c9ed9;
+  --theme-selection-background-semitransparent: rgba(76, 158, 217, 0.15);
+  --theme-selection-color: #f5f7fa;
+  --theme-splitter-color: #dde1e4;
+  --theme-comment: #696969;
   --theme-comment-alt: #ccd1d5;
 
-  --theme-body-color: var(--grey-60);
-  --theme-body-color-alt: var(--grey-40);
+  --theme-body-color: #393f4c;
+  --theme-body-color-alt: #585959;
   --theme-body-color-inactive: #999797;
   --theme-content-color1: #292e33;
   --theme-content-color2: #8fa1b2;
   --theme-content-color3: #667380;
 
-  --theme-highlight-green: var(--green-70);
-  --theme-highlight-blue: var(--blue-55);
-  --theme-highlight-purple: var(--blue-70);
-  --theme-highlight-red: var(--magenta-65);
-  --theme-highlight-yellow: #FFF89E;
-
-  /* These theme-highlight color variables have not been photonized. */
+  --theme-highlight-green: #2cbb0f;
+  --theme-highlight-blue: #0088cc;
   --theme-highlight-bluegrey: #0072ab;
+  --theme-highlight-purple: #5b5fff;
   --theme-highlight-lightorange: #d97e00;
   --theme-highlight-orange: #f13c00;
+  --theme-highlight-red: #ed2655;
   --theme-highlight-pink: #b82ee5;
   --theme-highlight-gray: #dde1e4;
+  --theme-highlight-yellow: #ffffb4;
 
   /* For accessibility purposes we want to enhance the focus styling. This
    * should improve keyboard navigation usability. */
@@ -85,9 +70,6 @@
   --theme-pane-collapse-image: url(chrome://devtools/skin/images/pane-collapse.svg);
   --theme-pane-expand-image: url(chrome://devtools/skin/images/pane-expand.svg);
 
-  /* Icon filters */
-  --theme-icon-checked-filter: url(chrome://devtools/skin/images/filters.svg#icon-checked-light);
-
   /* Tooltips */
   --theme-tooltip-border: #d9e1e8;
   --theme-tooltip-background: rgba(255, 255, 255, .9);
@@ -98,57 +80,43 @@
   --theme-command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#light-theme-focus);
 
   --theme-codemirror-gutter-background: #f4f4f4;
-  --theme-messageCloseButtonFilter: invert(0);
 }
 
 :root.theme-dark {
-  --theme-body-background: var(--grey-80);
-  --theme-sidebar-background: var(--grey-90);
+  --theme-body-background: #393f4c;
+  --theme-sidebar-background: #393f4c;
   --theme-contrast-background: #ffb35b;
 
-  /* Toolbar */
-  --theme-tab-toolbar-background: var(--grey-90);
-  --theme-toolbar-background: var(--grey-90);
-  --theme-toolbar-color: var(--grey-40);
-  --theme-toolbar-selected-color: white;
-  --theme-toolbar-checked-color: #75BFFF;
-  --theme-toolbar-highlighted-color: var(--green-50);
+  --theme-tab-toolbar-background: #272b35;
+  --theme-toolbar-background: #272b35;
   --theme-toolbar-background-hover: #20232B;
   --theme-toolbar-background-alt: #2F343E;
-  --theme-toolbar-hover: #252526;
-  --theme-toolbar-hover-active: #252526;
+  --theme-toolbar-hover: rgba(110, 120, 130, 0.1);
+  --theme-toolbar-hover-active: rgba(110, 120, 130, 0.2);
+  --theme-selection-background: #5675B9;
+  --theme-selection-background-semitransparent: rgba(86, 117, 185, 0.5);
+  --theme-selection-color: #f5f7fa;
+  --theme-splitter-color: #454d5d;
+  --theme-comment: #757873;
+  --theme-comment-alt: #5a6375;
 
-  /* Selection */
-  --theme-selection-background: #204E8A;
-  --theme-selection-background-hover: #353B48;
-  --theme-selection-color: #ffffff;
+  --theme-body-color: #8fa1b2;
+  --theme-body-color-alt: #b6babf;
+  --theme-body-color-inactive: #8fa1b2;
+  --theme-content-color1: #a9bacb;
+  --theme-content-color2: #8fa1b2;
+  --theme-content-color3: #5f7387;
 
-  /* Border color that splits the toolbars/panels/headers.
-   * This needs to be sync with commandline.css and commandline-browser.css. */
-  --theme-splitter-color: #3c3c3d;
-
-  --theme-comment: #939393;
-  --theme-comment-alt: #939393;
-
-  --theme-body-color: var(--grey-40);
-  --theme-body-color-alt: var(--grey-50);
-  --theme-body-color-inactive: var(--grey-40);
-  --theme-content-color1: var(--grey-30);
-  --theme-content-color2: var(--grey-40);
-  --theme-content-color3: #939393;
-
-  --theme-highlight-green: #86DE74;
-  --theme-highlight-blue: #75BFFF;
-  --theme-highlight-purple: #B98EFF;
-  --theme-highlight-red: #FF7DE9;
-  --theme-highlight-yellow: #FFF89E;
-
-  /* These theme-highlight color variables have not been photonized. */
+  --theme-highlight-green: #00ff7f;
+  --theme-highlight-blue: #46afe3;
   --theme-highlight-bluegrey: #5e88b0;
+  --theme-highlight-purple: #bcb8db;
   --theme-highlight-lightorange: #d99b28;
   --theme-highlight-orange: #d96629;
+  --theme-highlight-red: #eb5368;
   --theme-highlight-pink: #df80ff;
   --theme-highlight-gray: #e9f4fe;
+  --theme-highlight-yellow: #ffffb4;
 
   /* For accessibility purposes we want to enhance the focus styling. This
    * should improve keyboard navigation usability. */
@@ -170,9 +138,6 @@
   --theme-pane-collapse-image: url(chrome://devtools/skin/images/pane-collapse.svg);
   --theme-pane-expand-image: url(chrome://devtools/skin/images/pane-expand.svg);
 
-  /* Icon filters */
-  --theme-icon-checked-filter: url(chrome://devtools/skin/images/filters.svg#icon-checked-dark);
-
   /* Tooltips */
   --theme-tooltip-border: #434850;
   --theme-tooltip-background: rgba(19, 28, 38, .9);
@@ -183,7 +148,6 @@
   --theme-command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#dark-theme-focus);
 
   --theme-codemirror-gutter-background: #262b37;
-  --theme-messageCloseButtonFilter: invert(1);
 }
 
 :root.theme-firebug {
@@ -195,7 +159,7 @@
   --theme-toolbar-background: rgb(240, 240, 240) linear-gradient(rgba(255, 255, 255, 0.8), transparent);
   --theme-toolbar-tab-selected-background: rgb(253, 253, 253);
   --theme-selection-background: #3399ff;
-  --theme-selection-background-hover: rgba(128,128,128,0.2);
+  --theme-selection-background-semitransparent: rgba(128,128,128,0.2);
   --theme-selection-color: white;
   --theme-splitter-color: #bfbfbf;
   --theme-comment: darkgreen;
@@ -231,9 +195,6 @@
   /* Images */
   --theme-pane-collapse-image: url(chrome://devtools/skin/images/firebug/pane-collapse.svg);
   --theme-pane-expand-image: url(chrome://devtools/skin/images/firebug/pane-expand.svg);
-
-  /* Icon filters */
-  --theme-icon-checked-filter: url(chrome://devtools/skin/images/filters.svg#icon-checked-light);
 
   /* Font size */
   --theme-toolbar-font-size: 12px;
@@ -274,43 +235,11 @@
   --theme-focus-outline: 1px dotted var(--theme-focus-outline-color);
   --theme-focus-box-shadow-textbox: 0 0 0 1px var(--theme-textbox-box-shadow);
 
-  --toolbarbutton-background: var(--theme-toolbar-hover);
+  --toolbarbutton-background: rgba(110,120,130,0.1);
   --toolbarbutton-border-color: transparent;
   --toolbarbutton-hover-background: rgba(110,120,130,0.2);
   --toolbarbutton-hover-border-color: var(--toolbarbutton-border-color);
   --toolbarbutton-checked-background: var(--theme-selection-background);
   --toolbarbutton-checked-color: var(--theme-selection-color);
   --toolbarbutton-checked-border-color: var(--toolbarbutton-border-color);
-
-  /* The photon animation curve */
-  --animation-curve: cubic-bezier(.07,.95,0,1);
-
-  /* Firefox Colors CSS Variables v1.0.3
-   * Colors are taken from: https://github.com/FirefoxUX/design-tokens */
-  --magenta-65: #dd00a9;
-
-  --purple-60: #8000d7;
-
-  --blue-50: #0a84ff;
-  --blue-55: #0074e8;
-  --blue-60: #0060df;
-  --blue-70: #003eaa;
-
-  --red-70: #a4000f;
-
-  --green-50: #30e60b;
-  --green-60: #12bc00;
-  --green-70: #058b00;
-
-  --yellow-80: #715100;
-
-  --grey-10: #f9f9fa;
-  --grey-20: #ededf0;
-  --grey-30: #d7d7db;
-  --grey-40: #b1b1b3;
-  --grey-50: #737373;
-  --grey-60: #4a4a4f;
-  --grey-70: #38383d;
-  --grey-80: #2a2a2e;
-  --grey-90: #0c0c0d;
 }

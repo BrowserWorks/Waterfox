@@ -3,15 +3,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "txIXPathContext.h"
 #include "txNodeSet.h"
 #include "txExpr.h"
 #include "txXPathTreeWalker.h"
 
 txNamedAttributeStep::txNamedAttributeStep(int32_t aNsID,
-                                           nsAtom* aPrefix,
-                                           nsAtom* aLocalName)
+                                           nsIAtom* aPrefix,
+                                           nsIAtom* aLocalName)
     : mNamespace(aNsID),
       mPrefix(aPrefix),
       mLocalName(aLocalName)

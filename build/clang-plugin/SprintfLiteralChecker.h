@@ -9,9 +9,10 @@
 
 class SprintfLiteralChecker : public BaseCheck {
 public:
-  SprintfLiteralChecker(StringRef CheckName, ContextType *Context = nullptr)
-      : BaseCheck(CheckName, Context) {}
-  void registerMatchers(MatchFinder *AstMatcher) override;
+  SprintfLiteralChecker(StringRef CheckName,
+                        ContextType *Context = nullptr)
+    : BaseCheck(CheckName, Context) {}
+  void registerMatchers(MatchFinder* AstMatcher) override;
   void check(const MatchFinder::MatchResult &Result) override;
 };
 

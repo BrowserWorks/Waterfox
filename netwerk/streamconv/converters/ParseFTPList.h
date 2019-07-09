@@ -97,12 +97,8 @@ struct list_result
                                   /* (converting all-upcase names may be desirable) */
 };
 
-typedef PRTime (*NowTimeFn)();
-
 int ParseFTPList(const char *line,
                  struct list_state *state,
-                 struct list_result *result,
-                 PRTimeParamFn timeParam = PR_LocalTimeParameters,
-                 NowTimeFn nowTimeFn = PR_Now);
+                 struct list_result *result );
 
 #endif /* !ParseRTPList_h___ */

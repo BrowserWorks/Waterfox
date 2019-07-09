@@ -8,7 +8,7 @@
 
 // Keep others in (case-insensitive) order:
 #include "gfxContext.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "mozilla/dom/SVGMarkerElement.h"
 #include "SVGGeometryElement.h"
 #include "SVGGeometryFrame.h"
@@ -30,7 +30,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsSVGMarkerFrame)
 
 nsresult
 nsSVGMarkerFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                   nsAtom* aAttribute,
+                                   nsIAtom* aAttribute,
                                    int32_t  aModType)
 {
   if (aNameSpaceID == kNameSpaceID_None &&
@@ -42,7 +42,7 @@ nsSVGMarkerFrame::AttributeChanged(int32_t  aNameSpaceID,
        aAttribute == nsGkAtoms::orient ||
        aAttribute == nsGkAtoms::preserveAspectRatio ||
        aAttribute == nsGkAtoms::viewBox)) {
-    SVGObserverUtils::InvalidateDirectRenderingObservers(this);
+    nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
   return nsSVGContainerFrame::AttributeChanged(aNameSpaceID,
@@ -74,7 +74,7 @@ nsSVGMarkerFrame::GetCanvasTM()
     return gfxMatrix();
   }
 
-  SVGMarkerElement *content = static_cast<SVGMarkerElement*>(GetContent());
+  SVGMarkerElement *content = static_cast<SVGMarkerElement*>(mContent);
 
   mInUse2 = true;
   gfxMatrix markedTM = mMarkedFrame->GetCanvasTM();
@@ -110,7 +110,7 @@ nsSVGMarkerFrame::PaintMark(gfxContext& aContext,
 
   AutoMarkerReferencer markerRef(this, aMarkedFrame);
 
-  SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(GetContent());
+  SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(mContent);
   if (!marker->HasValidDimensions()) {
     return;
   }
@@ -165,7 +165,7 @@ nsSVGMarkerFrame::GetMarkBBoxContribution(const Matrix& aToBBoxUserspace,
 
   AutoMarkerReferencer markerRef(this, aMarkedFrame);
 
-  SVGMarkerElement *content = static_cast<SVGMarkerElement*>(GetContent());
+  SVGMarkerElement *content = static_cast<SVGMarkerElement*>(mContent);
   if (!content->HasValidDimensions()) {
     return bbox;
   }
@@ -194,9 +194,9 @@ nsSVGMarkerFrame::GetMarkBBoxContribution(const Matrix& aToBBoxUserspace,
 }
 
 void
-nsSVGMarkerFrame::SetParentCoordCtxProvider(SVGViewportElement *aContext)
+nsSVGMarkerFrame::SetParentCoordCtxProvider(SVGSVGElement *aContext)
 {
-  SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(GetContent());
+  SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(mContent);
   marker->SetParentCoordCtxProvider(aContext);
 }
 
@@ -219,7 +219,7 @@ nsSVGMarkerFrame::AutoMarkerReferencer::AutoMarkerReferencer(
   mFrame->mInUse = true;
   mFrame->mMarkedFrame = aMarkedFrame;
 
-  SVGViewportElement *ctx =
+  SVGSVGElement *ctx =
     static_cast<nsSVGElement*>(aMarkedFrame->GetContent())->GetCtx();
   mFrame->SetParentCoordCtxProvider(ctx);
 }

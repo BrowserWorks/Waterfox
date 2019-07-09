@@ -3,35 +3,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /// Gecko's pseudo-element definition.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PseudoElement {
     % for pseudo in PSEUDOS:
         /// ${pseudo.value}
         % if pseudo.is_tree_pseudo_element():
-        ${pseudo.capitalized()}(Box<[Atom]>),
+        ${pseudo.capitalized()}(Box<[String]>),
         % else:
         ${pseudo.capitalized()},
         % endif
     % endfor
 }
 
-/// Important: If you change this, you should also update Gecko's
-/// nsCSSPseudoElements::IsEagerlyCascadedInServo.
 <% EAGER_PSEUDOS = ["Before", "After", "FirstLine", "FirstLetter"] %>
-<% TREE_PSEUDOS = [pseudo for pseudo in PSEUDOS if pseudo.is_tree_pseudo_element()] %>
-<% SIMPLE_PSEUDOS = [pseudo for pseudo in PSEUDOS if not pseudo.is_tree_pseudo_element()] %>
 
 /// The number of eager pseudo-elements.
 pub const EAGER_PSEUDO_COUNT: usize = ${len(EAGER_PSEUDOS)};
-
-/// The number of non-functional pseudo-elements.
-pub const SIMPLE_PSEUDO_COUNT: usize = ${len(SIMPLE_PSEUDOS)};
-
-/// The number of tree pseudo-elements.
-pub const TREE_PSEUDO_COUNT: usize = ${len(TREE_PSEUDOS)};
-
-/// The number of all pseudo-elements.
-pub const PSEUDO_COUNT: usize = ${len(PSEUDOS)};
 
 /// The list of eager pseudos.
 pub const EAGER_PSEUDOS: [PseudoElement; EAGER_PSEUDO_COUNT] = [
@@ -40,11 +27,24 @@ pub const EAGER_PSEUDOS: [PseudoElement; EAGER_PSEUDO_COUNT] = [
     % endfor
 ];
 
+<% TREE_PSEUDOS = [pseudo for pseudo in PSEUDOS if pseudo.is_tree_pseudo_element()] %>
+<% SIMPLE_PSEUDOS = [pseudo for pseudo in PSEUDOS if not pseudo.is_tree_pseudo_element()] %>
+
 <%def name="pseudo_element_variant(pseudo, tree_arg='..')">\
 PseudoElement::${pseudo.capitalized()}${"({})".format(tree_arg) if pseudo.is_tree_pseudo_element() else ""}\
 </%def>
 
 impl PseudoElement {
+    /// Executes a closure with each simple (not functional)
+    /// pseudo-element as an argument.
+    pub fn each_simple<F>(mut fun: F)
+        where F: FnMut(Self),
+    {
+        % for pseudo in SIMPLE_PSEUDOS:
+            fun(${pseudo_element_variant(pseudo)});
+        % endfor
+    }
+
     /// Get the pseudo-element as an atom.
     #[inline]
     pub fn atom(&self) -> Atom {
@@ -55,28 +55,9 @@ impl PseudoElement {
         }
     }
 
-    /// Returns an index of the pseudo-element.
-    #[inline]
-    pub fn index(&self) -> usize {
-        match *self {
-            % for i, pseudo in enumerate(PSEUDOS):
-            ${pseudo_element_variant(pseudo)} => ${i},
-            % endfor
-        }
-    }
-
-    /// Returns an array of `None` values.
-    ///
-    /// FIXME(emilio): Integer generics can't come soon enough.
-    pub fn pseudo_none_array<T>() -> [Option<T>; PSEUDO_COUNT] {
-        [
-            ${",\n            ".join(["None" for pseudo in PSEUDOS])}
-        ]
-    }
-
     /// Whether this pseudo-element is an anonymous box.
     #[inline]
-    pub fn is_anon_box(&self) -> bool {
+    fn is_anon_box(&self) -> bool {
         match *self {
             % for pseudo in PSEUDOS:
                 % if pseudo.is_anon_box():
@@ -92,17 +73,6 @@ impl PseudoElement {
     pub fn is_eager(&self) -> bool {
         matches!(*self,
                  ${" | ".join(map(lambda name: "PseudoElement::{}".format(name), EAGER_PSEUDOS))})
-    }
-
-    /// Whether this pseudo-element is tree pseudo-element.
-    #[inline]
-    pub fn is_tree_pseudo_element(&self) -> bool {
-        match *self {
-            % for pseudo in TREE_PSEUDOS:
-            ${pseudo_element_variant(pseudo)} => true,
-            % endfor
-            _ => false,
-        }
     }
 
     /// Gets the flags associated to this pseudo-element, or 0 if it's an
@@ -147,7 +117,7 @@ impl PseudoElement {
                 % if not pseudo.is_anon_box():
                     PseudoElement::${pseudo.capitalized()} => CSSPseudoElementType::${pseudo.original_ident},
                 % elif pseudo.is_tree_pseudo_element():
-                    PseudoElement::${pseudo.capitalized()}(..) => CSSPseudoElementType::XULTree,
+                    PseudoElement::${pseudo.capitalized()}(..) => CSSPseudoElementType_InheritingAnonBox,
                 % elif pseudo.is_inheriting_anon_box():
                     PseudoElement::${pseudo.capitalized()} => CSSPseudoElementType_InheritingAnonBox,
                 % else:
@@ -158,19 +128,8 @@ impl PseudoElement {
     }
 
     /// Get a PseudoInfo for a pseudo
-    pub fn pseudo_info(&self) -> (*mut structs::nsAtom, CSSPseudoElementType) {
+    pub fn pseudo_info(&self) -> (*mut structs::nsIAtom, CSSPseudoElementType) {
         (self.atom().as_ptr(), self.pseudo_type())
-    }
-
-    /// Get the argument list of a tree pseudo-element.
-    #[inline]
-    pub fn tree_pseudo_args(&self) -> Option<<&[Atom]> {
-        match *self {
-            % for pseudo in TREE_PSEUDOS:
-            PseudoElement::${pseudo.capitalized()}(ref args) => Some(args),
-            % endfor
-            _ => None,
-        }
     }
 
     /// Construct a pseudo-element from an `Atom`.
@@ -203,19 +162,6 @@ impl PseudoElement {
         None
     }
 
-    /// Construct a tree pseudo-element from atom and args.
-    #[inline]
-    pub fn from_tree_pseudo_atom(atom: &Atom, args: Box<[Atom]>) -> Option<Self> {
-        % for pseudo in PSEUDOS:
-            % if pseudo.is_tree_pseudo_element():
-                if atom == &atom!("${pseudo.value}") {
-                    return Some(PseudoElement::${pseudo.capitalized()}(args));
-                }
-            % endif
-        % endfor
-        None
-    }
-
     /// Constructs an atom from a string of text, and whether we're in a
     /// user-agent stylesheet.
     ///
@@ -225,7 +171,7 @@ impl PseudoElement {
     /// Returns `None` if the pseudo-element is not recognised.
     #[inline]
     pub fn from_slice(s: &str, in_ua_stylesheet: bool) -> Option<Self> {
-        use std::ascii::AsciiExt;
+        #[allow(unused_imports)] use std::ascii::AsciiExt;
 
         // We don't need to support tree pseudos because functional
         // pseudo-elements needs arguments, and thus should be created
@@ -246,8 +192,8 @@ impl PseudoElement {
     ///
     /// Returns `None` if the pseudo-element is not recognized.
     #[inline]
-    pub fn tree_pseudo_element(name: &str, args: Box<[Atom]>) -> Option<Self> {
-        use std::ascii::AsciiExt;
+    pub fn tree_pseudo_element(name: &str, args: Box<[String]>) -> Option<Self> {
+        #[allow(unused_imports)] use std::ascii::AsciiExt;
         debug_assert!(name.starts_with("-moz-tree-"));
         let tree_part = &name[10..];
         % for pseudo in TREE_PSEUDOS:
@@ -267,20 +213,21 @@ impl ToCss for PseudoElement {
                 ${pseudo_element_variant(pseudo)} => dest.write_str("${pseudo.value}")?,
             % endfor
         }
-        if let Some(args) = self.tree_pseudo_args() {
-            if !args.is_empty() {
+        match *self {
+            ${" |\n            ".join("PseudoElement::{}(ref args)".format(pseudo.capitalized())
+                                      for pseudo in TREE_PSEUDOS)} => {
                 dest.write_char('(')?;
                 let mut iter = args.iter();
                 if let Some(first) = iter.next() {
-                    serialize_identifier(&first.to_string(), dest)?;
+                    serialize_identifier(first, dest)?;
                     for item in iter {
                         dest.write_str(", ")?;
-                        serialize_identifier(&item.to_string(), dest)?;
+                        serialize_identifier(item, dest)?;
                     }
                 }
-                dest.write_char(')')?;
+                dest.write_char(')')
             }
+            _ => Ok(()),
         }
-        Ok(())
     }
 }

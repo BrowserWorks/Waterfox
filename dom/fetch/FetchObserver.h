@@ -9,13 +9,13 @@
 
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/FetchObserverBinding.h"
-#include "mozilla/dom/AbortSignal.h"
+#include "mozilla/dom/FetchSignal.h"
 
 namespace mozilla {
 namespace dom {
 
 class FetchObserver final : public DOMEventTargetHelper
-                          , public AbortFollower
+                          , public FetchSignal::Follower
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -24,7 +24,7 @@ public:
   static bool
   IsEnabled(JSContext* aCx, JSObject* aGlobal);
 
-  FetchObserver(nsIGlobalObject* aGlobal, AbortSignal* aSignal);
+  FetchObserver(nsIGlobalObject* aGlobal, FetchSignal* aSignal);
 
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -37,7 +37,7 @@ public:
   IMPL_EVENT_HANDLER(responseprogress);
 
   void
-  Abort() override;
+  Aborted() override;
 
   void
   SetState(FetchState aState);

@@ -27,7 +27,6 @@ info: >
   ...
 flags: [onlyStrict]
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

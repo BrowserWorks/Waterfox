@@ -214,8 +214,7 @@ private:
 
   void AddToOwner(nsIDocument* aLoadingDocument);
 
-  nsresult DispatchWithTargetIfAvailable(already_AddRefed<nsIRunnable> aEvent);
-  void DispatchWithTarget(already_AddRefed<nsIRunnable> aEvent);
+  void Dispatch(already_AddRefed<nsIRunnable> aEvent);
 
   // The URI of our request.
   RefPtr<ImageURL> mURI;

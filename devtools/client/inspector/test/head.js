@@ -299,16 +299,16 @@ var clickContainer = Task.async(function* (selector, inspector) {
  */
 function mouseLeaveMarkupView(inspector) {
   info("Leaving the markup-view area");
+  let def = defer();
 
   // Find another element to mouseover over in order to leave the markup-view
   let btn = inspector.toolbox.doc.querySelector("#toolbox-controls");
 
   EventUtils.synthesizeMouseAtCenter(btn, {type: "mousemove"},
     inspector.toolbox.win);
+  executeSoon(def.resolve);
 
-  return new Promise(resolve => {
-    executeSoon(resolve);
-  });
+  return def.promise;
 }
 
 /**
@@ -447,12 +447,8 @@ const getHighlighterHelperFor = (type) => Task.async(
         return highlighter.actorID;
       },
 
-      show: function* (selector = ":root", options, frameSelector = null) {
-        if (frameSelector) {
-          highlightedNode = yield getNodeFrontInFrame(selector, frameSelector, inspector);
-        } else {
-          highlightedNode = yield getNodeFront(selector, inspector);
-        }
+      show: function* (selector = ":root", options) {
+        highlightedNode = yield getNodeFront(selector, inspector);
         return yield highlighter.show(highlightedNode, options);
       },
 
@@ -551,11 +547,11 @@ function* waitForMultipleChildrenUpdates(inspector) {
  */
 function waitForChildrenUpdated({markup}) {
   info("Waiting for queued children updates to be handled");
-  return new Promise(resolve => {
-    markup._waitForChildren().then(() => {
-      executeSoon(resolve);
-    });
+  let def = defer();
+  markup._waitForChildren().then(() => {
+    executeSoon(def.resolve);
   });
+  return def.promise;
 }
 
 /**
@@ -570,42 +566,43 @@ function waitForChildrenUpdated({markup}) {
  * ready
  */
 function waitForStyleEditor(toolbox, href) {
+  let def = defer();
+
   info("Waiting for the toolbox to switch to the styleeditor");
+  toolbox.once("styleeditor-selected").then(() => {
+    let panel = toolbox.getCurrentPanel();
+    ok(panel && panel.UI, "Styleeditor panel switched to front");
 
-  return new Promise(resolve => {
-    toolbox.once("styleeditor-selected").then(() => {
-      let panel = toolbox.getCurrentPanel();
-      ok(panel && panel.UI, "Styleeditor panel switched to front");
+    // A helper that resolves the promise once it receives an editor that
+    // matches the expected href. Returns false if the editor was not correct.
+    let gotEditor = (event, editor) => {
+      let currentHref = editor.styleSheet.href;
+      if (!href || (href && currentHref.endsWith(href))) {
+        info("Stylesheet editor selected");
+        panel.UI.off("editor-selected", gotEditor);
 
-      // A helper that resolves the promise once it receives an editor that
-      // matches the expected href. Returns false if the editor was not correct.
-      let gotEditor = (event, editor) => {
-        let currentHref = editor.styleSheet.href;
-        if (!href || (href && currentHref.endsWith(href))) {
-          info("Stylesheet editor selected");
-          panel.UI.off("editor-selected", gotEditor);
+        editor.getSourceEditor().then(sourceEditor => {
+          info("Stylesheet editor fully loaded");
+          def.resolve(sourceEditor);
+        });
 
-          editor.getSourceEditor().then(sourceEditor => {
-            info("Stylesheet editor fully loaded");
-            resolve(sourceEditor);
-          });
-
-          return true;
-        }
-
-        info("The editor was incorrect. Waiting for editor-selected event.");
-        return false;
-      };
-
-      // The expected editor may already be selected. Check the if the currently
-      // selected editor is the expected one and if not wait for an
-      // editor-selected event.
-      if (!gotEditor("styleeditor-selected", panel.UI.selectedEditor)) {
-        // The expected editor is not selected (yet). Wait for it.
-        panel.UI.on("editor-selected", gotEditor);
+        return true;
       }
-    });
+
+      info("The editor was incorrect. Waiting for editor-selected event.");
+      return false;
+    };
+
+    // The expected editor may already be selected. Check the if the currently
+    // selected editor is the expected one and if not wait for an
+    // editor-selected event.
+    if (!gotEditor("styleeditor-selected", panel.UI.selectedEditor)) {
+      // The expected editor is not selected (yet). Wait for it.
+      panel.UI.on("editor-selected", gotEditor);
+    }
   });
+
+  return def.promise;
 }
 
 /**
@@ -736,12 +733,11 @@ function* assertShowPreviewTooltip(view, target) {
  *        The DOM Element on which a tooltip should appear
  */
 function* assertTooltipHiddenOnMouseOut(tooltip, target) {
-  // The tooltip actually relies on mousemove events to check if it sould be hidden.
-  let mouseEvent = new target.ownerDocument.defaultView.MouseEvent("mousemove", {
+  let mouseEvent = new target.ownerDocument.defaultView.MouseEvent("mouseout", {
     bubbles: true,
     relatedTarget: target
   });
-  target.parentNode.dispatchEvent(mouseEvent);
+  target.dispatchEvent(mouseEvent);
 
   yield tooltip.once("hidden");
 

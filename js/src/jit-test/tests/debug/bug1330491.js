@@ -1,6 +1,6 @@
-// |jit-test| test-also-no-wasm-baseline; error: TestComplete
+// |jit-test| test-also-wasm-baseline; error: TestComplete
 
-if (!wasmDebuggingIsSupported())
+if (!wasmIsSupported())
      throw "TestComplete";
 
 (function createShortLivedDebugger() {

@@ -158,6 +158,7 @@ public:
 // nsXMLHttpRequestXPCOMifier.
 class XMLHttpRequestMainThread final : public XMLHttpRequest,
                                        public nsIXMLHttpRequest,
+                                       public nsIJSXMLHttpRequest,
                                        public nsIStreamListener,
                                        public nsIChannelEventSink,
                                        public nsIProgressEventSink,
@@ -189,7 +190,6 @@ public:
     eUnreachable,
     eChannelOpen,
     eRedirect,
-    eTerminated,
     ENUM_MAX
   };
 
@@ -201,13 +201,8 @@ public:
                  nsILoadGroup* aLoadGroup = nullptr)
   {
     MOZ_ASSERT(aPrincipal);
-    nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aGlobalObject);
-    if (win) {
-      MOZ_ASSERT(win->IsInnerWindow());
-      if (win->GetExtantDoc()) {
-        mStyleBackend = win->GetExtantDoc()->GetStyleBackendType();
-      }
-    }
+    MOZ_ASSERT_IF(nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(
+      aGlobalObject), win->IsInnerWindow());
     mPrincipal = aPrincipal;
     BindToOwner(aGlobalObject);
     mBaseURI = aBaseURI;
@@ -261,7 +256,7 @@ public:
 
   // request
   nsresult CreateChannel();
-  nsresult InitiateFetch(already_AddRefed<nsIInputStream> aUploadStream,
+  nsresult InitiateFetch(nsIInputStream* aUploadStream,
                          int64_t aUploadLength,
                          nsACString& aUploadContentType);
 
@@ -308,7 +303,6 @@ public:
 private:
   virtual ~XMLHttpRequestMainThread();
 
-  nsresult MaybeSilentSendFailure(nsresult aRv);
   nsresult SendInternal(const BodyExtractorBase* aBody);
 
   bool IsCrossSiteCORSRequest() const;
@@ -333,14 +327,71 @@ private:
 
 public:
   virtual void
-  Send(JSContext* aCx,
-       const Nullable<DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>& aData,
-       ErrorResult& aRv) override;
+  Send(JSContext* /*aCx*/, ErrorResult& aRv) override
+  {
+    aRv = SendInternal(nullptr);
+  }
 
   virtual void
-  SendInputStream(nsIInputStream* aInputStream, ErrorResult& aRv) override
+  Send(JSContext* /*aCx*/, const ArrayBuffer& aArrayBuffer,
+       ErrorResult& aRv) override
   {
-    BodyExtractor<nsIInputStream> body(aInputStream);
+    BodyExtractor<const ArrayBuffer> body(&aArrayBuffer);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void
+  Send(JSContext* /*aCx*/, const ArrayBufferView& aArrayBufferView,
+       ErrorResult& aRv) override
+  {
+    BodyExtractor<const ArrayBufferView> body(&aArrayBufferView);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void
+  Send(JSContext* /*aCx*/, Blob& aBlob, ErrorResult& aRv) override
+  {
+    BodyExtractor<nsIXHRSendable> body(&aBlob);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void Send(JSContext* /*aCx*/, URLSearchParams& aURLSearchParams,
+                    ErrorResult& aRv) override
+  {
+    BodyExtractor<nsIXHRSendable> body(&aURLSearchParams);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void
+  Send(JSContext* /*aCx*/, nsIDocument& aDoc, ErrorResult& aRv) override
+  {
+    BodyExtractor<nsIDocument> body(&aDoc);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void
+  Send(JSContext* aCx, const nsAString& aString, ErrorResult& aRv) override
+  {
+    if (DOMStringIsNull(aString)) {
+      Send(aCx, aRv);
+    } else {
+      BodyExtractor<const nsAString> body(&aString);
+      aRv = SendInternal(&body);
+    }
+  }
+
+  virtual void
+  Send(JSContext* /*aCx*/, FormData& aFormData, ErrorResult& aRv) override
+  {
+    BodyExtractor<nsIXHRSendable> body(&aFormData);
+    aRv = SendInternal(&body);
+  }
+
+  virtual void
+  Send(JSContext* aCx, nsIInputStream* aStream, ErrorResult& aRv) override
+  {
+    NS_ASSERTION(aStream, "Null should go to string version");
+    BodyExtractor<nsIInputStream> body(aStream);
     aRv = SendInternal(&body);
   }
 
@@ -528,6 +579,7 @@ protected:
                                    uint32_t count,
                                    uint32_t *writeCount);
   nsresult CreateResponseParsedJSON(JSContext* aCx);
+  void CreatePartialBlob(ErrorResult& aRv);
   // Change the state of the object with this. The broadcast argument
   // determines if the onreadystatechange listener should be called.
   nsresult ChangeState(State aState, bool aBroadcast = true);
@@ -667,6 +719,8 @@ protected:
   RefPtr<Blob> mResponseBlob;
   // We stream data to mBlobStorage when response type is "blob".
   RefPtr<MutableBlobStorage> mBlobStorage;
+  // We stream data to mBlobSet when response type is "moz-blob".
+  nsAutoPtr<BlobSet> mBlobSet;
 
   nsString mOverrideMimeType;
 
@@ -689,8 +743,6 @@ protected:
   nsCOMPtr<nsILoadGroup> mLoadGroup;
 
   State mState;
-
-  StyleBackendType mStyleBackend;
 
   bool mFlagSynchronous;
   bool mFlagAborted;
@@ -765,8 +817,6 @@ protected:
    * Close the XMLHttpRequest's channels.
    */
   void CloseRequest();
-
-  void TerminateOngoingFetch();
 
   /**
    * Close the XMLHttpRequest's channels and dispatch appropriate progress

@@ -7,7 +7,7 @@
 let syncService = {};
 Components.utils.import("resource://services-sync/service.js", syncService);
 const service = syncService.Service;
-const {UIState} = Components.utils.import("resource://services-sync/UIState.jsm", {});
+Components.utils.import("resource://services-sync/UIState.jsm");
 
 let getState;
 let originalSync;
@@ -15,7 +15,8 @@ let syncWasCalled = false;
 
 // TODO: This test should probably be re-written, we don't really test much here.
 add_task(async function testSyncRemoteTabsButtonFunctionality() {
-  info("Test the Sync Remote Tabs button in the panel");
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
+  info("Test the Sync Remote Tabs button in the PanelUI");
   storeInitialValues();
   mockFunctions();
 
@@ -23,21 +24,17 @@ add_task(async function testSyncRemoteTabsButtonFunctionality() {
   Services.obs.notifyObservers(null, UIState.ON_UPDATE);
 
   // add the sync remote tabs button to the panel
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-
-  await waitForOverflowButtonShown();
+  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
 
   // check the button's functionality
-  await document.getElementById("nav-bar").overflowable.show();
+  await PanelUI.show();
   info("The panel menu was opened");
 
   let syncRemoteTabsBtn = document.getElementById("sync-button");
-  let remoteTabsPanel = document.getElementById("PanelUI-remotetabs");
-  let viewShown = BrowserTestUtils.waitForEvent(remoteTabsPanel, "ViewShown");
   ok(syncRemoteTabsBtn, "The sync remote tabs button was added to the Panel Menu");
   // click the button - the panel should open.
   syncRemoteTabsBtn.click();
-  await viewShown;
+  let remoteTabsPanel = document.getElementById("PanelUI-remotetabs");
   ok(remoteTabsPanel.getAttribute("current"), "Sync Panel is in view");
 
   // Find and click the "setup" button.
@@ -53,9 +50,9 @@ add_task(async function asyncCleanup() {
   await resetCustomization();
   ok(CustomizableUI.inDefaultState, "The panel UI is in default state again.");
 
-  if (isOverflowOpen()) {
-    let panelHidePromise = promiseOverflowHidden(window);
-    PanelUI.overflowPanel.hidePopup();
+  if (isPanelUIOpen()) {
+    let panelHidePromise = promisePanelHidden(window);
+    PanelUI.hide();
     await panelHidePromise;
   }
 

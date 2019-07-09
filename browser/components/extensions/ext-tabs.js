@@ -3,7 +3,16 @@
 "use strict";
 
 // The ext-* files are imported into the same scopes.
-/* import-globals-from ext-browser.js */
+/* import-globals-from ext-utils.js */
+
+XPCOMUtils.defineLazyGetter(this, "strBundle", function() {
+  const stringSvc = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService);
+  return stringSvc.createBundle("chrome://global/locale/extensions.properties");
+});
+
+XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
+                                   "@mozilla.org/browser/aboutnewtab-service;1",
+                                   "nsIAboutNewTabService");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
@@ -11,14 +20,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
-
-XPCOMUtils.defineLazyGetter(this, "strBundle", function() {
-  return Services.strings.createBundle("chrome://global/locale/extensions.properties");
-});
-
-var {
-  ExtensionError,
-} = ExtensionUtils;
 
 let tabListener = {
   tabReadyInitialized: false,
@@ -265,9 +266,6 @@ this.tabs = class extends ExtensionAPI {
               needed.push("pinned");
             } else if (event.type == "TabUnpinned") {
               needed.push("pinned");
-            } else if (event.type == "TabBrowserInserted" &&
-                       !event.detail.insertedOnTabCreation) {
-              needed.push("discarded");
             }
 
             let tab = tabManager.getWrapper(event.originalTarget);
@@ -292,29 +290,16 @@ this.tabs = class extends ExtensionAPI {
             }
           };
 
-          let isArticleChangeListener = (eventName, event) => {
-            let {gBrowser} = event.target.ownerGlobal;
-            let tab = tabManager.getWrapper(
-              gBrowser.getTabForBrowser(event.target));
-
-            fireForTab(tab, {isArticle: event.data.isArticle});
-          };
-
           windowTracker.addListener("status", statusListener);
           windowTracker.addListener("TabAttrModified", listener);
           windowTracker.addListener("TabPinned", listener);
           windowTracker.addListener("TabUnpinned", listener);
-          windowTracker.addListener("TabBrowserInserted", listener);
-
-          tabTracker.on("tab-isarticle", isArticleChangeListener);
 
           return () => {
             windowTracker.removeListener("status", statusListener);
             windowTracker.removeListener("TabAttrModified", listener);
             windowTracker.removeListener("TabPinned", listener);
             windowTracker.removeListener("TabUnpinned", listener);
-            windowTracker.removeListener("TabBrowserInserted", listener);
-            tabTracker.off("tab-isarticle", isArticleChangeListener);
           };
         }).api(),
 
@@ -344,10 +329,6 @@ this.tabs = class extends ExtensionAPI {
 
               if (!context.checkLoadURL(url, {dontReportErrors: true})) {
                 return Promise.reject({message: `Illegal URL: ${url}`});
-              }
-
-              if (createProperties.openInReaderMode) {
-                url = `about:reader?url=${encodeURIComponent(url)}`;
               }
             }
 
@@ -456,10 +437,7 @@ this.tabs = class extends ExtensionAPI {
               return Promise.reject({message: `Illegal URL: ${url}`});
             }
 
-            let flags = updateProperties.loadReplace
-              ? Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY
-              : Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
-            nativeTab.linkedBrowser.loadURIWithFlags(url, {flags});
+            nativeTab.linkedBrowser.loadURI(url);
           }
 
           if (updateProperties.active !== null) {
@@ -471,7 +449,7 @@ this.tabs = class extends ExtensionAPI {
           }
           if (updateProperties.muted !== null) {
             if (nativeTab.muted != updateProperties.muted) {
-              nativeTab.toggleMuteAudio(extension.id);
+              nativeTab.toggleMuteAudio(extension.uuid);
             }
           }
           if (updateProperties.pinned !== null) {
@@ -752,7 +730,9 @@ this.tabs = class extends ExtensionAPI {
             // For non-remote browsers, this event is dispatched on the document
             // rather than on the <browser>.
             if (browser instanceof Ci.nsIDOMDocument) {
-              browser = browser.docShell.chromeEventHandler;
+              browser = browser.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIDocShell)
+                               .chromeEventHandler;
             }
 
             let {gBrowser} = browser.ownerGlobal;
@@ -930,16 +910,6 @@ this.tabs = class extends ExtensionAPI {
               }
             });
           });
-        },
-
-        async toggleReaderMode(tabId) {
-          let tab = await promiseTabWhenReady(tabId);
-          if (!tab.isInReaderMode && !tab.isArticle) {
-            throw new ExtensionError("The specified tab cannot be placed into reader mode.");
-          }
-          tab = getTabOrActive(tabId);
-
-          tab.linkedBrowser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
         },
       },
     };

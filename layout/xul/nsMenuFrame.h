@@ -10,7 +10,7 @@
 #ifndef nsMenuFrame_h__
 #define nsMenuFrame_h__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCOMPtr.h"
 
 #include "nsBoxFrame.h"
@@ -105,6 +105,7 @@ public:
 
   // Overridden to prevent events from going to children of the menu.
   virtual void BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
+                                           const nsRect&           aDirtyRect,
                                            const nsDisplayListSet& aLists) override;
 
   // this method can destroy the frame
@@ -253,7 +254,7 @@ protected:
 
   // This method can destroy the frame
   virtual nsresult AttributeChanged(int32_t aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t aModType) override;
   virtual ~nsMenuFrame() { }
 

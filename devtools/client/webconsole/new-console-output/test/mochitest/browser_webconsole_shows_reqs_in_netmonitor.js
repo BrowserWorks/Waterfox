@@ -21,9 +21,10 @@ registerCleanupFunction(() => {
 
 add_task(async function () {
   const toolbox = await openNewTabAndToolbox(TEST_URI, "netmonitor");
+  const currentTab = gBrowser.selectedTab;
   info("Network panel is open.");
 
-  await loadDocument(TEST_PATH);
+  await loadDocument(currentTab.linkedBrowser, TEST_PATH);
   info("Document loaded.");
 
   // Test that the request appears in the network panel.

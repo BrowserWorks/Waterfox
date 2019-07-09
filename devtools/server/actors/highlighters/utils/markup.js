@@ -7,7 +7,7 @@
 const { Cc, Ci, Cu, Cr } = require("chrome");
 const { getCurrentZoom, getWindowDimensions, getViewportDimensions,
   getRootBindingParent, loadSheet } = require("devtools/shared/layout/utils");
-const EventEmitter = require("devtools/shared/event-emitter");
+const { on, emit } = require("sdk/event/core");
 
 const lazyContainer = {};
 
@@ -29,6 +29,9 @@ exports.addPseudoClassLock = (...args) =>
 
 exports.removePseudoClassLock = (...args) =>
   lazyContainer.DOMUtils.removePseudoClassLock(...args);
+
+exports.getCSSStyleRules = (...args) =>
+  lazyContainer.DOMUtils.getCSSStyleRules(...args);
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
@@ -58,7 +61,7 @@ ClassList.prototype = {
     if (!this.contains(token)) {
       this[_tokens].push(token);
     }
-    EventEmitter.emit(this, "update");
+    emit(this, "update");
   },
   remove(token) {
     let index = this[_tokens].indexOf(token);
@@ -66,7 +69,7 @@ ClassList.prototype = {
     if (index > -1) {
       this[_tokens].splice(index, 1);
     }
-    EventEmitter.emit(this, "update");
+    emit(this, "update");
   },
   toggle(token) {
     if (this.contains(token)) {
@@ -305,6 +308,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
    */
   _onWindowReady(e, {isTopLevel}) {
     if (isTopLevel) {
+      this._remove();
       this._removeAllListeners();
       this.elements.clear();
       this._insert();
@@ -478,7 +482,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
 
     let classList = new ClassList(this.getAttributeForElement(id, "class"));
 
-    EventEmitter.on(classList, "update", () => {
+    on(classList, "update", () => {
       this.setAttributeForElement(id, "class", classList.toString());
     });
 

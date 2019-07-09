@@ -16,7 +16,6 @@ info: >
       [[Enumerable]]: true, [[Configurable]]: false}.
   ...
 includes: [testTypedArray.js, propertyHelper.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -16,8 +16,14 @@
 using namespace mozilla;
 using namespace mozilla::widget;
 
+const wchar_t
+nsUXThemeData::kThemeLibraryName[] = L"uxtheme.dll";
+
 HANDLE
 nsUXThemeData::sThemes[eUXNumClasses];
+
+HMODULE
+nsUXThemeData::sThemeDLL = nullptr;
 
 const int NUM_COMMAND_BUTTONS = 3;
 SIZE nsUXThemeData::sCommandButtonMetrics[NUM_COMMAND_BUTTONS];
@@ -34,12 +40,15 @@ bool nsUXThemeData::sTitlebarInfoPopulatedThemed = false;
 void
 nsUXThemeData::Teardown() {
   Invalidate();
+  if(sThemeDLL)
+    FreeLibrary(sThemeDLL);
 }
 
 void
 nsUXThemeData::Initialize()
 {
   ::ZeroMemory(sThemes, sizeof(sThemes));
+  NS_ASSERTION(!sThemeDLL, "nsUXThemeData being initialized twice!");
 
   CheckForCompositor(true);
   Invalidate();
@@ -66,6 +75,13 @@ nsUXThemeData::GetTheme(nsUXThemeClass cls) {
     sThemes[cls] = OpenThemeData(nullptr, GetClassName(cls));
   }
   return sThemes[cls];
+}
+
+HMODULE
+nsUXThemeData::GetThemeDLL() {
+  if (!sThemeDLL)
+    sThemeDLL = ::LoadLibraryW(kThemeLibraryName);
+  return sThemeDLL;
 }
 
 const wchar_t *nsUXThemeData::GetClassName(nsUXThemeClass cls) {

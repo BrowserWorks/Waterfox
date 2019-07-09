@@ -9,6 +9,10 @@
 
 let { toggleRecordingAllocationStacks } = require("devtools/client/memory/actions/allocations");
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function* () {
   let front = new StubbedMemoryFront();
   yield front.attach();

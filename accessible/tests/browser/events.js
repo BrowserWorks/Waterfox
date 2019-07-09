@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-"use strict";
+'use strict';
 
 // This is loaded by head.js, so has the same globals, hence we import the
 // globals from there.
@@ -13,7 +13,7 @@
             EVENT_DOCUMENT_LOAD_COMPLETE, EVENT_HIDE, EVENT_TEXT_CARET_MOVED,
             EVENT_DESCRIPTION_CHANGE, EVENT_NAME_CHANGE, EVENT_STATE_CHANGE,
             EVENT_VALUE_CHANGE, EVENT_TEXT_VALUE_CHANGE, EVENT_FOCUS,
-            EVENT_DOCUMENT_RELOAD, UnexpectedEvents, contentSpawnMutation,
+            EVENT_DOCUMENT_RELOAD,
             waitForEvent, waitForEvents, waitForOrderedEvents */
 
 const EVENT_DOCUMENT_LOAD_COMPLETE = nsIAccessibleEvent.EVENT_DOCUMENT_LOAD_COMPLETE;
@@ -44,7 +44,7 @@ function eventToString(event) {
                                   event.isExtraState ? event.state : 0);
     info += `, state: ${stateStr}, is enabled: ${event.isEnabled}`;
   } else if (event instanceof nsIAccessibleTextChangeEvent) {
-    let tcType = event.isInserted ? "inserted" : "removed";
+    let tcType = event.isInserted ? 'inserted' : 'removed';
     info += `, start: ${event.start}, length: ${event.length}, ${tcType} text: ${event.modifiedText}`;
   }
 
@@ -94,7 +94,7 @@ function waitForEvent(eventType, matchCriteria) {
   return new Promise(resolve => {
     let eventObserver = {
       observe(subject, topic, data) {
-        if (topic !== "accessible-event") {
+        if (topic !== 'accessible-event') {
           return;
         }
 
@@ -112,12 +112,15 @@ function waitForEvent(eventType, matchCriteria) {
 
         if (matchEvent(event, matchCriteria)) {
           Logger.log(`Correct event type: ${eventTypeToString(eventType)}`);
-          Services.obs.removeObserver(this, "accessible-event");
+          ok(event.accessibleDocument instanceof nsIAccessibleDocument,
+            'Accessible document present.');
+
+          Services.obs.removeObserver(this, 'accessible-event');
           resolve(event);
         }
       }
     };
-    Services.obs.addObserver(eventObserver, "accessible-event");
+    Services.obs.addObserver(eventObserver, 'accessible-event');
   });
 }
 
@@ -125,12 +128,12 @@ class UnexpectedEvents {
   constructor(unexpected) {
     if (unexpected.length) {
       this.unexpected = unexpected;
-      Services.obs.addObserver(this, "accessible-event");
+      Services.obs.addObserver(this, 'accessible-event');
     }
   }
 
   observe(subject, topic, data) {
-    if (topic !== "accessible-event") {
+    if (topic !== 'accessible-event') {
       return;
     }
 
@@ -146,7 +149,7 @@ class UnexpectedEvents {
 
   stop() {
     if (this.unexpected) {
-      Services.obs.removeObserver(this, "accessible-event");
+      Services.obs.removeObserver(this, 'accessible-event');
     }
   }
 }
@@ -182,45 +185,4 @@ function waitForEvents(events, ordered = false) {
 
 function waitForOrderedEvents(events) {
   return waitForEvents(events, true);
-}
-
-/*
- * This function spawns a content task and awaits expected mutation events from
- * various content changes. It's good at catching events we did *not* expect. We
- * do this advancing the layout refresh to flush the relocations/insertions
- * queue.
- */
-async function contentSpawnMutation(browser, waitFor, func, args = null) {
-  let onReorders = waitForEvents({ expected: waitFor.expected || [] });
-  let unexpectedListener = new UnexpectedEvents(waitFor.unexpected || []);
-
-  function tick() {
-    // 100ms is an arbitrary positive number to advance the clock.
-    // We don't need to advance the clock for a11y mutations, but other
-    // tick listeners may depend on an advancing clock with each refresh.
-    content.QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIDOMWindowUtils).advanceTimeAndRefresh(100);
-  }
-
-  // This stops the refreh driver from doing its regular ticks, and leaves
-  // us in control.
-  await ContentTask.spawn(browser, null, tick);
-
-  // Perform the tree mutation.
-  await ContentTask.spawn(browser, args, func);
-
-  // Do one tick to flush our queue (insertions, relocations, etc.)
-  await ContentTask.spawn(browser, null, tick);
-
-  let events = await onReorders;
-
-  unexpectedListener.stop();
-
-  // Go back to normal refresh driver ticks.
-  await ContentTask.spawn(browser, null, function() {
-    content.QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIDOMWindowUtils).restoreNormalRefresh();
-  });
-
-  return events;
 }

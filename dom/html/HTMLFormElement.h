@@ -75,10 +75,8 @@ public:
                                 HTMLInputElement** aRadioOut) override;
   NS_IMETHOD WalkRadioGroup(const nsAString& aName, nsIRadioVisitor* aVisitor,
                             bool aFlushContent) override;
-  void AddToRadioGroup(const nsAString& aName,
-                       HTMLInputElement* aRadio) override;
-  void RemoveFromRadioGroup(const nsAString& aName,
-                            HTMLInputElement* aRadio) override;
+  void AddToRadioGroup(const nsAString& aName, nsIFormControl* aRadio) override;
+  void RemoveFromRadioGroup(const nsAString& aName, nsIFormControl* aRadio) override;
   virtual uint32_t GetRequiredRadioCount(const nsAString& aName) const override;
   virtual void RadioRequiredWillChange(const nsAString& aName,
                                        bool aRequiredAdded) override;
@@ -92,7 +90,7 @@ public:
 
   // nsIContent
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
   virtual nsresult GetEventTargetParent(
@@ -107,13 +105,12 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
-  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   /**
@@ -220,12 +217,6 @@ public:
     * http://www.whatwg.org/specs/web-apps/current-work/multipage/association-of-controls-and-forms.html#implicit-submission
     */
   bool ImplicitSubmissionIsDisabled() const;
-
-  /**
-  * Check whether a given nsIFormControl is the last single line input control
-  * that is not disabled. aControl is expected to not be null.
-  */
-  bool IsLastActiveElement(const nsIFormControl* aControl) const;
 
   /**
    * Check whether a given nsIFormControl is the default submit

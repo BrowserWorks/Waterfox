@@ -3,30 +3,30 @@
 
 // Tests the breakpoints are hit in various situations.
 
-add_task(async function() {
-  const dbg = await initDebugger("doc-scripts.html");
+add_task(function* () {
+  const dbg = yield initDebugger("doc-scripts.html");
   const { selectors: { getSelectedSource }, getState } = dbg;
 
   // Make sure we can set a top-level breakpoint and it will be hit on
   // reload.
-  await addBreakpoint(dbg, "scripts.html", 18);
+  yield addBreakpoint(dbg, "scripts.html", 18);
   reload(dbg);
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
-  await resume(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, "scripts.html", 18);
+  yield resume(dbg);
 
   const paused = waitForPaused(dbg);
 
   // Create an eval script that pauses itself.
   invokeInTab("doEval");
 
-  await paused;
-  await resume(dbg);
+  yield paused;
+  yield resume(dbg);
   const source = getSelectedSource(getState()).toJS();
   ok(!source.url, "It is an eval source");
 
-  await addBreakpoint(dbg, source, 5);
+  yield addBreakpoint(dbg, source, 5);
   invokeInTab("evaledFunc");
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, source, 5);
 });

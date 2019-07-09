@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.every
 es5id: 15.4.4.16-7-6
 description: >
     Array.prototype.every visits deleted element in array after the
@@ -14,13 +13,13 @@ description: >
     delete arr[2];
     if(val == 3)
        return false;
-    else
+    else 
        return true;
   }
 
   Array.prototype[2] = 3;
   var arr = [1,2,3,4,5];
-
+  
   var res = arr.every(callbackfn);
   delete Array.prototype[2];
 

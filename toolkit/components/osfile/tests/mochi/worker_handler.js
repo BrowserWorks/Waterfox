@@ -5,17 +5,17 @@ function worker_handler(worker) {
   worker.onerror = function(error) {
     error.preventDefault();
     ok(false, "Worker error " + error.message);
-  };
+  }
   worker.onmessage = function(msg) {
     ok(true, "MAIN: onmessage " + JSON.stringify(msg.data));
     switch (msg.data.kind) {
     case "is":
       SimpleTest.ok(msg.data.outcome, msg.data.description +
-         "( " + msg.data.a + " ==? " + msg.data.b + ")" );
+         "( "+ msg.data.a + " ==? " + msg.data.b + ")" );
       return;
     case "isnot":
       SimpleTest.ok(msg.data.outcome, msg.data.description +
-      "( " + msg.data.a + " !=? " + msg.data.b + ")" );
+      "( "+ msg.data.a + " !=? " + msg.data.b + ")" );
          return;
     case "ok":
       SimpleTest.ok(msg.data.condition, msg.data.description);
@@ -28,7 +28,7 @@ function worker_handler(worker) {
       return;
     default:
       SimpleTest.ok(false, "test_osfile.xul: wrong message " + JSON.stringify(msg.data));
-
+      return;
     }
   };
 }

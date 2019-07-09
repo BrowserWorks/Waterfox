@@ -66,7 +66,7 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
                 # jobs have a minimal `hg pull`.
                 "clone_upstream_url": "https://hg.mozilla.org/mozilla-unified",
                 "repo_base": "https://hg.mozilla.org",
-                'tooltool_url': 'https://tooltool.mozilla-releng.net/',
+                'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',
                 "graph_selector": "/server/collect.cgi",
                 # only used for make uploadsymbols
                 'old_packages': [
@@ -125,7 +125,7 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
             else:
                 self.fatal("'stage_platform' not determined and is required in your config")
 
-        if self.try_message_has_flag('artifact') or os.environ.get('USE_ARTIFACT'):
+        if self.try_message_has_flag('artifact'):
             # Not all jobs that look like builds can be made into artifact
             # builds (for example, various SAN builds will not make sense as
             # artifact builds).  By default, only a vanilla debug or opt build
@@ -136,7 +136,7 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
             #
             # This is temporary, until we find a way to introduce an "artifact
             # build dimension" like "opt"/"debug" into the CI configurations.
-            self.info('Artifact build requested by try push.')
+            self.info('Artifact build requested in try syntax.')
 
             variant = None
 
@@ -149,10 +149,7 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
                 self.info('Build variant has `artifact_build_variant_in_try`: "%s".' % variant)
             else:
                 if not c.get('build_variant'):
-                    if c.get('debug_build'):
-                        variant = 'debug-artifact'
-                    else:
-                        variant = 'artifact'
+                    variant = 'artifact'
                 elif c.get('build_variant') in ['debug', 'cross-debug']:
                     variant = 'debug-artifact'
 

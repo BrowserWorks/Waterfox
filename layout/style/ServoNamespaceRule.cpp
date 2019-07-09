@@ -45,7 +45,7 @@ ServoNamespaceRule::Clone() const
   return nullptr;
 }
 
-nsAtom*
+nsIAtom*
 ServoNamespaceRule::GetPrefix() const
 {
   return Servo_NamespaceRule_GetPrefix(mRawRule);
@@ -54,7 +54,7 @@ ServoNamespaceRule::GetPrefix() const
 void
 ServoNamespaceRule::GetURLSpec(nsString& aURLSpec) const
 {
-  nsAtom* atom = Servo_NamespaceRule_GetURI(mRawRule);
+  nsIAtom* atom = Servo_NamespaceRule_GetURI(mRawRule);
   atom->ToString(aURLSpec);
 }
 

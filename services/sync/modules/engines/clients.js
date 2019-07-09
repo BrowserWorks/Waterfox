@@ -49,15 +49,7 @@ const CLIENTS_TTL = 1814400; // 21 days
 const CLIENTS_TTL_REFRESH = 604800; // 7 days
 const STALE_CLIENT_REMOTE_AGE = 604800; // 7 days
 
-// TTL of the message sent to another device when sending a tab
-const NOTIFY_TAB_SENT_TTL_SECS = 1 * 3600; // 1 hour
-
-// Reasons behind sending collection_changed push notifications.
-const COLLECTION_MODIFIED_REASON_SENDTAB = "sendtab";
-const COLLECTION_MODIFIED_REASON_FIRSTSYNC = "firstsync";
-
 const SUPPORTED_PROTOCOL_VERSIONS = [SYNC_API_VERSION];
-const LAST_MODIFIED_ON_PROCESS_COMMAND_PREF = "services.sync.clients.lastModifiedOnProcessCommands";
 
 function hasDupeCommand(commands, action) {
   if (!commands) {
@@ -69,7 +61,7 @@ function hasDupeCommand(commands, action) {
 
 this.ClientsRec = function ClientsRec(collection, id) {
   CryptoWrapper.call(this, collection, id);
-};
+}
 ClientsRec.prototype = {
   __proto__: CryptoWrapper.prototype,
   _logName: "Sync.Record.Clients",
@@ -91,7 +83,7 @@ this.ClientEngine = function ClientEngine(service) {
   this.resetLastSync();
   this.fxAccounts = fxAccounts;
   this.addClientCommandQueue = Promise.resolve();
-};
+}
 ClientEngine.prototype = {
   __proto__: SyncEngine.prototype,
   _storeObj: ClientStore,
@@ -99,17 +91,6 @@ ClientEngine.prototype = {
   _trackerObj: ClientsTracker,
   allowSkippedRecord: false,
   _knownStaleFxADeviceIds: null,
-
-  // These two properties allow us to avoid replaying the same commands
-  // continuously if we cannot manage to upload our own record.
-  _localClientLastModified: 0,
-  get _lastModifiedOnProcessCommands() {
-    return Services.prefs.getIntPref(LAST_MODIFIED_ON_PROCESS_COMMAND_PREF, -1);
-  },
-
-  set _lastModifiedOnProcessCommands(value) {
-    Services.prefs.setIntPref(LAST_MODIFIED_ON_PROCESS_COMMAND_PREF, value);
-  },
 
   // Always sync client data as it controls other sync behavior
   get enabled() {
@@ -263,7 +244,7 @@ ClientEngine.prototype = {
 
   async _prepareCommandsForUpload() {
     try {
-      await Utils.jsonMove("commands", "commands-syncing", this);
+      await Utils.jsonMove("commands", "commands-syncing", this)
     } catch (e) {
       // Ignore errors
     }
@@ -301,7 +282,7 @@ ClientEngine.prototype = {
         const localCommands = await this._readCommands();
         const localClientCommands = localCommands[clientId] || [];
         const remoteClient = this._store._remoteClients[clientId];
-        let remoteClientCommands = [];
+        let remoteClientCommands = []
         if (remoteClient && remoteClient.commands) {
           remoteClientCommands = remoteClient.commands;
         }
@@ -329,27 +310,10 @@ ClientEngine.prototype = {
   async updateKnownStaleClients() {
     this._log.debug("Updating the known stale clients");
     await this._refreshKnownStaleClients();
-    let localFxADeviceId = await fxAccounts.getDeviceId();
-    // Process newer records first, so that if we hit a record with a device ID
-    // we've seen before, we can mark it stale immediately.
-    let clientList = Object.values(this._store._remoteClients).sort((a, b) =>
-      b.serverLastModified - a.serverLastModified);
-    let seenDeviceIds = new Set([localFxADeviceId]);
-    for (let client of clientList) {
-      // Clients might not have an `fxaDeviceId` if they fail the FxA
-      // registration process.
-      if (!client.fxaDeviceId) {
-        continue;
-      }
-      if (this._knownStaleFxADeviceIds.includes(client.fxaDeviceId)) {
+    for (let client of Object.values(this._store._remoteClients)) {
+      if (client.fxaDeviceId && this._knownStaleFxADeviceIds.includes(client.fxaDeviceId)) {
         this._log.info(`Hiding stale client ${client.id} - in known stale clients list`);
         client.stale = true;
-      } else if (seenDeviceIds.has(client.fxaDeviceId)) {
-        this._log.info(`Hiding stale client ${client.id}` +
-                       ` - duplicate device id ${client.fxaDeviceId}`);
-        client.stale = true;
-      } else {
-        seenDeviceIds.add(client.fxaDeviceId);
       }
     }
   },
@@ -405,19 +369,14 @@ ClientEngine.prototype = {
           await this._removeRemoteClient(id);
         }
       }
-      let localFxADeviceId = await fxAccounts.getDeviceId();
       // Bug 1264498: Mobile clients don't remove themselves from the clients
       // collection when the user disconnects Sync, so we mark as stale clients
       // with the same name that haven't synced in over a week.
       // (Note we can't simply delete them, or we re-apply them next sync - see
       // bug 1287687)
-      this._localClientLastModified = Math.round(this._incomingClients[this.localID]);
       delete this._incomingClients[this.localID];
       let names = new Set([this.localName]);
-      let seenDeviceIds = new Set([localFxADeviceId]);
-      let idToLastModifiedList = Object.entries(this._incomingClients)
-                                 .sort((a, b) => b[1] - a[1]);
-      for (let [id, serverLastModified] of idToLastModifiedList) {
+      for (let [id, serverLastModified] of Object.entries(this._incomingClients)) {
         let record = this._store._remoteClients[id];
         // stash the server last-modified time on the record.
         record.serverLastModified = serverLastModified;
@@ -426,9 +385,6 @@ ClientEngine.prototype = {
           record.stale = true;
         }
         if (!names.has(record.name)) {
-          if (record.fxaDeviceId) {
-            seenDeviceIds.add(record.fxaDeviceId);
-          }
           names.add(record.name);
           continue;
         }
@@ -436,14 +392,6 @@ ClientEngine.prototype = {
         if (remoteAge > STALE_CLIENT_REMOTE_AGE) {
           this._log.info(`Hiding stale client ${id} with age ${remoteAge}`);
           record.stale = true;
-          continue;
-        }
-        if (record.fxaDeviceId && seenDeviceIds.has(record.fxaDeviceId)) {
-          this._log.info(`Hiding stale client ${record.id}` +
-                         ` - duplicate device id ${record.fxaDeviceId}`);
-          record.stale = true;
-        } else if (record.fxaDeviceId) {
-          seenDeviceIds.add(record.fxaDeviceId);
         }
       }
     } finally {
@@ -477,7 +425,7 @@ ClientEngine.prototype = {
       if (id == this.localID) {
         if (this.isFirstSync) {
           this._log.info("Uploaded our client record for the first time, notifying other clients.");
-          this._notifyClientRecordUploaded();
+          this._notifyCollectionChanged();
         }
         if (this.localCommands) {
           this.localCommands = this.localCommands.filter(command => !hasDupeCommand(commandChanges, command));
@@ -516,33 +464,16 @@ ClientEngine.prototype = {
       return fxaDeviceId ? acc.concat(fxaDeviceId) : acc;
     }, []);
     if (idsToNotify.length > 0) {
-      this._notifyOtherClientsModified(idsToNotify);
+      this._notifyCollectionChanged(idsToNotify, NOTIFY_TAB_SENT_TTL_SECS);
     }
   },
 
-  _notifyOtherClientsModified(ids) {
-    // We are not waiting on this promise on purpose.
-    this._notifyCollectionChanged(ids, NOTIFY_TAB_SENT_TTL_SECS,
-                                  COLLECTION_MODIFIED_REASON_SENDTAB);
-  },
-
-  _notifyClientRecordUploaded() {
-    // We are not waiting on this promise on purpose.
-    this._notifyCollectionChanged(null, 0, COLLECTION_MODIFIED_REASON_FIRSTSYNC);
-  },
-
-  /**
-   * @param {?string[]} ids FxA Client IDs to notify. null means everyone else.
-   * @param {number} ttl TTL of the push notification.
-   * @param {string} reason Reason for sending this push notification.
-   */
-  async _notifyCollectionChanged(ids, ttl, reason) {
+  async _notifyCollectionChanged(ids = null, ttl = 0) {
     const message = {
       version: 1,
       command: "sync:collection_changed",
       data: {
-        collections: ["clients"],
-        reason
+        collections: ["clients"]
       }
     };
     let excludedIds = null;
@@ -618,7 +549,7 @@ ClientEngine.prototype = {
       this._log.warn("Could not delete commands.json", err);
     }
     try {
-      await Utils.jsonRemove("commands-syncing", this);
+      await Utils.jsonRemove("commands-syncing", this)
     } catch (err) {
       this._log.warn("Could not delete commands-syncing.json", err);
     }
@@ -707,12 +638,9 @@ ClientEngine.prototype = {
    */
   async processIncomingCommands() {
     return this._notify("clients:process-commands", "", async function() {
-      if (!this.localCommands ||
-          (this._lastModifiedOnProcessCommands == this._localClientLastModified
-           && !this.ignoreLastModifiedOnProcessCommands)) {
+      if (!this.localCommands) {
         return true;
       }
-      this._lastModifiedOnProcessCommands = this._localClientLastModified;
 
       const clearedCommands = await this._readCommands()[this.localID];
       const commands = this.localCommands.filter(command => !hasDupeCommand(clearedCommands, command));
@@ -974,7 +902,7 @@ ClientStore.prototype = {
       // Optional fields.
       record.os = Services.appinfo.OS;             // "Darwin"
       record.appPackage = Services.appinfo.ID;
-      record.application = this.engine.brandName;   // "Nightly"
+      record.application = this.engine.brandName   // "Nightly"
 
       // We can't compute these yet.
       // record.device = "";            // Bug 1100723

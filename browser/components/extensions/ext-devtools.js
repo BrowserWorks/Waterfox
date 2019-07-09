@@ -2,11 +2,11 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-/* exported getDevToolsTargetForContext, getInspectedWindowFront, getToolboxEvalOptions */
-/* global getTargetTabIdForToolbox, getDevToolsTargetForContext, getInspectedWindowFront, getToolboxEvalOptions */
+/* exported getDevToolsTargetForContext */
+/* global getTargetTabIdForToolbox, getDevToolsTargetForContext */
 
 // The ext-* files are imported into the same scopes.
-/* import-globals-from ext-browser.js */
+/* import-globals-from ext-utils.js */
 
 /**
  * This module provides helpers used by the other specialized `ext-devtools-*.js` modules
@@ -53,9 +53,9 @@ global.getDevToolsTargetForContext = async (context) => {
     throw new Error("Unexpected target type: only local tabs are currently supported.");
   }
 
-  const tab = context.devToolsToolbox.target.tab;
-  context.devToolsTarget = DevToolsShim.createTargetForTab(tab);
+  const {TabTarget} = require("devtools/client/framework/target");
 
+  context.devToolsTarget = new TabTarget(context.devToolsToolbox.target.tab);
   await context.devToolsTarget.makeRemote();
 
   return context.devToolsTarget;
@@ -83,36 +83,6 @@ global.getTargetTabIdForToolbox = (toolbox) => {
   let tab = parentWindow.gBrowser.getTabForBrowser(target.tab.linkedBrowser);
 
   return tabTracker.getId(tab);
-};
-
-// Create an InspectedWindowFront instance for a given context (used in devtoools.inspectedWindow.eval
-// and in sidebar.setExpression API methods).
-global.getInspectedWindowFront = async function(context) {
-  // If there is not yet a front instance, then a lazily cloned target for the context is
-  // retrieved using the DevtoolsParentContextsManager helper (which is an asynchronous operation,
-  // because the first time that the target has been cloned, it is not ready to be used to create
-  // the front instance until it is connected to the remote debugger successfully).
-  const clonedTarget = await getDevToolsTargetForContext(context);
-  return DevToolsShim.createWebExtensionInspectedWindowFront(clonedTarget);
-};
-
-// Get the WebExtensionInspectedWindowActor eval options (needed to provide the $0 and inspect
-// binding provided to the evaluated js code).
-global.getToolboxEvalOptions = function(context) {
-  const options = {};
-  const toolbox = context.devToolsToolbox;
-  const selectedNode = toolbox.selection;
-
-  if (selectedNode && selectedNode.nodeFront) {
-    // If there is a selected node in the inspector, we hand over
-    // its actor id to the eval request in order to provide the "$0" binding.
-    options.toolboxSelectedNodeActorID = selectedNode.nodeFront.actorID;
-  }
-
-  // Provide the console actor ID to implement the "inspect" binding.
-  options.toolboxConsoleActorID = toolbox.target.form.consoleActor;
-
-  return options;
 };
 
 /**
@@ -311,7 +281,8 @@ initDevTools = function() {
                 "Only local tab are currently supported by the WebExtensions DevTools API.";
       let scriptError = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError);
       scriptError.init(msg, null, null, null, null, Ci.nsIScriptError.warningFlag, "content javascript");
-      Services.console.logMessage(scriptError);
+      let consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+      consoleService.logMessage(scriptError);
 
       return;
     }

@@ -28,17 +28,17 @@ public:
   virtual void Shutdown() override;
 
   virtual ipc::IPCResult
-    RecvParentCOMProxy(const IDispatchHolder& aParentCOMProxy) override;
+    RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy) override;
   virtual ipc::IPCResult
     RecvEmulatedWindow(const WindowsHandle& aEmulatedWindowHandle,
-                       const IDispatchHolder& aEmulatedWindowCOMProxy) override;
+                       const IAccessibleHolder& aEmulatedWindowCOMProxy) override;
   virtual ipc::IPCResult
     RecvRestoreFocus() override;
 
   HWND GetNativeWindowHandle() const;
-  IDispatch* GetEmulatedWindowIAccessible() const { return mEmulatedWindowProxy.get(); }
+  IAccessible* GetEmulatedWindowIAccessible() const { return mEmulatedWindowProxy.get(); }
 
-  IDispatch* GetParentIAccessible() const { return mParentProxy.get(); }
+  IAccessible* GetParentIAccessible() const { return mParentProxy.get(); }
 
   bool SendEvent(const uint64_t& aID, const uint32_t& type);
   bool SendHideEvent(const uint64_t& aRootID, const bool& aFromUser);
@@ -53,8 +53,7 @@ public:
                       const LayoutDeviceIntRect& aCaretRect);
   bool SendTextChangeEvent(const uint64_t& aID, const nsString& aStr,
                            const int32_t& aStart, const uint32_t& aLen,
-                           const bool& aIsInsert, const bool& aFromUser,
-                           const bool aDoSyncCheck = true);
+                           const bool& aIsInsert, const bool& aFromUser);
   bool SendSelectionEvent(const uint64_t& aID, const uint64_t& aWidgetID,
                           const uint32_t& aType);
   bool SendRoleChangedEvent(const uint32_t& aRole);
@@ -111,8 +110,7 @@ private:
     SerializedShow(DocAccessibleChild* aTarget,
                    ShowEventData& aEventData, bool aFromUser)
       : DeferredEvent(aTarget)
-      , mEventData(aEventData.ID(), aEventData.Idx(),
-                   nsTArray<AccessibleData>(), aEventData.EventSuppressed())
+      , mEventData(aEventData.ID(), aEventData.Idx(), nsTArray<AccessibleData>())
       , mFromUser(aFromUser)
     {
       // Since IPDL doesn't generate a move constructor for ShowEventData,
@@ -223,7 +221,7 @@ private:
     void Dispatch(DocAccessibleChild* aIPCDoc) override
     {
       Unused << aIPCDoc->SendTextChangeEvent(mID, mStr, mStart, mLen, mIsInsert,
-                                             mFromUser, false);
+                                             mFromUser);
     }
 
     uint64_t  mID;
@@ -346,8 +344,8 @@ private:
   };
 
   bool mIsRemoteConstructed;
-  mscom::ProxyUniquePtr<IDispatch> mParentProxy;
-  mscom::ProxyUniquePtr<IDispatch> mEmulatedWindowProxy;
+  mscom::ProxyUniquePtr<IAccessible> mParentProxy;
+  mscom::ProxyUniquePtr<IAccessible> mEmulatedWindowProxy;
   nsTArray<UniquePtr<DeferredEvent>> mDeferredEvents;
   HWND mEmulatedWindowHandle;
 };

@@ -698,7 +698,7 @@ WebGLProgram::GetFragDataLocation(const nsAString& userName_wide) const
         if (!ParseName(userName, &baseUserName, &isArray, &arrayIndex))
             return -1;
 
-        if (arrayIndex >= mContext->mGLMaxDrawBuffers)
+        if (arrayIndex >= mContext->mImplMaxDrawBuffers)
             return -1;
 
         const auto baseLoc = GetFragDataByUserName(this, baseUserName);
@@ -1263,7 +1263,7 @@ WebGLProgram::ValidateAfterTentativeLink(nsCString* const out_linkLog) const
     // * Unrecognized varying name
     // * Duplicate varying name
     // * Too many components for specified buffer mode
-    if (!mNextLink_TransformFeedbackVaryings.empty()) {
+    if (mNextLink_TransformFeedbackVaryings.size()) {
         GLuint maxComponentsPerIndex = 0;
         switch (mNextLink_TransformFeedbackBufferMode) {
         case LOCAL_GL_INTERLEAVED_ATTRIBS:
@@ -1283,7 +1283,7 @@ WebGLProgram::ValidateAfterTentativeLink(nsCString* const out_linkLog) const
         std::vector<size_t> componentsPerVert;
         std::set<const WebGLActiveInfo*> alreadyUsed;
         for (const auto& wideUserName : mNextLink_TransformFeedbackVaryings) {
-            if (componentsPerVert.empty() ||
+            if (!componentsPerVert.size() ||
                 mNextLink_TransformFeedbackBufferMode == LOCAL_GL_SEPARATE_ATTRIBS)
             {
                 componentsPerVert.push_back(0);
@@ -1608,7 +1608,7 @@ webgl::LinkedProgramInfo::MapFragDataName(const nsCString& userName,
 {
     // FS outputs can be arrays, but not structures.
 
-    if (fragDataMap.empty()) {
+    if (!fragDataMap.size()) {
         // No mappings map from validation, so just forward it.
         *out_mappedName = userName;
         return true;

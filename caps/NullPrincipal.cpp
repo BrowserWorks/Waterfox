@@ -103,14 +103,14 @@ NullPrincipal::Init(const OriginAttributes& aOriginAttributes, bool aIsFirstPart
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   nsAutoCString path;
-  rv = mURI->GetPathQueryRef(path);
+  rv = mURI->GetPath(path);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   OriginAttributes attrs(aOriginAttributes);
   if (aIsFirstParty) {
     // remove the '{}' characters from both ends.
     path.Mid(path, 1, path.Length() - 2);
-    path.AppendLiteral(".mozilla");
+    path.AppendLiteral(".waterfox");
     attrs.SetFirstPartyDomain(true, path);
   }
 
@@ -192,7 +192,7 @@ NS_IMETHODIMP
 NullPrincipal::GetBaseDomain(nsACString& aBaseDomain)
 {
   // For a null principal, we use our unique uuid as the base domain.
-  return mURI->GetPathQueryRef(aBaseDomain);
+  return mURI->GetPath(aBaseDomain);
 }
 
 NS_IMETHODIMP

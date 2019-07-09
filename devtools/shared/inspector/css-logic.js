@@ -8,9 +8,6 @@
 
 const { getRootBindingParent } = require("devtools/shared/layout/utils");
 const { getTabPrefs } = require("devtools/shared/indentation");
-const { Ci, Cc } = require("chrome");
-
-const MAX_DATA_URL_LENGTH = 40;
 
 /*
  * About the objects defined in this file:
@@ -112,13 +109,6 @@ exports.shortSource = function (sheet) {
     return exports.l10n("rule.sourceInline");
   }
 
-  // If the sheet is a data URL, return a trimmed version of it.
-  let dataUrl = sheet.href.trim().match(/^data:.*?,((?:.|\r|\n)*)$/);
-  if (dataUrl) {
-    return dataUrl[1].length > MAX_DATA_URL_LENGTH ?
-      `${dataUrl[1].substr(0, MAX_DATA_URL_LENGTH - 1)}…` : dataUrl[1];
-  }
-
   // We try, in turn, the filename, filePath, query string, whole thing
   let url = {};
   try {
@@ -139,7 +129,8 @@ exports.shortSource = function (sheet) {
     return url.query;
   }
 
-  return sheet.href;
+  let dataUrl = sheet.href.match(/^(data:[^,]*),/);
+  return dataUrl ? dataUrl[1] : sheet.href;
 };
 
 const TAB_CHARS = "\t";
@@ -472,43 +463,3 @@ function getXPath(ele) {
   return parts.length ? "/" + parts.reverse().join("/") : "";
 }
 exports.getXPath = getXPath;
-
-/**
- * Given a node, check to see if it is a ::before or ::after element.
- * If so, return the node that is accessible from within the document
- * (the parent of the anonymous node), along with which pseudo element
- * it was.  Otherwise, return the node itself.
- *
- * @returns {Object}
- *            - {DOMNode} node The non-anonymous node
- *            - {string} pseudo One of ':before', ':after', or null.
- */
-function getBindingElementAndPseudo(node) {
-  let bindingElement = node;
-  let pseudo = null;
-  if (node.nodeName == "_moz_generated_content_before") {
-    bindingElement = node.parentNode;
-    pseudo = ":before";
-  } else if (node.nodeName == "_moz_generated_content_after") {
-    bindingElement = node.parentNode;
-    pseudo = ":after";
-  }
-  return {
-    bindingElement: bindingElement,
-    pseudo: pseudo
-  };
-}
-exports.getBindingElementAndPseudo = getBindingElementAndPseudo;
-
-/**
- * Returns css style rules for a given a node.
- * This function can handle ::before or ::after pseudo element as well as
- * normal element.
- */
-function getCSSStyleRules(node) {
-  const DOMUtils =
-    Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
-  let { bindingElement, pseudo } = getBindingElementAndPseudo(node);
-  return DOMUtils.getCSSStyleRules(bindingElement, pseudo);
-}
-exports.getCSSStyleRules = getCSSStyleRules;

@@ -16,8 +16,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(PerformanceMainThread)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(PerformanceMainThread,
                                                 Performance)
 NS_IMPL_CYCLE_COLLECTION_UNLINK(mTiming,
-                                mNavigation,
-                                mDocEntry)
+                                mNavigation)
   tmp->mMozMemory = nullptr;
   mozilla::DropJSObjects(this);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -25,8 +24,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(PerformanceMainThread,
                                                   Performance)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTiming,
-                                    mNavigation,
-                                    mDocEntry)
+                                    mNavigation)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(PerformanceMainThread,
@@ -93,8 +91,7 @@ PerformanceMainThread::DispatchBufferFullEvent()
   // it bubbles, and it isn't cancelable
   event->InitEvent(NS_LITERAL_STRING("resourcetimingbufferfull"), true, false);
   event->SetTrusted(true);
-  bool dummy;
-  DispatchEvent(event, &dummy);
+  DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 PerformanceNavigation*
@@ -154,7 +151,38 @@ PerformanceMainThread::AddEntry(nsIHttpChannel* channel,
     // The PerformanceResourceTiming object will use the PerformanceTiming
     // object to get all the required timings.
     RefPtr<PerformanceResourceTiming> performanceEntry =
-      new PerformanceResourceTiming(performanceTiming, this, entryName, channel);
+      new PerformanceResourceTiming(performanceTiming, this, entryName);
+
+    nsAutoCString protocol;
+    // Can be an empty string.
+    Unused << channel->GetProtocolVersion(protocol);
+
+    // If this is a local fetch, nextHopProtocol should be set to empty string.
+    nsCOMPtr<nsICacheInfoChannel> cachedChannel = do_QueryInterface(channel);
+    if (cachedChannel) {
+      bool isFromCache;
+      if (NS_SUCCEEDED(cachedChannel->IsFromCache(&isFromCache))
+          && isFromCache) {
+        protocol.Truncate();
+      }
+    }
+
+    performanceEntry->SetNextHopProtocol(NS_ConvertUTF8toUTF16(protocol));
+
+    uint64_t encodedBodySize = 0;
+    Unused << channel->GetEncodedBodySize(&encodedBodySize);
+    performanceEntry->SetEncodedBodySize(encodedBodySize);
+
+    uint64_t transferSize = 0;
+    Unused << channel->GetTransferSize(&transferSize);
+    performanceEntry->SetTransferSize(transferSize);
+
+    uint64_t decodedBodySize = 0;
+    Unused << channel->GetDecodedBodySize(&decodedBodySize);
+    if (decodedBodySize == 0) {
+      decodedBodySize = encodedBodySize;
+    }
+    performanceEntry->SetDecodedBodySize(decodedBodySize);
 
     // If the initiator type had no valid value, then set it to the default
     // ("other") value.
@@ -307,84 +335,6 @@ DOMHighResTimeStamp
 PerformanceMainThread::CreationTime() const
 {
   return GetDOMTiming()->GetNavigationStart();
-}
-
-void
-PerformanceMainThread::EnsureDocEntry()
-{
-  if (!mDocEntry && nsContentUtils::IsPerformanceNavigationTimingEnabled()) {
-    nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(mChannel);
-    RefPtr<PerformanceTiming> timing =
-      new PerformanceTiming(this, mChannel, nullptr, 0);
-    mDocEntry = new PerformanceNavigationTiming(timing, this,
-                                                httpChannel);
-  }
-}
-
-
-void
-PerformanceMainThread::GetEntries(nsTArray<RefPtr<PerformanceEntry>>& aRetval)
-{
-  // We return an empty list when 'privacy.resistFingerprinting' is on.
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    aRetval.Clear();
-    return;
-  }
-
-  aRetval = mResourceEntries;
-  aRetval.AppendElements(mUserEntries);
-
-  EnsureDocEntry();
-  if (mDocEntry) {
-    aRetval.AppendElement(mDocEntry);
-  }
-
-  aRetval.Sort(PerformanceEntryComparator());
-}
-
-void
-PerformanceMainThread::GetEntriesByType(const nsAString& aEntryType,
-                                        nsTArray<RefPtr<PerformanceEntry>>& aRetval)
-{
-  // We return an empty list when 'privacy.resistFingerprinting' is on.
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    aRetval.Clear();
-    return;
-  }
-
-  if (aEntryType.EqualsLiteral("navigation")) {
-    aRetval.Clear();
-    EnsureDocEntry();
-    if (mDocEntry) {
-      aRetval.AppendElement(mDocEntry);
-    }
-    return;
-  }
-
-  Performance::GetEntriesByType(aEntryType, aRetval);
-}
-
-void
-PerformanceMainThread::GetEntriesByName(const nsAString& aName,
-                                        const Optional<nsAString>& aEntryType,
-                                        nsTArray<RefPtr<PerformanceEntry>>& aRetval)
-{
-  // We return an empty list when 'privacy.resistFingerprinting' is on.
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    aRetval.Clear();
-    return;
-  }
-
-  if (aName.EqualsLiteral("document")) {
-    aRetval.Clear();
-    EnsureDocEntry();
-    if (mDocEntry) {
-      aRetval.AppendElement(mDocEntry);
-    }
-    return;
-  }
-
-  Performance::GetEntriesByName(aName, aEntryType, aRetval);
 }
 
 } // dom namespace

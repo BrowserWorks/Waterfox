@@ -4,10 +4,9 @@
 
 "use strict";
 
-const { CanvasFrameAnonymousContentHelper,
+const { CanvasFrameAnonymousContentHelper, getCSSStyleRules,
         createSVGNode, createNode, getComputedStyle } = require("./utils/markup");
-const { setIgnoreLayoutChanges, getCurrentZoom,
-        getAdjustedQuads, getFrameOffsets } = require("devtools/shared/layout/utils");
+const { setIgnoreLayoutChanges, getCurrentZoom } = require("devtools/shared/layout/utils");
 const { AutoRefreshHighlighter } = require("./auto-refresh");
 const {
   getDistance,
@@ -16,10 +15,9 @@ const {
   projection,
   clickedOnPoint
 } = require("devtools/server/actors/utils/shapes-geometry-utils");
-const EventEmitter = require("devtools/shared/old-event-emitter");
-const { getCSSStyleRules } = require("devtools/shared/inspector/css-logic");
+const EventEmitter = require("devtools/shared/event-emitter");
 
-const BASE_MARKER_SIZE = 5;
+const BASE_MARKER_SIZE = 10;
 // the width of the area around highlighter lines that can be clicked, in px
 const LINE_CLICK_WIDTH = 5;
 const DOM_EVENTS = ["mousedown", "mousemove", "mouseup", "dblclick"];
@@ -122,16 +120,6 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       nodeType: "path",
       parent: mainSvg,
       attributes: {
-        "id": "markers-outline",
-        "class": "markers-outline",
-      },
-      prefix: this.ID_CLASS_PREFIX
-    });
-
-    createSVGNode(this.win, {
-      nodeType: "path",
-      parent: mainSvg,
-      attributes: {
         "id": "markers",
         "class": "markers",
       },
@@ -178,47 +166,13 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     };
   }
 
-  get frameDimensions() {
-    // In an iframe, we get the node's quads relative to the frame,
-    // instead of the parent document.
-    let dims = getAdjustedQuads(this.currentNode.ownerGlobal,
-      this.currentNode, this.referenceBox)[0].bounds;
-    let zoom = getCurrentZoom(this.win);
-
-    if (this.currentNode.getBBox &&
-        getComputedStyle(this.currentNode).stroke !== "none" && !this.useStrokeBox) {
-      dims = getObjectBoundingBox(dims.top, dims.left,
-        dims.width, dims.height, this.currentNode);
-    }
-
-    return {
-      top: dims.top / zoom,
-      left: dims.left / zoom,
-      width: dims.width / zoom,
-      height: dims.height / zoom
-    };
-  }
-
   handleEvent(event, id) {
     // No event handling if the highlighter is hidden
     if (this.areShapesHidden()) {
       return;
     }
 
-    let { target, type, pageX, pageY } = event;
-
-    // For events on highlighted nodes in an iframe, when the event takes place
-    // outside the iframe. Check if event target belongs to the iframe. If it doesn't,
-    // adjust pageX/pageY to be relative to the iframe rather than the parent.
-    if (target.ownerDocument !== this.currentNode.ownerDocument) {
-      let [xOffset, yOffset] = getFrameOffsets(target.ownerGlobal, this.currentNode);
-      // xOffset/yOffset are relative to the viewport, so first find the top/left
-      // edges of the viewport relative to the page.
-      let viewportLeft = pageX - event.clientX;
-      let viewportTop = pageY - event.clientY;
-      pageX -= viewportLeft + xOffset;
-      pageY -= viewportTop + yOffset;
-    }
+    const { target, type, pageX, pageY } = event;
 
     switch (type) {
       case "pagehide":
@@ -239,11 +193,24 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
         } else if (this.shapeType === "inset") {
           this._handleInsetClick(pageX, pageY);
         }
+        // Currently, changes to shape-outside do not become visible unless a reflow
+        // is forced (bug 1359834). This is a hack to force a reflow so changes made
+        // using the highlighter can be seen: we change the width of the element
+        // slightly on mousedown on a point, and restore the original width on mouseup.
+        if (this.property === "shape-outside" && this[_dragging]) {
+          let { width } = this.zoomAdjustedDimensions;
+          let origWidth = getDefinedShapeProperties(this.currentNode, "width");
+          this.currentNode.style.setProperty("width", `${width + 1}px`);
+          this[_dragging].origWidth = origWidth;
+        }
         event.stopPropagation();
         event.preventDefault();
         break;
       case "mouseup":
         if (this[_dragging]) {
+          if (this.property === "shape-outside") {
+            this.currentNode.style.setProperty("width", this[_dragging].origWidth);
+          }
           this[_dragging] = null;
         }
         break;
@@ -708,7 +675,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     let { width, height } = this.zoomAdjustedDimensions;
     let zoom = getCurrentZoom(this.win);
     let path = points.map(([x, y]) => {
-      return getCirclePath(BASE_MARKER_SIZE, x, y, width, height, zoom);
+      return getCirclePath(x, y, width, height, zoom);
     }).join(" ");
 
     let markerHover = this.getElement("marker-hover");
@@ -738,10 +705,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
    *          in percentages relative to the element.
    */
   convertPageCoordsToPercent(pageX, pageY) {
-    // If the current node is in an iframe, we get dimensions relative to the frame.
-    let dims = (this.highlighterEnv.window.document === this.currentNode.ownerDocument) ?
-               this.zoomAdjustedDimensions : this.frameDimensions;
-    let { top, left, width, height } = dims;
+    let { top, left, width, height } = this.zoomAdjustedDimensions;
     pageX -= left;
     pageY -= top;
     let percentX = pageX * 100 / width;
@@ -1310,7 +1274,6 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     this.getElement("polygon").setAttribute("hidden", true);
     this.getElement("rect").setAttribute("hidden", true);
     this.getElement("markers").setAttribute("d", "");
-    this.getElement("markers-outline").setAttribute("d", "");
   }
 
   /**
@@ -1439,14 +1402,10 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
    */
   _drawMarkers(coords, width, height, zoom) {
     let markers = coords.map(([x, y]) => {
-      return getCirclePath(BASE_MARKER_SIZE, x, y, width, height, zoom);
-    }).join(" ");
-    let outline = coords.map(([x, y]) => {
-      return getCirclePath(BASE_MARKER_SIZE + 2, x, y, width, height, zoom);
+      return getCirclePath(x, y, width, height, zoom);
     }).join(" ");
 
     this.getElement("markers").setAttribute("d", markers);
-    this.getElement("markers-outline").setAttribute("d", outline);
   }
 
   /**
@@ -1572,7 +1531,6 @@ exports.shapeModeToCssPropertyName = shapeModeToCssPropertyName;
 
 /**
  * Get the SVG path definition for a circle with given attributes.
- * @param {Number} size the radius of the circle in pixels
  * @param {Number} cx the x coordinate of the centre of the circle
  * @param {Number} cy the y coordinate of the centre of the circle
  * @param {Number} width the width of the element the circle is being drawn for
@@ -1580,14 +1538,14 @@ exports.shapeModeToCssPropertyName = shapeModeToCssPropertyName;
  * @param {Number} zoom the zoom level of the window the circle is drawn in
  * @returns {String} the definition of the circle in SVG path description format.
  */
-const getCirclePath = (size, cx, cy, width, height, zoom) => {
+const getCirclePath = (cx, cy, width, height, zoom) => {
   // We use a viewBox of 100x100 for shape-container so it's easy to position things
   // based on their percentage, but this makes it more difficult to create circles.
   // Therefor, 100px is the base size of shape-container. In order to make the markers'
   // size scale properly, we must adjust the radius based on zoom and the width/height of
   // the element being highlighted, then calculate a radius for both x/y axes based
   // on the aspect ratio of the element.
-  let radius = size * (100 / Math.max(width, height)) / zoom;
+  let radius = BASE_MARKER_SIZE * (100 / Math.max(width, height)) / zoom;
   let ratio = width / height;
   let rx = (ratio > 1) ? radius : radius / ratio;
   let ry = (ratio > 1) ? radius * ratio : radius;

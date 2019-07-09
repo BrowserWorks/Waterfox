@@ -54,7 +54,7 @@
 #include "nsTArray.h"
 #include "nsTemplateMatch.h"
 #include "nsTemplateRule.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsWhitespaceTokenizer.h"
 #include "nsGkAtoms.h"
 #include "nsXULElement.h"
@@ -483,11 +483,11 @@ nsXULTemplateBuilder::CreateContents(nsIContent* aElement, bool aForceCreation)
 
 NS_IMETHODIMP
 nsXULTemplateBuilder::HasGeneratedContent(nsIRDFResource* aResource,
-                                          nsAtom* aTag,
+                                          nsIAtom* aTag,
                                           bool* aGenerated)
 {
     ErrorResult rv;
-    const nsAString& tag = aTag ? nsDependentAtomString(aTag) : VoidString();
+    const nsAString& tag = aTag ? nsDependentAtomString(aTag) : NullString();
     *aGenerated = HasGeneratedContent(aResource, tag, rv);
     return rv.StealNSResult();
 }
@@ -828,7 +828,7 @@ nsXULTemplateBuilder::UpdateResultInContainer(nsIXULTemplateResult* aOldResult,
     nsTemplateMatch *newmatch = nullptr;
     if (aNewResult) {
         // only allow a result to be inserted into containers with a matching tag
-        nsAtom* tag = aQuerySet->GetTag();
+        nsIAtom* tag = aQuerySet->GetTag();
         if (aInsertionPoint && tag &&
             tag != aInsertionPoint->NodeInfo()->NameAtom())
             return NS_OK;
@@ -1184,7 +1184,7 @@ void
 nsXULTemplateBuilder::AttributeChanged(nsIDocument* aDocument,
                                        Element*     aElement,
                                        int32_t      aNameSpaceID,
-                                       nsAtom*     aAttribute,
+                                       nsIAtom*     aAttribute,
                                        int32_t      aModType,
                                        const nsAttrValue* aOldValue)
 {
@@ -1213,6 +1213,7 @@ void
 nsXULTemplateBuilder::ContentRemoved(nsIDocument* aDocument,
                                      nsIContent* aContainer,
                                      nsIContent* aChild,
+                                     int32_t aIndexInContainer,
                                      nsIContent* aPreviousSibling)
 {
     if (mRoot && nsContentUtils::ContentIsDescendantOf(mRoot, aChild)) {
@@ -1530,7 +1531,7 @@ nsXULTemplateBuilder::DetermineMatchedRule(nsIContent *aContainer,
         nsTemplateRule* rule = aQuerySet->GetRuleAt(r);
         // If a tag was specified, it must match the tag of the container
         // where content is being inserted.
-        nsAtom* tag = rule->GetTag();
+        nsIAtom* tag = rule->GetTag();
         if ((!aContainer || !tag ||
              tag == aContainer->NodeInfo()->NameAtom()) &&
             rule->CheckMatch(aResult)) {
@@ -1694,7 +1695,7 @@ nsXULTemplateBuilder::SubstituteTextReplaceVariable(nsXULTemplateBuilder* aThis,
     }
     else {
         // Got a variable; get the value it's assigned to
-        RefPtr<nsAtom> var = NS_Atomize(aVariable);
+        nsCOMPtr<nsIAtom> var = NS_Atomize(aVariable);
         c->result->GetBindingFor(var, replacementText);
     }
 
@@ -1932,7 +1933,7 @@ nsXULTemplateBuilder::CompileTemplate(nsIContent* aTemplate,
                                               getter_AddRefs(action));
 
             if (action){
-                RefPtr<nsAtom> memberVariable = mMemberVariable;
+                nsCOMPtr<nsIAtom> memberVariable = mMemberVariable;
                 if (!memberVariable) {
                     memberVariable = DetermineMemberVariable(action);
                     if (!memberVariable) {
@@ -1942,7 +1943,7 @@ nsXULTemplateBuilder::CompileTemplate(nsIContent* aTemplate,
                 }
 
                 if (hasQuery) {
-                    RefPtr<nsAtom> tag;
+                    nsCOMPtr<nsIAtom> tag;
                     DetermineRDFQueryRef(aQuerySet->mQueryNode,
                                          getter_AddRefs(tag));
                     if (tag)
@@ -1988,7 +1989,7 @@ nsXULTemplateBuilder::CompileTemplate(nsIContent* aTemplate,
                             }
                         }
 
-                        RefPtr<nsAtom> tag;
+                        nsCOMPtr<nsIAtom> tag;
                         DetermineRDFQueryRef(conditions, getter_AddRefs(tag));
                         if (tag)
                             aQuerySet->SetTag(tag);
@@ -2050,12 +2051,12 @@ nsXULTemplateBuilder::CompileTemplate(nsIContent* aTemplate,
             if (! hasQuery)
                 continue;
 
-            RefPtr<nsAtom> tag;
+            nsCOMPtr<nsIAtom> tag;
             DetermineRDFQueryRef(aQuerySet->mQueryNode, getter_AddRefs(tag));
             if (tag)
                 aQuerySet->SetTag(tag);
 
-            RefPtr<nsAtom> memberVariable = mMemberVariable;
+            nsCOMPtr<nsIAtom> memberVariable = mMemberVariable;
             if (!memberVariable) {
                 memberVariable = DetermineMemberVariable(rulenode);
                 if (!memberVariable) {
@@ -2096,7 +2097,7 @@ nsXULTemplateBuilder::CompileTemplate(nsIContent* aTemplate,
 nsresult
 nsXULTemplateBuilder::CompileExtendedQuery(nsIContent* aRuleElement,
                                            nsIContent* aActionElement,
-                                           nsAtom* aMemberVariable,
+                                           nsIAtom* aMemberVariable,
                                            nsTemplateQuerySet* aQuerySet)
 {
     // Compile an "extended" <template> rule. An extended rule may have
@@ -2143,7 +2144,7 @@ nsXULTemplateBuilder::CompileExtendedQuery(nsIContent* aRuleElement,
     return NS_OK;
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 nsXULTemplateBuilder::DetermineMemberVariable(nsIContent* aElement)
 {
     // recursively iterate over the children looking for an element
@@ -2157,7 +2158,7 @@ nsXULTemplateBuilder::DetermineMemberVariable(nsIContent* aElement)
             return NS_Atomize(uri);
         }
 
-        RefPtr<nsAtom> result = DetermineMemberVariable(child);
+        nsCOMPtr<nsIAtom> result = DetermineMemberVariable(child);
         if (result) {
             return result.forget();
         }
@@ -2167,7 +2168,7 @@ nsXULTemplateBuilder::DetermineMemberVariable(nsIContent* aElement)
 }
 
 void
-nsXULTemplateBuilder::DetermineRDFQueryRef(nsIContent* aQueryElement, nsAtom** aTag)
+nsXULTemplateBuilder::DetermineRDFQueryRef(nsIContent* aQueryElement, nsIAtom** aTag)
 {
     // check for a tag
     nsCOMPtr<nsIContent> content;
@@ -2208,7 +2209,7 @@ nsXULTemplateBuilder::CompileSimpleQuery(nsIContent* aRuleElement,
     // <conditions>. This means that a default query is used.
     nsCOMPtr<nsIDOMNode> query(do_QueryInterface(aRuleElement));
 
-    RefPtr<nsAtom> memberVariable;
+    nsCOMPtr<nsIAtom> memberVariable;
     if (mMemberVariable)
         memberVariable = mMemberVariable;
     else
@@ -2238,7 +2239,7 @@ nsXULTemplateBuilder::CompileSimpleQuery(nsIContent* aRuleElement,
     aRuleElement->GetAttr(kNameSpaceID_None, nsGkAtoms::parent, tag);
 
     if (!tag.IsEmpty()) {
-        RefPtr<nsAtom> tagatom = NS_Atomize(tag);
+        nsCOMPtr<nsIAtom> tagatom = NS_Atomize(tag);
         aQuerySet->SetTag(tagatom);
     }
 
@@ -2255,7 +2256,7 @@ nsXULTemplateBuilder::CompileConditions(nsTemplateRule* aRule,
     aCondition->GetAttr(kNameSpaceID_None, nsGkAtoms::parent, tag);
 
     if (!tag.IsEmpty()) {
-        RefPtr<nsAtom> tagatom = NS_Atomize(tag);
+        nsCOMPtr<nsIAtom> tagatom = NS_Atomize(tag);
         aRule->SetTag(tagatom);
     }
 
@@ -2302,7 +2303,7 @@ nsXULTemplateBuilder::CompileWhereCondition(nsTemplateRule* aRule,
         return NS_OK;
     }
 
-    RefPtr<nsAtom> svar;
+    nsCOMPtr<nsIAtom> svar;
     if (subject[0] == char16_t('?'))
         svar = NS_Atomize(subject);
 
@@ -2326,7 +2327,7 @@ nsXULTemplateBuilder::CompileWhereCondition(nsTemplateRule* aRule,
       aCondition->AttrValueIs(kNameSpaceID_None, nsGkAtoms::multiple,
                               nsGkAtoms::_true, eCaseMatters);
 
-    RefPtr<nsAtom> vvar;
+    nsCOMPtr<nsIAtom> vvar;
     if (!shouldMultiple && (value[0] == char16_t('?'))) {
         vvar = NS_Atomize(value);
     }
@@ -2417,7 +2418,7 @@ nsXULTemplateBuilder::CompileBinding(nsTemplateRule* aRule,
         return NS_OK;
     }
 
-    RefPtr<nsAtom> svar;
+    nsCOMPtr<nsIAtom> svar;
     if (subject[0] == char16_t('?')) {
         svar = NS_Atomize(subject);
     }
@@ -2443,7 +2444,7 @@ nsXULTemplateBuilder::CompileBinding(nsTemplateRule* aRule,
         return NS_OK;
     }
 
-    RefPtr<nsAtom> ovar;
+    nsCOMPtr<nsIAtom> ovar;
     if (object[0] == char16_t('?')) {
         ovar = NS_Atomize(object);
     }
@@ -2518,7 +2519,7 @@ nsXULTemplateBuilder::AddBindingsFor(nsXULTemplateBuilder* aThis,
 
     nsTemplateRule* rule = static_cast<nsTemplateRule*>(aClosure);
 
-    RefPtr<nsAtom> var = NS_Atomize(aVariable);
+    nsCOMPtr<nsIAtom> var = NS_Atomize(aVariable);
 
     // Strip it down to the raw RDF property by clobbering the "rdf:"
     // prefix

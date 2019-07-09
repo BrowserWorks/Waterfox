@@ -16,7 +16,6 @@
 #include "mozilla/AbstractThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/SharedThreadPool.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/TaskQueue.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/ContentChild.h"
@@ -32,7 +31,7 @@ namespace mozilla {
 
 // Update this version number to force re-running the benchmark. Such as when
 // an improvement to FFVP9 or LIBVPX is deemed worthwhile.
-const uint32_t VP9Benchmark::sBenchmarkVersionID = 2;
+const uint32_t VP9Benchmark::sBenchmarkVersionID = 3;
 
 const char* VP9Benchmark::sBenchmarkFpsPref = "media.benchmark.vp9.fps";
 const char* VP9Benchmark::sBenchmarkFpsVersionCheck = "media.benchmark.vp9.versioncheck";
@@ -44,8 +43,7 @@ VP9Benchmark::IsVP9DecodeFast()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  // Disable VP9 estimizer on Mac, see bug 1400787.
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_APPLEMEDIA)
+#ifdef MOZ_WIDGET_ANDROID
   return false;
 #else
   bool hasPref = Preferences::HasUserValue(sBenchmarkFpsPref);
@@ -55,7 +53,7 @@ VP9Benchmark::IsVP9DecodeFast()
     sHasRunTest = true;
 
     RefPtr<WebMDemuxer> demuxer = new WebMDemuxer(
-      new BufferMediaResource(sWebMSample, sizeof(sWebMSample)));
+      new BufferMediaResource(sWebMSample, sizeof(sWebMSample), nullptr));
     RefPtr<Benchmark> estimiser =
       new Benchmark(demuxer,
                     {
@@ -198,8 +196,8 @@ BenchmarkPlayback::DemuxNextSample()
     Thread(), __func__,
     [this, ref](RefPtr<MediaTrackDemuxer::SamplesHolder> aHolder) {
       mSamples.AppendElements(Move(aHolder->mSamples));
-      if (ref->mParameters.mStopAtFrame &&
-          mSamples.Length() == (size_t)ref->mParameters.mStopAtFrame.ref()) {
+      if (ref->mParameters.mStopAtFrame
+          && mSamples.Length() == (size_t)ref->mParameters.mStopAtFrame.ref()) {
         InitDecoder(Move(*mTrackDemuxer->GetInfo()));
       } else {
         Dispatch(NS_NewRunnableFunction("BenchmarkPlayback::DemuxNextSample",
@@ -292,9 +290,10 @@ BenchmarkPlayback::Output(const MediaDataDecoder::DecodedData& aResults)
   TimeStamp now = TimeStamp::Now();
   int32_t frames = mFrameCount - ref->mParameters.mStartupFrame;
   TimeDuration elapsedTime = now - mDecodeStartTime.refOr(now);
-  if (!mFinished &&
-      (((frames == ref->mParameters.mFramesToMeasure) && frames > 0) ||
-       elapsedTime >= ref->mParameters.mTimeout || mDrained)) {
+  if (!mFinished
+      && (((frames == ref->mParameters.mFramesToMeasure) && frames > 0)
+          || elapsedTime >= ref->mParameters.mTimeout
+          || mDrained)) {
     uint32_t decodeFps = frames / elapsedTime.ToSeconds();
     MainThreadShutdown();
     ref->Dispatch(

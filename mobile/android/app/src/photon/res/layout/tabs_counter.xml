@@ -5,46 +5,42 @@
 
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:gecko="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:background="@android:color/black"
     tools:layout_height="24dp"
     tools:layout_width="24dp"
-    tools:parentTag="RelativeLayout">
+    tools:orientation="vertical"
+    tools:parentTag="LinearLayout">
 
-    <FrameLayout
-        android:id="@+id/counter_root"
+    <org.mozilla.gecko.widget.themed.ThemedFrameLayout
+        android:id="@+id/counter_box"
         android:layout_width="20dp"
         android:layout_height="20dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="0.5dp">
-
-        <org.mozilla.gecko.widget.themed.ThemedImageView
-            android:id="@+id/counter_box"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/tabs_counter_box"
-            gecko:drawableTintList="@color/tabs_counter_fg"/>
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        android:layout_marginTop="0.5dp"
+        android:background="@drawable/tabs_counter_box">
 
         <org.mozilla.gecko.widget.themed.ThemedTextView
             android:id="@+id/counter_text"
-            style="@style/UrlBar.TabCounter.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:textColor="@color/tabs_counter_text"
             android:textSize="12sp"
+            android:textStyle="bold"
             tools:text="18"/>
-    </FrameLayout>
+    </org.mozilla.gecko.widget.themed.ThemedFrameLayout>
 
-    <org.mozilla.gecko.widget.themed.ThemedImageView
+    <org.mozilla.gecko.widget.themed.ThemedFrameLayout
         android:id="@+id/counter_bar"
         android:layout_width="20dp"
         android:layout_height="2dp"
-        android:layout_below="@id/counter_root"
-        android:layout_centerHorizontal="true"
+        android:layout_below="@id/counter_box"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
         android:layout_marginTop="1dp"
-        android:src="@drawable/tabs_counter_bar"
-        gecko:drawableTintList="@color/tabs_counter_fg"/>
-
+        android:background="@drawable/tabs_counter_bar"/>
 </merge>

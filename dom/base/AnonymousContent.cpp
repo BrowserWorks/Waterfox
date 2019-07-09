@@ -75,7 +75,6 @@ void
 AnonymousContent::SetAttributeForElement(const nsAString& aElementId,
                                          const nsAString& aName,
                                          const nsAString& aValue,
-                                         nsIPrincipal* aSubjectPrincipal,
                                          ErrorResult& aRv)
 {
   Element* element = GetElementById(aElementId);
@@ -84,7 +83,7 @@ AnonymousContent::SetAttributeForElement(const nsAString& aElementId,
     return;
   }
 
-  element->SetAttribute(aName, aValue, aSubjectPrincipal, aRv);
+  element->SetAttribute(aName, aValue, aRv);
 }
 
 void
@@ -188,13 +187,13 @@ Element*
 AnonymousContent::GetElementById(const nsAString& aElementId)
 {
   // This can be made faster in the future if needed.
-  RefPtr<nsAtom> elementId = NS_Atomize(aElementId);
+  nsCOMPtr<nsIAtom> elementId = NS_Atomize(aElementId);
   for (nsIContent* node = mContentNode; node;
        node = node->GetNextNode(mContentNode)) {
     if (!node->IsElement()) {
       continue;
     }
-    nsAtom* id = node->AsElement()->GetID();
+    nsIAtom* id = node->AsElement()->GetID();
     if (id && id == elementId) {
       return node->AsElement();
     }

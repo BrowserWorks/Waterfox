@@ -206,8 +206,8 @@ SharedFrameMetricsHelper::UpdateFromCompositorFrameMetrics(
       fabsf(contentMetrics.GetScrollOffset().y - compositorMetrics.GetScrollOffset().y) <= 2 &&
       fabsf(contentMetrics.GetDisplayPort().x - compositorMetrics.GetDisplayPort().x) <= 2 &&
       fabsf(contentMetrics.GetDisplayPort().y - compositorMetrics.GetDisplayPort().y) <= 2 &&
-      fabsf(contentMetrics.GetDisplayPort().Width() - compositorMetrics.GetDisplayPort().Width()) <= 2 &&
-      fabsf(contentMetrics.GetDisplayPort().Height() - compositorMetrics.GetDisplayPort().Height()) <= 2) {
+      fabsf(contentMetrics.GetDisplayPort().width - compositorMetrics.GetDisplayPort().width) <= 2 &&
+      fabsf(contentMetrics.GetDisplayPort().height - compositorMetrics.GetDisplayPort().height) <= 2) {
     return false;
   }
 
@@ -522,7 +522,7 @@ TileClient::ValidateBackBufferFromFront(const nsIntRegion& aDirtyRegion,
       // is unlikely that we'd save much by copying each individual rect of the
       // region, but we can reevaluate this if it becomes an issue.
       const IntRect rectToCopy = regionToCopy.GetBounds();
-      gfx::IntRect gfxRectToCopy(rectToCopy.x, rectToCopy.y, rectToCopy.Width(), rectToCopy.Height());
+      gfx::IntRect gfxRectToCopy(rectToCopy.x, rectToCopy.y, rectToCopy.width, rectToCopy.height);
       CopyFrontToBack(mFrontBuffer, mBackBuffer, gfxRectToCopy);
 
       if (mBackBufferOnWhite) {
@@ -923,9 +923,9 @@ void ClientMultiTiledLayerBuffer::Update(const nsIntRegion& newValidRegion,
   const TilesPlacement newTiles(floor_div(newBounds.x, scaledTileSize.width),
                           floor_div(newBounds.y, scaledTileSize.height),
                           floor_div(GetTileStart(newBounds.x, scaledTileSize.width)
-                                    + newBounds.Width(), scaledTileSize.width) + 1,
+                                    + newBounds.width, scaledTileSize.width) + 1,
                           floor_div(GetTileStart(newBounds.y, scaledTileSize.height)
-                                    + newBounds.Height(), scaledTileSize.height) + 1);
+                                    + newBounds.height, scaledTileSize.height) + 1);
 
   const size_t oldTileCount = mRetainedTiles.Length();
   const size_t newTileCount = newTiles.mSize.width * newTiles.mSize.height;
@@ -968,7 +968,7 @@ void ClientMultiTiledLayerBuffer::Update(const nsIntRegion& newValidRegion,
       }
     }
 
-    if (!mMoz2DTiles.empty()) {
+    if (mMoz2DTiles.size() > 0) {
       gfx::TileSet tileset;
       for (size_t i = 0; i < mMoz2DTiles.size(); ++i) {
         mMoz2DTiles[i].mTileOrigin -= mTilingOrigin;
@@ -1106,8 +1106,8 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
     const IntRect& dirtyRect = iter.Get();
     gfx::Rect drawRect(dirtyRect.x - aTileOrigin.x,
                        dirtyRect.y - aTileOrigin.y,
-                       dirtyRect.Width(),
-                       dirtyRect.Height());
+                       dirtyRect.width,
+                       dirtyRect.height);
     drawRect.Scale(mResolution);
 
     // Mark the newly updated area as invalid in the front buffer
@@ -1399,6 +1399,13 @@ TiledContentClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
   aStream << aPrefix;
   aStream << nsPrintfCString("%sTiledContentClient (0x%p)", mName, this).get();
+
+  if (profiler_feature_active(ProfilerFeature::DisplayListDump)) {
+    nsAutoCString pfx(aPrefix);
+    pfx += "  ";
+
+    Dump(aStream, pfx.get(), false);
+  }
 }
 
 void

@@ -15,7 +15,7 @@ class nsCSSCounterStyleRule final : public mozilla::css::Rule,
                                     public nsIDOMCSSCounterStyleRule
 {
 public:
-  explicit nsCSSCounterStyleRule(nsAtom* aName,
+  explicit nsCSSCounterStyleRule(nsIAtom* aName,
                                  uint32_t aLineNumber, uint32_t aColumnNumber)
     : mozilla::css::Rule(aLineNumber, aColumnNumber)
     , mName(aName)
@@ -74,7 +74,7 @@ public:
                              nsCSSCounterDesc aDescID,
                              const nsCSSValue& aValue);
 
-  nsAtom* Name() const { return mName; }
+  nsIAtom* Name() const { return mName; }
 
   uint32_t GetGeneration() const { return mGeneration; }
 
@@ -102,7 +102,7 @@ private:
   nsresult GetDescriptor(nsCSSCounterDesc aDescID, nsAString& aValue);
   nsresult SetDescriptor(nsCSSCounterDesc aDescID, const nsAString& aValue);
 
-  RefPtr<nsAtom> mName;
+  nsCOMPtr<nsIAtom> mName;
   nsCSSValue mValues[eCSSCounterDesc_COUNT];
   uint32_t   mGeneration;
 };

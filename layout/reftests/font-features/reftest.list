@@ -51,15 +51,15 @@ HTTP(..) == font-features-order-4.html font-features-noliga.html
 HTTP(..) == font-features-order-5.html font-features-hlig.html
 
 # check priority involving feature settings and font-variant-alternates
-HTTP(..) == alternates-order.html alternates-order-ref.html
+fails-if(styloVsGecko||stylo) HTTP(..) == alternates-order.html alternates-order-ref.html
 
 # check that font-specific values line up with @font-face feature settings
-skip-if((stylo||styloVsGecko)&&winWidget) HTTP(..) == annotations.html annotations-ref.html
+fails-if((stylo||styloVsGecko)&&cocoaWidget) skip-if((stylo||styloVsGecko)&&winWidget) HTTP(..) == annotations.html annotations-ref.html
 
 # font-variant subproperties
 # test for specific features being on and others off, based on prop values
 # (debug problems with font-variant-debug.html which displays all props)
-HTTP(..) == font-variant-alternates.html font-variant-alternates-ref.html
+fails-if(styloVsGecko||stylo) HTTP(..) == font-variant-alternates.html font-variant-alternates-ref.html
 HTTP(..) == font-variant-caps.html font-variant-caps-ref.html
 HTTP(..) == font-variant-east-asian.html font-variant-east-asian-ref.html
 HTTP(..) == font-variant-ligatures.html font-variant-ligatures-ref.html
@@ -89,10 +89,10 @@ HTTP(..) == spacelookups-wordcache.html spacelookups-wordcache-ref.html
 # requires Japanese font with feature support, WinXP lacks one
 random-if(!winWidget&&!cocoaWidget) HTTP(..) == fwid-spaces.html fwid-spaces-ref.html
 # Arial/Times New Roman on Win7+/OSX 10.6+ have kerning pairs that include spaces
-random-if(!winWidget&&!cocoaWidget) fails-if(winWidget||cocoaWidget) HTTP(..) != kerning-spaces-arial-nokern.html kerning-spaces-arial-default.html
-random-if(!winWidget&&!cocoaWidget) fails-if(winWidget||cocoaWidget) HTTP(..) == kerning-spaces-arial-kern.html kerning-spaces-arial-default.html
-random-if(!winWidget&&!cocoaWidget) fails-if(winWidget||cocoaWidget) HTTP(..) != kerning-spaces-tnr-nokern.html kerning-spaces-tnr-default.html
-random-if(!winWidget&&!cocoaWidget) fails-if(winWidget||cocoaWidget) HTTP(..) == kerning-spaces-tnr-kern.html kerning-spaces-tnr-default.html
+random-if(!winWidget&&!cocoaWidget) fails-if((winWidget||cocoaWidget)&&!styloVsGecko) HTTP(..) != kerning-spaces-arial-nokern.html kerning-spaces-arial-default.html
+random-if(!winWidget&&!cocoaWidget) fails-if((winWidget||cocoaWidget)&&!styloVsGecko) HTTP(..) == kerning-spaces-arial-kern.html kerning-spaces-arial-default.html
+random-if(!winWidget&&!cocoaWidget) fails-if((winWidget||cocoaWidget)&&!styloVsGecko) HTTP(..) != kerning-spaces-tnr-nokern.html kerning-spaces-tnr-default.html
+random-if(!winWidget&&!cocoaWidget) fails-if((winWidget||cocoaWidget)&&!styloVsGecko) HTTP(..) == kerning-spaces-tnr-kern.html kerning-spaces-tnr-default.html
 
 # font-variant-caps fallback
 # -- sanity check - none of these should look like the default rendering
@@ -118,6 +118,3 @@ HTTP(..) == subsuper-nofallback.html subsuper-nofallback-ref1.html
 random-if(cocoaWidget) HTTP(..) == subsuper-nofallback.html subsuper-nofallback-ref2.html # bug 1139269
 HTTP(..) != subsuper-nofallback.html subsuper-nofallback-notref.html
 HTTP(..) == subsuper-fallback-size.html subsuper-fallback-size-ref.html
-
-# GPOS spacing adjustments in vertical mode -- subsetted opentype/cff test font fails to load on Win7
-fails-if(webrender) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) HTTP(..) == 1376231-vertical-gpos-adjustments.html 1376231-vertical-gpos-adjustments-ref.html

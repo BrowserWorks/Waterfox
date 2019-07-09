@@ -24,7 +24,6 @@ use gleam::gl;
 use msg::constellation_msg::{Key, KeyModifiers};
 use net_traits::net_error_list::NetError;
 use script_traits::LoadData;
-use servo::BrowserId;
 use servo::ipc_channel::ipc::IpcSender;
 use servo_geometry::DeviceIndependentPixel;
 use std::cell::RefCell;
@@ -234,7 +233,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn client_window(&self, _: BrowserId) -> (Size2D<u32>, Point2D<i32>) {
+    fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
         let size = self.size().to_untyped();
         let width = size.width as u32;
         let height = size.height as u32;
@@ -242,15 +241,15 @@ impl WindowMethods for Window {
         (Size2D::new(width, height), Point2D::zero())
     }
 
-    fn set_inner_size(&self, _: BrowserId, _size: Size2D<u32>) {
+    fn set_inner_size(&self, _size: Size2D<u32>) {
 
     }
 
-    fn set_position(&self, _: BrowserId, _point: Point2D<i32>) {
+    fn set_position(&self, _point: Point2D<i32>) {
 
     }
 
-    fn set_fullscreen_state(&self, _: BrowserId, _state: bool) {
+    fn set_fullscreen_state(&self, _state: bool) {
     }
 
     fn present(&self) {
@@ -302,10 +301,10 @@ impl WindowMethods for Window {
                 app_wakeup();
             }
             fn clone(&self) -> Box<EventLoopWaker + Send> {
-                Box::new(CefEventLoopWaker)
+                box CefEventLoopWaker
             }
         }
-        Box::new(CefEventLoopWaker)
+        box CefEventLoopWaker
     }
 
     fn prepare_for_composite(&self, width: usize, height: usize) -> bool {
@@ -328,7 +327,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn set_favicon(&self, _: BrowserId, url: ServoUrl) {
+    fn set_favicon(&self, url: ServoUrl) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -337,7 +336,7 @@ impl WindowMethods for Window {
         browser.downcast().favicons.borrow_mut().push(url.into_string());
     }
 
-    fn status(&self, _: BrowserId, info: Option<String>) {
+    fn status(&self, info: Option<String>) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -354,7 +353,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn load_start(&self, _: BrowserId) {
+    fn load_start(&self) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -373,7 +372,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn load_end(&self, _: BrowserId) {
+    fn load_end(&self) {
         // FIXME(pcwalton): The status code 200 is a lie.
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
@@ -399,7 +398,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn load_error(&self, _: BrowserId, code: NetError, url: String) {
+    fn load_error(&self, code: NetError, url: String) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -416,7 +415,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn head_parsed(&self, _: BrowserId) {
+    fn head_parsed(&self) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -428,7 +427,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn set_page_title(&self, _: BrowserId, string: Option<String>) {
+    fn set_page_title(&self, string: Option<String>) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -449,7 +448,7 @@ impl WindowMethods for Window {
         *frame.title.borrow_mut() = str;
     }
 
-    fn history_changed(&self, _: BrowserId, history: Vec<LoadData>, current: usize) {
+    fn history_changed(&self, history: Vec<LoadData>, current: usize) {
         let browser = self.cef_browser.borrow();
         let browser = match *browser {
             None => return,
@@ -471,7 +470,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn handle_key(&self, _: Option<BrowserId>, _: Option<char>, _: Key, _: KeyModifiers) {
+    fn handle_key(&self, _: Option<char>, _: Key, _: KeyModifiers) {
         // TODO(negge)
     }
 
@@ -492,7 +491,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn allow_navigation(&self, _: BrowserId, _: ServoUrl, response_chan: IpcSender<bool>) {
+    fn allow_navigation(&self, _: ServoUrl, response_chan: IpcSender<bool>) {
         if let Err(e) = response_chan.send(true) {
             warn!("Failed to send allow_navigation() response: {}", e);
         };

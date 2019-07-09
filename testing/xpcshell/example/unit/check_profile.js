@@ -9,7 +9,7 @@ function check_profile_dir(profd) {
   Assert.ok(profd.isDirectory());
   let dirSvc = Cc["@mozilla.org/file/directory_service;1"]
                  .getService(Ci.nsIProperties);
-  let profd2 = dirSvc.get("ProfD", Ci.nsIFile);
+  let profd2 = dirSvc.get("ProfD", Ci.nsILocalFile);
   Assert.ok(profd2.exists());
   Assert.ok(profd2.isDirectory());
   // make sure we got the same thing back...

@@ -10,8 +10,7 @@
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsContentUtils.h"
-#include "nsAtom.h"
-#include "nsIFrame.h"
+#include "nsIAtom.h"
 #include "mozilla/dom/Element.h"
 
 inline bool
@@ -24,22 +23,6 @@ inline bool
 nsIContent::IsInChromeDocument() const
 {
   return nsContentUtils::IsChromeDoc(OwnerDoc());
-}
-
-inline void
-nsIContent::SetPrimaryFrame(nsIFrame* aFrame)
-{
-  MOZ_ASSERT(IsInUncomposedDoc() || IsInShadowTree(), "This will end badly!");
-  NS_PRECONDITION(!aFrame || !mPrimaryFrame || aFrame == mPrimaryFrame,
-                  "Losing track of existing primary frame");
-
-  if (aFrame) {
-    aFrame->SetIsPrimaryFrame(true);
-  } else if (nsIFrame* currentPrimaryFrame = GetPrimaryFrame()) {
-    currentPrimaryFrame->SetIsPrimaryFrame(false);
-  }
-
-  mPrimaryFrame = aFrame;
 }
 
 inline mozilla::dom::ShadowRoot* nsIContent::GetShadowRoot() const
@@ -113,7 +96,7 @@ nsIContent::GetFlattenedTreeParent() const
 }
 
 inline bool
-nsIContent::IsEventAttributeName(nsAtom* aName)
+nsIContent::IsEventAttributeName(nsIAtom* aName)
 {
   const char16_t* name = aName->GetUTF16String();
   if (name[0] != 'o' || name[1] != 'n') {

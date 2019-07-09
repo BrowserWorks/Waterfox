@@ -1,4 +1,4 @@
-if (!wasmDebuggingIsSupported())
+if (!wasmIsSupported())
   quit();
 
 fullcompartmentchecks(true);

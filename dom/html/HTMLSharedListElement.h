@@ -9,12 +9,16 @@
 
 #include "mozilla/Attributes.h"
 
+#include "nsIDOMHTMLOListElement.h"
+#include "nsIDOMHTMLUListElement.h"
 #include "nsGenericHTMLElement.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLSharedListElement final : public nsGenericHTMLElement
+class HTMLSharedListElement final : public nsGenericHTMLElement,
+                                    public nsIDOMHTMLOListElement,
+                                    public nsIDOMHTMLUListElement
 {
 public:
   explicit HTMLSharedListElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -25,12 +29,18 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
+  // nsIDOMHTMLOListElement
+  NS_DECL_NSIDOMHTMLOLISTELEMENT
+
+  // nsIDOMHTMLUListElement
+  // fully declared by NS_DECL_NSIDOMHTMLOLISTELEMENT
+
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
 

@@ -2,11 +2,9 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.wake
 description: >
   Test range checking of Atomics.wake on arrays that allow atomic operations
 includes: [testAtomics.js]
-features: [SharedArrayBuffer, ArrayBuffer, DataView, Atomics, arrow-function, let, for-of]
 ---*/
 
 var sab = new SharedArrayBuffer(4);

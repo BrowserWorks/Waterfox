@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "این تصویر برید شده است به $PIXELS$ پیکسل.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "خارج از سرویس."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "مطمئن نیستیم چه اتفاقی افتاده است. می‌خواهید دوباره امتحان کنید یا از یک صفحهٔ دیگر عکس بگیرید؟"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "بدون خارج شدن از فایرفاکس، عکس بگیرید، ذخیره کنید و به اشتراک بگذارید."
   },
-  "tourHeaderPageAction": {
-    "message": "روش جدیدی برای ذخیره کردن"
-  },
-  "tourBodyPageAction": {
-    "message": "بازکردن صفحه اقدامات فهرست در آدرس بار هر زمانی که شما تمایل داشته باشید از صفحه عکس بگیرید."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "ضبط آنچه شما می‌خواهید"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "کلیک کنید و بکشید تا فقط از قسمتی از صفحه عکس بگیرید. می‌توانید برای برجسته کردن روی ناحیه انتخاب شده حرکت کنید."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "ضبط پنجره یا کل صفحه‌ها"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "برای گرفتن عکس از ناحیه قابل مشاهده در پنجره یا تمام صفحه از دکمه‌های بالا سمت راست استفاده کنید."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "همانطور که می‌پسندید"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "عکس‌های بریده شده خود را برای به اشتراک‌گذاری راحت‌تر روی وب ذخیره کنید، یا آن‌ها را روی رایانه خود دریافت کنید. همچنین برای دیدن همهٔ عکس‌هایی که گرفتید می‌توانید روی دکمه «عکس‌های من» کلیک کنید."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "انجام شد"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "با استفاده از سرویس تصاویر صفحه فایرفاکس، شما با $TERMSANDPRIVACYNOTICETERMSLINK$ ما و $TERMSANDPRIVACYNOTICEPRIVACYLINK$ موافقت می‌کنید.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "با استفاده از سرویس تصاویرِ صفحه فایرفاکس، شما با شرایط سرویس‌های ابری فایرفاکس $TERMSANDPRIVACYNOTICETERMSLINK$ و $TERMSANDPRIVACYNOTICEPRIVACYLINK$ موافقت می‌کنید.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "نکات حریم‌خصوصی"
-  },
-  "libraryLabel": {
-    "message": "تصاویر صفحه"
   }
 }

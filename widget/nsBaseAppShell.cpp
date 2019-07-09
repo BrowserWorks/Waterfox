@@ -46,13 +46,11 @@ nsBaseAppShell::Init()
 {
   // Configure ourselves as an observer for the current thread:
 
-  if (XRE_UseNativeEventProcessing()) {
-    nsCOMPtr<nsIThreadInternal> threadInt =
+  nsCOMPtr<nsIThreadInternal> threadInt =
       do_QueryInterface(NS_GetCurrentThread());
-    NS_ENSURE_STATE(threadInt);
+  NS_ENSURE_STATE(threadInt);
 
-    threadInt->SetObserver(this);
-  }
+  threadInt->SetObserver(this);
 
   nsCOMPtr<nsIObserverService> obsSvc =
     mozilla::services::GetObserverService();

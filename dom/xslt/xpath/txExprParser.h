@@ -20,7 +20,7 @@ class Expr;
 class txExprLexer;
 class FunctionCall;
 class LocationStep;
-class nsAtom;
+class nsIAtom;
 class PredicateList;
 class Token;
 class txIParseContext;
@@ -84,9 +84,9 @@ protected:
      * Resolve a QName, given the mContext parse context.
      * Returns prefix and localName as well as namespace ID
      */
-    static nsresult resolveQName(const nsAString& aQName, nsAtom** aPrefix,
+    static nsresult resolveQName(const nsAString& aQName, nsIAtom** aPrefix,
                                  txIParseContext* aContext,
-                                 nsAtom** aLocalName, int32_t& aNamespace,
+                                 nsIAtom** aLocalName, int32_t& aNamespace,
                                  bool aIsNameTest = false);
 
     /**

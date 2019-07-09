@@ -148,18 +148,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
             "default": False,
             "help": "Run tests with Stylo enabled"
         }],
-        [["--disable-stylo"], {
-            "action": "store_true",
-            "dest": "disable_stylo",
-            "default": False,
-            "help": "Run tests with Stylo disabled"
-        }],
-        [["--enable-webrender"], {
-            "action": "store_true",
-            "dest": "enable_webrender",
-            "default": False,
-            "help": "Tries to enable the WebRender compositor.",
-        }],
     ] + testing_config_options + copy.deepcopy(blobupload_config_options) \
                                + copy.deepcopy(code_coverage_config_options)
 
@@ -198,7 +186,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
         self.gecko_profile = self.config.get('gecko_profile')
         self.gecko_profile_interval = self.config.get('gecko_profile_interval')
         self.pagesets_name = None
-        self.mitmproxy_rel_bin = None # some platforms download a mitmproxy release binary
         self.mitmproxy_recording_set = None # zip file found on tooltool that contains all of the mitmproxy recordings
         self.mitmproxy_recordings_file_list = self.config.get('mitmproxy', None) # files inside the recording set
         self.mitmdump = None # path to mitdump tool itself, in py3 venv
@@ -218,24 +205,19 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
                 opts = None
 
             if opts:
-                # In the case of a multi-line commit message, only examine
-                # the first line for mozharness options
-                opts = opts.split('\n')[0]
-                opts = re.sub(r'\w+:.*', '', opts).strip().split(' ')
-                if "--geckoProfile" in opts:
-                    # overwrite whatever was set here.
-                    self.gecko_profile = True
-                try:
-                    idx = opts.index('--geckoProfileInterval')
-                    if len(opts) > idx + 1:
-                        self.gecko_profile_interval = opts[idx + 1]
-                except ValueError:
-                    pass
-            else:
-                # no opts, check for '--geckoProfile' in try message text directly
-                if self.try_message_has_flag('geckoProfile'):
-                    self.gecko_profile = True
-
+              # In the case of a multi-line commit message, only examine
+              # the first line for mozharness options
+              opts = opts.split('\n')[0]
+              opts = re.sub(r'\w+:.*', '', opts).strip().split(' ')
+              if "--geckoProfile" in opts:
+                  # overwrite whatever was set here.
+                  self.gecko_profile = True
+              try:
+                  idx = opts.index('--geckoProfileInterval')
+                  if len(opts) > idx + 1:
+                      self.gecko_profile_interval = opts[idx + 1]
+              except ValueError:
+                  pass
         # finally, if gecko_profile is set, we add that to the talos options
         if self.gecko_profile:
             gecko_results.append('--geckoProfile')
@@ -417,13 +399,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
             self.info("Skipping: mitmproxy is not required")
             return
 
-        os_name = self.platform_name()
-
-        # on windows we need to install a pytyon 3 virtual env; on macosx and linux we
-        # use a mitmdump pre-built binary that doesn't need an external python 3
-        if 'win' in os_name:
-            # setup python 3.x virtualenv
-            self.setup_py3_virtualenv()
+        # setup python 3.x virtualenv
+        self.setup_py3_virtualenv()
 
         # install mitmproxy
         self.install_mitmproxy()
@@ -449,57 +426,10 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
 
     def install_mitmproxy(self):
         """Install the mitmproxy tool into the Python 3.x env"""
-        if 'win' in self.platform_name():
-            self.info("Installing mitmproxy")
-            self.py3_install_modules(modules=['mitmproxy'])
-            self.mitmdump = os.path.join(self.py3_path_to_executables(), 'mitmdump')
-        else:
-            # on macosx and linux64 we use a prebuilt mitmproxy release binary
-            mitmproxy_path = os.path.join(self.talos_path, 'talos', 'mitmproxy')
-            self.mitmdump = os.path.join(mitmproxy_path, 'mitmdump')
-            if not os.path.exists(self.mitmdump):
-                # download the mitmproxy release binary; will be overridden by the --no-download
-                if '--no-download' not in self.config['talos_extra_options']:
-                    if 'osx' in self.platform_name():
-                        _platform = 'osx'
-                    else:
-                        _platform = 'linux64'
-                    self.query_mitmproxy_rel_bin(_platform)
-                    if self.mitmproxy_rel_bin is None:
-                        self.fatal("Aborting: mitmproxy_release_bin_osx not found in talos.json")
-                    self.download_mitmproxy_binary(_platform)
-                else:
-                    self.info("Not downloading mitmproxy rel binary because no-download was specified")
-            self.info('The mitmdump macosx binary is found at: %s' % self.mitmdump)
+        self.info("Installing mitmproxy")
+        self.py3_install_modules(modules=['mitmproxy'])
+        self.mitmdump = os.path.join(self.py3_path_to_executables(), 'mitmdump')
         self.run_command([self.mitmdump, '--version'], env=self.query_env())
-
-    def query_mitmproxy_rel_bin(self, platform):
-        """Mitmproxy requires external playback archives to be downloaded and extracted"""
-        if self.mitmproxy_rel_bin:
-            return self.mitmproxy_rel_bin
-        if self.query_talos_json_config() and self.suite is not None:
-            config_key = "mitmproxy_release_bin_" + platform
-            self.mitmproxy_rel_bin = self.talos_json_config['suites'][self.suite].get(config_key, False)
-            return self.mitmproxy_rel_bin
-
-    def download_mitmproxy_binary(self, platform):
-        """Download the mitmproxy release binary from tooltool"""
-        self.info("Downloading the mitmproxy release binary using tooltool")
-        dest = os.path.join(self.talos_path, 'talos', 'mitmproxy')
-        _manifest = "mitmproxy-rel-bin-%s.manifest" % platform
-        manifest_file = os.path.join(self.talos_path, 'talos', 'mitmproxy', _manifest)
-
-        if platform in ['osx', 'linux64']:
-            self.tooltool_fetch(
-                manifest_file,
-                output_dir=dest,
-                cache=self.config.get('tooltool_cache')
-            )
-
-            archive = os.path.join(dest, self.mitmproxy_rel_bin)
-            tar = self.query_exe('tar')
-            unzip_cmd = [tar, '-xvzf', archive, '-C', dest]
-            self.run_command(unzip_cmd, halt_on_failure=True)
 
     def query_mitmproxy_recording_set(self):
         """Mitmproxy requires external playback archives to be downloaded and extracted"""
@@ -615,7 +545,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
         if not self.run_local:
             env['MINIDUMP_STACKWALK'] = self.query_minidump_stackwalk()
         env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
-        env['RUST_BACKTRACE'] = 'full'
+        env['RUST_BACKTRACE'] = '1'
         if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env, log_level=INFO)
@@ -633,30 +563,13 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin, TooltoolMixin,
         if self.obj_path is not None:
             env['MOZ_DEVELOPER_OBJ_DIR'] = self.obj_path
 
-        if self.config['enable_webrender']:
-            env['MOZ_WEBRENDER'] = '1'
-            env['MOZ_ACCELERATED'] = '1'
-
-        if self.config['disable_stylo'] and self.config['enable_stylo']:
-            self.fatal("--disable-stylo conflicts with --enable-stylo")
-
         if self.config['enable_stylo']:
             env['STYLO_FORCE_ENABLED'] = '1'
-        if self.config['disable_stylo']:
-            env['STYLO_FORCE_DISABLED'] = '1'
-
         # Remove once Talos is migrated away from buildbot
         if self.buildbot_config:
             platform = self.buildbot_config.get('properties', {}).get('platform', '')
-            if 'qr' in platform:
-                env['MOZ_WEBRENDER'] = '1'
-                env['MOZ_ACCELERATED'] = '1'
-            if 'stylo' in platform and 'stylo_disabled' not in platform:
+            if 'stylo' in platform:
                 env['STYLO_FORCE_ENABLED'] = '1'
-            if 'stylo_disabled' in platform:
-                env['STYLO_FORCE_DISABLED'] = '1'
-            if 'styloseq' in platform:
-                env['STYLO_THREADS'] = '1'
 
         # sets a timeout for how long talos should run without output
         output_timeout = self.config.get('talos_output_timeout', 3600)

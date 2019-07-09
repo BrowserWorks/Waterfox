@@ -77,8 +77,8 @@ public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
         int count = 0;
 
         for (int i = 0; i < candidates.length; ++i) {
-            final GeneratableElementIterator testIterator = new GeneratableElementIterator(
-                    new ClassWithOptions(candidates[i], null, /* ifdef */ ""));
+            final GeneratableElementIterator testIterator
+                    = new GeneratableElementIterator(new ClassWithOptions(candidates[i], null));
             if (testIterator.hasNext()
                     || testIterator.getFilteredInnerClasses() != null) {
                 count++;
@@ -108,9 +108,7 @@ public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
         for (Class<?> candidate : candidates) {
             if (candidate != null) {
                 ret[count++] = new ClassWithOptions(
-                        candidate,
-                        mClass.generatedName + "::" + candidate.getSimpleName(),
-                        /* ifdef */ "");
+                        candidate, mClass.generatedName + "::" + candidate.getSimpleName());
             }
         }
         assert ret.length == count;

@@ -13,14 +13,14 @@
 
 namespace xpc {
 
-struct OpaqueWithSilentFailing;
+struct ExposedPropertiesOnly;
 
 // When a vanilla chrome JS object is exposed to content, we use a wrapper that
-// fails silently on GET, ENUMERATE, and GET_PROPERTY_DESCRIPTOR for legacy
-// reasons. For extra security, we override the traps that allow content to pass
-// an object to chrome, and perform extra security checks on them.
+// supports __exposedProps__ for legacy reasons. For extra security, we override
+// the traps that allow content to pass an object to chrome, and perform extra
+// security checks on them.
 #define ChromeObjectWrapperBase \
-  FilteringWrapper<js::CrossCompartmentSecurityWrapper, OpaqueWithSilentFailing>
+  FilteringWrapper<js::CrossCompartmentSecurityWrapper, ExposedPropertiesOnly>
 
 class ChromeObjectWrapper : public ChromeObjectWrapperBase
 {

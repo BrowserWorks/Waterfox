@@ -1,0 +1,204 @@
+/* vim:set ts=2 sw=2 sts=2 et: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@import url('resource://devtools/client/shared/components/reps/reps.css');
+
+/******************************************************************************/
+/* TreeView Colors */
+
+:root {
+  --tree-link-color: blue;
+  --tree-header-background: #C8D2DC;
+  --tree-header-sorted-background: #AAC3DC;
+}
+
+/******************************************************************************/
+/* TreeView Table*/
+
+.treeTable .treeLabelCell {
+  padding: 2px 0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.treeTable .treeLabelCell::after {
+  content: ":";
+  color: var(--object-color);
+}
+
+.treeTable .treeValueCell {
+  padding: 2px 0;
+  padding-inline-start: 5px;
+  overflow: hidden;
+}
+
+.treeTable .treeValueCell.inputEnabled {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.treeTable .treeValueCell input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  margin-inline-end: 2px;
+}
+
+.treeTable .treeValueCell input:focus {
+  outline: none;
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+  transition: all 0.2s ease-in-out;
+}
+
+.treeTable .treeLabel {
+  cursor: default;
+  overflow: hidden;
+  padding-inline-start: 4px;
+  white-space: nowrap;
+  unicode-bidi: plaintext;
+}
+
+/* No paddding if there is actually no label */
+.treeTable .treeLabel:empty {
+  padding-inline-start: 0;
+}
+
+.treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
+  cursor: pointer;
+  color: var(--tree-link-color);
+  text-decoration: underline;
+}
+
+.treeTable .treeRow.selected {
+  background-color: var(--theme-selection-background);
+}
+
+.treeTable .treeRow.selected:not(:hover) *,
+.treeTable .treeRow.selected:not(:hover) .treeLabelCell::after {
+  color: var(--theme-selection-color);
+}
+
+/* Filtering */
+.treeTable .treeRow.hidden {
+  display: none;
+}
+
+.treeTable .treeValueCellDivider {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* Learn More link */
+.treeTable .treeValueCell .learn-more-link {
+  -moz-user-select: none;
+  color: var(--theme-highlight-blue);
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.treeTable .treeValueCell .learn-more-link:hover {
+  text-decoration: underline;
+}
+
+/******************************************************************************/
+/* Toggle Icon */
+
+.treeTable .treeRow .treeIcon {
+  height: 14px;
+  width: 14px;
+  font-size: 10px; /* Set the size of loading spinner */
+  display: inline-block;
+  vertical-align: bottom;
+  margin-inline-start: 3px;
+  padding-top: 1px;
+}
+
+/* All expanded/collapsed styles need to apply on immediate children
+  since there might be nested trees within a tree. */
+.treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
+  cursor: pointer;
+  background-repeat: no-repeat;
+}
+
+/******************************************************************************/
+/* Header */
+
+.treeTable .treeHeaderRow {
+  height: 18px;
+}
+
+.treeTable .treeHeaderCell {
+  cursor: pointer;
+  -moz-user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 0 !important;
+  background: linear-gradient(
+          rgba(255, 255, 255, 0.05),
+          rgba(0, 0, 0, 0.05)),
+      radial-gradient(1px 60% at right,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 80%) repeat-x var(--tree-header-background);
+  color: var(--theme-body-color);
+  white-space: nowrap;
+}
+
+.treeTable .treeHeaderCellBox {
+  padding: 2px 0;
+  padding-inline-start: 10px;
+  padding-inline-end: 14px;
+}
+
+.treeTable .treeHeaderRow > .treeHeaderCell:first-child > .treeHeaderCellBox {
+  padding: 0;
+}
+
+.treeTable .treeHeaderSorted {
+  background-color: var(--tree-header-sorted-background);
+}
+
+.treeTable .treeHeaderSorted > .treeHeaderCellBox {
+  background: url(chrome://devtools/skin/images/firebug/arrow-down.svg) no-repeat calc(100% - 4px);
+}
+
+.treeTable .treeHeaderSorted.sortedAscending > .treeHeaderCellBox {
+  background-image: url(chrome://devtools/skin/images/firebug/arrow-up.svg);
+}
+
+.treeTable .treeHeaderCell:hover:active {
+  background-image: linear-gradient(
+          rgba(0, 0, 0, 0.1),
+          transparent),
+      radial-gradient(1px 60% at right,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 80%);
+}
+
+/******************************************************************************/
+/* Themes */
+
+.theme-light .treeTable .treeRow:hover,
+.theme-dark .treeTable .treeRow:hover {
+  background-color: var(--theme-selection-background-semitransparent) !important;
+}
+
+.theme-firebug .treeTable .treeRow:hover {
+  background-color: var(--theme-body-background);
+}
+
+.theme-light .treeTable .treeLabel,
+.theme-dark .treeTable .treeLabel {
+  color: var(--theme-highlight-pink);
+}
+
+.theme-light .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover,
+.theme-dark .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
+  color: var(--theme-highlight-pink);
+}
+
+.theme-firebug .treeTable .treeLabel {
+  color: var(--theme-body-color);
+}

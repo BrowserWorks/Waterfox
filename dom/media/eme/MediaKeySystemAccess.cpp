@@ -10,6 +10,9 @@
 #include "mozilla/Preferences.h"
 #include "MediaContainerType.h"
 #include "MediaPrefs.h"
+#ifdef MOZ_FMP4
+#include "MP4Decoder.h"
+#endif
 #ifdef XP_WIN
 #include "WMFDecoderModule.h"
 #endif
@@ -31,7 +34,6 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "nsUnicharUtils.h"
 #include "mozilla/dom/MediaSource.h"
-#include "DecoderTraits.h"
 #ifdef MOZ_WIDGET_ANDROID
 #include "FennecJNIWrappers.h"
 #endif
@@ -103,7 +105,9 @@ MediaKeySystemAccess::CreateMediaKeys(ErrorResult& aRv)
 static bool
 HavePluginForKeySystem(const nsCString& aKeySystem)
 {
-  nsCString api = NS_LITERAL_CSTRING(CHROMIUM_CDM_API);
+  nsCString api = MediaPrefs::EMEChromiumAPIEnabled()
+                    ? NS_LITERAL_CSTRING(CHROMIUM_CDM_API)
+                    : NS_LITERAL_CSTRING(GMP_API_DECRYPTOR);
 
   bool havePlugin = HaveGMPFor(api, { aKeySystem });
 #ifdef MOZ_WIDGET_ANDROID

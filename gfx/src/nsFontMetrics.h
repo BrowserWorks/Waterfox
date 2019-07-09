@@ -22,7 +22,7 @@ class gfxContext;
 class gfxUserFontSet;
 class gfxTextPerfMetrics;
 class nsDeviceContext;
-class nsAtom;
+class nsIAtom;
 struct nsBoundingMetrics;
 
 /**
@@ -49,9 +49,9 @@ public:
     typedef gfxTextRun::Range Range;
     typedef mozilla::gfx::DrawTarget DrawTarget;
 
-    struct MOZ_STACK_CLASS Params
+    struct Params
     {
-      nsAtom* language = nullptr;
+      nsIAtom* language = nullptr;
       bool explicitLanguage = false;
       gfxFont::Orientation orientation = gfxFont::eHorizontal;
       gfxUserFontSet* userFontSet = nullptr;
@@ -180,7 +180,7 @@ public:
     /**
      * Returns the language associated with these metrics
      */
-    nsAtom* Language() const { return mLanguage; }
+    nsIAtom* Language() const { return mLanguage; }
 
     /**
      * Returns the orientation (horizontal/vertical) of these metrics.
@@ -249,10 +249,8 @@ private:
 
     nsFont mFont;
     RefPtr<gfxFontGroup> mFontGroup;
-    RefPtr<nsAtom> mLanguage;
-    // Pointer to the device context for which this fontMetrics object was
-    // created.
-    nsDeviceContext* MOZ_NON_OWNING_REF mDeviceContext;
+    nsCOMPtr<nsIAtom> mLanguage;
+    nsDeviceContext* mDeviceContext;
     int32_t mP2A;
 
     // The font orientation (horizontal or vertical) for which these metrics

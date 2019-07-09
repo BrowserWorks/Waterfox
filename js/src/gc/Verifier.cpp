@@ -194,14 +194,10 @@ gc::GCRuntime::startVerifyPreBarriers()
     if (!trc)
         return;
 
-    JSContext* cx = TlsContext.get();
-    AutoPrepareForTracing prep(cx, WithAtoms);
+    AutoPrepareForTracing prep(TlsContext.get(), WithAtoms);
 
-    {
-        AutoLockGC lock(cx->runtime());
-        for (auto chunk = allNonEmptyChunks(lock); !chunk.done(); chunk.next())
-            chunk->bitmap.clear();
-    }
+    for (auto chunk = allNonEmptyChunks(); !chunk.done(); chunk.next())
+        chunk->bitmap.clear();
 
     gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::TRACE_HEAP);
 
@@ -462,7 +458,6 @@ class HeapCheckTracerBase : public JS::CallbackTracer
     virtual void checkCell(Cell* cell) = 0;
 
   protected:
-    void dumpCellInfo(Cell* cell);
     void dumpCellPath();
 
     Cell* parentCell() {
@@ -530,7 +525,7 @@ HeapCheckTracerBase::onChild(const JS::GCCellPtr& thing)
 
     // Don't trace into GC in zones being used by helper threads.
     Zone* zone = thing.is<JSObject>() ? thing.as<JSObject>().zone() : cell->asTenured().zone();
-    if (zone->group() && zone->group()->usedByHelperThread())
+    if (zone->group() && zone->group()->usedByHelperThread)
         return;
 
     WorkItem item(thing, contextName(), parentIndex);
@@ -561,25 +556,14 @@ HeapCheckTracerBase::traceHeap(AutoLockForExclusiveAccess& lock)
 }
 
 void
-HeapCheckTracerBase::dumpCellInfo(Cell* cell)
-{
-    auto kind = cell->getTraceKind();
-    fprintf(stderr, "%s", GCTraceKindToAscii(kind));
-    if (kind == JS::TraceKind::Object)
-        fprintf(stderr, " %s", static_cast<JSObject*>(cell)->getClass()->name);
-    fprintf(stderr, " %p", cell);
-}
-
-void
 HeapCheckTracerBase::dumpCellPath()
 {
     const char* name = contextName();
     for (int index = parentIndex; index != -1; index = stack[index].parentIndex) {
         const WorkItem& parent = stack[index];
         Cell* cell = parent.thing.asCell();
-        fprintf(stderr, "  from ");
-        dumpCellInfo(cell);
-        fprintf(stderr, " %s edge\n", name);
+        fprintf(stderr, "  from %s %p %s edge\n",
+                GCTraceKindToAscii(cell->getTraceKind()), cell, name);
         name = parent.name;
     }
     fprintf(stderr, "  from root %s\n", name);
@@ -664,14 +648,16 @@ void
 CheckGrayMarkingTracer::checkCell(Cell* cell)
 {
     Cell* parent = parentCell();
-    if (!parent)
+    if (!cell->isTenured() || !parent || !parent->isTenured())
         return;
 
-    if (parent->isMarkedBlack() && cell->isMarkedGray()) {
+    TenuredCell* tenuredCell = &cell->asTenured();
+    TenuredCell* tenuredParent = &parent->asTenured();
+    if (tenuredParent->isMarkedBlack() && tenuredCell->isMarkedGray())
+    {
         failures++;
-        fprintf(stderr, "Found black to gray edge to ");
-        dumpCellInfo(cell);
-        fprintf(stderr, "\n");
+        fprintf(stderr, "Found black to gray edge to %s %p\n",
+                GCTraceKindToAscii(cell->getTraceKind()), cell);
         dumpCellPath();
     }
 }

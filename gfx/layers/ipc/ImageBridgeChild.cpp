@@ -240,19 +240,16 @@ ImageBridgeChild::ShutdownStep2(SynchronousTask* aTask)
 
   MOZ_ASSERT(InImageBridgeChildThread(),
              "Should be in ImageBridgeChild thread.");
-  if (!mDestroyed) {
-    Close();
-  }
+  Close();
 }
 
 void
 ImageBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
 {
   mCanSend = false;
-  mDestroyed = true;
   {
     MutexAutoLock lock(mContainerMapLock);
-    mImageContainerListeners.Clear();
+    mImageContainers.Clear();
   }
 }
 
@@ -325,20 +322,20 @@ ImageBridgeChild::Connect(CompositableClient* aCompositable,
 
   {
     MutexAutoLock lock(mContainerMapLock);
-    MOZ_ASSERT(!mImageContainerListeners.Contains(id));
-    mImageContainerListeners.Put(id, aImageContainer->GetImageContainerListener());
+    MOZ_ASSERT(!mImageContainers.Contains(id));
+    mImageContainers.Put(id, aImageContainer);
   }
 
   CompositableHandle handle(id);
   aCompositable->InitIPDL(handle);
-  SendNewCompositable(handle, aCompositable->GetTextureInfo(), GetCompositorBackendType());
+  SendNewCompositable(handle, aCompositable->GetTextureInfo());
 }
 
 void
 ImageBridgeChild::ForgetImageContainer(const CompositableHandle& aHandle)
 {
   MutexAutoLock lock(mContainerMapLock);
-  mImageContainerListeners.Remove(aHandle.Value());
+  mImageContainers.Remove(aHandle.Value());
 }
 
 Thread* ImageBridgeChild::GetThread() const
@@ -351,6 +348,38 @@ ImageBridgeChild::GetSingleton()
 {
   StaticMutexAutoLock lock(sImageBridgeSingletonLock);
   return sImageBridgeChildSingleton;
+}
+
+void
+ImageBridgeChild::ReleaseTextureClientNow(TextureClient* aClient)
+{
+  MOZ_ASSERT(InImageBridgeChildThread());
+  RELEASE_MANUALLY(aClient);
+}
+
+/* static */ void
+ImageBridgeChild::DispatchReleaseTextureClient(TextureClient* aClient)
+{
+  if (!aClient) {
+    return;
+  }
+
+  RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton();
+  if (!imageBridge) {
+    // TextureClient::Release should normally happen in the ImageBridgeChild
+    // thread because it usually generate some IPDL messages.
+    // However, if we take this branch it means that the ImageBridgeChild
+    // has already shut down, along with the TextureChild, which means no
+    // message will be sent and it is safe to run this code from any thread.
+    RELEASE_MANUALLY(aClient);
+    return;
+  }
+
+  RefPtr<Runnable> runnable = WrapRunnable(
+    imageBridge,
+    &ImageBridgeChild::ReleaseTextureClientNow,
+    aClient);
+  imageBridge->GetMessageLoop()->PostTask(runnable.forget());
 }
 
 void
@@ -653,6 +682,8 @@ ImageBridgeChild::WillShutdown()
 
     task.Wait();
   }
+
+  mDestroyed = true;
 }
 
 void
@@ -727,31 +758,7 @@ MessageLoop * ImageBridgeChild::GetMessageLoop() const
 ImageBridgeChild::IdentifyCompositorTextureHost(const TextureFactoryIdentifier& aIdentifier)
 {
   if (RefPtr<ImageBridgeChild> child = GetSingleton()) {
-    child->UpdateTextureFactoryIdentifier(aIdentifier);
-  }
-}
-
-void
-ImageBridgeChild::UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aIdentifier)
-{
-  bool disablingWebRender = GetCompositorBackendType() == LayersBackend::LAYERS_WR &&
-                            aIdentifier.mParentBackend != LayersBackend::LAYERS_WR;
-  IdentifyTextureHost(aIdentifier);
-  if (disablingWebRender) {
-    // ImageHost is incompatible between WebRender enabled and WebRender disabled.
-    // Then drop all ImageContainers' ImageClients during disabling WebRender.
-    nsTArray<RefPtr<ImageContainerListener> > listeners;
-    {
-      MutexAutoLock lock(mContainerMapLock);
-      for (auto iter = mImageContainerListeners.Iter(); !iter.Done(); iter.Next()) {
-        RefPtr<ImageContainerListener>& listener = iter.Data();
-        listeners.AppendElement(listener);
-      }
-    }
-    // Drop ImageContainer's ImageClient whithout holding mContainerMapLock to avoid deadlock.
-    for (auto container : listeners) {
-      container->DropImageClient();
-    }
+    child->IdentifyTextureHost(aIdentifier);
   }
 }
 
@@ -1022,8 +1029,10 @@ ImageBridgeChild::RecvDidComposite(InfallibleTArray<ImageCompositeNotification>&
     RefPtr<ImageContainerListener> listener;
     {
       MutexAutoLock lock(mContainerMapLock);
-      if (auto entry = mImageContainerListeners.Lookup(n.compositable().Value())) {
-        listener = entry.Data();
+      ImageContainer* imageContainer;
+      imageContainer = mImageContainers.Get(n.compositable().Value());
+      if (imageContainer) {
+        listener = imageContainer->GetImageContainerListener();
       }
     }
     if (listener) {
@@ -1134,7 +1143,7 @@ ImageBridgeChild::ReleaseCompositable(const CompositableHandle& aHandle)
 
   {
     MutexAutoLock lock(mContainerMapLock);
-    mImageContainerListeners.Remove(aHandle.Value());
+    mImageContainers.Remove(aHandle.Value());
   }
 }
 

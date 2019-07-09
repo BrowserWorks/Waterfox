@@ -7,12 +7,13 @@
 use app_units::Au;
 use cssparser::Parser;
 use parser::ParserContext;
+use properties::animated_properties::Animatable;
 use style_traits::ParseError;
-use values::animated::{Animate, Procedure, ToAnimatedZero};
-use values::distance::{ComputeSquaredDistance, SquaredDistance};
+use values::animated::ToAnimatedZero;
 
 /// A generic value for the `initial-letter` property.
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 pub enum InitialLetter<Number, Integer> {
     /// `normal`
     Normal,
@@ -29,7 +30,8 @@ impl<N, I> InitialLetter<N, I> {
 }
 
 /// A generic spacing value for the `letter-spacing` and `word-spacing` properties.
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 pub enum Spacing<Value> {
     /// `normal`
     Normal,
@@ -69,32 +71,26 @@ impl<Value> Spacing<Value> {
     }
 }
 
-impl<Value> Animate for Spacing<Value>
-where
-    Value: Animate + From<Au>,
+impl<Value> Animatable for Spacing<Value>
+    where Value: Animatable + From<Au>,
 {
     #[inline]
-    fn animate(&self, other: &Self, procedure: Procedure) -> Result<Self, ()> {
+    fn add_weighted(&self, other: &Self, self_portion: f64, other_portion: f64) -> Result<Self, ()> {
         if let (&Spacing::Normal, &Spacing::Normal) = (self, other) {
             return Ok(Spacing::Normal);
         }
         let zero = Value::from(Au(0));
         let this = self.value().unwrap_or(&zero);
         let other = other.value().unwrap_or(&zero);
-        Ok(Spacing::Value(this.animate(other, procedure)?))
+        this.add_weighted(other, self_portion, other_portion).map(Spacing::Value)
     }
-}
 
-impl<V> ComputeSquaredDistance for Spacing<V>
-where
-    V: ComputeSquaredDistance + From<Au>,
-{
     #[inline]
-    fn compute_squared_distance(&self, other: &Self) -> Result<SquaredDistance, ()> {
-        let zero = V::from(Au(0));
+    fn compute_distance(&self, other: &Self) -> Result<f64, ()> {
+        let zero = Value::from(Au(0));
         let this = self.value().unwrap_or(&zero);
         let other = other.value().unwrap_or(&zero);
-        this.compute_squared_distance(other)
+        this.compute_distance(other)
     }
 }
 
@@ -107,8 +103,8 @@ where
 }
 
 /// A generic value for the `line-height` property.
-#[derive(Animate, Clone, ComputeSquaredDistance, Copy, Debug)]
-#[derive(MallocSizeOf, PartialEq, ToAnimatedValue, ToCss)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToCss)]
 pub enum LineHeight<Number, LengthOrPercentage> {
     /// `normal`
     Normal,

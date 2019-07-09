@@ -6,14 +6,14 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/ob_press"/>
+            <solid android:color="@color/remote_tabs_setup_button_background_hit"/>
             <corners android:radius="@dimen/standard_corner_radius"/>
         </shape>
     </item>
 
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/action_accent"/>
+            <solid android:color="@color/action_orange"/>
             <corners android:radius="@dimen/standard_corner_radius"/>
         </shape>
     </item>

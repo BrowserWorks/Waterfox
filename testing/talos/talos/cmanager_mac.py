@@ -3,12 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """CounterManager for Mac OSX"""
-from __future__ import absolute_import, print_function
 
 import subprocess
+from cmanager import CounterManager
 import sys
-
-from cmanager_base import CounterManager
 
 
 def GetProcessData(pid):

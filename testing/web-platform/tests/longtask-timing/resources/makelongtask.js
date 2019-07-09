@@ -1,3 +1,3 @@
 /* Generate a slow task. */
-const begin = window.performance.now();
+var begin = window.performance.now();
 while (window.performance.now() < begin + 51);

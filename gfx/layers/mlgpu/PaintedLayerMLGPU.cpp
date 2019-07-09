@@ -6,7 +6,6 @@
 #include "PaintedLayerMLGPU.h"
 #include "LayerManagerMLGPU.h"
 #include "mozilla/layers/LayersHelpers.h"
-#include "UnitTransforms.h"
 
 namespace mozilla {
 
@@ -40,13 +39,6 @@ PaintedLayerMLGPU::OnPrepareToRender(FrameBuilder* aBuilder)
     return false;
   }
   mTextureOnWhite = mHost->AcquireTextureSourceOnWhite();
-  return true;
-}
-
-void
-PaintedLayerMLGPU::SetRenderRegion(LayerIntRegion&& aRegion)
-{
-  mRenderRegion = Move(aRegion);
 
 #ifndef MOZ_IGNORE_PAINT_WILL_RESAMPLE
   // Note: we don't set PaintWillResample on our ContentTextureHost. The old
@@ -57,13 +49,12 @@ PaintedLayerMLGPU::SetRenderRegion(LayerIntRegion&& aRegion)
   // behavior), we might break up the visible region again. If that turns
   // out to be a problem, we can factor this into ForEachDrawRect instead.
   if (MayResample()) {
-    mRenderRegion = mRenderRegion.GetBounds();
+    LayerIntRegion visible = Move(GetShadowVisibleRegion());
+    visible = visible.GetBounds();
+    SetShadowVisibleRegion(Move(visible));
   }
 #endif
-
-  LayerIntRect bounds(mRenderRegion.GetBounds().TopLeft(),
-                      ViewAs<LayerPixel>(mTexture->GetSize()));
-  mRenderRegion.AndWith(bounds);
+  return true;
 }
 
 bool
@@ -71,12 +62,16 @@ PaintedLayerMLGPU::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
     case CompositableType::CONTENT_SINGLE:
-    case CompositableType::CONTENT_DOUBLE:
+    case CompositableType::CONTENT_DOUBLE: {
+      if (mHost && mHost != static_cast<ContentHostBase*>(aHost)->AsContentHostTexture()) {
+        mHost->Detach(this);
+      }
       mHost = static_cast<ContentHostBase*>(aHost)->AsContentHostTexture();
       if (!mHost) {
         gfxWarning() << "ContentHostBase is not a ContentHostTexture";
       }
       return true;
+    }
     default:
       return false;
   }

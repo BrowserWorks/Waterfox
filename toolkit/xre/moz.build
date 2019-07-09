@@ -30,7 +30,7 @@ EXPORTS += [
     'nsIAppStartupNotifier.h',
 ]
 
-EXPORTS.mozilla += ['AutoSQLiteLifetime.h', 'Bootstrap.h']
+EXPORTS.mozilla += ['Bootstrap.h']
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
     EXPORTS += ['EventTracer.h']
@@ -91,7 +91,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     ]
 
 UNIFIED_SOURCES += [
-    'AutoSQLiteLifetime.cpp',
     'Bootstrap.cpp',
     'CreateAppData.cpp',
     'nsAppStartupNotifier.cpp',
@@ -200,6 +199,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     LOCAL_INCLUDES += [
         '/widget',
         '/widget/cocoa',
+        '/xpcom/base',
     ]
 
 if CONFIG['MOZ_ENABLE_XREMOTE']:

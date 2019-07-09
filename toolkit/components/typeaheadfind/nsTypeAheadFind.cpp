@@ -149,7 +149,7 @@ nsTypeAheadFind::PrefsReset()
   bool isSoundEnabled = true;
   prefBranch->GetBoolPref("accessibility.typeaheadfind.enablesound",
                            &isSoundEnabled);
-  nsCString soundStr;
+  nsXPIDLCString soundStr;
   if (isSoundEnabled)
     prefBranch->GetCharPref("accessibility.typeaheadfind.soundURL", getter_Copies(soundStr));
 
@@ -446,7 +446,7 @@ nsTypeAheadFind::FindItNow(nsIPresShell *aPresShell, bool aIsLinksOnly,
 
   while (true) {    // ----- Outer while loop: go through all docs -----
     while (true) {  // === Inner while loop: go through a single doc ===
-      mFind->Find(mTypeAheadBuffer.get(), mSearchRange, mStartPointRange,
+      mFind->Find(mTypeAheadBuffer, mSearchRange, mStartPointRange,
                   mEndPointRange, getter_AddRefs(returnRange));
 
       if (!returnRange)
@@ -923,8 +923,8 @@ nsTypeAheadFind::RangeStartsInsideLink(nsIDOMRange *aRange,
   // We now have the correct start node for the range
   // Search for links, starting with startNode, and going up parent chain
 
-  RefPtr<nsAtom> hrefAtom(NS_Atomize("href"));
-  RefPtr<nsAtom> typeAtom(NS_Atomize("type"));
+  nsCOMPtr<nsIAtom> hrefAtom(NS_Atomize("href"));
+  nsCOMPtr<nsIAtom> typeAtom(NS_Atomize("type"));
 
   while (true) {
     // Keep testing while startContent is equal to something,
@@ -1218,13 +1218,11 @@ nsTypeAheadFind::IsRangeVisible(nsIPresShell *aPresShell,
     return false;
 
   nsIFrame *frame = content->GetPrimaryFrame();
-  if (!frame) {
+  if (!frame)
     return false;  // No frame! Not visible then.
-  }
 
-  if (!frame->StyleVisibility()->IsVisible()) {
+  if (!frame->StyleVisibility()->IsVisible())
     return false;
-  }
 
   // Detect if we are _inside_ a text control, or something else with its own
   // selection controller.
@@ -1234,6 +1232,8 @@ nsTypeAheadFind::IsRangeVisible(nsIPresShell *aPresShell,
   }
 
   // ---- We have a frame ----
+  if (!aMustBeInViewPort)
+    return true; //  Don't need it to be on screen, just in rendering tree
 
   // Get the next in flow frame that contains the range start
   int32_t startFrameOffset, endFrameOffset;
@@ -1268,23 +1268,13 @@ nsTypeAheadFind::IsRangeVisible(nsIPresShell *aPresShell,
                                     nsRect(nsPoint(0,0), frame->GetSize()),
                                     minDistance);
 
-    if (rectVisibility == nsRectVisibility_kVisible) {
-      // This is an early exit case, where we return true if and only if
-      // the range is actually rendered.
-      return IsRangeRendered(aPresShell, aPresContext, aRange);
+    if (rectVisibility != nsRectVisibility_kAboveViewport) {
+      return true;
     }
   }
 
-  // Below this point, we know the range is not in the viewport.
-
-  if (!aMustBeInViewPort) {
-    // This is an early exit case because we don't care that that range
-    // is out of viewport, so we return that the range is "visible".
-    return true;
-  }
-
-  // The range isn't in the viewport, but we could scroll it into view.
-  // Move range forward to first visible point,
+  // We know that the target range isn't usable because it's not in the
+  // view port. Move range forward to first visible point,
   // this speeds us up a lot in long documents
   nsCOMPtr<nsIFrameEnumerator> frameTraversal;
   nsCOMPtr<nsIFrameTraversal> trav(do_CreateInstance(kFrameTraversalCID));
@@ -1298,9 +1288,8 @@ nsTypeAheadFind::IsRangeVisible(nsIPresShell *aPresShell,
                             false  // aSkipPopupChecks
                             );
 
-  if (!frameTraversal) {
+  if (!frameTraversal)
     return false;
-  }
 
   while (rectVisibility == nsRectVisibility_kAboveViewport) {
     frameTraversal->Next();
@@ -1324,86 +1313,6 @@ nsTypeAheadFind::IsRangeVisible(nsIPresShell *aPresShell,
       (*aFirstVisibleRange)->SetStart(firstVisibleNode, startFrameOffset);
       (*aFirstVisibleRange)->SetEnd(firstVisibleNode, endFrameOffset);
     }
-  }
-
-  return false;
-}
-
-NS_IMETHODIMP
-nsTypeAheadFind::IsRangeRendered(nsIDOMRange *aRange,
-                                bool *aResult)
-{
-  // Jump through hoops to extract the docShell from the range.
-  nsCOMPtr<nsIDOMNode> node;
-  aRange->GetStartContainer(getter_AddRefs(node));
-  nsCOMPtr<nsIDOMDocument> document;
-  node->GetOwnerDocument(getter_AddRefs(document));
-  nsCOMPtr<mozIDOMWindowProxy> window;
-  document->GetDefaultView(getter_AddRefs(window));
-  nsCOMPtr<nsIWebNavigation> navNav (do_GetInterface(window));
-  nsCOMPtr<nsIDocShell> docShell (do_GetInterface(navNav));
-
-  // Set up the arguments needed to check if a range is visible.
-  nsCOMPtr<nsIPresShell> presShell (docShell->GetPresShell());
-  RefPtr<nsPresContext> presContext = presShell->GetPresContext();
-  *aResult = IsRangeRendered(presShell, presContext, aRange);
-  return NS_OK;
-}
-
-bool
-nsTypeAheadFind::IsRangeRendered(nsIPresShell *aPresShell,
-                                 nsPresContext *aPresContext,
-                                 nsIDOMRange *aRange)
-{
-  NS_ASSERTION(aPresShell && aPresContext && aRange,
-               "params are invalid");
-
-  nsCOMPtr<nsIDOMNode> node;
-  aRange->GetCommonAncestorContainer(getter_AddRefs(node));
-
-  nsCOMPtr<nsIContent> content(do_QueryInterface(node));
-  if (!content) {
-    return false;
-  }
-
-  nsIFrame *frame = content->GetPrimaryFrame();
-  if (!frame) {
-    return false;  // No frame! Not visible then.
-  }
-
-  if (!frame->StyleVisibility()->IsVisible()) {
-    return false;
-  }
-
-  // Having a primary frame doesn't mean that the range is visible inside the
-  // viewport. Do a hit-test to determine that quickly and properly.
-  AutoTArray<nsIFrame*,8> frames;
-  nsIFrame *rootFrame = aPresShell->GetRootFrame();
-  RefPtr<nsRange> range = static_cast<nsRange*>(aRange);
-  RefPtr<mozilla::dom::DOMRectList> rects = range->GetClientRects(true, true);
-  for (uint32_t i = 0; i < rects->Length(); ++i) {
-    RefPtr<mozilla::dom::DOMRect> rect = rects->Item(i);
-    nsRect r(nsPresContext::CSSPixelsToAppUnits((float)rect->X()),
-             nsPresContext::CSSPixelsToAppUnits((float)rect->Y()),
-             nsPresContext::CSSPixelsToAppUnits((float)rect->Width()),
-             nsPresContext::CSSPixelsToAppUnits((float)rect->Height()));
-    // Append visible frames to frames array.
-    nsLayoutUtils::GetFramesForArea(rootFrame, r, frames,
-      nsLayoutUtils::IGNORE_PAINT_SUPPRESSION |
-      nsLayoutUtils::IGNORE_ROOT_SCROLL_FRAME |
-      nsLayoutUtils::ONLY_VISIBLE);
-
-    // See if any of the frames contain the content. If they do, then the range
-    // is visible. We search for the content rather than the original frame,
-    // because nsTextContinuation frames might be returned instead of the
-    // original frame.
-    for (const auto &f: frames) {
-      if (f->GetContent() == content) {
-        return true;
-      }
-    }
-
-    frames.ClearAndRetainStorage();
   }
 
   return false;

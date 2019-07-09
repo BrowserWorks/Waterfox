@@ -87,6 +87,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //// Globals
 
+const Promise = require("promise");
 const defer = require("devtools/shared/defer");
 
 // The following error types are considered programmer errors, which should be

@@ -7,19 +7,11 @@
 package org.mozilla.gecko.mma;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
 
 import com.leanplum.Leanplum;
 import com.leanplum.LeanplumActivityHelper;
-import com.leanplum.LeanplumPushNotificationCustomizer;
-import com.leanplum.LeanplumPushService;
-import com.leanplum.internal.Constants;
 
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.MmaConstants;
@@ -30,6 +22,7 @@ import java.util.UUID;
 
 public class MmaLeanplumImp implements MmaInterface {
 
+    private static final String KEY_ANDROID_PREF_STRING_LEANPLUM_DEVICE_ID = "android.not_a_preference.leanplum.device_id";
 
     @Override
     public void init(final Activity activity, Map<String, ?> attributes) {
@@ -45,6 +38,8 @@ public class MmaLeanplumImp implements MmaInterface {
         } else {
             Leanplum.setAppIdForDevelopmentMode(MmaConstants.MOZ_LEANPLUM_SDK_CLIENTID, MmaConstants.MOZ_LEANPLUM_SDK_KEY);
         }
+
+        LeanplumPushService.setGcmSenderId(AppConstants.MOZ_ANDROID_GCM_SENDERIDS);
 
         if (attributes != null) {
             Leanplum.start(activity, attributes);
@@ -67,11 +62,6 @@ public class MmaLeanplumImp implements MmaInterface {
                 LeanplumActivityHelper.onResume(activity);
             }
         });
-    }
-
-    @Override
-    public void setGcmSenderId(String senderIds) {
-        LeanplumPushService.setGcmSenderId(senderIds);
     }
 
     @Override
@@ -115,11 +105,6 @@ public class MmaLeanplumImp implements MmaInterface {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public String getMmaSenderId() {
-        return MmaConstants.MOZ_MMA_SENDER_ID;
     }
 
     @Override

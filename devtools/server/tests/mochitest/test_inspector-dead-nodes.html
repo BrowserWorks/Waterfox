@@ -24,7 +24,7 @@ let gDoc = null;
 addAsyncTest(function* () {
   let url = document.getElementById("inspectorContent").href;
 
-  let def = defer();
+  let def = promise.defer();
   attachURL(url, function (err, client, tab, doc) {
     def.resolve({client, tab, doc});
   });

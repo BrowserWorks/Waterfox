@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use dom::bindings::cell::DomRefCell;
+use core::nonzero::NonZero;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::VRStageParametersBinding;
 use dom::bindings::codegen::Bindings::VRStageParametersBinding::VRStageParametersMethods;
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use dom::bindings::js::Root;
 use dom::bindings::num::Finite;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use js::jsapi::{Heap, JSContext, JSObject};
@@ -19,8 +19,8 @@ use webvr_traits::WebVRStageParameters;
 #[dom_struct]
 pub struct VRStageParameters {
     reflector_: Reflector,
-    #[ignore_malloc_size_of = "Defined in rust-webvr"]
-    parameters: DomRefCell<WebVRStageParameters>,
+    #[ignore_heap_size_of = "Defined in rust-webvr"]
+    parameters: DOMRefCell<WebVRStageParameters>,
     transform: Heap<*mut JSObject>,
 }
 
@@ -30,13 +30,13 @@ impl VRStageParameters {
     fn new_inherited(parameters: WebVRStageParameters) -> VRStageParameters {
         VRStageParameters {
             reflector_: Reflector::new(),
-            parameters: DomRefCell::new(parameters),
+            parameters: DOMRefCell::new(parameters),
             transform: Heap::default()
         }
     }
 
     #[allow(unsafe_code)]
-    pub fn new(parameters: WebVRStageParameters, global: &GlobalScope) -> DomRoot<VRStageParameters> {
+    pub fn new(parameters: WebVRStageParameters, global: &GlobalScope) -> Root<VRStageParameters> {
         let cx = global.get_cx();
         rooted!(in (cx) let mut array = ptr::null_mut());
         unsafe {
@@ -44,7 +44,7 @@ impl VRStageParameters {
                                                                array.handle_mut());
         }
 
-        let stage_parameters  = reflect_dom_object(Box::new(VRStageParameters::new_inherited(parameters)),
+        let stage_parameters  = reflect_dom_object(box VRStageParameters::new_inherited(parameters),
                                                    global,
                                                    VRStageParametersBinding::Wrap);
 
@@ -69,8 +69,8 @@ impl VRStageParameters {
 impl VRStageParametersMethods for VRStageParameters {
     #[allow(unsafe_code)]
     // https://w3c.github.io/webvr/#dom-vrstageparameters-sittingtostandingtransform
-    unsafe fn SittingToStandingTransform(&self, _cx: *mut JSContext) -> NonNullJSObjectPtr {
-        NonNullJSObjectPtr::new_unchecked(self.transform.get())
+    unsafe fn SittingToStandingTransform(&self, _cx: *mut JSContext) -> NonZero<*mut JSObject> {
+        NonZero::new_unchecked(self.transform.get())
     }
 
     // https://w3c.github.io/webvr/#dom-vrstageparameters-sizex

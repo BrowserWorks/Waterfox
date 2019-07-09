@@ -59,16 +59,8 @@ nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSett
   uint32_t titleCount;
   nsresult rv = aWebBrowserPrint->EnumerateDocumentNames(&titleCount, &docTitles);
   if (NS_SUCCEEDED(rv) && titleCount > 0) {
-    // Print Core of Application Service sent print job with names exceeding
-    // 255 bytes. This is a workaround until fix it.
-    // (https://openradar.appspot.com/34428043)
-    nsAutoString adjustedTitle;
-    PrintTarget::AdjustPrintJobNameForIPP(nsDependentString(docTitles[0]),
-                                          adjustedTitle);
-    CFStringRef cfTitleString =
-      CFStringCreateWithCharacters(NULL,
-                                   reinterpret_cast<const UniChar*>(adjustedTitle.BeginReading()),
-                                   adjustedTitle.Length());
+    CFStringRef cfTitleString = CFStringCreateWithCharacters(NULL, reinterpret_cast<const UniChar*>(docTitles[0]),
+                                                             NS_strlen(docTitles[0]));
     if (cfTitleString) {
       ::PMPrintSettingsSetJobName(settingsX->GetPMPrintSettings(), cfTitleString);
       CFRelease(cfTitleString);
@@ -243,7 +235,7 @@ nsPrintDialogServiceX::ShowPageSetup(nsPIDOMWindowOuter *aParent,
 - (NSButton*)checkboxWithLabel:(const char*)aLabel andFrame:(NSRect)aRect;
 
 - (NSPopUpButton*)headerFooterItemListWithFrame:(NSRect)aRect
-                                   selectedItem:(const nsAString&)aCurrentString;
+                                   selectedItem:(const char16_t*)aCurrentString;
 
 - (void)addOptionsSection;
 
@@ -315,8 +307,8 @@ static const char sHeaderFooterTags[][4] =  {"", "&T", "&U", "&D", "&P", "&PT"};
   if (!mPrintBundle)
     return @"";
 
-  nsAutoString intlString;
-  mPrintBundle->GetStringFromName(aKey, intlString);
+  nsXPIDLString intlString;
+  mPrintBundle->GetStringFromName(aKey, getter_Copies(intlString));
   NSMutableString* s = [NSMutableString stringWithUTF8String:NS_ConvertUTF16toUTF8(intlString).get()];
 
   // Remove all underscores (they're used in the GTK dialog for accesskeys).
@@ -372,7 +364,7 @@ static const char sHeaderFooterTags[][4] =  {"", "&T", "&U", "&D", "&P", "&PT"};
 }
 
 - (NSPopUpButton*)headerFooterItemListWithFrame:(NSRect)aRect
-                                   selectedItem:(const nsAString&)aCurrentString
+                                   selectedItem:(const char16_t*)aCurrentString
 {
   NSPopUpButton* list = [[[NSPopUpButton alloc] initWithFrame:aRect pullsDown:NO] autorelease];
   [list setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
@@ -521,34 +513,34 @@ static const char sHeaderFooterTags[][4] =  {"", "&T", "&U", "&D", "&P", "&PT"};
   [self addCenteredLabel:"right" withFrame:NSMakeRect(356, 22, 100, 22)];
 
   // Lists
-  nsString sel;
+  nsXPIDLString sel;
 
-  mSettings->GetHeaderStrLeft(sel);
+  mSettings->GetHeaderStrLeft(getter_Copies(sel));
   mHeaderLeftList = [self headerFooterItemListWithFrame:NSMakeRect(156, 44, 100, 22)
                                            selectedItem:sel];
   [self addSubview:mHeaderLeftList];
 
-  mSettings->GetHeaderStrCenter(sel);
+  mSettings->GetHeaderStrCenter(getter_Copies(sel));
   mHeaderCenterList = [self headerFooterItemListWithFrame:NSMakeRect(256, 44, 100, 22)
                                              selectedItem:sel];
   [self addSubview:mHeaderCenterList];
 
-  mSettings->GetHeaderStrRight(sel);
+  mSettings->GetHeaderStrRight(getter_Copies(sel));
   mHeaderRightList = [self headerFooterItemListWithFrame:NSMakeRect(356, 44, 100, 22)
                                             selectedItem:sel];
   [self addSubview:mHeaderRightList];
 
-  mSettings->GetFooterStrLeft(sel);
+  mSettings->GetFooterStrLeft(getter_Copies(sel));
   mFooterLeftList = [self headerFooterItemListWithFrame:NSMakeRect(156, 0, 100, 22)
                                            selectedItem:sel];
   [self addSubview:mFooterLeftList];
 
-  mSettings->GetFooterStrCenter(sel);
+  mSettings->GetFooterStrCenter(getter_Copies(sel));
   mFooterCenterList = [self headerFooterItemListWithFrame:NSMakeRect(256, 0, 100, 22)
                                              selectedItem:sel];
   [self addSubview:mFooterCenterList];
 
-  mSettings->GetFooterStrRight(sel);
+  mSettings->GetFooterStrRight(getter_Copies(sel));
   mFooterRightList = [self headerFooterItemListWithFrame:NSMakeRect(356, 0, 100, 22)
                                             selectedItem:sel];
   [self addSubview:mFooterRightList];
@@ -578,22 +570,22 @@ static const char sHeaderFooterTags[][4] =  {"", "&T", "&U", "&D", "&P", "&PT"};
 {
   const char* headerFooterStr;
   headerFooterStr = [self headerFooterStringForList:mHeaderLeftList];
-  mSettings->SetHeaderStrLeft(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetHeaderStrLeft(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 
   headerFooterStr = [self headerFooterStringForList:mHeaderCenterList];
-  mSettings->SetHeaderStrCenter(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetHeaderStrCenter(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 
   headerFooterStr = [self headerFooterStringForList:mHeaderRightList];
-  mSettings->SetHeaderStrRight(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetHeaderStrRight(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 
   headerFooterStr = [self headerFooterStringForList:mFooterLeftList];
-  mSettings->SetFooterStrLeft(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetFooterStrLeft(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 
   headerFooterStr = [self headerFooterStringForList:mFooterCenterList];
-  mSettings->SetFooterStrCenter(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetFooterStrCenter(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 
   headerFooterStr = [self headerFooterStringForList:mFooterRightList];
-  mSettings->SetFooterStrRight(NS_ConvertUTF8toUTF16(headerFooterStr));
+  mSettings->SetFooterStrRight(NS_ConvertUTF8toUTF16(headerFooterStr).get());
 }
 
 // Summary

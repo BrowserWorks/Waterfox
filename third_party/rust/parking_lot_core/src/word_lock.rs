@@ -12,9 +12,6 @@ use stable::{AtomicUsize, Ordering, fence};
 use std::ptr;
 use std::mem;
 use std::cell::Cell;
-use std::thread::LocalKey;
-#[cfg(not(feature = "nightly"))]
-use std::panic;
 use spinwait::SpinWait;
 use thread_parker::ThreadParker;
 
@@ -49,32 +46,7 @@ impl ThreadData {
     }
 }
 
-// Returns a ThreadData structure for the current thread
-unsafe fn get_thread_data(local: &mut Option<ThreadData>) -> &ThreadData {
-    // Try to read from thread-local storage, but return None if the TLS has
-    // already been destroyed.
-    #[cfg(feature = "nightly")]
-    fn try_get_tls(key: &'static LocalKey<ThreadData>) -> Option<*const ThreadData> {
-        key.try_with(|x| x as *const ThreadData).ok()
-    }
-    #[cfg(not(feature = "nightly"))]
-    fn try_get_tls(key: &'static LocalKey<ThreadData>) -> Option<*const ThreadData> {
-        panic::catch_unwind(|| key.with(|x| x as *const ThreadData)).ok()
-    }
-
-    // If ThreadData is expensive to construct, then we want to use a cached
-    // version in thread-local storage if possible.
-    if !cfg!(windows) && !cfg!(all(feature = "nightly", target_os = "linux")) {
-        thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
-        if let Some(tls) = try_get_tls(&THREAD_DATA) {
-            return &*tls;
-        }
-    }
-
-    // Otherwise just create a ThreadData on the stack
-    *local = Some(ThreadData::new());
-    local.as_ref().unwrap()
-}
+thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
 
 const LOCKED_BIT: usize = 1;
 const QUEUE_LOCKED_BIT: usize = 2;
@@ -137,8 +109,7 @@ impl WordLock {
             }
 
             // Get our thread data and prepare it for parking
-            let mut thread_data = None;
-            let thread_data = get_thread_data(&mut thread_data);
+            let thread_data = &*THREAD_DATA.with(|x| x as *const ThreadData);
             assert!(mem::align_of_val(thread_data) > !QUEUE_MASK);
             thread_data.parker.prepare_park();
 

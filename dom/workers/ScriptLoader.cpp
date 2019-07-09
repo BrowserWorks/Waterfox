@@ -680,12 +680,7 @@ private:
     ScriptLoadInfo& loadInfo = mLoadInfos[aIndex];
 
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
-
-    // Note that importScripts() can redirect.  In theory the main
-    // script could also encounter an internal redirect, but currently
-    // the assert does not allow that.
-    MOZ_ASSERT_IF(mIsMainScript, channel == loadInfo.mChannel);
-    loadInfo.mChannel = channel;
+    MOZ_ASSERT(channel == loadInfo.mChannel);
 
     // We synthesize the result code, but its never exposed to content.
     RefPtr<mozilla::dom::InternalResponse> ir =
@@ -723,7 +718,7 @@ private:
     ir->Headers()->FillResponseHeaders(loadInfo.mChannel);
 
     RefPtr<mozilla::dom::Response> response =
-      new mozilla::dom::Response(mCacheCreator->Global(), ir, nullptr);
+      new mozilla::dom::Response(mCacheCreator->Global(), ir);
 
     mozilla::dom::RequestOrUSVString request;
 
@@ -731,14 +726,9 @@ private:
     request.SetAsUSVString().Rebind(loadInfo.mFullURL.Data(),
                                     loadInfo.mFullURL.Length());
 
-    // This JSContext will not end up executing JS code because here there are
-    // no ReadableStreams involved.
-    AutoJSAPI jsapi;
-    jsapi.Init();
-
     ErrorResult error;
     RefPtr<Promise> cachePromise =
-      mCacheCreator->Cache_()->Put(jsapi.cx(), request, *response, error);
+      mCacheCreator->Cache_()->Put(request, *response, error);
     if (NS_WARN_IF(error.Failed())) {
       nsresult rv = error.StealNSResult();
       channel->Cancel(rv);
@@ -1638,13 +1628,8 @@ CacheScriptLoader::Load(Cache* aCache)
 
   mozilla::dom::CacheQueryOptions params;
 
-  // This JSContext will not end up executing JS code because here there are
-  // no ReadableStreams involved.
-  AutoJSAPI jsapi;
-  jsapi.Init();
-
   ErrorResult error;
-  RefPtr<Promise> promise = aCache->Match(jsapi.cx(), request, params, error);
+  RefPtr<Promise> promise = aCache->Match(request, params, error);
   if (NS_WARN_IF(error.Failed())) {
     Fail(error.StealNSResult());
     return;
@@ -1725,6 +1710,8 @@ CacheScriptLoader::ResolvedCallback(JSContext* aCx,
   MOZ_ASSERT(!mPump);
   rv = NS_NewInputStreamPump(getter_AddRefs(mPump),
                              inputStream,
+                             -1, /* default streamPos */
+                             -1, /* default streamLen */
                              0, /* default segsize */
                              0, /* default segcount */
                              false, /* default closeWhenDone */
@@ -1973,7 +1960,7 @@ ScriptExecutorRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
            .setNoScriptRval(true);
 
     if (mScriptLoader.mWorkerScriptType == DebuggerScript) {
-      options.setVersion(JSVERSION_DEFAULT);
+      options.setVersion(JSVERSION_LATEST);
     }
 
     MOZ_ASSERT(loadInfo.mMutedErrorFlag.isSome());

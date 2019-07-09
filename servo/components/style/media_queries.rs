@@ -8,16 +8,13 @@
 
 use Atom;
 use context::QuirksMode;
-use cssparser::{Delimiter, Parser};
-use cssparser::{Token, ParserInput};
-use error_reporting::{ContextualParseError, ParseErrorReporter};
-use parser::{ParserContext, ParserErrorContext};
-use selectors::parser::SelectorParseErrorKind;
+use cssparser::{Delimiter, Parser, Token, ParserInput};
+use parser::ParserContext;
+use selectors::parser::SelectorParseError;
 use serialize_comma_separated_list;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::fmt;
-use str::string_as_ascii_lowercase;
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
-use values::CustomIdent;
+use style_traits::{ToCss, ParseError, StyleParseError};
 
 #[cfg(feature = "servo")]
 pub use servo::media_queries::{Device, Expression};
@@ -25,8 +22,8 @@ pub use servo::media_queries::{Device, Expression};
 pub use gecko::media_queries::{Device, Expression};
 
 /// A type that encapsulates a media query list.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct MediaList {
     /// The list of media queries.
     pub media_queries: Vec<MediaQuery>,
@@ -47,23 +44,23 @@ impl MediaList {
     }
 }
 
-/// <https://drafts.csswg.org/mediaqueries/#mq-prefix>
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+/// https://drafts.csswg.org/mediaqueries/#mq-prefix
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ToCss)]
 pub enum Qualifier {
     /// Hide a media query from legacy UAs:
-    /// <https://drafts.csswg.org/mediaqueries/#mq-only>
+    /// https://drafts.csswg.org/mediaqueries/#mq-only
     Only,
     /// Negate a media query:
-    /// <https://drafts.csswg.org/mediaqueries/#mq-not>
+    /// https://drafts.csswg.org/mediaqueries/#mq-not
     Not,
 }
 
 /// A [media query][mq].
 ///
 /// [mq]: https://drafts.csswg.org/mediaqueries/
-#[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+#[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct MediaQuery {
     /// The qualifier for this query.
     pub qualifier: Option<Qualifier>,
@@ -98,7 +95,7 @@ impl ToCss for MediaQuery {
     {
         if let Some(qual) = self.qualifier {
             qual.to_css(dest)?;
-            dest.write_char(' ')?;
+            write!(dest, " ")?;
         }
 
         match self.media_type {
@@ -109,10 +106,12 @@ impl ToCss for MediaQuery {
                 // Otherwise, we'd serialize media queries like "(min-width:
                 // 40px)" in "all (min-width: 40px)", which is unexpected.
                 if self.qualifier.is_some() || self.expressions.is_empty() {
-                    dest.write_str("all")?;
+                    write!(dest, "all")?;
                 }
             },
-            MediaQueryType::Concrete(MediaType(ref desc)) => desc.to_css(dest)?,
+            MediaQueryType::Known(MediaType::Screen) => write!(dest, "screen")?,
+            MediaQueryType::Known(MediaType::Print) => write!(dest, "print")?,
+            MediaQueryType::Unknown(ref desc) => write!(dest, "{}", desc)?,
         }
 
         if self.expressions.is_empty() {
@@ -120,75 +119,80 @@ impl ToCss for MediaQuery {
         }
 
         if self.media_type != MediaQueryType::All || self.qualifier.is_some() {
-            dest.write_str(" and ")?;
+            write!(dest, " and ")?;
         }
 
         self.expressions[0].to_css(dest)?;
 
         for expr in self.expressions.iter().skip(1) {
-            dest.write_str(" and ")?;
+            write!(dest, " and ")?;
             expr.to_css(dest)?;
         }
         Ok(())
     }
 }
 
-/// <http://dev.w3.org/csswg/mediaqueries-3/#media0>
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
+/// http://dev.w3.org/csswg/mediaqueries-3/#media0
+#[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub enum MediaQueryType {
     /// A media type that matches every device.
     All,
-    /// A specific media type.
-    Concrete(MediaType),
+    /// A known media type, that we parse and understand.
+    Known(MediaType),
+    /// An unknown media type.
+    Unknown(Atom),
 }
 
 impl MediaQueryType {
     fn parse(ident: &str) -> Result<Self, ()> {
-        match_ignore_ascii_case! { ident,
-            "all" => return Ok(MediaQueryType::All),
-            _ => (),
-        };
+        if ident.eq_ignore_ascii_case("all") {
+            return Ok(MediaQueryType::All);
+        }
 
-        // If parseable, accept this type as a concrete type.
-        MediaType::parse(ident).map(MediaQueryType::Concrete)
+        // From https://drafts.csswg.org/mediaqueries/#mq-syntax:
+        //
+        //   The <media-type> production does not include the keywords only,
+        //   not, and, and or.
+        if ident.eq_ignore_ascii_case("not") ||
+           ident.eq_ignore_ascii_case("or") ||
+           ident.eq_ignore_ascii_case("and") ||
+           ident.eq_ignore_ascii_case("only") {
+            return Err(())
+        }
+
+        Ok(match MediaType::parse(ident) {
+            Some(media_type) => MediaQueryType::Known(media_type),
+            None => MediaQueryType::Unknown(Atom::from(ident)),
+        })
     }
 
     fn matches(&self, other: MediaType) -> bool {
         match *self {
             MediaQueryType::All => true,
-            MediaQueryType::Concrete(ref known_type) => *known_type == other,
+            MediaQueryType::Known(ref known_type) => *known_type == other,
+            MediaQueryType::Unknown(..) => false,
         }
     }
 }
 
-/// <https://drafts.csswg.org/mediaqueries/#media-types>
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf))]
-pub struct MediaType(pub CustomIdent);
+/// https://drafts.csswg.org/mediaqueries/#media-types
+#[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+pub enum MediaType {
+    /// The "screen" media type.
+    Screen,
+    /// The "print" media type.
+    Print,
+}
 
 impl MediaType {
-    /// The `screen` media type.
-    pub fn screen() -> Self {
-        MediaType(CustomIdent(atom!("screen")))
-    }
-
-    /// The `print` media type.
-    pub fn print() -> Self {
-        MediaType(CustomIdent(atom!("print")))
-    }
-
-    fn parse(name: &str) -> Result<Self, ()> {
-        // From https://drafts.csswg.org/mediaqueries/#mq-syntax:
-        //
-        //   The <media-type> production does not include the keywords not, or, and, and only.
-        //
-        // Here we also perform the to-ascii-lowercase part of the serialization
-        // algorithm: https://drafts.csswg.org/cssom/#serializing-media-queries
-        match_ignore_ascii_case! { name,
-            "not" | "or" | "and" | "only" => Err(()),
-            _ => Ok(MediaType(CustomIdent(Atom::from(string_as_ascii_lowercase(name))))),
-        }
+    fn parse(name: &str) -> Option<Self> {
+        Some(match_ignore_ascii_case! { name,
+            "screen" => MediaType::Screen,
+            "print" => MediaType::Print,
+            _ => return None
+        })
     }
 }
 impl MediaQuery {
@@ -210,13 +214,13 @@ impl MediaQuery {
         let media_type = match input.try(|i| i.expect_ident_cloned()) {
             Ok(ident) => {
                 let result: Result<_, ParseError> = MediaQueryType::parse(&*ident)
-                    .map_err(|()| input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())));
+                    .map_err(|()| SelectorParseError::UnexpectedIdent(ident.clone()).into());
                 result?
             }
             Err(_) => {
                 // Media type is only optional if qualifier is not specified.
                 if qualifier.is_some() {
-                    return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+                    return Err(StyleParseError::UnspecifiedError.into())
                 }
 
                 // Without a media type, require at least one expression.
@@ -241,33 +245,20 @@ impl MediaQuery {
 /// Always returns a media query list. If any invalid media query is found, the
 /// media query list is only filled with the equivalent of "not all", see:
 ///
-/// <https://drafts.csswg.org/mediaqueries/#error-handling>
-pub fn parse_media_query_list<R>(
-    context: &ParserContext,
-    input: &mut Parser,
-    error_reporter: &R,
-) -> MediaList
-where
-    R: ParseErrorReporter,
-{
+/// https://drafts.csswg.org/mediaqueries/#error-handling
+pub fn parse_media_query_list(context: &ParserContext, input: &mut Parser) -> MediaList {
     if input.is_exhausted() {
         return MediaList::empty()
     }
 
     let mut media_queries = vec![];
     loop {
-        let start_position = input.position();
         match input.parse_until_before(Delimiter::Comma, |i| MediaQuery::parse(context, i)) {
             Ok(mq) => {
                 media_queries.push(mq);
             },
-            Err(err) => {
+            Err(..) => {
                 media_queries.push(MediaQuery::never_matching());
-                let location = err.location;
-                let error = ContextualParseError::InvalidMediaRule(
-                    input.slice_from(start_position), err);
-                let error_context = ParserErrorContext { error_reporter };
-                context.log_css_error(&error_context, location, error);
             },
         }
 
@@ -311,7 +302,7 @@ impl MediaList {
     }
 
     /// Append a new media query item to the media list.
-    /// <https://drafts.csswg.org/cssom/#dom-medialist-appendmedium>
+    /// https://drafts.csswg.org/cssom/#dom-medialist-appendmedium
     ///
     /// Returns true if added, false if fail to parse the medium string.
     pub fn append_medium(&mut self, context: &ParserContext, new_medium: &str) -> bool {
@@ -330,7 +321,7 @@ impl MediaList {
     }
 
     /// Delete a media query from the media list.
-    /// <https://drafts.csswg.org/cssom/#dom-medialist-deletemedium>
+    /// https://drafts.csswg.org/cssom/#dom-medialist-deletemedium
     ///
     /// Returns true if found and deleted, false otherwise.
     pub fn delete_medium(&mut self, context: &ParserContext, old_medium: &str) -> bool {

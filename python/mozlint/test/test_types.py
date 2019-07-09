@@ -2,11 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os
+import sys
 
-import mozunit
 import pytest
 
 from mozlint.result import ResultContainer
@@ -49,8 +47,8 @@ def test_no_filter(lint, lintdir, files):
 
     lint.lintargs['use_filters'] = False
     result = lint.roll(files)
-    assert len(result) == 3
+    assert len(result) == 2
 
 
 if __name__ == '__main__':
-    mozunit.main()
+    sys.exit(pytest.main(['--verbose', __file__]))

@@ -49,10 +49,10 @@ FILE* operator<<(FILE* out, const nsRect& rect)
   tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.y,
                        nsDeviceContext::AppUnitsPerCSSPixel()));
   tmp.AppendLiteral(", ");
-  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.Width(),
+  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.width,
                        nsDeviceContext::AppUnitsPerCSSPixel()));
   tmp.AppendLiteral(", ");
-  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.Height(),
+  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.height,
                        nsDeviceContext::AppUnitsPerCSSPixel()));
   tmp.Append('}');
   fputs(NS_LossyConvertUTF16toASCII(tmp).get(), out);

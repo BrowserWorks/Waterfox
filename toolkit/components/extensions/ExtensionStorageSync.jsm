@@ -41,25 +41,40 @@ const SCALAR_STORAGE_CONSUMED = "storage.sync.api.usage.storage_consumed";
 // Default is 5sec, which seems a bit aggressive on the open internet
 const KINTO_REQUEST_TIMEOUT = 30000;
 
-Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
-  BulkKeyBundle: "resource://services-sync/keys.js",
-  CollectionKeyManager: "resource://services-sync/record.js",
-  CommonUtils: "resource://services-common/utils.js",
-  CryptoUtils: "resource://services-crypto/utils.js",
-  fxAccounts: "resource://gre/modules/FxAccounts.jsm",
-  KintoHttpClient: "resource://services-common/kinto-http-client.js",
-  Kinto: "resource://services-common/kinto-offline-client.js",
-  FirefoxAdapter: "resource://services-common/kinto-storage-adapter.js",
-  Observers: "resource://services-common/observers.js",
-  Utils: "resource://services-sync/util.js",
-});
 
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "BulkKeyBundle",
+                                  "resource://services-sync/keys.js");
+XPCOMUtils.defineLazyModuleGetter(this, "CollectionKeyManager",
+                                  "resource://services-sync/record.js");
+XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
+                                  "resource://services-common/utils.js");
+XPCOMUtils.defineLazyModuleGetter(this, "CryptoUtils",
+                                  "resource://services-crypto/utils.js");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionStorage",
+                                  "resource://gre/modules/ExtensionStorage.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
+                                  "resource://gre/modules/FxAccounts.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "KintoHttpClient",
+                                  "resource://services-common/kinto-http-client.js");
+XPCOMUtils.defineLazyModuleGetter(this, "Kinto",
+                                  "resource://services-common/kinto-offline-client.js");
+XPCOMUtils.defineLazyModuleGetter(this, "FirefoxAdapter",
+                                  "resource://services-common/kinto-storage-adapter.js");
+XPCOMUtils.defineLazyModuleGetter(this, "Log",
+                                  "resource://gre/modules/Log.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Observers",
+                                  "resource://services-common/observers.js");
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+                                  "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
+                                  "resource://gre/modules/Sqlite.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Utils",
+                                  "resource://services-sync/util.js");
 XPCOMUtils.defineLazyPreferenceGetter(this, "prefPermitsStorageSync",
                                       STORAGE_SYNC_ENABLED_PREF, true);
 XPCOMUtils.defineLazyPreferenceGetter(this, "prefStorageSyncServerURL",
@@ -71,13 +86,12 @@ XPCOMUtils.defineLazyGetter(this, "WeaveCrypto", function() {
 });
 
 const {
-  DefaultMap,
   runSafeSyncWithoutClone,
 } = ExtensionUtils;
 
 // Map of Extensions to Set<Contexts> to track contexts that are still
 // "live" and use storage.sync.
-const extensionContexts = new DefaultMap(() => new Set());
+const extensionContexts = new Map();
 // Borrow logger from Sync.
 const log = Log.repository.getLogger("Sync.Engine.Extension-Storage");
 
@@ -124,7 +138,7 @@ this.extensionStorageSync = null;
  */
 function ciphertextHMAC(keyBundle, id, IV, ciphertext) {
   const hasher = keyBundle.sha256HMACHasher;
-  return CommonUtils.bytesAsHex(Utils.digestUTF8(id + IV + ciphertext, hasher));
+  return Utils.bytesAsHex(Utils.digestUTF8(id + IV + ciphertext, hasher));
 }
 
 /**
@@ -170,8 +184,8 @@ class EncryptionRemoteTransformer {
     }
 
     let IV = WeaveCrypto.generateRandomIV();
-    let ciphertext = await WeaveCrypto.encrypt(JSON.stringify(record),
-                                               keyBundle.encryptionKeyB64, IV);
+    let ciphertext = WeaveCrypto.encrypt(JSON.stringify(record),
+                                         keyBundle.encryptionKeyB64, IV);
     let hmac = ciphertextHMAC(keyBundle, id, IV, ciphertext);
     const encryptedResult = {ciphertext, IV, hmac, id};
 
@@ -204,8 +218,8 @@ class EncryptionRemoteTransformer {
     }
 
     // Handle invalid data here. Elsewhere we assume that cleartext is an object.
-    let cleartext = await WeaveCrypto.decrypt(record.ciphertext,
-                                              keyBundle.encryptionKeyB64, record.IV);
+    let cleartext = WeaveCrypto.decrypt(record.ciphertext,
+                                        keyBundle.encryptionKeyB64, record.IV);
     let jsonResult = JSON.parse(cleartext);
     if (!jsonResult || typeof jsonResult !== "object") {
       throw new Error("Decryption failed: result is <" + jsonResult + ">, not an object.");
@@ -274,7 +288,7 @@ class KeyRingEncryptionRemoteTransformer extends EncryptionRemoteTransformer {
         throw new Error("user doesn't have kB");
       }
 
-      let kB = CommonUtils.hexToBytes(user.kB);
+      let kB = Utils.hexToBytes(user.kB);
 
       let keyMaterial = CryptoUtils.hkdf(kB, undefined,
                                        "identity.mozilla.com/picl/v1/chrome.storage.sync", 2 * 32);
@@ -334,25 +348,30 @@ global.KeyRingEncryptionRemoteTransformer = KeyRingEncryptionRemoteTransformer;
  * - connection: a Sqlite connection. Meant for internal use only.
  * - kinto: a KintoBase object, suitable for using in Firefox. All
  *   collections in this database will use the same Sqlite connection.
- * @returns {Promise<Object>}
  */
-async function storageSyncInit() {
-  // Memoize the result to share the connection.
-  if (storageSyncInit.result === undefined) {
-    const path = "storage-sync.sqlite";
-    const connection = await FirefoxAdapter.openConnection({path});
-    storageSyncInit.result = {
-      connection,
-      kinto: new Kinto({
-        adapter: FirefoxAdapter,
-        adapterOptions: {sqliteHandle: connection},
-        timeout: KINTO_REQUEST_TIMEOUT,
-      }),
-    };
-  }
-  return storageSyncInit.result;
-}
+const storageSyncInit = (async function() {
+  const path = "storage-sync.sqlite";
+  const opts = {path, sharedMemoryCache: false};
+  const connection = await Sqlite.openConnection(opts);
+  await FirefoxAdapter._init(connection);
+  return {
+    connection,
+    kinto: new Kinto({
+      adapter: FirefoxAdapter,
+      adapterOptions: {sqliteHandle: connection},
+      timeout: KINTO_REQUEST_TIMEOUT,
+    }),
+  };
+})();
 
+AsyncShutdown.profileBeforeChange.addBlocker(
+  "ExtensionStorageSync: close Sqlite handle",
+  async function() {
+    const ret = await storageSyncInit;
+    const {connection} = ret;
+    await connection.close();
+  }
+);
 // Kinto record IDs have two condtions:
 //
 // - They must contain only ASCII alphanumerics plus - and _. To fix
@@ -427,7 +446,7 @@ class CryptoCollection {
 
   async getCollection() {
     throwIfNoFxA(this._fxaService, "tried to access cryptoCollection");
-    const {kinto} = await storageSyncInit();
+    const {kinto} = await storageSyncInit;
     return kinto.collection(STORAGE_SYNC_CRYPTO_COLLECTION_NAME, {
       idSchema: cryptoCollectionIdSchema,
       remoteTransformers: [new KeyRingEncryptionRemoteTransformer(this._fxaService)],
@@ -567,7 +586,7 @@ class CryptoCollection {
     } else {
       // We never actually use the default key, so it's OK if we
       // generate one multiple times.
-      await collectionKeys.generateDefaultKey();
+      collectionKeys.generateDefaultKey();
     }
     // Pass through uuid field so that we can save it if we need to.
     collectionKeys.uuid = cryptoKeyRecord.uuid;
@@ -665,6 +684,9 @@ global.CollectionKeyEncryptionRemoteTransformer = CollectionKeyEncryptionRemoteT
  */
 function cleanUpForContext(extension, context) {
   const contexts = extensionContexts.get(extension);
+  if (!contexts) {
+    Cu.reportError(new Error(`Internal error: cannot find any contexts for extension ${extension.id}`));
+  }
   contexts.delete(context);
   if (contexts.size === 0) {
     // Nobody else is using this collection. Clean up.
@@ -687,7 +709,7 @@ function cleanUpForContext(extension, context) {
  */
 const openCollection = async function(cryptoCollection, extension, context) {
   let collectionId = extension.id;
-  const {kinto} = await storageSyncInit();
+  const {kinto} = await storageSyncInit;
   const remoteTransformers = [new CollectionKeyEncryptionRemoteTransformer(cryptoCollection, extension.id)];
   const coll = kinto.collection(collectionId, {
     idSchema: storageSyncIdSchema,
@@ -1083,19 +1105,6 @@ class ExtensionStorageSync {
     }
   }
 
-  registerInUse(extension, context) {
-    // Register that the extension and context are in use.
-    const contexts = extensionContexts.get(extension);
-    if (!contexts.has(context)) {
-      // New context. Register it and make sure it cleans itself up
-      // when it closes.
-      contexts.add(context);
-      context.callOnClose({
-        close: () => cleanUpForContext(extension, context),
-      });
-    }
-  }
-
   /**
    * Get the collection for an extension, and register the extension
    * as being "in use".
@@ -1112,7 +1121,20 @@ class ExtensionStorageSync {
     if (prefPermitsStorageSync !== true) {
       return Promise.reject({message: `Please set ${STORAGE_SYNC_ENABLED_PREF} to true in about:config`});
     }
-    this.registerInUse(extension, context);
+    // Register that the extension and context are in use.
+    if (!extensionContexts.has(extension)) {
+      extensionContexts.set(extension, new Set());
+    }
+    const contexts = extensionContexts.get(extension);
+    if (!contexts.has(context)) {
+      // New context. Register it and make sure it cleans itself up
+      // when it closes.
+      contexts.add(context);
+      context.callOnClose({
+        close: () => cleanUpForContext(extension, context),
+      });
+    }
+
     return openCollection(this.cryptoCollection, extension, context);
   }
 
@@ -1221,7 +1243,8 @@ class ExtensionStorageSync {
     listeners.add(listener);
     this.listeners.set(extension, listeners);
 
-    this.registerInUse(extension, context);
+    // Force opening the collection so that we will sync for this extension.
+    return this.getCollection(extension, context);
   }
 
   removeOnChangedListener(extension, listener) {

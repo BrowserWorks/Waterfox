@@ -70,7 +70,7 @@ public:
   GetMaskArea(nsIFrame* aMaskedFrame);
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
 #ifdef DEBUG
@@ -80,6 +80,7 @@ public:
 #endif
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {}
 
 #ifdef DEBUG_FRAME_DUMP

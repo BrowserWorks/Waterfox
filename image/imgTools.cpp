@@ -47,6 +47,17 @@ imgTools::~imgTools()
 }
 
 NS_IMETHODIMP
+imgTools::DecodeImageData(nsIInputStream* aInStr,
+                          const nsACString& aMimeType,
+                          imgIContainer** aContainer)
+{
+  MOZ_ASSERT(*aContainer == nullptr,
+             "Cannot provide an existing image container to DecodeImageData");
+
+  return DecodeImage(aInStr, aMimeType, aContainer);
+}
+
+NS_IMETHODIMP
 imgTools::DecodeImage(nsIInputStream* aInStr,
                       const nsACString& aMimeType,
                       imgIContainer** aContainer)
@@ -61,8 +72,7 @@ imgTools::DecodeImage(nsIInputStream* aInStr,
   nsCOMPtr<nsIInputStream> inStream = aInStr;
   if (!NS_InputStreamIsBuffered(aInStr)) {
     nsCOMPtr<nsIInputStream> bufStream;
-    rv = NS_NewBufferedInputStream(getter_AddRefs(bufStream),
-                                   inStream.forget(), 1024);
+    rv = NS_NewBufferedInputStream(getter_AddRefs(bufStream), aInStr, 1024);
     if (NS_SUCCEEDED(rv)) {
       inStream = bufStream;
     }

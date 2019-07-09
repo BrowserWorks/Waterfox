@@ -25,9 +25,6 @@ class ReftestFormatter(TbplFormatter):
             return "%s\n" % data['message']
 
         formatted = TbplFormatter.__call__(self, data)
-
-        if formatted is None:
-            return
         if data['action'] == 'process_output':
             return formatted
         return 'REFTEST %s' % formatted
@@ -36,30 +33,22 @@ class ReftestFormatter(TbplFormatter):
         prefix = "%s |" % data['level'].upper()
         return "%s %s\n" % (prefix, data['message'])
 
-    def _format_status(self, data):
+    def test_end(self, data):
         extra = data.get('extra', {})
         status = data['status']
+        test = data['test']
 
         status_msg = "TEST-"
         if 'expected' in data:
             status_msg += "UNEXPECTED-%s" % status
         else:
-            if status not in ("PASS", "SKIP"):
+            if status != "PASS":
                 status_msg += "KNOWN-"
             status_msg += status
             if extra.get('status_msg') == 'Random':
                 status_msg += "(EXPECTED RANDOM)"
-        return status_msg
 
-    def test_status(self, data):
-        extra = data.get('extra', {})
-        test = data['test']
-
-        status_msg = self._format_status(data)
-        output_text = "%s | %s | %s" % (status_msg, test, data.get("subtest", "unknown test"))
-        if data.get('message'):
-            output_text += " | %s" % data['message']
-
+        output_text = "%s | %s | %s" % (status_msg, test, data.get("message", ""))
         if "reftest_screenshots" in extra:
             screenshots = extra["reftest_screenshots"]
             image_1 = screenshots[0]["screenshot"]
@@ -72,20 +61,7 @@ class ReftestFormatter(TbplFormatter):
             elif len(screenshots) == 1:
                 output_text += "\nREFTEST   IMAGE: data:image/png;base64,%s" % image_1
 
-        return output_text + "\n"
-
-    def test_end(self, data):
-        status = data['status']
-        test = data['test']
-
-        output_text = ""
-        if status != "OK":
-            status_msg = self._format_status(data)
-            output_text = "%s | %s | %s" % (status_msg, test, data.get("message", ""))
-
-        if output_text:
-            output_text += "\nREFTEST "
-        output_text += "TEST-END | %s" % test
+        output_text += "\nREFTEST TEST-END | %s" % test
         return "%s\n" % output_text
 
     def process_output(self, data):

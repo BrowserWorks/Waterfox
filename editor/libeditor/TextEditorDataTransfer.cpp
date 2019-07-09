@@ -123,7 +123,7 @@ TextEditor::InsertTextFromTransferable(nsITransferable* aTransferable,
       // Sanitize possible carriage returns in the string to be inserted
       nsContentUtils::PlatformToDOMLineBreaks(stuffToPaste);
 
-      AutoPlaceholderBatch beginBatching(this);
+      AutoEditBatch beginBatching(this);
       rv = InsertTextAt(stuffToPaste, aDestinationNode, aDestOffset, aDoDeleteSelection);
     }
   }
@@ -153,7 +153,7 @@ TextEditor::InsertFromDataTransfer(DataTransfer* aDataTransfer,
     data->GetAsAString(insertText);
     nsContentUtils::PlatformToDOMLineBreaks(insertText);
 
-    AutoPlaceholderBatch beginBatching(this);
+    AutoEditBatch beginBatching(this);
     return InsertTextAt(insertText, aDestinationNode, aDestOffset, aDoDeleteSelection);
   }
 
@@ -163,7 +163,7 @@ TextEditor::InsertFromDataTransfer(DataTransfer* aDataTransfer,
 nsresult
 TextEditor::InsertFromDrop(nsIDOMEvent* aDropEvent)
 {
-  CommitComposition();
+  ForceCompositionEnd();
 
   nsCOMPtr<nsIDOMDragEvent> dragEvent(do_QueryInterface(aDropEvent));
   NS_ENSURE_TRUE(dragEvent, NS_ERROR_FAILURE);
@@ -206,7 +206,7 @@ TextEditor::InsertFromDrop(nsIDOMEvent* aDropEvent)
   }
 
   // Combine any deletion and drop insertion into one transaction
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
 
   bool deleteSelection = false;
 
@@ -236,9 +236,11 @@ TextEditor::InsertFromDrop(nsIDOMEvent* aDropEvent)
     // We never have to delete if selection is already collapsed
     bool cursorIsInSelection = false;
 
-    uint32_t rangeCount = selection->RangeCount();
+    int32_t rangeCount;
+    rv = selection->GetRangeCount(&rangeCount);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-    for (uint32_t j = 0; j < rangeCount; j++) {
+    for (int32_t j = 0; j < rangeCount; j++) {
       RefPtr<nsRange> range = selection->GetRangeAt(j);
       if (!range) {
         // don't bail yet, iterate through them all

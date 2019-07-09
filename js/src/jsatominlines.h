@@ -47,10 +47,6 @@ AtomToId(JSAtom* atom)
     return JSID_FROM_BITS(size_t(atom));
 }
 
-// Use the NameToId method instead!
-inline jsid
-AtomToId(PropertyName* name) = delete;
-
 inline bool
 ValueToIdPure(const Value& v, jsid* id)
 {
@@ -68,8 +64,8 @@ ValueToIdPure(const Value& v, jsid* id)
         return true;
     }
 
-    if (v.isSymbol()) {
-        *id = SYMBOL_TO_JSID(v.toSymbol());
+    if (js::IsSymbolOrSymbolWrapper(v)) {
+        *id = SYMBOL_TO_JSID(js::ToSymbolPrimitive(v));
         return true;
     }
 
@@ -93,8 +89,8 @@ ValueToId(JSContext* cx, typename MaybeRooted<Value, allowGC>::HandleType v,
             return true;
         }
 
-        if (v.isSymbol()) {
-            idp.set(SYMBOL_TO_JSID(v.toSymbol()));
+        if (js::IsSymbolOrSymbolWrapper(v)) {
+            idp.set(SYMBOL_TO_JSID(js::ToSymbolPrimitive(v)));
             return true;
         }
     }

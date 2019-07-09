@@ -37,10 +37,6 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
   return logger.log.bind(logger);
 });
 
-Services.cpmm.addMessageListener("clearRecipeCache", () => {
-  LoginRecipesContent._clearRecipeCache();
-});
-
 // These mirror signon.* prefs.
 var gEnabled, gAutofillForms, gStoreWhenAutocompleteOff;
 var gLastRightClickTimeStamp = Number.NEGATIVE_INFINITY;
@@ -84,7 +80,7 @@ var observer = {
       return;
     }
 
-    log("onLocationChange handled:", aLocation.displaySpec, aWebProgress.DOMWindow.document);
+    log("onLocationChange handled:", aLocation.spec, aWebProgress.DOMWindow.document);
 
     LoginManagerContent._onNavigation(aWebProgress.DOMWindow.document);
   },
@@ -410,7 +406,7 @@ var LoginManagerContent = {
         log("Running deferred processing of onDOMInputPasswordAdded", formLike2);
         this._deferredPasswordAddedTasksByRootElement.delete(formLike2.rootElement);
         this._fetchLoginsFromParentAndFillForm(formLike2, window);
-      }, PASSWORD_INPUT_ADDED_COALESCING_THRESHOLD_MS, 0);
+      }, PASSWORD_INPUT_ADDED_COALESCING_THRESHOLD_MS);
 
       this._deferredPasswordAddedTasksByRootElement.set(formLike.rootElement, deferredTask);
     }
@@ -564,9 +560,6 @@ var LoginManagerContent = {
     let doc = form.ownerDocument;
     let autofillForm = gAutofillForms && !PrivateBrowsingUtils.isContentWindowPrivate(doc.defaultView);
 
-    let formOrigin = LoginUtils._getPasswordOrigin(doc.documentURI);
-    LoginRecipesContent.cacheRecipes(formOrigin, doc.defaultView, recipes);
-
     this._fillForm(form, loginsFound, recipes, {autofillForm});
   },
 
@@ -638,8 +631,10 @@ var LoginManagerContent = {
     log("onUsernameInput from", event.type);
 
     let doc = acForm.ownerDocument;
-    let formOrigin = LoginUtils._getPasswordOrigin(doc.documentURI);
-    let recipes = LoginRecipesContent.getRecipes(formOrigin, doc.defaultView);
+    let messageManager = messageManagerFromWindow(doc.defaultView);
+    let recipes = messageManager.sendSyncMessage("RemoteLogins:findRecipes", {
+      formOrigin: LoginUtils._getPasswordOrigin(doc.documentURI),
+    })[0];
 
     // Make sure the username field fillForm will use is the
     // same field as the autocomplete was activated on.
@@ -933,7 +928,9 @@ var LoginManagerContent = {
     let formSubmitURL = LoginUtils._getActionOrigin(form);
     let messageManager = messageManagerFromWindow(win);
 
-    let recipes = LoginRecipesContent.getRecipes(hostname, win);
+    let recipes = messageManager.sendSyncMessage("RemoteLogins:findRecipes", {
+      formOrigin: hostname,
+    })[0];
 
     // Get the appropriate fields from the form.
     var [usernameField, newPasswordField, oldPasswordField] =
@@ -1348,8 +1345,10 @@ var LoginManagerContent = {
     let form = LoginFormFactory.createFromField(aField);
 
     let doc = aField.ownerDocument;
-    let formOrigin = LoginUtils._getPasswordOrigin(doc.documentURI);
-    let recipes = LoginRecipesContent.getRecipes(formOrigin, doc.defaultView);
+    let messageManager = messageManagerFromWindow(doc.defaultView);
+    let recipes = messageManager.sendSyncMessage("RemoteLogins:findRecipes", {
+      formOrigin: LoginUtils._getPasswordOrigin(doc.documentURI),
+    })[0];
 
     let [usernameField, newPasswordField] =
           this._getFormFields(form, false, recipes);
@@ -1387,7 +1386,7 @@ var LoginUtils = {
         return "javascript:";
 
       // Build this manually instead of using prePath to avoid including the userPass portion.
-      realm = uri.scheme + "://" + uri.displayHostPort;
+      realm = uri.scheme + "://" + uri.hostPort;
     } catch (e) {
       // bug 159484 - disallow url types that don't support a hostPort.
       // (although we handle "javascript:..." as a special case above.)

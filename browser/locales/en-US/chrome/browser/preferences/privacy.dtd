@@ -15,7 +15,10 @@
 <!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
 <!ENTITY  trackingProtectionExceptions.accesskey "x">
 
-<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the release and beta channel. -->
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
 <!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">
 <!ENTITY trackingProtectionPBM6.accesskey     "v">
 <!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
@@ -46,14 +49,14 @@
 <!ENTITY  acceptCookies2.label          "Accept cookies from websites">
 <!ENTITY  acceptCookies2.accesskey      "A">
 
-<!ENTITY  acceptThirdParty2.pre.label     "Accept third-party cookies">
-<!ENTITY  acceptThirdParty2.pre.accesskey "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
 <!ENTITY  acceptThirdParty.always.label   "Always">
 <!ENTITY  acceptThirdParty.never.label    "Never">
 <!ENTITY  acceptThirdParty.visited.label  "From visited">
 
-<!ENTITY  keepUntil2.label              "Keep until">
-<!ENTITY  keepUntil2.accesskey          "u">
+<!ENTITY  keepUntil.label               "Keep until:">
+<!ENTITY  keepUntil.accesskey           "u">
 
 <!ENTITY  expire.label                  "they expire">
 <!ENTITY  close.label                   "I close &brandShortName;">
@@ -110,8 +113,3 @@
 <!ENTITY  browserContainersEnabled.accesskey    "n">
 <!ENTITY  browserContainersSettings.label        "Settings…">
 <!ENTITY  browserContainersSettings.accesskey    "i">
-
-<!ENTITY  a11yPrivacy.checkbox.label     "Prevent accessibility services from accessing your browser">
-<!ENTITY  a11yPrivacy.checkbox.accesskey "a">
-<!ENTITY  a11yPrivacy.learnmore.label    "Learn more">
-<!ENTITY enableSafeBrowsingLearnMore.label "Learn more">

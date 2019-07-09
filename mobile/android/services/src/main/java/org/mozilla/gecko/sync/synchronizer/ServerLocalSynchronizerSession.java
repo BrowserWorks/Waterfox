@@ -29,7 +29,7 @@ public class ServerLocalSynchronizerSession extends SynchronizerSession {
   }
 
   @Override
-  public void onFirstFlowCompleted(RecordsChannel recordsChannel) {
+  public void onFirstFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
     // If a "reflow exception" was thrown, consider this synchronization failed.
     final ReflowIsNecessaryException reflowException = recordsChannel.getReflowException();
     if (reflowException != null) {
@@ -58,11 +58,11 @@ public class ServerLocalSynchronizerSession extends SynchronizerSession {
       Logger.trace(LOG_TAG, "No failures storing local records.");
     }
 
-    super.onFirstFlowCompleted(recordsChannel);
+    super.onFirstFlowCompleted(recordsChannel, fetchEnd, storeEnd);
   }
 
   @Override
-  public void onSecondFlowCompleted(RecordsChannel recordsChannel) {
+  public void onSecondFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
     // If a "reflow exception" was thrown, consider this synchronization failed.
     final ReflowIsNecessaryException reflowException = recordsChannel.getReflowException();
     if (reflowException != null) {
@@ -92,6 +92,6 @@ public class ServerLocalSynchronizerSession extends SynchronizerSession {
     }
     Logger.trace(LOG_TAG, "No failures storing remote records.");
 
-    super.onSecondFlowCompleted(recordsChannel);
+    super.onSecondFlowCompleted(recordsChannel, fetchEnd, storeEnd);
   }
 }

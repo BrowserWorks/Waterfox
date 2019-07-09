@@ -14,6 +14,10 @@ let { snapshotState, dominatorTreeState, viewState, treeMapState } =
 let { importSnapshotAndCensus } = require("devtools/client/memory/actions/io");
 let { changeViewAndRefresh } = require("devtools/client/memory/actions/view");
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(function* () {
   let front = new StubbedMemoryFront();
   let heapWorker = new HeapAnalysesClient();

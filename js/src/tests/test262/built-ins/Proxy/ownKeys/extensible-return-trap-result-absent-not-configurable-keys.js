@@ -1,7 +1,7 @@
 // Copyright (C) 2015 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
+es6id: 9.5.12
 description: >
     If target is extensible, return the non-falsy trap result if target doesn't
     contain any non-configurable keys.
@@ -9,7 +9,7 @@ info: >
     [[OwnPropertyKeys]] ( )
 
     ...
-    15. If extensibleTarget is true and targetNonconfigurableKeys is empty, then
+    19. If extensibleTarget is true and targetNonconfigurableKeys is empty, then
         a. Return trapResult.
 ---*/
 

@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLButtonElement.h"
 #include "nsIConstraintValidation.h"
 
 namespace mozilla {
@@ -17,10 +18,12 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLButtonElement final : public nsGenericHTMLFormElementWithState,
+                                public nsIDOMHTMLButtonElement,
                                 public nsIConstraintValidation
 {
 public:
   using nsIConstraintValidation::GetValidationMessage;
+  using nsGenericHTMLFormElementWithState::GetFormAction;
 
   explicit HTMLButtonElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                              FromParser aFromParser = NOT_FROM_PARSER);
@@ -40,6 +43,9 @@ public:
   {
     return true;
   }
+
+  // nsIDOMHTMLButtonElement
+  NS_DECL_NSIDOMHTMLBUTTONELEMENT
 
   // overriden nsIFormControl methods
   NS_IMETHOD Reset() override;
@@ -75,19 +81,18 @@ public:
   /**
    * Called when an attribute is about to be changed
    */
-  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
 
@@ -115,17 +120,17 @@ public:
   }
   // nsGenericHTMLFormElement::GetForm is fine.
   using nsGenericHTMLFormElement::GetForm;
-  // GetFormAction implemented in superclass
+  // XPCOM GetFormAction is fine.
   void SetFormAction(const nsAString& aFormAction, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::formaction, aFormAction, aRv);
   }
-  void GetFormEnctype(nsAString& aFormEncType);
+  // XPCOM GetFormEnctype is fine.
   void SetFormEnctype(const nsAString& aFormEnctype, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::formenctype, aFormEnctype, aRv);
   }
-  void GetFormMethod(nsAString& aFormMethod);
+  // XPCOM GetFormMethod is fine.
   void SetFormMethod(const nsAString& aFormMethod, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::formmethod, aFormMethod, aRv);
@@ -138,31 +143,22 @@ public:
   {
     SetHTMLBoolAttr(nsGkAtoms::formnovalidate, aFormNoValidate, aError);
   }
-  void GetFormTarget(DOMString& aFormTarget)
-  {
-    GetHTMLAttr(nsGkAtoms::formtarget, aFormTarget);
-  }
+  // XPCOM GetFormTarget is fine.
   void SetFormTarget(const nsAString& aFormTarget, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::formtarget, aFormTarget, aRv);
   }
-  void GetName(DOMString& aName)
-  {
-    GetHTMLAttr(nsGkAtoms::name, aName);
-  }
+  // XPCOM GetName is fine.
   void SetName(const nsAString& aName, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::name, aName, aRv);
   }
-  void GetType(nsAString& aType);
+  // XPCOM GetType is fine.
   void SetType(const nsAString& aType, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::type, aType, aRv);
   }
-  void GetValue(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::value, aValue);
-  }
+  // XPCOM GetValue is fine.
   void SetValue(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::value, aValue, aRv);

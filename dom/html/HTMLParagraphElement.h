@@ -9,12 +9,14 @@
 
 #include "mozilla/Attributes.h"
 
+#include "nsIDOMHTMLParagraphElement.h"
 #include "nsGenericHTMLElement.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLParagraphElement final : public nsGenericHTMLElement
+class HTMLParagraphElement final : public nsGenericHTMLElement,
+                                   public nsIDOMHTMLParagraphElement
 {
 public:
   explicit HTMLParagraphElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -25,21 +27,21 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
+  // nsIDOMHTMLParagraphElement
+  NS_DECL_NSIDOMHTMLPARAGRAPHELEMENT
+
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
 
   // WebIDL API
-  void GetAlign(nsAString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::align, aValue);
-  }
+  // The XPCOM GetAlign is fine for our purposes
   void SetAlign(const nsAString& aValue, mozilla::ErrorResult& rv)
   {
     SetHTMLAttr(nsGkAtoms::align, aValue, rv);

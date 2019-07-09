@@ -54,7 +54,7 @@ interface PerformanceResourceTiming : PerformanceEntry {
     readonly attribute DOMHighResTimeStamp requestStart;
     readonly attribute DOMHighResTimeStamp responseStart;
     readonly attribute DOMHighResTimeStamp responseEnd;
-    [Default] object toJSON();
+    serializer = {inherit, attribute};
 };
 partial interface Performance {
     void clearResourceTimings();

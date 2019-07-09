@@ -1,10 +1,11 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/dstr-binding/ary-ptrn-elem-id-iter-val-err.case
 // - src/dstr-binding/error/cls-expr-async-gen-meth-dflt.template
 /*---
 description: Error forwarding when IteratorValue returns an abrupt completion (class expression async generator method (default parameter))
 esid: sec-class-definitions-runtime-semantics-evaluation
-features: [Symbol.iterator, async-iteration]
+features: [async-iteration]
 flags: [generated]
 info: |
     ClassExpression : class BindingIdentifieropt ClassTail
@@ -54,7 +55,6 @@ info: |
           ii. If v is an abrupt completion, set iteratorRecord.[[done]] to
               true.
           iii. ReturnIfAbrupt(v).
-
 ---*/
 var poisonedValue = Object.defineProperty({}, 'value', {
   get: function() {

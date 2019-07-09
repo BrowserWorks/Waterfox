@@ -120,21 +120,17 @@ private:
 private:
   explicit Interceptor(IInterceptorSink* aSink);
   ~Interceptor();
-  HRESULT GetInitialInterceptorForIID(detail::LiveSetAutoLock& aLiveSetLock,
+  HRESULT GetInitialInterceptorForIID(detail::LiveSetAutoLock& aLock,
                                       REFIID aTargetIid,
                                       STAUniquePtr<IUnknown> aTarget,
                                       void** aOutInterface);
   MapEntry* Lookup(REFIID aIid);
-  HRESULT QueryInterfaceTarget(REFIID aIid, void** aOutput,
-                               TimeDuration* aOutDuration = nullptr);
+  HRESULT QueryInterfaceTarget(REFIID aIid, void** aOutput);
   HRESULT ThreadSafeQueryInterface(REFIID aIid,
                                    IUnknown** aOutInterface) override;
   HRESULT CreateInterceptor(REFIID aIid, IUnknown* aOuter, IUnknown** aOutput);
-  REFIID MarshalAs(REFIID aIid) const;
-  HRESULT PublishTarget(detail::LiveSetAutoLock& aLiveSetLock,
-                        RefPtr<IUnknown> aInterceptor,
-                        REFIID aTargetIid,
-                        STAUniquePtr<IUnknown> aTarget);
+
+  static DWORD GetMarshalFlags(DWORD aDestContext, DWORD aMarshalFlags);
 
 private:
   InterceptorTargetPtr<IUnknown>  mTarget;
@@ -156,7 +152,7 @@ CreateInterceptor(STAUniquePtr<InterfaceT> aTargetInterface,
     return E_INVALIDARG;
   }
 
-  REFIID iidTarget = __uuidof(InterfaceT);
+  REFIID iidTarget = __uuidof(aTargetInterface);
 
   STAUniquePtr<IUnknown> targetUnknown(aTargetInterface.release());
   return Interceptor::Create(Move(targetUnknown), aEventSink, iidTarget,

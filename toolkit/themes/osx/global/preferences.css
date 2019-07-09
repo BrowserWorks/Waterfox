@@ -42,8 +42,13 @@ radio[pane]:active:hover {
   text-shadow: none;
 }
 
+radio[pane] > .paneButtonIcon {
+  /* preload external filter file */
+  background-image: url("chrome://global/skin/filters.svg");
+}
+
 radio[pane]:active:hover > .paneButtonIcon {
-  filter: brightness(0.55);
+  filter: url("chrome://global/skin/filters.svg#iconPressed");
 }
 
 radio[pane][selected="true"] {

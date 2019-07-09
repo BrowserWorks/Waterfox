@@ -9,7 +9,6 @@
 #define mozilla_SmallPointerArray_h
 
 #include "mozilla/Assertions.h"
-#include <algorithm>
 #include <iterator>
 #include <vector>
 
@@ -97,60 +96,34 @@ public:
     mInlineElements[0] = nullptr;
   }
 
-  bool RemoveElement(T* aElement) {
+  void RemoveElement(T* aElement) {
     MOZ_ASSERT(aElement != nullptr);
     if (aElement == nullptr) {
-      return false;
+      return;
     }
 
     if (mInlineElements[0] == aElement) {
       // Expectected case.
       mInlineElements[0] = mInlineElements[1];
       mInlineElements[1] = nullptr;
-      return true;
+      return;
     }
 
     if (mInlineElements[0]) {
       if (mInlineElements[1] == aElement) {
         mInlineElements[1] = nullptr;
-        return true;
       }
-      return false;
+      return;
     }
 
     if (mArray) {
       for (auto iter = mArray->begin(); iter != mArray->end(); iter++) {
         if (*iter == aElement) {
           mArray->erase(iter);
-          return true;
+          return;
         }
       }
     }
-    return false;
-  }
-
-  bool Contains(T* aElement) const {
-    MOZ_ASSERT(aElement != nullptr);
-    if (aElement == nullptr) {
-      return false;
-    }
-
-    if (mInlineElements[0] == aElement) {
-      return true;
-    }
-
-    if (mInlineElements[0]) {
-      if (mInlineElements[1] == aElement) {
-        return true;
-      }
-      return false;
-    }
-
-    if (mArray) {
-      return std::find(mArray->begin(), mArray->end(), aElement) != mArray->end();
-    }
-    return false;
-
   }
 
   size_t Length() const
@@ -208,7 +181,7 @@ private:
       return const_cast<T**>(&mInlineElements[0]);
     }
 
-    if (mArray->empty()) {
+    if (!mArray->size()) {
       return nullptr;
     }
 

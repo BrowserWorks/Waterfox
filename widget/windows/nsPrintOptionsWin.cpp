@@ -55,14 +55,17 @@ nsPrintOptionsWin::SerializeToPrintData(nsIPrintSettings* aSettings,
     return NS_ERROR_FAILURE;
   }
 
-  nsAutoString deviceName;
-  nsAutoString driverName;
+  char16_t* deviceName;
+  char16_t* driverName;
 
-  psWin->GetDeviceName(deviceName);
-  psWin->GetDriverName(driverName);
+  psWin->GetDeviceName(&deviceName);
+  psWin->GetDriverName(&driverName);
 
   data->deviceName().Assign(deviceName);
   data->driverName().Assign(driverName);
+
+  free(deviceName);
+  free(driverName);
 
   // When creating the print dialog on Windows, we only need to send certain
   // print settings information from the parent to the child not vice versa.
@@ -114,8 +117,8 @@ nsPrintOptionsWin::DeserializeToPrintSettings(const PrintData& data,
   }
 
   if (XRE_IsContentProcess()) {
-    psWin->SetDeviceName(data.deviceName());
-    psWin->SetDriverName(data.driverName());
+    psWin->SetDeviceName(data.deviceName().get());
+    psWin->SetDriverName(data.driverName().get());
 
     psWin->SetPrintableWidthInInches(data.printableWidthInInches());
     psWin->SetPrintableHeightInInches(data.printableHeightInInches());

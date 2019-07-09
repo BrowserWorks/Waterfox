@@ -195,7 +195,7 @@ nsMathMLmactionFrame::SetInitialChildList(ChildListID     aListID,
 
 nsresult
 nsMathMLmactionFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                       nsAtom* aAttribute,
+                                       nsIAtom* aAttribute,
                                        int32_t  aModType)
 {
   bool needsReflow = false;

@@ -913,56 +913,6 @@ const transformListType = {
                    // rotateY(30deg) == rotate3D(0, 1, 0, 30deg)
         [{ time: 500, expected: rotate3dToMatrix(0, 1, 0, Math.PI / 6) }]);
     }, property + ': rotateY');
-
-    // Following tests aim for test the fallback discrete interpolation behavior
-    // for non-invertible matrices. The non-invertible matrix that we use is the
-    // singuler matrix, matrix(1, 1, 0, 0, 0, 100).
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      var animation =
-        target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0)',
-                                     'matrix( 1, 1, 0,  0, 0, 100)'] },
-                       { duration: 1000, fill: 'both' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [ -1, 0, 0, -1, 200,   0 ] },
-          { time: 499,  expected: [ -1, 0, 0, -1, 200,   0 ] },
-          { time: 500,  expected: [  1, 1, 0,  0,   0, 100 ] },
-          { time: 1000, expected: [  1, 1, 0,  0,   0, 100 ] }]);
-    }, property + ': non-invertible matrices');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      var animation =                // matrix(0, -1, 1, 0, 250, 0)
-        target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)',
-                                     // matrix(-1, -1, 0, 0, 100, 100)
-                                     'translate(100px) matrix( 1, 1, 0,  0, 0, 100) rotate(180deg)'] },
-                       { duration: 1000, fill: 'both' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [  0, -1, 1, 0, 250,   0 ] },
-          { time: 499,  expected: [  0, -1, 1, 0, 250,   0 ] },
-          { time: 500,  expected: [ -1, -1, 0, 0, 100, 100 ] },
-          { time: 1000, expected: [ -1, -1, 0, 0, 100, 100 ] }]);
-    }, property + ': non-invertible matrices in matched transform lists');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      var animation =                // matrix(-2, 0, 0, -2, 250, 0)
-        target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) scale(2)',
-                                     // matrix(1, 1, 1, 1, 100, 100)
-                                     'translate(100px) matrix( 1, 1, 0,  0, 0, 100) skew(45deg)'] },
-                       { duration: 1000, fill: 'both' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [ -2, 0, 0, -2, 250,   0 ] },
-          { time: 499,  expected: [ -2, 0, 0, -2, 250,   0 ] },
-          { time: 500,  expected: [  1, 1, 1,  1, 100, 100 ] },
-          { time: 1000, expected: [  1, 1, 1,  1, 100, 100 ] }]);
-    }, property + ': non-invertible matrices in mismatched transform lists');
   },
 
   testAddition: function(property, setup) {
@@ -1128,55 +1078,6 @@ const transformListType = {
         [{ time: 0,    expected: rotate3dToMatrix(1, 1, 0,    -Math.PI / 4) },
          { time: 1000, expected: rotate3dToMatrix(1, 1, 0, 3 * Math.PI / 4) }]);
     }, property + ': matrix3d');
-
-    // Following tests aim for test the addition behavior for non-invertible
-    // matrices. Note that the addition for non-invertible matrices should be
-    // the same, just like addition for invertible matrices. With these tests,
-    // we can assure that addition never behaves as discrete. The non-invertible
-    // matrix that we use is the singuler matrix, matrix(1, 1, 0, 0, 0, 100).
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.style[idlName] = 'translateX(50px)';
-      var animation =
-        target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0)',
-                                     'matrix( 1, 1, 0,  0, 0, 100)'] },
-                       { duration: 1000, fill: 'both', composite: 'add' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [ -1, 0, 0, -1, 250,   0 ] },
-          { time: 1000, expected: [  1, 1, 0,  0,  50, 100 ] }]);
-    }, property + ': non-invertible matrices');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.style[idlName] = 'translateX(50px)';
-      var animation =                // matrix(0, -1, 1, 0, 200, 0)
-        target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)',
-                                     // matrix(-1, -1, 0, 0, 0, 100)
-                                     'matrix( 1, 1, 0,  0, 0, 100) rotate(180deg)'] },
-                       { duration: 1000, fill: 'both', composite: 'add' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [  0, -1, 1, 0, 250,   0 ] },
-          { time: 1000, expected: [ -1, -1, 0, 0,  50, 100 ] }]);
-    }, property + ': non-invertible matrices in matched transform lists');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.style[idlName] = 'translateX(50px)';
-      var animation =                // matrix(-2, 0, 0, -2, 200, 0)
-        target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0) scale(2)',
-                                     // matrix(1, 1, 1, 1, 0, 100)
-                                     'matrix( 1, 1, 0,  0, 0, 100) skew(45deg)'] },
-                       { duration: 1000, fill: 'both', composite: 'add' });
-
-      testAnimationSampleMatrices(animation, idlName,
-        [ { time: 0,    expected: [ -2, 0, 0, -2, 250,   0 ] },
-          { time: 1000, expected: [  1, 1, 1,  1,  50, 100 ] }]);
-    }, property + ': non-invertible matrices in mismatched transform lists');
   },
 
   testAccumulation: function(property, setup) {
@@ -1344,91 +1245,6 @@ const transformListType = {
         [{ time: 0,    expected: matrixArray },
          { time: 1000, expected: matrixArray }]);
     }, property + ': none');
-
-    // Following tests aim for test the fallback discrete accumulation behavior
-    // for non-invertible matrices. The non-invertible matrix that we use is the
-    // singuler matrix, matrix(1, 1, 0, 0, 0, 100).
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0)',
-                                   'matrix(-1, 0, 0, -1, 200, 0)'] }, 1000);
-      var animation = target.animate({ [idlName]: ['matrix( 1, 1, 0, 0, 0, 100)',
-                                                   'matrix( 1, 1, 0, 0, 0, 100)'] },
-                                     { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ 1, 1, 0, 0, 0, 100 ] }]);
-    }, property + ': non-invertible matrices (non-invertible onto invertible)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.animate({ [idlName]: ['matrix( 1, 1, 0, 0, 0, 100)',
-                                   'matrix( 1, 1, 0, 0, 0, 100)'] }, 1000);
-      var animation = target.animate({ [idlName]: ['matrix(-1, 0, 0, -1, 200, 0)',
-                                                   'matrix(-1, 0, 0, -1, 200, 0)'] },
-                                     { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ -1, 0, 0, -1, 200, 0 ] }]);
-    }, property + ': non-invertible matrices (invertible onto non-invertible)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-                                   // matrix(0, -1, 1, 0, 250, 0)
-      target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)',
-                                   'translate(50px)  matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)'] }, 1000);
-      var animation =                // matrix(-1, -1, 0, 0, 100, 100)
-        target.animate({ [idlName]: ['translate(100px) matrix( 1, 1, 0, 0, 0, 100) rotate(180deg)',
-                                     'translate(100px) matrix( 1, 1, 0, 0, 0, 100) rotate(180deg)'] },
-                       { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ -1, -1, 0, 0, 100, 100 ] }]);
-    }, property + ': non-invertible matrices in matched transform lists (non-invertible onto invertible)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-                                   // matrix(-1, -1, 0, 0, 100, 100)
-      target.animate({ [idlName]: ['translate(100px) matrix(1, 1, 0, 0, 0, 100) rotate(180deg)',
-                                   'translate(100px) matrix(1, 1, 0, 0, 0, 100) rotate(180deg)'] }, 1000);
-      var animation =                // matrix(0, -1, 1, 0, 250, 0)
-        target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)',
-                                     'translate(50px)  matrix(-1, 0, 0, -1, 200, 0) rotate(90deg)'] },
-                       { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ 0, -1, 1, 0, 250, 0 ] }]);
-    }, property + ': non-invertible matrices in matched transform lists (invertible onto non-invertible)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-                                   // matrix(-2, 0, 0, -2, 250, 0)
-      target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) scale(2)',
-                                   'translate(50px)  matrix(-1, 0, 0, -1, 200, 0) scale(2)'] }, 1000);
-      var animation =                // matrix(1, 1, 1, 1, 100, 100)
-        target.animate({ [idlName]: ['translate(100px) matrix(1, 1, 0, 0, 0, 100) skew(45deg)',
-                                     'translate(100px) matrix(1, 1, 0, 0, 0, 100) skew(45deg)'] },
-                       { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ 1, 1, 1, 1, 100, 100 ] }]);
-    }, property + ': non-invertible matrices in mismatched transform lists' +
-                  ' (non-invertible onto invertible)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-                                   // matrix(1, 1, 1, 1, 100, 100)
-      target.animate({ [idlName]: ['translate(100px) matrix(1, 1, 0, 0, 0, 100) skew(45deg)',
-                                   'translate(100px) matrix(1, 1, 0, 0, 0, 100) skew(45deg)'] }, 1000);
-      var animation =                // matrix(-2, 0, 0, -2, 250, 0)
-        target.animate({ [idlName]: ['translate(50px)  matrix(-1, 0, 0, -1, 200, 0) scale(2)',
-                                     'translate(50px)  matrix(-1, 0, 0, -1, 200, 0) scale(2)'] },
-                       { duration: 1000, composite: 'accumulate' });
-      testAnimationSampleMatrices(animation, idlName,
-                                  [{ time: 0, expected: [ -2, 0, 0, -2, 250, 0 ] }]);
-    }, property + ': non-invertible matrices in mismatched transform lists' +
-                  ' (invertible onto non-invertible)');
   },
 };
 
@@ -1724,18 +1540,6 @@ const textShadowListType = {
         [{ time: 500,  expected: 'rgb(150, 150, 150) 15px 15px 15px, '
                                + 'rgba(100, 100, 100, 0.5) 5px 5px 5px' }]);
     }, property + ': mismatched list length (from shorter to longer)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.style.color = 'rgb(0, 255, 0)';
-      var animation =
-        target.animate({ [idlName]: [ 'currentcolor 0px 0px 0px',
-                                      'currentcolor 10px 10px 10px'] },
-                       { duration: 1000, fill: 'both' });
-      testAnimationSamples(animation, idlName,
-        [{ time: 500,  expected: 'rgb(0, 255, 0) 5px 5px 5px' }]);
-    }, property + ': with currentcolor');
   },
 
   testAddition: function(property, setup) {
@@ -1845,18 +1649,6 @@ const boxShadowListType = {
         [{ time: 500,  expected: 'rgb(150, 150, 150) 15px 15px 15px 10px, '
                                + 'rgba(100, 100, 100, 0.5) 5px 5px 5px 0px' }]);
     }, property + ': mismatched list length (from longer to shorter)');
-
-    test(function(t) {
-      var idlName = propertyToIDL(property);
-      var target = createTestElement(t, setup);
-      target.style.color = 'rgb(0, 255, 0)';
-      var animation =
-        target.animate({ [idlName]: [ 'currentcolor 0px 0px 0px 0px',
-                                      'currentcolor 10px 10px 10px 10px'] },
-                       { duration: 1000, fill: 'both' });
-      testAnimationSamples(animation, idlName,
-        [{ time: 500,  expected: 'rgb(0, 255, 0) 5px 5px 5px 5px' }]);
-    }, property + ': with currentcolor');
   },
 
   testAddition: function(property, setup) {
@@ -2074,71 +1866,6 @@ const fontStretchType = {
   },
 }
 
-const fontVariationSettingsType = {
-  testInterpolation: (property, setup) => {
-    test(t => {
-      const idlName = propertyToIDL(property);
-      const target = createTestElement(t, setup);
-      const animation =
-        target.animate({ [idlName]: ['"wght" 1.1', '"wght" 1.5'] },
-                       { duration: 1000, fill: 'both' });
-      testAnimationSamples(animation, idlName,
-                           [{ time: 0,  expected: '"wght" 1.1' },
-                            { time: 250,  expected: '"wght" 1.2' },
-                            { time: 750,  expected: '"wght" 1.4' } ]);
-    }, `${property} supports animation as float`);
-
-    test(t => {
-      const idlName = propertyToIDL(property);
-      const target = createTestElement(t, setup);
-      const animation =
-        target.animate({ [idlName]: ['"wdth" 1, "wght" 1.1',
-                                     '"wght" 1.5, "wdth" 5'] },
-                       { duration: 1000, fill: 'both' });
-      testAnimationSamplesWithAnyOrder(
-        animation, idlName,
-        [{ time: 0, expected: '"wdth" 1, "wght" 1.1' },
-         { time: 250, expected: '"wdth" 2, "wght" 1.2' },
-         { time: 750, expected: '"wdth" 4, "wght" 1.4' } ]);
-    }, `${property} supports animation as float with multiple tags`);
-
-    test(t => {
-      const idlName = propertyToIDL(property);
-      const target = createTestElement(t, setup);
-      const animation =
-        target.animate({ [idlName]: ['"wdth" 1, "wght" 1.1',
-                                     '"wght" 10, "wdth" 5, "wght" 1.5'] },
-                       { duration: 1000, fill: 'both' });
-      testAnimationSamplesWithAnyOrder(
-        animation, idlName,
-        [{ time: 250, expected: '"wdth" 2, "wght" 1.2' },
-         { time: 750, expected: '"wdth" 4, "wght" 1.4' } ]);
-    }, `${property} supports animation as float with multiple duplicate tags`);
-  },
-
-  testAdditionOrAccumulation: (property, setup, composite) => {
-    test(t => {
-      const idlName = propertyToIDL(property);
-      const target = createTestElement(t, setup);
-      target.style[idlName] = '"wght" 1';
-      const animation =
-        target.animate({ [idlName]: ['"wght" 1.1', '"wght" 1.5'] },
-                       { duration: 1000, composite: composite });
-      testAnimationSamples(animation, idlName,
-                           [{ time: 250,  expected: '"wght" 2.2' },
-                            { time: 750,  expected: '"wght" 2.4' } ]);
-    }, `${property} with composite type ${composite}`);
-  },
-
-  testAddition: function(property, setup) {
-    this.testAdditionOrAccumulation(property, setup, 'add');
-  },
-
-  testAccumulation: function(property, setup) {
-    this.testAdditionOrAccumulation(property, setup, 'accumulate');
-  },
-}
-
 const types = {
   color: colorType,
   discrete: discreteType,
@@ -2159,5 +1886,5 @@ const types = {
   position: positionType,
   dasharray: dasharrayType,
   fontStretch: fontStretchType,
-  fontVariationSettings: fontVariationSettingsType,
 };
+

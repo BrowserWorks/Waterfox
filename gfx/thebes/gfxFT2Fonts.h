@@ -28,9 +28,6 @@ public: // new functions
 
     FT2FontEntry *GetFontEntry();
 
-    virtual already_AddRefed<mozilla::gfx::ScaledFont>
-    GetScaledFont(DrawTarget *aTarget) override;
-
     virtual void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontCacheSizes* aSizes) const override;
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,

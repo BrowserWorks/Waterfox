@@ -37,7 +37,6 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/dom/Selection.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/TextEditor.h"
 #include "gfxSkipChars.h"
 #include <algorithm>
 
@@ -388,12 +387,16 @@ HyperTextAccessible::OffsetToDOMPoint(int32_t aOffset)
   // 0 offset is valid even if no children. In this case the associated editor
   // is empty so return a DOM point for editor root element.
   if (aOffset == 0) {
-    RefPtr<TextEditor> textEditor = GetEditor();
-    if (textEditor) {
+    nsCOMPtr<nsIEditor> editor = GetEditor();
+    if (editor) {
       bool isEmpty = false;
-      textEditor->GetDocumentIsEmpty(&isEmpty);
+      editor->GetDocumentIsEmpty(&isEmpty);
       if (isEmpty) {
-        return DOMPoint(textEditor->GetRoot(), 0);
+        nsCOMPtr<nsIDOMElement> editorRootElm;
+        editor->GetRootElement(getter_AddRefs(editorRootElm));
+
+        nsCOMPtr<nsINode> editorRoot(do_QueryInterface(editorRootElm));
+        return DOMPoint(editorRoot, 0);
       }
     }
   }
@@ -1130,7 +1133,7 @@ HyperTextAccessible::NativeAttributes()
   return attributes.forget();
 }
 
-nsAtom*
+nsIAtom*
 HyperTextAccessible::LandmarkRole() const
 {
   if (!HasOwnContent())
@@ -1142,19 +1145,37 @@ HyperTextAccessible::LandmarkRole() const
     return nsGkAtoms::navigation;
   }
 
+  if (mContent->IsAnyOfHTMLElements(nsGkAtoms::header,
+                                    nsGkAtoms::footer)) {
+    // Only map header and footer if they are not descendants of an article
+    // or section tag.
+    nsIContent* parent = mContent->GetParent();
+    while (parent) {
+      if (parent->IsAnyOfHTMLElements(nsGkAtoms::article, nsGkAtoms::section)) {
+        break;
+      }
+      parent = parent->GetParent();
+    }
+
+    // No article or section elements found.
+    if (!parent) {
+      if (mContent->IsHTMLElement(nsGkAtoms::header)) {
+        return nsGkAtoms::banner;
+      }
+
+      if (mContent->IsHTMLElement(nsGkAtoms::footer)) {
+        return nsGkAtoms::contentinfo;
+      }
+    }
+    return nullptr;
+  }
+
   if (mContent->IsHTMLElement(nsGkAtoms::aside)) {
     return nsGkAtoms::complementary;
   }
 
   if (mContent->IsHTMLElement(nsGkAtoms::main)) {
     return nsGkAtoms::main;
-  }
-
-  // Only return xml-roles "region" if the section has an accessible name.
-  if (mContent->IsHTMLElement(nsGkAtoms::section)) {
-    nsAutoString name;
-    const_cast<HyperTextAccessible*>(this)->Name(name);
-    return name.IsEmpty() ? nullptr : nsGkAtoms::region;
   }
 
   return nullptr;
@@ -1272,7 +1293,7 @@ HyperTextAccessible::TextBounds(int32_t aStartOffset, int32_t aEndOffset,
   return bounds;
 }
 
-already_AddRefed<TextEditor>
+already_AddRefed<nsIEditor>
 HyperTextAccessible::GetEditor() const
 {
   if (!mContent->HasFlag(NODE_IS_EDITABLE)) {
@@ -1298,10 +1319,11 @@ HyperTextAccessible::GetEditor() const
   if (!editingSession)
     return nullptr; // No editing session interface
 
+  nsCOMPtr<nsIEditor> editor;
   nsIDocument* docNode = mDoc->DocumentNode();
-  RefPtr<HTMLEditor> htmlEditor =
-    editingSession->GetHTMLEditorForWindow(docNode->GetWindow());
-  return htmlEditor.forget();
+  editingSession->GetEditorForWindow(docNode->GetWindow(),
+                                     getter_AddRefs(editor));
+  return editor.forget();
 }
 
 /**
@@ -1317,7 +1339,7 @@ HyperTextAccessible::SetSelectionRange(int32_t aStartPos, int32_t aEndPos)
   // the selection we set here and leave the caret at the end of the text.
   // By calling GetEditor here, we ensure that editor initialization is
   // completed before we set the selection.
-  RefPtr<TextEditor> textEditor = GetEditor();
+  nsCOMPtr<nsIEditor> editor = GetEditor();
 
   bool isFocusable = InteractiveState() & states::FOCUSABLE;
 
@@ -1335,13 +1357,6 @@ HyperTextAccessible::SetSelectionRange(int32_t aStartPos, int32_t aEndPos)
   for (int32_t idx = domSel->RangeCount() - 1; idx > 0; idx--)
     domSel->RemoveRange(domSel->GetRangeAt(idx));
   SetSelectionBoundsAt(0, aStartPos, aEndPos);
-
-  // Make sure it is visible
-  domSel->ScrollIntoView(nsISelectionController::SELECTION_FOCUS_REGION,
-                         nsIPresShell::ScrollAxis(),
-                         nsIPresShell::ScrollAxis(),
-                         dom::Selection::SCROLL_FOR_CARET_MOVE |
-                             dom::Selection::SCROLL_OVERFLOW_HIDDEN);
 
   // When selection is done, move the focus to the selection if accessible is
   // not focusable. That happens when selection is set within hypertext
@@ -1543,11 +1558,13 @@ HyperTextAccessible::GetSelectionDOMRanges(SelectionType aSelectionType,
   if (!domSel)
     return;
 
-  nsINode* startNode = GetNode();
+  nsCOMPtr<nsINode> startNode = GetNode();
 
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (textEditor) {
-    startNode = textEditor->GetRoot();
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  if (editor) {
+    nsCOMPtr<nsIDOMElement> editorRoot;
+    editor->GetRootElement(getter_AddRefs(editorRoot));
+    startNode = do_QueryInterface(editorRoot);
   }
 
   if (!startNode)

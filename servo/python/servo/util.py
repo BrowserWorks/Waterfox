@@ -19,21 +19,6 @@ import sys
 import tarfile
 import zipfile
 import urllib2
-import certifi
-
-
-try:
-    from ssl import HAS_SNI
-except ImportError:
-    HAS_SNI = False
-
-# The cafile parameter was added in 2.7.9
-if HAS_SNI and sys.version_info >= (2, 7, 9):
-    STATIC_RUST_LANG_ORG_DIST = "https://static.rust-lang.org/dist"
-    URLOPEN_KWARGS = {"cafile": certifi.where()}
-else:
-    STATIC_RUST_LANG_ORG_DIST = "https://static-rust-lang-org.s3.amazonaws.com/dist"
-    URLOPEN_KWARGS = {}
 
 
 def delete(path):
@@ -52,7 +37,11 @@ def host_platform():
     elif os_type == "android":
         os_type = "linux-androideabi"
     elif os_type == "windows":
-        os_type = "pc-windows-msvc"
+        # If we are in a Visual Studio environment, use msvc
+        if os.getenv("PLATFORM") is not None:
+            os_type = "pc-windows-msvc"
+        else:
+            os_type = "unknown"
     elif os_type == "freebsd":
         os_type = "unknown-freebsd"
     else:
@@ -63,14 +52,21 @@ def host_platform():
 def host_triple():
     os_type = host_platform()
     cpu_type = platform.machine().lower()
-    if cpu_type in ["i386", "i486", "i686", "i768", "x86"]:
+    if os_type.endswith("-msvc"):
+        # vcvars*.bat should set it properly
+        platform_env = os.environ.get("PLATFORM").upper()
+        if platform_env == "X86":
+            cpu_type = "i686"
+        elif platform_env == "X64":
+            cpu_type = "x86_64"
+        else:
+            cpu_type = "unknown"
+    elif cpu_type in ["i386", "i486", "i686", "i768", "x86"]:
         cpu_type = "i686"
     elif cpu_type in ["x86_64", "x86-64", "x64", "amd64"]:
         cpu_type = "x86_64"
     elif cpu_type == "arm":
         cpu_type = "arm"
-    elif cpu_type == "aarch64":
-        cpu_type = "aarch64"
     else:
         cpu_type = "unknown"
 
@@ -79,16 +75,16 @@ def host_triple():
 
 def download(desc, src, writer, start_byte=0):
     if start_byte:
-        print("Resuming download of {} ...".format(src))
+        print("Resuming download of {}...".format(desc))
     else:
-        print("Downloading {} ...".format(src))
+        print("Downloading {}...".format(desc))
     dumb = (os.environ.get("TERM") == "dumb") or (not sys.stdout.isatty())
 
     try:
         req = urllib2.Request(src)
         if start_byte:
             req = urllib2.Request(src, headers={'Range': 'bytes={}-'.format(start_byte)})
-        resp = urllib2.urlopen(req, **URLOPEN_KWARGS)
+        resp = urllib2.urlopen(req)
 
         fsize = None
         if resp.info().getheader('Content-Length'):

@@ -322,7 +322,7 @@ ScrollbarActivity::UnregisterFromRefreshDriver()
 }
 
 static void
-SetBooleanAttribute(nsIContent* aContent, nsAtom* aAttribute, bool aValue)
+SetBooleanAttribute(nsIContent* aContent, nsIAtom* aAttribute, bool aValue)
 {
   if (aContent) {
     if (aValue) {
@@ -428,7 +428,7 @@ ScrollbarActivity::StartFadeBeginTimer()
     return;
   }
   if (!mFadeBeginTimer) {
-    mFadeBeginTimer = NS_NewTimer();
+    mFadeBeginTimer = do_CreateInstance("@mozilla.org/timer;1");
   }
   mFadeBeginTimer->InitWithNamedFuncCallback(
     FadeBeginTimerFired, this, mScrollbarFadeBeginDelay,

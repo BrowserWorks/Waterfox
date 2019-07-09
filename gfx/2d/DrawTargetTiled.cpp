@@ -41,8 +41,8 @@ DrawTargetTiled::Init(const TileSet& aTiles)
     mRect.y = min(mRect.y, mTiles[i].mTileOrigin.y);
     mRect.width = newXMost - mRect.x;
     mRect.height = newYMost - mRect.y;
-    mTiles[i].mDrawTarget->SetTransform(Matrix::Translation(-mTiles[i].mTileOrigin.x,
-                                                            -mTiles[i].mTileOrigin.y));
+    mTiles[i].mDrawTarget->SetTransform(Matrix::Translation(mTiles[i].mTileOrigin.x,
+                                                            mTiles[i].mTileOrigin.y));
   }
   mFormat = mTiles[0].mDrawTarget->GetFormat();
   SetPermitSubpixelAA(IsOpaque(mFormat));
@@ -116,10 +116,8 @@ TILED_COMMAND3(Mask, const Pattern&, const Pattern&, const DrawOptions&)
 void
 DrawTargetTiled::PushClip(const Path* aPath)
 {
-  if (!mClippedOutTilesStack.append(std::vector<bool>(mTiles.size()))) {
-    MOZ_CRASH("out of memory");
-  }
-  std::vector<bool>& clippedTiles = mClippedOutTilesStack.back();
+  mClippedOutTilesStack.push_back(std::vector<uint32_t>());
+  std::vector<uint32_t>& clippedTiles = mClippedOutTilesStack.back();
 
   Rect deviceRect = aPath->GetBounds(mTransform);
 
@@ -132,7 +130,7 @@ DrawTargetTiled::PushClip(const Path* aPath)
         mTiles[i].mDrawTarget->PushClip(aPath);
       } else {
         mTiles[i].mClippedOut = true;
-        clippedTiles[i] = true;
+        clippedTiles.push_back(i);
       }
     }
   }
@@ -141,10 +139,8 @@ DrawTargetTiled::PushClip(const Path* aPath)
 void
 DrawTargetTiled::PushClipRect(const Rect& aRect)
 {
-  if (!mClippedOutTilesStack.append(std::vector<bool>(mTiles.size()))) {
-    MOZ_CRASH("out of memory");
-  }
-  std::vector<bool>& clippedTiles = mClippedOutTilesStack.back();
+  mClippedOutTilesStack.push_back(std::vector<uint32_t>());
+  std::vector<uint32_t>& clippedTiles = mClippedOutTilesStack.back();
 
   Rect deviceRect = mTransform.TransformBounds(aRect);
 
@@ -157,7 +153,7 @@ DrawTargetTiled::PushClipRect(const Rect& aRect)
         mTiles[i].mDrawTarget->PushClipRect(aRect);
       } else {
         mTiles[i].mClippedOut = true;
-        clippedTiles[i] = true;
+        clippedTiles.push_back(i);
       }
     }
   }
@@ -166,17 +162,18 @@ DrawTargetTiled::PushClipRect(const Rect& aRect)
 void
 DrawTargetTiled::PopClip()
 {
-  std::vector<bool>& clippedTiles = mClippedOutTilesStack.back();
-  MOZ_ASSERT(clippedTiles.size() == mTiles.size());
   for (size_t i = 0; i < mTiles.size(); i++) {
     if (!mTiles[i].mClippedOut) {
       mTiles[i].mDrawTarget->PopClip();
-    } else if (clippedTiles[i]) {
-      mTiles[i].mClippedOut = false;
     }
   }
 
-  mClippedOutTilesStack.popBack();
+  std::vector<uint32_t>& clippedTiles = mClippedOutTilesStack.back();
+  for (size_t i = 0; i < clippedTiles.size(); i++) {
+    mTiles[clippedTiles[i]].mClippedOut = false;
+  }
+
+  mClippedOutTilesStack.pop_back();
 }
 
 void

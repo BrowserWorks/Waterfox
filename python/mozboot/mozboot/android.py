@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # If we add unicode_literals, Python 2.6.1 (required for OS X 10.6) breaks.
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 
 import errno
 import os
@@ -174,18 +174,31 @@ def ensure_android(os_name, artifact_mode=False, no_interactive=False):
                                ndk_path=ndk_path, ndk_url=ndk_url,
                                artifact_mode=artifact_mode)
 
+    if no_interactive:
+        # Cribbed from observation and https://stackoverflow.com/a/38381577.
+        path = os.path.join(mozbuild_path, 'android-sdk-{0}'.format(os_name), 'licenses')
+        ensure_dir(path)
+
+        licenses = {
+            'android-sdk-license': '8933bad161af4178b1185d1a37fbf41ea5269c55',
+            'android-sdk-preview-license': '84831b9409646a918e30573bab4c9c91346d8abd',
+        }
+        for license, tag in licenses.items():
+            lname = os.path.join(path, license)
+            if not os.path.isfile(lname):
+                open(lname, 'w').write('\n{0}\n'.format(tag))
+
+
     # We expect the |sdkmanager| tool to be at
     # ~/.mozbuild/android-sdk-$OS_NAME/tools/bin/sdkmanager.
     sdkmanager_tool = os.path.join(sdk_path, 'tools', 'bin', 'sdkmanager')
-    ensure_android_packages(sdkmanager_tool=sdkmanager_tool, no_interactive=no_interactive)
+    ensure_android_packages(sdkmanager_tool=sdkmanager_tool)
 
 
-def ensure_android_sdk_and_ndk(mozbuild_path, os_name, sdk_path, sdk_url, ndk_path, ndk_url,
-                               artifact_mode):
+def ensure_android_sdk_and_ndk(mozbuild_path, os_name, sdk_path, sdk_url, ndk_path, ndk_url, artifact_mode):
     '''
     Ensure the Android SDK and NDK are found at the given paths.  If not, fetch
-    and unpack the SDK and/or NDK from the given URLs into
-    |mozbuild_path/{android-sdk-$OS_NAME,android-ndk-$VER}|.
+    and unpack the SDK and/or NDK from the given URLs into |mozbuild_path/{android-sdk-$OS_NAME,android-ndk-$VER}|.
     '''
 
     # It's not particularly bad to overwrite the NDK toolchain, but it does take
@@ -212,11 +225,10 @@ def ensure_android_sdk_and_ndk(mozbuild_path, os_name, sdk_path, sdk_url, ndk_pa
         # android-sdk-$OS_NAME directory; it no longer does so.  We
         # preserve the old convention to smooth detecting existing SDK
         # installations.
-        install_mobile_android_sdk_or_ndk(sdk_url, os.path.join(mozbuild_path,
-                                          'android-sdk-{0}'.format(os_name)))
+        install_mobile_android_sdk_or_ndk(sdk_url, os.path.join(mozbuild_path, 'android-sdk-{0}'.format(os_name)))
 
 
-def ensure_android_packages(sdkmanager_tool, packages=None, no_interactive=False):
+def ensure_android_packages(sdkmanager_tool, packages=None):
     '''
     Use the given sdkmanager tool (like 'sdkmanager') to install required
     Android packages.
@@ -224,32 +236,10 @@ def ensure_android_packages(sdkmanager_tool, packages=None, no_interactive=False
 
     # This tries to install all the required Android packages.  The user
     # may be prompted to agree to the Android license.
-    package_file_name = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                        'android-packages.txt'))
+    package_file_name = os.path.abspath(os.path.join(os.path.dirname(__file__), 'android-packages.txt'))
     print(INSTALLING_ANDROID_PACKAGES % open(package_file_name, 'rt').read())
-
-    args = [sdkmanager_tool, '--package_file={0}'.format(package_file_name)]
-    if not no_interactive:
-        subprocess.check_call(args)
-        return
-
-    # Emulate yes.  For a discussion of passing input to check_output,
-    # see https://stackoverflow.com/q/10103551.
-    yes = '\n'.join(['y']*100)
-    proc = subprocess.Popen(args,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            stdin=subprocess.PIPE)
-    output, unused_err = proc.communicate(yes)
-
-    retcode = proc.poll()
-    if retcode:
-        cmd = args[0]
-        e = subprocess.CalledProcessError(retcode, cmd)
-        e.output = output
-        raise e
-
-    print(output)
+    subprocess.check_call([sdkmanager_tool,
+                           '--package_file={0}'.format(package_file_name)])
 
 
 def suggest_mozconfig(os_name, artifact_mode=False):
@@ -278,7 +268,7 @@ def android_ndk_url(os_name, ver='r11c'):
 
 
 def main(argv):
-    import optparse  # No argparse, which is new in Python 2.7.
+    import optparse # No argparse, which is new in Python 2.7.
     import platform
 
     parser = optparse.OptionParser()
@@ -297,11 +287,10 @@ def main(argv):
     elif platform.system() == 'Windows':
         os_name = 'windows'
     else:
-        raise NotImplementedError("We don't support bootstrapping the Android SDK (or Android "
-                                  "NDK) on {0} yet!".format(platform.system()))
+        raise NotImplementedError("We don't support bootstrapping the Android SDK (or Android NDK) "
+                                  "on {0} yet!".format(platform.system()))
 
-    ensure_android(os_name, artifact_mode=options.artifact_mode,
-                   no_interactive=options.no_interactive)
+    ensure_android(os_name, artifact_mode=options.artifact_mode, no_interactive=options.no_interactive)
     suggest_mozconfig(os_name, options.artifact_mode)
 
     return 0

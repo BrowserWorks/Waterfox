@@ -40,7 +40,6 @@ Element implements LegacyQueryInterface;
 Event implements LegacyQueryInterface;
 EventSource implements LegacyQueryInterface;
 FileList implements LegacyQueryInterface;
-FrameLoader implements LegacyQueryInterface;
 FormData implements LegacyQueryInterface;
 HTMLCollection implements LegacyQueryInterface;
 History implements LegacyQueryInterface;

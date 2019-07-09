@@ -59,6 +59,22 @@ ALL_FLAVORS = {
             'flavor': 'browser',
         }
     },
+    'jetpack-package': {
+        'suite': 'jetpack-package',
+        'aliases': ('jetpack-package', 'mochitest-jetpack-package', 'jpp'),
+        'enabled_apps': ('firefox',),
+        'extra_args': {
+            'flavor': 'jetpack-package',
+        }
+    },
+    'jetpack-addon': {
+        'suite': 'jetpack-addon',
+        'aliases': ('jetpack-addon', 'mochitest-jetpack-addon', 'jpa'),
+        'enabled_apps': ('firefox',),
+        'extra_args': {
+            'flavor': 'jetpack-addon',
+        }
+    },
     'a11y': {
         'suite': 'a11y',
         'aliases': ('a11y', 'mochitest-a11y', 'accessibility'),
@@ -213,12 +229,11 @@ class MochitestArguments(ArgumentContainer):
                   "chunkByDir directories.",
           "default": 0,
           }],
-        [["--run-by-manifest"],
+        [["--run-by-dir"],
          {"action": "store_true",
-          "dest": "runByManifest",
-          "help": "Run each manifest in a single browser instance with a fresh profile.",
+          "dest": "runByDir",
+          "help": "Run each directory in a single browser instance with a fresh profile.",
           "default": False,
-          "suppress": True,
           }],
         [["--shuffle"],
          {"action": "store_true",
@@ -474,12 +489,6 @@ class MochitestArguments(ArgumentContainer):
           "default": False,
           "help": "Do not print test log lines unless a failure occurs.",
           }],
-        [["--headless"],
-         {"action": "store_true",
-          "dest": "headless",
-          "default": False,
-          "help": "Run tests in headless mode.",
-          }],
         [["--pidfile"],
          {"dest": "pidFile",
           "default": "",
@@ -558,6 +567,11 @@ class MochitestArguments(ArgumentContainer):
          {"default": None,
           "help": "host:port to use when connecting to Marionette",
           }],
+        [["--marionette-port-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting for the marionette port to open.",
+          "suppress": True,
+          }],
         [["--marionette-socket-timeout"],
          {"default": None,
           "help": "Timeout while waiting to receive a message from the marionette server.",
@@ -586,23 +600,11 @@ class MochitestArguments(ArgumentContainer):
           "help": "File describes all failure patterns of the tests.",
           "suppress": True,
           }],
-        [["--sandbox-read-whitelist"],
-         {"default": [],
-          "dest": "sandboxReadWhitelist",
-          "action": "append",
-          "help": "Path to add to the sandbox whitelist.",
+        [["--work-path"],
+         {"default": None,
+          "dest": "workPath",
+          "help": "Path to the base dir of all test files.",
           "suppress": True,
-          }],
-        [["--verify"],
-         {"action": "store_true",
-          "default": False,
-          "help": "Run tests in verification mode: Run many times in different "
-                  "ways, to see if there are intermittent failures.",
-          }],
-        [["--verify-max-time"],
-         {"type": int,
-          "default": 3600,
-          "help": "Maximum time, in seconds, to run in --verify mode.",
           }],
     ]
 
@@ -742,7 +744,7 @@ class MochitestArguments(ArgumentContainer):
         if options.valgrind or options.debugger:
             # valgrind and some debuggers may cause Gecko to start slowly. Make sure
             # marionette waits long enough to connect.
-            options.marionette_startup_timeout = 900
+            options.marionette_port_timeout = 900
             options.marionette_socket_timeout = 540
 
         if options.store_chrome_manifest:
@@ -831,7 +833,7 @@ class MochitestArguments(ArgumentContainer):
 
         options.leakThresholds = {
             "default": options.defaultLeakThreshold,
-            "tab": 3000,  # See dependencies of bug 1401764.
+            "tab": 10000,  # See dependencies of bug 1051230.
             # GMP rarely gets a log, but when it does, it leaks a little.
             "geckomediaplugin": 20000,
         }
@@ -1017,7 +1019,8 @@ class AndroidArguments(ArgumentContainer):
                 if build_obj.substs.get('MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE'):
                     options.robocopApk = os.path.join(build_obj.topobjdir, 'gradle', 'build',
                                                       'mobile', 'android', 'app', 'outputs', 'apk',
-                                                      'app-official-photon-debug-androidTest.apk')
+                                                      'app-official-australis-debug-androidTest-'
+                                                      'unaligned.apk')
                 else:
                     options.robocopApk = os.path.join(build_obj.topobjdir, 'mobile', 'android',
                                                       'tests', 'browser',

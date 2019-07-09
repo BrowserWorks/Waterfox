@@ -5,7 +5,6 @@
 #include "nsEscape.h"
 #include "nsString.h"
 #include "nsIURI.h"
-#include "nsIURL.h"
 #include "nsUrlClassifierUtils.h"
 #include "nsTArray.h"
 #include "nsReadableUtils.h"
@@ -14,10 +13,6 @@
 #include "safebrowsing.pb.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Mutex.h"
-#include "nsIRedirectHistoryEntry.h"
-#include "nsIHttpChannelInternal.h"
-#include "mozIThirdPartyUtil.h"
-#include "nsIDocShell.h"
 
 #define DEFAULT_PROTOCOL_VERSION "2.2"
 
@@ -136,7 +131,7 @@ CreateClientInfo()
   nsCOMPtr<nsIPrefBranch> prefBranch =
     do_GetService(NS_PREFSERVICE_CONTRACTID);
 
-  nsCString clientId;
+  nsXPIDLCString clientId;
   nsresult rv = prefBranch->GetCharPref("browser.safebrowsing.id",
                                         getter_Copies(clientId));
 
@@ -147,26 +142,6 @@ CreateClientInfo()
   c->set_client_id(clientId.get());
 
   return c;
-}
-
-static bool
-IsAllowedOnCurrentPlatform(uint32_t aThreatType)
-{
-  PlatformType platform = GetPlatformType();
-
-  switch (aThreatType) {
-  case POTENTIALLY_HARMFUL_APPLICATION:
-    // Bug 1388582 - Google server would respond 404 error if the request
-    // contains PHA on non-mobile platform.
-    return ANDROID_PLATFORM == platform;
-  case MALICIOUS_BINARY:
-  case CSD_DOWNLOAD_WHITELIST:
-    // Bug 1392204 - 'goog-downloadwhite-proto' and 'goog-badbinurl-proto'
-    // are not available on android.
-    return ANDROID_PLATFORM != platform;
-  }
-  // We allow every threat type not listed in the switch cases.
-  return true;
 }
 
 } // end of namespace safebrowsing.
@@ -226,7 +201,7 @@ nsUrlClassifierUtils::GetKeyForURI(nsIURI * uri, nsACString & _retval)
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString path;
-  rv = innerURI->GetPathQueryRef(path);
+  rv = innerURI->GetPath(path);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // strip out anchors
@@ -252,22 +227,18 @@ static const struct {
   const char* mListName;
   uint32_t mThreatType;
 } THREAT_TYPE_CONV_TABLE[] = {
-  { "goog-malware-proto",  MALWARE_THREAT},                  // 1
-  { "googpub-phish-proto", SOCIAL_ENGINEERING_PUBLIC},       // 2
-  { "goog-unwanted-proto", UNWANTED_SOFTWARE},               // 3
-  { "goog-harmful-proto",  POTENTIALLY_HARMFUL_APPLICATION}, // 4
-  { "goog-phish-proto",    SOCIAL_ENGINEERING},              // 5
+  { "goog-malware-proto",  MALWARE_THREAT},            // 1
+  { "googpub-phish-proto", SOCIAL_ENGINEERING_PUBLIC}, // 2
+  { "goog-unwanted-proto", UNWANTED_SOFTWARE},         // 3
+  { "goog-phish-proto", SOCIAL_ENGINEERING},           // 5
 
   // For application reputation
-  { "goog-badbinurl-proto", MALICIOUS_BINARY},            // 7
+  { "goog-badbinurl-proto", MALICIOUS_BINARY},         // 7
   { "goog-downloadwhite-proto", CSD_DOWNLOAD_WHITELIST},  // 9
-
-  // For login reputation
-  { "goog-passwordwhite-proto", CSD_WHITELIST}, // 8
 
   // For testing purpose.
   { "test-phish-proto",    SOCIAL_ENGINEERING_PUBLIC}, // 2
-  { "test-unwanted-proto", UNWANTED_SOFTWARE},         // 3
+  { "test-unwanted-proto", UNWANTED_SOFTWARE}, // 3
 };
 
 NS_IMETHODIMP
@@ -330,7 +301,7 @@ nsUrlClassifierUtils::GetTelemetryProvider(const nsACString& aTableName,
       !NS_LITERAL_CSTRING("mozcn").Equals(aProvider) &&
       !NS_LITERAL_CSTRING("yandex").Equals(aProvider) &&
       !NS_LITERAL_CSTRING(TESTING_TABLE_PROVIDER_NAME).Equals(aProvider)) {
-    aProvider.AssignLiteral("other");
+    aProvider.Assign(NS_LITERAL_CSTRING("other"));
   }
 
   return NS_OK;
@@ -344,10 +315,10 @@ nsUrlClassifierUtils::GetProtocolVersion(const nsACString& aProvider,
   if (prefBranch) {
       nsPrintfCString prefName("browser.safebrowsing.provider.%s.pver",
                                nsCString(aProvider).get());
-      nsCString version;
+      nsXPIDLCString version;
       nsresult rv = prefBranch->GetCharPref(prefName.get(), getter_Copies(version));
 
-      aVersion = NS_SUCCEEDED(rv) ? version.get() : DEFAULT_PROTOCOL_VERSION;
+      aVersion = NS_SUCCEEDED(rv) ? version : DEFAULT_PROTOCOL_VERSION;
   } else {
       aVersion = DEFAULT_PROTOCOL_VERSION;
   }
@@ -372,13 +343,6 @@ nsUrlClassifierUtils::MakeUpdateRequestV4(const char** aListNames,
     nsresult rv = ConvertListNameToThreatType(listName, &threatType);
     if (NS_FAILED(rv)) {
       continue; // Unknown list name.
-    }
-    if (!IsAllowedOnCurrentPlatform(threatType)) {
-      NS_WARNING(nsPrintfCString("Threat type %d (%s) is unsupported on current platform: %d",
-                                 threatType,
-                                 aListNames[i],
-                                 GetPlatformType()).get());
-      continue; // Some threat types are not available on some platforms.
     }
     auto lur = r.mutable_list_update_requests()->Add();
     InitListUpdateRequest(static_cast<ThreatType>(threatType), aStatesBase64[i], lur);
@@ -413,31 +377,24 @@ nsUrlClassifierUtils::MakeFindFullHashRequestV4(const char** aListNames,
 
   nsresult rv;
 
+  // Set up FindFullHashesRequest.client_states.
+  for (uint32_t i = 0; i < aListCount; i++) {
+    nsCString stateBinary;
+    rv = Base64Decode(nsDependentCString(aListStatesBase64[i]), stateBinary);
+    NS_ENSURE_SUCCESS(rv, rv);
+    r.add_client_states(stateBinary.get(), stateBinary.Length());
+  }
+
   //-------------------------------------------------------------------
   // Set up FindFullHashesRequest.threat_info.
   auto threatInfo = r.mutable_threat_info();
 
   // 1) Set threat types.
   for (uint32_t i = 0; i < aListCount; i++) {
-    // Add threat types.
     uint32_t threatType;
     rv = ConvertListNameToThreatType(nsDependentCString(aListNames[i]), &threatType);
     NS_ENSURE_SUCCESS(rv, rv);
-    if (!IsAllowedOnCurrentPlatform(threatType)) {
-      NS_WARNING(nsPrintfCString("Threat type %d (%s) is unsupported on current platform: %d",
-                                 threatType,
-                                 aListNames[i],
-                                 GetPlatformType()).get());
-      continue;
-    }
     threatInfo->add_threat_types((ThreatType)threatType);
-
-    // Add client states for index 'i' only when the threat type is available
-    // on current platform.
-    nsCString stateBinary;
-    rv = Base64Decode(nsDependentCString(aListStatesBase64[i]), stateBinary);
-    NS_ENSURE_SUCCESS(rv, rv);
-    r.add_client_states(stateBinary.get(), stateBinary.Length());
   }
 
   // 2) Set platform type.
@@ -462,248 +419,6 @@ nsUrlClassifierUtils::MakeFindFullHashRequestV4(const char** aListNames,
   nsCString out;
   rv = Base64URLEncode(s.size(),
                        (const uint8_t*)s.c_str(),
-                       Base64URLEncodePaddingPolicy::Include,
-                       out);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  aRequest = out;
-
-  return NS_OK;
-}
-
-// Remove ref, query, userpass, anypart which may contain sensitive data
-static nsresult
-GetSpecWithoutSensitiveData(nsIURI* aUri, nsACString &aSpec)
-{
-  if (NS_WARN_IF(!aUri)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  nsCOMPtr<nsIURI> clone;
-  // Clone to make the uri mutable
-  nsresult rv = aUri->CloneIgnoringRef(getter_AddRefs(clone));
-  nsCOMPtr<nsIURL> url(do_QueryInterface(clone));
-  if (url) {
-    rv = url->SetQuery(EmptyCString());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = url->SetRef(EmptyCString());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = url->SetUserPass(EmptyCString());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = url->GetAsciiSpec(aSpec);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  return NS_OK;
-}
-
-static nsresult
-AddThreatSourceFromChannel(ThreatHit& aHit, nsIChannel *aChannel,
-                           ThreatHit_ThreatSourceType aType)
-{
-  if (NS_WARN_IF(!aChannel)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  nsresult rv;
-
-  auto matchingSource = aHit.add_resources();
-  matchingSource->set_type(aType);
-
-  nsCOMPtr<nsIURI> uri;
-  rv = aChannel->GetURI(getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCString spec;
-  rv = GetSpecWithoutSensitiveData(uri, spec);
-  NS_ENSURE_SUCCESS(rv, rv);
-  matchingSource->set_url(spec.get());
-
-  nsCOMPtr<nsIHttpChannel> httpChannel =
-    do_QueryInterface(aChannel);
-  if (httpChannel) {
-    nsCOMPtr<nsIURI> referrer;
-    rv = httpChannel->GetReferrer(getter_AddRefs(referrer));
-    if (NS_SUCCEEDED(rv) && referrer) {
-      nsCString referrerSpec;
-      rv = GetSpecWithoutSensitiveData(referrer, referrerSpec);
-      NS_ENSURE_SUCCESS(rv, rv);
-      matchingSource->set_referrer(referrerSpec.get());
-    }
-  }
-
-  nsCOMPtr<nsIHttpChannelInternal> httpChannelInternal =
-    do_QueryInterface(aChannel);
-  if (httpChannelInternal) {
-    nsCString remoteIp;
-    rv = httpChannelInternal->GetRemoteAddress(remoteIp);
-    if (NS_SUCCEEDED(rv) && !remoteIp.IsEmpty()) {
-      matchingSource->set_remote_ip(remoteIp.get());
-    }
-  }
-  return NS_OK;
-}
-static nsresult
-AddThreatSourceFromRedirectEntry(ThreatHit& aHit,
-                                 nsIRedirectHistoryEntry *aRedirectEntry,
-                                 ThreatHit_ThreatSourceType aType)
-{
-  if (NS_WARN_IF(!aRedirectEntry)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  nsresult rv;
-
-  nsCOMPtr<nsIPrincipal> principal;
-  rv = aRedirectEntry->GetPrincipal(getter_AddRefs(principal));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIURI> uri;
-  rv = principal->GetURI(getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCString spec;
-  rv = GetSpecWithoutSensitiveData(uri, spec);
-  NS_ENSURE_SUCCESS(rv, rv);
-  auto source = aHit.add_resources();
-  source->set_url(spec.get());
-  source->set_type(aType);
-
-  nsCOMPtr<nsIURI> referrer;
-  rv = aRedirectEntry->GetReferrerURI(getter_AddRefs(referrer));
-  if (NS_SUCCEEDED(rv) && referrer) {
-    nsCString referrerSpec;
-    rv = GetSpecWithoutSensitiveData(referrer, referrerSpec);
-    NS_ENSURE_SUCCESS(rv, rv);
-    source->set_referrer(referrerSpec.get());
-  }
-
-  nsCString remoteIp;
-  rv = aRedirectEntry->GetRemoteAddress(remoteIp);
-  if (NS_SUCCEEDED(rv) && !remoteIp.IsEmpty()) {
-    source->set_remote_ip(remoteIp.get());
-  }
-  return NS_OK;
-}
-
-// Add top level tab url and redirect threatsources to threatHit message
-static nsresult
-AddTabThreatSources(ThreatHit& aHit, nsIChannel *aChannel)
-{
-  if (NS_WARN_IF(!aChannel)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  nsresult rv;
-  nsCOMPtr<mozIDOMWindowProxy> win;
-  nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
-    do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = thirdPartyUtil->GetTopWindowForChannel(aChannel, getter_AddRefs(win));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  auto* pwin = nsPIDOMWindowOuter::From(win);
-  nsCOMPtr<nsIDocShell> docShell = pwin->GetDocShell();
-  if (!docShell) {
-    return NS_OK;
-  }
-
-  nsCOMPtr<nsIChannel> topChannel;
-  docShell->GetCurrentDocumentChannel(getter_AddRefs(topChannel));
-  if (!topChannel) {
-    return NS_OK;
-  }
-
-  nsCOMPtr<nsIURI> uri;
-  rv = aChannel->GetURI(getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIURI> topUri;
-  rv = topChannel->GetURI(getter_AddRefs(topUri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  bool isTopUri = false;
-  rv = topUri->Equals(uri, &isTopUri);
-  if (NS_SUCCEEDED(rv) && !isTopUri) {
-    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-    if (loadInfo && loadInfo->RedirectChain().Length()) {
-      AddThreatSourceFromRedirectEntry(aHit, loadInfo->RedirectChain()[0],
-                                       ThreatHit_ThreatSourceType_TAB_RESOURCE);
-    }
-  }
-
-  // Set top level tab_url threatshource
-  rv = AddThreatSourceFromChannel(aHit, topChannel,
-                                  ThreatHit_ThreatSourceType_TAB_URL);
-  Unused << NS_WARN_IF(NS_FAILED(rv));
-
-  // Set tab_redirect threatshources if there's any
-  nsCOMPtr<nsILoadInfo> topLoadInfo = topChannel->GetLoadInfo();
-  if (!topLoadInfo) {
-    return NS_OK;
-  }
-
-  nsIRedirectHistoryEntry* redirectEntry;
-  size_t length = topLoadInfo->RedirectChain().Length();
-  for (size_t i = 0; i < length; i++) {
-    redirectEntry = topLoadInfo->RedirectChain()[i];
-    AddThreatSourceFromRedirectEntry(aHit, redirectEntry,
-                                     ThreatHit_ThreatSourceType_TAB_REDIRECT);
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsUrlClassifierUtils::MakeThreatHitReport(nsIChannel *aChannel,
-                                          const nsACString& aListName,
-                                          const nsACString& aHashBase64,
-                                          nsACString &aRequest)
-{
-  if (NS_WARN_IF(aListName.IsEmpty()) ||
-      NS_WARN_IF(aHashBase64.IsEmpty()) ||
-      NS_WARN_IF(!aChannel)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  ThreatHit hit;
-  nsresult rv;
-
-  uint32_t threatType;
-  rv = ConvertListNameToThreatType(aListName, &threatType);
-  NS_ENSURE_SUCCESS(rv, rv);
-  hit.set_threat_type(static_cast<ThreatType>(threatType));
-
-  hit.set_platform_type(GetPlatformType());
-
-  nsCString hash;
-  rv = Base64Decode(aHashBase64, hash);
-  if (NS_FAILED(rv) || hash.Length() != COMPLETE_SIZE) {
-    return NS_ERROR_FAILURE;
-  }
-
-  auto threatEntry = hit.mutable_entry();
-  threatEntry->set_hash(hash.get(), hash.Length());
-
-  // Set matching source
-  rv = AddThreatSourceFromChannel(hit, aChannel,
-                                  ThreatHit_ThreatSourceType_MATCHING_URL);
-  Unused << NS_WARN_IF(NS_FAILED(rv));
-  // Set tab url, tab resource url and redirect sources
-  rv = AddTabThreatSources(hit, aChannel);
-  Unused << NS_WARN_IF(NS_FAILED(rv));
-
-  hit.set_allocated_client_info(CreateClientInfo());
-
-  std::string s;
-  hit.SerializeToString(&s);
-
-  nsCString out;
-  rv = Base64URLEncode(s.size(),
-                       reinterpret_cast<const uint8_t*>(s.c_str()),
                        Base64URLEncodePaddingPolicy::Include,
                        out);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -836,7 +551,7 @@ nsUrlClassifierUtils::ReadProvidersFromPrefs(ProviderDictType& aDict)
     nsCString provider(entry->GetKey());
     nsPrintfCString owninListsPref("%s.lists", provider.get());
 
-    nsCString owningLists;
+    nsXPIDLCString owningLists;
     nsresult rv = prefBranch->GetCharPref(owninListsPref.get(),
                                           getter_Copies(owningLists));
     if (NS_FAILED(rv)) {

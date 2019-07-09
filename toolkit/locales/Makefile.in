@@ -4,7 +4,14 @@
 
 include $(topsrcdir)/config/rules.mk
 
-libs-%: AB_CD=$*
+ifdef LOCALE_MERGEDIR
+vpath crashreporter.% $(LOCALE_MERGEDIR)/toolkit/crashreporter
+endif
+vpath crashreporter.% $(LOCALE_SRCDIR)/crashreporter
+ifdef LOCALE_MERGEDIR
+vpath crashreporter.% @srcdir@/en-US/crashreporter
+endif
+
 libs-%:
 	@$(MAKE) -C ../../netwerk/locales/ libs AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) -C ../../dom/locales/ libs AB_CD=$* XPI_NAME=locale-$*
@@ -14,7 +21,6 @@ libs-%:
 
 # target to be used by multi-locale l10n builds, just add this locale
 # like regular chrome code
-chrome-%: AB_CD=$*
 chrome-%:
 	@$(MAKE) -C $(DEPTH)/netwerk/locales/ chrome AB_CD=$*
 	@$(MAKE) -C $(DEPTH)/dom/locales/ chrome AB_CD=$*
@@ -24,13 +30,11 @@ chrome-%:
 libs:: update.locale
 	sed -e 's/%AB_CD%/$(AB_CD)/' $< > $(FINAL_TARGET)/update.locale
 
-ifndef IS_LANGPACK
 ifdef MOZ_CRASHREPORTER
-libs:: $(call MERGE_FILE,crashreporter/crashreporter.ini)
+libs:: crashreporter.ini
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)/crashreporter.app/Contents/Resources
 else
 	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)
-endif
 endif
 endif

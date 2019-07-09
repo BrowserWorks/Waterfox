@@ -8,7 +8,6 @@
 
 #include "nsError.h"
 #include "nsIDocument.h"
-#include "nsStringFwd.h"
 #include "mozilla/EventForwards.h"
 
 class nsINode;
@@ -17,6 +16,8 @@ class nsIDocument;
 class nsIImageLoadingContent;
 class nsIContent;
 class nsITransferable;
+class nsACString;
+class nsAString;
 class nsIPresShell;
 class nsILoadContext;
 

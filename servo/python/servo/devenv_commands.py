@@ -23,7 +23,6 @@ from mach.decorators import (
 
 from servo.command_base import CommandBase, cd, call
 from servo.build_commands import notify_build_done
-from servo.util import STATIC_RUST_LANG_ORG_DIST, URLOPEN_KWARGS
 
 
 @CommandProvider
@@ -33,7 +32,7 @@ class MachCommands(CommandBase):
             self.set_use_stable_rust()
             crate_dir = path.join('ports', 'geckolib')
         else:
-            crate_dir = path.join('ports', 'servo')
+            crate_dir = path.join('components', 'servo')
 
         self.ensure_bootstrapped()
         self.ensure_clobbered()
@@ -137,6 +136,7 @@ class MachCommands(CommandBase):
 
         if dry_run:
             import toml
+            import json
             import httplib
             import colorama
 
@@ -262,16 +262,31 @@ class MachCommands(CommandBase):
     @Command('rustup',
              description='Update the Rust version to latest Nightly',
              category='devenv')
-    def rustup(self):
-        url = STATIC_RUST_LANG_ORG_DIST + "/channel-rust-nightly-date.txt"
-        nightly_date = urllib2.urlopen(url, **URLOPEN_KWARGS).read()
-        filename = path.join(self.context.topdir, "rust-toolchain")
+    @CommandArgument('--master',
+                     action='store_true',
+                     help='Use the latest commit of the "master" branch')
+    def rustup(self, master=False):
+        if master:
+            url = "https://api.github.com/repos/rust-lang/rust/git/refs/heads/master"
+            commit = json.load(urllib2.urlopen(url))["object"]["sha"]
+        else:
+            import toml
+            import re
+            url = "https://static.rust-lang.org/dist/channel-rust-nightly.toml"
+            version = toml.load(urllib2.urlopen(url))["pkg"]["rustc"]["version"]
+            short_commit = re.search("\(([0-9a-f]+) ", version).group(1)
+            url = "https://api.github.com/repos/rust-lang/rust/commits/" + short_commit
+            commit = json.load(urllib2.urlopen(url))["sha"]
+        filename = path.join(self.context.topdir, "rust-commit-hash")
         with open(filename, "w") as f:
-            f.write("nightly-%s\n" % nightly_date)
+            f.write(commit + "\n")
 
-        # Reset self.config["tools"]["rust-root"] and self.config["tools"]["cargo-root"]
-        self._rust_nightly_date = None
+        # Reset self.config["tools"]["rust-root"]
+        self._rust_version = None
         self.set_use_stable_rust(False)
+
+        # Reset self.config["tools"]["cargo-root"]
+        self._cargo_build_id = None
         self.set_cargo_root()
 
         self.fetch()
@@ -286,3 +301,29 @@ class MachCommands(CommandBase):
         # Fetch Cargo dependencies
         with cd(self.context.topdir):
             call(["cargo", "fetch"], env=self.build_env())
+
+    @Command('wptrunner-upgrade',
+             description='upgrade wptrunner.',
+             category='devenv')
+    def upgrade_wpt_runner(self):
+        env = self.build_env()
+        with cd(path.join(self.context.topdir, 'tests', 'wpt', 'harness')):
+            code = call(["git", "init"], env=env)
+            if code:
+                return code
+            # No need to report an error if this fails, as it will for the first use
+            call(["git", "remote", "rm", "upstream"], env=env)
+            code = call(
+                ["git", "remote", "add", "upstream", "https://github.com/w3c/wptrunner.git"], env=env)
+            if code:
+                return code
+            code = call(["git", "fetch", "upstream"], env=env)
+            if code:
+                return code
+            code = call(["git", "reset", "--hard", "remotes/upstream/master"], env=env)
+            if code:
+                return code
+            code = call(["rm", "-rf", ".git"], env=env)
+            if code:
+                return code
+            return 0

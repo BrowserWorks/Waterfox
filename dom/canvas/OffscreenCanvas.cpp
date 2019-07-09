@@ -217,13 +217,11 @@ OffscreenCanvas::ToCloneData()
 }
 
 already_AddRefed<ImageBitmap>
-OffscreenCanvas::TransferToImageBitmap(ErrorResult& aRv)
+OffscreenCanvas::TransferToImageBitmap()
 {
+  ErrorResult rv;
   nsCOMPtr<nsIGlobalObject> globalObject = GetGlobalObject();
-  RefPtr<ImageBitmap> result = ImageBitmap::CreateFromOffscreenCanvas(globalObject, *this, aRv);
-  if (aRv.Failed()) {
-    return nullptr;
-  }
+  RefPtr<ImageBitmap> result = ImageBitmap::CreateFromOffscreenCanvas(globalObject, *this, rv);
 
   // Clear the content.
   if ((mCurrentContextType == CanvasContextType::WebGL1 ||
@@ -268,6 +266,17 @@ OffscreenCanvas::ToBlob(JSContext* aCx,
     {
       RefPtr<Blob> blob = aBlob;
 
+      ErrorResult rv;
+      uint64_t size = blob->GetSize(rv);
+      if (rv.Failed()) {
+        rv.SuppressException();
+      } else {
+        AutoJSAPI jsapi;
+        if (jsapi.Init(mGlobal)) {
+          JS_updateMallocCounter(jsapi.cx(), size);
+        }
+      }
+
       if (mPromise) {
         RefPtr<Blob> newBlob = Blob::Create(mGlobal, blob->Impl());
         mPromise->MaybeResolve(newBlob);
@@ -276,7 +285,7 @@ OffscreenCanvas::ToBlob(JSContext* aCx,
       mGlobal = nullptr;
       mPromise = nullptr;
 
-      return NS_OK;
+      return rv.StealNSResult();
     }
 
     nsCOMPtr<nsIGlobalObject> mGlobal;
@@ -286,13 +295,8 @@ OffscreenCanvas::ToBlob(JSContext* aCx,
   RefPtr<EncodeCompleteCallback> callback =
     new EncodeCallback(global, promise);
 
-  // TODO: Can we obtain the context and document here somehow
-  // so that we can decide when usePlaceholder should be true/false?
-  // See https://trac.torproject.org/18599
-  // For now, we always return a placeholder if fingerprinting resistance is on.
-  bool usePlaceholder = nsContentUtils::ShouldResistFingerprinting();
-  CanvasRenderingContextHelper::ToBlob(aCx, global, callback, aType, aParams,
-                                       usePlaceholder, aRv);
+  CanvasRenderingContextHelper::ToBlob(aCx, global,
+                                       callback, aType, aParams, aRv);
 
   return promise.forget();
 }
@@ -359,7 +363,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(OffscreenCanvas, DOMEventTargetHelper, mCurre
 NS_IMPL_ADDREF_INHERITED(OffscreenCanvas, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(OffscreenCanvas, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(OffscreenCanvas)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(OffscreenCanvas)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 

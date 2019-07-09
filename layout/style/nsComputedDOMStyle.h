@@ -12,7 +12,6 @@
 #include "mozilla/ArenaRefPtrInlines.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StyleComplexColor.h"
-#include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
 #include "nsCSSProps.h"
@@ -92,13 +91,13 @@ public:
   }
 
   static already_AddRefed<nsStyleContext>
-  GetStyleContext(mozilla::dom::Element* aElement, nsAtom* aPseudo,
+  GetStyleContext(mozilla::dom::Element* aElement, nsIAtom* aPseudo,
                   nsIPresShell* aPresShell,
                   StyleType aStyleType = eAll);
 
   static already_AddRefed<nsStyleContext>
   GetStyleContextNoFlush(mozilla::dom::Element* aElement,
-                         nsAtom* aPseudo,
+                         nsIAtom* aPseudo,
                          nsIPresShell* aPresShell,
                          StyleType aStyleType = eAll)
   {
@@ -111,7 +110,7 @@ public:
 
   static already_AddRefed<nsStyleContext>
   GetUnanimatedStyleContextNoFlush(mozilla::dom::Element* aElement,
-                                   nsAtom* aPseudo,
+                                   nsIAtom* aPseudo,
                                    nsIPresShell* aPresShell,
                                    StyleType aStyleType = eAll)
   {
@@ -175,7 +174,7 @@ private:
 
   static already_AddRefed<nsStyleContext>
   DoGetStyleContextNoFlush(mozilla::dom::Element* aElement,
-                           nsAtom* aPseudo,
+                           nsIAtom* aPseudo,
                            nsIPresShell* aPresShell,
                            StyleType aStyleType,
                            AnimationFlag aAnimationFlag);
@@ -297,7 +296,6 @@ private:
   already_AddRefed<CSSValue> DoGetFontSize();
   already_AddRefed<CSSValue> DoGetFontSizeAdjust();
   already_AddRefed<CSSValue> DoGetOsxFontSmoothing();
-  already_AddRefed<CSSValue> DoGetFontSmoothingBackgroundColor();
   already_AddRefed<CSSValue> DoGetFontStretch();
   already_AddRefed<CSSValue> DoGetFontStyle();
   already_AddRefed<CSSValue> DoGetFontSynthesis();
@@ -347,6 +345,7 @@ private:
 
   /* Mask properties */
   already_AddRefed<CSSValue> DoGetMask();
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
   already_AddRefed<CSSValue> DoGetMaskImage();
   already_AddRefed<CSSValue> DoGetMaskPosition();
   already_AddRefed<CSSValue> DoGetMaskPositionX();
@@ -357,7 +356,7 @@ private:
   already_AddRefed<CSSValue> DoGetMaskSize();
   already_AddRefed<CSSValue> DoGetMaskMode();
   already_AddRefed<CSSValue> DoGetMaskComposite();
-
+#endif
   /* Padding properties */
   already_AddRefed<CSSValue> DoGetPaddingTop();
   already_AddRefed<CSSValue> DoGetPaddingBottom();
@@ -692,9 +691,8 @@ private:
   bool GetFrameBorderRectWidth(nscoord& aWidth);
   bool GetFrameBorderRectHeight(nscoord& aHeight);
 
-  /* Helper functions for computing and serializing a nsStyleCoord. */
-  void SetCssTextToCoord(nsAString& aCssText, const nsStyleCoord& aCoord,
-                         bool aClampNegativeCalc);
+  /* Helper functions for computing the filter property style. */
+  void SetCssTextToCoord(nsAString& aCssText, const nsStyleCoord& aCoord);
   already_AddRefed<CSSValue> CreatePrimitiveValueForStyleFilter(
     const nsStyleFilter& aStyleFilter);
 
@@ -705,22 +703,17 @@ private:
   template<typename ReferenceBox>
   already_AddRefed<CSSValue>
   CreatePrimitiveValueForShapeSource(
-    const mozilla::UniquePtr<mozilla::StyleBasicShape>& aStyleBasicShape,
+    const mozilla::StyleBasicShape* aStyleBasicShape,
     ReferenceBox aReferenceBox,
     const KTableEntry aBoxKeywordTable[]);
 
   // Helper function for computing basic shape styles.
   already_AddRefed<CSSValue> CreatePrimitiveValueForBasicShape(
-    const mozilla::UniquePtr<mozilla::StyleBasicShape>& aStyleBasicShape);
+    const mozilla::StyleBasicShape* aStyleBasicShape);
   void BoxValuesToString(nsAString& aString,
-                         const nsTArray<nsStyleCoord>& aBoxValues,
-                         bool aClampNegativeCalc);
+                         const nsTArray<nsStyleCoord>& aBoxValues);
   void BasicShapeRadiiToString(nsAString& aCssText,
                                const nsStyleCorners& aCorners);
-
-  // Find out if we can safely skip flushing for aDocument (i.e. pending
-  // restyles does not affect mContent).
-  mozilla::FlushTarget GetFlushTarget(nsIDocument* aDocument) const;
 
 
   static nsComputedStyleMap* GetComputedStyleMap();
@@ -748,7 +741,7 @@ private:
    * if the pres arena from which it was allocated goes away.
    */
   mozilla::ArenaRefPtr<nsStyleContext> mStyleContext;
-  RefPtr<nsAtom> mPseudo;
+  nsCOMPtr<nsIAtom> mPseudo;
 
   /*
    * While computing style data, the primary frame for mContent --- named "outer"

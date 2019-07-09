@@ -145,13 +145,13 @@
 
     void EnableViewSource(nsHtml5Highlighter* aHighlighter);
 
-    void errStrayStartTag(nsAtom* aName);
+    void errStrayStartTag(nsIAtom* aName);
 
-    void errStrayEndTag(nsAtom* aName);
+    void errStrayEndTag(nsIAtom* aName);
 
-    void errUnclosedElements(int32_t aIndex, nsAtom* aName);
+    void errUnclosedElements(int32_t aIndex, nsIAtom* aName);
 
-    void errUnclosedElementsImplied(int32_t aIndex, nsAtom* aName);
+    void errUnclosedElementsImplied(int32_t aIndex, nsIAtom* aName);
 
     void errUnclosedElementsCell(int32_t aIndex);
 
@@ -173,7 +173,7 @@
 
     void errNonSpaceInNoscriptInHead();
 
-    void errFooBetweenHeadAndBody(nsAtom* aName);
+    void errFooBetweenHeadAndBody(nsIAtom* aName);
 
     void errStartTagWithoutDoctype();
 
@@ -181,15 +181,15 @@
 
     void errStartSelectWhereEndSelectExpected();
 
-    void errStartTagWithSelectOpen(nsAtom* aName);
+    void errStartTagWithSelectOpen(nsIAtom* aName);
 
-    void errBadStartTagInHead(nsAtom* aName);
+    void errBadStartTagInHead(nsIAtom* aName);
 
     void errImage();
 
     void errIsindex();
 
-    void errFooSeenWhenFooOpen(nsAtom* aName);
+    void errFooSeenWhenFooOpen(nsIAtom* aName);
 
     void errHeadingWhenHeadingOpen();
 
@@ -197,27 +197,27 @@
 
     void errNoCellToClose();
 
-    void errStartTagInTable(nsAtom* aName);
+    void errStartTagInTable(nsIAtom* aName);
 
     void errFormWhenFormOpen();
 
     void errTableSeenWhileTableOpen();
 
-    void errStartTagInTableBody(nsAtom* aName);
+    void errStartTagInTableBody(nsIAtom* aName);
 
     void errEndTagSeenWithoutDoctype();
 
     void errEndTagAfterBody();
 
-    void errEndTagSeenWithSelectOpen(nsAtom* aName);
+    void errEndTagSeenWithSelectOpen(nsIAtom* aName);
 
     void errGarbageInColgroup();
 
     void errEndTagBr();
 
-    void errNoElementToCloseButEndTagSeen(nsAtom* aName);
+    void errNoElementToCloseButEndTagSeen(nsIAtom* aName);
 
-    void errHtmlStartTagInForeignContext(nsAtom* aName);
+    void errHtmlStartTagInForeignContext(nsIAtom* aName);
 
     void errTableClosedWhileCaptionOpen();
 
@@ -227,17 +227,17 @@
 
     void errUnclosedChildrenInRuby();
 
-    void errStartTagSeenWithoutRuby(nsAtom* aName);
+    void errStartTagSeenWithoutRuby(nsIAtom* aName);
 
     void errSelfClosing();
 
     void errNoCheckUnclosedElementsOnStack();
 
-    void errEndTagDidNotMatchCurrentOpenElement(nsAtom* aName, nsAtom* aOther);
+    void errEndTagDidNotMatchCurrentOpenElement(nsIAtom* aName, nsIAtom* aOther);
 
-    void errEndTagViolatesNestingRules(nsAtom* aName);
+    void errEndTagViolatesNestingRules(nsIAtom* aName);
 
-    void errEndWithUnclosedElements(nsAtom* aName);
+    void errEndWithUnclosedElements(nsIAtom* aName);
 
     void MarkAsBroken(nsresult aRv);
 

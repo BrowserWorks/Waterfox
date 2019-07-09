@@ -61,15 +61,7 @@ XULStore.prototype = {
   load() {
     Services.obs.addObserver(this, "profile-before-change", true);
 
-    try {
-      this._storeFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
-    } catch (ex) {
-      try {
-        this._storeFile = Services.dirsvc.get("ProfDS", Ci.nsIFile);
-      } catch (ex) {
-        throw new Error("Can't find profile directory.");
-      }
-    }
+    this._storeFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
     this._storeFile.append(STOREDB_FILENAME);
 
     this.readFile();
@@ -93,12 +85,21 @@ XULStore.prototype = {
   },
 
   readFile() {
+    const MODE_RDONLY = 0x01;
+    const FILE_PERMS  = 0o600;
+
+    let stream = Cc["@mozilla.org/network/file-input-stream;1"].
+                 createInstance(Ci.nsIFileInputStream);
+    let json = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON);
     try {
-      this._data = JSON.parse(Cu.readFile(this._storeFile));
+      stream.init(this._storeFile, MODE_RDONLY, FILE_PERMS, 0);
+      this._data = json.decodeFromStream(stream, stream.available());
     } catch (e) {
       this.log("Error reading JSON: " + e);
       // This exception could mean that the file didn't exist.
       // We'll just ignore the error and start with a blank slate.
+    } finally {
+      stream.close();
     }
   },
 
@@ -148,7 +149,7 @@ XULStore.prototype = {
     }
 
     if (value.length > 4096) {
-      Services.console.logStringMessage("XULStore: Warning, truncating long attribute value");
+      Services.console.logStringMessage("XULStore: Warning, truncating long attribute value")
       value = value.substr(0, 4096);
     }
 

@@ -94,7 +94,7 @@
       </field>
       <field name="rootBranchInternal">
         Components.classes["@mozilla.org/preferences-service;1"]
-                  .getService(Components.interfaces.nsIPrefBranch);
+                  .getService(Components.interfaces.nsIPrefBranchInternal);
       </field>
       <property name="type" readonly="true">
         <getter>
@@ -374,7 +374,7 @@
               return fontEnumerator.getStandardFamilyName(family);
             case "file":
               var f = this._branch
-                          .getComplexValue(this.name, Components.interfaces.nsIFile);
+                          .getComplexValue(this.name, Components.interfaces.nsILocalFile);
               return f;
             default:
               this._reportUnknownType();
@@ -419,14 +419,14 @@
             var lf;
             if (typeof(val) == "string") {
               lf = Components.classes["@mozilla.org/file/local;1"]
-                             .createInstance(Components.interfaces.nsIFile);
+                             .createInstance(Components.interfaces.nsILocalFile);
               lf.persistentDescriptor = val;
               if (!lf.exists())
                 lf.initWithPath(val);
             } else
-              lf = val.QueryInterface(Components.interfaces.nsIFile);
+              lf = val.QueryInterface(Components.interfaces.nsILocalFile);
             this.preferences.rootBranch
-                .setComplexValue(this.name, Components.interfaces.nsIFile, lf);
+                .setComplexValue(this.name, Components.interfaces.nsILocalFile, lf);
             break;
           default:
             this._reportUnknownType();

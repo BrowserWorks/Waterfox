@@ -6,7 +6,6 @@ es6id: 9.5.14
 description: >
   Throws if trap is not callable (honoring the Realm of the current execution
   context)
-features: [cross-realm]
 ---*/
 
 var OProxy = $262.createRealm().global.Proxy;

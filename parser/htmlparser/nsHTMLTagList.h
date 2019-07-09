@@ -12,12 +12,6 @@
 
   It is designed to be used as input to various places that will define the
   HTML_TAG macro in useful ways through the magic of C preprocessing.
-  Additionally, it is consumed by the self-regeneration code in
-  ElementName.java from which nsHtml5ElementName.cpp/h is translated.
-  See parser/html/java/README.txt.
-
-  If you edit this list, you need to re-run ElementName.java
-  self-regeneration and the HTML parser Java to C++ translation.
 
   All entries must be enclosed in the macro HTML_TAG which will have cruel
   and unusual things done to it.
@@ -50,7 +44,7 @@ HTML_TAG(a, Anchor, Anchor)
 HTML_HTMLELEMENT_TAG(abbr)
 HTML_HTMLELEMENT_TAG(acronym)
 HTML_HTMLELEMENT_TAG(address)
-HTML_TAG(applet, Unknown, Unknown)
+HTML_TAG(applet, SharedObject, Applet)
 HTML_TAG(area, Area, Area)
 HTML_HTMLELEMENT_TAG(article)
 HTML_HTMLELEMENT_TAG(aside)
@@ -85,7 +79,7 @@ HTML_TAG(div, Div, Div)
 HTML_TAG(dl, SharedList, DList)
 HTML_HTMLELEMENT_TAG(dt)
 HTML_HTMLELEMENT_TAG(em)
-HTML_TAG(embed, Embed, Embed)
+HTML_TAG(embed, SharedObject, Embed)
 HTML_TAG(fieldset, FieldSet, FieldSet)
 HTML_HTMLELEMENT_TAG(figcaption)
 HTML_HTMLELEMENT_TAG(figure)
@@ -154,8 +148,8 @@ HTML_HTMLELEMENT_TAG(samp)
 HTML_TAG(script, Script, Script)
 HTML_HTMLELEMENT_TAG(section)
 HTML_TAG(select, Select, Select)
+HTML_TAG(shadow, Shadow, Shadow)
 HTML_HTMLELEMENT_TAG(small)
-HTML_TAG(slot, Slot, Slot)
 HTML_TAG(source, Source, Source)
 HTML_TAG(span, Span, Span)
 HTML_HTMLELEMENT_TAG(strike)

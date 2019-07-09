@@ -22,7 +22,7 @@ function resolveGeckoURI(aURI) {
     throw "Can't resolve an empty uri";
 
   if (aURI.startsWith("chrome://")) {
-    let registry = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIChromeRegistry);
+    let registry = Cc['@mozilla.org/chrome/chrome-registry;1'].getService(Ci["nsIChromeRegistry"]);
     return registry.convertChromeURL(Services.io.newURI(aURI)).spec;
   } else if (aURI.startsWith("resource://")) {
     let handler = Services.io.getProtocolHandler("resource").QueryInterface(Ci.nsIResProtocolHandler);
@@ -81,15 +81,14 @@ var PageActions = {
   },
 
   add: function(aOptions) {
-    let id = aOptions.id || uuidgen.generateUUID().toString();
+    let id = aOptions.id || uuidgen.generateUUID().toString()
 
     EventDispatcher.instance.sendRequest({
       type: "PageActions:Add",
       id: id,
       title: aOptions.title,
       icon: resolveGeckoURI(aOptions.icon),
-      important: "important" in aOptions ? aOptions.important : false,
-      useTint: "useTint" in aOptions ? aOptions.useTint : false
+      important: "important" in aOptions ? aOptions.important : false
     });
 
     this._items[id] = {};
@@ -115,4 +114,4 @@ var PageActions = {
     delete this._items[id];
     this._maybeUninitialize();
   }
-};
+}

@@ -123,7 +123,9 @@ enum class ImageBitmapFormat : uint8_t;
 class IdleRequest;
 class IdleRequestCallback;
 class IncrementalRunnable;
+#ifdef ENABLE_INTL_API
 class IntlUtils;
+#endif
 class Location;
 class MediaQueryList;
 class MozSelfSupport;
@@ -259,10 +261,7 @@ private:
 
 class nsGlobalWindow : public mozilla::dom::EventTarget,
                        public nsPIDOMWindow<nsISupports>,
-                       private nsIDOMWindow,
-                       // NOTE: This interface is private, as it's only
-                       // implemented on chrome windows.
-                       private nsIDOMChromeWindow,
+                       private nsIDOMWindowInternal,
                        public nsIScriptGlobalObject,
                        public nsIScriptObjectPrincipal,
                        public nsSupportsWeakReference,
@@ -344,9 +343,6 @@ public:
 
   // nsIDOMWindow
   NS_DECL_NSIDOMWINDOW
-
-  // nsIDOMChromeWindow (only implemented on chrome windows)
-  NS_DECL_NSIDOMCHROMEWINDOW
 
   nsresult
   OpenJS(const nsAString& aUrl, const nsAString& aName,
@@ -452,7 +448,6 @@ public:
   // Outer windows only.
   virtual nsresult SetFullscreenInternal(
     FullscreenReason aReason, bool aIsFullscreen) override final;
-  virtual void FullscreenWillChange(bool aIsFullscreen) override final;
   virtual void FinishFullscreenChange(bool aIsFullscreen) override final;
   bool SetWidgetFullscreen(FullscreenReason aReason, bool aIsFullscreen,
                            nsIWidget* aWidget, nsIScreen* aScreen);
@@ -466,9 +461,9 @@ public:
   bool IsVRContentPresenting() const;
 
   using EventTarget::EventListenerAdded;
-  virtual void EventListenerAdded(nsAtom* aType) override;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
   using EventTarget::EventListenerRemoved;
-  virtual void EventListenerRemoved(nsAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
 
   // nsIInterfaceRequestor
   NS_DECL_NSIINTERFACEREQUESTOR
@@ -478,6 +473,9 @@ public:
   already_AddRefed<nsPIDOMWindowOuter> IndexedGetter(uint32_t aIndex);
 
   static bool IsPrivilegedChromeWindow(JSContext* /* unused */, JSObject* aObj);
+
+  static bool IsShowModalDialogEnabled(JSContext* /* unused */ = nullptr,
+                                       JSObject* /* unused */ = nullptr);
 
   static bool IsRequestIdleCallbackEnabled(JSContext* aCx, JSObject* /* unused */);
 
@@ -493,7 +491,6 @@ public:
 
   // Object Management
   static already_AddRefed<nsGlobalWindow> Create(nsGlobalWindow *aOuterWindow);
-  static already_AddRefed<nsGlobalWindow> CreateChrome(nsGlobalWindow *aOuterWindow);
 
   static nsGlobalWindow *FromSupports(nsISupports *supports)
   {
@@ -604,6 +601,9 @@ public:
     return mIsChrome;
   }
 
+  using nsPIDOMWindow::IsModalContentWindow;
+  static bool IsModalContentWindow(JSContext* aCx, JSObject* aGlobal);
+
   // GetScrollFrame does not flush.  Callers should do it themselves as needed,
   // depending on which info they actually want off the scrollable frame.
   nsIScrollableFrame *GetScrollFrame();
@@ -658,6 +658,13 @@ public:
 
   virtual void EnableTimeChangeNotifications() override;
   virtual void DisableTimeChangeNotifications() override;
+
+#ifdef MOZ_B2G
+  // Inner windows only.
+  virtual void EnableNetworkEvent(mozilla::EventMessage aEventMessage) override;
+  virtual void DisableNetworkEvent(
+                 mozilla::EventMessage aEventMessage) override;
+#endif // MOZ_B2G
 
   virtual nsresult SetArguments(nsIArray* aArguments) override;
 
@@ -722,7 +729,7 @@ public:
     return sWindowsById;
   }
 
-  void AddSizeOfIncludingThis(nsWindowSizes& aWindowSizes) const;
+  void AddSizeOfIncludingThis(nsWindowSizes* aWindowSizes) const;
 
   // Inner windows only.
   void AddEventTargetObject(mozilla::DOMEventTargetHelper* aObject);
@@ -743,10 +750,9 @@ public:
     ContinueSlowScript = 0,
     ContinueSlowScriptAndKeepNotifying,
     AlwaysContinueSlowScript,
-    KillSlowScript,
-    KillScriptGlobal
+    KillSlowScript
   };
-  SlowScriptResponse ShowSlowScriptDialog(const nsString& aAddonId);
+  SlowScriptResponse ShowSlowScriptDialog();
 
   // Inner windows only.
   void AddGamepad(uint32_t aIndex, mozilla::dom::Gamepad* aGamepad);
@@ -965,8 +971,10 @@ public:
   void
   GetRegionalPrefsLocales(nsTArray<nsString>& aLocales);
 
+#ifdef ENABLE_INTL_API
   mozilla::dom::IntlUtils*
   GetIntlUtils(mozilla::ErrorResult& aRv);
+#endif
 
 protected:
   bool AlertOrConfirm(bool aAlert, const nsAString& aMessage,
@@ -1003,6 +1011,12 @@ public:
                                                 mozilla::ErrorResult& aRv);
   void PrintOuter(mozilla::ErrorResult& aError);
   void Print(mozilla::ErrorResult& aError);
+  void ShowModalDialog(JSContext* aCx, const nsAString& aUrl,
+                       JS::Handle<JS::Value> aArgument,
+                       const nsAString& aOptions,
+                       JS::MutableHandle<JS::Value> aRetval,
+                       nsIPrincipal& aSubjectPrincipal,
+                       mozilla::ErrorResult& aError);
   void PostMessageMoz(JSContext* aCx, JS::Handle<JS::Value> aMessage,
                       const nsAString& aTargetOrigin,
                       const mozilla::dom::Sequence<JSObject*>& aTransfer,
@@ -1166,9 +1180,9 @@ public:
   float GetMozInnerScreenYOuter(mozilla::dom::CallerType aCallerType);
   float GetMozInnerScreenY(mozilla::dom::CallerType aCallerType,
                            mozilla::ErrorResult& aError);
-  double GetDevicePixelRatioOuter(mozilla::dom::CallerType aCallerType);
-  double GetDevicePixelRatio(mozilla::dom::CallerType aCallerType,
-                             mozilla::ErrorResult& aError);
+  float GetDevicePixelRatioOuter(mozilla::dom::CallerType aCallerType);
+  float GetDevicePixelRatio(mozilla::dom::CallerType aCallerType,
+                            mozilla::ErrorResult& aError);
   int32_t GetScrollMinX(mozilla::ErrorResult& aError);
   int32_t GetScrollMinY(mozilla::ErrorResult& aError);
   int32_t GetScrollMaxX(mozilla::ErrorResult& aError);
@@ -1238,6 +1252,17 @@ public:
     return win.forget();
   }
 
+  void Get_content(JSContext* aCx,
+                   JS::MutableHandle<JSObject*> aRetval,
+                   mozilla::dom::SystemCallerGuarantee aCallerType,
+                   mozilla::ErrorResult& aError)
+  {
+    if (mDoc) {
+      mDoc->WarnOnceAbout(nsIDocument::eWindow_Content);
+    }
+    GetContent(aCx, aRetval, aCallerType, aError);
+  }
+
   already_AddRefed<mozilla::dom::Promise>
   CreateImageBitmap(JSContext* aCx,
                     const mozilla::dom::ImageBitmapSource& aImage,
@@ -1259,7 +1284,7 @@ public:
 
 
   // ChromeWindow bits.  Do NOT call these unless your window is in
-  // fact chrome.
+  // fact an nsGlobalChromeWindow.
   uint16_t WindowState();
   bool IsFullyOccluded();
   nsIBrowserDOMWindow* GetBrowserDOMWindowOuter();
@@ -1311,13 +1336,6 @@ public:
   already_AddRefed<nsWindowRoot> GetWindowRoot(mozilla::ErrorResult& aError);
 
   mozilla::dom::Performance* GetPerformance();
-
-  void UpdateTopInnerWindow();
-
-  virtual bool IsInSyncOperation() override
-  {
-    return GetExtantDoc() && GetExtantDoc()->IsInSyncOperation();
-  }
 
 protected:
   // Web IDL helpers
@@ -1722,6 +1740,7 @@ protected:
 public:
   // Outer windows only.
   nsDOMWindowList* GetWindowList();
+
 protected:
   // Helper for getComputedStyle and getDefaultComputedStyle
   already_AddRefed<nsICSSDeclaration>
@@ -1757,6 +1776,18 @@ protected:
                       JS::Handle<JS::Value> aTransfer,
                       nsIPrincipal& aSubjectPrincipal,
                       mozilla::ErrorResult& aError);
+
+  already_AddRefed<nsIVariant>
+    ShowModalDialogOuter(const nsAString& aUrl, nsIVariant* aArgument,
+                         const nsAString& aOptions,
+                         nsIPrincipal& aSubjectPrincipal,
+                         mozilla::ErrorResult& aError);
+
+  already_AddRefed<nsIVariant>
+    ShowModalDialog(const nsAString& aUrl, nsIVariant* aArgument,
+                    const nsAString& aOptions,
+                    nsIPrincipal& aSubjectPrincipal,
+                    mozilla::ErrorResult& aError);
 
   // Ask the user if further dialogs should be blocked, if dialogs are currently
   // being abused. This is used in the cases where we have no modifiable UI to
@@ -1796,19 +1827,6 @@ private:
 
   void SetIsBackgroundInternal(bool aIsBackground);
 
-  // NOTE: Chrome Only
-  void DisconnectAndClearGroupMessageManagers()
-  {
-    MOZ_RELEASE_ASSERT(IsChromeWindow());
-    for (auto iter = mChromeFields.mGroupMessageManagers.Iter(); !iter.Done(); iter.Next()) {
-      nsIMessageBroadcaster* mm = iter.UserData();
-      if (mm) {
-        static_cast<nsFrameMessageManager*>(mm)->Disconnect();
-      }
-    }
-    mChromeFields.mGroupMessageManagers.Clear();
-  }
-
 public:
   // Dispatch a runnable related to the global.
   virtual nsresult Dispatch(mozilla::TaskCategory aCategory,
@@ -1829,9 +1847,7 @@ public:
   void SuspendIdleRequests();
   void ResumeIdleRequests();
 
-  typedef mozilla::LinkedList<mozilla::dom::IdleRequest> IdleRequests;
-  void InsertIdleCallback(mozilla::dom::IdleRequest* aRequest);
-
+  typedef mozilla::LinkedList<RefPtr<mozilla::dom::IdleRequest>> IdleRequests;
   void RemoveIdleCallback(mozilla::dom::IdleRequest* aRequest);
 
 protected:
@@ -1920,6 +1936,9 @@ protected:
   // For |window.arguments|, via |openDialog|.
   nsCOMPtr<nsIArray>            mArguments;
 
+  // For |window.dialogArguments|, via |showModalDialog|.
+  RefPtr<DialogValueHolder> mDialogArguments;
+
   // Only used in the outer.
   RefPtr<DialogValueHolder> mReturnValue;
 
@@ -1983,12 +2002,17 @@ protected:
   nsCOMPtr<nsIURI> mLastOpenedURI;
 #endif
 
+#ifdef MOZ_B2G
+  bool mNetworkUploadObserverEnabled;
+  bool mNetworkDownloadObserverEnabled;
+#endif // MOZ_B2G
+
   bool mCleanedUp;
 
   nsCOMPtr<nsIDOMOfflineResourceList> mApplicationCache;
 
   using XBLPrototypeHandlerTable = nsJSThingHashtable<nsPtrHashKey<nsXBLPrototypeHandler>, JSObject*>;
-  mozilla::UniquePtr<XBLPrototypeHandlerTable> mCachedXBLPrototypeHandlers;
+  nsAutoPtr<XBLPrototypeHandlerTable> mCachedXBLPrototypeHandlers;
 
   // mSuspendedDoc is only set on outer windows. It's useful when we get matched
   // EnterModalState/LeaveModalState calls, in which case the outer window is
@@ -2021,7 +2045,7 @@ protected:
   nsTArray<uint32_t> mEnabledSensors;
 
 #if defined(MOZ_WIDGET_ANDROID)
-  mozilla::UniquePtr<mozilla::dom::WindowOrientationObserver> mOrientationChangeObserver;
+  nsAutoPtr<mozilla::dom::WindowOrientationObserver> mOrientationChangeObserver;
 #endif
 
 #ifdef MOZ_WEBSPEECH
@@ -2049,24 +2073,9 @@ protected:
   uint32_t mAutoActivateVRDisplayID; // Outer windows only
   int64_t mBeforeUnloadListenerCount; // Inner windows only
 
+#ifdef ENABLE_INTL_API
   RefPtr<mozilla::dom::IntlUtils> mIntlUtils;
-
-  // Members in the mChromeFields member should only be used in chrome windows.
-  // All accesses to this field should be guarded by a check of mIsChrome.
-  struct ChromeFields {
-    ChromeFields()
-      : mGroupMessageManagers(1)
-    {}
-
-    nsCOMPtr<nsIBrowserDOMWindow> mBrowserDOMWindow;
-    nsCOMPtr<nsIMessageBroadcaster> mMessageManager;
-    nsInterfaceHashtable<nsStringHashKey, nsIMessageBroadcaster> mGroupMessageManagers;
-    // A weak pointer to the nsPresShell that we are doing fullscreen for.
-    // The pointer being set indicates we've set the IsInFullscreenChange
-    // flag on this pres shell.
-    nsWeakPtr mFullscreenPresShell;
-    nsCOMPtr<mozIDOMWindowProxy> mOpenerForInitialContentBrowser;
-  } mChromeFields;
+#endif
 
   friend class nsDOMScriptableHelper;
   friend class nsDOMWindowUtils;
@@ -2076,6 +2085,7 @@ protected:
   friend class IdleRequestExecutor;
 
   static WindowByIdTable* sWindowsById;
+  static bool sWarnedAboutWindowInternal;
 };
 
 inline nsISupports*
@@ -2090,14 +2100,118 @@ ToCanonicalSupports(nsGlobalWindow *p)
     return static_cast<nsIDOMEventTarget*>(p);
 }
 
+/*
+ * nsGlobalChromeWindow inherits from nsGlobalWindow. It is the global
+ * object created for a Chrome Window only.
+ */
+class nsGlobalChromeWindow : public nsGlobalWindow,
+                             public nsIDOMChromeWindow
+{
+public:
+  // nsISupports
+  NS_DECL_ISUPPORTS_INHERITED
+
+  // nsIDOMChromeWindow interface
+  NS_DECL_NSIDOMCHROMEWINDOW
+
+  static already_AddRefed<nsGlobalChromeWindow> Create(nsGlobalWindow *aOuterWindow);
+
+  void DisconnectAndClearGroupMessageManagers()
+  {
+    for (auto iter = mGroupMessageManagers.Iter(); !iter.Done(); iter.Next()) {
+      nsIMessageBroadcaster* mm = iter.UserData();
+      if (mm) {
+        static_cast<nsFrameMessageManager*>(mm)->Disconnect();
+      }
+    }
+    mGroupMessageManagers.Clear();
+  }
+
+protected:
+  explicit nsGlobalChromeWindow(nsGlobalWindow *aOuterWindow)
+    : nsGlobalWindow(aOuterWindow),
+      mGroupMessageManagers(1)
+  {
+    mIsChrome = true;
+    mCleanMessageManager = true;
+  }
+
+  ~nsGlobalChromeWindow()
+  {
+    MOZ_ASSERT(mCleanMessageManager,
+               "chrome windows may always disconnect the msg manager");
+
+    DisconnectAndClearGroupMessageManagers();
+
+    if (mMessageManager) {
+      static_cast<nsFrameMessageManager *>(
+        mMessageManager.get())->Disconnect();
+    }
+
+    mCleanMessageManager = false;
+  }
+
+public:
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGlobalChromeWindow,
+                                           nsGlobalWindow)
+
+  using nsGlobalWindow::GetBrowserDOMWindow;
+  using nsGlobalWindow::SetBrowserDOMWindow;
+  using nsGlobalWindow::GetAttention;
+  using nsGlobalWindow::GetAttentionWithCycleCount;
+  using nsGlobalWindow::SetCursor;
+  using nsGlobalWindow::Maximize;
+  using nsGlobalWindow::Minimize;
+  using nsGlobalWindow::Restore;
+  using nsGlobalWindow::NotifyDefaultButtonLoaded;
+  using nsGlobalWindow::GetMessageManager;
+  using nsGlobalWindow::GetGroupMessageManager;
+  using nsGlobalWindow::BeginWindowMove;
+
+  nsCOMPtr<nsIBrowserDOMWindow> mBrowserDOMWindow;
+  nsCOMPtr<nsIMessageBroadcaster> mMessageManager;
+  nsInterfaceHashtable<nsStringHashKey, nsIMessageBroadcaster> mGroupMessageManagers;
+  // A weak pointer to the nsPresShell that we are doing fullscreen for.
+  // The pointer being set indicates we've set the IsInFullscreenChange
+  // flag on this pres shell.
+  nsWeakPtr mFullscreenPresShell;
+  nsCOMPtr<mozIDOMWindowProxy> mOpenerForInitialContentBrowser;
+};
+
+/*
+ * nsGlobalModalWindow inherits from nsGlobalWindow. It is the global
+ * object created for a modal content windows only (i.e. not modal
+ * chrome dialogs).
+ */
+class nsGlobalModalWindow : public nsGlobalWindow,
+                            public nsIDOMModalContentWindow
+{
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIDOMMODALCONTENTWINDOW
+
+  static already_AddRefed<nsGlobalModalWindow> Create(nsGlobalWindow *aOuterWindow);
+
+protected:
+  explicit nsGlobalModalWindow(nsGlobalWindow *aOuterWindow)
+    : nsGlobalWindow(aOuterWindow)
+  {
+    mIsModalContentWindow = true;
+  }
+
+  ~nsGlobalModalWindow() {}
+};
+
 /* factory function */
 inline already_AddRefed<nsGlobalWindow>
-NS_NewScriptGlobalObject(bool aIsChrome)
+NS_NewScriptGlobalObject(bool aIsChrome, bool aIsModalContentWindow)
 {
   RefPtr<nsGlobalWindow> global;
 
   if (aIsChrome) {
-    global = nsGlobalWindow::CreateChrome(nullptr);
+    global = nsGlobalChromeWindow::Create(nullptr);
+  } else if (aIsModalContentWindow) {
+    global = nsGlobalModalWindow::Create(nullptr);
   } else {
     global = nsGlobalWindow::Create(nullptr);
   }

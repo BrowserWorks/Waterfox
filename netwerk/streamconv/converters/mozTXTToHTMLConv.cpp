@@ -77,24 +77,24 @@ mozTXTToHTMLConv::EscapeStr(nsString& aInString, bool inAttribute)
     {
     case '<':
       aInString.Cut(i, 1);
-      aInString.InsertLiteral(u"&lt;", i);
+      aInString.Insert(NS_LITERAL_STRING("&lt;"), i);
       i += 4; // skip past the integers we just added
       break;
     case '>':
       aInString.Cut(i, 1);
-      aInString.InsertLiteral(u"&gt;", i);
+      aInString.Insert(NS_LITERAL_STRING("&gt;"), i);
       i += 4; // skip past the integers we just added
       break;
     case '&':
       aInString.Cut(i, 1);
-      aInString.InsertLiteral(u"&amp;", i);
+      aInString.Insert(NS_LITERAL_STRING("&amp;"), i);
       i += 5; // skip past the integers we just added
       break;
     case '"':
       if (inAttribute)
       {
         aInString.Cut(i, 1);
-        aInString.InsertLiteral(u"&quot;", i);
+        aInString.Insert(NS_LITERAL_STRING("&quot;"), i);
         i += 6;
         break;
       }

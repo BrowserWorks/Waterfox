@@ -98,7 +98,8 @@ SandboxLogCStack()
   // can't walk past the signal trampoline on ARM (bug 968531), and
   // x86 frame pointer walking may or may not work (bug 1082276).
 
-  MozStackWalk(SandboxPrintStackFrame, /* skip */ 3, /* max */ 0, nullptr);
+  MozStackWalk(SandboxPrintStackFrame, /* skip */ 3, /* max */ 0,
+               nullptr, 0, nullptr);
   SANDBOX_LOG_ERROR("end of stack.");
 }
 

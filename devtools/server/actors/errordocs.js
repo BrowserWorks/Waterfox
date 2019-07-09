@@ -82,8 +82,6 @@ const ErrorDocs = {
   JSMSG_DEPRECATED_DELETE_OPERAND: "Delete_in_strict_mode",
   JSMSG_MISSING_FORMAL: "Missing_formal_parameter",
   JSMSG_CANT_TRUNCATE_ARRAY: "Non_configurable_array_element",
-  JSMSG_INCOMPATIBLE_PROTO: "Called_on_incompatible_type",
-  JSMSG_INCOMPATIBLE_METHOD: "Called_on_incompatible_type",
 };
 
 const MIXED_CONTENT_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Mixed_content";
@@ -93,7 +91,6 @@ const PUBLIC_KEY_PINS_LEARN_MORE = "https://developer.mozilla.org/docs/Web/HTTP/
 const STRICT_TRANSPORT_SECURITY_LEARN_MORE = "https://developer.mozilla.org/docs/Web/HTTP/Headers/Strict-Transport-Security";
 const WEAK_SIGNATURE_ALGORITHM_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Weak_Signature_Algorithm";
 const MIME_TYPE_MISMATCH_LEARN_MORE = "https://developer.mozilla.org/docs/Web/HTTP/Headers/X-Content-Type-Options";
-const SOURCE_MAP_LEARN_MORE = "https://developer.mozilla.org/en-US/docs/Tools/Debugger/Source_map_errors";
 const ErrorCategories = {
   "Insecure Password Field": INSECURE_PASSWORDS_LEARN_MORE,
   "Mixed Content Message": MIXED_CONTENT_LEARN_MORE,
@@ -103,7 +100,6 @@ const ErrorCategories = {
   "SHA-1 Signature": WEAK_SIGNATURE_ALGORITHM_LEARN_MORE,
   "Tracking Protection": TRACKING_PROTECTION_LEARN_MORE,
   "MIMEMISMATCH": MIME_TYPE_MISMATCH_LEARN_MORE,
-  "source map": SOURCE_MAP_LEARN_MORE,
 };
 
 exports.GetURL = (error) => {

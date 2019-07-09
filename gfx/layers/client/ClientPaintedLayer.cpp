@@ -25,7 +25,6 @@
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "PaintThread.h"
 #include "ReadbackProcessor.h"
-#include "RotatedBuffer.h"
 
 namespace mozilla {
 namespace layers {
@@ -68,6 +67,12 @@ ClientPaintedLayer::CanRecordLayer(ReadbackProcessor* aReadback)
   // If we have mask layers, we have to render those first
   // In this case, don't record for now.
   if (GetMaskLayer()) {
+    return false;
+  }
+
+  // Component alpha layers aren't supported yet since we have to
+  // hold onto both the front/back buffer of a texture client.
+  if (GetSurfaceMode() == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
     return false;
   }
 
@@ -183,29 +188,6 @@ ClientPaintedLayer::PaintThebes(nsTArray<ReadbackProcessor::Update>* aReadbackUp
   }
 }
 
-/***
- * If we can, let's paint this ClientPaintedLayer's contents off the main thread.
- * The essential idea is that we ask the ContentClient for a DrawTarget and record
- * the moz2d commands. On the Paint Thread, we replay those commands to the
- * destination draw target. There are a couple of lifetime issues here though:
- *
- * 1) TextureClient owns the underlying buffer and DrawTarget. Because of this
- *    we have to keep the TextureClient and DrawTarget alive but trick the
- *    TextureClient into thinking it's already returned the DrawTarget
- *    since we iterate through different Rects to get DrawTargets*. If
- *    the TextureClient goes away, the DrawTarget and thus buffer can too.
- * 2) When ContentClient::EndPaint happens, it flushes the DrawTarget. We have
- *    to Reflush on the Paint Thread
- * 3) DrawTarget API is NOT thread safe. We get around this by recording
- *    on the main thread and painting on the paint thread. Logically,
- *    ClientLayerManager will force a flushed paint and block the main thread
- *    if we have another transaction. Thus we have a gap between when the main
- *    thread records, the paint thread paints, and we block the main thread
- *    from trying to paint again. The underlying API however is NOT thread safe.
- *  4) We have both "sync" and "async" OMTP. Sync OMTP means we paint on the main thread
- *     but block the main thread while the paint thread paints. Async OMTP doesn't block
- *     the main thread. Sync OMTP is only meant to be used as a debugging tool.
- */
 bool
 ClientPaintedLayer::PaintOffMainThread()
 {
@@ -220,12 +202,7 @@ ClientPaintedLayer::PaintOffMainThread()
 
   bool didUpdate = false;
   RotatedContentBuffer::DrawIterator iter;
-
-  // Debug Protip: Change to BorrowDrawTargetForPainting if using sync OMTP.
-  while (RefPtr<CapturedPaintState> captureState =
-          mContentClient->BorrowDrawTargetForRecording(state, &iter))
-  {
-    DrawTarget* target = captureState->mTarget;
+  while (DrawTarget* target = mContentClient->BorrowDrawTargetForPainting(state, &iter)) {
     if (!target || !target->IsValid()) {
       if (target) {
         mContentClient->ReturnDrawTargetToBuffer(target);
@@ -233,13 +210,16 @@ ClientPaintedLayer::PaintOffMainThread()
       continue;
     }
 
+    // We don't clear the rect here like WRPaintedBlobLayers do
+    // because ContentClient already clears the surface for us during BeginPaint.
     RefPtr<DrawTargetCapture> captureDT =
       Factory::CreateCaptureDrawTarget(target->GetBackendType(),
                                        target->GetSize(),
                                        target->GetFormat());
+    captureDT->SetTransform(target->GetTransform());
 
-    captureDT->SetTransform(captureState->mTargetTransform);
     SetAntialiasingFlags(this, captureDT);
+    SetAntialiasingFlags(this, target);
 
     RefPtr<gfxContext> ctx = gfxContext::CreatePreservingTransformOrNull(captureDT);
     MOZ_ASSERT(ctx); // already checked the target above
@@ -254,21 +234,16 @@ ClientPaintedLayer::PaintOffMainThread()
 
     ctx = nullptr;
 
-    captureState->mCapture = captureDT.forget();
-    PaintThread::Get()->PaintContents(captureState,
-                                      RotatedContentBuffer::PrepareDrawTargetForPainting);
+    PaintThread::Get()->PaintContents(captureDT, target);
 
     mContentClient->ReturnDrawTargetToBuffer(target);
-
     didUpdate = true;
   }
 
-  PaintThread::Get()->EndLayer();
   mContentClient->EndPaint(nullptr);
 
   if (didUpdate) {
     UpdateContentClient(state);
-    ClientManager()->SetNeedTextureSyncOnPaintThread();
   }
   return true;
 }

@@ -9,6 +9,7 @@
 #include "nsPISocketTransportService.h"
 #include "nsIThreadInternal.h"
 #include "nsIRunnable.h"
+#include "nsEventQueue.h"
 #include "nsCOMPtr.h"
 #include "prinrval.h"
 #include "mozilla/Logging.h"
@@ -22,12 +23,6 @@
 #include "nsITimer.h"
 #include "mozilla/UniquePtr.h"
 #include "PollableEvent.h"
-
-#if defined(_WIN64) && defined(WIN95)
-#include "WinDef.h"
-
-typedef PRStatus (*FileDesc2PlatformOverlappedIOHandleFunc)(PRFileDesc *fd, void **ol);
-#endif
 
 class nsASocketHandler;
 struct PRPollDesc;
@@ -125,12 +120,6 @@ public:
     bool IsTelemetryEnabledAndNotSleepPhase() { return mTelemetryEnabledPref &&
                                                        !mSleepPhase; }
     PRIntervalTime MaxTimeForPrClosePref() {return mMaxTimeForPrClosePref; }
-
-#if defined(_WIN64) && defined(WIN95)
-    void AddOverlappedPendingSocket(PRFileDesc *aFd);
-    bool HasFileDesc2PlatformOverlappedIOHandleFunc();
-    PRStatus CallFileDesc2PlatformOverlappedIOHandleFunc(PRFileDesc *fd, void **ol);
-#endif
 protected:
 
     virtual ~nsSocketTransportService();
@@ -281,21 +270,6 @@ private:
     void StartPolling();
     void EndPolling();
 #endif
-
-#if defined(_WIN64) && defined(WIN95)       
-    // If TCP Fast Open is used on Windows an overlapped io is used. We need to
-    // wait until this io is finished or canceled before detroying its
-    // PRFileDesc.
-    nsTArray<PRFileDesc *> mOverlappedPendingSockets;
-
-    bool mFileDesc2PlatformOverlappedIOHandleFuncChecked;
-    HMODULE mNsprLibrary;
-    FileDesc2PlatformOverlappedIOHandleFunc mFileDesc2PlatformOverlappedIOHandleFunc;
-
-    void CheckFileDesc2PlatformOverlappedIOHandleFunc();
-    void CheckOverlappedPendingSocketsAreDone();
-#endif
-
 };
 
 extern nsSocketTransportService *gSocketTransportService;

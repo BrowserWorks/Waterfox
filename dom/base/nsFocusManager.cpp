@@ -15,6 +15,7 @@
 #include "nsContentUtils.h"
 #include "nsIContentParent.h"
 #include "nsIDocument.h"
+#include "nsIEditor.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDOMChromeWindow.h"
 #include "nsIDOMElement.h"
@@ -53,7 +54,6 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/HTMLEditor.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Preferences.h"
@@ -280,15 +280,6 @@ GetContentWindow(nsIContent* aContent)
   return nullptr;
 }
 
-bool
-nsFocusManager::IsFocused(nsIContent* aContent)
-{
-  if (!aContent || !mFocusedContent) {
-    return false;
-  }
-  return aContent == mFocusedContent.get();
-}
-
 // get the current window for the given content node
 static nsPIDOMWindowOuter*
 GetCurrentWindow(nsIContent* aContent)
@@ -299,8 +290,7 @@ GetCurrentWindow(nsIContent* aContent)
 
 // static
 nsIContent*
-nsFocusManager::GetFocusedDescendant(nsPIDOMWindowOuter* aWindow,
-                                     SearchRange aSearchRange,
+nsFocusManager::GetFocusedDescendant(nsPIDOMWindowOuter* aWindow, bool aDeep,
                                      nsPIDOMWindowOuter** aFocusedWindow)
 {
   NS_ENSURE_TRUE(aWindow, nullptr);
@@ -309,34 +299,13 @@ nsFocusManager::GetFocusedDescendant(nsPIDOMWindowOuter* aWindow,
 
   nsIContent* currentContent = nullptr;
   nsPIDOMWindowOuter* window = aWindow;
-  for (;;) {
+  while (window) {
     *aFocusedWindow = window;
     currentContent = window->GetFocusedNode();
-    if (!currentContent || aSearchRange == eOnlyCurrentWindow) {
+    if (!currentContent || !aDeep)
       break;
-    }
 
     window = GetContentWindow(currentContent);
-    if (!window) {
-      break;
-    }
-
-    if (aSearchRange == eIncludeAllDescendants) {
-      continue;
-    }
-
-    MOZ_ASSERT(aSearchRange == eIncludeVisibleDescendants);
-
-    // If the child window doesn't have PresShell, it means the window is
-    // invisible.
-    nsIDocShell* docShell = window->GetDocShell();
-    if (!docShell) {
-      break;
-    }
-    nsIPresShell* presShell = docShell->GetPresShell();
-    if (!presShell) {
-      break;
-    }
   }
 
   NS_IF_ADDREF(*aFocusedWindow);
@@ -650,10 +619,7 @@ nsFocusManager::GetFocusedElementForWindow(mozIDOMWindowProxy* aWindow,
 
   nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
   nsCOMPtr<nsIContent> focusedContent =
-    GetFocusedDescendant(window,
-                         aDeep ? nsFocusManager::eIncludeAllDescendants :
-                                 nsFocusManager::eOnlyCurrentWindow,
-                         getter_AddRefs(focusedWindow));
+    GetFocusedDescendant(window, aDeep, getter_AddRefs(focusedWindow));
   if (focusedContent)
     CallQueryInterface(focusedContent, aElement);
 
@@ -763,8 +729,7 @@ nsFocusManager::WindowRaised(mozIDOMWindowProxy* aWindow)
   // retrieve the last focused element within the window that was raised
   nsCOMPtr<nsPIDOMWindowOuter> currentWindow;
   nsCOMPtr<nsIContent> currentFocus =
-    GetFocusedDescendant(window, eIncludeAllDescendants,
-                         getter_AddRefs(currentWindow));
+    GetFocusedDescendant(window, true, getter_AddRefs(currentWindow));
 
   NS_ASSERTION(currentWindow, "window raised with no window current");
   if (!currentWindow)
@@ -883,12 +848,18 @@ nsFocusManager::ContentRemoved(nsIDocument* aDocument, nsIContent* aContent)
     if (content->IsEditable()) {
       nsCOMPtr<nsIDocShell> docShell = aDocument->GetDocShell();
       if (docShell) {
-        RefPtr<HTMLEditor> htmlEditor = docShell->GetHTMLEditor();
-        if (htmlEditor) {
-          RefPtr<Selection> selection = htmlEditor->GetSelection();
-          if (selection && selection->GetFrameSelection() &&
-              content == selection->GetFrameSelection()->GetAncestorLimiter()) {
-            htmlEditor->FinalizeSelection();
+        nsCOMPtr<nsIEditor> editor;
+        docShell->GetEditor(getter_AddRefs(editor));
+        if (editor) {
+          nsCOMPtr<nsISelection> s;
+          editor->GetSelection(getter_AddRefs(s));
+          nsCOMPtr<nsISelectionPrivate> selection = do_QueryInterface(s);
+          if (selection) {
+            nsCOMPtr<nsIContent> limiter;
+            selection->GetAncestorLimiter(getter_AddRefs(limiter));
+            if (limiter == content) {
+              editor->FinalizeSelection();
+            }
           }
         }
       }
@@ -936,8 +907,7 @@ nsFocusManager::WindowShown(mozIDOMWindowProxy* aWindow, bool aNeedsFocus)
   if (aNeedsFocus) {
     nsCOMPtr<nsPIDOMWindowOuter> currentWindow;
     nsCOMPtr<nsIContent> currentFocus =
-      GetFocusedDescendant(window, eIncludeAllDescendants,
-                           getter_AddRefs(currentWindow));
+      GetFocusedDescendant(window, true, getter_AddRefs(currentWindow));
     if (currentWindow)
       Focus(currentWindow, currentFocus, 0, true, false, false, true);
   }
@@ -1194,7 +1164,7 @@ bool
 ActivateOrDeactivateChild(TabParent* aParent, void* aArg)
 {
   bool active = static_cast<bool>(aArg);
-  Unused << aParent->SendParentActivated(active);
+  Unused << aParent->Manager()->SendParentActivated(aParent, active);
   return false;
 }
 
@@ -1240,8 +1210,7 @@ nsFocusManager::SetFocusInner(nsIContent* aNewContent, int32_t aFlags,
   nsCOMPtr<nsPIDOMWindowOuter> newWindow;
   nsCOMPtr<nsPIDOMWindowOuter> subWindow = GetContentWindow(contentToFocus);
   if (subWindow) {
-    contentToFocus = GetFocusedDescendant(subWindow, eIncludeAllDescendants,
-                                          getter_AddRefs(newWindow));
+    contentToFocus = GetFocusedDescendant(subWindow, true, getter_AddRefs(newWindow));
     // since a window is being refocused, clear aFocusChanged so that the
     // caret position isn't updated.
     aFocusChanged = false;
@@ -2318,8 +2287,7 @@ nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow)
   // But on other platforms, we can just focus the toplevel widget to raise
   // the window.
   nsCOMPtr<nsPIDOMWindowOuter> childWindow;
-  GetFocusedDescendant(aWindow, eIncludeAllDescendants,
-                       getter_AddRefs(childWindow));
+  GetFocusedDescendant(aWindow, true, getter_AddRefs(childWindow));
   if (!childWindow)
     childWindow = aWindow;
 
@@ -2683,8 +2651,7 @@ nsFocusManager::DetermineElementToMoveFocus(nsPIDOMWindowOuter* aWindow,
       // When moving between documents, make sure to get the right
       // starting content in a descendant.
       nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
-      startContent = GetFocusedDescendant(aWindow, eIncludeAllDescendants,
-                                          getter_AddRefs(focusedWindow));
+      startContent = GetFocusedDescendant(aWindow, true, getter_AddRefs(focusedWindow));
     }
     else if (aType != MOVEFOCUS_LASTDOC) {
       // Otherwise, start at the focused node. If MOVEFOCUS_LASTDOC is used,

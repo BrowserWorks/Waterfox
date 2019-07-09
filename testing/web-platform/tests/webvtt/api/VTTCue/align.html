@@ -3,7 +3,6 @@
 <link rel="help" href="https://w3c.github.io/webvtt/#dom-vttcue-align">
 <script src=/resources/testharness.js></script>
 <script src=/resources/testharnessreport.js></script>
-<script src=common.js></script>
 <div id=log></div>
 <script>
 test(function(){
@@ -57,10 +56,10 @@ t_parsed.step(function(){
     t.onerror = this.step_func(function() {
       assert_unreached('got error event');
     });
-    t.src = make_vtt_track('WEBVTT\n\n00:00:00.000 --> 00:00:00.001\ntest\n\n'+
-                           '00:00:00.000 --> 00:00:00.001 align:start\ntest\n\n'+
-                           '00:00:00.000 --> 00:00:00.001 align:center\ntest\n\n'+
-                           '00:00:00.000 --> 00:00:00.001 align:end\ntest', this);
+    t.src = 'data:text/vtt,'+encodeURIComponent('WEBVTT\n\n00:00:00.000 --> 00:00:00.001\ntest\n\n'+
+                                                '00:00:00.000 --> 00:00:00.001 align:start\ntest\n\n'+
+                                                '00:00:00.000 --> 00:00:00.001 align:center\ntest\n\n'+
+                                                '00:00:00.000 --> 00:00:00.001 align:end\ntest');
     t.track.mode = 'showing';
     video.appendChild(t);
 });

@@ -1,4 +1,4 @@
-// |reftest| error:SyntaxError
+// |reftest| skip-if(release_or_beta) error:SyntaxError -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/function-forms/dflt-params-duplicates.case
 // - src/function-forms/syntax/async-gen-meth.template
@@ -39,7 +39,6 @@ info: |
       elements.
 
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 0, {
   async *method(x = 0, x) {

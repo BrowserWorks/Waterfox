@@ -83,7 +83,7 @@ add_task(async function() {
 
     let deleted = 0;
     while (deleted < charsToDelete) {
-      await urlbarBackspace();
+      await urlbarBackspace(arguments.callee);
       deleted++;
     }
 
@@ -104,3 +104,5 @@ add_task(async function() {
   await cycleTabs();
   cleanUp();
 });
+
+

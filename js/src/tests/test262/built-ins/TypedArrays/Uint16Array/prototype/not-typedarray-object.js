@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.6
-esid: sec-properties-of-typedarray-prototype-objects
 description: >
   Uint16Array.prototype is not a TypedArray instance object.
 info: >

@@ -4,8 +4,9 @@
 /*---
 description: >
     Objects that are not extensible  do not satisfy the assertion.
-includes: [testBuiltInObject.js,sta.js]
+includes: [testBuiltInObject.js]
 ---*/
+
 var threw = false;
 var obj = {};
 Object.preventExtensions(obj);

@@ -30,13 +30,6 @@ using namespace js::wasm;
 
 using mozilla::IsPowerOfTwo;
 
-// A sanity check.  We have only tested WASM_HUGE_MEMORY on x64, and only tested
-// x64 with WASM_HUGE_MEMORY.
-
-#if defined(WASM_HUGE_MEMORY) != defined(JS_CODEGEN_X64)
-#  error "Not an expected configuration"
-#endif
-
 void
 Val::writePayload(uint8_t* dst) const
 {
@@ -392,7 +385,7 @@ ElemSegment::serializedSize() const
     return sizeof(tableIndex) +
            sizeof(offset) +
            SerializedPodVectorSize(elemFuncIndices) +
-           SerializedPodVectorSize(elemCodeRangeIndices(Tier::Serialized));
+           SerializedPodVectorSize(elemCodeRangeIndices);
 }
 
 uint8_t*
@@ -401,7 +394,7 @@ ElemSegment::serialize(uint8_t* cursor) const
     cursor = WriteBytes(cursor, &tableIndex, sizeof(tableIndex));
     cursor = WriteBytes(cursor, &offset, sizeof(offset));
     cursor = SerializePodVector(cursor, elemFuncIndices);
-    cursor = SerializePodVector(cursor, elemCodeRangeIndices(Tier::Serialized));
+    cursor = SerializePodVector(cursor, elemCodeRangeIndices);
     return cursor;
 }
 
@@ -411,7 +404,7 @@ ElemSegment::deserialize(const uint8_t* cursor)
     (cursor = ReadBytes(cursor, &tableIndex, sizeof(tableIndex))) &&
     (cursor = ReadBytes(cursor, &offset, sizeof(offset))) &&
     (cursor = DeserializePodVector(cursor, &elemFuncIndices)) &&
-    (cursor = DeserializePodVector(cursor, &elemCodeRangeIndices(Tier::Serialized)));
+    (cursor = DeserializePodVector(cursor, &elemCodeRangeIndices));
     return cursor;
 }
 
@@ -419,7 +412,7 @@ size_t
 ElemSegment::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
 {
     return elemFuncIndices.sizeOfExcludingThis(mallocSizeOf) +
-           elemCodeRangeIndices(Tier::Serialized).sizeOfExcludingThis(mallocSizeOf);
+           elemCodeRangeIndices.sizeOfExcludingThis(mallocSizeOf);
 }
 
 Assumptions::Assumptions(JS::BuildIdCharVector&& buildId)
@@ -679,113 +672,73 @@ CodeRange::CodeRange(Kind kind, Offsets offsets)
   : begin_(offsets.begin),
     ret_(0),
     end_(offsets.end),
+    funcIndex_(0),
+    funcLineOrBytecode_(0),
+    funcBeginToNormalEntry_(0),
     kind_(kind)
 {
     MOZ_ASSERT(begin_ <= end_);
-    PodZero(&u);
 #ifdef DEBUG
     switch (kind_) {
+      case Entry:
+      case DebugTrap:
       case FarJumpIsland:
-      case OutOfBoundsExit:
-      case UnalignedExit:
+      case Inline:
       case Throw:
       case Interrupt:
         break;
-      default:
+      case Function:
+      case TrapExit:
+      case ImportJitExit:
+      case ImportInterpExit:
+      case BuiltinThunk:
         MOZ_CRASH("should use more specific constructor");
     }
 #endif
-}
-
-CodeRange::CodeRange(Kind kind, uint32_t funcIndex, Offsets offsets)
-  : begin_(offsets.begin),
-    ret_(0),
-    end_(offsets.end),
-    kind_(kind)
-{
-    u.funcIndex_ = funcIndex;
-    u.func.lineOrBytecode_ = 0;
-    u.func.beginToNormalEntry_ = 0;
-    u.func.beginToTierEntry_ = 0;
-    MOZ_ASSERT(kind == Entry);
-    MOZ_ASSERT(begin_ <= end_);
 }
 
 CodeRange::CodeRange(Kind kind, CallableOffsets offsets)
   : begin_(offsets.begin),
     ret_(offsets.ret),
     end_(offsets.end),
+    funcIndex_(0),
+    funcLineOrBytecode_(0),
+    funcBeginToNormalEntry_(0),
     kind_(kind)
 {
     MOZ_ASSERT(begin_ < ret_);
     MOZ_ASSERT(ret_ < end_);
-    PodZero(&u);
 #ifdef DEBUG
     switch (kind_) {
       case TrapExit:
-      case DebugTrap:
+      case ImportJitExit:
+      case ImportInterpExit:
       case BuiltinThunk:
         break;
-      default:
+      case Entry:
+      case DebugTrap:
+      case FarJumpIsland:
+      case Inline:
+      case Throw:
+      case Interrupt:
+      case Function:
         MOZ_CRASH("should use more specific constructor");
     }
 #endif
-}
-
-CodeRange::CodeRange(Kind kind, uint32_t funcIndex, CallableOffsets offsets)
-  : begin_(offsets.begin),
-    ret_(offsets.ret),
-    end_(offsets.end),
-    kind_(kind)
-{
-    MOZ_ASSERT(isImportExit() && !isImportJitExit());
-    MOZ_ASSERT(begin_ < ret_);
-    MOZ_ASSERT(ret_ < end_);
-    u.funcIndex_ = funcIndex;
-    u.func.lineOrBytecode_ = 0;
-    u.func.beginToNormalEntry_ = 0;
-    u.func.beginToTierEntry_ = 0;
-}
-
-CodeRange::CodeRange(uint32_t funcIndex, JitExitOffsets offsets)
-  : begin_(offsets.begin),
-    ret_(offsets.ret),
-    end_(offsets.end),
-    kind_(ImportJitExit)
-{
-    MOZ_ASSERT(isImportJitExit());
-    MOZ_ASSERT(begin_ < ret_);
-    MOZ_ASSERT(ret_ < end_);
-    u.funcIndex_ = funcIndex;
-    u.jitExit.beginToUntrustedFPStart_ = offsets.untrustedFPStart - begin_;
-    u.jitExit.beginToUntrustedFPEnd_ = offsets.untrustedFPEnd - begin_;
-}
-
-CodeRange::CodeRange(Trap trap, CallableOffsets offsets)
-  : begin_(offsets.begin),
-    ret_(offsets.ret),
-    end_(offsets.end),
-    kind_(TrapExit)
-{
-    MOZ_ASSERT(begin_ < ret_);
-    MOZ_ASSERT(ret_ < end_);
-    u.trap_ = trap;
 }
 
 CodeRange::CodeRange(uint32_t funcIndex, uint32_t funcLineOrBytecode, FuncOffsets offsets)
   : begin_(offsets.begin),
     ret_(offsets.ret),
     end_(offsets.end),
+    funcIndex_(funcIndex),
+    funcLineOrBytecode_(funcLineOrBytecode),
+    funcBeginToNormalEntry_(offsets.normalEntry - begin_),
     kind_(Function)
 {
     MOZ_ASSERT(begin_ < ret_);
     MOZ_ASSERT(ret_ < end_);
     MOZ_ASSERT(offsets.normalEntry - begin_ <= UINT8_MAX);
-    MOZ_ASSERT(offsets.tierEntry - begin_ <= UINT8_MAX);
-    u.funcIndex_ = funcIndex;
-    u.func.lineOrBytecode_ = funcLineOrBytecode;
-    u.func.beginToNormalEntry_ = offsets.normalEntry - begin_;
-    u.func.beginToTierEntry_ = offsets.tierEntry - begin_;
 }
 
 const CodeRange*

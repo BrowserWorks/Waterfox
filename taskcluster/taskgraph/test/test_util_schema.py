@@ -27,7 +27,7 @@ class TestValidateSchema(unittest.TestCase):
         try:
             validate_schema(schema, {'x': 'not-int'}, "pfx")
             self.fail("no exception raised")
-        except Exception as e:
+        except Exception, e:
             self.failUnless(str(e).startswith("pfx\n"))
 
 

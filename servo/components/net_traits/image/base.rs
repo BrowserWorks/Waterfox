@@ -7,7 +7,7 @@ use piston_image::{self, DynamicImage, ImageFormat};
 use std::fmt;
 use webrender_api;
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, MallocSizeOf, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, HeapSizeOf)]
 pub enum PixelFormat {
     /// Luminance channel only
     K8,
@@ -19,14 +19,14 @@ pub enum PixelFormat {
     BGRA8,
 }
 
-#[derive(Clone, Deserialize, MallocSizeOf, Serialize)]
+#[derive(Clone, Deserialize, Serialize, HeapSizeOf)]
 pub struct Image {
     pub width: u32,
     pub height: u32,
     pub format: PixelFormat,
-    #[ignore_malloc_size_of = "Defined in ipc-channel"]
+    #[ignore_heap_size_of = "Defined in ipc-channel"]
     pub bytes: IpcSharedMemory,
-    #[ignore_malloc_size_of = "Defined in webrender_api"]
+    #[ignore_heap_size_of = "Defined in webrender_api"]
     pub id: Option<webrender_api::ImageKey>,
 }
 
@@ -37,7 +37,7 @@ impl fmt::Debug for Image {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, MallocSizeOf, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, HeapSizeOf)]
 pub struct ImageMetadata {
     pub width: u32,
     pub height: u32,
@@ -50,8 +50,7 @@ pub struct ImageMetadata {
 fn byte_swap_and_premultiply(data: &mut [u8]) {
     let length = data.len();
 
-    let mut i = 0;
-    while i < length {
+    for i in Iterator::step_by(0..length, 4) {
         let r = data[i + 2];
         let g = data[i + 1];
         let b = data[i + 0];
@@ -59,8 +58,6 @@ fn byte_swap_and_premultiply(data: &mut [u8]) {
         data[i + 0] = r;
         data[i + 1] = g;
         data[i + 2] = b;
-
-        i += 4;
     }
 }
 

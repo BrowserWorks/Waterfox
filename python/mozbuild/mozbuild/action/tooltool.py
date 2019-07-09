@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 # tooltool is a lookaside cache implemented in Python
 # Copyright (C) 2011 John H. Ford <john@johnford.info>
@@ -141,7 +141,7 @@ class FileRecord(object):
             raise MissingFileException(filename=self.filename)
 
     def validate(self):
-        if self.size is None or self.validate_size():
+        if self.validate_size():
             if self.validate_digest():
                 return True
         return False
@@ -372,9 +372,9 @@ def list_manifest(manifest_file):
         ))
         return False
     for f in manifest.file_records:
-        print("%s\t%s\t%s" % ("P" if f.present() else "-",
+        print "%s\t%s\t%s" % ("P" if f.present() else "-",
                               "V" if f.present() and f.validate() else "-",
-                              f.filename))
+                              f.filename)
     return True
 
 
@@ -674,7 +674,7 @@ def fetch_files(manifest_file, base_urls, filenames=[], cache_folder=None,
                 try:
                     if not os.path.exists(cache_folder):
                         log.info("Creating cache in %s..." % cache_folder)
-                        os.makedirs(cache_folder, 0o0700)
+                        os.makedirs(cache_folder, 0700)
                     shutil.copy(os.path.join(os.getcwd(), localfile.filename),
                                 os.path.join(cache_folder, localfile.digest))
                     log.info("Local cache %s updated with %s" % (cache_folder,
@@ -999,7 +999,7 @@ def main(argv, _skip_logging=False):
 
     # default the options list if not provided
     if not options_obj.base_url:
-        options_obj.base_url = ['https://tooltool.mozilla-releng.net/']
+        options_obj.base_url = ['https://api.pub.build.mozilla.org/tooltool/']
 
     # ensure all URLs have a trailing slash
     def add_slash(url):

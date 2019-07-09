@@ -286,7 +286,6 @@ template <class Derived>
 FetchBodyConsumer<Derived>::Create(nsIGlobalObject* aGlobal,
                                    nsIEventTarget* aMainThreadEventTarget,
                                    FetchBody<Derived>* aBody,
-                                   AbortSignal* aSignal,
                                    FetchConsumeType aType,
                                    ErrorResult& aRv)
 {
@@ -348,10 +347,6 @@ FetchBodyConsumer<Derived>::Create(nsIGlobalObject* aGlobal,
     return nullptr;
   }
 
-  if (aSignal) {
-    consumer->Follow(aSignal);
-  }
-
   return promise.forget();
 }
 
@@ -375,8 +370,6 @@ FetchBodyConsumer<Derived>::ReleaseObject()
 #ifdef DEBUG
   mBody = nullptr;
 #endif
-
-  Unfollow();
 }
 
 template <class Derived>
@@ -472,7 +465,7 @@ FetchBodyConsumer<Derived>::BeginConsumeBodyMainThread()
 
   nsCOMPtr<nsIInputStreamPump> pump;
   nsresult rv = NS_NewInputStreamPump(getter_AddRefs(pump),
-                                      mBodyStream, 0, 0, false,
+                                      mBodyStream, -1, -1, 0, 0, false,
                                       mMainThreadEventTarget);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
@@ -697,14 +690,6 @@ FetchBodyConsumer<Derived>::Observe(nsISupports* aSubject,
   }
 
   return NS_OK;
-}
-
-template <class Derived>
-void
-FetchBodyConsumer<Derived>::Abort()
-{
-  AssertIsOnTargetThread();
-  ContinueConsumeBody(NS_ERROR_DOM_ABORT_ERR, 0, nullptr);
 }
 
 template <class Derived>

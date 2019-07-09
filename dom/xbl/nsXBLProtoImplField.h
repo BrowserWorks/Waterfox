@@ -7,7 +7,7 @@
 #ifndef nsXBLProtoImplField_h__
 #define nsXBLProtoImplField_h__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "jsapi.h"
 #include "nsString.h"
@@ -45,7 +45,7 @@ public:
   const char16_t* GetName() const { return mName; }
 
   unsigned AccessorAttributes() const {
-    return JSPROP_GETTER | JSPROP_SETTER |
+    return JSPROP_SHARED | JSPROP_GETTER | JSPROP_SETTER |
            (mJSAttributes & (JSPROP_ENUMERATE | JSPROP_PERMANENT));
   }
 

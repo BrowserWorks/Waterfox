@@ -1,7 +1,6 @@
 /* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 "use strict";
 
@@ -73,9 +72,6 @@ add_task(function* () {
 
   color = yield getComputedStyleProperty({selector: "div", name: "color"});
   is(color, "rgb(0, 0, 255)", "div is blue after saving file");
-
-  // Ensure that the editor didn't revert.  Bug 1346662.
-  is(editor.sourceEditor.getText(), CSS_TEXT, "edits remain applied");
 });
 
 function editSCSS(editor) {

@@ -72,7 +72,7 @@ public:
                              nsIChannel* aChannel,
                              imgCacheEntry* aCacheEntry,
                              nsISupports* aCX,
-                             nsIPrincipal* aTriggeringPrincipal,
+                             nsIPrincipal* aLoadingPrincipal,
                              int32_t aCORSMode,
                              ReferrerPolicy aReferrerPolicy);
 
@@ -127,9 +127,9 @@ public:
 
   // The principal for the document that loaded this image. Used when trying to
   // validate a CORS image load.
-  already_AddRefed<nsIPrincipal> GetTriggeringPrincipal() const
+  already_AddRefed<nsIPrincipal> GetLoadingPrincipal() const
   {
-    nsCOMPtr<nsIPrincipal> principal = mTriggeringPrincipal;
+    nsCOMPtr<nsIPrincipal> principal = mLoadingPrincipal;
     return principal.forget();
   }
 
@@ -153,9 +153,7 @@ public:
   // OK to use on any thread.
   nsresult GetURI(ImageURL** aURI);
   nsresult GetCurrentURI(nsIURI** aURI);
-  bool IsScheme(const char* aScheme) const;
   bool IsChrome() const;
-  bool IsData() const;
 
   nsresult GetImageErrorCode(void);
 
@@ -238,10 +236,9 @@ private:
   RefPtr<ImageURL> mURI;
   // The URI of the resource we ended up loading after all redirects, etc.
   nsCOMPtr<nsIURI> mCurrentURI;
-  // The principal which triggered the load of this image. Generally either
-  // the principal of the document the image is being loaded into, or of the
-  // stylesheet which specified the image to load. Used when validating for CORS.
-  nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
+  // The principal of the document which loaded this image. Used when
+  // validating for CORS.
+  nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
   // The principal of this image.
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIProperties> mProperties;

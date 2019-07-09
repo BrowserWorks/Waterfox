@@ -10,6 +10,9 @@
 #include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "nsContentUtils.h"
+// MouseEvent suppression in PP
+#include "nsContentList.h"
+
 #include "nsIDOMHTMLInputElement.h"
 #include "nsTextNode.h"
 
@@ -30,7 +33,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsGfxButtonControlFrame)
 
 void nsGfxButtonControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
-  DestroyAnonymousContent(mTextContent.forget());
+  nsContentUtils::DestroyAnonymousContent(&mTextContent);
   nsHTMLButtonControlFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -47,9 +50,8 @@ nsGfxButtonControlFrame::GetFrameName(nsAString& aResult) const
 nsresult
 nsGfxButtonControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
-  nsAutoString label;
-  nsresult rv = GetLabel(label);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsXPIDLString label;
+  GetLabel(label);
 
   // Add a child text content node for the label
   mTextContent = new nsTextNode(mContent->NodeInfo()->NodeInfoManager());
@@ -81,7 +83,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsHTMLButtonControlFrame)
 // label from a string bundle as is done for all other UI strings.
 // See bug 16999 for further details.
 nsresult
-nsGfxButtonControlFrame::GetDefaultLabel(nsAString& aString) const
+nsGfxButtonControlFrame::GetDefaultLabel(nsXPIDLString& aString) const
 {
   nsCOMPtr<nsIFormControl> form = do_QueryInterface(mContent);
   NS_ENSURE_TRUE(form, NS_ERROR_UNEXPECTED);
@@ -104,7 +106,7 @@ nsGfxButtonControlFrame::GetDefaultLabel(nsAString& aString) const
 }
 
 nsresult
-nsGfxButtonControlFrame::GetLabel(nsString& aLabel)
+nsGfxButtonControlFrame::GetLabel(nsXPIDLString& aLabel)
 {
   // Get the text from the "value" property on our content if there is
   // one; otherwise set it to a default value (localized).
@@ -150,7 +152,7 @@ nsGfxButtonControlFrame::GetLabel(nsString& aLabel)
 
 nsresult
 nsGfxButtonControlFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                          nsAtom*        aAttribute,
+                                          nsIAtom*        aAttribute,
                                           int32_t         aModType)
 {
   nsresult rv = NS_OK;
@@ -158,7 +160,7 @@ nsGfxButtonControlFrame::AttributeChanged(int32_t         aNameSpaceID,
   // If the value attribute is set, update the text of the label
   if (nsGkAtoms::value == aAttribute) {
     if (mTextContent && mContent) {
-      nsAutoString label;
+      nsXPIDLString label;
       rv = GetLabel(label);
       NS_ENSURE_SUCCESS(rv, rv);
 

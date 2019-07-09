@@ -11,15 +11,10 @@
 
 [SecureContext, Pref="security.webauth.webauthn"]
 interface PublicKeyCredential : Credential {
-    [SameObject] readonly attribute ArrayBuffer              rawId;
-    [SameObject] readonly attribute AuthenticatorResponse    response;
+    [SameObject] readonly attribute ArrayBuffer           rawId;
+    [SameObject] readonly attribute AuthenticatorResponse response;
     // Extensions are not supported yet.
-    // [SameObject] readonly attribute AuthenticationExtensions clientExtensionResults; // Add in Bug 1406458
-};
-
-[SecureContext]
-partial interface PublicKeyCredential {
-    static Promise<boolean> isPlatformAuthenticatorAvailable();
+    // [SameObject] readonly attribute AuthenticationExtensions clientExtensionResults;
 };
 
 [SecureContext, Pref="security.webauth.webauthn"]
@@ -32,76 +27,62 @@ interface AuthenticatorAttestationResponse : AuthenticatorResponse {
     [SameObject] readonly attribute ArrayBuffer attestationObject;
 };
 
-[SecureContext, Pref="security.webauth.webauthn"]
-interface AuthenticatorAssertionResponse : AuthenticatorResponse {
-    [SameObject] readonly attribute ArrayBuffer      authenticatorData;
-    [SameObject] readonly attribute ArrayBuffer      signature;
-    readonly attribute DOMString                     userId;
-};
-
 dictionary PublicKeyCredentialParameters {
     required PublicKeyCredentialType  type;
-    required COSEAlgorithmIdentifier  alg;
-};
-
-dictionary MakePublicKeyCredentialOptions {
-    required PublicKeyCredentialRpEntity   rp;
-    required PublicKeyCredentialUserEntity user;
-
-    required BufferSource                            challenge;
-    required sequence<PublicKeyCredentialParameters> pubKeyCredParams;
-
-    unsigned long                                timeout;
-    sequence<PublicKeyCredentialDescriptor>      excludeCredentials = [];
-    AuthenticatorSelectionCriteria               authenticatorSelection;
-    // Extensions are not supported yet.
-    // AuthenticationExtensions                  extensions; // Add in Bug 1406458
-};
-
-dictionary PublicKeyCredentialEntity {
-    DOMString      name;
-    USVString      icon;
-};
-
-dictionary PublicKeyCredentialRpEntity : PublicKeyCredentialEntity {
-    DOMString      id;
+    required WebAuthnAlgorithmID algorithm; // NOTE: changed from AllgorithmIdentifier because typedef (object or DOMString) not serializable
 };
 
 dictionary PublicKeyCredentialUserEntity : PublicKeyCredentialEntity {
-    BufferSource   id;
-    DOMString      displayName;
+    DOMString displayName;
+};
+
+dictionary MakeCredentialOptions {
+    required PublicKeyCredentialEntity rp;
+    required PublicKeyCredentialUserEntity user;
+
+    required BufferSource                         challenge;
+    required sequence<PublicKeyCredentialParameters> parameters;
+
+    unsigned long                        timeout;
+    sequence<PublicKeyCredentialDescriptor> excludeList;
+    AuthenticatorSelectionCriteria       authenticatorSelection;
+    // Extensions are not supported yet.
+    // AuthenticationExtensions             extensions;
+};
+
+dictionary PublicKeyCredentialEntity {
+    DOMString id;
+    DOMString name;
+    USVString icon;
 };
 
 dictionary AuthenticatorSelectionCriteria {
-    AuthenticatorAttachment      authenticatorAttachment;
-    boolean                      requireResidentKey = false;
-    boolean                      requireUserVerification = false;
+    Attachment    attachment;
+    boolean       requireResidentKey = false;
 };
 
-enum AuthenticatorAttachment {
-    "platform",       // Platform attachment
-    "cross-platform"  // Cross-platform attachment
+enum Attachment {
+    "platform",
+    "cross-platform"
 };
 
 dictionary PublicKeyCredentialRequestOptions {
     required BufferSource                challenge;
     unsigned long                        timeout;
     USVString                            rpId;
-    sequence<PublicKeyCredentialDescriptor> allowCredentials = [];
+    sequence<PublicKeyCredentialDescriptor> allowList = [];
     // Extensions are not supported yet.
-    // AuthenticationExtensions             extensions; // Add in Bug 1406458
+    // AuthenticationExtensions             extensions;
 };
-
-typedef record<DOMString, any>       AuthenticationExtensions;
 
 dictionary CollectedClientData {
     required DOMString           challenge;
     required DOMString           origin;
-    required DOMString           hashAlgorithm;
-    DOMString                    tokenBindingId;
+    required DOMString           hashAlg;
+    DOMString                    tokenBinding;
     // Extensions are not supported yet.
-    // AuthenticationExtensions     clientExtensions; // Add in Bug 1406458
-    // AuthenticationExtensions     authenticatorExtensions; // Add in Bug 1406458
+    // AuthenticationExtensions     clientExtensions;
+    // AuthenticationExtensions     authenticatorExtensions;
 };
 
 enum PublicKeyCredentialType {
@@ -111,17 +92,20 @@ enum PublicKeyCredentialType {
 dictionary PublicKeyCredentialDescriptor {
     required PublicKeyCredentialType type;
     required BufferSource id;
-    sequence<AuthenticatorTransport>   transports;
+    sequence<WebAuthnTransport>   transports;
 };
 
-enum AuthenticatorTransport {
+typedef (boolean or DOMString) WebAuthnAlgorithmID; // Fix when upstream there's a definition of how to serialize AlgorithmIdentifier
+
+[SecureContext, Pref="security.webauth.webauthn"]
+interface AuthenticatorAssertionResponse : AuthenticatorResponse {
+    [SameObject] readonly attribute ArrayBuffer      authenticatorData;
+    [SameObject] readonly attribute ArrayBuffer      signature;
+};
+
+// Renamed from "Transport" to avoid a collision with U2F
+enum WebAuthnTransport {
     "usb",
     "nfc",
     "ble"
 };
-
-typedef long COSEAlgorithmIdentifier;
-
-typedef sequence<AAGUID>      AuthenticatorSelectionList;
-
-typedef BufferSource      AAGUID;

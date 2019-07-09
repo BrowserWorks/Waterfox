@@ -4,8 +4,14 @@
 /*---
 description: >
   Verify an undefined descriptor
-includes: [propertyHelper.js,sta.js]
+includes: [propertyHelper.js]
 ---*/
+
+// monkeypatch the API
+$ERROR = function $ERROR(message) {
+  throw new Test262Error(message);
+};
+
 var sample = {
   bar: undefined,
   get baz() {}

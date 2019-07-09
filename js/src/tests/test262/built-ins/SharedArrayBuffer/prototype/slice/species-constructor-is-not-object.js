@@ -8,7 +8,6 @@ description: >
 info: >
   SharedArrayBuffer.prototype.slice ( start, end )
 
-features: [Symbol]
 ---*/
 
 var arrayBuffer = new SharedArrayBuffer(8);

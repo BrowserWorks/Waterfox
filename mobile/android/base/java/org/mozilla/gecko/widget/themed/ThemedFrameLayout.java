@@ -166,10 +166,6 @@ public class ThemedFrameLayout extends android.widget.FrameLayout
         return new ColorDrawable(ContextCompat.getColor(getContext(), id));
     }
 
-    public ColorStateList getDrawableColors() {
-        return drawableColors;
-    }
-
     protected LightweightTheme getTheme() {
         return theme;
     }

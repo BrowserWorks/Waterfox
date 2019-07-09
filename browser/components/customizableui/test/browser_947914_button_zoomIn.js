@@ -7,16 +7,12 @@
 var initialPageZoom = ZoomManager.zoom;
 
 add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   info("Check zoom in button existence and functionality");
 
   is(initialPageZoom, 1, "Initial zoom factor should be 1");
 
-  CustomizableUI.addWidgetToArea("zoom-controls", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-  registerCleanupFunction(() => CustomizableUI.reset());
-
-  await waitForOverflowButtonShown();
-
-  await document.getElementById("nav-bar").overflowable.show();
+  await PanelUI.show();
   info("Menu panel was opened");
 
   let zoomInButton = document.getElementById("zoom-in-button");
@@ -29,8 +25,8 @@ add_task(async function() {
   ok(pageZoomLevel > 100 && pageZoomLevel == expectedZoomLevel, "Page zoomed in correctly");
 
   // close the Panel
-  let panelHiddenPromise = promiseOverflowHidden(window);
-  document.getElementById("widget-overflow").hidePopup();
+  let panelHiddenPromise = promisePanelHidden(window);
+  PanelUI.hide();
   await panelHiddenPromise;
   info("Menu panel was closed");
 });

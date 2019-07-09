@@ -1,21 +1,17 @@
 "use strict";
 
-/* global windowTracker */
-
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "gThemesEnabled", () => {
-  return Services.prefs.getBoolPref("extensions.webextensions.themes.enabled");
+  return Preferences.get("extensions.webextensions.themes.enabled");
 });
 
-var {
-  getWinUtils,
-} = ExtensionUtils;
-
-const ICONS = Services.prefs.getStringPref("extensions.webextensions.themes.icons.buttons", "").split(",");
+const ICONS = Preferences.get("extensions.webextensions.themes.icons.buttons", "").split(",");
 
 /** Class representing a theme. */
 class Theme {
@@ -42,14 +38,8 @@ class Theme {
    *
    * @param {Object} details Theme part of the manifest. Supported
    *   properties can be found in the schema under ThemeType.
-   * @param {Object} targetWindow The window to apply the theme to. Omitting
-   *   this parameter will apply the theme globally.
    */
-  load(details, targetWindow) {
-    if (targetWindow) {
-      this.lwtStyles.window = getWinUtils(targetWindow).outerWindowID;
-    }
-
+  load(details) {
     if (details.colors) {
       this.loadColors(details.colors);
     }
@@ -74,9 +64,6 @@ class Theme {
       Services.obs.notifyObservers(null,
         "lightweight-theme-styling-update",
         JSON.stringify(this.lwtStyles));
-    } else {
-      this.logger.warn("Your theme doesn't include one of the following required " +
-        "properties: 'headerURL', 'accentcolor' or 'textcolor'");
     }
   }
 
@@ -104,20 +91,18 @@ class Theme {
           this.lwtStyles.accentcolor = cssColor;
           break;
         case "textcolor":
-        case "tab_text":
+        case "tab_background_text":
           this.lwtStyles.textcolor = cssColor;
           break;
         case "toolbar":
           this.lwtStyles.toolbarColor = cssColor;
           break;
         case "toolbar_text":
+        case "bookmark_text":
           this.lwtStyles.toolbar_text = cssColor;
           break;
-        case "toolbar_field":
-          this.lwtStyles.toolbar_field = cssColor;
-          break;
-        case "toolbar_field_text":
-          this.lwtStyles.toolbar_field_text = cssColor;
+        case "tab_text":
+          this.lwtStyles.textcolor = cssColor;
           break;
       }
     }
@@ -158,7 +143,7 @@ class Theme {
    * @param {Object} icons Dictionary mapping icon properties to extension URLs.
    */
   loadIcons(icons) {
-    if (!Services.prefs.getBoolPref("extensions.webextensions.themes.icons.enabled")) {
+    if (!Preferences.get("extensions.webextensions.themes.icons.enabled")) {
       // Return early if icons are disabled.
       return;
     }
@@ -242,9 +227,8 @@ class Theme {
 
   /**
    * Unloads the currently applied theme.
-   * @param {Object} targetWindow The window the theme should be unloaded from
    */
-  unload(targetWindow) {
+  unload() {
     let lwtStyles = {
       headerURL: "",
       accentcolor: "",
@@ -254,10 +238,6 @@ class Theme {
       textcolor: "",
       icons: {},
     };
-
-    if (targetWindow) {
-      lwtStyles.window = getWinUtils(targetWindow).outerWindowID;
-    }
 
     for (let icon of ICONS) {
       lwtStyles.icons[`--${icon}--icon`] = "";
@@ -299,7 +279,7 @@ this.theme = class extends ExtensionAPI {
 
     return {
       theme: {
-        update: (windowId, details) => {
+        update: (details) => {
           if (!gThemesEnabled) {
             // Return early if themes are disabled.
             return;
@@ -312,13 +292,9 @@ this.theme = class extends ExtensionAPI {
             this.theme = new Theme(extension.baseURI, extension.logger);
           }
 
-          let browserWindow;
-          if (windowId !== null) {
-            browserWindow = windowTracker.getWindow(windowId, context);
-          }
-          this.theme.load(details, browserWindow);
+          this.theme.load(details);
         },
-        reset: (windowId) => {
+        reset: () => {
           if (!gThemesEnabled) {
             // Return early if themes are disabled.
             return;
@@ -329,12 +305,7 @@ this.theme = class extends ExtensionAPI {
             return;
           }
 
-          let browserWindow;
-          if (windowId !== null) {
-            browserWindow = windowTracker.getWindow(windowId, context);
-          }
-
-          this.theme.unload(browserWindow);
+          this.theme.unload();
         },
       },
     };

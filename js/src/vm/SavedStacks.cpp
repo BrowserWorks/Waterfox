@@ -36,7 +36,6 @@
 
 #include "jscntxtinlines.h"
 
-#include "vm/GeckoProfiler-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/Stack-inl.h"
 
@@ -160,7 +159,7 @@ struct SavedFrame::Lookup {
     {
         MOZ_ASSERT(source);
         MOZ_ASSERT_IF(framePtr.isSome(), activation);
-        MOZ_ASSERT_IF(framePtr.isSome() && !activation->hasWasmExitFP(), pc);
+        MOZ_ASSERT_IF(framePtr.isSome() && !activation->isWasm(), pc);
 
 #ifdef JS_MORE_DETERMINISTIC
         column = 0;
@@ -308,6 +307,8 @@ SavedFrame::finishSavedFrameInit(JSContext* cx, HandleObject ctor, HandleObject 
 static const ClassOps SavedFrameClassOps = {
     nullptr,                    // addProperty
     nullptr,                    // delProperty
+    nullptr,                    // getProperty
+    nullptr,                    // setProperty
     nullptr,                    // enumerate
     nullptr,                    // newEnumerate
     nullptr,                    // resolve
@@ -1172,7 +1173,7 @@ SavedStacks::saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame,
         return true;
     }
 
-    AutoGeckoProfilerEntry pseudoFrame(cx, "js::SavedStacks::saveCurrentStack");
+    AutoGeckoProfilerEntry psuedoFrame(cx, "js::SavedStacks::saveCurrentStack");
     FrameIter iter(cx);
     return insertFrames(cx, iter, frame, mozilla::Move(capture));
 }

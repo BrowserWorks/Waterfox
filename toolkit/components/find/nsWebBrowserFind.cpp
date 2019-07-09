@@ -43,7 +43,7 @@
 
 #if DEBUG
 #include "nsIWebNavigation.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #endif
 
 nsWebBrowserFind::nsWebBrowserFind()
@@ -749,7 +749,7 @@ nsWebBrowserFind::SearchInFrame(nsPIDOMWindowOuter* aWindow, bool aWrapping,
 
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = find->Find(mSearchString.get(), searchRange, startPt, endPt,
+  rv = find->Find(mSearchString, searchRange, startPt, endPt,
                   getter_AddRefs(foundRange));
 
   if (NS_SUCCEEDED(rv) && foundRange) {
@@ -798,10 +798,8 @@ nsWebBrowserFind::GetFrameSelection(nsPIDOMWindowOuter* aWindow)
   nsPresContext* presContext = presShell->GetPresContext();
 
   nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
-  nsCOMPtr<nsIContent> focusedContent =
-    nsFocusManager::GetFocusedDescendant(aWindow,
-                                         nsFocusManager::eOnlyCurrentWindow,
-                                         getter_AddRefs(focusedWindow));
+  nsCOMPtr<nsIContent> focusedContent = nsFocusManager::GetFocusedDescendant(
+    aWindow, false, getter_AddRefs(focusedWindow));
 
   nsIFrame* frame =
     focusedContent ? focusedContent->GetPrimaryFrame() : nullptr;

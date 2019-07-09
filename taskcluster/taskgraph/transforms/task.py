@@ -10,35 +10,20 @@ complexities of worker implementations, scopes, and treeherder annotations.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import hashlib
 import json
 import os
-import re
 import time
 from copy import deepcopy
 
-from mozbuild.util import memoize
-from mozbuild import schedules
 from taskgraph.util.attributes import TRUNK_PROJECTS
-from taskgraph.util.hash import hash_path
 from taskgraph.util.treeherder import split_symbol
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.schema import validate_schema, Schema
 from taskgraph.util.scriptworker import get_release_config
 from voluptuous import Any, Required, Optional, Extra
 from taskgraph import GECKO
-from ..util import docker as dockerutil
 
 from .gecko_v2_whitelist import JOB_NAME_WHITELIST, JOB_NAME_WHITELIST_ERROR
-
-
-RUN_TASK = os.path.join(GECKO, 'taskcluster', 'docker', 'recipes', 'run-task')
-
-
-@memoize
-def _run_task_suffix():
-    """String to append to cache names under control of run-task."""
-    return hash_path(RUN_TASK)[0:20]
 
 
 # shortcut for a string where task references are allowed
@@ -57,9 +42,6 @@ task_description_schema = Schema({
     # attributes for this task
     Optional('attributes'): {basestring: object},
 
-    # relative path (from config.path) to the file task was defined in
-    Optional('job-from'): basestring,
-
     # dependencies of this task, keyed by name; these are passed through
     # verbatim and subject to the interpretation of the Task's get_dependencies
     # method.
@@ -75,13 +57,11 @@ task_description_schema = Schema({
     Optional('routes'): [basestring],
 
     # custom scopes for this task; any scopes required for the worker will be
-    # added automatically. The following parameters will be substituted in each
-    # scope:
-    #  {level} -- the scm level of this push
+    # added automatically
     Optional('scopes'): [basestring],
 
     # Tags
-    Optional('tags'): {basestring: basestring},
+    Optional('tags'): {basestring: object},
 
     # custom "task.extra" content
     Optional('extra'): {basestring: object},
@@ -147,47 +127,22 @@ task_description_schema = Schema({
     # See the attributes documentation for details.
     Optional('run-on-projects'): [basestring],
 
-    # Coalescing provides the facility for tasks to be superseded by the same
-    # task in a subsequent commit, if the current task backlog reaches an
-    # explicit threshold. Both age and size thresholds need to be met in order
-    # for coalescing to be triggered.
-    Optional('coalesce'): {
-        # A unique identifier per job (typically a hash of the job label) in
-        # order to partition tasks into appropriate sets for coalescing. This
-        # is combined with the project in order to generate a unique coalescing
-        # key for the coalescing service.
-        'job-identifier': basestring,
+    # If the task can be coalesced, this is the name used in the coalesce key
+    # the project, etc. will be added automatically.  Note that try (level 1)
+    # tasks are never coalesced
+    Optional('coalesce-name'): basestring,
 
-        # The minimum amount of time in seconds between two pending tasks with
-        # the same coalescing key, before the coalescing service will return
-        # tasks.
-        'age': int,
-
-        # The minimum number of backlogged tasks with the same coalescing key,
-        # before the coalescing service will return tasks.
-        'size': int,
-    },
-
-    # Optimization to perform on this task during the optimization phase.
-    # Optimizations are defined in taskcluster/taskgraph/optimize.py.
-    Required('optimization', default=None): Any(
-        # always run this task (default)
-        None,
-        # search the index for the given index namespaces, and replace this task if found
-        # the search occurs in order, with the first match winning
-        {'index-search': [basestring]},
+    # Optimizations to perform on this task during the optimization phase,
+    # specified in order.  These optimizations are defined in
+    # taskcluster/taskgraph/optimize.py.
+    Optional('optimizations'): [Any(
+        # search the index for the given index namespace, and replace this task if found
+        ['index-search', basestring],
         # consult SETA and skip this task if it is low-value
-        {'seta': None},
+        ['seta'],
         # skip this task if none of the given file patterns match
-        {'skip-unless-changed': [basestring]},
-        # skip this task if unless the change files' SCHEDULES contains any of these components
-        {'skip-unless-schedules': list(schedules.ALL_COMPONENTS)},
-        # skip if SETA or skip-unless-schedules says to
-        {'skip-unless-schedules-or-seta': list(schedules.ALL_COMPONENTS)},
-        # only run this task if its dependencies will run (useful for follow-on tasks that
-        # are unnecessary if the parent tasks are not run)
-        {'only-if-dependencies-run': None}
-    ),
+        ['skip-unless-changed', [basestring]],
+    )],
 
     # the provisioner-id/worker-type for the task.  The following parameters will
     # be substituted in this string:
@@ -210,9 +165,7 @@ task_description_schema = Schema({
             # a raw Docker image path (repo/image:tag)
             basestring,
             # an in-tree generated docker image (from `taskcluster/docker/<name>`)
-            {'in-tree': basestring},
-            # an indexed docker image
-            {'indexed': basestring},
+            {'in-tree': basestring}
         ),
 
         # worker features that should be enabled
@@ -223,18 +176,6 @@ task_description_schema = Schema({
         Required('loopback-video', default=False): bool,
         Required('loopback-audio', default=False): bool,
         Required('docker-in-docker', default=False): bool,  # (aka 'dind')
-
-        # Paths to Docker volumes.
-        #
-        # For in-tree Docker images, volumes can be parsed from Dockerfile.
-        # This only works for the Dockerfile itself: if a volume is defined in
-        # a base image, it will need to be declared here. Out-of-tree Docker
-        # images will also require explicit volume annotation.
-        #
-        # Caches are often mounted to the same path as Docker volumes. In this
-        # case, they take precedence over a Docker volume. But a volume still
-        # needs to be declared for the path.
-        Optional('volumes', default=[]): [basestring],
 
         # caches to set up for the task
         Optional('caches'): [{
@@ -247,10 +188,6 @@ task_description_schema = Schema({
 
             # location in the task image where the cache will be mounted
             'mount-point': basestring,
-
-            # Whether the cache is not used in untrusted environments
-            # (like the Try repo).
-            Optional('skip-untrusted', default=False): bool,
         }],
 
         # artifacts to extract from the task image after completion
@@ -491,11 +428,9 @@ task_description_schema = Schema({
 })
 
 GROUP_NAMES = {
-    'cram': 'Cram tests',
     'mocha': 'Mocha unit tests',
     'py': 'Python unit tests',
     'tc': 'Executed by TaskCluster',
-    'tc-A': 'Android Gradle tests executed by TaskCluster',
     'tc-e10s': 'Executed by TaskCluster with e10s',
     'tc-Fxfn-l': 'Firefox functional tests (local) executed by TaskCluster',
     'tc-Fxfn-l-e10s': 'Firefox functional tests (local) executed by TaskCluster with e10s',
@@ -507,16 +442,10 @@ GROUP_NAMES = {
     'tc-R': 'Reftests executed by TaskCluster',
     'tc-R-e10s': 'Reftests executed by TaskCluster with e10s',
     'tc-T': 'Talos performance tests executed by TaskCluster',
-    'tc-Tsd': 'Talos performance tests executed by TaskCluster with Stylo disabled',
-    'tc-Tss': 'Talos performance tests executed by TaskCluster with Stylo sequential',
     'tc-T-e10s': 'Talos performance tests executed by TaskCluster with e10s',
-    'tc-Tsd-e10s': 'Talos performance tests executed by TaskCluster with e10s, Stylo disabled',
-    'tc-Tss-e10s': 'Talos performance tests executed by TaskCluster with e10s, Stylo sequential',
     'tc-tt-c': 'Telemetry client marionette tests',
     'tc-tt-c-e10s': 'Telemetry client marionette tests with e10s',
     'tc-SY-e10s': 'Are we slim yet tests by TaskCluster with e10s',
-    'tc-SYsd-e10s': 'Are we slim yet tests by TaskCluster with e10s, Stylo disabled',
-    'tc-SYss-e10s': 'Are we slim yet tests by TaskCluster with e10s, Stylo sequential',
     'tc-VP': 'VideoPuppeteer tests executed by TaskCluster',
     'tc-W': 'Web platform tests executed by TaskCluster',
     'tc-W-e10s': 'Web platform tests executed by TaskCluster with e10s',
@@ -526,7 +455,7 @@ GROUP_NAMES = {
     'tc-L10n-Rpk': 'Localized Repackaged Repacks executed by Taskcluster',
     'tc-BM-L10n': 'Beetmover for locales executed by Taskcluster',
     'tc-BMR-L10n': 'Beetmover repackages for locales executed by Taskcluster',
-    'c-Up': 'Balrog submission of complete updates',
+    'tc-Up': 'Balrog submission of updates, executed by Taskcluster',
     'tc-cs': 'Checksum signing executed by Taskcluster',
     'tc-rs': 'Repackage signing executed by Taskcluster',
     'tc-BMcs': 'Beetmover checksums, executed by Taskcluster',
@@ -535,15 +464,11 @@ GROUP_NAMES = {
     'I': 'Docker Image Builds',
     'TL': 'Toolchain builds for Linux 64-bits',
     'TM': 'Toolchain builds for OSX',
-    'TMW': 'Toolchain builds for Windows MinGW',
     'TW32': 'Toolchain builds for Windows 32-bits',
     'TW64': 'Toolchain builds for Windows 64-bits',
     'SM-tc': 'Spidermonkey builds',
     'pub': 'APK publishing',
-    'p': 'Partial generation',
-    'ps': 'Partials signing',
 }
-
 UNKNOWN_GROUP_NAME = "Treeherder group {} has no name; add it to " + __file__
 
 V2_ROUTE_TEMPLATES = [
@@ -578,19 +503,7 @@ TREEHERDER_ROUTE_ROOTS = {
     'staging': 'tc-treeherder-stage',
 }
 
-# Which repository repository revision to use when reporting results to treeherder.
-DEFAULT_BRANCH_REV_PARAM = 'head_rev'
-BRANCH_REV_PARAM = {
-    'comm-esr45': 'comm_head_rev',
-    'comm-esr52': 'comm_head_rev',
-    'comm-beta': 'comm_head_rev',
-    'comm-central': 'comm_head_rev',
-    'comm-aurora': 'comm_head_rev',
-    'try-comm-central': 'comm_head_rev',
-}
-
-COALESCE_KEY = '{project}.{job-identifier}'
-SUPERSEDER_URL = 'https://coalesce.mozilla-releng.net/v1/list/{age}/{size}/{key}'
+COALESCE_KEY = 'builds.{project}.{name}'
 
 DEFAULT_BRANCH_PRIORITY = 'low'
 BRANCH_PRIORITIES = {
@@ -649,61 +562,19 @@ def index_builder(name):
     return wrap
 
 
-def coalesce_key(config, task):
-    return COALESCE_KEY.format(**{
-               'project': config.params['project'],
-               'job-identifier': task['coalesce']['job-identifier'],
-           })
-
-
-def superseder_url(config, task):
-    key = coalesce_key(config, task)
-    age = task['coalesce']['age']
-    size = task['coalesce']['size']
-    return SUPERSEDER_URL.format(
-        age=age,
-        size=size,
-        key=key
-    )
-
-
 @payload_builder('docker-worker')
 def build_docker_worker_payload(config, task, task_def):
     worker = task['worker']
-    level = int(config.params['level'])
 
     image = worker['docker-image']
     if isinstance(image, dict):
-        if 'in-tree' in image:
-            name = image['in-tree']
-            docker_image_task = 'build-docker-image-' + image['in-tree']
-            task.setdefault('dependencies', {})['docker-image'] = docker_image_task
-
-            image = {
-                "path": "public/image.tar.zst",
-                "taskId": {"task-reference": "<docker-image>"},
-                "type": "task-image",
-            }
-
-            # Find VOLUME in Dockerfile.
-            volumes = dockerutil.parse_volumes(name)
-            for v in sorted(volumes):
-                if v in worker['volumes']:
-                    raise Exception('volume %s already defined; '
-                                    'if it is defined in a Dockerfile, '
-                                    'it does not need to be specified in the '
-                                    'worker definition' % v)
-
-                worker['volumes'].append(v)
-
-        elif 'indexed' in image:
-            image = {
-                "path": "public/image.tar.zst",
-                "namespace": image['indexed'],
-                "type": "indexed-image",
-            }
-        else:
-            raise Exception("unknown docker image type")
+        docker_image_task = 'build-docker-image-' + image['in-tree']
+        task.setdefault('dependencies', {})['docker-image'] = docker_image_task
+        image = {
+            "path": "public/image.tar.zst",
+            "taskId": {"task-reference": "<docker-image>"},
+            "type": "task-image",
+        }
 
     features = {}
 
@@ -765,77 +636,12 @@ def build_docker_worker_payload(config, task, task_def):
             }
         payload['artifacts'] = artifacts
 
-    if isinstance(worker.get('docker-image'), basestring):
-        out_of_tree_image = worker['docker-image']
-    else:
-        out_of_tree_image = None
-
-    run_task = any([
-        payload.get('command', [''])[0].endswith('run-task'),
-        # image_builder is special and doesn't get detected like other tasks.
-        # It uses run-task so it needs our cache manipulations.
-        (out_of_tree_image or '').startswith('taskcluster/image_builder'),
-    ])
-
     if 'caches' in worker:
         caches = {}
-
-        # run-task knows how to validate caches.
-        #
-        # To help ensure new run-task features and bug fixes don't interfere
-        # with existing caches, we seed the hash of run-task into cache names.
-        # So, any time run-task changes, we should get a fresh set of caches.
-        # This means run-task can make changes to cache interaction at any time
-        # without regards for backwards or future compatibility.
-        #
-        # But this mechanism only works for in-tree Docker images that are built
-        # with the current run-task! For out-of-tree Docker images, we have no
-        # way of knowing their content of run-task. So, in addition to varying
-        # cache names by the contents of run-task, we also take the Docker image
-        # name into consideration. This means that different Docker images will
-        # never share the same cache. This is a bit unfortunate. But it is the
-        # safest thing to do. Fortunately, most images are defined in-tree.
-        #
-        # For out-of-tree Docker images, we don't strictly need to incorporate
-        # the run-task content into the cache name. However, doing so preserves
-        # the mechanism whereby changing run-task results in new caches
-        # everywhere.
-        if run_task:
-            suffix = '-%s' % _run_task_suffix()
-
-            if out_of_tree_image:
-                name_hash = hashlib.sha256(out_of_tree_image).hexdigest()
-                suffix += name_hash[0:12]
-
-        else:
-            suffix = ''
-
-        skip_untrusted = config.params['project'] == 'try' or level == 1
-
         for cache in worker['caches']:
-            # Some caches aren't enabled in environments where we can't
-            # guarantee certain behavior. Filter those out.
-            if cache.get('skip-untrusted') and skip_untrusted:
-                continue
-
-            name = '%s%s' % (cache['name'], suffix)
-            caches[name] = cache['mount-point']
-            task_def['scopes'].append('docker-worker:cache:%s' % name)
-
-        # Assertion: only run-task is interested in this.
-        if run_task:
-            payload['env']['TASKCLUSTER_CACHES'] = ';'.join(sorted(
-                caches.values()))
-
+            caches[cache['name']] = cache['mount-point']
+            task_def['scopes'].append('docker-worker:cache:' + cache['name'])
         payload['cache'] = caches
-
-    # And send down volumes information to run-task as well.
-    if run_task and worker.get('volumes'):
-        payload['env']['TASKCLUSTER_VOLUMES'] = ';'.join(
-            sorted(worker['volumes']))
-
-    if payload.get('cache') and skip_untrusted:
-        payload['env']['TASKCLUSTER_UNTRUSTED_CACHES'] = '1'
 
     if features:
         payload['features'] = features
@@ -843,10 +649,11 @@ def build_docker_worker_payload(config, task, task_def):
         payload['capabilities'] = capabilities
 
     # coalesce / superseding
-    if 'coalesce' in task:
-        payload['supersederUrl'] = superseder_url(config, task)
-
-    check_caches_are_volumes(task)
+    if 'coalesce-name' in task and int(config.params['level']) > 1:
+        key = COALESCE_KEY.format(
+            project=config.params['project'],
+            name=task['coalesce-name'])
+        payload['supersederUrl'] = "https://coalesce.mozilla-releng.net/v1/list/" + key
 
 
 @payload_builder('generic-worker')
@@ -899,10 +706,6 @@ def build_generic_worker_payload(config, task, task_def):
 
     if features:
         task_def['payload']['features'] = features
-
-    # coalesce / superseding
-    if 'coalesce' in task:
-        task_def['payload']['supersederUrl'] = superseder_url(config, task)
 
 
 @payload_builder('scriptworker-signing')
@@ -989,8 +792,8 @@ def build_macosx_engine_payload(config, task, task_def):
 
 @payload_builder('buildbot-bridge')
 def build_buildbot_bridge_payload(config, task, task_def):
-    task['extra'].pop('treeherder', None)
-    task['extra'].pop('treeherderEnv', None)
+    del task['extra']['treeherder']
+    del task['extra']['treeherderEnv']
     worker = task['worker']
     task_def['payload'] = {
         'buildername': worker['buildername'],
@@ -1145,16 +948,14 @@ def add_index_routes(config, tasks):
 @transforms.add
 def build_task(config, tasks):
     for task in tasks:
-        level = str(config.params['level'])
-        worker_type = task['worker-type'].format(level=level)
+        worker_type = task['worker-type'].format(level=str(config.params['level']))
         provisioner_id, worker_type = worker_type.split('/', 1)
 
         routes = task.get('routes', [])
-        scopes = [s.format(level=level) for s in task.get('scopes', [])]
+        scopes = task.get('scopes', [])
 
         # set up extra
         extra = task.get('extra', {})
-        extra['parent'] = os.environ.get('TASK_ID', '')
         task_th = task.get('treeherder')
         if task_th:
             extra['treeherderEnv'] = task_th['environments']
@@ -1175,15 +976,10 @@ def build_task(config, tasks):
             treeherder['jobKind'] = task_th['kind']
             treeherder['tier'] = task_th['tier']
 
-            treeherder_rev = config.params[
-                BRANCH_REV_PARAM.get(
-                    config.params['project'],
-                    DEFAULT_BRANCH_REV_PARAM)]
-
             routes.extend([
                 '{}.v2.{}.{}.{}'.format(TREEHERDER_ROUTE_ROOTS[env],
                                         config.params['project'],
-                                        treeherder_rev,
+                                        config.params['head_rev'],
                                         config.params['pushlog_id'])
                 for env in task_th['environments']
             ])
@@ -1194,8 +990,10 @@ def build_task(config, tasks):
         if 'deadline-after' not in task:
             task['deadline-after'] = '1 day'
 
-        if 'coalesce' in task:
-            key = coalesce_key(config, task)
+        if 'coalesce-name' in task and int(config.params['level']) > 1:
+            key = COALESCE_KEY.format(
+                project=config.params['project'],
+                name=task['coalesce-name'])
             routes.append('coalesce.v1.' + key)
 
         if 'priority' not in task:
@@ -1204,11 +1002,7 @@ def build_task(config, tasks):
                 DEFAULT_BRANCH_PRIORITY)
 
         tags = task.get('tags', {})
-        tags.update({
-            'createdForUser': config.params['owner'],
-            'kind': config.kind,
-            'label': task['label'],
-        })
+        tags.update({'createdForUser': config.params['owner']})
 
         task_def = {
             'provisionerId': provisioner_id,
@@ -1235,7 +1029,7 @@ def build_task(config, tasks):
         if task_th:
             # link back to treeherder in description
             th_push_link = 'https://treeherder.mozilla.org/#/jobs?repo={}&revision={}'.format(
-                config.params['project'], treeherder_rev)
+                config.params['project'], config.params['head_rev'])
             task_def['metadata']['description'] += ' ([Treeherder push]({}))'.format(
                 th_push_link)
 
@@ -1262,102 +1056,8 @@ def build_task(config, tasks):
             'task': task_def,
             'dependencies': task.get('dependencies', {}),
             'attributes': attributes,
-            'optimization': task.get('optimization', None),
+            'optimizations': task.get('optimizations', []),
         }
-
-
-def check_caches_are_volumes(task):
-    """Ensures that all cache paths are defined as volumes.
-
-    Caches and volumes are the only filesystem locations whose content
-    isn't defined by the Docker image itself. Some caches are optional
-    depending on the job environment. We want paths that are potentially
-    caches to have as similar behavior regardless of whether a cache is
-    used. To help enforce this, we require that all paths used as caches
-    to be declared as Docker volumes. This check won't catch all offenders.
-    But it is better than nothing.
-    """
-    volumes = set(task['worker']['volumes'])
-    paths = set(c['mount-point'] for c in task['worker'].get('caches', []))
-    missing = paths - volumes
-
-    if not missing:
-        return
-
-    raise Exception('task %s (image %s) has caches that are not declared as '
-                    'Docker volumes: %s' % (task['label'],
-                                            task['worker']['docker-image'],
-                                            ', '.join(sorted(missing))))
-
-
-@transforms.add
-def check_run_task_caches(config, tasks):
-    """Audit for caches requiring run-task.
-
-    run-task manages caches in certain ways. If a cache managed by run-task
-    is used by a non run-task task, it could cause problems. So we audit for
-    that and make sure certain cache names are exclusive to run-task.
-
-    IF YOU ARE TEMPTED TO MAKE EXCLUSIONS TO THIS POLICY, YOU ARE LIKELY
-    CONTRIBUTING TECHNICAL DEBT AND WILL HAVE TO SOLVE MANY OF THE PROBLEMS
-    THAT RUN-TASK ALREADY SOLVES. THINK LONG AND HARD BEFORE DOING THAT.
-    """
-    re_reserved_caches = re.compile('''^
-        (level-\d+-checkouts|level-\d+-tooltool-cache)
-    ''', re.VERBOSE)
-
-    re_sparse_checkout_cache = re.compile('^level-\d+-checkouts-sparse')
-
-    suffix = _run_task_suffix()
-
-    for task in tasks:
-        payload = task['task'].get('payload', {})
-        command = payload.get('command') or ['']
-
-        main_command = command[0] if isinstance(command[0], basestring) else ''
-        run_task = main_command.endswith('run-task')
-
-        require_sparse_cache = False
-        have_sparse_cache = False
-
-        if run_task:
-            for arg in command[1:]:
-                if not isinstance(arg, basestring):
-                    continue
-
-                if arg == '--':
-                    break
-
-                if arg.startswith('--sparse-profile'):
-                    require_sparse_cache = True
-                    break
-
-        for cache in payload.get('cache', {}):
-            if re_sparse_checkout_cache.match(cache):
-                have_sparse_cache = True
-
-            if not re_reserved_caches.match(cache):
-                continue
-
-            if not run_task:
-                raise Exception(
-                    '%s is using a cache (%s) reserved for run-task '
-                    'change the task to use run-task or use a different '
-                    'cache name' % (task['label'], cache))
-
-            if not cache.endswith(suffix):
-                raise Exception(
-                    '%s is using a cache (%s) reserved for run-task '
-                    'but the cache name is not dependent on the contents '
-                    'of run-task; change the cache name to conform to the '
-                    'naming requirements' % (task['label'], cache))
-
-        if require_sparse_cache and not have_sparse_cache:
-            raise Exception('%s is using a sparse checkout but not using '
-                            'a sparse checkout cache; change the checkout '
-                            'cache name so it is sparse aware' % task['label'])
-
-        yield task
 
 
 # Check that the v2 route templates match those used by Mozharness.  This can

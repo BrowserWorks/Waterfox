@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
 
 this.EXPORTED_SYMBOLS = ["WebVTT"];
 
@@ -352,6 +351,7 @@ const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
         return null;
       }
       var element = window.document.createElement(tagName);
+      element.localName = tagName;
       var name = TAG_ANNOTATION[type];
       if (name) {
         element[name] = annotation ? annotation.trim() : "";
@@ -1213,9 +1213,7 @@ const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
           line = parseHeader();
         }
 
-        var nextIteration = false;
-        while (nextIteration || self.buffer) {
-          nextIteration = false;
+        while (self.buffer) {
           if (!line) {
             // Since the data receiving is async, we need to wait until the
             // buffer gets the full line.
@@ -1234,7 +1232,6 @@ const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
             // If there is no cue identifier, keep the line and reuse this line
             // in next iteration.
             if (!parseCueIdentifier(line)) {
-              nextIteration = true;
               continue;
             }
             break;
@@ -1249,7 +1246,6 @@ const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
               self.cue = null;
               self.state = "ID";
               // Keep the line and reuse this line in next iteration.
-              nextIteration = true;
               continue;
             }
             if (self.cue.text) {

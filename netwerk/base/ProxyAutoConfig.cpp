@@ -21,6 +21,10 @@
 #include "nsServiceManagerUtils.h"
 #include "nsNetCID.h"
 
+#if defined(XP_MACOSX)
+#  include "nsMacUtilsImpl.h"
+#endif
+
 namespace mozilla {
 namespace net {
 
@@ -307,8 +311,9 @@ public:
   // nsITimerCallback
   NS_IMETHOD Notify(nsITimer *timer) override
   {
-    if (mRequest)
-      mRequest->Cancel(NS_ERROR_NET_TIMEOUT);
+    nsCOMPtr<nsICancelable> request(mRequest);
+    if (request)
+      request->Cancel(NS_ERROR_NET_TIMEOUT);
     mTimer = nullptr;
     return NS_OK;
   }
@@ -440,7 +445,7 @@ ProxyAutoConfig::ResolveAddress(const nsCString &aHostName,
 
   if (aTimeout && helper->mRequest) {
     if (!mTimer)
-      mTimer = NS_NewTimer();
+      mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     if (mTimer) {
       mTimer->SetTarget(mMainThreadEventTarget);
       mTimer->InitWithCallback(helper, aTimeout, nsITimer::TYPE_ONE_SHOT);
@@ -561,12 +566,12 @@ bool PACProxyAlert(JSContext *cx, unsigned int argc, JS::Value *vp)
 }
 
 static const JSFunctionSpec PACGlobalFunctions[] = {
-  JS_FN("dnsResolve", PACDnsResolve, 1, 0),
+  JS_FS("dnsResolve", PACDnsResolve, 1, 0),
 
   // a global "var pacUseMultihomedDNS = true;" will change behavior
   // of myIpAddress to actively use DNS
-  JS_FN("myIpAddress", PACMyIpAddress, 0, 0),
-  JS_FN("alert", PACProxyAlert, 1, 0),
+  JS_FS("myIpAddress", PACMyIpAddress, 0, 0),
+  JS_FS("alert", PACProxyAlert, 1, 0),
   JS_FS_END
 };
 
@@ -681,7 +686,7 @@ private:
 static const JSClassOps sJSContextWrapperGlobalClassOps = {
   nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   JS_GlobalObjectTraceHook
 };
 
@@ -723,6 +728,10 @@ ProxyAutoConfig::SetupJS()
 {
   mJSNeedsSetup = false;
   MOZ_ASSERT(!GetRunning(), "JIT is running");
+
+#if defined(XP_MACOSX)
+  nsMacUtilsImpl::EnableTCSMIfAvailable();
+#endif
 
   delete mJSContext;
   mJSContext = nullptr;
@@ -872,7 +881,6 @@ ProxyAutoConfig::GC()
 ProxyAutoConfig::~ProxyAutoConfig()
 {
   MOZ_COUNT_DTOR(ProxyAutoConfig);
-  MOZ_ASSERT(mShutdown, "Shutdown must be called before dtor.");
   NS_ASSERTION(!mJSContext,
                "~ProxyAutoConfig leaking JS context that "
                "should have been deleted on pac thread");
@@ -883,9 +891,8 @@ ProxyAutoConfig::Shutdown()
 {
   MOZ_ASSERT(!NS_IsMainThread(), "wrong thread for shutdown");
 
-  if (NS_WARN_IF(GetRunning()) || mShutdown) {
+  if (GetRunning() || mShutdown)
     return;
-  }
 
   mShutdown = true;
   delete mJSContext;

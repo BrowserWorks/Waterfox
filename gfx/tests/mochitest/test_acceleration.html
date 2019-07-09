@@ -32,7 +32,6 @@ var windows = SpecialPowers.Services.ww.getWindowEnumerator();
 var windowutils;
 var acceleratedWindows = 0;
 var advancedLayersWindows = 0;
-var layerManagerLog = [];
 while (windows.hasMoreElements()) {
   windowutils = windows.getNext().QueryInterface(Ci.nsIInterfaceRequestor)
                                  .getInterface(Ci.nsIDOMWindowUtils);
@@ -43,8 +42,6 @@ while (windows.hasMoreElements()) {
     if (windowutils.usingAdvancedLayers) {
       advancedLayersWindows++;
     }
-    layerManagerLog.push(windowutils.layerManagerType + ":" +
-                         windowutils.usingAdvancedLayers);
   } catch (e) {
     // The window may not have a layer manager, in which case we get an error.
     // Don't count it as an accelerated window.
@@ -107,7 +104,7 @@ switch(osName)
     var advancedLayersEnabled = false;
     var advancedLayersEnabledOnWin7 = false;
     try {
-      advancedLayersEnabled = SpecialPowers.getBoolPref("layers.mlgpu.enabled");
+      advancedLayersEnabled = SpecialPowers.getBoolPref("layers.mlgpu.dev-enabled");
       advancedLayersEnabledOnWin7 = SpecialPowers.getBoolPref("layers.mlgpu.enable-on-windows7");
     } catch (e) {}
     var shouldGetAL = advancedLayersEnabled;
@@ -115,8 +112,7 @@ switch(osName)
       shouldGetAL &= advancedLayersEnabledOnWin7;
     }
     if (shouldGetAL) {
-      isnot(advancedLayersWindows, 0, "Advanced Layers enabled on Windows; "
-                                      + layerManagerLog.join(","));
+      isnot(advancedLayersWindows, 0, "Advanced Layers enabled on Windows");
     } else {
       is(advancedLayersWindows, 0, "Advanced Layers disabled on Windows");
     }
@@ -127,7 +123,7 @@ switch(osName)
     break;
 
   default:
-    if (xr.OS == "Android") {
+    if (xr.OS == "Android" && xr.widgetToolkit != "gonk") {
       isnot(acceleratedWindows, 0, "Acceleration enabled on Android");
     } else {
       is(acceleratedWindows, 0, "Acceleration not supported on '" + osName + "'");

@@ -10,6 +10,10 @@ Cu.import("resource://services-crypto/utils.js");
 
 const FAKE_SESSION_TOKEN = "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf";
 
+function run_test() {
+  run_next_test();
+}
+
 // https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#.2Faccount.2Fkeys
 var ACCOUNT_KEYS = {
   keyFetch:     h("8081828384858687 88898a8b8c8d8e8f" +
@@ -261,7 +265,7 @@ add_task(async function test_signIn() {
   });
 
   // Note this strings must be unicode and not already utf-8 encoded.
-  let unicodeUsername = "m\xe9@example.com"; // 'mé@example.com'
+  let unicodeUsername = "m\xe9@example.com" // 'mé@example.com'
   let server = httpd_setup({
     "/account/login": function(request, response) {
       let body = CommonUtils.readBytesFromInputStream(request.bodyInputStream);

@@ -20,6 +20,8 @@ const testWindow = iframe.contentDocument.defaultView;
 // We should do the same checks for the callbacks from v0 spec.
 [
   'createdCallback',
+  'attachedCallback',
+  'detachedCallback',
   'attributeChangedCallback',
 ].forEach(callback => {
   var c = class {};

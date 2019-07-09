@@ -474,25 +474,24 @@ nsSAXXMLReader::ParseFromString(const nsAString &aStr,
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::ParseFromStream(nsIInputStream *aStreamPtr,
+nsSAXXMLReader::ParseFromStream(nsIInputStream *aStream,
                                 const char *aCharset,
                                 const char *aContentType)
 {
   // Don't call this in the middle of an async parse
   NS_ENSURE_TRUE(!mIsAsyncParse, NS_ERROR_FAILURE);
 
-  NS_ENSURE_ARG(aStreamPtr);
+  NS_ENSURE_ARG(aStream);
   NS_ENSURE_ARG(aContentType);
 
   // Put the nsCOMPtr out here so we hold a ref to the stream as needed
   nsresult rv;
-  nsCOMPtr<nsIInputStream> stream = aStreamPtr;
-  if (!NS_InputStreamIsBuffered(stream)) {
-    nsCOMPtr<nsIInputStream> bufferedStream;
+  nsCOMPtr<nsIInputStream> bufferedStream;
+  if (!NS_InputStreamIsBuffered(aStream)) {
     rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream),
-                                   stream.forget(), 4096);
+                                   aStream, 4096);
     NS_ENSURE_SUCCESS(rv, rv);
-    stream = bufferedStream;
+    aStream = bufferedStream;
   }
  
   rv = EnsureBaseURI();
@@ -505,7 +504,7 @@ nsSAXXMLReader::ParseFromStream(nsIInputStream *aStreamPtr,
   nsCOMPtr<nsIChannel> parserChannel;
   rv = NS_NewInputStreamChannel(getter_AddRefs(parserChannel),
                                 mBaseURI,
-                                stream,
+                                aStream,
                                 nullPrincipal,
                                 nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
                                 nsIContentPolicy::TYPE_OTHER,
@@ -537,7 +536,7 @@ nsSAXXMLReader::ParseFromStream(nsIInputStream *aStreamPtr,
   uint64_t offset = 0;
   while (NS_SUCCEEDED(rv) && NS_SUCCEEDED(status)) {
     uint64_t available;
-    rv = stream->Available(&available);
+    rv = aStream->Available(&available);
     if (rv == NS_BASE_STREAM_CLOSED) {
       rv = NS_OK;
       available = 0;
@@ -553,7 +552,7 @@ nsSAXXMLReader::ParseFromStream(nsIInputStream *aStreamPtr,
       available = UINT32_MAX;
 
     rv = mListener->OnDataAvailable(parserChannel, nullptr,
-                                    stream,
+                                    aStream,
                                     offset,
                                     (uint32_t)available);
     if (NS_SUCCEEDED(rv))

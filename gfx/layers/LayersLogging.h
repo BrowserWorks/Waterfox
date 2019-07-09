@@ -71,14 +71,6 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::PointTyped<T>& p,
 
 template<class T>
 void
-AppendToString(std::stringstream& aStream, const mozilla::gfx::Point3DTyped<T>& p,
-               const char* pfx="", const char* sfx="")
-{
-  aStream << pfx << p << sfx;
-}
-
-template<class T>
-void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::IntPointTyped<T>& p,
                const char* pfx="", const char* sfx="")
 {
@@ -93,7 +85,7 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::RectTyped<T>& r,
   aStream << pfx;
   aStream << nsPrintfCString(
     "(x=%f, y=%f, w=%f, h=%f)",
-    r.x, r.y, r.Width(), r.Height()).get();
+    r.x, r.y, r.width, r.height).get();
   aStream << sfx;
 }
 
@@ -105,7 +97,7 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::IntRectTyped<T>& 
   aStream << pfx;
   aStream << nsPrintfCString(
     "(x=%d, y=%d, w=%d, h=%d)",
-    r.x, r.y, r.Width(), r.Height()).get();
+    r.x, r.y, r.width, r.height).get();
   aStream << sfx;
 }
 
@@ -119,10 +111,6 @@ AppendToString(std::stringstream& aStream, const wr::LayoutRect& r,
 
 void
 AppendToString(std::stringstream& aStream, const wr::LayoutSize& s,
-               const char* pfx="", const char* sfx="");
-
-void
-AppendToString(std::stringstream& aStream, const wr::StickySideConstraint& s,
                const char* pfx="", const char* sfx="");
 
 void

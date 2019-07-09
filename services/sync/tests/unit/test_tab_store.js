@@ -4,6 +4,7 @@
 Cu.import("resource://services-sync/engines/tabs.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
+Cu.import("resource://testing-common/services/common/utils.js");
 
 async function getMockStore() {
   let engine = new TabEngine(Service);
@@ -25,7 +26,7 @@ add_task(async function test_create() {
              cleartext: { "foo": "bar" },
              modified: 1000};
   await store.applyIncoming(rec);
-  deepEqual(store._remoteClients.id1, { lastModified: 1000, foo: "bar" });
+  deepEqual(store._remoteClients["id1"], { lastModified: 1000, foo: "bar" });
 
   _("Create a second record");
   rec = {id: "id2",
@@ -33,7 +34,7 @@ add_task(async function test_create() {
          cleartext: { "foo2": "bar2" },
          modified: 2000};
   await store.applyIncoming(rec);
-  deepEqual(store._remoteClients.id2, { lastModified: 2000, foo2: "bar2" });
+  deepEqual(store._remoteClients["id2"], { lastModified: 2000, foo2: "bar2" });
 
   _("Create a third record");
   rec = {id: "id3",
@@ -41,7 +42,7 @@ add_task(async function test_create() {
          cleartext: { "foo3": "bar3" },
          modified: 3000};
   await store.applyIncoming(rec);
-  deepEqual(store._remoteClients.id3, { lastModified: 3000, foo3: "bar3" });
+  deepEqual(store._remoteClients["id3"], { lastModified: 3000, foo3: "bar3" });
 });
 
 add_task(async function test_getAllTabs() {
@@ -94,9 +95,8 @@ add_task(async function test_createRecord() {
   store.getTabState = mockGetTabState;
   store.shouldSkipWindow = mockShouldSkipWindow;
   store.getWindowEnumerator = mockGetWindowEnumerator.bind(this, "http://foo.com", 1, 1);
-  // This number is sensitive to our hard-coded default max record payload size
-  // in service.js (256 * 1024)
-  let numtabs = 2600;
+
+  let numtabs = 2600; // Note: this number is connected to DEFAULT_MAX_RECORD_PAYLOAD_BYTES
 
   store.getWindowEnumerator = mockGetWindowEnumerator.bind(this, "http://foo.com", 1, 1);
   record = await store.createRecord("fake-guid");
@@ -108,12 +108,4 @@ add_task(async function test_createRecord() {
   record = await store.createRecord("fake-guid");
   ok(record instanceof TabSetRecord);
   equal(record.tabs.length, 2501);
-
-  store.getMaxRecordPayloadSize = () => 512 * 1024;
-  numtabs = 5200;
-  _("Modify the max record payload size and create a big record");
-  store.getWindowEnumerator = mockGetWindowEnumerator.bind(this, "http://foo.com", 1, numtabs);
-  record = await store.createRecord("fake-guid");
-  ok(record instanceof TabSetRecord);
-  equal(record.tabs.length, 5021);
 });

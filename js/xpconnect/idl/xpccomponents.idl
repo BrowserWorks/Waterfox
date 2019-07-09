@@ -14,8 +14,6 @@ interface nsIAddonInterposition;
 interface nsIClassInfo;
 interface nsIComponentManager;
 interface nsICycleCollectorListener;
-interface nsIFile;
-interface nsIURI;
 interface nsIJSCID;
 interface nsIJSIID;
 interface nsIPrincipal;
@@ -46,8 +44,6 @@ interface nsIXPCComponents_Interfaces : nsISupports
 [scriptable, uuid(978ff520-d26c-11d2-9842-006008962422)]
 interface nsIXPCComponents_Classes : nsISupports
 {
-  // Make it so that |cid| gets mapped to |idString|.
-  void initialize(in nsIJSCID cid, in string idString);
 };
 
 /**
@@ -695,19 +691,6 @@ interface nsIXPCComponents_Utils : nsISupports
      * startup, measured with a monotonic clock.
      */
     double now();
-
-    /*
-     * Reads the given file and returns its contents. If called during early
-     * startup, the file will be pre-read on a background thread during profile
-     * startup so its contents will be available the next time they're read.
-     */
-    ACString readFile(in nsIFile file);
-
-    /*
-     * Reads the given local file URL and returns its contents. This has the
-     * same semantics of readFile.
-     */
-    ACString readURI(in nsIURI url);
 };
 
 /**
@@ -747,4 +730,7 @@ interface nsIXPCComponents : nsIXPCComponentsBase
     // A javascript component can set |returnCode| to specify an nsresult to
     // be returned without throwing an exception.
     attribute jsval                                     returnCode;
+
+    /* @deprecated Use Components.utils.reportError instead. */
+    [deprecated, implicit_jscontext] void reportError(in jsval error);
 };

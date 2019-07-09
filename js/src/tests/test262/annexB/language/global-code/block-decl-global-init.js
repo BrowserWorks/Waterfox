@@ -20,11 +20,9 @@ info: |
 var global = fnGlobalObject();
 assert.sameValue(f, undefined, 'binding is initialized to `undefined`');
 
-verifyProperty(global, "f", {
-  enumerable: true,
-  writable: true,
-  configurable: false
-});
+verifyEnumerable(global, 'f');
+verifyWritable(global, 'f');
+verifyNotConfigurable(global, 'f');
 
 {
   function f() {  }

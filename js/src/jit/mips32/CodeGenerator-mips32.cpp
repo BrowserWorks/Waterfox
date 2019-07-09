@@ -176,10 +176,16 @@ CodeGeneratorMIPS::visitBox(LBox* box)
 void
 CodeGeneratorMIPS::visitBoxFloatingPoint(LBoxFloatingPoint* box)
 {
-    const AnyRegister in = ToAnyRegister(box->getOperand(0));
-    const ValueOperand out = ToOutValue(box);
+    const LDefinition* payload = box->getDef(PAYLOAD_INDEX);
+    const LDefinition* type = box->getDef(TYPE_INDEX);
+    const LAllocation* in = box->getOperand(0);
 
-    masm.moveValue(TypedOrValueRegister(box->type(), in), out);
+    FloatRegister reg = ToFloatRegister(in);
+    if (box->type() == MIRType::Float32) {
+        masm.convertFloat32ToDouble(reg, ScratchDoubleReg);
+        reg = ScratchDoubleReg;
+    }
+    masm.ma_mv(reg, ValueOperand(ToRegister(type), ToRegister(payload)));
 }
 
 void
@@ -396,7 +402,7 @@ CodeGeneratorMIPS::visitDivOrModI64(LDivOrModI64* lir)
         masm.bind(&notmin);
     }
 
-    masm.setupWasmABICall();
+    masm.setupUnalignedABICall(temp);
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
@@ -404,9 +410,9 @@ CodeGeneratorMIPS::visitDivOrModI64(LDivOrModI64* lir)
 
     MOZ_ASSERT(gen->compilingWasm());
     if (lir->mir()->isMod())
-        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::ModI64);
+        masm.callWithABI(wasm::SymbolicAddress::ModI64);
     else
-        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::DivI64);
+        masm.callWithABI(wasm::SymbolicAddress::DivI64);
     MOZ_ASSERT(ReturnReg64 == output);
 
     masm.bind(&done);
@@ -435,7 +441,7 @@ CodeGeneratorMIPS::visitUDivOrModI64(LUDivOrModI64* lir)
     if (lir->canBeDivideByZero())
         masm.branchTest64(Assembler::Zero, rhs, rhs, temp, trap(lir, wasm::Trap::IntegerDivideByZero));
 
-    masm.setupWasmABICall();
+    masm.setupUnalignedABICall(temp);
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
@@ -443,9 +449,9 @@ CodeGeneratorMIPS::visitUDivOrModI64(LUDivOrModI64* lir)
 
     MOZ_ASSERT(gen->compilingWasm());
     if (lir->mir()->isMod())
-        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UModI64);
+        masm.callWithABI(wasm::SymbolicAddress::UModI64);
     else
-        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UDivI64);
+        masm.callWithABI(wasm::SymbolicAddress::UDivI64);
 }
 
 template <typename T>
@@ -497,7 +503,6 @@ CodeGeneratorMIPS::emitWasmLoadI64(T* lir)
                 masm.ma_sra(output.high, output.low, Imm32(31));
         } else {
             ScratchRegisterScope scratch(masm);
-            MOZ_ASSERT(output.low != ptr);
             masm.ma_load_unaligned(output.low, BaseIndex(HeapReg, ptr, TimesOne),
                                    temp, SizeWord, isSigned ? SignExtend : ZeroExtend);
             masm.ma_addu(scratch, ptr, Imm32(INT64HIGH_OFFSET));
@@ -516,7 +521,6 @@ CodeGeneratorMIPS::emitWasmLoadI64(T* lir)
             masm.ma_sra(output.high, output.low, Imm32(31));
     } else {
         ScratchRegisterScope scratch(masm);
-        MOZ_ASSERT(output.low != ptr);
         masm.ma_load(output.low, BaseIndex(HeapReg, ptr, TimesOne), SizeWord);
         masm.ma_addu(scratch, ptr, Imm32(INT64HIGH_OFFSET));
         masm.ma_load(output.high, BaseIndex(HeapReg, scratch, TimesOne), SizeWord);
@@ -691,25 +695,6 @@ CodeGeneratorMIPS::visitWrapInt64ToInt32(LWrapInt64ToInt32* lir)
 }
 
 void
-CodeGeneratorMIPS::visitSignExtendInt64(LSignExtendInt64* lir)
-{
-    Register64 input = ToRegister64(lir->getInt64Operand(0));
-    Register64 output = ToOutRegister64(lir);
-    switch (lir->mode()) {
-      case MSignExtendInt64::Byte:
-        masm.move8SignExtend(input.low, output.low);
-        break;
-      case MSignExtendInt64::Half:
-        masm.move16SignExtend(input.low, output.low);
-        break;
-      case MSignExtendInt64::Word:
-        masm.move32(input.low, output.low);
-        break;
-    }
-    masm.ma_sra(output.high, output.low, Imm32(31));
-}
-
-void
 CodeGeneratorMIPS::visitClzI64(LClzI64* lir)
 {
     Register64 input = ToRegister64(lir->getInt64Operand(0));
@@ -759,17 +744,12 @@ CodeGeneratorMIPS::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
         MOZ_CRASH("unexpected type in visitOutOfLineWasmTruncateCheck");
     }
 
-    masm.Push(input);
-
-    masm.setupWasmABICall();
+    masm.setupUnalignedABICall(output.high);
     masm.passABIArg(scratch, MoveOp::DOUBLE);
     if (lir->mir()->isUnsigned())
-        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::TruncateDoubleToUint64);
+        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToUint64);
     else
-        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::TruncateDoubleToInt64);
-
-    masm.Pop(input);
-
+        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToInt64);
     masm.ma_b(output.high, Imm32(0x80000000), ool->rejoin(), Assembler::NotEqual);
     masm.ma_b(output.low, Imm32(0x00000000), ool->rejoin(), Assembler::NotEqual);
     masm.ma_b(ool->entry());
@@ -793,23 +773,20 @@ CodeGeneratorMIPS::visitInt64ToFloatingPoint(LInt64ToFloatingPoint* lir)
     regs.take(input.high);
     Register temp = regs.takeAny();
 
-    masm.setupWasmABICall();
+    masm.setupUnalignedABICall(temp);
     masm.passABIArg(input.high);
     masm.passABIArg(input.low);
 
     if (lir->mir()->isUnsigned())
-        if (toType == MIRType::Double)
-            masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::Uint64ToDouble, MoveOp::DOUBLE);
-        else
-            masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::Uint64ToFloat32, MoveOp::FLOAT32);
+        masm.callWithABI(wasm::SymbolicAddress::Uint64ToFloatingPoint, MoveOp::DOUBLE);
     else
-        if (toType == MIRType::Double)
-            masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::Int64ToDouble, MoveOp::DOUBLE);
-        else
-            masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::Int64ToFloat32, MoveOp::FLOAT32);
+        masm.callWithABI(wasm::SymbolicAddress::Int64ToFloatingPoint, MoveOp::DOUBLE);
 
     MOZ_ASSERT_IF(toType == MIRType::Double, output == ReturnDoubleReg);
-    MOZ_ASSERT_IF(toType == MIRType::Float32, output == ReturnFloat32Reg);
+    if (toType == MIRType::Float32) {
+         MOZ_ASSERT(output == ReturnFloat32Reg);
+         masm.convertDoubleToFloat32(ReturnDoubleReg, output);
+    }
 }
 
 void

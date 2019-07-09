@@ -10,7 +10,6 @@
 #include "nsIFrame.h"
 #include "nsContentUtils.h"
 #include "nsLayoutUtils.h"
-#include "mozilla/ServoCSSParser.h"
 
 namespace mozilla {
 namespace dom {
@@ -48,6 +47,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(DOMIntersectionObserver)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOwner)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocument)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mCallback)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mRoot)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mQueuedEntries)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -55,6 +55,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(DOMIntersectionObserver)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOwner)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocument)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCallback)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRoot)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mQueuedEntries)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -80,10 +81,7 @@ DOMIntersectionObserver::Constructor(const mozilla::dom::GlobalObject& aGlobal,
   RefPtr<DOMIntersectionObserver> observer =
     new DOMIntersectionObserver(window.forget(), aCb);
 
-  if (aOptions.mRoot) {
-    observer->mRoot = aOptions.mRoot;
-    observer->mRoot->RegisterIntersectionObserver(observer);
-  }
+  observer->mRoot = aOptions.mRoot;
 
   if (!observer->SetRootMargin(aOptions.mRootMargin)) {
     aRv.ThrowDOMException(NS_ERROR_DOM_SYNTAX_ERR,
@@ -117,11 +115,6 @@ DOMIntersectionObserver::Constructor(const mozilla::dom::GlobalObject& aGlobal,
 bool
 DOMIntersectionObserver::SetRootMargin(const nsAString& aString)
 {
-  if (mDocument && mDocument->IsStyledByServo()) {
-    return ServoCSSParser::ParseIntersectionObserverRootMargin(aString,
-                                                               &mRootMargin);
-  }
-
   // By not passing a CSS Loader object we make sure we don't parse in quirks
   // mode so that pixel/percent and unit-less values will be differentiated.
   nsCSSParser parser(nullptr);
@@ -145,7 +138,7 @@ DOMIntersectionObserver::SetRootMargin(const nsAString& aString)
 void
 DOMIntersectionObserver::GetRootMargin(mozilla::dom::DOMString& aRetVal)
 {
-  mRootMargin.AppendToString(eCSSProperty_DOM, aRetVal);
+  mRootMargin.AppendToString(eCSSProperty_DOM, aRetVal, nsCSSValue::eNormalized);
 }
 
 void
@@ -168,10 +161,6 @@ DOMIntersectionObserver::Observe(Element& aTarget)
 void
 DOMIntersectionObserver::Unobserve(Element& aTarget)
 {
-  if (!mObservationTargets.Contains(&aTarget)) {
-    return;
-  }
-
   if (mObservationTargets.Length() == 1) {
     Disconnect();
     return;
@@ -182,13 +171,8 @@ DOMIntersectionObserver::Unobserve(Element& aTarget)
 }
 
 void
-DOMIntersectionObserver::UnlinkElement(Element& aTarget)
+DOMIntersectionObserver::UnlinkTarget(Element& aTarget)
 {
-  if (mRoot && mRoot == &aTarget) {
-    mRoot = nullptr;
-    Disconnect();
-    return;
-  }
   mObservationTargets.RemoveElement(&aTarget);
   if (mObservationTargets.Length() == 0) {
     Disconnect();
@@ -320,11 +304,7 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
         }
         root = rootFrame->GetContent()->AsElement();
         nsIScrollableFrame* scrollFrame = do_QueryFrame(rootFrame);
-        // If we end up with a null root frame for some reason, we'll proceed
-        // with an empty root intersection rect.
-        if (scrollFrame) {
-          rootRect = scrollFrame->GetScrollPortRect();
-        }
+        rootRect = scrollFrame->GetScrollPortRect();
       }
     }
   }
@@ -332,7 +312,7 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
   nsMargin rootMargin;
   NS_FOR_CSS_SIDES(side) {
     nscoord basis = side == eSideTop || side == eSideBottom ?
-      rootRect.Height() : rootRect.Width();
+      rootRect.height : rootRect.width;
     nsCSSValue value = mRootMargin.*nsCSSRect::sides[side];
     nsStyleCoord coord;
     if (value.IsPixelLengthUnit()) {
@@ -442,15 +422,13 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
       }
     }
 
-    int64_t targetArea =
-      (int64_t) targetRect.Width() * (int64_t) targetRect.Height();
-    int64_t intersectionArea = !intersectionRect ? 0 :
-      (int64_t) intersectionRect->Width() *
-      (int64_t) intersectionRect->Height();
+    double targetArea = targetRect.width * targetRect.height;
+    double intersectionArea = !intersectionRect ?
+      0 : intersectionRect->width * intersectionRect->height;
 
     double intersectionRatio;
     if (targetArea > 0.0) {
-      intersectionRatio = (double) intersectionArea / (double) targetArea;
+      intersectionRatio = intersectionArea / targetArea;
     } else {
       intersectionRatio = intersectionRect.isSome() ? 1.0 : 0.0;
     }

@@ -157,15 +157,13 @@ ImageResource::SendOnUnlockedDraw(uint32_t aFlags)
     mProgressTracker->OnUnlockedDraw();
   } else {
     NotNull<RefPtr<ImageResource>> image = WrapNotNull(this);
-    nsCOMPtr<nsIEventTarget> eventTarget = mProgressTracker->GetEventTarget();
-    nsCOMPtr<nsIRunnable> ev = NS_NewRunnableFunction(
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
       "image::ImageResource::SendOnUnlockedDraw", [=]() -> void {
         RefPtr<ProgressTracker> tracker = image->GetProgressTracker();
         if (tracker) {
           tracker->OnUnlockedDraw();
         }
-      });
-    eventTarget->Dispatch(ev.forget(), NS_DISPATCH_NORMAL);
+      }));
   }
 }
 

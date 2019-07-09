@@ -73,6 +73,7 @@
 #include "plstr.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "mozilla/BackgroundHangMonitor.h"
+#include "mozilla/ThreadHangStats.h"
 #include "mozilla/ProcessedStack.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/FileUtils.h"
@@ -142,11 +143,12 @@ public:
                                Telemetry::ProcessedStack &aStack,
                                int32_t aSystemUptime,
                                int32_t aFirefoxUptime,
-                               HangAnnotations&& aAnnotations);
+                               HangAnnotationsPtr aAnnotations);
 #endif
 #if defined(MOZ_GECKO_PROFILER)
   static void DoStackCapture(const nsACString& aKey);
 #endif
+  static void RecordThreadHangStats(Telemetry::ThreadHangStats&& aStats);
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
   struct Stat {
     uint32_t hitCount;
@@ -200,6 +202,10 @@ private:
   // Stores data about stacks captured on demand.
   KeyedStackCapturer mStackCapturer;
 #endif
+
+  // mThreadHangStats stores recorded, inactive thread hang stats
+  Vector<Telemetry::ThreadHangStats> mThreadHangStats;
+  Mutex mThreadHangStatsMutex;
 
   CombinedStacks mLateWritesStacks; // This is collected out of the main thread.
   bool mCachedTelemetryData;
@@ -479,6 +485,7 @@ TelemetryImpl::TelemetryImpl()
   , mHangReportsMutex("Telemetry::mHangReportsMutex")
   , mCanRecordBase(false)
   , mCanRecordExtended(false)
+  , mThreadHangStatsMutex("Telemetry::mThreadHangStatsMutex")
   , mCachedTelemetryData(false)
   , mLastShutdownTime(0)
   , mFailedLockCount(0)
@@ -495,6 +502,7 @@ TelemetryImpl::~TelemetryImpl() {
   // We will fix this in bug 1367344.
   MutexAutoLock hashLock(mHashMutex);
   MutexAutoLock hangReportsLock(mHangReportsMutex);
+  MutexAutoLock threadHangsLock(mThreadHangStatsMutex);
 }
 
 void
@@ -564,33 +572,41 @@ TelemetryImpl::SetHistogramRecordingEnabled(const nsACString &id, bool aEnabled)
 }
 
 NS_IMETHODIMP
-TelemetryImpl::SnapshotHistograms(unsigned int aDataset, bool aSubsession,
-                                  bool aClearHistograms, JSContext* aCx,
-                                  JS::MutableHandleValue aResult)
+TelemetryImpl::GetHistogramSnapshots(JSContext *cx, JS::MutableHandle<JS::Value> ret)
 {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (aSubsession) {
-    return NS_OK;
-  }
-#endif
-  return TelemetryHistogram::CreateHistogramSnapshots(aCx, aResult, aDataset,
-                                                      aSubsession,
-                                                      aClearHistograms);
+  return TelemetryHistogram::CreateHistogramSnapshots(cx, ret, false, false);
 }
 
 NS_IMETHODIMP
-TelemetryImpl::SnapshotKeyedHistograms(unsigned int aDataset, bool aSubsession,
-                                       bool aClearHistograms, JSContext* aCx,
-                                       JS::MutableHandleValue aResult)
+TelemetryImpl::SnapshotSubsessionHistograms(bool clearSubsession,
+                                            JSContext *cx,
+                                            JS::MutableHandle<JS::Value> ret)
 {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (aSubsession) {
-    return NS_OK;
-  }
+#if !defined(MOZ_WIDGET_ANDROID)
+  return TelemetryHistogram::CreateHistogramSnapshots(cx, ret, true,
+                                                      clearSubsession);
+#else
+  return NS_OK;
 #endif
-  return TelemetryHistogram::GetKeyedHistogramSnapshots(aCx, aResult, aDataset,
-                                                        aSubsession,
-                                                        aClearHistograms);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::GetKeyedHistogramSnapshots(JSContext *cx, JS::MutableHandle<JS::Value> ret)
+{
+  return TelemetryHistogram::GetKeyedHistogramSnapshots(cx, ret, false, false);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::SnapshotSubsessionKeyedHistograms(bool clearSubsession,
+                                                 JSContext *cx,
+                                                 JS::MutableHandle<JS::Value> ret)
+{
+#if !defined(MOZ_WIDGET_ANDROID)
+  return TelemetryHistogram::GetKeyedHistogramSnapshots(cx, ret, true,
+                                                        clearSubsession);
+#else
+  return NS_OK;
+#endif
 }
 
 bool
@@ -737,11 +753,19 @@ TelemetryImpl::GetChromeHangs(JSContext *cx, JS::MutableHandle<JS::Value> ret)
       if (!jsAnnotation) {
         return NS_ERROR_FAILURE;
       }
+      UniquePtr<HangAnnotations::Enumerator> annotationsEnum =
+        info->mAnnotations->GetEnumerator();
+      if (!annotationsEnum) {
+        return NS_ERROR_FAILURE;
+      }
 
-      for (auto& annot : info->mAnnotations) {
+      // ... fill it with key:value pairs...
+      nsAutoString key;
+      nsAutoString value;
+      while (annotationsEnum->Next(key, value)) {
         JS::RootedValue jsValue(cx);
-        jsValue.setString(JS_NewUCStringCopyN(cx, annot.mValue.get(), annot.mValue.Length()));
-        if (!JS_DefineUCProperty(cx, jsAnnotation, annot.mName.get(), annot.mName.Length(),
+        jsValue.setString(JS_NewUCStringCopyN(cx, value.get(), value.Length()));
+        if (!JS_DefineUCProperty(cx, jsAnnotation, key.get(), key.Length(),
                                  jsValue, JSPROP_ENUMERATE)) {
           return NS_ERROR_FAILURE;
         }
@@ -1041,6 +1065,43 @@ ReadStack(const char *aFileName, Telemetry::ProcessedStack &aStack)
   aStack = stack;
 }
 
+NS_IMETHODIMP
+TelemetryImpl::GetThreadHangStats(JSContext* cx, JS::MutableHandle<JS::Value> ret)
+{
+  JS::RootedObject retObj(cx, JS_NewArrayObject(cx, 0));
+  if (!retObj) {
+    return NS_ERROR_FAILURE;
+  }
+  size_t threadIndex = 0;
+
+  if (!BackgroundHangMonitor::IsDisabled()) {
+    /* First add active threads; we need to hold |iter| (and its lock)
+       throughout this method to avoid a race condition where a thread can
+       be recorded twice if the thread is destroyed while this method is
+       running */
+    BackgroundHangMonitor::ThreadHangStatsIterator iter;
+    for (Telemetry::ThreadHangStats* histogram = iter.GetNext();
+         histogram; histogram = iter.GetNext()) {
+      JS::RootedObject obj(cx, CreateJSThreadHangStats(cx, *histogram));
+      if (!JS_DefineElement(cx, retObj, threadIndex++, obj, JSPROP_ENUMERATE)) {
+        return NS_ERROR_FAILURE;
+      }
+    }
+  }
+
+  // Add saved threads next
+  MutexAutoLock autoLock(mThreadHangStatsMutex);
+  for (auto & stat : mThreadHangStats) {
+    JS::RootedObject obj(cx,
+      CreateJSThreadHangStats(cx, stat));
+    if (!JS_DefineElement(cx, retObj, threadIndex++, obj, JSPROP_ENUMERATE)) {
+      return NS_ERROR_FAILURE;
+    }
+  }
+  ret.setObject(*retObj);
+  return NS_OK;
+}
+
 void
 TelemetryImpl::ReadLateWritesStacks(nsIFile* aProfileDir)
 {
@@ -1109,6 +1170,23 @@ TelemetryImpl::GetLateWrites(JSContext *cx, JS::MutableHandle<JS::Value> ret)
 
   ret.setObject(*report);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+TelemetryImpl::RegisteredHistograms(uint32_t aDataset, uint32_t *aCount,
+                                    char*** aHistograms)
+{
+  return
+    TelemetryHistogram::RegisteredHistograms(aDataset, aCount, aHistograms);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::RegisteredKeyedHistograms(uint32_t aDataset, uint32_t *aCount,
+                                         char*** aHistograms)
+{
+  return
+    TelemetryHistogram::RegisteredKeyedHistograms(aDataset, aCount,
+                                                  aHistograms);
 }
 
 NS_IMETHODIMP
@@ -1518,16 +1596,22 @@ TelemetryImpl::RecordChromeHang(uint32_t aDuration,
                                 Telemetry::ProcessedStack &aStack,
                                 int32_t aSystemUptime,
                                 int32_t aFirefoxUptime,
-                                HangAnnotations&& aAnnotations)
+                                HangAnnotationsPtr aAnnotations)
 {
   if (!sTelemetry || !TelemetryHistogram::CanRecordExtended())
     return;
+
+  HangAnnotationsPtr annotations;
+  // We only pass aAnnotations if it is not empty.
+  if (aAnnotations && !aAnnotations->IsEmpty()) {
+    annotations = Move(aAnnotations);
+  }
 
   MutexAutoLock hangReportMutex(sTelemetry->mHangReportsMutex);
 
   sTelemetry->mHangReports.AddHang(aStack, aDuration,
                                    aSystemUptime, aFirefoxUptime,
-                                   Move(aAnnotations));
+                                   Move(annotations));
 }
 
 void
@@ -1540,10 +1624,22 @@ TelemetryImpl::DoStackCapture(const nsACString& aKey) {
 
 nsresult
 TelemetryImpl::CaptureStack(const nsACString& aKey) {
-#ifdef MOZ_GECKO_PROFILER
+#if defined(MOZ_GECKO_PROFILER)
   TelemetryImpl::DoStackCapture(aKey);
 #endif
   return NS_OK;
+}
+
+void
+TelemetryImpl::RecordThreadHangStats(Telemetry::ThreadHangStats&& aStats)
+{
+  if (!sTelemetry || !TelemetryHistogram::CanRecordExtended())
+    return;
+
+  MutexAutoLock autoLock(sTelemetry->mThreadHangStatsMutex);
+
+  // Ignore OOM.
+  mozilla::Unused << sTelemetry->mThreadHangStats.append(Move(aStats));
 }
 
 bool
@@ -1694,14 +1790,6 @@ TelemetryImpl::SnapshotKeyedScalars(unsigned int aDataset, bool aClearScalars, J
 }
 
 NS_IMETHODIMP
-TelemetryImpl::RegisterScalars(const nsACString& aCategoryName,
-                               JS::Handle<JS::Value> aScalarData,
-                               JSContext* cx)
-{
-  return TelemetryScalar::RegisterScalars(aCategoryName, aScalarData, cx);
-}
-
-NS_IMETHODIMP
 TelemetryImpl::ClearScalars()
 {
   TelemetryScalar::ClearScalars();
@@ -1770,6 +1858,10 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   { // Scope for mHangReportsMutex lock
     MutexAutoLock lock(mHangReportsMutex);
     n += mHangReports.SizeOfExcludingThis(aMallocSizeOf);
+  }
+  { // Scope for mThreadHangStatsMutex lock
+    MutexAutoLock lock(mThreadHangStatsMutex);
+    n += mThreadHangStats.sizeOfExcludingThis(aMallocSizeOf);
   }
 
   // It's a bit gross that we measure this other stuff that lives outside of
@@ -1982,7 +2074,7 @@ void RecordChromeHang(uint32_t duration,
                       ProcessedStack &aStack,
                       int32_t aSystemUptime,
                       int32_t aFirefoxUptime,
-                      HangAnnotations&& aAnnotations)
+                      HangAnnotationsPtr aAnnotations)
 {
   TelemetryImpl::RecordChromeHang(duration, aStack,
                                   aSystemUptime, aFirefoxUptime,
@@ -1991,11 +2083,17 @@ void RecordChromeHang(uint32_t duration,
 
 void CaptureStack(const nsACString& aKey)
 {
-#ifdef MOZ_GECKO_PROFILER
+#if defined(MOZ_GECKO_PROFILER)
   TelemetryImpl::DoStackCapture(aKey);
 #endif
 }
 #endif
+
+void RecordThreadHangStats(ThreadHangStats&& aStats)
+{
+  TelemetryImpl::RecordThreadHangStats(Move(aStats));
+}
+
 
 void
 WriteFailedProfileLock(nsIFile* aProfileDir)

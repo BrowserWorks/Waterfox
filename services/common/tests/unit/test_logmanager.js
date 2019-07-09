@@ -8,6 +8,10 @@ Cu.import("resource://services-common/logmanager.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
+function run_test() {
+  run_next_test();
+}
+
 // Returns an array of [consoleAppender, dumpAppender, [fileAppenders]] for
 // the specified log.  Note that fileAppenders will usually have length=1
 function getAppenders(log) {
@@ -110,7 +114,7 @@ function checkLogFile(prefix) {
   } else {
     // expecting 1 file.
     ok(entries.hasMoreElements());
-    let logfile = entries.getNext().QueryInterface(Ci.nsIFile);
+    let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     equal(logfile.leafName.slice(-4), ".txt");
     ok(logfile.leafName.startsWith(prefix + "-test-"), logfile.leafName);
     // and remove it ready for the next check.

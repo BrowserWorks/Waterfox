@@ -669,7 +669,7 @@ NotificationPermissionRequest::GetTypes(nsIArray** aTypes)
                                                          aTypes);
 }
 
-NS_IMPL_ISUPPORTS(NotificationTelemetryService, nsIObserver)
+NS_IMPL_ISUPPORTS(NotificationTelemetryService, nsISupports)
 
 NotificationTelemetryService::NotificationTelemetryService()
   : mDNDRecorded(false)
@@ -762,7 +762,7 @@ NotificationTelemetryService::GetNotificationPermission(nsISupports* aSupports,
   }
   nsAutoCString type;
   permission->GetType(type);
-  if (!type.EqualsLiteral("desktop-notification")) {
+  if (!type.Equals("desktop-notification")) {
     return false;
   }
   permission->GetCapability(aCapability);
@@ -797,14 +797,6 @@ NotificationTelemetryService::RecordDNDSupported()
 
   Telemetry::Accumulate(
     Telemetry::ALERTS_SERVICE_DND_SUPPORTED_FLAG, true);
-}
-
-NS_IMETHODIMP
-NotificationTelemetryService::Observe(nsISupports* aSubject,
-                                      const char* aTopic,
-                                      const char16_t* aData)
-{
-  return NS_OK;
 }
 
 // Observer that the alert service calls to do common tasks and/or dispatch to the
@@ -1189,7 +1181,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 NS_IMPL_ADDREF_INHERITED(Notification, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(Notification, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Notification)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(Notification)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
@@ -1310,8 +1302,7 @@ Notification::DispatchNotificationClickEvent()
 
   event->SetTrusted(true);
   WantsPopupControlCheck popupControlCheck(event);
-  bool dummy;
-  target->DispatchEvent(event, &dummy);
+  target->DispatchDOMEvent(nullptr, event, nullptr, nullptr);
   // We always return false since in case of dispatching on the serviceworker,
   // there is no well defined window to focus. The script may use the
   // Client.focus() API if it wishes.
@@ -2325,10 +2316,7 @@ Notification::InitFromJSVal(JSContext* aCx, JS::Handle<JS::Value> aData,
     return;
   }
 
-  aRv = dataObjectContainer->GetDataAsBase64(mDataAsBase64);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
+  dataObjectContainer->GetDataAsBase64(mDataAsBase64);
 }
 
 void Notification::InitFromBase64(const nsAString& aData, ErrorResult& aRv)
@@ -2345,10 +2333,7 @@ void Notification::InitFromBase64(const nsAString& aData, ErrorResult& aRv)
     return;
   }
 
-  aRv = container->GetDataAsBase64(mDataAsBase64);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
+  container->GetDataAsBase64(mDataAsBase64);
 }
 
 bool

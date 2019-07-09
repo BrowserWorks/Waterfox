@@ -1253,19 +1253,6 @@ AstDecodeExpr(AstDecodeContext& c)
         if (!AstDecodeConversion(c, ValType::F32, ValType::F64, Op(op.b0)))
             return false;
         break;
-#ifdef ENABLE_WASM_THREAD_OPS
-      case uint16_t(Op::I32Extend8S):
-      case uint16_t(Op::I32Extend16S):
-        if (!AstDecodeConversion(c, ValType::I32, ValType::I32, Op(op.b0)))
-            return false;
-        break;
-      case uint16_t(Op::I64Extend8S):
-      case uint16_t(Op::I64Extend16S):
-      case uint16_t(Op::I64Extend32S):
-        if (!AstDecodeConversion(c, ValType::I64, ValType::I64, Op(op.b0)))
-            return false;
-        break;
-#endif
       case uint16_t(Op::I32Load8S):
       case uint16_t(Op::I32Load8U):
         if (!AstDecodeLoad(c, ValType::I32, 1, Op(op.b0)))
@@ -1799,7 +1786,11 @@ AstDecodeEnvironment(AstDecodeContext& c)
 static bool
 AstDecodeCodeSection(AstDecodeContext& c)
 {
-    if (!c.env().codeSection) {
+    uint32_t sectionStart, sectionSize;
+    if (!c.d.startSection(SectionId::Code, &c.env(), &sectionStart, &sectionSize, "code"))
+        return false;
+
+    if (sectionStart == Decoder::NotStarted) {
         if (c.env().numFuncDefs() != 0)
             return c.d.fail("expected function bodies");
         return true;
@@ -1820,7 +1811,7 @@ AstDecodeCodeSection(AstDecodeContext& c)
             return false;
     }
 
-    return c.d.finishSection(*c.env().codeSection, "code");
+    return c.d.finishSection(sectionStart, sectionSize, "code");
 }
 
 // Number of bytes to display in a single fragment of a data section (per line).

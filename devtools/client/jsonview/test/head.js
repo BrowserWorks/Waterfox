@@ -35,7 +35,7 @@ registerCleanupFunction(() => {
 function addJsonViewTab(url, timeout = -1) {
   info("Adding a new JSON tab with URL: '" + url + "'");
 
-  let deferred = defer();
+  let deferred = promise.defer();
   addTab(url).then(tab => {
     let browser = tab.linkedBrowser;
 
@@ -123,14 +123,6 @@ function getElementText(selector) {
   });
 }
 
-function getElementAttr(selector, attr) {
-  info("Get attribute '" + attr + "' for element '" + selector + "'");
-
-  let data = {selector, attr};
-  return executeInContent("Test:JsonView:GetElementAttr", data)
-  .then(result => result.text);
-}
-
 function focusElement(selector) {
   info("Focus element: '" + selector + "'");
 
@@ -159,7 +151,7 @@ function sendString(str, selector) {
 }
 
 function waitForTime(delay) {
-  let deferred = defer();
+  let deferred = promise.defer();
   setTimeout(deferred.resolve, delay);
   return deferred.promise;
 }

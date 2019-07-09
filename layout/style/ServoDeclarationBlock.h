@@ -64,9 +64,13 @@ public:
 
   void GetPropertyValue(const nsAString& aProperty, nsAString& aValue) const;
   void GetPropertyValueByID(nsCSSPropertyID aPropID, nsAString& aValue) const;
+  void GetAuthoredPropertyValue(const nsAString& aProperty,
+                                nsAString& aValue) const {
+    GetPropertyValue(aProperty, aValue);
+  }
   bool GetPropertyIsImportant(const nsAString& aProperty) const;
   void RemoveProperty(const nsAString& aProperty);
-  bool RemovePropertyByID(nsCSSPropertyID aPropID);
+  void RemovePropertyByID(nsCSSPropertyID aPropID);
 
 private:
   ~ServoDeclarationBlock() {}

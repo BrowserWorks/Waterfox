@@ -9,7 +9,6 @@
 
 #include "nsString.h" // Required before 'mozilla/ErrorNames.h'!?
 #include "mozilla/ErrorNames.h"
-#include "mozilla/TimeStamp.h"
 #include "nsError.h"
 #include "nsPrintfCString.h"
 
@@ -42,13 +41,6 @@ public:
   MediaResult& operator=(MediaResult&& aOther) = default;
 
   nsresult Code() const { return mCode; }
-  nsCString ErrorName() const
-  {
-    nsCString name;
-    GetErrorName(mCode, name);
-    return name;
-  }
-
   const nsCString& Message() const { return mMessage; }
 
   // Interoperations with nsresult.
@@ -61,20 +53,18 @@ public:
     if (NS_SUCCEEDED(mCode)) {
       return nsCString();
     }
+    nsCString name;
+    GetErrorName(mCode, static_cast<nsACString&>(name));
     return nsPrintfCString("%s (0x%08" PRIx32 ")%s%s",
-                           ErrorName().get(),
+                           name.get(),
                            static_cast<uint32_t>(mCode),
                            mMessage.IsEmpty() ? "" : " - ",
                            mMessage.get());
   }
 
-  void SetGPUCrashTimeStamp(const TimeStamp& aTime) { mGPUCrashTimeStamp = aTime; }
-  const TimeStamp& GPUCrashTimeStamp() const { return mGPUCrashTimeStamp; }
-
 private:
   nsresult mCode;
   nsCString mMessage;
-  TimeStamp mGPUCrashTimeStamp; // Used in bug 1393399 for temporary telemetry usage.
 };
 
 #ifdef _MSC_VER

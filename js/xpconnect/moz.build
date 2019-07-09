@@ -10,3 +10,7 @@ with Files('**'):
 DIRS += ['public', 'idl', 'wrappers', 'loader', 'src']
 DIRS += ['shell']
 TEST_DIRS += ['tests']
+
+if CONFIG['MOZ_XPCTOOLS']:
+    DIRS += ['tools']
+

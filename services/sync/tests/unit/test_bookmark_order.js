@@ -13,8 +13,8 @@ Svc.Prefs.set("log.logger.engine.bookmarks", "Trace");
 initTestLogging("Trace");
 Log.repository.getLogger("Sqlite").level = Log.Level.Info;
 
-async function serverForFoo(engine) {
-  await generateNewKeys(Service.collectionKeys);
+function serverForFoo(engine) {
+  generateNewKeys(Service.collectionKeys);
 
   let clientsEngine = Service.clientsEngine;
   return serverForUsers({"foo": "password"}, {
@@ -40,8 +40,8 @@ async function serverForFoo(engine) {
         // Generate a fake default key bundle to avoid resetting the client
         // before the first sync.
         default: [
-          await Weave.Crypto.generateRandomKey(),
-          await Weave.Crypto.generateRandomKey(),
+          Weave.Crypto.generateRandomKey(),
+          Weave.Crypto.generateRandomKey(),
         ],
       }),
     },
@@ -140,7 +140,6 @@ async function resolveConflict(engine, collection, timestamp, buildTree,
     collection.insert(record.id, encryptPayload(record), timestamp);
   }
 
-  engine.lastModified = collection.timestamp;
   await sync_engine_and_validate_telem(engine, false);
 
   let expectedTree = buildTree(guids);
@@ -151,7 +150,7 @@ async function resolveConflict(engine, collection, timestamp, buildTree,
 add_task(async function test_local_order_newer() {
   let engine = Service.engineManager.get("bookmarks");
 
-  let server = await serverForFoo(engine);
+  let server = serverForFoo(engine);
   await SyncTestingInfrastructure(server);
 
   try {
@@ -196,7 +195,7 @@ add_task(async function test_local_order_newer() {
 add_task(async function test_remote_order_newer() {
   let engine = Service.engineManager.get("bookmarks");
 
-  let server = await serverForFoo(engine);
+  let server = serverForFoo(engine);
   await SyncTestingInfrastructure(server);
 
   try {

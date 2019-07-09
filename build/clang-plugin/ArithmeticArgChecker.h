@@ -9,9 +9,10 @@
 
 class ArithmeticArgChecker : public BaseCheck {
 public:
-  ArithmeticArgChecker(StringRef CheckName, ContextType *Context = nullptr)
-      : BaseCheck(CheckName, Context) {}
-  void registerMatchers(MatchFinder *AstMatcher) override;
+  ArithmeticArgChecker(StringRef CheckName,
+                       ContextType *Context = nullptr)
+    : BaseCheck(CheckName, Context) {}
+  void registerMatchers(MatchFinder* AstMatcher) override;
   void check(const MatchFinder::MatchResult &Result) override;
 };
 

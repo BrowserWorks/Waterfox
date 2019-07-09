@@ -2,6 +2,10 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function() {
   let blocklist = AM_Cc["@mozilla.org/extensions/blocklist;1"].
                   getService().wrappedJSObject;
@@ -32,7 +36,7 @@ add_task(async function() {
         resolve(read(...args));
       });
     });
-  };
+  }
 
   await blocklist._preloadBlocklist();
   do_check_true(blocklist._isBlocklistLoaded());

@@ -99,14 +99,14 @@ static const char gIDFormat[] =
 
 /*
  * Returns an allocated string in {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
- * format. The string is allocated with moz_xmalloc and should be freed by
+ * format. The string is allocated with NS_Alloc and should be freed by
  * the caller.
  */
 
 char*
 nsID::ToString() const
 {
-  char* res = (char*)moz_xmalloc(NSID_LENGTH);
+  char* res = (char*)NS_Alloc(NSID_LENGTH);
 
   if (res) {
     snprintf(res, NSID_LENGTH, gIDFormat,
@@ -129,11 +129,3 @@ nsID::ToProvidedString(char (&aDest)[NSID_LENGTH]) const
 }
 
 #endif // XPCOM_GLUE_AVOID_NSPR
-
-nsID*
-nsID::Clone() const
-{
-  auto id = static_cast<nsID*>(moz_xmalloc(sizeof(nsID)));
-  *id = *this;
-  return id;
-}

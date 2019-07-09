@@ -18,8 +18,6 @@
 #include "nsIFrame.h"
 #include "Units.h"
 
-#define NS_USER_INTERACTION_INTERVAL 5000 // ms
-
 class nsFrameLoader;
 class nsIContent;
 class nsIDocument;
@@ -111,7 +109,7 @@ public:
                            nsEventStatus* aStatus);
 
   void PostHandleKeyboardEvent(WidgetKeyboardEvent* aKeyboardEvent,
-                               nsIFrame* aTargetFrame, nsEventStatus& aStatus);
+                               nsEventStatus& aStatus);
 
   /**
    * DispatchLegacyMouseScrollEvents() dispatches eLegacyMouseLineOrPageScroll
@@ -140,9 +138,7 @@ public:
    *                  affect the return value.
    */
   bool SetContentState(nsIContent* aContent, EventStates aState);
-  void ContentRemoved(nsIDocument* aDocument, nsIContent* aMaybeContainer,
-                      nsIContent* aContent);
-
+  void ContentRemoved(nsIDocument* aDocument, nsIContent* aContent);
   bool EventStatusOK(WidgetGUIEvent* aEvent);
 
   /**
@@ -304,14 +300,10 @@ public:
   static bool IsRemoteTarget(nsIContent* aTarget);
 
   // Returns true if the given WidgetWheelEvent will resolve to a scroll action.
-  static bool WheelEventIsScrollAction(const WidgetWheelEvent* aEvent);
-
-  // Returns true if the given WidgetWheelEvent will resolve to a horizontal
-  // scroll action but it's a vertical wheel operation.
-  static bool WheelEventIsHorizontalScrollAction(const WidgetWheelEvent* aEvet);
+  static bool WheelEventIsScrollAction(WidgetWheelEvent* aEvent);
 
   // Returns user-set multipliers for a wheel event.
-  static void GetUserPrefsForWheelEvent(const WidgetWheelEvent* aEvent,
+  static void GetUserPrefsForWheelEvent(WidgetWheelEvent* aEvent,
                                         double* aOutMultiplierX,
                                         double* aOutMultiplierY);
 
@@ -542,7 +534,7 @@ protected:
      * Returns whether or not ApplyUserPrefsToDelta() would change the delta
      * values of an event.
      */
-    void GetUserPrefsForEvent(const WidgetWheelEvent* aEvent,
+    void GetUserPrefsForEvent(WidgetWheelEvent* aEvent,
                               double* aOutMultiplierX,
                               double* aOutMultiplierY);
 
@@ -562,26 +554,25 @@ protected:
       ACTION_SCROLL,
       ACTION_HISTORY,
       ACTION_ZOOM,
-      ACTION_HORIZONTAL_SCROLL,
-      ACTION_LAST = ACTION_HORIZONTAL_SCROLL,
+      ACTION_LAST = ACTION_ZOOM,
       // Following actions are used only by internal processing.  So, cannot
       // specified by prefs.
-      ACTION_SEND_TO_PLUGIN,
+      ACTION_SEND_TO_PLUGIN
     };
-    Action ComputeActionFor(const WidgetWheelEvent* aEvent);
+    Action ComputeActionFor(WidgetWheelEvent* aEvent);
 
     /**
      * NeedToComputeLineOrPageDelta() returns if the aEvent needs to be
      * computed the lineOrPageDelta values.
      */
-    bool NeedToComputeLineOrPageDelta(const WidgetWheelEvent* aEvent);
+    bool NeedToComputeLineOrPageDelta(WidgetWheelEvent* aEvent);
 
     /**
      * IsOverOnePageScrollAllowed*() checks whether wheel scroll amount should
      * be rounded down to the page width/height (false) or not (true).
      */
-    bool IsOverOnePageScrollAllowedX(const WidgetWheelEvent* aEvent);
-    bool IsOverOnePageScrollAllowedY(const WidgetWheelEvent* aEvent);
+    bool IsOverOnePageScrollAllowedX(WidgetWheelEvent* aEvent);
+    bool IsOverOnePageScrollAllowedY(WidgetWheelEvent* aEvent);
 
     /**
      * WheelEventsEnabledOnPlugins() returns true if user wants to use mouse
@@ -614,7 +605,7 @@ protected:
      * default index which is used at either no modifier key is pressed or
      * two or modifier keys are pressed.
      */
-    Index GetIndexFor(const WidgetWheelEvent* aEvent);
+    Index GetIndexFor(WidgetWheelEvent* aEvent);
 
     /**
      * GetPrefNameBase() returns the base pref name for aEvent.
@@ -629,25 +620,6 @@ protected:
     void Init(Index aIndex);
 
     void Reset();
-
-    /**
-     * Retrieve multiplier for aEvent->mDeltaX and aEvent->mDeltaY.
-     * If the default action is ACTION_HORIZONTAL_SCROLL and the delta values
-     * are adjusted by AutoWheelDeltaAdjuster(), this treats mMultiplierX as
-     * multiplier for deltaY and mMultiplierY as multiplier for deltaY.
-     *
-     * @param aEvent    The event which is being handled.
-     * @param aIndex    The index of mMultiplierX and mMultiplierY.
-     *                  Should be result of GetIndexFor(aEvent).
-     * @param aMultiplierForDeltaX      Will be set to multiplier for
-     *                                  aEvent->mDeltaX.
-     * @param aMultiplierForDeltaY      Will be set to multiplier for
-     *                                  aEvent->mDeltaY.
-     */
-    void GetMultiplierForDeltaXAndY(const WidgetWheelEvent* aEvent,
-                                    Index aIndex,
-                                    double* aMultiplierForDeltaX,
-                                    double* aMultiplierForDeltaY);
 
     bool mInit[COUNT_OF_MULTIPLIERS];
     double mMultiplierX[COUNT_OF_MULTIPLIERS];
@@ -996,20 +968,6 @@ private:
   static void ResetLastOverForContent(const uint32_t& aIdx,
                                       RefPtr<OverOutElementsWrapper>& aChunk,
                                       nsIContent* aClosure);
-
-  /**
-   * Update the attribute mLastRefPoint of the mouse event. It should be
-   *     the center of the window while the pointer is locked.
-   *     the same value as mRefPoint while there is no known last ref point.
-   *     the same value as the last known mRefPoint.
-   */
-  static void UpdateLastRefPointOfMouseEvent(WidgetMouseEvent* aMouseEvent);
-
-  static void ResetPointerToWindowCenterWhilePointerLocked(
-                WidgetMouseEvent* aMouseEvent);
-
-  // Update the last known ref point to the current event's mRefPoint.
-  static void UpdateLastPointerPosition(WidgetMouseEvent* aMouseEvent);
 
   int32_t     mLockCursor;
   bool mLastFrameConsumedSetCursor;

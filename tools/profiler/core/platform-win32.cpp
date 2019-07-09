@@ -32,50 +32,14 @@
 #include <mmsystem.h>
 #include <process.h>
 
-#ifdef __MINGW32__
-#include <immintrin.h> // for _mm_pause
-#endif
-
 #include "nsWindowsDllInterceptor.h"
 #include "mozilla/StackWalk_windows.h"
 #include "mozilla/WindowsVersion.h"
 
-/* static */ int
+/* static */ Thread::tid_t
 Thread::GetCurrentId()
 {
-  DWORD threadId = GetCurrentThreadId();
-  MOZ_ASSERT(threadId <= INT32_MAX, "native thread ID is > INT32_MAX");
-  return int(threadId);
-}
-
-void*
-GetStackTop(void* aGuess)
-{
-#if defined(GP_ARCH_x86)
-  // Offset 0x18 from the FS segment register gives a pointer to the thread
-  // information block for the current thread.
-  NT_TIB* pTib;
-#if defined(_MSC_VER)
-  __asm {
-    MOV EAX, FS:[18h]
-      MOV pTib, EAX
-  }
-#elif defined(__GNUC__)
-  asm ( "movl %%fs:0x18, %0\n"
-       : "=r" (pTib)
-      );
-#else
-#error "unimplemented"
-#endif
-  return static_cast<void*>(pTib->StackBase);
-
-#elif defined(GP_ARCH_amd64)
-  PNT_TIB64 pTib = reinterpret_cast<PNT_TIB64>(NtCurrentTeb());
-  return reinterpret_cast<void*>(pTib->StackBase);
-
-#else
-#error "unimplemented"
-#endif
+  return GetCurrentThreadId();
 }
 
 static void
@@ -127,10 +91,10 @@ private:
   HANDLE mProfiledThread;
 };
 
-HANDLE
+uintptr_t
 GetThreadHandle(PlatformData* aData)
 {
-  return aData->ProfiledThread();
+  return (uintptr_t) aData->ProfiledThread();
 }
 
 static const HANDLE kNoThread = INVALID_HANDLE_VALUE;

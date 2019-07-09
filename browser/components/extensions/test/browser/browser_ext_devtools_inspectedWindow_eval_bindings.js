@@ -2,8 +2,8 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const {gDevTools} = require("devtools/client/framework/devtools");
+XPCOMUtils.defineLazyModuleGetter(this, "DevToolsShim",
+                                  "chrome://devtools-shim/content/DevToolsShim.jsm");
 
 /**
  * this test file ensures that:
@@ -53,6 +53,8 @@ add_task(async function test_devtools_inspectedWindow_eval_bindings() {
   });
 
   await extension.startup();
+
+  const {gDevTools} = DevToolsShim;
 
   const target = gDevTools.getTargetForTab(tab);
   // Open the toolbox on the styleeditor, so that the inspector and the
@@ -136,34 +138,6 @@ add_task(async function test_devtools_inspectedWindow_eval_bindings() {
       });
       let objectInspectors = [...messageNode.querySelectorAll(".tree")];
       is(objectInspectors.length, 1, "There is the expected number of object inspectors");
-
-      // We need to wait for the object to be expanded so we don't call the server on a closed connection.
-      const [oi] = objectInspectors;
-      let nodes = oi.querySelectorAll(".node");
-
-      ok(nodes.length >= 1, "The object preview is rendered as expected");
-
-      // The tree can still be collapsed since the properties are fetched asynchronously.
-      if (nodes.length === 1) {
-        info("Waiting for the object properties to be displayed");
-        // If this is the case, we wait for the properties to be fetched and displayed.
-        await new Promise(resolve => {
-          const observer = new MutationObserver(mutations => {
-            resolve();
-            observer.disconnect();
-          });
-          observer.observe(oi, {childList: true});
-        });
-
-        // Retrieve the new nodes.
-        nodes = oi.querySelectorAll(".node");
-      }
-
-      // We should have 3 nodes :
-      //   ▼ Object { testkey: "testvalue" }
-      //   |  testkey: "testvalue"
-      //   |  ▶︎ __proto__: Object { … }
-      is(nodes.length, 3, "The object preview has the expected number of nodes");
     } else {
       const options = await new Promise(resolve => {
         jsterm.once("variablesview-open", (evt, view, options) => resolve(options));

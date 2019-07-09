@@ -23,7 +23,6 @@ info: >
     b. If integerIndex < 0, throw a RangeError exception.
     ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

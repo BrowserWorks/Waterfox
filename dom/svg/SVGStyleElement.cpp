@@ -23,10 +23,14 @@ SVGStyleElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 //----------------------------------------------------------------------
 // nsISupports methods
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(SVGStyleElement,
-                                             SVGStyleElementBase,
-                                             nsIStyleSheetLinkingElement,
-                                             nsIMutationObserver)
+NS_IMPL_ADDREF_INHERITED(SVGStyleElement, SVGStyleElementBase)
+NS_IMPL_RELEASE_INHERITED(SVGStyleElement, SVGStyleElementBase)
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(SVGStyleElement)
+  NS_INTERFACE_TABLE_INHERITED(SVGStyleElement,
+                               nsIStyleSheetLinkingElement,
+                               nsIMutationObserver)
+NS_INTERFACE_TABLE_TAIL_INHERITING(SVGStyleElementBase)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(SVGStyleElement)
 
@@ -90,13 +94,12 @@ SVGStyleElement::UnbindFromTree(bool aDeep, bool aNullParent)
 }
 
 nsresult
-SVGStyleElement::SetAttr(int32_t aNameSpaceID, nsAtom* aName,
-                         nsAtom* aPrefix, const nsAString& aValue,
-                         nsIPrincipal* aSubjectPrincipal,
+SVGStyleElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                         nsIAtom* aPrefix, const nsAString& aValue,
                          bool aNotify)
 {
   nsresult rv = SVGStyleElementBase::SetAttr(aNameSpaceID, aName, aPrefix,
-                                             aValue, aSubjectPrincipal, aNotify);
+                                             aValue, aNotify);
   if (NS_SUCCEEDED(rv) && aNameSpaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::title ||
         aName == nsGkAtoms::media ||
@@ -112,7 +115,7 @@ SVGStyleElement::SetAttr(int32_t aNameSpaceID, nsAtom* aName,
 }
 
 nsresult
-SVGStyleElement::UnsetAttr(int32_t aNameSpaceID, nsAtom* aAttribute,
+SVGStyleElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                            bool aNotify)
 {
   nsresult rv = SVGStyleElementBase::UnsetAttr(aNameSpaceID, aAttribute,
@@ -133,7 +136,7 @@ SVGStyleElement::UnsetAttr(int32_t aNameSpaceID, nsAtom* aAttribute,
 
 bool
 SVGStyleElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
@@ -161,7 +164,8 @@ SVGStyleElement::CharacterDataChanged(nsIDocument* aDocument,
 void
 SVGStyleElement::ContentAppended(nsIDocument* aDocument,
                                  nsIContent* aContainer,
-                                 nsIContent* aFirstNewContent)
+                                 nsIContent* aFirstNewContent,
+                                 int32_t aNewIndexInContainer)
 {
   ContentChanged(aContainer);
 }
@@ -169,7 +173,8 @@ SVGStyleElement::ContentAppended(nsIDocument* aDocument,
 void
 SVGStyleElement::ContentInserted(nsIDocument* aDocument,
                                  nsIContent* aContainer,
-                                 nsIContent* aChild)
+                                 nsIContent* aChild,
+                                 int32_t aIndexInContainer)
 {
   ContentChanged(aChild);
 }
@@ -178,6 +183,7 @@ void
 SVGStyleElement::ContentRemoved(nsIDocument* aDocument,
                                 nsIContent* aContainer,
                                 nsIContent* aChild,
+                                int32_t aIndexInContainer,
                                 nsIContent* aPreviousSibling)
 {
   ContentChanged(aChild);
@@ -257,10 +263,9 @@ SVGStyleElement::SetTitle(const nsAString& aTitle, ErrorResult& rv)
 // nsStyleLinkElement methods
 
 already_AddRefed<nsIURI>
-SVGStyleElement::GetStyleSheetURL(bool* aIsInline, nsIPrincipal** aTriggeringPrincipal)
+SVGStyleElement::GetStyleSheetURL(bool* aIsInline)
 {
   *aIsInline = true;
-  *aTriggeringPrincipal = nullptr;
   return nullptr;
 }
 

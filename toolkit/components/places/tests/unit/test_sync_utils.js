@@ -287,7 +287,7 @@ add_task(async function test_fetchGuidForURL() {
   //    It then compares the URL with the URL that is on the visits info.
   // 2- By creating a new GUID, changing the GUID for the visit, fetching the GUID and comparing them.
   for (let url of arrayOfURLsToVisit) {
-    let guid = await PlacesSyncUtils.history.fetchGuidForURL(url);
+    let guid = await PlacesSyncUtils.history.fetchGuidForURL(url)
     let info = await PlacesSyncUtils.history.fetchURLInfoForGuid(guid);
 
     let newGuid = makeGuid();
@@ -1150,7 +1150,7 @@ add_task(async function test_insert_livemark() {
       });
       let bmk = await PlacesUtils.bookmarks.fetch({
         guid: await PlacesSyncUtils.bookmarks.syncIdToGuid(livemark.syncId),
-      });
+      })
       equal(bmk.type, PlacesUtils.bookmarks.TYPE_FOLDER,
         "Livemarks should be stored as folders");
     }
@@ -2230,7 +2230,7 @@ add_task(async function test_pullChanges_restore_json_tracked() {
     ], "Pulling items restored from JSON backup should not mark them as syncing");
 
     let tombstones = await PlacesTestUtils.fetchSyncTombstones();
-    deepEqual(tombstones.map(({ guid }) => guid), [syncedFolder.guid],
+    ok(tombstones.map(({ guid }) => guid), [syncedFolder.guid],
       "Tombstones should exist after restoring from JSON backup");
 
     await PlacesSyncUtils.bookmarks.markChangesAsSyncing(changes);
@@ -2332,51 +2332,6 @@ add_task(async function test_pullChanges_custom_roots() {
       "Pulling changes should track synced sibling and parent");
     await setChangesSynced(changes);
   }
-
-  await PlacesUtils.bookmarks.eraseEverything();
-  await PlacesSyncUtils.bookmarks.reset();
-});
-
-add_task(async function test_pullChanges_tombstones() {
-  await ignoreChangedRoots();
-
-  do_print("Insert new bookmarks");
-  await PlacesUtils.bookmarks.insertTree({
-    guid: PlacesUtils.bookmarks.menuGuid,
-    children: [{
-      guid: "bookmarkAAAA",
-      url: "http://example.com/a",
-      title: "A",
-    }, {
-      guid: "bookmarkBBBB",
-      url: "http://example.com/b",
-      title: "B",
-    }],
-  });
-
-  do_print("Manually insert conflicting tombstone for new bookmark");
-  await PlacesUtils.withConnectionWrapper("test_pullChanges_tombstones",
-    async function(db) {
-      await db.executeCached(`
-        INSERT INTO moz_bookmarks_deleted(guid)
-        VALUES(:guid)`,
-        { guid: "bookmarkAAAA" });
-    }
-  );
-
-  let changes = await PlacesSyncUtils.bookmarks.pullChanges();
-  deepEqual(Object.keys(changes).sort(), ["bookmarkAAAA", "bookmarkBBBB",
-    "menu"], "Should handle undeleted items when returning changes");
-  strictEqual(changes.bookmarkAAAA.tombstone, false,
-    "Should replace tombstone for A with undeleted item");
-  strictEqual(changes.bookmarkBBBB.tombstone, false,
-    "Should not report B as deleted");
-
-  await setChangesSynced(changes);
-
-  let newChanges = await PlacesSyncUtils.bookmarks.pullChanges();
-  deepEqual(newChanges, {},
-    "Should not return changes after marking undeleted items as synced");
 
   await PlacesUtils.bookmarks.eraseEverything();
   await PlacesSyncUtils.bookmarks.reset();
@@ -2890,10 +2845,9 @@ add_task(async function test_migrateOldTrackerEntries() {
 add_task(async function test_ensureMobileQuery() {
   do_print("Ensure we correctly create the mobile query");
 
-  let PlacesUIUtils;
+  const PlacesUIUtils = {};
   try {
-    PlacesUIUtils = Cu.import("resource:///modules/PlacesUIUtils.jsm", {}).PlacesUIUtils;
-    PlacesUIUtils.maybeRebuildLeftPane();
+    Cu.import("resource://gre/modules/PlacesUIUtils.jsm", PlacesUIUtils);
   } catch (ex) {
     do_print("Can't build left pane roots; skipping test");
     return;
@@ -2909,10 +2863,20 @@ add_task(async function test_ensureMobileQuery() {
   let allBookmarkGuid = allBookmarksGuids[0];
 
   do_print("Try creating query after organizer is ready");
-  await PlacesSyncUtils.bookmarks.ensureMobileQuery();
+  await PlacesSyncUtils.bookmarks.ensureMobileQuery()
   let queryGuids = await PlacesSyncUtils.bookmarks.fetchGuidsWithAnno(
     "PlacesOrganizer/OrganizerQuery", "MobileBookmarks");
-  equal(queryGuids.length, 1, "Should create query without any mobile bookmarks");
+  equal(queryGuids.length, 0, "Should not create query without any mobile bookmarks");
+
+  do_print("Insert mobile bookmark, then create query");
+  let mozBmk = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.mobileGuid,
+    url: "https://mozilla.org",
+  });
+  await PlacesSyncUtils.bookmarks.ensureMobileQuery()
+  queryGuids = await PlacesSyncUtils.bookmarks.fetchGuidsWithAnno(
+    "PlacesOrganizer/OrganizerQuery", "MobileBookmarks");
+  equal(queryGuids.length, 1, "Should create query once mobile bookmarks exist");
 
   let queryGuid = queryGuids[0];
 
@@ -2930,7 +2894,7 @@ add_task(async function test_ensureMobileQuery() {
     guid: queryGuid,
     title: "renamed query",
   });
-  await PlacesSyncUtils.bookmarks.ensureMobileQuery();
+  await PlacesSyncUtils.bookmarks.ensureMobileQuery()
   let rootInfo = await PlacesUtils.bookmarks.fetch(PlacesUtils.bookmarks.mobileGuid);
   equal(rootInfo.title, "Mobile Bookmarks", "Should fix root title");
   queryInfo = await PlacesUtils.bookmarks.fetch(queryGuid);
@@ -2941,7 +2905,7 @@ add_task(async function test_ensureMobileQuery() {
     guid: queryGuid,
     url: "place:folder=BOOKMARKS_MENU",
   });
-  await PlacesSyncUtils.bookmarks.ensureMobileQuery();
+  await PlacesSyncUtils.bookmarks.ensureMobileQuery()
   queryInfo = await PlacesUtils.bookmarks.fetch(queryGuid);
   equal(queryInfo.url.href, `place:folder=MOBILE_BOOKMARKS`,
     "Should fix query URL to point to mobile root");
@@ -2949,82 +2913,8 @@ add_task(async function test_ensureMobileQuery() {
   do_print("We shouldn't track the query or the left pane root");
 
   let changes = await PlacesSyncUtils.bookmarks.pullChanges();
-  ok(!(queryGuid in changes), "Should not track mobile query");
-
-  await PlacesUtils.bookmarks.eraseEverything();
-  await PlacesSyncUtils.bookmarks.reset();
-});
-
-add_task(async function test_remove_stale_tombstones() {
-  do_print("Insert and delete synced bookmark");
-  {
-    await PlacesUtils.bookmarks.insert({
-      guid: "bookmarkAAAA",
-      parentGuid: PlacesUtils.bookmarks.toolbarGuid,
-      url: "http://example.com/a",
-      title: "A",
-      source: PlacesUtils.bookmarks.SOURCES.SYNC,
-    });
-    await PlacesUtils.bookmarks.remove("bookmarkAAAA");
-    let tombstones = await PlacesTestUtils.fetchSyncTombstones();
-    deepEqual(tombstones.map(({ guid }) => guid), ["bookmarkAAAA"],
-      "Should store tombstone for deleted synced bookmark");
-  }
-
-  do_print("Reinsert deleted bookmark");
-  {
-    // Different parent, URL, and title, but same GUID.
-    await PlacesUtils.bookmarks.insert({
-      guid: "bookmarkAAAA",
-      parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-      url: "http://example.com/a-restored",
-      title: "A (Restored)",
-    });
-
-    let tombstones = await PlacesTestUtils.fetchSyncTombstones();
-    deepEqual(tombstones, [],
-      "Should remove tombstone for reinserted bookmark");
-  }
-
-  do_print("Insert tree and erase everything");
-  {
-    await PlacesUtils.bookmarks.insertTree({
-      guid: PlacesUtils.bookmarks.menuGuid,
-      source: PlacesUtils.bookmarks.SOURCES.SYNC,
-      children: [{
-        guid: "bookmarkBBBB",
-        url: "http://example.com/b",
-        title: "B",
-      }, {
-        guid: "bookmarkCCCC",
-        url: "http://example.com/c",
-        title: "C",
-      }],
-    });
-    await PlacesUtils.bookmarks.eraseEverything();
-    let tombstones = await PlacesTestUtils.fetchSyncTombstones();
-    deepEqual(tombstones.map(({ guid }) => guid).sort(), ["bookmarkBBBB",
-      "bookmarkCCCC"], "Should store tombstones after erasing everything");
-  }
-
-  do_print("Reinsert tree");
-  {
-    await PlacesUtils.bookmarks.insertTree({
-      guid: PlacesUtils.bookmarks.mobileGuid,
-      children: [{
-        guid: "bookmarkBBBB",
-        url: "http://example.com/b",
-        title: "B",
-      }, {
-        guid: "bookmarkCCCC",
-        url: "http://example.com/c",
-        title: "C",
-      }],
-    });
-    let tombstones = await PlacesTestUtils.fetchSyncTombstones();
-    deepEqual(tombstones.map(({ guid }) => guid).sort(), [],
-      "Should remove tombstones after reinserting tree");
-  }
+  deepEqual(Object.keys(changes).sort(), [mozBmk.guid, "mobile"],
+    "Should not track mobile query");
 
   await PlacesUtils.bookmarks.eraseEverything();
   await PlacesSyncUtils.bookmarks.reset();

@@ -95,9 +95,17 @@ ProxyObject::New(JSContext* cx, const BaseProxyHandler* handler, HandleValue pri
         proxy->setCrossCompartmentPrivate(priv);
     else
         proxy->setSameCompartmentPrivate(priv);
+    
+    if (newKind == SingletonObject) {
+        Rooted<ProxyObject*> rootedProxy(cx, proxy);
+        if (!JSObject::setSingleton(cx, rootedProxy)) {
+          return nullptr;
+        }
+    return rootedProxy;
+    }
 
     /* Don't track types of properties of non-DOM and non-singleton proxies. */
-    if (newKind != SingletonObject && !clasp->isDOMClass())
+    if (!clasp->isDOMClass())
         MarkObjectGroupUnknownProperties(cx, proxy->group());
 
     return proxy;
@@ -114,33 +122,28 @@ ProxyObject::allocKindForTenure() const
 void
 ProxyObject::setCrossCompartmentPrivate(const Value& priv)
 {
-    setPrivate(priv);
+    *slotOfPrivate() = priv;
 }
 
 void
 ProxyObject::setSameCompartmentPrivate(const Value& priv)
 {
     MOZ_ASSERT(IsObjectValueInCompartment(priv, compartment()));
-    setPrivate(priv);
-}
-
-inline void
-ProxyObject::setPrivate(const Value& priv)
-{
-    MOZ_ASSERT_IF(IsMarkedBlack(this) && priv.isGCThing(),
-                  !JS::GCThingIsMarkedGray(JS::GCCellPtr(priv)));
     *slotOfPrivate() = priv;
 }
 
 void
 ProxyObject::nuke()
 {
-    // Clear the target reference and replaced it with a value that encodes
-    // various information about the original target.
-    setSameCompartmentPrivate(DeadProxyTargetValue(this));
+    // Select a dead proxy handler based on the properties of this wrapper.
+    // Do this before clearing the target.
+    const BaseProxyHandler* handler = SelectDeadProxyHandler(this);
+
+    // Clear the target reference.
+    setSameCompartmentPrivate(NullValue());
 
     // Update the handler to make this a DeadObjectProxy.
-    setHandler(&DeadObjectProxy::singleton);
+    setHandler(handler);
 
     // The proxy's reserved slots are not cleared and will continue to be
     // traced. This avoids the possibility of triggering write barriers while
@@ -188,13 +191,6 @@ ProxyObject::create(JSContext* cx, const Class* clasp, Handle<TaggedProto> proto
     cx->compartment()->setObjectPendingMetadata(cx, pobj);
 
     js::gc::TraceCreateObject(pobj);
-
-    if (newKind == SingletonObject) {
-        Rooted<ProxyObject*> pobjRoot(cx, pobj);
-        if (!JSObject::setSingleton(cx, pobjRoot))
-            return cx->alreadyReportedOOM();
-        pobj = pobjRoot;
-    }
 
     return pobj;
 }

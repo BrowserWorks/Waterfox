@@ -135,9 +135,9 @@ struct nsRuleData final : mozilla::GenericSpecifiedValues
     ValueFor(aId)->SetStringValue(aValue, eCSSUnit_Ident);
   }
 
-  void SetIdentAtomValue(nsCSSPropertyID aId, nsAtom* aValue)
+  void SetIdentAtomValue(nsCSSPropertyID aId, nsIAtom* aValue)
   {
-    RefPtr<nsAtom> atom = aValue;
+    nsCOMPtr<nsIAtom> atom = aValue;
     ValueFor(aId)->SetAtomIdentValue(atom.forget());
   }
 

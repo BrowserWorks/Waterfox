@@ -14,6 +14,16 @@ include('build/moz.configure/init.configure')
 # - Spidermonkey-specific options and rules should go in js/moz.configure.
 # - etc.
 
+# Multiprocess Firefox Testing UI - Nightly and Aurora
+# To be removed in Bug 1003313
+@depends(milestone)
+def e10s_testing_only(milestone):
+    return True
+
+set_config('E10S_TESTING_ONLY', e10s_testing_only)
+set_define('E10S_TESTING_ONLY', e10s_testing_only)
+
+
 option('--enable-artifact-builds', env='MOZ_ARTIFACT_BUILDS',
        help='Download and use prebuilt binary artifacts.')
 
@@ -259,9 +269,9 @@ option('--disable-gtest-in-build',
 # on Desktop platforms with the exception of Windows PGO, where linking
 # xul-gtest.dll takes too long.
 @depends('MOZ_PGO', build_project, target, 'MOZ_AUTOMATION', '--disable-gtest-in-build',
-         enable_tests, when='--enable-compile-environment')
-def build_gtest(pgo, build_project, target, automation, enabled, enable_tests):
-    if not enable_tests or not enabled:
+         when='--enable-compile-environment')
+def build_gtest(pgo, build_project, target, automation, enabled):
+    if not enabled:
         return None
     if (automation and build_project == 'browser' and
         not (pgo and target.os == 'WINNT')):
@@ -357,33 +367,15 @@ tup = check_prog('TUP', tup_progs)
 # watchman detection
 # ==============================================================
 
-option(env='WATCHMAN', nargs=1, help='Path to the watchman program')
-
-@depends('WATCHMAN')
-@checking('for watchman', callback=lambda w: w.path if w else 'not found')
-def watchman(prog):
-    if not prog:
-        prog = find_program('watchman')
-
-    if not prog:
-        return
-
-    # `watchman version` will talk to the Watchman daemon service.
-    # This can hang due to permissions problems. e.g.
-    # https://github.com/facebook/watchman/issues/376. So use
-    # `watchman --version` to prevent a class of failures.
-    out = check_cmd_output(prog, '--version', onerror=lambda: None)
-    if out is None:
-        return
-
-    return namespace(path=prog, version=Version(out.strip()))
+watchman = check_prog('WATCHMAN', ('watchman',), allow_missing=True)
 
 @depends_if(watchman)
 @checking('for watchman version')
-def watchman_version(w):
-    return w.version
-
-set_config('WATCHMAN', watchman.path)
+@imports('json')
+def watchman_version(watchman):
+    out = check_cmd_output(watchman, 'version')
+    res = json.loads(out)
+    return Version(res['version'])
 
 @depends_all(hg_version, hg_config, watchman)
 @checking('for watchman Mercurial integration')
@@ -511,8 +503,6 @@ def nsis_flags(host):
     return ''
 
 set_config('MAKENSISU_FLAGS', nsis_flags)
-
-check_prog('7Z', ('7z', '7za'), allow_missing=True, when=target_is_windows)
 
 # Fallthrough to autoconf-based configure
 include('build/moz.configure/old.configure')

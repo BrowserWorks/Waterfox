@@ -11,7 +11,7 @@
 #include "nsICSSLoaderObserver.h"
 
 class nsCSSRuleProcessor;
-class nsAtom;
+class nsIAtom;
 class nsIContent;
 class nsXBLPrototypeBinding;
 class nsXBLResourceLoader;
@@ -31,7 +31,7 @@ public:
   ~nsXBLPrototypeResources();
 
   bool LoadResources(nsIContent* aBoundElement);
-  void AddResource(nsAtom* aResourceType, const nsAString& aSrc);
+  void AddResource(nsIAtom* aResourceType, const nsAString& aSrc);
   void AddResourceListener(nsIContent* aElement);
   nsresult FlushSkinSheets();
 
@@ -64,7 +64,7 @@ public:
   // the Servo style backend.
   void ComputeServoStyleSet(nsPresContext* aPresContext);
 
-  mozilla::ServoStyleSet* GetServoStyleSet() const { return mServoStyleSet.get(); }
+  const mozilla::ServoStyleSet* GetServoStyleSet() const { return mServoStyleSet.get(); }
 
 private:
   // A loader object. Exists only long enough to load resources, and then it dies.

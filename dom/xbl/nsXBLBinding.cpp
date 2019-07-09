@@ -5,14 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsXBLDocumentInfo.h"
 #include "nsIInputStream.h"
 #include "nsNameSpaceManager.h"
 #include "nsIURI.h"
 #include "nsIURL.h"
 #include "nsIChannel.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "plstr.h"
 #include "nsIContent.h"
@@ -86,7 +86,7 @@ XBLEnumerate(JSContext *cx, JS::Handle<JSObject*> obj)
 }
 
 static const JSClassOps gPrototypeJSClassOps = {
-    nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
     XBLEnumerate, nullptr, nullptr,
     nullptr, XBLFinalize,
     nullptr, nullptr, nullptr, nullptr
@@ -135,7 +135,7 @@ nsXBLBinding::~nsXBLBinding(void)
     // It is unnecessary to uninstall anonymous content in a shadow tree
     // because the ShadowRoot itself is a DocumentFragment and does not
     // need any additional cleanup.
-    nsXBLBinding::UnbindAnonymousContent(mContent->OwnerDoc(), mContent);
+    nsXBLBinding::UninstallAnonymousContent(mContent->OwnerDoc(), mContent);
   }
   nsXBLDocumentInfo* info = mPrototypeBinding->XBLDocumentInfo();
   NS_RELEASE(info);
@@ -147,8 +147,8 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXBLBinding)
   // XXX Probably can't unlink mPrototypeBinding->XBLDocumentInfo(), because
   //     mPrototypeBinding is weak.
   if (tmp->mContent && !tmp->mIsShadowRootBinding) {
-    nsXBLBinding::UnbindAnonymousContent(tmp->mContent->OwnerDoc(),
-                                         tmp->mContent);
+    nsXBLBinding::UninstallAnonymousContent(tmp->mContent->OwnerDoc(),
+                                            tmp->mContent);
   }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mContent)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mNextBinding)
@@ -191,9 +191,8 @@ nsXBLBinding::GetBindingWithContent()
 }
 
 void
-nsXBLBinding::BindAnonymousContent(nsIContent* aAnonParent,
-                                   nsIContent* aElement,
-                                   bool aChromeOnlyContent)
+nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElement,
+                                      bool aChromeOnlyContent)
 {
   // We need to ensure two things.
   // (1) The anonymous content should be fooled into thinking it's in the bound
@@ -238,9 +237,8 @@ nsXBLBinding::BindAnonymousContent(nsIContent* aAnonParent,
 }
 
 void
-nsXBLBinding::UnbindAnonymousContent(nsIDocument* aDocument,
-                                     nsIContent* aAnonParent,
-                                     bool aNullParent)
+nsXBLBinding::UninstallAnonymousContent(nsIDocument* aDocument,
+                                        nsIContent* aAnonParent)
 {
   nsAutoScriptBlocker scriptBlocker;
   // Hold a strong ref while doing this, just in case.
@@ -252,7 +250,7 @@ nsXBLBinding::UnbindAnonymousContent(nsIDocument* aDocument,
   for (nsIContent* child = aAnonParent->GetFirstChild();
        child;
        child = child->GetNextSibling()) {
-    child->UnbindFromTree(true, aNullParent);
+    child->UnbindFromTree();
 #ifdef MOZ_XUL
     if (xuldoc) {
       xuldoc->RemoveSubtreeFromDocument(child);
@@ -280,7 +278,7 @@ nsXBLBinding::SetBoundElement(nsIContent* aElement)
   // is not given in the handler declaration.
   nsCOMPtr<nsIGlobalObject> go = mBoundElement->OwnerDoc()->GetScopeObject();
   NS_ENSURE_TRUE_VOID(go && go->GetGlobalJSObject());
-  mUsingContentXBLScope = xpc::UseContentXBLScope(JS::GetObjectRealmOrNull(go->GetGlobalJSObject()));
+  mUsingContentXBLScope = xpc::UseContentXBLScope(js::GetObjectCompartment(go->GetGlobalJSObject()));
 }
 
 bool
@@ -321,11 +319,9 @@ nsXBLBinding::GenerateAnonymousContent()
   if (hasContent) {
     nsIDocument* doc = mBoundElement->OwnerDoc();
 
-    IgnoredErrorResult rv;
-    nsCOMPtr<nsINode> clonedNode =
-      nsNodeUtils::Clone(content, true, doc->NodeInfoManager(), nullptr, rv);
-    // FIXME: Bug 1399558, Why is this code OK assuming that nsNodeUtils::Clone
-    // never fails?
+    nsCOMPtr<nsINode> clonedNode;
+    nsNodeUtils::Clone(content, true, doc->NodeInfoManager(), nullptr,
+                       getter_AddRefs(clonedNode));
     mContent = clonedNode->AsElement();
 
     // Search for <xbl:children> elements in the XBL content. In the presence
@@ -344,8 +340,8 @@ nsXBLBinding::GenerateAnonymousContent()
 
     // Do this after looking for <children> as this messes up the parent
     // pointer which would make the GetNextNode call above fail
-    BindAnonymousContent(mContent, mBoundElement,
-                         mPrototypeBinding->ChromeOnlyContent());
+    InstallAnonymousContent(mContent, mBoundElement,
+                            mPrototypeBinding->ChromeOnlyContent());
 
     // Insert explicit children into insertion points
     if (mDefaultInsertionPoint && mInsertionPoints.IsEmpty()) {
@@ -372,8 +368,8 @@ nsXBLBinding::GenerateAnonymousContent()
             // the bound element didn't match any of the <children> in the
             // binding. This became a pseudo-API that we have to maintain.
 
-            // Undo BindAnonymousContent
-            UnbindAnonymousContent(doc, mContent);
+            // Undo InstallAnonymousContent
+            UninstallAnonymousContent(doc, mContent);
 
             // Clear out our children elements to avoid dangling references.
             ClearInsertionPoints();
@@ -405,7 +401,7 @@ nsXBLBinding::GenerateAnonymousContent()
     int32_t namespaceID = attrInfo.mName->NamespaceID();
     // Hold a strong reference here so that the atom doesn't go away during
     // UnsetAttr.
-    RefPtr<nsAtom> name = attrInfo.mName->LocalName();
+    nsCOMPtr<nsIAtom> name = attrInfo.mName->LocalName();
 
     if (name != nsGkAtoms::includes) {
       if (!nsContentUtils::HasNonEmptyAttr(mBoundElement, namespaceID, name)) {
@@ -505,7 +501,7 @@ nsXBLBinding::InstallEventHandlers()
       nsXBLPrototypeHandler* curr;
       for (curr = handlerChain; curr; curr = curr->GetNextHandler()) {
         // Fetch the event type.
-        RefPtr<nsAtom> eventAtom = curr->GetEventName();
+        nsCOMPtr<nsIAtom> eventAtom = curr->GetEventName();
         if (!eventAtom ||
             eventAtom == nsGkAtoms::keyup ||
             eventAtom == nsGkAtoms::keydown ||
@@ -593,10 +589,10 @@ nsXBLBinding::InstallImplementation()
   return NS_OK;
 }
 
-nsAtom*
+nsIAtom*
 nsXBLBinding::GetBaseTag(int32_t* aNameSpaceID)
 {
-  nsAtom *tag = mPrototypeBinding->GetBaseTag(aNameSpaceID);
+  nsIAtom *tag = mPrototypeBinding->GetBaseTag(aNameSpaceID);
   if (!tag && mNextBinding)
     return mNextBinding->GetBaseTag(aNameSpaceID);
 
@@ -604,7 +600,7 @@ nsXBLBinding::GetBaseTag(int32_t* aNameSpaceID)
 }
 
 void
-nsXBLBinding::AttributeChanged(nsAtom* aAttribute, int32_t aNameSpaceID,
+nsXBLBinding::AttributeChanged(nsIAtom* aAttribute, int32_t aNameSpaceID,
                                bool aRemoveFlag, bool aNotify)
 {
   // XXX Change if we ever allow multiple bindings in a chain to contribute anonymous content
@@ -657,7 +653,7 @@ nsXBLBinding::UnhookEventHandlers()
         continue;
       }
 
-      RefPtr<nsAtom> eventAtom = curr->GetEventName();
+      nsCOMPtr<nsIAtom> eventAtom = curr->GetEventName();
       if (!eventAtom ||
           eventAtom == nsGkAtoms::keyup ||
           eventAtom == nsGkAtoms::keydown ||
@@ -826,7 +822,7 @@ nsXBLBinding::ChangeDocument(nsIDocument* aOldDocument, nsIDocument* aNewDocumen
     // Update the anonymous content.
     // XXXbz why not only for style bindings?
     if (mContent && !mIsShadowRootBinding) {
-      nsXBLBinding::UnbindAnonymousContent(aOldDocument, mContent);
+      nsXBLBinding::UninstallAnonymousContent(aOldDocument, mContent);
     }
 
     // Now that we've unbound our anonymous content from the tree and updated
@@ -873,7 +869,7 @@ nsXBLBinding::WalkRules(nsIStyleRuleProcessor::EnumFunc aFunc, void* aData)
     (*aFunc)(rules, aData);
 }
 
-ServoStyleSet*
+const ServoStyleSet*
 nsXBLBinding::GetServoStyleSet() const
 {
   return mPrototypeBinding->GetServoStyleSet();
@@ -909,7 +905,8 @@ GetOrCreateClassObjectMap(JSContext *cx, JS::Handle<JSObject*> scope, const char
   // It's not there. Create and define it.
   JS::Rooted<JSObject*> map(cx, JS::NewWeakMapObject(cx));
   if (!map || !JS_DefineProperty(cx, scope, mapName, map,
-                                 JSPROP_PERMANENT | JSPROP_READONLY))
+                                 JSPROP_PERMANENT | JSPROP_READONLY,
+                                 JS_STUBGETTER, JS_STUBSETTER))
   {
     return nullptr;
   }
@@ -1010,7 +1007,17 @@ nsXBLBinding::DoInitJSClass(JSContext *cx,
   NS_ENSURE_TRUE(xblScope, NS_ERROR_UNEXPECTED);
 
   JS::Rooted<JSObject*> parent_proto(cx);
-  if (!JS_GetPrototype(cx, obj, &parent_proto)) {
+  {
+    JS::RootedObject wrapped(cx, obj);
+    JSAutoCompartment ac(cx, xblScope);
+    if (!JS_WrapObject(cx, &wrapped)) {
+      return NS_ERROR_FAILURE;
+    }
+    if (!JS_GetPrototype(cx, wrapped, &parent_proto)) {
+      return NS_ERROR_FAILURE;
+    }
+  }
+  if (!JS_WrapObject(cx, &parent_proto)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1070,7 +1077,8 @@ nsXBLBinding::DoInitJSClass(JSContext *cx,
     JSAutoCompartment ac3(cx, holder);
     if (!JS_WrapObject(cx, &proto) ||
         !JS_DefineUCProperty(cx, holder, aClassName.get(), -1, proto,
-                             JSPROP_READONLY | JSPROP_PERMANENT))
+                             JSPROP_READONLY | JSPROP_PERMANENT,
+                             JS_STUBGETTER, JS_STUBSETTER))
     {
       return NS_ERROR_OUT_OF_MEMORY;
     }

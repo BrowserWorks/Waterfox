@@ -21,14 +21,15 @@ HTMLHRElement::~HTMLHRElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLHRElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLHRElement, nsGenericHTMLElement,
+                            nsIDOMHTMLHRElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLHRElement)
 
 
 bool
 HTMLHRElement::ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult)
 {
@@ -179,7 +180,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLHRElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLHRElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::align },

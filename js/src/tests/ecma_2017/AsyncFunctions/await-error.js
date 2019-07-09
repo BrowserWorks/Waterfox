@@ -7,7 +7,7 @@ let caught = false;
 try {
     eval("await 10");
 } catch(e) {
-    assertEq(e.message.includes("await is only valid in"), true);
+    assertEq(e.message, "await is only valid in async functions");
     caught = true;
 }
 assertEq(caught, true);

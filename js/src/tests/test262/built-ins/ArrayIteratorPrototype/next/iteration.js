@@ -2,13 +2,11 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-%arrayiteratorprototype%.next
-description: >
-    The method should return a valid iterator with the context as the
-    IteratedObject.
-es6id: 22.1.3.30
-features: [Symbol.iterator]
----*/
+  description: >
+      The method should return a valid iterator with the context as the
+      IteratedObject.
+  es6id: 22.1.3.30
+ ---*/
 
 var array = ['a', 'b', 'c'];
 var iterator = array[Symbol.iterator]();

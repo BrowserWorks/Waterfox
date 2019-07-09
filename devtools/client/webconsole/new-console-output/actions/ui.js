@@ -11,10 +11,8 @@ const Services = require("Services");
 
 const {
   FILTER_BAR_TOGGLE,
-  PERSIST_TOGGLE,
   PREFS,
   TIMESTAMPS_TOGGLE,
-  SELECT_NETWORK_MESSAGE_TAB,
 } = require("devtools/client/webconsole/new-console-output/constants");
 
 function filterBarToggle(show) {
@@ -27,16 +25,6 @@ function filterBarToggle(show) {
   };
 }
 
-function persistToggle(show) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: PERSIST_TOGGLE,
-    });
-    const uiState = getAllUi(getState());
-    Services.prefs.setBoolPref(PREFS.UI.PERSIST, uiState.get("persistLogs"));
-  };
-}
-
 function timestampsToggle(visible) {
   return {
     type: TIMESTAMPS_TOGGLE,
@@ -44,16 +32,7 @@ function timestampsToggle(visible) {
   };
 }
 
-function selectNetworkMessageTab(id) {
-  return {
-    type: SELECT_NETWORK_MESSAGE_TAB,
-    id,
-  };
-}
-
 module.exports = {
   filterBarToggle,
-  persistToggle,
   timestampsToggle,
-  selectNetworkMessageTab,
 };

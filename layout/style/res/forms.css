@@ -117,6 +117,20 @@ input::placeholder {
   line-height: -moz-block-height;
 }
 
+@-moz-document url-prefix(chrome://) {
+  input.uri-element-right-align:-moz-locale-dir(rtl) {
+    direction: ltr !important;
+    text-align: right !important;
+  }
+
+  /* Make sure that the location bar's alignment in RTL mode changes according
+     to the input box direction if the user switches the text direction using
+     cmd_switchTextDirection (which applies a dir attribute to the <input>). */
+  input.uri-element-right-align[dir=ltr]:-moz-locale-dir(rtl) {
+    text-align: left !important;
+  }
+}
+
 textarea {
   margin-block-start: 1px;
   margin-block-end: 1px;
@@ -519,7 +533,7 @@ input[type="file"] > button[type="button"] {
 }
 
 /* colored part of the color selector button */
-input[type="color"]::-moz-color-swatch {
+input[type="color"]:-moz-system-metric(color-picker-available)::-moz-color-swatch {
   width: 100%;
   height: 100%;
   min-width: 3px;
@@ -584,6 +598,55 @@ input[type="checkbox"]:disabled:hover:active {
   cursor: inherit;
 }
 
+%if defined(MOZ_WIDGET_ANDROID)
+/*
+ * These platforms doesn't have any theming support and thus -moz-appearance:none
+ * is the same as any other appearance value.
+ * XXX This is not web-compatible and should be fixed.
+ */
+input[type="radio"] {
+  border-radius: 100%;
+}
+
+input[type="checkbox"] {
+  border-radius: 0;
+}
+
+/* NOTE: The width, height, border-width, and padding here must all
+   add up the way nsFormControlFrame::GetIntrinsic(Width|Height)
+   expects them to, or they will not come out with total width equal
+   to total height on sites that set their 'width' or 'height' to 'auto'.
+   (Should we maybe set !important on width and height, then?)  */
+input[type="radio"],
+input[type="checkbox"] {
+  inline-size: 13px;
+  block-size: 13px;
+  color: -moz-FieldText;
+  border: 2px inset ThreeDLightShadow;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+input[type="radio"]:disabled,
+input[type="radio"]:disabled:active,
+input[type="radio"]:disabled:hover,
+input[type="radio"]:disabled:hover:active,
+input[type="checkbox"]:disabled,
+input[type="checkbox"]:disabled:active,
+input[type="checkbox"]:disabled:hover,
+input[type="checkbox"]:disabled:hover:active {
+  padding: 1px;
+  border: 1px inset ThreeDShadow;
+}
+
+input[type="checkbox"]:hover:active,
+input[type="radio"]:hover:active {
+  background-color: ThreeDFace ! important;
+  border-style: inset !important;
+}
+
+%endif /* defined(MOZ_WIDGET_ANDROID) */
+
 % On Mac, the native theme takes care of this.
 % See nsNativeThemeCocoa::ThemeDrawsFocusForWidget.
 %ifndef XP_MACOSX
@@ -606,7 +669,7 @@ input[type="search"] {
 /* Non text-related properties for buttons: these ones are shared with
    input[type="color"] */
 button,
-input[type="color"],
+input[type="color"]:-moz-system-metric(color-picker-available),
 input[type="reset"],
 input[type="button"],
 input[type="submit"] {
@@ -641,7 +704,7 @@ input[type="submit"] {
   overflow-clip-box: padding-box;
 }
 
-input[type="color"] {
+input[type="color"]:-moz-system-metric(color-picker-available) {
   inline-size: 64px;
   block-size: 23px;
 }
@@ -689,7 +752,7 @@ button {
 }
 
 button:hover,
-input[type="color"]:hover,
+input[type="color"]:-moz-system-metric(color-picker-available):hover,
 input[type="reset"]:hover,
 input[type="button"]:hover,
 input[type="submit"]:hover {
@@ -704,7 +767,7 @@ input[type="submit"]:hover {
 }
 
 button:active:hover,
-input[type="color"]:active:hover,
+input[type="color"]:-moz-system-metric(color-picker-available):active:hover,
 input[type="reset"]:active:hover,
 input[type="button"]:active:hover,
 input[type="submit"]:active:hover {
@@ -726,7 +789,7 @@ input[type="submit"]:active:hover {
 }
 
 button::-moz-focus-inner,
-input[type="color"]::-moz-focus-inner,
+input[type="color"]:-moz-system-metric(color-picker-available)::-moz-focus-inner,
 input[type="reset"]::-moz-focus-inner,
 input[type="button"]::-moz-focus-inner,
 input[type="submit"]::-moz-focus-inner,
@@ -740,7 +803,7 @@ input[type="file"] > button[type="button"]::-moz-focus-inner {
 }
 
 button:-moz-focusring::-moz-focus-inner,
-input[type="color"]:-moz-focusring::-moz-focus-inner,
+input[type="color"]:-moz-system-metric(color-picker-available):-moz-focusring::-moz-focus-inner,
 input[type="reset"]:-moz-focusring::-moz-focus-inner,
 input[type="button"]:-moz-focusring::-moz-focus-inner,
 input[type="submit"]:-moz-focusring::-moz-focus-inner,
@@ -749,8 +812,8 @@ input[type="file"] > button[type="button"]:-moz-focusring::-moz-focus-inner {
 }
 
 button:disabled:active, button:disabled,
-input[type="color"]:disabled:active,
-input[type="color"]:disabled,
+input[type="color"]:-moz-system-metric(color-picker-available):disabled:active,
+input[type="color"]:-moz-system-metric(color-picker-available):disabled,
 input[type="reset"]:disabled:active,
 input[type="reset"]:disabled,
 input[type="button"]:disabled:active,
@@ -1127,7 +1190,6 @@ input[type="number"] > div > div > div:hover {
 input[type="date"],
 input[type="time"] {
   overflow: hidden !important;
-  font-family: -moz-fixed;
 }
 
 :-moz-autofill, :-moz-autofill-preview {

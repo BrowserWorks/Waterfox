@@ -260,8 +260,6 @@ StyleSheetInfo::StyleSheetInfo(StyleSheetInfo& aCopy,
   , mFirstChild()  // We don't rebuild the child because we're making a copy
                    // without children.
   , mSourceMapURL(aCopy.mSourceMapURL)
-  , mSourceMapURLFromComment(aCopy.mSourceMapURLFromComment)
-  , mSourceURL(aCopy.mSourceURL)
 #ifdef DEBUG
   , mPrincipalSet(aCopy.mPrincipalSet)
 #endif
@@ -450,7 +448,7 @@ StyleSheet::EnsureUniqueInner()
              "unexpected number of outers");
   mDirty = true;
 
-  if (HasUniqueInner()) {
+  if (mInner->mSheets.Length() == 1) {
     // already unique
     return;
   }
@@ -512,35 +510,13 @@ StyleSheet::GetCssRules(nsIPrincipal& aSubjectPrincipal,
 void
 StyleSheet::GetSourceMapURL(nsAString& aSourceMapURL)
 {
-  if (mInner->mSourceMapURL.IsEmpty()) {
-    aSourceMapURL = mInner->mSourceMapURLFromComment;
-  } else {
-    aSourceMapURL = mInner->mSourceMapURL;
-  }
+  aSourceMapURL = mInner->mSourceMapURL;
 }
 
 void
 StyleSheet::SetSourceMapURL(const nsAString& aSourceMapURL)
 {
   mInner->mSourceMapURL = aSourceMapURL;
-}
-
-void
-StyleSheet::SetSourceMapURLFromComment(const nsAString& aSourceMapURLFromComment)
-{
-  mInner->mSourceMapURLFromComment = aSourceMapURLFromComment;
-}
-
-void
-StyleSheet::GetSourceURL(nsAString& aSourceURL)
-{
-  aSourceURL = mInner->mSourceURL;
-}
-
-void
-StyleSheet::SetSourceURL(const nsAString& aSourceURL)
-{
-  mInner->mSourceURL = aSourceURL;
 }
 
 css::Rule*

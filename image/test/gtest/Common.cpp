@@ -125,7 +125,7 @@ LoadFile(const char* aRelativePath)
   if (!NS_InputStreamIsBuffered(inputStream)) {
     nsCOMPtr<nsIInputStream> bufStream;
     rv = NS_NewBufferedInputStream(getter_AddRefs(bufStream),
-                                   inputStream.forget(), 1024);
+                                   inputStream, 1024);
     ASSERT_TRUE_OR_RETURN(NS_SUCCEEDED(rv), nullptr);
     inputStream = bufStream;
   }
@@ -170,7 +170,7 @@ PalettedRowsAreSolidColor(Decoder* aDecoder,
 {
   RawAccessFrameRef currentFrame = aDecoder->GetCurrentFrameRef();
   IntRect frameRect = currentFrame->GetRect();
-  IntRect solidColorRect(frameRect.x, aStartRow, frameRect.Width(), aRowCount);
+  IntRect solidColorRect(frameRect.x, aStartRow, frameRect.width, aRowCount);
   return PalettedRectIsSolidColor(aDecoder, solidColorRect, aColor);
 }
 
@@ -243,7 +243,7 @@ PalettedRectIsSolidColor(Decoder* aDecoder, const IntRect& aRect, uint8_t aColor
 
   // Walk through the image data and make sure that the entire rect has the
   // palette index |aColor|.
-  int32_t rowLength = frameRect.Width();
+  int32_t rowLength = frameRect.width;
   for (int32_t row = rect.y; row < rect.YMost(); ++row) {
     for (int32_t col = rect.x; col < rect.XMost(); ++col) {
       int32_t i = row * rowLength + col;
@@ -430,7 +430,7 @@ CheckWritePixels(Decoder* aDecoder,
     return AsVariant(BGRAColor::Green().AsPixel());
   });
   EXPECT_EQ(WriteState::FINISHED, result);
-  EXPECT_EQ(inputWriteRect.Width() * inputWriteRect.Height(), count);
+  EXPECT_EQ(inputWriteRect.width * inputWriteRect.height, count);
 
   AssertCorrectPipelineFinalState(aFilter, inputRect, outputRect);
 
@@ -477,7 +477,7 @@ CheckPalettedWritePixels(Decoder* aDecoder,
     return AsVariant(uint8_t(255));
   });
   EXPECT_EQ(WriteState::FINISHED, result);
-  EXPECT_EQ(inputWriteRect.Width() * inputWriteRect.Height(), count);
+  EXPECT_EQ(inputWriteRect.width * inputWriteRect.height, count);
 
   AssertCorrectPipelineFinalState(aFilter, inputRect, outputRect);
 
@@ -505,7 +505,7 @@ CheckPalettedWritePixels(Decoder* aDecoder,
   uint32_t imageLength;
   currentFrame->GetImageData(&imageData, &imageLength);
   ASSERT_TRUE(imageData != nullptr);
-  ASSERT_EQ(outputWriteRect.Width() * outputWriteRect.Height(), int32_t(imageLength));
+  ASSERT_EQ(outputWriteRect.width * outputWriteRect.height, int32_t(imageLength));
   for (uint32_t i = 0; i < imageLength; ++i) {
     ASSERT_EQ(uint8_t(255), imageData[i]);
   }
@@ -551,6 +551,11 @@ ImageTestCase GreenIconTestCase()
                        TEST_CASE_IS_TRANSPARENT);
 }
 
+ImageTestCase GreenWebPTestCase()
+{
+  return ImageTestCase("green.webp", "image/webp", IntSize(100, 100));
+}
+
 ImageTestCase GreenFirstFrameAnimatedGIFTestCase()
 {
   return ImageTestCase("first-frame-green.gif", "image/gif", IntSize(100, 100),
@@ -561,6 +566,12 @@ ImageTestCase GreenFirstFrameAnimatedPNGTestCase()
 {
   return ImageTestCase("first-frame-green.png", "image/png", IntSize(100, 100),
                        TEST_CASE_IS_TRANSPARENT | TEST_CASE_IS_ANIMATED);
+}
+
+ImageTestCase GreenFirstFrameAnimatedWebPTestCase()
+{
+  return ImageTestCase("first-frame-green.webp", "image/webp", IntSize(100, 100),
+                       TEST_CASE_IS_ANIMATED);
 }
 
 ImageTestCase CorruptTestCase()
@@ -697,6 +708,12 @@ ImageTestCase DownscaledIconTestCase()
 {
   return ImageTestCase("downscaled.icon", "image/icon", IntSize(100, 100),
                        IntSize(20, 20), TEST_CASE_IS_TRANSPARENT);
+}
+
+ImageTestCase DownscaledWebPTestCase()
+{
+  return ImageTestCase("downscaled.webp", "image/webp", IntSize(100, 100),
+                       IntSize(20, 20));
 }
 
 ImageTestCase DownscaledTransparentICOWithANDMaskTestCase()

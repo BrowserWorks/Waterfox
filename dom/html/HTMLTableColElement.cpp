@@ -33,7 +33,7 @@ NS_IMPL_ELEMENT_CLONE(HTMLTableColElement)
 
 bool
 HTMLTableColElement::ParseAttribute(int32_t aNamespaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     const nsAString& aValue,
                                     nsAttrValue& aResult)
 {
@@ -44,7 +44,7 @@ HTMLTableColElement::ParseAttribute(int32_t aNamespaceID,
     }
     if (aAttribute == nsGkAtoms::span) {
       /* protection from unrealistic large colspan values */
-      aResult.ParseClampedNonNegativeInt(aValue, 1, 1, MAX_COLSPAN);
+      aResult.ParseIntWithFallback(aValue, 1, MAX_COLSPAN);
       return true;
     }
     if (aAttribute == nsGkAtoms::width) {
@@ -89,7 +89,7 @@ HTMLTableColElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes
 }
 
 NS_IMETHODIMP_(bool)
-HTMLTableColElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLTableColElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::width },

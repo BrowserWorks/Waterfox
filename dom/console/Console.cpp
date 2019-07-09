@@ -37,6 +37,7 @@
 #include "nsIDOMWindowUtils.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsILoadContext.h"
+#include "nsIProgrammingLanguage.h"
 #include "nsISensitiveInfoHiddenURI.h"
 #include "nsIServiceManager.h"
 #include "nsISupportsPrimitives.h"
@@ -401,18 +402,15 @@ protected:
 
     MOZ_ASSERT(!wp->GetWindow());
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-
-    JSContext* cx = jsapi.cx();
+    AutoSafeJSContext cx;
 
     JS::Rooted<JSObject*> global(cx, mConsole->GetOrCreateSandbox(cx, wp->GetPrincipal()));
     if (NS_WARN_IF(!global)) {
       return;
     }
 
-    // The GetOrCreateSandbox call returns a proxy to the actual sandbox object.
-    // We don't need a proxy here.
+    // The CreateSandbox call returns a proxy to the actual sandbox object. We
+    // don't need a proxy here.
     global = js::UncheckedUnwrap(global);
 
     JSAutoCompartment ac(cx, global);
@@ -1055,11 +1053,6 @@ void
 Console::ProfileMethodInternal(JSContext* aCx, const nsAString& aAction,
                                const Sequence<JS::Value>& aData)
 {
-  // Make all Console API no-op if DevTools aren't enabled.
-  if (!nsContentUtils::DevToolsEnabled(aCx)) {
-    return;
-  }
-
   if (!NS_IsMainThread()) {
     // Here we are in a worker thread.
     RefPtr<ConsoleProfileRunnable> runnable =
@@ -1158,6 +1151,7 @@ StackFrameToStackEntry(JSContext* aCx, nsIStackFrame* aStackFrame,
     aStackEntry.mAsyncCause.Construct(cause);
   }
 
+  aStackEntry.mLanguage = nsIProgrammingLanguage::JAVASCRIPT;
   return NS_OK;
 }
 
@@ -1208,10 +1202,6 @@ Console::MethodInternal(JSContext* aCx, MethodName aMethodName,
                         const nsAString& aMethodString,
                         const Sequence<JS::Value>& aData)
 {
-  // Make all Console API no-op if DevTools aren't enabled.
-  if (!nsContentUtils::DevToolsEnabled(aCx)) {
-    return;
-  }
   AssertIsOnOwningThread();
 
   RefPtr<ConsoleCallData> callData(new ConsoleCallData());
@@ -1519,6 +1509,13 @@ Console::PopulateConsoleNotificationInTheTargetScope(JSContext* aCx,
   ClearException ce(aCx);
   RootedDictionary<ConsoleEvent> event(aCx);
 
+  // Save the principal's OriginAttributes in the console event data
+  // so that we will be able to filter messages by origin attributes.
+  JS::Rooted<JS::Value> originAttributesValue(aCx);
+  if (ToJSValue(aCx, aData->mOriginAttributes, &originAttributesValue)) {
+    event.mOriginAttributes = originAttributesValue;
+  }
+
   event.mAddonId = aData->mAddonId;
 
   event.mID.Construct();
@@ -1661,10 +1658,11 @@ Console::PopulateConsoleNotificationInTheTargetScope(JSContext* aCx,
                                     JS::PrivateValue(aData->mStack.get()));
 
       if (NS_WARN_IF(!JS_DefineProperty(aCx, eventObj, "stacktrace",
+                                        JS::UndefinedHandleValue,
+                                        JSPROP_ENUMERATE | JSPROP_SHARED |
+                                        JSPROP_GETTER | JSPROP_SETTER,
                                         JS_DATA_TO_FUNC_PTR(JSNative, funObj.get()),
-                                        nullptr,
-                                        JSPROP_ENUMERATE |
-                                        JSPROP_GETTER | JSPROP_SETTER))) {
+                                        nullptr))) {
         return false;
       }
     }
@@ -1847,7 +1845,7 @@ Console::ProcessArguments(JSContext* aCx,
           int32_t diff = aSequence.Length() - aStyles.Length();
           if (diff > 0) {
             for (int32_t i = 0; i < diff; i++) {
-              if (NS_WARN_IF(!aStyles.AppendElement(VoidString(), fallible))) {
+              if (NS_WARN_IF(!aStyles.AppendElement(NullString(), fallible))) {
                 return false;
               }
             }

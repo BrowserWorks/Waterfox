@@ -13,7 +13,6 @@
 #include "nsAutoPtr.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
-#include "nsIClassOfService.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsILoadContext.h"
 #include "nsIPrivateBrowsingChannel.h"
@@ -62,6 +61,7 @@
 #include "nsIMIMEInfo.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLSharedElement.h"
+#include "mozilla/dom/HTMLSharedObjectElement.h"
 #include "mozilla/Printf.h"
 
 using namespace mozilla;
@@ -1229,14 +1229,13 @@ nsresult nsWebBrowserPersist::SendErrorStatusChange(
     rv = s->CreateBundle(kWebBrowserPersistStringBundle, getter_AddRefs(bundle));
     NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && bundle, NS_ERROR_FAILURE);
 
-    nsAutoString msgText;
+    nsXPIDLString msgText;
     const char16_t *strings[1];
     strings[0] = path.get();
-    rv = bundle->FormatStringFromName(msgId, strings, 1, msgText);
+    rv = bundle->FormatStringFromName(msgId, strings, 1, getter_Copies(msgText));
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
-    mProgressListener->OnStatusChange(nullptr, aRequest, aResult,
-                                      msgText.get());
+    mProgressListener->OnStatusChange(nullptr, aRequest, aResult, msgText);
 
     return NS_OK;
 }
@@ -1287,7 +1286,7 @@ nsWebBrowserPersist::AppendPathToURI(nsIURI *aURI, const nsAString & aPath)
     NS_ENSURE_ARG_POINTER(aURI);
 
     nsAutoCString newPath;
-    nsresult rv = aURI->GetPathQueryRef(newPath);
+    nsresult rv = aURI->GetPath(newPath);
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
     // Append a forward slash if necessary
@@ -1299,7 +1298,7 @@ nsWebBrowserPersist::AppendPathToURI(nsIURI *aURI, const nsAString & aPath)
 
     // Store the path back on the URI
     AppendUTF16toUTF8(aPath, newPath);
-    aURI->SetPathQueryRef(newPath);
+    aURI->SetPath(newPath);
 
     return NS_OK;
 }
@@ -1491,18 +1490,11 @@ nsresult nsWebBrowserPersist::SaveChannelInternal(
                         getter_AddRefs(fileInputStream));
         NS_ENSURE_SUCCESS(rv, rv);
         rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedInputStream),
-                                       fileInputStream.forget(),
-                                       BUFFERED_OUTPUT_SIZE);
+                                       fileInputStream, BUFFERED_OUTPUT_SIZE);
         NS_ENSURE_SUCCESS(rv, rv);
         nsAutoCString contentType;
         aChannel->GetContentType(contentType);
         return StartUpload(bufferedInputStream, aFile, contentType);
-    }
-
-    // Mark save channel as throttleable.
-    nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(aChannel));
-    if (cos) {
-      cos->AddClassFlags(nsIClassOfService::Throttleable);
     }
 
     // Read from the input channel
@@ -2634,7 +2626,7 @@ nsWebBrowserPersist::SaveSubframeContent(
     nsresult rv = aFrameContent->GetContentType(contentType);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsString ext;
+    nsXPIDLString ext;
     GetExtensionForContentType(NS_ConvertASCIItoUTF16(contentType).get(),
                                getter_Copies(ext));
 

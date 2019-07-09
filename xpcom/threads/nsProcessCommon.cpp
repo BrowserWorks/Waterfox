@@ -33,16 +33,10 @@
 #include "nsString.h"
 #include "nsLiteralString.h"
 #include "nsReadableUtils.h"
-#include "mozilla/UniquePtrExtensions.h"
 #else
 #ifdef XP_MACOSX
 #include <crt_externs.h>
 #include <spawn.h>
-#endif
-#ifdef XP_UNIX
-#ifndef XP_MACOSX
-#include "base/process_util.h"
-#endif
 #include <sys/wait.h>
 #include <sys/errno.h>
 #endif
@@ -78,12 +72,11 @@ nsProcess::nsProcess()
   , mShutdown(false)
   , mBlocking(false)
   , mStartHidden(false)
-  , mNoShell(false)
   , mPid(-1)
   , mObserver(nullptr)
   , mWeakObserver(nullptr)
   , mExitValue(-1)
-#if !defined(XP_UNIX)
+#if !defined(XP_MACOSX)
   , mProcess(nullptr)
 #endif
 {
@@ -129,7 +122,7 @@ nsProcess::Init(nsIFile* aExecutable)
 
 
 #if defined(XP_WIN)
-// Out param `aWideCmdLine` must be free()d by the caller.
+// Out param `aWideCmdLine` must be PR_Freed by the caller.
 static int
 assembleCmdLine(char* const* aArgv, wchar_t** aWideCmdLine, UINT aCodePage)
 {
@@ -243,16 +236,13 @@ assembleCmdLine(char* const* aArgv, wchar_t** aWideCmdLine, UINT aCodePage)
 void
 nsProcess::Monitor(void* aArg)
 {
+  char stackBaseGuess;
+
   RefPtr<nsProcess> process = dont_AddRef(static_cast<nsProcess*>(aArg));
 
-#ifdef MOZ_GECKO_PROFILER
-  Maybe<AutoProfilerRegisterThread> registerThread;
-  if (!process->mBlocking) {
-    registerThread.emplace("RunProcess");
-  }
-#endif
   if (!process->mBlocking) {
     NS_SetCurrentThreadName("RunProcess");
+    profiler_register_thread("RunProcess", &stackBaseGuess);
   }
 
 #if defined(PROCESSMODEL_WINAPI)
@@ -277,7 +267,7 @@ nsProcess::Monitor(void* aArg)
     }
   }
 #else
-#ifdef XP_UNIX
+#ifdef XP_MACOSX
   int exitCode = -1;
   int status = 0;
   pid_t result;
@@ -301,7 +291,7 @@ nsProcess::Monitor(void* aArg)
   // Lock in case Kill or GetExitCode are called during this
   {
     MutexAutoLock lock(process->mLock);
-#if !defined(XP_UNIX)
+#if !defined(XP_MACOSX)
     process->mProcess = nullptr;
 #endif
     process->mExitValue = exitCode;
@@ -318,6 +308,10 @@ nsProcess::Monitor(void* aArg)
   } else {
     NS_DispatchToMainThread(NewRunnableMethod(
       "nsProcess::ProcessComplete", process, &nsProcess::ProcessComplete));
+  }
+
+  if (!process->mBlocking) {
+    profiler_unregister_thread();
   }
 }
 
@@ -472,78 +466,46 @@ nsProcess::RunProcess(bool aBlocking, char** aMyArgv, nsIObserver* aObserver,
 
 #if defined(PROCESSMODEL_WINAPI)
   BOOL retVal;
-  UniqueFreePtr<wchar_t> cmdLine;
+  wchar_t* cmdLine = nullptr;
 
   // |aMyArgv| is null-terminated and always starts with the program path. If
   // the second slot is non-null then arguments are being passed.
-  if (aMyArgv[1] || mNoShell) {
-    // Pass the executable path as argv[0] to the launched program when calling
-    // CreateProcess().
-    char** argv = mNoShell ? aMyArgv : aMyArgv + 1;
-
-    wchar_t* assembledCmdLine = nullptr;
-    if (assembleCmdLine(argv, &assembledCmdLine,
-                        aArgsUTF8 ? CP_UTF8 : CP_ACP) == -1) {
-      return NS_ERROR_FILE_EXECUTION_FAILED;
-    }
-    cmdLine.reset(assembledCmdLine);
+  if (aMyArgv[1] && assembleCmdLine(aMyArgv + 1, &cmdLine,
+                                    aArgsUTF8 ? CP_UTF8 : CP_ACP) == -1) {
+    return NS_ERROR_FILE_EXECUTION_FAILED;
   }
+
+  /* The SEE_MASK_NO_CONSOLE flag is important to prevent console windows
+   * from appearing. This makes behavior the same on all platforms. The flag
+   * will not have any effect on non-console applications.
+   */
 
   // The program name in aMyArgv[0] is always UTF-8
   NS_ConvertUTF8toUTF16 wideFile(aMyArgv[0]);
 
-  if (mNoShell) {
-    STARTUPINFO startupInfo;
-    ZeroMemory(&startupInfo, sizeof(startupInfo));
-    startupInfo.cb = sizeof(startupInfo);
-    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-    startupInfo.wShowWindow = mStartHidden ? SW_HIDE : SW_SHOWNORMAL;
+  SHELLEXECUTEINFOW sinfo;
+  memset(&sinfo, 0, sizeof(SHELLEXECUTEINFOW));
+  sinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+  sinfo.hwnd   = nullptr;
+  sinfo.lpFile = wideFile.get();
+  sinfo.nShow  = mStartHidden ? SW_HIDE : SW_SHOWNORMAL;
+  sinfo.fMask  = SEE_MASK_FLAG_DDEWAIT |
+                 SEE_MASK_NO_CONSOLE |
+                 SEE_MASK_NOCLOSEPROCESS;
 
-    PROCESS_INFORMATION processInfo;
-    retVal = CreateProcess(/* lpApplicationName = */ wideFile.get(),
-                           /* lpCommandLine */ cmdLine.get(),
-                           /* lpProcessAttributes = */ NULL,
-                           /* lpThreadAttributes = */ NULL,
-                           /* bInheritHandles = */ FALSE,
-                           /* dwCreationFlags = */ 0,
-                           /* lpEnvironment = */ NULL,
-                           /* lpCurrentDirectory = */ NULL,
-                           /* lpStartupInfo = */ &startupInfo,
-                           /* lpProcessInformation */ &processInfo);
+  if (cmdLine) {
+    sinfo.lpParameters = cmdLine;
+  }
 
-    if (!retVal) {
-      return NS_ERROR_FILE_EXECUTION_FAILED;
-    }
+  retVal = ShellExecuteExW(&sinfo);
+  if (!retVal) {
+    return NS_ERROR_FILE_EXECUTION_FAILED;
+  }
 
-    CloseHandle(processInfo.hThread);
+  mProcess = sinfo.hProcess;
 
-    mProcess = processInfo.hProcess;
-  } else {
-    SHELLEXECUTEINFOW sinfo;
-    memset(&sinfo, 0, sizeof(SHELLEXECUTEINFOW));
-    sinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-    sinfo.hwnd   = nullptr;
-    sinfo.lpFile = wideFile.get();
-    sinfo.nShow  = mStartHidden ? SW_HIDE : SW_SHOWNORMAL;
-
-    /* The SEE_MASK_NO_CONSOLE flag is important to prevent console windows
-     * from appearing. This makes behavior the same on all platforms. The flag
-     * will not have any effect on non-console applications.
-     */
-    sinfo.fMask  = SEE_MASK_FLAG_DDEWAIT |
-                   SEE_MASK_NO_CONSOLE |
-                   SEE_MASK_NOCLOSEPROCESS;
-
-    if (cmdLine) {
-      sinfo.lpParameters = cmdLine.get();
-    }
-
-    retVal = ShellExecuteExW(&sinfo);
-    if (!retVal) {
-      return NS_ERROR_FILE_EXECUTION_FAILED;
-    }
-
-    mProcess = sinfo.hProcess;
+  if (cmdLine) {
+    free(cmdLine);
   }
 
   mPid = GetProcessId(mProcess);
@@ -573,20 +535,6 @@ nsProcess::RunProcess(bool aBlocking, char** aMyArgv, nsIObserver* aObserver,
   posix_spawnattr_destroy(&spawnattr);
 
   if (result != 0) {
-    return NS_ERROR_FAILURE;
-  }
-#elif defined(XP_UNIX)
-  base::file_handle_mapping_vector fdMap;
-  std::vector<std::string> argvVec;
-  for (char** arg = aMyArgv; *arg != nullptr; ++arg) {
-    argvVec.push_back(*arg);
-  }
-  pid_t newPid;
-  if (base::LaunchApp(argvVec, fdMap, false, &newPid)) {
-    static_assert(sizeof(pid_t) <= sizeof(int32_t),
-                  "mPid is large enough to hold a pid");
-    mPid = static_cast<int32_t>(newPid);
-  } else {
     return NS_ERROR_FAILURE;
   }
 #else
@@ -656,20 +604,6 @@ nsProcess::SetStartHidden(bool aStartHidden)
 }
 
 NS_IMETHODIMP
-nsProcess::GetNoShell(bool* aNoShell)
-{
-  *aNoShell = mNoShell;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsProcess::SetNoShell(bool aNoShell)
-{
-  mNoShell = aNoShell;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsProcess::GetPid(uint32_t* aPid)
 {
   if (!mThread) {
@@ -695,7 +629,7 @@ nsProcess::Kill()
     if (TerminateProcess(mProcess, 0) == 0) {
       return NS_ERROR_FAILURE;
     }
-#elif defined(XP_UNIX)
+#elif defined(XP_MACOSX)
     if (kill(mPid, SIGKILL) != 0) {
       return NS_ERROR_FAILURE;
     }

@@ -8,6 +8,7 @@
 #include "nsOSHelperAppService.h"
 #include "nsISupports.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsIURL.h"
 #include "nsIMIMEInfo.h"
 #include "nsMIMEInfoWin.h"

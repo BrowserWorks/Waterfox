@@ -8,7 +8,7 @@ order: 12
 
 Certain test scenarios require more than just static HTML
 generation. This is supported through the
-[wptserve](http://wptserve.readthedocs.io) server. Several scenarios
+[wptserve](https://github.com/w3c/wptserve) server. Several scenarios
 in particular are common:
 
 

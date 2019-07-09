@@ -1,4 +1,4 @@
-"use strict";
+"use strict"
 
 const TEST_URLS = [
   "about:robots",
@@ -12,7 +12,7 @@ add_task(async function() {
   }
   registerCleanupFunction(async function() {
     for (let tab of tabs) {
-      await BrowserTestUtils.removeTab(tab);
+      await BrowserTestUtils.removeTab(tab)
     }
   });
 
@@ -29,7 +29,7 @@ add_task(async function() {
       let folderName = dialog.document.getElementById("stringBundle").getString("bookmarkAllTabsDefault");
       Assert.equal(namepicker.value, folderName, "Name field is correct.");
 
-      let promiseTitleChange = PlacesTestUtils.waitForNotification(
+      let promiseTitleChange = promiseBookmarksNotification(
         "onItemChanged", (id, prop, isAnno, val) => prop == "title" && val == "folder");
       fillBookmarkTextField("editBMPanel_namePicker", "folder", dialog);
       await promiseTitleChange;

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-get-regexp.prototype.flags
 es6id: 21.2.5.3
 description: >
   get RegExp.prototype.flags.length is 0.
@@ -23,13 +22,12 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-var get = Object.getOwnPropertyDescriptor(RegExp.prototype, 'flags').get;
+var desc = Object.getOwnPropertyDescriptor(RegExp.prototype, "flags");
 
-verifyProperty(get, 'length', {
-  value: 0,
-  writable: false,
-  enumerable: false,
-  configurable: true,
-});
+assert.sameValue(desc.get.length, 0);
+
+verifyNotEnumerable(desc.get, "length");
+verifyNotWritable(desc.get, "length");
+verifyConfigurable(desc.get, "length");
 
 reportCompare(0, 0);

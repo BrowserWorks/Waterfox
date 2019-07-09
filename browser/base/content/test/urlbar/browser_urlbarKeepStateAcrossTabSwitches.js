@@ -6,10 +6,10 @@
  */
 add_task(async function() {
   let input = "i-definitely-dont-exist.example.com";
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:newtab", false);
   // NB: CPOW usage because new tab pages can be preloaded, in which case no
   // load events fire.
-  await BrowserTestUtils.waitForCondition(() => !tab.linkedBrowser.contentDocument.hidden);
+  await BrowserTestUtils.waitForCondition(() => !tab.linkedBrowser.contentDocument.hidden)
   let errorPageLoaded = BrowserTestUtils.waitForErrorPage(tab.linkedBrowser);
   gURLBar.value = input;
   gURLBar.select();
@@ -29,10 +29,10 @@ add_task(async function() {
 add_task(async function() {
   let input = "To be or not to be-that is the question";
   await SpecialPowers.pushPrefEnv({set: [["keyword.enabled", false]]});
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:newtab", false);
   // NB: CPOW usage because new tab pages can be preloaded, in which case no
   // load events fire.
-  await BrowserTestUtils.waitForCondition(() => !tab.linkedBrowser.contentDocument.hidden);
+  await BrowserTestUtils.waitForCondition(() => !tab.linkedBrowser.contentDocument.hidden)
   let errorPageLoaded = BrowserTestUtils.waitForErrorPage(tab.linkedBrowser);
   gURLBar.value = input;
   gURLBar.select();

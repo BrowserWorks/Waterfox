@@ -15,7 +15,7 @@ var gMoveBookmarksDialog = {
   },
 
   init() {
-    this._nodes = window.arguments[0].nodes;
+    this._nodes = window.arguments[0];
 
     this.foldersTree.place =
       "place:excludeItems=1&excludeQueries=1&excludeReadOnlyFolders=1&folder=" +
@@ -45,9 +45,16 @@ var gMoveBookmarksDialog = {
       return;
     }
 
-    // Async transactions must do the move in the caller to avoid going out of
-    // scope whilst the dialog is still closing.
-    window.arguments[0].moveToGuid = PlacesUtils.getConcreteItemGuid(selectedNode);
+    PlacesTransactions.batch(async () => {
+      let newParentGuid = await PlacesUtils.promiseItemGuid(selectedFolderId);
+      for (let node of this._nodes) {
+        // Nothing to do if the node is already under the selected folder.
+        if (node.parent.itemId == selectedFolderId)
+          continue;
+        await PlacesTransactions.Move({ guid: node.bookmarkGuid,
+                                        newParentGuid }).transact();
+      }
+    }).catch(Components.utils.reportError);
   },
 
   newFolder: function MBD_newFolder() {

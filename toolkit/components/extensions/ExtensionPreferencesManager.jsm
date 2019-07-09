@@ -25,7 +25,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 const {Management} = Cu.import("resource://gre/modules/Extension.jsm", {});
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionSettingsStore",
                                   "resource://gre/modules/ExtensionSettingsStore.jsm");
@@ -36,20 +35,12 @@ XPCOMUtils.defineLazyGetter(this, "defaultPreferences", function() {
   return new Preferences({defaultBranch: true});
 });
 
-const ADDON_REPLACE_REASONS = new Set([
-  "ADDON_DOWNGRADE",
-  "ADDON_UPGRADE",
-]);
-
 /* eslint-disable mozilla/balanced-listeners */
 Management.on("shutdown", (type, extension) => {
   switch (extension.shutdownReason) {
     case "ADDON_DISABLE":
     case "ADDON_DOWNGRADE":
     case "ADDON_UPGRADE":
-      if (ADDON_REPLACE_REASONS.has(extension.shutdownReason)) {
-        Services.obs.notifyObservers(null, "web-extension-preferences-replacing");
-      }
       this.ExtensionPreferencesManager.disableAll(extension);
       break;
 
@@ -59,13 +50,9 @@ Management.on("shutdown", (type, extension) => {
   }
 });
 
-Management.on("startup", async (type, extension) => {
+Management.on("startup", (type, extension) => {
   if (["ADDON_ENABLE", "ADDON_UPGRADE", "ADDON_DOWNGRADE"].includes(extension.startupReason)) {
-    const enablePromise = this.ExtensionPreferencesManager.enableAll(extension);
-    if (ADDON_REPLACE_REASONS.has(extension.startupReason)) {
-      await enablePromise;
-      Services.obs.notifyObservers(null, "web-extension-preferences-replaced");
-    }
+    this.ExtensionPreferencesManager.enableAll(extension);
   }
 });
 /* eslint-enable mozilla/balanced-listeners */
@@ -179,19 +166,6 @@ this.ExtensionPreferencesManager = {
    */
   getDefaultValue(prefName) {
     return defaultPreferences.get(prefName);
-  },
-
-  /**
-   * Gets the id of the extension controlling a preference or null if it isn't
-   * being controlled.
-   *
-   * @param {string} prefName The name of the preference.
-   *
-   * @returns {Promise} Resolves to the id of the extension, or null.
-   */
-  async getControllingExtensionId(prefName) {
-    await ExtensionSettingsStore.initialize();
-    return ExtensionSettingsStore.getTopExtensionId(STORE_TYPE, prefName);
   },
 
   /**
@@ -323,19 +297,6 @@ this.ExtensionPreferencesManager = {
   },
 
   /**
-   * Return the currently active value for a setting.
-   *
-   * @param {string} name
-   *        The unique id of the setting.
-   *
-   * @returns {Object} The current setting object.
-   */
-  async getSetting(name) {
-    await ExtensionSettingsStore.initialize();
-    return ExtensionSettingsStore.getSetting(STORE_TYPE, name);
-  },
-
-  /**
    * Return the levelOfControl for a setting / extension combo.
    * This queries the levelOfControl from the ExtensionSettingsStore and also
    * takes into account whether any of the setting's preferences are locked.
@@ -344,28 +305,17 @@ this.ExtensionPreferencesManager = {
    *        The extension for which levelOfControl is being requested.
    * @param {string} name
    *        The unique id of the setting.
-   * @param {string} storeType
-   *        The name of the store in ExtensionSettingsStore.
-   *        Defaults to STORE_TYPE.
    *
    * @returns {Promise}
    *          Resolves to the level of control of the extension over the setting.
    */
-  async getLevelOfControl(extension, name, storeType = STORE_TYPE) {
-    // This could be called for a setting that isn't defined to the PreferencesManager,
-    // in which case we simply defer to the SettingsStore.
-    if (storeType === STORE_TYPE) {
-      let setting = settingsMap.get(name);
-      if (!setting) {
+  async getLevelOfControl(extension, name) {
+    for (let prefName of settingsMap.get(name).prefNames) {
+      if (Preferences.locked(prefName)) {
         return "not_controllable";
-      }
-      for (let prefName of setting.prefNames) {
-        if (Preferences.locked(prefName)) {
-          return "not_controllable";
-        }
       }
     }
     await ExtensionSettingsStore.initialize();
-    return ExtensionSettingsStore.getLevelOfControl(extension, storeType, name);
+    return ExtensionSettingsStore.getLevelOfControl(extension, STORE_TYPE, name);
   },
 };

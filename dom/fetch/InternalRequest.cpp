@@ -30,7 +30,6 @@ InternalRequest::GetRequestConstructorCopy(nsIGlobalObject* aGlobal, ErrorResult
   copy->mHeaders = new InternalHeaders(*mHeaders);
   copy->SetUnsafeRequest();
   copy->mBodyStream = mBodyStream;
-  copy->mBodyLength = mBodyLength;
   copy->mForceOriginHeader = true;
   // The "client" is not stored in our implementation. Fetch API users should
   // use the appropriate window/document/principal and other Gecko security
@@ -80,7 +79,6 @@ InternalRequest::InternalRequest(const nsACString& aURL,
                                  const nsACString& aFragment)
   : mMethod("GET")
   , mHeaders(new InternalHeaders(HeadersGuardEnum::None))
-  , mBodyLength(InternalResponse::UNKNOWN_BODY_SIZE)
   , mContentPolicyType(nsIContentPolicy::TYPE_FETCH)
   , mReferrer(NS_LITERAL_STRING(kFETCH_CLIENT_REFERRER_STR))
   , mReferrerPolicy(ReferrerPolicy::_empty)
@@ -147,7 +145,6 @@ InternalRequest::InternalRequest(const InternalRequest& aOther)
   : mMethod(aOther.mMethod)
   , mURLList(aOther.mURLList)
   , mHeaders(new InternalHeaders(*aOther.mHeaders))
-  , mBodyLength(InternalResponse::UNKNOWN_BODY_SIZE)
   , mContentPolicyType(aOther.mContentPolicyType)
   , mReferrer(aOther.mReferrer)
   , mReferrerPolicy(aOther.mReferrerPolicy)

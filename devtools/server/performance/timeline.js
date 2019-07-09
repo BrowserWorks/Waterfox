@@ -21,14 +21,15 @@
  */
 
 const { Ci, Cu } = require("chrome");
-
+const { Class } = require("sdk/core/heritage");
 // Be aggressive about lazy loading, as this will run on every
 // toolbox startup
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "Task", "devtools/shared/task", true);
 loader.lazyRequireGetter(this, "Memory", "devtools/server/performance/memory", true);
 loader.lazyRequireGetter(this, "Framerate", "devtools/server/performance/framerate", true);
 loader.lazyRequireGetter(this, "StackFrameCache", "devtools/server/actors/utils/stack", true);
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
+loader.lazyRequireGetter(this, "EventTarget", "sdk/event/target", true);
 
 // How often do we pull markers from the docShells, and therefore, how often do
 // we send events to the front (knowing that when there are no markers in the
@@ -38,30 +39,33 @@ const DEFAULT_TIMELINE_DATA_PULL_TIMEOUT = 200;
 /**
  * The timeline actor pops and forwards timeline markers registered in docshells.
  */
-function Timeline(tabActor) {
-  EventEmitter.decorate(this);
+exports.Timeline = Class({
+  extends: EventTarget,
 
-  this.tabActor = tabActor;
+  /**
+   * Initializes this actor with the provided connection and tab actor.
+   */
+  initialize: function (tabActor) {
+    this.tabActor = tabActor;
 
-  this._isRecording = false;
-  this._stackFrames = null;
-  this._memory = null;
-  this._framerate = null;
+    this._isRecording = false;
+    this._stackFrames = null;
+    this._memory = null;
+    this._framerate = null;
 
-  // Make sure to get markers from new windows as they become available
-  this._onWindowReady = this._onWindowReady.bind(this);
-  this._onGarbageCollection = this._onGarbageCollection.bind(this);
-  this.tabActor.on("window-ready", this._onWindowReady);
-}
+    // Make sure to get markers from new windows as they become available
+    this._onWindowReady = this._onWindowReady.bind(this);
+    this._onGarbageCollection = this._onGarbageCollection.bind(this);
+    events.on(this.tabActor, "window-ready", this._onWindowReady);
+  },
 
-Timeline.prototype = {
   /**
    * Destroys this actor, stopping recording first.
    */
   destroy: function () {
     this.stop();
 
-    this.tabActor.off("window-ready", this._onWindowReady);
+    events.off(this.tabActor, "window-ready", this._onWindowReady);
     this.tabActor = null;
   },
 
@@ -141,7 +145,7 @@ Timeline.prototype = {
           if (this._withDocLoadingEvents) {
             if (marker.name == "document::DOMContentLoaded" ||
                 marker.name == "document::Load") {
-              this.emit("doc-loading", marker, endTime);
+              events.emit(this, "doc-loading", marker, endTime);
             }
           }
         }
@@ -150,24 +154,24 @@ Timeline.prototype = {
 
     // Emit markers if requested.
     if (this._withMarkers && markers.length > 0) {
-      this.emit("markers", markers, endTime);
+      events.emit(this, "markers", markers, endTime);
     }
 
     // Emit framerate data if requested.
     if (this._withTicks) {
-      this.emit("ticks", endTime, this._framerate.getPendingTicks());
+      events.emit(this, "ticks", endTime, this._framerate.getPendingTicks());
     }
 
     // Emit memory data if requested.
     if (this._withMemory) {
-      this.emit("memory", endTime, this._memory.measure());
+      events.emit(this, "memory", endTime, this._memory.measure());
     }
 
     // Emit stack frames data if requested.
     if (this._withFrames && this._withMarkers) {
       let frames = this._stackFrames.makeEvent();
       if (frames) {
-        this.emit("frames", endTime, frames);
+        events.emit(this, "frames", endTime, frames);
       }
     }
 
@@ -247,7 +251,7 @@ Timeline.prototype = {
     }
 
     if (this._withGCEvents) {
-      this._memory.on("garbage-collection", this._onGarbageCollection);
+      events.on(this._memory, "garbage-collection", this._onGarbageCollection);
     }
 
     if (this._withFrames && this._withMarkers) {
@@ -290,7 +294,7 @@ Timeline.prototype = {
     }
 
     if (this._withGCEvents) {
-      this._memory.off("garbage-collection", this._onGarbageCollection);
+      events.off(this._memory, "garbage-collection", this._onGarbageCollection);
     }
 
     if (this._withFrames && this._withMarkers) {
@@ -342,7 +346,7 @@ Timeline.prototype = {
 
     let endTime = docShells[0].now();
 
-    this.emit("markers", collections.map(({
+    events.emit(this, "markers", collections.map(({
       startTimestamp: start, endTimestamp: end
     }) => {
       return {
@@ -355,6 +359,4 @@ Timeline.prototype = {
       };
     }), endTime);
   },
-};
-
-exports.Timeline = Timeline;
+});

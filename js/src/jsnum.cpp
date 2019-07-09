@@ -1263,7 +1263,7 @@ js::InitNumberClass(JSContext* cx, HandleObject obj)
     if (!parseInt)
         return nullptr;
     RootedValue parseIntValue(cx, ObjectValue(*parseInt));
-    if (!DefineDataProperty(cx, ctor, parseIntId, parseIntValue, 0))
+    if (!DefineProperty(cx, ctor, parseIntId, parseIntValue, nullptr, nullptr, 0))
         return nullptr;
 
     /* Number.parseFloat should be the same function object as global parseFloat. */
@@ -1273,17 +1273,17 @@ js::InitNumberClass(JSContext* cx, HandleObject obj)
     if (!parseFloat)
         return nullptr;
     RootedValue parseFloatValue(cx, ObjectValue(*parseFloat));
-    if (!DefineDataProperty(cx, ctor, parseFloatId, parseFloatValue, 0))
+    if (!DefineProperty(cx, ctor, parseFloatId, parseFloatValue, nullptr, nullptr, 0))
         return nullptr;
 
     RootedValue valueNaN(cx, cx->runtime()->NaNValue);
     RootedValue valueInfinity(cx, cx->runtime()->positiveInfinityValue);
 
     /* ES5 15.1.1.1, 15.1.1.2 */
-    if (!NativeDefineDataProperty(cx, global, cx->names().NaN, valueNaN,
-                                  JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING) ||
-        !NativeDefineDataProperty(cx, global, cx->names().Infinity, valueInfinity,
-                                  JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING))
+    if (!NativeDefineProperty(cx, global, cx->names().NaN, valueNaN, nullptr, nullptr,
+                              JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING) ||
+        !NativeDefineProperty(cx, global, cx->names().Infinity, valueInfinity, nullptr, nullptr,
+                              JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING))
     {
         return nullptr;
     }
@@ -1438,6 +1438,14 @@ js::NumberToAtom(JSContext* cx, double d)
     CacheNumber(cx, d, atom);
 
     return atom;
+}
+
+JSFlatString*
+js::NumberToString(JSContext* cx, double d)
+{
+    if (JSString* str = NumberToStringWithBase<CanGC>(cx, d, 10))
+        return &str->asFlat();
+    return nullptr;
 }
 
 JSFlatString*

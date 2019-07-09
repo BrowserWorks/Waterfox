@@ -1,7 +1,6 @@
 // Copyright (C) 2015 Mike Pennisi. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-esid: sec-array.prototype-@@unscopables
 es6id: 22.1.3.31
 description: >
     Property descriptor for initial value of `Symbol.unscopables` property

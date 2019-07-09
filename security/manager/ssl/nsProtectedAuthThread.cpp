@@ -22,7 +22,7 @@ NS_IMPL_ISUPPORTS(nsProtectedAuthThread, nsIProtectedAuthThread)
 
 static void nsProtectedAuthThreadRunner(void *arg)
 {
-    AUTO_PROFILER_REGISTER_THREAD("Protected Auth");
+    AutoProfilerRegisterThread registerThread("Protected Auth");
     NS_SetCurrentThreadName("Protected Auth");
 
     nsProtectedAuthThread *self = static_cast<nsProtectedAuthThread *>(arg);

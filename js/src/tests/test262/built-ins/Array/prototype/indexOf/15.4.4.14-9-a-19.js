@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.indexof
 es5id: 15.4.4.14-9-a-19
 description: >
     Array.prototype.indexOf - decreasing length of array does not
@@ -26,7 +25,7 @@ flags: [noStrict]
             },
             configurable: true
         });
-
+        
 
 assert.sameValue(arr.indexOf("unconfigurable"), 2, 'arr.indexOf("unconfigurable")');
 

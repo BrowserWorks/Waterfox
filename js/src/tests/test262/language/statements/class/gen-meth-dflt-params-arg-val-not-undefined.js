@@ -4,7 +4,7 @@
 /*---
 description: Use of intializer when argument value is not `undefined` (class expression method)
 esid: sec-class-definitions-runtime-semantics-evaluation
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 info: |
     ClassDeclaration : class BindingIdentifier ClassTail
@@ -57,7 +57,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     14.1.19 Runtime Semantics: IteratorBindingInitialization
 

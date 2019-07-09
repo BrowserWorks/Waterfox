@@ -26,46 +26,6 @@ void test_assign_helper(const nsACString& in, nsACString &_retval)
   _retval = in;
 }
 
-// Simple helper struct to test if conditionally enabled string functions are
-// working.
-template <typename T>
-struct EnableTest
-{
-  template <typename Q = T, typename EnableIfChar16 = mozilla::Char16OnlyT<Q>>
-  bool IsChar16() { return true; }
-
-  template <typename Q = T, typename EnableIfChar = mozilla::CharOnlyT<Q>>
-  bool IsChar16(int dummy = 42) { return false; }
-
-  template <typename Q = T, typename EnableIfChar16 = mozilla::Char16OnlyT<Q>>
-  bool IsChar() { return false; }
-
-  template <typename Q = T, typename EnableIfChar = mozilla::CharOnlyT<Q>>
-  bool IsChar(int dummy = 42) { return true; }
-};
-
-TEST(Strings, IsChar)
-{
-  EnableTest<char> charTest;
-  EXPECT_TRUE(charTest.IsChar());
-  EXPECT_FALSE(charTest.IsChar16());
-
-  EnableTest<char16_t> char16Test;
-  EXPECT_TRUE(char16Test.IsChar16());
-  EXPECT_FALSE(char16Test.IsChar());
-
-#ifdef COMPILATION_FAILURE_TEST
-  nsAutoCString a_ctest;
-  nsAutoString a_test;
-
-  a_ctest.AssignLiteral("hello");
-  // This should cause a compilation failure.
-  a_ctest.AssignLiteral(u"hello");
-  a_test.AssignLiteral(u"hello");
-  a_test.AssignLiteral("hello");
-#endif
-}
-
 TEST(Strings, assign)
 {
   nsCString result;
@@ -466,6 +426,20 @@ TEST(Strings, equals_ic)
   EXPECT_FALSE(s.LowerCaseEqualsLiteral("view-source"));
 }
 
+TEST(Strings, fixed_string)
+{
+  char buf[256] = "hello world";
+
+  nsFixedCString s(buf, sizeof(buf));
+
+  EXPECT_EQ(s.Length(), strlen(buf));
+
+  EXPECT_STREQ(s.get(), buf);
+
+  s.Assign("foopy doopy doo");
+  EXPECT_EQ(s.get(), buf);
+}
+
 TEST(Strings, concat)
 {
   nsCString bar("bar");
@@ -496,6 +470,45 @@ TEST(Strings, concat_3)
 
   result = ab + result + c;
   EXPECT_STREQ(result.get(), "abc");
+}
+
+TEST(Strings, xpidl_string)
+{
+  nsXPIDLCString a, b;
+  a = b;
+  EXPECT_TRUE(a == b);
+
+  a.Adopt(0);
+  EXPECT_TRUE(a == b);
+
+  a.Append("foopy");
+  a.Assign(b);
+  EXPECT_TRUE(a == b);
+
+  a.Insert("", 0);
+  a.Assign(b);
+  EXPECT_TRUE(a == b);
+
+  const char text[] = "hello world";
+  *getter_Copies(a) = NS_strdup(text);
+  EXPECT_STREQ(a, text);
+
+  b = a;
+  EXPECT_STREQ(a, b);
+
+  a.Adopt(0);
+  nsACString::const_iterator begin, end;
+  a.BeginReading(begin);
+  a.EndReading(end);
+  char *r = ToNewCString(Substring(begin, end));
+  EXPECT_STREQ(r, "");
+  free(r);
+
+  a.Adopt(0);
+  EXPECT_TRUE(a.IsVoid());
+
+  int32_t index = a.FindCharInSet("xyz");
+  EXPECT_EQ(index, kNotFound);
 }
 
 TEST(Strings, empty_assign)
@@ -707,40 +720,21 @@ TEST(Strings, voided)
 {
   const char kData[] = "hello world";
 
-  nsCString str;
-  EXPECT_TRUE(!str.IsVoid());
-  EXPECT_TRUE(str.IsEmpty());
-  EXPECT_STREQ(str.get(), "");
-
-  str.SetIsVoid(true);
+  nsXPIDLCString str;
+  EXPECT_FALSE(str);
   EXPECT_TRUE(str.IsVoid());
   EXPECT_TRUE(str.IsEmpty());
-  EXPECT_STREQ(str.get(), "");
 
   str.Assign(kData);
-  EXPECT_TRUE(!str.IsVoid());
-  EXPECT_TRUE(!str.IsEmpty());
-  EXPECT_STREQ(str.get(), kData);
+  EXPECT_STREQ(str, kData);
 
   str.SetIsVoid(true);
+  EXPECT_FALSE(str);
   EXPECT_TRUE(str.IsVoid());
   EXPECT_TRUE(str.IsEmpty());
-  EXPECT_STREQ(str.get(), "");
 
   str.SetIsVoid(false);
-  EXPECT_TRUE(!str.IsVoid());
-  EXPECT_TRUE(str.IsEmpty());
-  EXPECT_STREQ(str.get(), "");
-
-  str.Assign(kData);
-  EXPECT_TRUE(!str.IsVoid());
-  EXPECT_TRUE(!str.IsEmpty());
-  EXPECT_STREQ(str.get(), kData);
-
-  str.Adopt(nullptr);
-  EXPECT_TRUE(str.IsVoid());
-  EXPECT_TRUE(str.IsEmpty());
-  EXPECT_STREQ(str.get(), "");
+  EXPECT_STREQ(str, "");
 }
 
 TEST(Strings, voided_autostr)
@@ -1025,7 +1019,7 @@ TEST(Strings, Split)
 
   size_t counter = 0;
   for (const nsACString& token : one.Split(',')) {
-    EXPECT_TRUE(token.EqualsLiteral("one"));
+    EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     counter++;
   }
   EXPECT_EQ(counter, (size_t)1);
@@ -1033,9 +1027,9 @@ TEST(Strings, Split)
   counter = 0;
   for (const nsACString& token : two.Split(';')) {
     if (counter == 0) {
-      EXPECT_TRUE(token.EqualsLiteral("one"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
-      EXPECT_TRUE(token.EqualsLiteral("two"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("two")));
     }
     counter++;
   }
@@ -1044,11 +1038,11 @@ TEST(Strings, Split)
   counter = 0;
   for (const nsACString& token : three.Split('-')) {
     if (counter == 0) {
-      EXPECT_TRUE(token.EqualsLiteral("one"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
-      EXPECT_TRUE(token.EqualsLiteral(""));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("")));
     } else if (counter == 2) {
-      EXPECT_TRUE(token.EqualsLiteral("three"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("three")));
     }
     counter++;
   }
@@ -1064,9 +1058,9 @@ TEST(Strings, Split)
   counter = 0;
   for (const nsACString& token : delimStart.Split('-')) {
     if (counter == 0) {
-      EXPECT_TRUE(token.EqualsLiteral(""));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("")));
     } else if (counter == 1) {
-      EXPECT_TRUE(token.EqualsLiteral("two"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("two")));
     }
     counter++;
   }
@@ -1075,9 +1069,9 @@ TEST(Strings, Split)
   counter = 0;
   for (const nsACString& token : delimEnd.Split('-')) {
     if (counter == 0) {
-      EXPECT_TRUE(token.EqualsLiteral("one"));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
-      EXPECT_TRUE(token.EqualsLiteral(""));
+      EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("")));
     }
     counter++;
   }
@@ -1378,71 +1372,6 @@ MOZ_GTEST_BENCH(Strings, PerfStripCharsCRLF, [] {
       test3.StripChars("\r\n");
       test4.StripChars("\r\n");
       test5.StripChars("\r\n");
-    }
-});
-
-// Setup overhead test
-#define OneASCII "a"
-
-// Maximal non-SIMD legth
-#define FifteenASCII "Lorem ipsum dol"
-
-// Around hundred is common length for IsUTF8 check
-#define HundredASCII "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ac tellus eget velit viverra viverra i"
-
-MOZ_GTEST_BENCH(Strings, PerfIsUTF8One, [] {
-    nsCString test(OneASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsUTF8(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsUTF8Fifteen, [] {
-    nsCString test(FifteenASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsUTF8(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsUTF8Hundred, [] {
-    nsCString test(HundredASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsUTF8(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsUTF8Example3, [] {
-    nsCString test(TestExample3);
-    for (int i = 0; i < 100000; i++) {
-      IsUTF8(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsASCII8One, [] {
-    nsCString test(OneASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsASCII(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsASCIIFifteen, [] {
-    nsCString test(FifteenASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsASCII(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsASCIIHundred, [] {
-    nsCString test(HundredASCII);
-    for (int i = 0; i < 200000; i++) {
-      IsASCII(test);
-    }
-});
-
-MOZ_GTEST_BENCH(Strings, PerfIsASCIIExample3, [] {
-    nsCString test(TestExample3);
-    for (int i = 0; i < 100000; i++) {
-      IsUTF8(test);
     }
 });
 

@@ -23,18 +23,29 @@ struct ScrollAxis;
 
 [ptr] native nsIFrame(nsIFrame);
 [ptr] native RangeArray(nsTArray<nsRange*>);
+[ref] native constTextRangeStyleRef(const mozilla::TextRangeStyle);
 [ref] native nsPointRef(nsPoint);
 native nsDirection(nsDirection);
 native ScrollAxis(nsIPresShell::ScrollAxis);
 
 [scriptable, builtinclass, uuid(0c9f4f74-ee7e-4fe9-be6b-0ba856368178)]
-interface nsISelectionPrivate : nsISupports
+interface nsISelectionPrivate : nsISelection
  {
     const short ENDOFPRECEDINGLINE=0;
     const short STARTOFNEXTLINE=1;
 
     attribute boolean interlinePosition;
     [noscript] attribute nsIContent ancestorLimiter;
+
+    /* startBatchChanges
+       match this up with endbatchChanges. will stop ui updates while multiple selection methods are called
+    */
+    [noscript] void startBatchChanges();
+
+    /* endBatchChanges
+       match this up with startBatchChanges
+    */
+    [noscript] void endBatchChanges();
 
     DOMString  toStringWithFormat(in string formatType, in unsigned long flags, in int32_t wrapColumn);
     void  addSelectionListener(in nsISelectionListener newListener);
@@ -70,6 +81,14 @@ interface nsISelectionPrivate : nsISupports
      * Returns cached value for nsTextFrame::GetPointFromOffset.
      */
     [noscript] void getCachedFrameOffset(in nsIFrame aFrame, in int32_t inOffset, in nsPointRef aPoint);
+
+    /**
+     * Set the painting style for the range. The range must be a range in
+     * the selection. The textRangeStyle will be used by text frame
+     * when it is painting the selection.
+     */
+    [noscript] void setTextRangeStyle(in nsIDOMRange range,
+                      in constTextRangeStyleRef textRangeStyle);
 
     /**
      * Get the direction of the selection.

@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.5.2
-esid: sec-typedarray.prototype
 description: >
   The initial value of Uint8ClampedArray.prototype is the Uint8ClampedArray prototype object.
 info: >

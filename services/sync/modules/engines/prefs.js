@@ -22,12 +22,11 @@ Cu.import("resource://services-common/utils.js");
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                           "resource://gre/modules/LightweightThemeManager.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "PREFS_GUID",
-                            () => CommonUtils.encodeBase64URL(Services.appinfo.ID));
+const PREFS_GUID = CommonUtils.encodeBase64URL(Services.appinfo.ID);
 
 this.PrefRec = function PrefRec(collection, id) {
   CryptoWrapper.call(this, collection, id);
-};
+}
 PrefRec.prototype = {
   __proto__: CryptoWrapper.prototype,
   _logName: "Sync.Record.Pref",
@@ -38,7 +37,7 @@ Utils.deferGetSet(PrefRec, "cleartext", ["value"]);
 
 this.PrefsEngine = function PrefsEngine(service) {
   SyncEngine.call(this, "Prefs", service);
-};
+}
 PrefsEngine.prototype = {
   __proto__: SyncEngine.prototype,
   _storeObj: PrefStore,

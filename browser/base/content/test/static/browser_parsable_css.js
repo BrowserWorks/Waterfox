@@ -87,15 +87,6 @@ let allowedImageReferences = [
   {file: "chrome://devtools/skin/images/dock-bottom-maximize@2x.png",
    from: "chrome://devtools/skin/toolbox.css",
    isFromDevTools: true},
-  // Bug 1405539
-  {file: "chrome://global/skin/arrow/panelarrow-vertical@2x.png",
-   from: "resource://activity-stream/data/content/activity-stream.css",
-   isFromDevTools: false,
-   platforms: ["linux", "win"]},
-  {file: "chrome://global/skin/arrow/panelarrow-vertical-themed.svg",
-   from: "resource://activity-stream/data/content/activity-stream.css",
-   isFromDevTools: false,
-   platforms: ["macosx"]},
 ];
 
 // Add suffix to stylesheets' URI so that we always load them here and
@@ -273,7 +264,7 @@ add_task(async function checkAllTheCSS() {
   // Create a clean iframe to load all the files into. This needs to live at a
   // chrome URI so that it's allowed to load and parse any styles.
   let testFile = getRootDirectory(gTestPath) + "dummy_page.html";
-  let HiddenFrame = Cu.import("resource://testing-common/HiddenFrame.jsm", {}).HiddenFrame;
+  let HiddenFrame = Cu.import("resource://gre/modules/HiddenFrame.jsm", {}).HiddenFrame;
   let hiddenFrame = new HiddenFrame();
   let win = await hiddenFrame.get();
   let iframe = win.document.createElementNS("http://www.w3.org/1999/xhtml", "html:iframe");
@@ -288,7 +279,7 @@ add_task(async function checkAllTheCSS() {
   // so that all chrome paths can be recorded.
   let manifestPromises = [];
   uris = uris.filter(uri => {
-    if (uri.pathQueryRef.endsWith(".manifest")) {
+    if (uri.path.endsWith(".manifest")) {
       manifestPromises.push(parseManifest(uri));
       return false;
     }

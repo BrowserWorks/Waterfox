@@ -361,7 +361,6 @@ class ConfigureSandbox(dict):
 
     def include_file(self, path):
         '''Include one file in the sandbox. Users of this class probably want
-        to use `run` instead.
 
         Note: this will execute all template invocations, as well as @depends
         functions that depend on '--help', but nothing else.

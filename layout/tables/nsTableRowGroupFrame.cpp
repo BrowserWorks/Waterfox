@@ -181,7 +181,8 @@ nsTableRowGroupFrame::InitRepeatedFrame(nsTableRowGroupFrame* aHeaderFooterFrame
     while (copyCellFrame && originalCellFrame) {
       NS_ASSERTION(originalCellFrame->GetContent() == copyCellFrame->GetContent(),
                    "cell frames have different content");
-      uint32_t colIndex = originalCellFrame->ColIndex();
+      int32_t colIndex;
+      originalCellFrame->GetColIndex(colIndex);
       copyCellFrame->SetColIndex(colIndex);
 
       // Move to the next cell frame
@@ -200,7 +201,7 @@ nsTableRowGroupFrame::InitRepeatedFrame(nsTableRowGroupFrame* aHeaderFooterFrame
 // Handle the child-traversal part of DisplayGenericTablePart
 static void
 DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
-            const nsDisplayListSet& aLists)
+            const nsRect& aDirtyRect, const nsDisplayListSet& aLists)
 {
   nscoord overflowAbove;
   nsTableRowGroupFrame* f = static_cast<nsTableRowGroupFrame*>(aFrame);
@@ -213,15 +214,15 @@ DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
   // approximate it by checking it for |f|: if it's true for any row
   // in |f| then it's true for |f| itself.
   nsIFrame* kid = aBuilder->ShouldDescendIntoFrame(f) ?
-    nullptr : f->GetFirstRowContaining(aBuilder->GetDirtyRect().y, &overflowAbove);
+    nullptr : f->GetFirstRowContaining(aDirtyRect.y, &overflowAbove);
 
   if (kid) {
     // have a cursor, use it
     while (kid) {
-      if (kid->GetRect().y - overflowAbove >= aBuilder->GetDirtyRect().YMost() &&
-          kid->GetNormalRect().y - overflowAbove >= aBuilder->GetDirtyRect().YMost())
+      if (kid->GetRect().y - overflowAbove >= aDirtyRect.YMost() &&
+          kid->GetNormalRect().y - overflowAbove >= aDirtyRect.YMost())
         break;
-      f->BuildDisplayListForChild(aBuilder, kid, aLists);
+      f->BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
       kid = kid->GetNextSibling();
     }
     return;
@@ -231,7 +232,7 @@ DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
   nsTableRowGroupFrame::FrameCursorData* cursor = f->SetupRowCursor();
   kid = f->PrincipalChildList().FirstChild();
   while (kid) {
-    f->BuildDisplayListForChild(aBuilder, kid, aLists);
+    f->BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
 
     if (cursor) {
       if (!cursor->AppendFrame(kid)) {
@@ -249,9 +250,11 @@ DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
 
 void
 nsTableRowGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                       const nsRect&           aDirtyRect,
                                        const nsDisplayListSet& aLists)
 {
-  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aLists, DisplayRows);
+  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect,
+                                        aLists, DisplayRows);
 }
 
 nsIFrame::LogicalSides
@@ -1042,7 +1045,8 @@ nsTableRowGroupFrame::SplitSpanningCells(nsPresContext&           aPresContext,
               nsTableCellFrame* contCell = static_cast<nsTableCellFrame*>(
                 aPresContext.PresShell()->FrameConstructor()->
                   CreateContinuingFrame(&aPresContext, cell, &aLastRow));
-              uint32_t colIndex = cell->ColIndex();
+              int32_t colIndex;
+              cell->GetColIndex(colIndex);
               aContRow->InsertCellFrame(contCell, colIndex);
             }
           }
@@ -1359,7 +1363,8 @@ nsTableRowGroupFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsTableRowGroupFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
+
+  aStatus.Reset();
 
   // Row geometry may be going to change so we need to invalidate any row cursor.
   ClearRowCursor();

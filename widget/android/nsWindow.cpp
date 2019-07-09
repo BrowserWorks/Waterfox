@@ -1143,6 +1143,7 @@ public:
 template<> const char
 nsWindow::NativePtr<nsWindow::LayerViewSupport>::sName[] = "LayerViewSupport";
 
+#ifdef MOZ_NATIVE_DEVICES
 /* PresentationMediaPlayerManager native calls access inner nsWindow functionality so PMPMSupport is a child class of nsWindow */
 class nsWindow::PMPMSupport final
     : public PresentationMediaPlayerManager::Natives<PMPMSupport>
@@ -1227,6 +1228,7 @@ public:
 
 ANativeWindow* nsWindow::PMPMSupport::sWindow;
 EGLSurface nsWindow::PMPMSupport::sSurface;
+#endif
 
 
 nsWindow::GeckoViewSupport::~GeckoViewSupport()
@@ -1420,9 +1422,13 @@ nsWindow::InitNatives()
     nsWindow::GeckoViewSupport::Base::Init();
     nsWindow::LayerViewSupport::Init();
     nsWindow::NPZCSupport::Init();
+#ifdef MOZ_NATIVE_DEVICES
     if (jni::IsFennec()) {
         nsWindow::PMPMSupport::Init();
     }
+#endif
+
+    GeckoEditableSupport::Init();
 }
 
 nsWindow*
@@ -1788,12 +1794,6 @@ nsWindow::SetZIndex(int32_t aZIndex)
 void
 nsWindow::SetSizeMode(nsSizeMode aMode)
 {
-    if (aMode == mSizeMode) {
-        return;
-    }
-
-    nsBaseWidget::SetSizeMode(aMode);
-
     switch (aMode) {
         case nsSizeMode_Minimized:
             GeckoAppShell::MoveTaskToBack();
@@ -1943,8 +1943,6 @@ nsWindow::MakeFullScreen(bool aFullScreen, nsIScreen*)
 
     nsIWidgetListener* listener = GetWidgetListener();
     if (listener) {
-        mSizeMode = mIsFullScreen ? nsSizeMode_Fullscreen : nsSizeMode_Normal;
-        listener->SizeModeChanged(mSizeMode);
         listener->FullscreenChanged(mIsFullScreen);
     }
     return NS_OK;
@@ -2070,11 +2068,13 @@ nsWindow::GetNativeData(uint32_t aDataType)
             }
             return nullptr;
 
+#ifdef MOZ_NATIVE_DEVICES
         case NS_PRESENTATION_WINDOW:
             return PMPMSupport::sWindow;
 
         case NS_PRESENTATION_SURFACE:
             return PMPMSupport::sSurface;
+#endif
     }
 
     return nullptr;
@@ -2084,9 +2084,11 @@ void
 nsWindow::SetNativeData(uint32_t aDataType, uintptr_t aVal)
 {
     switch (aDataType) {
+#ifdef MOZ_NATIVE_DEVICES
         case NS_PRESENTATION_SURFACE:
             PMPMSupport::sSurface = reinterpret_cast<EGLSurface>(aVal);
             break;
+#endif
     }
 }
 

@@ -1,5 +1,5 @@
 var module = new WebAssembly.Module(wasmTextToBinary(`(module (func (nop)))`));
-var exp = wasmExtractCode(module, "stable");
+var exp = wasmExtractCode(module);
 assertEq(exp.code instanceof Uint8Array, true);
 assertEq(Array.isArray(exp.segments), true);
 var funcs = exp.segments.filter(s => s.kind === 0);

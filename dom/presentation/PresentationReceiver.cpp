@@ -145,9 +145,6 @@ PresentationReceiver::GetConnectionList(ErrorResult& aRv)
   }
 
   RefPtr<Promise> promise = mGetConnectionListPromise;
-  if (nsContentUtils::ShouldResistFingerprinting()) {
-    promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-  }
   return promise.forget();
 }
 

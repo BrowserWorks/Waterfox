@@ -20,13 +20,12 @@
 #include "nsILoadContext.h"
 #include "nsIDocument.h"
 #include "mozilla/AutoRestore.h"
-#include "mozilla/AtomArray.h"
 #include "mozilla/BloomFilter.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/dom/Element.h"
 
-class nsAtom;
+class nsIAtom;
 class nsIContent;
 class nsICSSPseudoComparator;
 struct TreeMatchContext;
@@ -70,7 +69,7 @@ class MOZ_STACK_CLASS AncestorFilter {
   // less even with several hundred things in the filter.  Note that
   // we allocate the filter lazily, because not all tree match
   // contexts can use one effectively.
-  typedef mozilla::BloomFilter<12, nsAtom> Filter;
+  typedef mozilla::BloomFilter<12, nsIAtom> Filter;
   nsAutoPtr<Filter> mFilter;
 
   // Stack of indices to pop to.  These are indices into mHashes.
@@ -533,7 +532,7 @@ struct MOZ_STACK_CLASS PseudoElementRuleProcessorData :
 
 struct MOZ_STACK_CLASS AnonBoxRuleProcessorData : public RuleProcessorData {
   AnonBoxRuleProcessorData(nsPresContext* aPresContext,
-                           nsAtom* aPseudoTag,
+                           nsIAtom* aPseudoTag,
                            nsRuleWalker* aRuleWalker)
     : RuleProcessorData(aPresContext, aRuleWalker),
       mPseudoTag(aPseudoTag)
@@ -542,7 +541,7 @@ struct MOZ_STACK_CLASS AnonBoxRuleProcessorData : public RuleProcessorData {
     NS_PRECONDITION(aRuleWalker, "Must have rule walker");
   }
 
-  nsAtom* mPseudoTag;
+  nsIAtom* mPseudoTag;
 };
 
 #ifdef MOZ_XUL
@@ -551,21 +550,22 @@ struct MOZ_STACK_CLASS XULTreeRuleProcessorData :
   XULTreeRuleProcessorData(nsPresContext* aPresContext,
                            mozilla::dom::Element* aParentElement,
                            nsRuleWalker* aRuleWalker,
-                           nsAtom* aPseudoTag,
-                           const mozilla::AtomArray& aInputWord,
+                           nsIAtom* aPseudoTag,
+                           nsICSSPseudoComparator* aComparator,
                            TreeMatchContext& aTreeMatchContext)
     : ElementDependentRuleProcessorData(aPresContext, aParentElement,
                                         aRuleWalker, aTreeMatchContext),
       mPseudoTag(aPseudoTag),
-      mInputWord(aInputWord)
+      mComparator(aComparator)
   {
     NS_PRECONDITION(aPseudoTag, "null pointer");
     NS_PRECONDITION(aRuleWalker, "Must have rule walker");
+    NS_PRECONDITION(aComparator, "must have a comparator");
     NS_PRECONDITION(aTreeMatchContext.mForStyling, "Styling here!");
   }
 
-  nsAtom*                 mPseudoTag;
-  const mozilla::AtomArray& mInputWord;
+  nsIAtom*                 mPseudoTag;
+  nsICSSPseudoComparator*  mComparator;
 };
 #endif
 
@@ -614,7 +614,7 @@ struct MOZ_STACK_CLASS AttributeRuleProcessorData :
   AttributeRuleProcessorData(nsPresContext* aPresContext,
                              mozilla::dom::Element* aElement,
                              int32_t aNameSpaceID,
-                             nsAtom* aAttribute,
+                             nsIAtom* aAttribute,
                              int32_t aModType,
                              bool aAttrHasChanged,
                              const nsAttrValue* aOtherValue,
@@ -630,7 +630,7 @@ struct MOZ_STACK_CLASS AttributeRuleProcessorData :
     NS_PRECONDITION(!aTreeMatchContext.mForStyling, "Not styling here!");
   }
   int32_t mNameSpaceID; // Namespace of the attribute involved.
-  nsAtom* mAttribute; // |HasAttributeDependentStyle| for which attribute?
+  nsIAtom* mAttribute; // |HasAttributeDependentStyle| for which attribute?
   // non-null if we have the value.
   const nsAttrValue* mOtherValue;
   int32_t mModType;    // The type of modification (see nsIDOMMutationEvent).

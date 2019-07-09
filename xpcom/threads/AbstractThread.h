@@ -124,23 +124,6 @@ public:
     MOZ_CRASH("Not support!");
   }
 
-  struct AutoEnter
-  {
-    explicit AutoEnter(AbstractThread* aThread)
-    {
-      mLastCurrentThread = sCurrentThreadTLS.get();
-      sCurrentThreadTLS.set(aThread);
-    }
-
-    ~AutoEnter()
-    {
-      sCurrentThreadTLS.set(mLastCurrentThread);
-    }
-
-  private:
-    AbstractThread* mLastCurrentThread = nullptr;
-  };
-
 protected:
   virtual ~AbstractThread() {}
   static MOZ_THREAD_LOCAL(AbstractThread*) sCurrentThreadTLS;

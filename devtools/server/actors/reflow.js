@@ -27,7 +27,8 @@
 const {Ci} = require("chrome");
 const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 const protocol = require("devtools/shared/protocol");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const events = require("sdk/event/core");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {reflowSpec} = require("devtools/shared/specs/reflow");
 
 /**
@@ -78,7 +79,7 @@ exports.ReflowActor = protocol.ActorClassWithSpec(reflowSpec, {
 
   _onReflow: function (event, reflows) {
     if (this._isStarted) {
-      this.emit("reflows", reflows);
+      events.emit(this, "reflows", reflows);
     }
   }
 });
@@ -96,8 +97,8 @@ function Observable(tabActor, callback) {
   this._onWindowReady = this._onWindowReady.bind(this);
   this._onWindowDestroyed = this._onWindowDestroyed.bind(this);
 
-  this.tabActor.on("window-ready", this._onWindowReady);
-  this.tabActor.on("window-destroyed", this._onWindowDestroyed);
+  events.on(this.tabActor, "window-ready", this._onWindowReady);
+  events.on(this.tabActor, "window-destroyed", this._onWindowDestroyed);
 }
 
 Observable.prototype = {
@@ -117,8 +118,8 @@ Observable.prototype = {
 
     this.stop();
 
-    this.tabActor.off("window-ready", this._onWindowReady);
-    this.tabActor.off("window-destroyed", this._onWindowDestroyed);
+    events.off(this.tabActor, "window-ready", this._onWindowReady);
+    events.off(this.tabActor, "window-destroyed", this._onWindowDestroyed);
 
     this.callback = null;
     this.tabActor = null;

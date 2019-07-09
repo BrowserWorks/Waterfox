@@ -53,8 +53,8 @@ ApplicationAccessible::Name(nsString& aName)
   if (NS_FAILED(rv))
     return eNameOK;
 
-  nsAutoString appName;
-  rv = bundle->GetStringFromName("brandShortName", appName);
+  nsXPIDLString appName;
+  rv = bundle->GetStringFromName("brandShortName", getter_Copies(appName));
   if (NS_FAILED(rv) || appName.IsEmpty()) {
     NS_WARNING("brandShortName not found, using default app name");
     appName.AssignLiteral("Gecko based application");

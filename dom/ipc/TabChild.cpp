@@ -88,11 +88,8 @@
 #include "nsIXULRuntime.h"
 #include "nsPIDOMWindow.h"
 #include "nsPIWindowRoot.h"
-#include "nsPointerHashKeys.h"
 #include "nsLayoutUtils.h"
 #include "nsPrintfCString.h"
-#include "nsTHashtable.h"
-#include "nsThreadManager.h"
 #include "nsThreadUtils.h"
 #include "nsViewManager.h"
 #include "nsWeakReference.h"
@@ -128,6 +125,7 @@
 #include "nsString.h"
 #include "nsISupportsPrimitives.h"
 #include "mozilla/Telemetry.h"
+#include "nsIDocShellLoadInfo.h"
 
 #ifdef XP_WIN
 #include "mozilla/plugins/PluginWidgetChild.h"
@@ -165,8 +163,6 @@ NS_IMPL_ISUPPORTS(TabChildSHistoryListener,
                   nsISupportsWeakReference)
 
 static const char BEFORE_FIRST_PAINT[] = "before-first-paint";
-
-nsTHashtable<nsPtrHashKey<TabChild>>* TabChild::sActiveTabs;
 
 typedef nsDataHashtable<nsUint64HashKey, TabChild*> TabChildMap;
 static TabChildMap* sTabChildren;
@@ -302,17 +298,8 @@ ContentListener::HandleEvent(nsIDOMEvent* aEvent)
 
 class TabChild::DelayedDeleteRunnable final
   : public Runnable
-  , public nsIRunnablePriority
 {
     RefPtr<TabChild> mTabChild;
-
-    // In order to ensure that this runnable runs after everything that could
-    // possibly touch this tab, we send it through the event queue twice. The
-    // first time it runs at normal priority and the second time it runs at
-    // input priority. This ensures that it runs after all events that were in
-    // either queue at the time it was first dispatched. mReadyToDelete starts
-    // out false (when it runs at normal priority) and is then set to true.
-    bool mReadyToDelete = false;
 
 public:
     explicit DelayedDeleteRunnable(TabChild* aTabChild)
@@ -323,21 +310,11 @@ public:
         MOZ_ASSERT(aTabChild);
     }
 
-    NS_DECL_ISUPPORTS_INHERITED
-
 private:
     ~DelayedDeleteRunnable()
     {
         MOZ_ASSERT(NS_IsMainThread());
         MOZ_ASSERT(!mTabChild);
-    }
-
-    NS_IMETHOD GetPriority(uint32_t* aPriority) override
-    {
-      *aPriority = mReadyToDelete
-                 ? nsIRunnablePriority::PRIORITY_INPUT
-                 : nsIRunnablePriority::PRIORITY_NORMAL;
-      return NS_OK;
     }
 
     NS_IMETHOD
@@ -346,26 +323,15 @@ private:
         MOZ_ASSERT(NS_IsMainThread());
         MOZ_ASSERT(mTabChild);
 
-        if (!mReadyToDelete) {
-          // This time run this runnable at input priority.
-          mReadyToDelete = true;
-          MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(this));
-          return NS_OK;
-        }
-
         // Check in case ActorDestroy was called after RecvDestroy message.
         if (mTabChild->IPCOpen()) {
-          Unused << PBrowserChild::Send__delete__(mTabChild);
+            Unused << PBrowserChild::Send__delete__(mTabChild);
         }
 
         mTabChild = nullptr;
         return NS_OK;
     }
 };
-
-NS_IMPL_ISUPPORTS_INHERITED(TabChild::DelayedDeleteRunnable,
-                            Runnable,
-                            nsIRunnablePriority)
 
 namespace {
 std::map<TabId, RefPtr<TabChild>>&
@@ -416,6 +382,7 @@ TabChild::TabChild(nsIContentChild* aManager,
   , mActiveSuppressDisplayport(0)
   , mLayersId(0)
   , mBeforeUnloadListeners(0)
+  , mLayersConnected(true)
   , mDidFakeShow(false)
   , mNotified(false)
   , mTriedBrowserInit(false)
@@ -457,11 +424,6 @@ TabChild::TabChild(nsIContentChild* aManager,
   if (mUniqueId) {
     MOZ_ASSERT(NestedTabChildMap().find(mUniqueId) == NestedTabChildMap().end());
     NestedTabChildMap()[mUniqueId] = this;
-  }
-  mCoalesceMouseMoveEvents =
-    Preferences::GetBool("dom.event.coalesce_mouse_move");
-  if (mCoalesceMouseMoveEvents) {
-    mCoalescedMouseEventFlusher = new CoalescedMouseMoveFlusher(this);
   }
 }
 
@@ -702,7 +664,7 @@ TabChild::UpdateFrameType()
                            nsIDocShell::FRAME_TYPE_REGULAR);
 }
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TabChild)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TabChild)
   NS_INTERFACE_MAP_ENTRY(nsIWebBrowserChrome)
   NS_INTERFACE_MAP_ENTRY(nsIWebBrowserChrome2)
   NS_INTERFACE_MAP_ENTRY(nsIEmbeddingSiteWindow)
@@ -942,7 +904,7 @@ TabChild::SetVisibility(bool aVisibility)
 }
 
 NS_IMETHODIMP
-TabChild::GetTitle(nsAString& aTitle)
+TabChild::GetTitle(char16_t** aTitle)
 {
   NS_WARNING("TabChild::GetTitle not supported in TabChild");
 
@@ -950,7 +912,7 @@ TabChild::GetTitle(nsAString& aTitle)
 }
 
 NS_IMETHODIMP
-TabChild::SetTitle(const nsAString& aTitle)
+TabChild::SetTitle(const char16_t* aTitle)
 {
   // JavaScript sends the "DOMTitleChanged" event to the parent
   // via the message manager.
@@ -1005,7 +967,8 @@ TabChild::ProvideWindow(mozIDOMWindowProxy* aParent,
                         bool aPositionSpecified, bool aSizeSpecified,
                         nsIURI* aURI, const nsAString& aName,
                         const nsACString& aFeatures, bool aForceNoOpener,
-                        bool* aWindowIsNew, mozIDOMWindowProxy** aReturn)
+                        nsIDocShellLoadInfo* aLoadInfo, bool* aWindowIsNew,
+                        mozIDOMWindowProxy** aReturn)
 {
     *aReturn = nullptr;
 
@@ -1048,6 +1011,7 @@ TabChild::ProvideWindow(mozIDOMWindowProxy* aParent,
                                    aName,
                                    aFeatures,
                                    aForceNoOpener,
+                                   aLoadInfo,
                                    aWindowIsNew,
                                    aReturn);
 }
@@ -1055,19 +1019,6 @@ TabChild::ProvideWindow(mozIDOMWindowProxy* aParent,
 void
 TabChild::DestroyWindow()
 {
-    if (mCoalescedMouseEventFlusher) {
-      mCoalescedMouseEventFlusher->RemoveObserver();
-      mCoalescedMouseEventFlusher = nullptr;
-    }
-
-    // In case we don't have chance to process all entries, clean all data in
-    // the queue.
-    while (mToBeDispatchedMouseData.GetSize() > 0) {
-      UniquePtr<CoalescedMouseData> data(
-        static_cast<CoalescedMouseData*>(mToBeDispatchedMouseData.PopFront()));
-      data.reset();
-    }
-
     nsCOMPtr<nsIBaseWindow> baseWindow = do_QueryInterface(WebNavigation());
     if (baseWindow)
         baseWindow->Destroy();
@@ -1129,14 +1080,6 @@ TabChild::ActorDestroy(ActorDestroyReason why)
 
 TabChild::~TabChild()
 {
-  if (sActiveTabs) {
-    sActiveTabs->RemoveEntry(this);
-    if (sActiveTabs->IsEmpty()) {
-      delete sActiveTabs;
-      sActiveTabs = nullptr;
-    }
-  }
-
   DestroyWindow();
 
   nsCOMPtr<nsIWebBrowser> webBrowser = do_QueryInterface(WebNavigation());
@@ -1184,7 +1127,6 @@ TabChild::DoFakeShow(const TextureFactoryIdentifier& aTextureFactoryIdentifier,
                      const CompositorOptions& aCompositorOptions,
                      PRenderFrameChild* aRenderFrame, const ShowInfo& aShowInfo)
 {
-  mLayersConnected = aRenderFrame ? Some(true) : Some(false);
   InitRenderingState(aTextureFactoryIdentifier, aLayersId, aCompositorOptions, aRenderFrame);
   RecvShow(ScreenIntSize(0, 0), aShowInfo, mParentIsActive, nsSizeMode_Normal);
   mDidFakeShow = true;
@@ -1283,7 +1225,7 @@ TabChild::RecvInitRendering(const TextureFactoryIdentifier& aTextureFactoryIdent
 {
   MOZ_ASSERT((!mDidFakeShow && aRenderFrame) || (mDidFakeShow && !aRenderFrame));
 
-  mLayersConnected = Some(aLayersConnected);
+  mLayersConnected = aLayersConnected;
   InitRenderingState(aTextureFactoryIdentifier, aLayersId, aCompositorOptions, aRenderFrame);
   return IPC_OK();
 }
@@ -1437,17 +1379,6 @@ TabChild::RecvHandleTap(const GeckoContentController::TapType& aType,
   return IPC_OK();
 }
 
-mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityHandleTap(
-  const GeckoContentController::TapType& aType,
-  const LayoutDevicePoint& aPoint,
-  const Modifiers& aModifiers,
-  const ScrollableLayerGuid& aGuid,
-  const uint64_t& aInputBlockId)
-{
-  return RecvHandleTap(aType, aPoint, aModifiers, aGuid, aInputBlockId);
-}
-
 bool
 TabChild::NotifyAPZStateChange(const ViewID& aViewId,
                                const layers::GeckoContentController::APZStateChange& aChange,
@@ -1535,6 +1466,13 @@ TabChild::RecvStopIMEStateManagement()
 }
 
 mozilla::ipc::IPCResult
+TabChild::RecvMenuKeyboardListenerInstalled(const bool& aInstalled)
+{
+  IMEStateManager::OnInstalledMenuKeyboardListener(aInstalled);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
 TabChild::RecvNotifyAttachGroupedSHistory(const uint32_t& aOffset)
 {
   // nsISHistory uses int32_t
@@ -1599,112 +1537,15 @@ TabChild::RecvMouseEvent(const nsString& aType,
   return IPC_OK();
 }
 
-void
-TabChild::ProcessPendingCoalescedMouseDataAndDispatchEvents()
-{
-  if (!mCoalesceMouseMoveEvents || !mCoalescedMouseEventFlusher) {
-    // We don't enable mouse coalescing or we are destroying TabChild.
-    return;
-  }
-
-  // We may reentry the event loop and push more data to
-  // mToBeDispatchedMouseData while dispatching an event.
-
-  // We may have some pending coalesced data while dispatch an event and reentry
-  // the event loop. In that case we don't have chance to consume the remainding
-  // pending data until we get new mouse events. Get some helps from
-  // mCoalescedMouseEventFlusher to trigger it.
-  mCoalescedMouseEventFlusher->StartObserver();
-
-  while (mToBeDispatchedMouseData.GetSize() > 0) {
-    UniquePtr<CoalescedMouseData> data(
-      static_cast<CoalescedMouseData*>(mToBeDispatchedMouseData.PopFront()));
-
-    UniquePtr<WidgetMouseEvent> event = data->TakeCoalescedEvent();
-    if (event) {
-      // Dispatch the pending events. Using HandleRealMouseButtonEvent
-      // to bypass the coalesce handling in RecvRealMouseMoveEvent. Can't use
-      // RecvRealMouseButtonEvent because we may also put some mouse events
-      // other than mousemove.
-      HandleRealMouseButtonEvent(*event,
-                                 data->GetScrollableLayerGuid(),
-                                 data->GetInputBlockId());
-    }
-  }
-  // mCoalescedMouseEventFlusher may be destroyed when reentrying the event
-  // loop.
-  if (mCoalescedMouseEventFlusher) {
-    mCoalescedMouseEventFlusher->RemoveObserver();
-  }
-}
-
-void
-TabChild::FlushAllCoalescedMouseData()
-{
-  MOZ_ASSERT(mCoalesceMouseMoveEvents);
-
-  // Move all entries from mCoalescedMouseData to mToBeDispatchedMouseData.
-  for (auto iter = mCoalescedMouseData.Iter(); !iter.Done(); iter.Next()) {
-    CoalescedMouseData* data = iter.UserData();
-    if (!data || data->IsEmpty()) {
-      continue;
-    }
-    UniquePtr<CoalescedMouseData> dispatchData =
-      MakeUnique<CoalescedMouseData>();
-
-    dispatchData->RetrieveDataFrom(*data);
-    mToBeDispatchedMouseData.Push(dispatchData.release());
-  }
-  mCoalescedMouseData.Clear();
-}
-
 mozilla::ipc::IPCResult
 TabChild::RecvRealMouseMoveEvent(const WidgetMouseEvent& aEvent,
                                  const ScrollableLayerGuid& aGuid,
                                  const uint64_t& aInputBlockId)
 {
-  if (mCoalesceMouseMoveEvents && mCoalescedMouseEventFlusher) {
-    CoalescedMouseData* data = nullptr;
-    mCoalescedMouseData.Get(aEvent.pointerId, &data);
-    if (!data) {
-      data = new CoalescedMouseData();
-      mCoalescedMouseData.Put(aEvent.pointerId, data);
-    }
-    if (data->CanCoalesce(aEvent, aGuid, aInputBlockId)) {
-      data->Coalesce(aEvent, aGuid, aInputBlockId);
-      mCoalescedMouseEventFlusher->StartObserver();
-      return IPC_OK();
-    }
-    // Can't coalesce current mousemove event. Put the coalesced mousemove data
-    // with the same pointer id to mToBeDispatchedMouseData, coalesce the
-    // current one, and process all pending data in mToBeDispatchedMouseData.
-    MOZ_ASSERT(data);
-    UniquePtr<CoalescedMouseData> dispatchData =
-      MakeUnique<CoalescedMouseData>();
-
-    dispatchData->RetrieveDataFrom(*data);
-    mToBeDispatchedMouseData.Push(dispatchData.release());
-
-    // Put new data to replace the old one in the hash table.
-    CoalescedMouseData* newData = new CoalescedMouseData();
-    mCoalescedMouseData.Put(aEvent.pointerId, newData);
-    newData->Coalesce(aEvent, aGuid, aInputBlockId);
-
-    // Dispatch all pending mouse events.
-    ProcessPendingCoalescedMouseDataAndDispatchEvents();
-    mCoalescedMouseEventFlusher->StartObserver();
-  } else if (!RecvRealMouseButtonEvent(aEvent, aGuid, aInputBlockId)) {
+  if (!RecvRealMouseButtonEvent(aEvent, aGuid, aInputBlockId)) {
     return IPC_FAIL_NO_REASON(this);
   }
   return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityRealMouseMoveEvent(const WidgetMouseEvent& aEvent,
-                                               const ScrollableLayerGuid& aGuid,
-                                               const uint64_t& aInputBlockId)
-{
-  return RecvRealMouseMoveEvent(aEvent, aGuid, aInputBlockId);
 }
 
 mozilla::ipc::IPCResult
@@ -1719,46 +1560,9 @@ TabChild::RecvSynthMouseMoveEvent(const WidgetMouseEvent& aEvent,
 }
 
 mozilla::ipc::IPCResult
-TabChild::RecvNormalPrioritySynthMouseMoveEvent(const WidgetMouseEvent& aEvent,
-                                                const ScrollableLayerGuid& aGuid,
-                                                const uint64_t& aInputBlockId)
-{
-  return RecvSynthMouseMoveEvent(aEvent, aGuid, aInputBlockId);
-}
-
-mozilla::ipc::IPCResult
 TabChild::RecvRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
                                    const ScrollableLayerGuid& aGuid,
                                    const uint64_t& aInputBlockId)
-{
-  if (mCoalesceMouseMoveEvents && mCoalescedMouseEventFlusher &&
-      aEvent.mMessage != eMouseMove) {
-    // When receiving a mouse event other than mousemove, we have to dispatch
-    // all coalesced events before it. However, we can't dispatch all pending
-    // coalesced events directly because we may reentry the event loop while
-    // dispatching. To make sure we won't dispatch disorder events, we move all
-    // coalesced mousemove events and current event to a deque to dispatch them.
-    // When reentrying the event loop and dispatching more events, we put new
-    // events in the end of the nsQueue and dispatch events from the beginning.
-    FlushAllCoalescedMouseData();
-
-    UniquePtr<CoalescedMouseData> dispatchData =
-      MakeUnique<CoalescedMouseData>();
-
-    dispatchData->Coalesce(aEvent, aGuid, aInputBlockId);
-    mToBeDispatchedMouseData.Push(dispatchData.release());
-
-    ProcessPendingCoalescedMouseDataAndDispatchEvents();
-    return IPC_OK();
-  }
-  HandleRealMouseButtonEvent(aEvent, aGuid, aInputBlockId);
-  return IPC_OK();
-}
-
-void
-TabChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
-                                     const ScrollableLayerGuid& aGuid,
-                                     const uint64_t& aInputBlockId)
 {
   // Mouse events like eMouseEnterIntoWidget, that are created in the parent
   // process EventStateManager code, have an input block id which they get from
@@ -1775,7 +1579,8 @@ TabChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
                                                         aInputBlockId);
   }
 
-  InputAPZContext context(aGuid, aInputBlockId, nsEventStatus_eIgnore);
+  nsEventStatus unused;
+  InputAPZContext context(aGuid, aInputBlockId, unused);
   if (pendingLayerization) {
     context.SetPendingLayerization();
   }
@@ -1789,16 +1594,9 @@ TabChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
   if (aInputBlockId && aEvent.mFlags.mHandledByAPZ) {
     mAPZEventState->ProcessMouseEvent(aEvent, aGuid, aInputBlockId);
   }
+  return IPC_OK();
 }
 
-mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityRealMouseButtonEvent(
-  const WidgetMouseEvent& aEvent,
-  const ScrollableLayerGuid& aGuid,
-  const uint64_t& aInputBlockId)
-{
-  return RecvRealMouseButtonEvent(aEvent, aGuid, aInputBlockId);
-}
 
 // In case handling repeated mouse wheel takes much time, we skip firing current
 // wheel event if it may be coalesced to the next one.
@@ -1853,12 +1651,13 @@ TabChild::MaybeDispatchCoalescedWheelEvent()
   if (mCoalescedWheelData.IsEmpty()) {
     return;
   }
-  UniquePtr<WidgetWheelEvent> wheelEvent =
-    mCoalescedWheelData.TakeCoalescedEvent();
+  const WidgetWheelEvent* wheelEvent =
+    mCoalescedWheelData.GetCoalescedWheelEvent();
   MOZ_ASSERT(wheelEvent);
   DispatchWheelEvent(*wheelEvent,
                      mCoalescedWheelData.GetScrollableLayerGuid(),
                      mCoalescedWheelData.GetInputBlockId());
+  mCoalescedWheelData.Reset();
 }
 
 void
@@ -1917,14 +1716,6 @@ TabChild::RecvMouseWheelEvent(const WidgetWheelEvent& aEvent,
 }
 
 mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityMouseWheelEvent(const WidgetWheelEvent& aEvent,
-                                            const ScrollableLayerGuid& aGuid,
-                                            const uint64_t& aInputBlockId)
-{
-  return RecvMouseWheelEvent(aEvent, aGuid, aInputBlockId);
-}
-
-mozilla::ipc::IPCResult
 TabChild::RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
                              const ScrollableLayerGuid& aGuid,
                              const uint64_t& aInputBlockId,
@@ -1966,15 +1757,6 @@ TabChild::RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
 }
 
 mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityRealTouchEvent(const WidgetTouchEvent& aEvent,
-                                           const ScrollableLayerGuid& aGuid,
-                                           const uint64_t& aInputBlockId,
-                                           const nsEventStatus& aApzResponse)
-{
-  return RecvRealTouchEvent(aEvent, aGuid, aInputBlockId, aApzResponse);
-}
-
-mozilla::ipc::IPCResult
 TabChild::RecvRealTouchMoveEvent(const WidgetTouchEvent& aEvent,
                                  const ScrollableLayerGuid& aGuid,
                                  const uint64_t& aInputBlockId,
@@ -1984,16 +1766,6 @@ TabChild::RecvRealTouchMoveEvent(const WidgetTouchEvent& aEvent,
     return IPC_FAIL_NO_REASON(this);
   }
   return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityRealTouchMoveEvent(
-  const WidgetTouchEvent& aEvent,
-  const ScrollableLayerGuid& aGuid,
-  const uint64_t& aInputBlockId,
-  const nsEventStatus& aApzResponse)
-{
-  return RecvRealTouchMoveEvent(aEvent, aGuid, aInputBlockId, aApzResponse);
 }
 
 mozilla::ipc::IPCResult
@@ -2175,12 +1947,6 @@ TabChild::RecvRealKeyEvent(const WidgetKeyboardEvent& aEvent)
 }
 
 mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityRealKeyEvent(const WidgetKeyboardEvent& aEvent)
-{
-  return RecvRealKeyEvent(aEvent);
-}
-
-mozilla::ipc::IPCResult
 TabChild::RecvKeyEvent(const nsString& aType,
                        const int32_t& aKeyCode,
                        const int32_t& aCharCode,
@@ -2204,13 +1970,6 @@ TabChild::RecvCompositionEvent(const WidgetCompositionEvent& aEvent)
 }
 
 mozilla::ipc::IPCResult
-TabChild::RecvNormalPriorityCompositionEvent(
-            const WidgetCompositionEvent& aEvent)
-{
-  return RecvCompositionEvent(aEvent);
-}
-
-mozilla::ipc::IPCResult
 TabChild::RecvSelectionEvent(const WidgetSelectionEvent& aEvent)
 {
   WidgetSelectionEvent localEvent(aEvent);
@@ -2218,12 +1977,6 @@ TabChild::RecvSelectionEvent(const WidgetSelectionEvent& aEvent)
   DispatchWidgetEventViaAPZ(localEvent);
   Unused << SendOnEventNeedingAckHandled(aEvent.mMessage);
   return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-TabChild::RecvNormalPrioritySelectionEvent(const WidgetSelectionEvent& aEvent)
-{
-  return RecvSelectionEvent(aEvent);
 }
 
 mozilla::ipc::IPCResult
@@ -2661,14 +2414,20 @@ TabChild::InternalSetDocShellIsActive(bool aIsActive, bool aPreserveLayers)
   });
 
   if (mCompositorOptions) {
+    // Note that |GetLayerManager()| has side-effects in that it creates a layer
+    // manager if one doesn't exist already. Calling it inside a debug-only
+    // assertion is generally bad but in this case we call it unconditionally
+    // just below so it's ok.
     MOZ_ASSERT(mPuppetWidget);
-    RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
-    MOZ_ASSERT(lm);
+    MOZ_ASSERT(mPuppetWidget->GetLayerManager());
+    MOZ_ASSERT(mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT
+            || mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_WR
+            || (gfxPlatform::IsHeadless() && mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC));
 
     // We send the current layer observer epoch to the compositor so that
     // TabParent knows whether a layer update notification corresponds to the
     // latest SetDocShellIsActive request that was made.
-    lm->SetLayerObserverEpoch(mLayerObserverEpoch);
+    mPuppetWidget->GetLayerManager()->SetLayerObserverEpoch(mLayerObserverEpoch);
   }
 
   // docshell is consider prerendered only if not active yet
@@ -2688,19 +2447,6 @@ TabChild::InternalSetDocShellIsActive(bool aIsActive, bool aPreserveLayers)
     }
 
     docShell->SetIsActive(aIsActive);
-  }
-
-  if (aIsActive) {
-    if (!sActiveTabs) {
-      sActiveTabs = new nsTHashtable<nsPtrHashKey<TabChild>>();
-    }
-    sActiveTabs->PutEntry(this);
-  } else {
-    if (sActiveTabs) {
-      sActiveTabs->RemoveEntry(this);
-      // We don't delete sActiveTabs here when it's empty since that
-      // could cause a lot of churn. Instead, we wait until ~TabChild.
-    }
   }
 
   if (aIsActive) {
@@ -2872,7 +2618,6 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
     mPuppetWidget->InitIMEState();
 
     if (!aRenderFrame) {
-      mLayersConnected = Some(false);
       NS_WARNING("failed to construct RenderFrame");
       return;
     }
@@ -2884,7 +2629,6 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
     // compositor context.
     PCompositorBridgeChild* compositorChild = CompositorBridgeChild::Get();
     if (!compositorChild) {
-      mLayersConnected = Some(false);
       NS_WARNING("failed to get CompositorBridgeChild instance");
       return;
     }
@@ -2903,21 +2647,33 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
       mLayersId = aLayersId;
     }
 
-    MOZ_ASSERT(!mPuppetWidget->HasLayerManager());
-    bool success = false;
-    if (mLayersConnected == Some(true)) {
-      success = CreateRemoteLayerManager(compositorChild);
-    }
+    ShadowLayerForwarder* lf =
+        mPuppetWidget->GetLayerManager(
+            nullptr, mTextureFactoryIdentifier.mParentBackend)
+                ->AsShadowForwarder();
 
-    if (success) {
-      MOZ_ASSERT(mLayersConnected == Some(true));
-      // Succeeded to create "remote" layer manager
+    LayerManager* lm = mPuppetWidget->GetLayerManager();
+    if (lm->AsWebRenderLayerManager()) {
+      lm->AsWebRenderLayerManager()->Initialize(compositorChild,
+                                                wr::AsPipelineId(aLayersId),
+                                                &mTextureFactoryIdentifier);
       ImageBridgeChild::IdentifyCompositorTextureHost(mTextureFactoryIdentifier);
       gfx::VRManagerChild::IdentifyTextureHost(mTextureFactoryIdentifier);
       InitAPZState();
-    } else {
-      // Fallback to BasicManager
-      mLayersConnected = Some(false);
+    }
+
+    if (lf) {
+      nsTArray<LayersBackend> backends;
+      backends.AppendElement(mTextureFactoryIdentifier.mParentBackend);
+      PLayerTransactionChild* shadowManager =
+          compositorChild->SendPLayerTransactionConstructor(backends, aLayersId);
+      if (shadowManager) {
+        lf->SetShadowManager(shadowManager);
+        lf->IdentifyTextureHost(mTextureFactoryIdentifier);
+        ImageBridgeChild::IdentifyCompositorTextureHost(mTextureFactoryIdentifier);
+        gfx::VRManagerChild::IdentifyTextureHost(mTextureFactoryIdentifier);
+        InitAPZState();
+      }
     }
 
     nsCOMPtr<nsIObserverService> observerService =
@@ -2928,42 +2684,6 @@ TabChild::InitRenderingState(const TextureFactoryIdentifier& aTextureFactoryIden
                                      BEFORE_FIRST_PAINT,
                                      false);
     }
-}
-
-bool
-TabChild::CreateRemoteLayerManager(mozilla::layers::PCompositorBridgeChild* aCompositorChild)
-{
-  MOZ_ASSERT(aCompositorChild);
-
-  bool success = false;
-  if (gfxVars::UseWebRender()) {
-    success = mPuppetWidget->CreateRemoteLayerManager([&] (LayerManager* aLayerManager) -> bool {
-      MOZ_ASSERT(aLayerManager->AsWebRenderLayerManager());
-      return aLayerManager->AsWebRenderLayerManager()->Initialize(aCompositorChild,
-                                                                  wr::AsPipelineId(mLayersId),
-                                                                  &mTextureFactoryIdentifier);
-    });
-  } else {
-    nsTArray<LayersBackend> ignored;
-    PLayerTransactionChild* shadowManager = aCompositorChild->SendPLayerTransactionConstructor(ignored, LayersId());
-    if (shadowManager &&
-        shadowManager->SendGetTextureFactoryIdentifier(&mTextureFactoryIdentifier) &&
-        mTextureFactoryIdentifier.mParentBackend != LayersBackend::LAYERS_NONE)
-    {
-      success = true;
-    }
-    if (!success) {
-      NS_WARNING("failed to allocate layer transaction");
-    } else {
-      success = mPuppetWidget->CreateRemoteLayerManager([&] (LayerManager* aLayerManager) -> bool {
-        ShadowLayerForwarder* lf = aLayerManager->AsShadowForwarder();
-        lf->SetShadowManager(shadowManager);
-        lf->IdentifyTextureHost(mTextureFactoryIdentifier);
-        return true;
-      });
-    }
-  }
-  return success;
 }
 
 void
@@ -3190,10 +2910,12 @@ TabChild::DidComposite(uint64_t aTransactionId,
                        const TimeStamp& aCompositeEnd)
 {
   MOZ_ASSERT(mPuppetWidget);
-  RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
-  MOZ_ASSERT(lm);
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager());
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT
+             || mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_WR
+             || (gfxPlatform::IsHeadless() && mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC));
 
-  lm->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
+  mPuppetWidget->GetLayerManager()->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
 }
 
 void
@@ -3226,19 +2948,24 @@ void
 TabChild::ClearCachedResources()
 {
   MOZ_ASSERT(mPuppetWidget);
-  RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
-  MOZ_ASSERT(lm);
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager());
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT
+             || mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_WR
+             || (gfxPlatform::IsHeadless() && mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC));
 
-  lm->ClearCachedResources();
+  mPuppetWidget->GetLayerManager()->ClearCachedResources();
 }
 
 void
 TabChild::InvalidateLayers()
 {
   MOZ_ASSERT(mPuppetWidget);
-  RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
-  MOZ_ASSERT(lm);
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager());
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT
+             || mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_WR
+             || (gfxPlatform::IsHeadless() && mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC));
 
+  RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
   FrameLayerBuilder::InvalidateAllLayers(lm);
 }
 
@@ -3263,9 +2990,33 @@ TabChild::ReinitRendering()
 
   bool success = false;
   RefPtr<CompositorBridgeChild> cb = CompositorBridgeChild::Get();
+  if (gfxVars::UseWebRender()) {
+    success = mPuppetWidget->RecreateLayerManager([&] (LayerManager* aLayerManager) -> bool {
+      MOZ_ASSERT(aLayerManager->AsWebRenderLayerManager());
+      return aLayerManager->AsWebRenderLayerManager()->Initialize(cb,
+                                                                  wr::AsPipelineId(mLayersId),
+                                                                  &mTextureFactoryIdentifier);
+    });
+  } else {
+    nsTArray<LayersBackend> ignored;
+    PLayerTransactionChild* shadowManager = cb->SendPLayerTransactionConstructor(ignored, LayersId());
+    if (shadowManager &&
+        shadowManager->SendGetTextureFactoryIdentifier(&mTextureFactoryIdentifier) &&
+        mTextureFactoryIdentifier.mParentBackend != LayersBackend::LAYERS_NONE)
+    {
+      success = true;
+    }
+    if (!success) {
+      NS_WARNING("failed to re-allocate layer transaction");
+      return;
+    }
 
-  if (cb) {
-    success = CreateRemoteLayerManager(cb);
+    success = mPuppetWidget->RecreateLayerManager([&] (LayerManager* aLayerManager) -> bool {
+      ShadowLayerForwarder* lf = aLayerManager->AsShadowForwarder();
+      lf->SetShadowManager(shadowManager);
+      lf->IdentifyTextureHost(mTextureFactoryIdentifier);
+      return true;
+    });
   }
 
   if (!success) {
@@ -3273,7 +3024,6 @@ TabChild::ReinitRendering()
     return;
   }
 
-  mLayersConnected = Some(true);
   ImageBridgeChild::IdentifyCompositorTextureHost(mTextureFactoryIdentifier);
   gfx::VRManagerChild::IdentifyTextureHost(mTextureFactoryIdentifier);
 
@@ -3311,6 +3061,10 @@ void
 TabChild::CompositorUpdated(const TextureFactoryIdentifier& aNewIdentifier,
                             uint64_t aDeviceResetSeqNo)
 {
+  MOZ_ASSERT(mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT
+             || mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_WR
+             || (gfxPlatform::IsHeadless() && mPuppetWidget->GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC));
+
   RefPtr<LayerManager> lm = mPuppetWidget->GetLayerManager();
 
   mTextureFactoryIdentifier = aNewIdentifier;
@@ -3705,7 +3459,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(TabChildGlobal,
   tmp->TraverseHostObjectURIs(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TabChildGlobal)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TabChildGlobal)
   NS_INTERFACE_MAP_ENTRY(nsIMessageListenerManager)
   NS_INTERFACE_MAP_ENTRY(nsIMessageSender)
   NS_INTERFACE_MAP_ENTRY(nsISyncMessageSender)

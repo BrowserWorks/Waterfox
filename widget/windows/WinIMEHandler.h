@@ -30,16 +30,8 @@ struct MSGResult;
  */
 class IMEHandler final
 {
-private:
-  /**
-   * Initialize() initializes both TSF modules and IMM modules.  Some TIPs
-   * may require a normal window (i.e., not message window) belonging to
-   * this process.  Therefore, this is called immediately after first normal
-   * window is created.
-   */
-  static void Initialize();
-
 public:
+  static void Initialize();
   static void Terminate();
 
   /**

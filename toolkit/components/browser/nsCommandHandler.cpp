@@ -109,7 +109,8 @@ nsCommandHandler::Exec(const char* aCommand, const char* aStatus,
   }
 
   // Return an empty string
-  *aResult = moz_xstrdup("");
+  const char szEmpty[] = "";
+  *aResult = (char*)nsMemory::Clone(szEmpty, sizeof(szEmpty));
 
   return NS_OK;
 }
@@ -131,7 +132,8 @@ nsCommandHandler::Query(const char* aCommand, const char* aStatus,
   }
 
   // Return an empty string
-  *aResult = moz_xstrdup("");
+  const char szEmpty[] = "";
+  *aResult = (char*)nsMemory::Clone(szEmpty, sizeof(szEmpty));
 
   return NS_OK;
 }

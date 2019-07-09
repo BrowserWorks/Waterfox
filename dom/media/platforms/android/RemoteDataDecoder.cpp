@@ -12,12 +12,10 @@
 #include "VideoUtils.h"
 #include "VPXDecoder.h"
 
-#include "mozilla/Telemetry.h"
 #include "nsIGfxInfo.h"
 #include "nsPromiseFlatString.h"
 #include "nsThreadUtils.h"
 #include "prlog.h"
-
 #include <jni.h>
 
 #undef LOG
@@ -148,7 +146,7 @@ public:
           TimeUnit::FromMicroseconds(presentationTimeUs));
 
         v->SetListener(Move(releaseSample));
-        mDecoder->UpdateOutputStatus(Move(v));
+        mDecoder->UpdateOutputStatus(v);
       }
 
       if (isEOS) {
@@ -169,9 +167,11 @@ public:
 
   RemoteVideoDecoder(const VideoInfo& aConfig,
                      MediaFormat::Param aFormat,
+                     layers::ImageContainer* aImageContainer,
                      const nsString& aDrmStubId, TaskQueue* aTaskQueue)
     : RemoteDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
                         aFormat, aDrmStubId, aTaskQueue)
+    , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
   }
@@ -209,8 +209,6 @@ public:
     }
     mIsCodecSupportAdaptivePlayback =
       mJavaDecoder->IsAdaptivePlaybackSupported();
-    Telemetry::Accumulate(Telemetry::MEDIA_ANDROID_VIDEO_TUNNELING_SUPPORT,
-                          mJavaDecoder->IsTunneledPlaybackSupported());
 
     return InitPromise::CreateAndResolve(TrackInfo::kVideoTrack, __func__);
   }
@@ -218,7 +216,6 @@ public:
   RefPtr<MediaDataDecoder::FlushPromise> Flush() override
   {
     mInputInfos.Clear();
-    mSeekTarget.reset();
     return RemoteDataDecoder::Flush();
   }
 
@@ -240,31 +237,13 @@ public:
     return mIsCodecSupportAdaptivePlayback;
   }
 
-  void SetSeekThreshold(const TimeUnit& aTime) override
-  {
-    mSeekTarget = Some(aTime);
-  }
-
-  bool IsUsefulData(const RefPtr<MediaData>& aSample) override
-  {
-    AssertOnTaskQueue();
-    if (!mSeekTarget) {
-      return true;
-    }
-    if (aSample->GetEndTime() > mSeekTarget.value()) {
-      mSeekTarget.reset();
-      return true;
-    }
-    return false;
-  }
-
 private:
+  layers::ImageContainer* mImageContainer;
   const VideoInfo mConfig;
   GeckoSurface::GlobalRef mSurface;
   AndroidSurfaceTextureHandle mSurfaceHandle;
   SimpleMap<InputInfo> mInputInfos;
   bool mIsCodecSupportAdaptivePlayback = false;
-  Maybe<TimeUnit> mSeekTarget;
 };
 
 class RemoteAudioDecoder : public RemoteDataDecoder
@@ -372,7 +351,7 @@ private:
           FramesToTimeUnit(numFrames, mOutputSampleRate), numFrames,
           Move(audio), mOutputChannels, mOutputSampleRate);
 
-        mDecoder->UpdateOutputStatus(Move(data));
+        mDecoder->UpdateOutputStatus(data);
       }
 
       if ((flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM) != 0) {
@@ -444,7 +423,7 @@ RemoteDataDecoder::CreateVideoDecoder(const CreateDecoderParams& aParams,
     nullptr);
 
   RefPtr<MediaDataDecoder> decoder = new RemoteVideoDecoder(
-    config, format, aDrmStubId, aParams.mTaskQueue);
+    config, format, aParams.mImageContainer, aDrmStubId, aParams.mTaskQueue);
   if (aProxy) {
     decoder = new EMEMediaDataDecoderProxy(aParams, decoder.forget(), aProxy);
   }
@@ -601,23 +580,21 @@ RemoteDataDecoder::UpdateInputStatus(int64_t aTimestamp, bool aProcessed)
 }
 
 void
-RemoteDataDecoder::UpdateOutputStatus(RefPtr<MediaData>&& aSample)
+RemoteDataDecoder::UpdateOutputStatus(MediaData* aSample)
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
     mTaskQueue->Dispatch(
-      NewRunnableMethod<const RefPtr<MediaData>>("RemoteDataDecoder::UpdateOutputStatus",
-                                                 this,
-                                                 &RemoteDataDecoder::UpdateOutputStatus,
-                                                 Move(aSample)));
+      NewRunnableMethod<MediaData*>("RemoteDataDecoder::UpdateOutputStatus",
+                                    this,
+                                    &RemoteDataDecoder::UpdateOutputStatus,
+                                    aSample));
     return;
   }
   AssertOnTaskQueue();
   if (mShutdown) {
     return;
   }
-  if (IsUsefulData(aSample)) {
-    mDecodedData.AppendElement(Move(aSample));
-  }
+  mDecodedData.AppendElement(aSample);
   ReturnDecodedData();
 }
 

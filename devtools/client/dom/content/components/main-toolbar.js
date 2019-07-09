@@ -11,10 +11,10 @@ const { l10n } = require("../utils");
 
 // Reps
 const { createFactories } = require("devtools/client/shared/react-utils");
-const { Toolbar, ToolbarButton } = createFactories(require("devtools/client/jsonview/components/reps/Toolbar"));
+const { Toolbar, ToolbarButton } = createFactories(require("devtools/client/jsonview/components/reps/toolbar"));
 
 // DOM Panel
-const SearchBox = React.createFactory(require("devtools/client/shared/components/SearchBox"));
+const SearchBox = React.createFactory(require("devtools/client/shared/components/search-box"));
 
 // Actions
 const { fetchProperties } = require("../actions/grips");
@@ -47,11 +47,10 @@ var MainToolbar = React.createClass({
     return (
       Toolbar({},
         ToolbarButton({
-          className: "refresh devtools-button",
-          id: "dom-refresh-button",
-          title: l10n.getStr("dom.refresh"),
-          onClick: this.onRefresh
-        }),
+          className: "btn refresh",
+          onClick: this.onRefresh},
+          l10n.getStr("dom.refresh")
+        ),
         SearchBox({
           delay: 250,
           onChange: this.onSearch,

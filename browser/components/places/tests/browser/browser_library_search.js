@@ -37,13 +37,13 @@ var testCases = [
   },
 
   function historyScope() {
-    let defScope = getDefaultScope(PlacesUIUtils.leftPaneQueries.History);
-    search(PlacesUIUtils.leftPaneQueries.History, "dummy", defScope);
+    let defScope = getDefaultScope(PlacesUIUtils.leftPaneQueries["History"]);
+    search(PlacesUIUtils.leftPaneQueries["History"], "dummy", defScope);
   },
 
   function downloadsScope() {
-    let defScope = getDefaultScope(PlacesUIUtils.leftPaneQueries.Downloads);
-    search(PlacesUIUtils.leftPaneQueries.Downloads, "dummy", defScope);
+    let defScope = getDefaultScope(PlacesUIUtils.leftPaneQueries["Downloads"]);
+    search(PlacesUIUtils.leftPaneQueries["Downloads"], "dummy", defScope);
   },
 ];
 
@@ -56,9 +56,9 @@ var testCases = [
  */
 function getDefaultScope(aFolderId) {
   switch (aFolderId) {
-    case PlacesUIUtils.leftPaneQueries.History:
-      return "scopeBarHistory";
-    case PlacesUIUtils.leftPaneQueries.Downloads:
+    case PlacesUIUtils.leftPaneQueries["History"]:
+      return "scopeBarHistory"
+    case PlacesUIUtils.leftPaneQueries["Downloads"]:
       return "scopeBarDownloads";
     default:
       return "scopeBarAll";
@@ -116,8 +116,8 @@ function search(aFolderId, aSearchStr, aExpectedScopeButtonId) {
 
     // getFolders() on a History query returns an empty array, so no use
     // comparing against aFolderId in that case.
-    if (aFolderId !== PlacesUIUtils.leftPaneQueries.History &&
-        aFolderId !== PlacesUIUtils.leftPaneQueries.Downloads) {
+    if (aFolderId !== PlacesUIUtils.leftPaneQueries["History"] &&
+        aFolderId !== PlacesUIUtils.leftPaneQueries["Downloads"]) {
       // contentTree.place should be equal to contentTree.result.root.uri,
       // but it's not until bug 476952 is fixed.
       let query = queryStringToQuery(contentTree.result.root.uri);
@@ -141,32 +141,41 @@ function search(aFolderId, aSearchStr, aExpectedScopeButtonId) {
   }
 }
 
-add_task(async function test() {
+/**
+ * test() contains window-launching boilerplate that calls this to really kick
+ * things off.  Add functions to the testCases array, and this will call them.
+ */
+function onLibraryAvailable() {
+  testCases.forEach(aTest => aTest());
+
+  gLibrary.close();
+  gLibrary = null;
+
+  // Cleanup.
+  PlacesUtils.tagging.untagURI(PlacesUtils._uri(TEST_URL), ["dummyTag"]);
+  PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
+  PlacesTestUtils.clearHistory().then(finish);
+}
+
+function test() {
+  waitForExplicitFinish();
+
+  // Sanity:
+  ok(PlacesUtils, "PlacesUtils in context");
+
   // Add visits, a bookmark and a tag.
-  await PlacesTestUtils.addVisits(
+  PlacesTestUtils.addVisits(
     [{ uri: PlacesUtils._uri(TEST_URL), visitDate: Date.now() * 1000,
        transition: PlacesUtils.history.TRANSITION_TYPED },
      { uri: PlacesUtils._uri(TEST_DOWNLOAD_URL), visitDate: Date.now() * 1000,
        transition: PlacesUtils.history.TRANSITION_DOWNLOAD }]
-    );
+    ).then(() => {
+      PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
+                                           PlacesUtils._uri(TEST_URL),
+                                           PlacesUtils.bookmarks.DEFAULT_INDEX,
+                                           "dummy");
+      PlacesUtils.tagging.tagURI(PlacesUtils._uri(TEST_URL), ["dummyTag"]);
 
-  await PlacesUtils.bookmarks.insert({
-    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-    title: "dummy",
-    url: TEST_URL,
-  });
-
-  PlacesUtils.tagging.tagURI(PlacesUtils._uri(TEST_URL), ["dummyTag"]);
-
-  gLibrary = await promiseLibrary();
-
-  testCases.forEach(aTest => aTest());
-
-  await promiseLibraryClosed(gLibrary);
-
-  // Cleanup.
-  PlacesUtils.tagging.untagURI(PlacesUtils._uri(TEST_URL), ["dummyTag"]);
-
-  await PlacesUtils.bookmarks.eraseEverything();
-  await PlacesUtils.history.clear();
-});
+      gLibrary = openLibrary(onLibraryAvailable);
+    });
+}

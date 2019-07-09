@@ -73,7 +73,6 @@
 #include "mozilla/dom/WorkerDebuggerGlobalScopeBinding.h"
 #include "mozilla/dom/WorkerGlobalScopeBinding.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/ThreadEventQueue.h"
 #include "mozilla/ThrottledEventQueue.h"
 #include "mozilla/TimelineConsumers.h"
 #include "mozilla/WorkerTimelineMarker.h"
@@ -571,8 +570,8 @@ private:
                          EventInit());
     event->SetTrusted(true);
 
-    bool dummy;
-    aWorkerPrivate->DispatchEvent(event, &dummy);
+    nsEventStatus status = nsEventStatus_eIgnore;
+    aWorkerPrivate->DispatchDOMEvent(nullptr, event, nullptr, &status);
     return true;
   }
 };
@@ -729,7 +728,7 @@ public:
     MOZ_ASSERT(parent);
 
     JS::Rooted<JS::Value> messageData(aCx);
-    IgnoredErrorResult rv;
+    ErrorResult rv;
 
     UniquePtr<AbstractTimelineMarker> start;
     UniquePtr<AbstractTimelineMarker> end;
@@ -755,13 +754,12 @@ public:
     }
 
     if (NS_WARN_IF(rv.Failed())) {
-      DispatchError(aCx, aTarget);
+      xpc::Throw(aCx, rv.StealNSResult());
       return false;
     }
 
     Sequence<OwningNonNull<MessagePort>> ports;
     if (!TakeTransferredPortsAsSequence(ports)) {
-      DispatchError(aCx, aTarget);
       return false;
     }
 
@@ -780,8 +778,8 @@ public:
 
     domEvent->SetTrusted(true);
 
-    bool dummy;
-    aTarget->DispatchEvent(domEvent, &dummy);
+    nsEventStatus dummy = nsEventStatus_eIgnore;
+    aTarget->DispatchDOMEvent(nullptr, domEvent, nullptr, &dummy);
 
     return true;
   }
@@ -814,21 +812,6 @@ private:
 
     return DispatchDOMEvent(aCx, aWorkerPrivate, aWorkerPrivate->GlobalScope(),
                             false);
-  }
-
-  void
-  DispatchError(JSContext* aCx, DOMEventTargetHelper* aTarget)
-  {
-    RootedDictionary<MessageEventInit> init(aCx);
-    init.mBubbles = false;
-    init.mCancelable = false;
-
-    RefPtr<Event> event =
-      MessageEvent::Constructor(aTarget, NS_LITERAL_STRING("messageerror"), init);
-    event->SetTrusted(true);
-
-    bool dummy;
-    aTarget->DispatchEvent(event, &dummy);
   }
 };
 
@@ -871,8 +854,8 @@ private:
     event->SetTrusted(true);
 
     nsCOMPtr<nsIDOMEvent> domEvent = do_QueryObject(event);
-    bool dummy;
-    globalScope->DispatchEvent(domEvent, &dummy);
+    nsEventStatus status = nsEventStatus_eIgnore;
+    globalScope->DispatchDOMEvent(nullptr, domEvent, nullptr, &status);
     return true;
   }
 };
@@ -1054,10 +1037,10 @@ public:
           ErrorEvent::Constructor(aTarget, NS_LITERAL_STRING("error"), init);
         event->SetTrusted(true);
 
-        bool defaultActionEnabled;
-        aTarget->DispatchEvent(event, &defaultActionEnabled);
+        nsEventStatus status = nsEventStatus_eIgnore;
+        aTarget->DispatchDOMEvent(nullptr, event, nullptr, &status);
 
-        if (!defaultActionEnabled) {
+        if (status == nsEventStatus_eConsumeNoDefault) {
           return;
         }
       }
@@ -2592,7 +2575,7 @@ WorkerPrivate::MemoryReporter::TryToMapAddon(nsACString &path)
   }
 
   static const size_t explicitLength = strlen("explicit/");
-  addonId.InsertLiteral("add-ons/", 0);
+  addonId.Insert(NS_LITERAL_CSTRING("add-ons/"), 0);
   addonId += "/";
   path.Insert(addonId, explicitLength);
 }
@@ -3643,8 +3626,7 @@ WorkerPrivate::OfflineStatusChangeEventInternal(bool aIsOffline)
   event->InitEvent(eventType, false, false);
   event->SetTrusted(true);
 
-  bool dummy;
-  globalScope->DispatchEvent(event, &dummy);
+  globalScope->DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 template <class Derived>
@@ -4064,7 +4046,7 @@ template <class Derived>
 NS_IMPL_RELEASE_INHERITED(WorkerPrivateParent<Derived>, DOMEventTargetHelper)
 
 template <class Derived>
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(WorkerPrivateParent<Derived>)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(WorkerPrivateParent<Derived>)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 template <class Derived>
@@ -4646,7 +4628,7 @@ WorkerPrivate::Constructor(const GlobalObject& aGlobal,
 {
   JSContext* cx = aGlobal.Context();
   return Constructor(cx, aScriptURL, aIsChromeWorker, aWorkerType,
-                     aWorkerName, VoidCString(), aLoadInfo, aRv);
+                     aWorkerName, NullCString(), aLoadInfo, aRv);
 }
 
 // static
@@ -5296,7 +5278,7 @@ WorkerPrivate::InitializeGCTimers()
   // Once the worker goes idle we set a short (IDLE_GC_TIMER_DELAY_SEC) timer to
   // run a shrinking GC. If the worker receives more messages then the short
   // timer is canceled and the periodic timer resumes.
-  mGCTimer = NS_NewTimer();
+  mGCTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   MOZ_ASSERT(mGCTimer);
 
   mPeriodicGCTimerRunning = false;
@@ -5853,9 +5835,11 @@ WorkerPrivate::CreateNewSyncLoop(Status aFailStatus)
     }
   }
 
-  auto queue = static_cast<ThreadEventQueue<EventQueue>*>(mThread->EventQueue());
-  nsCOMPtr<nsISerialEventTarget> realEventTarget = queue->PushEventQueue();
-  MOZ_ASSERT(realEventTarget);
+  nsCOMPtr<nsIThreadInternal> thread = do_QueryInterface(NS_GetCurrentThread());
+  MOZ_ASSERT(thread);
+
+  nsCOMPtr<nsIEventTarget> realEventTarget;
+  MOZ_ALWAYS_SUCCEEDS(thread->PushEventQueue(getter_AddRefs(realEventTarget)));
 
   RefPtr<EventTarget> workerEventTarget =
     new EventTarget(this, realEventTarget);
@@ -5986,8 +5970,7 @@ WorkerPrivate::DestroySyncLoop(uint32_t aLoopIndex, nsIThreadInternal* aThread)
     mSyncLoopStack.RemoveElementAt(aLoopIndex);
   }
 
-  auto queue = static_cast<ThreadEventQueue<EventQueue>*>(mThread->EventQueue());
-  queue->PopEventQueue(nestedEventTarget);
+  MOZ_ALWAYS_SUCCEEDS(aThread->PopEventQueue(nestedEventTarget));
 
   if (mSyncLoopStack.IsEmpty() && mPendingEventQueueClearing) {
     mPendingEventQueueClearing = false;
@@ -6129,7 +6112,6 @@ WorkerPrivate::EnterDebuggerEventLoop()
   uint32_t currentEventLoopLevel = ++mDebuggerEventLoopLevel;
 
   while (currentEventLoopLevel <= mDebuggerEventLoopLevel) {
-
     bool debuggerRunnablesPending = false;
 
     {
@@ -6148,8 +6130,7 @@ WorkerPrivate::EnterDebuggerEventLoop()
       MutexAutoLock lock(mMutex);
 
       while (mControlQueue.IsEmpty() &&
-             !(debuggerRunnablesPending = !mDebuggerQueue.IsEmpty()) &&
-             Promise::IsWorkerDebuggerMicroTaskEmpty()) {
+             !(debuggerRunnablesPending = !mDebuggerQueue.IsEmpty())) {
         WaitForWorkerEvents();
       }
 
@@ -6157,9 +6138,7 @@ WorkerPrivate::EnterDebuggerEventLoop()
 
       // XXXkhuey should we abort JS on the stack here if we got Abort above?
     }
-    if (!Promise::IsWorkerDebuggerMicroTaskEmpty()) {
-      Promise::PerformWorkerDebuggerMicroTaskCheckpoint();
-    }
+
     if (debuggerRunnablesPending) {
       // Start the periodic GC timer if it is not already running.
       SetGCTimerMode(PeriodicTimer);
@@ -6482,10 +6461,12 @@ WorkerPrivate::SetTimeout(JSContext* aCx,
   // If the timeout we just made is set to fire next then we need to update the
   // timer, unless we're currently running timeouts.
   if (insertedInfo == mTimeouts.Elements() && !mRunningExpiredTimeouts) {
+    nsresult rv;
+
     if (!mTimer) {
-      mTimer = NS_NewTimer();
-      if (!mTimer) {
-        aRv.Throw(NS_ERROR_UNEXPECTED);
+      mTimer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+      if (NS_FAILED(rv)) {
+        aRv.Throw(rv);
         return 0;
       }
 
@@ -7002,8 +6983,8 @@ WorkerPrivate::ConnectMessagePort(JSContext* aCx,
 
   nsCOMPtr<nsIDOMEvent> domEvent = do_QueryObject(event);
 
-  bool dummy;
-  globalScope->DispatchEvent(domEvent, &dummy);
+  nsEventStatus dummy = nsEventStatus_eIgnore;
+  globalScope->DispatchDOMEvent(nullptr, domEvent, nullptr, &dummy);
 
   return true;
 }

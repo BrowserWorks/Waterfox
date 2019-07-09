@@ -61,7 +61,6 @@
 #define DOWNLOAD_BLOCK_TABLE_PREF       "urlclassifier.downloadBlockTable"
 #define DOWNLOAD_ALLOW_TABLE_PREF       "urlclassifier.downloadAllowTable"
 #define DISALLOW_COMPLETION_TABLE_PREF  "urlclassifier.disallow_completions"
-#define PASSWORD_ALLOW_TABLE_PREF       "urlclassifier.passwordAllowTable"
 
 using namespace mozilla::safebrowsing;
 
@@ -226,9 +225,6 @@ public:
   // mUpdateObserver will be set. When the update finished, mUpdateObserver
   // will be nulled out in NotifyUpdateObserver.
   bool IsBusyUpdating() const { return !!mUpdateObserver; }
-
-  // Check the DB ready state of the worker thread
-  bool IsDBOpened() const { return !!mClassifier; }
 
   // Delegate Classifier to disable async update. If there is an
   // ongoing update on the update thread, we will be blocked until

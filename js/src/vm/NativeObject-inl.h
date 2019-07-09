@@ -137,13 +137,10 @@ NativeObject::copyDenseElements(uint32_t dstStart, const Value* src, uint32_t co
     MOZ_ASSERT(dstStart + count <= getDenseCapacity());
     MOZ_ASSERT(!denseElementsAreCopyOnWrite());
     MOZ_ASSERT(!denseElementsAreFrozen());
-    MOZ_ASSERT_IF(count > 0, src != nullptr);
 #ifdef DEBUG
     for (uint32_t i = 0; i < count; ++i)
         checkStoredValue(src[i]);
 #endif
-    if (count == 0)
-        return;
     if (JS::shadow::Zone::asShadowZone(zone())->needsIncrementalBarrier()) {
         uint32_t numShifted = getElementsHeader()->numShiftedElements();
         for (uint32_t i = 0; i < count; ++i) {
@@ -152,38 +149,23 @@ NativeObject::copyDenseElements(uint32_t dstStart, const Value* src, uint32_t co
                                         src[i]);
         }
     } else {
-        memcpy(reinterpret_cast<Value*>(&elements_[dstStart]), src,
-               count * sizeof(Value));
+        memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
         elementsRangeWriteBarrierPost(dstStart, count);
     }
 }
 
 inline void
-NativeObject::initDenseElements(NativeObject* src, uint32_t srcStart, uint32_t count)
+NativeObject::initDenseElements(uint32_t dstStart, const Value* src, uint32_t count)
 {
-    MOZ_ASSERT(src->getDenseInitializedLength() >= srcStart + count);
-
-    const Value* vp = src->getDenseElements() + srcStart;
-    initDenseElements(vp, count);
-}
-
-inline void
-NativeObject::initDenseElements(const Value* src, uint32_t count)
-{
-    MOZ_ASSERT(getDenseInitializedLength() == 0);
-    MOZ_ASSERT(count <= getDenseCapacity());
+    MOZ_ASSERT(dstStart + count <= getDenseCapacity());
     MOZ_ASSERT(!denseElementsAreCopyOnWrite());
     MOZ_ASSERT(!denseElementsAreFrozen());
-
-    setDenseInitializedLength(count);
-
 #ifdef DEBUG
     for (uint32_t i = 0; i < count; ++i)
         checkStoredValue(src[i]);
 #endif
-
-    memcpy(reinterpret_cast<Value*>(elements_), src, count * sizeof(Value));
-    elementsRangeWriteBarrierPost(0, count);
+    memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
+    elementsRangeWriteBarrierPost(dstStart, count);
 }
 
 inline bool
@@ -257,8 +239,7 @@ NativeObject::moveDenseElements(uint32_t dstStart, uint32_t srcStart, uint32_t c
                 dst->set(this, HeapSlot::Element, dst - elements_ + numShifted, *src);
         }
     } else {
-        memmove(reinterpret_cast<Value*>(elements_ + dstStart), elements_ + srcStart,
-                count * sizeof(Value));
+        memmove(elements_ + dstStart, elements_ + srcStart, count * sizeof(HeapSlot));
         elementsRangeWriteBarrierPost(dstStart, count);
     }
 }
@@ -273,8 +254,7 @@ NativeObject::moveDenseElementsNoPreBarrier(uint32_t dstStart, uint32_t srcStart
     MOZ_ASSERT(!denseElementsAreCopyOnWrite());
     MOZ_ASSERT(!denseElementsAreFrozen());
 
-    memmove(reinterpret_cast<Value*>(elements_ + dstStart), elements_ + srcStart,
-            count * sizeof(Value));
+    memmove(elements_ + dstStart, elements_ + srcStart, count * sizeof(Value));
     elementsRangeWriteBarrierPost(dstStart, count);
 }
 
@@ -399,38 +379,6 @@ NativeObject::ensureDenseElements(JSContext* cx, uint32_t index, uint32_t extra)
     return DenseElementResult::Success;
 }
 
-inline DenseElementResult
-NativeObject::setOrExtendDenseElements(JSContext* cx, uint32_t start, const Value* vp,
-                                       uint32_t count,
-                                       ShouldUpdateTypes updateTypes)
-{
-    if (denseElementsAreFrozen())
-        return DenseElementResult::Incomplete;
-
-    if (is<ArrayObject>() &&
-        !as<ArrayObject>().lengthIsWritable() &&
-        start + count >= as<ArrayObject>().length())
-    {
-        return DenseElementResult::Incomplete;
-    }
-
-    DenseElementResult result = ensureDenseElements(cx, start, count);
-    if (result != DenseElementResult::Success)
-        return result;
-
-    if (is<ArrayObject>() && start + count >= as<ArrayObject>().length())
-        as<ArrayObject>().setLengthInt32(start + count);
-
-    if (updateTypes == ShouldUpdateTypes::DontUpdate && !shouldConvertDoubleElements()) {
-        copyDenseElements(start, vp, count);
-    } else {
-        for (size_t i = 0; i < count; i++)
-            setDenseElementWithType(cx, start + i, vp[i]);
-    }
-
-    return DenseElementResult::Success;
-}
-
 inline Value
 NativeObject::getDenseOrTypedArrayElement(uint32_t idx)
 {
@@ -552,20 +500,6 @@ NativeObject::create(JSContext* cx, js::gc::AllocKind kind, js::gc::InitialHeap 
     return nobj;
 }
 
-/* static */ inline JS::Result<NativeObject*, JS::OOM&>
-NativeObject::createWithTemplate(JSContext* cx, js::gc::InitialHeap heap,
-                                 HandleObject templateObject)
-{
-    RootedObjectGroup group(cx, templateObject->group());
-    RootedShape shape(cx, templateObject->as<NativeObject>().lastProperty());
-
-    gc::AllocKind kind = gc::GetGCObjectKind(shape->numFixedSlots());
-    MOZ_ASSERT(CanBeFinalizedInBackground(kind, shape->getObjectClass()));
-    kind = gc::GetBackgroundAllocKind(kind);
-
-    return create(cx, kind, heap, shape, group);
-}
-
 MOZ_ALWAYS_INLINE uint32_t
 NativeObject::numDynamicSlots() const
 {
@@ -646,27 +580,6 @@ NativeObject::setLastProperty(JSContext* cx, Shape* shape)
 
     shape_ = shape;
     return true;
-}
-
-inline js::gc::AllocKind
-NativeObject::allocKindForTenure() const
-{
-    using namespace js::gc;
-    AllocKind kind = GetGCObjectFixedSlotsKind(numFixedSlots());
-    MOZ_ASSERT(!IsBackgroundFinalized(kind));
-    if (!CanBeFinalizedInBackground(kind, getClass()))
-        return kind;
-    return GetBackgroundAllocKind(kind);
-}
-
-inline js::gc::AllocKind
-PlainObject::allocKindForTenure() const
-{
-    using namespace js::gc;
-    AllocKind kind = GetGCObjectFixedSlotsKind(numFixedSlots());
-    MOZ_ASSERT(!IsBackgroundFinalized(kind));
-    MOZ_ASSERT(CanBeFinalizedInBackground(kind, getClass()));
-    return GetBackgroundAllocKind(kind);
 }
 
 /* Make an object with pregenerated shape from a NEWOBJECT bytecode. */

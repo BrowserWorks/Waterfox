@@ -199,7 +199,7 @@ XPathExpression::EvaluateWithContext(nsINode& aContextNode,
 
 nsresult
 EvalContextImpl::getVariable(int32_t aNamespace,
-                             nsAtom* aLName,
+                             nsIAtom* aLName,
                              txAExprResult*& aResult)
 {
     aResult = 0;

@@ -38,12 +38,13 @@
 #include "jit/IonTypes.h"
 #include "threading/Thread.h"
 #include "vm/MutexIDs.h"
-#include "wasm/WasmCode.h"
 
 namespace js {
+
+class WasmActivation;
+
 namespace jit {
 
-class JitActivation;
 class Simulator;
 class Redirection;
 class CachePage;
@@ -291,7 +292,7 @@ class Simulator
 
     // Handle a wasm interrupt triggered by an async signal handler.
     void handleWasmInterrupt();
-    void startWasmInterrupt(JitActivation* act);
+    void startInterrupt(WasmActivation* act);
 
     // Handle any wasm faults, returning true if the fault was handled.
     bool handleWasmFault(int32_t addr, unsigned numBytes);
@@ -422,7 +423,7 @@ class Simulator
     bool pc_modified_;
     int64_t icount_;
 
-    // wasm async interrupt / fault support
+    // wasm async interrupt support
     bool wasm_interrupt_;
 
     // Debugger input.

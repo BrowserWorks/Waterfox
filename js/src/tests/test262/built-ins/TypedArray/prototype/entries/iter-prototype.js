@@ -12,7 +12,7 @@ info: |
   ...
   3. Return CreateArrayIterator(O, "key+value").
 includes: [testTypedArray.js]
-features: [Symbol.iterator, TypedArray]
+features: [Symbol.iterator]
 ---*/
 
 var ArrayIteratorProto = Object.getPrototypeOf([][Symbol.iterator]());

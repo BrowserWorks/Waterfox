@@ -15,7 +15,6 @@
 #include "nsIOutputStream.h"
 #include "nsNetUtil.h"
 #include "nsPrintfCString.h"
-#include "nsIServiceWorkerManager.h"
 
 #include "prtime.h"
 
@@ -154,33 +153,33 @@ TEST(ServiceWorkerRegistrar, TestReadData)
 {
   nsAutoCString buffer(SERVICEWORKERREGISTRAR_VERSION "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("scope 0\ncurrentWorkerURL 0\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("scope 0\ncurrentWorkerURL 0\n");
   buffer.Append(SERVICEWORKERREGISTRAR_TRUE "\n");
-  buffer.AppendLiteral("cacheName 0\n");
-  buffer.AppendInt(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS, 16);
-  buffer.AppendLiteral("\n");
+  buffer.Append("cacheName 0\n");
+  buffer.AppendInt(nsIRequest::LOAD_NORMAL, 16);
+  buffer.Append("\n");
   buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("scope 1\ncurrentWorkerURL 1\n");
+  buffer.Append("\n");
+  buffer.Append("scope 1\ncurrentWorkerURL 1\n");
   buffer.Append(SERVICEWORKERREGISTRAR_FALSE "\n");
-  buffer.AppendLiteral("cacheName 1\n");
-  buffer.AppendInt(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_ALL, 16);
-  buffer.AppendLiteral("\n");
+  buffer.Append("cacheName 1\n");
+  buffer.AppendInt(nsIRequest::VALIDATE_ALWAYS, 16);
+  buffer.Append("\n");
   PRTime ts = PR_Now();
   buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
+  buffer.Append("\n");
   buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
@@ -206,8 +205,7 @@ TEST(ServiceWorkerRegistrar, TestReadData)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_TRUE(data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::LOAD_NORMAL, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -225,8 +223,7 @@ TEST(ServiceWorkerRegistrar, TestReadData)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_FALSE(data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_ALL,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)ts, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)ts, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)ts, data[1].lastUpdateTime());
@@ -262,8 +259,7 @@ TEST(ServiceWorkerRegistrar, TestWriteData)
       reg.currentWorkerHandlesFetch() = true;
       reg.cacheName() =
         NS_ConvertUTF8toUTF16(nsPrintfCString("cacheName write %d", i));
-      reg.updateViaCache() =
-        nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS;
+      reg.loadFlags() = nsIRequest::VALIDATE_ALWAYS;
 
       reg.currentWorkerInstalledTime() = PR_Now();
       reg.currentWorkerActivatedTime() = PR_Now();
@@ -320,8 +316,7 @@ TEST(ServiceWorkerRegistrar, TestWriteData)
     test.AppendPrintf("cacheName write %d", i);
     ASSERT_STREQ(test.get(), NS_ConvertUTF16toUTF8(data[i].cacheName()).get());
 
-    ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-              data[i].updateViaCache());
+    ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[i].loadFlags());
 
     ASSERT_NE((int64_t)0, data[i].currentWorkerInstalledTime());
     ASSERT_NE((int64_t)0, data[i].currentWorkerActivatedTime());
@@ -333,13 +328,13 @@ TEST(ServiceWorkerRegistrar, TestVersion2Migration)
 {
   nsAutoCString buffer("2" "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("spec 0\nscope 0\nscriptSpec 0\ncurrentWorkerURL 0\nactiveCache 0\nwaitingCache 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("spec 0\nscope 0\nscriptSpec 0\ncurrentWorkerURL 0\nactiveCache 0\nwaitingCache 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("spec 1\nscope 1\nscriptSpec 1\ncurrentWorkerURL 1\nactiveCache 1\nwaitingCache 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("spec 1\nscope 1\nscriptSpec 1\ncurrentWorkerURL 1\nactiveCache 1\nwaitingCache 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -364,8 +359,7 @@ TEST(ServiceWorkerRegistrar, TestVersion2Migration)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_EQ(true, data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("activeCache 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -383,8 +377,7 @@ TEST(ServiceWorkerRegistrar, TestVersion2Migration)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_EQ(true, data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("activeCache 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
@@ -394,13 +387,13 @@ TEST(ServiceWorkerRegistrar, TestVersion3Migration)
 {
   nsAutoCString buffer("3" "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("spec 0\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("spec 0\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("spec 1\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("spec 1\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -425,8 +418,7 @@ TEST(ServiceWorkerRegistrar, TestVersion3Migration)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_EQ(true, data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -444,8 +436,7 @@ TEST(ServiceWorkerRegistrar, TestVersion3Migration)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_EQ(true, data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
@@ -455,13 +446,13 @@ TEST(ServiceWorkerRegistrar, TestVersion4Migration)
 {
   nsAutoCString buffer("4" "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("scope 0\ncurrentWorkerURL 0\ncacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("scope 0\ncurrentWorkerURL 0\ncacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("scope 1\ncurrentWorkerURL 1\ncacheName 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("scope 1\ncurrentWorkerURL 1\ncacheName 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -487,8 +478,7 @@ TEST(ServiceWorkerRegistrar, TestVersion4Migration)
   // default is true
   ASSERT_EQ(true, data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -507,8 +497,7 @@ TEST(ServiceWorkerRegistrar, TestVersion4Migration)
   // default is true
   ASSERT_EQ(true, data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
@@ -518,17 +507,17 @@ TEST(ServiceWorkerRegistrar, TestVersion5Migration)
 {
   nsAutoCString buffer("5" "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("scope 0\ncurrentWorkerURL 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TRUE "\n");
-  buffer.AppendLiteral("cacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("scope 0\ncurrentWorkerURL 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TRUE "\n");
+  buffer.Append("cacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("scope 1\ncurrentWorkerURL 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_FALSE "\n");
-  buffer.AppendLiteral("cacheName 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("scope 1\ncurrentWorkerURL 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_FALSE "\n");
+  buffer.Append("cacheName 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -553,8 +542,7 @@ TEST(ServiceWorkerRegistrar, TestVersion5Migration)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_TRUE(data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -572,8 +560,7 @@ TEST(ServiceWorkerRegistrar, TestVersion5Migration)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_FALSE(data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
@@ -583,21 +570,21 @@ TEST(ServiceWorkerRegistrar, TestVersion6Migration)
 {
   nsAutoCString buffer("6" "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("scope 0\ncurrentWorkerURL 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TRUE "\n");
-  buffer.AppendLiteral("cacheName 0\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("scope 0\ncurrentWorkerURL 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TRUE "\n");
+  buffer.Append("cacheName 0\n");
   buffer.AppendInt(nsIRequest::LOAD_NORMAL, 16);
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("scope 1\ncurrentWorkerURL 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_FALSE "\n");
-  buffer.AppendLiteral("cacheName 1\n");
+  buffer.Append("\n");
+  buffer.Append("scope 1\ncurrentWorkerURL 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_FALSE "\n");
+  buffer.Append("cacheName 1\n");
   buffer.AppendInt(nsIRequest::VALIDATE_ALWAYS, 16);
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -622,8 +609,7 @@ TEST(ServiceWorkerRegistrar, TestVersion6Migration)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_TRUE(data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_ALL,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::LOAD_NORMAL, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -641,93 +627,10 @@ TEST(ServiceWorkerRegistrar, TestVersion6Migration)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_FALSE(data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
-}
-
-TEST(ServiceWorkerRegistrar, TestVersion7Migration)
-{
-  nsAutoCString buffer("7" "\n");
-
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("scope 0\ncurrentWorkerURL 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TRUE "\n");
-  buffer.AppendLiteral("cacheName 0\n");
-  buffer.AppendInt(nsIRequest::LOAD_NORMAL, 16);
-  buffer.AppendLiteral("\n");
-  buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
-  buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
-  buffer.AppendInt(0);
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
-
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("scope 1\ncurrentWorkerURL 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_FALSE "\n");
-  buffer.AppendLiteral("cacheName 1\n");
-  buffer.AppendInt(nsIRequest::VALIDATE_ALWAYS, 16);
-  buffer.AppendLiteral("\n");
-  PRTime ts = PR_Now();
-  buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
-  buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
-  buffer.AppendInt(ts);
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
-
-  ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
-
-  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
-
-  nsresult rv = swr->TestReadData();
-  ASSERT_EQ(NS_OK, rv) << "ReadData() should not fail";
-
-  const nsTArray<ServiceWorkerRegistrationData>& data = swr->TestGetData();
-  ASSERT_EQ((uint32_t)2, data.Length()) << "2 entries should be found";
-
-  const mozilla::ipc::PrincipalInfo& info0 = data[0].principal();
-  ASSERT_EQ(info0.type(), mozilla::ipc::PrincipalInfo::TContentPrincipalInfo) << "First principal must be content";
-  const mozilla::ipc::ContentPrincipalInfo& cInfo0 = data[0].principal();
-
-  nsAutoCString suffix0;
-  cInfo0.attrs().CreateSuffix(suffix0);
-
-  ASSERT_STREQ("^appId=123&inBrowser=1", suffix0.get());
-  ASSERT_STREQ("scope 0", cInfo0.spec().get());
-  ASSERT_STREQ("scope 0", data[0].scope().get());
-  ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
-  ASSERT_TRUE(data[0].currentWorkerHandlesFetch());
-  ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_ALL,
-            data[0].updateViaCache());
-  ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
-  ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
-  ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
-
-  const mozilla::ipc::PrincipalInfo& info1 = data[1].principal();
-  ASSERT_EQ(info1.type(), mozilla::ipc::PrincipalInfo::TContentPrincipalInfo) << "First principal must be content";
-  const mozilla::ipc::ContentPrincipalInfo& cInfo1 = data[1].principal();
-
-  nsAutoCString suffix1;
-  cInfo1.attrs().CreateSuffix(suffix1);
-
-  ASSERT_STREQ("", suffix1.get());
-  ASSERT_STREQ("scope 1", cInfo1.spec().get());
-  ASSERT_STREQ("scope 1", data[1].scope().get());
-  ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
-  ASSERT_FALSE(data[1].currentWorkerHandlesFetch());
-  ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
-  ASSERT_EQ((int64_t)ts, data[1].currentWorkerInstalledTime());
-  ASSERT_EQ((int64_t)ts, data[1].currentWorkerActivatedTime());
-  ASSERT_EQ((int64_t)ts, data[1].lastUpdateTime());
 }
 
 TEST(ServiceWorkerRegistrar, TestDedupeRead)
@@ -735,26 +638,26 @@ TEST(ServiceWorkerRegistrar, TestDedupeRead)
   nsAutoCString buffer("3" "\n");
 
   // unique entries
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("spec 0\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("spec 0\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("spec 1\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("spec 1\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   // dupe entries
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("spec 1\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("spec 1\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("^appId=123&inBrowser=1\n");
-  buffer.AppendLiteral("spec 2\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("^appId=123&inBrowser=1\n");
+  buffer.Append("spec 2\nscope 0\ncurrentWorkerURL 0\ncacheName 0\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
-  buffer.AppendLiteral("\n");
-  buffer.AppendLiteral("spec 3\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
-  buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
+  buffer.Append("\n");
+  buffer.Append("spec 3\nscope 1\ncurrentWorkerURL 1\ncacheName 1\n");
+  buffer.Append(SERVICEWORKERREGISTRAR_TERMINATOR "\n");
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
@@ -779,8 +682,7 @@ TEST(ServiceWorkerRegistrar, TestDedupeRead)
   ASSERT_STREQ("currentWorkerURL 0", data[0].currentWorkerURL().get());
   ASSERT_EQ(true, data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 0", NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());
@@ -798,8 +700,7 @@ TEST(ServiceWorkerRegistrar, TestDedupeRead)
   ASSERT_STREQ("currentWorkerURL 1", data[1].currentWorkerURL().get());
   ASSERT_EQ(true, data[1].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName 1", NS_ConvertUTF16toUTF8(data[1].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[1].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[1].loadFlags());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[1].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[1].lastUpdateTime());
@@ -818,8 +719,7 @@ TEST(ServiceWorkerRegistrar, TestDedupeWrite)
       reg.currentWorkerHandlesFetch() = true;
       reg.cacheName() =
         NS_ConvertUTF8toUTF16(nsPrintfCString("cacheName write %d", i));
-      reg.updateViaCache() =
-        nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS;
+      reg.loadFlags() = nsIRequest::VALIDATE_ALWAYS;
 
       nsAutoCString spec;
       spec.AppendPrintf("spec write dedupe/%d", i);
@@ -860,8 +760,7 @@ TEST(ServiceWorkerRegistrar, TestDedupeWrite)
   ASSERT_EQ(true, data[0].currentWorkerHandlesFetch());
   ASSERT_STREQ("cacheName write 9",
                NS_ConvertUTF16toUTF8(data[0].cacheName()).get());
-  ASSERT_EQ(nsIServiceWorkerRegistrationInfo::UPDATE_VIA_CACHE_IMPORTS,
-            data[0].updateViaCache());
+  ASSERT_EQ(nsIRequest::VALIDATE_ALWAYS, data[0].loadFlags());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerInstalledTime());
   ASSERT_EQ((int64_t)0, data[0].currentWorkerActivatedTime());
   ASSERT_EQ((int64_t)0, data[0].lastUpdateTime());

@@ -329,10 +329,10 @@ nsHttpRequestHead::SetOrigin(const nsACString &scheme, const nsACString &host,
 {
     RecursiveMutexAutoLock mon(mRecursiveMutex);
     mOrigin.Assign(scheme);
-    mOrigin.AppendLiteral("://");
+    mOrigin.Append(NS_LITERAL_CSTRING("://"));
     mOrigin.Append(host);
     if (port >= 0) {
-        mOrigin.AppendLiteral(":");
+        mOrigin.Append(NS_LITERAL_CSTRING(":"));
         mOrigin.AppendInt(port);
     }
 }

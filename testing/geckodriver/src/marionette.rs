@@ -28,8 +28,8 @@ use webdriver::command::{WebDriverCommand, WebDriverMessage, Parameters,
 use webdriver::command::WebDriverCommand::{
     NewSession, DeleteSession, Status, Get, GetCurrentUrl,
     GoBack, GoForward, Refresh, GetTitle, GetPageSource, GetWindowHandle,
-    GetWindowHandles, CloseWindow, SetWindowRect, GetWindowRect,
-    MinimizeWindow, MaximizeWindow, FullscreenWindow, SwitchToWindow, SwitchToFrame,
+    GetWindowHandles, CloseWindow, SetWindowRect,
+    GetWindowRect, MaximizeWindow, FullscreenWindow, SwitchToWindow, SwitchToFrame,
     SwitchToParentFrame, FindElement, FindElements,
     FindElementElement, FindElementElements, GetActiveElement,
     IsDisplayed, IsSelected, GetElementAttribute, GetElementProperty, GetCSSValue,
@@ -45,8 +45,8 @@ use webdriver::command::{
     GetNamedCookieParameters, AddCookieParameters, TimeoutsParameters,
     ActionsParameters, TakeScreenshotParameters};
 use webdriver::response::{CloseWindowResponse, Cookie, CookieResponse, CookiesResponse,
-                          ElementRectResponse, NewSessionResponse, TimeoutsResponse,
-                          ValueResponse, WebDriverResponse, WindowRectResponse};
+                          NewSessionResponse, RectResponse, TimeoutsResponse, ValueResponse,
+                          WebDriverResponse};
 use webdriver::common::{Date, ELEMENT_KEY, FrameId, Nullable, WebElement};
 use webdriver::error::{ErrorStatus, WebDriverError, WebDriverResult};
 use webdriver::server::{WebDriverHandler, Session};
@@ -428,7 +428,7 @@ impl MarionetteHandler {
         }
 
         let mut connection = MarionetteConnection::new(port, session_id.clone());
-        try!(connection.connect(&mut self.browser));
+        try!(connection.connect());
         self.connection = Mutex::new(Some(connection));
 
         Ok(capabilities)
@@ -451,11 +451,6 @@ impl MarionetteHandler {
         // double-dashed flags are not accepted on Windows systems
         runner.args().push("-marionette".to_owned());
 
-        // https://developer.mozilla.org/docs/Environment_variables_affecting_crash_reporting
-        runner.envs().insert("MOZ_CRASHREPORTER".to_string(), "1".to_string());
-        runner.envs().insert("MOZ_CRASHREPORTER_NO_REPORT".to_string(), "1".to_string());
-        runner.envs().insert("MOZ_CRASHREPORTER_SHUTDOWN".to_string(), "1".to_string());
-
         if let Some(args) = options.args.take() {
             runner.args().extend(args);
         };
@@ -466,6 +461,7 @@ impl MarionetteHandler {
                                     format!("Failed to set preferences: {}", e))
             }));
 
+        info!("Starting browser {} with args {:?}", binary.display(), runner.args());
         try!(runner.start()
             .map_err(|e| {
                 WebDriverError::new(ErrorStatus::SessionNotCreated,
@@ -492,10 +488,13 @@ impl MarionetteHandler {
 
         prefs.insert_slice(&extra_prefs[..]);
 
+        // fallbacks can be removed when Firefox 54 becomes stable
         if let Some(ref level) = self.current_log_level {
             prefs.insert("marionette.log.level", Pref::new(level.to_string()));
+            prefs.insert("marionette.logging", Pref::new(level.to_string()));  // fallback
         };
         prefs.insert("marionette.port", Pref::new(port as i64));
+        prefs.insert("marionette.defaultPrefs.port", Pref::new(port as i64));  // fallback
 
         prefs.write().map_err(|_| WebDriverError::new(ErrorStatus::UnknownError,
                                                       "Unable to write Firefox profile"))
@@ -552,16 +551,7 @@ impl WebDriverHandler<GeckoExtensionRoute> for MarionetteHandler {
         match self.connection.lock() {
             Ok(ref mut connection) => {
                 match connection.as_mut() {
-                    Some(conn) => {
-                        conn.send_command(resolved_capabilities, &msg)
-                            .map_err(|mut err| {
-                                // Shutdown the browser if no session can
-                                // be established due to errors.
-                                if let NewSession(_) = msg.command {
-                                    err.delete_session=true;
-                                }
-                                err})
-                    },
+                    Some(conn) => conn.send_command(resolved_capabilities, &msg),
                     None => panic!("Connection missing")
                 }
             },
@@ -770,46 +760,39 @@ impl MarionetteSession {
                     ErrorStatus::UnknownError,
                     "Failed to interpret width as float");
 
-                let rect = ElementRectResponse { x, y, width, height };
-                WebDriverResponse::ElementRect(rect)
+                WebDriverResponse::ElementRect(RectResponse::new(x, y, width, height))
             },
-            FullscreenWindow | MinimizeWindow | MaximizeWindow | GetWindowRect |
+            FullscreenWindow | MaximizeWindow | GetWindowRect |
             SetWindowRect(_) => {
                 let width = try_opt!(
                     try_opt!(resp.result.find("width"),
                              ErrorStatus::UnknownError,
-                             "Failed to find width field").as_u64(),
+                             "Failed to find width field").as_f64(),
                     ErrorStatus::UnknownError,
-                    "Failed to interpret width as positive integer");
+                    "Failed to interpret width as float");
 
                 let height = try_opt!(
                     try_opt!(resp.result.find("height"),
                              ErrorStatus::UnknownError,
-                             "Failed to find heigenht field").as_u64(),
+                             "Failed to find height field").as_f64(),
                     ErrorStatus::UnknownError,
-                    "Failed to interpret height as positive integer");
+                    "Failed to interpret height as float");
 
                 let x = try_opt!(
                     try_opt!(resp.result.find("x"),
                              ErrorStatus::UnknownError,
-                             "Failed to find x field").as_i64(),
+                             "Failed to find x field").as_f64(),
                     ErrorStatus::UnknownError,
-                    "Failed to interpret x as integer");
+                    "Failed to interpret x as float");
 
                 let y = try_opt!(
                     try_opt!(resp.result.find("y"),
                              ErrorStatus::UnknownError,
-                             "Failed to find y field").as_i64(),
+                             "Failed to find y field").as_f64(),
                     ErrorStatus::UnknownError,
-                    "Failed to interpret y as integer");
+                    "Failed to interpret y as float");
 
-                let rect = WindowRectResponse {
-                    x: x as i32,
-                    y: y as i32,
-                    width: width as i32,
-                    height: height as i32,
-                };
-                WebDriverResponse::WindowRect(rect)
+                WebDriverResponse::WindowRect(RectResponse::new(x, y, width, height))
             },
             GetCookies => {
                 let cookies = try!(self.process_cookies(&resp.result));
@@ -1056,9 +1039,8 @@ impl MarionetteCommand {
             SetTimeouts(ref x) => (Some("setTimeouts"), Some(x.to_marionette())),
             SetWindowRect(ref x) => (Some("setWindowRect"), Some(x.to_marionette())),
             GetWindowRect => (Some("getWindowRect"), None),
-            MinimizeWindow => (Some("WebDriver:MinimizeWindow"), None),
             MaximizeWindow => (Some("maximizeWindow"), None),
-            FullscreenWindow => (Some("fullscreen"), None),
+            FullscreenWindow => (Some("fullscreenWindow"), None),
             SwitchToWindow(ref x) => (Some("switchToWindow"), Some(x.to_marionette())),
             SwitchToFrame(ref x) => (Some("switchToFrame"), Some(x.to_marionette())),
             SwitchToParentFrame => (Some("switchToParentFrame"), None),
@@ -1328,28 +1310,13 @@ impl MarionetteConnection {
         }
     }
 
-    pub fn connect(&mut self, browser: &mut Option<FirefoxRunner>) -> WebDriverResult<()> {
+    pub fn connect(&mut self) -> WebDriverResult<()> {
         let timeout = 60 * 1000;  // ms
         let poll_interval = 100;  // ms
         let poll_attempts = timeout / poll_interval;
         let mut poll_attempt = 0;
 
         loop {
-            // If the process is gone, immediately abort the connection attempts
-            if let &mut Some(ref mut runner) = browser {
-                let status = runner.status();
-                if status.is_err() || status.as_ref().map(|x| *x).unwrap_or(None) != None {
-                    return Err(WebDriverError::new(
-                        ErrorStatus::UnknownError,
-                        format!("Process unexpectedly closed with status: {}", status
-                            .ok()
-                            .and_then(|x| x)
-                            .and_then(|x| x.code())
-                            .map(|x| x.to_string())
-                            .unwrap_or("{unknown}".into()))));
-                }
-            }
-
             match TcpStream::connect(&(DEFAULT_HOST, self.port)) {
                 Ok(stream) => {
                     self.stream = Some(stream);
@@ -1456,31 +1423,31 @@ impl MarionetteConnection {
         let mut bytes = 0usize;
 
         // TODO(jgraham): Check before we unwrap?
-        let stream = self.stream.as_mut().unwrap();
+        let mut stream = self.stream.as_mut().unwrap();
         loop {
-            let buf = &mut [0 as u8];
+            let mut buf = &mut [0 as u8];
             let num_read = try!(stream.read(buf));
             let byte = match num_read {
                 0 => {
-                    return Err(IoError::new(
-                        ErrorKind::Other,
-                        "EOF reading marionette message",
-                    ))
-                }
+                    return Err(IoError::new(ErrorKind::Other,
+                                            "EOF reading marionette message"))
+                },
                 1 => buf[0] as char,
-                _ => panic!("Expected one byte got more"),
+                _ => panic!("Expected one byte got more")
             };
             match byte {
                 '0'...'9' => {
                     bytes = bytes * 10;
                     bytes += byte as usize - '0' as usize;
+                },
+                ':' => {
+                    break
                 }
-                ':' => break,
                 _ => {}
             }
         }
 
-        let buf = &mut [0 as u8; 8192];
+        let mut buf = &mut [0 as u8; 8192];
         let mut payload = Vec::with_capacity(bytes);
         let mut total_read = 0;
         while total_read < bytes {

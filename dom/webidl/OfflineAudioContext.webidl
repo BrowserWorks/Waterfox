@@ -10,14 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
-dictionary OfflineAudioContextOptions {
-             unsigned long numberOfChannels = 1;
-    required unsigned long length;
-    required float         sampleRate;
-};
-
-[Constructor (OfflineAudioContextOptions contextOptions),
-Constructor(unsigned long numberOfChannels, unsigned long length, float sampleRate),
+[Constructor(unsigned long numberOfChannels, unsigned long length, float sampleRate),
 Pref="dom.webaudio.enabled"]
 interface OfflineAudioContext : BaseAudioContext {
 

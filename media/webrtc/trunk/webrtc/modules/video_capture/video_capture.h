@@ -17,7 +17,7 @@
 #include "webrtc/modules/include/module.h"
 #include "webrtc/modules/video_capture/video_capture_defines.h"
 
-#if defined(ANDROID)
+#if defined(ANDROID) && !defined(WEBRTC_GONK)
 #include <jni.h>
 #endif
 

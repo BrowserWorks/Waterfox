@@ -29,16 +29,6 @@ using namespace mozilla::dom;
 namespace mozilla {
 namespace net {
 
-static uint64_t
-FindTopOuterWindowID(nsPIDOMWindowOuter* aOuter)
-{
-  nsCOMPtr<nsPIDOMWindowOuter> outer = aOuter;
-  while (nsCOMPtr<nsPIDOMWindowOuter> parent = outer->GetScriptableParentOrNull()) {
-    outer = parent;
-  }
-  return outer->WindowID();
-}
-
 LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsINode* aLoadingContext,
@@ -50,18 +40,17 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                            aTriggeringPrincipal : mLoadingPrincipal.get())
   , mPrincipalToInherit(nullptr)
   , mLoadingContext(do_GetWeakReference(aLoadingContext))
-  , mContextForTopLevelLoad(nullptr)
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(aContentPolicyType)
   , mTainting(LoadTainting::Basic)
   , mUpgradeInsecureRequests(false)
   , mVerifySignedContent(false)
   , mEnforceSRI(false)
+  , mAllowDocumentToBeAgnosticToCSP(false)
   , mForceInheritPrincipalDropped(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
   , mParentOuterWindowID(0)
-  , mTopOuterWindowID(0)
   , mFrameOuterWindowID(0)
   , mEnforceSecurity(false)
   , mInitialSecurityCheckDone(false)
@@ -114,13 +103,9 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
       mOuterWindowID = contextOuter->WindowID();
       nsCOMPtr<nsPIDOMWindowOuter> parent = contextOuter->GetScriptableParent();
       mParentOuterWindowID = parent ? parent->WindowID() : mOuterWindowID;
-      mTopOuterWindowID = FindTopOuterWindowID(contextOuter);
     }
 
     mInnerWindowID = aLoadingContext->OwnerDoc()->InnerWindowID();
-    mAncestorPrincipals = aLoadingContext->OwnerDoc()->AncestorPrincipals();
-    mAncestorOuterWindowIDs = aLoadingContext->OwnerDoc()->AncestorOuterWindowIDs();
-    MOZ_DIAGNOSTIC_ASSERT(mAncestorPrincipals.Length() == mAncestorOuterWindowIDs.Length());
 
     // When the element being loaded is a frame, we choose the frame's window
     // for the window ID and the frame element's window as the parent
@@ -227,23 +212,21 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
 */
 LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
                    nsIPrincipal* aTriggeringPrincipal,
-                   nsISupports* aContextForTopLevelLoad,
                    nsSecurityFlags aSecurityFlags)
   : mLoadingPrincipal(nullptr)
   , mTriggeringPrincipal(aTriggeringPrincipal)
   , mPrincipalToInherit(nullptr)
-  , mContextForTopLevelLoad(do_GetWeakReference(aContextForTopLevelLoad))
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(nsIContentPolicy::TYPE_DOCUMENT)
   , mTainting(LoadTainting::Basic)
   , mUpgradeInsecureRequests(false)
   , mVerifySignedContent(false)
   , mEnforceSRI(false)
+  , mAllowDocumentToBeAgnosticToCSP(false)
   , mForceInheritPrincipalDropped(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
   , mParentOuterWindowID(0)
-  , mTopOuterWindowID(0)
   , mFrameOuterWindowID(0)
   , mEnforceSecurity(false)
   , mInitialSecurityCheckDone(false)
@@ -274,15 +257,11 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   // with the hidden window.
   nsCOMPtr<nsPIDOMWindowOuter> parent = aOuterWindow->GetScriptableParent();
   mParentOuterWindowID = parent ? parent->WindowID() : 0;
-  mTopOuterWindowID = FindTopOuterWindowID(aOuterWindow);
 
   // get the docshell from the outerwindow, and then get the originattributes
   nsCOMPtr<nsIDocShell> docShell = aOuterWindow->GetDocShell();
   MOZ_ASSERT(docShell);
   mOriginAttributes = nsDocShell::Cast(docShell)->GetOriginAttributes();
-  mAncestorPrincipals = nsDocShell::Cast(docShell)->AncestorPrincipals();
-  mAncestorOuterWindowIDs = nsDocShell::Cast(docShell)->AncestorOuterWindowIDs();
-  MOZ_DIAGNOSTIC_ASSERT(mAncestorPrincipals.Length() == mAncestorOuterWindowIDs.Length());
 
 #ifdef DEBUG
   if (docShell->ItemType() == nsIDocShellTreeItem::typeChrome) {
@@ -299,18 +278,17 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mSandboxedLoadingPrincipal(rhs.mSandboxedLoadingPrincipal)
   , mResultPrincipalURI(rhs.mResultPrincipalURI)
   , mLoadingContext(rhs.mLoadingContext)
-  , mContextForTopLevelLoad(rhs.mContextForTopLevelLoad)
   , mSecurityFlags(rhs.mSecurityFlags)
   , mInternalContentPolicyType(rhs.mInternalContentPolicyType)
   , mTainting(rhs.mTainting)
   , mUpgradeInsecureRequests(rhs.mUpgradeInsecureRequests)
   , mVerifySignedContent(rhs.mVerifySignedContent)
   , mEnforceSRI(rhs.mEnforceSRI)
+  , mAllowDocumentToBeAgnosticToCSP(rhs.mAllowDocumentToBeAgnosticToCSP)
   , mForceInheritPrincipalDropped(rhs.mForceInheritPrincipalDropped)
   , mInnerWindowID(rhs.mInnerWindowID)
   , mOuterWindowID(rhs.mOuterWindowID)
   , mParentOuterWindowID(rhs.mParentOuterWindowID)
-  , mTopOuterWindowID(rhs.mTopOuterWindowID)
   , mFrameOuterWindowID(rhs.mFrameOuterWindowID)
   , mEnforceSecurity(rhs.mEnforceSecurity)
   , mInitialSecurityCheckDone(rhs.mInitialSecurityCheckDone)
@@ -319,8 +297,6 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mRedirectChainIncludingInternalRedirects(
       rhs.mRedirectChainIncludingInternalRedirects)
   , mRedirectChain(rhs.mRedirectChain)
-  , mAncestorPrincipals(rhs.mAncestorPrincipals)
-  , mAncestorOuterWindowIDs(rhs.mAncestorOuterWindowIDs)
   , mCorsUnsafeHeaders(rhs.mCorsUnsafeHeaders)
   , mForcePreflight(rhs.mForcePreflight)
   , mIsPreflight(rhs.mIsPreflight)
@@ -342,11 +318,11 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    bool aUpgradeInsecureRequests,
                    bool aVerifySignedContent,
                    bool aEnforceSRI,
+                   bool aAllowDocumentToBeAgnosticToCSP,
                    bool aForceInheritPrincipalDropped,
                    uint64_t aInnerWindowID,
                    uint64_t aOuterWindowID,
                    uint64_t aParentOuterWindowID,
-                   uint64_t aTopOuterWindowID,
                    uint64_t aFrameOuterWindowID,
                    bool aEnforceSecurity,
                    bool aInitialSecurityCheckDone,
@@ -354,8 +330,6 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    const OriginAttributes& aOriginAttributes,
                    RedirectHistoryArray& aRedirectChainIncludingInternalRedirects,
                    RedirectHistoryArray& aRedirectChain,
-                   nsTArray<nsCOMPtr<nsIPrincipal>>&& aAncestorPrincipals,
-                   const nsTArray<uint64_t>& aAncestorOuterWindowIDs,
                    const nsTArray<nsCString>& aCorsUnsafeHeaders,
                    bool aForcePreflight,
                    bool aIsPreflight,
@@ -373,18 +347,16 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mUpgradeInsecureRequests(aUpgradeInsecureRequests)
   , mVerifySignedContent(aVerifySignedContent)
   , mEnforceSRI(aEnforceSRI)
+  , mAllowDocumentToBeAgnosticToCSP(aAllowDocumentToBeAgnosticToCSP)
   , mForceInheritPrincipalDropped(aForceInheritPrincipalDropped)
   , mInnerWindowID(aInnerWindowID)
   , mOuterWindowID(aOuterWindowID)
   , mParentOuterWindowID(aParentOuterWindowID)
-  , mTopOuterWindowID(aTopOuterWindowID)
   , mFrameOuterWindowID(aFrameOuterWindowID)
   , mEnforceSecurity(aEnforceSecurity)
   , mInitialSecurityCheckDone(aInitialSecurityCheckDone)
   , mIsThirdPartyContext(aIsThirdPartyContext)
   , mOriginAttributes(aOriginAttributes)
-  , mAncestorPrincipals(Move(aAncestorPrincipals))
-  , mAncestorOuterWindowIDs(aAncestorOuterWindowIDs)
   , mCorsUnsafeHeaders(aCorsUnsafeHeaders)
   , mForcePreflight(aForcePreflight)
   , mIsPreflight(aIsPreflight)
@@ -542,17 +514,6 @@ LoadInfo::LoadingNode()
 {
   nsCOMPtr<nsINode> node = do_QueryReferent(mLoadingContext);
   return node;
-}
-
-nsISupports*
-LoadInfo::ContextForTopLevelLoad()
-{
-  // Most likely you want to query LoadingNode() instead of
-  // ContextForTopLevelLoad() if this assertion fires.
-  MOZ_ASSERT(mInternalContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT,
-            "should only query this context for top level document loads");
-  nsCOMPtr<nsISupports> context = do_QueryReferent(mContextForTopLevelLoad);
-  return context;
 }
 
 NS_IMETHODIMP
@@ -754,13 +715,6 @@ LoadInfo::GetParentOuterWindowID(uint64_t* aResult)
 }
 
 NS_IMETHODIMP
-LoadInfo::GetTopOuterWindowID(uint64_t* aResult)
-{
-  *aResult = mTopOuterWindowID;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 LoadInfo::GetFrameOuterWindowID(uint64_t* aResult)
 {
   *aResult = mFrameOuterWindowID;
@@ -794,6 +748,25 @@ LoadInfo::ResetPrincipalToInheritToNullPrincipal()
 
   return NS_OK;
 }
+
+NS_IMETHODIMP
+LoadInfo::SetAllowDocumentToBeAgnosticToCSP(bool aAllowDocumentToBeAgnosticToCSP)
+{
+  if (mInternalContentPolicyType != nsIContentPolicy::TYPE_DOCUMENT) {
+    MOZ_ASSERT(false, "not available for loads other than TYPE_DOCUMENT");
+    return NS_ERROR_UNEXPECTED;
+  }
+  mAllowDocumentToBeAgnosticToCSP = aAllowDocumentToBeAgnosticToCSP;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetAllowDocumentToBeAgnosticToCSP(bool* aAllowDocumentToBeAgnosticToCSP)
+{
+  *aAllowDocumentToBeAgnosticToCSP = mAllowDocumentToBeAgnosticToCSP;
+  return NS_OK;
+}
+
 
 NS_IMETHODIMP
 LoadInfo::SetScriptableOriginAttributes(JSContext* aCx,
@@ -924,18 +897,6 @@ const RedirectHistoryArray&
 LoadInfo::RedirectChain()
 {
   return mRedirectChain;
-}
-
-const nsTArray<nsCOMPtr<nsIPrincipal>>&
-LoadInfo::AncestorPrincipals()
-{
-  return mAncestorPrincipals;
-}
-
-const nsTArray<uint64_t>&
-LoadInfo::AncestorOuterWindowIDs()
-{
-  return mAncestorOuterWindowIDs;
 }
 
 void

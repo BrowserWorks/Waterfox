@@ -10,29 +10,32 @@
 use {Atom, Namespace, LocalName};
 use applicable_declarations::ApplicableDeclarationBlock;
 use atomic_refcell::{AtomicRef, AtomicRefCell, AtomicRefMut};
-#[cfg(feature = "gecko")] use context::PostAnimationTasks;
 #[cfg(feature = "gecko")] use context::UpdateAnimationsTasks;
 use data::ElementData;
 use element_state::ElementState;
 use font_metrics::FontMetricsProvider;
 use media_queries::Device;
 use properties::{AnimationRules, ComputedValues, PropertyDeclarationBlock};
-#[cfg(feature = "gecko")] use properties::LonghandId;
 #[cfg(feature = "gecko")] use properties::animated_properties::AnimationValue;
+#[cfg(feature = "gecko")] use properties::animated_properties::TransitionProperty;
 use rule_tree::CascadeLevel;
-use selector_parser::{AttrValue, PseudoClassStringArg, PseudoElement, SelectorImpl};
-use selectors::Element as SelectorsElement;
+use selector_parser::{AttrValue, ElementExt, PreExistingComputedValues};
+use selector_parser::{PseudoClassStringArg, PseudoElement};
 use selectors::matching::{ElementSelectorFlags, VisitedHandlingMode};
 use selectors::sink::Push;
 use servo_arc::{Arc, ArcBorrow};
 use shared_lock::Locked;
+use smallvec::VecLike;
 use std::fmt;
-#[cfg(feature = "gecko")] use hash::FnvHashMap;
+#[cfg(feature = "gecko")] use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
 use stylist::Stylist;
-use traversal_flags::{TraversalFlags, self};
+use thread_state;
+use traversal_flags::TraversalFlags;
+
+pub use style_traits::UnsafeNode;
 
 /// An opaque handle to a node, which, unlike UnsafeNode, cannot be transformed
 /// back into a non-opaque representation. The only safe operation that can be
@@ -43,8 +46,8 @@ use traversal_flags::{TraversalFlags, self};
 /// Because the script task's GC does not trace layout, node data cannot be safely stored in layout
 /// data structures. Also, layout code tends to be faster when the DOM is not being accessed, for
 /// locality reasons. Using `OpaqueNode` enforces this invariant.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf, Deserialize, Serialize))]
+#[derive(Clone, PartialEq, Copy, Debug, Hash, Eq)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf, Deserialize, Serialize))]
 pub struct OpaqueNode(pub usize);
 
 impl OpaqueNode {
@@ -64,48 +67,28 @@ pub trait NodeInfo {
     fn is_element(&self) -> bool;
     /// Whether this node is a text node.
     fn is_text_node(&self) -> bool;
+
+    /// Whether this node needs layout.
+    ///
+    /// Comments, doctypes, etc are ignored by layout algorithms.
+    fn needs_layout(&self) -> bool { self.is_element() || self.is_text_node() }
 }
 
 /// A node iterator that only returns node that don't need layout.
 pub struct LayoutIterator<T>(pub T);
 
-impl<T, N> Iterator for LayoutIterator<T>
-where
-    T: Iterator<Item = N>,
-    N: NodeInfo,
+impl<T, I> Iterator for LayoutIterator<T>
+    where T: Iterator<Item=I>,
+          I: NodeInfo,
 {
-    type Item = N;
-
-    fn next(&mut self) -> Option<N> {
+    type Item = I;
+    fn next(&mut self) -> Option<I> {
         loop {
-            match self.0.next() {
-                Some(n) => {
-                    // Filter out nodes that layout should ignore.
-                    if n.is_text_node() || n.is_element() {
-                        return Some(n)
-                    }
-                }
-                None => return None,
+            // Filter out nodes that layout should ignore.
+            let n = self.0.next();
+            if n.is_none() || n.as_ref().unwrap().needs_layout() {
+                return n
             }
-        }
-    }
-}
-
-/// An iterator over the DOM children of a node.
-pub struct DomChildren<N>(Option<N>);
-impl<N> Iterator for DomChildren<N>
-where
-    N: TNode
-{
-    type Item = N;
-
-    fn next(&mut self) -> Option<N> {
-        match self.0.take() {
-            Some(n) => {
-                self.0 = n.next_sibling();
-                Some(n)
-            }
-            None => None,
         }
     }
 }
@@ -116,34 +99,35 @@ pub trait TNode : Sized + Copy + Clone + Debug + NodeInfo {
     /// The concrete `TElement` type.
     type ConcreteElement: TElement<ConcreteNode = Self>;
 
+    /// A concrete children iterator type in order to iterate over the `Node`s.
+    ///
+    /// TODO(emilio): We should eventually replace this with the `impl Trait`
+    /// syntax.
+    type ConcreteChildrenIterator: Iterator<Item = Self>;
+
+    /// Convert this node in an `UnsafeNode`.
+    fn to_unsafe(&self) -> UnsafeNode;
+
+    /// Get a node back from an `UnsafeNode`.
+    unsafe fn from_unsafe(n: &UnsafeNode) -> Self;
+
     /// Get this node's parent node.
     fn parent_node(&self) -> Option<Self>;
-
-    /// Get this node's first child.
-    fn first_child(&self) -> Option<Self>;
-
-    /// Get this node's first child.
-    fn last_child(&self) -> Option<Self>;
-
-    /// Get this node's previous sibling.
-    fn prev_sibling(&self) -> Option<Self>;
-
-    /// Get this node's next sibling.
-    fn next_sibling(&self) -> Option<Self>;
-
-    /// Iterate over the DOM children of an element.
-    fn dom_children(&self) -> DomChildren<Self> {
-        DomChildren(self.first_child())
-    }
-
-    /// Get this node's parent element from the perspective of a restyle
-    /// traversal.
-    fn traversal_parent(&self) -> Option<Self::ConcreteElement>;
 
     /// Get this node's parent element if present.
     fn parent_element(&self) -> Option<Self::ConcreteElement> {
         self.parent_node().and_then(|n| n.as_element())
     }
+
+    /// Returns an iterator over this node's children.
+    fn children(&self) -> LayoutIterator<Self::ConcreteChildrenIterator>;
+
+    /// Get this node's parent element from the perspective of a restyle
+    /// traversal.
+    fn traversal_parent(&self) -> Option<Self::ConcreteElement>;
+
+    /// Get this node's children from the perspective of a restyle traversal.
+    fn traversal_children(&self) -> LayoutIterator<Self::ConcreteChildrenIterator>;
 
     /// Converts self into an `OpaqueNode`.
     fn opaque(&self) -> OpaqueNode;
@@ -154,12 +138,22 @@ pub trait TNode : Sized + Copy + Clone + Debug + NodeInfo {
     /// Get this node as an element, if it's one.
     fn as_element(&self) -> Option<Self::ConcreteElement>;
 
+    /// Whether this node needs to be laid out on viewport size change.
+    fn needs_dirty_on_viewport_size_changed(&self) -> bool;
+
+    /// Mark this node as needing layout on viewport size change.
+    unsafe fn set_dirty_on_viewport_size_changed(&self);
+
     /// Whether this node can be fragmented. This is used for multicol, and only
     /// for Servo.
     fn can_be_fragmented(&self) -> bool;
 
     /// Set whether this node can be fragmented.
     unsafe fn set_can_be_fragmented(&self, value: bool);
+
+    /// Whether this node is in the document right now needed to clear the
+    /// restyle data appropriately on some forced restyles.
+    fn is_in_doc(&self) -> bool;
 }
 
 /// Wrapper to output the ElementData along with the node when formatting for
@@ -212,13 +206,7 @@ impl<N: TNode> Debug for ShowSubtreeDataAndPrimaryValues<N> {
 
 fn fmt_with_data<N: TNode>(f: &mut fmt::Formatter, n: N) -> fmt::Result {
     if let Some(el) = n.as_element() {
-        write!(
-            f, "{:?} dd={} aodd={} data={:?}",
-            el,
-            el.has_dirty_descendants(),
-            el.has_animation_only_dirty_descendants(),
-            el.borrow_data(),
-       )
+        write!(f, "{:?} dd={} data={:?}", el, el.has_dirty_descendants(), el.borrow_data())
     } else {
         write!(f, "{:?}", n)
     }
@@ -227,10 +215,9 @@ fn fmt_with_data<N: TNode>(f: &mut fmt::Formatter, n: N) -> fmt::Result {
 fn fmt_with_data_and_primary_values<N: TNode>(f: &mut fmt::Formatter, n: N) -> fmt::Result {
     if let Some(el) = n.as_element() {
         let dd = el.has_dirty_descendants();
-        let aodd = el.has_animation_only_dirty_descendants();
         let data = el.borrow_data();
         let values = data.as_ref().and_then(|d| d.styles.get_primary());
-        write!(f, "{:?} dd={} aodd={} data={:?} values={:?}", el, dd, aodd, &data, values)
+        write!(f, "{:?} dd={} data={:?} values={:?}", el, dd, &data, values)
     } else {
         write!(f, "{:?}", n)
     }
@@ -244,14 +231,50 @@ fn fmt_subtree<F, N: TNode>(f: &mut fmt::Formatter, stringify: &F, n: N, indent:
         write!(f, "  ")?;
     }
     stringify(f, n)?;
-    if let Some(e) = n.as_element() {
-        for kid in e.traversal_children() {
-            writeln!(f, "")?;
-            fmt_subtree(f, stringify, kid, indent + 1)?;
-        }
+    for kid in n.traversal_children() {
+        writeln!(f, "")?;
+        fmt_subtree(f, stringify, kid, indent + 1)?;
     }
 
     Ok(())
+}
+
+/// Flag that this element has a descendant for style processing, propagating
+/// the bit up to the root as needed.
+///
+/// This is _not_ safe to call during the parallel traversal.
+///
+/// This is intended as a helper so Servo and Gecko can override it with custom
+/// stuff if needed.
+///
+/// Returns whether no parent had already noted it, that is, whether we reached
+/// the root during the walk up.
+pub unsafe fn raw_note_descendants<E, B>(element: E) -> bool
+    where E: TElement,
+          B: DescendantsBit<E>,
+{
+    debug_assert!(!thread_state::get().is_worker());
+    // TODO(emilio, bholley): Documenting the flags setup a bit better wouldn't
+    // really hurt I guess.
+    debug_assert!(element.get_data().is_some(),
+                  "You should ensure you only flag styled elements");
+
+    let mut curr = Some(element);
+    while let Some(el) = curr {
+        if B::has(el) {
+            break;
+        }
+        B::set(el);
+        curr = el.traversal_parent();
+    }
+
+    // Note: We disable this assertion on servo because of bugs. See the
+    // comment around note_dirty_descendant in layout/wrapper.rs.
+    if cfg!(feature = "gecko") {
+        debug_assert!(element.descendants_bit_is_propagated::<B>());
+    }
+
+    curr.is_none()
 }
 
 /// A trait used to synthesize presentational hints for HTML element attributes.
@@ -265,25 +288,10 @@ pub trait PresentationalHintsSynthesizer {
 }
 
 /// The element trait, the main abstraction the style crate acts over.
-pub trait TElement
-    : Eq
-    + PartialEq
-    + Debug
-    + Hash
-    + Sized
-    + Copy
-    + Clone
-    + SelectorsElement<Impl = SelectorImpl>
-    + PresentationalHintsSynthesizer
-{
+pub trait TElement : Eq + PartialEq + Debug + Hash + Sized + Copy + Clone +
+                     ElementExt + PresentationalHintsSynthesizer {
     /// The concrete node type.
     type ConcreteNode: TNode<ConcreteElement = Self>;
-
-    /// A concrete children iterator type in order to iterate over the `Node`s.
-    ///
-    /// TODO(emilio): We should eventually replace this with the `impl Trait`
-    /// syntax.
-    type TraversalChildrenIterator: Iterator<Item = Self::ConcreteNode>;
 
     /// Type of the font metrics provider
     ///
@@ -300,11 +308,6 @@ pub trait TElement
     /// Otherwise we may set document-level state incorrectly, like the root
     /// font-size used for rem units.
     fn owner_doc_matches_for_testing(&self, _: &Device) -> bool { true }
-
-    /// Whether this element should match user and author rules.
-    ///
-    /// We use this for Native Anonymous Content in Gecko.
-    fn matches_user_and_author_rules(&self) -> bool { true }
 
     /// Returns the depth of this element in the DOM.
     fn depth(&self) -> usize {
@@ -323,9 +326,6 @@ pub trait TElement
     fn traversal_parent(&self) -> Option<Self> {
         self.as_node().traversal_parent()
     }
-
-    /// Get this node's children from the perspective of a restyle traversal.
-    fn traversal_children(&self) -> LayoutIterator<Self::TraversalChildrenIterator>;
 
     /// Returns the parent element we should inherit from.
     ///
@@ -416,6 +416,18 @@ pub trait TElement
     /// Internal iterator for the classes of this element.
     fn each_class<F>(&self, callback: F) where F: FnMut(&Atom);
 
+    /// Get the pre-existing style to calculate restyle damage (change hints).
+    ///
+    /// This needs to be generic since it varies between Servo and Gecko.
+    ///
+    /// XXX(emilio): It's a bit unfortunate we need to pass the current computed
+    /// values as an argument here, but otherwise Servo would crash due to
+    /// double borrows to return it.
+    fn existing_style_for_restyle_damage<'a>(&'a self,
+                                             current_computed_values: &'a ComputedValues,
+                                             pseudo: Option<&PseudoElement>)
+                                             -> Option<&'a PreExistingComputedValues>;
+
     /// Whether a given element may generate a pseudo-element.
     ///
     /// This is useful to avoid computing, for example, pseudo styles for
@@ -473,19 +485,14 @@ pub trait TElement
             // animation in a SequentialTask) is processed after the normal
             // traversal in that we had elements that handled snapshot.
             return data.has_styles() &&
-                   !data.hint.has_animation_hint_or_recascade();
-        }
-
-        if traversal_flags.contains(traversal_flags::UnstyledOnly) {
-            // We don't process invalidations in UnstyledOnly mode.
-            return data.has_styles();
+                   !data.restyle.hint.has_animation_hint_or_recascade();
         }
 
         if self.has_snapshot() && !self.handled_snapshot() {
             return false;
         }
 
-        data.has_styles() && !data.hint.has_non_animation_invalidations()
+        data.has_styles() && !data.restyle.hint.has_non_animation_invalidations()
     }
 
     /// Returns whether the element's styles are up-to-date after traversal
@@ -507,13 +514,32 @@ pub trait TElement
         //
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1389675 tracks fixing
         // this.
-        !data.hint.has_non_animation_invalidations()
+        !data.restyle.hint.has_non_animation_invalidations()
     }
+
+    /// Flags an element and its ancestors with a given `DescendantsBit`.
+    ///
+    /// TODO(emilio): We call this conservatively from restyle_element_internal
+    /// because we never flag unstyled stuff. A different setup for this may be
+    /// a bit cleaner, but it's probably not worth to invest on it right now
+    /// unless necessary.
+    unsafe fn note_descendants<B: DescendantsBit<Self>>(&self);
 
     /// Flag that this element has a descendant for style processing.
     ///
     /// Only safe to call with exclusive access to the element.
     unsafe fn set_dirty_descendants(&self);
+
+    /// Debug helper to be sure the bit is propagated.
+    fn descendants_bit_is_propagated<B: DescendantsBit<Self>>(&self) -> bool {
+        let mut current = Some(*self);
+        while let Some(el) = current {
+            if !B::has(el) { return false; }
+            current = el.traversal_parent();
+        }
+
+        true
+    }
 
     /// Flag that this element has no descendant for style processing.
     ///
@@ -539,19 +565,12 @@ pub trait TElement
     unsafe fn unset_animation_only_dirty_descendants(&self) {
     }
 
-    /// Clear all bits related describing the dirtiness of descendants.
+    /// Clear all bits related to dirty descendant.
     ///
     /// In Gecko, this corresponds to the regular dirty descendants bit, the
     /// animation-only dirty descendants bit, and the lazy frame construction
     /// descendants bit.
-    unsafe fn clear_descendant_bits(&self) { self.unset_dirty_descendants(); }
-
-    /// Clear all element flags related to dirtiness.
-    ///
-    /// In Gecko, this corresponds to the regular dirty descendants bit, the
-    /// animation-only dirty descendants bit, the lazy frame construction bit,
-    /// and the lazy frame construction descendants bit.
-    unsafe fn clear_dirty_bits(&self) { self.unset_dirty_descendants(); }
+    unsafe fn clear_descendants_bits(&self) { self.unset_dirty_descendants(); }
 
     /// Returns true if this element is a visited link.
     ///
@@ -635,10 +654,6 @@ pub trait TElement
                          before_change_style: Option<Arc<ComputedValues>>,
                          tasks: UpdateAnimationsTasks);
 
-    /// Creates a task to process post animation on a given element.
-    #[cfg(feature = "gecko")]
-    fn process_post_animation(&self, tasks: PostAnimationTasks);
-
     /// Returns true if the element has relevant animations. Relevant
     /// animations are those animations that are affecting the element's style
     /// or are scheduled to do so in the future.
@@ -657,7 +672,7 @@ pub trait TElement
             Some(d) => d,
             None => return false,
         };
-        return data.hint.has_animation_hint()
+        return data.restyle.hint.has_animation_hint()
     }
 
     /// Returns the anonymous content for the current element's XBL binding,
@@ -693,10 +708,28 @@ pub trait TElement
         false
     }
 
-    /// Gets the current existing CSS transitions, by |property, end value| pairs in a FnvHashMap.
+    /// Gets declarations from XBL bindings from the element.
+    fn get_declarations_from_xbl_bindings<V>(
+        &self,
+        pseudo_element: Option<&PseudoElement>,
+        applicable_declarations: &mut V
+    ) -> bool
+    where
+        V: Push<ApplicableDeclarationBlock> + VecLike<ApplicableDeclarationBlock>
+    {
+        self.each_xbl_stylist(|stylist| {
+            stylist.push_applicable_declarations_as_xbl_only_stylist(
+                self,
+                pseudo_element,
+                applicable_declarations
+            );
+        })
+    }
+
+    /// Gets the current existing CSS transitions, by |property, end value| pairs in a HashMap.
     #[cfg(feature = "gecko")]
     fn get_css_transitions_info(&self)
-                                -> FnvHashMap<LonghandId, Arc<AnimationValue>>;
+                                -> HashMap<TransitionProperty, Arc<AnimationValue>>;
 
     /// Does a rough (and cheap) check for whether or not transitions might need to be updated that
     /// will quickly return false for the common case of no transitions specified or running. If
@@ -704,33 +737,31 @@ pub trait TElement
     /// we can perform the more thoroughgoing check, needs_transitions_update, to further
     /// reduce the possibility of false positives.
     #[cfg(feature = "gecko")]
-    fn might_need_transitions_update(
-        &self,
-        old_values: Option<&ComputedValues>,
-        new_values: &ComputedValues
-    ) -> bool;
+    fn might_need_transitions_update(&self,
+                                     old_values: Option<&ComputedValues>,
+                                     new_values: &ComputedValues)
+                                     -> bool;
 
     /// Returns true if one of the transitions needs to be updated on this element. We check all
     /// the transition properties to make sure that updating transitions is necessary.
     /// This method should only be called if might_needs_transitions_update returns true when
     /// passed the same parameters.
     #[cfg(feature = "gecko")]
-    fn needs_transitions_update(
-        &self,
-        before_change_style: &ComputedValues,
-        after_change_style: &ComputedValues
-    ) -> bool;
+    fn needs_transitions_update(&self,
+                                before_change_style: &ComputedValues,
+                                after_change_style: &ComputedValues)
+                                -> bool;
 
     /// Returns true if we need to update transitions for the specified property on this element.
     #[cfg(feature = "gecko")]
-    fn needs_transitions_update_per_property(
-        &self,
-        property: &LonghandId,
-        combined_duration: f32,
-        before_change_style: &ComputedValues,
-        after_change_style: &ComputedValues,
-        existing_transitions: &FnvHashMap<LonghandId, Arc<AnimationValue>>
-    ) -> bool;
+    fn needs_transitions_update_per_property(&self,
+                                             property: &TransitionProperty,
+                                             combined_duration: f32,
+                                             before_change_style: &ComputedValues,
+                                             after_change_style: &ComputedValues,
+                                             existing_transitions: &HashMap<TransitionProperty,
+                                                                            Arc<AnimationValue>>)
+                                             -> bool;
 
     /// Returns the value of the `xml:lang=""` attribute (or, if appropriate,
     /// the `lang=""` attribute) on this element.
@@ -741,15 +772,32 @@ pub trait TElement
     /// of the `xml:lang=""` or `lang=""` attribute to use in place of
     /// looking at the element and its ancestors.  (This argument is used
     /// to implement matching of `:lang()` against snapshots.)
-    fn match_element_lang(
-        &self,
-        override_lang: Option<Option<AttrValue>>,
-        value: &PseudoClassStringArg
-    ) -> bool;
+    fn match_element_lang(&self,
+                          override_lang: Option<Option<AttrValue>>,
+                          value: &PseudoClassStringArg)
+                          -> bool;
+}
 
-    /// Returns whether this element is the main body element of the HTML
-    /// document it is on.
-    fn is_html_document_body_element(&self) -> bool;
+/// Trait abstracting over different kinds of dirty-descendants bits.
+pub trait DescendantsBit<E: TElement> {
+    /// Returns true if the Element has the bit.
+    fn has(el: E) -> bool;
+    /// Sets the bit on the Element.
+    unsafe fn set(el: E);
+}
+
+/// Implementation of DescendantsBit for the regular dirty descendants bit.
+pub struct DirtyDescendants;
+impl<E: TElement> DescendantsBit<E> for DirtyDescendants {
+    fn has(el: E) -> bool { el.has_dirty_descendants() }
+    unsafe fn set(el: E) { el.set_dirty_descendants(); }
+}
+
+/// Implementation of DescendantsBit for the animation-only dirty descendants bit.
+pub struct AnimationOnlyDirtyDescendants;
+impl<E: TElement> DescendantsBit<E> for AnimationOnlyDirtyDescendants {
+    fn has(el: E) -> bool { el.has_animation_only_dirty_descendants() }
+    unsafe fn set(el: E) { el.set_animation_only_dirty_descendants(); }
 }
 
 /// TNode and TElement aren't Send because we want to be careful and explicit

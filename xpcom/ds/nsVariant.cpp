@@ -251,6 +251,8 @@ CloneArray(uint16_t aInType, const nsIID* aInIID,
   NS_ASSERTION(aOutCount, "bad param");
   NS_ASSERTION(aOutValue, "bad param");
 
+  uint32_t allocatedValueCount = 0;
+  nsresult rv = NS_OK;
   uint32_t i;
 
   // First we figure out the size of the elements for the new u.array.
@@ -376,10 +378,13 @@ CloneArray(uint16_t aInType, const nsIID* aInIID,
       for (i = aInCount; i > 0; --i) {
         nsID* idp = *(inp++);
         if (idp) {
-          *(outp++) = idp->Clone();
+          if (!(*(outp++) = (nsID*)nsMemory::Clone((char*)idp, sizeof(nsID)))) {
+            goto bad;
+          }
         } else {
           *(outp++) = nullptr;
         }
+        allocatedValueCount++;
       }
       break;
     }
@@ -390,10 +395,14 @@ CloneArray(uint16_t aInType, const nsIID* aInIID,
       for (i = aInCount; i > 0; i--) {
         char* str = *(inp++);
         if (str) {
-          *(outp++) = moz_xstrdup(str);
+          if (!(*(outp++) = (char*)nsMemory::Clone(
+                              str, (strlen(str) + 1) * sizeof(char)))) {
+            goto bad;
+          }
         } else {
           *(outp++) = nullptr;
         }
+        allocatedValueCount++;
       }
       break;
     }
@@ -404,10 +413,14 @@ CloneArray(uint16_t aInType, const nsIID* aInIID,
       for (i = aInCount; i > 0; i--) {
         char16_t* str = *(inp++);
         if (str) {
-          *(outp++) = NS_strdup(str);
+          if (!(*(outp++) = (char16_t*)nsMemory::Clone(
+                              str, (NS_strlen(str) + 1) * sizeof(char16_t)))) {
+            goto bad;
+          }
         } else {
           *(outp++) = nullptr;
         }
+        allocatedValueCount++;
       }
       break;
     }
@@ -431,6 +444,18 @@ CloneArray(uint16_t aInType, const nsIID* aInIID,
   *aOutType = aInType;
   *aOutCount = aInCount;
   return NS_OK;
+
+bad:
+  if (*aOutValue) {
+    char** p = (char**)*aOutValue;
+    for (i = allocatedValueCount; i > 0; ++p, --i)
+      if (*p) {
+        free(*p);
+      }
+    free((char*)*aOutValue);
+    *aOutValue = nullptr;
+  }
+  return rv;
 }
 
 /***************************************************************************/
@@ -1143,7 +1168,10 @@ nsDiscriminatedUnion::ConvertToInterface(nsIID** aIID,
       return NS_ERROR_CANNOT_CONVERT_DATA;
   }
 
-  *aIID = piid->Clone();
+  *aIID = (nsIID*)nsMemory::Clone(piid, sizeof(nsIID));
+  if (!*aIID) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   if (u.iface.mInterfaceValue) {
     return u.iface.mInterfaceValue->QueryInterface(*piid, aInterface);

@@ -6,7 +6,7 @@
 #ifndef MOZILLA_AUDIOSAMPLEFORMAT_H_
 #define MOZILLA_AUDIOSAMPLEFORMAT_H_
 
-#include "mozilla/Assertions.h"
+#include "nsAlgorithm.h"
 #include <algorithm>
 
 namespace mozilla {
@@ -20,12 +20,12 @@ namespace mozilla {
  */
 enum AudioSampleFormat
 {
-  // Silence: format will be chosen later
-  AUDIO_FORMAT_SILENCE,
   // Native-endian signed 16-bit audio samples
   AUDIO_FORMAT_S16,
   // Signed 32-bit float samples
   AUDIO_FORMAT_FLOAT32,
+  // Silence: format will be chosen later
+  AUDIO_FORMAT_SILENCE,
   // The format used for output by AudioStream.
 #ifdef MOZ_SAMPLE_TYPE_S16
   AUDIO_OUTPUT_FORMAT = AUDIO_FORMAT_S16
@@ -246,11 +246,12 @@ inline const void*
 AddAudioSampleOffset(const void* aBase, AudioSampleFormat aFormat,
                      int32_t aOffset)
 {
-  static_assert(AUDIO_FORMAT_S16 == 1, "Bad constant");
-  static_assert(AUDIO_FORMAT_FLOAT32 == 2, "Bad constant");
-  MOZ_ASSERT(aFormat == AUDIO_FORMAT_S16 || aFormat == AUDIO_FORMAT_FLOAT32);
+  static_assert(AUDIO_FORMAT_S16 == 0, "Bad constant");
+  static_assert(AUDIO_FORMAT_FLOAT32 == 1, "Bad constant");
+  NS_ASSERTION(aFormat == AUDIO_FORMAT_S16 || aFormat == AUDIO_FORMAT_FLOAT32,
+               "Unknown format");
 
-  return static_cast<const uint8_t*>(aBase) + aFormat*2*aOffset;
+  return static_cast<const uint8_t*>(aBase) + (aFormat + 1)*2*aOffset;
 }
 
 } // namespace mozilla

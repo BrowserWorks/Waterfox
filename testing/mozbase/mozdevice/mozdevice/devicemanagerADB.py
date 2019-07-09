@@ -444,12 +444,11 @@ class DeviceManagerADB(DeviceManager):
         return outputFile
 
     def killProcess(self, appname, sig=None):
-        if not sig:
-            try:
-                self.shellCheckOutput(["am", "force-stop", appname], timeout=self.short_timeout)
-            except:
-                # no problem - will kill it instead
-                self._logger.info("killProcess failed force-stop of %s" % appname)
+        try:
+            self.shellCheckOutput(["am", "force-stop", appname], timeout=self.short_timeout)
+        except:
+            # no problem - will kill it instead
+            self._logger.info("killProcess failed force-stop of %s" % appname)
 
         shell_args = ["shell"]
         if self._sdk_version >= version_codes.N:
@@ -721,13 +720,9 @@ class DeviceManagerADB(DeviceManager):
             proc.run(timeout=timeout)
             ret_code = proc.wait()
             if ret_code is None:
-                self._logger.error("Failed to launch %s (may retry)" % finalArgs)
                 proc.kill()
                 retries += 1
             else:
-                if ret_code != 0:
-                    self._logger.error("Non-zero return code (%d) from %s" % (ret_code, finalArgs))
-                    self._logger.error("Output: %s" % proc.output)
                 return ret_code
 
         raise DMError("Timeout exceeded for _checkCmd call after %d retries." % retries)

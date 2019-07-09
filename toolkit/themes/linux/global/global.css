@@ -25,10 +25,8 @@ progressmeter[mode="undetermined"] {
   -moz-binding: url("chrome://global/content/bindings/progressmeter.xml#progressmeter-undetermined");
 }
 
-@media (-moz-menubar-drag) {
-  toolbar[type="menubar"]:not([autohide="true"]):not(:-moz-lwtheme) {
-    -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
-  }
+toolbar[type="menubar"]:not([autohide="true"]):not(:-moz-lwtheme):-moz-system-metric(menubar-drag) {
+  -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
 }
 
 /* ::::: Variables ::::: */
@@ -128,6 +126,8 @@ statusbarpanel {
 
 sidebarheader {
   min-height: 25px;
+  background-color: -moz-Dialog;
+  color: -moz-dialogText;
   text-shadow: none;
 }
 
@@ -165,7 +165,7 @@ statusbarpanel:-moz-lwtheme {
   border-bottom-color: ThreeDHighlight;
   margin: 0 5px 5px;
 }
-
+  
 .outset {
   border: 1px solid ThreeDShadow;
   border-left-color: ThreeDHighlight;
@@ -181,7 +181,7 @@ separator[orient="vertical"] {
 
 separator.thin:not([orient="vertical"]) {
   height: 0.5em;
-}
+}  
 separator.thin[orient="vertical"] {
   width: 0.5em;
 }
@@ -204,7 +204,7 @@ separator.groove[orient="vertical"] {
 .small-margin {
   margin: 1px 2px;
 }
-
+    
 .plain {
   -moz-appearance: none;
   margin: 0 !important;
@@ -289,21 +289,35 @@ popupnotificationcontent {
   border: none;
   margin: -14px;
   padding: 0;
-  background-image: url("chrome://global/skin/icons/autoscroll.svg");
-  background-size: contain;
+  background-image: url("chrome://global/skin/icons/autoscroll.png");
   background-color: transparent;
-  background-repeat: no-repeat;
+  background-position: right top;
   -moz-appearance: none;
 }
 
 .autoscroller[scrolldir="NS"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-vertical.svg");
+  background-position: right center;
 }
 
 .autoscroller[scrolldir="EW"] {
-  background-image: url("chrome://global/skin/icons/autoscroll-horizontal.svg");
+  background-position: right bottom;
 }
 
 /* :::::: Close button icons ::::: */
 
-%include ../../shared/close-icon.inc.css
+.close-icon {
+  -moz-appearance: none;
+  height: 16px;
+  width: 16px;
+  background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 16, 16, 0);
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.close-icon:hover {
+  background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 32, 16, 16);
+}
+
+.close-icon:hover:active {
+  background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 48, 16, 32);
+}

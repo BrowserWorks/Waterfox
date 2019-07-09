@@ -42,9 +42,9 @@ namespace dom {
 Location::Location(nsPIDOMWindowInner* aWindow, nsIDocShell *aDocShell)
   : mInnerWindow(aWindow)
 {
+  MOZ_ASSERT(aDocShell);
   MOZ_ASSERT(mInnerWindow->IsInnerWindow());
 
-  // aDocShell can be null if it gets called after nsDocShell::Destory().
   mDocShell = do_GetWeakReference(aDocShell);
 }
 
@@ -821,12 +821,7 @@ Location::SetSearch(const nsAString& aSearch,
     return;
   }
 
-  if (nsIDocument* doc = GetEntryDocument()) {
-    aRv = url->SetQueryWithEncoding(NS_ConvertUTF16toUTF8(aSearch),
-                                    doc->GetDocumentCharacterSet());
-  } else {
-    aRv = url->SetQuery(NS_ConvertUTF16toUTF8(aSearch));
-  }
+  aRv = url->SetQuery(NS_ConvertUTF16toUTF8(aSearch));
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }

@@ -1930,10 +1930,10 @@ private:
     , mGridStyle(aGridStyle)
     , mCols(eLogicalAxisInline)
     , mRows(eLogicalAxisBlock)
-    , mColFunctions(mGridStyle->GridTemplateColumns(),
+    , mColFunctions(mGridStyle->mGridTemplateColumns,
                     mGridStyle->mGridAutoColumnsMin,
                     mGridStyle->mGridAutoColumnsMax)
-    , mRowFunctions(mGridStyle->GridTemplateRows(),
+    , mRowFunctions(mGridStyle->mGridTemplateRows,
                     mGridStyle->mGridAutoRowsMin,
                     mGridStyle->mGridAutoRowsMax)
     , mReflowInput(aReflowInput)
@@ -2620,8 +2620,8 @@ nsGridContainerFrame::InitImplicitNamedAreas(const nsStylePosition* aStyle)
     // below if it isn't needed anymore.
     areas->Clear();
   }
-  AddImplicitNamedAreas(aStyle->GridTemplateColumns().mLineNameLists);
-  AddImplicitNamedAreas(aStyle->GridTemplateRows().mLineNameLists);
+  AddImplicitNamedAreas(aStyle->mGridTemplateColumns.mLineNameLists);
+  AddImplicitNamedAreas(aStyle->mGridTemplateRows.mLineNameLists);
   if (areas && areas->Count() == 0) {
     DeleteProperty(ImplicitNamedAreasProperty());
   }
@@ -3101,7 +3101,7 @@ nsGridContainerFrame::Grid::PlaceGridItems(GridReflowInput& aState,
                              aComputedMaxSize.ISize(aState.mWM));
   mGridColEnd = mExplicitGridColEnd =
     aState.mColFunctions.ComputeExplicitGridEnd(areas ? areas->mNColumns + 1 : 1);
-  LineNameMap colLineNameMap(gridStyle->GridTemplateColumns(), numRepeatCols);
+  LineNameMap colLineNameMap(gridStyle->mGridTemplateColumns, numRepeatCols);
 
   uint32_t numRepeatRows = aState.mRowFunctions.InitRepeatTracks(
                              gridStyle->mGridRowGap,
@@ -3110,7 +3110,7 @@ nsGridContainerFrame::Grid::PlaceGridItems(GridReflowInput& aState,
                              aComputedMaxSize.BSize(aState.mWM));
   mGridRowEnd = mExplicitGridRowEnd =
     aState.mRowFunctions.ComputeExplicitGridEnd(areas ? areas->NRows() + 1 : 1);
-  LineNameMap rowLineNameMap(gridStyle->GridTemplateRows(), numRepeatRows);
+  LineNameMap rowLineNameMap(gridStyle->mGridTemplateRows, numRepeatRows);
 
   // http://dev.w3.org/csswg/css-grid/#line-placement
   // Resolve definite positions per spec chap 9.2.
@@ -3303,7 +3303,7 @@ nsGridContainerFrame::Grid::PlaceGridItems(GridReflowInput& aState,
   Maybe<nsTArray<uint32_t>> colAdjust;
   uint32_t numEmptyCols = 0;
   if (aState.mColFunctions.mHasRepeatAuto &&
-      !gridStyle->GridTemplateColumns().mIsAutoFill &&
+      !gridStyle->mGridTemplateColumns.mIsAutoFill &&
       aState.mColFunctions.NumRepeatTracks() > 0) {
     for (uint32_t col = aState.mColFunctions.mRepeatAutoStart,
            endRepeat = aState.mColFunctions.mRepeatAutoEnd,
@@ -3330,7 +3330,7 @@ nsGridContainerFrame::Grid::PlaceGridItems(GridReflowInput& aState,
   Maybe<nsTArray<uint32_t>> rowAdjust;
   uint32_t numEmptyRows = 0;
   if (aState.mRowFunctions.mHasRepeatAuto &&
-      !gridStyle->GridTemplateRows().mIsAutoFill &&
+      !gridStyle->mGridTemplateRows.mIsAutoFill &&
       aState.mRowFunctions.NumRepeatTracks() > 0) {
     for (uint32_t row = aState.mRowFunctions.mRepeatAutoStart,
            endRepeat = aState.mRowFunctions.mRepeatAutoEnd,
@@ -5666,8 +5666,8 @@ nsGridContainerFrame::ReflowChildren(GridReflowInput&     aState,
                                      nsReflowStatus&      aStatus)
 {
   MOZ_ASSERT(aState.mReflowInput);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
+  aStatus.Reset();
   nsOverflowAreas ocBounds;
   nsReflowStatus ocStatus;
   if (GetPrevInFlow()) {
@@ -5758,7 +5758,6 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsGridContainerFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   if (IsFrameTreeTooDeep(aReflowInput, aDesiredSize, aStatus)) {
     return;
@@ -6207,7 +6206,7 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
     // Generate column lines first.
     uint32_t capacity = gridReflowInput.mCols.mSizes.Length();
     const nsStyleGridTemplate& gridColTemplate =
-      gridReflowInput.mGridStyle->GridTemplateColumns();
+      gridReflowInput.mGridStyle->mGridTemplateColumns;
     nsTArray<nsTArray<nsString>> columnLineNames(capacity);
     for (col = 0; col <= gridReflowInput.mCols.mSizes.Length(); col++) {
       // Offset col by the explicit grid offset, to get the original names.
@@ -6228,7 +6227,7 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
     // Generate row lines next.
     capacity = gridReflowInput.mRows.mSizes.Length();
     const nsStyleGridTemplate& gridRowTemplate =
-      gridReflowInput.mGridStyle->GridTemplateRows();
+      gridReflowInput.mGridStyle->mGridTemplateRows;
     nsTArray<nsTArray<nsString>> rowLineNames(capacity);
     for (row = 0; row <= gridReflowInput.mRows.mSizes.Length(); row++) {
       // Offset row by the explicit grid offset, to get the original names.
@@ -6408,11 +6407,12 @@ nsGridContainerFrame::MarkIntrinsicISizesDirty()
 
 void
 nsGridContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                       const nsRect&           aDirtyRect,
                                        const nsDisplayListSet& aLists)
 {
   DisplayBorderBackgroundOutline(aBuilder, aLists);
   if (GetPrevInFlow()) {
-    DisplayOverflowContainers(aBuilder, aLists);
+    DisplayOverflowContainers(aBuilder, aDirtyRect, aLists);
   }
 
   // Our children are all grid-level boxes, which behave the same as
@@ -6426,7 +6426,8 @@ nsGridContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                   CSSOrderAwareFrameIterator::eIncludeAll, order);
   for (; !iter.AtEnd(); iter.Next()) {
     nsIFrame* child = *iter;
-    BuildDisplayListForChild(aBuilder, child, aLists, ::GetDisplayFlagsForGridItem(child));
+    BuildDisplayListForChild(aBuilder, child, aDirtyRect, aLists,
+                             ::GetDisplayFlagsForGridItem(child));
   }
 }
 

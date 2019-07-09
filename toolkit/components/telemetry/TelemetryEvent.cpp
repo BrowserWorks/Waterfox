@@ -42,7 +42,6 @@ using mozilla::Telemetry::Common::MsSinceProcessStart;
 using mozilla::Telemetry::Common::LogToBrowserConsole;
 using mozilla::Telemetry::Common::CanRecordInProcess;
 using mozilla::Telemetry::Common::GetNameForProcessID;
-using mozilla::Telemetry::Common::IsValidIdentifierString;
 using mozilla::Telemetry::EventExtraEntry;
 using mozilla::Telemetry::ChildEventData;
 using mozilla::Telemetry::ProcessID;
@@ -952,12 +951,44 @@ GetArrayPropertyValues(JSContext* cx, JS::HandleObject obj, const char* property
   return true;
 }
 
+static bool
+IsStringCharValid(const char aChar, const bool allowInfixPeriod)
+{
+  return (aChar >= 'A' && aChar <= 'Z')
+      || (aChar >= 'a' && aChar <= 'z')
+      || (aChar >= '0' && aChar <= '9')
+      || (allowInfixPeriod && (aChar == '.'));
+}
+
+static bool
+IsValidIdentifierString(const nsACString& str, const size_t maxLength,
+                        const bool allowInfixPeriod)
+{
+  // Check string length.
+  if (str.Length() > maxLength) {
+    return false;
+  }
+
+  // Check string characters.
+  const char* first = str.BeginReading();
+  const char* end = str.EndReading();
+
+  for (const char* cur = first; cur < end; ++cur) {
+      const bool allowPeriod = allowInfixPeriod && (cur != first) && (cur != (end - 1));
+      if (!IsStringCharValid(*cur, allowPeriod)) {
+        return false;
+      }
+  }
+
+  return true;
+}
+
 nsresult
 TelemetryEvent::RegisterEvents(const nsACString& aCategory,
                                JS::Handle<JS::Value> aEventData,
                                JSContext* cx)
 {
-  if (!IsValidIdentifierString(aCategory, 30, true, false)) {
+  if (!IsValidIdentifierString(aCategory, 30, true)) {
     JS_ReportErrorASCII(cx, "Category parameter should match the identifier pattern.");
     return NS_ERROR_INVALID_ARG;
   }
@@ -984,7 +1015,7 @@ TelemetryEvent::RegisterEvents(const nsACString& aCategory,
       return NS_ERROR_FAILURE;
     }
 
-    if (!IsValidIdentifierString(NS_ConvertUTF16toUTF8(eventName), kMaxMethodNameByteLength, false, true)) {
+    if (!IsValidIdentifierString(NS_ConvertUTF16toUTF8(eventName), kMaxMethodNameByteLength, false)) {
       JS_ReportErrorASCII(cx, "Event names should match the identifier pattern.");
       return NS_ERROR_INVALID_ARG;
     }
@@ -1041,7 +1072,7 @@ TelemetryEvent::RegisterEvents(const nsACString& aCategory,
 
     // Validate methods.
     for (auto& method : methods) {
-      if (!IsValidIdentifierString(method, kMaxMethodNameByteLength, false, false)) {
+      if (!IsValidIdentifierString(method, kMaxMethodNameByteLength, false)) {
         JS_ReportErrorASCII(cx, "Method names should match the identifier pattern.");
         return NS_ERROR_INVALID_ARG;
       }
@@ -1049,7 +1080,7 @@ TelemetryEvent::RegisterEvents(const nsACString& aCategory,
 
     // Validate objects.
     for (auto& object : objects) {
-      if (!IsValidIdentifierString(object, kMaxObjectNameByteLength, false, true)) {
+      if (!IsValidIdentifierString(object, kMaxObjectNameByteLength, false)) {
         JS_ReportErrorASCII(cx, "Object names should match the identifier pattern.");
         return NS_ERROR_INVALID_ARG;
       }
@@ -1061,7 +1092,7 @@ TelemetryEvent::RegisterEvents(const nsACString& aCategory,
       return NS_ERROR_INVALID_ARG;
     }
     for (auto& key : extra_keys) {
-      if (!IsValidIdentifierString(key, kMaxExtraKeyNameByteLength, false, false)) {
+      if (!IsValidIdentifierString(key, kMaxExtraKeyNameByteLength, false)) {
         JS_ReportErrorASCII(cx, "Extra key names should match the identifier pattern.");
         return NS_ERROR_INVALID_ARG;
       }

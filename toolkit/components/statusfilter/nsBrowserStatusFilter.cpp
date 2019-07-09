@@ -375,11 +375,14 @@ nsBrowserStatusFilter::StartDelayTimer()
 {
     NS_ASSERTION(!DelayInEffect(), "delay should not be in effect");
 
-    return NS_NewTimerWithFuncCallback(getter_AddRefs(mTimer),
-                                       TimeoutHandler, this, 160,
-                                       nsITimer::TYPE_ONE_SHOT,
-                                       "nsBrowserStatusFilter::TimeoutHandler",
-                                       mTarget);
+    mTimer = do_CreateInstance("@mozilla.org/timer;1");
+    if (!mTimer)
+        return NS_ERROR_FAILURE;
+
+    mTimer->SetTarget(mTarget);
+    return mTimer->InitWithNamedFuncCallback(
+        TimeoutHandler, this, 160, nsITimer::TYPE_ONE_SHOT,
+        "nsBrowserStatusFilter::TimeoutHandler");
 }
 
 void

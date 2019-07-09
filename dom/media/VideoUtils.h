@@ -11,7 +11,6 @@
 #include "MediaInfo.h"
 #include "TimeUnits.h"
 #include "VideoLimits.h"
-#include "mozilla/gfx/Point.h" // for gfx::IntSize
 #include "mozilla/AbstractThread.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CheckedInt.h"
@@ -24,7 +23,8 @@
 #include "nsINamed.h"
 #include "nsIThread.h"
 #include "nsITimer.h"
-
+#include "nsRect.h"
+#include "nsSize.h"
 #include "nsThreadUtils.h"
 #include "prtime.h"
 
@@ -149,8 +149,7 @@ nsresult SecondsToUsecs(double aSeconds, int64_t& aOutUsecs);
 // Scales the display rect aDisplay by aspect ratio aAspectRatio.
 // Note that aDisplay must be validated by IsValidVideoRegion()
 // before being used!
-void
-ScaleDisplayByAspectRatio(gfx::IntSize& aDisplay, float aAspectRatio);
+void ScaleDisplayByAspectRatio(nsIntSize& aDisplay, float aAspectRatio);
 
 // Downmix Stereo audio samples to Mono.
 // Input are the buffer contains stereo data and the number of frames.
@@ -163,10 +162,8 @@ bool IsVideoContentType(const nsCString& aContentType);
 // extracted inside a frame of size aFrame, and scaled up to and displayed
 // at a size of aDisplay. You should validate the frame, picture, and
 // display regions before using them to display video frames.
-bool
-IsValidVideoRegion(const gfx::IntSize& aFrame,
-                   const gfx::IntRect& aPicture,
-                   const gfx::IntSize& aDisplay);
+bool IsValidVideoRegion(const nsIntSize& aFrame, const nsIntRect& aPicture,
+                        const nsIntSize& aDisplay);
 
 // Template to automatically set a variable to a value on scope exit.
 // Useful for unsetting flags, etc.
@@ -242,34 +239,6 @@ bool
 ExtractH264CodecDetails(const nsAString& aCodecs,
                         int16_t& aProfile,
                         int16_t& aLevel);
-
-struct VideoColorSpace
-{
-  // TODO: Define the value type as strong type enum
-  // to better know the exact meaning corresponding to ISO/IEC 23001-8:2016.
-  // Default value is listed https://www.webmproject.org/vp9/mp4/#optional-fields
-  uint8_t mPrimaryId = 1; // Table 2
-  uint8_t mTransferId = 1; // Table 3
-  uint8_t mMatrixId = 1; // Table 4
-  uint8_t mRangeId = 0;
-};
-
-// Extracts the VPX codecs parameter string.
-// See https://www.webmproject.org/vp9/mp4/#codecs-parameter-string
-// for more details.
-// Returns false on failure.
-bool
-ExtractVPXCodecDetails(const nsAString& aCodec,
-                       uint8_t& aProfile,
-                       uint8_t& aLevel,
-                       uint8_t& aBitDepth);
-bool
-ExtractVPXCodecDetails(const nsAString& aCodec,
-                       uint8_t& aProfile,
-                       uint8_t& aLevel,
-                       uint8_t& aBitDepth,
-                       uint8_t& aChromaSubsampling,
-                       VideoColorSpace& aColorSpace);
 
 // Use a cryptographic quality PRNG to generate raw random bytes
 // and convert that to a base64 string.
@@ -380,22 +349,22 @@ constexpr bool
 StartsWithMIMETypeMajor(const char* aString,
                         const char* aMajor, size_t aMajorRemaining)
 {
-  return (aMajorRemaining == 0 && *aString == '/') ||
-         (*aString == *aMajor && StartsWithMIMETypeMajor(aString + 1,
-                                                         aMajor + 1,
-                                                         aMajorRemaining - 1));
+  return (aMajorRemaining == 0 && *aString == '/')
+         || (*aString == *aMajor
+             && StartsWithMIMETypeMajor(aString + 1,
+                                        aMajor + 1, aMajorRemaining - 1));
 }
 
 // aString should only contain [a-z0-9\-\.] and a final '\0'.
 constexpr bool
 EndsWithMIMESubtype(const char* aString, size_t aRemaining)
 {
-  return aRemaining == 0 ||
-         (((*aString >= 'a' && *aString <= 'z') ||
-           (*aString >= '0' && *aString <= '9') ||
-           *aString == '-' ||
-           *aString == '.') &&
-          EndsWithMIMESubtype(aString + 1, aRemaining - 1));
+  return aRemaining == 0
+         || (((*aString >= 'a' && *aString <= 'z')
+              || (*aString >= '0' && *aString <= '9')
+              || *aString == '-'
+              || *aString == '.')
+             && EndsWithMIMESubtype(aString + 1, aRemaining - 1));
 }
 
 // Simple MIME-type literal string checker with a given (major) type.
@@ -405,10 +374,10 @@ constexpr bool
 IsMIMETypeWithMajor(const char* aString, size_t aLength,
                     const char (&aMajor)[MajorLengthPlus1])
 {
-  return aLength > MajorLengthPlus1 && // Major + '/' + at least 1 char
-         StartsWithMIMETypeMajor(aString, aMajor, MajorLengthPlus1 - 1) &&
-         EndsWithMIMESubtype(aString + MajorLengthPlus1,
-                             aLength - MajorLengthPlus1);
+  return aLength > MajorLengthPlus1 // Major + '/' + at least 1 char
+         && StartsWithMIMETypeMajor(aString, aMajor, MajorLengthPlus1 - 1)
+         && EndsWithMIMESubtype(aString + MajorLengthPlus1,
+                                aLength - MajorLengthPlus1);
 }
 
 } // namespace detail
@@ -419,9 +388,9 @@ IsMIMETypeWithMajor(const char* aString, size_t aLength,
 constexpr bool
 IsMediaMIMEType(const char* aString, size_t aLength)
 {
-  return detail::IsMIMETypeWithMajor(aString, aLength, "application") ||
-         detail::IsMIMETypeWithMajor(aString, aLength, "audio") ||
-         detail::IsMIMETypeWithMajor(aString, aLength, "video");
+  return detail::IsMIMETypeWithMajor(aString, aLength, "application")
+         || detail::IsMIMETypeWithMajor(aString, aLength, "audio")
+         || detail::IsMIMETypeWithMajor(aString, aLength, "video");
 }
 
 // Simple MIME-type string literal checker.
@@ -552,13 +521,10 @@ public:
   explicit StringListRange(const String& aList) : mList(aList) {}
   Iterator begin() const
   {
-    return Iterator(
-      mList.Data()
-      + ((empties == StringListRangeEmptyItems::ProcessEmptyItems &&
-          mList.Length() == 0)
-          ? 1
-          : 0),
-      mList.Length());
+    return Iterator(mList.Data()
+                    + ((empties == StringListRangeEmptyItems::ProcessEmptyItems
+                        && mList.Length() == 0) ? 1 : 0),
+                    mList.Length());
   }
   Iterator end() const
   {

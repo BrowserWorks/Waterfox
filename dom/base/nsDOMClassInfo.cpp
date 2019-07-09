@@ -240,6 +240,14 @@ SetParentToWindow(nsGlobalWindow *win, JSObject **parent)
   return NS_OK;
 }
 
+// static
+
+nsISupports *
+nsDOMClassInfo::GetNative(nsIXPConnectWrappedNative *wrapper, JSObject *obj)
+{
+  return wrapper ? wrapper->Native() : static_cast<nsISupports*>(js::GetObjectPrivate(obj));
+}
+
 nsresult
 nsDOMClassInfo::DefineStaticJSVals()
 {
@@ -544,10 +552,20 @@ nsDOMClassInfo::GetInterfaces(uint32_t *aCount, nsIID ***aArray)
   }
 
   *aArray = static_cast<nsIID **>(moz_xmalloc(count * sizeof(nsIID *)));
+  NS_ENSURE_TRUE(*aArray, NS_ERROR_OUT_OF_MEMORY);
 
   uint32_t i;
   for (i = 0; i < count; i++) {
-    *((*aArray) + i) = mData->mInterfaces[i]->Clone();
+    nsIID *iid = static_cast<nsIID *>(nsMemory::Clone(mData->mInterfaces[i],
+                                                         sizeof(nsIID)));
+
+    if (!iid) {
+      NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(i, *aArray);
+
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    *((*aArray) + i) = iid;
   }
 
   return NS_OK;
@@ -562,14 +580,15 @@ nsDOMClassInfo::GetScriptableHelper(nsIXPCScriptable **_retval)
 }
 
 NS_IMETHODIMP
-nsDOMClassInfo::GetContractID(nsACString& aContractID)
+nsDOMClassInfo::GetContractID(char **aContractID)
 {
-  aContractID.SetIsVoid(true);
+  *aContractID = nullptr;
+
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsDOMClassInfo::GetClassDescription(nsACString& aClassDescription)
+nsDOMClassInfo::GetClassDescription(char **aClassDescription)
 {
   return GetClassName(aClassDescription);
 }
@@ -598,9 +617,10 @@ nsDOMClassInfo::GetFlags(uint32_t *aFlags)
 // nsIXPCScriptable
 
 NS_IMETHODIMP
-nsDOMClassInfo::GetClassName(nsACString& aClassName)
+nsDOMClassInfo::GetClassName(char **aClassName)
 {
-  aClassName.Assign(mData->mClass.name);
+  *aClassName = NS_strdup(mData->mClass.name);
+
   return NS_OK;
 }
 
@@ -631,6 +651,26 @@ nsDOMClassInfo::PreCreate(nsISupports *nativeObj, JSContext *cx,
 {
   *parentObj = globalObj;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMClassInfo::GetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
+                            JSObject *obj, jsid id, JS::Value *vp,
+                            bool *_retval)
+{
+  NS_WARNING("nsDOMClassInfo::GetProperty Don't call me!");
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMClassInfo::SetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
+                            JSObject *obj, jsid id, JS::Value *vp,
+                            bool *_retval)
+{
+  NS_WARNING("nsDOMClassInfo::SetProperty Don't call me!");
+
+  return NS_ERROR_UNEXPECTED;
 }
 
 NS_IMETHODIMP
@@ -675,7 +715,8 @@ nsDOMClassInfo::Resolve(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
     // window.classname, just fall through and let the JS engine
     // return the Object constructor.
     if (!::JS_DefinePropertyById(cx, obj, id, desc.value(),
-                                 JSPROP_ENUMERATE)) {
+                                 JSPROP_ENUMERATE,
+                                 JS_STUBGETTER, JS_STUBSETTER)) {
       return NS_ERROR_UNEXPECTED;
     }
 
@@ -765,9 +806,9 @@ nsDOMClassInfo::PostCreatePrototype(JSContext * cx, JSObject * aProto)
                          getter_AddRefs(if_info));
 
       if (if_info) {
-        nsCString name;
+        nsXPIDLCString name;
         if_info->GetName(getter_Copies(name));
-        NS_ASSERTION(nsCRT::strcmp(CutPrefix(name.get()), mData->mClass.name) == 0,
+        NS_ASSERTION(nsCRT::strcmp(CutPrefix(name), mData->mClass.name) == 0,
                      "Class name and proto chain interface name mismatch!");
       }
     }
@@ -918,12 +959,13 @@ DefineInterfaceConstants(JSContext *cx, JS::Handle<JSObject*> obj, const nsIID *
 
   JS::Rooted<JS::Value> v(cx);
   for (i = parent_constant_count; i < constant_count; i++) {
-    nsCString name;
+    nsXPIDLCString name;
     rv = if_info->GetConstant(i, &v, getter_Copies(name));
     NS_ENSURE_TRUE(NS_SUCCEEDED(rv), rv);
 
-    if (!::JS_DefineProperty(cx, obj, name.get(), v,
-                             JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT)) {
+    if (!::JS_DefineProperty(cx, obj, name, v,
+                             JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT,
+                             JS_STUBGETTER, JS_STUBSETTER)) {
       return NS_ERROR_UNEXPECTED;
     }
   }
@@ -1453,7 +1495,8 @@ ResolvePrototype(nsIXPConnect *aXPConnect, nsGlobalWindow *aWin, JSContext *cx,
   // Per ECMA, the prototype property is {DontEnum, DontDelete, ReadOnly}
   if (!JS_WrapValue(cx, &v) ||
       !JS_DefineProperty(cx, class_obj, "prototype", v,
-                         JSPROP_PERMANENT | JSPROP_READONLY)) {
+                         JSPROP_PERMANENT | JSPROP_READONLY,
+                         JS_STUBGETTER, JS_STUBSETTER)) {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -1734,7 +1777,8 @@ LookupComponentsShim(JSContext *cx, JS::Handle<JSObject*> global,
   NS_ENSURE_TRUE(interfaces, NS_ERROR_OUT_OF_MEMORY);
   bool ok =
     JS_DefineProperty(cx, components, "interfaces", interfaces,
-                      JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
+                      JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY,
+                      JS_STUBGETTER, JS_STUBSETTER);
   NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
 
   // Define a bunch of shims from the Ci.nsIDOMFoo to window.Foo for DOM
@@ -1756,7 +1800,8 @@ LookupComponentsShim(JSContext *cx, JS::Handle<JSObject*> global,
 
     // Define the shim on the interfaces object.
     ok = JS_DefineProperty(cx, interfaces, geckoName, v,
-                           JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
+                           JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY,
+                           JS_STUBGETTER, JS_STUBSETTER);
     NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
   }
 

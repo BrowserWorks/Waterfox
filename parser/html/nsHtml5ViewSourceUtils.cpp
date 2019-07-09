@@ -18,10 +18,10 @@ nsHtml5ViewSourceUtils::NewBodyAttributes()
 
   nsString klass;
   if (mozilla::Preferences::GetBool("view_source.wrap_long_lines", true)) {
-    klass.AppendLiteral(u"wrap ");
+    klass.Append(NS_LITERAL_STRING("wrap "));
   }
   if (mozilla::Preferences::GetBool("view_source.syntax_highlight", true)) {
-    klass.AppendLiteral(u"highlight");
+    klass.Append(NS_LITERAL_STRING("highlight"));
   }
   if (!klass.IsEmpty()) {
     bodyAttrs->addAttribute(

@@ -29,6 +29,7 @@ public:
   GetAdditionalStyleContext(int32_t aIndex) const override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   NS_IMETHOD
@@ -60,7 +61,7 @@ public:
 
   virtual nsresult
   AttributeChanged(int32_t         aNameSpaceID,
-                   nsAtom*        aAttribute,
+                   nsIAtom*        aAttribute,
                    int32_t         aModType) override;
 
   // This method is called by the parent frame to ask <mo>

@@ -17,7 +17,6 @@ info: |
   4. If len is zero, return the empty String.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

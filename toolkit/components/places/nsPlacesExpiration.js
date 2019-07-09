@@ -71,7 +71,7 @@ const DATABASE_TO_MEMORY_PERC = 4;
 const DATABASE_TO_DISK_PERC = 2;
 // Maximum size of the optimal database.  High-end hardware has plenty of
 // memory and disk space, but performances don't grow linearly.
-const DATABASE_MAX_SIZE = 73400320; // 70MiB
+const DATABASE_MAX_SIZE = 62914560; // 60MiB
 // If the physical memory size is bogus, fallback to this.
 const MEMSIZE_FALLBACK_BYTES = 268435456; // 256 MiB
 // If the disk available space is bogus, fallback to this.
@@ -100,7 +100,7 @@ const EXPIRE_AGGRESSIVITY_MULTIPLIER = 3;
 // Magic numbers are determined through analysis of the distribution of a ratio
 // between number of unique URIs and database size among our users.
 // Used as a fall back value when it's not possible to calculate the real value.
-const URIENTRY_AVG_SIZE = 700;
+const URIENTRY_AVG_SIZE = 600;
 
 // Seconds of idle time before starting a larger expiration step.
 // Notice during idle we stop the expiration timer since we don't want to hurt
@@ -738,7 +738,7 @@ nsPlacesExpiration.prototype = {
       try {
         // Protect against a full disk or tiny quota.
         let dbFile = this._db.databaseFile;
-        dbFile.QueryInterface(Ci.nsIFile);
+        dbFile.QueryInterface(Ci.nsILocalFile);
         diskAvailableBytes = dbFile.diskSpaceAvailable;
       } catch (ex) {}
       if (diskAvailableBytes <= 0) {
@@ -802,12 +802,12 @@ nsPlacesExpiration.prototype = {
    *        invoked on success, function (aPagesCount).
    */
   _getPagesStats: function PEX__getPagesStats(aCallback) {
-    if (!this._cachedStatements.LIMIT_COUNT) {
-      this._cachedStatements.LIMIT_COUNT = this._db.createAsyncStatement(
+    if (!this._cachedStatements["LIMIT_COUNT"]) {
+      this._cachedStatements["LIMIT_COUNT"] = this._db.createAsyncStatement(
         `SELECT COUNT(*) FROM moz_places`
       );
     }
-    this._cachedStatements.LIMIT_COUNT.executeAsync({
+    this._cachedStatements["LIMIT_COUNT"].executeAsync({
       _pagesCount: 0,
       handleResult(aResults) {
         let row = aResults.getNextRow();
@@ -978,7 +978,7 @@ nsPlacesExpiration.prototype = {
 
     let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
     timer.initWithCallback(this, interval * 1000,
-                           Ci.nsITimer.TYPE_REPEATING_SLACK_LOW_PRIORITY);
+                           Ci.nsITimer.TYPE_REPEATING_SLACK);
     if (this._testingMode) {
       Services.obs.notifyObservers(null, TOPIC_TEST_INTERVAL_CHANGED,
                                    interval);

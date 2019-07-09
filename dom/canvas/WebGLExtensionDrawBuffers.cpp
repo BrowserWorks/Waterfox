@@ -20,7 +20,12 @@ WebGLExtensionDrawBuffers::WebGLExtensionDrawBuffers(WebGLContext* webgl)
 {
     MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 
-    webgl->UpdateMaxDrawBuffers();
+    // WEBGL_draw_buffers:
+    // "The value of the MAX_COLOR_ATTACHMENTS_WEBGL parameter must be greater than or
+    //  equal to that of the MAX_DRAW_BUFFERS_WEBGL parameter."
+    webgl->mImplMaxColorAttachments = webgl->mGLMaxColorAttachments;
+    webgl->mImplMaxDrawBuffers = std::min(webgl->mGLMaxDrawBuffers,
+                                          webgl->mImplMaxColorAttachments);
 }
 
 WebGLExtensionDrawBuffers::~WebGLExtensionDrawBuffers()
@@ -43,7 +48,20 @@ WebGLExtensionDrawBuffers::IsSupported(const WebGLContext* webgl)
 {
     gl::GLContext* gl = webgl->GL();
 
-    return gl->IsSupported(gl::GLFeature::draw_buffers);
+    if (!gl->IsExtensionSupported(gl::GLContext::ARB_draw_buffers) &&
+        !gl->IsExtensionSupported(gl::GLContext::EXT_draw_buffers))
+    {
+        return false;
+    }
+
+    // WEBGL_draw_buffers requires at least 4 color attachments.
+    if (webgl->mGLMaxDrawBuffers < webgl->kMinMaxDrawBuffers ||
+        webgl->mGLMaxColorAttachments < webgl->kMinMaxColorAttachments)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionDrawBuffers, WEBGL_draw_buffers)

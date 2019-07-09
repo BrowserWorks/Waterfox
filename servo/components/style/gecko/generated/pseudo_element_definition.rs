@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /// Gecko's pseudo-element definition.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PseudoElement {
         /// :after
         After,
@@ -140,29 +140,29 @@ pub enum PseudoElement {
         /// :-moz-ruby-text-container
         RubyTextContainer,
         /// :-moz-tree-column
-        MozTreeColumn(Box<[Atom]>),
+        MozTreeColumn(Box<[String]>),
         /// :-moz-tree-row
-        MozTreeRow(Box<[Atom]>),
+        MozTreeRow(Box<[String]>),
         /// :-moz-tree-separator
-        MozTreeSeparator(Box<[Atom]>),
+        MozTreeSeparator(Box<[String]>),
         /// :-moz-tree-cell
-        MozTreeCell(Box<[Atom]>),
+        MozTreeCell(Box<[String]>),
         /// :-moz-tree-indentation
-        MozTreeIndentation(Box<[Atom]>),
+        MozTreeIndentation(Box<[String]>),
         /// :-moz-tree-line
-        MozTreeLine(Box<[Atom]>),
+        MozTreeLine(Box<[String]>),
         /// :-moz-tree-twisty
-        MozTreeTwisty(Box<[Atom]>),
+        MozTreeTwisty(Box<[String]>),
         /// :-moz-tree-image
-        MozTreeImage(Box<[Atom]>),
+        MozTreeImage(Box<[String]>),
         /// :-moz-tree-cell-text
-        MozTreeCellText(Box<[Atom]>),
+        MozTreeCellText(Box<[String]>),
         /// :-moz-tree-checkbox
-        MozTreeCheckbox(Box<[Atom]>),
+        MozTreeCheckbox(Box<[String]>),
         /// :-moz-tree-progressmeter
-        MozTreeProgressmeter(Box<[Atom]>),
+        MozTreeProgressmeter(Box<[String]>),
         /// :-moz-tree-drop-feedback
-        MozTreeDropFeedback(Box<[Atom]>),
+        MozTreeDropFeedback(Box<[String]>),
         /// :-moz-svg-marker-anon-child
         MozSVGMarkerAnonChild,
         /// :-moz-svg-outer-svg-anon-child
@@ -173,23 +173,10 @@ pub enum PseudoElement {
         MozSVGText,
 }
 
-/// Important: If you change this, you should also update Gecko's
-/// nsCSSPseudoElements::IsEagerlyCascadedInServo.
-
-
 
 
 /// The number of eager pseudo-elements.
 pub const EAGER_PSEUDO_COUNT: usize = 4;
-
-/// The number of non-functional pseudo-elements.
-pub const SIMPLE_PSEUDO_COUNT: usize = 71;
-
-/// The number of tree pseudo-elements.
-pub const TREE_PSEUDO_COUNT: usize = 12;
-
-/// The number of all pseudo-elements.
-pub const PSEUDO_COUNT: usize = 83;
 
 /// The list of eager pseudos.
 pub const EAGER_PSEUDOS: [PseudoElement; EAGER_PSEUDO_COUNT] = [
@@ -201,7 +188,88 @@ pub const EAGER_PSEUDOS: [PseudoElement; EAGER_PSEUDO_COUNT] = [
 
 
 
+
+
+
 impl PseudoElement {
+    /// Executes a closure with each simple (not functional)
+    /// pseudo-element as an argument.
+    pub fn each_simple<F>(mut fun: F)
+        where F: FnMut(Self),
+    {
+            fun(PseudoElement::After);
+            fun(PseudoElement::Before);
+            fun(PseudoElement::Backdrop);
+            fun(PseudoElement::Cue);
+            fun(PseudoElement::FirstLetter);
+            fun(PseudoElement::FirstLine);
+            fun(PseudoElement::MozSelection);
+            fun(PseudoElement::MozFocusInner);
+            fun(PseudoElement::MozFocusOuter);
+            fun(PseudoElement::MozListBullet);
+            fun(PseudoElement::MozListNumber);
+            fun(PseudoElement::MozMathAnonymous);
+            fun(PseudoElement::MozNumberWrapper);
+            fun(PseudoElement::MozNumberText);
+            fun(PseudoElement::MozNumberSpinBox);
+            fun(PseudoElement::MozNumberSpinUp);
+            fun(PseudoElement::MozNumberSpinDown);
+            fun(PseudoElement::MozProgressBar);
+            fun(PseudoElement::MozRangeTrack);
+            fun(PseudoElement::MozRangeProgress);
+            fun(PseudoElement::MozRangeThumb);
+            fun(PseudoElement::MozMeterBar);
+            fun(PseudoElement::MozPlaceholder);
+            fun(PseudoElement::Placeholder);
+            fun(PseudoElement::MozColorSwatch);
+            fun(PseudoElement::MozText);
+            fun(PseudoElement::OofPlaceholder);
+            fun(PseudoElement::FirstLetterContinuation);
+            fun(PseudoElement::MozBlockInsideInlineWrapper);
+            fun(PseudoElement::MozMathMLAnonymousBlock);
+            fun(PseudoElement::MozXULAnonymousBlock);
+            fun(PseudoElement::HorizontalFramesetBorder);
+            fun(PseudoElement::VerticalFramesetBorder);
+            fun(PseudoElement::MozLineFrame);
+            fun(PseudoElement::ButtonContent);
+            fun(PseudoElement::CellContent);
+            fun(PseudoElement::DropDownList);
+            fun(PseudoElement::FieldsetContent);
+            fun(PseudoElement::FramesetBlank);
+            fun(PseudoElement::MozDisplayComboboxControlFrame);
+            fun(PseudoElement::HtmlCanvasContent);
+            fun(PseudoElement::InlineTable);
+            fun(PseudoElement::Table);
+            fun(PseudoElement::TableCell);
+            fun(PseudoElement::TableColGroup);
+            fun(PseudoElement::TableCol);
+            fun(PseudoElement::TableWrapper);
+            fun(PseudoElement::TableRowGroup);
+            fun(PseudoElement::TableRow);
+            fun(PseudoElement::Canvas);
+            fun(PseudoElement::PageBreak);
+            fun(PseudoElement::Page);
+            fun(PseudoElement::PageContent);
+            fun(PseudoElement::PageSequence);
+            fun(PseudoElement::ScrolledContent);
+            fun(PseudoElement::ScrolledCanvas);
+            fun(PseudoElement::ScrolledPageSequence);
+            fun(PseudoElement::ColumnContent);
+            fun(PseudoElement::Viewport);
+            fun(PseudoElement::ViewportScroll);
+            fun(PseudoElement::AnonymousFlexItem);
+            fun(PseudoElement::AnonymousGridItem);
+            fun(PseudoElement::Ruby);
+            fun(PseudoElement::RubyBase);
+            fun(PseudoElement::RubyBaseContainer);
+            fun(PseudoElement::RubyText);
+            fun(PseudoElement::RubyTextContainer);
+            fun(PseudoElement::MozSVGMarkerAnonChild);
+            fun(PseudoElement::MozSVGOuterSVGAnonChild);
+            fun(PseudoElement::MozSVGForeignContent);
+            fun(PseudoElement::MozSVGText);
+    }
+
     /// Get the pseudo-element as an atom.
     #[inline]
     pub fn atom(&self) -> Atom {
@@ -292,190 +360,9 @@ impl PseudoElement {
         }
     }
 
-    /// Returns an index of the pseudo-element.
-    #[inline]
-    pub fn index(&self) -> usize {
-        match *self {
-            PseudoElement::After => 0,
-            PseudoElement::Before => 1,
-            PseudoElement::Backdrop => 2,
-            PseudoElement::Cue => 3,
-            PseudoElement::FirstLetter => 4,
-            PseudoElement::FirstLine => 5,
-            PseudoElement::MozSelection => 6,
-            PseudoElement::MozFocusInner => 7,
-            PseudoElement::MozFocusOuter => 8,
-            PseudoElement::MozListBullet => 9,
-            PseudoElement::MozListNumber => 10,
-            PseudoElement::MozMathAnonymous => 11,
-            PseudoElement::MozNumberWrapper => 12,
-            PseudoElement::MozNumberText => 13,
-            PseudoElement::MozNumberSpinBox => 14,
-            PseudoElement::MozNumberSpinUp => 15,
-            PseudoElement::MozNumberSpinDown => 16,
-            PseudoElement::MozProgressBar => 17,
-            PseudoElement::MozRangeTrack => 18,
-            PseudoElement::MozRangeProgress => 19,
-            PseudoElement::MozRangeThumb => 20,
-            PseudoElement::MozMeterBar => 21,
-            PseudoElement::MozPlaceholder => 22,
-            PseudoElement::Placeholder => 23,
-            PseudoElement::MozColorSwatch => 24,
-            PseudoElement::MozText => 25,
-            PseudoElement::OofPlaceholder => 26,
-            PseudoElement::FirstLetterContinuation => 27,
-            PseudoElement::MozBlockInsideInlineWrapper => 28,
-            PseudoElement::MozMathMLAnonymousBlock => 29,
-            PseudoElement::MozXULAnonymousBlock => 30,
-            PseudoElement::HorizontalFramesetBorder => 31,
-            PseudoElement::VerticalFramesetBorder => 32,
-            PseudoElement::MozLineFrame => 33,
-            PseudoElement::ButtonContent => 34,
-            PseudoElement::CellContent => 35,
-            PseudoElement::DropDownList => 36,
-            PseudoElement::FieldsetContent => 37,
-            PseudoElement::FramesetBlank => 38,
-            PseudoElement::MozDisplayComboboxControlFrame => 39,
-            PseudoElement::HtmlCanvasContent => 40,
-            PseudoElement::InlineTable => 41,
-            PseudoElement::Table => 42,
-            PseudoElement::TableCell => 43,
-            PseudoElement::TableColGroup => 44,
-            PseudoElement::TableCol => 45,
-            PseudoElement::TableWrapper => 46,
-            PseudoElement::TableRowGroup => 47,
-            PseudoElement::TableRow => 48,
-            PseudoElement::Canvas => 49,
-            PseudoElement::PageBreak => 50,
-            PseudoElement::Page => 51,
-            PseudoElement::PageContent => 52,
-            PseudoElement::PageSequence => 53,
-            PseudoElement::ScrolledContent => 54,
-            PseudoElement::ScrolledCanvas => 55,
-            PseudoElement::ScrolledPageSequence => 56,
-            PseudoElement::ColumnContent => 57,
-            PseudoElement::Viewport => 58,
-            PseudoElement::ViewportScroll => 59,
-            PseudoElement::AnonymousFlexItem => 60,
-            PseudoElement::AnonymousGridItem => 61,
-            PseudoElement::Ruby => 62,
-            PseudoElement::RubyBase => 63,
-            PseudoElement::RubyBaseContainer => 64,
-            PseudoElement::RubyText => 65,
-            PseudoElement::RubyTextContainer => 66,
-            PseudoElement::MozTreeColumn(..) => 67,
-            PseudoElement::MozTreeRow(..) => 68,
-            PseudoElement::MozTreeSeparator(..) => 69,
-            PseudoElement::MozTreeCell(..) => 70,
-            PseudoElement::MozTreeIndentation(..) => 71,
-            PseudoElement::MozTreeLine(..) => 72,
-            PseudoElement::MozTreeTwisty(..) => 73,
-            PseudoElement::MozTreeImage(..) => 74,
-            PseudoElement::MozTreeCellText(..) => 75,
-            PseudoElement::MozTreeCheckbox(..) => 76,
-            PseudoElement::MozTreeProgressmeter(..) => 77,
-            PseudoElement::MozTreeDropFeedback(..) => 78,
-            PseudoElement::MozSVGMarkerAnonChild => 79,
-            PseudoElement::MozSVGOuterSVGAnonChild => 80,
-            PseudoElement::MozSVGForeignContent => 81,
-            PseudoElement::MozSVGText => 82,
-        }
-    }
-
-    /// Returns an array of `None` values.
-    ///
-    /// FIXME(emilio): Integer generics can't come soon enough.
-    pub fn pseudo_none_array<T>() -> [Option<T>; PSEUDO_COUNT] {
-        [
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None
-        ]
-    }
-
     /// Whether this pseudo-element is an anonymous box.
     #[inline]
-    pub fn is_anon_box(&self) -> bool {
+    fn is_anon_box(&self) -> bool {
         match *self {
                     PseudoElement::MozText => true,
                     PseudoElement::OofPlaceholder => true,
@@ -544,26 +431,6 @@ impl PseudoElement {
     pub fn is_eager(&self) -> bool {
         matches!(*self,
                  PseudoElement::Before | PseudoElement::After | PseudoElement::FirstLine | PseudoElement::FirstLetter)
-    }
-
-    /// Whether this pseudo-element is tree pseudo-element.
-    #[inline]
-    pub fn is_tree_pseudo_element(&self) -> bool {
-        match *self {
-            PseudoElement::MozTreeColumn(..) => true,
-            PseudoElement::MozTreeRow(..) => true,
-            PseudoElement::MozTreeSeparator(..) => true,
-            PseudoElement::MozTreeCell(..) => true,
-            PseudoElement::MozTreeIndentation(..) => true,
-            PseudoElement::MozTreeLine(..) => true,
-            PseudoElement::MozTreeTwisty(..) => true,
-            PseudoElement::MozTreeImage(..) => true,
-            PseudoElement::MozTreeCellText(..) => true,
-            PseudoElement::MozTreeCheckbox(..) => true,
-            PseudoElement::MozTreeProgressmeter(..) => true,
-            PseudoElement::MozTreeDropFeedback(..) => true,
-            _ => false,
-        }
     }
 
     /// Gets the flags associated to this pseudo-element, or 0 if it's an
@@ -872,8 +739,8 @@ impl PseudoElement {
                     PseudoElement::InlineTable => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::Table => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::TableCell => CSSPseudoElementType_InheritingAnonBox,
-                    PseudoElement::TableColGroup => CSSPseudoElementType::NonInheritingAnonBox,
-                    PseudoElement::TableCol => CSSPseudoElementType::NonInheritingAnonBox,
+                    PseudoElement::TableColGroup => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::TableCol => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::TableWrapper => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::TableRowGroup => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::TableRow => CSSPseudoElementType_InheritingAnonBox,
@@ -895,18 +762,18 @@ impl PseudoElement {
                     PseudoElement::RubyBaseContainer => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::RubyText => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::RubyTextContainer => CSSPseudoElementType_InheritingAnonBox,
-                    PseudoElement::MozTreeColumn(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeRow(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeSeparator(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeCell(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeIndentation(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeLine(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeTwisty(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeImage(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeCellText(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeCheckbox(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeProgressmeter(..) => CSSPseudoElementType::XULTree,
-                    PseudoElement::MozTreeDropFeedback(..) => CSSPseudoElementType::XULTree,
+                    PseudoElement::MozTreeColumn(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeRow(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeSeparator(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeCell(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeIndentation(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeLine(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeTwisty(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeImage(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeCellText(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeCheckbox(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeProgressmeter(..) => CSSPseudoElementType_InheritingAnonBox,
+                    PseudoElement::MozTreeDropFeedback(..) => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::MozSVGMarkerAnonChild => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::MozSVGOuterSVGAnonChild => CSSPseudoElementType_InheritingAnonBox,
                     PseudoElement::MozSVGForeignContent => CSSPseudoElementType_InheritingAnonBox,
@@ -915,28 +782,8 @@ impl PseudoElement {
     }
 
     /// Get a PseudoInfo for a pseudo
-    pub fn pseudo_info(&self) -> (*mut structs::nsAtom, CSSPseudoElementType) {
+    pub fn pseudo_info(&self) -> (*mut structs::nsIAtom, CSSPseudoElementType) {
         (self.atom().as_ptr(), self.pseudo_type())
-    }
-
-    /// Get the argument list of a tree pseudo-element.
-    #[inline]
-    pub fn tree_pseudo_args(&self) -> Option<&[Atom]> {
-        match *self {
-            PseudoElement::MozTreeColumn(ref args) => Some(args),
-            PseudoElement::MozTreeRow(ref args) => Some(args),
-            PseudoElement::MozTreeSeparator(ref args) => Some(args),
-            PseudoElement::MozTreeCell(ref args) => Some(args),
-            PseudoElement::MozTreeIndentation(ref args) => Some(args),
-            PseudoElement::MozTreeLine(ref args) => Some(args),
-            PseudoElement::MozTreeTwisty(ref args) => Some(args),
-            PseudoElement::MozTreeImage(ref args) => Some(args),
-            PseudoElement::MozTreeCellText(ref args) => Some(args),
-            PseudoElement::MozTreeCheckbox(ref args) => Some(args),
-            PseudoElement::MozTreeProgressmeter(ref args) => Some(args),
-            PseudoElement::MozTreeDropFeedback(ref args) => Some(args),
-            _ => None,
-        }
     }
 
     /// Construct a pseudo-element from an `Atom`.
@@ -1326,48 +1173,6 @@ impl PseudoElement {
         None
     }
 
-    /// Construct a tree pseudo-element from atom and args.
-    #[inline]
-    pub fn from_tree_pseudo_atom(atom: &Atom, args: Box<[Atom]>) -> Option<Self> {
-                if atom == &atom!(":-moz-tree-column") {
-                    return Some(PseudoElement::MozTreeColumn(args));
-                }
-                if atom == &atom!(":-moz-tree-row") {
-                    return Some(PseudoElement::MozTreeRow(args));
-                }
-                if atom == &atom!(":-moz-tree-separator") {
-                    return Some(PseudoElement::MozTreeSeparator(args));
-                }
-                if atom == &atom!(":-moz-tree-cell") {
-                    return Some(PseudoElement::MozTreeCell(args));
-                }
-                if atom == &atom!(":-moz-tree-indentation") {
-                    return Some(PseudoElement::MozTreeIndentation(args));
-                }
-                if atom == &atom!(":-moz-tree-line") {
-                    return Some(PseudoElement::MozTreeLine(args));
-                }
-                if atom == &atom!(":-moz-tree-twisty") {
-                    return Some(PseudoElement::MozTreeTwisty(args));
-                }
-                if atom == &atom!(":-moz-tree-image") {
-                    return Some(PseudoElement::MozTreeImage(args));
-                }
-                if atom == &atom!(":-moz-tree-cell-text") {
-                    return Some(PseudoElement::MozTreeCellText(args));
-                }
-                if atom == &atom!(":-moz-tree-checkbox") {
-                    return Some(PseudoElement::MozTreeCheckbox(args));
-                }
-                if atom == &atom!(":-moz-tree-progressmeter") {
-                    return Some(PseudoElement::MozTreeProgressmeter(args));
-                }
-                if atom == &atom!(":-moz-tree-drop-feedback") {
-                    return Some(PseudoElement::MozTreeDropFeedback(args));
-                }
-        None
-    }
-
     /// Constructs an atom from a string of text, and whether we're in a
     /// user-agent stylesheet.
     ///
@@ -1377,7 +1182,7 @@ impl PseudoElement {
     /// Returns `None` if the pseudo-element is not recognised.
     #[inline]
     pub fn from_slice(s: &str, in_ua_stylesheet: bool) -> Option<Self> {
-        use std::ascii::AsciiExt;
+        #[allow(unused_imports)] use std::ascii::AsciiExt;
 
         // We don't need to support tree pseudos because functional
         // pseudo-elements needs arguments, and thus should be created
@@ -1746,8 +1551,8 @@ impl PseudoElement {
     ///
     /// Returns `None` if the pseudo-element is not recognized.
     #[inline]
-    pub fn tree_pseudo_element(name: &str, args: Box<[Atom]>) -> Option<Self> {
-        use std::ascii::AsciiExt;
+    pub fn tree_pseudo_element(name: &str, args: Box<[String]>) -> Option<Self> {
+        #[allow(unused_imports)] use std::ascii::AsciiExt;
         debug_assert!(name.starts_with("-moz-tree-"));
         let tree_part = &name[10..];
             if tree_part.eq_ignore_ascii_case("column") {
@@ -1878,20 +1683,31 @@ impl ToCss for PseudoElement {
                 PseudoElement::MozSVGForeignContent => dest.write_str(":-moz-svg-foreign-content")?,
                 PseudoElement::MozSVGText => dest.write_str(":-moz-svg-text")?,
         }
-        if let Some(args) = self.tree_pseudo_args() {
-            if !args.is_empty() {
+        match *self {
+            PseudoElement::MozTreeColumn(ref args) |
+            PseudoElement::MozTreeRow(ref args) |
+            PseudoElement::MozTreeSeparator(ref args) |
+            PseudoElement::MozTreeCell(ref args) |
+            PseudoElement::MozTreeIndentation(ref args) |
+            PseudoElement::MozTreeLine(ref args) |
+            PseudoElement::MozTreeTwisty(ref args) |
+            PseudoElement::MozTreeImage(ref args) |
+            PseudoElement::MozTreeCellText(ref args) |
+            PseudoElement::MozTreeCheckbox(ref args) |
+            PseudoElement::MozTreeProgressmeter(ref args) |
+            PseudoElement::MozTreeDropFeedback(ref args) => {
                 dest.write_char('(')?;
                 let mut iter = args.iter();
                 if let Some(first) = iter.next() {
-                    serialize_identifier(&first.to_string(), dest)?;
+                    serialize_identifier(first, dest)?;
                     for item in iter {
                         dest.write_str(", ")?;
-                        serialize_identifier(&item.to_string(), dest)?;
+                        serialize_identifier(item, dest)?;
                     }
                 }
-                dest.write_char(')')?;
+                dest.write_char(')')
             }
+            _ => Ok(()),
         }
-        Ok(())
     }
 }

@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-rest-val-obj.case
-// - src/dstr-binding-for-await/default/for-await-of-async-gen-var-async.template
+// - src/dstr-binding/obj-ptrn-rest-val-obj.case
+// - src/dstr-binding/default/for-await-of-async-gen-var-async.template
 /*---
 description: Rest object contains just unextracted data (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -44,22 +45,19 @@ var asyncIter = (async function*() {
 
 async function *fn() {
   for await (var {a, b, ...rest} of asyncIter) {
+    assert.sameValue(rest.x, 1);
+    assert.sameValue(rest.y, 2);
     assert.sameValue(rest.a, undefined);
     assert.sameValue(rest.b, undefined);
 
-    verifyProperty(rest, "x", {
-      enumerable: true,
-      writable: true,
-      configurable: true,
-      value: 1
-    });
+    verifyEnumerable(rest, "x");
+    verifyWritable(rest, "x");
+    verifyConfigurable(rest, "x");
 
-    verifyProperty(rest, "y", {
-      enumerable: true,
-      writable: true,
-      configurable: true,
-      value: 2
-    });
+    verifyEnumerable(rest, "y");
+    verifyWritable(rest, "y");
+    verifyConfigurable(rest, "y");
+
 
     iterCount += 1;
   }

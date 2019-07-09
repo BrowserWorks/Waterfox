@@ -113,8 +113,7 @@ public:
 
   // HTMLFormSubmission
   virtual nsresult
-  GetEncodedSubmission(nsIURI* aURI, nsIInputStream** aPostDataStream,
-                       int64_t* aPostDataStreamLength) override;
+  GetEncodedSubmission(nsIURI* aURI, nsIInputStream** aPostDataStream) override;
 
   virtual nsresult AddNameValuePair(const nsAString& aName,
                                     const nsAString& aValue) override

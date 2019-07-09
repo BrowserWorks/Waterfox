@@ -51,10 +51,8 @@ var publicProperties = [
   "getProfileCache",
   "getSignedInUser",
   "getSignedInUserProfile",
-  "handleAccountDestroyed",
   "handleDeviceDisconnection",
-  "handleEmailUpdated",
-  "hasLocalSession",
+  "handleAccountDestroyed",
   "invalidateCertificate",
   "loadAndPoll",
   "localtimeOffsetMsec",
@@ -266,7 +264,7 @@ AccountState.prototype = {
       log.error("Failed to update cached tokens", err);
     });
   },
-};
+}
 
 /* Given an array of scopes, make a string key by normalizing. */
 function getScopeKey(scopeArray) {
@@ -354,7 +352,7 @@ this.FxAccounts = function(mockInternal) {
   internal.initialize();
 
   return Object.freeze(external);
-};
+}
 
 /**
  * The internal API's constructor.
@@ -594,7 +592,7 @@ FxAccountsInternal.prototype = {
    *
    * @param credentials
    *        The credentials object containing the fields to be updated.
-   *        This object must contain the |uid| field and it must
+   *        This object must contain |email| and |uid| fields and they must
    *        match the currently signed in user.
    */
   updateUserAccountData(credentials) {
@@ -604,14 +602,15 @@ FxAccountsInternal.prototype = {
     }
     let currentAccountState = this.currentAccountState;
     return currentAccountState.promiseInitialized.then(() => {
-      return currentAccountState.getUserAccountData(["uid"]);
+      return currentAccountState.getUserAccountData(["email", "uid"]);
     }).then(existing => {
-      if (existing.uid != credentials.uid) {
+      if (existing.email != credentials.email || existing.uid != credentials.uid) {
         throw new Error("The specified credentials aren't for the current user");
       }
-      // We need to nuke uid as storage will complain if we try and
-      // update it (even when the value is the same)
+      // We need to nuke email and uid as storage will complain if we try and
+      // update them (even when the value is the same)
       credentials = Cu.cloneInto(credentials, {}); // clone it first
+      delete credentials.email;
       delete credentials.uid;
       return currentAccountState.updateUserAccountData(credentials);
     });
@@ -761,7 +760,7 @@ FxAccountsInternal.prototype = {
       serverURL: tokenData.server,
       client_id: FX_OAUTH_CLIENT_ID
     });
-    return client.destroyToken(tokenData.token);
+    return client.destroyToken(tokenData.token)
   },
 
   _destroyAllOAuthTokens(tokenInfos) {
@@ -812,7 +811,7 @@ FxAccountsInternal.prototype = {
           FxAccountsConfig.resetConfigURLs();
           // just for testing - notifications are cheap when no observers.
           this.notifyObservers("testhelper-fxa-signout-complete");
-        });
+        })
       } else {
         // We want to do this either way -- but if we're signing out remotely we
         // need to wait until we destroy the oauth tokens if we want that to succeed.
@@ -869,24 +868,6 @@ FxAccountsInternal.prototype = {
       }
       return this.fxAccountsClient.sessionStatus(data.sessionToken);
     });
-  },
-
-  /**
-   * Checks if we have a valid local session state for the current account.
-   *
-   * @return Promise
-   *        Resolves with a boolean, with true indicating that we appear to
-   *        have a valid local session, or false if we need to reauthenticate
-   *        with the content server to obtain one.
-   *        Note that this doesn't check with the server - it really just tells
-   *        us if we are even able to perform that server check. To fully check
-   *        the account status, you should first call this method, and if this
-   *        returns true, you should then call sessionStatus() to check with
-   *        the server.
-   */
-  async hasLocalSession() {
-    let data = await this.getSignedInUser();
-    return data && data.sessionToken;
   },
 
   /**
@@ -978,7 +959,7 @@ FxAccountsInternal.prototype = {
       kB: CommonUtils.bytesAsHex(kB_hex),
       keyFetchToken: null, // null values cause the item to be removed.
       unwrapBKey: null,
-    };
+    }
 
     log.debug("Keys Obtained: kA=" + !!updateData.kA + ", kB=" + !!updateData.kB);
     if (logPII) {
@@ -1059,7 +1040,7 @@ FxAccountsInternal.prototype = {
       return {
         keyPair: accountData.keyPair.rawKeyPair,
         certificate: accountData.cert.rawCert
-      };
+      }
     }
     // We are definately going to generate a new cert, either because it has
     // already expired, or the keyPair has - and a new keyPair means we must
@@ -1114,7 +1095,7 @@ FxAccountsInternal.prototype = {
     return {
       keyPair: keyPair.rawKeyPair,
       certificate,
-    };
+    }
   },
 
   getUserAccountData() {
@@ -1230,9 +1211,6 @@ FxAccountsInternal.prototype = {
       if (error && error.retryAfter) {
         // If the server told us to back off, back off the requested amount.
         nextPollMs = (error.retryAfter + 3) * 1000;
-        log.warn(`the server rejected our email status check and told us to try again in ${nextPollMs}ms`);
-      } else {
-        log.error(`checkEmailStatus failed to poll`, error);
       }
     }
     if (why == "push") {
@@ -1268,7 +1246,7 @@ FxAccountsInternal.prototype = {
 
   async onPollEmailSuccess(currentState, why) {
     try {
-      await currentState.updateUserAccountData({ verified: true });
+      await currentState.updateUserAccountData({ verified: true })
       const accountData = await currentState.getUserAccountData();
       // Now that the user is verified, we can proceed to fetch keys
       if (currentState.whenVerifiedDeferred) {
@@ -1291,7 +1269,6 @@ FxAccountsInternal.prototype = {
   },
 
   requiresHttps() {
-    // Also used in FxAccountsOAuthGrantClient.jsm.
     let allowHttp = Services.prefs.getBoolPref("identity.fxaccounts.allowHttp", false);
     return allowHttp !== true;
   },
@@ -1608,11 +1585,6 @@ FxAccountsInternal.prototype = {
     return null;
   },
 
-  handleEmailUpdated(newEmail) {
-    Services.prefs.setStringPref(PREF_LAST_FXA_USER, CryptoUtils.sha256Base64(newEmail));
-    return this.currentAccountState.updateUserAccountData({ email: newEmail });
-  },
-
   async handleAccountDestroyed(uid) {
     const accountData = await this.currentAccountState.getUserAccountData();
     const localUid = accountData ? accountData.uid : null;
@@ -1645,7 +1617,7 @@ FxAccountsInternal.prototype = {
       if (!FXA_PWDMGR_REAUTH_WHITELIST.has(field)) {
         updateData[field] = null;
       }
-    };
+    }
     FXA_PWDMGR_PLAINTEXT_FIELDS.forEach(clearField);
     FXA_PWDMGR_SECURE_FIELDS.forEach(clearField);
     FXA_PWDMGR_MEMORY_FIELDS.forEach(clearField);
@@ -1779,7 +1751,7 @@ FxAccountsInternal.prototype = {
         return this._logErrorAndResetDeviceRegistrationVersion(error);
       }).catch(secondError => {
         log.error("failed to recover from device-session conflict", secondError);
-        this._logErrorAndResetDeviceRegistrationVersion(error);
+        this._logErrorAndResetDeviceRegistrationVersion(error)
       });
   },
 

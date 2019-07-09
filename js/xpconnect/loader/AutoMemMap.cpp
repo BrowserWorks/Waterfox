@@ -45,7 +45,7 @@ AutoMemMap::init(nsIFile* file, int flags, int mode, PRFileMapProtect prot)
 {
     MOZ_ASSERT(!fd);
 
-    MOZ_TRY(file->OpenNSPRFileDesc(flags, mode, &fd.rwget()));
+    NS_TRY(file->OpenNSPRFileDesc(flags, mode, &fd.rwget()));
 
     return initInternal(prot);
 }
@@ -76,7 +76,7 @@ AutoMemMap::initInternal(PRFileMapProtect prot)
     MOZ_ASSERT(!addr);
 
     PRFileInfo64 fileInfo;
-    MOZ_TRY(PR_GetOpenFileInfo64(fd.get(), &fileInfo));
+    NS_TRY(PR_GetOpenFileInfo64(fd.get(), &fileInfo));
 
     if (fileInfo.size > UINT32_MAX)
         return Err(NS_ERROR_INVALID_ARG);

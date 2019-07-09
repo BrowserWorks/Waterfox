@@ -80,6 +80,9 @@ interface XULControllers;
   [Throws, UnsafeInPrerendering, NeedsSubjectPrincipal] boolean confirm(optional DOMString message = "");
   [Throws, UnsafeInPrerendering, NeedsSubjectPrincipal] DOMString? prompt(optional DOMString message = "", optional DOMString default = "");
   [Throws, UnsafeInPrerendering] void print();
+  //[Throws] any showModalDialog(DOMString url, optional any argument);
+  [Throws, Func="nsGlobalWindow::IsShowModalDialogEnabled", UnsafeInPrerendering, NeedsSubjectPrincipal]
+  any showModalDialog(DOMString url, optional any argument, optional DOMString options = "");
 
   [Throws, CrossOriginCallable, NeedsSubjectPrincipal]
   void postMessage(any message, DOMString targetOrigin, optional sequence<object> transfer = []);
@@ -228,6 +231,17 @@ interface SpeechSynthesisGetter {
 Window implements SpeechSynthesisGetter;
 #endif
 
+// http://www.whatwg.org/specs/web-apps/current-work/
+[NoInterfaceObject]
+interface WindowModal {
+  [Throws, Func="nsGlobalWindow::IsModalContentWindow", NeedsSubjectPrincipal]
+  readonly attribute any dialogArguments;
+
+  [Throws, Func="nsGlobalWindow::IsModalContentWindow", NeedsSubjectPrincipal]
+  attribute any returnValue;
+};
+Window implements WindowModal;
+
 // Mozilla-specific stuff
 partial interface Window {
   //[NewObject, Throws] CSSStyleDeclaration getDefaultComputedStyle(Element elt, optional DOMString pseudoElt = "");
@@ -259,7 +273,7 @@ partial interface Window {
   [Throws, NeedsCallerType]
   readonly attribute float mozInnerScreenY;
   [Replaceable, Throws, NeedsCallerType]
-  readonly attribute double devicePixelRatio;
+  readonly attribute float devicePixelRatio;
 
   /* The maximum offset that the window can be scrolled to
      (i.e., the document width/height minus the scrollport width/height) */
@@ -317,6 +331,12 @@ partial interface Window {
            attribute EventHandler onuserproximity;
            attribute EventHandler ondevicelight;
 
+#ifdef MOZ_B2G
+           attribute EventHandler onmoztimechange;
+           attribute EventHandler onmoznetworkupload;
+           attribute EventHandler onmoznetworkdownload;
+#endif
+
   void                      dump(DOMString str);
 
   /**
@@ -336,12 +356,9 @@ partial interface Window {
                                                                    optional DOMString options = "",
                                                                    any... extraArguments);
 
-  [
-#ifdef NIGHTLY_BUILD
-   ChromeOnly,
-#endif
-   NonEnumerable, Replaceable, Throws, NeedsCallerType]
-  readonly attribute object? content;
+  [Replaceable, Throws, NeedsCallerType] readonly attribute object? content;
+
+  [ChromeOnly, Throws, NeedsCallerType] readonly attribute object? __content;
 
   [Throws, ChromeOnly] any getInterface(IID iid);
 
@@ -356,7 +373,7 @@ Window implements TouchEventHandlers;
 
 Window implements OnErrorEventHandlerForWindow;
 
-#if defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
 // https://compat.spec.whatwg.org/#windoworientation-interface
 partial interface Window {
   [NeedsCallerType]
@@ -373,9 +390,8 @@ partial interface Window {
 };
 #endif
 
-// Mozilla extensions for Chrome windows.
-partial interface Window {
-  // The STATE_* constants need to match the corresponding enum in nsGlobalWindow.cpp.
+[Func="IsChromeOrXBL"]
+interface ChromeWindow {
   [Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
   const unsigned short STATE_MAXIMIZED = 1;
   [Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
@@ -444,9 +460,6 @@ partial interface Window {
    */
   [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
   void beginWindowMove(Event mouseDownEvent, optional Element? panel = null);
-
-  [Func="IsChromeOrXBL"]
-  readonly attribute boolean isChromeWindow;
 };
 
 partial interface Window {
@@ -474,6 +487,7 @@ partial interface Window {
     readonly attribute Worklet paintWorklet;
 };
 
+Window implements ChromeWindow;
 Window implements WindowOrWorkerGlobalScope;
 
 partial interface Window {
@@ -522,10 +536,12 @@ partial interface Window {
   [Func="IsChromeOrXBL"]
   sequence<DOMString> getRegionalPrefsLocales();
 
+#ifdef ENABLE_INTL_API
   /**
    * Getter funcion for IntlUtils, which provides helper functions for
    * localization.
    */
   [Throws, Func="IsChromeOrXBL"]
   readonly attribute IntlUtils intlUtils;
+#endif
 };

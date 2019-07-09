@@ -21,7 +21,6 @@ info: |
     a. If Type(key) is String, then
       i. Let desc be ? O.[[GetOwnProperty]](key).
       ...
-features: [Symbol]
 ---*/
 
 let log = [];

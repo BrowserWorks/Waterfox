@@ -14,18 +14,14 @@
 #include "nsError.h"
 #include "nsContentUtils.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StylePrefs.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/Unused.h"
 #include "FontFaceSet.h"
 #include "nsPresContext.h"
 #include "nsIPrincipal.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIHttpChannel.h"
 #include "nsIContentPolicy.h"
-#include "nsIThreadRetargetableRequest.h"
 #include "nsContentPolicyUtils.h"
-#include "nsNetCID.h"
 
 #include "mozilla/gfx/2D.h"
 
@@ -89,13 +85,16 @@ nsFontFaceLoader::StartedLoading(nsIStreamLoader* aStreamLoader)
   }
 
   if (loadTimeout > 0) {
-    NS_NewTimerWithFuncCallback(getter_AddRefs(mLoadTimer),
-                                LoadTimerCallback,
-                                static_cast<void*>(this),
-                                loadTimeout,
-                                nsITimer::TYPE_ONE_SHOT,
-                                "LoadTimerCallback",
-                                mFontFaceSet->Document()->EventTargetFor(TaskCategory::Other));
+    mLoadTimer = do_CreateInstance("@mozilla.org/timer;1");
+    if (mLoadTimer) {
+      mLoadTimer->SetTarget(
+        mFontFaceSet->Document()->EventTargetFor(TaskCategory::Other));
+      mLoadTimer->InitWithNamedFuncCallback(LoadTimerCallback,
+                                            static_cast<void*>(this),
+                                            loadTimeout,
+                                            nsITimer::TYPE_ONE_SHOT,
+                                            "LoadTimerCallback");
+    }
   } else {
     mUserFontEntry->mFontDataLoadingState = gfxUserFontEntry::LOADING_SLOWLY;
   }
@@ -195,11 +194,8 @@ nsFontFaceLoader::LoadTimerCallback(nsITimer* aTimer, void* aClosure)
   }
 }
 
-NS_IMPL_ISUPPORTS(nsFontFaceLoader,
-                  nsIStreamLoaderObserver,
-                  nsIRequestObserver)
+NS_IMPL_ISUPPORTS(nsFontFaceLoader, nsIStreamLoaderObserver)
 
-// nsIStreamLoaderObserver
 NS_IMETHODIMP
 nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
                                    nsISupports* aContext,
@@ -207,8 +203,6 @@ nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
                                    uint32_t aStringLen,
                                    const uint8_t* aString)
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   if (!mFontFaceSet) {
     // We've been canceled
     return aStatus;
@@ -296,31 +290,6 @@ nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
   return NS_SUCCESS_ADOPTED_DATA;
 }
 
-// nsIRequestObserver
-NS_IMETHODIMP
-nsFontFaceLoader::OnStartRequest(nsIRequest* aRequest,
-                                 nsISupports* aContext)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsCOMPtr<nsIThreadRetargetableRequest> req = do_QueryInterface(aRequest);
-  if (req) {
-    nsCOMPtr<nsIEventTarget> sts =
-      do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
-    Unused << NS_WARN_IF(NS_FAILED(req->RetargetDeliveryTo(sts)));
-  }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsFontFaceLoader::OnStopRequest(nsIRequest* aRequest,
-                                nsISupports* aContext,
-                                nsresult aStatusCode)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  return NS_OK;
-}
-
 void
 nsFontFaceLoader::Cancel()
 {
@@ -338,7 +307,7 @@ uint8_t
 nsFontFaceLoader::GetFontDisplay()
 {
   uint8_t fontDisplay = NS_FONT_DISPLAY_AUTO;
-  if (StylePrefs::sFontDisplayEnabled) {
+  if (Preferences::GetBool("layout.css.font-display.enabled")) {
     fontDisplay = mUserFontEntry->GetFontDisplay();
   }
   return fontDisplay;

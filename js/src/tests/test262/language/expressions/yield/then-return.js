@@ -6,7 +6,6 @@ description: >
     When a generator body contains a yield statement followed by a return
     statement, it should produce an iterator that visits the yieled value and
     completes on the returned value.
-features: [generators]
 ---*/
 
 function* g() { yield 1; return 2; }

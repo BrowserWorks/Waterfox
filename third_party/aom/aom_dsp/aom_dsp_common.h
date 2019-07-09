@@ -31,6 +31,8 @@ extern "C" {
 #define AOMMIN(x, y) (((x) < (y)) ? (x) : (y))
 #define AOMMAX(x, y) (((x) > (y)) ? (x) : (y))
 
+#define NELEMENTS(x) (sizeof((x)) / sizeof((x)[0]))
+
 #define IMPLIES(a, b) (!(a) || (b))  //  Logical 'a implies b' (or 'a -> b')
 
 #define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
@@ -52,9 +54,16 @@ extern "C" {
 #define UNLIKELY(v) (v)
 #endif
 
+#define AOM_SWAP(type, a, b) \
+  do {                       \
+    type c = (b);            \
+    b = a;                   \
+    a = c;                   \
+  } while (0)
+
 #if CONFIG_AOM_QM
 typedef uint16_t qm_val_t;
-#define AOM_QM_BITS 5
+#define AOM_QM_BITS 6
 #endif
 #if CONFIG_HIGHBITDEPTH
 // Note:
@@ -78,14 +87,11 @@ static INLINE int clamp(int value, int low, int high) {
   return value < low ? low : (value > high ? high : value);
 }
 
-static INLINE int64_t clamp64(int64_t value, int64_t low, int64_t high) {
-  return value < low ? low : (value > high ? high : value);
-}
-
 static INLINE double fclamp(double value, double low, double high) {
   return value < low ? low : (value > high ? high : value);
 }
 
+#if CONFIG_HIGHBITDEPTH
 static INLINE uint16_t clip_pixel_highbd(int val, int bd) {
   switch (bd) {
     case 8:
@@ -94,6 +100,7 @@ static INLINE uint16_t clip_pixel_highbd(int val, int bd) {
     case 12: return (uint16_t)clamp(val, 0, 4095);
   }
 }
+#endif  // CONFIG_HIGHBITDEPTH
 
 #ifdef __cplusplus
 }  // extern "C"

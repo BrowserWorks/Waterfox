@@ -206,6 +206,10 @@ class TestResolver(MozbuildObject):
                 'mochitest', 'a11y'),
             'browser-chrome': os.path.join(self.topobjdir, '_tests', 'testing',
                 'mochitest', 'browser'),
+            'jetpack-package': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'jetpack-package'),
+            'jetpack-addon': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'jetpack-addon'),
             'chrome': os.path.join(self.topobjdir, '_tests', 'testing',
                 'mochitest', 'chrome'),
             'mochitest': os.path.join(self.topobjdir, '_tests', 'testing',
@@ -287,11 +291,12 @@ TEST_MANIFESTS = dict(
     A11Y=('a11y', 'testing/mochitest', 'a11y', True),
     BROWSER_CHROME=('browser-chrome', 'testing/mochitest', 'browser', True),
     ANDROID_INSTRUMENTATION=('instrumentation', 'instrumentation', '.', False),
+    JETPACK_PACKAGE=('jetpack-package', 'testing/mochitest', 'jetpack-package', True),
+    JETPACK_ADDON=('jetpack-addon', 'testing/mochitest', 'jetpack-addon', False),
     FIREFOX_UI_FUNCTIONAL=('firefox-ui-functional', 'firefox-ui', '.', False),
     FIREFOX_UI_UPDATE=('firefox-ui-update', 'firefox-ui', '.', False),
     PUPPETEER_FIREFOX=('firefox-ui-functional', 'firefox-ui', '.', False),
     PYTHON_UNITTEST=('python', 'python', '.', False),
-    CRAMTEST=('cram', 'cram', '.', False),
 
     # marionette tests are run from the srcdir
     # TODO(ato): make packaging work as for other test suites
@@ -509,7 +514,7 @@ def install_test_files(topsrcdir, topobjdir, tests_root, test_objs):
 
 # Convenience methods for test manifest reading.
 def read_manifestparser_manifest(context, manifest_path):
-    path = manifest_path.full_path
+    path = mozpath.normpath(mozpath.join(context.srcdir, manifest_path))
     return manifestparser.TestManifest(manifests=[path], strict=True,
                                        rootdir=context.config.topsrcdir,
                                        finder=context._finder,
@@ -517,7 +522,7 @@ def read_manifestparser_manifest(context, manifest_path):
 
 def read_reftest_manifest(context, manifest_path):
     import reftest
-    path = manifest_path.full_path
+    path = mozpath.normpath(mozpath.join(context.srcdir, manifest_path))
     manifest = reftest.ReftestManifest(finder=context._finder)
     manifest.load(path)
     return manifest

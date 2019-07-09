@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.foreach
 es5id: 15.4.4.18-5-6
 description: Array.prototype.forEach - thisArg is function
 ---*/
@@ -16,7 +15,7 @@ description: Array.prototype.forEach - thisArg is function
 
   function foo(){}
   foo.res = true;
-
+  
   var arr = [1];
   arr.forEach(callbackfn,foo)
 

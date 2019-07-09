@@ -189,8 +189,7 @@ impl Default for RestyleHint {
 
 #[cfg(feature = "gecko")]
 impl From<nsRestyleHint> for RestyleHint {
-    fn from(mut raw: nsRestyleHint) -> Self {
-        use gecko_bindings::structs::nsRestyleHint_eRestyle_Force as eRestyle_Force;
+    fn from(raw: nsRestyleHint) -> Self {
         use gecko_bindings::structs::nsRestyleHint_eRestyle_ForceDescendants as eRestyle_ForceDescendants;
         use gecko_bindings::structs::nsRestyleHint_eRestyle_LaterSiblings as eRestyle_LaterSiblings;
         use gecko_bindings::structs::nsRestyleHint_eRestyle_Self as eRestyle_Self;
@@ -203,23 +202,14 @@ impl From<nsRestyleHint> for RestyleHint {
                       "Handle later siblings manually if necessary plz.");
 
         if (raw.0 & (eRestyle_Self.0 | eRestyle_Subtree.0)) != 0 {
-            raw.0 &= !eRestyle_Self.0;
             hint.insert(RESTYLE_SELF);
         }
 
         if (raw.0 & (eRestyle_Subtree.0 | eRestyle_SomeDescendants.0)) != 0 {
-            raw.0 &= !eRestyle_Subtree.0;
-            raw.0 &= !eRestyle_SomeDescendants.0;
             hint.insert(RESTYLE_DESCENDANTS);
         }
 
-        if (raw.0 & (eRestyle_ForceDescendants.0 | eRestyle_Force.0)) != 0 {
-            raw.0 &= !eRestyle_Force.0;
-            hint.insert(RECASCADE_SELF);
-        }
-
         if (raw.0 & eRestyle_ForceDescendants.0) != 0 {
-            raw.0 &= !eRestyle_ForceDescendants.0;
             hint.insert(RECASCADE_DESCENDANTS);
         }
 
@@ -230,7 +220,9 @@ impl From<nsRestyleHint> for RestyleHint {
 }
 
 #[cfg(feature = "servo")]
-malloc_size_of_is_0!(RestyleHint);
+impl ::heapsize::HeapSizeOf for RestyleHint {
+    fn heap_size_of_children(&self) -> usize { 0 }
+}
 
 /// Asserts that all replacement hints have a matching nsRestyleHint value.
 #[cfg(feature = "gecko")]

@@ -21,7 +21,7 @@ add_task(async function test_getOpenURLs() {
   _("Test getOpenURLs.");
   let [engine, store] = await getMocks();
 
-  let superLongURL = "http://" + (new Array(URI_LENGTH_MAX).join("w")) + ".com/";
+  let superLongURL = "http://" + (new Array(MAX_UPLOAD_BYTES).join("w")) + ".com/";
   let urls = ["http://bar.com", "http://foo.com", "http://foobar.com", superLongURL];
   function fourURLs() {
     return urls.pop();
@@ -55,7 +55,7 @@ add_task(async function test_tab_engine_skips_incoming_local_record() {
     notEqual(record.id, localID, "Only apply tab records from remote clients");
     applied.push(record);
     apply.call(store, record);
-  };
+  }
 
   let collection = new ServerCollection();
 
@@ -80,7 +80,7 @@ add_task(async function test_tab_engine_skips_incoming_local_record() {
   meta_global.payload.engines = {tabs: {version: engine.version,
                                         syncID: engine.syncID}};
 
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
 
   let promiseFinished = new Promise(resolve => {
     let syncFinish = engine._syncFinish;
@@ -90,7 +90,7 @@ add_task(async function test_tab_engine_skips_incoming_local_record() {
 
       await syncFinish.call(engine);
       resolve();
-    };
+    }
   });
 
   _("Start sync");

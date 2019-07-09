@@ -3,6 +3,8 @@
 // The ext-* files are imported into the same scopes.
 /* import-globals-from ext-toolkit.js */
 
+XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
+                                  "resource://gre/modules/EventEmitter.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "idleService",
                                    "@mozilla.org/widget/idleservice;1",
                                    "nsIIdleService");
@@ -35,13 +37,14 @@ const getIdleObserver = (extension, context) => {
   let observerInfo = getIdleObserverInfo(extension, context);
   let {observer, detectionInterval} = observerInfo;
   if (!observer) {
-    observer = new class extends ExtensionUtils.EventEmitter {
-      observe(subject, topic, data) {
+    observer = {
+      observe: function(subject, topic, data) {
         if (topic == "idle" || topic == "active") {
           this.emit("stateChanged", topic);
         }
-      }
-    }();
+      },
+    };
+    EventEmitter.decorate(observer);
     idleService.addIdleObserver(observer, detectionInterval);
     observerInfo.observer = observer;
     observerInfo.detectionInterval = detectionInterval;

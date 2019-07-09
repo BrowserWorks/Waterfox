@@ -161,11 +161,10 @@ interface nsISelection : nsISupports
 
 %{C++
     /**
-     * AsSelection() returns a pointer to Selection class.
-     *
-     * In order to avoid circular dependency issues, this method is defined
-     * in mozilla/dom/Selection.h.  Consumers need to #include that header.
+     * AsSelection() returns a pointer to Selection class if the instance is
+     * derived from it.  Otherwise, nullptr but it should never happen
+     * since Selection is the only class implementing nsISelection.
      */
-    inline mozilla::dom::Selection* AsSelection();
+    virtual mozilla::dom::Selection* AsSelection() = 0;
 %}
 };

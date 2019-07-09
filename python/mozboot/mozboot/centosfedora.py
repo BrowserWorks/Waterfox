@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import platform
 
 from mozboot.base import BaseBootstrapper
@@ -113,12 +111,12 @@ class CentOSFedoraBootstrapper(StyloInstall, BaseBootstrapper):
         # Install Android specific packages.
         self.dnf_install(*self.mobile_android_packages)
 
-        from mozboot import android
+        import android
         android.ensure_android('linux', artifact_mode=artifact_mode,
                                no_interactive=self.no_interactive)
 
     def suggest_mobile_android_mozconfig(self, artifact_mode=False):
-        from mozboot import android
+        import android
         android.suggest_mozconfig('linux', artifact_mode=artifact_mode)
 
     def suggest_mobile_android_artifact_mode_mozconfig(self):

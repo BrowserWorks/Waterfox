@@ -14,9 +14,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SafeBrowsing",
   "resource://gre/modules/SafeBrowsing.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewSettings"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewSettings");
 
 function debug(aMsg) {
   // dump(aMsg);
@@ -33,14 +32,12 @@ class GeckoViewSettings extends GeckoViewModule {
     // We only allow to set this setting during initialization, further updates
     // will be ignored.
     this.useMultiprocess = !!this.settings.useMultiprocess;
-    this._displayMode = Ci.nsIDocShell.DISPLAY_MODE_BROWSER;
   }
 
   onSettingsUpdate() {
     debug("onSettingsUpdate: " + JSON.stringify(this.settings));
 
     this.useTrackingProtection = !!this.settings.useTrackingProtection;
-    this.displayMode = this.settings.displayMode;
   }
 
   get useTrackingProtection() {
@@ -53,8 +50,8 @@ class GeckoViewSettings extends GeckoViewModule {
       this._isSafeBrowsingInit = true;
     }
     if (aUse != this._useTrackingProtection) {
-      this.messageManager.loadFrameScript("data:," +
-        `docShell.useTrackingProtection = ${aUse}`,
+      this.messageManager.loadFrameScript('data:,' +
+        'docShell.useTrackingProtection = ' + aUse,
         true
       );
       this._useTrackingProtection = aUse;
@@ -78,23 +75,5 @@ class GeckoViewSettings extends GeckoViewModule {
       this.browser.removeAttribute("remote");
     }
     parentNode.appendChild(this.browser);
-  }
-
-  get displayMode() {
-    return this._displayMode;
-  }
-
-  set displayMode(aMode) {
-    if (!this.useMultiprocess) {
-      this.window.QueryInterface(Ci.nsIInterfaceRequestor)
-                   .getInterface(Ci.nsIDocShell)
-                   .displayMode = aMode;
-    } else {
-      this.messageManager.loadFrameScript("data:," +
-        `docShell.displayMode = ${aMode}`,
-        true
-      );
-    }
-    this._displayMode = aMode;
   }
 }

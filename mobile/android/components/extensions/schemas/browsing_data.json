@@ -162,6 +162,7 @@
         "description": "Clears various types of browsing data stored in a user's profile.",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",
@@ -206,6 +207,7 @@
         "description": "Clears the browser's cache.",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",
@@ -244,6 +246,7 @@
         "description": "Clears the browser's list of downloaded files (<em>not</em> the downloaded files themselves).",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",
@@ -283,6 +286,7 @@
         "description": "Clears the browser's stored form data (autofill).",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",
@@ -342,6 +346,7 @@
         "description": "Clears websites' local storage data.",
         "type": "function",
         "async": "callback",
+        "unsupported": true,
         "parameters": [
           {
             "$ref": "RemovalOptions",

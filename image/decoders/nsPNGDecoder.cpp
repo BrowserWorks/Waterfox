@@ -232,7 +232,7 @@ nsPNGDecoder::CreateFrame(const FrameInfo& aFrameInfo)
   MOZ_LOG(sPNGDecoderAccountingLog, LogLevel::Debug,
          ("PNGDecoderAccounting: nsPNGDecoder::CreateFrame -- created "
           "image frame with %dx%d pixels for decoder %p",
-          mFrameRect.Width(), mFrameRect.Height(), this));
+          mFrameRect.width, mFrameRect.height, this));
 
 #ifdef PNG_APNG_SUPPORTED
   if (png_get_valid(mPNG, mInfo, PNG_INFO_acTL)) {
@@ -284,7 +284,6 @@ nsPNGDecoder::InitInternal()
         105,  67,  67,  80, '\0'};  // iCCP
   static png_byte unused_chunks[]=
        { 98,  75,  71,  68, '\0',   // bKGD
-        101,  88,  73, 102, '\0',   // eXIf
         104,  73,  83,  84, '\0',   // hIST
         105,  84,  88, 116, '\0',   // iTXt
         111,  70,  70, 115, '\0',   // oFFs
@@ -571,7 +570,7 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
   const IntRect frameRect(0, 0, width, height);
 
   // Post our size to the superclass
-  decoder->PostSize(frameRect.Width(), frameRect.Height());
+  decoder->PostSize(frameRect.width, frameRect.height);
 
   if (width >
     SurfaceCache::MaximumCapacity()/(bit_depth > 8 ? 16:8)) {
@@ -736,15 +735,15 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
   if (decoder->mTransform && (channels <= 2 || isInterlaced)) {
     uint32_t bpp[] = { 0, 3, 4, 3, 4 };
     decoder->mCMSLine =
-      static_cast<uint8_t*>(malloc(bpp[channels] * frameRect.Width()));
+      static_cast<uint8_t*>(malloc(bpp[channels] * frameRect.width));
     if (!decoder->mCMSLine) {
       png_error(decoder->mPNG, "malloc of mCMSLine failed");
     }
   }
 
   if (interlace_type == PNG_INTERLACE_ADAM7) {
-    if (frameRect.Height() < INT32_MAX / (frameRect.Width() * int32_t(channels))) {
-      const size_t bufferSize = channels * frameRect.Width() * frameRect.Height();
+    if (frameRect.height < INT32_MAX / (frameRect.width * int32_t(channels))) {
+      const size_t bufferSize = channels * frameRect.width * frameRect.height;
 
       if (bufferSize > SurfaceCache::MaximumCapacity()) {
         png_error(decoder->mPNG, "Insufficient memory to deinterlace image");
@@ -850,7 +849,7 @@ nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
   }
 
   const png_uint_32 height =
-    static_cast<png_uint_32>(decoder->mFrameRect.Height());
+    static_cast<png_uint_32>(decoder->mFrameRect.height);
 
   if (row_num >= height) {
     // Bail if we receive extra rows. This is especially important because if we
@@ -865,7 +864,7 @@ nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
   uint8_t* rowToWrite = new_row;
 
   if (decoder->interlacebuf) {
-    uint32_t width = uint32_t(decoder->mFrameRect.Width());
+    uint32_t width = uint32_t(decoder->mFrameRect.width);
 
     // We'll output the deinterlaced version of the row.
     rowToWrite = decoder->interlacebuf + (row_num * decoder->mChannels * width);
@@ -883,7 +882,7 @@ nsPNGDecoder::WriteRow(uint8_t* aRow)
   MOZ_ASSERT(aRow);
 
   uint8_t* rowToWrite = aRow;
-  uint32_t width = uint32_t(mFrameRect.Width());
+  uint32_t width = uint32_t(mFrameRect.width);
 
   // Apply color management to the row, if necessary, before writing it out.
   if (mTransform) {

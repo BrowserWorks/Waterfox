@@ -6,7 +6,6 @@ description: >
     When invoked via the function invocation pattern with a single argument,
     the GeneratorFunction intrinsic creates a valid generator whose body is the
     first argument evaluated as source code.
-features: [generators]
 ---*/
 
 var GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;

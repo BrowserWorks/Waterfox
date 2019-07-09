@@ -127,44 +127,6 @@ fetchXHR('http://user:pass@mochi.test:8888/user-pass', function(xhr) {
   finish();
 });
 
-fetchXHR('readable-stream.txt', function(xhr) {
-  my_ok(xhr.status == 200, "loading completed");
-  my_ok(xhr.responseText == 'Hello!', "The message is correct!");
-  finish();
-});
-
-fetchXHR('readable-stream-locked.txt', function(xhr) {
-  my_ok(false, "This should not be called!");
-  finish();
-}, function() {
-  my_ok(true, "The exception has been correctly handled!");
-  finish();
-});
-
-fetchXHR('readable-stream-with-exception.txt', function(xhr) {
-  my_ok(false, "This should not be called!");
-  finish();
-}, function() {
-  my_ok(true, "The exception has been correctly handled!");
-  finish();
-});
-
-fetchXHR('readable-stream-with-exception2.txt', function(xhr) {
-  my_ok(false, "This should not be called!");
-  finish();
-}, function() {
-  my_ok(true, "The exception has been correctly handled!");
-  finish();
-});
-
-fetchXHR('readable-stream-already-consumed.txt', function(xhr) {
-  my_ok(false, "This should not be called!");
-  finish();
-}, function() {
-  my_ok(true, "The exception has been correctly handled!");
-  finish();
-});
-
 var expectedUncompressedResponse = "";
 for (var i = 0; i < 10; ++i) {
   expectedUncompressedResponse += "hello";
@@ -412,11 +374,7 @@ fetch('interrupt.sjs')
 ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'].forEach(function(method) {
   fetchXHRWithMethod('xhr-method-test.txt', method, function(xhr) {
     my_ok(xhr.status == 200, method + " load should be successful");
-    if (method === "HEAD") {
-      my_ok(xhr.responseText == "", method + "load should not have synthesized response");
-    } else {
-      my_ok(xhr.responseText == ("intercepted " + method), method + " load should have synthesized response");
-    }
+    my_ok(xhr.responseText == ("intercepted " + method), method + " load should have synthesized response");
     finish();
   });
 });

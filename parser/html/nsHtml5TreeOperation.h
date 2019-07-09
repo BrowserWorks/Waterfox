@@ -17,8 +17,7 @@ namespace mozilla {
 class Encoding;
 }
 
-enum eHtml5TreeOperation
-{
+enum eHtml5TreeOperation {
   eTreeOpUninitialized,
   // main HTML5 ops
   eTreeOpAppend,
@@ -28,11 +27,8 @@ enum eHtml5TreeOperation
   eTreeOpAppendToDocument,
   eTreeOpAddAttributes,
   eTreeOpDocumentMode,
-  eTreeOpCreateHTMLElementNetwork,
-  eTreeOpCreateHTMLElementNotNetwork,
-  eTreeOpCreateSVGElementNetwork,
-  eTreeOpCreateSVGElementNotNetwork,
-  eTreeOpCreateMathMLElement,
+  eTreeOpCreateElementNetwork,
+  eTreeOpCreateElementNotNetwork,
   eTreeOpSetFormElement,
   eTreeOpAppendText,
   eTreeOpFosterParentText,
@@ -106,10 +102,10 @@ class nsHtml5TreeOperation final {
      * reobtains dynamic atoms from the Gecko-global atom table.
      *
      * @param aAtom a potentially parser-scoped atom
-     * @return an nsAtom that's pointer comparable on the main thread with
+     * @return an nsIAtom that's pointer comparable on the main thread with
      *         other not-parser atoms.
      */
-    static inline already_AddRefed<nsAtom> Reget(nsAtom* aAtom)
+    static inline already_AddRefed<nsIAtom> Reget(nsIAtom* aAtom)
     {
       if (!aAtom || aAtom->IsStaticAtom()) {
         return dont_AddRef(aAtom);
@@ -151,26 +147,12 @@ class nsHtml5TreeOperation final {
                                   nsHtml5HtmlAttributes* aAttributes,
                                   nsHtml5DocumentBuilder* aBuilder);
 
-    static nsIContent* CreateHTMLElement(
-      nsAtom* aName,
-      nsHtml5HtmlAttributes* aAttributes,
-      mozilla::dom::FromParser aFromParser,
-      nsNodeInfoManager* aNodeInfoManager,
-      nsHtml5DocumentBuilder* aBuilder,
-      mozilla::dom::HTMLContentCreatorFunction aCreator);
-
-    static nsIContent* CreateSVGElement(
-      nsAtom* aName,
-      nsHtml5HtmlAttributes* aAttributes,
-      mozilla::dom::FromParser aFromParser,
-      nsNodeInfoManager* aNodeInfoManager,
-      nsHtml5DocumentBuilder* aBuilder,
-      mozilla::dom::SVGContentCreatorFunction aCreator);
-
-    static nsIContent* CreateMathMLElement(nsAtom* aName,
-                                           nsHtml5HtmlAttributes* aAttributes,
-                                           nsNodeInfoManager* aNodeInfoManager,
-                                           nsHtml5DocumentBuilder* aBuilder);
+    static nsIContent* CreateElement(int32_t aNs,
+                                     nsIAtom* aName,
+                                     nsHtml5HtmlAttributes* aAttributes,
+                                     mozilla::dom::FromParser aFromParser,
+                                     nsNodeInfoManager* aNodeInfoManager,
+                                     nsHtml5DocumentBuilder* aBuilder);
 
     static void SetFormElement(nsIContent* aNode, nsIContent* aParent);
 
@@ -192,7 +174,7 @@ class nsHtml5TreeOperation final {
                                            int32_t aLength,
                                            nsHtml5DocumentBuilder* aBuilder);
 
-    static nsresult AppendDoctypeToDocument(nsAtom* aName,
+    static nsresult AppendDoctypeToDocument(nsIAtom* aName,
                                             const nsAString& aPublicId,
                                             const nsAString& aSystemId,
                                             nsHtml5DocumentBuilder* aBuilder);
@@ -327,31 +309,22 @@ class nsHtml5TreeOperation final {
       mOne.node = static_cast<nsIContent**>(aNode);
       mTwo.state = nullptr;
     }
-
-    inline void Init(int32_t aNamespace,
-                     nsAtom* aName,
+    
+    inline void Init(int32_t aNamespace, 
+                     nsIAtom* aName, 
                      nsHtml5HtmlAttributes* aAttributes,
                      nsIContentHandle* aTarget,
                      nsIContentHandle* aIntendedParent,
-                     bool aFromNetwork,
-                     nsHtml5ContentCreatorFunction aCreator)
+                     bool aFromNetwork)
     {
       NS_PRECONDITION(mOpCode == eTreeOpUninitialized,
         "Op code must be uninitialized when initializing.");
       NS_PRECONDITION(aName, "Initialized tree op with null name.");
       NS_PRECONDITION(aTarget, "Initialized tree op with null target node.");
-      if (aNamespace == kNameSpaceID_XHTML) {
-        mOpCode = aFromNetwork ? eTreeOpCreateHTMLElementNetwork
-                               : eTreeOpCreateHTMLElementNotNetwork;
-        mFour.htmlCreator = aCreator.html;
-      } else if (aNamespace == kNameSpaceID_SVG) {
-        mOpCode = aFromNetwork ? eTreeOpCreateSVGElementNetwork
-                               : eTreeOpCreateSVGElementNotNetwork;
-        mFour.svgCreator = aCreator.svg;
-      } else {
-        MOZ_ASSERT(aNamespace == kNameSpaceID_MathML);
-        mOpCode = eTreeOpCreateMathMLElement;
-      }
+      mOpCode = aFromNetwork ?
+                eTreeOpCreateElementNetwork :
+                eTreeOpCreateElementNotNetwork;
+      mFour.integer = aNamespace;
       mFive.node = static_cast<nsIContent**>(aIntendedParent);
       mOne.node = static_cast<nsIContent**>(aTarget);
       mTwo.atom = aName;
@@ -415,7 +388,7 @@ class nsHtml5TreeOperation final {
       mTwo.attributes = aAttributes;
     }
     
-    inline void Init(nsAtom* aName, 
+    inline void Init(nsIAtom* aName, 
                      const nsAString& aPublicId, 
                      const nsAString& aSystemId)
     {
@@ -428,8 +401,8 @@ class nsHtml5TreeOperation final {
     
     inline void Init(nsIContentHandle* aElement,
                      const char* aMsgId,
-                     nsAtom* aAtom,
-                     nsAtom* aOtherAtom)
+                     nsIAtom* aAtom,
+                     nsIAtom* aOtherAtom)
     {
       NS_PRECONDITION(mOpCode == eTreeOpUninitialized,
         "Op code must be uninitialized when initializing.");
@@ -442,7 +415,7 @@ class nsHtml5TreeOperation final {
 
     inline void Init(nsIContentHandle* aElement,
                      const char* aMsgId,
-                     nsAtom* aAtom)
+                     nsIAtom* aAtom)
     {
       Init(aElement, aMsgId, aAtom, nullptr);
     }
@@ -542,7 +515,8 @@ class nsHtml5TreeOperation final {
 
     nsresult Perform(nsHtml5TreeOpExecutor* aBuilder,
                      nsIContent** aScriptElement,
-                     bool* aInterrupted);
+                     bool* aInterrupted,
+                     bool* aStreamEnded);
 
   private:
     // possible optimization:
@@ -551,7 +525,7 @@ class nsHtml5TreeOperation final {
     eHtml5TreeOperation mOpCode;
     union {
       nsIContent**                    node;
-      nsAtom*                        atom;
+      nsIAtom*                        atom;
       nsHtml5HtmlAttributes*          attributes;
       nsHtml5DocumentMode             mode;
       char16_t*                       unicharPtr;
@@ -561,8 +535,6 @@ class nsHtml5TreeOperation final {
       int32_t                         integer;
       nsresult                        result;
       const Encoding*                 encoding;
-      mozilla::dom::HTMLContentCreatorFunction htmlCreator;
-      mozilla::dom::SVGContentCreatorFunction svgCreator;
     } mOne, mTwo, mThree, mFour, mFive;
 };
 

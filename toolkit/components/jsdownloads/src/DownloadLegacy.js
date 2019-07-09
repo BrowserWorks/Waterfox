@@ -20,6 +20,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 
 /**
  * nsITransfer implementation that provides a bridge to a Download object.
@@ -50,7 +52,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
  * download is successful, even if the source has a size of zero bytes.
  */
 function DownloadLegacyTransfer() {
-  this._promiseDownload = new Promise(r => this._resolveDownload = r);
+  this._deferDownload = PromiseUtils.defer();
 }
 
 DownloadLegacyTransfer.prototype = {
@@ -91,7 +93,7 @@ DownloadLegacyTransfer.prototype = {
 
       // The main request has just started.  Wait for the associated Download
       // object to be available before notifying.
-      this._promiseDownload.then(download => {
+      this._deferDownload.promise.then(download => {
         // If the request was blocked, now that we have the download object we
         // should set a flag that can be retrieved later when handling the
         // cancellation so that the proper error can be thrown.
@@ -124,7 +126,7 @@ DownloadLegacyTransfer.prototype = {
         (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
       // The last file has been received, or the download failed.  Wait for the
       // associated Download object to be available before notifying.
-      this._promiseDownload.then(download => {
+      this._deferDownload.promise.then(download => {
         // At this point, the hash has been set and we need to copy it to the
         // DownloadSaver.
         if (Components.isSuccessCode(aStatus)) {
@@ -163,8 +165,8 @@ DownloadLegacyTransfer.prototype = {
       this._componentFailed = true;
 
       // Wait for the associated Download object to be available.
-      this._promiseDownload.then(download => {
-        download.saver.onTransferFinished(aStatus);
+      this._deferDownload.promise.then(function DLT_OSC_onDownload(aDownload) {
+        aDownload.saver.onTransferFinished(aStatus);
       }).catch(Cu.reportError);
     }
   },
@@ -177,41 +179,11 @@ DownloadLegacyTransfer.prototype = {
                                                       aMaxSelfProgress,
                                                       aCurTotalProgress,
                                                       aMaxTotalProgress) {
-    // Since this progress function is invoked frequently, we use a slightly
-    // more complex solution that optimizes the case where we already have an
-    // associated Download object, avoiding the Promise overhead.
-    if (this._download) {
-      this._hasDelayedProgress = false;
-      this._download.saver.onProgressBytes(aCurTotalProgress,
-                                           aMaxTotalProgress);
-      return;
-    }
-
-    // If we don't have a Download object yet, store the most recent progress
-    // notification to send later. We must do this because there is no guarantee
-    // that a future notification will be sent if the download stalls.
-    this._delayedCurTotalProgress = aCurTotalProgress;
-    this._delayedMaxTotalProgress = aMaxTotalProgress;
-
-    // Do not enqueue multiple callbacks for the progress report.
-    if (this._hasDelayedProgress) {
-      return;
-    }
-    this._hasDelayedProgress = true;
-
-    this._promiseDownload.then(download => {
-      // Check whether an immediate progress report has been already processed
-      // before we could send the delayed progress report.
-      if (!this._hasDelayedProgress) {
-        return;
-      }
-      download.saver.onProgressBytes(this._delayedCurTotalProgress,
-                                     this._delayedMaxTotalProgress);
+    // Wait for the associated Download object to be available.
+    this._deferDownload.promise.then(function DLT_OPC64_onDownload(aDownload) {
+      aDownload.saver.onProgressBytes(aCurTotalProgress, aMaxTotalProgress);
     }).catch(Cu.reportError);
   },
-  _hasDelayedProgress: false,
-  _delayedCurTotalProgress: 0,
-  _delayedMaxTotalProgress: 0,
 
   // nsIWebProgressListener2
   onRefreshAttempted: function DLT_onRefreshAttempted(aWebProgress, aRefreshURI,
@@ -261,8 +233,7 @@ DownloadLegacyTransfer.prototype = {
       aDownload.start().catch(() => {});
 
       // Start processing all the other events received through nsITransfer.
-      this._download = aDownload;
-      this._resolveDownload(aDownload);
+      this._deferDownload.resolve(aDownload);
 
       // Add the download to the list, allowing it to be seen and canceled.
       return Downloads.getList(Downloads.ALL).then(list => list.add(aDownload));
@@ -282,20 +253,10 @@ DownloadLegacyTransfer.prototype = {
   },
 
   /**
-   * Download object associated with this nsITransfer instance. This is not
-   * available immediately when the nsITransfer instance is created.
+   * This deferred object contains a promise that is resolved with the Download
+   * object associated with this nsITransfer instance, when it is available.
    */
-  _download: null,
-
-  /**
-   * Promise that resolves to the Download object associated with this
-   * nsITransfer instance after the _resolveDownload method is invoked.
-   *
-   * Waiting on this promise using "then" ensures that the callbacks are invoked
-   * in the correct order even if enqueued before the object is available.
-   */
-  _promiseDownload: null,
-  _resolveDownload: null,
+  _deferDownload: null,
 
   /**
    * Reference to the component that is executing the download.  This component

@@ -4,14 +4,14 @@
 
 use devtools_traits::{TimelineMarker, TimelineMarkerType};
 use dom::bindings::callback::ExceptionHandling;
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::EventBinding;
 use dom::bindings::codegen::Bindings::EventBinding::{EventConstants, EventMethods};
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{JS, MutNullableJS, Root, RootedReference};
 use dom::bindings::refcounted::Trusted;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot, MutNullableDom, RootedReference};
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::eventtarget::{CompiledEventListener, EventTarget, ListenerPhase};
@@ -20,18 +20,18 @@ use dom::node::Node;
 use dom::virtualmethods::vtable_for;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use script_thread::Runnable;
 use servo_atoms::Atom;
 use std::cell::Cell;
 use std::default::Default;
-use task::TaskOnce;
 use time;
 
 #[dom_struct]
 pub struct Event {
     reflector_: Reflector,
-    current_target: MutNullableDom<EventTarget>,
-    target: MutNullableDom<EventTarget>,
-    type_: DomRefCell<Atom>,
+    current_target: MutNullableJS<EventTarget>,
+    target: MutNullableJS<EventTarget>,
+    type_: DOMRefCell<Atom>,
     phase: Cell<EventPhase>,
     canceled: Cell<EventDefault>,
     stop_propagation: Cell<bool>,
@@ -50,7 +50,7 @@ impl Event {
             reflector_: Reflector::new(),
             current_target: Default::default(),
             target: Default::default(),
-            type_: DomRefCell::new(atom!("")),
+            type_: DOMRefCell::new(atom!("")),
             phase: Cell::new(EventPhase::None),
             canceled: Cell::new(EventDefault::Allowed),
             stop_propagation: Cell::new(false),
@@ -64,8 +64,8 @@ impl Event {
         }
     }
 
-    pub fn new_uninitialized(global: &GlobalScope) -> DomRoot<Event> {
-        reflect_dom_object(Box::new(Event::new_inherited()),
+    pub fn new_uninitialized(global: &GlobalScope) -> Root<Event> {
+        reflect_dom_object(box Event::new_inherited(),
                            global,
                            EventBinding::Wrap)
     }
@@ -73,7 +73,7 @@ impl Event {
     pub fn new(global: &GlobalScope,
                type_: Atom,
                bubbles: EventBubbles,
-               cancelable: EventCancelable) -> DomRoot<Event> {
+               cancelable: EventCancelable) -> Root<Event> {
         let event = Event::new_uninitialized(global);
         event.init_event(type_, bool::from(bubbles), bool::from(cancelable));
         event
@@ -81,7 +81,7 @@ impl Event {
 
     pub fn Constructor(global: &GlobalScope,
                        type_: DOMString,
-                       init: &EventBinding::EventInit) -> Fallible<DomRoot<Event>> {
+                       init: &EventBinding::EventInit) -> Fallible<Root<Event>> {
         let bubbles = EventBubbles::from(init.bubbles);
         let cancelable = EventCancelable::from(init.cancelable);
         Ok(Event::new(global, Atom::from(type_), bubbles, cancelable))
@@ -137,13 +137,13 @@ impl Event {
         // Step 4.
         if let Some(target_node) = target.downcast::<Node>() {
             for ancestor in target_node.ancestors() {
-                event_path.push(Dom::from_ref(ancestor.upcast::<EventTarget>()));
+                event_path.push(JS::from_ref(ancestor.upcast::<EventTarget>()));
             }
             let top_most_ancestor_or_target =
-                DomRoot::from_ref(event_path.r().last().cloned().unwrap_or(target));
-            if let Some(document) = DomRoot::downcast::<Document>(top_most_ancestor_or_target) {
+                Root::from_ref(event_path.r().last().cloned().unwrap_or(target));
+            if let Some(document) = Root::downcast::<Document>(top_most_ancestor_or_target) {
                 if self.type_() != atom!("load") && document.browsing_context().is_some() {
-                    event_path.push(Dom::from_ref(document.window().upcast()));
+                    event_path.push(JS::from_ref(document.window().upcast()));
                 }
             }
         }
@@ -233,12 +233,12 @@ impl EventMethods for Event {
     }
 
     // https://dom.spec.whatwg.org/#dom-event-target
-    fn GetTarget(&self) -> Option<DomRoot<EventTarget>> {
+    fn GetTarget(&self) -> Option<Root<EventTarget>> {
         self.target.get()
     }
 
     // https://dom.spec.whatwg.org/#dom-event-currenttarget
-    fn GetCurrentTarget(&self) -> Option<DomRoot<EventTarget>> {
+    fn GetCurrentTarget(&self) -> Option<Root<EventTarget>> {
         self.current_target.get()
     }
 
@@ -294,7 +294,7 @@ impl EventMethods for Event {
     }
 }
 
-#[derive(Clone, Copy, MallocSizeOf, PartialEq)]
+#[derive(PartialEq, HeapSizeOf, Copy, Clone)]
 pub enum EventBubbles {
     Bubbles,
     DoesNotBubble
@@ -318,7 +318,7 @@ impl From<EventBubbles> for bool {
     }
 }
 
-#[derive(Clone, Copy, MallocSizeOf, PartialEq)]
+#[derive(PartialEq, HeapSizeOf, Copy, Clone)]
 pub enum EventCancelable {
     Cancelable,
     NotCancelable
@@ -342,9 +342,9 @@ impl From<EventCancelable> for bool {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, JSTraceable, PartialEq)]
+#[derive(JSTraceable, Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u16)]
-#[derive(MallocSizeOf)]
+#[derive(HeapSizeOf)]
 pub enum EventPhase {
     None      = EventConstants::NONE,
     Capturing = EventConstants::CAPTURING_PHASE,
@@ -363,7 +363,7 @@ pub enum EventPhase {
 ///
 /// [msg]: https://doc.servo.org/script_traits/enum.ConstellationMsg.html#variant.KeyEvent
 ///
-#[derive(Clone, Copy, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(JSTraceable, HeapSizeOf, Copy, Clone, PartialEq)]
 pub enum EventDefault {
     /// The default action of the event is allowed (constructor's default)
     Allowed,
@@ -381,15 +381,17 @@ pub enum EventStatus {
 }
 
 // https://dom.spec.whatwg.org/#concept-event-fire
-pub struct EventTask {
+pub struct EventRunnable {
     pub target: Trusted<EventTarget>,
     pub name: Atom,
     pub bubbles: EventBubbles,
     pub cancelable: EventCancelable,
 }
 
-impl TaskOnce for EventTask {
-    fn run_once(self) {
+impl Runnable for EventRunnable {
+    fn name(&self) -> &'static str { "EventRunnable" }
+
+    fn handler(self: Box<EventRunnable>) {
         let target = self.target.root();
         let bubbles = self.bubbles;
         let cancelable = self.cancelable;
@@ -398,13 +400,15 @@ impl TaskOnce for EventTask {
 }
 
 // https://html.spec.whatwg.org/multipage/#fire-a-simple-event
-pub struct SimpleEventTask {
+pub struct SimpleEventRunnable {
     pub target: Trusted<EventTarget>,
     pub name: Atom,
 }
 
-impl TaskOnce for SimpleEventTask {
-    fn run_once(self) {
+impl Runnable for SimpleEventRunnable {
+    fn name(&self) -> &'static str { "SimpleEventRunnable" }
+
+    fn handler(self: Box<SimpleEventRunnable>) {
         let target = self.target.root();
         target.fire_event(self.name);
     }
@@ -416,7 +420,7 @@ fn dispatch_to_listeners(event: &Event, target: &EventTarget, event_path: &[&Eve
     assert!(!event.stop_propagation.get());
     assert!(!event.stop_immediate.get());
 
-    let window = match DomRoot::downcast::<Window>(target.global()) {
+    let window = match Root::downcast::<Window>(target.global()) {
         Some(window) => {
             if window.need_emit_timeline_marker(TimelineMarkerType::DOMEvent) {
                 Some(window)
@@ -521,13 +525,4 @@ fn inner_invoke(window: Option<&Window>,
 
     // Step 3.
     found
-}
-
-impl Default for EventBinding::EventInit {
-    fn default() -> EventBinding::EventInit {
-        EventBinding::EventInit {
-            bubbles: false,
-            cancelable: false,
-        }
-    }
 }

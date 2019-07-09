@@ -127,7 +127,7 @@ bool
 Instance::callImport(JSContext* cx, uint32_t funcImportIndex, unsigned argc, const uint64_t* argv,
                      MutableHandleValue rval)
 {
-    Tier tier = code().bestTier();
+    Tier tier = Tier::TBD;
 
     const FuncImport& fi = metadata(tier).funcImports[funcImportIndex];
 
@@ -191,13 +191,9 @@ Instance::callImport(JSContext* cx, uint32_t funcImportIndex, unsigned argc, con
         return true;
 
     // The import may already have become optimized.
-    for (auto t : code().tiers()) {
-        void* jitExitCode = codeBase(t) + fi.jitExitCodeOffset();
-        if (import.code == jitExitCode)
-            return true;
-    }
-
     void* jitExitCode = codeBase(tier) + fi.jitExitCodeOffset();
+    if (import.code == jitExitCode)
+        return true;
 
     // Test if the function is JIT compiled.
     if (!importFun->hasScript())
@@ -215,6 +211,10 @@ Instance::callImport(JSContext* cx, uint32_t funcImportIndex, unsigned argc, con
     if (script->baselineScript()->hasPendingIonBuilder())
         return true;
 
+    // Currently we can't rectify arguments. Therefore disable if argc is too low.
+    if (importFun->nargs() > fi.sig().args().length())
+        return true;
+
     // Ensure the argument types are included in the argument TypeSets stored in
     // the TypeScript. This is necessary for Ion, because the import will use
     // the skip-arg-checks entry point.
@@ -225,13 +225,9 @@ Instance::callImport(JSContext* cx, uint32_t funcImportIndex, unsigned argc, con
     // patched back.
     if (!TypeScript::ThisTypes(script)->hasType(TypeSet::UndefinedType()))
         return true;
-
-    const ValTypeVector& importArgs = fi.sig().args();
-
-    size_t numKnownArgs = Min(importArgs.length(), importFun->nargs());
-    for (uint32_t i = 0; i < numKnownArgs; i++) {
+    for (uint32_t i = 0; i < importFun->nargs(); i++) {
         TypeSet::Type type = TypeSet::UnknownType();
-        switch (importArgs[i]) {
+        switch (fi.sig().args()[i]) {
           case ValType::I32:   type = TypeSet::Int32Type(); break;
           case ValType::I64:   MOZ_CRASH("can't happen because of above guard");
           case ValType::F32:   type = TypeSet::DoubleType(); break;
@@ -245,14 +241,6 @@ Instance::callImport(JSContext* cx, uint32_t funcImportIndex, unsigned argc, con
           case ValType::B32x4: MOZ_CRASH("NYI");
         }
         if (!TypeScript::ArgTypes(script, i)->hasType(type))
-            return true;
-    }
-
-    // These arguments will be filled with undefined at runtime by the
-    // arguments rectifier: check that the imported function can handle
-    // undefined there.
-    for (uint32_t i = importArgs.length(); i < importFun->nargs(); i++) {
-        if (!TypeScript::ArgTypes(script, i)->hasType(TypeSet::UndefinedType()))
             return true;
     }
 
@@ -361,9 +349,9 @@ Instance::Instance(JSContext* cx,
 #endif
     tlsData()->instance = this;
     tlsData()->addressOfContext = (JSContext**)object->zone()->group()->addressOfOwnerContext();
-    tlsData()->jumpTable = code_->jumpTable();
 
-    Tier callerTier = code_->bestTier();
+    Tier callerTier = Tier::TBD;
+    Tier calleeTier = Tier::TBD;
 
     for (size_t i = 0; i < metadata(callerTier).funcImports.length(); i++) {
         HandleFunction f = funcImports[i];
@@ -371,9 +359,8 @@ Instance::Instance(JSContext* cx,
         FuncImportTls& import = funcImportTls(fi);
         if (!isAsmJS() && IsExportedWasmFunction(f)) {
             WasmInstanceObject* calleeInstanceObj = ExportedFunctionToInstanceObject(f);
-            Instance& calleeInstance = calleeInstanceObj->instance();
-            Tier calleeTier = calleeInstance.code().bestTier();
             const CodeRange& codeRange = calleeInstanceObj->getExportedFunctionCodeRange(f, calleeTier);
+            Instance& calleeInstance = calleeInstanceObj->instance();
             import.tls = calleeInstance.tlsData();
             import.code = calleeInstance.codeBase(calleeTier) + codeRange.funcNormalEntry();
             import.baselineScript = nullptr;
@@ -459,13 +446,6 @@ Instance::init(JSContext* cx)
         }
     }
 
-    if (!metadata(code_->bestTier()).funcImports.empty()) {
-        JitRuntime* jitRuntime = cx->runtime()->getJitRuntime(cx);
-        if (!jitRuntime)
-            return false;
-        jsJitArgsRectifier_ = jitRuntime->getArgumentsRectifier();
-    }
-
     return true;
 }
 
@@ -473,7 +453,7 @@ Instance::~Instance()
 {
     compartment_->wasm.unregisterInstance(*this);
 
-    const FuncImportVector& funcImports = metadata(code().stableTier()).funcImports;
+    const FuncImportVector& funcImports = metadata(code().anyTier()).funcImports;
 
     for (unsigned i = 0; i < funcImports.length(); i++) {
         FuncImportTls& import = funcImportTls(funcImports[i]);
@@ -523,11 +503,7 @@ Instance::tracePrivate(JSTracer* trc)
     MOZ_ASSERT(!gc::IsAboutToBeFinalized(&object_));
     TraceEdge(trc, &object_, "wasm instance object");
 
-    TraceNullableEdge(trc, &jsJitArgsRectifier_, "wasm jit args rectifier");
-
-    // OK to just do one tier here; though the tiers have different funcImports
-    // tables, they share the tls object.
-    for (const FuncImport& fi : metadata(code().stableTier()).funcImports)
+    for (const FuncImport& fi : metadata(code().anyTier()).funcImports)
         TraceNullableEdge(trc, &funcImportTls(fi).obj, "wasm import");
 
     for (const SharedTable& table : tables_)
@@ -545,12 +521,6 @@ Instance::trace(JSTracer* trc)
     // WasmInstanceObject will call Instance::tracePrivate at which point we
     // can mark the rest of the children.
     TraceEdge(trc, &object_, "wasm instance object");
-}
-
-WasmMemoryObject*
-Instance::memory() const
-{
-    return memory_;
 }
 
 SharedMem<uint8_t*>
@@ -585,7 +555,7 @@ Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args)
     // If there has been a moving grow, this Instance should have been notified.
     MOZ_RELEASE_ASSERT(!memory_ || tlsData()->memoryBase == memory_->buffer().dataPointerEither());
 
-    Tier tier = code().bestTier();
+    Tier tier = Tier::TBD;
 
     const FuncExport& func = metadata(tier).lookupFuncExport(funcIndex);
 
@@ -691,7 +661,13 @@ Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args)
     }
 
     {
-        JitActivation activation(cx);
+        // Push a WasmActivation to describe the wasm frames we're about to push
+        // when running this module. Additionally, push a JitActivation so that
+        // the optimized wasm-to-Ion FFI call path (which we want to be very
+        // fast) can avoid doing so. The JitActivation is marked as inactive so
+        // stack iteration will skip over it.
+        WasmActivation activation(cx);
+        JitActivation jitActivation(cx, /* active */ false);
 
         // Call the per-exported-function trampoline created by GenerateEntry.
         auto funcPtr = JS_DATA_TO_FUNC_PTR(ExportFuncPtr, codeBase(tier) + func.entryOffset());
@@ -838,10 +814,9 @@ Instance::onMovingGrowTable()
 void
 Instance::deoptimizeImportExit(uint32_t funcImportIndex)
 {
-    Tier t = code().bestTier();
-    const FuncImport& fi = metadata(t).funcImports[funcImportIndex];
+    const FuncImport& fi = metadata(code().anyTier()).funcImports[funcImportIndex];
     FuncImportTls& import = funcImportTls(fi);
-    import.code = codeBase(t) + fi.interpExitCodeOffset();
+    import.code = codeBase(Tier::TBD) + fi.interpExitCodeOffset();
     import.baselineScript = nullptr;
 }
 

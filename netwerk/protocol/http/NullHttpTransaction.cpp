@@ -15,7 +15,6 @@
 #include "NullHttpChannel.h"
 #include "nsQueryObject.h"
 #include "nsNetUtil.h"
-#include "TCPFastOpenLayer.h"
 
 namespace mozilla {
 namespace net {
@@ -184,24 +183,14 @@ NullHttpTransaction::OnTransportStatus(nsITransport* transport,
       mTimings.connectStart = TimeStamp::Now();
     }
   } else if (status == NS_NET_STATUS_CONNECTED_TO) {
-    TimeStamp tnow = TimeStamp::Now();
     if (mTimings.connectEnd.IsNull()) {
-        mTimings.connectEnd = tnow;
-    }
-    if (mTimings.tcpConnectEnd.IsNull()) {
-        mTimings.tcpConnectEnd = tnow;
-    }
-    // After a socket is connected we know for sure whether data has been
-    // sent on SYN packet and if not we should update TLS start timing.
-    if ((mFastOpenStatus != TFO_DATA_SENT) &&
-        !mTimings.secureConnectionStart.IsNull()) {
-        mTimings.secureConnectionStart = tnow;
-    }
-  } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_STARTING) {
-    if (mTimings.secureConnectionStart.IsNull()) {
-        mTimings.secureConnectionStart = TimeStamp::Now();
+      mTimings.connectEnd = TimeStamp::Now();
     }
   } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_ENDED) {
+    if (mTimings.secureConnectionStart.IsNull() &&
+        !mTimings.connectEnd.IsNull()) {
+      mTimings.secureConnectionStart = mTimings.connectEnd;
+    }
     mTimings.connectEnd = TimeStamp::Now();;
   }
 

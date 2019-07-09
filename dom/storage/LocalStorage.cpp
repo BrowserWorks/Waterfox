@@ -154,7 +154,7 @@ LocalStorage::RemoveItem(const nsAString& aKey, nsIPrincipal& aSubjectPrincipal,
   }
 
   if (!aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION)) {
-    BroadcastChangeNotification(aKey, old, VoidString());
+    BroadcastChangeNotification(aKey, old, NullString());
   }
 }
 
@@ -172,7 +172,7 @@ LocalStorage::Clear(nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv)
   }
 
   if (!aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION)) {
-    BroadcastChangeNotification(VoidString(), VoidString(), VoidString());
+    BroadcastChangeNotification(NullString(), NullString(), NullString());
   }
 }
 
@@ -243,6 +243,9 @@ LocalStorage::ApplyEvent(StorageEvent* aStorageEvent)
   // Otherwise, we set the new value.
   mCache->SetItem(this, key, value, old, LocalStorageCache::E10sPropagated);
 }
+
+static const char kPermissionType[] = "cookie";
+static const char kStorageEnabled[] = "dom.storage.enabled";
 
 bool
 LocalStorage::PrincipalEquals(nsIPrincipal* aPrincipal)

@@ -368,7 +368,13 @@ function prompt(aBrowser, aRequest) {
   aBrowser.dispatchEvent(new aBrowser.ownerGlobal
                                      .CustomEvent("PermissionStateChange"));
 
-  let uri = Services.io.newURI(aRequest.documentURI);
+  let uri;
+  try {
+    // This fails for principals that serialize to "null", e.g. file URIs.
+    uri = Services.io.newURI(aRequest.origin);
+  } catch (e) {
+    uri = Services.io.newURI(aRequest.documentURI);
+  }
   let host = getHost(uri);
   let chromeDoc = aBrowser.ownerDocument;
   let stringBundle = chromeDoc.defaultView.gNavigatorBundle;
@@ -541,17 +547,6 @@ function prompt(aBrowser, aRequest) {
           addDeviceToList(menupopup, device.name, device.deviceIndex);
       }
 
-      function checkDisabledWindowMenuItem() {
-        let list = doc.getElementById("webRTC-selectWindow-menulist");
-        let item = list.selectedItem;
-        let notificationElement = doc.getElementById("webRTC-shareDevices-notification");
-        if (!item || item.hasAttribute("disabled")) {
-          notificationElement.setAttribute("invalidselection", "true");
-        } else {
-          notificationElement.removeAttribute("invalidselection");
-        }
-      }
-
       function listScreenShareDevices(menupopup, devices) {
         while (menupopup.lastChild)
           menupopup.removeChild(menupopup.lastChild);
@@ -566,10 +561,10 @@ function prompt(aBrowser, aRequest) {
         label.setAttribute("accesskey",
                            stringBundle.getString(gumStringId + ".accesskey"));
 
-        // "Select <type>" is the default because we can't pick a
+        // "No <type>" is the default because we can't pick a
         // 'default' window to share.
         addDeviceToList(menupopup,
-                        stringBundle.getString("getUserMedia.pick" + typeName + ".label"),
+                        stringBundle.getString("getUserMedia.no" + typeName + ".label"),
                         "-1");
         menupopup.appendChild(doc.createElement("menuseparator"));
 
@@ -610,9 +605,7 @@ function prompt(aBrowser, aRequest) {
         // Always re-select the "No <type>" item.
         doc.getElementById("webRTC-selectWindow-menulist").removeAttribute("value");
         doc.getElementById("webRTC-all-windows-shared").hidden = true;
-
         menupopup._commandEventListener = event => {
-          checkDisabledWindowMenuItem();
           let video = doc.getElementById("webRTC-previewVideo");
           if (video.stream) {
             video.stream.getTracks().forEach(t => t.stop());
@@ -639,21 +632,26 @@ function prompt(aBrowser, aRequest) {
               bundle.getString("getUserMedia.shareScreen.learnMoreLabel");
             let baseURL =
               Services.urlFormatter.formatURLPref("app.support.baseURL");
-            let learnMore =
-              "<label class='text-link' href='" + baseURL + "screenshare-safety'>" +
-              learnMoreText + "</label>";
+
+            let learnMore = chromeWin.document.createElement("label");
+            learnMore.className = "text-link";
+            learnMore.setAttribute("href", baseURL + "screenshare-safety");
+            learnMore.textContent = learnMoreText;
 
             if (type == "screen") {
               string = bundle.getFormattedString("getUserMedia.shareScreenWarning.message",
-                                                 [learnMore]);
+                                                 ["<>"]);
             } else {
               let brand =
                 doc.getElementById("bundle_brand").getString("brandShortName");
               string = bundle.getFormattedString("getUserMedia.shareFirefoxWarning.message",
-                                                 [brand, learnMore]);
+                                                 [brand, "<>"]);
             }
-            // eslint-disable-next-line no-unsanitized/property
-            warning.innerHTML = string;
+
+            let [pre, post] = string.split("<>");
+            warning.textContent = pre;
+            warning.appendChild(learnMore);
+            warning.appendChild(chromeWin.document.createTextNode(post));
           }
 
           let perms = Services.perms;
@@ -688,10 +686,6 @@ function prompt(aBrowser, aRequest) {
         menuitem.setAttribute("tooltiptext", deviceName);
         if (type)
           menuitem.setAttribute("devicetype", type);
-
-        if (deviceIndex == "-1")
-          menuitem.setAttribute("disabled", true);
-
         menupopup.appendChild(menuitem);
         return menuitem;
       }
@@ -703,13 +697,10 @@ function prompt(aBrowser, aRequest) {
       let camMenupopup = doc.getElementById("webRTC-selectCamera-menupopup");
       let windowMenupopup = doc.getElementById("webRTC-selectWindow-menupopup");
       let micMenupopup = doc.getElementById("webRTC-selectMicrophone-menupopup");
-      if (sharingScreen) {
+      if (sharingScreen)
         listScreenShareDevices(windowMenupopup, videoDevices);
-        checkDisabledWindowMenuItem();
-      } else {
+      else
         listDevices(camMenupopup, videoDevices);
-        doc.getElementById("webRTC-shareDevices-notification").removeAttribute("invalidselection");
-      }
 
       if (!sharingAudio)
         listDevices(micMenupopup, audioDevices);
@@ -952,7 +943,7 @@ function getGlobalIndicator() {
       } else if (this[field] && !aState) {
         this._statusBar.removeItem(this[field]);
         this[field].remove();
-        this[field] = null;
+        this[field] = null
       }
     },
     updateIndicatorState() {

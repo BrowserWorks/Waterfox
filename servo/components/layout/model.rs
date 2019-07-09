@@ -7,17 +7,18 @@
 #![deny(unsafe_code)]
 
 use app_units::Au;
-use euclid::{SideOffsets2D, Size2D};
+use euclid::{Transform3D, SideOffsets2D, Size2D};
 use fragment::Fragment;
 use std::cmp::{max, min};
 use std::fmt;
+use style::computed_values::transform::ComputedMatrix;
 use style::logical_geometry::{LogicalMargin, WritingMode};
 use style::properties::ComputedValues;
 use style::values::computed::{BorderCornerRadius, LengthOrPercentageOrAuto};
 use style::values::computed::{LengthOrPercentage, LengthOrPercentageOrNone};
 
 /// A collapsible margin. See CSS 2.1 § 8.3.1.
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct AdjoiningMargins {
     /// The value of the greatest positive margin.
     pub most_positive: Au,
@@ -60,7 +61,7 @@ impl AdjoiningMargins {
 }
 
 /// Represents the block-start and block-end margins of a flow with collapsible margins. See CSS 2.1 § 8.3.1.
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum CollapsibleMargins {
     /// Margins may not collapse with this flow.
     None(Au, Au),
@@ -141,7 +142,7 @@ impl MarginCollapseInfo {
                 may_collapse_through = may_collapse_through &&
                     match fragment.style().content_block_size() {
                         LengthOrPercentageOrAuto::Auto => true,
-                        LengthOrPercentageOrAuto::Length(l) => l.px() == 0.,
+                        LengthOrPercentageOrAuto::Length(Au(v)) => v == 0,
                         LengthOrPercentageOrAuto::Percentage(v) => {
                             v.0 == 0. || containing_block_size.is_none()
                         }
@@ -150,7 +151,7 @@ impl MarginCollapseInfo {
 
                 if may_collapse_through {
                     match fragment.style().min_block_size() {
-                        LengthOrPercentage::Length(l) if l.px() == 0. => {
+                        LengthOrPercentage::Length(Au(0)) => {
                             FinalMarginState::MarginsCollapseThrough
                         },
                         LengthOrPercentage::Percentage(v) if v.0 == 0. => {
@@ -294,7 +295,7 @@ impl MarginCollapseInfo {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum MarginCollapseState {
     /// We are accumulating margin on the logical top of this flow.
     AccumulatingCollapsibleTopMargin,
@@ -303,7 +304,7 @@ pub enum MarginCollapseState {
 }
 
 /// Intrinsic inline-sizes, which consist of minimum and preferred.
-#[derive(Clone, Copy, Serialize)]
+#[derive(Serialize, Copy, Clone)]
 pub struct IntrinsicISizes {
     /// The *minimum inline-size* of the content.
     pub minimum_inline_size: Au,
@@ -394,7 +395,7 @@ impl IntrinsicISizesContribution {
 }
 
 /// Useful helper data type when computing values for blocks and positioned elements.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MaybeAuto {
     Auto,
     Specified(Au),
@@ -412,7 +413,7 @@ impl MaybeAuto {
             LengthOrPercentageOrAuto::Calc(calc) => {
                 MaybeAuto::from_option(calc.to_used_value(Some(containing_length)))
             }
-            LengthOrPercentageOrAuto::Length(length) => MaybeAuto::Specified(Au::from(length))
+            LengthOrPercentageOrAuto::Length(length) => MaybeAuto::Specified(length)
         }
     }
 
@@ -454,7 +455,7 @@ pub fn style_length(style_length: LengthOrPercentageOrAuto,
     match container_size {
         Some(length) => MaybeAuto::from_style(style_length, length),
         None => if let LengthOrPercentageOrAuto::Length(length) = style_length {
-            MaybeAuto::Specified(Au::from(length))
+            MaybeAuto::Specified(length)
         } else {
             MaybeAuto::Auto
         }
@@ -474,8 +475,8 @@ pub fn specified_border_radius(
     containing_size: Size2D<Au>)
     -> Size2D<Au>
 {
-    let w = radius.0.width().to_used_value(containing_size.width);
-    let h = radius.0.height().to_used_value(containing_size.height);
+    let w = radius.0.width.to_used_value(containing_size.width);
+    let h = radius.0.height.to_used_value(containing_size.height);
     Size2D::new(w, h)
 }
 
@@ -507,6 +508,20 @@ pub fn specified_margin_from_style(style: &ComputedValues,
         MaybeAuto::from_style(margin_style.margin_left, Au(0)).specified_or_zero()))
 }
 
+pub trait ToGfxMatrix {
+    fn to_gfx_matrix(&self) -> Transform3D<f32>;
+}
+
+impl ToGfxMatrix for ComputedMatrix {
+    fn to_gfx_matrix(&self) -> Transform3D<f32> {
+        Transform3D::row_major(
+            self.m11 as f32, self.m12 as f32, self.m13 as f32, self.m14 as f32,
+            self.m21 as f32, self.m22 as f32, self.m23 as f32, self.m24 as f32,
+            self.m31 as f32, self.m32 as f32, self.m33 as f32, self.m34 as f32,
+            self.m41 as f32, self.m42 as f32, self.m43 as f32, self.m44 as f32)
+    }
+}
+
 /// A min-size and max-size constraint. The constructor has a optional `border`
 /// parameter, and when it is present the constraint will be subtracted. This is
 /// used to adjust the constraint for `box-sizing: border-box`, and when you do so
@@ -526,7 +541,7 @@ impl SizeConstraint {
         let mut min_size = match container_size {
             Some(container_size) => min_size.to_used_value(container_size),
             None => if let LengthOrPercentage::Length(length) = min_size {
-                Au::from(length)
+                length
             } else {
                 Au(0)
             }
@@ -535,7 +550,7 @@ impl SizeConstraint {
         let mut max_size = match container_size {
             Some(container_size) => max_size.to_used_value(container_size),
             None => if let LengthOrPercentageOrNone::Length(length) = max_size {
-                Some(Au::from(length))
+                Some(length)
             } else {
                 None
             }

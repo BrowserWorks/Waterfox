@@ -127,9 +127,14 @@ using mozilla::dom::FakePluginMimeEntry;
     }                                                                \
   }
 
+// this is the name of the directory which will be created
+// to cache temporary files.
+#define kPluginTmpDirName NS_LITERAL_CSTRING("plugtmp")
+
 static const char *kPrefWhitelist = "plugin.allowed_types";
 static const char *kPrefLoadInParentPrefix = "plugin.load_in_parent_process.";
 static const char *kPrefDisableFullPage = "plugin.disable_full_page_plugin_for_types";
+static const char *kPrefJavaMIME = "plugin.java.mime";
 
 // How long we wait before unloading an idle plugin process.
 // Defaults to 30 seconds.
@@ -657,7 +662,7 @@ void nsPluginHost::OnPluginInstanceDestroyed(nsPluginTag* aPluginTag)
       if (aPluginTag->mUnloadTimer) {
         aPluginTag->mUnloadTimer->Cancel();
       } else {
-        aPluginTag->mUnloadTimer = NS_NewTimer();
+        aPluginTag->mUnloadTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
       }
       uint32_t unloadTimeout = Preferences::GetUint(kPrefUnloadPluginTimeoutSecs,
                                                     kDefaultPluginUnloadingTimeout);
@@ -666,6 +671,27 @@ void nsPluginHost::OnPluginInstanceDestroyed(nsPluginTag* aPluginTag)
                                                  nsITimer::TYPE_ONE_SHOT);
     }
   }
+}
+
+nsresult
+nsPluginHost::GetPluginTempDir(nsIFile **aDir)
+{
+  if (!sPluginTempDir) {
+    nsCOMPtr<nsIFile> tmpDir;
+    nsresult rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR,
+                                         getter_AddRefs(tmpDir));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = tmpDir->AppendNative(kPluginTmpDirName);
+
+    // make it unique, and mode == 0700, not world-readable
+    rv = tmpDir->CreateUnique(nsIFile::DIRECTORY_TYPE, 0700);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    tmpDir.swap(sPluginTempDir);
+  }
+
+  return sPluginTempDir->Clone(aDir);
 }
 
 nsresult
@@ -711,6 +737,7 @@ nsPluginHost::InstantiatePluginInstance(const nsACString& aMimeType, nsIURI* aUR
   }
 
   if (tagType != nsPluginTagType_Embed &&
+      tagType != nsPluginTagType_Applet &&
       tagType != nsPluginTagType_Object) {
     instanceOwner->Destroy();
     return NS_ERROR_FAILURE;
@@ -1001,15 +1028,6 @@ nsPluginHost::HavePluginForExtension(const nsACString & aExtension,
                                      /* out */ nsACString & aMimeType,
                                      PluginFilter aFilter)
 {
-  // As of FF 52, we only support flash and test plugins, so if the extension types
-  // don't match for that, exit before we start loading plugins.
-  //
-  // XXX: Remove tst case when bug 1351885 lands.
-  if (!aExtension.LowerCaseEqualsLiteral("swf") &&
-      !aExtension.LowerCaseEqualsLiteral("tst")) {
-    return false;
-  }
-
   bool checkEnabled = aFilter & eExcludeDisabled;
   bool allowFake = !(aFilter & eExcludeFake);
   return FindNativePluginForExtension(aExtension, aMimeType, checkEnabled) ||
@@ -1148,12 +1166,6 @@ nsPluginHost::FindNativePluginForType(const nsACString & aMimeType,
                                       bool aCheckEnabled)
 {
   if (aMimeType.IsEmpty()) {
-    return nullptr;
-  }
-
-  // As of FF 52, we only support flash and test plugins, so if the mime types
-  // don't match for that, exit before we start loading plugins.
-  if (!nsPluginHost::CanUsePluginForMIMEType(aMimeType)) {
     return nullptr;
   }
 
@@ -1774,6 +1786,21 @@ nsPluginHost::GetSpecialType(const nsACString & aMIMEType)
     return eSpecialType_Flash;
   }
 
+  // Java registers variants of its MIME with parameters, e.g.
+  // application/x-java-vm;version=1.3
+  const nsACString &noParam = Substring(aMIMEType, 0, aMIMEType.FindChar(';'));
+
+  // The java mime pref may well not be one of these,
+  // e.g. application/x-java-test used in the test suite
+  nsAutoCString javaMIME;
+  Preferences::GetCString(kPrefJavaMIME, javaMIME);
+  if ((!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME.get())) ||
+      noParam.LowerCaseEqualsASCII("application/x-java-vm") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-applet") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-bean")) {
+    return eSpecialType_Java;
+  }
+
   return eSpecialType_None;
 }
 
@@ -1920,38 +1947,22 @@ struct CompareFilesByTime
 
 } // namespace
 
-static
 bool
-ShouldAddPlugin(const nsPluginInfo& info, bool flashOnly)
+nsPluginHost::ShouldAddPlugin(nsPluginTag* aPluginTag)
 {
-  if (!info.fName || (strcmp(info.fName, "Shockwave Flash") != 0 && flashOnly)) {
-    return false;
-  }
-  for (uint32_t i = 0; i < info.fVariantCount; ++i) {
-    if (info.fMimeTypeArray[i] &&
-        (!strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash") ||
-         !strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash-test"))) {
-      return true;
-    }
-    if (flashOnly) {
-      continue;
-    }
-    if (info.fMimeTypeArray[i] &&
-        (!strcmp(info.fMimeTypeArray[i], "application/x-test") ||
-         !strcmp(info.fMimeTypeArray[i], "application/x-Second-Test"))) {
-      return true;
-    }
-  }
 #ifdef PLUGIN_LOGGING
   PLUGIN_LOG(PLUGIN_LOG_NORMAL,
              ("ShouldAddPlugin : Ignoring non-flash plugin library %s\n", aPluginTag->FileName().get()));
 #endif // PLUGIN_LOGGING
-  return false;
+  return true;
 }
 
 void
 nsPluginHost::AddPluginTag(nsPluginTag* aPluginTag)
 {
+  if (!ShouldAddPlugin(aPluginTag)) {
+    return;
+  }
   aPluginTag->mNext = mPlugins;
   mPlugins = aPluginTag;
 
@@ -1965,6 +1976,22 @@ nsPluginHost::AddPluginTag(nsPluginTag* aPluginTag)
       }
     }
   }
+}
+
+static bool
+PluginInfoIsFlash(const nsPluginInfo& info)
+{
+  if (!info.fName || strcmp(info.fName, "Shockwave Flash") != 0) {
+    return false;
+  }
+  for (uint32_t i = 0; i < info.fVariantCount; ++i) {
+    if (info.fMimeTypeArray[i] &&
+        (!strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash") ||
+         !strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash-test"))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 typedef NS_NPAPIPLUGIN_CALLBACK(char *, NP_GETMIMEDESCRIPTION)(void);
@@ -2091,8 +2118,7 @@ nsresult nsPluginHost::ScanPluginsDirectory(nsIFile *pluginsDir,
         res = pluginFile.GetPluginInfo(info, &library);
       }
       // if we don't have mime type don't proceed, this is not a plugin
-      if (NS_FAILED(res) || !info.fMimeTypeArray ||
-          (!ShouldAddPlugin(info, flashOnly))) {
+      if (NS_FAILED(res) || !info.fMimeTypeArray) {
         RefPtr<nsInvalidPluginTag> invalidTag = new nsInvalidPluginTag(filePath.get(),
                                                                          fileModTime);
         pluginFile.FreePluginInfo(info);
@@ -2322,6 +2348,7 @@ nsPluginHost::SetPluginsInContent(uint32_t aPluginEpoch,
                                                nsTArray<nsCString>(tag.mimeTypes()),
                                                nsTArray<nsCString>(tag.mimeDescriptions()),
                                                nsTArray<nsCString>(tag.extensions()),
+                                               tag.isJavaPlugin(),
                                                tag.isFlashPlugin(),
                                                tag.supportsAsyncRender(),
                                                tag.lastModifiedTime(),
@@ -2563,6 +2590,7 @@ nsPluginHost::SendPluginsToContent()
                                        tag->MimeTypes(),
                                        tag->MimeDescriptions(),
                                        tag->Extensions(),
+                                       tag->mIsJavaPlugin,
                                        tag->mIsFlashPlugin,
                                        tag->mSupportsAsyncRender,
                                        tag->FileName(),
@@ -2683,11 +2711,11 @@ nsPluginHost::RegisterWithCategoryManager(const nsCString& aMimeType,
     }
 
     // Only delete the entry if a plugin registered for it
-    nsCString value;
+    nsXPIDLCString value;
     nsresult rv = catMan->GetCategoryEntry("Gecko-Content-Viewers",
                                            aMimeType.get(),
                                            getter_Copies(value));
-    if (NS_SUCCEEDED(rv) && strcmp(value.get(), contractId) == 0) {
+    if (NS_SUCCEEDED(rv) && strcmp(value, contractId) == 0) {
       catMan->DeleteCategoryEntry("Gecko-Content-Viewers",
                                   aMimeType.get(),
                                   true);
@@ -3077,6 +3105,10 @@ nsPluginHost::ReadPluginInfo()
     MOZ_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_BASIC,
       ("LoadCachedPluginsInfo : Loading Cached plugininfo for %s\n", tag->FileName().get()));
 
+    if (!ShouldAddPlugin(tag)) {
+      continue;
+    }
+
     tag->mNext = mCachedPlugins;
     mCachedPlugins = tag;
   }
@@ -3406,6 +3438,7 @@ NS_IMETHODIMP nsPluginHost::Observe(nsISupports *aSubject,
                                     const char16_t *someData)
 {
   if (!strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, aTopic)) {
+    OnShutdown();
     UnloadPlugins();
     sInst->Release();
   }
@@ -3856,25 +3889,6 @@ nsPluginHost::DestroyRunningInstances(nsPluginTag* aPluginTag)
       }
     }
   }
-}
-
-/* static */
-bool
-nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType)
-{
-  // We only support flash as a plugin, so if the mime types don't match for
-  // those, exit before we start loading plugins.
-  //
-  // XXX: Remove test/java cases when bug 1351885 lands.
-  if (nsPluginHost::GetSpecialType(aMIMEType) == nsPluginHost::eSpecialType_Flash ||
-      MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-third-test")) {
-    return true;
-  }
-
-  return false;
 }
 
 // Runnable that does an async destroy of a plugin.

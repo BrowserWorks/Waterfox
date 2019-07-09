@@ -170,16 +170,16 @@ public:
   {
     CSSRect scrollableRect = mScrollableRect;
     CSSSize compSize = CalculateCompositedSizeInCssPixels();
-    if (scrollableRect.Width() < compSize.width) {
+    if (scrollableRect.width < compSize.width) {
       scrollableRect.x = std::max(0.f,
-                                  scrollableRect.x - (compSize.width - scrollableRect.Width()));
-      scrollableRect.SetWidth(compSize.width);
+                                  scrollableRect.x - (compSize.width - scrollableRect.width));
+      scrollableRect.width = compSize.width;
     }
 
-    if (scrollableRect.Height() < compSize.height) {
+    if (scrollableRect.height < compSize.height) {
       scrollableRect.y = std::max(0.f,
-                                  scrollableRect.y - (compSize.height - scrollableRect.Height()));
-      scrollableRect.SetHeight(compSize.height);
+                                  scrollableRect.y - (compSize.height - scrollableRect.height));
+      scrollableRect.height = compSize.height;
     }
 
     return scrollableRect;
@@ -213,8 +213,8 @@ public:
   {
     CSSSize scrollPortSize = CalculateCompositedSizeInCssPixels();
     CSSRect scrollRange = mScrollableRect;
-    scrollRange.SetWidth(std::max(scrollRange.Width() - scrollPortSize.width, 0.0f));
-    scrollRange.SetHeight(std::max(scrollRange.Height() - scrollPortSize.height, 0.0f));
+    scrollRange.width = std::max(scrollRange.width - scrollPortSize.width, 0.0f);
+    scrollRange.height = std::max(scrollRange.height - scrollPortSize.height, 0.0f);
     return scrollRange;
   }
 

@@ -8,6 +8,7 @@ import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
+import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
 import android.text.Editable;
@@ -64,10 +65,6 @@ public class FindInPageBar extends LinearLayout
             }
         });
 
-        final Tab tab = Tabs.getInstance().getSelectedTab();
-        final boolean isPrivate = (tab != null && tab.isPrivate());
-        mFindText.setPrivateMode(isPrivate);
-
         mStatusText = (TextView) content.findViewById(R.id.find_status);
 
         mInflated = true;
@@ -75,11 +72,10 @@ public class FindInPageBar extends LinearLayout
             "FindInPage:MatchesCountResult");
     }
 
-    public void show(final boolean isPrivateMode) {
+    public void show() {
         if (!mInflated)
             inflateContent();
 
-        mFindText.setPrivateMode(isPrivateMode);
         setVisibility(VISIBLE);
         mFindText.requestFocus();
 

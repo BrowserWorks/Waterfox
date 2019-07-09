@@ -52,7 +52,6 @@ public class AppConstants {
         public static final boolean feature19Plus = MIN_SDK_VERSION >= 19 || (MAX_SDK_VERSION >= 19 && Build.VERSION.SDK_INT >= 19);
         public static final boolean feature20Plus = MIN_SDK_VERSION >= 20 || (MAX_SDK_VERSION >= 20 && Build.VERSION.SDK_INT >= 20);
         public static final boolean feature21Plus = MIN_SDK_VERSION >= 21 || (MAX_SDK_VERSION >= 21 && Build.VERSION.SDK_INT >= 21);
-        public static final boolean feature23Plus = MIN_SDK_VERSION >= 23 || (MAX_SDK_VERSION >= 23 && Build.VERSION.SDK_INT >= 23);
         public static final boolean feature24Plus = MIN_SDK_VERSION >= 24 || (MAX_SDK_VERSION >= 24 && Build.VERSION.SDK_INT >= 24);
         public static final boolean feature26Plus = MIN_SDK_VERSION >= 26 || (MAX_SDK_VERSION >= 26 && Build.VERSION.SDK_INT >= 26);
 
@@ -118,11 +117,15 @@ public class AppConstants {
     false;
 //#endif
 
-    public static final String MOZ_ANDROID_GCM_SENDERID =
+    public static final String MOZ_ANDROID_GCM_SENDERIDS =
+//#ifdef MOZ_MMA_GCM_SENDERID
+    "@MOZ_ANDROID_GCM_SENDERID@,@MOZ_MMA_GCM_SENDERID@";
+//#else
 //#ifdef MOZ_ANDROID_GCM_SENDERID
     "@MOZ_ANDROID_GCM_SENDERID@";
 //#else
     null;
+//#endif
 //#endif
 
     public static final String MOZ_CHILD_PROCESS_NAME = "@MOZ_CHILD_PROCESS_NAME@";
@@ -305,6 +308,13 @@ public class AppConstants {
     false;
 //#endif
 
+    public static final boolean MOZ_ANDROID_CUSTOM_TABS =
+//#ifdef MOZ_ANDROID_CUSTOM_TABS
+    true;
+//#else
+    false;
+//#endif
+
     public static final boolean MOZ_ANDROID_PWA =
 //#ifdef MOZ_ANDROID_PWA
     true;
@@ -330,12 +340,5 @@ public class AppConstants {
         true;
 //#else
         false;
-//#endif
-
-    public static final String MOZ_POCKET_API_KEY =
-//#ifdef MOZ_ANDROID_POCKET
-        "@MOZ_POCKET_API_KEY@";
-//#else
-        null;
 //#endif
 }

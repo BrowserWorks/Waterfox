@@ -48,9 +48,10 @@ using OggPacketPtr = UniquePtr<ogg_packet, OggPacketDeletePolicy>;
 // Deallocates a packet, used in OggPacketQueue below.
 class OggPacketDeallocator : public nsDequeFunctor
 {
-  virtual void operator()(void* aPacket)
+  virtual void* operator()(void* aPacket)
   {
     OggPacketDeletePolicy()(static_cast<ogg_packet*>(aPacket));
+    return nullptr;
   }
 };
 

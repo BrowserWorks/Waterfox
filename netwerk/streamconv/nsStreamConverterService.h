@@ -10,10 +10,10 @@
 
 #include "nsClassHashtable.h"
 #include "nsCOMArray.h"
-#include "nsStringFwd.h"
 #include "nsTArrayForwardDeclare.h"
 
-class nsAtom;
+class nsCString;
+class nsIAtom;
 
 class nsStreamConverterService : public nsIStreamConverterService {
 public:
@@ -40,8 +40,7 @@ private:
     nsresult ParseFromTo(const char *aContractID, nsCString &aFromRes, nsCString &aToRes);
 
     // member variables
-    nsClassHashtable<nsCStringHashKey, nsTArray<RefPtr<nsAtom>>>
-        mAdjacencyList;
+    nsClassHashtable<nsCStringHashKey, nsCOMArray<nsIAtom>> mAdjacencyList;
 };
 
 #endif // __nsstreamconverterservice__h___

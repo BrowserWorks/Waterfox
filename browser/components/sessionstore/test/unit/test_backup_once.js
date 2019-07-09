@@ -19,6 +19,10 @@ updateAppInfo({
   platformVersion: "",
 });
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function init() {
   // Make sure that we have a profile before initializing SessionFile
   let profd = do_get_profile();
@@ -56,7 +60,7 @@ function promise_check_contents(path, expect) {
 
 function generateFileContents(id) {
   let url = `http://example.com/test_backup_once#${id}_${Math.random()}`;
-  return {windows: [{tabs: [{entries: [{url}], index: 1}]}]};
+  return {windows: [{tabs: [{entries: [{url}], index: 1}]}]}
 }
 
 // Write to the store, and check that it creates:

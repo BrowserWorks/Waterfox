@@ -207,12 +207,6 @@ struct MemStream {
   ~MemStream() { free(mData); }
 };
 
-class EventStream {
-public:
-  virtual void write(const char* aData, size_t aSize) = 0;
-  virtual void read(char* aOut, size_t aSize) = 0;
-};
-
 class RecordedEvent {
 public:
   enum EventType {
@@ -272,9 +266,8 @@ public:
    */
   virtual bool PlayEvent(Translator *aTranslator) const { return true; }
 
-  virtual void RecordToStream(std::ostream& aStream) const = 0;
-  virtual void RecordToStream(EventStream& aStream) const = 0;
-  virtual void RecordToStream(MemStream& aStream) const = 0;
+  virtual void RecordToStream(std::ostream &aStream) const {}
+  virtual void RecordToStream(MemStream &aStream) const  = 0;
 
   virtual void OutputSimpleEventInfo(std::stringstream &aStringStream) const { }
 
@@ -299,14 +292,8 @@ public:
   template<class S>
   static RecordedEvent *LoadEvent(S &aStream, EventType aType);
   static RecordedEvent *LoadEventFromStream(std::istream &aStream, EventType aType);
-  static RecordedEvent *LoadEventFromStream(EventStream& aStream, EventType aType);
 
-  // An alternative to LoadEvent that avoids a heap allocation for the event.
-  // This accepts a callable `f' that will take a RecordedEvent* as a single parameter
-  template<class S, class F>
-  static bool DoWithEvent(S &aStream, EventType aType, F f);
-
-  EventType GetType() const { return (EventType)mType; }
+  EventType GetType() { return (EventType)mType; }
 protected:
   friend class DrawEventRecorderPrivate;
   friend class DrawEventRecorderFile;
@@ -323,3 +310,4 @@ protected:
 } // namespace mozilla
 
 #endif
+

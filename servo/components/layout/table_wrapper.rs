@@ -17,9 +17,7 @@ use app_units::Au;
 use block::{AbsoluteNonReplaced, BlockFlow, FloatNonReplaced, ISizeAndMarginsComputer, ISizeConstraintInput};
 use block::{ISizeConstraintSolution, MarginsMayCollapseFlag};
 use context::LayoutContext;
-use display_list_builder::{BlockFlowDisplayListBuilding, DisplayListBuildState};
-use display_list_builder::{NEVER_CREATES_CLIP_SCROLL_NODE, NEVER_CREATES_CONTAINING_BLOCK};
-use display_list_builder::StackingContextCollectionState;
+use display_list_builder::DisplayListBuildState;
 use euclid::Point2D;
 use floats::FloatKind;
 use flow::{Flow, FlowClass, ImmutableFlowUtils, INLINE_POSITION_IS_STATIC, OpaqueFlow};
@@ -29,7 +27,7 @@ use model::MaybeAuto;
 use std::cmp::{max, min};
 use std::fmt;
 use std::ops::Add;
-use style::computed_values::{position, table_layout};
+use style::computed_values::{border_collapse, position, table_layout};
 use style::context::SharedStyleContext;
 use style::logical_geometry::{LogicalRect, LogicalSize};
 use style::properties::ComputedValues;
@@ -37,18 +35,14 @@ use style::values::CSSFloat;
 use style::values::computed::LengthOrPercentageOrAuto;
 use table::{ColumnComputedInlineSize, ColumnIntrinsicInlineSize};
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Copy, Clone, Serialize, Debug)]
 pub enum TableLayout {
     Fixed,
     Auto
 }
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for TableWrapperFlow {}
-
 /// A table wrapper flow based on a block formatting context.
 #[derive(Serialize)]
-#[repr(C)]
 pub struct TableWrapperFlow {
     pub block_flow: BlockFlow,
 
@@ -102,6 +96,7 @@ impl TableWrapperFlow {
     // tables are separated into table flows and table wrapper flows.
     fn compute_border_and_padding_of_table(&mut self) {
         let available_inline_size = self.block_flow.base.block_container_inline_size;
+        let border_collapse = self.block_flow.fragment.style.get_inheritedtable().border_collapse;
         for kid in self.block_flow.base.child_iter_mut() {
             if !kid.is_table() {
                 continue
@@ -109,7 +104,8 @@ impl TableWrapperFlow {
 
             let kid_table = kid.as_mut_table();
             let kid_block_flow = &mut kid_table.block_flow;
-            kid_block_flow.fragment.compute_border_and_padding(available_inline_size);
+            kid_block_flow.fragment.compute_border_and_padding(available_inline_size,
+                                                               border_collapse);
             kid_block_flow.fragment.compute_block_direction_margins(available_inline_size);
             kid_block_flow.fragment.compute_inline_direction_margins(available_inline_size);
             return
@@ -236,10 +232,12 @@ impl TableWrapperFlow {
 
         // Delegate to the appropriate inline size computer to find the constraint inputs and write
         // the constraint solutions in.
+        let border_collapse = self.block_flow.fragment.style.get_inheritedtable().border_collapse;
         if self.block_flow.base.flags.is_float() {
             let inline_size_computer = FloatedTable {
                 minimum_width_of_all_columns: minimum_width_of_all_columns,
                 preferred_width_of_all_columns: preferred_width_of_all_columns,
+                border_collapse: border_collapse,
                 table_border_padding: border_padding,
             };
             let input =
@@ -260,6 +258,7 @@ impl TableWrapperFlow {
             let inline_size_computer = AbsoluteTable {
                 minimum_width_of_all_columns: minimum_width_of_all_columns,
                 preferred_width_of_all_columns: preferred_width_of_all_columns,
+                border_collapse: border_collapse,
                 table_border_padding: border_padding,
             };
             let input =
@@ -279,6 +278,7 @@ impl TableWrapperFlow {
         let inline_size_computer = Table {
             minimum_width_of_all_columns: minimum_width_of_all_columns,
             preferred_width_of_all_columns: preferred_width_of_all_columns,
+            border_collapse: border_collapse,
             table_border_padding: border_padding,
         };
         let input =
@@ -428,8 +428,8 @@ impl Flow for TableWrapperFlow {
         debug_assert!(remaining.is_none());
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn place_float_if_applicable<'a>(&mut self) {
@@ -462,9 +462,8 @@ impl Flow for TableWrapperFlow {
         self.block_flow.build_display_list(state);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
-        self.block_flow.collect_stacking_contexts_for_block(
-            state, NEVER_CREATES_CONTAINING_BLOCK | NEVER_CREATES_CLIP_SCROLL_NODE);
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
+        self.block_flow.collect_stacking_contexts(state);
     }
 
     fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>) {
@@ -616,7 +615,7 @@ impl<'a> Add for &'a AutoLayoutCandidateGuess {
 
 /// The `CSSFloat` member specifies the weight of the smaller of the two guesses, on a scale from
 /// 0.0 to 1.0.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum SelectedAutoLayoutCandidateGuess {
     UseMinimumGuess,
     InterpolateBetweenMinimumGuessAndMinimumPercentageGuess(CSSFloat),
@@ -787,12 +786,14 @@ fn initial_computed_inline_size(block: &mut BlockFlow,
 struct Table {
     minimum_width_of_all_columns: Au,
     preferred_width_of_all_columns: Au,
+    border_collapse: border_collapse::T,
     table_border_padding: Au,
 }
 
 impl ISizeAndMarginsComputer for Table {
     fn compute_border_and_padding(&self, block: &mut BlockFlow, containing_block_inline_size: Au) {
-        block.fragment.compute_border_and_padding(containing_block_inline_size)
+        block.fragment.compute_border_and_padding(containing_block_inline_size,
+                                                  self.border_collapse)
     }
 
     fn initial_computed_inline_size(&self,
@@ -820,12 +821,14 @@ impl ISizeAndMarginsComputer for Table {
 struct FloatedTable {
     minimum_width_of_all_columns: Au,
     preferred_width_of_all_columns: Au,
+    border_collapse: border_collapse::T,
     table_border_padding: Au,
 }
 
 impl ISizeAndMarginsComputer for FloatedTable {
     fn compute_border_and_padding(&self, block: &mut BlockFlow, containing_block_inline_size: Au) {
-        block.fragment.compute_border_and_padding(containing_block_inline_size)
+        block.fragment.compute_border_and_padding(containing_block_inline_size,
+                                                  self.border_collapse)
     }
 
     fn initial_computed_inline_size(&self,
@@ -855,12 +858,14 @@ impl ISizeAndMarginsComputer for FloatedTable {
 struct AbsoluteTable {
     minimum_width_of_all_columns: Au,
     preferred_width_of_all_columns: Au,
+    border_collapse: border_collapse::T,
     table_border_padding: Au,
 }
 
 impl ISizeAndMarginsComputer for AbsoluteTable {
     fn compute_border_and_padding(&self, block: &mut BlockFlow, containing_block_inline_size: Au) {
-        block.fragment.compute_border_and_padding(containing_block_inline_size)
+        block.fragment.compute_border_and_padding(containing_block_inline_size,
+                                                  self.border_collapse)
     }
 
     fn initial_computed_inline_size(&self,

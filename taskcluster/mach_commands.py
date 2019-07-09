@@ -118,18 +118,6 @@ class MachCommands(MachCommandBase):
     @CommandArgument('--head-rev',
                      required=True,
                      help='Commit revision to use from head repository')
-    @CommandArgument('--comm-base-repository',
-                     required=False,
-                     help='URL for "base" comm-* repository to clone')
-    @CommandArgument('--comm-head-repository',
-                     required=False,
-                     help='URL for "head" comm-* repository to fetch revision from')
-    @CommandArgument('--comm-head-ref',
-                     required=False,
-                     help='comm-* Reference (this is same as rev usually for hg)')
-    @CommandArgument('--comm-head-rev',
-                     required=False,
-                     help='Commit revision to use from head comm-* repository')
     @CommandArgument('--message',
                      required=True,
                      help='Commit message to be parsed. Example: "try: -b do -p all -u all"')
@@ -168,6 +156,81 @@ class MachCommands(MachCommandBase):
             traceback.print_exc()
             sys.exit(1)
 
+    @SubCommand('taskgraph', 'action-task',
+                description="Run the add-tasks task. DEPRECATED! Use 'add-tasks' instead.")
+    @CommandArgument('--root', '-r',
+                     default='taskcluster/ci',
+                     help="root of the taskgraph definition relative to topsrcdir")
+    @CommandArgument('--decision-id',
+                     required=True,
+                     help="Decision Task ID of the reference decision task")
+    @CommandArgument('--task-labels',
+                     required=True,
+                     help='Comma separated list of task labels to be scheduled')
+    def taskgraph_action(self, **options):
+        """Run the action task: Generates a task graph using the set of labels
+        provided in the task-labels parameter. It uses the full-task file of
+        the gecko decision task."""
+
+        import taskgraph.action
+        try:
+            self.setup_logging()
+            return taskgraph.action.add_tasks(options['decision_id'],
+                                              options['task_labels'].split(','))
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @SubCommand('taskgraph', 'add-tasks',
+                description="Run the add-tasks task")
+    @CommandArgument('--root', '-r',
+                     default='taskcluster/ci',
+                     help="root of the taskgraph definition relative to topsrcdir")
+    @CommandArgument('--decision-id',
+                     required=True,
+                     help="Decision Task ID of the reference decision task")
+    @CommandArgument('--task-labels',
+                     required=True,
+                     help='Comma separated list of task labels to be scheduled')
+    def taskgraph_add_tasks(self, **options):
+        """Run the action task: Generates a task graph using the set of labels
+        provided in the task-labels parameter. It uses the full-task file of
+        the gecko decision task."""
+
+        import taskgraph.action
+        try:
+            self.setup_logging()
+            return taskgraph.action.add_tasks(options['decision_id'],
+                                              options['task_labels'].split(','))
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @SubCommand('taskgraph', 'backfill',
+                description="Run the backfill task")
+    @CommandArgument('--root', '-r',
+                     default='taskcluster/ci',
+                     help="root of the taskgraph definition relative to topsrcdir")
+    @CommandArgument('--project',
+                     required=True,
+                     help="Project of the jobs that need to be backfilled.")
+    @CommandArgument('--job-id',
+                     required=True,
+                     help="Id of the job to be backfilled.")
+    def taskgraph_backfill(self, **options):
+        """Run the backfill task: Given a job in a project, it will
+        add that job type to any previous revisions in treeherder
+        until either a hard limit is met or a green version of that
+        job is found."""
+
+        import taskgraph.action
+        try:
+            self.setup_logging()
+            return taskgraph.action.backfill(options['project'], options['job_id'])
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
     @SubCommand('taskgraph', 'cron',
                 description="Run the cron task")
     @CommandArgument('--base-repository',
@@ -200,6 +263,30 @@ class MachCommands(MachCommandBase):
         try:
             self.setup_logging()
             return taskgraph.cron.taskgraph_cron(options)
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @SubCommand('taskgraph', 'add-talos',
+                description="Run the add-talos task")
+    @CommandArgument('--root', '-r',
+                     default='taskcluster/ci',
+                     help="root of the taskgraph definition relative to topsrcdir")
+    @CommandArgument('--decision-task-id',
+                     required=True,
+                     help="Id of the decision task that is part of the push to be talos'd")
+    @CommandArgument('--times',
+                     required=False,
+                     default=1,
+                     type=int,
+                     help="Number of times to add each job.")
+    def taskgraph_add_talos(self, **options):
+        """Add all talos jobs for a push."""
+
+        import taskgraph.action
+        try:
+            self.setup_logging()
+            return taskgraph.action.add_talos(options['decision_task_id'], options['times'])
         except Exception:
             traceback.print_exc()
             sys.exit(1)
@@ -414,26 +501,6 @@ class TaskClusterImagesProvider(object):
                 build_image(image_name)
             else:
                 build_context(image_name, context_only)
-        except Exception:
-            traceback.print_exc()
-            sys.exit(1)
-
-
-@CommandProvider
-class TaskClusterPartialsData(object):
-    @Command('release-history', category="ci",
-             description="Query balrog for release history used by enable partials generation")
-    @CommandArgument('-b', '--branch',
-                     help="The gecko project branch used in balrog, such as "
-                          "mozilla-central, release, date")
-    @CommandArgument('--product', default='Firefox',
-                     help="The product identifier, such as 'Firefox'")
-    def generate_partials_builds(self, product, branch):
-        from taskgraph.util.partials import populate_release_history
-        try:
-            import yaml
-            release_history = {'release_history': populate_release_history(product, branch)}
-            print(yaml.safe_dump(release_history, allow_unicode=True, default_flow_style=False))
         except Exception:
             traceback.print_exc()
             sys.exit(1)

@@ -28,9 +28,8 @@ pub enum CGTextDrawingMode {
     CGTextClip
 }
 
-// This is an enum due to zero-sized types warnings.
-// For more details see https://github.com/rust-lang/rust/issues/27303
-pub enum __CGContext {}
+#[repr(C)]
+pub struct __CGContext;
 
 pub type CGContextRef = *const __CGContext;
 

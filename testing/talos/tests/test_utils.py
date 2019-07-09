@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-
-import os
-import unittest
-
 from talos import utils
+import unittest
+import os
 
 
 class TestTimer(unittest.TestCase):

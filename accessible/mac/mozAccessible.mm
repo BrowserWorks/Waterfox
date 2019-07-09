@@ -733,7 +733,7 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
   ProxyAccessible* proxy = [self getProxyAccessible];
 
   // Deal with landmarks first
-  nsAtom* landmark = nullptr;
+  nsIAtom* landmark = nullptr;
   if (accWrap)
     landmark = accWrap->LandmarkRole();
   else if (proxy)
@@ -770,7 +770,7 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
     return @"AXLandmarkRegion";
 
   // Now, deal with widget roles
-  nsAtom* roleAtom = nullptr;
+  nsIAtom* roleAtom = nullptr;
   if (accWrap && accWrap->HasARIARole()) {
     const nsRoleMapEntry* roleMap = accWrap->ARIARoleMap();
     roleAtom = *roleMap->roleAtom;
@@ -1106,11 +1106,7 @@ struct RoleDescrComparator
 
 - (BOOL)isFocused
 {
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    return FocusMgr()->IsFocused(accWrap);
-  }
-
-  return false; //XXX: proxy implementation is needed.
+  return FocusMgr()->IsFocused([self getGeckoAccessible]);
 }
 
 - (BOOL)canBeFocused

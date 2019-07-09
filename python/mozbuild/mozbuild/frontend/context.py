@@ -24,7 +24,6 @@ from collections import (
 )
 from mozbuild.util import (
     HierarchicalStringList,
-    ImmutableStrictOrderingOnAppendList,
     KeyedDefaultDict,
     List,
     ListWithAction,
@@ -37,8 +36,6 @@ from mozbuild.util import (
     TypedList,
     TypedNamedTuple,
 )
-
-from .. import schedules
 
 from ..testing import (
     all_test_flavors,
@@ -552,9 +549,9 @@ def ContextDerivedTypedList(klass, base_class=List):
     """
     assert issubclass(klass, ContextDerivedValue)
     class _TypedList(ContextDerivedValue, TypedList(klass, base_class)):
-        def __init__(self, context, iterable=[], **kwargs):
+        def __init__(self, context, iterable=[]):
             self.context = context
-            super(_TypedList, self).__init__(iterable, **kwargs)
+            super(_TypedList, self).__init__(iterable)
 
         def normalize(self, e):
             if not isinstance(e, klass):
@@ -608,54 +605,6 @@ def ContextDerivedTypedRecord(*fields):
     return _TypedRecord
 
 
-class Schedules(object):
-    """Similar to a ContextDerivedTypedRecord, but with different behavior
-    for the properties:
-
-     * VAR.inclusive can only be appended to (+=), and can only contain values
-       from mozbuild.schedules.INCLUSIVE_COMPONENTS
-
-     * VAR.exclusive can only be assigned to (no +=), and can only contain
-       values from mozbuild.schedules.ALL_COMPONENTS
-    """
-    __slots__ = ('_exclusive', '_inclusive')
-
-    def __init__(self):
-        self._inclusive = TypedList(Enum(*schedules.INCLUSIVE_COMPONENTS))()
-        self._exclusive = ImmutableStrictOrderingOnAppendList(schedules.EXCLUSIVE_COMPONENTS)
-
-    # inclusive is mutable cannot be assigned to (+= only)
-    @property
-    def inclusive(self):
-        return self._inclusive
-
-    @inclusive.setter
-    def inclusive(self, value):
-        if value is not self._inclusive:
-            raise AttributeError("Cannot assign to this value - use += instead")
-        unexpected = [v for v in value if v not in schedules.INCLUSIVE_COMPONENTS]
-        if unexpected:
-            raise Exception("unexpected exclusive component(s) " + ', '.join(unexpected))
-
-    # exclusive is immuntable but can be set (= only)
-    @property
-    def exclusive(self):
-        return self._exclusive
-
-    @exclusive.setter
-    def exclusive(self, value):
-        if not isinstance(value, (tuple, list)):
-            raise Exception("expected a tuple or list")
-        unexpected = [v for v in value if v not in schedules.ALL_COMPONENTS]
-        if unexpected:
-            raise Exception("unexpected exclusive component(s) " + ', '.join(unexpected))
-        self._exclusive = ImmutableStrictOrderingOnAppendList(sorted(value))
-
-    # components provides a synthetic summary of all components
-    @property
-    def components(self):
-        return list(sorted(set(self._inclusive) | set(self._exclusive)))
-
 @memoize
 def ContextDerivedTypedHierarchicalStringList(type):
     """Specialized HierarchicalStringList for use with ContextDerivedValue
@@ -678,7 +627,7 @@ def ContextDerivedTypedHierarchicalStringList(type):
 
     return _TypedListWithItems
 
-def OrderedPathListWithAction(action):
+def OrderedListWithAction(action):
     """Returns a class which behaves as a StrictOrderingOnAppendList, but
     invokes the given callable with each input and a context as it is
     read, storing a tuple including the result and the original item.
@@ -686,12 +635,12 @@ def OrderedPathListWithAction(action):
     This used to extend moz.build reading to make more data available in
     filesystem-reading mode.
     """
-    class _OrderedListWithAction(ContextDerivedTypedList(SourcePath,
-                                 StrictOrderingOnAppendListWithAction)):
+    class _OrderedListWithAction(ContextDerivedValue,
+                                 StrictOrderingOnAppendListWithAction):
         def __init__(self, context, *args):
             def _action(item):
                 return item, action(context, item)
-            super(_OrderedListWithAction, self).__init__(context, action=_action, *args)
+            super(_OrderedListWithAction, self).__init__(action=_action, *args)
 
     return _OrderedListWithAction
 
@@ -713,8 +662,8 @@ def TypedListWithAction(typ, action):
 WebPlatformTestManifest = TypedNamedTuple("WebPlatformTestManifest",
                                           [("manifest_path", unicode),
                                            ("test_root", unicode)])
-ManifestparserManifestList = OrderedPathListWithAction(read_manifestparser_manifest)
-ReftestManifestList = OrderedPathListWithAction(read_reftest_manifest)
+ManifestparserManifestList = OrderedListWithAction(read_manifestparser_manifest)
+ReftestManifestList = OrderedListWithAction(read_reftest_manifest)
 WptManifestList = TypedListWithAction(WebPlatformTestManifest, read_wpt_manifest)
 
 OrderedSourceList = ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList)
@@ -726,9 +675,6 @@ DependentTestsEntry = ContextDerivedTypedRecord(('files', OrderedSourceList),
                                                 ('flavors', OrderedTestFlavorList))
 BugzillaComponent = TypedNamedTuple('BugzillaComponent',
                         [('product', unicode), ('component', unicode)])
-SchedulingComponents = ContextDerivedTypedRecord(
-        ('inclusive', TypedList(unicode, StrictOrderingOnAppendList)),
-        ('exclusive', TypedList(unicode, StrictOrderingOnAppendList)))
 
 
 class Files(SubContext):
@@ -846,35 +792,6 @@ class Files(SubContext):
 
             Would suggest that nsGlobalWindow.cpp is potentially relevant to
             any plain mochitest.
-            """),
-        'SCHEDULES': (Schedules, list,
-            """Maps source files to the CI tasks that should be scheduled when
-            they change.  The tasks are grouped by named components, and those
-            names appear again in the taskgraph configuration
-            `($topsrcdir/taskgraph/).
-
-            Some components are "inclusive", meaning that changes to most files
-            do not schedule them, aside from those described in a Files
-            subcontext.  For example, py-lint tasks need not be scheduled for
-            most changes, but should be scheduled when any Python file changes.
-            Such components are named by appending to `SCHEDULES.inclusive`:
-
-            with Files('**.py'):
-                SCHEDULES.inclusive += ['py-lint']
-
-            Other components are 'exclusive', meaning that changes to most
-            files schedule them, but some files affect only one or two
-            components. For example, most files schedule builds and tests of
-            Firefox for Android, OS X, Windows, and Linux, but files under
-            `mobile/android/` affect Android builds and tests exclusively, so
-            builds for other operating systems are not needed.  Test suites
-            provide another example: most files schedule reftests, but changes
-            to reftest scripts need only schedule reftests and no other suites.
-
-            Exclusive components are named by setting `SCHEDULES.exclusive`:
-
-            with Files('mobile/android/**'):
-                SCHEDULES.exclusive = ['android']
             """),
     }
 
@@ -1095,20 +1012,6 @@ VARIABLES = {
 
         This variable should not be used directly; you should be using the
         HostRustLibrary template instead.
-        """),
-
-    'RUST_TEST': (unicode, unicode,
-        """Name of a Rust test to build and run via `cargo test`.
-
-        This variable should not be used directly; you should be using the
-        RustTest template instead.
-        """),
-
-    'RUST_TEST_FEATURES': (List, list,
-        """Cargo features to activate for RUST_TEST.
-
-        This variable should not be used directly; you should be using the
-        RustTest template instead.
         """),
 
     'UNIFIED_SOURCES': (ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList), list,
@@ -1642,6 +1545,14 @@ VARIABLES = {
         """List of manifest files defining browser chrome tests.
         """),
 
+    'JETPACK_PACKAGE_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining jetpack package tests.
+        """),
+
+    'JETPACK_ADDON_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining jetpack addon tests.
+        """),
+
     'ANDROID_INSTRUMENTATION_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining Android instrumentation tests.
         """),
@@ -1708,10 +1619,6 @@ VARIABLES = {
 
     'PYTHON_UNITTEST_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining python unit tests.
-        """),
-
-    'CRAMTEST_MANIFESTS': (ManifestparserManifestList, list,
-        """List of manifest files defining cram unit tests.
         """),
 
 
@@ -1800,6 +1707,24 @@ VARIABLES = {
                 (...)
             }
             (...)
+        """),
+
+    'GN_DIRS': (StrictOrderingOnAppendListWithFlagsFactory({
+            'variables': dict,
+            'sandbox_vars': dict,
+            'non_unified_sources': StrictOrderingOnAppendList,
+            'mozilla_flags': list,
+        }), list,
+        """List of dirs containing gn files describing targets to build. Attributes:
+            - variables, a dictionary containing variables and values to pass
+              to `gn gen`.
+            - sandbox_vars, a dictionary containing variables and values to
+              pass to the mozbuild processor on top of those derived from gn.
+            - non_unified_sources, a list containing sources files, relative to
+              the current moz.build, that should be excluded from source file
+              unification.
+            - mozilla_flags, a set of flags that if present in the gn config
+              will be mirrored to the resulting mozbuild configuration.
         """),
 
     'SPHINX_TREES': (dict, dict,

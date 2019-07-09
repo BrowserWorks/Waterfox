@@ -4,6 +4,8 @@
  * important on ARM as an explicit mask is required at the native instruction
  * level. */
 
+load(libdir + 'range.js');
+
 function testShiftLeft()
 {
     var r = [];

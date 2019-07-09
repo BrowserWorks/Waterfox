@@ -287,27 +287,10 @@ imgRequestProxy::GetEventTarget() const
   return target.forget();
 }
 
-nsresult
-imgRequestProxy::DispatchWithTargetIfAvailable(already_AddRefed<nsIRunnable> aEvent)
-{
-  LOG_FUNC(gImgLog, "imgRequestProxy::DispatchWithTargetIfAvailable");
-
-  // This method should only be used when it is *expected* that we are
-  // dispatching an event (e.g. we want to handle an event asynchronously)
-  // rather we need to (e.g. we are in the wrong scheduler group context).
-  // As such, we do not set mHadDispatch for telemetry purposes.
-  if (mEventTarget) {
-    mEventTarget->Dispatch(Move(aEvent), NS_DISPATCH_NORMAL);
-    return NS_OK;
-  }
-
-  return NS_DispatchToMainThread(Move(aEvent));
-}
-
 void
-imgRequestProxy::DispatchWithTarget(already_AddRefed<nsIRunnable> aEvent)
+imgRequestProxy::Dispatch(already_AddRefed<nsIRunnable> aEvent)
 {
-  LOG_FUNC(gImgLog, "imgRequestProxy::DispatchWithTarget");
+  LOG_FUNC(gImgLog, "imgRequestProxy::Dispatch");
 
   MOZ_ASSERT(mListener || mTabGroup);
   MOZ_ASSERT(mEventTarget);
@@ -427,7 +410,7 @@ imgRequestProxy::Cancel(nsresult status)
   mCanceled = true;
 
   nsCOMPtr<nsIRunnable> ev = new imgCancelRunnable(this, status);
-  return DispatchWithTargetIfAvailable(ev.forget());
+  return NS_DispatchToCurrentThread(ev);
 }
 
 void
@@ -468,10 +451,8 @@ imgRequestProxy::CancelAndForgetObserver(nsresult aStatus)
   mIsInLoadGroup = oldIsInLoadGroup;
 
   if (mIsInLoadGroup) {
-    nsCOMPtr<nsIRunnable> ev =
-      NewRunnableMethod("imgRequestProxy::DoRemoveFromLoadGroup",
-                        this, &imgRequestProxy::DoRemoveFromLoadGroup);
-    DispatchWithTargetIfAvailable(ev.forget());
+    NS_DispatchToCurrentThread(NewRunnableMethod("imgRequestProxy::DoRemoveFromLoadGroup",
+                                                 this, &imgRequestProxy::DoRemoveFromLoadGroup));
   }
 
   NullOutListener();
@@ -948,12 +929,12 @@ imgRequestProxy::Notify(int32_t aType, const mozilla::gfx::IntRect* aRect)
     RefPtr<imgRequestProxy> self(this);
     if (aRect) {
       const mozilla::gfx::IntRect rect = *aRect;
-      DispatchWithTarget(NS_NewRunnableFunction("imgRequestProxy::Notify",
+      Dispatch(NS_NewRunnableFunction("imgRequestProxy::Notify",
                                       [self, rect, aType]() -> void {
         self->Notify(aType, &rect);
       }));
     } else {
-      DispatchWithTarget(NS_NewRunnableFunction("imgRequestProxy::Notify",
+      Dispatch(NS_NewRunnableFunction("imgRequestProxy::Notify",
                                       [self, aType]() -> void {
         self->Notify(aType, nullptr);
       }));
@@ -983,7 +964,7 @@ imgRequestProxy::OnLoadComplete(bool aLastPart)
   RefPtr<imgRequestProxy> self(this);
 
   if (!IsOnEventTarget()) {
-    DispatchWithTarget(NS_NewRunnableFunction("imgRequestProxy::OnLoadComplete",
+    Dispatch(NS_NewRunnableFunction("imgRequestProxy::OnLoadComplete",
                                     [self, aLastPart]() -> void {
       self->OnLoadComplete(aLastPart);
     }));
@@ -1038,7 +1019,7 @@ imgRequestProxy::BlockOnload()
 
   if (!IsOnEventTarget()) {
     RefPtr<imgRequestProxy> self(this);
-    DispatchWithTarget(NS_NewRunnableFunction("imgRequestProxy::BlockOnload",
+    Dispatch(NS_NewRunnableFunction("imgRequestProxy::BlockOnload",
                                     [self]() -> void {
       self->BlockOnload();
     }));
@@ -1065,7 +1046,7 @@ imgRequestProxy::UnblockOnload()
 
   if (!IsOnEventTarget()) {
     RefPtr<imgRequestProxy> self(this);
-    DispatchWithTarget(NS_NewRunnableFunction("imgRequestProxy::UnblockOnload",
+    Dispatch(NS_NewRunnableFunction("imgRequestProxy::UnblockOnload",
                                     [self]() -> void {
       self->UnblockOnload();
     }));

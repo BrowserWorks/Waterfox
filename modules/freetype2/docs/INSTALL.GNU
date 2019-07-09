@@ -25,7 +25,7 @@ instructions in the file `INSTALL.UNIX' instead.
 
       http://makepp.sourceforge.net
 
-    for more information; you need version 1.19 or newer, and you must
+    for more information;  you need version 2.0 or newer, and you must
     pass option `--norc-substitution'.
 
     Make sure that you are invoking GNU Make from the command line, by
@@ -35,7 +35,7 @@ instructions in the file `INSTALL.UNIX' instead.
 
     to display its version number.
 
-    VERSION 3.80 OR NEWER IS NEEDED!
+    VERSION 3.81 OR NEWER IS NEEDED!
 
 
   2. Invoke `make'
@@ -148,7 +148,7 @@ instructions in the file `INSTALL.UNIX' instead.
 
 ----------------------------------------------------------------------
 
-Copyright 2003-2017 by
+Copyright 2003-2018 by
 David Turner, Robert Wilhelm, and Werner Lemberg.
 
 This  file is  part of  the FreeType  project, and  may only  be used,

@@ -12,7 +12,7 @@ exports.items = [{
   runAt: "client",
   name: "scratchpad",
   buttonId: "command-button-scratchpad",
-  buttonClass: "command-button",
+  buttonClass: "command-button command-button-invertable",
   tooltipText: l10n.lookup("scratchpadOpenTooltip"),
   hidden: true,
   exec: function (args, context) {

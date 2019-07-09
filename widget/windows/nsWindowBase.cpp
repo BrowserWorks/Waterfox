@@ -11,7 +11,6 @@
 #include "WinUtils.h"
 #include "npapi.h"
 #include "nsAutoPtr.h"
-#include "nsIPresShell.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;

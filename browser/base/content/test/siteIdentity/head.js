@@ -130,7 +130,7 @@ function isSecurityState(browser, expectedState) {
  * @return {Promise}
  * @resolves When the operation has finished and the identity panel has closed.
  */
-async function assertMixedContentBlockingState(tabbrowser, states = {}) {
+function assertMixedContentBlockingState(tabbrowser, states = {}) {
   if (!tabbrowser || !("activeLoaded" in states) ||
       !("activeBlocked" in states) || !("passiveLoaded" in states)) {
     throw new Error("assertMixedContentBlockingState requires a browser and a states object");
@@ -232,9 +232,9 @@ async function assertMixedContentBlockingState(tabbrowser, states = {}) {
   }
 
   if (stateSecure) {
-    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-secure\")",
       "CC using secure icon");
-    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-secure\")",
       "CC using secure icon");
   }
 
@@ -245,34 +245,33 @@ async function assertMixedContentBlockingState(tabbrowser, states = {}) {
       is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/mcb-disabled.svg\")",
         "CC using active loaded icon");
     } else if (activeBlocked || passiveLoaded) {
-      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
-      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
     } else {
       // There is a case here with weak ciphers, but no bc tests are handling this yet.
-      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
-      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg\")",
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
     }
   }
 
   if (activeLoaded || activeBlocked || passiveLoaded) {
-    let promiseViewShown = BrowserTestUtils.waitForEvent(gIdentityHandler._identityPopup, "ViewShown");
     doc.getElementById("identity-popup-security-expander").click();
-    await promiseViewShown;
     is(Array.filter(doc.querySelectorAll("[observes=identity-popup-mcb-learn-more]"),
                     element => !is_hidden(element)).length, 1,
        "The 'Learn more' link should be visible once.");
   }
 
-  if (gIdentityHandler._identityPopup.state != "closed") {
-    let hideEvent = BrowserTestUtils.waitForEvent(gIdentityHandler._identityPopup, "popuphidden");
-    info("Hiding identity popup");
-    gIdentityHandler._identityPopup.hidePopup();
-    await hideEvent;
-  }
+  gIdentityHandler._identityPopup.hidden = true;
+
+  // Wait for the panel to be closed before continuing. The promisePopupHidden
+  // function cannot be used because it's unreliable unless promisePopupShown is
+  // also called before closing the panel. This cannot be done until all callers
+  // are made asynchronous (bug 1221114).
+  return new Promise(resolve => executeSoon(resolve));
 }
 
 async function loadBadCertPage(url) {

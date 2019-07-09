@@ -8,7 +8,7 @@
 #include "mozilla/dom/U2FTokenTransport.h"
 #include "mozilla/dom/U2FHIDTokenManager.h"
 #include "mozilla/dom/U2FSoftTokenManager.h"
-#include "mozilla/dom/PWebAuthnTransactionParent.h"
+#include "mozilla/dom/WebAuthnTransactionParent.h"
 #include "mozilla/MozPromise.h"
 #include "mozilla/dom/WebAuthnUtil.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -160,12 +160,12 @@ U2FTokenManager::Get()
 void
 U2FTokenManager::AbortTransaction(const nsresult& aError)
 {
-  Unused << mTransactionParent->SendAbort(aError);
+  Unused << mTransactionParent->SendCancel(aError);
   ClearTransaction();
 }
 
 void
-U2FTokenManager::MaybeClearTransaction(PWebAuthnTransactionParent* aParent)
+U2FTokenManager::MaybeClearTransaction(WebAuthnTransactionParent* aParent)
 {
   // Only clear if we've been requested to do so by our current transaction
   // parent.
@@ -197,27 +197,28 @@ U2FTokenManager::GetTokenManagerImpl()
   }
 
   auto pm = U2FPrefManager::Get();
+  bool useSoftToken = pm->GetSoftTokenEnabled();
+  bool useUsbToken = pm->GetUsbTokenEnabled();
 
-  // Prefer the HW token, even if the softtoken is enabled too.
-  // We currently don't support soft and USB tokens enabled at the
-  // same time as the softtoken would always win the race to register.
+  // At least one token type must be enabled.
+  // We currently don't support soft and USB tokens enabled at
+  // the same time as the softtoken would always win the race to register.
   // We could support it for signing though...
-  if (pm->GetUsbTokenEnabled()) {
-    return new U2FHIDTokenManager();
+  if (!(useSoftToken ^ useUsbToken)) {
+    return nullptr;
   }
 
-  if (pm->GetSoftTokenEnabled()) {
+  if (useSoftToken) {
     return new U2FSoftTokenManager(pm->GetSoftTokenCounter());
   }
 
   // TODO Use WebAuthnRequest to aggregate results from all transports,
   //      once we have multiple HW transport types.
-
-  return nullptr;
+  return new U2FHIDTokenManager();
 }
 
 void
-U2FTokenManager::Register(PWebAuthnTransactionParent* aTransactionParent,
+U2FTokenManager::Register(WebAuthnTransactionParent* aTransactionParent,
                           const WebAuthnTransactionInfo& aTransactionInfo)
 {
   MOZ_LOG(gU2FTokenManagerLog, LogLevel::Debug, ("U2FAuthRegister"));
@@ -242,29 +243,19 @@ U2FTokenManager::Register(PWebAuthnTransactionParent* aTransactionParent,
   }
 
   uint64_t tid = mTransactionId;
-  mozilla::TimeStamp startTime = mozilla::TimeStamp::Now();
   mTokenManagerImpl->Register(aTransactionInfo.Descriptors(),
                               aTransactionInfo.RpIdHash(),
                               aTransactionInfo.ClientDataHash(),
                               aTransactionInfo.TimeoutMS())
                    ->Then(GetCurrentThreadSerialEventTarget(), __func__,
-                         [tid, startTime](U2FRegisterResult&& aResult) {
+                         [tid](U2FRegisterResult&& aResult) {
                            U2FTokenManager* mgr = U2FTokenManager::Get();
                            mgr->MaybeConfirmRegister(tid, aResult);
-                           Telemetry::ScalarAdd(
-                             Telemetry::ScalarID::SECURITY_WEBAUTHN_USED,
-                             NS_LITERAL_STRING("U2FRegisterFinish"), 1);
-                           Telemetry::AccumulateTimeDelta(
-                             Telemetry::WEBAUTHN_CREATE_CREDENTIAL_MS,
-                             startTime);
                          },
                          [tid](nsresult rv) {
                            MOZ_ASSERT(NS_FAILED(rv));
                            U2FTokenManager* mgr = U2FTokenManager::Get();
                            mgr->MaybeAbortRegister(tid, rv);
-                           Telemetry::ScalarAdd(
-                             Telemetry::ScalarID::SECURITY_WEBAUTHN_USED,
-                             NS_LITERAL_STRING("U2FRegisterAbort"), 1);
                          })
                    ->Track(mRegisterPromise);
 }
@@ -299,7 +290,7 @@ U2FTokenManager::MaybeAbortRegister(uint64_t aTransactionId,
 }
 
 void
-U2FTokenManager::Sign(PWebAuthnTransactionParent* aTransactionParent,
+U2FTokenManager::Sign(WebAuthnTransactionParent* aTransactionParent,
                       const WebAuthnTransactionInfo& aTransactionInfo)
 {
   MOZ_LOG(gU2FTokenManagerLog, LogLevel::Debug, ("U2FAuthSign"));
@@ -320,29 +311,19 @@ U2FTokenManager::Sign(PWebAuthnTransactionParent* aTransactionParent,
   }
 
   uint64_t tid = mTransactionId;
-  mozilla::TimeStamp startTime = mozilla::TimeStamp::Now();
   mTokenManagerImpl->Sign(aTransactionInfo.Descriptors(),
                           aTransactionInfo.RpIdHash(),
                           aTransactionInfo.ClientDataHash(),
                           aTransactionInfo.TimeoutMS())
                    ->Then(GetCurrentThreadSerialEventTarget(), __func__,
-                     [tid, startTime](U2FSignResult&& aResult) {
+                     [tid](U2FSignResult&& aResult) {
                        U2FTokenManager* mgr = U2FTokenManager::Get();
                        mgr->MaybeConfirmSign(tid, aResult);
-                       Telemetry::ScalarAdd(
-                         Telemetry::ScalarID::SECURITY_WEBAUTHN_USED,
-                         NS_LITERAL_STRING("U2FSignFinish"), 1);
-                       Telemetry::AccumulateTimeDelta(
-                         Telemetry::WEBAUTHN_GET_ASSERTION_MS,
-                         startTime);
                      },
                      [tid](nsresult rv) {
                        MOZ_ASSERT(NS_FAILED(rv));
                        U2FTokenManager* mgr = U2FTokenManager::Get();
                        mgr->MaybeAbortSign(tid, rv);
-                       Telemetry::ScalarAdd(
-                         Telemetry::ScalarID::SECURITY_WEBAUTHN_USED,
-                         NS_LITERAL_STRING("U2FSignAbort"), 1);
                      })
                    ->Track(mSignPromise);
 }
@@ -378,7 +359,7 @@ U2FTokenManager::MaybeAbortSign(uint64_t aTransactionId, const nsresult& aError)
 }
 
 void
-U2FTokenManager::Cancel(PWebAuthnTransactionParent* aParent)
+U2FTokenManager::Cancel(WebAuthnTransactionParent* aParent)
 {
   if (mTransactionParent != aParent) {
     return;

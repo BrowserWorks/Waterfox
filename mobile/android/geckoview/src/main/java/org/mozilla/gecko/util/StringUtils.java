@@ -5,8 +5,6 @@
 
 package org.mozilla.gecko.util;
 
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
@@ -245,17 +243,6 @@ public class StringUtils {
         return uri.getQueryParameterNames();
     }
 
-    /**
-     * @return  the index of the path segment of URLs
-     */
-    public static int pathStartIndex(String text) {
-        if (text.contains("://")) {
-            return text.indexOf('/', text.indexOf("://") + 3);
-        } else {
-            return text.indexOf('/');
-        }
-    }
-
     public static String safeSubstring(@NonNull final String str, final int start, final int end) {
         return str.substring(
                 Math.max(0, start),
@@ -288,34 +275,5 @@ public class StringUtils {
         }
 
         return "\u200E" + text;
-    }
-
-    /**
-     * Case-insensitive version of {@link String#startsWith(String)}.
-     */
-    public static boolean caseInsensitiveStartsWith(String text, String prefix) {
-        return caseInsensitiveStartsWith(text, prefix, 0);
-    }
-
-    /**
-     * Case-insensitive version of {@link String#startsWith(String, int)}.
-     */
-    public static boolean caseInsensitiveStartsWith(String text, String prefix, int start) {
-        return text.regionMatches(true, start, prefix, 0, prefix.length());
-    }
-
-    /**
-     * Measures the width of the given substring when rendered using the specified Paint.
-     *
-     * @param text      String to measure and return its width
-     * @param start     Index of the first char in the string to measure
-     * @param end       1 past the last char in the string measure
-     * @param textPaint the paint used to render the text
-     * @return          the width of the specified substring in screen pixels
-     */
-    public static int getTextWidth(final String text, final int start, final int end, final Paint textPaint) {
-        final Rect bounds = new Rect();
-        textPaint.getTextBounds(text, start, end, bounds);
-        return bounds.width();
     }
 }

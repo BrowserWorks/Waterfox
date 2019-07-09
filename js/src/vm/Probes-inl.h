@@ -11,6 +11,8 @@
 
 #include "jscntxt.h"
 
+#include "gc/Zone.h"
+
 namespace js {
 
 /*

@@ -10,12 +10,11 @@
 #include "nsCOMPtr.h"
 #endif
 
-#include "mozilla/HTMLEditor.h"
-#include "mozilla/RefPtr.h"
 #include "nsIHTMLDocument.h"
 
 class nsIDocShell;
 class nsIEditingSession;
+class nsIEditor;
 
 class nsDocShellEditorData
 {
@@ -27,11 +26,8 @@ public:
   bool GetEditable();
   nsresult CreateEditor();
   nsresult GetEditingSession(nsIEditingSession** aResult);
-  mozilla::HTMLEditor* GetHTMLEditor() const
-  {
-    return mHTMLEditor;
-  }
-  nsresult SetHTMLEditor(mozilla::HTMLEditor* aHTMLEditor);
+  nsresult GetEditor(nsIEditor** aResult);
+  nsresult SetEditor(nsIEditor* aEditor);
   void TearDownEditor();
   nsresult DetachFromWindow();
   nsresult ReattachToWindow(nsIDocShell* aDocShell);
@@ -46,15 +42,11 @@ protected:
   // Only present for the content root docShell. Session is owned here.
   nsCOMPtr<nsIEditingSession> mEditingSession;
 
-  // If this frame is editable, store HTML editor here. It's owned here.
-  RefPtr<mozilla::HTMLEditor> mHTMLEditor;
-
-  // Backup for the corresponding nsIHTMLDocument's  editing state while
-  // the editor is detached.
-  nsIHTMLDocument::EditingState mDetachedEditingState;
-
   // Indicates whether to make an editor after a url load.
   bool mMakeEditable;
+
+  // If this frame is editable, store editor here. Editor is owned here.
+  nsCOMPtr<nsIEditor> mEditor;
 
   // Denotes if the editor is detached from its window. The editor is detached
   // while it's stored in the session history bfcache.
@@ -62,6 +54,10 @@ protected:
 
   // Backup for mMakeEditable while the editor is detached.
   bool mDetachedMakeEditable;
+
+  // Backup for the corresponding nsIHTMLDocument's  editing state while
+  // the editor is detached.
+  nsIHTMLDocument::EditingState mDetachedEditingState;
 };
 
 #endif // nsDocShellEditorData_h__

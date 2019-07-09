@@ -52,15 +52,12 @@ module.exports = {
     "no-useless-parameters": require("../lib/rules/no-useless-parameters"),
     "no-useless-removeEventListener":
       require("../lib/rules/no-useless-removeEventListener"),
-    "no-useless-run-test":
-      require("../lib/rules/no-useless-run-test"),
     "reject-importGlobalProperties":
       require("../lib/rules/reject-importGlobalProperties"),
     "reject-some-requires": require("../lib/rules/reject-some-requires"),
     "use-default-preference-values":
       require("../lib/rules/use-default-preference-values"),
     "use-ownerGlobal": require("../lib/rules/use-ownerGlobal"),
-    "use-services": require("../lib/rules/use-services"),
     "var-only-at-top-level": require("../lib/rules/var-only-at-top-level")
   },
   rulesConfig: {
@@ -80,13 +77,11 @@ module.exports = {
     "no-import-into-var-and-global": "off",
     "no-task": "off",
     "no-useless-parameters": "off",
-    "no-useless-run-test": "off",
     "no-useless-removeEventListener": "off",
     "reject-importGlobalProperties": "off",
     "reject-some-requires": "off",
     "use-default-preference-values": "off",
     "use-ownerGlobal": "off",
-    "use-services": "off",
     "var-only-at-top-level": "off"
   }
 };

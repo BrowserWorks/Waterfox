@@ -7,14 +7,7 @@ function test() {
   var principal = secman.createCodebasePrincipal(exampleUri, {});
 
   function testIsFeed(aTitle, aHref, aType, aKnown) {
-    var link = {
-      title: aTitle,
-      href: aHref,
-      type: aType,
-      ownerDocument: {
-        characterSet: "UTF-8"
-      }
-    };
+    var link = { title: aTitle, href: aHref, type: aType };
     return Feeds.isValidFeed(link, principal, aKnown);
   }
 

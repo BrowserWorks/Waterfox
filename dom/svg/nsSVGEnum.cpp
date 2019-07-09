@@ -7,7 +7,7 @@
 #include "nsError.h"
 #include "nsSVGAttrTearoffTable.h"
 #include "nsSVGEnum.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsSVGElement.h"
 #include "nsSMILValue.h"
 #include "SMILEnumType.h"
@@ -30,7 +30,7 @@ nsSVGEnum::GetMapping(nsSVGElement *aSVGElement)
 }
 
 nsresult
-nsSVGEnum::SetBaseValueAtom(const nsAtom* aValue, nsSVGElement *aSVGElement)
+nsSVGEnum::SetBaseValueAtom(const nsIAtom* aValue, nsSVGElement *aSVGElement)
 {
   nsSVGEnumMapping *mapping = GetMapping(aSVGElement);
 
@@ -59,7 +59,7 @@ nsSVGEnum::SetBaseValueAtom(const nsAtom* aValue, nsSVGElement *aSVGElement)
   return NS_ERROR_DOM_SYNTAX_ERR;
 }
 
-nsAtom*
+nsIAtom*
 nsSVGEnum::GetBaseValueAtom(nsSVGElement *aSVGElement)
 {
   nsSVGEnumMapping *mapping = GetMapping(aSVGElement);
@@ -141,7 +141,7 @@ nsSVGEnum::SMILEnum::ValueFromString(const nsAString& aStr,
                                      nsSMILValue& aValue,
                                      bool& aPreventCachingOfSandwich) const
 {
-  nsAtom *valAtom = NS_GetStaticAtom(aStr);
+  nsIAtom *valAtom = NS_GetStaticAtom(aStr);
   if (valAtom) {
     nsSVGEnumMapping *mapping = mVal->GetMapping(mSVGElement);
 

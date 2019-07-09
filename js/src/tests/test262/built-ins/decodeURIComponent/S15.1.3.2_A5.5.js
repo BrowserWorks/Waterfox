@@ -4,8 +4,6 @@
 /*---
 info: The decodeURIComponent property has the attribute DontEnum
 es5id: 15.1.3.2_A5.5
-es6id: 18.2.6.3
-esid: sec-decodeuricomponent-encodeduricomponent
 description: Checking use propertyIsEnumerable, for-in
 ---*/
 
@@ -19,7 +17,7 @@ var result = true;
 for (var p in this){
   if (p === "decodeURIComponent") {
     result = false;
-  }
+  }  
 }
 
 if (result !== true) {

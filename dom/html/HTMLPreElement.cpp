@@ -22,13 +22,16 @@ HTMLPreElement::~HTMLPreElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLPreElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLPreElement, nsGenericHTMLElement,
+                            nsIDOMHTMLPreElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLPreElement)
 
+NS_IMPL_INT_ATTR(HTMLPreElement, Width, width)
+
 bool
 HTMLPreElement::ParseAttribute(int32_t aNamespaceID,
-                               nsAtom* aAttribute,
+                               nsIAtom* aAttribute,
                                const nsAString& aValue,
                                nsAttrValue& aResult)
 {
@@ -58,7 +61,7 @@ HTMLPreElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLPreElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLPreElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   if (!mNodeInfo->Equals(nsGkAtoms::pre)) {
     return nsGenericHTMLElement::IsAttributeMapped(aAttribute);

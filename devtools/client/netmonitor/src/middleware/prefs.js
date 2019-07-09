@@ -10,7 +10,6 @@ const {
   RESET_COLUMNS,
   TOGGLE_COLUMN,
   TOGGLE_REQUEST_FILTER_TYPE,
-  ENABLE_PERSISTENT_LOGS,
   DISABLE_BROWSER_CACHE,
 } = require("../constants");
 const { getRequestFilterTypes } = require("../selectors/index");
@@ -31,10 +30,6 @@ function prefsMiddleware(store) {
           .map(([type, check]) => type);
         Services.prefs.setCharPref(
           "devtools.netmonitor.filters", JSON.stringify(filters));
-        break;
-      case ENABLE_PERSISTENT_LOGS:
-        Services.prefs.setBoolPref(
-          "devtools.netmonitor.persistlog", store.getState().ui.persistentLogsEnabled);
         break;
       case DISABLE_BROWSER_CACHE:
         Services.prefs.setBoolPref(

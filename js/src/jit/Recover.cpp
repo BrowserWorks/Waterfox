@@ -20,8 +20,8 @@
 
 #include "gc/Heap.h"
 
+#include "jit/JitFrameIterator.h"
 #include "jit/JitSpewer.h"
-#include "jit/JSJitFrameIter.h"
 #include "jit/MIR.h"
 #include "jit/MIRGraph.h"
 #include "jit/VMFunctions.h"
@@ -337,32 +337,32 @@ RUrsh::recover(JSContext* cx, SnapshotIterator& iter) const
 }
 
 bool
-MSignExtendInt32::writeRecoverData(CompactBufferWriter& writer) const
+MSignExtend::writeRecoverData(CompactBufferWriter& writer) const
 {
     MOZ_ASSERT(canRecoverOnBailout());
-    writer.writeUnsigned(uint32_t(RInstruction::Recover_SignExtendInt32));
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_SignExtend));
     MOZ_ASSERT(Mode(uint8_t(mode_)) == mode_);
     writer.writeByte(uint8_t(mode_));
     return true;
 }
 
-RSignExtendInt32::RSignExtendInt32(CompactBufferReader& reader)
+RSignExtend::RSignExtend(CompactBufferReader& reader)
 {
     mode_ = reader.readByte();
 }
 
 bool
-RSignExtendInt32::recover(JSContext* cx, SnapshotIterator& iter) const
+RSignExtend::recover(JSContext* cx, SnapshotIterator& iter) const
 {
     RootedValue operand(cx, iter.read());
 
     int32_t result;
-    switch (MSignExtendInt32::Mode(mode_)) {
-      case MSignExtendInt32::Byte:
+    switch (MSignExtend::Mode(mode_)) {
+      case MSignExtend::Byte:
         if (!js::SignExtendOperation<int8_t>(cx, operand, &result))
             return false;
         break;
-      case MSignExtendInt32::Half:
+      case MSignExtend::Half:
         if (!js::SignExtendOperation<int16_t>(cx, operand, &result))
             return false;
         break;
@@ -1359,7 +1359,7 @@ RNewArray::recover(JSContext* cx, SnapshotIterator& iter) const
     RootedValue result(cx);
     RootedObjectGroup group(cx, templateObject->group());
 
-    ArrayObject* resultObject = NewFullyAllocatedArrayTryUseGroup(cx, group, count_);
+    JSObject* resultObject = NewFullyAllocatedArrayTryUseGroup(cx, group, count_);
     if (!resultObject)
         return false;
 
@@ -1509,35 +1509,6 @@ RLambdaArrow::recover(JSContext* cx, SnapshotIterator& iter) const
     RootedFunction fun(cx, &iter.read().toObject().as<JSFunction>());
 
     JSObject* resultObject = js::LambdaArrow(cx, fun, scopeChain, newTarget);
-    if (!resultObject)
-        return false;
-
-    RootedValue result(cx);
-    result.setObject(*resultObject);
-    iter.storeInstructionResult(result);
-    return true;
-}
-
-bool
-MNewCallObject::writeRecoverData(CompactBufferWriter& writer) const
-{
-    MOZ_ASSERT(canRecoverOnBailout());
-    writer.writeUnsigned(uint32_t(RInstruction::Recover_NewCallObject));
-    return true;
-}
-
-RNewCallObject::RNewCallObject(CompactBufferReader& reader)
-{
-}
-
-bool
-RNewCallObject::recover(JSContext* cx, SnapshotIterator& iter) const
-{
-    Rooted<CallObject*> templateObj(cx, &iter.read().toObject().as<CallObject>());
-
-    RootedShape shape(cx, templateObj->lastProperty());
-    RootedObjectGroup group(cx, templateObj->group());
-    JSObject* resultObject = NewCallObject(cx, shape, group);
     if (!resultObject)
         return false;
 
@@ -1712,38 +1683,6 @@ RArrayState::recover(JSContext* cx, SnapshotIterator& iter) const
     }
 
     result.setObject(*object);
-    iter.storeInstructionResult(result);
-    return true;
-}
-
-bool
-MSetArrayLength::writeRecoverData(CompactBufferWriter& writer) const
-{
-    MOZ_ASSERT(canRecoverOnBailout());
-    // For simplicity, we capture directly the object instead of the elements
-    // pointer.
-    MOZ_ASSERT(elements()->type() != MIRType::Elements);
-    writer.writeUnsigned(uint32_t(RInstruction::Recover_SetArrayLength));
-    return true;
-}
-
-RSetArrayLength::RSetArrayLength(CompactBufferReader& reader)
-{
-}
-
-bool
-RSetArrayLength::recover(JSContext* cx, SnapshotIterator& iter) const
-{
-    RootedValue result(cx);
-    RootedArrayObject obj(cx, &iter.read().toObject().as<ArrayObject>());
-    RootedValue len(cx, iter.read());
-
-    RootedId id(cx, NameToId(cx->names().length));
-    ObjectOpResult error;
-    if (!ArraySetLength(cx, obj, id, JSPROP_PERMANENT, len, error))
-        return false;
-
-    result.setObject(*obj);
     iter.storeInstructionResult(result);
     return true;
 }

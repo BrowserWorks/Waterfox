@@ -134,7 +134,7 @@ void
 XPathResult::AttributeChanged(nsIDocument* aDocument,
                               Element* aElement,
                               int32_t aNameSpaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               int32_t aModType,
                               const nsAttrValue* aOldValue)
 {
@@ -144,7 +144,8 @@ XPathResult::AttributeChanged(nsIDocument* aDocument,
 void
 XPathResult::ContentAppended(nsIDocument* aDocument,
                              nsIContent* aContainer,
-                             nsIContent* aFirstNewContent)
+                             nsIContent* aFirstNewContent,
+                             int32_t aNewIndexInContainer)
 {
     Invalidate(aContainer);
 }
@@ -152,7 +153,8 @@ XPathResult::ContentAppended(nsIDocument* aDocument,
 void
 XPathResult::ContentInserted(nsIDocument* aDocument,
                              nsIContent* aContainer,
-                             nsIContent* aChild)
+                             nsIContent* aChild,
+                             int32_t aIndexInContainer)
 {
     Invalidate(aContainer);
 }
@@ -161,6 +163,7 @@ void
 XPathResult::ContentRemoved(nsIDocument* aDocument,
                             nsIContent* aContainer,
                             nsIContent* aChild,
+                            int32_t aIndexInContainer,
                             nsIContent* aPreviousSibling)
 {
     Invalidate(aContainer);

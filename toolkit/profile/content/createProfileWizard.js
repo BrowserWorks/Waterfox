@@ -86,17 +86,16 @@ function chooseProfileFolder() {
   // default to the Profiles folder
   dirChooser.displayDirectory = gDefaultProfileParent;
 
-  dirChooser.open(() => {
-    newProfileRoot = dirChooser.file;
+  dirChooser.show();
+  newProfileRoot = dirChooser.file;
 
-    // Disable the "Default Folder..." button when the default profile folder
-    // was selected manually in the File Picker.
-    document.getElementById("useDefault").disabled =
-      (newProfileRoot.parent.equals(gDefaultProfileParent));
+  // Disable the "Default Folder..." button when the default profile folder
+  // was selected manually in the File Picker.
+  document.getElementById("useDefault").disabled =
+    (newProfileRoot.parent.equals(gDefaultProfileParent));
 
-    gProfileRoot = newProfileRoot;
-    updateProfileDisplay();
-  });
+  gProfileRoot = newProfileRoot;
+  updateProfileDisplay();
 }
 
 // Checks the current user input for validity and triggers an error message accordingly.

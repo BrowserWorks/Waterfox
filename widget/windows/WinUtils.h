@@ -498,6 +498,8 @@ public:
   static bool GetAppInitDLLs(nsAString& aOutput);
 
 #ifdef ACCESSIBILITY
+  static void SetAPCPending();
+
   static a11y::Accessible* GetRootAccessibleForHWND(HWND aHwnd);
 #endif
 

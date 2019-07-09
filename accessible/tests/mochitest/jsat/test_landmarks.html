@@ -47,34 +47,34 @@
       }, {
         accOrElmOrID: "article_header",
         expectedUtterance: [
-          ["a header within an article"],
-          ["a header within an article"]],
+          [{"string": "header"}, "a header within an article"],
+          ["a header within an article", {"string": "header"}]],
         expectedBraille: [
-          ["a header within an article"],
-          ["a header within an article"]],
+          [{"string": "headerAbbr"}, "a header within an article"],
+          ["a header within an article", {"string": "headerAbbr"}]],
       }, {
         accOrElmOrID: "article_footer",
         expectedUtterance: [
-          ["a footer within an article"],
-          ["a footer within an article"]],
+          [{"string": "footer"}, "a footer within an article"],
+          ["a footer within an article", {"string": "footer"}]],
         expectedBraille: [
-          ["a footer within an article"],
-          ["a footer within an article"]]
+          [{"string": "footerAbbr"}, "a footer within an article"],
+          ["a footer within an article", {"string": "footerAbbr"}]]
       }, {
         accOrElmOrID: "section_header",
-        expectedUtterance: [["a header within a section"],
-                            ["a header within a section"]],
+        expectedUtterance: [[{"string": "header"}, "a header within a section"],
+                            ["a header within a section", {"string": "header"}]],
         expectedBraille: [
-          ["a header within a section"],
-          ["a header within a section"]]
+          [{"string": "headerAbbr"}, "a header within a section"],
+          ["a header within a section", {"string": "headerAbbr"}]]
       }, {
         accOrElmOrID: "section_footer",
         expectedUtterance: [
-          ["a footer within a section"],
-          ["a footer within a section"]],
+          [{"string": "footer"}, "a footer within a section"],
+          ["a footer within a section", {"string": "footer"}]],
         expectedBraille: [
-          ["a footer within a section"],
-          ["a footer within a section"]]
+          [{"string": "footerAbbr"}, "a footer within a section"],
+          ["a footer within a section", {"string": "footerAbbr"}]]
       }, {
         accOrElmOrID: "aside",
         expectedUtterance: [

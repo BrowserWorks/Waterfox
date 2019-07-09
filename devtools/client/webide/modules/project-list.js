@@ -7,7 +7,7 @@ const {Cu} = require("chrome");
 const Services = require("Services");
 const {AppProjects} = require("devtools/client/webide/modules/app-projects");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {Task} = require("devtools/shared/task");
 const utils = require("devtools/client/webide/modules/utils");
 const Telemetry = require("devtools/client/shared/telemetry");
@@ -166,7 +166,7 @@ ProjectList.prototype = {
       try {
         url = new URL(tab.url);
       } catch (e) {
-        // Don't try to handle invalid URLs
+        // Don't try to handle invalid URLs, especially from Valence.
         continue;
       }
       // Wanted to use nsIFaviconService here, but it only works for visited

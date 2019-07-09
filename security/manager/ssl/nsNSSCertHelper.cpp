@@ -106,7 +106,8 @@ GetPIPNSSBundleString(const char* stringName, nsAString& result)
     return rv;
   }
   result.Truncate();
-  return pipnssBundle->GetStringFromName(stringName, result);
+  return pipnssBundle->GetStringFromName(stringName,
+                                         getter_Copies(result));
 }
 
 static nsresult
@@ -125,7 +126,7 @@ PIPBundleFormatStringFromName(const char* stringName, const char16_t** params,
   }
   result.Truncate();
   return pipnssBundle->FormatStringFromName(
-    stringName, params, numParams, result);
+    stringName, params, numParams, getter_Copies(result));
 }
 
 static nsresult
@@ -969,7 +970,7 @@ ProcessGeneralName(const UniquePLArenaPool& arena, CERTGeneralName* current,
   NS_ENSURE_ARG_POINTER(current);
 
   nsAutoString key;
-  nsAutoString value;
+  nsXPIDLString value;
   nsresult rv = NS_OK;
 
   switch (current->type) {
@@ -1885,7 +1886,7 @@ nsNSSCertificate::CreateTBSCertificateASN1Struct(nsIASN1Sequence** retSequence)
   algID->SetDisplayName(text);
   asn1Objects->AppendElement(algID, false);
 
-  nsString value;
+  nsXPIDLString value;
   ProcessName(&mCert->issuer, getter_Copies(value));
 
   printableItem = new nsNSSASN1PrintableItem();

@@ -1,4 +1,4 @@
-"use strict";
+"use strict"
 
 add_task(async function() {
   info("Bug 475529 - Add is the default button for the new folder dialog + " +
@@ -30,7 +30,7 @@ add_task(async function() {
         tree.controller.doCommand("placesCmd_new:folder");
       },
       async function test(dialogWin) {
-        let promiseTitleChangeNotification = PlacesTestUtils.waitForNotification(
+        let promiseTitleChangeNotification = promiseBookmarksNotification(
           "onItemChanged", (itemId, prop, isAnno, val) => prop == "title" && val == "n");
 
         fillBookmarkTextField("editBMPanel_namePicker", "n", dialogWin, false);
@@ -45,11 +45,6 @@ add_task(async function() {
         });
 
         is(newFolder.title, "n", "folder name has been edited");
-
-        let bm = await PlacesUtils.bookmarks.fetch(newBookmark.guid);
-        Assert.equal(bm.index, insertionIndex + 1,
-          "Bookmark should have been shifted to the next index");
-
         await PlacesUtils.bookmarks.remove(newFolder);
         await PlacesUtils.bookmarks.remove(newBookmark);
       }

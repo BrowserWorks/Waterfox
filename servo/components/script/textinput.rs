@@ -16,13 +16,13 @@ use std::ops::Range;
 use std::usize;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Selection {
     Selected,
     NotSelected
 }
 
-#[derive(Clone, Copy, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(JSTraceable, PartialEq, Copy, Clone, HeapSizeOf)]
 pub enum SelectionDirection {
     Forward,
     Backward,
@@ -49,7 +49,7 @@ impl From<SelectionDirection> for DOMString {
     }
 }
 
-#[derive(Clone, Copy, JSTraceable, MallocSizeOf, PartialEq)]
+#[derive(JSTraceable, Copy, Clone, HeapSizeOf, PartialEq)]
 pub struct TextPoint {
     /// 0-based line number
     pub line: usize,
@@ -58,7 +58,7 @@ pub struct TextPoint {
 }
 
 /// Encapsulated state for handling keyboard input in a single or multiline text input control.
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 pub struct TextInput<T: ClipboardProvider> {
     /// Current text input content, split across lines without trailing '\n'
     lines: Vec<DOMString>,
@@ -68,11 +68,11 @@ pub struct TextInput<T: ClipboardProvider> {
     pub selection_begin: Option<TextPoint>,
     /// Is this a multiline input?
     multiline: bool,
-    #[ignore_malloc_size_of = "Can't easily measure this generic type"]
+    #[ignore_heap_size_of = "Can't easily measure this generic type"]
     clipboard_provider: T,
     /// The maximum number of UTF-16 code units this text input is allowed to hold.
     ///
-    /// <https://html.spec.whatwg.org/multipage/#attr-fe-maxlength>
+    /// https://html.spec.whatwg.org/multipage/#attr-fe-maxlength
     pub max_length: Option<usize>,
     pub min_length: Option<usize>,
     pub selection_direction: SelectionDirection,
@@ -96,14 +96,14 @@ impl Default for TextPoint {
 }
 
 /// Control whether this control should allow multiple lines.
-#[derive(Eq, PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Lines {
     Single,
     Multiple,
 }
 
 /// The direction in which to delete a character.
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Direction {
     Forward,
     Backward
@@ -236,7 +236,7 @@ impl<T: ClipboardProvider> TextInput<T> {
     /// The length of the selected text in UTF-16 code units.
     fn selection_utf16_len(&self) -> usize {
         self.fold_selection_slices(0usize,
-            |len, slice| *len += slice.chars().map(char::len_utf16).sum::<usize>())
+            |len, slice| *len += slice.chars().map(char::len_utf16).sum())
     }
 
     /// Run the callback on a series of slices that, concatenated, make up the selected text.

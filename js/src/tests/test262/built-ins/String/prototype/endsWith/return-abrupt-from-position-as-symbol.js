@@ -12,7 +12,7 @@ info: >
   ToInteger(endPosition).
   11. ReturnIfAbrupt(pos).
   ...
-features: [Symbol, String.prototype.endsWith]
+features: [Symbol]
 ---*/
 
 var position = Symbol();

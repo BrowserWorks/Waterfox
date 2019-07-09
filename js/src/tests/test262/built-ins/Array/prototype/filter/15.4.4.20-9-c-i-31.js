@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.filter
 es5id: 15.4.4.20-9-c-i-31
 description: >
     Array.prototype.filter - unnhandled exceptions happened in getter

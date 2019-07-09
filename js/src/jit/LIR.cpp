@@ -6,8 +6,6 @@
 
 #include "jit/LIR.h"
 
-#include "mozilla/ScopeExit.h"
-
 #include <ctype.h>
 
 #include "jsprf.h"
@@ -211,10 +209,8 @@ LRecoverInfo::New(MIRGenerator* gen, MResumePoint* mir)
     return recoverInfo;
 }
 
-// de-virtualise MResumePoint::getOperand calls.
-template <typename Node>
 bool
-LRecoverInfo::appendOperands(Node* ins)
+LRecoverInfo::appendOperands(MNode* ins)
 {
     for (size_t i = 0, end = ins->numOperands(); i < end; i++) {
         MDefinition* def = ins->getOperand(i);
@@ -237,18 +233,10 @@ LRecoverInfo::appendDefinition(MDefinition* def)
 {
     MOZ_ASSERT(def->isRecoveredOnBailout());
     def->setInWorklist();
-    auto clearWorklistFlagOnFailure = mozilla::MakeScopeExit([&] {
-        def->setNotInWorklist();
-    });
 
     if (!appendOperands(def))
         return false;
-
-    if (!instructions_.append(def))
-        return false;
-
-    clearWorklistFlagOnFailure.release();
-    return true;
+    return instructions_.append(def);
 }
 
 bool
@@ -272,22 +260,20 @@ LRecoverInfo::appendResumePoint(MResumePoint* rp)
 bool
 LRecoverInfo::init(MResumePoint* rp)
 {
-    // Before exiting this function, remove temporary flags from all definitions
-    // added in the vector.
-    auto clearWorklistFlags = mozilla::MakeScopeExit([&] {
-        for (MNode** it = begin(); it != end(); it++) {
-            if (!(*it)->isDefinition())
-                continue;
-            (*it)->toDefinition()->setNotInWorklist();
-        }
-    });
-
     // Sort operations in the order in which we need to restore the stack. This
     // implies that outer frames, as well as operations needed to recover the
     // current frame, are located before the current frame. The inner-most
     // resume point should be the last element in the list.
     if (!appendResumePoint(rp))
         return false;
+
+    // Remove temporary flags from all definitions.
+    for (MNode** it = begin(); it != end(); it++) {
+        if (!(*it)->isDefinition())
+            continue;
+
+        (*it)->toDefinition()->setNotInWorklist();
+    }
 
     MOZ_ASSERT(mir() == rp);
     return true;

@@ -22,9 +22,6 @@ const consoleApiCommands = [
   "console.log('myregex', /a.b.c/)",
   "console.table(['red', 'green', 'blue']);",
   "console.log('myobject', {red: 'redValue', green: 'greenValue', blue: 'blueValue'});",
-  "console.debug('debug message');",
-  "console.info('info message');",
-  "console.error('error message');",
 ];
 
 let consoleApi = new Map(consoleApiCommands.map(

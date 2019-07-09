@@ -10,9 +10,7 @@ use app_units::Au;
 use block::{BlockFlow, CandidateBSizeIterator, ISizeAndMarginsComputer};
 use block::{ISizeConstraintInput, ISizeConstraintSolution};
 use context::LayoutContext;
-use display_list_builder::{BlockFlowDisplayListBuilding, BorderPaintingMode};
-use display_list_builder::{DisplayListBuildState, NEVER_CREATES_STACKING_CONTEXT};
-use display_list_builder::StackingContextCollectionState;
+use display_list_builder::{BlockFlowDisplayListBuilding, BorderPaintingMode, DisplayListBuildState};
 use euclid::Point2D;
 use flow;
 use flow::{BaseFlow, EarlyAbsolutePositionInfo, Flow, FlowClass, ImmutableFlowUtils, OpaqueFlow};
@@ -34,14 +32,10 @@ use table_row::{self, CellIntrinsicInlineSize, CollapsedBorder, CollapsedBorderP
 use table_row::TableRowFlow;
 use table_wrapper::TableLayout;
 
-#[allow(unsafe_code)]
-unsafe impl ::flow::HasBaseFlow for TableFlow {}
-
 /// A table flow corresponded to the table's internal table fragment under a table wrapper flow.
 /// The properties `position`, `float`, and `margin-*` are used on the table wrapper fragment,
 /// not table fragment per CSS 2.1 § 10.5.
 #[derive(Serialize)]
-#[repr(C)]
 pub struct TableFlow {
     pub block_flow: BlockFlow,
 
@@ -194,7 +188,12 @@ impl TableFlow {
         let style = self.block_flow.fragment.style();
         match style.get_inheritedtable().border_collapse {
             border_collapse::T::separate => style.get_inheritedtable().border_spacing,
-            border_collapse::T::collapse => border_spacing::T::zero(),
+            border_collapse::T::collapse => {
+                border_spacing::T {
+                    horizontal: Au(0),
+                    vertical: Au(0),
+                }
+            }
         }
     }
 
@@ -203,7 +202,7 @@ impl TableFlow {
         if num_columns == 0 {
             return Au(0);
         }
-        self.spacing().horizontal() * (num_columns as i32 + 1)
+        self.spacing().horizontal * (num_columns as i32 + 1)
     }
 }
 
@@ -248,7 +247,7 @@ impl Flow for TableFlow {
                         LengthOrPercentageOrAuto::Auto |
                         LengthOrPercentageOrAuto::Calc(_) |
                         LengthOrPercentageOrAuto::Percentage(_) => Au(0),
-                        LengthOrPercentageOrAuto::Length(length) => Au::from(length),
+                        LengthOrPercentageOrAuto::Length(length) => length,
                     },
                     percentage: match *specified_inline_size {
                         LengthOrPercentageOrAuto::Auto |
@@ -470,12 +469,12 @@ impl Flow for TableFlow {
 
     fn assign_block_size(&mut self, _: &LayoutContext) {
         debug!("assign_block_size: assigning block_size for table");
-        let vertical_spacing = self.spacing().vertical();
+        let vertical_spacing = self.spacing().vertical;
         self.block_flow.assign_block_size_for_table_like_flow(vertical_spacing)
     }
 
-    fn compute_stacking_relative_position(&mut self, layout_context: &LayoutContext) {
-        self.block_flow.compute_stacking_relative_position(layout_context)
+    fn compute_absolute_position(&mut self, layout_context: &LayoutContext) {
+        self.block_flow.compute_absolute_position(layout_context)
     }
 
     fn generated_containing_block_size(&self, flow: OpaqueFlow) -> LogicalSize<Au> {
@@ -503,9 +502,8 @@ impl Flow for TableFlow {
         self.block_flow.build_display_list_for_block(state, border_painting_mode);
     }
 
-    fn collect_stacking_contexts(&mut self, state: &mut StackingContextCollectionState) {
-        // Stacking contexts are collected by the table wrapper.
-        self.block_flow.collect_stacking_contexts_for_block(state, NEVER_CREATES_STACKING_CONTEXT);
+    fn collect_stacking_contexts(&mut self, state: &mut DisplayListBuildState) {
+        self.block_flow.collect_stacking_contexts(state);
     }
 
     fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>) {
@@ -547,7 +545,8 @@ pub struct InternalTable {
 
 impl ISizeAndMarginsComputer for InternalTable {
     fn compute_border_and_padding(&self, block: &mut BlockFlow, containing_block_inline_size: Au) {
-        block.fragment.compute_border_and_padding(containing_block_inline_size)
+        block.fragment.compute_border_and_padding(containing_block_inline_size,
+                                                  self.border_collapse)
     }
 
     /// Compute the used value of inline-size, taking care of min-inline-size and max-inline-size.
@@ -589,7 +588,7 @@ impl ISizeAndMarginsComputer for InternalTable {
 /// maximum of 100 pixels and 20% of the table), the preceding constraint means that we must
 /// potentially store both a specified width *and* a specified percentage, so that the inline-size
 /// assignment phase of layout will know which one to pick.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Serialize, Debug, Copy)]
 pub struct ColumnIntrinsicInlineSize {
     /// The preferred intrinsic inline size.
     pub preferred: Au,
@@ -626,7 +625,7 @@ impl ColumnIntrinsicInlineSize {
 ///
 /// TODO(pcwalton): There will probably be some `border-collapse`-related info in here too
 /// eventually.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Serialize, Clone, Copy, Debug)]
 pub struct ColumnComputedInlineSize {
     /// The computed size of this inline column.
     pub size: Au,

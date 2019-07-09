@@ -65,24 +65,12 @@ pingDiscardedForSize
 The ``pingDiscardedForSize`` field contains the information about top ten pings, whose size exceeded the
 ping size limit (1 mb). This field lists the number of discarded pings per ping type.
 
-The ping type "<unknown>" is used to indicate that a pending pings size exceeded the limit. This is because we don't have the pending pings type available cheaply at the moment.
-
 This field is optional.
 
 sendFailure
 ~~~~~~~~~~~
 The ``sendFailure`` field contains the information about pings, which had failures on sending.
 This field lists the number of failed pings per ping send failure type.
-
-The recorded failure types are:
-
-* "eOK"
-* "eRequest"
-* "eUnreachable"
-* "eChannelOpen"
-* "eRedirect"
-* "abort"
-* "timeout"
 
 This field is optional.
 

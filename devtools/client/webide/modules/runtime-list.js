@@ -6,7 +6,7 @@
 
 const Services = require("Services");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {RuntimeScanners, WiFiScanner} = require("devtools/client/webide/modules/runtimes");
 const {Devices} = require("resource://devtools/shared/apps/Devices.jsm");
 const {Task} = require("devtools/shared/task");
@@ -126,6 +126,7 @@ RuntimeList.prototype = {
 
     let usbListNode = doc.querySelector("#runtime-panel-usb");
     let wifiListNode = doc.querySelector("#runtime-panel-wifi");
+    let simulatorListNode = doc.querySelector("#runtime-panel-simulator");
     let otherListNode = doc.querySelector("#runtime-panel-other");
     let noHelperNode = doc.querySelector("#runtime-panel-noadbhelper");
     let noUSBNode = doc.querySelector("#runtime-panel-nousbdevice");
@@ -151,6 +152,7 @@ RuntimeList.prototype = {
     for (let [type, parent] of [
       ["usb", usbListNode],
       ["wifi", wifiListNode],
+      ["simulator", simulatorListNode],
       ["other", otherListNode],
     ]) {
       while (parent.hasChildNodes()) {

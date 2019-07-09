@@ -658,7 +658,7 @@ class TaskCache(CacheManager):
                  'Searching Taskcluster index with namespace: {namespace}')
         try:
             taskId = find_task_id(namespace)
-        except KeyError:
+        except Exception:
             # Not all revisions correspond to pushes that produce the job we
             # care about; and even those that do may not have completed yet.
             raise ValueError('Task for {namespace} does not exist (yet)!'.format(namespace=namespace))
@@ -744,13 +744,7 @@ class ArtifactPersistLimit(PersistLimit):
             if f.path in self._downloaded_now:
                 kept.append(f)
                 continue
-            try:
-                fs.remove(f.path)
-            except WindowsError:
-                # For some reason, on automation, we can't remove those files.
-                # So for now, ignore the error.
-                kept.append(f)
-                continue
+            fs.remove(f.path)
             self.log(logging.INFO, 'artifact',
                 {'filename': f.path},
                 'Purged artifact {filename}')
@@ -796,9 +790,7 @@ class ArtifactCache(object):
             # human readable unique name, but extracting build IDs is time consuming
             # (especially on Mac OS X, where we must mount a large DMG file).
             hash = hashlib.sha256(url).hexdigest()[:16]
-            # Strip query string and fragments.
-            basename = os.path.basename(urlparse.urlparse(url).path)
-            fname = hash + '-' + basename
+            fname = hash + '-' + os.path.basename(url)
 
         path = os.path.abspath(mozpath.join(self._cache_dir, fname))
         if self._skip_cache and os.path.exists(path):
@@ -984,15 +976,12 @@ class Artifacts(object):
         if self._git:
             return self._get_hg_revisions_from_git()
 
-        # Mercurial updated the ordering of "last" in 4.3. We use revision
-        # numbers to order here to accommodate multiple versions of hg.
-        last_revs = subprocess.check_output([
+        return subprocess.check_output([
             self._hg, 'log',
-            '--template', '{rev}:{node}\n',
+            '--template', '{node}\n',
             '-r', 'last(public() and ::., {num})'.format(
                 num=NUM_REVISIONS_TO_QUERY)
         ], cwd=self._topsrcdir).splitlines()
-        return [i.split(':')[-1] for i in sorted(last_revs, reverse=True)]
 
     def _find_pushheads(self):
         """Returns an iterator of recent pushhead revisions, starting with the

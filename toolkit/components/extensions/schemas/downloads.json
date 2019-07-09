@@ -8,7 +8,8 @@
           "type": "string",
           "enum": [
             "downloads",
-            "downloads.open"
+            "downloads.open",
+            "downloads.shelf"
           ]
         }]
       }
@@ -376,18 +377,12 @@
                 "optional": true,
                 "type": "string"
               },
-              "incognito": {
-                "description": "Whether to associate the download with a private browsing session.",
-                "optional": true,
-                "default": false,
-                "type": "boolean"
-              },
               "conflictAction": {
                 "$ref": "FilenameConflictAction",
                 "optional": true
               },
               "saveAs": {
-                "description": "Use a file-chooser to allow the user to select a filename. If the option is not specified, the file chooser will be shown only if the Firefox \"Always ask you where to save files\" option is enabled (i.e. the pref <code>browser.download.useDownloadDir</code> is set to <code>false</code>).",
+                "description": "Use a file-chooser to allow the user to select a filename.",
                 "optional": true,
                 "type": "boolean"
               },

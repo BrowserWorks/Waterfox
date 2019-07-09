@@ -6,8 +6,9 @@
 
 <% data.new_style_struct("Counters", inherited=False, gecko_name="Content") %>
 
-<%helpers:longhand name="content" boxed="True" animation_value_type="discrete"
+<%helpers:longhand name="content" boxed="True" animation_value_type="none"
                    spec="https://drafts.csswg.org/css-content/#propdef-content">
+    use values::computed::ComputedValueAsSpecified;
     #[cfg(feature = "gecko")]
     use values::generics::CounterStyleOrNone;
     #[cfg(feature = "gecko")]
@@ -20,6 +21,9 @@
 
     pub use self::computed_value::T as SpecifiedValue;
     pub use self::computed_value::ContentItem;
+
+    impl ComputedValueAsSpecified for SpecifiedValue {}
+    no_viewport_percentage!(SpecifiedValue);
 
     pub mod computed_value {
         use cssparser;
@@ -36,7 +40,8 @@
         #[cfg(feature = "gecko")]
         use values::specified::Attr;
 
-        #[derive(Clone, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue)]
+        #[derive(Debug, PartialEq, Eq, Clone)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         pub enum ContentItem {
             /// Literal string content.
             String(String),
@@ -96,7 +101,8 @@
             }
         }
 
-        #[derive(Clone, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue)]
+        #[derive(Debug, PartialEq, Eq, Clone)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         pub enum T {
             Normal,
             None,
@@ -201,9 +207,7 @@
                     };
                     match result {
                         Some(result) => content.push(result?),
-                        None => return Err(input.new_custom_error(
-                            StyleParseErrorKind::UnexpectedFunction(name.clone())
-                        ))
+                        None => return Err(StyleParseError::UnexpectedFunction(name.clone()).into())
                     }
                 }
                 Ok(Token::Ident(ref ident)) => {
@@ -216,15 +220,15 @@
                         _ => false,
                     };
                     if !valid {
-                        return Err(input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())))
+                        return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into())
                     }
                 }
                 Err(_) => break,
-                Ok(t) => return Err(input.new_unexpected_token_error(t))
+                Ok(t) => return Err(BasicParseError::UnexpectedToken(t).into())
             }
         }
         if content.is_empty() {
-            return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
+            return Err(StyleParseError::UnspecifiedError.into());
         }
         Ok(SpecifiedValue::Items(content))
     }
@@ -236,8 +240,7 @@
     use style_traits::ToCss;
     use values::CustomIdent;
 
-    #[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
-    #[derive(Clone, Debug, PartialEq)]
+    #[derive(Debug, Clone, PartialEq)]
     pub struct SpecifiedValue(pub Vec<(CustomIdent, specified::Integer)>);
 
     pub mod computed_value {
@@ -245,7 +248,8 @@
         use style_traits::ToCss;
         use values::CustomIdent;
 
-        #[derive(Clone, Debug, MallocSizeOf, PartialEq)]
+        #[derive(Debug, Clone, PartialEq)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         pub struct T(pub Vec<(CustomIdent, i32)>);
 
         impl ToCss for T {
@@ -292,6 +296,7 @@
         computed_value::T(Vec::new())
     }
 
+    no_viewport_percentage!(SpecifiedValue);
 
     impl ToCss for SpecifiedValue {
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result
@@ -328,10 +333,9 @@
 
         let mut counters = Vec::new();
         loop {
-            let location = input.current_source_location();
             let counter_name = match input.next() {
-                Ok(&Token::Ident(ref ident)) => CustomIdent::from_ident(location, ident, &["none"])?,
-                Ok(t) => return Err(location.new_unexpected_token_error(t.clone())),
+                Ok(&Token::Ident(ref ident)) => CustomIdent::from_ident(ident, &["none"])?,
+                Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
                 Err(_) => break,
             };
             let counter_delta = input.try(|input| specified::parse_integer(context, input))
@@ -342,7 +346,7 @@
         if !counters.is_empty() {
             Ok(SpecifiedValue(counters))
         } else {
-            Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            Err(StyleParseError::UnspecifiedError.into())
         }
     }
 </%helpers:longhand>

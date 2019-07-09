@@ -9,7 +9,7 @@
 #include "jswrapper.h"
 #include "nsCRT.h"
 #include "nsError.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsJSProtocolHandler.h"
 #include "nsStringStream.h"
@@ -28,6 +28,7 @@
 #include "nsIWindowMediator.h"
 #include "nsPIDOMWindow.h"
 #include "nsIConsoleService.h"
+#include "nsXPIDLString.h"
 #include "nsEscape.h"
 #include "nsIWebNavigation.h"
 #include "nsIDocShell.h"
@@ -44,7 +45,6 @@
 #include "nsIWritablePropertyBag2.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsSandboxFlags.h"
-#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsILoadInfo.h"
 #include "nsContentSecurityManager.h"
@@ -96,7 +96,7 @@ nsresult nsJSThunk::Init(nsIURI* uri)
     NS_ENSURE_ARG_POINTER(uri);
 
     // Get the script string to evaluate...
-    nsresult rv = uri->GetPathQueryRef(mScript);
+    nsresult rv = uri->GetPath(mScript);
     if (NS_FAILED(rv)) return rv;
 
     // Get the url.
@@ -182,7 +182,7 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
         rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_SCRIPT,
                                   EmptyString(), // aNonce
                                   true,         // aParserCreated
-                                  nullptr, // aContent
+                                  EmptyString(), // aContent
                                   0,             // aLineNumber
                                   &allowsInlineScript);
 
@@ -235,7 +235,7 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
 
     // New script entry point required, due to the "Create a script" step of
     // http://www.whatwg.org/specs/web-apps/current-work/#javascript-protocol
-    mozilla::nsAutoMicroTask mt;
+    nsAutoMicroTask mt;
     AutoEntryScript aes(innerGlobal, "javascript: URI", true);
     JSContext* cx = aes.cx();
     JS::Rooted<JSObject*> globalJSObject(cx, innerGlobal->GetGlobalJSObject());

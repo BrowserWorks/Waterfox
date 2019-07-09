@@ -60,6 +60,20 @@ nsTableCellFrame::~nsTableCellFrame()
 
 NS_IMPL_FRAMEARENA_HELPERS(nsTableCellFrame)
 
+nsTableCellFrame*
+nsTableCellFrame::GetNextCell() const
+{
+  nsIFrame* childFrame = GetNextSibling();
+  while (childFrame) {
+    nsTableCellFrame *cellFrame = do_QueryFrame(childFrame);
+    if (cellFrame) {
+      return cellFrame;
+    }
+    childFrame = childFrame->GetNextSibling();
+  }
+  return nullptr;
+}
+
 void
 nsTableCellFrame::Init(nsIContent*       aContent,
                        nsContainerFrame* aParent,
@@ -75,7 +89,8 @@ nsTableCellFrame::Init(nsIContent*       aContent,
   if (aPrevInFlow) {
     // Set the column index
     nsTableCellFrame* cellFrame = (nsTableCellFrame*)aPrevInFlow;
-    uint32_t colIndex = cellFrame->ColIndex();
+    int32_t           colIndex;
+    cellFrame->GetColIndex(colIndex);
     SetColIndex(colIndex);
   } else {
     // Although the spec doesn't say that writing-mode is not applied to
@@ -176,8 +191,36 @@ nsTableCellFrame::NeedsToObserve(const ReflowInput& aReflowInput)
 }
 
 nsresult
+nsTableCellFrame::GetRowIndex(int32_t &aRowIndex) const
+{
+  nsresult result;
+  nsTableRowFrame* row = static_cast<nsTableRowFrame*>(GetParent());
+  if (row) {
+    aRowIndex = row->GetRowIndex();
+    result = NS_OK;
+  }
+  else {
+    aRowIndex = 0;
+    result = NS_ERROR_NOT_INITIALIZED;
+  }
+  return result;
+}
+
+nsresult
+nsTableCellFrame::GetColIndex(int32_t &aColIndex) const
+{
+  if (GetPrevInFlow()) {
+    return static_cast<nsTableCellFrame*>(FirstInFlow())->GetColIndex(aColIndex);
+  }
+  else {
+    aColIndex = mColIndex;
+    return  NS_OK;
+  }
+}
+
+nsresult
 nsTableCellFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                   nsAtom*        aAttribute,
+                                   nsIAtom*        aAttribute,
                                    int32_t         aModType)
 {
   // We need to recalculate in this case because of the nowrap quirk in
@@ -187,12 +230,8 @@ nsTableCellFrame::AttributeChanged(int32_t         aNameSpaceID,
     PresContext()->PresShell()->
       FrameNeedsReflow(this, nsIPresShell::eTreeChange, NS_FRAME_IS_DIRTY);
   }
-
-  if (aAttribute == nsGkAtoms::rowspan || aAttribute == nsGkAtoms::colspan) {
-    nsLayoutUtils::PostRestyleEvent(mContent->AsElement(),
-                                    nsRestyleHint(0),
-                                    nsChangeHint_UpdateTableCellSpans);
-  }
+  // let the table frame decide what to do
+  GetTableFrame()->AttributeChangedFor(this, mContent, aAttribute);
   return NS_OK;
 }
 
@@ -207,13 +246,13 @@ nsTableCellFrame::DidSetStyleContext(nsStyleContext* aOldStyleContext)
   nsTableFrame* tableFrame = GetTableFrame();
   if (tableFrame->IsBorderCollapse() &&
       tableFrame->BCRecalcNeeded(aOldStyleContext, StyleContext())) {
-    uint32_t colIndex = ColIndex();
-    uint32_t rowIndex = RowIndex();
+    int32_t colIndex, rowIndex;
+    GetColIndex(colIndex);
+    GetRowIndex(rowIndex);
     // row span needs to be clamped as we do not create rows in the cellmap
     // which do not have cells originating in them
     TableArea damageArea(colIndex, rowIndex, GetColSpan(),
-      std::min(static_cast<uint32_t>(GetRowSpan()), 
-               tableFrame->GetRowCount() - rowIndex));
+      std::min(GetRowSpan(), tableFrame->GetRowCount() - rowIndex));
     tableFrame->AddBCDamageArea(damageArea);
   }
 }
@@ -385,7 +424,7 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      gfxContext* aCtx) override;
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override;
+                           bool* aSnap) override;
   NS_DISPLAY_DECL_NAME("TableCellBackground", TYPE_TABLE_CELL_BACKGROUND)
 };
 
@@ -401,7 +440,7 @@ void nsDisplayTableCellBackground::Paint(nsDisplayListBuilder* aBuilder,
 
 nsRect
 nsDisplayTableCellBackground::GetBounds(nsDisplayListBuilder* aBuilder,
-                                        bool* aSnap) const
+                                        bool* aSnap)
 {
   // revert from nsDisplayTableItem's implementation ... cell backgrounds
   // don't overflow the cell
@@ -431,39 +470,19 @@ PaintTableCellSelection(nsIFrame* aFrame, DrawTarget* aDrawTarget,
                                                                aPt);
 }
 
-bool
-nsTableCellFrame::ShouldPaintBordersAndBackgrounds() const
-{
-  // If we're not visible, we don't paint.
-  if (!StyleVisibility()->IsVisible()) {
-    return false;
-  }
-
-  // Consider 'empty-cells', but only in separated borders mode.
-  if (!GetContentEmpty()) {
-    return true;
-  }
-
-  nsTableFrame* tableFrame = GetTableFrame();
-  if (tableFrame->IsBorderCollapse()) {
-    return true;
-  }
-
-  return StyleTableBorder()->mEmptyCells == NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
-}
-
-bool
-nsTableCellFrame::ShouldPaintBackground(nsDisplayListBuilder* aBuilder)
-{
-  return ShouldPaintBordersAndBackgrounds() && IsVisibleInSelection(aBuilder);
-}
-
 void
 nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                   const nsRect&           aDirtyRect,
                                    const nsDisplayListSet& aLists)
 {
   DO_GLOBAL_REFLOW_COUNT_DSP("nsTableCellFrame");
-  if (ShouldPaintBordersAndBackgrounds()) {
+  nsTableFrame* tableFrame = GetTableFrame();
+  int32_t emptyCellStyle = GetContentEmpty() && !tableFrame->IsBorderCollapse() ?
+                              StyleTableBorder()->mEmptyCells
+                              : NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
+  // take account of 'empty-cells'
+  if (StyleVisibility()->IsVisible() &&
+      (NS_STYLE_TABLE_EMPTY_CELLS_HIDE != emptyCellStyle)) {
     // display outset box-shadows if we need to.
     bool hasBoxShadow = !!StyleEffects()->mBoxShadow;
     if (hasBoxShadow) {
@@ -488,14 +507,14 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     }
 
     // display borders if we need to
-    ProcessBorders(GetTableFrame(), aBuilder, aLists);
+    ProcessBorders(tableFrame, aBuilder, aLists);
 
     // and display the selection border if we need to
     if (IsSelected()) {
       aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
         nsDisplayGeneric(aBuilder, this, ::PaintTableCellSelection,
                          "TableCellSelection",
-                         DisplayItemType::TYPE_TABLE_CELL_SELECTION));
+                         nsDisplayItem::TYPE_TABLE_CELL_SELECTION));
     }
   }
 
@@ -515,7 +534,7 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   // because that/ would put the child's background in the Content() list
   // which isn't right (e.g., would end up on top of our child floats for
   // event handling).
-  BuildDisplayListForChild(aBuilder, kid, aLists);
+  BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
 }
 
 nsIFrame::LogicalSides
@@ -799,13 +818,14 @@ CalcUnpaginatedBSize(nsTableCellFrame& aCellFrame,
   nsTableRowGroupFrame* firstRGInFlow =
     static_cast<nsTableRowGroupFrame*>(row->GetParent());
 
-  uint32_t rowIndex = firstCellInFlow->RowIndex();
+  int32_t rowIndex;
+  firstCellInFlow->GetRowIndex(rowIndex);
   int32_t rowSpan = aTableFrame.GetEffectiveRowSpan(*firstCellInFlow);
 
   nscoord computedBSize = firstTableInFlow->GetRowSpacing(rowIndex,
                                                           rowIndex + rowSpan - 1);
   computedBSize -= aBlockDirBorderPadding;
-  uint32_t rowX;
+  int32_t rowX;
   for (row = firstRGInFlow->GetFirstRow(), rowX = 0; row; row = row->GetNextRow(), rowX++) {
     if (rowX > rowIndex + rowSpan - 1) {
       break;
@@ -826,7 +846,6 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsTableCellFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
 
   if (aReflowInput.mFlags.mSpecialBSizeReflow) {
     FirstInFlow()->AddStateBits(NS_TABLE_CELL_HAD_SPECIAL_REFLOW);
@@ -835,6 +854,7 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   // see if a special bsize reflow needs to occur due to having a pct height
   nsTableFrame::CheckRequestSpecialBSizeReflow(aReflowInput);
 
+  aStatus.Reset();
   WritingMode wm = aReflowInput.GetWritingMode();
   LogicalSize availSize(wm, aReflowInput.AvailableISize(),
                             aReflowInput.AvailableBSize());
@@ -1021,7 +1041,12 @@ nsTableCellFrame::AccessibleType()
 NS_IMETHODIMP
 nsTableCellFrame::GetCellIndexes(int32_t &aRowIndex, int32_t &aColIndex)
 {
-  aRowIndex = RowIndex();
+  nsresult res = GetRowIndex(aRowIndex);
+  if (NS_FAILED(res))
+  {
+    aColIndex = 0;
+    return res;
+  }
   aColIndex = mColIndex;
   return  NS_OK;
 }

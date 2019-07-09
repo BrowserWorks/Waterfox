@@ -6,10 +6,10 @@
 
 #include <CoreFoundation/CFString.h>
 
-#include "AppleVTDecoder.h"
 #include "AppleCMLinker.h"
 #include "AppleDecoderModule.h"
 #include "AppleUtils.h"
+#include "AppleVTDecoder.h"
 #include "AppleVTLinker.h"
 #include "MediaData.h"
 #include "mozilla/ArrayUtils.h"
@@ -63,13 +63,13 @@ AppleVTDecoder::~AppleVTDecoder()
 RefPtr<MediaDataDecoder::InitPromise>
 AppleVTDecoder::Init()
 {
-  MediaResult rv = InitializeSession();
+  nsresult rv = InitializeSession();
 
   if (NS_SUCCEEDED(rv)) {
     return InitPromise::CreateAndResolve(TrackType::kVideoTrack, __func__);
   }
 
-  return InitPromise::CreateAndReject(rv, __func__);
+  return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
 }
 
 RefPtr<MediaDataDecoder::DecodePromise>
@@ -351,7 +351,7 @@ AppleVTDecoder::OutputFrame(CVPixelBufferRef aImage,
   RefPtr<MediaData> data;
   // Bounds.
   VideoInfo info;
-  info.mDisplay = gfx::IntSize(mDisplayWidth, mDisplayHeight);
+  info.mDisplay = nsIntSize(mDisplayWidth, mDisplayHeight);
 
   if (useNullSample) {
     data = new NullData(aFrameRef.byte_offset,
@@ -473,7 +473,7 @@ AppleVTDecoder::WaitForAsynchronousFrames()
   return NS_OK;
 }
 
-MediaResult
+nsresult
 AppleVTDecoder::InitializeSession()
 {
   OSStatus rv;
@@ -487,8 +487,8 @@ AppleVTDecoder::InitializeSession()
                                       extensions,
                                       &mFormat);
   if (rv != noErr) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("Couldn't create format description!"));
+    NS_ERROR("Couldn't create format description!");
+    return NS_ERROR_FAILURE;
   }
 
   // Contruct video decoder selection spec.
@@ -507,8 +507,8 @@ AppleVTDecoder::InitializeSession()
                                     &mSession);
 
   if (rv != noErr) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("Couldn't create decompression session!"));
+    NS_ERROR("Couldn't create decompression session!");
+    return NS_ERROR_FAILURE;
   }
 
   if (AppleVTLinker::skPropUsingHWAccel) {

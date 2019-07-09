@@ -42,12 +42,12 @@ class GeckoInstance(object):
         # AddonManager.SCOPE_PROFILE + AddonManager.SCOPE_APPLICATION
         "extensions.autoDisableScopes": 0,
         "extensions.enabledScopes": 5,
+        # don't block add-ons for e10s
+        "extensions.e10sBlocksEnabling": False,
         # Disable metadata caching for installed add-ons by default
         "extensions.getAddons.cache.enabled": False,
         # Disable intalling any distribution add-ons
         "extensions.installDistroAddons": False,
-        # Make sure Shield doesn't hit the network.
-        "extensions.shield-recipe-client.api_url": "",
         "extensions.showMismatchUI": False,
         # Turn off extension updates so they don't bother tests
         "extensions.update.enabled": False,
@@ -296,16 +296,14 @@ class FennecInstance(GeckoInstance):
         "browser.snippets.firstrunHomepage.enabled": False,
 
         # Disable safebrowsing components
-        "browser.safebrowsing.blockedURIs.enabled": False,
         "browser.safebrowsing.downloads.enabled": False,
-        "browser.safebrowsing.passwords.enabled": False,
-        "browser.safebrowsing.malware.enabled": False,
-        "browser.safebrowsing.phishing.enabled": False,
 
         # Do not restore the last open set of tabs if the browser has crashed
         "browser.sessionstore.resume_from_crash": False,
 
         # Disable e10s by default
+        "browser.tabs.remote.autostart.1": False,
+        "browser.tabs.remote.autostart.2": False,
         "browser.tabs.remote.autostart": False,
 
         # Do not allow background tabs to be zombified, otherwise for tests that
@@ -435,7 +433,6 @@ class DesktopInstance(GeckoInstance):
         # Disable safebrowsing components
         "browser.safebrowsing.blockedURIs.enabled": False,
         "browser.safebrowsing.downloads.enabled": False,
-        "browser.safebrowsing.passwords.enabled": False,
         "browser.safebrowsing.malware.enabled": False,
         "browser.safebrowsing.phishing.enabled": False,
 
@@ -449,6 +446,8 @@ class DesktopInstance(GeckoInstance):
         "browser.shell.checkDefaultBrowser": False,
 
         # Disable e10s by default
+        "browser.tabs.remote.autostart.1": False,
+        "browser.tabs.remote.autostart.2": False,
         "browser.tabs.remote.autostart": False,
 
         # Needed for branded builds to prevent opening a second tab on startup
@@ -465,17 +464,6 @@ class DesktopInstance(GeckoInstance):
         "browser.tabs.warnOnCloseOtherTabs": False,
         # Do not warn when multiple tabs will be opened
         "browser.tabs.warnOnOpen": False,
-
-        # Disable the UI tour
-        "browser.uitour.enabled": False,
-
-        # Turn off search suggestions in the location bar so as not to trigger network
-        # connections.
-        "browser.urlbar.suggest.searches": False,
-
-        # Turn off the location bar search suggestions opt-in.  It interferes with
-        # tests that don't expect it to be there.
-        "browser.urlbar.userMadeSearchSuggestionsChoice": True,
 
         # Disable first-run welcome page
         "startup.homepage_welcome_url": "about:blank",

@@ -5,16 +5,16 @@
 
 "use strict";
 
-const {Loader, Require} =
-  Components.utils.import("resource://devtools/shared/base-loader.js", {});
+const {Loader} = Components.utils.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
 
-const loader = new Loader({
+const loader = new Loader.Loader({
   paths: {
+    "": "resource://gre/modules/commonjs/",
     "devtools": "resource://devtools",
   },
   globals: {},
 });
-const require = Require(loader, { id: "undo-test" });
+const require = Loader.Require(loader, { id: "undo-test" });
 
 const {UndoStack} = require("devtools/client/shared/undo");
 

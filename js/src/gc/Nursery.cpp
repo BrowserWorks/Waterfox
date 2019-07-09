@@ -116,7 +116,7 @@ js::Nursery::Nursery(JSRuntime* rt)
 {}
 
 bool
-js::Nursery::init(uint32_t maxNurseryBytes, AutoLockGCBgAlloc& lock)
+js::Nursery::init(uint32_t maxNurseryBytes, AutoLockGC& lock)
 {
     if (!mallocedBuffers.init())
         return false;
@@ -132,7 +132,8 @@ js::Nursery::init(uint32_t maxNurseryBytes, AutoLockGCBgAlloc& lock)
     if (maxNurseryChunks_ == 0)
         return true;
 
-    updateNumChunksLocked(1, lock);
+    AutoMaybeStartBackgroundAllocation maybeBgAlloc;
+    updateNumChunksLocked(1, maybeBgAlloc, lock);
     if (numChunks() == 0)
         return false;
 
@@ -203,6 +204,7 @@ js::Nursery::disable()
         return;
     updateNumChunks(0);
     currentEnd_ = 0;
+    position_ = 0;
     runtime()->gc.storeBuffer().disable();
 }
 
@@ -312,6 +314,7 @@ js::Nursery::allocate(size_t size)
     }
 #endif
 
+    MemProfiler::SampleNursery(reinterpret_cast<void*>(thing), size);
     return thing;
 }
 
@@ -343,19 +346,6 @@ js::Nursery::allocateBuffer(JSObject* obj, size_t nbytes)
     if (!IsInsideNursery(obj))
         return obj->zone()->pod_malloc<uint8_t>(nbytes);
     return allocateBuffer(obj->zone(), nbytes);
-}
-
-void*
-js::Nursery::allocateBufferSameLocation(JSObject* obj, size_t nbytes)
-{
-    MOZ_ASSERT(obj);
-    MOZ_ASSERT(nbytes > 0);
-    MOZ_ASSERT(nbytes <= MaxNurseryBufferSize);
-
-    if (!IsInsideNursery(obj))
-        return obj->zone()->pod_malloc<uint8_t>(nbytes);
-
-    return allocate(nbytes);
 }
 
 void*
@@ -392,7 +382,7 @@ js::Nursery::freeBuffer(void* buffer)
 }
 
 void
-Nursery::setIndirectForwardingPointer(void* oldData, void* newData)
+Nursery::setForwardingPointer(void* oldData, void* newData, bool direct)
 {
     MOZ_ASSERT(isInside(oldData));
 
@@ -401,15 +391,37 @@ Nursery::setIndirectForwardingPointer(void* oldData, void* newData)
     // newData pointer will appear to be "inside" the nursery.
     MOZ_ASSERT(!isInside(newData) || (uintptr_t(newData) & ChunkMask) == 0);
 
-    AutoEnterOOMUnsafeRegion oomUnsafe;
-    if (!forwardedBuffers.initialized() && !forwardedBuffers.init())
-        oomUnsafe.crash("Nursery::setForwardingPointer");
+    if (direct) {
+        *reinterpret_cast<void**>(oldData) = newData;
+    } else {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!forwardedBuffers.initialized() && !forwardedBuffers.init())
+            oomUnsafe.crash("Nursery::setForwardingPointer");
 #ifdef DEBUG
-    if (ForwardedBufferMap::Ptr p = forwardedBuffers.lookup(oldData))
-        MOZ_ASSERT(p->value() == newData);
+        if (ForwardedBufferMap::Ptr p = forwardedBuffers.lookup(oldData))
+            MOZ_ASSERT(p->value() == newData);
 #endif
-    if (!forwardedBuffers.put(oldData, newData))
-        oomUnsafe.crash("Nursery::setForwardingPointer");
+        if (!forwardedBuffers.put(oldData, newData))
+            oomUnsafe.crash("Nursery::setForwardingPointer");
+    }
+}
+
+void
+Nursery::setSlotsForwardingPointer(HeapSlot* oldSlots, HeapSlot* newSlots, uint32_t nslots)
+{
+    // Slot arrays always have enough space for a forwarding pointer, since the
+    // number of slots is never zero.
+    MOZ_ASSERT(nslots > 0);
+    setForwardingPointer(oldSlots, newSlots, /* direct = */ true);
+}
+
+void
+Nursery::setElementsForwardingPointer(ObjectElements* oldHeader, ObjectElements* newHeader,
+                                      uint32_t capacity)
+{
+    // Only use a direct forwarding pointer if there is enough space for one.
+    setForwardingPointer(oldHeader->elements(), newHeader->elements(),
+                         capacity > 0);
 }
 
 #ifdef DEBUG
@@ -455,22 +467,6 @@ js::TenuringTracer::TenuringTracer(JSRuntime* rt, Nursery* nursery)
 {
 }
 
-inline float
-js::Nursery::calcPromotionRate(bool *validForTenuring) const {
-    float used = float(previousGC.nurseryUsedBytes);
-    float capacity = float(previousGC.nurseryCapacity);
-    float tenured = float(previousGC.tenuredBytes);
-
-    if (validForTenuring) {
-        /*
-         * We can only use promotion rates if they're likely to be valid,
-         * they're only valid if the nursury was at least 90% full.
-         */
-        *validForTenuring = used > capacity * 0.9f;
-    }
-    return tenured / used;
-}
-
 void
 js::Nursery::renderProfileJSON(JSONPrinter& json) const
 {
@@ -496,7 +492,8 @@ js::Nursery::renderProfileJSON(JSONPrinter& json) const
 
     json.property("reason", JS::gcreason::ExplainReason(previousGC.reason));
     json.property("bytes_tenured", previousGC.tenuredBytes);
-    json.floatProperty("promotion_rate", calcPromotionRate(nullptr), 0);
+    json.floatProperty("promotion_rate",
+                       100.0 * previousGC.tenuredBytes / double(previousGC.nurseryUsedBytes), 2);
     json.property("nursery_bytes", previousGC.nurseryUsedBytes);
     json.property("new_nursery_bytes", numChunks() * ChunkSize);
 
@@ -614,18 +611,14 @@ js::Nursery::collect(JS::gcreason::Reason reason)
     JS::AutoSuppressGCAnalysis nogc;
 
     TenureCountCache tenureCounts;
+    double promotionRate = 0;
     previousGC.reason = JS::gcreason::NO_REASON;
-    if (!isEmpty()) {
-        doCollection(reason, tenureCounts);
-    } else {
-        previousGC.nurseryUsedBytes = 0;
-        previousGC.nurseryCapacity = spaceToEnd();
-        previousGC.tenuredBytes = 0;
-    }
+    if (!isEmpty())
+        promotionRate = doCollection(reason, tenureCounts);
 
     // Resize the nursery.
     startProfile(ProfileKey::Resize);
-    maybeResizeNursery(reason);
+    maybeResizeNursery(reason, promotionRate);
     endProfile(ProfileKey::Resize);
 
     // If we are promoting the nursery, or exhausted the store buffer with
@@ -633,20 +626,16 @@ js::Nursery::collect(JS::gcreason::Reason reason)
     // the nursery is full, look for object groups that are getting promoted
     // excessively and try to pretenure them.
     startProfile(ProfileKey::Pretenure);
-    bool validPromotionRate;
-    const float promotionRate = calcPromotionRate(&validPromotionRate);
     uint32_t pretenureCount = 0;
-    if (validPromotionRate) {
-        if (promotionRate > 0.8 || IsFullStoreBufferReason(reason)) {
-            JSContext* cx = TlsContext.get();
-            for (auto& entry : tenureCounts.entries) {
-                if (entry.count >= 3000) {
-                    ObjectGroup* group = entry.group;
-                    if (group->canPreTenure()) {
-                        AutoCompartment ac(cx, group);
-                        group->setShouldPreTenure(cx);
-                        pretenureCount++;
-                    }
+    if (promotionRate > 0.8 || IsFullStoreBufferReason(reason)) {
+        JSContext* cx = TlsContext.get();
+        for (auto& entry : tenureCounts.entries) {
+            if (entry.count >= 3000) {
+                ObjectGroup* group = entry.group;
+                if (group->canPreTenure()) {
+                    AutoCompartment ac(cx, group);
+                    group->setShouldPreTenure(cx);
+                    pretenureCount++;
                 }
             }
         }
@@ -698,7 +687,7 @@ js::Nursery::collect(JS::gcreason::Reason reason)
     }
 }
 
-void
+double
 js::Nursery::doCollection(JS::gcreason::Reason reason,
                           TenureCountCache& tenureCounts)
 {
@@ -709,8 +698,7 @@ js::Nursery::doCollection(JS::gcreason::Reason reason,
     AutoDisableProxyCheck disableStrictProxyChecking;
     mozilla::DebugOnly<AutoEnterOOMUnsafeRegion> oomUnsafeRegion;
 
-    const size_t initialNurseryCapacity = spaceToEnd();
-    const size_t initialNurseryUsedBytes = initialNurseryCapacity - freeSpace();
+    size_t initialNurserySize = spaceToEnd();
 
     // Move objects pointed to by roots from the nursery to the major heap.
     TenuringTracer mover(rt, this);
@@ -769,11 +757,11 @@ js::Nursery::doCollection(JS::gcreason::Reason reason,
     collectToFixedPoint(mover, tenureCounts);
     endProfile(ProfileKey::CollectToFP);
 
-    // Sweep to update any pointers to nursery objects that have now been
-    // tenured.
-    startProfile(ProfileKey::Sweep);
-    sweep(&mover);
-    endProfile(ProfileKey::Sweep);
+    // Sweep compartments to update the array buffer object's view lists.
+    startProfile(ProfileKey::SweepArrayBufferViewList);
+    for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
+        c->sweepAfterMinorGC(&mover);
+    endProfile(ProfileKey::SweepArrayBufferViewList);
 
     // Update any slot or element pointers whose destination has been tenured.
     startProfile(ProfileKey::UpdateJitActivations);
@@ -790,9 +778,9 @@ js::Nursery::doCollection(JS::gcreason::Reason reason,
     freeMallocedBuffers();
     endProfile(ProfileKey::FreeMallocedBuffers);
 
-    startProfile(ProfileKey::ClearNursery);
-    clear();
-    endProfile(ProfileKey::ClearNursery);
+    startProfile(ProfileKey::Sweep);
+    sweep();
+    endProfile(ProfileKey::Sweep);
 
     startProfile(ProfileKey::ClearStoreBuffer);
     runtime()->gc.storeBuffer().clear();
@@ -807,9 +795,11 @@ js::Nursery::doCollection(JS::gcreason::Reason reason,
     endProfile(ProfileKey::CheckHashTables);
 
     previousGC.reason = reason;
-    previousGC.nurseryCapacity = initialNurseryCapacity;
-    previousGC.nurseryUsedBytes = initialNurseryUsedBytes;
+    previousGC.nurseryUsedBytes = initialNurserySize;
     previousGC.tenuredBytes = mover.tenuredSize;
+
+    // Calculate and return the promotion rate.
+    return mover.tenuredSize / double(initialNurserySize);
 }
 
 void
@@ -863,30 +853,20 @@ js::Nursery::waitBackgroundFreeEnd()
 }
 
 void
-js::Nursery::sweep(JSTracer* trc)
+js::Nursery::sweep()
 {
-    // Sweep unique IDs first before we sweep any tables that may be keyed based
-    // on them.
+    /* Sweep unique id's in all in-use chunks. */
     for (Cell* cell : cellsWithUid_) {
         JSObject* obj = static_cast<JSObject*>(cell);
-        if (!IsForwarded(obj)) {
+        if (!IsForwarded(obj))
             obj->zone()->removeUniqueId(obj);
-        } else {
-            JSObject* dst = Forwarded(obj);
-            dst->zone()->transferUniqueId(dst, obj);
-        }
+        else
+            MOZ_ASSERT(Forwarded(obj)->zone()->hasUniqueId(Forwarded(obj)));
     }
     cellsWithUid_.clear();
 
-    for (CompartmentsIter c(runtime(), SkipAtoms); !c.done(); c.next())
-        c->sweepAfterMinorGC(trc);
-
     sweepDictionaryModeObjects();
-}
 
-void
-js::Nursery::clear()
-{
 #ifdef JS_GC_ZEAL
     /* Poison the nursery contents so touching a freed object will crash. */
     for (unsigned i = 0; i < numChunks(); i++)
@@ -908,6 +888,7 @@ js::Nursery::clear()
 
     /* Set current start position for isEmpty checks. */
     setStartPosition();
+    MemProfiler::SweepNursery(runtime());
 }
 
 size_t
@@ -945,7 +926,7 @@ js::Nursery::setStartPosition()
 }
 
 void
-js::Nursery::maybeResizeNursery(JS::gcreason::Reason reason)
+js::Nursery::maybeResizeNursery(JS::gcreason::Reason reason, double promotionRate)
 {
     static const double GrowThreshold   = 0.05;
     static const double ShrinkThreshold = 0.01;
@@ -964,19 +945,11 @@ js::Nursery::maybeResizeNursery(JS::gcreason::Reason reason)
         return;
 #endif
 
-    /*
-     * This incorrect promotion rate results in better nursery sizing
-     * decisions, however we should to better tuning based on the real
-     * promotion rate in the future.
-     */
-    const float promotionRate =
-        float(previousGC.tenuredBytes) / float(previousGC.nurseryCapacity);
-
     newMaxNurseryChunks = runtime()->gc.tunables.gcMaxNurseryBytes() >> ChunkShift;
     if (newMaxNurseryChunks != maxNurseryChunks_) {
         maxNurseryChunks_ = newMaxNurseryChunks;
         /* The configured maximum nursery size is changing */
-        const int extraChunks = numChunks() - newMaxNurseryChunks;
+        int extraChunks = numChunks() - newMaxNurseryChunks;
         if (extraChunks > 0) {
             /* We need to shrink the nursery */
             shrinkAllocableSpace(extraChunks);
@@ -1024,14 +997,16 @@ void
 js::Nursery::updateNumChunks(unsigned newCount)
 {
     if (numChunks() != newCount) {
-        AutoLockGCBgAlloc lock(runtime());
-        updateNumChunksLocked(newCount, lock);
+        AutoMaybeStartBackgroundAllocation maybeBgAlloc;
+        AutoLockGC lock(runtime());
+        updateNumChunksLocked(newCount, maybeBgAlloc, lock);
     }
 }
 
 void
 js::Nursery::updateNumChunksLocked(unsigned newCount,
-                                   AutoLockGCBgAlloc& lock)
+                                   AutoMaybeStartBackgroundAllocation& maybeBgAlloc,
+                                   AutoLockGC& lock)
 {
     // The GC nursery is an optimization and so if we fail to allocate nursery
     // chunks we do not report an error.
@@ -1054,7 +1029,7 @@ js::Nursery::updateNumChunksLocked(unsigned newCount,
         return;
 
     for (unsigned i = priorCount; i < newCount; i++) {
-        auto newChunk = runtime()->gc.getOrAllocChunk(lock);
+        auto newChunk = runtime()->gc.getOrAllocChunk(lock, maybeBgAlloc);
         if (!newChunk) {
             chunks_.shrinkTo(i);
             return;
@@ -1078,8 +1053,6 @@ js::Nursery::sweepDictionaryModeObjects()
     for (auto obj : dictionaryModeObjects_) {
         if (!IsForwarded(obj))
             obj->sweepDictionaryListPointer();
-        else
-            Forwarded(obj)->updateDictionaryListPointerAfterMinorGC(obj);
     }
     dictionaryModeObjects_.clear();
 }

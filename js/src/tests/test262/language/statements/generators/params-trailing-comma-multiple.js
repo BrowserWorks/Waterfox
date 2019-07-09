@@ -4,7 +4,6 @@
 /*---
 description: A trailing comma should not increase the respective length, using multiple parameters (generator function declaration)
 esid: sec-generator-function-definitions-runtime-semantics-instantiatefunctionobject
-features: [generators]
 flags: [generated]
 info: |
     GeneratorDeclaration : function * ( FormalParameters ) { GeneratorBody }
@@ -36,7 +35,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     Trailing comma in the parameters list
 

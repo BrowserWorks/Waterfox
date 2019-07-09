@@ -8,19 +8,12 @@ package org.mozilla.gecko.mma;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.Bundle;
-import android.support.annotation.CheckResult;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
 
 import java.util.Map;
 
 
 public interface MmaInterface {
-
     void init(Activity Activity, Map<String, ?> attributes);
-
-    void setGcmSenderId(String senderIds);
 
     void setCustomIcon(@DrawableRes int iconResId);
 
@@ -33,8 +26,6 @@ public interface MmaInterface {
     void stop();
 
     @CheckResult boolean handleGcmMessage(Context context, String from, Bundle bundle);
-
-    String getMmaSenderId();
 
     void setDeviceId(@NonNull String deviceId);
 }

@@ -12,7 +12,7 @@ var Cu = Components.utils;
 
 const {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const {DebuggerClient} = require("devtools/shared/client/debugger-client");
+const {DebuggerClient} = require("devtools/shared/client/main");
 const {DebuggerServer} = require("devtools/server/main");
 const {defer} = require("promise");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -78,22 +78,6 @@ function* initLayoutFrontForUrl(url) {
   let layout = yield walker.getLayoutInspector();
 
   return {inspector, walker, layout, client};
-}
-
-function* initAccessibilityFrontForUrl(url) {
-  const {AccessibilityFront} = require("devtools/shared/fronts/accessibility");
-  const {InspectorFront} = require("devtools/shared/fronts/inspector");
-
-  yield addTab(url);
-
-  initDebuggerServer();
-  let client = new DebuggerClient(DebuggerServer.connectPipe());
-  let form = yield connectDebuggerClient(client);
-  let inspector = InspectorFront(client, form);
-  let walker = yield inspector.getWalker();
-  let accessibility = AccessibilityFront(client, form);
-
-  return {inspector, walker, accessibility, client};
 }
 
 function initDebuggerServer() {
@@ -251,54 +235,4 @@ function waitForMarkerType(front, types, predicate,
 
 function getCookieId(name, domain, path) {
   return `${name}${SEPARATOR_GUID}${domain}${SEPARATOR_GUID}${path}`;
-}
-
-/**
- * Trigger DOM activity and wait for the corresponding accessibility event.
- * @param  {Object} emitter   Devtools event emitter, usually a front.
- * @param  {Sting} name       Accessibility event in question.
- * @param  {Function} handler Accessibility event handler function with checks.
- * @param  {Promise} task     A promise that resolves when DOM activity is done.
- */
-async function emitA11yEvent(emitter, name, handler, task) {
-  let promise = emitter.once(name, handler);
-  await task();
-  await promise;
-}
-
-/**
- * Check that accessibilty front is correct and its attributes are also
- * up-to-date.
- * @param  {Object} front         Accessibility front to be tested.
- * @param  {Object} expected      A map of a11y front properties to be verified.
- * @param  {Object} expectedFront Expected accessibility front.
- */
-function checkA11yFront(front, expected, expectedFront) {
-  ok(front, "The accessibility front is created");
-
-  if (expectedFront) {
-    is(front, expectedFront, "Matching accessibility front");
-  }
-
-  for (let key in expected) {
-    is(front[key], expected[key], `accessibility front has correct ${key}`);
-  }
-}
-
-/**
- * Wait for accessibility service to shut down. We consider it shut down when
- * an "a11y-init-or-shutdown" event is received with a value of "0".
- */
-async function waitForA11yShutdown() {
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, () =>
-    new Promise(resolve => {
-      let observe = (subject, topic, data) => {
-        Services.obs.removeObserver(observe, "a11y-init-or-shutdown");
-
-        if (data === "0") {
-          resolve();
-        }
-      };
-      Services.obs.addObserver(observe, "a11y-init-or-shutdown");
-    }));
 }

@@ -4,11 +4,6 @@
 pref(font.default.zh-CN,"serif") pref(font.default.zh-TW,"serif") pref(font.default.ja,"serif") pref(font.default.ko,"serif") == 1394311.htm 1394311-ref.htm
 pref(font.default.zh-CN,"sans-serif") pref(font.default.zh-TW,"sans-serif") pref(font.default.ja,"sans-serif") pref(font.default.ko,"sans-serif") == 1394311.htm 1394311-ref.htm
 
-# tests for bug 1367860 (correct default generic font based on language)
-== 1367860-1.htm 1367860-ref.htm
-== 1367860-2.htm 1367860-ref.htm
-== 1367860-3.htm 1367860-ref.htm
-
 # basic tests for bug 538730
 != synthetic-bold-1.html synthetic-bold-1-ref.html
 != synthetic-bold-2.html synthetic-bold-2-ref.html
@@ -59,7 +54,7 @@ random-if(cocoaWidget) != impact-bold.html impact.html # bug 539418
 == localized-family-names-004.html localized-family-names-004-ref.html
 
 # family names with escaped spaces shouldn't match the names without the spaces
-fails-if(gtkWidget) == familyname-escapedidents.html familyname-escapedidents-ref.html # bug 1309425, bug 1328771
+fails-if(gtkWidget&&!styloVsGecko) == familyname-escapedidents.html familyname-escapedidents-ref.html # bug 1309425, bug 1328771
 
 # weight mapping tests
 HTTP(..) == normalmedium.html normalmedium-ref.html
@@ -134,8 +129,3 @@ skip-if(!cocoaWidget) HTTP(..) != apple-symbols-1.html apple-symbols-1-notref.ht
 # random-if(!OSX) != system-generic-fallback-zh-cn.html system-generic-fallback-ja.html
 # random-if(!OSX) != system-generic-fallback-zh-tw.html system-generic-fallback-zh-cn.html
 
-# Tests for legacy font family name (GDI-model families) matching;
-# these depend on specific fonts that are available as standard on macOS and Windows,
-# and are not expected to pass on platforms that don't have those same fonts.
-skip-if(!cocoaWidget) == legacy-family-names-1.html legacy-family-names-1-ref.html
-skip-if(!winWidget) == legacy-family-names-2.html legacy-family-names-2-ref.html

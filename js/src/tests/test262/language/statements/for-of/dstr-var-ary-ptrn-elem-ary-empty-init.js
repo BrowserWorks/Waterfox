@@ -5,7 +5,7 @@
 description: BindingElement with array binding pattern and initializer is used (for-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
 es6id: 13.7.5.11
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 info: |
     IterationStatement :
@@ -44,7 +44,6 @@ info: |
        b. Let v be ? GetValue(defaultValue).
     4. Return the result of performing BindingInitialization of BindingPattern
        with v and environment as the arguments.
-
 ---*/
 var initCount = 0;
 var iterCount = 0;

@@ -15,12 +15,12 @@ We were using a temporary profile in the previous step, [building DevTools](./bu
 The solution is to create a new profile:
 
 ```
-./mach run -P development
+./mach -P development
 ```
 
 If this profile doesn't exist yet (quite likely), a window will open offering you options to create a new profile, and asking you which name you want to use. Create a new one, and name it `development`. Then start Firefox by clicking on `Start Nightly`.
 
-Next time you start Firefox with `./mach run -P development`, the new profile will be automatically used, and settings will persist between browser launches.
+Next time you start Firefox with `./mach -P development`, the new profile will be automatically used, and settings will persist between browser launches.
 
 ## Enable additional logging
 
@@ -30,7 +30,7 @@ You can change the value of these preferences by going to `about:config`:
 | --------------- | --------------- | -------- |
 | `browser.dom.window.dump.enabled` | `true` | Adds global `dump` function to log strings to `stdout` |
 | `devtools.debugger.log` (*) | `true` | Dump packets sent over remote debugging protocol to `stdout`.<br /><br />The [remote protocol inspector add-on](https://github.com/firebug/rdp-inspector/wiki) might be useful too. |
-| `devtools.dump.emit` (*) | `true` | Log event notifications from the EventEmitter class<br />(found at `devtools/shared/old-event-emitter.js`). |
+| `devtools.dump.emit` (*) | `true` | Log event notifications from the EventEmitter class<br />(found at `devtools/shared/event-emitter.js`). |
 
 Preferences marked with a (`*`) also require `browser.dom.window.dump.enabled` in order to work. You might not want to enable *all* of those all the time, as they can cause the output to be way too verbose, but they might be useful if you're working on a server actor, for example<!--TODO link to actors doc-->.
 

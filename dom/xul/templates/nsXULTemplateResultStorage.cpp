@@ -75,7 +75,7 @@ nsXULTemplateResultStorage::GetType(nsAString& aType)
 
 
 NS_IMETHODIMP
-nsXULTemplateResultStorage::GetBindingFor(nsAtom* aVar, nsAString& aValue)
+nsXULTemplateResultStorage::GetBindingFor(nsIAtom* aVar, nsAString& aValue)
 {
     NS_ENSURE_ARG_POINTER(aVar);
 
@@ -97,7 +97,7 @@ nsXULTemplateResultStorage::GetBindingFor(nsAtom* aVar, nsAString& aValue)
 }
 
 NS_IMETHODIMP
-nsXULTemplateResultStorage::GetBindingObjectFor(nsAtom* aVar, nsISupports** aValue)
+nsXULTemplateResultStorage::GetBindingObjectFor(nsIAtom* aVar, nsISupports** aValue)
 {
     NS_ENSURE_ARG_POINTER(aVar);
 

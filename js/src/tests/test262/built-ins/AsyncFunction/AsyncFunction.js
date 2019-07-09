@@ -3,7 +3,7 @@
 
 /*---
 author: Brian Terlson <brian.terlson@microsoft.com>
-esid: sec-async-function-objects
+esid: pending
 description: >
   %AsyncFunction% exists and is a function
 ---*/

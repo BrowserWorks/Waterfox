@@ -13,7 +13,6 @@ FRAME_ID(nsBoxFrame, Box, NotLeaf)
 FRAME_ID(nsBulletFrame, Bullet, Leaf)
 FRAME_ID(nsButtonBoxFrame, Box, NotLeaf)
 FRAME_ID(nsCanvasFrame, Canvas, NotLeaf)
-FRAME_ID(nsCheckboxRadioFrame, CheckboxRadio, Leaf)
 FRAME_ID(nsColorControlFrame, ColorControl, Leaf)
 FRAME_ID(nsColumnSetFrame, ColumnSet, NotLeaf)
 FRAME_ID(nsComboboxControlFrame, ComboboxControl, NotLeaf)
@@ -29,6 +28,8 @@ FRAME_ID(nsFirstLineFrame, Line, NotLeaf)
 FRAME_ID(nsFlexContainerFrame, FlexContainer, NotLeaf)
 FRAME_ID(nsFrame, None, NotLeaf)
 FRAME_ID(nsGfxButtonControlFrame, GfxButtonControl, Leaf)
+FRAME_ID(nsGfxCheckboxControlFrame, FormControl, Leaf)
+FRAME_ID(nsGfxRadioControlFrame, FormControl, Leaf)
 FRAME_ID(nsGridContainerFrame, GridContainer, NotLeaf)
 FRAME_ID(nsGridRowGroupFrame, Box, NotLeaf)
 FRAME_ID(nsGridRowLeafFrame, Box, NotLeaf)
@@ -145,14 +146,9 @@ FRAME_ID(nsXULLabelFrame, XULLabel, NotLeaf)
 FRAME_ID(nsXULScrollFrame, Scroll, NotLeaf)
 FRAME_ID(ViewportFrame, Viewport, NotLeaf)
 
-// The following ABSTRACT_FRAME_IDs needs to come after the above
-// FRAME_IDs, because we have two separate enums, one that includes
-// only FRAME_IDs and another which includes both and we depend on
-// FRAME_IDs to have the same number in both.
-// See ClassID (the former) and FrameIID in nsQueryFrame.h.
-
 // Non-concrete classes (for FrameIID use)
 ABSTRACT_FRAME_ID(nsContainerFrame)
+ABSTRACT_FRAME_ID(nsFormControlFrame)
 ABSTRACT_FRAME_ID(nsIFrame)
 ABSTRACT_FRAME_ID(nsLeafFrame)
 ABSTRACT_FRAME_ID(nsMathMLContainerFrame)

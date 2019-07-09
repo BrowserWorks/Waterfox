@@ -11,8 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 let log = Cu.import("resource://gre/modules/Log.jsm", {})
             .Log.repository.getLogger("Sync.RemoteTabs");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserUITelemetry",
-  "resource:///modules/BrowserUITelemetry.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
   "resource:///modules/PlacesUIUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
@@ -117,7 +115,6 @@ TabListComponent.prototype = {
 
   onOpenTab(url, where, params) {
     this._window.openUILinkIn(url, where, params);
-    BrowserUITelemetry.countSyncedTabEvent("open", "sidebar");
   },
 
   onOpenTabs(urls, where) {
@@ -135,7 +132,6 @@ TabListComponent.prototype = {
         triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
       });
     }
-    BrowserUITelemetry.countSyncedTabEvent("openmultiple", "sidebar");
   },
 
   onCopyTabLocation(url) {

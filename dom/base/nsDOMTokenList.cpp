@@ -22,7 +22,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsDOMTokenList::nsDOMTokenList(Element* aElement, nsAtom* aAttrAtom,
+nsDOMTokenList::nsDOMTokenList(Element* aElement, nsIAtom* aAttrAtom,
                                const DOMTokenListSupportedTokenArray aSupportedTokens)
   : mElement(aElement),
     mAttrAtom(aAttrAtom),
@@ -61,10 +61,10 @@ nsDOMTokenList::RemoveDuplicates(const nsAttrValue* aAttr)
     return;
   }
 
-  BloomFilter<8, nsAtom> filter;
-  AtomArray* array = aAttr->GetAtomArrayValue();
+  BloomFilter<8, nsIAtom> filter;
+  nsAttrValue::AtomArray* array = aAttr->GetAtomArrayValue();
   for (uint32_t i = 0; i < array->Length(); i++) {
-    nsAtom* atom = array->ElementAt(i);
+    nsIAtom* atom = array->ElementAt(i);
     if (filter.mightContain(atom)) {
       // Start again, with a hashtable
       RemoveDuplicatesInternal(array, i);
@@ -76,12 +76,13 @@ nsDOMTokenList::RemoveDuplicates(const nsAttrValue* aAttr)
 }
 
 void
-nsDOMTokenList::RemoveDuplicatesInternal(AtomArray* aArray, uint32_t aStart)
+nsDOMTokenList::RemoveDuplicatesInternal(nsAttrValue::AtomArray* aArray,
+                                         uint32_t aStart)
 {
-  nsDataHashtable<nsPtrHashKey<nsAtom>, bool> tokens;
+  nsDataHashtable<nsPtrHashKey<nsIAtom>, bool> tokens;
 
   for (uint32_t i = 0; i < aArray->Length(); i++) {
-    nsAtom* atom = aArray->ElementAt(i);
+    nsIAtom* atom = aArray->ElementAt(i);
     // No need to check the hashtable below aStart
     if (i >= aStart && tokens.Get(atom)) {
       aArray->RemoveElementAt(i);

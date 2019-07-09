@@ -64,22 +64,16 @@ class SyncPreference extends Preference {
             return;
         }
 
-        final ExtendedJSONObject profileJSON = fxAccount.getProfileJSON();
-        final String displayName = profileJSON != null ? profileJSON.getString(FxAccountConstants.KEY_PROFILE_JSON_USERNAME) : null;
-
-        // Update title from account email/display name.
+        // Update title from account email.
         ThreadUtils.postToUiThread(new Runnable() {
             @Override
             public void run() {
-                if (!TextUtils.isEmpty(displayName)) {
-                    setTitle(displayName);
-                } else {
-                    setTitle(R.string.pref_sync_default_title);
-                }
-                setSummary(fxAccount.getEmail());
+                setTitle(fxAccount.getEmail());
+                setSummary("");
             }
         });
 
+        final ExtendedJSONObject profileJSON = fxAccount.getProfileJSON();
         if (profileJSON == null) {
             return;
         }

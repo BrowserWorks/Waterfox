@@ -4,45 +4,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+XPIDL_SOURCES += [
+    'nsIWebRequestListener.idl',
+]
+
+XPIDL_MODULE = 'webextensions'
+
+EXPORTS += [
+    'nsWebRequestListener.h',
+]
+
 UNIFIED_SOURCES += [
-    'ChannelWrapper.cpp',
-    'StreamFilter.cpp',
-    'StreamFilterChild.cpp',
-    'StreamFilterEvents.cpp',
-    'StreamFilterParent.cpp',
-    'WebRequestService.cpp',
-]
-
-IPDL_SOURCES += [
-    'PStreamFilter.ipdl',
-]
-
-EXPORTS.mozilla += [
-    'WebRequestService.h',
-]
-
-EXPORTS.mozilla.extensions += [
-    'ChannelWrapper.h',
-    'StreamFilter.h',
-    'StreamFilterBase.h',
-    'StreamFilterChild.h',
-    'StreamFilterEvents.h',
-    'StreamFilterParent.h',
-]
-
-LOCAL_INCLUDES += [
-    '/caps',
-]
-
-include('/ipc/chromium/chromium-config.mozbuild')
-
-LOCAL_INCLUDES += [
-    # For nsHttpChannel.h
-    '/netwerk/base',
-    '/netwerk/protocol/http',
+    'nsWebRequestListener.cpp',
 ]
 
 FINAL_LIBRARY = 'xul'
-
-with Files("**"):
-    BUG_COMPONENT = ("Toolkit", "WebExtensions: Request Handling")

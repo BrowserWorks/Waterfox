@@ -11,10 +11,9 @@
 #include "MediaResult.h"
 #include "WMF.h"
 #include "WMFMediaDataDecoder.h"
-#include "mozilla/Atomics.h"
 #include "mozilla/RefPtr.h"
 #include "nsAutoPtr.h"
-#include "mozilla/gfx/Rect.h"
+#include "nsRect.h"
 
 namespace mozilla {
 
@@ -26,7 +25,6 @@ public:
   WMFVideoMFTManager(const VideoInfo& aConfig,
                      layers::KnowsCompositor* aKnowsCompositor,
                      layers::ImageContainer* aImageContainer,
-                     float aFramerate,
                      bool aDXVAEnabled);
   ~WMFVideoMFTManager();
 
@@ -42,7 +40,12 @@ public:
 
   TrackInfo::TrackType GetType() override { return TrackInfo::kVideoTrack; }
 
-  nsCString GetDescriptionName() const override;
+  const char* GetDescriptionName() const override
+  {
+    nsCString failureReason;
+    return IsHardwareAccelerated(failureReason) ? "wmf hardware video decoder"
+                                                : "wmf software video decoder";
+  }
 
   void Flush() override
   {
@@ -81,13 +84,11 @@ private:
 
   HRESULT SetDecoderMediaTypes();
 
-  bool CanUseDXVA(IMFMediaType* aType, float aFramerate);
-
-  already_AddRefed<MFTDecoder> LoadAMDVP9Decoder();
+  bool CanUseDXVA(IMFMediaType* aType);
 
   // Video frame geometry.
   const VideoInfo mVideoInfo;
-  const gfx::IntSize mImageSize;
+  const nsIntSize mImageSize;
   uint32_t mVideoStride;
 
   RefPtr<layers::ImageContainer> mImageContainer;
@@ -122,9 +123,6 @@ private:
   bool mGotExcessiveNullOutput = false;
   bool mIsValid = true;
   bool mIMFUsable = false;
-  bool mCheckForAMDDecoder = true;
-  Atomic<bool> mAMDVP9InUse;
-  const float mFramerate;
 };
 
 } // namespace mozilla

@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use canvas_traits::webgl::WebGLError::*;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::webglrenderingcontext::WebGLRenderingContext;
 use dom::webgltexture::WebGLTexture;
 use std::{self, fmt};
 use super::WebGLValidator;
 use super::types::{TexImageTarget, TexDataType, TexFormat};
+use webrender_api::WebGLError::*;
 
 /// The errors that the texImage* family of functions can generate.
 #[derive(Debug)]
@@ -97,7 +97,7 @@ pub struct CommonTexImage2DValidator<'a> {
 }
 
 pub struct CommonTexImage2DValidatorResult {
-    pub texture: DomRoot<WebGLTexture>,
+    pub texture: Root<WebGLTexture>,
     pub target: TexImageTarget,
     pub level: u32,
     pub internal_format: TexFormat,
@@ -263,14 +263,14 @@ pub struct TexImage2DValidatorResult {
     pub height: u32,
     pub level: u32,
     pub border: u32,
-    pub texture: DomRoot<WebGLTexture>,
+    pub texture: Root<WebGLTexture>,
     pub target: TexImageTarget,
     pub format: TexFormat,
     pub data_type: TexDataType,
 }
 
 /// TexImage2d validator as per
-/// <https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml>
+/// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
 impl<'a> WebGLValidator for TexImage2DValidator<'a> {
     type ValidatedOutput = TexImage2DValidatorResult;
     type Error = TexImageValidationError;

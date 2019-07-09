@@ -392,6 +392,9 @@ DiskInit.h
 dlfcn.h
 dlgs.h
 dl.h
+#ifdef MOZ_WIDGET_GONK
+dns_sd.h
+#endif
 docobj.h
 dos/dosextens.h
 dos.h
@@ -494,7 +497,6 @@ getopt.h
 glibconfig.h
 glib.h
 glib-object.h
-glob.h
 gmodule.h
 gnome.h
 gnu/libc-version.h
@@ -836,7 +838,6 @@ PMApplication.h
 pmddim.h
 poll.h
 Polygon.h
-port.h
 portable.h
 Power.h
 PP_ClassHeaders.cp
@@ -1256,6 +1257,12 @@ libavcodec/avfft.h
 #if MOZ_SYSTEM_PNG==1
 png.h
 #endif
+#if MOZ_SYSTEM_WEBP==1
+webp/decode.h
+webp/demux.h
+webp/mux_types.h
+webp/types.h
+#endif
 #if MOZ_SYSTEM_ZLIB==1
 zlib.h
 #endif
@@ -1328,13 +1335,11 @@ unicode/uclean.h
 unicode/ucol.h
 unicode/udat.h
 unicode/udatpg.h
-unicode/udisplaycontext.h
 unicode/uenum.h
 unicode/unistr.h
 unicode/unorm.h
 unicode/unum.h
 unicode/upluralrules.h
-unicode/ureldatefmt.h
 unicode/ustring.h
 unicode/utypes.h
 #endif

@@ -398,6 +398,12 @@ if (this.addMessageListener) {
   Services.obs.addObserver(onPrompt, "passwordmgr-prompt-save");
 
   addMessageListener("setupParent", ({selfFilling = false} = {selfFilling: false}) => {
+    // Force LoginManagerParent to init for the tests since it's normally delayed
+    // by apps such as on Android.
+    if (AppConstants.platform == "android") {
+      LoginManagerParent.init();
+    }
+
     commonInit(selfFilling);
     sendAsyncMessage("doneSetup");
   });
@@ -443,7 +449,8 @@ if (this.addMessageListener) {
   // Code to only run in the mochitest pages (not in the chrome script).
   SpecialPowers.pushPrefEnv({"set": [["signon.rememberSignons", true],
                                      ["signon.autofillForms.http", true],
-                                     ["security.insecure_field_warning.contextual.enabled", false]]
+                                     ["security.insecure_field_warning.contextual.enabled", false],
+                                     ["network.auth.non-web-content-triggered-resources-http-auth-allow", true]]
                            });
   SimpleTest.registerCleanupFunction(() => {
     SpecialPowers.popPrefEnv();

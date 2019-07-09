@@ -126,8 +126,8 @@ async function testMenuBookmarks() {
 async function testToolbarBookmarks() {
   let root = PlacesUtils.getFolderContents(PlacesUtils.toolbarFolderId).root;
 
-  // child count (add 3 for pre-existing items)
-  Assert.equal(root.childCount, bookmarkData.length + 3);
+  // child count (add 2 for pre-existing items)
+  Assert.equal(root.childCount, bookmarkData.length + 2);
 
   let livemarkNode = root.getChild(1);
   Assert.equal("Latest Headlines", livemarkNode.title);
@@ -138,19 +138,11 @@ async function testToolbarBookmarks() {
   Assert.equal("http://en-us.fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
                livemark.feedURI.spec);
 
-  livemarkNode = root.getChild(2);
-  Assert.equal("Latest Headlines No Site", livemarkNode.title);
-
-  livemark = await PlacesUtils.livemarks.getLivemark({ id: livemarkNode.itemId });
-  Assert.equal(null, livemark.siteURI);
-  Assert.equal("http://en-us.fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
-               livemark.feedURI.spec);
-
   // test added bookmark data
-  let bookmarkNode = root.getChild(3);
+  let bookmarkNode = root.getChild(2);
   Assert.equal(bookmarkNode.uri, bookmarkData[0].uri.spec);
   Assert.equal(bookmarkNode.title, bookmarkData[0].title);
-  bookmarkNode = root.getChild(4);
+  bookmarkNode = root.getChild(3);
   Assert.equal(bookmarkNode.uri, bookmarkData[1].uri.spec);
   Assert.equal(bookmarkNode.title, bookmarkData[1].title);
 

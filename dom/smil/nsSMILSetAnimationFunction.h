@@ -32,7 +32,7 @@ public:
    * @returns true if aAttribute is a recognized animation-related
    *          attribute; false otherwise.
    */
-  virtual bool SetAttr(nsAtom* aAttribute, const nsAString& aValue,
+  virtual bool SetAttr(nsIAtom* aAttribute, const nsAString& aValue,
                          nsAttrValue& aResult, nsresult* aParseResult = nullptr) override;
 
   /*
@@ -41,7 +41,7 @@ public:
    * @returns true if aAttribute is a recognized animation-related
    *          attribute; false otherwise.
    */
-  virtual bool UnsetAttr(nsAtom* aAttribute) override;
+  virtual bool UnsetAttr(nsIAtom* aAttribute) override;
 
 protected:
   // Although <set> animation might look like to-animation, unlike to-animation,
@@ -56,13 +56,13 @@ protected:
   virtual bool IsValueFixedForSimpleDuration() const override {
     return true;
   }
-  virtual bool               HasAttr(nsAtom* aAttName) const override;
-  virtual const nsAttrValue* GetAttr(nsAtom* aAttName) const override;
-  virtual bool               GetAttr(nsAtom* aAttName,
+  virtual bool               HasAttr(nsIAtom* aAttName) const override;
+  virtual const nsAttrValue* GetAttr(nsIAtom* aAttName) const override;
+  virtual bool               GetAttr(nsIAtom* aAttName,
                                      nsAString& aResult) const override;
   virtual bool WillReplace() const override;
 
-  bool IsDisallowedAttribute(const nsAtom* aAttribute) const;
+  bool IsDisallowedAttribute(const nsIAtom* aAttribute) const;
 };
 
 #endif // NS_SMILSETANIMATIONFUNCTION_H_

@@ -7,21 +7,23 @@
 use construct::FlowConstructor;
 use context::LayoutContext;
 use display_list_builder::DisplayListBuildState;
-use flow::{self, CAN_BE_FRAGMENTED, Flow, ImmutableFlowUtils};
+use flow::{self, PreorderFlowTraversal};
+use flow::{CAN_BE_FRAGMENTED, Flow, ImmutableFlowUtils, PostorderFlowTraversal};
 use script_layout_interface::wrapper_traits::{LayoutNode, ThreadSafeLayoutNode};
 use servo_config::opts;
 use style::context::{SharedStyleContext, StyleContext};
 use style::data::ElementData;
 use style::dom::{NodeInfo, TElement, TNode};
 use style::selector_parser::RestyleDamage;
-use style::servo::restyle_damage::{BUBBLE_ISIZES, REFLOW, REFLOW_OUT_OF_FLOW, REPAINT, REPOSITION};
-use style::traversal::{DomTraversal, recalc_style_at};
+use style::servo::restyle_damage::{BUBBLE_ISIZES, REFLOW, REFLOW_OUT_OF_FLOW, REPAINT};
+use style::traversal::{DomTraversal, TraversalDriver, recalc_style_at};
 use style::traversal::PerLevelTraversalData;
 use wrapper::{GetRawData, LayoutNodeLayoutData};
 use wrapper::ThreadSafeLayoutNodeHelpers;
 
 pub struct RecalcStyleAndConstructFlows<'a> {
     context: LayoutContext<'a>,
+    driver: TraversalDriver,
 }
 
 impl<'a> RecalcStyleAndConstructFlows<'a> {
@@ -32,9 +34,10 @@ impl<'a> RecalcStyleAndConstructFlows<'a> {
 
 impl<'a> RecalcStyleAndConstructFlows<'a> {
     /// Creates a traversal context, taking ownership of the shared layout context.
-    pub fn new(context: LayoutContext<'a>) -> Self {
+    pub fn new(context: LayoutContext<'a>, driver: TraversalDriver) -> Self {
         RecalcStyleAndConstructFlows {
             context: context,
+            driver: driver,
         }
     }
 
@@ -77,104 +80,15 @@ impl<'a, E> DomTraversal<E> for RecalcStyleAndConstructFlows<'a>
         // (1) They child doesn't yet have layout data (preorder traversal initializes it).
         // (2) The parent element has restyle damage (so the text flow also needs fixup).
         node.get_raw_data().is_none() ||
-        parent_data.damage != RestyleDamage::empty()
+        parent_data.restyle.damage != RestyleDamage::empty()
     }
 
     fn shared_context(&self) -> &SharedStyleContext {
         &self.context.style_context
     }
-}
 
-/// A top-down traversal.
-pub trait PreorderFlowTraversal {
-    /// The operation to perform. Return true to continue or false to stop.
-    fn process(&self, flow: &mut Flow);
-
-    /// Returns true if this node should be processed and false if neither this node nor its
-    /// descendants should be processed.
-    fn should_process_subtree(&self, _flow: &mut Flow) -> bool {
-        true
-    }
-
-    /// Returns true if this node must be processed in-order. If this returns false,
-    /// we skip the operation for this node, but continue processing the descendants.
-    /// This is called *after* parent nodes are visited.
-    fn should_process(&self, _flow: &mut Flow) -> bool {
-        true
-    }
-
-    /// Traverses the tree in preorder.
-    fn traverse(&self, flow: &mut Flow) {
-        if !self.should_process_subtree(flow) {
-            return;
-        }
-        if self.should_process(flow) {
-            self.process(flow);
-        }
-        for kid in flow::child_iter_mut(flow) {
-            self.traverse(kid);
-        }
-    }
-
-    /// Traverse the Absolute flow tree in preorder.
-    ///
-    /// Traverse all your direct absolute descendants, who will then traverse
-    /// their direct absolute descendants.
-    ///
-    /// Return true if the traversal is to continue or false to stop.
-    fn traverse_absolute_flows(&self, flow: &mut Flow) {
-        if self.should_process(flow) {
-            self.process(flow);
-        }
-        for descendant_link in flow::mut_base(flow).abs_descendants.iter() {
-            self.traverse_absolute_flows(descendant_link)
-        }
-    }
-}
-
-/// A bottom-up traversal, with a optional in-order pass.
-pub trait PostorderFlowTraversal {
-    /// The operation to perform. Return true to continue or false to stop.
-    fn process(&self, flow: &mut Flow);
-
-    /// Returns false if this node must be processed in-order. If this returns false, we skip the
-    /// operation for this node, but continue processing the ancestors. This is called *after*
-    /// child nodes are visited.
-    fn should_process(&self, _flow: &mut Flow) -> bool {
-        true
-    }
-
-    /// Traverses the tree in postorder.
-    fn traverse(&self, flow: &mut Flow) {
-        for kid in flow::child_iter_mut(flow) {
-            self.traverse(kid);
-        }
-        if self.should_process(flow) {
-            self.process(flow);
-        }
-    }
-}
-
-/// An in-order (sequential only) traversal.
-pub trait InorderFlowTraversal {
-    /// The operation to perform. Returns the level of the tree we're at.
-    fn process(&mut self, flow: &mut Flow, level: u32);
-
-    /// Returns true if this node should be processed and false if neither this node nor its
-    /// descendants should be processed.
-    fn should_process_subtree(&mut self, _flow: &mut Flow) -> bool {
-        true
-    }
-
-    /// Traverses the tree in-order.
-    fn traverse(&mut self, flow: &mut Flow, level: u32) {
-        if !self.should_process_subtree(flow) {
-            return;
-        }
-        self.process(flow, level);
-        for kid in flow::child_iter_mut(flow) {
-            self.traverse(kid, level + 1);
-        }
+    fn is_parallel(&self) -> bool {
+        self.driver.is_parallel()
     }
 }
 
@@ -237,7 +151,7 @@ impl<'a> PostorderFlowTraversal for BubbleISizes<'a> {
 }
 
 /// The assign-inline-sizes traversal. In Gecko this corresponds to `Reflow`.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct AssignISizes<'a> {
     pub layout_context: &'a LayoutContext<'a>,
 }
@@ -257,7 +171,7 @@ impl<'a> PreorderFlowTraversal for AssignISizes<'a> {
 /// The assign-block-sizes-and-store-overflow traversal, the last (and most expensive) part of
 /// layout computation. Determines the final block-sizes for all layout objects and computes
 /// positions. In Gecko this corresponds to `Reflow`.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct AssignBSizes<'a> {
     pub layout_context: &'a LayoutContext<'a>,
 }
@@ -286,20 +200,15 @@ impl<'a> PostorderFlowTraversal for AssignBSizes<'a> {
     }
 }
 
-pub struct ComputeStackingRelativePositions<'a> {
+#[derive(Copy, Clone)]
+pub struct ComputeAbsolutePositions<'a> {
     pub layout_context: &'a LayoutContext<'a>,
 }
 
-impl<'a> PreorderFlowTraversal for ComputeStackingRelativePositions<'a> {
-    #[inline]
-    fn should_process_subtree(&self, flow: &mut Flow) -> bool {
-        flow::base(flow).restyle_damage.contains(REPOSITION)
-    }
-
+impl<'a> PreorderFlowTraversal for ComputeAbsolutePositions<'a> {
     #[inline]
     fn process(&self, flow: &mut Flow) {
-        flow.compute_stacking_relative_position(self.layout_context);
-        flow::mut_base(flow).restyle_damage.remove(REPOSITION)
+        flow.compute_absolute_position(self.layout_context);
     }
 }
 
@@ -313,18 +222,24 @@ impl<'a> BuildDisplayList<'a> {
         let parent_stacking_context_id = self.state.current_stacking_context_id;
         self.state.current_stacking_context_id = flow::base(flow).stacking_context_id;
 
-        let parent_clip_and_scroll_info = self.state.current_clip_and_scroll_info;
-        self.state.current_clip_and_scroll_info =
-            flow.clip_and_scroll_info(self.state.layout_context.id);
+        let parent_scroll_root_id = self.state.current_scroll_root_id;
+        self.state.current_scroll_root_id = flow.scroll_root_id(self.state.layout_context.id);
 
-        flow.build_display_list(&mut self.state);
-        flow::mut_base(flow).restyle_damage.remove(REPAINT);
+        if self.should_process() {
+            flow.build_display_list(&mut self.state);
+            flow::mut_base(flow).restyle_damage.remove(REPAINT);
+        }
 
         for kid in flow::child_iter_mut(flow) {
             self.traverse(kid);
         }
 
         self.state.current_stacking_context_id = parent_stacking_context_id;
-        self.state.current_clip_and_scroll_info = parent_clip_and_scroll_info;
+        self.state.current_scroll_root_id = parent_scroll_root_id;
+    }
+
+    #[inline]
+    fn should_process(&self) -> bool {
+        true
     }
 }

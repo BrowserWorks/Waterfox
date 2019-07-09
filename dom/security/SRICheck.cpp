@@ -182,18 +182,22 @@ SRICheck::IntegrityMetadata(const nsAString& aMetadataList,
 
 /* static */ nsresult
 SRICheck::VerifyIntegrity(const SRIMetadata& aMetadata,
-                          nsIChannel* aChannel,
-                          const nsACString& aBytes,
+                          nsIUnicharStreamLoader* aLoader,
+                          const nsAString& aString,
                           const nsACString& aSourceFileURI,
                           nsIConsoleReportCollector* aReporter)
 {
+  NS_ENSURE_ARG_POINTER(aLoader);
   NS_ENSURE_ARG_POINTER(aReporter);
+
+  nsCOMPtr<nsIChannel> channel;
+  aLoader->GetChannel(getter_AddRefs(channel));
 
   if (MOZ_LOG_TEST(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug)) {
     nsAutoCString requestURL;
     nsCOMPtr<nsIURI> originalURI;
-    if (aChannel &&
-        NS_SUCCEEDED(aChannel->GetOriginalURI(getter_AddRefs(originalURI))) &&
+    if (channel &&
+        NS_SUCCEEDED(channel->GetOriginalURI(getter_AddRefs(originalURI))) &&
         originalURI) {
       originalURI->GetAsciiSpec(requestURL);
     }
@@ -201,11 +205,14 @@ SRICheck::VerifyIntegrity(const SRIMetadata& aMetadata,
   }
 
   SRICheckDataVerifier verifier(aMetadata, aSourceFileURI, aReporter);
-  nsresult rv =
-    verifier.Update(aBytes.Length(), (const uint8_t*)aBytes.BeginReading());
+  nsresult rv;
+  nsDependentCString rawBuffer;
+  rv = aLoader->GetRawBuffer(rawBuffer);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = verifier.Update(rawBuffer.Length(), (const uint8_t*)rawBuffer.get());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  return verifier.Verify(aMetadata, aChannel, aSourceFileURI, aReporter);
+  return verifier.Verify(aMetadata, channel, aSourceFileURI, aReporter);
 }
 
 //////////////////////////////////////////////////////////////
@@ -430,8 +437,7 @@ SRICheckDataVerifier::DataSummaryLength(uint32_t aDataLen, const uint8_t* aData,
 
   // decode the content of the buffer
   size_t offset = sizeof(mHashType);
-  decltype(mHashLength) len = 0;
-  memcpy(&len, &aData[offset], sizeof(mHashLength));
+  size_t len = *reinterpret_cast<const decltype(mHashLength)*>(&aData[offset]);
   offset += sizeof(mHashLength);
 
   SRIVERBOSE(("SRICheckDataVerifier::DataSummaryLength, header {%x, %x, %x, %x, %x, ...}",
@@ -468,20 +474,18 @@ SRICheckDataVerifier::ImportDataSummary(uint32_t aDataLen, const uint8_t* aData)
 
   // decode the content of the buffer
   size_t offset = 0;
-  decltype(mHashType) hashType;
-  memcpy(&hashType, &aData[offset], sizeof(mHashType));
-  if (hashType != mHashType) {
+  if (*reinterpret_cast<const decltype(mHashType)*>(&aData[offset]) != mHashType) {
     SRILOG(("SRICheckDataVerifier::ImportDataSummary, hash type[%d] does not match[%d]",
-            hashType, mHashType));
+            *reinterpret_cast<const decltype(mHashType)*>(&aData[offset]),
+             mHashType));
     return NS_ERROR_SRI_UNEXPECTED_HASH_TYPE;
   }
   offset += sizeof(mHashType);
 
-  decltype(mHashLength) hashLength;
-  memcpy(&hashLength, &aData[offset], sizeof(mHashLength));
-  if (hashLength != mHashLength) {
+  if (*reinterpret_cast<const decltype(mHashLength)*>(&aData[offset]) != mHashLength) {
     SRILOG(("SRICheckDataVerifier::ImportDataSummary, hash length[%d] does not match[%d]",
-            hashLength, mHashLength));
+            *reinterpret_cast<const decltype(mHashLength)*>(&aData[offset]),
+             mHashLength));
     return NS_ERROR_SRI_UNEXPECTED_HASH_TYPE;
   }
   offset += sizeof(mHashLength);
@@ -503,9 +507,9 @@ SRICheckDataVerifier::ExportDataSummary(uint32_t aDataLen, uint8_t* aData)
 
   // serialize the hash in the buffer
   size_t offset = 0;
-  memcpy(&aData[offset], &mHashType, sizeof(mHashType));
+  *reinterpret_cast<decltype(mHashType)*>(&aData[offset]) = mHashType;
   offset += sizeof(mHashType);
-  memcpy(&aData[offset], &mHashLength, sizeof(mHashLength));
+  *reinterpret_cast<decltype(mHashLength)*>(&aData[offset]) = mHashLength;
   offset += sizeof(mHashLength);
 
   SRIVERBOSE(("SRICheckDataVerifier::ExportDataSummary, header {%x, %x, %x, %x, %x, ...}",
@@ -525,9 +529,9 @@ SRICheckDataVerifier::ExportEmptyDataSummary(uint32_t aDataLen, uint8_t* aData)
 
   // serialize an unknown hash in the buffer, to be able to skip it later
   size_t offset = 0;
-  memset(&aData[offset], 0, sizeof(mHashType));
+  *reinterpret_cast<decltype(mHashType)*>(&aData[offset]) = 0;
   offset += sizeof(mHashType);
-  memset(&aData[offset], 0, sizeof(mHashLength));
+  *reinterpret_cast<decltype(mHashLength)*>(&aData[offset]) = 0;
   offset += sizeof(mHashLength);
 
   SRIVERBOSE(("SRICheckDataVerifier::ExportEmptyDataSummary, header {%x, %x, %x, %x, %x, ...}",

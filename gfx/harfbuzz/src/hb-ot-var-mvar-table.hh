@@ -43,7 +43,7 @@ struct VariationValueRecord
 
   public:
   Tag		valueTag;	/* Four-byte tag identifying a font-wide measure. */
-  ULONG		varIdx;		/* Outer/inner index into VariationStore item. */
+  HBUINT32		varIdx;		/* Outer/inner index into VariationStore item. */
 
   public:
   DEFINE_SIZE_STATIC (8);
@@ -77,7 +77,7 @@ struct MVAR
     const VariationValueRecord *record;
     record = (VariationValueRecord *) bsearch (&tag, values,
 					       valueRecordCount, valueRecordSize,
-					       (hb_compare_func_t) tag_compare);
+					       tag_compare);
     if (!record)
       return 0.;
 
@@ -85,19 +85,23 @@ struct MVAR
   }
 
 protected:
-  static inline int tag_compare (const hb_tag_t *a, const Tag *b)
-  { return b->cmp (*a); }
+  static inline int tag_compare (const void *pa, const void *pb)
+  {
+    const hb_tag_t *a = (const hb_tag_t *) pa;
+    const Tag *b = (const Tag *) pb;
+    return b->cmp (*a);
+  }
 
   protected:
   FixedVersion<>version;	/* Version of the metrics variation table
 				 * initially set to 0x00010000u */
-  USHORT	reserved;	/* Not used; set to 0. */
-  USHORT	valueRecordSize;/* The size in bytes of each value record —
+  HBUINT16	reserved;	/* Not used; set to 0. */
+  HBUINT16	valueRecordSize;/* The size in bytes of each value record —
 				 * must be greater than zero. */
-  USHORT	valueRecordCount;/* The number of value records — may be zero. */
+  HBUINT16	valueRecordCount;/* The number of value records — may be zero. */
   OffsetTo<VariationStore>
 		varStore;	/* Offset to item variation store table. */
-  BYTE		values[VAR];	/* Array of value records. The records must be
+  HBUINT8		values[VAR];	/* Array of value records. The records must be
 				 * in binary order of their valueTag field. */
 
   public:

@@ -8,7 +8,7 @@
 
 "use strict";
 
-const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
+const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu  } = Components;
 
 Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -52,7 +52,7 @@ function TestDescription(aType, aTcpAddress, aTcpPort) {
 
 TestDescription.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationChannelDescription]),
-};
+}
 
 function TestControlChannelListener(aRole) {
   log("TestControlChannelListener of " + aRole + " is created.");
@@ -299,7 +299,7 @@ function presentationLaunchAndTerminate() {
       controllerControlChannelListener = new TestControlChannelListener("controller");
       controllerControlChannel.listener = controllerControlChannelListener;
       // test notifyConnected for controller
-      return controllerControlChannelListener.isNotifyConnectedCalled;
+      return controllerControlChannelListener.isNotifyConnectedCalled
   }).then(() => {
       ok(true, "notifyConnected of controller should be called.");
 

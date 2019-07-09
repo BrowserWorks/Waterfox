@@ -374,8 +374,8 @@ SVGContentUtils::EstablishesViewport(nsIContent *aContent)
                                                   nsGkAtoms::symbol);
 }
 
-SVGViewportElement*
-SVGContentUtils::GetNearestViewportElement(const nsIContent *aContent)
+nsSVGElement*
+SVGContentUtils::GetNearestViewportElement(nsIContent *aContent)
 {
   nsIContent *element = aContent->GetFlattenedTreeParent();
 
@@ -384,11 +384,7 @@ SVGContentUtils::GetNearestViewportElement(const nsIContent *aContent)
       if (element->IsSVGElement(nsGkAtoms::foreignObject)) {
         return nullptr;
       }
-      MOZ_ASSERT(element->IsAnyOfSVGElements(nsGkAtoms::svg,
-                                             nsGkAtoms::symbol),
-                 "upcoming static_cast is only valid for "
-                 "SVGViewportElement subclasses");
-      return static_cast<SVGViewportElement*>(element);
+      return static_cast<nsSVGElement*>(element);
     }
     element = element->GetFlattenedTreeParent();
   }
@@ -832,7 +828,7 @@ SVGContentUtils::CoordToFloat(nsSVGElement *aContent,
     return nsPresContext::AppUnitsToFloatCSSPixels(aCoord.GetCoordValue());
 
   case eStyleUnit_Percent: {
-    SVGViewportElement* ctx = aContent->GetCtx();
+    SVGSVGElement* ctx = aContent->GetCtx();
     return ctx ? aCoord.GetPercentValue() * ctx->GetLength(SVGContentUtils::XY) : 0.0f;
   }
   default:

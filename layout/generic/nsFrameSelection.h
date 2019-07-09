@@ -203,10 +203,8 @@ public:
    *  be used by most of the methods
    *  @param aShell is the parameter to be used for most of the other calls for callbacks etc
    *  @param aLimiter limits the selection to nodes with aLimiter parents
-   *  @param aAccessibleCaretEnabled true if we should enable the accessible caret.
    */
-  void Init(nsIPresShell *aShell, nsIContent *aLimiter,
-            bool aAccessibleCaretEnabled);
+  void Init(nsIPresShell *aShell, nsIContent *aLimiter);
 
   /** HandleClick will take the focus to the new frame at the new offset and
    *  will either extend the selection from the old anchor, or replace the old anchor.
@@ -703,8 +701,7 @@ private:
                                                       Selection* aSel);
 
   RefPtr<mozilla::dom::Selection>
-    mDomSelections[
-      sizeof(mozilla::kPresentSelectionTypes) / sizeof(mozilla::SelectionType)];
+    mDomSelections[mozilla::kPresentSelectionTypeCount];
 
   // Table selection support.
   nsITableCellLayout* GetCellLayout(nsIContent *aCellContent) const;
@@ -773,7 +770,6 @@ private:
   bool mDragState;   //for drag purposes
   bool mMouseDoubleDownState; //has the doubleclick down happened
   bool mDesiredPosSet;
-  bool mAccessibleCaretEnabled;
 
   int8_t mCaretMovementStyle;
 

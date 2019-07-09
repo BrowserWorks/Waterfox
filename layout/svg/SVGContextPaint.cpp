@@ -10,7 +10,7 @@
 #include "mozilla/Preferences.h"
 #include "nsIDocument.h"
 #include "nsSVGPaintServerFrame.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGPaintServerFrame.h"
 
 using namespace mozilla::gfx;
@@ -91,12 +91,12 @@ SetupInheritablePaint(const DrawTarget* aDrawTarget,
                       SVGContextPaint* aOuterContextPaint,
                       SVGContextPaintImpl::Paint& aTargetPaint,
                       nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
-                      SVGObserverUtils::PaintingPropertyDescriptor aProperty,
+                      nsSVGEffects::PaintingPropertyDescriptor aProperty,
                       imgDrawingParams& aImgParams)
 {
   const nsStyleSVG *style = aFrame->StyleSVG();
   nsSVGPaintServerFrame *ps =
-    SVGObserverUtils::GetPaintServer(aFrame, aFillOrStroke, aProperty);
+    nsSVGEffects::GetPaintServer(aFrame, aFillOrStroke, aProperty);
 
   if (ps) {
     RefPtr<gfxPattern> pattern =
@@ -157,7 +157,7 @@ SVGContextPaintImpl::Init(const DrawTarget* aDrawTarget,
 
     SetupInheritablePaint(aDrawTarget, aContextMatrix, aFrame, opacity,
                           aOuterContextPaint, mFillPaint, &nsStyleSVG::mFill,
-                          SVGObserverUtils::FillProperty(), aImgParams);
+                          nsSVGEffects::FillProperty(), aImgParams);
 
     SetFillOpacity(opacity);
 
@@ -174,8 +174,7 @@ SVGContextPaintImpl::Init(const DrawTarget* aDrawTarget,
 
     SetupInheritablePaint(aDrawTarget, aContextMatrix, aFrame, opacity,
                           aOuterContextPaint, mStrokePaint,
-                          &nsStyleSVG::mStroke,
-                          SVGObserverUtils::StrokeProperty(),
+                          &nsStyleSVG::mStroke, nsSVGEffects::StrokeProperty(),
                           aImgParams);
 
     SetStrokeOpacity(opacity);

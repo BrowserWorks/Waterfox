@@ -4,7 +4,7 @@
 
 use dom::bindings::codegen::Bindings::HTMLProgressElementBinding::{self, HTMLProgressElementMethods};
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::DomRoot;
+use dom::bindings::js::Root;
 use dom::document::Document;
 use dom::htmlelement::HTMLElement;
 use dom::node::Node;
@@ -30,8 +30,8 @@ impl HTMLProgressElement {
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLProgressElement> {
-        Node::reflect_node(Box::new(HTMLProgressElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLProgressElement> {
+        Node::reflect_node(box HTMLProgressElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLProgressElementBinding::Wrap)
     }
@@ -39,7 +39,7 @@ impl HTMLProgressElement {
 
 impl HTMLProgressElementMethods for HTMLProgressElement {
     // https://html.spec.whatwg.org/multipage/#dom-lfe-labels
-    fn Labels(&self) -> DomRoot<NodeList> {
+    fn Labels(&self) -> Root<NodeList> {
         self.upcast::<HTMLElement>().labels()
     }
 }

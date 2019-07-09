@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-"use strict";
+"use strict"
 
 XPCOMUtils.defineLazyModuleGetter(this, "jwcrypto",
                                   "resource://services-crypto/jwcrypto.jsm");
@@ -272,3 +272,7 @@ var TESTS = [
 TESTS = TESTS.concat([test_rsa, test_dsa]);
 
 TESTS.forEach(add_test);
+
+function run_test() {
+  run_next_test();
+}

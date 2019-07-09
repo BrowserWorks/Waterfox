@@ -77,11 +77,12 @@ nsMathMLmrootFrame::TransmitAutomaticData()
 
 void
 nsMathMLmrootFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                     const nsRect&           aDirtyRect,
                                      const nsDisplayListSet& aLists)
 {
   /////////////
   // paint the content we are square-rooting
-  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aLists);
+  nsMathMLContainerFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 
   /////////////
   // paint the sqrt symbol
@@ -165,9 +166,8 @@ nsMathMLmrootFrame::Reflow(nsPresContext*          aPresContext,
                            nsReflowStatus&          aStatus)
 {
   MarkInReflow();
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   nsReflowStatus childStatus;
+
   mPresentationData.flags &= ~NS_MATHML_ERROR;
   aDesiredSize.ClearSize();
   aDesiredSize.SetBlockStartAscent(0);
@@ -216,6 +216,7 @@ nsMathMLmrootFrame::Reflow(nsPresContext*          aPresContext,
     // report an error, encourage people to get their markups in order
     ReportChildCountError();
     ReflowError(drawTarget, aDesiredSize);
+    aStatus.Reset();
     NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
     // Call DidReflow() for the child frames we successfully did reflow.
     DidReflowChildren(mFrames.FirstChild(), childFrame);
@@ -353,6 +354,7 @@ nsMathMLmrootFrame::Reflow(nsPresContext*          aPresContext,
   mReference.x = 0;
   mReference.y = aDesiredSize.BlockStartAscent();
 
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 

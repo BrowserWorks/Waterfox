@@ -77,6 +77,8 @@ SharedWorker::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
+  Telemetry::Accumulate(Telemetry::SHARED_WORKER_COUNT, 1);
+
   return sharedWorker.forget();
 }
 
@@ -160,7 +162,7 @@ SharedWorker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
 NS_IMPL_ADDREF_INHERITED(SharedWorker, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(SharedWorker, DOMEventTargetHelper)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(SharedWorker)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(SharedWorker)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(SharedWorker)

@@ -244,6 +244,16 @@ DoesNotParticipateInAutoDirection(const Element* aElement)
           aElement->IsInAnonymousSubtree());
 }
 
+static inline bool
+IsBdiWithoutDirAuto(const Element* aElement)
+{
+  // We are testing for bdi elements without explicit dir="auto", so we can't
+  // use the HasDirAuto() flag, since that will return true for bdi element with
+  // no dir attribute or an invalid dir attribute
+  return (aElement->IsHTMLElement(nsGkAtoms::bdi) &&
+          (!aElement->HasValidDir() || aElement->HasFixedDir()));
+}
+
 /**
  * Returns true if aElement is one of the element whose text content should not
  * affect the direction of ancestors with dir=auto (though it may affect its own
@@ -253,7 +263,7 @@ static bool
 DoesNotAffectDirectionOfAncestors(const Element* aElement)
 {
   return (DoesNotParticipateInAutoDirection(aElement) ||
-          aElement->IsHTMLElement(nsGkAtoms::bdi) ||
+          IsBdiWithoutDirAuto(aElement) ||
           aElement->HasFixedDir());
 }
 
@@ -411,7 +421,7 @@ WalkDescendantsSetDirectionFromText(Element* aElement, bool aNotify = true,
 class nsTextNodeDirectionalityMap
 {
   static void
-  nsTextNodeDirectionalityMapDtor(void *aObject, nsAtom* aPropertyName,
+  nsTextNodeDirectionalityMapDtor(void *aObject, nsIAtom* aPropertyName,
                                   void *aPropertyValue, void* aData)
   {
     nsINode* textNode = static_cast<nsINode * >(aObject);
@@ -441,7 +451,7 @@ public:
 
   static void
   nsTextNodeDirectionalityMapPropertyDestructor(void* aObject,
-                                                nsAtom* aProperty,
+                                                nsIAtom* aProperty,
                                                 void* aPropertyValue,
                                                 void* aData)
   {

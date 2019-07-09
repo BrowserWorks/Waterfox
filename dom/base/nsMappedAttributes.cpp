@@ -156,7 +156,7 @@ NS_IMPL_QUERY_INTERFACE(nsMappedAttributes,
                         nsIStyleRule)
 
 void
-nsMappedAttributes::SetAndSwapAttr(nsAtom* aAttrName, nsAttrValue& aValue,
+nsMappedAttributes::SetAndSwapAttr(nsIAtom* aAttrName, nsAttrValue& aValue,
                                    bool* aValueWasSet)
 {
   NS_PRECONDITION(aAttrName, "null name");
@@ -183,7 +183,7 @@ nsMappedAttributes::SetAndSwapAttr(nsAtom* aAttrName, nsAttrValue& aValue,
 }
 
 const nsAttrValue*
-nsMappedAttributes::GetAttr(nsAtom* aAttrName) const
+nsMappedAttributes::GetAttr(nsIAtom* aAttrName) const
 {
   NS_PRECONDITION(aAttrName, "null name");
 
@@ -334,7 +334,7 @@ nsMappedAttributes::GetExistingAttrNameFromQName(const nsAString& aName) const
 }
 
 int32_t
-nsMappedAttributes::IndexOfAttr(nsAtom* aLocalName) const
+nsMappedAttributes::IndexOfAttr(nsIAtom* aLocalName) const
 {
   uint32_t i;
   for (i = 0; i < mAttrCount; ++i) {

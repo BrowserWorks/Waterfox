@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array-len
 info: >
     The [[Prototype]] property of the newly constructed object
     is set to the original Array prototype object, the one that

@@ -38,7 +38,7 @@ static const nsAttrValue::EnumTable kClearTable[] = {
 
 bool
 HTMLBRElement::ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult)
 {
@@ -66,7 +66,7 @@ HTMLBRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLBRElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLBRElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::clear },

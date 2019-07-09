@@ -69,20 +69,20 @@ WeaveCrypto.prototype = {
         return crypto;
     },
 
-    async encrypt(clearTextUCS2, symmetricKey, iv) {
+    encrypt(clearTextUCS2, symmetricKey, iv) {
         this.log("encrypt() called");
         let clearTextBuffer = this.encoder.encode(clearTextUCS2).buffer;
-        let encrypted = await this._commonCrypt(clearTextBuffer, symmetricKey, iv, OPERATIONS.ENCRYPT);
+        let encrypted = this._commonCrypt(clearTextBuffer, symmetricKey, iv, OPERATIONS.ENCRYPT);
         return this.encodeBase64(encrypted);
     },
 
-    async decrypt(cipherText, symmetricKey, iv) {
+    decrypt(cipherText, symmetricKey, iv) {
         this.log("decrypt() called");
         if (cipherText.length) {
             cipherText = atob(cipherText);
         }
         let cipherTextBuffer = this.byteCompressInts(cipherText);
-        let decrypted = await this._commonCrypt(cipherTextBuffer, symmetricKey, iv, OPERATIONS.DECRYPT);
+        let decrypted = this._commonCrypt(cipherTextBuffer, symmetricKey, iv, OPERATIONS.DECRYPT);
         return this.decoder.decode(decrypted);
     },
 
@@ -97,7 +97,7 @@ WeaveCrypto.prototype = {
      * @returns
      * the encrypted/decrypted data (ArrayBuffer)
     */
-    async _commonCrypt(data, symKeyStr, ivStr, operation) {
+    _commonCrypt(data, symKeyStr, ivStr, operation) {
         this.log("_commonCrypt() called");
         ivStr = atob(ivStr);
 
@@ -112,27 +112,35 @@ WeaveCrypto.prototype = {
         }
 
         let iv = this.byteCompressInts(ivStr);
-        let symKey = await this.importSymKey(symKeyStr, operation);
+        let symKey = this.importSymKey(symKeyStr, operation);
         let cryptMethod = (operation === OPERATIONS.ENCRYPT
                            ? crypto.subtle.encrypt
                            : crypto.subtle.decrypt)
                           .bind(crypto.subtle);
         let algo = { name: CRYPT_ALGO, iv };
 
-        let keyBytes = await cryptMethod.call(crypto.subtle, algo, symKey, data);
-        return new Uint8Array(keyBytes);
+
+        return Async.promiseSpinningly(
+            cryptMethod(algo, symKey, data)
+            .then(keyBytes => new Uint8Array(keyBytes))
+        );
     },
 
 
-    async generateRandomKey() {
+    generateRandomKey() {
         this.log("generateRandomKey() called");
         let algo = {
             name: CRYPT_ALGO,
             length: CRYPT_ALGO_LENGTH
         };
-        let key = await crypto.subtle.generateKey(algo, true, []);
-        let keyBytes = await crypto.subtle.exportKey("raw", key);
-        return this.encodeBase64(new Uint8Array(keyBytes));
+        return Async.promiseSpinningly(
+            crypto.subtle.generateKey(algo, true, [])
+            .then(key => crypto.subtle.exportKey("raw", key))
+            .then(keyBytes => {
+                keyBytes = new Uint8Array(keyBytes);
+                return this.encodeBase64(keyBytes);
+            })
+        );
     },
 
     generateRandomIV() {
@@ -156,7 +164,7 @@ WeaveCrypto.prototype = {
     // string itself as a key.
     _encryptionSymKeyMemo: {},
     _decryptionSymKeyMemo: {},
-    async importSymKey(encodedKeyString, operation) {
+    importSymKey(encodedKeyString, operation) {
         let memo;
 
         // We use two separate memos for thoroughness: operation is an input to
@@ -178,9 +186,14 @@ WeaveCrypto.prototype = {
         let symmetricKeyBuffer = this.makeUint8Array(encodedKeyString, true);
         let algo = { name: CRYPT_ALGO };
         let usages = [operation === OPERATIONS.ENCRYPT ? "encrypt" : "decrypt"];
-        let symKey = await crypto.subtle.importKey("raw", symmetricKeyBuffer, algo, false, usages);
-        memo[encodedKeyString] = symKey;
-        return symKey;
+
+        return Async.promiseSpinningly(
+            crypto.subtle.importKey("raw", symmetricKeyBuffer, algo, false, usages)
+            .then(symKey => {
+                memo[encodedKeyString] = symKey;
+                return symKey;
+            })
+        );
     },
 
 

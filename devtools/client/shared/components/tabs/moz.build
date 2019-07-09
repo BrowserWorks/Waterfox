@@ -5,8 +5,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DevToolsModules(
-    'TabBar.css',
-    'TabBar.js',
-    'Tabs.css',
-    'Tabs.js',
+    'tabbar.css',
+    'tabbar.js',
+    'tabs.css',
+    'tabs.js',
 )

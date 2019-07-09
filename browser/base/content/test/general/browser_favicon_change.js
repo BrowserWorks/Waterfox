@@ -3,7 +3,7 @@
 
 "use strict";
 
-const TEST_URL = "http://mochi.test:8888/browser/browser/base/content/test/general/file_favicon_change.html";
+const TEST_URL = "http://mochi.test:8888/browser/browser/base/content/test/general/file_favicon_change.html"
 
 add_task(async function() {
   let extraTab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
@@ -17,8 +17,7 @@ add_task(async function() {
         continue;
       }
       let imageVal = extraTab.getAttribute("image").replace(/#.*$/, "");
-      // Ignore chrome favicons set on the tab before the actual page load.
-      if (!imageVal || !imageVal.startsWith("http://example.org/")) {
+      if (!imageVal) {
         // The value gets removed because it doesn't load.
         continue;
       }

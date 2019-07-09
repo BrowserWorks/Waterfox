@@ -8,13 +8,15 @@
 #define mozilla_dom_HTMLFrameElement_h
 
 #include "mozilla/Attributes.h"
+#include "nsIDOMHTMLFrameElement.h"
 #include "nsGenericHTMLFrameElement.h"
 #include "nsGkAtoms.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLFrameElement final : public nsGenericHTMLFrameElement
+class HTMLFrameElement final : public nsGenericHTMLFrameElement,
+                               public nsIDOMHTMLFrameElement
 {
 public:
   using nsGenericHTMLFrameElement::SwapFrameLoaders;
@@ -25,57 +27,43 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLFrameElement, frame)
+  // nsIDOMHTMLFrameElement
+  NS_DECL_NSIDOMHTMLFRAMEELEMENT
 
   // nsIContent
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
 
   // WebIDL API
-  void GetFrameBorder(DOMString& aFrameBorder) const
-  {
-    GetHTMLAttr(nsGkAtoms::frameborder, aFrameBorder);
-  }
+  // The XPCOM GetFrameBorder is OK for us
   void SetFrameBorder(const nsAString& aFrameBorder, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::frameborder, aFrameBorder, aError);
   }
 
-  void GetLongDesc(nsAString& aLongDesc) const
-  {
-    GetURIAttr(nsGkAtoms::longdesc, nullptr, aLongDesc);
-  }
+  // The XPCOM GetLongDesc is OK for us
   void SetLongDesc(const nsAString& aLongDesc, ErrorResult& aError)
   {
     SetAttrHelper(nsGkAtoms::longdesc, aLongDesc);
   }
 
-  void GetMarginHeight(DOMString& aMarginHeight) const
-  {
-    GetHTMLAttr(nsGkAtoms::marginheight, aMarginHeight);
-  }
+  // The XPCOM GetMarginHeight is OK for us
   void SetMarginHeight(const nsAString& aMarginHeight, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::marginheight, aMarginHeight, aError);
   }
 
-  void GetMarginWidth(DOMString& aMarginWidth) const
-  {
-    GetHTMLAttr(nsGkAtoms::marginwidth, aMarginWidth);
-  }
+  // The XPCOM GetMarginWidth is OK for us
   void SetMarginWidth(const nsAString& aMarginWidth, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::marginwidth, aMarginWidth, aError);
   }
 
-  void GetName(DOMString& aName) const
-  {
-    GetHTMLAttr(nsGkAtoms::name, aName);
-  }
+  // The XPCOM GetName is OK for us
   void SetName(const nsAString& aName, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::name, aName, aError);
@@ -90,22 +78,16 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::noresize, aNoResize, aError);
   }
 
-  void GetScrolling(DOMString& aScrolling) const
-  {
-    GetHTMLAttr(nsGkAtoms::scrolling, aScrolling);
-  }
+  // The XPCOM GetScrolling is OK for us
   void SetScrolling(const nsAString& aScrolling, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::scrolling, aScrolling, aError);
   }
 
-  void GetSrc(nsString& aSrc, nsIPrincipal&)
+  // The XPCOM GetSrc is OK for us
+  void SetSrc(const nsAString& aSrc, ErrorResult& aError)
   {
-    GetURIAttr(nsGkAtoms::src, nullptr, aSrc);
-  }
-  void SetSrc(const nsAString& aSrc, nsIPrincipal& aTriggeringPrincipal, ErrorResult& aError)
-  {
-    SetHTMLAttr(nsGkAtoms::src, aSrc, aTriggeringPrincipal, aError);
+    SetAttrHelper(nsGkAtoms::src, aSrc);
   }
 
   using nsGenericHTMLFrameElement::GetContentDocument;

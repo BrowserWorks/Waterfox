@@ -615,6 +615,17 @@ PluginInstanceParent::RecvNPN_InvalidateRect(const NPRect& rect)
     return IPC_OK();
 }
 
+static inline NPRect
+IntRectToNPRect(const gfx::IntRect& rect)
+{
+    NPRect r;
+    r.left = rect.x;
+    r.top = rect.y;
+    r.right = rect.x + rect.width;
+    r.bottom = rect.y + rect.height;
+    return r;
+}
+
 mozilla::ipc::IPCResult
 PluginInstanceParent::RecvRevokeCurrentDirectSurface()
 {
@@ -1333,10 +1344,10 @@ PluginInstanceParent::NPP_SetWindow(const NPWindow* aWindow)
 #if defined(XP_MACOSX) || defined(XP_WIN)
     double floatScaleFactor = 1.0;
     mNPNIface->getvalue(mNPP, NPNVcontentsScaleFactor, &floatScaleFactor);
+    int scaleFactor = ceil(floatScaleFactor);
     window.contentsScaleFactor = floatScaleFactor;
 #endif
 #if defined(XP_MACOSX)
-    int scaleFactor = ceil(floatScaleFactor);
     if (mShWidth != window.width * scaleFactor || mShHeight != window.height * scaleFactor) {
         if (mDrawingModel == NPDrawingModelCoreAnimation ||
             mDrawingModel == NPDrawingModelInvalidatingCoreAnimation) {
@@ -2293,6 +2304,20 @@ PluginInstanceParent::RecvRequestCommitOrCancel(const bool& aCommitted)
     if (owner) {
         owner->RequestCommitOrCancel(aCommitted);
     }
+#endif
+    return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+PluginInstanceParent::RecvEnableIME(const bool& aEnable)
+{
+#if defined(OS_WIN)
+    nsPluginInstanceOwner* owner = GetOwner();
+    if (owner) {
+        owner->EnableIME(aEnable);
+    }
+#else
+    MOZ_CRASH("Not reachable");
 #endif
     return IPC_OK();
 }

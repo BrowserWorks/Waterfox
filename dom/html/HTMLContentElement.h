@@ -29,7 +29,14 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLContentElement,
                                            nsGenericHTMLElement)
 
-  NS_IMPL_FROMCONTENT_HELPER(HTMLContentElement, IsHTMLContentElement())
+  static HTMLContentElement* FromContent(nsIContent* aContent)
+  {
+    if (aContent->IsHTMLContentElement()) {
+      return static_cast<HTMLContentElement*>(aContent);
+    }
+
+    return nullptr;
+  }
 
   virtual bool IsHTMLContentElement() const override { return true; }
 
@@ -82,10 +89,9 @@ protected:
    */
   void UpdateFallbackDistribution();
 
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   /**

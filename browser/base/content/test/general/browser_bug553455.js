@@ -25,10 +25,6 @@ const CHROMEROOT = croot;
 var gApp = document.getElementById("bundle_brand").getString("brandShortName");
 var gVersion = Services.appinfo.version;
 
-function waitForTick() {
-  return new Promise(resolve => executeSoon(resolve));
-}
-
 function getObserverTopic(aNotificationId) {
   let topic = aNotificationId;
   if (topic == "xpinstall-disabled")
@@ -73,7 +69,6 @@ async function waitForProgressNotification(aPanelOpen = false, aExpectedCount = 
 
   await observerPromise;
   await panelEventPromise;
-  await waitForTick();
 
   info("Saw a notification");
   ok(PopupNotifications.isPanelOpen, "Panel should be open");
@@ -119,7 +114,6 @@ async function waitForNotification(aId, aExpectedCount = 1) {
 
   await observerPromise;
   await panelEventPromise;
-  await waitForTick();
 
   info("Saw a " + aId + " notification");
   ok(PopupNotifications.isPanelOpen, "Panel should be open");

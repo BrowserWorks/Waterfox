@@ -19,7 +19,6 @@
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackground.h"
 #include "mozilla/ipc/PBackgroundChild.h"
-#include "mozilla/Telemetry.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsAboutProtocolUtils.h"
 #include "nsContentUtils.h"
@@ -478,28 +477,6 @@ IDBFactory::Open(JSContext* aCx,
                  CallerType aCallerType,
                  ErrorResult& aRv)
 {
-  if (!IsChrome() &&
-      aOptions.mStorage.WasPassed()) {
-    switch (aOptions.mStorage.Value()) {
-      case StorageType::Persistent: {
-        Telemetry::ScalarAdd(Telemetry::ScalarID::IDB_TYPE_PERSISTENT_COUNT, 1);
-        break;
-      }
-
-      case StorageType::Temporary: {
-        Telemetry::ScalarAdd(Telemetry::ScalarID::IDB_TYPE_TEMPORARY_COUNT, 1);
-        break;
-      }
-
-      case StorageType::Default:
-      case StorageType::EndGuard_:
-        break;
-
-      default:
-        MOZ_CRASH("Invalid storage type!");
-    }
-  }
-
   return OpenInternal(aCx,
                       /* aPrincipal */ nullptr,
                       aName,
@@ -638,7 +615,6 @@ IDBFactory::OpenInternal(JSContext* aCx,
   MOZ_ASSERT_IF(!mWindow, !mPrivateBrowsingMode);
 
   CommonFactoryRequestParams commonParams;
-  commonParams.privateBrowsingMode() = mPrivateBrowsingMode;
 
   PrincipalInfo& principalInfo = commonParams.principalInfo();
 

@@ -10,7 +10,7 @@ function loadFromFile(path) {
   var testFile =
     Components.classes["@mozilla.org/file/directory_service;1"].
     getService(Components.interfaces.nsIProperties).
-    get("CurWorkD", Components.interfaces.nsIFile);
+    get("CurWorkD", Components.interfaces.nsILocalFile);
   var dirs = path.split("/");
   for (var i = 0; i < dirs.length; i++) {
     testFile.append(dirs[i]);

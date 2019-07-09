@@ -32,7 +32,9 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPOWERMANAGERSERVICE
 
-  PowerManagerService() {}
+  PowerManagerService()
+    : mWatchdogTimeoutSecs(0)
+  {}
 
   static already_AddRefed<PowerManagerService> GetInstance();
 
@@ -68,9 +70,13 @@ private:
   void ComputeWakeLockState(const hal::WakeLockInformation& aWakeLockInfo,
                             nsAString &aState);
 
+  void SyncProfile();
+
   static StaticRefPtr<PowerManagerService> sSingleton;
 
   nsTArray<nsCOMPtr<nsIDOMMozWakeLockListener>> mWakeLockListeners;
+
+  int32_t mWatchdogTimeoutSecs;
 };
 
 } // namespace power

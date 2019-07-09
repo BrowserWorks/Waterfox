@@ -71,7 +71,7 @@ public:
     return mLength;
   }
 
-  virtual void CreateInputStream(nsIInputStream** aInputStream,
+  virtual void GetInternalStream(nsIInputStream** aInputStream,
                                  ErrorResult& aRv) override;
 
   virtual const nsTArray<RefPtr<BlobImpl>>* GetSubBlobImpls() const override
@@ -91,8 +91,6 @@ public:
   }
 
   virtual bool MayBeClonedToOtherThreads() const override;
-
-  size_t GetAllocationSize() const override;
 
 protected:
   MultipartBlobImpl(nsTArray<RefPtr<BlobImpl>>&& aBlobImpls,

@@ -380,9 +380,21 @@ var ViewSourceContent = {
     if (/^about:blocked/.test(errorDoc.documentURI)) {
       // The event came from a button on a malware/phishing block page
 
-      if (target == errorDoc.getElementById("goBackButton")) {
+      if (target == errorDoc.getElementById("getMeOutButton")) {
         // Instead of loading some safe page, just close the window
         sendAsyncMessage("ViewSource:Close");
+      } else if (target == errorDoc.getElementById("reportButton")) {
+        // This is the "Why is this site blocked" button. We redirect
+        // to the generic page describing phishing/malware protection.
+        let URL = Services.urlFormatter.formatURLPref("app.support.baseURL");
+        sendAsyncMessage("ViewSource:OpenURL", { URL })
+      } else if (target == errorDoc.getElementById("ignoreWarningButton")) {
+        // Allow users to override and continue through to the site
+        docShell.QueryInterface(Ci.nsIWebNavigation)
+                .loadURIWithOptions(content.location.href,
+                                    Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CLASSIFIER,
+                                    null, Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+                                    null, null, null);
       }
     }
   },
@@ -437,6 +449,15 @@ var ViewSourceContent = {
   },
 
   onContextMenu(event) {
+    let addonInfo = {};
+    let subject = {
+      event,
+      addonInfo,
+    };
+
+    subject.wrappedJSObject = subject;
+    Services.obs.notifyObservers(subject, "content-contextmenu");
+
     let node = event.target;
 
     let result = {
@@ -927,7 +948,7 @@ var ViewSourceContent = {
       if (itemSpec.accesskey) {
         let accesskeyName = `context_${itemSpec.id}_accesskey`;
         item.setAttribute("accesskey",
-                          this.bundle.GetStringFromName(accesskeyName));
+                          this.bundle.GetStringFromName(accesskeyName))
       }
       menu.appendChild(item);
     });

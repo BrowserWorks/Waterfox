@@ -13,6 +13,7 @@
 
 #include "mozilla/dom/HTMLVideoElement.h"
 #include "mozilla/layers/WebRenderLayerManager.h"
+#include "nsIDOMHTMLImageElement.h"
 #include "nsDisplayList.h"
 #include "nsGenericHTMLElement.h"
 #include "nsPresContext.h"
@@ -24,6 +25,7 @@
 #include "nsContentUtils.h"
 #include "ImageContainer.h"
 #include "ImageLayers.h"
+#include "nsContentList.h"
 #include "nsStyleUtil.h"
 #include <algorithm>
 
@@ -175,9 +177,9 @@ nsVideoFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
 void
 nsVideoFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
-  DestroyAnonymousContent(mCaptionDiv.forget());
-  DestroyAnonymousContent(mVideoControls.forget());
-  DestroyAnonymousContent(mPosterImage.forget());
+  nsContentUtils::DestroyAnonymousContent(&mCaptionDiv);
+  nsContentUtils::DestroyAnonymousContent(&mVideoControls);
+  nsContentUtils::DestroyAnonymousContent(&mPosterImage);
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -286,13 +288,14 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsVideoFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aMetrics, aStatus);
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                  ("enter nsVideoFrame::Reflow: availSize=%d,%d",
                   aReflowInput.AvailableWidth(),
                   aReflowInput.AvailableHeight()));
 
   NS_PRECONDITION(mState & NS_FRAME_IN_REFLOW, "frame is not in reflow");
+
+  aStatus.Reset();
 
   const WritingMode myWM = aReflowInput.GetWritingMode();
   nscoord contentBoxBSize = aReflowInput.ComputedBSize();
@@ -313,7 +316,6 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
   // and a container frame for the caption.
   for (nsIFrame* child : mFrames) {
     nsSize oldChildSize = child->GetSize();
-    nsReflowStatus childStatus;
 
     if (child->GetContent() == mPosterImage) {
       // Reflow the poster frame.
@@ -321,8 +323,6 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
       ReflowOutput kidDesiredSize(aReflowInput);
       WritingMode wm = imageFrame->GetWritingMode();
       LogicalSize availableSize = aReflowInput.AvailableSize(wm);
-      availableSize.BSize(wm) = NS_UNCONSTRAINEDSIZE;
-
       LogicalSize cbSize = aMetrics.Size(aMetrics.GetWritingMode()).
                              ConvertTo(wm, aMetrics.GetWritingMode());
       ReflowInput kidReflowInput(aPresContext,
@@ -341,11 +341,7 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
       kidReflowInput.SetComputedWidth(posterRenderRect.width);
       kidReflowInput.SetComputedHeight(posterRenderRect.height);
       ReflowChild(imageFrame, aPresContext, kidDesiredSize, kidReflowInput,
-                  posterRenderRect.x, posterRenderRect.y, 0, childStatus);
-      MOZ_ASSERT(childStatus.IsFullyComplete(),
-                 "We gave our child unconstrained available block-size, "
-                 "so it should be complete!");
-
+                  posterRenderRect.x, posterRenderRect.y, 0, aStatus);
       FinishReflowChild(imageFrame, aPresContext,
                         kidDesiredSize, &kidReflowInput,
                         posterRenderRect.x, posterRenderRect.y, 0);
@@ -377,10 +373,7 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
                                        availableSize);
       ReflowOutput kidDesiredSize(kidReflowInput);
       ReflowChild(child, aPresContext, kidDesiredSize, kidReflowInput,
-                  borderPadding.left, borderPadding.top, 0, childStatus);
-      MOZ_ASSERT(childStatus.IsFullyComplete(),
-                 "We gave our child unconstrained available block-size, "
-                 "so it should be complete!");
+                  borderPadding.left, borderPadding.top, 0, aStatus);
 
       if (child->GetContent() == mVideoControls && isBSizeShrinkWrapping) {
         // Resolve our own BSize based on the controls' size in the same axis.
@@ -422,8 +415,6 @@ nsVideoFrame::Reflow(nsPresContext* aPresContext,
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                  ("exit nsVideoFrame::Reflow: size=%d,%d",
                   aMetrics.Width(), aMetrics.Height()));
-
-  MOZ_ASSERT(aStatus.IsEmpty(), "This type of frame can't be split.");
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aMetrics);
 }
 
@@ -443,8 +434,8 @@ public:
   NS_DISPLAY_DECL_NAME("Video", TYPE_VIDEO)
 
   virtual bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                       mozilla::wr::IpcResourceUpdateQueue& aResources,
                                        const mozilla::layers::StackingContextHelper& aSc,
+                                       nsTArray<mozilla::layers::WebRenderParentCommand>& aParentCommands,
                                        mozilla::layers::WebRenderLayerManager* aManager,
                                        nsDisplayListBuilder* aDisplayListBuilder) override
   {
@@ -496,8 +487,8 @@ public:
     SwapScaleWidthHeightForRotation(scaleHint, rotationDeg);
     container->SetScaleHint(scaleHint);
 
-    LayoutDeviceRect rect(destGFXRect.x, destGFXRect.y, destGFXRect.width, destGFXRect.height);
-    return aManager->CommandBuilder().PushImage(this, container, aBuilder, aResources, aSc, rect);
+    LayerRect rect(destGFXRect.x, destGFXRect.y, destGFXRect.width, destGFXRect.height);
+    return aManager->PushImage(this, container, aBuilder, aSc, rect);
   }
 
   // It would be great if we could override GetOpaqueRegion to return nonempty here,
@@ -508,8 +499,7 @@ public:
   // away completely (e.g. because of a decoder error). The problem would
   // be especially acute if we have off-main-thread rendering.
 
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
     *aSnap = true;
     nsIFrame* f = Frame();
@@ -544,6 +534,7 @@ public:
 
 void
 nsVideoFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                               const nsRect&           aDirtyRect,
                                const nsDisplayListSet& aLists)
 {
   if (!IsVisibleForPainting(aBuilder))
@@ -579,15 +570,14 @@ nsVideoFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   // but only want to draw mPosterImage conditionally. Others we
   // always add to the display list.
   for (nsIFrame* child : mFrames) {
-    if (child->GetContent() != mPosterImage || shouldDisplayPoster ||
-        child->IsBoxFrame()) {
-
-      nsDisplayListBuilder::AutoBuildingDisplayList
-        buildingForChild(aBuilder, child,
-                         aBuilder->GetDirtyRect() - child->GetOffsetTo(this),
-                         aBuilder->IsAtRootOfPseudoStackingContext());
-
-      child->BuildDisplayListForStackingContext(aBuilder, aLists.Content());
+    if (child->GetContent() != mPosterImage || shouldDisplayPoster) {
+      child->BuildDisplayListForStackingContext(aBuilder,
+                                                aDirtyRect - child->GetOffsetTo(this),
+                                                aLists.Content());
+    } else if (child->IsBoxFrame()) {
+      child->BuildDisplayListForStackingContext(aBuilder,
+                                                aDirtyRect - child->GetOffsetTo(this),
+                                                aLists.Content());
     }
   }
 }
@@ -794,7 +784,7 @@ nsVideoFrame::UpdatePosterSource(bool aNotify)
 
 nsresult
 nsVideoFrame::AttributeChanged(int32_t aNameSpaceID,
-                               nsAtom* aAttribute,
+                               nsIAtom* aAttribute,
                                int32_t aModType)
 {
   if (aAttribute == nsGkAtoms::poster && HasVideoElement()) {

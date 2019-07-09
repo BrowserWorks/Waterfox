@@ -33,15 +33,13 @@ public:
   Get();
 
   void
-  AddStream(nsIInputStream* aInputStream, const nsID& aID, uint64_t aSize,
-            uint64_t aChildID);
+  AddStream(nsIInputStream* aInputStream, const nsID& aID, uint64_t aChildID);
 
   void
   ForgetStream(const nsID& aID);
 
   void
-  GetStream(const nsID& aID, uint64_t aStart, uint64_t aLength,
-            nsIInputStream** aInputStream);
+  GetStream(const nsID& aID, nsIInputStream** aInputStream);
 
   void
   StoreCallback(const nsID& aID, IPCBlobInputStreamParentCallback* aCallback);
@@ -61,8 +59,6 @@ private:
     // This is the Process ID connected with this inputStream. We need to store
     // this information in order to delete it if the child crashes/shutdowns.
     uint64_t mChildID;
-
-    uint64_t mSize;
   };
 
   nsClassHashtable<nsIDHashKey, StreamData> mStorage;

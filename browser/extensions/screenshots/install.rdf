@@ -7,14 +7,14 @@
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!--Firefox-->
-        <em:minVersion>57.0a1</em:minVersion>
+        <em:minVersion>51.0a1</em:minVersion>
         <em:maxVersion>*</em:maxVersion>
       </Description>
     </em:targetApplication>
     <em:type>2</em:type>
-    <em:version>19.2.0</em:version>
+    <em:version>10.12.0</em:version>
     <em:bootstrap>true</em:bootstrap>
-    <em:homepageURL>https://screenshots.firefox.com/</em:homepageURL>
+    <em:homepageURL>https://pageshot.net/</em:homepageURL>
     <em:multiprocessCompatible>true</em:multiprocessCompatible>
   </Description>
 </RDF>

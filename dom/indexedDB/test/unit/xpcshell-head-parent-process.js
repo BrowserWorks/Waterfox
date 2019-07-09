@@ -59,7 +59,7 @@ if (!this.runTest) {
 
     do_test_pending();
     testGenerator.next();
-  };
+  }
 }
 
 function finishTest()
@@ -76,7 +76,7 @@ function finishTest()
 
   do_execute_soon(function() {
     do_test_finished();
-  });
+  })
 }
 
 function grabEventAndContinueHandler(event)
@@ -379,7 +379,7 @@ function getRandomView(size)
 {
   let view = getView(size);
   for (let i = 0; i < size; i++) {
-    view[i] = parseInt(Math.random() * 255);
+    view[i] = parseInt(Math.random() * 255)
   }
   return view;
 }
@@ -474,7 +474,7 @@ function verifyBlob(blob1, blob2)
         verifyBuffers(buffer1, buffer2);
         testGenerator.next();
       }
-    };
+    }
   }
 
   let reader = new FileReader();
@@ -485,7 +485,7 @@ function verifyBlob(blob1, blob2)
       verifyBuffers(buffer1, buffer2);
       testGenerator.next();
     }
-  };
+  }
 }
 
 function verifyMutableFile(mutableFile1, file2)
@@ -507,8 +507,8 @@ function verifyView(view1, view2)
 function verifyWasmModule(module1, module2)
 {
   let testingFunctions = Cu.getJSTestingFunctions();
-  let exp1 = testingFunctions.wasmExtractCode(module1, "ion");
-  let exp2 = testingFunctions.wasmExtractCode(module2, "ion");
+  let exp1 = testingFunctions.wasmExtractCode(module1);
+  let exp2 = testingFunctions.wasmExtractCode(module2);
   let code1 = exp1.code;
   let code2 = exp2.code;
   ok(code1 instanceof Uint8Array, "Instance of Uint8Array");
@@ -681,7 +681,3 @@ var SpecialPowers = {
     }
   },
 };
-
-// This can be removed soon when on by default.
-if (SpecialPowers.isMainProcess())
-  SpecialPowers.setBoolPref("javascript.options.wasm_baselinejit", true);

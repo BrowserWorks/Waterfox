@@ -209,7 +209,8 @@ AudioSession::Start()
                                 getter_AddRefs(bundle));
     NS_ENSURE_TRUE(bundle, NS_ERROR_FAILURE);
 
-    bundle->GetStringFromName("brandFullName", mDisplayName);
+    bundle->GetStringFromName("brandFullName",
+                              getter_Copies(mDisplayName));
 
     wchar_t *buffer;
     mIconPath.GetMutableData(&buffer, MAX_PATH);

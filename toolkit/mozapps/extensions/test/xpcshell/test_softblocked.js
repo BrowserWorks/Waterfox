@@ -10,7 +10,7 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://testing-common/MockRegistrar.jsm");
 
 // Allow insecure updates
-Services.prefs.setBoolPref("extensions.checkUpdateSecurity", false);
+Services.prefs.setBoolPref("extensions.checkUpdateSecurity", false)
 
 const testserver = createHttpServer();
 gPort = testserver.identity.primaryPort;
@@ -50,8 +50,8 @@ profileDir.append("extensions");
 
 function load_blocklist(aFile) {
   return new Promise((resolve, reject) => {
-    Services.obs.addObserver(function observer() {
-      Services.obs.removeObserver(observer, "blocklist-updated");
+    Services.obs.addObserver(function() {
+      Services.obs.removeObserver(arguments.callee, "blocklist-updated");
 
       resolve();
     }, "blocklist-updated");

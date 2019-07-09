@@ -8,7 +8,7 @@
 
 use std::fmt;
 use style_traits::ToCss;
-use values::computed::{Context, ToComputedValue};
+use values::computed::{ComputedValueAsSpecified, Context, ToComputedValue};
 use values::specified;
 
 pub use super::specified::{AlignItems, AlignJustifyContent, AlignJustifySelf};
@@ -17,7 +17,7 @@ pub use super::specified::{AlignItems, AlignJustifyContent, AlignJustifySelf};
 ///
 /// Need to carry around both the specified and computed value to handle the
 /// special legacy keyword. Sigh.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct JustifyItems {
     /// The specified value for the property. Can contain `auto`.
     pub specified: specified::JustifyItems,
@@ -46,7 +46,7 @@ impl JustifyItems {
 impl ToComputedValue for specified::JustifyItems {
     type ComputedValue = JustifyItems;
 
-    /// <https://drafts.csswg.org/css-align/#valdef-justify-items-legacy>
+    /// https://drafts.csswg.org/css-align/#valdef-justify-items-legacy
     fn to_computed_value(&self, _context: &Context) -> JustifyItems {
         use values::specified::align;
         let specified = *self;
@@ -69,3 +69,7 @@ impl ToComputedValue for specified::JustifyItems {
         computed.specified
     }
 }
+
+impl ComputedValueAsSpecified for AlignItems {}
+impl ComputedValueAsSpecified for AlignJustifyContent {}
+impl ComputedValueAsSpecified for AlignJustifySelf {}

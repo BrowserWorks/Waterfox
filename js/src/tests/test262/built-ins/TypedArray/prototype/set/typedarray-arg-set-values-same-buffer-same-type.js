@@ -27,7 +27,6 @@ info: >
       ii. Perform SetValueInBuffer(targetBuffer, targetByteIndex, "Uint8",
       value).
 includes: [testTypedArray.js, compareArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

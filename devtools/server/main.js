@@ -17,7 +17,8 @@ var { LocalDebuggerTransport, ChildDebuggerTransport, WorkerDebuggerTransport } 
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var { dumpn, dumpv } = DevToolsUtils;
 var flags = require("devtools/shared/flags");
-var OldEventEmitter = require("devtools/shared/old-event-emitter");
+var EventEmitter = require("devtools/shared/event-emitter");
+var Promise = require("promise");
 var SyncPromise = require("devtools/shared/deprecated-sync-thenables");
 
 DevToolsUtils.defineLazyGetter(this, "DebuggerSocket", () => {
@@ -86,7 +87,7 @@ function loadSubScript(url) {
   }
 }
 
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 
 var gRegisteredModules = Object.create(null);
 
@@ -167,7 +168,7 @@ var DebuggerServer = {
    * window (i.e the global style editor). Set this to your main window type,
    * for example "navigator:browser".
    */
-  chromeWindowType: "navigator:browser",
+  chromeWindowType: null,
 
   /**
    * Allow debugging chrome of (parent or child) processes.
@@ -266,13 +267,11 @@ var DebuggerServer = {
    *        actors to retrieve them.
    */
   registerActors({ root = true, browser = true, tab = true,
-                   windowType = null }) {
-    if (windowType) {
-      this.chromeWindowType = windowType;
-    }
+                   windowType = "navigator:browser" }) {
+    this.chromeWindowType = windowType;
 
     if (browser) {
-      this.addBrowserActors(this.chromeWindowType);
+      this.addBrowserActors(windowType);
     }
 
     if (root) {
@@ -422,10 +421,8 @@ var DebuggerServer = {
    * restrictPrivileges=true, to prevent exposing them on b2g parent process's
    * root actor.
    */
-  addBrowserActors(windowType = null, restrictPrivileges = false) {
-    if (windowType) {
-      this.chromeWindowType = windowType;
-    }
+  addBrowserActors(windowType = "navigator:browser", restrictPrivileges = false) {
+    this.chromeWindowType = windowType;
     this.registerModule("devtools/server/actors/webbrowser");
 
     if (!restrictPrivileges) {
@@ -497,6 +494,11 @@ var DebuggerServer = {
       constructor: "StyleSheetsActor",
       type: { tab: true }
     });
+    this.registerModule("devtools/server/actors/styleeditor", {
+      prefix: "styleEditor",
+      constructor: "StyleEditorActor",
+      type: { tab: true }
+    });
     this.registerModule("devtools/server/actors/storage", {
       prefix: "storage",
       constructor: "StorageActor",
@@ -548,6 +550,11 @@ var DebuggerServer = {
       type: { tab: true }
     });
     if ("nsIProfiler" in Ci) {
+      this.registerModule("devtools/server/actors/profiler", {
+        prefix: "profiler",
+        constructor: "ProfilerActor",
+        type: { tab: true }
+      });
       this.registerModule("devtools/server/actors/performance", {
         prefix: "performance",
         constructor: "PerformanceActor",
@@ -564,6 +571,11 @@ var DebuggerServer = {
       constructor: "PromisesActor",
       type: { tab: true }
     });
+    this.registerModule("devtools/server/actors/performance-entries", {
+      prefix: "performanceEntries",
+      constructor: "PerformanceEntriesActor",
+      type: { tab: true }
+    });
     this.registerModule("devtools/server/actors/emulation", {
       prefix: "emulation",
       constructor: "EmulationActor",
@@ -572,11 +584,6 @@ var DebuggerServer = {
     this.registerModule("devtools/server/actors/webextension-inspected-window", {
       prefix: "webExtensionInspectedWindow",
       constructor: "WebExtensionInspectedWindowActor",
-      type: { tab: true }
-    });
-    this.registerModule("devtools/server/actors/accessibility", {
-      prefix: "accessibility",
-      constructor: "AccessibilityActor",
       type: { tab: true }
     });
   },
@@ -768,7 +775,7 @@ var DebuggerServer = {
 
     function onClose() {
       Services.obs.removeObserver(onMessageManagerClose, "message-manager-close");
-      EventEmitter.off(connection, "closed", onClose);
+      events.off(connection, "closed", onClose);
       if (childTransport) {
         // If we have a child transport, the actor has already
         // been created. We need to stop using this message manager.
@@ -798,7 +805,7 @@ var DebuggerServer = {
     Services.obs.addObserver(onMessageManagerClose,
                              "message-manager-close");
 
-    EventEmitter.on(connection, "closed", onClose);
+    events.on(connection, "closed", onClose);
 
     return deferred.promise;
   },
@@ -958,41 +965,42 @@ var DebuggerServer = {
     if (this._childMessageManagers.size == 0) {
       return Promise.resolve();
     }
-    return new Promise(done => {
-      // If waitForEval is set, pass a unique id and expect child.js to send
-      // a message back once the code in child is evaluated.
-      if (typeof (waitForEval) != "boolean") {
-        waitForEval = false;
-      }
-      let count = this._childMessageManagers.size;
-      let id = waitForEval ? generateUUID().toString() : null;
+    let deferred = Promise.defer();
 
-      this._childMessageManagers.forEach(mm => {
-        if (waitForEval) {
-          // Listen for the end of each child execution
-          let evalListener = msg => {
-            if (msg.data.id !== id) {
-              return;
-            }
-            mm.removeMessageListener("debug:setup-in-child-response", evalListener);
-            if (--count === 0) {
-              done();
-            }
-          };
-          mm.addMessageListener("debug:setup-in-child-response", evalListener);
-        }
-        mm.sendAsyncMessage("debug:setup-in-child", {
-          module: module,
-          setupChild: setupChild,
-          args: args,
-          id: id,
-        });
+    // If waitForEval is set, pass a unique id and expect child.js to send
+    // a message back once the code in child is evaluated.
+    if (typeof (waitForEval) != "boolean") {
+      waitForEval = false;
+    }
+    let count = this._childMessageManagers.size;
+    let id = waitForEval ? generateUUID().toString() : null;
+
+    this._childMessageManagers.forEach(mm => {
+      if (waitForEval) {
+        // Listen for the end of each child execution
+        let evalListener = msg => {
+          if (msg.data.id !== id) {
+            return;
+          }
+          mm.removeMessageListener("debug:setup-in-child-response", evalListener);
+          if (--count === 0) {
+            deferred.resolve();
+          }
+        };
+        mm.addMessageListener("debug:setup-in-child-response", evalListener);
+      }
+      mm.sendAsyncMessage("debug:setup-in-child", {
+        module: module,
+        setupChild: setupChild,
+        args: args,
+        id: id,
       });
-
-      if (!waitForEval) {
-        done();
-      }
     });
+
+    if (waitForEval) {
+      return deferred.promise;
+    }
+    return Promise.resolve();
   },
 
   /**
@@ -1128,7 +1136,7 @@ var DebuggerServer = {
     };
 
     let destroy = DevToolsUtils.makeInfallible(function () {
-      EventEmitter.off(connection, "closed", destroy);
+      events.off(connection, "closed", destroy);
       Services.obs.removeObserver(onMessageManagerClose, "message-manager-close");
 
       // provides hook to actor modules that need to exchange messages
@@ -1193,7 +1201,7 @@ var DebuggerServer = {
 
     // Listen for connection close to cleanup things
     // when user unplug the device or we lose the connection somehow.
-    EventEmitter.on(connection, "closed", destroy);
+    events.on(connection, "closed", destroy);
 
     mm.sendAsyncMessage("debug:connect", { prefix, addonId });
 
@@ -1423,7 +1431,7 @@ DevToolsUtils.defineLazyGetter(DebuggerServer, "AuthenticationResult", () => {
   return Authentication.AuthenticationResult;
 });
 
-OldEventEmitter.decorate(DebuggerServer);
+EventEmitter.decorate(DebuggerServer);
 
 if (this.exports) {
   exports.DebuggerServer = DebuggerServer;
@@ -1886,7 +1894,7 @@ DebuggerServerConnection.prototype = {
     }
     this._actorPool = null;
 
-    EventEmitter.emit(this, "closed", status);
+    events.emit(this, "closed", status);
 
     this._extraPools.forEach(p => p.destroy());
     this._extraPools = null;

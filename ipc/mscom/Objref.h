@@ -8,9 +8,6 @@
 #define mozilla_mscom_Objref_h
 
 #include "mozilla/NotNull.h"
-#include "mozilla/RefPtr.h"
-
-#include <guiddef.h>
 
 struct IStream;
 
@@ -20,36 +17,13 @@ namespace mscom {
 /**
  * Given a buffer containing a serialized proxy to an interface with a handler,
  * this function strips out the handler and converts it to a standard one.
- * @param aStream IStream containing a serialized proxy.
- *                There should be nothing else written to the stream past the
- *                current OBJREF.
- * @param aStart  Absolute position of the beginning of the OBJREF.
- * @param aEnd    Absolute position of the end of the OBJREF.
+ * @param aStream IStream whose pointer is positioned at the beginning of the
+ *                OBJREF to be stripped. There should be nothing else written
+ *                to the stream past the current OBJREF.
  * @return true if the handler was successfully stripped, otherwise false.
  */
 bool
-StripHandlerFromOBJREF(NotNull<IStream*> aStream,
-                       const uint64_t aStart,
-                       const uint64_t aEnd);
-
-/**
- * Given a buffer containing a serialized proxy to an interface, this function
- * returns the length of the serialized data.
- * @param aStream IStream containing a serialized proxy. The stream pointer
- *                must be positioned at the beginning of the OBJREF.
- * @return The size of the serialized proxy, or 0 on error.
- */
-uint32_t
-GetOBJREFSize(NotNull<IStream*> aStream);
-
-/**
- * Overrides the IID in a serialized proxy with the specified IID.
- * @param aStream Pointer to a stream containing a serialized proxy.
- * @param aStart Offset to the beginning of the serialized proxy within aStream.
- * @param aNewIid The replacement IID to apply to the serialized proxy.
- */
-bool
-SetIID(NotNull<IStream*> aStream, const uint64_t aStart, REFIID aNewIid);
+StripHandlerFromOBJREF(NotNull<IStream*> aStream);
 
 } // namespace mscom
 } // namespace mozilla

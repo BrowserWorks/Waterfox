@@ -42,12 +42,8 @@ class Proxy
     static bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp);
     static bool get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
                     MutableHandleValue vp);
-    static bool getInternal(JSContext* cx, HandleObject proxy, HandleValue receiver,
-                            HandleId id, MutableHandleValue vp);
     static bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
                     HandleValue receiver, ObjectOpResult& result);
-    static bool setInternal(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
-                            HandleValue receiver, ObjectOpResult& result);
     static bool call(JSContext* cx, HandleObject proxy, const CallArgs& args);
     static bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args);
 
@@ -80,13 +76,8 @@ bool
 proxy_Call(JSContext* cx, unsigned argc, Value* vp);
 bool
 proxy_Construct(JSContext* cx, unsigned argc, Value* vp);
-size_t
-proxy_ObjectMoved(JSObject* obj, JSObject* old);
 
 // These functions are used by JIT code
-
-bool
-ProxyHas(JSContext* cx, HandleObject proxy, HandleValue idVal, MutableHandleValue result);
 
 bool
 ProxyHasOwn(JSContext* cx, HandleObject proxy, HandleValue idVal, MutableHandleValue result);

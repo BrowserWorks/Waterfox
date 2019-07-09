@@ -19,8 +19,6 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/Attributes.h"
 
-class nsAuthSSPI;
-
 class nsDNSService final : public nsPIDNSService
                          , public nsIObserver
                          , public nsIMemoryReporter
@@ -40,14 +38,6 @@ public:
 
     bool GetOffline() const;
 
-protected:
-    friend class nsAuthSSPI;
-
-    nsresult DeprecatedSyncResolve(const nsACString &aHostname,
-                                   uint32_t flags,
-                                   const mozilla::OriginAttributes &aOriginAttributes,
-                                   nsIDNSRecord **result);
-
 private:
     ~nsDNSService();
 
@@ -59,11 +49,6 @@ private:
                                 const nsACString &aInput,
                                 nsIIDNService    *aIDN,
                                 nsACString       &aACE);
-
-    nsresult ResolveInternal(const nsACString &aHostname,
-                             uint32_t flags,
-                             const mozilla::OriginAttributes &aOriginAttributes,
-                             nsIDNSRecord **result);
 
     RefPtr<nsHostResolver>  mResolver;
     nsCOMPtr<nsIIDNService>   mIDN;

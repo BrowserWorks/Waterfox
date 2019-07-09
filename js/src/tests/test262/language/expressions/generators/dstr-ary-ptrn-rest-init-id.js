@@ -6,7 +6,7 @@
 description: Reset element (identifier) does not support initializer (generator function expression)
 esid: sec-generator-function-definitions-runtime-semantics-evaluation
 es6id: 14.4.14
-features: [generators, destructuring-binding]
+features: [destructuring-binding]
 flags: [generated]
 negative:
   phase: early
@@ -48,7 +48,6 @@ info: |
         [ BindingElementList[?Yield] ]
         [ BindingElementList[?Yield] , Elisionopt BindingRestElement[?Yield]opt ]
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 var callCount = 0;
 var f;

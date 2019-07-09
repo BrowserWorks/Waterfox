@@ -14,6 +14,7 @@
 #![deny(unsafe_code)]
 
 use ServoArc;
+use app_units::Au;
 use block::BlockFlow;
 use context::{LayoutContext, with_thread_local_font_context};
 use data::{HAS_NEWLY_CONSTRUCTED_FLOW, LayoutData};
@@ -348,15 +349,15 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
                 SpecificFragmentInfo::Iframe(IframeFragmentInfo::new(node))
             }
             Some(LayoutNodeType::Element(LayoutElementType::HTMLImageElement)) => {
-                let image_info = Box::new(ImageFragmentInfo::new(
-                    node.image_url(), node, &self.layout_context
-                ));
+                let image_info = box ImageFragmentInfo::new(node.image_url(),
+                                                            node,
+                                                            &self.layout_context);
                 SpecificFragmentInfo::Image(image_info)
             }
             Some(LayoutNodeType::Element(LayoutElementType::HTMLObjectElement)) => {
-                let image_info = Box::new(ImageFragmentInfo::new(
-                    node.object_data(), node, &self.layout_context
-                 ));
+                let image_info = box ImageFragmentInfo::new(node.object_data(),
+                                                            node,
+                                                            &self.layout_context);
                 SpecificFragmentInfo::Image(image_info)
             }
             Some(LayoutNodeType::Element(LayoutElementType::HTMLTableElement)) => {
@@ -374,11 +375,11 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
             }
             Some(LayoutNodeType::Element(LayoutElementType::HTMLCanvasElement)) => {
                 let data = node.canvas_data().unwrap();
-                SpecificFragmentInfo::Canvas(Box::new(CanvasFragmentInfo::new(data)))
+                SpecificFragmentInfo::Canvas(box CanvasFragmentInfo::new(data))
             }
             Some(LayoutNodeType::Element(LayoutElementType::SVGSVGElement)) => {
                 let data = node.svg_data().unwrap();
-                SpecificFragmentInfo::Svg(Box::new(SvgFragmentInfo::new(data)))
+                SpecificFragmentInfo::Svg(box SvgFragmentInfo::new(data))
             }
             _ => {
                 // This includes pseudo-elements.
@@ -553,8 +554,7 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
                 // Add whitespace results. They will be stripped out later on when
                 // between block elements, and retained when between inline elements.
                 let fragment_info = SpecificFragmentInfo::UnscannedText(
-                    Box::new(UnscannedTextFragmentInfo::new(" ".to_owned(), None))
-                );
+                    box UnscannedTextFragmentInfo::new(" ".to_owned(), None));
                 let fragment = Fragment::from_opaque_node_and_style(whitespace_node,
                                                                     whitespace_pseudo,
                                                                     whitespace_style,
@@ -616,12 +616,14 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
         flow.finish();
 
         // Set up the absolute descendants.
-        if flow.is_absolute_containing_block() {
+        let contains_positioned_fragments = flow.contains_positioned_fragments();
+        let is_absolutely_positioned = flow::base(&*flow).flags.contains(IS_ABSOLUTELY_POSITIONED);
+        if contains_positioned_fragments {
             // This is the containing block for all the absolute descendants.
             flow.set_absolute_descendants(abs_descendants);
 
             abs_descendants = AbsoluteDescendants::new();
-            if flow::base(&*flow).flags.contains(IS_ABSOLUTELY_POSITIONED) {
+            if is_absolutely_positioned {
                 // This is now the only absolute flow in the subtree which hasn't yet
                 // reached its CB.
                 abs_descendants.push(flow.clone());
@@ -687,7 +689,7 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
 
         match text_content {
             TextContent::Text(string) => {
-                let info = Box::new(UnscannedTextFragmentInfo::new(string, node.selection()));
+                let info = box UnscannedTextFragmentInfo::new(string, node.selection());
                 let specific_fragment_info = SpecificFragmentInfo::UnscannedText(info);
                 fragments.fragments.push_back(Fragment::from_opaque_node_and_style(
                         node.opaque(),
@@ -701,11 +703,11 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
                 for content_item in content_items.into_iter() {
                     let specific_fragment_info = match content_item {
                         ContentItem::String(string) => {
-                            let info = Box::new(UnscannedTextFragmentInfo::new(string, None));
+                            let info = box UnscannedTextFragmentInfo::new(string, None);
                             SpecificFragmentInfo::UnscannedText(info)
                         }
                         content_item => {
-                            let content_item = Box::new(GeneratedContentInfo::ContentItem(content_item));
+                            let content_item = box GeneratedContentInfo::ContentItem(content_item);
                             SpecificFragmentInfo::GeneratedContent(content_item)
                         }
                     };
@@ -822,8 +824,7 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
                         whitespace_damage)) => {
                     // Instantiate the whitespace fragment.
                     let fragment_info = SpecificFragmentInfo::UnscannedText(
-                        Box::new(UnscannedTextFragmentInfo::new(" ".to_owned(), None))
-                    );
+                        box UnscannedTextFragmentInfo::new(" ".to_owned(), None));
                     let fragment =
                         Fragment::from_opaque_node_and_style(whitespace_node,
                                                              whitespace_pseudo,
@@ -844,8 +845,7 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
         if is_empty && node_style.has_padding_or_border() {
             // An empty inline box needs at least one fragment to draw its background and borders.
             let info = SpecificFragmentInfo::UnscannedText(
-                Box::new(UnscannedTextFragmentInfo::new(String::new(), None))
-            );
+                box UnscannedTextFragmentInfo::new(String::new(), None));
             let fragment = Fragment::from_opaque_node_and_style(node.opaque(),
                                                                 node.get_pseudo_element_type().strip(),
                                                                 node_style.clone(),
@@ -1060,13 +1060,16 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
 
         // The flow is done.
         flow.finish();
-        if flow.is_absolute_containing_block() {
+        let contains_positioned_fragments = flow.contains_positioned_fragments();
+        if contains_positioned_fragments {
             // This is the containing block for all the absolute descendants.
             flow.set_absolute_descendants(abs_descendants);
 
             abs_descendants = AbsoluteDescendants::new();
 
-            if flow::base(&*flow).flags.contains(IS_ABSOLUTELY_POSITIONED) {
+            let is_absolutely_positioned =
+                flow::base(&*flow).flags.contains(IS_ABSOLUTELY_POSITIONED);
+            if is_absolutely_positioned {
                 // This is now the only absolute flow in the subtree which hasn't yet
                 // reached its containing block.
                 abs_descendants.push(flow.clone());
@@ -1131,13 +1134,16 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
         legalizer.finish(&mut wrapper_flow);
         wrapper_flow.finish();
 
-        if wrapper_flow.is_absolute_containing_block() {
+        let contains_positioned_fragments = wrapper_flow.contains_positioned_fragments();
+        if contains_positioned_fragments {
             // This is the containing block for all the absolute descendants.
             wrapper_flow.set_absolute_descendants(abs_descendants);
 
             abs_descendants = AbsoluteDescendants::new();
 
-            if flow::base(&*wrapper_flow).flags.contains(IS_ABSOLUTELY_POSITIONED) {
+            let is_absolutely_positioned =
+                flow::base(&*wrapper_flow).flags.contains(IS_ABSOLUTELY_POSITIONED);
+            if is_absolutely_positioned {
                 // This is now the only absolute flow in the subtree which hasn't yet
                 // reached its containing block.
                 abs_descendants.push(wrapper_flow.clone());
@@ -1202,9 +1208,9 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
         let flotation = FloatKind::from_property(flotation);
         let marker_fragments = match node.style(self.style_context()).get_list().list_style_image {
             list_style_image::computed_value::T(Either::First(ref url_value)) => {
-                let image_info = Box::new(ImageFragmentInfo::new(
-                    url_value.url().map(|u| u.clone()), node, &self.layout_context
-                ));
+                let image_info = box ImageFragmentInfo::new(url_value.url().map(|u| u.clone()),
+                                                            node,
+                                                            &self.layout_context);
                 vec![Fragment::new(node, SpecificFragmentInfo::Image(image_info), self.layout_context)]
             }
             list_style_image::computed_value::T(Either::Second(_none)) => {
@@ -1218,8 +1224,7 @@ impl<'a, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode>
                         unscanned_marker_fragments.push_back(Fragment::new(
                             node,
                             SpecificFragmentInfo::UnscannedText(
-                                Box::new(UnscannedTextFragmentInfo::new(text, None))
-                            ),
+                                box UnscannedTextFragmentInfo::new(text, None)),
                             self.layout_context));
                         let marker_fragments =
                             with_thread_local_font_context(self.layout_context, |mut font_context| {
@@ -1455,7 +1460,7 @@ impl<'a, ConcreteThreadSafeLayoutNode> PostorderNodeMutTraversal<ConcreteThreadS
         node.insert_flags(HAS_NEWLY_CONSTRUCTED_FLOW);
 
         // Bail out if this node has an ancestor with display: none.
-        if node.style(self.style_context()).is_in_display_none_subtree() {
+        if node.style(self.style_context()).get_inheritedbox()._servo_under_display_none.0 {
             self.set_flow_construction_result(node, ConstructionResult::None);
             return;
         }
@@ -1829,8 +1834,7 @@ fn control_chars_to_fragment(node: &InlineFragmentNodeInfo,
                              restyle_damage: RestyleDamage)
                              -> Fragment {
     let info = SpecificFragmentInfo::UnscannedText(
-        Box::new(UnscannedTextFragmentInfo::new(String::from(text), None))
-    );
+        box UnscannedTextFragmentInfo::new(String::from(text), None));
     let text_style = context.stylist.style_for_anonymous(
         &context.guards, &PseudoElement::ServoText, &node.style);
     Fragment::from_opaque_node_and_style(node.address,
@@ -1856,10 +1860,10 @@ impl ComputedValueUtils for ComputedValues {
            !padding.padding_right.is_definitely_zero() ||
            !padding.padding_bottom.is_definitely_zero() ||
            !padding.padding_left.is_definitely_zero() ||
-           border.border_top_width.px() != 0. ||
-           border.border_right_width.px() != 0. ||
-           border.border_bottom_width.px() != 0. ||
-           border.border_left_width.px() != 0.
+           border.border_top_width != Au(0) ||
+           border.border_right_width != Au(0) ||
+           border.border_bottom_width != Au(0) ||
+           border.border_left_width != Au(0)
     }
 }
 

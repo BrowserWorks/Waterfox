@@ -601,13 +601,9 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   if (!mDocument)
     return;
 
-  // Wait until an update, we have started, or an interruptible reflow is
-  // finished.
   if (mObservingState == eRefreshProcessing ||
-      mObservingState == eRefreshProcessingForUpdate ||
-      mPresShell->IsReflowInterrupted()) {
+      mObservingState == eRefreshProcessingForUpdate)
     return;
-  }
 
   // Any generic notifications should be queued if we're processing content
   // insertions or generic notifications.
@@ -813,8 +809,7 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
 
   // Process relocation list.
   for (uint32_t idx = 0; idx < mRelocations.Length(); idx++) {
-    // owner should be in a document and have na associated DOM node (docs sometimes don't)
-    if (mRelocations[idx]->IsInDocument() && mRelocations[idx]->HasOwnContent()) {
+    if (mRelocations[idx]->IsInDocument()) {
       mDocument->DoARIAOwnsRelocation(mRelocations[idx]);
     }
   }

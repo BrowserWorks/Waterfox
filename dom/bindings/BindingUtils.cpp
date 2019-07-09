@@ -21,9 +21,9 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
-#include "nsHTMLTags.h"
 #include "nsIDocShell.h"
 #include "nsIDOMGlobalPropertyInitializer.h"
+#include "nsIParserService.h"
 #include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
 #include "nsIXPConnect.h"
@@ -39,13 +39,16 @@
 
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/CustomElementRegistry.h"
+#include "mozilla/dom/DOMError.h"
+#include "mozilla/dom/DOMErrorBinding.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/HTMLObjectElement.h"
 #include "mozilla/dom/HTMLObjectElementBinding.h"
-#include "mozilla/dom/HTMLEmbedElement.h"
+#include "mozilla/dom/HTMLSharedObjectElement.h"
 #include "mozilla/dom/HTMLElementBinding.h"
 #include "mozilla/dom/HTMLEmbedElementBinding.h"
+#include "mozilla/dom/HTMLAppletElementBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ResolveSystemBinding.h"
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
@@ -835,7 +838,8 @@ CreateInterfaceObject(JSContext* cx, JS::Handle<JSObject*> global,
       if (!namedConstructor ||
           !JS_DefineProperty(cx, namedConstructor, "prototype",
                              proto,
-                             JSPROP_PERMANENT | JSPROP_READONLY) ||
+                             JSPROP_PERMANENT | JSPROP_READONLY,
+                             JS_STUBGETTER, JS_STUBSETTER) ||
           (defineOnGlobal &&
            !DefineConstructor(cx, global, namedConstructors->mName,
                               namedConstructor))) {
@@ -1045,7 +1049,7 @@ NativeInterface2JSObjectAndThrowIfFailed(JSContext* aCx,
 
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!XPCConvert::NativeInterface2JSObject(aRetval, aHelper, aIID,
+  if (!XPCConvert::NativeInterface2JSObject(aRetval, nullptr, aHelper, aIID,
                                             aAllowNativeWrapper, &rv)) {
     // I can't tell if NativeInterface2JSObject throws JS exceptions
     // or not.  This is a sloppy stab at the right semantics; the
@@ -1614,7 +1618,7 @@ DEBUG_CheckXBLCallable(JSContext *cx, JSObject *obj)
     // has been adopted into another compartment, those prototypes will now point
     // to a different XBL scope (which is ok).
     MOZ_ASSERT_IF(js::IsCrossCompartmentWrapper(obj),
-                  xpc::IsInContentXBLScope(js::UncheckedUnwrap(obj)));
+                  xpc::IsContentXBLScope(js::GetObjectCompartment(js::UncheckedUnwrap(obj))));
     MOZ_ASSERT(JS::IsCallable(obj));
 }
 
@@ -1655,9 +1659,8 @@ XrayResolveOwnProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
     nativePropertyHooks->mResolveOwnProperty;
 
   if (type == eNamedPropertiesObject) {
-    MOZ_ASSERT(!resolveOwnProperty,
-               "Shouldn't have any Xray-visible properties");
-    return true;
+    // None of these should be cached on the holder, since they're dynamic.
+    return resolveOwnProperty(cx, wrapper, obj, id, desc);
   }
 
   const NativePropertiesHolder& nativePropertiesHolder =
@@ -1714,7 +1717,7 @@ XrayResolveOwnProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
     // Make sure to assert that.
     JS::Rooted<JSObject*> maybeElement(cx, obj);
     Element* element;
-    if (xpc::IsInContentXBLScope(wrapper) &&
+    if (xpc::ObjectScope(wrapper)->IsContentXBLScope() &&
         NS_SUCCEEDED(UNWRAP_OBJECT(Element, &maybeElement, element))) {
       if (!nsContentUtils::LookupBindingMember(cx, element, id, desc)) {
         return false;
@@ -1967,9 +1970,7 @@ XrayOwnPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
     nativePropertyHooks->mEnumerateOwnProperties;
 
   if (type == eNamedPropertiesObject) {
-    MOZ_ASSERT(!enumerateOwnProperties,
-               "Shouldn't have any Xray-visible properties");
-    return true;
+    return enumerateOwnProperties(cx, wrapper, obj, props);
   }
 
   if (IsInstance(type)) {
@@ -2048,6 +2049,8 @@ NativePropertyHooks sEmptyNativePropertyHooks = {
 const js::ClassOps sBoringInterfaceObjectClassClassOps = {
     nullptr,               /* addProperty */
     nullptr,               /* delProperty */
+    nullptr,               /* getProperty */
+    nullptr,               /* setProperty */
     nullptr,               /* enumerate */
     nullptr,               /* newEnumerate */
     nullptr,               /* resolve */
@@ -2180,20 +2183,17 @@ DictionaryBase::AppendJSONToString(const char16_t* aJSONData,
   return true;
 }
 
-void
-ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aError)
+nsresult
+ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
 {
   js::AssertSameCompartment(aCx, aObjArg);
-
-  aError.MightThrowJSException();
 
   // Check if we're anywhere near the stack limit before we reach the
   // transplanting code, since it has no good way to handle errors. This uses
   // the untrusted script limit, which is not strictly necessary since no
   // actual script should run.
   if (!js::CheckRecursionLimitConservative(aCx)) {
-    aError.StealExceptionFromJSContext(aCx);
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   JS::Rooted<JSObject*> aObj(aCx, aObjArg);
@@ -2214,12 +2214,12 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aErr
   JSCompartment* newCompartment = js::GetObjectCompartment(newParent);
   if (oldCompartment == newCompartment) {
     MOZ_ASSERT(oldParent == newParent);
-    return;
+    return NS_OK;
   }
 
   nsISupports* native = UnwrapDOMObjectToISupports(aObj);
   if (!native) {
-    return;
+    return NS_OK;
   }
 
   bool isProxy = js::IsProxy(aObj);
@@ -2235,14 +2235,12 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aErr
 
   JS::Handle<JSObject*> proto = (domClass->mGetProto)(aCx);
   if (!proto) {
-    aError.StealExceptionFromJSContext(aCx);
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   JS::Rooted<JSObject*> newobj(aCx, JS_CloneObject(aCx, aObj, proto));
   if (!newobj) {
-    aError.StealExceptionFromJSContext(aCx);
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   JS::Rooted<JSObject*> propertyHolder(aCx);
@@ -2250,16 +2248,27 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aErr
   if (copyFrom) {
     propertyHolder = JS_NewObjectWithGivenProto(aCx, nullptr, nullptr);
     if (!propertyHolder) {
-      aError.StealExceptionFromJSContext(aCx);
-      return;
+      return NS_ERROR_OUT_OF_MEMORY;
     }
 
     if (!JS_CopyPropertiesFrom(aCx, propertyHolder, copyFrom)) {
-      aError.StealExceptionFromJSContext(aCx);
-      return;
+      return NS_ERROR_FAILURE;
     }
   } else {
     propertyHolder = nullptr;
+  }
+
+  // Expandos from other compartments are attached to the target JS object.
+  // Copy them over, and let the old ones die a natural death.
+
+  // Note that at this point the DOM_OBJECT_SLOT for |newobj| has not been set.
+  // CloneExpandoChain() will use this property of |newobj| when it calls
+  // preserveWrapper() via attachExpandoObject() if |aObj| has expandos set, and
+  // preserveWrapper() will not do anything in this case.  This is safe because
+  // if expandos are present then the wrapper will already have been preserved
+  // for this native.
+  if (!xpc::XrayUtils::CloneExpandoChain(aCx, newobj, aObj)) {
+    return NS_ERROR_FAILURE;
   }
 
   // We've set up |newobj|, so we make it own the native by setting its reserved
@@ -2272,7 +2281,7 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aErr
                       js::GetReservedSlot(aObj, DOM_OBJECT_SLOT));
   js::SetReservedSlot(aObj, DOM_OBJECT_SLOT, JS::PrivateValue(nullptr));
 
-  aObj = xpc::TransplantObjectRetainingXrayExpandos(aCx, aObj, newobj);
+  aObj = xpc::TransplantObject(aCx, aObj, newobj);
   if (!aObj) {
     MOZ_CRASH();
   }
@@ -2301,14 +2310,22 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aErr
   nsObjectLoadingContent* htmlobject;
   nsresult rv = UNWRAP_OBJECT(HTMLObjectElement, &maybeObjLC, htmlobject);
   if (NS_FAILED(rv)) {
-    rv = UNWRAP_OBJECT(HTMLEmbedElement, &maybeObjLC, htmlobject);
+    rv = UnwrapObject<prototypes::id::HTMLEmbedElement,
+                      HTMLSharedObjectElement>(&maybeObjLC, htmlobject);
     if (NS_FAILED(rv)) {
-      htmlobject = nullptr;
+      rv = UnwrapObject<prototypes::id::HTMLAppletElement,
+                        HTMLSharedObjectElement>(&maybeObjLC, htmlobject);
+      if (NS_FAILED(rv)) {
+        htmlobject = nullptr;
+      }
     }
   }
   if (htmlobject) {
     htmlobject->SetupProtoChain(aCx, aObj);
   }
+
+  // Now we can just return the wrapper
+  return NS_OK;
 }
 
 GlobalObject::GlobalObject(JSContext* aCx, JSObject* aObject)
@@ -3552,7 +3569,7 @@ GetCustomElementReactionsStack(JS::Handle<JSObject*> aObj)
 // https://html.spec.whatwg.org/multipage/dom.html#htmlconstructor
 already_AddRefed<nsGenericHTMLElement>
 CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
-                  JS::Handle<JSObject*> aGivenProto, ErrorResult& aRv)
+                  ErrorResult& aRv)
 {
   // Step 1.
   nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal.GetAsSupports());
@@ -3614,7 +3631,13 @@ CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
     // Step 5.
     // If the definition is for a customized built-in element, the localName
     // should be defined in the specification.
-    tag = nsHTMLTags::CaseSensitiveAtomTagToId(definition->mLocalName);
+    nsIParserService* parserService = nsContentUtils::GetParserService();
+    if (!parserService) {
+      aRv.Throw(NS_ERROR_UNEXPECTED);
+      return nullptr;
+    }
+
+    tag = parserService->HTMLCaseSensitiveAtomTagToId(definition->mLocalName);
     if (tag == eHTMLTag_userdefined) {
       aRv.ThrowTypeError<MSG_ILLEGAL_CONSTRUCTOR>();
       return nullptr;
@@ -3654,53 +3677,20 @@ CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
 
   // Step 6 and Step 7 are in the code output by CGClassConstructor.
   // Step 8.
-  nsTArray<RefPtr<nsGenericHTMLElement>>& constructionStack =
-    definition->mConstructionStack;
-  if (constructionStack.IsEmpty()) {
-    RefPtr<nsGenericHTMLElement> newElement;
-    if (tag == eHTMLTag_userdefined) {
-      // Autonomous custom element.
-      newElement = NS_NewHTMLElement(nodeInfo.forget());
-    } else {
-      // Customized built-in element.
-      newElement = CreateHTMLElement(tag, nodeInfo.forget(), NOT_FROM_PARSER);
-    }
-
-    newElement->SetCustomElementData(
-      new CustomElementData(definition->mType, CustomElementData::State::eCustom));
-
-    newElement->SetCustomElementDefinition(definition);
-
-    return newElement.forget();
+  // Construction stack will be implemented in bug 1287348. So we always run
+  // "construction stack is empty" case for now.
+  RefPtr<nsGenericHTMLElement> element;
+  if (tag == eHTMLTag_userdefined) {
+    // Autonomous custom element.
+    element = NS_NewHTMLElement(nodeInfo.forget());
+  } else {
+    // Customized built-in element.
+    element = CreateHTMLElement(tag, nodeInfo.forget(), NOT_FROM_PARSER);
   }
 
-  // Step 9.
-  RefPtr<nsGenericHTMLElement>& element = constructionStack.LastElement();
+  element->SetCustomElementData(
+    new CustomElementData(definition->mType, CustomElementData::State::eCustom));
 
-  // Step 10.
-  if (element == ALEADY_CONSTRUCTED_MARKER) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return nullptr;
-  }
-
-  // Step 11.
-  // Do prototype swizzling for upgrading a custom element here, for cases when
-  // we have a reflector already.  If we don't have one yet, our caller will
-  // create it with the right proto (by calling DoGetOrCreateDOMReflector with
-  // that proto).
-  JS::Rooted<JSObject*> reflector(cx, element->GetWrapper());
-  if (reflector) {
-    // reflector might be in different compartment.
-    JSAutoCompartment ac(cx, reflector);
-    JS::Rooted<JSObject*> givenProto(cx, aGivenProto);
-    if (!JS_WrapObject(cx, &givenProto) ||
-        !JS_SetPrototype(cx, reflector, givenProto)) {
-      aRv.NoteJSContextException(cx);
-      return nullptr;
-    }
-  }
-
-  // Step 12 and Step 13.
   return element.forget();
 }
 
@@ -3732,7 +3722,8 @@ AssertReflectorHasGivenProto(JSContext* aCx, JSObject* aReflector,
 #endif // DEBUG
 
 void
-SetDocumentAndPageUseCounter(JSObject* aObject, UseCounter aUseCounter)
+SetDocumentAndPageUseCounter(JSContext* aCx, JSObject* aObject,
+                             UseCounter aUseCounter)
 {
   nsGlobalWindow* win = xpc::WindowGlobalOrNull(js::UncheckedUnwrap(aObject));
   if (win && win->GetDocument()) {

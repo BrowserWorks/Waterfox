@@ -72,7 +72,6 @@
 #include "CustomElementRegistry.h"
 #include "mozilla/dom/Performance.h"
 #include "mozilla/Maybe.h"
-#include "nsIURIClassifier.h"
 
 #define XML_DECLARATION_BITS_DECLARATION_EXISTS   (1 << 0)
 #define XML_DECLARATION_BITS_ENCODING_EXISTS      (1 << 1)
@@ -134,7 +133,7 @@ public:
 class nsDocHeaderData
 {
 public:
-  nsDocHeaderData(nsAtom* aField, const nsAString& aData)
+  nsDocHeaderData(nsIAtom* aField, const nsAString& aData)
     : mField(aField), mData(aData), mNext(nullptr)
   {
   }
@@ -144,7 +143,7 @@ public:
     delete mNext;
   }
 
-  RefPtr<nsAtom> mField;
+  nsCOMPtr<nsIAtom> mField;
   nsString          mData;
   nsDocHeaderData*  mNext;
 };
@@ -347,9 +346,6 @@ protected:
   bool mHaveShutDown;
 };
 
-// For classifying a flash document based on its principal.
-class PrincipalFlashClassifier;
-
 // Base class for our document implementations.
 class nsDocument : public nsIDocument,
                    public nsIDOMDocument,
@@ -371,7 +367,7 @@ public:
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
-  NS_DECL_ADDSIZEOFEXCLUDINGTHIS
+  NS_DECL_SIZEOF_EXCLUDING_THIS
 
   virtual void Reset(nsIChannel *aChannel, nsILoadGroup *aLoadGroup) override;
   virtual void ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
@@ -434,17 +430,27 @@ public:
   virtual void
     SetDocumentCharacterSet(NotNull<const Encoding*> aEncoding) override;
 
-  virtual Element* AddIDTargetObserver(nsAtom* aID, IDTargetObserver aObserver,
+  /**
+   * Add an observer that gets notified whenever the charset changes.
+   */
+  virtual nsresult AddCharSetObserver(nsIObserver* aObserver) override;
+
+  /**
+   * Remove a charset observer.
+   */
+  virtual void RemoveCharSetObserver(nsIObserver* aObserver) override;
+
+  virtual Element* AddIDTargetObserver(nsIAtom* aID, IDTargetObserver aObserver,
                                        void* aData, bool aForImage) override;
-  virtual void RemoveIDTargetObserver(nsAtom* aID, IDTargetObserver aObserver,
+  virtual void RemoveIDTargetObserver(nsIAtom* aID, IDTargetObserver aObserver,
                                       void* aData, bool aForImage) override;
 
   /**
    * Access HTTP header data (this may also get set from other sources, like
    * HTML META tags).
    */
-  virtual void GetHeaderData(nsAtom* aHeaderField, nsAString& aData) const override;
-  virtual void SetHeaderData(nsAtom* aheaderField,
+  virtual void GetHeaderData(nsIAtom* aHeaderField, nsAString& aData) const override;
+  virtual void SetHeaderData(nsIAtom* aheaderField,
                              const nsAString& aData) override;
 
   /**
@@ -533,10 +539,10 @@ public:
   /**
    * Add/Remove an element to the document's id and name hashes
    */
-  virtual void AddToIdTable(Element* aElement, nsAtom* aId) override;
-  virtual void RemoveFromIdTable(Element* aElement, nsAtom* aId) override;
-  virtual void AddToNameTable(Element* aElement, nsAtom* aName) override;
-  virtual void RemoveFromNameTable(Element* aElement, nsAtom* aName) override;
+  virtual void AddToIdTable(Element* aElement, nsIAtom* aId) override;
+  virtual void RemoveFromIdTable(Element* aElement, nsIAtom* aId) override;
+  virtual void AddToNameTable(Element* aElement, nsIAtom* aName) override;
+  virtual void RemoveFromNameTable(Element* aElement, nsIAtom* aName) override;
 
   /**
    * Add a new observer of document change notifications. Whenever
@@ -573,9 +579,7 @@ public:
   virtual void StyleRuleRemoved(mozilla::StyleSheet* aStyleSheet,
                                 mozilla::css::Rule* aStyleRule) override;
 
-  virtual void FlushPendingNotifications(mozilla::FlushType aType,
-                                         mozilla::FlushTarget aTarget
-                                           = mozilla::FlushTarget::Normal) override;
+  virtual void FlushPendingNotifications(mozilla::FlushType aType) override;
   virtual void FlushExternalResources(mozilla::FlushType aType) override;
   virtual void SetXMLDeclaration(const char16_t *aVersion,
                                  const char16_t *aEncoding,
@@ -594,6 +598,7 @@ public:
   // nsINode
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
   virtual nsIContent *GetChildAt(uint32_t aIndex) const override;
+  virtual nsIContent * const * GetChildArray(uint32_t* aChildCount) const override;
   virtual int32_t IndexOf(const nsINode* aPossibleChild) const override;
   virtual uint32_t GetChildCount() const override;
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
@@ -620,9 +625,9 @@ public:
                        mozilla::dom::HTMLInputElement*  aFocusedRadio,
                        mozilla::dom::HTMLInputElement** aRadioOut) override;
   virtual void AddToRadioGroup(const nsAString& aName,
-                               mozilla::dom::HTMLInputElement* aRadio) override;
+                               nsIFormControl* aRadio) override;
   virtual void RemoveFromRadioGroup(const nsAString& aName,
-                                    mozilla::dom::HTMLInputElement* aRadio) override;
+                                    nsIFormControl* aRadio) override;
   virtual uint32_t GetRequiredRadioCount(const nsAString& aName) const override;
   virtual void RadioRequiredWillChange(const nsAString& aName,
                                        bool aRequiredAdded) override;
@@ -662,7 +667,6 @@ public:
   virtual void ScheduleSVGForPresAttrEvaluation(nsSVGElement* aSVG) override;
   virtual void UnscheduleSVGForPresAttrEvaluation(nsSVGElement* aSVG) override;
   virtual void ResolveScheduledSVGPresAttrs() override;
-  bool IsSynthesized();
 
 private:
   void AddOnDemandBuiltInUASheet(mozilla::StyleSheet* aSheet);
@@ -700,7 +704,7 @@ public:
   virtual nsresult Init();
 
   virtual already_AddRefed<Element> CreateElem(const nsAString& aName,
-                                               nsAtom* aPrefix,
+                                               nsIAtom* aPrefix,
                                                int32_t aNamespaceID,
                                                const nsAString* aIs = nullptr) override;
 
@@ -728,7 +732,7 @@ public:
 
   virtual Element*
     GetAnonymousElementByAttribute(nsIContent* aElement,
-                                   nsAtom* aAttrName,
+                                   nsIAtom* aAttrName,
                                    const nsAString& aAttrValue) const override;
 
   virtual Element* ElementFromPointHelper(float aX, float aY,
@@ -818,21 +822,17 @@ public:
     ResolvePreloadImage(nsIURI *aBaseURI,
                         const nsAString& aSrcAttr,
                         const nsAString& aSrcsetAttr,
-                        const nsAString& aSizesAttr,
-                        bool *aIsImgSet) override;
+                        const nsAString& aSizesAttr) override;
 
   virtual void MaybePreLoadImage(nsIURI* uri,
                                  const nsAString &aCrossOriginAttr,
-                                 ReferrerPolicy aReferrerPolicy,
-                                 bool aIsImgSet) override;
-
+                                 ReferrerPolicy aReferrerPolicy) override;
   virtual void ForgetImagePreload(nsIURI* aURI) override;
 
   virtual void MaybePreconnect(nsIURI* uri,
                                mozilla::CORSMode aCORSMode) override;
 
-  virtual void PreloadStyle(nsIURI* uri,
-                            const mozilla::Encoding* aEncoding,
+  virtual void PreloadStyle(nsIURI* uri, const nsAString& charset,
                             const nsAString& aCrossOriginAttr,
                             ReferrerPolicy aReferrerPolicy,
                             const nsAString& aIntegrity) override;
@@ -982,7 +982,7 @@ public:
   // to notify window when the page was first visited.
   void MaybeActiveMediaComponents();
 
-  virtual void DocAddSizeOfExcludingThis(nsWindowSizes& aWindowSizes) const override;
+  virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const override;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }
@@ -1135,6 +1135,8 @@ protected:
   // the classification lists and the classification of parent documents.
   mozilla::dom::FlashClassification ComputeFlashClassification();
 
+  nsTArray<nsIObserver*> mCharSetObservers;
+
   PLDHashTable *mSubDocuments;
 
   // Array of owning references to all children
@@ -1178,7 +1180,6 @@ protected:
   // non-null when this document is in fullscreen mode.
   nsWeakPtr mFullscreenRoot;
 
-  RefPtr<PrincipalFlashClassifier> mPrincipalFlashClassifier;
   mozilla::dom::FlashClassification mFlashClassification;
   // Do not use this value directly. Call the |IsThirdParty()| method, which
   // caches its result here.
@@ -1190,6 +1191,12 @@ private:
 public:
   virtual already_AddRefed<mozilla::dom::CustomElementRegistry>
     GetCustomElementRegistry() override;
+
+  // Check whether web components are enabled for the global of aObject.
+  static bool IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject);
+  // Check whether web components are enabled for the global of the document
+  // this nodeinfo comes from.
+  static bool IsWebComponentsEnabled(mozilla::dom::NodeInfo* aNodeInfo);
 
   RefPtr<mozilla::EventListenerManager> mListenerManager;
   RefPtr<mozilla::dom::StyleSheetList> mDOMStyleSheets;
@@ -1419,12 +1426,6 @@ private:
 public:
   bool mWillReparent;
 #endif
-
-private:
-  void RecordNavigationTiming(ReadyState aReadyState);
-  bool mDOMLoadingSet : 1;
-  bool mDOMInteractiveSet : 1;
-  bool mDOMCompleteSet : 1;
 };
 
 class nsDocumentOnStack

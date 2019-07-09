@@ -28,10 +28,8 @@
         "description": "Represents information about a contextual identity.",
         "properties": {
           "name": {"type": "string", "description": "The name of the contextual identity."},
-          "icon": {"type": "string", "description": "The icon name of the contextual identity."},
-          "iconUrl": {"type": "string", "description": "The icon url of the contextual identity."},
-          "color": {"type": "string", "description": "The color name of the contextual identity."},
-          "colorCode": {"type": "string", "description": "The color hash of the contextual identity."},
+          "icon": {"type": "string", "description": "The icon of the contextual identity."},
+          "color": {"type": "string", "description": "The color of the contextual identity."},
           "cookieStoreId": {"type": "string", "description": "The cookie store ID of the contextual identity."}
         }
       }
@@ -117,50 +115,6 @@
             "type": "string",
             "name": "cookieStoreId",
             "description": "The ID of the contextual identity cookie store. "
-          }
-        ]
-      }
-    ],
-    "events": [
-      {
-        "name": "onUpdated",
-        "type": "function",
-        "description": "Fired when a container is updated.",
-        "parameters": [
-          {
-            "type": "object",
-            "name": "changeInfo",
-            "properties": {
-              "contextualIdentity": {"$ref": "ContextualIdentity", "description": "Contextual identity that has been updated"}
-            }
-          }
-        ]
-      },
-      {
-        "name": "onCreated",
-        "type": "function",
-        "description": "Fired when a new container is created.",
-        "parameters": [
-          {
-            "type": "object",
-            "name": "changeInfo",
-            "properties": {
-              "contextualIdentity": {"$ref": "ContextualIdentity", "description": "Contextual identity that has been created"}
-            }
-          }
-        ]
-      },
-      {
-        "name": "onRemoved",
-        "type": "function",
-        "description": "Fired when a container is removed.",
-        "parameters": [
-          {
-            "type": "object",
-            "name": "changeInfo",
-            "properties": {
-              "contextualIdentity": {"$ref": "ContextualIdentity", "description": "Contextual identity that has been removed"}
-            }
           }
         ]
       }

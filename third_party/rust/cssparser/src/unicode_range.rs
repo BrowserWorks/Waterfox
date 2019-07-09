@@ -44,10 +44,10 @@ impl UnicodeRange {
 
         let range = match parse_concatenated(concatenated_tokens.as_bytes()) {
             Ok(range) => range,
-            Err(()) => return Err(input.new_basic_unexpected_token_error(Token::Ident(concatenated_tokens.into()))),
+            Err(()) => return Err(BasicParseError::UnexpectedToken(Token::Ident(concatenated_tokens.into()))),
         };
         if range.end > char::MAX as u32 || range.start > range.end {
-            Err(input.new_basic_unexpected_token_error(Token::Ident(concatenated_tokens.into())))
+            Err(BasicParseError::UnexpectedToken(Token::Ident(concatenated_tokens.into())))
         } else {
             Ok(range)
         }
@@ -57,11 +57,10 @@ impl UnicodeRange {
 fn parse_tokens<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), BasicParseError<'i>> {
     match input.next_including_whitespace()?.clone() {
         Token::Delim('+') => {
-            // FIXME: remove .clone() when lifetimes are non-lexical.
-            match input.next_including_whitespace()?.clone() {
+            match *input.next_including_whitespace()? {
                 Token::Ident(_) => {}
                 Token::Delim('?') => {}
-                t => return Err(input.new_basic_unexpected_token_error(t))
+                ref t => return Err(BasicParseError::UnexpectedToken(t.clone()))
             }
             parse_question_marks(input)
         }
@@ -69,15 +68,15 @@ fn parse_tokens<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), BasicParseErro
             parse_question_marks(input)
         }
         Token::Number { .. } => {
-            let after_number = input.state();
+            let after_number = input.position();
             match input.next_including_whitespace() {
                 Ok(&Token::Delim('?')) => parse_question_marks(input),
                 Ok(&Token::Dimension { .. }) => {}
                 Ok(&Token::Number { .. }) => {}
-                _ => input.reset(&after_number)
+                _ => input.reset(after_number)
             }
         }
-        t => return Err(input.new_basic_unexpected_token_error(t))
+        t => return Err(BasicParseError::UnexpectedToken(t))
     }
     Ok(())
 }
@@ -85,11 +84,11 @@ fn parse_tokens<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), BasicParseErro
 /// Consume as many '?' as possible
 fn parse_question_marks(input: &mut Parser) {
     loop {
-        let start = input.state();
+        let position = input.position();
         match input.next_including_whitespace() {
             Ok(&Token::Delim('?')) => {}
             _ => {
-                input.reset(&start);
+                input.reset(position);
                 return
             }
         }

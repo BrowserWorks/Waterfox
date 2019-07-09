@@ -9,7 +9,7 @@
 #include "TextEditUtils.h"
 #include "gfxFontUtils.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/EditorUtils.h" // AutoPlaceholderBatch, AutoRules
+#include "mozilla/EditorUtils.h" // AutoEditBatch, AutoRules
 #include "mozilla/HTMLEditor.h"
 #include "mozilla/mozalloc.h"
 #include "mozilla/Preferences.h"
@@ -52,7 +52,6 @@
 #include "nsString.h"
 #include "nsStringFwd.h"
 #include "nsSubstringTuple.h"
-#include "nsTextNode.h"
 #include "nsUnicharUtils.h"
 #include "nsXPCOM.h"
 
@@ -77,6 +76,18 @@ TextEditor::TextEditor()
   // check the "single line editor newline handling"
   // and "caret behaviour in selection" prefs
   GetDefaultEditorPrefs(mNewlineHandling, mCaretStyle);
+}
+
+HTMLEditor*
+TextEditor::AsHTMLEditor()
+{
+  return nullptr;
+}
+
+const HTMLEditor*
+TextEditor::AsHTMLEditor() const
+{
+  return nullptr;
 }
 
 TextEditor::~TextEditor()
@@ -106,7 +117,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_ADDREF_INHERITED(TextEditor, EditorBase)
 NS_IMPL_RELEASE_INHERITED(TextEditor, EditorBase)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TextEditor)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TextEditor)
   NS_INTERFACE_MAP_ENTRY(nsIPlaintextEditor)
   NS_INTERFACE_MAP_ENTRY(nsIEditorMailSupport)
 NS_INTERFACE_MAP_END_INHERITING(EditorBase)
@@ -401,7 +412,7 @@ TextEditor::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent)
 NS_IMETHODIMP
 TextEditor::TypedText(const nsAString& aString, ETypingAction aAction)
 {
-  AutoPlaceholderBatch batch(this, nsGkAtoms::TypingTxnName);
+  AutoPlaceHolderBatch batch(this, nsGkAtoms::TypingTxnName);
 
   switch (aAction) {
     case eTypedText:
@@ -551,7 +562,7 @@ TextEditor::ExtendSelectionForDelete(Selection* aSelection,
         NS_ENSURE_TRUE(node, NS_ERROR_FAILURE);
 
         // node might be anonymous DIV, so we find better text node
-        FindBetterInsertionPoint(node, offset, nullptr);
+        FindBetterInsertionPoint(node, offset);
 
         if (IsTextNode(node)) {
           const nsTextFragment* data = node->GetAsText()->GetText();
@@ -597,7 +608,7 @@ TextEditor::DeleteSelection(EDirection aAction,
   nsCOMPtr<nsIEditRules> rules(mRules);
 
   // delete placeholder txns merge.
-  AutoPlaceholderBatch batch(this, nsGkAtoms::DeleteTxnName);
+  AutoPlaceHolderBatch batch(this, nsGkAtoms::DeleteTxnName);
   AutoRules beginRulesSniffing(this, EditAction::deleteSelection, aAction);
 
   // pre-process
@@ -650,7 +661,7 @@ TextEditor::InsertText(const nsAString& aStringToInsert)
   if (ShouldHandleIMEComposition()) {
     opID = EditAction::insertIMEText;
   }
-  AutoPlaceholderBatch batch(this, nullptr);
+  AutoPlaceHolderBatch batch(this, nullptr);
   AutoRules beginRulesSniffing(this, opID, nsIEditor::eNext);
 
   // pre-process
@@ -688,7 +699,7 @@ TextEditor::InsertLineBreak()
   // Protect the edit rules object from dying
   nsCOMPtr<nsIEditRules> rules(mRules);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   AutoRules beginRulesSniffing(this, EditAction::insertBreak, nsIEditor::eNext);
 
   // pre-process
@@ -704,7 +715,6 @@ TextEditor::InsertLineBreak()
     // get the (collapsed) selection location
     NS_ENSURE_STATE(selection->GetRangeAt(0));
     nsCOMPtr<nsINode> selNode = selection->GetRangeAt(0)->GetStartContainer();
-    nsCOMPtr<nsIContent> selChild = selection->GetRangeAt(0)->GetChildAtStartOffset();
     int32_t selOffset = selection->GetRangeAt(0)->StartOffset();
     NS_ENSURE_STATE(selNode);
 
@@ -723,7 +733,7 @@ TextEditor::InsertLineBreak()
 
     // insert a linefeed character
     rv = InsertTextImpl(NS_LITERAL_STRING("\n"), address_of(selNode),
-                        address_of(selChild), &selOffset, doc);
+                        &selOffset, doc);
     if (!selNode) {
       rv = NS_ERROR_NULL_POINTER; // don't return here, so DidDoAction is called
     }
@@ -767,7 +777,7 @@ TextEditor::SetText(const nsAString& aString)
   nsCOMPtr<nsIEditRules> rules(mRules);
 
   // delete placeholder txns merge.
-  AutoPlaceholderBatch batch(this, nullptr);
+  AutoPlaceHolderBatch batch(this, nullptr);
   AutoRules beginRulesSniffing(this, EditAction::setText, nsIEditor::eNext);
 
   // pre-process
@@ -871,10 +881,10 @@ TextEditor::UpdateIMEComposition(WidgetCompositionEvent* aCompsitionChangeEvent)
 
   nsresult rv;
   {
-    AutoPlaceholderBatch batch(this, nsGkAtoms::IMETxnName);
+    AutoPlaceHolderBatch batch(this, nsGkAtoms::IMETxnName);
 
     MOZ_ASSERT(mIsInEditAction,
-      "AutoPlaceholderBatch should've notified the observes of before-edit");
+      "AutoPlaceHolderBatch should've notified the observes of before-edit");
     rv = InsertText(aCompsitionChangeEvent->mData);
 
     if (caretP) {
@@ -901,41 +911,17 @@ TextEditor::GetInputEventTargetContent()
   return target.forget();
 }
 
-nsresult
-TextEditor::DocumentIsEmpty(bool* aIsEmpty)
-{
-  NS_ENSURE_TRUE(mRules, NS_ERROR_NOT_INITIALIZED);
-
-  if (static_cast<TextEditRules*>(mRules.get())->HasBogusNode()) {
-    *aIsEmpty = true;
-    return NS_OK;
-  }
-
-  // Even if there is no bogus node, we should be detected as empty document
-  // if all the children are text nodes and these have no content.
-  Element* rootElement = GetRoot();
-  if (!rootElement) {
-    *aIsEmpty = true;
-    return NS_OK;
-  }
-
-  for (nsIContent* child = rootElement->GetFirstChild();
-       child; child = child->GetNextSibling()) {
-    if (!EditorBase::IsTextNode(child) ||
-        static_cast<nsTextNode*>(child)->TextDataLength()) {
-      *aIsEmpty = false;
-      return NS_OK;
-    }
-  }
-
-  *aIsEmpty = true;
-  return NS_OK;
-}
-
 NS_IMETHODIMP
 TextEditor::GetDocumentIsEmpty(bool* aDocumentIsEmpty)
 {
-  return DocumentIsEmpty(aDocumentIsEmpty);
+  NS_ENSURE_TRUE(aDocumentIsEmpty, NS_ERROR_NULL_POINTER);
+
+  NS_ENSURE_TRUE(mRules, NS_ERROR_NOT_INITIALIZED);
+
+  // Protect the edit rules object from dying
+  nsCOMPtr<nsIEditRules> rules(mRules);
+  *aDocumentIsEmpty = rules->DocumentIsEmpty();
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1106,7 +1092,7 @@ TextEditor::Undo(uint32_t aCount)
 
   AutoUpdateViewBatch beginViewBatching(this);
 
-  CommitComposition();
+  ForceCompositionEnd();
 
   NotifyEditorObservers(eNotifyEditorObserversOfBefore);
 
@@ -1134,7 +1120,7 @@ TextEditor::Redo(uint32_t aCount)
 
   AutoUpdateViewBatch beginViewBatching(this);
 
-  CommitComposition();
+  ForceCompositionEnd();
 
   NotifyEditorObservers(eNotifyEditorObserversOfBefore);
 
@@ -1176,7 +1162,7 @@ TextEditor::FireClipboardEvent(EventMessage aEventMessage,
                                bool* aActionTaken)
 {
   if (aEventMessage == ePaste) {
-    CommitComposition();
+    ForceCompositionEnd();
   }
 
   nsCOMPtr<nsIPresShell> presShell = GetPresShell();
@@ -1430,7 +1416,7 @@ TextEditor::PasteAsQuotation(int32_t aSelectionType)
       if (textDataObj && len > 0) {
         nsAutoString stuffToPaste;
         textDataObj->GetData ( stuffToPaste );
-        AutoPlaceholderBatch beginBatching(this);
+        AutoEditBatch beginBatching(this);
         rv = InsertAsQuotation(stuffToPaste, 0);
       }
     }
@@ -1461,7 +1447,7 @@ TextEditor::InsertAsQuotation(const nsAString& aQuotedText,
   RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
 
-  AutoPlaceholderBatch beginBatching(this);
+  AutoEditBatch beginBatching(this);
   AutoRules beginRulesSniffing(this, EditAction::insertText, nsIEditor::eNext);
 
   // give rules a chance to handle or cancel
@@ -1640,18 +1626,16 @@ TextEditor::SelectEntireDocument(Selection* aSelection)
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Don't select the trailing BR node if we have one
-  nsCOMPtr<nsIContent> childNode;
-  rv = GetEndChildNode(aSelection, getter_AddRefs(childNode));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-  if (childNode) {
-    childNode = childNode->GetPreviousSibling();
-  }
+  int32_t selOffset;
+  nsCOMPtr<nsIDOMNode> selNode;
+  rv = GetEndNodeAndOffset(aSelection, getter_AddRefs(selNode), &selOffset);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsIDOMNode> childNode = GetChildAt(selNode, selOffset - 1);
 
   if (childNode && TextEditUtils::IsMozBR(childNode)) {
     int32_t parentOffset;
-    nsINode* parentNode = GetNodeLocation(childNode, &parentOffset);
+    nsCOMPtr<nsIDOMNode> parentNode = GetNodeLocation(childNode, &parentOffset);
 
     return aSelection->Extend(parentNode, parentOffset);
   }
@@ -1669,7 +1653,7 @@ TextEditor::GetDOMEventTarget()
 
 nsresult
 TextEditor::SetAttributeOrEquivalent(Element* aElement,
-                                     nsAtom* aAttribute,
+                                     nsIAtom* aAttribute,
                                      const nsAString& aValue,
                                      bool aSuppressTransaction)
 {
@@ -1678,7 +1662,7 @@ TextEditor::SetAttributeOrEquivalent(Element* aElement,
 
 nsresult
 TextEditor::RemoveAttributeOrEquivalent(Element* aElement,
-                                        nsAtom* aAttribute,
+                                        nsIAtom* aAttribute,
                                         bool aSuppressTransaction)
 {
   return EditorBase::RemoveAttribute(aElement, aAttribute);

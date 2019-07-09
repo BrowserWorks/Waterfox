@@ -9,9 +9,9 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/Mutex.h"
-#include "mozilla/NotNull.h"
+#include "mozilla/Monitor.h"
 #include "AutoTaskQueue.h"
+#include "mozilla/dom/SourceBufferBinding.h"
 
 #include "MediaContainerType.h"
 #include "MediaData.h"
@@ -21,6 +21,7 @@
 #include "SourceBufferTask.h"
 #include "TimeUnits.h"
 #include "nsAutoPtr.h"
+#include "nsProxyRelease.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -35,8 +36,9 @@ class SourceBufferResource;
 class SourceBufferTaskQueue
 {
 public:
-  SourceBufferTaskQueue() { }
-
+  SourceBufferTaskQueue()
+  : mMonitor("SourceBufferTaskQueue")
+  {}
   ~SourceBufferTaskQueue()
   {
     MOZ_ASSERT(mQueue.IsEmpty(), "All tasks must have been processed");
@@ -44,11 +46,13 @@ public:
 
   void Push(SourceBufferTask* aTask)
   {
+    MonitorAutoLock mon(mMonitor);
     mQueue.AppendElement(aTask);
   }
 
   already_AddRefed<SourceBufferTask> Pop()
   {
+    MonitorAutoLock mon(mMonitor);
     if (!mQueue.Length()) {
       return nullptr;
     }
@@ -59,9 +63,12 @@ public:
 
   nsTArray<SourceBufferTask>::size_type Length() const
   {
+    MonitorAutoLock mon(mMonitor);
     return mQueue.Length();
   }
+
 private:
+  mutable Monitor mMonitor;
   nsTArray<RefPtr<SourceBufferTask>> mQueue;
 };
 
@@ -155,6 +162,15 @@ public:
                                            MediaResult& aResult);
   int32_t FindCurrentPosition(TrackInfo::TrackType aTrack,
                               const media::TimeUnit& aFuzz) const;
+
+  // Will set the next GetSample index if needed. This information is determined
+  // through the value of mNextSampleTimecode. Return false if the index
+  // couldn't be determined or if there's nothing more that could be demuxed.
+  // This occurs if either the track buffer doesn't contain the required
+  // timecode or is empty.
+  nsresult SetNextGetSampleIndexIfNeeded(TrackInfo::TrackType aTrack,
+                                         const media::TimeUnit& aFuzz);
+
   media::TimeUnit GetNextRandomAccessPoint(TrackInfo::TrackType aTrack,
                                            const media::TimeUnit& aFuzz);
 
@@ -206,7 +222,7 @@ private:
   // Set to true once a new segment is started.
   bool mNewMediaSegmentStarted;
   bool mActiveTrack;
-  const MediaContainerType mType;
+  MediaContainerType mType;
 
   // ContainerParser objects and methods.
   // Those are used to parse the incoming input buffer.
@@ -371,20 +387,8 @@ private:
       mLastFrameDuration.reset();
       mHighestEndTimestamp.reset();
       mNeedRandomAccessPoint = true;
-      mNextInsertionIndex.reset();
-    }
 
-    void Reset()
-    {
-      ResetAppendState();
-      mEvictionIndex.Reset();
-      for (auto& buffer : mBuffers) {
-        buffer.Clear();
-      }
-      mSizeBuffer = 0;
-      mNextGetSampleIndex.reset();
-      mBufferedRanges.Clear();
-      mSanitizedBufferedRanges.Clear();
+      mNextInsertionIndex.reset();
     }
 
     void AddSizeOfResources(MediaSourceDecoder::ResourceSizes* aSizes) const;
@@ -450,29 +454,15 @@ private:
   TrackData mAudioTracks;
 
   // TaskQueue methods and objects.
-  RefPtr<AutoTaskQueue> GetTaskQueueSafe() const
+  AbstractThread* GetTaskQueue() const
   {
-    MutexAutoLock mut(mMutex);
     return mTaskQueue;
-  }
-  NotNull<AbstractThread*> TaskQueueFromTaskQueue() const
-  {
-#ifdef DEBUG
-    RefPtr<AutoTaskQueue> taskQueue = GetTaskQueueSafe();
-    MOZ_ASSERT(taskQueue && taskQueue->IsCurrentThreadIn());
-#endif
-    return WrapNotNull(mTaskQueue.get());
   }
   bool OnTaskQueue() const
   {
-    auto taskQueue = TaskQueueFromTaskQueue();
-    return taskQueue->IsCurrentThreadIn();
+    return !GetTaskQueue() || GetTaskQueue()->IsCurrentThreadIn();
   }
-  void ResetTaskQueue()
-  {
-    MutexAutoLock mut(mMutex);
-    mTaskQueue = nullptr;
-  }
+  RefPtr<AutoTaskQueue> mTaskQueue;
 
   // SourceBuffer Queues and running context.
   SourceBufferTaskQueue mQueue;
@@ -514,11 +504,7 @@ private:
   Atomic<EvictionState> mEvictionState;
 
   // Monitor to protect following objects accessed across multiple threads.
-  mutable Mutex mMutex;
-  // mTaskQueue is only ever written after construction on the task queue.
-  // As such, it can be accessed while on task queue without the need for the
-  // mutex.
-  RefPtr<AutoTaskQueue> mTaskQueue;
+  mutable Monitor mMonitor;
   // Stable audio and video track time ranges.
   media::TimeIntervals mVideoBufferedRanges;
   media::TimeIntervals mAudioBufferedRanges;

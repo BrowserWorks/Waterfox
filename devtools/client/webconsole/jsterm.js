@@ -8,7 +8,7 @@
 
 const {Utils: WebConsoleUtils} =
   require("devtools/client/webconsole/utils");
-const defer = require("devtools/shared/defer");
+const promise = require("promise");
 const Debugger = require("Debugger");
 const Services = require("Services");
 const {KeyCodes} = require("devtools/client/shared/keycodes");
@@ -16,13 +16,13 @@ const {KeyCodes} = require("devtools/client/shared/keycodes");
 loader.lazyServiceGetter(this, "clipboardHelper",
                          "@mozilla.org/widget/clipboardhelper;1",
                          "nsIClipboardHelper");
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/old-event-emitter");
+loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 loader.lazyRequireGetter(this, "AutocompletePopup", "devtools/client/shared/autocomplete-popup");
 loader.lazyRequireGetter(this, "ToolSidebar", "devtools/client/framework/sidebar", true);
 loader.lazyRequireGetter(this, "Messages", "devtools/client/webconsole/console-output", true);
 loader.lazyRequireGetter(this, "asyncStorage", "devtools/shared/async-storage");
-loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/environment-client");
-loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/object-client");
+loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/main", true);
 loader.lazyImporter(this, "VariablesView", "resource://devtools/client/shared/widgets/VariablesView.jsm");
 loader.lazyImporter(this, "VariablesViewController", "resource://devtools/client/shared/widgets/VariablesViewController.jsm");
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
@@ -433,7 +433,7 @@ JSTerm.prototype = {
    *          Resolves with the message once the result is displayed.
    */
   execute: function (executeString, callback) {
-    let deferred = defer();
+    let deferred = promise.defer();
     let resultCallback;
     if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
       resultCallback = (msg) => deferred.resolve(msg);
@@ -522,7 +522,7 @@ JSTerm.prototype = {
    *         received.
    */
   requestEvaluation: function (str, options = {}) {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     function onResult(response) {
       if (!response.error) {
@@ -546,21 +546,6 @@ JSTerm.prototype = {
 
     this.webConsoleClient.evaluateJSAsync(str, onResult, evalOptions);
     return deferred.promise;
-  },
-
-  /**
-   * Copy the object/variable by invoking the server
-   * which invokes the `copy(variable)` command and makes it
-   * available in the clipboard
-   * @param evalString - string which has the evaluation string to be copied
-   * @param options - object - Options for evaluation
-   * @return object
-   *         A promise object that is resolved when the server response is
-   *         received.
-   */
-  copyObject: function (evalString, evalOptions) {
-    return this.webConsoleClient.evaluateJSAsync(`copy(${evalString})`,
-      null, evalOptions);
   },
 
   /**
@@ -641,7 +626,7 @@ JSTerm.prototype = {
 
     let openPromise;
     if (options.targetElement) {
-      let deferred = defer();
+      let deferred = promise.defer();
       openPromise = deferred.promise;
       let document = options.targetElement.ownerDocument;
       let iframe = document.createElementNS(XHTML_NS, "iframe");
@@ -686,7 +671,7 @@ JSTerm.prototype = {
    *         A promise object for the adding of the new tab.
    */
   _addVariablesViewSidebarTab: function () {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     let onTabReady = () => {
       let window = this.sidebar.getWindowForTab("variablesview");
@@ -995,7 +980,6 @@ JSTerm.prototype = {
     this.focus();
     this.emit("messages-cleared");
   },
-
   /**
    * Remove all of the private messages from the Web Console output.
    *
@@ -1022,11 +1006,7 @@ JSTerm.prototype = {
     inputNode.style.height = "auto";
 
     // Now resize the input field to fit its contents.
-    // TODO: remove `inputNode.inputField.scrollHeight` when the old
-    // console UI is removed. See bug 1381834
-    let scrollHeight = inputNode.inputField ?
-      inputNode.inputField.scrollHeight : inputNode.scrollHeight;
-
+    let scrollHeight = inputNode.inputField.scrollHeight;
     if (scrollHeight > 0) {
       inputNode.style.height = scrollHeight + "px";
     }
@@ -1774,13 +1754,7 @@ JSTerm.prototype = {
     this._sidebarDestroy();
 
     this.clearCompletion();
-
-    if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
-      this.webConsoleClient.clearNetworkRequests();
-      this.hud.outputNode.innerHTML = "";
-    } else {
-      this.clearOutput();
-    }
+    this.clearOutput();
 
     this.autocompletePopup.destroy();
     this.autocompletePopup = null;

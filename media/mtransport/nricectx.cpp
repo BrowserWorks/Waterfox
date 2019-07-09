@@ -964,27 +964,18 @@ nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
 
   SetCtxFlags(default_route_only, proxy_only);
 
-  TimeStamp start = TimeStamp::Now();
   // This might start gathering for the first time, or again after
   // renegotiation, or might do nothing at all if gathering has already
   // finished.
   int r = nr_ice_gather(ctx_, &NrIceCtx::gather_cb, this);
 
-
   if (!r) {
     SetGatheringState(ICE_CTX_GATHER_COMPLETE);
-    Telemetry::AccumulateTimeDelta(
-        Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME_IMMEDIATE_SUCCESS, start);
   } else if (r != R_WOULDBLOCK) {
     MOZ_MTLOG(ML_ERROR, "Couldn't gather ICE candidates for '"
                         << name_ << "', error=" << r);
     SetConnectionState(ICE_CTX_FAILED);
-    Telemetry::AccumulateTimeDelta(
-        Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME_IMMEDIATE_FAILURE, start);
     return NS_ERROR_FAILURE;
-  } else {
-    Telemetry::AccumulateTimeDelta(
-        Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME, start);
   }
 
   return NS_OK;
@@ -1031,8 +1022,8 @@ nsresult NrIceCtx::ParseGlobalAttributes(std::vector<std::string> attrs) {
   }
 
   int r = nr_ice_peer_ctx_parse_global_attributes(peer_,
-                                                  attrs_in.empty() ?
-                                                  nullptr : &attrs_in[0],
+                                                  attrs_in.size() ?
+                                                  &attrs_in[0] : nullptr,
                                                   attrs_in.size());
   if (r) {
     MOZ_MTLOG(ML_ERROR, "Couldn't parse global attributes for "

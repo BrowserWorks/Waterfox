@@ -5,7 +5,104 @@
 %include shared.inc
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-%include ../../shared/notification.inc.css
+notification {
+  padding: 3px 3px 4px;
+  text-shadow: none;
+}
+
+notification[type="info"] {
+  color: rgba(255,255,255,0.95);
+  background: linear-gradient(#606060, #404040);
+  border-top: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+notification[type="warning"] {
+  color: rgba(0,0,0,0.95);
+  background: linear-gradient(#ffe13e, #ffc703);
+  border-top: 1px solid #bf8a01;
+  border-bottom: 1px solid #bf8a01;
+}
+
+notification[type="critical"] {
+  color: rgba(255,255,255,0.95);
+  background: linear-gradient(#d40000, #980000);
+  border-top: 1px solid #5d0000;
+  border-bottom: 1px solid #5d0000;
+}
+
+notificationbox[notificationside="top"] > notification {
+  border-top-style: none;
+}
+
+notificationbox[notificationside="bottom"] > notification {
+  border-bottom-style: none;
+}
+
+.messageText > .text-link {
+  color: inherit !important;
+  text-decoration: underline;
+}
+
+.messageImage {
+  width: 16px;
+  height: 16px;
+  margin: 0 4px;
+}
+
+/* Default icons for notifications */
+
+.messageImage[type="info"] {
+  list-style-image: url("chrome://global/skin/notification/info-icon.png");
+}
+
+.messageImage[type="warning"] {
+  list-style-image: url("chrome://global/skin/notification/warning-icon.png");
+}
+
+.messageImage[type="critical"] {
+  list-style-image: url("chrome://global/skin/notification/error-icon.png");
+}
+
+.messageText {
+  margin: 0 3px !important;
+  padding: 0;
+  font-weight: bold;
+}
+
+.messageCloseButton {
+  -moz-appearance: none;
+  padding: 0;
+  margin: 0 2px;
+  border: none;
+}
+
+/*
+ Invert the close icon for @type=info since both are normally dark. It's unclear
+ why !important is necessary here so remove it if it's no longer needed.
+*/
+notification[type="info"]:not([value="translation"]) .close-icon:not(:hover) {
+  -moz-image-region: rect(0, 64px, 16px, 48px) !important;
+}
+
+@media (min-resolution: 2dppx) {
+  notification[type="info"]:not([value="translation"]) .close-icon:not(:hover) {
+    -moz-image-region: rect(0, 128px, 32px, 96px) !important;
+  }
+}
+
+.messageCloseButton:-moz-focusring > .toolbarbutton-icon {
+  border-radius: 10000px;
+  box-shadow: 0 0 2px 1px -moz-mac-focusring,
+              0 0 0 2px -moz-mac-focusring inset;
+}
+
+@media (min-resolution: 2dppx) {
+  .messageCloseButton > .toolbarbutton-icon {
+    width: 16px;
+  }
+}
+
 %include ../../shared/popupnotification.inc.css
 
 .popup-notification-button:-moz-focusring {
@@ -15,8 +112,4 @@
 
 .popup-notification-warning {
   color: #aa1b08;
-}
-
-.popup-notification-button[anonid="secondarybutton"]:not([hidden="true"])  ~ .popup-notification-button[default]:not([highlight="true"]) {
-  border-inline-start: 1px solid var(--panel-separator-color);
 }

@@ -31,7 +31,7 @@ using namespace mozilla::image;
 //
 
 static int8_t
-ParseStyleValue(nsAtom* aAttribute, const nsAString& aAttributeValue)
+ParseStyleValue(nsIAtom* aAttribute, const nsAString& aAttributeValue)
 {
   if (aAttribute == nsGkAtoms::rowalign_) {
     if (aAttributeValue.EqualsLiteral("top"))
@@ -66,7 +66,7 @@ ParseStyleValue(nsAtom* aAttribute, const nsAString& aAttributeValue)
 
 static nsTArray<int8_t>*
 ExtractStyleValues(const nsAString& aString,
-                   nsAtom* aAttribute,
+                   nsIAtom* aAttribute,
                    bool aAllowMultiValues)
 {
   nsTArray<int8_t>* styleArray = nullptr;
@@ -141,7 +141,7 @@ NS_DECLARE_FRAME_PROPERTY_DELETABLE(ColumnAlignProperty, nsTArray<int8_t>)
 NS_DECLARE_FRAME_PROPERTY_DELETABLE(ColumnLinesProperty, nsTArray<int8_t>)
 
 static const FramePropertyDescriptor<nsTArray<int8_t>>*
-AttributeToProperty(nsAtom* aAttribute)
+AttributeToProperty(nsIAtom* aAttribute)
 {
   if (aAttribute == nsGkAtoms::rowalign_)
     return RowAlignProperty();
@@ -183,8 +183,10 @@ static void
 ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
                    nsStyleBorder& aStyleBorder)
 {
-  uint32_t rowIndex = aFrame->RowIndex();
-  uint32_t columnIndex = aFrame->ColIndex();
+  int32_t rowIndex;
+  int32_t columnIndex;
+  aFrame->GetRowIndex(rowIndex);
+  aFrame->GetColIndex(columnIndex);
 
   nscoord borderWidth =
     nsPresContext::GetBorderWidthForKeyword(NS_STYLE_BORDER_WIDTH_THIN);
@@ -199,7 +201,7 @@ ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
   if (rowIndex > 0 && rowLinesList) {
     // If the row number is greater than the number of provided rowline
     // values, we simply repeat the last value.
-    uint32_t listLength = rowLinesList->Length();
+    int32_t listLength = rowLinesList->Length();
     if (rowIndex < listLength) {
       aStyleBorder.SetBorderStyle(eSideTop,
                     rowLinesList->ElementAt(rowIndex - 1));
@@ -214,7 +216,7 @@ ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
   if (columnIndex > 0 && columnLinesList) {
     // If the column number is greater than the number of provided columline
     // values, we simply repeat the last value.
-    uint32_t listLength = columnLinesList->Length();
+    int32_t listLength = columnLinesList->Length();
     if (columnIndex < listLength) {
       aStyleBorder.SetBorderStyle(eSideLeft,
                     columnLinesList->ElementAt(columnIndex - 1));
@@ -278,7 +280,7 @@ public:
 
   void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                  const nsDisplayItemGeometry* aGeometry,
-                                 nsRegion* aInvalidRegion) const override
+                                 nsRegion* aInvalidRegion) override
   {
     auto geometry =
       static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
@@ -292,8 +294,7 @@ public:
     nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
   }
 
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
     *aSnap = true;
     nsStyleBorder styleBorder = *mFrame->StyleBorder();
@@ -342,7 +343,7 @@ public:
 
 static void
 ParseFrameAttribute(nsIFrame* aFrame,
-                    nsAtom* aAttribute,
+                    nsIAtom* aAttribute,
                     bool aAllowMultiValues)
 {
   nsAutoString attrValue;
@@ -431,7 +432,7 @@ static const float kDefaultFramespacingArg1Ex = 0.5f;
 
 static void
 ExtractSpacingValues(const nsAString&   aString,
-                     nsAtom*           aAttribute,
+                     nsIAtom*           aAttribute,
                      nsTArray<nscoord>& aSpacingArray,
                      nsIFrame*          aFrame,
                      nscoord            aDefaultValue0,
@@ -486,7 +487,7 @@ ExtractSpacingValues(const nsAString&   aString,
 }
 
 static void
-ParseSpacingAttribute(nsMathMLmtableFrame* aFrame, nsAtom* aAttribute)
+ParseSpacingAttribute(nsMathMLmtableFrame* aFrame, nsIAtom* aAttribute)
 {
   NS_ASSERTION(aAttribute == nsGkAtoms::rowspacing_ ||
                aAttribute == nsGkAtoms::columnspacing_ ||
@@ -705,7 +706,7 @@ nsMathMLmtableWrapperFrame::~nsMathMLmtableWrapperFrame()
 
 nsresult
 nsMathMLmtableWrapperFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                             nsAtom* aAttribute,
+                                             nsIAtom* aAttribute,
                                              int32_t  aModType)
 {
   // Attributes specific to <mtable>:
@@ -822,8 +823,6 @@ nsMathMLmtableWrapperFrame::Reflow(nsPresContext*           aPresContext,
                                    const ReflowInput& aReflowInput,
                                    nsReflowStatus&          aStatus)
 {
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   nsAutoString value;
   // we want to return a table that is anchored according to the align attribute
 
@@ -1104,7 +1103,7 @@ nsMathMLmtrFrame::~nsMathMLmtrFrame()
 
 nsresult
 nsMathMLmtrFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                   nsAtom* aAttribute,
+                                   nsIAtom* aAttribute,
                                    int32_t  aModType)
 {
   // Attributes specific to <mtr>:
@@ -1164,7 +1163,7 @@ nsMathMLmtdFrame::Init(nsIContent*       aContent,
 
 nsresult
 nsMathMLmtdFrame::AttributeChanged(int32_t  aNameSpaceID,
-                                   nsAtom* aAttribute,
+                                   nsIAtom* aAttribute,
                                    int32_t  aModType)
 {
   // Attributes specific to <mtd>:
@@ -1204,11 +1203,12 @@ nsMathMLmtdFrame::GetVerticalAlign() const
   nsTArray<int8_t>* alignmentList = FindCellProperty(this, RowAlignProperty());
 
   if (alignmentList) {
-    uint32_t rowIndex = RowIndex();
+    int32_t rowIndex;
+    GetRowIndex(rowIndex);
 
     // If the row number is greater than the number of provided rowalign values,
     // we simply repeat the last value.
-    if (rowIndex < alignmentList->Length())
+    if (rowIndex < (int32_t)alignmentList->Length())
       alignment = alignmentList->ElementAt(rowIndex);
     else
       alignment = alignmentList->ElementAt(alignmentList->Length() - 1);
@@ -1295,11 +1295,12 @@ nsStyleText* nsMathMLmtdInnerFrame::StyleTextForLineLayout()
 
   if (alignmentList) {
     nsMathMLmtdFrame* cellFrame = (nsMathMLmtdFrame*)GetParent();
-    uint32_t columnIndex = cellFrame->ColIndex();
+    int32_t columnIndex;
+    cellFrame->GetColIndex(columnIndex);
 
     // If the column number is greater than the number of provided columalign
     // values, we simply repeat the last value.
-    if (columnIndex < alignmentList->Length())
+    if (columnIndex < (int32_t)alignmentList->Length())
       alignment = alignmentList->ElementAt(columnIndex);
     else
       alignment = alignmentList->ElementAt(alignmentList->Length() - 1);

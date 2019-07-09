@@ -10,7 +10,7 @@ const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const { SideMenuWidget } = require("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
 const promise = require("promise");
 const Services = require("Services");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
 const { CanvasFront } = require("devtools/shared/fronts/canvas");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -19,10 +19,6 @@ const { LocalizationHelper } = require("devtools/shared/l10n");
 const { PluralForm } = require("devtools/shared/plural-form");
 const { Heritage, WidgetMethods, setNamedTimeout, clearNamedTimeout,
         setConditionalTimeout } = require("devtools/client/shared/widgets/view-helpers");
-
-// Use privileged promise in panel documents to prevent having them to freeze
-// during toolbox destruction. See bug 1402779.
-const Promise = require("Promise");
 
 const CANVAS_ACTOR_RECORDING_ATTEMPT = flags.testing ? 500 : 5000;
 

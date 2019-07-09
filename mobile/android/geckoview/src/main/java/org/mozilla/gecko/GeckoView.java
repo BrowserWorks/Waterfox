@@ -20,7 +20,6 @@ import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
-import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -28,7 +27,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -44,7 +42,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputMethodManager;
 
 public class GeckoView extends LayerView {
 
@@ -131,10 +128,7 @@ public class GeckoView extends LayerView {
     private final GeckoViewHandler<NavigationListener> mNavigationHandler =
         new GeckoViewHandler<NavigationListener>(
             "GeckoViewNavigation", this,
-            new String[]{
-                "GeckoView:LocationChange",
-                "GeckoView:OnLoadUri"
-            }
+            new String[]{ "GeckoView:LocationChange" }
         ) {
             @Override
             public void handleMessage(final NavigationListener listener,
@@ -148,15 +142,8 @@ public class GeckoView extends LayerView {
                                          message.getBoolean("canGoBack"));
                     listener.onCanGoForward(GeckoView.this,
                                             message.getBoolean("canGoForward"));
-                } else if ("GeckoView:OnLoadUri".equals(event)) {
-                    final String uri = message.getString("uri");
-                    final NavigationListener.TargetWindow where =
-                        NavigationListener.TargetWindow.forGeckoValue(
-                            message.getInt("where"));
-                    final boolean result =
-                        listener.onLoadUri(GeckoView.this, uri, where);
-                    callback.sendSuccess(result);
                 }
+
             }
         };
 
@@ -311,7 +298,6 @@ public class GeckoView extends LayerView {
 
     private PromptDelegate mPromptDelegate;
     private InputConnectionListener mInputConnectionListener;
-    private boolean mIsResettingFocus;
 
     private GeckoViewSettings mSettings;
 
@@ -466,7 +452,7 @@ public class GeckoView extends LayerView {
      * @param context Activity or Application Context for starting GeckoView.
      */
     public static void preload(final Context context) {
-        preload(context, /* geckoArgs */ null, /* multiprocess */ false);
+        preload(context, /* geckoArgs */ null);
     }
 
     /**
@@ -474,26 +460,26 @@ public class GeckoView extends LayerView {
      * if Gecko is not already running.
      *
      * @param context Activity or Application Context for starting GeckoView.
-     * @param geckoArgs Arguments to be passed to Gecko, if Gecko is not already running.
-     * @param multiprocess True if child process in multiprocess mode should be preloaded.
+     * @param geckoArgs Arguments to be passed to Gecko, if Gecko is not already running
      */
-    public static void preload(final Context context, final String geckoArgs,
-                               final boolean multiprocess) {
+    public static void preload(final Context context, final String geckoArgs) {
         final Context appContext = context.getApplicationContext();
         if (GeckoAppShell.getApplicationContext() == null) {
             GeckoAppShell.setApplicationContext(appContext);
         }
 
-        final int flags = multiprocess ? GeckoThread.FLAG_PRELOAD_CHILD : 0;
-        if (GeckoThread.initMainProcess(/* profile */ null, geckoArgs, flags)) {
+        if (GeckoThread.initMainProcess(GeckoProfile.initFromArgs(appContext, geckoArgs),
+                                        geckoArgs,
+                                        /* debugging */ false)) {
             GeckoThread.launch();
         }
     }
 
     private void init(final Context context, final GeckoViewSettings settings) {
-        final boolean multiprocess = settings != null &&
-                                     settings.getBoolean(GeckoViewSettings.USE_MULTIPROCESS);
-        preload(context, /* geckoArgs */ null, multiprocess);
+        preload(context);
+
+        // Perform common initialization for Fennec/GeckoView.
+        GeckoAppShell.setLayerView(this);
 
         initializeView();
         mListener.registerListeners();
@@ -503,9 +489,6 @@ public class GeckoView extends LayerView {
         } else {
             mSettings = settings;
         }
-        mSettings.setString(GeckoViewSettings.DEBUGGER_SOCKET_DIR,
-                            context.getApplicationInfo().dataDir);
-
     }
 
     @Override
@@ -693,59 +676,8 @@ public class GeckoView extends LayerView {
         mEventDispatcher.dispatch("GeckoView:GoForward", null);
     }
 
-    /**
-    * Set this GeckoView as active or inactive. Setting a GeckoView to inactive will
-    * significantly reduce its memory footprint, but should only be done if the
-    * GeckoView is not currently visible.
-    * @param active A boolean determining whether the GeckoView is active
-    */
-    public void setActive(boolean active) {
-        final GeckoBundle msg = new GeckoBundle();
-        msg.putBoolean("active", active);
-        mEventDispatcher.dispatch("GeckoView:SetActive", msg);
-    }
-
     public GeckoViewSettings getSettings() {
         return mSettings;
-    }
-
-    @Override
-    public void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
-        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
-
-        if (gainFocus && !mIsResettingFocus) {
-            ThreadUtils.postToUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (!isFocused()) {
-                        return;
-                    }
-
-                    final InputMethodManager imm = InputMethods.getInputMethodManager(getContext());
-                    // Bug 1404111:
-                    // Through View#onFocusChanged, the InputMethodManager queues up a checkFocus
-                    // call for the next spin of the message loop, so by posting this Runnable after
-                    // super#onFocusChanged, the IMM should have completed its focus change handling
-                    // at this point and we should be the active view for input handling.
-
-                    // If however onViewDetachedFromWindow for the previously active view gets
-                    // called *after* onFocusChanged, but *before* the focus change has been fully
-                    // processed by the IMM with the help of checkFocus, the IMM will lose track of
-                    // the currently active view, which means that we can't interact with the IME.
-                    if (!imm.isActive(GeckoView.this)) {
-                        // If that happens, we bring the IMM's internal state back into sync by
-                        // clearing and resetting our focus.
-                        mIsResettingFocus = true;
-                        clearFocus();
-                        // After calling clearFocus we might regain focus automatically, but we
-                        // explicitly request it again in case this doesn't happen.
-                        // If we've already got the focus back, this will then be a no-op anyway.
-                        requestFocus();
-                        mIsResettingFocus = false;
-                    }
-                }
-            });
-        }
     }
 
     @Override
@@ -809,8 +741,7 @@ public class GeckoView extends LayerView {
                 mInputConnectionListener.onKeyMultiple(keyCode, repeatCount, event);
     }
 
-    @Override
-    public boolean isIMEEnabled() {
+    /* package */ boolean isIMEEnabled() {
         return mInputConnectionListener != null &&
                 mInputConnectionListener.isIMEEnabled();
     }
@@ -1294,13 +1225,6 @@ public class GeckoView extends LayerView {
          * Class representing security information for a site.
          */
         public class SecurityInformation {
-            public static final int SECURITY_MODE_UNKNOWN = 0;
-            public static final int SECURITY_MODE_IDENTIFIED = 1;
-            public static final int SECURITY_MODE_VERIFIED = 2;
-
-            public static final int CONTENT_UNKNOWN = 0;
-            public static final int CONTENT_BLOCKED = 1;
-            public static final int CONTENT_LOADED = 2;
             /**
              * Indicates whether or not the site is secure.
              */
@@ -1334,35 +1258,35 @@ public class GeckoView extends LayerView {
              */
             public final String issuerOrganization;
             /**
-             * Indicates the security level of the site; possible values are SECURITY_MODE_UNKNOWN,
-             * SECURITY_MODE_IDENTIFIED, and SECURITY_MODE_VERIFIED. SECURITY_MODE_IDENTIFIED
-             * indicates domain validation only, while SECURITY_MODE_VERIFIED indicates extended validation.
+             * Indicates the security level of the site; possible values are "unknown",
+             * "identified", and "verified". "identified" indicates domain validation only,
+             * while "verified" indicates extended validation.
              */
-            public final int securityMode;
+            public final String securityMode;
             /**
              * Indicates the presence of passive mixed content; possible values are
-             * CONTENT_UNKNOWN, CONTENT_BLOCKED, and CONTENT_LOADED.
+             * "unknown", "blocked", and "loaded".
              */
-            public final int mixedModePassive;
+            public final String mixedModePassive;
             /**
              * Indicates the presence of active mixed content; possible values are
-             * CONTENT_UNKNOWN, CONTENT_BLOCKED, and CONTENT_LOADED.
+             * "unknown", "blocked", and "loaded".
              */
-            public final int mixedModeActive;
+            public final String mixedModeActive;
             /**
              * Indicates the status of tracking protection; possible values are
-             * CONTENT_UNKNOWN, CONTENT_BLOCKED, and CONTENT_LOADED.
+             * "unknown", "blocked", and "loaded".
              */
-            public final int trackingMode;
+            public final String trackingMode;
 
             /* package */ SecurityInformation(GeckoBundle identityData) {
                 final GeckoBundle mode = identityData.getBundle("mode");
 
-                mixedModePassive = mode.getInt("mixed_display");
-                mixedModeActive = mode.getInt("mixed_active");
-                trackingMode = mode.getInt("tracking");
+                mixedModePassive = mode.getString("mixed_display");
+                mixedModeActive = mode.getString("mixed_active");
+                trackingMode = mode.getString("tracking");
 
-                securityMode = mode.getInt("identity");
+                securityMode = mode.getString("identity");
 
                 isSecure = identityData.getBoolean("secure");
                 isException = identityData.getBoolean("securityException");
@@ -1455,61 +1379,6 @@ public class GeckoView extends LayerView {
         * @param canGoForward The new value for the ability.
         */
         void onCanGoForward(GeckoView view, boolean canGoForward);
-
-        enum TargetWindow {
-            DEFAULT(0),
-            CURRENT(1),
-            NEW(2);
-
-            private static final TargetWindow[] sValues = TargetWindow.values();
-            private int mValue;
-
-            private TargetWindow(int value) {
-                mValue = value;
-            }
-
-            public static TargetWindow forValue(int value) {
-                return sValues[value];
-            }
-
-            public static TargetWindow forGeckoValue(int value) {
-                // DEFAULT(0),
-                // CURRENT(1),
-                // NEW(2),
-                // NEWTAB(3),
-                // SWITCHTAB(4);
-                final TargetWindow[] sMap = {
-                    DEFAULT,
-                    CURRENT,
-                    NEW,
-                    NEW,
-                    NEW
-                };
-                return sMap[value];
-            }
-        }
-
-        enum LoadUriResult {
-            HANDLED(0),
-            LOAD_IN_FRAME(1);
-
-            private int mValue;
-
-            private LoadUriResult(int value) {
-                mValue = value;
-            }
-        }
-
-        /**
-        * A request to open an URI.
-        * @param view The GeckoView that initiated the callback.
-        * @param uri The URI to be loaded.
-        * @param where The target window.
-        *
-        * @return True if the URI loading has been handled, false if Gecko
-        *         should handle the loading.
-        */
-        boolean onLoadUri(GeckoView view, String uri, TargetWindow where);
     }
 
     /**
@@ -1708,7 +1577,7 @@ public class GeckoView extends LayerView {
              * Called by the prompt implementation when the multiple-choice list is
              * dismissed by the user.
              *
-             * @param ids IDs of the selected items.
+             * @param id IDs of the selected items.
              */
             void confirm(String[] ids);
 
@@ -1725,7 +1594,7 @@ public class GeckoView extends LayerView {
              * Called by the prompt implementation when the multiple-choice list is
              * dismissed by the user.
              *
-             * @param items Bundle array representing the selected items; must be original
+             * @param item Bundle array representing the selected items; must be original
              *             GeckoBundle objects that were passed to the implementation.
              */
             void confirm(GeckoBundle[] items);

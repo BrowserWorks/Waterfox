@@ -18,11 +18,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(Object.prototype.__lookupGetter__, "length", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: 1
-});
+assert.sameValue(Object.prototype.__lookupGetter__.length, 1);
+
+verifyNotEnumerable(Object.prototype.__lookupGetter__, 'length');
+verifyNotWritable(Object.prototype.__lookupGetter__, 'length');
+verifyConfigurable(Object.prototype.__lookupGetter__, 'length');
 
 reportCompare(0, 0);

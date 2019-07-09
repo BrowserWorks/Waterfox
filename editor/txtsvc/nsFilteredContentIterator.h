@@ -12,7 +12,7 @@
 #include "nsISupportsImpl.h"
 #include "nscore.h"
 
-class nsAtom;
+class nsIAtom;
 class nsIDOMNode;
 class nsIDOMRange;
 class nsINode;
@@ -32,10 +32,6 @@ public:
   /* nsIContentIterator */
   virtual nsresult Init(nsINode* aRoot) override;
   virtual nsresult Init(nsIDOMRange* aRange) override;
-  virtual nsresult Init(nsINode* aStartContainer, uint32_t aStartOffset,
-                        nsINode* aEndContainer, uint32_t aEndOffset) override;
-  virtual nsresult Init(const mozilla::RawRangeBoundary& aStart,
-                        const mozilla::RawRangeBoundary& aEnd) override;
   virtual void First() override;
   virtual void Last() override;
   virtual void Next() override;
@@ -53,11 +49,6 @@ protected:
 
   virtual ~nsFilteredContentIterator();
 
-  /**
-   * Callers must guarantee that mRange isn't nullptr and it's positioned.
-   */
-  nsresult InitWithRange();
-
   // enum to give us the direction
   typedef enum {eDirNotSet, eForward, eBackward} eDirectionType;
   nsresult AdvanceNode(nsIDOMNode* aNode, nsIDOMNode*& aNewNode, eDirectionType aDir);
@@ -68,11 +59,11 @@ protected:
   nsCOMPtr<nsIContentIterator> mIterator;
   nsCOMPtr<nsIContentIterator> mPreIterator;
 
-  RefPtr<nsAtom> mBlockQuoteAtom;
-  RefPtr<nsAtom> mScriptAtom;
-  RefPtr<nsAtom> mTextAreaAtom;
-  RefPtr<nsAtom> mSelectAreaAtom;
-  RefPtr<nsAtom> mMapAtom;
+  nsCOMPtr<nsIAtom> mBlockQuoteAtom;
+  nsCOMPtr<nsIAtom> mScriptAtom;
+  nsCOMPtr<nsIAtom> mTextAreaAtom;
+  nsCOMPtr<nsIAtom> mSelectAreaAtom;
+  nsCOMPtr<nsIAtom> mMapAtom;
 
   nsCOMPtr<nsITextServicesFilter> mFilter;
   RefPtr<nsRange>               mRange;

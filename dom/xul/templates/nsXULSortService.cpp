@@ -1,7 +1,20 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * This Original Code has been modified by IBM Corporation.
+ * Modifications made by IBM described herein are
+ * Copyright (c) International Business Machines
+ * Corporation, 2000
+ *
+ * Modifications to Mozilla code or documentation
+ * identified per MPL Section 3.3
+ *
+ * Date         Modified by     Description of modification
+ * 03/27/2000   IBM Corp.       Added PR_CALLBACK for Optlink
+ *                               use in OS2
+ */
 
 /*
   This file provides the implementation for the sort service manager.
@@ -44,7 +57,7 @@ XULSortServiceImpl::SetSortHints(nsIContent *aNode, nsSortState* aSortState)
 
   // for trees, also set the sort info on the currently sorted column
   if (aNode->NodeInfo()->Equals(nsGkAtoms::tree, kNameSpaceID_XUL)) {
-    if (aSortState->sortKeys.Length() >= 1) {
+    if (aSortState->sortKeys.Count() >= 1) {
       nsAutoString sortkey;
       aSortState->sortKeys[0]->ToString(sortkey);
       SetSortColumnHints(aNode, sortkey, direction);
@@ -184,7 +197,7 @@ testSortCallback(const void *data1, const void *data2, void *privateData)
                                          nullptr, sortState->sortHints, &sortOrder);
   }
   else {
-    int32_t length = sortState->sortKeys.Length();
+    int32_t length = sortState->sortKeys.Count();
     for (int32_t t = 0; t < length; t++) {
       // for templates, use the query processor to do sorting
       if (sortState->processor) {
@@ -293,7 +306,7 @@ XULSortServiceImpl::SortContainer(nsIContent *aContainer, nsSortState* aSortStat
            grandchild;
            grandchild = grandchild->GetNextSibling()) {
         mozilla::dom::NodeInfo *ni = grandchild->NodeInfo();
-        nsAtom *localName = ni->NameAtom();
+        nsIAtom *localName = ni->NameAtom();
         if (ni->NamespaceID() == kNameSpaceID_XUL &&
             (localName == nsGkAtoms::treechildren ||
              localName == nsGkAtoms::menupopup)) {
@@ -347,14 +360,14 @@ XULSortServiceImpl::InitializeSortState(nsIContent* aRootElement,
     nsAutoString sortResource, sortResource2;
     aRootElement->GetAttr(kNameSpaceID_None, nsGkAtoms::sortResource, sortResource);
     if (!sortResource.IsEmpty()) {
-      RefPtr<nsAtom> sortkeyatom = NS_Atomize(sortResource);
-      aSortState->sortKeys.AppendElement(sortkeyatom);
+      nsCOMPtr<nsIAtom> sortkeyatom = NS_Atomize(sortResource);
+      aSortState->sortKeys.AppendObject(sortkeyatom);
       sort.Append(sortResource);
 
       aRootElement->GetAttr(kNameSpaceID_None, nsGkAtoms::sortResource2, sortResource2);
       if (!sortResource2.IsEmpty()) {
-        RefPtr<nsAtom> sortkeyatom2 = NS_Atomize(sortResource2);
-        aSortState->sortKeys.AppendElement(sortkeyatom2);
+        nsCOMPtr<nsIAtom> sortkeyatom2 = NS_Atomize(sortResource2);
+        aSortState->sortKeys.AppendObject(sortkeyatom2);
         sort.Append(' ');
         sort.Append(sortResource2);
       }
@@ -363,9 +376,9 @@ XULSortServiceImpl::InitializeSortState(nsIContent* aRootElement,
   else {
     nsWhitespaceTokenizer tokenizer(sort);
     while (tokenizer.hasMoreTokens()) {
-      RefPtr<nsAtom> keyatom = NS_Atomize(tokenizer.nextToken());
+      nsCOMPtr<nsIAtom> keyatom = NS_Atomize(tokenizer.nextToken());
       NS_ENSURE_TRUE(keyatom, NS_ERROR_OUT_OF_MEMORY);
-      aSortState->sortKeys.AppendElement(keyatom);
+      aSortState->sortKeys.AppendObject(keyatom);
     }
   }
 

@@ -11,7 +11,7 @@ async function calcMaximumAvailSize(aChromeWidth, aChromeHeight) {
   let chromeUIWidth;
   let chromeUIHeight;
   let testPath = "http://example.net/browser/browser/" +
-                 "components/resistfingerprinting/test/browser/";
+                 "components/resistfingerprinting/test/browser/"
 
   // If the chrome UI dimensions is not given, we will calculate it.
   if (!aChromeWidth || !aChromeHeight) {
@@ -68,7 +68,7 @@ async function calcMaximumAvailSize(aChromeWidth, aChromeHeight) {
 
 async function calcPopUpWindowChromeUISize() {
   let testPath = "http://example.net/browser/browser/" +
-                 "components/resistFingerprinting/test/browser/";
+                 "components/resistFingerprinting/test/browser/"
   // open a popup window to acquire the chrome UI size of it.
   let tab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser, testPath + "file_dummy.html");
@@ -142,7 +142,7 @@ async function testWindowOpen(aBrowser, aSettingWidth, aSettingHeight,
           is(win.innerHeight, input.targetHeight,
             "The window.innerHeight has a correct rounded value");
 
-          win.close();
+          win.close()
           resolve();
         };
       });
@@ -227,89 +227,4 @@ async function testWindowSizeSetting(aBrowser, aSettingWidth, aSettingHeight,
       win.close();
     }
   );
-}
-
-class RoundedWindowTest {
-  // testOuter is optional.  run() can be invoked with only 1 parameter.
-  static run(testCases, testOuter) {
-    // "this" is the calling class itself.
-    // e.g. when invoked by RoundedWindowTest.run(), "this" is "class RoundedWindowTest".
-    let test = new this(testCases);
-    add_task(async () => test.setup());
-    add_task(async () => {
-      if (testOuter == undefined) {
-        // If testOuter is not given, do tests for both inner and outer.
-        await test.doTests(false);
-        await test.doTests(true);
-      } else {
-        await test.doTests(testOuter);
-      }
-    });
-  }
-
-  get TEST_PATH() {
-    return "http://example.net/browser/browser/components/resistfingerprinting/test/browser/";
-  }
-
-  constructor(testCases) {
-    this.testCases = testCases;
-  }
-
-  async setup() {
-    await SpecialPowers.pushPrefEnv({"set":
-      [["privacy.resistFingerprinting", true]]
-    });
-
-    // Calculate the popup window's chrome UI size for tests of outerWidth/Height.
-    let popUpChromeUISize = await calcPopUpWindowChromeUISize();
-
-    this.popupChromeUIWidth = popUpChromeUISize.chromeWidth;
-    this.popupChromeUIHeight = popUpChromeUISize.chromeHeight;
-
-    // Calculate the maximum available size.
-    let maxAvailSize = await calcMaximumAvailSize(this.popupChromeUIWidth,
-                                                  this.popupChromeUIHeight);
-
-    this.maxAvailWidth = maxAvailSize.maxAvailWidth;
-    this.maxAvailHeight = maxAvailSize.maxAvailHeight;
-  }
-
-  async doTests(testOuter) {
-    // Open a tab to test.
-    this.tab = await BrowserTestUtils.openNewForegroundTab(
-      gBrowser, this.TEST_PATH + "file_dummy.html");
-
-    for (let test of this.testCases) {
-      await this.doTest(test, testOuter);
-    }
-
-    await BrowserTestUtils.removeTab(this.tab);
-  }
-
-  async doTest() {
-    throw new Error("RoundedWindowTest.doTest must be overridden.");
-  }
-}
-
-class WindowSettingTest extends RoundedWindowTest {
-  async doTest(test, testOuter) {
-    await testWindowSizeSetting(this.tab.linkedBrowser,
-                                test.settingWidth, test.settingHeight,
-                                test.targetWidth, test.targetHeight,
-                                test.initWidth, test.initHeight,
-                                testOuter,
-                                this.maxAvailWidth, this.maxAvailHeight,
-                                this.popupChromeUIWidth, this.popupChromeUIHeight);
-  }
-}
-
-class OpenTest extends RoundedWindowTest {
-  async doTest(test, testOuter) {
-    await testWindowOpen(this.tab.linkedBrowser,
-                         test.settingWidth, test.settingHeight,
-                         test.targetWidth, test.targetHeight,
-                         testOuter,
-                         this.maxAvailWidth, this.maxAvailHeight,
-                         this.popupChromeUIWidth, this.popupChromeUIHeight);
-  }
 }

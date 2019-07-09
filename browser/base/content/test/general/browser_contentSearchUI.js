@@ -300,13 +300,13 @@ add_task(async function mouse() {
   checkState(state, "x", ["xfoo", "xbar"], 1);
 
   state = await msg("mousemove", 2);
-  checkState(state, "x", ["xfoo", "xbar"], 2, 0);
+  checkState(state, "x", ["xfoo", "xbar"], 1, 0);
 
   state = await msg("mousemove", 3);
-  checkState(state, "x", ["xfoo", "xbar"], 3, 1);
+  checkState(state, "x", ["xfoo", "xbar"], 1, 1);
 
   state = await msg("mousemove", -1);
-  checkState(state, "x", ["xfoo", "xbar"], -1);
+  checkState(state, "x", ["xfoo", "xbar"], 1);
 
   await msg("reset");
   await setUp();
@@ -318,10 +318,10 @@ add_task(async function mouse() {
   checkState(state, "x", ["xfoo", "xbar"], 0);
 
   state = await msg("mousemove", 2);
-  checkState(state, "x", ["xfoo", "xbar"], 2, 0);
+  checkState(state, "x", ["xfoo", "xbar"], 0, 0);
 
   state = await msg("mousemove", -1);
-  checkState(state, "x", ["xfoo", "xbar"], -1);
+  checkState(state, "x", ["xfoo", "xbar"], 0);
 
   await msg("reset");
 });
@@ -396,7 +396,7 @@ add_task(async function cycleEngines() {
         resolve();
       }, "browser-search-engine-modified");
     });
-  };
+  }
 
   let p = promiseEngineChange(TEST_ENGINE_PREFIX + " " + TEST_ENGINE_2_BASENAME);
   await msg("key", { key: "VK_DOWN", modifiers: { accelKey: true }});
@@ -444,7 +444,7 @@ add_task(async function search() {
   eventData.selection = {
     index: 1,
     kind: "key",
-  };
+  }
   SimpleTest.isDeeply(eventData, mesg, "Search event data");
 
   await promiseTab();
@@ -510,7 +510,24 @@ add_task(async function search() {
   await setUp();
 
   // Test selecting a suggestion, then clicking a one-off without deselecting the
-  // suggestion, using the keyboard.
+  // suggestion.
+  await msg("key", { key: "x", waitForSuggestions: true });
+  p = msg("waitForSearch");
+  await msg("mousemove", 1);
+  await msg("mousemove", 3);
+  await msg("click", { eltIdx: 3, modifiers });
+  mesg = await p;
+  eventData.searchString = "xfoo"
+  eventData.selection = {
+    index: 1,
+    kind: "mouse",
+  };
+  SimpleTest.isDeeply(eventData, mesg, "Search event data");
+
+  await promiseTab();
+  await setUp();
+
+  // Same as above, but with the keyboard.
   delete modifiers.button;
   await msg("key", { key: "x", waitForSuggestions: true });
   p = msg("waitForSearch");
@@ -519,7 +536,6 @@ add_task(async function search() {
   await msg("key", "VK_TAB");
   await msg("key", { key: "VK_RETURN", modifiers });
   mesg = await p;
-  eventData.searchString = "xfoo";
   eventData.selection = {
     index: 1,
     kind: "key",
@@ -540,7 +556,7 @@ add_task(async function search() {
   p = msg("waitForSearch");
   await msg("key", { key: "VK_RETURN", modifiers });
   mesg = await p;
-  eventData.searchString = "x";
+  eventData.searchString = "x"
   eventData.originalEvent = modifiers;
   eventData.engineName = TEST_ENGINE_PREFIX + " " + TEST_ENGINE_BASENAME;
   delete eventData.selection;

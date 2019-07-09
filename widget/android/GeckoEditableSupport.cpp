@@ -12,7 +12,6 @@
 #include "nsIContent.h"
 #include "nsISelection.h"
 
-#include "mozilla/EventStateManager.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEventDispatcherListener.h"
@@ -1153,12 +1152,29 @@ GeckoEditableSupport::SetInputContext(const InputContext& aContext,
             aContext.mIMEState.mEnabled, aContext.mIMEState.mOpen,
             aAction.mCause, aAction.mFocusChange);
 
-    mInputContext = aContext;
-    const bool isUserAction = EventStateManager::IsHandlingUserInput();
+    // Ensure that opening the virtual keyboard is allowed for this specific
+    // InputContext depending on the content.ime.strict.policy pref
+    if (aContext.mIMEState.mEnabled != IMEState::DISABLED &&
+        aContext.mIMEState.mEnabled != IMEState::PLUGIN &&
+        Preferences::GetBool("content.ime.strict_policy", false) &&
+        !aAction.ContentGotFocusByTrustedCause() &&
+        !aAction.UserMightRequestOpenVKB()) {
+        return;
+    }
 
-    if (mInputContext.mIMEState.mEnabled == IMEState::ENABLED &&
-        isUserAction &&
-        aAction.mFocusChange == InputContextAction::FOCUS_NOT_CHANGED) {
+    IMEState::Enabled enabled = aContext.mIMEState.mEnabled;
+
+    // Only show the virtual keyboard for plugins if mOpen is set appropriately.
+    // This avoids showing it whenever a plugin is focused. Bug 747492
+    if (aContext.mIMEState.mEnabled == IMEState::PLUGIN &&
+        aContext.mIMEState.mOpen != IMEState::OPEN) {
+        enabled = IMEState::DISABLED;
+    }
+
+    mInputContext = aContext;
+    mInputContext.mIMEState.mEnabled = enabled;
+
+    if (enabled == IMEState::ENABLED && aAction.UserMightRequestOpenVKB()) {
         // Don't reset keyboard when we should simply open the vkb
         mEditable->NotifyIME(GeckoEditableListener::NOTIFY_IME_OPEN_VKB);
         return;
@@ -1170,7 +1186,8 @@ GeckoEditableSupport::SetInputContext(const InputContext& aContext,
     mIMEUpdatingContext = true;
 
     RefPtr<GeckoEditableSupport> self(this);
-    nsAppShell::PostEvent([this, self, isUserAction] {
+
+    nsAppShell::PostEvent([this, self] {
         nsCOMPtr<nsIWidget> widget = GetWidget();
 
         mIMEUpdatingContext = false;
@@ -1180,9 +1197,7 @@ GeckoEditableSupport::SetInputContext(const InputContext& aContext,
         mEditable->NotifyIMEContext(mInputContext.mIMEState.mEnabled,
                                     mInputContext.mHTMLInputType,
                                     mInputContext.mHTMLInputInputmode,
-                                    mInputContext.mActionHint,
-                                    mInputContext.mInPrivateBrowsing,
-                                    isUserAction);
+                                    mInputContext.mActionHint);
     });
 }
 

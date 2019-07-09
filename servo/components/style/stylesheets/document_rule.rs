@@ -6,15 +6,13 @@
 //! initially in CSS Conditional Rules Module Level 3, @document has been postponed to the level 4.
 //! We implement the prefixed `@-moz-document`.
 
-use cssparser::{Parser, Token, SourceLocation};
-#[cfg(feature = "gecko")]
-use malloc_size_of::{MallocSizeOfOps, MallocUnconditionalShallowSizeOf};
+use cssparser::{Parser, Token, SourceLocation, BasicParseError};
 use media_queries::Device;
 use parser::{Parse, ParserContext};
 use servo_arc::Arc;
 use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
+use style_traits::{ToCss, ParseError, StyleParseError};
 use stylesheets::CssRules;
 use values::specified::url::SpecifiedUrl;
 
@@ -27,16 +25,6 @@ pub struct DocumentRule {
     pub rules: Arc<Locked<CssRules>>,
     /// The line and column of the rule's source code.
     pub source_location: SourceLocation,
-}
-
-impl DocumentRule {
-    /// Measure heap usage.
-    #[cfg(feature = "gecko")]
-    pub fn size_of(&self, guard: &SharedRwLockReadGuard, ops: &mut MallocSizeOfOps) -> usize {
-        // Measurement of other fields may be added later.
-        self.rules.unconditional_shallow_size_of(ops) +
-            self.rules.read_with(guard).size_of(guard, ops)
-    }
 }
 
 impl ToCssWithGuard for DocumentRule {
@@ -100,11 +88,10 @@ macro_rules! parse_quoted_or_unquoted_string {
         $input.parse_nested_block(|input| {
             let start = input.position();
             input.parse_entirely(|input| {
-                let location = input.current_source_location();
                 match input.next() {
                     Ok(&Token::QuotedString(ref value)) =>
                         Ok($url_matching_function(value.as_ref().to_owned())),
-                    Ok(t) => Err(location.new_unexpected_token_error(t.clone())),
+                    Ok(t) => Err(BasicParseError::UnexpectedToken(t.clone()).into()),
                     Err(e) => Err(e.into()),
                 }
             }).or_else(|_: ParseError| {
@@ -130,7 +117,7 @@ impl UrlMatchingFunction {
         } else if let Ok(url) = input.try(|input| SpecifiedUrl::parse(context, input)) {
             Ok(UrlMatchingFunction::Url(url))
         } else {
-            Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            Err(StyleParseError::UnspecifiedError.into())
         }
     }
 
@@ -139,7 +126,7 @@ impl UrlMatchingFunction {
     pub fn evaluate(&self, device: &Device) -> bool {
         use gecko_bindings::bindings::Gecko_DocumentRule_UseForPresentation;
         use gecko_bindings::structs::URLMatchingFunction as GeckoUrlMatchingFunction;
-        use nsstring::nsCStr;
+        use nsstring::nsCString;
 
         let func = match *self {
             UrlMatchingFunction::Url(_) => GeckoUrlMatchingFunction::eURL,
@@ -148,7 +135,7 @@ impl UrlMatchingFunction {
             UrlMatchingFunction::RegExp(_) => GeckoUrlMatchingFunction::eRegExp,
         };
 
-        let pattern = nsCStr::from(match *self {
+        let pattern = nsCString::from(match *self {
             UrlMatchingFunction::Url(ref url) => url.as_str(),
             UrlMatchingFunction::UrlPrefix(ref pat) |
             UrlMatchingFunction::Domain(ref pat) |
@@ -194,7 +181,7 @@ impl ToCss for UrlMatchingFunction {
 
 /// A `@document` rule's condition.
 ///
-/// <https://www.w3.org/TR/2012/WD-css3-conditional-20120911/#at-document>
+/// https://www.w3.org/TR/2012/WD-css3-conditional-20120911/#at-document
 ///
 /// The `@document` rule's condition is written as a comma-separated list of
 /// URL matching functions, and the condition evaluates to true whenever any

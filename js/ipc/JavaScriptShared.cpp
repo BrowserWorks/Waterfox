@@ -356,7 +356,8 @@ JavaScriptShared::fromVariant(JSContext* cx, const JSVariant& from, MutableHandl
           const JSIID& id = from.get_JSIID();
           ConvertID(id, &iid);
 
-          RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
+          JSCompartment* compartment = GetContextCompartment(cx);
+          RootedObject global(cx, JS_GetGlobalForCompartmentOrNull(cx, compartment));
           JSObject* obj = xpc_NewIDObject(cx, global, iid);
           if (!obj)
               return false;
@@ -574,6 +575,7 @@ JavaScriptShared::fromDescriptor(JSContext* cx, Handle<PropertyDescriptor> desc,
             return false;
         out->getter() = objVar;
     } else {
+        MOZ_ASSERT(desc.getter() != JS_PropertyStub);
         out->getter() = UnknownPropertyOp;
     }
 
@@ -586,6 +588,7 @@ JavaScriptShared::fromDescriptor(JSContext* cx, Handle<PropertyDescriptor> desc,
             return false;
         out->setter() = objVar;
     } else {
+        MOZ_ASSERT(desc.setter() != JS_StrictPropertyStub);
         out->setter() = UnknownPropertyOp;
     }
 
@@ -600,7 +603,7 @@ UnknownPropertyStub(JSContext* cx, HandleObject obj, HandleId id, MutableHandleV
 }
 
 bool
-UnknownStrictPropertyStub(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
+UnknownStrictPropertyStub(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
                           ObjectOpResult& result)
 {
     JS_ReportErrorASCII(cx, "setter could not be wrapped via CPOWs");

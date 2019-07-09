@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Зображення було обрізано до $PIXELS$ пікселів.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Сталася помилка."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Ми не впевнені, в чому проблема. Спробувати ще раз, або ж зробити знімок іншої сторінки?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Робіть знімки екрану, зберігайте та діліться ними прямо в Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Новий спосіб збереження"
-  },
-  "tourBodyPageAction": {
-    "message": "Розгорніть меню дій для сторінки в панелі адреси, коли ви хочете зробити знімок екрану."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Робіть знімки чого завгодно"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Клацніть і потягніть мишею для захоплення частини сторінки. Ви також можете навести курсор миші для підсвічення вибраної області."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Захоплюйте вікна або цілі сторінки"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "За допомогою кнопок у верхній правій частині обирайте захоплення видимої області вікна, або сторінки повністю."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Як вам подобається"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Зберігайте свої знімки в Інтернеті, щоб легко ними ділитися, або завантажуйте їх на свій комп'ютер. Ви також можете переглянути всі збережені знімки, натиснувши на кнопку Мої знімки."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Готово"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Використовуючи Firefox Screenshots, ви погоджуєтеся з нашими $TERMSANDPRIVACYNOTICETERMSLINK$ та $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Використовуючи Firefox Screenshots, ви погоджуєтеся з умовами хмарних послуг Firefox: $TERMSANDPRIVACYNOTICETERMSLINK$ та $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Повідомленням про приватність"
-  },
-  "libraryLabel": {
-    "message": "Знімки екрану"
   }
 }

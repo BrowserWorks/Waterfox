@@ -14,7 +14,6 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
-#include "mozilla/dom/Selection.h"
 #include "InputData.h"
 
 namespace IPC
@@ -199,7 +198,6 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
     WriteParam(aMsg, aParam.mViewPortIsOverscrolled);
     WriteParam(aMsg, aParam.mCanTriggerSwipe);
     WriteParam(aMsg, aParam.mAllowToOverrideSystemScrollSpeed);
-    WriteParam(aMsg, aParam.mDeltaValuesAdjustedForDefaultHandler);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
@@ -223,8 +221,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
       ReadParam(aMsg, aIter, &aResult->mOverflowDeltaY) &&
       ReadParam(aMsg, aIter, &aResult->mViewPortIsOverscrolled) &&
       ReadParam(aMsg, aIter, &aResult->mCanTriggerSwipe) &&
-      ReadParam(aMsg, aIter, &aResult->mAllowToOverrideSystemScrollSpeed) &&
-      ReadParam(aMsg, aIter, &aResult->mDeltaValuesAdjustedForDefaultHandler);
+      ReadParam(aMsg, aIter, &aResult->mAllowToOverrideSystemScrollSpeed);
     aResult->mScrollType =
       static_cast<mozilla::WidgetWheelEvent::ScrollType>(scrollType);
     return rv;
@@ -267,7 +264,7 @@ struct ParamTraits<mozilla::WidgetMouseEvent>
   static void Write(Message* aMsg, const paramType& aParam)
   {
     WriteParam(aMsg, static_cast<const mozilla::WidgetMouseEventBase&>(aParam));
-    WriteParam(aMsg, static_cast<const mozilla::WidgetPointerHelper&>(aParam));
+    WriteParam(aMsg, static_cast<mozilla::WidgetPointerHelper>(aParam));
     WriteParam(aMsg, aParam.mIgnoreRootScrollFrame);
     WriteParam(aMsg, static_cast<paramType::ReasonType>(aParam.mReason));
     WriteParam(aMsg, static_cast<paramType::ContextMenuTriggerType>(

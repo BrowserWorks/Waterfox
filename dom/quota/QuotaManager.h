@@ -177,15 +177,13 @@ public:
   GetQuotaObject(PersistenceType aPersistenceType,
                  const nsACString& aGroup,
                  const nsACString& aOrigin,
-                 nsIFile* aFile,
-                 int64_t* aFileSizeOut = nullptr);
+                 nsIFile* aFile);
 
   already_AddRefed<QuotaObject>
   GetQuotaObject(PersistenceType aPersistenceType,
                  const nsACString& aGroup,
                  const nsACString& aOrigin,
-                 const nsAString& aPath,
-                 int64_t* aFileSizeOut = nullptr);
+                 const nsAString& aPath);
 
   Nullable<bool>
   OriginPersisted(const nsACString& aGroup,
@@ -298,9 +296,6 @@ public:
                                     nsIFile** aDirectory,
                                     bool* aCreated);
 
-  nsresult
-  EnsureTemporaryStorageIsInitialized();
-
   void
   OriginClearCompleted(PersistenceType aPersistenceType,
                        const nsACString& aOrigin);
@@ -378,9 +373,6 @@ public:
   void
   GetGroupUsageAndLimit(const nsACString& aGroup,
                         UsageInfo* aUsageInfo);
-
-  void
-  NotifyStoragePressure(uint64_t aUsage);
 
   static void
   GetStorageId(PersistenceType aPersistenceType,
@@ -478,9 +470,6 @@ private:
 
   nsresult
   UpgradeStorageFrom1_0To2_0(mozIStorageConnection* aConnection);
-
-  nsresult
-  UpgradeStorageFrom2_0To2_1(mozIStorageConnection* aConnection);
 
   nsresult
   InitializeRepository(PersistenceType aPersistenceType);

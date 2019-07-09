@@ -14,11 +14,28 @@ are termed "single-locale language repacks".  There is another concept of a
 "multi-locale language build", which is more like a regular build and less
 like a re-packaging post-processing step.
 
-Instructions for single-locale repacks for developers
------------------------------------------------------
+There are scripts in-tree in mozharness to orchestrate these re-packaging
+steps for `Desktop
+<https://dxr.mozilla.org/mozilla-central/source/testing/mozharness/scripts/desktop_l10n.py>`_
+and `Android
+<https://dxr.mozilla.org/mozilla-central/source/testing/mozharness/scripts/mobile_l10n.py>`_
+but they rely heavily on buildbot information so they are almost impossible to
+run locally.
+
+The following instructions are extracted from the `Android script with hg hash
+494289c7
+<https://dxr.mozilla.org/mozilla-central/rev/494289c72ba3997183e7b5beaca3e0447ecaf96d/testing/mozharness/scripts/mobile_l10n.py>`_,
+and may need to be updated and slightly modified for Desktop.
+
+Step by step instructions for Android
+-------------------------------------
 
 This assumes that ``$AB_CD`` is the locale you want to repack with; I tested
 with "ar" and "en-GB".
+
+.. warning:: l10n repacks do not work with artifact builds.  Repackaging
+   compiles no code so supporting ``--disable-compile-environment`` would not
+   save much, if any, time.
 
 #. You must have a built and packaged object directory, or a pre-built
    ``en-US`` package.
@@ -28,52 +45,56 @@ with "ar" and "en-GB".
       ./mach build
       ./mach package
 
-#. Repackage using the locale-specific changes.
+#. Clone ``l10n-central/$AB_CD`` so that it is a sibling to your
+   ``mozilla-central`` directory.
 
    .. code-block:: shell
 
-      ./mach build installers-$AB_CD
+      $ ls -al
+      mozilla-central
+      ...
+      $ mkdir -p l10n-central
+      $ hg clone https://hg.mozilla.org/l10n-central/$AB_CD l10n-central/$AB_CD
+      $ ls -al
+      mozilla-central
+      l10n-central/$AB_CD
+      ...
 
-You should find a re-packaged build at ``OBJDIR/dist/``, and a
-runnable binary in ``OBJDIR/dist/l10n-stage/``.
-The ``installers`` target runs quite a few things for you, including getting
-the repository for the requested locale from
-https://hg.mozilla.org/l10n-central/. It will clone them into
-``~/.mozbuild/l10n-central``. If you have an existing repository there, you
-may want to occasionally update that via ``hg pull -u``. If you prefer
-to have the l10n repositories at a different location on your disk, you
-can point to the directory via
+#. Copy your ``mozconfig`` to ``mozconfig.l10n`` and add the following.
 
-   .. code-block:: shell
+   ::
 
-      ac_add_options --with-l10n-base=/make/this/a/absolute/path
+      ac_add_options --with-l10n-base=../../l10n-central
+      ac_add_options --disable-tests
+      mk_add_options MOZ_OBJDIR=./objdir-l10n
 
-Instructions for multi-locale builds
-------------------------------------
-
-If you want to create a single build with mutliple locales, you will do
-
-#. Create a build and package
+#. Configure and prepare the l10n object directory.
 
    .. code-block:: shell
 
-      ./mach build
-      ./mach package
+      MOZCONFIG=mozconfig.l10n ./mach configure
+      MOZCONFIG=mozconfig.l10n ./mach build -C config export
+      MOZCONFIG=mozconfig.l10n ./mach build buildid.h
 
-#. For each locale you want to include in the build:
-
-   .. code-block:: shell
-
-      export MOZ_CHROME_MULTILOCALE="de it zh-TW"
-      for AB_CD in $MOZ_CHROME_MULTILOCALE; do
-         ./mach build chrome-$AB_CD
-      done
-
-#. Create the multilingual package:
+#. Copy your built package and unpack it into the l10n object directory.
 
    .. code-block:: shell
 
-      AB_CD=multi ./mach package
+      cp $OBJDIR/dist/fennec-*en-US*.apk ./objdir-l10n/dist
+      MOZCONFIG=mozconfig.l10n ./mach build -C mobile/android/locales unpack
 
-This `currently <https://bugzilla.mozilla.org/show_bug.cgi?id=1362496>`_ only
-works for Firefox for Android.
+#. Run the ``compare-locales`` script to write locale-specific changes into
+   ``objdir-l10n/merged``.
+
+   .. code-block:: shell
+
+      MOZCONFIG=mozconfig.l10n ./mach compare-locales --merge-dir objdir-l10n/merged $AB_CD
+
+#. Finally, repackage using the locale-specific changes.
+
+   .. code-block:: shell
+
+      MOZCONFIG=mozconfig.l10n LOCALE_MERGEDIR=`realpath objdir-l10n/merged` ./mach build -C mobile/android/locales installers-$AB_CD
+
+   (Note the absolute path for ``LOCALE_MERGEDIR``.)  You should find a
+   re-packaged build at ``objdir-l10n/dist/fennec-*$AB_CD*.apk``.

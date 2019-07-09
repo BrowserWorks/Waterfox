@@ -18,7 +18,6 @@ info: |
         b. Perform DefinePropertyOrThrow(F, "prototype", PropertyDescriptor{[[Value]]: prototype,
             [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: false}).
     ...
-features: [generators]
 ---*/
 
 var GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;

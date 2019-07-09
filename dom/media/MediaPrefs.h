@@ -116,6 +116,9 @@ private:
   DECL_MEDIA_PREF("media.eme.enabled",                        EMEEnabled, bool, false);
   DECL_MEDIA_PREF("media.use-blank-decoder",                  PDMUseBlankDecoder, bool, false);
   DECL_MEDIA_PREF("media.gpu-process-decoder",                PDMUseGPUDecoder, bool, false);
+#ifdef MOZ_GONK_MEDIACODEC
+  DECL_MEDIA_PREF("media.gonk.enabled",                       PDMGonkDecoderEnabled, bool, true);
+#endif
 #ifdef MOZ_WIDGET_ANDROID
   DECL_MEDIA_PREF("media.android-media-codec.enabled",        PDMAndroidMediaCodecEnabled, bool, false);
   DECL_MEDIA_PREF("media.android-media-codec.preferred",      PDMAndroidMediaCodecPreferred, bool, false);
@@ -137,7 +140,6 @@ private:
   DECL_MEDIA_PREF("media.wmf.enabled",                        PDMWMFEnabled, bool, true);
   DECL_MEDIA_PREF("media.wmf.skip-blacklist",                 PDMWMFSkipBlacklist, bool, false);
   DECL_MEDIA_PREF("media.decoder-doctor.wmf-disabled-is-failure", DecoderDoctorWMFDisabledIsFailure, bool, false);
-  DECL_MEDIA_PREF("media.wmf.vp9.enabled",                    PDMWMFVP9DecoderEnabled, bool, true);
   DECL_MEDIA_PREF("media.wmf.decoder.thread-count",           PDMWMFThreadCount, int32_t, -1);
 #endif
   DECL_MEDIA_PREF("media.decoder.fuzzing.enabled",            PDMFuzzingEnabled, bool, false);
@@ -150,6 +152,7 @@ private:
   DECL_MEDIA_PREF("media.gmp.decoder.h264",                   GMPH264Preferred, uint32_t, 0);
   DECL_MEDIA_PREF("media.eme.audio.blank",                    EMEBlankAudio, bool, false);
   DECL_MEDIA_PREF("media.eme.video.blank",                    EMEBlankVideo, bool, false);
+  DECL_MEDIA_PREF("media.eme.chromium-api.enabled",           EMEChromiumAPIEnabled, bool, false);
   DECL_MEDIA_PREF("media.eme.chromium-api.video-shmems",
                   EMEChromiumAPIVideoShmemCount,
                   uint32_t,
@@ -205,11 +208,6 @@ private:
 
   // resume background video decoding when the cursor is hovering over the tab.
   DECL_MEDIA_PREF("media.resume-bkgnd-video-on-tabhover",     ResumeVideoDecodingOnTabHover, bool, false);
-
-  // Enable sandboxing support for cubeb
-  DECL_MEDIA_PREF("media.cubeb.sandbox",                      CubebSandbox, bool, false);
-  DECL_MEDIA_PREF("media.videocontrols.lock-video-orientation",  VideoOrientationLockEnabled, bool, false);
-
 public:
   // Manage the singleton:
   static MediaPrefs& GetSingleton();

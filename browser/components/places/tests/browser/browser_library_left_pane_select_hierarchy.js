@@ -2,42 +2,40 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-add_task(async function() {
+function test() {
+  waitForExplicitFinish();
+  openLibrary(onLibraryReady);
+}
+
+function onLibraryReady(aLibrary) {
   let hierarchy = [ "AllBookmarks", "BookmarksMenu" ];
 
-  let items = await PlacesUtils.bookmarks.insertTree({
-    guid: PlacesUtils.bookmarks.menuGuid,
-    children: [{
-      title: "Folder 1",
-      type: PlacesUtils.bookmarks.TYPE_FOLDER,
-      children: [{
-        title: "Folder 2",
-        type: PlacesUtils.bookmarks.TYPE_FOLDER,
-        children: [{
-          title: "Bookmark",
-          url: "http://example.com",
-        }],
-      }],
-    }],
+  let folder1 = PlacesUtils.bookmarks
+                           .createFolder(PlacesUtils.bookmarksMenuFolderId,
+                                         "Folder 1",
+                                         PlacesUtils.bookmarks.DEFAULT_INDEX);
+  hierarchy.push(folder1);
+  let folder2 = PlacesUtils.bookmarks
+                           .createFolder(folder1, "Folder 2",
+                                         PlacesUtils.bookmarks.DEFAULT_INDEX);
+  hierarchy.push(folder2);
+  let bookmark = PlacesUtils.bookmarks
+                            .insertBookmark(folder2, NetUtil.newURI("http://example.com/"),
+                                            PlacesUtils.bookmarks.DEFAULT_INDEX,
+                                            "Bookmark");
+
+  registerCleanupFunction(function() {
+    PlacesUtils.bookmarks.removeItem(folder1);
+    aLibrary.close();
   });
 
-  let folder1Id = await PlacesUtils.promiseItemId(items[0].guid);
-  let folder2Id = await PlacesUtils.promiseItemId(items[1].guid);
+  aLibrary.PlacesOrganizer.selectLeftPaneContainerByHierarchy(hierarchy);
 
-  hierarchy.push(folder1Id, folder2Id);
+  is(aLibrary.PlacesOrganizer._places.selectedNode.itemId, folder2,
+     "Found the expected left pane selected node");
 
-  let library = await promiseLibrary();
+  is(aLibrary.ContentTree.view.view.nodeForTreeIndex(0).itemId, bookmark,
+     "Found the expected right pane contents");
 
-  registerCleanupFunction(async function() {
-    await PlacesUtils.bookmarks.remove(items[0]);
-    await promiseLibraryClosed(library);
-  });
-
-  library.PlacesOrganizer.selectLeftPaneContainerByHierarchy(hierarchy);
-
-  Assert.equal(library.PlacesOrganizer._places.selectedNode.bookmarkGuid, items[1].guid,
-    "Found the expected left pane selected node");
-
-  Assert.equal(library.ContentTree.view.view.nodeForTreeIndex(0).bookmarkGuid, items[2].guid,
-    "Found the expected right pane contents");
-});
+  finish();
+}

@@ -10,20 +10,16 @@
 
 namespace mozilla {
 
-bool StylePrefs::sFontDisplayEnabled;
 bool StylePrefs::sOpentypeSVGEnabled;
 bool StylePrefs::sWebkitPrefixedAliasesEnabled;
 bool StylePrefs::sWebkitDevicePixelRatioEnabled;
 bool StylePrefs::sMozGradientsEnabled;
 bool StylePrefs::sControlCharVisibility;
 bool StylePrefs::sFramesTimingFunctionEnabled;
-bool StylePrefs::sUnprefixedFullscreenApiEnabled;
 
 /* static */ void
 StylePrefs::Init()
 {
-  Preferences::AddBoolVarCache(&sFontDisplayEnabled,
-                               "layout.css.font-display.enabled");
   Preferences::AddBoolVarCache(&sOpentypeSVGEnabled,
                                "gfx.font_rendering.opentype_svg.enabled");
   Preferences::AddBoolVarCache(&sWebkitPrefixedAliasesEnabled,
@@ -36,8 +32,6 @@ StylePrefs::Init()
                                "layout.css.control-characters.visible");
   Preferences::AddBoolVarCache(&sFramesTimingFunctionEnabled,
                                "layout.css.frames-timing.enabled");
-  Preferences::AddBoolVarCache(&sUnprefixedFullscreenApiEnabled,
-                               "full-screen-api.unprefix.enabled");
 }
 
 } // namespace mozilla

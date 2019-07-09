@@ -408,7 +408,7 @@ SpeechDispatcherService::Setup()
         ToUpperCase(variant);
 
         // eSpeak uses UK which is not a valid region subtag in BCP47.
-        if (variant.EqualsLiteral("UK")) {
+        if (variant.Equals("UK")) {
           variant.AssignLiteral("GB");
         }
 

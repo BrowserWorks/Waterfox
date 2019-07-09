@@ -50,7 +50,8 @@ SVGTitleElement::CharacterDataChanged(nsIDocument *aDocument,
 void
 SVGTitleElement::ContentAppended(nsIDocument *aDocument,
                                  nsIContent *aContainer,
-                                 nsIContent *aFirstNewContent)
+                                 nsIContent *aFirstNewContent,
+                                 int32_t aNewIndexInContainer)
 {
   SendTitleChangeEvent(false);
 }
@@ -58,7 +59,8 @@ SVGTitleElement::ContentAppended(nsIDocument *aDocument,
 void
 SVGTitleElement::ContentInserted(nsIDocument *aDocument,
                                  nsIContent *aContainer,
-                                 nsIContent *aChild)
+                                 nsIContent *aChild,
+                                 int32_t aIndexInContainer)
 {
   SendTitleChangeEvent(false);
 }
@@ -67,6 +69,7 @@ void
 SVGTitleElement::ContentRemoved(nsIDocument *aDocument,
                                 nsIContent *aContainer,
                                 nsIContent *aChild,
+                                int32_t aIndexInContainer,
                                 nsIContent *aPreviousSibling)
 {
   SendTitleChangeEvent(false);

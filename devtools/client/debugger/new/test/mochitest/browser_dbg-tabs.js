@@ -7,33 +7,33 @@ function countTabs(dbg) {
   return findElement(dbg, "sourceTabs").children.length;
 }
 
-add_task(async function() {
-  let dbg = await initDebugger("doc-scripts.html");
+add_task(function*() {
+  let dbg = yield initDebugger("doc-scripts.html");
 
-  await selectSource(dbg, "simple1");
-  await selectSource(dbg, "simple2");
+  yield selectSource(dbg, "simple1");
+  yield selectSource(dbg, "simple2");
   is(countTabs(dbg), 2);
 
   // Test reloading the debugger
-  await reload(dbg, "simple1", "simple2");
+  yield reload(dbg, "simple1", "simple2");
   is(countTabs(dbg), 2);
-  await waitForSelectedSource(dbg);
+  yield waitForSelectedSource(dbg);
 
   // Test reloading the debuggee a second time
-  await reload(dbg, "simple1", "simple2");
+  yield reload(dbg, "simple1", "simple2");
   is(countTabs(dbg), 2);
-  await waitForSelectedSource(dbg);
+  yield waitForSelectedSource(dbg);
 });
 
-add_task(async function() {
-  let dbg = await initDebugger("doc-scripts.html", "simple1", "simple2");
+add_task(function*() {
+  let dbg = yield initDebugger("doc-scripts.html", "simple1", "simple2");
 
-  await selectSource(dbg, "simple1");
-  await selectSource(dbg, "simple2");
+  yield selectSource(dbg, "simple1");
+  yield selectSource(dbg, "simple2");
   closeTab(dbg, "simple1");
   closeTab(dbg, "simple2");
 
   // Test reloading the debugger
-  await reload(dbg, "simple1", "simple2");
+  yield reload(dbg, "simple1", "simple2");
   is(countTabs(dbg), 0);
 });

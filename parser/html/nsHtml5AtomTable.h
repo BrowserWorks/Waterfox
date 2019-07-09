@@ -7,10 +7,13 @@
 
 #include "nsHashKeys.h"
 #include "nsTHashtable.h"
-#include "nsAtom.h"
+#include "nsAutoPtr.h"
+#include "nsIAtom.h"
 #include "nsISerialEventTarget.h"
 
 #define RECENTLY_USED_PARSER_ATOMS_SIZE 31
+
+class nsHtml5Atom;
 
 class nsHtml5AtomEntry : public nsStringHashKey
 {
@@ -18,9 +21,12 @@ class nsHtml5AtomEntry : public nsStringHashKey
     explicit nsHtml5AtomEntry(KeyTypePointer aStr);
     nsHtml5AtomEntry(const nsHtml5AtomEntry& aOther);
     ~nsHtml5AtomEntry();
-    inline nsAtom* GetAtom() { return mAtom; }
+    inline nsHtml5Atom* GetAtom()
+    {
+      return mAtom;
+    }
   private:
-    nsAtom* mAtom;
+    nsAutoPtr<nsHtml5Atom> mAtom;
 };
 
 /**
@@ -76,7 +82,7 @@ class nsHtml5AtomTable
     /**
      * Obtains the atom for the given string in the scope of this atom table.
      */
-    nsAtom* GetAtom(const nsAString& aKey);
+    nsIAtom* GetAtom(const nsAString& aKey);
     
     /**
      * Empties the table.
@@ -98,7 +104,7 @@ class nsHtml5AtomTable
   
   private:
     nsTHashtable<nsHtml5AtomEntry> mTable;
-    nsAtom* mRecentlyUsedParserAtoms[RECENTLY_USED_PARSER_ATOMS_SIZE];
+    nsIAtom* mRecentlyUsedParserAtoms[RECENTLY_USED_PARSER_ATOMS_SIZE];
 #ifdef DEBUG
     nsCOMPtr<nsISerialEventTarget>            mPermittedLookupEventTarget;
 #endif

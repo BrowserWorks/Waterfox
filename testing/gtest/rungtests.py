@@ -20,7 +20,7 @@ log = mozlog.unstructured.getLogger('gtest')
 
 class GTests(object):
     # Time (seconds) to wait for test process to complete
-    TEST_PROC_TIMEOUT = 1200
+    TEST_PROC_TIMEOUT = 1800
     # Time (seconds) in which process will be killed if it produces no output.
     TEST_PROC_NO_OUTPUT_TIMEOUT = 300
 
@@ -81,6 +81,7 @@ class GTests(object):
         """
         Add environment variables likely to be used across all platforms, including remote systems.
         """
+        env["MOZILLA_FIVE_HOME"] = self.xre_path
         env["MOZ_XRE_DIR"] = self.xre_path
         env["MOZ_GMP_PATH"] = os.pathsep.join(
             os.path.join(self.xre_path, p, "1.0")

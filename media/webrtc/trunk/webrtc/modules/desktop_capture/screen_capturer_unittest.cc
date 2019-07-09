@@ -49,8 +49,6 @@ class ScreenCapturerTest : public testing::Test {
   }
 
   bool CreateDirectxCapturer() {
-    // Mozilla builds do not include the DirectX Capturer
-    #if !defined(WEBRTC_MOZILLA_BUILD)
     if (!ScreenCapturerWinDirectx::IsSupported()) {
       LOG(LS_WARNING) << "Directx capturer is not supported";
       return false;
@@ -58,9 +56,6 @@ class ScreenCapturerTest : public testing::Test {
 
     MaybeCreateDirectxCapturer();
     return true;
-    #else
-    return false;
-    #endif
   }
 
   void CreateMagnifierCapturer() {

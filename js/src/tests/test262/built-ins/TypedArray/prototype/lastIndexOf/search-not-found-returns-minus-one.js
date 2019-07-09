@@ -22,7 +22,6 @@ info: >
     ...
   8. Return -1.
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

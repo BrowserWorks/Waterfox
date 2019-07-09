@@ -5,8 +5,9 @@
 description: >
     Objects that do not define all of the specified "own" properties do not
     satisfy the assertion.
-includes: [testBuiltInObject.js,sta.js]
+includes: [testBuiltInObject.js]
 ---*/
+
 var threw = false;
 var obj = {};
 Object.defineProperty(obj, 'a', {

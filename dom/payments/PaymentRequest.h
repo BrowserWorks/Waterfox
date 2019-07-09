@@ -36,48 +36,28 @@ public:
 
   static bool PrefEnabled(JSContext* aCx, JSObject* aObj);
 
-  static nsresult IsValidStandardizedPMI(const nsAString& aIdentifier,
-                                         nsAString& aErrorMsg);
+  static bool IsValidMethodData(JSContext* aCx,
+                                const Sequence<PaymentMethodData>& aMethodData,
+                                nsAString& aErrorMsg);
 
-  static nsresult IsValidPaymentMethodIdentifier(const nsAString& aIdentifier,
-                                                 nsAString& aErrorMsg);
-
-  static nsresult IsValidMethodData(JSContext* aCx,
-                                    const Sequence<PaymentMethodData>& aMethodData,
-                                    nsAString& aErrorMsg);
-
-  static nsresult
+  static bool
   IsValidNumber(const nsAString& aItem,
                 const nsAString& aStr,
                 nsAString& aErrorMsg);
-  static nsresult
+  static bool
   IsNonNegativeNumber(const nsAString& aItem,
                       const nsAString& aStr,
                       nsAString& aErrorMsg);
 
-  static nsresult
-  IsValidCurrencyAmount(const nsAString& aItem,
-                        const PaymentCurrencyAmount& aAmount,
-                        const bool aIsTotalItem,
-                        nsAString& aErrorMsg);
-
-  static nsresult
-  IsValidCurrency(const nsAString& aItem,
-                  const nsAString& aCurrency,
-                  nsAString& aErrorMsg);
-
-  static nsresult
+  static bool
   IsValidDetailsInit(const PaymentDetailsInit& aDetails,
-                     const bool aRequestShipping,
                      nsAString& aErrorMsg);
 
-  static nsresult
-  IsValidDetailsUpdate(const PaymentDetailsUpdate& aDetails,
-                       const bool aRequestShipping);
+  static bool
+  IsValidDetailsUpdate(const PaymentDetailsUpdate& aDetails);
 
-  static nsresult
+  static bool
   IsValidDetailsBase(const PaymentDetailsBase& aDetails,
-                     const bool aRequestShipping,
                      nsAString& aErrorMsg);
 
   static already_AddRefed<PaymentRequest>
@@ -91,12 +71,13 @@ public:
   void RespondCanMakePayment(bool aResult);
 
   already_AddRefed<Promise> Show(ErrorResult& aRv);
-  void RespondShowPayment(const nsAString& aMethodName,
+  void RespondShowPayment(bool aAccept,
+                          const nsAString& aMethodName,
                           const nsAString& aDetails,
                           const nsAString& aPayerName,
                           const nsAString& aPayerEmail,
                           const nsAString& aPayerPhone,
-                          nsresult aRv);
+                          nsresult aRv = NS_ERROR_DOM_ABORT_ERR);
   void RejectShowPayment(nsresult aRejectReason);
   void RespondComplete();
 
@@ -131,7 +112,7 @@ public:
   void GetShippingOption(nsAString& aRetVal) const;
   nsresult UpdateShippingOption(const nsAString& aShippingOption);
 
-  nsresult UpdatePayment(JSContext* aCx, const PaymentDetailsUpdate& aDetails);
+  nsresult UpdatePayment(const PaymentDetailsUpdate& aDetails);
   void AbortUpdate(nsresult aRv);
 
   void SetShippingType(const Nullable<PaymentShippingType>& aShippingType);

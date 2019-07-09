@@ -51,9 +51,9 @@ function sync_httpd_setup() {
 async function setUp(server) {
   await configureIdentity({username: "johndoe@mozilla.com"}, server);
 
-  await generateNewKeys(Service.collectionKeys);
+  generateNewKeys(Service.collectionKeys);
   let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
-  await serverKeys.encrypt(Service.identity.syncKeyBundle);
+  serverKeys.encrypt(Service.identity.syncKeyBundle);
   let result = (await serverKeys.upload(Service.resource(Service.cryptoKeysURL))).success;
   return result;
 }
@@ -527,7 +527,7 @@ add_task(async function test_autoconnect_mp_locked() {
   Utils.ensureMPUnlocked = () => {
     _("Faking Master Password entry cancelation.");
     return false;
-  };
+  }
   let origCanFetchKeys = Service.identity._canFetchKeys;
   Service.identity._canFetchKeys = () => false;
 
@@ -818,8 +818,8 @@ add_task(async function test_sync_X_Weave_Backoff() {
     { id: "foo", cleartext: { os: "mobile", version: "0.01", type: "desktop" } }
   );
   let rec = await clientsEngine._store.createRecord("foo", "clients");
-  await rec.encrypt(Service.collectionKeys.keyForCollection("clients"));
-  await rec.upload(Service.resource(clientsEngine.engineURL + rec.id));
+  rec.encrypt(Service.collectionKeys.keyForCollection("clients"));
+  rec.upload(Service.resource(clientsEngine.engineURL + rec.id));
 
   // Sync once to log in and get everything set up. Let's verify our initial
   // values.
@@ -879,8 +879,8 @@ add_task(async function test_sync_503_Retry_After() {
     { id: "foo", cleartext: { os: "mobile", version: "0.01", type: "desktop" } }
   );
   let rec = await clientsEngine._store.createRecord("foo", "clients");
-  await rec.encrypt(Service.collectionKeys.keyForCollection("clients"));
-  await rec.upload(Service.resource(clientsEngine.engineURL + rec.id));
+  rec.encrypt(Service.collectionKeys.keyForCollection("clients"));
+  rec.upload(Service.resource(clientsEngine.engineURL + rec.id));
 
   // Sync once to log in and get everything set up. Let's verify our initial
   // values.
@@ -948,7 +948,7 @@ add_task(async function test_loginError_recoverable_reschedules() {
   do_check_true(scheduler.syncTimer.delay <= scheduler.syncInterval);
 
   Svc.Obs.remove("weave:service:sync:start", onSyncStart);
-  await cleanUpAndGo();
+  await cleanUpAndGo()
 });
 
 add_task(async function test_loginError_fatal_clearsTriggers() {

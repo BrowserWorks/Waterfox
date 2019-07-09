@@ -11,7 +11,11 @@ const nsISupportsString = Components.interfaces.nsISupportsString;
 const nsIPrefBranch = Components.interfaces.nsIPrefBranch;
 const nsIClipboardHelper = Components.interfaces.nsIClipboardHelper;
 
+const nsSupportsString_CONTRACTID = "@mozilla.org/supports-string;1";
+const nsPrompt_CONTRACTID = "@mozilla.org/embedcomp/prompt-service;1";
+const nsPrefService_CONTRACTID = "@mozilla.org/preferences-service;1";
 const nsClipboardHelper_CONTRACTID = "@mozilla.org/widget/clipboardhelper;1";
+const nsAtomService_CONTRACTID = "@mozilla.org/atom-service;1";
 
 const gPrefBranch = Services.prefs;
 const gClipboardHelper = Components.classes[nsClipboardHelper_CONTRACTID].getService(nsIClipboardHelper);
@@ -461,7 +465,7 @@ const configController = {
   },
   onEvent: function onEvent(event) {
   }
-};
+}
 
 function updateContextMenu() {
   var lockCol = PREF_IS_LOCKED;

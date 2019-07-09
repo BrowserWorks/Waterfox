@@ -74,11 +74,21 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
         '/dom/system',
         '/dom/system/android',
     ]
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+    LOCAL_INCLUDES += [
+        '/widget/gtk',
+    ]
 
 if CONFIG['MOZ_WEBSPEECH']:
     LOCAL_INCLUDES += [
         '/dom/media/webspeech/recognition',
         '/dom/media/webspeech/synth',
+    ]
+
+if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
+    LOCAL_INCLUDES += [
+        '/media/pocketsphinx',
+        '/media/sphinxbase',
     ]
 
 if CONFIG['MOZ_SECUREELEMENT']:

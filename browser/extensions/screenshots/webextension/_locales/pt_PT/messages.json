@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "Esta imagem foi recortada para $PIXELS$px.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Fora de serviço."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Não temos a certeza do que acabou de acontecer. Importa-se de tentar novamente ou tirar uma captura de uma página diferente?"
   },
-  "tourBodyIntro": {
-    "message": "Tire, guarde e partilhe capturas de ecrã sem sair do Firefox."
+  "tourBodyOne": {
+    "message": "Tire, guarde, e partilhe capturas de ecrã sem sair do Firefox."
   },
-  "tourHeaderPageAction": {
-    "message": "Uma nova maneira de guardar"
+  "tourHeaderTwo": {
+    "message": "Capture aquilo mesmo que pretende"
   },
-  "tourBodyPageAction": {
-    "message": "Expanda o menu de ações da página na barra de endereço sempre que quiser tirar uma captura de ecrã."
+  "tourBodyTwo": {
+    "message": "Clique e arraste para capturar apenas uma porção de uma página. Pode também pairar para destacar a sua seleção."
   },
-  "tourHeaderClickAndDrag": {
-    "message": "Capture exatamente o que quer"
-  },
-  "tourBodyClickAndDrag": {
-    "message": "Clique e arraste para capturar apenas uma parte de uma página. Pode também pairar para destacar a sua seleção."
-  },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Capture janelas ou páginas inteiras"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Selecione os botões no canto superior direito para capturar a área visível na janela ou para capturar uma página inteira."
   },
-  "tourHeaderDownloadUpload": {
-    "message": "Como você gosta"
+  "tourHeaderFour": {
+    "message": "Como você gostar"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Guarde as suas capturas na Web para partilhar mais facilmente, ou descarregue-as para o seu computador. Pode também clicar no botão Minhas capturas para encontrar todas as capturas que tirou."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Feito"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Ao utilizar o Firefox Screenshots, concorda com os nossos $TERMSANDPRIVACYNOTICETERMSLINK$ e com o $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Ao utilizar o Firefox Screenshots, você concorda com os $TERMSANDPRIVACYNOTICETERMSLINK$ e com o $TERMSANDPRIVACYNOTICEPRIVACYLINK$ do Firefox Cloud Services.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "Aviso de privacidade"
-  },
-  "libraryLabel": {
-    "message": "Capturas de ecrã"
   }
 }

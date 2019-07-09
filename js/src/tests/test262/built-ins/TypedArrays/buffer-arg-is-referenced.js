@@ -15,7 +15,6 @@ info: >
   15. Set O's [[ViewedArrayBuffer]] internal slot to buffer.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

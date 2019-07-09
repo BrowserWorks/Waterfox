@@ -129,7 +129,7 @@ SVGFEMorphologyElement::GetPrimitiveDescription(nsSVGFilterInstance* aInstance,
 
 bool
 SVGFEMorphologyElement::AttributeAffectsRendering(int32_t aNameSpaceID,
-                                                  nsAtom* aAttribute) const
+                                                  nsIAtom* aAttribute) const
 {
   return SVGFEMorphologyElementBase::AttributeAffectsRendering(aNameSpaceID, aAttribute) ||
          (aNameSpaceID == kNameSpaceID_None &&

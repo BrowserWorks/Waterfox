@@ -483,14 +483,7 @@ LocalTime(double t)
 static double
 UTC(double t)
 {
-    // Following the ES2017 specification creates undesirable results at DST
-    // transitions. For example when transitioning from PST to PDT,
-    // |new Date(2016,2,13,2,0,0).toTimeString()| returns the string value
-    // "01:00:00 GMT-0800 (PST)" instead of "03:00:00 GMT-0700 (PDT)". Follow
-    // V8 and subtract one hour before computing the offset.
-    // Spec bug: https://bugs.ecmascript.org/show_bug.cgi?id=4007
-
-    return t - AdjustTime(t - DateTimeInfo::localTZA() - msPerHour);
+    return t - AdjustTime(t - DateTimeInfo::localTZA());
 }
 
 /* ES5 15.9.1.10. */
@@ -2591,7 +2584,7 @@ date_toJSON(JSContext* cx, unsigned argc, Value* vp)
 
 /* Interface to PRMJTime date struct. */
 static PRMJTime
-ToPRMJTime(double localTime, double utcTime)
+ToPRMJTime(double localTime)
 {
     double year = YearFromTime(localTime);
 
@@ -2605,7 +2598,9 @@ ToPRMJTime(double localTime, double utcTime)
     prtm.tm_wday = int8_t(WeekDay(localTime));
     prtm.tm_year = year;
     prtm.tm_yday = int16_t(DayWithinYear(localTime, year));
-    prtm.tm_isdst = (DaylightSavingTA(utcTime) != 0);
+
+    // XXX: DaylightSavingTA expects utc-time argument.
+    prtm.tm_isdst = (DaylightSavingTA(localTime) != 0);
 
     return prtm;
 }
@@ -2652,20 +2647,20 @@ FormatDate(JSContext* cx, double utcTime, FormatSpec format, MutableHandleValue 
              */
 
             /* get a time zone string from the OS to include as a comment. */
-            PRMJTime prtm = ToPRMJTime(localTime, utcTime);
+            PRMJTime prtm = ToPRMJTime(utcTime);
             size_t tzlen = PRMJ_FormatTime(tzbuf, sizeof tzbuf, "(%Z)", &prtm);
             if (tzlen != 0) {
                 /*
                  * Decide whether to use the resulting time zone string.
                  *
-                 * Reject it if it contains any non-ASCII or non-printable
+                 * Reject it if it contains any non-ASCII, non-alphanumeric
                  * characters.  It's then likely in some other character
                  * encoding, and we probably won't display it correctly.
                  */
                 usetz = true;
                 for (size_t i = 0; i < tzlen; i++) {
                     char16_t c = tzbuf[i];
-                    if (c > 127 || !isprint(c)) {
+                    if (c > 127 || !(isalnum(c) || c == ' ' || c == '(' || c == ')' || c == '.')) {
                         usetz = false;
                         break;
                     }
@@ -2732,7 +2727,7 @@ ToLocaleFormatHelper(JSContext* cx, HandleObject obj, const char* format, Mutabl
         strcpy(buf, js_NaN_date_str);
     } else {
         double localTime = LocalTime(utcTime);
-        PRMJTime prtm = ToPRMJTime(localTime, utcTime);
+        PRMJTime prtm = ToPRMJTime(localTime);
 
         /* Let PRMJTime format it. */
         size_t result_len = PRMJ_FormatTime(buf, sizeof buf, format, &prtm);
@@ -2945,20 +2940,47 @@ date_toSource(JSContext* cx, unsigned argc, Value* vp)
 }
 #endif
 
+MOZ_ALWAYS_INLINE bool
+IsObject(HandleValue v)
+{
+    return v.isObject();
+}
+
 // ES6 20.3.4.41.
 MOZ_ALWAYS_INLINE bool
 date_toString_impl(JSContext* cx, const CallArgs& args)
 {
-    // Steps 1-2.
-    return FormatDate(cx, args.thisv().toObject().as<DateObject>().UTCTime().toNumber(),
-                      FormatSpec::DateTime, args.rval());
+    // Step 1.
+    RootedObject obj(cx, &args.thisv().toObject());
+
+    // Step 2.
+    ESClass cls;
+    if (!GetBuiltinClass(cx, obj, &cls))
+        return false;
+
+    double tv;
+    if (cls != ESClass::Date) {
+        // Step 2.
+        tv = GenericNaN();
+    } else {
+        // Step 3.
+        RootedValue unboxed(cx);
+        if (!Unbox(cx, obj, &unboxed))
+            return false;
+
+        tv = unboxed.toNumber();
+    }
+
+    // Step 4.
+    return FormatDate(cx, tv, FormatSpec::DateTime, args.rval());
 }
 
 bool
 date_toString(JSContext* cx, unsigned argc, Value* vp)
 {
+    // Step 1.
     CallArgs args = CallArgsFromVp(argc, vp);
-    return CallNonGenericMethod<IsDate, date_toString_impl>(cx, args);
+    return CallNonGenericMethod<IsObject, date_toString_impl>(cx, args);
 }
 
 MOZ_ALWAYS_INLINE bool
@@ -3261,8 +3283,8 @@ FinishDateClassInit(JSContext* cx, HandleObject ctor, HandleObject proto)
     RootedId toUTCStringId(cx, NameToId(cx->names().toUTCString));
     RootedId toGMTStringId(cx, NameToId(cx->names().toGMTString));
     return NativeGetProperty(cx, proto.as<NativeObject>(), toUTCStringId, &toUTCStringFun) &&
-           NativeDefineDataProperty(cx, proto.as<NativeObject>(), toGMTStringId, toUTCStringFun,
-                                    0);
+           NativeDefineProperty(cx, proto.as<NativeObject>(), toGMTStringId, toUTCStringFun,
+                                nullptr, nullptr, 0);
 }
 
 static const ClassSpec DateObjectClassSpec = {

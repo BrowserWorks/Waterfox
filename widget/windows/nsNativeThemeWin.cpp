@@ -49,8 +49,7 @@ nsNativeThemeWin::nsNativeThemeWin() :
   mProgressDeterminateTimeStamp(TimeStamp::Now()),
   mProgressIndeterminateTimeStamp(TimeStamp::Now()),
   mBorderCacheValid(),
-  mMinimumWidgetSizeCacheValid(),
-  mGutterSizeCacheValid(false)
+  mMinimumWidgetSizeCacheValid()
 {
   // If there is a relevant change in forms.css for windows platform,
   // static widget style variables (e.g. sButtonBorderSize) should be 
@@ -220,19 +219,6 @@ GetGutterSize(HANDLE theme, HDC hdc)
     ret.cx = width;
     ret.cy = height;
     return ret;
-}
-
-SIZE
-nsNativeThemeWin::GetCachedGutterSize(HANDLE theme)
-{
-  if (mGutterSizeCacheValid) {
-    return mGutterSizeCache;
-  }
-
-  mGutterSizeCache = GetGutterSize(theme, nullptr);
-  mGutterSizeCacheValid = true;
-
-  return mGutterSizeCache;
 }
 
 /* DrawThemeBGRTLAware - render a theme part based on rtl state.
@@ -1492,8 +1478,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
 static bool
 AssumeThemePartAndStateAreTransparent(int32_t aPart, int32_t aState)
 {
-  if (!(IsWin8Point1OrLater() && nsUXThemeData::IsHighContrastOn()) &&
-      aPart == MENU_POPUPITEM && aState == MBI_NORMAL) {
+  if (aPart == MENU_POPUPITEM && aState == MBI_NORMAL) {
     return true;
   }
   return false;
@@ -2288,7 +2273,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     case NS_THEME_RADIOMENUITEM:
       if(!IsTopLevelMenu(aFrame))
       {
-        SIZE gutterSize(GetCachedGutterSize(theme));
+        SIZE gutterSize(GetGutterSize(theme, nullptr));
         aResult->width = gutterSize.cx;
         aResult->height = gutterSize.cy;
         ScaleForFrameDPI(aResult, aFrame);
@@ -2300,7 +2285,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     case NS_THEME_MENUCHECKBOX:
     case NS_THEME_MENURADIO:
       {
-        SIZE boxSize(GetCachedGutterSize(theme));
+        SIZE boxSize(GetGutterSize(theme, nullptr));
         aResult->width = boxSize.cx+2;
         aResult->height = boxSize.cy;
         *aIsOverridable = false;
@@ -2452,7 +2437,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
 
 NS_IMETHODIMP
 nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
-                                     nsAtom* aAttribute, bool* aShouldRepaint,
+                                     nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
   // Some widget types just never change state.
@@ -2530,7 +2515,6 @@ nsNativeThemeWin::ThemeChanged()
   nsUXThemeData::Invalidate();
   memset(mBorderCacheValid, 0, sizeof(mBorderCacheValid));
   memset(mMinimumWidgetSizeCacheValid, 0, sizeof(mMinimumWidgetSizeCacheValid));
-  mGutterSizeCacheValid = false;
   return NS_OK;
 }
 

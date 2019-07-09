@@ -1214,10 +1214,6 @@ nsLineLayout::SyncAnnotationBounds(PerFrameData* aRubyFrame)
   for (PerFrameData* pfd = span->mFirstFrame; pfd; pfd = pfd->mNext) {
     for (PerFrameData* rtc = pfd->mNextAnnotation;
          rtc; rtc = rtc->mNextAnnotation) {
-      if (lineWM.IsOrthogonalTo(rtc->mFrame->GetWritingMode())) {
-        // Inter-character case: don't attempt to sync annotation bounds.
-        continue;
-      }
       // When the annotation container is reflowed, the width of the
       // ruby container is unknown so we use a dummy container size;
       // in the case of RTL block direction, the final position will be
@@ -3021,10 +3017,6 @@ nsLineLayout::ExpandRubyBoxWithAnnotations(PerFrameData* aFrame,
   bool isLevelContainer = aFrame->mFrame->IsRubyBaseContainerFrame();
   for (PerFrameData* annotation = aFrame->mNextAnnotation;
        annotation; annotation = annotation->mNextAnnotation) {
-    if (lineWM.IsOrthogonalTo(annotation->mFrame->GetWritingMode())) {
-      // Inter-character case: don't attempt to expand ruby annotations.
-      continue;
-    }
     if (isLevelContainer) {
       nsIFrame* rtcFrame = annotation->mFrame;
       MOZ_ASSERT(rtcFrame->IsRubyTextContainerFrame());

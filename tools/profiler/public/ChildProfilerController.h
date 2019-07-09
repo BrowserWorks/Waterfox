@@ -8,8 +8,9 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/RefPtr.h"
-#include "nsStringFwd.h"
 #include "base/process.h"
+
+class nsCString;
 
 namespace mozilla {
 

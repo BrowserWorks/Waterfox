@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.every
 es5id: 15.4.4.16-7-b-16
 description: >
     Array.prototype.every - decreasing length of array does not delete
@@ -17,7 +16,7 @@ flags: [noStrict]
                 return true;
             }
         }
-
+        
         var arr = [0, 1, 2];
 
         Object.defineProperty(arr, "2", {

@@ -5,7 +5,7 @@
 /*---
 description: RestParameter does not support an initializer (static class expression generator method)
 esid: sec-runtime-semantics-bindingclassdeclarationevaluation
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 negative:
   phase: early
@@ -62,7 +62,6 @@ info: |
            iteratorRecord and env as arguments.
     [...]
 
-
     14.1 Function Definitions
 
     Syntax
@@ -81,7 +80,6 @@ info: |
       ...BindingPattern[?Yield]
 
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 class C {
   static *method(...x = []) {

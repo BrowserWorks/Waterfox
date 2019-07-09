@@ -399,8 +399,8 @@ function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout) {
     }
 
     info("Loading manager window in tab");
-    Services.obs.addObserver(function observer(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(observer, aTopic);
+    Services.obs.addObserver(function(aSubject, aTopic, aData) {
+      Services.obs.removeObserver(arguments.callee, aTopic);
       if (aSubject.location.href != MANAGER_URI) {
         info("Ignoring load event for " + aSubject.location.href);
         return;
@@ -425,10 +425,10 @@ function close_manager(aManagerWindow, aCallback, aLongerTimeout) {
     ok(aManagerWindow != null, "Should have an add-ons manager window to close");
     is(aManagerWindow.location, MANAGER_URI, "Should be closing window with correct URI");
 
-    aManagerWindow.addEventListener("unload", function listener() {
+    aManagerWindow.addEventListener("unload", function() {
       try {
         dump("Manager window unload handler\n");
-        this.removeEventListener("unload", listener);
+        this.removeEventListener("unload", arguments.callee);
         resolve();
       } catch (e) {
         reject(e);
@@ -611,7 +611,7 @@ CategoryUtilities.prototype = {
   openType(aCategoryType, aCallback) {
     return this.open(this.get(aCategoryType), aCallback);
   }
-};
+}
 
 function CertOverrideListener(host, bits) {
   this.host = host;
@@ -643,7 +643,7 @@ CertOverrideListener.prototype = {
     cos.rememberValidityOverride(this.host, -1, cert, this.bits, false);
     return true;
   }
-};
+}
 
 // Add overrides for the bad certificates
 function addCertOverride(host, bits) {
@@ -732,7 +732,7 @@ MockProvider.prototype = {
     let requiresRestart = (aAddon.operationsRequiringRestart &
                            AddonManager.OP_NEEDS_RESTART_INSTALL) != 0;
     AddonManagerPrivate.callInstallListeners("onExternalInstall", null, aAddon,
-                                             oldAddon, requiresRestart);
+                                             oldAddon, requiresRestart)
   },
 
   /**

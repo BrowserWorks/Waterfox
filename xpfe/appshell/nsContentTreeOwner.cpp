@@ -37,6 +37,7 @@
 #include "nsWindowWatcher.h"
 #include "NullPrincipal.h"
 #include "mozilla/BrowserElementParent.h"
+#include "nsIDocShellLoadInfo.h"
 
 #include "nsIDOMDocument.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -713,14 +714,15 @@ NS_IMETHODIMP nsContentTreeOwner::SetFocus()
    return mXULWindow->SetFocus();
 }
 
-NS_IMETHODIMP nsContentTreeOwner::GetTitle(nsAString& aTitle)
+NS_IMETHODIMP nsContentTreeOwner::GetTitle(char16_t** aTitle)
 {
+   NS_ENSURE_ARG_POINTER(aTitle);
    NS_ENSURE_STATE(mXULWindow);
 
    return mXULWindow->GetTitle(aTitle);
 }
 
-NS_IMETHODIMP nsContentTreeOwner::SetTitle(const nsAString& aTitle)
+NS_IMETHODIMP nsContentTreeOwner::SetTitle(const char16_t* aTitle)
 {
    // We only allow the title to be set from the primary content shell
   if(!mPrimary || !mContentTitleSetting)
@@ -809,7 +811,7 @@ NS_IMETHODIMP nsContentTreeOwner::SetTitle(const nsAString& aTitle)
     return rv.StealNSResult();
   }
 
-  return mXULWindow->SetTitle(title);
+  return mXULWindow->SetTitle(title.get());
 }
 
 //*****************************************************************************
@@ -825,6 +827,7 @@ nsContentTreeOwner::ProvideWindow(mozIDOMWindowProxy* aParent,
                                   const nsAString& aName,
                                   const nsACString& aFeatures,
                                   bool aForceNoOpener,
+                                  nsIDocShellLoadInfo* aLoadInfo,
                                   bool* aWindowIsNew,
                                   mozIDOMWindowProxy** aReturn)
 {
@@ -922,15 +925,16 @@ nsContentTreeOwner::ProvideWindow(mozIDOMWindowProxy* aParent,
       flags |= nsIBrowserDOMWindow::OPEN_NO_OPENER;
     }
 
-    // Get a new rendering area from the browserDOMWin.
-    // Since we are not loading any URI, we follow the principle of least
-    // privilege and use a nullPrincipal as the triggeringPrincipal.
+    // Get a new rendering area from the browserDOMWin.  We don't want
+    // to be starting any loads here, so get it with a null URI. Since/
+    // we are not loading any URI, we follow the principle of least privlege
+    // and use a nullPrincipal as the triggeringPrincipal.
     //
     // This method handles setting the opener for us, so we don't need to set it
     // ourselves.
     RefPtr<NullPrincipal> nullPrincipal = NullPrincipal::Create();
-    return browserDOMWin->CreateContentWindow(aURI, aParent, openLocation,
-                                              flags, nullPrincipal, aReturn);
+    return browserDOMWin->OpenURI(nullptr, aParent, openLocation,
+                                  flags, nullPrincipal, aReturn);
   }
 }
 
@@ -1147,13 +1151,13 @@ nsSiteWindow::SetVisibility(bool aVisibility)
 }
 
 NS_IMETHODIMP
-nsSiteWindow::GetTitle(nsAString& aTitle)
+nsSiteWindow::GetTitle(char16_t * *aTitle)
 {
   return mAggregator->GetTitle(aTitle);
 }
 
 NS_IMETHODIMP
-nsSiteWindow::SetTitle(const nsAString& aTitle)
+nsSiteWindow::SetTitle(const char16_t * aTitle)
 {
   return mAggregator->SetTitle(aTitle);
 }

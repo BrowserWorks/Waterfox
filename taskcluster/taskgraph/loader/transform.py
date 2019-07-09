@@ -5,6 +5,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
+import itertools
 
 from ..util.templates import merge
 from ..util.yaml import load_yaml
@@ -23,34 +24,23 @@ def loader(kind, path, config, params, loaded_tasks):
     keys to those mappings are added in the `name` key of each entity.
 
     If there is a `job-defaults` config, then every job is merged with it.
-    This provides a simple way to set default values for all jobs of a kind.
-    The `job-defaults` key can also be specified in a yaml file pointed to by
-    `jobs-from`. In this case it will only apply to tasks defined in the same
-    file.
+    This provides a simple way to set default values for all jobs of a
+    kind.  More complex defaults should be implemented with custom
+    transforms.
 
     Other kind implementations can use a different loader function to
     produce inputs and hand them to `transform_inputs`.
     """
     def jobs():
         defaults = config.get('job-defaults')
-        for name, job in config.get('jobs', {}).iteritems():
+        jobs = config.get('jobs', {}).iteritems()
+        jobs_from = itertools.chain.from_iterable(
+            load_yaml(path, filename).iteritems()
+            for filename in config.get('jobs-from', {}))
+        for name, job in itertools.chain(jobs, jobs_from):
             if defaults:
                 job = merge(defaults, job)
-            job['job-from'] = 'kind.yml'
             yield name, job
-
-        for filename in config.get('jobs-from', []):
-            tasks = load_yaml(path, filename)
-
-            file_defaults = tasks.pop('job-defaults', None)
-            if defaults:
-                file_defaults = merge(defaults, file_defaults or {})
-
-            for name, job in tasks.iteritems():
-                if file_defaults:
-                    job = merge(file_defaults, job)
-                job['job-from'] = filename
-                yield name, job
 
     for name, job in jobs():
         job['name'] = name

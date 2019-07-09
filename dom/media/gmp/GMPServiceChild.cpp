@@ -19,7 +19,6 @@
 #include "base/task.h"
 #include "nsIObserverService.h"
 #include "nsComponentManagerUtils.h"
-#include "mozilla/SystemGroup.h"
 
 namespace mozilla {
 
@@ -226,22 +225,22 @@ struct GMPCapabilityAndVersion
   {
     nsCString s;
     s.Append(mName);
-    s.AppendLiteral(" version=");
+    s.Append(" version=");
     s.Append(mVersion);
-    s.AppendLiteral(" tags=[");
+    s.Append(" tags=[");
     nsCString tags;
     for (const GMPCapability& cap : mCapabilities) {
       if (!tags.IsEmpty()) {
-        tags.AppendLiteral(" ");
+        tags.Append(" ");
       }
       tags.Append(cap.mAPIName);
       for (const nsCString& tag : cap.mAPITags) {
-        tags.AppendLiteral(":");
+        tags.Append(":");
         tags.Append(tag);
       }
     }
     s.Append(tags);
-    s.AppendLiteral("]");
+    s.Append("]");
     return s;
   }
 
@@ -259,7 +258,7 @@ GMPCapabilitiesToString()
   nsCString s;
   for (const GMPCapabilityAndVersion& gmp : *sGMPCapabilities) {
     if (!s.IsEmpty()) {
-      s.AppendLiteral(", ");
+      s.Append(", ");
     }
     s.Append(gmp.ToString());
   }

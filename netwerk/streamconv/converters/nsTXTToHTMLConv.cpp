@@ -285,7 +285,7 @@ nsTXTToHTMLConv::CatHTML(int32_t front, int32_t back)
         // href is implied
         mBuffer.Mid(linkText, front, back-front);
 
-        mBuffer.InsertLiteral(u"<a href=\"", front);
+        mBuffer.Insert(NS_LITERAL_STRING("<a href=\""), front);
         cursor += front+9;
         if (modLen) {
             mBuffer.Insert(mToken->modText, cursor);
@@ -302,11 +302,11 @@ nsTXTToHTMLConv::CatHTML(int32_t front, int32_t back)
         }
 
         cursor += back-front;
-        mBuffer.InsertLiteral(u"\">", cursor);
+        mBuffer.Insert(NS_LITERAL_STRING("\">"), cursor);
         cursor += 2;
         mBuffer.Insert(linkText, cursor);
         cursor += linkText.Length();
-        mBuffer.InsertLiteral(u"</a>", cursor);
+        mBuffer.Insert(NS_LITERAL_STRING("</a>"), cursor);
         cursor += 4;
     }
     mToken = nullptr; // indicates completeness

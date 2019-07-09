@@ -5,8 +5,6 @@
 #ifndef IIRFilter_h
 #define IIRFilter_h
 
-#include "nsTArray.h"
-
 typedef nsTArray<double> AudioDoubleArray;
 
 namespace blink {

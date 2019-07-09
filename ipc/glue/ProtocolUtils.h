@@ -29,7 +29,6 @@
 #include "mozilla/NotNull.h"
 #include "mozilla/UniquePtr.h"
 #include "MainThreadUtils.h"
-#include "nsILabelableRunnable.h"
 
 #if defined(ANDROID) && defined(DEBUG)
 #include <android/log.h>
@@ -63,8 +62,6 @@ enum {
 class nsIEventTarget;
 
 namespace mozilla {
-class SchedulerGroup;
-
 namespace dom {
 class ContentParent;
 } // namespace dom
@@ -269,8 +266,6 @@ protected:
     ~IToplevelProtocol();
 
 public:
-    using SchedulerGroupSet = nsILabelableRunnable::SchedulerGroupSet;
-
     void SetTransport(UniquePtr<Transport> aTrans)
     {
         mTrans = Move(aTrans);
@@ -384,16 +379,6 @@ public:
     }
 
     virtual void ProcessRemoteNativeEventsInInterruptCall() {
-    }
-
-    // Override this method in top-level protocols to change the SchedulerGroups
-    // that a message might affect. This should be used only as a last resort
-    // when it's difficult to determine an EventTarget ahead of time. See the
-    // comment in nsILabelableRunnable.h for more information.
-    virtual bool
-    GetMessageSchedulerGroups(const Message& aMsg, SchedulerGroupSet& aGroups)
-    {
-        return false;
     }
 
     virtual already_AddRefed<nsIEventTarget>
@@ -626,22 +611,18 @@ public:
 
     Endpoint(Endpoint&& aOther)
       : mValid(aOther.mValid)
+      , mMode(aOther.mMode)
       , mTransport(aOther.mTransport)
       , mMyPid(aOther.mMyPid)
       , mOtherPid(aOther.mOtherPid)
     {
-        if (aOther.mValid) {
-            mMode = aOther.mMode;
-        }
         aOther.mValid = false;
     }
 
     Endpoint& operator=(Endpoint&& aOther)
     {
         mValid = aOther.mValid;
-        if (aOther.mValid) {
-            mMode = aOther.mMode;
-        }
+        mMode = aOther.mMode;
         mTransport = aOther.mTransport;
         mMyPid = aOther.mMyPid;
         mOtherPid = aOther.mOtherPid;
@@ -735,6 +716,8 @@ CreateEndpoints(const PrivateIPDLInterface& aPrivate,
 void
 TableToArray(const nsTHashtable<nsPtrHashKey<void>>& aTable,
              nsTArray<void*>& aArray);
+
+const char* StringFromIPCMessageType(uint32_t aMessageType);
 
 } // namespace ipc
 

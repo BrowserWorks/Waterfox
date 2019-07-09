@@ -57,7 +57,6 @@
 #include <d3d10_1.h>
 
 #include "mozilla/gfx/2D.h"
-#include "mozilla/gfx/gfxVars.h"
 
 #include "nsMemory.h"
 
@@ -479,10 +478,6 @@ gfxWindowsPlatform::GetContentBackendFor(mozilla::layers::LayersBackend aLayers)
     return defaultBackend;
   }
 
-  if (aLayers == LayersBackend::LAYERS_WR && gfx::gfxVars::UseWebRenderANGLE()) {
-    return defaultBackend;
-  }
-
   if (defaultBackend == BackendType::DIRECT2D1_1) {
     // We can't have D2D without D3D11 layers, so fallback to Skia.
     return BackendType::SKIA;
@@ -557,6 +552,34 @@ gfxWindowsPlatform::CreateOffscreenSurface(const IntSize& aSize,
     }
 
     return surf.forget();
+}
+
+already_AddRefed<ScaledFont>
+gfxWindowsPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
+{
+    if (aFont->GetType() == gfxFont::FONT_TYPE_DWRITE) {
+        return aFont->GetScaledFont(aTarget);
+    }
+
+    NS_ASSERTION(aFont->GetType() == gfxFont::FONT_TYPE_GDI,
+        "Fonts on windows should be GDI or DWrite!");
+
+    NativeFont nativeFont;
+    nativeFont.mType = NativeFontType::GDI_FONT_FACE;
+    LOGFONT lf;
+    GetObject(static_cast<gfxGDIFont*>(aFont)->GetHFONT(), sizeof(LOGFONT), &lf);
+    nativeFont.mFont = &lf;
+
+    if (aTarget->GetBackendType() == BackendType::CAIRO) {
+      return Factory::CreateScaledFontWithCairo(nativeFont,
+                                                aFont->GetUnscaledFont(),
+                                                aFont->GetAdjustedSize(),
+                                                aFont->GetCairoScaledFont());
+    }
+
+    return Factory::CreateScaledFontForNativeFont(nativeFont,
+                                                  aFont->GetUnscaledFont(),
+                                                  aFont->GetAdjustedSize());
 }
 
 static const char kFontAparajita[] = "Aparajita";

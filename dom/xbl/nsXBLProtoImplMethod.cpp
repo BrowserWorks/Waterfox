@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "jsapi.h"
 #include "nsIContent.h"
@@ -193,7 +193,7 @@ nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsString& aClassStr,
   JS::CompileOptions options(cx);
   options.setFileAndLine(functionUri.get(),
                          uncompiledMethod->mBodyText.GetLineNumber())
-         .setVersion(JSVERSION_DEFAULT);
+         .setVersion(JSVERSION_LATEST);
   JS::Rooted<JSObject*> methodObject(cx);
   JS::AutoObjectVector emptyVector(cx);
   nsresult rv = nsJSUtils::CompileFunction(jsapi, emptyVector, options, cname,

@@ -35,6 +35,7 @@ public:
     , mWidth(0)
     , mHeight(0)
     , mInitDone(false)
+    , mHasDirectListeners(false)
     , mCaptureIndex(aIndex)
     , mTrackID(0)
   {}
@@ -44,6 +45,7 @@ public:
 
   void GetName(nsAString& aName) const override;
   void GetUUID(nsACString& aUUID) const override;
+  void SetDirectListeners(bool aHasListeners) override;
 
   bool IsFake() override
   {
@@ -117,10 +119,12 @@ protected:
   nsTArray<PrincipalHandle> mPrincipalHandles; // Directly mapped to mSources.
   RefPtr<layers::Image> mImage;
   RefPtr<layers::ImageContainer> mImageContainer;
+  int mWidth, mHeight; // protected with mMonitor on Gonk due to different threading
   // end of data protected by mMonitor
 
-  int mWidth, mHeight;
+
   bool mInitDone;
+  bool mHasDirectListeners;
   int mCaptureIndex;
   TrackID mTrackID;
 

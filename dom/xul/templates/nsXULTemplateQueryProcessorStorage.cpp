@@ -50,8 +50,8 @@ nsXULTemplateResultSetStorage::nsXULTemplateResultSetStorage(mozIStorageStatemen
         nsAutoCString name;
         rv = aStatement->GetColumnName(c, name);
         if (NS_SUCCEEDED(rv)) {
-            RefPtr<nsAtom> columnName = NS_Atomize(NS_LITERAL_CSTRING("?") + name);
-            mColumnNames.AppendElement(columnName);
+            nsCOMPtr<nsIAtom> columnName = NS_Atomize(NS_LITERAL_CSTRING("?") + name);
+            mColumnNames.AppendObject(columnName);
         }
     }
 }
@@ -87,9 +87,9 @@ nsXULTemplateResultSetStorage::GetNext(nsISupports **aResult)
 
 
 int32_t
-nsXULTemplateResultSetStorage::GetColumnIndex(nsAtom* aColumnName)
+nsXULTemplateResultSetStorage::GetColumnIndex(nsIAtom* aColumnName)
 {
-    int32_t count = mColumnNames.Length();
+    int32_t count = mColumnNames.Count();
     for (int32_t c = 0; c < count; c++) {
         if (mColumnNames[c] == aColumnName)
             return c;
@@ -104,7 +104,7 @@ nsXULTemplateResultSetStorage::FillColumnValues(nsCOMArray<nsIVariant>& aArray)
     if (!mStatement)
         return;
 
-    int32_t count = mColumnNames.Length();
+    int32_t count = mColumnNames.Count();
 
     for (int32_t c = 0; c < count; c++) {
         RefPtr<nsVariant> value = new nsVariant();
@@ -193,7 +193,7 @@ nsXULTemplateQueryProcessorStorage::GetDatasource(nsIArray* aDataSources,
     if (scheme.EqualsLiteral("profile")) {
 
         nsAutoCString path;
-        rv = uri->GetPathQueryRef(path);
+        rv = uri->GetPath(path);
         NS_ENSURE_SUCCESS(rv, rv);
 
         if (path.IsEmpty()) {
@@ -273,8 +273,8 @@ nsXULTemplateQueryProcessorStorage::Done()
 NS_IMETHODIMP
 nsXULTemplateQueryProcessorStorage::CompileQuery(nsIXULTemplateBuilder* aBuilder,
                                                  nsIDOMNode* aQueryNode,
-                                                 nsAtom* aRefVariable,
-                                                 nsAtom* aMemberVariable,
+                                                 nsIAtom* aRefVariable,
+                                                 nsIAtom* aMemberVariable,
                                                  nsISupports** aReturn)
 {
     nsCOMPtr<nsIDOMNodeList> childNodes;
@@ -411,8 +411,8 @@ nsXULTemplateQueryProcessorStorage::GenerateResults(nsISupports* aDatasource,
 
 NS_IMETHODIMP
 nsXULTemplateQueryProcessorStorage::AddBinding(nsIDOMNode* aRuleNode,
-                                               nsAtom* aVar,
-                                               nsAtom* aRef,
+                                               nsIAtom* aVar,
+                                               nsIAtom* aRef,
                                                const nsAString& aExpr)
 {
     return NS_OK;
@@ -434,7 +434,7 @@ nsXULTemplateQueryProcessorStorage::TranslateRef(nsISupports* aDatasource,
 NS_IMETHODIMP
 nsXULTemplateQueryProcessorStorage::CompareResults(nsIXULTemplateResult* aLeft,
                                                    nsIXULTemplateResult* aRight,
-                                                   nsAtom* aVar,
+                                                   nsIAtom* aVar,
                                                    uint32_t aSortHints,
                                                    int32_t* aResult)
 {

@@ -3,16 +3,13 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-description: >
-    A newline may not precede the `*` token in a `yield` expression.
-es6id: 14.4
-negative:
-  phase: early
-  type: SyntaxError
-features: [generators]
----*/
-
-throw "Test262: This statement should not be evaluated.";
+  description: >
+      A newline may not precede the `*` token in a `yield` expression.
+  es6id: 14.4
+  negative:
+    phase: early
+    type: SyntaxError
+ ---*/
 
 function* g() {
   yield

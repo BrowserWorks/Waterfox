@@ -59,26 +59,9 @@ Decoder::fail(size_t errorOffset, const char* msg)
 }
 
 bool
-Decoder::readSectionHeader(uint8_t* id, SectionRange* range)
+Decoder::startSection(SectionId id, ModuleEnvironment* env, uint32_t* sectionStart,
+                      uint32_t* sectionSize, const char* sectionName)
 {
-    if (!readFixedU8(id))
-        return false;
-
-    uint32_t size;
-    if (!readVarU32(&size))
-        return false;
-
-    range->start = cur_ - beg_;
-    range->size = size;
-    return true;
-}
-
-bool
-Decoder::startSection(SectionId id, ModuleEnvironment* env, MaybeSectionRange* range,
-                      const char* sectionName)
-{
-    MOZ_ASSERT(!*range);
-
     // Record state at beginning of section to allow rewinding to this point
     // if, after skipping through several custom sections, we don't find the
     // section 'id'.
@@ -91,12 +74,12 @@ Decoder::startSection(SectionId id, ModuleEnvironment* env, MaybeSectionRange* r
 
     // Only start a section with 'id', skipping any custom sections before it.
 
-    uint8_t idValue;
-    if (!readFixedU8(&idValue))
+    uint32_t idValue;
+    if (!readVarU32(&idValue))
         goto rewind;
 
-    while (idValue != uint8_t(id)) {
-        if (idValue != uint8_t(SectionId::Custom))
+    while (idValue != uint32_t(id)) {
+        if (idValue != uint32_t(SectionId::Custom))
             goto rewind;
 
         // Rewind to the beginning of the current section since this is what
@@ -108,24 +91,22 @@ Decoder::startSection(SectionId id, ModuleEnvironment* env, MaybeSectionRange* r
         // Having successfully skipped a custom section, consider the next
         // section.
         currentSectionStart = cur_;
-        if (!readFixedU8(&idValue))
+        if (!readVarU32(&idValue))
             goto rewind;
     }
 
     // Found it, now start the section.
 
-    uint32_t size;
-    if (!readVarU32(&size) || bytesRemain() < size)
+    if (!readVarU32(sectionSize) || bytesRemain() < *sectionSize)
         goto fail;
 
-    range->emplace();
-    (*range)->start = cur_ - beg_;
-    (*range)->size = size;
+    *sectionStart = cur_ - beg_;
     return true;
 
   rewind:
     cur_ = initialCur;
     env->customSections.shrinkTo(initialCustomSectionsLength);
+    *sectionStart = NotStarted;
     return true;
 
   fail:
@@ -133,18 +114,18 @@ Decoder::startSection(SectionId id, ModuleEnvironment* env, MaybeSectionRange* r
 }
 
 bool
-Decoder::finishSection(const SectionRange& range, const char* sectionName)
+Decoder::finishSection(uint32_t sectionStart, uint32_t sectionSize, const char* sectionName)
 {
     if (resilientMode_)
         return true;
-    if (range.size != (cur_ - beg_) - range.start)
+    if (sectionSize != (cur_ - beg_) - sectionStart)
         return failf("byte size mismatch in %s section", sectionName);
     return true;
 }
 
 bool
 Decoder::startCustomSection(const char* expected, size_t expectedLength, ModuleEnvironment* env,
-                            MaybeSectionRange* range)
+                            uint32_t* sectionStart, uint32_t* sectionSize)
 {
     // Record state at beginning of section to allow rewinding to this point
     // if, after skipping through several custom sections, we don't find the
@@ -156,9 +137,9 @@ Decoder::startCustomSection(const char* expected, size_t expectedLength, ModuleE
         // Try to start a custom section. If we can't, rewind to the beginning
         // since we may have skipped several custom sections already looking for
         // 'expected'.
-        if (!startSection(SectionId::Custom, env, range, "custom"))
+        if (!startSection(SectionId::Custom, env, sectionStart, sectionSize, "custom"))
             return false;
-        if (!*range)
+        if (*sectionStart == NotStarted)
             goto rewind;
 
         NameInBytecode name;
@@ -167,7 +148,7 @@ Decoder::startCustomSection(const char* expected, size_t expectedLength, ModuleE
 
         name.offset = currentOffset();
         uint32_t payloadOffset = name.offset + name.length;
-        uint32_t payloadEnd = (*range)->start + (*range)->size;
+        uint32_t payloadEnd = *sectionStart + *sectionSize;
         if (payloadOffset > payloadEnd)
             goto fail;
 
@@ -185,8 +166,7 @@ Decoder::startCustomSection(const char* expected, size_t expectedLength, ModuleE
         }
 
         // Otherwise, blindly skip the custom section and keep looking.
-        finishCustomSection(**range);
-        range->reset();
+        finishCustomSection(*sectionStart, *sectionSize);
     }
     MOZ_CRASH("unreachable");
 
@@ -200,11 +180,11 @@ Decoder::startCustomSection(const char* expected, size_t expectedLength, ModuleE
 }
 
 void
-Decoder::finishCustomSection(const SectionRange& range)
+Decoder::finishCustomSection(uint32_t sectionStart, uint32_t sectionSize)
 {
     MOZ_ASSERT(cur_ >= beg_);
     MOZ_ASSERT(cur_ <= end_);
-    cur_ = (beg_ + range.start) + range.size;
+    cur_ = (beg_ + sectionStart) + sectionSize;
     MOZ_ASSERT(cur_ <= end_);
     clearError();
 }
@@ -212,29 +192,28 @@ Decoder::finishCustomSection(const SectionRange& range)
 bool
 Decoder::skipCustomSection(ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!startCustomSection(nullptr, 0, env, &range))
+    uint32_t sectionStart, sectionSize;
+    if (!startCustomSection(nullptr, 0, env, &sectionStart, &sectionSize))
         return false;
-    if (!range)
+    if (sectionStart == NotStarted)
         return fail("expected custom section");
 
-    finishCustomSection(*range);
+    finishCustomSection(sectionStart, sectionSize);
     return true;
 }
 
 bool
-Decoder::startNameSubsection(NameType nameType, Maybe<uint32_t>* endOffset)
+Decoder::startNameSubsection(NameType nameType, uint32_t* endOffset)
 {
-    MOZ_ASSERT(!*endOffset);
-
     const uint8_t* initialPosition = cur_;
 
-    uint8_t nameTypeValue;
-    if (!readFixedU8(&nameTypeValue))
+    uint32_t nameTypeValue;
+    if (!readVarU32(&nameTypeValue))
         return false;
 
     if (nameTypeValue != uint8_t(nameType)) {
         cur_ = initialPosition;
+        *endOffset = NotStarted;
         return true;
     }
 
@@ -242,13 +221,14 @@ Decoder::startNameSubsection(NameType nameType, Maybe<uint32_t>* endOffset)
     if (!readVarU32(&payloadLength) || payloadLength > bytesRemain())
         return false;
 
-    *endOffset = Some((cur_ - beg_) + payloadLength);
+    *endOffset = (cur_ - beg_) + payloadLength;
     return true;
 }
 
 bool
 Decoder::finishNameSubsection(uint32_t endOffset)
 {
+    MOZ_ASSERT(endOffset != NotStarted);
     return endOffset == uint32_t(cur_ - beg_);
 }
 
@@ -599,15 +579,6 @@ DecodeFunctionBodyExprs(const ModuleEnvironment& env, const Sig& sig, const ValT
             CHECK(iter.readConversion(ValType::I64, ValType::F64, &nothing));
           case uint16_t(Op::F64PromoteF32):
             CHECK(iter.readConversion(ValType::F32, ValType::F64, &nothing));
-#ifdef ENABLE_WASM_THREAD_OPS
-          case uint16_t(Op::I32Extend8S):
-          case uint16_t(Op::I32Extend16S):
-            CHECK(iter.readConversion(ValType::I32, ValType::I32, &nothing));
-          case uint16_t(Op::I64Extend8S):
-          case uint16_t(Op::I64Extend16S):
-          case uint16_t(Op::I64Extend32S):
-            CHECK(iter.readConversion(ValType::I64, ValType::I64, &nothing));
-#endif
           case uint16_t(Op::I32Load8S):
           case uint16_t(Op::I32Load8U): {
             LinearMemoryAddress<Nothing> addr;
@@ -763,10 +734,10 @@ DecodePreamble(Decoder& d)
 static bool
 DecodeTypeSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Type, env, &range, "type"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Type, env, &sectionStart, &sectionSize, "type"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numSigs;
@@ -780,8 +751,8 @@ DecodeTypeSection(Decoder& d, ModuleEnvironment* env)
         return false;
 
     for (uint32_t sigIndex = 0; sigIndex < numSigs; sigIndex++) {
-        uint8_t form;
-        if (!d.readFixedU8(&form) || form != uint8_t(TypeCode::Func))
+        uint32_t form;
+        if (!d.readVarU32(&form) || form != uint32_t(TypeCode::Func))
             return d.fail("expected function form");
 
         uint32_t numArgs;
@@ -820,7 +791,10 @@ DecodeTypeSection(Decoder& d, ModuleEnvironment* env)
         env->sigs[sigIndex] = Sig(Move(args), result);
     }
 
-    return d.finishSection(*range, "type");
+    if (!d.finishSection(sectionStart, sectionSize, "type"))
+        return false;
+
+    return true;
 }
 
 static UniqueChars
@@ -835,9 +809,6 @@ DecodeName(Decoder& d)
 
     const uint8_t* bytes;
     if (!d.readBytes(numBytes, &bytes))
-        return nullptr;
-
-    if (!JS::StringIsUTF8(bytes, numBytes))
         return nullptr;
 
     UniqueChars name(js_pod_malloc<char>(numBytes + 1));
@@ -865,12 +836,12 @@ DecodeSignatureIndex(Decoder& d, const SigWithIdVector& sigs, uint32_t* sigIndex
 static bool
 DecodeLimits(Decoder& d, Limits* limits)
 {
-    uint8_t flags;
-    if (!d.readFixedU8(&flags))
+    uint32_t flags;
+    if (!d.readVarU32(&flags))
         return d.fail("expected flags");
 
-    if (flags & ~uint8_t(0x1))
-        return d.failf("unexpected bits set in flags: %" PRIu32, (flags & ~uint8_t(0x1)));
+    if (flags & ~uint32_t(0x1))
+        return d.failf("unexpected bits set in flags: %" PRIu32, (flags & ~uint32_t(0x1)));
 
     if (!d.readVarU32(&limits->initial))
         return d.fail("expected initial length");
@@ -895,11 +866,11 @@ DecodeLimits(Decoder& d, Limits* limits)
 static bool
 DecodeTableLimits(Decoder& d, TableDescVector* tables)
 {
-    uint8_t elementType;
-    if (!d.readFixedU8(&elementType))
+    uint32_t elementType;
+    if (!d.readVarU32(&elementType))
         return d.fail("expected table element type");
 
-    if (elementType != uint8_t(TypeCode::AnyFunc))
+    if (elementType != uint32_t(TypeCode::AnyFunc))
         return d.fail("expected 'anyfunc' element type");
 
     Limits limits;
@@ -943,14 +914,14 @@ DecodeGlobalType(Decoder& d, ValType* type, bool* isMutable)
     if (!DecodeValType(d, ModuleKind::Wasm, type))
         return false;
 
-    uint8_t flags;
-    if (!d.readFixedU8(&flags))
+    uint32_t flags;
+    if (!d.readVarU32(&flags))
         return d.fail("expected global flags");
 
-    if (flags & ~uint8_t(GlobalTypeImmediate::AllowedMask))
+    if (flags & ~uint32_t(GlobalTypeImmediate::AllowedMask))
         return d.fail("unexpected bits set in global flags");
 
-    *isMutable = flags & uint8_t(GlobalTypeImmediate::IsMutable);
+    *isMutable = flags & uint32_t(GlobalTypeImmediate::IsMutable);
     return true;
 }
 
@@ -1001,8 +972,8 @@ DecodeImport(Decoder& d, ModuleEnvironment* env)
     if (!funcName)
         return d.fail("expected valid import func name");
 
-    uint8_t rawImportKind;
-    if (!d.readFixedU8(&rawImportKind))
+    uint32_t rawImportKind;
+    if (!d.readVarU32(&rawImportKind))
         return d.fail("failed to read import kind");
 
     DefinitionKind importKind = DefinitionKind(rawImportKind);
@@ -1052,10 +1023,10 @@ DecodeImport(Decoder& d, ModuleEnvironment* env)
 static bool
 DecodeImportSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Import, env, &range, "import"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Import, env, &sectionStart, &sectionSize, "import"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numImports;
@@ -1070,7 +1041,7 @@ DecodeImportSection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    if (!d.finishSection(*range, "import"))
+    if (!d.finishSection(sectionStart, sectionSize, "import"))
         return false;
 
     // The global data offsets will be filled in by ModuleGenerator::init.
@@ -1083,10 +1054,10 @@ DecodeImportSection(Decoder& d, ModuleEnvironment* env)
 static bool
 DecodeFunctionSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Function, env, &range, "function"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Function, env, &sectionStart, &sectionSize, "function"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numDefs;
@@ -1108,16 +1079,19 @@ DecodeFunctionSection(Decoder& d, ModuleEnvironment* env)
         env->funcSigs.infallibleAppend(&env->sigs[sigIndex]);
     }
 
-    return d.finishSection(*range, "function");
+    if (!d.finishSection(sectionStart, sectionSize, "function"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeTableSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Table, env, &range, "table"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Table, env, &sectionStart, &sectionSize, "table"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numTables;
@@ -1132,16 +1106,19 @@ DecodeTableSection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    return d.finishSection(*range, "table");
+    if (!d.finishSection(sectionStart, sectionSize, "table"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeMemorySection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Memory, env, &range, "memory"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Memory, env, &sectionStart, &sectionSize, "memory"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numMemories;
@@ -1156,7 +1133,10 @@ DecodeMemorySection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    return d.finishSection(*range, "memory");
+    if (!d.finishSection(sectionStart, sectionSize, "memory"))
+        return false;
+
+    return true;
 }
 
 static bool
@@ -1225,10 +1205,10 @@ DecodeInitializerExpression(Decoder& d, const GlobalDescVector& globals, ValType
 static bool
 DecodeGlobalSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Global, env, &range, "global"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Global, env, &sectionStart, &sectionSize, "global"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numDefs;
@@ -1256,7 +1236,10 @@ DecodeGlobalSection(Decoder& d, ModuleEnvironment* env)
         env->globals.infallibleAppend(GlobalDesc(initializer, isMutable));
     }
 
-    return d.finishSection(*range, "global");
+    if (!d.finishSection(sectionStart, sectionSize, "global"))
+        return false;
+
+    return true;
 }
 
 typedef HashSet<const char*, CStringHasher, SystemAllocPolicy> CStringSet;
@@ -1289,8 +1272,8 @@ DecodeExport(Decoder& d, ModuleEnvironment* env, CStringSet* dupSet)
     if (!fieldName)
         return false;
 
-    uint8_t exportKind;
-    if (!d.readFixedU8(&exportKind))
+    uint32_t exportKind;
+    if (!d.readVarU32(&exportKind))
         return d.fail("failed to read export kind");
 
     switch (DefinitionKind(exportKind)) {
@@ -1351,10 +1334,10 @@ DecodeExport(Decoder& d, ModuleEnvironment* env, CStringSet* dupSet)
 static bool
 DecodeExportSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Export, env, &range, "export"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Export, env, &sectionStart, &sectionSize, "export"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     CStringSet dupSet;
@@ -1373,16 +1356,19 @@ DecodeExportSection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    return d.finishSection(*range, "export");
+    if (!d.finishSection(sectionStart, sectionSize, "export"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeStartSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Start, env, &range, "start"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Start, env, &sectionStart, &sectionSize, "start"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t funcIndex;
@@ -1401,16 +1387,19 @@ DecodeStartSection(Decoder& d, ModuleEnvironment* env)
 
     env->startFuncIndex = Some(funcIndex);
 
-    return d.finishSection(*range, "start");
+    if (!d.finishSection(sectionStart, sectionSize, "start"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeElemSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Elem, env, &range, "elem"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Elem, env, &sectionStart, &sectionSize, "elem"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numSegments;
@@ -1457,34 +1446,10 @@ DecodeElemSection(Decoder& d, ModuleEnvironment* env)
         env->tables[env->elemSegments.back().tableIndex].external = true;
     }
 
-    return d.finishSection(*range, "elem");
-}
-
-bool
-wasm::StartsCodeSection(const uint8_t* begin, const uint8_t* end, SectionRange* codeSection)
-{
-    UniqueChars unused;
-    Decoder d(begin, end, 0, &unused);
-
-    if (!DecodePreamble(d))
+    if (!d.finishSection(sectionStart, sectionSize, "elem"))
         return false;
 
-    while (!d.done()) {
-        uint8_t id;
-        SectionRange range;
-        if (!d.readSectionHeader(&id, &range))
-            return false;
-
-        if (id == uint8_t(SectionId::Code)) {
-            *codeSection = range;
-            return true;
-        }
-
-        if (!d.readBytes(range.size))
-            return false;
-    }
-
-    return false;
+    return true;
 }
 
 bool
@@ -1520,9 +1485,6 @@ wasm::DecodeModuleEnvironment(Decoder& d, ModuleEnvironment* env)
     if (!DecodeElemSection(d, env))
         return false;
 
-    if (!d.startSection(SectionId::Code, env, &env->codeSection, "code"))
-        return false;
-
     return true;
 }
 
@@ -1548,7 +1510,11 @@ DecodeFunctionBody(Decoder& d, const ModuleEnvironment& env, uint32_t funcIndex)
 static bool
 DecodeCodeSection(Decoder& d, ModuleEnvironment* env)
 {
-    if (!env->codeSection) {
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Code, env, &sectionStart, &sectionSize, "code"))
+        return false;
+
+    if (sectionStart == Decoder::NotStarted) {
         if (env->numFuncDefs() != 0)
             return d.fail("expected function bodies");
         return true;
@@ -1566,16 +1532,19 @@ DecodeCodeSection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    return d.finishSection(*env->codeSection, "code");
+    if (!d.finishSection(sectionStart, sectionSize, "code"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeDataSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startSection(SectionId::Data, env, &range, "data"))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startSection(SectionId::Data, env, &sectionStart, &sectionSize, "data"))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     uint32_t numSegments;
@@ -1615,16 +1584,19 @@ DecodeDataSection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    return d.finishSection(*range, "data");
+    if (!d.finishSection(sectionStart, sectionSize, "data"))
+        return false;
+
+    return true;
 }
 
 static bool
 DecodeModuleNameSubsection(Decoder& d, ModuleEnvironment* env)
 {
-    Maybe<uint32_t> endOffset;
+    uint32_t endOffset;
     if (!d.startNameSubsection(NameType::Module, &endOffset))
         return false;
-    if (!endOffset)
+    if (endOffset == Decoder::NotStarted)
         return true;
 
     // Don't use NameInBytecode for module name; instead store a copy of the
@@ -1643,16 +1615,16 @@ DecodeModuleNameSubsection(Decoder& d, ModuleEnvironment* env)
     // Do nothing with module name for now; a future patch will incorporate the
     // module name into the callstack format.
 
-    return d.finishNameSubsection(*endOffset);
+    return d.finishNameSubsection(endOffset);
 }
 
 static bool
 DecodeFunctionNameSubsection(Decoder& d, ModuleEnvironment* env)
 {
-    Maybe<uint32_t> endOffset;
+    uint32_t endOffset;
     if (!d.startNameSubsection(NameType::Function, &endOffset))
         return false;
-    if (!endOffset)
+    if (endOffset == Decoder::NotStarted)
         return true;
 
     uint32_t nameCount = 0;
@@ -1686,7 +1658,7 @@ DecodeFunctionNameSubsection(Decoder& d, ModuleEnvironment* env)
             return false;
     }
 
-    if (!d.finishNameSubsection(*endOffset))
+    if (!d.finishNameSubsection(endOffset))
         return false;
 
     // To encourage fully valid function names subsections; only save names if
@@ -1698,10 +1670,10 @@ DecodeFunctionNameSubsection(Decoder& d, ModuleEnvironment* env)
 static bool
 DecodeNameSection(Decoder& d, ModuleEnvironment* env)
 {
-    MaybeSectionRange range;
-    if (!d.startCustomSection(NameSectionName, env, &range))
+    uint32_t sectionStart, sectionSize;
+    if (!d.startCustomSection(NameSectionName, env, &sectionStart, &sectionSize))
         return false;
-    if (!range)
+    if (sectionStart == Decoder::NotStarted)
         return true;
 
     // Once started, custom sections do not report validation errors.
@@ -1717,7 +1689,7 @@ DecodeNameSection(Decoder& d, ModuleEnvironment* env)
     // skip to the end of the name section (as it would for any other error).
 
   finish:
-    d.finishCustomSection(*range);
+    d.finishCustomSection(sectionStart, sectionSize);
     return true;
 }
 

@@ -1,6 +1,8 @@
 import os
 from collections import defaultdict
 
+import mozinfo
+
 from wptmanifest.parser import atoms
 
 atom_reset = atoms["Reset"]
@@ -65,8 +67,6 @@ def get_run_info(metadata_root, product, **kwargs):
 
 class RunInfo(dict):
     def __init__(self, metadata_root, product, debug, extras=None):
-        import mozinfo
-
         self._update_mozinfo(metadata_root)
         self.update(mozinfo.info)
         self["product"] = product
@@ -77,18 +77,14 @@ class RunInfo(dict):
             self["debug"] = False
         if product == "firefox" and "stylo" not in self:
             self["stylo"] = False
-        if "STYLO_FORCE_ENABLED" in os.environ:
+        if 'STYLO_FORCE_ENABLED' in os.environ:
             self["stylo"] = True
-        if "STYLO_FORCE_DISABLED" in os.environ:
-            self["stylo"] = False
         if extras is not None:
             self.update(extras)
 
     def _update_mozinfo(self, metadata_root):
         """Add extra build information from a mozinfo.json file in a parent
         directory"""
-        import mozinfo
-
         path = metadata_root
         dirs = set()
         while path != os.path.expanduser('~'):

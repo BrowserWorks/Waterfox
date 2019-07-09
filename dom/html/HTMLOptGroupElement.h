@@ -8,13 +8,15 @@
 #define mozilla_dom_HTMLOptGroupElement_h
 
 #include "mozilla/Attributes.h"
+#include "nsIDOMHTMLOptGroupElement.h"
 #include "nsGenericHTMLElement.h"
 
 namespace mozilla {
 class EventChainPreVisitor;
 namespace dom {
 
-class HTMLOptGroupElement final : public nsGenericHTMLElement
+class HTMLOptGroupElement final : public nsGenericHTMLElement,
+                                  public nsIDOMHTMLOptGroupElement
 {
 public:
   explicit HTMLOptGroupElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -23,6 +25,9 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
+
+  // nsIDOMHTMLOptGroupElement
+  NS_DECL_NSIDOMHTMLOPTGROUPELEMENT
 
   // nsINode
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
@@ -36,10 +41,9 @@ public:
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
                          bool aPreallocateChildren) const override;
 
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }

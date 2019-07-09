@@ -352,10 +352,7 @@ nsUrlClassifierPrefixSet::LoadFromFile(nsIFile* aFile)
                                            MAX_BUFFER_SIZE);
 
   // Convert to buffered stream
-  nsCOMPtr<nsIInputStream> in;
-  rv = NS_NewBufferedInputStream(getter_AddRefs(in), localInFile.forget(),
-                                 bufferSize);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIInputStream> in = NS_BufferInputStream(localInFile, bufferSize);
 
   rv = LoadPrefixes(in);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -402,8 +399,6 @@ nsUrlClassifierPrefixSet::StoreToFile(nsIFile* aFile)
 nsresult
 nsUrlClassifierPrefixSet::LoadPrefixes(nsIInputStream* in)
 {
-  mCanary.Check();
-
   uint32_t magic;
   uint32_t read;
 
@@ -494,8 +489,6 @@ nsUrlClassifierPrefixSet::CalculatePreallocateSize()
 nsresult
 nsUrlClassifierPrefixSet::WritePrefixes(nsIOutputStream* out)
 {
-  mCanary.Check();
-
   uint32_t written;
   uint32_t writelen = sizeof(uint32_t);
   uint32_t magic = PREFIXSET_VERSION_MAGIC;

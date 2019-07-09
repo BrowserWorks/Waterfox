@@ -29,7 +29,7 @@
 #ifndef nsHtml5StackNode_h
 #define nsHtml5StackNode_h
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsHtml5AtomTable.h"
 #include "nsHtml5String.h"
 #include "nsNameSpaceManager.h"
@@ -43,7 +43,6 @@
 #include "nsHtml5Macros.h"
 #include "nsIContentHandle.h"
 #include "nsHtml5Portability.h"
-#include "nsHtml5ContentCreatorFunction.h"
 
 class nsHtml5StreamParser;
 
@@ -62,14 +61,13 @@ class nsHtml5StackNode
   public:
     int32_t idxInTreeBuilder;
     int32_t flags;
-    nsAtom* name;
-    nsAtom* popName;
+    nsIAtom* name;
+    nsIAtom* popName;
     int32_t ns;
     nsIContentHandle* node;
     nsHtml5HtmlAttributes* attributes;
   private:
     int32_t refcount;
-    mozilla::dom::HTMLContentCreatorFunction htmlCreator;
   public:
     inline int32_t getFlags()
     {
@@ -82,27 +80,25 @@ class nsHtml5StackNode
     bool isFosterParenting();
     bool isHtmlIntegrationPoint();
     explicit nsHtml5StackNode(int32_t idxInTreeBuilder);
-    mozilla::dom::HTMLContentCreatorFunction getHtmlCreator();
     void setValues(int32_t flags,
                    int32_t ns,
-                   nsAtom* name,
+                   nsIAtom* name,
                    nsIContentHandle* node,
-                   nsAtom* popName,
-                   nsHtml5HtmlAttributes* attributes,
-                   mozilla::dom::HTMLContentCreatorFunction htmlCreator);
+                   nsIAtom* popName,
+                   nsHtml5HtmlAttributes* attributes);
     void setValues(nsHtml5ElementName* elementName, nsIContentHandle* node);
     void setValues(nsHtml5ElementName* elementName,
                    nsIContentHandle* node,
                    nsHtml5HtmlAttributes* attributes);
     void setValues(nsHtml5ElementName* elementName,
                    nsIContentHandle* node,
-                   nsAtom* popName);
+                   nsIAtom* popName);
     void setValues(nsHtml5ElementName* elementName,
-                   nsAtom* popName,
+                   nsIAtom* popName,
                    nsIContentHandle* node);
     void setValues(nsHtml5ElementName* elementName,
                    nsIContentHandle* node,
-                   nsAtom* popName,
+                   nsIAtom* popName,
                    bool markAsIntegrationPoint);
 
   private:

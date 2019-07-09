@@ -13,9 +13,8 @@
 #include "nsIClipboard.h"
 #include "nsIEditor.h"
 #include "nsIPersistentProperties2.h"
+#include "nsIPlaintextEditor.h"
 #include "nsFrameSelection.h"
-
-#include "mozilla/TextEditor.h"
 
 namespace mozilla {
 namespace a11y {
@@ -61,65 +60,67 @@ HyperTextAccessible::ReplaceText(const nsAString& aText)
   // DeleteText().
   DeleteText(0, CharacterCount());
 
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (!textEditor) {
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  nsCOMPtr<nsIPlaintextEditor> plaintextEditor(do_QueryInterface(editor));
+  if (!plaintextEditor) {
     return;
   }
 
   // DeleteText() may cause inserting <br> element in some cases. Let's
   // select all again and replace whole contents.
-  textEditor->SelectAll();
+  editor->SelectAll();
 
-  textEditor->InsertText(aText);
+  plaintextEditor->InsertText(aText);
 }
 
 inline void
 HyperTextAccessible::InsertText(const nsAString& aText, int32_t aPosition)
 {
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (textEditor) {
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  nsCOMPtr<nsIPlaintextEditor> peditor(do_QueryInterface(editor));
+  if (peditor) {
     SetSelectionRange(aPosition, aPosition);
-    textEditor->InsertText(aText);
+    peditor->InsertText(aText);
   }
 }
 
 inline void
 HyperTextAccessible::CopyText(int32_t aStartPos, int32_t aEndPos)
   {
-    RefPtr<TextEditor> textEditor = GetEditor();
-    if (textEditor) {
+    nsCOMPtr<nsIEditor> editor = GetEditor();
+    if (editor) {
       SetSelectionRange(aStartPos, aEndPos);
-      textEditor->Copy();
+      editor->Copy();
     }
   }
 
 inline void
 HyperTextAccessible::CutText(int32_t aStartPos, int32_t aEndPos)
   {
-    RefPtr<TextEditor> textEditor = GetEditor();
-    if (textEditor) {
+    nsCOMPtr<nsIEditor> editor = GetEditor();
+    if (editor) {
       SetSelectionRange(aStartPos, aEndPos);
-      textEditor->Cut();
+      editor->Cut();
     }
   }
 
 inline void
 HyperTextAccessible::DeleteText(int32_t aStartPos, int32_t aEndPos)
 {
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (textEditor) {
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  if (editor) {
     SetSelectionRange(aStartPos, aEndPos);
-    textEditor->DeleteSelection(nsIEditor::eNone, nsIEditor::eStrip);
+    editor->DeleteSelection(nsIEditor::eNone, nsIEditor::eStrip);
   }
 }
 
 inline void
 HyperTextAccessible::PasteText(int32_t aPosition)
 {
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (textEditor) {
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  if (editor) {
     SetSelectionRange(aPosition, aPosition);
-    textEditor->Paste(nsIClipboard::kGlobalClipboard);
+    editor->Paste(nsIClipboard::kGlobalClipboard);
   }
 }
 

@@ -7,36 +7,38 @@ const kAnchorAttribute = "cui-anchorid";
 
 /**
  * Check that anchor gets set correctly when moving an item from the panel to the toolbar
- * and into the palette.
+ * using 'undo'
  */
 add_task(async function() {
-  CustomizableUI.addWidgetToArea("history-panelmenu", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   await startCustomizing();
   let button = document.getElementById("history-panelmenu");
-  is(button.getAttribute(kAnchorAttribute), "nav-bar-overflow-button",
+  is(button.getAttribute(kAnchorAttribute), "PanelUI-menu-button",
      "Button (" + button.id + ") starts out with correct anchor");
 
   let navbar = document.getElementById("nav-bar").customizationTarget;
-  let onMouseUp = BrowserTestUtils.waitForEvent(navbar, "mouseup");
   simulateItemDrag(button, navbar);
-  await onMouseUp;
   is(CustomizableUI.getPlacementOfWidget(button.id).area, "nav-bar",
      "Button (" + button.id + ") ends up in nav-bar");
 
   ok(!button.hasAttribute(kAnchorAttribute),
      "Button (" + button.id + ") has no anchor in toolbar");
 
-  CustomizableUI.addWidgetToArea("history-panelmenu", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-
-  is(button.getAttribute(kAnchorAttribute), "nav-bar-overflow-button",
-     "Button (" + button.id + ") has anchor again");
-
   let resetButton = document.getElementById("customization-reset-button");
   ok(!resetButton.hasAttribute("disabled"), "Should be able to reset now.");
   await gCustomizeMode.reset();
 
+  is(button.getAttribute(kAnchorAttribute), "PanelUI-menu-button",
+     "Button (" + button.id + ") has anchor again");
+
+  let undoButton = document.getElementById("customization-undo-reset-button");
+  ok(!undoButton.hasAttribute("disabled"), "Should be able to undo now.");
+  await gCustomizeMode.undoReset();
+
   ok(!button.hasAttribute(kAnchorAttribute),
-     "Button (" + button.id + ") once again has no anchor in customize panel");
+     "Button (" + button.id + ") once again has no anchor in toolbar");
+
+  await gCustomizeMode.reset();
 
   await endCustomizing();
 });
@@ -48,17 +50,15 @@ add_task(async function() {
  */
 add_task(async function() {
   await startCustomizing();
-  let button = document.getElementById("home-button");
+  let button = document.getElementById("bookmarks-menu-button");
   ok(!button.hasAttribute(kAnchorAttribute),
      "Button (" + button.id + ") has no anchor in toolbar");
 
-  let panel = document.getElementById(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-  let onMouseUp = BrowserTestUtils.waitForEvent(panel, "mouseup");
+  let panel = document.getElementById("PanelUI-contents");
   simulateItemDrag(button, panel);
-  await onMouseUp;
-  is(CustomizableUI.getPlacementOfWidget(button.id).area, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL,
+  is(CustomizableUI.getPlacementOfWidget(button.id).area, "PanelUI-contents",
      "Button (" + button.id + ") ends up in panel");
-  is(button.getAttribute(kAnchorAttribute), "nav-bar-overflow-button",
+  is(button.getAttribute(kAnchorAttribute), "PanelUI-menu-button",
      "Button (" + button.id + ") has correct anchor in the panel");
 
   let resetButton = document.getElementById("customization-reset-button");

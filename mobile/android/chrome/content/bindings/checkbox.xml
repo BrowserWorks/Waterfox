@@ -54,7 +54,8 @@
           if (aValue) {
             this.setAttribute("checked", "true");
             this._group.selectedItem = this._on;
-          } else {
+          }
+          else {
             this.removeAttribute("checked");
             this._group.selectedItem = this._off;
           }

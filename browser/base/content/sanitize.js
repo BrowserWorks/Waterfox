@@ -7,17 +7,22 @@
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
-
-XPCOMUtils.defineLazyModuleGetters(this, {
-  AppConstants: "resource://gre/modules/AppConstants.jsm",
-  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
-  FormHistory: "resource://gre/modules/FormHistory.jsm",
-  Downloads: "resource://gre/modules/Downloads.jsm",
-  DownloadsCommon: "resource:///modules/DownloadsCommon.jsm",
-  TelemetryStopwatch: "resource://gre/modules/TelemetryStopwatch.jsm",
-  console: "resource://gre/modules/Console.jsm",
-  setTimeout: "resource://gre/modules/Timer.jsm",
-});
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+                                  "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
+                                  "resource://gre/modules/FormHistory.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
+                                  "resource://gre/modules/Downloads.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
+                                  "resource:///modules/DownloadsCommon.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
+                                  "resource://gre/modules/TelemetryStopwatch.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "console",
+                                  "resource://gre/modules/Console.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
+                                  "resource://gre/modules/Timer.jsm");
 
 
 XPCOMUtils.defineLazyServiceGetter(this, "serviceWorkerManager",
@@ -297,28 +302,15 @@ Sanitizer.prototype = {
         Services.obs.notifyObservers(null, "extension:purge-localStorage");
 
         // ServiceWorkers
-        let promises = [];
         let serviceWorkers = serviceWorkerManager.getAllRegistrations();
         for (let i = 0; i < serviceWorkers.length; i++) {
           let sw = serviceWorkers.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
-
-          promises.push(new Promise(resolve => {
-            let unregisterCallback = {
-              unregisterSucceeded: () => { resolve(true); },
-              // We don't care about failures.
-              unregisterFailed: () => { resolve(true); },
-              QueryInterface: XPCOMUtils.generateQI(
-                [Ci.nsIServiceWorkerUnregisterCallback])
-            };
-
-            serviceWorkerManager.propagateUnregister(sw.principal, unregisterCallback, sw.scope);
-          }));
+          let host = sw.principal.URI.host;
+          serviceWorkerManager.removeAndPropagate(host);
         }
 
-        await Promise.all(promises);
-
         // QuotaManager
-        promises = [];
+        let promises = [];
         await new Promise(resolve => {
           quotaManagerService.getUsage(request => {
             if (request.resultCode != Cr.NS_OK) {
@@ -333,7 +325,7 @@ Sanitizer.prototype = {
               let uri = principal.URI;
               if (uri.scheme == "http" || uri.scheme == "https" || uri.scheme == "file") {
                 promises.push(new Promise(r => {
-                  let req = quotaManagerService.clearStoragesForPrincipal(principal, null, false);
+                  let req = quotaManagerService.clearStoragesForPrincipal(principal, null, true);
                   req.callback = () => { r(); };
                 }));
               }
@@ -638,7 +630,7 @@ Sanitizer.prototype = {
               return false;
             }
             return undefined;
-          };
+          }
           newWindow.addEventListener("fullscreen", onFullScreen);
         }
 
@@ -664,7 +656,7 @@ Sanitizer.prototype = {
               TelemetryStopwatch.finish("FX_SANITIZE_OPENWINDOWS", refObj);
               resolve();
             }
-          };
+          }
 
           let numWindowsClosing = windowList.length;
           let onWindowClosed = function() {
@@ -677,7 +669,7 @@ Sanitizer.prototype = {
                 resolve();
               }
             }
-          };
+          }
           Services.obs.addObserver(onWindowOpened, "browser-delayed-startup-finished");
           Services.obs.addObserver(onWindowClosed, "xul-window-destroyed");
         });

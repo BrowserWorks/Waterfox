@@ -133,7 +133,6 @@ enum class OpKind {
     TeeGlobal,
     Call,
     CallIndirect,
-    OldCallDirect,
     OldCallIndirect,
     Return,
     If,
@@ -530,8 +529,6 @@ class MOZ_STACK_CLASS OpIter : private Policy
     MOZ_MUST_USE bool readB32x4Const(I32x4* i32x4);
     MOZ_MUST_USE bool readCall(uint32_t* calleeIndex, ValueVector* argValues);
     MOZ_MUST_USE bool readCallIndirect(uint32_t* sigIndex, Value* callee, ValueVector* argValues);
-    MOZ_MUST_USE bool readOldCallDirect(uint32_t numFuncImports, uint32_t* funcIndex,
-                                        ValueVector* argValues);
     MOZ_MUST_USE bool readOldCallIndirect(uint32_t* sigIndex, Value* callee, ValueVector* argValues);
     MOZ_MUST_USE bool readAtomicLoad(LinearMemoryAddress<Value>* addr,
                                      Scalar::Type* viewType);
@@ -1290,11 +1287,11 @@ OpIter<Policy>::readCurrentMemory()
     if (!env_.usesMemory())
         return fail("can't touch memory without memory");
 
-    uint8_t flags;
-    if (!readFixedU8(&flags))
+    uint32_t flags;
+    if (!readVarU32(&flags))
         return false;
 
-    if (flags != uint8_t(MemoryTableFlags::Default))
+    if (flags != uint32_t(MemoryTableFlags::Default))
         return fail("unexpected flags");
 
     return push(ValType::I32);
@@ -1309,11 +1306,11 @@ OpIter<Policy>::readGrowMemory(Value* input)
     if (!env_.usesMemory())
         return fail("can't touch memory without memory");
 
-    uint8_t flags;
-    if (!readFixedU8(&flags))
+    uint32_t flags;
+    if (!readVarU32(&flags))
         return false;
 
-    if (flags != uint8_t(MemoryTableFlags::Default))
+    if (flags != uint32_t(MemoryTableFlags::Default))
         return fail("unexpected flags");
 
     if (!popWithType(ValType::I32, input))
@@ -1607,44 +1604,17 @@ OpIter<Policy>::readCallIndirect(uint32_t* sigIndex, Value* callee, ValueVector*
     if (*sigIndex >= env_.numSigs())
         return fail("signature index out of range");
 
-    uint8_t flags;
-    if (!readFixedU8(&flags))
+    uint32_t flags;
+    if (!readVarU32(&flags))
         return false;
 
-    if (flags != uint8_t(MemoryTableFlags::Default))
+    if (flags != uint32_t(MemoryTableFlags::Default))
         return fail("unexpected flags");
 
     if (!popWithType(ValType::I32, callee))
         return false;
 
     const Sig& sig = env_.sigs[*sigIndex];
-
-    if (!popCallArgs(sig.args(), argValues))
-        return false;
-
-    return push(sig.ret());
-}
-
-template <typename Policy>
-inline bool
-OpIter<Policy>::readOldCallDirect(uint32_t numFuncImports, uint32_t* funcIndex,
-                                  ValueVector* argValues)
-{
-    MOZ_ASSERT(Classify(op_) == OpKind::OldCallDirect);
-
-    uint32_t funcDefIndex;
-    if (!readVarU32(&funcDefIndex))
-        return fail("unable to read call function index");
-
-    if (UINT32_MAX - funcDefIndex < numFuncImports)
-        return fail("callee index out of range");
-
-    *funcIndex = numFuncImports + funcDefIndex;
-
-    if (*funcIndex >= env_.funcSigs.length())
-        return fail("callee index out of range");
-
-    const Sig& sig = *env_.funcSigs[*funcIndex];
 
     if (!popCallArgs(sig.args(), argValues))
         return false;

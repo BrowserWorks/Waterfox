@@ -85,13 +85,14 @@
 #include "nsWrapperCache.h"
 #include "nsStringBuffer.h"
 #include "GeckoProfiler.h"
-
-#ifdef MOZ_GECKO_PROFILER
 #include "ProfilerMarkerPayload.h"
-#endif
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
+#endif
+
+#if defined(XP_MACOSX)
+#  include "nsMacUtilsImpl.h"
 #endif
 
 #include "nsIException.h"
@@ -520,6 +521,12 @@ CycleCollectedJSRuntime::CycleCollectedJSRuntime(JSContext* aCx)
   MOZ_ASSERT(aCx);
   MOZ_ASSERT(mJSRuntime);
 
+#if defined(XP_MACOSX)
+  if (!XRE_IsParentProcess()) {
+    nsMacUtilsImpl::EnableTCSMIfAvailable();
+  }
+#endif
+
   if (!JS_AddExtraGCRootsTracer(aCx, TraceBlackJS, this)) {
     MOZ_CRASH("JS_AddExtraGCRootsTracer failed");
   }
@@ -836,7 +843,6 @@ CycleCollectedJSRuntime::GCSliceCallback(JSContext* aContext,
   CycleCollectedJSRuntime* self = CycleCollectedJSRuntime::Get();
   MOZ_ASSERT(CycleCollectedJSContext::Get()->Context() == aContext);
 
-#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
     if (aProgress == JS::GC_CYCLE_END) {
       profiler_add_marker(
@@ -852,7 +858,6 @@ CycleCollectedJSRuntime::GCSliceCallback(JSContext* aContext,
                                          aDesc.sliceToJSON(aContext)));
     }
   }
-#endif
 
   if (aProgress == JS::GC_CYCLE_END &&
       JS::dbg::FireOnGarbageCollectionHookRequired(aContext)) {
@@ -935,10 +940,8 @@ CycleCollectedJSRuntime::GCNurseryCollectionCallback(JSContext* aContext,
 
   if (aProgress == JS::GCNurseryProgress::GC_NURSERY_COLLECTION_START) {
     self->mLatestNurseryCollectionStart = TimeStamp::Now();
-  }
-#ifdef MOZ_GECKO_PROFILER
-  else if (aProgress == JS::GCNurseryProgress::GC_NURSERY_COLLECTION_END &&
-           profiler_is_active())
+  } else if ((aProgress == JS::GCNurseryProgress::GC_NURSERY_COLLECTION_END) &&
+             profiler_is_active())
   {
     profiler_add_marker(
       "GCMinor",
@@ -946,7 +949,6 @@ CycleCollectedJSRuntime::GCNurseryCollectionCallback(JSContext* aContext,
                                        TimeStamp::Now(),
                                        JS::MinorGcToJSON(aContext)));
   }
-#endif
 
   if (self->mPrevGCNurseryCollectionCallback) {
     self->mPrevGCNurseryCollectionCallback(aContext, aProgress, aReason);
@@ -1055,16 +1057,15 @@ CycleCollectedJSRuntime::TraceNativeGrayRoots(JSTracer* aTracer)
 void
 CycleCollectedJSRuntime::AddJSHolder(void* aHolder, nsScriptObjectTracer* aTracer)
 {
-  auto entry = mJSHolderMap.LookupForAdd(aHolder);
-  if (entry) {
-    JSHolderInfo* info = entry.Data();
+  JSHolderInfo* info = nullptr;
+  if (mJSHolderMap.Get(aHolder, &info)) {
     MOZ_ASSERT(info->mHolder == aHolder);
     info->mTracer = aTracer;
     return;
   }
 
   mJSHolders.InfallibleAppend(JSHolderInfo {aHolder, aTracer});
-  entry.OrInsert([&] {return &mJSHolders.GetLast();});
+  mJSHolderMap.Put(aHolder, &mJSHolders.GetLast());
 }
 
 struct ClearJSHolder : public TraceCallbacks
@@ -1114,26 +1115,19 @@ struct ClearJSHolder : public TraceCallbacks
 void
 CycleCollectedJSRuntime::RemoveJSHolder(void* aHolder)
 {
-  auto entry = mJSHolderMap.Lookup(aHolder);
-  if (entry) {
-    JSHolderInfo* info = entry.Data();
+  JSHolderInfo* info = nullptr;
+  if (mJSHolderMap.Get(aHolder, &info)) {
     MOZ_ASSERT(info->mHolder == aHolder);
     info->mTracer->Trace(aHolder, ClearJSHolder(), nullptr);
 
     JSHolderInfo* lastInfo = &mJSHolders.GetLast();
-    bool updateLast = (info != lastInfo);
-    if (updateLast) {
+    if (info != lastInfo) {
       *info = *lastInfo;
+      mJSHolderMap.Put(info->mHolder, info);
     }
 
     mJSHolders.PopLast();
-    entry.Remove();
-
-    if (updateLast) {
-      // We have to do this after removing the entry above to ensure that we
-      // don't trip over the hashtable generation number assertion.
-      mJSHolderMap.Put(info->mHolder, info);
-    }
+    mJSHolderMap.Remove(aHolder);
   }
 }
 
@@ -1434,7 +1428,7 @@ CycleCollectedJSRuntime::FinalizeDeferredThings(CycleCollectedJSContext::Deferre
   MOZ_ASSERT(mDeferredFinalizerTable.Count() == 0);
 
   if (aType == CycleCollectedJSContext::FinalizeIncrementally) {
-    NS_IdleDispatchToCurrentThread(do_AddRef(mFinalizeRunnable), 2500);
+    NS_DispatchToCurrentThread(mFinalizeRunnable);
   } else {
     mFinalizeRunnable->ReleaseNow(false);
     MOZ_ASSERT(!mFinalizeRunnable);

@@ -23,7 +23,6 @@
 #include "gfx2DGlue.h"
 #include "mozilla/gfx/Logging.h"        // for gfxCriticalError
 #include "mozilla/UniquePtr.h"
-#include "TextDrawTarget.h"
 
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
@@ -474,11 +473,6 @@ gfxTextRun::DrawPartialLigature(gfxFont *aFont, Range aRange,
         return;
     }
 
-    if (auto* textDrawer = aParams.context->GetTextDrawer()) {
-        textDrawer->FoundUnsupportedFeature();
-        return;
-    }
-
     // Draw partial ligature. We hack this by clipping the ligature.
     LigatureData data = ComputeLigatureData(aRange, aProvider);
     gfxRect clipExtents = aParams.context->GetClipExtents();
@@ -567,7 +561,7 @@ HasNonOpaqueNonTransparentColor(gfxContext *aContext, Color& aCurrentColorOut)
 }
 
 // helper class for double-buffering drawing with non-opaque color
-struct MOZ_STACK_CLASS BufferAlphaColor {
+struct BufferAlphaColor {
     explicit BufferAlphaColor(gfxContext *aContext)
         : mContext(aContext)
     {
@@ -613,7 +607,7 @@ gfxTextRun::Draw(Range aRange, gfxPoint aPt, const DrawParams& aParams) const
     if (aParams.drawMode & DrawMode::GLYPH_FILL) {
         Color currentColor;
         if (aParams.context->GetDeviceColor(currentColor) &&
-            currentColor.a == 0 && !aParams.context->GetTextDrawer()) {
+            currentColor.a == 0) {
             skipDrawing = true;
         }
     }
@@ -642,9 +636,7 @@ gfxTextRun::Draw(Range aRange, gfxPoint aPt, const DrawParams& aParams) const
 
     if (aParams.drawMode & DrawMode::GLYPH_FILL &&
         HasNonOpaqueNonTransparentColor(aParams.context, currentColor) &&
-        HasSyntheticBoldOrColor(this, aRange) &&
-        !aParams.context->GetTextDrawer()) {
-
+        HasSyntheticBoldOrColor(this, aRange)) {
         needToRestore = true;
         // Measure text; use the bounding box to determine the area we need
         // to buffer.
@@ -732,8 +724,7 @@ gfxTextRun::Draw(Range aRange, gfxPoint aPt, const DrawParams& aParams) const
 
 // This method is mostly parallel to Draw().
 void
-gfxTextRun::DrawEmphasisMarks(gfxContext *aContext,
-                              gfxTextRun* aMark,
+gfxTextRun::DrawEmphasisMarks(gfxContext *aContext, gfxTextRun* aMark,
                               gfxFloat aMarkAdvance, gfxPoint aPt,
                               Range aRange, PropertyProvider* aProvider) const
 {
@@ -1835,7 +1826,7 @@ gfxFontGroup::BuildFontList()
     gfxPlatformFontList *pfl = gfxPlatformFontList::PlatformFontList();
 
     // lookup fonts in the fontlist
-    for (const FontFamilyName& name : mFamilyList.GetFontlist()->mNames) {
+    for (const FontFamilyName& name : mFamilyList.GetFontlist()) {
         if (name.IsNamed()) {
             AddPlatformFont(name.mName, fonts);
         } else {
@@ -1882,9 +1873,7 @@ gfxFontGroup::AddPlatformFont(const nsAString& aName,
 
     // Not known in the user font set ==> check system fonts
     gfxPlatformFontList::PlatformFontList()
-        ->FindAndAddFamilies(aName, &aFamilyList,
-                             gfxPlatformFontList::FindFamiliesFlags(0),
-                             &mStyle, mDevToCssSize);
+        ->FindAndAddFamilies(aName, &aFamilyList, &mStyle, mDevToCssSize);
 }
 
 void
@@ -2569,23 +2558,10 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
 
     gfxFont *mainFont = GetFirstValidFont();
 
-    ShapedTextFlags orientation =
-        aTextRun->GetFlags() & ShapedTextFlags::TEXT_ORIENT_MASK;
-
-    if (orientation != ShapedTextFlags::TEXT_ORIENT_HORIZONTAL &&
-        (aRunScript == Script::MONGOLIAN || aRunScript == Script::PHAGS_PA)) {
-        // Mongolian and Phags-pa text should ignore text-orientation and
-        // always render in its "native" vertical mode, implemented by fonts
-        // as sideways-right (i.e as if shaped horizontally, and then the
-        // entire line is rotated to render vertically). Therefore, we ignore
-        // the aOrientation value from the textrun's flags, and make all
-        // vertical Mongolian/Phags-pa use sideways-right.
-        orientation = ShapedTextFlags::TEXT_ORIENT_VERTICAL_SIDEWAYS_RIGHT;
-    }
-
     uint32_t runStart = 0;
     AutoTArray<gfxTextRange,3> fontRanges;
-    ComputeRanges(fontRanges, aString, aLength, aRunScript, orientation);
+    ComputeRanges(fontRanges, aString, aLength, aRunScript,
+                  aTextRun->GetFlags() & ShapedTextFlags::TEXT_ORIENT_MASK);
     uint32_t numRanges = fontRanges.Length();
     bool missingChars = false;
 
@@ -2593,6 +2569,8 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
         const gfxTextRange& range = fontRanges[r];
         uint32_t matchedLength = range.Length();
         gfxFont *matchedFont = range.font;
+        bool vertical =
+            range.orientation == ShapedTextFlags::TEXT_ORIENT_VERTICAL_UPRIGHT;
         // create the glyph run for this range
         if (matchedFont && mStyle.noFallbackVariantFeatures) {
             // common case - just do glyph layout and record the
@@ -2605,7 +2583,7 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
                                                   aOffset + runStart,
                                                   matchedLength,
                                                   aRunScript,
-                                                  range.orientation)) {
+                                                  vertical)) {
                 // glyph layout failed! treat as missing glyphs
                 matchedFont = nullptr;
             }
@@ -2645,7 +2623,7 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
                                                        aOffset + runStart,
                                                        matchedLength,
                                                        aRunScript,
-                                                       range.orientation)) {
+                                                       vertical)) {
                     // glyph layout failed! treat as missing glyphs
                     matchedFont = nullptr;
                 }
@@ -2690,7 +2668,7 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
                                                       aOffset + runStart,
                                                       matchedLength,
                                                       aRunScript,
-                                                      range.orientation)) {
+                                                      vertical)) {
                     // glyph layout failed! treat as missing glyphs
                     matchedFont = nullptr;
                 }

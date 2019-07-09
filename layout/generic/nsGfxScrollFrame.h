@@ -27,7 +27,7 @@
 class nsPresContext;
 class nsIPresShell;
 class nsIContent;
-class nsAtom;
+class nsIAtom;
 class nsPresState;
 class nsIScrollPositionListener;
 
@@ -70,9 +70,11 @@ public:
   void Destroy();
 
   void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
                         const nsDisplayListSet& aLists);
 
   void AppendScrollPartsTo(nsDisplayListBuilder*   aBuilder,
+                           const nsRect&           aDirtyRect,
                            const nsDisplayListSet& aLists,
                            bool                    aCreateLayer,
                            bool                    aPositioned);
@@ -88,7 +90,7 @@ public:
    * @note This method might destroy the frame, pres shell and other objects.
    * Called when the 'curpos' attribute on one of the scrollbars changes.
    */
-  void CurPosAttributeChanged(nsIContent* aChild, bool aDoScroll = true);
+  void CurPosAttributeChanged(nsIContent* aChild);
 
   void PostScrollEvent();
   void FireScrollEvent();
@@ -100,30 +102,36 @@ public:
   /**
    * This class handles the dispatching of scroll events to content.
    *
-   * Scroll events are posted to the refresh driver via
-   * nsRefreshDriver::PostScrollEvent(), and they are fired during a refresh
-   * driver tick, after running requestAnimationFrame callbacks but before
-   * the style flush. This allows rAF callbacks to perform scrolling and have
-   * that scrolling be reflected on the same refresh driver tick, while at
-   * the same time allowing scroll event listeners to make style changes and
-   * have those style changes be reflected on the same refresh driver tick.
+   * nsRefreshDriver maintains three lists of refresh observers, one for each
+   * flush type: FlushType::Style, FlushType::Layout, and FlushType::Display.
    *
-   * ScrollEvents cannot be refresh observers, because none of the existing
-   * categories of refresh observers (FlushType::Style, FlushType::Layout,
-   * and FlushType::Display) are run at the desired time in a refresh driver
-   * tick. They behave similarly to refresh observers in that their presence
-   * causes the refresh driver to tick.
+   * During a tick, it runs through each list of observers, in order, and runs
+   * them. To iterate over each list, it uses an EndLimitedIterator, which is
+   * designed to iterate only over elements present when the iterator was
+   * created, not elements added afterwards. This means that, for a given flush
+   * type, a refresh observer added during the execution of another refresh
+   * observer of that flush type, will not run until the next tick.
    *
-   * ScrollEvents are one-shot runnables; the refresh driver drops them after
-   * running them.
+   * During main-thread animation-driven scrolling, ScrollEvents are *posted*
+   * by AsyncScroll::WillRefresh(). AsyncScroll registers itself as a FlushType::Style
+   * refresh observer.
+   *
+   * Posting a scroll event, as of bug 1250550, registers a FlushType::Layout
+   * refresh observer, which *fires* the event when run. This allows the event
+   * to be fired to content in the same refresh driver tick as it is posted.
+   * This is an important invariant to maintain to reduce scroll event latency
+   * for main-thread scrolling.
    */
-  class ScrollEvent : public Runnable {
+  class ScrollEvent : public nsARefreshObserver {
   public:
-    NS_DECL_NSIRUNNABLE
-    explicit ScrollEvent(ScrollFrameHelper* aHelper);
-    void Revoke() { mHelper = nullptr; }
+    NS_INLINE_DECL_REFCOUNTING(ScrollEvent, override)
+    explicit ScrollEvent(ScrollFrameHelper *helper);
+    void WillRefresh(mozilla::TimeStamp aTime) override;
+  protected:
+    virtual ~ScrollEvent();
   private:
-    ScrollFrameHelper* mHelper;
+    ScrollFrameHelper *mHelper;
+    RefPtr<nsRefreshDriver> mDriver;
   };
 
   class AsyncScrollPortEvent : public Runnable {
@@ -166,9 +174,9 @@ public:
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
-  void SetCoordAttribute(nsIContent* aContent, nsAtom* aAtom, nscoord aSize);
+  void SetCoordAttribute(nsIContent* aContent, nsIAtom* aAtom, nscoord aSize);
 
-  nscoord GetCoordAttribute(nsIFrame* aFrame, nsAtom* aAtom, nscoord aDefaultValue,
+  nscoord GetCoordAttribute(nsIFrame* aFrame, nsIAtom* aAtom, nscoord aDefaultValue,
                             nscoord* aRangeStart, nscoord* aRangeLength);
 
   /**
@@ -235,20 +243,20 @@ public:
    * @note This method might destroy the frame, pres shell and other objects.
    */
   void ScrollToCSSPixelsApproximate(const mozilla::CSSPoint& aScrollPosition,
-                                    nsAtom* aOrigin = nullptr);
+                                    nsIAtom* aOrigin = nullptr);
 
   CSSIntPoint GetScrollPositionCSSPixels();
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
-  void ScrollToImpl(nsPoint aScrollPosition, const nsRect& aRange, nsAtom* aOrigin = nullptr);
+  void ScrollToImpl(nsPoint aScrollPosition, const nsRect& aRange, nsIAtom* aOrigin = nullptr);
   void ScrollVisual();
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
   void ScrollBy(nsIntPoint aDelta, nsIScrollableFrame::ScrollUnit aUnit,
                 nsIScrollableFrame::ScrollMode aMode, nsIntPoint* aOverflow,
-                nsAtom* aOrigin = nullptr,
+                nsIAtom* aOrigin = nullptr,
                 nsIScrollableFrame::ScrollMomentum aMomentum = nsIScrollableFrame::NOT_MOMENTUM,
                 nsIScrollbarMediator::ScrollSnapMode aSnap
                   = nsIScrollbarMediator::DISABLE_SNAP);
@@ -410,7 +418,7 @@ public:
 
   bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                              nsRect* aDirtyRect,
-                             bool aSetBase);
+                             bool aAllowCreateDisplayPort);
   void NotifyApproximateFrameVisibilityUpdate(bool aIgnoreDisplayPort);
   bool GetDisplayPortAtLastApproximateFrameVisibilityUpdate(nsRect* aDisplayPort);
 
@@ -423,9 +431,9 @@ public:
 
   void HandleScrollbarStyleSwitching();
 
-  nsAtom* LastScrollOrigin() const { return mLastScrollOrigin; }
+  nsIAtom* LastScrollOrigin() const { return mLastScrollOrigin; }
   void AllowScrollOriginDowngrade() { mAllowScrollOriginDowngrade = true; }
-  nsAtom* LastSmoothScrollOrigin() const { return mLastSmoothScrollOrigin; }
+  nsIAtom* LastSmoothScrollOrigin() const { return mLastSmoothScrollOrigin; }
   uint32_t CurrentScrollGeneration() const { return mScrollGeneration; }
   nsPoint LastScrollDestination() const { return mDestination; }
   void ResetScrollInfoIfGeneration(uint32_t aGeneration) {
@@ -487,14 +495,13 @@ public:
   nsIFrame* mScrollCornerBox;
   nsIFrame* mResizerBox;
   nsContainerFrame* mOuter;
-  const nsIFrame* mReferenceFrameDuringPainting;
   RefPtr<AsyncScroll> mAsyncScroll;
   RefPtr<AsyncSmoothMSDScroll> mAsyncSmoothMSDScroll;
   RefPtr<ScrollbarActivity> mScrollbarActivity;
   nsTArray<nsIScrollPositionListener*> mListeners;
-  nsAtom* mLastScrollOrigin;
+  nsIAtom* mLastScrollOrigin;
   bool mAllowScrollOriginDowngrade;
-  nsAtom* mLastSmoothScrollOrigin;
+  nsIAtom* mLastSmoothScrollOrigin;
   Maybe<nsPoint> mApzSmoothScrollDestination;
   uint32_t mScrollGeneration;
   nsRect mScrollPort;
@@ -637,12 +644,12 @@ protected:
    */
   void ScrollToWithOrigin(nsPoint aScrollPosition,
                           nsIScrollableFrame::ScrollMode aMode,
-                          nsAtom *aOrigin, // nullptr indicates "other" origin
+                          nsIAtom *aOrigin, // nullptr indicates "other" origin
                           const nsRect* aRange,
                           nsIScrollbarMediator::ScrollSnapMode aSnap
                             = nsIScrollbarMediator::DISABLE_SNAP);
 
-  void CompleteAsyncScroll(const nsRect &aRange, nsAtom* aOrigin = nullptr);
+  void CompleteAsyncScroll(const nsRect &aRange, nsIAtom* aOrigin = nullptr);
 
   bool HasPluginFrames();
   bool HasPerspective() const;
@@ -686,9 +693,10 @@ public:
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS(nsHTMLScrollFrame)
 
-  virtual void BuildDisplayList(nsDisplayListBuilder* aBuilder,
+  virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {
-    mHelper.BuildDisplayList(aBuilder, aLists);
+    mHelper.BuildDisplayList(aBuilder, aDirtyRect, aLists);
   }
 
   bool TryLayout(ScrollReflowInput* aState,
@@ -842,7 +850,7 @@ public:
     mHelper.ScrollToCSSPixels(aScrollPosition, aMode);
   }
   virtual void ScrollToCSSPixelsApproximate(const mozilla::CSSPoint& aScrollPosition,
-                                            nsAtom* aOrigin = nullptr) override {
+                                            nsIAtom* aOrigin = nullptr) override {
     mHelper.ScrollToCSSPixelsApproximate(aScrollPosition, aOrigin);
   }
   /**
@@ -855,7 +863,7 @@ public:
    * @note This method might destroy the frame, pres shell and other objects.
    */
   virtual void ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit, ScrollMode aMode,
-                        nsIntPoint* aOverflow, nsAtom* aOrigin = nullptr,
+                        nsIntPoint* aOverflow, nsIAtom* aOrigin = nullptr,
                         nsIScrollableFrame::ScrollMomentum aMomentum = nsIScrollableFrame::NOT_MOMENTUM,
                         nsIScrollbarMediator::ScrollSnapMode aSnap
                           = nsIScrollbarMediator::DISABLE_SNAP)
@@ -890,9 +898,6 @@ public:
   virtual bool IsScrollingActive(nsDisplayListBuilder* aBuilder) override {
     return mHelper.IsScrollingActive(aBuilder);
   }
-  virtual bool IsMaybeScrollingActive() const override {
-    return mHelper.IsMaybeScrollingActive();
-  }
   virtual bool IsProcessingAsyncScroll() override {
     return mHelper.IsProcessingAsyncScroll();
   }
@@ -911,13 +916,13 @@ public:
   virtual nsRect ExpandRectToNearlyVisible(const nsRect& aRect) const override {
     return mHelper.ExpandRectToNearlyVisible(aRect);
   }
-  virtual nsAtom* LastScrollOrigin() override {
+  virtual nsIAtom* LastScrollOrigin() override {
     return mHelper.LastScrollOrigin();
   }
   virtual void AllowScrollOriginDowngrade() override {
     mHelper.AllowScrollOriginDowngrade();
   }
-  virtual nsAtom* LastSmoothScrollOrigin() override {
+  virtual nsIAtom* LastSmoothScrollOrigin() override {
     return mHelper.LastSmoothScrollOrigin();
   }
   virtual uint32_t CurrentScrollGeneration() override {
@@ -951,8 +956,8 @@ public:
   }
   virtual bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                                      nsRect* aDirtyRect,
-                                     bool aSetBase) override {
-    return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aSetBase);
+                                     bool aAllowCreateDisplayPort) override {
+    return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
   }
   virtual void NotifyApproximateFrameVisibilityUpdate(bool aIgnoreDisplayPort) override {
     mHelper.NotifyApproximateFrameVisibilityUpdate(aIgnoreDisplayPort);
@@ -1121,8 +1126,9 @@ public:
                                                 bool aClipAllDescendants);
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override {
-    mHelper.BuildDisplayList(aBuilder, aLists);
+    mHelper.BuildDisplayList(aBuilder, aDirtyRect, aLists);
   }
 
   // XXXldb Is this actually used?
@@ -1282,7 +1288,7 @@ public:
     mHelper.ScrollToCSSPixels(aScrollPosition, aMode);
   }
   virtual void ScrollToCSSPixelsApproximate(const mozilla::CSSPoint& aScrollPosition,
-                                            nsAtom* aOrigin = nullptr) override {
+                                            nsIAtom* aOrigin = nullptr) override {
     mHelper.ScrollToCSSPixelsApproximate(aScrollPosition, aOrigin);
   }
   virtual CSSIntPoint GetScrollPositionCSSPixels() override {
@@ -1292,7 +1298,7 @@ public:
    * @note This method might destroy the frame, pres shell and other objects.
    */
   virtual void ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit, ScrollMode aMode,
-                        nsIntPoint* aOverflow, nsAtom* aOrigin = nullptr,
+                        nsIntPoint* aOverflow, nsIAtom* aOrigin = nullptr,
                         nsIScrollableFrame::ScrollMomentum aMomentum = nsIScrollableFrame::NOT_MOMENTUM,
                         nsIScrollbarMediator::ScrollSnapMode aSnap
                           = nsIScrollbarMediator::DISABLE_SNAP)
@@ -1327,9 +1333,6 @@ public:
   virtual bool IsScrollingActive(nsDisplayListBuilder* aBuilder) override {
     return mHelper.IsScrollingActive(aBuilder);
   }
-  virtual bool IsMaybeScrollingActive() const override {
-    return mHelper.IsMaybeScrollingActive();
-  }
   virtual bool IsProcessingAsyncScroll() override {
     return mHelper.IsProcessingAsyncScroll();
   }
@@ -1348,13 +1351,13 @@ public:
   virtual nsRect ExpandRectToNearlyVisible(const nsRect& aRect) const override {
     return mHelper.ExpandRectToNearlyVisible(aRect);
   }
-  virtual nsAtom* LastScrollOrigin() override {
+  virtual nsIAtom* LastScrollOrigin() override {
     return mHelper.LastScrollOrigin();
   }
   virtual void AllowScrollOriginDowngrade() override {
     mHelper.AllowScrollOriginDowngrade();
   }
-  virtual nsAtom* LastSmoothScrollOrigin() override {
+  virtual nsIAtom* LastSmoothScrollOrigin() override {
     return mHelper.LastSmoothScrollOrigin();
   }
   virtual uint32_t CurrentScrollGeneration() override {
@@ -1463,8 +1466,8 @@ public:
   }
   virtual bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                                      nsRect* aDirtyRect,
-                                     bool aSetBase) override {
-    return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aSetBase);
+                                     bool aAllowCreateDisplayPort) override {
+    return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
   }
   virtual void NotifyApproximateFrameVisibilityUpdate(bool aIgnoreDisplayPort) override {
     mHelper.NotifyApproximateFrameVisibilityUpdate(aIgnoreDisplayPort);

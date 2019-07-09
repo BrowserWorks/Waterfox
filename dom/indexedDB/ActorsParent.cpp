@@ -3647,6 +3647,8 @@ UpgradeSchemaFrom18_0To19_0(mozIStorageConnection* aConnection)
   return NS_OK;
 }
 
+#if !defined(MOZ_B2G)
+
 class NormalJSContext;
 
 class UpgradeFileIdsFunction final
@@ -3682,6 +3684,8 @@ private:
                  nsIVariant** aResult) override;
 };
 
+#endif // MOZ_B2G
+
 nsresult
 UpgradeSchemaFrom19_0To20_0(nsIFile* aFMDirectory,
                             mozIStorageConnection* aConnection)
@@ -3690,6 +3694,20 @@ UpgradeSchemaFrom19_0To20_0(nsIFile* aFMDirectory,
   MOZ_ASSERT(aConnection);
 
   AUTO_PROFILER_LABEL("UpgradeSchemaFrom19_0To20_0", STORAGE);
+
+#if defined(MOZ_B2G)
+
+  // We don't have to do the upgrade of file ids on B2G. The old format was
+  // only used by the previous single process implementation and B2G was
+  // always multi process. This is a nice optimization since the upgrade needs
+  // to deserialize all structured clones which reference a stored file or
+  // a mutable file.
+  nsresult rv = aConnection->SetSchemaVersion(MakeSchemaVersion(20, 0));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+#else // MOZ_B2G
 
   nsCOMPtr<mozIStorageStatement> stmt;
   nsresult rv = aConnection->CreateStatement(NS_LITERAL_CSTRING(
@@ -3788,6 +3806,8 @@ UpgradeSchemaFrom19_0To20_0(nsIFile* aFMDirectory,
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
+
+#endif // MOZ_B2G
 
   return NS_OK;
 }
@@ -6826,7 +6846,7 @@ DatabaseFile::GetInputStream(ErrorResult &rv) const
   }
 
   nsCOMPtr<nsIInputStream> inputStream;
-  mBlobImpl->CreateInputStream(getter_AddRefs(inputStream), rv);
+  mBlobImpl->GetInternalStream(getter_AddRefs(inputStream), rv);
   if (rv.Failed()) {
     return nullptr;
   }
@@ -7715,10 +7735,12 @@ private:
   void
   SendResults() override;
 
+#ifdef ENABLE_INTL_API
   static nsresult
   UpdateLocaleAwareIndex(mozIStorageConnection* aConnection,
                          const IndexMetadata& aIndexMetadata,
                          const nsCString& aLocale);
+#endif
 };
 
 class OpenDatabaseOp::VersionChangeOp final
@@ -11992,7 +12014,7 @@ DatabaseUpdateFunction::UpdateInternal(int64_t aId,
 
 ConnectionPool::ConnectionPool()
   : mDatabasesMutex("ConnectionPool::mDatabasesMutex")
-  , mIdleTimer(NS_NewTimer())
+  , mIdleTimer(do_CreateInstance(NS_TIMER_CONTRACTID))
   , mNextTransactionId(0)
   , mTotalThreadCount(0)
   , mShutdownRequested(false)
@@ -17376,7 +17398,7 @@ FileManager::InitDirectory(nsIFile* aDirectory,
       nsCOMPtr<mozIStorageConnection> connection;
       rv = CreateStorageConnection(aDatabaseFile,
                                    aDirectory,
-                                   VoidString(),
+                                   NullString(),
                                    aPersistenceType,
                                    aGroup,
                                    aOrigin,
@@ -17992,9 +18014,20 @@ QuotaClient::ShutdownWorkThreads()
 
   mShutdownRequested = true;
 
+  // Shutdown maintenance thread pool (this spins the event loop until all
+  // threads are gone). This should release any maintenance related quota
+  // objects.
   if (mMaintenanceThreadPool) {
     mMaintenanceThreadPool->Shutdown();
     mMaintenanceThreadPool = nullptr;
+  }
+
+  // Let any runnables dispatched from dying maintenance threads to be
+  // processed. This should release any maintenance related directory locks.
+  if (mCurrentMaintenance) {
+    MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() {
+      return !mCurrentMaintenance;
+    }));
   }
 
   RefPtr<ConnectionPool> connectionPool = gConnectionPool.get();
@@ -18320,7 +18353,8 @@ Maintenance::Start()
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(mState == State::Initial);
 
-  if (IsAborted()) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
+      IsAborted()) {
     return NS_ERROR_ABORT;
   }
 
@@ -18344,7 +18378,8 @@ Maintenance::CreateIndexedDatabaseManager()
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mState == State::CreateIndexedDatabaseManager);
 
-  if (IsAborted()) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      IsAborted()) {
     return NS_ERROR_ABORT;
   }
 
@@ -18369,7 +18404,8 @@ Maintenance::OpenDirectory()
   MOZ_ASSERT(!mDirectoryLock);
   MOZ_ASSERT(QuotaManager::Get());
 
-  if (IsAborted()) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
+      IsAborted()) {
     return NS_ERROR_ABORT;
   }
 
@@ -18393,7 +18429,8 @@ Maintenance::DirectoryOpen()
   MOZ_ASSERT(mState == State::DirectoryOpenPending);
   MOZ_ASSERT(mDirectoryLock);
 
-  if (IsAborted()) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
+      IsAborted()) {
     return NS_ERROR_ABORT;
   }
 
@@ -18423,7 +18460,8 @@ Maintenance::DirectoryWork()
   // We have to find all database files that match any persistence type and any
   // origin. We ignore anything out of the ordinary for now.
 
-  if (IsAborted()) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      IsAborted()) {
     return NS_ERROR_ABORT;
   }
 
@@ -18610,6 +18648,7 @@ Maintenance::DirectoryWork()
         continue;
       }
 
+      nsCString suffix;
       nsCString group;
       nsCString origin;
       nsTArray<nsString> databasePaths;
@@ -18667,17 +18706,17 @@ Maintenance::DirectoryWork()
 
         // Found a database.
         if (databasePaths.IsEmpty()) {
+          MOZ_ASSERT(suffix.IsEmpty());
           MOZ_ASSERT(group.IsEmpty());
           MOZ_ASSERT(origin.IsEmpty());
 
           int64_t dummyTimeStamp;
           bool dummyPersisted;
-          nsCString dummySuffix;
           if (NS_WARN_IF(NS_FAILED(
                 quotaManager->GetDirectoryMetadata2(originDir,
                                                     &dummyTimeStamp,
                                                     &dummyPersisted,
-                                                    dummySuffix,
+                                                    suffix,
                                                     group,
                                                     origin)))) {
             // Not much we can do here...
@@ -18695,6 +18734,21 @@ Maintenance::DirectoryWork()
                                                     group,
                                                     origin,
                                                     Move(databasePaths)));
+
+        nsCOMPtr<nsIFile> directory;
+
+        // Idle maintenance may occur before origin is initailized.
+        // Ensure origin is initialized first. It will initialize all origins
+        // for temporary storage including IDB origins.
+        rv = quotaManager->EnsureOriginIsInitialized(persistenceType,
+                                                     suffix,
+                                                     group,
+                                                     origin,
+                                                     getter_AddRefs(directory));
+
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return rv;
+        }
       }
     }
   }
@@ -18745,6 +18799,11 @@ Maintenance::BeginDatabaseMaintenance()
       return true;
     }
   };
+
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
+      IsAborted()) {
+    return NS_ERROR_ABORT;
+  }
 
   RefPtr<nsThreadPool> threadPool;
 
@@ -18932,6 +18991,11 @@ DatabaseMaintenance::PerformMaintenanceOnDatabase()
     }
   };
 
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      mMaintenance->IsAborted()) {
+    return;
+  }
+
   nsCOMPtr<nsIFile> databaseFile = GetFileForPath(mDatabasePath);
   MOZ_ASSERT(databaseFile);
 
@@ -18947,10 +19011,6 @@ DatabaseMaintenance::PerformMaintenanceOnDatabase()
   }
 
   AutoClose autoClose(connection);
-
-  if (mMaintenance->IsAborted()) {
-    return;
-  }
 
   AutoProgressHandler progressHandler(mMaintenance);
   if (NS_WARN_IF(NS_FAILED(progressHandler.Register(connection)))) {
@@ -18970,17 +19030,9 @@ DatabaseMaintenance::PerformMaintenanceOnDatabase()
     return;
   }
 
-  if (mMaintenance->IsAborted()) {
-    return;
-  }
-
   MaintenanceAction maintenanceAction;
   rv = DetermineMaintenanceAction(connection, databaseFile, &maintenanceAction);
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  if (mMaintenance->IsAborted()) {
     return;
   }
 
@@ -19009,6 +19061,11 @@ DatabaseMaintenance::CheckIntegrity(mozIStorageConnection* aConnection,
   MOZ_ASSERT(!IsOnBackgroundThread());
   MOZ_ASSERT(aConnection);
   MOZ_ASSERT(aOk);
+
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      mMaintenance->IsAborted()) {
+    return NS_ERROR_ABORT;
+  }
 
   nsresult rv;
 
@@ -19126,6 +19183,11 @@ DatabaseMaintenance::DetermineMaintenanceAction(
   MOZ_ASSERT(aConnection);
   MOZ_ASSERT(aDatabaseFile);
   MOZ_ASSERT(aMaintenanceAction);
+
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      mMaintenance->IsAborted()) {
+    return NS_ERROR_ABORT;
+  }
 
   int32_t schemaVersion;
   nsresult rv = aConnection->GetSchemaVersion(&schemaVersion);
@@ -19336,6 +19398,11 @@ DatabaseMaintenance::IncrementalVacuum(mozIStorageConnection* aConnection)
   MOZ_ASSERT(!IsOnBackgroundThread());
   MOZ_ASSERT(aConnection);
 
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      mMaintenance->IsAborted()) {
+    return;
+  }
+
   nsresult rv = aConnection->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
     "PRAGMA incremental_vacuum;"
   ));
@@ -19352,6 +19419,11 @@ DatabaseMaintenance::FullVacuum(mozIStorageConnection* aConnection,
   MOZ_ASSERT(!IsOnBackgroundThread());
   MOZ_ASSERT(aConnection);
   MOZ_ASSERT(aDatabaseFile);
+
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
+      mMaintenance->IsAborted()) {
+    return;
+  }
 
   nsresult rv = aConnection->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
     "VACUUM;"
@@ -19524,6 +19596,8 @@ NS_IMPL_ISUPPORTS(CompressDataBlobsFunction, mozIStorageFunction)
 NS_IMPL_ISUPPORTS(EncodeKeysFunction, mozIStorageFunction)
 NS_IMPL_ISUPPORTS(StripObsoleteOriginAttributesFunction, mozIStorageFunction);
 
+#if !defined(MOZ_B2G)
+
 nsresult
 UpgradeFileIdsFunction::Init(nsIFile* aFMDirectory,
                              mozIStorageConnection* aConnection)
@@ -19614,6 +19688,8 @@ UpgradeFileIdsFunction::OnFunctionCall(mozIStorageValueArray* aArguments,
   result.forget(aResult);
   return NS_OK;
 }
+
+#endif // MOZ_B2G
 
 // static
 void
@@ -19912,6 +19988,9 @@ DatabaseOperationBase::BindKeyRangeToStatement(
                                             mozIStorageStatement* aStatement,
                                             const nsCString& aLocale)
 {
+#ifndef ENABLE_INTL_API
+  return BindKeyRangeToStatement(aKeyRange, aStatement);
+#else
   MOZ_ASSERT(!IsOnBackgroundThread());
   MOZ_ASSERT(aStatement);
   MOZ_ASSERT(!aLocale.IsEmpty());
@@ -19949,6 +20028,7 @@ DatabaseOperationBase::BindKeyRangeToStatement(
   }
 
   return NS_OK;
+#endif
 }
 
 // static
@@ -21041,19 +21121,32 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
   MOZ_ASSERT(mState == State::Initial || mState == State::PermissionRetry);
 
   const PrincipalInfo& principalInfo = mCommonParams.principalInfo();
-  if (principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo &&
-      NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
-    if (aContentParent) {
-      // The DOM in the other process should have kept us from receiving any
-      // indexedDB messages so assume that the child is misbehaving.
-      aContentParent->KillHard("IndexedDB CheckPermission 1");
-    }
-    return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
-  }
+  if (principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo) {
+    if (principalInfo.type() != PrincipalInfo::TContentPrincipalInfo) {
+      if (aContentParent) {
+        // We just want ContentPrincipalInfo or SystemPrincipalInfo.
+        aContentParent->KillHard("IndexedDB CheckPermission 0");
+      }
 
-  if (NS_WARN_IF(mCommonParams.privateBrowsingMode())) {
-    // XXX This is only temporary.
-    return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
+      return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
+    }
+
+    if (NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
+      if (aContentParent) {
+        // The DOM in the other process should have kept us from receiving any
+        // indexedDB messages so assume that the child is misbehaving.
+        aContentParent->KillHard("IndexedDB CheckPermission 1");
+      }
+
+      return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
+    }
+
+    const ContentPrincipalInfo& contentPrincipalInfo =
+      principalInfo.get_ContentPrincipalInfo();
+    if (contentPrincipalInfo.attrs().mPrivateBrowsingId != 0) {
+      // IndexedDB is currently disabled in privateBrowsing.
+      return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
+    }
   }
 
   mFileHandleDisabled = !Preferences::GetBool(kPrefFileHandleEnabled);
@@ -22011,6 +22104,7 @@ OpenDatabaseOp::LoadDatabaseInformation(mozIStorageConnection* aConnection)
 
     indexMetadata->mCommonMetadata.multiEntry() = !!scratch;
 
+#ifdef ENABLE_INTL_API
     const bool localeAware = !stmt->IsNull(6);
     if (localeAware) {
       rv = stmt->GetUTF8String(6, indexMetadata->mCommonMetadata.locale());
@@ -22040,6 +22134,7 @@ OpenDatabaseOp::LoadDatabaseInformation(mozIStorageConnection* aConnection)
         }
       }
     }
+#endif
 
     if (NS_WARN_IF(!objectStoreMetadata->mIndexes.Put(indexId, indexMetadata,
                                                       fallible))) {
@@ -22065,6 +22160,7 @@ OpenDatabaseOp::LoadDatabaseInformation(mozIStorageConnection* aConnection)
   return NS_OK;
 }
 
+#ifdef ENABLE_INTL_API
 /* static */
 nsresult
 OpenDatabaseOp::UpdateLocaleAwareIndex(mozIStorageConnection* aConnection,
@@ -22182,6 +22278,7 @@ OpenDatabaseOp::UpdateLocaleAwareIndex(mozIStorageConnection* aConnection,
   rv = metaStmt->Execute();
   return rv;
 }
+#endif
 
 nsresult
 OpenDatabaseOp::BeginVersionChange()
@@ -23718,32 +23815,38 @@ TransactionDatabaseOperationBase::SendPreprocessInfoOrResults(
   MOZ_ASSERT(mTransaction);
 
   if (NS_WARN_IF(IsActorDestroyed())) {
-    // Don't send any notifications if the actor was destroyed already.
+    // Normally we wouldn't need to send any notifications if the actor was
+    // already destroyed, but this can be a VersionChangeOp which needs to
+    // notify its parent operation (OpenDatabaseOp) about the failure.
+    // So SendFailureResult needs to be called even when the actor was
+    // destroyed.  Normal operations redundantly check if the actor was
+    // destroyed in SendSuccessResult and SendFailureResult, therefore it's
+    // ok to call it in all cases here.
     if (NS_SUCCEEDED(mResultCode)) {
       IDB_REPORT_INTERNAL_ERR();
       mResultCode = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
-  } else {
-    if (mTransaction->IsInvalidated() || mTransaction->IsAborted()) {
-      // Aborted transactions always see their requests fail with ABORT_ERR,
-      // even if the request succeeded or failed with another error.
-      mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
-    } else if (NS_SUCCEEDED(mResultCode)) {
-      if (aSendPreprocessInfo) {
-        // This should not release the IPDL reference.
-        mResultCode = SendPreprocessInfo();
-      } else {
-        // This may release the IPDL reference.
-        mResultCode = SendSuccessResult();
-      }
-    }
+  } else if (mTransaction->IsInvalidated() || mTransaction->IsAborted()) {
+    // Aborted transactions always see their requests fail with ABORT_ERR,
+    // even if the request succeeded or failed with another error.
+    mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
+  }
 
-    if (NS_FAILED(mResultCode)) {
-      // This should definitely release the IPDL reference.
-      if (!SendFailureResult(mResultCode)) {
-        // Abort the transaction.
-        mTransaction->Abort(mResultCode, /* aForce */ false);
-      }
+  if (NS_SUCCEEDED(mResultCode)) {
+    if (aSendPreprocessInfo) {
+      // This should not release the IPDL reference.
+      mResultCode = SendPreprocessInfo();
+    } else {
+      // This may release the IPDL reference.
+      mResultCode = SendSuccessResult();
+    }
+  }
+
+  if (NS_FAILED(mResultCode)) {
+    // This should definitely release the IPDL reference.
+    if (!SendFailureResult(mResultCode)) {
+      // Abort the transaction.
+      mTransaction->Abort(mResultCode, /* aForce */ false);
     }
   }
 
@@ -25033,6 +25136,8 @@ CreateIndexOp::DoDatabaseWork(DatabaseConnection* aConnection)
 static const JSClassOps sNormalJSContextGlobalClassOps = {
   /* addProperty */ nullptr,
   /* delProperty */ nullptr,
+  /* getProperty */ nullptr,
+  /* setProperty */ nullptr,
   /* enumerate */ nullptr,
   /* newEnumerate */ nullptr,
   /* resolve */ nullptr,
@@ -27956,12 +28061,15 @@ OpenOp::GetRangeKeyInfo(bool aLowerBound, Key* aKey, bool* aOpen)
     if (range.isOnly()) {
       *aKey = range.lower();
       *aOpen = false;
+#ifdef ENABLE_INTL_API
       if (mCursor->IsLocaleAware()) {
         range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale);
       }
+#endif
     } else {
       *aKey = aLowerBound ? range.lower() : range.upper();
       *aOpen = aLowerBound ? range.lowerOpen() : range.upperOpen();
+#ifdef ENABLE_INTL_API
       if (mCursor->IsLocaleAware()) {
         if (aLowerBound) {
           range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale);
@@ -27969,6 +28077,7 @@ OpenOp::GetRangeKeyInfo(bool aLowerBound, Key* aKey, bool* aOpen)
           range.upper().ToLocaleBasedKey(*aKey, mCursor->mLocale);
         }
       }
+#endif
     }
   } else {
     *aOpen = false;
@@ -28444,11 +28553,9 @@ OpenOp::DoIndexDatabaseWork(DatabaseConnection* aConnection)
         openLimit;
       mCursor->mContinuePrimaryKeyQuery =
         queryStart +
-        NS_LITERAL_CSTRING(" AND ("
-          "(sort_column == :current_key AND "
-             "index_table.object_data_key >= :object_key) OR "
-          "sort_column > :current_key"
-        ")") +
+        NS_LITERAL_CSTRING(" AND sort_column >= :current_key "
+                            "AND index_table.object_data_key >= :object_key "
+                          ) +
         directionClause +
         openLimit;
       break;
@@ -28498,11 +28605,9 @@ OpenOp::DoIndexDatabaseWork(DatabaseConnection* aConnection)
         openLimit;
       mCursor->mContinuePrimaryKeyQuery =
         queryStart +
-        NS_LITERAL_CSTRING(" AND ("
-          "(sort_column == :current_key AND "
-             "index_table.object_data_key <= :object_key) OR "
-          "sort_column < :current_key"
-        ")") +
+        NS_LITERAL_CSTRING(" AND sort_column <= :current_key "
+                            "AND index_table.object_data_key <= :object_key "
+                          ) +
         directionClause +
         openLimit;
       break;
@@ -28682,11 +28787,9 @@ OpenOp::DoIndexKeyDatabaseWork(DatabaseConnection* aConnection)
         openLimit;
       mCursor->mContinuePrimaryKeyQuery =
         queryStart +
-        NS_LITERAL_CSTRING(" AND ("
-          "(sort_column == :current_key AND "
-             "object_data_key >= :object_key) OR "
-          "sort_column > :current_key"
-        ")") +
+        NS_LITERAL_CSTRING(" AND sort_column >= :current_key "
+                            "AND object_data_key >= :object_key "
+                          ) +
         directionClause +
         openLimit;
       break;
@@ -28736,11 +28839,9 @@ OpenOp::DoIndexKeyDatabaseWork(DatabaseConnection* aConnection)
         openLimit;
       mCursor->mContinuePrimaryKeyQuery =
         queryStart +
-        NS_LITERAL_CSTRING(" AND ("
-          "(sort_column == :current_key AND "
-             "object_data_key <= :object_key) OR "
-          "sort_column < :current_key"
-        ")") +
+        NS_LITERAL_CSTRING(" AND sort_column <= :current_key "
+                            "AND object_data_key <= :object_key "
+                          ) +
         directionClause +
         openLimit;
       break;

@@ -59,9 +59,6 @@ var test_bookmarks = {
     { title: "Latest Headlines",
       url: "http://en-us.fxfeeds.mozilla.com/en-US/firefox/livebookmarks/",
       feedUrl: "http://en-us.fxfeeds.mozilla.com/en-US/firefox/headlines.xml"
-    },
-    { title: "Latest Headlines No Site",
-      feedUrl: "http://en-us.fxfeeds.mozilla.com/en-US/firefox/headlines.xml"
     }
   ],
   unfiled: [
@@ -81,12 +78,13 @@ add_task(async function setup() {
   Services.prefs.setIntPref("browser.places.smartBookmarksVersion", -1);
 
   // File pointer to legacy bookmarks file.
-  gBookmarksFileOld = OS.Path.join(do_get_cwd().path, "bookmarks.preplaces.html");
+  gBookmarksFileOld = do_get_file("bookmarks.preplaces.html");
 
   // File pointer to a new Places-exported bookmarks file.
-  gBookmarksFileNew = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.exported.html");
-  if (await OS.File.exists(gBookmarksFileNew)) {
-    await OS.File.remove(gBookmarksFileNew);
+  gBookmarksFileNew = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
+  gBookmarksFileNew.append("bookmarks.exported.html");
+  if (gBookmarksFileNew.exists()) {
+    gBookmarksFileNew.remove(false);
   }
 
   // This test must be the first one, since it setups the new bookmarks.html.
@@ -295,8 +293,6 @@ function checkItem(aExpected, aNode) {
   let id = aNode.itemId;
 
   return (async function() {
-    let bookmark = await PlacesUtils.bookmarks.fetch(aNode.bookmarkGuid);
-
     for (let prop in aExpected) {
       switch (prop) {
         case "type":
@@ -311,16 +307,16 @@ function checkItem(aExpected, aNode) {
                       aExpected.description);
           break;
         case "dateAdded":
-          do_check_eq(PlacesUtils.toPRTime(bookmark.dateAdded),
+          do_check_eq(PlacesUtils.bookmarks.getItemDateAdded(id),
                       aExpected.dateAdded);
           break;
         case "lastModified":
-          do_check_eq(PlacesUtils.toPRTime(bookmark.lastModified),
+          do_check_eq(PlacesUtils.bookmarks.getItemLastModified(id),
                       aExpected.lastModified);
           break;
         case "url":
           if (!("feedUrl" in aExpected))
-            do_check_eq(aNode.uri, aExpected.url);
+            do_check_eq(aNode.uri, aExpected.url)
           break;
         case "icon":
           let {data} = await getFaviconDataForPage(aExpected.url);
@@ -349,9 +345,7 @@ function checkItem(aExpected, aNode) {
           break;
         case "feedUrl":
           let livemark = await PlacesUtils.livemarks.getLivemark({ id });
-          if (aExpected.url) {
-            do_check_eq(livemark.siteURI.spec, aExpected.url);
-          }
+          do_check_eq(livemark.siteURI.spec, aExpected.url);
           do_check_eq(livemark.feedURI.spec, aExpected.feedUrl);
           break;
         case "children":

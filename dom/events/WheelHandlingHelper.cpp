@@ -21,7 +21,7 @@
 #include "nsPresContext.h"
 #include "prtime.h"
 #include "Units.h"
-#include "ScrollAnimationPhysics.h"
+#include "AsyncScrollBase.h"
 
 namespace mozilla {
 
@@ -324,10 +324,11 @@ WheelTransaction::OnTimeout(nsITimer* aTimer, void* aClosure)
 WheelTransaction::SetTimeout()
 {
   if (!sTimer) {
-    sTimer = NS_NewTimer().take();
-    if (!sTimer) {
+    nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    if (!timer) {
       return;
     }
+    timer.swap(sTimer);
   }
   sTimer->Cancel();
   DebugOnly<nsresult> rv =
@@ -529,9 +530,8 @@ ScrollbarsForWheel::DeactivateAllTemporarilyActivatedScrollTargets()
 }
 
 /******************************************************************/
-/* mozilla::WheelTransaction::Prefs                               */
+/* mozilla::WheelTransaction                                      */
 /******************************************************************/
-
 int32_t WheelTransaction::Prefs::sMouseWheelAccelerationStart = -1;
 int32_t WheelTransaction::Prefs::sMouseWheelAccelerationFactor = -1;
 uint32_t WheelTransaction::Prefs::sMouseWheelTransactionTimeout = 1500;
@@ -553,49 +553,6 @@ WheelTransaction::Prefs::InitializeStatics()
                                  "mousewheel.transaction.ignoremovedelay", 100);
     Preferences::AddBoolVarCache(&sTestMouseScroll, "test.mousescroll", false);
     sIsInitialized = true;
-  }
-}
-
-/******************************************************************/
-/* mozilla::AutoWheelDeltaAdjuster                                */
-/******************************************************************/
-
-AutoWheelDeltaAdjuster::AutoWheelDeltaAdjuster(WidgetWheelEvent& aWheelEvent)
-  : mWheelEvent(aWheelEvent)
-  , mOldDeltaX(aWheelEvent.mDeltaX)
-  , mOldDeltaZ(aWheelEvent.mDeltaZ)
-  , mOldOverflowDeltaX(aWheelEvent.mOverflowDeltaX)
-  , mOldLineOrPageDeltaX(aWheelEvent.mLineOrPageDeltaX)
-  , mTreatedVerticalWheelAsHorizontalScroll(false)
-{
-  MOZ_ASSERT(!aWheelEvent.mDeltaValuesAdjustedForDefaultHandler);
-
-  if (EventStateManager::WheelEventIsHorizontalScrollAction(&aWheelEvent)) {
-    // Move deltaY values to deltaX and set both deltaY and deltaZ to 0.
-    mWheelEvent.mDeltaX = mWheelEvent.mDeltaY;
-    mWheelEvent.mDeltaY = 0.0;
-    mWheelEvent.mDeltaZ = 0.0;
-    mWheelEvent.mOverflowDeltaX = mWheelEvent.mOverflowDeltaY;
-    mWheelEvent.mOverflowDeltaY = 0.0;
-    mWheelEvent.mLineOrPageDeltaX = mWheelEvent.mLineOrPageDeltaY;
-    mWheelEvent.mLineOrPageDeltaY = 0;
-    mWheelEvent.mDeltaValuesAdjustedForDefaultHandler = true;
-    mTreatedVerticalWheelAsHorizontalScroll = true;
-  }
-}
-
-AutoWheelDeltaAdjuster::~AutoWheelDeltaAdjuster()
-{
-  if (mTreatedVerticalWheelAsHorizontalScroll &&
-      mWheelEvent.mDeltaValuesAdjustedForDefaultHandler) {
-    mWheelEvent.mDeltaY = mWheelEvent.mDeltaX;
-    mWheelEvent.mDeltaX = mOldDeltaX;
-    mWheelEvent.mDeltaZ = mOldDeltaZ;
-    mWheelEvent.mOverflowDeltaY = mWheelEvent.mOverflowDeltaX;
-    mWheelEvent.mOverflowDeltaX = mOldOverflowDeltaX;
-    mWheelEvent.mLineOrPageDeltaY = mWheelEvent.mLineOrPageDeltaX;
-    mWheelEvent.mLineOrPageDeltaX = mOldLineOrPageDeltaX;
-    mWheelEvent.mDeltaValuesAdjustedForDefaultHandler = false;
   }
 }
 

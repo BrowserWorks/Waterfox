@@ -10,7 +10,7 @@
 #include "SVGContentUtils.h"
 #include "nsSVGTransform.h"
 #include "nsGkAtoms.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 using namespace mozilla;
 
@@ -68,7 +68,7 @@ SVGTransformListParser::ParseTransform()
   }
 
   const nsAString& transform = Substring(start.get(), mIter.get());
-  nsAtom* keyAtom = NS_GetStaticAtom(transform);
+  nsIAtom* keyAtom = NS_GetStaticAtom(transform);
 
   if (!keyAtom || !SkipWsp()) {
     return false;

@@ -599,8 +599,8 @@ GfxInfo::Init()
 
     if (createDXGIFactory) {
       RefPtr<IDXGIFactory> factory = nullptr;
-      createDXGIFactory(__uuidof(IDXGIFactory),
-                        (void**)(&factory) );
+      HRESULT hrf = createDXGIFactory(__uuidof(IDXGIFactory),
+                                      (void**)(&factory) );
       if (factory) {
         RefPtr<IDXGIAdapter> adapter;
         if (SUCCEEDED(factory->EnumAdapters(0, getter_AddRefs(adapter)))) {
@@ -923,7 +923,7 @@ GfxInfo::AddCrashReportAnnotations()
     LossyAppendUTF16toASCII(mDeviceKeyDebug, note);
     LossyAppendUTF16toASCII(mDeviceKeyDebug, note);
   }
-  note.AppendLiteral("\n");
+  note.Append("\n");
 
   if (mHasDualGPU) {
     nsString deviceID2, vendorID2, subsysID2;
@@ -1390,6 +1390,10 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   *aStatus = nsIGfxInfo::FEATURE_STATUS_UNKNOWN;
   if (aOS)
     *aOS = os;
+
+  if (mShutdownOccurred) {
+    return NS_OK;
+  }
 
   // Don't evaluate special cases if we're checking the downloaded blocklist.
   if (!aDriverInfo.Length()) {

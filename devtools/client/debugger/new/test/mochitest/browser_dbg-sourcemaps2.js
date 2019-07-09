@@ -6,22 +6,22 @@
 
 // This source map does not have source contents, so it's fetched separately
 
-add_task(async function() {
+add_task(function*() {
   // NOTE: the CORS call makes the test run times inconsistent
   requestLongerTimeout(2);
 
-  const dbg = await initDebugger("doc-sourcemaps2.html");
+  const dbg = yield initDebugger("doc-sourcemaps2.html");
   const { selectors: { getBreakpoint, getBreakpoints }, getState } = dbg;
 
-  await waitForSources(dbg, "main.js", "main.min.js");
+  yield waitForSources(dbg, "main.js", "main.min.js");
 
   ok(true, "Original sources exist");
   const mainSrc = findSource(dbg, "main.js");
 
-  await selectSource(dbg, mainSrc);
+  yield selectSource(dbg, mainSrc);
 
   // Test that breakpoint is not off by a line.
-  await addBreakpoint(dbg, mainSrc, 4);
+  yield addBreakpoint(dbg, mainSrc, 4);
   is(getBreakpoints(getState()).size, 1, "One breakpoint exists");
   ok(
     getBreakpoint(getState(), { sourceId: mainSrc.id, line: 4, column: 2 }),
@@ -30,6 +30,6 @@ add_task(async function() {
 
   invokeInTab("logMessage");
 
-  await waitForPaused(dbg);
-  assertPausedLocation(dbg);
+  yield waitForPaused(dbg);
+  assertPausedLocation(dbg, "main.js", 4);
 });

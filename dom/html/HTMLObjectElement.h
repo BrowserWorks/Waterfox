@@ -10,6 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
 #include "nsObjectLoadingContent.h"
+#include "nsIDOMHTMLObjectElement.h"
 #include "nsIConstraintValidation.h"
 
 namespace mozilla {
@@ -19,6 +20,7 @@ class HTMLFormSubmission;
 
 class HTMLObjectElement final : public nsGenericHTMLFormElement
                               , public nsObjectLoadingContent
+                              , public nsIDOMHTMLObjectElement
                               , public nsIConstraintValidation
 {
 public:
@@ -49,6 +51,9 @@ public:
   // EventTarget
   virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
 
+  // nsIDOMHTMLObjectElement
+  NS_DECL_NSIDOMHTMLOBJECTELEMENT
+
   virtual nsresult BindToTree(nsIDocument *aDocument, nsIContent *aParent,
                               nsIContent *aBindingParent,
                               bool aCompileEventHandlers) override;
@@ -68,11 +73,11 @@ public:
   virtual bool IsDoneAddingChildren() override;
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom *aAttribute,
+                                nsIAtom *aAttribute,
                                 const nsAString &aValue,
                                 nsAttrValue &aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom *aAttribute) const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom *aAttribute) const override;
   virtual EventStates IntrinsicState() const override;
   virtual void DestroyContent() override;
 
@@ -90,10 +95,7 @@ public:
                                            nsGenericHTMLFormElement)
 
   // Web IDL binding methods
-  void GetData(DOMString& aValue)
-  {
-    GetURIAttr(nsGkAtoms::data, nsGkAtoms::codebase, aValue);
-  }
+  // XPCOM GetData is ok; note that it's a URI attribute with a weird base URI
   void SetData(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::data, aValue, aRv);
@@ -170,10 +172,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::archive, aValue, aRv);
   }
-  void GetCode(DOMString& aValue)
-  {
-    GetHTMLAttr(nsGkAtoms::code, aValue);
-  }
+  // XPCOM GetCode is ok
   void SetCode(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::code, aValue, aRv);
@@ -210,10 +209,7 @@ public:
   {
     SetUnsignedIntAttr(nsGkAtoms::vspace, aValue, 0, aRv);
   }
-  void GetCodeBase(DOMString& aValue)
-  {
-    GetURIAttr(nsGkAtoms::codebase, nullptr, aValue);
-  }
+  // XPCOM GetCodebase is ok; note that it's a URI attribute
   void SetCodeBase(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::codebase, aValue, aRv);
@@ -250,12 +246,11 @@ protected:
   // Override for nsImageLoadingContent.
   nsIContent* AsContent() override { return this; }
 
-  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
-  virtual nsresult OnAttrSetButNotChanged(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
                                           const nsAttrValueOrString& aValue,
                                           bool aNotify) override;
 
@@ -287,7 +282,7 @@ private:
    * @param aName the localname of the attribute being set
    * @param aNotify Whether we plan to notify document observers.
    */
-  nsresult AfterMaybeChangeAttr(int32_t aNamespaceID, nsAtom* aName,
+  nsresult AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 bool aNotify);
 
   bool mIsDoneAddingChildren;

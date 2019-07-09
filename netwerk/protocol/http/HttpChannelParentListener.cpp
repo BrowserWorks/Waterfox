@@ -12,6 +12,7 @@
 #include "mozilla/Unused.h"
 #include "nsIAuthPrompt.h"
 #include "nsIAuthPrompt2.h"
+#include "nsIHttpEventSink.h"
 #include "nsIHttpHeaderVisitor.h"
 #include "nsIRedirectChannelRegistrar.h"
 #include "nsIPromptFactory.h"
@@ -29,7 +30,6 @@ HttpChannelParentListener::HttpChannelParentListener(HttpChannelParent* aInitial
   , mSuspendedForDiversion(false)
   , mShouldIntercept(false)
   , mShouldSuspendIntercept(false)
-  , mInterceptCanceled(false)
 {
   LOG(("HttpChannelParentListener::HttpChannelParentListener [this=%p, next=%p]",
        this, aInitialChannel));
@@ -123,6 +123,7 @@ NS_IMETHODIMP
 HttpChannelParentListener::GetInterface(const nsIID& aIID, void **result)
 {
   if (aIID.Equals(NS_GET_IID(nsIChannelEventSink)) ||
+      aIID.Equals(NS_GET_IID(nsIHttpEventSink))  ||
       aIID.Equals(NS_GET_IID(nsINetworkInterceptController))  ||
       aIID.Equals(NS_GET_IID(nsIRedirectResultListener)))
   {
@@ -248,19 +249,14 @@ HttpChannelParentListener::OnRedirectResult(bool succeeded)
   }
 
   if (succeeded) {
-    // Switch to redirect channel and delete the old one.  Only do this
-    // if we are actually changing channels.  During a service worker
-    // interception internal redirect we preserve the same HttpChannelParent.
-    if (!SameCOMIdentity(redirectChannel, mNextListener)) {
-      nsCOMPtr<nsIParentChannel> parent;
-      parent = do_QueryInterface(mNextListener);
-      MOZ_ASSERT(parent);
-      parent->Delete();
-      mInterceptCanceled = false;
-      mNextListener = do_QueryInterface(redirectChannel);
-      MOZ_ASSERT(mNextListener);
-      redirectChannel->SetParentListener(this);
-    }
+    // Switch to redirect channel and delete the old one.
+    nsCOMPtr<nsIParentChannel> parent;
+    parent = do_QueryInterface(mNextListener);
+    MOZ_ASSERT(parent);
+    parent->Delete();
+    mNextListener = do_QueryInterface(redirectChannel);
+    MOZ_ASSERT(mNextListener);
+    redirectChannel->SetParentListener(this);
   } else if (redirectChannel) {
     // Delete the redirect target channel: continue using old channel
     redirectChannel->Delete();
@@ -318,8 +314,7 @@ public:
   {
     // The URL passed as an argument here doesn't matter, since the child will
     // receive a redirection notification as a result of this synthesized response.
-    mChannel->StartSynthesizedResponse(nullptr, nullptr, EmptyCString());
-    mChannel->FinishSynthesizedResponse();
+    mChannel->FinishSynthesizedResponse(EmptyCString());
     return NS_OK;
   }
 };
@@ -327,23 +322,6 @@ public:
 NS_IMETHODIMP
 HttpChannelParentListener::ChannelIntercepted(nsIInterceptedChannel* aChannel)
 {
-  // Its possible for the child-side interception to complete and tear down
-  // the actor before we even get this parent-side interception notification.
-  // In this case we want to let the interception succeed, but then immediately
-  // cancel it.  If we return an error code from here then it might get
-  // propagated back to the child process where the interception did not encounter
-  // an error.  Therefore cancel the new channel asynchronously from a runnable.
-  if (mInterceptCanceled) {
-    nsCOMPtr<nsIRunnable> r =
-      NewRunnableMethod<nsresult>("HttpChannelParentListener::CancelInterception",
-                                  aChannel,
-                                  &nsIInterceptedChannel::CancelInterception,
-                                  NS_BINDING_ABORTED);
-    MOZ_ALWAYS_SUCCEEDS(
-      SystemGroup::Dispatch(TaskCategory::Other, r.forget()));
-    return NS_OK;
-  }
-
   if (mShouldSuspendIntercept) {
     mInterceptedChannel = aChannel;
     return NS_OK;
@@ -405,11 +383,6 @@ HttpChannelParentListener::DivertTo(nsIStreamListener* aListener)
   MOZ_ASSERT(aListener);
   MOZ_RELEASE_ASSERT(mSuspendedForDiversion, "Must already be suspended!");
 
-  // Reset mInterceptCanceled back to false every time a new listener is set.
-  // We only want to cancel the interception if our current listener has
-  // signaled its cleaning up.
-  mInterceptCanceled = false;
-
   mNextListener = aListener;
 
   return ResumeForDiversion();
@@ -434,21 +407,12 @@ HttpChannelParentListener::SetupInterceptionAfterRedirect(bool aShouldIntercept)
 }
 
 void
-HttpChannelParentListener::ClearInterceptedChannel(nsIStreamListener* aListener)
+HttpChannelParentListener::ClearInterceptedChannel()
 {
-  // Only cancel the interception if this is from our current listener.  We
-  // can get spurious calls here from other HttpChannelParent instances being
-  // destroyed asynchronously.
-  if (!SameCOMIdentity(mNextListener, aListener)) {
-    return;
-  }
   if (mInterceptedChannel) {
-    mInterceptedChannel->CancelInterception(NS_ERROR_INTERCEPTION_FAILED);
+    mInterceptedChannel->Cancel(NS_ERROR_INTERCEPTION_FAILED);
     mInterceptedChannel = nullptr;
   }
-  // Note that channel interception has been canceled.  If we got this before
-  // the interception even occured we will trigger the cancel later.
-  mInterceptCanceled = true;
 }
 
 } // namespace net

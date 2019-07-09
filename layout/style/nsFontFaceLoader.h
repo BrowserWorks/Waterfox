@@ -14,7 +14,6 @@
 #include "nsCOMPtr.h"
 #include "nsIStreamLoader.h"
 #include "nsIChannel.h"
-#include "nsIRequestObserver.h"
 #include "gfxUserFontSet.h"
 #include "nsHashKeys.h"
 #include "nsTHashtable.h"
@@ -23,7 +22,6 @@
 class nsIPrincipal;
 
 class nsFontFaceLoader : public nsIStreamLoaderObserver
-                       , public nsIRequestObserver
 {
 public:
   nsFontFaceLoader(gfxUserFontEntry* aFontToLoad, nsIURI* aFontURI,
@@ -32,7 +30,6 @@ public:
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISTREAMLOADEROBSERVER
-  NS_DECL_NSIREQUESTOBSERVER
 
   // initiate the load
   nsresult Init();

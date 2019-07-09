@@ -9,14 +9,12 @@ const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 
 /**
  * A function that can be used as part of a require hook for a
- * loader.js Loader.
- * This function handles "raw!" and "theme-loader!" requires.
- * See also: https://github.com/webpack/raw-loader.
+ * loader.js Loader.  This function only handles webpack-style "raw!"
+ * requires; other requires should not be passed to this.  See
+ * https://github.com/webpack/raw-loader.
  */
 this.requireRawId = function (id, require) {
-  let index = id.indexOf("!");
-  let rawId = id.slice(index + 1);
-  let uri = require.resolve(rawId);
+  let uri = require.resolve(id.slice(4));
   // If the original string did not end with ".js", then
   // require.resolve might have added the suffix.  We don't want to
   // add a suffix for a raw load (if needed the caller can specify it

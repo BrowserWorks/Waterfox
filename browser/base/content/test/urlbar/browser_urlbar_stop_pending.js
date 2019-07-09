@@ -1,4 +1,3 @@
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict";
 
 const SLOW_PAGE = "http://www.example.com/browser/browser/base/content/test/urlbar/slow-page.sjs";
@@ -64,7 +63,7 @@ add_task(async function() {
     let link = content.document.createElement("a");
     link.href = URL;
     link.textContent = "click me to open a slow page";
-    link.id = "clickme";
+    link.id = "clickme"
     content.document.body.appendChild(link);
   });
   info("added link");
@@ -111,7 +110,7 @@ add_task(async function() {
     let link = content.document.createElement("a");
     link.href = URL;
     link.textContent = "click me to open a slow page";
-    link.id = "clickme";
+    link.id = "clickme"
     content.document.body.appendChild(link);
   });
   info("added link");

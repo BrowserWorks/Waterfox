@@ -3,7 +3,6 @@
 
 /*---
 description: Source is an object without length property
-esid: sec-array.from
 es6id: 22.1.2.1
 ---*/
 

@@ -35,10 +35,7 @@ addLoadEvent(function () {
   SpecialPowers.pushPrefEnv({
     "set": [
       ["full-screen-api.unprefix.enabled", true],
-      ["full-screen-api.allow-trusted-requests-only", false],
-      // Use legacy data: URI behavior to run test.
-      ["security.data_uri.unique_opaque_origin", false],
-      ["security.data_uri.block_toplevel_data_uri_navigations", false],
+      ["full-screen-api.allow-trusted-requests-only", false]
     ]
   }, next);
 });

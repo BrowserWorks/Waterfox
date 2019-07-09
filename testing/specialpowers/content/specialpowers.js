@@ -49,7 +49,6 @@ function SpecialPowers(window) {
                             "SpecialPowers.RemoveFiles",
                             "SPPingService",
                             "SPLoadExtension",
-                            "SPProcessCrashManagerWait",
                             "SPStartupExtension",
                             "SPUnloadExtension",
                             "SPExtensionMessage"];
@@ -203,7 +202,7 @@ SpecialPowers.prototype.nestedFrameSetup = function() {
     if (frameId === "nested-parent-frame") {
       Services.obs.removeObserver(onRemoteBrowserShown, "remote-browser-shown");
 
-      let mm = frame.frameLoader.messageManager;
+      let mm = frame.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
       self._grandChildFrameMM = mm;
 
       self.SP_SYNC_MESSAGES.forEach(function(msgname) {

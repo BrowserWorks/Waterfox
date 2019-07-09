@@ -4,13 +4,13 @@
 
 // check-tidy: no specs after this line
 
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::TestBindingPairIterableBinding;
 use dom::bindings::codegen::Bindings::TestBindingPairIterableBinding::TestBindingPairIterableMethods;
 use dom::bindings::error::Fallible;
 use dom::bindings::iterable::Iterable;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
@@ -18,7 +18,7 @@ use dom_struct::dom_struct;
 #[dom_struct]
 pub struct TestBindingPairIterable {
     reflector: Reflector,
-    map: DomRefCell<Vec<(DOMString, u32)>>,
+    map: DOMRefCell<Vec<(DOMString, u32)>>,
 }
 
 impl Iterable for TestBindingPairIterable {
@@ -36,14 +36,14 @@ impl Iterable for TestBindingPairIterable {
 }
 
 impl TestBindingPairIterable {
-    fn new(global: &GlobalScope) -> DomRoot<TestBindingPairIterable> {
-        reflect_dom_object(Box::new(TestBindingPairIterable {
+    fn new(global: &GlobalScope) -> Root<TestBindingPairIterable> {
+        reflect_dom_object(box TestBindingPairIterable {
             reflector: Reflector::new(),
-            map: DomRefCell::new(vec![]),
-        }), global, TestBindingPairIterableBinding::TestBindingPairIterableWrap)
+            map: DOMRefCell::new(vec![]),
+        }, global, TestBindingPairIterableBinding::TestBindingPairIterableWrap)
     }
 
-    pub fn Constructor(global: &GlobalScope) -> Fallible<DomRoot<TestBindingPairIterable>> {
+    pub fn Constructor(global: &GlobalScope) -> Fallible<Root<TestBindingPairIterable>> {
         Ok(TestBindingPairIterable::new(global))
     }
 }

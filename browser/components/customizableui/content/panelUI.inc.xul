@@ -79,19 +79,44 @@
     </panelview>
 
     <panelview id="PanelUI-history" flex="1">
+      <label value="&appMenuHistory.label;" class="panel-subview-header"/>
       <vbox class="panel-subview-body">
         <toolbarbutton id="appMenuViewHistorySidebar"
                        label="&appMenuHistory.viewSidebar.label;"
                        type="checkbox"
+#ifndef MOZ_PHOTON_THEME
+                       class="subviewbutton"
+#else
                        class="subviewbutton subviewbutton-iconic"
+#endif
                        key="key_gotoHistory"
                        oncommand="SidebarUI.toggle('viewHistorySidebar'); PanelUI.hide();">
           <observes element="viewHistorySidebar" attribute="checked"/>
         </toolbarbutton>
         <toolbarbutton id="appMenuClearRecentHistory"
                        label="&appMenuHistory.clearRecent.label;"
+#ifndef MOZ_PHOTON_THEME
+                       class="subviewbutton"
+#else
                        class="subviewbutton subviewbutton-iconic"
+#endif
                        command="Tools:Sanitize"/>
+        <toolbarbutton id="appMenuRestoreLastSession"
+                       label="&appMenuHistory.restoreSession.label;"
+#ifndef MOZ_PHOTON_THEME
+                       class="subviewbutton"
+#else
+                       class="subviewbutton subviewbutton-iconic"
+#endif
+                       command="Browser:RestoreLastSession"/>
+#ifndef MOZ_PHOTON_THEME
+        <menuseparator id="PanelUI-recentlyClosedTabs-separator"/>
+        <vbox id="PanelUI-recentlyClosedTabs" tooltip="bhTooltip"/>
+        <menuseparator id="PanelUI-recentlyClosedWindows-separator"/>
+        <vbox id="PanelUI-recentlyClosedWindows" tooltip="bhTooltip"/>
+        <menuseparator id="PanelUI-historyItems-separator"/>
+        <vbox id="PanelUI-historyItems" tooltip="bhTooltip"/>
+#else
         <toolbarseparator/>
         <toolbarbutton id="appMenuRecentlyClosedTabs"
                        label="&historyUndoMenu.label;"
@@ -113,6 +138,7 @@
                      tooltip="bhTooltip">
           <!-- history menu items will go here -->
         </toolbaritem>
+#endif
       </vbox>
       <toolbarbutton id="PanelUI-historyMore"
                      class="panel-subview-footer subviewbutton"
@@ -120,11 +146,14 @@
                      oncommand="PlacesCommandHook.showPlacesOrganizer('History'); CustomizableUI.hidePanelForNode(this);"/>
     </panelview>
 
+#ifdef MOZ_PHOTON_THEME
     <panelview id="appMenu-library-recentlyClosedTabs"/>
     <panelview id="appMenu-library-recentlyClosedWindows"/>
+#endif
 
     <panelview id="PanelUI-remotetabs" flex="1" class="PanelUI-subView"
                descriptionheightworkaround="true">
+      <label value="&appMenuRemoteTabs.label;" class="panel-subview-header"/>
       <vbox class="panel-subview-body">
         <!-- this widget has 3 boxes in the body, but only 1 is ever visible -->
         <!-- When Sync is ready to sync -->
@@ -160,7 +189,7 @@
             <hbox id="PanelUI-remotetabs-tabsdisabledpane" pack="center" flex="1">
               <vbox class="PanelUI-remotetabs-instruction-box" align="center">
                 <hbox pack="center">
-                  <image class="fxaSyncIllustration"/>
+                  <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
                 </hbox>
                 <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.tabsnotsyncing.label;</label>
                 <hbox pack="center">
@@ -178,7 +207,7 @@
             <hbox id="PanelUI-remotetabs-nodevicespane" pack="center" flex="1">
               <vbox class="PanelUI-remotetabs-instruction-box">
                 <hbox pack="center">
-                  <image class="fxaSyncIllustration"/>
+                  <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
                 </hbox>
                 <label class="PanelUI-remotetabs-instruction-title">&appMenuRemoteTabs.noclients.title;</label>
                 <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.subtitle;</label>
@@ -196,7 +225,7 @@
                 align="center"
                 class="PanelUI-remotetabs-instruction-box"
                 observes="sync-setup-state">
-            <image class="fxaSyncIllustration"/>
+            <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
@@ -210,7 +239,7 @@
                 align="center"
                 class="PanelUI-remotetabs-instruction-box"
                 observes="sync-reauth-state">
-            <image class="fxaSyncIllustration"/>
+            <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
@@ -221,17 +250,49 @@
     </panelview>
 
     <panelview id="PanelUI-bookmarks" flex="1" class="PanelUI-subView">
+      <label value="&bookmarksMenu.label;" class="panel-subview-header"/>
       <vbox class="panel-subview-body">
         <toolbarbutton id="panelMenuBookmarkThisPage"
+#ifndef MOZ_PHOTON_THEME
+                       class="subviewbutton"
+#else
                        class="subviewbutton subviewbutton-iconic"
+#endif
                        observes="bookmarkThisPageBroadcaster"
                        command="Browser:AddBookmarkAs"
                        onclick="PanelUI.hide();"/>
-        <toolbarbutton id="panelMenu_bookmarkingTools"
-                       label="&bookmarkingTools.label;"
-                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
-                       closemenu="none"
-                       oncommand="BookmarkingUI.showBookmarkingTools(this);"/>
+#ifndef MOZ_PHOTON_THEME
+        <toolbarseparator/>
+#endif
+        <toolbarbutton id="panelMenu_viewBookmarksSidebar"
+                       label="&viewBookmarksSidebar2.label;"
+#ifndef MOZ_PHOTON_THEME
+                       class="subviewbutton"
+#else
+                       class="subviewbutton subviewbutton-iconic"
+#endif
+                       key="viewBookmarksSidebarKb"
+                       oncommand="SidebarUI.toggle('viewBookmarksSidebar'); PanelUI.hide();">
+          <observes element="viewBookmarksSidebar" attribute="checked"/>
+        </toolbarbutton>
+#ifndef MOZ_PHOTON_THEME
+        <toolbarbutton id="panelMenu_viewBookmarksToolbar"
+                       label="&viewBookmarksToolbar.label;"
+                       type="checkbox"
+                       toolbarId="PersonalToolbar"
+                       class="subviewbutton"
+                       oncommand="onViewToolbarCommand(event); PanelUI.hide();"/>
+        <toolbarseparator/>
+        <toolbarbutton id="panelMenu_bookmarksToolbar"
+                       label="&personalbarCmd.label;"
+                       class="subviewbutton cui-withicon"
+                       oncommand="PlacesCommandHook.showPlacesOrganizer('BookmarksToolbar'); PanelUI.hide();"/>
+        <toolbarbutton id="panelMenu_unsortedBookmarks"
+                       label="&otherBookmarksCmd.label;"
+                       class="subviewbutton cui-withicon"
+                       oncommand="PlacesCommandHook.showPlacesOrganizer('UnfiledBookmarks'); PanelUI.hide();"/>
+        <toolbarseparator class="small-separator"/>
+#else
         <toolbarbutton id="panelMenu_searchBookmarks"
                        label="&searchBookmarks.label;"
                        class="subviewbutton subviewbutton-iconic"
@@ -240,9 +301,14 @@
         <label id="panelMenu_recentBookmarks"
                value="&recentBookmarks.label;"
                class="subview-subheader"/>
+#endif
         <toolbaritem id="panelMenu_bookmarksMenu"
                      orient="vertical"
                      smoothscroll="false"
+#ifndef MOZ_PHOTON_THEME
+                     onclick="if (event.button == 1) BookmarkingUI.onPanelMenuViewCommand(event, this._placesView);"
+                     oncommand="BookmarkingUI.onPanelMenuViewCommand(event, this._placesView);"
+#endif
                      flatList="true"
                      tooltip="bhTooltip">
           <!-- bookmarks menu items will go here -->
@@ -256,21 +322,31 @@
     </panelview>
 
     <panelview id="PanelUI-feeds" flex="1" oncommand="FeedHandler.subscribeToFeed(null, event);">
+      <label value="&feedsMenu2.label;" class="panel-subview-header"/>
     </panelview>
 
     <panelview id="PanelUI-containers" flex="1">
+      <label value="&containersMenu.label;" class="panel-subview-header"/>
       <vbox id="PanelUI-containersItems"/>
     </panelview>
 
     <panelview id="PanelUI-helpView" flex="1" class="PanelUI-subView">
+      <label value="&helpMenu.label;" class="panel-subview-header"/>
       <vbox id="PanelUI-helpItems" class="panel-subview-body"/>
     </panelview>
 
     <panelview id="PanelUI-developer" flex="1">
+      <label value="&webDeveloperMenu.label;" class="panel-subview-header"/>
       <vbox id="PanelUI-developerItems" class="panel-subview-body"/>
     </panelview>
 
+    <panelview id="PanelUI-sidebar" flex="1">
+      <label value="&appMenuSidebars.label;" class="panel-subview-header"/>
+      <vbox id="PanelUI-sidebarItems" class="panel-subview-body"/>
+    </panelview>
+
     <panelview id="PanelUI-characterEncodingView" flex="1">
+      <label value="&charsetMenu2.label;" class="panel-subview-header"/>
       <vbox class="panel-subview-body">
         <vbox id="PanelUI-characterEncodingView-pinned"
               class="PanelUI-characterEncodingView-list"/>
@@ -323,31 +399,6 @@
 
   </panelmultiview>
 
-</panel>
-
-<panel id="widget-overflow"
-       role="group"
-       type="arrow"
-       noautofocus="true"
-       position="bottomcenter topright"
-       photon="true"
-       hidden="true">
-  <photonpanelmultiview mainViewId="widget-overflow-mainView" disablekeynav="true">
-    <panelview id="widget-overflow-mainView"
-               context="toolbar-context-menu">
-      <vbox class="panel-subview-body">
-        <vbox id="widget-overflow-list" class="widget-overflow-list"
-              overflowfortoolbar="nav-bar"/>
-        <toolbarseparator id="widget-overflow-fixed-separator" hidden="true"/>
-        <vbox id="widget-overflow-fixed-list" class="widget-overflow-list" hidden="true" />
-      </vbox>
-      <toolbarbutton command="cmd_CustomizeToolbars"
-                      id="overflowMenu-customize-button"
-                      class="subviewbutton panel-subview-footer"
-                      accesskey="&overflowCustomizeToolbar.accesskey;"
-                      label="&overflowCustomizeToolbar.label;"/>
-    </panelview>
-  </photonpanelmultiview>
   <!-- This menu is here because not having it in the menu in which it's used flickers
        when hover styles overlap. See https://bugzilla.mozilla.org/show_bug.cgi?id=1378427 .
        -->
@@ -355,27 +406,86 @@
              onpopupshowing="gCustomizeMode.onPanelContextMenuShowing(event)">
     <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
               id="customizationPanelItemContextMenuPin"
-              accesskey="&customizeMenu.pinToOverflowMenu.accesskey;"
-              label="&customizeMenu.pinToOverflowMenu.label;"
+              photonaccesskey="&customizeMenu.pinToOverflowMenu.accesskey;"
+              photonlabel="&customizeMenu.pinToOverflowMenu.label;"
+              accesskey="&customizeMenu.moveToPanel.accesskey;"
+              label="&customizeMenu.moveToPanel.label;"
               closemenu="single"
               class="customize-context-moveToPanel"/>
     <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
               id="customizationPanelItemContextMenuUnpin"
               closemenu="single"
               class="customize-context-moveToToolbar"
-              accesskey="&customizeMenu.unpinFromOverflowMenu.accesskey;"
-              label="&customizeMenu.unpinFromOverflowMenu.label;"/>
+              photonaccesskey="&customizeMenu.unpinFromOverflowMenu.accesskey;"
+              photonlabel="&customizeMenu.unpinFromOverflowMenu.label;"
+              accesskey="&customizeMenu.moveToToolbar.accesskey;"
+              label="&customizeMenu.moveToToolbar.label;"/>
     <menuitem oncommand="gCustomizeMode.removeFromArea(document.popupNode)"
               closemenu="single"
               class="customize-context-removeFromPanel"
-              accesskey="&customizeMenu.removeFromToolbar.accesskey;"
-              label="&customizeMenu.removeFromToolbar.label;"/>
+              photonaccesskey="&customizeMenu.removeFromToolbar.accesskey;"
+              photonlabel="&customizeMenu.removeFromToolbar.label;"
+              accesskey="&customizeMenu.removeFromMenu.accesskey;"
+              label="&customizeMenu.removeFromMenu.label;"/>
     <menuseparator/>
     <menuitem command="cmd_CustomizeToolbars"
               class="viewCustomizeToolbar"
               accesskey="&viewCustomizeToolbar.accesskey;"
               label="&viewCustomizeToolbar.label;"/>
   </menupopup>
+</panel>
+
+<panel id="widget-overflow"
+       role="group"
+       type="arrow"
+       noautofocus="true"
+       position="bottomcenter topright"
+#ifndef MOZ_PHOTON_THEME
+       context="toolbar-context-menu"
+#endif
+       hidden="true">
+#ifdef MOZ_PHOTON_THEME
+  <photonpanelmultiview mainViewId="widget-overflow-mainView">
+    <panelview id="widget-overflow-mainView"
+               context="toolbar-context-menu">
+#endif
+      <vbox class="panel-subview-body">
+        <vbox id="widget-overflow-scroller">
+          <vbox id="widget-overflow-list" class="widget-overflow-list"
+                overflowfortoolbar="nav-bar"/>
+          <toolbarseparator id="widget-overflow-fixed-separator" hidden="true"/>
+          <vbox id="widget-overflow-fixed-list" class="widget-overflow-list" hidden="true"
+                emptylabel="&customizeMode.emptyOverflowList.description;"/>
+        </vbox>
+      </vbox>
+#ifdef MOZ_PHOTON_THEME
+      <toolbarbutton command="cmd_CustomizeToolbars"
+                      id="overflowMenu-customize-button"
+                      class="subviewbutton panel-subview-footer"
+                      accesskey="&overflowCustomizeToolbar.accesskey;"
+                      label="&overflowCustomizeToolbar.label;"/>
+    </panelview>
+  </photonpanelmultiview>
+#endif
+</panel>
+
+<panel id="customization-tipPanel"
+       type="arrow"
+       flip="none"
+       side="left"
+       position="leftcenter topright"
+       noautohide="true"
+       hidden="true">
+  <hbox class="customization-tipPanel-wrapper">
+    <vbox class="customization-tipPanel-infoBox"/>
+    <vbox class="customization-tipPanel-content" flex="1">
+      <description class="customization-tipPanel-contentMessage"/>
+      <image class="customization-tipPanel-contentImage"/>
+    </vbox>
+    <vbox pack="start" align="end" class="customization-tipPanel-closeBox">
+      <toolbarbutton oncommand="gCustomizeMode.hideTip()" class="close-icon"/>
+    </vbox>
+  </hbox>
 </panel>
 
 <panel id="panic-button-success-notification"
@@ -420,8 +530,9 @@
                      buttonhighlight="true"
                      hidden="true">
     <popupnotificationcontent id="update-available-notification-content" orient="vertical">
-      <description id="update-available-description">&updateAvailable.message;</description>
-      <label id="update-available-whats-new" class="text-link" value="&updateAvailable.whatsnew.label;" />
+      <description id="update-available-description">&updateAvailable.message;
+        <label id="update-available-whats-new" class="text-link" value="&updateAvailable.whatsnew.label;" />
+      </description>
     </popupnotificationcontent>
   </popupnotification>
 
@@ -438,8 +549,9 @@
                      buttonhighlight="true"
                      hidden="true">
     <popupnotificationcontent id="update-manual-notification-content" orient="vertical">
-      <description id="update-manual-description">&updateManual.message;</description>
-      <label id="update-manual-whats-new" class="text-link" value="&updateManual.whatsnew.label;" />
+      <description id="update-manual-description">&updateManual.message;
+        <label id="update-manual-whats-new" class="text-link" value="&updateManual.whatsnew.label;" />
+      </description>
     </popupnotificationcontent>
   </popupnotification>
 
@@ -456,21 +568,22 @@
                      buttonhighlight="true"
                      hidden="true">
     <popupnotificationcontent id="update-restart-notification-content" orient="vertical">
-      <description id="update-restart-description">&updateRestart.message2;</description>
+      <description id="update-restart-description">&updateRestart.message;</description>
     </popupnotificationcontent>
   </popupnotification>
 </panel>
 
-<menupopup id="customizationPaletteItemContextMenu"
-           onpopupshowing="gCustomizeMode.onPaletteContextMenuShowing(event)">
+<menupopup id="customizationPaletteItemContextMenu">
   <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
             class="customize-context-addToToolbar"
             accesskey="&customizeMenu.addToToolbar.accesskey;"
             label="&customizeMenu.addToToolbar.label;"/>
   <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
             class="customize-context-addToPanel"
-            accesskey="&customizeMenu.addToOverflowMenu.accesskey;"
-            label="&customizeMenu.addToOverflowMenu.label;"/>
+            photonaccesskey="&customizeMenu.addToOverflowMenu.accesskey;"
+            photonlabel="&customizeMenu.addToOverflowMenu.label;"
+            accesskey="&customizeMenu.addToPanel.accesskey;"
+            label="&customizeMenu.addToPanel.label;"/>
 </menupopup>
 
 <menupopup id="customizationPanelContextMenu">
@@ -535,32 +648,29 @@
                        label="&newPrivateWindow.label;"
                        key="key_privatebrowsing"
                        command="Tools:PrivateBrowsing"/>
-        <toolbarbutton id="appMenuRestoreLastSession"
-                       label="&appMenuHistory.restoreSession.label;"
-                       class="subviewbutton subviewbutton-iconic"
-                       command="Browser:RestoreLastSession"/>
         <toolbarseparator/>
-        <toolbaritem id="appMenu-zoom-controls" class="toolbaritem-combined-buttons" closemenu="none">
+        <toolbaritem id="appMenu-zoom-controls" class="toolbaritem-combined-buttons">
           <label value="&fullZoom.label;"/>
           <toolbarbutton id="appMenu-zoomReduce-button"
                          class="subviewbutton subviewbutton-iconic"
                          command="cmd_fullZoomReduce"
+                         closemenu="none"
                          tooltip="dynamic-shortcut-tooltip"/>
           <toolbarbutton id="appMenu-zoomReset-button"
                          class="subviewbutton"
                          command="cmd_fullZoomReset"
+                         closemenu="none"
                          tooltip="dynamic-shortcut-tooltip"/>
           <toolbarbutton id="appMenu-zoomEnlarge-button"
                          class="subviewbutton subviewbutton-iconic"
                          command="cmd_fullZoomEnlarge"
+                         closemenu="none"
                          tooltip="dynamic-shortcut-tooltip"/>
           <toolbarseparator orient="vertical"/>
           <toolbarbutton id="appMenu-fullscreen-button"
                          class="subviewbutton subviewbutton-iconic"
                          observes="View:FullScreen"
                          type="checkbox"
-                         closemenu="auto"
-                         onclick="if (event.button == 0) this.closest('panel').hidePopup();"
                          tooltip="dynamic-shortcut-tooltip"/>
         </toolbaritem>
         <toolbarseparator/>
@@ -624,8 +734,8 @@
         <toolbarbutton id="appMenu-print-button"
                        class="subviewbutton subviewbutton-iconic"
                        label="&printCmd.label;"
-#ifdef XP_MACOSX
                        key="printKb"
+#ifdef XP_MACOSX
                        command="cmd_print"
 #else
                        command="cmd_printPreview"
@@ -686,7 +796,7 @@
       <vbox class="panel-subview-body">
         <toolbarbutton id="appMenu-library-bookmarks-button"
                        class="subviewbutton subviewbutton-iconic subviewbutton-nav"
-                       label="&bookmarksSubview.label;"
+                       label="&bookmarksMenuButton.label;"
                        closemenu="none"
                        oncommand="BookmarkingUI.showSubView(this);"/>
         <toolbarbutton id="appMenu-library-history-button"
@@ -694,67 +804,12 @@
                        label="&historyMenu.label;"
                        closemenu="none"
                        oncommand="PanelUI.showSubView('PanelUI-history', this)"/>
-        <toolbarbutton id="appMenu-library-downloads-button"
-                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
-                       label="&libraryDownloads.label;"
-                       closemenu="none"
-                       oncommand="DownloadsSubview.show(this);"/>
         <toolbarbutton id="appMenu-library-remotetabs-button"
                        class="subviewbutton subviewbutton-iconic subviewbutton-nav"
                        label="&appMenuRemoteTabs.label;"
                        closemenu="none"
                        oncommand="PanelUI.showSubView('PanelUI-remotetabs', this)"/>
-        <toolbarseparator/>
-        <label value="&appMenuRecentHighlights.label;"
-               class="subview-subheader"/>
-        <toolbaritem id="appMenu-library-recentHighlights"
-                     orient="vertical"
-                     smoothscroll="false"
-                     flatList="true"
-                     tooltip="bhTooltip">
-          <!-- Recent Highlights will go here -->
-        </toolbaritem>
-      </vbox>
-    </panelview>
-
-    <panelview id="PanelUI-bookmarkingTools" class="PanelUI-subView">
-      <vbox class="panel-subview-body">
-        <toolbarbutton id="panelMenu_toggleBookmarksMenu"
-                       label="&addBookmarksMenu.label;"
-                       label-checked="&removeBookmarksMenu.label;"
-                       class="subviewbutton subviewbutton-iconic"
-                       oncommand="BookmarkingUI.toggleMenuButtonInToolbar(this); PanelUI.hide();"/>
-        <toolbarbutton id="panelMenu_viewBookmarksSidebar"
-                       label="&viewBookmarksSidebar2.label;"
-                       label-checked="&hideBookmarksSidebar.label;"
-                       class="subviewbutton subviewbutton-iconic"
-                       key="viewBookmarksSidebarKb"
-                       oncommand="SidebarUI.toggle('viewBookmarksSidebar', this); PanelUI.hide();">
-          <observes element="viewBookmarksSidebar" attribute="checked"/>
-        </toolbarbutton>
-        <toolbarbutton id="panelMenu_viewBookmarksToolbar"
-                       class="subviewbutton subviewbutton-iconic"
-                       placesanonid="view-toolbar"
-                       toolbarId="PersonalToolbar"
-                       type="checkbox"
-                       oncommand="onViewToolbarCommand(event)"
-                       label="&viewBookmarksToolbar.label;"
-                       label-checked="&hideBookmarksToolbar.label;"/>
       </vbox>
     </panelview>
   </photonpanelmultiview>
-</panel>
-
-<panel id="downloads-button-autohide-panel"
-       role="group"
-       type="arrow"
-       hidden="true"
-       onpopupshown="gCustomizeMode._downloadPanelAutoHideTimeout = setTimeout(() => event.target.hidePopup(), 4000);"
-       onmouseover="clearTimeout(gCustomizeMode._downloadPanelAutoHideTimeout);"
-       onmouseout="gCustomizeMode._downloadPanelAutoHideTimeout = setTimeout(() => event.target.hidePopup(), 2000);"
-       onpopuphidden="clearTimeout(gCustomizeMode._downloadPanelAutoHideTimeout);"
-       >
-  <checkbox id="downloads-button-autohide-checkbox"
-            label="&customizeMode.autoHideDownloadsButton.label;" checked="true"
-            oncommand="gCustomizeMode.onDownloadsAutoHideChange(event)"/>
 </panel>

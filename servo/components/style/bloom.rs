@@ -88,15 +88,14 @@ impl<E: TElement> PushedElement<E> {
     fn new(el: E, num_hashes: usize) -> Self {
         PushedElement {
             element: unsafe { SendElement::new(el) },
-            num_hashes,
+            num_hashes: num_hashes,
         }
     }
 }
 
 fn each_relevant_element_hash<E, F>(element: E, mut f: F)
-where
-    E: TElement,
-    F: FnMut(u32),
+    where E: TElement,
+          F: FnMut(u32),
 {
     f(element.get_local_name().get_hash());
     f(element.get_namespace().get_hash());
@@ -105,6 +104,10 @@ where
         f(id.get_hash());
     }
 
+    // TODO: case-sensitivity depends on the document type and quirks mode.
+    //
+    // TODO(emilio): It's not clear whether that's relevant here though?
+    // Classes and ids should be normalized already I think.
     element.each_class(|class| {
         f(class.get_hash())
     });
@@ -121,12 +124,6 @@ impl<E: TElement> StyleBloom<E> {
     /// Create an empty `StyleBloom`. Because StyleBloom acquires the thread-
     /// local filter buffer, creating multiple live StyleBloom instances at
     /// the same time on the same thread will panic.
-
-    // Forced out of line to limit stack frame sizes after extra inlining from
-    // https://github.com/rust-lang/rust/pull/43931
-    //
-    // See https://github.com/servo/servo/pull/18420#issuecomment-328769322
-    #[inline(never)]
     pub fn new() -> Self {
         let bloom_arc = BLOOM_KEY.with(|b| b.clone());
         let filter = OwningHandle::new_with_fn(bloom_arc, |x| unsafe { x.as_ref() }.unwrap().borrow_mut());

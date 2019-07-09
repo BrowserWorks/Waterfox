@@ -6,11 +6,8 @@
 // This defines a common base class for nsITheme implementations, to reduce
 // code duplication.
 
-#ifndef _NSNATIVETHEME_H_
-#define _NSNATIVETHEME_H_
-
 #include "nsAlgorithm.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsMargin.h"
@@ -164,8 +161,8 @@ class nsNativeTheme : public nsITimerCallback, public nsINamed
   bool IsMenuListEditable(nsIFrame *aFrame);
 
   nsIPresShell *GetPresShell(nsIFrame* aFrame);
-  static bool CheckBooleanAttr(nsIFrame* aFrame, nsAtom* aAtom);
-  static int32_t CheckIntAttr(nsIFrame* aFrame, nsAtom* aAtom, int32_t defaultValue);
+  static bool CheckBooleanAttr(nsIFrame* aFrame, nsIAtom* aAtom);
+  static int32_t CheckIntAttr(nsIFrame* aFrame, nsIAtom* aAtom, int32_t defaultValue);
 
   // Helpers for progressbar.
   static double GetProgressValue(nsIFrame* aFrame);
@@ -190,5 +187,3 @@ class nsNativeTheme : public nsITimerCallback, public nsINamed
   nsCOMPtr<nsITimer> mAnimatedContentTimer;
   AutoTArray<nsCOMPtr<nsIContent>, 20> mAnimatedContentList;
 };
-
-#endif // _NSNATIVETHEME_H_

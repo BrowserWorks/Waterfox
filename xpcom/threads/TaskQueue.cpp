@@ -225,7 +225,7 @@ TaskQueue::Runner::Run()
   {
     MonitorAutoLock mon(mQueue->mQueueMonitor);
     MOZ_ASSERT(mQueue->mIsRunning);
-    if (mQueue->mTasks.empty()) {
+    if (mQueue->mTasks.size() == 0) {
       mQueue->mIsRunning = false;
       mQueue->MaybeResolveShutdown();
       mon.NotifyAll();
@@ -255,7 +255,7 @@ TaskQueue::Runner::Run()
 
   {
     MonitorAutoLock mon(mQueue->mQueueMonitor);
-    if (mQueue->mTasks.empty()) {
+    if (mQueue->mTasks.size() == 0) {
       // No more events to run. Exit the task runner.
       mQueue->mIsRunning = false;
       mQueue->MaybeResolveShutdown();

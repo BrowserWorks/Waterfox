@@ -73,12 +73,12 @@ public:
   GetIPCManager() = 0;
 
   already_AddRefed<InternalRequest>
-  ToInternalRequest(JSContext* aCx, const RequestOrUSVString& aIn,
-                    BodyAction aBodyAction, ErrorResult& aRv);
+  ToInternalRequest(const RequestOrUSVString& aIn, BodyAction aBodyAction,
+                    ErrorResult& aRv);
 
   already_AddRefed<InternalRequest>
-  ToInternalRequest(JSContext* aCx, const OwningRequestOrUSVString& aIn,
-                    BodyAction aBodyAction, ErrorResult& aRv);
+  ToInternalRequest(const OwningRequestOrUSVString& aIn, BodyAction aBodyAction,
+                    ErrorResult& aRv);
 
   void
   ToCacheRequest(CacheRequest& aOut, InternalRequest* aIn,
@@ -91,7 +91,7 @@ public:
                              ErrorResult& aRv);
 
   void
-  ToCacheResponse(JSContext* aCx, CacheResponse& aOut, Response& aIn,
+  ToCacheResponse(CacheResponse& aOut, Response& aIn,
                   nsTArray<UniquePtr<mozilla::ipc::AutoIPCStream>>& aStreamCleanupList,
                   ErrorResult& aRv);
 
@@ -133,7 +133,7 @@ public:
 
 private:
   void
-  CheckAndSetBodyUsed(JSContext* aCx, Request* aRequest, BodyAction aBodyAction,
+  CheckAndSetBodyUsed(Request* aRequest, BodyAction aBodyAction,
                       ErrorResult& aRv);
 
   already_AddRefed<InternalRequest>

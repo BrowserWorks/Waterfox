@@ -1,4 +1,4 @@
-// |reftest| error:SyntaxError
+// |reftest| skip-if(release_or_beta) error:SyntaxError -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
 // - src/async-generators/await-as-binding-identifier.case
 // - src/async-generators/syntax/async-class-decl-static-method.template
@@ -29,7 +29,6 @@ info: |
     StringValue of Identifier is "await".
 
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 
 class C { static async *gen() {

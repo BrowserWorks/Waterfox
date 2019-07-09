@@ -14,15 +14,11 @@ function arraySum(arr) {
 }
 
 function clearHistograms() {
-  Services.telemetry.snapshotHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN,
-                                        true /* subsession */,
-                                        true /* clear */);
+  Services.telemetry.snapshotSubsessionHistograms(true);
 }
 
 function getSnapshots(process) {
-  return Services.telemetry.snapshotHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN,
-                                               true /* subsession */,
-                                               false /* clear */)[process];
+  return Services.telemetry.snapshotSubsessionHistograms()[process];
 }
 
 // There is no good way to make sure that the parent received the histogram
@@ -31,9 +27,7 @@ function getSnapshots(process) {
 // approach (Bug 1357509).
 function promiseTelemetryRecorded(id, process, expectedCount) {
   let condition = () => {
-    let snapshot = Services.telemetry.snapshotHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN,
-                                                         true /* subsession */,
-                                                         false /* clear */)[process][id];
+    let snapshot = Services.telemetry.snapshotSubsessionHistograms()[process][id];
     return snapshot && arraySum(snapshot.counts) >= expectedCount;
   };
   return ContentTaskUtils.waitForCondition(condition);

@@ -11,7 +11,6 @@
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "nsIFile.h"
-#include "nsIObserver.h"
 #include "nsISupports.h"
 
 #include "jsapi.h"
@@ -21,12 +20,10 @@ namespace mozilla {
 class Addon;
 
 class AddonManagerStartup final : public amIAddonManagerStartup
-                                , public nsIObserver
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_AMIADDONMANAGERSTARTUP
-  NS_DECL_NSIOBSERVER
 
   AddonManagerStartup();
 

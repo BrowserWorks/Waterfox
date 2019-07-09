@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/UniquePtr.h"
+#include "nsIDOMHTMLFrameSetElement.h"
 #include "nsGenericHTMLElement.h"
 
 /**
@@ -43,7 +44,8 @@ namespace dom {
 
 class OnBeforeUnloadEventHandlerNonNull;
 
-class HTMLFrameSetElement final : public nsGenericHTMLElement
+class HTMLFrameSetElement final : public nsGenericHTMLElement,
+                                  public nsIDOMHTMLFrameSetElement
 {
 public:
   explicit HTMLFrameSetElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -59,6 +61,9 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
+
+  // nsIDOMHTMLFrameSetElement
+  NS_DECL_NSIDOMHTMLFRAMESETELEMENT
 
   void GetCols(DOMString& aCols)
   {
@@ -77,7 +82,7 @@ public:
     SetHTMLAttr(nsGkAtoms::rows, aRows, aError);
   }
 
-  virtual bool IsEventAttributeNameInternal(nsAtom *aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom *aName) override;
 
   // Event listener stuff; we need to declare only the ones we need to
   // forward to window that don't come from nsIDOMHTMLFrameSetElement.
@@ -114,10 +119,10 @@ public:
 
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
-  virtual nsChangeHint GetAttributeChangeHint(const nsAtom* aAttribute,
+  virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
 
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
@@ -128,7 +133,7 @@ protected:
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 

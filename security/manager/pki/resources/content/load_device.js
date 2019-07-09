@@ -39,32 +39,14 @@ function onDialogAccept() {
   let bundle = document.getElementById("pipnss_bundle");
   let nameBox = document.getElementById("device_name");
   let pathBox = document.getElementById("device_path");
-  let pkcs11ModuleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                         .getService(Ci.nsIPKCS11ModuleDB);
+  let pkcs11 = Cc["@mozilla.org/security/pkcs11;1"].getService(Ci.nsIPKCS11);
 
   try {
-    pkcs11ModuleDB.addModule(nameBox.value, pathBox.value, 0, 0);
+    pkcs11.addModule(nameBox.value, pathBox.value, 0, 0);
   } catch (e) {
     alertPromptService(null, bundle.getString("AddModuleFailure"));
     return false;
   }
 
   return true;
-}
-
-function validateModuleName() {
-  let bundle = document.getElementById("pippki_bundle");
-  let name = document.getElementById("device_name").value;
-  let helpText = document.getElementById("helpText");
-  helpText.value = "";
-  let dialogNode = document.querySelector("dialog");
-  dialogNode.removeAttribute("buttondisabledaccept");
-  if (name == "") {
-    helpText.value = bundle.getString("loadModuleHelp_emptyModuleName");
-    dialogNode.setAttribute("buttondisabledaccept", true);
-  }
-  if (name == "Root Certs") {
-    helpText.value = bundle.getString("loadModuleHelp_rootCertsModuleName");
-    dialogNode.setAttribute("buttondisabledaccept", true);
-  }
 }

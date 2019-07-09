@@ -9,10 +9,8 @@ description: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(Date.prototype, "setYear", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyWritable(Date.prototype, "setYear");
+verifyNotEnumerable(Date.prototype, "setYear");
+verifyConfigurable(Date.prototype, "setYear");
 
 reportCompare(0, 0);

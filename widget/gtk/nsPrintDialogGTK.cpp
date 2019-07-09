@@ -53,9 +53,9 @@ ShowCustomDialog(GtkComboBox *changed_box, gpointer user_data)
 
   nsCOMPtr<nsIStringBundle> printBundle;
   bundleSvc->CreateBundle("chrome://global/locale/printdialog.properties", getter_AddRefs(printBundle));
-  nsAutoString intlString;
+  nsXPIDLString intlString;
 
-  printBundle->GetStringFromName("headerFooterCustom", intlString);
+  printBundle->GetStringFromName("headerFooterCustom", getter_Copies(intlString));
   GtkWidget* prompt_dialog = gtk_dialog_new_with_buttons(NS_ConvertUTF16toUTF8(intlString).get(), printDialog,
 #if (MOZ_WIDGET_GTK == 2)
                                                          (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR),
@@ -71,7 +71,7 @@ ShowCustomDialog(GtkComboBox *changed_box, gpointer user_data)
                                           GTK_RESPONSE_REJECT,
                                           -1);
 
-  printBundle->GetStringFromName("customHeaderFooterPrompt", intlString);
+  printBundle->GetStringFromName("customHeaderFooterPrompt", getter_Copies(intlString));
   GtkWidget* custom_label = gtk_label_new(NS_ConvertUTF16toUTF8(intlString).get());
   GtkWidget* custom_entry = gtk_entry_new();
   GtkWidget* question_icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
@@ -275,11 +275,11 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter *aParent,
 
   // --- Table for making the header and footer options ---
   GtkWidget* header_footer_table = gtk_table_new(3, 3, FALSE); // 3x3 table
-  nsString header_footer_str[3];
+  nsXPIDLString header_footer_str[3];
 
-  aSettings->GetHeaderStrLeft(header_footer_str[0]);
-  aSettings->GetHeaderStrCenter(header_footer_str[1]);
-  aSettings->GetHeaderStrRight(header_footer_str[2]);
+  aSettings->GetHeaderStrLeft(getter_Copies(header_footer_str[0]));
+  aSettings->GetHeaderStrCenter(getter_Copies(header_footer_str[1]));
+  aSettings->GetHeaderStrRight(getter_Copies(header_footer_str[2]));
 
   for (unsigned int i = 0; i < ArrayLength(header_dropdown); i++) {
     header_dropdown[i] = ConstructHeaderFooterDropdown(header_footer_str[i].get());
@@ -296,9 +296,9 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter *aParent,
                      i, (i + 1), 1, 2, (GtkAttachOptions) 0, (GtkAttachOptions) 0, 2, 2);
   }
 
-  aSettings->GetFooterStrLeft(header_footer_str[0]);
-  aSettings->GetFooterStrCenter(header_footer_str[1]);
-  aSettings->GetFooterStrRight(header_footer_str[2]);
+  aSettings->GetFooterStrLeft(getter_Copies(header_footer_str[0]));
+  aSettings->GetFooterStrCenter(getter_Copies(header_footer_str[1]));
+  aSettings->GetFooterStrRight(getter_Copies(header_footer_str[2]));
 
   for (unsigned int i = 0; i < ArrayLength(footer_dropdown); i++) {
     footer_dropdown[i] = ConstructHeaderFooterDropdown(header_footer_str[i].get());
@@ -327,8 +327,8 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter *aParent,
 NS_ConvertUTF16toUTF8
 nsPrintDialogWidgetGTK::GetUTF8FromBundle(const char *aKey)
 {
-  nsAutoString intlString;
-  printBundle->GetStringFromName(aKey, intlString);
+  nsXPIDLString intlString;
+  printBundle->GetStringFromName(aKey, getter_Copies(intlString));
   return NS_ConvertUTF16toUTF8(intlString);  // Return the actual object so we don't lose reference
 }
 
@@ -371,22 +371,22 @@ nsPrintDialogWidgetGTK::ExportHeaderFooter(nsIPrintSettings *aNS)
 {
   const char* header_footer_str;
   header_footer_str = OptionWidgetToString(header_dropdown[0]);
-  aNS->SetHeaderStrLeft(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetHeaderStrLeft(NS_ConvertUTF8toUTF16(header_footer_str).get());
 
   header_footer_str = OptionWidgetToString(header_dropdown[1]);
-  aNS->SetHeaderStrCenter(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetHeaderStrCenter(NS_ConvertUTF8toUTF16(header_footer_str).get());
 
   header_footer_str = OptionWidgetToString(header_dropdown[2]);
-  aNS->SetHeaderStrRight(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetHeaderStrRight(NS_ConvertUTF8toUTF16(header_footer_str).get());
 
   header_footer_str = OptionWidgetToString(footer_dropdown[0]);
-  aNS->SetFooterStrLeft(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetFooterStrLeft(NS_ConvertUTF8toUTF16(header_footer_str).get());
 
   header_footer_str = OptionWidgetToString(footer_dropdown[1]);
-  aNS->SetFooterStrCenter(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetFooterStrCenter(NS_ConvertUTF8toUTF16(header_footer_str).get());
 
   header_footer_str = OptionWidgetToString(footer_dropdown[2]);
-  aNS->SetFooterStrRight(NS_ConvertUTF8toUTF16(header_footer_str));
+  aNS->SetFooterStrRight(NS_ConvertUTF8toUTF16(header_footer_str).get());
 }
 
 nsresult
@@ -582,11 +582,11 @@ nsPrintDialogServiceGTK::ShowPageSetup(nsPIDOMWindowOuter *aParent,
   // We need to init the prefs here because aNSSettings in its current form is a dummy in both uses of the word
   nsCOMPtr<nsIPrintSettingsService> psService = do_GetService("@mozilla.org/gfx/printsettings-service;1");
   if (psService) {
-    nsString printName;
-    aNSSettings->GetPrinterName(printName);
-    if (printName.IsVoid()) {
-      psService->GetDefaultPrinterName(printName);
-      aNSSettings->SetPrinterName(printName);
+    nsXPIDLString printName;
+    aNSSettings->GetPrinterName(getter_Copies(printName));
+    if (!printName) {
+      psService->GetDefaultPrinterName(getter_Copies(printName));
+      aNSSettings->SetPrinterName(printName.get());
     }
     psService->InitPrintSettingsFromPrefs(aNSSettings, true, nsIPrintSettings::kInitSaveAll);
   }

@@ -302,19 +302,29 @@ BoxModel.prototype = {
           properties[0].name = property.substring(9);
         }
 
-        session.setProperties(properties).catch(console.error);
+        session.setProperties(properties).catch(e => console.error(e));
       },
       done: (value, commit) => {
         editor.elt.parentNode.classList.remove("boxmodel-editing");
         if (!commit) {
           session.revert().then(() => {
             session.destroy();
-          }, console.error);
+          }, e => console.error(e));
           return;
         }
 
-        this.updateBoxModel("editable-value-change");
+        if (!this.inspector) {
+          return;
+        }
+
+        let node = this.inspector.selection.nodeFront;
+        this.inspector.pageStyle.getLayout(node, {
+          autoMargins: true,
+        }).then(layout => {
+          this.store.dispatch(updateLayout(layout));
+        }, e => console.error(e));
       },
+      contextMenu: this.inspector.onTextBoxContextMenu,
       cssProperties: getCssProperties(this.inspector.toolbox)
     }, event);
   },

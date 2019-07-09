@@ -15,7 +15,7 @@ info: >
       vii. If IsAccessorDescriptor(Desc) is true, return false.
   ...
 includes: [testTypedArray.js]
-features: [Reflect, TypedArray]
+features: [Reflect]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

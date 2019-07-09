@@ -6,7 +6,6 @@
 package org.mozilla.gecko.db;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -21,7 +20,6 @@ import org.json.simple.JSONObject;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.annotation.RobocopTarget;
-import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.db.BrowserContract.ActivityStreamBlocklist;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserContract.Combined;
@@ -36,20 +34,15 @@ import org.mozilla.gecko.db.BrowserContract.SearchHistory;
 import org.mozilla.gecko.db.BrowserContract.Thumbnails;
 import org.mozilla.gecko.db.BrowserContract.UrlAnnotations;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
-import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.reader.SavedReaderViewHelper;
-import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.util.FileUtils;
 
 import static org.mozilla.gecko.db.DBUtils.qualifyColumn;
 
-import android.accounts.Account;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -59,17 +52,16 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
 
 // public for robocop testing
-public class BrowserDatabaseHelper extends SQLiteOpenHelper {
+public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
     private static final String LOGTAG = "GeckoBrowserDBHelper";
 
     // Replace the Bug number below with your Bug that is conducting a DB upgrade, as to force a merge conflict with any
     // other patches that require a DB upgrade.
-    public static final int DATABASE_VERSION = 39; // Bug 1364644
+    public static final int DATABASE_VERSION = 37; // Bug 1351805
     public static final String DATABASE_NAME = "browser.db";
 
     final protected Context mContext;
@@ -139,11 +131,6 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 Bookmarks.DATE_MODIFIED + " INTEGER," +
                 Bookmarks.GUID + " TEXT NOT NULL," +
                 Bookmarks.IS_DELETED + " INTEGER NOT NULL DEFAULT 0, " +
-
-                // Mark every new record as "needs to be synced" by default.
-                Bookmarks.LOCAL_VERSION + " INTEGER NOT NULL DEFAULT 1, " +
-                Bookmarks.SYNC_VERSION + " INTEGER NOT NULL DEFAULT 0, " +
-
                 "FOREIGN KEY (" + Bookmarks.PARENT + ") REFERENCES " +
                 TABLE_BOOKMARKS + "(" + Bookmarks._ID + ")" +
                 ");");
@@ -239,7 +226,7 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 PageMetadata.HAS_IMAGE + " TINYINT NOT NULL DEFAULT 0, " +
                 PageMetadata.JSON + " TEXT NOT NULL, " +
 
-                "FOREIGN KEY (" + PageMetadata.HISTORY_GUID + ") REFERENCES " +
+                "FOREIGN KEY (" + Visits.HISTORY_GUID + ") REFERENCES " +
                 TABLE_HISTORY + "(" + History.GUID + ") ON DELETE CASCADE ON UPDATE CASCADE" +
                 ");");
 
@@ -683,118 +670,6 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 " ON " + Combined.FAVICON_ID + " = " + qualifyColumn(TABLE_FAVICONS, Favicons._ID));
     }
 
-    private void createCombinedViewOn38(final SQLiteDatabase db) {
-        /*
-        Builds on top of v33 & v34 combined view, adding the column:
-        - Combined.HISTORY_GUID - sync GUID for merging with PageMetadata table.
-
-        Any code written prior to v33 referencing columns by index directly remains intact
-        (yet must die a fiery death), as new columns were added to the end of the list.
-
-        The rows in the ensuing view are, in order:
-            Combined.BOOKMARK_ID
-            Combined.HISTORY_ID
-            Combined._ID (always 0)
-            Combined.URL
-            Combined.TITLE
-            Combined.VISITS
-            Combined.DATE_LAST_VISITED
-            Combined.FAVICON_ID
-            Combined.LOCAL_DATE_LAST_VISITED
-            Combined.REMOTE_DATE_LAST_VISITED
-            Combined.LOCAL_VISITS_COUNT
-            Combined.REMOTE_VISITS_COUNT
-            Combined.HISTORY_GUID
-         */
-        db.execSQL("CREATE VIEW IF NOT EXISTS " + VIEW_COMBINED + " AS" +
-
-                // Bookmarks without history.
-                " SELECT " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks._ID) + " AS " + Combined.BOOKMARK_ID + "," +
-                "-1 AS " + Combined.HISTORY_ID + "," +
-                "0 AS " + Combined._ID + "," +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.URL) + " AS " + Combined.URL + ", " +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.TITLE) + " AS " + Combined.TITLE + ", " +
-                "-1 AS " + Combined.VISITS + ", " +
-                "-1 AS " + Combined.DATE_LAST_VISITED + "," +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.FAVICON_ID) + " AS " + Combined.FAVICON_ID + "," +
-                "0 AS " + Combined.LOCAL_DATE_LAST_VISITED + ", " +
-                "0 AS " + Combined.REMOTE_DATE_LAST_VISITED + ", " +
-                "0 AS " + Combined.LOCAL_VISITS_COUNT + ", " +
-                "0 AS " + Combined.REMOTE_VISITS_COUNT + ", " +
-                "NULL AS " + Combined.HISTORY_GUID +
-                " FROM " + TABLE_BOOKMARKS +
-                " WHERE " +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.TYPE)  + " = " + Bookmarks.TYPE_BOOKMARK + " AND " +
-                // Ignore pinned bookmarks.
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.PARENT)  + " <> " + Bookmarks.FIXED_PINNED_LIST_ID + " AND " +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.IS_DELETED)  + " = 0 AND " +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.URL) +
-                " NOT IN (SELECT " + History.URL + " FROM " + TABLE_HISTORY + ")" +
-                " UNION ALL" +
-
-                // History with and without bookmark.
-                " SELECT " +
-                "CASE " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.IS_DELETED) +
-
-                // Give pinned bookmarks a NULL ID so that they're not treated as bookmarks. We can't
-                // completely ignore them here because they're joined with history entries we care about.
-                " WHEN 0 THEN " +
-                "CASE " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.PARENT) +
-                " WHEN " + Bookmarks.FIXED_PINNED_LIST_ID + " THEN " +
-                "NULL " +
-                "ELSE " +
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks._ID) +
-                " END " +
-                "ELSE " +
-                "NULL " +
-                "END AS " + Combined.BOOKMARK_ID + "," +
-                qualifyColumn(TABLE_HISTORY, History._ID) + " AS " + Combined.HISTORY_ID + "," +
-                "0 AS " + Combined._ID + "," +
-                qualifyColumn(TABLE_HISTORY, History.URL) + " AS " + Combined.URL + "," +
-
-                // Prioritize bookmark titles over history titles, since the user may have
-                // customized the title for a bookmark.
-                "COALESCE(" + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.TITLE) + ", " +
-                qualifyColumn(TABLE_HISTORY, History.TITLE) +
-                ") AS " + Combined.TITLE + "," +
-                qualifyColumn(TABLE_HISTORY, History.VISITS) + " AS " + Combined.VISITS + "," +
-                qualifyColumn(TABLE_HISTORY, History.DATE_LAST_VISITED) + " AS " + Combined.DATE_LAST_VISITED + "," +
-                qualifyColumn(TABLE_HISTORY, History.FAVICON_ID) + " AS " + Combined.FAVICON_ID + "," +
-
-                qualifyColumn(TABLE_HISTORY, History.LOCAL_DATE_LAST_VISITED) + " AS " + Combined.LOCAL_DATE_LAST_VISITED + "," +
-                qualifyColumn(TABLE_HISTORY, History.REMOTE_DATE_LAST_VISITED) + " AS " + Combined.REMOTE_DATE_LAST_VISITED + "," +
-                qualifyColumn(TABLE_HISTORY, History.LOCAL_VISITS) + " AS " + Combined.LOCAL_VISITS_COUNT + "," +
-                qualifyColumn(TABLE_HISTORY, History.REMOTE_VISITS) + " AS " + Combined.REMOTE_VISITS_COUNT + "," +
-                qualifyColumn(TABLE_HISTORY, History.GUID) + " AS " + Combined.HISTORY_GUID +
-
-                // We need to JOIN on Visits in order to compute visit counts
-                " FROM " + TABLE_HISTORY + " " +
-
-                // We really shouldn't be selecting deleted bookmarks, but oh well.
-                "LEFT OUTER JOIN " + TABLE_BOOKMARKS +
-                " ON " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.URL) + " = " + qualifyColumn(TABLE_HISTORY, History.URL) +
-                " WHERE " +
-                qualifyColumn(TABLE_HISTORY, History.IS_DELETED) + " = 0 AND " +
-                "(" +
-                // The left outer join didn't match...
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.TYPE) + " IS NULL OR " +
-
-                // ... or it's a bookmark. This is less efficient than filtering prior
-                // to the join if you have lots of folders.
-                qualifyColumn(TABLE_BOOKMARKS, Bookmarks.TYPE) + " = " + Bookmarks.TYPE_BOOKMARK + ")"
-        );
-
-        debug("Creating " + VIEW_COMBINED_WITH_FAVICONS + " view");
-
-        db.execSQL("CREATE VIEW IF NOT EXISTS " + VIEW_COMBINED_WITH_FAVICONS + " AS" +
-                " SELECT " + qualifyColumn(VIEW_COMBINED, "*") + ", " +
-                qualifyColumn(TABLE_FAVICONS, Favicons.URL) + " AS " + Combined.FAVICON_URL + ", " +
-                qualifyColumn(TABLE_FAVICONS, Favicons.DATA) + " AS " + Combined.FAVICON +
-                " FROM " + VIEW_COMBINED + " LEFT OUTER JOIN " + TABLE_FAVICONS +
-                " ON " + Combined.FAVICON_ID + " = " + qualifyColumn(TABLE_FAVICONS, Favicons._ID));
-
-    }
-
     private void createLoginsTable(SQLiteDatabase db, final String tableName) {
         debug("Creating logins.db: " + db.getPath());
         debug("Creating " + tableName + " table");
@@ -888,7 +763,7 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
         createBookmarksWithAnnotationsView(db);
 
         createVisitsTable(db);
-        createCombinedViewOn38(db);
+        createCombinedViewOn34(db);
 
         createActivityStreamBlocklistTable(db);
 
@@ -2128,126 +2003,6 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
         createRemoteDevicesTable(db);
     }
 
-    private void upgradeDatabaseFrom37to38(final SQLiteDatabase db) {
-        createV38CombinedView(db);
-    }
-
-    private void upgradeDatabaseFrom38to39(final SQLiteDatabase db) {
-        updateBookmarksTableAddSyncTrackerFields(db);
-    }
-
-    private void updateBookmarksTableAddSyncTrackerFields(final SQLiteDatabase db) {
-        // Perform schema migration. Mark every record as "needs to be synced" by default.
-        db.execSQL("ALTER TABLE " + TABLE_BOOKMARKS +
-                " ADD COLUMN " + Bookmarks.LOCAL_VERSION + " INTEGER NOT NULL DEFAULT 1");
-        db.execSQL("ALTER TABLE " + TABLE_BOOKMARKS +
-                " ADD COLUMN " + Bookmarks.SYNC_VERSION + " INTEGER NOT NULL DEFAULT 0");
-
-        // Perform data migration.
-
-        // We're moving from timestamp-based change tracking for bookmarks to version-based tracking.
-        // As a result of this migration, each bookmark will be marked as either "synced", or
-        // "needs to be synced".
-        // "Synced" means that according to the timestamps present, we consider a record to be
-        // up-to-date, not requiring an upload.
-        // "Needs to be synced" means that the record was either never synced for the current account,
-        // or was modified since it was last synced, or missing modified timestamp, requiring an upload.
-
-        // The two states, "synced" and "needs to be synced", are indicated via local and sync version:
-        // "synced":
-        // - localVersion=1
-        // - syncVersion=1
-
-        // "needs to be synced":
-        // - localVersion=1
-        // - syncVersion=0
-
-        // By default, every record is marked as "needs to be synced" via the ALTER statements above.
-        // If sync isn't setup, or bookmark collection was never synced, we're done.
-        // Otherwise, we iterate through every bookmark record, and compare their 'created' and 'modified'
-        // timestamps to the "last sync of bookmarks" timestamp, to determine if record was neither
-        // created nor modified since the last sync.
-        // Once we build a list of all "synced" bookmarks, we UPDATE their sync versions.
-
-        // Here are the possible migration scenarios, for completeness:
-
-        // Trivial case: sync is not setup.
-        // Indicate that all records will need to be uploaded whenever sync is connected.
-
-        // Trivial case: sync is set up, but bookmarks were never synced.
-        // Indicate that all records will need to be uploaded whenever bookmarks are synced.
-
-        // Sync is present, and bookmarks were synced at some point.
-        // For each record, we need to figure out if it needs to be considered as changed.
-        // Even though we have both created and modified timestamp, timestamp-based sync looks only
-        // at modified timestamp - we do the same here, to stay consistent with prior semantics.
-
-        // - recordModified > lastBookmarkSync
-        // -> consider it changed since last sync
-
-        // - recordModified < lastBookmarkSync
-        // -> consider it not changed since last sync
-
-        // - recordModified = lastBookmarkSync
-        // -> consider it inserted during the last sync, and so "not changed"
-        // it's possible that a user inserted a bookmark at the exact moment that last sync finished
-        // but we consider it as a highly unlikely possibility. Otherwise we run a risk of re-uploading
-        // some amount of bookmarks unnecessarily.
-
-        // Since our default version values indicate that a record needs to be synced, the
-        // actual data migration is simple: it's only concerned with "synced" records.
-
-        // First, we need to find out if sync is set up.
-        final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
-        if (account == null) {
-            Log.d(LOGTAG, "No Firefox account. Skipping bookmark version migration.");
-            return;
-        }
-
-        // Now, figure out when bookmarks were last synced.
-        final AndroidFxAccount fxAccount = new AndroidFxAccount(mContext, account);
-        final SharedPreferences syncPrefs;
-        try {
-            syncPrefs = fxAccount.getSyncPrefs();
-        } catch (Exception e) {
-            Log.e(LOGTAG, "Could not read sync SharedPreferences. Skipping bookmark version migration.", e);
-            return;
-        }
-
-        final SynchronizerConfiguration synchronizerConfiguration;
-        try {
-            synchronizerConfiguration = new SynchronizerConfiguration(new PrefsBranch(syncPrefs, "bookmarks."));
-        } catch (IOException | NonObjectJSONException e) {
-            Log.e(LOGTAG, "Could not process sync SharedPreferences. Skipping bookmark version migration.", e);
-            return;
-        }
-
-        final long lastSyncTimestamp = synchronizerConfiguration.localBundle.getTimestamp();
-        Log.d(LOGTAG, "Bookmarks last synced: " + lastSyncTimestamp);
-
-        performBookmarkTimestampToVersionMigration(db, lastSyncTimestamp);
-    }
-
-    @VisibleForTesting
-    static void performBookmarkTimestampToVersionMigration(final SQLiteDatabase db, final long lastSyncTimestamp) {
-        if (lastSyncTimestamp == -1) {
-            Log.d(LOGTAG, "Bookmarks were never synced. Skipping bookmark version migration.");
-            return;
-        }
-
-        final ContentValues syncedVersionValues = new ContentValues();
-        // NB: LOCAL_VERSION default value is 1, so we only need to change SYNC_VERSION.
-        syncedVersionValues.put(Bookmarks.SYNC_VERSION, 1);
-        final int modified = db.update(
-                TABLE_BOOKMARKS,
-                syncedVersionValues,
-                Bookmarks.DATE_MODIFIED + " IS NOT NULL AND " + Bookmarks.DATE_MODIFIED + " <= ?",
-                new String[] {String.valueOf(lastSyncTimestamp)}
-        );
-
-        Log.d(LOGTAG, "Marked bookmarks as 'not changed since last sync': " + modified);
-    }
-
     private void createV33CombinedView(final SQLiteDatabase db) {
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED);
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED_WITH_FAVICONS);
@@ -2260,13 +2015,6 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED_WITH_FAVICONS);
 
         createCombinedViewOn34(db);
-    }
-
-    private void createV38CombinedView(final SQLiteDatabase db) {
-        db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED);
-        db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED_WITH_FAVICONS);
-
-        createCombinedViewOn38(db);
     }
 
     private void createV19CombinedView(SQLiteDatabase db) {
@@ -2393,14 +2141,6 @@ public class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
                 case 37:
                     upgradeDatabaseFrom36to37(db);
-                    break;
-
-                case 38:
-                    upgradeDatabaseFrom37to38(db);
-                    break;
-
-                case 39:
-                    upgradeDatabaseFrom38to39(db);
                     break;
             }
         }

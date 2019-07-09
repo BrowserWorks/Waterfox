@@ -188,7 +188,7 @@ function evaluateJSAsync(panel, expression) {
 
 function refreshPanel(panel) {
   let doc = panel.panelWin.document;
-  let button = doc.querySelector("#dom-refresh-button");
+  let button = doc.querySelector(".btn.refresh");
   return synthesizeMouseClickSoon(panel, button).then(() => {
     // Wait till children (properties) are fetched
     // from the backend.

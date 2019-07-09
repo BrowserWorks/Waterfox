@@ -241,8 +241,7 @@ CompositableParentManager::DestroyActor(const OpDestroy& aOp)
 
 RefPtr<CompositableHost>
 CompositableParentManager::AddCompositable(const CompositableHandle& aHandle,
-				           const TextureInfo& aInfo,
-                                           bool aUseWebRender)
+				           const TextureInfo& aInfo)
 {
   if (mCompositables.find(aHandle.Value()) != mCompositables.end()) {
     NS_ERROR("Client should not allocate duplicate handles");
@@ -253,7 +252,7 @@ CompositableParentManager::AddCompositable(const CompositableHandle& aHandle,
     return nullptr;
   }
 
-  RefPtr<CompositableHost> host = CompositableHost::Create(aInfo, aUseWebRender);
+  RefPtr<CompositableHost> host = CompositableHost::Create(aInfo);
   if (!host) {
     return nullptr;
   }

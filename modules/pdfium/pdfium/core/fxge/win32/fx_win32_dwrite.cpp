@@ -11,9 +11,9 @@
 #include "core/fxge/win32/dwrite_int.h"
 
 typedef HRESULT(__stdcall* FuncType_DWriteCreateFactory)(
-    DWRITE_FACTORY_TYPE,
-    REFIID,
-    IUnknown**);
+    __in DWRITE_FACTORY_TYPE,
+    __in REFIID,
+    __out IUnknown**);
 template <typename InterfaceType>
 inline void SafeRelease(InterfaceType** currentObject) {
   if (*currentObject) {
@@ -114,7 +114,7 @@ class CDwGdiTextRenderer {
                                          FLOAT baselineOriginX,
                                          FLOAT baselineOriginY,
                                          DWRITE_MEASURING_MODE measuringMode,
-                                         DWRITE_GLYPH_RUN const* glyphRun,
+                                         __in DWRITE_GLYPH_RUN const* glyphRun,
                                          const COLORREF& textColor);
 
  private:
@@ -413,7 +413,7 @@ STDMETHODIMP CDwGdiTextRenderer::DrawGlyphRun(
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_MEASURING_MODE measuringMode,
-    DWRITE_GLYPH_RUN const* glyphRun,
+    __in DWRITE_GLYPH_RUN const* glyphRun,
     const COLORREF& textColor) {
   HRESULT hr = S_OK;
   if (pMatrix) {

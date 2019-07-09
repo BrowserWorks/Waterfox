@@ -16,7 +16,7 @@ info: |
         [...]
      b. Else if received.[[Type]] is throw, then
         i. Let throw be ? GetMethod(iterator, "throw").
-features: [generators, Symbol.iterator]
+features: [Symbol.iterator]
 ---*/
 
 var thrown = new Test262Error();

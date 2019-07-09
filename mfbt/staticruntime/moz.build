@@ -6,10 +6,6 @@
 
 Library('mfbt_staticruntime')
 
-LOCAL_INCLUDES += [
-    '/mfbt/double-conversion',
-]
-
 include('../objs.mozbuild')
 
 UNIFIED_SOURCES += mfbt_src_cppsrcs

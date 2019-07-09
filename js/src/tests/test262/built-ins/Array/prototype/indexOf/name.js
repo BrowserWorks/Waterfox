@@ -2,8 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.indexof
-es6id: 22.1.3.12
+es6id: 22.1.3.11
 description: >
   Array.prototype.indexOf.name is "indexOf".
 info: >

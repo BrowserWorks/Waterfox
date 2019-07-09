@@ -12,7 +12,7 @@
 #endif
 
 #ifdef MOZ_CHECK_JNI
-#include <unistd.h>
+#include <pthread.h>
 #include "mozilla/Assertions.h"
 #include "APKOpen.h"
 #include "MainThreadUtils.h"
@@ -89,7 +89,8 @@ JNIEnv* GetEnvForThread();
         if ((thread) == mozilla::jni::CallingThread::GECKO) { \
             MOZ_RELEASE_ASSERT(::NS_IsMainThread()); \
         } else if ((thread) == mozilla::jni::CallingThread::UI) { \
-            const bool isOnUiThread = (GetUIThreadId() == ::gettid()); \
+            const bool isOnUiThread = ::pthread_equal(::pthread_self(), \
+                                                      ::getJavaUiThread()); \
             MOZ_RELEASE_ASSERT(isOnUiThread); \
         } \
     } while (0)
@@ -142,8 +143,6 @@ void DispatchToGeckoPriorityQueue(already_AddRefed<nsIRunnable> aCall);
 bool IsFennec();
 
 int GetAPIVersion();
-
-pid_t GetUIThreadId();
 
 } // jni
 } // mozilla

@@ -4,10 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-DIRS += ['util']
+DIRS += ['util', 'tables']
 TEST_DIRS += ['tests']
 
 XPIDL_SOURCES += [
+    'nsIEntityConverter.idl',
+    'nsISaveAsCharset.idl',
     'nsIUnicodeNormalizer.idl',
 ]
 
@@ -19,8 +21,18 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
-    'nsUnicodeNormalizer.cpp',
+    'nsEntityConverter.cpp',
+    'nsSaveAsCharset.cpp',
 ]
+
+if CONFIG['ENABLE_INTL_API']:
+    UNIFIED_SOURCES += [
+        'nsUnicodeNormalizer_ICU.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'nsUnicodeNormalizer.cpp',
+    ]
 
 FINAL_LIBRARY = 'xul'
 

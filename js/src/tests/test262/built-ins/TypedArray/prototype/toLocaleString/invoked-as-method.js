@@ -19,7 +19,6 @@ info: >
   exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var TypedArrayPrototype = TypedArray.prototype;

@@ -35,7 +35,7 @@ add_task(function* () {
   hud.setFilterState("exception", true);
 
   // We need to let the console opening event loop to finish.
-  let deferred = defer();
+  let deferred = promise.defer();
   executeSoon(() => closeConsole().then(() => deferred.resolve(null)));
   yield deferred.promise;
 

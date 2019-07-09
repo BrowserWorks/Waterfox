@@ -7,7 +7,7 @@
 #include "nsMenuPopupFrame.h"
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
 #include "nsCSSRendering.h"
@@ -101,7 +101,6 @@ nsMenuPopupFrame::nsMenuPopupFrame(nsStyleContext* aContext)
   , mPrefSize(-1, -1)
   , mXPos(0)
   , mYPos(0)
-  , mAlignmentOffset(0)
   , mLastClientOffset(0, 0)
   , mPopupType(ePopupTypePanel)
   , mPopupState(ePopupClosed)
@@ -158,7 +157,7 @@ nsMenuPopupFrame::Init(nsIContent*       aContent,
   mPopupType = ePopupTypePanel;
   nsIDocument* doc = aContent->OwnerDoc();
   int32_t namespaceID;
-  RefPtr<nsAtom> tag = doc->BindingManager()->ResolveTag(aContent, &namespaceID);
+  nsCOMPtr<nsIAtom> tag = doc->BindingManager()->ResolveTag(aContent, &namespaceID);
   if (namespaceID == kNameSpaceID_XUL) {
     if (tag == nsGkAtoms::menupopup || tag == nsGkAtoms::popup)
       mPopupType = ePopupTypeMenu;
@@ -319,7 +318,7 @@ nsMenuPopupFrame::CreateWidgetForView(nsView* aView)
 #endif
 
   nsIContent* parentContent = GetContent()->GetParent();
-  nsAtom *tag = nullptr;
+  nsIAtom *tag = nullptr;
   if (parentContent && parentContent->IsXULElement())
     tag = parentContent->NodeInfo()->NameAtom();
   widgetData.mHasRemoteContent = remote;
@@ -2261,7 +2260,7 @@ nsMenuPopupFrame::AttachedDismissalListener()
 
 nsresult
 nsMenuPopupFrame::AttributeChanged(int32_t aNameSpaceID,
-                                   nsAtom* aAttribute,
+                                   nsIAtom* aAttribute,
                                    int32_t aModType)
 
 {

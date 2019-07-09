@@ -58,27 +58,6 @@ function checkKeyedScalar(scalars, scalarName, key, expectedValue) {
 }
 
 /**
- * An helper that checks the value of a scalar if it's expected to be > 0,
- * otherwise makes sure that the scalar it's not reported.
- *
- * @param {Object} scalars
- *        The snapshot of the scalars.
- * @param {String} scalarName
- *        The name of the scalar to check.
- * @param {Number} value
- *        The expected value for the provided scalar.
- * @param {String} msg
- *        The message to print when checking the value.
- */
-let checkScalar = (scalars, scalarName, value, msg) => {
-  if (value > 0) {
-    is(scalars[scalarName], value, msg);
-    return;
-  }
-  ok(!(scalarName in scalars), scalarName + " must not be reported.");
-};
-
-/**
  * An utility function to write some text in the search input box
  * in a content page.
  * @param {Object} browser
@@ -97,30 +76,14 @@ let typeInSearchField = async function(browser, text, fieldName) {
   });
 };
 
-
 /**
- * Clear and get the named histogram
- * @param {String} name
- *        The name of the histogram
+ * Clear and get the SEARCH_COUNTS histogram.
  */
-function getAndClearHistogram(name) {
-  let histogram = Services.telemetry.getHistogramById(name);
-  histogram.clear();
-  return histogram;
+function getSearchCountsHistogram() {
+  let search_hist = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+  search_hist.clear();
+  return search_hist;
 }
-
-
-/**
- * Clear and get the named keyed histogram
- * @param {String} name
- *        The name of the keyed histogram
- */
-function getAndClearKeyedHistogram(name) {
-  let histogram = Services.telemetry.getKeyedHistogramById(name);
-  histogram.clear();
-  return histogram;
-}
-
 
 /**
  * Check that the keyed histogram contains the right value.
@@ -136,8 +99,8 @@ function checkKeyedHistogram(h, key, expectedValue) {
  */
 function getParentProcessScalars(aChannel, aKeyed = false, aClear = false) {
   const scalars = aKeyed ?
-    Services.telemetry.snapshotKeyedScalars(aChannel, aClear).parent :
-    Services.telemetry.snapshotScalars(aChannel, aClear).parent;
+    Services.telemetry.snapshotKeyedScalars(aChannel, aClear)["parent"] :
+    Services.telemetry.snapshotScalars(aChannel, aClear)["parent"];
   return scalars || {};
 }
 
@@ -265,14 +228,3 @@ function getPopupNotificationNode() {
   return popupNotifications[0];
 }
 
-
-/**
- * Disable non-release page actions (that are tested elsewhere).
- *
- * @return void
- */
-async function disableNonReleaseActions() {
-  if (AppConstants.MOZ_DEV_EDITION || AppConstants.NIGHTLY_BUILD) {
-    await SpecialPowers.pushPrefEnv({set: [["extensions.webcompat-reporter.enabled", false]]});
-  }
-}

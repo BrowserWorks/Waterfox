@@ -17,4 +17,3 @@ else:
   GeckoSharedLibrary('qipcap')
 
 NoVisibilityFlags()
-NO_PGO = True

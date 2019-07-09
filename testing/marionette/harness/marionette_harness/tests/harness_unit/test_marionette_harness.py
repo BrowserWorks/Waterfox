@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import mozunit
 import pytest
 
 from mock import Mock, patch, sentinel
@@ -105,4 +104,6 @@ def test_harness_sets_up_default_test_handlers(mach_parsed_kwargs):
 
 
 if __name__ == '__main__':
-    mozunit.main('--log-tbpl=-')
+    import sys
+    sys.exit(pytest.main(
+        ['--log-tbpl=-', __file__]))

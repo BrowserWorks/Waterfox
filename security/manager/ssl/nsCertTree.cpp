@@ -23,7 +23,7 @@
 #include "nsTHashtable.h"
 #include "nsUnicharUtils.h"
 #include "nsXPCOMCID.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "pkix/pkixtypes.h"
 
 using namespace mozilla;
@@ -55,11 +55,11 @@ CompareCacheHashEntryPtr::~CompareCacheHashEntryPtr()
 }
 
 CompareCacheHashEntry::CompareCacheHashEntry()
-:key(nullptr)
+   : key(nullptr)
+   , mCritInit()
 {
   for (int i = 0; i < max_criterions; ++i) {
     mCritInit[i] = false;
-    mCrit[i].SetIsVoid(true);
   }
 }
 
@@ -153,6 +153,8 @@ NS_IMPL_ISUPPORTS(nsCertTree, nsICertTree, nsITreeView)
 
 nsCertTree::nsCertTree()
   : mTreeArray(nullptr)
+  , mNumOrgs(0)
+  , mNumRows(0)
   , mCompareCache(&gMapOps, sizeof(CompareCacheHashEntryPtr),
                   kInitialCacheLength)
 {
@@ -1282,7 +1284,7 @@ nsCertTree::CmpInitCriterion(nsIX509Cert *cert, CompareCacheHashEntry *entry,
   NS_ENSURE_TRUE(cert && entry, RETURN_NOTHING);
 
   entry->mCritInit[level] = true;
-  nsString& str = entry->mCrit[level];
+  nsXPIDLString &str = entry->mCrit[level];
 
   switch (crit) {
     case sort_IssuerOrg:
@@ -1344,14 +1346,14 @@ nsCertTree::CmpByCrit(nsIX509Cert *a, CompareCacheHashEntry *ace,
     CmpInitCriterion(b, bce, crit, level);
   }
 
-  nsString& str_a = ace->mCrit[level];
-  nsString& str_b = bce->mCrit[level];
+  nsXPIDLString &str_a = ace->mCrit[level];
+  nsXPIDLString &str_b = bce->mCrit[level];
 
   int32_t result;
-  if (!str_a.IsVoid() && !str_b.IsVoid())
+  if (str_a && str_b)
     result = Compare(str_a, str_b, nsCaseInsensitiveStringComparator());
   else
-    result = str_a.IsVoid() ? (str_b.IsVoid() ? 0 : -1) : 1;
+    result = !str_a ? (!str_b ? 0 : -1) : 1;
 
   if (sort_IssuedDateDescending == crit)
     result *= -1; // reverse compare order

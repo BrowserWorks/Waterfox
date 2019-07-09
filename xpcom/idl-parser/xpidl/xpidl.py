@@ -529,7 +529,7 @@ class Interface(object):
                 raise IDLError("interface '%s' inherits from non-interface type '%s'" % (self.name, self.base), self.location)
 
             if self.attributes.scriptable and not realbase.attributes.scriptable:
-                raise IDLError("interface '%s' is scriptable but derives from non-scriptable '%s'" % (self.name, self.base), self.location, warning=True)
+                print >>sys.stderr, IDLError("interface '%s' is scriptable but derives from non-scriptable '%s'" % (self.name, self.base), self.location, warning=True)
 
             if self.attributes.scriptable and realbase.attributes.builtinclass and not self.attributes.builtinclass:
                 raise IDLError("interface '%s' is not builtinclass but derives from builtinclass '%s'" % (self.name, self.base), self.location)
@@ -602,6 +602,7 @@ class InterfaceAttributes(object):
     scriptable = False
     builtinclass = False
     function = False
+    deprecated = False
     noscript = False
     main_process_scriptable_only = False
 
@@ -620,6 +621,9 @@ class InterfaceAttributes(object):
     def setbuiltinclass(self):
         self.builtinclass = True
 
+    def setdeprecated(self):
+        self.deprecated = True
+
     def setmain_process_scriptable_only(self):
         self.main_process_scriptable_only = True
 
@@ -629,6 +633,7 @@ class InterfaceAttributes(object):
         'builtinclass': (False, setbuiltinclass),
         'function':   (False, setfunction),
         'noscript':   (False, setnoscript),
+        'deprecated': (False, setdeprecated),
         'object':     (False, lambda self: True),
         'main_process_scriptable_only': (False, setmain_process_scriptable_only),
         }
@@ -711,6 +716,7 @@ class Attribute(object):
     binaryname = None
     null = None
     undefined = None
+    deprecated = False
     infallible = False
 
     def __init__(self, type, name, attlist, readonly, location, doccomments):
@@ -758,6 +764,8 @@ class Attribute(object):
                     self.noscript = True
                 elif name == 'implicit_jscontext':
                     self.implicit_jscontext = True
+                elif name == 'deprecated':
+                    self.deprecated = True
                 elif name == 'nostdcall':
                     self.nostdcall = True
                 elif name == 'must_use':
@@ -814,6 +822,7 @@ class Method(object):
     nostdcall = False
     must_use = False
     optional_argc = False
+    deprecated = False
 
     def __init__(self, type, name, attlist, paramlist, location, doccomments, raises):
         self.type = type
@@ -844,6 +853,8 @@ class Method(object):
                 self.implicit_jscontext = True
             elif name == 'optional_argc':
                 self.optional_argc = True
+            elif name == 'deprecated':
+                self.deprecated = True
             elif name == 'nostdcall':
                 self.nostdcall = True
             elif name == 'must_use':

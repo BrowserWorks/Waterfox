@@ -6,6 +6,7 @@
 
 const { Ci } = require("chrome");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const Services = require("Services");
 const { TargetFactory } = require("devtools/client/framework/target");
 const Telemetry = require("devtools/client/shared/telemetry");
@@ -19,16 +20,16 @@ const { PluralForm } = require("devtools/shared/plural-form");
 
 loader.lazyGetter(this, "prefBranch", function () {
   return Services.prefs.getBranch(null)
-                    .QueryInterface(Ci.nsIPrefBranch);
+                    .QueryInterface(Ci.nsIPrefBranch2);
 });
 
 loader.lazyRequireGetter(this, "gcliInit", "devtools/shared/gcli/commands/index");
 loader.lazyRequireGetter(this, "util", "gcli/util/util");
-loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/webconsole/listeners", true);
+loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/server/actors/utils/webconsole-listeners", true);
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
 loader.lazyRequireGetter(this, "nodeConstants", "devtools/shared/dom-node-constants");
-loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/old-event-emitter");
+loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 
 /**
  * A collection of utilities to help working with commands
@@ -225,7 +226,6 @@ DeveloperToolbar.prototype.createToolbar = function () {
   let toolbar = this._doc.createElement("toolbar");
   toolbar.setAttribute("id", "developer-toolbar");
   toolbar.setAttribute("hidden", "true");
-  toolbar.setAttribute("fullscreentoolbar", "true");
 
   let close = this._doc.createElement("toolbarbutton");
   close.setAttribute("id", "developer-toolbar-closebutton");
@@ -308,23 +308,25 @@ DeveloperToolbar.prototype.focus = function () {
   if (this.visible) {
     // If the toolbar was just inserted, the <textbox> may still have
     // its binding in process of being applied and not be focusable yet
-    return new Promise((resolve, reject) => {
-      let checkBinding = () => {
-        // Bail out if the toolbar has been destroyed in the meantime
-        if (!this._input) {
-          reject();
-          return;
-        }
-        // mInputField is a xbl field of <xul:textbox>
-        if (typeof this._input.mInputField != "undefined") {
-          this._input.focus();
-          resolve();
-        } else {
-          this._input.ownerDocument.defaultView.setTimeout(checkBinding, 50);
-        }
-      };
-      checkBinding();
-    });
+    let waitForBinding = defer();
+
+    let checkBinding = () => {
+      // Bail out if the toolbar has been destroyed in the meantime
+      if (!this._input) {
+        waitForBinding.reject();
+        return;
+      }
+      // mInputField is a xbl field of <xul:textbox>
+      if (typeof this._input.mInputField != "undefined") {
+        this._input.focus();
+        waitForBinding.resolve();
+      } else {
+        this._input.ownerDocument.defaultView.setTimeout(checkBinding, 50);
+      }
+    };
+    checkBinding();
+
+    return waitForBinding.promise;
   }
 
   return this.show(true);
@@ -814,76 +816,77 @@ OutputPanel.create = function (devtoolbar) {
  * @private See OutputPanel.create
  */
 OutputPanel.prototype._init = function (devtoolbar) {
-  return new Promise((resolve, reject) => {
-    this._devtoolbar = devtoolbar;
-    this._input = this._devtoolbar._input;
-    this._toolbar = this._devtoolbar._doc.getElementById("developer-toolbar");
+  this._devtoolbar = devtoolbar;
+  this._input = this._devtoolbar._input;
+  this._toolbar = this._devtoolbar._doc.getElementById("developer-toolbar");
 
-    /*
-    <tooltip|panel id="gcli-output"
-           noautofocus="true"
-           noautohide="true"
-           class="gcli-panel">
-      <html:iframe xmlns:html="http://www.w3.org/1999/xhtml"
-                   id="gcli-output-frame"
-                   src="chrome://devtools/content/commandline/commandlineoutput.xhtml"
-                   sandbox="allow-same-origin"/>
-    </tooltip|panel>
-    */
+  /*
+  <tooltip|panel id="gcli-output"
+         noautofocus="true"
+         noautohide="true"
+         class="gcli-panel">
+    <html:iframe xmlns:html="http://www.w3.org/1999/xhtml"
+                 id="gcli-output-frame"
+                 src="chrome://devtools/content/commandline/commandlineoutput.xhtml"
+                 sandbox="allow-same-origin"/>
+  </tooltip|panel>
+  */
 
-    // TODO: Switch back from tooltip to panel when metacity focus issue is fixed:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
-    this._panel = this._devtoolbar._doc.createElement(isLinux ? "tooltip" : "panel");
+  // TODO: Switch back from tooltip to panel when metacity focus issue is fixed:
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
+  this._panel = this._devtoolbar._doc.createElement(isLinux ? "tooltip" : "panel");
 
-    this._panel.id = "gcli-output";
-    this._panel.classList.add("gcli-panel");
+  this._panel.id = "gcli-output";
+  this._panel.classList.add("gcli-panel");
 
-    if (isLinux) {
-      this.canHide = false;
-      this._onpopuphiding = this._onpopuphiding.bind(this);
-      this._panel.addEventListener("popuphiding", this._onpopuphiding, true);
-    } else {
-      this._panel.setAttribute("noautofocus", "true");
-      this._panel.setAttribute("noautohide", "true");
+  if (isLinux) {
+    this.canHide = false;
+    this._onpopuphiding = this._onpopuphiding.bind(this);
+    this._panel.addEventListener("popuphiding", this._onpopuphiding, true);
+  } else {
+    this._panel.setAttribute("noautofocus", "true");
+    this._panel.setAttribute("noautohide", "true");
 
-      // Bug 692348: On Windows and OSX if a panel has no content and no height
-      // openPopup fails to display it. Setting the height to 1px alows the panel
-      // to be displayed before has content or a real height i.e. the first time
-      // it is displayed.
-      this._panel.setAttribute("height", "1px");
-    }
+    // Bug 692348: On Windows and OSX if a panel has no content and no height
+    // openPopup fails to display it. Setting the height to 1px alows the panel
+    // to be displayed before has content or a real height i.e. the first time
+    // it is displayed.
+    this._panel.setAttribute("height", "1px");
+  }
 
-    this._toolbar.parentElement.insertBefore(this._panel, this._toolbar);
+  this._toolbar.parentElement.insertBefore(this._panel, this._toolbar);
 
-    this._frame = this._devtoolbar._doc.createElementNS(NS_XHTML, "iframe");
-    this._frame.id = "gcli-output-frame";
-    this._frame.setAttribute("src", "chrome://devtools/content/commandline/commandlineoutput.xhtml");
-    this._frame.setAttribute("sandbox", "allow-same-origin");
-    this._panel.appendChild(this._frame);
+  this._frame = this._devtoolbar._doc.createElementNS(NS_XHTML, "iframe");
+  this._frame.id = "gcli-output-frame";
+  this._frame.setAttribute("src", "chrome://devtools/content/commandline/commandlineoutput.xhtml");
+  this._frame.setAttribute("sandbox", "allow-same-origin");
+  this._panel.appendChild(this._frame);
 
-    this.displayedOutput = undefined;
+  this.displayedOutput = undefined;
 
-    this._update = this._update.bind(this);
+  this._update = this._update.bind(this);
 
-    // Wire up the element from the iframe, and resolve the promise
-    let onload = () => {
-      this._frame.removeEventListener("load", onload, true);
+  // Wire up the element from the iframe, and resolve the promise
+  let deferred = defer();
+  let onload = () => {
+    this._frame.removeEventListener("load", onload, true);
 
-      this.document = this._frame.contentDocument;
-      this._copyTheme();
+    this.document = this._frame.contentDocument;
+    this._copyTheme();
 
-      this._div = this.document.getElementById("gcli-output-root");
-      this._div.classList.add("gcli-row-out");
-      this._div.setAttribute("aria-live", "assertive");
+    this._div = this.document.getElementById("gcli-output-root");
+    this._div.classList.add("gcli-row-out");
+    this._div.setAttribute("aria-live", "assertive");
 
-      let styles = this._toolbar.ownerDocument.defaultView
-                      .getComputedStyle(this._toolbar);
-      this._div.setAttribute("dir", styles.direction);
+    let styles = this._toolbar.ownerDocument.defaultView
+                    .getComputedStyle(this._toolbar);
+    this._div.setAttribute("dir", styles.direction);
 
-      resolve(this);
-    };
-    this._frame.addEventListener("load", onload, true);
-  });
+    deferred.resolve(this);
+  };
+  this._frame.addEventListener("load", onload, true);
+
+  return deferred.promise;
 };
 
 /* Copy the current devtools theme attribute into the iframe,
@@ -1132,76 +1135,78 @@ TooltipPanel.create = function (devtoolbar) {
  * @private See TooltipPanel.create
  */
 TooltipPanel.prototype._init = function (devtoolbar) {
-  return new Promise((resolve, reject) => {
-    this._devtoolbar = devtoolbar;
-    this._input = devtoolbar._doc.querySelector(".gclitoolbar-input-node");
-    this._toolbar = devtoolbar._doc.querySelector("#developer-toolbar");
-    this._dimensions = { start: 0, end: 0 };
+  let deferred = defer();
 
-    /*
-    <tooltip|panel id="gcli-tooltip"
-           type="arrow"
-           noautofocus="true"
-           noautohide="true"
-           class="gcli-panel">
-      <html:iframe xmlns:html="http://www.w3.org/1999/xhtml"
-                   id="gcli-tooltip-frame"
-                   src="chrome://devtools/content/commandline/commandlinetooltip.xhtml"
-                   flex="1"
-                   sandbox="allow-same-origin"/>
-    </tooltip|panel>
-    */
+  this._devtoolbar = devtoolbar;
+  this._input = devtoolbar._doc.querySelector(".gclitoolbar-input-node");
+  this._toolbar = devtoolbar._doc.querySelector("#developer-toolbar");
+  this._dimensions = { start: 0, end: 0 };
 
-    // TODO: Switch back from tooltip to panel when metacity focus issue is fixed:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
-    this._panel = devtoolbar._doc.createElement(isLinux ? "tooltip" : "panel");
+  /*
+  <tooltip|panel id="gcli-tooltip"
+         type="arrow"
+         noautofocus="true"
+         noautohide="true"
+         class="gcli-panel">
+    <html:iframe xmlns:html="http://www.w3.org/1999/xhtml"
+                 id="gcli-tooltip-frame"
+                 src="chrome://devtools/content/commandline/commandlinetooltip.xhtml"
+                 flex="1"
+                 sandbox="allow-same-origin"/>
+  </tooltip|panel>
+  */
 
-    this._panel.id = "gcli-tooltip";
-    this._panel.classList.add("gcli-panel");
+  // TODO: Switch back from tooltip to panel when metacity focus issue is fixed:
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
+  this._panel = devtoolbar._doc.createElement(isLinux ? "tooltip" : "panel");
 
-    if (isLinux) {
-      this.canHide = false;
-      this._onpopuphiding = this._onpopuphiding.bind(this);
-      this._panel.addEventListener("popuphiding", this._onpopuphiding, true);
-    } else {
-      this._panel.setAttribute("noautofocus", "true");
-      this._panel.setAttribute("noautohide", "true");
+  this._panel.id = "gcli-tooltip";
+  this._panel.classList.add("gcli-panel");
 
-      // Bug 692348: On Windows and OSX if a panel has no content and no height
-      // openPopup fails to display it. Setting the height to 1px alows the panel
-      // to be displayed before has content or a real height i.e. the first time
-      // it is displayed.
-      this._panel.setAttribute("height", "1px");
-    }
+  if (isLinux) {
+    this.canHide = false;
+    this._onpopuphiding = this._onpopuphiding.bind(this);
+    this._panel.addEventListener("popuphiding", this._onpopuphiding, true);
+  } else {
+    this._panel.setAttribute("noautofocus", "true");
+    this._panel.setAttribute("noautohide", "true");
 
-    this._toolbar.parentElement.insertBefore(this._panel, this._toolbar);
+    // Bug 692348: On Windows and OSX if a panel has no content and no height
+    // openPopup fails to display it. Setting the height to 1px alows the panel
+    // to be displayed before has content or a real height i.e. the first time
+    // it is displayed.
+    this._panel.setAttribute("height", "1px");
+  }
 
-    this._frame = devtoolbar._doc.createElementNS(NS_XHTML, "iframe");
-    this._frame.id = "gcli-tooltip-frame";
-    this._frame.setAttribute("src", "chrome://devtools/content/commandline/commandlinetooltip.xhtml");
-    this._frame.setAttribute("flex", "1");
-    this._frame.setAttribute("sandbox", "allow-same-origin");
-    this._panel.appendChild(this._frame);
+  this._toolbar.parentElement.insertBefore(this._panel, this._toolbar);
 
-    /**
-     * Wire up the element from the iframe, and resolve the promise.
-     */
-    let onload = () => {
-      this._frame.removeEventListener("load", onload, true);
+  this._frame = devtoolbar._doc.createElementNS(NS_XHTML, "iframe");
+  this._frame.id = "gcli-tooltip-frame";
+  this._frame.setAttribute("src", "chrome://devtools/content/commandline/commandlinetooltip.xhtml");
+  this._frame.setAttribute("flex", "1");
+  this._frame.setAttribute("sandbox", "allow-same-origin");
+  this._panel.appendChild(this._frame);
 
-      this.document = this._frame.contentDocument;
-      this._copyTheme();
-      this.hintElement = this.document.getElementById("gcli-tooltip-root");
-      this._connector = this.document.getElementById("gcli-tooltip-connector");
+  /**
+   * Wire up the element from the iframe, and resolve the promise.
+   */
+  let onload = () => {
+    this._frame.removeEventListener("load", onload, true);
 
-      let styles = this._toolbar.ownerDocument.defaultView
-                      .getComputedStyle(this._toolbar);
-      this.hintElement.setAttribute("dir", styles.direction);
+    this.document = this._frame.contentDocument;
+    this._copyTheme();
+    this.hintElement = this.document.getElementById("gcli-tooltip-root");
+    this._connector = this.document.getElementById("gcli-tooltip-connector");
 
-      resolve(this);
-    };
-    this._frame.addEventListener("load", onload, true);
-  });
+    let styles = this._toolbar.ownerDocument.defaultView
+                    .getComputedStyle(this._toolbar);
+    this.hintElement.setAttribute("dir", styles.direction);
+
+    deferred.resolve(this);
+  };
+  this._frame.addEventListener("load", onload, true);
+
+  return deferred.promise;
 };
 
 /* Copy the current devtools theme attribute into the iframe,

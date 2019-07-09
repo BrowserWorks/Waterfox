@@ -10,7 +10,8 @@ var notificationURL = "http://example.org/browser/browser/base/content/test/aler
 var newWindowOpenedFromTab;
 
 add_task(async function test_notificationPreventDefaultAndSwitchTabs() {
-  await addNotificationPermission(notificationURL);
+  let pm = Services.perms;
+  pm.add(makeURI(notificationURL), "desktop-notification", pm.ALLOW_ACTION);
 
   let originalTab = gBrowser.selectedTab;
   await BrowserTestUtils.withNewTab({

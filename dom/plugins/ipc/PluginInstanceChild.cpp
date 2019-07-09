@@ -75,22 +75,16 @@ static WindowsDllInterceptor sUser32Intercept;
 static HWND sWinlessPopupSurrogateHWND = nullptr;
 static User32TrackPopupMenu sUser32TrackPopupMenuStub = nullptr;
 
-typedef HIMC (WINAPI *Imm32ImmGetContext)(HWND hWND);
-typedef BOOL (WINAPI *Imm32ImmReleaseContext)(HWND hWND, HIMC hIMC);
-typedef LONG (WINAPI *Imm32ImmGetCompositionString)(HIMC hIMC,
-                                                    DWORD dwIndex,
-                                                    LPVOID lpBuf,
-                                                    DWORD dwBufLen);
-typedef BOOL (WINAPI *Imm32ImmSetCandidateWindow)(HIMC hIMC,
-                                                  LPCANDIDATEFORM lpCandidate);
-typedef BOOL (WINAPI *Imm32ImmNotifyIME)(HIMC hIMC, DWORD dwAction,
-                                        DWORD dwIndex, DWORD dwValue);
 static WindowsDllInterceptor sImm32Intercept;
-static Imm32ImmGetContext sImm32ImmGetContextStub = nullptr;
-static Imm32ImmReleaseContext sImm32ImmReleaseContextStub = nullptr;
-static Imm32ImmGetCompositionString sImm32ImmGetCompositionStringStub = nullptr;
-static Imm32ImmSetCandidateWindow sImm32ImmSetCandidateWindowStub = nullptr;
-static Imm32ImmNotifyIME sImm32ImmNotifyIME = nullptr;
+static decltype(ImmGetContext)* sImm32ImmGetContextStub = nullptr;
+static decltype(ImmReleaseContext)* sImm32ImmReleaseContextStub = nullptr;
+static decltype(ImmGetCompositionStringW)* sImm32ImmGetCompositionStringStub =
+                                             nullptr;
+static decltype(ImmSetCandidateWindow)* sImm32ImmSetCandidateWindowStub =
+                                          nullptr;
+static decltype(ImmNotifyIME)* sImm32ImmNotifyIME = nullptr;
+static decltype(ImmAssociateContextEx)* sImm32ImmAssociateContextExStub =
+                                          nullptr;
 static PluginInstanceChild* sCurrentPluginInstance = nullptr;
 static const HIMC sHookIMC = (const HIMC)0xefefefef;
 
@@ -158,6 +152,7 @@ PluginInstanceChild::PluginInstanceChild(const NPPluginFuncs* aPluginIface,
     , mWinlessThrottleOldWndProc(0)
     , mWinlessHiddenMsgHWND(0)
 #endif // OS_WIN
+    , mAsyncCallMutex("PluginInstanceChild::mAsyncCallMutex")
 #if defined(MOZ_WIDGET_COCOA)
 #if defined(__i386__)
     , mEventModel(NPEventModelCarbon)
@@ -182,6 +177,7 @@ PluginInstanceChild::PluginInstanceChild(const NPPluginFuncs* aPluginIface,
     , mDestroyed(false)
 #ifdef XP_WIN
     , mLastKeyEventConsumed(false)
+    , mLastEnableIMEState(true)
 #endif // #ifdef XP_WIN
     , mStackDepth(0)
 {
@@ -211,7 +207,7 @@ PluginInstanceChild::~PluginInstanceChild()
     // In the event that we registered for audio device changes, stop.
     PluginModuleChild* chromeInstance = PluginModuleChild::GetChrome();
     if (chromeInstance) {
-      chromeInstance->PluginRequiresAudioDeviceChanges(this, false);
+      NPError rv = chromeInstance->PluginRequiresAudioDeviceChanges(this, false);
     }
 #endif
 #if defined(MOZ_WIDGET_COCOA)
@@ -2122,6 +2118,30 @@ PluginInstanceChild::ImmNotifyIME(HIMC aIMC, DWORD aAction, DWORD aIndex,
     return TRUE;
 }
 
+// static
+BOOL
+PluginInstanceChild::ImmAssociateContextExProc(HWND hWND, HIMC hImc,
+                                               DWORD dwFlags)
+{
+    PluginInstanceChild* self = sCurrentPluginInstance;
+    if (!self) {
+        // If ImmAssociateContextEx calls unexpected window message,
+        // we can use child instance object from window property if available.
+        self = reinterpret_cast<PluginInstanceChild*>(
+                   GetProp(hWND, kFlashThrottleProperty));
+        NS_WARNING_ASSERTION(self, "Cannot find PluginInstanceChild");
+    }
+
+    // HIMC is always nullptr on Flash's windowless
+    if (!hImc && self) {
+        // Store the last IME state since Flash may call ImmAssociateContextEx
+        // before taking focus.
+        self->mLastEnableIMEState = !!(dwFlags & IACE_DEFAULT);
+        self->SendEnableIME(self->mLastEnableIMEState);
+    }
+    return sImm32ImmAssociateContextExStub(hWND, hImc, dwFlags);
+}
+
 void
 PluginInstanceChild::InitImm32Hook()
 {
@@ -2156,6 +2176,10 @@ PluginInstanceChild::InitImm32Hook()
         "ImmNotifyIME",
         reinterpret_cast<intptr_t>(ImmNotifyIME),
         (void**)&sImm32ImmNotifyIME);
+    sImm32Intercept.AddHook(
+        "ImmAssociateContextEx",
+        reinterpret_cast<intptr_t>(ImmAssociateContextExProc),
+        (void**)&sImm32ImmAssociateContextExStub);
 }
 
 void
@@ -2194,6 +2218,7 @@ PluginInstanceChild::WinlessHandleEvent(NPEvent& event)
     AutoRestore<PluginInstanceChild *> pluginInstance(sCurrentPluginInstance);
     if (event.event == WM_IME_STARTCOMPOSITION ||
         event.event == WM_IME_COMPOSITION ||
+        event.event == WM_LBUTTONDOWN ||
         event.event == WM_KILLFOCUS) {
       sCurrentPluginInstance = this;
     }
@@ -2207,6 +2232,27 @@ PluginInstanceChild::WinlessHandleEvent(NPEvent& event)
 
     if (IsWindow(focusHwnd)) {
       SetFocus(focusHwnd);
+    }
+
+    // This is hack of Flash's behaviour.
+    //
+    // When moving focus from chrome to plugin by mouse click, Gecko sends
+    // mouse message (such as WM_LBUTTONDOWN etc) at first, then sends
+    // WM_SETFOCUS. But Flash will call ImmAssociateContextEx on WM_LBUTTONDOWN
+    // even if it doesn't receive WM_SETFOCUS.
+    //
+    // In this situation, after sending mouse message, content process will be
+    // activated and set input context with PLUGIN.  So after activating
+    // content process, we have to set current IME state again.
+
+    if (event.event == WM_SETFOCUS) {
+        // When focus is changed from chrome process to plugin process,
+        // Flash may call ImmAssociateContextEx before receiving WM_SETFOCUS.
+        SendEnableIME(mLastEnableIMEState);
+    } else if (event.event == WM_KILLFOCUS) {
+        // Flash always calls ImmAssociateContextEx by taking focus.
+        // Although this flag doesn't have to be reset, I add it for safety.
+        mLastEnableIMEState = true;
     }
 
     return handled;
@@ -3182,6 +3228,8 @@ PluginInstanceChild::EnsureCurrentBuffer(void)
         NS_ERROR("Cannot create helper surface");
         return false;
     }
+
+    return true;
 #elif defined(XP_MACOSX)
 
     if (!mDoubleBufferCARenderer.HasCALayer()) {
@@ -3235,7 +3283,6 @@ PluginInstanceChild::EnsureCurrentBuffer(void)
         mAccumulatedInvalidRect.UnionRect(mAccumulatedInvalidRect, toInvalidate);
     }
 #endif
-
     return true;
 }
 
@@ -3309,14 +3356,10 @@ PluginInstanceChild::UpdateWindowAttributes(bool aForceSetWindow)
     // window.x/y passed to NPP_SetWindow
 
     if (mPluginIface->event) {
-        // width and height are stored as units, but narrow to ints here
-        MOZ_RELEASE_ASSERT(mWindow.width <= INT_MAX);
-        MOZ_RELEASE_ASSERT(mWindow.height <= INT_MAX);
-
         WINDOWPOS winpos = {
             0, 0,
             mWindow.x, mWindow.y,
-            (int32_t)mWindow.width, (int32_t)mWindow.height,
+            mWindow.width, mWindow.height,
             0
         };
         NPEvent pluginEvent = {
@@ -3383,7 +3426,7 @@ PluginInstanceChild::PaintRectToPlatformSurface(const nsIntRect& aRect,
     NPEvent paintEvent = {
         WM_PAINT,
         uintptr_t(mWindow.window),
-        intptr_t(&rect)
+        uintptr_t(&rect)
     };
 
     ::SetViewportOrgEx((HDC) mWindow.window, -mWindow.x, -mWindow.y, nullptr);
@@ -4043,6 +4086,25 @@ PluginInstanceChild::UnscheduleTimer(uint32_t id)
 }
 
 void
+PluginInstanceChild::AsyncCall(PluginThreadCallback aFunc, void* aUserData)
+{
+    RefPtr<ChildAsyncCall> task = new ChildAsyncCall(this, aFunc, aUserData);
+    PostChildAsyncCall(task.forget());
+}
+
+void
+PluginInstanceChild::PostChildAsyncCall(already_AddRefed<ChildAsyncCall> aTask)
+{
+    RefPtr<ChildAsyncCall> task = aTask;
+
+    {
+        MutexAutoLock lock(mAsyncCallMutex);
+        mPendingAsyncCalls.AppendElement(task);
+    }
+    ProcessChild::message_loop()->PostTask(task.forget());
+}
+
+void
 PluginInstanceChild::SwapSurfaces()
 {
     RefPtr<gfxASurface> tmpsurf = mCurrentSurface;
@@ -4261,6 +4323,13 @@ PluginInstanceChild::Destroy()
     }
     mPendingFlashThrottleMsgs.Clear();
 #endif
+
+    // Pending async calls are discarded, not delivered. This matches the
+    // in-process behavior.
+    for (uint32_t i = 0; i < mPendingAsyncCalls.Length(); ++i)
+        mPendingAsyncCalls[i]->Cancel();
+
+    mPendingAsyncCalls.Clear();
 }
 
 mozilla::ipc::IPCResult

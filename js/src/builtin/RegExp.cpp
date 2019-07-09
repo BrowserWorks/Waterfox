@@ -22,7 +22,6 @@
 #include "jsobjinlines.h"
 
 #include "vm/NativeObject-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::unicode;
@@ -861,7 +860,7 @@ const JSPropertySpec js::regexp_static_props[] = {
 
 template <typename CharT>
 static bool
-IsTrailSurrogateWithLeadSurrogateImpl(HandleLinearString input, size_t index)
+IsTrailSurrogateWithLeadSurrogateImpl(JSContext* cx, HandleLinearString input, size_t index)
 {
     JS::AutoCheckCannotGC nogc;
     MOZ_ASSERT(index > 0 && index < input->length());
@@ -872,14 +871,14 @@ IsTrailSurrogateWithLeadSurrogateImpl(HandleLinearString input, size_t index)
 }
 
 static bool
-IsTrailSurrogateWithLeadSurrogate(HandleLinearString input, int32_t index)
+IsTrailSurrogateWithLeadSurrogate(JSContext* cx, HandleLinearString input, int32_t index)
 {
     if (index <= 0 || size_t(index) >= input->length())
         return false;
 
     return input->hasLatin1Chars()
-           ? IsTrailSurrogateWithLeadSurrogateImpl<Latin1Char>(input, index)
-           : IsTrailSurrogateWithLeadSurrogateImpl<char16_t>(input, index);
+           ? IsTrailSurrogateWithLeadSurrogateImpl<Latin1Char>(cx, input, index)
+           : IsTrailSurrogateWithLeadSurrogateImpl<char16_t>(cx, input, index);
 }
 
 /*
@@ -898,7 +897,7 @@ ExecuteRegExp(JSContext* cx, HandleObject regexp, HandleString string,
      */
 
     /* Steps 1-2 performed by the caller. */
-    Handle<RegExpObject*> reobj = regexp.as<RegExpObject>();
+    Rooted<RegExpObject*> reobj(cx, &regexp->as<RegExpObject>());
 
     RootedRegExpShared re(cx, RegExpObject::getShared(cx, reobj));
     if (!re)
@@ -946,7 +945,7 @@ ExecuteRegExp(JSContext* cx, HandleObject regexp, HandleString string,
          * However, the spec will change to match our implementation's
          * behavior. See https://github.com/tc39/ecma262/issues/128.
          */
-        if (IsTrailSurrogateWithLeadSurrogate(input, lastIndex))
+        if (IsTrailSurrogateWithLeadSurrogate(cx, input, lastIndex))
             lastIndex--;
     }
 
@@ -1204,27 +1203,6 @@ js::regexp_test_no_statics(JSContext* cx, unsigned argc, Value* vp)
     return status != RegExpRunStatus_Error;
 }
 
-using CapturesVector = GCVector<Value, 4>;
-
-struct JSSubString
-{
-    JSLinearString* base;
-    size_t          offset;
-    size_t          length;
-
-    JSSubString() { mozilla::PodZero(this); }
-
-    void initEmpty(JSLinearString* base) {
-        this->base = base;
-        offset = length = 0;
-    }
-    void init(JSLinearString* base, size_t offset, size_t length) {
-        this->base = base;
-        this->offset = offset;
-        this->length = length;
-    }
-};
-
 static void
 GetParen(JSLinearString* matched, const JS::Value& capture, JSSubString* out)
 {
@@ -1239,7 +1217,7 @@ GetParen(JSLinearString* matched, const JS::Value& capture, JSSubString* out)
 template <typename CharT>
 static bool
 InterpretDollar(JSLinearString* matched, JSLinearString* string, size_t position, size_t tailPos,
-                Handle<CapturesVector> captures, JSLinearString* replacement,
+                MutableHandle<GCVector<Value>> captures, JSLinearString* replacement,
                 const CharT* replacementBegin, const CharT* currentDollar,
                 const CharT* replacementEnd,
                 JSSubString* out, size_t* skip)
@@ -1318,7 +1296,7 @@ InterpretDollar(JSLinearString* matched, JSLinearString* string, size_t position
 template <typename CharT>
 static bool
 FindReplaceLengthString(JSContext* cx, HandleLinearString matched, HandleLinearString string,
-                        size_t position, size_t tailPos, Handle<CapturesVector> captures,
+                        size_t position, size_t tailPos, MutableHandle<GCVector<Value>> captures,
                         HandleLinearString replacement, size_t firstDollarIndex, size_t* sizep)
 {
     CheckedInt<uint32_t> replen = replacement->length();
@@ -1357,7 +1335,7 @@ FindReplaceLengthString(JSContext* cx, HandleLinearString matched, HandleLinearS
 
 static bool
 FindReplaceLength(JSContext* cx, HandleLinearString matched, HandleLinearString string,
-                  size_t position, size_t tailPos, Handle<CapturesVector> captures,
+                  size_t position, size_t tailPos, MutableHandle<GCVector<Value>> captures,
                   HandleLinearString replacement, size_t firstDollarIndex, size_t* sizep)
 {
     return replacement->hasLatin1Chars()
@@ -1375,7 +1353,7 @@ FindReplaceLength(JSContext* cx, HandleLinearString matched, HandleLinearString 
 template <typename CharT>
 static void
 DoReplace(HandleLinearString matched, HandleLinearString string,
-          size_t position, size_t tailPos, Handle<CapturesVector> captures,
+          size_t position, size_t tailPos, MutableHandle<GCVector<Value>> captures,
           HandleLinearString replacement, size_t firstDollarIndex, StringBuffer &sb)
 {
     JS::AutoCheckCannotGC nogc;
@@ -1410,7 +1388,7 @@ DoReplace(HandleLinearString matched, HandleLinearString string,
 
 static bool
 NeedTwoBytes(HandleLinearString string, HandleLinearString replacement,
-             HandleLinearString matched, Handle<CapturesVector> captures)
+             HandleLinearString matched, Handle<GCVector<Value>> captures)
 {
     if (string->hasTwoByteChars())
         return true;
@@ -1420,7 +1398,7 @@ NeedTwoBytes(HandleLinearString string, HandleLinearString replacement,
         return true;
 
     for (size_t i = 0, len = captures.length(); i < len; i++) {
-        const Value& capture = captures[i];
+        Value capture = captures[i];
         if (capture.isUndefined())
             continue;
         if (capture.toString()->hasTwoByteChars())
@@ -1432,23 +1410,13 @@ NeedTwoBytes(HandleLinearString string, HandleLinearString replacement,
 
 /* ES 2016 draft Mar 25, 2016 21.1.3.14.1. */
 bool
-js::RegExpGetSubstitution(JSContext* cx, HandleArrayObject matchResult, HandleLinearString string,
-                          size_t position, HandleLinearString replacement,
+js::RegExpGetSubstitution(JSContext* cx, HandleLinearString matched, HandleLinearString string,
+                          size_t position, HandleObject capturesObj, HandleLinearString replacement,
                           size_t firstDollarIndex, MutableHandleValue rval)
 {
     MOZ_ASSERT(firstDollarIndex < replacement->length());
 
     // Step 1 (skipped).
-
-    // Step 10 (reordered).
-    uint32_t matchResultLength = matchResult->length();
-    MOZ_ASSERT(matchResultLength > 0);
-    MOZ_ASSERT(matchResultLength == matchResult->getDenseInitializedLength());
-
-    const Value& matchedValue = matchResult->getDenseElement(0);
-    RootedLinearString matched(cx, matchedValue.toString()->ensureLinear(cx));
-    if (!matched)
-        return false;
 
     // Step 2.
     size_t matchLength = matched->length();
@@ -1458,21 +1426,28 @@ js::RegExpGetSubstitution(JSContext* cx, HandleArrayObject matchResult, HandleLi
     // Step 6.
     MOZ_ASSERT(position <= string->length());
 
-    uint32_t nCaptures = matchResultLength - 1;
-    Rooted<CapturesVector> captures(cx, CapturesVector(cx));
+    // Step 10 (reordered).
+    uint32_t nCaptures;
+    if (!GetLengthProperty(cx, capturesObj, &nCaptures))
+        return false;
+
+    Rooted<GCVector<Value>> captures(cx, GCVector<Value>(cx));
     if (!captures.reserve(nCaptures))
         return false;
 
     // Step 7.
-    for (uint32_t i = 1; i <= nCaptures; i++) {
-        const Value& capture = matchResult->getDenseElement(i);
+    RootedValue capture(cx);
+    for (uint32_t i = 0; i < nCaptures; i++) {
+        if (!GetElement(cx, capturesObj, capturesObj, i, &capture))
+            return false;
 
         if (capture.isUndefined()) {
             captures.infallibleAppend(capture);
             continue;
         }
 
-        JSLinearString* captureLinear = capture.toString()->ensureLinear(cx);
+        MOZ_ASSERT(capture.isString());
+        RootedLinearString captureLinear(cx, capture.toString()->ensureLinear(cx));
         if (!captureLinear)
             return false;
         captures.infallibleAppend(StringValue(captureLinear));
@@ -1492,7 +1467,7 @@ js::RegExpGetSubstitution(JSContext* cx, HandleArrayObject matchResult, HandleLi
 
     // Step 11.
     size_t reserveLength;
-    if (!FindReplaceLength(cx, matched, string, position, tailPos, captures, replacement,
+    if (!FindReplaceLength(cx, matched, string, position, tailPos, &captures, replacement,
                            firstDollarIndex, &reserveLength))
     {
         return false;
@@ -1508,10 +1483,10 @@ js::RegExpGetSubstitution(JSContext* cx, HandleArrayObject matchResult, HandleLi
         return false;
 
     if (replacement->hasLatin1Chars()) {
-        DoReplace<Latin1Char>(matched, string, position, tailPos, captures,
+        DoReplace<Latin1Char>(matched, string, position, tailPos, &captures,
                               replacement, firstDollarIndex, result);
     } else {
-        DoReplace<char16_t>(matched, string, position, tailPos, captures,
+        DoReplace<char16_t>(matched, string, position, tailPos, &captures,
                             replacement, firstDollarIndex, result);
     }
 
@@ -1529,7 +1504,7 @@ js::GetFirstDollarIndex(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     MOZ_ASSERT(args.length() == 1);
-    JSString* str = args[0].toString();
+    RootedString str(cx, args[0].toString());
 
     // Should be handled in different path.
     MOZ_ASSERT(str->length() != 0);
@@ -1563,11 +1538,11 @@ js::GetFirstDollarIndexRawFlat(JSLinearString* text)
     if (text->hasLatin1Chars())
         return GetFirstDollarIndexImpl(text->latin1Chars(nogc), len);
 
-    return GetFirstDollarIndexImpl(text->twoByteChars(nogc), len);
+    return  GetFirstDollarIndexImpl(text->twoByteChars(nogc), len);
 }
 
 bool
-js::GetFirstDollarIndexRaw(JSContext* cx, JSString* str, int32_t* index)
+js::GetFirstDollarIndexRaw(JSContext* cx, HandleString str, int32_t* index)
 {
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
@@ -1591,7 +1566,7 @@ js::RegExpPrototypeOptimizable(JSContext* cx, unsigned argc, Value* vp)
 bool
 js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto)
 {
-    AutoUnsafeCallWithABI unsafe;
+    JS::AutoCheckCannotGC nogc;
     AutoAssertNoPendingException aanpe(cx);
     if (!proto->isNative())
         return false;
@@ -1684,7 +1659,7 @@ js::RegExpInstanceOptimizable(JSContext* cx, unsigned argc, Value* vp)
 bool
 js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto)
 {
-    AutoUnsafeCallWithABI unsafe;
+    JS::AutoCheckCannotGC nogc;
     AutoAssertNoPendingException aanpe(cx);
 
     RegExpObject* rx = &obj->as<RegExpObject>();
@@ -1780,7 +1755,7 @@ js::intrinsic_GetElemBaseForLambda(JSContext* cx, unsigned argc, Value* vp)
 /*
  * Emulates `b[a]` property access, that is detected in GetElemBaseForLambda.
  * It returns the property value only if the property is data property and the
- * property value is a string.  Otherwise it returns undefined.
+ * propety value is a string.  Otherwise it returns undefined.
  */
 bool
 js::intrinsic_GetStringDataProperty(JSContext* cx, unsigned argc, Value* vp)
@@ -1791,18 +1766,21 @@ js::intrinsic_GetStringDataProperty(JSContext* cx, unsigned argc, Value* vp)
     RootedObject obj(cx, &args[0].toObject());
     if (!obj->isNative()) {
         // The object is already checked to be native in GetElemBaseForLambda,
-        // but it can be swapped to another class that is non-native.
+        // but it can be swapped to the other class that is non-native.
         // Return undefined to mark failure to get the property.
         args.rval().setUndefined();
         return true;
     }
 
-    JSAtom* atom = AtomizeString(cx, args[1].toString());
+    RootedNativeObject nobj(cx, &obj->as<NativeObject>());
+    RootedString name(cx, args[1].toString());
+
+    RootedAtom atom(cx, AtomizeString(cx, name));
     if (!atom)
         return false;
 
-    Value v;
-    if (GetPropertyPure(cx, obj, AtomToId(atom), &v) && v.isString())
+    RootedValue v(cx);
+    if (GetPropertyPure(cx, nobj, AtomToId(atom), v.address()) && v.isString())
         args.rval().set(v);
     else
         args.rval().setUndefined();

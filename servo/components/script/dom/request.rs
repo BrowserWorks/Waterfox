@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use body::{BodyOperations, BodyType, consume_body};
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::HeadersBinding::{HeadersInit, HeadersMethods};
 use dom::bindings::codegen::Bindings::RequestBinding;
 use dom::bindings::codegen::Bindings::RequestBinding::ReferrerPolicy;
@@ -17,8 +17,8 @@ use dom::bindings::codegen::Bindings::RequestBinding::RequestMode;
 use dom::bindings::codegen::Bindings::RequestBinding::RequestRedirect;
 use dom::bindings::codegen::Bindings::RequestBinding::RequestType;
 use dom::bindings::error::{Error, Fallible};
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::str::{ByteString, DOMString, USVString};
 use dom::bindings::trace::RootedTraceableBox;
 use dom::globalscope::GlobalScope;
@@ -38,18 +38,19 @@ use net_traits::request::Request as NetTraitsRequest;
 use net_traits::request::RequestMode as NetTraitsRequestMode;
 use net_traits::request::Type as NetTraitsRequestType;
 use servo_url::ServoUrl;
+use std::ascii::AsciiExt;
 use std::cell::{Cell, Ref};
 use std::rc::Rc;
 
 #[dom_struct]
 pub struct Request {
     reflector_: Reflector,
-    request: DomRefCell<NetTraitsRequest>,
+    request: DOMRefCell<NetTraitsRequest>,
     body_used: Cell<bool>,
-    headers: MutNullableDom<Headers>,
-    mime_type: DomRefCell<Vec<u8>>,
-    #[ignore_malloc_size_of = "Rc"]
-    body_promise: DomRefCell<Option<(Rc<Promise>, BodyType)>>,
+    headers: MutNullableJS<Headers>,
+    mime_type: DOMRefCell<Vec<u8>>,
+    #[ignore_heap_size_of = "Rc"]
+    body_promise: DOMRefCell<Option<(Rc<Promise>, BodyType)>>,
 }
 
 impl Request {
@@ -57,18 +58,19 @@ impl Request {
                      url: ServoUrl) -> Request {
         Request {
             reflector_: Reflector::new(),
-            request: DomRefCell::new(
+            request: DOMRefCell::new(
                 net_request_from_global(global, url)),
             body_used: Cell::new(false),
             headers: Default::default(),
-            mime_type: DomRefCell::new("".to_string().into_bytes()),
-            body_promise: DomRefCell::new(None),
+            mime_type: DOMRefCell::new("".to_string().into_bytes()),
+            body_promise: DOMRefCell::new(None),
         }
     }
 
     pub fn new(global: &GlobalScope,
-               url: ServoUrl) -> DomRoot<Request> {
-        reflect_dom_object(Box::new(Request::new_inherited(global, url)),
+               url: ServoUrl) -> Root<Request> {
+        reflect_dom_object(box Request::new_inherited(global,
+                                                      url),
                            global, RequestBinding::Wrap)
     }
 
@@ -76,7 +78,7 @@ impl Request {
     pub fn Constructor(global: &GlobalScope,
                        input: RequestInfo,
                        init: RootedTraceableBox<RequestInit>)
-                       -> Fallible<DomRoot<Request>> {
+                       -> Fallible<Root<Request>> {
         // Step 1
         let temporary_request: NetTraitsRequest;
 
@@ -292,7 +294,7 @@ impl Request {
         if let Some(possible_header) = init.headers.as_ref() {
             match possible_header {
                 &HeadersInit::Headers(ref init_headers) => {
-                    headers_copy = DomRoot::from_ref(&*init_headers);
+                    headers_copy = Root::from_ref(&*init_headers);
                 }
                 &HeadersInit::ByteStringSequenceSequence(ref init_sequence) => {
                     headers_copy.fill(Some(
@@ -309,7 +311,7 @@ impl Request {
         // We cannot empty `r.Headers().header_list` because
         // we would undo the Step 27 above.  One alternative is to set
         // `headers_copy` as a deep copy of `r.Headers()`. However,
-        // `r.Headers()` is a `DomRoot<T>`, and therefore it is difficult
+        // `r.Headers()` is a `Root<T>`, and therefore it is difficult
         // to obtain a mutable reference to `r.Headers()`. Without the
         // mutable reference, we cannot mutate `r.Headers()` to be the
         // deep copied headers in Step 27.
@@ -323,6 +325,10 @@ impl Request {
                     "The mode is 'no-cors' but the method is not a cors-safelisted method".to_string()));
             }
             // Step 30.2
+            if !borrowed_request.integrity_metadata.is_empty() {
+                return Err(Error::Type("Integrity metadata is not an empty string".to_string()));
+            }
+            // Step 30.3
             r.Headers().set_guard(Guard::RequestNoCors);
         }
 
@@ -404,14 +410,14 @@ impl Request {
 
 impl Request {
     fn from_net_request(global: &GlobalScope,
-                        net_request: NetTraitsRequest) -> DomRoot<Request> {
+                        net_request: NetTraitsRequest) -> Root<Request> {
         let r = Request::new(global,
                              net_request.current_url());
         *r.request.borrow_mut() = net_request;
         r
     }
 
-    fn clone_from(r: &Request) -> Fallible<DomRoot<Request>> {
+    fn clone_from(r: &Request) -> Fallible<Root<Request>> {
         let req = r.request.borrow();
         let url = req.url();
         let body_used = r.body_used.get();
@@ -447,16 +453,15 @@ fn net_request_from_global(global: &GlobalScope,
 
 // https://fetch.spec.whatwg.org/#concept-method-normalize
 fn normalize_method(m: &str) -> HttpMethod {
-    match_ignore_ascii_case! { m,
-        "delete" => return HttpMethod::Delete,
-        "get" => return HttpMethod::Get,
-        "head" => return HttpMethod::Head,
-        "options" => return HttpMethod::Options,
-        "post" => return HttpMethod::Post,
-        "put" => return HttpMethod::Put,
-        _ => (),
+    match m {
+        m if m.eq_ignore_ascii_case("DELETE") => HttpMethod::Delete,
+        m if m.eq_ignore_ascii_case("GET") => HttpMethod::Get,
+        m if m.eq_ignore_ascii_case("HEAD") => HttpMethod::Head,
+        m if m.eq_ignore_ascii_case("OPTIONS") => HttpMethod::Options,
+        m if m.eq_ignore_ascii_case("POST") => HttpMethod::Post,
+        m if m.eq_ignore_ascii_case("PUT") => HttpMethod::Put,
+        m => HttpMethod::Extension(m.to_string()),
     }
-    HttpMethod::Extension(m.to_string())
 }
 
 // https://fetch.spec.whatwg.org/#concept-method
@@ -522,7 +527,7 @@ impl RequestMethods for Request {
     }
 
     // https://fetch.spec.whatwg.org/#dom-request-headers
-    fn Headers(&self) -> DomRoot<Headers> {
+    fn Headers(&self) -> Root<Headers> {
         self.headers.or_init(|| Headers::new(&self.global()))
     }
 
@@ -589,7 +594,7 @@ impl RequestMethods for Request {
     }
 
     // https://fetch.spec.whatwg.org/#dom-request-clone
-    fn Clone(&self) -> Fallible<DomRoot<Request>> {
+    fn Clone(&self) -> Fallible<Root<Request>> {
         // Step 1
         if request_is_locked(self) {
             return Err(Error::Type("Request is locked".to_string()));
@@ -791,7 +796,7 @@ impl Into<RequestMode> for NetTraitsRequestMode {
             NetTraitsRequestMode::SameOrigin => RequestMode::Same_origin,
             NetTraitsRequestMode::NoCors => RequestMode::No_cors,
             NetTraitsRequestMode::CorsMode => RequestMode::Cors,
-            NetTraitsRequestMode::WebSocket => unreachable!("Websocket request mode should never be exposed to Dom"),
+            NetTraitsRequestMode::WebSocket => unreachable!("Websocket request mode should never be exposed to JS"),
         }
     }
 }

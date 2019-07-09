@@ -8,13 +8,9 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/EventQueue.h"
 #include "mozilla/Mutex.h"
-#include "mozilla/Services.h"
 #include "mozilla/Unused.h"
-#include "nsIObserver.h"
-#include "nsIObserverService.h"
-#include "nsThreadUtils.h"
+#include "nsEventQueue.h"
 
 namespace mozilla {
 
@@ -90,8 +86,10 @@ class ThrottledEventQueue::Inner final : public nsIObserver
   mutable Mutex mMutex;
   mutable CondVar mIdleCondVar;
 
+  mozilla::CondVar mEventsAvailable;
+
   // any thread, protected by mutex
-  EventQueue mEventQueue;
+  nsEventQueue mEventQueue;
 
   // written on main thread, read on any thread
   nsCOMPtr<nsISerialEventTarget> mBaseTarget;
@@ -105,6 +103,8 @@ class ThrottledEventQueue::Inner final : public nsIObserver
   explicit Inner(nsISerialEventTarget* aBaseTarget)
     : mMutex("ThrottledEventQueue")
     , mIdleCondVar(mMutex, "ThrottledEventQueue:Idle")
+    , mEventsAvailable(mMutex, "[ThrottledEventQueue::Inner.mEventsAvailable]")
+    , mEventQueue(mEventsAvailable, nsEventQueue::eNormalQueue)
     , mBaseTarget(aBaseTarget)
     , mShutdownStarted(false)
   {
@@ -132,8 +132,7 @@ class ThrottledEventQueue::Inner final : public nsIObserver
 
       // We only check the name of an executor runnable when we know there is something
       // in the queue, so this should never fail.
-      event = mEventQueue.PeekEvent(lock);
-      MOZ_ALWAYS_TRUE(event);
+      MOZ_ALWAYS_TRUE(mEventQueue.PeekEvent(getter_AddRefs(event), lock));
     }
 
     if (nsCOMPtr<nsINamed> named = do_QueryInterface(event)) {
@@ -163,14 +162,13 @@ class ThrottledEventQueue::Inner final : public nsIObserver
 
       // We only dispatch an executor runnable when we know there is something
       // in the queue, so this should never fail.
-      event = mEventQueue.GetEvent(nullptr, lock);
-      MOZ_ASSERT(event);
+      MOZ_ALWAYS_TRUE(mEventQueue.GetPendingEvent(getter_AddRefs(event), lock));
 
       // If there are more events in the queue, then dispatch the next
       // executor.  We do this now, before running the event, because
       // the event might spin the event loop and we don't want to stall
       // the queue.
-      if (mEventQueue.HasReadyEvent(lock)) {
+      if (mEventQueue.HasPendingEvent(lock)) {
         // Dispatch the next base target runnable to attempt to execute
         // the next throttled event.  We must do this before executing
         // the event in case the event spins the event loop.
@@ -354,7 +352,7 @@ public:
 
     // Only add the event to the underlying queue if are able to
     // dispatch to our base target.
-    mEventQueue.PutEvent(Move(aEvent), EventPriority::Normal, lock);
+    mEventQueue.PutEvent(Move(aEvent), lock);
     return NS_OK;
   }
 

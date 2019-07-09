@@ -28,12 +28,6 @@ your `test-topic` is probably too broad!)
 In csswg-test, the file names should be unique within the repository,
 regardless of where they are in the directory structure.
 
-### HTTPS
-
-By default tests are served over plain http. If a test requires https
-it must be given a filename containing `.https` before the extension,
-e.g. `test-secure.https.html`. For more details see the documentation
-on [file names](file-name-flags).
 
 #### Support Files
 
@@ -150,12 +144,11 @@ new tests. Any of these rules may be broken if the test demands it:
  * Use UNIX-style line endings (i.e. no CR characters at EOL).
 
 We have a lint tool for catching these and other common mistakes. You
-can run it manually by starting the `wpt` executable from the root of
-your local web-platform-tests working directory, and invoking the
-`lint` subcommand, like this:
+can run it manually by starting the `lint` executable from the root of
+your local web-platform-tests working directory like this:
 
 ```
-./wpt lint
+./lint
 ```
 
 The lint tool is also run automatically for every submitted pull request,
@@ -185,4 +178,3 @@ for CSS have some additional requirements for:
 [lint-tool]: {{ site.baseurl }}{% link _writing-tests/lint-tool.md %}
 [css-metadata]: {{ site.baseurl }}{% link _writing-tests/css-metadata.md %}
 [css-user-styles]: {{ site.baseurl }}{% link _writing-tests/css-user-styles.md %}
-[file-name-flags]: {{ site.baseurl }}{% link _writing-tests/file-names.md %}

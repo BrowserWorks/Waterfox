@@ -68,11 +68,9 @@ nsHtml5TreeBuilder::~nsHtml5TreeBuilder()
 }
 
 nsIContentHandle*
-nsHtml5TreeBuilder::createElement(int32_t aNamespace,
-                                  nsAtom* aName,
+nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
                                   nsHtml5HtmlAttributes* aAttributes,
-                                  nsIContentHandle* aIntendedParent,
-                                  nsHtml5ContentCreatorFunction aCreator)
+                                  nsIContentHandle* aIntendedParent)
 {
   NS_PRECONDITION(aAttributes, "Got null attributes.");
   NS_PRECONDITION(aName, "Got null name.");
@@ -82,7 +80,7 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
                   "Bogus namespace.");
 
   if (mBuilder) {
-    RefPtr<nsAtom> name = nsHtml5TreeOperation::Reget(aName);
+    nsCOMPtr<nsIAtom> name = nsHtml5TreeOperation::Reget(aName);
 
     nsIContent* intendedParent = aIntendedParent ?
       static_cast<nsIContent*>(aIntendedParent) : nullptr;
@@ -93,28 +91,13 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
        intendedParent->OwnerDoc()->NodeInfoManager() :
        mBuilder->GetNodeInfoManager();
 
-    nsIContent* elem;
-    if (aNamespace == kNameSpaceID_XHTML) {
-      elem = nsHtml5TreeOperation::CreateHTMLElement(
-        name,
-        aAttributes,
-        mozilla::dom::FROM_PARSER_FRAGMENT,
-        nodeInfoManager,
-        mBuilder,
-        aCreator.html);
-    } else if (aNamespace == kNameSpaceID_SVG) {
-      elem = nsHtml5TreeOperation::CreateSVGElement(
-        name,
-        aAttributes,
-        mozilla::dom::FROM_PARSER_FRAGMENT,
-        nodeInfoManager,
-        mBuilder,
-        aCreator.svg);
-    } else {
-      MOZ_ASSERT(aNamespace == kNameSpaceID_MathML);
-      elem = nsHtml5TreeOperation::CreateMathMLElement(
-        name, aAttributes, nodeInfoManager, mBuilder);
-    }
+    nsIContent* elem =
+      nsHtml5TreeOperation::CreateElement(aNamespace,
+                                          name,
+                                          aAttributes,
+                                          mozilla::dom::FROM_PARSER_FRAGMENT,
+                                          nodeInfoManager,
+                                          mBuilder);
     if (MOZ_UNLIKELY(aAttributes != tokenizer->GetAttributes() &&
                      aAttributes != nsHtml5HtmlAttributes::EMPTY_ATTRIBUTES)) {
       delete aAttributes;
@@ -130,8 +113,7 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
                aAttributes,
                content,
                aIntendedParent,
-               !!mSpeculativeLoadStage,
-               aCreator);
+               !!mSpeculativeLoadStage);
   // mSpeculativeLoadStage is non-null only in the off-the-main-thread
   // tree builder, which handles the network stream
 
@@ -216,10 +198,8 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
                   aAttributes->getValue(nsHtml5AttributeName::ATTR_CROSSORIGIN);
                 nsHtml5String integrity =
                   aAttributes->getValue(nsHtml5AttributeName::ATTR_INTEGRITY);
-                nsHtml5String referrerPolicy =
-                  aAttributes->getValue(nsHtml5AttributeName::ATTR_REFERRERPOLICY);
                 mSpeculativeLoadQueue.AppendElement()->InitStyle(
-                  url, charset, crossOrigin, referrerPolicy, integrity);
+                  url, charset, crossOrigin, integrity);
               }
             } else if (rel.LowerCaseEqualsASCII("preconnect")) {
               nsHtml5String url =
@@ -319,10 +299,8 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
               aAttributes->getValue(nsHtml5AttributeName::ATTR_CROSSORIGIN);
             nsHtml5String integrity =
               aAttributes->getValue(nsHtml5AttributeName::ATTR_INTEGRITY);
-            nsHtml5String referrerPolicy =
-              aAttributes->getValue(nsHtml5AttributeName::ATTR_REFERRERPOLICY);
             mSpeculativeLoadQueue.AppendElement()->InitStyle(
-              url, nullptr, crossOrigin, referrerPolicy, integrity);
+              url, nullptr, crossOrigin, integrity);
           }
         }
         break;
@@ -373,15 +351,13 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
 }
 
 nsIContentHandle*
-nsHtml5TreeBuilder::createElement(int32_t aNamespace,
-                                  nsAtom* aName,
+nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
                                   nsHtml5HtmlAttributes* aAttributes,
                                   nsIContentHandle* aFormElement,
-                                  nsIContentHandle* aIntendedParent,
-                                  nsHtml5ContentCreatorFunction aCreator)
+                                  nsIContentHandle* aIntendedParent)
 {
-  nsIContentHandle* content =
-    createElement(aNamespace, aName, aAttributes, aIntendedParent, aCreator);
+  nsIContentHandle* content = createElement(aNamespace, aName, aAttributes,
+                                            aIntendedParent);
   if (aFormElement) {
     if (mBuilder) {
       nsHtml5TreeOperation::SetFormElement(static_cast<nsIContent*>(content),
@@ -398,11 +374,8 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace,
 nsIContentHandle*
 nsHtml5TreeBuilder::createHtmlElementSetAsRoot(nsHtml5HtmlAttributes* aAttributes)
 {
-  nsHtml5ContentCreatorFunction creator;
-  // <html> uses NS_NewHTMLSharedElement creator
-  creator.html = NS_NewHTMLSharedElement;
-  nsIContentHandle* content = createElement(
-    kNameSpaceID_XHTML, nsGkAtoms::html, aAttributes, nullptr, creator);
+  nsIContentHandle* content =
+    createElement(kNameSpaceID_XHTML, nsGkAtoms::html, aAttributes, nullptr);
   if (mBuilder) {
     nsresult rv = nsHtml5TreeOperation::AppendToDocument(static_cast<nsIContent*>(content),
                                                          mBuilder);
@@ -418,14 +391,11 @@ nsHtml5TreeBuilder::createHtmlElementSetAsRoot(nsHtml5HtmlAttributes* aAttribute
 }
 
 nsIContentHandle*
-nsHtml5TreeBuilder::createAndInsertFosterParentedElement(
-  int32_t aNamespace,
-  nsAtom* aName,
-  nsHtml5HtmlAttributes* aAttributes,
-  nsIContentHandle* aFormElement,
-  nsIContentHandle* aTable,
-  nsIContentHandle* aStackParent,
-  nsHtml5ContentCreatorFunction aCreator)
+nsHtml5TreeBuilder::createAndInsertFosterParentedElement(int32_t aNamespace, nsIAtom* aName,
+                                                         nsHtml5HtmlAttributes* aAttributes,
+                                                         nsIContentHandle* aFormElement,
+                                                         nsIContentHandle* aTable,
+                                                         nsIContentHandle* aStackParent)
 {
   NS_PRECONDITION(aTable, "Null table");
   NS_PRECONDITION(aStackParent, "Null stack parent");
@@ -437,8 +407,8 @@ nsHtml5TreeBuilder::createAndInsertFosterParentedElement(
       static_cast<nsIContent*>(aTable),
       static_cast<nsIContent*>(aStackParent));
 
-    nsIContentHandle* child = createElement(
-      aNamespace, aName, aAttributes, aFormElement, fosterParent, aCreator);
+    nsIContentHandle* child = createElement(aNamespace, aName, aAttributes,
+      aFormElement, fosterParent);
 
     insertFosterParentedChild(child, aTable, aStackParent);
 
@@ -454,8 +424,8 @@ nsHtml5TreeBuilder::createAndInsertFosterParentedElement(
                            aStackParent, fosterParentHandle);
 
   // Create the element with the correct intended parent.
-  nsIContentHandle* child = createElement(
-    aNamespace, aName, aAttributes, aFormElement, fosterParentHandle, aCreator);
+  nsIContentHandle* child = createElement(aNamespace, aName, aAttributes,
+    aFormElement, fosterParentHandle);
 
   // Insert the child into the foster parent.
   insertFosterParentedChild(child, aTable, aStackParent);
@@ -759,7 +729,7 @@ nsHtml5TreeBuilder::end()
 }
 
 void
-nsHtml5TreeBuilder::appendDoctypeToDocument(nsAtom* aName,
+nsHtml5TreeBuilder::appendDoctypeToDocument(nsIAtom* aName,
                                             nsHtml5String aPublicId,
                                             nsHtml5String aSystemId)
 {
@@ -769,7 +739,7 @@ nsHtml5TreeBuilder::appendDoctypeToDocument(nsAtom* aName,
   aPublicId.ToString(publicId);
   aSystemId.ToString(systemId);
   if (mBuilder) {
-    RefPtr<nsAtom> name = nsHtml5TreeOperation::Reget(aName);
+    nsCOMPtr<nsIAtom> name = nsHtml5TreeOperation::Reget(aName);
     nsresult rv = nsHtml5TreeOperation::AppendDoctypeToDocument(
       name, publicId, systemId, mBuilder);
     if (NS_FAILED(rv)) {
@@ -786,7 +756,7 @@ nsHtml5TreeBuilder::appendDoctypeToDocument(nsAtom* aName,
 }
 
 void
-nsHtml5TreeBuilder::elementPushed(int32_t aNamespace, nsAtom* aName, nsIContentHandle* aElement)
+nsHtml5TreeBuilder::elementPushed(int32_t aNamespace, nsIAtom* aName, nsIContentHandle* aElement)
 {
   NS_ASSERTION(aNamespace == kNameSpaceID_XHTML || aNamespace == kNameSpaceID_SVG || aNamespace == kNameSpaceID_MathML, "Element isn't HTML, SVG or MathML!");
   NS_ASSERTION(aName, "Element doesn't have local name!");
@@ -857,7 +827,7 @@ nsHtml5TreeBuilder::elementPushed(int32_t aNamespace, nsAtom* aName, nsIContentH
 }
 
 void
-nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsAtom* aName, nsIContentHandle* aElement)
+nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsIAtom* aName, nsIContentHandle* aElement)
 {
   NS_ASSERTION(aNamespace == kNameSpaceID_XHTML || aNamespace == kNameSpaceID_SVG || aNamespace == kNameSpaceID_MathML, "Element isn't HTML, SVG or MathML!");
   NS_ASSERTION(aName, "Element doesn't have local name!");
@@ -935,9 +905,8 @@ nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsAtom* aName, nsIContentH
   // Some HTML nodes need DoneAddingChildren() called to initialize
   // properly (e.g. form state restoration).
   // XXX expose ElementName group here and do switch
-  if (aName == nsGkAtoms::object ||
-      aName == nsGkAtoms::select ||
-      aName == nsGkAtoms::textarea ||
+  if (aName == nsGkAtoms::object || aName == nsGkAtoms::applet ||
+      aName == nsGkAtoms::select || aName == nsGkAtoms::textarea ||
       aName == nsGkAtoms::output) {
     if (mBuilder) {
       nsHtml5TreeOperation::DoneAddingChildren(static_cast<nsIContent*>(aElement));
@@ -1313,7 +1282,7 @@ nsHtml5TreeBuilder::EnableViewSource(nsHtml5Highlighter* aHighlighter)
 }
 
 void
-nsHtml5TreeBuilder::errStrayStartTag(nsAtom* aName)
+nsHtml5TreeBuilder::errStrayStartTag(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStrayStartTag2", aName);
@@ -1321,7 +1290,7 @@ nsHtml5TreeBuilder::errStrayStartTag(nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errStrayEndTag(nsAtom* aName)
+nsHtml5TreeBuilder::errStrayEndTag(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStrayEndTag", aName);
@@ -1329,7 +1298,7 @@ nsHtml5TreeBuilder::errStrayEndTag(nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errUnclosedElements(int32_t aIndex, nsAtom* aName)
+nsHtml5TreeBuilder::errUnclosedElements(int32_t aIndex, nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errUnclosedElements", aName);
@@ -1337,7 +1306,7 @@ nsHtml5TreeBuilder::errUnclosedElements(int32_t aIndex, nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errUnclosedElementsImplied(int32_t aIndex, nsAtom* aName)
+nsHtml5TreeBuilder::errUnclosedElementsImplied(int32_t aIndex, nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errUnclosedElementsImplied",
@@ -1426,7 +1395,7 @@ nsHtml5TreeBuilder::errNonSpaceInNoscriptInHead()
 }
 
 void
-nsHtml5TreeBuilder::errFooBetweenHeadAndBody(nsAtom* aName)
+nsHtml5TreeBuilder::errFooBetweenHeadAndBody(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errFooBetweenHeadAndBody", aName);
@@ -1459,7 +1428,7 @@ nsHtml5TreeBuilder::errStartSelectWhereEndSelectExpected()
 }
 
 void
-nsHtml5TreeBuilder::errStartTagWithSelectOpen(nsAtom* aName)
+nsHtml5TreeBuilder::errStartTagWithSelectOpen(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStartTagWithSelectOpen", aName);
@@ -1467,7 +1436,7 @@ nsHtml5TreeBuilder::errStartTagWithSelectOpen(nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errBadStartTagInHead(nsAtom* aName)
+nsHtml5TreeBuilder::errBadStartTagInHead(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errBadStartTagInHead2", aName);
@@ -1491,7 +1460,7 @@ nsHtml5TreeBuilder::errIsindex()
 }
 
 void
-nsHtml5TreeBuilder::errFooSeenWhenFooOpen(nsAtom* aName)
+nsHtml5TreeBuilder::errFooSeenWhenFooOpen(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errFooSeenWhenFooOpen", aName);
@@ -1523,7 +1492,7 @@ nsHtml5TreeBuilder::errNoCellToClose()
 }
 
 void
-nsHtml5TreeBuilder::errStartTagInTable(nsAtom* aName)
+nsHtml5TreeBuilder::errStartTagInTable(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStartTagInTable", aName);
@@ -1547,7 +1516,7 @@ nsHtml5TreeBuilder::errTableSeenWhileTableOpen()
 }
 
 void
-nsHtml5TreeBuilder::errStartTagInTableBody(nsAtom* aName)
+nsHtml5TreeBuilder::errStartTagInTableBody(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStartTagInTableBody", aName);
@@ -1571,7 +1540,7 @@ nsHtml5TreeBuilder::errEndTagAfterBody()
 }
 
 void
-nsHtml5TreeBuilder::errEndTagSeenWithSelectOpen(nsAtom* aName)
+nsHtml5TreeBuilder::errEndTagSeenWithSelectOpen(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errEndTagSeenWithSelectOpen",
@@ -1596,7 +1565,7 @@ nsHtml5TreeBuilder::errEndTagBr()
 }
 
 void
-nsHtml5TreeBuilder::errNoElementToCloseButEndTagSeen(nsAtom* aName)
+nsHtml5TreeBuilder::errNoElementToCloseButEndTagSeen(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun(
@@ -1605,7 +1574,7 @@ nsHtml5TreeBuilder::errNoElementToCloseButEndTagSeen(nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errHtmlStartTagInForeignContext(nsAtom* aName)
+nsHtml5TreeBuilder::errHtmlStartTagInForeignContext(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errHtmlStartTagInForeignContext",
@@ -1646,7 +1615,7 @@ nsHtml5TreeBuilder::errUnclosedChildrenInRuby()
 }
 
 void
-nsHtml5TreeBuilder::errStartTagSeenWithoutRuby(nsAtom* aName)
+nsHtml5TreeBuilder::errStartTagSeenWithoutRuby(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errStartTagSeenWithoutRuby",
@@ -1672,8 +1641,8 @@ nsHtml5TreeBuilder::errNoCheckUnclosedElementsOnStack()
 }
 
 void
-nsHtml5TreeBuilder::errEndTagDidNotMatchCurrentOpenElement(nsAtom* aName,
-                                                           nsAtom* aOther)
+nsHtml5TreeBuilder::errEndTagDidNotMatchCurrentOpenElement(nsIAtom* aName,
+                                                           nsIAtom* aOther)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun(
@@ -1682,7 +1651,7 @@ nsHtml5TreeBuilder::errEndTagDidNotMatchCurrentOpenElement(nsAtom* aName,
 }
 
 void
-nsHtml5TreeBuilder::errEndTagViolatesNestingRules(nsAtom* aName)
+nsHtml5TreeBuilder::errEndTagViolatesNestingRules(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errEndTagViolatesNestingRules", aName);
@@ -1690,7 +1659,7 @@ nsHtml5TreeBuilder::errEndTagViolatesNestingRules(nsAtom* aName)
 }
 
 void
-nsHtml5TreeBuilder::errEndWithUnclosedElements(nsAtom* aName)
+nsHtml5TreeBuilder::errEndWithUnclosedElements(nsIAtom* aName)
 {
   if (MOZ_UNLIKELY(mViewSource)) {
     mViewSource->AddErrorToCurrentRun("errEndWithUnclosedElements", aName);

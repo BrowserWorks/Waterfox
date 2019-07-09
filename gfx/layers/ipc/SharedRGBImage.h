@@ -35,7 +35,7 @@ public:
   explicit SharedRGBImage(ImageClient* aCompositable);
 
 protected:
-  virtual ~SharedRGBImage();
+  ~SharedRGBImage();
 
 public:
   virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;

@@ -10,10 +10,6 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-DIRS = [
-    'pingsender',
-]
-
 DEFINES['MOZ_APP_VERSION'] = '"%s"' % CONFIG['MOZ_APP_VERSION']
 
 LOCAL_INCLUDES += [
@@ -50,6 +46,7 @@ EXPORTS.mozilla += [
     'ipc/TelemetryIPC.h',
     'ProcessedStack.h',
     'Telemetry.h',
+    'ThreadHangStats.h',
 ]
 
 SOURCES += [
@@ -64,6 +61,7 @@ SOURCES += [
     'TelemetryHistogram.cpp',
     'TelemetryIOInterposeObserver.cpp',
     'TelemetryScalar.cpp',
+    'ThreadHangStats.cpp',
     'WebrtcTelemetry.cpp',
 ]
 
@@ -94,7 +92,6 @@ EXTRA_JS_MODULES += [
     'TelemetryTimestamps.jsm',
     'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
-    'UITelemetry.jsm',
     'UpdatePing.jsm',
 ]
 

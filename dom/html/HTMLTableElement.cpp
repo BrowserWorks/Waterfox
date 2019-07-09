@@ -93,11 +93,11 @@ protected:
   // Check if the passed-in nsIContent is a <tr> within the section defined by
   // `aSection`. The root of the table is considered to be part of the `<tbody>`
   // section.
-  bool IsAppropriateRow(nsAtom* aSection, nsIContent* aContent);
+  bool IsAppropriateRow(nsIAtom* aSection, nsIContent* aContent);
 
   // Scan backwards starting from `aCurrent` in the table, looking for the
   // previous row in the table which is within the section `aSection`.
-  nsIContent* PreviousRow(nsAtom* aSection, nsIContent* aCurrent);
+  nsIContent* PreviousRow(nsIAtom* aSection, nsIContent* aCurrent);
 
   // Handle the insertion of the child `aChild` into the container `aContainer`
   // within the tree. The container must be an `InterestingContainer`. This
@@ -258,7 +258,7 @@ TableRowsCollection::GetFirstNamedElement(const nsAString& aName, bool& aFound)
 {
   EnsureInitialized();
   aFound = false;
-  RefPtr<nsAtom> nameAtom = NS_Atomize(aName);
+  nsCOMPtr<nsIAtom> nameAtom = NS_Atomize(aName);
   NS_ENSURE_TRUE(nameAtom, nullptr);
 
   for (auto& node : mRows) {
@@ -280,7 +280,7 @@ TableRowsCollection::GetSupportedNames(nsTArray<nsString>& aNames)
   EnsureInitialized();
   for (auto& node : mRows) {
     if (node->HasID()) {
-      nsAtom* idAtom = node->GetID();
+      nsIAtom* idAtom = node->GetID();
       MOZ_ASSERT(idAtom != nsGkAtoms::_empty,
                  "Empty ids don't get atomized");
       nsDependentAtomString idStr(idAtom);
@@ -293,7 +293,7 @@ TableRowsCollection::GetSupportedNames(nsTArray<nsString>& aNames)
     if (el) {
       const nsAttrValue* val = el->GetParsedAttr(nsGkAtoms::name);
       if (val && val->Type() == nsAttrValue::eAtom) {
-        nsAtom* nameAtom = val->GetAtomValue();
+        nsIAtom* nameAtom = val->GetAtomValue();
         MOZ_ASSERT(nameAtom != nsGkAtoms::_empty,
                    "Empty names don't get atomized");
         nsDependentAtomString nameStr(nameAtom);
@@ -340,7 +340,7 @@ TableRowsCollection::InterestingContainer(nsIContent* aContainer)
 }
 
 bool
-TableRowsCollection::IsAppropriateRow(nsAtom* aSection, nsIContent* aContent)
+TableRowsCollection::IsAppropriateRow(nsIAtom* aSection, nsIContent* aContent)
 {
   if (!aContent->IsHTMLElement(nsGkAtoms::tr)) {
     return false;
@@ -354,7 +354,7 @@ TableRowsCollection::IsAppropriateRow(nsAtom* aSection, nsIContent* aContent)
 }
 
 nsIContent*
-TableRowsCollection::PreviousRow(nsAtom* aSection, nsIContent* aCurrent)
+TableRowsCollection::PreviousRow(nsIAtom* aSection, nsIContent* aCurrent)
 {
   // Keep going backwards until we've found a `tr` element. We want to always
   // run at least once, as we don't want to find ourselves.
@@ -417,7 +417,7 @@ TableRowsCollection::HandleInsert(nsIContent* aContainer,
 
   // We should have only been passed an insertion from an interesting container,
   // so we can get the container we're inserting to fairly easily.
-  nsAtom* section = aContainer == mParent
+  nsIAtom* section = aContainer == mParent
     ? nsGkAtoms::tbody
     : aContainer->NodeInfo()->NameAtom();
 
@@ -479,7 +479,8 @@ TableRowsCollection::HandleInsert(nsIContent* aContainer,
 void
 TableRowsCollection::ContentAppended(nsIDocument* aDocument,
                                      nsIContent* aContainer,
-                                     nsIContent* aFirstNewContent)
+                                     nsIContent* aFirstNewContent,
+                                     int32_t aNewIndexInContainer)
 {
   if (!nsContentUtils::IsInSameAnonymousTree(mParent, aFirstNewContent) ||
       !InterestingContainer(aContainer)) {
@@ -503,7 +504,8 @@ TableRowsCollection::ContentAppended(nsIDocument* aDocument,
 void
 TableRowsCollection::ContentInserted(nsIDocument* aDocument,
                                      nsIContent* aContainer,
-                                     nsIContent* aChild)
+                                     nsIContent* aChild,
+                                     int32_t aIndexInContainer)
 {
   if (!nsContentUtils::IsInSameAnonymousTree(mParent, aChild) ||
       !InterestingContainer(aContainer)) {
@@ -517,6 +519,7 @@ void
 TableRowsCollection::ContentRemoved(nsIDocument* aDocument,
                                     nsIContent* aContainer,
                                     nsIContent* aChild,
+                                    int32_t aIndexInContainer,
                                     nsIContent* aPreviousSibling)
 {
   if (!nsContentUtils::IsInSameAnonymousTree(mParent, aChild) ||
@@ -610,8 +613,13 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLTableElement,
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRows)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED_0(HTMLTableElement,
-                                               nsGenericHTMLElement)
+NS_IMPL_ADDREF_INHERITED(HTMLTableElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLTableElement, Element)
+
+// QueryInterface implementation for HTMLTableElement
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(HTMLTableElement)
+NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
+
 
 NS_IMPL_ELEMENT_CLONE(HTMLTableElement)
 
@@ -678,14 +686,11 @@ HTMLTableElement::CreateTHead()
   return head.forget();
 }
 
-void
-HTMLTableElement::DeleteTHead()
-{
-  HTMLTableSectionElement* tHead = GetTHead();
+void HTMLTableElement::DeleteTHead() {
+  RefPtr<HTMLTableSectionElement> tHead = GetTHead();
   if (tHead) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*tHead, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
@@ -709,14 +714,11 @@ HTMLTableElement::CreateTFoot()
   return foot.forget();
 }
 
-void
-HTMLTableElement::DeleteTFoot()
-{
-  HTMLTableSectionElement* tFoot = GetTFoot();
+void HTMLTableElement::DeleteTFoot() {
+  RefPtr<HTMLTableSectionElement> tFoot = GetTFoot();
   if (tFoot) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*tFoot, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
@@ -742,14 +744,11 @@ HTMLTableElement::CreateCaption()
   return caption.forget();
 }
 
-void
-HTMLTableElement::DeleteCaption()
-{
-  HTMLTableCaptionElement* caption = GetCaption();
+void HTMLTableElement::DeleteCaption() {
+  RefPtr<HTMLTableCaptionElement> caption = GetCaption();
   if (caption) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*caption, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
@@ -919,7 +918,7 @@ HTMLTableElement::DeleteRow(int32_t aIndex, ErrorResult& aError)
 
 bool
 HTMLTableElement::ParseAttribute(int32_t aNamespaceID,
-                                 nsAtom* aAttribute,
+                                 nsIAtom* aAttribute,
                                  const nsAString& aValue,
                                  nsAttrValue& aResult)
 {
@@ -1058,7 +1057,7 @@ HTMLTableElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLTableElement::IsAttributeMapped(const nsAtom* aAttribute) const
+HTMLTableElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
     { &nsGkAtoms::cellpadding },
@@ -1182,7 +1181,7 @@ HTMLTableElement::UnbindFromTree(bool aDeep, bool aNullParent)
 }
 
 nsresult
-HTMLTableElement::BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLTableElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValueOrString* aValue,
                                 bool aNotify)
 {
@@ -1194,17 +1193,15 @@ HTMLTableElement::BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
 }
 
 nsresult
-HTMLTableElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLTableElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                const nsAttrValue* aValue,
-                               const nsAttrValue* aOldValue,
-                               nsIPrincipal* aSubjectPrincipal,
-                               bool aNotify)
+                               const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aName == nsGkAtoms::cellpadding && aNameSpaceID == kNameSpaceID_None) {
     BuildInheritedAttributes();
   }
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 } // namespace dom

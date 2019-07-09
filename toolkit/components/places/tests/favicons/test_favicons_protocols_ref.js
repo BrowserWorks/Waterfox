@@ -48,7 +48,7 @@ add_task(async function() {
                         PlacesUtils.favicons.getFaviconLinkForIcon(NetUtil.newURI(ICON32_URL)),
                         "Invalid size should return the bigger icon");
 
-  // Add the icon also for the page with ref.
+  // Ass the icon also for the page with ref.
   await PlacesTestUtils.addVisits(PAGE_URL + "#other§=12");
   await setFaviconForPage(PAGE_URL + "#other§=12", ICON16_URL, false);
   await setFaviconForPage(PAGE_URL + "#other§=12", ICON32_URL, false);
@@ -71,10 +71,4 @@ add_task(async function() {
   await compareFavicons(PlacesUtils.urlWithSizeRef(win, PAGE_ICON_URL, 32),
                         PlacesUtils.favicons.getFaviconLinkForIcon(NetUtil.newURI(ICON32_URL)),
                         "Size=32 with HIDPI should return the 32px icon");
-
-  // Check setting a different default preferred size works.
-  PlacesUtils.favicons.setDefaultIconURIPreferredSize(16);
-  await compareFavicons(PAGE_ICON_URL,
-    PlacesUtils.favicons.getFaviconLinkForIcon(NetUtil.newURI(ICON16_URL)),
-    "Not specifying a ref should return the set default size icon");
 });

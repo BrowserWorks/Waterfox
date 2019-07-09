@@ -46,7 +46,8 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
             kwargs["certutil_binary"] = self.get_binary_path('certutil')
 
         if kwargs["stackfix_dir"] is None:
-            kwargs["stackfix_dir"] = self.bindir
+            kwargs["stackfix_dir"] = os.path.split(
+                self.get_binary_path(validate_exists=False))[0]
 
         here = os.path.split(__file__)[0]
 
@@ -72,15 +73,33 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
 
         kwargs = wptcommandline.check_args(kwargs)
 
-        return kwargs
-
     def kwargs_wptrun(self, kwargs):
         from wptrunner import wptcommandline
         here = os.path.join(self.topsrcdir, 'testing', 'web-platform')
 
-        kwargs["tests_root"] = os.path.join(here, "tests")
+        sys.path.insert(0, os.path.join(here, "tests", "tools"))
 
-        sys.path.insert(0, kwargs["tests_root"])
+        import wptrun
+
+        product = kwargs["product"]
+
+        setup_func = {
+            "chrome": wptrun.setup_chrome,
+            "edge": wptrun.setup_edge,
+            "servo": wptrun.setup_servo,
+        }[product]
+
+        try:
+            wptrun.check_environ(product)
+
+            setup_func(wptrun.virtualenv.Virtualenv(self.virtualenv_manager.virtualenv_root),
+                       kwargs,
+                       True)
+        except wptrun.WptrunError as e:
+            print(e.message, file=sys.stderr)
+            sys.exit(1)
+
+        kwargs["tests_root"] = os.path.join(here, "tests")
 
         if kwargs["metadata_root"] is None:
             metadir = os.path.join(here, "products", kwargs["product"])
@@ -95,16 +114,7 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
             with open(src_manifest) as src, open(dest_manifest, "w") as dest:
                 dest.write(src.read())
 
-        from tools.wpt import run
-
-        try:
-            kwargs = run.setup_wptrunner(run.virtualenv.Virtualenv(self.virtualenv_manager.virtualenv_root),
-                                         **kwargs)
-        except run.WptrunError as e:
-            print(e.message, file=sys.stderr)
-            sys.exit(1)
-
-        return kwargs
+        kwargs = wptcommandline.check_args(kwargs)
 
     def setup_fonts_firefox(self):
         # Ensure the Ahem font is available
@@ -115,7 +125,7 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
         ahem_src = os.path.join(self.topsrcdir, "testing", "web-platform", "tests", "fonts", "Ahem.ttf")
         ahem_dest = os.path.join(font_path, "Ahem.ttf")
         if not os.path.exists(ahem_dest) and os.path.exists(ahem_src):
-            with open(ahem_src, "rb") as src, open(ahem_dest, "wb") as dest:
+            with open(ahem_src) as src, open(ahem_dest, "w") as dest:
                 dest.write(src.read())
 
 
@@ -279,7 +289,7 @@ testing/web-platform/tests for tests that may be shared
         if proc:
             proc.wait()
 
-        context.commands.dispatch("wpt-manifest-update", context)
+        context.commands.dispatch("wpt-manifest-update", context, {"check_clean": False, "rebuild": False})
 
 
 class WPTManifestUpdater(MozbuildObject):

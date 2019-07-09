@@ -231,10 +231,9 @@
 #filter-container .add,
 #filter-container .remove-button,
 #toggle-presets {
-  -moz-context-properties: fill;
-  fill: var(--theme-toolbar-color);
+  filter: var(--icon-filter);
 }
 
 .show-presets #toggle-presets {
-  fill: var(--theme-toolbar-checked-color);
+  filter: url(chrome://devtools/skin/images/filters.svg#checked-icon-state);
 }

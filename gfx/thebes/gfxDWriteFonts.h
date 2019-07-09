@@ -71,9 +71,9 @@ public:
     virtual already_AddRefed<mozilla::gfx::ScaledFont>
     GetScaledFont(mozilla::gfx::DrawTarget *aTarget) override;
 
-protected:
-    cairo_scaled_font_t *InitCairoScaledFont();
+    virtual cairo_scaled_font_t *GetCairoScaledFont() override;
 
+protected:
     virtual const Metrics& GetHorizontalMetrics() override;
 
     bool GetFakeMetricsForArialBlack(DWRITE_FONT_METRICS *aFontMetrics);
@@ -105,8 +105,8 @@ protected:
     bool mNeedsBold;
     bool mUseSubpixelPositions;
     bool mAllowManualShowGlyphs;
-
-    static bool sUseClearType;
+    bool mAzureScaledFontIsCairo;
+    static bool mUseClearType;
 };
 
 #endif

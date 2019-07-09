@@ -91,11 +91,11 @@
        // and use it here. Until that's in the platform, though,
        // we'll play it safe and parentify the filename unless
        // we're absolutely certain things will be ok if we don't.
-       var filenameURI = ios.newURI(filename,
+       var filenameURI = ios.newURI(options.filename,
                                     null,
                                     baseURI);
        if (filenameURI.scheme == 'chrome' &&
-           filenameURI.pathQueryRef.indexOf('/content/') == 0)
+           filenameURI.path.indexOf('/content/') == 0)
          // Content packages will always have wrappers made for them;
          // if automatic wrappers have been disabled for the
          // chrome package via a chrome manifest flag, then

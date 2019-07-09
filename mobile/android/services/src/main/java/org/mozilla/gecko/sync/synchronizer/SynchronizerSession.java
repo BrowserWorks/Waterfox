@@ -64,12 +64,10 @@ implements RecordsChannelDelegate,
   private RepositorySessionBundle bundleA;
   private RepositorySessionBundle bundleB;
 
-  // Bug 1392505: for each "side" of the channel, we keep track of lastFetch and lastStore timestamps.
-  // For local repositories these timestamps represent our last interactions with local data.
-  // For the remote repository these timestamps represent server collection's last-modified
-  // timestamp after a corresponding operation (GET or POST) finished. We obtain these from server's
-  // response headers.
-  // It's important that we never compare timestamps which originated from different clocks.
+  // Bug 726054: just like desktop, we track our last interaction with the server,
+  // not the last record timestamp that we fetched. This ensures that we don't re-
+  // download the records we just uploaded, at the cost of skipping any records
+  // that a concurrently syncing client has uploaded.
   private long pendingATimestamp = -1;
   private long pendingBTimestamp = -1;
   private long storeEndATimestamp = -1;
@@ -202,8 +200,8 @@ implements RecordsChannelDelegate,
     // This is the delegate for the *first* flow.
     RecordsChannelDelegate channelAToBDelegate = new RecordsChannelDelegate() {
       @Override
-      public void onFlowCompleted(RecordsChannel recordsChannel) {
-        session.onFirstFlowCompleted(recordsChannel);
+      public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
+        session.onFirstFlowCompleted(recordsChannel, fetchEnd, storeEnd);
       }
 
       @Override
@@ -226,6 +224,12 @@ implements RecordsChannelDelegate,
         // of better telemetry. See Bug 1362208.
         storeFailedCauseException = ex;
       }
+
+      @Override
+      public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
+        Logger.warn(LOG_TAG, "First RecordsChannel onFlowFinishedFailed. Logging session error.", ex);
+        session.delegate.onSynchronizeFailed(session, ex, "Failed to finish first flow.");
+      }
     };
 
     // This is the *first* channel to flow.
@@ -244,12 +248,14 @@ implements RecordsChannelDelegate,
    * <p>
    * By default, any fetch and store failures are ignored.
    * @param recordsChannel the <code>RecordsChannel</code> (for error testing).
+   * @param fetchEnd timestamp when fetches completed.
+   * @param storeEnd timestamp when stores completed.
    */
-  public void onFirstFlowCompleted(RecordsChannel recordsChannel) {
+  public void onFirstFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
     Logger.trace(LOG_TAG, "First RecordsChannel onFlowCompleted.");
-    pendingATimestamp = sessionA.getLastFetchTimestamp();
-    storeEndBTimestamp = sessionB.getLastStoreTimestamp();
-    Logger.debug(LOG_TAG, "Fetch end is " + pendingATimestamp + ". Store end is " + storeEndBTimestamp + ". Starting next.");
+    Logger.debug(LOG_TAG, "Fetch end is " + fetchEnd + ". Store end is " + storeEnd + ". Starting next.");
+    pendingATimestamp = fetchEnd;
+    storeEndBTimestamp = storeEnd;
     numInboundRecords.set(recordsChannel.getFetchCount());
     numInboundRecordsStored.set(recordsChannel.getStoreAcceptedCount());
     numInboundRecordsFailed.set(recordsChannel.getStoreFailureCount());
@@ -263,12 +269,15 @@ implements RecordsChannelDelegate,
    * <p>
    * By default, any fetch and store failures are ignored.
    * @param recordsChannel the <code>RecordsChannel</code> (for error testing).
+   * @param fetchEnd timestamp when fetches completed.
+   * @param storeEnd timestamp when stores completed.
    */
-  public void onSecondFlowCompleted(RecordsChannel recordsChannel) {
+  public void onSecondFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
     Logger.trace(LOG_TAG, "Second RecordsChannel onFlowCompleted.");
-    pendingBTimestamp = sessionB.getLastFetchTimestamp();
-    storeEndATimestamp = sessionA.getLastStoreTimestamp();
-    Logger.debug(LOG_TAG, "Fetch end is " + pendingBTimestamp + ". Store end is " + storeEndATimestamp + ". Finishing.");
+    Logger.debug(LOG_TAG, "Fetch end is " + fetchEnd + ". Store end is " + storeEnd + ". Finishing.");
+
+    pendingBTimestamp = fetchEnd;
+    storeEndATimestamp = storeEnd;
     numOutboundRecords.set(recordsChannel.getFetchCount());
     numOutboundRecordsStored.set(recordsChannel.getStoreAcceptedCount());
     numOutboundRecordsFailed.set(recordsChannel.getStoreFailureCount());
@@ -284,8 +293,8 @@ implements RecordsChannelDelegate,
   }
 
   @Override
-  public void onFlowCompleted(RecordsChannel recordsChannel) {
-    onSecondFlowCompleted(recordsChannel);
+  public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
+    onSecondFlowCompleted(recordsChannel, fetchEnd, storeEnd);
   }
 
   @Override
@@ -302,6 +311,12 @@ implements RecordsChannelDelegate,
   @Override
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex, String recordGuid) {
     Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Logging remote store error.", ex);
+  }
+
+  @Override
+  public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
+    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowFinishedFailed. Logging session error.", ex);
+    this.delegate.onSynchronizeFailed(this, ex, "Failed to finish second flow.");
   }
 
   /*

@@ -1226,8 +1226,7 @@ class LRecoverInfo : public TempObject
 
     // Fill the instruction vector such as all instructions needed for the
     // recovery are pushed before the current instruction.
-    template <typename Node>
-    MOZ_MUST_USE bool appendOperands(Node* ins);
+    MOZ_MUST_USE bool appendOperands(MNode* ins);
     MOZ_MUST_USE bool appendDefinition(MDefinition* def);
     MOZ_MUST_USE bool appendResumePoint(MResumePoint* rp);
   public:
@@ -1261,50 +1260,37 @@ class LRecoverInfo : public TempObject
         MNode** it_;
         MNode** end_;
         size_t op_;
-        size_t opEnd_;
-        MResumePoint* rp_;
-        MNode* node_;
 
       public:
         explicit OperandIter(LRecoverInfo* recoverInfo)
-          : it_(recoverInfo->begin()), end_(recoverInfo->end()),
-            op_(0), opEnd_(0), rp_(nullptr), node_(nullptr)
+          : it_(recoverInfo->begin()), end_(recoverInfo->end()), op_(0)
         {
             settle();
         }
 
         void settle() {
-            opEnd_ = (*it_)->numOperands();
-            while (opEnd_ == 0) {
+            while ((*it_)->numOperands() == 0) {
                 ++it_;
                 op_ = 0;
-                opEnd_ = (*it_)->numOperands();
             }
-            node_ = *it_;
-            if (node_->isResumePoint())
-                rp_ = node_->toResumePoint();
         }
 
         MDefinition* operator*() {
-            if (rp_) // de-virtualize MResumePoint::getOperand calls.
-                return rp_->getOperand(op_);
-            return node_->getOperand(op_);
+            return (*it_)->getOperand(op_);
         }
         MDefinition* operator ->() {
-            if (rp_) // de-virtualize MResumePoint::getOperand calls.
-                return rp_->getOperand(op_);
-            return node_->getOperand(op_);
+            return (*it_)->getOperand(op_);
         }
 
         OperandIter& operator ++() {
             ++op_;
-            if (op_ != opEnd_)
-                return *this;
-            op_ = 0;
-            ++it_;
-            node_ = rp_ = nullptr;
+            if (op_ == (*it_)->numOperands()) {
+                op_ = 0;
+                ++it_;
+            }
             if (!*this)
                 settle();
+
             return *this;
         }
 

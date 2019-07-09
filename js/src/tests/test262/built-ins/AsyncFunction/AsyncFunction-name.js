@@ -3,7 +3,7 @@
 
 /*---
 author: Brian Terlson <brian.terlson@microsoft.com>
-esid: sec-async-function-constructor-properties
+esid: pending
 description: >
   %AsyncFunction% has a name of "AsyncFunction".
 includes: [propertyHelper.js]

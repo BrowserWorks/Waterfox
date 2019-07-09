@@ -44,11 +44,8 @@
 
   <script type="application/javascript"
           src="chrome://browser/content/places/places.js"/>
-#ifndef XP_MACOSX
-  <!-- On Mac, this is included via macBrowserOverlay.xul -> browser.js -> defineLazyScriptGetter -->
   <script type="application/javascript"
           src="chrome://browser/content/places/editBookmarkOverlay.js"/>
-#endif
 
   <stringbundleset id="placesStringSet">
     <stringbundle id="brandStrings" src="chrome://branding/locale/brand.properties"/>
@@ -158,7 +155,7 @@
         <toolbarbutton type="menu" class="tabbable"
               onpopupshowing="document.getElementById('placeContent').focus()"
 #else
-      <menubar id="placesMenu">
+      <menubar id="placesMenu" _moz-menubarkeeplocal="true">
         <menu accesskey="&organize.accesskey;" class="menu-iconic"
 #endif
               id="organizeButton" label="&organize.label;"
@@ -399,6 +396,13 @@
             <splitter class="tree-splitter"/>
             <treecol label="&col.lastmodified.label;" id="placesContentLastModified" anonid="lastModified" flex="1" hidden="true"
                       persist="width hidden ordinal sortActive sortDirection"/>
+            <splitter class="tree-splitter"/>
+            <treecol label="&col.parentfolder.label;" id="placesContentParentFolder" anonid="parentFolder" flex="1" hidden="true"
+                      persist="width hidden ordinal sortActive sortDirection"/>
+            <splitter class="tree-splitter"/>
+            <treecol label="&col.parentpath.label;" id="placesContentParentPath" anonid="parentPath" flex="1" hidden="true"
+                      persist="width hidden ordinal sortActive sortDirection"/>
+
           </treecols>
           <treechildren flex="1" onclick="ContentTree.onClick(event);"/>
         </tree>

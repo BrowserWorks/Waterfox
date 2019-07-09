@@ -96,17 +96,22 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLObjectElement,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mValidity)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLObjectElement,
-                                             nsGenericHTMLFormElement,
-                                             imgINotificationObserver,
-                                             nsIRequestObserver,
-                                             nsIStreamListener,
-                                             nsIFrameLoaderOwner,
-                                             nsIObjectLoadingContent,
-                                             nsIImageLoadingContent,
-                                             imgIOnloadBlocker,
-                                             nsIChannelEventSink,
-                                             nsIConstraintValidation)
+NS_IMPL_ADDREF_INHERITED(HTMLObjectElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLObjectElement, Element)
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLObjectElement)
+  NS_INTERFACE_TABLE_INHERITED(HTMLObjectElement,
+                               nsIDOMHTMLObjectElement,
+                               imgINotificationObserver,
+                               nsIRequestObserver,
+                               nsIStreamListener,
+                               nsIFrameLoaderOwner,
+                               nsIObjectLoadingContent,
+                               nsIImageLoadingContent,
+                               imgIOnloadBlocker,
+                               nsIChannelEventSink,
+                               nsIConstraintValidation)
+NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLFormElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLObjectElement)
 
@@ -233,6 +238,12 @@ HTMLObjectElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 
 #endif // #ifdef XP_MACOSX
 
+NS_IMETHODIMP
+HTMLObjectElement::GetForm(nsIDOMHTMLFormElement **aForm)
+{
+  return nsGenericHTMLFormElement::GetForm(aForm);
+}
+
 nsresult
 HTMLObjectElement::BindToTree(nsIDocument *aDocument,
                               nsIContent *aParent,
@@ -281,21 +292,19 @@ HTMLObjectElement::UnbindFromTree(bool aDeep,
 }
 
 nsresult
-HTMLObjectElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+HTMLObjectElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
   nsresult rv = AfterMaybeChangeAttr(aNamespaceID, aName, aNotify);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return nsGenericHTMLFormElement::AfterSetAttr(aNamespaceID, aName, aValue,
-                                                aOldValue, aSubjectPrincipal, aNotify);
+                                                aOldValue, aNotify);
 }
 
 nsresult
-HTMLObjectElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsAtom* aName,
+HTMLObjectElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
                                           const nsAttrValueOrString& aValue,
                                           bool aNotify)
 {
@@ -307,7 +316,7 @@ HTMLObjectElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsAtom* aName,
 }
 
 nsresult
-HTMLObjectElement::AfterMaybeChangeAttr(int32_t aNamespaceID, nsAtom* aName,
+HTMLObjectElement::AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
                                         bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {
@@ -433,10 +442,38 @@ HTMLObjectElement::SubmitNamesValues(HTMLFormSubmission *aFormSubmission)
   return aFormSubmission->AddNameValuePair(name, value);
 }
 
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Align, align)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Archive, archive)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Border, border)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Code, code)
+NS_IMPL_URI_ATTR(HTMLObjectElement, CodeBase, codebase)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, CodeType, codetype)
+NS_IMPL_URI_ATTR_WITH_BASE(HTMLObjectElement, Data, data, codebase)
+NS_IMPL_BOOL_ATTR(HTMLObjectElement, Declare, declare)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Height, height)
+NS_IMPL_INT_ATTR(HTMLObjectElement, Hspace, hspace)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Name, name)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Standby, standby)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Type, type)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, UseMap, usemap)
+NS_IMPL_INT_ATTR(HTMLObjectElement, Vspace, vspace)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Width, width)
+
 int32_t
 HTMLObjectElement::TabIndexDefault()
 {
   return IsFocusableForTabIndex() ? 0 : -1;
+}
+
+NS_IMETHODIMP
+HTMLObjectElement::GetContentDocument(nsIDOMDocument **aContentDocument)
+{
+  NS_ENSURE_ARG_POINTER(aContentDocument);
+
+  nsCOMPtr<nsIDOMDocument> domDoc =
+    do_QueryInterface(GetContentDocument(*nsContentUtils::SubjectPrincipal()));
+  domDoc.forget(aContentDocument);
+  return NS_OK;
 }
 
 nsPIDOMWindowOuter*
@@ -452,7 +489,7 @@ HTMLObjectElement::GetContentWindow(nsIPrincipal& aSubjectPrincipal)
 
 bool
 HTMLObjectElement::ParseAttribute(int32_t aNamespaceID,
-                                  nsAtom *aAttribute,
+                                  nsIAtom *aAttribute,
                                   const nsAString &aValue,
                                   nsAttrValue &aResult)
 {
@@ -481,7 +518,7 @@ HTMLObjectElement::MapAttributesIntoRule(const nsMappedAttributes *aAttributes,
 }
 
 NS_IMETHODIMP_(bool)
-HTMLObjectElement::IsAttributeMapped(const nsAtom *aAttribute) const
+HTMLObjectElement::IsAttributeMapped(const nsIAtom *aAttribute) const
 {
   static const MappedAttributeEntry* const map[] = {
     sCommonAttributeMap,
@@ -523,7 +560,7 @@ HTMLObjectElement::IntrinsicState() const
 uint32_t
 HTMLObjectElement::GetCapabilities() const
 {
-  return nsObjectLoadingContent::GetCapabilities();
+  return nsObjectLoadingContent::GetCapabilities() | eSupportClassID;
 }
 
 void

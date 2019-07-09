@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.content.LocalBroadcastManager;
@@ -74,8 +73,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
   // Tracks the last seen storage hostname for backoff purposes.
   private static final String PREF_BACKOFF_STORAGE_HOST = "backoffStorageHost";
-  // Preference key for allowing sync over metered connections.
-  public static final String PREFS_SYNC_RESTRICT_METERED = "sync.restrict_metered";
 
   // Used to do cheap in-memory rate limiting. Don't sync again if we
   // successfully synced within this duration.
@@ -466,7 +463,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     tokenServerclient.getTokenFromBrowserIDAssertion(assertion, true, clientState, delegate);
   }
 
-  private void maybeRegisterDevice(Context context, AndroidFxAccount fxAccount) {
+  public void maybeRegisterDevice(Context context, AndroidFxAccount fxAccount) {
     // Register the device if necessary (asynchronous, in another thread).
     // As part of device registration, we obtain a PushSubscription, register our push endpoint
     // with FxA, and update account data with fxaDeviceId, which is part of our synced
@@ -487,7 +484,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     FxAccountDeviceListUpdater deviceListUpdater = new FxAccountDeviceListUpdater(fxAccount, context.getContentResolver());
     // Since the clients stage requires a fresh list of remote devices, we update the device list synchronously.
-    deviceListUpdater.updateAndMaybeRenewRegistration(context);
+    deviceListUpdater.update();
   }
 
   /**
@@ -504,27 +501,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     final Context context = getContext();
     final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-
-    // This flag is used to conclude whether we should ignore syncing
-    // based on user preference for syncing over metered connections.
-    boolean shouldRejectSyncViaSettings = false;
-    // Check whether we should ignore settings or not.
-    if (!extras.getBoolean(ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, false)) {
-      // Check if we are allowed to sync on metered connections.
-      boolean isMeteredRestricted = false;
-      try {
-        isMeteredRestricted = fxAccount.getSyncPrefs().getBoolean(PREFS_SYNC_RESTRICT_METERED, false);
-      } catch (Exception e) {
-        Logger.error(LOG_TAG, "Failed to read sync preferences. Allowing metered connections by default.");
-      }
-      // Check if the device is on a metered connection or not.
-      final ConnectivityManager manager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-      final boolean isMetered = manager.isActiveNetworkMetered();
-      // If the connection is metered and syncing over metered connections is
-      // not permitted, we should bail.
-      shouldRejectSyncViaSettings = isMeteredRestricted && isMetered;
-    }
-
 
     // NB: we use elapsedRealtime which is time since boot, to ensure our clock is monotonic and isn't
     // paused while CPU is in the power-saving mode.
@@ -569,25 +545,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     Collection<String> stageNamesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
 
-    // If syncing should be rejected due to metered connection preferences
-    // and we are doing the first sync ever, we should at least sync the
-    // 'clients' collection to ensure we upload our local client record.
-    // see {@link <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=802749">Bug 802749</a>}
-    // for more information.
-    if (shouldRejectSyncViaSettings && fxAccount.neverSynced()) {
-      stageNamesToSync.clear();
-      stageNamesToSync.add("clients");
-    }
-
     final SyncDelegate syncDelegate = new SyncDelegate(latch, syncResult, fxAccount, stageNamesToSync);
     Result offeredResult = null;
-
-    if (shouldRejectSyncViaSettings && !fxAccount.neverSynced()) {
-      // The user is on a metered connection and has disabled syncing over metered connections,
-      // we should reject the sync.
-      syncDelegate.rejectSync();
-      return;
-    }
 
     try {
       // This will be the same chunk of SharedPreferences that we pass through to GlobalSession/SyncConfiguration.
@@ -742,7 +701,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     // will happen right away.
     if (syncDelegate.fullSyncNecessary) {
       Logger.info(LOG_TAG, "Syncing done. Full follow-up sync necessary, requesting immediate sync.");
-      fxAccount.requestImmediateSync(null, null, false);
+      fxAccount.requestImmediateSync(null, null);
       return;
     }
 
@@ -765,6 +724,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     // If there are any other stages marked as incomplete, request that they're synced again.
     Logger.info(LOG_TAG, "Syncing done. Requesting an immediate follow-up sync.");
-    fxAccount.requestImmediateSync(stagesToSyncAgain, null, false);
+    fxAccount.requestImmediateSync(stagesToSyncAgain, null);
   }
 }

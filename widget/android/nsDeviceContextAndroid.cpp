@@ -60,9 +60,9 @@ nsDeviceContextSpecAndroid::BeginDocument(const nsAString& aTitle,
 NS_IMETHODIMP
 nsDeviceContextSpecAndroid::EndDocument()
 {
-  nsString targetPath;
+  nsXPIDLString targetPath;
   nsCOMPtr<nsIFile> destFile;
-  mPrintSettings->GetToFileName(targetPath);
+  mPrintSettings->GetToFileName(getter_Copies(targetPath));
 
   nsresult rv = NS_NewLocalFile(targetPath, false, getter_AddRefs(destFile));
   NS_ENSURE_SUCCESS(rv, rv);

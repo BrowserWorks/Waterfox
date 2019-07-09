@@ -15,6 +15,6 @@ impl ScriptChan for HistoryTraversalTaskSource {
     }
 
     fn clone(&self) -> Box<ScriptChan + Send> {
-        Box::new(HistoryTraversalTaskSource((&self.0).clone()))
+        box HistoryTraversalTaskSource((&self.0).clone())
     }
 }

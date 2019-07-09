@@ -13,7 +13,7 @@
     <item android:color="@color/photon_text_placeholder_private" gecko:state_dark="true" />
 
     <!-- light theme -->
-    <item android:color="@color/photon_text_placeholder_private" gecko:state_light="true" />
+    <item android:color="@color/photon_text_placeholder" gecko:state_light="true" />
 
     <!-- normal mode -->
     <item android:color="@color/photon_text_placeholder" />

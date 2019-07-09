@@ -2,8 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.from
-es6id: 22.1.2.1
+es6id: 22.1.2.1_T1
 description: Testing Array.from when passed a String
 author: Hank Yates (hankyates@gmail.com)
 ---*/

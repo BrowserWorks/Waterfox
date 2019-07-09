@@ -38,15 +38,26 @@ HTMLFieldSetElement::~HTMLFieldSetElement()
   }
 }
 
+// nsISupports
+
 NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLFieldSetElement, nsGenericHTMLFormElement,
                                    mValidity, mElements)
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLFieldSetElement,
-                                             nsGenericHTMLFormElement,
-                                             nsIConstraintValidation)
+NS_IMPL_ADDREF_INHERITED(HTMLFieldSetElement, Element)
+NS_IMPL_RELEASE_INHERITED(HTMLFieldSetElement, Element)
+
+// QueryInterface implementation for HTMLFieldSetElement
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLFieldSetElement)
+  NS_INTERFACE_TABLE_INHERITED(HTMLFieldSetElement,
+                               nsIDOMHTMLFieldSetElement,
+                               nsIConstraintValidation)
+NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLFormElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLFieldSetElement)
 
+
+NS_IMPL_BOOL_ATTR(HTMLFieldSetElement, Disabled, disabled)
+NS_IMPL_STRING_ATTR(HTMLFieldSetElement, Name, name)
 
 bool
 HTMLFieldSetElement::IsDisabledForEvents(EventMessage aMessage)
@@ -68,11 +79,9 @@ HTMLFieldSetElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 }
 
 nsresult
-HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue,
-                                  const nsAttrValue* aOldValue,
-                                  nsIPrincipal* aSubjectPrincipal,
-                                  bool aNotify)
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled) {
     // This *has* to be called *before* calling FieldSetDisabledChanged on our
@@ -94,8 +103,15 @@ HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLFormElement::AfterSetAttr(aNameSpaceID, aName,
-                                                aValue, aOldValue,
-                                                aSubjectPrincipal, aNotify);
+                                                aValue, aOldValue, aNotify);
+}
+
+// nsIDOMHTMLFieldSetElement
+
+NS_IMETHODIMP
+HTMLFieldSetElement::GetForm(nsIDOMHTMLFormElement** aForm)
+{
+  return nsGenericHTMLFormElement::GetForm(aForm);
 }
 
 NS_IMETHODIMP
@@ -108,10 +124,17 @@ HTMLFieldSetElement::GetType(nsAString& aType)
 /* static */
 bool
 HTMLFieldSetElement::MatchListedElements(Element* aElement, int32_t aNamespaceID,
-                                         nsAtom* aAtom, void* aData)
+                                         nsIAtom* aAtom, void* aData)
 {
   nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(aElement);
   return formControl;
+}
+
+NS_IMETHODIMP
+HTMLFieldSetElement::GetElements(nsIDOMHTMLCollection** aElements)
+{
+  NS_ADDREF(*aElements = Elements());
+  return NS_OK;
 }
 
 nsIHTMLCollection*

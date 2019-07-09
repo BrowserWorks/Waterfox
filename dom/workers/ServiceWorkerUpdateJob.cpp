@@ -65,7 +65,7 @@ GetRequiredScopeStringPrefix(nsIURI* aScriptURI, nsACString& aPrefix,
     aPrefix.Append(dir);
   } else if (aPrefixMode == eUsePath) {
     nsAutoCString path;
-    rv = aScriptURI->GetPathQueryRef(path);
+    rv = aScriptURI->GetPath(path);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -169,15 +169,14 @@ public:
   }
 };
 
-ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(
-    nsIPrincipal* aPrincipal,
-    const nsACString& aScope,
-    const nsACString& aScriptSpec,
-    nsILoadGroup* aLoadGroup,
-    ServiceWorkerUpdateViaCache aUpdateViaCache)
+ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(nsIPrincipal* aPrincipal,
+                                               const nsACString& aScope,
+                                               const nsACString& aScriptSpec,
+                                               nsILoadGroup* aLoadGroup,
+                                               nsLoadFlags aLoadFlags)
   : ServiceWorkerJob(Type::Update, aPrincipal, aScope, aScriptSpec)
   , mLoadGroup(aLoadGroup)
-  , mUpdateViaCache(aUpdateViaCache)
+  , mLoadFlags(aLoadFlags)
 {
 }
 
@@ -189,16 +188,15 @@ ServiceWorkerUpdateJob::GetRegistration() const
   return ref.forget();
 }
 
-ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(
-    Type aType,
-    nsIPrincipal* aPrincipal,
-    const nsACString& aScope,
-    const nsACString& aScriptSpec,
-    nsILoadGroup* aLoadGroup,
-    ServiceWorkerUpdateViaCache aUpdateViaCache)
+ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(Type aType,
+                                               nsIPrincipal* aPrincipal,
+                                               const nsACString& aScope,
+                                               const nsACString& aScriptSpec,
+                                               nsILoadGroup* aLoadGroup,
+                                               nsLoadFlags aLoadFlags)
   : ServiceWorkerJob(aType, aPrincipal, aScope, aScriptSpec)
   , mLoadGroup(aLoadGroup)
-  , mUpdateViaCache(aUpdateViaCache)
+  , mLoadFlags(aLoadFlags)
 {
 }
 
@@ -329,10 +327,10 @@ ServiceWorkerUpdateJob::Update()
   }
 }
 
-ServiceWorkerUpdateViaCache
-ServiceWorkerUpdateJob::GetUpdateViaCache() const
+nsLoadFlags
+ServiceWorkerUpdateJob::GetLoadFlags() const
 {
-  return mUpdateViaCache;
+  return mLoadFlags;
 }
 
 void
@@ -383,6 +381,8 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
     }
   }
 
+  mLoadFlags = aLoadFlags;
+
   nsAutoCString defaultAllowedPrefix;
   rv = GetRequiredScopeStringPrefix(scriptURI, defaultAllowedPrefix,
                                     eUseDirectory);
@@ -401,7 +401,7 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
   }
 
   if (!StringBeginsWith(mRegistration->mScope, maxPrefix)) {
-    nsAutoString message;
+    nsXPIDLString message;
     NS_ConvertUTF8toUTF16 reportScope(mRegistration->mScope);
     NS_ConvertUTF8toUTF16 reportMaxPrefix(maxPrefix);
     const char16_t* params[] = { reportScope.get(), reportMaxPrefix.get() };
@@ -429,17 +429,13 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
   Telemetry::Accumulate(Telemetry::SERVICE_WORKER_UPDATED, 1);
 
   // Begin step 7 of the Update algorithm to evaluate the new script.
-  nsLoadFlags flags = aLoadFlags;
-  if (GetUpdateViaCache() == ServiceWorkerUpdateViaCache::None) {
-    flags |= nsIRequest::VALIDATE_ALWAYS;
-  }
 
   RefPtr<ServiceWorkerInfo> sw =
     new ServiceWorkerInfo(mRegistration->mPrincipal,
                           mRegistration->mScope,
                           mScriptSpec,
                           aNewCacheName,
-                          flags);
+                          mLoadFlags);
 
   mRegistration->SetEvaluating(sw);
 

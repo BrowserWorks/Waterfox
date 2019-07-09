@@ -8,17 +8,15 @@ var initialLocation = gBrowser.currentURI.spec;
 var globalClipboard;
 
 add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   await BrowserTestUtils.withNewTab({gBrowser, url: "about:blank"}, async function() {
     info("Check copy button existence and functionality");
-    CustomizableUI.addWidgetToArea("edit-controls", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-
-    await waitForOverflowButtonShown();
 
     let testText = "copy text test";
 
     gURLBar.focus();
     info("The URL bar was focused");
-    await document.getElementById("nav-bar").overflowable.show();
+    await PanelUI.show();
     info("Menu panel was opened");
 
     let copyButton = document.getElementById("copy-button");
@@ -29,7 +27,7 @@ add_task(async function() {
     gURLBar.value = testText;
     gURLBar.focus();
     gURLBar.select();
-    await document.getElementById("nav-bar").overflowable.show();
+    await PanelUI.show();
     info("Menu panel was opened");
 
     ok(!copyButton.hasAttribute("disabled"), "Copy button is enabled when selecting");
@@ -58,6 +56,5 @@ add_task(async function() {
 });
 
 registerCleanupFunction(function cleanup() {
-  CustomizableUI.reset();
   Services.clipboard.emptyClipboard(globalClipboard);
 });

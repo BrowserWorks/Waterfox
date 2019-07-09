@@ -731,15 +731,13 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     }
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
-    conduit->SetLocalMID(aTrackPair.mRtpTransport->mTransportId);
 
-    for (auto value: configs.values) {
-      if (value->mName == "telephone-event") {
-        // we have a telephone event codec, so we need to make sure
-        // the dynamic pt is set properly
-        conduit->SetDtmfPayloadType(value->mType, value->mFreq);
-        break;
-      }
+    if (configs.values.size() > 1
+        && configs.values.back()->mName == "telephone-event") {
+      // we have a telephone event codec, so we need to make sure
+      // the dynamic pt is set properly
+      conduit->SetDtmfPayloadType(configs.values.back()->mType,
+                                  configs.values.back()->mFreq);
     }
 
     auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
@@ -748,10 +746,9 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
       return NS_ERROR_FAILURE;
     }
 
-    // Should these be genericized like they are in the video conduit case?
     const SdpExtmapAttributeList::Extmap* audioLevelExt =
         aTrack.GetNegotiatedDetails()->GetExt(
-            webrtc::RtpExtension::kAudioLevelUri);
+            "urn:ietf:params:rtp-hdrext:ssrc-audio-level");
 
     if (audioLevelExt) {
       MOZ_MTLOG(ML_DEBUG, "Calling EnableAudioLevelExtension");
@@ -759,19 +756,6 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
 
       if (error) {
         MOZ_MTLOG(ML_ERROR, "EnableAudioLevelExtension failed: " << error);
-        return NS_ERROR_FAILURE;
-      }
-    }
-
-    const SdpExtmapAttributeList::Extmap* midExt =
-        aTrack.GetNegotiatedDetails()->GetExt(webrtc::RtpExtension::kMIdUri);
-
-    if (midExt) {
-      MOZ_MTLOG(ML_DEBUG, "Calling EnableMIDExtension");
-      error = conduit->EnableMIDExtension(true, midExt->entry);
-
-      if (error) {
-        MOZ_MTLOG(ML_ERROR, "EnableMIDExtension failed: " << error);
         return NS_ERROR_FAILURE;
       }
     }
@@ -883,7 +867,6 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     }
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
-    conduit->SetLocalMID(aTrackPair.mRtpTransport->mTransportId);
 
     rv = ConfigureVideoCodecMode(aTrack, *conduit);
     if (NS_FAILED(rv)) {
@@ -893,7 +876,6 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     if (!extmaps.empty()) {
       conduit->SetLocalRTPExtensions(true, extmaps);
     }
-
     auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureSendMediaCodec failed: " << error);

@@ -4,7 +4,6 @@
 """
 Common functions for both push-apk and push-apk-breakpoint.
 """
-from __future__ import absolute_import, print_function, unicode_literals
 
 import re
 
@@ -14,7 +13,7 @@ REQUIRED_ARCHITECTURES = {
     'android-x86-nightly',
     'android-api-16-nightly',
 }
-PLATFORM_REGEX = re.compile(r'build-signing-android-(\S+)-nightly')
+PLATFORM_REGEX = re.compile(r'signing-android-(\S+)-nightly')
 
 
 def fill_labels_tranform(_, jobs):

@@ -376,8 +376,8 @@ static void DumpRect(T* aPacketRect, const Rect& aRect)
 {
     aPacketRect->set_x(aRect.x);
     aPacketRect->set_y(aRect.y);
-    aPacketRect->set_w(aRect.Width());
-    aPacketRect->set_h(aRect.Height());
+    aPacketRect->set_w(aRect.width);
+    aPacketRect->set_h(aRect.height);
 }
 
 static void DumpFilter(TexturePacket* aTexturePacket,

@@ -71,14 +71,11 @@
           "title": {"type": "string", "optional": true, "permissions": ["tabs"], "description": "The title of the tab. This property is only present if the extension's manifest includes the <code>\"tabs\"</code> permission."},
           "favIconUrl": {"type": "string", "optional": true, "permissions": ["tabs"], "description": "The URL of the tab's favicon. This property is only present if the extension's manifest includes the <code>\"tabs\"</code> permission. It may also be an empty string if the tab is loading."},
           "status": {"type": "string", "optional": true, "description": "Either <em>loading</em> or <em>complete</em>."},
-          "discarded": {"type": "boolean", "optional": true, "description": "True while the tab is not loaded with content."},
           "incognito": {"type": "boolean", "description": "Whether the tab is in an incognito window."},
           "width": {"type": "integer", "optional": true, "description": "The width of the tab in pixels."},
           "height": {"type": "integer", "optional": true, "description": "The height of the tab in pixels."},
           "sessionId": {"type": "string", "optional": true, "description": "The session ID used to uniquely identify a Tab obtained from the $(ref:sessions) API."},
-          "cookieStoreId": {"type": "string", "optional": true, "description": "The CookieStoreId used for the tab."},
-          "isArticle": {"type": "boolean", "optional": true, "description": "Whether the document in the tab can be rendered in reader mode."},
-          "isInReaderMode": {"type": "boolean", "optional": true, "description": "Whether the document in the tab is being rendered in reader mode."}
+          "cookieStoreId": {"type": "string", "optional": true, "description": "The CookieStoreId used for the tab."}
         }
       },
       {
@@ -497,10 +494,7 @@
                 "type": "string",
                 "optional": true,
                 "description": "The CookieStoreId for the tab that opened this tab."
-              },
-              "openInReaderMode": {
-                "type": "boolean",
-                "optional": true, "description": "Whether the document in the tab should be opened in reader mode."}
+              }
             }
           },
           {
@@ -594,11 +588,6 @@
                 "$ref": "TabStatus",
                 "optional": true,
                 "description": "Whether the tabs have completed loading."
-              },
-              "discarded": {
-                "type": "boolean",
-                "optional": true,
-                "description": "True while the tabs are not loaded with content."
               },
               "title": {
                 "type": "string",
@@ -753,11 +742,6 @@
                 "minimum": 0,
                 "optional": true,
                 "description": "The ID of the tab that opened this tab. If specified, the opener tab must be in the same window as this tab."
-              },
-              "loadReplace": {
-                "type": "boolean",
-                "optional": true,
-                "description": "Whether the load should replace the current history entry for the tab."
               }
             }
           },
@@ -902,21 +886,6 @@
                 "description": "An ISO language code such as <code>en</code> or <code>fr</code>. For a complete list of languages supported by this method, see <a href='http://src.chromium.org/viewvc/chrome/trunk/src/third_party/cld/languages/internal/languages.cc'>kLanguageInfoTable</a>. The 2nd to 4th columns will be checked and the first non-NULL value will be returned except for Simplified Chinese for which zh-CN will be returned. For an unknown language, <code>und</code> will be returned."
               }
             ]
-          }
-        ]
-      },
-      {
-        "name": "toggleReaderMode",
-        "type": "function",
-        "description": "Toggles reader mode for the document in the tab.",
-        "async": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "name": "tabId",
-            "minimum": 0,
-            "optional": true,
-            "description": "Defaults to the active tab of the $(topic:current-window)[current window]."
           }
         ]
       },
@@ -1225,11 +1194,6 @@
                 "type": "string",
                 "optional": true,
                 "description": "The status of the tab. Can be either <em>loading</em> or <em>complete</em>."
-              },
-              "discarded": {
-                "type": "boolean",
-                "optional": true,
-                "description": "True while the tab is not loaded with content."
               },
               "url": {
                 "type": "string",

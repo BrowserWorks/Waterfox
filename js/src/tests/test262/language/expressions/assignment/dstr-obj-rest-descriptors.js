@@ -27,19 +27,16 @@ var vals = obj;
 
 result = {...rest} = vals;
 
-verifyProperty(rest, "a", {
-  enumerable: true,
-  writable: true,
-  configurable: true,
-  value: 3
-});
+assert.sameValue(rest.a, 3);
+assert.sameValue(rest.b, 4);
 
-verifyProperty(rest, "b", {
-  enumerable: true,
-  writable: true,
-  configurable: true,
-  value: 4
-});
+verifyEnumerable(rest, "a");
+verifyWritable(rest, "a");
+verifyConfigurable(rest, "a");
+
+verifyEnumerable(rest, "b");
+verifyWritable(rest, "b");
+verifyConfigurable(rest, "b");
 
 
 assert.sameValue(result, vals);

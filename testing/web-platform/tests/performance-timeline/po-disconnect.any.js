@@ -23,15 +23,14 @@
 
   async_test(function (t) {
     var observer = new PerformanceObserver(
-        t.step_func(function (entryList, obs) {
-          assert_unreached("This callback must not be invoked");
+        t.step_func(function(entryList, obs) {
+          checkEntries(entryList.getEntries(),
+            [{ entryType: "mark", name: "mark1"}]);
+          t.done();
         })
       );
     observer.observe({entryTypes: ["mark"]});
     self.performance.mark("mark1");
     observer.disconnect();
     self.performance.mark("mark2");
-    t.step_timeout(function () {
-      t.done();
-    }, 2000);
-  }, "An observer disconnected after a mark must not have its callback invoked");
+  }, "An observer disconnected after a mark must receive the mark");

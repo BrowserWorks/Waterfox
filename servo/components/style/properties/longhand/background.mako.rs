@@ -6,17 +6,14 @@
 
 <% data.new_style_struct("Background", inherited=False) %>
 
-${helpers.predefined_type(
-    "background-color",
-    "Color",
+${helpers.predefined_type("background-color", "Color",
     "computed_value::T::transparent()",
     initial_specified_value="SpecifiedValue::transparent()",
     spec="https://drafts.csswg.org/css-backgrounds/#background-color",
-    animation_value_type="AnimatedColor",
+    animation_value_type="IntermediateColor",
     ignored_when_colors_disabled=True,
     allow_quirks=True,
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
-)}
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.predefined_type("background-image", "ImageLayer",
     initial_value="Either::First(None_)",
@@ -24,6 +21,7 @@ ${helpers.predefined_type("background-image", "ImageLayer",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-image",
     vector="True",
     animation_value_type="discrete",
+    has_uncacheable_values="True" if product == "gecko" else "False",
     ignored_when_colors_disabled="True",
     flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
@@ -52,7 +50,8 @@ ${helpers.predefined_type("background-image", "ImageLayer",
                              "round" => Round,
                              "no-repeat" => NoRepeat);
 
-    #[derive(Clone, Debug, MallocSizeOf, PartialEq, ToCss)]
+    #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+    #[derive(Clone, Debug, PartialEq, ToCss)]
     pub enum SpecifiedValue {
         RepeatX,
         RepeatY,
@@ -62,10 +61,12 @@ ${helpers.predefined_type("background-image", "ImageLayer",
     pub mod computed_value {
         pub use super::RepeatKeyword;
 
-        #[derive(Clone, Debug, MallocSizeOf, PartialEq)]
+        #[derive(Debug, Clone, PartialEq)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         pub struct T(pub RepeatKeyword, pub RepeatKeyword);
     }
 
+    no_viewport_percentage!(SpecifiedValue);
 
     impl ToCss for computed_value::T {
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
@@ -128,7 +129,7 @@ ${helpers.predefined_type("background-image", "ImageLayer",
             _ => Err(()),
         }).or_else(|()| {
             let horizontal: Result<_, ParseError> = RepeatKeyword::from_ident(&ident)
-                .map_err(|()| input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())));
+                .map_err(|()| SelectorParseError::UnexpectedIdent(ident.clone()).into());
             let horizontal = horizontal?;
             let vertical = input.try(RepeatKeyword::parse).ok();
             Ok(SpecifiedValue::Other(horizontal, vertical))
@@ -162,12 +163,11 @@ ${helpers.single_keyword("background-origin",
                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.predefined_type("background-size", "BackgroundSize",
-    initial_value="computed::BackgroundSize::auto()",
-    initial_specified_value="specified::BackgroundSize::auto()",
+    initial_value="computed::LengthOrPercentageOrAuto::Auto.into()",
+    initial_specified_value="specified::LengthOrPercentageOrAuto::Auto.into()",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-size",
     vector=True,
-    animation_value_type="BackgroundSizeList",
-    need_animatable=True,
+    animation_value_type="ComputedValue",
     flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     extra_prefixes="webkit")}
 

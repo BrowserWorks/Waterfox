@@ -36,11 +36,6 @@ pub fn Platform() -> DOMString {
     DOMString::from("Mac")
 }
 
-#[cfg(target_os = "ios")]
-pub fn Platform() -> DOMString {
-    DOMString::from("iOS")
-}
-
 pub fn UserAgent() -> DOMString {
     DOMString::from(&*opts::get().user_agent)
 }

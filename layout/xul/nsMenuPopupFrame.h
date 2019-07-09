@@ -12,7 +12,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/gfx/Types.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsGkAtoms.h"
 #include "nsCOMPtr.h"
 #include "nsMenuFrame.h"
@@ -221,7 +221,7 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 
   virtual nsresult AttributeChanged(int32_t aNameSpaceID,
-                                    nsAtom* aAttribute,
+                                    nsIAtom* aAttribute,
                                     int32_t aModType) override;
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;

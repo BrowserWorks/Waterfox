@@ -194,7 +194,7 @@ public:
 
   nsresult CharacterDataChanged(CharacterDataChangeInfo* aInfo) override;
   nsresult AttributeChanged(int32_t  aNameSpaceID,
-                            nsAtom* aAttribute,
+                            nsIAtom* aAttribute,
                             int32_t aModType) override;
   nsSplittableType GetSplittableType() const override;
   nsIFrame* GetPrevContinuation() const override;
@@ -487,7 +487,7 @@ public:
    * level field.
    */
   void Trace(const char* aMethod, bool aEnter);
-  void Trace(const char* aMethod, bool aEnter, const nsReflowStatus& aStatus);
+  void Trace(const char* aMethod, bool aEnter, nsReflowStatus aStatus);
   void TraceMsg(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
 
   // Helper function that verifies that each frame in the list has the
@@ -495,6 +495,17 @@ public:
   static void VerifyDirtyBitSet(const nsFrameList& aFrameList);
 
   static void XMLQuote(nsString& aString);
+
+  /**
+   * Dump out the "base classes" regression data. This should dump
+   * out the interior data, not the "frame" XML container. And it
+   * should call the base classes same named method before doing
+   * anything specific in a derived class. This means that derived
+   * classes need not override DumpRegressionData unless they need
+   * some custom behavior that requires changing how the outer "frame"
+   * XML container is dumped.
+   */
+  virtual void DumpBaseRegressionData(nsPresContext* aPresContext, FILE* out, int32_t aIndent);
 
   // Display Reflow Debugging
   static void* DisplayReflowEnter(nsPresContext*          aPresContext,
@@ -571,7 +582,7 @@ public:
    * @param aChildPseudo the child's pseudo type, if any.
    */
   static nsIFrame*
-  CorrectStyleParentFrame(nsIFrame* aProspectiveParent, nsAtom* aChildPseudo);
+  CorrectStyleParentFrame(nsIFrame* aProspectiveParent, nsIAtom* aChildPseudo);
 
 protected:
   // Protected constructor and destructor
@@ -733,6 +744,17 @@ public:
    */
   nsFrameState GetDebugStateBits() const override;
   /**
+   * Called to dump out regression data that describes the layout
+   * of the frame and its children, and so on. The format of the
+   * data is dictated to be XML (using a specific DTD); the
+   * specific kind of data dumped is up to the frame itself, with
+   * the caveat that some base types are defined.
+   * For more information, see XXX.
+   */
+  nsresult DumpRegressionData(nsPresContext* aPresContext,
+                              FILE* out, int32_t aIndent) override;
+
+  /**
    * See if style tree verification is enabled. To enable style tree
    * verification add "styleverifytree:1" to your MOZ_LOG
    * environment variable (any non-zero debug level will work). Or,
@@ -842,7 +864,7 @@ public:
 
   struct DR_init_offsets_cookie {
     DR_init_offsets_cookie(nsIFrame* aFrame, mozilla::SizeComputationInput* aState,
-                           const mozilla::LogicalSize& aPercentBasis,
+                           nscoord aPercentBasis,
                            mozilla::WritingMode aCBWritingMode,
                            const nsMargin* aBorder,
                            const nsMargin* aPadding);

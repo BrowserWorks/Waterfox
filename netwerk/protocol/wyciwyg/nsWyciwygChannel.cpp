@@ -533,14 +533,14 @@ nsWyciwygChannel::GetCharsetAndSource(int32_t* aSource, nsACString& aCharset)
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsCString data;
+  nsXPIDLCString data;
   mCacheEntry->GetMetaDataElement("charset", getter_Copies(data));
 
   if (data.IsEmpty()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsCString sourceStr;
+  nsXPIDLCString sourceStr;
   mCacheEntry->GetMetaDataElement("charset-source", getter_Copies(sourceStr));
 
   int32_t source;

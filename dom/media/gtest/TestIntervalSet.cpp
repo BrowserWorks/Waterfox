@@ -536,7 +536,8 @@ TEST(IntervalSet, TimeRangesSeconds)
   i1.Add(media::TimeInterval(media::TimeUnit::FromSeconds(45), media::TimeUnit::FromSeconds(50)));
 
   media::TimeIntervals i(i0 + i1);
-  RefPtr<dom::TimeRanges> tr = new dom::TimeRanges(i);
+  RefPtr<dom::TimeRanges> tr = new dom::TimeRanges();
+  i.ToTimeRanges(tr);
   EXPECT_EQ(tr->Length(), i.Length());
   for (dom::TimeRanges::index_type index = 0; index < tr->Length(); index++) {
     ErrorResult rv;
@@ -571,13 +572,22 @@ TEST(IntervalSet, TimeRangesConversion)
   tr->Add(53, 57);
   tr->Add(45, 50);
 
-  // explicit copy constructor and ToTimeIntervals.
-  media::TimeIntervals i1(tr->ToTimeIntervals());
+  // explicit copy constructor
+  media::TimeIntervals i1(tr);
   CheckTimeRanges(tr, i1);
 
-  // ctor(const TimeIntervals&)
-  RefPtr<dom::TimeRanges> tr2 = new dom::TimeRanges(tr->ToTimeIntervals());
-  CheckTimeRanges(tr2, i1);
+  // static FromTimeRanges
+  media::TimeIntervals i2 = media::TimeIntervals::FromTimeRanges(tr);
+  CheckTimeRanges(tr, i2);
+
+  media::TimeIntervals i3;
+  // operator=(TimeRanges*)
+  i3 = tr;
+  CheckTimeRanges(tr, i3);
+
+  // operator= test
+  i1 = tr.get();
+  CheckTimeRanges(tr, i1);
 }
 
 TEST(IntervalSet, TimeRangesMicroseconds)
@@ -595,7 +605,8 @@ TEST(IntervalSet, TimeRangesMicroseconds)
   i1.Add(media::TimeInterval(media::TimeUnit::FromMicroseconds(45), media::TimeUnit::FromMicroseconds(50)));
 
   media::TimeIntervals i(i0 + i1);
-  RefPtr<dom::TimeRanges> tr = new dom::TimeRanges(i);
+  RefPtr<dom::TimeRanges> tr = new dom::TimeRanges();
+  i.ToTimeRanges(tr);
   EXPECT_EQ(tr->Length(), i.Length());
   for (dom::TimeRanges::index_type index = 0; index < tr->Length(); index++) {
     ErrorResult rv;
@@ -619,8 +630,9 @@ TEST(IntervalSet, TimeRangesMicroseconds)
   tr = new dom::TimeRanges();
   tr->Add(0, 30);
   tr->Add(50, std::numeric_limits<double>::infinity());
-  media::TimeIntervals i_oo = tr->ToTimeIntervals();
-  RefPtr<dom::TimeRanges> tr2 = new dom::TimeRanges(i_oo);
+  media::TimeIntervals i_oo{media::TimeIntervals::FromTimeRanges(tr)};
+  RefPtr<dom::TimeRanges> tr2 = new dom::TimeRanges();
+  i_oo.ToTimeRanges(tr2);
   EXPECT_EQ(tr->Length(), tr2->Length());
   for (dom::TimeRanges::index_type index = 0; index < tr->Length(); index++) {
     ErrorResult rv;

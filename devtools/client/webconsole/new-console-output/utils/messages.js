@@ -7,7 +7,6 @@
 "use strict";
 
 const l10n = require("devtools/client/webconsole/webconsole-l10n");
-const { getUrlDetails } = require("devtools/client/netmonitor/src/utils/request-utils");
 
 const {
   MESSAGE_SOURCE,
@@ -233,11 +232,6 @@ function transformNetworkEventPacket(packet) {
     response: networkEvent.response,
     timeStamp: networkEvent.timeStamp,
     totalTime: networkEvent.totalTime,
-    url: networkEvent.request.url,
-    urlDetails: getUrlDetails(networkEvent.request.url),
-    method: networkEvent.request.method,
-    updates: networkEvent.updates,
-    cause: networkEvent.cause,
   });
 }
 
@@ -252,7 +246,7 @@ function transformEvaluationResultPacket(packet) {
     notes,
   } = packet;
 
-  const parameter = helperResult && helperResult.object
+  let parameters = helperResult && helperResult.object
     ? helperResult.object
     : result;
 
@@ -263,7 +257,7 @@ function transformEvaluationResultPacket(packet) {
     helperType: helperResult ? helperResult.type : null,
     level,
     messageText,
-    parameters: [parameter],
+    parameters,
     exceptionDocURL,
     frame,
     timeStamp,
@@ -334,7 +328,7 @@ function getLevelFromType(type) {
     clear: levels.LEVEL_LOG,
     trace: levels.LEVEL_LOG,
     table: levels.LEVEL_LOG,
-    debug: levels.LEVEL_DEBUG,
+    debug: levels.LEVEL_LOG,
     dir: levels.LEVEL_LOG,
     dirxml: levels.LEVEL_LOG,
     group: levels.LEVEL_LOG,
@@ -342,7 +336,7 @@ function getLevelFromType(type) {
     groupEnd: levels.LEVEL_LOG,
     time: levels.LEVEL_LOG,
     timeEnd: levels.LEVEL_LOG,
-    count: levels.LEVEL_LOG,
+    count: levels.LEVEL_DEBUG,
   };
 
   return levelMap[type] || MESSAGE_TYPE.LOG;

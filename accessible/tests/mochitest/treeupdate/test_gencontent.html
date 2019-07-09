@@ -27,14 +27,15 @@
 
   <script type="application/javascript">
 
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Invokers
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
      * Insert new node with CSS generated content style applied to container.
      */
-    function insertNodeHavingGenContent(aContainerID) {
+    function insertNodeHavingGenContent(aContainerID)
+    {
       this.containerNode = getNode(aContainerID);
       this.container = getAccessible(this.containerNode);
 
@@ -43,14 +44,16 @@
         new invokerChecker(EVENT_REORDER, this.container)
       ];
 
-      this.invoke = function insertNodeHavingGenContent_invoke() {
+      this.invoke = function insertNodeHavingGenContent_invoke()
+      {
         var node = document.createElement("div");
         node.textContent = "text";
         node.setAttribute("class", "gentext");
         this.containerNode.appendChild(node);
-      };
+      }
 
-      this.finalCheck = function insertNodeHavingGenContent_finalCheck() {
+      this.finalCheck = function insertNodeHavingGenContent_finalCheck()
+      {
         var accTree =
           { SECTION: [ // container
             { SECTION: [ // inserted node
@@ -60,17 +63,19 @@
             ] }
           ] };
         testAccessibleTree(this.container, accTree);
-      };
+      }
 
-      this.getID = function insertNodeHavingGenContent_getID() {
+      this.getID = function insertNodeHavingGenContent_getID()
+      {
         return "insert node having generated content to " + prettyName(aContainerID);
-      };
+      }
     }
 
     /**
      * Add CSS generated content to the given node contained by container node.
      */
-    function addGenContent(aContainerID, aNodeID) {
+    function addGenContent(aContainerID, aNodeID)
+    {
       this.container = getAccessible(aContainerID);
       this.node = getNode(aNodeID);
 
@@ -80,11 +85,13 @@
         new invokerChecker(EVENT_REORDER, this.container)
       ];
 
-      this.invoke = function addGenContent_invoke() {
+      this.invoke = function addGenContent_invoke()
+      {
         this.node.setAttribute("class", "gentext");
-      };
+      }
 
-      this.finalCheck = function insertNodeHavingGenContent_finalCheck() {
+      this.finalCheck = function insertNodeHavingGenContent_finalCheck()
+      {
         var accTree =
           { SECTION: [ // container
             { SECTION: [ // inserted node
@@ -94,29 +101,33 @@
             ] }
           ] };
         testAccessibleTree(this.container, accTree);
-      };
+      }
 
-      this.getID = function addGenContent_getID() {
+      this.getID = function addGenContent_getID()
+      {
         return "add generated content to" + prettyName(aNodeID);
-      };
+      }
     }
 
     /**
      * Target getters.
      */
-    function getFirstChild(aAcc) {
-      try { return aAcc.getChildAt(0); } catch (e) { return null; }
+    function getFirstChild(aAcc)
+    {
+      try { return aAcc.getChildAt(0); }
+      catch (e) { return null; }
     }
 
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Do tests
-    // //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
     var gQueue = null;
-    // gA11yEventDumpID = "eventdump"; // debug stuff
-    // gA11yEventDumpToConsole = true;
+    //gA11yEventDumpID = "eventdump"; // debug stuff
+    //gA11yEventDumpToConsole = true;
 
-    function doTests() {
+    function doTests()
+    {
       gQueue = new eventQueue();
 
       gQueue.push(new insertNodeHavingGenContent("container1"));

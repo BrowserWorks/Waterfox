@@ -16,7 +16,7 @@ using namespace JS;
 static const JSClassOps global_classOps = {
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
     JS_GlobalObjectTraceHook
 };
 
@@ -79,7 +79,7 @@ main(int argc, const char** argv)
 
     /* Create the global object. */
     JS::CompartmentOptions options;
-    options.behaviors().setVersion(JSVERSION_DEFAULT);
+    options.behaviors().setVersion(JSVERSION_LATEST);
 
     RootedObject global(cx, checkPtr(JS_NewGlobalObject(cx, &global_class,
                         nullptr, JS::FireOnNewGlobalHook, options)));

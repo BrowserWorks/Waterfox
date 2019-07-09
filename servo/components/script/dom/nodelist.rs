@@ -5,17 +5,17 @@
 use dom::bindings::codegen::Bindings::NodeBinding::NodeMethods;
 use dom::bindings::codegen::Bindings::NodeListBinding;
 use dom::bindings::codegen::Bindings::NodeListBinding::NodeListMethods;
+use dom::bindings::js::{JS, MutNullableJS, Root, RootedReference};
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot, MutNullableDom, RootedReference};
 use dom::node::{ChildrenMutation, Node};
 use dom::window::Window;
 use dom_struct::dom_struct;
 use std::cell::Cell;
 
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 #[must_root]
 pub enum NodeListType {
-    Simple(Vec<Dom<Node>>),
+    Simple(Vec<JS<Node>>),
     Children(ChildrenList),
 }
 
@@ -36,26 +36,26 @@ impl NodeList {
     }
 
     #[allow(unrooted_must_root)]
-    pub fn new(window: &Window, list_type: NodeListType) -> DomRoot<NodeList> {
-        reflect_dom_object(Box::new(NodeList::new_inherited(list_type)),
+    pub fn new(window: &Window, list_type: NodeListType) -> Root<NodeList> {
+        reflect_dom_object(box NodeList::new_inherited(list_type),
                            window,
                            NodeListBinding::Wrap)
     }
 
-    pub fn new_simple_list<T>(window: &Window, iter: T) -> DomRoot<NodeList>
-                              where T: Iterator<Item=DomRoot<Node>> {
-        NodeList::new(window, NodeListType::Simple(iter.map(|r| Dom::from_ref(&*r)).collect()))
+    pub fn new_simple_list<T>(window: &Window, iter: T) -> Root<NodeList>
+                              where T: Iterator<Item=Root<Node>> {
+        NodeList::new(window, NodeListType::Simple(iter.map(|r| JS::from_ref(&*r)).collect()))
     }
 
-    pub fn new_simple_list_slice(window: &Window, slice: &[&Node]) -> DomRoot<NodeList> {
-        NodeList::new(window, NodeListType::Simple(slice.iter().map(|r| Dom::from_ref(*r)).collect()))
+    pub fn new_simple_list_slice(window: &Window, slice: &[&Node]) -> Root<NodeList> {
+        NodeList::new(window, NodeListType::Simple(slice.iter().map(|r| JS::from_ref(*r)).collect()))
     }
 
-    pub fn new_child_list(window: &Window, node: &Node) -> DomRoot<NodeList> {
+    pub fn new_child_list(window: &Window, node: &Node) -> Root<NodeList> {
         NodeList::new(window, NodeListType::Children(ChildrenList::new(node)))
     }
 
-    pub fn empty(window: &Window) -> DomRoot<NodeList> {
+    pub fn empty(window: &Window) -> Root<NodeList> {
         NodeList::new(window, NodeListType::Simple(vec![]))
     }
 }
@@ -70,17 +70,17 @@ impl NodeListMethods for NodeList {
     }
 
     // https://dom.spec.whatwg.org/#dom-nodelist-item
-    fn Item(&self, index: u32) -> Option<DomRoot<Node>> {
+    fn Item(&self, index: u32) -> Option<Root<Node>> {
         match self.list_type {
             NodeListType::Simple(ref elems) => {
-                elems.get(index as usize).map(|node| DomRoot::from_ref(&**node))
+                elems.get(index as usize).map(|node| Root::from_ref(&**node))
             },
             NodeListType::Children(ref list) => list.item(index),
         }
     }
 
     // https://dom.spec.whatwg.org/#dom-nodelist-item
-    fn IndexedGetter(&self, index: u32) -> Option<DomRoot<Node>> {
+    fn IndexedGetter(&self, index: u32) -> Option<Root<Node>> {
         self.Item(index)
     }
 }
@@ -95,7 +95,7 @@ impl NodeList {
         }
     }
 
-    pub fn as_simple_list(&self) -> &Vec<Dom<Node>> {
+    pub fn as_simple_list(&self) -> &Vec<JS<Node>> {
         if let NodeListType::Simple(ref list) = self.list_type {
             list
         } else {
@@ -103,18 +103,18 @@ impl NodeList {
         }
     }
 
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item=DomRoot<Node>> + 'a {
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item=Root<Node>> + 'a {
         let len = self.Length();
         (0..len).flat_map(move |i| self.Item(i))
     }
 }
 
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 #[must_root]
 pub struct ChildrenList {
-    node: Dom<Node>,
-    #[ignore_malloc_size_of = "Defined in rust-mozjs"]
-    last_visited: MutNullableDom<Node>,
+    node: JS<Node>,
+    #[ignore_heap_size_of = "Defined in rust-mozjs"]
+    last_visited: MutNullableJS<Node>,
     last_index: Cell<u32>,
 }
 
@@ -122,8 +122,8 @@ impl ChildrenList {
     pub fn new(node: &Node) -> ChildrenList {
         let last_visited = node.GetFirstChild();
         ChildrenList {
-            node: Dom::from_ref(node),
-            last_visited: MutNullableDom::new(last_visited.r()),
+            node: JS::from_ref(node),
+            last_visited: MutNullableJS::new(last_visited.r()),
             last_index: Cell::new(0u32),
         }
     }
@@ -132,7 +132,7 @@ impl ChildrenList {
         self.node.children_count()
     }
 
-    pub fn item(&self, index: u32) -> Option<DomRoot<Node>> {
+    pub fn item(&self, index: u32) -> Option<Root<Node>> {
         // This always start traversing the children from the closest element
         // among parent's first and last children and the last visited one.
         let len = self.len() as u32;

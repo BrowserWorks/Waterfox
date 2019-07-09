@@ -13,7 +13,6 @@
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
-#include "gfxTypes.h" // for gfxAlphaType
 #include "nsCycleCollectionParticipant.h"
 
 struct JSContext;
@@ -179,8 +178,6 @@ public:
               const ArrayBufferViewOrArrayBuffer& aBuffer,
               int32_t aOffset, ErrorResult& aRv);
 
-  size_t GetAllocatedSize() const;
-
 protected:
 
   /*
@@ -286,10 +283,6 @@ protected:
    */
   bool mIsCroppingAreaOutSideOfSourceImage;
 
-  /*
-   * Whether this object allocated allocated and owns the image data.
-   */
-  bool mAllocatedImageData;
 };
 
 } // namespace dom

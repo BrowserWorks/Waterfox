@@ -1,11 +1,11 @@
 // Copyright (C) 2015 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
+es6id: 9.5.12
 description: >
     [[OwnPropertyKeys]] ( )
 
-    6. If trap is undefined, then Return target.[[OwnPropertyKeys]]()
+    7. If trap is undefined, then Return target.[[OwnPropertyKeys]]()
 ---*/
 
 var target = {

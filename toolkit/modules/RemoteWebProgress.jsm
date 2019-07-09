@@ -56,10 +56,10 @@ RemoteWebProgress.prototype = {
   NOTIFY_REFRESH:        0x00000100,
   NOTIFY_ALL:            0x000001ff,
 
-  get isLoadingDocument() { return this._isLoadingDocument; },
+  get isLoadingDocument() { return this._isLoadingDocument },
   get DOMWindow() { return this._DOMWindow; },
   get DOMWindowID() { return this._DOMWindowID; },
-  get isTopLevel() { return this._isTopLevel; },
+  get isTopLevel() { return this._isTopLevel },
   get loadType() { return this._loadType; },
 
   addProgressListener(aListener, aNotifyMask) {
@@ -151,7 +151,7 @@ RemoteWebProgressManager.prototype = {
       let helper = Cc["@mozilla.org/network/serialization-helper;1"]
                     .getService(Components.interfaces.nsISerializationHelper);
 
-      deserialized = helper.deserializeObject(aStatus);
+      deserialized = helper.deserializeObject(aStatus)
       deserialized.QueryInterface(Ci.nsISSLStatus);
     }
 
@@ -222,11 +222,7 @@ RemoteWebProgressManager.prototype = {
 
     if (isTopLevel) {
       this._browser._contentWindow = objects.contentWindow;
-      // Setting a content-type back to `null` is quite nonsensical for the
-      // frontend, especially since we're not expecting it.
-      if (json.documentContentType !== null) {
-        this._browser._documentContentType = json.documentContentType;
-      }
+      this._browser._documentContentType = json.documentContentType;
       if (typeof json.inLoadURI != "undefined") {
         this._browser.inLoadURI = json.inLoadURI;
       }
@@ -264,7 +260,6 @@ RemoteWebProgressManager.prototype = {
         this._browser._contentPrincipal = json.principal;
         this._browser._isSyntheticDocument = json.synthetic;
         this._browser._innerWindowID = json.innerWindowID;
-        this._browser._contentRequestContextID = json.requestContextID;
       }
 
       this._callProgressListeners(

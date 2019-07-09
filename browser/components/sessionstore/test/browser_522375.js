@@ -1,11 +1,12 @@
 function test() {
-  var startup_info = Services.startup.getStartupInfo();
+  var startup_info = Components.classes["@mozilla.org/toolkit/app-startup;1"].getService(Components.interfaces.nsIAppStartup).getStartupInfo();
   // No .process info on mac
 
   // Check if we encountered a telemetry error for the the process creation
   // timestamp and turn the first test into a known failure.
-  var snapshot = Services.telemetry.getHistogramById("STARTUP_MEASUREMENT_ERRORS")
-                                   .snapshot();
+  var telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
+  var snapshot = telemetry.getHistogramById("STARTUP_MEASUREMENT_ERRORS")
+                          .snapshot();
 
   if (snapshot.counts[0] == 0)
     ok(startup_info.process <= startup_info.main, "process created before main is run " + uneval(startup_info));

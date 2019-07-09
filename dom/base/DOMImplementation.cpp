@@ -61,7 +61,7 @@ DOMImplementation::CreateDocumentType(const nsAString& aQualifiedName,
     return nullptr;
   }
 
-  RefPtr<nsAtom> name = NS_Atomize(aQualifiedName);
+  nsCOMPtr<nsIAtom> name = NS_Atomize(aQualifiedName);
   if (!name) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
@@ -70,7 +70,7 @@ DOMImplementation::CreateDocumentType(const nsAString& aQualifiedName,
   // Indicate that there is no internal subset (not just an empty one)
   RefPtr<DocumentType> docType =
     NS_NewDOMDocumentType(mOwner->NodeInfoManager(), name, aPublicId,
-                          aSystemId, VoidString(), aRv);
+                          aSystemId, NullString(), aRv);
   return docType.forget();
 }
 
@@ -123,8 +123,7 @@ DOMImplementation::CreateDocument(const nsAString& aNamespaceURI,
                          mDocumentURI, mBaseURI,
                          mOwner->NodePrincipal(),
                          true, scriptHandlingObject,
-                         DocumentFlavorLegacyGuess,
-                         mOwner->GetStyleBackendType());
+                         DocumentFlavorLegacyGuess);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // When DOMImplementation's createDocument method is invoked with
@@ -188,7 +187,7 @@ DOMImplementation::CreateHTMLDocument(const nsAString& aTitle,
                                       nsGkAtoms::html, // aName
                                       EmptyString(), // aPublicId
                                       EmptyString(), // aSystemId
-                                      VoidString()); // aInternalSubset
+                                      NullString()); // aInternalSubset
   NS_ENSURE_SUCCESS(rv, rv);
 
 
@@ -203,8 +202,7 @@ DOMImplementation::CreateHTMLDocument(const nsAString& aTitle,
                          doctype, mDocumentURI, mBaseURI,
                          mOwner->NodePrincipal(),
                          true, scriptHandlingObject,
-                         DocumentFlavorLegacyGuess,
-                         mOwner->GetStyleBackendType());
+                         DocumentFlavorLegacyGuess);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(document);
 
@@ -249,7 +247,8 @@ DOMImplementation::CreateHTMLDocument(const Optional<nsAString>& aTitle,
 {
   nsCOMPtr<nsIDocument> document;
   nsCOMPtr<nsIDOMDocument> domDocument;
-  aRv = CreateHTMLDocument(aTitle.WasPassed() ? aTitle.Value() : VoidString(),
+  aRv = CreateHTMLDocument(aTitle.WasPassed() ? aTitle.Value()
+                                              : NullString(),
                            getter_AddRefs(document),
                            getter_AddRefs(domDocument));
   return document.forget();

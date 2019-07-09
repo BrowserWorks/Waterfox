@@ -10,7 +10,6 @@ info: >
   7. Let len be ? ToLength(? Get(arrayLike, "length")).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var arrayLike = {};

@@ -492,7 +492,7 @@ EthiopicToText(CounterValue aOrdinal, nsAString& aResult)
   // If we didn't add the leading "0", decrement asciiStringLength so
   // it will be equivalent to a zero-based index in both cases.
   if (asciiStringLength & 1) {
-    asciiNumberString.InsertLiteral(u"0", 0);
+    asciiNumberString.Insert(NS_LITERAL_STRING("0"), 0);
   } else {
     asciiStringLength--;
   }
@@ -575,13 +575,22 @@ SystemUsesNegativeSign(uint8_t aSystem)
 class BuiltinCounterStyle : public CounterStyle
 {
 public:
-  constexpr BuiltinCounterStyle(int32_t aStyle, nsAtom** aName)
-    : CounterStyle(aStyle)
-    , mName(aName)
+  friend class CounterStyleManager;
+
+  // will be initialized by CounterStyleManager::InitializeBuiltinCounterStyles
+  constexpr BuiltinCounterStyle()
+    : CounterStyle(NS_STYLE_LIST_STYLE_NONE)
   {
   }
 
-  virtual nsAtom* GetStyleName() const final;
+protected:
+  constexpr explicit BuiltinCounterStyle(int32_t aStyle)
+    : CounterStyle(aStyle)
+  {
+  }
+
+public:
+  virtual void GetStyleName(nsAString& aResult) override;
   virtual void GetPrefix(nsAString& aResult) override;
   virtual void GetSuffix(nsAString& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
@@ -602,26 +611,16 @@ public:
                                      WritingMode aWritingMode,
                                      nsAString& aResult,
                                      bool& aIsRTL) override;
-
-protected:
-  BuiltinCounterStyle(const BuiltinCounterStyle& aOther)
-    : CounterStyle(aOther.mStyle)
-    , mName(aOther.mName)
-  {
-  }
-
-private:
-  // The atom for the name of the builtin counter style.
-  // Extra indirection to point to nsGkAtoms members rather than the
-  // nsAtom, because members of nsGkAtoms are updated at runtime but
-  // we want to construct BuiltinCounterStyle at compile time.
-  nsAtom** const mName;
 };
 
-/* virtual */ nsAtom*
-BuiltinCounterStyle::GetStyleName() const
+/* virtual */ void
+BuiltinCounterStyle::GetStyleName(nsAString& aResult)
 {
-  return *mName;
+  MOZ_ASSERT(mStyle != NS_STYLE_LIST_STYLE_CUSTOM);
+  const nsCString& str =
+    nsCSSProps::ValueToKeyword(mStyle, nsCSSProps::kListStyleKTable);
+  MOZ_ASSERT(!str.IsEmpty());
+  aResult.Assign(NS_ConvertUTF8toUTF16(str));
 }
 
 /* virtual */ void
@@ -957,35 +956,11 @@ BuiltinCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
   }
 }
 
-// MSVC 2015 has a bug that vtable pointer of constexpr objects is null,
-// which would cause startup crash. So const is used instead here for
-// pre-2017 version of MSVC to workaround this issue.
-#if !defined(_MSC_VER) || _MSC_VER >= 1910
-static constexpr BuiltinCounterStyle gBuiltinStyleTable[] =
-#else
-static const BuiltinCounterStyle gBuiltinStyleTable[] =
-#endif
-{
-#define BUILTIN_COUNTER_STYLE(value_, atom_) \
-  { NS_STYLE_LIST_STYLE_ ## value_, &nsGkAtoms::atom_ },
-#include "BuiltinCounterStyleList.h"
-#undef BUILTIN_COUNTER_STYLE
-};
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1910
-#define BUILTIN_COUNTER_STYLE(value_, atom_) \
-  static_assert(gBuiltinStyleTable[NS_STYLE_LIST_STYLE_ ## value_].GetStyle() \
-                == NS_STYLE_LIST_STYLE_ ## value_, "Builtin counter style " \
-                #atom_ " has unmatched index and value.");
-#include "BuiltinCounterStyleList.h"
-#undef BUILTIN_COUNTER_STYLE
-#endif
-
 class DependentBuiltinCounterStyle final : public BuiltinCounterStyle
 {
 public:
   DependentBuiltinCounterStyle(int32_t aStyle, CounterStyleManager* aManager)
-    : BuiltinCounterStyle(gBuiltinStyleTable[aStyle]),
+    : BuiltinCounterStyle(aStyle),
       mManager(aManager)
   {
     NS_ASSERTION(IsDependentStyle(), "Not a dependent builtin style");
@@ -1040,7 +1015,7 @@ DependentBuiltinCounterStyle::GetFallback()
 class CustomCounterStyle final : public CounterStyle
 {
 public:
-  CustomCounterStyle(nsAtom* aName,
+  CustomCounterStyle(nsIAtom* aName,
                      CounterStyleManager* aManager,
                      nsCSSCounterStyleRule* aRule)
     : CounterStyle(NS_STYLE_LIST_STYLE_CUSTOM),
@@ -1072,7 +1047,7 @@ public:
   nsCSSCounterStyleRule* GetRule() const { return mRule; }
   uint32_t GetRuleGeneration() const { return mRuleGeneration; }
 
-  virtual nsAtom* GetStyleName() const override;
+  virtual void GetStyleName(nsAString& aResult) override;
   virtual void GetPrefix(nsAString& aResult) override;
   virtual void GetSuffix(nsAString& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
@@ -1138,7 +1113,7 @@ private:
   CounterStyle* GetExtends();
   CounterStyle* GetExtendsRoot();
 
-  RefPtr<nsAtom> mName;
+  nsCOMPtr<nsIAtom> mName;
 
   // CounterStyleManager should always overlive any CounterStyle as it
   // is owned by nsPresContext, and will be released after all nodes and
@@ -1229,10 +1204,11 @@ CustomCounterStyle::ResetDependentData()
   }
 }
 
-/* virtual */ nsAtom*
-CustomCounterStyle::GetStyleName() const
+/* virtual */ void
+CustomCounterStyle::GetStyleName(nsAString& aResult)
 {
-  return mName;
+  nsDependentAtomString name(mName);
+  aResult.Assign(name);
 }
 
 /* virtual */ void
@@ -1752,10 +1728,10 @@ AnonymousCounterStyle::AnonymousCounterStyle(uint8_t aSystem,
 {
 }
 
-/* virtual */ nsAtom*
-AnonymousCounterStyle::GetStyleName() const
+/* virtual */ void
+AnonymousCounterStyle::GetStyleName(nsAString& aResult)
 {
-  return nullptr;
+  aResult.Truncate();
 }
 
 /* virtual */ void
@@ -1993,6 +1969,8 @@ CounterStyle::CallFallbackStyle(CounterValue aOrdinal,
   GetFallback()->GetCounterText(aOrdinal, aWritingMode, aResult, aIsRTL);
 }
 
+static BuiltinCounterStyle gBuiltinStyleTable[NS_STYLE_LIST_STYLE__MAX];
+
 CounterStyleManager::CounterStyleManager(nsPresContext* aPresContext)
   : mPresContext(aPresContext)
 {
@@ -2005,6 +1983,14 @@ CounterStyleManager::CounterStyleManager(nsPresContext* aPresContext)
 CounterStyleManager::~CounterStyleManager()
 {
   MOZ_ASSERT(!mPresContext, "Disconnect should have been called");
+}
+
+/* static */ void
+CounterStyleManager::InitializeBuiltinCounterStyles()
+{
+  for (uint32_t i = 0; i < NS_STYLE_LIST_STYLE__MAX; ++i) {
+    gBuiltinStyleTable[i].mStyle = i;
+  }
 }
 
 void
@@ -2036,7 +2022,7 @@ CounterStyleManager::Disconnect()
 }
 
 CounterStyle*
-CounterStyleManager::BuildCounterStyle(nsAtom* aName)
+CounterStyleManager::BuildCounterStyle(nsIAtom* aName)
 {
   MOZ_ASSERT(NS_IsMainThread());
   CounterStyle* data = GetCounterStyle(aName);
@@ -2044,21 +2030,22 @@ CounterStyleManager::BuildCounterStyle(nsAtom* aName)
     return data;
   }
 
-  // Names are compared case-sensitively here. Predefined names should
-  // have been lowercased by the parser.
+  // It is intentional that the predefined names are case-insensitive
+  // but the user-defined names case-sensitive.
   StyleSetHandle styleSet = mPresContext->StyleSet();
   nsCSSCounterStyleRule* rule = styleSet->CounterStyleRuleForName(aName);
   if (rule) {
     MOZ_ASSERT(rule->Name() == aName);
     data = new (mPresContext) CustomCounterStyle(aName, this, rule);
   } else {
-    for (const BuiltinCounterStyle& item : gBuiltinStyleTable) {
-      if (item.GetStyleName() == aName) {
-        int32_t style = item.GetStyle();
-        data = item.IsDependentStyle()
-          ? new (mPresContext) DependentBuiltinCounterStyle(style, this)
-          : GetBuiltinStyle(style);
-        break;
+    int32_t type;
+    nsDependentAtomString name(aName);
+    nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(name);
+    if (nsCSSProps::FindKeyword(keyword, nsCSSProps::kListStyleKTable, type)) {
+      if (gBuiltinStyleTable[type].IsDependentStyle()) {
+        data = new (mPresContext) DependentBuiltinCounterStyle(type, this);
+      } else {
+        data = GetBuiltinStyle(type);
       }
     }
   }
@@ -2072,21 +2059,11 @@ CounterStyleManager::BuildCounterStyle(nsAtom* aName)
 /* static */ CounterStyle*
 CounterStyleManager::GetBuiltinStyle(int32_t aStyle)
 {
-  MOZ_ASSERT(0 <= aStyle && size_t(aStyle) < sizeof(gBuiltinStyleTable),
+  MOZ_ASSERT(0 <= aStyle && aStyle < NS_STYLE_LIST_STYLE__MAX,
              "Require a valid builtin style constant");
   MOZ_ASSERT(!gBuiltinStyleTable[aStyle].IsDependentStyle(),
              "Cannot get dependent builtin style");
-  // No method of BuiltinCounterStyle mutates the struct itself, so it
-  // should be fine to cast const away.
-  return const_cast<BuiltinCounterStyle*>(&gBuiltinStyleTable[aStyle]);
-}
-
-/* static */ nsAtom*
-CounterStyleManager::GetStyleNameFromType(int32_t aStyle)
-{
-  MOZ_ASSERT(0 <= aStyle && size_t(aStyle) < sizeof(gBuiltinStyleTable),
-             "Require a valid builtin style constant");
-  return gBuiltinStyleTable[aStyle].GetStyleName();
+  return &gBuiltinStyleTable[aStyle];
 }
 
 bool

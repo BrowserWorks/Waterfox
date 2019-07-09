@@ -30,13 +30,12 @@ elif CONFIG['GNU_CXX']:
     ]
 
 if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
-     CXXFLAGS += [
-         '-Wno-c++11-narrowing',
-     ]
+    CXXFLAGS += [
+        '-Wno-implicit-fallthrough',
+        '-Wno-c++11-narrowing',
+    ]
 
-if not CONFIG['_MSC_VER']:
-     CXXFLAGS += [
-         '-Wno-implicit-fallthrough',
-     ]
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    DEFINES['ELFSIZE'] = 32
 
 DEFINES['NO_STABS_SUPPORT'] = True

@@ -18,7 +18,6 @@ skip: true
   skip: false
 """
 
-
 def test_filter_unicode():
     tests = make_mock_manifest(("test", "a", 10), ("test", "a/b", 10),
                                ("test", "c", 10))

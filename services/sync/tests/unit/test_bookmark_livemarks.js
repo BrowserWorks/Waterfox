@@ -7,6 +7,7 @@ Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/service.js");
+Cu.import("resource://testing-common/services/common/utils.js");
 
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
 
@@ -54,7 +55,7 @@ const record631361 = {
 function makeLivemark(p, mintGUID) {
   let b = new Livemark("bookmarks", p.id);
   // Copy here, because tests mutate the contents.
-  b.cleartext = Cu.cloneInto(p, {});
+  b.cleartext = TestingUtils.deepCopy(p);
 
   if (mintGUID)
     b.id = Utils.makeGUID();

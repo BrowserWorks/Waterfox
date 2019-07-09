@@ -68,8 +68,6 @@ public:
   dom::Optional<dom::MediaKeyStatus> mStatus;
 };
 
-// Time is defined as the number of milliseconds since the
-// Epoch (00:00:00 UTC, January 1, 1970).
 typedef int64_t UnixTime;
 
 // Proxies calls CDM, and proxies calls back.
@@ -177,7 +175,7 @@ public:
   // Main thread only.
   virtual void OnSessionMessage(const nsAString& aSessionId,
                                 dom::MediaKeyMessageType aMessageType,
-                                const nsTArray<uint8_t>& aMessage) = 0;
+                                nsTArray<uint8_t>& aMessage) = 0;
 
   // Main thread only.
   virtual void OnExpirationChange(const nsAString& aSessionId,

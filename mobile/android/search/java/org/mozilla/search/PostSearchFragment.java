@@ -110,7 +110,6 @@ public class PostSearchFragment extends Fragment {
             networkError = false;
         }
 
-        @SuppressWarnings("deprecation")
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             // Ignore about:blank URL loads and the first results page we try to load.

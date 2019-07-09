@@ -92,7 +92,6 @@ nsHttpConnectionInfo::Init(const nsACString &host, int32_t port,
     mUsingConnect = false;
     mNPNToken = npnToken;
     mOriginAttributes = originAttributes;
-    mTlsFlags = 0x0;
 
     mUsingHttpsProxy = (proxyInfo && proxyInfo->IsHTTPS());
     mUsingHttpProxy = mUsingHttpsProxy || (proxyInfo && proxyInfo->IsHTTP());
@@ -148,8 +147,7 @@ void nsHttpConnectionInfo::BuildHashKey()
     // byte 5 is X/. X is for disallow_spdy flag
     // byte 6 is C/. C is for be Conservative
 
-    mHashKey.AssignLiteral(".......[tlsflags0x00000000]");
-
+    mHashKey.AssignLiteral(".......");
     mHashKey.Append(keyHost);
     if (!mNetworkInterfaceId.IsEmpty()) {
         mHashKey.Append('(');
@@ -261,7 +259,6 @@ nsHttpConnectionInfo::Clone() const
     clone->SetInsecureScheme(GetInsecureScheme());
     clone->SetNoSpdy(GetNoSpdy());
     clone->SetBeConservative(GetBeConservative());
-    clone->SetTlsFlags(GetTlsFlags());
     MOZ_ASSERT(clone->Equals(this));
 
     return clone;
@@ -285,7 +282,6 @@ nsHttpConnectionInfo::CloneAsDirectRoute(nsHttpConnectionInfo **outCI)
     clone->SetInsecureScheme(GetInsecureScheme());
     clone->SetNoSpdy(GetNoSpdy());
     clone->SetBeConservative(GetBeConservative());
-    clone->SetTlsFlags(GetTlsFlags());
     if (!mNetworkInterfaceId.IsEmpty()) {
         clone->SetNetworkInterfaceId(mNetworkInterfaceId);
     }
@@ -312,13 +308,6 @@ nsHttpConnectionInfo::CreateWildCard(nsHttpConnectionInfo **outParam)
     clone->SetPrivate(GetPrivate());
     clone.forget(outParam);
     return NS_OK;
-}
-
-void
-nsHttpConnectionInfo::SetTlsFlags(uint32_t aTlsFlags) {
-    mTlsFlags = aTlsFlags;
-
-    mHashKey.Replace(18, 8, nsPrintfCString("%08x", mTlsFlags));
 }
 
 bool

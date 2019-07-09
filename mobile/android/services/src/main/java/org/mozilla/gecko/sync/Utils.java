@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -34,6 +35,7 @@ import org.mozilla.gecko.util.IOUtils;
 import org.mozilla.gecko.util.StringUtils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 public class Utils {
@@ -242,11 +244,17 @@ public class Utils {
     return sha1Base32(account.toLowerCase(Locale.US));
   }
 
+  public static SharedPreferences getSharedPreferences(final Context context, final String product, final String username, final String serverURL, final String profile, final long version)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    String prefsPath = getPrefsPath(product, username, serverURL, profile, version);
+    return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
+  }
+
   /**
    * Get shared preferences path for a Sync account.
    *
    * @param product the Firefox Sync product package name (like "org.mozilla.firefox").
-   * @param accountKey local Sync account identifier.
+   * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
    * @param serverURL the Sync account server URL.
    * @param profile the Firefox profile name.
    * @param version the version of preferences to reference.
@@ -254,9 +262,9 @@ public class Utils {
    * @throws NoSuchAlgorithmException
    * @throws UnsupportedEncodingException
    */
-  public static String getPrefsPath(final String product, final String accountKey, final String serverURL, final String profile, final long version)
+  public static String getPrefsPath(final String product, final String username, final String serverURL, final String profile, final long version)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    final String encodedAccount = sha1Base32(serverURL + ":" + usernameFromAccount(accountKey));
+    final String encodedAccount = sha1Base32(serverURL + ":" + usernameFromAccount(username));
 
     if (version <= 0) {
       return "sync.prefs." + encodedAccount;
@@ -476,7 +484,7 @@ public class Utils {
    * @param filename name of file to read; must not be null.
    * @return <code>String</code> instance.
    */
-  public static String readFile(final Context context, final String filename) throws IOException {
+  public static String readFile(final Context context, final String filename) {
     if (filename == null) {
       throw new IllegalArgumentException("Passed null filename in readFile.");
     }
@@ -491,6 +499,8 @@ public class Utils {
         sb.append(line);
       }
       return sb.toString();
+    } catch (Exception e) {
+      return null;
     } finally {
       IOUtils.safeStreamClose(br);
     }

@@ -174,7 +174,7 @@ TrackUnionStream::TrackUnionStream()
     TrackID id;
     if (IsTrackIDExplicit(id = aPort->GetDestinationTrackId())) {
       MOZ_ASSERT(id >= mNextAvailableTrackID &&
-                 !mUsedTracks.ContainsSorted(id),
+                 mUsedTracks.BinaryIndexOf(id) == mUsedTracks.NoIndex,
                  "Desired destination id taken. Only provide a destination ID "
                  "if you can assure its availability, or we may not be able "
                  "to bind to the correct DOM-side track.");
@@ -191,7 +191,7 @@ TrackUnionStream::TrackUnionStream()
       mUsedTracks.InsertElementSorted(id);
     } else if ((id = aTrack->GetID()) &&
                id > mNextAvailableTrackID &&
-               !mUsedTracks.ContainsSorted(id)) {
+               mUsedTracks.BinaryIndexOf(id) == mUsedTracks.NoIndex) {
       // Input id available. Mark it used in mUsedTracks.
       mUsedTracks.InsertElementSorted(id);
     } else {
@@ -311,7 +311,6 @@ TrackUnionStream::TrackUnionStream()
           aInputTrack->GetEnd() <= inputEnd) {
         inputTrackEndPoint = aInputTrack->GetEnd();
         *aOutputTrackFinished = true;
-        break;
       }
 
       if (interval.mStart >= interval.mEnd) {
@@ -323,6 +322,7 @@ TrackUnionStream::TrackUnionStream()
       StreamTime outputStart = outputTrack->GetEnd();
 
       if (interval.mInputIsBlocked) {
+        // Maybe the input track ended?
         segment->AppendNullData(ticks);
         STREAM_LOG(LogLevel::Verbose, ("TrackUnionStream %p appending %lld ticks of null data to track %d",
                    this, (long long)ticks, outputTrack->GetID()));

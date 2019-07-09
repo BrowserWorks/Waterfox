@@ -18,7 +18,6 @@
 #include "nsCSSRuleProcessor.h"
 #include "nsDeviceContext.h"
 #include "nsIBaseWindow.h"
-#include "nsIDocShell.h"
 #include "nsIDocument.h"
 #include "nsIWidget.h"
 #include "nsContentUtils.h"
@@ -279,24 +278,16 @@ static void
 GetResolution(nsPresContext* aPresContext, const nsMediaFeature*,
               nsCSSValue& aResult)
 {
-  // We're returning resolution in terms of device pixels per css pixel, since
-  // that is the preferred unit for media queries of resolution. This avoids
-  // introducing precision error from conversion to and from less-used
-  // physical units like inches.
-
-  float dppx;
+  float dpi = 96; // Use 96 when resisting fingerprinting.
 
   if (!ShouldResistFingerprinting(aPresContext)) {
-    // Get the actual device pixel ratio, which also takes zoom into account.
-    dppx = float(nsPresContext::AppUnitsPerCSSPixel()) /
-             aPresContext->AppUnitsPerDevPixel();
-  } else {
-    // We are resisting fingerprinting, so pretend we have a device pixel ratio
-    // of 1. In that case, we simply report the zoom level.
-    dppx = aPresContext->GetDeviceFullZoom();
+    // Resolution measures device pixels per CSS (inch/cm/pixel).  We
+    // return it in device pixels per CSS inches.
+    dpi = float(nsPresContext::AppUnitsPerCSSInch()) /
+          float(aPresContext->AppUnitsPerDevPixel());
   }
 
-  aResult.SetFloatValue(dppx, eCSSUnit_Pixel);
+  aResult.SetFloatValue(dpi, eCSSUnit_Inch);
 }
 
 static void
@@ -313,44 +304,33 @@ GetDisplayMode(nsPresContext* aPresContext, const nsMediaFeature*,
                nsCSSValue& aResult)
 {
   nsCOMPtr<nsISupports> container;
-  RefPtr<nsIDocShell> docShell;
-
-  if (!aPresContext) {
-    aResult.SetIntValue(NS_STYLE_DISPLAY_MODE_BROWSER, eCSSUnit_Enumerated);
-    return;
-  }
-
   if (aPresContext) {
     // Calling GetRootPresContext() can be slow, so make sure to call it
     // just once.
     nsRootPresContext* root = aPresContext->GetRootPresContext();
     if (root && root->Document()) {
       container = root->Document()->GetContainer();
-      docShell = root->GetDocShell();
     }
   }
-
   nsCOMPtr<nsIBaseWindow> baseWindow = do_QueryInterface(container);
-  if (baseWindow) {
-    nsCOMPtr<nsIWidget> mainWidget;
-    baseWindow->GetMainWidget(getter_AddRefs(mainWidget));
-    nsSizeMode mode = mainWidget ? mainWidget->SizeMode() : nsSizeMode_Normal;
-
-    if (mode == nsSizeMode_Fullscreen) {
-      aResult.SetIntValue(NS_STYLE_DISPLAY_MODE_FULLSCREEN, eCSSUnit_Enumerated);
-      return;
-    }
+  if (!baseWindow) {
+    aResult.SetIntValue(NS_STYLE_DISPLAY_MODE_BROWSER, eCSSUnit_Enumerated);
+    return;
   }
-
-  static_assert(nsIDocShell::DISPLAY_MODE_BROWSER == NS_STYLE_DISPLAY_MODE_BROWSER &&
-                nsIDocShell::DISPLAY_MODE_MINIMAL_UI == NS_STYLE_DISPLAY_MODE_MINIMAL_UI &&
-                nsIDocShell::DISPLAY_MODE_STANDALONE == NS_STYLE_DISPLAY_MODE_STANDALONE &&
-                nsIDocShell::DISPLAY_MODE_FULLSCREEN == NS_STYLE_DISPLAY_MODE_FULLSCREEN,
-                "nsIDocShell display modes must mach nsStyleConsts.h");
-
-  uint32_t displayMode = NS_STYLE_DISPLAY_MODE_BROWSER;
-  if (docShell) {
-    docShell->GetDisplayMode(&displayMode);
+  nsCOMPtr<nsIWidget> mainWidget;
+  baseWindow->GetMainWidget(getter_AddRefs(mainWidget));
+  int32_t displayMode;
+  nsSizeMode mode = mainWidget ? mainWidget->SizeMode() : nsSizeMode_Normal;
+  // Background tabs are always in 'browser' mode for now.
+  // If new modes are supported, please ensure not cause the regression in
+  // Bug 1259641.
+  switch (mode) {
+    case nsSizeMode_Fullscreen:
+      displayMode = NS_STYLE_DISPLAY_MODE_FULLSCREEN;
+      break;
+    default:
+      displayMode = NS_STYLE_DISPLAY_MODE_BROWSER;
+      break;
   }
 
   aResult.SetIntValue(displayMode, eCSSUnit_Enumerated);
@@ -390,21 +370,15 @@ GetSystemMetric(nsPresContext* aPresContext, const nsMediaFeature* aFeature,
                 nsCSSValue& aResult)
 {
   aResult.Reset();
-
-  const bool isAccessibleFromContentPages =
-    !(aFeature->mReqFlags & nsMediaFeature::eUserAgentAndChromeOnly);
-
-  if (isAccessibleFromContentPages &&
-      ShouldResistFingerprinting(aPresContext)) {
+  if (ShouldResistFingerprinting(aPresContext)) {
     // If "privacy.resistFingerprinting" is enabled, then we simply don't
-    // return any system-backed media feature values. (No spoofed values
-    // returned.)
+    // return any system-backed media feature values. (No spoofed values returned.)
     return;
   }
 
   MOZ_ASSERT(aFeature->mValueType == nsMediaFeature::eBoolInteger,
              "unexpected type");
-  nsAtom* metricAtom = *aFeature->mData.mMetric;
+  nsIAtom *metricAtom = *aFeature->mData.mMetric;
   bool hasMetric = nsCSSRuleProcessor::HasSystemMetric(metricAtom);
   aResult.SetIntValue(hasMetric ? 1 : 0, eCSSUnit_Integer);
 }
@@ -640,10 +614,18 @@ nsMediaFeatures::features[] = {
     GetIsResourceDocument
   },
   {
+    &nsGkAtoms::_moz_color_picker_available,
+    nsMediaFeature::eMinMaxNotAllowed,
+    nsMediaFeature::eBoolInteger,
+    nsMediaFeature::eNoRequirements,
+    { &nsGkAtoms::color_picker_available },
+    GetSystemMetric
+  },
+  {
     &nsGkAtoms::_moz_scrollbar_start_backward,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_start_backward },
     GetSystemMetric
   },
@@ -651,7 +633,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_scrollbar_start_forward,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_start_forward },
     GetSystemMetric
   },
@@ -659,7 +641,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_scrollbar_end_backward,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_end_backward },
     GetSystemMetric
   },
@@ -667,7 +649,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_scrollbar_end_forward,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_end_forward },
     GetSystemMetric
   },
@@ -675,7 +657,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_scrollbar_thumb_proportional,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_thumb_proportional },
     GetSystemMetric
   },
@@ -782,6 +764,15 @@ nsMediaFeatures::features[] = {
     nsMediaFeature::eBoolInteger,
     nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::swipe_animation_enabled },
+    GetSystemMetric
+  },
+
+  {
+    &nsGkAtoms::_moz_physical_home_button,
+    nsMediaFeature::eMinMaxNotAllowed,
+    nsMediaFeature::eBoolInteger,
+    nsMediaFeature::eNoRequirements,
+    { &nsGkAtoms::physical_home_button },
     GetSystemMetric
   },
 

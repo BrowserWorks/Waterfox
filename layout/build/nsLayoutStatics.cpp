@@ -67,6 +67,7 @@
 #include "CacheObserver.h"
 #include "DisplayItemClip.h"
 #include "ActiveLayerTracker.h"
+#include "CounterStyleManager.h"
 #include "FrameLayerBuilder.h"
 #include "AnimationCommon.h"
 #include "LayerAnimationInfo.h"
@@ -116,6 +117,7 @@
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/dom/HTMLVideoElement.h"
 #include "TouchManager.h"
+#include "MediaDecoder.h"
 #include "MediaPrefs.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/StaticPresData.h"
@@ -123,7 +125,10 @@
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
 #include "mozilla/dom/ipc/IPCBlobInputStreamStorage.h"
 #include "mozilla/dom/U2FTokenManager.h"
-#include "mozilla/dom/PointerEventHandler.h"
+
+#ifdef MOZ_WIDGET_GTK
+#include "nsNativeMenuAtoms.h"
+#endif
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -157,6 +162,9 @@ nsLayoutStatics::Initialize()
   nsTextServicesDocument::RegisterAtoms();
   nsHTMLTags::RegisterAtoms();
   nsRDFAtoms::RegisterAtoms();
+#ifdef MOZ_WIDGET_GTK
+  nsNativeMenuAtoms::RegisterAtoms();
+#endif
 
   NS_SealStaticAtomTable();
 
@@ -191,7 +199,6 @@ nsLayoutStatics::Initialize()
 
   nsCellMap::Init();
 
-  mozilla::SharedFontList::Initialize();
   StaticPresData::Init();
   nsCSSRendering::Init();
 
@@ -260,7 +267,7 @@ nsLayoutStatics::Initialize()
   nsHtml5Module::InitializeStatics();
   mozilla::dom::FallbackEncoding::Initialize();
   nsLayoutUtils::Initialize();
-  PointerEventHandler::InitializeStatics();
+  nsIPresShell::InitializeStatics();
   TouchManager::InitializeStatics();
   ContentPrincipal::InitializeStatics();
 
@@ -286,6 +293,8 @@ nsLayoutStatics::Initialize()
 
   CacheObserver::Init();
 
+  CounterStyleManager::InitializeBuiltinCounterStyles();
+
   IMEStateManager::Init();
 
   ServiceWorkerRegistrar::Initialize();
@@ -295,14 +304,14 @@ nsLayoutStatics::Initialize()
   mozilla::LayerAnimationInfo::Initialize();
 #endif
 
+  MediaDecoder::InitStatics();
+
   PromiseDebugging::Init();
 
   mozilla::dom::WebCryptoThreadPool::Initialize();
 
 #ifdef MOZ_STYLO
-  if (XRE_IsParentProcess() || XRE_IsContentProcess()) {
-    InitializeServo();
-  }
+  InitializeServo();
 #endif
 
 #ifndef MOZ_WIDGET_ANDROID
@@ -324,10 +333,8 @@ nsLayoutStatics::Shutdown()
   // memory reporter manager.
 
 #ifdef MOZ_STYLO
-  if (XRE_IsParentProcess() || XRE_IsContentProcess()) {
-    ShutdownServo();
-    URLExtraData::ReleaseDummy();
-  }
+  ShutdownServo();
+  URLExtraData::ReleaseDummy();
 #endif
 
   nsMessageManagerScriptExecutor::Shutdown();
@@ -399,7 +406,7 @@ nsLayoutStatics::Shutdown()
 
   nsCORSListenerProxy::Shutdown();
 
-  PointerEventHandler::ReleaseStatics();
+  nsIPresShell::ReleaseStatics();
 
   TouchManager::ReleaseStatics();
 
@@ -416,7 +423,6 @@ nsLayoutStatics::Shutdown()
   HTMLInputElement::DestroyUploadLastDir();
 
   nsLayoutUtils::Shutdown();
-  mozilla::SharedFontList::Shutdown();
 
   nsHyphenationManager::Shutdown();
   nsDOMMutationObserver::Shutdown();

@@ -7,7 +7,7 @@ description: Expression is a candidate for tail-call optimization.
 esid: static-semantics-hasproductionintailposition
 flags: [onlyStrict]
 features: [tail-call-optimization]
-includes: [tcoHelper.js]
+includes: [tco-helper.js]
 ---*/
 
 var callCount = 0;

@@ -56,7 +56,6 @@ enum class SurfaceFormat : int8_t {
 
   // This one is a single-byte, so endianness isn't an issue.
   A8,
-  A16,
 
   R8G8,
 
@@ -142,7 +141,6 @@ enum class BackendType : int8_t {
   SKIA,
   RECORDING,
   DIRECT2D1_1,
-  WEBRENDER_TEXT,
 
   // Add new entries above this line.
   BACKEND_LAST
@@ -404,7 +402,7 @@ enum SideBits {
   int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eSideTop;                 \
   for (mozilla::Side var_;                                               \
        MOZ_CONCAT(var_,__LINE__) <= mozilla::eSideLeft &&                \
-         (static_cast<void>(var_ = mozilla::Side(MOZ_CONCAT(var_,__LINE__))), true); \
+         ((var_ = mozilla::Side(MOZ_CONCAT(var_,__LINE__))), true);      \
        ++MOZ_CONCAT(var_,__LINE__))
 
 static inline Side& operator++(Side& side) {
@@ -433,7 +431,7 @@ constexpr int eCornerCount = 4;
   int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eCornerTopLeft;          \
   for (mozilla::Corner var_;                                            \
        MOZ_CONCAT(var_,__LINE__) <= mozilla::eCornerBottomLeft &&       \
-         (static_cast<void>(var_ = mozilla::Corner(MOZ_CONCAT(var_,__LINE__))), true); \
+         (var_ = mozilla::Corner(MOZ_CONCAT(var_,__LINE__)), true);     \
        ++MOZ_CONCAT(var_,__LINE__))
 
 static inline Corner operator++(Corner& aCorner) {
@@ -462,7 +460,7 @@ enum HalfCorner {
   int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eCornerTopLeftX;         \
   for (mozilla::HalfCorner var_;                                        \
        MOZ_CONCAT(var_,__LINE__) <= mozilla::eCornerBottomLeftY &&      \
-         (static_cast<void>(var_ = mozilla::HalfCorner(MOZ_CONCAT(var_,__LINE__))), true); \
+         (var_ = mozilla::HalfCorner(MOZ_CONCAT(var_,__LINE__)), true); \
        ++MOZ_CONCAT(var_,__LINE__))
 
 static inline HalfCorner operator++(HalfCorner& aHalfCorner) {

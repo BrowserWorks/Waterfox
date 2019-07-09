@@ -7,7 +7,7 @@
 #include "nsTreeUtils.h"
 #include "ChildIterator.h"
 #include "nsCRT.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsNameSpaceManager.h"
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
@@ -44,7 +44,7 @@ nsTreeUtils::TokenizeProperties(const nsAString& aProperties, AtomArray & aPrope
     if (iter == first)
       break;
 
-    RefPtr<nsAtom> atom = NS_Atomize(Substring(first, iter));
+    nsCOMPtr<nsIAtom> atom = NS_Atomize(Substring(first, iter));
     aPropertiesArray.AppendElement(atom);
   } while (iter != end);
 
@@ -52,7 +52,7 @@ nsTreeUtils::TokenizeProperties(const nsAString& aProperties, AtomArray & aPrope
 }
 
 nsIContent*
-nsTreeUtils::GetImmediateChild(nsIContent* aContainer, nsAtom* aTag)
+nsTreeUtils::GetImmediateChild(nsIContent* aContainer, nsIAtom* aTag)
 {
   dom::FlattenedChildIterator iter(aContainer);
   for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {
@@ -65,7 +65,7 @@ nsTreeUtils::GetImmediateChild(nsIContent* aContainer, nsAtom* aTag)
 }
 
 nsIContent*
-nsTreeUtils::GetDescendantChild(nsIContent* aContainer, nsAtom* aTag)
+nsTreeUtils::GetDescendantChild(nsIContent* aContainer, nsIAtom* aTag)
 {
   dom::FlattenedChildIterator iter(aContainer);
   for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {

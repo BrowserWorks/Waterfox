@@ -306,7 +306,7 @@ bool LinuxPtraceDumper::ThreadsSuspend() {
     }
   }
   threads_suspended_ = true;
-  return !threads_.empty();
+  return threads_.size() > 0;
 }
 
 bool LinuxPtraceDumper::ThreadsResume() {

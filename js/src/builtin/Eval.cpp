@@ -444,15 +444,17 @@ js::IsAnyBuiltinEval(JSFunction* fun)
     return fun->maybeNative() == IndirectEval;
 }
 
-static bool
-ExecuteInExtensibleLexicalEnvironment(JSContext* cx, HandleScript scriptArg, HandleObject env)
+JS_FRIEND_API(bool)
+js::ExecuteInGlobalAndReturnScope(JSContext* cx, HandleObject global, HandleScript scriptArg,
+                                  MutableHandleObject envArg)
 {
     CHECK_REQUEST(cx);
-    assertSameCompartment(cx, env);
-    MOZ_ASSERT(IsExtensibleLexicalEnvironment(env));
+    assertSameCompartment(cx, global);
+    MOZ_ASSERT(global->is<GlobalObject>());
     MOZ_RELEASE_ASSERT(scriptArg->hasNonSyntacticScope());
 
     RootedScript script(cx, scriptArg);
+    Rooted<GlobalObject*> globalRoot(cx, &global->as<GlobalObject>());
     if (script->compartment() != cx->compartment()) {
         script = CloneGlobalScript(cx, ScopeKind::NonSyntactic, script);
         if (!script)
@@ -461,118 +463,23 @@ ExecuteInExtensibleLexicalEnvironment(JSContext* cx, HandleScript scriptArg, Han
         Debugger::onNewScript(cx, script);
     }
 
+    Rooted<EnvironmentObject*> env(cx, NonSyntacticVariablesObject::create(cx));
+    if (!env)
+        return false;
+
+    // Unlike the non-syntactic scope chain API used by the subscript loader,
+    // this API creates a fresh block scope each time.
+    env = LexicalEnvironmentObject::createNonSyntactic(cx, env);
+    if (!env)
+        return false;
+
     RootedValue rval(cx);
-    return ExecuteKernel(cx, script, *env, UndefinedValue(),
-                         NullFramePtr() /* evalInFrame */, rval.address());
-}
-
-JS_FRIEND_API(bool)
-js::ExecuteInGlobalAndReturnScope(JSContext* cx, HandleObject global, HandleScript scriptArg,
-                                  MutableHandleObject envArg)
-{
-    RootedObject varEnv(cx, NonSyntacticVariablesObject::create(cx));
-    if (!varEnv)
+    if (!ExecuteKernel(cx, script, *env, UndefinedValue(),
+                       NullFramePtr() /* evalInFrame */, rval.address()))
+    {
         return false;
-
-    // Create lexical environment with |this| == global.
-    // NOTE: This is required behavior for Gecko FrameScriptLoader
-    RootedObject lexEnv(cx, LexicalEnvironmentObject::createNonSyntactic(cx, varEnv, global));
-    if (!lexEnv)
-        return false;
-
-    if (!ExecuteInExtensibleLexicalEnvironment(cx, scriptArg, lexEnv))
-        return false;
-
-    envArg.set(lexEnv);
-    return true;
-}
-
-JS_FRIEND_API(JSObject*)
-js::NewJSMEnvironment(JSContext* cx)
-{
-    RootedObject varEnv(cx, NonSyntacticVariablesObject::create(cx));
-    if (!varEnv)
-        return nullptr;
-
-    // Force LexicalEnvironmentObject to be created
-    MOZ_ASSERT(!cx->compartment()->getNonSyntacticLexicalEnvironment(varEnv));
-    if (!cx->compartment()->getOrCreateNonSyntacticLexicalEnvironment(cx, varEnv))
-        return nullptr;
-
-    return varEnv;
-}
-
-JS_FRIEND_API(bool)
-js::ExecuteInJSMEnvironment(JSContext* cx, HandleScript scriptArg, HandleObject varEnv)
-{
-    AutoObjectVector emptyChain(cx);
-    return ExecuteInJSMEnvironment(cx, scriptArg, varEnv, emptyChain);
-}
-
-JS_FRIEND_API(bool)
-js::ExecuteInJSMEnvironment(JSContext* cx, HandleScript scriptArg, HandleObject varEnv,
-                            AutoObjectVector& targetObj)
-{
-    assertSameCompartment(cx, varEnv);
-    MOZ_ASSERT(cx->compartment()->getNonSyntacticLexicalEnvironment(varEnv));
-    MOZ_DIAGNOSTIC_ASSERT(scriptArg->noScriptRval());
-
-    RootedObject env(cx, JS_ExtensibleLexicalEnvironment(varEnv));
-
-    // If the Gecko subscript loader specifies target objects, we need to add
-    // them to the environment. These are added after the NSVO environment.
-    if (!targetObj.empty()) {
-        // The environment chain will be as follows:
-        //      GlobalObject / BackstagePass
-        //      LexicalEnvironmentObject[this=global]
-        //      NonSyntacticVariablesObject (the JSMEnvironment)
-        //      LexicalEnvironmentObject[this=nsvo]
-        //      WithEnvironmentObject[target=targetObj]
-        //      LexicalEnvironmentObject[this=targetObj] (*)
-        //
-        //  (*) This environment intentionally intercepts JSOP_GLOBALTHIS, but
-        //  not JSOP_FUNCTIONTHIS (which instead will fallback to the NSVO). I
-        //  don't make the rules, I just record them.
-
-        // Wrap the target objects in WithEnvironments.
-        if (!js::CreateObjectsForEnvironmentChain(cx, targetObj, env, &env))
-            return false;
-
-        // See CreateNonSyntacticEnvironmentChain
-        if (!JSObject::setQualifiedVarObj(cx, env))
-            return false;
-
-        // Create an extensible LexicalEnvironmentObject for target object
-        env = cx->compartment()->getOrCreateNonSyntacticLexicalEnvironment(cx, env);
-        if (!env)
-            return false;
     }
 
-    return ExecuteInExtensibleLexicalEnvironment(cx, scriptArg, env);
-}
-
-JS_FRIEND_API(JSObject*)
-js::GetJSMEnvironmentOfScriptedCaller(JSContext* cx)
-{
-    FrameIter iter(cx);
-    if (iter.done())
-        return nullptr;
-
-    // WASM frames don't always provide their environment, but we also shouldn't
-    // expect to see any calling into here.
-    MOZ_RELEASE_ASSERT(!iter.isWasm());
-
-    RootedObject env(cx, iter.environmentChain(cx));
-    while (env && !env->is<NonSyntacticVariablesObject>())
-        env = env->enclosingEnvironment();
-
-    return env;
-}
-
-JS_FRIEND_API(bool)
-js::IsJSMEnvironment(JSObject* obj)
-{
-    // NOTE: This also returns true if the NonSyntacticVariablesObject was
-    // created for reasons other than the JSM loader.
-    return obj->is<NonSyntacticVariablesObject>();
+    envArg.set(env);
+    return true;
 }

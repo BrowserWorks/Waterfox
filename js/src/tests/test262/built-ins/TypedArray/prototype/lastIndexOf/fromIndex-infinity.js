@@ -21,7 +21,6 @@ info: >
   7. Repeat, while k ≥ 0
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

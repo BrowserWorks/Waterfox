@@ -5,8 +5,8 @@
 // matter if the source text doesn't exist yet or even if the source
 // doesn't exist.
 
-add_task(async function() {
-  const dbg = await initDebugger("doc-scripts.html");
+add_task(function*() {
+  const dbg = yield initDebugger("doc-scripts.html");
   const { selectors: { getSource }, getState } = dbg;
   const sourceUrl = EXAMPLE_URL + "long.js";
 
@@ -17,19 +17,19 @@ add_task(async function() {
 
   // Wait for the source text to load and make sure we're in the right
   // place.
-  await waitForDispatch(dbg, "LOAD_SOURCE_TEXT");
+  yield waitForDispatch(dbg, "LOAD_SOURCE_TEXT");
 
   // TODO: revisit highlighting lines when the debugger opens
   //assertHighlightLocation(dbg, "long.js", 66);
 
   // Jump to line 16 and make sure the editor scrolled.
-  await selectSource(dbg, "long.js", 16);
+  yield selectSource(dbg, "long.js", 16);
   assertHighlightLocation(dbg, "long.js", 16);
 
   // Make sure only one line is ever highlighted and the flash
   // animation is cancelled on old lines.
-  await selectSource(dbg, "long.js", 17);
-  await selectSource(dbg, "long.js", 18);
+  yield selectSource(dbg, "long.js", 17);
+  yield selectSource(dbg, "long.js", 18);
   assertHighlightLocation(dbg, "long.js", 18);
   is(
     findAllElements(dbg, "highlightLine").length,
@@ -44,8 +44,8 @@ add_task(async function() {
   // Make sure the source is in the loading state, wait for it to be
   // fully loaded, and check the highlighted line.
   const simple1 = findSource(dbg, "simple1.js");
-  ok(getSource(getState(), simple1.id).get("loadedState"));
-  await waitForDispatch(dbg, "LOAD_SOURCE_TEXT");
+  ok(getSource(getState(), simple1.id).get("loading"));
+  yield waitForDispatch(dbg, "LOAD_SOURCE_TEXT");
   ok(getSource(getState(), simple1.id).get("text"));
   assertHighlightLocation(dbg, "simple1.js", 6);
 });

@@ -9,9 +9,10 @@
 
 class ExplicitImplicitChecker : public BaseCheck {
 public:
-  ExplicitImplicitChecker(StringRef CheckName, ContextType *Context = nullptr)
-      : BaseCheck(CheckName, Context) {}
-  void registerMatchers(MatchFinder *AstMatcher) override;
+  ExplicitImplicitChecker(StringRef CheckName,
+                          ContextType *Context = nullptr)
+    : BaseCheck(CheckName, Context) {}
+  void registerMatchers(MatchFinder* AstMatcher) override;
   void check(const MatchFinder::MatchResult &Result) override;
 };
 

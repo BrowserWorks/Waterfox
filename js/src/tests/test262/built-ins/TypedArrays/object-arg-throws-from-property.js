@@ -18,7 +18,6 @@ info: >
     b. Let kValue be ? Get(arrayLike, Pk).
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var obj = {

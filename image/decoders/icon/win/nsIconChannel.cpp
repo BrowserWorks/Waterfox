@@ -11,7 +11,7 @@
 #include "nsIServiceManager.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsMimeTypes.h"
 #include "nsMemory.h"
@@ -256,7 +256,7 @@ nsIconChannel::AsyncOpen(nsIStreamListener* aListener,
   nsCOMPtr<nsIEventTarget> target =
     nsContentUtils::GetEventTargetByLoadInfo(mLoadInfo,
                                              mozilla::TaskCategory::Other);
-  rv = mPump->Init(inStream, 0, 0, false, target);
+  rv = mPump->Init(inStream, int64_t(-1), int64_t(-1), 0, 0, false, target);
   if (NS_FAILED(rv)) {
     mCallbacks = nullptr;
     return rv;
@@ -334,7 +334,7 @@ GetSizeInfoFlag(uint32_t aDesiredImageSize)
 nsresult
 nsIconChannel::GetHIconFromFile(HICON* hIcon)
 {
-  nsCString contentType;
+  nsXPIDLCString contentType;
   nsCString fileExt;
   nsCOMPtr<nsIFile> localFile; // file we want an icon for
   uint32_t desiredImageSize;

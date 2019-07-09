@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use canvas_traits::canvas::{FillOrStrokeStyle, RepetitionStyle, SurfaceStyle};
+use canvas_traits::{FillOrStrokeStyle, RepetitionStyle, SurfaceStyle};
 use dom::bindings::codegen::Bindings::CanvasPatternBinding;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::canvasgradient::ToFillOrStrokeStyle;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
@@ -49,14 +49,11 @@ impl CanvasPattern {
                surface_size: Size2D<i32>,
                repeat: RepetitionStyle,
                origin_clean: bool)
-               -> DomRoot<CanvasPattern> {
-        reflect_dom_object(
-            Box::new(CanvasPattern::new_inherited(
-                surface_data, surface_size, repeat, origin_clean
-            )),
-            global,
-            CanvasPatternBinding::Wrap
-        )
+               -> Root<CanvasPattern> {
+        reflect_dom_object(box CanvasPattern::new_inherited(surface_data, surface_size,
+                                                            repeat, origin_clean),
+                           global,
+                           CanvasPatternBinding::Wrap)
     }
     pub fn origin_is_clean(&self) -> bool {
       self.origin_clean

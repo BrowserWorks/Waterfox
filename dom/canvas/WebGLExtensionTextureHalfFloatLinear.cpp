@@ -14,7 +14,6 @@ namespace mozilla {
 WebGLExtensionTextureHalfFloatLinear::WebGLExtensionTextureHalfFloatLinear(WebGLContext* webgl)
     : WebGLExtensionBase(webgl)
 {
-    MOZ_ASSERT(!webgl->IsWebGL2());
     auto& fua = webgl->mFormatUsage;
 
     fua->EditUsage(webgl::EffectiveFormat::RGBA16F)->isFilterable = true;

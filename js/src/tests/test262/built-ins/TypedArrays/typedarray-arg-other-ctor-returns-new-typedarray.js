@@ -11,7 +11,6 @@ info: >
   least one argument and the Type of the first argument is Object and that
   object has a [[TypedArrayName]] internal slot.
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var sample1 = new Int8Array(7);

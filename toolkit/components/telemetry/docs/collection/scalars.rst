@@ -9,7 +9,7 @@ The serialized scalar data is submitted with the :doc:`main pings <../data/main-
 
 .. important::
 
-    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for one of the data peers. We try to reply within a business day.
+    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for :bsmedberg or one of the other data peers. We try to reply within a business day.
 
 The API
 =======
@@ -33,47 +33,6 @@ Probes in privileged JavaScript code can use the following functions to manipula
 These functions can throw if, for example, an operation is performed on a scalar type that doesn't support it
 (e.g. calling scalarSetMaximum on a scalar of the string kind). Please look at the `code documentation <https://dxr.mozilla.org/mozilla-central/search?q=regexp%3ATelemetryScalar%3A%3A(Set%7CAdd)+file%3ATelemetryScalar.cpp&redirect=false>`_ for
 additional information.
-
-``registerScalars()``
-~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: js
-
-  Services.telemetry.registerScalars(category, scalarData);
-
-Register new scalars from add-ons.
-
-* ``category`` - *(required, string)* The unique category the scalars are registered in (see :ref:`limitations <scalar-limitations>`).
-* ``scalarData`` - *(required, object)* An object of the form ``{scalarName1: scalar1Data, ...}`` that contains registration data for multiple scalars; ``scalarName1`` is subject to :ref:`limitations <scalar-limitations>`; each scalar is an object with the following properties:
-
-  * ``kind`` - *(required, uint)*  One of the scalar types (nsITelemetry::SCALAR_TYPE_*).
-  * ``keyed`` - *(optional, bool)* Whether this is a keyed scalar or not. Defaults to false.
-  * ``record_on_release`` - *(optional, bool)* Whether to record this data on release. Defaults to false.
-  * ``expired`` - *(optional, bool)* Whether this scalar entry is expired. This allows recording it without error, but it will be discarded. Defaults to false.
-
-For scalars recorded from add-ons, registration happens at runtime. Any new scalar must first be registered through this function before they can be recorded.
-
-After registration, the scalars can be recorded through the usual scalar JS API. If the accumulation happens in a content process right after the registration and the definition still has to reach this process, it will be discarded: one way to work around the problem is to send an IPC message to the content process and start accumulating data once this message has been received. The accumulated data will be submitted in the main pings payload under ``processes.dynamic.scalars``.
-
-.. note::
-
-    Accumulating in dynamic scalars only works in content child processes and in the parent process. All the accumulations (parent and content chldren) are aggregated together .
-
-New scalars registered here are subject to the same :ref:`limitations <scalar-limitations>` as the ones registered through ``Scalars.yaml``, e.g. the length of the category name or the allowed characters.
-
-Example:
-
-.. code-block:: js
-
-  Services.telemetry.registerScalars("myAddon.category", {
-    "counter_scalar": {
-      kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-      keyed: false,
-      record_on_release: false
-    },
-  });
-  // Now scalars can be recorded.
-  Services.telemetry.scalarSet("myAddon.category.counter_scalar", 37);
 
 C++ API
 -------
@@ -106,8 +65,8 @@ The probes in the definition file are represented in a fixed-depth, two-level st
 
 .. code-block:: yaml
 
-    # The following is a category.
-    a.category.hierarchy:
+    # The following is a group.
+    a.group.hierarchy:
       a_probe_name:
         kind: uint
         ...
@@ -115,24 +74,22 @@ The probes in the definition file are represented in a fixed-depth, two-level st
         kind: string
         ...
       ...
-    category2:
+    group2:
       probe:
         kind: int
         ...
 
-.. _scalar-limitations:
-
-Category and probe names need to follow a few rules:
+Group and probe names need to follow a few rules:
 
 - they cannot exceed 40 characters each;
-- category names must be alpha-numeric + ``.``, with no leading/trailing digit or ``.``;
+- group names must be alpha-numeric + ``.``, with no leading/trailing digit or ``.``;
 - probe names must be alpha-numeric + ``_``, with no leading/trailing digit or ``_``.
 
 A probe can be defined as follows:
 
 .. code-block:: yaml
 
-    a.category.hierarchy:
+    a.group.hierarchy:
       a_scalar:
         bug_numbers:
           - 1276190
@@ -179,7 +136,7 @@ Keyed scalars should only be used if the set of keys are not known beforehand. I
 Multiple processes caveats
 --------------------------
 When recording data in different processes of the same type (e.g. multiple content processes), the user is responsible for preventing races between the operations on the scalars.
-Races can happen because scalar changes are sent from each child process to the parent process, and then merged into the final storage location. Since there's no synchronization between the processes, operations like ``setMaximum`` can potentially produce different results if sent from more than one child process.
+Races can happen because scalar changes are send from each child process to the parent process, and then merged into the final storage location. Since there's no synchronization between the processes, operations like ``setMaximum`` can potentially produce different results if sent from more than one child process.
 
 The processor scripts
 =====================
@@ -284,4 +241,3 @@ Version History
 - Firefox 50: Initial scalar support (`bug 1276195 <https://bugzilla.mozilla.org/show_bug.cgi?id=1276195>`_).
 - Firefox 51: Added keyed scalars (`bug 1277806 <https://bugzilla.mozilla.org/show_bug.cgi?id=1277806>`_).
 - Firefox 53: Added child process scalars (`bug 1278556 <https://bugzilla.mozilla.org/show_bug.cgi?id=1278556>`_).
-- Firefox 58: Added support for recording new scalars from add-ons (`bug 1393801 <bug https://bugzilla.mozilla.org/show_bug.cgi?id=1393801>`_).

@@ -153,11 +153,6 @@ testComparison32('gt_u', 40, 40, 0);
 testComparison32('ge_s', 40, 40, 1);
 testComparison32('ge_u', 40, 40, 1);
 
-// On 32-bit debug builds, with --ion-eager, this test can run into our
-// per-process JIT code limits and OOM. Trigger a GC to discard code.
-if (getJitCompilerOptions()["ion.warmup.trigger"] === 0)
-    gc();
-
 // Test MTest's GVN branch inversion.
 var testTrunc = wasmEvalText(`(module (func (param f32) (result i32) (if i32 (i32.eqz (i32.trunc_s/f32 (get_local 0))) (i32.const 0) (i32.const 1))) (export "" 0))`).exports[""];
 assertEq(testTrunc(0), 0);
@@ -189,7 +184,6 @@ assertEq(testTrunc(13.37), 1);
     testBinary64('div_s', 40, 7, 5);
     testBinary64('div_s', "0x1234567887654321", 2, "0x91a2b3c43b2a190");
     testBinary64('div_s', "0x1234567887654321", "0x1000000000", "0x1234567");
-    testBinary64('div_s', -1, "0x100000000", 0);
     testBinary64('div_u', -40, 2, "0x7fffffffffffffec");
     testBinary64('div_u', "0x1234567887654321", 9, "0x205d0b80f0b4059");
     testBinary64('div_u', 40, 2, 20);

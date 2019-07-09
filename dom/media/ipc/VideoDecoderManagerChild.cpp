@@ -116,12 +116,8 @@ VideoDecoderManagerChild::GetManagerAbstractThread()
 
 PVideoDecoderChild*
 VideoDecoderManagerChild::AllocPVideoDecoderChild(const VideoInfo& aVideoInfo,
-                                                  const float& aFramerate,
                                                   const layers::TextureFactoryIdentifier& aIdentifier,
-                                                  bool* aSuccess,
-                                                  nsCString* /* not used */,
-                                                  nsCString* /* not used */,
-                                                  nsCString* /* not used */)
+                                                  bool* aSuccess)
 {
   return new VideoDecoderChild();
 }

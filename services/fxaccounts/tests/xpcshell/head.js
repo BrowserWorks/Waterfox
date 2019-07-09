@@ -24,6 +24,18 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 // Load mocking/stubbing library, sinon
 // docs: http://sinonjs.org/releases/v2.3.2/
 Cu.import("resource://gre/modules/Timer.jsm");
-Services.scriptloader.loadSubScript("resource://testing-common/sinon-2.3.2.js", this);
-/* globals sinon */
+var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
+var loader = new Loader.Loader({
+  paths: {
+    "": "resource://testing-common/",
+  },
+  globals: {
+    setTimeout,
+    setInterval,
+    clearTimeout,
+    clearInterval,
+  },
+});
+var require = Loader.Require(loader, {id: ""});
+var sinon = require("sinon-2.3.2");
 // ================================================

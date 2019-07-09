@@ -389,8 +389,8 @@ nsresult TransportLayerDtls::InitInternal() {
     return rv;
   }
 
-  timer_ = NS_NewTimer();
-  if (!timer_) {
+  timer_ = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+  if (NS_FAILED(rv)) {
     MOZ_MTLOG(ML_ERROR, "Couldn't get timer");
     return rv;
   }

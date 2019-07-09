@@ -4,7 +4,7 @@
 "use strict";
 
 const {Task} = require("devtools/shared/task");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {createNode} = require("devtools/client/animationinspector/utils");
 const { LocalizationHelper } = require("devtools/shared/l10n");
 
@@ -196,7 +196,7 @@ DomNodePreview.prototype = {
   },
 
   destroy: function () {
-    HighlighterLock.unhighlight().catch(console.error);
+    HighlighterLock.unhighlight().catch(e => console.error(e));
 
     this.stopListeners();
 
@@ -218,7 +218,7 @@ DomNodePreview.prototype = {
       return;
     }
     this.highlighterUtils.highlightNodeFront(this.nodeFront)
-                         .catch(console.error);
+                         .catch(e => console.error(e));
   },
 
   onPreviewMouseOut: function () {
@@ -226,7 +226,7 @@ DomNodePreview.prototype = {
       return;
     }
     this.highlighterUtils.unhighlight()
-                         .catch(console.error);
+                         .catch(e => console.error(e));
   },
 
   onSelectElClick: function () {
@@ -246,12 +246,12 @@ DomNodePreview.prototype = {
       classList.remove("selected");
       HighlighterLock.unhighlight().then(() => {
         this.emit("target-highlighter-unlocked");
-      }, console.error);
+      }, error => console.error(error));
     } else {
       classList.add("selected");
       HighlighterLock.highlight(this).then(() => {
         this.emit("target-highlighter-locked");
-      }, console.error);
+      }, error => console.error(error));
     }
   },
 

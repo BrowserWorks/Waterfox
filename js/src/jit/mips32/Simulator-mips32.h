@@ -36,13 +36,9 @@
 #include "jit/IonTypes.h"
 #include "threading/Thread.h"
 #include "vm/MutexIDs.h"
-#include "wasm/WasmCode.h"
 
 namespace js {
-
 namespace jit {
-
-class JitActivation;
 
 class Simulator;
 class Redirection;
@@ -192,11 +188,8 @@ class Simulator {
     template <typename T>
     T get_pc_as() const { return reinterpret_cast<T>(get_pc()); }
 
-    void trigger_wasm_interrupt() {
-        // This can be called several times if a single interrupt isn't caught
-        // and handled by the simulator, but this is fine; once the current
-        // instruction is done executing, the interrupt will be handled anyhow.
-        wasm_interrupt_ = true;
+    void set_resume_pc(void* value) {
+        resume_pc_ = int32_t(value);
     }
 
     // Accessor to the internal simulator stack area.
@@ -262,9 +255,6 @@ class Simulator {
     inline double readD(uint32_t addr, SimInstruction* instr);
     inline void writeD(uint32_t addr, double value, SimInstruction* instr);
 
-    inline int32_t loadLinkedW(uint32_t addr, SimInstruction* instr);
-    inline int32_t storeConditionalW(uint32_t addr, int32_t value, SimInstruction* instr);
-
     // Executing is handled based on the instruction type.
     void decodeTypeRegister(SimInstruction* instr);
 
@@ -294,12 +284,6 @@ class Simulator {
     void increaseStopCounter(uint32_t code);
     void printStopInfo(uint32_t code);
 
-    // Handle a wasm interrupt triggered by an async signal handler.
-    void handleWasmInterrupt();
-    void startInterrupt(JitActivation* act);
-
-    // Handle any wasm faults, returning true if the fault was handled.
-    bool handleWasmFault(int32_t addr, unsigned numBytes);
 
     // Executes one instruction.
     void instructionDecode(SimInstruction* instr);
@@ -307,6 +291,8 @@ class Simulator {
     void branchDelayInstructionDecode(SimInstruction* instr);
 
   public:
+    static bool ICacheCheckingEnabled;
+
     static int StopSimAt;
 
     // Runtime call support.
@@ -343,10 +329,6 @@ class Simulator {
     // FPU control register.
     uint32_t FCSR_;
 
-    bool LLBit_;
-    uint32_t LLAddr_;
-    int32_t lastLLValue_;
-
     // Simulator support.
     char* stack_;
     uintptr_t stackLimit_;
@@ -354,8 +336,7 @@ class Simulator {
     int icount_;
     int break_count_;
 
-    // wasm async interrupt / fault support
-    bool wasm_interrupt_;
+    int32_t resume_pc_;
 
     // Debugger input.
     char* lastDebuggerInput_;

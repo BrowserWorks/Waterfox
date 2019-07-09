@@ -5,8 +5,8 @@
 use dom::bindings::codegen::Bindings::DOMPointBinding::{DOMPointInit, DOMPointMethods, Wrap};
 use dom::bindings::codegen::Bindings::DOMPointReadOnlyBinding::DOMPointReadOnlyMethods;
 use dom::bindings::error::Fallible;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::reflect_dom_object;
-use dom::bindings::root::DomRoot;
 use dom::dompointreadonly::{DOMPointReadOnly, DOMPointWriteMethods};
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
@@ -24,8 +24,8 @@ impl DOMPoint {
         }
     }
 
-    pub fn new(global: &GlobalScope, x: f64, y: f64, z: f64, w: f64) -> DomRoot<DOMPoint> {
-        reflect_dom_object(Box::new(DOMPoint::new_inherited(x, y, z, w)), global, Wrap)
+    pub fn new(global: &GlobalScope, x: f64, y: f64, z: f64, w: f64) -> Root<DOMPoint> {
+        reflect_dom_object(box DOMPoint::new_inherited(x, y, z, w), global, Wrap)
     }
 
     pub fn Constructor(global: &GlobalScope,
@@ -33,11 +33,11 @@ impl DOMPoint {
                        y: f64,
                        z: f64,
                        w: f64)
-                       -> Fallible<DomRoot<DOMPoint>> {
+                       -> Fallible<Root<DOMPoint>> {
         Ok(DOMPoint::new(global, x, y, z, w))
     }
 
-    pub fn new_from_init(global: &GlobalScope, p: &DOMPointInit) -> DomRoot<DOMPoint> {
+    pub fn new_from_init(global: &GlobalScope, p: &DOMPointInit) -> Root<DOMPoint> {
         DOMPoint::new(global, p.x, p.y, p.z, p.w)
     }
 }

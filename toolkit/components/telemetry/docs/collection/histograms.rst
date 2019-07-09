@@ -6,7 +6,7 @@ If a user has opted into submitting performance data to Mozilla, the Telemetry s
 
 .. important::
 
-    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for one of the data peers. We try to reply within a business day.
+    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for :bsmedberg or one of the other data peers. We try to reply within a business day.
 
 The following sections explain how to add a new measurement to Telemetry.
 
@@ -18,13 +18,13 @@ They are collected through a common API and automatically submitted with the :do
 
 .. hint::
 
-    Before adding a new histogram, you should consider using other collection mechanisms. For example, if the need is to track a single scalar value (e.g. number, boolean or string), you should use :doc:`scalars`.
+    Before adding a new histogram,  you should consider using other collection mechanisms. For example, if the need is to track a single scalar value (e.g. number, boolean or string), you should use :doc:`scalars`.
 
 The histogram below is taken from Firefox's ``about:telemetry`` page. It shows a histogram used for tracking plugin shutdown times and the data collected over a single Firefox session. The timing data is grouped into buckets where the height of the blue bars represents the number of items in each bucket. The tallest bar, for example, indicates that there were 63 plugin shutdowns lasting between 129ms and 204ms.
 
 .. image:: sampleHistogram.png
 
-The histograms on the ``about:telemetry`` page only show the non-empty buckets in a histogram, except for the bucket to the left of the first non-empty bucket and the bucket to the right of the last non-empty bucket.
+The histograms on the ``about:telemetry`` page only show the non-empty buckets in a histogram except for the bucket to the left of the first non-empty bucket and the bucket to the right of the last non-empty bucket.
 
 .. _choosing-histogram-type:
 
@@ -149,10 +149,6 @@ Required. One of the histogram types described in the previous section. Differen
 ---------
 Optional, boolean, defaults to ``false``. Determines whether this is a *keyed histogram*.
 
-``keys``
----------
-Optional, list of strings. Only valid for *keyed histograms*. Defines a case sensitive list of allowed keys that can be used for this histogram. The list is limited to 30 keys with a maximum length of 20 characters. When using a key that is not in the list, the accumulation is discarded and a warning is printed to the browser console.
-
 ``low``
 -------
 Optional, the default value is ``1``. This field represents the minimum value expected in the histogram. Note that all histograms automatically get a bucket with label ``0`` for counting values below the ``low`` value. If a histogram does not specify a ``low`` value, it will always have a ``"0"`` bucket (for negative or zero values) and a ``"1"`` bucket (for values between ``1`` and the next bucket).
@@ -172,7 +168,7 @@ Required for enumerated histograms. Similar to n_buckets, it represent the numbe
 
 ``labels``
 ----------
-Required for categorical histograms. This is an array of strings which are the labels for different values in this histograms. The labels are restricted to a C++-friendly subset of characters (``^[a-z][a-z0-9_]+[a-z0-9]$``). This field is limited to 100 strings, each with a maximum length of 20 characters.
+Required for categorical histograms. This is an array of strings which are the labels for different values in this histograms. The labels are restricted to a C++-friendly subset of characters (``^[a-z][a-z0-9_]+[a-z0-9]$``).
 
 ``bug_numbers``
 ---------------
@@ -198,7 +194,7 @@ Optional. This is one of:
     Because they are collected by default, opt-out probes need to meet a higher "user benefit" threshold than opt-in probes.
 
 
-    **Every** new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for one of the data peers.
+    **Every** new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for :bsmedberg or one of the other data peers.
 
 Changing a histogram
 ====================

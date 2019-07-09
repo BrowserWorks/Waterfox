@@ -659,31 +659,15 @@ Assembler::finish()
 }
 
 bool
-Assembler::appendRawCode(const uint8_t* code, size_t numBytes)
+Assembler::asmMergeWith(Assembler& other)
 {
     flush();
-    return m_buffer.appendRawCode(code, numBytes);
-}
-
-bool
-Assembler::reserve(size_t size)
-{
-    // This buffer uses fixed-size chunks so there's no point in reserving
-    // now vs. on-demand.
-    return !oom();
-}
-
-bool
-Assembler::swapBuffer(wasm::Bytes& bytes)
-{
-    // For now, specialize to the one use case. As long as wasm::Bytes is a
-    // Vector, not a linked-list of chunks, there's not much we can do other
-    // than copy.
-    MOZ_ASSERT(bytes.empty());
-    if (!bytes.resize(bytesNeeded()))
+    other.flush();
+    if (other.oom())
         return false;
-    m_buffer.executableCopy(bytes.begin());
-    return true;
+    if (!AssemblerShared::asmMergeWith(size(), other))
+        return false;
+    return m_buffer.appendBuffer(other.m_buffer);
 }
 
 void
@@ -964,21 +948,20 @@ Assembler::processCodeLabels(uint8_t* rawCode)
 {
     for (size_t i = 0; i < codeLabels_.length(); i++) {
         CodeLabel label = codeLabels_[i];
-        Bind(rawCode, *label.patchAt(), *label.target());
+        Bind(rawCode, label.patchAt(), rawCode + label.target()->offset());
     }
 }
 
 void
-Assembler::writeCodePointer(CodeOffset* label)
-{
-    BufferOffset off = writeInst(-1);
+Assembler::writeCodePointer(CodeOffset* label) {
+    BufferOffset off = writeInst(LabelBase::INVALID_OFFSET);
     label->bind(off.getOffset());
 }
 
 void
-Assembler::Bind(uint8_t* rawCode, CodeOffset label, CodeOffset target)
+Assembler::Bind(uint8_t* rawCode, CodeOffset* label, const void* address)
 {
-    *reinterpret_cast<const void**>(rawCode + label.offset()) = rawCode + target.offset();
+    *reinterpret_cast<const void**>(rawCode + label->offset()) = address;
 }
 
 Assembler::Condition
@@ -2273,41 +2256,21 @@ Assembler::PatchConstantPoolLoad(void* loadAddr, void* constPoolAddr)
 // Atomic instruction stuff:
 
 BufferOffset
-Assembler::as_ldrexd(Register rt, Register rt2, Register rn, Condition c)
-{
-    MOZ_ASSERT(!(rt.code() & 1) && rt2.code() == rt.code()+1);
-    MOZ_ASSERT(rt.code() != 14 && rn.code() != 15);
-    return writeInst(0x01b00f9f | (int)c | RT(rt) | RN(rn));
-}
-
-BufferOffset
 Assembler::as_ldrex(Register rt, Register rn, Condition c)
 {
-    MOZ_ASSERT(rt.code() != 15 && rn.code() != 15);
     return writeInst(0x01900f9f | (int)c | RT(rt) | RN(rn));
 }
 
 BufferOffset
 Assembler::as_ldrexh(Register rt, Register rn, Condition c)
 {
-    MOZ_ASSERT(rt.code() != 15 && rn.code() != 15);
     return writeInst(0x01f00f9f | (int)c | RT(rt) | RN(rn));
 }
 
 BufferOffset
 Assembler::as_ldrexb(Register rt, Register rn, Condition c)
 {
-    MOZ_ASSERT(rt.code() != 15 && rn.code() != 15);
     return writeInst(0x01d00f9f | (int)c | RT(rt) | RN(rn));
-}
-
-BufferOffset
-Assembler::as_strexd(Register rd, Register rt, Register rt2, Register rn, Condition c)
-{
-    MOZ_ASSERT(!(rt.code() & 1) && rt2.code() == rt.code()+1);
-    MOZ_ASSERT(rt.code() != 14 && rn.code() != 15 && rd.code() != 15);
-    MOZ_ASSERT(rd != rn && rd != rt && rd != rt2);
-    return writeInst(0x01a00f90 | (int)c | RD(rd) | RN(rn) | rt.code());
 }
 
 BufferOffset
@@ -2329,12 +2292,6 @@ Assembler::as_strexb(Register rd, Register rt, Register rn, Condition c)
 {
     MOZ_ASSERT(rd != rn && rd != rt); // True restriction on Cortex-A7 (RPi2)
     return writeInst(0x01c00f90 | (int)c | RD(rd) | RN(rn) | rt.code());
-}
-
-BufferOffset
-Assembler::as_clrex()
-{
-    return writeInst(0xf57ff01f);
 }
 
 // Memory barrier stuff:
@@ -2420,7 +2377,12 @@ Assembler::as_b(Label* l, Condition c)
         if (oom())
             return BufferOffset();
 
-        as_b(BufferOffset(l).diffB<BOffImm>(ret), c, ret);
+    BOffImm off = BufferOffset(l).diffB<BOffImm>(ret);
+    if (off.isInvalid()) {
+      m_buffer.fail_bail();
+      return BufferOffset();
+    }
+    as_b(off, c, ret);
 #ifdef JS_DISASM_ARM
         spewBranch(m_buffer.getInstOrNull(ret), l);
 #endif
@@ -2430,9 +2392,10 @@ Assembler::as_b(Label* l, Condition c)
     if (oom())
         return BufferOffset();
 
+    int32_t old;
     BufferOffset ret;
     if (l->used()) {
-        int32_t old = l->offset();
+        old = l->offset();
         // This will currently throw an assertion if we couldn't actually
         // encode the offset of the branch.
         if (!BOffImm::IsInRange(old)) {
@@ -2441,6 +2404,7 @@ Assembler::as_b(Label* l, Condition c)
         }
         ret = as_b(BOffImm(old), c, l);
     } else {
+        old = LabelBase::INVALID_OFFSET;
         BOffImm inv;
         ret = as_b(inv, c, l);
     }
@@ -2448,7 +2412,8 @@ Assembler::as_b(Label* l, Condition c)
     if (oom())
         return BufferOffset();
 
-    l->use(ret.getOffset());
+    DebugOnly<int32_t> check = l->use(ret.getOffset());
+    MOZ_ASSERT(check == old);
     return ret;
 }
 
@@ -2514,18 +2479,20 @@ Assembler::as_bl(Label* l, Condition c)
     if (oom())
         return BufferOffset();
 
+    int32_t old;
     BufferOffset ret;
-    // See if the list was empty.
+    // See if the list was empty :(
     if (l->used()) {
         // This will currently throw an assertion if we couldn't actually encode
         // the offset of the branch.
-        int32_t old = l->offset();
+        old = l->offset();
         if (!BOffImm::IsInRange(old)) {
             m_buffer.fail_bail();
             return ret;
         }
         ret = as_bl(BOffImm(old), c, l);
     } else {
+        old = LabelBase::INVALID_OFFSET;
         BOffImm inv;
         ret = as_bl(inv, c, l);
     }
@@ -2533,7 +2500,8 @@ Assembler::as_bl(Label* l, Condition c)
     if (oom())
         return BufferOffset();
 
-    l->use(ret.getOffset());
+    DebugOnly<int32_t> check = l->use(ret.getOffset());
+    MOZ_ASSERT(check == old);
     return ret;
 }
 
@@ -2960,8 +2928,7 @@ Assembler::retarget(Label* label, Label* target)
             // use chain, prepending the entire use chain of target.
             Instruction branch = *editSrc(labelBranchOffset);
             Condition c = branch.extractCond();
-            int32_t prev = target->offset();
-            target->use(label->offset());
+            int32_t prev = target->use(label->offset());
             if (branch.is<InstBImm>())
                 as_b(BOffImm(prev), c, labelBranchOffset);
             else if (branch.is<InstBLImm>())
@@ -2971,7 +2938,8 @@ Assembler::retarget(Label* label, Label* target)
         } else {
             // The target is unbound and unused. We can just take the head of
             // the list hanging off of label, and dump that into target.
-            target->use(label->offset());
+            DebugOnly<uint32_t> prev = target->use(label->offset());
+            MOZ_ASSERT((int32_t)prev == Label::INVALID_OFFSET);
         }
     }
     label->reset();

@@ -41,6 +41,7 @@ namespace jit {
     _(LoadUndefinedResult)                \
     _(LoadBooleanResult)                  \
     _(LoadInt32ArrayLengthResult)         \
+    _(LoadUnboxedArrayLengthResult)       \
     _(LoadArgumentsObjectLengthResult)    \
     _(LoadFunctionLengthResult)           \
     _(LoadStringLengthResult)             \
@@ -50,17 +51,17 @@ namespace jit {
     _(LoadDenseElementHoleResult)         \
     _(LoadDenseElementExistsResult)       \
     _(LoadDenseElementHoleExistsResult)   \
+    _(LoadUnboxedArrayElementResult)      \
     _(LoadTypedElementResult)             \
     _(LoadObjectResult)                   \
     _(LoadTypeOfObjectResult)             \
     _(CompareStringResult)                \
     _(CompareObjectResult)                \
     _(CompareSymbolResult)                \
-    _(ArrayJoinResult)                    \
     _(CallPrintString)                    \
     _(Breakpoint)                         \
     _(MegamorphicLoadSlotByValueResult)   \
-    _(MegamorphicHasPropResult)           \
+    _(MegamorphicHasOwnResult)            \
     _(WrapResult)
 
 // Represents a Value on the Baseline frame's expression stack. Slot 0 is the
@@ -461,6 +462,37 @@ class MOZ_RAII AutoScratchRegister
     }
 
     Register get() const { return reg_; }
+    operator Register() const { return reg_; }
+};
+
+// Like AutoScratchRegister, but lets the caller specify a register that should
+// not be allocated here.
+class MOZ_RAII AutoScratchRegisterExcluding
+{
+    CacheRegisterAllocator& alloc_;
+    Register reg_;
+
+  public:
+    AutoScratchRegisterExcluding(CacheRegisterAllocator& alloc, MacroAssembler& masm,
+                                 Register excluding)
+      : alloc_(alloc)
+    {
+        MOZ_ASSERT(excluding != InvalidReg);
+
+        reg_ = alloc.allocateRegister(masm);
+
+        if (reg_ == excluding) {
+            // We need a different register, so try again.
+            reg_ = alloc.allocateRegister(masm);
+            MOZ_ASSERT(reg_ != excluding);
+            alloc_.releaseRegister(excluding);
+        }
+
+        MOZ_ASSERT(alloc_.currentOpRegs_.has(reg_));
+    }
+    ~AutoScratchRegisterExcluding() {
+        alloc_.releaseRegister(reg_);
+    }
     operator Register() const { return reg_; }
 };
 

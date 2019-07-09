@@ -18,7 +18,6 @@ info: >
   exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var join = TypedArray.prototype.join;

@@ -6,7 +6,7 @@
  * https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html#sec-navigation-timing-interface
  */
 
-[Exposed=(Window)]
+[Exposed=(Window,Worker)]
 interface PerformanceTiming {
   readonly attribute unsigned long long navigationStart;
   /*  readonly attribute unsigned long long unloadEventStart;

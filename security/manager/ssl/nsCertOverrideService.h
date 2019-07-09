@@ -7,7 +7,6 @@
 #ifndef nsCertOverrideService_h
 #define nsCertOverrideService_h
 
-#include "mozilla/Move.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TypedEnumBits.h"
 #include "nsICertOverrideService.h"
@@ -30,6 +29,7 @@ public:
 
   nsCertOverride()
     : mPort(-1)
+    , mIsTemporary(false)
     , mOverrideBits(OverrideBits::None)
   {
   }
@@ -80,10 +80,10 @@ class nsCertOverrideEntry final : public PLDHashEntryHdr
     {
     }
 
-    nsCertOverrideEntry(nsCertOverrideEntry&& toMove)
-      : mSettings(mozilla::Move(toMove.mSettings))
-      , mHostWithPort(mozilla::Move(toMove.mHostWithPort))
+    nsCertOverrideEntry(const nsCertOverrideEntry& toCopy)
     {
+      mSettings = toCopy.mSettings;
+      mHostWithPort = toCopy.mHostWithPort;
     }
 
     ~nsCertOverrideEntry()

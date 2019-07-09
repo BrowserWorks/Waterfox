@@ -12,12 +12,12 @@ UNIFIED_SOURCES += [
     'testArgumentsObject.cpp',
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
-    'testAtomicOperations.cpp',
     'testBoundFunction.cpp',
     'testBug604087.cpp',
     'testCallArgs.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
+    'testClassGetter.cpp',
     'testCloneScript.cpp',
     'testDateToLocaleString.cpp',
     'testDebugger.cpp',
@@ -29,7 +29,6 @@ UNIFIED_SOURCES += [
     'testDifferentNewTargetInvokeConstructor.cpp',
     'testErrorCopying.cpp',
     'testException.cpp',
-    'testExecuteInJSMEnvironment.cpp',
     'testExternalArrayBuffer.cpp',
     'testExternalStrings.cpp',
     'testFindSCCs.cpp',
@@ -56,7 +55,6 @@ UNIFIED_SOURCES += [
     'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
     'testIndexToString.cpp',
-    'testInformalValueTypeName.cpp',
     'testIntern.cpp',
     'testIntlAvailableLocales.cpp',
     'testIntString.cpp',
@@ -112,11 +110,6 @@ UNIFIED_SOURCES += [
 SOURCES += [
     # There are clashing definitions of js::jit::AssemblerBuffer.
     'testAssemblerBuffer.cpp',
-]
-
-SOURCES += [
-    # We don't want this in the C++ files with the test cases.
-    'hidePointer.cpp',
 ]
 
 if CONFIG['ENABLE_ION']:

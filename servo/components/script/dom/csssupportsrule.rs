@@ -5,8 +5,8 @@
 use cssparser::{Parser, ParserInput};
 use dom::bindings::codegen::Bindings::CSSSupportsRuleBinding;
 use dom::bindings::codegen::Bindings::WindowBinding::WindowBinding::WindowMethods;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::cssconditionrule::CSSConditionRule;
 use dom::cssrule::SpecificCSSRule;
@@ -23,7 +23,7 @@ use style_traits::{PARSING_MODE_DEFAULT, ToCss};
 #[dom_struct]
 pub struct CSSSupportsRule {
     cssconditionrule: CSSConditionRule,
-    #[ignore_malloc_size_of = "Arc"]
+    #[ignore_heap_size_of = "Arc"]
     supportsrule: Arc<Locked<SupportsRule>>,
 }
 
@@ -40,20 +40,20 @@ impl CSSSupportsRule {
 
     #[allow(unrooted_must_root)]
     pub fn new(window: &Window, parent_stylesheet: &CSSStyleSheet,
-               supportsrule: Arc<Locked<SupportsRule>>) -> DomRoot<CSSSupportsRule> {
-        reflect_dom_object(Box::new(CSSSupportsRule::new_inherited(parent_stylesheet, supportsrule)),
+               supportsrule: Arc<Locked<SupportsRule>>) -> Root<CSSSupportsRule> {
+        reflect_dom_object(box CSSSupportsRule::new_inherited(parent_stylesheet, supportsrule),
                            window,
                            CSSSupportsRuleBinding::Wrap)
     }
 
-    /// <https://drafts.csswg.org/css-conditional-3/#the-csssupportsrule-interface>
+    /// https://drafts.csswg.org/css-conditional-3/#the-csssupportsrule-interface
     pub fn get_condition_text(&self) -> DOMString {
         let guard = self.cssconditionrule.shared_lock().read();
         let rule = self.supportsrule.read_with(&guard);
         rule.condition.to_css_string().into()
     }
 
-    /// <https://drafts.csswg.org/css-conditional-3/#the-csssupportsrule-interface>
+    /// https://drafts.csswg.org/css-conditional-3/#the-csssupportsrule-interface
     pub fn set_condition_text(&self, text: DOMString) {
         let mut input = ParserInput::new(&text);
         let mut input = Parser::new(&mut input);
@@ -63,7 +63,7 @@ impl CSSSupportsRule {
             let win = global.as_window();
             let url = win.Document().url();
             let quirks_mode = win.Document().quirks_mode();
-            let context = ParserContext::new_for_cssom(&url, Some(CssRuleType::Supports),
+            let context = ParserContext::new_for_cssom(&url, win.css_error_reporter(), Some(CssRuleType::Supports),
                                                        PARSING_MODE_DEFAULT,
                                                        quirks_mode);
             let enabled = cond.eval(&context);

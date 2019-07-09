@@ -153,6 +153,7 @@
 @BINPATH@/components/editor.xpt
 @BINPATH@/components/extensions.xpt
 @BINPATH@/components/exthandler.xpt
+@BINPATH@/components/exthelper.xpt
 @BINPATH@/components/fastfind.xpt
 @BINPATH@/components/feeds.xpt
 @BINPATH@/components/gfx.xpt
@@ -172,6 +173,9 @@
 @BINPATH@/components/layout_xul_tree.xpt
 @BINPATH@/components/layout_xul.xpt
 @BINPATH@/components/locale.xpt
+#ifdef MOZ_GECKO_PROFILER
+@BINPATH@/components/memory_profiler.xpt
+#endif
 @BINPATH@/components/mimetype.xpt
 @BINPATH@/components/mozfind.xpt
 #ifdef ENABLE_INTL_API
@@ -279,10 +283,8 @@
 @BINPATH@/components/WellKnownOpportunisticUtils.manifest
 @BINPATH@/components/mozProtocolHandler.js
 @BINPATH@/components/mozProtocolHandler.manifest
-#ifndef MOZ_GECKOVIEW_JAR
 @BINPATH@/components/nsDNSServiceDiscovery.manifest
 @BINPATH@/components/nsDNSServiceDiscovery.js
-#endif
 @BINPATH@/components/toolkitsearch.manifest
 @BINPATH@/components/nsSearchService.js
 @BINPATH@/components/nsSidebar.js
@@ -335,8 +337,8 @@
 @BINPATH@/components/nsURLFormatter.js
 @BINPATH@/components/txEXSLTRegExFunctions.manifest
 @BINPATH@/components/txEXSLTRegExFunctions.js
-@BINPATH@/components/ContentPrefService2.manifest
-@BINPATH@/components/ContentPrefService2.js
+@BINPATH@/components/nsContentPrefService.manifest
+@BINPATH@/components/nsContentPrefService.js
 @BINPATH@/components/nsHandlerService-json.manifest
 @BINPATH@/components/nsHandlerService-json.js
 @BINPATH@/components/nsHandlerService.manifest
@@ -443,8 +445,10 @@
 @BINPATH@/features/*
 
 ; DevTools
+#ifndef MOZ_GECKOVIEW_JAR
 @BINPATH@/chrome/devtools@JAREXT@
 @BINPATH@/chrome/devtools.manifest
+#endif
 
 ; [Default Preferences]
 ; All the pref files must be part of base to prevent migration bugs
@@ -479,8 +483,8 @@
 @BINPATH@/res/table-remove-row.gif
 @BINPATH@/res/grabber.gif
 @BINPATH@/res/dtd/*
-@BINPATH@/res/html/*
 @BINPATH@/res/language.properties
+@BINPATH@/res/entityTables/*
 
 #ifndef MOZ_ANDROID_EXCLUDE_FONTS
 @BINPATH@/res/fonts/*
@@ -526,7 +530,6 @@
 @BINPATH@/components/GeckoView.manifest
 @BINPATH@/components/GeckoViewPrompt.js
 @BINPATH@/components/GeckoViewPermission.js
-@BINPATH@/components/GeckoViewStartup.js
 #else
 @BINPATH@/chrome/chrome@JAREXT@
 @BINPATH@/chrome/chrome.manifest
@@ -564,14 +567,4 @@
 
 #ifdef PKG_LOCALE_MANIFEST
 #include @PKG_LOCALE_MANIFEST@
-#endif
-
-; Background Hang Monitor
-@BINPATH@/components/backgroundhangmonitor.xpt
-
-; NOTE: This must match the config checks in
-; /toolkit/components/backgroundhangmonitor/moz.build.
-#if defined(NIGHTLY_BUILD) && !defined(MOZ_DEBUG) && !defined(MOZ_TSAN)
-@BINPATH@/components/BHRTelemetryService.js
-@BINPATH@/components/BHRTelemetryService.manifest
 #endif

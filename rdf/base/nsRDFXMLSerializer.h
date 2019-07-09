@@ -11,7 +11,7 @@
 #include "nsIRDFXMLSerializer.h"
 #include "nsIRDFXMLSource.h"
 #include "nsNameSpaceMap.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 
 #include "nsDataHashtable.h"
 #include "rdfITripleVisitor.h"
@@ -44,7 +44,7 @@ protected:
     RegisterQName(nsIRDFResource* aResource);
     nsresult
     GetQName(nsIRDFResource* aResource, nsCString& aQName);
-    already_AddRefed<nsAtom>
+    already_AddRefed<nsIAtom>
     EnsureNewPrefix();
 
     nsresult
@@ -96,7 +96,7 @@ protected:
 
     nsCOMPtr<nsIRDFDataSource> mDataSource;
     nsNameSpaceMap mNameSpaces;
-    nsCString mBaseURLSpec;
+    nsXPIDLCString mBaseURLSpec;
 
     // hash mapping resources to utf8-encoded QNames
     nsDataHashtable<nsISupportsHashKey, nsCString> mQNames;

@@ -147,7 +147,8 @@ NS_CI_INTERFACE_GETTER_NAME(_class)(uint32_t *count, nsIID ***array)          \
     uint32_t i = 0;
 
 #define NS_CLASSINFO_HELPER_ENTRY(_interface)                                 \
-    (*array)[i++] = NS_GET_IID(_interface).Clone();                           \
+    (*array)[i++] = (nsIID*)nsMemory::Clone(&NS_GET_IID(_interface),          \
+                                            sizeof(nsIID));
 
 #define NS_CLASSINFO_HELPER_END                                               \
     MOZ_ASSERT(i == *count, "Incorrent number of entries");                   \

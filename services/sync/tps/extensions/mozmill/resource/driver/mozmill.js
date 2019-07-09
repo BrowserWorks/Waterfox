@@ -240,7 +240,7 @@ function getAddrbkController () {
 }
 
 function firePythonCallback (filename, method, args, kwargs) {
-  let obj = {'filename': filename, 'method': method};
+  obj = {'filename': filename, 'method': method};
   obj['args'] = args || [];
   obj['kwargs'] = kwargs || {};
 

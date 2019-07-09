@@ -8,7 +8,6 @@
 
 #include "ContentProcess.h"
 #include "ContentPrefs.h"
-#include "mozilla/Scheduler.h"
 
 #if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
 #include <stdlib.h>
@@ -116,7 +115,6 @@ ContentProcess::Init(int aArgc, char* aArgv[])
   bool foundIntPrefs = false;
   bool foundBoolPrefs = false;
   bool foundStringPrefs = false;
-  bool foundSchedulerPrefs = false;
 
   uint64_t childID;
   bool isForBrowser;
@@ -127,7 +125,6 @@ ContentProcess::Init(int aArgc, char* aArgv[])
   nsCOMPtr<nsIFile> profileDir;
 #endif
 
-  char* schedulerPrefs = nullptr;
   InfallibleTArray<PrefSetting> prefsArray;
   for (int idx = aArgc; idx > 0; idx--) {
     if (!aArgv[idx]) {
@@ -207,10 +204,8 @@ ContentProcess::Init(int aArgc, char* aArgv[])
       }
       SET_PREF_PHASE(END_INIT_PREFS);
       foundStringPrefs = true;
-    } else if (!strcmp(aArgv[idx], "-schedulerPrefs")) {
-      schedulerPrefs = aArgv[idx + 1];
-      foundSchedulerPrefs = true;
-    } else if (!strcmp(aArgv[idx], "-safeMode")) {
+    }
+    else if (!strcmp(aArgv[idx], "-safeMode")) {
       gSafeMode = true;
     }
 
@@ -231,13 +226,7 @@ ContentProcess::Init(int aArgc, char* aArgv[])
     }
 #endif /* XP_MACOSX && MOZ_CONTENT_SANDBOX */
 
-    bool allFound = foundAppdir
-                 && foundChildID
-                 && foundIsForBrowser
-                 && foundIntPrefs
-                 && foundBoolPrefs
-                 && foundStringPrefs
-                 && foundSchedulerPrefs;
+    bool allFound = foundAppdir && foundChildID && foundIsForBrowser && foundIntPrefs && foundBoolPrefs && foundStringPrefs;
 
 #if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
     allFound &= foundProfile;
@@ -248,7 +237,6 @@ ContentProcess::Init(int aArgc, char* aArgv[])
     }
   }
   Preferences::SetInitPreferences(&prefsArray);
-  Scheduler::SetPrefs(schedulerPrefs);
   mContent.Init(IOThreadChild::message_loop(),
                 ParentPid(),
                 IOThreadChild::channel(),

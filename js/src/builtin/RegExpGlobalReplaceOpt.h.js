@@ -18,7 +18,7 @@
 // steps 8.b-16.
 // Optimized path for @@replace with the following conditions:
 //   * global flag is true
-function FUNC_NAME(rx, S, lengthS, replaceValue, flags
+function FUNC_NAME(rx, S, lengthS, replaceValue, fullUnicode
 #ifdef SUBSTITUTION
                    , firstDollarIndex
 #endif
@@ -27,9 +27,6 @@ function FUNC_NAME(rx, S, lengthS, replaceValue, flags
 #endif
                   )
 {
-    // Step 8.a.
-    var fullUnicode = !!(flags & REGEXP_UNICODE_FLAG);
-
     // Step 8.b.
     var lastIndex = 0;
     rx.lastIndex = 0;
@@ -38,7 +35,7 @@ function FUNC_NAME(rx, S, lengthS, replaceValue, flags
     // Save the original source and flags, so we can check if the replacer
     // function recompiled the regexp.
     var originalSource = UnsafeGetStringFromReservedSlot(rx, REGEXP_SOURCE_SLOT);
-    var originalFlags = flags;
+    var originalFlags = UnsafeGetInt32FromReservedSlot(rx, REGEXP_FLAGS_SLOT);
 #endif
 
     // Step 12 (reordered).
@@ -56,8 +53,11 @@ function FUNC_NAME(rx, S, lengthS, replaceValue, flags
         if (result === null)
             break;
 
-        // Steps 14.a-b (skipped).
+#if defined(SUBSTITUTION)
+        // Steps 14.a-b.
         assert(result.length >= 1, "RegExpMatcher doesn't return an empty array");
+        var nCaptures = result.length - 1;
+#endif
 
         // Step 14.c.
         var matched = result[0];
@@ -74,7 +74,9 @@ function FUNC_NAME(rx, S, lengthS, replaceValue, flags
 #if defined(FUNCTIONAL)
         replacement = RegExpGetFunctionalReplacement(result, S, position, replaceValue);
 #elif defined(SUBSTITUTION)
-        replacement = RegExpGetSubstitution(result, S, position, replaceValue, firstDollarIndex);
+        replacement = RegExpGetComplexReplacement(result, matched, S, position,
+                                                  nCaptures, replaceValue,
+                                                  false, firstDollarIndex);
 #elif defined(ELEMBASE)
         if (IsObject(elemBase)) {
             var prop = GetStringDataProperty(elemBase, matched);

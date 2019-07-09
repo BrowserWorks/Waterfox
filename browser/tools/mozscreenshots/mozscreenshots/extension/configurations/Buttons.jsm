@@ -19,23 +19,20 @@ this.Buttons = {
 
   configurations: {
     navBarButtons: {
-      selectors: ["#nav-bar"],
       applyConfig: async () => {
         CustomizableUI.addWidgetToArea("screenshot-widget", CustomizableUI.AREA_NAVBAR);
       },
     },
 
     tabsToolbarButtons: {
-      selectors: ["#TabsToolbar"],
       applyConfig: async () => {
         CustomizableUI.addWidgetToArea("screenshot-widget", CustomizableUI.AREA_TABSTRIP);
       },
     },
 
     menuPanelButtons: {
-      selectors: ["#widget-overflow"],
       applyConfig: async () => {
-        CustomizableUI.addWidgetToArea("screenshot-widget", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
+        CustomizableUI.addWidgetToArea("screenshot-widget", CustomizableUI.AREA_PANEL);
       },
 
       verifyConfig() {
@@ -48,7 +45,6 @@ this.Buttons = {
     },
 
     custPaletteButtons: {
-      selectors: ["#customization-palette"],
       applyConfig: async () => {
         CustomizableUI.removeWidgetFromArea("screenshot-widget");
       },

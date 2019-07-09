@@ -56,9 +56,8 @@ NSSDialogs.prototype = {
                                             escapedArgList.length);
   },
 
-  getPrompt: function(aTitle, aText, aButtons, aWindow) {
+  getPrompt: function(aTitle, aText, aButtons) {
     return new Prompt({
-      window: aWindow,
       title: aTitle,
       text: aText,
       buttons: aButtons,
@@ -84,7 +83,7 @@ NSSDialogs.prototype = {
                                   [ this.getString("nssdialogs.ok.label"),
                                     this.getString("downloadCert.viewCert.label"),
                                     this.getString("nssdialogs.cancel.label")
-                                  ], aCtx);
+                                  ]);
 
       prompt.addCheckbox({ id: "trustSSL", label: this.getString("downloadCert.trustSSL"), checked: false })
             .addCheckbox({ id: "trustEmail", label: this.getString("downloadCert.trustEmail"), checked: false })
@@ -118,7 +117,7 @@ NSSDialogs.prototype = {
                                 this.getString("pkcs12.getpassword.message"),
                                 [ this.getString("nssdialogs.ok.label"),
                                   this.getString("nssdialogs.cancel.label")
-                                ], aCtx).addPassword({id: "pw"});
+                                ]).addPassword({id: "pw"});
     let response = this.showPrompt(prompt);
     if (response.button != 0) {
       return false;
@@ -149,7 +148,7 @@ NSSDialogs.prototype = {
   viewCert: function(aCtx, aCert) {
     let p = this.getPrompt(this.getString("certmgr.title"), "", [
                              this.getString("nssdialogs.ok.label"),
-                           ], aCtx);
+                           ]);
     p.addLabel({ label: this.certInfoSection("certmgr.subjectinfo.label",
                           ["certdetail.cn", aCert.commonName,
                            "certdetail.o", aCert.organization,
@@ -203,10 +202,10 @@ NSSDialogs.prototype = {
     return detailLines.join("<br/>");
   },
 
-  viewCertDetails: function(details, window) {
+  viewCertDetails: function(details) {
     let p = this.getPrompt(this.getString("clientAuthAsk.message3"),
-                    "",
-                    [ this.getString("nssdialogs.ok.label") ], window);
+                    '',
+                    [ this.getString("nssdialogs.ok.label") ]);
     p.addLabel({ label: details });
     this.showPrompt(p);
   },
@@ -241,7 +240,7 @@ NSSDialogs.prototype = {
       ];
       let prompt = this.getPrompt(this.getString("clientAuthAsk.title"),
                                   this.getString("clientAuthAsk.message1"),
-                                  buttons, ctx)
+                                  buttons)
       .addLabel({ id: "requestedDetails", label: serverRequestedDetails } )
       .addMenulist({
         id: "nicknames",
@@ -256,7 +255,7 @@ NSSDialogs.prototype = {
       let response = this.showPrompt(prompt);
       selectedIndex.value = response.nicknames;
       if (response.button == 1 /* buttons[1] */) {
-        this.viewCertDetails(certDetailsList[selectedIndex.value], ctx);
+        this.viewCertDetails(certDetailsList[selectedIndex.value]);
         continue;
       } else if (response.button == 0 /* buttons[0] */) {
         if (response.rememberBox == true) {

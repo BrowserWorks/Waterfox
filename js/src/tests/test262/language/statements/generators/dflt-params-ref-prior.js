@@ -4,7 +4,7 @@
 /*---
 description: Referencing a parameter that occurs earlier in the ParameterList (generator function declaration)
 esid: sec-generator-function-definitions-runtime-semantics-instantiatefunctionobject
-features: [default-parameters, generators]
+features: [default-parameters]
 flags: [generated]
 info: |
     GeneratorDeclaration : function * ( FormalParameters ) { GeneratorBody }
@@ -36,7 +36,6 @@ info: |
         b. Let formalStatus be IteratorBindingInitialization for formals with
            iteratorRecord and env as arguments.
     [...]
-
 
     14.1.19 Runtime Semantics: IteratorBindingInitialization
 

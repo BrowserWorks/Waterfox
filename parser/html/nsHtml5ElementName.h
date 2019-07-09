@@ -28,7 +28,7 @@
 #ifndef nsHtml5ElementName_h
 #define nsHtml5ElementName_h
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsHtml5AtomTable.h"
 #include "nsHtml5String.h"
 #include "nsNameSpaceManager.h"
@@ -42,7 +42,6 @@
 #include "nsHtml5Macros.h"
 #include "nsIContentHandle.h"
 #include "nsHtml5Portability.h"
-#include "nsHtml5ContentCreatorFunction.h"
 
 class nsHtml5StreamParser;
 
@@ -77,26 +76,14 @@ public:
   static const int32_t OPTIONAL_END_TAG = (1 << 23);
 
 private:
-  nsAtom* name;
-  nsAtom* camelCaseName;
-  mozilla::dom::HTMLContentCreatorFunction htmlCreator;
-  mozilla::dom::SVGContentCreatorFunction svgCreator;
+  nsIAtom* name;
+  nsIAtom* camelCaseName;
 
 public:
   int32_t flags;
-  inline nsAtom* getName() { return name; }
+  inline nsIAtom* getName() { return name; }
 
-  inline nsAtom* getCamelCaseName() { return camelCaseName; }
-
-  inline mozilla::dom::HTMLContentCreatorFunction getHtmlCreator()
-  {
-    return htmlCreator;
-  }
-
-  inline mozilla::dom::SVGContentCreatorFunction getSvgCreator()
-  {
-    return svgCreator;
-  }
+  inline nsIAtom* getCamelCaseName() { return camelCaseName; }
 
   inline int32_t getFlags() { return flags; }
 
@@ -123,29 +110,29 @@ public:
       }
     }
     return -1;
-  }
-
-  inline static nsHtml5ElementName* elementNameByBuffer(
-    char16_t* buf,
-    int32_t offset,
-    int32_t length,
-    nsHtml5AtomTable* interner)
-  {
-    uint32_t hash = nsHtml5ElementName::bufToHash(buf, length);
-    jArray<int32_t, int32_t> hashes;
-    hashes = nsHtml5ElementName::ELEMENT_HASHES;
-    int32_t index = levelOrderBinarySearch(hashes, hash);
-    if (index < 0) {
-      return nullptr;
-    } else {
-      nsHtml5ElementName* elementName =
-        nsHtml5ElementName::ELEMENT_NAMES[index];
-      nsAtom* name = elementName->name;
-      if (!nsHtml5Portability::localEqualsBuffer(name, buf, offset, length)) {
-        return nullptr;
-      }
-      return elementName;
     }
+
+    inline static nsHtml5ElementName* elementNameByBuffer(
+      char16_t* buf,
+      int32_t offset,
+      int32_t length,
+      nsHtml5AtomTable* interner)
+    {
+      uint32_t hash = nsHtml5ElementName::bufToHash(buf, length);
+      jArray<int32_t, int32_t> hashes;
+      hashes = nsHtml5ElementName::ELEMENT_HASHES;
+      int32_t index = levelOrderBinarySearch(hashes, hash);
+      if (index < 0) {
+        return nullptr;
+      } else {
+        nsHtml5ElementName* elementName =
+          nsHtml5ElementName::ELEMENT_NAMES[index];
+        nsIAtom* name = elementName->name;
+        if (!nsHtml5Portability::localEqualsBuffer(name, buf, offset, length)) {
+          return nullptr;
+        }
+        return elementName;
+      }
     }
 
   private:
@@ -179,28 +166,16 @@ public:
       return len + first + second + third + fourth + fifth;
     }
 
-    nsHtml5ElementName(nsAtom* name,
-                       nsAtom* camelCaseName,
-                       mozilla::dom::HTMLContentCreatorFunction htmlCreator,
-                       mozilla::dom::SVGContentCreatorFunction svgCreator,
-                       int32_t flags);
-
+    nsHtml5ElementName(nsIAtom* name, nsIAtom* camelCaseName, int32_t flags);
   public:
     nsHtml5ElementName();
     ~nsHtml5ElementName();
-    inline void setNameForNonInterned(nsAtom* name, bool custom)
+    inline void setNameForNonInterned(nsIAtom* name)
     {
       this->name = name;
       this->camelCaseName = name;
-      if (custom) {
-        this->htmlCreator = NS_NewCustomElement;
-      } else {
-        this->htmlCreator = NS_NewHTMLUnknownElement;
-      }
       MOZ_ASSERT(this->flags == nsHtml5ElementName::NOT_INTERNED);
     }
-
-    inline bool isCustom() { return this->htmlCreator == NS_NewCustomElement; }
 
     static nsHtml5ElementName* ELT_ANNOTATION_XML;
     static nsHtml5ElementName* ELT_BIG;
@@ -240,7 +215,6 @@ public:
     static nsHtml5ElementName* ELT_H5;
     static nsHtml5ElementName* ELT_H6;
     static nsHtml5ElementName* ELT_AREA;
-    static nsHtml5ElementName* ELT_DATA;
     static nsHtml5ElementName* ELT_FEFUNCA;
     static nsHtml5ElementName* ELT_METADATA;
     static nsHtml5ElementName* ELT_META;
@@ -374,8 +348,6 @@ public:
     static nsHtml5ElementName* ELT_DT;
     static nsHtml5ElementName* ELT_APPLET;
     static nsHtml5ElementName* ELT_BASEFONT;
-    static nsHtml5ElementName* ELT_CONTENT;
-    static nsHtml5ElementName* ELT_DATALIST;
     static nsHtml5ElementName* ELT_FOREIGNOBJECT;
     static nsHtml5ElementName* ELT_FIELDSET;
     static nsHtml5ElementName* ELT_FRAMESET;
@@ -396,7 +368,6 @@ public:
     static nsHtml5ElementName* ELT_RECT;
     static nsHtml5ElementName* ELT_RADIALGRADIENT;
     static nsHtml5ElementName* ELT_SELECT;
-    static nsHtml5ElementName* ELT_SLOT;
     static nsHtml5ElementName* ELT_SCRIPT;
     static nsHtml5ElementName* ELT_TFOOT;
     static nsHtml5ElementName* ELT_TEXT;

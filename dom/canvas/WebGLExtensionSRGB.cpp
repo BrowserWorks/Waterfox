@@ -58,9 +58,12 @@ WebGLExtensionSRGB::~WebGLExtensionSRGB()
 }
 
 bool
-WebGLExtensionSRGB::IsSupported(const WebGLContext* const webgl)
+WebGLExtensionSRGB::IsSupported(const WebGLContext* webgl)
 {
-    return webgl->gl->IsSupported(gl::GLFeature::sRGB);
+    gl::GLContext* gl = webgl->GL();
+
+    return gl->IsSupported(gl::GLFeature::sRGB_framebuffer) &&
+           gl->IsSupported(gl::GLFeature::sRGB_texture);
 }
 
 

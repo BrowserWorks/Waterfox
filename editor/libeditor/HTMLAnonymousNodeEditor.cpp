@@ -13,7 +13,7 @@
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsGkAtoms.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIContent.h"
 #include "nsID.h"
 #include "nsIDOMCSSPrimitiveValue.h"
@@ -162,16 +162,17 @@ ElementDeletionObserver::NodeWillBeDestroyed(const nsINode* aNode)
 }
 
 ManualNACPtr
-HTMLEditor::CreateAnonymousElement(nsAtom* aTag,
-                                   nsIContent& aParentContent,
+HTMLEditor::CreateAnonymousElement(nsIAtom* aTag,
+                                   nsIDOMNode* aParentNode,
                                    const nsAString& aAnonClass,
                                    bool aIsCreatedHidden)
 {
-  // Don't put anonymous editor element into non-HTML element.
-  // It is mainly for avoiding other anonymous element being inserted
-  // into <svg:use>, but in general we probably don't want to insert
-  // some random HTML anonymous element into a non-HTML element.
-  if (!aParentContent.IsHTMLElement()) {
+  if (NS_WARN_IF(!aParentNode)) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIContent> parentContent = do_QueryInterface(aParentNode);
+  if (NS_WARN_IF(!parentContent)) {
     return nullptr;
   }
 
@@ -218,7 +219,7 @@ HTMLEditor::CreateAnonymousElement(nsAtom* aTag,
     // establish parenthood of the element
     newContentRaw->SetIsNativeAnonymousRoot();
     nsresult rv =
-      newContentRaw->BindToTree(doc, &aParentContent, &aParentContent, true);
+      newContentRaw->BindToTree(doc, parentContent, parentContent, true);
     if (NS_FAILED(rv)) {
       newContentRaw->UnbindFromTree();
       return nullptr;
@@ -238,9 +239,9 @@ HTMLEditor::CreateAnonymousElement(nsAtom* aTag,
   }
 
   ElementDeletionObserver* observer =
-    new ElementDeletionObserver(newContent, &aParentContent);
+    new ElementDeletionObserver(newContent, parentContent);
   NS_ADDREF(observer); // NodeWillBeDestroyed releases.
-  aParentContent.AddMutationObserver(observer);
+  parentContent->AddMutationObserver(observer);
   newContent->AddMutationObserver(observer);
 
 #ifdef DEBUG
@@ -307,8 +308,11 @@ HTMLEditor::DeleteRefToAnonymousNode(ManualNACPtr aContent,
         docObserver->BeginUpdate(document, UPDATE_CONTENT_MODEL);
       }
 
+      // XXX This is wrong (bug 439258).  Once it's fixed, the NS_WARNING
+      // in RestyleManager::RestyleForRemove should be changed back
+      // to an assertion.
       docObserver->ContentRemoved(aContent->GetComposedDoc(),
-                                  parentContent, aContent,
+                                  parentContent, aContent, -1,
                                   aContent->GetPreviousSibling());
       if (document) {
         docObserver->EndUpdate(document, UPDATE_CONTENT_MODEL);
@@ -352,7 +356,11 @@ HTMLEditor::CheckSelectionStateForAnonymousButtons(nsISelection* aSelection)
   }
 
   // what's its tag?
-  nsAtom* focusTagAtom = focusElementNode->NodeInfo()->NameAtom();
+  nsAutoString focusTagName;
+  rv = focusElement->GetTagName(focusTagName);
+  NS_ENSURE_SUCCESS(rv, rv);
+  ToLowerCase(focusTagName);
+  nsCOMPtr<nsIAtom> focusTagAtom = NS_Atomize(focusTagName);
 
   nsCOMPtr<nsIDOMElement> absPosElement;
   if (mIsAbsolutelyPositioningEnabled) {
@@ -480,7 +488,7 @@ HTMLEditor::CheckSelectionStateForAnonymousButtons(nsISelection* aSelection)
 // Resizing and Absolute Positioning need to know everything about the
 // containing box of the element: position, size, margins, borders
 nsresult
-HTMLEditor::GetPositionAndDimensions(Element& aElement,
+HTMLEditor::GetPositionAndDimensions(nsIDOMElement* aElement,
                                      int32_t& aX,
                                      int32_t& aY,
                                      int32_t& aW,
@@ -490,13 +498,18 @@ HTMLEditor::GetPositionAndDimensions(Element& aElement,
                                      int32_t& aMarginLeft,
                                      int32_t& aMarginTop)
 {
+  nsCOMPtr<Element> element = do_QueryInterface(aElement);
+  NS_ENSURE_ARG_POINTER(element);
+
   // Is the element positioned ? let's check the cheap way first...
-  bool isPositioned =
-    aElement.HasAttr(kNameSpaceID_None, nsGkAtoms::_moz_abspos);
+  bool isPositioned = false;
+  nsresult rv =
+    aElement->HasAttribute(NS_LITERAL_STRING("_moz_abspos"), &isPositioned);
+  NS_ENSURE_SUCCESS(rv, rv);
   if (!isPositioned) {
     // hmmm... the expensive way now...
     nsAutoString positionStr;
-    mCSSEditUtils->GetComputedProperty(aElement, *nsGkAtoms::position,
+    mCSSEditUtils->GetComputedProperty(*element, *nsGkAtoms::position,
                                        positionStr);
     isPositioned = positionStr.EqualsLiteral("absolute");
   }
@@ -507,7 +520,7 @@ HTMLEditor::GetPositionAndDimensions(Element& aElement,
 
     // Get the all the computed css styles attached to the element node
     RefPtr<nsComputedDOMStyle> cssDecl =
-      mCSSEditUtils->GetComputedStyle(&aElement);
+      mCSSEditUtils->GetComputedStyle(element);
     NS_ENSURE_STATE(cssDecl);
 
     aBorderLeft = GetCSSFloatValue(cssDecl, NS_LITERAL_STRING("border-left-width"));
@@ -523,7 +536,7 @@ HTMLEditor::GetPositionAndDimensions(Element& aElement,
     aH = GetCSSFloatValue(cssDecl, NS_LITERAL_STRING("height"));
   } else {
     mResizedObjectIsAbsolutelyPositioned = false;
-    nsCOMPtr<nsIDOMHTMLElement> htmlElement = do_QueryInterface(&aElement);
+    nsCOMPtr<nsIDOMHTMLElement> htmlElement = do_QueryInterface(aElement);
     if (!htmlElement) {
       return NS_ERROR_NULL_POINTER;
     }
@@ -531,7 +544,7 @@ HTMLEditor::GetPositionAndDimensions(Element& aElement,
 
     if (NS_WARN_IF(NS_FAILED(htmlElement->GetOffsetWidth(&aW))) ||
         NS_WARN_IF(NS_FAILED(htmlElement->GetOffsetHeight(&aH)))) {
-      return NS_ERROR_FAILURE;
+      return rv;
     }
 
     aBorderLeft = 0;

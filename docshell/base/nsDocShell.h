@@ -19,7 +19,6 @@
 #include "nsIDOMStorageManager.h"
 #include "nsDocLoader.h"
 #include "mozilla/BasePrincipal.h"
-#include "mozilla/Move.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/TimeStamp.h"
@@ -62,11 +61,9 @@
 #include "nsRect.h"
 #include "Units.h"
 #include "nsIDeprecationWarner.h"
-#include "nsILoadURIDelegate.h"
 
 namespace mozilla {
 class Encoding;
-class HTMLEditor;
 enum class TaskCategory;
 namespace dom {
 class EventTarget;
@@ -210,7 +207,6 @@ public:
                          const char16_t* aTargetSpec,
                          const nsAString& aFileName,
                          nsIInputStream* aPostDataStream,
-                         int64_t aPostDataStreamLength,
                          nsIInputStream* aHeadersDataStream,
                          bool aIsTrusted,
                          nsIPrincipal* aTriggeringPrincipal) override;
@@ -219,7 +215,6 @@ public:
                              const char16_t* aTargetSpec,
                              const nsAString& aFileName,
                              nsIInputStream* aPostDataStream = 0,
-                             int64_t aPostDataStreamLength = -1,
                              nsIInputStream* aHeadersDataStream = 0,
                              bool aNoOpenerImplied = false,
                              nsIDocShell** aDocShell = 0,
@@ -262,8 +257,6 @@ public:
 
   friend class OnLinkClickEvent;
 
-  static bool SandboxFlagsImplyCookies(const uint32_t &aSandboxFlags);
-
   // We need dummy OnLocationChange in some cases to update the UI without
   // updating security info.
   void FireDummyOnLocationChange()
@@ -288,68 +281,6 @@ public:
   bool InFrameSwap();
 
   const Encoding* GetForcedCharset() { return mForcedCharset; }
-
-  mozilla::HTMLEditor* GetHTMLEditorInternal();
-  nsresult SetHTMLEditorInternal(mozilla::HTMLEditor* aHTMLEditor);
-
-  nsDOMNavigationTiming* GetNavigationTiming() const;
-
-  /**
-   * Get the list of ancestor principals for this docshell.  The list is meant
-   * to be the list of principals of the documents this docshell is "nested
-   * through" in the sense of
-   * <https://html.spec.whatwg.org/multipage/browsers.html#browsing-context-nested-through>.
-   * In practice, it is defined as follows:
-   *
-   * If this is an <iframe mozbrowser> or a toplevel content docshell
-   * (i.e. toplevel document in spec terms), the list is empty.
-   *
-   * Otherwise the list is the list for the document we're nested through (again
-   * in the spec sense), with the principal of that document prepended.  Note
-   * that this matches the ordering specified for Location.ancestorOrigins.
-   */
-  const nsTArray<nsCOMPtr<nsIPrincipal>>& AncestorPrincipals() const
-  {
-    return mAncestorPrincipals;
-  }
-
-  /**
-   * Set the list of ancestor principals for this docshell.  This is really only
-   * needed for use by the frameloader.  We can't do this ourselves, inside
-   * docshell, because there's a bunch of state setup that frameloader does
-   * (like telling us whether we're a mozbrowser), some of which comes after the
-   * docshell is added to the docshell tree, which can affect what the ancestor
-   * principals should look like.
-   *
-   * This method steals the data from the passed-in array.
-   */
-  void SetAncestorPrincipals(
-    nsTArray<nsCOMPtr<nsIPrincipal>>&& aAncestorPrincipals)
-  {
-    mAncestorPrincipals = mozilla::Move(aAncestorPrincipals);
-  }
-
-  /**
-   * Get the list of ancestor outerWindowIDs for this docshell.  The list is meant
-   * to be the list of outer window IDs that correspond to the ancestorPrincipals
-   * above.   For each ancestor principal, we store the parent window ID.
-   */
-  const nsTArray<uint64_t>& AncestorOuterWindowIDs() const
-  {
-    return mAncestorOuterWindowIDs;
-  }
-
-  /**
-   * Set the list of ancestor outer window IDs for this docshell.  We call this
-   * from frameloader as well in order to keep the array matched with the
-   * ancestor principals.
-   *
-   * This method steals the data from the passed-in array.
-   */
-  void SetAncestorOuterWindowIDs(nsTArray<uint64_t>&& aAncestorOuterWindowIDs)
-  {
-    mAncestorOuterWindowIDs = mozilla::Move(aAncestorOuterWindowIDs);
-  }
 
 private:
   bool CanSetOriginAttributes();
@@ -459,7 +390,6 @@ protected:
                      const char* aTypeHint,
                      const nsAString& aFileName,
                      nsIInputStream* aPostData,
-                     int64_t aPostDataLength,
                      nsIInputStream* aHeadersData,
                      bool aFirstParty,
                      nsIDocShell** aDocShell,
@@ -511,7 +441,7 @@ protected:
   void SetReferrerPolicy(uint32_t aReferrerPolicy);
 
   // Session History
-  bool ShouldAddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel);
+  bool ShouldAddToSessionHistory(nsIURI* aURI);
   // Either aChannel or aOwner must be null. If aChannel is
   // present, the owner should be gotten from it.
   // If aCloneChildren is true, then our current session history's
@@ -974,11 +904,9 @@ protected:
 
   eCharsetReloadState mCharsetReloadState;
 
-  nsCOMPtr<nsILoadURIDelegate> mLoadURIDelegate;
-
   // Offset in the parent's child list.
   // -1 if the docshell is added dynamically to the parent shell.
-  int32_t mChildOffset;
+  uint32_t mChildOffset;
   uint32_t mBusyFlags;
   uint32_t mAppType;
   uint32_t mLoadType;
@@ -991,8 +919,7 @@ protected:
   int32_t mItemType;
 
   // Index into the SHTransaction list, indicating the previous and current
-  // transaction at the time that this DocShell begins to load. Consequently
-  // root docshell's indices can differ from child docshells'.
+  // transaction at the time that this DocShell begins to load
   int32_t mPreviousTransIndex;
   int32_t mLoadedTransIndex;
 
@@ -1121,18 +1048,6 @@ protected:
 
   nsString mInterceptedDocumentId;
 
-  // This represents the CSS display-mode we are currently using.
-  // It can be any of the following values from nsIDocShell.idl:
-  //
-  // DISPLAY_MODE_BROWSER = 0
-  // DISPLAY_MODE_MINIMAL_UI = 1
-  // DISPLAY_MODE_STANDALONE = 2
-  // DISPLAY_MODE_FULLSCREEN = 3
-  //
-  // This is mostly used for media queries. The integer values above
-  // match those used in nsStyleConsts.h
-  uint32_t mDisplayMode;
-
 private:
   const Encoding* mForcedCharset;
   const Encoding* mParentCharset;
@@ -1154,11 +1069,6 @@ private:
   // Whether or not touch events are overridden. Possible values are defined
   // as constants in the nsIDocShell.idl file.
   uint32_t mTouchEventsOverride;
-
-  // Our list of ancestor principals.
-  nsTArray<nsCOMPtr<nsIPrincipal>> mAncestorPrincipals;
-  // Our list of ancestor outerWindowIDs.
-  nsTArray<uint64_t> mAncestorOuterWindowIDs;
 
   // Separate function to do the actual name (i.e. not _top, _self etc.)
   // searching for FindItemWithName.

@@ -3,7 +3,6 @@
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/browserid_identity.js");
@@ -209,7 +208,7 @@ add_task(async function test_new_channel() {
   locationURL = server.baseURI + "/resource";
 
   let request = new AsyncResource(server.baseURI + "/redirect");
-  let content = await request.get();
+  let content = await request.get()
   do_check_true(resourceRequested);
   do_check_eq(200, content.status);
   do_check_true("content-type" in content.headers);
@@ -273,7 +272,7 @@ add_task(async function test_get() {
   resLogger.debug = function(msg) {
     debugMessages.push(msg);
     dbg.call(this, msg);
-  };
+  }
 
   // Since we didn't receive proper JSON data, accessing content.obj
   // will result in a SyntaxError from JSON.parse
@@ -294,8 +293,8 @@ add_test(function test_basicauth() {
   _("Test that the BasicAuthenticator doesn't screw up header case.");
   let res1 = new AsyncResource(server.baseURI + "/foo");
   res1.setHeader("Authorization", "Basic foobar");
-  do_check_eq(res1._headers.authorization, "Basic foobar");
-  do_check_eq(res1.headers.authorization, "Basic foobar");
+  do_check_eq(res1._headers["authorization"], "Basic foobar");
+  do_check_eq(res1.headers["authorization"], "Basic foobar");
 
   run_next_test();
 });
@@ -303,7 +302,7 @@ add_test(function test_basicauth() {
 add_task(async function test_get_protected_fail() {
   _("GET a password protected resource (test that it'll fail w/o pass, no throw)");
   let res2 = new AsyncResource(server.baseURI + "/protected");
-  let content = await res2.get();
+  let content = await res2.get()
   do_check_eq(content, "This path exists and is protected - failed");
   do_check_eq(content.status, 401);
   do_check_false(content.success);
@@ -609,9 +608,9 @@ add_test(function test_uri_construction() {
 
   let query = "?" + args.join("&");
 
-  let uri1 = CommonUtils.makeURI("http://foo/" + query)
+  let uri1 = Utils.makeURI("http://foo/" + query)
                   .QueryInterface(Ci.nsIURL);
-  let uri2 = CommonUtils.makeURI("http://foo/")
+  let uri2 = Utils.makeURI("http://foo/")
                   .QueryInterface(Ci.nsIURL);
   uri2.query = query;
   do_check_eq(uri1.query, uri2.query);

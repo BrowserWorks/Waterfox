@@ -116,7 +116,7 @@ Function .onInit
 
   SetSilent silent
 
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     Abort
   ${EndUnless}
 FunctionEnd

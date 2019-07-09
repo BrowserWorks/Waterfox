@@ -464,14 +464,6 @@ UploadImageDataToTexture(GLContext* gl,
             // We don't have a specific luminance shader
             surfaceFormat = SurfaceFormat::A8;
             break;
-        case SurfaceFormat::A16:
-            format = LOCAL_GL_LUMINANCE;
-            internalFormat = LOCAL_GL_LUMINANCE16;
-            type = LOCAL_GL_UNSIGNED_SHORT;
-            // We don't have a specific luminance shader
-            surfaceFormat = SurfaceFormat::A8;
-            pixelSize = 2;
-            break;
         default:
             NS_ASSERTION(false, "Unhandled image surface format!");
     }
@@ -514,8 +506,8 @@ UploadImageDataToTexture(GLContext* gl,
                                 0,
                                 rect.x,
                                 rect.y,
-                                rect.Width(),
-                                rect.Height(),
+                                rect.width,
+                                rect.height,
                                 aStride,
                                 pixelSize,
                                 format,

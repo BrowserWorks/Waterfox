@@ -14,9 +14,6 @@
 
 "use strict";
 
-/* Set this to true only for debugging purpose; it makes the output noisy. */
-const kDumpAllStacks = false;
-
 const blacklist = {
   components: new Set([
     "PushComponents.js",
@@ -49,45 +46,34 @@ add_task(async function() {
   // Load a custom frame script to avoid using ContentTask which loads Task.jsm
   mm.loadFrameScript("data:text/javascript,(" + function() {
     /* eslint-env mozilla/frame-script */
-    const {classes: Cc, interfaces: Ci, manager: Cm, utils: Cu} = Components;
+    const {classes: Cc, interfaces: Ci, manager: Cm} = Components;
     Cm.QueryInterface(Ci.nsIServiceManager);
-    Cu.import("resource://gre/modules/AppConstants.jsm");
-    let collectStacks = AppConstants.NIGHTLY_BUILD || AppConstants.DEBUG;
+
     let loader = Cc["@mozilla.org/moz/jsloader;1"].getService(Ci.xpcIJSModuleLoader);
-    let components = {};
-    for (let component of loader.loadedComponents()) {
+    sendAsyncMessage("Test:LoadedScripts", {
       /* Keep only the file name for components, as the path is an absolute file
          URL rather than a resource:// URL like for modules. */
-      components[component.replace(/.*\//, "")] =
-        collectStacks ? loader.getComponentLoadStack(component) : "";
-    }
-    let modules = {};
-    for (let module of loader.loadedModules()) {
-      modules[module] = collectStacks ? loader.getModuleImportStack(module) : "";
-    }
-    let services = {};
-    for (let contractID in Object.keys(Cc)) {
-      try {
-        if (Cm.isServiceInstantiatedByContractID(contractID, Ci.nsISupports))
-          services[contractID] = "";
-      } catch (e) {}
-    }
-    sendAsyncMessage("Test:LoadedScripts", {components, modules, services});
+      components: loader.loadedComponents().map(f => f.replace(/.*\//, "")),
+      modules: loader.loadedModules(),
+      services: Object.keys(Cc).filter(c => {
+        try {
+          Cm.isServiceInstantiatedByContractID(c, Ci.nsISupports);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      })
+    });
   } + ")()", false);
 
   let loadedList = await promise;
   for (let scriptType in blacklist) {
     info(scriptType);
     for (let file of blacklist[scriptType]) {
-      let loaded = file in loadedList[scriptType];
-      ok(!loaded, `${file} is not allowed`);
-      if (loaded && loadedList[scriptType][file])
-        info(loadedList[scriptType][file]);
+      ok(!loadedList[scriptType].includes(file), `${file} is not allowed`);
     }
-    for (let file in loadedList[scriptType]) {
+    for (let file of loadedList[scriptType]) {
       info(file);
-      if (kDumpAllStacks && loadedList[scriptType][file])
-        info(loadedList[scriptType][file]);
     }
   }
 

@@ -91,7 +91,7 @@ void
 CSP_GetLocalizedStr(const char* aName,
                     const char16_t** aParams,
                     uint32_t aLength,
-                    nsAString& outResult)
+                    char16_t** outResult)
 {
   nsCOMPtr<nsIStringBundle> keyStringBundle;
   nsCOMPtr<nsIStringBundleService> stringBundleService =
@@ -142,7 +142,7 @@ CSP_LogMessage(const nsAString& aMessage,
 
   // Prepending CSP to the outgoing console message
   nsString cspMsg;
-  cspMsg.AppendLiteral(u"Content Security Policy: ");
+  cspMsg.Append(NS_LITERAL_STRING("Content Security Policy: "));
   cspMsg.Append(aMessage);
 
   // Currently 'aSourceLine' is not logged to the console, because similar
@@ -152,9 +152,9 @@ CSP_LogMessage(const nsAString& aMessage,
   // E.g. 'aSourceLine' might be: 'onclick attribute on DIV element'.
   // In such cases we append 'aSourceLine' directly to the error message.
   if (!aSourceLine.IsEmpty()) {
-    cspMsg.AppendLiteral(" Source: ");
+    cspMsg.Append(NS_LITERAL_STRING(" Source: "));
     cspMsg.Append(aSourceLine);
-    cspMsg.AppendLiteral(u".");
+    cspMsg.Append(NS_LITERAL_STRING("."));
   }
 
   nsresult rv;
@@ -193,8 +193,8 @@ CSP_LogLocalizedStr(const char* aName,
                     const char* aCategory,
                     uint64_t aInnerWindowID)
 {
-  nsAutoString logMsg;
-  CSP_GetLocalizedStr(aName, aParams, aLength, logMsg);
+  nsXPIDLString logMsg;
+  CSP_GetLocalizedStr(aName, aParams, aLength, getter_Copies(logMsg));
   CSP_LogMessage(logMsg, aSourceName, aSourceLine,
                  aLineNumber, aColumnNumber, aFlags,
                  aCategory, aInnerWindowID);
@@ -281,15 +281,6 @@ CSP_CreateHostSrcFromSelfURI(nsIURI* aSelfURI)
   aSelfURI->GetScheme(scheme);
   hostsrc->setScheme(NS_ConvertUTF8toUTF16(scheme));
 
-  // An empty host (e.g. for data:) indicates it's effectively a unique origin.
-  // Please note that we still need to set the scheme on hostsrc (see above),
-  // because it's used for reporting.
-  if (host.EqualsLiteral("")) {
-    hostsrc->setIsUniqueOrigin();
-    // no need to query the port in that case.
-    return hostsrc;
-  }
-
   int32_t port;
   aSelfURI->GetPort(&port);
   // Only add port if it's not default port.
@@ -322,7 +313,7 @@ CSP_IsDirective(const nsAString& aValue, CSPDirective aDir)
 bool
 CSP_IsKeyword(const nsAString& aValue, enum CSPKeyword aKey)
 {
-  return aValue.LowerCaseEqualsASCII(CSP_EnumToUTF8Keyword(aKey));
+  return aValue.LowerCaseEqualsASCII(CSP_EnumToKeyword(aKey));
 }
 
 bool
@@ -331,10 +322,14 @@ CSP_IsQuotelessKeyword(const nsAString& aKey)
   nsString lowerKey = PromiseFlatString(aKey);
   ToLowerCase(lowerKey);
 
+  static_assert(CSP_LAST_KEYWORD_VALUE ==
+                (sizeof(CSPStrKeywords) / sizeof(CSPStrKeywords[0])),
+                "CSP_LAST_KEYWORD_VALUE does not match length of CSPStrKeywords");
+
   nsAutoString keyword;
   for (uint32_t i = 0; i < CSP_LAST_KEYWORD_VALUE; i++) {
     // skipping the leading ' and trimming the trailing '
-    keyword.AssignASCII(gCSPUTF8Keywords[i] + 1);
+    keyword.AssignASCII(CSPStrKeywords[i] + 1);
     keyword.Trim("'", false, true);
     if (lowerKey.Equals(keyword)) {
       return true;
@@ -478,7 +473,7 @@ nsCSPBaseSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
                      bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPBaseSrc::allows, aKeyWord: %s, a HashOrNonce: %s",
-              aKeyword == CSP_HASH ? "hash" : CSP_EnumToUTF8Keyword(aKeyword),
+              aKeyword == CSP_HASH ? "hash" : CSP_EnumToKeyword(aKeyword),
               NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
   return false;
 }
@@ -528,7 +523,6 @@ nsCSPSchemeSrc::toString(nsAString& outStr) const
 nsCSPHostSrc::nsCSPHostSrc(const nsAString& aHost)
   : mHost(aHost)
   , mGeneratedFromSelfKeyword(false)
-  , mIsUniqueOrigin(false)
   , mWithinFrameAncstorsDir(false)
 {
   ToLowerCase(mHost);
@@ -630,7 +624,7 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
                  aUri->GetSpecOrDefault().get()));
   }
 
-  if (mInvalidated || mIsUniqueOrigin) {
+  if (mInvalidated) {
     return false;
   }
 
@@ -823,7 +817,7 @@ nsCSPKeywordSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
                         bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPKeywordSrc::allows, aKeyWord: %s, aHashOrNonce: %s, mInvalidated: %s",
-              CSP_EnumToUTF8Keyword(aKeyword),
+              CSP_EnumToKeyword(aKeyword),
               NS_ConvertUTF16toUTF8(aHashOrNonce).get(),
               mInvalidated ? "yes" : "false"));
 
@@ -849,7 +843,7 @@ nsCSPKeywordSrc::visit(nsCSPSrcVisitor* aVisitor) const
 void
 nsCSPKeywordSrc::toString(nsAString& outStr) const
 {
-  outStr.Append(CSP_EnumToUTF16Keyword(mKeyword));
+  outStr.AppendASCII(CSP_EnumToKeyword(mKeyword));
 }
 
 /* ===== nsCSPNonceSrc ==================== */
@@ -882,8 +876,7 @@ nsCSPNonceSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
                       bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPNonceSrc::allows, aKeyWord: %s, a HashOrNonce: %s",
-              CSP_EnumToUTF8Keyword(aKeyword),
-              NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
+              CSP_EnumToKeyword(aKeyword), NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
 
   if (aKeyword != CSP_NONCE) {
     return false;
@@ -901,7 +894,7 @@ nsCSPNonceSrc::visit(nsCSPSrcVisitor* aVisitor) const
 void
 nsCSPNonceSrc::toString(nsAString& outStr) const
 {
-  outStr.Append(CSP_EnumToUTF16Keyword(CSP_NONCE));
+  outStr.AppendASCII(CSP_EnumToKeyword(CSP_NONCE));
   outStr.Append(mNonce);
   outStr.AppendASCII("'");
 }
@@ -925,8 +918,7 @@ nsCSPHashSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
                      bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPHashSrc::allows, aKeyWord: %s, a HashOrNonce: %s",
-              CSP_EnumToUTF8Keyword(aKeyword),
-              NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
+              CSP_EnumToKeyword(aKeyword), NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
 
   if (aKeyword != CSP_HASH) {
     return false;
@@ -1059,8 +1051,7 @@ nsCSPDirective::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
                        bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPDirective::allows, aKeyWord: %s, a HashOrNonce: %s",
-              CSP_EnumToUTF8Keyword(aKeyword),
-              NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
+              CSP_EnumToKeyword(aKeyword), NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
 
   for (uint32_t i = 0; i < mSrcs.Length(); i++) {
     if (mSrcs[i]->allows(aKeyword, aHashOrNonce, aParserCreated)) {
@@ -1449,8 +1440,7 @@ nsCSPPolicy::allows(nsContentPolicyType aContentType,
                     bool aParserCreated) const
 {
   CSPUTILSLOG(("nsCSPPolicy::allows, aKeyWord: %s, a HashOrNonce: %s",
-              CSP_EnumToUTF8Keyword(aKeyword),
-              NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
+              CSP_EnumToKeyword(aKeyword), NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
 
   nsCSPDirective* defaultDir = nullptr;
 

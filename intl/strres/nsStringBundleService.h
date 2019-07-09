@@ -39,7 +39,7 @@ private:
   void getStringBundle(const char *aUrl, nsIStringBundle** aResult);
   nsresult FormatWithBundle(nsIStringBundle* bundle, nsresult aStatus,
                             uint32_t argCount, char16_t** argArray,
-                            nsAString& result);
+                            char16_t* *result);
 
   void flushBundleCache();
 

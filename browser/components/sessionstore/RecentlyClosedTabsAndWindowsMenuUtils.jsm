@@ -49,7 +49,7 @@ this.RecentlyClosedTabsAndWindowsMenuUtils = {
       }
 
     createRestoreAllEntry(doc, fragment, aPrefixRestoreAll, false,
-                          aRestoreAllLabel, closedTabs.length, aTagName);
+                          aRestoreAllLabel, closedTabs.length, aTagName)
     }
     return fragment;
   },
@@ -110,10 +110,6 @@ this.RecentlyClosedTabsAndWindowsMenuUtils = {
 
     aEvent.view.undoCloseTab(aEvent.originalTarget.getAttribute("value"));
     aEvent.view.gBrowser.moveTabToEnd();
-    let ancestorPanel = aEvent.target.closest("panel");
-    if (ancestorPanel) {
-      ancestorPanel.hidePopup();
-    }
   },
 };
 

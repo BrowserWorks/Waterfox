@@ -40,26 +40,11 @@ class Graph(object):
     def __repr__(self):
         return "<Graph nodes={!r} edges={!r}>".format(self.nodes, self.edges)
 
-    def transitive_closure(self, nodes, reverse=False):
+    def transitive_closure(self, nodes):
         """
         Return the transitive closure of <nodes>: the graph containing all
         specified nodes as well as any nodes reachable from them, and any
         intervening edges.
-
-        If `reverse` is true, the "reachability" will be reversed and this
-        will return the set of nodes that can reach the specified nodes.
-
-        Example
-        -------
-
-        a ------> b ------> c
-                  |
-                  `-------> d
-
-        transitive_closure([b]).nodes == set([a, b])
-        transitive_closure([c]).nodes == set([c, b, a])
-        transitive_closure([c], reverse=True).nodes == set([c])
-        transitive_closure([b], reverse=True).nodes == set([b, c, d])
         """
         assert isinstance(nodes, set)
         assert nodes <= self.nodes
@@ -72,15 +57,22 @@ class Graph(object):
             nodes, edges = new_nodes, new_edges
             add_edges = set((left, right, name)
                             for (left, right, name) in self.edges
-                            if (right if reverse else left) in nodes)
-            add_nodes = set((left if reverse else right) for (left, right, _) in add_edges)
+                            if left in nodes)
+            add_nodes = set(right for (_, right, _) in add_edges)
             new_nodes = nodes | add_nodes
             new_edges = edges | add_edges
         return Graph(new_nodes, new_edges)
 
-    def _visit(self, reverse):
+    def visit_postorder(self):
+        """
+        Generate a sequence of nodes in postorder, such that every node is
+        visited *after* any nodes it links to.
+
+        Behavior is undefined (read: it will hang) if the graph contains a
+        cycle.
+        """
         queue = collections.deque(sorted(self.nodes))
-        links_by_node = self.reverse_links_dict() if reverse else self.links_dict()
+        links_by_node = self.links_dict()
         seen = set()
         while queue:
             node = queue.popleft()
@@ -93,23 +85,6 @@ class Graph(object):
             else:
                 queue.extend(n for n in links if n not in seen)
                 queue.append(node)
-
-    def visit_postorder(self):
-        """
-        Generate a sequence of nodes in postorder, such that every node is
-        visited *after* any nodes it links to.
-
-        Behavior is undefined (read: it will hang) if the graph contains a
-        cycle.
-        """
-        return self._visit(False)
-
-    def visit_preorder(self):
-        """
-        Like visit_postorder, but in reverse: evrey node is visited *before*
-        any nodes it links to.
-        """
-        return self._visit(True)
 
     def links_dict(self):
         """

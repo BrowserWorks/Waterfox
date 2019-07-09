@@ -23,7 +23,6 @@ from mozpack.copier import (
     Jarrer,
 )
 from mozpack.errors import errors
-from mozpack.mozjar import JAR_BROTLI
 import mozpack.path as mozpath
 import buildconfig
 from argparse import ArgumentParser
@@ -214,9 +213,9 @@ def main():
                         'access logs')
     parser.add_argument('--optimizejars', action='store_true', default=False,
                         help='Enable jar optimizations')
-    parser.add_argument('--compress', choices=('none', 'deflate', 'brotli'),
-                        default='deflate',
-                        help='Use given jar compression (default: deflate)')
+    parser.add_argument('--disable-compression', action='store_false',
+                        dest='compress', default=True,
+                        help='Disable jar compression')
     parser.add_argument('manifest', default=None, nargs='?',
                         help='Manifest file name')
     parser.add_argument('source', help='Source directory')
@@ -226,7 +225,7 @@ def main():
                         help='Extra files not to be considered as resources')
     args = parser.parse_args()
 
-    defines = dict(buildconfig.defines['ALLDEFINES'])
+    defines = dict(buildconfig.defines)
     if args.ignore_errors:
         errors.ignore_errors()
 
@@ -234,21 +233,15 @@ def main():
         for name, value in [split_define(d) for d in args.defines]:
             defines[name] = value
 
-    compress = {
-        'none': False,
-        'deflate': True,
-        'brotli': JAR_BROTLI,
-    }[args.compress]
-
     copier = FileCopier()
     if args.format == 'flat':
         formatter = FlatFormatter(copier)
     elif args.format == 'jar':
-        formatter = JarFormatter(copier, compress=compress, optimize=args.optimizejars)
+        formatter = JarFormatter(copier, compress=args.compress, optimize=args.optimizejars)
     elif args.format == 'omni':
         formatter = OmniJarFormatter(copier,
                                      buildconfig.substs['OMNIJAR_NAME'],
-                                     compress=compress,
+                                     compress=args.compress,
                                      optimize=args.optimizejars,
                                      non_resources=args.non_resource)
     else:

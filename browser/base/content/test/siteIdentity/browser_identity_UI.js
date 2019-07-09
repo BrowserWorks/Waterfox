@@ -33,7 +33,7 @@ var tests = [
   },
   {
     name: "IDN subdomain",
-    location: "http://sub1.xn--hxajbheg2az3al.xn--jxalpdlp/",
+    location: "http://sub1." + idnDomain + "/",
     effectiveHost: "sub1." + idnDomain
   },
   {
@@ -58,7 +58,7 @@ var tests = [
     location: "http://127.0.0.1:8888/",
     effectiveHost: "127.0.0.1"
   },
-];
+]
 
 var gCurrentTest, gCurrentTestIndex = -1, gTestDesc, gPopupHidden;
 // Go through the tests in both directions, to add additional coverage for

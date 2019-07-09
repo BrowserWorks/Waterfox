@@ -8,7 +8,6 @@
 #define mozilla_dom_media_MediaIPCUtils_h
 
 #include "ipc/IPCMessageUtils.h"
-#include "mozilla/gfx/Rect.h"
 #include "mozilla/GfxMessageUtils.h"
 #include "PlatformDecoderModule.h"
 
@@ -32,7 +31,7 @@ namespace IPC {
 
     static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
     {
-      mozilla::gfx::IntRect imageRect;
+      nsIntRect imageRect;
       if (ReadParam(aMsg, aIter, &aResult->mMimeType) &&
           ReadParam(aMsg, aIter, &aResult->mDisplay) &&
           ReadParam(aMsg, aIter, &aResult->mStereoMode) &&

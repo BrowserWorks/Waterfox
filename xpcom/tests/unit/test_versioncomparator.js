@@ -28,7 +28,8 @@ var equality = [
   "1.0+"
 ];
 
-function run_test() {
+function run_test()
+{
   var vc = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
                      .getService(Components.interfaces.nsIVersionComparator);
 
@@ -38,10 +39,12 @@ function run_test() {
       if (i == j) {
         if (result != 0)
           do_throw(comparisons[i] + " should be the same as itself");
-      } else if (i < j) {
+      }
+      else if (i < j) {
         if (!(result < 0))
           do_throw(comparisons[i] + " should be less than " + comparisons[j]);
-      } else if (!(result > 0)) {
+      }
+      else if (!(result > 0)) {
         do_throw(comparisons[i] + " should be greater than " + comparisons[j]);
       }
     }

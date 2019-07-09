@@ -10,8 +10,4 @@ cd /setup
 . /setup/install-make.sh
 . /setup/install-cmake.sh
 
-if [ -f /setup/install-debug-symbols.sh ]; then
-    . /setup/install-debug-symbols.sh
-fi
-
 rm -rf /setup

@@ -41,6 +41,7 @@ public:
          nsReflowStatus&          aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual void
@@ -49,7 +50,7 @@ public:
 
   virtual nsresult
   AttributeChanged(int32_t         aNameSpaceID,
-                   nsAtom*        aAttribute,
+                   nsIAtom*        aAttribute,
                    int32_t         aModType) override;
 
   // override the base method because we must keep separators in sync

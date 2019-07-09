@@ -70,7 +70,6 @@ load 877910.html
 load 903106.html
 load 916322-1.html
 load 916322-2.html
-load 978644.xhtml
 load 1032654.html
 load 1141260.html
 load 1228876.html
@@ -82,6 +81,5 @@ load 1290904.html
 load 1343886-1.html
 load 1343886-2.xml
 load 1343886-3.xml
-load 1350972.html
+asserts(0-3) load 1350972.html
 load 1386905.html
-asserts(0-4) load 1401726.html

@@ -76,7 +76,7 @@ SVGFEDiffuseLightingElement::GetPrimitiveDescription(nsSVGFilterInstance* aInsta
 
 bool
 SVGFEDiffuseLightingElement::AttributeAffectsRendering(int32_t aNameSpaceID,
-                                                       nsAtom* aAttribute) const
+                                                       nsIAtom* aAttribute) const
 {
   return SVGFEDiffuseLightingElementBase::AttributeAffectsRendering(aNameSpaceID, aAttribute) ||
          (aNameSpaceID == kNameSpaceID_None &&

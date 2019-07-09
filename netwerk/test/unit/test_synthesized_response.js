@@ -17,17 +17,8 @@ function make_uri(url) {
   return ios.newURI(url);
 }
 
-function isParentProcess() {
-    let appInfo = Cc["@mozilla.org/xre/app-info;1"];
-    return (!appInfo || appInfo.getService(Ci.nsIXULRuntime).processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT);
-}
-
-if (isParentProcess()) {
-  // ensure the cache service is prepped when running the test
-  // We only do this in the main process, as the cache storage service leaks
-  // when instantiated in the content process.
-  Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(Ci.nsICacheStorageService);
-}
+// ensure the cache service is prepped when running the test
+Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(Ci.nsICacheStorageService);
 
 var gotOnProgress;
 var gotOnStatus;
@@ -63,8 +54,9 @@ function make_channel(url, body, cb) {
                             .createInstance(Ci.nsIStringInputStream);
         synthesized.data = body;
 
-        channel.startSynthesizedResponse(synthesized, null, '');
-        channel.finishSynthesizedResponse();
+        NetUtil.asyncCopy(synthesized, channel.responseBody, function() {
+          channel.finishSynthesizedResponse('');
+        });
       }
       if (cb) {
         cb(channel);
@@ -151,9 +143,10 @@ add_test(function() {
       var synthesized = Cc["@mozilla.org/io/string-input-stream;1"]
                           .createInstance(Ci.nsIStringInputStream);
       synthesized.data = NON_REMOTE_BODY;
-      channel.synthesizeHeader("Content-Length", NON_REMOTE_BODY.length);
-      channel.startSynthesizedResponse(synthesized, null, '');
-      channel.finishSynthesizedResponse();
+      NetUtil.asyncCopy(synthesized, channel.responseBody, function() {
+        channel.synthesizeHeader("Content-Length", NON_REMOTE_BODY.length);
+        channel.finishSynthesizedResponse('');
+      });
     });
   });
   chan.asyncOpen2(new ChannelListener(handle_synthesized_response, null));
@@ -176,11 +169,12 @@ add_test(function() {
                         .createInstance(Ci.nsIStringInputStream);
     synthesized.data = NON_REMOTE_BODY;
 
-    // set the content-type to ensure that the stream converter doesn't hold up notifications
-    // and cause the test to fail
-    intercepted.synthesizeHeader("Content-Type", "text/plain");
-    intercepted.startSynthesizedResponse(synthesized, null, '');
-    intercepted.finishSynthesizedResponse();
+    NetUtil.asyncCopy(synthesized, intercepted.responseBody, function() {
+      // set the content-type to ensure that the stream converter doesn't hold up notifications
+      // and cause the test to fail
+      intercepted.synthesizeHeader("Content-Type", "text/plain");
+      intercepted.finishSynthesizedResponse('');
+    });
   });
   chan.asyncOpen2(new ChannelListener(handle_synthesized_response, null,
 				     CL_ALLOW_UNKNOWN_CL | CL_SUSPEND | CL_EXPECT_3S_DELAY));
@@ -189,7 +183,7 @@ add_test(function() {
 // ensure that the intercepted channel can be cancelled
 add_test(function() {
   var chan = make_channel(URL + '/body', null, function(intercepted) {
-    intercepted.cancelInterception(Cr.NS_BINDING_ABORTED);
+    intercepted.cancel(Cr.NS_BINDING_ABORTED);
   });
   chan.asyncOpen2(new ChannelListener(run_next_test, null, CL_EXPECT_FAILURE));
 });
@@ -201,7 +195,7 @@ add_test(function() {
     do_timeout(0, function() {
       var gotexception = false;
       try {
-        chan.cancelInterception();
+        chan.cancel();
       } catch (x) {
         gotexception = true;
       }
@@ -218,10 +212,11 @@ add_test(function() {
                         .createInstance(Ci.nsIStringInputStream);
     synthesized.data = NON_REMOTE_BODY;
 
-    let channel = intercepted.channel;
-    intercepted.startSynthesizedResponse(synthesized, null, '');
-    intercepted.finishSynthesizedResponse();
-    channel.cancel(Cr.NS_BINDING_ABORTED);
+    NetUtil.asyncCopy(synthesized, intercepted.responseBody, function() {
+      let channel = intercepted.channel;
+      intercepted.finishSynthesizedResponse('');
+      channel.cancel(Cr.NS_BINDING_ABORTED);
+    });
   });
   chan.asyncOpen2(new ChannelListener(run_next_test, null,
                                      CL_EXPECT_FAILURE | CL_ALLOW_UNKNOWN_CL));
@@ -234,25 +229,13 @@ add_test(function() {
                         .createInstance(Ci.nsIStringInputStream);
     synthesized.data = NON_REMOTE_BODY;
 
-    intercepted.channel.cancel(Cr.NS_BINDING_ABORTED);
-
-    // This should not throw, but result in the channel firing callbacks
-    // with an error status.
-    intercepted.startSynthesizedResponse(synthesized, null, '');
-    intercepted.finishSynthesizedResponse();
+    NetUtil.asyncCopy(synthesized, intercepted.responseBody, function() {
+      intercepted.channel.cancel(Cr.NS_BINDING_ABORTED);
+      intercepted.finishSynthesizedResponse('');
+    });
   });
   chan.asyncOpen2(new ChannelListener(run_next_test, null,
                                      CL_EXPECT_FAILURE | CL_ALLOW_UNKNOWN_CL));
-});
-
-// Ensure that nsIInterceptedChannel.channelIntercepted() can return an error.
-// In this case we should automatically ResetInterception() and complete the
-// network request.
-add_test(function() {
-  var chan = make_channel(URL + '/body', null, function(chan) {
-    throw('boom');
-  });
-  chan.asyncOpen2(new ChannelListener(handle_remote_response, null));
 });
 
 add_test(function() {

@@ -1,8 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-/* eslint-env mozilla/frame-script */
-
 const { classes: Cc, interfaces: Ci, results: Cr } = Components;
 
 var dbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
@@ -18,22 +16,26 @@ function setTimeout(callback, delay) {
 
 function doUpdate(update) {
   let listener = {
-    QueryInterface(iid) {
+    QueryInterface: function(iid)
+    {
       if (iid.equals(Ci.nsISupports) ||
           iid.equals(Ci.nsIUrlClassifierUpdateObserver))
         return this;
 
       throw Cr.NS_ERROR_NO_INTERFACE;
     },
-    updateUrlRequested(url) { },
-    streamFinished(status) { },
-    updateError(errorCode) {
+    updateUrlRequested: function(url) { },
+    streamFinished: function(status) { },
+    updateError: function(errorCode) {
       sendAsyncMessage("updateError", errorCode);
     },
-    updateSuccess(requestedTimeout) {
+    updateSuccess: function(requestedTimeout) {
       sendAsyncMessage("updateSuccess");
     }
   };
+
+  let dbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
+                  .getService(Ci.nsIUrlClassifierDBService);
 
   try {
     dbService.beginUpdate(listener, "test-malware-simple,test-unwanted-simple", "");
@@ -41,7 +43,7 @@ function doUpdate(update) {
     dbService.updateStream(update);
     dbService.finishStream();
     dbService.finishUpdate();
-  } catch (e) {
+  } catch(e) {
     // beginUpdate may fail if there's an existing update in progress
     // retry until success or testcase timeout.
     setTimeout(() => { doUpdate(update); }, 1000);
@@ -52,7 +54,7 @@ function doReload() {
   try {
     dbService.reloadDatabase();
     sendAsyncMessage("reloadSuccess");
-  } catch (e) {
+  } catch(e) {
     setTimeout(() => { doReload(); }, 1000);
   }
 }
@@ -82,14 +84,16 @@ function waitForInit() {
     iosvc.newURI(url), {});
 
   let listener = {
-    QueryInterface(iid) {
+    QueryInterface: function(iid)
+    {
       if (iid.equals(Ci.nsISupports) ||
         iid.equals(Ci.nsIUrlClassifierUpdateObserver))
         return this;
       throw Cr.NS_ERROR_NO_INTERFACE;
     },
 
-    handleEvent(value) {
+    handleEvent: function(value)
+    {
       if (value === table) {
         sendAsyncMessage("safeBrowsingInited");
       }

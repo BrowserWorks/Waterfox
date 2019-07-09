@@ -25,7 +25,6 @@ info: >
     d. Let R be a String value produced by concatenating S and next.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

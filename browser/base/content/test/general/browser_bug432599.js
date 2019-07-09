@@ -1,4 +1,3 @@
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 function invokeUsingCtrlD(phase) {
   switch (phase) {
   case 1:
@@ -82,15 +81,15 @@ var titleElement = document.getElementById("editBookmarkPanelTitle");
 var removeElement = document.getElementById("editBookmarkPanelRemoveButton");
 
 function checkBookmarksPanel(invoker, phase) {
-  let onPopupShown = function popupShownListener(aEvent) {
+  let onPopupShown = function(aEvent) {
     if (aEvent.originalTarget == popupElement) {
-      popupElement.removeEventListener("popupshown", popupShownListener);
+      popupElement.removeEventListener("popupshown", arguments.callee);
       checkBookmarksPanel(invoker, phase + 1);
     }
   };
-  let onPopupHidden = function listener(aEvent) {
+  let onPopupHidden = function(aEvent) {
     if (aEvent.originalTarget == popupElement) {
-      popupElement.removeEventListener("popuphidden", listener);
+      popupElement.removeEventListener("popuphidden", arguments.callee);
       if (phase < 4) {
         checkBookmarksPanel(invoker, phase + 1);
       } else {

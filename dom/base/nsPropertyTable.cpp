@@ -2,13 +2,21 @@
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * This Original Code has been modified by IBM Corporation. Modifications made by IBM
+ * described herein are Copyright (c) International Business Machines Corporation, 2000.
+ * Modifications to Mozilla code or documentation identified per MPL Section 3.3
+ *
+ * Date             Modified by     Description of modification
+ * 04/20/2000       IBM Corp.      OS/2 VisualAge build.
+ */
 
 /**
  * nsPropertyTable allows a set of arbitrary key/value pairs to be stored
  * for any number of nodes, in a global hashtable rather than on the nodes
  * themselves.  Nodes can be any type of object; the hashtable keys are
- * nsAtom pointers, and the values are void pointers.
+ * nsIAtom pointers, and the values are void pointers.
  */
 
 #include "nsPropertyTable.h"
@@ -17,7 +25,7 @@
 
 #include "PLDHashTable.h"
 #include "nsError.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 
 struct PropertyListMapEntry : public PLDHashEntryHdr {
   const void  *key;
@@ -28,7 +36,7 @@ struct PropertyListMapEntry : public PLDHashEntryHdr {
 
 class nsPropertyTable::PropertyList {
 public:
-  PropertyList(nsAtom*           aName,
+  PropertyList(nsIAtom*           aName,
                NSPropertyDtorFunc aDtorFunc,
                void*              aDtorData,
                bool               aTransfer);
@@ -41,14 +49,14 @@ public:
   // Destroy all remaining properties (without removing them)
   void Destroy();
 
-  bool Equals(nsAtom *aPropertyName)
+  bool Equals(nsIAtom *aPropertyName)
   {
     return mName == aPropertyName;
   }
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
 
-  RefPtr<nsAtom>  mName;           // property name
+  nsCOMPtr<nsIAtom>  mName;           // property name
   PLDHashTable       mObjectValueMap; // map of object/value pairs
   NSPropertyDtorFunc mDtorFunc;       // property specific value dtor function
   void*              mDtorData;       // pointer to pass to dtor
@@ -138,7 +146,7 @@ nsPropertyTable::EnumerateAll(NSPropertyFunc aCallBack, void* aData)
 
 void*
 nsPropertyTable::GetPropertyInternal(nsPropertyOwner aObject,
-                                     nsAtom    *aPropertyName,
+                                     nsIAtom    *aPropertyName,
                                      bool        aRemove,
                                      nsresult   *aResult)
 {
@@ -168,7 +176,7 @@ nsPropertyTable::GetPropertyInternal(nsPropertyOwner aObject,
 
 nsresult
 nsPropertyTable::SetPropertyInternal(nsPropertyOwner     aObject,
-                                     nsAtom            *aPropertyName,
+                                     nsIAtom            *aPropertyName,
                                      void               *aPropertyValue,
                                      NSPropertyDtorFunc  aPropDtorFunc,
                                      void               *aPropDtorData,
@@ -223,7 +231,7 @@ nsPropertyTable::SetPropertyInternal(nsPropertyOwner     aObject,
 
 nsresult
 nsPropertyTable::DeleteProperty(nsPropertyOwner aObject,
-                                nsAtom    *aPropertyName)
+                                nsIAtom    *aPropertyName)
 {
   NS_PRECONDITION(aPropertyName && aObject, "unexpected null param");
 
@@ -237,7 +245,7 @@ nsPropertyTable::DeleteProperty(nsPropertyOwner aObject,
 }
 
 nsPropertyTable::PropertyList*
-nsPropertyTable::GetPropertyListFor(nsAtom* aPropertyName) const
+nsPropertyTable::GetPropertyListFor(nsIAtom* aPropertyName) const
 {
   PropertyList* result;
 
@@ -252,7 +260,7 @@ nsPropertyTable::GetPropertyListFor(nsAtom* aPropertyName) const
 
 //----------------------------------------------------------------------
 
-nsPropertyTable::PropertyList::PropertyList(nsAtom            *aName,
+nsPropertyTable::PropertyList::PropertyList(nsIAtom            *aName,
                                             NSPropertyDtorFunc  aDtorFunc,
                                             void               *aDtorData,
                                             bool                aTransfer)
@@ -326,7 +334,7 @@ nsPropertyTable::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
 /* static */
 void
-nsPropertyTable::SupportsDtorFunc(void *aObject, nsAtom *aPropertyName,
+nsPropertyTable::SupportsDtorFunc(void *aObject, nsIAtom *aPropertyName,
                                   void *aPropertyValue, void *aData)
 {
   nsISupports *propertyValue = static_cast<nsISupports*>(aPropertyValue);

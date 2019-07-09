@@ -6,10 +6,8 @@
 
 /* exported startup, shutdown, install, uninstall, ExtensionAPIs */
 
-Components.utils.import("resource://gre/modules/ExtensionCommon.jsm");
+Components.utils.import("resource://gre/modules/ExtensionAPI.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
-
-const {ExtensionAPIs} = ExtensionCommon;
 
 var namespace;
 var resource;
@@ -20,7 +18,7 @@ function install(data, reason) {
 
 function startup(data, reason) {
   namespace = data.id.replace(/@.*/, "");
-  resource = `extension-${namespace.toLowerCase()}-api`;
+  resource = `extension-${namespace}-api`;
 
   resProto = Services.io.getProtocolHandler("resource")
                      .QueryInterface(Components.interfaces.nsIResProtocolHandler);

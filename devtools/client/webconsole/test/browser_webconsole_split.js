@@ -194,7 +194,7 @@ function test() {
   });
 
   function openPanel(toolId) {
-    let deferred = defer();
+    let deferred = promise.defer();
     let target = TargetFactory.forTab(gBrowser.selectedTab);
     gDevTools.showToolbox(target, toolId).then(function (box) {
       toolbox = box;

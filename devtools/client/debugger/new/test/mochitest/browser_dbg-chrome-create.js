@@ -42,12 +42,12 @@ registerCleanupFunction(function() {
   gProcess = null;
 });
 
-add_task(async function() {
+add_task(function*() {
   // Windows XP and 8.1 test slaves are terribly slow at this test.
   requestLongerTimeout(5);
   Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
 
-  gProcess = await initChromeDebugger();
+  gProcess = yield initChromeDebugger();
 
   ok(
     gProcess._dbgProcess,
@@ -81,5 +81,5 @@ add_task(async function() {
 
   info("profile path: " + gProcess._dbgProfilePath);
 
-  await gProcess.close();
+  yield gProcess.close();
 });

@@ -148,7 +148,7 @@ BlockingIOWatcher::~BlockingIOWatcher()
 void BlockingIOWatcher::InitThread()
 {
   // GetCurrentThread() only returns a pseudo handle, hence DuplicateHandle
-  ::DuplicateHandle(
+  BOOL result = ::DuplicateHandle(
     GetCurrentProcess(),
     GetCurrentThread(),
     GetCurrentProcess(),

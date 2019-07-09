@@ -7,8 +7,9 @@ let notificationURL = "http://example.org/browser/browser/base/content/test/aler
 let oldShowFavicons;
 
 add_task(async function test_notificationClose() {
+  let pm = Services.perms;
   let notificationURI = makeURI(notificationURL);
-  await addNotificationPermission(notificationURL);
+  pm.add(notificationURI, "desktop-notification", pm.ALLOW_ACTION);
 
   oldShowFavicons = Services.prefs.getBoolPref("alerts.showFavicons");
   Services.prefs.setBoolPref("alerts.showFavicons", true);
@@ -45,7 +46,7 @@ add_task(async function test_notificationClose() {
     let alertIcon = alertWindow.document.getElementById("alertIcon");
     is(alertIcon.src, faviconURI.spec, "Icon of notification should be present");
 
-    let alertCloseButton = alertWindow.document.querySelector(".close-icon");
+    let alertCloseButton = alertWindow.document.querySelector(".alertCloseButton");
     is(alertCloseButton.localName, "toolbarbutton", "close button found");
     let promiseBeforeUnloadEvent =
       BrowserTestUtils.waitForEvent(alertWindow, "beforeunload");

@@ -132,11 +132,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1345366
     error: "Update with Error",
   };
 
-  const nonSupportedMethods = [{
-    supportedMethods: "nonsupported-method",
-  }];
-
-
   function updateWithShippingAddress() {
     return new Promise((resolve, reject) => {
       resolve(defaultDetails);
@@ -197,22 +192,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1345366
     });
   }
 
-  function testCannotMakePaymentShow() {
-    return new Promise((resolve, reject) => {
-      const payRequest = new PaymentRequest(nonSupportedMethods, defaultDetails);
-      payRequest.canMakePayment().then(result => {
-        ok(!result, "canMakePayment() should return false, but got " + result + ".");
-        payRequest.show().then( () => {
-          ok(false, "Should be rejected with 'NotSupportedError', but got resolved");
-          resolve();
-        }).catch( e => {
-          is(e.name, "NotSupportedError", "Should be rejected with 'NotSupportedError', but got " + e.name + ".");
-          resolve();
-        });
-      });
-    });
-  }
-
   function testRejectShow() {
     gScript.sendAsyncMessage("set-reject-ui-service");
     return new Promise((resolve, reject) => {
@@ -255,13 +234,13 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1345366
 
   function testNullDetailsResponse() {
     return new Promise((resolve, reject) => {
-      gScript.addMessageListener("test-init-data-and-response-complete",
+      gScript.addMessageListener("test-null-details-response-complete",
                                  function nullDetailsResponseCompleteHandler() {
-        gScript.removeMessageListener("test-init-data-and-response-complete",
+        gScript.removeMessageListener("test-null-details-response-complete",
                                       nullDetailsResponseCompleteHandler);
         resolve();
       });
-      gScript.sendAsyncMessage("test-init-data-and-response");
+      gScript.sendAsyncMessage("test-null-details-response");
     });
   }
 
@@ -276,8 +255,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1345366
   }
 
   function runTests() {
-    testCannotMakePaymentShow()
-    .then(testRejectShow)
+    testRejectShow()
     .then(testShow)
     .then(testUpdateWithError)
     .then(testNullDetailsResponse)
@@ -300,5 +278,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1345366
 </head>
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1345366">Mozilla Bug 1345366</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
 </body>
 </html>

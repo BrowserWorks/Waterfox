@@ -19,6 +19,10 @@ var gPolicy              = null;
 var gManifestObject      = null;
 var gManifestHandlerURI  = null;
 
+function run_test() {
+  run_next_test();
+}
+
 add_task(async function test_setup() {
   loadAddonManager();
   await removeCacheFile();
@@ -52,7 +56,7 @@ add_task(async function test_setup() {
 });
 
 function checkExperimentListsEqual(list, list2) {
-  Assert.equal(list.length, list2.length, "Lists should have the same length.");
+  Assert.equal(list.length, list2.length, "Lists should have the same length.")
 
   for (let i = 0; i < list.length; ++i) {
     for (let k of Object.keys(list[i])) {
@@ -384,7 +388,7 @@ add_task(async function test_expiration() {
 
   // Test that experiments that are cached locally but never ran are removed from cache
   // when they are removed from the manifest (this is cached data, not really history).
-  gManifestObject.experiments = gManifestObject.experiments.slice(1, 1);
+  gManifestObject["experiments"] = gManifestObject["experiments"].slice(1, 1);
   await experiments.updateManifest();
   validateCache([...experiments._experiments.keys()], [EXPERIMENT2_ID]);
 
@@ -392,20 +396,4 @@ add_task(async function test_expiration() {
   await experiments._toggleExperimentsEnabled(false);
   await promiseRestartManager();
   await removeCacheFile();
-});
-
-add_task(async function test_invalid_cache() {
-  // Save uncompressed data to the cache file to trigger a loading error.
-  let encoder = new TextEncoder();
-  let data = encoder.encode("foo");
-
-  let path = OS.Path.join(OS.Constants.Path.profileDir, "experiments.json");
-  let options = { tmpPath: path + ".tmp" };
-  await OS.File.writeAtomic(path, data, options);
-
-  // Trigger loading from the cache. This should not throw and gracefully recover.
-  let experiments = new Experiments.Experiments(gPolicy);
-  let list = await experiments.getExperiments();
-
-  Assert.deepEqual(list, [], "The experiments cache should be empty.");
 });

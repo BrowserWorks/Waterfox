@@ -4,12 +4,11 @@
 
 //! A list of CSS rules.
 
-#[cfg(feature = "gecko")]
-use malloc_size_of::{MallocShallowSizeOf, MallocSizeOfOps};
 use servo_arc::{Arc, RawOffsetArc};
 use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard};
 use stylesheets::{CssRule, RulesMutateError};
 use stylesheets::loader::StylesheetLoader;
+use stylesheets::memory::{MallocSizeOfFn, MallocSizeOfWithGuard};
 use stylesheets::rule_parser::State;
 use stylesheets::stylesheet::StylesheetContents;
 
@@ -37,17 +36,17 @@ impl DeepCloneWithLock for CssRules {
     }
 }
 
-impl CssRules {
-    /// Measure heap usage.
-    #[cfg(feature = "gecko")]
-    pub fn size_of(&self, guard: &SharedRwLockReadGuard, ops: &mut MallocSizeOfOps) -> usize {
-        let mut n = self.0.shallow_size_of(ops);
-        for rule in self.0.iter() {
-            n += rule.size_of(guard, ops);
-        }
-        n
+impl MallocSizeOfWithGuard for CssRules {
+    fn malloc_size_of_children(
+        &self,
+        guard: &SharedRwLockReadGuard,
+        malloc_size_of: MallocSizeOfFn
+    ) -> usize {
+        self.0.malloc_size_of_children(guard, malloc_size_of)
     }
+}
 
+impl CssRules {
     /// Trivially construct a new set of CSS rules.
     pub fn new(rules: Vec<CssRule>, shared_lock: &SharedRwLock) -> Arc<Locked<CssRules>> {
         Arc::new(shared_lock.wrap(CssRules(rules)))
@@ -65,7 +64,7 @@ impl CssRules {
         })
     }
 
-    /// <https://drafts.csswg.org/cssom/#remove-a-css-rule>
+    /// https://drafts.csswg.org/cssom/#remove-a-css-rule
     pub fn remove_rule(&mut self, index: usize) -> Result<(), RulesMutateError> {
         // Step 1, 2
         if index >= self.0.len() {
@@ -92,7 +91,7 @@ impl CssRules {
 
 /// A trait to implement helpers for `Arc<Locked<CssRules>>`.
 pub trait CssRulesHelpers {
-    /// <https://drafts.csswg.org/cssom/#insert-a-css-rule>
+    /// https://drafts.csswg.org/cssom/#insert-a-css-rule
     ///
     /// Written in this funky way because parsing an @import rule may cause us
     /// to clone a stylesheet from the same document due to caching in the CSS

@@ -14,6 +14,7 @@
  */
 
 var {Task} = require("devtools/shared/task");
+var Promise = require("promise");
 
 /**
  * Create an async function that only executes once per instance of an object.

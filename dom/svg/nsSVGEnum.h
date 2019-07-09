@@ -15,7 +15,7 @@
 #include "mozilla/dom/SVGAnimatedEnumeration.h"
 #include "mozilla/UniquePtr.h"
 
-class nsAtom;
+class nsIAtom;
 class nsSMILValue;
 
 namespace mozilla {
@@ -27,7 +27,7 @@ class SVGAnimationElement;
 typedef uint8_t nsSVGEnumValue;
 
 struct nsSVGEnumMapping {
-  nsAtom **mKey;
+  nsIAtom **mKey;
   nsSVGEnumValue mVal;
 };
 
@@ -41,8 +41,8 @@ public:
     mIsBaseSet = false;
   }
 
-  nsresult SetBaseValueAtom(const nsAtom* aValue, nsSVGElement *aSVGElement);
-  nsAtom* GetBaseValueAtom(nsSVGElement *aSVGElement);
+  nsresult SetBaseValueAtom(const nsIAtom* aValue, nsSVGElement *aSVGElement);
+  nsIAtom* GetBaseValueAtom(nsSVGElement *aSVGElement);
   nsresult SetBaseValue(uint16_t aValue,
                         nsSVGElement *aSVGElement);
   uint16_t GetBaseValue() const

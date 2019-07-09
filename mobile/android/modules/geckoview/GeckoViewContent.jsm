@@ -9,11 +9,9 @@ this.EXPORTED_SYMBOLS = ["GeckoViewContent"];
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/GeckoViewModule.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewContent"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewContent");
 
 function debug(aMsg) {
   // dump(aMsg);
@@ -22,9 +20,6 @@ function debug(aMsg) {
 class GeckoViewContent extends GeckoViewModule {
   init() {
     this.frameScriptLoaded = false;
-    this.eventDispatcher.registerListener(this, [
-      "GeckoView:SetActive"
-    ]);
   }
 
   register() {
@@ -42,6 +37,8 @@ class GeckoViewContent extends GeckoViewModule {
     this.eventDispatcher.registerListener(this, "GeckoViewContent:ExitFullScreen");
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenExit", this);
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenRequest", this);
+    this.messageManager.addMessageListener("GeckoView:DOMTitleChanged", this);
+    this.messageManager.addMessageListener("GeckoView:ContextMenu", this);
   }
 
   // Bundle event handler.
@@ -50,9 +47,6 @@ class GeckoViewContent extends GeckoViewModule {
     switch (aEvent) {
       case "GeckoViewContent:ExitFullScreen":
         this.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenExited");
-        break;
-      case "GeckoView:SetActive":
-        this.browser.docShellIsActive = aData.active;
         break;
     }
   }
@@ -65,6 +59,8 @@ class GeckoViewContent extends GeckoViewModule {
     this.eventDispatcher.unregisterListener(this, "GeckoViewContent:ExitFullScreen");
     this.messageManager.removeMessageListener("GeckoView:DOMFullscreenExit", this);
     this.messageManager.removeMessageListener("GeckoView:DOMFullscreenRequest", this);
+    this.messageManager.removeMessageListener("GeckoView:DOMTitleChanged", this);
+    this.messageManager.removeMessageListener("GeckoView:ContextMenu", this);
   }
 
   // DOM event handler
@@ -89,6 +85,15 @@ class GeckoViewContent extends GeckoViewModule {
     debug("receiveMessage " + aMsg.name);
 
     switch (aMsg.name) {
+      case "GeckoView:ContextMenu":
+        this.eventDispatcher.sendRequest({
+          type: aMsg.name,
+          screenX: aMsg.data.screenX,
+          screenY: aMsg.data.screenY,
+          elementSrc: aMsg.data.elementSrc,
+          uri: aMsg.data.uri
+        });
+        break;
       case "GeckoView:DOMFullscreenExit":
         this.window.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIDOMWindowUtils)
@@ -98,6 +103,12 @@ class GeckoViewContent extends GeckoViewModule {
         this.window.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIDOMWindowUtils)
                    .remoteFrameFullscreenChanged(aMsg.target);
+        break;
+      case "GeckoView:DOMTitleChanged":
+        this.eventDispatcher.sendRequest({
+          type: "GeckoView:DOMTitleChanged",
+          title: aMsg.data.title
+        });
         break;
     }
   }

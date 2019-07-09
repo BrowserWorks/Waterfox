@@ -444,7 +444,7 @@ nsCoreUtils::IsErrorPage(nsIDocument *aDocument)
     return false;
 
   nsAutoCString path;
-  uri->GetPathQueryRef(path);
+  uri->GetPath(path);
 
   NS_NAMED_LITERAL_CSTRING(neterror, "neterror");
   NS_NAMED_LITERAL_CSTRING(certerror, "certerror");
@@ -459,7 +459,7 @@ nsCoreUtils::GetID(nsIContent *aContent, nsAString& aID)
 }
 
 bool
-nsCoreUtils::GetUIntAttr(nsIContent *aContent, nsAtom *aAttr, int32_t *aUInt)
+nsCoreUtils::GetUIntAttr(nsIContent *aContent, nsIAtom *aAttr, int32_t *aUInt)
 {
   nsAutoString value;
   aContent->GetAttr(kNameSpaceID_None, aAttr, value);

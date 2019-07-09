@@ -31,7 +31,7 @@ var Logger = {
     }
 
     this._file = Cc["@mozilla.org/file/local;1"]
-                 .createInstance(Ci.nsIFile);
+                 .createInstance(Ci.nsILocalFile);
     this._file.initWithPath(path);
     var exists = this._file.exists();
 

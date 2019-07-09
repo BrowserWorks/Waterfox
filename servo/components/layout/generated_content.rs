@@ -10,6 +10,7 @@
 
 use context::{LayoutContext, with_thread_local_font_context};
 use flow::{self, AFFECTS_COUNTERS, Flow, HAS_COUNTER_AFFECTING_CHILDREN, ImmutableFlowUtils};
+use flow::InorderFlowTraversal;
 use fragment::{Fragment, GeneratedContentInfo, SpecificFragmentInfo, UnscannedTextFragmentInfo};
 use gfx::display_list::OpaqueNode;
 use script_layout_interface::wrapper_traits::PseudoElementType;
@@ -21,7 +22,6 @@ use style::properties::ComputedValues;
 use style::selector_parser::RestyleDamage;
 use style::servo::restyle_damage::RESOLVE_GENERATED_CONTENT;
 use text::TextRunScanner;
-use traversal::InorderFlowTraversal;
 
 // Decimal styles per CSS-COUNTER-STYLES § 6.1:
 static DECIMAL: [char; 10] = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ];
@@ -130,14 +130,14 @@ impl<'a> InorderFlowTraversal for ResolveGeneratedContent<'a> {
     }
 
     #[inline]
-    fn should_process_subtree(&mut self, flow: &mut Flow) -> bool {
+    fn should_process(&mut self, flow: &mut Flow) -> bool {
         flow::base(flow).restyle_damage.intersects(RESOLVE_GENERATED_CONTENT) ||
             flow::base(flow).flags.intersects(AFFECTS_COUNTERS | HAS_COUNTER_AFFECTING_CHILDREN)
     }
 }
 
 /// The object that mutates the generated content fragments.
-struct ResolveGeneratedContentFragmentMutator<'a, 'b: 'a> {
+struct ResolveGeneratedContentFragmentMutator<'a,'b:'a> {
     /// The traversal.
     traversal: &'a mut ResolveGeneratedContent<'b>,
     /// The level we're at in the flow tree.
@@ -148,7 +148,7 @@ struct ResolveGeneratedContentFragmentMutator<'a, 'b: 'a> {
     incremented: bool,
 }
 
-impl<'a, 'b> ResolveGeneratedContentFragmentMutator<'a, 'b> {
+impl<'a,'b> ResolveGeneratedContentFragmentMutator<'a,'b> {
     fn mutate_fragment(&mut self, fragment: &mut Fragment) {
         // We only reset and/or increment counters once per flow. This avoids double-incrementing
         // counters on list items (once for the main fragment and once for the marker).
@@ -248,7 +248,7 @@ impl<'a, 'b> ResolveGeneratedContentFragmentMutator<'a, 'b> {
             // so that it isn't processed again on the next layout.  FIXME (mbrubeck): When
             // processing an inline flow, this traversal should be allowed to insert or remove
             // fragments.  Then we can just remove these fragments rather than adding placeholders.
-            None => SpecificFragmentInfo::GeneratedContent(Box::new(GeneratedContentInfo::Empty))
+            None => SpecificFragmentInfo::GeneratedContent(box GeneratedContentInfo::Empty)
         };
     }
 
@@ -436,8 +436,7 @@ fn render_text(layout_context: &LayoutContext,
                -> Option<SpecificFragmentInfo> {
     let mut fragments = LinkedList::new();
     let info = SpecificFragmentInfo::UnscannedText(
-        Box::new(UnscannedTextFragmentInfo::new(string, None))
-    );
+        box UnscannedTextFragmentInfo::new(string, None));
     fragments.push_back(Fragment::from_opaque_node_and_style(node,
                                                              pseudo,
                                                              style.clone(),

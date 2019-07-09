@@ -28,7 +28,7 @@ this.EngineSynchronizer = function EngineSynchronizer(service) {
   this._log.level = Log.Level[Svc.Prefs.get("log.logger.synchronizer")];
 
   this.service = service;
-};
+}
 
 EngineSynchronizer.prototype = {
   async sync(engineNamesToSync) {
@@ -315,11 +315,7 @@ EngineSynchronizer.prototype = {
         this._log.trace("The " + engineName + " engine was disabled remotely.");
 
         // Don't automatically mark it as declined!
-        try {
-          engine.enabled = false;
-        } catch (e) {
-          this._log.trace("Failed to disable engine " + engineName);
-        }
+        engine.enabled = false;
       }
     }
 

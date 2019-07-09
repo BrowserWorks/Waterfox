@@ -31,6 +31,7 @@
 #include "nsIXPConnect.h"
 #include "nsEnumeratorUtils.h"
 #include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsITextToSubURI.h"
 #include "nsIInterfaceRequestor.h"
@@ -324,7 +325,7 @@ nsHTTPIndex::OnStopRequest(nsIRequest *request,
 
   nsresult rv;
 
-  nsCString commentStr;
+  nsXPIDLCString commentStr;
   mParser->GetComment(getter_Copies(commentStr));
 
   nsCOMPtr<nsIRDFLiteral> comment;
@@ -378,7 +379,7 @@ nsHTTPIndex::OnIndexAvailable(nsIRequest* aRequest, nsISupports *aContext,
   // we found the filename; construct a resource for its entry
   nsAutoCString entryuriC(baseStr);
 
-  nsCString filename;
+  nsXPIDLCString filename;
   nsresult rv = aIndex->GetLocation(getter_Copies(filename));
   if (NS_FAILED(rv)) return rv;
   entryuriC.Append(filename);
@@ -414,7 +415,7 @@ nsHTTPIndex::OnIndexAvailable(nsIRequest* aRequest, nsISupports *aContext,
       rv = Assert(entry, kNC_URL, lit, true);
       if (NS_FAILED(rv)) return rv;
 
-      nsString xpstr;
+      nsXPIDLString xpstr;
 
       // description
       rv = aIndex->GetDescription(getter_Copies(xpstr));
@@ -686,7 +687,7 @@ nsHTTPIndex::GetDataSource(nsIRDFDataSource** _result)
 // the uri.
 //
 // Do NOT try to get the destination of a uri in any other way
-void nsHTTPIndex::GetDestination(nsIRDFResource* r, nsACString& dest) {
+void nsHTTPIndex::GetDestination(nsIRDFResource* r, nsXPIDLCString& dest) {
   // First try the URL attribute
   nsCOMPtr<nsIRDFNode> node;
 
@@ -736,19 +737,27 @@ nsHTTPIndex::isWellknownContainerURI(nsIRDFResource *r)
       return isContainerFlag;
   }
 
-  nsCString uri;
+  nsXPIDLCString uri;
   GetDestination(r, uri);
-  return StringBeginsWith(uri, nsDependentCString(kFTPProtocol)) &&
+  return uri.get() && !strncmp(uri, kFTPProtocol, sizeof(kFTPProtocol) - 1) &&
          (uri.Last() == '/');
 }
 
 
 NS_IMETHODIMP
-nsHTTPIndex::GetURI(nsACString& aURI)
+nsHTTPIndex::GetURI(char * *uri)
 {
-  aURI.AssignLiteral("rdf:httpindex");
-  return NS_OK;
+	NS_PRECONDITION(uri != nullptr, "null ptr");
+	if (! uri)
+		return(NS_ERROR_NULL_POINTER);
+
+	if ((*uri = strdup("rdf:httpindex")) == nullptr)
+		return(NS_ERROR_OUT_OF_MEMORY);
+
+	return(NS_OK);
 }
+
+
 
 NS_IMETHODIMP
 nsHTTPIndex::GetSource(nsIRDFResource *aProperty, nsIRDFNode *aTarget, bool aTruthValue,
@@ -850,15 +859,19 @@ nsHTTPIndex::GetTargets(nsIRDFResource *aSource, nsIRDFResource *aProperty, bool
                 // which should fire as soon as possible (out-of-band)
             	if (!mTimer)
             	{
-                    rv = NS_NewTimerWithFuncCallback(getter_AddRefs(mTimer),
-                                                     nsHTTPIndex::FireTimer,
-                                                     this,
-                                                     1,
-                                                     nsITimer::TYPE_ONE_SHOT,
-                                                     "nsHTTPIndex::GetTargets");
-                    // Note: don't addref "this" as we'll cancel the
-                    // timer in the httpIndex destructor
+            		mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
             		NS_ASSERTION(NS_SUCCEEDED(rv), "unable to create a timer");
+            		if (NS_SUCCEEDED(rv))
+            		{
+                          mTimer->InitWithNamedFuncCallback(
+                            nsHTTPIndex::FireTimer,
+                            this,
+                            1,
+                            nsITimer::TYPE_ONE_SHOT,
+                            "nsHTTPIndex::GetTargets");
+                          // Note: don't addref "this" as we'll cancel the
+                          // timer in the httpIndex destructor
+                        }
             	}
 	    	}
 		}
@@ -871,6 +884,7 @@ nsHTTPIndex::GetTargets(nsIRDFResource *aSource, nsIRDFResource *aProperty, bool
 nsresult
 nsHTTPIndex::AddElement(nsIRDFResource *parent, nsIRDFResource *prop, nsIRDFNode *child)
 {
+    nsresult    rv;
 
     if (!mNodeList)
     {
@@ -884,15 +898,18 @@ nsHTTPIndex::AddElement(nsIRDFResource *parent, nsIRDFResource *prop, nsIRDFNode
 
 	if (!mTimer)
 	{
-        return NS_NewTimerWithFuncCallback(getter_AddRefs(mTimer),
-                                           nsHTTPIndex::FireTimer,
-                                           this,
-                                           1,
-                                           nsITimer::TYPE_ONE_SHOT,
-                                           "nsHTTPIndex::AddElement");
-        // Note: don't addref "this" as we'll cancel the
-        // timer in the httpIndex destructor
-    }
+		mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+		NS_ASSERTION(NS_SUCCEEDED(rv), "unable to create a timer");
+		if (NS_FAILED(rv))  return(rv);
+
+                mTimer->InitWithNamedFuncCallback(nsHTTPIndex::FireTimer,
+                                                  this,
+                                                  1,
+                                                  nsITimer::TYPE_ONE_SHOT,
+                                                  "nsHTTPIndex::AddElement");
+                // Note: don't addref "this" as we'll cancel the
+                // timer in the httpIndex destructor
+        }
 
     return(NS_OK);
 }
@@ -915,12 +932,12 @@ nsHTTPIndex::FireTimer(nsITimer* aTimer, void* aClosure)
           do_QueryElementAt(httpIndex->mConnectionList, 0);
       httpIndex->mConnectionList->RemoveElementAt(0);
 
-      nsCString uri = VoidCString();
+      nsXPIDLCString uri;
       if (source) {
         httpIndex->GetDestination(source, uri);
       }
 
-      if (uri.IsVoid()) {
+      if (!uri) {
         NS_ERROR("Could not reconstruct uri");
         return;
       }
@@ -1018,14 +1035,17 @@ nsHTTPIndex::FireTimer(nsITimer* aTimer, void* aClosure)
   // to cancel the timer if we don't need to refire it
   if (refireTimer)
   {
-    NS_NewTimerWithFuncCallback(getter_AddRefs(httpIndex->mTimer),
-                                nsHTTPIndex::FireTimer,
-                                aClosure,
-                                10,
-                                nsITimer::TYPE_ONE_SHOT,
-                                "nsHTTPIndex::FireTimer");
-    // Note: don't addref "this" as we'll cancel the
-    // timer in the httpIndex destructor
+    httpIndex->mTimer = do_CreateInstance("@mozilla.org/timer;1");
+    if (httpIndex->mTimer)
+    {
+      httpIndex->mTimer->InitWithNamedFuncCallback(nsHTTPIndex::FireTimer,
+                                                   aClosure,
+                                                   10,
+                                                   nsITimer::TYPE_ONE_SHOT,
+                                                   "nsHTTPIndex::FireTimer");
+      // Note: don't addref "this" as we'll cancel the
+      // timer in the httpIndex destructor
+    }
   }
 }
 
@@ -1262,14 +1282,13 @@ nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
     nsCOMPtr<nsICategoryManager> catMan(do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv));
     if (NS_FAILED(rv))
       return rv;
-    nsCString contractID;
+    nsXPIDLCString contractID;
     rv = catMan->GetCategoryEntry("Gecko-Content-Viewers", "application/vnd.mozilla.xul+xml",
                                   getter_Copies(contractID));
     if (NS_FAILED(rv))
       return rv;
 
-    nsCOMPtr<nsIDocumentLoaderFactory>
-      factory(do_GetService(contractID.get(), &rv));
+    nsCOMPtr<nsIDocumentLoaderFactory> factory(do_GetService(contractID, &rv));
     if (NS_FAILED(rv)) return rv;
 
     nsCOMPtr<nsIURI> uri;
@@ -1323,14 +1342,13 @@ nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
   nsCOMPtr<nsICategoryManager> catMan(do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv));
   if (NS_FAILED(rv))
     return rv;
-  nsCString contractID;
+  nsXPIDLCString contractID;
   rv = catMan->GetCategoryEntry("Gecko-Content-Viewers", "text/html",
                                 getter_Copies(contractID));
   if (NS_FAILED(rv))
     return rv;
 
-  nsCOMPtr<nsIDocumentLoaderFactory>
-    factory(do_GetService(contractID.get(), &rv));
+  nsCOMPtr<nsIDocumentLoaderFactory> factory(do_GetService(contractID, &rv));
   if (NS_FAILED(rv)) return rv;
 
   nsCOMPtr<nsIStreamListener> listener;

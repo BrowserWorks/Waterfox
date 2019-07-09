@@ -24,9 +24,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Likely.h"
 #include "nsISelection.h"
-#include "TextDrawTarget.h"
-
-using mozilla::layout::TextDrawTarget;
 
 namespace mozilla {
 namespace css {
@@ -169,10 +166,9 @@ public:
   nsDisplayTextOverflowMarker(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                               const nsRect& aRect, nscoord aAscent,
                               const nsStyleTextOverflowSide* aStyle,
-                              uint32_t aLineNumber,
                               uint32_t aIndex)
     : nsDisplayItem(aBuilder, aFrame), mRect(aRect),
-      mStyle(aStyle), mAscent(aAscent), mIndex((aLineNumber << 1) + aIndex) {
+      mStyle(aStyle), mAscent(aAscent), mIndex(aIndex) {
     MOZ_COUNT_CTOR(nsDisplayTextOverflowMarker);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -181,15 +177,14 @@ public:
   }
 #endif
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override
-  {
+                           bool* aSnap) override {
     *aSnap = false;
     nsRect shadowRect =
       nsLayoutUtils::GetTextShadowRectsUnion(mRect, mFrame);
     return mRect.Union(shadowRect);
   }
 
-  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) const override
+  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) override
   {
     if (gfxPlatform::GetPlatform()->RespectsFontStyleSmoothing()) {
       // On OS X, web authors can turn off subpixel text rendering using the
@@ -206,18 +201,11 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      gfxContext* aCtx) override;
 
-  virtual uint32_t GetPerFrameKey() const override {
-    return (mIndex << TYPE_BITS) | nsDisplayItem::GetPerFrameKey();
+  virtual uint32_t GetPerFrameKey() override {
+    return (mIndex << nsDisplayItem::TYPE_BITS) | nsDisplayItem::GetPerFrameKey();
   }
   void PaintTextToContext(gfxContext* aCtx,
                           nsPoint aOffsetFromRect);
-
-  virtual bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                       mozilla::wr::IpcResourceUpdateQueue& aResources,
-                                       const StackingContextHelper& aSc,
-                                       layers::WebRenderLayerManager* aManager,
-                                       nsDisplayListBuilder* aDisplayListBuilder) override;
-
   NS_DISPLAY_DECL_NAME("TextOverflow", TYPE_TEXT_OVERFLOW)
 private:
   nsRect          mRect;   // in reference frame coordinates
@@ -240,9 +228,6 @@ void
 nsDisplayTextOverflowMarker::Paint(nsDisplayListBuilder* aBuilder,
                                    gfxContext*           aCtx)
 {
-  DrawTargetAutoDisableSubpixelAntialiasing disable(aCtx->GetDrawTarget(),
-                                                    mDisableSubpixelAA);
-
   nscolor foregroundColor = nsLayoutUtils::
     GetColor(mFrame, &nsStyleText::mWebkitTextFillColor);
 
@@ -291,33 +276,6 @@ nsDisplayTextOverflowMarker::PaintTextToContext(gfxContext* aCtx,
   }
 }
 
-bool
-nsDisplayTextOverflowMarker::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                                                     mozilla::wr::IpcResourceUpdateQueue& aResources,
-                                                     const StackingContextHelper& aSc,
-                                                     layers::WebRenderLayerManager* aManager,
-                                                     nsDisplayListBuilder* aDisplayListBuilder)
-{
-  if (!gfxPrefs::LayersAllowTextLayers()) {
-      return false;
-  }
-
-  bool snap;
-  nsRect bounds = GetBounds(aDisplayListBuilder, &snap);
-  if (bounds.IsEmpty()) {
-    return true;
-  }
-
-  // Run the rendering algorithm to capture the glyphs and shadows
-  RefPtr<TextDrawTarget> textDrawer = new TextDrawTarget(aBuilder, aSc, aManager, this, bounds);
-  RefPtr<gfxContext> captureCtx = gfxContext::CreateOrNull(textDrawer);
-  Paint(aDisplayListBuilder, captureCtx);
-  textDrawer->TerminateShadows();
-
-  return !textDrawer->HasUnsupportedFeatures();
-}
-
-
 TextOverflow::TextOverflow(nsDisplayListBuilder* aBuilder,
                            nsIFrame* aBlockFrame)
   : mContentArea(aBlockFrame->GetWritingMode(),
@@ -326,14 +284,13 @@ TextOverflow::TextOverflow(nsDisplayListBuilder* aBuilder,
   , mBuilder(aBuilder)
   , mBlock(aBlockFrame)
   , mScrollableFrame(nsLayoutUtils::GetScrollableFrameFor(aBlockFrame))
-  , mMarkerList(aBuilder)
   , mBlockSize(aBlockFrame->GetSize())
   , mBlockWM(aBlockFrame->GetWritingMode())
   , mAdjustForPixelSnapping(false)
 {
 #ifdef MOZ_XUL
   if (!mScrollableFrame) {
-    nsAtom* pseudoType = aBlockFrame->StyleContext()->GetPseudo();
+    nsIAtom* pseudoType = aBlockFrame->StyleContext()->GetPseudo();
     if (pseudoType == nsCSSAnonBoxes::mozXULAnonymousBlock) {
       mScrollableFrame =
         nsLayoutUtils::GetScrollableFrameFor(aBlockFrame->GetParent());
@@ -362,6 +319,8 @@ TextOverflow::TextOverflow(nsDisplayListBuilder* aBuilder,
                         LogicalPoint(mBlockWM,
                                      mScrollableFrame->GetScrollPosition(),
                                      nullContainerSize));
+    nsIFrame* scrollFrame = do_QueryFrame(mScrollableFrame);
+    scrollFrame->AddStateBits(NS_SCROLLFRAME_INVALIDATE_CONTENTS_ON_SCROLL);
   }
   uint8_t direction = aBlockFrame->StyleVisibility()->mDirection;
   const nsStyleTextReset* style = aBlockFrame->StyleTextReset();
@@ -697,8 +656,7 @@ TextOverflow::ExamineLineFrames(nsLineBox*      aLine,
 
 void
 TextOverflow::ProcessLine(const nsDisplayListSet& aLists,
-                          nsLineBox*              aLine,
-                          uint32_t                aLineNumber)
+                          nsLineBox*              aLine)
 {
   NS_ASSERTION(mIStart.mStyle->mType != NS_STYLE_TEXT_OVERFLOW_CLIP ||
                mIEnd.mStyle->mType != NS_STYLE_TEXT_OVERFLOW_CLIP,
@@ -747,7 +705,7 @@ TextOverflow::ProcessLine(const nsDisplayListSet& aLists,
   for (uint32_t i = 0; i < ArrayLength(lists); ++i) {
     PruneDisplayListContents(lists[i], framesToHide, insideMarkersArea);
   }
-  CreateMarkers(aLine, needIStart, needIEnd, insideMarkersArea, contentArea, aLineNumber);
+  CreateMarkers(aLine, needIStart, needIEnd, insideMarkersArea, contentArea);
 }
 
 void
@@ -755,12 +713,12 @@ TextOverflow::PruneDisplayListContents(nsDisplayList* aList,
                                        const FrameHashtable& aFramesToHide,
                                        const LogicalRect& aInsideMarkersArea)
 {
-  nsDisplayList saved(mBuilder);
+  nsDisplayList saved;
   nsDisplayItem* item;
   while ((item = aList->RemoveBottom())) {
     nsIFrame* itemFrame = item->Frame();
     if (IsFrameDescendantOfAny(itemFrame, aFramesToHide, mBlock)) {
-      item->Destroy(mBuilder);
+      item->~nsDisplayItem();
       continue;
     }
 
@@ -842,8 +800,7 @@ void
 TextOverflow::CreateMarkers(const nsLineBox* aLine,
                             bool aCreateIStart, bool aCreateIEnd,
                             const LogicalRect& aInsideMarkersArea,
-                            const LogicalRect& aContentArea,
-                            uint32_t aLineNumber)
+                            const LogicalRect& aContentArea)
 {
   if (aCreateIStart) {
     DisplayListClipState::AutoSaveRestore clipState(mBuilder);
@@ -858,7 +815,7 @@ TextOverflow::CreateMarkers(const nsLineBox* aLine,
                markerRect, clipState);
     nsDisplayItem* marker = new (mBuilder)
       nsDisplayTextOverflowMarker(mBuilder, mBlock, markerRect,
-                                  aLine->GetLogicalAscent(), mIStart.mStyle, aLineNumber, 0);
+                                  aLine->GetLogicalAscent(), mIStart.mStyle, 0);
     mMarkerList.AppendNewToTop(marker);
   }
 
@@ -875,7 +832,7 @@ TextOverflow::CreateMarkers(const nsLineBox* aLine,
                markerRect, clipState);
     nsDisplayItem* marker = new (mBuilder)
       nsDisplayTextOverflowMarker(mBuilder, mBlock, markerRect,
-                                  aLine->GetLogicalAscent(), mIEnd.mStyle, aLineNumber, 1);
+                                  aLine->GetLogicalAscent(), mIEnd.mStyle, 1);
     mMarkerList.AppendNewToTop(marker);
   }
 }

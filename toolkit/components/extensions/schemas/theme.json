@@ -16,6 +16,32 @@
         }]
       },
       {
+        "id": "ThemeColor",
+        "choices": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      },
+      {
         "id": "ThemeType",
         "type": "object",
         "properties": {
@@ -25,15 +51,15 @@
             "properties": {
               "additional_backgrounds": {
                 "type": "array",
-                "items": { "$ref": "ImageDataOrExtensionURL" },
+                "items": { "$ref": "ExtensionURL" },
                 "optional": true
               },
               "headerURL": {
-                "$ref": "ImageDataOrExtensionURL",
+                "$ref": "ExtensionURL",
                 "optional": true
               },
               "theme_frame": {
-                "$ref": "ImageDataOrExtensionURL",
+                "$ref": "ExtensionURL",
                 "optional": true
               }
             },
@@ -44,41 +70,55 @@
             "optional": true,
             "properties": {
               "accentcolor": {
-                "type": "string",
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "frame": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                },
-                "optional": true
-              },
-              "tab_text": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                },
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "textcolor": {
-                "type": "string",
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "tab_background_text": {
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "tab_text": {
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "toolbar": {
-                "type": "string",
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "toolbar_text": {
-                "type": "string",
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "bookmark_text": {
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "toolbar_field": {
-                "type": "string",
+                "$ref": "ThemeColor",
                 "optional": true
               },
               "toolbar_field_text": {
-                "type": "string",
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "toolbar_top_separator": {
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "toolbar_bottom_separator": {
+                "$ref": "ThemeColor",
+                "optional": true
+              },
+              "toolbar_vertical_separator": {
+                "$ref": "ThemeColor",
                 "optional": true
               }
             },
@@ -465,12 +505,6 @@
         "description": "Make complete or partial updates to the theme. Resolves when the update has completed.",
         "parameters": [
           {
-            "type": "integer",
-            "name": "windowId",
-            "optional": true,
-            "description": "The id of the window to update. No id updates all windows."
-          },
-          {
             "name": "details",
             "$ref": "manifest.ThemeType",
             "description": "The properties of the theme to update."
@@ -482,14 +516,7 @@
         "type": "function",
         "async": true,
         "description": "Removes the updates made to the theme.",
-        "parameters": [
-          {
-            "type": "integer",
-            "name": "windowId",
-            "optional": true,
-            "description": "The id of the window to reset. No id resets all windows."
-          }
-        ]
+        "parameters": []
       }
     ]
   }

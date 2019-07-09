@@ -367,13 +367,6 @@ nsAutoCompleteController::HandleEnter(bool aIsPopupSelection,
 
   // Stop the search, and handle the enter.
   StopSearch();
-  // StopSearch() can call PostSearchCleanup() which might result
-  // in a blur event, which could null out mInput, so we need to check it
-  // again.  See bug #408463 for more details
-  if (!mInput) {
-    return NS_OK;
-  }
-
   EnterMatch(aIsPopupSelection, aEvent);
 
   return NS_OK;
@@ -1424,8 +1417,15 @@ nsAutoCompleteController::StartSearches()
   MOZ_ASSERT(timeout > 0, "Trying to delay searches with a 0 timeout!");
 
   // Now start the delayed searches.
-  return NS_NewTimerWithCallback(getter_AddRefs(mTimer),
-                                 this, timeout, nsITimer::TYPE_ONE_SHOT);
+  nsresult rv;
+  mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+  if (NS_FAILED(rv))
+      return rv;
+  rv = mTimer->InitWithCallback(this, timeout, nsITimer::TYPE_ONE_SHOT);
+  if (NS_FAILED(rv))
+      mTimer = nullptr;
+
+  return rv;
 }
 
 nsresult

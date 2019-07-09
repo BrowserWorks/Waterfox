@@ -43,12 +43,10 @@ var counter = 0;
 for ({ x: xCover = (0, function() {}), x: cover = (function() {}) } of [{}]) {
   assert.notSameValue(xCover.name, 'xCover');
 
-  verifyProperty(cover, 'name', {
-    enumerable: false,
-    writable: false,
-    configurable: true,
-    value: 'cover'
-  });
+  assert.sameValue(cover.name, 'cover');
+  verifyNotEnumerable(cover, 'name');
+  verifyNotWritable(cover, 'name');
+  verifyConfigurable(cover, 'name');
   counter += 1;
 }
 

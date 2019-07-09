@@ -13,28 +13,25 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
   "resource://gre/modules/Messaging.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-  "resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dump", () =>
-    Cu.import("resource://gre/modules/AndroidLog.jsm",
-              {}).AndroidLog.d.bind(null, "ViewNavigation"));
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
+           .AndroidLog.d.bind(null, "ViewNavigation");
 
 function debug(aMsg) {
   // dump(aMsg);
 }
 
 // Handles navigation requests between Gecko and a GeckoView.
+// Implements GeckoView.loadUri via openURI.
 // Handles GeckoView:GoBack and :GoForward requests dispatched by
 // GeckoView.goBack and .goForward.
 // Dispatches GeckoView:LocationChange to the GeckoView on location change when
 // active.
-// Implements nsIBrowserDOMWindow.
-// Implements nsILoadURIDelegate.
+// Can be activated and deactivated by GeckoViewNavigation:Active and :Inactive
+// events.
 class GeckoViewNavigation extends GeckoViewModule {
   init() {
     this.window.QueryInterface(Ci.nsIDOMChromeWindow).browserDOMWindow = this;
-    this.browser.docShell.loadURIDelegate = this;
 
     this.eventDispatcher.registerListener(this, [
       "GeckoView:GoBack",
@@ -73,101 +70,14 @@ class GeckoViewNavigation extends GeckoViewModule {
     debug("receiveMessage " + aMsg.name);
   }
 
-  handleLoadUri(aUri, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
-    debug("handleOpenURI: aUri=" + (aUri && aUri.spec) +
-          " aWhere=" + aWhere +
-          " aFlags=" + aFlags);
-
-    if (!this.isRegistered) {
-      return false;
-    }
-
-    let message = {
-      type: "GeckoView:OnLoadUri",
-      uri: aUri ? aUri.displaySpec : "",
-      where: aWhere,
-      flags: aFlags
-    };
-
-    debug("dispatch " + JSON.stringify(message));
-
-    let handled = undefined;
-    this.eventDispatcher.sendRequestForResult(message).then(response => {
-      handled = response;
-    });
-    Services.tm.spinEventLoopUntil(() => handled !== undefined);
-
-    return handled;
+  // nsIBrowserDOMWindow::openURI implementation.
+  openURI(aUri, aOpener, aWhere, aFlags) {
+    debug("openURI: aUri.spec=" + aUri.spec);
+    // nsIWebNavigation::loadURI(URI, loadFlags, referrer, postData, headers).
+    this.browser.loadURI(aUri.spec, null, null, null);
   }
 
-  // nsILoadURIDelegate.
-  loadURI(aUri, aWhere, aFlags, aTriggeringPrincipal) {
-    debug("loadURI " + aUri + " " + aWhere + " " + aFlags + " " +
-          aTriggeringPrincipal);
-
-    let handled = this.handleLoadUri(aUri, null, aWhere, aFlags,
-                                     aTriggeringPrincipal);
-    if (!handled) {
-      throw Cr.NS_ERROR_ABORT;
-    }
-  }
-
-  // nsIBrowserDOMWindow.
-  createContentWindow(aUri, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
-    debug("createContentWindow: aUri=" + (aUri && aUri.spec) +
-          " aWhere=" + aWhere +
-          " aFlags=" + aFlags);
-
-    let handled = this.handleLoadUri(aUri, aOpener, aWhere, aFlags,
-                                     aTriggeringPrincipal);
-    if (!handled &&
-        (aWhere === Ci.nsIBrowserDOMWindow.OPEN_DEFAULTWINDOW ||
-         aWhere === Ci.nsIBrowserDOMWindow.OPEN_CURRENTWINDOW)) {
-      return this.browser.contentWindow;
-    }
-
-    throw Cr.NS_ERROR_ABORT;
-  }
-
-  // nsIBrowserDOMWindow.
-  createContentWindowInFrame(aUri, aParams, aWhere, aFlags, aNextTabParentId,
-                             aName) {
-    debug("createContentWindowInFrame: aUri=" + (aUri && aUri.spec) +
-          " aParams=" + aParams +
-          " aWhere=" + aWhere +
-          " aFlags=" + aFlags +
-          " aNextTabParentId=" + aNextTabParentId +
-          " aName=" + aName);
-
-    let handled = this.handleLoadUri(aUri, null, aWhere, aFlags, null);
-    if (!handled &&
-        (aWhere === Ci.nsIBrowserDOMWindow.OPEN_DEFAULTWINDOW ||
-         aWhere === Ci.nsIBrowserDOMWindow.OPEN_CURRENTWINDOW)) {
-      return this.browser;
-    }
-
-    throw Cr.NS_ERROR_ABORT;
-  }
-
-  // nsIBrowserDOMWindow.
-  openURI(aUri, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
-    return this.createContentWindow(aUri, aOpener, aWhere, aFlags,
-                                    aTriggeringPrincipal);
-  }
-
-  // nsIBrowserDOMWindow.
-  openURIInFrame(aUri, aParams, aWhere, aFlags, aNextTabParentId, aName) {
-    return this.createContentWindowInFrame(aUri, aParams, aWhere, aFlags,
-                                           aNextTabParentId, aName);
-  }
-
-  // nsIBrowserDOMWindow.
-  isTabContentWindow(aWindow) {
-    debug("isTabContentWindow " + this.browser.contentWindow === aWindow);
-    return this.browser.contentWindow === aWindow;
-  }
-
-  // nsIBrowserDOMWindow.
+  // nsIBrowserDOMWindow::canClose implementation.
   canClose() {
     debug("canClose");
     return false;
@@ -206,7 +116,7 @@ class GeckoViewNavigation extends GeckoViewModule {
 
     let message = {
       type: "GeckoView:LocationChange",
-      uri: fixedURI.displaySpec,
+      uri: fixedURI.spec,
       canGoBack: this.browser.canGoBack,
       canGoForward: this.browser.canGoForward,
     };

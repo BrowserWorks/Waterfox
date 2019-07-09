@@ -65,6 +65,7 @@ test("new Number(1)", n => Number.prototype.valueOf.call(n));
 test("new Number(1)", n => Number.prototype.toFixed.call(n));
 test("new Number(1)", n => Number.prototype.toExponential.call(n));
 test("new Number(1)", n => Number.prototype.toPrecision.call(n));
+test("new Iterator({x:1})", i => Iterator.prototype.next.call(i).toString());
 test("(function(){yield 1})()", i => (function(){yield})().next.call(i).toString());
 test("new String('one')", s => String.prototype.toSource.call(s));
 test("new String('one')", s => String.prototype.toString.call(s));
@@ -152,7 +153,7 @@ test("new Date()", d => justDontThrow(Date.prototype.toLocaleFormat.call(d)));
 test("new Date()", d => justDontThrow(Date.prototype.toTimeString.call(d)));
 test("new Date()", d => justDontThrow(Date.prototype.toDateString.call(d)));
 test("new Date()", d => justDontThrow(Date.prototype.toSource.call(d)));
-test("new Date()", d => justDontThrow(Date.prototype.toString.call(d)));
+test("new Date()", d => justDontThrow(Date.prototype.toString.call(d)), true);
 test("new Date()", d => justDontThrow(Date.prototype.valueOf.call(d)));
 
 throw "done";

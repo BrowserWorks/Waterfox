@@ -3,11 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gfxPlatform.h"
-#include "HeadlessCompositorWidget.h"
-#include "HeadlessWidget.h"
-#include "mozilla/widget/PlatformWidgetTypes.h"
-
 #include "InProcessWinCompositorWidget.h"
 #include "nsWindow.h"
 
@@ -19,16 +14,10 @@ CompositorWidget::CreateLocal(const CompositorWidgetInitData& aInitData,
                               const layers::CompositorOptions& aOptions,
                               nsIWidget* aWidget)
 {
-  if (aInitData.type() == CompositorWidgetInitData::THeadlessCompositorWidgetInitData) {
-    return new HeadlessCompositorWidget(aInitData.get_HeadlessCompositorWidgetInitData(),
-                                        aOptions, static_cast<HeadlessWidget*>(aWidget));
-  } else {
-    return new InProcessWinCompositorWidget(aInitData.get_WinCompositorWidgetInitData(),
-                                            aOptions, static_cast<nsWindow*>(aWidget));
-  }
+  return new InProcessWinCompositorWidget(aInitData, aOptions, static_cast<nsWindow*>(aWidget));
 }
 
-InProcessWinCompositorWidget::InProcessWinCompositorWidget(const WinCompositorWidgetInitData& aInitData,
+InProcessWinCompositorWidget::InProcessWinCompositorWidget(const CompositorWidgetInitData& aInitData,
                                                            const layers::CompositorOptions& aOptions,
                                                            nsWindow* aWindow)
  : WinCompositorWidget(aInitData, aOptions),
@@ -36,6 +25,31 @@ InProcessWinCompositorWidget::InProcessWinCompositorWidget(const WinCompositorWi
 {
   MOZ_ASSERT(mWindow);
 }
+
+void
+InProcessWinCompositorWidget::OnDestroyWindow()
+{
+  EnterPresentLock();
+  WinCompositorWidget::OnDestroyWindow();
+  LeavePresentLock();
+}
+
+void
+InProcessWinCompositorWidget::UpdateTransparency(nsTransparencyMode aMode)
+{
+  EnterPresentLock();
+  WinCompositorWidget::UpdateTransparency(aMode);
+  LeavePresentLock();
+}
+
+void
+InProcessWinCompositorWidget::ClearTransparentWindow()
+{
+  EnterPresentLock();
+  WinCompositorWidget::ClearTransparentWindow();
+  LeavePresentLock();
+}
+
 
 nsIWidget*
 InProcessWinCompositorWidget::RealWidget()

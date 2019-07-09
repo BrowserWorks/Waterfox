@@ -26,18 +26,16 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-// Use the CC variant of this, even though this class does not define
-// a new CC participant, to make QIing to the CC interfaces faster.
-NS_IMPL_QUERY_INTERFACE_CYCLE_COLLECTION_INHERITED(nsStyledElement,
-                                                   nsStyledElementBase,
-                                                   nsStyledElement)
+NS_IMPL_QUERY_INTERFACE_INHERITED(nsStyledElement,
+                                  nsStyledElementBase,
+                                  nsStyledElement)
 
 //----------------------------------------------------------------------
 // nsIContent methods
 
 bool
 nsStyledElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
@@ -51,7 +49,7 @@ nsStyledElement::ParseAttribute(int32_t aNamespaceID,
 }
 
 nsresult
-nsStyledElement::BeforeSetAttr(int32_t aNamespaceID, nsAtom* aName,
+nsStyledElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                const nsAttrValueOrString* aValue, bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {
@@ -109,8 +107,7 @@ nsStyledElement::SetInlineStyleDeclaration(DeclarationBlock* aDeclaration,
   nsIDocument* document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
   return SetAttrAndNotify(kNameSpaceID_None, nsGkAtoms::style, nullptr,
-                          oldValueSet ? &oldValue : nullptr, attrValue,
-                          nullptr, modType,
+                          oldValueSet ? &oldValue : nullptr, attrValue, modType,
                           hasListeners, aNotify, kDontCallAfterSetAttr,
                           document, updateBatch);
 }

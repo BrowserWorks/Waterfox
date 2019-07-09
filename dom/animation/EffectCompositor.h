@@ -20,7 +20,7 @@
 #include "nsTArray.h"
 
 class nsCSSPropertyIDSet;
-class nsAtom;
+class nsIAtom;
 class nsIFrame;
 class nsIStyleRule;
 class nsPresContext;
@@ -168,7 +168,6 @@ public:
 
   bool HasPendingStyleUpdates() const;
   bool HasThrottledStyleUpdates() const;
-  bool HasPendingStyleUpdatesFor(dom::Element* aElement) const;
 
   // Tell the restyle tracker about all the animated styles that have
   // pending updates so that it can update the animation rule for these

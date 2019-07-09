@@ -97,7 +97,7 @@ Assert.prototype = {
       }
       a = pSlice.call(a);
       b = pSlice.call(b);
-      return this._deepEqual(a, b);
+      return _deepEqual(a, b);
     }
     try {
       var ka = Object.keys(a),
@@ -396,8 +396,7 @@ Assert.prototype = {
     // XXX Bug 634948
     // Regex objects are transformed to strings when evaluated in a sandbox
     // For now lets re-create the regex from its string representation
-    let pattern = "";
-    let flags = "";
+    let pattern = flags = "";
     try {
       let matches = aRegex.toString().match(/\/(.*)\/(.*)/);
 

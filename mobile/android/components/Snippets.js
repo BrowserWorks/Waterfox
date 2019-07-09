@@ -11,8 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Home", "resource://gre/modules/Home.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
-
 
 XPCOMUtils.defineLazyGetter(this, "gEncoder", function() { return new gChromeWin.TextEncoder(); });
 XPCOMUtils.defineLazyGetter(this, "gDecoder", function() { return new gChromeWin.TextDecoder(); });
@@ -205,11 +203,9 @@ function updateBanner(messages) {
       onclick: function() {
         gChromeWin.BrowserApp.loadURI(message.url);
         removeSnippet(id, message.id);
-        UITelemetry.addEvent("action.1", "banner", null, message.id);
       },
       ondismiss: function() {
         removeSnippet(id, message.id);
-        UITelemetry.addEvent("cancel.1", "banner", null, message.id);
       },
       onshown: function() {
         // 10% of the time, record the snippet id and a timestamp
@@ -367,14 +363,12 @@ function loadSyncPromoBanner() {
           Home.banner.remove(id);
           Accounts.launchSetup();
 
-          UITelemetry.addEvent("action.1", "banner", null, "syncpromo");
         },
         ondismiss: function() {
           // Remove the sync promo message from the banner and never try to show it again.
           Home.banner.remove(id);
           Services.prefs.setBoolPref("browser.snippets.syncPromo.enabled", false);
 
-          UITelemetry.addEvent("cancel.1", "banner", null, "syncpromo");
         }
       });
     },
@@ -397,13 +391,11 @@ function loadHomePanelsBanner() {
       // User has interacted with this snippet so don't show it again.
       Services.prefs.setBoolPref("browser.snippets.firstrunHomepage.enabled", false);
 
-      UITelemetry.addEvent("action.1", "banner", null, "firstrun-homepage");
     },
     ondismiss: function() {
       Home.banner.remove(id);
       Services.prefs.setBoolPref("browser.snippets.firstrunHomepage.enabled", false);
 
-      UITelemetry.addEvent("cancel.1", "banner", null, "firstrun-homepage");
     }
   });
 }

@@ -122,7 +122,7 @@ nsFilePickerProxy::GetFiles(nsISimpleEnumerator** aFiles)
   return NS_ERROR_FAILURE;
 }
 
-nsresult
+NS_IMETHODIMP
 nsFilePickerProxy::Show(int16_t* aReturn)
 {
   MOZ_ASSERT(false, "Show is unimplemented; use Open");

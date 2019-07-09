@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-rest-getter.case
-// - src/dstr-binding-for-await/default/for-await-of-async-func-var.template
+// - src/dstr-binding/obj-ptrn-rest-getter.case
+// - src/dstr-binding/default/for-await-of-async-func-var.template
 /*---
 description: Getter is called when obj is being deconstructed to a rest Object (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -42,12 +43,10 @@ async function fn() {
     assert.sameValue(x.v, 2);
     assert.sameValue(count, 1);
 
-    verifyProperty(x, "v", {
-      enumerable: true,
-      writable: true,
-      configurable: true,
-      value: 2
-    });
+    verifyEnumerable(x, "v");
+    verifyWritable(x, "v");
+    verifyConfigurable(x, "v");
+
 
     iterCount += 1;
   }

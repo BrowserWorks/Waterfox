@@ -17,7 +17,9 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/gfx/Rect.h"
-#include "nsString.h"
+#include "nsIMemoryReporter.h"
+#include "nsRect.h"
+#include "nsSize.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -466,7 +468,6 @@ public:
 
     Plane mPlanes[3];
     YUVColorSpace mYUVColorSpace = YUVColorSpace::BT601;
-    uint32_t mBitDepth = 8;
   };
 
   class Listener

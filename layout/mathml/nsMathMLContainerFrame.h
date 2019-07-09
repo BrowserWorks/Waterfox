@@ -115,6 +115,7 @@ public:
   }
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override;
@@ -140,7 +141,7 @@ public:
   //        too (e.g., this happens with <munder>, <mover>, <munderover>).
   virtual nsresult
   AttributeChanged(int32_t         aNameSpaceID,
-                   nsAtom*        aAttribute,
+                   nsIAtom*        aAttribute,
                    int32_t         aModType) override;
 
   // helper function to apply mirroring to a horizontal coordinate, if needed.
@@ -248,7 +249,7 @@ public:
    * @param aChildTag The tag which is forbidden in this context
    */
   nsresult
-  ReportInvalidChildError(nsAtom* aChildTag);
+  ReportInvalidChildError(nsIAtom* aChildTag);
 
   /*
    * Helper to call ReportToConsole when an error occurs.

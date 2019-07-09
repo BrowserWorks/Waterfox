@@ -88,7 +88,7 @@ function createPendingCrashReports(howMany, accessDate) {
   let createFile = (fileName, extension, lastAccessedDate, contents) => {
     let file = dir.clone();
     file.append(fileName + "." + extension);
-    file.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
+    file.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
     let promises = [OS.File.setDates(file.path, lastAccessedDate)];
 
     if (contents) {
@@ -99,7 +99,7 @@ function createPendingCrashReports(howMany, accessDate) {
       }));
     }
     return Promise.all(promises);
-  };
+  }
 
   let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
                       .getService(Ci.nsIUUIDGenerator);

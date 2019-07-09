@@ -272,7 +272,7 @@ nsXULPrototypeCache::FlushSkinFiles()
     XBLDocTable& xblDocTable = XBLDocTableFor(tableType);
     for (auto iter = xblDocTable.Iter(); !iter.Done(); iter.Next()) {
       nsAutoCString str;
-      iter.Key()->GetPathQueryRef(str);
+      iter.Key()->GetPath(str);
       if (strncmp(str.get(), "/skin", 5) == 0) {
         iter.Remove();
       }
@@ -282,7 +282,7 @@ nsXULPrototypeCache::FlushSkinFiles()
     StyleSheetTable& table = StyleSheetTableFor(tableType);
     for (auto iter = table.Iter(); !iter.Done(); iter.Next()) {
       nsAutoCString str;
-      iter.Data()->GetSheetURI()->GetPathQueryRef(str);
+      iter.Data()->GetSheetURI()->GetPath(str);
       if (strncmp(str.get(), "/skin", 5) == 0) {
         iter.Remove();
       }
@@ -399,15 +399,11 @@ nsXULPrototypeCache::GetOutputStream(nsIURI* uri, nsIObjectOutputStream** stream
     nsCOMPtr<nsIStorageStream> storageStream;
     bool found = mOutputStreamTable.Get(uri, getter_AddRefs(storageStream));
     if (found) {
-        // Setting an output stream here causes crashes on Windows. The previous
-        // version of this code always returned NS_ERROR_OUT_OF_MEMORY here,
-        // because it used a mistyped contract ID to create its object stream.
-        return NS_ERROR_NOT_IMPLEMENTED;
-#if 0
+        objectOutput = do_CreateInstance("mozilla.org/binaryoutputstream;1");
+        if (!objectOutput) return NS_ERROR_OUT_OF_MEMORY;
         nsCOMPtr<nsIOutputStream> outputStream
             = do_QueryInterface(storageStream);
-        objectOutput = NS_NewObjectOutputStream(outputStream);
-#endif
+        objectOutput->SetOutputStream(outputStream);
     } else {
         rv = NewObjectOutputWrappedStorageStream(getter_AddRefs(objectOutput),
                                                  getter_AddRefs(storageStream),
@@ -489,7 +485,7 @@ nsXULPrototypeCache::BeginCaching(nsIURI* aURI)
     nsresult rv, tmp;
 
     nsAutoCString path;
-    aURI->GetPathQueryRef(path);
+    aURI->GetPath(path);
     if (!StringEndsWith(path, NS_LITERAL_CSTRING(".xul")))
         return NS_ERROR_NOT_AVAILABLE;
 

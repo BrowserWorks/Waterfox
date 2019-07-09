@@ -5,7 +5,6 @@
 extern crate ipc_channel;
 extern crate profile;
 extern crate profile_traits;
-extern crate servo_allocator;
 
 #[cfg(test)]
 mod time;

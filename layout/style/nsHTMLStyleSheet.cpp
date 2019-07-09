@@ -2,7 +2,15 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * This Original Code has been modified by IBM Corporation. Modifications made by IBM
+ * described herein are Copyright (c) International Business Machines Corporation, 2000.
+ * Modifications to Mozilla code or documentation identified per MPL Section 3.3
+ *
+ * Date             Modified by     Description of modification
+ * 04/20/2000       IBM Corp.      OS/2 VisualAge build.
+ */
 
 /*
  * style sheet and style rule processor representing data from presentational
@@ -148,7 +156,7 @@ nsHTMLStyleSheet::LangRule::MapRuleInfoInto(nsRuleData* aRuleData)
   if (aRuleData->mSIDs & NS_STYLE_INHERIT_BIT(Font)) {
     nsCSSValue* lang = aRuleData->ValueForLang();
     if (lang->GetUnit() == eCSSUnit_Null) {
-      RefPtr<nsAtom> langAtom = mLang;
+      nsCOMPtr<nsIAtom> langAtom = mLang;
       lang->SetAtomIdentValue(langAtom.forget());
     }
   }
@@ -235,7 +243,7 @@ struct LangRuleTableEntry : public PLDHashEntryHdr {
 static PLDHashNumber
 LangRuleTable_HashKey(const void *key)
 {
-  auto* lang = static_cast<const nsAtom*>(key);
+  auto* lang = static_cast<const nsIAtom*>(key);
   return lang->hash();
 }
 
@@ -251,7 +259,7 @@ LangRuleTable_ClearEntry(PLDHashTable *table, PLDHashEntryHdr *hdr)
 static bool
 LangRuleTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
-  auto* lang = static_cast<const nsAtom*>(key);
+  auto* lang = static_cast<const nsIAtom*>(key);
   const LangRuleTableEntry *entry = static_cast<const LangRuleTableEntry*>(hdr);
 
   return entry->mRule->mLang == lang;
@@ -260,12 +268,12 @@ LangRuleTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 static void
 LangRuleTable_InitEntry(PLDHashEntryHdr *hdr, const void *key)
 {
-  auto* lang = static_cast<const nsAtom*>(key);
+  auto* lang = static_cast<const nsIAtom*>(key);
 
   LangRuleTableEntry* entry = new (KnownNotNull, hdr) LangRuleTableEntry();
 
   // Create the unique rule for this language
-  entry->mRule = new nsHTMLStyleSheet::LangRule(const_cast<nsAtom*>(lang));
+  entry->mRule = new nsHTMLStyleSheet::LangRule(const_cast<nsIAtom*>(lang));
 }
 
 static const PLDHashTableOps LangRuleTable_Ops = {
@@ -583,7 +591,7 @@ nsHTMLStyleSheet::CalculateMappedServoDeclarations(nsPresContext* aPresContext)
 }
 
 nsIStyleRule*
-nsHTMLStyleSheet::LangRuleFor(const nsAtom* aLanguage)
+nsHTMLStyleSheet::LangRuleFor(const nsIAtom* aLanguage)
 {
   auto entry =
     static_cast<LangRuleTableEntry*>(mLangRuleTable.Add(aLanguage, fallible));

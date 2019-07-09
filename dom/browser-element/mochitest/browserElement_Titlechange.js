@@ -7,7 +7,6 @@
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
 browserElementTestHelpers.addPermission();
-browserElementTestHelpers.allowTopLevelDataURINavigation();
 
 function runTest() {
   var iframe1 = document.createElement('iframe');

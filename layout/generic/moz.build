@@ -68,6 +68,7 @@ with Files('nsVideoFrame.*'):
     BUG_COMPONENT = ('Core', 'Audio/Video')
 
 EXPORTS += [
+    'AsyncScrollBase.h',
     'nsCanvasFrame.h',
     'nsContainerFrame.h',
     'nsDirection.h',
@@ -81,6 +82,7 @@ EXPORTS += [
     'nsIAnonymousContentCreator.h',
     'nsIFrame.h',
     'nsIFrameInlines.h',
+    'nsIFrameUtil.h',
     'nsILineIterator.h',
     'nsIObjectFrame.h',
     'nsIPageSequenceFrame.h',
@@ -99,12 +101,8 @@ EXPORTS += [
     'nsTextFrameUtils.h',
     'nsTextRunTransformations.h',
     'RubyUtils.h',
-    'ScrollAnimationBezierPhysics.h',
-    'ScrollAnimationMSDPhysics.h',
-    'ScrollAnimationPhysics.h',
     'ScrollbarActivity.h',
     'ScrollSnap.h',
-    'TextDrawTarget.h',
     'Visibility.h',
 ]
 
@@ -123,6 +121,7 @@ EXPORTS.mozilla.layout += [
 ]
 
 UNIFIED_SOURCES += [
+    'AsyncScrollBase.cpp',
     'BlockReflowInput.cpp',
     'BRFrame.cpp',
     'CSSAlignUtils.cpp',
@@ -147,6 +146,7 @@ UNIFIED_SOURCES += [
     'nsFrameSelection.cpp',
     'nsFrameSetFrame.cpp',
     'nsFrameState.cpp',
+    'nsFrameUtil.cpp',
     'nsGfxScrollFrame.cpp',
     'nsGridContainerFrame.cpp',
     'nsHTMLCanvasFrame.cpp',
@@ -176,8 +176,6 @@ UNIFIED_SOURCES += [
     'ReflowInput.cpp',
     'ReflowOutput.cpp',
     'RubyUtils.cpp',
-    'ScrollAnimationBezierPhysics.cpp',
-    'ScrollAnimationMSDPhysics.cpp',
     'ScrollbarActivity.cpp',
     'ScrollSnap.cpp',
     'ScrollVelocityQueue.cpp',
@@ -211,7 +209,7 @@ LOCAL_INCLUDES += [
 
 JAR_MANIFESTS += ['jar.mn']
 
-RESOURCE_FILES.html = [
+CONTENT_ACCESSIBLE_FILES.html = [
     'folder.png',
 ]
 

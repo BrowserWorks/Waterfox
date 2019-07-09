@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.reduce
 es5id: 15.4.4.21-3-17
 description: >
     Array.prototype.reduce - 'length' is a string containing a number

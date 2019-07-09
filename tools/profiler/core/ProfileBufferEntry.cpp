@@ -87,8 +87,7 @@ public:
    : mWriter(aWriter)
    , mIndex(0)
   {
-    aWriter.StartObjectProperty("schema",
-                                SpliceableJSONWriter::SingleLineStyle);
+    aWriter.StartObjectProperty("schema");
   }
 
   void WriteField(const char* aName) {
@@ -188,7 +187,7 @@ public:
     , mStrings(&aStrings)
     , mNextFreeIndex(0)
   {
-    mJSONWriter.StartArrayElement(SpliceableJSONWriter::SingleLineStyle);
+    mJSONWriter.StartArrayElement();
   }
 
   // If you don't have access to a UniqueStrings, you had better not try and
@@ -198,7 +197,7 @@ public:
     , mStrings(nullptr)
     , mNextFreeIndex(0)
   {
-    mJSONWriter.StartArrayElement(SpliceableJSONWriter::SingleLineStyle);
+    mJSONWriter.StartArrayElement();
   }
 
   ~AutoArraySchemaWriter() {
@@ -939,7 +938,7 @@ static void
 AddPausedRange(SpliceableJSONWriter& aWriter, const char* aReason,
                const Maybe<double>& aStartTime, const Maybe<double>& aEndTime)
 {
-  aWriter.Start();
+  aWriter.Start(SpliceableJSONWriter::SingleLineStyle);
   if (aStartTime) {
     aWriter.DoubleProperty("startTime", *aStartTime);
   } else {

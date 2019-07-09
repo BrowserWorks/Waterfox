@@ -52,9 +52,9 @@ CreateDecoderWrapper()
 already_AddRefed<MediaDataDecoder>
 GMPDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 {
-  if (!MP4Decoder::IsH264(aParams.mConfig.mMimeType) &&
-      !VPXDecoder::IsVP8(aParams.mConfig.mMimeType) &&
-      !VPXDecoder::IsVP9(aParams.mConfig.mMimeType)) {
+  if (!MP4Decoder::IsH264(aParams.mConfig.mMimeType)
+      && !VPXDecoder::IsVP8(aParams.mConfig.mMimeType)
+      && !VPXDecoder::IsVP9(aParams.mConfig.mMimeType)) {
     return nullptr;
   }
 
@@ -79,7 +79,9 @@ GMPDecoderModule::SupportsMimeType(const nsACString& aMimeType,
     return false;
   }
 
-  nsCString api = NS_LITERAL_CSTRING(CHROMIUM_CDM_API);
+  nsCString api = MediaPrefs::EMEChromiumAPIEnabled()
+    ? NS_LITERAL_CSTRING(CHROMIUM_CDM_API)
+    : NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER);
 
   if (MP4Decoder::IsH264(aMimeType)) {
     return HaveGMPFor(api, { NS_LITERAL_CSTRING("h264"), aGMP.value()});

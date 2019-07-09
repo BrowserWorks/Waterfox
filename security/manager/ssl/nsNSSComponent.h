@@ -10,7 +10,6 @@
 #include "ScopedNSSTypes.h"
 #include "SharedCertVerifier.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/Monitor.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
@@ -67,6 +66,12 @@ public:
 
   NS_IMETHOD LogoutAuthenticatedPK11() = 0;
 
+#ifndef MOZ_NO_SMART_CARDS
+  NS_IMETHOD LaunchSmartCardThread(SECMODModule* module) = 0;
+
+  NS_IMETHOD ShutdownSmartCardThread(SECMODModule* module) = 0;
+#endif
+
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) = 0;
 #endif
@@ -76,13 +81,6 @@ public:
 #ifdef XP_WIN
   NS_IMETHOD GetEnterpriseRoots(nsIX509CertList** enterpriseRoots) = 0;
 #endif
-
-  NS_IMETHOD BlockUntilLoadableRootsLoaded() = 0;
-  NS_IMETHOD CheckForSmartCardChanges() = 0;
-
-  // Main thread only
-  NS_IMETHOD HasActiveSmartCards(bool& result) = 0;
-  NS_IMETHOD HasUserCertsInstalled(bool& result) = 0;
 
   virtual ::already_AddRefed<mozilla::psm::SharedCertVerifier>
     GetDefaultCertVerifier() = 0;
@@ -97,10 +95,6 @@ class nsNSSComponent final : public nsINSSComponent
                            , public nsIObserver
 {
 public:
-  // LoadLoadableRootsTask updates mLoadableRootsLoaded and
-  // mLoadableRootsLoadedResult and then signals mLoadableRootsLoadedMonitor.
-  friend class LoadLoadableRootsTask;
-
   NS_DEFINE_STATIC_CID_ACCESSOR( NS_NSSCOMPONENT_CID )
 
   nsNSSComponent();
@@ -121,6 +115,16 @@ public:
   NS_IMETHOD GetNSSBundleString(const char* name, nsAString& outString) override;
   NS_IMETHOD LogoutAuthenticatedPK11() override;
 
+#ifndef MOZ_NO_SMART_CARDS
+  NS_IMETHOD LaunchSmartCardThread(SECMODModule* module) override;
+  NS_IMETHOD ShutdownSmartCardThread(SECMODModule* module) override;
+  nsresult LaunchSmartCardThreads();
+  void ShutdownSmartCardThreads();
+  nsresult DispatchEventToWindow(nsIDOMWindow* domWin,
+                                 const nsAString& eventType,
+                                 const nsAString& token);
+#endif
+
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) override;
 #endif
@@ -130,13 +134,6 @@ public:
 #ifdef XP_WIN
   NS_IMETHOD GetEnterpriseRoots(nsIX509CertList** enterpriseRoots) override;
 #endif
-
-  NS_IMETHOD BlockUntilLoadableRootsLoaded() override;
-  NS_IMETHOD CheckForSmartCardChanges() override;
-
-  // Main thread only
-  NS_IMETHOD HasActiveSmartCards(bool& result) override;
-  NS_IMETHOD HasUserCertsInstalled(bool& result) override;
 
   ::already_AddRefed<mozilla::psm::SharedCertVerifier>
     GetDefaultCertVerifier() override;
@@ -157,6 +154,7 @@ private:
   nsresult InitializeNSS();
   void ShutdownNSS();
 
+  void LoadLoadableRoots();
   void UnloadLoadableRoots();
   void setValidationOptions(bool isInitialSetting);
   nsresult setEnabledTLSVersions();
@@ -176,11 +174,6 @@ private:
 
   void UnloadEnterpriseRoots(const mozilla::MutexAutoLock& proofOfLock);
 #endif // XP_WIN
-
-  // mLoadableRootsLoadedMonitor protects mLoadableRootsLoaded.
-  mozilla::Monitor mLoadableRootsLoadedMonitor;
-  bool mLoadableRootsLoaded;
-  nsresult mLoadableRootsLoadedResult;
 
   // mMutex protects all members that are accessed from more than one thread.
   // While this lock is held, the same thread must not attempt to acquire a
@@ -203,32 +196,11 @@ private:
 #endif // XP_WIN
 
   // The following members are accessed only on the main thread:
+#ifndef MOZ_NO_SMART_CARDS
+  SmartCardThreadList* mThreadList;
+#endif
   static int mInstanceCount;
 };
-
-inline nsresult
-BlockUntilLoadableRootsLoaded()
-{
-  nsCOMPtr<nsINSSComponent> component(do_GetService(PSM_COMPONENT_CONTRACTID));
-  if (!component) {
-    return NS_ERROR_FAILURE;
-  }
-  return component->BlockUntilLoadableRootsLoaded();
-}
-
-inline nsresult
-CheckForSmartCardChanges()
-{
-#ifndef MOZ_NO_SMART_CARDS
-  nsCOMPtr<nsINSSComponent> component(do_GetService(PSM_COMPONENT_CONTRACTID));
-  if (!component) {
-    return NS_ERROR_FAILURE;
-  }
-  return component->CheckForSmartCardChanges();
-#else
-  return NS_OK;
-#endif
-}
 
 class nsNSSErrors
 {

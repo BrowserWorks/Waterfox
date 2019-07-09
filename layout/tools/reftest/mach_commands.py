@@ -20,6 +20,8 @@ from mach.decorators import (
     Command,
 )
 
+import reftestcommandline
+
 
 parser = None
 
@@ -76,7 +78,7 @@ class ReftestRunner(MozbuildObject):
 
         args.extraProfileFiles.append(os.path.join(self.topobjdir, "dist", "plugins"))
         args.symbolsPath = os.path.join(self.topobjdir, "crashreporter-symbols")
-        args.sandboxReadWhitelist.extend([self.topsrcdir, self.topobjdir])
+        args.workPath = self.topsrcdir
 
         if not args.tests:
             args.tests = [os.path.join(*default_manifest[args.suite])]
@@ -181,8 +183,6 @@ def process_test_objects(kwargs):
 
 
 def get_parser():
-    import reftestcommandline
-
     global parser
     here = os.path.abspath(os.path.dirname(__file__))
     build_obj = MozbuildObject.from_environment(cwd=here)

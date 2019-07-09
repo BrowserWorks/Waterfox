@@ -73,6 +73,7 @@ body {
 .item.selected > .item-title-container {
   background-color: -moz-cellhighlight;
   color: -moz-cellhighlighttext;
+  font-weight: bold;
 }
 
 .item.selected:focus > .item-title-container {
@@ -130,7 +131,7 @@ body {
   flex-flow: row;
   overflow: hidden;
   flex-grow: 1;
-  padding: 4px;
+  padding: 1px 0px 1px 0px;
 }
 
 .item-title {

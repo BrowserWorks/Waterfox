@@ -14,18 +14,7 @@ from taskgraph.task import Task
 from mozunit import main
 
 
-class MorphTestCase(unittest.TestCase):
-
-    def make_taskgraph(self, tasks):
-        label_to_taskid = {k: k + '-tid' for k in tasks}
-        for label, task_id in label_to_taskid.iteritems():
-            tasks[label].task_id = task_id
-        graph = Graph(nodes=set(tasks), edges=set())
-        taskgraph = TaskGraph(tasks, graph)
-        return taskgraph, label_to_taskid
-
-
-class TestIndexTask(MorphTestCase):
+class TestIndexTask(unittest.TestCase):
 
     def test_make_index_tasks(self):
         task_def = {
@@ -85,96 +74,13 @@ class TestIndexTask(MorphTestCase):
         self.assertEqual(index_task.task['scopes'],
                          ['index:insert-task:gecko.v2.mozilla-central.*'])
 
-
-class TestApplyJSONeTemplates(MorphTestCase):
-
-    tasks = [
-        {
-            'kind': 'build',
-            'label': 'a',
-            'attributes': {},
-            'task': {
-                'extra': {
-                    'treeherder': {
-                        'group': 'tc',
-                        'symbol': 'B'
-                    }
-                },
-                'payload': {
-                    'env': {
-                        'FOO': 'BAR'
-                    }
-                },
-                'tags': {
-                    'kind': 'build'
-                }
-            }
-        },
-        {
-            'kind': 'test',
-            'label': 'b',
-            'attributes': {},
-            'task': {
-                'extra': {
-                    'treeherder': {
-                        'group': 'tc',
-                        'symbol': 't'
-                    }
-                },
-                'payload': {
-                    'env': {
-                        'FOO': 'BAR'
-                    }
-                },
-                'tags': {
-                    'kind': 'test'
-                }
-            }
-        },
-    ]
-
-    def test_template_artifact(self):
-        tg, label_to_taskid = self.make_taskgraph({
-            t['label']: Task(**t) for t in self.tasks[:]
-        })
-
-        fn = morph.apply_jsone_templates({'artifact': {'enabled': 1}})
-        morphed = fn(tg, label_to_taskid)[0]
-
-        self.assertEqual(len(morphed.tasks), 2)
-
-        for t in morphed.tasks.values():
-            if t.kind == 'build':
-                self.assertEqual(t.task['extra']['treeherder']['group'], 'tc')
-                self.assertEqual(t.task['extra']['treeherder']['symbol'], 'Ba')
-                self.assertEqual(t.task['payload']['env']['USE_ARTIFACT'], 1)
-            else:
-                self.assertEqual(t.task['extra']['treeherder']['group'], 'tc')
-                self.assertEqual(t.task['extra']['treeherder']['symbol'], 't')
-                self.assertNotIn('USE_ARTIFACT', t.task['payload']['env'])
-
-    def test_template_env(self):
-        tg, label_to_taskid = self.make_taskgraph({
-            t['label']: Task(**t) for t in self.tasks[:]
-        })
-
-        fn = morph.apply_jsone_templates({'env': {'ENABLED': 1, 'FOO': 'BAZ'}})
-        morphed = fn(tg, label_to_taskid)[0]
-
-        self.assertEqual(len(morphed.tasks), 2)
-        for t in morphed.tasks.values():
-            self.assertEqual(len(t.task['payload']['env']), 2)
-            self.assertEqual(t.task['payload']['env']['ENABLED'], 1)
-            self.assertEqual(t.task['payload']['env']['FOO'], 'BAZ')
-
-        fn = morph.apply_jsone_templates({'env': {'ENABLED': 0}})
-        morphed = fn(tg, label_to_taskid)[0]
-
-        self.assertEqual(len(morphed.tasks), 2)
-        for t in morphed.tasks.values():
-            self.assertEqual(len(t.task['payload']['env']), 2)
-            self.assertEqual(t.task['payload']['env']['ENABLED'], 0)
-            self.assertEqual(t.task['payload']['env']['FOO'], 'BAZ')
+    def make_taskgraph(self, tasks):
+        label_to_taskid = {k: k + '-tid' for k in tasks}
+        for label, task_id in label_to_taskid.iteritems():
+            tasks[label].task_id = task_id
+        graph = Graph(nodes=set(tasks), edges=set())
+        taskgraph = TaskGraph(tasks, graph)
+        return taskgraph, label_to_taskid
 
 
 if __name__ == '__main__':

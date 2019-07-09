@@ -48,8 +48,9 @@ ImageLayerMLGPU::ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSu
       mScaleToSize.width != 0.0 &&
       mScaleToSize.height != 0.0)
   {
-    Size scale(sourceRect.Width() / mScaleToSize.width,
-               sourceRect.Height() / mScaleToSize.height);
+    Size scale(
+      sourceRect.width / mScaleToSize.width,
+      sourceRect.height / mScaleToSize.height);
     mScale = Some(scale);
   }
 
@@ -65,7 +66,7 @@ ImageLayerMLGPU::GetSamplingFilter()
 bool
 ImageLayerMLGPU::IsContentOpaque()
 {
-  if (mPictureRect.Width() == 0 || mPictureRect.Height() == 0) {
+  if (mPictureRect.width == 0 || mPictureRect.height == 0) {
     return false;
   }
   if (mScaleMode == ScaleMode::STRETCH) {
@@ -75,20 +76,13 @@ ImageLayerMLGPU::IsContentOpaque()
 }
 
 void
-ImageLayerMLGPU::SetRenderRegion(LayerIntRegion&& aRegion)
+ImageLayerMLGPU::SetRegionToRender(LayerIntRegion&& aRegion)
 {
-  switch (mScaleMode) {
-  case ScaleMode::STRETCH:
-    // See bug 1264142.
+  // See bug 1264142.
+  if (mScaleMode == ScaleMode::STRETCH) {
     aRegion.AndWith(LayerIntRect(0, 0, mScaleToSize.width, mScaleToSize.height));
-    break;
-  default:
-    // Clamp the visible region to the texture size. (see bug 1396507)
-    MOZ_ASSERT(mScaleMode == ScaleMode::SCALE_NONE);
-    aRegion.AndWith(LayerIntRect(0, 0, mPictureRect.width, mPictureRect.height));
-    break;
   }
-  LayerMLGPU::SetRenderRegion(Move(aRegion));
+  LayerMLGPU::SetRegionToRender(Move(aRegion));
 }
 
 void

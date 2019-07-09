@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIClassInfoImpl.h"
-#include "nsString.h"
 
 NS_IMETHODIMP_(MozExternalRefCountType)
 GenericClassInfo::AddRef()
@@ -37,17 +36,17 @@ GenericClassInfo::GetScriptableHelper(nsIXPCScriptable** aHelper)
 }
 
 NS_IMETHODIMP
-GenericClassInfo::GetContractID(nsACString& aContractID)
+GenericClassInfo::GetContractID(char** aContractID)
 {
   NS_ERROR("GetContractID not implemented");
-  aContractID.SetIsVoid(true);
+  *aContractID = nullptr;
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-GenericClassInfo::GetClassDescription(nsACString& aDescription)
+GenericClassInfo::GetClassDescription(char** aDescription)
 {
-  aDescription.SetIsVoid(true);
+  *aDescription = nullptr;
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

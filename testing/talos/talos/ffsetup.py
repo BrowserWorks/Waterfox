@@ -5,21 +5,21 @@
 """
 Set up a browser environment before running a test.
 """
-from __future__ import absolute_import, print_function
 
 import os
 import tempfile
-
 import mozfile
 import mozinfo
 import mozrunner
-from mozlog import get_proxy_logger
+
 from mozprocess import ProcessHandlerMixin
 from mozprofile.profile import Profile
+from mozlog import get_proxy_logger
+
 from talos import utils
-from talos.gecko_profile import GeckoProfile
 from talos.utils import TalosError
-from talos import heavy
+from talos.gecko_profile import GeckoProfile
+
 
 LOG = get_proxy_logger()
 
@@ -93,10 +93,9 @@ class FFSetup(object):
         if self.test_config.get('extensions'):
             extensions.append(self.test_config['extensions'])
 
-        # downloading a profile instead of using the empty one
-        if self.test_config['profile'] is not None:
-            path = heavy.download_profile(self.test_config['profile'])
-            self.test_config['profile_path'] = path
+        if self.browser_config['develop'] or \
+           self.browser_config['branch_name'] == 'Try':
+            extensions = [os.path.dirname(i) for i in extensions]
 
         profile = Profile.clone(
             os.path.normpath(self.test_config['profile_path']),
@@ -166,9 +165,9 @@ class FFSetup(object):
     def clean(self):
         try:
             mozfile.remove(self._tmp_dir)
-        except Exception as e:
-            print("Exception while removing profile directory: %s" % self._tmp_dir)
-            print(e)
+        except Exception, e:
+            print "Exception while removing profile directory: %s" % self._tmp_dir
+            print e
 
         if self.gecko_profile:
             self.gecko_profile.clean()

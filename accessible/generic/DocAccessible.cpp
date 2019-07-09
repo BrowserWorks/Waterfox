@@ -46,8 +46,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/HTMLEditor.h"
-#include "mozilla/TextEditor.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/DocumentType.h"
 #include "mozilla/dom/Element.h"
@@ -62,7 +60,7 @@ using namespace mozilla::a11y;
 ////////////////////////////////////////////////////////////////////////////////
 // Static member initialization
 
-static nsAtom** kRelationAttrs[] =
+static nsIAtom** kRelationAttrs[] =
 {
   &nsGkAtoms::aria_labelledby,
   &nsGkAtoms::aria_describedby,
@@ -94,7 +92,7 @@ DocAccessible::
   mDocumentNode(aDocument),
   mScrollPositionChangedTicks(0),
   mLoadState(eTreeConstructionPending), mDocFlags(0), mLoadEventType(0),
-  mVirtualCursor(nullptr),
+  mARIAAttrOldValue{nullptr}, mVirtualCursor(nullptr),
   mPresShell(aPresShell), mIPCDoc(nullptr)
 {
   mGenericTypes |= eDocument;
@@ -163,7 +161,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DocAccessible, Accessible)
   tmp->mARIAOwnsHash.Clear();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DocAccessible)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DocAccessible)
   NS_INTERFACE_MAP_ENTRY(nsIDocumentObserver)
   NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
@@ -268,8 +266,8 @@ DocAccessible::NativeState()
     state |= states::INVISIBLE | states::OFFSCREEN;
   }
 
-  RefPtr<TextEditor> textEditor = GetEditor();
-  state |= textEditor ? states::EDITABLE : states::READONLY;
+  nsCOMPtr<nsIEditor> editor = GetEditor();
+  state |= editor ? states::EDITABLE : states::READONLY;
 
   return state;
 }
@@ -339,7 +337,7 @@ DocAccessible::TakeFocus()
 }
 
 // HyperTextAccessible method
-already_AddRefed<TextEditor>
+already_AddRefed<nsIEditor>
 DocAccessible::GetEditor() const
 {
   // Check if document is editable (designMode="on" case). Otherwise check if
@@ -358,17 +356,15 @@ DocAccessible::GetEditor() const
   if (!editingSession)
     return nullptr; // No editing session interface
 
-  RefPtr<HTMLEditor> htmlEditor =
-    editingSession->GetHTMLEditorForWindow(mDocumentNode->GetWindow());
-  if (!htmlEditor) {
+  nsCOMPtr<nsIEditor> editor;
+  editingSession->GetEditorForWindow(mDocumentNode->GetWindow(), getter_AddRefs(editor));
+  if (!editor)
     return nullptr;
-  }
 
   bool isEditable = false;
-  htmlEditor->GetIsDocumentEditable(&isEditable);
-  if (isEditable) {
-    return htmlEditor.forget();
-  }
+  editor->GetIsDocumentEditable(&isEditable);
+  if (isEditable)
+    return editor.forget();
 
   return nullptr;
 }
@@ -530,7 +526,7 @@ DocAccessible::RelativeBounds(nsIFrame** aRelativeFrame) const
       return nsRect();
 
     nsRect scrollPort;
-    nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
+    nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollableExternal();
     if (sf) {
       scrollPort = sf->GetScrollPortRect();
     } else {
@@ -650,14 +646,15 @@ DocAccessible::ScrollPositionDidChange(nscoord aX, nscoord aY)
     mScrollWatchTimer->SetDelay(kScrollPosCheckWait);  // Create new timer, to avoid leaks
   }
   else {
-    NS_NewTimerWithFuncCallback(getter_AddRefs(mScrollWatchTimer),
-                                ScrollTimerCallback,
-                                this,
-                                kScrollPosCheckWait,
-                                nsITimer::TYPE_REPEATING_SLACK,
-                                "a11y::DocAccessible::ScrollPositionDidChange");
+    mScrollWatchTimer = do_CreateInstance("@mozilla.org/timer;1");
     if (mScrollWatchTimer) {
       NS_ADDREF_THIS(); // Kung fu death grip
+      mScrollWatchTimer->InitWithNamedFuncCallback(
+        ScrollTimerCallback,
+        this,
+        kScrollPosCheckWait,
+        nsITimer::TYPE_REPEATING_SLACK,
+        "a11y::DocAccessible::ScrollPositionDidChange");
     }
   }
   mScrollPositionChangedTicks = 1;
@@ -714,7 +711,7 @@ void
 DocAccessible::AttributeWillChange(nsIDocument* aDocument,
                                    dom::Element* aElement,
                                    int32_t aNameSpaceID,
-                                   nsAtom* aAttribute, int32_t aModType,
+                                   nsIAtom* aAttribute, int32_t aModType,
                                    const nsAttrValue* aNewValue)
 {
   Accessible* accessible = GetAccessible(aElement);
@@ -766,7 +763,7 @@ DocAccessible::NativeAnonymousChildListChange(nsIDocument* aDocument,
 void
 DocAccessible::AttributeChanged(nsIDocument* aDocument,
                                 dom::Element* aElement,
-                                int32_t aNameSpaceID, nsAtom* aAttribute,
+                                int32_t aNameSpaceID, nsIAtom* aAttribute,
                                 int32_t aModType,
                                 const nsAttrValue* aOldValue)
 {
@@ -812,7 +809,7 @@ DocAccessible::AttributeChanged(nsIDocument* aDocument,
 // DocAccessible protected member
 void
 DocAccessible::AttributeChangedImpl(Accessible* aAccessible,
-                                    int32_t aNameSpaceID, nsAtom* aAttribute)
+                                    int32_t aNameSpaceID, nsIAtom* aAttribute)
 {
   // Fire accessible event after short timer, because we need to wait for
   // DOM attribute & resulting layout to actually change. Otherwise,
@@ -951,7 +948,7 @@ DocAccessible::AttributeChangedImpl(Accessible* aAccessible,
 
 // DocAccessible protected member
 void
-DocAccessible::ARIAAttributeChanged(Accessible* aAccessible, nsAtom* aAttribute)
+DocAccessible::ARIAAttributeChanged(Accessible* aAccessible, nsIAtom* aAttribute)
 {
   // Note: For universal/global ARIA states and properties we don't care if
   // there is an ARIA role present or not.
@@ -1095,7 +1092,8 @@ DocAccessible::ARIAActiveDescendantChanged(Accessible* aAccessible)
 void
 DocAccessible::ContentAppended(nsIDocument* aDocument,
                                nsIContent* aContainer,
-                               nsIContent* aFirstNewContent)
+                               nsIContent* aFirstNewContent,
+                               int32_t /* unused */)
 {
 }
 
@@ -1161,14 +1159,14 @@ DocAccessible::CharacterDataChanged(nsIDocument* aDocument,
 
 void
 DocAccessible::ContentInserted(nsIDocument* aDocument, nsIContent* aContainer,
-                               nsIContent* aChild)
+                               nsIContent* aChild, int32_t /* unused */)
 {
 }
 
 void
 DocAccessible::ContentRemoved(nsIDocument* aDocument,
                               nsIContent* aContainerNode,
-                              nsIContent* aChildNode,
+                              nsIContent* aChildNode, int32_t /* unused */,
                               nsIContent* aPreviousSiblingNode)
 {
 #ifdef A11Y_LOG
@@ -1309,9 +1307,9 @@ DocAccessible::BindToDocument(Accessible* aAccessible,
 
   aAccessible->SetRoleMapEntry(aRoleMapEntry);
 
-  if (aAccessible->HasOwnContent()) {
-    AddDependentIDsFor(aAccessible);
+  AddDependentIDsFor(aAccessible);
 
+  if (aAccessible->HasOwnContent()) {
     nsIContent* el = aAccessible->GetContent();
     if (el->HasAttr(kNameSpaceID_None, nsGkAtoms::aria_owns)) {
       mNotificationController->ScheduleRelocation(aAccessible);
@@ -1500,8 +1498,7 @@ DocAccessible::DoInitialUpdate()
         }
 
 #if defined(XP_WIN)
-        IAccessibleHolder holder(CreateHolderFromAccessible(WrapNotNull(this)));
-        MOZ_DIAGNOSTIC_ASSERT(!holder.IsNull());
+        IAccessibleHolder holder(CreateHolderFromAccessible(this));
         int32_t childID = AccessibleWrap::GetChildIDFor(this);
 #else
         int32_t holder = 0, childID = 0;
@@ -1534,15 +1531,13 @@ DocAccessible::DoInitialUpdate()
     ParentDocument()->FireDelayedEvent(reorderEvent);
   }
 
-  if (IPCAccessibilityActive()) {
-    DocAccessibleChild* ipcDoc = IPCDoc();
-    MOZ_ASSERT(ipcDoc);
-    if (ipcDoc) {
-      for (auto idx = 0U; idx < mChildren.Length(); idx++) {
-        ipcDoc->InsertIntoIpcTree(this, mChildren.ElementAt(idx), idx);
-      }
-    }
+  TreeMutation mt(this);
+  uint32_t childCount = ChildCount();
+  for (uint32_t i = 0; i < childCount; i++) {
+    Accessible* child = GetChildAt(i);
+    mt.AfterInsertion(child);
   }
+  mt.Done();
 }
 
 void
@@ -1579,14 +1574,14 @@ DocAccessible::ProcessLoad()
 }
 
 void
-DocAccessible::AddDependentIDsFor(Accessible* aRelProvider, nsAtom* aRelAttr)
+DocAccessible::AddDependentIDsFor(Accessible* aRelProvider, nsIAtom* aRelAttr)
 {
   dom::Element* relProviderEl = aRelProvider->Elm();
   if (!relProviderEl)
     return;
 
   for (uint32_t idx = 0; idx < kRelationAttrsLen; idx++) {
-    nsAtom* relAttr = *kRelationAttrs[idx];
+    nsIAtom* relAttr = *kRelationAttrs[idx];
     if (aRelAttr && aRelAttr != relAttr)
       continue;
 
@@ -1607,11 +1602,6 @@ DocAccessible::AddDependentIDsFor(Accessible* aRelProvider, nsAtom* aRelAttr)
       if (id.IsEmpty())
         break;
 
-      nsIContent* dependentContent = iter.GetElem(id);
-      if (relAttr == nsGkAtoms::aria_owns && dependentContent &&
-          !aRelProvider->IsAcceptableChild(dependentContent))
-        continue;
-
       AttrRelProviderArray* providers = mDependentIDsHash.Get(id);
       if (!providers) {
         providers = new AttrRelProviderArray();
@@ -1630,6 +1620,7 @@ DocAccessible::AddDependentIDsFor(Accessible* aRelProvider, nsAtom* aRelAttr)
           // content is not accessible then store it to pend its container
           // children invalidation (this happens immediately after the caching
           // is finished).
+          nsIContent* dependentContent = iter.GetElem(id);
           if (dependentContent) {
             if (!HasAccessible(dependentContent)) {
               mInvalidationList.AppendElement(dependentContent);
@@ -1651,14 +1642,14 @@ DocAccessible::AddDependentIDsFor(Accessible* aRelProvider, nsAtom* aRelAttr)
 
 void
 DocAccessible::RemoveDependentIDsFor(Accessible* aRelProvider,
-                                     nsAtom* aRelAttr)
+                                     nsIAtom* aRelAttr)
 {
   dom::Element* relProviderElm = aRelProvider->Elm();
   if (!relProviderElm)
     return;
 
   for (uint32_t idx = 0; idx < kRelationAttrsLen; idx++) {
-    nsAtom* relAttr = *kRelationAttrs[idx];
+    nsIAtom* relAttr = *kRelationAttrs[idx];
     if (aRelAttr && aRelAttr != *kRelationAttrs[idx])
       continue;
 
@@ -1692,7 +1683,7 @@ DocAccessible::RemoveDependentIDsFor(Accessible* aRelProvider,
 
 bool
 DocAccessible::UpdateAccessibleOnAttrChange(dom::Element* aElement,
-                                            nsAtom* aAttribute)
+                                            nsIAtom* aAttribute)
 {
   if (aAttribute == nsGkAtoms::role) {
     // It is common for js libraries to set the role on the body element after
@@ -2153,11 +2144,6 @@ DocAccessible::DoARIAOwnsRelocation(Accessible* aOwner)
 
     // A new child is found, check for loops.
     if (child->Parent() != aOwner) {
-      // Child is aria-owned by another container, skip.
-      if (child->IsRelocated()) {
-        continue;
-      }
-
       Accessible* parent = aOwner;
       while (parent && parent != child && !parent->IsDoc()) {
         parent = parent->Parent();
@@ -2260,11 +2246,11 @@ DocAccessible::MoveChild(Accessible* aChild, Accessible* aNewParent,
   MOZ_ASSERT(aIdxInParent <= static_cast<int32_t>(aNewParent->ChildCount()),
              "Wrong insertion point for a moving child");
 
-  Accessible* curParent = aChild->Parent();
-
   if (!aNewParent->IsAcceptableChild(aChild->GetContent())) {
     return false;
   }
+
+  Accessible* curParent = aChild->Parent();
 
 #ifdef A11Y_LOG
   logging::TreeInfo("move child", 0,

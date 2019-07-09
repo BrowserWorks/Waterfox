@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-prop-id-get-value-err.case
-// - src/dstr-binding-for-await/error/for-await-of-async-func-var.template
+// - src/dstr-binding/obj-ptrn-prop-id-get-value-err.case
+// - src/dstr-binding/error/for-await-of-async-func-var.template
 /*---
 description: Error thrown when accessing the corresponding property of the value object (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -37,7 +38,7 @@ info: |
 
     13.3.3.7 Runtime Semantics: KeyedBindingInitialization
 
-    BindingElement : BindingPattern Initializer_opt
+    BindingElement : BindingPattern Initializeropt
 
     1. Let v be GetV(value, propertyName).
     2. ReturnIfAbrupt(v).
@@ -56,10 +57,7 @@ async function fn() {
 }
 
 fn()
-  .then(_ => {
-    throw new Test262Error("Expected async function to reject, but resolved.");
-  }, ({ constructor }) => {
-    assert.sameValue(constructor, Test262Error);
-    
-  })
+  .then(_ => { throw new Test262Error("Expected async function to reject, but resolved."); }, ({ constructor }) => assert.sameValue(constructor, Test262Error))
   .then($DONE, $DONE);
+
+assert.sameValue(initEvalCount, 0);

@@ -73,11 +73,15 @@ public:
     delete GfxInfoBase::mFeatureStatus;
     GfxInfoBase::mFeatureStatus = nullptr;
 
-    for (uint32_t i = 0; i < DeviceFamilyMax; i++)
+    for (uint32_t i = 0; i < DeviceFamilyMax; i++) {
       delete GfxDriverInfo::mDeviceFamilies[i];
+      GfxDriverInfo::mDeviceFamilies[i] = nullptr;
+    }
 
-    for (uint32_t i = 0; i < DeviceVendorMax; i++)
+    for (uint32_t i = 0; i < DeviceVendorMax; i++) {
       delete GfxDriverInfo::mDeviceVendors[i];
+      GfxDriverInfo::mDeviceVendors[i] = nullptr;
+    }
 
     GfxInfoBase::mShutdownOccurred = true;
 
@@ -291,8 +295,6 @@ BlacklistOSToOperatingSystem(const nsAString& os)
     return OperatingSystem::OSX10_11;
   else if (os.EqualsLiteral("Darwin 16"))
     return OperatingSystem::OSX10_12;
-  else if (os.EqualsLiteral("Darwin 17"))
-    return OperatingSystem::OSX10_13;
   else if (os.EqualsLiteral("Android"))
     return OperatingSystem::Android;
   // For historical reasons, "All" in blocklist means "All Windows"
@@ -1476,13 +1478,6 @@ GfxInfoBase::GetWebRenderEnabled(bool* aWebRenderEnabled)
 }
 
 NS_IMETHODIMP
-GfxInfoBase::GetOffMainThreadPaintEnabled(bool* aOffMainThreadPaintEnabled)
-{
-  *aOffMainThreadPaintEnabled = gfxConfig::IsEnabled(Feature::OMTP);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 GfxInfoBase::GetIsHeadless(bool* aIsHeadless)
 {
   *aIsHeadless = gfxPlatform::IsHeadless();
@@ -1542,7 +1537,6 @@ GfxInfoBase::ControlGPUProcessForXPCShell(bool aEnable, bool *_retval)
     gpm->LaunchGPUProcess();
     gpm->EnsureGPUReady();
   } else {
-    gfxConfig::UserDisable(Feature::GPU_PROCESS, "xpcshell-test");
     gpm->KillProcess();
   }
 

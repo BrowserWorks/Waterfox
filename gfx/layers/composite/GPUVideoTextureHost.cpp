@@ -111,34 +111,37 @@ GPUVideoTextureHost::CreateRenderTexture(const wr::ExternalImageId& aExternalIma
   mWrappedTextureHost->CreateRenderTexture(aExternalImageId);
 }
 
-uint32_t
-GPUVideoTextureHost::NumSubTextures() const
+void
+GPUVideoTextureHost::GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                                    const std::function<wr::ImageKey()>& aImageKeyAllocator)
 {
   MOZ_ASSERT(mWrappedTextureHost);
-  return mWrappedTextureHost->NumSubTextures();
+  MOZ_ASSERT(aImageKeys.IsEmpty());
+
+  mWrappedTextureHost->GetWRImageKeys(aImageKeys, aImageKeyAllocator);
 }
 
 void
-GPUVideoTextureHost::PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                         ResourceUpdateOp aOp,
-                                         const Range<wr::ImageKey>& aImageKeys,
-                                         const wr::ExternalImageId& aExtID)
+GPUVideoTextureHost::AddWRImage(wr::WebRenderAPI* aAPI,
+                                Range<const wr::ImageKey>& aImageKeys,
+                                const wr::ExternalImageId& aExtID)
 {
   MOZ_ASSERT(mWrappedTextureHost);
-  mWrappedTextureHost->PushResourceUpdates(aResources, aOp, aImageKeys, aExtID);
+
+  mWrappedTextureHost->AddWRImage(aAPI, aImageKeys, aExtID);
 }
 
 void
-GPUVideoTextureHost::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                      const wr::LayoutRect& aBounds,
-                                      const wr::LayoutRect& aClip,
-                                      wr::ImageRendering aFilter,
-                                      const Range<wr::ImageKey>& aImageKeys)
+GPUVideoTextureHost::PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                       const wr::LayoutRect& aBounds,
+                                       const wr::LayoutRect& aClip,
+                                       wr::ImageRendering aFilter,
+                                       Range<const wr::ImageKey>& aImageKeys)
 {
   MOZ_ASSERT(mWrappedTextureHost);
   MOZ_ASSERT(aImageKeys.length() > 0);
 
-  mWrappedTextureHost->PushDisplayItems(aBuilder,
+  mWrappedTextureHost->PushExternalImage(aBuilder,
                                          aBounds,
                                          aClip,
                                          aFilter,

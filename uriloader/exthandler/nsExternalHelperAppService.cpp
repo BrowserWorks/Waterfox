@@ -9,7 +9,6 @@
 /* This must occur *after* base/basictypes.h to avoid typedefs conflicts. */
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Base64.h"
-#include "mozilla/ResultExtensions.h"
 
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabChild.h"
@@ -26,7 +25,7 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsICategoryManager.h"
 #include "nsDependentSubstring.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsUnicharUtils.h"
 #include "nsIStringEnumerator.h"
 #include "nsMemory.h"
@@ -146,12 +145,16 @@ static const char NEVER_ASK_FOR_OPEN_FILE_PREF[] =
 static nsresult UnescapeFragment(const nsACString& aFragment, nsIURI* aURI,
                                  nsAString& aResult)
 {
-  // We need the unescaper
-  nsresult rv;
+  // First, we need a charset
+  nsAutoCString originCharset;
+  nsresult rv = aURI->GetOriginCharset(originCharset);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Now, we need the unescaper
   nsCOMPtr<nsITextToSubURI> textToSubURI = do_GetService(NS_ITEXTTOSUBURI_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  return textToSubURI->UnEscapeURIForUI(NS_LITERAL_CSTRING("UTF-8"), aFragment, aResult);
+  return textToSubURI->UnEscapeURIForUI(originCharset, aFragment, aResult);
 }
 
 /**
@@ -540,6 +543,7 @@ static const nsExtraMimeTypeEntry extraMimeEntries[] =
   { IMAGE_TIFF, "tiff,tif", "TIFF Image" },
   { IMAGE_XBM, "xbm", "XBM Image" },
   { IMAGE_SVG_XML, "svg", "Scalable Vector Graphics" },
+  { IMAGE_WEBP, "webp", "WebP Image" },
   { MESSAGE_RFC822, "eml", "RFC-822 data" },
   { TEXT_PLAIN, "txt,text", "Text File" },
   { APPLICATION_JSON, "json", "JavaScript Object Notation" },
@@ -904,17 +908,17 @@ NS_IMETHODIMP nsExternalHelperAppService::ExternalProtocolHandlerExists(const ch
   nsCOMPtr<nsIHandlerInfo> handlerInfo;
   nsresult rv = GetProtocolHandlerInfo(nsDependentCString(aProtocolScheme), 
                                        getter_AddRefs(handlerInfo));
-  if (NS_SUCCEEDED(rv)) {
-    // See if we have any known possible handler apps for this
-    nsCOMPtr<nsIMutableArray> possibleHandlers;
-    handlerInfo->GetPossibleApplicationHandlers(getter_AddRefs(possibleHandlers));
+  NS_ENSURE_SUCCESS(rv, rv);
 
-    uint32_t length;
-    possibleHandlers->GetLength(&length);
-    if (length) {
-      *aHandlerExists = true;
-      return NS_OK;
-    }
+  // See if we have any known possible handler apps for this
+  nsCOMPtr<nsIMutableArray> possibleHandlers;
+  handlerInfo->GetPossibleApplicationHandlers(getter_AddRefs(possibleHandlers));
+
+  uint32_t length;
+  possibleHandlers->GetLength(&length);
+  if (length) {
+    *aHandlerExists = true;
+    return NS_OK;
   }
 
   // if not, fall back on an os-based handler
@@ -941,6 +945,11 @@ NS_IMETHODIMP nsExternalHelperAppService::IsExposedProtocol(const char * aProtoc
     Preferences::GetBool("network.protocol-handler.expose-all", false);
 
   return NS_OK;
+}
+
+NS_IMETHODIMP nsExternalHelperAppService::LoadUrl(nsIURI * aURL)
+{
+  return LoadURI(aURL, nullptr);
 }
 
 static const char kExternalProtocolPrefPrefix[]  = "network.protocol-handler.external.";
@@ -1800,7 +1809,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         if (type == kWriteError) {
           // Attempt to write without sufficient permissions.
 #if defined(ANDROID)
-          // On Android this means the SD card is present but
+          // On Android (and Gonk), this means the SD card is present but
           // unavailable (read-only).
           msgId = "SDAccessErrorCardReadOnly";
 #else
@@ -1821,7 +1830,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         }
 #if defined(ANDROID)
         else if (type == kWriteError) {
-          // On Android this means the SD card is missing (not in
+          // On Android (and Gonk), this means the SD card is missing (not in
           // SD slot).
           msgId = "SDAccessErrorCardMissing";
           break;
@@ -1860,24 +1869,24 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         nsCOMPtr<nsIStringBundle> bundle;
         if (NS_SUCCEEDED(stringService->CreateBundle("chrome://global/locale/nsWebBrowserPersist.properties",
                          getter_AddRefs(bundle)))) {
-            nsAutoString msgText;
+            nsXPIDLString msgText;
             const char16_t *strings[] = { path.get() };
             if (NS_SUCCEEDED(bundle->FormatStringFromName(msgId, strings, 1,
-                                                          msgText))) {
+                                                          getter_Copies(msgText)))) {
               if (mDialogProgressListener) {
                 // We have a listener, let it handle the error.
-                mDialogProgressListener->OnStatusChange(nullptr, (type == kReadError) ? aRequest : nullptr, rv, msgText.get());
+                mDialogProgressListener->OnStatusChange(nullptr, (type == kReadError) ? aRequest : nullptr, rv, msgText);
               } else if (mTransfer) {
-                mTransfer->OnStatusChange(nullptr, (type == kReadError) ? aRequest : nullptr, rv, msgText.get());
+                mTransfer->OnStatusChange(nullptr, (type == kReadError) ? aRequest : nullptr, rv, msgText);
               } else if (XRE_IsParentProcess()) {
                 // We don't have a listener.  Simply show the alert ourselves.
                 nsresult qiRv;
                 nsCOMPtr<nsIPrompt> prompter(do_GetInterface(GetDialogParent(), &qiRv));
-                nsAutoString title;
+                nsXPIDLString title;
                 bundle->FormatStringFromName("title",
                                              strings,
                                              1,
-                                             title);
+                                             getter_Copies(title));
 
                 MOZ_LOG(nsExternalHelperAppService::mLog, LogLevel::Debug,
                        ("mContentContext=0x%p, prompter=0x%p, qi rv=0x%08"
@@ -1917,7 +1926,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
                 }
 
                 // We should always have a prompter at this point.
-                prompter->Alert(title.get(), msgText.get());
+                prompter->Alert(title, msgText);
               }
             }
         }
@@ -2532,7 +2541,12 @@ nsresult nsExternalAppHandler::MaybeCloseWindow()
       // Now close the old window.  Do it on a timer so that we don't run
       // into issues trying to close the window before it has fully opened.
       NS_ASSERTION(!mTimer, "mTimer was already initialized once!");
-      MOZ_TRY_VAR(mTimer, NS_NewTimerWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT));
+      mTimer = do_CreateInstance("@mozilla.org/timer;1");
+      if (!mTimer) {
+        return NS_ERROR_FAILURE;
+      }
+
+      mTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT);
       mWindowToClose = window;
     }
   }
@@ -2733,7 +2747,7 @@ nsExternalHelperAppService::GetTypeFromExtension(const nsACString& aFileExt,
     nsAutoCString lowercaseFileExt(aFileExt);
     ToLowerCase(lowercaseFileExt);
     // Read the MIME type from the category entry, if available
-    nsCString type;
+    nsXPIDLCString type;
     nsresult rv = catMan->GetCategoryEntry("ext-to-type-mapping",
                                            lowercaseFileExt.get(),
                                            getter_Copies(type));

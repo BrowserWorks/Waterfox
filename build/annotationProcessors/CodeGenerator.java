@@ -27,7 +27,6 @@ public class CodeGenerator {
 
     private final Class<?> cls;
     private final String clsName;
-    private final ClassWithOptions options;
     private AnnotationInfo.CallingThread callingThread = null;
     private int numNativesInits;
 
@@ -36,11 +35,9 @@ public class CodeGenerator {
     public CodeGenerator(ClassWithOptions annotatedClass) {
         this.cls = annotatedClass.wrappedClass;
         this.clsName = annotatedClass.generatedName;
-        this.options = annotatedClass;
 
         final String unqualifiedName = Utils.getUnqualifiedName(clsName);
         header.append(
-                Utils.getIfdefHeader(annotatedClass.ifdef) +
                 "class " + clsName + " : public mozilla::jni::ObjectBase<" +
                         unqualifiedName + ">\n" +
                 "{\n" +
@@ -52,13 +49,11 @@ public class CodeGenerator {
                 "\n");
 
         cpp.append(
-                Utils.getIfdefHeader(annotatedClass.ifdef) +
                 "const char " + clsName + "::name[] =\n" +
                 "        \"" + cls.getName().replace('.', '/') + "\";\n" +
                 "\n");
 
         natives.append(
-                Utils.getIfdefHeader(annotatedClass.ifdef) +
                 "template<class Impl>\n" +
                 "class " + clsName + "::Natives : " +
                         "public mozilla::jni::NativeImpl<" + unqualifiedName + ", Impl>\n" +
@@ -561,8 +556,6 @@ public class CodeGenerator {
      * @return The bytes to be written to the wrappers file.
      */
     public String getWrapperFileContents() {
-        cpp.append(
-                Utils.getIfdefFooter(options.ifdef));
         return cpp.toString();
     }
 
@@ -587,8 +580,7 @@ public class CodeGenerator {
         }
         header.append(
                 "};\n" +
-                "\n" +
-                Utils.getIfdefFooter(options.ifdef));
+                "\n");
         return header.toString();
     }
 
@@ -608,8 +600,7 @@ public class CodeGenerator {
                 "template<class Impl>\n" +
                 "const JNINativeMethod " + clsName + "::Natives<Impl>::methods[] = {" + nativesInits + '\n' +
                 "};\n" +
-                "\n" +
-                Utils.getIfdefFooter(options.ifdef));
+                "\n");
         return natives.toString();
     }
 }

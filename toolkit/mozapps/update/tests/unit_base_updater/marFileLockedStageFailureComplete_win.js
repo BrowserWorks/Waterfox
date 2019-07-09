@@ -54,18 +54,18 @@ function runUpdateFinished() {
  */
 function waitForHelperExitFinished() {
   standardInit();
+  Assert.equal(readStatusFile(), STATE_PENDING,
+               "the status file failure code" + MSG_SHOULD_EQUAL);
+  Assert.equal(gUpdateManager.updateCount, 2,
+               "the update manager updateCount attribute" + MSG_SHOULD_EQUAL);
+  Assert.equal(gUpdateManager.getUpdateAt(0).state, STATE_PENDING,
+               "the update state" + MSG_SHOULD_EQUAL);
+  Assert.equal(gUpdateManager.getUpdateAt(0).errorCode, WRITE_ERROR,
+               "the update errorCode" + MSG_SHOULD_EQUAL);
   checkPostUpdateRunningFile(false);
   checkFilesAfterUpdateFailure(getApplyDirFile);
   checkUpdateLogContains(ERR_RENAME_FILE);
   checkUpdateLogContains(ERR_BACKUP_CREATE_7);
   checkUpdateLogContains(STATE_FAILED_WRITE_ERROR + "\n" + CALL_QUIT);
-  do_execute_soon(() => waitForUpdateXMLFiles(true, false));
-}
-
-/**
- * Called after the call to waitForUpdateXMLFiles finishes.
- */
-function waitForUpdateXMLFilesFinished() {
-  checkUpdateManager(STATE_PENDING, true, STATE_PENDING, WRITE_ERROR, 0);
   checkCallbackLog();
 }

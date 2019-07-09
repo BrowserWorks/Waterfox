@@ -47,12 +47,11 @@ const {require, loader} = Cu.import("resource://devtools/shared/Loader.jsm", {})
 
 const Editor = require("devtools/client/sourceeditor/editor");
 const TargetFactory = require("devtools/client/framework/target").TargetFactory;
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {DevToolsWorker} = require("devtools/shared/worker/worker");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const flags = require("devtools/shared/flags");
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const Services = require("Services");
 const {gDevTools} = require("devtools/client/framework/devtools");
 const {Heritage} = require("devtools/client/shared/widgets/view-helpers");
@@ -63,10 +62,6 @@ const {ScratchpadManager} = require("resource://devtools/client/scratchpad/scrat
 const {addDebuggerToGlobal} = require("resource://gre/modules/jsdebugger.jsm");
 const {OS} = require("resource://gre/modules/osfile.jsm");
 const {Reflect} = require("resource://gre/modules/reflect.jsm");
-
-// Use privileged promise in panel documents to prevent having them to freeze
-// during toolbox destruction. See bug 1402779.
-const Promise = require("Promise");
 
 XPCOMUtils.defineConstant(this, "SCRATCHPAD_CONTEXT_CONTENT", SCRATCHPAD_CONTEXT_CONTENT);
 XPCOMUtils.defineConstant(this, "SCRATCHPAD_CONTEXT_BROWSER", SCRATCHPAD_CONTEXT_BROWSER);
@@ -83,10 +78,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "VariablesViewController",
 
 loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
 
-loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/debugger-client", true);
-loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/environment-client");
-loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/object-client");
-loader.lazyRequireGetter(this, "HUDService", "devtools/client/webconsole/hudservice", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "HUDService", "devtools/client/webconsole/hudservice");
 
 XPCOMUtils.defineLazyGetter(this, "REMOTE_TIMEOUT", () =>
   Services.prefs.getIntPref("devtools.debugger.remote-timeout"));
@@ -511,7 +506,7 @@ var Scratchpad = {
     let evalOptions = { url: this.uniqueName };
 
     return connection.then(({ debuggerClient, webConsoleClient }) => {
-      let deferred = defer();
+      let deferred = promise.defer();
 
       webConsoleClient.evaluateJSAsync(aString, aResponse => {
         this.debuggerClient = debuggerClient;
@@ -554,7 +549,7 @@ var Scratchpad = {
    */
   run: function SP_run()
   {
-    let deferred = defer();
+    let deferred = promise.defer();
     let reject = aReason => deferred.reject(aReason);
 
     this.execute().then(([aString, aError, aResult]) => {
@@ -581,7 +576,7 @@ var Scratchpad = {
    */
   inspect: function SP_inspect()
   {
-    let deferred = defer();
+    let deferred = promise.defer();
     let reject = aReason => deferred.reject(aReason);
 
     this.execute().then(([aString, aError, aResult]) => {
@@ -609,7 +604,7 @@ var Scratchpad = {
    */
   reloadAndRun: function SP_reloadAndRun()
   {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     if (this.executionContext !== SCRATCHPAD_CONTEXT_CONTENT) {
       console.error(this.strings.
@@ -637,7 +632,7 @@ var Scratchpad = {
    */
   display: function SP_display()
   {
-    let deferred = defer();
+    let deferred = promise.defer();
     let reject = aReason => deferred.reject(aReason);
 
     this.execute().then(([aString, aError, aResult]) => {
@@ -880,7 +875,7 @@ var Scratchpad = {
    */
   _writePrimitiveAsComment: function SP__writePrimitiveAsComment(aValue)
   {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     if (aValue.type == "longString") {
       let client = this.webConsoleClient;
@@ -939,7 +934,7 @@ var Scratchpad = {
    */
   writeAsErrorComment: function SP_writeAsErrorComment(aError)
   {
-    let deferred = defer();
+    let deferred = promise.defer();
 
     if (VariablesView.isPrimitive({ value: aError.exception })) {
       let error = aError.exception;
@@ -1060,7 +1055,7 @@ var Scratchpad = {
   /**
    * Export the textbox content to a file.
    *
-   * @param nsIFile aFile
+   * @param nsILocalFile aFile
    *        The file where you want to save the textbox content.
    * @param boolean aNoConfirmation
    *        If the file already exists, ask for confirmation?
@@ -1146,7 +1141,7 @@ var Scratchpad = {
   /**
    * Read the content of a file and put it into the textbox.
    *
-   * @param nsIFile aFile
+   * @param nsILocalFile aFile
    *        The file you want to save the textbox content into.
    * @param boolean aSilentError
    *        True if you do not want to display an error when file load fails,
@@ -1239,7 +1234,7 @@ var Scratchpad = {
             file = aFile;
           } else {
             file = Components.classes["@mozilla.org/file/local;1"].
-                   createInstance(Components.interfaces.nsIFile);
+                   createInstance(Components.interfaces.nsILocalFile);
             let filePath = this.getRecentFiles()[aIndex];
             file.initWithPath(filePath);
           }
@@ -1303,8 +1298,8 @@ var Scratchpad = {
   /**
    * Save a recent file in a JSON parsable string.
    *
-   * @param nsIFile aFile
-   *        The nsIFile we want to save as a recent file.
+   * @param nsILocalFile aFile
+   *        The nsILocalFile we want to save as a recent file.
    */
   setRecentFile: function SP_setRecentFile(aFile)
   {
@@ -1459,7 +1454,7 @@ var Scratchpad = {
       return this.saveFileAs(aCallback);
     }
 
-    let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
     file.initWithPath(this.filename);
 
     this.exportToFile(file, true, false, aStatus => {
@@ -1514,7 +1509,7 @@ var Scratchpad = {
    */
   revertFile: function SP_revertFile(aCallback)
   {
-    let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
     file.initWithPath(this.filename);
 
     if (!file.exists()) {
@@ -1740,7 +1735,7 @@ var Scratchpad = {
       this.populateRecentFilesMenu();
       PreferenceObserver.init();
       CloseObserver.init();
-    }).catch(console.error);
+    }).catch((err) => console.error(err));
     this._setupCommandListeners();
     this._updateViewMenuItems();
     this._setupPopupShowingListeners();
@@ -2116,7 +2111,7 @@ ScratchpadTab.prototype = {
       return this._connector;
     }
 
-    let deferred = defer();
+    let deferred = promise.defer();
     this._connector = deferred.promise;
 
     let connectTimer = setTimeout(() => {
@@ -2267,7 +2262,7 @@ ScratchpadSidebar.prototype = {
   {
     this.show();
 
-    let deferred = defer();
+    let deferred = promise.defer();
 
     let onTabReady = () => {
       if (this.variablesView) {

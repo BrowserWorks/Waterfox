@@ -799,11 +799,11 @@ interface TestInterface {
   void exerciseTypedefInterfaces3(YetAnotherNameForTestInterface arg);
 
   // Deprecated methods and attributes
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   attribute byte deprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   byte deprecatedMethod();
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   byte deprecatedMethodWithContext(any arg);
 
   // Static methods and attributes
@@ -815,11 +815,11 @@ interface TestInterface {
   static void assert(boolean arg);
 
   // Deprecated static methods and attributes
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static attribute byte staticDeprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static void staticDeprecatedMethod();
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="GetAttributeNode"]
   static void staticDeprecatedMethodWithContext(any arg);
 
   // Overload resolution tests
@@ -974,14 +974,6 @@ interface TestInterface {
 
   attribute byte dashed-attribute;
   void dashed-method();
-
-  // [NonEnumerable] tests
-  [NonEnumerable]
-  attribute boolean nonEnumerableAttr;
-  [NonEnumerable]
-  const boolean nonEnumerableConst = true;
-  [NonEnumerable]
-  void nonEnumerableMethod();
 
   // If you add things here, add them to TestExampleGen and TestJSImplGen as well
 };
@@ -1261,7 +1253,7 @@ interface TestCppKeywordNamedMethodsInterface {
   long volatile();
 };
 
-[Deprecated="EnablePrivilege", Constructor()]
+[Deprecated="GetAttributeNode", Constructor()]
 interface TestDeprecatedInterface {
   static void alsoDeprecated();
 };

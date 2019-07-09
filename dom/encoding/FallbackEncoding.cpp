@@ -54,8 +54,7 @@ FallbackEncoding::Get()
   // Don't let the user break things by setting the override to unreasonable
   // values via about:config
   auto encoding = Encoding::ForLabel(override);
-  if (!encoding || !encoding->IsAsciiCompatible() ||
-      encoding == UTF_8_ENCODING) {
+  if (!encoding || !encoding->IsAsciiCompatible()) {
     mFallback = nullptr;
   } else {
     mFallback = encoding;

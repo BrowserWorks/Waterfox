@@ -32,14 +32,16 @@
       // which is the URL displayed in the location bar, i.e.
       // the URI that the user attempted to load.
 
-      function getErrorCode() {
+      function getErrorCode()
+      {
         var url = document.documentURI;
         var error = url.search(/e\=/);
         var duffUrl = url.search(/\&u\=/);
         return decodeURIComponent(url.slice(error + 2, duffUrl));
       }
 
-      function getURL() {
+      function getURL()
+      {
         var url = document.documentURI;
         var match = url.match(/&u=([^&]+)&/);
 
@@ -60,7 +62,8 @@
        * Check whether this warning page should be overridable or whether
        * the "ignore warning" button should be hidden.
        */
-      function getOverride() {
+      function getOverride()
+      {
         var url = document.documentURI;
         var match = url.match(/&o=1&/);
         return !!match;
@@ -70,7 +73,8 @@
        * Attempt to get the hostname via document.location.  Fail back
        * to getURL so that we always return something meaningful.
        */
-      function getHostString() {
+      function getHostString()
+      {
         try {
           return document.location.hostname;
         } catch (e) {
@@ -78,7 +82,8 @@
         }
       }
 
-      function initPage() {
+      function initPage()
+      {
         var error = "";
         switch (getErrorCode()) {
           case "malwareBlocked" :
@@ -89,9 +94,6 @@
             break;
           case "unwantedBlocked" :
             error = "unwanted";
-            break;
-          case "harmfulBlocked" :
-            error = "harmful";
             break;
           default:
             return;
@@ -126,13 +128,6 @@
           el.remove();
         }
 
-        if (error !== "harmful") {
-          el = document.getElementById("errorTitleText_harmful");
-          el.remove();
-          el = document.getElementById("errorShortDescText_harmful");
-          el.remove();
-        }
-
         if (!getOverride()) {
           var btn = document.getElementById("ignoreWarningButton");
           if (btn) {
@@ -141,11 +136,7 @@
         }
 
         // Set sitename
-        let siteElem = document.getElementById(error + "_sitename");
-        if (siteElem) {
-          siteElem.textContent = getHostString();
-        }
-
+        document.getElementById(error + "_sitename").textContent = getHostString();
         document.title = document.getElementById("errorTitleText_" + error)
                                  .innerHTML;
 
@@ -165,17 +156,15 @@
         <h1 id="errorTitleText_phishing" class="errorTitleText">&safeb.blocked.phishingPage.title3;</h1>
         <h1 id="errorTitleText_malware" class="errorTitleText">&safeb.blocked.malwarePage.title;</h1>
         <h1 id="errorTitleText_unwanted" class="errorTitleText">&safeb.blocked.unwantedPage.title;</h1>
-        <h1 id="errorTitleText_harmful" class="errorTitleText">&safeb.blocked.harmfulPage.title;</h1>
       </div>
 
       <div id="errorLongContent">
-
+      
         <!-- Short Description -->
         <div id="errorShortDesc">
           <p id="errorShortDescText_phishing">&safeb.blocked.phishingPage.shortDesc3;</p>
           <p id="errorShortDescText_malware">&safeb.blocked.malwarePage.shortDesc;</p>
           <p id="errorShortDescText_unwanted">&safeb.blocked.unwantedPage.shortDesc;</p>
-          <p id="errorShortDescText_harmful">&safeb.blocked.harmfulPage.shortDesc;</p>
         </div>
 
         <!-- Long Description -->

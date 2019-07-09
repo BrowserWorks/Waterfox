@@ -6,7 +6,7 @@
 "use strict";
 
 const {Task} = require("devtools/shared/task");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
 const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const JSOL = require("devtools/client/shared/vendor/jsol");
@@ -169,16 +169,11 @@ function StorageUI(front, target, panelWin, toolbox) {
   this._tablePopup = this._panelDoc.getElementById("storage-table-popup");
   this._tablePopup.addEventListener("popupshowing", this.onTablePopupShowing);
 
-  this.onRefreshTable = this.onRefreshTable.bind(this);
   this.onAddItem = this.onAddItem.bind(this);
   this.onRemoveItem = this.onRemoveItem.bind(this);
   this.onRemoveAllFrom = this.onRemoveAllFrom.bind(this);
   this.onRemoveAll = this.onRemoveAll.bind(this);
-  this.onRemoveAllSessionCookies = this.onRemoveAllSessionCookies.bind(this);
   this.onRemoveTreeItem = this.onRemoveTreeItem.bind(this);
-
-  this._refreshButton = this._panelDoc.getElementById("refresh-button");
-  this._refreshButton.addEventListener("command", this.onRefreshTable);
 
   this._addButton = this._panelDoc.getElementById("add-button");
   this._addButton.addEventListener("command", this.onAddItem);
@@ -200,19 +195,9 @@ function StorageUI(front, target, panelWin, toolbox) {
     "storage-table-popup-delete-all");
   this._tablePopupDeleteAll.addEventListener("command", this.onRemoveAll);
 
-  this._tablePopupDeleteAllSessionCookies = this._panelDoc.getElementById(
-    "storage-table-popup-delete-all-session-cookies");
-  this._tablePopupDeleteAllSessionCookies.addEventListener("command",
-    this.onRemoveAllSessionCookies);
-
   this._treePopupDeleteAll = this._panelDoc.getElementById(
     "storage-tree-popup-delete-all");
   this._treePopupDeleteAll.addEventListener("command", this.onRemoveAll);
-
-  this._treePopupDeleteAllSessionCookies = this._panelDoc.getElementById(
-    "storage-tree-popup-delete-all-session-cookies");
-  this._treePopupDeleteAllSessionCookies.addEventListener("command",
-    this.onRemoveAllSessionCookies);
 
   this._treePopupDelete = this._panelDoc.getElementById("storage-tree-popup-delete");
   this._treePopupDelete.addEventListener("command", this.onRemoveTreeItem);
@@ -246,20 +231,15 @@ StorageUI.prototype = {
     this.sidebarToggleBtn = null;
 
     this._treePopup.removeEventListener("popupshowing", this.onTreePopupShowing);
-    this._refreshButton.removeEventListener("command", this.onRefreshTable);
     this._addButton.removeEventListener("command", this.onAddItem);
     this._tablePopupAddItem.removeEventListener("command", this.onAddItem);
     this._treePopupDeleteAll.removeEventListener("command", this.onRemoveAll);
-    this._treePopupDeleteAllSessionCookies.removeEventListener("command",
-      this.onRemoveAllSessionCookies);
     this._treePopupDelete.removeEventListener("command", this.onRemoveTreeItem);
 
     this._tablePopup.removeEventListener("popupshowing", this.onTablePopupShowing);
     this._tablePopupDelete.removeEventListener("command", this.onRemoveItem);
     this._tablePopupDeleteAllFrom.removeEventListener("command", this.onRemoveAllFrom);
     this._tablePopupDeleteAll.removeEventListener("command", this.onRemoveAll);
-    this._tablePopupDeleteAllSessionCookies.removeEventListener("command",
-      this.onRemoveAllSessionCookies);
   },
 
   setupToolbar: function () {
@@ -598,8 +578,6 @@ StorageUI.prototype = {
           yield this._target.actorHasMethod(type, "removeItem");
         this.actorSupportsRemoveAll =
           yield this._target.actorHasMethod(type, "removeAll");
-        this.actorSupportsRemoveAllSessionCookies =
-          yield this._target.actorHasMethod(type, "removeAllSessionCookies");
 
         yield this.resetColumns(type, host, subType);
       }
@@ -1136,17 +1114,6 @@ StorageUI.prototype = {
 
       this._treePopupDeleteAll.hidden = !showDeleteAll;
 
-      // The delete all session cookies action is displayed for cookie object stores
-      // (level 2 of tree)
-      let showDeleteAllSessionCookies = false;
-      if (this.actorSupportsRemoveAllSessionCookies) {
-        if (type === "cookies" && selectedItem.length === 2) {
-          showDeleteAllSessionCookies = true;
-        }
-      }
-
-      this._treePopupDeleteAllSessionCookies.hidden = !showDeleteAllSessionCookies;
-
       // The delete action is displayed for:
       // - IndexedDB databases (level 3 of the tree)
       // - Cache objects (level 3 of the tree)
@@ -1165,13 +1132,6 @@ StorageUI.prototype = {
     if (!showMenu) {
       event.preventDefault();
     }
-  },
-
-  /**
-   * Handles refreshing the selected storage
-   */
-  onRefreshTable: function (event) {
-    this.onHostSelect(event, this.tree.selectedItem);
   },
 
   /**
@@ -1213,19 +1173,6 @@ StorageUI.prototype = {
     let front = this.getCurrentFront();
     let name = path.length > 0 ? JSON.stringify(path) : undefined;
     front.removeAll(host, name);
-  },
-
-  /**
-   * Handles removing all session cookies from the storage
-   */
-  onRemoveAllSessionCookies: function () {
-    // Cannot use this.currentActor() if the handler is called from the
-    // tree context menu: it returns the correct value only after the
-    // table data from server is successfully fetched (and that's async).
-    let [, host, ...path] = this.tree.selectedItem;
-    let front = this.getCurrentFront();
-    let name = path.length > 0 ? JSON.stringify(path) : undefined;
-    front.removeAllSessionCookies(host, name);
   },
 
   /**

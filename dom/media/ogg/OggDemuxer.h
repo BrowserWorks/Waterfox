@@ -23,6 +23,8 @@ public:
 
   RefPtr<InitPromise> Init() override;
 
+  bool HasTrackType(TrackInfo::TrackType aType) const override;
+
   uint32_t GetNumberTracks(TrackInfo::TrackType aType) const override;
 
   already_AddRefed<MediaTrackDemuxer> GetTrackDemuxer(TrackInfo::TrackType aType,
@@ -307,7 +309,7 @@ private:
 
   // The picture region inside Theora frame to be displayed, if we have
   // a Theora video track.
-  gfx::IntRect mPicture;
+  nsIntRect mPicture;
 
   // True if we are decoding a chained ogg.
   bool mIsChained;

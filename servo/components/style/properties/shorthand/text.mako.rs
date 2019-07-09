@@ -6,10 +6,10 @@
 
 <%helpers:shorthand name="text-decoration"
                     sub_properties="text-decoration-line
-                    ${' text-decoration-style text-decoration-color' if product == 'gecko' else ''}"
+                    ${' text-decoration-style text-decoration-color' if product == 'gecko' or data.testing else ''}"
                     spec="https://drafts.csswg.org/css-text-decor/#propdef-text-decoration">
 
-    % if product == "gecko":
+    % if product == "gecko" or data.testing:
         use values::specified;
         use properties::longhands::{text_decoration_line, text_decoration_style, text_decoration_color};
     % else:
@@ -18,7 +18,7 @@
 
     pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                -> Result<Longhands, ParseError<'i>> {
-        % if product == "gecko":
+        % if product == "gecko" or data.testing:
             let (mut line, mut style, mut color, mut any) = (None, None, None, false);
         % else:
             let (mut line, mut any) = (None, false);
@@ -39,7 +39,7 @@
 
             parse_component!(line, text_decoration_line);
 
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 parse_component!(style, text_decoration_style);
                 parse_component!(color, text_decoration_color);
             % endif
@@ -48,13 +48,13 @@
         }
 
         if !any {
-            return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
+            return Err(StyleParseError::UnspecifiedError.into());
         }
 
         Ok(expanded! {
             text_decoration_line: unwrap_or_initial!(text_decoration_line, line),
 
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 text_decoration_style: unwrap_or_initial!(text_decoration_style, style),
                 text_decoration_color: unwrap_or_initial!(text_decoration_color, color),
             % endif
@@ -65,7 +65,7 @@
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
             self.text_decoration_line.to_css(dest)?;
 
-            % if product == "gecko":
+            % if product == "gecko" or data.testing:
                 if self.text_decoration_style != &text_decoration_style::SpecifiedValue::solid {
                     dest.write_str(" ")?;
                     self.text_decoration_style.to_css(dest)?;

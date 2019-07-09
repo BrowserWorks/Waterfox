@@ -335,7 +335,9 @@ endif
 
 ifneq (android,$(MOZ_WIDGET_TOOLKIT))
   OPTIMIZEJARS = 1
-  JAR_COMPRESSION ?= none
+  ifneq (gonk,$(MOZ_WIDGET_TOOLKIT))
+    DISABLE_JAR_COMPRESSION = 1
+  endif
 endif
 
 # A js binary is needed to perform verification of JavaScript minification.
@@ -397,7 +399,6 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(WP_TEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(GTEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip) \
-  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(GENERATED_SOURCE_FILE_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(MOZ_SOURCESTAMP_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDINFO_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDID_INFO_TXT_FILE)) \
@@ -419,9 +420,7 @@ endif
 
 ifdef MOZ_CODE_COVERAGE
   UPLOAD_FILES += \
-    $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(CODE_COVERAGE_ARCHIVE_BASENAME).zip) \
-    $(call QUOTED_WILDCARD,$(topobjdir)/chrome-map.json) \
-    $(NULL)
+    $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(CODE_COVERAGE_ARCHIVE_BASENAME).zip)
 endif
 
 ifdef MOZ_STYLO

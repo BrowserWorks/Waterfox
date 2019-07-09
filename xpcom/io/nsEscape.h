@@ -43,27 +43,32 @@ extern "C" {
 char* nsEscape(const char* aStr, size_t aLength, size_t* aOutputLen,
                nsEscapeMask aMask);
 
-/**
- * Decodes '%'-escaped hex codes into character values, modifies the parameter,
- * returns the same buffer
- */
 char* nsUnescape(char* aStr);
-
-/**
- * Decodes '%'-escaped hex codes into character values, modifies the parameter
- * buffer, returns the length of the result (result may contain \0's).
+/* decode % escaped hex codes into character values,
+ * modifies the parameter, returns the same buffer
  */
+
 int32_t nsUnescapeCount(char* aStr);
+/* decode % escaped hex codes into character values,
+ * modifies the parameter buffer, returns the length of the result
+ * (result may contain \0's).
+ */
+
+char*
+nsEscapeHTML(const char* aString);
+
+char16_t*
+nsEscapeHTML2(const char16_t* aSourceBuffer,
+              int32_t aSourceBufferLen = -1);
+/*
+ * Escape problem char's for HTML display
+ */
+
 
 #ifdef __cplusplus
 }
 #endif
 
-/**
- * Infallibly append aSrc to aDst, escaping chars that are problematic for HTML
- * display.
- */
-void nsAppendEscapedHTML(const nsACString& aSrc, nsACString& aDst);
 
 /**
  * NS_EscapeURL/NS_UnescapeURL constants for |flags| parameter:
@@ -163,19 +168,6 @@ NS_EscapeURL(const nsACString& aStr, uint32_t aFlags, nsACString& aResult)
 nsresult
 NS_EscapeURL(const nsACString& aStr, uint32_t aFlags, nsACString& aResult,
              const mozilla::fallible_t&);
-
-// Forward declaration for nsASCIIMask.h
-typedef std::array<bool, 128> ASCIIMaskArray;
-
-/**
- * The same as NS_EscapeURL, except it also filters out characters that match
- * aFilterMask.
- */
-nsresult
-NS_EscapeAndFilterURL(const nsACString& aStr, uint32_t aFlags,
-                      const ASCIIMaskArray* aFilterMask,
-                      nsACString& aResult, const mozilla::fallible_t&);
-
 
 inline const nsACString&
 NS_UnescapeURL(const nsACString& aStr, uint32_t aFlags, nsACString& aResult)

@@ -16,7 +16,7 @@ var { gDevTools } = require("devtools/client/framework/devtools");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 var Services = require("Services");
-var { DebuggerClient } = require("devtools/shared/client/debugger-client");
+var { DebuggerClient } = require("devtools/shared/client/main");
 var { PrefsHelper } = require("devtools/client/shared/prefs");
 var { Task } = require("devtools/shared/task");
 
@@ -25,6 +25,7 @@ var { Task } = require("devtools/shared/task");
  */
 var Prefs = new PrefsHelper("devtools.debugger", {
   chromeDebuggingHost: ["Char", "chrome-debugging-host"],
+  chromeDebuggingPort: ["Int", "chrome-debugging-port"],
   chromeDebuggingWebSocket: ["Bool", "chrome-debugging-websocket"],
 });
 
@@ -32,27 +33,15 @@ var gToolbox, gClient;
 
 var connect = Task.async(function* () {
   window.removeEventListener("load", connect);
-
   // Initiate the connection
-  let env = Components.classes["@mozilla.org/process/environment;1"]
-    .getService(Components.interfaces.nsIEnvironment);
-  let port = env.get("MOZ_BROWSER_TOOLBOX_PORT");
-  let addonID = env.get("MOZ_BROWSER_TOOLBOX_ADDONID");
-
-  // A port needs to be passed in from the environment, for instance:
-  //    MOZ_BROWSER_TOOLBOX_PORT=6080 ./mach run -chrome \
-  //      chrome://devtools/content/framework/toolbox-process-window.xul
-  if (!port) {
-    throw new Error("Must pass a port in an env variable with MOZ_BROWSER_TOOLBOX_PORT");
-  }
-
   let transport = yield DebuggerClient.socketConnect({
     host: Prefs.chromeDebuggingHost,
-    port,
+    port: Prefs.chromeDebuggingPort,
     webSocket: Prefs.chromeDebuggingWebSocket,
   });
   gClient = new DebuggerClient(transport);
   yield gClient.connect();
+  let addonID = getParameterByName("addonID");
 
   if (addonID) {
     let { addons } = yield gClient.listAddons();
@@ -76,6 +65,7 @@ function setPrefDefaults() {
   // Bug 1225160 - Using source maps with browser debugging can lead to a crash
   Services.prefs.setBoolPref("devtools.debugger.source-maps-enabled", false);
   Services.prefs.setBoolPref("devtools.debugger.new-debugger-frontend", true);
+  Services.prefs.setBoolPref("devtools.debugger.client-source-maps-enabled", true);
   Services.prefs.setBoolPref("devtools.webconsole.new-frontend-enabled", false);
 }
 window.addEventListener("load", function () {
@@ -225,4 +215,11 @@ function quitApp() {
   if (shouldProceed) {
     Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
   }
+}
+
+function getParameterByName(name) {
+  name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+  let regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+  let results = regex.exec(window.location.search);
+  return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }

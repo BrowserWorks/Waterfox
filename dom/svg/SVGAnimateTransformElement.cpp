@@ -28,7 +28,7 @@ SVGAnimateTransformElement::SVGAnimateTransformElement(already_AddRefed<mozilla:
 
 bool
 SVGAnimateTransformElement::ParseAttribute(int32_t aNamespaceID,
-                                           nsAtom* aAttribute,
+                                           nsIAtom* aAttribute,
                                            const nsAString& aValue,
                                            nsAttrValue& aResult)
 {
@@ -36,7 +36,7 @@ SVGAnimateTransformElement::ParseAttribute(int32_t aNamespaceID,
   // specially.
   if (aNamespaceID == kNameSpaceID_None && aAttribute == nsGkAtoms::type) {
     aResult.ParseAtom(aValue);
-    nsAtom* atom = aResult.GetAtomValue();
+    nsIAtom* atom = aResult.GetAtomValue();
     if (atom != nsGkAtoms::translate &&
         atom != nsGkAtoms::scale &&
         atom != nsGkAtoms::rotate &&

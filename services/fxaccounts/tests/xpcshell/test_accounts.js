@@ -84,7 +84,7 @@ MockStorageManager.prototype = {
     this.accountData = null;
     return Promise.resolve();
   }
-};
+}
 
 function MockFxAccountsClient() {
   this._email = "nobody@example.com";
@@ -130,7 +130,7 @@ function MockFxAccountsClient() {
 }
 MockFxAccountsClient.prototype = {
   __proto__: FxAccountsClient.prototype
-};
+}
 
 /*
  * We need to mock the FxAccounts module's interfaces to external
@@ -270,7 +270,7 @@ add_task(async function test_set_signed_in_user_deletes_previous_device() {
   account.internal.deleteDeviceRegistration = () => {
     deleteDeviceRegistrationCalled = true;
     return Promise.resolve(true);
-  };
+  }
 
   await account.setSignedInUser(credentials);
   do_check_true(deleteDeviceRegistrationCalled);
@@ -294,23 +294,29 @@ add_task(async function test_update_account_data() {
     email: credentials.email,
     uid: credentials.uid,
     assertion: "new_assertion",
-  };
+  }
   await account.updateUserAccountData(newCreds);
   do_check_eq((await account.getSignedInUser()).assertion, "new_assertion",
               "new field value was saved");
 
-  // but we should fail attempting to change the uid.
+  // but we should fail attempting to change email or uid.
+  newCreds = {
+    email: "someoneelse@example.com",
+    uid: credentials.uid,
+    assertion: "new_assertion",
+  }
+  await Assert.rejects(account.updateUserAccountData(newCreds));
   newCreds = {
     email: credentials.email,
     uid: "another_uid",
     assertion: "new_assertion",
-  };
+  }
   await Assert.rejects(account.updateUserAccountData(newCreds));
 
-  // should fail without the uid.
+  // should fail without email or uid.
   newCreds = {
     assertion: "new_assertion",
-  };
+  }
   await Assert.rejects(account.updateUserAccountData(newCreds));
 
   // and should fail with a field name that's not known by storage.
@@ -318,7 +324,7 @@ add_task(async function test_update_account_data() {
     email: credentials.email,
     uid: "another_uid",
     foo: "bar",
-  };
+  }
   await Assert.rejects(account.updateUserAccountData(newCreds));
 });
 
@@ -540,7 +546,7 @@ add_test(function test_pollEmailStatus_start_verified() {
     fxa.internal.getUserAccountData().then(user => {
       fxa.internal.fxAccountsClient._email = test_user.email;
       fxa.internal.fxAccountsClient._verified = true;
-      const mock = sinon.mock(fxa.internal);
+      const mock = sinon.mock(fxa.internal)
       mock.expects("_scheduleNextPollEmailStatus").never();
       fxa.internal.startPollEmailStatus(fxa.internal.currentAccountState, user.sessionToken, "start").then(() => {
         mock.verify();
@@ -560,7 +566,7 @@ add_test(function test_pollEmailStatus_start() {
 
   fxa.setSignedInUser(test_user).then(() => {
     fxa.internal.getUserAccountData().then(user => {
-      const mock = sinon.mock(fxa.internal);
+      const mock = sinon.mock(fxa.internal)
       mock.expects("_scheduleNextPollEmailStatus").once()
           .withArgs(fxa.internal.currentAccountState, user.sessionToken, 123456, "start");
       fxa.internal.startPollEmailStatus(fxa.internal.currentAccountState, user.sessionToken, "start").then(() => {
@@ -583,7 +589,7 @@ add_test(function test_pollEmailStatus_start_subsequent() {
 
   fxa.setSignedInUser(test_user).then(() => {
     fxa.internal.getUserAccountData().then(user => {
-      const mock = sinon.mock(fxa.internal);
+      const mock = sinon.mock(fxa.internal)
       mock.expects("_scheduleNextPollEmailStatus").once()
           .withArgs(fxa.internal.currentAccountState, user.sessionToken, 654321, "start");
       fxa.internal.startPollEmailStatus(fxa.internal.currentAccountState, user.sessionToken, "start").then(() => {
@@ -604,7 +610,7 @@ add_test(function test_pollEmailStatus_browser_startup() {
 
   fxa.setSignedInUser(test_user).then(() => {
     fxa.internal.getUserAccountData().then(user => {
-      const mock = sinon.mock(fxa.internal);
+      const mock = sinon.mock(fxa.internal)
       mock.expects("_scheduleNextPollEmailStatus").once()
           .withArgs(fxa.internal.currentAccountState, user.sessionToken, 654321, "browser-startup");
       fxa.internal.startPollEmailStatus(fxa.internal.currentAccountState, user.sessionToken, "browser-startup").then(() => {
@@ -622,7 +628,7 @@ add_test(function test_pollEmailStatus_push() {
 
   fxa.setSignedInUser(test_user).then(() => {
     fxa.internal.getUserAccountData().then(user => {
-      const mock = sinon.mock(fxa.internal);
+      const mock = sinon.mock(fxa.internal)
       mock.expects("_scheduleNextPollEmailStatus").never();
       fxa.internal.startPollEmailStatus(fxa.internal.currentAccountState, user.sessionToken, "push").then(() => {
         mock.verify();
@@ -734,7 +740,7 @@ add_task(async function test_getKeys_invalid_token() {
 add_test(function test_fetchAndUnwrapKeys_no_token() {
   let fxa = new MockFxAccounts();
   let user = getTestUser("lettuce.protheroe");
-  delete user.keyFetchToken;
+  delete user.keyFetchToken
 
   makeObserver(ONLOGOUT_NOTIFICATION, function() {
     log.debug("test_fetchAndUnwrapKeys_no_token observed logout");
@@ -751,7 +757,7 @@ add_test(function test_fetchAndUnwrapKeys_no_token() {
     error => {
       log.info("setSignedInUser correctly rejected");
     }
-  );
+  )
 });
 
 // Alice (User A) signs up but never verifies her email.  Then Bob (User B)
@@ -807,9 +813,6 @@ add_task(async function test_getAssertion_invalid_token() {
     email: "sonia@example.com",
   };
   await fxa.setSignedInUser(creds);
-  // we have what we still believe to be a valid session token, so we should
-  // consider that we have a local session.
-  do_check_true(await fxa.hasLocalSession());
 
   try {
     let promiseAssertion = fxa.getAssertion("audience.example.com");
@@ -827,7 +830,6 @@ add_task(async function test_getAssertion_invalid_token() {
   let user = await fxa.internal.getUserAccountData();
   do_check_eq(user.email, creds.email);
   do_check_eq(user.sessionToken, null);
-  do_check_false(await fxa.hasLocalSession());
 });
 
 add_task(async function test_getAssertion() {
@@ -989,7 +991,7 @@ add_test(function test_accountStatus() {
                  }
                );
             }
-          );
+          )
         }
       );
     }
@@ -1197,7 +1199,7 @@ add_test(function test_getOAuthToken() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {
@@ -1213,7 +1215,7 @@ add_test(function test_getOAuthToken() {
            do_check_eq(result, "token");
            run_next_test();
         }
-      );
+      )
     }
   );
 
@@ -1229,7 +1231,7 @@ add_test(function test_getOAuthTokenScoped() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function(assertion, scopeString) {
@@ -1246,7 +1248,7 @@ add_test(function test_getOAuthTokenScoped() {
            do_check_eq(result, "token");
            run_next_test();
         }
-      );
+      )
     }
   );
 
@@ -1262,7 +1264,7 @@ add_task(async function test_getOAuthTokenCached() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {
@@ -1295,7 +1297,7 @@ add_task(async function test_getOAuthTokenCachedScopeNormalization() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {
@@ -1393,7 +1395,7 @@ add_test(function test_getOAuthToken_network_error() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {
@@ -1422,7 +1424,7 @@ add_test(function test_getOAuthToken_auth_error() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {
@@ -1451,7 +1453,7 @@ add_test(function test_getOAuthToken_unknown_error() {
 
   // create a mock oauth client
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "https://example.com/v1",
+    serverURL: "http://example.com/v1",
     client_id: "abc123"
   });
   client.getTokenFromAssertion = function() {

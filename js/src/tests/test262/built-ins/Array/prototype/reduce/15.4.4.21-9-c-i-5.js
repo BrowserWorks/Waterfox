@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.reduce
 es5id: 15.4.4.21-9-c-i-5
 description: >
     Array.prototype.reduce - element to be retrieved is own data
@@ -32,7 +31,7 @@ description: >
 
         var child = new Con();
         child.length = 2;
-
+        
         Object.defineProperty(child, "0", {
             value: "9",
             configurable: true

@@ -41,7 +41,7 @@ Debug_SetValueRangeToCrashOnTouch(Value* beg, Value* end)
 {
 #ifdef DEBUG
     for (Value* v = beg; v != end; ++v)
-        *v = js::PoisonedObjectValue(0x48);
+        v->setObject(*reinterpret_cast<JSObject*>(0x48));
 #endif
 }
 
@@ -396,17 +396,14 @@ class Shape;
 class NewObjectCache;
 
 // Operations which change an object's dense elements can either succeed, fail,
-// or be unable to complete. The latter is used when the object's elements must
-// become sparse instead. The enum below is used for such operations.
+// or be unable to complete. For native objects, the latter is used when the
+// object's elements must become sparse instead. The enum below is used for
+// such operations, and for similar operations on unboxed arrays and methods
+// that work on both kinds of objects.
 enum class DenseElementResult {
     Failure,
     Success,
     Incomplete
-};
-
-enum class ShouldUpdateTypes {
-    Update,
-    DontUpdate
 };
 
 /*
@@ -545,9 +542,6 @@ class NativeObject : public ShapedObject
     static inline JS::Result<NativeObject*, JS::OOM&>
     create(JSContext* cx, js::gc::AllocKind kind, js::gc::InitialHeap heap,
            js::HandleShape shape, js::HandleObjectGroup group);
-
-    static inline JS::Result<NativeObject*, JS::OOM&>
-    createWithTemplate(JSContext* cx, js::gc::InitialHeap heap, HandleObject templateObject);
 
   protected:
 #ifdef DEBUG
@@ -724,53 +718,6 @@ class NativeObject : public ShapedObject
     }
 
     /*
-     * The methods below shadow methods on JSObject and are more efficient for
-     * known-native objects.
-     */
-    bool hasAllFlags(js::BaseShape::Flag flags) const {
-        MOZ_ASSERT(flags);
-        return shape_->hasAllObjectFlags(flags);
-    }
-    bool watched() const {
-        return hasAllFlags(js::BaseShape::WATCHED);
-    }
-    bool nonProxyIsExtensible() const {
-        return !hasAllFlags(js::BaseShape::NOT_EXTENSIBLE);
-    }
-
-    /*
-     * Whether there may be indexed properties on this object, excluding any in
-     * the object's elements.
-     */
-    bool isIndexed() const {
-        return hasAllFlags(js::BaseShape::INDEXED);
-    }
-
-    static bool setHadElementsAccess(JSContext* cx, HandleNativeObject obj) {
-        return setFlags(cx, obj, js::BaseShape::HAD_ELEMENTS_ACCESS);
-    }
-
-    /*
-     * Whether SETLELEM was used to access this object. See also the comment near
-     * PropertyTree::MAX_HEIGHT.
-     */
-    bool hadElementsAccess() const {
-        return hasAllFlags(js::BaseShape::HAD_ELEMENTS_ACCESS);
-    }
-
-    // Mark an object as having its 'new' script information cleared.
-    bool wasNewScriptCleared() const {
-        return hasAllFlags(js::BaseShape::NEW_SCRIPT_CLEARED);
-    }
-    static bool setNewScriptCleared(JSContext* cx, HandleNativeObject obj) {
-        return setFlags(cx, obj, js::BaseShape::NEW_SCRIPT_CLEARED);
-    }
-
-    bool hasInterestingSymbol() const {
-        return hasAllFlags(js::BaseShape::HAS_INTERESTING_SYMBOL);
-    }
-
-    /*
      * Grow or shrink slots immediately before changing the slot span.
      * The number of allocated slots is not stored explicitly, and changes to
      * the slots must track changes in the slot span.
@@ -858,7 +805,6 @@ class NativeObject : public ShapedObject
                                                 JSGetterOp getter, JSSetterOp setter,
                                                 uint32_t slot, unsigned attrs, unsigned flags,
                                                 bool allowDictionary = true);
-    static Shape* addEnumerableDataProperty(JSContext* cx, HandleNativeObject obj, HandleId id);
 
     /* Add a data property whose id is not yet in this scope. */
     static Shape* addDataProperty(JSContext* cx, HandleNativeObject obj,
@@ -1227,14 +1173,9 @@ class NativeObject : public ShapedObject
     inline Value getDenseOrTypedArrayElement(uint32_t idx);
 
     inline void copyDenseElements(uint32_t dstStart, const Value* src, uint32_t count);
-    inline void initDenseElements(const Value* src, uint32_t count);
-    inline void initDenseElements(NativeObject* src, uint32_t srcStart, uint32_t count);
+    inline void initDenseElements(uint32_t dstStart, const Value* src, uint32_t count);
     inline void moveDenseElements(uint32_t dstStart, uint32_t srcStart, uint32_t count);
     inline void moveDenseElementsNoPreBarrier(uint32_t dstStart, uint32_t srcStart, uint32_t count);
-
-    inline DenseElementResult
-    setOrExtendDenseElements(JSContext* cx, uint32_t start, const Value* vp, uint32_t count,
-                             ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update);
 
     bool shouldConvertDoubleElements() {
         return getElementsHeader()->shouldConvertDoubleElements();
@@ -1400,12 +1341,8 @@ class NativeObject : public ShapedObject
     copy(JSContext* cx, gc::AllocKind kind, gc::InitialHeap heap,
          HandleNativeObject templateObject);
 
-    /* Return the allocKind we would use if we were to tenure this object. */
-    inline js::gc::AllocKind allocKindForTenure() const;
-
     void updateShapeAfterMovingGC();
     void sweepDictionaryListPointer();
-    void updateDictionaryListPointerAfterMinorGC(NativeObject* old);
 
     /* JIT Accessors */
     static size_t offsetOfElements() { return offsetof(NativeObject, elements_); }
@@ -1426,9 +1363,6 @@ class PlainObject : public NativeObject
 {
   public:
     static const js::Class class_;
-
-    /* Return the allocKind we would use if we were to tenure this object. */
-    inline js::gc::AllocKind allocKindForTenure() const;
 };
 
 inline void
@@ -1457,30 +1391,29 @@ NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
                      ObjectOpResult& result);
 
 extern bool
-NativeDefineAccessorProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
-                             JSGetterOp getter, JSSetterOp setter, unsigned attrs,
-                             ObjectOpResult& result);
+NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue value,
+                     JSGetterOp getter, JSSetterOp setter, unsigned attrs,
+                     ObjectOpResult& result);
 
 extern bool
-NativeDefineDataProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue value,
-                         unsigned attrs, ObjectOpResult& result);
+NativeDefineProperty(JSContext* cx, HandleNativeObject obj, PropertyName* name,
+                     HandleValue value, GetterOp getter, SetterOp setter,
+                     unsigned attrs, ObjectOpResult& result);
+
+extern bool
+NativeDefineElement(JSContext* cx, HandleNativeObject obj, uint32_t index, HandleValue value,
+                    JSGetterOp getter, JSSetterOp setter, unsigned attrs,
+                    ObjectOpResult& result);
 
 /* If the result out-param is omitted, throw on failure. */
 extern bool
-NativeDefineAccessorProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
-                             JSGetterOp getter, JSSetterOp setter, unsigned attrs);
+NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue value,
+                     JSGetterOp getter, JSSetterOp setter, unsigned attrs);
 
 extern bool
-NativeDefineDataProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue value,
-                         unsigned attrs);
-
-extern bool
-NativeDefineAccessorProperty(JSContext* cx, HandleNativeObject obj, PropertyName* name,
-                             JSGetterOp getter, JSSetterOp setter, unsigned attrs);
-
-extern bool
-NativeDefineDataProperty(JSContext* cx, HandleNativeObject obj, PropertyName* name,
-                         HandleValue value, unsigned attrs);
+NativeDefineProperty(JSContext* cx, HandleNativeObject obj, PropertyName* name,
+                     HandleValue value, JSGetterOp getter, JSSetterOp setter,
+                     unsigned attrs);
 
 extern bool
 NativeHasProperty(JSContext* cx, HandleNativeObject obj, HandleId id, bool* foundp);
@@ -1523,10 +1456,9 @@ enum QualifiedBool {
     Qualified = 1
 };
 
-template <QualifiedBool Qualified>
 extern bool
 NativeSetProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue v,
-                  HandleValue receiver, ObjectOpResult& result);
+                  HandleValue receiver, QualifiedBool qualified, ObjectOpResult& result);
 
 extern bool
 NativeSetElement(JSContext* cx, HandleNativeObject obj, uint32_t index, HandleValue v,
@@ -1618,7 +1550,7 @@ js::SetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
 {
     if (obj->getOpsSetProperty())
         return JSObject::nonNativeSetProperty(cx, obj, id, v, receiver, result);
-    return NativeSetProperty<Qualified>(cx, obj.as<NativeObject>(), id, v, receiver, result);
+    return NativeSetProperty(cx, obj.as<NativeObject>(), id, v, receiver, Qualified, result);
 }
 
 inline bool

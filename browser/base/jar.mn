@@ -17,8 +17,6 @@ browser.jar:
 *       content/browser/abouthome/aboutHome.xhtml     (content/abouthome/aboutHome.xhtml)
         content/browser/abouthome/aboutHome.js        (content/abouthome/aboutHome.js)
 *       content/browser/abouthome/aboutHome.css       (content/abouthome/aboutHome.css)
-        content/browser/abouthome/snippet1.png        (content/abouthome/snippet1.png)
-        content/browser/abouthome/snippet2.png        (content/abouthome/snippet2.png)
         content/browser/abouthome/downloads.png       (content/abouthome/downloads.png)
         content/browser/abouthome/bookmarks.png       (content/abouthome/bookmarks.png)
         content/browser/abouthome/history.png         (content/abouthome/history.png)
@@ -27,8 +25,7 @@ browser.jar:
         content/browser/abouthome/settings.png        (content/abouthome/settings.png)
         content/browser/abouthome/restore.png         (content/abouthome/restore.png)
         content/browser/abouthome/restore-large.png   (content/abouthome/restore-large.png)
-        content/browser/abouthome/snippet1@2x.png      (content/abouthome/snippet1@2x.png)
-        content/browser/abouthome/snippet2@2x.png      (content/abouthome/snippet2@2x.png)
+        content/browser/abouthome/about-wordmark.svg  (content/abouthome/about-wordmark.svg)
         content/browser/abouthome/downloads@2x.png     (content/abouthome/downloads@2x.png)
         content/browser/abouthome/bookmarks@2x.png     (content/abouthome/bookmarks@2x.png)
         content/browser/abouthome/history@2x.png       (content/abouthome/history@2x.png)
@@ -38,9 +35,6 @@ browser.jar:
         content/browser/abouthome/restore@2x.png       (content/abouthome/restore@2x.png)
         content/browser/abouthome/restore-large@2x.png (content/abouthome/restore-large@2x.png)
 
-        content/browser/illustrations/error-connection-failure.svg (content/illustrations/error-connection-failure.svg)
-        content/browser/illustrations/error-server-not-found.svg (content/illustrations/error-server-not-found.svg)
-        content/browser/illustrations/error-malformed-url.svg (content/illustrations/error-malformed-url.svg)
         content/browser/aboutNetError.xhtml            (content/aboutNetError.xhtml)
 
 #ifdef MOZ_SERVICES_HEALTHREPORT
@@ -69,9 +63,6 @@ browser.jar:
         content/browser/browser-customization.js      (content/browser-customization.js)
         content/browser/browser-data-submission-info-bar.js (content/browser-data-submission-info-bar.js)
         content/browser/browser-compacttheme.js       (content/browser-compacttheme.js)
-#ifndef MOZILLA_OFFICIAL
-        content/browser/browser-development-helpers.js (content/browser-development-helpers.js)
-#endif
         content/browser/browser-feeds.js              (content/browser-feeds.js)
         content/browser/browser-fullScreenAndPointerLock.js  (content/browser-fullScreenAndPointerLock.js)
         content/browser/browser-fullZoom.js           (content/browser-fullZoom.js)
@@ -110,8 +101,8 @@ browser.jar:
         content/browser/defaultthemes/5.icon.jpg      (content/defaultthemes/5.icon.jpg)
         content/browser/defaultthemes/5.preview.jpg   (content/defaultthemes/5.preview.jpg)
         content/browser/defaultthemes/compact.header.png    (content/defaultthemes/compact.header.png)
-        content/browser/defaultthemes/dark.icon.svg  (content/defaultthemes/dark.icon.svg)
-        content/browser/defaultthemes/light.icon.svg (content/defaultthemes/light.icon.svg)
+        content/browser/defaultthemes/compactdark.icon.svg  (content/defaultthemes/compactdark.icon.svg)
+        content/browser/defaultthemes/compactlight.icon.svg (content/defaultthemes/compactlight.icon.svg)
         content/browser/newtab/newTab.xhtml           (content/newtab/newTab.xhtml)
 *       content/browser/newtab/newTab.js              (content/newtab/newTab.js)
         content/browser/newtab/newTab.css             (content/newtab/newTab.css)
@@ -139,6 +130,11 @@ browser.jar:
         content/browser/tabbrowser.xml                (content/tabbrowser.xml)
 *       content/browser/urlbarBindings.xml            (content/urlbarBindings.xml)
         content/browser/utilityOverlay.js             (content/utilityOverlay.js)
+        content/browser/usercontext-briefcase.svg     (content/usercontext-briefcase.svg)
+        content/browser/usercontext-cart.svg          (content/usercontext-cart.svg)
+        content/browser/usercontext-circle.svg        (content/usercontext-circle.svg)
+        content/browser/usercontext-dollar.svg        (content/usercontext-dollar.svg)
+        content/browser/usercontext-fingerprint.svg   (content/usercontext-fingerprint.svg)
         content/browser/web-panels.js                 (content/web-panels.js)
 *       content/browser/web-panels.xul                (content/web-panels.xul)
         content/browser/webext-panels.js              (content/webext-panels.js)
@@ -164,9 +160,3 @@ browser.jar:
 % overlay chrome://browser/content/browser.xul chrome://browser/content/report-phishing-overlay.xul
 
 % override chrome://global/content/netError.xhtml chrome://browser/content/aboutNetError.xhtml
-
-# L10n resources and overrides.
-% override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
-% override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
-% override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
-% resource search-plugins chrome://browser/locale/searchplugins/

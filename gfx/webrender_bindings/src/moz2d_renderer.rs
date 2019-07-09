@@ -3,12 +3,11 @@ use bindings::{ByteSlice, MutByteSlice, wr_moz2d_render_cb};
 use rayon::ThreadPool;
 
 use std::collections::hash_map::{HashMap, Entry};
-use std::ptr;
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::sync::Arc;
 
 pub struct Moz2dImageRenderer {
-    blob_commands: HashMap<ImageKey, (Arc<BlobImageData>, Option<TileSize>)>,
+    blob_commands: HashMap<ImageKey, Arc<BlobImageData>>,
 
     // The images rendered in the current frame (not kept here between frames)
     rendered_images: HashMap<BlobImageRequest, Option<BlobImageResult>>,
@@ -19,21 +18,13 @@ pub struct Moz2dImageRenderer {
     workers: Arc<ThreadPool>,
 }
 
-fn option_to_nullable<T>(option: &Option<T>) -> *const T {
-    match option {
-        &Some(ref x) => { x as *const T }
-        &None => { ptr::null() }
-    }
-}
-
 impl BlobImageRenderer for Moz2dImageRenderer {
-    fn add(&mut self, key: ImageKey, data: BlobImageData, tiling: Option<TileSize>) {
-        self.blob_commands.insert(key, (Arc::new(data), tiling));
+    fn add(&mut self, key: ImageKey, data: BlobImageData, _tiling: Option<TileSize>) {
+        self.blob_commands.insert(key, Arc::new(data));
     }
 
     fn update(&mut self, key: ImageKey, data: BlobImageData) {
-        let entry = self.blob_commands.get_mut(&key).unwrap();
-        entry.0 = Arc::new(data);
+        self.blob_commands.insert(key, Arc::new(data));
     }
 
     fn delete(&mut self, key: ImageKey) {
@@ -47,6 +38,7 @@ impl BlobImageRenderer for Moz2dImageRenderer {
                _dirty_rect: Option<DeviceUintRect>) {
         debug_assert!(!self.rendered_images.contains_key(&request));
         // TODO: implement tiling.
+        assert!(request.tile.is_none());
 
         // Add None in the map of rendered images. This makes it possible to differentiate
         // between commands that aren't finished yet (entry in the map is equal to None) and
@@ -56,15 +48,12 @@ impl BlobImageRenderer for Moz2dImageRenderer {
 
         let tx = self.tx.clone();
         let descriptor = descriptor.clone();
-        let blob = &self.blob_commands[&request.key];
-        let tile_size = blob.1;
-        let commands = Arc::clone(&blob.0);
-
+        let commands = Arc::clone(self.blob_commands.get(&request.key).unwrap());
 
         self.workers.spawn(move || {
             let buf_size = (descriptor.width
                 * descriptor.height
-                * descriptor.format.bytes_per_pixel()) as usize;
+                * descriptor.format.bytes_per_pixel().unwrap()) as usize;
             let mut output = vec![255u8; buf_size];
 
             let result = unsafe {
@@ -73,11 +62,8 @@ impl BlobImageRenderer for Moz2dImageRenderer {
                     descriptor.width,
                     descriptor.height,
                     descriptor.format,
-                    option_to_nullable(&tile_size),
-                    option_to_nullable(&request.tile),
                     MutByteSlice::new(output.as_mut_slice())
                 ) {
-
                     Ok(RasterizedBlobImage {
                         width: descriptor.width,
                         height: descriptor.height,
@@ -111,7 +97,6 @@ impl BlobImageRenderer for Moz2dImageRenderer {
         while let Ok((req, result)) = self.rx.recv() {
             if req == request {
                 // There it is!
-                self.rendered_images.remove(&request);
                 return result
             }
             self.rendered_images.insert(req, Some(result));
@@ -120,11 +105,7 @@ impl BlobImageRenderer for Moz2dImageRenderer {
         // If we break out of the loop above it means the channel closed unexpectedly.
         Err(BlobImageError::Other("Channel closed".into()))
     }
-
     fn delete_font(&mut self, _font: FontKey) {
-    }
-
-    fn delete_font_instance(&mut self, _key: FontInstanceKey) {
     }
 }
 

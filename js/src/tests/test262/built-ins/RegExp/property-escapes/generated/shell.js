@@ -1,11 +1,4 @@
 // file: regExpUtils.js
-// Copyright (C) 2017 Ecma International.  All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
-/*---
-description: |
-    Collection of functions used to assert the correctness of RegExp objects.
----*/
-
 function buildString({ loneCodePoints, ranges }) {
   const CHUNK_SIZE = 10000;
   let result = String.fromCodePoint(...loneCodePoints);

@@ -4,7 +4,6 @@
 es6id: 12.12.3
 description: >
     "Logical AND" Symbol evaluation
-features: [Symbol]
 ---*/
 var sym = Symbol();
 

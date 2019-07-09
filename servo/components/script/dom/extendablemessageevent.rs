@@ -6,8 +6,8 @@ use dom::bindings::codegen::Bindings::ExtendableMessageEventBinding;
 use dom::bindings::codegen::Bindings::ExtendableMessageEventBinding::ExtendableMessageEventMethods;
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::reflect_dom_object;
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::DOMString;
 use dom::bindings::trace::RootedTraceableBox;
 use dom::event::Event;
@@ -32,13 +32,13 @@ impl ExtendableMessageEvent {
     pub fn new(global: &GlobalScope, type_: Atom,
                bubbles: bool, cancelable: bool,
                data: HandleValue, origin: DOMString, lastEventId: DOMString)
-               -> DomRoot<ExtendableMessageEvent> {
-        let ev = Box::new(ExtendableMessageEvent {
+               -> Root<ExtendableMessageEvent> {
+        let ev = box ExtendableMessageEvent {
             event: ExtendableEvent::new_inherited(),
             data: Heap::default(),
             origin: origin,
             lastEventId: lastEventId,
-        });
+        };
         let ev = reflect_dom_object(ev, global, ExtendableMessageEventBinding::Wrap);
         {
             let event = ev.upcast::<Event>();
@@ -52,7 +52,7 @@ impl ExtendableMessageEvent {
     pub fn Constructor(worker: &ServiceWorkerGlobalScope,
                        type_: DOMString,
                        init: RootedTraceableBox<ExtendableMessageEventBinding::ExtendableMessageEventInit>)
-                       -> Fallible<DomRoot<ExtendableMessageEvent>> {
+                       -> Fallible<Root<ExtendableMessageEvent>> {
         let global = worker.upcast::<GlobalScope>();
         let ev = ExtendableMessageEvent::new(global,
                                              Atom::from(type_),

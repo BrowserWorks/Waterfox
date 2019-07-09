@@ -6,7 +6,6 @@
 #include "sdp.h"
 #include "sdp_private.h"
 
-#include "CSFLog.h"
 
 /******************************************************************/
 /*  Required Platform Routines                                    */

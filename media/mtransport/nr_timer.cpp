@@ -207,12 +207,14 @@ static int nr_async_timer_set_nonzero(int timeout, NR_async_cb cb, void *arg,
   nsresult rv;
   CheckSTSThread();
 
+  nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+  if (NS_FAILED(rv)) {
+    return(R_FAILED);
+  }
+
   nrappkitTimerCallback* callback =
       new nrappkitTimerCallback(cb, arg, func, l);
-
-  nsCOMPtr<nsITimer> timer;
-  rv = NS_NewTimerWithCallback(getter_AddRefs(timer),
-                               callback, timeout, nsITimer::TYPE_ONE_SHOT);
+  rv = timer->InitWithCallback(callback, timeout, nsITimer::TYPE_ONE_SHOT);
   if (NS_FAILED(rv)) {
     return R_FAILED;
   }

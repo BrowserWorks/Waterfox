@@ -209,17 +209,14 @@ GeckoProfilerRuntime::stringsReset()
 class MOZ_RAII GeckoProfilerEntryMarker
 {
   public:
-    explicit MOZ_ALWAYS_INLINE
-    GeckoProfilerEntryMarker(JSContext* cx,
-                             JSScript* script
-                             MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
-    MOZ_ALWAYS_INLINE ~GeckoProfilerEntryMarker();
+    explicit GeckoProfilerEntryMarker(JSContext* cx,
+                                      JSScript* script
+                                      MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    ~GeckoProfilerEntryMarker();
 
   private:
-    GeckoProfilerThread* profiler_;
-#ifdef DEBUG
-    uint32_t spBefore_;
-#endif
+    GeckoProfilerThread* profiler;
+    mozilla::DebugOnly<uint32_t> spBefore_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
@@ -231,17 +228,14 @@ class MOZ_RAII GeckoProfilerEntryMarker
 class MOZ_NONHEAP_CLASS AutoGeckoProfilerEntry
 {
   public:
-    explicit MOZ_ALWAYS_INLINE
-    AutoGeckoProfilerEntry(JSContext* cx, const char* label,
-                           ProfileEntry::Category category = ProfileEntry::Category::JS
-                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
-    MOZ_ALWAYS_INLINE ~AutoGeckoProfilerEntry();
+    explicit AutoGeckoProfilerEntry(JSContext* cx, const char* label,
+                                    ProfileEntry::Category category = ProfileEntry::Category::JS
+                                    MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    ~AutoGeckoProfilerEntry();
 
   private:
     GeckoProfilerThread* profiler_;
-#ifdef DEBUG
-    uint32_t spBefore_;
-#endif
+    mozilla::DebugOnly<uint32_t> spBefore_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 

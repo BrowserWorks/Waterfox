@@ -306,10 +306,7 @@ InputQueue::ReceiveKeyboardInput(const RefPtr<AsyncPanZoomController>& aTarget,
 
   ProcessQueue();
 
-  // If APZ is allowing passive listeners then we must dispatch the event to
-  // content, otherwise we can consume the event.
-  return gfxPrefs::APZKeyboardPassiveListeners() ? nsEventStatus_eConsumeDoDefault
-                                                 : nsEventStatus_eConsumeNoDefault;
+  return nsEventStatus_eConsumeNoDefault;
 }
 
 static bool
@@ -538,9 +535,6 @@ InputQueue::AllowScrollHandoff() const
   }
   if (GetCurrentPanGestureBlock()) {
     return GetCurrentPanGestureBlock()->AllowScrollHandoff();
-  }
-  if (GetCurrentKeyboardBlock()) {
-    return GetCurrentKeyboardBlock()->AllowScrollHandoff();
   }
   return true;
 }

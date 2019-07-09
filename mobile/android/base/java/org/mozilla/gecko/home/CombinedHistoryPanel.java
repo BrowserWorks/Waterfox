@@ -36,6 +36,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.RemoteClientsDialogFragment;
@@ -202,7 +203,7 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
     }
 
     private void setUpRefreshLayout() {
-        mRefreshLayout.setColorSchemeResources(R.color.fennec_ui_accent, R.color.action_accent);
+        mRefreshLayout.setColorSchemeResources(R.color.fennec_ui_orange, R.color.action_orange);
         mRefreshLayout.setOnRefreshListener(new RemoteTabsRefreshListener());
         mRefreshLayout.setEnabled(false);
     }
@@ -634,7 +635,7 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
         public void onRefresh() {
             if (FirefoxAccounts.firefoxAccountsExist(getActivity())) {
                 final Account account = FirefoxAccounts.getFirefoxAccount(getActivity());
-                FirefoxAccounts.requestImmediateSync(account, STAGES_TO_SYNC_ON_REFRESH, null, true);
+                FirefoxAccounts.requestImmediateSync(account, STAGES_TO_SYNC_ON_REFRESH, null);
             } else {
                 Log.wtf(LOGTAG, "No Firefox Account found; this should never happen. Ignoring.");
                 mRefreshLayout.setRefreshing(false);

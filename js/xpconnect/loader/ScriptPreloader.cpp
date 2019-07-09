@@ -4,12 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "ScriptPreloader-inl.h"
 #include "mozilla/ScriptPreloader.h"
-#include "mozJSComponentLoader.h"
+#include "ScriptPreloader-inl.h"
 #include "mozilla/loader/ScriptCacheActors.h"
-
-#include "mozilla/URLPreloader.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -365,12 +362,12 @@ Result<nsCOMPtr<nsIFile>, nsresult>
 ScriptPreloader::GetCacheFile(const nsAString& suffix)
 {
     nsCOMPtr<nsIFile> cacheFile;
-    MOZ_TRY(mProfD->Clone(getter_AddRefs(cacheFile)));
+    NS_TRY(mProfD->Clone(getter_AddRefs(cacheFile)));
 
-    MOZ_TRY(cacheFile->AppendNative(NS_LITERAL_CSTRING("startupCache")));
+    NS_TRY(cacheFile->AppendNative(NS_LITERAL_CSTRING("startupCache")));
     Unused << cacheFile->Create(nsIFile::DIRECTORY_TYPE, 0777);
 
-    MOZ_TRY(cacheFile->Append(mBaseName + suffix));
+    NS_TRY(cacheFile->Append(mBaseName + suffix));
 
     return Move(cacheFile);
 }
@@ -380,18 +377,18 @@ static const uint8_t MAGIC[] = "mozXDRcachev001";
 Result<Ok, nsresult>
 ScriptPreloader::OpenCache()
 {
-    MOZ_TRY(NS_GetSpecialDirectory("ProfLDS", getter_AddRefs(mProfD)));
+    NS_TRY(NS_GetSpecialDirectory("ProfLDS", getter_AddRefs(mProfD)));
 
     nsCOMPtr<nsIFile> cacheFile;
     MOZ_TRY_VAR(cacheFile, GetCacheFile(NS_LITERAL_STRING(".bin")));
 
     bool exists;
-    MOZ_TRY(cacheFile->Exists(&exists));
+    NS_TRY(cacheFile->Exists(&exists));
     if (exists) {
-        MOZ_TRY(cacheFile->MoveTo(nullptr, mBaseName + NS_LITERAL_STRING("-current.bin")));
+        NS_TRY(cacheFile->MoveTo(nullptr, mBaseName + NS_LITERAL_STRING("-current.bin")));
     } else {
-        MOZ_TRY(cacheFile->SetLeafName(mBaseName + NS_LITERAL_STRING("-current.bin")));
-        MOZ_TRY(cacheFile->Exists(&exists));
+        NS_TRY(cacheFile->SetLeafName(mBaseName + NS_LITERAL_STRING("-current.bin")));
+        NS_TRY(cacheFile->Exists(&exists));
         if (!exists) {
             return Err(NS_ERROR_FILE_NOT_FOUND);
         }
@@ -416,18 +413,9 @@ ScriptPreloader::InitCache(const nsAString& basePath)
         return Ok();
     }
 
-    // Grab the compilation scope before initializing the URLPreloader, since
-    // it's not safe to run component loader code during its critical section.
-    AutoSafeJSAPI jsapi;
-    JS::RootedObject scope(jsapi.cx(), CompilationScope(jsapi.cx()));
-
-    // Note: Code on the main thread *must not access Omnijar in any way* until
-    // this AutoBeginReading guard is destroyed.
-    URLPreloader::AutoBeginReading abr;
-
     MOZ_TRY(OpenCache());
 
-    return InitCacheInternal(scope);
+    return InitCacheInternal();
 }
 
 Result<Ok, nsresult>
@@ -450,7 +438,7 @@ ScriptPreloader::InitCache(const Maybe<ipc::FileDescriptor>& cacheFile, ScriptCa
 }
 
 Result<Ok, nsresult>
-ScriptPreloader::InitCacheInternal(JS::HandleObject scope)
+ScriptPreloader::InitCacheInternal()
 {
     auto size = mCacheData.size();
 
@@ -525,7 +513,16 @@ ScriptPreloader::InitCacheInternal(JS::HandleObject scope)
         cleanup.release();
     }
 
-    DecodeNextBatch(OFF_THREAD_FIRST_CHUNK_SIZE, scope);
+    DecodeNextBatch(OFF_THREAD_FIRST_CHUNK_SIZE);
+    return Ok();
+}
+
+static inline Result<Ok, nsresult>
+Write(PRFileDesc* fd, const void* data, int32_t len)
+{
+    if (PR_Write(fd, data, len) != len) {
+        return Err(NS_ERROR_FAILURE);
+    }
     return Ok();
 }
 
@@ -630,14 +627,14 @@ ScriptPreloader::WriteCache()
     MOZ_TRY_VAR(cacheFile, GetCacheFile(NS_LITERAL_STRING("-new.bin")));
 
     bool exists;
-    MOZ_TRY(cacheFile->Exists(&exists));
+    NS_TRY(cacheFile->Exists(&exists));
     if (exists) {
-        MOZ_TRY(cacheFile->Remove(false));
+        NS_TRY(cacheFile->Remove(false));
     }
 
     {
         AutoFDClose fd;
-        MOZ_TRY(cacheFile->OpenNSPRFileDesc(PR_WRONLY | PR_CREATE_FILE, 0644, &fd.rwget()));
+        NS_TRY(cacheFile->OpenNSPRFileDesc(PR_WRONLY | PR_CREATE_FILE, 0644, &fd.rwget()));
 
         // We also need to hold mMonitor while we're touching scripts in
         // mScripts, or they may be freed before we're done with them.
@@ -678,7 +675,7 @@ ScriptPreloader::WriteCache()
         }
     }
 
-    MOZ_TRY(cacheFile->MoveTo(nullptr, mBaseName + NS_LITERAL_STRING(".bin")));
+    NS_TRY(cacheFile->MoveTo(nullptr, mBaseName + NS_LITERAL_STRING(".bin")));
 
     return Ok();
 }
@@ -698,10 +695,7 @@ ScriptPreloader::Run()
         mal.Wait(10000);
     }
 
-    auto result = URLPreloader::GetSingleton().WriteCache();
-    Unused << NS_WARN_IF(result.isErr());
-
-    result = WriteCache();
+    auto result = WriteCache();
     Unused << NS_WARN_IF(result.isErr());
 
     result = mChildCache->WriteCache();
@@ -914,12 +908,6 @@ ScriptPreloader::DoFinishOffThreadDecode()
     MaybeFinishOffThreadDecode();
 }
 
-JSObject*
-ScriptPreloader::CompilationScope(JSContext* cx)
-{
-    return mozJSComponentLoader::Get()->CompilationScope(cx);
-}
-
 void
 ScriptPreloader::MaybeFinishOffThreadDecode()
 {
@@ -935,10 +923,10 @@ ScriptPreloader::MaybeFinishOffThreadDecode()
         DecodeNextBatch(OFF_THREAD_CHUNK_SIZE);
     });
 
-    AutoSafeJSAPI jsapi;
-    JSContext* cx = jsapi.cx();
+    AutoJSAPI jsapi;
+    MOZ_RELEASE_ASSERT(jsapi.Init(xpc::CompilationScope()));
 
-    JSAutoCompartment ac(cx, CompilationScope(cx));
+    JSContext* cx = jsapi.cx();
     JS::Rooted<JS::ScriptVector> jsScripts(cx, JS::ScriptVector(cx));
 
     // If this fails, we still need to mark the scripts as finished. Any that
@@ -960,7 +948,7 @@ ScriptPreloader::MaybeFinishOffThreadDecode()
 }
 
 void
-ScriptPreloader::DecodeNextBatch(size_t chunkSize, JS::HandleObject scope)
+ScriptPreloader::DecodeNextBatch(size_t chunkSize)
 {
     MOZ_ASSERT(mParsingSources.length() == 0);
     MOZ_ASSERT(mParsingScripts.length() == 0);
@@ -1006,11 +994,11 @@ ScriptPreloader::DecodeNextBatch(size_t chunkSize, JS::HandleObject scope)
         return;
     }
 
-    AutoSafeJSAPI jsapi;
+    AutoJSAPI jsapi;
+    MOZ_RELEASE_ASSERT(jsapi.Init(xpc::CompilationScope()));
     JSContext* cx = jsapi.cx();
-    JSAutoCompartment ac(cx, scope ? scope : CompilationScope(cx));
 
-    JS::CompileOptions options(cx, JSVERSION_DEFAULT);
+    JS::CompileOptions options(cx, JSVERSION_LATEST);
     options.setNoScriptRval(true)
            .setSourceIsLazy(true);
 

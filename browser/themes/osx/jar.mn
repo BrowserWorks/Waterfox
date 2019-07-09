@@ -10,7 +10,10 @@ browser.jar:
 * skin/classic/browser/syncedtabs/sidebar.css          (syncedtabs/sidebar.css)
 * skin/classic/browser/browser.css
 * skin/classic/browser/compacttheme.css
+  skin/classic/browser/Info.png
   skin/classic/browser/subtle-pattern.png
+  skin/classic/browser/menu-back.png
+  skin/classic/browser/menu-forward.png
   skin/classic/browser/menuPanel-customize.png
   skin/classic/browser/menuPanel-customize@2x.png
   skin/classic/browser/menuPanel-exit.png
@@ -23,15 +26,43 @@ browser.jar:
   skin/classic/browser/panel-expander-open@2x.png
   skin/classic/browser/panel-plus-sign.png
   skin/classic/browser/page-livemarks.png
+  skin/classic/browser/page-livemarks@2x.png
   skin/classic/browser/pageInfo.css
+  skin/classic/browser/privatebrowsing-mask.png
+  skin/classic/browser/privatebrowsing-mask@2x.png
+  skin/classic/browser/privatebrowsing-mask-short.png
+  skin/classic/browser/privatebrowsing-mask-short@2x.png
+  skin/classic/browser/reload-stop-go.png
+  skin/classic/browser/reload-stop-go@2x.png
   skin/classic/browser/searchbar.css
-  skin/classic/browser/slowStartup-16.png
   skin/classic/browser/toolbarbutton-dropmarker.png
   skin/classic/browser/toolbarbutton-dropmarker@2x.png
+  skin/classic/browser/urlbar-history-dropmarker.png
+  skin/classic/browser/urlbar-history-dropmarker@2x.png
+  skin/classic/browser/urlbar-popup-blocked.png
+  skin/classic/browser/urlbar-popup-blocked@2x.png
+  skin/classic/browser/webRTC-sharingDevice-menubar.png
+  skin/classic/browser/webRTC-sharingDevice-menubar@2x.png
+  skin/classic/browser/webRTC-sharingMicrophone-menubar.png
+  skin/classic/browser/webRTC-sharingMicrophone-menubar@2x.png
+  skin/classic/browser/webRTC-sharingScreen-menubar.png
+  skin/classic/browser/webRTC-sharingScreen-menubar@2x.png
   skin/classic/browser/webRTC-indicator.css
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
+#ifndef MOZ_PHOTON_THEME
+  skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
+  skin/classic/browser/customizableui/customizeMode-gridTexture.png  (customizableui/customizeMode-gridTexture.png)
+  skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
+  skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
+#endif
 * skin/classic/browser/customizableui/panelUI.css    (customizableui/panelUI.css)
 * skin/classic/browser/downloads/allDownloadsViewOverlay.css (downloads/allDownloadsViewOverlay.css)
+  skin/classic/browser/downloads/download-glow-menuPanel.png (downloads/download-glow-menuPanel.png)
+  skin/classic/browser/downloads/download-glow-menuPanel@2x.png (downloads/download-glow-menuPanel@2x.png)
+  skin/classic/browser/downloads/download-notification-finish.png  (downloads/download-notification-finish.png)
+  skin/classic/browser/downloads/download-notification-finish@2x.png  (downloads/download-notification-finish@2x.png)
+  skin/classic/browser/downloads/download-notification-start.png  (downloads/download-notification-start.png)
+  skin/classic/browser/downloads/download-notification-start@2x.png  (downloads/download-notification-start@2x.png)
 * skin/classic/browser/downloads/downloads.css              (downloads/downloads.css)
   skin/classic/browser/feeds/subscribe.css                  (feeds/subscribe.css)
   skin/classic/browser/feeds/feedIcon.png                   (feeds/feedIcon.png)
@@ -40,19 +71,24 @@ browser.jar:
   skin/classic/browser/setDesktopBackground.css
   skin/classic/browser/monitor.png
   skin/classic/browser/monitor_16-10.png
-  skin/classic/browser/notification-icons/geo-blocked.svg  (notification-icons/geo-blocked.svg)
-  skin/classic/browser/notification-icons/geo.svg          (notification-icons/geo.svg)
   skin/classic/browser/places/allBookmarks.png              (places/allBookmarks.png)
 * skin/classic/browser/places/places.css                    (places/places.css)
   skin/classic/browser/places/organizer.css                 (places/organizer.css)
+  skin/classic/browser/places/query.png                     (places/query.png)
+  skin/classic/browser/places/query@2x.png                  (places/query@2x.png)
   skin/classic/browser/places/bookmarksMenu.png             (places/bookmarksMenu.png)
   skin/classic/browser/places/bookmarksToolbar.png          (places/bookmarksToolbar.png)
   skin/classic/browser/places/bookmarksToolbar@2x.png       (places/bookmarksToolbar@2x.png)
+  skin/classic/browser/places/bookmarksToolbar-menuPanel.png    (places/bookmarksToolbar-menuPanel.png)
+  skin/classic/browser/places/bookmarksToolbar-menuPanel@2x.png (places/bookmarksToolbar-menuPanel@2x.png)
+  skin/classic/browser/places/history.png                   (places/history.png)
+  skin/classic/browser/places/history@2x.png                (places/history@2x.png)
   skin/classic/browser/places/toolbar.png                   (places/toolbar.png)
   skin/classic/browser/places/toolbarDropMarker.png         (places/toolbarDropMarker.png)
   skin/classic/browser/places/editBookmarkOverlay.css       (places/editBookmarkOverlay.css)
   skin/classic/browser/places/starred48.png                 (places/starred48.png)
   skin/classic/browser/places/starred48@2x.png              (places/starred48@2x.png)
+  skin/classic/browser/places/unstarred48.png               (places/unstarred48.png)
   skin/classic/browser/places/unfiledBookmarks.png          (places/unfiledBookmarks.png)
   skin/classic/browser/places/unfiledBookmarks@2x.png       (places/unfiledBookmarks@2x.png)
   skin/classic/browser/places/tag.png                       (places/tag.png)
@@ -64,30 +100,73 @@ browser.jar:
   skin/classic/browser/preferences/saveFile.png             (preferences/saveFile.png)
 * skin/classic/browser/preferences/preferences.css          (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
+* skin/classic/browser/preferences/in-content-new/preferences.css     (preferences/in-content-new/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
+* skin/classic/browser/preferences/in-content-new/dialog.css          (preferences/in-content-new/dialog.css)
   skin/classic/browser/preferences/applications.css         (preferences/applications.css)
+  skin/classic/browser/tabbrowser/tab-active-middle.png                  (tabbrowser/tab-active-middle.png)
+  skin/classic/browser/tabbrowser/tab-active-middle@2x.png               (tabbrowser/tab-active-middle@2x.png)
+  skin/classic/browser/tabbrowser/tab-background-end.png                 (tabbrowser/tab-background-end.png)
+  skin/classic/browser/tabbrowser/tab-background-end@2x.png              (tabbrowser/tab-background-end@2x.png)
+  skin/classic/browser/tabbrowser/tab-background-middle.png              (tabbrowser/tab-background-middle.png)
+  skin/classic/browser/tabbrowser/tab-background-middle@2x.png           (tabbrowser/tab-background-middle@2x.png)
+  skin/classic/browser/tabbrowser/tab-background-start.png               (tabbrowser/tab-background-start.png)
+  skin/classic/browser/tabbrowser/tab-background-start@2x.png            (tabbrowser/tab-background-start@2x.png)
+
+# NOTE: The following two files (tab-selected-end.svg, tab-selected-start.svg) get pre-processed in
+#       Makefile.in with a non-default marker of "%" and the result of that gets packaged.
+  skin/classic/browser/tabbrowser/tab-selected-end.svg                   (tab-selected-end.svg)
+  skin/classic/browser/tabbrowser/tab-selected-start.svg                 (tab-selected-start.svg)
+
+  skin/classic/browser/tabbrowser/tab-stroke-end.png                     (tabbrowser/tab-stroke-end.png)
+  skin/classic/browser/tabbrowser/tab-stroke-end@2x.png                  (tabbrowser/tab-stroke-end@2x.png)
+  skin/classic/browser/tabbrowser/tab-stroke-start.png                   (tabbrowser/tab-stroke-start.png)
+  skin/classic/browser/tabbrowser/tab-stroke-start@2x.png                (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png                   (tabbrowser/tabDragIndicator.png)
   skin/classic/browser/tabbrowser/tabDragIndicator@2x.png                (tabbrowser/tabDragIndicator@2x.png)
   skin/classic/browser/sync-desktopIcon.svg  (../shared/sync-desktopIcon.svg)
+  skin/classic/browser/sync-horizontalbar.png
+  skin/classic/browser/sync-horizontalbar@2x.png
   skin/classic/browser/sync-mobileIcon.svg  (../shared/sync-mobileIcon.svg)
+  skin/classic/browser/syncProgress-horizontalbar.png
+  skin/classic/browser/syncProgress-horizontalbar@2x.png
+#ifndef MOZ_PHOTON_THEME
+  skin/classic/browser/Toolbar-background-noise.png         (Toolbar-background-noise.png)
+#endif
   skin/classic/browser/yosemite/menuPanel-customize.png                (menuPanel-customize-yosemite.png)
   skin/classic/browser/yosemite/menuPanel-customize@2x.png             (menuPanel-customize-yosemite@2x.png)
   skin/classic/browser/yosemite/menuPanel-exit.png                     (menuPanel-exit-yosemite.png)
   skin/classic/browser/yosemite/menuPanel-exit@2x.png                  (menuPanel-exit-yosemite@2x.png)
   skin/classic/browser/yosemite/menuPanel-help.png                     (menuPanel-help-yosemite.png)
   skin/classic/browser/yosemite/menuPanel-help@2x.png                  (menuPanel-help-yosemite@2x.png)
-  skin/classic/browser/e10s-64@2x.png                                  (../shared/e10s-64@2x.png)
+  skin/classic/browser/yosemite/reload-stop-go.png                     (reload-stop-go-yosemite.png)
+  skin/classic/browser/yosemite/reload-stop-go@2x.png                  (reload-stop-go-yosemite@2x.png)
+  skin/classic/browser/yosemite/sync-horizontalbar.png                 (sync-horizontalbar-yosemite.png)
+  skin/classic/browser/yosemite/sync-horizontalbar@2x.png              (sync-horizontalbar-yosemite@2x.png)
+  skin/classic/browser/yosemite/tab-selected-end-inactive.svg          (tabbrowser/tab-selected-end-yosemite-inactive.svg)
+  skin/classic/browser/yosemite/tab-selected-start-inactive.svg        (tabbrowser/tab-selected-start-yosemite-inactive.svg)
+  skin/classic/browser/yosemite/tab-active-middle-inactive.png         (tabbrowser/tab-active-middle-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-active-middle-inactive@2x.png      (tabbrowser/tab-active-middle-yosemite-inactive@2x.png)
+  skin/classic/browser/yosemite/tab-stroke-end-inactive.png            (tabbrowser/tab-stroke-end-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-stroke-end-inactive@2x.png         (tabbrowser/tab-stroke-end-yosemite-inactive@2x.png)
+  skin/classic/browser/yosemite/tab-stroke-start-inactive.png          (tabbrowser/tab-stroke-start-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-stroke-start-inactive@2x.png       (tabbrowser/tab-stroke-start-yosemite-inactive@2x.png)
+#ifdef E10S_TESTING_ONLY
+  skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
+#endif
 
 [extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}] chrome.jar:
 % override chrome://browser/skin/feeds/audioFeedIcon.png                   chrome://browser/skin/feeds/feedIcon.png
 % override chrome://browser/skin/feeds/audioFeedIcon16.png                 chrome://browser/skin/feeds/feedIcon16.png
 % override chrome://browser/skin/feeds/videoFeedIcon.png                   chrome://browser/skin/feeds/feedIcon.png
 % override chrome://browser/skin/feeds/videoFeedIcon16.png                 chrome://browser/skin/feeds/feedIcon16.png
-% override chrome://browser/skin/notification-icons/geo-detailed.svg       chrome://browser/skin/notification-icons/geo.svg
-
 % override chrome://browser/skin/menuPanel-customize.png                   chrome://browser/skin/yosemite/menuPanel-customize.png                  os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-customize@2x.png                chrome://browser/skin/yosemite/menuPanel-customize@2x.png               os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-exit.png                        chrome://browser/skin/yosemite/menuPanel-exit.png                       os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-exit@2x.png                     chrome://browser/skin/yosemite/menuPanel-exit@2x.png                    os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-help.png                        chrome://browser/skin/yosemite/menuPanel-help.png                       os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-help@2x.png                     chrome://browser/skin/yosemite/menuPanel-help@2x.png                    os=Darwin osversion>=10.10
+% override chrome://browser/skin/reload-stop-go.png                        chrome://browser/skin/yosemite/reload-stop-go.png                       os=Darwin osversion>=10.10
+% override chrome://browser/skin/reload-stop-go@2x.png                     chrome://browser/skin/yosemite/reload-stop-go@2x.png                    os=Darwin osversion>=10.10
+% override chrome://browser/skin/sync-horizontalbar.png                    chrome://browser/skin/yosemite/sync-horizontalbar.png               os=Darwin osversion>=10.10
+% override chrome://browser/skin/sync-horizontalbar@2x.png                 chrome://browser/skin/yosemite/sync-horizontalbar@2x.png            os=Darwin osversion>=10.10

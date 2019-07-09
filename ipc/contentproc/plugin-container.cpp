@@ -6,6 +6,7 @@
 
 #include "nsXPCOM.h"
 #include "nsXULAppAPI.h"
+#include "nsAutoPtr.h"
 #include "mozilla/Bootstrap.h"
 
 #ifdef XP_WIN

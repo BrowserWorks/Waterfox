@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.5.2
-esid: sec-typedarray.prototype
 description: >
   The initial value of Uint8Array.prototype is the Uint8Array prototype object.
 info: >

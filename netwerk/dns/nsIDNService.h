@@ -12,7 +12,12 @@
 #include "nsUnicodeScriptCodes.h"
 #include "nsWeakReference.h"
 
+#ifdef IDNA2008
 #include "unicode/uidna.h"
+#else
+#include "nsIUnicodeNormalizer.h"
+#include "nsIDNKitInterface.h"
+#endif
 
 #include "nsString.h"
 
@@ -146,6 +151,7 @@ private:
   bool illegalScriptCombo(mozilla::unicode::Script script,
                           int32_t& savedScript);
 
+#ifdef IDNA2008
   /**
    * Convert a DNS label from ASCII to Unicode using IDNA2008
    */
@@ -158,6 +164,10 @@ private:
                               stringPrepFlag flag);
 
   UIDNA* mIDNA;
+#else
+  idn_nameprep_t mNamePrepHandle;
+  nsCOMPtr<nsIUnicodeNormalizer> mNormalizer;
+#endif
 
   // We use this mutex to guard access to:
   // |mIDNBlacklist|, |mShowPunycode|, |mRestrictionProfile|,
@@ -169,7 +179,7 @@ private:
   mozilla::Mutex mLock;
 
   // guarded by mLock
-  nsString mIDNBlacklist;
+  nsXPIDLString mIDNBlacklist;
 
   /**
    * Flag set by the pref network.IDN_show_punycode. When it is true,

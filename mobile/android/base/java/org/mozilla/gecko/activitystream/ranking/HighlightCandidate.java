@@ -6,9 +6,7 @@
 package org.mozilla.gecko.activitystream.ranking;
 
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.support.annotation.CheckResult;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -69,32 +67,19 @@ import java.lang.annotation.RetentionPolicy;
         }
     }
 
-    /**
-     * The BOOKMARK_ID colmun value is set to -1 for non-bookmarks in
-     * {@link org.mozilla.gecko.db.BrowserProvider#getHighlightCandidates(SQLiteDatabase, String)}
-     */
-    private static final int COLUMN_VALUE_NON_BOOKMARK = -1;
-
     @VisibleForTesting final Features features = new Features();
     private Highlight highlight;
     private @Nullable String imageUrl;
     private String host;
     private double score;
-    private boolean isBookmark;
 
-    /**
-     * @return the HighlightCandidate, or null if the candidate is invalid.
-     */
-    @Nullable
-    public static HighlightCandidate fromCursor(final Cursor cursor, final HighlightCandidateCursorIndices cursorIndices) {
+    public static HighlightCandidate fromCursor(final Cursor cursor, final HighlightCandidateCursorIndices cursorIndices)
+            throws InvalidHighlightCandidateException {
         final HighlightCandidate candidate = new HighlightCandidate();
 
         extractHighlight(candidate, cursor, cursorIndices);
-        final boolean isSuccess = extractFeatures(candidate, cursor, cursorIndices);
+        extractFeatures(candidate, cursor, cursorIndices);
 
-        if (!isSuccess) {
-            return null;
-        }
         return candidate;
     }
 
@@ -108,25 +93,9 @@ import java.lang.annotation.RetentionPolicy;
 
     /**
      * Extract and assign features that will be used for ranking.
-     *
-     * @return true if the candidate is valid, false otherwise.
      */
-    @CheckResult
-    private static boolean extractFeatures(final HighlightCandidate candidate, final Cursor cursor,
-            final HighlightCandidateCursorIndices cursorIndices) {
-        final Uri uri = Uri.parse(candidate.highlight.getUrl());
-
-        // We don't support opaque URIs (such as mailto:...), or URIs which do not have a valid host.
-        // The latter might simply be URIs with invalid characters in them (such as underscore...).
-        // See Bug 1363521 and Bug 1378967.
-        if (!uri.isHierarchical() || uri.getHost() == null) {
-            // Note: we used to throw an exception but sometimes many Exceptions were thrown, potentially
-            // impacting performance so we changed it to a boolean return.
-            return false;
-        }
-
-        candidate.isBookmark = cursor.getDouble(cursorIndices.bookmarkIDColumnIndex) != COLUMN_VALUE_NON_BOOKMARK;
-
+    private static void extractFeatures(final HighlightCandidate candidate, final Cursor cursor,
+            final HighlightCandidateCursorIndices cursorIndices) throws InvalidHighlightCandidateException {
         candidate.features.put(
                 FEATURE_AGE_IN_DAYS,
                 (System.currentTimeMillis() - cursor.getDouble(cursorIndices.historyDateLastVisitedColumnIndex))
@@ -185,6 +154,15 @@ import java.lang.annotation.RetentionPolicy;
                 FEATURE_DESCRIPTION_LENGTH,
                 (double) candidate.highlight.getFastDescriptionLength());
 
+        final Uri uri = Uri.parse(candidate.highlight.getUrl());
+
+        // We don't support opaque URIs (such as mailto:...), or URIs which do not have a valid host.
+        // The latter might simply be URIs with invalid characters in them (such as underscore...).
+        // See Bug 1363521 and Bug 1378967.
+        if (!uri.isHierarchical() || uri.getHost() == null) {
+            throw new InvalidHighlightCandidateException();
+        }
+
         candidate.host = uri.getHost();
 
         candidate.features.put(
@@ -195,8 +173,6 @@ import java.lang.annotation.RetentionPolicy;
         candidate.features.put(
                 FEATURE_QUERY_LENGTH,
                 (double) uri.getQueryParameterNames().size());
-
-        return true;
     }
 
     @VisibleForTesting HighlightCandidate() {
@@ -218,10 +194,6 @@ import java.lang.annotation.RetentionPolicy;
         return host;
     }
 
-    /* package-private */ boolean isBookmark() {
-        return isBookmark;
-    }
-
     /**
      * Gets an estimate of the actual image url that should only be used to compare against other return
      * values of this method. See {@link Highlight#getFastImageURLForComparison()} for more details.
@@ -233,5 +205,9 @@ import java.lang.annotation.RetentionPolicy;
 
     /* package-private */ Highlight getHighlight() {
         return highlight;
+    }
+
+    /* package-private */ static class InvalidHighlightCandidateException extends Exception {
+        private static final long serialVersionUID = 949263104621445850L;
     }
 }

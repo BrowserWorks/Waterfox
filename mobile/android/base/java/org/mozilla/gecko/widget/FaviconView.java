@@ -6,7 +6,6 @@
 package org.mozilla.gecko.widget;
 
 import android.graphics.Color;
-import android.support.v7.widget.AppCompatImageView;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.icons.IconCallback;
 import org.mozilla.gecko.icons.IconResponse;
@@ -32,7 +31,7 @@ import java.lang.ref.WeakReference;
  * Displays solid colour background around Favicon to fill space not occupied by the icon. Colour
  * selected is the dominant colour of the provided Favicon.
  */
-public class FaviconView extends AppCompatImageView {
+public class FaviconView extends ImageView {
 
     // Default x/y-radius of the oval used to round the corners of the background (dp)
     private static final int DEFAULT_CORNER_RADIUS_DP = 2;

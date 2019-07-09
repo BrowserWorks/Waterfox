@@ -13,16 +13,16 @@ use computed_values::{font_feature_settings, font_stretch, font_style, font_weig
 use computed_values::font_family::FamilyName;
 use cssparser::{AtRuleParser, DeclarationListParser, DeclarationParser, Parser};
 use cssparser::{SourceLocation, CowRcStr};
-use error_reporting::{ContextualParseError, ParseErrorReporter};
+use error_reporting::ContextualParseError;
 #[cfg(feature = "gecko")] use gecko_bindings::structs::CSSFontFaceDescriptors;
 #[cfg(feature = "gecko")] use cssparser::UnicodeRange;
-use parser::{ParserContext, ParserErrorContext, Parse};
+use parser::{ParserContext, log_css_error, Parse};
 #[cfg(feature = "gecko")]
 use properties::longhands::font_language_override;
-use selectors::parser::SelectorParseErrorKind;
+use selectors::parser::SelectorParseError;
 use shared_lock::{SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
-use style_traits::{Comma, OneOrMoreSeparated, ParseError, StyleParseErrorKind, ToCss};
+use style_traits::{Comma, OneOrMoreSeparated, ParseError, StyleParseError, ToCss};
 use values::specified::url::SpecifiedUrl;
 
 /// A source for a font-face rule.
@@ -43,8 +43,8 @@ impl OneOrMoreSeparated for Source {
 /// A `UrlSource` represents a font-face source that has been specified with a
 /// `url()` function.
 ///
-/// <https://drafts.csswg.org/css-fonts/#src-desc>
-#[derive(Clone, Debug, Eq, PartialEq)]
+/// https://drafts.csswg.org/css-fonts/#src-desc
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 pub struct UrlSource {
     /// The specified url.
@@ -100,7 +100,7 @@ impl Parse for FontWeight {
         result.or_else(|_| {
             font_weight::T::from_int(input.expect_integer()?)
                 .map(FontWeight::Weight)
-                .map_err(|()| input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+                .map_err(|()| StyleParseError::UnspecifiedError.into())
         })
     }
 }
@@ -108,13 +108,8 @@ impl Parse for FontWeight {
 /// Parse the block inside a `@font-face` rule.
 ///
 /// Note that the prelude parsing code lives in the `stylesheets` module.
-pub fn parse_font_face_block<R>(context: &ParserContext,
-                                error_context: &ParserErrorContext<R>,
-                                input: &mut Parser,
-                                location: SourceLocation)
-                                -> FontFaceRuleData
-    where R: ParseErrorReporter
-{
+pub fn parse_font_face_block(context: &ParserContext, input: &mut Parser, location: SourceLocation)
+    -> FontFaceRuleData {
     let mut rule = FontFaceRuleData::empty(location);
     {
         let parser = FontFaceRuleParser {
@@ -123,10 +118,11 @@ pub fn parse_font_face_block<R>(context: &ParserContext,
         };
         let mut iter = DeclarationListParser::new(input, parser);
         while let Some(declaration) = iter.next() {
-            if let Err((error, slice)) = declaration {
-                let location = error.location;
-                let error = ContextualParseError::UnsupportedFontFaceDescriptor(slice, error);
-                context.log_css_error(error_context, location, error)
+            if let Err(err) = declaration {
+                let pos = err.span.start;
+                let error = ContextualParseError::UnsupportedFontFaceDescriptor(
+                    iter.input.slice(err.span), err.error);
+                log_css_error(iter.input, pos, error, context);
             }
         }
     }
@@ -171,10 +167,6 @@ impl Iterator for EffectiveSources {
     fn next(&mut self) -> Option<Source> {
         self.0.pop()
     }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.0.len(), Some(self.0.len()))
-    }
 }
 
 struct FontFaceRuleParser<'a, 'b: 'a> {
@@ -184,10 +176,9 @@ struct FontFaceRuleParser<'a, 'b: 'a> {
 
 /// Default methods reject all at rules.
 impl<'a, 'b, 'i> AtRuleParser<'i> for FontFaceRuleParser<'a, 'b> {
-    type PreludeNoBlock = ();
-    type PreludeBlock = ();
+    type Prelude = ();
     type AtRule = ();
-    type Error = StyleParseErrorKind<'i>;
+    type Error = SelectorParseError<'i, StyleParseError<'i>>;
 }
 
 impl Parse for Source {
@@ -219,24 +210,14 @@ impl Parse for Source {
     }
 }
 
-macro_rules! is_descriptor_enabled {
-    ("font-display") => {
-        unsafe {
-            use gecko_bindings::structs::mozilla;
-            mozilla::StylePrefs_sFontDisplayEnabled
-        }
-    };
-    ($name: tt) => { true }
-}
-
 macro_rules! font_face_descriptors_common {
     (
         $( #[$doc: meta] $name: tt $ident: ident / $gecko_ident: ident: $ty: ty, )*
     ) => {
         /// Data inside a `@font-face` rule.
         ///
-        /// <https://drafts.csswg.org/css-fonts/#font-face-rule>
-        #[derive(Clone, Debug, Eq, PartialEq)]
+        /// https://drafts.csswg.org/css-fonts/#font-face-rule
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct FontFaceRuleData {
             $(
                 #[$doc]
@@ -288,13 +269,13 @@ macro_rules! font_face_descriptors_common {
 
        impl<'a, 'b, 'i> DeclarationParser<'i> for FontFaceRuleParser<'a, 'b> {
            type Declaration = ();
-           type Error = StyleParseErrorKind<'i>;
+           type Error = SelectorParseError<'i, StyleParseError<'i>>;
 
            fn parse_value<'t>(&mut self, name: CowRcStr<'i>, input: &mut Parser<'i, 't>)
                               -> Result<(), ParseError<'i>> {
                 match_ignore_ascii_case! { &*name,
                     $(
-                        $name if is_descriptor_enabled!($name) => {
+                        $name => {
                             // DeclarationParser also calls parse_entirely
                             // so we’d normally not need to,
                             // but in this case we do because we set the value as a side effect
@@ -303,7 +284,7 @@ macro_rules! font_face_descriptors_common {
                             self.rule.$ident = Some(value)
                         }
                     )*
-                    _ => return Err(input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(name.clone())))
+                    _ => return Err(SelectorParseError::UnexpectedIdent(name.clone()).into())
                 }
                 Ok(())
             }

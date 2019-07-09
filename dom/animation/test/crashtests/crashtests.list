@@ -10,9 +10,6 @@ pref(dom.animations-api.core.enabled,true) load 1272475-1.html
 pref(dom.animations-api.core.enabled,true) load 1272475-2.html
 pref(dom.animations-api.core.enabled,true) load 1278485-1.html
 pref(dom.animations-api.core.enabled,true) load 1277272-1.html
-pref(dom.animations-api.core.enabled,true) load 1282691-1.html
-pref(dom.animations-api.core.enabled,true) load 1291413-1.html
-pref(dom.animations-api.core.enabled,true) load 1291413-2.html
 pref(dom.animations-api.core.enabled,true) load 1304886-1.html
 pref(dom.animations-api.core.enabled,true) load 1322382-1.html
 pref(dom.animations-api.core.enabled,true) load 1322291-1.html
@@ -34,6 +31,3 @@ pref(dom.animations-api.core.enabled,true) load 1343589-1.html
 pref(dom.animations-api.core.enabled,true) load 1359658-1.html
 pref(dom.animations-api.core.enabled,true) load 1373712-1.html
 pref(dom.animations-api.core.enabled,true) load 1379606-1.html
-pref(dom.animations-api.core.enabled,true) load 1393605-1.html
-load 1400022-1.html
-pref(dom.animations-api.core.enabled,true) load 1401809.html

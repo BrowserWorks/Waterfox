@@ -201,8 +201,7 @@ public:
   uint32_t GetSize() const;
   void UpdateSize(int32_t diff);
   uint32_t GetNumElements() const;
-  bool Contains(imgCacheEntry* aEntry) const;
-  typedef nsTArray<RefPtr<imgCacheEntry> > queueContainer;
+  typedef std::vector<RefPtr<imgCacheEntry> > queueContainer;
   typedef queueContainer::iterator iterator;
   typedef queueContainer::const_iterator const_iterator;
 
@@ -291,7 +290,6 @@ public:
                                   nsIURI* aReferrerURI,
                                   ReferrerPolicy aReferrerPolicy,
                                   nsIPrincipal* aLoadingPrincipal,
-                                  uint64_t aRequestContextID,
                                   nsILoadGroup* aLoadGroup,
                                   imgINotificationObserver* aObserver,
                                   nsINode* aContext,
@@ -342,16 +340,7 @@ public:
   nsresult InitCache();
 
   bool RemoveFromCache(const ImageCacheKey& aKey);
-
-  // Enumeration describing if a given entry is in the cache queue or not.
-  // There are some cases we know the entry is definitely not in the queue.
-  enum class QueueState {
-    MaybeExists,
-    AlreadyRemoved
-  };
-
-  bool RemoveFromCache(imgCacheEntry* entry,
-                       QueueState aQueueState = QueueState::MaybeExists);
+  bool RemoveFromCache(imgCacheEntry* entry);
 
   bool PutIntoCache(const ImageCacheKey& aKey, imgCacheEntry* aEntry);
 

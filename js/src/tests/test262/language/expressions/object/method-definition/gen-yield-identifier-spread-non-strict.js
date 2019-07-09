@@ -4,14 +4,13 @@
 /*---
 description: Mixed use of object spread and yield as a valid identifier in a function body inside a generator body in non strict mode (Generator method - valid for non-strict only cases)
 esid: prod-GeneratorMethod
-features: [Symbol, object-spread, generators]
+features: [object-spread]
 flags: [generated, noStrict]
 info: |
     14.4 Generator Function Definitions
 
     GeneratorMethod[Yield, Await]:
       * PropertyName ( UniqueFormalParameters ) { GeneratorBody }
-
 
     Spread Properties
 

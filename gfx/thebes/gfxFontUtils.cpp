@@ -413,7 +413,8 @@ gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
 uint32_t
 gfxFontUtils::FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
                                     uint32_t *aTableOffset,
-                                    uint32_t *aUVSTableOffset)
+                                    uint32_t *aUVSTableOffset,
+                                    bool *aSymbolEncoding)
 {
     enum {
         OffsetVersion = 0,
@@ -473,14 +474,17 @@ gfxFontUtils::FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
         if (isSymbol(platformID, encodingID)) {
             keepFormat = format;
             *aTableOffset = offset;
+            *aSymbolEncoding = true;
             break;
         } else if (format == 4 && acceptableFormat4(platformID, encodingID, keepFormat)) {
             keepFormat = format;
             *aTableOffset = offset;
+            *aSymbolEncoding = false;
         } else if ((format == 10 || format == 12 || format == 13) &&
                    acceptableUCS4Encoding(platformID, encodingID, keepFormat)) {
             keepFormat = format;
             *aTableOffset = offset;
+            *aSymbolEncoding = false;
             if (platformID > PLATFORM_ID_UNICODE || !aUVSTableOffset || *aUVSTableOffset) {
                 break; // we don't want to try anything else when this format is available.
             }
@@ -498,23 +502,36 @@ gfxFontUtils::FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
 nsresult
 gfxFontUtils::ReadCMAP(const uint8_t *aBuf, uint32_t aBufLength,
                        gfxSparseBitSet& aCharacterMap,
-                       uint32_t& aUVSOffset)
+                       uint32_t& aUVSOffset,
+                       bool& aUnicodeFont, bool& aSymbolFont)
 {
     uint32_t offset;
+    bool     symbol;
     uint32_t format = FindPreferredSubtable(aBuf, aBufLength,
-                                            &offset, &aUVSOffset);
+                                            &offset, &aUVSOffset, &symbol);
 
     switch (format) {
     case 4:
+        if (symbol) {
+            aUnicodeFont = false;
+            aSymbolFont = true;
+        } else {
+            aUnicodeFont = true;
+            aSymbolFont = false;
+        }
         return ReadCMAPTableFormat4(aBuf + offset, aBufLength - offset,
                                     aCharacterMap);
 
     case 10:
+        aUnicodeFont = true;
+        aSymbolFont = false;
         return ReadCMAPTableFormat10(aBuf + offset, aBufLength - offset,
                                      aCharacterMap);
 
     case 12:
     case 13:
+        aUnicodeFont = true;
+        aSymbolFont = false;
         return ReadCMAPTableFormat12or13(aBuf + offset, aBufLength - offset,
                                          aCharacterMap);
 
@@ -752,8 +769,9 @@ gfxFontUtils::MapCharToGlyph(const uint8_t *aCmapBuf, uint32_t aBufLength,
                              uint32_t aUnicode, uint32_t aVarSelector)
 {
     uint32_t offset, uvsOffset;
+    bool     symbol;
     uint32_t format = FindPreferredSubtable(aCmapBuf, aBufLength, &offset,
-                                            &uvsOffset);
+                                            &uvsOffset, &symbol);
 
     uint32_t gid;
     switch (format) {

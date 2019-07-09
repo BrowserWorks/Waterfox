@@ -8,7 +8,6 @@
 
 .content-container {
   -moz-appearance: -moz-mac-source-list;
-  -moz-font-smoothing-background-color: -moz-mac-source-list;
 }
 
 .item {
@@ -29,12 +28,10 @@
 
 .item.selected > .item-title-container {
   -moz-appearance: -moz-mac-source-list-selection;
-  -moz-font-smoothing-background-color: -moz-mac-source-list-selection;
 }
 
 .item.selected:focus > .item-title-container {
   -moz-appearance: -moz-mac-active-source-list-selection;
-  -moz-font-smoothing-background-color: -moz-mac-active-source-list-selection;
 }
 
 .item.client .item-twisty-container {
@@ -100,12 +97,16 @@
   }
 }
 
+.sidebar-search-container {
+  border-bottom: 1px solid #bdbdbd;
+}
+
 .search-box {
   -moz-appearance: searchfield;
   padding: 1px;
   font-size: 12px;
   cursor: text;
-  margin: 4px;
+  margin: 4px 8px 10px;
   border-width: 3px;
   border-style: solid;
   border-color: currentcolor;

@@ -42,6 +42,8 @@
 
 "use strict";
 
+const Promise = require("promise");
+
 const DBNAME = "devtools-async-storage";
 const DBVERSION = 1;
 const STORENAME = "keyvaluepairs";

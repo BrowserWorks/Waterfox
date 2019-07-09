@@ -6,7 +6,7 @@
 
 "use strict";
 
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 
 /**
  * A partial implementation of the Menu API provided by electron:
@@ -132,9 +132,6 @@ Menu.prototype._createMenuItems = function (parent) {
       menuitem.setAttribute("label", item.label);
       menuitem.addEventListener("command", () => {
         item.click();
-      });
-      menuitem.addEventListener("DOMMenuItemActive", () => {
-        item.hover();
       });
 
       if (item.type === "checkbox") {

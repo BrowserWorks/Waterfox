@@ -25,7 +25,7 @@ class ChunkedJSONWriteFunc : public mozilla::JSONWriteFunc
 public:
   friend class SpliceableJSONWriter;
 
-  ChunkedJSONWriteFunc() {
+  ChunkedJSONWriteFunc() : mChunkPtr{nullptr}, mChunkEnd{nullptr} {
     AllocChunk(kChunkSize);
   }
 
@@ -85,7 +85,7 @@ public:
     : JSONWriter(mozilla::Move(aWriter))
   { }
 
-  void StartBareList(CollectionStyle aStyle = MultiLineStyle) {
+  void StartBareList(CollectionStyle aStyle = SingleLineStyle) {
     StartCollection(nullptr, "", aStyle);
   }
 

@@ -23,8 +23,6 @@ class AuthenticatorAssertionResponse final : public AuthenticatorResponse
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(AuthenticatorAssertionResponse,
-                                                         AuthenticatorResponse)
 
   explicit AuthenticatorAssertionResponse(nsPIDOMWindowInner* aParent);
 
@@ -36,29 +34,20 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
-  GetAuthenticatorData(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal);
+  GetAuthenticatorData(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal) const;
 
   nsresult
   SetAuthenticatorData(CryptoBuffer& aBuffer);
 
   void
-  GetSignature(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal);
+  GetSignature(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal) const;
 
   nsresult
   SetSignature(CryptoBuffer& aBuffer);
 
-  void
-  GetUserId(DOMString& aRetVal);
-
-  nsresult
-  SetUserId(const nsAString& aUserId);
-
 private:
   CryptoBuffer mAuthenticatorData;
-  JS::Heap<JSObject*> mAuthenticatorDataCachedObj;
   CryptoBuffer mSignature;
-  JS::Heap<JSObject*> mSignatureCachedObj;
-  nsString mUserId;
 };
 
 } // namespace dom

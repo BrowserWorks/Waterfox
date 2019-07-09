@@ -25,7 +25,7 @@ using namespace mozilla::a11y;
 
 void
 nsAccUtils::GetAccAttr(nsIPersistentProperties *aAttributes,
-                       nsAtom *aAttrName, nsAString& aAttrValue)
+                       nsIAtom *aAttrName, nsAString& aAttrValue)
 {
   aAttrValue.Truncate();
 
@@ -34,7 +34,7 @@ nsAccUtils::GetAccAttr(nsIPersistentProperties *aAttributes,
 
 void
 nsAccUtils::SetAccAttr(nsIPersistentProperties *aAttributes,
-                       nsAtom *aAttrName, const nsAString& aAttrValue)
+                       nsIAtom *aAttrName, const nsAString& aAttrValue)
 {
   nsAutoString oldValue;
   aAttributes->SetStringProperty(nsAtomCString(aAttrName), aAttrValue, oldValue);
@@ -42,7 +42,7 @@ nsAccUtils::SetAccAttr(nsIPersistentProperties *aAttributes,
 
 void
 nsAccUtils::SetAccAttr(nsIPersistentProperties *aAttributes,
-                       nsAtom* aAttrName, nsAtom* aAttrValue)
+                       nsIAtom* aAttrName, nsIAtom* aAttrValue)
 {
   nsAutoString oldValue;
   aAttributes->SetStringProperty(nsAtomCString(aAttrName),
@@ -187,7 +187,7 @@ nsAccUtils::SetLiveContainerAttributes(nsIPersistentProperties *aAttributes,
 }
 
 bool
-nsAccUtils::HasDefinedARIAToken(nsIContent *aContent, nsAtom *aAtom)
+nsAccUtils::HasDefinedARIAToken(nsIContent *aContent, nsIAtom *aAtom)
 {
   NS_ASSERTION(aContent, "aContent is null in call to HasDefinedARIAToken!");
 
@@ -201,8 +201,8 @@ nsAccUtils::HasDefinedARIAToken(nsIContent *aContent, nsAtom *aAtom)
   return true;
 }
 
-nsAtom*
-nsAccUtils::GetARIAToken(dom::Element* aElement, nsAtom* aAttr)
+nsIAtom*
+nsAccUtils::GetARIAToken(dom::Element* aElement, nsIAtom* aAttr)
 {
   if (!HasDefinedARIAToken(aElement, aAttr))
     return nsGkAtoms::_empty;

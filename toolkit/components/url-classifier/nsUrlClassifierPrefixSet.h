@@ -19,7 +19,6 @@
 #include "mozilla/FileUtils.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Mutex.h"
-#include "mozilla/Poison.h"
 
 namespace mozilla {
 namespace safebrowsing {
@@ -85,7 +84,6 @@ private:
   uint32_t mTotalPrefixes;
 
   nsCString mMemoryReportPath;
-  mozilla::CorruptionCanary mCanary;
 };
 
 #endif

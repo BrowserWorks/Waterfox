@@ -53,10 +53,9 @@ public:
         MOZ_CRASH("SandboxPrivate doesn't use DOM bindings!");
     }
 
-    size_t ObjectMoved(JSObject* obj, JSObject* old)
+    void ObjectMoved(JSObject* obj, const JSObject* old)
     {
         UpdateWrapper(obj, old);
-        return 0;
     }
 
 private:

@@ -24,7 +24,6 @@
 #endif
 #include "MediaStreamGraph.h"
 #include "MediaTrackConstraints.h"
-#include "SineWaveGenerator.h"
 
 namespace mozilla {
 
@@ -65,6 +64,7 @@ public:
                    const MediaEnginePrefs &aPrefs,
                    const nsString& aDeviceId,
                    const char** aOutBadConstraint) override;
+  void SetDirectListeners(bool aHasDirectListeners) override {};
   void NotifyPull(MediaStreamGraph* aGraph,
                   SourceMediaStream *aSource,
                   TrackID aId,
@@ -144,6 +144,7 @@ public:
                    const MediaEnginePrefs &aPrefs,
                    const nsString& aDeviceId,
                    const char** aOutBadConstraint) override;
+  void SetDirectListeners(bool aHasDirectListeners) override {};
   void inline AppendToSegment(AudioSegment& aSegment,
                               TrackTicks aSamples,
                               const PrincipalHandle& aPrincipalHandle);

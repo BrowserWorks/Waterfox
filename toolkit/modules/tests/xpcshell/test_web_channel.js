@@ -22,9 +22,13 @@ var MockWebChannelBroker = {
     }
   },
   unregisterChannel(channelToRemove) {
-    this._channelMap.delete(channelToRemove);
+    this._channelMap.delete(channelToRemove)
   }
 };
+
+function run_test() {
+  run_next_test();
+}
 
 /**
  * Web channel tests

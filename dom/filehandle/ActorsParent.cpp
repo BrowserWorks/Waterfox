@@ -2538,7 +2538,7 @@ WriteOp::Init(FileHandle* aFileHandle)
       }
 
       IgnoredErrorResult rv;
-      blobImpl->CreateInputStream(getter_AddRefs(inputStream), rv);
+      blobImpl->GetInternalStream(getter_AddRefs(inputStream), rv);
       if (NS_WARN_IF(rv.Failed())) {
         return false;
       }

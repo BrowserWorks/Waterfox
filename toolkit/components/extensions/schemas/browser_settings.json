@@ -7,7 +7,7 @@
     "namespace": "manifest",
     "types": [
       {
-        "$extend": "OptionalPermission",
+        "$extend": "Permission",
         "choices": [{
           "type": "string",
           "enum": [
@@ -21,34 +21,10 @@
     "namespace": "browserSettings",
     "description": "Use the <code>browser.browserSettings</code> API to control global settings of the browser.",
     "permissions": ["browserSettings"],
-    "types": [
-      {
-        "id": "ImageAnimationBehavior",
-        "type": "string",
-        "enum": ["normal", "none", "once"],
-        "description": "How images should be animated in the browser."
-      }
-    ],
     "properties": {
-      "allowPopupsForUserEvents": {
-        "$ref": "types.Setting",
-        "description": "Allows or disallows pop-up windows from opening in response to user events."
-      },
       "cacheEnabled": {
         "$ref": "types.Setting",
         "description": "Enables or disables the browser cache."
-      },
-      "homepageOverride": {
-        "$ref": "types.Setting",
-        "description": "Returns the value of the overridden home page. Read-only."
-      },
-      "imageAnimationBehavior": {
-        "$ref": "types.Setting",
-        "description": "Controls the behaviour of image animation in the browser. This setting's value is of type ImageAnimationBehavior, defaulting to <code>normal</code>."
-      },
-      "newTabPageOverride": {
-        "$ref": "types.Setting",
-        "description": "Returns the value of the overridden new tab page. Read-only."
       }
     }
   }

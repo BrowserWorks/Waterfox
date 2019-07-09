@@ -35,7 +35,7 @@ Accessible::HasARIARole() const
 }
 
 inline bool
-Accessible::IsARIARole(nsAtom* aARIARole) const
+Accessible::IsARIARole(nsIAtom* aARIARole) const
 {
   const nsRoleMapEntry* roleMapEntry = ARIARoleMap();
   return roleMapEntry && roleMapEntry->Is(aARIARole);
@@ -77,7 +77,7 @@ Accessible::IsSearchbox() const
   return (roleMapEntry && roleMapEntry->Is(nsGkAtoms::searchbox)) ||
     (mContent->IsHTMLElement(nsGkAtoms::input) &&
      mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
-                           nsGkAtoms::search, eCaseMatters));
+                           nsGkAtoms::textInputType, eCaseMatters));
 }
 
 inline bool

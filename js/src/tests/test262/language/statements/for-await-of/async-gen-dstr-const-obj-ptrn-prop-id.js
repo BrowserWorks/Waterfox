@@ -1,6 +1,7 @@
+// |reftest| skip-if(release_or_beta) -- async-iteration is not released yet
 // This file was procedurally generated from the following sources:
-// - src/dstr-binding-for-await/obj-ptrn-prop-id.case
-// - src/dstr-binding-for-await/default/for-await-of-async-gen-const.template
+// - src/dstr-binding/obj-ptrn-prop-id.case
+// - src/dstr-binding/default/for-await-of-async-gen-const.template
 /*---
 description: Binding as specified via property name and identifier (for-await-of statement)
 esid: sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation
@@ -37,10 +38,10 @@ info: |
 
     13.3.3.7 Runtime Semantics: KeyedBindingInitialization
 
-    SingleNameBinding : BindingIdentifier Initializer_opt
+    SingleNameBinding : BindingIdentifier Initializeropt
 
     [...]
-    7. Return InitializeReferencedBinding(lhs, v).
+    8. Return InitializeReferencedBinding(lhs, v).
 ---*/
 
 var iterCount = 0;

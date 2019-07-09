@@ -30,7 +30,7 @@
 
 #define nsHtml5Tokenizer_cpp__
 
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsHtml5AtomTable.h"
 #include "nsHtml5String.h"
 #include "nsIContent.h"
@@ -131,7 +131,7 @@ nsHtml5Tokenizer::isViewingXmlSource()
 }
 
 void 
-nsHtml5Tokenizer::setStateAndEndTagExpectation(int32_t specialTokenizerState, nsAtom* endTagExpectation)
+nsHtml5Tokenizer::setStateAndEndTagExpectation(int32_t specialTokenizerState, nsIAtom* endTagExpectation)
 {
   this->stateSave = specialTokenizerState;
   if (specialTokenizerState == nsHtml5Tokenizer::DATA) {
@@ -231,13 +231,8 @@ nsHtml5Tokenizer::emitOrAppendCharRefBuf(int32_t returnState)
 nsHtml5String
 nsHtml5Tokenizer::strBufToString()
 {
-  nsHtml5String str = nsHtml5Portability::newStringFromBuffer(
-    strBuf,
-    0,
-    strBufLen,
-    tokenHandler,
-    !newAttributesEachTime &&
-      attributeName == nsHtml5AttributeName::ATTR_CLASS);
+  nsHtml5String str =
+    nsHtml5Portability::newStringFromBuffer(strBuf, 0, strBufLen, tokenHandler);
   clearStrBufAfterUse();
   return str;
 }
@@ -293,15 +288,14 @@ void
 nsHtml5Tokenizer::strBufToElementNameString()
 {
   if (containsHyphen) {
-    nsAtom* annotationName = nsHtml5ElementName::ELT_ANNOTATION_XML->getName();
+    nsIAtom* annotationName = nsHtml5ElementName::ELT_ANNOTATION_XML->getName();
     if (nsHtml5Portability::localEqualsBuffer(
           annotationName, strBuf, 0, strBufLen)) {
       tagName = nsHtml5ElementName::ELT_ANNOTATION_XML;
     } else {
       nonInternedTagName->setNameForNonInterned(
         nsHtml5Portability::newLocalNameFromBuffer(
-          strBuf, 0, strBufLen, interner),
-        true);
+          strBuf, 0, strBufLen, interner));
       tagName = nonInternedTagName;
     }
   } else {
@@ -310,8 +304,7 @@ nsHtml5Tokenizer::strBufToElementNameString()
     if (!tagName) {
       nonInternedTagName->setNameForNonInterned(
         nsHtml5Portability::newLocalNameFromBuffer(
-          strBuf, 0, strBufLen, interner),
-        false);
+          strBuf, 0, strBufLen, interner));
       tagName = nonInternedTagName;
     }
   }
@@ -1813,7 +1806,6 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
             NS_HTML5_BREAK(outer);
           }
           appendCharRefBuf(c);
-          continue;
         }
         outer_end: ;
         if (candidate == -1) {
@@ -2338,11 +2330,8 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               default: {
                 tokenHandler->characters(nsHtml5Tokenizer::LT_SOLIDUS, 0, 2);
                 emitStrBuf();
-                if (c == '\0') {
-                  emitReplacementCharacter(buf, pos);
-                } else {
-                  cstart = pos;
-                }
+                cstart = pos;
+                reconsume = true;
                 state = P::transition(mViewSource, returnState, reconsume, pos);
                 NS_HTML5_CONTINUE(stateloop);
               }
@@ -4362,7 +4351,6 @@ nsHtml5Tokenizer::eof()
           if (hi < lo) {
             NS_HTML5_BREAK(outer);
           }
-          continue;
         }
         outer_end: ;
         if (candidate == -1) {
@@ -4442,7 +4430,6 @@ nsHtml5Tokenizer::eof()
   }
   eofloop_end: ;
   tokenHandler->eof();
-  return;
 }
 
 void 
@@ -4501,7 +4488,7 @@ nsHtml5Tokenizer::end()
     publicIdentifier = nullptr;
   }
   tagName = nullptr;
-  nonInternedTagName->setNameForNonInterned(nullptr, false);
+  nonInternedTagName->setNameForNonInterned(nullptr);
   attributeName = nullptr;
   nonInternedAttributeName->setNameForNonInterned(nullptr);
   tokenHandler->endTokenization();
@@ -4607,8 +4594,7 @@ nsHtml5Tokenizer::loadState(nsHtml5Tokenizer* other)
   } else {
     nonInternedTagName->setNameForNonInterned(
       nsHtml5Portability::newLocalFromLocal(other->tagName->getName(),
-                                            interner),
-      other->tagName->isCustom());
+                                            interner));
     tagName = nonInternedTagName;
   }
   if (!other->attributeName) {

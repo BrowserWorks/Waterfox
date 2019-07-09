@@ -1,6 +1,7 @@
 // Copyright 2009 the Sputnik authors.  All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
+esid: sec-date-constructor
 info: >
     The [[Value]] property of the newly constructed object
     is set by following steps:
@@ -11,7 +12,6 @@ info: >
     11. Compute MakeDate(Result(9), Result(10))
     12. Set the [[Value]] property of the newly constructed object to
     TimeClip(UTC(Result(11)))
-esid: sec-date-year-month-date-hours-minutes-seconds-ms
 es5id: 15.9.3.1_A5_T3
 description: 4 arguments, (year, month, date, hours)
 includes: [assertRelativeDateMs.js]

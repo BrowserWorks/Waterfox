@@ -3,29 +3,31 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const { on, off } = require("sdk/event/core");
+const { Class } = require("sdk/core/heritage");
+
 /**
  * A very simple utility for monitoring framerate. Takes a `tabActor`
  * and monitors framerate over time. The actor wrapper around this
  * can be found at devtools/server/actors/framerate.js
  */
-class Framerate {
-  constructor(tabActor) {
+exports.Framerate = Class({
+  initialize: function (tabActor) {
     this.tabActor = tabActor;
     this._contentWin = tabActor.window;
     this._onRefreshDriverTick = this._onRefreshDriverTick.bind(this);
     this._onGlobalCreated = this._onGlobalCreated.bind(this);
-    this.tabActor.on("window-ready", this._onGlobalCreated);
-  }
-
-  destroy(conn) {
-    this.tabActor.off("window-ready", this._onGlobalCreated);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
+  },
+  destroy: function (conn) {
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
     this.stopRecording();
-  }
+  },
 
   /**
    * Starts monitoring framerate, storing the frames per second.
    */
-  startRecording() {
+  startRecording: function () {
     if (this._recording) {
       return;
     }
@@ -33,67 +35,65 @@ class Framerate {
     this._ticks = [];
     this._startTime = this.tabActor.docShell.now();
     this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
-  }
+  },
 
   /**
    * Stops monitoring framerate, returning the recorded values.
    */
-  stopRecording(beginAt = 0, endAt = Number.MAX_SAFE_INTEGER) {
+  stopRecording: function (beginAt = 0, endAt = Number.MAX_SAFE_INTEGER) {
     if (!this._recording) {
       return [];
     }
     let ticks = this.getPendingTicks(beginAt, endAt);
     this.cancelRecording();
     return ticks;
-  }
+  },
 
   /**
    * Stops monitoring framerate, without returning the recorded values.
    */
-  cancelRecording() {
+  cancelRecording: function () {
     this._contentWin.cancelAnimationFrame(this._rafID);
     this._recording = false;
     this._ticks = null;
     this._rafID = -1;
-  }
+  },
 
   /**
    * Returns whether this instance is currently recording.
    */
-  isRecording() {
+  isRecording: function () {
     return !!this._recording;
-  }
+  },
 
   /**
    * Gets the refresh driver ticks recorded so far.
    */
-  getPendingTicks(beginAt = 0, endAt = Number.MAX_SAFE_INTEGER) {
+  getPendingTicks: function (beginAt = 0, endAt = Number.MAX_SAFE_INTEGER) {
     if (!this._ticks) {
       return [];
     }
     return this._ticks.filter(e => e >= beginAt && e <= endAt);
-  }
+  },
 
   /**
    * Function invoked along with the refresh driver.
    */
-  _onRefreshDriverTick() {
+  _onRefreshDriverTick: function () {
     if (!this._recording) {
       return;
     }
     this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
     this._ticks.push(this.tabActor.docShell.now() - this._startTime);
-  }
+  },
 
   /**
    * When the content window for the tab actor is created.
    */
-  _onGlobalCreated(win) {
+  _onGlobalCreated: function (win) {
     if (this._recording) {
       this._contentWin.cancelAnimationFrame(this._rafID);
       this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
     }
   }
-}
-
-exports.Framerate = Framerate;
+});

@@ -887,16 +887,6 @@ bool
 DataViewObject::byteLengthGetterImpl(JSContext* cx, const CallArgs& args)
 {
     Rooted<DataViewObject*> thisView(cx, &args.thisv().toObject().as<DataViewObject>());
-
-#ifdef NIGHTLY_BUILD
-    // Step 6,
-    if (thisView->arrayBufferEither().isDetached()) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
-        return false;
-    }
-#endif
-
-    // Step 7.
     args.rval().set(DataViewObject::byteLengthValue(thisView));
     return true;
 }
@@ -912,16 +902,6 @@ bool
 DataViewObject::byteOffsetGetterImpl(JSContext* cx, const CallArgs& args)
 {
     Rooted<DataViewObject*> thisView(cx, &args.thisv().toObject().as<DataViewObject>());
-
-#ifdef NIGHTLY_BUILD
-    // Step 6,
-    if (thisView->arrayBufferEither().isDetached()) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
-        return false;
-    }
-#endif
-
-    // Step 7.
     args.rval().set(DataViewObject::byteOffsetValue(thisView));
     return true;
 }
@@ -949,6 +929,8 @@ DataViewObject::CreatePrototype(JSContext* cx, JSProtoKey key)
 static const ClassOps DataViewObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */
@@ -1031,7 +1013,7 @@ JS_GetDataViewByteOffset(JSObject* obj)
 }
 
 JS_FRIEND_API(void*)
-JS_GetDataViewData(JSObject* obj, bool* isSharedMemory, const JS::AutoRequireNoGC&)
+JS_GetDataViewData(JSObject* obj, bool* isSharedMemory, const JS::AutoCheckCannotGC&)
 {
     obj = CheckedUnwrap(obj);
     if (!obj)

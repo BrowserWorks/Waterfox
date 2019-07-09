@@ -31,16 +31,7 @@ macro_rules! size_of_test {
     }
 }
 
-// Some of these assume 64-bit
+// These assume 64-bit
 size_of_test!(token, Token, 32);
 size_of_test!(std_cow_str, Cow<'static, str>, 32);
 size_of_test!(cow_rc_str, CowRcStr, 16);
-
-size_of_test!(tokenizer, ::tokenizer::Tokenizer, 72);
-size_of_test!(parser_input, ::parser::ParserInput, 144);
-size_of_test!(parser, ::parser::Parser, 16);
-size_of_test!(source_position, ::SourcePosition, 8);
-size_of_test!(parser_state, ::ParserState, 24);
-
-size_of_test!(basic_parse_error, ::BasicParseError, 48);
-size_of_test!(parse_error_lower_bound, ::ParseError<()>, 56);

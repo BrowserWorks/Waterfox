@@ -132,6 +132,7 @@ pub fn system_default_family(generic_name: &str) -> Option<String> {
     }
 }
 
+#[cfg(target_os = "linux")]
 pub fn last_resort_font_families() -> Vec<String> {
     vec!(
         "Fira Sans".to_owned(),
@@ -140,4 +141,16 @@ pub fn last_resort_font_families() -> Vec<String> {
     )
 }
 
+#[cfg(target_os = "windows")]
+pub fn last_resort_font_families() -> Vec<String> {
+    vec!(
+        "Arial".to_owned()
+    )
+}
+
+#[cfg(target_os = "linux")]
 pub static SANS_SERIF_FONT_FAMILY: &'static str = "DejaVu Sans";
+
+#[cfg(target_os = "windows")]
+pub static SANS_SERIF_FONT_FAMILY: &'static str = "Arial";
+

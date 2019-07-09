@@ -8,9 +8,8 @@ kind-dependencies:
    - toolchain
 
 transforms:
-   - taskgraph.transforms.spidermonkey:transforms
    - taskgraph.transforms.build_attrs:transforms
-   - taskgraph.transforms.use_toolchains:transforms
+   - taskgraph.transforms.toolchain:transforms
    - taskgraph.transforms.job:transforms
    - taskgraph.transforms.task:transforms
 
@@ -22,6 +21,11 @@ job-defaults:
     index:
         product: firefox
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        docker-image: {in-tree: desktop-build}
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: spidermonkey
     when:
@@ -35,7 +39,6 @@ job-defaults:
             - intl/icu/**
             - js/moz.configure
             - js/public/**
-            - js/rust/**
             - js/src/**
             - layout/tools/reftest/reftest/**
             - Makefile.in
@@ -56,14 +59,9 @@ job-defaults:
             - toolkit/mozapps/installer/package-name.mk
             - toolkit/mozapps/installer/upload-files.mk
     toolchains:
-        by-worker-type:
-            .*-b-win2012:
-                - win64-clang-cl
-                - win64-rust
-            default:
-                - linux64-clang
-                - linux64-gcc
-                - linux64-rust
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
 
 jobs:
     sm-package/opt:
@@ -72,11 +70,6 @@ jobs:
             job-name: sm-package-opt
         treeherder:
             symbol: SM-tc(pkg)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             using: spidermonkey-package
             spidermonkey-variant: plain
@@ -88,30 +81,8 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(mozjs-crate)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             using: spidermonkey-mozjs-crate
-            spidermonkey-variant: plain
-        run-on-projects: ['integration', 'release', 'try']
-
-    sm-rust-bindings/debug:
-        description: "Build and test the Rust bindings for SpiderMonkey"
-        index:
-            job-name: sm-rust-bindings-debug
-        treeherder:
-            symbol: SM-tc(rust)
-            tier: 2
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-        run:
-            using: spidermonkey-rust-bindings
             spidermonkey-variant: plain
         run-on-projects: ['integration', 'release', 'try']
 
@@ -122,26 +93,6 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(p)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-        run:
-            spidermonkey-variant: plaindebug
-
-    sm-plain-windows/debug:
-        description: "Spidermonkey Plain"
-        index:
-            job-name: sm-win-plaindebug-debug
-        treeherder:
-            platform: windows2012-32/debug
-            symbol: SM-tc(p)
-        worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
-        worker:
-            max-run-time: 36000
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/releng.manifest"
         run:
             spidermonkey-variant: plaindebug
 
@@ -151,26 +102,6 @@ jobs:
             job-name: sm-plain-opt
         treeherder:
             symbol: SM-tc(p)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-        run:
-            spidermonkey-variant: plain
-
-    sm-plain-windows/opt:
-        description: "Spidermonkey Plain"
-        index:
-            job-name: sm-win-plain-opt
-        treeherder:
-            platform: windows2012-32/opt
-            symbol: SM-tc(p)
-        worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
-        worker:
-            max-run-time: 36000
-            env:
-              TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/releng.manifest"
         run:
             spidermonkey-variant: plain
 
@@ -182,8 +113,6 @@ jobs:
             platform: linux32/debug
             symbol: SM-tc(arm)
         worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
             env:
                 TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
         run:
@@ -196,11 +125,6 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(arm64)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             spidermonkey-variant: arm64-sim
 
@@ -211,10 +135,8 @@ jobs:
         treeherder:
             symbol: SM-tc(asan)
         worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
             env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
         run:
             spidermonkey-variant: asan
 
@@ -225,26 +147,6 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(cgc)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-        run:
-            spidermonkey-variant: compacting
-
-    sm-compacting-windows/debug:
-        description: "Spidermonkey Compacting"
-        index:
-            job-name: sm-win-compacting-debug
-        treeherder:
-            platform: windows2012-32/debug
-            symbol: SM-tc(cgc)
-        worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
-        worker:
-            max-run-time: 36000
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/releng.manifest"
         run:
             spidermonkey-variant: compacting
 
@@ -255,10 +157,8 @@ jobs:
         treeherder:
             symbol: SM-tc(msan)
         worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
             env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/msan.manifest"
         run:
             spidermonkey-variant: msan
 
@@ -270,8 +170,6 @@ jobs:
             symbol: SM-tc(tsan)
             tier: 3
         worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
             env:
                 TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/tsan.manifest"
         run:
@@ -284,11 +182,6 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(r)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             spidermonkey-variant: rootanalysis
 
@@ -299,11 +192,6 @@ jobs:
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(nu)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             spidermonkey-variant: nonunified
 
@@ -314,10 +202,5 @@ jobs:
         treeherder:
             platform: linux64/opt
             symbol: SM-tc(f)
-        worker:
-            max-run-time: 36000
-            docker-image: {in-tree: desktop-build}
-            env:
-                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             spidermonkey-variant: fuzzing

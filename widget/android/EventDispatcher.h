@@ -53,7 +53,7 @@ public:
                          jni::Object::Param aCallback);
 
     static nsresult UnboxBundle(JSContext* aCx,
-                                jni::Object::Param aData,
+                                const jni::Object::Param aData,
                                 JS::MutableHandleValue aOut);
 
 private:

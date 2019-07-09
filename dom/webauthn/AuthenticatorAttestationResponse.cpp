@@ -10,39 +10,18 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(AuthenticatorAttestationResponse)
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(AuthenticatorAttestationResponse,
-                                                AuthenticatorResponse)
-  tmp->mAttestationObjectCachedObj = nullptr;
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(AuthenticatorAttestationResponse,
-                                               AuthenticatorResponse)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mAttestationObjectCachedObj)
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
-
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AuthenticatorAttestationResponse,
-                                                  AuthenticatorResponse)
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
-
 NS_IMPL_ADDREF_INHERITED(AuthenticatorAttestationResponse, AuthenticatorResponse)
 NS_IMPL_RELEASE_INHERITED(AuthenticatorAttestationResponse, AuthenticatorResponse)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AuthenticatorAttestationResponse)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AuthenticatorAttestationResponse)
 NS_INTERFACE_MAP_END_INHERITING(AuthenticatorResponse)
 
 AuthenticatorAttestationResponse::AuthenticatorAttestationResponse(nsPIDOMWindowInner* aParent)
   : AuthenticatorResponse(aParent)
-  , mAttestationObjectCachedObj(nullptr)
-{
-  mozilla::HoldJSObjects(this);
-}
+{}
 
 AuthenticatorAttestationResponse::~AuthenticatorAttestationResponse()
-{
-  mozilla::DropJSObjects(this);
-}
+{}
 
 JSObject*
 AuthenticatorAttestationResponse::WrapObject(JSContext* aCx,
@@ -53,12 +32,9 @@ AuthenticatorAttestationResponse::WrapObject(JSContext* aCx,
 
 void
 AuthenticatorAttestationResponse::GetAttestationObject(JSContext* aCx,
-                                                       JS::MutableHandle<JSObject*> aRetVal)
+                                                       JS::MutableHandle<JSObject*> aRetVal) const
 {
-  if (!mAttestationObjectCachedObj) {
-    mAttestationObjectCachedObj = mAttestationObject.ToArrayBuffer(aCx);
-  }
-  aRetVal.set(mAttestationObjectCachedObj);
+  aRetVal.set(mAttestationObject.ToUint8Array(aCx));
 }
 
 nsresult

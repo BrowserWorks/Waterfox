@@ -69,7 +69,7 @@ public:
                         PeekOffsetCharacterOptions()) override;
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
 #ifdef DEBUG_FRAME_DUMP
@@ -419,6 +419,7 @@ public:
    * Add overflow containers to the display list
    */
   void DisplayOverflowContainers(nsDisplayListBuilder*   aBuilder,
+                                 const nsRect&           aDirtyRect,
                                  const nsDisplayListSet& aLists);
 
   /**
@@ -431,6 +432,7 @@ public:
    * to emulate what nsContainerFrame::Paint did.
    */
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   static void PlaceFrameView(nsIFrame* aFrame)
@@ -573,6 +575,7 @@ protected:
    * display items) go into the Content() list.
    */
   void BuildDisplayListForNonBlockChildren(nsDisplayListBuilder*   aBuilder,
+                                           const nsRect&           aDirtyRect,
                                            const nsDisplayListSet& aLists,
                                            uint32_t                aFlags = 0);
 
@@ -581,9 +584,11 @@ protected:
    * Intended as a convenience for derived classes.
    */
   void BuildDisplayListForInline(nsDisplayListBuilder*   aBuilder,
+                                 const nsRect&           aDirtyRect,
                                  const nsDisplayListSet& aLists) {
     DisplayBorderBackgroundOutline(aBuilder, aLists);
-    BuildDisplayListForNonBlockChildren(aBuilder, aLists, DISPLAY_CHILD_INLINE);
+    BuildDisplayListForNonBlockChildren(aBuilder, aDirtyRect, aLists,
+                                        DISPLAY_CHILD_INLINE);
   }
 
 
@@ -629,20 +634,12 @@ protected:
    * Resets the overlist pointers to nullptr, and updates the receiver's child
    * count and content mapping.
    *
-   * @return true if any frames were moved and false otherwise
-   */
-  bool MoveOverflowToChildList();
-
-  /**
-   * Basically same as MoveOverflowToChildList, except that this is for
-   * handling inline children where children of prev-in-flow can be
-   * pushed to overflow list even if a next-in-flow exists.
-   *
-   * @param aLineContainer the line container of the current frame.
+   * @param aLineContainer the line container of the current frame if it
+   *          has one. nullptr if unrelated.
    *
    * @return true if any frames were moved and false otherwise
    */
-  bool MoveInlineOverflowToChildList(nsIFrame* aLineContainer);
+  bool MoveOverflowToChildList(nsIFrame* aLineContainer = nullptr);
 
   /**
    * Push aFromChild and its next siblings to the overflow list.

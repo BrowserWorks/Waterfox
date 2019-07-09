@@ -5,10 +5,33 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "FlacDecoder.h"
+#include "FlacDemuxer.h"
 #include "MediaContainerType.h"
+#include "MediaDecoderStateMachine.h"
+#include "MediaFormatReader.h"
 #include "MediaPrefs.h"
 
 namespace mozilla {
+
+ChannelMediaDecoder*
+FlacDecoder::Clone(MediaDecoderInit& aInit)
+{
+  if (!IsEnabled()) {
+    return nullptr;
+  }
+
+  return new FlacDecoder(aInit);
+}
+
+MediaDecoderStateMachine*
+FlacDecoder::CreateStateMachine()
+{
+  MediaFormatReaderInit init;
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, new FlacDemuxer(mResource));
+  return new MediaDecoderStateMachine(this, mReader);
+}
 
 /* static */ bool
 FlacDecoder::IsEnabled()
@@ -24,10 +47,10 @@ FlacDecoder::IsEnabled()
 /* static */ bool
 FlacDecoder::IsSupportedType(const MediaContainerType& aContainerType)
 {
-  return IsEnabled() &&
-         (aContainerType.Type() == MEDIAMIMETYPE("audio/flac") ||
-          aContainerType.Type() == MEDIAMIMETYPE("audio/x-flac") ||
-          aContainerType.Type() == MEDIAMIMETYPE("application/x-flac"));
+  return IsEnabled()
+         && (aContainerType.Type() == MEDIAMIMETYPE("audio/flac")
+             || aContainerType.Type() == MEDIAMIMETYPE("audio/x-flac")
+             || aContainerType.Type() == MEDIAMIMETYPE("application/x-flac"));
 }
 
 } // namespace mozilla

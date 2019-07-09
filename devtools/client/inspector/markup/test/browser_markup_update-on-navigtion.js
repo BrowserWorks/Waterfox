@@ -5,8 +5,9 @@
 
 // Test that markup view handles page navigation correctly.
 
-const URL_1 = URL_ROOT + "doc_markup_update-on-navigtion_1.html";
-const URL_2 = URL_ROOT + "doc_markup_update-on-navigtion_2.html";
+const SCHEMA = "data:text/html;charset=UTF-8,";
+const URL_1 = SCHEMA + "<div id='one' style='color:red;'>ONE</div>";
+const URL_2 = SCHEMA + "<div id='two' style='color:green;'>TWO</div>";
 
 add_task(function* () {
   let {inspector, testActor} = yield openInspectorForURL(URL_1);
@@ -15,7 +16,7 @@ add_task(function* () {
   yield selectNode("#one", inspector);
 
   let willNavigate = inspector.target.once("will-navigate");
-  yield testActor.eval(`window.location = "${URL_2}"`);
+  yield testActor.eval(`content.location = "${URL_2}"`);
 
   info("Waiting for will-navigate");
   yield willNavigate;

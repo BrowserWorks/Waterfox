@@ -4,8 +4,14 @@
 /*---
 description: >
   verifyProperty should receive at least 3 arguments: obj, name, and descriptor
-includes: [propertyHelper.js,sta.js]
+includes: [propertyHelper.js]
 ---*/
+
+// monkeypatch the API
+$ERROR = function $ERROR(message) {
+  throw new Test262Error(message);
+};
+
 assert.throws(Test262Error, () => {
   verifyProperty();
 }, "0 arguments");

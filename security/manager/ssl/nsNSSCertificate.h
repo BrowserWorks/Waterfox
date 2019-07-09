@@ -17,10 +17,10 @@
 #include "nsIX509CertDB.h"
 #include "nsIX509CertList.h"
 #include "nsNSSShutDown.h"
-#include "nsStringFwd.h"
 
 namespace mozilla { namespace pkix { class DERArray; } }
 
+class nsAutoString;
 class nsINSSComponent;
 class nsIASN1Sequence;
 

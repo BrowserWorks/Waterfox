@@ -1,8 +1,6 @@
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 
-/* global __LOCATION__ */
-
 function run_test() {
   // skip this test on Windows
   if (mozinfo.os != "win") {
@@ -18,7 +16,7 @@ function run_test() {
     if (link.exists())
       link.remove(false);
 
-    var ln = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    var ln = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
     ln.initWithPath("/bin/ln");
     var process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
     process.init(ln);

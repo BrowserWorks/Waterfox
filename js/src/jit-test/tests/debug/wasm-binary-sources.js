@@ -3,7 +3,7 @@
 load(libdir + "asserts.js");
 load(libdir + "array-compare.js");
 
-if (!wasmDebuggingIsSupported())
+if (!wasmIsSupported())
   quit();
 
 var g = newGlobal();

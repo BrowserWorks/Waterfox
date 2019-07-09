@@ -11,7 +11,7 @@ use cssparser::Parser;
 use parser::{Parse, ParserContext};
 use std::borrow::Cow;
 use std::fmt;
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
+use style_traits::{ToCss, ParseError, StyleParseError};
 use values::computed::Percentage;
 use values::generics::basic_shape::{Circle as GenericCircle};
 use values::generics::basic_shape::{ClippingShape as GenericClippingShape, Ellipse as GenericEllipse};
@@ -26,10 +26,10 @@ use values::specified::position::{HorizontalPosition, Position, PositionComponen
 use values::specified::url::SpecifiedUrl;
 
 /// A specified clipping shape.
-pub type ClippingShape = GenericClippingShape<BasicShape, SpecifiedUrl>;
+pub type ClippingShape = GenericClippingShape<BasicShape>;
 
 /// A specified float area shape.
-pub type FloatAreaShape = GenericFloatAreaShape<BasicShape, SpecifiedUrl>;
+pub type FloatAreaShape = GenericFloatAreaShape<BasicShape>;
 
 /// A specified basic shape.
 pub type BasicShape = GenericBasicShape<HorizontalPosition, VerticalPosition, LengthOrPercentage>;
@@ -49,7 +49,7 @@ pub type ShapeRadius = GenericShapeRadius<LengthOrPercentage>;
 /// The specified value of `Polygon`
 pub type Polygon = GenericPolygon<LengthOrPercentage>;
 
-impl<ReferenceBox: Parse> Parse for ShapeSource<BasicShape, ReferenceBox, SpecifiedUrl> {
+impl<ReferenceBox: Parse> Parse for ShapeSource<BasicShape, ReferenceBox> {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         if input.try(|i| i.expect_ident_matching("none")).is_ok() {
             return Ok(ShapeSource::None)
@@ -81,7 +81,7 @@ impl<ReferenceBox: Parse> Parse for ShapeSource<BasicShape, ReferenceBox, Specif
             return Ok(ShapeSource::Shape(shp, ref_box))
         }
 
-        ref_box.map(|v| ShapeSource::Box(v)).ok_or(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        ref_box.map(|v| ShapeSource::Box(v)).ok_or(StyleParseError::UnspecifiedError.into())
     }
 }
 
@@ -91,7 +91,7 @@ impl Parse for GeometryBox {
             return Ok(GeometryBox::ShapeBox(shape_box))
         }
 
-        try_match_ident_ignore_ascii_case! { input,
+        try_match_ident_ignore_ascii_case! { input.expect_ident()?,
             "fill-box" => Ok(GeometryBox::FillBox),
             "stroke-box" => Ok(GeometryBox::StrokeBox),
             "view-box" => Ok(GeometryBox::ViewBox),
@@ -101,7 +101,6 @@ impl Parse for GeometryBox {
 
 impl Parse for BasicShape {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let location = input.current_source_location();
         let function = input.expect_function()?.clone();
         input.parse_nested_block(move |i| {
             (match_ignore_ascii_case! { &function,
@@ -110,7 +109,7 @@ impl Parse for BasicShape {
                 "ellipse" => return Ellipse::parse_function_arguments(context, i).map(GenericBasicShape::Ellipse),
                 "polygon" => return Polygon::parse_function_arguments(context, i).map(GenericBasicShape::Polygon),
                 _ => Err(())
-            }).map_err(|()| location.new_custom_error(StyleParseErrorKind::UnexpectedFunction(function.clone())))
+            }).map_err(|()| StyleParseError::UnexpectedFunction(function.clone()).into())
         })
     }
 }
@@ -230,14 +229,14 @@ impl Parse for ShapeRadius {
             return Ok(GenericShapeRadius::Length(lop))
         }
 
-        try_match_ident_ignore_ascii_case! { input,
+        try_match_ident_ignore_ascii_case! { input.expect_ident()?,
             "closest-side" => Ok(GenericShapeRadius::ClosestSide),
             "farthest-side" => Ok(GenericShapeRadius::FarthestSide),
         }
     }
 }
 
-/// <https://drafts.csswg.org/css-shapes/#basic-shape-serialization>
+/// https://drafts.csswg.org/css-shapes/#basic-shape-serialization
 ///
 /// Positions get serialized differently with basic shapes. Keywords
 /// are converted to percentages where possible. Only the two or four

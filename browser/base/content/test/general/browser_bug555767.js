@@ -2,7 +2,7 @@
      * License, v. 2.0. If a copy of the MPL was not distributed with this
      * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-    add_task(async function listener() {
+    add_task(async function() {
       let testURL = "http://example.org/browser/browser/base/content/test/general/dummy_page.html";
       let tabSelected = false;
 
@@ -13,7 +13,7 @@
       await promiseTabLoaded(baseTab);
       if (baseTab.linkedBrowser.currentURI.spec == "about:blank")
         return;
-      baseTab.linkedBrowser.removeEventListener("load", listener, true);
+      baseTab.linkedBrowser.removeEventListener("load", arguments.callee, true);
 
       let testTab = BrowserTestUtils.addTab(gBrowser);
 
@@ -51,3 +51,4 @@
       // Press enter!
       EventUtils.synthesizeKey("VK_RETURN", {});
     });
+

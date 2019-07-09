@@ -52,7 +52,7 @@ public:
 
   void SetupInterception(const nsHttpResponseHead& aResponseHead);
   void SetupInterceptionAfterRedirect(bool aShouldIntercept);
-  void ClearInterceptedChannel(nsIStreamListener* aListener);
+  void ClearInterceptedChannel();
 
 private:
   virtual ~HttpChannelParentListener();
@@ -73,10 +73,6 @@ private:
   bool mShouldIntercept;
   // Set if this channel should suspend on interception.
   bool mShouldSuspendIntercept;
-  // Set if the channel interception has been canceled.  Can be set before
-  // interception first occurs.  In this case cancelation is deferred until
-  // the interception takes place.
-  bool mInterceptCanceled;
 
   nsAutoPtr<nsHttpResponseHead> mSynthesizedResponseHead;
 

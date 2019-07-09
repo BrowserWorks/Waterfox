@@ -1,11 +1,11 @@
 // enable crash reporting first
 var cwd = Components.classes["@mozilla.org/file/directory_service;1"]
       .getService(Components.interfaces.nsIProperties)
-      .get("CurWorkD", Components.interfaces.nsIFile);
+      .get("CurWorkD", Components.interfaces.nsILocalFile);
 
 // get the temp dir
 var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
-var _tmpd = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsIFile);
+var _tmpd = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
 _tmpd.initWithPath(env.get("XPCSHELL_TEST_TEMP_DIR"));
 
 var crashReporter =

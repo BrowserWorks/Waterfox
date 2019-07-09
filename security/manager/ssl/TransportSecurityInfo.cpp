@@ -89,13 +89,12 @@ TransportSecurityInfo::SetOriginAttributes(
   mOriginAttributes = aOriginAttributes;
 }
 
-NS_IMETHODIMP
-TransportSecurityInfo::GetErrorCode(int32_t* state)
+PRErrorCode
+TransportSecurityInfo::GetErrorCode() const
 {
   MutexAutoLock lock(mMutex);
 
-  *state = mErrorCode;
-  return NS_OK;
+  return mErrorCode;
 }
 
 void
@@ -258,6 +257,13 @@ TransportSecurityInfo::formatErrorMessage(const MutexAutoLock& /*proofOfLock*/,
 }
 
 NS_IMETHODIMP
+TransportSecurityInfo::GetErrorCode(int32_t* state)
+{
+  *state = GetErrorCode();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 TransportSecurityInfo::GetInterface(const nsIID & uuid, void * *result)
 {
   if (!NS_IsMainThread()) {
@@ -404,7 +410,12 @@ TransportSecurityInfo::Read(nsIObjectInputStream* stream)
   if (NS_FAILED(rv)) {
     return rv;
   }
-  mSSLStatus = BitwiseCast<nsSSLStatus*, nsISupports*>(supports.get());
+  nsCOMPtr<nsISSLStatus> castGuard(do_QueryInterface(supports));
+  if (castGuard) {
+    mSSLStatus = BitwiseCast<nsSSLStatus*, nsISSLStatus*>(castGuard.get());
+  } else {
+    mSSLStatus = nullptr;
+  }
 
   nsCOMPtr<nsISupports> failedCertChainSupports;
   rv = NS_ReadOptionalObject(stream, true, getter_AddRefs(failedCertChainSupports));
@@ -432,16 +443,16 @@ TransportSecurityInfo::GetScriptableHelper(nsIXPCScriptable **_retval)
 }
 
 NS_IMETHODIMP
-TransportSecurityInfo::GetContractID(nsACString& aContractID)
+TransportSecurityInfo::GetContractID(char * *aContractID)
 {
-  aContractID.SetIsVoid(true);
+  *aContractID = nullptr;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-TransportSecurityInfo::GetClassDescription(nsACString& aClassDescription)
+TransportSecurityInfo::GetClassDescription(char * *aClassDescription)
 {
-  aClassDescription.SetIsVoid(true);
+  *aClassDescription = nullptr;
   return NS_OK;
 }
 

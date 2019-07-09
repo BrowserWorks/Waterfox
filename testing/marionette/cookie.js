@@ -4,13 +4,15 @@
 
 "use strict";
 
-const {interfaces: Ci, utils: Cu, results: Cr} = Components;
+const {interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
 Cu.import("chrome://marionette/content/assert.js");
-const {InvalidCookieDomainError} = Cu.import("chrome://marionette/content/error.js", {});
-const {pprint} = Cu.import("chrome://marionette/content/format.js", {});
+const {
+  error,
+  InvalidCookieDomainError,
+} = Cu.import("chrome://marionette/content/error.js", {});
 
 this.EXPORTED_SYMBOLS = ["cookie"];
 
@@ -35,9 +37,8 @@ this.cookie = {
  *
  * @param {Object.<string, (number|boolean|string)>} json
  *     Cookie to be deserialised.  <var>name</var> and <var>value</var>
- *     are required fields which must be strings.  The <var>path</var> and
- *     <var>domain</var> fields are optional, but must be a string if
- *     provided.
+ *     are required fields which must be strings.  The <var>path</var>
+ *     field is optional, but must be a string if provided.
  *     The <var>secure</var>, <var>httpOnly</var>, and
  *     <var>session</var>fields are similarly optional, but must be
  *     booleans.  Likewise, the <var>expiry</var> field is optional but
@@ -52,14 +53,11 @@ this.cookie = {
 cookie.fromJSON = function(json) {
   let newCookie = {};
 
-  assert.object(json, pprint`Expected cookie object, got ${json}`);
+  assert.object(json, error.pprint`Expected cookie object, got ${json}`);
 
   newCookie.name = assert.string(json.name, "Cookie name must be string");
   newCookie.value = assert.string(json.value, "Cookie value must be string");
 
-  if (typeof json.domain != "undefined") {
-    newCookie.domain = assert.string(json.domain, "Cookie domain must be string");
-  }
   if (typeof json.path != "undefined") {
     newCookie.path = assert.string(json.path, "Cookie path must be string");
   }
@@ -97,12 +95,6 @@ cookie.fromJSON = function(json) {
 cookie.add = function(newCookie, {restrictToHost = null} = {}) {
   assert.string(newCookie.name, "Cookie name must be string");
   assert.string(newCookie.value, "Cookie value must be string");
-
-  let hostOnly = false;
-  if (typeof newCookie.domain == "undefined") {
-    hostOnly = true;
-    newCookie.domain = restrictToHost;
-  }
   assert.string(newCookie.domain, "Cookie domain must be string");
 
   if (typeof newCookie.path == "undefined") {
@@ -117,31 +109,11 @@ cookie.add = function(newCookie, {restrictToHost = null} = {}) {
     newCookie.expiry = date.getTime() / 1000;
   }
 
-  let isIpAddress = false;
-  try {
-    Services.eTLD.getPublicSuffixFromHost(newCookie.domain);
-  } catch (e) {
-    switch (e.result) {
-      case Cr.NS_ERROR_HOST_IS_IP_ADDRESS:
-        isIpAddress = true;
-        break;
-      default:
-        throw new InvalidCookieDomainError(newCookie.domain);
-    }
-  }
-
-  if (!hostOnly && !isIpAddress) {
-    // only store this as a domain cookie if the domain was specified in the
-    // request and it wasn't an IP address.
-    newCookie.domain = "." + newCookie.domain;
-  }
-
   if (restrictToHost) {
-    if (!restrictToHost.endsWith(newCookie.domain) &&
-        ("." + restrictToHost) !== newCookie.domain &&
-        restrictToHost !== newCookie.domain) {
-      throw new InvalidCookieDomainError(`Cookies may only be set ` +
-          `for the current domain (${restrictToHost})`);
+    if (newCookie.domain !== restrictToHost) {
+      throw new InvalidCookieDomainError(
+          `Cookies may only be set ` +
+          ` for the current domain (${restrictToHost})`);
     }
   }
 
@@ -192,7 +164,7 @@ cookie.remove = function(toDelete) {
  * @return {Iterable.<Cookie>}
  *     Iterator.
  */
-cookie.iter = function* (host, currentPath = "/") {
+cookie.iter = function*(host, currentPath = "/") {
   assert.string(host, "host must be string");
   assert.string(currentPath, "currentPath must be string");
 

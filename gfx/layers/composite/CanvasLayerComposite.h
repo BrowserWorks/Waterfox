@@ -33,6 +33,12 @@ protected:
   virtual ~CanvasLayerComposite();
 
 public:
+  // CanvasLayer impl
+  virtual void Initialize(const Data& aData) override
+  {
+    MOZ_CRASH("Incompatibe surface type");
+  }
+
   virtual bool SetCompositableHost(CompositableHost* aHost) override;
 
   virtual void Disconnect() override
@@ -57,11 +63,6 @@ public:
   virtual const char* Name() const override { return "CanvasLayerComposite"; }
 
 protected:
-  CanvasRenderer* CreateCanvasRendererInternal() override {
-    MOZ_CRASH("Incompatible surface type");
-    return nullptr;
-  }
-
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
 
 private:

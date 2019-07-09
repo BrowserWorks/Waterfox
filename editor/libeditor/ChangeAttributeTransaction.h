@@ -13,7 +13,7 @@
 #include "nsISupportsImpl.h"              // NS_DECL_ISUPPORTS_INHERITED
 #include "nsString.h"                     // nsString members
 
-class nsAtom;
+class nsIAtom;
 
 namespace mozilla {
 
@@ -34,7 +34,7 @@ public:
    * @param aValue     the new value for aAttribute, or null to remove
    */
   ChangeAttributeTransaction(dom::Element& aElement,
-                             nsAtom& aAttribute,
+                             nsIAtom& aAttribute,
                              const nsAString* aValue);
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -52,7 +52,7 @@ private:
   nsCOMPtr<dom::Element> mElement;
 
   // The attribute to change
-  RefPtr<nsAtom> mAttribute;
+  nsCOMPtr<nsIAtom> mAttribute;
 
   // The value to set the attribute to (ignored if mRemoveAttribute==true)
   nsString mValue;

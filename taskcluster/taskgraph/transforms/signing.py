@@ -75,7 +75,6 @@ def validate(config, jobs):
 def make_task_description(config, jobs):
     for job in jobs:
         dep_job = job['dependent-task']
-        attributes = dep_job.attributes
 
         signing_format_scopes = []
         formats = set([])
@@ -100,15 +99,7 @@ def make_task_description(config, jobs):
         treeherder.setdefault('tier', 1)
         treeherder.setdefault('kind', 'build')
 
-        label = job['label']
-        description = (
-            "Initial Signing for locale '{locale}' for build '"
-            "{build_platform}/{build_type}'".format(
-                locale=attributes.get('locale', 'en-US'),
-                build_platform=attributes.get('build_platform'),
-                build_type=attributes.get('build_type')
-            )
-        )
+        label = job.get('label', "{}-signing".format(dep_job.label))
 
         attributes = copy_attributes_from_dependent_job(dep_job)
         attributes['signed'] = True
@@ -123,7 +114,8 @@ def make_task_description(config, jobs):
 
         task = {
             'label': label,
-            'description': description,
+            'description': "{} Signing".format(
+                dep_job.task["metadata"]["description"]),
             'worker-type': _generate_worker_type(signing_cert_scope),
             'worker': {'implementation': 'scriptworker-signing',
                        'upstream-artifacts': job['upstream-artifacts'],

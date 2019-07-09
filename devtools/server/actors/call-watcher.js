@@ -6,8 +6,11 @@
 /* global XPCNativeWrapper */
 
 const {Ci, Cu} = require("chrome");
+const events = require("sdk/event/core");
 const protocol = require("devtools/shared/protocol");
-const {serializeStack, parseStack} = Cu.import("resource://devtools/shared/base-loader.js", {});
+const {serializeStack, parseStack} = require("toolkit/loader");
+
+const {on, off, emit} = events;
 
 const { functionCallSpec, callWatcherSpec } = require("devtools/shared/specs/call-watcher");
 const { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
@@ -234,13 +237,13 @@ exports.CallWatcherActor = protocol.ActorClassWithSpec(callWatcherSpec, {
     this._onGlobalCreated = this._onGlobalCreated.bind(this);
     this._onGlobalDestroyed = this._onGlobalDestroyed.bind(this);
     this._onContentFunctionCall = this._onContentFunctionCall.bind(this);
-    this.tabActor.on("window-ready", this._onGlobalCreated);
-    this.tabActor.on("window-destroyed", this._onGlobalDestroyed);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
+    on(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
   },
   destroy: function (conn) {
     protocol.Actor.prototype.destroy.call(this, conn);
-    this.tabActor.off("window-ready", this._onGlobalCreated);
-    this.tabActor.off("window-destroyed", this._onGlobalDestroyed);
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
+    off(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
     this.finalize();
   },
 
@@ -540,7 +543,7 @@ exports.CallWatcherActor = protocol.ActorClassWithSpec(callWatcherSpec, {
     if (this.onCall) {
       this.onCall(functionCall);
     } else {
-      this.emit("call", functionCall);
+      emit(this, "call", functionCall);
     }
   }
 });

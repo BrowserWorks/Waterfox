@@ -9,17 +9,17 @@ use style::thread_state;
 
 /// A mutable field in the DOM.
 ///
-/// This extends the API of `std::cell::RefCell` to allow unsafe access in
+/// This extends the API of `core::cell::RefCell` to allow unsafe access in
 /// certain situations, with dynamic checking in debug builds.
-#[derive(Clone, Debug, Default, MallocSizeOf, PartialEq)]
-pub struct DomRefCell<T> {
+#[derive(Clone, Debug, Default, HeapSizeOf, PartialEq)]
+pub struct DOMRefCell<T> {
     value: RefCell<T>,
 }
 
-// Functionality specific to Servo's `DomRefCell` type
+// Functionality specific to Servo's `DOMRefCell` type
 // ===================================================
 
-impl<T> DomRefCell<T> {
+impl<T> DOMRefCell<T> {
     /// Return a reference to the contents.
     ///
     /// For use in the layout thread only.
@@ -57,12 +57,12 @@ impl<T> DomRefCell<T> {
     }
 }
 
-// Functionality duplicated with `std::cell::RefCell`
+// Functionality duplicated with `core::cell::RefCell`
 // ===================================================
-impl<T> DomRefCell<T> {
-    /// Create a new `DomRefCell` containing `value`.
-    pub fn new(value: T) -> DomRefCell<T> {
-        DomRefCell {
+impl<T> DOMRefCell<T> {
+    /// Create a new `DOMRefCell` containing `value`.
+    pub fn new(value: T) -> DOMRefCell<T> {
+        DOMRefCell {
             value: RefCell::new(value),
         }
     }
@@ -79,7 +79,7 @@ impl<T> DomRefCell<T> {
     ///
     /// Panics if the value is currently mutably borrowed.
     pub fn borrow(&self) -> Ref<T> {
-        self.try_borrow().expect("DomRefCell<T> already mutably borrowed")
+        self.try_borrow().expect("DOMRefCell<T> already mutably borrowed")
     }
 
     /// Mutably borrows the wrapped value.
@@ -93,7 +93,7 @@ impl<T> DomRefCell<T> {
     ///
     /// Panics if the value is currently borrowed.
     pub fn borrow_mut(&self) -> RefMut<T> {
-        self.try_borrow_mut().expect("DomRefCell<T> already borrowed")
+        self.try_borrow_mut().expect("DOMRefCell<T> already borrowed")
     }
 
     /// Attempts to immutably borrow the wrapped value.

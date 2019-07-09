@@ -93,8 +93,7 @@ public:
   MOCK_METHOD3(NotifyAPZStateChange, void(const ScrollableLayerGuid& aGuid, APZStateChange aChange, int aArg));
   MOCK_METHOD0(NotifyFlushComplete, void());
   MOCK_METHOD1(NotifyAsyncScrollbarDragRejected, void(const FrameMetrics::ViewID&));
-  MOCK_METHOD1(NotifyAsyncAutoscrollRejected, void(const FrameMetrics::ViewID&));
-  MOCK_METHOD1(CancelAutoscroll, void(const ScrollableLayerGuid&));
+  MOCK_METHOD1(NotifyAutoscrollHandledByAPZ, void(const FrameMetrics::ViewID&));
 };
 
 class MockContentControllerDelayed : public MockContentController {
@@ -231,39 +230,39 @@ public:
   }
 
   void SetFrameMetrics(const FrameMetrics& metrics) {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     mFrameMetrics = metrics;
   }
 
   FrameMetrics& GetFrameMetrics() {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return mFrameMetrics;
   }
 
   ScrollMetadata& GetScrollMetadata() {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return mScrollMetadata;
   }
 
   const FrameMetrics& GetFrameMetrics() const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     return mFrameMetrics;
   }
 
   using AsyncPanZoomController::GetVelocityVector;
 
   void AssertStateIsReset() const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     EXPECT_EQ(NOTHING, mState);
   }
 
   void AssertStateIsFling() const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     EXPECT_EQ(FLING, mState);
   }
 
   void AssertAxisLocked(ScrollDirection aDirection) const {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    ReentrantMonitorAutoEnter lock(mMonitor);
     switch (aDirection) {
     case ScrollDirection::NONE:
       EXPECT_EQ(PANNING, mState);

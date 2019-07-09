@@ -217,6 +217,7 @@ nsStyleSet::nsStyleSet()
     mInGC(false),
     mAuthorStyleDisabled(false),
     mInReconstruct(false),
+    mInitFontFeatureValuesLookup(true),
     mNeedsRestyleAfterEnsureUniqueInner(false),
     mUsesViewportUnits(false),
     mDirty(0),
@@ -250,12 +251,10 @@ nsStyleSet::~nsStyleSet()
   }
 }
 
-void
-nsStyleSet::AddSizeOfIncludingThis(nsWindowSizes& aSizes) const
+size_t
+nsStyleSet::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
-  MallocSizeOf mallocSizeOf = aSizes.mState.mMallocSizeOf;
-
-  size_t n = mallocSizeOf(this);
+  size_t n = aMallocSizeOf(this);
 
   for (SheetType type : MakeEnumeratedRange(SheetType::Count)) {
     if (mRuleProcessors[type]) {
@@ -267,20 +266,20 @@ nsStyleSet::AddSizeOfIncludingThis(nsWindowSizes& aSizes) const
         shared = rp->IsShared();
       }
       if (!shared) {
-        n += mRuleProcessors[type]->SizeOfIncludingThis(mallocSizeOf);
+        n += mRuleProcessors[type]->SizeOfIncludingThis(aMallocSizeOf);
       }
     }
     // We don't own the sheets (either the nsLayoutStyleSheetCache singleton
     // or our document owns them).
-    n += mSheets[type].ShallowSizeOfExcludingThis(mallocSizeOf);
+    n += mSheets[type].ShallowSizeOfExcludingThis(aMallocSizeOf);
   }
 
   for (uint32_t i = 0; i < mScopedDocSheetRuleProcessors.Length(); i++) {
-    n += mScopedDocSheetRuleProcessors[i]->SizeOfIncludingThis(mallocSizeOf);
+    n += mScopedDocSheetRuleProcessors[i]->SizeOfIncludingThis(aMallocSizeOf);
   }
-  n += mScopedDocSheetRuleProcessors.ShallowSizeOfExcludingThis(mallocSizeOf);
+  n += mScopedDocSheetRuleProcessors.ShallowSizeOfExcludingThis(aMallocSizeOf);
 
-  aSizes.mLayoutGeckoStyleSets += n;
+  return n;
 }
 
 void
@@ -874,7 +873,7 @@ nsStyleSet::GetContext(GeckoStyleContext* aParentContext,
                        // because aParentContext has one, then aRuleNode
                        // should be used.)
                        nsRuleNode* aVisitedRuleNode,
-                       nsAtom* aPseudoTag,
+                       nsIAtom* aPseudoTag,
                        CSSPseudoElementType aPseudoType,
                        Element* aElementForAnimation,
                        uint32_t aFlags)
@@ -2029,7 +2028,7 @@ nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
                "must have pseudo element type");
   NS_ASSERTION(aParentElement, "aParentElement must not be null");
 
-  nsAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(aType);
+  nsIAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(aType);
   nsRuleWalker ruleWalker(mRuleTree, mAuthorStyleDisabled);
   aTreeMatchContext.ResetForUnvisitedMatching();
   PseudoElementRuleProcessorData data(PresContext(), aParentElement,
@@ -2095,7 +2094,7 @@ nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
 }
 
 already_AddRefed<GeckoStyleContext>
-nsStyleSet::ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
+nsStyleSet::ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
                                                GeckoStyleContext* aParentContext)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
@@ -2141,7 +2140,7 @@ nsStyleSet::ResolveInheritingAnonymousBoxStyle(nsAtom* aPseudoTag,
 }
 
 already_AddRefed<GeckoStyleContext>
-nsStyleSet::ResolveNonInheritingAnonymousBoxStyle(nsAtom* aPseudoTag)
+nsStyleSet::ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
 
@@ -2186,7 +2185,7 @@ already_AddRefed<GeckoStyleContext>
 nsStyleSet::ResolveXULTreePseudoStyle(Element* aParentElement,
                                       nsICSSAnonBoxPseudo* aPseudoTag,
                                       GeckoStyleContext* aParentContext,
-                                      const mozilla::AtomArray& aInputWord)
+                                      nsICSSPseudoComparator* aComparator)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
 
@@ -2199,7 +2198,7 @@ nsStyleSet::ResolveXULTreePseudoStyle(Element* aParentElement,
                                aParentElement->OwnerDoc());
   InitStyleScopes(treeContext, aParentElement);
   XULTreeRuleProcessorData data(PresContext(), aParentElement, &ruleWalker,
-                                aPseudoTag, aInputWord, treeContext);
+                                aPseudoTag, aComparator, treeContext);
   FileRules(EnumRulesMatching<XULTreeRuleProcessorData>, &data, aParentElement,
             &ruleWalker);
 
@@ -2241,7 +2240,7 @@ nsStyleSet::AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray)
 }
 
 nsCSSKeyframesRule*
-nsStyleSet::KeyframesRuleForName(nsAtom* aName)
+nsStyleSet::KeyframesRuleForName(const nsString& aName)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
   NS_ASSERTION(mBatching == 0, "rule processors out of date");
@@ -2263,7 +2262,7 @@ nsStyleSet::KeyframesRuleForName(nsAtom* aName)
 }
 
 nsCSSCounterStyleRule*
-nsStyleSet::CounterStyleRuleForName(nsAtom* aName)
+nsStyleSet::CounterStyleRuleForName(nsIAtom* aName)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
   NS_ASSERTION(mBatching == 0, "rule processors out of date");
@@ -2284,29 +2283,6 @@ nsStyleSet::CounterStyleRuleForName(nsAtom* aName)
   return nullptr;
 }
 
-already_AddRefed<gfxFontFeatureValueSet>
-nsStyleSet::BuildFontFeatureValueSet()
-{
-  nsTArray<nsCSSFontFeatureValuesRule*> rules;
-  AppendFontFeatureValuesRules(rules);
-
-  if (rules.IsEmpty()) {
-    return nullptr;
-  }
-
-  RefPtr<gfxFontFeatureValueSet> set = new gfxFontFeatureValueSet();
-  for (nsCSSFontFeatureValuesRule* rule : rules) {
-    const nsTArray<FontFamilyName>& familyList = rule->GetFamilyList()->mNames;
-    const nsTArray<gfxFontFeatureValueSet::FeatureValues>&
-      featureValues = rule->GetFeatureValues();
-
-    for (const FontFamilyName& f : familyList) {
-      set->AddFontFeatureValues(f.mName, featureValues);
-    }
-  }
-  return set.forget();
-}
-
 bool
 nsStyleSet::AppendFontFeatureValuesRules(
                                  nsTArray<nsCSSFontFeatureValuesRule*>& aArray)
@@ -2325,6 +2301,40 @@ nsStyleSet::AppendFontFeatureValuesRules(
     }
   }
   return true;
+}
+
+already_AddRefed<gfxFontFeatureValueSet>
+nsStyleSet::GetFontFeatureValuesLookup()
+{
+  if (mInitFontFeatureValuesLookup) {
+    mInitFontFeatureValuesLookup = false;
+
+    nsTArray<nsCSSFontFeatureValuesRule*> rules;
+    AppendFontFeatureValuesRules(rules);
+
+    mFontFeatureValuesLookup = new gfxFontFeatureValueSet();
+
+    uint32_t i, numRules = rules.Length();
+    for (i = 0; i < numRules; i++) {
+      nsCSSFontFeatureValuesRule *rule = rules[i];
+
+      const nsTArray<FontFamilyName>& familyList = rule->GetFamilyList().GetFontlist();
+      const nsTArray<gfxFontFeatureValueSet::FeatureValues>&
+        featureValues = rule->GetFeatureValues();
+
+      // for each family
+      size_t f, numFam;
+
+      numFam = familyList.Length();
+      for (f = 0; f < numFam; f++) {
+        mFontFeatureValuesLookup->AddFontFeatureValues(familyList[f].mName,
+                                                       featureValues);
+      }
+    }
+  }
+
+  RefPtr<gfxFontFeatureValueSet> lookup = mFontFeatureValuesLookup;
+  return lookup.forget();
 }
 
 bool
@@ -2467,7 +2477,7 @@ nsStyleSet::ReparentStyleContext(GeckoStyleContext* aStyleContext,
     return ret.forget();
   }
 
-  nsAtom* pseudoTag = aStyleContext->GetPseudo();
+  nsIAtom* pseudoTag = aStyleContext->GetPseudo();
   CSSPseudoElementType pseudoType = aStyleContext->GetPseudoType();
   nsRuleNode* ruleNode = aStyleContext->RuleNode();
 
@@ -2618,7 +2628,7 @@ nsStyleSet::HasStateDependentStyle(Element* aElement,
 
 struct MOZ_STACK_CLASS AttributeData : public AttributeRuleProcessorData {
   AttributeData(nsPresContext* aPresContext, Element* aElement,
-                int32_t aNameSpaceID, nsAtom* aAttribute, int32_t aModType,
+                int32_t aNameSpaceID, nsIAtom* aAttribute, int32_t aModType,
                 bool aAttrHasChanged, const nsAttrValue* aOtherValue,
                 TreeMatchContext& aTreeMatchContext)
     : AttributeRuleProcessorData(aPresContext, aElement, aNameSpaceID,
@@ -2644,7 +2654,7 @@ SheetHasAttributeStyle(nsIStyleRuleProcessor* aProcessor, void *aData)
 nsRestyleHint
 nsStyleSet::HasAttributeDependentStyle(Element*       aElement,
                                        int32_t        aNameSpaceID,
-                                       nsAtom*       aAttribute,
+                                       nsIAtom*       aAttribute,
                                        int32_t        aModType,
                                        bool           aAttrHasChanged,
                                        const nsAttrValue* aOtherValue,
@@ -2686,8 +2696,8 @@ nsStyleSet::MediumFeaturesChanged(bool aViewportChanged)
   }
 
   if (mBindingManager) {
-    bool thisChanged =
-      mBindingManager->MediumFeaturesChanged(presContext);
+    bool thisChanged = false;
+    mBindingManager->MediumFeaturesChanged(presContext, &thisChanged);
     stylesChanged = stylesChanged || thisChanged;
   }
 
@@ -2729,15 +2739,7 @@ nsStyleSet::EnsureUniqueInnerOnCSSSheets()
     StyleSheet* sheet = queue[idx];
     queue.RemoveElementAt(idx);
 
-    // Only call EnsureUniqueInner for complete sheets. If we do call it on
-    // incomplete sheets, we'll cause problems when the sheet is actually
-    // loaded. We don't care about incomplete sheets here anyway, because this
-    // method is only invoked by nsPresContext::EnsureSafeToHandOutCSSRules.
-    // The CSSRule objects we are handing out won't contain any rules derived
-    // from incomplete sheets (because they aren't yet applied in styling).
-    if (sheet->IsComplete()) {
-      sheet->EnsureUniqueInner();
-    }
+    sheet->EnsureUniqueInner();
 
     // Enqueue all the sheet's children.
     sheet->AppendAllChildSheets(queue);

@@ -3,7 +3,6 @@
 // This code is governed by the license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.compareexchange
 description: Testing descriptor property of Atomics.compareExchange
 includes: [propertyHelper.js]
 ---*/

@@ -14,11 +14,11 @@
 #include "mozilla/Attributes.h"           // for final
 #include "nsCOMPtr.h"                     // for member
 #include "nsCycleCollectionParticipant.h" // for NS_DECL_CYCLE_*
-#include "nsStringFwd.h"
 #include "plhash.h"                       // for typedef PLHashNumber
 
+class nsAString;
 class nsBindingManager;
-class nsAtom;
+class nsIAtom;
 class nsIDocument;
 class nsIDOMDocumentType;
 class nsIPrincipal;
@@ -61,12 +61,12 @@ public:
    * Methods for creating nodeinfo's from atoms and/or strings.
    */
   already_AddRefed<mozilla::dom::NodeInfo>
-  GetNodeInfo(nsAtom *aName, nsAtom *aPrefix, int32_t aNamespaceID,
-              uint16_t aNodeType, nsAtom* aExtraName = nullptr);
-  nsresult GetNodeInfo(const nsAString& aName, nsAtom *aPrefix,
+  GetNodeInfo(nsIAtom *aName, nsIAtom *aPrefix, int32_t aNamespaceID,
+              uint16_t aNodeType, nsIAtom* aExtraName = nullptr);
+  nsresult GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
                        int32_t aNamespaceID, uint16_t aNodeType,
                        mozilla::dom::NodeInfo** aNodeInfo);
-  nsresult GetNodeInfo(const nsAString& aName, nsAtom *aPrefix,
+  nsresult GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
                        const nsAString& aNamespaceURI, uint16_t aNodeType,
                        mozilla::dom::NodeInfo** aNodeInfo);
 
@@ -109,39 +109,12 @@ public:
     return mBindingManager;
   }
 
-  enum Tri
-  {
-    eTriUnset = 0,
-    eTriFalse,
-    eTriTrue
-  };
-
-  /**
-   * Returns true if SVG nodes in this document have real SVG semantics.
-   */
-  bool SVGEnabled()
-  {
-    return mSVGEnabled == eTriTrue
-             ? true
-             : mSVGEnabled == eTriFalse ? false : InternalSVGEnabled();
-  }
-
-  /**
-   * Returns true if MathML nodes in this document have real MathML semantics.
-   */
-  bool MathMLEnabled()
-  {
-    return mMathMLEnabled == eTriTrue
-             ? true
-             : mMathMLEnabled == eTriFalse ? false : InternalMathMLEnabled();
-  }
-
 protected:
   friend class nsDocument;
   friend class nsXULPrototypeDocument;
   friend nsresult NS_NewDOMDocumentType(nsIDOMDocumentType** ,
                                         nsNodeInfoManager *,
-                                        nsAtom *,
+                                        nsIAtom *,
                                         const nsAString& ,
                                         const nsAString& ,
                                         const nsAString& );
@@ -157,9 +130,6 @@ private:
   static int DropNodeInfoDocument(PLHashEntry *he, int hashIndex,
                                      void *arg);
 
-  bool InternalSVGEnabled();
-  bool InternalMathMLEnabled();
-
   PLHashTable *mNodeInfoHash;
   nsIDocument * MOZ_NON_OWNING_REF mDocument; // WEAK
   uint32_t mNonDocumentNodeInfos;
@@ -170,8 +140,6 @@ private:
   mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mDocumentNodeInfo; // WEAK to avoid circular ownership
   RefPtr<nsBindingManager> mBindingManager;
   mozilla::dom::NodeInfo* mRecentlyUsedNodeInfos[RECENTLY_USED_NODEINFOS_SIZE];
-  Tri mSVGEnabled;
-  Tri mMathMLEnabled;
 };
 
 #endif /* nsNodeInfoManager_h___ */

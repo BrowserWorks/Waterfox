@@ -126,7 +126,7 @@ class FunctionCompiler
 
     const ModuleEnvironment&   env_;
     IonOpIter                  iter_;
-    const FuncCompileInput&    func_;
+    const FuncBytes&           func_;
     const ValTypeVector&       locals_;
     size_t                     lastReadCallSite_;
 
@@ -149,7 +149,7 @@ class FunctionCompiler
   public:
     FunctionCompiler(const ModuleEnvironment& env,
                      Decoder& decoder,
-                     const FuncCompileInput& func,
+                     const FuncBytes& func,
                      const ValTypeVector& locals,
                      MIRGenerator& mirGen)
       : env_(env),
@@ -171,7 +171,7 @@ class FunctionCompiler
     const ModuleEnvironment&   env() const   { return env_; }
     IonOpIter&                 iter()        { return iter_; }
     TempAllocator&             alloc() const { return alloc_; }
-    const Sig&                 sig() const   { return *env_.funcSigs[func_.index]; }
+    const Sig&                 sig() const   { return func_.sig(); }
 
     BytecodeOffset bytecodeOffset() const {
         return iter_.bytecodeOffset();
@@ -184,14 +184,14 @@ class FunctionCompiler
     {
         // Prepare the entry block for MIR generation:
 
-        const ValTypeVector& args = sig().args();
+        const ValTypeVector& args = func_.sig().args();
 
         if (!mirGen_.ensureBallast())
             return false;
         if (!newBlock(/* prev */ nullptr, &curBlock_))
             return false;
 
-        for (ABIArgIter<ValTypeVector> i(args); !i.done(); i++) {
+        for (ABIArgValTypeIter i(args); !i.done(); i++) {
             MWasmParameter* ins = MWasmParameter::New(alloc(), *i, i.mirType());
             curBlock_->add(ins);
             curBlock_->initSlot(info().localSlot(i.index()), ins);
@@ -270,7 +270,7 @@ class FunctionCompiler
 #endif
         MOZ_ASSERT(inDeadCode());
         MOZ_ASSERT(done(), "all bytes must be consumed");
-        MOZ_ASSERT(func_.callSiteLineNums.length() == lastReadCallSite_);
+        MOZ_ASSERT(func_.callSiteLineNums().length() == lastReadCallSite_);
     }
 
     /************************* Read-only interface (after local scope setup) */
@@ -667,41 +667,6 @@ class FunctionCompiler
         if (inDeadCode())
             return nullptr;
         auto* ins = MExtendInt32ToInt64::New(alloc(), op, isUnsigned);
-        curBlock_->add(ins);
-        return ins;
-    }
-
-    MDefinition* signExtend(MDefinition* op, uint32_t srcSize, uint32_t targetSize)
-    {
-        if (inDeadCode())
-            return nullptr;
-        MInstruction* ins;
-        switch (targetSize) {
-          case 4: {
-            MSignExtendInt32::Mode mode;
-            switch (srcSize) {
-              case 1:  mode = MSignExtendInt32::Byte; break;
-              case 2:  mode = MSignExtendInt32::Half; break;
-              default: MOZ_CRASH("Bad sign extension");
-            }
-            ins = MSignExtendInt32::New(alloc(), op, mode);
-            break;
-          }
-          case 8: {
-            MSignExtendInt64::Mode mode;
-            switch (srcSize) {
-              case 1:  mode = MSignExtendInt64::Byte; break;
-              case 2:  mode = MSignExtendInt64::Half; break;
-              case 4:  mode = MSignExtendInt64::Word; break;
-              default: MOZ_CRASH("Bad sign extension");
-            }
-            ins = MSignExtendInt64::New(alloc(), op, mode);
-            break;
-          }
-          default: {
-            MOZ_CRASH("Bad sign extension");
-          }
-        }
         curBlock_->add(ins);
         return ins;
     }
@@ -1574,8 +1539,8 @@ class FunctionCompiler
     /************************************************************ DECODING ***/
 
     uint32_t readCallSiteLineOrBytecode() {
-        if (!func_.callSiteLineNums.empty())
-            return func_.callSiteLineNums[lastReadCallSite_++];
+        if (!func_.callSiteLineNums().empty())
+            return func_.callSiteLineNums()[lastReadCallSite_++];
         return iter_.lastOpcodeOffset();
     }
 
@@ -2037,19 +2002,14 @@ EmitCallArgs(FunctionCompiler& f, const Sig& sig, const DefVector& args, CallCom
 }
 
 static bool
-EmitCall(FunctionCompiler& f, bool asmJSFuncDef)
+EmitCall(FunctionCompiler& f)
 {
     uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
     uint32_t funcIndex;
     DefVector args;
-    if (asmJSFuncDef) {
-        if (!f.iter().readOldCallDirect(f.env().numFuncImports(), &funcIndex, &args))
-            return false;
-    } else {
-        if (!f.iter().readCall(&funcIndex, &args))
-            return false;
-    }
+    if (!f.iter().readCall(&funcIndex, &args))
+        return false;
 
     if (f.inDeadCode())
         return true;
@@ -2298,20 +2258,6 @@ EmitTruncate(FunctionCompiler& f, ValType operandType, ValType resultType,
     }
     return true;
 }
-
-#ifdef ENABLE_WASM_THREAD_OPS
-static bool
-EmitSignExtend(FunctionCompiler& f, uint32_t srcSize, uint32_t targetSize)
-{
-    MDefinition* input;
-    ValType type = targetSize == 4 ? ValType::I32 : ValType::I64;
-    if (!f.iter().readConversion(type, type, &input))
-        return false;
-
-    f.iter().setResult(f.signExtend(input, srcSize, targetSize));
-    return true;
-}
-#endif
 
 static bool
 EmitExtendI32(FunctionCompiler& f, bool isUnsigned)
@@ -3332,7 +3278,7 @@ EmitBodyExprs(FunctionCompiler& f)
 
           // Calls
           case uint16_t(Op::Call):
-            CHECK(EmitCall(f, /* asmJSFuncDef = */ false));
+            CHECK(EmitCall(f));
           case uint16_t(Op::CallIndirect):
             CHECK(EmitCallIndirect(f, /* oldStyle = */ false));
 
@@ -3655,20 +3601,6 @@ EmitBodyExprs(FunctionCompiler& f)
           case uint16_t(Op::F64ReinterpretI64):
             CHECK(EmitReinterpret(f, ValType::F64, ValType::I64, MIRType::Double));
 
-          // Sign extensions
-#ifdef ENABLE_WASM_THREAD_OPS
-          case uint16_t(Op::I32Extend8S):
-            CHECK(EmitSignExtend(f, 1, 4));
-          case uint16_t(Op::I32Extend16S):
-            CHECK(EmitSignExtend(f, 2, 4));
-          case uint16_t(Op::I64Extend8S):
-            CHECK(EmitSignExtend(f, 1, 8));
-          case uint16_t(Op::I64Extend16S):
-            CHECK(EmitSignExtend(f, 2, 8));
-          case uint16_t(Op::I64Extend32S):
-            CHECK(EmitSignExtend(f, 4, 8));
-#endif
-
           // asm.js-specific operators
 
           case uint16_t(Op::MozPrefix): {
@@ -3728,8 +3660,6 @@ EmitBodyExprs(FunctionCompiler& f)
                 CHECK_ASMJS(EmitBinaryMathBuiltinCall(f, SymbolicAddress::PowD, ValType::F64));
               case uint16_t(MozOp::F64Atan2):
                 CHECK_ASMJS(EmitBinaryMathBuiltinCall(f, SymbolicAddress::ATan2D, ValType::F64));
-              case uint16_t(MozOp::OldCallDirect):
-                CHECK_ASMJS(EmitCall(f, /* asmJSFuncDef = */ true));
               case uint16_t(MozOp::OldCallIndirect):
                 CHECK_ASMJS(EmitCallIndirect(f, /* oldStyle = */ true));
 
@@ -3859,86 +3789,71 @@ EmitBodyExprs(FunctionCompiler& f)
 }
 
 bool
-wasm::IonCompileFunctions(const ModuleEnvironment& env, LifoAlloc& lifo,
-                          const FuncCompileInputVector& inputs, CompiledCode* code,
-                          UniqueChars* error)
+wasm::IonCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* error)
 {
-    MOZ_ASSERT(env.tier == Tier::Ion);
+    MOZ_ASSERT(task->tier() == Tier::Ion);
 
-    TempAllocator alloc(&lifo);
-    JitContext jitContext(&alloc);
-    MOZ_ASSERT(IsCompilingWasm());
-    MacroAssembler masm(MacroAssembler::WasmToken(), alloc);
+    const FuncBytes& func = unit->func();
+    const ModuleEnvironment& env = task->env();
 
-    // Swap in already-allocated empty vectors to avoid malloc/free.
-    MOZ_ASSERT(code->empty());
-    if (!code->swap(masm))
+    Decoder d(func.bytes().begin(), func.bytes().end(), func.lineOrBytecode(), error);
+
+    // Build the local types vector.
+
+    ValTypeVector locals;
+    if (!locals.appendAll(func.sig().args()))
+        return false;
+    if (!DecodeLocalEntries(d, env.kind, &locals))
         return false;
 
-    for (const FuncCompileInput& func : inputs) {
-        Decoder d(func.begin, func.end, func.lineOrBytecode, error);
+    // Set up for Ion compilation.
 
-        // Build the local types vector.
+    JitContext jitContext(&task->alloc());
+    const JitCompileOptions options;
+    MIRGraph graph(&task->alloc());
+    CompileInfo compileInfo(locals.length());
+    MIRGenerator mir(nullptr, options, &task->alloc(), &graph, &compileInfo,
+                     IonOptimizations.get(OptimizationLevel::Wasm));
+    mir.initMinWasmHeapLength(env.minMemoryLength);
 
-        ValTypeVector locals;
-        if (!locals.appendAll(env.funcSigs[func.index]->args()))
+    // Build MIR graph
+    {
+        FunctionCompiler f(env, d, func, locals, mir);
+        if (!f.init())
             return false;
-        if (!DecodeLocalEntries(d, env.kind, &locals))
+
+        if (!f.startBlock())
             return false;
 
-        // Set up for Ion compilation.
+        if (!EmitBodyExprs(f))
+            return false;
 
-        const JitCompileOptions options;
-        MIRGraph graph(&alloc);
-        CompileInfo compileInfo(locals.length());
-        MIRGenerator mir(nullptr, options, &alloc, &graph, &compileInfo,
-                         IonOptimizations.get(OptimizationLevel::Wasm));
-        mir.initMinWasmHeapLength(env.minMemoryLength);
-
-        // Build MIR graph
-        {
-            FunctionCompiler f(env, d, func, locals, mir);
-            if (!f.init())
-                return false;
-
-            if (!f.startBlock())
-                return false;
-
-            if (!EmitBodyExprs(f))
-                return false;
-
-            f.finish();
-        }
-
-        // Compile MIR graph
-        {
-            jit::SpewBeginFunction(&mir, nullptr);
-            jit::AutoSpewEndFunction spewEndFunction(&mir);
-
-            if (!OptimizeMIR(&mir))
-                return false;
-
-            LIRGraph* lir = GenerateLIR(&mir);
-            if (!lir)
-                return false;
-
-            SigIdDesc sigId = env.funcSigs[func.index]->id;
-
-            CodeGenerator codegen(&mir, lir, &masm);
-
-            BytecodeOffset prologueTrapOffset(func.lineOrBytecode);
-            FuncOffsets offsets;
-            if (!codegen.generateWasm(sigId, prologueTrapOffset, &offsets))
-                return false;
-
-            if (!code->codeRanges.emplaceBack(func.index, func.lineOrBytecode, offsets))
-                return false;
-        }
+        f.finish();
     }
 
-    masm.finish();
-    if (masm.oom())
-        return false;
+    // Compile MIR graph
+    {
+        jit::SpewBeginFunction(&mir, nullptr);
+        jit::AutoSpewEndFunction spewEndFunction(&mir);
 
-    return code->swap(masm);
+        if (!OptimizeMIR(&mir))
+            return false;
+
+        LIRGraph* lir = GenerateLIR(&mir);
+        if (!lir)
+            return false;
+
+        SigIdDesc sigId = env.funcSigs[func.index()]->id;
+
+        CodeGenerator codegen(&mir, lir, &task->masm());
+
+        BytecodeOffset prologueTrapOffset(func.lineOrBytecode());
+        FuncOffsets offsets;
+        if (!codegen.generateWasm(sigId, prologueTrapOffset, &offsets))
+            return false;
+
+        unit->finish(offsets);
+    }
+
+    return true;
 }

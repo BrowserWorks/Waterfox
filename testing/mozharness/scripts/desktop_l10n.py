@@ -65,7 +65,7 @@ configuration_tokens = ('branch',
 # are defined at run time and they cannot be enforced in the _pre_config_lock
 # phase
 runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
-                         'abs_objdir', 'revision',
+                         'abs_objdir', 'abs_merge_dir', 'revision',
                          'to_buildid', 'en_us_binary_url',
                          'en_us_installer_binary_url', 'mar_tools_url',
                          'post_upload_extra', 'who')
@@ -392,6 +392,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             if binary.endswith('.exe'):
                 binary_path = binary_path.replace('\\', '\\\\\\\\')
             bootstrap_env[name] = binary_path
+            if 'LOCALE_MERGEDIR' in bootstrap_env:
+                # windows fix
+                bootstrap_env['LOCALE_MERGEDIR'] = bootstrap_env['LOCALE_MERGEDIR'].replace('\\', '\\\\\\\\')
         if self.query_is_nightly():
             bootstrap_env["IS_NIGHTLY"] = "yes"
         self.bootstrap_env = bootstrap_env
@@ -862,15 +865,20 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self._copy_mozconfig()
         dirs = self.query_abs_dirs()
         cwd = os.path.join(dirs['abs_locales_dir'])
-        target = ["installers-%s" % locale, ]
+        target = ["installers-%s" % locale,
+                  "LOCALE_MERGEDIR=%s" % env["LOCALE_MERGEDIR"], ]
         return self._make(target=target, cwd=cwd,
                           env=env, halt_on_failure=False)
 
     def repack_locale(self, locale):
-        """wraps the logic for make installers and generating
+        """wraps the logic for compare locale, make installers and generating
            complete updates."""
 
-        # run make installers
+        if self.run_compare_locales(locale) != SUCCESS:
+            self.error("compare locale %s failed" % (locale))
+            return FAILURE
+
+        # compare locale succeeded, run make installers
         if self.make_installers(locale) != SUCCESS:
             self.error("make installers-%s failed" % (locale))
             return FAILURE
@@ -1047,12 +1055,13 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         env = self.query_bootstrap_env()
         config = self.config
         dirs = self.query_abs_dirs()
-        toolchains = os.environ.get('MOZ_TOOLCHAINS')
         manifest_src = os.environ.get('TOOLTOOL_MANIFEST')
         if not manifest_src:
             manifest_src = config.get('tooltool_manifest_src')
-        if not manifest_src and not toolchains:
+        if not manifest_src:
             return
+        tooltool_manifest_path = os.path.join(dirs['abs_mozilla_dir'],
+                                              manifest_src)
         python = sys.executable
         # A mock environment is a special case, the system python isn't
         # available there
@@ -1066,22 +1075,20 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             'toolchain',
             '-v',
             '--retry', '4',
+            '--tooltool-manifest',
+            tooltool_manifest_path,
             '--artifact-manifest',
             os.path.join(dirs['abs_mozilla_dir'], 'toolchains.json'),
+            '--tooltool-url',
+            config['tooltool_url'],
         ]
-        if manifest_src:
-            cmd.extend([
-                '--tooltool-manifest',
-                os.path.join(dirs['abs_mozilla_dir'], manifest_src),
-                '--tooltool-url',
-                config['tooltool_url'],
-            ])
-            auth_file = self._get_tooltool_auth_file()
-            if auth_file and os.path.exists(auth_file):
-                cmd.extend(['--authentication-file', auth_file])
+        auth_file = self._get_tooltool_auth_file()
+        if auth_file and os.path.exists(auth_file):
+            cmd.extend(['--authentication-file', auth_file])
         cache = config['bootstrap_env'].get('TOOLTOOL_CACHE')
         if cache:
             cmd.extend(['--cache-dir', cache])
+        toolchains = os.environ.get('MOZ_TOOLCHAINS')
         if toolchains:
             cmd.extend(toolchains.split())
         self.info(str(cmd))

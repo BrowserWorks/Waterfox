@@ -16,7 +16,7 @@ info: >
   ...
   6. Return O.
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var s = Symbol("1");

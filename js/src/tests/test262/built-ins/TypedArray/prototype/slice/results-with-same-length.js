@@ -4,7 +4,6 @@
 esid: sec-%typedarray%.prototype.slice
 description: slice may return a new instance with the same length
 includes: [testTypedArray.js, compareArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

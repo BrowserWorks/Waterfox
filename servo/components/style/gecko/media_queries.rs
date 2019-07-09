@@ -7,14 +7,14 @@
 use app_units::AU_PER_PX;
 use app_units::Au;
 use context::QuirksMode;
-use cssparser::{CssStringWriter, Parser, RGBA, Token, BasicParseErrorKind};
+use cssparser::{CssStringWriter, Parser, RGBA, Token, BasicParseError};
 use euclid::ScaleFactor;
 use euclid::Size2D;
 use font_metrics::get_metrics_provider_for_product;
-use gecko::values::{convert_nscolor_to_rgba, convert_rgba_to_nscolor};
+use gecko::values::convert_nscolor_to_rgba;
 use gecko_bindings::bindings;
 use gecko_bindings::structs;
-use gecko_bindings::structs::{nsCSSKeyword, nsCSSProps_KTableEntry, nsCSSValue, nsCSSUnit};
+use gecko_bindings::structs::{nsCSSKeyword, nsCSSProps_KTableEntry, nsCSSValue, nsCSSUnit, nsStringBuffer};
 use gecko_bindings::structs::{nsMediaExpression_Range, nsMediaFeature};
 use gecko_bindings::structs::{nsMediaFeature_ValueType, nsMediaFeature_RangeType, nsMediaFeature_RequirementFlags};
 use gecko_bindings::structs::{nsPresContext, RawGeckoPresContextOwned};
@@ -22,20 +22,17 @@ use media_queries::MediaType;
 use parser::ParserContext;
 use properties::{ComputedValues, StyleBuilder};
 use properties::longhands::font_size;
-use rule_cache::RuleCacheConditions;
+use selectors::parser::SelectorParseError;
 use servo_arc::Arc;
-use std::cell::RefCell;
 use std::fmt::{self, Write};
-use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use str::starts_with_ignore_ascii_case;
 use string_cache::Atom;
 use style_traits::{CSSPixel, DevicePixel};
-use style_traits::{ToCss, ParseError, StyleParseErrorKind};
+use style_traits::{ToCss, ParseError, StyleParseError};
 use style_traits::viewport::ViewportConstraints;
-use stylesheets::Origin;
-use values::{CSSFloat, CustomIdent, serialize_dimension};
+use values::{CSSFloat, specified};
 use values::computed::{self, ToComputedValue};
-use values::specified::Length;
 
 /// The `Device` in Gecko wraps a pres context, has a default values computed,
 /// and contains all the viewport rule state.
@@ -45,6 +42,7 @@ pub struct Device {
     /// here is fine.
     pres_context: RawGeckoPresContextOwned,
     default_values: Arc<ComputedValues>,
+    viewport_override: Option<ViewportConstraints>,
     /// The font size of the root element
     /// This is set when computing the style of the root
     /// element, and used for rem units in other elements.
@@ -54,11 +52,6 @@ pub struct Device {
     /// the parent to compute everything else. So it is correct to just use
     /// a relaxed atomic here.
     root_font_size: AtomicIsize,
-    /// The body text color, stored as an `nscolor`, used for the "tables
-    /// inherit from body" quirk.
-    ///
-    /// <https://quirks.spec.whatwg.org/#the-tables-inherit-color-from-body-quirk>
-    body_text_color: AtomicUsize,
     /// Whether any styles computed in the document relied on the root font-size
     /// by using rem units.
     used_root_font_size: AtomicBool,
@@ -77,9 +70,8 @@ impl Device {
         Device {
             pres_context: pres_context,
             default_values: ComputedValues::default_values(unsafe { &*pres_context }),
-            // FIXME(bz): Seems dubious?
-            root_font_size: AtomicIsize::new(font_size::get_initial_value().size().0 as isize),
-            body_text_color: AtomicUsize::new(unsafe { &*pres_context }.mDefaultColor as usize),
+            viewport_override: None,
+            root_font_size: AtomicIsize::new(font_size::get_initial_value().0 as isize), // FIXME(bz): Seems dubious?
             used_root_font_size: AtomicBool::new(false),
             used_viewport_size: AtomicBool::new(false),
         }
@@ -87,11 +79,9 @@ impl Device {
 
     /// Tells the device that a new viewport rule has been found, and stores the
     /// relevant viewport constraints.
-    pub fn account_for_viewport_rule(
-        &mut self,
-        _constraints: &ViewportConstraints
-    ) {
-        unreachable!("Gecko doesn't support @viewport");
+    pub fn account_for_viewport_rule(&mut self,
+                                     constraints: &ViewportConstraints) {
+        self.viewport_override = Some(constraints.clone());
     }
 
     /// Returns the default computed values as a reference, in order to match
@@ -116,18 +106,6 @@ impl Device {
         self.root_font_size.store(size.0 as isize, Ordering::Relaxed)
     }
 
-    /// Sets the body text color for the "inherit color from body" quirk.
-    ///
-    /// <https://quirks.spec.whatwg.org/#the-tables-inherit-color-from-body-quirk>
-    pub fn set_body_text_color(&self, color: RGBA) {
-        self.body_text_color.store(convert_rgba_to_nscolor(&color) as usize, Ordering::Relaxed)
-    }
-
-    /// Returns the body text color.
-    pub fn body_text_color(&self) -> RGBA {
-        convert_nscolor_to_rgba(self.body_text_color.load(Ordering::Relaxed) as u32)
-    }
-
     /// Gets the pres context associated with this document.
     pub fn pres_context(&self) -> &nsPresContext {
         unsafe { &*self.pres_context }
@@ -135,12 +113,9 @@ impl Device {
 
     /// Recreates the default computed values.
     pub fn reset_computed_values(&mut self) {
+        // NB: A following stylesheet flush will populate this if appropriate.
+        self.viewport_override = None;
         self.default_values = ComputedValues::default_values(self.pres_context());
-    }
-
-    /// Rebuild all the cached data.
-    pub fn rebuild_cached_data(&mut self) {
-        self.reset_computed_values();
         self.used_root_font_size.store(false, Ordering::Relaxed);
         self.used_viewport_size.store(false, Ordering::Relaxed);
     }
@@ -155,36 +130,37 @@ impl Device {
     /// This includes the viewport override from `@viewport` rules, and also the
     /// default computed values.
     pub fn reset(&mut self) {
+        // NB: A following stylesheet flush will populate this if appropriate.
+        self.viewport_override = None;
         self.reset_computed_values();
     }
 
     /// Returns the current media type of the device.
     pub fn media_type(&self) -> MediaType {
         unsafe {
-            // Gecko allows emulating random media with mIsEmulatingMedia and
-            // mMediaEmulated.
-            let context = self.pres_context();
-            let medium_to_use = if context.mIsEmulatingMedia() != 0 {
-                context.mMediaEmulated.mRawPtr
+            // FIXME(emilio): Gecko allows emulating random media with
+            // mIsEmulatingMedia / mMediaEmulated . Refactor both sides so that
+            // is supported (probably just making MediaType an Atom).
+            if self.pres_context().mMedium == atom!("screen").as_ptr() {
+                MediaType::Screen
             } else {
-                context.mMedium
-            };
-
-            MediaType(CustomIdent(Atom::from(medium_to_use)))
+                debug_assert!(self.pres_context().mMedium == atom!("print").as_ptr());
+                MediaType::Print
+            }
         }
     }
 
     /// Returns the current viewport size in app units.
     pub fn au_viewport_size(&self) -> Size2D<Au> {
-        let area = &self.pres_context().mVisibleArea;
-        Size2D::new(Au(area.width), Au(area.height))
-    }
-
-    /// Returns the current viewport size in app units, recording that it's been
-    /// used for viewport unit resolution.
-    pub fn au_viewport_size_for_viewport_unit_resolution(&self) -> Size2D<Au> {
         self.used_viewport_size.store(true, Ordering::Relaxed);
-        self.au_viewport_size()
+        self.viewport_override.as_ref().map(|v| {
+            Size2D::new(Au::from_f32_px(v.size.width),
+                        Au::from_f32_px(v.size.height))
+        }).unwrap_or_else(|| unsafe {
+            // TODO(emilio): Need to take into account scrollbars.
+            let area = &self.pres_context().mVisibleArea;
+            Size2D::new(Au(area.width), Au(area.height))
+        })
     }
 
     /// Returns whether we ever looked up the viewport size of the Device.
@@ -210,20 +186,11 @@ impl Device {
     pub fn default_background_color(&self) -> RGBA {
         convert_nscolor_to_rgba(self.pres_context().mBackgroundColor)
     }
-
-    /// Applies text zoom to a font-size or line-height value (see nsStyleFont::ZoomText).
-    pub fn zoom_text(&self, size: Au) -> Au {
-        size.scale_by(self.pres_context().mEffectiveTextZoom)
-    }
-    /// Un-apply text zoom (see nsStyleFont::UnzoomText).
-    pub fn unzoom_text(&self, size: Au) -> Au {
-        size.scale_by(1. / self.pres_context().mEffectiveTextZoom)
-    }
 }
 
 /// A expression for gecko contains a reference to the media feature, the value
 /// the media query contained, and the range to evaluate.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct Expression {
     feature: &'static nsMediaFeature,
     value: Option<MediaExpressionValue>,
@@ -265,7 +232,7 @@ impl PartialEq for Expression {
 }
 
 /// A resolution.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Resolution {
     /// Dots per inch.
     Dpi(CSSFloat),
@@ -285,16 +252,15 @@ impl Resolution {
     }
 
     fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let location = input.current_source_location();
         let (value, unit) = match *input.next()? {
             Token::Dimension { value, ref unit, .. } => {
                 (value, unit)
             },
-            ref t => return Err(location.new_unexpected_token_error(t.clone())),
+            ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
         };
 
         if value <= 0. {
-            return Err(location.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            return Err(StyleParseError::UnspecifiedError.into())
         }
 
         (match_ignore_ascii_case! { &unit,
@@ -302,7 +268,7 @@ impl Resolution {
             "dppx" => Ok(Resolution::Dppx(value)),
             "dpcm" => Ok(Resolution::Dpcm(value)),
             _ => Err(())
-        }).map_err(|()| location.new_custom_error(StyleParseErrorKind::UnexpectedDimension(unit.clone())))
+        }).map_err(|()| StyleParseError::UnexpectedDimension(unit.clone()).into())
     }
 }
 
@@ -311,18 +277,31 @@ impl ToCss for Resolution {
         where W: fmt::Write,
     {
         match *self {
-            Resolution::Dpi(v) => serialize_dimension(v, "dpi", dest),
-            Resolution::Dppx(v) => serialize_dimension(v, "dppx", dest),
-            Resolution::Dpcm(v) => serialize_dimension(v, "dpcm", dest),
+            Resolution::Dpi(v) => write!(dest, "{}dpi", v),
+            Resolution::Dppx(v) => write!(dest, "{}dppx", v),
+            Resolution::Dpcm(v) => write!(dest, "{}dpcm", v),
         }
     }
 }
 
+unsafe fn string_from_ns_string_buffer(buffer: *const nsStringBuffer) -> String {
+    use std::slice;
+    debug_assert!(!buffer.is_null());
+    let data = buffer.offset(1) as *const u16;
+    let mut length = 0;
+    let mut iter = data;
+    while *iter != 0 {
+        length += 1;
+        iter = iter.offset(1);
+    }
+    String::from_utf16_lossy(slice::from_raw_parts(data, length))
+}
+
 /// A value found or expected in a media expression.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum MediaExpressionValue {
     /// A length.
-    Length(Length),
+    Length(specified::Length),
     /// A (non-negative) integer.
     Integer(u32),
     /// A floating point value.
@@ -345,8 +324,6 @@ pub enum MediaExpressionValue {
 
 impl MediaExpressionValue {
     fn from_css_value(for_expr: &Expression, css_value: &nsCSSValue) -> Option<Self> {
-        use gecko::conversions::string_from_chars_pointer;
-
         // NB: If there's a null value, that means that we don't support the
         // feature.
         if css_value.mUnit == nsCSSUnit::eCSSUnit_Null {
@@ -357,7 +334,7 @@ impl MediaExpressionValue {
             nsMediaFeature_ValueType::eLength => {
                 debug_assert!(css_value.mUnit == nsCSSUnit::eCSSUnit_Pixel);
                 let pixels = css_value.float_unchecked();
-                Some(MediaExpressionValue::Length(Length::from_px(pixels)))
+                Some(MediaExpressionValue::Length(specified::Length::from_px(pixels)))
             }
             nsMediaFeature_ValueType::eInteger => {
                 let i = css_value.integer_unchecked();
@@ -375,8 +352,8 @@ impl MediaExpressionValue {
                 Some(MediaExpressionValue::BoolInteger(i == 1))
             }
             nsMediaFeature_ValueType::eResolution => {
-                debug_assert!(css_value.mUnit == nsCSSUnit::eCSSUnit_Pixel);
-                Some(MediaExpressionValue::Resolution(Resolution::Dppx(css_value.float_unchecked())))
+                debug_assert!(css_value.mUnit == nsCSSUnit::eCSSUnit_Inch);
+                Some(MediaExpressionValue::Resolution(Resolution::Dpi(css_value.float_unchecked())))
             }
             nsMediaFeature_ValueType::eEnumerated => {
                 let value = css_value.integer_unchecked() as i16;
@@ -385,9 +362,7 @@ impl MediaExpressionValue {
             nsMediaFeature_ValueType::eIdent => {
                 debug_assert!(css_value.mUnit == nsCSSUnit::eCSSUnit_Ident);
                 let string = unsafe {
-                    let buffer = *css_value.mValue.mString.as_ref();
-                    debug_assert!(!buffer.is_null());
-                    string_from_chars_pointer(buffer.offset(1) as *const u16)
+                    string_from_ns_string_buffer(*css_value.mValue.mString.as_ref())
                 };
                 Some(MediaExpressionValue::Ident(string))
             }
@@ -410,15 +385,13 @@ impl MediaExpressionValue {
     {
         match *self {
             MediaExpressionValue::Length(ref l) => l.to_css(dest),
-            MediaExpressionValue::Integer(v) => v.to_css(dest),
-            MediaExpressionValue::Float(v) => v.to_css(dest),
+            MediaExpressionValue::Integer(v) => write!(dest, "{}", v),
+            MediaExpressionValue::Float(v) => write!(dest, "{}", v),
             MediaExpressionValue::BoolInteger(v) => {
                 dest.write_str(if v { "1" } else { "0" })
             },
             MediaExpressionValue::IntRatio(a, b) => {
-                a.to_css(dest)?;
-                dest.write_char('/')?;
-                b.to_css(dest)
+                write!(dest, "{}/{}", a, b)
             },
             MediaExpressionValue::Resolution(ref r) => r.to_css(dest),
             MediaExpressionValue::Ident(ref ident) => {
@@ -486,87 +459,6 @@ unsafe fn find_in_table<F>(mut current_entry: *const nsCSSProps_KTableEntry,
     }
 }
 
-fn parse_feature_value<'i, 't>(feature: &nsMediaFeature,
-                               feature_value_type: nsMediaFeature_ValueType,
-                               context: &ParserContext,
-                               input: &mut Parser<'i, 't>)
-                               -> Result<MediaExpressionValue, ParseError<'i>> {
-    let value = match feature_value_type {
-        nsMediaFeature_ValueType::eLength => {
-           let length = Length::parse_non_negative(context, input)?;
-           // FIXME(canaltinova): See bug 1396057. Gecko doesn't support calc
-           // inside media queries. This check is for temporarily remove it
-           // for parity with gecko. We should remove this check when we want
-           // to support it.
-           if let Length::Calc(_) = length {
-               return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-           }
-           MediaExpressionValue::Length(length)
-        },
-        nsMediaFeature_ValueType::eInteger => {
-           // FIXME(emilio): We should use `Integer::parse` to handle `calc`
-           // properly in integer expressions. Note that calc is still not
-           // supported in media queries per FIXME above.
-           let i = input.expect_integer()?;
-           if i < 0 {
-               return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-           }
-           MediaExpressionValue::Integer(i as u32)
-        }
-        nsMediaFeature_ValueType::eBoolInteger => {
-           let i = input.expect_integer()?;
-           if i < 0 || i > 1 {
-               return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-           }
-           MediaExpressionValue::BoolInteger(i == 1)
-        }
-        nsMediaFeature_ValueType::eFloat => {
-           MediaExpressionValue::Float(input.expect_number()?)
-        }
-        nsMediaFeature_ValueType::eIntRatio => {
-           let a = input.expect_integer()?;
-           if a <= 0 {
-               return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-           }
-
-           input.expect_delim('/')?;
-
-           let b = input.expect_integer()?;
-           if b <= 0 {
-               return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
-           }
-           MediaExpressionValue::IntRatio(a as u32, b as u32)
-        }
-        nsMediaFeature_ValueType::eResolution => {
-           MediaExpressionValue::Resolution(Resolution::parse(input)?)
-        }
-        nsMediaFeature_ValueType::eEnumerated => {
-            let location = input.current_source_location();
-            let keyword = input.expect_ident()?;
-            let keyword = unsafe {
-                bindings::Gecko_LookupCSSKeyword(keyword.as_bytes().as_ptr(),
-                keyword.len() as u32)
-            };
-
-            let first_table_entry: *const nsCSSProps_KTableEntry = unsafe {
-                *feature.mData.mKeywordTable.as_ref()
-            };
-
-            let value = match unsafe { find_in_table(first_table_entry, |kw, _| kw == keyword) } {
-                Some((_kw, value)) => value,
-                None => return Err(location.new_custom_error(StyleParseErrorKind::UnspecifiedError)),
-            };
-
-            MediaExpressionValue::Enumerated(value)
-        }
-        nsMediaFeature_ValueType::eIdent => {
-            MediaExpressionValue::Ident(input.expect_ident()?.as_ref().to_owned())
-        }
-    };
-
-    Ok(value)
-}
-
 impl Expression {
     /// Trivially construct a new expression.
     fn new(feature: &'static nsMediaFeature,
@@ -584,37 +476,17 @@ impl Expression {
     /// ```
     /// (media-feature: media-value)
     /// ```
-    pub fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i>> {
-        input.expect_parenthesis_block().map_err(|err|
-            err.location.new_custom_error(match err.kind {
-                BasicParseErrorKind::UnexpectedToken(t) => StyleParseErrorKind::ExpectedIdentifier(t),
-                _ => StyleParseErrorKind::UnspecifiedError,
-            })
-        )?;
-
+    pub fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                         -> Result<Self, ParseError<'i>> {
+        input.expect_parenthesis_block()?;
         input.parse_nested_block(|input| {
             // FIXME: remove extra indented block when lifetimes are non-lexical
             let feature;
             let range;
             {
-                let location = input.current_source_location();
-                let ident = input.expect_ident().map_err(|err|
-                    err.location.new_custom_error(match err.kind {
-                        BasicParseErrorKind::UnexpectedToken(t) => StyleParseErrorKind::ExpectedIdentifier(t),
-                        _ => StyleParseErrorKind::UnspecifiedError,
-                    })
-                )?;
+                let ident = input.expect_ident()?;
 
                 let mut flags = 0;
-
-                if context.in_chrome_stylesheet() ||
-                    context.stylesheet_origin == Origin::UserAgent {
-                    flags |= nsMediaFeature_RequirementFlags::eUserAgentAndChromeOnly as u8;
-                }
-
                 let result = {
                     let mut feature_name = &**ident;
 
@@ -649,24 +521,16 @@ impl Expression {
                         feature = f;
                         range = r;
                     }
-                    Err(()) => {
-                        return Err(location.new_custom_error(
-                            StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone())
-                        ))
-                    }
+                    Err(()) => return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into()),
                 }
 
                 if (feature.mReqFlags & !flags) != 0 {
-                    return Err(location.new_custom_error(
-                        StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone())
-                    ))
+                    return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into());
                 }
 
                 if range != nsMediaExpression_Range::eEqual &&
-                   feature.mRangeType != nsMediaFeature_RangeType::eMinMaxAllowed {
-                    return Err(location.new_custom_error(
-                        StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone())
-                    ))
+                    feature.mRangeType != nsMediaFeature_RangeType::eMinMaxAllowed {
+                    return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into());
                 }
             }
 
@@ -677,16 +541,75 @@ impl Expression {
             // reject them here too.
             if input.try(|i| i.expect_colon()).is_err() {
                 if range != nsMediaExpression_Range::eEqual {
-                    return Err(input.new_custom_error(StyleParseErrorKind::RangedExpressionWithNoValue))
+                    return Err(StyleParseError::RangedExpressionWithNoValue.into())
                 }
                 return Ok(Expression::new(feature, None, range));
             }
 
-            let value = parse_feature_value(feature,
-                                            feature.mValueType,
-                                            context, input).map_err(|err|
-                err.location.new_custom_error(StyleParseErrorKind::MediaQueryExpectedFeatureValue)
-            )?;
+            let value = match feature.mValueType {
+                nsMediaFeature_ValueType::eLength => {
+                    MediaExpressionValue::Length(
+                        specified::Length::parse_non_negative(context, input)?)
+                },
+                nsMediaFeature_ValueType::eInteger => {
+                    let i = input.expect_integer()?;
+                    if i < 0 {
+                        return Err(StyleParseError::UnspecifiedError.into())
+                    }
+                    MediaExpressionValue::Integer(i as u32)
+                }
+                nsMediaFeature_ValueType::eBoolInteger => {
+                    let i = input.expect_integer()?;
+                    if i < 0 || i > 1 {
+                        return Err(StyleParseError::UnspecifiedError.into())
+                    }
+                    MediaExpressionValue::BoolInteger(i == 1)
+                }
+                nsMediaFeature_ValueType::eFloat => {
+                    MediaExpressionValue::Float(input.expect_number()?)
+                }
+                nsMediaFeature_ValueType::eIntRatio => {
+                    let a = input.expect_integer()?;
+                    if a <= 0 {
+                        return Err(StyleParseError::UnspecifiedError.into())
+                    }
+
+                    input.expect_delim('/')?;
+
+                    let b = input.expect_integer()?;
+                    if b <= 0 {
+                        return Err(StyleParseError::UnspecifiedError.into())
+                    }
+                    MediaExpressionValue::IntRatio(a as u32, b as u32)
+                }
+                nsMediaFeature_ValueType::eResolution => {
+                    MediaExpressionValue::Resolution(Resolution::parse(input)?)
+                }
+                nsMediaFeature_ValueType::eEnumerated => {
+                    let keyword = input.expect_ident()?;
+                    let keyword = unsafe {
+                        bindings::Gecko_LookupCSSKeyword(keyword.as_bytes().as_ptr(),
+                                                         keyword.len() as u32)
+                    };
+
+                    let first_table_entry: *const nsCSSProps_KTableEntry = unsafe {
+                        *feature.mData.mKeywordTable.as_ref()
+                    };
+
+                    let value =
+                        match unsafe { find_in_table(first_table_entry, |kw, _| kw == keyword) } {
+                            Some((_kw, value)) => {
+                                value
+                            }
+                            None => return Err(StyleParseError::UnspecifiedError.into()),
+                        };
+
+                    MediaExpressionValue::Enumerated(value)
+                }
+                nsMediaFeature_ValueType::eIdent => {
+                    MediaExpressionValue::Ident(input.expect_ident()?.as_ref().to_owned())
+                }
+            };
 
             Ok(Expression::new(feature, Some(value), range))
         })
@@ -709,12 +632,11 @@ impl Expression {
         self.evaluate_against(device, &value, quirks_mode)
     }
 
-    fn evaluate_against(
-        &self,
-        device: &Device,
-        actual_value: &MediaExpressionValue,
-        quirks_mode: QuirksMode,
-    ) -> bool {
+    fn evaluate_against(&self,
+                        device: &Device,
+                        actual_value: &MediaExpressionValue,
+                        quirks_mode: QuirksMode)
+                        -> bool {
         use self::MediaExpressionValue::*;
         use std::cmp::Ordering;
 
@@ -729,17 +651,15 @@ impl Expression {
 
         // http://dev.w3.org/csswg/mediaqueries3/#units
         // em units are relative to the initial font-size.
-        let mut conditions = RuleCacheConditions::default();
         let context = computed::Context {
             is_root_element: false,
             builder: StyleBuilder::for_derived_style(device, default_values, None, None),
             font_metrics_provider: &provider,
             cached_system_font: None,
             in_media_query: true,
-            quirks_mode,
+            // TODO: pass the correct value here.
+            quirks_mode: quirks_mode,
             for_smil_animation: false,
-            for_non_inherited_property: None,
-            rule_cache_conditions: RefCell::new(&mut conditions),
         };
 
         let required_value = match self.value {
@@ -750,7 +670,7 @@ impl Expression {
                 return match *actual_value {
                     BoolInteger(v) => v,
                     Integer(v) => v != 0,
-                    Length(ref l) => l.to_computed_value(&context).px() != 0.,
+                    Length(ref l) => l.to_computed_value(&context) != Au(0),
                     _ => true,
                 }
             }
@@ -759,16 +679,14 @@ impl Expression {
         // FIXME(emilio): Handle the possible floating point errors?
         let cmp = match (required_value, actual_value) {
             (&Length(ref one), &Length(ref other)) => {
-                one.to_computed_value(&context).to_i32_au()
-                    .cmp(&other.to_computed_value(&context).to_i32_au())
+                one.to_computed_value(&context)
+                    .cmp(&other.to_computed_value(&context))
             }
             (&Integer(one), &Integer(ref other)) => one.cmp(other),
             (&BoolInteger(one), &BoolInteger(ref other)) => one.cmp(other),
             (&Float(one), &Float(ref other)) => one.partial_cmp(other).unwrap(),
             (&IntRatio(one_num, one_den), &IntRatio(other_num, other_den)) => {
-                // Extend to avoid overflow.
-                (one_num as u64 * other_den as u64).cmp(
-                    &(other_num as u64 * one_den as u64))
+                (one_num * other_den).partial_cmp(&(other_num * one_den)).unwrap()
             }
             (&Resolution(ref one), &Resolution(ref other)) => {
                 let actual_dpi = unsafe {

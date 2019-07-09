@@ -435,7 +435,7 @@ class BookmarkValidator {
         folders.push(record);
 
         if (new Set(record.children).size !== record.children.length) {
-          problemData.duplicateChildren.push(record.id);
+          problemData.duplicateChildren.push(record.id)
         }
 
         // The children array stores special guids as their local guid values,
@@ -823,8 +823,8 @@ class BookmarkValidator {
   }
 
   async _getServerState(engine) {
-    // XXXXX - todo - we need to capture last-modified of the server here and
-    // ensure the repairer only applys with if-unmodified-since that date.
+// XXXXX - todo - we need to capture last-modified of the server here and
+// ensure the repairer only applys with if-unmodified-since that date.
     let collection = engine.itemSource();
     let collectionKey = engine.service.collectionKeys.keyForCollection(engine.name);
     collection.full = true;
@@ -832,14 +832,10 @@ class BookmarkValidator {
     if (!result.response.success) {
       throw result.response;
     }
-    let maybeYield = Async.jankYielder();
-    let cleartexts = [];
-    for (let record of result.records) {
-      await maybeYield();
-      await record.decrypt(collectionKey);
-      cleartexts.push(record.cleartext);
-    }
-    return cleartexts;
+    return result.records.map(record => {
+      record.decrypt(collectionKey);
+      return record.cleartext;
+    });
   }
 
   async validate(engine) {

@@ -7,14 +7,11 @@
 // This file is a stub, for platforms that do not yet support out-of-process
 // compositing or do not need specialized types to do so.
 
-include HeadlessWidgetTypes;
-
 namespace mozilla {
 namespace widget {
 
-union CompositorWidgetInitData
+struct CompositorWidgetInitData
 {
-  HeadlessCompositorWidgetInitData;
 };
 
 } // namespace widget

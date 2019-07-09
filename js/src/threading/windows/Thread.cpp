@@ -54,16 +54,8 @@ js::Thread::Id::operator==(const Id& aOther) const
   return platformData()->id == aOther.platformData()->id;
 }
 
-js::Thread::~Thread()
-{
-  LockGuard<Mutex> lock(idMutex_);
-  MOZ_RELEASE_ASSERT(!joinable(lock));
-}
-
 js::Thread::Thread(Thread&& aOther)
-  : idMutex_(mutexid::ThreadId)
 {
-  LockGuard<Mutex> lock(aOther.idMutex_);
   id_ = aOther.id_;
   aOther.id_ = Id();
   options_ = aOther.options_;
@@ -72,8 +64,7 @@ js::Thread::Thread(Thread&& aOther)
 js::Thread&
 js::Thread::operator=(Thread&& aOther)
 {
-  LockGuard<Mutex> lock(idMutex_);
-  MOZ_RELEASE_ASSERT(!joinable(lock));
+  MOZ_RELEASE_ASSERT(!joinable());
   id_ = aOther.id_;
   aOther.id_ = Id();
   options_ = aOther.options_;
@@ -83,8 +74,6 @@ js::Thread::operator=(Thread&& aOther)
 bool
 js::Thread::create(unsigned int (__stdcall* aMain)(void*), void* aArg)
 {
-  LockGuard<Mutex> lock(idMutex_);
-
   // Use _beginthreadex and not CreateThread, because threads that are
   // created with the latter leak a small amount of memory when they use
   // certain msvcrt functions and then exit.
@@ -105,8 +94,7 @@ js::Thread::create(unsigned int (__stdcall* aMain)(void*), void* aArg)
 void
 js::Thread::join()
 {
-  LockGuard<Mutex> lock(idMutex_);
-  MOZ_RELEASE_ASSERT(joinable(lock));
+  MOZ_RELEASE_ASSERT(joinable());
   DWORD r = WaitForSingleObject(id_.platformData()->handle, INFINITE);
   MOZ_RELEASE_ASSERT(r == WAIT_OBJECT_0);
   BOOL success = CloseHandle(id_.platformData()->handle);
@@ -114,31 +102,10 @@ js::Thread::join()
   id_ = Id();
 }
 
-js::Thread::Id
-js::Thread::get_id()
-{
-  LockGuard<Mutex> lock(idMutex_);
-  return id_;
-}
-
-bool
-js::Thread::joinable(LockGuard<Mutex>& lock)
-{
-  return id_ != Id();
-}
-
-bool
-js::Thread::joinable()
-{
-  LockGuard<Mutex> lock(idMutex_);
-  return joinable(lock);
-}
-
 void
 js::Thread::detach()
 {
-  LockGuard<Mutex> lock(idMutex_);
-  MOZ_RELEASE_ASSERT(joinable(lock));
+  MOZ_RELEASE_ASSERT(joinable());
   BOOL success = CloseHandle(id_.platformData()->handle);
   MOZ_RELEASE_ASSERT(success);
   id_ = Id();

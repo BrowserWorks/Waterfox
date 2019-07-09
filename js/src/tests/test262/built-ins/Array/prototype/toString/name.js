@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.tostring
 es6id: 22.1.3.27
 description: >
   Array.prototype.toString.name is "toString".

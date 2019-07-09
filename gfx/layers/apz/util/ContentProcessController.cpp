@@ -93,16 +93,9 @@ ContentProcessController::NotifyAsyncScrollbarDragRejected(const FrameMetrics::V
 }
 
 void
-ContentProcessController::NotifyAsyncAutoscrollRejected(const FrameMetrics::ViewID& aScrollId)
+ContentProcessController::NotifyAutoscrollHandledByAPZ(const FrameMetrics::ViewID& aScrollId)
 {
-  APZCCallbackHelper::NotifyAsyncAutoscrollRejected(aScrollId);
-}
-
-void
-ContentProcessController::CancelAutoscroll(const ScrollableLayerGuid& aGuid)
-{
-  // This should never get called
-  MOZ_ASSERT_UNREACHABLE("Unexpected message to content process");
+  APZCCallbackHelper::NotifyAutoscrollHandledByAPZ(aScrollId);
 }
 
 void

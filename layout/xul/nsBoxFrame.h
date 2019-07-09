@@ -85,7 +85,7 @@ public:
 
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
   virtual void MarkIntrinsicISizesDirty() override;
@@ -141,9 +141,11 @@ public:
   // virtual so nsStackFrame, nsButtonBoxFrame, nsSliderFrame and nsMenuFrame
   // can override it
   virtual void BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
+                                           const nsRect&           aDirtyRect,
                                            const nsDisplayListSet& aLists);
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
 #ifdef DEBUG_LAYOUT
@@ -168,11 +170,6 @@ public:
    * example) don't support ordinals in their children.
    */
   virtual bool SupportsOrdinalsInChildren();
-
-  /**
-   * Return our wrapper block, if any.
-   */
-  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
 private:
   explicit nsBoxFrame(nsStyleContext* aContext)

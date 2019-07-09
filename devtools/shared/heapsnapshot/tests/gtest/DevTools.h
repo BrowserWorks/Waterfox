@@ -74,7 +74,7 @@ struct DevTools : public ::testing::Test {
     static const JSClassOps globalClassOps = {
       nullptr, nullptr, nullptr, nullptr,
       nullptr, nullptr, nullptr, nullptr,
-      nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr,
       JS_GlobalObjectTraceHook
     };
     static const JSClass globalClass = {
@@ -89,7 +89,7 @@ struct DevTools : public ::testing::Test {
     /* Create the global object. */
     JS::RootedObject newGlobal(cx);
     JS::CompartmentOptions options;
-    options.behaviors().setVersion(JSVERSION_DEFAULT);
+    options.behaviors().setVersion(JSVERSION_LATEST);
     newGlobal = JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
                                    JS::FireOnNewGlobalHook, options);
     if (!newGlobal)

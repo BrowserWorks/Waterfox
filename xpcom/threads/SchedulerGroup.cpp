@@ -54,7 +54,6 @@ NS_DEFINE_STATIC_IID_ACCESSOR(SchedulerEventTarget, NS_DISPATCHEREVENTTARGET_IID
 
 static Atomic<uint64_t> gEarliestUnprocessedVsync(0);
 
-#ifdef EARLY_BETA_OR_EARLIER
 class MOZ_RAII AutoCollectVsyncTelemetry final
 {
 public:
@@ -63,14 +62,18 @@ public:
     : mIsBackground(aRunnable->IsBackground())
   {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+#ifdef EARLY_BETA_OR_EARLIER
     aRunnable->GetName(mKey);
     mStart = TimeStamp::Now();
+#endif
   }
   ~AutoCollectVsyncTelemetry()
   {
+#ifdef EARLY_BETA_OR_EARLIER
     if (Telemetry::CanRecordBase()) {
       CollectTelemetry();
     }
+#endif
   }
 
 private:
@@ -124,7 +127,6 @@ AutoCollectVsyncTelemetry::CollectTelemetry()
 
   Telemetry::Accumulate(Telemetry::CONTENT_JS_KNOWN_TICK_DELAY_MS, duration);
 }
-#endif
 
 } // namespace
 
@@ -203,14 +205,11 @@ SchedulerGroup::MarkVsyncRan()
   gEarliestUnprocessedVsync = 0;
 }
 
-MOZ_THREAD_LOCAL(bool) SchedulerGroup::sTlsValidatingAccess;
+SchedulerGroup* SchedulerGroup::sRunningDispatcher;
 
 SchedulerGroup::SchedulerGroup()
- : mIsRunning(false)
+ : mAccessValid(false)
 {
-  if (NS_IsMainThread()) {
-    sTlsValidatingAccess.infallibleInit();
-  }
 }
 
 nsresult
@@ -339,15 +338,15 @@ SchedulerGroup::InternalUnlabeledDispatch(TaskCategory aCategory,
   return rv;
 }
 
-/* static */ void
+void
 SchedulerGroup::SetValidatingAccess(ValidationType aType)
 {
-  bool validating = aType == StartValidation;
-  sTlsValidatingAccess.set(validating);
+  sRunningDispatcher = aType == StartValidation ? this : nullptr;
+  mAccessValid = aType == StartValidation;
 
   dom::AutoJSAPI jsapi;
   jsapi.Init();
-  js::EnableAccessValidation(jsapi.cx(), validating);
+  js::EnableAccessValidation(jsapi.cx(), !!sRunningDispatcher);
 }
 
 SchedulerGroup::Runnable::Runnable(already_AddRefed<nsIRunnable>&& aRunnable,
@@ -356,14 +355,6 @@ SchedulerGroup::Runnable::Runnable(already_AddRefed<nsIRunnable>&& aRunnable,
   , mRunnable(Move(aRunnable))
   , mGroup(aGroup)
 {
-}
-
-bool
-SchedulerGroup::Runnable::GetAffectedSchedulerGroups(SchedulerGroupSet& aGroups)
-{
-  aGroups.Clear();
-  aGroups.Put(Group());
-  return true;
 }
 
 NS_IMETHODIMP
@@ -387,12 +378,12 @@ SchedulerGroup::Runnable::Run()
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
+  mGroup->SetValidatingAccess(StartValidation);
+
   nsresult result;
 
   {
-#ifdef EARLY_BETA_OR_EARLIER
     AutoCollectVsyncTelemetry telemetry(this);
-#endif
     result = mRunnable->Run();
   }
 
@@ -404,16 +395,26 @@ SchedulerGroup::Runnable::Run()
   return result;
 }
 
-NS_IMETHODIMP
-SchedulerGroup::Runnable::GetPriority(uint32_t* aPriority)
-{
-  *aPriority = nsIRunnablePriority::PRIORITY_NORMAL;
-  nsCOMPtr<nsIRunnablePriority> runnablePrio = do_QueryInterface(mRunnable);
-  return runnablePrio ? runnablePrio->GetPriority(aPriority) : NS_OK;
-}
-
 NS_IMPL_ISUPPORTS_INHERITED(SchedulerGroup::Runnable,
                             mozilla::Runnable,
-                            nsIRunnablePriority,
-                            nsILabelableRunnable,
                             SchedulerGroup::Runnable)
+
+SchedulerGroup::AutoProcessEvent::AutoProcessEvent()
+ : mPrevRunningDispatcher(SchedulerGroup::sRunningDispatcher)
+{
+  SchedulerGroup* prev = sRunningDispatcher;
+  if (prev) {
+    MOZ_ASSERT(prev->mAccessValid);
+    prev->SetValidatingAccess(EndValidation);
+  }
+}
+
+SchedulerGroup::AutoProcessEvent::~AutoProcessEvent()
+{
+  MOZ_ASSERT(!sRunningDispatcher);
+
+  SchedulerGroup* prev = mPrevRunningDispatcher;
+  if (prev) {
+    prev->SetValidatingAccess(StartValidation);
+  }
+}

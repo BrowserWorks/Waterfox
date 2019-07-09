@@ -8,17 +8,16 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLBodyElement.h"
 #include "nsIStyleRule.h"
 
 namespace mozilla {
-
-class TextEditor;
-
 namespace dom {
 
 class OnBeforeUnloadEventHandlerNonNull;
 
-class HTMLBodyElement final : public nsGenericHTMLElement
+class HTMLBodyElement final : public nsGenericHTMLElement,
+                              public nsIDOMHTMLBodyElement
 {
 public:
   using Element::GetText;
@@ -32,7 +31,8 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLBodyElement, body);
+  // nsIDOMHTMLBodyElement
+  NS_DECL_NSIDOMHTMLBODYELEMENT
 
   // Event listener stuff; we need to declare only the ones we need to
   // forward to window that don't come from nsIDOMHTMLBodyElement.
@@ -50,61 +50,41 @@ public:
 #undef WINDOW_EVENT_HELPER
 #undef EVENT
 
-  void GetText(nsAString& aText)
+  void GetText(DOMString& aText)
   {
     GetHTMLAttr(nsGkAtoms::text, aText);
-  }
-  void SetText(const nsAString& aText)
-  {
-    SetHTMLAttr(nsGkAtoms::text, aText);
   }
   void SetText(const nsAString& aText, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::text, aText, aError);
   }
-  void GetLink(nsAString& aLink)
+  void GetLink(DOMString& aLink)
   {
     GetHTMLAttr(nsGkAtoms::link, aLink);
-  }
-  void SetLink(const nsAString& aLink)
-  {
-    SetHTMLAttr(nsGkAtoms::link, aLink);
   }
   void SetLink(const nsAString& aLink, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::link, aLink, aError);
   }
-  void GetVLink(nsAString& aVLink)
+  void GetVLink(DOMString& aVLink)
   {
     GetHTMLAttr(nsGkAtoms::vlink, aVLink);
-  }
-  void SetVLink(const nsAString& aVLink)
-  {
-    SetHTMLAttr(nsGkAtoms::vlink, aVLink);
   }
   void SetVLink(const nsAString& aVLink, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::vlink, aVLink, aError);
   }
-  void GetALink(nsAString& aALink)
+  void GetALink(DOMString& aALink)
   {
     GetHTMLAttr(nsGkAtoms::alink, aALink);
-  }
-  void SetALink(const nsAString& aALink)
-  {
-    SetHTMLAttr(nsGkAtoms::alink, aALink);
   }
   void SetALink(const nsAString& aALink, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::alink, aALink, aError);
   }
-  void GetBgColor(nsAString& aBgColor)
+  void GetBgColor(DOMString& aBgColor)
   {
     GetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
-  }
-  void SetBgColor(const nsAString& aBgColor)
-  {
-    SetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
   }
   void SetBgColor(const nsAString& aBgColor, ErrorResult& aError)
   {
@@ -114,26 +94,22 @@ public:
   {
     GetHTMLAttr(nsGkAtoms::background, aBackground);
   }
-  void GetBackground(nsAString& aBackground)
-  {
-    GetHTMLAttr(nsGkAtoms::background, aBackground);
-  }
   void SetBackground(const nsAString& aBackground, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::background, aBackground, aError);
   }
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsAtom* aAttribute,
+                              nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
-  virtual already_AddRefed<TextEditor> GetAssociatedEditor() override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual already_AddRefed<nsIEditor> GetAssociatedEditor() override;
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                          bool aPreallocateChildren) const override;
 
-  virtual bool IsEventAttributeNameInternal(nsAtom* aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom* aName) override;
 
 
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
@@ -142,10 +118,9 @@ public:
   /**
    * Called when an attribute has just been changed
    */
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
-                                nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
 protected:

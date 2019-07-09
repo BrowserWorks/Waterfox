@@ -12,7 +12,7 @@ var { Tools } = require("devtools/client/definitions");
 var { isTargetSupported } = Tools.scratchpad;
 
 function pushPrefEnv() {
-  let deferred = defer();
+  let deferred = promise.defer();
   let options = {"set":
       [["devtools.scratchpad.enabled", true]
   ]};

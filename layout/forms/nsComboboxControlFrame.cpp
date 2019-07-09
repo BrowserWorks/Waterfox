@@ -11,7 +11,7 @@
 #include "mozilla/gfx/PathHelpers.h"
 #include "nsCOMPtr.h"
 #include "nsFocusManager.h"
-#include "nsCheckboxRadioFrame.h"
+#include "nsFormControlFrame.h"
 #include "nsGkAtoms.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsHTMLParts.h"
@@ -21,6 +21,7 @@
 #include "nsPIDOMWindow.h"
 #include "nsIPresShell.h"
 #include "nsPresState.h"
+#include "nsContentList.h"
 #include "nsView.h"
 #include "nsViewManager.h"
 #include "nsIDOMEventListener.h"
@@ -595,7 +596,7 @@ nsComboboxControlFrame::GetAvailableDropdownSpace(WritingMode aWM,
   *aBefore = 0;
   *aAfter = 0;
 
-  nsRect screen = nsCheckboxRadioFrame::GetUsableScreenRect(PresContext());
+  nsRect screen = nsFormControlFrame::GetUsableScreenRect(PresContext());
   nsSize containerSize = screen.Size();
   LogicalRect logicalScreen(aWM, screen, containerSize);
   if (mLastDropDownAfterScreenBCoord == nscoord_MIN) {
@@ -823,7 +824,6 @@ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext,
                                nsReflowStatus&          aStatus)
 {
   MarkInReflow();
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
   // Constraints we try to satisfy:
 
   // 1) Default inline size of button is the vertical scrollbar size
@@ -1048,6 +1048,10 @@ nsComboboxControlFrame::HandleRedisplayTextEvent()
   mRedisplayTextEvent.Forget();
 
   ActuallyDisplayText(true);
+  if (!weakThis.IsAlive()) {
+    return;
+  }
+
   // XXXbz This should perhaps be eResize.  Check.
   PresContext()->PresShell()->FrameNeedsReflow(mDisplayFrame,
                                                nsIPresShell::eStyleChange,
@@ -1059,13 +1063,14 @@ nsComboboxControlFrame::HandleRedisplayTextEvent()
 void
 nsComboboxControlFrame::ActuallyDisplayText(bool aNotify)
 {
+  nsCOMPtr<nsIContent> displayContent = mDisplayContent;
   if (mDisplayedOptionTextOrPreview.IsEmpty()) {
     // Have to use a non-breaking space for line-block-size calculations
     // to be right
     static const char16_t space = 0xA0;
-    mDisplayContent->SetText(&space, 1, aNotify);
+    displayContent->SetText(&space, 1, aNotify);
   } else {
-    mDisplayContent->SetText(mDisplayedOptionTextOrPreview, aNotify);
+    displayContent->SetText(mDisplayedOptionTextOrPreview, aNotify);
   }
 }
 
@@ -1181,7 +1186,7 @@ nsComboboxControlFrame::HandleEvent(nsPresContext* aPresContext,
 
 
 nsresult
-nsComboboxControlFrame::SetFormProperty(nsAtom* aName, const nsAString& aValue)
+nsComboboxControlFrame::SetFormProperty(nsIAtom* aName, const nsAString& aValue)
 {
   nsIFormControlFrame* fcFrame = do_QueryFrame(mDropdownFrame);
   if (!fcFrame) {
@@ -1220,7 +1225,7 @@ nsComboboxControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   // isn't possible to set the display type in CSS2 to create a button frame.
 
     // create content used for display
-  //nsAtom* tag = NS_Atomize("mozcombodisplay");
+  //nsIAtom* tag = NS_Atomize("mozcombodisplay");
 
   // Add a child text content node for the label
 
@@ -1312,6 +1317,7 @@ public:
                           nsReflowStatus&          aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
 protected:
@@ -1326,8 +1332,6 @@ nsComboboxDisplayFrame::Reflow(nsPresContext*           aPresContext,
                                const ReflowInput& aReflowInput,
                                nsReflowStatus&          aStatus)
 {
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   ReflowInput state(aReflowInput);
   if (state.ComputedBSize() == NS_INTRINSICSIZE) {
     // Note that the only way we can have a computed block size here is
@@ -1348,14 +1352,15 @@ nsComboboxDisplayFrame::Reflow(nsPresContext*           aPresContext,
 
 void
 nsComboboxDisplayFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                         const nsRect&           aDirtyRect,
                                          const nsDisplayListSet& aLists)
 {
-  nsDisplayListCollection set(aBuilder);
-  nsBlockFrame::BuildDisplayList(aBuilder, set);
+  nsDisplayListCollection set;
+  nsBlockFrame::BuildDisplayList(aBuilder, aDirtyRect, set);
 
   // remove background items if parent frame is themed
   if (mComboBox->IsThemed()) {
-    set.BorderBackground()->DeleteAll(aBuilder);
+    set.BorderBackground()->DeleteAll();
   }
 
   set.MoveTo(aLists);
@@ -1406,7 +1411,7 @@ nsComboboxControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
   // Revoke any pending RedisplayTextEvent
   mRedisplayTextEvent.Revoke();
 
-  nsCheckboxRadioFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
+  nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
 
   if (mDroppedDown) {
     MOZ_ASSERT(mDropdownFrame, "mDroppedDown without frame");
@@ -1420,8 +1425,8 @@ nsComboboxControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
   // Cleanup frames in popup child list
   mPopupFrames.DestroyFramesFrom(aDestructRoot);
-  DestroyAnonymousContent(mDisplayContent.forget());
-  DestroyAnonymousContent(mButtonContent.forget());
+  nsContentUtils::DestroyAnonymousContent(&mDisplayContent);
+  nsContentUtils::DestroyAnonymousContent(&mButtonContent);
   nsBlockFrame::DestroyFrom(aDestructRoot);
 }
 
@@ -1555,8 +1560,14 @@ void nsDisplayComboboxFocus::Paint(nsDisplayListBuilder* aBuilder,
 
 void
 nsComboboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                         const nsRect&           aDirtyRect,
                                          const nsDisplayListSet& aLists)
 {
+#ifdef NOISY
+  printf("%p paint at (%d, %d, %d, %d)\n", this,
+    aDirtyRect.x, aDirtyRect.y, aDirtyRect.width, aDirtyRect.height);
+#endif
+
   if (aBuilder->IsForEventDelivery()) {
     // Don't allow children to receive events.
     // REVIEW: following old GetFrameForPoint
@@ -1564,7 +1575,7 @@ nsComboboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   } else {
     // REVIEW: Our in-flow child frames are inline-level so they will paint in our
     // content list, so we don't need to mess with layers.
-    nsBlockFrame::BuildDisplayList(aBuilder, aLists);
+    nsBlockFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
   }
 
   // draw a focus indicator only when focus rings should be drawn
@@ -1701,7 +1712,7 @@ nsComboboxControlFrame::GenerateStateKey(nsIContent* aContent,
   if (NS_FAILED(rv) || aKey.IsEmpty()) {
     return rv;
   }
-  aKey.AppendLiteral("CCF");
+  aKey.Append("CCF");
   return NS_OK;
 }
 
@@ -1718,3 +1729,4 @@ nsComboboxControlFrame::ToolkitHasNativePopup()
   return false;
 #endif /* MOZ_USE_NATIVE_POPUP_WINDOWS */
 }
+

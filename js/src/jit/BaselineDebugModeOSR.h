@@ -10,7 +10,7 @@
 #include "jit/BaselineFrame.h"
 #include "jit/BaselineIC.h"
 #include "jit/BaselineJIT.h"
-#include "jit/JSJitFrameIter.h"
+#include "jit/JitFrameIterator.h"
 
 #include "vm/Debugger.h"
 
@@ -82,25 +82,24 @@ class DebugModeOSRVolatileStub
 };
 
 //
-// A JitFrameIter that updates internal JSJitFrameIter in case of
-// recompilation of an on-stack baseline script.
+// A JitFrameIterator that updates itself in case of recompilation of an
+// on-stack baseline script.
 //
-
-class DebugModeOSRVolatileJitFrameIter : public JitFrameIter
+class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
 {
-    DebugModeOSRVolatileJitFrameIter** stack;
-    DebugModeOSRVolatileJitFrameIter* prev;
+    DebugModeOSRVolatileJitFrameIterator** stack;
+    DebugModeOSRVolatileJitFrameIterator* prev;
 
   public:
-    explicit DebugModeOSRVolatileJitFrameIter(JSContext* cx)
-      : JitFrameIter(cx->activation()->asJit())
+    explicit DebugModeOSRVolatileJitFrameIterator(JSContext* cx)
+      : JitFrameIterator(cx)
     {
-        stack = &cx->liveVolatileJitFrameIter_.ref();
+        stack = &cx->liveVolatileJitFrameIterators_.ref();
         prev = *stack;
         *stack = this;
     }
 
-    ~DebugModeOSRVolatileJitFrameIter() {
+    ~DebugModeOSRVolatileJitFrameIterator() {
         MOZ_ASSERT(*stack == this);
         *stack = prev;
     }

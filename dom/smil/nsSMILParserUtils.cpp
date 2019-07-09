@@ -345,7 +345,7 @@ MoveToNextToken(RangedPtr<const char16_t>& aIter,
   }
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 ConvertUnescapedTokenToAtom(const nsAString& aToken)
 {
   // Whether the token is an id-ref or event-symbol it should be a valid NCName
@@ -354,7 +354,7 @@ ConvertUnescapedTokenToAtom(const nsAString& aToken)
   return NS_Atomize(aToken);
 }
 
-already_AddRefed<nsAtom>
+already_AddRefed<nsIAtom>
 ConvertTokenToAtom(const nsAString& aToken,
                    bool aUnescapeToken)
 {
@@ -416,7 +416,7 @@ ParseElementBaseTimeValueSpec(const nsAString& aSpec,
   bool requiresUnescaping;
   MoveToNextToken(tokenEnd, end, true, requiresUnescaping);
 
-  RefPtr<nsAtom> atom =
+  RefPtr<nsIAtom> atom =
     ConvertTokenToAtom(Substring(start.get(), tokenEnd.get()),
                        requiresUnescaping);
   if (atom == nullptr) {

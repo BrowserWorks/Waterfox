@@ -19,8 +19,8 @@ Ensure that the actor's destroy is really destroying everything that it should. 
 ```js
 destroy: function() {
   Actor.prototype.destroy.call(this);
-  this.tabActor.off("will-navigate", this.onWillNavigate);
-  this.tabActor.off("navigate", this.onNavigate);
+  events.off(this.tabActor, "will-navigate", this.onWillNavigate);
+  events.off(this.tabActor, "navigate", this.onNavigate);
 
   this.stopAnimationPlayerUpdates();
   this.tabActor = this.observer = this.actors = null;

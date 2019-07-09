@@ -8,8 +8,8 @@ import argparse
 import os
 import re
 import sys
-from buildconfig import topsrcdir, topobjdir
-from mozbuild.backend.configenvironment import PartialConfigEnvironment
+from buildconfig import topobjdir
+from mozbuild.backend.configenvironment import ConfigEnvironment
 from mozbuild.util import FileAvoidWrite
 import mozpack.path as mozpath
 
@@ -30,12 +30,14 @@ def process_define_file(output, input):
 
     path = os.path.abspath(input)
 
-    config = PartialConfigEnvironment(topobjdir)
+    config = ConfigEnvironment.from_config_status(
+        mozpath.join(topobjdir, 'config.status'))
 
     if mozpath.basedir(path,
-                       [mozpath.join(topsrcdir, 'js/src')]) and \
+                       [mozpath.join(config.topsrcdir, 'js/src')]) and \
             not config.substs.get('JS_STANDALONE'):
-        config = PartialConfigEnvironment(mozpath.join(topobjdir, 'js', 'src'))
+        config = ConfigEnvironment.from_config_status(
+            mozpath.join(topobjdir, 'js', 'src', 'config.status'))
 
     with open(path, 'rU') as input:
         r = re.compile('^\s*#\s*(?P<cmd>[a-z]+)(?:\s+(?P<name>\S+)(?:\s+(?P<value>\S+))?)?', re.U)
@@ -45,7 +47,7 @@ def process_define_file(output, input):
                 cmd = m.group('cmd')
                 name = m.group('name')
                 value = m.group('value')
-                if name and cmd != 'endif':
+                if name:
                     if name == 'ALLDEFINES':
                         if cmd == 'define':
                             raise Exception(
@@ -53,7 +55,8 @@ def process_define_file(output, input):
                                 'CONFIGURE_DEFINE_FILE')
                         defines = '\n'.join(sorted(
                             '#define %s %s' % (name, val)
-                            for name, val in config.defines['ALLDEFINES'].iteritems()))
+                            for name, val in config.defines.iteritems()
+                            if name not in config.non_global_defines))
                         l = l[:m.start('cmd') - 1] \
                             + defines + l[m.end('name'):]
                     elif name in config.defines:
@@ -73,9 +76,7 @@ def process_define_file(output, input):
 
             output.write(l)
 
-    deps = {path}
-    deps.update(config.get_dependencies())
-    return deps
+    return {path, config.source}
 
 
 def main(argv):

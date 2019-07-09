@@ -236,9 +236,6 @@ SkipString(ParserContext& aCtx)
   for (uint8_t sym = GetNextSymbol(aCtx); sym; sym = GetNextSymbol(aCtx)) {
     if (sym == '\\') {
       sym = GetNextSymbol(aCtx);
-      if (!sym) {
-          return false;
-      }
     } else if (sym == '"') {
       return true;
     }

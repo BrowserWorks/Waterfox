@@ -3,7 +3,6 @@
 """
 test talos browser output parsing
 """
-from __future__ import absolute_import
 
 import os
 import unittest

@@ -87,7 +87,7 @@ var WebcompatReporter = {
         canvas.width = dpr * w;
         canvas.height = dpr * h;
         ctx.scale(dpr, dpr);
-        ctx.drawWindow(win, x, y, w, h, "#ffffff");
+        ctx.drawWindow(win, x, y, w, h, '#ffffff');
         let screenshot = canvas.toDataURL();
         resolve({tab: tab, data: screenshot});
       } catch (e) {
@@ -120,7 +120,7 @@ var WebcompatReporter = {
   reportIssue: (tabData) => {
     return new Promise((resolve) => {
       const WEBCOMPAT_ORIGIN = "https://webcompat.com";
-      let url = tabData.tab.browser.currentURI.spec;
+      let url = tabData.tab.browser.currentURI.spec
       let webcompatURL = `${WEBCOMPAT_ORIGIN}/issues/new?url=${url}&src=mobile-reporter`;
 
       if (tabData.data && typeof tabData.data === "string") {

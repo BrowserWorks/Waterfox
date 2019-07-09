@@ -52,7 +52,7 @@ nsTextEquivUtils::GetNameFromSubtree(Accessible* aAccessible,
 
 nsresult
 nsTextEquivUtils::GetTextEquivFromIDRefs(Accessible* aAccessible,
-                                         nsAtom *aIDRefsAttr,
+                                         nsIAtom *aIDRefsAttr,
                                          nsAString& aTextEquiv)
 {
   aTextEquiv.Truncate();

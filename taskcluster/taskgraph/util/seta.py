@@ -1,9 +1,3 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-from __future__ import absolute_import, print_function, unicode_literals
-
 import json
 import logging
 import requests
@@ -80,6 +74,9 @@ class SETA(object):
 
             # ensure no build tasks slipped in, we never want to optimize out those
             low_value_tasks = [x for x in low_value_tasks if 'build' not in x.lower()]
+
+            # Bug 1340065, temporarily disable SETA for linux64-stylo
+            low_value_tasks = [x for x in low_value_tasks if x.find('linux64-stylo') == -1]
 
         # In the event of request times out, requests will raise a TimeoutError.
         except exceptions.Timeout:

@@ -23,7 +23,7 @@ info: >
       iii. If testResult is true, return true.
   ...
 includes: [testTypedArray.js]
-features: [Symbol, TypedArray]
+features: [Symbol]
 ---*/
 
 var s = Symbol("1");

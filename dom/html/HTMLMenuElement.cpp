@@ -55,9 +55,15 @@ HTMLMenuElement::~HTMLMenuElement()
 {
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLMenuElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLMenuElement, nsGenericHTMLElement,
+                            nsIDOMHTMLMenuElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLMenuElement)
+
+NS_IMPL_BOOL_ATTR(HTMLMenuElement, Compact, compact)
+NS_IMPL_ENUM_ATTR_DEFAULT_VALUE(HTMLMenuElement, Type, type,
+                                kMenuDefaultType->tag)
+NS_IMPL_STRING_ATTR(HTMLMenuElement, Label, label)
 
 
 void
@@ -106,11 +112,9 @@ HTMLMenuElement::Build(nsIMenuBuilder* aBuilder)
 }
 
 nsresult
-HTMLMenuElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
+HTMLMenuElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue,
-                              const nsAttrValue* aOldValue,
-                              nsIPrincipal* aSubjectPrincipal,
-                              bool aNotify)
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::type) {
     if (aValue) {
@@ -121,12 +125,12 @@ HTMLMenuElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aOldValue, aSubjectPrincipal, aNotify);
+                                            aOldValue, aNotify);
 }
 
 bool
 HTMLMenuElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {

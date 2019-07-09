@@ -249,8 +249,7 @@ this.ContentSearch = {
       };
       win.openUILinkIn(submission.uri.spec, where, params);
     }
-    win.BrowserSearch.recordSearchInTelemetry(engine, data.healthReportKey,
-                                              { selection: data.selection });
+    return;
   },
 
   async getSuggestions(engineName, searchString, browser) {

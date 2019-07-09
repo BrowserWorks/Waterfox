@@ -78,17 +78,21 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.OrientationEventListener;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
@@ -153,9 +157,6 @@ public abstract class GeckoApp extends GeckoActivity
     public static final String PREFS_CRASHED_COUNT         = "crashedCount";
     public static final String PREFS_CLEANUP_TEMP_FILES    = "cleanupTempFiles";
 
-    // Used with SharedPreferences, per profile, to determine if this is the first run of
-    // the application. When accessing SharedPreferences, the default value of true should be used.
-    //
     // Originally, this was only used for the telemetry core ping logic. To avoid
     // having to write custom migration logic, we just keep the original pref key.
     public static final String PREFS_IS_FIRST_RUN = "telemetry-isFirstRun";
@@ -445,7 +446,7 @@ public abstract class GeckoApp extends GeckoActivity
     }
 
     public MenuPanel getMenuPanel() {
-        if (mMenuPanel == null || mMenu == null) {
+        if (mMenuPanel == null) {
             onCreatePanelMenu(Window.FEATURE_OPTIONS_PANEL, null);
             invalidateOptionsMenu();
         }
@@ -673,7 +674,7 @@ public abstract class GeckoApp extends GeckoActivity
             GeckoAccessibility.updateAccessibilitySettings(this);
 
         } else if ("Accessibility:Event".equals(event)) {
-            GeckoAccessibility.sendAccessibilityEvent(mLayerView, message);
+            GeckoAccessibility.sendAccessibilityEvent(message);
 
         } else if ("Bookmark:Insert".equals(event)) {
             final BrowserDB db = BrowserDB.from(getProfile());
@@ -738,6 +739,47 @@ public abstract class GeckoApp extends GeckoActivity
 
         } else if ("PrivateBrowsing:Data".equals(event)) {
             mPrivateBrowsingSession = message.getString("session");
+
+        } else if ("RuntimePermissions:Check".equals(event)) {
+            final String[] permissions = message.getStringArray("permissions");
+            final boolean shouldPrompt = message.getBoolean("shouldPrompt", false);
+            if (callback == null || permissions == null) {
+                return;
+            }
+
+            Permissions.from(this)
+                    .withPermissions(permissions)
+                    .doNotPromptIf(!shouldPrompt)
+                    .andFallback(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.sendSuccess(false);
+                        }
+                    })
+                    .run(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.sendSuccess(true);
+                        }
+                    });
+
+        } else if ("Share:Text".equals(event)) {
+            final String text = message.getString("text");
+            final Tab tab = Tabs.getInstance().getSelectedTab();
+            String title = "";
+            if (tab != null) {
+                title = tab.getDisplayTitle();
+            }
+            IntentHelper.openUriExternal(text, "text/plain", "", "", Intent.ACTION_SEND, title, false);
+
+            // Context: Sharing via chrome list (no explicit session is active)
+            Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "text");
+
+        } else if ("Snackbar:Show".equals(event)) {
+            SnackbarBuilder.builder(this)
+                    .fromEvent(message)
+                    .callback(callback)
+                    .buildAndShow();
 
         } else if ("SystemUI:Visibility".equals(event)) {
             if (message.getBoolean("visible", true)) {
@@ -1015,12 +1057,11 @@ public abstract class GeckoApp extends GeckoActivity
 
     @Override // GeckoView.ContentListener
     public void onFullScreen(final GeckoView view, final boolean fullScreen) {
+        ThreadUtils.assertOnUiThread();
         if (fullScreen) {
-            SnackbarBuilder.builder(this)
-                    .message(R.string.fullscreen_warning)
+            SnackbarBuilder.builder(this).message(R.string.fullscreen_warning)
                     .duration(Snackbar.LENGTH_LONG).buildAndShow();
         }
-        ThreadUtils.assertOnUiThread();
         ActivityUtils.setFullScreen(this, fullScreen);
     }
 
@@ -1058,6 +1099,8 @@ public abstract class GeckoApp extends GeckoActivity
      **/
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        GeckoAppShell.ensureCrashHandling();
+
         // Enable Android Strict Mode for developers' local builds (the "default" channel).
         if ("default".equals(AppConstants.MOZ_UPDATE_CHANNEL)) {
             enableStrictMode();
@@ -1129,10 +1172,10 @@ public abstract class GeckoApp extends GeckoActivity
             final String action = intent.getAction();
             final String args = GeckoApplication.addDefaultGeckoArgs(
                     intent.getStringExtra("args"));
-            final int flags = ACTION_DEBUG.equals(action) ? GeckoThread.FLAG_DEBUGGING : 0;
 
             sAlreadyLoaded = true;
-            GeckoThread.initMainProcess(/* profile */ null, args, flags);
+            GeckoThread.initMainProcess(/* profile */ null, args,
+                                        /* debugging */ ACTION_DEBUG.equals(action));
 
             // Speculatively pre-fetch the profile in the background.
             ThreadUtils.postToBackgroundThread(new Runnable() {
@@ -1214,6 +1257,8 @@ public abstract class GeckoApp extends GeckoActivity
             "Mma:web_save_media",
             "Permissions:Data",
             "PrivateBrowsing:Data",
+            "RuntimePermissions:Check",
+            "Share:Text",
             "SystemUI:Visibility",
             "ToggleChrome:Focus",
             "ToggleChrome:Hide",
@@ -1226,7 +1271,11 @@ public abstract class GeckoApp extends GeckoActivity
         // Use global layout state change to kick off additional initialization
         mMainLayout.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
-        mTextSelection = TextSelection.Factory.create(mLayerView, getTextSelectPresenter());
+        if (Versions.preMarshmallow) {
+            mTextSelection = new ActionBarTextSelection(this, getTextSelectPresenter());
+        } else {
+            mTextSelection = new FloatingToolbarTextSelection(this, mLayerView);
+        }
         mTextSelection.create();
 
         final Bundle finalSavedInstanceState = savedInstanceState;
@@ -1381,6 +1430,8 @@ public abstract class GeckoApp extends GeckoActivity
                 BrowserLocaleManager.storeAndNotifyOSLocale(getSharedPreferencesForProfile(), osLocale);
             }
         });
+
+        IntentHelper.init(this);
     }
 
     @Override
@@ -1461,10 +1512,9 @@ public abstract class GeckoApp extends GeckoActivity
     }
 
     protected void initializeChrome() {
-        mDoorHangerPopup = new DoorHangerPopup(this, getAppEventDispatcher());
+        mDoorHangerPopup = new DoorHangerPopup(this);
         mDoorHangerPopup.setOnVisibilityChangeListener(this);
         mFormAssistPopup = (FormAssistPopup) findViewById(R.id.form_assist_popup);
-        mFormAssistPopup.create(mLayerView);
     }
 
     @Override
@@ -1871,7 +1921,7 @@ public abstract class GeckoApp extends GeckoActivity
     }
 
     /**
-     * Enable Android StrictMode checks.
+     * Enable Android StrictMode checks (for supported OS versions).
      * http://developer.android.com/reference/android/os/StrictMode.html
      */
     private void enableStrictMode() {
@@ -1880,9 +1930,6 @@ public abstract class GeckoApp extends GeckoActivity
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                                   .detectAll()
                                   .penaltyLog()
-                                  // Match Android's default configuration - which we use on
-                                  // automation builds, including release - for network access.
-                                  .penaltyDeathOnNetwork()
                                   .build());
 
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
@@ -2026,6 +2073,8 @@ public abstract class GeckoApp extends GeckoActivity
         // Undo whatever we did in onPause.
         super.onResume();
 
+        EventDispatcher.getInstance().registerUiThreadListener(this, "Snackbar:Show");
+
         if (mIsAbortingAppLaunch) {
             return;
         }
@@ -2097,6 +2146,8 @@ public abstract class GeckoApp extends GeckoActivity
     @Override
     public void onPause()
     {
+        EventDispatcher.getInstance().unregisterUiThreadListener(this, "Snackbar:Show");
+
         if (mIsAbortingAppLaunch) {
             super.onPause();
             return;
@@ -2136,8 +2187,6 @@ public abstract class GeckoApp extends GeckoActivity
             }
         });
 
-        GeckoAppShell.setScreenOrientationDelegate(null);
-
         super.onPause();
     }
 
@@ -2168,21 +2217,6 @@ public abstract class GeckoApp extends GeckoActivity
             // We did not initialize anything, so skip cleaning up.
             super.onDestroy();
             return;
-        }
-
-        if (mFormAssistPopup != null) {
-            mFormAssistPopup.destroy();
-            mFormAssistPopup = null;
-        }
-
-        if (mDoorHangerPopup != null) {
-            mDoorHangerPopup.destroy();
-            mDoorHangerPopup = null;
-        }
-
-        if (mTextSelection != null) {
-            mTextSelection.destroy();
-            mTextSelection = null;
         }
 
         EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
@@ -2216,6 +2250,8 @@ public abstract class GeckoApp extends GeckoActivity
             "Mma:web_save_media",
             "Permissions:Data",
             "PrivateBrowsing:Data",
+            "RuntimePermissions:Check",
+            "Share:Text",
             "SystemUI:Visibility",
             "ToggleChrome:Focus",
             "ToggleChrome:Hide",

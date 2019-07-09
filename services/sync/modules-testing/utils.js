@@ -17,7 +17,6 @@ this.EXPORTED_SYMBOLS = [
   "MockFxaStorageManager",
   "AccountState", // from a module import
   "sumHistogram",
-  "getLoginTelemetryScalar",
 ];
 
 var {utils: Cu} = Components;
@@ -71,12 +70,12 @@ MockFxaStorageManager.prototype = {
     this.accountData = null;
     return Promise.resolve();
   }
-};
+}
 
 /**
  * First wait >100ms (nsITimers can take up to that much time to fire, so
  * we can account for the timer in delayedAutoconnect) and then two event
- * loop ticks (to account for the CommonUtils.nextTick() in autoConnect).
+ * loop ticks (to account for the Utils.nextTick() in autoConnect).
  */
 this.waitForZeroTimer = function waitForZeroTimer(callback) {
   let ticks = 2;
@@ -89,19 +88,19 @@ this.waitForZeroTimer = function waitForZeroTimer(callback) {
     callback();
   }
   CommonUtils.namedTimer(wait, 150, {}, "timer");
-};
+}
 
 this.promiseZeroTimer = function() {
   return new Promise(resolve => {
     waitForZeroTimer(resolve);
   });
-};
+}
 
 this.promiseNamedTimer = function(wait, thisObj, name) {
   return new Promise(resolve => {
-    CommonUtils.namedTimer(resolve, wait, thisObj, name);
+    Utils.namedTimer(resolve, wait, thisObj, name);
   });
-};
+}
 
 // Return an identity configuration suitable for testing with our identity
 // providers.  |overrides| can specify overrides for any default values.
@@ -145,7 +144,7 @@ this.makeIdentityConfig = function(overrides) {
     }
   }
   return result;
-};
+}
 
 this.makeFxAccountsInternalMock = function(config) {
   return {
@@ -201,7 +200,7 @@ this.configureFxAccountIdentity = function(authService,
   // logged in user of the mockFXA service.
   authService._signedInUser = config.fxaccount.user;
   authService._account = config.fxaccount.user.email;
-};
+}
 
 this.configureIdentity = async function(identityOverrides, server) {
   let config = makeIdentityConfig(identityOverrides, server);
@@ -228,7 +227,7 @@ this.configureIdentity = async function(identityOverrides, server) {
   if (config.fxaccount.token.endpoint) {
     ns.Service.clusterURL = config.fxaccount.token.endpoint;
   }
-};
+}
 
 this.SyncTestingInfrastructure = async function(server, username) {
   let ns = {};
@@ -241,8 +240,8 @@ this.SyncTestingInfrastructure = async function(server, username) {
     fakeFilesystem: new FakeFilesystemService({}),
     fakeGUIDService: new FakeGUIDService(),
     fakeCryptoService: new FakeCryptoService(),
-  };
-};
+  }
+}
 
 /**
  * Turn WBO cleartext into fake "encrypted" payload as it goes over the wire.
@@ -257,7 +256,7 @@ this.encryptPayload = function encryptPayload(cleartext) {
     IV: "irrelevant",
     hmac: fakeSHA256HMAC(cleartext, CryptoUtils.makeHMACKey("")),
   };
-};
+}
 
 this.sumHistogram = function(name, options = {}) {
   let histogram = options.key ? Services.telemetry.getKeyedHistogramById(name) :
@@ -269,10 +268,4 @@ this.sumHistogram = function(name, options = {}) {
   }
   histogram.clear();
   return sum;
-};
-
-this.getLoginTelemetryScalar = function() {
-  let dataset = Services.telemetry.DATASET_RELEASE_CHANNEL_OPTOUT;
-  let snapshot = Services.telemetry.snapshotKeyedScalars(dataset, true);
-  return snapshot.parent ? snapshot.parent["services.sync.sync_login_state_transitions"] : {};
-};
+}

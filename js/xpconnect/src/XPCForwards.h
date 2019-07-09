@@ -31,6 +31,7 @@ class XPCWrappedNativeProto;
 class XPCWrappedNativeTearOff;
 
 class XPCTraceableVariant;
+class XPCJSObjectHolder;
 
 class JSObject2WrappedJSMap;
 class Native2WrappedNativeMap;

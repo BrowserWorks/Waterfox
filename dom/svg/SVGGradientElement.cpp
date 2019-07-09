@@ -105,7 +105,7 @@ SVGGradientElement::Href()
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGGradientElement::IsAttributeMapped(const nsAtom* name) const
+SVGGradientElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sColorMap,

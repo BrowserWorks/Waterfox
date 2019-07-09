@@ -6,7 +6,7 @@
 #include "MaskLayerImageCache.h"
 
 #include "ImageContainer.h"
-#include "mozilla/layers/KnowsCompositor.h"
+#include "mozilla/layers/ShadowLayers.h"
 
 using namespace mozilla::layers;
 

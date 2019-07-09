@@ -8,21 +8,6 @@
      {}
     ]
    ],
-   "dom/throttling/resources/test.html": [
-    [
-     {}
-    ]
-   ],
-   "dom/throttling/resources/throttling.js": [
-    [
-     {}
-    ]
-   ],
-   "dom/throttling/resources/ws.sub.js": [
-    [
-     {}
-    ]
-   ],
    "fetch/api/redirect/redirect-referrer-mixed-content.js": [
     [
      {}
@@ -33,62 +18,12 @@
      {}
     ]
    ],
-   "html/semantics/scripting-1/the-script-element/support/bad_local_export.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/circular_error1.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/circular_error2.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/circular_error3.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/import_resolve_failure.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/indirect_export_resolve_failure.js": [
-    [
-     {}
-    ]
-   ],
    "html/semantics/scripting-1/the-script-element/support/missing_import.js": [
     [
      {}
     ]
    ],
-   "html/semantics/scripting-1/the-script-element/support/missing_indirect_export.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/mixed_import.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/mixed_import2.js": [
-    [
-     {}
-    ]
-   ],
    "html/semantics/scripting-1/the-script-element/support/module.js": [
-    [
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/support/module_eval_error.js": [
     [
      {}
     ]
@@ -421,54 +356,6 @@
      {}
     ]
    ],
-   "dom/throttling/throttling-1.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-1.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-2.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-2.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-3.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-3.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-4.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-4.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-indexeddb.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-indexeddb.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-webaudio.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-webaudio.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-webrtc.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-webrtc.window.html",
-     {}
-    ]
-   ],
-   "dom/throttling/throttling-ws.window.js": [
-    [
-     "/_mozilla/dom/throttling/throttling-ws.window.html",
-     {}
-    ]
-   ],
    "fetch/api/redirect/redirect-referrer.https.html": [
     [
      "/_mozilla/fetch/api/redirect/redirect-referrer.https.html",
@@ -571,27 +458,9 @@
      {}
     ]
    ],
-   "html/semantics/scripting-1/the-script-element/circular-module-import-with-syntax-error.html": [
-    [
-     "/_mozilla/html/semantics/scripting-1/the-script-element/circular-module-import-with-syntax-error.html",
-     {}
-    ]
-   ],
    "html/semantics/scripting-1/the-script-element/create-module-script.html": [
     [
      "/_mozilla/html/semantics/scripting-1/the-script-element/create-module-script.html",
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/mixed-content-import.https.html": [
-    [
-     "/_mozilla/html/semantics/scripting-1/the-script-element/mixed-content-import.https.html",
-     {}
-    ]
-   ],
-   "html/semantics/scripting-1/the-script-element/module-error-reporting.html": [
-    [
-     "/_mozilla/html/semantics/scripting-1/the-script-element/module-error-reporting.html",
      {}
     ]
    ],
@@ -978,50 +847,6 @@
    "f289334e7b3486259b9aae54b4282a7211b8813e",
    "testharness"
   ],
-  "dom/throttling/resources/test.html": [
-   "0898e3efa5dbcc74138bdf27ff2787d1f1a2d4d8",
-   "support"
-  ],
-  "dom/throttling/resources/throttling.js": [
-   "e0bf1a7c5a0d2c8be2b793c786bb9484779dcbbf",
-   "support"
-  ],
-  "dom/throttling/resources/ws.sub.js": [
-   "66306649fb96efc2d5f13c566fac3da18339bc38",
-   "support"
-  ],
-  "dom/throttling/throttling-1.window.js": [
-   "216ffff13da87662a1dcddbc6ab091cc0e7380ba",
-   "testharness"
-  ],
-  "dom/throttling/throttling-2.window.js": [
-   "e76ad877b617c343968211596c34e787849ef587",
-   "testharness"
-  ],
-  "dom/throttling/throttling-3.window.js": [
-   "c7e6a0638b216f1f314a022d166ac3d2d6b3ffbd",
-   "testharness"
-  ],
-  "dom/throttling/throttling-4.window.js": [
-   "7a6d52ee3f4077bbfc7f0ac635559abc14e0fde5",
-   "testharness"
-  ],
-  "dom/throttling/throttling-indexeddb.window.js": [
-   "334beb79c9bd4fd56574b5eca2b6a3709d9057e7",
-   "testharness"
-  ],
-  "dom/throttling/throttling-webaudio.window.js": [
-   "27e56f68bc041ad07b9c9c27341006d95cd90194",
-   "testharness"
-  ],
-  "dom/throttling/throttling-webrtc.window.js": [
-   "02e6acec2ff275e0e935cb6d903d348f98d5d437",
-   "testharness"
-  ],
-  "dom/throttling/throttling-ws.window.js": [
-   "67a981ba2a4d08b684947ed42aba6648dcd262b4",
-   "testharness"
-  ],
   "fetch/api/redirect/redirect-referrer-mixed-content.js": [
    "f9d7ec9cf9fa8c847e45664b05482e3f8c191385",
    "support"
@@ -1098,72 +923,20 @@
    "eea373cbbfd4f6289234667fe9a002ff6a9755cf",
    "testharness"
   ],
-  "html/semantics/scripting-1/the-script-element/circular-module-import-with-syntax-error.html": [
-   "b2ada78a025ebeb971c09dc99f323f3b8322f6ea",
-   "testharness"
-  ],
   "html/semantics/scripting-1/the-script-element/create-module-script.html": [
    "3214bced5d81e8001a321aea4c80675b6603b11d",
    "testharness"
   ],
-  "html/semantics/scripting-1/the-script-element/mixed-content-import.https.html": [
-   "7815d81c7ad8ac1367aaca5aa3fa9cd89d7e56d9",
-   "testharness"
-  ],
-  "html/semantics/scripting-1/the-script-element/module-error-reporting.html": [
-   "5e3027bb28cfa54faee31015fbe2b5c920d52c18",
-   "testharness"
-  ],
   "html/semantics/scripting-1/the-script-element/reload-failed-module-script.html": [
-   "7bfcf25ed4e793d00b0b33269bc3401545527420",
+   "5b8cf6809bd8d0797f4172bf9a01f9085c0abbaf",
    "testharness"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/bad_local_export.js": [
-   "4922a882dca470dc9e583af92e495d261abba551",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/circular_error1.js": [
-   "5f53c0df8ea4741dd79ae8441fc75b71e57553ea",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/circular_error2.js": [
-   "512c88977c5b4518530cfe3f6c6c47e01e511a1e",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/circular_error3.js": [
-   "a3687131ce1c869910fb71d98d1e0cdb8e707251",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/import_resolve_failure.js": [
-   "3a8927f5cd778f90758b46083b19998987c3a462",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/indirect_export_resolve_failure.js": [
-   "14dca5999dd3179ea2c4a1faccda545e74b8a0bd",
-   "support"
   ],
   "html/semantics/scripting-1/the-script-element/support/missing_import.js": [
    "52d9e4b6332f11467c1a7d3d18893fdf8ce6ff72",
    "support"
   ],
-  "html/semantics/scripting-1/the-script-element/support/missing_indirect_export.js": [
-   "f125b760ddd301e23ad154312200f70b88f90875",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/mixed_import.js": [
-   "d4b9fed8c6a0036f19ea0c0a9282c59496c55616",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/mixed_import2.js": [
-   "7954815a724e8a98ccd0c39f667ea62defaa18df",
-   "support"
-  ],
   "html/semantics/scripting-1/the-script-element/support/module.js": [
-   "c105f0b90bf9cd30b3a54c5d022eabaee2378b6d",
-   "support"
-  ],
-  "html/semantics/scripting-1/the-script-element/support/module_eval_error.js": [
-   "f2c2c2d6cda97a9e8514aee986d7edc92c1d9eed",
+   "3de5a5a1fb12e698509ac14ba44d7b2b474330f4",
    "support"
   ],
   "html/syntax/parsing/math-parse01.html": [

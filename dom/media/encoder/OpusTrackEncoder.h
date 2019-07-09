@@ -30,7 +30,7 @@ public:
 class OpusTrackEncoder : public AudioTrackEncoder
 {
 public:
-  explicit OpusTrackEncoder(TrackRate aTrackRate);
+  OpusTrackEncoder();
   virtual ~OpusTrackEncoder();
 
   already_AddRefed<TrackMetadataBase> GetMetadata() override;

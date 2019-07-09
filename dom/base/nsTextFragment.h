@@ -17,9 +17,10 @@
 #include "mozilla/MemoryReporting.h"
 
 #include "nsString.h"
-#include "nsStringBuffer.h"
 #include "nsReadableUtils.h"
 #include "nsISupportsImpl.h"
+
+class nsString;
 
 // XXX should this normalize the code to keep a \u0000 at the end?
 
@@ -80,8 +81,8 @@ public:
    */
   const char16_t *Get2b() const
   {
-    MOZ_ASSERT(Is2b(), "not 2b text");
-    return static_cast<char16_t*>(m2b->Data());
+    NS_ASSERTION(Is2b(), "not 2b text");
+    return m2b;
   }
 
   /**
@@ -111,40 +112,15 @@ public:
    * Change the contents of this fragment to be a copy of the given
    * buffer. If aUpdateBidi is true, contents of the fragment will be scanned,
    * and mState.mIsBidi will be turned on if it includes any Bidi characters.
-   * If aForce2b is true, aBuffer will be stored as char16_t as is.  Then,
-   * you can access the value faster but may waste memory if all characters
-   * are less than U+0100.
    */
-  bool SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi,
-             bool aForce2b);
-
-  bool SetTo(const nsString& aString, bool aUpdateBidi, bool aForce2b)
-  {
-    ReleaseText();
-    if (aForce2b && !aUpdateBidi) {
-      nsStringBuffer* buffer = nsStringBuffer::FromString(aString);
-      if (buffer) {
-        NS_ADDREF(m2b = buffer);
-        mState.mInHeap = true;
-        mState.mIs2b = true;
-        mState.mLength = aString.Length();
-        return true;
-      }
-    }
-
-    return SetTo(aString.get(), aString.Length(), aUpdateBidi, aForce2b);
-  }
+  bool SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi);
 
   /**
    * Append aData to the end of this fragment. If aUpdateBidi is true, contents
    * of the fragment will be scanned, and mState.mIsBidi will be turned on if
    * it includes any Bidi characters.
-   * If aForce2b is true, the string will be stored as char16_t as is.  Then,
-   * you can access the value faster but may waste memory if all characters
-   * are less than U+0100.
    */
-  bool Append(const char16_t* aBuffer, uint32_t aLength, bool aUpdateBidi,
-              bool aForce2b);
+  bool Append(const char16_t* aBuffer, uint32_t aLength, bool aUpdateBidi);
 
   /**
    * Append the contents of this string fragment to aString
@@ -163,11 +139,7 @@ public:
   bool AppendTo(nsAString& aString,
                 const mozilla::fallible_t& aFallible) const {
     if (mState.mIs2b) {
-      if (aString.IsEmpty()) {
-        m2b->ToString(mState.mLength, aString);
-        return true;
-      }
-      bool ok = aString.Append(Get2b(), mState.mLength, aFallible);
+      bool ok = aString.Append(m2b, mState.mLength, aFallible);
       if (!ok) {
         return false;
       }
@@ -202,7 +174,7 @@ public:
                 const mozilla::fallible_t& aFallible) const
   {
     if (mState.mIs2b) {
-      bool ok = aString.Append(Get2b() + aOffset, aLength, aFallible);
+      bool ok = aString.Append(m2b + aOffset, aLength, aFallible);
       if (!ok) {
         return false;
       }
@@ -229,12 +201,7 @@ public:
   char16_t CharAt(int32_t aIndex) const
   {
     MOZ_ASSERT(uint32_t(aIndex) < mState.mLength, "bad index");
-    return mState.mIs2b ? Get2b()[aIndex] : static_cast<unsigned char>(m1b[aIndex]);
-  }
-
-  void SetBidi(bool aBidi)
-  {
-    mState.mIsBidi = aBidi;
+    return mState.mIs2b ? m2b[aIndex] : static_cast<unsigned char>(m1b[aIndex]);
   }
 
   struct FragmentBits {
@@ -246,12 +213,8 @@ public:
     uint32_t mInHeap : 1;
     uint32_t mIs2b : 1;
     uint32_t mIsBidi : 1;
-    // Note that when you change the bits of mLength, you also need to change
-    // NS_MAX_TEXT_FRAGMENT_LENGTH.
     uint32_t mLength : 29;
   };
-
-#define NS_MAX_TEXT_FRAGMENT_LENGTH (static_cast<uint32_t>(0x1FFFFFFF))
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
@@ -265,8 +228,8 @@ private:
   void UpdateBidiFlag(const char16_t* aBuffer, uint32_t aLength);
 
   union {
-    nsStringBuffer* m2b;
-    const char* m1b; // This is const since it can point to shared data
+    char16_t *m2b;
+    const char *m1b; // This is const since it can point to shared data
   };
 
   union {

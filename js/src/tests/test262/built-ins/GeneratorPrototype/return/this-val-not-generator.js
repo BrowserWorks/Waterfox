@@ -19,7 +19,6 @@ info: |
   [...]
   2. If generator does not have a [[GeneratorState]] internal slot, throw a
      TypeError exception.
-features: [generators]
 ---*/
 
 function* g() {}

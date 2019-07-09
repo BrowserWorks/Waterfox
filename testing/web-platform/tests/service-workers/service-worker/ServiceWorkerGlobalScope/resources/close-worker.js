@@ -1,3 +1,4 @@
+importScripts('../../resources/interfaces.js');
 importScripts('../../resources/worker-testharness.js');
 
 test(function() {

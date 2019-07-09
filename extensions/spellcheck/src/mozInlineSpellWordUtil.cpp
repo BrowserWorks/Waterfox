@@ -4,13 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozInlineSpellWordUtil.h"
-
-#include "mozilla/BinarySearch.h"
-#include "mozilla/TextEditor.h"
-#include "mozilla/dom/Element.h"
-
 #include "nsDebug.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIDOMCSSStyleDeclaration.h"
 #include "nsIDOMElement.h"
@@ -21,10 +16,12 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIContent.h"
 #include "nsTextFragment.h"
+#include "mozilla/dom/Element.h"
 #include "nsRange.h"
 #include "nsContentUtils.h"
 #include "nsIFrame.h"
 #include <algorithm>
+#include "mozilla/BinarySearch.h"
 
 using namespace mozilla;
 
@@ -53,24 +50,33 @@ inline bool IsConditionalPunctuation(char16_t ch)
 // mozInlineSpellWordUtil::Init
 
 nsresult
-mozInlineSpellWordUtil::Init(TextEditor* aTextEditor)
+mozInlineSpellWordUtil::Init(const nsWeakPtr& aWeakEditor)
 {
-  if (NS_WARN_IF(!aTextEditor)) {
-    return NS_ERROR_FAILURE;
-  }
+  nsresult rv;
 
-  mDocument = aTextEditor->GetDocument();
-  if (NS_WARN_IF(!mDocument)) {
-    return NS_ERROR_FAILURE;
-  }
-  mDOMDocument = do_QueryInterface(mDocument);
+  // getting the editor can fail commonly because the editor was detached, so
+  // don't assert
+  nsCOMPtr<nsIEditor> editor = do_QueryReferent(aWeakEditor, &rv);
+  if (NS_FAILED(rv))
+    return rv;
+
+  nsCOMPtr<nsIDOMDocument> domDoc;
+  rv = editor->GetDocument(getter_AddRefs(domDoc));
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(domDoc, NS_ERROR_NULL_POINTER);
+
+  mDOMDocument = domDoc;
+  mDocument = do_QueryInterface(domDoc);
 
   // Find the root node for the editor. For contenteditable we'll need something
   // cleverer here.
-  mRootNode = aTextEditor->GetRoot();
-  if (NS_WARN_IF(!mRootNode)) {
-    return NS_ERROR_FAILURE;
-  }
+  nsCOMPtr<nsIDOMElement> rootElt;
+  rv = editor->GetRootElement(getter_AddRefs(rootElt));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsINode> rootNode = do_QueryInterface(rootElt);
+  mRootNode = rootNode;
+  NS_ASSERTION(mRootNode, "GetRootElement returned null *and* claimed to suceed!");
   return NS_OK;
 }
 

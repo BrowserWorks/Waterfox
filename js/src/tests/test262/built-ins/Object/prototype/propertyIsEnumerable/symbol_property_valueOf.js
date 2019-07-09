@@ -10,7 +10,6 @@ info: >
   2. ReturnIfAbrupt(P).
   ...
 es6id: 19.1.3.4
-features: [Symbol]
 ---*/
 
 var obj = {};

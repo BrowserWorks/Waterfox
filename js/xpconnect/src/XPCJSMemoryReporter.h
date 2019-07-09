@@ -8,7 +8,7 @@
 #define XPCJSMemoryReporter_h
 
 class nsISupports;
-class nsIHandleReportCallback;
+class nsIMemoryReporterCallback;
 
 namespace xpc {
 
@@ -23,7 +23,7 @@ class JSReporter
 public:
     static void CollectReports(WindowPaths* windowPaths,
                                WindowPaths* topWindowPaths,
-                               nsIHandleReportCallback* handleReport,
+                               nsIMemoryReporterCallback* handleReport,
                                nsISupports* data,
                                bool anonymize);
 };

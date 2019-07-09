@@ -25,9 +25,6 @@
 #include "nsIErrorService.h"
 #include "nsICategoryManager.h"
 #include "nsContentUtils.h"
-#include "nsStringStream.h"
-#include "mozilla/ResultExtensions.h"
-#include "mozilla/URLPreloader.h"
 
 // for async loading
 #ifdef ASYNC_LOADING
@@ -53,15 +50,6 @@ nsStringBundle::nsStringBundle(const char* aURLSpec,
 
 nsStringBundle::~nsStringBundle()
 {
-}
-
-NS_IMETHODIMP
-nsStringBundle::AsyncPreload()
-{
-  return NS_IdleDispatchToCurrentThread(
-    NewIdleRunnableMethod("nsStringBundle::LoadProperties",
-                          this,
-                          &nsStringBundle::LoadProperties));
 }
 
 nsresult
@@ -96,27 +84,21 @@ nsStringBundle::LoadProperties()
     return NS_ERROR_ABORT;
   }
 
+  nsCOMPtr<nsIChannel> channel;
+  rv = NS_NewChannel(getter_AddRefs(channel),
+                     uri,
+                     nsContentUtils::GetSystemPrincipal(),
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                     nsIContentPolicy::TYPE_OTHER);
+
+  if (NS_FAILED(rv)) return rv;
+
+  // It's a string bundle.  We expect a text/plain type, so set that as hint
+  channel->SetContentType(NS_LITERAL_CSTRING("text/plain"));
+
   nsCOMPtr<nsIInputStream> in;
-
-  auto result = URLPreloader::ReadURI(uri);
-  if (result.isOk()) {
-    MOZ_TRY(NS_NewCStringInputStream(getter_AddRefs(in), result.unwrap()));
-  } else {
-    nsCOMPtr<nsIChannel> channel;
-    rv = NS_NewChannel(getter_AddRefs(channel),
-                       uri,
-                       nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                       nsIContentPolicy::TYPE_OTHER);
-
-    if (NS_FAILED(rv)) return rv;
-
-    // It's a string bundle.  We expect a text/plain type, so set that as hint
-    channel->SetContentType(NS_LITERAL_CSTRING("text/plain"));
-
-    rv = channel->Open2(getter_AddRefs(in));
-    if (NS_FAILED(rv)) return rv;
-  }
+  rv = channel->Open2(getter_AddRefs(in));
+  if (NS_FAILED(rv)) return rv;
 
   NS_ASSERTION(NS_SUCCEEDED(rv) && in, "Error in OpenBlockingStream");
   NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && in, NS_ERROR_FAILURE);
@@ -133,23 +115,8 @@ nsStringBundle::LoadProperties()
   return rv;
 }
 
-NS_IMETHODIMP
-nsStringBundle::GetStringFromID(int32_t aID, nsAString& aResult)
-{
-  nsAutoCString idStr;
-  idStr.AppendInt(aID, 10);
-  return GetStringFromName(idStr.get(), aResult);
-}
-
-NS_IMETHODIMP
-nsStringBundle::GetStringFromAUTF8Name(const nsACString& aName,
-                                       nsAString& aResult)
-{
-  return GetStringFromName(PromiseFlatCString(aName).get(), aResult);
-}
-
-NS_IMETHODIMP
-nsStringBundle::GetStringFromName(const char* aName, nsAString& aResult)
+nsresult
+nsStringBundle::GetStringFromNameHelper(const char* aName, nsAString& aResult)
 {
   NS_ENSURE_ARG_POINTER(aName);
 
@@ -166,14 +133,47 @@ nsStringBundle::GetStringFromName(const char* aName, nsAString& aResult)
     if (NS_SUCCEEDED(rv)) return rv;
   }
 
-  return mProps->GetStringProperty(nsDependentCString(aName), aResult);
+  rv = mProps->GetStringProperty(nsDependentCString(aName), aResult);
+  return rv;
+}
+
+NS_IMETHODIMP
+nsStringBundle::GetStringFromID(int32_t aID, char16_t **aResult)
+{
+  nsAutoCString idStr;
+  idStr.AppendInt(aID, 10);
+  return GetStringFromName(idStr.get(), aResult);
+}
+
+NS_IMETHODIMP
+nsStringBundle::GetStringFromAUTF8Name(const nsACString& aName,
+                                       char16_t **aResult)
+{
+  return GetStringFromName(PromiseFlatCString(aName).get(), aResult);
+}
+
+NS_IMETHODIMP
+nsStringBundle::GetStringFromName(const char* aName, char16_t** aResult)
+{
+  NS_ENSURE_ARG_POINTER(aResult);
+
+  *aResult = nullptr;
+
+  nsAutoString tmpstr;
+  nsresult rv = GetStringFromNameHelper(aName, tmpstr);
+  if (NS_FAILED(rv)) return rv;
+
+  *aResult = ToNewUnicode(tmpstr);
+  NS_ENSURE_TRUE(*aResult, NS_ERROR_OUT_OF_MEMORY);
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP
 nsStringBundle::FormatStringFromID(int32_t aID,
                                    const char16_t **aParams,
                                    uint32_t aLength,
-                                   nsAString& aResult)
+                                   char16_t ** aResult)
 {
   nsAutoCString idStr;
   idStr.AppendInt(aID, 10);
@@ -185,7 +185,7 @@ NS_IMETHODIMP
 nsStringBundle::FormatStringFromAUTF8Name(const nsACString& aName,
                                           const char16_t **aParams,
                                           uint32_t aLength,
-                                          nsAString& aResult)
+                                          char16_t **aResult)
 {
   return FormatStringFromName(PromiseFlatCString(aName).get(), aParams,
                               aLength, aResult);
@@ -196,12 +196,15 @@ NS_IMETHODIMP
 nsStringBundle::FormatStringFromName(const char* aName,
                                      const char16_t** aParams,
                                      uint32_t aLength,
-                                     nsAString& aResult)
+                                     char16_t** aResult)
 {
+  NS_ENSURE_ARG_POINTER(aResult);
   NS_ASSERTION(aParams && aLength, "FormatStringFromName() without format parameters: use GetStringFromName() instead");
 
+  *aResult = nullptr;
+
   nsAutoString formatStr;
-  nsresult rv = GetStringFromName(aName, formatStr);
+  nsresult rv = GetStringFromNameHelper(aName, formatStr);
   if (NS_FAILED(rv)) return rv;
 
   return FormatString(formatStr.get(), aParams, aLength, aResult);
@@ -291,8 +294,9 @@ nsStringBundle::GetSimpleEnumeration(nsISimpleEnumerator** elements)
 nsresult
 nsStringBundle::FormatString(const char16_t *aFormatStr,
                              const char16_t **aParams, uint32_t aLength,
-                             nsAString& aResult)
+                             char16_t **aResult)
 {
+  NS_ENSURE_ARG_POINTER(aResult);
   NS_ENSURE_ARG(aLength <= 10); // enforce 10-parameter limit
 
   // implementation note: you would think you could use vsmprintf
@@ -301,19 +305,20 @@ nsStringBundle::FormatString(const char16_t *aFormatStr,
   // Don't believe me? See:
   //   http://www.eskimo.com/~scs/C-faq/q15.13.html
   // -alecf
-  nsTextFormatter::ssprintf(aResult, aFormatStr,
-                            aLength >= 1 ? aParams[0] : nullptr,
-                            aLength >= 2 ? aParams[1] : nullptr,
-                            aLength >= 3 ? aParams[2] : nullptr,
-                            aLength >= 4 ? aParams[3] : nullptr,
-                            aLength >= 5 ? aParams[4] : nullptr,
-                            aLength >= 6 ? aParams[5] : nullptr,
-                            aLength >= 7 ? aParams[6] : nullptr,
-                            aLength >= 8 ? aParams[7] : nullptr,
-                            aLength >= 9 ? aParams[8] : nullptr,
-                            aLength >= 10 ? aParams[9] : nullptr);
+  *aResult =
+    nsTextFormatter::smprintf(aFormatStr,
+                              aLength >= 1 ? aParams[0] : nullptr,
+                              aLength >= 2 ? aParams[1] : nullptr,
+                              aLength >= 3 ? aParams[2] : nullptr,
+                              aLength >= 4 ? aParams[3] : nullptr,
+                              aLength >= 5 ? aParams[4] : nullptr,
+                              aLength >= 6 ? aParams[5] : nullptr,
+                              aLength >= 7 ? aParams[6] : nullptr,
+                              aLength >= 8 ? aParams[7] : nullptr,
+                              aLength >= 9 ? aParams[8] : nullptr,
+                              aLength >= 10 ? aParams[9] : nullptr);
 
-  return NS_OK;
+  return *aResult ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
 NS_IMPL_ISUPPORTS(nsExtensibleStringBundle, nsIStringBundle)
@@ -364,43 +369,25 @@ nsExtensibleStringBundle::Init(const char * aCategory,
   return rv;
 }
 
-NS_IMETHODIMP
-nsExtensibleStringBundle::AsyncPreload()
-{
-  nsresult rv = NS_OK;
-  const uint32_t size = mBundles.Count();
-  for (uint32_t i = 0; i < size; ++i) {
-    nsIStringBundle* bundle = mBundles[i];
-    if (bundle) {
-      nsresult rv2 = bundle->AsyncPreload();
-      rv = NS_FAILED(rv) ? rv : rv2;
-    }
-  }
-  return rv;
-}
-
 nsExtensibleStringBundle::~nsExtensibleStringBundle()
 {
 }
 
-nsresult
-nsExtensibleStringBundle::GetStringFromID(int32_t aID, nsAString& aResult)
+nsresult nsExtensibleStringBundle::GetStringFromID(int32_t aID, char16_t ** aResult)
 {
   nsAutoCString idStr;
   idStr.AppendInt(aID, 10);
   return GetStringFromName(idStr.get(), aResult);
 }
 
-nsresult
-nsExtensibleStringBundle::GetStringFromAUTF8Name(const nsACString& aName,
-                                                 nsAString& aResult)
+nsresult nsExtensibleStringBundle::GetStringFromAUTF8Name(
+  const nsACString& aName, char16_t ** aResult)
 {
   return GetStringFromName(PromiseFlatCString(aName).get(), aResult);
 }
 
-nsresult
-nsExtensibleStringBundle::GetStringFromName(const char* aName,
-                                            nsAString& aResult)
+nsresult nsExtensibleStringBundle::GetStringFromName(const char* aName,
+                                                     char16_t** aResult)
 {
   nsresult rv;
   const uint32_t size = mBundles.Count();
@@ -420,7 +407,7 @@ NS_IMETHODIMP
 nsExtensibleStringBundle::FormatStringFromID(int32_t aID,
                                              const char16_t ** aParams,
                                              uint32_t aLength,
-                                             nsAString& aResult)
+                                             char16_t ** aResult)
 {
   nsAutoCString idStr;
   idStr.AppendInt(aID, 10);
@@ -431,7 +418,7 @@ NS_IMETHODIMP
 nsExtensibleStringBundle::FormatStringFromAUTF8Name(const nsACString& aName,
                                                     const char16_t ** aParams,
                                                     uint32_t aLength,
-                                                    nsAString& aResult)
+                                                    char16_t ** aResult)
 {
   return FormatStringFromName(PromiseFlatCString(aName).get(),
                               aParams, aLength, aResult);
@@ -441,16 +428,15 @@ NS_IMETHODIMP
 nsExtensibleStringBundle::FormatStringFromName(const char* aName,
                                                const char16_t** aParams,
                                                uint32_t aLength,
-                                               nsAString& aResult)
+                                               char16_t** aResult)
 {
-  nsAutoString formatStr;
+  nsXPIDLString formatStr;
   nsresult rv;
-  rv = GetStringFromName(aName, formatStr);
+  rv = GetStringFromName(aName, getter_Copies(formatStr));
   if (NS_FAILED(rv))
     return rv;
 
-  return nsStringBundle::FormatString(formatStr.get(), aParams, aLength,
-                                      aResult);
+  return nsStringBundle::FormatString(formatStr, aParams, aLength, aResult);
 }
 
 nsresult nsExtensibleStringBundle::GetSimpleEnumeration(nsISimpleEnumerator ** aResult)
@@ -649,9 +635,10 @@ nsStringBundleService::CreateExtensibleBundle(const char* aCategory,
 nsresult
 nsStringBundleService::FormatWithBundle(nsIStringBundle* bundle, nsresult aStatus,
                                         uint32_t argCount, char16_t** argArray,
-                                        nsAString& result)
+                                        char16_t* *result)
 {
   nsresult rv;
+  nsXPIDLCString key;
 
   // try looking up the error message with the int key:
   uint16_t code = NS_ERROR_GET_CODE(aStatus);
@@ -674,16 +661,17 @@ nsStringBundleService::FormatWithBundle(nsIStringBundle* bundle, nsresult aStatu
 NS_IMETHODIMP
 nsStringBundleService::FormatStatusMessage(nsresult aStatus,
                                            const char16_t* aStatusArg,
-                                           nsAString& result)
+                                           char16_t* *result)
 {
   nsresult rv;
   uint32_t i, argCount = 0;
   nsCOMPtr<nsIStringBundle> bundle;
-  nsCString stringBundleURL;
+  nsXPIDLCString stringBundleURL;
 
   // XXX hack for mailnews who has already formatted their messages:
   if (aStatus == NS_OK && aStatusArg) {
-    result.Assign(aStatusArg);
+    *result = NS_strdup(aStatusArg);
+    NS_ENSURE_TRUE(*result, NS_ERROR_OUT_OF_MEMORY);
     return NS_OK;
   }
 
@@ -722,7 +710,7 @@ nsStringBundleService::FormatStatusMessage(nsresult aStatus,
   rv = mErrorService->GetErrorStringBundle(NS_ERROR_GET_MODULE(aStatus),
                                            getter_Copies(stringBundleURL));
   if (NS_SUCCEEDED(rv)) {
-    getStringBundle(stringBundleURL.get(), getter_AddRefs(bundle));
+    getStringBundle(stringBundleURL, getter_AddRefs(bundle));
     rv = FormatWithBundle(bundle, aStatus, argCount, argArray, result);
   }
   if (NS_FAILED(rv)) {

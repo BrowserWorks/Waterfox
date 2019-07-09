@@ -46,7 +46,6 @@
 #include "vm/Printer.h"
 #include "vm/RegExpObject.h"
 #include "vm/RegExpStatics.h"
-#include "vm/SelfHosting.h"
 #include "vm/StringBuffer.h"
 #include "vm/Unicode.h"
 
@@ -76,7 +75,7 @@ using mozilla::RangedPtr;
 using JS::AutoCheckCannotGC;
 
 static JSLinearString*
-ArgToLinearString(JSContext* cx, const CallArgs& args, unsigned argno)
+ArgToRootedString(JSContext* cx, const CallArgs& args, unsigned argno)
 {
     if (argno >= args.length())
         return cx->names().undefined;
@@ -85,6 +84,7 @@ ArgToLinearString(JSContext* cx, const CallArgs& args, unsigned argno)
     if (!str)
         return nullptr;
 
+    args[argno].setString(str);
     return str->ensureLinear(cx);
 }
 
@@ -324,7 +324,7 @@ str_escape(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    JSLinearString* str = ArgToRootedString(cx, args, 0);
     if (!str)
         return false;
 
@@ -454,7 +454,7 @@ str_unescape(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     // Step 1.
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
     if (!str)
         return false;
 
@@ -522,16 +522,17 @@ static bool
 str_enumerate(JSContext* cx, HandleObject obj)
 {
     RootedString str(cx, obj->as<StringObject>().unbox());
-    js::StaticStrings& staticStrings = cx->staticStrings();
-
     RootedValue value(cx);
     for (size_t i = 0, length = str->length(); i < length; i++) {
-        JSString* str1 = staticStrings.getUnitStringForElement(cx, str, i);
+        JSString* str1 = NewDependentString(cx, str, i, 1);
         if (!str1)
             return false;
         value.setString(str1);
-        if (!DefineDataElement(cx, obj, i, value, STRING_ELEMENT_ATTRS | JSPROP_RESOLVING))
+        if (!DefineElement(cx, obj, i, value, nullptr, nullptr,
+                           STRING_ELEMENT_ATTRS | JSPROP_RESOLVING))
+        {
             return false;
+        }
     }
 
     return true;
@@ -558,8 +559,8 @@ str_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
         if (!str1)
             return false;
         RootedValue value(cx, StringValue(str1));
-        if (!DefineDataElement(cx, obj, uint32_t(slot), value,
-                               STRING_ELEMENT_ATTRS | JSPROP_RESOLVING))
+        if (!DefineElement(cx, obj, uint32_t(slot), value, nullptr, nullptr,
+                           STRING_ELEMENT_ATTRS | JSPROP_RESOLVING))
         {
             return false;
         }
@@ -571,6 +572,8 @@ str_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 static const ClassOps StringObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     str_enumerate,
     nullptr, /* newEnumerate */
     str_resolve,
@@ -939,10 +942,10 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
         // Look for the first character that changes when lowercased.
         size_t i = 0;
         for (; i < length; i++) {
-            CharT c = chars[i];
+            char16_t c = chars[i];
             if (!IsSame<CharT, Latin1Char>::value) {
                 if (unicode::IsLeadSurrogate(c) && i + 1 < length) {
-                    CharT trail = chars[i + 1];
+                    char16_t trail = chars[i + 1];
                     if (unicode::IsTrailSurrogate(trail)) {
                         if (unicode::CanLowerCaseNonBMP(c, trail))
                             break;
@@ -984,15 +987,11 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
 }
 
 JSString*
-js::StringToLowerCase(JSContext* cx, HandleString string)
+js::StringToLowerCase(JSContext* cx, HandleLinearString string)
 {
-    JSLinearString* linear = string->ensureLinear(cx);
-    if (!linear)
-        return nullptr;
-
-    if (linear->hasLatin1Chars())
-        return ToLowerCase<Latin1Char>(cx, linear);
-    return ToLowerCase<char16_t>(cx, linear);
+    if (string->hasLatin1Chars())
+        return ToLowerCase<Latin1Char>(cx, string);
+    return ToLowerCase<char16_t>(cx, string);
 }
 
 bool
@@ -1004,7 +1003,11 @@ js::str_toLowerCase(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    JSString* result = StringToLowerCase(cx, str);
+    RootedLinearString linear(cx, str->ensureLinear(cx));
+    if (!linear)
+        return false;
+
+    JSString* result = StringToLowerCase(cx, linear);
     if (!result)
         return false;
 
@@ -1249,10 +1252,10 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
         // Look for the first character that changes when uppercased.
         size_t i = 0;
         for (; i < length; i++) {
-            CharT c = chars[i];
+            char16_t c = chars[i];
             if (!IsSame<CharT, Latin1Char>::value) {
                 if (unicode::IsLeadSurrogate(c) && i + 1 < length) {
-                    CharT trail = chars[i + 1];
+                    char16_t trail = chars[i + 1];
                     if (unicode::IsTrailSurrogate(trail)) {
                         if (unicode::CanUpperCaseNonBMP(c, trail))
                             break;
@@ -1264,7 +1267,7 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
             }
             if (unicode::CanUpperCase(c))
                 break;
-            if (MOZ_UNLIKELY(c > 0x7f && CanUpperCaseSpecialCasing(c)))
+            if (MOZ_UNLIKELY(c > 0x7f && CanUpperCaseSpecialCasing(static_cast<CharT>(c))))
                 break;
         }
 
@@ -1321,15 +1324,11 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
 }
 
 JSString*
-js::StringToUpperCase(JSContext* cx, HandleString string)
+js::StringToUpperCase(JSContext* cx, HandleLinearString string)
 {
-    JSLinearString* linear = string->ensureLinear(cx);
-    if (!linear)
-        return nullptr;
-
-    if (linear->hasLatin1Chars())
-        return ToUpperCase<Latin1Char>(cx, linear);
-    return ToUpperCase<char16_t>(cx, linear);
+    if (string->hasLatin1Chars())
+        return ToUpperCase<Latin1Char>(cx, string);
+    return ToUpperCase<char16_t>(cx, string);
 }
 
 bool
@@ -1341,7 +1340,11 @@ js::str_toUpperCase(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    JSString* result = StringToUpperCase(cx, str);
+    RootedLinearString linear(cx, str->ensureLinear(cx));
+    if (!linear)
+        return false;
+
+    JSString* result = StringToUpperCase(cx, linear);
     if (!result)
         return false;
 
@@ -1439,7 +1442,7 @@ js::str_normalize(JSContext* cx, unsigned argc, Value* vp)
         form = NFC;
     } else {
         // Step 4.
-        JSLinearString* formStr = ArgToLinearString(cx, args, 0);
+        RootedLinearString formStr(cx, ArgToRootedString(cx, args, 0));
         if (!formStr)
             return false;
 
@@ -1592,6 +1595,7 @@ js::str_charAt(JSContext* cx, unsigned argc, Value* vp)
 bool
 js::str_charCodeAt_impl(JSContext* cx, HandleString string, HandleValue index, MutableHandleValue res)
 {
+    RootedString str(cx);
     size_t i;
     if (index.isInt32()) {
         i = index.toInt32();
@@ -1828,10 +1832,16 @@ StringMatch(const TextChar* text, uint32_t textLen, const PatChar* pat, uint32_t
      * For big patterns with large potential overlap we want the SIMD-optimized
      * speed of memcmp. For small patterns, a simple loop is faster. We also can't
      * use memcmp if one of the strings is TwoByte and the other is Latin-1.
+     *
+     * FIXME: Linux memcmp performance is sad and the manual loop is faster.
      */
-    return (patLen > 128 && IsSame<TextChar, PatChar>::value)
-           ? Matcher<MemCmp<TextChar, PatChar>, TextChar, PatChar>(text, textLen, pat, patLen)
-           : Matcher<ManualCmp<TextChar, PatChar>, TextChar, PatChar>(text, textLen, pat, patLen);
+    return
+#if !defined(__linux__)
+        (patLen > 128 && IsSame<TextChar, PatChar>::value)
+            ? Matcher<MemCmp<TextChar, PatChar>, TextChar, PatChar>(text, textLen, pat, patLen)
+            :
+#endif
+              Matcher<ManualCmp<TextChar, PatChar>, TextChar, PatChar>(text, textLen, pat, patLen);
 }
 
 static int32_t
@@ -1861,6 +1871,15 @@ StringMatch(JSLinearString* text, JSLinearString* pat, uint32_t start = 0)
 }
 
 static const size_t sRopeMatchThresholdRatioLog2 = 4;
+
+bool
+js::StringHasPattern(JSLinearString* text, const char16_t* pat, uint32_t patLen)
+{
+    AutoCheckCannotGC nogc;
+    return text->hasLatin1Chars()
+           ? StringMatch(text->latin1Chars(nogc), text->length(), pat, patLen) != -1
+           : StringMatch(text->twoByteChars(nogc), text->length(), pat, patLen) != -1;
+}
 
 int
 js::StringFindPattern(JSLinearString* text, JSLinearString* pat, size_t start)
@@ -2052,48 +2071,35 @@ RopeMatch(JSContext* cx, JSRope* text, JSLinearString* pat, int* match)
     return true;
 }
 
-static MOZ_ALWAYS_INLINE bool
-ReportErrorIfFirstArgIsRegExp(JSContext* cx, const CallArgs& args)
-{
-    // Only call IsRegExp if the first argument is definitely an object, so we
-    // don't pay the cost of an additional function call in the common case.
-    if (args.length() == 0 || !args[0].isObject())
-        return true;
-
-    bool isRegExp;
-    if (!IsRegExp(cx, args[0], &isRegExp))
-        return false;
-
-    if (isRegExp) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
-                                  "first", "", "Regular Expression");
-        return false;
-    }
-    return true;
-}
-
-// ES2018 draft rev de77aaeffce115deaf948ed30c7dbe4c60983c0c
-// 21.1.3.7 String.prototype.includes ( searchString [ , position ] )
+/* ES6 draft rc4 21.1.3.7. */
 bool
 js::str_includes(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    // Steps 1-2.
+    // Steps 1, 2, and 3
     RootedString str(cx, ToStringForStringFunction(cx, args.thisv()));
     if (!str)
         return false;
 
-    // Steps 3-4.
-    if (!ReportErrorIfFirstArgIsRegExp(cx, args))
+    // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
         return false;
 
-    // Step 5.
-    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
+    // Step 6
+    if (isRegExp) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
+                                  "first", "", "Regular Expression");
+        return false;
+    }
+
+    // Steps 7 and 8
+    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Step 6.
+    // Steps 9 and 10
     uint32_t pos = 0;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -2107,13 +2113,13 @@ js::str_includes(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 7.
+    // Step 11
     uint32_t textLen = str->length();
 
-    // Step 8.
+    // Step 12
     uint32_t start = Min(Max(pos, 0U), textLen);
 
-    // Steps 9-10.
+    // Steps 13 and 14
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
@@ -2134,7 +2140,7 @@ js::str_indexOf(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Steps 4 and 5
-    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2216,7 +2222,7 @@ js::str_lastIndexOf(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 3.
-    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2313,28 +2319,35 @@ js::HasSubstringAt(JSLinearString* text, JSLinearString* pat, size_t start)
     return EqualChars(pat->latin1Chars(nogc), textChars, patLen);
 }
 
-// ES2018 draft rev de77aaeffce115deaf948ed30c7dbe4c60983c0c
-// 21.1.3.20 String.prototype.startsWith ( searchString [ , position ] )
+/* ES6 draft rc3 21.1.3.18. */
 bool
 js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    // Steps 1-2.
+    // Steps 1, 2, and 3
     RootedString str(cx, ToStringForStringFunction(cx, args.thisv()));
     if (!str)
         return false;
 
-    // Steps 3-4.
-    if (!ReportErrorIfFirstArgIsRegExp(cx, args))
+    // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
         return false;
 
-    // Step 5.
-    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
+    // Step 6
+    if (isRegExp) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
+                                  "first", "", "Regular Expression");
+        return false;
+    }
+
+    // Steps 7 and 8
+    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Step 6.
+    // Steps 9 and 10
     uint32_t pos = 0;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -2348,22 +2361,22 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 7.
+    // Step 11
     uint32_t textLen = str->length();
 
-    // Step 8.
+    // Step 12
     uint32_t start = Min(Max(pos, 0U), textLen);
 
-    // Step 9.
+    // Step 13
     uint32_t searchLen = searchStr->length();
 
-    // Step 10.
+    // Step 14
     if (searchLen + start < searchLen || searchLen + start > textLen) {
         args.rval().setBoolean(false);
         return true;
     }
 
-    // Steps 11-12.
+    // Steps 15 and 16
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
@@ -2372,31 +2385,38 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-// ES2018 draft rev de77aaeffce115deaf948ed30c7dbe4c60983c0c
-// 21.1.3.6 String.prototype.endsWith ( searchString [ , endPosition ] )
+/* ES6 draft rc3 21.1.3.6. */
 bool
 js::str_endsWith(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    // Steps 1-2.
+    // Steps 1, 2, and 3
     RootedString str(cx, ToStringForStringFunction(cx, args.thisv()));
     if (!str)
         return false;
 
-    // Steps 3-4.
-    if (!ReportErrorIfFirstArgIsRegExp(cx, args))
+    // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
         return false;
 
-    // Step 5.
-    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
+    // Step 6
+    if (isRegExp) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
+                                  "first", "", "Regular Expression");
+        return false;
+    }
+
+    // Steps 7 and 8
+    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Step 6.
+    // Step 9
     uint32_t textLen = str->length();
 
-    // Step 7.
+    // Steps 10 and 11
     uint32_t pos = textLen;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -2410,22 +2430,22 @@ js::str_endsWith(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 8.
+    // Step 12
     uint32_t end = Min(Max(pos, 0U), textLen);
 
-    // Step 9.
+    // Step 13
     uint32_t searchLen = searchStr->length();
 
-    // Step 11 (reordered).
+    // Step 15 (reordered)
     if (searchLen > end) {
         args.rval().setBoolean(false);
         return true;
     }
 
-    // Step 10.
+    // Step 14
     uint32_t start = end - searchLen;
 
-    // Steps 12-13.
+    // Steps 16 and 17
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
@@ -2458,7 +2478,7 @@ TrimString(const CharT* chars, bool trimLeft, bool trimRight, size_t length,
 static bool
 TrimString(JSContext* cx, const CallArgs& args, bool trimLeft, bool trimRight)
 {
-    JSString* str = ToStringForStringFunction(cx, args.thisv());
+    RootedString str(cx, ToStringForStringFunction(cx, args.thisv()));
     if (!str)
         return false;
 
@@ -2476,11 +2496,11 @@ TrimString(JSContext* cx, const CallArgs& args, bool trimLeft, bool trimRight)
         TrimString(linear->twoByteChars(nogc), trimLeft, trimRight, length, &begin, &end);
     }
 
-    JSLinearString* result = NewDependentString(cx, linear, begin, end - begin);
-    if (!result)
+    str = NewDependentString(cx, str, begin, end - begin);
+    if (!str)
         return false;
 
-    args.rval().setString(result);
+    args.rval().setString(str);
     return true;
 }
 
@@ -2506,8 +2526,7 @@ js::str_trimRight(JSContext* cx, unsigned argc, Value* vp)
 }
 
 // Utility for building a rope (lazy concatenation) of strings.
-class RopeBuilder
-{
+class RopeBuilder {
     JSContext* cx;
     RootedString res;
 
@@ -2545,93 +2564,80 @@ FindDollarIndex(const CharT* chars, size_t length)
 
 } /* anonymous namespace */
 
-/*
- * Constructs a result string that looks like:
- *
- *      newstring = string[:matchStart] + repstr + string[matchEnd:]
- */
 static JSString*
-BuildFlatReplacement(JSContext* cx, HandleString textstr, HandleLinearString repstr,
-                     size_t matchStart, size_t patternLength)
+BuildFlatReplacement(JSContext* cx, HandleString textstr, HandleString repstr,
+                     size_t match, size_t patternLength)
 {
-    size_t matchEnd = matchStart + patternLength;
-
-    RootedString resultStr(cx, NewDependentString(cx, textstr, 0, matchStart));
-    if (!resultStr)
-        return nullptr;
-
-    resultStr = ConcatStrings<CanGC>(cx, resultStr, repstr);
-    if (!resultStr)
-        return nullptr;
-
-    MOZ_ASSERT(textstr->length() >= matchEnd);
-    RootedString rest(cx, NewDependentString(cx, textstr, matchEnd, textstr->length() - matchEnd));
-    if (!rest)
-        return nullptr;
-
-    return ConcatStrings<CanGC>(cx, resultStr, rest);
-}
-
-static JSString*
-BuildFlatRopeReplacement(JSContext* cx, HandleString textstr, HandleLinearString repstr,
-                         size_t match, size_t patternLength)
-{
-    MOZ_ASSERT(textstr->isRope());
-
+    RopeBuilder builder(cx);
     size_t matchEnd = match + patternLength;
 
-    /*
-     * If we are replacing over a rope, avoid flattening it by iterating
-     * through it, building a new rope.
-     */
-    StringSegmentRange r(cx);
-    if (!r.init(textstr))
-        return nullptr;
+    if (textstr->isRope()) {
+        /*
+         * If we are replacing over a rope, avoid flattening it by iterating
+         * through it, building a new rope.
+         */
+        StringSegmentRange r(cx);
+        if (!r.init(textstr))
+            return nullptr;
 
-    RopeBuilder builder(cx);
-    size_t pos = 0;
-    while (!r.empty()) {
-        RootedString str(cx, r.front());
-        size_t len = str->length();
-        size_t strEnd = pos + len;
-        if (pos < matchEnd && strEnd > match) {
-            /*
-             * We need to special-case any part of the rope that overlaps
-             * with the replacement string.
-             */
-            if (match >= pos) {
+        size_t pos = 0;
+        while (!r.empty()) {
+            RootedString str(cx, r.front());
+            size_t len = str->length();
+            size_t strEnd = pos + len;
+            if (pos < matchEnd && strEnd > match) {
                 /*
-                 * If this part of the rope overlaps with the left side of
-                 * the pattern, then it must be the only one to overlap with
-                 * the first character in the pattern, so we include the
-                 * replacement string here.
+                 * We need to special-case any part of the rope that overlaps
+                 * with the replacement string.
                  */
-                RootedString leftSide(cx, NewDependentString(cx, str, 0, match - pos));
-                if (!leftSide ||
-                    !builder.append(leftSide) ||
-                    !builder.append(repstr))
-                {
-                    return nullptr;
+                if (match >= pos) {
+                    /*
+                     * If this part of the rope overlaps with the left side of
+                     * the pattern, then it must be the only one to overlap with
+                     * the first character in the pattern, so we include the
+                     * replacement string here.
+                     */
+                    RootedString leftSide(cx, NewDependentString(cx, str, 0, match - pos));
+                    if (!leftSide ||
+                        !builder.append(leftSide) ||
+                        !builder.append(repstr))
+                    {
+                        return nullptr;
+                    }
                 }
-            }
 
-            /*
-             * If str runs off the end of the matched string, append the
-             * last part of str.
-             */
-            if (strEnd > matchEnd) {
-                RootedString rightSide(cx, NewDependentString(cx, str, matchEnd - pos,
-                                                              strEnd - matchEnd));
-                if (!rightSide || !builder.append(rightSide))
+                /*
+                 * If str runs off the end of the matched string, append the
+                 * last part of str.
+                 */
+                if (strEnd > matchEnd) {
+                    RootedString rightSide(cx, NewDependentString(cx, str, matchEnd - pos,
+                                                                  strEnd - matchEnd));
+                    if (!rightSide || !builder.append(rightSide))
+                        return nullptr;
+                }
+            } else {
+                if (!builder.append(str))
                     return nullptr;
             }
-        } else {
-            if (!builder.append(str))
+            pos += str->length();
+            if (!r.popFront())
                 return nullptr;
         }
-        pos += str->length();
-        if (!r.popFront())
+    } else {
+        RootedString leftSide(cx, NewDependentString(cx, textstr, 0, match));
+        if (!leftSide)
             return nullptr;
+        RootedString rightSide(cx);
+        rightSide = NewDependentString(cx, textstr, match + patternLength,
+                                       textstr->length() - match - patternLength);
+        if (!rightSide ||
+            !builder.append(leftSide) ||
+            !builder.append(repstr) ||
+            !builder.append(rightSide))
+        {
+            return nullptr;
+        }
     }
 
     return builder.result();
@@ -2686,11 +2692,14 @@ AppendDollarReplacement(StringBuffer& newReplaceChars, size_t firstDollarIndex,
 }
 
 /*
- * Perform a linear-scan dollar substitution on the replacement text.
+ * Perform a linear-scan dollar substitution on the replacement text,
+ * constructing a result string that looks like:
+ *
+ *      newstring = string[:matchStart] + dollarSub(replaceValue) + string[matchLimit:]
  */
-static JSLinearString*
-InterpretDollarReplacement(JSContext* cx, HandleString textstrArg, HandleLinearString repstr,
-                           uint32_t firstDollarIndex, size_t matchStart, size_t patternLength)
+static JSString*
+BuildDollarReplacement(JSContext* cx, JSString* textstrArg, JSLinearString* repstr,
+                       uint32_t firstDollarIndex, size_t matchStart, size_t patternLength)
 {
     RootedLinearString textstr(cx, textstrArg->ensureLinear(cx));
     if (!textstr)
@@ -2725,19 +2734,37 @@ InterpretDollarReplacement(JSContext* cx, HandleString textstrArg, HandleLinearS
     if (!res)
         return nullptr;
 
-    return newReplaceChars.finishString();
+    RootedString leftSide(cx, NewDependentString(cx, textstr, 0, matchStart));
+    if (!leftSide)
+        return nullptr;
+
+    RootedString newReplace(cx, newReplaceChars.finishString());
+    if (!newReplace)
+        return nullptr;
+
+    MOZ_ASSERT(textstr->length() >= matchLimit);
+    RootedString rightSide(cx, NewDependentString(cx, textstr, matchLimit,
+                                                  textstr->length() - matchLimit));
+    if (!rightSide)
+        return nullptr;
+
+    RopeBuilder builder(cx);
+    if (!builder.append(leftSide) || !builder.append(newReplace) || !builder.append(rightSide))
+        return nullptr;
+
+    return builder.result();
 }
 
 template <typename StrChar, typename RepChar>
 static bool
-StrFlatReplaceGlobal(JSContext* cx, JSLinearString* str, JSLinearString* pat, JSLinearString* rep,
-                     StringBuffer& sb)
+StrFlatReplaceGlobal(JSContext *cx, JSLinearString *str, JSLinearString *pat, JSLinearString *rep,
+                     StringBuffer &sb)
 {
     MOZ_ASSERT(str->length() > 0);
 
     AutoCheckCannotGC nogc;
-    const StrChar* strChars = str->chars<StrChar>(nogc);
-    const RepChar* repChars = rep->chars<RepChar>(nogc);
+    const StrChar *strChars = str->chars<StrChar>(nogc);
+    const RepChar *repChars = rep->chars<RepChar>(nogc);
 
     // The pattern is empty, so we interleave the replacement string in-between
     // each character.
@@ -2788,8 +2815,8 @@ StrFlatReplaceGlobal(JSContext* cx, JSLinearString* str, JSLinearString* pat, JS
 
 // This is identical to "str.split(pattern).join(replacement)" except that we
 // do some deforestation optimization in Ion.
-JSString*
-js::str_flat_replace_string(JSContext* cx, HandleString string, HandleString pattern,
+JSString *
+js::str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
                             HandleString replacement)
 {
     MOZ_ASSERT(string);
@@ -2834,7 +2861,11 @@ js::str_flat_replace_string(JSContext* cx, HandleString string, HandleString pat
         }
     }
 
-    return sb.finishString();
+    JSString *str = sb.finishString();
+    if (!str)
+        return nullptr;
+
+    return str;
 }
 
 JSString*
@@ -2845,7 +2876,7 @@ js::str_replace_string_raw(JSContext* cx, HandleString string, HandleString patt
     if (!repl)
         return nullptr;
 
-    RootedLinearString pat(cx, pattern->ensureLinear(cx));
+    RootedAtom pat(cx, AtomizeString(cx, pattern));
     if (!pat)
         return nullptr;
 
@@ -2874,18 +2905,13 @@ js::str_replace_string_raw(JSContext* cx, HandleString string, HandleString patt
     if (match < 0)
         return string;
 
-    if (dollarIndex != UINT32_MAX) {
-        repl = InterpretDollarReplacement(cx, string, repl, dollarIndex, match, patternLength);
-        if (!repl)
-            return nullptr;
-    } else if (string->isRope()) {
-        return BuildFlatRopeReplacement(cx, string, repl, match, patternLength);
-    }
+    if (dollarIndex != UINT32_MAX)
+        return BuildDollarReplacement(cx, string, repl, dollarIndex, match, patternLength);
     return BuildFlatReplacement(cx, string, repl, match, patternLength);
 }
 
 // ES 2016 draft Mar 25, 2016 21.1.3.17 steps 4, 8, 12-18.
-static ArrayObject*
+static JSObject*
 SplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, HandleLinearString sep,
             HandleObjectGroup group)
 {
@@ -2982,7 +3008,7 @@ SplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, HandleLinearS
 }
 
 // Fast-path for splitting a string into a character array via split("").
-static ArrayObject*
+static JSObject*
 CharSplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, HandleObjectGroup group)
 {
     size_t strLength = str->length();
@@ -3007,7 +3033,7 @@ CharSplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, HandleObj
 }
 
 template <typename TextChar>
-static MOZ_ALWAYS_INLINE ArrayObject*
+static MOZ_ALWAYS_INLINE JSObject*
 SplitSingleCharHelper(JSContext* cx, HandleLinearString str, const TextChar* text,
                       uint32_t textLen, char16_t patCh, HandleObjectGroup group)
 {
@@ -3050,9 +3076,9 @@ SplitSingleCharHelper(JSContext* cx, HandleLinearString str, const TextChar* tex
 }
 
 // ES 2016 draft Mar 25, 2016 21.1.3.17 steps 4, 8, 12-18.
-static ArrayObject*
-SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, HandleObjectGroup group)
-{
+static JSObject*
+SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, HandleObjectGroup group) {
+
     // Step 12.
     size_t strLength = str->length();
 
@@ -3060,16 +3086,17 @@ SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, Handle
     if (!linearChars.init(cx, str))
         return nullptr;
 
-    if (linearChars.isLatin1())
+    if (linearChars.isLatin1()) {
         return SplitSingleCharHelper(cx, str, linearChars.latin1Chars(), strLength, ch, group);
-
-    return SplitSingleCharHelper(cx, str, linearChars.twoByteChars(), strLength, ch, group);
+    } else {
+        return SplitSingleCharHelper(cx, str, linearChars.twoByteChars(), strLength, ch, group);
+    }
 }
 
 // ES 2016 draft Mar 25, 2016 21.1.3.17 steps 4, 8, 12-18.
-ArrayObject*
-js::str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep,
-                     uint32_t limit)
+JSObject*
+js::str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep, uint32_t limit)
+
 {
     RootedLinearString linearStr(cx, str->ensureLinear(cx));
     if (!linearStr)
@@ -3134,8 +3161,8 @@ static const JSFunctionSpec string_methods[] = {
     /* Java-like methods. */
     JS_FN(js_toString_str,     str_toString,          0,0),
     JS_FN(js_valueOf_str,      str_toString,          0,0),
-    JS_INLINABLE_FN("toLowerCase", str_toLowerCase,   0,0, StringToLowerCase),
-    JS_INLINABLE_FN("toUpperCase", str_toUpperCase,   0,0, StringToUpperCase),
+    JS_FN("toLowerCase",       str_toLowerCase,       0,0),
+    JS_FN("toUpperCase",       str_toUpperCase,       0,0),
     JS_INLINABLE_FN("charAt",  str_charAt,            1,0, StringCharAt),
     JS_INLINABLE_FN("charCodeAt", str_charCodeAt,     1,0, StringCharCodeAt),
     JS_SELF_HOSTED_FN("substring", "String_substring", 2,0),
@@ -3297,16 +3324,6 @@ static MOZ_ALWAYS_INLINE bool
 ToCodePoint(JSContext* cx, HandleValue code, uint32_t* codePoint)
 {
     // String.fromCodePoint, Steps 5.a-b.
-
-    // Fast path for the common case - the input is already an int32.
-    if (code.isInt32()) {
-        int32_t nextCP = code.toInt32();
-        if (nextCP >= 0 && nextCP <= int32_t(unicode::NonBMPMax)) {
-            *codePoint = uint32_t(nextCP);
-            return true;
-        }
-    }
-
     double nextCP;
     if (!ToNumber(cx, code, &nextCP))
         return false;
@@ -3797,6 +3814,28 @@ js::StringEqualsAscii(JSLinearString* str, const char* asciiBytes)
            : EqualChars(latin1, str->twoByteChars(nogc), length);
 }
 
+size_t
+js_strlen(const char16_t* s)
+{
+    const char16_t* t;
+
+    for (t = s; *t != 0; t++)
+        continue;
+    return (size_t)(t - s);
+}
+
+int32_t
+js_strcmp(const char16_t* lhs, const char16_t* rhs)
+{
+    while (true) {
+        if (*lhs != *rhs)
+            return int32_t(*lhs) - int32_t(*rhs);
+        if (*lhs == 0)
+            return 0;
+        ++lhs; ++rhs;
+    }
+}
+
 int32_t
 js_fputs(const char16_t* s, FILE* f)
 {
@@ -3883,14 +3922,27 @@ template const char16_t*
 js_strchr_limit(const char16_t* s, char16_t c, const char16_t* limit);
 
 char16_t*
-js::InflateString(JSContext* cx, const char* bytes, size_t length)
+js::InflateString(JSContext* cx, const char* bytes, size_t* lengthp)
 {
-    char16_t* chars = cx->pod_malloc<char16_t>(length + 1);
+    size_t nchars;
+    char16_t* chars;
+    size_t nbytes = *lengthp;
+
+    nchars = nbytes;
+    chars = cx->pod_malloc<char16_t>(nchars + 1);
     if (!chars)
-        return nullptr;
-    CopyAndInflateChars(chars, bytes, length);
-    chars[length] = 0;
+        goto bad;
+    for (size_t i = 0; i < nchars; i++)
+        chars[i] = (unsigned char) bytes[i];
+    *lengthp = nchars;
+    chars[nchars] = 0;
     return chars;
+
+  bad:
+    // For compatibility with callers of JS_DecodeBytes we must zero lengthp
+    // on errors.
+    *lengthp = 0;
+    return nullptr;
 }
 
 template <typename CharT>
@@ -3924,6 +3976,73 @@ js::DeflateStringToBuffer(JSContext* maybecx, const char16_t* src, size_t srclen
                           char* dst, size_t* dstlenp);
 
 #define ____ false
+
+/*
+ * Identifier start chars:
+ * -      36:    $
+ * -  65..90: A..Z
+ * -      95:    _
+ * - 97..122: a..z
+ */
+const bool js_isidstart[] = {
+/*       0     1     2     3     4     5     6     7     8     9  */
+/*  0 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  1 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  2 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  3 */ ____, ____, ____, ____, ____, ____, true, ____, ____, ____,
+/*  4 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  5 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  6 */ ____, ____, ____, ____, ____, true, true, true, true, true,
+/*  7 */ true, true, true, true, true, true, true, true, true, true,
+/*  8 */ true, true, true, true, true, true, true, true, true, true,
+/*  9 */ true, ____, ____, ____, ____, true, ____, true, true, true,
+/* 10 */ true, true, true, true, true, true, true, true, true, true,
+/* 11 */ true, true, true, true, true, true, true, true, true, true,
+/* 12 */ true, true, true, ____, ____, ____, ____, ____
+};
+
+/*
+ * Identifier chars:
+ * -      36:    $
+ * -  48..57: 0..9
+ * -  65..90: A..Z
+ * -      95:    _
+ * - 97..122: a..z
+ */
+const bool js_isident[] = {
+/*       0     1     2     3     4     5     6     7     8     9  */
+/*  0 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  1 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  2 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  3 */ ____, ____, ____, ____, ____, ____, true, ____, ____, ____,
+/*  4 */ ____, ____, ____, ____, ____, ____, ____, ____, true, true,
+/*  5 */ true, true, true, true, true, true, true, true, ____, ____,
+/*  6 */ ____, ____, ____, ____, ____, true, true, true, true, true,
+/*  7 */ true, true, true, true, true, true, true, true, true, true,
+/*  8 */ true, true, true, true, true, true, true, true, true, true,
+/*  9 */ true, ____, ____, ____, ____, true, ____, true, true, true,
+/* 10 */ true, true, true, true, true, true, true, true, true, true,
+/* 11 */ true, true, true, true, true, true, true, true, true, true,
+/* 12 */ true, true, true, ____, ____, ____, ____, ____
+};
+
+/* Whitespace chars: '\t', '\n', '\v', '\f', '\r', ' '. */
+const bool js_isspace[] = {
+/*       0     1     2     3     4     5     6     7     8     9  */
+/*  0 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, true,
+/*  1 */ true, true, true, true, ____, ____, ____, ____, ____, ____,
+/*  2 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  3 */ ____, ____, true, ____, ____, ____, ____, ____, ____, ____,
+/*  4 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  5 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  6 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  7 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  8 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/*  9 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/* 10 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/* 11 */ ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+/* 12 */ ____, ____, ____, ____, ____, ____, ____, ____
+};
 
 /*
  * Uri reserved chars + #:
@@ -3990,6 +4109,8 @@ static const bool js_isUriUnescaped[] = {
 
 #undef ____
 
+#define URI_CHUNK 64U
+
 static inline bool
 TransferBufferToString(StringBuffer& sb, MutableHandleValue rval)
 {
@@ -4009,64 +4130,47 @@ TransferBufferToString(StringBuffer& sb, MutableHandleValue rval)
  */
 enum EncodeResult { Encode_Failure, Encode_BadUri, Encode_Success };
 
-// Bug 1403318: GCC sometimes inlines this Encode function rather than the
-// caller Encode function. Annotate both functions with MOZ_NEVER_INLINE resp.
-// MOZ_ALWAYS_INLINE to ensure we get the desired inlining behavior.
 template <typename CharT>
-static MOZ_NEVER_INLINE EncodeResult
-Encode(StringBuffer& sb, const CharT* chars, size_t length, const bool* unescapedSet)
+static EncodeResult
+Encode(StringBuffer& sb, const CharT* chars, size_t length,
+       const bool* unescapedSet, const bool* unescapedSet2)
 {
-    Latin1Char hexBuf[4];
+    static const char HexDigits[] = "0123456789ABCDEF"; /* NB: uppercase */
+
+    char16_t hexBuf[4];
     hexBuf[0] = '%';
     hexBuf[3] = 0;
 
-    auto appendEncoded = [&sb, &hexBuf](Latin1Char c) {
-        static const char HexDigits[] = "0123456789ABCDEF"; /* NB: uppercase */
-
-        hexBuf[1] = HexDigits[c >> 4];
-        hexBuf[2] = HexDigits[c & 0xf];
-        return sb.append(hexBuf, 3);
-    };
-
     for (size_t k = 0; k < length; k++) {
-        CharT c = chars[k];
-        if (c < 128 && (js_isUriUnescaped[c] || (unescapedSet && unescapedSet[c]))) {
-            if (!sb.append(Latin1Char(c)))
+        char16_t c = chars[k];
+        if (c < 128 && (unescapedSet[c] || (unescapedSet2 && unescapedSet2[c]))) {
+            if (!sb.append(c))
                 return Encode_Failure;
         } else {
-            if (mozilla::IsSame<CharT, Latin1Char>::value) {
-                if (c < 0x80) {
-                    if (!appendEncoded(c))
-                        return Encode_Failure;
-                } else {
-                    if (!appendEncoded(0xC0 | (c >> 6)) || !appendEncoded(0x80 | (c & 0x3F)))
-                        return Encode_Failure;
-                }
+            if (unicode::IsTrailSurrogate(c))
+                return Encode_BadUri;
+
+            uint32_t v;
+            if (!unicode::IsLeadSurrogate(c)) {
+                v = c;
             } else {
-                if (unicode::IsTrailSurrogate(c))
+                k++;
+                if (k == length)
                     return Encode_BadUri;
 
-                uint32_t v;
-                if (!unicode::IsLeadSurrogate(c)) {
-                    v = c;
-                } else {
-                    k++;
-                    if (k == length)
-                        return Encode_BadUri;
+                char16_t c2 = chars[k];
+                if (!unicode::IsTrailSurrogate(c2))
+                    return Encode_BadUri;
 
-                    char16_t c2 = chars[k];
-                    if (!unicode::IsTrailSurrogate(c2))
-                        return Encode_BadUri;
-
-                    v = unicode::UTF16Decode(c, c2);
-                }
-
-                uint8_t utf8buf[4];
-                size_t L = OneUcs4ToUtf8Char(utf8buf, v);
-                for (size_t j = 0; j < L; j++) {
-                    if (!appendEncoded(utf8buf[j]))
-                        return Encode_Failure;
-                }
+                v = unicode::UTF16Decode(c, c2);
+            }
+            uint8_t utf8buf[4];
+            size_t L = OneUcs4ToUtf8Char(utf8buf, v);
+            for (size_t j = 0; j < L; j++) {
+                hexBuf[1] = HexDigits[utf8buf[j] >> 4];
+                hexBuf[2] = HexDigits[utf8buf[j] & 0xf];
+                if (!sb.append(hexBuf, 3))
+                    return Encode_Failure;
             }
         }
     }
@@ -4074,8 +4178,9 @@ Encode(StringBuffer& sb, const CharT* chars, size_t length, const bool* unescape
     return Encode_Success;
 }
 
-static MOZ_ALWAYS_INLINE bool
-Encode(JSContext* cx, HandleLinearString str, const bool* unescapedSet, MutableHandleValue rval)
+static bool
+Encode(JSContext* cx, HandleLinearString str, const bool* unescapedSet,
+       const bool* unescapedSet2, MutableHandleValue rval)
 {
     size_t length = str->length();
     if (length == 0) {
@@ -4090,10 +4195,10 @@ Encode(JSContext* cx, HandleLinearString str, const bool* unescapedSet, MutableH
     EncodeResult res;
     if (str->hasLatin1Chars()) {
         AutoCheckCannotGC nogc;
-        res = Encode(sb, str->latin1Chars(nogc), str->length(), unescapedSet);
+        res = Encode(sb, str->latin1Chars(nogc), str->length(), unescapedSet, unescapedSet2);
     } else {
         AutoCheckCannotGC nogc;
-        res = Encode(sb, str->twoByteChars(nogc), str->length(), unescapedSet);
+        res = Encode(sb, str->twoByteChars(nogc), str->length(), unescapedSet, unescapedSet2);
     }
 
     if (res == Encode_Failure)
@@ -4115,7 +4220,7 @@ static DecodeResult
 Decode(StringBuffer& sb, const CharT* chars, size_t length, const bool* reservedSet)
 {
     for (size_t k = 0; k < length; k++) {
-        CharT c = chars[k];
+        char16_t c = chars[k];
         if (c == '%') {
             size_t start = k;
             if ((k + 2) >= length)
@@ -4126,15 +4231,8 @@ Decode(StringBuffer& sb, const CharT* chars, size_t length, const bool* reserved
 
             uint32_t B = JS7_UNHEX(chars[k+1]) * 16 + JS7_UNHEX(chars[k+2]);
             k += 2;
-            if (B < 128) {
-                c = CharT(B);
-                if (reservedSet && reservedSet[c]) {
-                    if (!sb.append(chars + start, k - start + 1))
-                        return Decode_Failure;
-                } else {
-                    if (!sb.append(c))
-                        return Decode_Failure;
-                }
+            if (!(B & 0x80)) {
+                c = char16_t(B);
             } else {
                 int n = 1;
                 while (B & (0x80 >> n))
@@ -4163,21 +4261,25 @@ Decode(StringBuffer& sb, const CharT* chars, size_t length, const bool* reserved
                     k += 2;
                     octets[j] = char(B);
                 }
-
                 uint32_t v = JS::Utf8ToOneUcs4Char(octets, n);
-                MOZ_ASSERT(v >= 128);
                 if (v >= unicode::NonBMPMin) {
                     if (v > unicode::NonBMPMax)
                         return Decode_BadUri;
 
-                    if (!sb.append(unicode::LeadSurrogate(v)))
+                    char16_t H = unicode::LeadSurrogate(v);
+                    if (!sb.append(H))
                         return Decode_Failure;
-                    if (!sb.append(unicode::TrailSurrogate(v)))
-                        return Decode_Failure;
+                    c = unicode::TrailSurrogate(v);
                 } else {
-                    if (!sb.append(char16_t(v)))
-                        return Decode_Failure;
+                    c = char16_t(v);
                 }
+            }
+            if (c < 128 && reservedSet && reservedSet[c]) {
+                if (!sb.append(chars + start, k - start + 1))
+                    return Decode_Failure;
+            } else {
+                if (!sb.append(c))
+                    return Decode_Failure;
             }
         } else {
             if (!sb.append(c))
@@ -4224,7 +4326,7 @@ static bool
 str_decodeURI(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
     if (!str)
         return false;
 
@@ -4235,7 +4337,7 @@ static bool
 str_decodeURI_Component(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
     if (!str)
         return false;
 
@@ -4246,29 +4348,28 @@ static bool
 str_encodeURI(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
     if (!str)
         return false;
 
-    return Encode(cx, str, js_isUriReservedPlusPound, args.rval());
+    return Encode(cx, str, js_isUriUnescaped, js_isUriReservedPlusPound, args.rval());
 }
 
 static bool
 str_encodeURI_Component(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
+    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
     if (!str)
         return false;
 
-    return Encode(cx, str, nullptr, args.rval());
+    return Encode(cx, str, js_isUriUnescaped, nullptr, args.rval());
 }
 
 bool
 js::EncodeURI(JSContext* cx, StringBuffer& sb, const char* chars, size_t length)
 {
-    EncodeResult result = Encode(sb, reinterpret_cast<const Latin1Char*>(chars), length,
-                                 js_isUriReservedPlusPound);
+    EncodeResult result = Encode(sb, chars, length, js_isUriUnescaped, js_isUriReservedPlusPound);
     if (result == EncodeResult::Encode_Failure)
         return false;
     if (result == EncodeResult::Encode_BadUri) {
@@ -4526,10 +4627,19 @@ BuildFlatMatchArray(JSContext* cx, HandleString str, HandleString pattern, int32
 static bool
 CallIsStringOptimizable(JSContext* cx, const char* name, bool* result)
 {
+    JSAtom* atom = Atomize(cx, name, strlen(name));
+    if (!atom)
+        return false;
+    RootedPropertyName propName(cx, atom->asPropertyName());
+
+    RootedValue funcVal(cx);
+    if (!GlobalObject::getSelfHostedFunction(cx, cx->global(), propName, propName, 0, &funcVal))
+        return false;
+
     FixedInvokeArgs<0> args(cx);
 
     RootedValue rval(cx);
-    if (!CallSelfHostedFunction(cx, name, UndefinedHandleValue, args, &rval))
+    if (!Call(cx, funcVal, UndefinedHandleValue, args, &rval))
         return false;
 
     *result = rval.toBoolean();
@@ -4551,7 +4661,7 @@ js::FlatStringMatch(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(isOptimizable);
 #endif
 
-    RootedString str(cx, args[0].toString());
+    RootedString str(cx,args[0].toString());
     RootedString pattern(cx, args[1].toString());
 
     bool isFlat = false;
@@ -4581,7 +4691,7 @@ js::FlatStringSearch(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(isOptimizable);
 #endif
 
-    RootedString str(cx, args[0].toString());
+    RootedString str(cx,args[0].toString());
     RootedString pattern(cx, args[1].toString());
 
     bool isFlat = false;

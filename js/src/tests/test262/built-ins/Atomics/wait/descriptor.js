@@ -3,7 +3,6 @@
 // This code is governed by the license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.wait
 description: Testing descriptor property of Atomics.wait
 includes: [propertyHelper.js]
 ---*/

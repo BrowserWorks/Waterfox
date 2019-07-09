@@ -41,23 +41,25 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(SVGMPathElement,
                                                   SVGMPathElementBase)
-  tmp->mPathTracker.Traverse(&cb);
+  tmp->mHrefTarget.Traverse(&cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 //----------------------------------------------------------------------
 // nsISupports methods
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(SVGMPathElement,
-                                             SVGMPathElementBase,
-                                             nsIDOMNode,
-                                             nsIDOMElement,
-                                             nsIDOMSVGElement,
-                                             nsIMutationObserver)
+NS_IMPL_ADDREF_INHERITED(SVGMPathElement,SVGMPathElementBase)
+NS_IMPL_RELEASE_INHERITED(SVGMPathElement,SVGMPathElementBase)
+
+NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(SVGMPathElement)
+  NS_INTERFACE_TABLE_INHERITED(SVGMPathElement, nsIDOMNode, nsIDOMElement,
+                               nsIDOMSVGElement,
+                               nsIMutationObserver)
+NS_INTERFACE_TABLE_TAIL_INHERITING(SVGMPathElementBase)
 
 // Constructor
 SVGMPathElement::SVGMPathElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-  : SVGMPathElementBase(aNodeInfo)
-  , mPathTracker(this)
+  : SVGMPathElementBase(aNodeInfo),
+    mHrefTarget(this)
 {
 }
 
@@ -88,7 +90,7 @@ SVGMPathElement::BindToTree(nsIDocument* aDocument,
                             nsIContent* aBindingParent,
                             bool aCompileEventHandlers)
 {
-  MOZ_ASSERT(!mPathTracker.get(),
+  MOZ_ASSERT(!mHrefTarget.get(),
              "Shouldn't have href-target yet (or it should've been cleared)");
   nsresult rv = SVGMPathElementBase::BindToTree(aDocument, aParent,
                                                 aBindingParent,
@@ -117,7 +119,7 @@ SVGMPathElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 bool
 SVGMPathElement::ParseAttribute(int32_t aNamespaceID,
-                                nsAtom* aAttribute,
+                                nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
@@ -143,7 +145,7 @@ SVGMPathElement::ParseAttribute(int32_t aNamespaceID,
 
 nsresult
 SVGMPathElement::UnsetAttr(int32_t aNamespaceID,
-                           nsAtom* aAttribute, bool aNotify)
+                           nsIAtom* aAttribute, bool aNotify)
 {
   nsresult rv = SVGMPathElementBase::UnsetAttr(aNamespaceID, aAttribute,
                                                aNotify);
@@ -186,7 +188,7 @@ void
 SVGMPathElement::AttributeChanged(nsIDocument* aDocument,
                                   Element* aElement,
                                   int32_t aNameSpaceID,
-                                  nsAtom* aAttribute,
+                                  nsIAtom* aAttribute,
                                   int32_t aModType,
                                   const nsAttrValue* aOldValue)
 {
@@ -205,13 +207,13 @@ SVGMPathElement::GetReferencedPath()
 {
   if (!HasAttr(kNameSpaceID_XLink, nsGkAtoms::href) &&
       !HasAttr(kNameSpaceID_None, nsGkAtoms::href)) {
-    MOZ_ASSERT(!mPathTracker.get(),
+    MOZ_ASSERT(!mHrefTarget.get(),
                "We shouldn't have a href target "
                "if we don't have an xlink:href or href attribute");
     return nullptr;
   }
 
-  nsIContent* genericTarget = mPathTracker.get();
+  nsIContent* genericTarget = mHrefTarget.get();
   if (genericTarget && genericTarget->IsSVGElement(nsGkAtoms::path)) {
     return static_cast<SVGPathElement*>(genericTarget);
   }
@@ -231,24 +233,24 @@ SVGMPathElement::UpdateHrefTarget(nsIContent* aParent,
                                             aHrefStr, OwnerDoc(), baseURI);
 
   // Stop observing old target (if any)
-  if (mPathTracker.get()) {
-    mPathTracker.get()->RemoveMutationObserver(this);
+  if (mHrefTarget.get()) {
+    mHrefTarget.get()->RemoveMutationObserver(this);
   }
 
   if (aParent) {
     // Pass in |aParent| instead of |this| -- first argument is only used
     // for a call to GetComposedDoc(), and |this| might not have a current
     // document yet (if our caller is BindToTree).
-    mPathTracker.Reset(aParent, targetURI);
+    mHrefTarget.Reset(aParent, targetURI);
   } else {
     // if we don't have a parent, then there's no animateMotion element
     // depending on our target, so there's no point tracking it right now.
-    mPathTracker.Unlink();
+    mHrefTarget.Unlink();
   }
 
   // Start observing new target (if any)
-  if (mPathTracker.get()) {
-    mPathTracker.get()->AddMutationObserver(this);
+  if (mHrefTarget.get()) {
+    mHrefTarget.get()->AddMutationObserver(this);
   }
 
   NotifyParentOfMpathChange(aParent);
@@ -258,10 +260,10 @@ void
 SVGMPathElement::UnlinkHrefTarget(bool aNotifyParent)
 {
   // Stop observing old target (if any)
-  if (mPathTracker.get()) {
-    mPathTracker.get()->RemoveMutationObserver(this);
+  if (mHrefTarget.get()) {
+    mHrefTarget.get()->RemoveMutationObserver(this);
   }
-  mPathTracker.Unlink();
+  mHrefTarget.Unlink();
 
   if (aNotifyParent) {
     NotifyParentOfMpathChange(GetParent());

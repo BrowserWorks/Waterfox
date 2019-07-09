@@ -8,7 +8,7 @@ const Services = require("Services");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
 const {AppActorFront} = require("devtools/shared/apps/app-actor-front");
 const {Connection} = require("devtools/shared/client/connection-manager");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 
 window.addEventListener("load", function () {
   window.addEventListener("resize", Monitor.resize);
@@ -26,7 +26,7 @@ window.addEventListener("load", function () {
  * The Monitor is a WebIDE tool used to display any kind of time-based data in
  * the form of graphs.
  *
- * The data can come from a Firefox OS device, or from a WebSockets
+ * The data can come from a Firefox OS device, simulator, or from a WebSockets
  * server running locally.
  *
  * The format of a data update is typically an object like:

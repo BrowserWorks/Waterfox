@@ -20,12 +20,17 @@
   list-style-image: var(--stop-icon) !important;
 }
 
+%ifdef MOZ_PHOTON_THEME
 :root[lwthemeicons~="--bookmark_star-icon"] #star-button:-moz-lwtheme,
+%endif
 :root[lwthemeicons~="--bookmark_star-icon"] #bookmarks-menu-button:-moz-lwtheme {
   list-style-image: var(--bookmark_star-icon) !important;
 }
 
-:root[lwthemeicons~="--bookmark_menu-icon"] #bookmarks-menu-button:-moz-lwtheme {
+%ifdef MOZ_PHOTON_THEME
+:root[lwthemeicons~="--bookmark_menu-icon"] #bookmarks-menu-button:-moz-lwtheme,
+%endif
+:root[lwthemeicons~="--bookmark_menu-icon"] #bookmarks-menu-button[cui-areatype='toolbar'] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon:-moz-lwtheme {
   list-style-image: var(--bookmark_menu-icon) !important;
 }
 
@@ -121,13 +126,20 @@
   list-style-image: var(--forget-icon) !important;
 }
 
+:root[lwthemeicons~="--pocket-icon"] #pocket-button:-moz-lwtheme {
+  list-style-image: var(--pocket-icon) !important;
+}
+
+%ifdef MOZ_PHOTON_THEME
 :root[lwthemeicons~="--bookmark_star-icon"] #star-button:-moz-lwtheme,
 :root[lwthemeicons~="--bookmark_menu-icon"] #bookmarks-menu-button:-moz-lwtheme,
+%endif
 :root[lwthemeicons~="--back-icon"] #back-button:-moz-lwtheme,
 :root[lwthemeicons~="--forward-icon"] #forward-button:-moz-lwtheme,
 :root[lwthemeicons~="--reload-icon"] #reload-button:-moz-lwtheme,
 :root[lwthemeicons~="--stop-icon"] #stop-button:-moz-lwtheme,
 :root[lwthemeicons~="--bookmark_star-icon"] #bookmarks-menu-button:-moz-lwtheme,
+:root[lwthemeicons~="--bookmark_menu-icon"] #bookmarks-menu-button[cui-areatype='toolbar'] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon:-moz-lwtheme,
 :root[lwthemeicons~="--downloads-icon"] #downloads-button:-moz-lwtheme,
 :root[lwthemeicons~="--home-icon"] #home-button:-moz-lwtheme,
 :root[lwthemeicons~="--app_menu-icon"] #PanelUI-menu-button:-moz-lwtheme,
@@ -150,6 +162,14 @@
 :root[lwthemeicons~="--subscribe-icon"] #feed-button:-moz-lwtheme,
 :root[lwthemeicons~="--text_encoding-icon"] #characterencoding-button:-moz-lwtheme,
 :root[lwthemeicons~="--email_link-icon"] #email-link-button:-moz-lwtheme,
-:root[lwthemeicons~="--forget-icon"] #panic-button:-moz-lwtheme {
+:root[lwthemeicons~="--forget-icon"] #panic-button:-moz-lwtheme,
+:root[lwthemeicons~="--pocket-icon"] #pocket-button:-moz-lwtheme {
   -moz-image-region: rect(0, 16px, 16px, 0) !important;
 }
+
+%ifndef MOZ_PHOTON_THEME
+:root[lwthemeicons~="--reload-icon"] #urlbar > #reload-button:-moz-lwtheme,
+:root[lwthemeicons~="--stop-icon"] #urlbar > #stop-button:-moz-lwtheme {
+  -moz-image-region: rect(0, 14px, 14px, 0) !important;
+}
+%endif

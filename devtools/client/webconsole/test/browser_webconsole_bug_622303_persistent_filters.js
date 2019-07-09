@@ -58,7 +58,7 @@ add_task(function* () {
 });
 
 function onConsoleOpen(hud) {
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let hudBox = hud.ui.rootElement;
 
@@ -92,7 +92,7 @@ function onConsoleOpen(hud) {
 
 function onConsoleReopen1(hud) {
   info("testing after reopening once");
-  let deferred = defer();
+  let deferred = promise.defer();
 
   let hudBox = hud.ui.rootElement;
 

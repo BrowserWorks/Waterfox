@@ -11,10 +11,8 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype, "anchor", {
-  enumerable: false,
-  writable: true,
-  configurable: true
-});
+verifyNotEnumerable(String.prototype, 'anchor');
+verifyWritable(String.prototype, 'anchor');
+verifyConfigurable(String.prototype, 'anchor');
 
 reportCompare(0, 0);

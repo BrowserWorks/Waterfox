@@ -9,7 +9,7 @@
  */
 var protocol = require("devtools/shared/protocol");
 var {RetVal, Arg} = protocol;
-var EventEmitter = require("devtools/shared/event-emitter");
+var events = require("sdk/event/core");
 var {LongStringActor} = require("devtools/server/actors/string");
 
 // The test implicitly relies on this.
@@ -77,11 +77,11 @@ var RootActor = protocol.ActorClassWithSpec(rootSpec, {
   },
 
   emitShortString: function () {
-    EventEmitter.emit(this, "string-event", new LongStringActor(this.conn, SHORT_STR));
+    events.emit(this, "string-event", new LongStringActor(this.conn, SHORT_STR));
   },
 
   emitLongString: function () {
-    EventEmitter.emit(this, "string-event", new LongStringActor(this.conn, LONG_STR));
+    events.emit(this, "string-event", new LongStringActor(this.conn, LONG_STR));
   },
 });
 
@@ -165,7 +165,7 @@ function run_test() {
       // That reference should be removed now.
       expectRootChildren(0);
     }).then(() => {
-      let deferred = defer();
+      let deferred = promise.defer();
       rootClient.once("string-event", (str) => {
         trace.expectSend({"type": "emitShortString", "to": "<actorid>"});
         trace.expectReceive({"type": "string-event", "str": "abc", "from": "<actorid>"});
@@ -187,7 +187,7 @@ function run_test() {
       // Will generate no packets
       return strfront.release();
     }).then(() => {
-      let deferred = defer();
+      let deferred = promise.defer();
       rootClient.once("string-event", (str) => {
         trace.expectSend({"type": "emitLongString", "to": "<actorid>"});
         trace.expectReceive({"type": "string-event",

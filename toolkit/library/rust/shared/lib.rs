@@ -15,19 +15,20 @@ extern crate webrender_bindings;
 extern crate cubeb_pulse;
 extern crate encoding_c;
 extern crate encoding_glue;
-#[cfg(feature = "cubeb-remoting")]
-extern crate audioipc_client;
-#[cfg(feature = "cubeb-remoting")]
-extern crate audioipc_server;
-extern crate u2fhid;
-extern crate log;
-extern crate syn;
 
 use std::boxed::Box;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::panic;
 
+
+
+// This workaround is fixed in Rust 1.19. For details, see bug 1358151.
+thread_local!(static UNUSED_THREAD_LOCAL: () = ());
+#[no_mangle]
+pub extern "C" fn rust_init_please_remove_this_after_updating_rust_1_19() {
+    UNUSED_THREAD_LOCAL.with(|_| ());
+}
 
 
 /// Used to implement `nsIDebug2::RustPanic` for testing purposes.

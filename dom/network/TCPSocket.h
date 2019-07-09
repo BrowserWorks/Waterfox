@@ -30,6 +30,7 @@ namespace mozilla {
 class ErrorResult;
 namespace dom {
 
+class DOMError;
 struct ServerSocketOptions;
 class TCPServerSocket;
 class TCPSocketChild;

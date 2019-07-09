@@ -23,8 +23,6 @@
 //! [cssparser]: ../cssparser/index.html
 //! [selectors]: ../selectors/index.html
 
-#![deny(warnings)]
-#![deny(missing_docs)]
 
 // FIXME(bholley): We need to blanket-allow unsafe code in order to make the
 // gecko atom!() macro work. When Rust 1.14 is released [1], we can uncomment
@@ -40,16 +38,17 @@
 extern crate app_units;
 extern crate arrayvec;
 extern crate atomic_refcell;
+extern crate bit_vec;
 #[macro_use]
 extern crate bitflags;
 #[allow(unused_extern_crates)] extern crate byteorder;
 #[cfg(feature = "gecko")] #[macro_use] #[no_link] extern crate cfg_if;
 #[macro_use] extern crate cssparser;
 extern crate euclid;
-extern crate fallible;
 extern crate fnv;
 #[cfg(feature = "gecko")] #[macro_use] pub mod gecko_string_cache;
-extern crate hashglobe;
+#[cfg(feature = "servo")] extern crate heapsize;
+#[cfg(feature = "servo")] #[macro_use] extern crate heapsize_derive;
 extern crate itertools;
 extern crate itoa;
 #[cfg(feature = "servo")] #[macro_use] extern crate html5ever;
@@ -57,13 +56,11 @@ extern crate itoa;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-extern crate lru_cache;
-#[macro_use] extern crate malloc_size_of;
-#[macro_use] extern crate malloc_size_of_derive;
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate matches;
 #[cfg(feature = "gecko")]
+#[macro_use]
 pub extern crate nsstring_vendor as nsstring;
 #[cfg(feature = "gecko")] extern crate num_cpus;
 extern crate num_integer;
@@ -71,7 +68,8 @@ extern crate num_traits;
 extern crate ordered_float;
 extern crate owning_ref;
 extern crate parking_lot;
-extern crate precomputed_hash;
+extern crate pdqsort;
+#[cfg(feature = "gecko")] extern crate precomputed_hash;
 extern crate rayon;
 extern crate selectors;
 #[cfg(feature = "servo")] #[macro_use] extern crate serde;
@@ -79,7 +77,6 @@ pub extern crate servo_arc;
 #[cfg(feature = "servo")] #[macro_use] extern crate servo_atoms;
 #[cfg(feature = "servo")] extern crate servo_config;
 #[cfg(feature = "servo")] extern crate servo_url;
-extern crate smallbitvec;
 extern crate smallvec;
 #[macro_use]
 extern crate style_derive;
@@ -93,19 +90,19 @@ extern crate unicode_segmentation;
 #[macro_use]
 mod macros;
 
-#[cfg(feature = "servo")] pub mod animation;
+pub mod animation;
 pub mod applicable_declarations;
 #[allow(missing_docs)] // TODO.
 #[cfg(feature = "servo")] pub mod attr;
 pub mod bezier;
 pub mod bloom;
+pub mod cache;
+pub mod cascade_info;
 pub mod context;
 pub mod counter_style;
 pub mod custom_properties;
 pub mod data;
 pub mod dom;
-pub mod dom_apis;
-pub mod driver;
 pub mod element_state;
 #[cfg(feature = "servo")] mod encoding_support;
 pub mod error_reporting;
@@ -113,7 +110,6 @@ pub mod font_face;
 pub mod font_metrics;
 #[cfg(feature = "gecko")] #[allow(unsafe_code)] pub mod gecko;
 #[cfg(feature = "gecko")] #[allow(unsafe_code)] pub mod gecko_bindings;
-pub mod hash;
 pub mod invalidation;
 #[allow(missing_docs)] // TODO.
 pub mod logical_geometry;
@@ -121,7 +117,6 @@ pub mod matching;
 pub mod media_queries;
 pub mod parallel;
 pub mod parser;
-pub mod rule_cache;
 pub mod rule_tree;
 pub mod scoped_tls;
 pub mod selector_map;
@@ -131,6 +126,7 @@ pub mod sharing;
 pub mod style_resolver;
 pub mod stylist;
 #[cfg(feature = "servo")] #[allow(unsafe_code)] pub mod servo;
+pub mod sequential;
 pub mod str;
 pub mod style_adjuster;
 pub mod stylesheet_set;
@@ -173,7 +169,7 @@ pub mod gecko_properties {
 }
 
 macro_rules! reexport_computed_values {
-    ( $( { $name: ident, $boxed: expr } )+ ) => {
+    ( $( $name: ident )+ ) => {
         /// Types for [computed values][computed].
         ///
         /// [computed]: https://drafts.csswg.org/css-cascade/#computed
@@ -203,7 +199,7 @@ pub fn serialize_comma_separated_list<W, T>(dest: &mut W,
     list[0].to_css(dest)?;
 
     for item in list.iter().skip(1) {
-        dest.write_str(", ")?;
+        write!(dest, ", ")?;
         item.to_css(dest)?;
     }
 

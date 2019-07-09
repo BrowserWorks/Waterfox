@@ -12,12 +12,14 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIDOMHTMLLabelElement.h"
 
 namespace mozilla {
 class EventChainPostVisitor;
 namespace dom {
 
-class HTMLLabelElement final : public nsGenericHTMLElement
+class HTMLLabelElement final : public nsGenericHTMLElement,
+                               public nsIDOMHTMLLabelElement
 {
 public:
   explicit HTMLLabelElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -37,14 +39,17 @@ public:
     return true;
   }
 
+  // nsIDOMHTMLLabelElement
+  NS_DECL_NSIDOMHTMLLABELELEMENT
+
   HTMLFormElement* GetForm() const;
   void GetHtmlFor(nsString& aHtmlFor)
   {
     GetHTMLAttr(nsGkAtoms::_for, aHtmlFor);
   }
-  void SetHtmlFor(const nsAString& aHtmlFor)
+  void SetHtmlFor(const nsAString& aHtmlFor, ErrorResult& aError)
   {
-    SetHTMLAttr(nsGkAtoms::_for, aHtmlFor);
+    SetHTMLAttr(nsGkAtoms::_for, aHtmlFor, aError);
   }
   nsGenericHTMLElement* GetControl() const
   {

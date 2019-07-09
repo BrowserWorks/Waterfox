@@ -46,7 +46,7 @@ impl PseudoElement {
             return PseudoElementCascadeType::Eager
         }
 
-        if self.is_precomputed() {
+        if self.is_anon_box() {
             return PseudoElementCascadeType::Precomputed
         }
 
@@ -75,22 +75,10 @@ impl PseudoElement {
         EAGER_PSEUDOS[i].clone()
     }
 
-    /// Whether the current pseudo element is ::before or ::after.
+    /// Whether this pseudo-element is ::before or ::after.
     #[inline]
     pub fn is_before_or_after(&self) -> bool {
-        self.is_before() || self.is_after()
-    }
-
-    /// Whether this pseudo-element is the ::before pseudo.
-    #[inline]
-    pub fn is_before(&self) -> bool {
-        *self == PseudoElement::Before
-    }
-
-    /// Whether this pseudo-element is the ::after pseudo.
-    #[inline]
-    pub fn is_after(&self) -> bool {
-        *self == PseudoElement::After
+        matches!(*self, PseudoElement::Before | PseudoElement::After)
     }
 
     /// Whether this pseudo-element is ::first-letter.
@@ -127,17 +115,10 @@ impl PseudoElement {
         (self.flags() & structs::CSS_PSEUDO_ELEMENT_SUPPORTS_USER_ACTION_STATE) != 0
     }
 
-    /// Whether this pseudo-element skips flex/grid container display-based
-    /// fixup.
-    #[inline]
-    pub fn skip_item_based_display_fixup(&self) -> bool {
-        (self.flags() & structs::CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM) == 0
-    }
-
     /// Whether this pseudo-element is precomputed.
     #[inline]
     pub fn is_precomputed(&self) -> bool {
-        self.is_anon_box() && !self.is_tree_pseudo_element()
+        self.is_anon_box()
     }
 
     /// Covert non-canonical pseudo-element to canonical one, and keep a

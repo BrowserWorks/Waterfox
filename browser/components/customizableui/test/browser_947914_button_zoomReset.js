@@ -7,16 +7,12 @@
 var initialPageZoom = ZoomManager.zoom;
 
 add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   info("Check zoom reset button existence and functionality");
 
   is(initialPageZoom, 1, "Page zoom reset correctly");
   ZoomManager.zoom = 0.5;
-  CustomizableUI.addWidgetToArea("zoom-controls", CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
-  registerCleanupFunction(() => CustomizableUI.reset());
-
-  await waitForOverflowButtonShown();
-
-  await document.getElementById("nav-bar").overflowable.show();
+  await PanelUI.show();
   info("Menu panel was opened");
 
   let zoomResetButton = document.getElementById("zoom-reset-button");
@@ -32,8 +28,8 @@ add_task(async function() {
   is(pageZoomLevel, buttonZoomLevel, "Button displays the correct zoom level");
 
   // close the panel
-  let panelHiddenPromise = promiseOverflowHidden(window);
-  document.getElementById("widget-overflow").hidePopup();
+  let panelHiddenPromise = promisePanelHidden(window);
+  PanelUI.hide();
   await panelHiddenPromise;
   info("Menu panel was closed");
 });

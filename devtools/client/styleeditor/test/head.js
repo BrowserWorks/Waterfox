@@ -82,10 +82,6 @@ var openStyleEditor = Task.async(function* (tab) {
   let panel = toolbox.getPanel("styleeditor");
   let ui = panel.UI;
 
-  // The stylesheet list appears with an animation. Let this animation finish.
-  let animations = ui._root.getAnimations({subtree: true});
-  yield Promise.all(animations.map(a => a.finished));
-
   return { toolbox, panel, ui };
 });
 

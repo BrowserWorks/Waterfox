@@ -51,11 +51,7 @@ struct IMENotificationRequests final
     NOTIFY_MOUSE_BUTTON_EVENT_ON_CHAR    = 1 << 3,
     // NOTE: NOTIFY_DURING_DEACTIVE isn't supported in environments where two
     //       or more compositions are possible.  E.g., Mac and Linux (GTK).
-    NOTIFY_DURING_DEACTIVE               = 1 << 7,
-
-    NOTIFY_ALL = NOTIFY_TEXT_CHANGE |
-                 NOTIFY_POSITION_CHANGE |
-                 NOTIFY_MOUSE_BUTTON_EVENT_ON_CHAR,
+    NOTIFY_DURING_DEACTIVE               = 1 << 7
   };
 
   IMENotificationRequests()
@@ -111,7 +107,7 @@ struct IMENotificationRequests final
 };
 
 /**
- * Contains IMEStatus plus information about the current
+ * Contains IMEStatus plus information about the current 
  * input context that the IME can use as hints if desired.
  */
 
@@ -275,20 +271,7 @@ struct InputContext final
   InputContext()
     : mOrigin(XRE_IsParentProcess() ? ORIGIN_MAIN : ORIGIN_CONTENT)
     , mMayBeIMEUnaware(false)
-    , mInPrivateBrowsing(false)
   {
-  }
-
-  // If InputContext instance is a static variable, any heap allocated stuff
-  // of its members need to be deleted at XPCOM shutdown.  Otherwise, it's
-  // detected as memory leak.
-  void ShutDown()
-  {
-    // The buffer for nsString will be released with a call of SetCapacity(0).
-    // Truncate() isn't enough because it just sets length to 0.
-    mHTMLInputType.SetCapacity(0);
-    mHTMLInputInputmode.SetCapacity(0);
-    mActionHint.SetCapacity(0);
   }
 
   bool IsPasswordEditor() const
@@ -324,10 +307,6 @@ struct InputContext final
    * composiion events. This enables a key-events-only mode on Android for
    * compatibility with webapps relying on key listeners. */
   bool mMayBeIMEUnaware;
-
-  /* Whether the owning document of the input element has been loaded
-   * in private browsing mode. */
-  bool mInPrivateBrowsing;
 
   bool IsOriginMainProcess() const
   {
@@ -419,10 +398,6 @@ struct InputContextAction final
       default:
         return false;
     }
-  }
-
-  bool IsUserAction() const {
-    return IsUserAction(mCause);
   }
 
   InputContextAction()
@@ -626,8 +601,8 @@ struct IMENotification final
     {
       mX = aRect.x;
       mY = aRect.y;
-      mWidth = aRect.Width();
-      mHeight = aRect.Height();
+      mWidth = aRect.width;
+      mHeight = aRect.height;
     }
     nsIntRect AsIntRect() const
     {
@@ -797,7 +772,7 @@ struct IMENotification final
     }
 
     // Positive if text is added. Negative if text is removed.
-    int64_t Difference() const
+    int64_t Difference() const 
     {
       return mAddedEndOffset - mRemovedEndOffset;
     }

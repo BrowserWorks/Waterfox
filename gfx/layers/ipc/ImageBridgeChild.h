@@ -41,7 +41,6 @@ namespace layers {
 class AsyncCanvasRenderer;
 class ImageClient;
 class ImageContainer;
-class ImageContainerListener;
 class ImageBridgeParent;
 class CompositableClient;
 struct CompositableTransaction;
@@ -206,6 +205,7 @@ public:
                                                     TextureFlags aFlag);
   void UpdateAsyncCanvasRenderer(AsyncCanvasRenderer* aClient);
   void UpdateImageClient(RefPtr<ImageContainer> aContainer);
+  static void DispatchReleaseTextureClient(TextureClient* aClient);
 
   /**
    * Flush all Images sent to CompositableHost.
@@ -238,6 +238,8 @@ private:
     CompositableType aType,
     ImageContainer* aImageContainer);
 
+  void ReleaseTextureClientNow(TextureClient* aClient);
+
   void UpdateAsyncCanvasRendererNow(AsyncCanvasRenderer* aClient);
   void UpdateAsyncCanvasRendererSync(
     SynchronousTask* aTask,
@@ -250,8 +252,6 @@ private:
 
   void ProxyAllocShmemNow(SynchronousTask* aTask, AllocShmemParams* aParams);
   void ProxyDeallocShmemNow(SynchronousTask* aTask, Shmem* aShmem, bool* aResult);
-
-  void UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aIdentifier);
 
 public:
   // CompositableForwarder
@@ -399,7 +399,7 @@ private:
    * Mapping from async compositable IDs to image containers.
    */
   Mutex mContainerMapLock;
-  nsRefPtrHashtable<nsUint64HashKey, ImageContainerListener> mImageContainerListeners;
+  nsDataHashtable<nsUint64HashKey, ImageContainer*> mImageContainers;
 };
 
 } // namespace layers

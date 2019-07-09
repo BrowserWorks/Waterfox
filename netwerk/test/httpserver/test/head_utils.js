@@ -51,7 +51,7 @@ function makeBIS(stream)
 /**
  * Returns the contents of the file as a string.
  *
- * @param file : nsIFile
+ * @param file : nsILocalFile
  *   the file whose contents are to be read
  * @returns string
  *   the contents of the file

@@ -402,9 +402,6 @@ nsBaseDragService::EndDragSession(bool aDoneDrag, uint32_t aKeyModifiers)
                                                               mUserCancelled,
                                                               mEndDragPoint,
                                                               aKeyModifiers);
-    // Continue sending input events with input priority when stopping the dnd
-    // session.
-    mChildProcesses[i]->SetInputPriorityEventEnabled(true);
   }
   mChildProcesses.Clear();
 

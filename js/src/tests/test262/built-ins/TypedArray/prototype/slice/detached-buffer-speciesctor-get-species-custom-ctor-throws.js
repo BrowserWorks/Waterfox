@@ -24,7 +24,7 @@ info: >
   2. Perform ? ValidateTypedArray(newTypedArray).
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [Symbol.species, TypedArray]
+features: [Symbol.species]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

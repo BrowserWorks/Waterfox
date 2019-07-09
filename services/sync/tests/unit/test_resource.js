@@ -3,7 +3,6 @@
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/status.js");
 Cu.import("resource://services-sync/util.js");
@@ -211,7 +210,7 @@ add_task(async function test() {
   logger.debug = function(msg) {
     debugMessages.push(msg);
     dbg.call(this, msg);
-  };
+  }
 
   // Since we didn't receive proper JSON data, accessing content.obj
   // will result in a SyntaxError from JSON.parse.
@@ -316,7 +315,7 @@ add_task(async function test() {
   _("DELETE a resource");
   let res6 = new Resource(server.baseURI + "/delete");
   content = await res6.delete();
-  do_check_eq(content, "This resource has been deleted");
+  do_check_eq(content, "This resource has been deleted")
   do_check_eq(content.status, 200);
 
   _("JSON conversion of response body");
@@ -426,7 +425,7 @@ add_task(async function test() {
   };
   res18._onProgress = onProgress;
   let warnings = [];
-  res18._log.warn = function(msg) { warnings.push(msg); };
+  res18._log.warn = function(msg) { warnings.push(msg) };
   error = undefined;
   try {
     content = await res18.get();
@@ -451,7 +450,7 @@ add_task(async function test() {
   res18._onProgress = onProgress;
   let oldWarn = res18._log.warn;
   warnings = [];
-  res18._log.warn = function(msg) { warnings.push(msg); };
+  res18._log.warn = function(msg) { warnings.push(msg) };
   error = undefined;
   try {
     content = await res18.get();
@@ -488,9 +487,9 @@ add_task(async function test() {
 
   let query = "?" + args.join("&");
 
-  let uri1 = CommonUtils.makeURI("http://foo/" + query)
+  let uri1 = Utils.makeURI("http://foo/" + query)
                   .QueryInterface(Ci.nsIURL);
-  let uri2 = CommonUtils.makeURI("http://foo/")
+  let uri2 = Utils.makeURI("http://foo/")
                   .QueryInterface(Ci.nsIURL);
   uri2.query = query;
   do_check_eq(uri1.query, uri2.query);

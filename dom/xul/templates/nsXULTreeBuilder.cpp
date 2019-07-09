@@ -47,7 +47,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(nsXULTreeBuilder, nsXULTemplateBuilder,
                                    mLocalStore,
                                    mObservers)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsXULTreeBuilder)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsXULTreeBuilder)
     NS_INTERFACE_MAP_ENTRY(nsIXULTreeBuilder)
     NS_INTERFACE_MAP_ENTRY(nsITreeView)
 NS_INTERFACE_MAP_END_INHERITING(nsXULTemplateBuilder)
@@ -1389,7 +1389,7 @@ nsXULTreeBuilder::GetTemplateActionCellFor(int32_t aRow, nsTreeColumn& aCol)
         return nullptr;
     }
 
-    RefPtr<nsAtom> colAtom(aCol.GetAtom());
+    nsCOMPtr<nsIAtom> colAtom(aCol.GetAtom());
     int32_t colIndex(aCol.GetIndex());
 
     nsIContent* result = nullptr;

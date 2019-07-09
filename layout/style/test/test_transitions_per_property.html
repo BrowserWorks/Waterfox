@@ -58,9 +58,6 @@ function any_unit_to_num(str)
 var FUNC_NEGATIVE = "cubic-bezier(0.25, -2, 0.75, 1)";
 var FUNC_OVERONE = "cubic-bezier(0.25, 0, 0.75, 3)";
 
-// After resolving Bug 1387080, we can remove this variable.
-const isServo = SpecialPowers.DOMWindowUtils.isStyledByServo;
-
 var supported_properties = {
     "border-bottom-left-radius": [ test_radius_transition ],
     "border-bottom-right-radius": [ test_radius_transition ],
@@ -136,7 +133,7 @@ var supported_properties = {
                      test_true_currentcolor_transition,
                      test_auto_color_transition ],
     "clip": [ test_rect_transition ],
-    "clip-path": [ test_basic_shape_or_url_transition ],
+    "clip-path": [ test_clip_path_transition ],
     "color": [ test_color_transition,
                test_currentcolor_transition ],
     "fill": [ test_color_transition,
@@ -194,30 +191,6 @@ var supported_properties = {
     "margin-top": [ test_length_transition, test_percent_transition,
                     test_length_percent_calc_transition,
                     test_length_unclamped, test_percent_unclamped ],
-    "mask-position": [ test_background_position_transition,
-                       // FIXME: We don't currently test clamping,
-                       // since mask-position uses calc() as
-                       // an intermediate form.
-                       /* test_length_percent_pair_unclamped */ ],
-    "mask-position-x": [ test_background_position_coord_transition,
-                         test_length_transition,
-                         test_percent_transition,
-                         // FIXME: We don't currently test clamping,
-                         // since background-position-x uses calc() as
-                         // an intermediate form.
-                         /* test_length_percent_pair_unclamped */ ],
-    "mask-position-y": [ test_background_position_coord_transition,
-                         test_length_transition,
-                         test_percent_transition,
-                         // FIXME: We don't currently test clamping,
-                         // since background-position-y uses calc() as
-                         // an intermediate form.
-                         /* test_length_percent_pair_unclamped */ ],
-    "mask-size": [ test_background_size_transition,
-                   // FIXME: We don't currently test clamping,
-                   // since mask-size uses calc() as an
-                   // intermediate form.
-                   /* test_length_percent_pair_clamped */ ],
     "max-height": [ test_length_transition, test_percent_transition,
                     test_length_clamped, test_percent_clamped ],
     "max-width": [ test_length_transition, test_percent_transition,
@@ -310,9 +283,31 @@ var supported_properties = {
                                    test_true_currentcolor_transition ]
 };
 
-if (SpecialPowers.getBoolPref("layout.css.shape-outside.enabled")) {
-  supported_properties["shape-outside"] =
-    [ test_basic_shape_or_url_transition ];
+if (SupportsMaskShorthand()) {
+  supported_properties["mask-position"] = [ test_background_position_transition,
+                                     // FIXME: We don't currently test clamping,
+                                     // since mask-position uses calc() as
+                                     // an intermediate form.
+                                     /* test_length_percent_pair_unclamped */ ];
+  supported_properties["mask-position-x"] = [ test_background_position_coord_transition,
+                                              test_length_transition,
+                                              test_percent_transition,
+                                            // FIXME: We don't currently test clamping,
+                                            // since background-position-x uses calc() as
+                                            // an intermediate form.
+                                            /* test_length_percent_pair_unclamped */ ];
+  supported_properties["mask-position-y"] = [ test_background_position_coord_transition,
+                                              test_length_transition,
+                                              test_percent_transition,
+                                            // FIXME: We don't currently test clamping,
+                                            // since background-position-y uses calc() as
+                                            // an intermediate form.
+                                            /* test_length_percent_pair_unclamped */ ];
+  supported_properties["mask-size"] = [ test_background_size_transition,
+                                     // FIXME: We don't currently test clamping,
+                                     // since mask-size uses calc() as an
+                                     // intermediate form.
+                                     /* test_length_percent_pair_clamped */ ];
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.font-variations.enabled")) {
@@ -516,7 +511,6 @@ var transformTests = [
     expected: computeMatrix('rotate(30deg) skewX(' + Math.atan(Math.tan(Math.PI * 60/180) / 2) + 'rad) scale(2, 0.5)'),
     round_error_ok: true },
 
-
   // matrix decomposition
 
   // Four pairs of the same matrix expressed different ways.
@@ -632,27 +626,17 @@ var transformTests = [
     round_error_ok: true },
 ];
 
-// Even if the default reference-box of shape-outside is margin-box, which is
-// different from the default reference-box of clip-path, we still can reuse
-// these tests for both properties because we always explicitly assign a
-// reference-box (i.e. border-box or content-box) if needed.
-// Bug 1313619: Add some tests for two basic shapes with an explicit
-// reference-box and a default one.
-var clipPathAndShapeOutsideTests = [
+var clipPathTests = [
   { start: "none", end: "none",
     expected: ["none"] },
   // none to shape
   { start: "none",
     end: "circle(500px at 500px 500px) border-box",
-    expected:
-      isServo ? ["circle", ["500px at 500px 500px"], "border-box"]
-              : ["circle", ["500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
+    expected: ["circle", ["500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
   },
   { start: "none",
     end: "ellipse(500px 500px at 500px 500px) border-box",
-    expected:
-      isServo ? ["ellipse", ["500px 500px at 500px 500px"], "border-box"]
-              : ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
+    expected: ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
   },
   { start: "none",
     end: "polygon(evenodd, 500px 500px, 500px 500px) border-box",
@@ -669,15 +653,11 @@ var clipPathAndShapeOutsideTests = [
     expected: ["ellipse", ["200px 200px at 50% 50%"]] },
   { start: "circle(100px at 100px 100px) border-box",
     end: "circle(500px at 500px 500px) border-box",
-    expected:
-      isServo ? ["circle", ["200px at 200px 200px"], "border-box"]
-              : ["circle", ["200px at calc(200px + 0%) calc(200px + 0%)"], "border-box"]
+    expected: ["circle", ["200px at calc(200px + 0%) calc(200px + 0%)"], "border-box"]
   },
   { start: "ellipse(100px 100px at 100px 100px) border-box",
     end: "ellipse(500px 500px at 500px 500px) border-box",
-    expected:
-      isServo ? ["ellipse", ["200px 200px at 200px 200px"], "border-box"]
-              : ["ellipse", ["200px 200px at calc(200px + 0%) calc(200px + 0%)"], "border-box"]
+    expected: ["ellipse", ["200px 200px at calc(200px + 0%) calc(200px + 0%)"], "border-box"]
   },
   { start: "polygon(evenodd, 100px 100px, 100px 100px) border-box",
     end: "polygon(evenodd, 500px 500px, 500px 500px) border-box",
@@ -748,15 +728,11 @@ var clipPathAndShapeOutsideTests = [
   // mismatching boxes
   { start: "circle(100px at 100px 100px) border-box",
     end: "circle(500px at 500px 500px) content-box",
-    expected:
-      isServo ? ["circle", ["500px at 500px 500px"], "content-box"]
-              : ["circle", ["500px at calc(500px + 0%) calc(500px + 0%)"], "content-box"]
+    expected: ["circle", ["500px at calc(500px + 0%) calc(500px + 0%)"], "content-box"]
   },
   { start: "ellipse(100px 100px at 100px 100px) border-box",
     end: "ellipse(500px 500px at 500px 500px) content-box",
-    expected:
-      isServo ? ["ellipse", ["500px 500px at 500px 500px"], "content-box"]
-              : ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "content-box"]
+    expected: ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "content-box"]
   },
   { start: "polygon(evenodd, 100px 100px, 100px 100px) border-box",
     end: "polygon(evenodd, 500px 500px, 500px 500px) content-box",
@@ -769,9 +745,7 @@ var clipPathAndShapeOutsideTests = [
   // mismatching functions
   { start: "circle(100px at 100px 100px) border-box",
     end: "ellipse(500px 500px at 500px 500px) border-box",
-    expected:
-      isServo ? ["ellipse", ["500px 500px at 500px 500px"], "border-box"]
-              : ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
+    expected: ["ellipse", ["500px 500px at calc(500px + 0%) calc(500px + 0%)"], "border-box"]
   },
   { start: "inset(0px round 20px)", end: "ellipse(500px 500px)",
     expected: ["ellipse", ["500px 500px at 50% 50%"]]
@@ -1441,16 +1415,12 @@ function test_true_currentcolor_shorthand_transition(prop) {
   test_true_currentcolor_transition(prop, get_color_from_shorthand_value, true);
 }
 
-function test_shape_or_url_equals(computedValStr, expected)
+function test_clip_path_equals(computedValStr, expectedList)
 {
   // Check simple case "none"
-  if (computedValStr == "none" && computedValStr == expected[0]) {
+  if (computedValStr == "none" && computedValStr == expectedList[0]) {
     return true;
   }
-  // We will update the expected list in this function for checking the result,
-  // so we clone it first to avoid affecting the input parameter.
-  var expectedList = expected.slice();
-
   var start = String(computedValStr);
 
   var regBox = /\s*(content\-box|padding\-box|border\-box|margin\-box|view\-box|stroke\-box|fill\-box)/
@@ -1486,7 +1456,7 @@ function test_shape_or_url_equals(computedValStr, expected)
     if (computedValStr == "") {
       return true;
     } else {
-      ok(false, "expected basic shape");
+      ok(false, "expected clip-path shape");
       return false;
     }
   }
@@ -1574,17 +1544,20 @@ function filter_function_list_equals(computedValStr, expectedList)
   return true;
 }
 
-function test_basic_shape_or_url_transition(prop) {
-  for (var i in clipPathAndShapeOutsideTests) {
-    var test = clipPathAndShapeOutsideTests[i];
+function test_clip_path_transition(prop) {
+  if (!SpecialPowers.getBoolPref("layout.css.clip-path-shapes.enabled")) {
+    return;
+  }
+  for (var i in clipPathTests) {
+    var test = clipPathTests[i];
     div.style.setProperty("transition-property", "none", "");
     div.style.setProperty(prop, test.start, "");
     cs.getPropertyValue(prop);
     div.style.setProperty("transition-property", prop, "");
     div.style.setProperty(prop, test.end, "");
     var actual = cs.getPropertyValue(prop);
-    ok(test_shape_or_url_equals(actual, test.expected),
-       prop + " property is " + actual + " expected values of " +
+    ok(test_clip_path_equals(actual, test.expected),
+       "Clip-path property is " + actual + " expected values of " +
        test.expected);
   }
 }
@@ -1650,28 +1623,10 @@ function test_shadow_transition(prop) {
                          "8px 8px 8px 8px red inset");
   }
 
-  // Transition beween values with color and without color.
-  div.style.setProperty("transition-property", "none", "");
-  div.style.setProperty("color", "rgb(3, 0, 0)", "");
-  div.style.setProperty(prop, "2px 2px 2px", "");
-  is(cs.getPropertyValue(prop), "rgb(3, 0, 0) 2px 2px 2px" + spreadStr,
-     "shadow-valued property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
-  div.style.setProperty(prop, "8px 8px 8px red", "");
-  // Bug 726550 for gecko (can't transition), bug 1390697 for servo (doesn't
-  // work currentColor animation for {text,box}-shadow).
-  todo_is(cs.getPropertyValue(prop),
-          "rgb(66, 0, 0) 3.5px 3.5px 3.5px" + spreadStr,
-          "shadow-valued property " + prop +
-          ": interpolation values with/without color");
-
-  // Transition beween values without color.
   var defaultColor = cs.getPropertyValue("color") + " ";
-  div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "2px 2px 2px", "");
   is(cs.getPropertyValue(prop), defaultColor + "2px 2px 2px" + spreadStr,
-     "shadow-valued property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
+     "shadow-valued property " + prop + ": non-interpolable cases");
   div.style.setProperty(prop, "6px 14px 10px", "");
   is(cs.getPropertyValue(prop), defaultColor + "3px 5px 4px" + spreadStr,
      "shadow-valued property " + prop + ": interpolation without color");
@@ -2107,18 +2062,12 @@ function test_rect_transition(prop) {
   check_distance(prop, "rect(4px, 16px, 12px, 6px)",
                        "rect(3px, 13px, 10px, 5px)",
                        "rect(0px, 4px, 4px, 2px)");
-  div.style.setProperty(prop, "rect(0px, 6px, 4px, auto)", "");
   if (prop == "clip") {
+    div.style.setProperty(prop, "rect(0px, 6px, 4px, auto)", "");
     is(cs.getPropertyValue(prop), "rect(0px, 6px, 4px, auto)",
        "rect-valued property " + prop + ": can't interpolate auto components");
-  } else {
-    is(prop, "-moz-image-region");
-    // Bug 1390067: -moz-image-region should behave just like clip does.
-    todo_is(cs.getPropertyValue(prop), "rect(0px, 6px, 4px, auto)",
-            "rect-valued property " + prop +
-            ": can't interpolate auto components");
+    div.style.setProperty(prop, "rect(0px, 6px, 4px, 2px)", "");
   }
-  div.style.setProperty(prop, "rect(0px, 6px, 4px, 2px)", "");
   div.style.setProperty(prop, "auto", "");
   is(cs.getPropertyValue(prop), "auto",
      "rect-valued property " + prop + ": can't interpolate auto components");
@@ -2310,47 +2259,36 @@ function test_background_position_coord_transition(prop) {
                        "calc(-5px + 80%)",
                        "calc(40px + 20%)");
 
-  div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "10px, 50px, 30px", "");
   is(cs.getPropertyValue(prop), "10px, 50px, 30px",
      "property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "50px, 70px, 30px", "");
   is(cs.getPropertyValue(prop), "20px, 55px, 30px",
      "property " + prop + ": interpolation of lists of lengths");
   check_distance(prop, "10px, 50px, 30px",
                        "20px, 55px, 30px",
                        "50px, 70px, 30px");
-
-  div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "10px, 50%, 30%, 5px", "");
   is(cs.getPropertyValue(prop), "10px, 50%, 30%, 5px",
      "property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "50px, 70%, 30%, 25px", "");
   is(cs.getPropertyValue(prop), "20px, 55%, 30%, 10px",
      "property " + prop + ": interpolation of lists of lengths and percents");
   check_distance(prop, "10px, 50%, 30%, 5px",
                        "20px, 55%, 30%, 10px",
                        "50px, 70%, 30%, 25px");
-
-  div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "20%, 8px", "");
   is(cs.getPropertyValue(prop), "20%, 8px",
      "property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "12px, 40%", "");
   is(cs.getPropertyValue(prop), "calc(3px + 15%), calc(6px + 10%)",
      "property " + prop + ": interpolation that computes to calc()");
   check_distance(prop, "20%, 8px",
                        "calc(3px + 15%), calc(6px + 10%)",
                        "12px, 40%");
-
-  div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "calc(20% + 40px), 8px, calc(20px + 12%)", "");
   is(cs.getPropertyValue(prop), "calc(40px + 20%), 8px, calc(20px + 12%)",
      "property " + prop + ": computed value before transition");
-  div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "12px, calc(20%), calc(8px + 20%)", "");
   is(cs.getPropertyValue(prop), "calc(33px + 15%), calc(6px + 5%), calc(17px + 14%)",
      "property " + prop + ": interpolation that computes to calc()");
@@ -2455,11 +2393,9 @@ function test_background_position_size_common(prop, doesPropTakeListValues,
 
   // Test list values, if appropriate
   if (doesPropTakeListValues) {
-    div.style.setProperty("transition-property", "none", "");
     div.style.setProperty(prop, "10px 40px, 50px 50px, 30px 20px", "");
     is(cs.getPropertyValue(prop), "10px 40px, 50px 50px, 30px 20px",
        "property " + prop + ": computed value before transition");
-    div.style.setProperty("transition-property", prop, "");
     div.style.setProperty(prop, "50px 20px, 70px 50px, 30px 40px", "");
     is(cs.getPropertyValue(prop), "20px 35px, 55px 50px, 30px 25px",
        "property " + prop + ": interpolation of lists of lengths");
@@ -2468,11 +2404,9 @@ function test_background_position_size_common(prop, doesPropTakeListValues,
                            "20px 35px, 55px 50px, 30px 25px",
                            "50px 20px, 70px 50px, 30px 40px");
     }
-    div.style.setProperty("transition-property", "none", "");
     div.style.setProperty(prop, "10px 40%, 50% 50px, 30% 20%, 5px 10px", "");
     is(cs.getPropertyValue(prop), "10px 40%, 50% 50px, 30% 20%, 5px 10px",
        "property " + prop + ": computed value before transition");
-    div.style.setProperty("transition-property", prop, "");
     div.style.setProperty(prop, "50px 20%, 70% 50px, 30% 40%, 25px 50px", "");
     is(cs.getPropertyValue(prop), "20px 35%, 55% 50px, 30% 25%, 10px 20px",
        "property " + prop + ": interpolation of lists of lengths and percents");
@@ -2481,11 +2415,9 @@ function test_background_position_size_common(prop, doesPropTakeListValues,
                            "20px 35%, 55% 50px, 30% 25%, 10px 20px",
                            "50px 20%, 70% 50px, 30% 40%, 25px 50px");
     }
-    div.style.setProperty("transition-property", "none", "");
     div.style.setProperty(prop, "20% 40%, 8px 12px", "");
     is(cs.getPropertyValue(prop), "20% 40%, 8px 12px",
        "property " + prop + ": computed value before transition");
-    div.style.setProperty("transition-property", prop, "");
     div.style.setProperty(prop, "12px 20px, 40% 16%", "");
     is(cs.getPropertyValue(prop), "calc(3px + 15%) calc(5px + 30%), calc(6px + 10%) calc(9px + 4%)",
        "property " + prop + ": interpolation that computes to calc()");
@@ -2494,11 +2426,9 @@ function test_background_position_size_common(prop, doesPropTakeListValues,
                            "calc(3px + 15%) calc(5px + 30%), calc(6px + 10%) calc(9px + 4%)",
                            "12px 20px, 40% 16%");
     }
-    div.style.setProperty("transition-property", "none", "");
     div.style.setProperty(prop, "calc(20% + 40px) calc(40px + 40%), 8px 12%, calc(20px + 12%) calc(24px + 8%)", "");
     is(cs.getPropertyValue(prop), "calc(40px + 20%) calc(40px + 40%), 8px 12%, calc(20px + 12%) calc(24px + 8%)",
        "property " + prop + ": computed value before transition");
-    div.style.setProperty("transition-property", prop, "");
     div.style.setProperty(prop, "12px 20%, calc(20%) calc(16px + 60%), calc(8px + 20%) calc(40px + 16%)", "");
     is(cs.getPropertyValue(prop), "calc(33px + 15%) calc(30px + 35%), calc(6px + 5%) calc(4px + 24%), calc(17px + 14%) calc(28px + 10%)",
        "property " + prop + ": interpolation that computes to calc()");

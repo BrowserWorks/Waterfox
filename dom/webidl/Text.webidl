@@ -18,9 +18,4 @@ interface Text : CharacterData {
   readonly attribute DOMString wholeText;
 };
 
-partial interface Text {
-  [Pref="dom.webcomponents.enabled"]
-  readonly attribute HTMLSlotElement? assignedSlot;
-};
-
 Text implements GeometryUtils;

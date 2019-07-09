@@ -110,6 +110,17 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Fake_MediaStreamListener)
 };
 
+class Fake_DirectMediaStreamListener : public Fake_MediaStreamListener
+{
+protected:
+  virtual ~Fake_DirectMediaStreamListener() {}
+
+public:
+  virtual void NotifyRealtimeData(mozilla::MediaStreamGraph* graph, mozilla::TrackID tid,
+                                  mozilla::StreamTime offset,
+                                  const mozilla::MediaSegment& media) = 0;
+};
+
 class Fake_MediaStreamTrackListener
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Fake_MediaStreamTrackListener)
@@ -642,6 +653,7 @@ namespace mozilla {
 typedef Fake_MediaStream MediaStream;
 typedef Fake_SourceMediaStream SourceMediaStream;
 typedef Fake_MediaStreamListener MediaStreamListener;
+typedef Fake_DirectMediaStreamListener DirectMediaStreamListener;
 typedef Fake_MediaStreamTrackListener MediaStreamTrackListener;
 typedef Fake_DirectMediaStreamTrackListener DirectMediaStreamTrackListener;
 typedef Fake_DOMMediaStream DOMMediaStream;

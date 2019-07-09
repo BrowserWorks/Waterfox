@@ -31,7 +31,6 @@ import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.restrictions.Restrictable;
 import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.util.Clipboard;
-import org.mozilla.gecko.util.MenuUtils;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.UIAsyncTask;
@@ -209,7 +208,7 @@ public abstract class HomeFragment extends Fragment {
             menu.findItem(R.id.home_open_private_tab).setVisible(false);
             menu.findItem(R.id.home_copyurl).setVisible(false);
             menu.findItem(R.id.home_share).setVisible(false);
-            MenuUtils.safeSetVisible(menu, R.id.home_add_to_launcher, false);
+            menu.findItem(R.id.home_add_to_launcher).setVisible(false);
             menu.findItem(R.id.home_set_as_homepage).setVisible(false);
 
             menu.findItem(R.id.home_as_pin).setVisible(false);
@@ -309,7 +308,8 @@ public abstract class HomeFragment extends Fragment {
             ThreadUtils.postToBackgroundThread(new Runnable() {
                 @Override
                 public void run() {
-                    GeckoApplication.createBrowserShortcut(displayTitle, info.url);
+                    GeckoApplication.createShortcut(displayTitle, info.url);
+
                 }
             });
 

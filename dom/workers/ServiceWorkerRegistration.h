@@ -10,7 +10,6 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/ServiceWorkerBinding.h"
 #include "mozilla/dom/ServiceWorkerCommon.h"
-#include "mozilla/dom/ServiceWorkerRegistrationBinding.h"
 #include "mozilla/dom/workers/bindings/WorkerHolder.h"
 #include "nsContentUtils.h" // Required for nsContentUtils::PushEnabled
 
@@ -90,9 +89,6 @@ public:
 
   virtual void
   GetScope(nsAString& aScope) const = 0;
-
-  virtual ServiceWorkerUpdateViaCache
-  UpdateViaCache() const = 0;
 
   virtual already_AddRefed<Promise>
   Update(ErrorResult& aRv) = 0;

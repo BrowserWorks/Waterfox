@@ -48,7 +48,8 @@ const kMathTable = 2;
  * @param  aRowRoles       [in] array of row roles.
  */
 function testTableStruct(aIdentifier, aCellsArray, aColHeaderType,
-                         aCaption, aSummary, aTableType, aRowRoles) {
+                         aCaption, aSummary, aTableType, aRowRoles)
+{
   var tableNode = getNode(aIdentifier);
   var isGrid = tableNode.getAttribute("role") == "grid" ||
     tableNode.getAttribute("role") == "treegrid" ||
@@ -214,7 +215,8 @@ function testTableStruct(aIdentifier, aCellsArray, aColHeaderType,
  * @param  aIdentifier  [in] table accessible identifier
  * @param  aIdxes       [in] two dimensional array of cell indexes
  */
-function testTableIndexes(aIdentifier, aIdxes) {
+function testTableIndexes(aIdentifier, aIdxes)
+{
   var tableAcc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!tableAcc)
     return;
@@ -324,7 +326,7 @@ function testTableIndexes(aIdentifier, aIdxes) {
           }
 
           is(obtainedRowIdx, origRowIdx,
-             cellId + ": row for the cell at index " + idx + " is not correct");
+             cellId + ": row for the cell at index " + idx +" is not correct");
 
           // cell: getColumnIndex
           try {
@@ -335,7 +337,7 @@ function testTableIndexes(aIdentifier, aIdxes) {
           }
 
           is(obtainedColIdx, origColIdx,
-             id + ": column for the cell at index " + idx + " is not correct");
+             id + ": column for the cell at index " + idx +" is not correct");
         }
       }
 
@@ -361,7 +363,8 @@ function testTableIndexes(aIdentifier, aIdxes) {
  *                       origin, otherwise kRowSpanned or kColSpanned constant).
  * @param  aMsg         [in] text appended before every message
  */
-function testTableSelection(aIdentifier, aCellsArray, aMsg) {
+function testTableSelection(aIdentifier, aCellsArray, aMsg)
+{
   var msg = aMsg ? aMsg : "";
   var acc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!acc)
@@ -527,7 +530,8 @@ function testTableSelection(aIdentifier, aCellsArray, aMsg) {
 /**
  * Test unselectColumn method of accessible table.
  */
-function testUnselectTableColumn(aIdentifier, aColIdx, aCellsArray) {
+function testUnselectTableColumn(aIdentifier, aColIdx, aCellsArray)
+{
   var acc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!acc)
     return;
@@ -548,7 +552,8 @@ function testUnselectTableColumn(aIdentifier, aColIdx, aCellsArray) {
 /**
  * Test selectColumn method of accessible table.
  */
-function testSelectTableColumn(aIdentifier, aColIdx, aCellsArray) {
+function testSelectTableColumn(aIdentifier, aColIdx, aCellsArray)
+{
   var acc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!acc)
     return;
@@ -605,7 +610,8 @@ function testSelectTableColumn(aIdentifier, aColIdx, aCellsArray) {
 /**
  * Test unselectRow method of accessible table.
  */
-function testUnselectTableRow(aIdentifier, aRowIdx, aCellsArray) {
+function testUnselectTableRow(aIdentifier, aRowIdx, aCellsArray)
+{
   var acc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!acc)
     return;
@@ -626,7 +632,8 @@ function testUnselectTableRow(aIdentifier, aRowIdx, aCellsArray) {
 /**
  * Test selectRow method of accessible table.
  */
-function testSelectTableRow(aIdentifier, aRowIdx, aCellsArray) {
+function testSelectTableRow(aIdentifier, aRowIdx, aCellsArray)
+{
   var acc = getAccessible(aIdentifier, [nsIAccessibleTable]);
   if (!acc)
     return;
@@ -684,7 +691,8 @@ function testSelectTableRow(aIdentifier, aRowIdx, aCellsArray) {
 /**
  * Test columnHeaderCells and rowHeaderCells of accessible table.
  */
-function testHeaderCells(aHeaderInfoMap) {
+function testHeaderCells(aHeaderInfoMap)
+{
   for (var testIdx = 0; testIdx < aHeaderInfoMap.length; testIdx++) {
     var dataCellIdentifier = aHeaderInfoMap[testIdx].cell;
     var dataCell = getAccessible(dataCellIdentifier, [nsIAccessibleTableCell]);
@@ -733,13 +741,14 @@ function testHeaderCells(aHeaderInfoMap) {
   }
 }
 
-// //////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // private implementation
 
 /**
  * Return row and column of orig cell for the given spanned cell.
  */
-function getOrigRowAndColumn(aCellsArray, aRowIdx, aColIdx) {
+function getOrigRowAndColumn(aCellsArray, aRowIdx, aColIdx)
+{
   var cellState = aCellsArray[aRowIdx][aColIdx];
 
   var origRowIdx = aRowIdx, origColIdx = aColIdx;

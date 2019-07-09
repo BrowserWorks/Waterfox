@@ -9,7 +9,6 @@
 #include "MediaTrackConstraints.h"
 #include "mtransport/runnable_utils.h"
 #include "nsAutoPtr.h"
-#include "AudioConverter.h"
 
 // scoped_ptr.h uses FF
 #ifdef FF
@@ -64,7 +63,6 @@ AudioOutputObserver::AudioOutputObserver()
   , mChunkSize(0)
   , mSaved(nullptr)
   , mSamplesSaved(0)
-  , mDownmixBuffer(MAX_SAMPLING_FREQ * MAX_CHANNELS / 100)
 {
   // Buffers of 10ms chunks
   mPlayoutFifo = new webrtc::SingleRwFifo(MAX_AEC_FIFO_DEPTH/10);
@@ -103,19 +101,13 @@ void
 AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aFrames, bool aOverran,
                                   int aFreq, int aChannels)
 {
-  // Prepare for downmix if needed
-  int channels = aChannels;
-  if (aChannels > MAX_CHANNELS) {
-    channels = MAX_CHANNELS;
-  }
-
   if (mPlayoutChannels != 0) {
-    if (mPlayoutChannels != static_cast<uint32_t>(channels)) {
+    if (mPlayoutChannels != static_cast<uint32_t>(aChannels)) {
       MOZ_CRASH();
     }
   } else {
-    MOZ_ASSERT(channels <= MAX_CHANNELS);
-    mPlayoutChannels = static_cast<uint32_t>(channels);
+    MOZ_ASSERT(aChannels <= MAX_CHANNELS);
+    mPlayoutChannels = static_cast<uint32_t>(aChannels);
   }
   if (mPlayoutFreq != 0) {
     if (mPlayoutFreq != static_cast<uint32_t>(aFreq)) {
@@ -143,7 +135,7 @@ AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aFrame
   while (aFrames) {
     if (!mSaved) {
       mSaved = (FarEndAudioChunk *) moz_xmalloc(sizeof(FarEndAudioChunk) +
-                                                (mChunkSize * channels - 1)*sizeof(int16_t));
+                                                (mChunkSize * aChannels - 1)*sizeof(int16_t));
       mSaved->mSamples = mChunkSize;
       mSaved->mOverrun = aOverran;
       aOverran = false;
@@ -153,14 +145,8 @@ AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aFrame
       to_copy = aFrames;
     }
 
-    int16_t* dest = &(mSaved->mData[mSamplesSaved * channels]);
-    if (aChannels > MAX_CHANNELS) {
-      AudioConverter converter(AudioConfig(aChannels, 0), AudioConfig(channels, 0));
-      converter.Process(mDownmixBuffer, aBuffer, to_copy);
-      ConvertAudioSamples(mDownmixBuffer.Data(), dest, to_copy * channels);
-    } else {
-      ConvertAudioSamples(aBuffer, dest, to_copy * channels);
-    }
+    int16_t *dest = &(mSaved->mData[mSamplesSaved * aChannels]);
+    ConvertAudioSamples(aBuffer, dest, to_copy * aChannels);
 
 #ifdef LOG_FAREND_INSERTION
     if (fp) {
@@ -191,17 +177,13 @@ MediaEngineWebRTCMicrophoneSource::MediaEngineWebRTCMicrophoneSource(
     mozilla::AudioInput* aAudioInput,
     int aIndex,
     const char* name,
-    const char* uuid,
-    bool aDelayAgnostic,
-    bool aExtendedFilter)
+    const char* uuid)
   : MediaEngineAudioSource(kReleased)
   , mVoiceEngine(aVoiceEnginePtr)
   , mAudioInput(aAudioInput)
   , mMonitor("WebRTCMic.Monitor")
   , mCapIndex(aIndex)
   , mChannel(-1)
-  , mDelayAgnostic(aDelayAgnostic)
-  , mExtendedFilter(aExtendedFilter)
   , mTrackID(TRACK_NONE)
   , mStarted(false)
   , mSampleFrequency(MediaEngine::DEFAULT_SAMPLE_RATE)
@@ -210,7 +192,6 @@ MediaEngineWebRTCMicrophoneSource::MediaEngineWebRTCMicrophoneSource(
   , mPlayoutDelay(0)
   , mNullTransport(nullptr)
   , mSkipProcessing(false)
-  , mInputDownmixBuffer(MAX_SAMPLING_FREQ * MAX_CHANNELS / 100)
 {
   MOZ_ASSERT(aVoiceEnginePtr);
   MOZ_ASSERT(aAudioInput);
@@ -365,8 +346,8 @@ MediaEngineWebRTCMicrophoneSource::UpdateSingleSource(
         mAudioInput->GetChannelCount(channelCount);
         MOZ_ASSERT(channelCount > 0 && mLastPrefs.mChannels > 0);
         // Check if new validated channels is the same as previous
-        if (static_cast<uint32_t>(mLastPrefs.mChannels) != channelCount &&
-            !source->OpenNewAudioCallbackDriver(mListener)) {
+        if (static_cast<uint32_t>(mLastPrefs.mChannels) != channelCount
+            && !source->OpenNewAudioCallbackDriver(mListener)) {
           return NS_ERROR_FAILURE;
         }
         // Update settings
@@ -639,16 +620,7 @@ MediaEngineWebRTCMicrophoneSource::PacketizeAndProcess(MediaStreamGraph* aGraph,
     int16_t* packet = mInputBuffer.Elements();
     mPacketizer->Output(packet);
 
-    if (aChannels > MAX_CHANNELS) {
-      AudioConverter converter(AudioConfig(aChannels, 0, AudioConfig::FORMAT_S16),
-                               AudioConfig(MAX_CHANNELS, 0, AudioConfig::FORMAT_S16));
-      converter.Process(mInputDownmixBuffer, packet, mPacketizer->PacketSize());
-      mVoERender->ExternalRecordingInsertData(mInputDownmixBuffer.Data(),
-                                              mPacketizer->PacketSize() * MAX_CHANNELS,
-                                              aRate, 0);
-    } else {
-      mVoERender->ExternalRecordingInsertData(packet, samplesPerPacket, aRate, 0);
-    }
+    mVoERender->ExternalRecordingInsertData(packet, samplesPerPacket, aRate, 0);
   }
 }
 
@@ -687,8 +659,8 @@ MediaEngineWebRTCMicrophoneSource::InsertInGraph(const T* aBuffer,
             (i+1 < len) ? 0 : 1, insertTime);
 
     // Bug 971528 - Support stereo capture in gUM
-    MOZ_ASSERT(aChannels >= 1 && aChannels <= 8,
-               "Support up to 8 channels");
+    MOZ_ASSERT(aChannels == 1 || aChannels == 2,
+        "GraphDriver only supports mono and stereo audio for now");
 
     nsAutoPtr<AudioSegment> segment(new AudioSegment());
     RefPtr<SharedBuffer> buffer =
@@ -785,10 +757,6 @@ MediaEngineWebRTCMicrophoneSource::InitEngine()
   mVoEBase = webrtc::VoEBase::GetInterface(mVoiceEngine);
 
   mVoEBase->Init();
-  webrtc::Config config;
-  config.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(mExtendedFilter));
-  config.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(mDelayAgnostic));
-  mVoEBase->audio_processing()->SetExtraOptions(config);
 
   mVoERender = webrtc::VoEExternalMedia::GetInterface(mVoiceEngine);
   if (mVoERender) {
@@ -859,6 +827,7 @@ MediaEngineWebRTCMicrophoneSource::AllocChannel()
 
       // Check for availability.
       if (!mAudioInput->SetRecordingDevice(mCapIndex)) {
+#ifndef MOZ_B2G
         // Because of the permission mechanism of B2G, we need to skip the status
         // check here.
         bool avail = false;
@@ -869,6 +838,7 @@ MediaEngineWebRTCMicrophoneSource::AllocChannel()
           }
           return false;
         }
+#endif // MOZ_B2G
 
         // Set "codec" to PCM, 32kHz on device's channels
         ScopedCustomReleasePtr<webrtc::VoECodec> ptrVoECodec(webrtc::VoECodec::GetInterface(mVoiceEngine));
@@ -878,8 +848,7 @@ MediaEngineWebRTCMicrophoneSource::AllocChannel()
           codec.channels = CHANNELS;
           uint32_t maxChannels = 0;
           if (mAudioInput->GetMaxAvailableChannels(maxChannels) == 0) {
-            MOZ_ASSERT(maxChannels);
-            codec.channels = std::min<uint32_t>(maxChannels, MAX_CHANNELS);
+            codec.channels = maxChannels;
           }
           MOZ_ASSERT(mSampleFrequency == 16000 || mSampleFrequency == 32000);
           codec.rate = SAMPLE_RATE(mSampleFrequency);

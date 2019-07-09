@@ -129,7 +129,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
 
 /* static */
 bool
-nsNativeTheme::CheckBooleanAttr(nsIFrame* aFrame, nsAtom* aAtom)
+nsNativeTheme::CheckBooleanAttr(nsIFrame* aFrame, nsIAtom* aAtom)
 {
   if (!aFrame)
     return false;
@@ -150,7 +150,7 @@ nsNativeTheme::CheckBooleanAttr(nsIFrame* aFrame, nsAtom* aAtom)
 
 /* static */
 int32_t
-nsNativeTheme::CheckIntAttr(nsIFrame* aFrame, nsAtom* aAtom, int32_t defaultValue)
+nsNativeTheme::CheckIntAttr(nsIFrame* aFrame, nsIAtom* aAtom, int32_t defaultValue)
 {
   if (!aFrame)
     return defaultValue;
@@ -636,7 +636,7 @@ nsNativeTheme::QueueAnimatedContentForRefresh(nsIContent* aContent,
   timeout = std::min(mAnimatedContentTimeout, timeout);
 
   if (!mAnimatedContentTimer) {
-    mAnimatedContentTimer = NS_NewTimer();
+    mAnimatedContentTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     NS_ENSURE_TRUE(mAnimatedContentTimer, false);
   }
 

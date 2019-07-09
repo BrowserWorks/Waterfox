@@ -5,21 +5,22 @@
 "use strict";
 
 const { Cu } = require("chrome");
-const EventEmitter = require("devtools/shared/old-event-emitter");
+const EventEmitter = require("devtools/shared/event-emitter");
 const { isNodeValid } = require("./utils/markup");
-const { getAdjustedQuads, getWindowDimensions } = require("devtools/shared/layout/utils");
+const { getAdjustedQuads, getCurrentZoom,
+        getWindowDimensions } = require("devtools/shared/layout/utils");
 
 // Note that the order of items in this array is important because it is used
 // for drawing the BoxModelHighlighter's path elements correctly.
 const BOX_MODEL_REGIONS = ["margin", "border", "padding", "content"];
 const QUADS_PROPS = ["p1", "p2", "p3", "p4", "bounds"];
 
-function areValuesDifferent(oldValue, newValue) {
+function areValuesDifferent(oldValue, newValue, zoom) {
   let delta = Math.abs(oldValue.toFixed(4) - newValue.toFixed(4));
-  return delta >= .5;
+  return delta / zoom > 1 / zoom;
 }
 
-function areQuadsDifferent(oldQuads, newQuads) {
+function areQuadsDifferent(oldQuads, newQuads, zoom) {
   for (let region of BOX_MODEL_REGIONS) {
     if (oldQuads[region].length !== newQuads[region].length) {
       return true;
@@ -31,7 +32,7 @@ function areQuadsDifferent(oldQuads, newQuads) {
         let newProp = newQuads[region][i][prop];
 
         for (let key of Object.keys(oldProp)) {
-          if (areValuesDifferent(oldProp[key], newProp[key])) {
+          if (areValuesDifferent(oldProp[key], newProp[key], zoom)) {
             return true;
           }
         }
@@ -189,7 +190,7 @@ AutoRefreshHighlighter.prototype = {
     let oldQuads = this.currentQuads;
     this._updateAdjustedQuads();
 
-    return areQuadsDifferent(oldQuads, this.currentQuads);
+    return areQuadsDifferent(oldQuads, this.currentQuads, getCurrentZoom(this.win));
   },
 
   /**

@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.map
 es6id: 22.1.3.15
 description: >
   Array.prototype.map.name is "map".

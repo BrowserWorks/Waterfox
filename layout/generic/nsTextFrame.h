@@ -12,7 +12,6 @@
 #include "mozilla/UniquePtr.h"
 #include "nsFrame.h"
 #include "nsFrameSelection.h"
-#include "nsGenericDOMDataNode.h"
 #include "nsSplittableFrame.h"
 #include "nsLineBox.h"
 #include "gfxSkipChars.h"
@@ -41,7 +40,7 @@ class SVGContextPaint;
 class nsTextFrame : public nsFrame
 {
   typedef mozilla::LayoutDeviceRect LayoutDeviceRect;
-  typedef mozilla::SelectionTypeMask SelectionTypeMask;
+  typedef mozilla::RawSelectionType RawSelectionType;
   typedef mozilla::SelectionType SelectionType;
   typedef mozilla::TextRangeStyle TextRangeStyle;
   typedef mozilla::gfx::DrawTarget DrawTarget;
@@ -70,6 +69,7 @@ public:
 
   // nsIFrame
   void BuildDisplayList(nsDisplayListBuilder* aBuilder,
+                        const nsRect& aDirtyRect,
                         const nsDisplayListSet& aLists) override;
 
   void Init(nsIContent* aContent,
@@ -96,10 +96,7 @@ public:
       aNextContinuation->RemoveStateBits(NS_FRAME_IS_FLUID_CONTINUATION);
     // Setting a non-fluid continuation might affect our flow length (they're
     // quite rare so we assume it always does) so we delete our cached value:
-    if (GetContent()->HasFlag(NS_HAS_FLOWLENGTH_PROPERTY)) {
-      GetContent()->DeleteProperty(nsGkAtoms::flowlength);
-      GetContent()->UnsetFlags(NS_HAS_FLOWLENGTH_PROPERTY);
-    }
+    GetContent()->DeleteProperty(nsGkAtoms::flowlength);
   }
   nsIFrame* GetNextInFlowVirtual() const override { return GetNextInFlow(); }
   nsTextFrame* GetNextInFlow() const
@@ -122,10 +119,7 @@ public:
         !mNextContinuation->HasAnyStateBits(NS_FRAME_IS_FLUID_CONTINUATION)) {
       // Changing from non-fluid to fluid continuation might affect our flow
       // length, so we delete our cached value:
-      if (GetContent()->HasFlag(NS_HAS_FLOWLENGTH_PROPERTY)) {
-        GetContent()->DeleteProperty(nsGkAtoms::flowlength);
-        GetContent()->UnsetFlags(NS_HAS_FLOWLENGTH_PROPERTY);
-      }
+      GetContent()->DeleteProperty(nsGkAtoms::flowlength);
     }
     if (aNextInFlow) {
       aNextInFlow->AddStateBits(NS_FRAME_IS_FLUID_CONTINUATION);
@@ -520,13 +514,13 @@ public:
     const nsCharClipDisplayItem::ClipEdges& aClipEdges);
   // helper: paint text with foreground and background colors determined
   // by selection(s). Also computes a mask of all selection types applying to
-  // our text, returned in aAllSelectionTypeMask.
+  // our text, returned in aAllTypes.
   // Return false if the text was not painted and we should continue with
   // the fast path.
   bool PaintTextWithSelectionColors(
     const PaintTextSelectionParams& aParams,
     const mozilla::UniquePtr<SelectionDetails>& aDetails,
-    SelectionTypeMask* aAllSelectionTypeMask,
+    RawSelectionType* aAllRawSelectionTypes,
     const nsCharClipDisplayItem::ClipEdges& aClipEdges);
   // helper: paint text decorations for text selected by aSelectionType
   void PaintTextSelectionDecorations(const PaintTextSelectionParams& aParams,
@@ -833,6 +827,7 @@ protected:
                                 const gfxFont::Metrics& aFontMetrics,
                                 DrawPathCallbacks* aCallbacks,
                                 bool aVertical,
+                                gfxFloat aDecorationOffsetDir,
                                 uint8_t aDecoration);
 
   struct PaintDecorationLineParams;

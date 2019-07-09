@@ -11,7 +11,7 @@
 #include "mozilla/RestyleManager.h"
 #include "mozilla/RestyleManagerInlines.h"
 #include "nsCSSFrameConstructor.h"
-#include "SVGObserverUtils.h"
+#include "nsSVGEffects.h"
 #include "nsSVGElement.h"
 #include "nsSVGUtils.h"
 #include "nsSVGAnimatedTransformList.h"
@@ -143,15 +143,16 @@ nsSVGDisplayContainerFrame::Init(nsIContent*       aContent,
 
 void
 nsSVGDisplayContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                             const nsRect&           aDirtyRect,
                                              const nsDisplayListSet& aLists)
 {
   // mContent could be a XUL element so check for an SVG element before casting
   if (mContent->IsSVGElement() &&
-      !static_cast<const nsSVGElement*>(GetContent())->HasValidDimensions()) {
+      !static_cast<const nsSVGElement*>(mContent)->HasValidDimensions()) {
     return;
   }
   DisplayOutline(aBuilder, aLists);
-  return BuildDisplayListForNonBlockChildren(aBuilder, aLists);
+  return BuildDisplayListForNonBlockChildren(aBuilder, aDirtyRect, aLists);
 }
 
 void
@@ -200,7 +201,7 @@ void
 nsSVGDisplayContainerFrame::RemoveFrame(ChildListID aListID,
                                         nsIFrame* aOldFrame)
 {
-  SVGObserverUtils::InvalidateRenderingObservers(aOldFrame);
+  nsSVGEffects::InvalidateRenderingObservers(aOldFrame);
 
   // nsSVGContainerFrame::RemoveFrame doesn't call down into
   // nsContainerFrame::RemoveFrame, so it doesn't call FrameNeedsReflow. We
@@ -232,7 +233,7 @@ nsSVGDisplayContainerFrame::IsSVGTransformed(gfx::Matrix *aOwnTransform,
 
   // mContent could be a XUL element so check for an SVG element before casting
   if (mContent->IsSVGElement()) {
-    nsSVGElement *content = static_cast<nsSVGElement*>(GetContent());
+    nsSVGElement *content = static_cast<nsSVGElement*>(mContent);
     nsSVGAnimatedTransformList* transformList =
       content->GetAnimatedTransformList();
     if ((transformList && transformList->HasTransform()) ||
@@ -334,7 +335,7 @@ nsSVGDisplayContainerFrame::ReflowSVG()
     (GetParent()->GetStateBits() & NS_FRAME_FIRST_REFLOW) == 0;
 
   if (outerSVGHasHadFirstReflow) {
-    RemoveStateBits(NS_FRAME_FIRST_REFLOW); // tell our children
+    mState &= ~NS_FRAME_FIRST_REFLOW; // tell our children
   }
 
   nsOverflowAreas overflowRects;
@@ -384,15 +385,15 @@ nsSVGDisplayContainerFrame::ReflowSVG()
     // Make sure we have our filter property (if any) before calling
     // FinishAndStoreOverflow (subsequent filter changes are handled off
     // nsChangeHint_UpdateEffects):
-    SVGObserverUtils::UpdateEffects(this);
+    nsSVGEffects::UpdateEffects(this);
   }
 
   FinishAndStoreOverflow(overflowRects, mRect.Size());
 
   // Remove state bits after FinishAndStoreOverflow so that it doesn't
   // invalidate on first reflow:
-  RemoveStateBits(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
-                  NS_FRAME_HAS_DIRTY_CHILDREN);
+  mState &= ~(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
+              NS_FRAME_HAS_DIRTY_CHILDREN);
 }
 
 void
@@ -400,11 +401,6 @@ nsSVGDisplayContainerFrame::NotifySVGChanged(uint32_t aFlags)
 {
   MOZ_ASSERT(aFlags & (TRANSFORM_CHANGED | COORD_CONTEXT_CHANGED),
              "Invalidation logic may need adjusting");
-
-  if (aFlags & TRANSFORM_CHANGED) {
-    // make sure our cached transform matrix gets (lazily) updated
-    mCanvasTM = nullptr;
-  }
 
   nsSVGUtils::NotifyChildrenOfSVGChange(this, aFlags);
 }
@@ -437,21 +433,4 @@ nsSVGDisplayContainerFrame::GetBBoxContribution(
   }
 
   return bboxUnion;
-}
-
-gfxMatrix
-nsSVGDisplayContainerFrame::GetCanvasTM()
-{
-  if (!mCanvasTM) {
-    NS_ASSERTION(GetParent(), "null parent");
-
-    nsSVGContainerFrame *parent = static_cast<nsSVGContainerFrame*>(GetParent());
-    nsSVGElement *content = static_cast<nsSVGElement*>(GetContent());
-
-    gfxMatrix tm = content->PrependLocalTransformsTo(parent->GetCanvasTM());
-
-    mCanvasTM = new gfxMatrix(tm);
-  }
-
-  return *mCanvasTM;
 }

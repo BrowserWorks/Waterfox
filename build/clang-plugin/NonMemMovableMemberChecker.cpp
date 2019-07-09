@@ -7,18 +7,21 @@
 
 MemMoveAnnotation NonMemMovable = MemMoveAnnotation();
 
-void NonMemMovableMemberChecker::registerMatchers(MatchFinder *AstMatcher) {
+void NonMemMovableMemberChecker::registerMatchers(MatchFinder* AstMatcher) {
   // Handle non-mem-movable members
-  AstMatcher->addMatcher(cxxRecordDecl(needsMemMovableMembers()).bind("decl"),
-                         this);
+  AstMatcher->addMatcher(
+      cxxRecordDecl(needsMemMovableMembers())
+          .bind("decl"),
+      this);
 }
 
-void NonMemMovableMemberChecker::check(const MatchFinder::MatchResult &Result) {
-  const char *Error =
+void NonMemMovableMemberChecker::check(
+    const MatchFinder::MatchResult &Result) {
+  const char* Error =
       "class %0 cannot have non-memmovable member %1 of type %2";
 
   // Get the specialization
-  const CXXRecordDecl *Declaration =
+  const CXXRecordDecl* Declaration =
       Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
 
   // Report an error for every member which is non-memmovable
@@ -26,9 +29,10 @@ void NonMemMovableMemberChecker::check(const MatchFinder::MatchResult &Result) {
     QualType Type = Field->getType();
     if (NonMemMovable.hasEffectiveAnnotation(Type)) {
       diag(Field->getLocation(), Error, DiagnosticIDs::Error)
-          << Declaration << Field << Type;
-      NonMemMovable.dumpAnnotationReason(*this, Type,
-                                         Declaration->getLocation());
+        << Declaration
+        << Field
+        << Type;
+      NonMemMovable.dumpAnnotationReason(*this, Type, Declaration->getLocation());
     }
   }
 }

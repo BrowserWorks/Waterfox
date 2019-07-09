@@ -18,8 +18,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
                                   "resource://gre/modules/TelemetrySend.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Log",
-                                  "resource://gre/modules/Log.jsm");
 
 const gIsWindows = AppConstants.platform == "win";
 const gIsMac = AppConstants.platform == "macosx";
@@ -41,7 +39,6 @@ const PingServer = {
   _started: false,
   _defers: [ PromiseUtils.defer() ],
   _currentDeferred: 0,
-  _logger: null,
 
   get port() {
     return this._httpServer.identity.primaryPort;
@@ -51,14 +48,6 @@ const PingServer = {
     return this._started;
   },
 
-  get _log() {
-    if (!this._logger) {
-      this._logger = Log.repository.getLoggerWithMessagePrefix("Toolkit.Telemetry", "PingServer::");
-    }
-
-    return this._logger;
-  },
-
   registerPingHandler(handler) {
     const wrapped = wrapWithExceptionHandler(handler);
     this._httpServer.registerPrefixHandler("/submit/telemetry/", wrapped);
@@ -66,8 +55,6 @@ const PingServer = {
 
   resetPingHandler() {
     this.registerPingHandler((request, response) => {
-      let r = request;
-      this._log.trace(`defaultPingHandler() - ${r.method} ${r.scheme}://${r.host}:${r.port}${r.path}`);
       let deferred = this._defers[this._defers.length - 1];
       this._defers.push(PromiseUtils.defer());
       deferred.resolve(request);
@@ -129,7 +116,7 @@ const PingServer = {
 function decodeRequestPayload(request) {
   let s = request.bodyInputStream;
   let payload = null;
-  let decoder = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON);
+  let decoder = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON)
 
   if (request.hasHeader("content-encoding") &&
       request.getHeader("content-encoding") == "gzip") {
@@ -188,8 +175,6 @@ function loadAddonManager(...args) {
   // used by system add-ons.
   const distroDir = FileUtils.getDir("ProfD", ["sysfeatures", "app0"], true);
   AddonTestUtils.registerDirectory("XREAppFeat", distroDir);
-  AddonTestUtils.awaitPromise(AddonTestUtils.overrideBuiltIns(
-          {"system": ["tel-system-xpi@tests.mozilla.org"]}));
   return AddonTestUtils.promiseStartupManager();
 }
 
@@ -335,7 +320,6 @@ if (runningInParent) {
   Services.prefs.setBoolPref(TelemetryUtils.Preferences.ShutdownPingSender, false);
   Services.prefs.setBoolPref(TelemetryUtils.Preferences.ShutdownPingSenderFirstSession, false);
   Services.prefs.setBoolPref("toolkit.telemetry.newProfilePing.enabled", false);
-  Services.prefs.setBoolPref(TelemetryUtils.Preferences.FirstShutdownPingEnabled, false);
   // Ensure browser experiments are also disabled, to avoid network activity
   // when toggling PREF_ENABLED.
   Services.prefs.setBoolPref("experiments.enabled", false);

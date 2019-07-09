@@ -121,7 +121,7 @@ NS_INTERFACE_MAP_END
 
 NS_IMETHODIMP
 nsWindowDataSource::OnWindowTitleChange(nsIXULWindow *window,
-                                        const nsAString& newTitle)
+                                        const char16_t *newTitle)
 {
     nsresult rv;
 
@@ -137,8 +137,7 @@ nsWindowDataSource::OnWindowTitleChange(nsIXULWindow *window,
     NS_ENSURE_TRUE(windowResource, NS_ERROR_UNEXPECTED);
 
     nsCOMPtr<nsIRDFLiteral> newTitleLiteral;
-    rv = gRDFService->GetLiteral(PromiseFlatString(newTitle).get(),
-                                 getter_AddRefs(newTitleLiteral));
+    rv = gRDFService->GetLiteral(newTitle, getter_AddRefs(newTitleLiteral));
     NS_ENSURE_SUCCESS(rv, rv);
 
     // get the old title
@@ -308,9 +307,15 @@ nsWindowDataSource::GetWindowForResource(const char *aResourceString,
 // GetTarget() - need to handle kNC_KeyIndex
 
 
-NS_IMETHODIMP nsWindowDataSource::GetURI(nsACString& aURI)
+NS_IMETHODIMP nsWindowDataSource::GetURI(char * *aURI)
 {
-    aURI.AssignLiteral("rdf:window-mediator");
+    NS_ENSURE_ARG_POINTER(aURI);
+
+    *aURI = ToNewCString(NS_LITERAL_CSTRING("rdf:window-mediator"));
+
+    if (!*aURI)
+        return NS_ERROR_OUT_OF_MEMORY;
+
     return NS_OK;
 }
 

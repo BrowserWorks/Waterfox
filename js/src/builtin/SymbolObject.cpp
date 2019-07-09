@@ -74,7 +74,7 @@ SymbolObject::initClass(JSContext* cx, HandleObject obj, bool defineMembers)
         WellKnownSymbols* wks = cx->runtime()->wellKnownSymbols;
         for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
             value.setSymbol(wks->get(i));
-            if (!NativeDefineDataProperty(cx, ctor, names[i], value, attrs))
+            if (!NativeDefineProperty(cx, ctor, names[i], value, nullptr, nullptr, attrs))
                 return nullptr;
         }
     }

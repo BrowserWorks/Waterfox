@@ -20,6 +20,7 @@ const {
   dominatorTreeState,
   individualsState,
 } = require("../constants");
+const telemetry = require("../telemetry");
 const view = require("./view");
 const refresh = require("./refresh");
 const diffing = require("./diffing");
@@ -100,6 +101,8 @@ exports.selectSnapshotAndRefresh = function (heapWorker, id) {
  */
 const takeSnapshot = exports.takeSnapshot = function (front) {
   return function* (dispatch, getState) {
+    telemetry.countTakeSnapshot();
+
     if (getState().diffing || getState().individuals) {
       dispatch(view.changeView(viewState.CENSUS));
     }
@@ -255,6 +258,8 @@ function makeTakeCensusTask({ getDisplay, getFilter, getCensus, beginAction,
         report,
         parentMap
       });
+
+      telemetry.countCensus({ filter, display });
     }
   });
 }
@@ -580,6 +585,7 @@ TaskCache.declareCacheableTask({
 
     removeFromCache();
     dispatch({ type: actions.FETCH_DOMINATOR_TREE_END, id, root });
+    telemetry.countDominatorTree({ display });
     return root;
   }
 });

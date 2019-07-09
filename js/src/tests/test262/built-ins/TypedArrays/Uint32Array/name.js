@@ -3,7 +3,6 @@
 
 /*---
 es6id: 22.2.5
-esid: sec-properties-of-the-typedarray-constructors
 description: >
   Uint32Array.name is "Uint32Array".
 info: >

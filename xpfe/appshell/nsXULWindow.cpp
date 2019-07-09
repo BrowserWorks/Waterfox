@@ -165,6 +165,13 @@ NS_IMETHODIMP nsXULWindow::GetInterface(const nsIID& aIID, void** aSink)
     domWindow.forget(aSink);
     return rv;
   }
+  if (aIID.Equals(NS_GET_IID(nsIDOMWindowInternal))) {
+    nsCOMPtr<mozIDOMWindowProxy> window = nullptr;
+    rv = GetWindowDOMWindow(getter_AddRefs(window));
+    nsCOMPtr<nsIDOMWindowInternal> domWindowInternal = do_QueryInterface(window);
+    domWindowInternal.forget(aSink);
+    return rv;
+  }
   if (aIID.Equals(NS_GET_IID(nsIWebBrowserChrome)) &&
     NS_SUCCEEDED(EnsureContentTreeOwner()) &&
     NS_SUCCEEDED(mContentTreeOwner->QueryInterface(aIID, aSink)))
@@ -890,13 +897,17 @@ NS_IMETHODIMP nsXULWindow::SetFocus()
   return NS_OK;
 }
 
-NS_IMETHODIMP nsXULWindow::GetTitle(nsAString& aTitle)
+NS_IMETHODIMP nsXULWindow::GetTitle(char16_t** aTitle)
 {
-  aTitle = mTitle;
+  NS_ENSURE_ARG_POINTER(aTitle);
+
+  *aTitle = ToNewUnicode(mTitle);
+  if (!*aTitle)
+    return NS_ERROR_OUT_OF_MEMORY;
   return NS_OK;
 }
 
-NS_IMETHODIMP nsXULWindow::SetTitle(const nsAString& aTitle)
+NS_IMETHODIMP nsXULWindow::SetTitle(const char16_t* aTitle)
 {
   NS_ENSURE_STATE(mWindow);
   mTitle.Assign(aTitle);

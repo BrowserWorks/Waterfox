@@ -20,16 +20,17 @@ info: >
        a. Let realm be ? GetFunctionRealm(constructor).
        b. Let proto be realm's intrinsic object named intrinsicDefaultProto.
     [...]
-features: [cross-realm, Reflect.construct]
+features: [Reflect]
 ---*/
 
 var other = $262.createRealm().global;
 var C = new other.Function();
+C.prototype = null;
 
 var P = new Proxy(function() {}, {});
 
 var p = Reflect.construct(P, [], C);
 
-assert.sameValue(Object.getPrototypeOf(Object.getPrototypeOf(p)), other.Object.prototype);
+assert.sameValue(Object.getPrototypeOf(p), other.Object.prototype);
 
 reportCompare(0, 0);

@@ -38,6 +38,8 @@ resc_trace(JSTracer* trc, JSObject* obj)
 static const ClassOps RegExpStaticsObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* newEnumerate */
     nullptr, /* resolve */

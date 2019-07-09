@@ -3,6 +3,16 @@ var Ci = Components.interfaces;
 var Cu = Components.utils;
 var Cr = Components.results;
 
+function newCacheBackEndUsed()
+{
+  var cache1srv = Components.classes["@mozilla.org/network/cache-service;1"]
+                            .getService(Components.interfaces.nsICacheService);
+  var cache2srv = Components.classes["@mozilla.org/netwerk/cache-storage-service;1"]
+                            .getService(Components.interfaces.nsICacheStorageService);
+
+  return cache1srv.cacheIOTarget != cache2srv.ioTarget;
+}
+
 var callbacks = new Array();
 
 // Expect an existing entry
@@ -58,7 +68,7 @@ function pumpReadStream(inputStream, goon)
     // non-blocking stream, must read via pump
     var pump = Cc["@mozilla.org/network/input-stream-pump;1"]
                .createInstance(Ci.nsIInputStreamPump);
-    pump.init(inputStream, 0, 0, true);
+    pump.init(inputStream, -1, -1, 0, 0, true);
     var data = "";
     pump.asyncRead({
       onStartRequest: function (aRequest, aContext) { },
@@ -123,15 +133,17 @@ OpenCallback.prototype =
 
     if (this.behavior & COMPLETE) {
       LOG_C2(this, "onCacheEntryCheck DONE, return RECHECK_AFTER_WRITE_FINISHED");
-      // Specific to the new backend because of concurrent read/write:
-      // when a consumer returns RECHECK_AFTER_WRITE_FINISHED from onCacheEntryCheck
-      // the cache calls this callback again after the entry write has finished.
-      // This gives the consumer a chance to recheck completeness of the entry
-      // again.
-      // Thus, we reset state as onCheck would have never been called.
-      this.onCheckPassed = false;
-      // Don't return RECHECK_AFTER_WRITE_FINISHED on second call of onCacheEntryCheck.
-      this.behavior &= ~COMPLETE;
+      if (newCacheBackEndUsed()) {
+        // Specific to the new backend because of concurrent read/write:
+        // when a consumer returns RECHECK_AFTER_WRITE_FINISHED from onCacheEntryCheck
+        // the cache calls this callback again after the entry write has finished.
+        // This gives the consumer a chance to recheck completeness of the entry
+        // again.
+        // Thus, we reset state as onCheck would have never been called.
+        this.onCheckPassed = false;
+        // Don't return RECHECK_AFTER_WRITE_FINISHED on second call of onCacheEntryCheck.
+        this.behavior &= ~COMPLETE;
+      }
       return Ci.nsICacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
     }
 
@@ -298,7 +310,10 @@ VisitCallback.prototype =
   {
     LOG_C2(this, "onCacheStorageInfo: num=" + num + ", size=" + consumption);
     do_check_eq(this.num, num);
-    do_check_eq(this.consumption, consumption);
+    if (newCacheBackEndUsed()) {
+      // Consumption is as expected only in the new backend
+      do_check_eq(this.consumption, consumption);
+    }
     if (!this.entries)
       this.notify();
   },

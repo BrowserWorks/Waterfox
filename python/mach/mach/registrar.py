@@ -29,11 +29,11 @@ class MachRegistrar(object):
 
         if not handler.category:
             raise MachError('Cannot register a mach command without a '
-                            'category: %s' % name)
+                'category: %s' % name)
 
         if handler.category not in self.categories:
             raise MachError('Cannot register a command to an undefined '
-                            'category: %s -> %s' % (name, handler.category))
+                'category: %s -> %s' % (name, handler.category))
 
         self.command_handlers[name] = handler
         self.commands_by_category[handler.category].add(name)
@@ -116,15 +116,9 @@ class MachRegistrar(object):
             # subsequent invocations of Registrar.dispatch()
             old_defaults = parser._defaults.copy()
             parser.set_defaults(**kwargs)
-            kwargs, unknown = parser.parse_known_args(argv or [])
+            kwargs, _ = parser.parse_known_args(argv or [])
             kwargs = vars(kwargs)
             parser._defaults = old_defaults
-
-            if unknown:
-                if subcommand:
-                    name = '{} {}'.format(name, subcommand)
-                parser.error("unrecognized arguments for {}: {}".format(
-                    name, ', '.join(["'{}'".format(arg) for arg in unknown])))
 
         return self._run_command_handler(handler, context=context, **kwargs)
 

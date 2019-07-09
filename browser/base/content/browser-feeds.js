@@ -348,7 +348,7 @@ var FeedHandler = {
           }
 
           if (fp.file.leafName != appName) {
-            Services.prefs.setComplexValue(prefName, Ci.nsIFile, selectedApp);
+            Services.prefs.setComplexValue(prefName, Ci.nsILocalFile, selectedApp);
             aBrowser.messageManager.sendAsyncMessage("FeedWriter:SetApplicationLauncherMenuItem",
                                                     { name: this._getFileDisplayName(selectedApp),
                                                       type: "SelectedAppMenuItem" });
@@ -361,7 +361,7 @@ var FeedHandler = {
 
   executeClientApp(aSpec, aTitle, aSubtitle, aFeedHandler) {
     // aFeedHandler is either "default", indicating the system default reader, or a pref-name containing
-    // an nsIFile pointing to the feed handler's executable.
+    // an nsILocalFile pointing to the feed handler's executable.
 
     let clientApp = null;
     if (aFeedHandler == "default") {
@@ -369,7 +369,7 @@ var FeedHandler = {
                     .getService(Ci.nsIShellService)
                     .defaultFeedReader;
     } else {
-      clientApp = Services.prefs.getComplexValue(aFeedHandler, Ci.nsIFile);
+      clientApp = Services.prefs.getComplexValue(aFeedHandler, Ci.nsILocalFile);
     }
 
     // For the benefit of applications that might know how to deal with more
@@ -438,7 +438,7 @@ var FeedHandler = {
   // nsIObserver
   observe(subject, topic, data) {
     if (topic == "nsPref:changed") {
-      LOG(`Pref changed ${data}`);
+      LOG(`Pref changed ${data}`)
       if (this._prefChangeCallback) {
         this._prefChangeCallback.disarm();
       }
@@ -497,7 +497,7 @@ var FeedHandler = {
     let selectedClientApp;
     const feedTypePref = getPrefAppForType(feedType);
     try {
-      selectedClientApp = Services.prefs.getComplexValue(feedTypePref, Ci.nsIFile);
+      selectedClientApp = Services.prefs.getComplexValue(feedTypePref, Ci.nsILocalFile);
     } catch (ex) {
       // Just do nothing, then we won't bother populating
     }

@@ -29,7 +29,7 @@ CFLAGS += ['-DBROTLI_BUILD_PORTABLE']
 
 Library('brotli')
 
-HostProgram('brotli')
+HostProgram('bro')
 
 HOST_SOURCES += UNIFIED_SOURCES
 
@@ -51,10 +51,10 @@ HOST_SOURCES += [
     'enc/metablock.c',
     'enc/static_dict.c',
     'enc/utf8_util.c',
-    'tools/brotli.c',
+    'tools/bro.c',
 ]
 
-if CONFIG['HOST_CC_TYPE'] not in ('msvc', 'clang-cl'):
+if CONFIG['OS_TARGET'] != 'WINNT':
     HOST_OS_LIBS += [
         'm' # for log2() function used by Brotli encoder
     ]

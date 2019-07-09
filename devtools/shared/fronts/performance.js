@@ -88,7 +88,7 @@ const PerformanceFront = FrontClassWithSpec(performanceSpec, {
   /**
    * Loads a recording from a file.
    *
-   * @param {nsIFile} file
+   * @param {nsILocalFile} file
    *        The file to import the data from.
    * @return {Promise<PerformanceRecordingFront>}
    */

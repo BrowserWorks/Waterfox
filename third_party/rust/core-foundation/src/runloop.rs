@@ -125,9 +125,8 @@ mod test {
 
 
         let run_loop_timer = CFRunLoopTimer::new(now + 0.20f64, 0f64, 0, 0, timer_popped, &mut context);
-        unsafe {
-            run_loop.add_timer(&run_loop_timer, kCFRunLoopDefaultMode);
-        }
+        run_loop.add_timer(&run_loop_timer, kCFRunLoopDefaultMode);
+
         CFRunLoop::run_current();
     }
 

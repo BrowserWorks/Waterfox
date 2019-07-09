@@ -8,16 +8,17 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import json
 import os
+import inspect
 import re
-import yaml
-from slugid import nice as slugid
 from mozbuild.util import memoize
 from types import FunctionType
 from collections import namedtuple
-from taskgraph import create, GECKO
-from taskgraph.util import taskcluster
+from taskgraph.util.docker import docker_image
 from taskgraph.parameters import Parameters
+from . import util
 
+
+GECKO = os.path.realpath(os.path.join(__file__, '..', '..', '..'))
 
 actions = []
 callbacks = {}
@@ -169,6 +170,7 @@ def register_callback_action(name, title, symbol, description, order=10000,
         assert 1 <= len(symbol) <= 25, 'symbol must be between 1 and 25 characters'
         assert not mem['registered'], 'register_callback_action must be used as decorator'
         assert cb.__name__ not in callbacks, 'callback name {} is not unique'.format(cb.__name__)
+        source_path = os.path.relpath(inspect.stack()[1][1], GECKO)
 
         @register_task_action(name, title, description, order, context, schema)
         def build_callback_action_task(parameters):
@@ -181,43 +183,74 @@ def register_callback_action(name, title, symbol, description, order=10000,
             repo_scope = 'assume:repo:{}/{}:*'.format(
                 match.group(1), match.group(2))
 
-            task_group_id = os.environ.get('TASK_ID', slugid())
-
-            template = os.path.join(GECKO, '.taskcluster.yml')
-
-            with open(template, 'r') as f:
-                taskcluster_yml = yaml.safe_load(f)
-                if taskcluster_yml['version'] != 1:
-                    raise Exception('actions.json must be updated to work with .taskcluster.yml')
-                if not isinstance(taskcluster_yml['tasks'], list):
-                    raise Exception('.taskcluster.yml "tasks" must be a list for action tasks')
-
-                return {
-                    '$let': {
-                        'tasks_for': 'action',
-                        'repository': {
-                            'url': parameters['head_repository'],
-                            'project': parameters['project'],
-                            'level': parameters['level'],
-                        },
-                        'push': {
-                            'owner': 'mozilla-taskcluster-maintenance@mozilla.com',
-                            'pushlog_id': parameters['pushlog_id'],
-                            'revision': parameters['head_rev'],
-                        },
-                        'action': {
-                            'name': name,
-                            'title': title,
-                            'description': description,
-                            'taskGroupId': task_group_id,
-                            'repo_scope': repo_scope,
-                            'cb_name': cb.__name__,
-                            'symbol': symbol,
-                        },
+            return {
+                'created': {'$fromNow': ''},
+                'deadline': {'$fromNow': '12 hours'},
+                'expires': {'$fromNow': '14 days'},
+                'metadata': {
+                    'owner': 'mozilla-taskcluster-maintenance@mozilla.com',
+                    'source': '{}raw-file/{}/{}'.format(
+                        parameters['head_repository'], parameters['head_rev'], source_path,
+                    ),
+                    'name': 'Action: {}'.format(title),
+                    'description': 'Task executing callback for action.\n\n---\n' + description,
+                },
+                'workerType': 'gecko-decision',
+                'provisionerId': 'aws-provisioner-v1',
+                'scopes': [
+                    repo_scope,
+                ],
+                'tags': {
+                    'createdForUser': parameters['owner'],
+                    'kind': 'action-callback',
+                },
+                'routes': [
+                    'tc-treeherder.v2.{}.{}.{}'.format(
+                        parameters['project'], parameters['head_rev'], parameters['pushlog_id']),
+                    'tc-treeherder-stage.v2.{}.{}.{}'.format(
+                        parameters['project'], parameters['head_rev'], parameters['pushlog_id']),
+                ],
+                'payload': {
+                    'env': {
+                        'GECKO_BASE_REPOSITORY': 'https://hg.mozilla.org/mozilla-unified',
+                        'GECKO_HEAD_REPOSITORY': parameters['head_repository'],
+                        'GECKO_HEAD_REF': parameters['head_ref'],
+                        'GECKO_HEAD_REV': parameters['head_rev'],
+                        'HG_STORE_PATH': '/home/worker/checkouts/hg-store',
+                        'ACTION_TASK_GROUP_ID': {'$eval': 'taskGroupId'},
+                        'ACTION_TASK_ID': {'$json': {'$eval': 'taskId'}},
+                        'ACTION_TASK': {'$json': {'$eval': 'task'}},
+                        'ACTION_INPUT': {'$json': {'$eval': 'input'}},
+                        'ACTION_CALLBACK': cb.__name__,
+                        'ACTION_PARAMETERS': {'$json': {'$eval': 'parameters'}},
                     },
-                    'in': taskcluster_yml['tasks'][0]
-                }
-
+                    'cache': {
+                        'level-{}-checkouts'.format(parameters['level']):
+                            '/home/worker/checkouts',
+                    },
+                    'features': {
+                        'taskclusterProxy': True,
+                        'chainOfTrust': True,
+                    },
+                    'image': docker_image('decision'),
+                    'maxRunTime': 1800,
+                    'command': [
+                        '/home/worker/bin/run-task', '--vcs-checkout=/home/worker/checkouts/gecko',
+                        '--', 'bash', '-cx',
+                        """\
+cd /home/worker/checkouts/gecko &&
+ln -s /home/worker/artifacts artifacts &&
+./mach --log-no-times taskgraph action-callback""",
+                    ],
+                },
+                'extra': {
+                    'treeherder': {
+                        'groupName': 'action-callback',
+                        'groupSymbol': 'AC',
+                        'symbol': symbol,
+                    },
+                },
+            }
         mem['registered'] = True
         callbacks[cb.__name__] = cb
     return register_callback
@@ -276,8 +309,7 @@ def trigger_action_callback(task_group_id, task_id, task, input, callback, param
             callback, get_callbacks().keys()))
 
     if test:
-        create.testing = True
-        taskcluster.testing = True
+        util.testing = True
 
     cb(Parameters(**parameters), input, task_group_id, task_id, task)
 
@@ -286,14 +318,9 @@ def trigger_action_callback(task_group_id, task_id, task, input, callback, param
 def _load():
     # Load all modules from this folder, relying on the side-effects of register_
     # functions to populate the action registry.
-    actions_dir = os.path.dirname(__file__)
-    for f in os.listdir(actions_dir):
+    for f in os.listdir(os.path.dirname(__file__)):
         if f.endswith('.py') and f not in ('__init__.py', 'registry.py', 'util.py'):
             __import__('taskgraph.actions.' + f[:-3])
-        if f.endswith('.yml'):
-            with open(os.path.join(actions_dir, f), 'r') as d:
-                frontmatter, template = yaml.safe_load_all(d)
-                register_task_action(**frontmatter)(lambda _: template)
     return callbacks, actions
 
 

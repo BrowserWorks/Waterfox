@@ -36,6 +36,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_INADEQUATE_CERT_TYPE,
+                        certificateUsageStatusResponder);
 
 
   // Test of active distrust. No usage should pass.
@@ -50,6 +56,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNTRUSTED_ISSUER,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNTRUSTED_ISSUER,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNTRUSTED_ISSUER,
+                        certificateUsageStatusResponder);
 
   // Trust set to T  -  trusted CA to issue client certs, where client cert is
   // usageSSLClient.
@@ -72,6 +84,15 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
   checkCertErrorGeneric(certdb, ee_cert, isRootCA ? SEC_ERROR_UNKNOWN_ISSUER
                                                   : PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, isRootCA ? SEC_ERROR_UNKNOWN_ISSUER
+                                                  : PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert,
+                        isRootCA ? SEC_ERROR_UNKNOWN_ISSUER
+                                 : SEC_ERROR_INADEQUATE_CERT_TYPE,
+                        certificateUsageStatusResponder);
 
 
   // Now tests on the SSL trust bit
@@ -88,6 +109,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNTRUSTED_ISSUER,
+                        certificateUsageStatusResponder);
 
   // Inherited trust SSL
   setCertTrust(cert_to_modify_trust, ",C,C");
@@ -103,6 +130,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_INADEQUATE_CERT_TYPE,
+                        certificateUsageStatusResponder);
 
   // Now tests on the EMAIL trust bit
   setCertTrust(cert_to_modify_trust, "C,p,C");
@@ -116,6 +149,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNTRUSTED_ISSUER,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_INADEQUATE_CERT_TYPE,
+                        certificateUsageStatusResponder);
 
 
   // inherited EMAIL Trust
@@ -133,6 +172,12 @@ function test_ca_distrust(ee_cert, cert_to_modify_trust, isRootCA) {
   checkCertErrorGeneric(certdb, ee_cert, isRootCA ? SEC_ERROR_UNKNOWN_ISSUER
                                                   : PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_CA_CERT_INVALID,
+                        certificateUsageVerifyCA);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_INADEQUATE_CERT_TYPE,
+                        certificateUsageStatusResponder);
 }
 
 
@@ -176,6 +221,8 @@ function run_test() {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNKNOWN_ISSUER,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, SEC_ERROR_UNKNOWN_ISSUER,
+                        certificateUsageObjectSigner);
 
   // Now make a CA trust anchor available.
   setCertTrust(ca_cert, "CTu,CTu,CTu");
@@ -187,4 +234,6 @@ function run_test() {
                         certificateUsageEmailSigner);
   checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
                         certificateUsageEmailRecipient);
+  checkCertErrorGeneric(certdb, ee_cert, PRErrorCodeSuccess,
+                        certificateUsageObjectSigner);
 }

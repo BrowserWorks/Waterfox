@@ -77,7 +77,7 @@ interface Element : Node {
   Element? insertAdjacentElement(DOMString where_, Element element); // historical
   [Throws]
   void insertAdjacentText(DOMString where_, DOMString data);
-  [CEReactions, Throws]
+  [Throws]
   void insertAdjacentHTML(DOMString position, DOMString html);
 };
 

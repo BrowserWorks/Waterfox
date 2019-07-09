@@ -70,6 +70,7 @@ using mozilla::CommandInt from "mozilla/EventForwards.h";
 using mozilla::WritingMode from "mozilla/WritingModes.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using nsIWidget::TouchPointerState from "nsIWidget.h";
+using nsCursor from "nsIWidget.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
 using class mozilla::dom::MessagePort from "mozilla/dom/MessagePort.h";
 using class mozilla::dom::ipc::StructuredCloneData from "mozilla/dom/ipc/StructuredCloneData.h";
@@ -209,8 +210,8 @@ parent:
      *  notification Whole data of the notification
      *  requests     Requests of notification for IME of the native widget
      */
-    nested(inside_cpow) async NotifyIMEFocus(ContentCache contentCache,
-                                             IMENotification notification)
+    nested(inside_cpow) sync NotifyIMEFocus(ContentCache contentCache,
+                                            IMENotification notification)
       returns (IMENotificationRequests requests);
 
     /**
@@ -253,7 +254,7 @@ parent:
     /**
      * Notifies IME of mouse button event on a character in focused editor.
      *
-     * Returns true if the mouse button event is consumed by IME.
+     * Returns true if the mouse button event is consumd by IME.
      */
     nested(inside_cpow) sync NotifyIMEMouseButtonEvent(IMENotification notification)
       returns (bool consumedByIME);
@@ -318,6 +319,11 @@ parent:
     async SetCandidateWindowForPlugin(CandidateWindowPosition aPosition);
 
     /**
+     * Enable or Disable IME by windowless plugin if plugin has focus.
+     */
+    async EnableIMEForPlugin(bool aEnable);
+
+    /**
      * Notifies the parent process of native key event data received in a
      * plugin process directly.
      *
@@ -354,7 +360,6 @@ parent:
                                               nsString type,
                                               nsString inputmode,
                                               nsString actionHint,
-                                              bool inPrivateBrowsing,
                                               int32_t cause,
                                               int32_t focusChange);
 
@@ -368,7 +373,7 @@ parent:
      *   Invalidate any locally cached cursor settings and force an
      *   update.
      */
-    async SetCursor(uint32_t value, bool force);
+    async SetCursor(nsCursor value, bool force);
 
     /**
      * Set the native cursor using a custom image.
@@ -531,6 +536,7 @@ parent:
 child:
     async NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
 
+
 parent:
 
     /**
@@ -541,12 +547,6 @@ parent:
      * @see RequestNotifyAfterRemotePaint
      */
     async RemotePaintIsReady();
-
-    /**
-     * Child informs the parent that the content is ready to handle input
-     * events. This is sent when the TabChild is created.
-     */
-    async RemoteIsReadyToHandleInputEvents();
 
     /**
      * Child informs the parent that the layer tree is already available.
@@ -594,14 +594,6 @@ parent:
      */
     async RequestCrossBrowserNavigation(uint32_t aGlobalIndex);
 
-    /**
-     * This function is used to notify the parent that it should display a
-     * canvas permission prompt.
-     *
-     * @param aFirstPartyURI first party of the tab that is requesting access.
-     */
-    async ShowCanvasPermissionPrompt(nsCString aFirstPartyURI);
-
 child:
     /**
      * Notify the remote browser that it has been Show()n on this
@@ -629,8 +621,6 @@ child:
 
     async SizeModeChanged(nsSizeMode sizeMode);
 
-    async ParentActivated(bool aActivated);
-
     async SetKeyboardIndicators(UIStateChangeType showAccelerators,
                                 UIStateChangeType showFocusRings);
 
@@ -639,6 +629,12 @@ child:
      * should stop managing IME state.
      */
     async StopIMEStateManagement();
+
+    /**
+     * MenuKeyboardListenerInstalled() is called when menu keyboard listener
+     * is installed in the parent process.
+     */
+    async MenuKeyboardListenerInstalled(bool aInstalled);
 
     /**
      * @see nsIDOMWindowUtils sendMouseEvent.
@@ -655,14 +651,7 @@ child:
      * When two consecutive mouse move events would be added to the message queue,
      * they are 'compressed' by dumping the oldest one.
      */
-    prio(input) async RealMouseMoveEvent(WidgetMouseEvent event,
-                                         ScrollableLayerGuid aGuid,
-                                         uint64_t aInputBlockId) compress;
-
-    async NormalPriorityRealMouseMoveEvent(WidgetMouseEvent event,
-                                           ScrollableLayerGuid aGuid,
-                                           uint64_t aInputBlockId) compress;
-
+    async RealMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId) compress;
     /**
      * Mouse move events with |reason == eSynthesized| are sent via a separate
      * message because they do not generate DOM 'mousemove' events, and the
@@ -670,62 +659,21 @@ child:
      * |reason == eReal| event being dropped in favour of an |eSynthesized|
      * event, and thus a DOM 'mousemove' event to be lost.
      */
-    prio(input) async SynthMouseMoveEvent(WidgetMouseEvent event,
-                                          ScrollableLayerGuid aGuid,
-                                          uint64_t aInputBlockId);
-    async NormalPrioritySynthMouseMoveEvent(WidgetMouseEvent event,
-                                            ScrollableLayerGuid aGuid,
-                                            uint64_t aInputBlockId);
-
-    prio(input) async RealMouseButtonEvent(WidgetMouseEvent event,
-                                           ScrollableLayerGuid aGuid,
-                                           uint64_t aInputBlockId);
-    async NormalPriorityRealMouseButtonEvent(WidgetMouseEvent event,
-                                             ScrollableLayerGuid aGuid,
-                                             uint64_t aInputBlockId);
-
-    prio(input) async RealKeyEvent(WidgetKeyboardEvent event);
-    async NormalPriorityRealKeyEvent(WidgetKeyboardEvent event);
-
-    prio(input) async MouseWheelEvent(WidgetWheelEvent event,
-                                      ScrollableLayerGuid aGuid,
-                                      uint64_t aInputBlockId);
-    async NormalPriorityMouseWheelEvent(WidgetWheelEvent event,
-                                        ScrollableLayerGuid aGuid,
-                                        uint64_t aInputBlockId);
-
-    prio(input) async RealTouchEvent(WidgetTouchEvent aEvent,
-                                     ScrollableLayerGuid aGuid,
-                                     uint64_t aInputBlockId,
-                                     nsEventStatus aApzResponse);
-    async NormalPriorityRealTouchEvent(WidgetTouchEvent aEvent,
-                                       ScrollableLayerGuid aGuid,
-                                       uint64_t aInputBlockId,
-                                       nsEventStatus aApzResponse);
-
-    prio(input) async HandleTap(TapType aType, LayoutDevicePoint point,
-                                Modifiers aModifiers, ScrollableLayerGuid aGuid,
-                                uint64_t aInputBlockId);
-    async NormalPriorityHandleTap(TapType aType, LayoutDevicePoint point,
-                                  Modifiers aModifiers, ScrollableLayerGuid aGuid,
-                                  uint64_t aInputBlockId);
-
-    prio(input) async RealTouchMoveEvent(WidgetTouchEvent aEvent,
-                                         ScrollableLayerGuid aGuid,
-                                         uint64_t aInputBlockId,
-                                         nsEventStatus aApzResponse);
-    async NormalPriorityRealTouchMoveEvent(WidgetTouchEvent aEvent,
-                                           ScrollableLayerGuid aGuid,
-                                           uint64_t aInputBlockId,
-                                           nsEventStatus aApzResponse);
-
-    /*
-     * We disable the input event queue when there is an active dnd session. We
-     * don't need support RealDragEvent with input priority.
-     */
-    async RealDragEvent(WidgetDragEvent aEvent, uint32_t aDragAction,
-                        uint32_t aDropEffect);
-
+    async SynthMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    async RealMouseButtonEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    async RealKeyEvent(WidgetKeyboardEvent event);
+    async MouseWheelEvent(WidgetWheelEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    async RealTouchEvent(WidgetTouchEvent aEvent,
+                         ScrollableLayerGuid aGuid,
+                         uint64_t aInputBlockId,
+                         nsEventStatus aApzResponse);
+    async HandleTap(TapType aType, LayoutDevicePoint point, Modifiers aModifiers,
+                    ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    async RealTouchMoveEvent(WidgetTouchEvent aEvent,
+                             ScrollableLayerGuid aGuid,
+                             uint64_t aInputBlockId,
+                             nsEventStatus aApzResponse);
+    async RealDragEvent(WidgetDragEvent aEvent, uint32_t aDragAction, uint32_t aDropEffect);
     async PluginEvent(WidgetPluginEvent aEvent);
 
     /**
@@ -737,11 +685,9 @@ child:
                    int32_t aModifiers,
                    bool aPreventDefault);
 
-    prio(input) async CompositionEvent(WidgetCompositionEvent event);
-    async NormalPriorityCompositionEvent(WidgetCompositionEvent event);
+    async CompositionEvent(WidgetCompositionEvent event);
 
-    prio(input) async SelectionEvent(WidgetSelectionEvent event);
-    async NormalPrioritySelectionEvent(WidgetSelectionEvent event);
+    async SelectionEvent(WidgetSelectionEvent event);
 
     /**
      * Call PasteTransferable via a controller on the content process

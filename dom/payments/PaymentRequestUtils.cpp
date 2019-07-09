@@ -8,47 +8,46 @@
 #include "PaymentRequestUtils.h"
 #include "nsIMutableArray.h"
 #include "nsISupportsPrimitives.h"
+#include "nsIJSON.h"
 
 namespace mozilla {
 namespace dom {
-
-static bool
-WriteCallback(const char16_t* aBuf, uint32_t aLength, void* aData)
-{
-  nsAString* result = static_cast<nsAString*>(aData);
-  result->Append(static_cast<const char16_t*>(aBuf),
-                 static_cast<uint32_t>(aLength));
-  return true;
-}
 
 nsresult
 SerializeFromJSObject(JSContext* aCx, JS::HandleObject aObject, nsAString& aSerializedObject)
 {
   MOZ_ASSERT(aCx);
+  nsCOMPtr<nsIJSON> serializer = do_CreateInstance("@mozilla.org/dom/json;1");
+  if (NS_WARN_IF(!serializer)) {
+    return NS_ERROR_FAILURE;
+  }
   JS::RootedValue value(aCx, JS::ObjectValue(*aObject));
-  return SerializeFromJSVal(aCx, value, aSerializedObject);
+  return serializer->EncodeFromJSVal(value.address(), aCx, aSerializedObject);
 }
 
 nsresult
 SerializeFromJSVal(JSContext* aCx, JS::HandleValue aValue, nsAString& aSerializedValue)
 {
   MOZ_ASSERT(aCx);
-  aSerializedValue.Truncate();
+  nsCOMPtr<nsIJSON> serializer = do_CreateInstance("@mozilla.org/dom/json;1");
+  if (NS_WARN_IF(!serializer)) {
+    return NS_ERROR_FAILURE;
+  }
   JS::RootedValue value(aCx, aValue.get());
-  nsAutoString serializedValue;
-  NS_ENSURE_TRUE(JS_Stringify(aCx, &value, nullptr, JS::NullHandleValue,
-                              WriteCallback, &serializedValue), NS_ERROR_XPC_BAD_CONVERT_JS);
-  NS_ENSURE_TRUE(!serializedValue.IsEmpty(), NS_ERROR_FAILURE);
-  aSerializedValue = serializedValue;
-  return NS_OK;
+  return serializer->EncodeFromJSVal(value.address(), aCx, aSerializedValue);
 }
 
 nsresult
 DeserializeToJSObject(const nsAString& aSerializedObject, JSContext* aCx, JS::MutableHandleObject aObject)
 {
   MOZ_ASSERT(aCx);
+  nsCOMPtr<nsIJSON> deserializer = do_CreateInstance("@mozilla.org/dom/json;1");
+  if (NS_WARN_IF(!deserializer)) {
+    return NS_ERROR_FAILURE;
+  }
   JS::RootedValue value(aCx);
-  nsresult rv = DeserializeToJSValue(aSerializedObject, aCx, &value);
+  JS::MutableHandleValue handleVal(&value);
+  nsresult rv = deserializer->DecodeToJSVal(aSerializedObject, aCx, handleVal);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -64,9 +63,13 @@ nsresult
 DeserializeToJSValue(const nsAString& aSerializedObject, JSContext* aCx, JS::MutableHandleValue aValue)
 {
   MOZ_ASSERT(aCx);
-  if (!JS_ParseJSON(aCx, static_cast<const char16_t*>(PromiseFlatString(aSerializedObject).get()),
-                    aSerializedObject.Length(), aValue)) {
-    return NS_ERROR_UNEXPECTED;
+  nsCOMPtr<nsIJSON> deserializer = do_CreateInstance("@mozilla.org/dom/json;1");
+  if (NS_WARN_IF(!deserializer)) {
+    return NS_ERROR_FAILURE;
+  }
+  nsresult rv = deserializer->DecodeToJSVal(aSerializedObject, aCx, aValue);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
   return NS_OK;
 }

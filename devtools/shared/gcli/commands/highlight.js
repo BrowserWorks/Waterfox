@@ -6,8 +6,10 @@
 
 const l10n = require("gcli/l10n");
 require("devtools/server/actors/inspector");
-const {HighlighterEnvironment}  = require("devtools/server/actors/highlighters");
-const {BoxModelHighlighter} = require("devtools/server/actors/highlighters/box-model");
+const {
+  BoxModelHighlighter,
+  HighlighterEnvironment
+} = require("devtools/server/actors/highlighters");
 
 const {PluralForm} = require("devtools/shared/plural-form");
 const {LocalizationHelper} = require("devtools/shared/l10n");

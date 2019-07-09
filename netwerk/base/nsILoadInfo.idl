@@ -16,15 +16,14 @@ interface nsIURI;
 #include "nsTArray.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/LoadTainting.h"
-#include "nsStringFwd.h"
+
+class nsCString;
 %}
 
 [ref] native nsIRedirectHistoryEntryArray(const nsTArray<nsCOMPtr<nsIRedirectHistoryEntry>>);
 native OriginAttributes(mozilla::OriginAttributes);
 [ref] native const_OriginAttributesRef(const mozilla::OriginAttributes);
 [ref] native StringArrayRef(const nsTArray<nsCString>);
-[ref] native Uint64ArrayRef(const nsTArray<uint64_t>);
-[ref] native PrincipalArrayRef(const nsTArray<nsCOMPtr<nsIPrincipal>>);
 
 typedef unsigned long nsSecurityFlags;
 
@@ -334,16 +333,6 @@ interface nsILoadInfo : nsISupports
   nsINode binaryLoadingNode();
 
   /**
-   * A C++ friendly version of the loadingContext for toplevel loads.
-   * Most likely you want to query the ownerDocument or LoadingNode
-   * and not this context only available for TYPE_DOCUMENT loads.
-   * Please note that except for loads of TYPE_DOCUMENT, this
-   * ContextForTopLevelLoad will always return null.
-   */
-  [noscript, notxpcom, nostdcall, binaryname(ContextForTopLevelLoad)]
-  nsISupports binaryContextForTopLevelLoad();
-
-  /**
    * The securityFlags of that channel.
    */
   readonly attribute nsSecurityFlags securityFlags;
@@ -509,17 +498,15 @@ interface nsILoadInfo : nsISupports
   /**
    * These are the window IDs of the window in which the element being
    * loaded lives. parentOuterWindowID is the window ID of this window's
-   * parent. topOuterWindowID is the ID of the top-level window of the same
-   * docShell type.
+   * parent.
    *
    * Note that these window IDs can be 0 if the window is not
-   * available. parentOuterWindowID and topOuterWindowID will be the same as
-   * outerWindowID if the window has no parent.
+   * available. parentOuterWindowID will be the same as outerWindowID if the
+   * window has no parent.
    */
   [infallible] readonly attribute unsigned long long innerWindowID;
   [infallible] readonly attribute unsigned long long outerWindowID;
   [infallible] readonly attribute unsigned long long parentOuterWindowID;
-  [infallible] readonly attribute unsigned long long topOuterWindowID;
 
   /**
    * Only when the element being loaded is <frame src="foo.html">
@@ -539,6 +526,18 @@ interface nsILoadInfo : nsISupports
    * you are doing!!!
    */
   void resetPrincipalToInheritToNullPrincipal();
+
+  /**
+   * Allows certain top-level channels to be agnostic to CSP. If set,
+   * this attribute needs to be set before the CSP is initialized
+   * within nsDocument. If set after, this attribute has no effect.
+   * Please note, that this logic is only available for loads of TYPE_DOCUMENT,
+   * and is discarded for other loads.
+   *
+   * WARNING: Please only use that function if you know exactly what
+   * you are doing!!!
+   */
+  [infallible] attribute boolean allowDocumentToBeAgnosticToCSP;
 
   /**
    * Customized OriginAttributes within LoadInfo to allow overwriting of the
@@ -643,36 +642,6 @@ interface nsILoadInfo : nsISupports
    */
   [noscript, notxpcom, nostdcall, binaryname(RedirectChain)]
   nsIRedirectHistoryEntryArray binaryRedirectChain();
-
-  /**
-   * An array of nsIPrincipals which stores the principals of the parent frames,
-   * not including the frame loading this request.  The closest ancestor is at
-   * index zero and the top level ancestor is at the last index.
-   *
-   * The ancestorPrincipals[0] entry for an iframe load will be the principal of
-   * the iframe element's owner document.
-   * The ancestorPrincipals[0] entry for an image loaded in an iframe will be the
-   * principal of the iframe element's owner document.
-   *
-   * See nsIDocument::AncestorPrincipals for more information.
-   *
-   * Please note that this array has the same lifetime as the
-   * loadInfo object - use with caution!
-   */
-  [noscript, notxpcom, nostdcall]
-  PrincipalArrayRef AncestorPrincipals();
-
-
-  /**
-   * An array of outerWindowIDs which correspond to nsILoadInfo::AncestorPrincipals
-   * above.  AncestorOuterWindowIDs[0] is the outerWindowID of the frame
-   * associated with the principal at ancestorPrincipals[0], and so forth.
-   *
-   * Please note that this array has the same lifetime as the
-   * loadInfo object - use with caution!
-   */
-  [noscript, notxpcom, nostdcall]
-  Uint64ArrayRef AncestorOuterWindowIDs();
 
   /**
    * Sets the list of unsafe headers according to CORS spec, as well as

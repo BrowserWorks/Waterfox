@@ -18,7 +18,6 @@ const PREF_BLOCKLIST_CHANGES_PATH       = "services.blocklist.changes.path";
 const PREF_BLOCKLIST_LAST_UPDATE        = "services.blocklist.last_update_seconds";
 const PREF_BLOCKLIST_LAST_ETAG          = "services.blocklist.last_etag";
 const PREF_BLOCKLIST_CLOCK_SKEW_SECONDS = "services.blocklist.clock_skew_seconds";
-const PREF_BLOCKLIST_LOAD_DUMP          = "services.blocklist.load_dump";
 
 // Telemetry update source identifier.
 const TELEMETRY_HISTOGRAM_KEY = "settings-changes-monitoring";
@@ -36,7 +35,7 @@ XPCOMUtils.defineLazyGetter(this, "gBlocklistClients", function() {
 });
 
 // Add a blocklist client for testing purposes. Do not use for any other purpose
-this.addTestBlocklistClient = (name, client) => { gBlocklistClients[name] = client; };
+this.addTestBlocklistClient = (name, client) => { gBlocklistClients[name] = client; }
 
 
 async function pollChanges(url, lastEtag) {
@@ -153,7 +152,6 @@ this.checkVersions = async function() {
   Services.prefs.setIntPref(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS, clockDifference);
   Services.prefs.setIntPref(PREF_BLOCKLIST_LAST_UPDATE, serverTimeMillis / 1000);
 
-  const loadDump = Services.prefs.getBoolPref(PREF_BLOCKLIST_LOAD_DUMP, true);
   // Iterate through the collections version info and initiate a synchronization
   // on the related blocklist client.
   let firstError;
@@ -162,7 +160,7 @@ this.checkVersions = async function() {
     const client = gBlocklistClients[collection];
     if (client && client.bucketName == bucket) {
       try {
-        await client.maybeSync(lastModified, serverTimeMillis, {loadDump});
+        await client.maybeSync(lastModified, serverTimeMillis);
       } catch (e) {
         if (!firstError) {
           firstError = e;
@@ -179,6 +177,4 @@ this.checkVersions = async function() {
   if (currentEtag) {
     Services.prefs.setCharPref(PREF_BLOCKLIST_LAST_ETAG, currentEtag);
   }
-
-  Services.obs.notifyObservers(null, "blocklist-updater-versions-checked");
 };

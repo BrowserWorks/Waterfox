@@ -22,11 +22,10 @@ info: >
 includes: [propertyHelper.js]
 ---*/
 
-verifyProperty(String.prototype.fixed, "length", {
-  enumerable: false,
-  writable: false,
-  configurable: true,
-  value: 0
-});
+assert.sameValue(String.prototype.fixed.length, 0);
+
+verifyNotEnumerable(String.prototype.fixed, "length");
+verifyNotWritable(String.prototype.fixed, "length");
+verifyConfigurable(String.prototype.fixed, "length");
 
 reportCompare(0, 0);

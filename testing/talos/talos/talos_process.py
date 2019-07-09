@@ -1,17 +1,16 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
-from __future__ import absolute_import
 
-import pprint
 import time
+import psutil
+import mozcrash
 import traceback
+from mozprocess import ProcessHandler
 from threading import Event
 
-import mozcrash
-import psutil
 from mozlog import get_proxy_logger
-from mozprocess import ProcessHandler
+
 from utils import TalosError
 
 LOG = get_proxy_logger()
@@ -107,8 +106,6 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
     wait_for_quit_timeout = 5
     event = Event()
     reader = Reader(event)
-
-    LOG.info("Using env: %s" % pprint.pformat(kwargs['env']))
 
     kwargs['storeOutput'] = False
     kwargs['processOutputLine'] = reader

@@ -181,7 +181,8 @@ Version(JSContext *cx,
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     args.rval().setInt32(JS_GetVersion(cx));
     if (args.get(0).isInt32())
-        JS::SetVersionForCurrentRealm(cx, JSVersion(args[0].toInt32()));
+        JS_SetVersionForCompartment(js::GetContextCompartment(cx),
+                                    JSVersion(args[0].toInt32()));
     return true;
 }
 
@@ -247,15 +248,15 @@ GCZeal(JSContext *cx, unsigned argc, JS::Value *vp)
 
 const JSFunctionSpec gGlobalFunctions[] =
 {
-    JS_FN("print",           Print,          0,0),
-    JS_FN("load",            Load,           1,0),
-    JS_FN("quit",            Quit,           0,0),
-    JS_FN("version",         Version,        1,0),
-    JS_FN("dumpXPC",         DumpXPC,        1,0),
-    JS_FN("dump",            Dump,           1,0),
-    JS_FN("gc",              GC,             0,0),
+    JS_FS("print",           Print,          0,0),
+    JS_FS("load",            Load,           1,0),
+    JS_FS("quit",            Quit,           0,0),
+    JS_FS("version",         Version,        1,0),
+    JS_FS("dumpXPC",         DumpXPC,        1,0),
+    JS_FS("dump",            Dump,           1,0),
+    JS_FS("gc",              GC,             0,0),
  #ifdef JS_GC_ZEAL
-    JS_FN("gczeal",          GCZeal,         1,0),
+    JS_FS("gczeal",          GCZeal,         1,0),
  #endif
     JS_FS_END
 };
@@ -423,6 +424,13 @@ XPCShellEnvironment::Init()
 
     mGlobalHolder.init(cx);
 
+    nsCOMPtr<nsIXPConnect> xpc =
+      do_GetService(nsIXPConnect::GetCID());
+    if (!xpc) {
+        NS_ERROR("failed to get nsXPConnect service!");
+        return false;
+    }
+
     nsCOMPtr<nsIPrincipal> principal;
     nsCOMPtr<nsIScriptSecurityManager> securityManager =
         do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
@@ -444,21 +452,22 @@ XPCShellEnvironment::Init()
 
     JS::CompartmentOptions options;
     options.creationOptions().setSystemZone();
-    options.behaviors().setVersion(JSVERSION_DEFAULT);
+    options.behaviors().setVersion(JSVERSION_LATEST);
     if (xpc::SharedMemoryEnabled())
         options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
 
-    JS::Rooted<JSObject*> globalObj(cx);
-    rv = xpc::InitClassesWithNewWrappedGlobal(cx,
+    nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
+    rv = xpc->InitClassesWithNewWrappedGlobal(cx,
                                               static_cast<nsIGlobalObject *>(backstagePass),
                                               principal, 0,
                                               options,
-                                              &globalObj);
+                                              getter_AddRefs(holder));
     if (NS_FAILED(rv)) {
         NS_ERROR("InitClassesWithNewWrappedGlobal failed!");
         return false;
     }
 
+    JS::Rooted<JSObject*> globalObj(cx, holder->GetJSObject());
     if (!globalObj) {
         NS_ERROR("Failed to get global JSObject!");
         return false;
@@ -470,7 +479,8 @@ XPCShellEnvironment::Init()
     JS::Rooted<Value> privateVal(cx, PrivateValue(this));
     if (!JS_DefineProperty(cx, globalObj, "__XPCShellEnvironment",
                            privateVal,
-                           JSPROP_READONLY | JSPROP_PERMANENT) ||
+                           JSPROP_READONLY | JSPROP_PERMANENT,
+                           JS_STUBGETTER, JS_STUBSETTER) ||
         !JS_DefineFunctions(cx, globalObj, gGlobalFunctions) ||
         !JS_DefineProfilingFunctions(cx, globalObj))
     {

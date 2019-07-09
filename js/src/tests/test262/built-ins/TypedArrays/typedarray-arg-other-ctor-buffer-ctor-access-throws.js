@@ -22,7 +22,6 @@ info: >
   2. Let C be ? Get(O, "constructor").
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

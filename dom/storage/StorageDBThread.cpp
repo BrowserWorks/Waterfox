@@ -92,9 +92,8 @@ Scheme0Scope(LocalStorageCacheBridge* aCache)
     if (result.IsEmpty()) {
       // Must contain the old prefix, otherwise we won't search for the whole
       // origin attributes suffix.
-      result.AppendLiteral("0:f:");
+      result.Append(NS_LITERAL_CSTRING("0:f:"));
     }
-
     // Append the whole origin attributes suffix despite we have already stored
     // appid and inbrowser.  We are only looking for it when the scope string
     // starts with "$appid:$inbrowser:" (with whatever valid values).
@@ -489,7 +488,7 @@ StorageDBThread::SetDefaultPriority()
 void
 StorageDBThread::ThreadFunc(void* aArg)
 {
-  AUTO_PROFILER_REGISTER_THREAD("localStorage DB");
+  AutoProfilerRegisterThread registerThread("localStorage DB");
   NS_SetCurrentThreadName("localStorage DB");
   mozilla::IOInterposer::RegisterCurrentThread();
 

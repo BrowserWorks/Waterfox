@@ -51,4 +51,5 @@ class LoggingMixin(object):
             'User login: {username}')
         """
         self._logger.log(level, format_str,
-                         extra={'action': action, 'params': params})
+            extra={'action': action, 'params': params})
+

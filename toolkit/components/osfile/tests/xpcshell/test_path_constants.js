@@ -7,11 +7,16 @@
 Cu.import("resource://gre/modules/ctypes.jsm", this);
 Cu.import("resource://testing-common/AppData.jsm", this);
 
+
+function run_test() {
+  run_next_test();
+}
+
 function compare_paths(ospath, key) {
   let file;
   try {
     file = Services.dirsvc.get(key, Components.interfaces.nsIFile);
-  } catch (ex) {}
+  } catch(ex) {}
 
   if (file) {
     do_check_true(!!ospath);
@@ -53,7 +58,7 @@ add_task(async function test_simple_paths() {
 
 // Test presence of paths that only exist on Desktop platforms
 add_task(async function test_desktop_paths() {
-  if (OS.Constants.Sys.Name == "Android") {
+  if (OS.Constants.Sys.Name == "Android" || OS.Constants.Sys.Name == "Gonk") {
     return;
   }
   do_check_true(!!OS.Constants.Path.desktopDir);

@@ -10,7 +10,6 @@
 #include "mozilla/gfx/Point.h"
 #include "mozilla/gfx/Types.h"
 #include "MaskOperation.h"
-#include "MLGDevice.h"
 #include "nsDataHashtable.h"
 #include "nsRefPtrHashtable.h"
 #include "ShaderDefinitionsMLGPU.h"

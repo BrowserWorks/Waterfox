@@ -21,6 +21,7 @@
 #include "nsIXULAppInfo.h"
 #include "nsIConsoleService.h"
 #include "mozilla/Unused.h"
+#include "GMPDecryptorParent.h"
 #include "nsComponentManagerUtils.h"
 #include "runnable_utils.h"
 #include "VideoUtils.h"
@@ -36,11 +37,9 @@
 #include "nsThreadUtils.h"
 #include "GMPCrashHelper.h"
 
-#include "MediaResult.h"
 #include "mozilla/dom/PluginCrashedEvent.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/SystemGroup.h"
 
 namespace mozilla {
 
@@ -238,9 +237,7 @@ GeckoMediaPluginService::GetCDM(const NodeId& aNodeId,
   MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   if (mShuttingDownOnGMPThread || aTags.IsEmpty()) {
-    nsPrintfCString reason("%s::%s failed, aTags.IsEmpty() = %d, mShuttingDownOnGMPThread = %d.",
-      __CLASS__, __FUNCTION__, aTags.IsEmpty(), mShuttingDownOnGMPThread);
-    return GetCDMParentPromise::CreateAndReject(MediaResult(NS_ERROR_FAILURE, reason.get()), __func__);
+    return GetCDMParentPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
   typedef MozPromiseHolder<GetCDMParentPromise> PromiseHolder;
@@ -257,10 +254,7 @@ GeckoMediaPluginService::GetCDM(const NodeId& aNodeId,
              UniquePtr<PromiseHolder> holder(rawHolder);
              RefPtr<ChromiumCDMParent> cdm = parent->GetChromiumCDM();
              if (!parent) {
-               nsPrintfCString reason(
-                 "%s::%s failed since GetChromiumCDM returns nullptr.",
-                 __CLASS__, __FUNCTION__);
-               holder->Reject(MediaResult(NS_ERROR_FAILURE, reason.get()), __func__);
+               holder->Reject(NS_ERROR_FAILURE, __func__);
                return;
              }
              if (helper) {
@@ -269,11 +263,8 @@ GeckoMediaPluginService::GetCDM(const NodeId& aNodeId,
              holder->Resolve(cdm, __func__);
            },
            [rawHolder] {
-             nsPrintfCString reason(
-               "%s::%s failed since GetContentParent rejects the promise.",
-               __CLASS__, __FUNCTION__);
              UniquePtr<PromiseHolder> holder(rawHolder);
-             holder->Reject(MediaResult(NS_ERROR_FAILURE, reason.get()), __func__);
+             holder->Reject(NS_ERROR_FAILURE, __func__);
            });
 
   return promise;
@@ -311,7 +302,7 @@ GeckoMediaPluginService::GMPDispatch(already_AddRefed<nsIRunnable> event,
   nsCOMPtr<nsIRunnable> r(event);
   nsCOMPtr<nsIThread> thread;
   nsresult rv = GetThread(getter_AddRefs(thread));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     return rv;
   }
   return thread->Dispatch(r, flags);
@@ -333,7 +324,7 @@ GeckoMediaPluginService::GetThread(nsIThread** aThread)
     }
 
     nsresult rv = NS_NewNamedThread("GMPThread", getter_AddRefs(mGMPThread));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
+    if (NS_FAILED(rv)) {
       return rv;
     }
 
@@ -428,6 +419,50 @@ GeckoMediaPluginService::GetGMPVideoEncoder(GMPCrashHelper* aHelper,
       [rawCallback] {
         UniquePtr<GetGMPVideoEncoderCallback> callback(rawCallback);
         callback->Done(nullptr, nullptr);
+      });
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GeckoMediaPluginService::GetGMPDecryptor(GMPCrashHelper* aHelper,
+                                         nsTArray<nsCString>* aTags,
+                                         const nsACString& aNodeId,
+                                         UniquePtr<GetGMPDecryptorCallback>&& aCallback)
+{
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+  if (!SandboxInfo::Get().CanSandboxMedia()) {
+    NS_WARNING("GeckoMediaPluginService::GetGMPDecryptor: "
+               "EME decryption not available without sandboxing support.");
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+#endif
+
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
+  NS_ENSURE_ARG(aTags && aTags->Length() > 0);
+  NS_ENSURE_ARG(aCallback);
+
+  if (mShuttingDownOnGMPThread) {
+    return NS_ERROR_FAILURE;
+  }
+
+  GetGMPDecryptorCallback* rawCallback = aCallback.release();
+  RefPtr<AbstractThread> thread(GetAbstractGMPThread());
+  RefPtr<GMPCrashHelper> helper(aHelper);
+  GetContentParent(aHelper, aNodeId, NS_LITERAL_CSTRING(GMP_API_DECRYPTOR), *aTags)
+    ->Then(thread, __func__,
+      [rawCallback, helper](RefPtr<GMPContentParent::CloseBlocker> wrapper) {
+        RefPtr<GMPContentParent> parent = wrapper->mParent;
+        UniquePtr<GetGMPDecryptorCallback> callback(rawCallback);
+        GMPDecryptorParent* actor = nullptr;
+        if (parent && NS_SUCCEEDED(parent->GetGMPDecryptor(&actor))) {
+          actor->SetCrashHelper(helper);
+        }
+        callback->Done(actor);
+      },
+      [rawCallback] {
+        UniquePtr<GetGMPDecryptorCallback> callback(rawCallback);
+        callback->Done(nullptr);
       });
 
   return NS_OK;

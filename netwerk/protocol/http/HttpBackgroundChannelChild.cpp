@@ -429,9 +429,7 @@ HttpBackgroundChannelChild::RecvSetClassifierMatchedInfo(const ClassifierInfo& i
 
   // SetClassifierMatchedInfo has no order dependency to OnStartRequest.
   // It this be handled as soon as possible
-  mChannelChild->ProcessSetClassifierMatchedInfo(info.list(),
-                                                 info.provider(),
-                                                 info.fullhash());
+  mChannelChild->ProcessSetClassifierMatchedInfo(info.list(), info.provider(), info.prefix());
 
   return IPC_OK();
 }

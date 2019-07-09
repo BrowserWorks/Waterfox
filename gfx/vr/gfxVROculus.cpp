@@ -18,7 +18,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/gfx/DeviceManagerDx.h"
-#include "mozilla/layers/CompositorThread.h"
 #include "ipc/VRLayerParent.h"
 
 #include "mozilla/gfx/Quaternion.h"
@@ -28,8 +27,8 @@
 #include "TextureD3D11.h"
 
 #include "gfxVROculus.h"
-#include "VRThread.h"
 
+#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/dom/GamepadEventTypes.h"
 #include "mozilla/dom/GamepadBinding.h"
 #include "mozilla/Telemetry.h"
@@ -199,7 +198,6 @@ VROculusSession::VROculusSession()
   , mInitFlags((ovrInitFlags)0)
   , mTextureSet(nullptr)
   , mPresenting(false)
-  , mDrawBlack(false)
 {
 }
 
@@ -233,20 +231,10 @@ VROculusSession::StartPresentation(const IntSize& aSize)
 {
   if (!mPresenting) {
     mPresenting = true;
-    mTelemetry.Clear();
-    mTelemetry.mPresentationStart = TimeStamp::Now();
-
-    ovrPerfStats perfStats;
-    if (ovr_GetPerfStats(mSession, &perfStats) == ovrSuccess) {
-      if (perfStats.FrameStatsCount) {
-        mTelemetry.mLastDroppedFrameCount = perfStats.FrameStats[0].AppDroppedFrameCount;
-      }
-    }
+    mPresentationSize = aSize;
+    Refresh();
+    mPresentationStart = TimeStamp::Now();
   }
-
-  // Update the size, even when we are already presenting.
-  mPresentationSize = aSize;
-  Refresh();
 }
 
 void
@@ -255,22 +243,9 @@ VROculusSession::StopPresentation()
   if (mPresenting) {
     mLastPresentationEnd = TimeStamp::Now();
     mPresenting = false;
-
-    const TimeDuration duration = mLastPresentationEnd - mTelemetry.mPresentationStart;
     Telemetry::Accumulate(Telemetry::WEBVR_USERS_VIEW_IN, 1);
-    Telemetry::Accumulate(Telemetry::WEBVR_TIME_SPENT_VIEWING_IN_OCULUS,
-                          duration.ToMilliseconds());
-
-    if (mTelemetry.IsLastDroppedFrameValid() && duration.ToSeconds()) {
-      ovrPerfStats perfStats;
-      if (ovr_GetPerfStats(mSession, &perfStats) == ovrSuccess) {
-        if (perfStats.FrameStatsCount) {
-          const uint32_t droppedFramesPerSec = (perfStats.FrameStats[0].AppDroppedFrameCount -
-                                                mTelemetry.mLastDroppedFrameCount) / duration.ToSeconds();
-          Telemetry::Accumulate(Telemetry::WEBVR_DROPPED_FRAMES_IN_OCULUS, droppedFramesPerSec);
-        }
-      }
-    }
+    Telemetry::AccumulateTimeDelta(Telemetry::WEBVR_TIME_SPENT_VIEWING_IN_OCULUS,
+                                   mPresentationStart);
     Refresh();
   }
 }
@@ -323,14 +298,8 @@ VROculusSession::StopLib()
 }
 
 void
-VROculusSession::Refresh(bool aForceRefresh)
+VROculusSession::Refresh()
 {
-  // We are waiting for drawing the black layer command for
-  // Compositor thread. Ignore Refresh() calls from other threads.
-  if (mDrawBlack && !aForceRefresh) {
-    return;
-  }
-
   ovrInitFlags flags = (ovrInitFlags)(ovrInit_RequestVersion | ovrInit_MixedRendering);
   bool bInvisible = true;
   if (mPresenting) {
@@ -348,25 +317,11 @@ VROculusSession::Refresh(bool aForceRefresh)
       // While we are waiting for either the timeout or a new presentation,
       // fill the HMD with black / no layers.
       if (mSession && mTextureSet) {
-        if (!aForceRefresh) {
-          // ovr_SubmitFrame is only allowed been run at Compositor thread,
-          // so we post this task to Compositor thread and let it determine
-          // if reloading library.
-          mDrawBlack = true;
-          MessageLoop* loop = layers::CompositorThreadHolder::Loop();
-          loop->PostTask(NewRunnableMethod<bool>(
-            "gfx::VROculusSession::Refresh",
-            this,
-            &VROculusSession::Refresh, true));
-
-          return;
-        }
         ovrLayerEyeFov layer;
         memset(&layer, 0, sizeof(layer));
         layer.Header.Type = ovrLayerType_Disabled;
         ovrLayerHeader *layers = &layer.Header;
         ovr_SubmitFrame(mSession, 0, nullptr, &layers, 1);
-        mDrawBlack = false;
       }
     }
   }
@@ -934,12 +889,25 @@ VRDisplayOculus::GetSensorState(double absTime)
 void
 VRDisplayOculus::StartPresentation()
 {
-  if (!CreateD3DObjects()) {
-    return;
-  }
   mSession->StartPresentation(IntSize(mDisplayInfo.mEyeResolution.width * 2, mDisplayInfo.mEyeResolution.height));
   if (!mSession->IsRenderReady()) {
     return;
+  }
+
+  if (!mDevice) {
+    mDevice = gfx::DeviceManagerDx::Get()->GetCompositorDevice();
+    if (!mDevice) {
+      NS_WARNING("Failed to get a D3D11Device for Oculus");
+      return;
+    }
+  }
+
+  if (!mContext) {
+    mDevice->GetImmediateContext(getter_AddRefs(mContext));
+    if (!mContext) {
+      NS_WARNING("Failed to get immediate context for Oculus");
+      return;
+    }
   }
 
   if (!mQuadVS) {
@@ -1054,21 +1022,12 @@ VRDisplayOculus::UpdateConstantBuffers()
 }
 
 bool
-VRDisplayOculus::SubmitFrame(ID3D11Texture2D* aSource,
-                             const IntSize& aSize,
-                             const gfx::Rect& aLeftEyeRect,
-                             const gfx::Rect& aRightEyeRect)
+VRDisplayOculus::SubmitFrame(TextureSourceD3D11* aSource,
+  const IntSize& aSize,
+  const gfx::Rect& aLeftEyeRect,
+  const gfx::Rect& aRightEyeRect)
 {
-  if (!CreateD3DObjects()) {
-    return false;
-  }
-
-  AutoRestoreRenderState restoreState(this);
-  if (!restoreState.IsSuccess()) {
-    return false;
-  }
-
-  if (!mSession->IsRenderReady()) {
+  if (!mSession->IsRenderReady() || !mDevice || !mContext) {
     return false;
   }
   /**
@@ -1127,15 +1086,12 @@ VRDisplayOculus::SubmitFrame(ID3D11Texture2D* aSource,
   mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
   mContext->VSSetShader(mQuadVS, nullptr, 0);
   mContext->PSSetShader(mQuadPS, nullptr, 0);
-
-  RefPtr<ID3D11ShaderResourceView> srView;
-  HRESULT hr = mDevice->CreateShaderResourceView(aSource, nullptr, getter_AddRefs(srView));
-  if (FAILED(hr)) {
-    gfxWarning() << "Could not create shader resource view for Oculus: " << hexa(hr);
+  ID3D11ShaderResourceView* srView = aSource->GetShaderResourceView();
+  if (!srView) {
+    NS_WARNING("Failed to get SRV for Oculus");
     return false;
   }
-  ID3D11ShaderResourceView* viewPtr = srView.get();
-  mContext->PSSetShaderResources(0 /* 0 == TexSlot::RGB */, 1, &viewPtr);
+  mContext->PSSetShaderResources(0 /* 0 == TexSlot::RGB */, 1, &srView);
   // XXX Use Constant from TexSlot in CompositorD3D11.cpp?
 
   ID3D11SamplerState *sampler = mLinearSamplerState;
@@ -1164,12 +1120,12 @@ VRDisplayOculus::SubmitFrame(ID3D11Texture2D* aSource,
   layer.Fov[1] = mFOVPort[1];
   layer.Viewport[0].Pos.x = aSize.width * aLeftEyeRect.x;
   layer.Viewport[0].Pos.y = aSize.height * aLeftEyeRect.y;
-  layer.Viewport[0].Size.w = aSize.width * aLeftEyeRect.Width();
-  layer.Viewport[0].Size.h = aSize.height * aLeftEyeRect.Height();
+  layer.Viewport[0].Size.w = aSize.width * aLeftEyeRect.width;
+  layer.Viewport[0].Size.h = aSize.height * aLeftEyeRect.height;
   layer.Viewport[1].Pos.x = aSize.width * aRightEyeRect.x;
   layer.Viewport[1].Pos.y = aSize.height * aRightEyeRect.y;
-  layer.Viewport[1].Size.w = aSize.width * aRightEyeRect.Width();
-  layer.Viewport[1].Size.h = aSize.height * aRightEyeRect.Height();
+  layer.Viewport[1].Size.w = aSize.width * aRightEyeRect.width;
+  layer.Viewport[1].Size.h = aSize.height * aRightEyeRect.height;
 
   const Point3D& l = mDisplayInfo.mEyeTranslation[0];
   const Point3D& r = mDisplayInfo.mEyeTranslation[1];
@@ -1407,9 +1363,9 @@ VRControllerOculus::VibrateHapticComplete(ovrSession aSession, uint32_t aPromise
   VRManager *vm = VRManager::Get();
   MOZ_ASSERT(vm);
 
-  VRListenerThreadHolder::Loop()->PostTask(NewRunnableMethod<uint32_t>(
-                                           "VRManager::NotifyVibrateHapticCompleted",
-                                           vm, &VRManager::NotifyVibrateHapticCompleted, aPromiseID));
+  CompositorThreadHolder::Loop()->PostTask(NewRunnableMethod<uint32_t>(
+                                             "VRManager::NotifyVibrateHapticCompleted",
+                                             vm, &VRManager::NotifyVibrateHapticCompleted, aPromiseID));
 }
 
 void

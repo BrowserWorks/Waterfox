@@ -416,9 +416,8 @@ function cleanErrorMessage(error) {
   }
   // Try to filter things that look somewhat like a URL (in that they contain a
   // colon in the middle of non-whitespace), in case anything else is including
-  // these in error messages. Note that JSON.stringified stuff comes through
-  // here, so we explicitly ignore double-quotes as well.
-  error = error.replace(/[^\s"]+:[^\s"]+/g, "<URL>");
+  // these in error messages.
+  error = error.replace(/\S+:\S+/g, "<URL>");
   return error;
 }
 
@@ -446,7 +445,7 @@ class SyncTelemetryImpl {
 
   getPingJSON(reason) {
     return {
-      os: TelemetryEnvironment.currentEnvironment.system.os,
+      os: TelemetryEnvironment.currentEnvironment["system"]["os"],
       why: reason,
       discarded: this.discarded || undefined,
       version: PING_FORMAT_VERSION,
@@ -714,22 +713,10 @@ class SyncTelemetryImpl {
     if (error.result) {
       return { name: "nserror", code: error.result };
     }
-    // It's probably an Error object, but it also could be some
-    // other object that may or may not override toString to do
-    // something useful.
-    let msg = String(error);
-    if (msg.startsWith("[object")) {
-      // Nothing useful in the default, check for a string "message" property.
-      if (typeof error.message == "string") {
-        msg = String(error.message);
-      } else {
-        // Hopefully it won't come to this...
-        msg = JSON.stringify(error);
-      }
-    }
+
     return {
       name: "unexpectederror",
-      error: cleanErrorMessage(msg)
+      error: cleanErrorMessage(String(error))
     };
   }
 

@@ -72,7 +72,7 @@ extern "C" {
 void
 Gecko_GetErrorName(nsresult aRv, nsACString& aName)
 {
-  mozilla::GetErrorName(aRv, aName);
+  GetErrorName(aRv, aName);
 }
 
 }

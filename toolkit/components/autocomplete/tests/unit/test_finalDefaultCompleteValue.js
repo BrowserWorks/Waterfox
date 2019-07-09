@@ -16,6 +16,10 @@ function AutoCompleteInput(aSearches) {
 }
 AutoCompleteInput.prototype = Object.create(AutoCompleteInputBase.prototype);
 
+function run_test() {
+  run_next_test();
+}
+
 add_test(function test_keyNavigation() {
   doSearch("moz", "mozilla.com", "http://www.mozilla.com", function(aController) {
     do_check_eq(aController.input.textValue, "mozilla.com");

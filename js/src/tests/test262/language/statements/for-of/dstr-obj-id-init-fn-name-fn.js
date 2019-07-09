@@ -42,12 +42,10 @@ var counter = 0;
 for ({ xFn = function x() {}, fn = function() {} } of [{}]) {
   assert.notSameValue(xFn.name, 'xFn');
 
-  verifyProperty(fn, 'name', {
-    enumerable: false,
-    writable: false,
-    configurable: true,
-    value: 'fn'
-  });
+  assert.sameValue(fn.name, 'fn');
+  verifyNotEnumerable(fn, 'name');
+  verifyNotWritable(fn, 'name');
+  verifyConfigurable(fn, 'name');
   counter += 1;
 }
 

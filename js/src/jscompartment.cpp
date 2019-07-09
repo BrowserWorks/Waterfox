@@ -59,18 +59,14 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     warnedAboutDateToLocaleFormat(false),
     warnedAboutExprClosure(false),
     warnedAboutForEach(false),
-    warnedAboutLegacyGenerator(false),
-    warnedAboutObjectWatch(false),
     warnedAboutStringGenericsMethods(0),
 #ifdef DEBUG
     firedOnNewGlobalObject(false),
 #endif
     global_(nullptr),
     enterCompartmentDepth(0),
-    globalHolds(0),
     performanceMonitoring(runtime_),
     data(nullptr),
-    realmData(nullptr),
     allocationMetadataBuilder(nullptr),
     lastAnimationTime(0),
     regExps(zone),
@@ -99,7 +95,6 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     jitCompartment_(nullptr),
     mappedArgumentsTemplate_(nullptr),
     unmappedArgumentsTemplate_(nullptr),
-    iterResultTemplate_(nullptr),
     lcovOutput()
 {
     PodArrayZero(sawDeprecatedLanguageExtension);
@@ -588,17 +583,7 @@ JSCompartment::getOrCreateNonSyntacticLexicalEnvironment(JSContext* cx, HandleOb
     RootedObject lexicalEnv(cx, nonSyntacticLexicalEnvironments_->lookup(key));
 
     if (!lexicalEnv) {
-        // NOTE: The default global |this| value is set to key for compatibility
-        // with existing users of the lexical environment cache.
-        //  - When used by shared-global JSM loader, |this| must be the
-        //    NonSyntacticVariablesObject passed as enclosing.
-        //  - When used by SubscriptLoader, |this| must be the target object of
-        //    the WithEnvironmentObject wrapper.
-        //  - When used by XBL/DOM Events, we execute directly as a function and
-        //    do not access the |this| value.
-        // See js::GetFunctionThis / js::GetNonSyntacticGlobalThis
-        MOZ_ASSERT(key->is<NonSyntacticVariablesObject>() || !key->is<EnvironmentObject>());
-        lexicalEnv = LexicalEnvironmentObject::createNonSyntactic(cx, enclosing, /*thisv = */key);
+        lexicalEnv = LexicalEnvironmentObject::createNonSyntactic(cx, enclosing);
         if (!lexicalEnv)
             return nullptr;
         if (!nonSyntacticLexicalEnvironments_->add(cx, key, lexicalEnv))
@@ -642,10 +627,10 @@ JSCompartment::addToVarNames(JSContext* cx, JS::Handle<JSAtom*> name)
 /* static */ HashNumber
 TemplateRegistryHashPolicy::hash(const Lookup& lookup)
 {
-    size_t length = lookup->as<NativeObject>().getDenseInitializedLength();
+    size_t length = GetAnyBoxedOrUnboxedInitializedLength(lookup);
     HashNumber hash = 0;
     for (uint32_t i = 0; i < length; i++) {
-        JSAtom& lookupAtom = lookup->as<NativeObject>().getDenseElement(i).toString()->asAtom();
+        JSAtom& lookupAtom = GetAnyBoxedOrUnboxedDenseElement(lookup, i).toString()->asAtom();
         hash = mozilla::AddToHash(hash, lookupAtom.hash());
     }
     return hash;
@@ -654,13 +639,13 @@ TemplateRegistryHashPolicy::hash(const Lookup& lookup)
 /* static */ bool
 TemplateRegistryHashPolicy::match(const Key& key, const Lookup& lookup)
 {
-    size_t length = lookup->as<NativeObject>().getDenseInitializedLength();
-    if (key->as<NativeObject>().getDenseInitializedLength() != length)
+    size_t length = GetAnyBoxedOrUnboxedInitializedLength(lookup);
+    if (GetAnyBoxedOrUnboxedInitializedLength(key) != length)
         return false;
 
     for (uint32_t i = 0; i < length; i++) {
-        JSAtom* a = &key->as<NativeObject>().getDenseElement(i).toString()->asAtom();
-        JSAtom* b = &lookup->as<NativeObject>().getDenseElement(i).toString()->asAtom();
+        JSAtom* a = &GetAnyBoxedOrUnboxedDenseElement(key, i).toString()->asAtom();
+        JSAtom* b = &GetAnyBoxedOrUnboxedDenseElement(lookup, i).toString()->asAtom();
         if (a != b)
             return false;
     }
@@ -669,7 +654,7 @@ TemplateRegistryHashPolicy::match(const Key& key, const Lookup& lookup)
 }
 
 bool
-JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleArrayObject rawStrings,
+JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleObject rawStrings,
                                         MutableHandleObject templateObj)
 {
     if (TemplateRegistry::AddPtr p = templateLiteralMap_.lookupForAdd(rawStrings)) {
@@ -681,7 +666,7 @@ JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleArrayObject rawStri
     } else {
         MOZ_ASSERT(templateObj->nonProxyIsExtensible());
         RootedValue rawValue(cx, ObjectValue(*rawStrings));
-        if (!DefineDataProperty(cx, templateObj, cx->names().raw, rawValue, 0))
+        if (!DefineProperty(cx, templateObj, cx->names().raw, rawValue, nullptr, nullptr, 0))
             return false;
         if (!FreezeObject(cx, rawStrings))
             return false;
@@ -696,7 +681,7 @@ JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleArrayObject rawStri
 }
 
 JSObject*
-JSCompartment::getExistingTemplateLiteralObject(ArrayObject* rawStrings)
+JSCompartment::getExistingTemplateLiteralObject(JSObject* rawStrings)
 {
     TemplateRegistry::Ptr p = templateLiteralMap_.lookup(rawStrings);
     MOZ_ASSERT(p);
@@ -718,7 +703,7 @@ JSCompartment::traceOutgoingCrossCompartmentWrappers(JSTracer* trc)
              * We have a cross-compartment wrapper. Its private pointer may
              * point into the compartment being collected, so we should mark it.
              */
-            ProxyObject::traceEdgeToTarget(trc, wrapper);
+            TraceEdge(trc, wrapper->slotOfPrivate(), "cross-compartment wrapper");
         }
     }
 }
@@ -768,7 +753,7 @@ JSCompartment::traceRoots(JSTracer* trc, js::gc::GCRuntime::TraceOrMarkRuntime t
         //
         // If a compartment is on-stack, we mark its global so that
         // JSContext::global() remains valid.
-        if (shouldTraceGlobal() && global_.unbarrieredGet())
+        if (enterCompartmentDepth && global_.unbarrieredGet())
             TraceRoot(trc, global_.unsafeUnbarrieredForTracing(), "on-stack compartment global");
     }
 
@@ -854,8 +839,6 @@ JSCompartment::sweepAfterMinorGC(JSTracer* trc)
         table.sweepAfterMinorGC();
 
     crossCompartmentWrappers.sweepAfterMinorGC(trc);
-
-    sweepMapAndSetObjectsAfterMinorGC();
 }
 
 void
@@ -951,20 +934,6 @@ JSCompartment::sweepWatchpoints()
         watchpointMap->sweep();
 }
 
-void
-JSCompartment::sweepMapAndSetObjectsAfterMinorGC()
-{
-    auto fop = runtime_->defaultFreeOp();
-
-    for (auto mapobj : mapsWithNurseryMemory)
-        MapObject::sweepAfterMinorGC(fop, mapobj);
-    mapsWithNurseryMemory.clearAndFree();
-
-    for (auto setobj : setsWithNurseryMemory)
-        SetObject::sweepAfterMinorGC(fop, setobj);
-    setsWithNurseryMemory.clearAndFree();
-}
-
 namespace {
 struct TraceRootFunctor {
     JSTracer* trc;
@@ -999,9 +968,6 @@ JSCompartment::sweepTemplateObjects()
 
     if (unmappedArgumentsTemplate_ && IsAboutToBeFinalized(&unmappedArgumentsTemplate_))
         unmappedArgumentsTemplate_.set(nullptr);
-
-    if (iterResultTemplate_ && IsAboutToBeFinalized(&iterResultTemplate_))
-        iterResultTemplate_.set(nullptr);
 }
 
 /* static */ void

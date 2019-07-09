@@ -89,10 +89,11 @@ PaymentResponse::GetDetails(JSContext* aCx, JS::MutableHandle<JSObject*> aRetVal
 
     MOZ_ASSERT(aCx);
     JS::RootedValue value(aCx);
-    if (NS_WARN_IF(!response.ToObjectInternal(aCx, &value))) {
+    JS::MutableHandleValue handleValue(&value);
+    if (NS_WARN_IF(!response.ToObjectInternal(aCx, handleValue))) {
       return;
     }
-    aRetVal.set(&value.toObject());
+    aRetVal.set(&handleValue.toObject());
   }
 }
 

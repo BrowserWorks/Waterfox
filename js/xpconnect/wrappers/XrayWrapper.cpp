@@ -187,12 +187,6 @@ XrayTraits::getExpandoChain(HandleObject obj)
     return ObjectScope(obj)->GetExpandoChain(obj);
 }
 
-JSObject*
-XrayTraits::detachExpandoChain(HandleObject obj)
-{
-    return ObjectScope(obj)->DetachExpandoChain(obj);
-}
-
 bool
 XrayTraits::setExpandoChain(JSContext* cx, HandleObject obj, HandleObject chain)
 {
@@ -297,7 +291,7 @@ ReportWrapperDenial(JSContext* cx, HandleId id, WrapperDenialType type, const ch
         MOZ_ASSERT(type == WrapperDenialForCOW);
         errorMessage.emplace("Security wrapper denied access to property %s on privileged "
                              "Javascript object. Support for exposing privileged objects "
-                             "to untrusted content via __exposedProps__ has been "
+                             "to untrusted content via __exposedProps__ is being gradually "
                              "removed - use WebIDL bindings or Components.utils.cloneInto "
                              "instead. Note that only the first denied property access from a "
                              "given global object will be reported.",
@@ -457,19 +451,11 @@ TryResolvePropertyFromSpecs(JSContext* cx, HandleId id, HandleObject holder,
         }
     }
     if (psMatch) {
-        // The generic Xray machinery only defines non-own properties on the holder.
-        // This is broken, and will be fixed at some point, but for now we need to
-        // cache the value explicitly. See the corresponding call to
-        // JS_GetPropertyById at the top of JSXrayTraits::resolveOwnProperty.
-        //
-        // Note also that the public-facing API here doesn't give us a way to
-        // pass along JITInfo. It's probably ok though, since Xrays are already
-        // pretty slow.
         desc.value().setUndefined();
+        RootedFunction getterObj(cx);
+        RootedFunction setterObj(cx);
         unsigned flags = psMatch->flags;
         if (psMatch->isAccessor()) {
-            RootedFunction getterObj(cx);
-            RootedFunction setterObj(cx);
             if (psMatch->isSelfHosted()) {
                 getterObj = JS::GetSelfHostedFunction(cx, psMatch->accessors.getter.selfHosted.funname, id, 0);
                 if (!getterObj)
@@ -489,26 +475,32 @@ TryResolvePropertyFromSpecs(JSContext* cx, HandleId id, HandleObject holder,
                                                  JSSetterOp));
             }
             desc.setAttributes(flags);
-            if (!JS_DefinePropertyById(cx, holder, id,
-                                       JS_PROPERTYOP_GETTER(desc.getter()),
-                                       JS_PROPERTYOP_SETTER(desc.setter()),
-                                       // This particular descriptor, unlike most,
-                                       // actually stores JSNatives directly,
-                                       // since we just set it up.  Do NOT pass
-                                       // JSPROP_PROPOP_ACCESSORS here!
-                                       desc.attributes()))
-            {
-                return false;
-            }
         } else {
             RootedValue v(cx);
             if (!psMatch->getValue(cx, &v))
                 return false;
-            if (!JS_DefinePropertyById(cx, holder, id, v, flags & ~JSPROP_INTERNAL_USE_BIT))
-                return false;
+            desc.value().set(v);
+            desc.setAttributes(flags & ~JSPROP_INTERNAL_USE_BIT);
         }
 
-        return JS_GetOwnPropertyDescriptorById(cx, holder, id, desc);
+        // The generic Xray machinery only defines non-own properties on the holder.
+        // This is broken, and will be fixed at some point, but for now we need to
+        // cache the value explicitly. See the corresponding call to
+        // JS_GetPropertyById at the top of JSXrayTraits::resolveOwnProperty.
+        //
+        // Note also that the public-facing API here doesn't give us a way to
+        // pass along JITInfo. It's probably ok though, since Xrays are already
+        // pretty slow.
+        return JS_DefinePropertyById(cx, holder, id,
+                                     desc.value(),
+                                     // This particular descriptor, unlike most,
+                                     // actually stores JSNatives directly,
+                                     // since we just set it up.  Do NOT pass
+                                     // JSPROP_PROPOP_ACCESSORS here!
+                                     desc.attributes(),
+                                     JS_PROPERTYOP_GETTER(desc.getter()),
+                                     JS_PROPERTYOP_SETTER(desc.setter())) &&
+               JS_GetOwnPropertyDescriptorById(cx, holder, id, desc);
     }
 
     return true;
@@ -1102,7 +1094,7 @@ ExpandoObjectFinalize(JSFreeOp* fop, JSObject* obj)
 
 const JSClassOps XrayExpandoObjectClassOps = {
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
     ExpandoObjectFinalize
 };
 
@@ -1305,30 +1297,76 @@ XrayTraits::ensureExpandoObject(JSContext* cx, HandleObject wrapper,
 }
 
 bool
-XrayTraits::cloneExpandoChain(JSContext* cx, HandleObject dst, HandleObject srcChain)
+XrayTraits::cloneExpandoChain(JSContext* cx, HandleObject dst, HandleObject src)
 {
     MOZ_ASSERT(js::IsObjectInContextCompartment(dst, cx));
     MOZ_ASSERT(getExpandoChain(dst) == nullptr);
 
-    RootedObject oldHead(cx, srcChain);
+    RootedObject oldHead(cx, getExpandoChain(src));
+
+#ifdef DEBUG
+    // When this is called from dom::ReparentWrapper() there will be no native
+    // set for |dst|. Eventually it will be set to that of |src|.  This will
+    // prevent attachExpandoObject() from preserving the wrapper, but this is
+    // not a problem because in this case the wrapper will already have been
+    // preserved when expandos were originally added to |src|. Assert the
+    // wrapper for |src| has been preserved if it has expandos set.
+    if (oldHead) {
+        nsISupports* identity = mozilla::dom::UnwrapDOMObjectToISupports(src);
+        if (identity) {
+            nsWrapperCache* cache = nullptr;
+            CallQueryInterface(identity, &cache);
+            MOZ_ASSERT_IF(cache, cache->PreservingWrapper());
+        }
+    }
+#endif
+
     while (oldHead) {
+        // If movingIntoXrayCompartment is true, then our new reflector is in a
+        // compartment that used to have an Xray-with-expandos to the old reflector
+        // and we should copy the expandos to the new reflector directly.
+        bool movingIntoXrayCompartment;
+
+        // exclusiveWrapper is only used if movingIntoXrayCompartment ends up true.
         RootedObject exclusiveWrapper(cx);
         RootedObject wrapperHolder(cx, JS_GetReservedSlot(oldHead,
                                                           JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER)
                                                          .toObjectOrNull());
         if (wrapperHolder) {
-            // The global containing this wrapper holder has an xray for |src|
-            // with expandos. Create an xray in the global for |dst| which
-            // will be associated with a clone of |src|'s expando object.
-            JSAutoCompartment ac(cx, UncheckedUnwrap(wrapperHolder));
-            exclusiveWrapper = dst;
-            if (!JS_WrapObject(cx, &exclusiveWrapper))
+            RootedObject unwrappedHolder(cx, UncheckedUnwrap(wrapperHolder));
+            // unwrappedHolder is the compartment of the relevant Xray, so check
+            // whether that matches the compartment of cx (which matches the
+            // compartment of dst).
+            movingIntoXrayCompartment =
+                js::IsObjectInContextCompartment(unwrappedHolder, cx);
+
+            if (!movingIntoXrayCompartment) {
+                // The global containing this wrapper holder has an xray for |src|
+                // with expandos. Create an xray in the global for |dst| which
+                // will be associated with a clone of |src|'s expando object.
+                JSAutoCompartment ac(cx, unwrappedHolder);
+                exclusiveWrapper = dst;
+                if (!JS_WrapObject(cx, &exclusiveWrapper))
+                    return false;
+            }
+        } else {
+            JSAutoCompartment ac(cx, oldHead);
+            movingIntoXrayCompartment =
+                expandoObjectMatchesConsumer(cx, oldHead, ObjectPrincipal(dst));
+        }
+
+        if (movingIntoXrayCompartment) {
+            // Just copy properties directly onto dst.
+            if (!JS_CopyPropertiesFrom(cx, dst, oldHead))
+                return false;
+        } else {
+            // Create a new expando object in the compartment of dst to replace
+            // oldHead.
+            RootedObject newHead(cx, attachExpandoObject(cx, dst, exclusiveWrapper,
+                                                         GetExpandoObjectPrincipal(oldHead)));
+            if (!JS_CopyPropertiesFrom(cx, newHead, oldHead))
                 return false;
         }
-        RootedObject newHead(cx, attachExpandoObject(cx, dst, exclusiveWrapper,
-                                                     GetExpandoObjectPrincipal(oldHead)));
-        if (!JS_CopyPropertiesFrom(cx, newHead, oldHead))
-            return false;
         oldHead = JS_GetReservedSlot(oldHead, JSSLOT_EXPANDO_NEXT).toObjectOrNull();
     }
     return true;
@@ -1372,6 +1410,15 @@ XrayTraits::getExpandoClass(JSContext* cx, HandleObject target) const
 {
     return &DefaultXrayExpandoObjectClass;
 }
+
+namespace XrayUtils {
+bool CloneExpandoChain(JSContext* cx, JSObject* dstArg, JSObject* srcArg)
+{
+    RootedObject dst(cx, dstArg);
+    RootedObject src(cx, srcArg);
+    return GetXrayTraits(src)->cloneExpandoChain(cx, dst, src);
+}
+} // namespace XrayUtils
 
 static const size_t JSSLOT_XRAY_HOLDER = 0;
 
@@ -1522,6 +1569,9 @@ XPCWrappedNativeXrayTraits::resolveNativeProperty(JSContext* cx, HandleObject wr
         if (member->IsWritableAttribute())
             attrs |= JSPROP_SETTER;
 
+        // Make the property shared on the holder so no slot is allocated
+        // for it. This avoids keeping garbage alive through that slot.
+        attrs |= JSPROP_SHARED;
         desc.setAttributes(attrs);
     } else {
         // This is a method. Clone a function for it.
@@ -1626,8 +1676,9 @@ XrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper, HandleObject
     {
         if (!JS_AlreadyHasOwnPropertyById(cx, holder, id, &found))
             return false;
-        if (!found && !JS_DefinePropertyById(cx, holder, id, wrappedJSObject_getter, nullptr,
-                                             JSPROP_ENUMERATE)) {
+        if (!found && !JS_DefinePropertyById(cx, holder, id, UndefinedHandleValue,
+                                             JSPROP_ENUMERATE | JSPROP_SHARED,
+                                             wrappedJSObject_getter)) {
             return false;
         }
         if (!JS_GetOwnPropertyDescriptorById(cx, holder, id, desc))
@@ -2071,10 +2122,6 @@ XrayWrapper<Base, Traits>::getPropertyDescriptor(JSContext* cx, HandleObject wra
                                                  JS::MutableHandle<PropertyDescriptor> desc)
                                                  const
 {
-    // We can't assert !Traits::HasPrototypes here, because
-    // CrossOriginXrayWrapper::getOwnPropertyDescriptor calls us, but it uses
-    // DOMXrayTraits, which have HasPrototype.
-
     assertEnteredPolicy(cx, wrapper, id, BaseProxyHandler::GET | BaseProxyHandler::SET |
                                          BaseProxyHandler::GET_PROPERTY_DESCRIPTOR);
     RootedObject target(cx, XrayTraits::getTargetObject(wrapper));
@@ -2123,9 +2170,7 @@ XrayWrapper<Base, Traits>::getPropertyDescriptor(JSContext* cx, HandleObject wra
     // Scope Polluter and thus the resulting properties are non-|own|. However,
     // we're set up (above) to cache (on the holder) anything that comes out of
     // resolveNativeProperty, which we don't want for something dynamic like
-    // named access. So we just handle it separately here.  Note that this is
-    // only relevant for CrossOriginXrayWrapper, which calls
-    // getPropertyDescriptor from getOwnPropertyDescriptor.
+    // named access. So we just handle it separately here.
     nsGlobalWindow* win = nullptr;
     if (!desc.object() &&
         JSID_IS_STRING(id) &&
@@ -2170,8 +2215,6 @@ XrayWrapper<Base, Traits>::getOwnPropertyDescriptor(JSContext* cx, HandleObject 
                                          BaseProxyHandler::GET_PROPERTY_DESCRIPTOR);
     RootedObject target(cx, XrayTraits::getTargetObject(wrapper));
     RootedObject holder(cx, Traits::singleton.ensureHolder(cx, wrapper));
-    if (!holder)
-        return false;
 
     if (!Traits::singleton.resolveOwnProperty(cx, wrapper, target, holder, id, desc))
         return false;
@@ -2434,7 +2477,6 @@ template <typename Base, typename Traits>
 JSObject*
 XrayWrapper<Base, Traits>::enumerate(JSContext* cx, HandleObject wrapper) const
 {
-    MOZ_ASSERT(!Traits::HasPrototype, "Why did we get called?");
     // Skip our Base if it isn't already ProxyHandler.
     return js::BaseProxyHandler::enumerate(cx, wrapper);
 }

@@ -11,7 +11,6 @@
 #include "nsIResProtocolHandler.h"
 #include "nsIChromeRegistry.h"
 #include "nsAutoPtr.h"
-#include "nsStringStream.h"
 #include "StartupCacheUtils.h"
 #include "mozilla/scache/StartupCache.h"
 #include "mozilla/Omnijar.h"
@@ -23,14 +22,16 @@ nsresult
 NewObjectInputStreamFromBuffer(UniquePtr<char[]> buffer, uint32_t len,
                                nsIObjectInputStream** stream)
 {
-  nsCOMPtr<nsIInputStream> stringStream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stringStream),
-                                      buffer.release(), len,
-                                      NS_ASSIGNMENT_ADOPT);
-  MOZ_ALWAYS_SUCCEEDS(rv);
+  nsCOMPtr<nsIStringInputStream> stringStream =
+    do_CreateInstance("@mozilla.org/io/string-input-stream;1");
+  NS_ENSURE_TRUE(stringStream, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsIObjectInputStream> objectInput =
-    NS_NewObjectInputStream(stringStream);
+    do_CreateInstance("@mozilla.org/binaryinputstream;1");
+  NS_ENSURE_TRUE(objectInput, NS_ERROR_FAILURE);
+
+  stringStream->AdoptData(buffer.release(), len);
+  objectInput->SetInputStream(stringStream);
 
   objectInput.forget(stream);
   return NS_OK;
@@ -46,11 +47,12 @@ NewObjectOutputWrappedStorageStream(nsIObjectOutputStream **wrapperStream,
   nsresult rv = NS_NewStorageStream(256, UINT32_MAX, getter_AddRefs(storageStream));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCOMPtr<nsIObjectOutputStream> objectOutput
+    = do_CreateInstance("@mozilla.org/binaryoutputstream;1");
   nsCOMPtr<nsIOutputStream> outputStream
     = do_QueryInterface(storageStream);
 
-  nsCOMPtr<nsIObjectOutputStream> objectOutput
-    = NS_NewObjectOutputStream(outputStream);
+  objectOutput->SetOutputStream(outputStream);
 
 #ifdef DEBUG
   if (wantDebugStream) {
@@ -230,7 +232,7 @@ PathifyURI(nsIURI *in, nsACString &out)
             NS_ENSURE_SUCCESS(rv, rv);
 
             nsAutoCString path;
-            rv = baseFileURL->GetPathQueryRef(path);
+            rv = baseFileURL->GetPath(path);
             NS_ENSURE_SUCCESS(rv, rv);
 
             out.Append(path);

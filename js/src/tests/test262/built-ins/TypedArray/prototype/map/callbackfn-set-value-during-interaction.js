@@ -8,7 +8,7 @@ description: >
 info: >
   22.2.3.19 %TypedArray%.prototype.map ( callbackfn [ , thisArg ] )
 includes: [testTypedArray.js]
-features: [Reflect.set, TypedArray]
+features: [Reflect.set]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

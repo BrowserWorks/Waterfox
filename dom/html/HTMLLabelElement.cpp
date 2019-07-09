@@ -35,11 +35,45 @@ HTMLLabelElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 
 // nsISupports
 
-NS_IMPL_ISUPPORTS_INHERITED0(HTMLLabelElement, nsGenericHTMLElement)
+NS_IMPL_ISUPPORTS_INHERITED(HTMLLabelElement, nsGenericHTMLElement,
+                            nsIDOMHTMLLabelElement)
 
 // nsIDOMHTMLLabelElement
 
 NS_IMPL_ELEMENT_CLONE(HTMLLabelElement)
+
+NS_IMETHODIMP
+HTMLLabelElement::GetForm(nsIDOMHTMLFormElement** aForm)
+{
+  RefPtr<nsIDOMHTMLFormElement> form = GetForm();
+  form.forget(aForm);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HTMLLabelElement::GetControl(nsIDOMHTMLElement** aElement)
+{
+  nsCOMPtr<nsIDOMHTMLElement> element = do_QueryObject(GetLabeledElement());
+  element.forget(aElement);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HTMLLabelElement::SetHtmlFor(const nsAString& aHtmlFor)
+{
+  ErrorResult rv;
+  SetHtmlFor(aHtmlFor, rv);
+  return rv.StealNSResult();
+}
+
+NS_IMETHODIMP
+HTMLLabelElement::GetHtmlFor(nsAString& aHtmlFor)
+{
+  nsString htmlFor;
+  GetHtmlFor(htmlFor);
+  aHtmlFor = htmlFor;
+  return NS_OK;
+}
 
 HTMLFormElement*
 HTMLLabelElement::GetForm() const

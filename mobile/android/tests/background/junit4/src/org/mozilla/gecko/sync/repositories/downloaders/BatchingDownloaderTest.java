@@ -139,7 +139,7 @@ public class BatchingDownloaderTest {
         }
 
         @Override
-        public void onFetchCompleted() {
+        public void onFetchCompleted(long fetchEnd) {
             this.isSuccess = true;
         }
 
@@ -213,11 +213,6 @@ public class BatchingDownloaderTest {
                 throws URISyntaxException, UnsupportedEncodingException {
             this.offset = offset;
             return super.makeSyncStorageCollectionRequest(newer, batchLimit, full, sort, ids, offset);
-        }
-
-        @Override
-        void runTaskOnQueue(Runnable task) {
-            task.run();
         }
     }
 

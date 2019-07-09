@@ -10,7 +10,6 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/ServoTypes.h"
 #include "mozilla/SheetType.h"
 #include "mozilla/StyleComplexColor.h"
 #include "mozilla/URLExtraData.h"
@@ -33,7 +32,7 @@
 #include <type_traits>
 
 class imgRequestProxy;
-class nsAtom;
+class nsIAtom;
 class nsIContent;
 class nsIDocument;
 class nsIPrincipal;
@@ -41,7 +40,6 @@ class nsIURI;
 class nsPresContext;
 template <class T>
 class nsPtrHashKey;
-struct RustString;
 
 namespace mozilla {
 class CSSStyleSheet;
@@ -106,14 +104,9 @@ protected:
   // aString and aExtraData.
   URLValueData(const nsAString& aString,
                already_AddRefed<URLExtraData> aExtraData);
-  URLValueData(ServoRawOffsetArc<RustString> aString,
-               already_AddRefed<URLExtraData> aExtraData);
   // Construct with the actual URI.
   URLValueData(already_AddRefed<PtrHolder<nsIURI>> aURI,
                const nsAString& aString,
-               already_AddRefed<URLExtraData> aExtraData);
-  URLValueData(already_AddRefed<PtrHolder<nsIURI>> aURI,
-               ServoRawOffsetArc<RustString> aString,
                already_AddRefed<URLExtraData> aExtraData);
 
 public:
@@ -163,56 +156,27 @@ public:
 
   bool EqualsExceptRef(nsIURI* aURI) const;
 
-  // Can only be called from the main thread. Returns this URL's UTF-16 representation,
-  // converting and caching its value if necessary.
-  const nsString& GetUTF16String() const;
-  // Returns this URL's UTF-16 representation, converting if necessary.
-  nsString GetUTF16StringForAnyThread() const;
-
-  bool IsStringEmpty() const;
-
 private:
   // mURI stores the lazily resolved URI.  This may be null if the URI is
   // invalid, even once resolved.
   mutable PtrHandle<nsIURI> mURI;
 public:
+  nsString mString;
   RefPtr<URLExtraData> mExtraData;
 private:
-  // Returns a substring based on mStrings.mRustString which should not be exposed
-  // to external consumers.
-  nsDependentCSubstring GetRustString() const;
-
   mutable bool mURIResolved;
   // mIsLocalRef is set when url starts with a U+0023 number sign(#) character.
   mutable Maybe<bool> mIsLocalRef;
   mutable Maybe<bool> mMightHaveRef;
 
-  mutable union RustOrGeckoString {
-    explicit RustOrGeckoString(const nsAString& aString)
-    : mString(aString) {}
-    explicit RustOrGeckoString(ServoRawOffsetArc<RustString> aString)
-    : mRustString(aString) {}
-    ~RustOrGeckoString() {}
-    nsString mString;
-    mozilla::ServoRawOffsetArc<RustString> mRustString;
-  } mStrings;
-  mutable bool mUsingRustString;
-
 protected:
-  // Only used by ImageValue.  Declared up here because otherwise bindgen gets
-  // confused by the non-standard-layout packing of the variable up into
-  // URLValueData.
-  bool mLoadedImage = false;
-
-  virtual ~URLValueData();
+  virtual ~URLValueData() = default;
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
   URLValueData(const URLValueData& aOther) = delete;
   URLValueData& operator=(const URLValueData& aOther) = delete;
-
-  friend struct ImageValue;
 };
 
 struct URLValue final : public URLValueData
@@ -236,8 +200,6 @@ struct URLValue final : public URLValueData
 
 struct ImageValue final : public URLValueData
 {
-  static ImageValue* CreateFromURLValue(URLValue* url, nsIDocument* aDocument);
-
   // Not making the constructor and destructor inline because that would
   // force us to include imgIRequest.h, which leads to REQUIRES hell, since
   // this header is included all over.
@@ -247,19 +209,9 @@ struct ImageValue final : public URLValueData
              already_AddRefed<URLExtraData> aExtraData,
              nsIDocument* aDocument);
 
-  // This constructor is only safe to call from the main thread.
-  ImageValue(nsIURI* aURI, ServoRawOffsetArc<RustString> aString,
-             already_AddRefed<URLExtraData> aExtraData,
-             nsIDocument* aDocument);
-
   // This constructor is safe to call from any thread, but Initialize
   // must be called later for the object to be useful.
   ImageValue(const nsAString& aString,
-             already_AddRefed<URLExtraData> aExtraData);
-
-  // This constructor is safe to call from any thread, but Initialize
-  // must be called later for the object to be useful.
-  ImageValue(ServoRawOffsetArc<RustString> aURIString,
              already_AddRefed<URLExtraData> aExtraData);
 
   ImageValue(const ImageValue&) = delete;
@@ -267,7 +219,7 @@ struct ImageValue final : public URLValueData
 
   void Initialize(nsIDocument* aDocument);
 
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+  // XXXheycam We should have our own SizeOfIncludingThis method.
 
 protected:
   ~ImageValue();
@@ -276,6 +228,9 @@ public:
   // Inherit Equals from URLValueData
 
   nsRefPtrHashtable<nsPtrHashKey<nsIDocument>, imgRequestProxy> mRequests;
+
+private:
+  bool mLoadedImage = false;
 };
 
 struct GridNamedArea {
@@ -334,6 +289,31 @@ private:
   GridTemplateAreasValue(const GridTemplateAreasValue& aOther) = delete;
   GridTemplateAreasValue&
   operator=(const GridTemplateAreasValue& aOther) = delete;
+};
+
+class FontFamilyListRefCnt final : public FontFamilyList {
+public:
+    FontFamilyListRefCnt()
+        : FontFamilyList()
+    {}
+
+    explicit FontFamilyListRefCnt(FontFamilyType aGenericType)
+        : FontFamilyList(aGenericType)
+    {}
+
+    FontFamilyListRefCnt(const nsAString& aFamilyName,
+                         QuotedName aQuoted)
+        : FontFamilyList(aFamilyName, aQuoted)
+    {}
+
+    FontFamilyListRefCnt(const FontFamilyListRefCnt& aOther)
+        : FontFamilyList(aOther)
+    {}
+
+    NS_INLINE_DECL_REFCOUNTING(FontFamilyListRefCnt);
+
+private:
+    ~FontFamilyListRefCnt() {}
 };
 
 struct RGBAColorData
@@ -503,10 +483,10 @@ enum nsCSSUnit {
   eCSSUnit_PairListDep  = 57,     // (nsCSSValuePairList*) same as PairList
                                   //   but does not own the list
 
-  eCSSUnit_FontFamilyList = 58,   // (SharedFontList*) value
+  eCSSUnit_FontFamilyList = 58,   // (FontFamilyList*) value
 
   // Atom units
-  eCSSUnit_AtomIdent    = 60,     // (nsAtom*) for its string as an identifier
+  eCSSUnit_AtomIdent    = 60,     // (nsIAtom*) for its string as an identifier
 
   eCSSUnit_Integer      = 70,     // (int) simple value
   eCSSUnit_Enumerated   = 71,     // (int) value has enumerated meaning
@@ -616,7 +596,7 @@ public:
   explicit nsCSSValue(nsCSSValueGradient* aValue);
   explicit nsCSSValue(nsCSSValueTokenStream* aValue);
   explicit nsCSSValue(mozilla::css::GridTemplateAreasValue* aValue);
-  explicit nsCSSValue(mozilla::SharedFontList* aValue);
+  explicit nsCSSValue(mozilla::css::FontFamilyListRefCnt* aValue);
   nsCSSValue(const nsCSSValue& aCopy);
   nsCSSValue(nsCSSValue&& aOther)
     : mUnit(aOther.mUnit)
@@ -635,11 +615,15 @@ public:
     return !(*this == aOther);
   }
 
+  // Enum for AppendToString's aValueSerialization argument.
+  enum Serialization { eNormalized, eAuthorSpecified };
+
   /**
    * Serialize |this| as a specified value for |aProperty| and append
    * it to |aResult|.
    */
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      Serialization aValueSerialization) const;
 
   nsCSSUnit GetUnit() const { return mUnit; }
   bool      IsLengthUnit() const
@@ -818,13 +802,13 @@ public:
     return mValue.mSharedList;
   }
 
-  mozilla::NotNull<mozilla::SharedFontList*> GetFontFamilyListValue() const
+  mozilla::FontFamilyList* GetFontFamilyListValue() const
   {
     MOZ_ASSERT(mUnit == eCSSUnit_FontFamilyList,
                "not a font family list value");
     NS_ASSERTION(mValue.mFontFamilyList != nullptr,
                  "font family list value should never be null");
-    return mozilla::WrapNotNull(mValue.mFontFamilyList);
+    return mValue.mFontFamilyList;
   }
 
   // bodies of these are below
@@ -870,8 +854,8 @@ public:
     MOZ_ASSERT(mUnit == eCSSUnit_URL || mUnit == eCSSUnit_Image,
                "not a URL value");
     return mUnit == eCSSUnit_URL ?
-             mValue.mURL->GetUTF16String().get() :
-             mValue.mImage->GetUTF16String().get();
+             mValue.mURL->mString.get() :
+             mValue.mImage->mString.get();
   }
 
   // Not making this inline because that would force us to include
@@ -893,7 +877,7 @@ public:
     return mValue.mFloatColor;
   }
 
-  nsAtom* GetAtomValue() const {
+  nsIAtom* GetAtomValue() const {
     MOZ_ASSERT(mUnit == eCSSUnit_AtomIdent);
     return mValue.mAtom;
   }
@@ -919,7 +903,7 @@ public:
   void SetPercentValue(float aValue);
   void SetFloatValue(float aValue, nsCSSUnit aUnit);
   void SetStringValue(const nsString& aValue, nsCSSUnit aUnit);
-  void SetAtomIdentValue(already_AddRefed<nsAtom> aValue);
+  void SetAtomIdentValue(already_AddRefed<nsIAtom> aValue);
   void SetColorValue(nscolor aValue);
   void SetIntegerColorValue(nscolor aValue, nsCSSUnit aUnit);
   // converts the nscoord to pixels
@@ -937,7 +921,7 @@ public:
   void SetGradientValue(nsCSSValueGradient* aGradient);
   void SetTokenStreamValue(nsCSSValueTokenStream* aTokenStream);
   void SetGridTemplateAreas(mozilla::css::GridTemplateAreasValue* aValue);
-  void SetFontFamilyListValue(already_AddRefed<mozilla::SharedFontList> aFontListValue);
+  void SetFontFamilyListValue(mozilla::css::FontFamilyListRefCnt* aFontListValue);
   void SetPairValue(const nsCSSValuePair* aPair);
   void SetPairValue(const nsCSSValue& xValue, const nsCSSValue& yValue);
   void SetSharedListValue(nsCSSValueSharedList* aList);
@@ -991,11 +975,13 @@ public:
   static void
   AppendSidesShorthandToString(const nsCSSPropertyID aProperties[],
                                const nsCSSValue* aValues[],
-                               nsAString& aString);
+                               nsAString& aString,
+                               Serialization aSerialization);
   static void
   AppendBasicShapeRadiusToString(const nsCSSPropertyID aProperties[],
                                  const nsCSSValue* aValues[],
-                                 nsAString& aResult);
+                                 nsAString& aResult,
+                                 Serialization aValueSerialization);
   static void
   AppendAlignJustifyValueToString(int32_t aValue, nsAString& aResult);
 
@@ -1004,16 +990,21 @@ private:
     return static_cast<char16_t*>(aBuffer->Data());
   }
 
-  void AppendPolygonToString(nsCSSPropertyID aProperty,
-                             nsAString& aResult) const;
+  void AppendPolygonToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                             Serialization aValueSerialization) const;
   void AppendPositionCoordinateToString(const nsCSSValue& aValue,
                                         nsCSSPropertyID aProperty,
-                                        nsAString& aResult) const;
+                                        nsAString& aResult,
+                                        Serialization aSerialization) const;
   void AppendCircleOrEllipseToString(
            nsCSSKeyword aFunctionId,
-           nsCSSPropertyID aProperty, nsAString& aResult) const;
-  void AppendBasicShapePositionToString(nsAString& aResult) const;
-  void AppendInsetToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+           nsCSSPropertyID aProperty, nsAString& aResult,
+           Serialization aValueSerialization) const;
+  void AppendBasicShapePositionToString(
+           nsAString& aResult,
+           Serialization aValueSerialization) const;
+  void AppendInsetToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                           Serialization aValueSerialization) const;
 protected:
   nsCSSUnit mUnit;
   union {
@@ -1023,7 +1014,7 @@ protected:
     // If we're of a string type, mString is not null.
     nsStringBuffer* MOZ_OWNING_REF mString;
     nscolor    mColor;
-    nsAtom* MOZ_OWNING_REF mAtom;
+    nsIAtom* MOZ_OWNING_REF mAtom;
     Array* MOZ_OWNING_REF mArray;
     mozilla::css::URLValue* MOZ_OWNING_REF mURL;
     mozilla::css::ImageValue* MOZ_OWNING_REF mImage;
@@ -1039,7 +1030,7 @@ protected:
     nsCSSValuePairList_heap* MOZ_OWNING_REF mPairList;
     nsCSSValuePairList* mPairListDependent;
     nsCSSValueFloatColor* MOZ_OWNING_REF mFloatColor;
-    mozilla::SharedFontList* MOZ_OWNING_REF mFontFamilyList;
+    mozilla::css::FontFamilyListRefCnt* MOZ_OWNING_REF mFontFamilyList;
     mozilla::css::ComplexColorValue* MOZ_OWNING_REF mComplexColor;
   } mValue;
 };
@@ -1137,7 +1128,8 @@ struct nsCSSValueList {
 
   nsCSSValueList* Clone() const;  // makes a deep copy. Infallible.
   void CloneInto(nsCSSValueList* aList) const; // makes a deep copy into aList
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      nsCSSValue::Serialization aValueSerialization) const;
 
   static bool Equal(const nsCSSValueList* aList1,
                     const nsCSSValueList* aList2);
@@ -1199,7 +1191,8 @@ private:
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(nsCSSValueSharedList)
 
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      nsCSSValue::Serialization aValueSerialization) const;
 
   bool operator==(nsCSSValueSharedList const& aOther) const;
   bool operator!=(const nsCSSValueSharedList& aOther) const
@@ -1239,7 +1232,8 @@ struct nsCSSRect {
   nsCSSRect(const nsCSSRect& aCopy);
   ~nsCSSRect();
 
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      nsCSSValue::Serialization aValueSerialization) const;
 
   bool operator==(const nsCSSRect& aOther) const {
     return mTop == aOther.mTop &&
@@ -1380,7 +1374,8 @@ struct nsCSSValuePair {
            mYValue.GetUnit() != eCSSUnit_Null;
   }
 
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      nsCSSValue::Serialization aValueSerialization) const;
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
@@ -1471,7 +1466,8 @@ struct nsCSSValueTriplet {
                mZValue.GetUnit() != eCSSUnit_Null;
     }
 
-    void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+    void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                        nsCSSValue::Serialization aValueSerialization) const;
 
     nsCSSValue mXValue;
     nsCSSValue mYValue;
@@ -1534,7 +1530,8 @@ struct nsCSSValuePairList {
   ~nsCSSValuePairList();
 
   nsCSSValuePairList* Clone() const; // makes a deep copy. Infallible.
-  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult) const;
+  void AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
+                      nsCSSValue::Serialization aValueSerialization) const;
 
   static bool Equal(const nsCSSValuePairList* aList1,
                     const nsCSSValuePairList* aList2);

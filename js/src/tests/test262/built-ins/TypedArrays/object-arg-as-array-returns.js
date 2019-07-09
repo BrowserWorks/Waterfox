@@ -13,7 +13,6 @@ info: >
   internal slot.
 
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var obj = [7, 42];

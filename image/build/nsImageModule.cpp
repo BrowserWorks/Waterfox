@@ -82,6 +82,7 @@ static const mozilla::Module::CategoryEntry kImageCategories[] = {
   { "Gecko-Content-Viewers", IMAGE_PNG, "@mozilla.org/content/document-loader-factory;1" },
   { "Gecko-Content-Viewers", IMAGE_APNG, "@mozilla.org/content/document-loader-factory;1" },
   { "Gecko-Content-Viewers", IMAGE_X_PNG, "@mozilla.org/content/document-loader-factory;1" },
+  { "Gecko-Content-Viewers", IMAGE_WEBP, "@mozilla.org/content/document-loader-factory;1" },
   { "content-sniffing-services", "@mozilla.org/image/loader;1", "@mozilla.org/image/loader;1" },
   { nullptr }
 };
@@ -103,6 +104,7 @@ mozilla::image::EnsureModuleInitialized()
   mozilla::image::ImageFactory::Initialize();
   mozilla::image::DecodePool::Initialize();
   mozilla::image::SurfaceCache::Initialize();
+  mozilla::image::SurfacePipe::Initialize();
   imgLoader::GlobalInit();
   sInitialized = true;
   return NS_OK;

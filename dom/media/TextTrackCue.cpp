@@ -23,7 +23,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(TextTrackCue,
 
 NS_IMPL_ADDREF_INHERITED(TextTrackCue, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(TextTrackCue, DOMEventTargetHelper)
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TextTrackCue)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TextTrackCue)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 StaticRefPtr<nsIWebVTTParserWrapper> TextTrackCue::sParserWrapper;
@@ -54,8 +54,6 @@ TextTrackCue::TextTrackCue(nsPIDOMWindowInner* aOwnerWindow,
   , mText(aText)
   , mStartTime(aStartTime)
   , mEndTime(aEndTime)
-  , mPosition(0.0)
-  , mLine(0.0)
   , mReset(false, "TextTrackCue::mReset")
   , mHaveStartedWatcher(false)
   , mWatchManager(this, GetOwnerGlobal()->AbstractMainThreadFor(TaskCategory::Other))
@@ -78,8 +76,6 @@ TextTrackCue::TextTrackCue(nsPIDOMWindowInner* aOwnerWindow,
   , mStartTime(aStartTime)
   , mEndTime(aEndTime)
   , mTrackElement(aTrackElement)
-  , mPosition(0.0)
-  , mLine(0.0)
   , mReset(false, "TextTrackCue::mReset")
   , mHaveStartedWatcher(false)
   , mWatchManager(this, GetOwnerGlobal()->AbstractMainThreadFor(TaskCategory::Other))

@@ -5,7 +5,6 @@
 /*---
 description: It's a syntax error if a FunctionRestParameter is followed by a trailing comma (class expression method)
 esid: sec-class-definitions-runtime-semantics-evaluation
-features: [generators]
 flags: [generated]
 negative:
   phase: early
@@ -62,7 +61,6 @@ info: |
            iteratorRecord and env as arguments.
     [...]
 
-
     Trailing comma in the parameters list
 
     14.1 Function Definitions
@@ -74,7 +72,6 @@ info: |
         FormalParameterList[?Yield, ?Await] ,
         FormalParameterList[?Yield, ?Await] , FunctionRestParameter[?Yield, ?Await]
 ---*/
-throw "Test262: This statement should not be evaluated.";
 
 class C {
   *method(...a,) {

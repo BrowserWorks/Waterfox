@@ -22,6 +22,7 @@ const TEST_CASES = {
         { x: 50000, y: 0.5 },
         { x: 75000, y: 0.75 },
         { x: 99000, y: 0.99 },
+        { x: 100000, y: 1 },
         { x: 100000, y: 0 },
       ]
     ]
@@ -63,6 +64,7 @@ const TEST_CASES = {
         { x: 49999, y: 0.0 },
         { x: 50000, y: 0.5 },
         { x: 99999, y: 0.5 },
+        { x: 100000, y: 1 },
         { x: 100000, y: 0 },
       ]
     ]
@@ -105,6 +107,7 @@ const TEST_CASES = {
         { x: 79999, y: 0.6 },
         { x: 80000, y: 0.8 },
         { x: 99999, y: 0.8 },
+        { x: 100000, y: 1 },
         { x: 100000, y: 0 },
       ],
       [
@@ -112,6 +115,7 @@ const TEST_CASES = {
         { x: 49999, y: 0.0 },
         { x: 50000, y: 0.5 },
         { x: 99999, y: 0.5 },
+        { x: 100000, y: 1 },
         { x: 100000, y: 0 },
       ]
     ]
@@ -121,7 +125,8 @@ const TEST_CASES = {
 add_task(function* () {
   yield addTab(URL_ROOT + "doc_multiple_easings.html");
   const { panel } = yield openAnimationInspector();
-  getAnimationTimeBlocks(panel).forEach(timeBlock => {
+  const timelineComponent = panel.animationsTimelineComponent;
+  timelineComponent.timeBlocks.forEach(timeBlock => {
     const state = timeBlock.animation.state;
     const testcase = TEST_CASES[state.name];
     if (!testcase) {

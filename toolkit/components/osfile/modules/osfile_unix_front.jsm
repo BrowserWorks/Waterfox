@@ -9,10 +9,6 @@
  * This front-end is meant to be imported by a worker thread.
  */
 
-/* eslint-env mozilla/chrome-worker, node */
-/* global OS */
-
-// eslint-disable-next-line no-lone-blocks
 {
   if (typeof Components != "undefined") {
     // We do not wish osfile_unix_front.jsm to be used directly as a main thread
@@ -32,7 +28,7 @@
      let Path = require("resource://gre/modules/osfile/ospath.jsm");
      let SysAll = require("resource://gre/modules/osfile/osfile_unix_allthreads.jsm");
      exports.OS.Unix.File._init();
-     SharedAll.LOG.bind(SharedAll, "Unix front-end");
+     let LOG = SharedAll.LOG.bind(SharedAll, "Unix front-end");
      let Const = SharedAll.Constants.libc;
      let UnixFile = exports.OS.Unix.File;
      let Type = UnixFile.Type;
@@ -81,7 +77,7 @@
        if (this._closeResult) {
          throw this._closeResult;
        }
-
+       return;
      };
 
      /**
@@ -102,7 +98,7 @@
      File.prototype._read = function _read(buffer, nbytes, options = {}) {
       // Populate the page cache with data from a file so the subsequent reads
       // from that file will not block on disk I/O.
-       if (typeof(UnixFile.posix_fadvise) === "function" &&
+       if (typeof(UnixFile.posix_fadvise) === 'function' &&
            (options.sequential || !("sequential" in options))) {
          UnixFile.posix_fadvise(this.fd, 0, nbytes,
           OS.Constants.libc.POSIX_FADV_SEQUENTIAL);
@@ -223,7 +219,7 @@
       */
      if (SharedAll.Constants.Sys.Name != "Android") {
        File.prototype.setDates = function(accessDate, modificationDate) {
-         let { /* value, */ ptr} = datesToTimevals(accessDate, modificationDate);
+         let {value, ptr} = datesToTimevals(accessDate, modificationDate);
          throw_on_negative("setDates",
            UnixFile.futimes(this.fd, ptr),
            this._path);
@@ -342,9 +338,9 @@
      File.exists = function Unix_exists(path) {
        if (UnixFile.access(path, Const.F_OK) == -1) {
          return false;
-       }
+       } else {
          return true;
-
+       }
      };
 
      /**
@@ -385,6 +381,27 @@
          }
          throw new File.Error("removeEmptyDir", ctypes.errno, path);
        }
+     };
+
+     /**
+      * Gets the number of bytes available on disk to the current user.
+      *
+      * @param {string} sourcePath Platform-specific path to a directory on
+      * the disk to query for free available bytes.
+      *
+      * @return {number} The number of bytes available for the current user.
+      * @throws {OS.File.Error} In case of any error.
+      */
+     File.getAvailableFreeSpace = function Unix_getAvailableFreeSpace(sourcePath) {
+       let fileSystemInfo = new Type.statvfs.implementation();
+       let fileSystemInfoPtr = fileSystemInfo.address();
+
+       throw_on_negative("statvfs",  (UnixFile.statvfs || UnixFile.statfs)(sourcePath, fileSystemInfoPtr));
+
+       let bytes = new Type.uint64_t.implementation(
+                        fileSystemInfo.f_frsize * fileSystemInfo.f_bavail);
+
+       return bytes.value;
      };
 
      /**
@@ -535,6 +552,7 @@
          // Perform actual copy
          let total_read = 0;
          while (true) {
+           let chunk_size = Math.min(nbytes, bufSize);
            let bytes_just_read = read(pump_buffer, bufSize);
            if (bytes_just_read == 0) {
              return total_read;
@@ -584,7 +602,7 @@
                  "pump",
                  UnixFile.splice(pipe_read, null,
                    dest_fd, null, bytes_read,
-                     (bytes_read == chunk_size) ? Const.SPLICE_F_MORE : 0
+                     (bytes_read == chunk_size)?Const.SPLICE_F_MORE:0
                ));
                if (!bytes_written) {
                  // This should never happen
@@ -625,19 +643,20 @@
        // copy directories
        File.copy = function copy(sourcePath, destPath, options = {}) {
          let source, dest;
+         let result;
          try {
            source = File.open(sourcePath);
            // Need to open the output file with |append:false|, or else |splice|
            // won't work.
            if (options.noOverwrite) {
-             dest = File.open(destPath, {create: true, append: false});
+             dest = File.open(destPath, {create:true, append:false});
            } else {
-             dest = File.open(destPath, {trunc: true, append: false});
+             dest = File.open(destPath, {trunc:true, append:false});
            }
            if (options.unixUserland) {
-             pump_userland(source, dest, options);
+             result = pump_userland(source, dest, options);
            } else {
-             pump(source, dest, options);
+             result = pump(source, dest, options);
            }
          } catch (x) {
            if (dest) {
@@ -732,16 +751,16 @@
       *
       * Skip special directories "." and "..".
       *
-      * @return By definition of the iterator protocol, either
-      * `{value: {File.Entry}, done: false}` if there is an unvisited entry
-      * in the directory, or `{value: undefined, done: true}`, otherwise.
+      * @return {File.Entry} The next entry in the directory.
+      * @throws {StopIteration} Once all files in the directory have been
+      * encountered.
       */
      File.DirectoryIterator.prototype.next = function next() {
        if (!this._exists) {
          throw File.Error.noSuchFile("DirectoryIterator.prototype.next", this._path);
        }
        if (this._closed) {
-         return {value: undefined, done: true};
+         throw StopIteration;
        }
        for (let entry = UnixFile.readdir(this._dir);
             entry != null && !entry.isNull();
@@ -764,13 +783,10 @@
            isSymLink = contents.d_type == Const.DT_LNK;
          }
 
-         return {
-           value: new File.DirectoryIterator.Entry(isDir, isSymLink, name, this._path),
-           done: false
-         };
+         return new File.DirectoryIterator.Entry(isDir, isSymLink, name, this._path);
        }
        this.close();
-       return {value: undefined, done: true};
+       throw StopIteration;
      };
 
      /**
@@ -837,7 +853,7 @@
      let gStatData = new Type.stat.implementation();
      let gStatDataPtr = gStatData.address();
 
-     let MODE_MASK = 4095 /* = 07777*/;
+     let MODE_MASK = 4095 /*= 07777*/;
      File.Info = function Info(stat, path) {
        let isDir = (stat.st_mode & Const.S_IFMT) == Const.S_IFDIR;
        let isSymLink = (stat.st_mode & Const.S_IFMT) == Const.S_IFLNK;
@@ -983,7 +999,7 @@
       * @throws {OS.File.Error} In case of I/O error.
       */
      File.setDates = function setDates(path, accessDate, modificationDate) {
-       let {/* value, */ ptr} = datesToTimevals(accessDate, modificationDate);
+       let {value, ptr} = datesToTimevals(accessDate, modificationDate);
        throw_on_negative("setDates",
                          UnixFile.utimes(path, ptr),
                          path);
@@ -1036,14 +1052,14 @@
      File.getCurrentDirectory = function getCurrentDirectory() {
        let path, buf;
        if (UnixFile.get_current_dir_name) {
-         path = UnixFile.get_current_dir_name();
+	 path = UnixFile.get_current_dir_name();
        } else if (UnixFile.getwd_auto) {
          path = UnixFile.getwd_auto(null);
        } else {
-         for (let length = Const.PATH_MAX; !path; length *= 2) {
-           buf = new (ctypes.char.array(length));
-           path = UnixFile.getcwd(buf, length);
-         }
+	 for (let length = Const.PATH_MAX; !path; length *= 2) {
+	   buf = new (ctypes.char.array(length));
+	   path = UnixFile.getcwd(buf, length);
+	 };
        }
        throw_on_null("getCurrentDirectory", path);
        return path.readString();
@@ -1063,10 +1079,10 @@
       * Get/set the current directory.
       */
      Object.defineProperty(File, "curDir", {
-         set(path) {
+         set: function(path) {
            this.setCurrentDirectory(path);
          },
-         get() {
+         get: function() {
            return this.getCurrentDirectory();
          }
        }
@@ -1147,7 +1163,7 @@
                              "|Date| instance or number");
        }
        return date;
-     }
+     };
 
      /**
       * Helper used by both versions of setPermissions.

@@ -1231,10 +1231,10 @@ class ICCall_ConstStringSplit : public ICMonitoredStub
     uint32_t pcOffset_;
     GCPtrString expectedStr_;
     GCPtrString expectedSep_;
-    GCPtrArrayObject templateObject_;
+    GCPtrObject templateObject_;
 
     ICCall_ConstStringSplit(JitCode* stubCode, ICStub* firstMonitorStub, uint32_t pcOffset,
-                            JSString* str, JSString* sep, ArrayObject* templateObject)
+                            JSString* str, JSString* sep, JSObject* templateObject)
       : ICMonitoredStub(ICStub::Call_ConstStringSplit, stubCode, firstMonitorStub),
         pcOffset_(pcOffset), expectedStr_(str), expectedSep_(sep),
         templateObject_(templateObject)
@@ -1261,7 +1261,7 @@ class ICCall_ConstStringSplit : public ICMonitoredStub
         return expectedSep_;
     }
 
-    GCPtrArrayObject& templateObject() {
+    GCPtrObject& templateObject() {
         return templateObject_;
     }
 
@@ -1271,7 +1271,7 @@ class ICCall_ConstStringSplit : public ICMonitoredStub
         uint32_t pcOffset_;
         RootedString expectedStr_;
         RootedString expectedSep_;
-        RootedArrayObject templateObject_;
+        RootedObject templateObject_;
 
         MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm);
 
@@ -1282,13 +1282,13 @@ class ICCall_ConstStringSplit : public ICMonitoredStub
 
       public:
         Compiler(JSContext* cx, ICStub* firstMonitorStub, uint32_t pcOffset, HandleString str,
-                 HandleString sep, HandleArrayObject templateObject)
+                 HandleString sep, HandleValue templateObject)
           : ICCallStubCompiler(cx, ICStub::Call_ConstStringSplit),
             firstMonitorStub_(firstMonitorStub),
             pcOffset_(pcOffset),
             expectedStr_(cx, str),
             expectedSep_(cx, sep),
-            templateObject_(cx, templateObject)
+            templateObject_(cx, &templateObject.toObject())
         { }
 
         ICStub* getStub(ICStubSpace* space) {

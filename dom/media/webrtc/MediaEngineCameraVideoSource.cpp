@@ -225,7 +225,7 @@ MediaEngineCameraVideoSource::ChooseCapability(
          aPrefs.GetWidth(), aPrefs.GetHeight(),
          aPrefs.mFPS, aPrefs.mMinFPS));
     LogConstraints(aConstraints);
-    if (!aConstraints.mAdvanced.empty()) {
+    if (aConstraints.mAdvanced.size()) {
       LOG(("Advanced array[%zu]:", aConstraints.mAdvanced.size()));
       for (auto& advanced : aConstraints.mAdvanced) {
         LogConstraints(advanced);
@@ -399,6 +399,13 @@ const nsCString&
 MediaEngineCameraVideoSource::GetUUID() const
 {
   return mUniqueId;
+}
+
+void
+MediaEngineCameraVideoSource::SetDirectListeners(bool aHasDirectListeners)
+{
+  LOG((__FUNCTION__));
+  mHasDirectListeners = aHasDirectListeners;
 }
 
 } // namespace mozilla

@@ -28,9 +28,11 @@ StoreBuffer::GenericBuffer::trace(StoreBuffer* owner, JSTracer* trc)
         return;
 
     for (LifoAlloc::Enum e(*storage_); !e.empty();) {
-        unsigned size = *e.read<unsigned>();
-        BufferableRef* edge = e.read<BufferableRef>(size);
+        unsigned size = *e.get<unsigned>();
+        e.popFront<unsigned>();
+        BufferableRef* edge = e.get<BufferableRef>(size);
         edge->trace(trc);
+        e.popFront(size);
     }
 }
 
@@ -130,8 +132,10 @@ js::gc::AllocateWholeCellSet(Arena* arena)
     AutoEnterOOMUnsafeRegion oomUnsafe;
     Nursery& nursery = zone->group()->nursery();
     void* data = nursery.allocateBuffer(zone, sizeof(ArenaCellSet));
-    if (!data)
+    if (!data) {
         oomUnsafe.crash("Failed to allocate WholeCellSet");
+        return nullptr;
+    }
 
     if (nursery.freeSpace() < ArenaCellSet::NurseryFreeThresholdBytes)
         zone->group()->storeBuffer().setAboutToOverflow(JS::gcreason::FULL_WHOLE_CELL_BUFFER);

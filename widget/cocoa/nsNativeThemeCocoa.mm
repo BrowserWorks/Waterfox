@@ -21,7 +21,7 @@
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIFrame.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsNameSpaceManager.h"
 #include "nsPresContext.h"
 #include "nsGkAtoms.h"
@@ -3004,7 +3004,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:
     {
-      // nsCheckboxRadioFrame::GetIntrinsicWidth and nsCheckboxRadioFrame::GetIntrinsicHeight
+      // nsFormControlFrame::GetIntrinsicWidth and nsFormControlFrame::GetIntrinsicHeight
       // assume a border width of 2px.
       aResult->SizeTo(2, 2, 2, 2);
       break;
@@ -3508,7 +3508,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
 NS_IMETHODIMP
 nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
-                                       nsAtom* aAttribute, bool* aShouldRepaint,
+                                       nsIAtom* aAttribute, bool* aShouldRepaint,
                                        const nsAttrValue* aOldValue)
 {
   // Some widget types just never change state.
@@ -3809,6 +3809,52 @@ nsNativeThemeCocoa::NeedToClearBackgroundBehindWidget(nsIFrame* aFrame,
       return true;
     case NS_THEME_DIALOG:
       return IsWindowSheet(aFrame);
+    default:
+      return false;
+  }
+}
+
+static nscolor ConvertNSColor(NSColor* aColor)
+{
+  NSColor* deviceColor = [aColor colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+  return NS_RGBA((unsigned int)([deviceColor redComponent] * 255.0),
+                 (unsigned int)([deviceColor greenComponent] * 255.0),
+                 (unsigned int)([deviceColor blueComponent] * 255.0),
+                 (unsigned int)([deviceColor alphaComponent] * 255.0));
+}
+
+bool
+nsNativeThemeCocoa::WidgetProvidesFontSmoothingBackgroundColor(nsIFrame* aFrame,
+                                                               uint8_t aWidgetType,
+                                                               nscolor* aColor)
+{
+  switch (aWidgetType) {
+    case NS_THEME_MAC_SOURCE_LIST:
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_VIBRANCY_LIGHT:
+    case NS_THEME_MAC_VIBRANCY_DARK:
+    case NS_THEME_TOOLTIP:
+    case NS_THEME_MENUPOPUP:
+    case NS_THEME_MENUITEM:
+    case NS_THEME_CHECKMENUITEM:
+    case NS_THEME_DIALOG:
+    {
+      if ((aWidgetType == NS_THEME_DIALOG && !IsWindowSheet(aFrame)) ||
+          ((aWidgetType == NS_THEME_MAC_SOURCE_LIST_SELECTION ||
+            aWidgetType == NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION) &&
+            !IsInSourceList(aFrame))) {
+        return false;
+      }
+      ChildView* childView = ChildViewForFrame(aFrame);
+      if (childView) {
+        ThemeGeometryType type = ThemeGeometryTypeForWidget(aFrame, aWidgetType);
+        NSColor* color = [childView vibrancyFontSmoothingBackgroundColorForThemeGeometryType:type];
+        *aColor = ConvertNSColor(color);
+        return true;
+      }
+      return false;
+    }
     default:
       return false;
   }

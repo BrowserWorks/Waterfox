@@ -26,7 +26,6 @@ info: >
   ...
 flags: [noStrict]
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var T = this;

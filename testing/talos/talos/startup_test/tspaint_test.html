@@ -21,7 +21,7 @@ async function painted() {
 
   let startupInfo = await TalosPowersContent.getStartupInfo();
 
-  let startupTime = startupInfo.firstPaint - startupInfo.process;
+  let startupTime = startupInfo["firstPaint"] - startupInfo["process"];
 
   document.body.textContent = "Startup time = " + startupTime + " ms";
   if (window.dump) {
@@ -38,7 +38,7 @@ function failed() {
 }
 
 function dumpConsoleAndQuit() {
-  var messages = {};
+  var messages = {}
 
   try {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");

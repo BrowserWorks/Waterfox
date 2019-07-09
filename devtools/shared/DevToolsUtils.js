@@ -204,38 +204,6 @@ exports.getProperty = function (object, key) {
 };
 
 /**
- * Removes all the non-opaque security wrappers of a debuggee object.
- * Returns null if some wrapper can't be removed.
- *
- * @param obj Debugger.Object
- *        The debuggee object to be unwrapped.
- * @return Debugger.Object|null
- *        The unwrapped object, or null if some wrapper couldn't be removed.
- */
-exports.unwrap = function unwrap(obj) {
-  // Check if `obj` has an opaque wrapper.
-  if (obj.class === "Opaque") {
-    return obj;
-  }
-
-  // Attempt to unwrap. If this operation is not allowed, it may return null or throw.
-  let unwrapped;
-  try {
-    unwrapped = obj.unwrap();
-  } catch (err) {
-    unwrapped = null;
-  }
-
-  // Check if further unwrapping is not possible.
-  if (!unwrapped || unwrapped === obj) {
-    return unwrapped;
-  }
-
-  // Recursively remove additional security wrappers.
-  return unwrap(unwrapped);
-};
-
-/**
  * Determines if a descriptor has a getter which doesn't call into JavaScript.
  *
  * @param Object desc
@@ -246,9 +214,13 @@ exports.unwrap = function unwrap(obj) {
 exports.hasSafeGetter = function (desc) {
   // Scripted functions that are CCWs will not appear scripted until after
   // unwrapping.
-  let fn = desc.get;
-  fn = fn && exports.unwrap(fn);
-  return fn && fn.callable && fn.class == "Function" && fn.script === undefined;
+  try {
+    let fn = desc.get.unwrap();
+    return fn && fn.callable && fn.class == "Function" && fn.script === undefined;
+  } catch (e) {
+    // Avoid exception 'Object in compartment marked as invisible to Debugger'
+    return false;
+  }
 };
 
 /**
@@ -276,31 +248,13 @@ exports.isSafeJSObject = function (obj) {
     return true;
   }
 
-  // Xray wrappers protect against unintended code execution.
-  if (Cu.isXrayWrapper(obj)) {
+  let principal = Cu.getObjectPrincipal(obj);
+  if (Services.scriptSecurityManager.isSystemPrincipal(principal)) {
+    // allow chrome objects
     return true;
   }
 
-  // If there aren't Xrays, only allow chrome objects.
-  let principal = Cu.getObjectPrincipal(obj);
-  if (!Services.scriptSecurityManager.isSystemPrincipal(principal)) {
-    return false;
-  }
-
-  // Scripted proxy objects without Xrays can run their proxy traps.
-  if (Cu.isProxy(obj)) {
-    return false;
-  }
-
-  // Even if `obj` looks safe, an unsafe object in its prototype chain may still
-  // run unintended code, e.g. when using the `instanceof` operator.
-  let proto = Object.getPrototypeOf(obj);
-  if (proto && !exports.isSafeJSObject(proto)) {
-    return false;
-  }
-
-  // Allow non-problematic chrome objects.
-  return true;
+  return Cu.isXrayWrapper(obj);
 };
 
 exports.dumpn = function (str) {
@@ -535,7 +489,18 @@ function mainThreadFetch(urlIn, aOptions = { loadFromCache: true,
       // the input unmodified. Essentially we try to decode the data as UTF-8
       // and if that fails, we use the locale specific default encoding. This is
       // the best we can do if the source does not provide charset info.
-      let charset = bomCharset || channel.contentCharset || aOptions.charset || "UTF-8";
+      let charset = bomCharset;
+      if (!charset) {
+        try {
+          charset = channel.contentCharset;
+        } catch (e) {
+          // Accessing `contentCharset` on content served by a service worker in
+          // non-e10s may throw.
+        }
+      }
+      if (!charset) {
+        charset = aOptions.charset || "UTF-8";
+      }
       let unicodeSource = NetworkHelper.convertToUnicode(source, charset);
 
       deferred.resolve({

@@ -22,7 +22,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-static nsAtom** const unitMap[] =
+static nsIAtom** const unitMap[] =
 {
   nullptr, /* SVG_LENGTHTYPE_UNKNOWN */
   nullptr, /* SVG_LENGTHTYPE_NUMBER */
@@ -71,7 +71,7 @@ GetUnitTypeForString(const nsAString& unitStr)
   if (unitStr.IsEmpty())
     return nsIDOMSVGLength::SVG_LENGTHTYPE_NUMBER;
 
-  nsAtom *unitAtom = NS_GetStaticAtom(unitStr);
+  nsIAtom *unitAtom = NS_GetStaticAtom(unitStr);
   if (unitAtom) {
     for (uint32_t i = 0 ; i < ArrayLength(unitMap) ; i++) {
       if (unitMap[i] && *unitMap[i] == unitAtom) {
@@ -86,7 +86,11 @@ GetUnitTypeForString(const nsAString& unitStr)
 static void
 GetValueString(nsAString &aValueAsString, float aValue, uint16_t aUnitType)
 {
-  nsTextFormatter::ssprintf(aValueAsString, u"%g", (double)aValue);
+  char16_t buf[24];
+  nsTextFormatter::snprintf(buf, sizeof(buf)/sizeof(char16_t),
+                            u"%g",
+                            (double)aValue);
+  aValueAsString.Assign(buf);
 
   nsAutoString unitString;
   GetUnitString(unitString, aUnitType);

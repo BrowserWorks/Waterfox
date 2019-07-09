@@ -28,14 +28,8 @@ public:
 
   void AddPlayPending(dom::Animation& aAnimation)
   {
-    // We'd like to assert here that IsWaitingToPause(aAnimation) is false but
-    // if |aAnimation| was tracked here as a pause-pending animation when it was
-    // removed from |mDocument|, then re-attached to |mDocument|, and then
-    // played again, we could end up here with IsWaitingToPause returning true.
-    //
-    // However, that should be harmless since all it means is that we'll call
-    // Animation::TriggerOnNextTick or Animation::TriggerNow twice, both of
-    // which will handle the redundant call gracefully.
+    MOZ_ASSERT(!IsWaitingToPause(aAnimation),
+               "Animation is already waiting to pause");
     AddPending(aAnimation, mPlayPendingSet);
     mHasPlayPendingGeometricAnimations = CheckState::Indeterminate;
   }
@@ -51,10 +45,8 @@ public:
 
   void AddPausePending(dom::Animation& aAnimation)
   {
-    // As with AddPausePending, we'd like to assert that
-    // IsWaitingToPlay(aAnimation) is false but there are some circumstances
-    // where this can be true. Fortunately adding the animation to both pending
-    // sets should be harmless.
+    MOZ_ASSERT(!IsWaitingToPlay(aAnimation),
+               "Animation is already waiting to play");
     AddPending(aAnimation, mPausePendingSet);
   }
   void RemovePausePending(dom::Animation& aAnimation)

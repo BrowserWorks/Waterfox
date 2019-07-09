@@ -5,7 +5,7 @@
 description: Elision accepts exhausted iterator (try statement)
 esid: sec-runtime-semantics-catchclauseevaluation
 es6id: 13.15.7
-features: [generators, destructuring-binding]
+features: [generator, destructuring-binding]
 flags: [generated]
 info: |
     Catch : catch ( CatchParameter ) Block

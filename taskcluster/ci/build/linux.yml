@@ -24,7 +24,6 @@ linux64/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-dmd/opt:
@@ -55,7 +54,6 @@ linux64-dmd/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64/pgo:
@@ -71,6 +69,7 @@ linux64/pgo:
         max-run-time: 36000
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    coalesce-name: linux64-pgo
     run:
         using: mozharness
         actions: [get-secrets build check-test update]
@@ -85,7 +84,6 @@ linux64/pgo:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64/debug:
@@ -116,7 +114,6 @@ linux64/debug:
         - linux64-clang
         - linux64-gcc
         - linux64-sccache
-        - linux64-rust
 
 linux64-devedition-nightly/opt:
     description: "Linux64 devedition Nightly"
@@ -150,7 +147,6 @@ linux64-devedition-nightly/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-base-toolchains/opt:
@@ -178,9 +174,8 @@ linux64-base-toolchains/opt:
         tooltool-downloads: public
         need-xvfb: true
     toolchains:
-        - linux64-clang-3.9
-        - linux64-gcc-4.9
-        - linux64-rust-1.20
+        - linux64-clang
+        - linux64-gcc
         - linux64-sccache
 
 linux64-base-toolchains/debug:
@@ -209,9 +204,8 @@ linux64-base-toolchains/debug:
         tooltool-downloads: public
         need-xvfb: true
     toolchains:
-        - linux64-clang-3.9
-        - linux64-gcc-4.9
-        - linux64-rust-1.20
+        - linux64-clang
+        - linux64-gcc
         - linux64-sccache
 
 linux/opt:
@@ -227,6 +221,7 @@ linux/opt:
         max-run-time: 36000
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: opt_linux32
     run:
         using: mozharness
         actions: [get-secrets build check-test update]
@@ -240,7 +235,6 @@ linux/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux/debug:
@@ -256,6 +250,7 @@ linux/debug:
         max-run-time: 36000
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: dbg_linux32
     run:
         using: mozharness
         actions: [get-secrets build check-test update]
@@ -270,7 +265,6 @@ linux/debug:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux/pgo:
@@ -286,6 +280,7 @@ linux/pgo:
         max-run-time: 36000
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: linux32-pgo
     run:
         using: mozharness
         actions: [get-secrets build check-test update]
@@ -300,73 +295,6 @@ linux/pgo:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
-        - linux64-sccache
-
-linux-rusttests/opt:
-    description: "Linux32 Rust tests Opt"
-    index:
-        product: firefox
-        job-name: linux-rusttests-opt
-    treeherder:
-        platform: linux32-rusttests/opt
-        symbol: tc(BR)
-        tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
-    worker:
-        max-run-time: 5400
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
-    run:
-        using: mozharness
-        actions: [get-secrets build check-test update]
-        config:
-            - builds/releng_base_linux_32_builds.py
-            - balrog/production.py
-        script: "mozharness/scripts/fx_desktop_build.py"
-        secrets: true
-        custom-build-variant-cfg: rusttests
-        tooltool-downloads: public
-        keep-artifacts: false
-        need-xvfb: true
-    run-on-projects: [ 'trunk', 'try' ]
-    toolchains:
-        - linux64-clang
-        - linux64-gcc
-        - linux64-rust
-        - linux64-sccache
-
-linux-rusttests/debug:
-    description: "Linux32 Rust tests Debug"
-    index:
-        product: firefox
-        job-name: linux-rusttests-debug
-    treeherder:
-        platform: linux32-rusttests/debug
-        symbol: tc(BR)
-        tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
-    worker:
-        max-run-time: 5400
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
-    run:
-        using: mozharness
-        actions: [get-secrets build check-test update]
-        config:
-            - builds/releng_base_linux_32_builds.py
-            - balrog/production.py
-        script: "mozharness/scripts/fx_desktop_build.py"
-        secrets: true
-        custom-build-variant-cfg: rusttests-debug
-        tooltool-downloads: public
-        keep-artifacts: false
-        need-xvfb: true
-    run-on-projects: [ 'trunk', 'try' ]
-    toolchains:
-        - linux64-clang
-        - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux-devedition-nightly/opt:
@@ -401,7 +329,6 @@ linux-devedition-nightly/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux-nightly/opt:
@@ -434,7 +361,6 @@ linux-nightly/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 
@@ -450,7 +376,7 @@ linux64-asan/opt:
     worker:
         env:
             PERFHERDER_EXTRA_OPTIONS: "opt asan"
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
         max-run-time: 36000
     run:
         using: mozharness
@@ -466,7 +392,6 @@ linux64-asan/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 
@@ -482,7 +407,7 @@ linux64-asan-fuzzing/opt:
     worker:
         env:
             PERFHERDER_EXTRA_OPTIONS: asan-fuzzing
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/fuzzing.manifest"
         max-run-time: 36000
     run:
         using: mozharness
@@ -496,40 +421,7 @@ linux64-asan-fuzzing/opt:
         tooltool-downloads: public
         need-xvfb: true
     toolchains:
-        - linux64-clang-4
         - linux64-gcc
-        - linux64-rust
-        - linux64-sccache
-
-linux64-asan-reporter/opt:
-    description: "Linux64 Opt ASAN Reporter Nightly"
-    index:
-        product: firefox
-        job-name: linux64-asan-reporter-opt
-    treeherder:
-        platform: linux64/asan
-        symbol: tc(BoR)
-    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
-    worker:
-        env:
-            PERFHERDER_EXTRA_OPTIONS: asan-reporter
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-        max-run-time: 36000
-    run:
-        using: mozharness
-        actions: [get-secrets build check-test update]
-        config:
-            - builds/releng_base_linux_64_builds.py
-            - balrog/production.py
-        script: "mozharness/scripts/fx_desktop_build.py"
-        secrets: true
-        custom-build-variant-cfg: asan-reporter-tc
-        tooltool-downloads: public
-        need-xvfb: true
-    toolchains:
-        - linux64-clang-4
-        - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-asan/debug:
@@ -544,7 +436,7 @@ linux64-asan/debug:
     worker:
         env:
             PERFHERDER_EXTRA_OPTIONS: "debug asan"
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
         max-run-time: 36000
     run:
         using: mozharness
@@ -560,7 +452,6 @@ linux64-asan/debug:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-nightly/opt:
@@ -593,7 +484,6 @@ linux64-nightly/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-noopt/debug:
@@ -626,73 +516,6 @@ linux64-noopt/debug:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
-        - linux64-sccache
-
-linux64-rusttests/opt:
-    description: "Linux64 Rust tests Opt"
-    index:
-        product: firefox
-        job-name: linux64-rusttests-opt
-    treeherder:
-        platform: linux64-rusttests/opt
-        symbol: tc(BR)
-        tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
-    worker:
-        max-run-time: 5400
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-    run:
-        using: mozharness
-        actions: [get-secrets build check-test update]
-        config:
-            - builds/releng_base_linux_64_builds.py
-            - balrog/production.py
-        script: "mozharness/scripts/fx_desktop_build.py"
-        secrets: true
-        custom-build-variant-cfg: rusttests
-        tooltool-downloads: public
-        keep-artifacts: false
-        need-xvfb: true
-    run-on-projects: [ 'trunk', 'try' ]
-    toolchains:
-        - linux64-clang
-        - linux64-gcc
-        - linux64-rust
-        - linux64-sccache
-
-linux64-rusttests/debug:
-    description: "Linux64 Rust tests Debug"
-    index:
-        product: firefox
-        job-name: linux64-rusttests-debug
-    treeherder:
-        platform: linux64-rusttests/debug
-        symbol: tc(BR)
-        tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
-    worker:
-        max-run-time: 5400
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
-    run:
-        using: mozharness
-        actions: [get-secrets build check-test update]
-        config:
-            - builds/releng_base_linux_64_builds.py
-            - balrog/production.py
-        script: "mozharness/scripts/fx_desktop_build.py"
-        secrets: true
-        custom-build-variant-cfg: rusttests-debug
-        tooltool-downloads: public
-        keep-artifacts: false
-        need-xvfb: true
-    run-on-projects: [ 'trunk', 'try' ]
-    toolchains:
-        - linux64-clang
-        - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-jsdcov/opt:
@@ -723,7 +546,6 @@ linux64-jsdcov/opt:
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache
 
 linux64-ccov/opt:
@@ -731,6 +553,7 @@ linux64-ccov/opt:
     index:
         product: firefox
         job-name: linux64-ccov-opt
+    needs-sccache: false
     treeherder:
         platform: linux64-ccov/opt
         symbol: tc(B)
@@ -753,9 +576,9 @@ linux64-ccov/opt:
         tooltool-downloads: public
         need-xvfb: true
     toolchains:
-        - linux64-clang-4
-        - linux64-rust
+        - linux64-clang
         - linux64-gcc
+        - linux64-sccache
 
 linux64-add-on-devel/opt:
     description: "Linux64 add-on-devel"
@@ -782,9 +605,8 @@ linux64-add-on-devel/opt:
         custom-build-variant-cfg: add-on-devel
         tooltool-downloads: public
         need-xvfb: true
-    run-on-projects: [ 'mozilla-beta', 'mozilla-release', 'mozilla-esr45' ]
+    run-on-projects: [ 'mozilla-release', 'mozilla-esr45' ]
     toolchains:
         - linux64-clang
         - linux64-gcc
-        - linux64-rust
         - linux64-sccache

@@ -157,6 +157,13 @@ public:
       const ScrollableLayerGuid& aGuid,
       const Maybe<ZoomConstraints>& aConstraints) = 0;
 
+  /**
+   * Cancels any currently running animation. Note that all this does is set the
+   * state of the AsyncPanZoomController back to NOTHING, but it is the
+   * animation's responsibility to check this before advancing.
+   */
+  virtual void CancelAnimation(const ScrollableLayerGuid &aGuid) = 0;
+
   virtual void SetDPI(float aDpiValue) = 0;
 
   /**
@@ -176,7 +183,7 @@ public:
       const ScrollableLayerGuid& aGuid,
       const AsyncDragMetrics& aDragMetrics) = 0;
 
-  virtual bool StartAutoscroll(
+  virtual void StartAutoscroll(
       const ScrollableLayerGuid& aGuid,
       const ScreenPoint& aAnchorLocation) = 0;
 

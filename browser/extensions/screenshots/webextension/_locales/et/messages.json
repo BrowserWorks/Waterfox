@@ -40,14 +40,6 @@
       }
     }
   },
-  "imageCroppedWarning": {
-    "message": "See pilt on vähendatud $PIXELS$-le pikslile.",
-    "placeholders": {
-      "pixels": {
-        "content": "$1"
-      }
-    }
-  },
   "requestErrorTitle": {
     "message": "Tekkis viga."
   },
@@ -87,31 +79,25 @@
   "genericErrorDetails": {
     "message": "Me pole kindlad, mis just juhtus. Proovid ehk uuesti või teed ekraanipildi mõnest teisest lehest?"
   },
-  "tourBodyIntro": {
+  "tourBodyOne": {
     "message": "Tee, salvesta ja jaga ekraanipilte Firefoxist lahkumata."
   },
-  "tourHeaderPageAction": {
-    "message": "Uus viis salvestamiseks"
-  },
-  "tourBodyPageAction": {
-    "message": "Laienda lehe tegevuste menüüd aadressiribal, kui soovid ekraanipildi teha."
-  },
-  "tourHeaderClickAndDrag": {
+  "tourHeaderTwo": {
     "message": "Salvesta just seda, mida soovid"
   },
-  "tourBodyClickAndDrag": {
+  "tourBodyTwo": {
     "message": "Klõpsa ja lohista lehe osa valimiseks. Samuti võid valiku esile toomiseks kursorit selle kohal hoida."
   },
-  "tourHeaderFullPage": {
+  "tourHeaderThree": {
     "message": "Salvesta aknaid või terveid lehti"
   },
-  "tourBodyFullPage": {
+  "tourBodyThree": {
     "message": "Kasuta nuppe ülal paremal aknas nähtava ala või terve lehe salvestamiseks."
   },
-  "tourHeaderDownloadUpload": {
+  "tourHeaderFour": {
     "message": "Nii, kuidas sulle meeldib"
   },
-  "tourBodyDownloadUpload": {
+  "tourBodyFour": {
     "message": "Salvesta kärbitud pilte lihtsamaks jagamiseks veebi või laadi need alla enda arvutisse. Võid ka klõpsata Minu pildid nupul kõigi tehtud piltide vaatamiseks."
   },
   "tourSkip": {
@@ -126,8 +112,8 @@
   "tourDone": {
     "message": "Valmis"
   },
-  "termsAndPrivacyNotice2": {
-    "message": "Firefox Screenshots'i kasutades nõustud meie $TERMSANDPRIVACYNOTICETERMSLINK$ ja $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Firefox Screenshots kasutamisel nõustud Firefox Cloud Services $TERMSANDPRIVACYNOTICETERMSLINK$ ja $TERMSANDPRIVACYNOTICEPRIVACYLINK$.",
     "placeholders": {
       "termsandprivacynoticetermslink": {
         "content": "$1"
@@ -142,8 +128,5 @@
   },
   "termsAndPrivacyNoticyPrivacyLink": {
     "message": "privaatsuspoliitikaga"
-  },
-  "libraryLabel": {
-    "message": "Ekraanipildid"
   }
 }

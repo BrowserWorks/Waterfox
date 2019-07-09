@@ -30,7 +30,7 @@ function test() {
       { uri: NetUtil.newURI("http://ubuntu.org"),
         visits: [ new VisitInfo(PlacesUtils.history.TRANSITION_DOWNLOAD) ]
       },
-    ];
+    ]
     PlacesUtils.asyncHistory.updatePlaces(places, {
       handleResult() {},
       handleError() {
@@ -43,18 +43,19 @@ function test() {
 
 
         // Check results.
-        let testURIs = ["http://ubuntu.org/", "http://google.com/"];
-        for (let element of win.ContentArea.currentView
-                                           .associatedElement.children) {
-          is(element._shell.download.source.url, testURIs.shift(),
-             "URI matches");
+        let contentRoot = win.ContentArea.currentView.result.root;
+        let len = contentRoot.childCount;
+        const TEST_URIS = ["http://ubuntu.org/", "http://google.com/"];
+        for (let i = 0; i < len; i++) {
+          is(contentRoot.getChild(i).uri, TEST_URIS[i],
+              "Comparing downloads shown at index " + i);
         }
 
         win.close();
         PlacesTestUtils.clearHistory().then(finish);
       }
-    });
-  };
+    })
+  }
 
   openLibrary(onLibraryReady, "Downloads");
 }
@@ -65,4 +66,4 @@ function VisitInfo(aTransitionType) {
       PlacesUtils.history.TRANSITION_LINK : aTransitionType;
   this.visitDate = now++ * 1000;
 }
-VisitInfo.prototype = {};
+VisitInfo.prototype = {}

@@ -100,9 +100,6 @@ nsresult NS_NewFileURI(nsIURI **result,
                        nsIFile *spec,
                        nsIIOService *ioService = nullptr);     // pass in nsIIOService to optimize callers
 
-nsresult NS_GetSanitizedURIStringFromURI(nsIURI *aUri,
-                                         nsAString &aSanitizedSpec);
-
 /*
 * How to create a new Channel, using NS_NewChannel,
 * NS_NewChannelWithTriggeringPrincipal,
@@ -302,6 +299,8 @@ nsresult NS_NewInputStreamChannel(nsIChannel        **outChannel,
 
 nsresult NS_NewInputStreamPump(nsIInputStreamPump **result,
                                nsIInputStream      *stream,
+                               int64_t              streamPos = int64_t(-1),
+                               int64_t              streamLen = int64_t(-1),
                                uint32_t             segsize = 0,
                                uint32_t             segcount = 0,
                                bool                 closeWhenDone = false,
@@ -510,10 +509,26 @@ nsresult NS_NewLocalFileStream(nsIFileStream **result,
                                int32_t         perm          = -1,
                                int32_t         behaviorFlags = 0);
 
+// returns the input end of a pipe.  the output end of the pipe
+// is attached to the original stream.  data from the original
+// stream is read into the pipe on a background thread.
+nsresult NS_BackgroundInputStream(nsIInputStream **result,
+                                  nsIInputStream  *stream,
+                                  uint32_t         segmentSize  = 0,
+                                  uint32_t         segmentCount = 0);
+
+// returns the output end of a pipe.  the input end of the pipe
+// is attached to the original stream.  data written to the pipe
+// is copied to the original stream on a background thread.
+nsresult NS_BackgroundOutputStream(nsIOutputStream **result,
+                                   nsIOutputStream  *stream,
+                                   uint32_t          segmentSize  = 0,
+                                   uint32_t          segmentCount = 0);
+
 MOZ_MUST_USE nsresult
-NS_NewBufferedInputStream(nsIInputStream** aResult,
-                          already_AddRefed<nsIInputStream> aInputStream,
-                          uint32_t aBufferSize);
+NS_NewBufferedInputStream(nsIInputStream **result,
+                          nsIInputStream  *str,
+                          uint32_t         bufferSize);
 
 // note: the resulting stream can be QI'ed to nsISafeOutputStream iff the
 // provided stream supports it.
@@ -534,6 +549,9 @@ nsresult NS_NewBufferedOutputStream(nsIOutputStream **result,
  */
 already_AddRefed<nsIOutputStream>
 NS_BufferOutputStream(nsIOutputStream *aOutputStream,
+                      uint32_t aBufferSize);
+already_AddRefed<nsIInputStream>
+NS_BufferInputStream(nsIInputStream *aInputStream,
                       uint32_t aBufferSize);
 
 // returns an input stream compatible with nsIUploadChannel::SetUploadStream()

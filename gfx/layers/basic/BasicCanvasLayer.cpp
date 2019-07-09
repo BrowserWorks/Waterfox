@@ -7,7 +7,6 @@
 #include "AsyncCanvasRenderer.h"
 #include "basic/BasicLayers.h"          // for BasicLayerManager
 #include "basic/BasicLayersImpl.h"      // for GetEffectiveOperator
-#include "CopyableCanvasRenderer.h"
 #include "mozilla/mozalloc.h"           // for operator new
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for Layer::AddRef, etc
@@ -26,6 +25,61 @@ using namespace mozilla::gl;
 namespace mozilla {
 namespace layers {
 
+already_AddRefed<SourceSurface>
+BasicCanvasLayer::UpdateSurface()
+{
+  if (mAsyncRenderer) {
+    MOZ_ASSERT(!mBufferProvider);
+    MOZ_ASSERT(!mGLContext);
+    return mAsyncRenderer->GetSurface();
+  }
+
+  if (!mGLContext) {
+    return nullptr;
+  }
+
+  SharedSurface* frontbuffer = nullptr;
+  if (mGLFrontbuffer) {
+    frontbuffer = mGLFrontbuffer.get();
+  } else {
+    GLScreenBuffer* screen = mGLContext->Screen();
+    const auto& front = screen->Front();
+    if (front) {
+      frontbuffer = front->Surf();
+    }
+  }
+
+  if (!frontbuffer) {
+    NS_WARNING("Null frame received.");
+    return nullptr;
+  }
+
+  IntSize readSize(frontbuffer->mSize);
+  SurfaceFormat format = (GetContentFlags() & CONTENT_OPAQUE)
+                          ? SurfaceFormat::B8G8R8X8
+                          : SurfaceFormat::B8G8R8A8;
+  bool needsPremult = frontbuffer->mHasAlpha && !mIsAlphaPremultiplied;
+
+  RefPtr<DataSourceSurface> resultSurf = GetTempSurface(readSize, format);
+  // There will already be a warning from inside of GetTempSurface, but
+  // it doesn't hurt to complain:
+  if (NS_WARN_IF(!resultSurf)) {
+    return nullptr;
+  }
+
+  // Readback handles Flush/MarkDirty.
+  if (!mGLContext->Readback(frontbuffer, resultSurf)) {
+    NS_WARNING("Failed to read back canvas surface.");
+    return nullptr;
+  }
+  if (needsPremult) {
+    gfxUtils::PremultiplyDataSurface(resultSurf, resultSurf);
+  }
+  MOZ_ASSERT(resultSurf);
+
+  return resultSurf.forget();
+}
+
 void
 BasicCanvasLayer::Paint(DrawTarget* aDT,
                         const Point& aDeviceOffset,
@@ -35,18 +89,17 @@ BasicCanvasLayer::Paint(DrawTarget* aDT,
     return;
 
   RefPtr<SourceSurface> surface;
-  CopyableCanvasRenderer* canvasRenderer = mCanvasRenderer->AsCopyableCanvasRenderer();
-  MOZ_ASSERT(canvasRenderer);
   if (IsDirty()) {
     Painted();
 
-    surface = canvasRenderer->ReadbackSurface();
+    FirePreTransactionCallback();
+    surface = UpdateSurface();
+    FireDidTransactionCallback();
   }
 
   bool bufferPoviderSnapshot = false;
-  PersistentBufferProvider* bufferProvider = canvasRenderer->GetBufferProvider();
-  if (!surface && bufferProvider) {
-    surface = bufferProvider->BorrowSnapshot();
+  if (!surface && mBufferProvider) {
+    surface = mBufferProvider->BorrowSnapshot();
     bufferPoviderSnapshot = !!surface;
   }
 
@@ -54,33 +107,29 @@ BasicCanvasLayer::Paint(DrawTarget* aDT,
     return;
   }
 
+  const bool needsYFlip = (mOriginPos == gl::OriginPos::BottomLeft);
+
   Matrix oldTM;
-  if (canvasRenderer->NeedsYFlip()) {
+  if (needsYFlip) {
     oldTM = aDT->GetTransform();
     aDT->SetTransform(Matrix(oldTM).
-                      PreTranslate(0.0f, mBounds.Height()).
+                        PreTranslate(0.0f, mBounds.height).
                         PreScale(1.0f, -1.0f));
   }
 
   FillRectWithMask(aDT, aDeviceOffset,
-                   Rect(0, 0, mBounds.Width(), mBounds.Height()),
+                   Rect(0, 0, mBounds.width, mBounds.height),
                    surface, mSamplingFilter,
                    DrawOptions(GetEffectiveOpacity(), GetEffectiveOperator(this)),
                    aMaskLayer);
 
-  if (canvasRenderer->NeedsYFlip()) {
+  if (needsYFlip) {
     aDT->SetTransform(oldTM);
   }
 
   if (bufferPoviderSnapshot) {
-    bufferProvider->ReturnSnapshot(surface.forget());
+    mBufferProvider->ReturnSnapshot(surface.forget());
   }
-}
-
-CanvasRenderer*
-BasicCanvasLayer::CreateCanvasRendererInternal()
-{
-  return new CopyableCanvasRenderer();
 }
 
 already_AddRefed<CanvasLayer>

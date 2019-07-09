@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.foreach
 es5id: 15.4.4.18-7-c-ii-2
 description: Array.prototype.forEach - callbackfn takes 3 arguments
 ---*/
@@ -10,7 +9,7 @@ description: Array.prototype.forEach - callbackfn takes 3 arguments
   var parCnt = 3;
   var bCalled = false
   function callbackfn(val, idx, obj)
-  {
+  { 
     bCalled = true;
     if(arguments.length !== 3)
       parCnt = arguments.length;   //verify if callbackfn was called with 3 parameters

@@ -8,6 +8,7 @@
 
 #include "GMPProcessParent.h"
 #include "GMPServiceParent.h"
+#include "GMPDecryptorParent.h"
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
 #include "GMPTimerParent.h"
@@ -20,6 +21,10 @@
 #include "nsTArray.h"
 #include "nsIFile.h"
 #include "mozilla/MozPromise.h"
+
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 
 namespace mozilla {
 namespace ipc {

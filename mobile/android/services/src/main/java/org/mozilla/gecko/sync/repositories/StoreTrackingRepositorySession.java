@@ -47,7 +47,7 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
   }
 
   @Override
-  public synchronized void untrackGUID(String guid) {
+  protected synchronized void untrackGUID(String guid) {
     if (this.storeTracker == null) {
       throw new IllegalStateException("Store tracker not yet initialized!");
     }
@@ -55,7 +55,7 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
   }
 
   @Override
-  public synchronized void untrackGUIDs(Collection<String> guids) {
+  protected synchronized void untrackGUIDs(Collection<String> guids) {
     if (this.storeTracker == null) {
       throw new IllegalStateException("Store tracker not yet initialized!");
     }
@@ -67,7 +67,7 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
     }
   }
 
-  public void trackRecord(Record record) {
+  protected void trackRecord(Record record) {
 
     Logger.debug(LOG_TAG, "Tracking record " + record.guid +
                            " (" + record.lastModified + ") to avoid re-upload.");

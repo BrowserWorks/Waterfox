@@ -27,7 +27,6 @@ class NameResolver
 
     JSContext* cx;
     size_t nparents;                /* number of parents in the parents array */
-    MOZ_INIT_OUTSIDE_CTOR
     ParseNode* parents[MaxParents]; /* history of ParseNodes we've been looking at */
     StringBuffer* buf;              /* when resolving, buffer to append to */
 
@@ -687,7 +686,6 @@ class NameResolver
           case PNK_DIV:
           case PNK_MOD:
           case PNK_POW:
-          case PNK_PIPELINE:
           case PNK_COMMA:
           case PNK_NEW:
           case PNK_CALL:

@@ -28,48 +28,6 @@ MacroAssembler::move64(Imm64 imm, Register64 dest)
     movePtr(ImmWord(imm.value), dest.reg);
 }
 
-void
-MacroAssembler::moveDoubleToGPR64(FloatRegister src, Register64 dest)
-{
-    MOZ_CRASH("NYI: moveDoubleToGPR64");
-}
-
-void
-MacroAssembler::moveGPR64ToDouble(Register64 src, FloatRegister dest)
-{
-    MOZ_CRASH("NYI: moveGPR64ToDouble");
-}
-
-void
-MacroAssembler::move64To32(Register64 src, Register dest)
-{
-    MOZ_CRASH("NYI: move64To32");
-}
-
-void
-MacroAssembler::move32To64ZeroExtend(Register src, Register64 dest)
-{
-    MOZ_CRASH("NYI: move32To64ZeroExtend");
-}
-
-void
-MacroAssembler::move8To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_CRASH("NYI: move8To64SignExtend");
-}
-
-void
-MacroAssembler::move16To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_CRASH("NYI: move16To64SignExtend");
-}
-
-void
-MacroAssembler::move32To64SignExtend(Register src, Register64 dest)
-{
-    MOZ_CRASH("NYI: move32To64SignExtend");
-}
-
 // ===============================================================
 // Logical instructions
 
@@ -333,9 +291,8 @@ MacroAssembler::mul64(const Operand& src, const Register64& dest, const Register
 void
 MacroAssembler::mulBy3(Register src, Register dest)
 {
-    MOZ_ASSERT(src != ScratchRegister);
-    as_daddu(ScratchRegister, src, src);
-    as_daddu(dest, ScratchRegister, src);
+    as_daddu(dest, src, src);
+    as_daddu(dest, dest, src);
 }
 
 void
@@ -714,27 +671,9 @@ void
 MacroAssembler::branchTestMagic(Condition cond, const Address& valaddr, JSWhyMagic why, Label* label)
 {
     uint64_t magic = MagicValue(why).asRawBits();
-    SecondScratchRegisterScope scratch(*this);
+    ScratchRegisterScope scratch(*this);
     loadPtr(valaddr, scratch);
     ma_b(scratch, ImmWord(magic), label, cond);
-}
-
-void
-MacroAssembler::branchToComputedAddress(const BaseIndex& addr)
-{
-    int32_t shift = Imm32::ShiftOf(addr.scale).value;
-    if (shift) {
-        // 6 instructions : lui ori dror32 ori jr nop
-        ma_mul(ScratchRegister, addr.index, Imm32(6 * 4));
-        as_daddu(ScratchRegister, addr.base, ScratchRegister);
-    } else {
-        as_daddu(ScratchRegister, addr.base, addr.index);
-    }
-
-    if (addr.offset)
-        asMasm().addPtr(Imm32(addr.offset), ScratchRegister);
-    as_jr(ScratchRegister);
-    as_nop();
 }
 
 // ========================================================================
@@ -770,16 +709,18 @@ template <class L>
 void
 MacroAssembler::wasmBoundsCheck(Condition cond, Register index, Register boundsCheckLimit, L label)
 {
-    ma_b(index, boundsCheckLimit, label, cond);
+    MOZ_CRASH("NYI - patching is no longer available");
+    // BufferOffset bo = ma_BoundsCheck(ScratchRegister);
+    // append(wasm::BoundsCheck(bo.getOffset()));
+
+    // ma_b(index, ScratchRegister, label, cond);
 }
 
 template <class L>
 void
 MacroAssembler::wasmBoundsCheck(Condition cond, Register index, Address boundsCheckLimit, L label)
 {
-    SecondScratchRegisterScope scratch2(*this);
-    load32(boundsCheckLimit,SecondScratchReg);
-    ma_b(index, SecondScratchReg, label, cond);
+    MOZ_CRASH("NYI - patching is no longer available");
 }
 
 //}}} check_macroassembler_style

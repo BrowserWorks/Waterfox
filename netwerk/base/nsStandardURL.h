@@ -35,7 +35,6 @@ class nsIFile;
 class nsIURLParser;
 
 namespace mozilla {
-class Encoding;
 namespace net {
 
 //-----------------------------------------------------------------------------
@@ -123,7 +122,7 @@ public: /* internal -- HPUX compiler can't handle this being private */
     class nsSegmentEncoder
     {
     public:
-        explicit nsSegmentEncoder(const Encoding* encoding = nullptr);
+        explicit nsSegmentEncoder(const char *charset);
 
         // Encode the given segment if necessary, and return the length of
         // the encoded segment.  The encoded segment is appended to |buf|
@@ -199,8 +198,7 @@ private:
                                 bool useEsc = false, int32_t* diff = nullptr);
     uint32_t AppendToBuf(char *, uint32_t, const char *, uint32_t);
 
-    nsresult BuildNormalizedSpec(const char* spec, const Encoding* encoding);
-    nsresult SetSpecWithEncoding(const nsACString &input, const Encoding* encoding);
+    nsresult BuildNormalizedSpec(const char *spec);
 
     bool     SegmentIs(const URLSegment &s1, const char *val, bool ignoreCase = false);
     bool     SegmentIs(const char* spec, const URLSegment &s1, const char *val, bool ignoreCase = false);
@@ -276,6 +274,7 @@ private:
     URLSegment mQuery;
     URLSegment mRef;
 
+    nsCString              mOriginCharset;
     nsCOMPtr<nsIURLParser> mParser;
 
     // mFile is protected so subclasses can access it directly

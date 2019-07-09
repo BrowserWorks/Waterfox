@@ -28,7 +28,6 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
     # Element IDs.
     _input_id = 'input'
     _input_padding_id = 'input-padding'
-    _input_size_id = 'input-size'
     _textarea_id = 'textarea'
     _textarea2_id = 'textarea2'
     _textarea_one_line_id = 'textarea-one-line'
@@ -263,7 +262,7 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
         el = self.marionette.find_element(By.ID, el_id)
         self._test_minimum_select_one_character(el)
 
-    def _test_minimum_select_one_character(self, el):
+    def _test_minimum_select_one_character(self, el, x=None, y=None):
         sel = SelectionManager(el)
         original_content = sel.content
         words = original_content.split()
@@ -278,7 +277,13 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
         # Goal: Select the first character.
         target_content = original_content[0]
 
-        self.long_press_on_word(el, 0)
+        if x and y:
+            # If we got x and y from the arguments, use it as a hint of the
+            # location of the first word
+            pass
+        else:
+            x, y = self.word_location(el, 0)
+        self.long_press_on_location(el, x, y)
 
         # Drag the second caret to the end of the content.
         (caret1_x, caret1_y), (caret2_x, caret2_y) = sel.carets_location()
@@ -315,26 +320,24 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
     @parameterized(_content_id + '_to_' + _contenteditable_id,
                    el1_id=_content_id, el2_id=_contenteditable_id)
     def test_long_press_changes_focus_from(self, el1_id, el2_id):
-        self.open_test_html(self._selection_html)
-        el1 = self.marionette.find_element(By.ID, el1_id)
-        el2 = self.marionette.find_element(By.ID, el2_id)
+        '''Test the focus could be changed from el1 to el2 by long press.
 
-        # Compute the content of the first word in el2.
-        sel = SelectionManager(el2)
-        original_content = sel.content
-        words = original_content.split()
-        target_content = words[0]
+        If the focus is changed to e2 successfully, the carets should appear and
+        could be dragged.
 
-        # Goal: Tap to focus el1, and then select the first word on el2.
+        '''
+        # Goal: Tap to focus el1, and then select the first character on
+        # el2.
 
         # We want to collect the location of the first word in el2 here
         # since self.word_location() has the side effect which would
         # change the focus.
+        self.open_test_html(self._selection_html)
+        el1 = self.marionette.find_element(By.ID, el1_id)
+        el2 = self.marionette.find_element(By.ID, el2_id)
         x, y = self.word_location(el2, 0)
-
         el1.tap()
-        self.long_press_on_location(el2, x, y)
-        self.assertEqual(target_content, sel.selected_content)
+        self._test_minimum_select_one_character(el2, x=x, y=y)
 
     @parameterized(_input_id, el_id=_input_id)
     @parameterized(_textarea_id, el_id=_textarea_id)
@@ -567,29 +570,36 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
 
     def test_long_press_to_select_when_partial_visible_word_is_selected(self):
         self.open_test_html(self._selection_html)
-        el = self.marionette.find_element(By.ID, self._input_size_id)
+        el = self.marionette.find_element(By.ID, self._input_id)
         sel = SelectionManager(el)
 
-        original_content = sel.content
+        # To successfully select the second word while the first word is being
+        # selected, use sufficient spaces between 'a' and 'b' to avoid the
+        # second caret covers on the second word.
+        original_content = 'aaaaaaaa          bbbbbbbb'
+        el.clear()
+        el.send_keys(original_content)
         words = original_content.split()
 
-        # We cannot use self.long_press_on_word() for the second long press
-        # on the first word because it has side effect that changes the
-        # cursor position. We need to save the location of the first word to
-        # be used later.
+        # We cannot use self.long_press_on_word() directly since it has will
+        # change the cursor position which affects this test. We have to store
+        # the position of word 0 and word 1 before long-pressing to select the
+        # word.
         word0_x, word0_y = self.word_location(el, 0)
+        word1_x, word1_y = self.word_location(el, 1)
 
-        # Long press on the second word.
-        self.long_press_on_word(el, 1)
-        self.assertEqual(words[1], sel.selected_content)
-
-        # Long press on the first word.
         self.long_press_on_location(el, word0_x, word0_y)
         self.assertEqual(words[0], sel.selected_content)
 
-        # If the second caret is visible, it can be dragged to the position
-        # of the first caret. After that, selection will contain only the
-        # first character.
+        self.long_press_on_location(el, word1_x, word1_y)
+        self.assertEqual(words[1], sel.selected_content)
+
+        self.long_press_on_location(el, word0_x, word0_y)
+        self.assertEqual(words[0], sel.selected_content)
+
+        # If the second carets is visible, it can be dragged to the position of
+        # the first caret. After that, selection will contain only the first
+        # character.
         (caret1_x, caret1_y), (caret2_x, caret2_y) = sel.carets_location()
         self.actions.flick(el, caret2_x, caret2_y, caret1_x, caret1_y).perform()
         self.assertEqual(words[0][0], sel.selected_content)

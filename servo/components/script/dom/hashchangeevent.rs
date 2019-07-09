@@ -7,8 +7,8 @@ use dom::bindings::codegen::Bindings::HashChangeEventBinding;
 use dom::bindings::codegen::Bindings::HashChangeEventBinding::HashChangeEventMethods;
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::Root;
 use dom::bindings::reflector::reflect_dom_object;
-use dom::bindings::root::DomRoot;
 use dom::bindings::str::{DOMString, USVString};
 use dom::event::Event;
 use dom::window::Window;
@@ -32,8 +32,8 @@ impl HashChangeEvent {
         }
     }
 
-    pub fn new_uninitialized(window: &Window) -> DomRoot<HashChangeEvent> {
-        reflect_dom_object(Box::new(HashChangeEvent::new_inherited(String::new(), String::new())),
+    pub fn new_uninitialized(window: &Window) -> Root<HashChangeEvent> {
+        reflect_dom_object(box HashChangeEvent::new_inherited(String::new(), String::new()),
                            window,
                            HashChangeEventBinding::Wrap)
     }
@@ -44,8 +44,8 @@ impl HashChangeEvent {
                cancelable: bool,
                old_url: String,
                new_url: String)
-               -> DomRoot<HashChangeEvent> {
-        let ev = reflect_dom_object(Box::new(HashChangeEvent::new_inherited(old_url, new_url)),
+               -> Root<HashChangeEvent> {
+        let ev = reflect_dom_object(box HashChangeEvent::new_inherited(old_url, new_url),
                                     window,
                                     HashChangeEventBinding::Wrap);
         {
@@ -58,7 +58,7 @@ impl HashChangeEvent {
     pub fn Constructor(window: &Window,
                        type_: DOMString,
                        init: &HashChangeEventBinding::HashChangeEventInit)
-                       -> Fallible<DomRoot<HashChangeEvent>> {
+                       -> Fallible<Root<HashChangeEvent>> {
         Ok(HashChangeEvent::new(window,
                                 Atom::from(type_),
                                 init.parent.bubbles,

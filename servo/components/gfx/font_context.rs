@@ -7,7 +7,7 @@ use fnv::FnvHasher;
 use font::{Font, FontGroup, FontHandleMethods};
 use font_cache_thread::FontCacheThread;
 use font_template::FontTemplateDescriptor;
-use malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
+use heapsize::HeapSizeOf;
 use platform::font::FontHandle;
 use platform::font_context::FontContextHandle;
 use platform::font_template::FontTemplateData;
@@ -92,9 +92,7 @@ impl FontContext {
                                                         template,
                                                         Some(actual_pt_size))?;
 
-        let font_instance_key = self.font_cache_thread
-                                    .get_font_instance(font_key, actual_pt_size);
-        Ok(Font::new(handle, variant, descriptor, pt_size, actual_pt_size, font_instance_key))
+        Ok(Font::new(handle, variant, descriptor, pt_size, actual_pt_size, font_key))
     }
 
     fn expire_font_caches_if_necessary(&mut self) {
@@ -118,7 +116,7 @@ impl FontContext {
 
         let layout_font_group_cache_key = LayoutFontGroupCacheKey {
             pointer: style.clone(),
-            size: style.font_size.size(),
+            size: style.font_size,
         };
         if let Some(ref cached_font_group) = self.layout_font_group_cache.get(
                 &layout_font_group_cache_key) {
@@ -135,7 +133,7 @@ impl FontContext {
 
         let mut fonts: SmallVec<[Rc<RefCell<Font>>; 8]> = SmallVec::new();
 
-        for family in style.font_family.0.iter() {
+        for family in &style.font_family.0 {
             // GWTODO: Check on real pages if this is faster as Vec() or HashMap().
             let mut cache_hit = false;
             for cached_font_entry in &self.layout_font_cache {
@@ -148,7 +146,7 @@ impl FontContext {
                         Some(ref cached_font_ref) => {
                             let cached_font = (*cached_font_ref).borrow();
                             if cached_font.descriptor == desc &&
-                               cached_font.requested_pt_size == style.font_size.size() &&
+                               cached_font.requested_pt_size == style.font_size &&
                                cached_font.variant == style.font_variant_caps {
                                 fonts.push((*cached_font_ref).clone());
                                 cache_hit = true;
@@ -166,9 +164,10 @@ impl FontContext {
                     Some(template_info) => {
                         let layout_font = self.create_layout_font(template_info.font_template,
                                                                   desc.clone(),
-                                                                  style.font_size.size(),
+                                                                  style.font_size,
                                                                   style.font_variant_caps,
-                                                                  template_info.font_key);
+                                                                  template_info.font_key
+                                                                               .expect("No font key present!"));
                         let font = match layout_font {
                             Ok(layout_font) => {
                                 let layout_font = Rc::new(RefCell::new(layout_font));
@@ -199,7 +198,7 @@ impl FontContext {
         for cached_font_entry in &self.fallback_font_cache {
             let cached_font = cached_font_entry.font.borrow();
             if cached_font.descriptor == desc &&
-                        cached_font.requested_pt_size == style.font_size.size() &&
+                        cached_font.requested_pt_size == style.font_size &&
                         cached_font.variant == style.font_variant_caps {
                 fonts.push(cached_font_entry.font.clone());
                 cache_hit = true;
@@ -211,9 +210,9 @@ impl FontContext {
             let template_info = self.font_cache_thread.last_resort_font_template(desc.clone());
             let layout_font = self.create_layout_font(template_info.font_template,
                                                       desc.clone(),
-                                                      style.font_size.size(),
+                                                      style.font_size,
                                                       style.font_variant_caps,
-                                                      template_info.font_key);
+                                                      template_info.font_key.expect("No font key present!"));
             match layout_font {
                 Ok(layout_font) => {
                     let layout_font = Rc::new(RefCell::new(layout_font));
@@ -232,10 +231,10 @@ impl FontContext {
     }
 }
 
-impl MallocSizeOf for FontContext {
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+impl HeapSizeOf for FontContext {
+    fn heap_size_of_children(&self) -> usize {
         // FIXME(njn): Measure other fields eventually.
-        self.platform_handle.size_of(ops)
+        self.platform_handle.heap_size_of_children()
     }
 }
 

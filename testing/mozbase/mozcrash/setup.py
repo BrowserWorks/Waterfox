@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 from setuptools import setup
 
 PACKAGE_NAME = 'mozcrash'
@@ -17,9 +16,7 @@ setup(name=PACKAGE_NAME,
       description="Library for printing stack traces from minidumps "
       "left behind by crashed processes",
       long_description="see http://mozbase.readthedocs.org/",
-      classifiers=['Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 2 :: Only'],
-      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='mozilla',
       author='Mozilla Automation and Tools team',
       author_email='tools@lists.mozilla.org',

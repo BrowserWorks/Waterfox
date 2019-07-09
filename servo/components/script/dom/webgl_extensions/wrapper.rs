@@ -2,52 +2,52 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use dom::bindings::nonnull::NonNullJSObjectPtr;
+use core::nonzero::NonZero;
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::bindings::reflector::DomObject;
-use dom::bindings::root::{DomRoot, MutNullableDom};
 use dom::bindings::trace::JSTraceable;
 use dom::webglrenderingcontext::WebGLRenderingContext;
-use malloc_size_of::MallocSizeOf;
+use heapsize::HeapSizeOf;
+use js::jsapi::JSObject;
 use std::any::Any;
 use super::{WebGLExtension, WebGLExtensions};
 
 /// Trait used internally by WebGLExtensions to store and
 /// handle the different WebGL extensions in a common list.
-pub trait WebGLExtensionWrapper: JSTraceable + MallocSizeOf {
+pub trait WebGLExtensionWrapper: JSTraceable + HeapSizeOf {
     fn instance_or_init(&self,
                         ctx: &WebGLRenderingContext,
                         ext: &WebGLExtensions)
-                        -> NonNullJSObjectPtr;
+                        -> NonZero<*mut JSObject>;
     fn is_supported(&self, &WebGLExtensions) -> bool;
-    fn is_enabled(&self) -> bool;
     fn enable(&self, ext: &WebGLExtensions);
     fn name(&self) -> &'static str;
     fn as_any(&self) -> &Any;
 }
 
 #[must_root]
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(JSTraceable, HeapSizeOf)]
 pub struct TypedWebGLExtensionWrapper<T: WebGLExtension> {
-    extension: MutNullableDom<T::Extension>
+    extension: MutNullableJS<T::Extension>
 }
 
 /// Typed WebGL Extension implementation.
-/// Exposes the exact MutNullableDom<DOMObject> type defined by the extension.
+/// Exposes the exact MutNullableJS<DOMObject> type defined by the extension.
 impl<T: WebGLExtension> TypedWebGLExtensionWrapper<T> {
     pub fn new() -> TypedWebGLExtensionWrapper<T> {
         TypedWebGLExtensionWrapper {
-            extension: MutNullableDom::new(None)
+            extension: MutNullableJS::new(None)
         }
     }
 }
 
 impl<T> WebGLExtensionWrapper for TypedWebGLExtensionWrapper<T>
-                              where T: WebGLExtension + JSTraceable + MallocSizeOf + 'static {
+                              where T: WebGLExtension + JSTraceable + HeapSizeOf + 'static {
     #[allow(unsafe_code)]
     fn instance_or_init(&self,
                         ctx: &WebGLRenderingContext,
                         ext: &WebGLExtensions)
-                        -> NonNullJSObjectPtr {
+                        -> NonZero<*mut JSObject> {
         let mut enabled = true;
         let extension = self.extension.or_init(|| {
             enabled = false;
@@ -57,16 +57,12 @@ impl<T> WebGLExtensionWrapper for TypedWebGLExtensionWrapper<T>
             self.enable(ext);
         }
         unsafe {
-            NonNullJSObjectPtr::new_unchecked(extension.reflector().get_jsobject().get())
+            NonZero::new_unchecked(extension.reflector().get_jsobject().get())
         }
     }
 
     fn is_supported(&self, ext: &WebGLExtensions) -> bool {
-        self.is_enabled() || T::is_supported(ext)
-    }
-
-    fn is_enabled(&self) -> bool {
-        self.extension.get().is_some()
+        self.extension.get().is_some() || T::is_supported(ext)
     }
 
     fn enable(&self, ext: &WebGLExtensions) {
@@ -82,10 +78,8 @@ impl<T> WebGLExtensionWrapper for TypedWebGLExtensionWrapper<T>
     }
 }
 
-impl<T> TypedWebGLExtensionWrapper<T>
-    where T: WebGLExtension + JSTraceable + MallocSizeOf + 'static
-{
-    pub fn dom_object(&self) -> Option<DomRoot<T::Extension>> {
+impl<T> TypedWebGLExtensionWrapper<T> where T: WebGLExtension + JSTraceable + HeapSizeOf + 'static {
+    pub fn dom_object(&self) -> Option<Root<T::Extension>> {
         self.extension.get()
     }
 }

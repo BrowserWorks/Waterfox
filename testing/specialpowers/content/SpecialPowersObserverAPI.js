@@ -117,10 +117,6 @@ SpecialPowersObserverAPI.prototype = {
             }
           }
         } else { // ipc:content-shutdown
-          if (!aSubject.hasKey("abnormal")) {
-            return; // This is a normal shutdown, ignore it
-          }
-
           addDumpIDToMessage("dumpID");
         }
         this._sendAsyncMessage("SPProcessCrashService", message);
@@ -252,7 +248,9 @@ SpecialPowersObserverAPI.prototype = {
   },
 
   _sendReply(aMessage, aReplyName, aReplyMsg) {
-    let mm = aMessage.target.frameLoader
+    let mm = aMessage.target
+                     .QueryInterface(Ci.nsIFrameLoaderOwner)
+                     .frameLoader
                      .messageManager;
     mm.sendAsyncMessage(aReplyName, aReplyMsg);
   },
@@ -397,17 +395,6 @@ SpecialPowersObserverAPI.prototype = {
         return undefined; // See comment at the beginning of this function.
       }
 
-      case "SPProcessCrashManagerWait": {
-        let promises = aMessage.json.crashIds.map((crashId) => {
-          return Services.crashmanager.ensureCrashIsPresent(crashId);
-        });
-
-        Promise.all(promises).then(() => {
-          this._sendReply(aMessage, "SPProcessCrashManagerWait", {});
-        });
-        return undefined; // See comment at the beginning of this function.
-      }
-
       case "SPPermissionManager": {
         let msg = aMessage.json;
         let principal = msg.principal;
@@ -484,7 +471,9 @@ SpecialPowersObserverAPI.prototype = {
           sandboxOptions = {}
         }
         let sb = Components.utils.Sandbox(systemPrincipal, sandboxOptions);
-        let mm = aMessage.target.frameLoader
+        let mm = aMessage.target
+                         .QueryInterface(Ci.nsIFrameLoaderOwner)
+                         .frameLoader
                          .messageManager;
         sb.sendAsyncMessage = (name, message) => {
           mm.sendAsyncMessage("SPChromeScriptMessage",

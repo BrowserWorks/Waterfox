@@ -6,8 +6,8 @@
 #ifndef include_dom_ipc_VideoDecoderChild_h
 #define include_dom_ipc_VideoDecoderChild_h
 
-#include "MediaResult.h"
 #include "PlatformDecoderModule.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/dom/PVideoDecoderChild.h"
 
 namespace mozilla {
@@ -29,8 +29,7 @@ public:
   mozilla::ipc::IPCResult RecvInputExhausted() override;
   mozilla::ipc::IPCResult RecvDrainComplete() override;
   mozilla::ipc::IPCResult RecvError(const nsresult& aError) override;
-  mozilla::ipc::IPCResult RecvInitComplete(const nsCString& aDecoderDescription,
-                                           const bool& aHardware,
+  mozilla::ipc::IPCResult RecvInitComplete(const bool& aHardware,
                                            const nsCString& aHardwareReason,
                                            const uint32_t& aConversion) override;
   mozilla::ipc::IPCResult RecvInitFailed(const nsresult& aReason) override;
@@ -44,14 +43,12 @@ public:
   RefPtr<MediaDataDecoder::FlushPromise> Flush();
   void Shutdown();
   bool IsHardwareAccelerated(nsACString& aFailureReason) const;
-  nsCString GetDescriptionName() const;
   void SetSeekThreshold(const media::TimeUnit& aTime);
   MediaDataDecoder::ConversionRequired NeedsConversion() const;
 
   MOZ_IS_CLASS_INIT
-  MediaResult InitIPDL(const VideoInfo& aVideoInfo,
-                       float aFramerate,
-                       const layers::TextureFactoryIdentifier& aIdentifier);
+  bool InitIPDL(const VideoInfo& aVideoInfo,
+                const layers::TextureFactoryIdentifier& aIdentifier);
   void DestroyIPDL();
 
   // Called from IPDL when our actor has been destroyed
@@ -73,20 +70,15 @@ private:
   MozPromiseHolder<MediaDataDecoder::FlushPromise> mFlushPromise;
 
   nsCString mHardwareAcceleratedReason;
-  nsCString mDescription;
   bool mCanSend;
   bool mInitialized;
-  bool mIsHardwareAccelerated;
-  MediaDataDecoder::ConversionRequired mConversion;
+  Atomic<bool> mIsHardwareAccelerated;
+  Atomic<MediaDataDecoder::ConversionRequired> mConversion;
 
   // Set to true if the actor got destroyed and we haven't yet notified the
   // caller.
   bool mNeedNewDecoder;
   MediaDataDecoder::DecodedData mDecodedData;
-
-  nsCString mBlacklistedD3D11Driver;
-  nsCString mBlacklistedD3D9Driver;
-  TimeStamp mGPUCrashTime;
 };
 
 } // namespace dom

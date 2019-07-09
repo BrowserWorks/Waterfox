@@ -331,10 +331,15 @@ RestyleManager::ContentRemoved(nsINode* aContainer,
 void
 RestyleManager::ContentStateChangedInternal(Element* aElement,
                                             EventStates aStateMask,
-                                            nsChangeHint* aOutChangeHint)
+                                            nsChangeHint* aOutChangeHint,
+                                            nsRestyleHint* aOutRestyleHint)
 {
   MOZ_ASSERT(!mInStyleRefresh);
   MOZ_ASSERT(aOutChangeHint);
+  MOZ_ASSERT(aOutRestyleHint);
+
+  StyleSetHandle styleSet = PresContext()->StyleSet();
+  NS_ASSERTION(styleSet, "couldn't get style set");
 
   *aOutChangeHint = nsChangeHint(0);
   // Any change to a content state that affects which frames we construct
@@ -344,6 +349,7 @@ RestyleManager::ContentStateChangedInternal(Element* aElement,
   // need to force a reframe -- if it's needed, the HasStateDependentStyle
   // call will handle things.
   nsIFrame* primaryFrame = aElement->GetPrimaryFrame();
+  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
   if (primaryFrame) {
     // If it's generated content, ignore LOADING/etc state changes on it.
     if (!primaryFrame->IsGeneratedContentFrame() &&
@@ -368,7 +374,27 @@ RestyleManager::ContentStateChangedInternal(Element* aElement,
       }
     }
 
+    pseudoType = primaryFrame->StyleContext()->GetPseudoType();
+
     primaryFrame->ContentStatesChanged(aStateMask);
+  }
+
+  if (pseudoType >= CSSPseudoElementType::Count) {
+    *aOutRestyleHint = styleSet->HasStateDependentStyle(aElement, aStateMask);
+  } else if (nsCSSPseudoElements::PseudoElementSupportsUserActionState(
+               pseudoType)) {
+    // If aElement is a pseudo-element, we want to check to see whether there
+    // are any state-dependent rules applying to that pseudo.
+    Element* ancestor =
+      ElementForStyleContext(nullptr, primaryFrame, pseudoType);
+    *aOutRestyleHint = styleSet->HasStateDependentStyle(ancestor, pseudoType,
+                                                        aElement, aStateMask);
+  } else {
+    *aOutRestyleHint = nsRestyleHint(0);
+  }
+
+  if (aStateMask.HasState(NS_EVENT_STATE_HOVER) && *aOutRestyleHint != 0) {
+    IncrementHoverGeneration();
   }
 
   if (aStateMask.HasState(NS_EVENT_STATE_VISITED)) {
@@ -432,12 +458,12 @@ RestyleManager::ChangeHintToString(nsChangeHint aHint)
     "ReflowChangesSizeOrPosition", "UpdateComputedBSize",
     "UpdateUsesOpacity", "UpdateBackgroundPosition",
     "AddOrRemoveTransform", "CSSOverflowChange",
-    "UpdateWidgetProperties", "UpdateTableCellSpans"
+    "UpdateWidgetProperties"
   };
-  static_assert(nsChangeHint_AllHints == (1u << ArrayLength(names)) - 1,
+  static_assert(nsChangeHint_AllHints == (1 << ArrayLength(names)) - 1,
                 "Name list doesn't match change hints.");
-  uint32_t hint = aHint & ((1u << ArrayLength(names)) - 1);
-  uint32_t rest = aHint & ~((1u << ArrayLength(names)) - 1);
+  uint32_t hint = aHint & ((1 << ArrayLength(names)) - 1);
+  uint32_t rest = aHint & ~((1 << ArrayLength(names)) - 1);
   if ((hint & NS_STYLE_HINT_REFLOW) == NS_STYLE_HINT_REFLOW) {
     result.AppendLiteral("NS_STYLE_HINT_REFLOW");
     hint = hint & ~NS_STYLE_HINT_REFLOW;
@@ -495,7 +521,7 @@ DumpContext(nsIFrame* aFrame, nsStyleContext* aContext)
   if (aContext) {
     fprintf(stdout, " style: %p ", static_cast<void*>(aContext));
 
-    nsAtom* pseudoTag = aContext->GetPseudo();
+    nsIAtom* pseudoTag = aContext->GetPseudo();
     if (pseudoTag) {
       nsAutoString buffer;
       pseudoTag->ToString(buffer);
@@ -1241,23 +1267,6 @@ StyleChangeReflow(nsIFrame* aFrame, nsChangeHint aHint)
   } while (aFrame);
 }
 
-// Get the next sibling which might have a frame.  This only considers siblings
-// that stylo post-traversal looks at, so only elements and text.  In
-// particular, it ignores comments.
-static nsIContent*
-NextSiblingWhichMayHaveFrame(nsIContent* aContent)
-{
-  for (nsIContent* next = aContent->GetNextSibling();
-       next;
-       next = next->GetNextSibling()) {
-    if (next->IsElement() || next->IsNodeOfType(nsINode::eTEXT)) {
-      return next;
-    }
-  }
-
-  return nullptr;
-}
-
 void
 RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
 {
@@ -1337,7 +1346,7 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
         // to reconstruct - we can just reflow, because no scrollframe is being
         // added/removed.
         nsIContent* prevOverrideNode =
-          presContext->GetViewportScrollbarStylesOverrideElement();
+          presContext->GetViewportScrollbarStylesOverrideNode();
         nsIContent* newOverrideNode =
           presContext->UpdateViewportScrollbarStylesOverride();
 
@@ -1388,8 +1397,7 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
            aChangeList[i].mContent &&
            aChangeList[i].mContent->HasFlag(NODE_NEEDS_FRAME) &&
            (i == lazyRangeStart ||
-            NextSiblingWhichMayHaveFrame(aChangeList[i - 1].mContent) ==
-              aChangeList[i].mContent))
+            aChangeList[i - 1].mContent->GetNextSibling() == aChangeList[i].mContent))
     {
       MOZ_ASSERT(aChangeList[i].mHint & nsChangeHint_ReconstructFrame);
       MOZ_ASSERT(!aChangeList[i].mFrame);
@@ -1397,21 +1405,13 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
     }
     if (i != lazyRangeStart) {
       nsIContent* start = aChangeList[lazyRangeStart].mContent;
-      nsIContent* end = NextSiblingWhichMayHaveFrame(aChangeList[i-1].mContent);
+      nsIContent* end = aChangeList[i-1].mContent->GetNextSibling();
       nsIContent* container = start->GetParent();
       MOZ_ASSERT(container);
       if (!end) {
-        frameConstructor->ContentAppended(
-            container,
-            start,
-            nsCSSFrameConstructor::InsertionKind::Sync);
+        frameConstructor->ContentAppended(container, start, false);
       } else {
-        frameConstructor->ContentRangeInserted(
-            container,
-            start,
-            end,
-            nullptr,
-            nsCSSFrameConstructor::InsertionKind::Sync);
+        frameConstructor->ContentRangeInserted(container, start, end, nullptr, false);
       }
     }
     for (size_t j = lazyRangeStart; j < i; ++j) {
@@ -1422,7 +1422,8 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
       break;
     }
 
-    const nsStyleChangeData& data = aChangeList[i];
+    nsStyleChangeData& mutable_data = aChangeList[i];
+    const nsStyleChangeData& data = mutable_data;
     nsIFrame* frame = data.mFrame;
     nsIContent* content = data.mContent;
     nsChangeHint hint = data.mHint;
@@ -1510,8 +1511,8 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
       // We could also have problems with triggering of CSS transitions
       // on elements whose frames are reconstructed, since we depend on
       // the reconstruction happening synchronously.
-      frameConstructor->RecreateFramesForContent(
-        content, nsCSSFrameConstructor::InsertionKind::Sync);
+      frameConstructor->RecreateFramesForContent(content, false,
+        nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION, nullptr);
     } else {
       NS_ASSERTION(frame, "This shouldn't happen");
 
@@ -1553,30 +1554,18 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
       if (hint & nsChangeHint_UpdateEffects) {
         for (nsIFrame* cont = frame; cont;
              cont = nsLayoutUtils::GetNextContinuationOrIBSplitSibling(cont)) {
-          SVGObserverUtils::UpdateEffects(cont);
+          nsSVGEffects::UpdateEffects(cont);
         }
       }
       if ((hint & nsChangeHint_InvalidateRenderingObservers) ||
           ((hint & nsChangeHint_UpdateOpacityLayer) &&
            frame->IsFrameOfType(nsIFrame::eSVG) &&
            !(frame->GetStateBits() & NS_STATE_IS_OUTER_SVG))) {
-        SVGObserverUtils::InvalidateRenderingObservers(frame);
+        nsSVGEffects::InvalidateRenderingObservers(frame);
       }
       if (hint & nsChangeHint_NeedReflow) {
         StyleChangeReflow(frame, hint);
         didReflowThisFrame = true;
-      }
-
-      // Here we need to propagate repaint frame change hint instead of update
-      // opacity layer change hint when we do opacity optimization for SVG.
-      // We can't do it in nsStyleEffects::CalcDifference() just like we do
-      // for the optimization for 0.99 over opacity values since we have no way
-      // to call nsSVGUtils::CanOptimizeOpacity() there.
-      if ((hint & nsChangeHint_UpdateOpacityLayer) &&
-          nsSVGUtils::CanOptimizeOpacity(frame) &&
-          frame->IsFrameOfType(nsIFrame::eSVGGeometry)) {
-        hint &= ~nsChangeHint_UpdateOpacityLayer;
-        hint |= nsChangeHint_RepaintFrame;
       }
 
       if ((hint & nsChangeHint_UpdateUsesOpacity) &&
@@ -1714,9 +1703,6 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
       if (hint & nsChangeHint_UpdateWidgetProperties) {
         frame->UpdateWidgetProperties();
       }
-      if (hint & nsChangeHint_UpdateTableCellSpans) {
-        frameConstructor->UpdateTableCellSpans(content);
-      }
     }
   }
 
@@ -1788,7 +1774,7 @@ RestyleManager::AddLayerChangesForAnimation(nsIFrame* aFrame,
       // so we can skip adding any change hint here. (If we *were* to add
       // nsChangeHint_UpdateTransformLayer, ApplyRenderingChangeToTree would
       // complain that we're updating a transform layer without a transform).
-      if (layerInfo.mLayerType == DisplayItemType::TYPE_TRANSFORM &&
+      if (layerInfo.mLayerType == nsDisplayItem::TYPE_TRANSFORM &&
           !aFrame->StyleDisplay()->HasTransformStyle()) {
         continue;
       }

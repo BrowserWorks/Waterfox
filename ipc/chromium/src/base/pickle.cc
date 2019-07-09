@@ -476,7 +476,7 @@ void Pickle::EndRead(PickleIterator& iter, uint32_t ipcMsgType) const {
     uint32_t latencyMs = round((mozilla::TimeStamp::Now() - iter.start_).ToMilliseconds());
     if (latencyMs >= kMinTelemetryIPCReadLatencyMs) {
       mozilla::Telemetry::Accumulate(mozilla::Telemetry::IPC_READ_MAIN_THREAD_LATENCY_MS,
-                                     nsDependentCString(IPC::StringFromIPCMessageType(ipcMsgType)),
+                                     nsDependentCString(mozilla::ipc::StringFromIPCMessageType(ipcMsgType)),
                                      latencyMs);
     }
   }
@@ -522,109 +522,6 @@ void Pickle::EndWrite(uint32_t length) {
     };
     buffers_.WriteBytes(padding_data, padding);
   }
-}
-
-bool Pickle::WriteBool(bool value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzBool(&value);
-#endif
-  return WriteInt(value ? 1 : 0);
-}
-
-bool Pickle::WriteInt16(int16_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzInt16(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteUInt16(uint16_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzUInt16(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteInt(int value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzInt(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteLong(long value) {
-  // Always written as a 64-bit value since the size for this type can
-  // differ between architectures.
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzLong(&value);
-#endif
-  return WriteInt64(int64_t(value));
-}
-
-bool Pickle::WriteULong(unsigned long value) {
-  // Always written as a 64-bit value since the size for this type can
-  // differ between architectures.
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzULong(&value);
-#endif
-  return WriteUInt64(uint64_t(value));
-}
-
-bool Pickle::WriteSize(size_t value) {
-  // Always written as a 64-bit value since the size for this type can
-  // differ between architectures.
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzSize(&value);
-#endif
-  return WriteUInt64(uint64_t(value));
-}
-
-bool Pickle::WriteInt32(int32_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzInt(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteUInt32(uint32_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzUInt32(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteInt64(int64_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzInt64(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteUInt64(uint64_t value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzUInt64(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteDouble(double value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzDouble(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
-}
-
-bool Pickle::WriteIntPtr(intptr_t value) {
-  // Always written as a 64-bit value since the size for this type can
-  // differ between architectures.
-  return WriteInt64(int64_t(value));
-}
-
-bool Pickle::WriteUnsignedChar(unsigned char value) {
-#ifdef FUZZING
-  Singleton<mozilla::ipc::Faulty>::get()->FuzzUChar(&value);
-#endif
-  return WriteBytes(&value, sizeof(value));
 }
 
 bool Pickle::WriteBytes(const void* data, uint32_t data_len, uint32_t alignment) {

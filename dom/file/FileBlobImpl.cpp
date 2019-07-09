@@ -239,7 +239,7 @@ const uint32_t sFileStreamFlags =
   nsIFileInputStream::SHARE_DELETE;
 
 void
-FileBlobImpl::CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv)
+FileBlobImpl::GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv)
 {
   nsCOMPtr<nsIInputStream> stream;
   aRv = NS_NewLocalFileInputStream(getter_AddRefs(stream), mFile, -1, -1,
@@ -254,7 +254,7 @@ FileBlobImpl::CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv)
   }
 
   RefPtr<SlicedInputStream> slicedInputStream =
-    new SlicedInputStream(stream.forget(), mStart, mLength);
+    new SlicedInputStream(stream, mStart, mLength);
   slicedInputStream.forget(aStream);
 }
 

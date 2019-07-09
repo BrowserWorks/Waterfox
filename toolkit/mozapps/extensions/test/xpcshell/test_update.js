@@ -302,7 +302,7 @@ for (let test of testParams) {
 
       run_next_test();
     });
-  };
+  }
 
   // Checks that we see no compatibility information when there is none.
   add_test(function run_test_4() {
@@ -384,7 +384,7 @@ for (let test of testParams) {
       a3.uninstall();
       run_next_test();
     });
-  };
+  }
 
   // Test that background update checks work
   let continue_test_6;
@@ -426,7 +426,7 @@ for (let test of testParams) {
       "onInstallStarted",
       "onInstallEnded",
     ], callback_soon(check_test_6));
-  };
+  }
 
   check_test_6 = (install) => {
     do_check_eq(install.existingAddon.pendingUpgrade.install, install);
@@ -439,7 +439,7 @@ for (let test of testParams) {
       a1.uninstall();
       run_next_test();
     });
-  };
+  }
 
   // Verify the parameter escaping in update urls.
   add_test(function run_test_8() {
@@ -766,7 +766,7 @@ for (let test of testParams) {
       a7.uninstall();
       run_next_test();
     });
-  };
+  }
 
   // Test that background update checks doesn't update an add-on that isn't
   // allowed to update automatically.
@@ -866,7 +866,7 @@ for (let test of testParams) {
 
       run_next_test();
     });
-  };
+  }
 
   // Test that background update checks doesn't update an add-on that is
   // pending uninstall
@@ -963,7 +963,7 @@ for (let test of testParams) {
 
       run_next_test();
     });
-  };
+  }
 
   add_test(function run_test_16() {
     restartManager();
@@ -1163,7 +1163,7 @@ for (let test of testParams) {
       "onInstallStarted",
       "onInstallEnded",
     ], callback_soon(check_test_20));
-  };
+  }
 
   check_test_20 = (install) => {
     do_check_eq(install.existingAddon.pendingUpgrade.install, install);
@@ -1177,10 +1177,10 @@ for (let test of testParams) {
 
       do_execute_soon(() => {
         restartManager();
-        run_next_test();
+        run_next_test()
       });
     });
-  };
+  }
 
   add_task(async function cleanup() {
     let addons = await AddonManager.getAddonsByTypes(["extension"]);
@@ -1359,14 +1359,12 @@ function check_test_7_cache() {
 
 // Test that the update check returns nothing for addons in locked install
 // locations.
-add_test(async function run_test_locked_install() {
+add_test(function run_test_locked_install() {
   const lockedDir = gProfD.clone();
   lockedDir.append("locked_extensions");
   registerDirectory("XREAppFeat", lockedDir);
-
-  await promiseShutdownManager();
-
-  writeInstallRDFToXPI({
+  restartManager();
+  writeInstallRDFForExtension({
     id: "addon13@tests.mozilla.org",
     version: "1.0",
     updateURL: "http://localhost:" + gPort + "/data/test_update.rdf",
@@ -1377,11 +1375,7 @@ add_test(async function run_test_locked_install() {
     }],
     name: "Test Addon 13",
   }, lockedDir);
-
-  let validAddons = { "system": ["addon13@tests.mozilla.org"] };
-  await overrideBuiltIns(validAddons);
-
-  await promiseStartupManager();
+  restartManager();
 
   AddonManager.getAddonByID("addon13@tests.mozilla.org", function(a13) {
     do_check_neq(a13, null);

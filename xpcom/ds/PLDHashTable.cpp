@@ -199,22 +199,15 @@ PLDHashTable::HashShift(uint32_t aEntrySize, uint32_t aLength)
 PLDHashTable::PLDHashTable(const PLDHashTableOps* aOps, uint32_t aEntrySize,
                            uint32_t aLength)
   : mOps(aOps)
-  , mEntryStore()
-  , mGeneration(0)
   , mHashShift(HashShift(aEntrySize, aLength))
   , mEntrySize(aEntrySize)
   , mEntryCount(0)
   , mRemovedCount(0)
+  , mEntryStore()
 #ifdef DEBUG
   , mChecker()
 #endif
 {
-  // An entry size greater than 0xff is unlikely, but let's check anyway. If
-  // you hit this, your hashtable would waste lots of space for unused entries
-  // and you should change your hash table's entries to pointers.
-  if (aEntrySize != uint32_t(mEntrySize)) {
-    MOZ_CRASH("Entry size is too large");
-  }
 }
 
 PLDHashTable&
@@ -224,22 +217,22 @@ PLDHashTable::operator=(PLDHashTable&& aOther)
     return *this;
   }
 
-  // Destruct |this|.
-  this->~PLDHashTable();
-
-  // |mOps| and |mEntrySize| are const so we can't assign them. Instead, we
-  // require that they are equal. The justification for this is that they're
+  // |mOps| and |mEntrySize| are required to stay the same, they're
   // conceptually part of the type -- indeed, if PLDHashTable was a templated
   // type like nsTHashtable, they *would* be part of the type -- so it only
   // makes sense to assign in cases where they match.
   MOZ_RELEASE_ASSERT(mOps == aOther.mOps);
   MOZ_RELEASE_ASSERT(mEntrySize == aOther.mEntrySize);
 
+  // Reconstruct |this|.
+  this->~PLDHashTable();
+  new (KnownNotNull, this) PLDHashTable(aOther.mOps, aOther.mEntrySize, 0);
+
   // Move non-const pieces over.
   mHashShift = Move(aOther.mHashShift);
   mEntryCount = Move(aOther.mEntryCount);
   mRemovedCount = Move(aOther.mRemovedCount);
-  mEntryStore.Set(aOther.mEntryStore.Get(), &mGeneration);
+  mEntryStore = Move(aOther.mEntryStore);
 #ifdef DEBUG
   mChecker = Move(aOther.mChecker);
 #endif
@@ -249,7 +242,7 @@ PLDHashTable::operator=(PLDHashTable&& aOther)
 #ifdef DEBUG
     AutoDestructorOp op(mChecker);
 #endif
-    aOther.mEntryStore.Set(nullptr, &aOther.mGeneration);
+    aOther.mEntryStore.Set(nullptr);
   }
 
   return *this;
@@ -490,7 +483,7 @@ PLDHashTable::ChangeTable(int32_t aDeltaLog2)
   char* oldEntryStore;
   char* oldEntryAddr;
   oldEntryAddr = oldEntryStore = mEntryStore.Get();
-  mEntryStore.Set(newEntryStore, &mGeneration);
+  mEntryStore.Set(newEntryStore);
   PLDHashMoveEntry moveEntry = mOps->moveEntry;
 
   // Copy only live entries, leaving removed ones behind.
@@ -555,7 +548,7 @@ PLDHashTable::Add(const void* aKey, const mozilla::fallible_t&)
     // We already checked this in the constructor, so it must still be true.
     MOZ_RELEASE_ASSERT(SizeOfEntryStore(CapacityFromHashShift(), mEntrySize,
                                         &nbytes));
-    mEntryStore.Set((char*)malloc(nbytes), &mGeneration);
+    mEntryStore.Set((char*)malloc(nbytes));
     if (!mEntryStore.Get()) {
       return nullptr;
     }

@@ -84,15 +84,14 @@ public:
 
   bool HasRules() const;
 
-  MOZ_MUST_USE nsresult
-  ParseSheet(css::Loader* aLoader,
-             Span<const uint8_t> aInput,
-             nsIURI* aSheetURI,
-             nsIURI* aBaseURI,
-             nsIPrincipal* aSheetPrincipal,
-             uint32_t aLineNumber,
-             nsCompatibility aCompatMode,
-             css::LoaderReusableStyleSheets* aReusableSheets = nullptr);
+  MOZ_MUST_USE nsresult ParseSheet(css::Loader* aLoader,
+                                   const nsAString& aInput,
+                                   nsIURI* aSheetURI,
+                                   nsIURI* aBaseURI,
+                                   nsIPrincipal* aSheetPrincipal,
+                                   uint32_t aLineNumber,
+                                   nsCompatibility aCompatMode,
+                                   css::LoaderReusableStyleSheets* aReusableSheets = nullptr);
 
   nsresult ReparseSheet(const nsAString& aInput);
 
@@ -120,10 +119,7 @@ public:
 
   // Internal GetCssRules method which do not have security check and
   // completelness check.
-  ServoCSSRuleList* GetCssRulesInternal(bool aRequireUniqueInner = true);
-
-  // Returns the stylesheet's Servo origin as an OriginFlags value.
-  OriginFlags GetOrigin();
+  ServoCSSRuleList* GetCssRulesInternal();
 
 protected:
   virtual ~ServoStyleSheet();

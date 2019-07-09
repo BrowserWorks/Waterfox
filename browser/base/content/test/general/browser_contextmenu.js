@@ -10,7 +10,6 @@ let LOGIN_FILL_ITEMS = [
       "fill-login-saved-passwords", true
     ], null,
 ];
-let hasPocket = Services.prefs.getBoolPref("extensions.pocket.enabled");
 let hasContainers = Services.prefs.getBoolPref("privacy.userContext.enabled");
 
 const example_base = "http://example.com/browser/browser/base/content/test/general/";
@@ -23,12 +22,7 @@ Services.scriptloader.loadSubScript(chrome_base + "contextmenu_common.js", this)
 add_task(async function test_xul_text_link_label() {
   let url = chrome_base + "subtst_contextmenu_xul.xul";
 
-  await BrowserTestUtils.openNewForegroundTab({
-    gBrowser,
-    url,
-    waitForLoad: true,
-    waitForStateStop: true,
-  });
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, url);
 
   await test_contextmenu("#test-xul-text-link-label",
     ["context-openlinkintab", true,
@@ -41,7 +35,6 @@ add_task(async function test_xul_text_link_label() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "context-searchselect",  true,
      "---", null,
@@ -95,7 +88,6 @@ add_task(async function test_plaintext() {
                          "context-bookmarkpage", true], null,
                     "---",                  null,
                     "context-savepage",     true,
-                    ...(hasPocket ? ["context-pocket", true] : []),
                     "---", null,
                     "context-sendpagetodevice", true, [], null,
                     "---",                  null,
@@ -122,7 +114,6 @@ add_task(async function test_link() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "context-searchselect",  true,
      "---", null,
@@ -184,6 +175,8 @@ add_task(async function test_video_ok() {
      "context-savevideo",          true,
      "context-video-saveimage",    true,
      "context-sendvideo",          true,
+     "context-castvideo",          null,
+       [], null
     ]
   );
 });
@@ -229,6 +222,8 @@ add_task(async function test_video_bad() {
      "context-savevideo",          true,
      "context-video-saveimage",    false,
      "context-sendvideo",          true,
+     "context-castvideo",          null,
+       [], null
     ]
   );
 });
@@ -253,6 +248,8 @@ add_task(async function test_video_bad2() {
      "context-savevideo",          false,
      "context-video-saveimage",    false,
      "context-sendvideo",          false,
+     "context-castvideo",          null,
+       [], null
     ]
   );
 });
@@ -266,7 +263,6 @@ add_task(async function test_iframe() {
           "context-bookmarkpage", true], null,
      "---",                  null,
      "context-savepage",     true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---", null,
      "context-sendpagetodevice", true, [], null,
      "---",                  null,
@@ -313,6 +309,8 @@ add_task(async function test_video_in_iframe() {
      "context-savevideo",          true,
      "context-video-saveimage",    true,
      "context-sendvideo",          true,
+     "context-castvideo",          null,
+       [], null,
      "frame",                null,
          ["context-showonlythisframe", true,
           "context-openframeintab",    true,
@@ -570,7 +568,6 @@ add_task(async function test_pagemenu() {
           "+Checkbox",           {type: "checkbox", icon: "", checked: false, disabled: false}], null,
      "---",                  null,
      "context-savepage",     true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---", null,
      "context-sendpagetodevice", true, [], null,
      "---",                  null,
@@ -604,7 +601,6 @@ add_task(async function test_dom_full_screen() {
      "context-leave-dom-fullscreen", true,
      "---",                          null,
      "context-savepage",             true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---", null,
      "context-sendpagetodevice", true, [], null,
      "---",                          null,
@@ -620,7 +616,7 @@ add_task(async function test_dom_full_screen() {
       async preCheckContextMenuFn() {
         await pushPrefs(["full-screen-api.allow-trusted-requests-only", false],
                         ["full-screen-api.transition-duration.enter", "0 0"],
-                        ["full-screen-api.transition-duration.leave", "0 0"]);
+                        ["full-screen-api.transition-duration.leave", "0 0"])
         await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
           let doc = content.document;
           let win = doc.defaultView;
@@ -653,7 +649,6 @@ add_task(async function test_pagemenu2() {
           "context-bookmarkpage", true], null,
      "---",                  null,
      "context-savepage",     true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---",                  null,
      "context-sendpagetodevice", true, [], null,
      "---",                  null,
@@ -735,7 +730,6 @@ add_task(async function test_imagelink() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "---",                   null,
      "context-viewimage",            true,
@@ -838,7 +832,6 @@ add_task(async function test_click_to_play_blocked_plugin() {
      "context-ctp-hide",     true,
      "---",                  null,
      "context-savepage",     true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---",                  null,
      "context-sendpagetodevice", true, [], null,
      "---",                  null,
@@ -885,7 +878,6 @@ add_task(async function test_srcdoc() {
           "context-bookmarkpage", true], null,
      "---",                  null,
      "context-savepage",     true,
-     ...(hasPocket ? ["context-pocket", true] : []),
      "---",                  null,
      "context-sendpagetodevice", true, [], null,
      "---",                  null,
@@ -937,7 +929,6 @@ add_task(async function test_svg_link() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "context-searchselect",  true,
      "---",                   null,
@@ -956,7 +947,6 @@ add_task(async function test_svg_link() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "context-searchselect",  true,
      "---",                   null,
@@ -975,7 +965,6 @@ add_task(async function test_svg_link() {
      "---",                   null,
      "context-bookmarklink",  true,
      "context-savelink",      true,
-     ...(hasPocket ? ["context-savelinktopocket", true] : []),
      "context-copylink",      true,
      "context-searchselect",  true,
      "---",                   null,

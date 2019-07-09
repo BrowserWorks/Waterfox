@@ -24,7 +24,6 @@ public interface HealthRecorder {
 
     public void recordGeckoStartupTime(long duration);
     public void recordJavaStartupTime(long duration);
-    public void recordSearch(final String engineID, final String location);
     public void recordSessionEnd(String reason, SharedPreferences.Editor editor);
     public void recordSessionEnd(String reason, SharedPreferences.Editor editor, final int environment);
 

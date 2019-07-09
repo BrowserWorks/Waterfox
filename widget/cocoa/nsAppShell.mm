@@ -46,9 +46,6 @@
 
 using namespace mozilla::widget;
 
-#define WAKE_LOCK_LOG(...) MOZ_LOG(gMacWakeLockLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
-static mozilla::LazyLogModule gMacWakeLockLog("MacWakeLock");
-
 // A wake lock listener that disables screen saver when requested by
 // Gecko. For example when we're playing video in a foreground tab we
 // don't want the screen saver to turn on.
@@ -60,37 +57,15 @@ public:
 private:
   ~MacWakeLockListener() {}
 
-  IOPMAssertionID mAssertionNoDisplaySleepID = kIOPMNullAssertionID;
-  IOPMAssertionID mAssertionNoIdleSleepID = kIOPMNullAssertionID;
+  IOPMAssertionID mAssertionID = kIOPMNullAssertionID;
 
   NS_IMETHOD Callback(const nsAString& aTopic, const nsAString& aState) override {
-    if (!aTopic.EqualsASCII("screen") &&
-        !aTopic.EqualsASCII("audio-playing") &&
-        !aTopic.EqualsASCII("video-playing")) {
+    if (!aTopic.EqualsASCII("screen")) {
       return NS_OK;
     }
-
-    // we should still hold the lock for background audio.
-    if (aTopic.EqualsASCII("audio-playing") &&
-        aState.EqualsASCII("locked-background")) {
-      WAKE_LOCK_LOG("keep audio playing even in background");
-      return NS_OK;
-    }
-
-    bool shouldKeepDisplayOn = aTopic.EqualsASCII("screen") ||
-                               aTopic.EqualsASCII("video-playing");
-    CFStringRef assertionType = shouldKeepDisplayOn ?
-      kIOPMAssertionTypeNoDisplaySleep : kIOPMAssertionTypeNoIdleSleep;
-    IOPMAssertionID& assertionId = shouldKeepDisplayOn ?
-      mAssertionNoDisplaySleepID : mAssertionNoIdleSleepID;
-
     // Note the wake lock code ensures that we're not sent duplicate
     // "locked-foreground" notifications when multiple wake locks are held.
     if (aState.EqualsASCII("locked-foreground")) {
-      if (assertionId != kIOPMNullAssertionID) {
-        WAKE_LOCK_LOG("already has a lock");
-        return NS_OK;
-      }
       // Prevent screen saver.
       CFStringRef cf_topic =
         ::CFStringCreateWithCharacters(kCFAllocatorDefault,
@@ -98,24 +73,22 @@ private:
                                          (aTopic.Data()),
                                        aTopic.Length());
       IOReturn success =
-        ::IOPMAssertionCreateWithName(assertionType,
+        ::IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
                                       kIOPMAssertionLevelOn,
                                       cf_topic,
-                                      &assertionId);
+                                      &mAssertionID);
       CFRelease(cf_topic);
       if (success != kIOReturnSuccess) {
-        WAKE_LOCK_LOG("failed to disable screensaver");
+        NS_WARNING("failed to disable screensaver");
       }
-      WAKE_LOCK_LOG("create screensaver");
     } else {
       // Re-enable screen saver.
-      if (assertionId != kIOPMNullAssertionID) {
-        IOReturn result = ::IOPMAssertionRelease(assertionId);
+      NS_WARNING("Releasing screensaver");
+      if (mAssertionID != kIOPMNullAssertionID) {
+        IOReturn result = ::IOPMAssertionRelease(mAssertionID);
         if (result != kIOReturnSuccess) {
-          WAKE_LOCK_LOG("failed to release screensaver");
+          NS_WARNING("failed to release screensaver");
         }
-        WAKE_LOCK_LOG("Release screensaver");
-        assertionId = kIOPMNullAssertionID;
       }
     }
     return NS_OK;
@@ -330,7 +303,7 @@ nsAppShell::Init()
   // context.version = 0;
   context.info = this;
   context.perform = ProcessGeckoEvents;
-
+  
   mCFRunLoopSource = ::CFRunLoopSourceCreate(kCFAllocatorDefault, 0, &context);
   NS_ENSURE_STATE(mCFRunLoopSource);
 
@@ -705,23 +678,13 @@ nsAppShell::Run(void)
 
   mStarted = true;
 
-  if (XRE_IsParentProcess()) {
-    AddScreenWakeLockListener();
-  }
+  AddScreenWakeLockListener();
 
-  // We use the native Gecko event loop in content processes.
-  nsresult rv = NS_OK;
-  if (XRE_UseNativeEventProcessing()) {
-    NS_OBJC_TRY_ABORT([NSApp run]);
-  } else {
-    rv = nsBaseAppShell::Run();
-  }
+  NS_OBJC_TRY_ABORT([NSApp run]);
 
-  if (XRE_IsParentProcess()) {
-    RemoveScreenWakeLockListener();
-  }
+  RemoveScreenWakeLockListener();
 
-  return rv;
+  return NS_OK;
 }
 
 NS_IMETHODIMP

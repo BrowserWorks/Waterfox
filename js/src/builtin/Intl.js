@@ -246,7 +246,7 @@ function getDuplicateVariantRE() {
         // Match everything in a langtag prior to any variants, and maybe some
         // of the variants as well (which makes this pattern inefficient but
         // not wrong, for our purposes);
-        "^(?:" + alphanum + "{2,8}-)+" +
+        "(?:" + alphanum + "{2,8}-)+" +
         // a variant, parenthesised so that we can refer back to it later;
         "(" + variant + ")-" +
         // zero or more subtags at least two characters long (thus stopping
@@ -427,10 +427,8 @@ function CanonicalizeLanguageTag(locale) {
             // "zh-nan" -> "nan"
             // Note that the script generating extlangMappings makes sure that
             // no extlang mapping will replace a normal language code.
-            // The preferred value for all current deprecated extlang subtags
-            // is equal to the extlang subtag, so we only need remove the
-            // redundant prefix to get the preferred value.
-            if (i === 1 && extlangMappings[subtag] === subtags[0]) {
+            subtag = extlangMappings[subtag].preferred;
+            if (i === 1 && extlangMappings[subtag].prefix === subtags[0]) {
                 callFunction(std_Array_shift, subtags);
                 i--;
             }
@@ -457,7 +455,7 @@ function CanonicalizeLanguageTag(locale) {
         var extension = ArrayJoinRange(subtags, "-", extensionStart, i);
         _DefineDataProperty(extensions, extensions.length, extension);
     }
-    callFunction(ArraySort, extensions);
+    callFunction(std_Array_sort, extensions);
 
     // Private use sequences are left as is. "x-private"
     var privateUse = "";
@@ -820,7 +818,7 @@ function addSpecialMissingLanguageTags(availableLocales) {
 
     // Also forcibly provide the last-ditch locale.
     var lastDitch = lastDitchLocale();
-    assert(lastDitch === "en-GB" && availableLocales.en,
+    assert(lastDitch === "en-GB" && availableLocales["en"],
            "shouldn't be a need to add every locale implied by the last-" +
            "ditch locale, merely just the last-ditch locale");
     availableLocales[lastDitch] = true;
@@ -1397,8 +1395,7 @@ function initializeIntlObject(obj, type, lazyData) {
     assert((type === "Collator" && IsCollator(obj)) ||
            (type === "DateTimeFormat" && IsDateTimeFormat(obj)) ||
            (type === "NumberFormat" && IsNumberFormat(obj)) ||
-           (type === "PluralRules" && IsPluralRules(obj)) ||
-           (type === "RelativeTimeFormat" && IsRelativeTimeFormat(obj)),
+           (type === "PluralRules" && IsPluralRules(obj)),
            "type must match the object's class");
     assert(IsObject(lazyData), "non-object lazy data");
 
@@ -1465,9 +1462,7 @@ function maybeInternalProperties(internals) {
  */
 function getIntlObjectInternals(obj) {
     assert(IsObject(obj), "getIntlObjectInternals called with non-Object");
-    assert(IsCollator(obj) || IsDateTimeFormat(obj) ||
-           IsNumberFormat(obj) || IsPluralRules(obj) ||
-           IsRelativeTimeFormat(obj),
+    assert(IsCollator(obj) || IsDateTimeFormat(obj) || IsNumberFormat(obj) || IsPluralRules(obj),
            "getIntlObjectInternals called with non-Intl object");
 
     var internals = UnsafeGetReservedSlot(obj, INTL_INTERNALS_OBJECT_SLOT);
@@ -1477,8 +1472,7 @@ function getIntlObjectInternals(obj) {
     assert((internals.type === "Collator" && IsCollator(obj)) ||
            (internals.type === "DateTimeFormat" && IsDateTimeFormat(obj)) ||
            (internals.type === "NumberFormat" && IsNumberFormat(obj)) ||
-           (internals.type === "PluralRules" && IsPluralRules(obj)) ||
-           (internals.type === "RelativeTimeFormat" && IsRelativeTimeFormat(obj)),
+           (internals.type === "PluralRules" && IsPluralRules(obj)),
            "type must match the object's class");
     assert(hasOwn("lazyData", internals), "missing lazyData");
     assert(hasOwn("internalProps", internals), "missing internalProps");
@@ -1680,10 +1674,12 @@ function InitializeCollator(collator, locales, options) {
     // Steps 4-5.
     //
     // If we ever need more speed here at startup, we should try to detect the
-    // case where |options === undefined| and then directly use the default
-    // value for each option.  For now, just keep it simple.
+    // case where |options === undefined| and Object.prototype hasn't been
+    // mucked with.  (|options| is fully consumed in this method, so it's not a
+    // concern that Object.prototype might be touched between now and when
+    // |resolveCollatorInternals| is called.)  For now, just keep it simple.
     if (options === undefined)
-        options = std_Object_create(null);
+        options = {};
     else
         options = ToObject(options);
 
@@ -2173,10 +2169,12 @@ function InitializeNumberFormat(numberFormat, thisValue, locales, options) {
     // Steps 4-5.
     //
     // If we ever need more speed here at startup, we should try to detect the
-    // case where |options === undefined| and then directly use the default
-    // value for each option.  For now, just keep it simple.
+    // case where |options === undefined| and Object.prototype hasn't been
+    // mucked with.  (|options| is fully consumed in this method, so it's not a
+    // concern that Object.prototype might be touched between now and when
+    // |resolveNumberFormatInternals| is called.)  For now just keep it simple.
     if (options === undefined)
-        options = std_Object_create(null);
+        options = {};
     else
         options = ToObject(options);
 
@@ -2372,14 +2370,8 @@ _SetCanonicalName(Intl_NumberFormat_format_get, "get format");
 
 
 function Intl_NumberFormat_formatToParts(value) {
-    // Step 1.
-    var nf = this;
-
-    // Steps 2-3.
-    if (!IsObject(nf) || !IsNumberFormat(nf)) {
-        ThrowTypeError(JSMSG_INTL_OBJECT_NOT_INITED, "NumberFormat", "formatToParts",
-                       "NumberFormat");
-    }
+    // Steps 1-3.
+    var nf = UnwrapNumberFormat(this, "formatToParts");
 
     // Ensure the NumberFormat internals are resolved.
     getNumberFormatInternals(nf);
@@ -3079,14 +3071,8 @@ _SetCanonicalName(Intl_DateTimeFormat_format_get, "get format");
  * Intl.DateTimeFormat.prototype.formatToParts ( date )
  */
 function Intl_DateTimeFormat_formatToParts(date) {
-    // Step 1.
-    var dtf = this;
-
-    // Steps 2-3.
-    if (!IsObject(dtf) || !IsDateTimeFormat(dtf)) {
-        ThrowTypeError(JSMSG_INTL_OBJECT_NOT_INITED, "DateTimeFormat", "formatToParts",
-                       "DateTimeFormat");
-    }
+    // Steps 1-3.
+    var dtf = UnwrapDateTimeFormat(this, "formatToParts");
 
     // Ensure the DateTimeFormat internals are resolved.
     getDateTimeFormatInternals(dtf);
@@ -3368,7 +3354,7 @@ function InitializePluralRules(pluralRules, locales, options) {
 
     // Steps 4-5.
     if (options === undefined)
-        options = std_Object_create(null);
+        options = {};
     else
         options = ToObject(options);
 
@@ -3473,223 +3459,6 @@ function Intl_PluralRules_resolvedOptions() {
         if (hasOwn(p, internals))
             _DefineDataProperty(result, p, internals[p]);
     }
-    return result;
-}
-
-
-/********** Intl.RelativeTimeFormat **********/
-
-/**
- * RelativeTimeFormat internal properties.
- *
- * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.3.3.
- */
-var relativeTimeFormatInternalProperties = {
-    localeData: relativeTimeFormatLocaleData,
-    _availableLocales: null,
-    availableLocales: function() // eslint-disable-line object-shorthand
-    {
-        var locales = this._availableLocales;
-        if (locales)
-            return locales;
-
-        locales = intl_RelativeTimeFormat_availableLocales();
-        addSpecialMissingLanguageTags(locales);
-        return (this._availableLocales = locales);
-    },
-    relevantExtensionKeys: [],
-};
-
-function relativeTimeFormatLocaleData() {
-    // RelativeTimeFormat doesn't support any extension keys.
-    return {};
-}
-
-/**
- * Compute an internal properties object from |lazyRelativeTimeFormatData|.
- */
-function resolveRelativeTimeFormatInternals(lazyRelativeTimeFormatData) {
-    assert(IsObject(lazyRelativeTimeFormatData), "lazy data not an object?");
-
-    var internalProps = std_Object_create(null);
-
-    var RelativeTimeFormat = relativeTimeFormatInternalProperties;
-
-    // Step 16.
-    const r = ResolveLocale(callFunction(RelativeTimeFormat.availableLocales, RelativeTimeFormat),
-                            lazyRelativeTimeFormatData.requestedLocales,
-                            lazyRelativeTimeFormatData.opt,
-                            RelativeTimeFormat.relevantExtensionKeys,
-                            RelativeTimeFormat.localeData);
-
-    // Step 17.
-    internalProps.locale = r.locale;
-    internalProps.style = lazyRelativeTimeFormatData.style;
-
-    return internalProps;
-}
-
-/**
- * Returns an object containing the RelativeTimeFormat internal properties of |obj|,
- * or throws a TypeError if |obj| isn't RelativeTimeFormat-initialized.
- */
-function getRelativeTimeFormatInternals(obj, methodName) {
-    assert(IsObject(obj), "getRelativeTimeFormatInternals called with non-object");
-    assert(IsRelativeTimeFormat(obj), "getRelativeTimeFormatInternals called with non-RelativeTimeFormat");
-
-    var internals = getIntlObjectInternals(obj);
-    assert(internals.type === "RelativeTimeFormat", "bad type escaped getIntlObjectInternals");
-
-    var internalProps = maybeInternalProperties(internals);
-    if (internalProps)
-        return internalProps;
-
-    internalProps = resolveRelativeTimeFormatInternals(internals.lazyData);
-    setInternalProperties(internals, internalProps);
-    return internalProps;
-}
-
-/**
- * Initializes an object as a RelativeTimeFormat.
- *
- * This method is complicated a moderate bit by its implementing initialization
- * as a *lazy* concept.  Everything that must happen now, does -- but we defer
- * all the work we can until the object is actually used as a RelativeTimeFormat.
- * This later work occurs in |resolveRelativeTimeFormatInternals|; steps not noted
- * here occur there.
- *
- * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.1.1.
- */
-function InitializeRelativeTimeFormat(relativeTimeFormat, locales, options) {
-    assert(IsObject(relativeTimeFormat),
-           "InitializeRelativeimeFormat called with non-object");
-    assert(IsRelativeTimeFormat(relativeTimeFormat),
-           "InitializeRelativeTimeFormat called with non-RelativeTimeFormat");
-
-    // Lazy RelativeTimeFormat data has the following structure:
-    //
-    //   {
-    //     requestedLocales: List of locales,
-    //     style: "long" / "short" / "narrow",
-    //
-    //     opt: // opt object computer in InitializeRelativeTimeFormat
-    //       {
-    //         localeMatcher: "lookup" / "best fit",
-    //       }
-    //   }
-    //
-    // Note that lazy data is only installed as a final step of initialization,
-    // so every RelativeTimeFormat lazy data object has *all* these properties, never a
-    // subset of them.
-    const lazyRelativeTimeFormatData = std_Object_create(null);
-
-    // Step 3.
-    let requestedLocales = CanonicalizeLocaleList(locales);
-    lazyRelativeTimeFormatData.requestedLocales = requestedLocales;
-
-    // Steps 4-5.
-    if (options === undefined)
-        options = std_Object_create(null);
-    else
-        options = ToObject(options);
-
-    // Step 6.
-    let opt = new Record();
-
-    // Steps 7-8.
-    let matcher = GetOption(options, "localeMatcher", "string", ["lookup", "best fit"], "best fit");
-    opt.localeMatcher = matcher;
-
-    lazyRelativeTimeFormatData.opt = opt;
-
-    // Steps 13-14.
-    const style = GetOption(options, "style", "string", ["long", "short", "narrow"], "long");
-    lazyRelativeTimeFormatData.style = style;
-
-    initializeIntlObject(relativeTimeFormat, "RelativeTimeFormat", lazyRelativeTimeFormatData)
-}
-
-/**
- * Returns the subset of the given locale list for which this locale list has a
- * matching (possibly fallback) locale. Locales appear in the same order in the
- * returned list as in the input list.
- *
- * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.3.2.
- */
-function Intl_RelativeTimeFormat_supportedLocalesOf(locales /*, options*/) {
-    var options = arguments.length > 1 ? arguments[1] : undefined;
-
-    // Step 1.
-    var availableLocales = callFunction(relativeTimeFormatInternalProperties.availableLocales,
-                                        relativeTimeFormatInternalProperties);
-    // Step 2.
-    let requestedLocales = CanonicalizeLocaleList(locales);
-
-    // Step 3.
-    return SupportedLocales(availableLocales, requestedLocales, options);
-}
-
-/**
- * Returns a String value representing the written form of a relative date
- * formatted according to the effective locale and the formatting options
- * of this RelativeTimeFormat object.
- *
- * Spec: ECMAScript 402 API, RelativeTImeFormat, 1.4.3.
- */
-function Intl_RelativeTimeFormat_format(value, unit) {
-    // Step 1.
-    let relativeTimeFormat = this;
-
-    // Step 2.
-    if (!IsObject(relativeTimeFormat) || !IsRelativeTimeFormat(relativeTimeFormat))
-        ThrowTypeError(JSMSG_INTL_OBJECT_NOT_INITED, "RelativeTimeFormat", "format", "RelativeTimeFormat");
-
-    // Ensure the RelativeTimeFormat internals are resolved.
-    getRelativeTimeFormatInternals(relativeTimeFormat);
-
-    // Step 3.
-    let t = ToNumber(value);
-
-    // Step 4.
-    let u = ToString(unit);
-
-    switch (u) {
-      case "second":
-      case "minute":
-      case "hour":
-      case "day":
-      case "week":
-      case "month":
-      case "quarter":
-      case "year":
-        break;
-      default:
-        ThrowRangeError(JSMSG_INVALID_OPTION_VALUE, "unit", u);
-    }
-
-    // Step 5.
-    return intl_FormatRelativeTime(relativeTimeFormat, t, u);
-}
-
-/**
- * Returns the resolved options for a PluralRules object.
- *
- * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.4.4.
- */
-function Intl_RelativeTimeFormat_resolvedOptions() {
-    // Check "this RelativeTimeFormat object" per introduction of section 1.4.
-    if (!IsObject(this) || !IsRelativeTimeFormat(this)) {
-        ThrowTypeError(JSMSG_INTL_OBJECT_NOT_INITED, "RelativeTimeFormat", "resolvedOptions",
-                       "RelativeTimeFormat");
-    }
-
-    var internals = getRelativeTimeFormatInternals(this, "resolvedOptions");
-
-    var result = {
-        locale: internals.locale,
-        style: internals.style,
-    };
-
     return result;
 }
 
@@ -3801,8 +3570,8 @@ function Intl_getDisplayNames(locales, options) {
 
     // 2. If options is undefined, then
     if (options === undefined)
-        // a. Let options be ObjectCreate(null).
-        options = std_Object_create(null);
+        // a. Let options be ObjectCreate(%ObjectPrototype%).
+        options = {};
     // 3. Else,
     else
         // a. Let options be ? ToObject(options).

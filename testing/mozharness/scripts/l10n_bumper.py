@@ -145,22 +145,14 @@ class L10nBumper(VCSScript):
         dirs = self.query_abs_dirs()
         repo_path = dirs['gecko_local_dir']
         platform_dict = {}
-        ignore_config = bump_config.get('ignore_config', {})
         for platform_config in bump_config['platform_configs']:
             path = os.path.join(repo_path, platform_config['path'])
             self.info("Reading %s for %s locales..." % (path, platform_config['platforms']))
             contents = self.read_from_file(path)
             for locale in contents.splitlines():
-                # locale is 1st word in line in shipped-locales
-                if platform_config.get('format') == 'shipped-locales':
-                    locale = locale.split(' ')[0]
-                existing_platforms = set(platform_dict.get(locale, {}).get('platforms', []))
-                platforms = set(platform_config['platforms'])
-                ignore_platforms = set(ignore_config.get(locale, []))
-                platforms = (platforms | existing_platforms) - ignore_platforms
-                platform_dict[locale] = {
-                    'platforms': sorted(list(platforms))
-                }
+                platforms = platform_dict.get(locale, {}).get('platforms', [])
+                platforms = sorted(list(platform_config['platforms']) + platforms)
+                platform_dict[locale] = {'platforms': platforms}
         self.info("Built platform_dict:\n%s" % pprint.pformat(platform_dict))
         return platform_dict
 
@@ -191,7 +183,7 @@ class L10nBumper(VCSScript):
 
     def build_commit_message(self, name, locale_map):
         comments = ''
-        approval_str = 'DONTBUILD r=release a=l10n-bump'
+        approval_str = 'r=release a=l10n-bump'
         for locale, revision in sorted(locale_map.items()):
             comments += "%s -> %s\n" % (locale, revision)
         if self.config['ignore_closed_tree']:

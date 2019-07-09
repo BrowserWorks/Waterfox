@@ -72,7 +72,7 @@ LogBlockedRequest(nsIRequest* aRequest,
   }
 
   // Generate the error message
-  nsAutoString blockedMessage;
+  nsXPIDLString blockedMessage;
   NS_ConvertUTF8toUTF16 specUTF16(spec);
   const char16_t* params[] = { specUTF16.get(), aParam };
   rv = nsContentUtils::FormatLocalizedString(nsContentUtils::eSECURITY_PROPERTIES,
@@ -1580,14 +1580,14 @@ nsCORSListenerProxy::LogBlockedCORSRequest(uint64_t aInnerWindowID,
   // query innerWindowID and log to web console, otherwise log to
   // the error to the browser console.
   if (aInnerWindowID > 0) {
-    rv = scriptError->InitWithSanitizedSource(aMessage,
-                                              EmptyString(), // sourceName
-                                              EmptyString(), // sourceLine
-                                              0,             // lineNumber
-                                              0,             // columnNumber
-                                              nsIScriptError::warningFlag,
-                                              "CORS",
-                                              aInnerWindowID);
+    rv = scriptError->InitWithWindowID(aMessage,
+                                       EmptyString(), // sourceName
+                                       EmptyString(), // sourceLine
+                                       0,             // lineNumber
+                                       0,             // columnNumber
+                                       nsIScriptError::warningFlag,
+                                       "CORS",
+                                       aInnerWindowID);
   }
   else {
     rv = scriptError->Init(aMessage,

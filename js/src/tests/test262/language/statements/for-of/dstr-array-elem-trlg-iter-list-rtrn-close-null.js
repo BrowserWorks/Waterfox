@@ -48,19 +48,13 @@ info: |
        exception.
 
 ---*/
-var nextCount = 0;
-var returnCount = 0;
+var iterable = {};
 var iterator = {
-  next: function() {
-    nextCount += 1;
-    return {done: false, value: undefined};
-  },
   return: function() {
-    returnCount += 1;
     return null;
   }
 };
-var iterable = {};
+var iter;
 iterable[Symbol.iterator] = function() {
   return iterator;
 };
@@ -69,7 +63,7 @@ function* g() {
 
 var counter = 0;
 
-for ([ {} = yield , ] of [iterable]) {
+for ([ {}[yield] , ] of [iterable]) {
   
   counter += 1;
 }
@@ -78,15 +72,11 @@ assert.sameValue(counter, 1);
 
 }
 
-var iter = g();
+iter = g();
 iter.next();
 
-assert.sameValue(nextCount, 1);
-assert.sameValue(returnCount, 0);
 assert.throws(TypeError, function() {
   iter.return();
 });
-assert.sameValue(nextCount, 1);
-assert.sameValue(returnCount, 1);
 
 reportCompare(0, 0);

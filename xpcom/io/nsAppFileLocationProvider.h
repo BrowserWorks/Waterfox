@@ -45,6 +45,10 @@ protected:
   nsresult GetDefaultUserProfileRoot(nsIFile** aLocalFile,
                                      bool aLocal = false);
 
+#if defined(MOZ_WIDGET_COCOA)
+  static bool IsOSXLeopard();
+#endif
+
   nsCOMPtr<nsIFile> mMozBinDirectory;
 };
 

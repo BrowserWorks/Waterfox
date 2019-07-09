@@ -19,7 +19,7 @@ info: |
   11. Let targetObj be ? TypedArrayCreate(C, « len »).
   ...
 includes: [testTypedArray.js]
-features: [Symbol.iterator, TypedArray]
+features: [Symbol.iterator]
 ---*/
 
 var sourceItor = [1, 2];

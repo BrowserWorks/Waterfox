@@ -25,17 +25,24 @@ var mainWindow = window.QueryInterface(Ci.nsIInterfaceRequestor)
                     .rootTreeItem
                     .QueryInterface(Ci.nsIInterfaceRequestor)
                     .getInterface(Ci.nsIDOMWindow);
-var contentPage = "chrome://mochitests/content/chrome/toolkit/components/url-classifier/tests/mochitest/classifiedAnnotatedPBFrame.html";
+var contentPage = "chrome://mochitests/content/chrome/toolkit/components/url-classifier/tests/mochitest/classifiedAnnotatedPBFrame.html"
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://testing-common/UrlClassifierTestUtils.jsm");
-Components.utils.import("resource://testing-common/TestUtils.jsm");
+
+function whenDelayedStartupFinished(aWindow, aCallback) {
+  Services.obs.addObserver(function observer(aSubject, aTopic) {
+    if (aWindow == aSubject) {
+      Services.obs.removeObserver(observer, aTopic);
+      setTimeout(aCallback, 0);
+    }
+  }, "browser-delayed-startup-finished");
+}
 
 function testOnWindow(aCallback) {
   var win = mainWindow.OpenBrowserWindow();
   win.addEventListener("load", function() {
-    TestUtils.topicObserved("browser-delayed-startup-finished",
-                            subject => subject == win).then(() => {
+    whenDelayedStartupFinished(win, function() {
       win.addEventListener("DOMContentLoaded", function onInnerLoad() {
         if (win.content.location.href != contentPage) {
           win.gBrowser.loadURI(contentPage);
@@ -43,8 +50,8 @@ function testOnWindow(aCallback) {
         }
         win.removeEventListener("DOMContentLoaded", onInnerLoad, true);
 
-        win.content.addEventListener("load", function innerLoad2() {
-          win.content.removeEventListener("load", innerLoad2);
+        win.content.addEventListener('load', function innerLoad2() {
+          win.content.removeEventListener('load', innerLoad2);
           SimpleTest.executeSoon(function() { aCallback(win); });
         }, false, true);
       }, true);
@@ -63,11 +70,11 @@ function checkLoads(aWindow, aBlocked) {
 }
 
 SpecialPowers.pushPrefEnv(
-  {"set": [["urlclassifier.trackingTable", "test-track-simple"],
-           ["privacy.trackingprotection.enabled", true],
-           ["browser.safebrowsing.malware.enabled", false],
-           ["browser.safebrowsing.phishing.enabled", false],
-           ["channelclassifier.allowlist_example", true]]},
+  {"set" : [["urlclassifier.trackingTable", "test-track-simple"],
+            ["privacy.trackingprotection.enabled", true],
+            ["browser.safebrowsing.malware.enabled", false],
+            ["browser.safebrowsing.phishing.enabled", false],
+            ["channelclassifier.allowlist_example", true]]},
   test);
 
 function test() {
@@ -80,9 +87,9 @@ function test() {
 
       // Safe Browsing turned ON, tracking protection should still work
       SpecialPowers.setBoolPref("browser.safebrowsing.phishing.enabled", true);
-      testOnWindow(function(aWindow1) {
-        checkLoads(aWindow1, true);
-        aWindow1.close();
+      testOnWindow(function(aWindow) {
+        checkLoads(aWindow, true);
+        aWindow.close();
         SimpleTest.finish();
       });
     });

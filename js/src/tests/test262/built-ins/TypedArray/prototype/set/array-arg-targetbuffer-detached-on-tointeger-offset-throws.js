@@ -18,7 +18,6 @@ info: >
   9. If IsDetachedBuffer(targetBuffer) is true, throw a TypeError exception.
   ...
 includes: [testTypedArray.js, detachArrayBuffer.js]
-features: [TypedArray]
 ---*/
 
 testWithTypedArrayConstructors(function(TA) {

@@ -102,8 +102,12 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
     envVar = None
     dmdLibrary = None
     preloadEnvVar = None
-    if mozinfo.isUnix:
+    if 'toolkit' in mozinfo.info and mozinfo.info['toolkit'] == "gonk":
+        # Skip all of this, it's only valid for the host.
+        pass
+    elif mozinfo.isUnix:
         envVar = "LD_LIBRARY_PATH"
+        env['MOZILLA_FIVE_HOME'] = xrePath
         dmdLibrary = "libdmd.so"
         preloadEnvVar = "LD_PRELOAD"
     elif mozinfo.isMac:
@@ -153,12 +157,8 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
     if asan:
         try:
             # Symbolizer support
-            if mozinfo.isMac:
-                llvmSymbolizerDir = ldLibraryPath
-            else:
-                llvmSymbolizerDir = xrePath
             llvmsym = os.path.join(
-                llvmSymbolizerDir,
+                xrePath,
                 "llvm-symbolizer" + mozinfo.info["bin_suffix"].encode('ascii'))
             if os.path.isfile(llvmsym):
                 env["ASAN_SYMBOLIZER_PATH"] = llvmsym
@@ -172,8 +172,6 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
             if mozinfo.isWin:
                 totalMemory = int(
                     os.popen("wmic computersystem get TotalPhysicalMemory").readlines()[1]) / 1024
-            elif mozinfo.isMac:
-                totalMemory = int(os.popen("sysctl hw.memsize").readlines()[0].split()[1]) / 1024
             else:
                 totalMemory = int(os.popen("free").readlines()[1].split()[1])
 

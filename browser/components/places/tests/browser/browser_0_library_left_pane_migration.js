@@ -15,6 +15,9 @@
 const TEST_URI = "http://www.mozilla.org/";
 
 add_task(async function() {
+  // Sanity checks.
+  ok(PlacesUtils, "PlacesUtils is running in chrome context");
+  ok(PlacesUIUtils, "PlacesUIUtils is running in chrome context");
   ok(PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION > 0,
      "Left pane version in chrome context, current version is: " + PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION );
 
@@ -80,7 +83,7 @@ add_task(async function() {
   // Check left pane is populated.
   organizer.PlacesOrganizer.selectLeftPaneQuery("History");
   is(organizer.PlacesOrganizer._places.selectedNode.itemId,
-     PlacesUIUtils.leftPaneQueries.History,
+     PlacesUIUtils.leftPaneQueries["History"],
      "Library left pane is populated and working");
 
   await promiseLibraryClosed(organizer);

@@ -24,25 +24,6 @@ using namespace mozilla;
 using namespace mozilla::a11y;
 
 /**
- * String versions of consumer flags. See GetHumanReadableConsumersStr.
- */
-static const wchar_t* ConsumerStringMap[CONSUMERS_ENUM_LEN+1] = {
-  L"NVDA",
-  L"JAWS",
-  L"OLDJAWS",
-  L"WE",
-  L"DOLPHIN",
-  L"SEROTEK",
-  L"COBRA",
-  L"ZOOMTEXT",
-  L"KAZAGURU",
-  L"YOUDAO",
-  L"UNKNOWN",
-  L"UIAUTOMATION",
-  L"\0"
-};
-
-/**
  * Return true if module version is lesser than the given version.
  */
 bool
@@ -243,15 +224,11 @@ ReadCOMRegDefaultString(const nsString& aRegPath, nsAString& aOutBuf)
 {
   aOutBuf.Truncate();
 
-  nsAutoString fullyQualifiedRegPath;
-  fullyQualifiedRegPath.AppendLiteral(u"SOFTWARE\\Classes\\");
-  fullyQualifiedRegPath.Append(aRegPath);
-
   // Get the required size and type of the registry value.
   // We expect either REG_SZ or REG_EXPAND_SZ.
   DWORD type;
   DWORD bufLen = 0;
-  LONG result = ::RegGetValue(HKEY_LOCAL_MACHINE, fullyQualifiedRegPath.get(),
+  LONG result = ::RegGetValue(HKEY_CLASSES_ROOT, aRegPath.get(),
                               nullptr, RRF_RT_ANY, &type, nullptr, &bufLen);
   if (result != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
     return false;
@@ -262,7 +239,7 @@ ReadCOMRegDefaultString(const nsString& aRegPath, nsAString& aOutBuf)
 
   aOutBuf.SetLength((bufLen + 1) / sizeof(char16_t));
 
-  result = ::RegGetValue(HKEY_LOCAL_MACHINE, fullyQualifiedRegPath.get(), nullptr,
+  result = ::RegGetValue(HKEY_CLASSES_ROOT, aRegPath.get(), nullptr,
                          flags, nullptr, aOutBuf.BeginWriting(), &bufLen);
   if (result != ERROR_SUCCESS) {
     aOutBuf.Truncate();
@@ -417,22 +394,3 @@ Compatibility::GetActCtxResourceId()
 #endif // defined(HAVE_64BIT_BUILD)
 }
 
-// static
-void
-Compatibility::GetHumanReadableConsumersStr(nsAString &aResult)
-{
-  bool appened = false;
-  uint32_t index = 0;
-  for (uint32_t consumers = sConsumers; consumers; consumers = consumers >> 1) {
-    if (consumers & 0x1) {
-      if (appened) {
-        aResult.AppendLiteral(",");
-      }
-      aResult.Append(ConsumerStringMap[index]);
-      appened = true;
-    }
-    if (++index > CONSUMERS_ENUM_LEN) {
-      break;
-    }
-  }
-}

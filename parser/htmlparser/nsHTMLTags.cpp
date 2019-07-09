@@ -24,7 +24,7 @@ const char16_t* const nsHTMLTags::sTagUnicodeTable[] = {
 #undef HTML_OTHER
 
 // static array of tag atoms
-nsAtom* nsHTMLTags::sTagAtomTable[eHTMLTag_userdefined - 1];
+nsIAtom* nsHTMLTags::sTagAtomTable[eHTMLTag_userdefined - 1];
 
 int32_t nsHTMLTags::gTableRefCount;
 PLHashTable* nsHTMLTags::gTagTable;
@@ -47,7 +47,7 @@ HTMLTagsKeyCompareUCPtr(const void *key1, const void *key2)
   return nsCRT::strcmp(str1, str2) == 0;
 }
 
-// nsAtom* -> id hash
+// nsIAtom* -> id hash
 static PLHashNumber
 HTMLTagsHashCodeAtom(const void *key)
 {
@@ -83,8 +83,8 @@ nsHTMLTags::RegisterAtoms(void)
   {
     // let's verify that all names in the the table are lowercase...
     for (int32_t i = 0; i < NS_HTML_TAG_MAX; ++i) {
-      nsAutoString temp1((char16_t*)sTagAtoms_info[i].mString);
-      nsAutoString temp2((char16_t*)sTagAtoms_info[i].mString);
+      nsAutoString temp1((char16_t*)sTagAtoms_info[i].mStringBuffer->Data());
+      nsAutoString temp2((char16_t*)sTagAtoms_info[i].mStringBuffer->Data());
       ToLowerCase(temp1);
       NS_ASSERTION(temp1.Equals(temp2), "upper case char in table");
     }
@@ -93,7 +93,7 @@ nsHTMLTags::RegisterAtoms(void)
     // correct.
     for (int32_t i = 0; i < NS_HTML_TAG_MAX; ++i) {
       nsAutoString temp1(sTagUnicodeTable[i]);
-      nsAutoString temp2((char16_t*)sTagAtoms_info[i].mString);
+      nsAutoString temp2((char16_t*)sTagAtoms_info[i].mStringBuffer->Data());
       NS_ASSERTION(temp1.Equals(temp2), "Bad unicode tag name!");
     }
 
@@ -161,7 +161,7 @@ nsHTMLTags::ReleaseTable(void)
 
 // static
 nsHTMLTag
-nsHTMLTags::StringTagToId(const nsAString& aTagName)
+nsHTMLTags::LookupTag(const nsAString& aTagName)
 {
   uint32_t length = aTagName.Length();
 
@@ -195,7 +195,7 @@ nsHTMLTags::StringTagToId(const nsAString& aTagName)
 
   buf[i] = 0;
 
-  return CaseSensitiveStringTagToId(buf);
+  return CaseSensitiveLookupTag(buf);
 }
 
 #ifdef DEBUG
@@ -204,37 +204,54 @@ nsHTMLTags::TestTagTable()
 {
      const char16_t *tag;
      nsHTMLTag id;
-     RefPtr<nsAtom> atom;
+     nsCOMPtr<nsIAtom> atom;
 
      nsHTMLTags::AddRefTable();
      // Make sure we can find everything we are supposed to
      for (int i = 0; i < NS_HTML_TAG_MAX; ++i) {
        tag = sTagUnicodeTable[i];
-       id = StringTagToId(nsDependentString(tag));
+       id = LookupTag(nsDependentString(tag));
        NS_ASSERTION(id != eHTMLTag_userdefined, "can't find tag id");
+       const char16_t* check = GetStringValue(id);
+       NS_ASSERTION(0 == nsCRT::strcmp(check, tag), "can't map id back to tag");
 
        nsAutoString uname(tag);
        ToUpperCase(uname);
-       NS_ASSERTION(id == StringTagToId(uname), "wrong id");
+       NS_ASSERTION(id == LookupTag(uname), "wrong id");
 
-       NS_ASSERTION(id == CaseSensitiveStringTagToId(tag), "wrong id");
+       NS_ASSERTION(id == CaseSensitiveLookupTag(tag), "wrong id");
 
        atom = NS_Atomize(tag);
-       NS_ASSERTION(id == CaseSensitiveAtomTagToId(atom), "wrong id");
+       NS_ASSERTION(id == CaseSensitiveLookupTag(atom), "wrong id");
+       NS_ASSERTION(atom == GetAtom(id), "can't map id back to atom");
      }
 
      // Make sure we don't find things that aren't there
-     id = StringTagToId(NS_LITERAL_STRING("@"));
+     id = LookupTag(NS_LITERAL_STRING("@"));
      NS_ASSERTION(id == eHTMLTag_userdefined, "found @");
-     id = StringTagToId(NS_LITERAL_STRING("zzzzz"));
+     id = LookupTag(NS_LITERAL_STRING("zzzzz"));
      NS_ASSERTION(id == eHTMLTag_userdefined, "found zzzzz");
 
      atom = NS_Atomize("@");
-     id = CaseSensitiveAtomTagToId(atom);
+     id = CaseSensitiveLookupTag(atom);
      NS_ASSERTION(id == eHTMLTag_userdefined, "found @");
      atom = NS_Atomize("zzzzz");
-     id = CaseSensitiveAtomTagToId(atom);
+     id = CaseSensitiveLookupTag(atom);
      NS_ASSERTION(id == eHTMLTag_userdefined, "found zzzzz");
+
+     tag = GetStringValue((nsHTMLTag) 0);
+     NS_ASSERTION(!tag, "found enum 0");
+     tag = GetStringValue((nsHTMLTag) -1);
+     NS_ASSERTION(!tag, "found enum -1");
+     tag = GetStringValue((nsHTMLTag) (NS_HTML_TAG_MAX + 1));
+     NS_ASSERTION(!tag, "found past max enum");
+
+     atom = GetAtom((nsHTMLTag) 0);
+     NS_ASSERTION(!atom, "found enum 0");
+     atom = GetAtom((nsHTMLTag) -1);
+     NS_ASSERTION(!atom, "found enum -1");
+     atom = GetAtom((nsHTMLTag) (NS_HTML_TAG_MAX + 1));
+     NS_ASSERTION(!atom, "found past max enum");
 
      ReleaseTable();
 }

@@ -9,8 +9,12 @@
 <%helpers:longhand name="cursor" boxed="${product == 'gecko'}" animation_value_type="discrete"
   spec="https://drafts.csswg.org/css-ui/#cursor">
     pub use self::computed_value::T as SpecifiedValue;
+    use values::computed::ComputedValueAsSpecified;
     #[cfg(feature = "gecko")]
     use values::specified::url::SpecifiedUrl;
+
+    impl ComputedValueAsSpecified for SpecifiedValue {}
+    no_viewport_percentage!(SpecifiedValue);
 
     pub mod computed_value {
         #[cfg(feature = "gecko")]
@@ -21,7 +25,8 @@
         #[cfg(feature = "gecko")]
         use values::specified::url::SpecifiedUrl;
 
-        #[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+        #[derive(Clone, Copy, Debug, PartialEq, ToCss)]
         pub enum Keyword {
             Auto,
             Cursor(Cursor),
@@ -31,14 +36,14 @@
         pub type T = Keyword;
 
         #[cfg(feature = "gecko")]
-        #[derive(Clone, Debug, MallocSizeOf, PartialEq, ToComputedValue)]
+        #[derive(Clone, PartialEq, Debug)]
         pub struct Image {
             pub url: SpecifiedUrl,
             pub hotspot: Option<(f32, f32)>,
         }
 
         #[cfg(feature = "gecko")]
-        #[derive(Clone, Debug, MallocSizeOf, PartialEq, ToComputedValue)]
+        #[derive(Clone, PartialEq, Debug)]
         pub struct T {
             pub images: Vec<Image>,
             pub keyword: Keyword,
@@ -88,16 +93,15 @@
     impl Parse for computed_value::Keyword {
         fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<computed_value::Keyword, ParseError<'i>> {
-            use std::ascii::AsciiExt;
+            #[allow(unused_imports)] use std::ascii::AsciiExt;
             use style_traits::cursor::Cursor;
-            let location = input.current_source_location();
             let ident = input.expect_ident()?;
             if ident.eq_ignore_ascii_case("auto") {
                 Ok(computed_value::Keyword::Auto)
             } else {
                 Cursor::from_css_keyword(&ident)
                     .map(computed_value::Keyword::Cursor)
-                    .map_err(|()| location.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(ident.clone())))
+                    .map_err(|()| SelectorParseError::UnexpectedIdent(ident.clone()).into())
             }
         }
     }
@@ -154,6 +158,7 @@ ${helpers.single_keyword("pointer-events", "auto none", animation_value_type="di
 ${helpers.single_keyword("-moz-user-input", "auto none enabled disabled",
                          products="gecko", gecko_ffi_name="mUserInput",
                          gecko_enum_prefix="StyleUserInput",
+                         gecko_inexhaustive=True,
                          animation_value_type="discrete",
                          spec="Nonstandard (https://developer.mozilla.org/en-US/docs/Web/CSS/-moz-user-input)")}
 
@@ -161,6 +166,7 @@ ${helpers.single_keyword("-moz-user-modify", "read-only read-write write-only",
                          products="gecko", gecko_ffi_name="mUserModify",
                          gecko_enum_prefix="StyleUserModify",
                          needs_conversion=True,
+                         gecko_inexhaustive=True,
                          animation_value_type="discrete",
                          spec="Nonstandard (https://developer.mozilla.org/en-US/docs/Web/CSS/-moz-user-modify)")}
 
@@ -168,27 +174,15 @@ ${helpers.single_keyword("-moz-user-focus",
                          "none ignore normal select-after select-before select-menu select-same select-all",
                          products="gecko", gecko_ffi_name="mUserFocus",
                          gecko_enum_prefix="StyleUserFocus",
+                         gecko_inexhaustive=True,
                          animation_value_type="discrete",
                          spec="Nonstandard (https://developer.mozilla.org/en-US/docs/Web/CSS/-moz-user-focus)")}
 
-${helpers.predefined_type(
-    "caret-color",
-    "ColorOrAuto",
-    "Either::Second(Auto)",
-    spec="https://drafts.csswg.org/css-ui/#caret-color",
-    animation_value_type="Either<AnimatedColor, Auto>",
-    boxed=True,
-    ignored_when_colors_disabled=True,
-    products="gecko",
-)}
-
-${helpers.predefined_type(
-    "-moz-font-smoothing-background-color",
-    "RGBAColor",
-    "RGBA::transparent()",
-    animation_value_type="AnimatedRGBA",
-    products="gecko",
-    gecko_ffi_name="mFontSmoothingBackgroundColor",
-    internal=True,
-    spec="None (Nonstandard internal property)"
-)}
+${helpers.predefined_type("caret-color",
+                          "ColorOrAuto",
+                          "Either::Second(Auto)",
+                          spec="https://drafts.csswg.org/css-ui/#caret-color",
+                          animation_value_type="Either<IntermediateColor, Auto>",
+                          boxed=True,
+                          ignored_when_colors_disabled=True,
+                          products="gecko")}

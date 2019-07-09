@@ -4,13 +4,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """output formats for Talos"""
-from __future__ import absolute_import
 
 import filter
-# NOTE: we have a circular dependency with output.py when we import results
 import simplejson as json
 import utils
+
 from mozlog import get_proxy_logger
+
+# NOTE: we have a circular dependency with output.py when we import results
+import results as TalosResults
 
 LOG = get_proxy_logger()
 
@@ -22,13 +24,11 @@ class Output(object):
     def check(cls, urls):
         """check to ensure that the urls are valid"""
 
-    def __init__(self, results, tsresult_class):
+    def __init__(self, results):
         """
         - results : TalosResults instance
-        - tsresult_class : Results class
         """
         self.results = results
-        self.tsresult_class = tsresult_class
 
     def __call__(self):
         suites = []
@@ -62,7 +62,7 @@ class Output(object):
                         if page == 'NULL':
                             page = test.name()
                             if tsresult is None:
-                                tsresult = r = self.tsresult_class()
+                                tsresult = r = TalosResults.Results()
                                 r.results = [{'index': 0, 'page': test.name(),
                                               'runs': val}]
                             else:
@@ -73,26 +73,11 @@ class Output(object):
 
                 tresults = [tsresult] if tsresult else test.results
 
-                # Merge results for the same page when using cycle > 1
-                merged_results = {}
-                for result in tresults:
-                    results = []
-                    for r in result.results:
-                        page = r['page']
-                        if page in merged_results:
-                            merged_results[page]['runs'].extend(r['runs'])
-                        else:
-                            merged_results[page] = r
-                            results.append(r)
-                    # override the list of page results for each run
-                    result.results = results
-
                 for result in tresults:
                     filtered_results = \
                         result.values(suite['name'],
                                       test.test_config['filters'])
                     vals.extend([[i['value'], j] for i, j in filtered_results])
-                    subtest_index = 0
                     for val, page in filtered_results:
                         if page == 'NULL':
                             # no real subtests
@@ -105,15 +90,12 @@ class Output(object):
                         # if results are from a comparison test i.e. perf-reftest, it will also
                         # contain replicates for 'base' and 'reference'; we wish to keep those
                         # to reference; actual results were calculated as the difference of those
-                        base_runs = result.results[subtest_index].get('base_runs', None)
-                        ref_runs = result.results[subtest_index].get('ref_runs', None)
+                        base_runs = result.results[0].get('base_runs', None)
+                        ref_runs = result.results[0].get('ref_runs', None)
                         if base_runs and ref_runs:
                             subtest['base_replicates'] = base_runs
                             subtest['ref_replicates'] = ref_runs
-
                         subtests.append(subtest)
-                        subtest_index += 1
-
                         if test.test_config.get('lower_is_better') is not None:
                             subtest['lowerIsBetter'] = \
                                 test.test_config['lower_is_better']
@@ -216,14 +198,20 @@ class Output(object):
     @classmethod
     def shortName(cls, name):
         """short name for counters"""
-        names = {"% Processor Time": "%cpu",
-                 "XRes": "xres"}
+        names = {"Working Set": "memset",
+                 "% Processor Time": "%cpu",
+                 "Private Bytes": "pbytes",
+                 "RSS": "rss",
+                 "XRes": "xres",
+                 "Modified Page List Bytes": "modlistbytes",
+                 "Main_RSS": "main_rss"}
         return names.get(name, name)
 
     @classmethod
     def isMemoryMetric(cls, resultName):
         """returns if the result is a memory metric"""
-        memory_metric = ['xres']  # measured in bytes
+        memory_metric = ['memset', 'rss', 'pbytes', 'xres', 'modlistbytes',
+                         'main_rss', 'content_rss']  # measured in bytes
         return bool([i for i in memory_metric if i in resultName])
 
     @classmethod
@@ -236,24 +224,8 @@ class Output(object):
     def JS_Metric(cls, val_list):
         """v8 benchmark score"""
         results = [i for i, j in val_list]
+        LOG.info("javascript benchmark")
         return sum(results)
-
-    @classmethod
-    def speedometer_score(cls, val_list):
-        """
-        speedometer_score: https://bug-172968-attachments.webkit.org/attachment.cgi?id=319888
-        """
-        correctionFactor = 3
-        results = [i for i, j in val_list]
-        # speedometer has 16 tests, each of these are made of up 9 subtests
-        # and a sum of the 9 values.  We receive 160 values, and want to use
-        # the 16 test values, not the sub test values.
-        if len(results) != 160:
-            raise Exception("Speedometer has 160 subtests, found: %s instead" % len(results))
-
-        results = results[9::10]
-        score = 60 * 1000 / filter.geometric_mean(results) / correctionFactor
-        return score
 
     @classmethod
     def CanvasMark_Metric(cls, val_list):
@@ -271,8 +243,6 @@ class Output(object):
             return self.JS_Metric(vals)
         elif testname.startswith('tcanvasmark'):
             return self.CanvasMark_Metric(vals)
-        elif testname.startswith('speedometer'):
-            return self.speedometer_score(vals)
         elif len(vals) > 1:
             return filter.geometric_mean([i for i, j in vals])
         else:

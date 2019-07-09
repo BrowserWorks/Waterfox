@@ -20,7 +20,7 @@ impl nsStyleCoord {
     }
 }
 
-unsafe impl CoordData for nsStyleCoord {
+impl CoordData for nsStyleCoord {
     #[inline]
     fn unit(&self) -> nsStyleUnit {
         unsafe {
@@ -35,7 +35,7 @@ unsafe impl CoordData for nsStyleCoord {
     }
 }
 
-unsafe impl CoordDataMut for nsStyleCoord {
+impl CoordDataMut for nsStyleCoord {
     unsafe fn values_mut(&mut self) -> (&mut nsStyleUnit, &mut nsStyleUnion) {
         let unit = self.get_mUnit_mut() as *mut _;
         let value = self.get_mValue_mut() as *mut _;
@@ -51,14 +51,6 @@ impl nsStyleCoord_CalcValue {
             mPercent: 0.0,
             mHasPercent: false,
         }
-    }
-}
-
-impl PartialEq for nsStyleCoord_CalcValue {
-    fn eq(&self, other: &Self) -> bool {
-        self.mLength == other.mLength &&
-            self.mPercent == other.mPercent &&
-            self.mHasPercent == other.mHasPercent
     }
 }
 
@@ -98,7 +90,7 @@ pub struct SidesDataMut<'a> {
     index: usize,
 }
 
-unsafe impl<'a> CoordData for SidesData<'a> {
+impl<'a> CoordData for SidesData<'a> {
     #[inline]
     fn unit(&self) -> nsStyleUnit {
         unsafe {
@@ -112,7 +104,7 @@ unsafe impl<'a> CoordData for SidesData<'a> {
         }
     }
 }
-unsafe impl<'a> CoordData for SidesDataMut<'a> {
+impl<'a> CoordData for SidesDataMut<'a> {
     #[inline]
     fn unit(&self) -> nsStyleUnit {
         unsafe {
@@ -126,7 +118,7 @@ unsafe impl<'a> CoordData for SidesDataMut<'a> {
         }
     }
 }
-unsafe impl<'a> CoordDataMut for SidesDataMut<'a> {
+impl<'a> CoordDataMut for SidesDataMut<'a> {
     unsafe fn values_mut(&mut self) -> (&mut nsStyleUnit, &mut nsStyleUnion) {
         let unit = &mut self.sides.get_mUnits_mut()[self.index] as *mut _;
         let value = &mut self.sides.get_mValues_mut()[self.index] as *mut _;
@@ -168,7 +160,7 @@ pub struct CornersDataMut<'a> {
     index: usize,
 }
 
-unsafe impl<'a> CoordData for CornersData<'a> {
+impl<'a> CoordData for CornersData<'a> {
     fn unit(&self) -> nsStyleUnit {
         unsafe {
             self.corners.get_mUnits()[self.index]
@@ -180,7 +172,7 @@ unsafe impl<'a> CoordData for CornersData<'a> {
         }
     }
 }
-unsafe impl<'a> CoordData for CornersDataMut<'a> {
+impl<'a> CoordData for CornersDataMut<'a> {
     fn unit(&self) -> nsStyleUnit {
         unsafe {
             self.corners.get_mUnits()[self.index]
@@ -192,7 +184,7 @@ unsafe impl<'a> CoordData for CornersDataMut<'a> {
         }
     }
 }
-unsafe impl<'a> CoordDataMut for CornersDataMut<'a> {
+impl<'a> CoordDataMut for CornersDataMut<'a> {
     unsafe fn values_mut(&mut self) -> (&mut nsStyleUnit, &mut nsStyleUnion) {
         let unit = &mut self.corners.get_mUnits_mut()[self.index] as *mut _;
         let value = &mut self.corners.get_mValues_mut()[self.index] as *mut _;
@@ -200,11 +192,11 @@ unsafe impl<'a> CoordDataMut for CornersDataMut<'a> {
     }
 }
 
+#[derive(Copy, Clone)]
 /// Enum representing the tagged union that is CoordData.
 ///
 /// In release mode this should never actually exist in the code, and will be
 /// optimized out by threading matches and inlining.
-#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CoordDataValue {
     /// eStyleUnit_Null
     Null,
@@ -240,7 +232,7 @@ pub enum CoordDataValue {
 
 
 /// A trait to abstract on top of a mutable `nsStyleCoord`-like object.
-pub unsafe trait CoordDataMut : CoordData {
+pub trait CoordDataMut : CoordData {
     /// Get mutably the unit and the union.
     ///
     /// This is unsafe since it's possible to modify the unit without changing
@@ -394,7 +386,7 @@ pub unsafe trait CoordDataMut : CoordData {
     }
 }
 /// A trait to abstract on top of a `nsStyleCoord`-like object.
-pub unsafe trait CoordData {
+pub trait CoordData {
     /// Get the unit of this object.
     fn unit(&self) -> nsStyleUnit;
     /// Get the `nsStyleUnion` for this object.

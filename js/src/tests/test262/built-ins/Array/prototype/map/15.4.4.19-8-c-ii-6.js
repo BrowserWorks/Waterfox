@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-array.prototype.map
 es5id: 15.4.4.19-8-c-ii-6
 description: Array.prototype.map - arguments to callbackfn are self consistent.
 ---*/

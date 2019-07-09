@@ -13,7 +13,7 @@
 #include "nsAutoPtr.h"
 #include "nsCOMArray.h"
 #include "nsTArray.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsTArray.h"
 #include "nsIPrincipal.h"
@@ -90,16 +90,6 @@ public:
   virtual nsIMessageSender* GetProcessMessageManager() const
   {
     return nullptr;
-  }
-
-  virtual nsresult DoGetRemoteType(nsAString& aRemoteType) const
-  {
-    aRemoteType.Truncate();
-    nsIMessageSender* parent = GetProcessMessageManager();
-    if (parent) {
-      return parent->GetRemoteType(aRemoteType);
-    }
-    return NS_OK;
   }
 
 protected:

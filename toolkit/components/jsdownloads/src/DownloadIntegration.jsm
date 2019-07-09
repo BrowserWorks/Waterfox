@@ -80,7 +80,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "volumeService",
 
 // We have to use the gCombinedDownloadIntegration identifier because, in this
 // module only, the DownloadIntegration identifier refers to the base version.
-/* global gCombinedDownloadIntegration:false */
 Integration.downloads.defineModuleGetter(this, "gCombinedDownloadIntegration",
             "resource://gre/modules/DownloadIntegration.jsm",
             "DownloadIntegration");
@@ -277,7 +276,7 @@ this.DownloadIntegration = {
     } else {
       try {
         this._downloadsDirectory = this._getDirectory("DfltDwnld");
-      } catch (e) {
+      } catch(e) {
         this._downloadsDirectory = await this._createDownloadsDirectory("Home");
       }
     }
@@ -296,7 +295,7 @@ this.DownloadIntegration = {
     let directoryPath = null;
     let prefValue = Services.prefs.getIntPref("browser.download.folderList", 1);
 
-    switch (prefValue) {
+    switch(prefValue) {
       case 0: // Desktop
         directoryPath = this._getDirectory("Desk");
         break;
@@ -309,7 +308,7 @@ this.DownloadIntegration = {
                                                          Ci.nsIFile);
           directoryPath = directory.path;
           await OS.File.makeDir(directoryPath, { ignoreExisting: true });
-        } catch (ex) {
+        } catch(ex) {
           // Either the preference isn't set or the directory cannot be created.
           directoryPath = await this.getSystemDownloadsDirectory();
         }
@@ -317,7 +316,7 @@ this.DownloadIntegration = {
       case 3: // Cloud Storage
         try {
           directoryPath = await CloudStorage.getDownloadFolder();
-        } catch (ex) {}
+        } catch(ex) {}
         if (!directoryPath) {
           directoryPath = await this.getSystemDownloadsDirectory();
         }
@@ -666,7 +665,7 @@ this.DownloadIntegration = {
 
     // If our previous attempts failed, try sending it through
     // the system's external "file:" URL handler.
-    gExternalProtocolService.loadURI(NetUtil.newURI(file));
+    gExternalProtocolService.loadUrl(NetUtil.newURI(file));
   },
 
   /**
@@ -678,7 +677,7 @@ this.DownloadIntegration = {
     // only because this is the same behavior as the system-level prompt,
     // but also because the most recently active window is the right choice
     // in basically all cases.
-    return DownloadUIHelper.getPrompter().confirmLaunchExecutable(path);
+    return await DownloadUIHelper.getPrompter().confirmLaunchExecutable(path);
   },
 
   /**
@@ -731,7 +730,7 @@ this.DownloadIntegration = {
 
     // If launch also fails (probably because it's not implemented), let
     // the OS handler try to open the parent.
-    gExternalProtocolService.loadURI(NetUtil.newURI(parent));
+    gExternalProtocolService.loadUrl(NetUtil.newURI(parent));
   },
 
   /**
@@ -963,8 +962,10 @@ this.DownloadObserver = {
         break;
       case "wake_notification":
       case "resume_process_notification":
-        let wakeDelay =
-          Services.prefs.getIntPref("browser.download.manager.resumeOnWakeDelay", 10000);
+        let wakeDelay = 10000;
+        try {
+          wakeDelay = Services.prefs.getIntPref("browser.download.manager.resumeOnWakeDelay");
+        } catch(e) {}
 
         if (wakeDelay >= 0) {
           this._wakeTimer = new Timer(this._resumeOfflineDownloads.bind(this), wakeDelay,
@@ -1003,10 +1004,11 @@ this.DownloadObserver = {
  * @param aList
  *        DownloadList object linked to this observer.
  */
-this.DownloadHistoryObserver = function(aList) {
+this.DownloadHistoryObserver = function (aList)
+{
   this._list = aList;
   PlacesUtils.history.addObserver(this);
-};
+}
 
 this.DownloadHistoryObserver.prototype = {
   /**
@@ -1027,12 +1029,12 @@ this.DownloadHistoryObserver.prototype = {
     this._list.removeFinished();
   },
 
-  onTitleChanged() {},
-  onBeginUpdateBatch() {},
-  onEndUpdateBatch() {},
-  onVisit() {},
-  onPageChanged() {},
-  onDeleteVisits() {},
+  onTitleChanged: function () {},
+  onBeginUpdateBatch: function () {},
+  onEndUpdateBatch: function () {},
+  onVisit: function () {},
+  onPageChanged: function () {},
+  onDeleteVisits: function () {},
 };
 
 /**
@@ -1049,14 +1051,15 @@ this.DownloadHistoryObserver.prototype = {
  * @param aStore
  *        The DownloadStore object used for saving.
  */
-this.DownloadAutoSaveView = function(aList, aStore) {
+this.DownloadAutoSaveView = function (aList, aStore)
+{
   this._list = aList;
   this._store = aStore;
   this._downloadsMap = new Map();
   this._writer = new DeferredTask(() => this._store.save(), kSaveDelayMs);
   AsyncShutdown.profileBeforeChange.addBlocker("DownloadAutoSaveView: writing data",
                                                () => this._writer.finalize());
-};
+}
 
 this.DownloadAutoSaveView.prototype = {
   /**
@@ -1081,7 +1084,8 @@ this.DownloadAutoSaveView.prototype = {
    * @resolves When the view has been registered.
    * @rejects JavaScript exception.
    */
-  initialize() {
+  initialize: function ()
+  {
     // We set _initialized to true after adding the view, so that
     // onDownloadAdded doesn't cause a save to occur.
     return this._list.addView(this).then(() => this._initialized = true);
@@ -1103,12 +1107,14 @@ this.DownloadAutoSaveView.prototype = {
    * Called when the list of downloads changed, this triggers the asynchronous
    * serialization of the list of downloads.
    */
-  saveSoon() {
+  saveSoon: function ()
+  {
     this._writer.arm();
   },
 
   // DownloadList callback
-  onDownloadAdded(aDownload) {
+  onDownloadAdded: function (aDownload)
+  {
     if (gCombinedDownloadIntegration.shouldPersistDownload(aDownload)) {
       this._downloadsMap.set(aDownload, aDownload.getSerializationHash());
       if (this._initialized) {
@@ -1118,7 +1124,8 @@ this.DownloadAutoSaveView.prototype = {
   },
 
   // DownloadList callback
-  onDownloadChanged(aDownload) {
+  onDownloadChanged: function (aDownload)
+  {
     if (!gCombinedDownloadIntegration.shouldPersistDownload(aDownload)) {
       if (this._downloadsMap.has(aDownload)) {
         this._downloadsMap.delete(aDownload);
@@ -1135,7 +1142,8 @@ this.DownloadAutoSaveView.prototype = {
   },
 
   // DownloadList callback
-  onDownloadRemoved(aDownload) {
+  onDownloadRemoved: function (aDownload)
+  {
     if (this._downloadsMap.has(aDownload)) {
       this._downloadsMap.delete(aDownload);
       this.saveSoon();

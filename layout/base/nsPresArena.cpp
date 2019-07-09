@@ -11,13 +11,13 @@
 
 #include "mozilla/Poison.h"
 #include "nsDebug.h"
+#include "nsArenaMemoryStats.h"
 #include "nsPrintfCString.h"
 #include "GeckoStyleContext.h"
 #include "FrameLayerBuilder.h"
 #include "mozilla/ArrayUtils.h"
 #include "nsStyleContext.h"
 #include "nsStyleContextInlines.h"
-#include "nsWindowSizes.h"
 
 #include <inttypes.h>
 
@@ -164,12 +164,13 @@ nsPresArena::Free(uint32_t aCode, void* aPtr)
 }
 
 void
-nsPresArena::AddSizeOfExcludingThis(nsWindowSizes& aSizes) const
+nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
+                                    nsArenaMemoryStats* aArenaStats)
 {
   // We do a complicated dance here because we want to measure the
   // space taken up by the different kinds of objects in the arena,
   // but we don't have pointers to those objects.  And even if we did,
-  // we wouldn't be able to use mMallocSizeOf on them, since they were
+  // we wouldn't be able to use aMallocSizeOf on them, since they were
   // allocated out of malloc'd chunks of memory.  So we compute the
   // size of the arena as known by malloc and we add up the sizes of
   // all the objects that we care about.  Subtracting these two
@@ -177,13 +178,11 @@ nsPresArena::AddSizeOfExcludingThis(nsWindowSizes& aSizes) const
   // slop in the arena itself as well as the size of objects that
   // we've not measured explicitly.
 
-  size_t mallocSize = mPool.SizeOfExcludingThis(aSizes.mState.mMallocSizeOf);
+  size_t mallocSize = mPool.SizeOfExcludingThis(aMallocSizeOf);
 
   size_t totalSizeInFreeLists = 0;
-  for (const FreeList* entry = mFreeLists;
-       entry != ArrayEnd(mFreeLists);
-       ++entry) {
-    mallocSize += entry->SizeOfExcludingThis(aSizes.mState.mMallocSizeOf);
+  for (FreeList* entry = mFreeLists; entry != ArrayEnd(mFreeLists); ++entry) {
+    mallocSize += entry->SizeOfExcludingThis(aMallocSizeOf);
 
     // Note that we're not measuring the size of the entries on the free
     // list here.  The free list knows how many objects we've allocated
@@ -191,40 +190,39 @@ nsPresArena::AddSizeOfExcludingThis(nsWindowSizes& aSizes) const
     // |mEntries| at this point) and we're using that to determine the
     // total size of objects allocated with a given ID.
     size_t totalSize = entry->mEntrySize * entry->mEntriesEverAllocated;
+    size_t* p;
 
     switch (entry - mFreeLists) {
-#define FRAME_ID(classname, ...) \
-      case nsQueryFrame::classname##_id: \
-        aSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(classname) += totalSize; \
+#define FRAME_ID(classname, ...)                          \
+      case nsQueryFrame::classname##_id:                  \
+        p = &aArenaStats->FRAME_ID_STAT_FIELD(classname); \
         break;
 #define ABSTRACT_FRAME_ID(...)
 #include "nsFrameIdList.h"
 #undef FRAME_ID
 #undef ABSTRACT_FRAME_ID
       case eArenaObjectID_nsLineBox:
-        aSizes.mArenaSizes.mLineBoxes += totalSize;
+        p = &aArenaStats->mLineBoxes;
         break;
       case eArenaObjectID_nsRuleNode:
-        aSizes.mArenaSizes.mRuleNodes += totalSize;
+        p = &aArenaStats->mRuleNodes;
         break;
       case eArenaObjectID_GeckoStyleContext:
-        aSizes.mArenaSizes.mStyleContexts += totalSize;
+        p = &aArenaStats->mStyleContexts;
         break;
-#define STYLE_STRUCT(name_, cb_) \
-      case eArenaObjectID_nsStyle##name_: \
-        aSizes.mArenaSizes.mGeckoStyleSizes.NS_STYLE_SIZES_FIELD(name_) += \
-          totalSize; \
-        break;
-#define STYLE_STRUCT_LIST_IGNORE_VARIABLES
+#define STYLE_STRUCT(name_, checkdata_cb_)      \
+        case eArenaObjectID_nsStyle##name_:
 #include "nsStyleStructList.h"
 #undef STYLE_STRUCT
-#undef STYLE_STRUCT_LIST_IGNORE_VARIABLES
+        p = &aArenaStats->mStyleStructs;
+        break;
       default:
         continue;
     }
 
+    *p += totalSize;
     totalSizeInFreeLists += totalSize;
   }
 
-  aSizes.mLayoutPresShellSize += mallocSize - totalSizeInFreeLists;
+  aArenaStats->mOther += mallocSize - totalSizeInFreeLists;
 }

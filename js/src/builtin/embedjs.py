@@ -132,7 +132,8 @@ def messages(jsmsg):
 
 def get_config_defines(buildconfig):
   # Collect defines equivalent to ACDEFINES and add MOZ_DEBUG_DEFINES.
-  env = buildconfig.defines['ALLDEFINES']
+  env = {key: value for key, value in buildconfig.defines.iteritems()
+         if key not in buildconfig.non_global_defines}
   for define in buildconfig.substs['MOZ_DEBUG_DEFINES']:
     env[define] = 1
   return env

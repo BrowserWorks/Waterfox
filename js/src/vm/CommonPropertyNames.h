@@ -145,6 +145,7 @@
     macro(forceInterpreter, forceInterpreter, "forceInterpreter") \
     macro(forEach, forEach, "forEach") \
     macro(format, format, "format") \
+    macro(formatToParts, formatToParts, "formatToParts") \
     macro(fraction, fraction, "fraction") \
     macro(frame, frame, "frame") \
     macro(from, from, "from") \
@@ -185,7 +186,6 @@
     macro(InitializeDateTimeFormat, InitializeDateTimeFormat, "InitializeDateTimeFormat") \
     macro(InitializeNumberFormat, InitializeNumberFormat, "InitializeNumberFormat") \
     macro(InitializePluralRules, InitializePluralRules, "InitializePluralRules") \
-    macro(InitializeRelativeTimeFormat, InitializeRelativeTimeFormat, "InitializeRelativeTimeFormat") \
     macro(innermost, innermost, "innermost") \
     macro(inNursery, inNursery, "inNursery") \
     macro(input, input, "input") \
@@ -206,6 +206,7 @@
     macro(isPrototypeOf, isPrototypeOf, "isPrototypeOf") \
     macro(IterableToList, IterableToList, "IterableToList") \
     macro(iterate, iterate, "iterate") \
+    macro(iteratorIntrinsic, iteratorIntrinsic, "__iterator__") \
     macro(join, join, "join") \
     macro(js, js, "js") \
     macro(keys, keys, "keys") \
@@ -237,8 +238,8 @@
     macro(mode, mode, "mode") \
     macro(module, module, "module") \
     macro(Module, Module, "Module") \
-    macro(ModuleInstantiate, ModuleInstantiate, "ModuleInstantiate") \
-    macro(ModuleEvaluate, ModuleEvaluate, "ModuleEvaluate") \
+    macro(ModuleDeclarationInstantiation, ModuleDeclarationInstantiation, "ModuleDeclarationInstantiation") \
+    macro(ModuleEvaluation, ModuleEvaluation, "ModuleEvaluation") \
     macro(month, month, "month") \
     macro(multiline, multiline, "multiline") \
     macro(name, name, "name") \
@@ -256,6 +257,7 @@
     macro(noStack, noStack, "noStack") \
     macro(notes, notes, "notes") \
     macro(NumberFormat, NumberFormat, "NumberFormat") \
+    macro(NumberFormatFormatToParts, NumberFormatFormatToParts, "Intl_NumberFormat_formatToParts") \
     macro(numeric, numeric, "numeric") \
     macro(objectArguments, objectArguments, "[object Arguments]") \
     macro(objectArray, objectArray, "[object Array]") \
@@ -283,6 +285,7 @@
     macro(pattern, pattern, "pattern") \
     macro(pending, pending, "pending") \
     macro(PluralRules, PluralRules, "PluralRules") \
+    macro(PluralRulesSelect, PluralRulesSelect, "Intl_PluralRules_Select") \
     macro(percentSign, percentSign, "percentSign") \
     macro(plusSign, plusSign, "plusSign") \
     macro(public, public_, "public") \
@@ -350,8 +353,6 @@
     macro(Reify, Reify, "Reify") \
     macro(reject, reject, "reject") \
     macro(rejected, rejected, "rejected") \
-    macro(RelativeTimeFormat, RelativeTimeFormat, "RelativeTimeFormat") \
-    macro(RelativeTimeFormatFormat, RelativeTimeFormatFormat, "Intl_RelativeTimeFormat_Format") \
     macro(RequireObjectCoercible, RequireObjectCoercible, "RequireObjectCoercible") \
     macro(resolve, resolve, "resolve") \
     macro(resumeGenerator, resumeGenerator, "resumeGenerator") \
@@ -420,7 +421,6 @@
     macro(unescape, unescape, "unescape") \
     macro(uneval, uneval, "uneval") \
     macro(unicode, unicode, "unicode") \
-    macro(unit, unit, "unit") \
     macro(uninitialized, uninitialized, "uninitialized") \
     macro(unsized, unsized, "unsized") \
     macro(unwatch, unwatch, "unwatch") \

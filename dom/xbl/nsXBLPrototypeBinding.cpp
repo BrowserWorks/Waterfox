@@ -7,13 +7,13 @@
 #include "mozilla/ArrayUtils.h"
 
 #include "nsCOMPtr.h"
-#include "nsAtom.h"
+#include "nsIAtom.h"
 #include "nsIInputStream.h"
 #include "nsNameSpaceManager.h"
 #include "nsIURI.h"
 #include "nsIURL.h"
 #include "nsIChannel.h"
-#include "nsString.h"
+#include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsNetUtil.h"
 #include "plstr.h"
@@ -61,7 +61,7 @@ using namespace mozilla::dom;
 
 class nsXBLAttributeEntry {
 public:
-  nsXBLAttributeEntry(nsAtom* aSrcAtom, nsAtom* aDstAtom,
+  nsXBLAttributeEntry(nsIAtom* aSrcAtom, nsIAtom* aDstAtom,
                       int32_t aDstNameSpace, nsIContent* aContent)
     : mElement(aContent),
       mSrcAttribute(aSrcAtom),
@@ -73,8 +73,8 @@ public:
     NS_CONTENT_DELETE_LIST_MEMBER(nsXBLAttributeEntry, this, mNext);
   }
 
-  nsAtom* GetSrcAttribute() { return mSrcAttribute; }
-  nsAtom* GetDstAttribute() { return mDstAttribute; }
+  nsIAtom* GetSrcAttribute() { return mSrcAttribute; }
+  nsIAtom* GetDstAttribute() { return mDstAttribute; }
   int32_t GetDstNameSpace() { return mDstNameSpace; }
 
   nsIContent* GetElement() { return mElement; }
@@ -85,8 +85,8 @@ public:
 protected:
   nsIContent* mElement;
 
-  RefPtr<nsAtom> mSrcAttribute;
-  RefPtr<nsAtom> mDstAttribute;
+  nsCOMPtr<nsIAtom> mSrcAttribute;
+  nsCOMPtr<nsIAtom> mDstAttribute;
   int32_t mDstNameSpace;
   nsXBLAttributeEntry* mNext;
 };
@@ -240,7 +240,7 @@ nsXBLPrototypeBinding::LoadResources(nsIContent* aBoundElement)
 }
 
 nsresult
-nsXBLPrototypeBinding::AddResource(nsAtom* aResourceType, const nsAString& aSrc)
+nsXBLPrototypeBinding::AddResource(nsIAtom* aResourceType, const nsAString& aSrc)
 {
   EnsureResources();
 
@@ -320,7 +320,7 @@ nsXBLPrototypeBinding::InstallImplementation(nsXBLBinding* aBinding)
 
 // XXXbz this duplicates lots of SetAttrs
 void
-nsXBLPrototypeBinding::AttributeChanged(nsAtom* aAttribute,
+nsXBLPrototypeBinding::AttributeChanged(nsIAtom* aAttribute,
                                         int32_t aNameSpaceID,
                                         bool aRemoveFlag,
                                         nsIContent* aChangedElement,
@@ -350,7 +350,7 @@ nsXBLPrototypeBinding::AttributeChanged(nsAtom* aAttribute,
     if (realElement) {
       // Hold a strong reference here so that the atom doesn't go away during
       // UnsetAttr.
-      RefPtr<nsAtom> dstAttr = xblAttr->GetDstAttribute();
+      nsCOMPtr<nsIAtom> dstAttr = xblAttr->GetDstAttribute();
       int32_t dstNs = xblAttr->GetDstNameSpace();
 
       if (aRemoveFlag)
@@ -410,13 +410,13 @@ nsXBLPrototypeBinding::AttributeChanged(nsAtom* aAttribute,
 }
 
 void
-nsXBLPrototypeBinding::SetBaseTag(int32_t aNamespaceID, nsAtom* aTag)
+nsXBLPrototypeBinding::SetBaseTag(int32_t aNamespaceID, nsIAtom* aTag)
 {
   mBaseNameSpaceID = aNamespaceID;
   mBaseTag = aTag;
 }
 
-nsAtom*
+nsIAtom*
 nsXBLPrototypeBinding::GetBaseTag(int32_t* aNamespaceID)
 {
   if (mBaseTag) {
@@ -437,7 +437,7 @@ nsXBLPrototypeBinding::ImplementsInterface(REFNSIID aIID) const
 // Internal helpers ///////////////////////////////////////////////////////////////////////
 
 nsIContent*
-nsXBLPrototypeBinding::GetImmediateChild(nsAtom* aTag)
+nsXBLPrototypeBinding::GetImmediateChild(nsIAtom* aTag)
 {
   for (nsIContent* child = mBinding->GetFirstChild();
        child;
@@ -503,7 +503,7 @@ nsXBLPrototypeBinding::SetInitialAttributes(nsIContent* aBoundElement, nsIConten
       for (auto iter2 = xblAttributes->Iter(); !iter2.Done(); iter2.Next()) {
         // XXXbz this duplicates lots of AttributeChanged
         nsXBLAttributeEntry* entry = iter2.UserData();
-        nsAtom* src = entry->GetSrcAttribute();
+        nsIAtom* src = entry->GetSrcAttribute();
         nsAutoString value;
         bool attrPresent = true;
 
@@ -526,7 +526,7 @@ nsXBLPrototypeBinding::SetInitialAttributes(nsIContent* aBoundElement, nsIConten
 
           nsXBLAttributeEntry* curr = entry;
           while (curr) {
-            nsAtom* dst = curr->GetDstAttribute();
+            nsIAtom* dst = curr->GetDstAttribute();
             int32_t dstNs = curr->GetDstNameSpace();
             nsIContent* element = curr->GetElement();
 
@@ -569,15 +569,7 @@ nsXBLPrototypeBinding::GetRuleProcessor()
   return nullptr;
 }
 
-void
-nsXBLPrototypeBinding::ComputeServoStyleSet(nsPresContext* aPresContext)
-{
-  if (mResources) {
-    mResources->ComputeServoStyleSet(aPresContext);
-  }
-}
-
-ServoStyleSet*
+const ServoStyleSet*
 nsXBLPrototypeBinding::GetServoStyleSet() const
 {
   return mResources ? mResources->GetServoStyleSet() : nullptr;
@@ -593,8 +585,8 @@ nsXBLPrototypeBinding::EnsureAttributeTable()
 }
 
 void
-nsXBLPrototypeBinding::AddToAttributeTable(int32_t aSourceNamespaceID, nsAtom* aSourceTag,
-                                           int32_t aDestNamespaceID, nsAtom* aDestTag,
+nsXBLPrototypeBinding::AddToAttributeTable(int32_t aSourceNamespaceID, nsIAtom* aSourceTag,
+                                           int32_t aDestNamespaceID, nsIAtom* aDestTag,
                                            nsIContent* aContent)
 {
     InnerAttributeTable* attributesNS = mAttributeTable->Get(aSourceNamespaceID);
@@ -637,9 +629,9 @@ nsXBLPrototypeBinding::ConstructAttributeTable(nsIContent* aElement)
       char* token = nsCRT::strtok( str, ", ", &newStr );
       while( token != nullptr ) {
         // Build an atom out of this attribute.
-        RefPtr<nsAtom> atom;
+        nsCOMPtr<nsIAtom> atom;
         int32_t atomNsID = kNameSpaceID_None;
-        RefPtr<nsAtom> attribute;
+        nsCOMPtr<nsIAtom> attribute;
         int32_t attributeNsID = kNameSpaceID_None;
 
         // Figure out if this token contains a :.
@@ -773,7 +765,7 @@ nsXBLPrototypeBinding::CreateKeyHandlers()
 {
   nsXBLPrototypeHandler* curr = mPrototypeHandler;
   while (curr) {
-    RefPtr<nsAtom> eventAtom = curr->GetEventName();
+    nsCOMPtr<nsIAtom> eventAtom = curr->GetEventName();
     if (eventAtom == nsGkAtoms::keyup ||
         eventAtom == nsGkAtoms::keydown ||
         eventAtom == nsGkAtoms::keypress) {
@@ -980,8 +972,8 @@ nsXBLPrototypeBinding::Read(nsIObjectInputStream* aStream,
       rv = aStream->ReadString(attrValue);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      RefPtr<nsAtom> atomPrefix = NS_Atomize(attrPrefix);
-      RefPtr<nsAtom> atomName = NS_Atomize(attrName);
+      nsCOMPtr<nsIAtom> atomPrefix = NS_Atomize(attrPrefix);
+      nsCOMPtr<nsIAtom> atomName = NS_Atomize(attrName);
       mBinding->SetAttr(attrNamespace, atomName, atomPrefix, attrValue, false);
     }
   }
@@ -1149,7 +1141,7 @@ nsXBLPrototypeBinding::Write(nsIObjectOutputStream* aStream)
       rv = WriteNamespace(aStream, name->NamespaceID());
       NS_ENSURE_SUCCESS(rv, rv);
 
-      nsAtom* prefix = name->GetPrefix();
+      nsIAtom* prefix = name->GetPrefix();
       nsAutoString prefixString;
       if (prefix) {
         prefix->ToString(prefixString);
@@ -1229,14 +1221,14 @@ nsXBLPrototypeBinding::ReadContentNode(nsIObjectInputStream* aStream,
   rv = aStream->ReadString(prefix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<nsAtom> prefixAtom;
+  nsCOMPtr<nsIAtom> prefixAtom;
   if (!prefix.IsEmpty())
     prefixAtom = NS_Atomize(prefix);
 
   rv = aStream->ReadString(tag);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<nsAtom> tagAtom = NS_Atomize(tag);
+  nsCOMPtr<nsIAtom> tagAtom = NS_Atomize(tag);
   RefPtr<NodeInfo> nodeInfo =
     aNim->GetNodeInfo(tagAtom, prefixAtom, namespaceID, nsIDOMNode::ELEMENT_NODE);
 
@@ -1274,12 +1266,12 @@ nsXBLPrototypeBinding::ReadContentNode(nsIObjectInputStream* aStream,
       rv = aStream->ReadString(val);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      RefPtr<nsAtom> nameAtom = NS_Atomize(name);
+      nsCOMPtr<nsIAtom> nameAtom = NS_Atomize(name);
       if (namespaceID == kNameSpaceID_None) {
         attrs[i].mName.SetTo(nameAtom);
       }
       else {
-        RefPtr<nsAtom> prefixAtom;
+        nsCOMPtr<nsIAtom> prefixAtom;
         if (!prefix.IsEmpty())
           prefixAtom = NS_Atomize(prefix);
 
@@ -1317,11 +1309,11 @@ nsXBLPrototypeBinding::ReadContentNode(nsIObjectInputStream* aStream,
       rv = aStream->ReadString(val);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      RefPtr<nsAtom> prefixAtom;
+      nsCOMPtr<nsIAtom> prefixAtom;
       if (!prefix.IsEmpty())
         prefixAtom = NS_Atomize(prefix);
 
-      RefPtr<nsAtom> nameAtom = NS_Atomize(name);
+      nsCOMPtr<nsIAtom> nameAtom = NS_Atomize(name);
       content->SetAttr(namespaceID, nameAtom, prefixAtom, val, false);
     }
 
@@ -1344,8 +1336,8 @@ nsXBLPrototypeBinding::ReadContentNode(nsIObjectInputStream* aStream,
     rv = aStream->ReadString(destAttribute);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    RefPtr<nsAtom> srcAtom = NS_Atomize(srcAttribute);
-    RefPtr<nsAtom> destAtom = NS_Atomize(destAttribute);
+    nsCOMPtr<nsIAtom> srcAtom = NS_Atomize(srcAttribute);
+    nsCOMPtr<nsIAtom> destAtom = NS_Atomize(destAttribute);
 
     EnsureAttributeTable();
     AddToAttributeTable(srcNamespaceID, srcAtom, destNamespaceID, destAtom, content);
@@ -1437,7 +1429,7 @@ nsXBLPrototypeBinding::WriteContentNode(nsIObjectOutputStream* aStream,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsAutoString prefixStr;
-    nsAtom* prefix = name->GetPrefix();
+    nsIAtom* prefix = name->GetPrefix();
     if (prefix)
       prefix->ToString(prefixStr);
     rv = aStream->WriteWStringZ(prefixStr.get());
@@ -1542,7 +1534,7 @@ nsXBLPrototypeBinding::WriteNamespace(nsIObjectOutputStream* aStream,
 }
 
 
-bool CheckTagNameWhiteList(int32_t aNameSpaceID, nsAtom *aTagName)
+bool CheckTagNameWhiteList(int32_t aNameSpaceID, nsIAtom *aTagName)
 {
   static nsIContent::AttrValuesArray kValidXULTagNames[] =  {
     &nsGkAtoms::autorepeatbutton, &nsGkAtoms::box, &nsGkAtoms::browser,
@@ -1615,7 +1607,7 @@ nsXBLPrototypeBinding::ResolveBaseBinding()
         nsContentUtils::NameSpaceManager()->GetNameSpaceID(nameSpace,
                                                            nsContentUtils::IsChromeDoc(doc));
 
-      RefPtr<nsAtom> tagName = NS_Atomize(display);
+      nsCOMPtr<nsIAtom> tagName = NS_Atomize(display);
       // Check the white list
       if (!CheckTagNameWhiteList(nameSpaceID, tagName)) {
         const char16_t* params[] = { display.get() };

@@ -12,7 +12,6 @@
 #include "mozilla/gfx/Point.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/webrender/WebRenderAPI.h"
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "nsClassHashtable.h"
 
@@ -35,13 +34,14 @@ class AsyncImagePipelineManager final
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AsyncImagePipelineManager)
 
-  explicit AsyncImagePipelineManager(already_AddRefed<wr::WebRenderAPI>&& aApi);
+  explicit AsyncImagePipelineManager(wr::IdNamespace aIdNamespace);
 
 protected:
   ~AsyncImagePipelineManager();
 
 public:
-  void Destroy();
+  void Destroy(wr::WebRenderAPI* aApi);
+  bool HasKeysToDelete();
 
   void AddPipeline(const wr::PipelineId& aPipelineId);
   void RemovePipeline(const wr::PipelineId& aPipelineId, const wr::Epoch& aEpoch);
@@ -70,15 +70,15 @@ public:
   }
 
   void AddAsyncImagePipeline(const wr::PipelineId& aPipelineId, WebRenderImageHost* aImageHost);
-  void RemoveAsyncImagePipeline(const wr::PipelineId& aPipelineId);
+  void RemoveAsyncImagePipeline(wr::WebRenderAPI* aApi, const wr::PipelineId& aPipelineId);
 
   void UpdateAsyncImagePipeline(const wr::PipelineId& aPipelineId,
-                                const LayoutDeviceRect& aScBounds,
+                                const LayerRect& aScBounds,
                                 const gfx::Matrix4x4& aScTransform,
                                 const gfx::MaybeIntSize& aScaleToSize,
                                 const wr::ImageRendering& aFilter,
                                 const wr::MixBlendMode& aMixBlendMode);
-  void ApplyAsyncImages();
+  void ApplyAsyncImages(wr::WebRenderAPI* aApi);
 
   void AppendImageCompositeNotification(const ImageCompositeNotificationInfo& aNotification)
   {
@@ -91,6 +91,7 @@ public:
   }
 
 private:
+  void DeleteOldAsyncImages(wr::WebRenderAPI* aApi);
 
   uint32_t GetNextResourceId() { return ++mResourceId; }
   wr::IdNamespace GetNamespace() { return mIdNamespace; }
@@ -101,6 +102,7 @@ private:
     key.mHandle = GetNextResourceId();
     return key;
   }
+  bool GenerateImageKeyForTextureHost(wr::WebRenderAPI* aApi, TextureHost* aTexture, nsTArray<wr::ImageKey>& aKeys);
 
   struct ForwardingTextureHost {
     ForwardingTextureHost(const wr::Epoch& aEpoch, TextureHost* aTexture)
@@ -123,7 +125,7 @@ private:
     bool mInitialised;
     bool mIsChanged;
     bool mUseExternalImage;
-    LayoutDeviceRect mScBounds;
+    LayerRect mScBounds;
     gfx::Matrix4x4 mScTransform;
     gfx::MaybeIntSize mScaleToSize;
     wr::ImageRendering mFilter;
@@ -133,23 +135,19 @@ private:
     nsTArray<wr::ImageKey> mKeys;
   };
 
-  Maybe<TextureHost::ResourceUpdateOp>
-  UpdateImageKeys(wr::ResourceUpdateQueue& aResourceUpdates,
-                  AsyncImagePipeline* aPipeline,
-                  nsTArray<wr::ImageKey>& aKeys);
-  Maybe<TextureHost::ResourceUpdateOp>
-  UpdateWithoutExternalImage(wr::ResourceUpdateQueue& aResources,
-                             TextureHost* aTexture,
-                             wr::ImageKey aKey,
-                             TextureHost::ResourceUpdateOp);
+  bool UpdateImageKeys(wr::WebRenderAPI* aApi,
+                       bool& aUseExternalImage,
+                       AsyncImagePipeline* aImageMgr,
+                       nsTArray<wr::ImageKey>& aKeys,
+                       nsTArray<wr::ImageKey>& aKeysToDelete);
 
-  RefPtr<wr::WebRenderAPI> mApi;
   wr::IdNamespace mIdNamespace;
   uint32_t mResourceId;
 
   nsClassHashtable<nsUint64HashKey, PipelineTexturesHolder> mPipelineTexturesHolders;
   nsClassHashtable<nsUint64HashKey, AsyncImagePipeline> mAsyncImagePipelines;
   uint32_t mAsyncImageEpoch;
+  nsTArray<wr::ImageKey> mKeysToDelete;
   bool mDestroyed;
 
   // Render time for the current composition.

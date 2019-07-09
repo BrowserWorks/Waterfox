@@ -6,6 +6,9 @@
 #ifndef mozilla_ICUUtils_h__
 #define mozilla_ICUUtils_h__
 
+// We only build the ICU utils if we're building ICU:
+#ifdef ENABLE_INTL_API
+
 // The ICU utils implementation needs internal things like XPCOM strings and
 // nsGkAtom, so we only build when included into internal libs:
 #ifdef MOZILLA_INTERNAL_API
@@ -102,6 +105,7 @@ public:
 #endif
 };
 
+#endif /* ENABLE_INTL_API */
 #endif /* MOZILLA_INTERNAL_API */
 
 #endif /* mozilla_ICUUtils_h__ */

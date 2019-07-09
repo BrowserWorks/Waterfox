@@ -58,7 +58,6 @@ enum class OperatingSystem {
   OSX10_10,
   OSX10_11,
   OSX10_12,
-  OSX10_13,
   Android,
   Ios
 };

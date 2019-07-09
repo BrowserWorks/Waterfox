@@ -7,59 +7,19 @@
 
 const {utils: Cu} = Components;
 
-const {WebElementEventTarget} = Cu.import("chrome://marionette/content/dom.js", {});
 Cu.import("chrome://marionette/content/element.js");
 const {
   NoSuchWindowError,
   UnsupportedOperationError,
 } = Cu.import("chrome://marionette/content/error.js", {});
 Cu.import("chrome://marionette/content/frame.js");
-const {WindowState} = Cu.import("chrome://marionette/content/wm.js", {});
 
-this.EXPORTED_SYMBOLS = ["browser", "Context", "WindowState"];
+this.EXPORTED_SYMBOLS = ["browser"];
 
 /** @namespace */
 this.browser = {};
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-
-/**
- * Variations of Marionette contexts.
- *
- * Choosing a context through the <tt>Marionette:SetContext</tt>
- * command directs all subsequent browsing context scoped commands
- * to that context.
- *
- * @enum
- */
-const Context = {
-  Chrome: "chrome",
-  Content: "content",
-};
-this.Context = Context;
-
-/**
- * Gets the correct context from a string.
- *
- * @param {string} s
- *     Context string serialisation.
- *
- * @return {Context}
- *     Context.
- *
- * @throws {TypeError}
- *     If <var>s</var> is not a context.
- */
-Context.fromString = function(s) {
-  switch (s) {
-    case "chrome":
-      return Context.Chrome;
-    case "content":
-      return Context.Content;
-    default:
-      throw new TypeError(`Unknown context: ${s}`);
-  }
-};
 
 /**
  * Get the <code>&lt;xul:browser&gt;</code> for the specified tab.
@@ -86,20 +46,20 @@ browser.getBrowserForTab = function(tab) {
 /**
  * Return the tab browser for the specified chrome window.
  *
- * @param {ChromeWindow} win
- *     Window whose <code>tabbrowser</code> needs to be accessed.
+ * @param {nsIDOMWindow} win
+ *     The window whose tabbrowser needs to be accessed.
  *
  * @return {Tab}
  *     Tab browser or null if it's not a browser window.
  */
-browser.getTabBrowser = function(window) {
+browser.getTabBrowser = function(win) {
   // Fennec
-  if ("BrowserApp" in window) {
-    return window.BrowserApp;
+  if ("BrowserApp" in win) {
+    return win.BrowserApp;
 
   // Firefox
-  } else if ("gBrowser" in window) {
-    return window.gBrowser;
+  } else if ("gBrowser" in win) {
+    return win.gBrowser;
   }
 
   return null;
@@ -110,6 +70,11 @@ browser.getTabBrowser = function(window) {
  *
  * Browsing contexts handle interactions with the browser, according to
  * the current environment (Firefox, Fennec).
+ *
+ * @param {nsIDOMWindow} win
+ *     The window whose browser needs to be accessed.
+ * @param {GeckoDriver} driver
+ *     Reference to the driver the browser is attached to.
  */
 browser.Context = class {
 
@@ -119,13 +84,13 @@ browser.Context = class {
    * @param {GeckoDriver} driver
    *     Reference to driver instance.
    */
-  constructor(window, driver) {
-    this.window = window;
+  constructor(win, driver) {
+    this.window = win;
     this.driver = driver;
 
     // In Firefox this is <xul:tabbrowser> (not <xul:browser>!)
     // and BrowserApp in Fennec
-    this.tabBrowser = browser.getTabBrowser(this.window);
+    this.tabBrowser = browser.getTabBrowser(win);
 
     this.knownFrames = [];
 
@@ -175,10 +140,6 @@ browser.Context = class {
     }
 
     return null;
-  }
-
-  get messageManager() {
-    return this.contentBrowser.messageManager;
   }
 
   /**
@@ -244,7 +205,6 @@ browser.Context = class {
       y: this.window.screenY,
       width: this.window.outerWidth,
       height: this.window.outerHeight,
-      state: WindowState.from(this.window.windowState),
     };
   }
 
@@ -273,7 +233,9 @@ browser.Context = class {
    */
   closeWindow() {
     return new Promise(resolve => {
-      this.window.addEventListener("unload", resolve, {once: true});
+      this.window.addEventListener("unload", ev => {
+        resolve();
+      }, {once: true});
       this.window.close();
     });
   }
@@ -300,12 +262,16 @@ browser.Context = class {
     return new Promise((resolve, reject) => {
       if (this.tabBrowser.closeTab) {
         // Fennec
-        this.tabBrowser.deck.addEventListener("TabClose", resolve, {once: true});
+        this.tabBrowser.deck.addEventListener("TabClose", ev => {
+          resolve();
+        }, {once: true});
         this.tabBrowser.closeTab(this.tab);
 
       } else if (this.tabBrowser.removeTab) {
         // Firefox
-        this.tab.addEventListener("TabClose", resolve, {once: true});
+        this.tab.addEventListener("TabClose", ev => {
+          resolve();
+        }, {once: true});
         this.tabBrowser.removeTab(this.tab);
 
       } else {
@@ -331,7 +297,7 @@ browser.Context = class {
    * @param {number=} index
    *     Tab index to switch to. If the parameter is undefined,
    *     the currently selected tab will be used.
-   * @param {ChromeWindow=} window
+   * @param {nsIDOMWindow=} win
    *     Switch to this window before selecting the tab.
    * @param {boolean=} focus
    *      A boolean value which determins whether to focus
@@ -340,10 +306,10 @@ browser.Context = class {
    * @throws UnsupportedOperationError
    *     If tab handling for the current application isn't supported.
    */
-  switchToTab(index, window = undefined, focus = true) {
-    if (window) {
-      this.window = window;
-      this.tabBrowser = browser.getTabBrowser(this.window);
+  switchToTab(index, win, focus = true) {
+    if (win) {
+      this.window = win;
+      this.tabBrowser = browser.getTabBrowser(win);
     }
 
     if (!this.tabBrowser) {
@@ -369,10 +335,6 @@ browser.Context = class {
         }
       }
     }
-
-    // TODO(ato): Currently tied to curBrowser, but should be moved to
-    // WebElement when introduced by https://bugzil.la/1400256.
-    this.eventObserver = new WebElementEventTarget(this.messageManager);
   }
 
   /**

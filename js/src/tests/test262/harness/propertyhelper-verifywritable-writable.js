@@ -6,6 +6,7 @@ description: >
     Objects whose specified property is writable satisfy the assertion.
 includes: [propertyHelper.js]
 ---*/
+
 var obj = {};
 
 Object.defineProperty(obj, 'a', {

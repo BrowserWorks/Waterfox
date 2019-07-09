@@ -2,14 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{BorderRadius, ComplexClipRegion, DeviceIntPoint, DeviceIntRect, DeviceIntSize};
-use api::{DevicePoint, DeviceRect, DeviceSize, LayerRect, LayerToWorldTransform, LayoutRect};
-use api::WorldPoint3D;
-use euclid::{Point2D, Rect, Size2D, TypedPoint2D, TypedRect, TypedSize2D, TypedTransform2D};
-use euclid::TypedTransform3D;
+use std::f32::consts::{FRAC_1_SQRT_2};
+use euclid::{Point2D, Rect, Size2D};
+use euclid::{TypedRect, TypedPoint2D, TypedSize2D, TypedTransform2D, TypedTransform3D};
+use api::{DeviceIntRect, DevicePoint, DeviceRect, DeviceSize};
+use api::{LayerRect, WorldPoint3D, LayerToWorldTransform};
+use api::{BorderRadius, ComplexClipRegion, LayoutRect};
 use num_traits::Zero;
-use std::f32::consts::FRAC_1_SQRT_2;
-use std::i32;
 
 // Matches the definition of SK_ScalarNearlyZero in Skia.
 const NEARLY_ZERO: f32 = 1.0 / 4096.0;
@@ -19,7 +18,6 @@ pub trait MatrixHelpers<Src, Dst> {
     fn transform_rect(&self, rect: &TypedRect<f32, Src>) -> TypedRect<f32, Dst>;
     fn is_identity(&self) -> bool;
     fn preserves_2d_axis_alignment(&self) -> bool;
-    fn has_perspective_component(&self) -> bool;
     fn inverse_project(&self, target: &TypedPoint2D<f32, Dst>) -> Option<TypedPoint2D<f32, Src>>;
     fn inverse_rect_footprint(&self, rect: &TypedRect<f32, Dst>) -> TypedRect<f32, Src>;
 }
@@ -69,21 +67,16 @@ impl<Src, Dst> MatrixHelpers<Src, Dst> for TypedTransform3D<f32, Src, Dst> {
         col0 < 2 && col1 < 2 && row0 < 2 && row1 < 2
     }
 
-    fn has_perspective_component(&self) -> bool {
-         self.m14 != 0.0 || self.m24 != 0.0 || self.m34 != 0.0 || self.m44 != 1.0
-    }
-
     fn inverse_project(&self, target: &TypedPoint2D<f32, Dst>) -> Option<TypedPoint2D<f32, Src>> {
         let m: TypedTransform2D<f32, Src, Dst>;
-        m = TypedTransform2D::column_major(
-            self.m11 - target.x * self.m14,
-            self.m21 - target.x * self.m24,
-            self.m41 - target.x * self.m44,
-            self.m12 - target.y * self.m14,
-            self.m22 - target.y * self.m24,
-            self.m42 - target.y * self.m44,
-        );
-        m.inverse().map(|inv| TypedPoint2D::new(inv.m31, inv.m32))
+        m = TypedTransform2D::column_major(self.m11 - target.x * self.m14,
+                                           self.m21 - target.x * self.m24,
+                                           self.m41 - target.x * self.m44,
+                                           self.m12 - target.y * self.m14,
+                                           self.m22 - target.y * self.m24,
+                                           self.m42 - target.y * self.m44);
+        m.inverse()
+         .map(|inv| TypedPoint2D::new(inv.m31, inv.m32))
     }
 
     fn inverse_rect_footprint(&self, rect: &TypedRect<f32, Dst>) -> TypedRect<f32, Src> {
@@ -100,26 +93,24 @@ impl<Src, Dst> MatrixHelpers<Src, Dst> for TypedTransform3D<f32, Src, Dst> {
     }
 }
 
-pub trait RectHelpers<U>
-where
-    Self: Sized,
-{
+pub trait RectHelpers<U> where Self: Sized {
     fn contains_rect(&self, other: &Self) -> bool;
     fn from_floats(x0: f32, y0: f32, x1: f32, y1: f32) -> Self;
     fn is_well_formed_and_nonempty(&self) -> bool;
 }
 
 impl<U> RectHelpers<U> for TypedRect<f32, U> {
+
     fn contains_rect(&self, other: &Self) -> bool {
-        self.origin.x <= other.origin.x && self.origin.y <= other.origin.y &&
-            self.max_x() >= other.max_x() && self.max_y() >= other.max_y()
+        self.origin.x <= other.origin.x &&
+        self.origin.y <= other.origin.y &&
+        self.max_x() >= other.max_x() &&
+        self.max_y() >= other.max_y()
     }
 
     fn from_floats(x0: f32, y0: f32, x1: f32, y1: f32) -> Self {
-        TypedRect::new(
-            TypedPoint2D::new(x0, y0),
-            TypedSize2D::new(x1 - x0, y1 - y0),
-        )
+        TypedRect::new(TypedPoint2D::new(x0, y0),
+                       TypedSize2D::new(x1 - x0, y1 - y0))
     }
 
     fn is_well_formed_and_nonempty(&self) -> bool {
@@ -129,24 +120,26 @@ impl<U> RectHelpers<U> for TypedRect<f32, U> {
 
 // Don't use `euclid`'s `is_empty` because that has effectively has an "and" in the conditional
 // below instead of an "or".
-pub fn rect_is_empty<N: PartialEq + Zero, U>(rect: &TypedRect<N, U>) -> bool {
+pub fn rect_is_empty<N:PartialEq + Zero, U>(rect: &TypedRect<N, U>) -> bool {
     rect.size.width == Zero::zero() || rect.size.height == Zero::zero()
 }
 
 #[inline]
-pub fn rect_from_points_f(x0: f32, y0: f32, x1: f32, y1: f32) -> Rect<f32> {
-    Rect::new(Point2D::new(x0, y0), Size2D::new(x1 - x0, y1 - y0))
+pub fn rect_from_points_f(x0: f32,
+                          y0: f32,
+                          x1: f32,
+                          y1: f32) -> Rect<f32> {
+    Rect::new(Point2D::new(x0, y0),
+              Size2D::new(x1 - x0, y1 - y0))
 }
 
 pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (b - a) * t + a
 }
 
-pub fn subtract_rect<U>(
-    rect: &TypedRect<f32, U>,
-    other: &TypedRect<f32, U>,
-    results: &mut Vec<TypedRect<f32, U>>,
-) {
+pub fn subtract_rect<U>(rect: &TypedRect<f32, U>,
+                        other: &TypedRect<f32, U>,
+                        results: &mut Vec<TypedRect<f32, U>>) {
     results.clear();
 
     let int = rect.intersection(other);
@@ -193,7 +186,7 @@ pub fn get_normal(x: f32) -> Option<f32> {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum TransformedRectKind {
     AxisAligned = 0,
@@ -209,12 +202,18 @@ pub struct TransformedRect {
     pub kind: TransformedRectKind,
 }
 
+// Having an unlimited bounding box is fine up until we try
+// to cast it to `i32`, where we get `-2147483648` for any
+// values larger than or equal to 2^31.
+//Note: clamping to i32::MIN and i32::MAX is not a solution,
+// with explanation left as an exercise for the reader.
+const MAX_COORD: f32 = 1.0e9;
+
 impl TransformedRect {
-    pub fn new(
-        rect: &LayerRect,
-        transform: &LayerToWorldTransform,
-        device_pixel_ratio: f32,
-    ) -> TransformedRect {
+    pub fn new(rect: &LayerRect,
+               transform: &LayerToWorldTransform,
+               device_pixel_ratio: f32) -> TransformedRect {
+
         let kind = if transform.preserves_2d_axis_alignment() {
             TransformedRectKind::AxisAligned
         } else {
@@ -244,15 +243,12 @@ impl TransformedRect {
         let inner_min_dp = (DevicePoint::new(xs[1], ys[1]) * device_pixel_ratio).ceil();
         let inner_max_dp = (DevicePoint::new(xs[2], ys[2]) * device_pixel_ratio).floor();
 
-        let max_rect = DeviceRect::max_rect();
+        let max_rect = DeviceRect::new(DevicePoint::new(-MAX_COORD, -MAX_COORD),
+                                       DeviceSize::new(2.0*MAX_COORD, 2.0*MAX_COORD));
         let bounding_rect = DeviceRect::new(outer_min_dp, (outer_max_dp - outer_min_dp).to_size())
-            .intersection(&max_rect)
-            .unwrap_or(max_rect)
-            .to_i32();
+            .intersection(&max_rect).unwrap_or(max_rect).to_i32();
         let inner_rect = DeviceRect::new(inner_min_dp, (inner_max_dp - inner_min_dp).to_size())
-            .intersection(&max_rect)
-            .unwrap_or(max_rect)
-            .to_i32();
+            .intersection(&max_rect).unwrap_or(max_rect).to_i32();
 
         TransformedRect {
             local_rect: *rect,
@@ -271,12 +267,21 @@ pub fn pack_as_float(value: u32) -> f32 {
 
 
 pub trait ComplexClipRegionHelpers {
+    /// Return an aligned rectangle that is inside the clip region and doesn't intersect
+    /// any of the bounding rectangles of the rounded corners.
+    fn get_inner_rect_safe(&self) -> Option<LayoutRect>;
     /// Return the approximately largest aligned rectangle that is fully inside
     /// the provided clip region.
     fn get_inner_rect_full(&self) -> Option<LayoutRect>;
 }
 
 impl ComplexClipRegionHelpers for ComplexClipRegion {
+    fn get_inner_rect_safe(&self) -> Option<LayoutRect> {
+        // value of `k==1.0` is used for extraction of the corner rectangles
+        // see `SEGMENT_CORNER_*` in `clip_shared.glsl`
+        extract_inner_rect_impl(&self.rect, &self.radii, 1.0)
+    }
+
     fn get_inner_rect_full(&self) -> Option<LayoutRect> {
         // this `k` optimal for a simple case of all border radii being equal
         let k = 1.0 - 0.5 * FRAC_1_SQRT_2; // could be nicely approximated to `0.3`
@@ -285,11 +290,9 @@ impl ComplexClipRegionHelpers for ComplexClipRegion {
 }
 
 #[inline]
-fn extract_inner_rect_impl<U>(
-    rect: &TypedRect<f32, U>,
-    radii: &BorderRadius,
-    k: f32,
-) -> Option<TypedRect<f32, U>> {
+fn extract_inner_rect_impl<U>(rect: &TypedRect<f32, U>,
+                              radii: &BorderRadius,
+                              k: f32) -> Option<TypedRect<f32, U>> {
     // `k` defines how much border is taken into account
     // We enforce the offsets to be rounded to pixel boundaries
     // by `ceil`-ing and `floor`-ing them
@@ -297,28 +300,14 @@ fn extract_inner_rect_impl<U>(
     let xl = (k * radii.top_left.width.max(radii.bottom_left.width)).ceil();
     let xr = (rect.size.width - k * radii.top_right.width.max(radii.bottom_right.width)).floor();
     let yt = (k * radii.top_left.height.max(radii.top_right.height)).ceil();
-    let yb =
-        (rect.size.height - k * radii.bottom_left.height.max(radii.bottom_right.height)).floor();
+    let yb = (rect.size.height - k * radii.bottom_left.height.max(radii.bottom_right.height)).floor();
 
     if xl <= xr && yt <= yb {
-        Some(TypedRect::new(
-            TypedPoint2D::new(rect.origin.x + xl, rect.origin.y + yt),
-            TypedSize2D::new(xr - xl, yb - yt),
-        ))
+        Some(TypedRect::new(TypedPoint2D::new(rect.origin.x + xl, rect.origin.y + yt),
+             TypedSize2D::new(xr-xl, yb-yt)))
     } else {
         None
     }
-}
-
-/// Return an aligned rectangle that is inside the clip region and doesn't intersect
-/// any of the bounding rectangles of the rounded corners.
-pub fn extract_inner_rect_safe<U>(
-    rect: &TypedRect<f32, U>,
-    radii: &BorderRadius,
-) -> Option<TypedRect<f32, U>> {
-    // value of `k==1.0` is used for extraction of the corner rectangles
-    // see `SEGMENT_CORNER_*` in `clip_shared.glsl`
-    extract_inner_rect_impl(rect, radii, 1.0)
 }
 
 /// Consumes the old vector and returns a new one that may reuse the old vector's allocated
@@ -352,35 +341,5 @@ pub mod test {
         let m1 = Transform3D::create_rotation(0.0, 1.0, 0.0, Radians::new(PI / 3.0));
         // rotation by 60 degrees would imply scaling of X component by a factor of 2
         assert_eq!(m1.inverse_project(&p0), Some(Point2D::new(2.0, 2.0)));
-    }
-}
-
-pub trait MaxRect {
-    fn max_rect() -> Self;
-}
-
-impl MaxRect for DeviceIntRect {
-    fn max_rect() -> Self {
-        DeviceIntRect::new(
-            DeviceIntPoint::new(i32::MIN / 2, i32::MIN / 2),
-            DeviceIntSize::new(i32::MAX, i32::MAX),
-        )
-    }
-}
-
-impl MaxRect for DeviceRect {
-    fn max_rect() -> Self {
-        // Having an unlimited bounding box is fine up until we try
-        // to cast it to `i32`, where we get `-2147483648` for any
-        // values larger than or equal to 2^31.
-        //
-        // Note: clamping to i32::MIN and i32::MAX is not a solution,
-        // with explanation left as an exercise for the reader.
-        const MAX_COORD: f32 = 1.0e9;
-
-        DeviceRect::new(
-            DevicePoint::new(-MAX_COORD, -MAX_COORD),
-            DeviceSize::new(2.0 * MAX_COORD, 2.0 * MAX_COORD),
-        )
     }
 }

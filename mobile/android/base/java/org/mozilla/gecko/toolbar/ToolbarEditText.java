@@ -306,7 +306,6 @@ public class ToolbarEditText extends CustomEditText
         final int textLength = text.length();
         final int resultLength = result.length();
         final int autoCompleteStart = text.getSpanStart(AUTOCOMPLETE_SPAN);
-        final int pathStart = StringUtils.pathStartIndex(getNonAutocompleteText(text));
         mAutoCompleteResult = result;
 
         if (autoCompleteStart > -1) {
@@ -314,17 +313,11 @@ public class ToolbarEditText extends CustomEditText
 
             // If the result and the current text don't have the same prefixes,
             // the result is stale and we should wait for the another result to come in.
-            final String userText = text.toString().substring(0, autoCompleteStart);
-            if (!StringUtils.caseInsensitiveStartsWith(result, userText)) {
+            if (!TextUtils.regionMatches(result, 0, text, 0, autoCompleteStart)) {
                 return;
             }
 
             beginSettingAutocomplete();
-
-            // Should we force capitalisation from result
-            if (pathStart != -1) {
-                text.replace(pathStart, autoCompleteStart, result, pathStart, autoCompleteStart);
-            }
 
             // Replace the existing autocomplete text with new one.
             // replace() preserves the autocomplete spans that we set before.
@@ -343,14 +336,7 @@ public class ToolbarEditText extends CustomEditText
             // If the result prefix doesn't match the current text,
             // the result is stale and we should wait for the another result to come in.
             if (resultLength <= textLength ||
-                    !StringUtils.caseInsensitiveStartsWith(result, text.toString())) {
-                return;
-            }
-
-            // Now that we know the result and the usertext are the same case-insensitively,
-            // we should check whether their path parts match case-sensitively
-            if (pathStart != -1 &&
-                    !TextUtils.regionMatches(result, pathStart, text, pathStart, textLength - pathStart)) {
+                    !TextUtils.regionMatches(result, 0, text, 0, textLength)) {
                 return;
             }
 
@@ -442,7 +428,6 @@ public class ToolbarEditText extends CustomEditText
 
         if (isPrivateMode()) {
             outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
-            outAttrs.imeOptions |= InputMethods.IME_FLAG_NO_PERSONALIZED_LEARNING;
         }
 
         return new InputConnectionWrapper(ic, false) {
@@ -549,7 +534,7 @@ public class ToolbarEditText extends CustomEditText
             // to discard any autocomplete results that are in-flight, and vice versa.
             mDiscardAutoCompleteResult = !doAutocomplete;
 
-            if (doAutocomplete && StringUtils.caseInsensitiveStartsWith(mAutoCompleteResult, text)) {
+            if (doAutocomplete && mAutoCompleteResult.startsWith(text)) {
                 // If this text already matches our autocomplete text, autocomplete likely
                 // won't change. Just reuse the old autocomplete value.
                 onAutocomplete(mAutoCompleteResult);

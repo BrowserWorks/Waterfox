@@ -8,8 +8,8 @@ this.EXPORTED_SYMBOLS = ["Tabs"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-const CUST_TAB = "chrome://browser/skin/customize.svg";
-const PREFS_TAB = "chrome://browser/skin/settings.svg";
+const CUST_TAB = "chrome://browser/skin/customizableui/customizeFavicon.ico";
+const PREFS_TAB = "chrome://browser/skin/preferences/in-content-new/favicon.ico";
 const DEFAULT_FAVICON_TAB = `data:text/html,<meta charset="utf-8">
 <title>No favicon</title>`;
 
@@ -21,7 +21,6 @@ this.Tabs = {
 
   configurations: {
     fiveTabs: {
-      selectors: ["#tabbrowser-tabs"],
       async applyConfig() {
         fiveTabsHelper();
         let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
@@ -33,7 +32,6 @@ this.Tabs = {
     },
 
     fourPinned: {
-      selectors: ["#tabbrowser-tabs"],
       async applyConfig() {
         fiveTabsHelper();
         let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
@@ -60,7 +58,6 @@ this.Tabs = {
     },
 
     twoPinnedWithOverflow: {
-      selectors: ["#tabbrowser-tabs"],
       async applyConfig() {
         fiveTabsHelper();
 
@@ -145,7 +142,7 @@ function closeAllButOneTab(url = "about:blank") {
   gBrowser.selectedBrowser.loadURI(url);
   if (gBrowser.selectedTab.pinned)
     gBrowser.unpinTab(gBrowser.selectedTab);
-  let newTabButton = browserWindow.document.getAnonymousElementByAttribute(browserWindow.gBrowser.tabContainer, "class", "tabs-newtab-button toolbarbutton-1");
+  let newTabButton = browserWindow.document.getAnonymousElementByAttribute(browserWindow.gBrowser.tabContainer, "class", "tabs-newtab-button");
   hoverTab(newTabButton, false);
 }
 

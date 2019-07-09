@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <windows.h>
 
-#include "nsXULAppAPI.h"
+#include "base/child_privileges.h"
 
 namespace sandbox {
   class BrokerServices;
@@ -34,7 +34,6 @@ public:
 
   bool LaunchApp(const wchar_t *aPath,
                  const wchar_t *aArguments,
-                 GeckoProcessType aProcessType,
                  const bool aEnableLogging,
                  void **aProcessHandle);
   virtual ~SandboxBroker();
@@ -42,7 +41,7 @@ public:
   // Security levels for different types of processes
 #if defined(MOZ_CONTENT_SANDBOX)
   void SetSecurityLevelForContentProcess(int32_t aSandboxLevel,
-                                         bool aIsFileProcess);
+                                         base::ChildPrivileges aPrivs);
 #endif
 
   void SetSecurityLevelForGPUProcess(int32_t aSandboxLevel);

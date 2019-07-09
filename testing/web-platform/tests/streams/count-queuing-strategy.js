@@ -103,11 +103,4 @@ test(() => {
 
 }, 'CountQueuingStrategy\'s highWaterMark property can be set to anything');
 
-test(() => {
-
-  assert_equals(CountQueuingStrategy.name, 'CountQueuingStrategy',
-                'CountQueuingStrategy.name must be "CountQueuingStrategy"');
-
-}, 'CountQueuingStrategy.name is correct');
-
 done();

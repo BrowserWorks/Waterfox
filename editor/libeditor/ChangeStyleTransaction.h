@@ -11,7 +11,8 @@
 #include "nsCycleCollectionParticipant.h" // various macros
 #include "nsString.h"                     // nsString members
 
-class nsAtom;
+class nsAString;
+class nsIAtom;
 
 namespace mozilla {
 
@@ -44,7 +45,7 @@ public:
    * @param aChangeType     [IN] whether to set or remove
    */
   ChangeStyleTransaction(dom::Element& aElement,
-                         nsAtom& aProperty,
+                         nsIAtom& aProperty,
                          const nsAString& aValue,
                          EChangeType aChangeType);
 
@@ -77,7 +78,7 @@ private:
    * @param aCSSProperty    [IN] the CSS property
    * @return                true if the property accepts more than one value
    */
-  bool AcceptsMoreThanOneValue(nsAtom& aCSSProperty);
+  bool AcceptsMoreThanOneValue(nsIAtom& aCSSProperty);
 
   /**
    * Remove a value from a list of white-space separated values.
@@ -99,7 +100,7 @@ private:
   nsCOMPtr<dom::Element> mElement;
 
   // The CSS property to change.
-  RefPtr<nsAtom> mProperty;
+  nsCOMPtr<nsIAtom> mProperty;
 
   // The value to set the property to (ignored if mRemoveProperty==true).
   nsString mValue;

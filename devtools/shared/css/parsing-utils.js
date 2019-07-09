@@ -14,8 +14,7 @@
 
 "use strict";
 
-loader.lazyRequireGetter(this, "CSS_ANGLEUNIT",
-  "devtools/shared/css/properties-db", true);
+const {CSS_ANGLEUNIT} = require("devtools/shared/css/properties-db");
 
 const promise = require("promise");
 const {getCSSLexer} = require("devtools/shared/css/lexer");
@@ -250,28 +249,6 @@ function getEmptyDeclaration() {
 }
 
 /**
- * Like trim, but only trims CSS-allowed whitespace.
- */
-function cssTrim(str) {
-  let match = /^[ \t\r\n\f]*(.*?)[ \t\r\n\f]*$/.exec(str);
-  if (match) {
-    return match[1];
-  }
-  return str;
-}
-
-/**
- * Like trimRight, but only trims CSS-allowed whitespace.
- */
-function cssTrimRight(str) {
-  let match = /^(.*?)[ \t\r\n\f]*$/.exec(str);
-  if (match) {
-    return match[1];
-  }
-  return str;
-}
-
-/**
  * A helper function that does all the parsing work for
  * parseDeclarations.  This is separate because it has some arguments
  * that don't make sense in isolation.
@@ -332,7 +309,7 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
     if (token.tokenType === "symbol" && token.text === ":") {
       if (!lastProp.name) {
         // Set the current declaration name if there's no name yet
-        lastProp.name = cssTrim(current);
+        lastProp.name = current.trim();
         lastProp.colonOffsets = [token.startOffset, token.endOffset];
         current = "";
         hasBang = false;
@@ -358,7 +335,7 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
         current = "";
         break;
       }
-      lastProp.value = cssTrim(current);
+      lastProp.value = current.trim();
       current = "";
       hasBang = false;
       declarations.push(getEmptyDeclaration());
@@ -406,11 +383,11 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
       // Ignore this case in comments.
       if (!inComment) {
         // Trailing property found, e.g. p1:v1;p2:v2;p3
-        lastProp.name = cssTrim(current);
+        lastProp.name = current.trim();
       }
     } else {
       // Trailing value found, i.e. value without an ending ;
-      lastProp.value = cssTrim(current);
+      lastProp.value = current.trim();
       let terminator = lexer.performEOFFixup("", true);
       lastProp.terminator = terminator + ";";
       // If the input was unterminated, attribute the remainder to
@@ -855,7 +832,7 @@ RuleRewriter.prototype = {
       // a property but which would break the entire style sheet.
       let newText = this.inputString.substring(decl.colonOffsets[1],
                                                decl.offsets[1]);
-      newText = cssTrimRight(unescapeCSSComment(newText));
+      newText = unescapeCSSComment(newText).trimRight();
       this.result += this.sanitizeText(newText, index) + ";";
 
       // See if the comment end can be deleted.

@@ -68,8 +68,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadsViewUI",
                                   "resource:///modules/DownloadsViewUI.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "DownloadsSubview",
-                                  "resource:///modules/DownloadsSubview.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
@@ -222,9 +220,6 @@ var DownloadsPanel = {
       this._focusPanel();
       return;
     }
-
-    // As a belt-and-suspenders check, ensure the button is not hidden.
-    DownloadsButton.unhide();
 
     this.initialize(() => {
       // Delay displaying the panel because this function will sometimes be
@@ -547,7 +542,7 @@ var DownloadsPanel = {
       // without any notification, and there would be no way to either open or
       // close the panel any more.  To prevent this, check if the window is
       // minimized and in that case force the panel to the closed state.
-      if (window.windowState == window.STATE_MINIMIZED) {
+      if (window.windowState == Ci.nsIDOMChromeWindow.STATE_MINIMIZED) {
         DownloadsButton.releaseAnchor();
         this._state = this.kStateHidden;
         return;
@@ -557,9 +552,6 @@ var DownloadsPanel = {
         DownloadsCommon.error("Downloads button cannot be found.");
         return;
       }
-
-      let onBookmarksToolbar = !!anchor.closest("#PersonalToolbar");
-      this.panel.classList.toggle("bookmarks-toolbar", onBookmarksToolbar);
 
       // When the panel is opened, we check if the target files of visible items
       // still exist, and update the allowed items interactions accordingly.  We
@@ -1034,7 +1026,7 @@ var DownloadsView = {
 
     aEvent.stopPropagation();
   },
-};
+}
 
 XPCOMUtils.defineConstant(this, "DownloadsView", DownloadsView);
 
@@ -1103,6 +1095,7 @@ DownloadsViewItem.prototype = {
         return partFile.exists();
       }
       case "cmd_delete":
+      case "downloadsCmd_cancel":
       case "downloadsCmd_copyLocation":
       case "downloadsCmd_doDefault":
         return true;
@@ -1120,6 +1113,11 @@ DownloadsViewItem.prototype = {
   },
 
   // Item commands
+
+  cmd_delete() {
+    DownloadsCommon.removeAndFinalizeDownload(this.download);
+    PlacesUtils.history.remove(this.download.source.url).catch(Cu.reportError);
+  },
 
   downloadsCmd_unblock() {
     DownloadsPanel.hidePanel();
@@ -1583,6 +1581,13 @@ var DownloadsBlockedSubview = {
    *        An array of strings with information about the block.
    */
   toggle(element, title, details) {
+    if (this.view.showingSubView) {
+      this.hide();
+      return;
+    }
+
+    this.element = element;
+    element.setAttribute("showingsubview", "true");
     DownloadsView.subViewOpen = true;
     DownloadsViewController.updateCommands();
 
@@ -1603,25 +1608,32 @@ var DownloadsBlockedSubview = {
     // Without this, the mainView is more narrow than the panel once all
     // downloads are removed from the panel.
     document.getElementById("downloadsPanel-mainView").style.minWidth =
-      window.getComputedStyle(this.subview).width;
+      window.getComputedStyle(this.view).width;
   },
 
   handleEvent(event) {
     switch (event.type) {
       case "ViewHiding":
         this.subview.removeEventListener(event.type, this);
+        this.element.removeAttribute("showingsubview");
         DownloadsView.subViewOpen = false;
-        // If we're going back to the main panel, use showPanel to
-        // focus the proper element.
-        if (this.view.current !== this.subview) {
-          DownloadsPanel.showPanel();
-        }
+        delete this.element;
         break;
       default:
         DownloadsCommon.log("Unhandled DownloadsBlockedSubview event: " +
                             event.type);
         break;
     }
+  },
+
+  /**
+   * Slides out the blocked subview and shows the main view.
+   */
+  hide() {
+    this.view.showMainView();
+    // The point of this is to focus the proper element in the panel now that
+    // the main view is showing again.  showPanel handles that.
+    DownloadsPanel.showPanel();
   },
 
   /**

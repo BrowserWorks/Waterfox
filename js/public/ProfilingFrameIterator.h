@@ -23,7 +23,7 @@ namespace js {
     class Activation;
     namespace jit {
         class JitActivation;
-        class JSJitProfilingFrameIterator;
+        class JitProfilingFrameIterator;
         class JitcodeGlobalEntry;
     } // namespace jit
     namespace wasm {
@@ -46,17 +46,9 @@ struct ForEachTrackedOptimizationTypeInfoOp;
 // contents to become out of date.
 class MOZ_NON_PARAM JS_PUBLIC_API(ProfilingFrameIterator)
 {
-  public:
-    enum class Kind : bool {
-        JSJit,
-        Wasm
-    };
-
-  private:
     JSContext* cx_;
     uint32_t sampleBufferGen_;
     js::Activation* activation_;
-    Kind kind_;
 
     static const unsigned StorageSpace = 8 * sizeof(void*);
     alignas(void*) unsigned char storage_[StorageSpace];
@@ -75,19 +67,18 @@ class MOZ_NON_PARAM JS_PUBLIC_API(ProfilingFrameIterator)
         return *static_cast<const js::wasm::ProfilingFrameIterator*>(storage());
     }
 
-    js::jit::JSJitProfilingFrameIterator& jsJitIter() {
+    js::jit::JitProfilingFrameIterator& jitIter() {
         MOZ_ASSERT(!done());
-        MOZ_ASSERT(isJSJit());
-        return *static_cast<js::jit::JSJitProfilingFrameIterator*>(storage());
+        MOZ_ASSERT(isJit());
+        return *static_cast<js::jit::JitProfilingFrameIterator*>(storage());
     }
 
-    const js::jit::JSJitProfilingFrameIterator& jsJitIter() const {
+    const js::jit::JitProfilingFrameIterator& jitIter() const {
         MOZ_ASSERT(!done());
-        MOZ_ASSERT(isJSJit());
-        return *static_cast<const js::jit::JSJitProfilingFrameIterator*>(storage());
+        MOZ_ASSERT(isJit());
+        return *static_cast<const js::jit::JitProfilingFrameIterator*>(storage());
     }
 
-    void settleFrames();
     void settle();
 
     bool hasSampleBufferGen() const {
@@ -134,7 +125,7 @@ class MOZ_NON_PARAM JS_PUBLIC_API(ProfilingFrameIterator)
     } JS_HAZ_GC_INVALIDATED;
 
     bool isWasm() const;
-    bool isJSJit() const;
+    bool isJit() const;
 
     uint32_t extractStack(Frame* frames, uint32_t offset, uint32_t end) const;
 

@@ -7,7 +7,7 @@
 use app_units::Au;
 use devtools_traits::NodeInfo;
 use document_loader::DocumentLoader;
-use dom::bindings::cell::DomRefCell;
+use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::CharacterDataBinding::CharacterDataMethods;
 use dom::bindings::codegen::Bindings::DocumentBinding::DocumentMethods;
 use dom::bindings::codegen::Bindings::ElementBinding::ElementMethods;
@@ -22,13 +22,15 @@ use dom::bindings::error::{Error, ErrorResult, Fallible};
 use dom::bindings::inheritance::{Castable, CharacterDataTypeId, ElementTypeId};
 use dom::bindings::inheritance::{EventTargetTypeId, HTMLElementTypeId, NodeTypeId};
 use dom::bindings::inheritance::{SVGElementTypeId, SVGGraphicsElementTypeId};
+use dom::bindings::js::{JS, LayoutJS, MutNullableJS};
+use dom::bindings::js::Root;
+use dom::bindings::js::RootedReference;
 use dom::bindings::reflector::{DomObject, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot, LayoutDom, MutNullableDom, RootedReference};
 use dom::bindings::str::{DOMString, USVString};
 use dom::bindings::xmlname::namespace_from_domstring;
 use dom::characterdata::{CharacterData, LayoutCharacterDataHelpers};
 use dom::cssstylesheet::CSSStyleSheet;
-use dom::customelementregistry::{CallbackReaction, try_upgrade_element};
+use dom::customelementregistry::CallbackReaction;
 use dom::document::{Document, DocumentSource, HasBrowsingContext, IsHTMLDocument};
 use dom::documentfragment::DocumentFragment;
 use dom::documenttype::DocumentType;
@@ -56,10 +58,10 @@ use dom::virtualmethods::{VirtualMethods, vtable_for};
 use dom::window::Window;
 use dom_struct::dom_struct;
 use euclid::{Point2D, Vector2D, Rect, Size2D};
+use heapsize::{HeapSizeOf, heap_size_of};
 use html5ever::{Prefix, Namespace, QualName};
 use js::jsapi::{JSContext, JSObject, JSRuntime};
 use libc::{self, c_void, uintptr_t};
-use malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
 use msg::constellation_msg::{BrowsingContextId, PipelineId};
 use ref_slice::ref_slice;
 use script_layout_interface::{HTMLCanvasData, OpaqueStyleAndLayoutData, SVGSVGData};
@@ -72,10 +74,9 @@ use selectors::matching::{matches_selector_list, MatchingContext, MatchingMode};
 use selectors::parser::SelectorList;
 use servo_arc::Arc;
 use servo_url::ServoUrl;
-use smallvec::SmallVec;
 use std::borrow::ToOwned;
 use std::cell::{Cell, UnsafeCell, RefMut};
-use std::cmp;
+use std::cmp::max;
 use std::default::Default;
 use std::iter;
 use std::mem;
@@ -98,25 +99,25 @@ pub struct Node {
     eventtarget: EventTarget,
 
     /// The parent of this node.
-    parent_node: MutNullableDom<Node>,
+    parent_node: MutNullableJS<Node>,
 
     /// The first child of this node.
-    first_child: MutNullableDom<Node>,
+    first_child: MutNullableJS<Node>,
 
     /// The last child of this node.
-    last_child: MutNullableDom<Node>,
+    last_child: MutNullableJS<Node>,
 
     /// The next sibling of this node.
-    next_sibling: MutNullableDom<Node>,
+    next_sibling: MutNullableJS<Node>,
 
     /// The previous sibling of this node.
-    prev_sibling: MutNullableDom<Node>,
+    prev_sibling: MutNullableJS<Node>,
 
     /// The document that this node belongs to.
-    owner_doc: MutNullableDom<Document>,
+    owner_doc: MutNullableJS<Document>,
 
     /// The live list of children return by .childNodes.
-    child_list: MutNullableDom<NodeList>,
+    child_list: MutNullableJS<NodeList>,
 
     /// The live count of children of this node.
     children_count: Cell<u32>,
@@ -140,14 +141,14 @@ pub struct Node {
     style_and_layout_data: Cell<Option<OpaqueStyleAndLayoutData>>,
 
     /// Registered observers for this node.
-    mutation_observers: DomRefCell<Vec<RegisteredObserver>>,
+    mutation_observers: DOMRefCell<Vec<RegisteredObserver>>,
 
     unique_id: UniqueId,
 }
 
 bitflags! {
     #[doc = "Flags for node items."]
-    #[derive(JSTraceable, MallocSizeOf)]
+    #[derive(JSTraceable, HeapSizeOf)]
     pub flags NodeFlags: u16 {
         #[doc = "Specifies whether this node is in a document."]
         const IS_IN_DOC = 1 << 0,
@@ -167,7 +168,8 @@ bitflags! {
         /// Whether any ancestor is a fragmentation container
         const CAN_BE_FRAGMENTED = 1 << 4,
 
-        // There's a free bit here.
+        #[doc = "Specifies whether this node needs to be dirted when viewport size changed."]
+        const DIRTY_ON_VIEWPORT_SIZE_CHANGE = 1 << 5,
 
         #[doc = "Specifies whether the parser has set an associated form owner for \
                  this element. Only applicable for form-associatable elements."]
@@ -198,9 +200,9 @@ impl Drop for Node {
 }
 
 /// suppress observers flag
-/// <https://dom.spec.whatwg.org/#concept-node-insert>
-/// <https://dom.spec.whatwg.org/#concept-node-remove>
-#[derive(Clone, Copy, MallocSizeOf)]
+/// https://dom.spec.whatwg.org/#concept-node-insert
+/// https://dom.spec.whatwg.org/#concept-node-remove
+#[derive(Copy, Clone, HeapSizeOf)]
 enum SuppressObserver {
     Suppressed,
     Unsuppressed
@@ -315,7 +317,7 @@ impl Node {
             node.style_and_layout_data.get().map(|d| node.dispose(d));
             // https://dom.spec.whatwg.org/#concept-node-remove step 14
             if let Some(element) = node.as_custom_element() {
-                ScriptThread::enqueue_callback_reaction(&*element, CallbackReaction::Disconnected, None);
+                ScriptThread::enqueue_callback_reaction(&*element, CallbackReaction::Disconnected);
             }
         }
 
@@ -327,10 +329,10 @@ impl Node {
         UntrustedNodeAddress(self.reflector().get_jsobject().get() as *const c_void)
     }
 
-    pub fn as_custom_element(&self) -> Option<DomRoot<Element>> {
+    pub fn as_custom_element(&self) -> Option<Root<Element>> {
         self.downcast::<Element>()
             .and_then(|element| if element.get_custom_element_definition().is_some() {
-                Some(DomRoot::from_ref(element))
+                Some(Root::from_ref(element))
             } else {
                 None
             })
@@ -353,21 +355,19 @@ impl<'a> QuerySelectorIterator {
 }
 
 impl<'a> Iterator for QuerySelectorIterator {
-    type Item = DomRoot<Node>;
+    type Item = Root<Node>;
 
-    fn next(&mut self) -> Option<DomRoot<Node>> {
+    fn next(&mut self) -> Option<Root<Node>> {
         let selectors = &self.selectors;
 
         self.iterator.by_ref().filter_map(|node| {
             // TODO(cgaebel): Is it worth it to build a bloom filter here
             // (instead of passing `None`)? Probably.
-            //
-            // FIXME(bholley): Consider an nth-index cache here.
-            let mut ctx = MatchingContext::new(MatchingMode::Normal, None, None,
+            let mut ctx = MatchingContext::new(MatchingMode::Normal, None,
                 node.owner_doc().quirks_mode());
-            if let Some(element) = DomRoot::downcast(node) {
+            if let Some(element) = Root::downcast(node) {
                 if matches_selector_list(selectors, &element, &mut ctx) {
-                    return Some(DomRoot::upcast(element));
+                    return Some(Root::upcast(element));
                 }
             }
             None
@@ -382,17 +382,6 @@ impl Node {
         for kid in self.children() {
             kid.teardown();
         }
-    }
-
-    /// Returns true if this node is before `other` in the same connected DOM
-    /// tree.
-    pub fn is_before(&self, other: &Node) -> bool {
-        let cmp = other.CompareDocumentPosition(self);
-        if cmp & NodeConstants::DOCUMENT_POSITION_DISCONNECTED != 0 {
-            return false;
-        }
-
-        cmp & NodeConstants::DOCUMENT_POSITION_PRECEDING != 0
     }
 
     /// Return all registered mutation observers for this node.
@@ -497,8 +486,8 @@ impl Node {
         // its descendants version, and the document's version. Normally, this will just be
         // the document's version, but we do have to deal with the case where the node has moved
         // document, so may have a higher version count than its owning document.
-        let doc: DomRoot<Node> = DomRoot::upcast(self.owner_doc());
-        let version = cmp::max(self.inclusive_descendants_version(), doc.inclusive_descendants_version()) + 1;
+        let doc: Root<Node> = Root::upcast(self.owner_doc());
+        let version = max(self.inclusive_descendants_version(), doc.inclusive_descendants_version()) + 1;
         for ancestor in self.inclusive_ancestors() {
             ancestor.inclusive_descendants_version.set(version);
         }
@@ -530,16 +519,16 @@ impl Node {
         TreeIterator::new(self)
     }
 
-    pub fn inclusively_following_siblings(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn inclusively_following_siblings(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
-            current: Some(DomRoot::from_ref(self)),
+            current: Some(Root::from_ref(self)),
             next_node: |n| n.GetNextSibling(),
         }
     }
 
-    pub fn inclusively_preceding_siblings(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn inclusively_preceding_siblings(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
-            current: Some(DomRoot::from_ref(self)),
+            current: Some(Root::from_ref(self)),
             next_node: |n| n.GetPreviousSibling(),
         }
     }
@@ -552,14 +541,14 @@ impl Node {
         parent.ancestors().any(|ancestor| &*ancestor == self)
     }
 
-    pub fn following_siblings(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn following_siblings(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetNextSibling(),
             next_node: |n| n.GetNextSibling(),
         }
     }
 
-    pub fn preceding_siblings(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn preceding_siblings(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetPreviousSibling(),
             next_node: |n| n.GetPreviousSibling(),
@@ -568,19 +557,19 @@ impl Node {
 
     pub fn following_nodes(&self, root: &Node) -> FollowingNodeIterator {
         FollowingNodeIterator {
-            current: Some(DomRoot::from_ref(self)),
-            root: DomRoot::from_ref(root),
+            current: Some(Root::from_ref(self)),
+            root: Root::from_ref(root),
         }
     }
 
     pub fn preceding_nodes(&self, root: &Node) -> PrecedingNodeIterator {
         PrecedingNodeIterator {
-            current: Some(DomRoot::from_ref(self)),
-            root: DomRoot::from_ref(root),
+            current: Some(Root::from_ref(self)),
+            root: Root::from_ref(root),
         }
     }
 
-    pub fn descending_last_children(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn descending_last_children(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetLastChild(),
             next_node: |n| n.GetLastChild(),
@@ -638,8 +627,8 @@ impl Node {
             // Step 6 && Step 7
             (false, false, _, true) | (false, true, QuirksMode::Quirks, _) => {
                 Rect::new(Point2D::new(window.ScrollX(), window.ScrollY()),
-                                       Size2D::new(cmp::max(window.InnerWidth(), scroll_area.size.width),
-                                                   cmp::max(window.InnerHeight(), scroll_area.size.height)))
+                                       Size2D::new(max(window.InnerWidth(), scroll_area.size.width),
+                                                   max(window.InnerHeight(), scroll_area.size.height)))
             },
             // Step 9
             _ => scroll_area
@@ -747,24 +736,23 @@ impl Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-parentnode-queryselector
-    pub fn query_selector(&self, selectors: DOMString) -> Fallible<Option<DomRoot<Element>>> {
+    pub fn query_selector(&self, selectors: DOMString) -> Fallible<Option<Root<Element>>> {
         // Step 1.
         match SelectorParser::parse_author_origin_no_namespace(&selectors) {
             // Step 2.
             Err(_) => Err(Error::Syntax),
             // Step 3.
             Ok(selectors) => {
-                // FIXME(bholley): Consider an nth-index cache here.
-                let mut ctx = MatchingContext::new(MatchingMode::Normal, None, None,
+                let mut ctx = MatchingContext::new(MatchingMode::Normal, None,
                                                    self.owner_doc().quirks_mode());
-                Ok(self.traverse_preorder().filter_map(DomRoot::downcast).find(|element| {
+                Ok(self.traverse_preorder().filter_map(Root::downcast).find(|element| {
                     matches_selector_list(&selectors, element, &mut ctx)
                 }))
             }
         }
     }
 
-    /// <https://dom.spec.whatwg.org/#scope-match-a-selectors-string>
+    /// https://dom.spec.whatwg.org/#scope-match-a-selectors-string
     /// Get an iterator over all nodes which match a set of selectors
     /// Be careful not to do anything which may manipulate the DOM tree
     /// whilst iterating, otherwise the iterator may be invalidated.
@@ -786,27 +774,27 @@ impl Node {
 
     // https://dom.spec.whatwg.org/#dom-parentnode-queryselectorall
     #[allow(unsafe_code)]
-    pub fn query_selector_all(&self, selectors: DOMString) -> Fallible<DomRoot<NodeList>> {
+    pub fn query_selector_all(&self, selectors: DOMString) -> Fallible<Root<NodeList>> {
         let window = window_from_node(self);
         let iter = self.query_selector_iter(selectors)?;
         Ok(NodeList::new_simple_list(&window, iter))
     }
 
-    pub fn ancestors(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn ancestors(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetParentNode(),
             next_node: |n| n.GetParentNode(),
         }
     }
 
-    pub fn inclusive_ancestors(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn inclusive_ancestors(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
-            current: Some(DomRoot::from_ref(self)),
+            current: Some(Root::from_ref(self)),
             next_node: |n| n.GetParentNode(),
         }
     }
 
-    pub fn owner_doc(&self) -> DomRoot<Document> {
+    pub fn owner_doc(&self) -> Root<Document> {
         self.owner_doc.get().unwrap()
     }
 
@@ -822,22 +810,22 @@ impl Node {
         self.is_in_doc() && self.owner_doc().browsing_context().is_some()
     }
 
-    pub fn children(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn children(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetFirstChild(),
             next_node: |n| n.GetNextSibling(),
         }
     }
 
-    pub fn rev_children(&self) -> impl Iterator<Item=DomRoot<Node>> {
+    pub fn rev_children(&self) -> impl Iterator<Item=Root<Node>> {
         SimpleNodeIterator {
             current: self.GetLastChild(),
             next_node: |n| n.GetPreviousSibling(),
         }
     }
 
-    pub fn child_elements(&self) -> impl Iterator<Item=DomRoot<Element>> {
-        self.children().filter_map(DomRoot::downcast as fn(_) -> _).peekable()
+    pub fn child_elements(&self) -> impl Iterator<Item=Root<Element>> {
+        self.children().filter_map(Root::downcast as fn(_) -> _).peekable()
     }
 
     pub fn remove_self(&self) {
@@ -878,9 +866,9 @@ impl Node {
     }
 
     /// Used by `HTMLTableSectionElement::InsertRow` and `HTMLTableRowElement::InsertCell`
-    pub fn insert_cell_or_row<F, G, I>(&self, index: i32, get_items: F, new_child: G) -> Fallible<DomRoot<HTMLElement>>
-        where F: Fn() -> DomRoot<HTMLCollection>,
-              G: Fn() -> DomRoot<I>,
+    pub fn insert_cell_or_row<F, G, I>(&self, index: i32, get_items: F, new_child: G) -> Fallible<Root<HTMLElement>>
+        where F: Fn() -> Root<HTMLCollection>,
+              G: Fn() -> Root<I>,
               I: DerivedFrom<Node> + DerivedFrom<HTMLElement> + DomObject,
     {
         if index < -1 {
@@ -897,7 +885,7 @@ impl Node {
             } else {
                 let items = get_items();
                 let node = match items.elements_iter()
-                                      .map(DomRoot::upcast::<Node>)
+                                      .map(Root::upcast::<Node>)
                                       .map(Some)
                                       .chain(iter::once(None))
                                       .nth(index as usize) {
@@ -908,12 +896,12 @@ impl Node {
             }
         }
 
-        Ok(DomRoot::upcast::<HTMLElement>(tr))
+        Ok(Root::upcast::<HTMLElement>(tr))
     }
 
     /// Used by `HTMLTableSectionElement::DeleteRow` and `HTMLTableRowElement::DeleteCell`
     pub fn delete_cell_or_row<F, G>(&self, index: i32, get_items: F, is_delete_type: G) -> ErrorResult
-        where F: Fn() -> DomRoot<HTMLCollection>,
+        where F: Fn() -> Root<HTMLCollection>,
               G: Fn(&Element) -> bool
     {
         let element = match index {
@@ -921,7 +909,7 @@ impl Node {
             -1 => {
                 let last_child = self.upcast::<Node>().GetLastChild();
                 match last_child.and_then(|node| node.inclusively_preceding_siblings()
-                                                     .filter_map(DomRoot::downcast::<Element>)
+                                                     .filter_map(Root::downcast::<Element>)
                                                      .filter(|elem| is_delete_type(elem))
                                                      .next()) {
                     Some(element) => element,
@@ -950,7 +938,7 @@ impl Node {
         }
     }
 
-    pub fn get_cssom_stylesheet(&self) -> Option<DomRoot<CSSStyleSheet>> {
+    pub fn get_cssom_stylesheet(&self) -> Option<Root<CSSStyleSheet>> {
         if let Some(node) = self.downcast::<HTMLStyleElement>() {
             node.get_cssom_stylesheet()
         } else if let Some(node) = self.downcast::<HTMLLinkElement>() {
@@ -965,8 +953,8 @@ impl Node {
 
 
 /// Iterate through `nodes` until we find a `Node` that is not in `not_in`
-fn first_node_not_in<I>(mut nodes: I, not_in: &[NodeOrString]) -> Option<DomRoot<Node>>
-        where I: Iterator<Item=DomRoot<Node>>
+fn first_node_not_in<I>(mut nodes: I, not_in: &[NodeOrString]) -> Option<Root<Node>>
+        where I: Iterator<Item=Root<Node>>
 {
     nodes.find(|node| {
         not_in.iter().all(|n| {
@@ -982,30 +970,30 @@ fn first_node_not_in<I>(mut nodes: I, not_in: &[NodeOrString]) -> Option<DomRoot
 /// returns it.
 #[allow(unsafe_code)]
 pub unsafe fn from_untrusted_node_address(_runtime: *mut JSRuntime, candidate: UntrustedNodeAddress)
-    -> DomRoot<Node> {
+    -> Root<Node> {
     // https://github.com/servo/servo/issues/6383
     let candidate: uintptr_t = mem::transmute(candidate.0);
 //        let object: *mut JSObject = jsfriendapi::bindgen::JS_GetAddressableObject(runtime,
 //                                                                                  candidate);
     let object: *mut JSObject = mem::transmute(candidate);
     if object.is_null() {
-        panic!("Attempted to create a `Dom<Node>` from an invalid pointer!")
+        panic!("Attempted to create a `JS<Node>` from an invalid pointer!")
     }
     let boxed_node = conversions::private_from_object(object) as *const Node;
-    DomRoot::from_ref(&*boxed_node)
+    Root::from_ref(&*boxed_node)
 }
 
 #[allow(unsafe_code)]
 pub trait LayoutNodeHelpers {
     unsafe fn type_id_for_layout(&self) -> NodeTypeId;
 
-    unsafe fn parent_node_ref(&self) -> Option<LayoutDom<Node>>;
-    unsafe fn first_child_ref(&self) -> Option<LayoutDom<Node>>;
-    unsafe fn last_child_ref(&self) -> Option<LayoutDom<Node>>;
-    unsafe fn prev_sibling_ref(&self) -> Option<LayoutDom<Node>>;
-    unsafe fn next_sibling_ref(&self) -> Option<LayoutDom<Node>>;
+    unsafe fn parent_node_ref(&self) -> Option<LayoutJS<Node>>;
+    unsafe fn first_child_ref(&self) -> Option<LayoutJS<Node>>;
+    unsafe fn last_child_ref(&self) -> Option<LayoutJS<Node>>;
+    unsafe fn prev_sibling_ref(&self) -> Option<LayoutJS<Node>>;
+    unsafe fn next_sibling_ref(&self) -> Option<LayoutJS<Node>>;
 
-    unsafe fn owner_doc_for_layout(&self) -> LayoutDom<Document>;
+    unsafe fn owner_doc_for_layout(&self) -> LayoutJS<Document>;
 
     unsafe fn is_element_for_layout(&self) -> bool;
     unsafe fn get_flag(&self, flag: NodeFlags) -> bool;
@@ -1022,12 +1010,12 @@ pub trait LayoutNodeHelpers {
     fn image_url(&self) -> Option<ServoUrl>;
     fn canvas_data(&self) -> Option<HTMLCanvasData>;
     fn svg_data(&self) -> Option<SVGSVGData>;
-    fn iframe_browsing_context_id(&self) -> Option<BrowsingContextId>;
-    fn iframe_pipeline_id(&self) -> Option<PipelineId>;
+    fn iframe_browsing_context_id(&self) -> BrowsingContextId;
+    fn iframe_pipeline_id(&self) -> PipelineId;
     fn opaque(&self) -> OpaqueNode;
 }
 
-impl LayoutNodeHelpers for LayoutDom<Node> {
+impl LayoutNodeHelpers for LayoutJS<Node> {
     #[inline]
     #[allow(unsafe_code)]
     unsafe fn type_id_for_layout(&self) -> NodeTypeId {
@@ -1042,37 +1030,37 @@ impl LayoutNodeHelpers for LayoutDom<Node> {
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn parent_node_ref(&self) -> Option<LayoutDom<Node>> {
+    unsafe fn parent_node_ref(&self) -> Option<LayoutJS<Node>> {
         (*self.unsafe_get()).parent_node.get_inner_as_layout()
     }
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn first_child_ref(&self) -> Option<LayoutDom<Node>> {
+    unsafe fn first_child_ref(&self) -> Option<LayoutJS<Node>> {
         (*self.unsafe_get()).first_child.get_inner_as_layout()
     }
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn last_child_ref(&self) -> Option<LayoutDom<Node>> {
+    unsafe fn last_child_ref(&self) -> Option<LayoutJS<Node>> {
         (*self.unsafe_get()).last_child.get_inner_as_layout()
     }
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn prev_sibling_ref(&self) -> Option<LayoutDom<Node>> {
+    unsafe fn prev_sibling_ref(&self) -> Option<LayoutJS<Node>> {
         (*self.unsafe_get()).prev_sibling.get_inner_as_layout()
     }
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn next_sibling_ref(&self) -> Option<LayoutDom<Node>> {
+    unsafe fn next_sibling_ref(&self) -> Option<LayoutJS<Node>> {
         (*self.unsafe_get()).next_sibling.get_inner_as_layout()
     }
 
     #[inline]
     #[allow(unsafe_code)]
-    unsafe fn owner_doc_for_layout(&self) -> LayoutDom<Document> {
+    unsafe fn owner_doc_for_layout(&self) -> LayoutJS<Document> {
         (*self.unsafe_get()).owner_doc.get_inner_as_layout().unwrap()
     }
 
@@ -1173,16 +1161,16 @@ impl LayoutNodeHelpers for LayoutDom<Node> {
             .map(|svg| svg.data())
     }
 
-    fn iframe_browsing_context_id(&self) -> Option<BrowsingContextId> {
+    fn iframe_browsing_context_id(&self) -> BrowsingContextId {
         let iframe_element = self.downcast::<HTMLIFrameElement>()
             .expect("not an iframe element!");
-        iframe_element.browsing_context_id()
+        iframe_element.browsing_context_id().unwrap()
     }
 
-    fn iframe_pipeline_id(&self) -> Option<PipelineId> {
+    fn iframe_pipeline_id(&self) -> PipelineId {
         let iframe_element = self.downcast::<HTMLIFrameElement>()
             .expect("not an iframe element!");
-        iframe_element.pipeline_id()
+        iframe_element.pipeline_id().unwrap()
     }
 
     #[allow(unsafe_code)]
@@ -1199,13 +1187,13 @@ impl LayoutNodeHelpers for LayoutDom<Node> {
 //
 
 pub struct FollowingNodeIterator {
-    current: Option<DomRoot<Node>>,
-    root: DomRoot<Node>,
+    current: Option<Root<Node>>,
+    root: Root<Node>,
 }
 
 impl FollowingNodeIterator {
     /// Skips iterating the children of the current node
-    pub fn next_skipping_children(&mut self) -> Option<DomRoot<Node>> {
+    pub fn next_skipping_children(&mut self) -> Option<Root<Node>> {
         let current = match self.current.take() {
             None => return None,
             Some(current) => current,
@@ -1214,7 +1202,7 @@ impl FollowingNodeIterator {
         self.next_skipping_children_impl(current)
     }
 
-    fn next_skipping_children_impl(&mut self, current: DomRoot<Node>) -> Option<DomRoot<Node>> {
+    fn next_skipping_children_impl(&mut self, current: Root<Node>) -> Option<Root<Node>> {
         if self.root == current {
             self.current = None;
             return None;
@@ -1240,10 +1228,10 @@ impl FollowingNodeIterator {
 }
 
 impl Iterator for FollowingNodeIterator {
-    type Item = DomRoot<Node>;
+    type Item = Root<Node>;
 
     // https://dom.spec.whatwg.org/#concept-tree-following
-    fn next(&mut self) -> Option<DomRoot<Node>> {
+    fn next(&mut self) -> Option<Root<Node>> {
         let current = match self.current.take() {
             None => return None,
             Some(current) => current,
@@ -1259,15 +1247,15 @@ impl Iterator for FollowingNodeIterator {
 }
 
 pub struct PrecedingNodeIterator {
-    current: Option<DomRoot<Node>>,
-    root: DomRoot<Node>,
+    current: Option<Root<Node>>,
+    root: Root<Node>,
 }
 
 impl Iterator for PrecedingNodeIterator {
-    type Item = DomRoot<Node>;
+    type Item = Root<Node>;
 
     // https://dom.spec.whatwg.org/#concept-tree-preceding
-    fn next(&mut self) -> Option<DomRoot<Node>> {
+    fn next(&mut self) -> Option<Root<Node>> {
         let current = match self.current.take() {
             None => return None,
             Some(current) => current,
@@ -1291,16 +1279,16 @@ impl Iterator for PrecedingNodeIterator {
 }
 
 struct SimpleNodeIterator<I>
-    where I: Fn(&Node) -> Option<DomRoot<Node>>
+    where I: Fn(&Node) -> Option<Root<Node>>
 {
-    current: Option<DomRoot<Node>>,
+    current: Option<Root<Node>>,
     next_node: I,
 }
 
 impl<I> Iterator for SimpleNodeIterator<I>
-    where I: Fn(&Node) -> Option<DomRoot<Node>>
+    where I: Fn(&Node) -> Option<Root<Node>>
 {
-    type Item = DomRoot<Node>;
+    type Item = Root<Node>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.current.take();
@@ -1310,19 +1298,19 @@ impl<I> Iterator for SimpleNodeIterator<I>
 }
 
 pub struct TreeIterator {
-    current: Option<DomRoot<Node>>,
+    current: Option<Root<Node>>,
     depth: usize,
 }
 
 impl TreeIterator {
     fn new(root: &Node) -> TreeIterator {
         TreeIterator {
-            current: Some(DomRoot::from_ref(root)),
+            current: Some(Root::from_ref(root)),
             depth: 0,
         }
     }
 
-    pub fn next_skipping_children(&mut self) -> Option<DomRoot<Node>> {
+    pub fn next_skipping_children(&mut self) -> Option<Root<Node>> {
         let current = match self.current.take() {
             None => return None,
             Some(current) => current,
@@ -1331,7 +1319,7 @@ impl TreeIterator {
         self.next_skipping_children_impl(current)
     }
 
-    fn next_skipping_children_impl(&mut self, current: DomRoot<Node>) -> Option<DomRoot<Node>> {
+    fn next_skipping_children_impl(&mut self, current: Root<Node>) -> Option<Root<Node>> {
         for ancestor in current.inclusive_ancestors() {
             if self.depth == 0 {
                 break;
@@ -1349,10 +1337,10 @@ impl TreeIterator {
 }
 
 impl Iterator for TreeIterator {
-    type Item = DomRoot<Node>;
+    type Item = Root<Node>;
 
     // https://dom.spec.whatwg.org/#concept-tree-order
-    fn next(&mut self) -> Option<DomRoot<Node>> {
+    fn next(&mut self) -> Option<Root<Node>> {
         let current = match self.current.take() {
             None => return None,
             Some(current) => current,
@@ -1368,7 +1356,7 @@ impl Iterator for TreeIterator {
 }
 
 /// Specifies whether children must be recursively cloned or not.
-#[derive(Clone, Copy, MallocSizeOf, PartialEq)]
+#[derive(Copy, Clone, PartialEq, HeapSizeOf)]
 pub enum CloneChildrenFlag {
     CloneChildren,
     DoNotCloneChildren
@@ -1380,8 +1368,8 @@ impl Node {
     pub fn reflect_node<N>(
             node: Box<N>,
             document: &Document,
-            wrap_fn: unsafe extern "Rust" fn(*mut JSContext, &GlobalScope, Box<N>) -> DomRoot<N>)
-            -> DomRoot<N>
+            wrap_fn: unsafe extern "Rust" fn(*mut JSContext, &GlobalScope, Box<N>) -> Root<N>)
+            -> Root<N>
         where N: DerivedFrom<Node> + DomObject
     {
         let window = document.window();
@@ -1407,7 +1395,7 @@ impl Node {
             last_child: Default::default(),
             next_sibling: Default::default(),
             prev_sibling: Default::default(),
-            owner_doc: MutNullableDom::new(doc),
+            owner_doc: MutNullableJS::new(doc),
             child_list: Default::default(),
             children_count: Cell::new(0u32),
             flags: Cell::new(flags),
@@ -1437,7 +1425,7 @@ impl Node {
             for descendant in node.traverse_preorder().filter_map(|d| d.as_custom_element()) {
                 // Step 3.2.
                 ScriptThread::enqueue_callback_reaction(&*descendant,
-                    CallbackReaction::Adopted(old_doc.clone(), DomRoot::from_ref(document)), None);
+                    CallbackReaction::Adopted(old_doc.clone(), Root::from_ref(document)));
             }
             for descendant in node.traverse_preorder() {
                 // Step 3.3.
@@ -1562,7 +1550,7 @@ impl Node {
 
     // https://dom.spec.whatwg.org/#concept-node-pre-insert
     pub fn pre_insert(node: &Node, parent: &Node, child: Option<&Node>)
-                      -> Fallible<DomRoot<Node>> {
+                      -> Fallible<Root<Node>> {
         // Step 1.
         Node::ensure_pre_insertion_validity(node, parent, child)?;
 
@@ -1584,7 +1572,7 @@ impl Node {
         Node::insert(node, parent, reference_child, SuppressObserver::Unsuppressed);
 
         // Step 6.
-        Ok(DomRoot::from_ref(node))
+        Ok(Root::from_ref(node))
     }
 
     // https://dom.spec.whatwg.org/#concept-node-insert
@@ -1612,7 +1600,7 @@ impl Node {
         rooted_vec!(let mut new_nodes);
         let new_nodes = if let NodeTypeId::DocumentFragment = node.type_id() {
             // Step 3.
-            new_nodes.extend(node.children().map(|kid| Dom::from_ref(&*kid)));
+            new_nodes.extend(node.children().map(|kid| JS::from_ref(&*kid)));
             // Step 4.
             for kid in new_nodes.r() {
                 Node::remove(*kid, node, SuppressObserver::Suppressed);
@@ -1648,16 +1636,15 @@ impl Node {
             // Step 7.1.
             parent.add_child(*kid, child);
             // Step 7.7.
-            for descendant in kid.traverse_preorder().filter_map(DomRoot::downcast::<Element>) {
+            for descendant in kid.traverse_preorder().filter_map(Root::downcast::<Element>) {
                 // Step 7.7.2.
                 if descendant.is_connected() {
+                    // Step 7.7.2.1.
                     if descendant.get_custom_element_definition().is_some() {
-                        // Step 7.7.2.1.
-                        ScriptThread::enqueue_callback_reaction(&*descendant, CallbackReaction::Connected, None);
-                    } else {
-                        // Step 7.7.2.2.
-                        try_upgrade_element(&*descendant);
+                        ScriptThread::enqueue_callback_reaction(&*descendant, CallbackReaction::Connected);
                     }
+                    // TODO: Step 7.7.2.2.
+                    // Try to upgrade descendant.
                 }
             }
         }
@@ -1687,7 +1674,7 @@ impl Node {
         rooted_vec!(let mut added_nodes);
         let added_nodes = if let Some(node) = node.as_ref() {
             if let NodeTypeId::DocumentFragment = node.type_id() {
-                added_nodes.extend(node.children().map(|child| Dom::from_ref(&*child)));
+                added_nodes.extend(node.children().map(|child| JS::from_ref(&*child)));
                 added_nodes.r()
             } else {
                 ref_slice(node)
@@ -1719,7 +1706,7 @@ impl Node {
     }
 
     // https://dom.spec.whatwg.org/#concept-node-pre-remove
-    fn pre_remove(child: &Node, parent: &Node) -> Fallible<DomRoot<Node>> {
+    fn pre_remove(child: &Node, parent: &Node) -> Fallible<Root<Node>> {
         // Step 1.
         match child.GetParentNode() {
             Some(ref node) if &**node != parent => return Err(Error::NotFound),
@@ -1731,7 +1718,7 @@ impl Node {
         Node::remove(child, parent, SuppressObserver::Unsuppressed);
 
         // Step 3.
-        Ok(DomRoot::from_ref(child))
+        Ok(Root::from_ref(child))
     }
 
     // https://dom.spec.whatwg.org/#concept-node-remove
@@ -1780,27 +1767,27 @@ impl Node {
 
     // https://dom.spec.whatwg.org/#concept-node-clone
     pub fn clone(node: &Node, maybe_doc: Option<&Document>,
-                 clone_children: CloneChildrenFlag) -> DomRoot<Node> {
+                 clone_children: CloneChildrenFlag) -> Root<Node> {
         // Step 1.
         let document = match maybe_doc {
-            Some(doc) => DomRoot::from_ref(doc),
+            Some(doc) => Root::from_ref(doc),
             None => node.owner_doc()
         };
 
         // Step 2.
         // XXXabinader: clone() for each node as trait?
-        let copy: DomRoot<Node> = match node.type_id() {
+        let copy: Root<Node> = match node.type_id() {
             NodeTypeId::DocumentType => {
                 let doctype = node.downcast::<DocumentType>().unwrap();
                 let doctype = DocumentType::new(doctype.name().clone(),
                                                 Some(doctype.public_id().clone()),
                                                 Some(doctype.system_id().clone()),
                                                 &document);
-                DomRoot::upcast::<Node>(doctype)
+                Root::upcast::<Node>(doctype)
             },
             NodeTypeId::DocumentFragment => {
                 let doc_fragment = DocumentFragment::new(&document);
-                DomRoot::upcast::<Node>(doc_fragment)
+                Root::upcast::<Node>(doc_fragment)
             },
             NodeTypeId::CharacterData(_) => {
                 let cdata = node.downcast::<CharacterData>().unwrap();
@@ -1823,7 +1810,7 @@ impl Node {
                                              None, DocumentActivity::Inactive,
                                              DocumentSource::NotFromParser, loader,
                                              None, None);
-                DomRoot::upcast::<Node>(document)
+                Root::upcast::<Node>(document)
             },
             NodeTypeId::Element(..) => {
                 let element = node.downcast::<Element>().unwrap();
@@ -1837,14 +1824,14 @@ impl Node {
                                               &document,
                                               ElementCreator::ScriptCreated,
                                               CustomElementCreationMode::Asynchronous);
-                DomRoot::upcast::<Node>(element)
+                Root::upcast::<Node>(element)
             },
         };
 
         // Step 3.
         let document = match copy.downcast::<Document>() {
-            Some(doc) => DomRoot::from_ref(doc),
-            None => DomRoot::from_ref(&*document),
+            Some(doc) => Root::from_ref(doc),
+            None => Root::from_ref(&*document),
         };
         assert!(copy.owner_doc() == document);
 
@@ -1887,12 +1874,12 @@ impl Node {
         copy
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#child-text-content>
+    /// https://html.spec.whatwg.org/multipage/#child-text-content
     pub fn child_text_content(&self) -> DOMString {
         Node::collect_text_contents(self.children())
     }
 
-    pub fn collect_text_contents<T: Iterator<Item=DomRoot<Node>>>(iterator: T) -> DOMString {
+    pub fn collect_text_contents<T: Iterator<Item=Root<Node>>>(iterator: T) -> DOMString {
         let mut content = String::new();
         for node in iterator {
             if let Some(ref text) = node.downcast::<Text>() {
@@ -1976,7 +1963,7 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-ownerdocument
-    fn GetOwnerDocument(&self) -> Option<DomRoot<Document>> {
+    fn GetOwnerDocument(&self) -> Option<Root<Document>> {
         match self.type_id() {
             NodeTypeId::CharacterData(..) |
             NodeTypeId::Element(..) |
@@ -1987,18 +1974,18 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-getrootnode
-    fn GetRootNode(&self) -> DomRoot<Node> {
+    fn GetRootNode(&self) -> Root<Node> {
         self.inclusive_ancestors().last().unwrap()
     }
 
     // https://dom.spec.whatwg.org/#dom-node-parentnode
-    fn GetParentNode(&self) -> Option<DomRoot<Node>> {
+    fn GetParentNode(&self) -> Option<Root<Node>> {
         self.parent_node.get()
     }
 
     // https://dom.spec.whatwg.org/#dom-node-parentelement
-    fn GetParentElement(&self) -> Option<DomRoot<Element>> {
-        self.GetParentNode().and_then(DomRoot::downcast)
+    fn GetParentElement(&self) -> Option<Root<Element>> {
+        self.GetParentNode().and_then(Root::downcast)
     }
 
     // https://dom.spec.whatwg.org/#dom-node-haschildnodes
@@ -2007,7 +1994,7 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-childnodes
-    fn ChildNodes(&self) -> DomRoot<NodeList> {
+    fn ChildNodes(&self) -> Root<NodeList> {
         self.child_list.or_init(|| {
             let doc = self.owner_doc();
             let window = doc.window();
@@ -2016,22 +2003,22 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-firstchild
-    fn GetFirstChild(&self) -> Option<DomRoot<Node>> {
+    fn GetFirstChild(&self) -> Option<Root<Node>> {
         self.first_child.get()
     }
 
     // https://dom.spec.whatwg.org/#dom-node-lastchild
-    fn GetLastChild(&self) -> Option<DomRoot<Node>> {
+    fn GetLastChild(&self) -> Option<Root<Node>> {
         self.last_child.get()
     }
 
     // https://dom.spec.whatwg.org/#dom-node-previoussibling
-    fn GetPreviousSibling(&self) -> Option<DomRoot<Node>> {
+    fn GetPreviousSibling(&self) -> Option<Root<Node>> {
         self.prev_sibling.get()
     }
 
     // https://dom.spec.whatwg.org/#dom-node-nextsibling
-    fn GetNextSibling(&self) -> Option<DomRoot<Node>> {
+    fn GetNextSibling(&self) -> Option<Root<Node>> {
         self.next_sibling.get()
     }
 
@@ -2076,7 +2063,7 @@ impl NodeMethods for Node {
                 let node = if value.is_empty() {
                     None
                 } else {
-                    Some(DomRoot::upcast(self.owner_doc().CreateTextNode(value)))
+                    Some(Root::upcast(self.owner_doc().CreateTextNode(value)))
                 };
 
                 // Step 3.
@@ -2092,17 +2079,17 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-insertbefore
-    fn InsertBefore(&self, node: &Node, child: Option<&Node>) -> Fallible<DomRoot<Node>> {
+    fn InsertBefore(&self, node: &Node, child: Option<&Node>) -> Fallible<Root<Node>> {
         Node::pre_insert(node, self, child)
     }
 
     // https://dom.spec.whatwg.org/#dom-node-appendchild
-    fn AppendChild(&self, node: &Node) -> Fallible<DomRoot<Node>> {
+    fn AppendChild(&self, node: &Node) -> Fallible<Root<Node>> {
         Node::pre_insert(node, self, None)
     }
 
     // https://dom.spec.whatwg.org/#concept-node-replace
-    fn ReplaceChild(&self, node: &Node, child: &Node) -> Fallible<DomRoot<Node>> {
+    fn ReplaceChild(&self, node: &Node, child: &Node) -> Fallible<Root<Node>> {
         // Step 1.
         match self.type_id() {
             NodeTypeId::Document(_) |
@@ -2216,7 +2203,7 @@ impl NodeMethods for Node {
         // Step 12.
         rooted_vec!(let mut nodes);
         let nodes = if node.type_id() == NodeTypeId::DocumentFragment {
-            nodes.extend(node.children().map(|node| Dom::from_ref(&*node)));
+            nodes.extend(node.children().map(|node| JS::from_ref(&*node)));
             nodes.r()
         } else {
             ref_slice(&node)
@@ -2240,12 +2227,12 @@ impl NodeMethods for Node {
         MutationObserver::queue_a_mutation_record(&self, mutation);
 
         // Step 15.
-        Ok(DomRoot::from_ref(child))
+        Ok(Root::from_ref(child))
     }
 
     // https://dom.spec.whatwg.org/#dom-node-removechild
     fn RemoveChild(&self, node: &Node)
-                       -> Fallible<DomRoot<Node>> {
+                       -> Fallible<Root<Node>> {
         Node::pre_remove(node, self)
     }
 
@@ -2276,7 +2263,7 @@ impl NodeMethods for Node {
     }
 
     // https://dom.spec.whatwg.org/#dom-node-clonenode
-    fn CloneNode(&self, deep: bool) -> DomRoot<Node> {
+    fn CloneNode(&self, deep: bool) -> Root<Node> {
         Node::clone(self, None, if deep {
             CloneChildrenFlag::CloneChildren
         } else {
@@ -2375,70 +2362,55 @@ impl NodeMethods for Node {
 
     // https://dom.spec.whatwg.org/#dom-node-comparedocumentposition
     fn CompareDocumentPosition(&self, other: &Node) -> u16 {
-        // step 1.
         if self == other {
-            return 0
-        }
+            // step 2.
+            0
+        } else {
+            let mut lastself = Root::from_ref(self);
+            let mut lastother = Root::from_ref(other);
+            for ancestor in self.ancestors() {
+                if &*ancestor == other {
+                    // step 4.
+                    return NodeConstants::DOCUMENT_POSITION_CONTAINS +
+                           NodeConstants::DOCUMENT_POSITION_PRECEDING;
+                }
+                lastself = ancestor;
+            }
+            for ancestor in other.ancestors() {
+                if &*ancestor == self {
+                    // step 5.
+                    return NodeConstants::DOCUMENT_POSITION_CONTAINED_BY +
+                           NodeConstants::DOCUMENT_POSITION_FOLLOWING;
+                }
+                lastother = ancestor;
+            }
 
-        // FIXME(emilio): This will eventually need to handle attribute nodes.
+            if lastself != lastother {
+                let abstract_uint: uintptr_t = as_uintptr(&self);
+                let other_uint: uintptr_t = as_uintptr(&*other);
 
-        let mut self_and_ancestors =
-            self.inclusive_ancestors().collect::<SmallVec<[_; 20]>>();
-        let mut other_and_ancestors =
-            other.inclusive_ancestors().collect::<SmallVec<[_; 20]>>();
-
-        if self_and_ancestors.last() != other_and_ancestors.last() {
-            let random =
-                as_uintptr(self_and_ancestors.last().unwrap())
-                    < as_uintptr(other_and_ancestors.last().unwrap());
-            let random = if random {
-                NodeConstants::DOCUMENT_POSITION_FOLLOWING
-            } else {
-                NodeConstants::DOCUMENT_POSITION_PRECEDING
-            };
-
-            // Disconnected.
-            return random +
-                NodeConstants::DOCUMENT_POSITION_DISCONNECTED +
-                NodeConstants::DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
-        }
-
-        let mut parent = self_and_ancestors.pop().unwrap();
-        other_and_ancestors.pop().unwrap();
-
-        let mut current_position = cmp::min(self_and_ancestors.len(), other_and_ancestors.len());
-
-        while current_position > 0 {
-            current_position -= 1;
-            let child_1 = self_and_ancestors.pop().unwrap();
-            let child_2 = other_and_ancestors.pop().unwrap();
-
-            if child_1 != child_2 {
-                let is_before =
-                    parent.children().position(|c| c == child_1).unwrap()
-                     < parent.children().position(|c| c == child_2).unwrap();
-                // If I am before, `other` is following, and the other way
-                // around.
-                return if is_before {
+                let random = if abstract_uint < other_uint {
                     NodeConstants::DOCUMENT_POSITION_FOLLOWING
                 } else {
                     NodeConstants::DOCUMENT_POSITION_PRECEDING
                 };
+                // step 3.
+                return random +
+                    NodeConstants::DOCUMENT_POSITION_DISCONNECTED +
+                    NodeConstants::DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
             }
 
-            parent = child_1;
-        }
-
-        // We hit the end of one of the parent chains, so one node needs to be
-        // contained in the other.
-        //
-        // If we're the container, return that `other` is contained by us.
-        return if self_and_ancestors.len() < other_and_ancestors.len() {
-            NodeConstants::DOCUMENT_POSITION_FOLLOWING +
-            NodeConstants::DOCUMENT_POSITION_CONTAINED_BY
-        } else {
-            NodeConstants::DOCUMENT_POSITION_PRECEDING +
-            NodeConstants::DOCUMENT_POSITION_CONTAINS
+            for child in lastself.traverse_preorder() {
+                if &*child == other {
+                    // step 6.
+                    return NodeConstants::DOCUMENT_POSITION_PRECEDING;
+                }
+                if &*child == self {
+                    // step 7.
+                    return NodeConstants::DOCUMENT_POSITION_FOLLOWING;
+                }
+            }
+            unreachable!()
         }
     }
 
@@ -2499,13 +2471,13 @@ impl NodeMethods for Node {
     }
 }
 
-pub fn document_from_node<T: DerivedFrom<Node> + DomObject>(derived: &T) -> DomRoot<Document> {
+pub fn document_from_node<T: DerivedFrom<Node> + DomObject>(derived: &T) -> Root<Document> {
     derived.upcast().owner_doc()
 }
 
-pub fn window_from_node<T: DerivedFrom<Node> + DomObject>(derived: &T) -> DomRoot<Window> {
+pub fn window_from_node<T: DerivedFrom<Node> + DomObject>(derived: &T) -> Root<Window> {
     let document = document_from_node(derived);
-    DomRoot::from_ref(document.window())
+    Root::from_ref(document.window())
 }
 
 impl VirtualMethods for Node {
@@ -2531,7 +2503,7 @@ impl VirtualMethods for Node {
 }
 
 /// A summary of the changes that happened to a node.
-#[derive(Clone, Copy, MallocSizeOf, PartialEq)]
+#[derive(Copy, Clone, PartialEq, HeapSizeOf)]
 pub enum NodeDamage {
     /// The node's `style` attribute changed.
     NodeStyleDamaged,
@@ -2626,7 +2598,7 @@ impl<'a> ChildrenMutation<'a> {
     /// NOTE: This does not check whether the inserted/removed nodes were elements, so in some
     /// cases it will return a false positive.  This doesn't matter for correctness, because at
     /// worst the returned element will be restyled unnecessarily.
-    pub fn modified_edge_element(&self) -> Option<DomRoot<Node>> {
+    pub fn modified_edge_element(&self) -> Option<Root<Node>> {
         match *self {
             // Add/remove at start of container: Return the first following element.
             ChildrenMutation::Prepend { next, .. } |
@@ -2704,11 +2676,11 @@ struct UniqueId {
 
 unsafe_no_jsmanaged_fields!(UniqueId);
 
-impl MallocSizeOf for UniqueId {
+impl HeapSizeOf for UniqueId {
     #[allow(unsafe_code)]
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+    fn heap_size_of_children(&self) -> usize {
         if let &Some(ref uuid) = unsafe { &*self.cell.get() } {
-            unsafe { ops.malloc_size_of(&** uuid) }
+            unsafe { heap_size_of(&** uuid as *const Uuid as *const _) }
         } else {
             0
         }
@@ -2727,7 +2699,7 @@ impl UniqueId {
         unsafe {
             let ptr = self.cell.get();
             if (*ptr).is_none() {
-                *ptr = Some(Box::new(Uuid::new_v4()));
+                *ptr = Some(box Uuid::new_v4());
             }
             &(&*ptr).as_ref().unwrap()
         }
@@ -2786,7 +2758,7 @@ pub trait VecPreOrderInsertionHelper<T> {
     fn insert_pre_order(&mut self, elem: &T, tree_root: &Node);
 }
 
-impl<T> VecPreOrderInsertionHelper<T> for Vec<Dom<T>>
+impl<T> VecPreOrderInsertionHelper<T> for Vec<JS<T>>
     where T: DerivedFrom<Node> + DomObject
 {
     /// This algorithm relies on the following assumptions:
@@ -2800,14 +2772,14 @@ impl<T> VecPreOrderInsertionHelper<T> for Vec<Dom<T>>
     /// the traversal.
     fn insert_pre_order(&mut self, elem: &T, tree_root: &Node) {
         if self.is_empty() {
-            self.push(Dom::from_ref(elem));
+            self.push(JS::from_ref(elem));
             return;
         }
 
         let elem_node = elem.upcast::<Node>();
         let mut head: usize = 0;
         for node in tree_root.traverse_preorder() {
-            let head_node = DomRoot::upcast::<Node>(DomRoot::from_ref(&*self[head]));
+            let head_node = Root::upcast::<Node>(Root::from_ref(&*self[head]));
             if head_node == node {
                 head += 1;
             }
@@ -2815,6 +2787,6 @@ impl<T> VecPreOrderInsertionHelper<T> for Vec<Dom<T>>
                 break;
             }
         }
-        self.insert(head, Dom::from_ref(elem));
+        self.insert(head, JS::from_ref(elem));
     }
 }

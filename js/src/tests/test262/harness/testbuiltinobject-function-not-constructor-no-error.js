@@ -5,8 +5,9 @@
 description: >
     Non-constructor functions that do not throw an when invoked via `new` do
     not satisfy the assertion.
-includes: [testBuiltInObject.js,sta.js]
+includes: [testBuiltInObject.js]
 ---*/
+
 var threw = false;
 
 try {

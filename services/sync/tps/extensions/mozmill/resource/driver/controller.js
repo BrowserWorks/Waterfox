@@ -28,7 +28,7 @@ var sleep = utils.sleep;
 // For Mozmill 1.5 backward compatibility
 var windowMap = windows.map;
 
-var waitForEvents = function () {
+waitForEvents = function () {
 }
 
 waitForEvents.prototype = {
@@ -66,7 +66,7 @@ waitForEvents.prototype = {
     for (var e in this.registry) {
       assert.waitFor(function () {
         return this.node.firedEvents[e] == true;
-      }, "waitForEvents.wait(): Event '" + e + "' has been fired.", timeout, interval);
+      }, "waitForEvents.wait(): Event '" + ex + "' has been fired.", timeout, interval);
 
       this.node.removeEventListener(e, this.registry[e], true);
     }
@@ -433,7 +433,8 @@ MozMillController.prototype.startUserShutdown = function (timeout, restart, next
  * @param {string} aNext
  *        Name of the next test function to run after restart
  * @param {boolean} [aFlags=undefined]
- *        Additional flags how to handle the shutdown or restart.
+ *        Additional flags how to handle the shutdown or restart. The attributes
+ *        eRestarti386 (0x20) and eRestartx86_64 (0x30) have not been documented yet.
  * @see https://developer.mozilla.org/nsIAppStartup#Attributes
  */
 MozMillController.prototype.restartApplication = function (aNext, aFlags) {
@@ -460,7 +461,8 @@ MozMillController.prototype.restartApplication = function (aNext, aFlags) {
  * @param {boolean} [aResetProfile=false]
  *        Whether to reset the profile during restart
  * @param {boolean} [aFlags=undefined]
- *        Additional flags how to handle the shutdown or restart.
+ *        Additional flags how to handle the shutdown or restart. The attributes
+ *        eRestarti386 and eRestartx86_64 have not been documented yet.
  * @see https://developer.mozilla.org/nsIAppStartup#Attributes
  */
 MozMillController.prototype.stopApplication = function (aResetProfile, aFlags) {
@@ -793,7 +795,7 @@ MozMillController.prototype.assertImageLoaded = function (el) {
   // Workaround for Safari -- it only supports the
   // complete attrib on script-created images
   if (typeof comp == 'undefined') {
-    let test = new Image();
+    test = new Image();
     // If the original image was successfully loaded,
     // src for new one should be pulled from cache
     test.src = img.src;
@@ -982,9 +984,9 @@ function browserAdditions (controller) {
       timed_out = true;
     }
     finally {
-      let state = 'URI=' + win.document.location.href +
+      state = 'URI=' + win.document.location.href +
               ', readyState=' + win.document.readyState;
-      let message = "controller.waitForPageLoad(" + state + ")";
+      message = "controller.waitForPageLoad(" + state + ")";
 
       if (timed_out) {
         throw new errors.AssertionError(message);

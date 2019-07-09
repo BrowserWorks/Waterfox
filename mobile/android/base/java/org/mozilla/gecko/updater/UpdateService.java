@@ -22,6 +22,7 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -55,6 +56,7 @@ import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.TimeZone;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -147,8 +149,8 @@ public class UpdateService extends IntentService {
 
         mPrefs = getSharedPreferences(PREFS_NAME, 0);
         mNotificationManager = NotificationManagerCompat.from(this);
-        mConnectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        mWifiLock = ((WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE))
+        mConnectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE))
                     .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, PREFS_NAME);
         mCancelDownload = false;
     }

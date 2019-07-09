@@ -1,8 +1,6 @@
 "use strict";
 
-const PATH = getRootDirectory(gTestPath)
-             .replace("chrome://mochitests/content/", "http://example.com/");
-const URL = PATH + "file_async_duplicate_tab.html";
+const URL = "data:text/html;charset=utf-8,<a href=%23>clickme</a>";
 
 add_task(async function test_duplicate() {
   // Create new tab.

@@ -508,10 +508,16 @@ BackgroundFileSaver::ProcessStateChange()
         NS_ENSURE_SUCCESS(rv, rv);
       }
 
-      // Now we can update the actual target file name.
-      mActualTarget = renamedTarget;
-      mActualTargetKeepPartial = renamedTargetKeepPartial;
+      // We should not only update the mActualTarget with renameTarget when
+      // they point to the different files.
+      // In this way, if mActualTarget and renamedTarget point to the same file
+      // with different addresses, "CheckCompletion()" will return false forever.
     }
+
+    // Update mActualTarget with renameTarget,
+    // even if they point to the same file.
+    mActualTarget = renamedTarget;
+    mActualTargetKeepPartial = renamedTargetKeepPartial;
   }
 
   // Notify if the target file name actually changed.
@@ -908,12 +914,7 @@ BackgroundFileSaver::ExtractSignatureInfo(const nsAString& filePath)
             LOG(("Couldn't create NSS cert [this = %p]", this));
             break;
           }
-          rv = nssCertList->AddCert(nssCert);
-          if (NS_FAILED(rv)) {
-            extractionSuccess = false;
-            LOG(("Couldn't add NSS cert to cert list [this = %p]", this));
-            break;
-          }
+          nssCertList->AddCert(nssCert);
           nsString subjectName;
           nssCert->GetSubjectName(subjectName);
           LOG(("Adding cert %s [this = %p]",

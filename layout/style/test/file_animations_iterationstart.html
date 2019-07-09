@@ -50,7 +50,8 @@ addAsyncAnimTest(async function() {
 
   advance_clock(6000);
   await waitForPaints();
-  omta_is(div, "transform", { tx: 50 }, RunningOn.MainThread, "End of Animation");
+  // Bug 1352336: The following should be RunningOn.MainThread
+  omta_is(div, "transform", { tx: 50 }, RunningOn.Either, "End of Animation");
 
   done_div();
 });

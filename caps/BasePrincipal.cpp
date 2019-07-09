@@ -7,6 +7,10 @@
 #include "mozilla/BasePrincipal.h"
 
 #include "nsDocShell.h"
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
+#include "nsIAddonPolicyService.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
@@ -53,8 +57,7 @@ NS_IMETHODIMP
 BasePrincipal::GetOriginNoSuffix(nsACString& aOrigin)
 {
   MOZ_ASSERT(mInitialized);
-  mOriginNoSuffix->ToUTF8String(aOrigin);
-  return NS_OK;
+  return mOriginNoSuffix->ToUTF8String(aOrigin);
 }
 
 bool
@@ -294,8 +297,7 @@ NS_IMETHODIMP
 BasePrincipal::GetOriginSuffix(nsACString& aOriginAttributes)
 {
   MOZ_ASSERT(mOriginSuffix);
-  mOriginSuffix->ToUTF8String(aOriginAttributes);
-  return NS_OK;
+  return mOriginSuffix->ToUTF8String(aOriginAttributes);
 }
 
 NS_IMETHODIMP
@@ -332,29 +334,24 @@ BasePrincipal::GetIsInIsolatedMozBrowserElement(bool* aIsInIsolatedMozBrowserEle
   return NS_OK;
 }
 
-nsresult
-BasePrincipal::GetAddonPolicy(nsISupports** aResult)
-{
-  *aResult = AddonPolicy();
-  return NS_OK;
-}
-
-extensions::WebExtensionPolicy*
-BasePrincipal::AddonPolicy()
-{
-  if (Is<ContentPrincipal>()) {
-    return As<ContentPrincipal>()->AddonPolicy();
-  }
-  return nullptr;
-}
-
 bool
-BasePrincipal::AddonHasPermission(const nsAtom* aPerm)
+BasePrincipal::AddonHasPermission(const nsAString& aPerm)
 {
-  if (auto policy = AddonPolicy()) {
-    return policy->HasPermission(aPerm);
+  nsAutoString addonId;
+  NS_ENSURE_SUCCESS(GetAddonId(addonId), false);
+
+  if (addonId.IsEmpty()) {
+    return false;
   }
-  return false;
+
+  nsCOMPtr<nsIAddonPolicyService> aps =
+    do_GetService("@mozilla.org/addons/policy-service;1");
+  NS_ENSURE_TRUE(aps, false);
+
+  bool retval = false;
+  nsresult rv = aps->AddonHasPermission(addonId, aPerm, &retval);
+  NS_ENSURE_SUCCESS(rv, false);
+  return retval;
 }
 
 already_AddRefed<BasePrincipal>
@@ -454,10 +451,19 @@ BasePrincipal::CloneStrippingUserContextIdAndFirstPartyDomain()
 bool
 BasePrincipal::AddonAllowsLoad(nsIURI* aURI, bool aExplicit /* = false */)
 {
-  if (auto policy = AddonPolicy()) {
-    return policy->CanAccessURI(aURI, aExplicit);
+  nsAutoString addonId;
+  NS_ENSURE_SUCCESS(GetAddonId(addonId), false);
+
+  if (addonId.IsEmpty()) {
+    return false;
   }
-  return false;
+
+  nsCOMPtr<nsIAddonPolicyService> aps = do_GetService("@mozilla.org/addons/policy-service;1");
+  NS_ENSURE_TRUE(aps, false);
+
+  bool allowed = false;
+  nsresult rv = aps->AddonMayLoadURI(addonId, aURI, aExplicit, &allowed);
+  return NS_SUCCEEDED(rv) && allowed;
 }
 
 void

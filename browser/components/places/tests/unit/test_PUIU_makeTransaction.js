@@ -14,25 +14,25 @@ function waitForBookmarkNotification(aNotification, aCallback, aProperty) {
     // nsINavBookmarkObserver
     QueryInterface: XPCOMUtils.generateQI([Ci.nsINavBookmarkObserver]),
     onBeginUpdateBatch: function onBeginUpdateBatch() {
-      return this.validate("onBeginUpdateBatch", arguments);
+      return this.validate(arguments.callee.name, arguments);
     },
     onEndUpdateBatch: function onEndUpdateBatch() {
-      return this.validate("onEndUpdateBatch", arguments);
+      return this.validate(arguments.callee.name, arguments);
     },
     onItemAdded: function onItemAdded(aItemId, aParentId, aIndex, aItemType,
                                       aURI, aTitle) {
-      return this.validate("onItemAdded", { id: aItemId,
+      return this.validate(arguments.callee.name, { id: aItemId,
                                                     index: aIndex,
                                                     type: aItemType,
                                                     url: aURI ? aURI.spec : null,
                                                     title: aTitle });
     },
     onItemRemoved: function onItemRemoved() {
-      return this.validate("onItemRemoved", arguments);
+      return this.validate(arguments.callee.name, arguments);
     },
     onItemChanged: function onItemChanged(id, property, aIsAnno,
                                           aNewValue, aLastModified, type) {
-      return this.validate("onItemChanged",
+      return this.validate(arguments.callee.name,
                            { id,
                              get index() {
                                return PlacesUtils.bookmarks.getItemIndex(this.id);
@@ -50,11 +50,11 @@ function waitForBookmarkNotification(aNotification, aCallback, aProperty) {
                            });
     },
     onItemVisited: function onItemVisited() {
-      return this.validate("onItemVisited", arguments);
+      return this.validate(arguments.callee.name, arguments);
     },
     onItemMoved: function onItemMoved(aItemId, aOldParentId, aOldIndex,
                                       aNewParentId, aNewIndex, aItemType) {
-      this.validate("onItemMoved", { id: aItemId,
+      this.validate(arguments.callee.name, { id: aItemId,
                                              index: aNewIndex,
                                              type: aItemType });
     }
@@ -85,8 +85,8 @@ function wrapNodeByIdAndParent(aItemId, aParentId) {
 }
 
 add_test(function test_text_paste() {
-  const TEST_URL = "http://places.moz.org/";
-  const TEST_TITLE = "Places bookmark";
+  const TEST_URL = "http://places.moz.org/"
+  const TEST_TITLE = "Places bookmark"
 
   waitForBookmarkNotification("onItemAdded", function(aData) {
     do_check_eq(aData.title, TEST_TITLE);
@@ -107,7 +107,7 @@ add_test(function test_text_paste() {
 });
 
 add_test(function test_container() {
-  const TEST_TITLE = "Places folder";
+  const TEST_TITLE = "Places folder"
 
   waitForBookmarkNotification("onItemChanged", function(aChangedData) {
     do_check_eq(aChangedData.title, TEST_TITLE);
@@ -214,8 +214,8 @@ add_test(function test_separator() {
 });
 
 add_test(function test_bookmark() {
-  const TEST_URL = "http://places.moz.org/";
-  const TEST_TITLE = "Places bookmark";
+  const TEST_URL = "http://places.moz.org/"
+  const TEST_TITLE = "Places bookmark"
 
   waitForBookmarkNotification("onItemChanged", function(aChangedData) {
     do_check_eq(aChangedData.title, TEST_TITLE);
@@ -275,8 +275,8 @@ add_test(function test_bookmark() {
 });
 
 add_test(function test_visit() {
-  const TEST_URL = "http://places.moz.org/";
-  const TEST_TITLE = "Places bookmark";
+  const TEST_URL = "http://places.moz.org/"
+  const TEST_TITLE = "Places bookmark"
 
   waitForBookmarkNotification("onItemAdded", function(aAddedData) {
     do_check_eq(aAddedData.title, TEST_TITLE);
@@ -328,3 +328,7 @@ add_test(function check_annotations() {
   do_check_eq(others.length, 3);
   run_next_test();
 });
+
+function run_test() {
+  run_next_test();
+}

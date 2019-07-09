@@ -7,7 +7,7 @@ use dom::bindings::codegen::Bindings::HTMLTemplateElementBinding;
 use dom::bindings::codegen::Bindings::HTMLTemplateElementBinding::HTMLTemplateElementMethods;
 use dom::bindings::codegen::Bindings::NodeBinding::NodeMethods;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::root::{DomRoot, MutNullableDom};
+use dom::bindings::js::{MutNullableJS, Root};
 use dom::document::Document;
 use dom::documentfragment::DocumentFragment;
 use dom::htmlelement::HTMLElement;
@@ -20,8 +20,8 @@ use html5ever::{LocalName, Prefix};
 pub struct HTMLTemplateElement {
     htmlelement: HTMLElement,
 
-    /// <https://html.spec.whatwg.org/multipage/#template-contents>
-    contents: MutNullableDom<DocumentFragment>,
+    /// https://html.spec.whatwg.org/multipage/#template-contents
+    contents: MutNullableJS<DocumentFragment>,
 }
 
 impl HTMLTemplateElement {
@@ -31,23 +31,23 @@ impl HTMLTemplateElement {
         HTMLTemplateElement {
             htmlelement:
                 HTMLElement::new_inherited(local_name, prefix, document),
-            contents: MutNullableDom::new(None),
+            contents: MutNullableJS::new(None),
         }
     }
 
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
                prefix: Option<Prefix>,
-               document: &Document) -> DomRoot<HTMLTemplateElement> {
-        Node::reflect_node(Box::new(HTMLTemplateElement::new_inherited(local_name, prefix, document)),
+               document: &Document) -> Root<HTMLTemplateElement> {
+        Node::reflect_node(box HTMLTemplateElement::new_inherited(local_name, prefix, document),
                            document,
                            HTMLTemplateElementBinding::Wrap)
     }
 }
 
 impl HTMLTemplateElementMethods for HTMLTemplateElement {
-    /// <https://html.spec.whatwg.org/multipage/#dom-template-content>
-    fn Content(&self) -> DomRoot<DocumentFragment> {
+    /// https://html.spec.whatwg.org/multipage/#dom-template-content
+    fn Content(&self) -> Root<DocumentFragment> {
         self.contents.or_init(|| {
             let doc = document_from_node(self);
             doc.appropriate_template_contents_owner_document().CreateDocumentFragment()
@@ -60,7 +60,7 @@ impl VirtualMethods for HTMLTemplateElement {
         Some(self.upcast::<HTMLElement>() as &VirtualMethods)
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#template-adopting-steps>
+    /// https://html.spec.whatwg.org/multipage/#template-adopting-steps
     fn adopting_steps(&self, old_doc: &Document) {
         self.super_type().unwrap().adopting_steps(old_doc);
         // Step 1.
@@ -69,7 +69,7 @@ impl VirtualMethods for HTMLTemplateElement {
         Node::adopt(self.Content().upcast(), &doc);
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#the-template-element:concept-node-clone-ext>
+    /// https://html.spec.whatwg.org/multipage/#the-template-element:concept-node-clone-ext
     fn cloning_steps(&self, copy: &Node, maybe_doc: Option<&Document>,
                      clone_children: CloneChildrenFlag) {
         self.super_type().unwrap().cloning_steps(copy, maybe_doc, clone_children);
@@ -79,7 +79,7 @@ impl VirtualMethods for HTMLTemplateElement {
         }
         let copy = copy.downcast::<HTMLTemplateElement>().unwrap();
         // Steps 2-3.
-        let copy_contents = DomRoot::upcast::<Node>(copy.Content());
+        let copy_contents = Root::upcast::<Node>(copy.Content());
         let copy_contents_doc = copy_contents.owner_doc();
         for child in self.Content().upcast::<Node>().children() {
             let copy_child = Node::clone(

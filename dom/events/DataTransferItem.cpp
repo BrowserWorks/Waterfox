@@ -388,7 +388,7 @@ DataTransferItem::CreateFileFromInputStream(nsIInputStream* aStream)
     key = "GenericFileName";
   }
 
-  nsAutoString fileName;
+  nsXPIDLString fileName;
   nsresult rv = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                                    key, fileName);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -503,19 +503,13 @@ DataTransferItem::Data(nsIPrincipal* aPrincipal, ErrorResult& aRv)
 {
   MOZ_ASSERT(aPrincipal);
 
+  nsCOMPtr<nsIVariant> variant = DataNoSecurityCheck();
+
   // If the inbound principal is system, we can skip the below checks, as
   // they will trivially succeed.
   if (nsContentUtils::IsSystemPrincipal(aPrincipal)) {
-    return DataNoSecurityCheck();
+    return variant.forget();
   }
-
-  // We should not allow raw data to be accessed from a Protected DataTransfer.
-  // We don't prevent this access if the accessing document is Chrome.
-  if (mDataTransfer->IsProtected()) {
-    return nullptr;
-  }
-
-  nsCOMPtr<nsIVariant> variant = DataNoSecurityCheck();
 
   MOZ_ASSERT(!ChromeOnly(), "Non-chrome code shouldn't see a ChromeOnly DataTransferItem");
   if (ChromeOnly()) {

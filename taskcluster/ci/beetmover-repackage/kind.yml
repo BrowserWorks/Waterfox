@@ -5,14 +5,12 @@
 loader: taskgraph.loader.single_dep:loader
 
 transforms:
-   - taskgraph.transforms.name_sanity:transforms
    - taskgraph.transforms.beetmover_repackage_l10n:transforms
    - taskgraph.transforms.beetmover_repackage:transforms
    - taskgraph.transforms.task:transforms
 
 kind-dependencies:
   - repackage-signing
-  - partials-signing
 
 only-for-build-platforms:
   - linux-nightly/opt

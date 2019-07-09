@@ -4,9 +4,9 @@
 
 use dom::bindings::codegen::Bindings::GamepadButtonBinding;
 use dom::bindings::codegen::Bindings::GamepadButtonBinding::GamepadButtonMethods;
+use dom::bindings::js::Root;
 use dom::bindings::num::Finite;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
-use dom::bindings::root::DomRoot;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
 use std::cell::Cell;
@@ -29,8 +29,8 @@ impl GamepadButton {
         }
     }
 
-    pub fn new(global: &GlobalScope, pressed: bool, touched: bool) -> DomRoot<GamepadButton> {
-        reflect_dom_object(Box::new(GamepadButton::new_inherited(pressed, touched)),
+    pub fn new(global: &GlobalScope, pressed: bool, touched: bool) -> Root<GamepadButton> {
+        reflect_dom_object(box GamepadButton::new_inherited(pressed, touched),
                            global,
                            GamepadButtonBinding::Wrap)
     }

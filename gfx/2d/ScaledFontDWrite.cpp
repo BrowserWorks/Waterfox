@@ -8,7 +8,6 @@
 #include "PathD2D.h"
 #include "gfxFont.h"
 #include "Logging.h"
-#include "mozilla/webrender/WebRenderTypes.h"
 
 using namespace std;
 
@@ -297,38 +296,14 @@ bool
 ScaledFontDWrite::GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton)
 {
   InstanceData instance(this);
-  aCb(reinterpret_cast<uint8_t*>(&instance), sizeof(instance), nullptr, 0, aBaton);
-  return true;
-}
-
-bool
-ScaledFontDWrite::GetWRFontInstanceOptions(Maybe<wr::FontInstanceOptions>* aOutOptions,
-                                           Maybe<wr::FontInstancePlatformOptions>* aOutPlatformOptions,
-                                           std::vector<FontVariation>* aOutVariations)
-{
-  AntialiasMode aaMode = GetDefaultAAMode();
-  if (aaMode != AntialiasMode::SUBPIXEL) {
-    wr::FontInstanceOptions options;
-    options.render_mode =
-      aaMode == AntialiasMode::NONE ? wr::FontRenderMode::Mono : wr::FontRenderMode::Alpha;
-    options.subpx_dir = wr::SubpixelDirection::Horizontal;
-    options.synthetic_italics = false;
-    *aOutOptions = Some(options);
-  }
-
-  wr::FontInstancePlatformOptions platformOptions;
-  platformOptions.use_embedded_bitmap = UseEmbeddedBitmaps();
-  platformOptions.force_gdi_rendering = ForceGDIMode();
-  *aOutPlatformOptions = Some(platformOptions);
+  aCb(reinterpret_cast<uint8_t*>(&instance), sizeof(instance), aBaton);
   return true;
 }
 
 already_AddRefed<ScaledFont>
 UnscaledFontDWrite::CreateScaledFont(Float aGlyphSize,
                                      const uint8_t* aInstanceData,
-                                     uint32_t aInstanceDataLength,
-                                     const FontVariation* aVariations,
-                                     uint32_t aNumVariations)
+                                     uint32_t aInstanceDataLength)
 {
   if (aInstanceDataLength < sizeof(ScaledFontDWrite::InstanceData)) {
     gfxWarning() << "DWrite scaled font instance data is truncated.";

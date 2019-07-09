@@ -11,6 +11,7 @@
 #include "nsIFile.h"
 
 #ifdef MOZ_WIDGET_COCOA
+#include <Carbon/Carbon.h>
 #include "nsILocalFileMac.h"
 #include "prenv.h"
 #endif

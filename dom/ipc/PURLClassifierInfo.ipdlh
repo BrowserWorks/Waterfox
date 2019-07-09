@@ -10,7 +10,7 @@ namespace dom {
 struct ClassifierInfo {
   nsCString list;
   nsCString provider;
-  nsCString fullhash;
+  nsCString prefix;
 };
 
 union MaybeInfo {

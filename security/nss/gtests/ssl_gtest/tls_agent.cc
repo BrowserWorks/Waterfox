@@ -36,7 +36,6 @@ const std::string TlsAgent::kServerRsa = "rsa";    // both sign and encrypt
 const std::string TlsAgent::kServerRsaSign = "rsa_sign";
 const std::string TlsAgent::kServerRsaPss = "rsa_pss";
 const std::string TlsAgent::kServerRsaDecrypt = "rsa_decrypt";
-const std::string TlsAgent::kServerRsaChain = "rsa_chain";
 const std::string TlsAgent::kServerEcdsa256 = "ecdsa256";
 const std::string TlsAgent::kServerEcdsa384 = "ecdsa384";
 const std::string TlsAgent::kServerEcdsa521 = "ecdsa521";
@@ -388,7 +387,7 @@ void TlsAgent::SetShortHeadersEnabled() {
 void TlsAgent::SetAltHandshakeTypeEnabled() {
   EXPECT_TRUE(EnsureTlsSetup());
 
-  SECStatus rv = SSL_UseAltServerHelloType(ssl_fd(), true);
+  SECStatus rv = SSL_UseAltServerHelloType(ssl_fd(), PR_TRUE);
   EXPECT_EQ(SECSuccess, rv);
 }
 

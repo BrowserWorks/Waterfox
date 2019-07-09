@@ -113,7 +113,7 @@ Function .onInit
   System::Call 'kernel32::SetDllDirectoryW(w "")'
 
   SetSilent silent
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     Abort
   ${EndUnless}
 FunctionEnd

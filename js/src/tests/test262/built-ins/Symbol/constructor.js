@@ -4,7 +4,6 @@
 es6id: 19.4.3.1
 description: >
     Symbol constructor
-features: [Symbol]
 ---*/
 assert.sameValue(
     Object.getPrototypeOf(Symbol('66')).constructor,

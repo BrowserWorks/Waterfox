@@ -33,7 +33,7 @@
 #include "nsContentUtils.h"
 #include "nsStyleUtil.h"
 #include "nsQueryObject.h"
-#include "nsIContentPolicy.h"
+#include "nsIContentPolicyBase.h"
 #include "nsMimeTypes.h"
 #include "imgLoader.h"
 #include "MediaContainerType.h"
@@ -323,7 +323,8 @@ nsStyleLinkElement::UpdateStyleSheet(nsICSSLoaderObserver* aObserver,
 {
   if (aForceReload) {
     // We remove this stylesheet from the cache to load a new version.
-    nsCOMPtr<nsIContent> thisContent = do_QueryInterface(this);
+    nsCOMPtr<nsIContent> thisContent;
+    CallQueryInterface(this, getter_AddRefs(thisContent));
     nsCOMPtr<nsIDocument> doc = thisContent->IsInShadowTree() ?
       thisContent->OwnerDoc() : thisContent->GetUncomposedDoc();
     if (doc && doc->CSSLoader()->GetEnabled() &&
@@ -405,9 +406,11 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
 {
   *aWillNotify = false;
 
-  nsCOMPtr<nsIContent> thisContent = do_QueryInterface(this);
+  nsCOMPtr<nsIContent> thisContent;
+  CallQueryInterface(this, getter_AddRefs(thisContent));
+
   // All instances of nsStyleLinkElement should implement nsIContent.
-  MOZ_ASSERT(thisContent);
+  NS_ENSURE_TRUE(thisContent, NS_ERROR_FAILURE);
 
   if (thisContent->IsInAnonymousSubtree() &&
       thisContent->IsAnonymousContentInSVGUseSubtree()) {
@@ -428,7 +431,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   Element* oldScopeElement = nullptr;
   if (mStyleSheet) {
     if (mStyleSheet->IsServo()) {
-      // XXXheycam ServoStyleSheets don't support <style scoped>.
+      NS_WARNING("stylo: ServoStyleSheets don't support <style scoped>");
     } else {
       oldScopeElement = mStyleSheet->AsGecko()->GetScopeElement();
     }
@@ -471,8 +474,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   }
 
   bool isInline;
-  nsCOMPtr<nsIPrincipal> triggeringPrincipal;
-  nsCOMPtr<nsIURI> uri = GetStyleSheetURL(&isInline, getter_AddRefs(triggeringPrincipal));
+  nsCOMPtr<nsIURI> uri = GetStyleSheetURL(&isInline);
 
   if (!aForceUpdate && mStyleSheet && !isInline && uri) {
     nsIURI* oldURI = mStyleSheet->GetSheetURI();
@@ -520,16 +522,6 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
 
   bool doneLoading = false;
   nsresult rv = NS_OK;
-
-  // Load the link's referrerpolicy attribute. If the link does not provide a
-  // referrerpolicy attribute, ignore this and use the document's referrer
-  // policy
-
-  net::ReferrerPolicy referrerPolicy = GetLinkReferrerPolicy();
-  if (referrerPolicy == net::RP_Unset) {
-    referrerPolicy = doc->GetReferrerPolicy();
-  }
-
   if (isInline) {
     nsAutoString text;
     if (!nsContentUtils::GetNodeTextContent(thisContent, false, text, fallible)) {
@@ -547,8 +539,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
     // Parse the style sheet.
     rv = doc->CSSLoader()->
       LoadInlineStyle(thisContent, text, mLineNumber, title, media,
-                      referrerPolicy, scopeElement, aObserver, &doneLoading,
-                      &isAlternate);
+                      scopeElement, aObserver, &doneLoading, &isAlternate);
   }
   else {
     nsAutoString integrity;
@@ -559,13 +550,22 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
                NS_ConvertUTF16toUTF8(integrity).get()));
     }
 
+    // if referrer attributes are enabled in preferences, load the link's referrer
+    // attribute. If the link does not provide a referrer attribute, ignore this
+    // and use the document's referrer policy
+
+    net::ReferrerPolicy referrerPolicy = GetLinkReferrerPolicy();
+    if (referrerPolicy == net::RP_Unset) {
+      referrerPolicy = doc->GetReferrerPolicy();
+    }
+
     // XXXbz clone the URI here to work around content policies modifying URIs.
     nsCOMPtr<nsIURI> clonedURI;
     uri->Clone(getter_AddRefs(clonedURI));
     NS_ENSURE_TRUE(clonedURI, NS_ERROR_OUT_OF_MEMORY);
     rv = doc->CSSLoader()->
-      LoadStyleLink(thisContent, clonedURI, triggeringPrincipal, title, media,
-                    isAlternate, GetCORSMode(), referrerPolicy, integrity,
+      LoadStyleLink(thisContent, clonedURI, title, media, isAlternate,
+                    GetCORSMode(), referrerPolicy, integrity,
                     aObserver, &isAlternate);
     if (NS_FAILED(rv)) {
       // Don't propagate LoadStyleLink() errors further than this, since some
@@ -600,7 +600,8 @@ nsStyleLinkElement::UpdateStyleSheetScopedness(bool aIsNowScoped)
 
   CSSStyleSheet* sheet = mStyleSheet->AsGecko();
 
-  nsCOMPtr<nsIContent> thisContent = do_QueryInterface(this);
+  nsCOMPtr<nsIContent> thisContent;
+  CallQueryInterface(this, getter_AddRefs(thisContent));
 
   Element* oldScopeElement = sheet->GetScopeElement();
   Element* newScopeElement = aIsNowScoped ?

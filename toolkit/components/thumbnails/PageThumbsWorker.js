@@ -89,7 +89,7 @@ var Agent = {
       let skip = new Set(skipFiles);
 
       let entries = [];
-      for (let entry of iter) {
+      for (let entry in iter) {
         if (!entry.isDir && !entry.isSymLink && !skip.has(entry.name)) {
           entries.push(entry);
         }
@@ -108,7 +108,7 @@ var Agent = {
     }
     let iter = new OS.File.DirectoryIterator(pathFrom);
     if (iter.exists()) {
-      for (let entry of iter) {
+      for (let entry in iter) {
         if (entry.isDir || entry.isSymLink) {
           continue;
         }
@@ -153,7 +153,7 @@ var Agent = {
   wipe: function Agent_wipe(path) {
     let iterator = new File.DirectoryIterator(path);
     try {
-      for (let entry of iterator) {
+      for (let entry in iterator) {
         try {
           File.remove(entry.path);
         } catch (ex) {

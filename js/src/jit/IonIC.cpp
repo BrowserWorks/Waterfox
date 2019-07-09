@@ -40,11 +40,6 @@ IonIC::scratchRegisterForEntryJump()
         TypedOrValueRegister output = asGetPropertyIC()->output();
         return output.hasValue() ? output.valueReg().scratchReg() : output.typedReg().gpr();
       }
-      case CacheKind::GetPropSuper:
-      case CacheKind::GetElemSuper: {
-        TypedOrValueRegister output = asGetPropSuperIC()->output();
-        return output.valueReg().scratchReg();
-      }
       case CacheKind::SetProp:
       case CacheKind::SetElem:
         return asSetPropertyIC()->temp();
@@ -61,6 +56,8 @@ IonIC::scratchRegisterForEntryJump()
       case CacheKind::Call:
       case CacheKind::Compare:
       case CacheKind::TypeOf:
+      case CacheKind::GetPropSuper:
+      case CacheKind::GetElemSuper:
         MOZ_CRASH("Unsupported IC");
     }
 
@@ -118,7 +115,7 @@ IonIC::trace(JSTracer* trc)
 
 /* static */ bool
 IonGetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonGetPropertyIC* ic,
-                         HandleValue val, HandleValue idVal, MutableHandleValue res)
+			 HandleValue val, HandleValue idVal, MutableHandleValue res)
 {
     // Override the return value if we are invalidated (bug 728188).
     IonScript* ionScript = outerScript->ionScript();
@@ -189,43 +186,6 @@ IonGetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonGetProperty
 }
 
 /* static */ bool
-IonGetPropSuperIC::update(JSContext* cx, HandleScript outerScript, IonGetPropSuperIC* ic,
-                          HandleObject obj, HandleValue receiver, HandleValue idVal, MutableHandleValue res)
-{
-    // Override the return value if we are invalidated (bug 728188).
-    IonScript* ionScript = outerScript->ionScript();
-    AutoDetectInvalidation adi(cx, res, ionScript);
-
-    if (ic->state().maybeTransition())
-        ic->discardStubs(cx->zone());
-
-    bool attached = false;
-    if (ic->state().canAttachStub()) {
-        RootedValue val(cx, ObjectValue(*obj));
-        bool isTemporarilyUnoptimizable = false;
-        GetPropIRGenerator gen(cx, outerScript, ic->pc(), ic->kind(), ic->state().mode(),
-                               &isTemporarilyUnoptimizable, val, idVal, receiver,
-                               GetPropertyResultFlags::All);
-        if (gen.tryAttachStub())
-            ic->attachCacheIRStub(cx, gen.writerRef(), gen.cacheKind(), ionScript, &attached);
-
-        if (!attached && !isTemporarilyUnoptimizable)
-            ic->state().trackNotAttached();
-    }
-
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, idVal, &id))
-        return false;
-
-    if (!GetProperty(cx, obj, receiver, id, res))
-        return false;
-
-    // Monitor changes to cache entry.
-    TypeScript::Monitor(cx, ic->script(), ic->pc(), res);
-    return true;
-}
-
-/* static */ bool
 IonSetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonSetPropertyIC* ic,
                          HandleObject obj, HandleValue idVal, HandleValue rhs)
 {
@@ -283,11 +243,8 @@ IonSetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonSetProperty
             MOZ_ASSERT(!script->hasNonSyntacticScope());
             InitGlobalLexicalOperation(cx, &cx->global()->lexicalEnvironment(), script, pc, rhs);
         } else if (IsPropertyInitOp(JSOp(*pc))) {
-            // This might be a JSOP_INITELEM op with a constant string id. We
-            // can't call InitPropertyOperation here as that function is
-            // specialized for JSOP_INIT*PROP (it does not support arbitrary
-            // objects that might show up here).
-            if (!InitElemOperation(cx, pc, obj, idVal, rhs))
+            RootedId id(cx, AtomToId(&idVal.toString()->asAtom()));
+            if (!InitPropertyOperation(cx, JSOp(*pc), obj, id, rhs))
                 return false;
         } else {
             MOZ_ASSERT(IsPropertySetOp(JSOp(*pc)));

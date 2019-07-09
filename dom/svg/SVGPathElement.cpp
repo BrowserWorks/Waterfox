@@ -45,12 +45,11 @@ SVGPathElement::SVGPathElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeIn
 //----------------------------------------------------------------------
 // memory reporting methods
 
-void
-SVGPathElement::AddSizeOfExcludingThis(nsWindowSizes& aSizes,
-                                       size_t* aNodeSize) const
+size_t
+SVGPathElement::SizeOfExcludingThis(mozilla::SizeOfState& aState) const
 {
-  SVGPathElementBase::AddSizeOfExcludingThis(aSizes, aNodeSize);
-  *aNodeSize += mD.SizeOfExcludingThis(aSizes.mState.mMallocSizeOf);
+  return SVGPathElementBase::SizeOfExcludingThis(aState) +
+         mD.SizeOfExcludingThis(aState.mMallocSizeOf);
 }
 
 //----------------------------------------------------------------------
@@ -246,7 +245,7 @@ SVGPathElement::HasValidDimensions() const
 // nsIContent methods
 
 NS_IMETHODIMP_(bool)
-SVGPathElement::IsAttributeMapped(const nsAtom* name) const
+SVGPathElement::IsAttributeMapped(const nsIAtom* name) const
 {
   static const MappedAttributeEntry* const map[] = {
     sMarkersMap
@@ -266,7 +265,7 @@ SVGPathElement::GetOrBuildPathForMeasuring()
 // SVGGeometryElement methods
 
 bool
-SVGPathElement::AttributeDefinesGeometry(const nsAtom *aName)
+SVGPathElement::AttributeDefinesGeometry(const nsIAtom *aName)
 {
   return aName == nsGkAtoms::d ||
          aName == nsGkAtoms::pathLength;

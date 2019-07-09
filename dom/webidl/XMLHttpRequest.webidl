@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * https://xhr.spec.whatwg.org/#interface-xmlhttprequest
+ * www.w3.org/TR/2012/WD-XMLHttpRequest-20120117/
  *
  * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
@@ -23,7 +23,9 @@ enum XMLHttpRequestResponseType {
   "text",
 
   // Mozilla-specific stuff
+  "moz-chunked-text",
   "moz-chunked-arraybuffer",
+  "moz-blob"
 };
 
 /**
@@ -85,7 +87,23 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
   readonly attribute XMLHttpRequestUpload upload;
 
   [Throws]
-  void send(optional (Document or BodyInit)? body = null);
+  void send();
+  [Throws]
+  void send(ArrayBuffer data);
+  [Throws]
+  void send(ArrayBufferView data);
+  [Throws]
+  void send(Blob data);
+  [Throws]
+  void send(Document data);
+  [Throws]
+  void send(USVString? data);
+  [Throws]
+  void send(FormData data);
+  [Throws]
+  void send(InputStream data);
+  [Throws]
+  void send(URLSearchParams data);
 
   [Throws]
   void abort();
@@ -136,9 +154,6 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
 
   [ChromeOnly, Exposed=Window]
   void setOriginAttributes(optional OriginAttributesDictionary originAttributes);
-
-  [ChromeOnly, Throws]
-  void sendInputStream(InputStream body);
 
   // Only works on MainThread.
   // Its permanence is to be evaluated in bug 1368540 for Firefox 60.

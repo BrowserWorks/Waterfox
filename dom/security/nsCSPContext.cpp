@@ -26,7 +26,6 @@
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 #include "nsIStringStream.h"
-#include "nsISupportsPrimitives.h"
 #include "nsIUploadChannel.h"
 #include "nsIScriptError.h"
 #include "nsIWebNavigation.h"
@@ -83,7 +82,7 @@ CreateCacheKey_Internal(nsIURI* aContentLocation,
   outCacheKey.Truncate();
   if (aContentType != nsIContentPolicy::TYPE_SCRIPT && isDataScheme) {
     // For non-script data: URI, use ("data:", aContentType) as the cache key.
-    outCacheKey.AppendLiteral("data:");
+    outCacheKey.Append(NS_LITERAL_CSTRING("data:"));
     outCacheKey.AppendInt(aContentType);
     return NS_OK;
   }
@@ -95,7 +94,7 @@ CreateCacheKey_Internal(nsIURI* aContentLocation,
   // Don't cache for a URI longer than the cutoff size.
   if (spec.Length() <= CSP_CACHE_URI_CUTOFF_SIZE) {
     outCacheKey.Append(spec);
-    outCacheKey.AppendLiteral("!");
+    outCacheKey.Append(NS_LITERAL_CSTRING("!"));
     outCacheKey.AppendInt(aContentType);
   }
 
@@ -224,6 +223,14 @@ nsCSPContext::permitsInternal(CSPDirective aDir,
 
   nsAutoString violatedDirective;
   for (uint32_t p = 0; p < mPolicies.Length(); p++) {
+
+    // According to the W3C CSP spec, frame-ancestors checks are ignored for
+    // report-only policies (when "monitoring").
+    if (aDir == nsIContentSecurityPolicy::FRAME_ANCESTORS_DIRECTIVE &&
+        mPolicies[p]->getReportOnlyFlag()) {
+      continue;
+    }
+
     if (!mPolicies[p]->permits(aDir,
                                aContentLocation,
                                aNonce,
@@ -498,7 +505,7 @@ NS_IMETHODIMP
 nsCSPContext::GetAllowsInline(nsContentPolicyType aContentType,
                               const nsAString& aNonce,
                               bool aParserCreated,
-                              nsISupports* aElementOrContent,
+                              const nsAString& aContent,
                               uint32_t aLineNumber,
                               bool* outAllowsInline)
 {
@@ -513,36 +520,12 @@ nsCSPContext::GetAllowsInline(nsContentPolicyType aContentType,
     return NS_OK;
   }
 
-   nsAutoString content(EmptyString());
-
   // always iterate all policies, otherwise we might not send out all reports
   for (uint32_t i = 0; i < mPolicies.Length(); i++) {
     bool allowed =
       mPolicies[i]->allows(aContentType, CSP_UNSAFE_INLINE, EmptyString(), aParserCreated) ||
-      mPolicies[i]->allows(aContentType, CSP_NONCE, aNonce, aParserCreated);
-
-    // If the inlined script or style is allowed by either unsafe-inline or the
-    // nonce, go ahead and shortcut this loop so we can avoid allocating
-    // unecessary strings
-    if (allowed) {
-      continue;
-    }
-
-    // Check the content length to ensure the content is not allocated more than
-    // once. Even though we are in a for loop, it is probable that there is only one
-    // policy, so this check may be unnecessary.
-    if (content.Length() == 0) {
-      // postpone the allocation until absolutely necessary.
-      nsCOMPtr<nsISupportsString> stringContent = do_QueryInterface(aElementOrContent);
-      nsCOMPtr<nsIScriptElement> element = do_QueryInterface(aElementOrContent);
-      if (stringContent) {
-        Unused << stringContent->GetData(content);
-      } else if (element) {
-        element->GetScriptText(content);
-      }
-    }
-
-    allowed = mPolicies[i]->allows(aContentType, CSP_HASH, content, aParserCreated);
+      mPolicies[i]->allows(aContentType, CSP_NONCE, aNonce, aParserCreated) ||
+      mPolicies[i]->allows(aContentType, CSP_HASH, aContent, aParserCreated);
 
     if (!allowed) {
       // policy is violoated: deny the load unless policy is report only and
@@ -554,7 +537,7 @@ nsCSPContext::GetAllowsInline(nsContentPolicyType aContentType,
       mPolicies[i]->getDirectiveStringForContentType(aContentType, violatedDirective);
       reportInlineViolation(aContentType,
                             aNonce,
-                            content,
+                            aContent,
                             violatedDirective,
                             i,
                             aLineNumber);
@@ -732,7 +715,7 @@ nsCSPContext::EnsureEventTarget(nsIEventTarget* aEventTarget)
 }
 
 struct ConsoleMsgQueueElem {
-  nsString      mMsg;
+  nsXPIDLString mMsg;
   nsString      mSourceName;
   nsString      mSourceLine;
   uint32_t      mLineNumber;
@@ -771,8 +754,8 @@ nsCSPContext::logToConsole(const char* aName,
 {
   // let's check if we have to queue up console messages
   if (mQueueUpMessages) {
-    nsAutoString msg;
-    CSP_GetLocalizedStr(aName, aParams, aParamsLength, msg);
+    nsXPIDLString msg;
+    CSP_GetLocalizedStr(aName, aParams, aParamsLength, getter_Copies(msg));
     ConsoleMsgQueueElem &elem = *mConsoleMsgQueue.AppendElement();
     elem.mMsg = msg;
     elem.mSourceName = PromiseFlatString(aSourceName);
@@ -859,6 +842,15 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
                           uint32_t aLineNum)
 {
   NS_ENSURE_ARG_MAX(aViolatedPolicyIndex, mPolicies.Length() - 1);
+
+#ifdef MOZ_B2G
+  // load group information (on process-split necko implementations like b2g).
+  // (fix this in bug 1011086)
+  if (!mCallingChannelLoadGroup) {
+    NS_WARNING("Load group required but not present for report sending; cannot send CSP violation reports");
+    return NS_ERROR_FAILURE;
+  }
+#endif
 
   dom::CSPReport report;
   nsresult rv;
@@ -1136,13 +1128,11 @@ class CSPReportSenderRunnable final : public Runnable
 
       if (blockedURI) {
         blockedURI->GetSpec(blockedDataStr);
-        if (blockedDataStr.Length() > 40) {
-          bool isData = false;
-          rv = blockedURI->SchemeIs("data", &isData);
-          if (NS_SUCCEEDED(rv) && isData) {
-            blockedDataStr.Truncate(40);
-            blockedDataStr.AppendASCII("...");
-          }
+        bool isData = false;
+        rv = blockedURI->SchemeIs("data", &isData);
+        if (NS_SUCCEEDED(rv) && isData) {
+          blockedDataStr.Truncate(40);
+          blockedDataStr.AppendASCII("...");
         }
       } else if (blockedString) {
         blockedString->GetData(blockedDataStr);
@@ -1522,11 +1512,6 @@ CSPReportRedirectSink::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
                                               uint32_t aRedirFlags,
                                               nsIAsyncVerifyRedirectCallback* aCallback)
 {
-  if (aRedirFlags & nsIChannelEventSink::REDIRECT_INTERNAL) {
-    aCallback->OnRedirectVerifyCallback(NS_OK);
-    return NS_OK;
-  }
-
   // cancel the old channel so XHR failure callback happens
   nsresult rv = aOldChannel->Cancel(NS_ERROR_ABORT);
   NS_ENSURE_SUCCESS(rv, rv);

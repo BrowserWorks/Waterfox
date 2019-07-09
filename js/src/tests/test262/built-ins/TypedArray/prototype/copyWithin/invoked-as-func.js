@@ -17,7 +17,6 @@ info: >
   exception.
   ...
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var copyWithin = TypedArray.prototype.copyWithin;

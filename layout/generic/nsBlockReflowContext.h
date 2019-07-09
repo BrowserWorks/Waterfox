@@ -28,7 +28,7 @@ class nsBlockReflowContext {
 
 public:
   nsBlockReflowContext(nsPresContext* aPresContext,
-                       const ReflowInput& aParentRI);
+                       const ReflowInput& aParentRS);
   ~nsBlockReflowContext() { }
 
   void ReflowBlock(const mozilla::LogicalRect& aSpace,
@@ -42,11 +42,11 @@ public:
                    BlockReflowInput&         aState);
 
   bool PlaceBlock(const ReflowInput& aReflowInput,
-                  bool aForceFit,
-                  nsLineBox* aLine,
-                  nsCollapsingMargin& aBEndMarginResult /* out */,
-                  nsOverflowAreas& aOverflowAreas,
-                  const nsReflowStatus& aReflowStatus);
+                  bool                     aForceFit,
+                  nsLineBox*               aLine,
+                  nsCollapsingMargin&      aBEndMarginResult /* out */,
+                  nsOverflowAreas&         aOverflowAreas,
+                  nsReflowStatus           aReflowStatus);
 
   nsCollapsingMargin& GetCarriedOutBEndMargin() {
     return mMetrics.mCarriedOutBEndMargin;

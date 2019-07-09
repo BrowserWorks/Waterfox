@@ -98,7 +98,8 @@ WrapWithWebRenderTextureHost(ISurfaceAllocator* aDeallocator,
                              LayersBackend aBackend,
                              TextureFlags aFlags)
 {
-  if ((aFlags & TextureFlags::SNAPSHOT) ||
+  if (!gfx::gfxVars::UseWebRender() ||
+      (aFlags & TextureFlags::SNAPSHOT) ||
       (aBackend != LayersBackend::LAYERS_WR) ||
       (!aDeallocator->UsesImageBridge() && !aDeallocator->AsCompositorBridgeParentBase())) {
     return false;
@@ -410,7 +411,8 @@ TextureHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
   AppendToString(aStream, mFlags, " [flags=", "]");
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxPrefs::LayersDumpTexture()) {
+  if (gfxPrefs::LayersDumpTexture() ||
+      profiler_feature_active(ProfilerFeature::LayersDump)) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 
@@ -445,7 +447,7 @@ TextureSource::Name() const
   MOZ_CRASH("GFX: TextureSource without class name");
   return "TextureSource";
 }
-
+  
 BufferTextureHost::BufferTextureHost(const BufferDescriptor& aDesc,
                                      TextureFlags aFlags)
 : TextureHost(aFlags)
@@ -565,60 +567,75 @@ BufferTextureHost::CreateRenderTexture(const wr::ExternalImageId& aExternalImage
   wr::RenderThread::Get()->RegisterExternalImage(wr::AsUint64(aExternalImageId), texture.forget());
 }
 
-uint32_t
-BufferTextureHost::NumSubTextures() const
+void
+BufferTextureHost::GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                                  const std::function<wr::ImageKey()>& aImageKeyAllocator)
 {
-  if (GetFormat() == gfx::SurfaceFormat::YUV) {
-    return 3;
-  }
+  MOZ_ASSERT(aImageKeys.IsEmpty());
 
-  return 1;
+  if (GetFormat() != gfx::SurfaceFormat::YUV) {
+    // 1 image key
+    aImageKeys.AppendElement(aImageKeyAllocator());
+    MOZ_ASSERT(aImageKeys.Length() == 1);
+  } else {
+    // 3 image key
+    aImageKeys.AppendElement(aImageKeyAllocator());
+    aImageKeys.AppendElement(aImageKeyAllocator());
+    aImageKeys.AppendElement(aImageKeyAllocator());
+    MOZ_ASSERT(aImageKeys.Length() == 3);
+  }
 }
 
 void
-BufferTextureHost::PushResourceUpdates(wr::ResourceUpdateQueue& aResources,
-                                       ResourceUpdateOp aOp,
-                                       const Range<wr::ImageKey>& aImageKeys,
-                                       const wr::ExternalImageId& aExtID)
+BufferTextureHost::AddWRImage(wr::WebRenderAPI* aAPI,
+                              Range<const wr::ImageKey>& aImageKeys,
+                              const wr::ExternalImageId& aExtID)
 {
-  auto method = aOp == TextureHost::ADD_IMAGE ? &wr::ResourceUpdateQueue::AddExternalImage
-                                              : &wr::ResourceUpdateQueue::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::ExternalBuffer;
-
   if (GetFormat() != gfx::SurfaceFormat::YUV) {
     MOZ_ASSERT(aImageKeys.length() == 1);
 
     wr::ImageDescriptor descriptor(GetSize(),
                                    ImageDataSerializer::ComputeRGBStride(GetFormat(), GetSize().width),
                                    GetFormat());
-    (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+    aAPI->AddExternalImageBuffer(aImageKeys[0], descriptor, aExtID);
   } else {
     MOZ_ASSERT(aImageKeys.length() == 3);
 
     const layers::YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
-    wr::ImageDescriptor yDescriptor(desc.ySize(), desc.yStride(), gfx::SurfaceFormat::A8);
-    wr::ImageDescriptor cbcrDescriptor(desc.cbCrSize(), desc.cbCrStride(), gfx::SurfaceFormat::A8);
-    (aResources.*method)(aImageKeys[0], yDescriptor, aExtID, bufferType, 0);
-    (aResources.*method)(aImageKeys[1], cbcrDescriptor, aExtID, bufferType, 1);
-    (aResources.*method)(aImageKeys[2], cbcrDescriptor, aExtID, bufferType, 2);
+    wr::ImageDescriptor yDescriptor(desc.ySize(), desc.ySize().width, gfx::SurfaceFormat::A8);
+    wr::ImageDescriptor cbcrDescriptor(desc.cbCrSize(), desc.cbCrSize().width, gfx::SurfaceFormat::A8);
+    aAPI->AddExternalImage(aImageKeys[0],
+                           yDescriptor,
+                           aExtID,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
+                           0);
+    aAPI->AddExternalImage(aImageKeys[1],
+                           cbcrDescriptor,
+                           aExtID,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
+                           1);
+    aAPI->AddExternalImage(aImageKeys[2],
+                           cbcrDescriptor,
+                           aExtID,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
+                           2);
   }
 }
 
 void
-BufferTextureHost::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
-                                    const wr::LayoutRect& aBounds,
-                                    const wr::LayoutRect& aClip,
-                                    wr::ImageRendering aFilter,
-                                    const Range<wr::ImageKey>& aImageKeys)
+BufferTextureHost::PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                     const wr::LayoutRect& aBounds,
+                                     const wr::LayoutRect& aClip,
+                                     wr::ImageRendering aFilter,
+                                     Range<const wr::ImageKey>& aImageKeys)
 {
   if (GetFormat() != gfx::SurfaceFormat::YUV) {
     MOZ_ASSERT(aImageKeys.length() == 1);
-    aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0]);
+    aBuilder.PushImage(aBounds, aClip, aFilter, aImageKeys[0]);
   } else {
     MOZ_ASSERT(aImageKeys.length() == 3);
     aBuilder.PushYCbCrPlanarImage(aBounds,
                                   aClip,
-                                  true,
                                   aImageKeys[0],
                                   aImageKeys[1],
                                   aImageKeys[2],
@@ -879,16 +896,6 @@ BufferTextureHost::GetYUVColorSpace() const
   return YUVColorSpace::UNKNOWN;
 }
 
-uint32_t
-BufferTextureHost::GetBitDepth() const
-{
-  if (mFormat == gfx::SurfaceFormat::YUV) {
-    const YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
-    return desc.bitDepth();
-  }
-  return 8;
-}
-
 bool
 BufferTextureHost::UploadIfNeeded()
 {
@@ -995,19 +1002,19 @@ BufferTextureHost::Upload(nsIntRegion *aRegion)
 
     RefPtr<gfx::DataSourceSurface> tempY =
       gfx::Factory::CreateWrappingDataSourceSurface(ImageDataSerializer::GetYChannel(buf, desc),
-                                                    desc.yStride(),
+                                                    desc.ySize().width,
                                                     desc.ySize(),
-                                                    SurfaceFormatForAlphaBitDepth(desc.bitDepth()));
+                                                    gfx::SurfaceFormat::A8);
     RefPtr<gfx::DataSourceSurface> tempCb =
       gfx::Factory::CreateWrappingDataSourceSurface(ImageDataSerializer::GetCbChannel(buf, desc),
-                                                    desc.cbCrStride(),
+                                                    desc.cbCrSize().width,
                                                     desc.cbCrSize(),
-                                                    SurfaceFormatForAlphaBitDepth(desc.bitDepth()));
+                                                    gfx::SurfaceFormat::A8);
     RefPtr<gfx::DataSourceSurface> tempCr =
       gfx::Factory::CreateWrappingDataSourceSurface(ImageDataSerializer::GetCrChannel(buf, desc),
-                                                    desc.cbCrStride(),
+                                                    desc.cbCrSize().width,
                                                     desc.cbCrSize(),
-                                                    SurfaceFormatForAlphaBitDepth(desc.bitDepth()));
+                                                    gfx::SurfaceFormat::A8);
     // We don't support partial updates for Y U V textures
     NS_ASSERTION(!aRegion, "Unsupported partial updates for YCbCr textures");
     if (!tempY ||

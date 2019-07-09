@@ -41,3 +41,26 @@ add_task(async function testInvalidArguments() {
   await extension.awaitFinish("invalidArguments");
   await extension.unload();
 });
+
+add_task(async function testUnimplementedDataType() {
+  function background() {
+    browser.browsingData.remove({}, {localStorage: true});
+    browser.test.sendMessage("finished");
+  }
+
+  let {messages} = await promiseConsoleOutput(async function() {
+    let extension = ExtensionTestUtils.loadExtension({
+      background: background,
+      manifest: {
+        permissions: ["browsingData"],
+      },
+    });
+
+    await extension.startup();
+    await extension.awaitMessage("finished");
+    await extension.unload();
+  });
+
+  let warningObserved = messages.find(line => /Firefox does not support dataTypes: localStorage/.test(line));
+  ok(warningObserved, "Warning issued when calling remove with an unimplemented dataType.");
+});

@@ -57,7 +57,7 @@ TestAsyncReturnsParent::Main()
 mozilla::ipc::IPCResult
 TestAsyncReturnsParent::RecvPong(PongResolver&& aResolve)
 {
-  aResolve(Tuple<const uint32_t&, const uint32_t&>(sMagic1, sMagic2));
+  aResolve(MakeTuple(sMagic1, sMagic2));
   return IPC_OK();
 }
 

@@ -13,7 +13,7 @@ add_task(function* () {
   yield addTab(URL_ROOT + "doc_simple_animation.html");
   let {panel} = yield openAnimationInspector();
 
-  let targets = getAnimationTargetNodes(panel);
+  let targets = panel.animationsTimelineComponent.targetNodes;
 
   info("Click on the highlighter icon for the first animated node");
   let domNodePreview1 = targets[0].previewer;

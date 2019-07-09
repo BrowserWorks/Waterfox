@@ -6,7 +6,7 @@
 const { classes: Cc, Constructor: CC, interfaces: Ci, utils: Cu } = Components;
 
 const TEST_PATH = "http://example.net/browser/browser/" +
-                  "components/resistfingerprinting/test/browser/";
+                  "components/resistfingerprinting/test/browser/"
 
 var spoofedUserAgent;
 
@@ -42,7 +42,7 @@ async function testNavigator() {
   is(result.pluginsLength, 0, "Navigator.plugins has a length of 0.");
   is(result.oscpu, SPOOFED_OSCPU, "Navigator.oscpu is correctly spoofed.");
   is(result.buildID, SPOOFED_BUILDID, "Navigator.buildID is correctly spoofed.");
-  is(result.hardwareConcurrency, SPOOFED_HW_CONCURRENCY, "Navigator.hardwareConcurrency is correctly spoofed.");
+  is(result.hardwareConcurrency, SPOOFED_HW_CONCURRENCY, "Navigator.hardwareConcurrency is correctly spoofed.")
 
   is(result.appCodeName, CONST_APPCODENAME, "Navigator.appCodeName reports correct constant value.");
   is(result.product, CONST_PRODUCT, "Navigator.product reports correct constant value.");
@@ -76,7 +76,7 @@ async function testWorkerNavigator() {
   is(result.appVersion, SPOOFED_APPVERSION, "Navigator.appVersion is correctly spoofed.");
   is(result.platform, SPOOFED_PLATFORM, "Navigator.platform is correctly spoofed.");
   is(result.userAgent, spoofedUserAgent, "Navigator.userAgent is correctly spoofed.");
-  is(result.hardwareConcurrency, SPOOFED_HW_CONCURRENCY, "Navigator.hardwareConcurrency is correctly spoofed.");
+  is(result.hardwareConcurrency, SPOOFED_HW_CONCURRENCY, "Navigator.hardwareConcurrency is correctly spoofed.")
 
   is(result.appCodeName, CONST_APPCODENAME, "Navigator.appCodeName reports correct constant value.");
   is(result.product, CONST_PRODUCT, "Navigator.product reports correct constant value.");
@@ -89,8 +89,9 @@ add_task(async function setup() {
     [["privacy.resistFingerprinting", true]]
   });
 
-  let appVersion = parseInt(Services.appinfo.version);
-  let spoofedVersion = appVersion - ((appVersion - 3) % 7);
+  let appInfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
+  let appVersion = parseInt(appInfo.version);
+  let spoofedVersion = appVersion - (appVersion % 10);
   spoofedUserAgent = `Mozilla/5.0 (${SPOOFED_OSCPU}; rv:${spoofedVersion}.0) Gecko/20100101 Firefox/${spoofedVersion}.0`;
 });
 

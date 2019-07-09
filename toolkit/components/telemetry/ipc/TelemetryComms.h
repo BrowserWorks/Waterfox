@@ -17,13 +17,13 @@ namespace Telemetry {
 // Histogram accumulation types.
 enum HistogramID : uint32_t;
 
-struct HistogramAccumulation
+struct Accumulation
 {
   mozilla::Telemetry::HistogramID mId;
   uint32_t mSample;
 };
 
-struct KeyedHistogramAccumulation
+struct KeyedAccumulation
 {
   mozilla::Telemetry::HistogramID mId;
   uint32_t mSample;
@@ -43,8 +43,7 @@ typedef mozilla::Variant<uint32_t, bool, nsString> ScalarVariant;
 
 struct ScalarAction
 {
-  uint32_t mId;
-  bool mDynamic;
+  ScalarID mId;
   ScalarActionType mActionType;
   // We need to wrap mData in a Maybe otherwise the IPC system
   // is unable to instantiate a ScalarAction.
@@ -53,32 +52,12 @@ struct ScalarAction
 
 struct KeyedScalarAction
 {
-  uint32_t mId;
-  bool mDynamic;
+  ScalarID mId;
   ScalarActionType mActionType;
   nsCString mKey;
   // We need to wrap mData in a Maybe otherwise the IPC system
   // is unable to instantiate a ScalarAction.
   Maybe<ScalarVariant> mData;
-};
-
-// Dynamic scalars support.
-struct DynamicScalarDefinition
-{
-  uint32_t type;
-  uint32_t dataset;
-  bool expired;
-  bool keyed;
-  nsCString name;
-
-  bool operator ==(const DynamicScalarDefinition& rhs) const
-  {
-    return type == rhs.type &&
-           dataset == rhs.dataset &&
-           expired == rhs.expired &&
-           keyed == rhs.keyed &&
-           name.Equals(rhs.name);
-  }
 };
 
 struct EventExtraEntry {
@@ -110,9 +89,9 @@ namespace IPC {
 
 template<>
 struct
-ParamTraits<mozilla::Telemetry::HistogramAccumulation>
+ParamTraits<mozilla::Telemetry::Accumulation>
 {
-  typedef mozilla::Telemetry::HistogramAccumulation paramType;
+  typedef mozilla::Telemetry::Accumulation paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
   {
@@ -133,9 +112,9 @@ ParamTraits<mozilla::Telemetry::HistogramAccumulation>
 
 template<>
 struct
-ParamTraits<mozilla::Telemetry::KeyedHistogramAccumulation>
+ParamTraits<mozilla::Telemetry::KeyedAccumulation>
 {
-  typedef mozilla::Telemetry::KeyedHistogramAccumulation paramType;
+  typedef mozilla::Telemetry::KeyedAccumulation paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
   {
@@ -168,8 +147,7 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
   static void Write(Message* aMsg, const paramType& aParam)
   {
     // Write the message type
-    aMsg->WriteUInt32(aParam.mId);
-    WriteParam(aMsg, aParam.mDynamic);
+    aMsg->WriteUInt32(static_cast<uint32_t>(aParam.mId));
     WriteParam(aMsg, static_cast<uint32_t>(aParam.mActionType));
 
     if (aParam.mData.isNothing()) {
@@ -178,16 +156,16 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
     }
 
     if (aParam.mData->is<uint32_t>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_COUNT.
-      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_TYPE_COUNT));
+      // That's a nsITelemetry::SCALAR_COUNT.
+      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_COUNT));
       WriteParam(aMsg, aParam.mData->as<uint32_t>());
     } else if (aParam.mData->is<nsString>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_STRING.
-      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_TYPE_STRING));
+      // That's a nsITelemetry::SCALAR_STRING.
+      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_STRING));
       WriteParam(aMsg, aParam.mData->as<nsString>());
     } else if (aParam.mData->is<bool>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_BOOLEAN.
-      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_TYPE_BOOLEAN));
+      // That's a nsITelemetry::SCALAR_BOOLEAN.
+      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_BOOLEAN));
       WriteParam(aMsg, aParam.mData->as<bool>());
     } else {
       MOZ_CRASH("Unknown scalar type.");
@@ -199,7 +177,6 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
     // Read the scalar ID and the scalar type.
     uint32_t scalarType = 0;
     if (!aMsg->ReadUInt32(aIter, reinterpret_cast<uint32_t*>(&(aResult->mId))) ||
-        !ReadParam(aMsg, aIter, reinterpret_cast<bool*>(&(aResult->mDynamic))) ||
         !ReadParam(aMsg, aIter, reinterpret_cast<uint32_t*>(&(aResult->mActionType))) ||
         !ReadParam(aMsg, aIter, &scalarType)) {
       return false;
@@ -208,7 +185,7 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
     // De-serialize the data based on the scalar type.
     switch (scalarType)
     {
-      case nsITelemetry::SCALAR_TYPE_COUNT:
+      case nsITelemetry::SCALAR_COUNT:
         {
           uint32_t data = 0;
           // De-serialize the data.
@@ -218,7 +195,7 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
           aResult->mData = mozilla::Some(mozilla::AsVariant(data));
           break;
         }
-      case nsITelemetry::SCALAR_TYPE_STRING:
+      case nsITelemetry::SCALAR_STRING:
         {
           nsString data;
           // De-serialize the data.
@@ -228,7 +205,7 @@ ParamTraits<mozilla::Telemetry::ScalarAction>
           aResult->mData = mozilla::Some(mozilla::AsVariant(data));
           break;
         }
-      case nsITelemetry::SCALAR_TYPE_BOOLEAN:
+      case nsITelemetry::SCALAR_BOOLEAN:
         {
           bool data = false;
           // De-serialize the data.
@@ -260,7 +237,6 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
   {
     // Write the message type
     aMsg->WriteUInt32(static_cast<uint32_t>(aParam.mId));
-    WriteParam(aMsg, aParam.mDynamic);
     WriteParam(aMsg, static_cast<uint32_t>(aParam.mActionType));
     WriteParam(aMsg, aParam.mKey);
 
@@ -270,16 +246,16 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
     }
 
     if (aParam.mData->is<uint32_t>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_COUNT.
-      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_TYPE_COUNT));
+      // That's a nsITelemetry::SCALAR_COUNT.
+      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_COUNT));
       WriteParam(aMsg, aParam.mData->as<uint32_t>());
     } else if (aParam.mData->is<nsString>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_STRING.
+      // That's a nsITelemetry::SCALAR_STRING.
       // Keyed string scalars are not supported.
       MOZ_ASSERT(false, "Keyed String Scalar unable to be write from child process. Not supported.");
     } else if (aParam.mData->is<bool>()) {
-      // That's a nsITelemetry::SCALAR_TYPE_BOOLEAN.
-      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_TYPE_BOOLEAN));
+      // That's a nsITelemetry::SCALAR_BOOLEAN.
+      WriteParam(aMsg, static_cast<uint32_t>(nsITelemetry::SCALAR_BOOLEAN));
       WriteParam(aMsg, aParam.mData->as<bool>());
     } else {
       MOZ_CRASH("Unknown keyed scalar type.");
@@ -291,7 +267,6 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
     // Read the scalar ID and the scalar type.
     uint32_t scalarType = 0;
     if (!aMsg->ReadUInt32(aIter, reinterpret_cast<uint32_t*>(&(aResult->mId))) ||
-        !ReadParam(aMsg, aIter, reinterpret_cast<bool*>(&(aResult->mDynamic))) ||
         !ReadParam(aMsg, aIter, reinterpret_cast<uint32_t*>(&(aResult->mActionType))) ||
         !ReadParam(aMsg, aIter, &(aResult->mKey)) ||
         !ReadParam(aMsg, aIter, &scalarType)) {
@@ -301,7 +276,7 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
     // De-serialize the data based on the scalar type.
     switch (scalarType)
     {
-      case nsITelemetry::SCALAR_TYPE_COUNT:
+      case nsITelemetry::SCALAR_COUNT:
         {
           uint32_t data = 0;
           // De-serialize the data.
@@ -311,13 +286,13 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
           aResult->mData = mozilla::Some(mozilla::AsVariant(data));
           break;
         }
-      case nsITelemetry::SCALAR_TYPE_STRING:
+      case nsITelemetry::SCALAR_STRING:
         {
           // Keyed string scalars are not supported.
           MOZ_ASSERT(false, "Keyed String Scalar unable to be read from child process. Not supported.");
           return false;
         }
-      case nsITelemetry::SCALAR_TYPE_BOOLEAN:
+      case nsITelemetry::SCALAR_BOOLEAN:
         {
           bool data = false;
           // De-serialize the data.
@@ -332,35 +307,6 @@ ParamTraits<mozilla::Telemetry::KeyedScalarAction>
         return false;
     }
 
-    return true;
-  }
-};
-
-template<>
-struct
-ParamTraits<mozilla::Telemetry::DynamicScalarDefinition>
-{
-  typedef mozilla::Telemetry::DynamicScalarDefinition paramType;
-
-  static void Write(Message* aMsg, const paramType& aParam)
-  {
-    nsCString name;
-    WriteParam(aMsg, aParam.type);
-    WriteParam(aMsg, aParam.dataset);
-    WriteParam(aMsg, aParam.expired);
-    WriteParam(aMsg, aParam.keyed);
-    WriteParam(aMsg, aParam.name);
-  }
-
-  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
-  {
-    if (!ReadParam(aMsg, aIter, reinterpret_cast<uint32_t*>(&(aResult->type))) ||
-        !ReadParam(aMsg, aIter, reinterpret_cast<uint32_t*>(&(aResult->dataset))) ||
-        !ReadParam(aMsg, aIter, reinterpret_cast<bool*>(&(aResult->expired))) ||
-        !ReadParam(aMsg, aIter, reinterpret_cast<bool*>(&(aResult->keyed))) ||
-        !ReadParam(aMsg, aIter, &(aResult->name))) {
-      return false;
-    }
     return true;
   }
 };

@@ -2,7 +2,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -17,7 +16,10 @@ const FEEDWRITER_CID = Components.ID("{49bb6593-3aff-4eb3-a068-2712c28bd58e}");
 const FEEDWRITER_CONTRACTID = "@mozilla.org/browser/feeds/result-writer;1";
 
 function LOG(str) {
-  let shouldLog = Services.prefs.getBoolPref("feeds.log", false);
+  let prefB = Cc["@mozilla.org/preferences-service;1"].
+              getService(Ci.nsIPrefBranch);
+
+  let shouldLog = prefB.getBoolPref("feeds.log", false);
 
   if (shouldLog)
     dump("*** Feeds: " + str + "\n");
@@ -30,8 +32,10 @@ function LOG(str) {
  * @returns an nsIURI object, or null if the creation of the URI failed.
  */
 function makeURI(aURLSpec, aCharset) {
+  let ios = Cc["@mozilla.org/network/io-service;1"].
+            getService(Ci.nsIIOService);
   try {
-    return Services.io.newURI(aURLSpec, aCharset);
+    return ios.newURI(aURLSpec, aCharset);
   } catch (ex) { }
 
   return null;
@@ -74,13 +78,6 @@ function FeedWriter() {
   this._selectedAppMenuItem = null;
   this._subscribeCallback = null;
   this._defaultHandlerMenuItem = null;
-
-
-  XPCOMUtils.defineLazyGetter(this, "_mm", () =>
-    this._window.QueryInterface(Ci.nsIInterfaceRequestor).
-                 getInterface(Ci.nsIDocShell).
-                 QueryInterface(Ci.nsIInterfaceRequestor).
-                 getInterface(Ci.nsIContentFrameMessageManager));
 }
 
 FeedWriter.prototype = {
@@ -119,10 +116,12 @@ FeedWriter.prototype = {
    *          The URI spec to set as the href
    */
   _safeSetURIAttribute(element, attribute, uri) {
+    let secman = Cc["@mozilla.org/scriptsecuritymanager;1"].
+                 getService(Ci.nsIScriptSecurityManager);
     const flags = Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL;
     try {
       // TODO Is this necessary?
-      Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(this._feedPrincipal, uri, flags);
+      secman.checkLoadURIStrWithPrincipal(this._feedPrincipal, uri, flags);
       // checkLoadURIStrWithPrincipal will throw if the link URI should not be
       // loaded, either because our feedURI isn't allowed to load it or per
       // the rules specified in |flags|, so we'll never "linkify" the link...
@@ -137,7 +136,9 @@ FeedWriter.prototype = {
   __bundle: null,
   get _bundle() {
     if (!this.__bundle) {
-      this.__bundle = Services.strings.createBundle(URI_BUNDLE);
+      this.__bundle = Cc["@mozilla.org/intl/stringbundle;1"].
+                      getService(Ci.nsIStringBundleService).
+                      createBundle(URI_BUNDLE);
     }
     return this.__bundle;
   },
@@ -432,10 +433,10 @@ FeedWriter.prototype = {
         enclosureDiv.appendChild(this._document.createTextNode( " (" + type_text + ", " + size_text + ")"));
 
       else if (type_text)
-        enclosureDiv.appendChild(this._document.createTextNode( " (" + type_text + ")"));
+        enclosureDiv.appendChild(this._document.createTextNode( " (" + type_text + ")"))
 
       else if (size_text)
-        enclosureDiv.appendChild(this._document.createTextNode( " (" + size_text + ")"));
+        enclosureDiv.appendChild(this._document.createTextNode( " (" + size_text + ")"))
 
       enclosuresDiv.appendChild(enclosureDiv);
     }
@@ -483,7 +484,9 @@ FeedWriter.prototype = {
    * @returns moz-icon url of the given file as a string
    */
   _getFileIconURL(file) {
-    let fph = Services.io.getProtocolHandler("file")
+    let ios = Cc["@mozilla.org/network/io-service;1"].
+              getService(Ci.nsIIOService);
+    let fph = ios.getProtocolHandler("file")
                  .QueryInterface(Ci.nsIFileProtocolHandler);
     let urlSpec = fph.getURLSpecFromFile(file);
     return "moz-icon://" + urlSpec + "?size=16";
@@ -790,7 +793,9 @@ FeedWriter.prototype = {
     this._document = window.document;
     this._handlersList = this._document.getElementById("handlersMenuList");
 
-    this._feedPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(this._feedURI, {});
+    let secman = Cc["@mozilla.org/scriptsecuritymanager;1"].
+                 getService(Ci.nsIScriptSecurityManager);
+    this._feedPrincipal = secman.createCodebasePrincipal(this._feedURI, {});
 
     LOG("Subscribe Preview: feed uri = " + this._window.location.href);
 
@@ -816,7 +821,7 @@ FeedWriter.prototype = {
       case "FeedWriter:PreferenceUpdated":
         // This is called when browser-feeds.js spots a pref change
         // This will happen when
-        // - about:preferences#general changes
+        // - about:preferences#applications changes
         // - another feed reader page changes the preference
         // - when this page itself changes the select and there isn't a redirect
         //   bookmarks and launching an external app means the page stays open after subscribe
@@ -955,7 +960,7 @@ FeedWriter.prototype = {
       LOG(`FeedWriter:SetFeedPrefsAndSubscribe - ${JSON.stringify(settings)}`);
       this._mm.sendAsyncMessage("FeedWriter:SetFeedPrefsAndSubscribe",
                                 settings);
-    };
+    }
 
     // Show the file picker before subscribing if the
     // choose application menuitem was chosen using the keyboard
@@ -972,8 +977,18 @@ FeedWriter.prototype = {
     }
   },
 
+  get _mm() {
+    let mm = this._window.QueryInterface(Ci.nsIInterfaceRequestor).
+                          getInterface(Ci.nsIDocShell).
+                          QueryInterface(Ci.nsIInterfaceRequestor).
+                          getInterface(Ci.nsIContentFrameMessageManager);
+    delete this._mm;
+    return this._mm = mm;
+  },
+
   classID: FEEDWRITER_CID,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener, Ci.nsIObserver,
+                                         Ci.nsINavHistoryObserver,
                                          Ci.nsIDOMGlobalPropertyInitializer])
 };
 

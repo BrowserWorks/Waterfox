@@ -8,7 +8,6 @@
 
 #include "nsICacheEntry.h"
 #include "nsICachingChannel.h"
-#include "nsIClassOfService.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIPrincipal.h"
 
@@ -505,7 +504,6 @@ AsyncFetchAndSetIconForPage::AsyncFetchAndSetIconForPage(
 , bool aFaviconLoadPrivate
 , nsIFaviconDataCallback* aCallback
 , nsIPrincipal* aLoadingPrincipal
-, uint64_t aRequestContextID
 ) : Runnable("places::AsyncFetchAndSetIconForPage")
   , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(
       "AsyncFetchAndSetIconForPage::mCallback", aCallback))
@@ -515,7 +513,6 @@ AsyncFetchAndSetIconForPage::AsyncFetchAndSetIconForPage(
   , mLoadingPrincipal(new nsMainThreadPtrHolder<nsIPrincipal>(
       "AsyncFetchAndSetIconForPage::mLoadingPrincipal", aLoadingPrincipal))
   , mCanceled(false)
-  , mRequestContextID(aRequestContextID)
 {
   MOZ_ASSERT(NS_IsMainThread());
 }
@@ -594,19 +591,6 @@ AsyncFetchAndSetIconForPage::FetchFromNetwork() {
   nsCOMPtr<nsISupportsPriority> priorityChannel = do_QueryInterface(channel);
   if (priorityChannel) {
     priorityChannel->AdjustPriority(nsISupportsPriority::PRIORITY_LOWEST);
-  }
-
-  if (nsContentUtils::IsTailingEnabled()) {
-    nsCOMPtr<nsIClassOfService> cos = do_QueryInterface(channel);
-    if (cos) {
-      cos->AddClassFlags(nsIClassOfService::Tail |
-                         nsIClassOfService::Throttleable);
-    }
-
-    nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
-    if (httpChannel) {
-      Unused << httpChannel->SetRequestContextID(mRequestContextID);
-    }
   }
 
   rv = channel->AsyncOpen2(this);
@@ -1295,7 +1279,7 @@ FetchAndConvertUnsupportedPayloads::ConvertPayload(int64_t aId,
 
   // Decode the input stream to a surface.
   RefPtr<gfx::SourceSurface> surface =
-      image::ImageOps::DecodeToSurface(stream.forget(),
+      image::ImageOps::DecodeToSurface(stream,
                                        aMimeType,
                                        imgIContainer::DECODE_FLAGS_DEFAULT);
   NS_ENSURE_STATE(surface);

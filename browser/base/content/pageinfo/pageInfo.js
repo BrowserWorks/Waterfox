@@ -84,7 +84,7 @@ pageInfoTreeView.prototype = {
 
   performActionOnRow(action, row) {
     if (action == "copy") {
-      var data = this.handleCopy(row);
+      var data = this.handleCopy(row)
       this.tree.treeBody.parentNode.setAttribute("copybuffer", data);
     }
   },
@@ -121,7 +121,7 @@ pageInfoTreeView.prototype = {
   isContainer(index) { return false; },
   isContainerOpen(index) { return false; },
   isSeparator(index) { return false; },
-  isSorted() { return this.sortcol > -1; },
+  isSorted() { return this.sortcol > -1 },
   canDrop(index, orientation) { return false; },
   drop(row, orientation) { return false; },
   getParentIndex(index) { return 0; },
@@ -232,6 +232,7 @@ var gBundle;
 
 const PERMISSION_CONTRACTID     = "@mozilla.org/permissionmanager;1";
 const PREFERENCES_CONTRACTID    = "@mozilla.org/preferences-service;1";
+const ATOM_CONTRACTID           = "@mozilla.org/atom-service;1";
 
 // a number of services I'll need later
 // the cache services
@@ -249,7 +250,7 @@ const nsICookiePermission  = Components.interfaces.nsICookiePermission;
 const nsIPermissionManager = Components.interfaces.nsIPermissionManager;
 
 const nsICertificateDialogs = Components.interfaces.nsICertificateDialogs;
-const CERTIFICATEDIALOGS_CONTRACTID = "@mozilla.org/nsCertificateDialogs;1";
+const CERTIFICATEDIALOGS_CONTRACTID = "@mozilla.org/nsCertificateDialogs;1"
 
 // clipboard helper
 function getClipboardHelper() {
@@ -270,7 +271,7 @@ const XLinkNS  = "http://www.w3.org/1999/xlink";
 const XULNS    = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const XMLNS    = "http://www.w3.org/XML/1998/namespace";
 const XHTMLNS  = "http://www.w3.org/1999/xhtml";
-const XHTML2NS = "http://www.w3.org/2002/06/xhtml2";
+const XHTML2NS = "http://www.w3.org/2002/06/xhtml2"
 
 const XHTMLNSre  = "^http\:\/\/www\.w3\.org\/1999\/xhtml$";
 const XHTML2NSre = "^http\:\/\/www\.w3\.org\/2002\/06\/xhtml2$";
@@ -348,10 +349,10 @@ function loadPageInfo(frameOuterWindowID, imageElement, browser) {
   gStrings["application/xml"]      = gBundle.getString("feedXML");
   gStrings["application/rdf+xml"]  = gBundle.getString("feedXML");
 
-  let imageInfo = imageElement;
-
   // Look for pageInfoListener in content.js. Sends message to listener with arguments.
-  mm.sendAsyncMessage("PageInfo:getData", {strings: gStrings, frameOuterWindowID});
+  mm.sendAsyncMessage("PageInfo:getData", {strings: gStrings,
+                      frameOuterWindowID},
+                      { imageElement });
 
   let pageInfoData;
 
@@ -361,11 +362,12 @@ function loadPageInfo(frameOuterWindowID, imageElement, browser) {
     pageInfoData = message.data;
     let docInfo = pageInfoData.docInfo;
     let windowInfo = pageInfoData.windowInfo;
-    let uri = makeURI(docInfo.documentURIObject.spec);
+    let uri = makeURI(docInfo.documentURIObject.spec,
+                      docInfo.documentURIObject.originCharset);
     let principal = docInfo.principal;
     gDocInfo = docInfo;
 
-    gImageElement = imageInfo;
+    gImageElement = pageInfoData.imageInfo;
 
     var titleFormat = windowInfo.isTopWindow ? "pageInfo.page.title"
                                              : "pageInfo.frame.title";
@@ -667,14 +669,14 @@ function getSelectedRow(tree) {
 }
 
 function selectSaveFolder(aCallback) {
-  const nsIFile = Components.interfaces.nsIFile;
+  const nsILocalFile = Components.interfaces.nsILocalFile;
   const nsIFilePicker = Components.interfaces.nsIFilePicker;
   let titleText = gBundle.getString("mediaSelectFolder");
   let fp = Components.classes["@mozilla.org/filepicker;1"].
            createInstance(nsIFilePicker);
   let fpCallback = function fpCallback_done(aResult) {
     if (aResult == nsIFilePicker.returnOK) {
-      aCallback(fp.file.QueryInterface(nsIFile));
+      aCallback(fp.file.QueryInterface(nsILocalFile));
     } else {
       aCallback(null);
     }
@@ -685,7 +687,7 @@ function selectSaveFolder(aCallback) {
   try {
     let prefs = Components.classes[PREFERENCES_CONTRACTID].
                 getService(Components.interfaces.nsIPrefBranch);
-    let initialDir = prefs.getComplexValue("browser.download.dir", nsIFile);
+    let initialDir = prefs.getComplexValue("browser.download.dir", nsILocalFile);
     if (initialDir) {
       fp.displayDirectory = initialDir;
     }
@@ -849,9 +851,6 @@ function makePreview(row) {
     var physWidth = 0, physHeight = 0;
     var width = 0, height = 0;
 
-    let serial = Components.classes["@mozilla.org/network/serialization-helper;1"]
-                           .getService(Components.interfaces.nsISerializationHelper);
-    let loadingPrincipalStr = serial.serializeToString(gDocInfo.principal);
     if ((item.HTMLLinkElement || item.HTMLInputElement ||
          item.HTMLImageElement || item.SVGImageElement ||
          (item.HTMLObjectElement && mimeType && mimeType.startsWith("image/")) ||
@@ -890,7 +889,7 @@ function makePreview(row) {
         width = newImage.width;
         height = newImage.height;
 
-        document.getElementById("theimagecontainer").collapsed = false;
+        document.getElementById("theimagecontainer").collapsed = false
         document.getElementById("brokenimagecontainer").collapsed = true;
 
         let imageSize = "";
@@ -910,14 +909,12 @@ function makePreview(row) {
         setItemValue("imagedimensiontext", imageSize);
       }, {once: true});
 
-      newImage.setAttribute("loadingprincipal", loadingPrincipalStr);
       newImage.setAttribute("src", url);
     } else {
       // Handle the case where newImage is not used for width & height
       if (item.HTMLVideoElement && isProtocolAllowed) {
         newImage = document.createElementNS("http://www.w3.org/1999/xhtml", "video");
         newImage.id = "thepreviewimage";
-        newImage.setAttribute("loadingprincipal", loadingPrincipalStr);
         newImage.src = url;
         newImage.controls = true;
         width = physWidth = item.videoWidth;
@@ -928,7 +925,6 @@ function makePreview(row) {
       } else if (item.HTMLAudioElement && isProtocolAllowed) {
         newImage = new Audio;
         newImage.id = "thepreviewimage";
-        newImage.setAttribute("loadingprincipal", loadingPrincipalStr);
         newImage.src = url;
         newImage.controls = true;
         isAudio = true;
@@ -999,7 +995,7 @@ var imagePermissionObserver = {
       }
     }
   }
-};
+}
 
 function getContentTypeFromHeaders(cacheEntryDescriptor) {
   if (!cacheEntryDescriptor)

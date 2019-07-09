@@ -298,7 +298,7 @@ nsAttrAndChildArray::AttrCount() const
 }
 
 const nsAttrValue*
-nsAttrAndChildArray::GetAttr(nsAtom* aLocalName, int32_t aNamespaceID) const
+nsAttrAndChildArray::GetAttr(nsIAtom* aLocalName, int32_t aNamespaceID) const
 {
   uint32_t i, slotCount = AttrSlotCount();
   if (aNamespaceID == kNameSpaceID_None) {
@@ -389,7 +389,7 @@ nsAttrAndChildArray::AttrAt(uint32_t aPos) const
 }
 
 nsresult
-nsAttrAndChildArray::SetAndSwapAttr(nsAtom* aLocalName, nsAttrValue& aValue,
+nsAttrAndChildArray::SetAndSwapAttr(nsIAtom* aLocalName, nsAttrValue& aValue,
                                     bool* aHadValue)
 {
   *aHadValue = false;
@@ -421,7 +421,7 @@ nsAttrAndChildArray::SetAndSwapAttr(mozilla::dom::NodeInfo* aName,
                                     nsAttrValue& aValue, bool* aHadValue)
 {
   int32_t namespaceID = aName->NamespaceID();
-  nsAtom* localName = aName->NameAtom();
+  nsIAtom* localName = aName->NameAtom();
   if (namespaceID == kNameSpaceID_None) {
     return SetAndSwapAttr(localName, aValue, aHadValue);
   }
@@ -555,7 +555,7 @@ nsAttrAndChildArray::GetExistingAttrNameFromQName(const nsAString& aName) const
 }
 
 int32_t
-nsAttrAndChildArray::IndexOfAttr(nsAtom* aLocalName, int32_t aNamespaceID) const
+nsAttrAndChildArray::IndexOfAttr(nsIAtom* aLocalName, int32_t aNamespaceID) const
 {
   int32_t idx;
   if (mImpl && mImpl->mMappedAttrs && aNamespaceID == kNameSpaceID_None) {
@@ -593,7 +593,7 @@ nsAttrAndChildArray::IndexOfAttr(nsAtom* aLocalName, int32_t aNamespaceID) const
 }
 
 nsresult
-nsAttrAndChildArray::SetAndSwapMappedAttr(nsAtom* aLocalName,
+nsAttrAndChildArray::SetAndSwapMappedAttr(nsIAtom* aLocalName,
                                           nsAttrValue& aValue,
                                           nsMappedAttributeElement* aContent,
                                           nsHTMLStyleSheet* aSheet,

@@ -221,7 +221,7 @@ add_task(async function search_folder() {
   await PlacesUtils.bookmarks.eraseEverything();
 });
 
-add_task(async function search_includes_separators() {
+add_task(async function search_excludes_separators() {
   let bm1 = await PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
                                                  url: "http://example.com/",
                                                  title: "a bookmark" });
@@ -232,10 +232,10 @@ add_task(async function search_includes_separators() {
   checkBookmarkObject(bm2);
 
   let results = await PlacesUtils.bookmarks.search({});
-  Assert.ok(results.findIndex(bookmark => { return bookmark.guid == bm1.guid; }) > -1,
+  Assert.ok(results.findIndex(bookmark => { return bookmark.guid == bm1.guid }) > -1,
             "The bookmark was found in the results.");
-  Assert.ok(results.findIndex(bookmark => { return bookmark.guid == bm2.guid; }) > -1,
-            "The separator was included in the results.");
+  Assert.equal(-1, results.findIndex(bookmark => { return bookmark.guid == bm2.guid }),
+            "The separator was excluded from the results.");
 
   await PlacesUtils.bookmarks.eraseEverything();
 });

@@ -74,9 +74,6 @@ RTPHeaderExtension::operator=(const RTPHeaderExtension& rhs) {
   videoRotation = rhs.videoRotation;
 
   rtpStreamId = rhs.rtpStreamId;
-  repairedRtpStreamId = rhs.repairedRtpStreamId;
-
-  mId = rhs.mId;
 
   return *this;
 }

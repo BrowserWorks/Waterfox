@@ -121,7 +121,7 @@ let SyncedTabsInternal = {
 
       for (let tab of client.tabs) {
         let url = tab.urlHistory[0];
-        log.trace("remote tab", url);
+        log.debug("remote tab", url);
 
         if (!url) {
           continue;

@@ -51,6 +51,7 @@
 
 using namespace mozilla;
 using namespace mozilla::gfx;
+using mozilla::widget::ScreenHelperGTK;
 
 NS_IMPL_ISUPPORTS_INHERITED(nsNativeThemeGTK, nsNativeTheme, nsITheme,
                                                              nsIObserver)
@@ -199,7 +200,7 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                    aWidgetType == NS_THEME_CHECKBOX_LABEL ||
                    aWidgetType == NS_THEME_RADIO_LABEL)) {
 
-      nsAtom* atom = nullptr;
+      nsIAtom* atom = nullptr;
       if (IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XUL)) {
         if (aWidgetType == NS_THEME_CHECKBOX_LABEL ||
             aWidgetType == NS_THEME_RADIO_LABEL) {
@@ -703,24 +704,6 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
   case NS_THEME_GTK_INFO_BAR:
     aGtkWidgetType = MOZ_GTK_INFO_BAR;
     break;
-  case NS_THEME_WINDOW_TITLEBAR:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR;
-    break;
-  case NS_THEME_WINDOW_TITLEBAR_MAXIMIZED:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR_MAXIMIZED;
-    break;
-  case NS_THEME_WINDOW_BUTTON_CLOSE:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_CLOSE;
-    break;
-  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE;
-    break;
-  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE;
-    break;
-  case NS_THEME_WINDOW_BUTTON_RESTORE:
-    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE;
-    break;
   default:
     return false;
   }
@@ -1006,11 +989,19 @@ DrawThemeWithCairo(gfxContext* aContext, DrawTarget* aDrawTarget,
       dataSurface->Unmap();
 
       if (cr) {
-        // The widget either needs to be masked or has transparency, so use the slower drawing path.
-        aDrawTarget->DrawSurface(dataSurface,
-                                 Rect(aSnapped ? drawOffset - aDrawTarget->GetTransform().GetTranslation() : drawOffset,
-                                      Size(aDrawSize)),
-                                 Rect(0, 0, aDrawSize.width, aDrawSize.height));
+        if (!aSnapped || aTransparency != nsITheme::eOpaque) {
+          // The widget either needs to be masked or has transparency, so use the slower drawing path.
+          aDrawTarget->DrawSurface(dataSurface,
+                                   Rect(aSnapped ? drawOffset - aDrawTarget->GetTransform().GetTranslation() : drawOffset,
+                                        Size(aDrawSize)),
+                                   Rect(0, 0, aDrawSize.width, aDrawSize.height));
+        } else {
+          // The widget is a simple opaque rectangle, so just copy it out.
+          aDrawTarget->CopySurface(dataSurface,
+                                   IntRect(0, 0, aDrawSize.width, aDrawSize.height),
+                                   TruncatedToInt(drawOffset));
+        }
+
         cairo_destroy(cr);
       }
 
@@ -1038,6 +1029,24 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
     aExtra->left = aExtra->right = 1;
     break;
 
+  // Include the indicator spacing (the padding around the control).
+  case NS_THEME_CHECKBOX:
+  case NS_THEME_RADIO:
+    {
+      gint indicator_size, indicator_spacing;
+
+      if (aWidgetType == NS_THEME_CHECKBOX) {
+        moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+      } else {
+        moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+      }
+
+      aExtra->top = indicator_spacing;
+      aExtra->right = indicator_spacing;
+      aExtra->bottom = indicator_spacing;
+      aExtra->left = indicator_spacing;
+      break;
+    }
   case NS_THEME_BUTTON :
     {
       if (IsDefaultButton(aFrame)) {
@@ -1595,9 +1604,17 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
   case NS_THEME_CHECKBOX:
   case NS_THEME_RADIO:
     {
-      const ToggleGTKMetrics* metrics = GetToggleMetrics(aWidgetType == NS_THEME_RADIO);
-      aResult->width = metrics->minSizeWithBorder.width;
-      aResult->height = metrics->minSizeWithBorder.height;
+      gint indicator_size, indicator_spacing;
+
+      if (aWidgetType == NS_THEME_CHECKBOX) {
+        moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+      } else {
+        moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+      }
+
+      // Include space for the indicator and the padding around it.
+      aResult->width = indicator_size;
+      aResult->height = indicator_size;
     }
     break;
   case NS_THEME_TOOLBARBUTTON_DROPDOWN:
@@ -1619,10 +1636,6 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
   case NS_THEME_MENULIST:
   case NS_THEME_TOOLBARBUTTON:
   case NS_THEME_TREEHEADERCELL:
-  case NS_THEME_WINDOW_BUTTON_CLOSE:
-  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
-  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
-  case NS_THEME_WINDOW_BUTTON_RESTORE:
     {
       if (aWidgetType == NS_THEME_MENULIST) {
         // Include the arrow size.
@@ -1693,7 +1706,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
 NS_IMETHODIMP
 nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
-                                     nsAtom* aAttribute, bool* aShouldRepaint,
+                                     nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
   // Some widget types just never change state.
@@ -1890,17 +1903,6 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   case NS_THEME_GTK_INFO_BAR:
 #endif
     return !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
-
-  case NS_THEME_WINDOW_BUTTON_CLOSE:
-  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
-  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
-  case NS_THEME_WINDOW_BUTTON_RESTORE:
-  case NS_THEME_WINDOW_TITLEBAR:
-  case NS_THEME_WINDOW_TITLEBAR_MAXIMIZED:
-    // GtkHeaderBar is available on GTK 3.10+, which is used for styling
-    // title bars and title buttons.
-    return gtk_check_version(3, 10, 0) == nullptr &&
-           !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
 
   case NS_THEME_MENULIST_BUTTON:
     if (aFrame && aFrame->GetWritingMode().IsVertical()) {

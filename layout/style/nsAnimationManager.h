@@ -43,7 +43,7 @@ struct AnimationEventInfo {
   AnimationEventInfo(dom::Element* aElement,
                      CSSPseudoElementType aPseudoType,
                      EventMessage aMessage,
-                     nsAtom* aAnimationName,
+                     const nsAString& aAnimationName,
                      const StickyTimeDuration& aElapsedTime,
                      const TimeStamp& aTimeStamp,
                      dom::Animation* aAnimation)
@@ -53,7 +53,7 @@ struct AnimationEventInfo {
     , mTimeStamp(aTimeStamp)
   {
     // XXX Looks like nobody initialize WidgetEvent::time
-    aAnimationName->ToString(mEvent.mAnimationName);
+    mEvent.mAnimationName = aAnimationName;
     mEvent.mElapsedTime =
       nsRFPService::ReduceTimePrecisionAsSecs(aElapsedTime.ToSeconds());
     mEvent.mPseudoElement =
@@ -78,7 +78,7 @@ class CSSAnimation final : public Animation
 {
 public:
  explicit CSSAnimation(nsIGlobalObject* aGlobal,
-                       nsAtom* aAnimationName)
+                       const nsAString& aAnimationName)
     : dom::Animation(aGlobal)
     , mAnimationName(aAnimationName)
     , mIsStylePaused(false)
@@ -90,8 +90,7 @@ public:
     // We might need to drop this assertion once we add a script-accessible
     // constructor but for animations generated from CSS markup the
     // animation-name should never be empty.
-    MOZ_ASSERT(mAnimationName != nsGkAtoms::_empty,
-               "animation-name should not be 'none'");
+    MOZ_ASSERT(!mAnimationName.IsEmpty(), "animation-name should not be empty");
   }
 
   JSObject* WrapObject(JSContext* aCx,
@@ -101,26 +100,17 @@ public:
   const CSSAnimation* AsCSSAnimation() const override { return this; }
 
   // CSSAnimation interface
-  void GetAnimationName(nsString& aRetVal) const
-  {
-    mAnimationName->ToString(aRetVal);
-  }
+  void GetAnimationName(nsString& aRetVal) const { aRetVal = mAnimationName; }
 
-  nsAtom* AnimationName() const { return mAnimationName; }
+  // Alternative to GetAnimationName that returns a reference to the member
+  // for more efficient internal usage.
+  const nsString& AnimationName() const { return mAnimationName; }
 
   // Animation interface overrides
   virtual Promise* GetReady(ErrorResult& aRv) override;
   virtual void Play(ErrorResult& aRv, LimitBehavior aLimitBehavior) override;
   virtual void Pause(ErrorResult& aRv) override;
 
-  // NOTE: tabbrowser.xml currently relies on the fact that reading the
-  // currentTime of a CSSAnimation does *not* flush style (whereas reading the
-  // playState does). If CSS Animations 2 specifies that reading currentTime
-  // also flushes style we will need to find another way to detect canceled
-  // animations in tabbrowser.xml. On the other hand, if CSS Animations 2
-  // specifies that reading playState does *not* flush style (and we drop the
-  // following override), then we should update tabbrowser.xml to check
-  // the playState instead.
   virtual AnimationPlayState PlayStateFromJS() const override;
   virtual void PlayFromJS(ErrorResult& aRv) override;
 
@@ -205,7 +195,7 @@ protected:
            TimeDuration();
   }
 
-  RefPtr<nsAtom> mAnimationName;
+  nsString mAnimationName;
 
   // The (pseudo-)element whose computed animation-name refers to this
   // animation (if any).
@@ -294,15 +284,15 @@ protected:
 template <>
 struct AnimationTypeTraits<dom::CSSAnimation>
 {
-  static nsAtom* ElementPropertyAtom()
+  static nsIAtom* ElementPropertyAtom()
   {
     return nsGkAtoms::animationsProperty;
   }
-  static nsAtom* BeforePropertyAtom()
+  static nsIAtom* BeforePropertyAtom()
   {
     return nsGkAtoms::animationsOfBeforeProperty;
   }
-  static nsAtom* AfterPropertyAtom()
+  static nsIAtom* AfterPropertyAtom()
   {
     return nsGkAtoms::animationsOfAfterProperty;
   }

@@ -40,11 +40,11 @@
     _(ClearNewObjectCache,      "clrNOC")                                     \
     _(CollectToFP,              "collct")                                     \
     _(ObjectsTenuredCallback,   "tenCB")                                      \
-    _(Sweep,                    "sweep")                                      \
+    _(SweepArrayBufferViewList, "swpABO")                                     \
     _(UpdateJitActivations,     "updtIn")                                     \
     _(FreeMallocedBuffers,      "frSlts")                                     \
     _(ClearStoreBuffer,         "clrSB")                                      \
-    _(ClearNursery,             "clear")                                      \
+    _(Sweep,                    "sweep")                                      \
     _(Resize,                   "resize")                                     \
     _(Pretenure,                "pretnr")
 
@@ -55,7 +55,6 @@ struct Zone;
 namespace js {
 
 class ObjectElements;
-class PlainObject;
 class NativeObject;
 class Nursery;
 class HeapSlot;
@@ -99,6 +98,8 @@ class TenuringTracer : public JSTracer
     template <typename T> void traverse(T** thingp);
     template <typename T> void traverse(T* thingp);
 
+    void insertIntoFixupList(gc::RelocationOverlay* entry);
+
     // The store buffers need to be able to call these directly.
     void traceObject(JSObject* src);
     void traceObjectSlots(NativeObject* nobj, uint32_t start, uint32_t length);
@@ -107,12 +108,8 @@ class TenuringTracer : public JSTracer
   private:
     Nursery& nursery() { return nursery_; }
 
-    inline void insertIntoFixupList(gc::RelocationOverlay* entry);
-    template <typename T>
-    inline T* allocTenured(JS::Zone* zone, gc::AllocKind kind);
-
-    inline JSObject* movePlainObjectToTenured(PlainObject* src);
-    JSObject* moveToTenuredSlow(JSObject* src);
+    JSObject* moveToTenured(JSObject* src);
+    size_t moveObjectToTenured(JSObject* dst, JSObject* src, gc::AllocKind dstKind);
     size_t moveElementsToTenured(NativeObject* dst, NativeObject* src, gc::AllocKind dstKind);
     size_t moveSlotsToTenured(NativeObject* dst, NativeObject* src, gc::AllocKind dstKind);
 
@@ -142,7 +139,7 @@ class Nursery
     explicit Nursery(JSRuntime* rt);
     ~Nursery();
 
-    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes, AutoLockGCBgAlloc& lock);
+    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes, AutoLockGC& lock);
 
     unsigned maxChunks() const { return maxNurseryChunks_; }
     unsigned numChunks() const { return chunks_.length(); }
@@ -189,13 +186,6 @@ class Nursery
      */
     void* allocateBuffer(JSObject* obj, size_t nbytes);
 
-    /*
-     * Allocate a buffer for a given object, always using the nursery if obj is
-     * in the nursery. The requested size must be less than or equal to
-     * MaxNurseryBufferSize.
-     */
-    void* allocateBufferSameLocation(JSObject* obj, size_t nbytes);
-
     /* Resize an existing object buffer. */
     void* reallocateBuffer(JSObject* obj, void* oldBuffer,
                            size_t oldBytes, size_t newBytes);
@@ -219,8 +209,10 @@ class Nursery
     /* Forward a slots/elements pointer stored in an Ion frame. */
     void forwardBufferPointer(HeapSlot** pSlotsElems);
 
-    inline void maybeSetForwardingPointer(JSTracer* trc, void* oldData, void* newData, bool direct);
-    inline void setForwardingPointerWhileTenuring(void* oldData, void* newData, bool direct);
+    void maybeSetForwardingPointer(JSTracer* trc, void* oldData, void* newData, bool direct) {
+        if (trc->isTenuringTracer() && isInside(oldData))
+            setForwardingPointer(oldData, newData, direct);
+    }
 
     /* Mark a malloced buffer as no longer needing to be freed. */
     void removeMallocedBuffer(void* buffer) {
@@ -255,6 +247,7 @@ class Nursery
 
     // Free space remaining, not counting chunk trailers.
     MOZ_ALWAYS_INLINE size_t freeSpace() const {
+        MOZ_ASSERT(isEnabled());
         MOZ_ASSERT(currentEnd_ - position_ <= NurseryChunkUsableSize);
         return (currentEnd_ - position_) +
                (numChunks() - currentChunk_ - 1) * NurseryChunkUsableSize;
@@ -324,7 +317,7 @@ class Nursery
     unsigned maxNurseryChunks_;
 
     /* Promotion rate for the previous minor collection. */
-    float previousPromotionRate_;
+    double previousPromotionRate_;
 
     /* Report minor collections taking at least this long, if enabled. */
     mozilla::TimeDuration profileThreshold_;
@@ -361,27 +354,11 @@ class Nursery
     ProfileDurations totalDurations_;
     uint64_t minorGcCount_;
 
-    /*
-     * This data is initialised only if the nursery is enabled and after at
-     * least one call to Nursery::collect()
-     */
     struct {
         JS::gcreason::Reason reason;
-        size_t nurseryCapacity;
-        size_t nurseryUsedBytes;
-        size_t tenuredBytes;
+        uint64_t nurseryUsedBytes;
+        uint64_t tenuredBytes;
     } previousGC;
-
-    /*
-     * Calculate the promotion rate of the most recent minor GC.
-     * The valid_for_tenuring parameter is used to return whether this
-     * promotion rate is accurate enough (the nursery was full enough) to be
-     * used for tenuring and other decisions.
-     *
-     * Must only be called if the previousGC data is initialised.
-     */
-    float
-    calcPromotionRate(bool *validForTenuring) const;
 
     /*
      * The set of externally malloced buffers potentially kept live by objects
@@ -439,7 +416,8 @@ class Nursery
 
     void updateNumChunks(unsigned newCount);
     void updateNumChunksLocked(unsigned newCount,
-                               AutoLockGCBgAlloc& lock);
+                               gc::AutoMaybeStartBackgroundAllocation& maybeBgAlloc,
+                               AutoLockGC& lock);
 
     MOZ_ALWAYS_INLINE uintptr_t allocationEnd() const {
         MOZ_ASSERT(numChunks() > 0);
@@ -461,7 +439,7 @@ class Nursery
     /* Common internal allocator function. */
     void* allocate(size_t size);
 
-    void doCollection(JS::gcreason::Reason reason,
+    double doCollection(JS::gcreason::Reason reason,
                         gc::TenureCountCache& tenureCounts);
 
     /*
@@ -471,34 +449,25 @@ class Nursery
     void collectToFixedPoint(TenuringTracer& trc, gc::TenureCountCache& tenureCounts);
 
     /* Handle relocation of slots/elements pointers stored in Ion frames. */
-    inline void setForwardingPointer(void* oldData, void* newData, bool direct);
+    void setForwardingPointer(void* oldData, void* newData, bool direct);
 
-    inline void setDirectForwardingPointer(void* oldData, void* newData);
-    void setIndirectForwardingPointer(void* oldData, void* newData);
-
-    inline void setSlotsForwardingPointer(HeapSlot* oldSlots, HeapSlot* newSlots, uint32_t nslots);
-    inline void setElementsForwardingPointer(ObjectElements* oldHeader, ObjectElements* newHeader,
-                                             uint32_t capacity);
+    void setSlotsForwardingPointer(HeapSlot* oldSlots, HeapSlot* newSlots, uint32_t nslots);
+    void setElementsForwardingPointer(ObjectElements* oldHeader, ObjectElements* newHeader,
+                                      uint32_t capacity);
 
     /* Free malloced pointers owned by freed things in the nursery. */
     void freeMallocedBuffers();
 
     /*
-     * Updates pointers to nursery objects that have been tenured and discards
-     * pointers to objects that have been freed.
-     */
-    void sweep(JSTracer* trc);
-
-    /*
      * Frees all non-live nursery-allocated things at the end of a minor
      * collection.
      */
-    void clear();
+    void sweep();
 
     void sweepDictionaryModeObjects();
 
     /* Change the allocable space provided by the nursery. */
-    void maybeResizeNursery(JS::gcreason::Reason reason);
+    void maybeResizeNursery(JS::gcreason::Reason reason, double promotionRate);
     void growAllocableSpace();
     void shrinkAllocableSpace(unsigned removeNumChunks);
     void minimizeAllocableSpace();

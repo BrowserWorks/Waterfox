@@ -115,18 +115,16 @@ menuitem.menuitem-iconic > .menu-iconic-left {
 
 /* ::::: menu/menuitems in menubar ::::: */
 
+menubar > menu {
+  border: 2px solid transparent;
+}
+
 menubar > menu[_moz-menuactive="true"]:not([disabled="true"]) {
   color: -moz-menubarhovertext;
 }
 
-@media (-moz-windows-classic) {
-  menubar > menu {
-    border: 2px solid transparent;
-  }
-
-  menubar > menu[_moz-menuactive="true"][open="true"] {
-    border-width: 3px 1px 1px 3px;
-  }
+menubar > menu[_moz-menuactive="true"][open="true"] {
+  border-width: 3px 1px 1px 3px;
 }
 
 menubar > menu:-moz-lwtheme {
@@ -227,11 +225,9 @@ menulist > menupopup > menuitem[_moz-menuactive="true"][disabled="true"] {
   color: GrayText;
 }
 
-@media (-moz-windows-classic) {
-  menulist > menupopup > menuitem[disabled="true"]:not([_moz-menuactive="true"]) {
-    color: GrayText;
-    text-shadow: none;
-  }
+menulist > menupopup > menuitem[disabled="true"]:not([_moz-menuactive="true"]):-moz-system-metric(windows-classic) {
+  color: GrayText;
+  text-shadow: none;
 }
 
 menulist > menupopup > :-moz-any(menuitem, menucaption):not(.menuitem-iconic) > .menu-iconic-text {

@@ -11,24 +11,24 @@
      - collects info on any counters while test runs
      - waits for a 'dump' from the browser
 """
-from __future__ import absolute_import, print_function
 
 import os
-import platform
-import shutil
-import subprocess
 import sys
-
-import mozcrash
-import mozfile
+import platform
 import results
-import talosconfig
+import subprocess
 import utils
+import mozcrash
+import talosconfig
+import shutil
+import mozfile
+
 from mozlog import get_proxy_logger
-from talos.cmanager import CounterManagement
-from talos.ffsetup import FFSetup
-from talos.talos_process import run_browser
+
 from talos.utils import TalosCrash, TalosError, TalosRegression
+from talos.talos_process import run_browser
+from talos.ffsetup import FFSetup
+from talos.cmanager import CounterManagement
 
 LOG = get_proxy_logger()
 
@@ -92,21 +92,13 @@ class TTest(object):
             mainthread_io = os.path.join(here, "mainthread_io.log")
             setup.env['MOZ_MAIN_THREAD_IO_LOG'] = mainthread_io
 
-        if browser_config['disable_stylo']:
-            if browser_config['stylothreads']:
-                raise TalosError("--disable-stylo conflicts with --stylo-threads")
-            if browser_config['enable_stylo']:
-                raise TalosError("--disable-stylo conflicts with --enable-stylo")
-
         # As we transition to Stylo, we need to set env vars and output data properly
-        if browser_config['enable_stylo']:
-            setup.env['STYLO_FORCE_ENABLED'] = '1'
-        if browser_config['disable_stylo']:
-            setup.env['STYLO_FORCE_DISABLED'] = '1'
+        if browser_config['stylo']:
+            setup.env['STYLO_FORCE_ENABLED'] = 1
 
         # During the Stylo transition, measure different number of threads
         if browser_config.get('stylothreads', 0) > 0:
-            setup.env['STYLO_THREADS'] = str(browser_config['stylothreads'])
+            setup.env['STYLO_THREADS'] = browser_config['stylothreads']
 
         test_config['url'] = utils.interpolate(
             test_config['url'],

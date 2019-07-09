@@ -261,7 +261,7 @@ GenNewUniqueTaskId()
   TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE(info, 0);
 
-  int tid = Thread::GetCurrentId();
+  Thread::tid_t tid = Thread::GetCurrentId();
   uint64_t taskid = ((uint64_t)tid << 32) | ++info->mLastUniqueTaskId;
   return taskid;
 }
@@ -347,9 +347,6 @@ LogBegin(uint64_t aTaskId, uint64_t aSourceEventId)
     log->mBegin.mTime = GetTimestamp();
     log->mBegin.mPid = getpid();
     log->mBegin.mTid = Thread::GetCurrentId();
-
-    MOZ_ASSERT(log->mBegin.mPid >= 0, "native process ID is < 0 (signed integer overflow)");
-    MOZ_ASSERT(log->mBegin.mTid >= 0, "native thread ID is < 0  (signed integer overflow)");
   }
 }
 

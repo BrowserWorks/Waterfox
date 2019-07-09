@@ -77,11 +77,10 @@ public class TestResizingProcessor {
     }
 
     @Test
-    public void testBitmapIsNotScaledMoreThanMaxScaleFactor() {
+    public void testBitmapIsNotScaledMoreThanTwoTimesTheSize() {
         final IconRequest request = createTestRequest();
 
-        final int initialSize = 5;
-        final Bitmap bitmap = createBitmapMock(initialSize);
+        final Bitmap bitmap = createBitmapMock(5);
         final IconResponse response = spy(IconResponse.create(bitmap));
 
         final ResizingProcessor processor = spy(new ResizingProcessor());
@@ -89,7 +88,7 @@ public class TestResizingProcessor {
         doReturn(resizedBitmap).when(processor).resize(any(Bitmap.class), anyInt());
         processor.process(request, response);
 
-        verify(processor).resize(bitmap, initialSize * ResizingProcessor.MAX_SCALE_FACTOR);
+        verify(processor).resize(bitmap, 10);
         verify(bitmap).recycle();
         verify(response).updateBitmap(resizedBitmap);
     }

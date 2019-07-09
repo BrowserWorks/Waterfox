@@ -62,9 +62,6 @@
 
 mozilla::LazyLogModule gWindowsLog("Widget");
 
-#define LOG_E(...) MOZ_LOG(gWindowsLog, LogLevel::Error, (__VA_ARGS__))
-#define LOG_D(...) MOZ_LOG(gWindowsLog, LogLevel::Debug, (__VA_ARGS__))
-
 using namespace mozilla::gfx;
 
 namespace mozilla {
@@ -688,6 +685,15 @@ WinUtils::MonitorFromRect(const gfx::Rect& rect)
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 #endif
 
+static Atomic<bool> sAPCPending;
+
+/* static */
+void
+WinUtils::SetAPCPending()
+{
+  sAPCPending = true;
+}
+
 /* static */
 a11y::Accessible*
 WinUtils::GetRootAccessibleForHWND(HWND aHwnd)
@@ -706,6 +712,11 @@ bool
 WinUtils::PeekMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                       UINT aLastMessage, UINT aOption)
 {
+#ifdef ACCESSIBILITY
+  if (NS_IsMainThread() && sAPCPending.exchange(false)) {
+    while (sNtTestAlert() != STATUS_SUCCESS) ;
+  }
+#endif
 #ifdef NS_ENABLE_TSF
   RefPtr<ITfMessagePump> msgPump = TSFTextStore::GetMessagePump();
   if (msgPump) {
@@ -777,6 +788,10 @@ WinUtils::WaitForMessage(DWORD aTimeoutMs)
 #if defined(ACCESSIBILITY)
     if (result == WAIT_IO_COMPLETION) {
       if (NS_IsMainThread()) {
+        if (sAPCPending.exchange(false)) {
+          // Clear out any pending APCs
+          while (sNtTestAlert() != STATUS_SUCCESS) ;
+        }
         // We executed an APC that would have woken up the hang monitor. Since
         // there are no more APCs pending and we are now going to sleep again,
         // we should notify the hang monitor.
@@ -1277,7 +1292,8 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
   // Decode the image from the format it was returned to us in (probably PNG)
   nsCOMPtr<imgIContainer> container;
   nsCOMPtr<imgITools> imgtool = do_CreateInstance("@mozilla.org/image/tools;1");
-  rv = imgtool->DecodeImage(stream, aMimeType, getter_AddRefs(container));
+  rv = imgtool->DecodeImageData(stream, aMimeType,
+                                getter_AddRefs(container));
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<SourceSurface> surface =
@@ -1766,7 +1782,14 @@ WinUtils::ToIntRect(const RECT& aRect)
 bool
 WinUtils::IsIMEEnabled(const InputContext& aInputContext)
 {
-  return IsIMEEnabled(aInputContext.mIMEState.mEnabled);
+  if (!IsIMEEnabled(aInputContext.mIMEState.mEnabled)) {
+    return false;
+  }
+  if (aInputContext.mIMEState.mEnabled == IMEState::PLUGIN &&
+      aInputContext.mHTMLInputType.EqualsLiteral("password")) {
+    return false;
+  }
+  return true;
 }
 
 /* static */
@@ -1821,8 +1844,6 @@ WinUtils::GetMaxTouchPoints()
 bool
 WinUtils::ResolveJunctionPointsAndSymLinks(std::wstring& aPath)
 {
-  LOG_D("ResolveJunctionPointsAndSymLinks: Resolving path: %S", aPath.c_str());
-
   wchar_t path[MAX_PATH] = { 0 };
 
   nsAutoHandle handle(
@@ -1835,15 +1856,12 @@ WinUtils::ResolveJunctionPointsAndSymLinks(std::wstring& aPath)
                   nullptr));
 
   if (handle == INVALID_HANDLE_VALUE) {
-    LOG_E("Failed to open file handle to resolve path. GetLastError=%d",
-          GetLastError());
     return false;
   }
 
   DWORD pathLen = GetFinalPathNameByHandleW(
     handle, path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
   if (pathLen == 0 || pathLen >= MAX_PATH) {
-    LOG_E("GetFinalPathNameByHandleW failed. GetLastError=%d", GetLastError());
     return false;
   }
   aPath = path;
@@ -1857,7 +1875,6 @@ WinUtils::ResolveJunctionPointsAndSymLinks(std::wstring& aPath)
     aPath.erase(0, 4);
   }
 
-  LOG_D("ResolveJunctionPointsAndSymLinks: Resolved path to: %S", aPath.c_str());
   return true;
 }
 

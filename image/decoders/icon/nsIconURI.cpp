@@ -136,12 +136,6 @@ nsMozIconURI::GetDisplayHost(nsACString& aUnicodeHost)
 }
 
 NS_IMETHODIMP
-nsMozIconURI::GetDisplayPrePath(nsACString& aPrePath)
-{
-  return GetPrePath(aPrePath);
-}
-
-NS_IMETHODIMP
 nsMozIconURI::GetHasRef(bool* result)
 {
   *result = false;
@@ -195,7 +189,10 @@ nsMozIconURI::SetSpec(const nsACString& aSpec)
 
   nsAutoCString iconSpec(aSpec);
   if (!Substring(iconSpec, 0,
-                 MOZICON_SCHEME_LEN).EqualsLiteral(MOZICON_SCHEME)) {
+                 MOZICON_SCHEME_LEN).EqualsLiteral(MOZICON_SCHEME) ||
+      (!Substring(iconSpec, MOZICON_SCHEME_LEN, 7).EqualsLiteral("file://") &&
+       // Checking for the leading '//' will match both the '//stock/' and '//.foo' cases:
+       !Substring(iconSpec, MOZICON_SCHEME_LEN, 2).EqualsLiteral("//"))) {
     return NS_ERROR_MALFORMED_URI;
   }
 
@@ -275,6 +272,11 @@ nsMozIconURI::SetSpec(const nsACString& aSpec)
   ioService->NewURI(iconPath, nullptr, nullptr, getter_AddRefs(uri));
   mIconURL = do_QueryInterface(uri);
   if (mIconURL) {
+    // The inner URI should be a 'file:' one. If not, bail.
+    bool isFile = false;
+    if (!NS_SUCCEEDED(mIconURL->SchemeIs("file", &isFile)) || !isFile) {
+      return NS_ERROR_MALFORMED_URI;
+    }
     mFileName.Truncate();
   } else if (mFileName.IsEmpty()) {
     return NS_ERROR_MALFORMED_URI;
@@ -383,14 +385,14 @@ nsMozIconURI::SetPort(int32_t aPort)
 }
 
 NS_IMETHODIMP
-nsMozIconURI::GetPathQueryRef(nsACString& aPath)
+nsMozIconURI::GetPath(nsACString& aPath)
 {
   aPath.Truncate();
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsMozIconURI::SetPathQueryRef(const nsACString& aPath)
+nsMozIconURI::SetPath(const nsACString& aPath)
 {
   return NS_ERROR_FAILURE;
 }
@@ -417,13 +419,6 @@ nsMozIconURI::GetQuery(nsACString& aQuery)
 
 NS_IMETHODIMP
 nsMozIconURI::SetQuery(const nsACString& aQuery)
-{
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsMozIconURI::SetQueryWithEncoding(const nsACString& aQuery,
-                                   const Encoding* aEncoding)
 {
   return NS_ERROR_FAILURE;
 }
@@ -552,6 +547,13 @@ NS_IMETHODIMP
 nsMozIconURI::GetAsciiHost(nsACString& aHostA)
 {
   return GetHost(aHostA);
+}
+
+NS_IMETHODIMP
+nsMozIconURI::GetOriginCharset(nsACString& result)
+{
+  result.Truncate();
+  return NS_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -712,7 +714,17 @@ nsMozIconURI::Deserialize(const URIParams& aParams)
   mContentType = params.contentType();
   mFileName = params.fileName();
   mStockIcon = params.stockIcon();
+
+  if (params.iconSize() < -1 ||
+      params.iconSize() >= (int32_t) ArrayLength(kSizeStrings)) {
+    return false;
+  }
   mIconSize = params.iconSize();
+
+  if (params.iconState() < -1 ||
+      params.iconState() >= (int32_t) ArrayLength(kStateStrings)) {
+    return false;
+  }
   mIconState = params.iconState();
 
   return true;

@@ -90,3 +90,7 @@ add_test(function autocomplete_defaultIndex_exceeds_matchCount() {
     run_next_test();
   };
 });
+
+function run_test() {
+  run_next_test();
+}

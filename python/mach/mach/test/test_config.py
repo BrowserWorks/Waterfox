@@ -40,31 +40,30 @@ CONFIG2 = r"""
 bar = value2
 """
 
-
 @SettingsProvider
 class Provider1(object):
     config_settings = [
-        ('foo.bar', StringType, 'desc'),
-        ('foo.baz', PathType, 'desc'),
+        ('foo.bar', StringType),
+        ('foo.baz', PathType),
     ]
 
 
 @SettingsProvider
 class ProviderDuplicate(object):
     config_settings = [
-        ('dupesect.foo', StringType, 'desc'),
-        ('dupesect.foo', StringType, 'desc'),
+        ('dupesect.foo', StringType),
+        ('dupesect.foo', StringType),
     ]
 
 
 @SettingsProvider
 class Provider2(object):
     config_settings = [
-        ('a.string', StringType, 'desc'),
-        ('a.boolean', BooleanType, 'desc'),
-        ('a.pos_int', PositiveIntegerType, 'desc'),
-        ('a.int', IntegerType, 'desc'),
-        ('a.path', PathType, 'desc'),
+        ('a.string', StringType),
+        ('a.boolean', BooleanType),
+        ('a.pos_int', PositiveIntegerType),
+        ('a.int', IntegerType),
+        ('a.path', PathType),
     ]
 
 
@@ -73,27 +72,27 @@ class Provider3(object):
     @classmethod
     def config_settings(cls):
         return [
-            ('a.string', 'string', 'desc'),
-            ('a.boolean', 'boolean', 'desc'),
-            ('a.pos_int', 'pos_int', 'desc'),
-            ('a.int', 'int', 'desc'),
-            ('a.path', 'path', 'desc'),
+            ('a.string', 'string'),
+            ('a.boolean', 'boolean'),
+            ('a.pos_int', 'pos_int'),
+            ('a.int', 'int'),
+            ('a.path', 'path'),
         ]
 
 
 @SettingsProvider
 class Provider4(object):
     config_settings = [
-        ('foo.abc', StringType, 'desc', 'a', {'choices': set('abc')}),
-        ('foo.xyz', StringType, 'desc', 'w', {'choices': set('xyz')}),
+        ('foo.abc', StringType, 'a', {'choices': set('abc')}),
+        ('foo.xyz', StringType, 'w', {'choices': set('xyz')}),
     ]
 
 
 @SettingsProvider
 class Provider5(object):
     config_settings = [
-        ('foo.*', 'string', 'desc'),
-        ('foo.bar', 'string', 'desc'),
+        ('foo.*', 'string'),
+        ('foo.bar', 'string'),
     ]
 
 

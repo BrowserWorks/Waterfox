@@ -64,27 +64,9 @@ class MachCommands(MachCommandBase):
             kwargs['perTabPause'] = 1
             kwargs['settleWaitTime'] = 1
 
-        if 'disable_stylo' in kwargs and kwargs['disable_stylo']:
-            if 'single_stylo_traversal' in kwargs and kwargs['single_stylo_traversal']:
-                print("--disable-stylo conflicts with --single-stylo-traversal")
-                return 1
-            if 'enable_stylo' in kwargs and kwargs['enable_stylo']:
-                print("--disable-stylo conflicts with --enable-stylo")
-                return 1
-
-        if 'single_stylo_traversal' in kwargs and kwargs['single_stylo_traversal']:
-            os.environ['STYLO_THREADS'] = '1'
-        else:
-            os.environ['STYLO_THREADS'] = '4'
-
-        if 'enable_stylo' in kwargs and kwargs['enable_stylo']:
-            os.environ['STYLO_FORCE_ENABLED'] = '1'
-        if 'disable_stylo' in kwargs and kwargs['disable_stylo']:
-            os.environ['STYLO_FORCE_DISABLED'] = '1'
-
         runtime_testvars = {}
         for arg in ('webRootDir', 'pageManifest', 'resultsDir', 'entities', 'iterations',
-                    'perTabPause', 'settleWaitTime', 'maxTabs', 'dmd'):
+                    'perTabPause', 'settleWaitTime', 'maxTabs'):
             if kwargs[arg]:
                 runtime_testvars[arg] = kwargs[arg]
 
@@ -137,43 +119,6 @@ class MachCommands(MachCommandBase):
                 '-d',
                 page_load_test_dir]}
             self.run_process(**unzip_args)
-
-        # If '--preferences' was not specified supply our default set.
-        if not kwargs['prefs_files']:
-            kwargs['prefs_files'] = [os.path.join(awsy_source_dir, 'conf', 'prefs.json')]
-
-        # Setup DMD env vars if necessary.
-        if kwargs['dmd']:
-            dmd_params = []
-
-            bin_dir = os.path.dirname(binary)
-            lib_name = self.substs['DLL_PREFIX'] + 'dmd' + self.substs['DLL_SUFFIX']
-            dmd_lib = os.path.join(bin_dir, lib_name)
-            if not os.path.exists(dmd_lib):
-                print("Please build with |--enable-dmd| to use DMD.")
-                return 1
-
-            env_vars = {
-                "Darwin": {
-                    "DYLD_INSERT_LIBRARIES": dmd_lib,
-                    "LD_LIBRARY_PATH": bin_dir,
-                },
-                "Linux": {
-                    "LD_PRELOAD": dmd_lib,
-                    "LD_LIBRARY_PATH": bin_dir,
-                },
-                "WINNT": {
-                    "MOZ_REPLACE_MALLOC_LIB": dmd_lib,
-                },
-            }
-
-            arch = self.substs['OS_ARCH']
-            for k, v in env_vars[arch].iteritems():
-                os.environ[k] = v
-
-            # Also add the bin dir to the python path so we can use dmd.py
-            if bin_dir not in sys.path:
-                sys.path.append(bin_dir)
 
         for k, v in kwargs.iteritems():
             setattr(args, k, v)
@@ -233,18 +178,6 @@ class MachCommands(MachCommandBase):
                      dest='settleWaitTime',
                      help='Seconds to wait for things to settled down. '
                      'Defaults to %s.' % SETTLE_WAIT_TIME)
-    @CommandArgument('--enable-stylo', group='AWSY', action='store_true',
-                     dest='enable_stylo', default=False,
-                     help='Enable Stylo.')
-    @CommandArgument('--disable-stylo', group='AWSY', action='store_true',
-                     dest='disable_stylo', default=False,
-                     help='Disable Stylo.')
-    @CommandArgument('--single-stylo-traversal', group='AWSY', action='store_true',
-                     dest='single_stylo_traversal', default=False,
-                     help='Set STYLO_THREADS=1.')
-    @CommandArgument('--dmd', group='AWSY', action='store_true',
-                     dest='dmd', default=False,
-                     help='Enable DMD during testing. Requires a DMD-enabled build.')
     def run_awsy_test(self, tests, **kwargs):
         """mach awsy-test runs the in-tree version of the Are We Slim Yet
         (AWSY) tests.

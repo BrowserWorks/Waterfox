@@ -6,8 +6,6 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "HeadlessShell",
-                                  "resource:///modules/HeadlessShell.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LaterRun",
                                   "resource:///modules/LaterRun.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
@@ -18,8 +16,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
                                   "resource:///modules/ShellService.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils",
                                    "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
-XPCOMUtils.defineLazyModuleGetter(this, "UpdatePing",
-                                  "resource://gre/modules/UpdatePing.jsm");
 
 const nsISupports            = Components.interfaces.nsISupports;
 
@@ -468,10 +464,6 @@ nsBrowserContentHandler.prototype = {
     } else {
       info += "  --preferences      Open Preferences dialog.\n";
     }
-    if (AppConstants.platform == "win" || AppConstants.MOZ_WIDGET_GTK) {
-      info += "  --screenshot [<path>] Save screenshot to <path> or in working directory.\n";
-      info += "  --window-size width[,height] Width and optionally height of screenshot.\n";
-    }
     info += "  --search <term>    Search <term> with your default search engine.\n";
     return info;
   },
@@ -499,7 +491,6 @@ nsBrowserContentHandler.prototype = {
       // to have the overridePage's content vary depending on the version we're
       // upgrading from.
       let old_mstone = Services.prefs.getCharPref("browser.startup.homepage_override.mstone", "unknown");
-      let old_buildId = Services.prefs.getCharPref("browser.startup.homepage_override.buildID", "unknown");
       override = needHomepageOverride(prefb);
       if (override != OVERRIDE_NONE) {
         switch (override) {
@@ -521,19 +512,10 @@ nsBrowserContentHandler.prototype = {
             willRestoreSession = ss.isAutomaticRestoreEnabled();
 
             overridePage = Services.urlFormatter.formatURLPref("startup.homepage_override_url");
-            if (prefb.prefHasUserValue("app.update.postupdate")) {
+            if (prefb.prefHasUserValue("app.update.postupdate"))
               overridePage = getPostUpdateOverridePage(overridePage);
-              // Send the update ping to signal that the update was successful.
-              UpdatePing.handleUpdateSuccess(old_mstone, old_buildId);
-            }
 
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
-            break;
-          case OVERRIDE_NEW_BUILD_ID:
-            if (prefb.prefHasUserValue("app.update.postupdate")) {
-              // Send the update ping to signal that the update was successful.
-              UpdatePing.handleUpdateSuccess(old_mstone, old_buildId);
-            }
             break;
         }
       }
@@ -663,7 +645,7 @@ nsBrowserContentHandler.prototype = {
         // We don't have to show the instruction page.
         throw NS_ERROR_ABORT;
       }
-      cmdLine.handleFlag("osint", false);
+      cmdLine.handleFlag("osint", false)
     }
   },
 };
@@ -728,7 +710,7 @@ nsDefaultCommandLineHandler.prototype = {
       if (!this._haveProfile) {
         try {
           // This will throw when a profile has not been selected.
-          Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
+          Services.dirsvc.get("ProfD", Components.interfaces.nsILocalFile);
           this._haveProfile = true;
         } catch (e) {
           while ((ar = cmdLine.handleFlagWithParam("url", false)));
@@ -745,11 +727,6 @@ nsDefaultCommandLineHandler.prototype = {
       }
     } catch (e) {
       Components.utils.reportError(e);
-    }
-
-    if (cmdLine.findFlag("screenshot", true) != -1) {
-      HeadlessShell.handleCmdLineArgs(cmdLine, urilist.filter(shouldLoadURI).map(u => u.spec));
-      return;
     }
 
     for (let i = 0; i < cmdLine.length; ++i) {

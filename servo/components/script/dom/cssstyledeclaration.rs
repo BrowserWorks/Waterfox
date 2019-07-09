@@ -6,8 +6,8 @@ use dom::bindings::codegen::Bindings::CSSStyleDeclarationBinding::{self, CSSStyl
 use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
 use dom::bindings::error::{Error, ErrorResult, Fallible};
 use dom::bindings::inheritance::Castable;
+use dom::bindings::js::{JS, Root};
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
-use dom::bindings::root::{Dom, DomRoot};
 use dom::bindings::str::DOMString;
 use dom::cssrule::CSSRule;
 use dom::element::Element;
@@ -16,9 +16,8 @@ use dom::window::Window;
 use dom_struct::dom_struct;
 use servo_arc::Arc;
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use style::attr::AttrValue;
-use style::properties::{DeclarationSource, Importance, PropertyDeclarationBlock, PropertyId, LonghandId, ShorthandId};
+use style::properties::{Importance, PropertyDeclarationBlock, PropertyId, LonghandId, ShorthandId};
 use style::properties::{parse_one_declaration_into, parse_style_attribute, SourcePropertyDeclaration};
 use style::selector_parser::PseudoElement;
 use style::shared_lock::Locked;
@@ -33,12 +32,12 @@ pub struct CSSStyleDeclaration {
     pseudo: Option<PseudoElement>,
 }
 
-#[derive(JSTraceable, MallocSizeOf)]
+#[derive(HeapSizeOf, JSTraceable)]
 #[must_root]
 pub enum CSSStyleOwner {
-    Element(Dom<Element>),
-    CSSRule(Dom<CSSRule>,
-            #[ignore_malloc_size_of = "Arc"]
+    Element(JS<Element>),
+    CSSRule(JS<CSSRule>,
+            #[ignore_heap_size_of = "Arc"]
             Arc<Locked<PropertyDeclarationBlock>>),
 }
 
@@ -137,10 +136,10 @@ impl CSSStyleOwner {
         }
     }
 
-    fn window(&self) -> DomRoot<Window> {
+    fn window(&self) -> Root<Window> {
         match *self {
             CSSStyleOwner::Element(ref el) => window_from_node(&**el),
-            CSSStyleOwner::CSSRule(ref rule, _) => DomRoot::from_ref(rule.global().as_window()),
+            CSSStyleOwner::CSSRule(ref rule, _) => Root::from_ref(rule.global().as_window()),
         }
     }
 
@@ -154,7 +153,7 @@ impl CSSStyleOwner {
     }
 }
 
-#[derive(MallocSizeOf, PartialEq)]
+#[derive(PartialEq, HeapSizeOf)]
 pub enum CSSModificationAccess {
     ReadWrite,
     Readonly,
@@ -192,12 +191,12 @@ impl CSSStyleDeclaration {
                owner: CSSStyleOwner,
                pseudo: Option<PseudoElement>,
                modification_access: CSSModificationAccess)
-               -> DomRoot<CSSStyleDeclaration> {
-        reflect_dom_object(
-            Box::new(CSSStyleDeclaration::new_inherited(owner, pseudo, modification_access)),
-            global,
-            CSSStyleDeclarationBinding::Wrap
-        )
+               -> Root<CSSStyleDeclaration> {
+        reflect_dom_object(box CSSStyleDeclaration::new_inherited(owner,
+                                                                  pseudo,
+                                                                  modification_access),
+                           global,
+                           CSSStyleDeclarationBinding::Wrap)
     }
 
     fn get_computed_style(&self, property: PropertyId) -> DOMString {
@@ -274,11 +273,7 @@ impl CSSStyleDeclaration {
 
             // Step 7
             // Step 8
-            *changed = pdb.extend(
-                declarations.drain(),
-                importance,
-                DeclarationSource::CssOm,
-            );
+            *changed = pdb.extend_reset(declarations.drain(), importance);
 
             Ok(())
         })
@@ -300,7 +295,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
 
     // https://dev.w3.org/csswg/cssom/#dom-cssstyledeclaration-getpropertyvalue
     fn GetPropertyValue(&self, property: DOMString) -> DOMString {
-        let id = if let Ok(id) = PropertyId::parse(&property, None) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property
@@ -311,7 +306,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
 
     // https://dev.w3.org/csswg/cssom/#dom-cssstyledeclaration-getpropertypriority
     fn GetPropertyPriority(&self, property: DOMString) -> DOMString {
-        let id = if let Ok(id) = PropertyId::parse(&property, None) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property
@@ -335,7 +330,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
                    priority: DOMString)
                    -> ErrorResult {
         // Step 3
-        let id = if let Ok(id) = PropertyId::parse(&property, None) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unknown property
@@ -352,7 +347,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
         }
 
         // Step 2 & 3
-        let id = match PropertyId::parse(&property, None) {
+        let id = match PropertyId::parse(&property) {
             Ok(id) => id,
             Err(..) => return Ok(()), // Unkwown property
         };
@@ -384,7 +379,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
             return Err(Error::NoModificationAllowed);
         }
 
-        let id = if let Ok(id) = PropertyId::parse(&property, None) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property, cannot be there to remove.
@@ -414,10 +409,10 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
     // https://dev.w3.org/csswg/cssom/#the-cssstyledeclaration-interface
     fn IndexedGetter(&self, index: u32) -> Option<DOMString> {
         self.owner.with_block(|pdb| {
-            pdb.declarations().get(index as usize).map(|declaration| {
-                let important = pdb.declarations_importance().get(index);
+            pdb.declarations().get(index as usize).map(|entry| {
+                let (ref declaration, importance) = *entry;
                 let mut css = declaration.to_css_string();
-                if important {
+                if importance.important() {
                     css += " !important";
                 }
                 DOMString::from(css)

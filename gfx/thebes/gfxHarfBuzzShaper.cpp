@@ -12,14 +12,20 @@
 #include "mozilla/Sprintf.h"
 #include "nsUnicodeProperties.h"
 #include "nsUnicodeScriptCodes.h"
+#include "nsUnicodeNormalizer.h"
 
 #include "harfbuzz/hb.h"
 #include "harfbuzz/hb-ot.h"
 
+#if ENABLE_INTL_API // ICU is available: we'll use it for Unicode composition
+                    // and decomposition in preference to nsUnicodeNormalizer.
 #include "unicode/unorm.h"
 #include "unicode/utext.h"
-
-static const UNormalizer2* sNormalizer = nullptr;
+#define MOZ_HB_SHAPER_USE_ICU_NORMALIZATION 1
+static const UNormalizer2 * sNormalizer = nullptr;
+#else
+#undef MOZ_HB_SHAPER_USE_ICU_NORMALIZATION
+#endif
 
 #include <algorithm>
 
@@ -392,11 +398,7 @@ gfxHarfBuzzShaper::HBGetGlyphVAdvance(hb_font_t *font, void *font_data,
     // and provide hinted platform-specific vertical advances (analogous to the
     // GetGlyphWidth method for horizontal advances). If that proves necessary,
     // we'll add a new gfxFont method and call it from here.
-    //
-    // We negate the value from GetGlyphVAdvance here because harfbuzz shapes
-    // with a coordinate system where positive is upwards, whereas the inline
-    // direction in which glyphs advance is downwards.
-    return -fcd->mShaper->GetGlyphVAdvance(glyph);
+    return fcd->mShaper->GetGlyphVAdvance(glyph);
 }
 
 struct VORG {
@@ -421,9 +423,6 @@ gfxHarfBuzzShaper::HBGetGlyphVOrigin(hb_font_t *font, void *font_data,
     const gfxHarfBuzzShaper::FontCallbackData *fcd =
         static_cast<const gfxHarfBuzzShaper::FontCallbackData*>(font_data);
     fcd->mShaper->GetGlyphVOrigin(glyph, x, y);
-    // Negate the value we computed from font data (see comment re coordinate
-    // system orientation in HBGetGlyphVAdvance).
-    *y = -*y;
     return true;
 }
 
@@ -1100,6 +1099,8 @@ HBUnicodeCompose(hb_unicode_funcs_t *ufuncs,
                  hb_codepoint_t     *ab,
                  void               *user_data)
 {
+#if MOZ_HB_SHAPER_USE_ICU_NORMALIZATION
+
     if (sNormalizer) {
         UChar32 ch = unorm2_composePair(sNormalizer, a, b);
         if (ch >= 0) {
@@ -1107,6 +1108,14 @@ HBUnicodeCompose(hb_unicode_funcs_t *ufuncs,
             return true;
         }
     }
+
+#else // no ICU available, use the old nsUnicodeNormalizer
+
+    if (nsUnicodeNormalizer::Compose(a, b, ab)) {
+        return true;
+    }
+
+#endif
 
     return false;
 }
@@ -1127,6 +1136,8 @@ HBUnicodeDecompose(hb_unicode_funcs_t *ufuncs,
         return true;
     }
 #endif
+
+#if MOZ_HB_SHAPER_USE_ICU_NORMALIZATION
 
     if (!sNormalizer) {
         return false;
@@ -1159,6 +1170,12 @@ HBUnicodeDecompose(hb_unicode_funcs_t *ufuncs,
     utext_close(&text);
 
     return *b != 0 || *a != ab;
+
+#else // no ICU available, use the old nsUnicodeNormalizer
+
+    return nsUnicodeNormalizer::DecomposeNonRecursively(ab, a, b);
+
+#endif
 }
 
 static void
@@ -1241,9 +1258,11 @@ gfxHarfBuzzShaper::Initialize()
                                             HBUnicodeDecompose,
                                             nullptr, nullptr);
 
+#if MOZ_HB_SHAPER_USE_ICU_NORMALIZATION
         UErrorCode error = U_ZERO_ERROR;
         sNormalizer = unorm2_getNFCInstance(&error);
-        MOZ_ASSERT(U_SUCCESS(error), "failed to get ICU normalizer");
+        NS_ASSERTION(U_SUCCESS(error), "failed to get ICU normalizer");
+#endif
     }
 
     gfxFontEntry *entry = mFont->GetFontEntry();
@@ -1256,9 +1275,11 @@ gfxHarfBuzzShaper::Initialize()
         }
         uint32_t len;
         const uint8_t* data = (const uint8_t*)hb_blob_get_data(mCmapTable, &len);
+        bool symbol;
         mCmapFormat = gfxFontUtils::
             FindPreferredSubtable(data, len,
-                                  &mSubtableOffset, &mUVSTableOffset);
+                                  &mSubtableOffset, &mUVSTableOffset,
+                                  &symbol);
         if (mCmapFormat <= 0) {
             return false;
         }
@@ -1282,15 +1303,6 @@ gfxHarfBuzzShaper::Initialize()
     hb_font_set_ppem(mHBFont, mFont->GetAdjustedSize(), mFont->GetAdjustedSize());
     uint32_t scale = FloatToFixed(mFont->GetAdjustedSize()); // 16.16 fixed-point
     hb_font_set_scale(mHBFont, scale, scale);
-
-    const auto& vars = mFont->GetStyle()->variationSettings;
-    size_t len = vars.Length();
-    if (len > 0) {
-        // Fortunately, the hb_variation_t struct is compatible with our
-        // gfxFontFeature, so we can simply cast here.
-        auto hbVars = reinterpret_cast<const hb_variation_t*>(vars.Elements());
-        hb_font_set_variations(mHBFont, hbVars, len);
-    }
 
     return true;
 }
@@ -1693,9 +1705,8 @@ gfxHarfBuzzShaper::SetGlyphsFromRun(gfxShapedText  *aShapedText,
         hb_position_t i_offset, i_advance; // inline-direction offset/advance
         hb_position_t b_offset, b_advance; // block-direction offset/advance
         if (aVertical) {
-            // our inline coordinate direction is the opposite of harfbuzz's
-            i_offset = -posInfo[glyphStart].y_offset;
-            i_advance = -posInfo[glyphStart].y_advance;
+            i_offset = posInfo[glyphStart].y_offset;
+            i_advance = posInfo[glyphStart].y_advance;
             b_offset = posInfo[glyphStart].x_offset;
             b_advance = posInfo[glyphStart].x_advance;
         } else {
@@ -1763,9 +1774,8 @@ gfxHarfBuzzShaper::SetGlyphsFromRun(gfxShapedText  *aShapedText,
                 }
 
                 if (aVertical) {
-                    // our inline coordinate direction is the opposite of HB's
-                    i_offset = baseIOffset + posInfo[glyphStart].y_offset;
-                    i_advance = -posInfo[glyphStart].y_advance;
+                    i_offset = baseIOffset - posInfo[glyphStart].y_offset;
+                    i_advance = posInfo[glyphStart].y_advance;
                     b_offset = baseBOffset - posInfo[glyphStart].x_offset;
                     b_advance = posInfo[glyphStart].x_advance;
                 } else {

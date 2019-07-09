@@ -42,20 +42,20 @@ class GkAtomSource:
     PATTERN = re.compile('^(GK_ATOM)\((.+),\s*"(.*)"\)')
     FILE = "include/nsGkAtomList.h"
     CLASS = "nsGkAtoms"
-    TYPE = "nsAtom"
+    TYPE = "nsIAtom"
 
 
 class CSSPseudoElementsAtomSource:
     PATTERN = re.compile('^(CSS_PSEUDO_ELEMENT)\((.+),\s*"(.*)",')
     FILE = "include/nsCSSPseudoElementList.h"
     CLASS = "nsCSSPseudoElements"
-    # NB: nsICSSPseudoElement is effectively the same as a nsAtom, but we need
+    # NB: nsICSSPseudoElement is effectively the same as a nsIAtom, but we need
     # this for MSVC name mangling.
     TYPE = "nsICSSPseudoElement"
 
 
 class CSSAnonBoxesAtomSource:
-    PATTERN = re.compile('^(CSS_ANON_BOX|CSS_NON_INHERITING_ANON_BOX|CSS_WRAPPER_ANON_BOX)\((.+),\s*"(.*)"\)')
+    PATTERN = re.compile('^(CSS_ANON_BOX|CSS_NON_INHERITING_ANON_BOX)\((.+),\s*"(.*)"\)')
     FILE = "include/nsCSSAnonBoxList.h"
     CLASS = "nsCSSAnonBoxes"
     TYPE = "nsICSSAnonBoxPseudo"
@@ -110,8 +110,7 @@ class Atom:
         return self.macro == "CSS_NON_INHERITING_ANON_BOX"
 
     def is_inheriting_anon_box(self):
-        return (self.macro == "CSS_ANON_BOX" or
-                self.macro == "CSS_WRAPPER_ANON_BOX")
+        return self.macro == "CSS_ANON_BOX"
 
     def is_tree_pseudo_element(self):
         return self.value.startswith(":-moz-tree-")
@@ -163,14 +162,14 @@ class FileAvoidWrite(BytesIO):
             self.close()
 
 
-IMPORTS = ("\nuse gecko_bindings::structs::nsAtom;"
+IMPORTS = ("\nuse gecko_bindings::structs::nsIAtom;"
            "\nuse string_cache::Atom;\n\n")
 
 ATOM_TEMPLATE = ("            #[link_name = \"{link_name}\"]\n"
                  "            pub static {name}: *mut {type};")
 
 UNSAFE_STATIC = ("#[inline(always)]\n"
-                 "pub unsafe fn atom_from_static(ptr: *mut nsAtom) -> Atom {\n"
+                 "pub unsafe fn atom_from_static(ptr: *mut nsIAtom) -> Atom {\n"
                  "    Atom::from_static(ptr)\n"
                  "}\n\n")
 
@@ -220,7 +219,7 @@ def write_atom_macro(atoms, file_name):
         f.write(IMPORTS)
 
         for source in SOURCES:
-            if source.TYPE != "nsAtom":
+            if source.TYPE != "nsIAtom":
                 f.write("pub enum {} {{}}\n\n".format(source.TYPE))
 
         f.write(UNSAFE_STATIC)

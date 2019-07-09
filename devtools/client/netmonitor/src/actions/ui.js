@@ -7,7 +7,6 @@
 const {
   ACTIVITY_TYPE,
   OPEN_NETWORK_DETAILS,
-  ENABLE_PERSISTENT_LOGS,
   DISABLE_BROWSER_CACHE,
   OPEN_STATISTICS,
   RESET_COLUMNS,
@@ -15,6 +14,7 @@ const {
   TOGGLE_COLUMN,
   WATERFALL_RESIZE,
 } = require("../constants");
+const { triggerActivity } = require("../connector/index");
 
 /**
  * Change network details panel.
@@ -25,18 +25,6 @@ function openNetworkDetails(open) {
   return {
     type: OPEN_NETWORK_DETAILS,
     open,
-  };
-}
-
-/**
- * Change persistent logs state.
- *
- * @param {boolean} enabled - expected persistent logs enabled state
- */
-function enablePersistentLogs(enabled) {
-  return {
-    type: ENABLE_PERSISTENT_LOGS,
-    enabled,
   };
 }
 
@@ -55,12 +43,11 @@ function disableBrowserCache(disabled) {
 /**
  * Change performance statistics panel open state.
  *
- * @param {Object} connector - connector object to the backend
  * @param {boolean} visible - expected performance statistics panel open state
  */
-function openStatistics(connector, open) {
+function openStatistics(open) {
   if (open) {
-    connector.triggerActivity(ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED);
+    triggerActivity(ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED);
   }
   return {
     type: OPEN_STATISTICS,
@@ -121,14 +108,6 @@ function toggleNetworkDetails() {
 }
 
 /**
- * Toggle persistent logs status.
- */
-function togglePersistentLogs() {
-  return (dispatch, getState) =>
-    dispatch(enablePersistentLogs(!getState().ui.persistentLogsEnabled));
-}
-
-/**
  * Toggle browser cache status.
  */
 function toggleBrowserCache() {
@@ -139,14 +118,13 @@ function toggleBrowserCache() {
 /**
  * Toggle performance statistics panel.
  */
-function toggleStatistics(connector) {
+function toggleStatistics() {
   return (dispatch, getState) =>
-    dispatch(openStatistics(connector, !getState().ui.statisticsOpen));
+    dispatch(openStatistics(!getState().ui.statisticsOpen));
 }
 
 module.exports = {
   openNetworkDetails,
-  enablePersistentLogs,
   disableBrowserCache,
   openStatistics,
   resetColumns,
@@ -154,7 +132,6 @@ module.exports = {
   selectDetailsPanelTab,
   toggleColumn,
   toggleNetworkDetails,
-  togglePersistentLogs,
   toggleBrowserCache,
   toggleStatistics,
 };

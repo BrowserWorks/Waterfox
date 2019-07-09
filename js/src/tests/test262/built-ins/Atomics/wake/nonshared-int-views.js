@@ -2,11 +2,9 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-esid: sec-atomics.wake
 description: >
   Test Atomics.wake on non-shared integer TypedArrays
 includes: [testTypedArray.js]
-features: [TypedArray]
 ---*/
 
 var ab = new ArrayBuffer(16);

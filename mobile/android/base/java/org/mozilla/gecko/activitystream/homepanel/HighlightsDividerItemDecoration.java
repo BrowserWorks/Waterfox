@@ -14,13 +14,11 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 /**
- * ItemDecoration implementation that draws horizontal divider line between items
- * in the AS newtab page.
+ * ItemDecoration implementation that draws horizontal divider line between highlight items.
  */
 /* package */ class HighlightsDividerItemDecoration extends RecyclerView.ItemDecoration {
-
-    // We do not want to draw a divider above the first item.
-    private static final int START_DRAWING_AT_POSITION = 1;
+    // We do not want to draw a divider for the first items: Top sites panel and highlights title.
+    private static final int START_DRAWING_AT_POSITION = 2;
 
     private static final int[] ATTRS = new int[]{
             android.R.attr.listDivider
@@ -39,33 +37,13 @@ import android.view.View;
         final int right = parent.getWidth() - parent.getPaddingRight();
 
         final int childCount = parent.getChildCount();
-        for (int i = 0; i < childCount; i++) {
+        for (int i = START_DRAWING_AT_POSITION; i < childCount; i++) {
             final View child = parent.getChildAt(i);
-
-            final int childPosition = parent.getChildAdapterPosition(child);
-            if (childPosition == RecyclerView.NO_POSITION
-                    || childPosition < START_DRAWING_AT_POSITION) {
-                continue;
-            }
-
-            if (child.getVisibility() == View.GONE) {
-                continue;
-            }
-
-            // Do not draw dividers above section title items.
-            final int childViewType = parent.getAdapter().getItemViewType(childPosition);
-            if (childViewType == StreamRecyclerAdapter.RowItemType.HIGHLIGHTS_TITLE.getViewType()
-                    || childViewType == StreamRecyclerAdapter.RowItemType.TOP_STORIES_TITLE.getViewType()) {
-                continue;
-            }
-
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                     .getLayoutParams();
-            final int dividerHeight = divider.getIntrinsicHeight();
-            // Use dividerHeight / 2 to account for divider height and place it evenly between the two views.
-            final int topOfDivider = child.getTop() - params.topMargin - dividerHeight / 2;
-            final int bottomOfDivider = topOfDivider + divider.getIntrinsicHeight();
-            divider.setBounds(left, topOfDivider, right, bottomOfDivider);
+            final int top = child.getBottom() + params.bottomMargin;
+            final int bottom = top + divider.getIntrinsicHeight();
+            divider.setBounds(left, top, right, bottom);
             divider.draw(c);
         }
     }

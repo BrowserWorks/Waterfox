@@ -8,7 +8,6 @@
 
 #include "MainThreadUtils.h"
 #include "mozilla/a11y/Accessible.h"
-#include "mozilla/a11y/Platform.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/mscom/MainThreadRuntime.h"
 #include "mozilla/mscom/Registration.h"
@@ -262,13 +261,6 @@ LazyInstantiator::ShouldInstantiate(const DWORD aClientTid)
     return false;
   }
   */
-
-  // Store full path to executable for support purposes.
-  nsAutoString filePath;
-  nsresult rv = clientExe->GetPath(filePath);
-  if (NS_SUCCEEDED(rv)) {
-    a11y::SetInstantiator(filePath);
-  }
 
 #if defined(MOZ_TELEMETRY_REPORTING) || defined(MOZ_CRASHREPORTER)
   if (!mTelemetryThread) {
@@ -812,12 +804,7 @@ HRESULT
 LazyInstantiator::accNavigate(long navDir, VARIANT varStart,
                               VARIANT *pvarEndUpAt)
 {
-  if (!pvarEndUpAt) {
-    return E_INVALIDARG;
-  }
-
-  RESOLVE_ROOT;
-  return mWeakAccessible->accNavigate(navDir, varStart, pvarEndUpAt);
+  return E_NOTIMPL;
 }
 
 HRESULT

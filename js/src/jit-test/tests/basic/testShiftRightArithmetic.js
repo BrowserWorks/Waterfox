@@ -2,6 +2,8 @@
  * especially important on ARM as an explicit mask is required at the native
  * instruction level. */
 
+load(libdir + 'range.js');
+
 /* Test different combinations of literals/variables. */
 var s = 4;
 var t = 100;

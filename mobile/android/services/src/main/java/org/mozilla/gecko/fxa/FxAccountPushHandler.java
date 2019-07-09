@@ -3,7 +3,6 @@ package org.mozilla.gecko.fxa;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -11,14 +10,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
-import org.mozilla.gecko.fxa.devices.FxAccountDeviceListUpdater;
 import org.mozilla.gecko.util.GeckoBundle;
 
 public class FxAccountPushHandler {
     private static final String LOG_TAG = "FxAccountPush";
 
     private static final String COMMAND_DEVICE_DISCONNECTED = "fxaccounts:device_disconnected";
-    private static final String COMMAND_PROFILE_UPDATED = "fxaccounts:profile_updated";
     private static final String COMMAND_COLLECTION_CHANGED = "sync:collection_changed";
 
     private static final String CLIENTS_COLLECTION = "clients";
@@ -47,15 +44,13 @@ public class FxAccountPushHandler {
         }
         try {
             String command = message.getString("command");
+            JSONObject data = message.getJSONObject("data");
             switch (command) {
                 case COMMAND_DEVICE_DISCONNECTED:
-                    handleDeviceDisconnection(context, message.getJSONObject("data"));
+                    handleDeviceDisconnection(context, data);
                     break;
                 case COMMAND_COLLECTION_CHANGED:
-                    handleCollectionChanged(context, message.getJSONObject("data"));
-                    break;
-                case COMMAND_PROFILE_UPDATED:
-                    handleProfileUpdated(context);
+                    handleCollectionChanged(context, data);
                     break;
                 default:
                     Log.d(LOG_TAG, "No handler defined for FxA Push command " + command);
@@ -66,16 +61,6 @@ public class FxAccountPushHandler {
         }
     }
 
-    private static void handleProfileUpdated(Context context) {
-        final Account account = FirefoxAccounts.getFirefoxAccount(context);
-        if (account == null) {
-            Log.w(LOG_TAG, "Can't change profile of non-existent Firefox Account!; push ignored");
-            return;
-        }
-        final AndroidFxAccount androidFxAccount = new AndroidFxAccount(context, account);
-        androidFxAccount.fetchProfileJSON();
-    }
-
     private static void handleVerification(Context context) {
         AndroidFxAccount fxAccount = AndroidFxAccount.fromContext(context);
         if (fxAccount == null) {
@@ -84,7 +69,7 @@ public class FxAccountPushHandler {
         }
         Log.i(LOG_TAG, "Received 'accountVerified' push event, requesting immediate sync");
         // This will trigger an email verification check and a sync.
-        fxAccount.requestImmediateSync(null, null, true);
+        fxAccount.requestImmediateSync(null, null);
     }
 
     private static void handleCollectionChanged(Context context, JSONObject data) throws JSONException {
@@ -98,7 +83,7 @@ public class FxAccountPushHandler {
                     return;
                 }
                 final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-                fxAccount.requestImmediateSync(new String[] { CLIENTS_COLLECTION }, null, true);
+                fxAccount.requestImmediateSync(new String[] { CLIENTS_COLLECTION }, null);
                 return;
             }
         }
@@ -112,11 +97,6 @@ public class FxAccountPushHandler {
         }
         final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
         if (!fxAccount.getDeviceId().equals(data.getString("id"))) {
-            // We filter our clients list with the FxA devices list, so it is necessary to fetch
-            // an updated FxA devices list in order to have an up-to-date clients list in the UI.
-            Log.i(LOG_TAG, "Another device in the account got disconnected, refreshing FxA device list.");
-            final FxAccountDeviceListUpdater deviceListUpdater = new FxAccountDeviceListUpdater(fxAccount, context.getContentResolver());
-            deviceListUpdater.update();
             return;
         }
         AccountManager.get(context).removeAccount(account, null, null);

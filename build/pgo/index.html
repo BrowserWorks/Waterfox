@@ -5,7 +5,6 @@
 
  var list = 
      [
-  "js-input/speedometer/index.html",
   "blueprint/sample.html",
   "blueprint/forms.html",
   "blueprint/grid.html",
@@ -39,19 +38,15 @@
   "js-input/sunspider/string-unpack-code.html",
   "js-input/sunspider/string-validate-input.html"
      ];
- var defaultInterval = 2000;
+ var interval = 1000;
  var idx = 0;
  var w;
  
  window.onload = function () {
      w = window.open("about:blank");
-     window.setTimeout(loadURL, defaultInterval);
+     window.setTimeout(loadURL, interval); 
  };
  function loadURL () {
-     var interval = defaultInterval;
-     if (idx == 0) {
-         interval = 90000;
-     }
      w.close();
      w = window.open(list[idx++]);
      if (idx < list.length) {

@@ -25,6 +25,10 @@
 #include "jsfriendapi.h"
 #include "ThreadAnnotation.h"
 
+#ifdef XP_WIN
+#include "mozilla/TlsAllocationTracker.h"
+#endif
+
 #if defined(XP_WIN32)
 #ifdef WIN32_LEAN_AND_MEAN
 #undef WIN32_LEAN_AND_MEAN
@@ -410,7 +414,7 @@ SetJitExceptionHandler()
  * This size is bigger than xul.dll plus some extra for MinidumpWriteDump
  * allocations.
  */
-static const SIZE_T kReserveSize = 0x5000000; // 80 MB
+static const SIZE_T kReserveSize = 0x4000000; // 64 MB
 static void* gBreakpadReservedVM;
 #endif
 
@@ -842,42 +846,25 @@ LaunchProgram(const XP_CHAR* aProgramPath, const XP_CHAR* aMinidumpPath)
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
   }
-#elif defined(XP_MACOSX)
-  // Needed to locate NSS and its dependencies
-  setenv("DYLD_LIBRARY_PATH", libraryPath, /* overwrite */ 1);
-
-  pid_t pid = 0;
-  char* const my_argv[] = {
-    const_cast<char*>(aProgramPath),
-    const_cast<char*>(aMinidumpPath),
-    nullptr
-  };
-
-  char **env = nullptr;
-  char ***nsEnv = _NSGetEnviron();
-  if (nsEnv) {
-    env = *nsEnv;
-  }
-
-  int rv = posix_spawnp(&pid, my_argv[0], nullptr, nullptr, my_argv, env);
-
-  if (rv != 0) {
-    return false;
-  }
-#else // !XP_MACOSX
+#elif defined(XP_UNIX)
   pid_t pid = sys_fork();
 
   if (pid == -1) {
     return false;
   } else if (pid == 0) {
+#ifdef XP_LINUX
     // need to clobber this, as libcurl might load NSS,
     // and we want it to load the system NSS.
     unsetenv("LD_LIBRARY_PATH");
+#else // XP_MACOSX
+    // Needed to locate NSS and its dependencies
+    setenv("DYLD_LIBRARY_PATH", libraryPath, /* overwrite */ 1);
+#endif
     Unused << execl(aProgramPath,
                     aProgramPath, aMinidumpPath, (char*)0);
     _exit(1);
   }
-#endif // XP_MACOSX
+#endif // XP_UNIX
 
   return true;
 }
@@ -1298,7 +1285,7 @@ BuildTempPath(char* aBuf, size_t aBufLen)
 static size_t
 BuildTempPath(char* aBuf, size_t aBufLen)
 {
-  // GeckoAppShell sets this in the environment
+  // GeckoAppShell or Gonk's init.rc sets this in the environment
   const char *tempenv = PR_GetEnv("TMPDIR");
   if (!tempenv) {
     return false;
@@ -1440,6 +1427,13 @@ PrepareChildExceptionTimeAnnotations()
       WriteAnnotation(apiData, "TopPendingIPCType", topPendingIPCTypeBuffer);
     }
   }
+
+#ifdef XP_WIN
+  const char* tlsAllocations = mozilla::GetTlsAllocationStacks();
+  if (tlsAllocations) {
+    WriteAnnotation(apiData, "TlsAllocations", tlsAllocations);
+  }
+#endif
 
   std::function<void(const char*)> getThreadAnnotationCB =
     [&] (const char * aAnnotation) -> void {
@@ -1686,7 +1680,7 @@ nsresult SetExceptionHandler(nsIFile* aXREDirectory,
     const char* androidPackageName = PR_GetEnv("MOZ_ANDROID_PACKAGE_NAME");
     if (androidPackageName != nullptr) {
       nsCString package(androidPackageName);
-      package.AppendLiteral("/org.mozilla.gecko.CrashReporter");
+      package.Append("/org.mozilla.gecko.CrashReporter");
       crashReporterPath = ToNewCString(package);
     } else {
       nsCString package(ANDROID_PACKAGE_NAME "/org.mozilla.gecko.CrashReporter");
@@ -3047,7 +3041,7 @@ bool
 GetIDFromMinidump(nsIFile* minidump, nsAString& id)
 {
   if (minidump && NS_SUCCEEDED(minidump->GetLeafName(id))) {
-    id.ReplaceLiteral(id.Length() - 4, 4, u"");
+    id.Replace(id.Length() - 4, 4, NS_LITERAL_STRING(""));
     return true;
   }
   return false;
@@ -3590,17 +3584,6 @@ OOPDeinit()
 #endif
 }
 
-void
-GetChildProcessTmpDir(nsIFile** aOutTmpDir)
-{
-  MOZ_ASSERT(XRE_IsParentProcess());
-#if (defined(XP_MACOSX) || defined(XP_WIN))
-  if (childProcessTmpDir) {
-    CreateFileFromPath(*childProcessTmpDir, aOutTmpDir);
-  }
-#endif
-}
-
 #if defined(XP_WIN) || defined(XP_MACOSX)
 // Parent-side API for children
 const char*
@@ -3755,14 +3738,9 @@ GetLastRunCrashID(nsAString& id)
 
 #if defined(XP_WIN) || defined(XP_MACOSX)
 void
-InitChildProcessTmpDir(nsIFile* aDirOverride)
+InitChildProcessTmpDir()
 {
   MOZ_ASSERT(!XRE_IsParentProcess());
-  if (aDirOverride) {
-    childProcessTmpDir = CreatePathFromFile(aDirOverride);
-    return;
-  }
-
   // When retrieved by the child process, this will always resolve to the
   // correct directory regardless of sandbox level.
   nsCOMPtr<nsIFile> tmpDir;
@@ -4080,32 +4058,26 @@ bool TakeMinidump(nsIFile** aResult, bool aMoveToPending)
 }
 
 inline void
-NotifyDumpResult(bool aResult,
-                 bool aAsync,
-                 std::function<void(bool)>&& aCallback,
-                 RefPtr<nsIThread>&& aCallbackThread)
+InvokeCallback(bool aAsync,
+               std::function<void()>&& aCallback,
+               RefPtr<nsIThread>&& aCallbackThread)
 {
-  std::function<void()> runnable = [&](){
-    aCallback(aResult);
-  };
-
   if (aAsync) {
     MOZ_ASSERT(!!aCallbackThread);
     Unused << aCallbackThread->Dispatch(NS_NewRunnableFunction("CrashReporter::InvokeCallback",
-                                                               Move(runnable)),
+                                                               Move(aCallback)),
                                         NS_DISPATCH_SYNC);
   } else {
-    runnable();
+    aCallback();
   }
 }
 
 void
-CreatePairedChildMinidumpAsync(ProcessHandle aTargetPid,
+CreateMinidumpsAndPairInternal(ProcessHandle aTargetPid,
                                ThreadId aTargetBlamedThread,
                                nsCString aIncomingPairName,
                                nsCOMPtr<nsIFile> aIncomingDumpToPair,
                                nsIFile** aMainDumpOut,
-                               xpstring aDumpPath,
                                std::function<void(bool)>&& aCallback,
                                RefPtr<nsIThread>&& aCallbackThread,
                                bool aAsync)
@@ -4118,43 +4090,76 @@ CreatePairedChildMinidumpAsync(ProcessHandle aTargetPid,
   ThreadId targetThread = aTargetBlamedThread;
 #endif
 
+  xpstring dump_path;
+#ifndef XP_LINUX
+  dump_path = gExceptionHandler->dump_path();
+#else
+  dump_path = gExceptionHandler->minidump_descriptor().directory();
+#endif
+
+  std::function<void()> runnable;
   // dump the target
   nsCOMPtr<nsIFile> targetMinidump;
   if (!google_breakpad::ExceptionHandler::WriteMinidumpForChild(
          aTargetPid,
          targetThread,
-         aDumpPath,
+         dump_path,
          PairedDumpCallbackExtra,
          static_cast<void*>(&targetMinidump)
 #ifdef XP_WIN32
          , GetMinidumpType()
 #endif
       )) {
-    NotifyDumpResult(false, aAsync, Move(aCallback), Move(aCallbackThread));
+    runnable = [&](){
+      aCallback(false);
+    };
+    InvokeCallback(aAsync, Move(runnable), Move(aCallbackThread));
     return;
   }
 
   nsCOMPtr<nsIFile> targetExtra;
   GetExtraFileForMinidump(targetMinidump, getter_AddRefs(targetExtra));
-  if (!targetExtra) {
-    targetMinidump->Remove(false);
 
-    NotifyDumpResult(false, aAsync, Move(aCallback), Move(aCallbackThread));
-    return;
+  // If aIncomingDumpToPair isn't valid, create a dump of this process.
+  nsCOMPtr<nsIFile> incomingDump;
+  if (aIncomingDumpToPair == nullptr) {
+    if (!google_breakpad::ExceptionHandler::WriteMinidump(
+        dump_path,
+#ifdef XP_MACOSX
+        true,
+#endif
+        PairedDumpCallback,
+        static_cast<void*>(&incomingDump)
+#ifdef XP_WIN32
+        , GetMinidumpType()
+#endif
+        )) {
+      runnable = [&](){
+        targetMinidump->Remove(false);
+        targetExtra->Remove(false);
+        aCallback(false);
+      };
+      InvokeCallback(aAsync, Move(runnable), Move(aCallbackThread));
+      return;
+    }
+  } else {
+    incomingDump = aIncomingDumpToPair;
   }
 
-  RenameAdditionalHangMinidump(aIncomingDumpToPair,
-                               targetMinidump,
-                               aIncomingPairName);
+  runnable = [&](){
+    RenameAdditionalHangMinidump(incomingDump, targetMinidump, aIncomingPairName);
 
-  if (ShouldReport()) {
-    MoveToPending(targetMinidump, targetExtra, nullptr);
-    MoveToPending(aIncomingDumpToPair, nullptr, nullptr);
-  }
+    if (ShouldReport()) {
+      MoveToPending(targetMinidump, targetExtra, nullptr);
+      MoveToPending(incomingDump, nullptr, nullptr);
+    }
 
-  targetMinidump.forget(aMainDumpOut);
+    targetMinidump.forget(aMainDumpOut);
+    aIncomingPairName = nullptr; // Release the ptr on the main thread.
 
-  NotifyDumpResult(true, aAsync, Move(aCallback), Move(aCallbackThread));
+    aCallback(true);
+  };
+  InvokeCallback(aAsync, Move(runnable), Move(aCallbackThread));
 }
 
 void
@@ -4171,39 +4176,6 @@ CreateMinidumpsAndPair(ProcessHandle aTargetPid,
     return;
   }
 
-  AutoIOInterposerDisable disableIOInterposition;
-
-  xpstring dump_path;
-#ifndef XP_LINUX
-  dump_path = gExceptionHandler->dump_path();
-#else
-  dump_path = gExceptionHandler->minidump_descriptor().directory();
-#endif
-
-  // If aIncomingDumpToPair isn't valid, create a dump of this process.
-  // This part needs to be synchronous, unfortunately, so that the parent dump
-  // contains the stack symmetrical with the child dump.
-  nsCOMPtr<nsIFile> incomingDumpToPair;
-  if (aIncomingDumpToPair == nullptr) {
-    if (!google_breakpad::ExceptionHandler::WriteMinidump(
-        dump_path,
-#ifdef XP_MACOSX
-        true,
-#endif
-        PairedDumpCallback,
-        static_cast<void*>(&incomingDumpToPair)
-#ifdef XP_WIN32
-        , GetMinidumpType()
-#endif
-        )) {
-      aCallback(false);
-      return;
-    } // else incomingDump is assigned in PairedDumpCallback().
-  } else {
-    incomingDumpToPair = aIncomingDumpToPair;
-  }
-  MOZ_ASSERT(!!incomingDumpToPair);
-
   if (aAsync &&
       !sMinidumpWriterThread &&
       NS_FAILED(NS_NewNamedThread("Minidump Writer", &sMinidumpWriterThread))) {
@@ -4211,20 +4183,20 @@ CreateMinidumpsAndPair(ProcessHandle aTargetPid,
     return;
   }
 
+  nsCOMPtr<nsIFile> incomingDumpToPair = aIncomingDumpToPair;
   nsCString incomingPairName(aIncomingPairName);
   std::function<void(bool)> callback = Move(aCallback);
-  // Don't call do_GetCurrentThread() if this is called synchronously because
+  // Don't call do_GetCurrentThread() is this is called synchronously because
   // 1. it's unnecessary, and 2. more importantly, it might create one if called
-  // from a native thread, and the thread will be leaked.
+  // from a native thread, and the thread will be leakded.
   RefPtr<nsIThread> callbackThread = aAsync ? do_GetCurrentThread() : nullptr;
 
   std::function<void()> doDump = [=]() mutable {
-    CreatePairedChildMinidumpAsync(aTargetPid,
+    CreateMinidumpsAndPairInternal(aTargetPid,
                                    aTargetBlamedThread,
                                    incomingPairName,
                                    incomingDumpToPair,
                                    aMainDumpOut,
-                                   dump_path,
                                    Move(callback),
                                    Move(callbackThread),
                                    aAsync);

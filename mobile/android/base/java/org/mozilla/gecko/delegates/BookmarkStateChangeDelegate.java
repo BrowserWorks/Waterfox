@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.ListView;
 
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoSharedPrefs;
@@ -173,7 +174,7 @@ public class BookmarkStateChangeDelegate extends BrowserAppDelegateWithReference
                     browserApp.showEditBookmarkDialog(tab.getURL());
 
                 } else if (itemId == 1) {
-                    final String extrasId = res.getResourceEntryName(R.string.contextmenu_add_page_shortcut);
+                    final String extrasId = res.getResourceEntryName(R.string.contextmenu_add_to_launcher);
                     Telemetry.sendUIEvent(TelemetryContract.Event.ACTION,
                             TelemetryContract.Method.DIALOG, extrasId);
 
@@ -184,7 +185,7 @@ public class BookmarkStateChangeDelegate extends BrowserAppDelegateWithReference
                         ThreadUtils.postToBackgroundThread(new Runnable() {
                             @Override
                             public void run() {
-                                GeckoApplication.createBrowserShortcut(title, url);
+                                GeckoApplication.createShortcut(title, url);
                             }
                         });
                     }
@@ -192,11 +193,17 @@ public class BookmarkStateChangeDelegate extends BrowserAppDelegateWithReference
             }
         });
 
-        final PromptListItem[] items = new PromptListItem[2];
-        items[0] = new PromptListItem(res.getString(R.string.contextmenu_edit_bookmark));
-        items[1] = new PromptListItem(res.getString(R.string.contextmenu_add_page_shortcut));
+        if (AppConstants.Versions.feature26Plus) {
+            final PromptListItem[] items = new PromptListItem[1];
+            items[0] = new PromptListItem(res.getString(R.string.contextmenu_edit_bookmark));
+            ps.show("", "", items, ListView.CHOICE_MODE_NONE);
+        } else {
+            final PromptListItem[] items = new PromptListItem[2];
+            items[0] = new PromptListItem(res.getString(R.string.contextmenu_edit_bookmark));
+            items[1] = new PromptListItem(res.getString(R.string.contextmenu_add_to_launcher));
 
-        ps.show("", "", items, ListView.CHOICE_MODE_NONE);
+            ps.show("", "", items, ListView.CHOICE_MODE_NONE);
+        }
     }
 
     private void showReaderModeBookmarkAddedSnackbar() {

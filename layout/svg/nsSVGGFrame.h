@@ -41,8 +41,16 @@ public:
 
   // nsIFrame interface:
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
-                                    nsAtom*        aAttribute,
+                                    nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
+
+  // nsSVGDisplayableFrame interface:
+  virtual void NotifySVGChanged(uint32_t aFlags) override;
+
+  // nsSVGContainerFrame methods:
+  virtual gfxMatrix GetCanvasTM() override;
+
+  nsAutoPtr<gfxMatrix> mCanvasTM;
 };
 
 #endif

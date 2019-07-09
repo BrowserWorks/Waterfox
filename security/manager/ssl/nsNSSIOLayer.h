@@ -10,7 +10,6 @@
 #include "TransportSecurityInfo.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/TimeStamp.h"
-#include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsDataHashtable.h"
 #include "nsIClientAuthDialogs.h"
@@ -36,8 +35,7 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
                               public nsIClientAuthUserDecision
 {
 public:
-  nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags,
-                  uint32_t providerTlsFlags);
+  nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSISSLSOCKETCONTROL
@@ -77,7 +75,6 @@ public:
   void SetSentClientCert() { mSentClientCert = true; }
 
   uint32_t GetProviderFlags() const { return mProviderFlags; }
-  uint32_t GetProviderTlsFlags() const { return mProviderTlsFlags; }
 
   mozilla::psm::SharedSSLState& SharedState();
 
@@ -121,51 +118,6 @@ public:
 
   void SetMACAlgorithmUsed(int16_t mac) { mMACAlgorithmUsed = mac; }
 
-  void SetShortWritePending(int32_t amount, unsigned char data)
-  {
-    mIsShortWritePending = true;
-    mShortWriteOriginalAmount = amount;
-    mShortWritePendingByte = data;
-  }
-
-  bool IsShortWritePending()
-  {
-    return mIsShortWritePending;
-  }
-
-  unsigned char const* GetShortWritePendingByteRef()
-  {
-    return &mShortWritePendingByte;
-  }
-
-  int32_t ResetShortWritePending()
-  {
-    mIsShortWritePending = false;
-    return mShortWriteOriginalAmount;
-  }
-
-#ifdef DEBUG
-  // These helpers assert that the caller does try to send the same data
-  // as it was previously when we hit the short-write.  This is a measure
-  // to make sure we communicate correctly to the consumer.
-  void RememberShortWrittenBuffer(const unsigned char *data)
-  {
-    mShortWriteBufferCheck = mozilla::MakeUnique<char[]>(mShortWriteOriginalAmount);
-    memcpy(mShortWriteBufferCheck.get(), data, mShortWriteOriginalAmount);
-  }
-  void CheckShortWrittenBuffer(const unsigned char *data, int32_t amount)
-  {
-    if (!mShortWriteBufferCheck) return;
-    MOZ_ASSERT(amount >= mShortWriteOriginalAmount,
-               "unexpected amount length after short write");
-    MOZ_ASSERT(!memcmp(mShortWriteBufferCheck.get(), data, mShortWriteOriginalAmount),
-               "unexpected buffer content after short write");
-    mShortWriteBufferCheck = nullptr;
-  }
-#endif
-
-  void SetSharedOwningReference(mozilla::psm::SharedSSLState* ref);
-
 protected:
   virtual ~nsNSSSocketInfo();
 
@@ -195,24 +147,6 @@ private:
   bool      mNotedTimeUntilReady;
   bool      mFailedVerification;
 
-  // True when SSL layer has indicated an "SSL short write", i.e. need
-  // to call on send one or more times to push all pending data to write.
-  bool      mIsShortWritePending;
-
-  // These are only valid if mIsShortWritePending is true.
-  //
-  // Value of the last byte pending from the SSL short write that needs
-  // to be passed to subsequent calls to send to perform the flush.
-  unsigned char mShortWritePendingByte;
-
-  // Original amount of data the upper layer has requested to write to
-  // return after the successful flush.
-  int32_t   mShortWriteOriginalAmount;
-
-#ifdef DEBUG
-  mozilla::UniquePtr<char[]> mShortWriteBufferCheck;
-#endif
-
   // mKEA* are used in false start and http/2 detetermination
   // Values are from nsISSLSocketControl
   int16_t mKEAUsed;
@@ -222,24 +156,16 @@ private:
   bool    mBypassAuthentication;
 
   uint32_t mProviderFlags;
-  uint32_t mProviderTlsFlags;
   mozilla::TimeStamp mSocketCreationTimestamp;
   uint64_t mPlaintextBytesRead;
 
   nsCOMPtr<nsIX509Cert> mClientCert;
-
-  // if non-null this is a reference to the mSharedState (which is
-  // not an owning reference). If this is used, the info has a private
-  // state that does not share things like intolerance lists with the
-  // rest of the session. This is normally used when you have per
-  // socket tls flags overriding session wide defaults.
-  RefPtr<mozilla::psm::SharedSSLState> mOwningSharedRef;
 };
 
 class nsSSLIOLayerHelpers
 {
 public:
-  explicit nsSSLIOLayerHelpers(uint32_t aTlsFlags = 0);
+  nsSSLIOLayerHelpers();
   ~nsSSLIOLayerHelpers();
 
   nsresult Init();
@@ -297,7 +223,6 @@ public:
 private:
   mozilla::Mutex mutex;
   nsCOMPtr<nsIObserver> mPrefObserver;
-  uint32_t mTlsFlags;
 };
 
 nsresult nsSSLIOLayerNewSocket(int32_t family,
@@ -308,8 +233,7 @@ nsresult nsSSLIOLayerNewSocket(int32_t family,
                                PRFileDesc** fd,
                                nsISupports** securityInfo,
                                bool forSTARTTLS,
-                               uint32_t flags,
-                               uint32_t tlsFlags);
+                               uint32_t flags);
 
 nsresult nsSSLIOLayerAddToSocket(int32_t family,
                                  const char* host,
@@ -319,8 +243,7 @@ nsresult nsSSLIOLayerAddToSocket(int32_t family,
                                  PRFileDesc* fd,
                                  nsISupports** securityInfo,
                                  bool forSTARTTLS,
-                                 uint32_t flags,
-                                 uint32_t tlsFlags);
+                                 uint32_t flags);
 
 nsresult nsSSLIOLayerFreeTLSIntolerantSites();
 nsresult displayUnknownCertErrorAlert(nsNSSSocketInfo* infoObject, int error);

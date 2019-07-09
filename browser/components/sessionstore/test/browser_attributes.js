@@ -12,27 +12,20 @@ const PREF = "browser.sessionstore.restore_on_demand";
 const PREF2 = "media.block-autoplay-until-in-foreground";
 
 add_task(async function test() {
-  Services.prefs.setBoolPref(PREF, true);
+  Services.prefs.setBoolPref(PREF, true)
   registerCleanupFunction(() => Services.prefs.clearUserPref(PREF));
 
   // Since we need to test 'activemedia-blocked' attribute.
-  Services.prefs.setBoolPref(PREF2, true);
+  Services.prefs.setBoolPref(PREF2, true)
   registerCleanupFunction(() => Services.prefs.clearUserPref(PREF2));
 
   // Add a new tab with a nice icon.
   let tab = BrowserTestUtils.addTab(gBrowser, "about:robots");
   await promiseBrowserLoaded(tab.linkedBrowser);
 
-  // Because there is debounce logic in ContentLinkHandler.jsm to reduce the
-  // favicon loads, we have to wait some time before checking that icon was
-  // stored properly.
-  await BrowserTestUtils.waitForCondition(() => {
-    return gBrowser.getIcon(tab) != null;
-  }, "wait for favicon load to finish", 100, 5);
-
-  // Check that the tab has 'image' and 'iconloadingprincipal' attributes.
+  // Check that the tab has 'image' and 'iconLoadingPrincipal' attributes.
   ok(tab.hasAttribute("image"), "tab.image exists");
-  ok(tab.hasAttribute("iconloadingprincipal"), "tab.iconloadingprincipal exists");
+  ok(tab.hasAttribute("iconLoadingPrincipal"), "tab.iconLoadingPrincipal exists");
 
   tab.toggleMuteAudio();
   // Check that the tab has a 'muted' attribute.
@@ -45,11 +38,11 @@ add_task(async function test() {
   // Make sure we do not persist 'image','muted' and 'activemedia-blocked' attributes.
   ss.persistTabAttribute("image");
   ss.persistTabAttribute("muted");
-  ss.persistTabAttribute("iconloadingprincipal");
+  ss.persistTabAttribute("iconLoadingPrincipal");
   ss.persistTabAttribute("activemedia-blocked");
   let {attributes} = JSON.parse(ss.getTabState(tab));
   ok(!("image" in attributes), "'image' attribute not saved");
-  ok(!("iconloadingprincipal" in attributes), "'iconloadingprincipal' attribute not saved");
+  ok(!("iconLoadingPrincipal" in attributes), "'iconLoadingPrincipal' attribute not saved");
   ok(!("muted" in attributes), "'muted' attribute not saved");
   ok(!("custom" in attributes), "'custom' attribute not saved");
   ok(!("activemedia-blocked" in attributes), "'activemedia-blocked' attribute not saved");

@@ -616,6 +616,7 @@ nsMathMLContainerFrame::PropagatePresentationDataFromChildAt(nsIFrame*       aPa
 
 void
 nsMathMLContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                         const nsRect&           aDirtyRect,
                                          const nsDisplayListSet& aLists)
 {
   // report an error if something wrong was found in this frame
@@ -630,7 +631,8 @@ nsMathMLContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   DisplayBorderBackgroundOutline(aBuilder, aLists);
 
-  BuildDisplayListForNonBlockChildren(aBuilder, aLists, DISPLAY_CHILD_INLINE);
+  BuildDisplayListForNonBlockChildren(aBuilder, aDirtyRect, aLists,
+                                      DISPLAY_CHILD_INLINE);
 
 #if defined(DEBUG) && defined(SHOW_BOUNDING_BOX)
   // for visual debug
@@ -763,7 +765,7 @@ nsMathMLContainerFrame::RemoveFrame(ChildListID     aListID,
 
 nsresult
 nsMathMLContainerFrame::AttributeChanged(int32_t         aNameSpaceID,
-                                         nsAtom*        aAttribute,
+                                         nsIAtom*        aAttribute,
                                          int32_t         aModType)
 {
   // XXX Since they are numerous MathML attributes that affect layout, and
@@ -868,8 +870,6 @@ nsMathMLContainerFrame::Reflow(nsPresContext*           aPresContext,
                                nsReflowStatus&          aStatus)
 {
   MarkInReflow();
-  MOZ_ASSERT(aStatus.IsEmpty(), "Caller should pass a fresh reflow status!");
-
   mPresentationData.flags &= ~NS_MATHML_ERROR;
   aDesiredSize.Width() = aDesiredSize.Height() = 0;
   aDesiredSize.SetBlockStartAscent(0);
@@ -947,6 +947,7 @@ nsMathMLContainerFrame::Reflow(nsPresContext*           aPresContext,
   // Place children now by re-adjusting the origins to align the baselines
   FinalizeReflow(drawTarget, aDesiredSize);
 
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
@@ -1536,7 +1537,7 @@ nsMathMLContainerFrame::ReportChildCountError()
 }
 
 nsresult
-nsMathMLContainerFrame::ReportInvalidChildError(nsAtom* aChildTag)
+nsMathMLContainerFrame::ReportInvalidChildError(nsIAtom* aChildTag)
 {
   const char16_t* argv[] =
     { aChildTag->GetUTF16String(),
@@ -1549,9 +1550,7 @@ nsMathMLContainerFrame::ReportInvalidChildError(nsAtom* aChildTag)
 nsContainerFrame*
 NS_NewMathMLmathBlockFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 {
-  auto newFrame = new (aPresShell) nsMathMLmathBlockFrame(aContext);
-  newFrame->AddStateBits(NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS);
-  return newFrame;
+  return new (aPresShell) nsMathMLmathBlockFrame(aContext);
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmathBlockFrame)

@@ -251,7 +251,11 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsNavHistoryResult, NS_NAVHISTORYRESULT_IID)
   NS_IMETHOD GetFromVisitId(int64_t* aFromVisitId) override \
     { return nsNavHistoryResultNode::GetFromVisitId(aFromVisitId); } \
   NS_IMETHOD GetVisitType(uint32_t* aVisitType) override \
-    { return nsNavHistoryResultNode::GetVisitType(aVisitType); }
+    { return nsNavHistoryResultNode::GetVisitType(aVisitType); } \
+  NS_IMETHOD GetParentFolder(nsACString& aParentFolder) override \
+    { return nsNavHistoryResultNode::GetParentFolder(aParentFolder); } \
+  NS_IMETHOD GetParentPath(nsACString& aParentPath) override \
+    { return nsNavHistoryResultNode::GetParentPath(aParentPath); } 
 
 class nsNavHistoryResultNode : public nsINavHistoryResultNode
 {
@@ -278,6 +282,8 @@ public:
   NS_IMETHOD GetVisitId(int64_t* aVisitId) override;
   NS_IMETHOD GetFromVisitId(int64_t* aFromVisitId) override;
   NS_IMETHOD GetVisitType(uint32_t* aVisitType) override;
+  NS_IMETHOD GetParentFolder(nsACString& aParentFolder) override;
+  NS_IMETHOD GetParentPath(nsACString& aParentPath) override;
 
   virtual void OnRemoving();
 
@@ -373,6 +379,8 @@ public:
   int64_t mFromVisitId;
   PRTime mDateAdded;
   PRTime mLastModified;
+  nsCString mParentFolder;
+  nsCString mParentPath;
 
   // The indent level of this node. The root node will have a value of -1.  The
   // root's children will have a value of 0, and so on.
@@ -559,6 +567,22 @@ public:
   static int32_t SortComparison_FrecencyGreater(nsNavHistoryResultNode* a,
                                                 nsNavHistoryResultNode* b,
                                                 void* closure);
+
+  static int32_t SortComparison_ParentFolderLess(nsNavHistoryResultNode* a,
+                                             nsNavHistoryResultNode* b,
+                                             void* closure);
+  static int32_t SortComparison_ParentFolderGreater(nsNavHistoryResultNode* a,
+                                                nsNavHistoryResultNode* b,
+                                                void* closure);
+
+  static int32_t SortComparison_ParentPathLess(nsNavHistoryResultNode* a,
+                                             nsNavHistoryResultNode* b,
+                                             void* closure);
+  static int32_t SortComparison_ParentPathGreater(nsNavHistoryResultNode* a,
+                                                nsNavHistoryResultNode* b,
+                                                void* closure);
+
+
 
   // finding children: THESE DO NOT ADDREF
   nsNavHistoryResultNode* FindChildURI(const nsACString& aSpec,

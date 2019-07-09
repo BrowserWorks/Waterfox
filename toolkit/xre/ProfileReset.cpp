@@ -45,7 +45,7 @@ CreateResetProfile(nsIToolkitProfileService* aProfileSvc, const nsACString& aOld
     newProfileName.Assign(aOldProfileName);
     newProfileName.Append("-");
   } else {
-    newProfileName.AssignLiteral("default-");
+    newProfileName.Assign("default-");
   }
   newProfileName.Append(nsPrintfCString("%" PRId64, PR_Now() / 1000));
   nsresult rv = aProfileSvc->CreateProfile(nullptr, // choose a default dir for us
@@ -87,11 +87,11 @@ ProfileResetCleanup(nsIToolkitProfile* aOldProfile)
   NS_ConvertUTF8toUTF16 appName(gAppData->name);
   const char16_t* params[] = {appName.get(), appName.get()};
 
-  nsAutoString resetBackupDirectoryName;
+  nsXPIDLString resetBackupDirectoryName;
 
   static const char* kResetBackupDirectory = "resetBackupDirectory";
   rv = sb->FormatStringFromName(kResetBackupDirectory, params, 2,
-                                resetBackupDirectoryName);
+                                getter_Copies(resetBackupDirectoryName));
 
   // Get info to copy the old root profile dir to the desktop as a backup.
   nsCOMPtr<nsIFile> backupDest, containerDest, profileDest;

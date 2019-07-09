@@ -41,16 +41,14 @@
 // platform HTML (CF_HTML on win32)
 //
 void
-nsPrimitiveHelpers :: CreatePrimitiveForData ( const nsACString& aFlavor, const void* aDataBuff,
+nsPrimitiveHelpers :: CreatePrimitiveForData ( const char* aFlavor, const void* aDataBuff,
                                                  uint32_t aDataLen, nsISupports** aPrimitive )
 {
   if ( !aPrimitive )
     return;
 
-  if ( aFlavor.EqualsLiteral(kTextMime) ||
-       aFlavor.EqualsLiteral(kNativeHTMLMime) ||
-       aFlavor.EqualsLiteral(kRTFMime) ||
-       aFlavor.EqualsLiteral(kCustomTypesMime)) {
+  if ( strcmp(aFlavor,kTextMime) == 0 || strcmp(aFlavor,kNativeHTMLMime) == 0 ||
+       strcmp(aFlavor,kRTFMime) == 0 || strcmp(aFlavor,kCustomTypesMime) == 0) {
     nsCOMPtr<nsISupportsCString> primitive =
         do_CreateInstance(NS_SUPPORTS_CSTRING_CONTRACTID);
     if ( primitive ) {
@@ -108,7 +106,7 @@ nsPrimitiveHelpers :: CreatePrimitiveForCFHTML ( const void* aDataBuff,
     return;
   memcpy(utf8, aDataBuff, *aDataLen);
   int32_t signedLen = static_cast<int32_t>(*aDataLen);
-  nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks(nsDependentCString(kTextMime), &utf8, &signedLen);
+  nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks(kTextMime, &utf8, &signedLen);
   *aDataLen = signedLen;
 
   nsAutoString str(NS_ConvertUTF8toUTF16(reinterpret_cast<const char*>(utf8), *aDataLen));
@@ -127,7 +125,7 @@ nsPrimitiveHelpers :: CreatePrimitiveForCFHTML ( const void* aDataBuff,
 // parameter does not reflect that.
 //
 void
-nsPrimitiveHelpers :: CreateDataFromPrimitive ( const nsACString& aFlavor, nsISupports* aPrimitive,
+nsPrimitiveHelpers :: CreateDataFromPrimitive ( const char* aFlavor, nsISupports* aPrimitive,
                                                    void** aDataBuff, uint32_t aDataLen )
 {
   if ( !aDataBuff )
@@ -135,8 +133,7 @@ nsPrimitiveHelpers :: CreateDataFromPrimitive ( const nsACString& aFlavor, nsISu
 
   *aDataBuff = nullptr;
 
-  if (aFlavor.EqualsLiteral(kTextMime) ||
-      aFlavor.EqualsLiteral(kCustomTypesMime)) {
+  if ( strcmp(aFlavor,kTextMime) == 0 || strcmp(aFlavor,kCustomTypesMime) == 0) {
     nsCOMPtr<nsISupportsCString> plainText ( do_QueryInterface(aPrimitive) );
     if ( plainText ) {
       nsAutoCString data;
@@ -167,7 +164,7 @@ nsPrimitiveHelpers :: CreateDataFromPrimitive ( const nsACString& aFlavor, nsISu
 // NOTE: this assumes that it can use 'free' to dispose of the old buffer.
 //
 nsresult
-nsLinebreakHelpers :: ConvertPlatformToDOMLinebreaks ( const nsACString& inFlavor, void** ioData,
+nsLinebreakHelpers :: ConvertPlatformToDOMLinebreaks ( const char* inFlavor, void** ioData,
                                                           int32_t* ioLengthInBytes )
 {
   NS_ASSERTION ( ioData && *ioData && ioLengthInBytes, "Bad Params");
@@ -176,8 +173,7 @@ nsLinebreakHelpers :: ConvertPlatformToDOMLinebreaks ( const nsACString& inFlavo
 
   nsresult retVal = NS_OK;
 
-  if (inFlavor.EqualsLiteral(kTextMime) ||
-      inFlavor.EqualsLiteral(kRTFMime)) {
+  if ( strcmp(inFlavor, kTextMime) == 0 || strcmp(inFlavor, kRTFMime) == 0) {
     char* buffAsChars = reinterpret_cast<char*>(*ioData);
     char* oldBuffer = buffAsChars;
     retVal = nsLinebreakConverter::ConvertLineBreaksInSitu ( &buffAsChars, nsLinebreakConverter::eLinebreakAny,
@@ -189,7 +185,7 @@ nsLinebreakHelpers :: ConvertPlatformToDOMLinebreaks ( const nsACString& inFlavo
       *ioData = buffAsChars;
     }
   }
-  else if (inFlavor.EqualsLiteral("image/jpeg")) {
+  else if ( strcmp(inFlavor, "image/jpeg") == 0 ) {
     // I'd assume we don't want to do anything for binary data....
   }
   else {

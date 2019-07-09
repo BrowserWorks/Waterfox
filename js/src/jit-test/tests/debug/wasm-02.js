@@ -1,6 +1,6 @@
 // Tests that wasm module scripts are available via onNewScript.
 
-if (!wasmDebuggingIsSupported())
+if (!wasmIsSupported())
   quit();
 
 var g = newGlobal();
