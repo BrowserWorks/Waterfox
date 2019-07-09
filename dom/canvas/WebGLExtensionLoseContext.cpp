@@ -11,24 +11,18 @@
 namespace mozilla {
 
 WebGLExtensionLoseContext::WebGLExtensionLoseContext(WebGLContext* webgl)
-    : WebGLExtensionBase(webgl)
-{
+    : WebGLExtensionBase(webgl) {}
+
+WebGLExtensionLoseContext::~WebGLExtensionLoseContext() {}
+
+void WebGLExtensionLoseContext::LoseContext() {
+  if (!mContext) return;
+  mContext->LoseContext();
 }
 
-WebGLExtensionLoseContext::~WebGLExtensionLoseContext()
-{
-}
-
-void
-WebGLExtensionLoseContext::LoseContext()
-{
-    mContext->LoseContext();
-}
-
-void
-WebGLExtensionLoseContext::RestoreContext()
-{
-    mContext->RestoreContext();
+void WebGLExtensionLoseContext::RestoreContext() {
+  if (!mContext) return;
+  mContext->RestoreContext();
 }
 
 IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionLoseContext, WEBGL_lose_context)

@@ -6,8 +6,8 @@
 #ifndef WEBGLOBJECTMODEL_H_
 #define WEBGLOBJECTMODEL_H_
 
+#include "mozilla/WeakPtr.h"
 #include "nsCycleCollectionNoteChild.h"
-
 #include "WebGLTypes.h"
 
 namespace mozilla {
@@ -20,17 +20,17 @@ class WebGLContext;
 // This class is a mixin for objects that are tied to a specific
 // context (which is to say, all of them).  They provide initialization
 // as well as comparison with the current context.
-class WebGLContextBoundObject
-{
-public:
-    WebGLContext* const mContext;
-private:
-    const uint32_t mContextGeneration;
+class WebGLContextBoundObject {
+ public:
+  const WeakPtr<WebGLContext> mContext;
 
-public:
-    explicit WebGLContextBoundObject(WebGLContext* webgl);
+ private:
+  const uint32_t mContextGeneration;
 
-    bool IsCompatibleWithContext(const WebGLContext* other) const;
+ public:
+  explicit WebGLContextBoundObject(WebGLContext* webgl);
+
+  bool IsCompatibleWithContext(const WebGLContext* other) const;
 };
 
 ////

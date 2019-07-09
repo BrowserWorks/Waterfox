@@ -298,7 +298,7 @@ class WebGLContext
     , public WebGLContextUnchecked
     , public WebGLRectangleObject
     , public nsWrapperCache
-{
+    , public SupportsWeakPtr<WebGLContext> {
     friend class ScopedDrawHelper;
     friend class ScopedDrawWithTransformFeedback;
     friend class ScopedFBRebinder;
@@ -350,6 +350,7 @@ public:
 
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(WebGLContext,
                                                            nsIDOMWebGLRenderingContext)
+    MOZ_DECLARE_WEAKREFERENCE_TYPENAME(WebGLContext)
 
     virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override = 0;
 
