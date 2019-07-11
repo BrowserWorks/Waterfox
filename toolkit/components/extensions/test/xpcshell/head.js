@@ -26,6 +26,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 // These values may be changed in later head files and tested in check_remote
 // below.
 Services.prefs.setBoolPref("extensions.webextensions.remote", false);
+Services.prefs.setBoolPref("dom.serviceWorkers.enabled", true);
 const testEnv = {
   expectRemote: false,
 };
@@ -210,4 +211,3 @@ async function withHandlingUserInput(extension, fn) {
   await fn();
   await MessageChannel.sendMessage(messageManager, "ExtensionTest:HandleUserInput", false);
 }
-

@@ -228,7 +228,9 @@ var gURLBarHandler = {
    * binding is only applied before the initial xul layout.
    */
   formatValue() {
-    if (typeof this.textbox.formatValue == "function") {
+    if (this.quantumbar) {
+      this.urlbar.formatValue();
+    } else if (typeof this.textbox.formatValue == "function") {
       this.textbox.formatValue();
     }
   },
@@ -6686,8 +6688,11 @@ function promptRemoveExtension(addon) {
   let checkboxState = {value: false};
   let checkboxMessage = null;
 
-  // Enable abuse report checkbox in the remove extension dialog.
-  if (gHtmlAboutAddonsEnabled && gAddonAbuseReportEnabled) {
+  // Enable abuse report checkbox in the remove extension dialog,
+  // if enabled by the about:config prefs and the addon type
+  // is currently supported.
+  if (gHtmlAboutAddonsEnabled && gAddonAbuseReportEnabled &&
+      ["extension", "theme"].includes(addon.type)) {
     checkboxMessage = getFormattedString("webext.remove.abuseReportCheckbox.message", [
       document.getElementById("bundle_brand").getString("vendorShortName"),
     ]);

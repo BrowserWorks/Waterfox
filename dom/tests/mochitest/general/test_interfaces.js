@@ -818,11 +818,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PublicKeyCredential"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PushManager", insecureContext: true, fennecOrDesktop: true },
+    {name: "PushManager", insecureContext: true, fennec: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PushSubscription", insecureContext: true, fennecOrDesktop: true },
+    {name: "PushSubscription", insecureContext: true, fennec: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PushSubscriptionOptions", insecureContext: true, fennecOrDesktop: true },
+    {name: "PushSubscriptionOptions", insecureContext: true, fennec: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "RadioNodeList", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -884,11 +884,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "Selection", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorker", insecureContext: true},
+    {name: "ServiceWorker", insecureContext: true, fennec: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorkerContainer", insecureContext: false},
+    {name: "ServiceWorkerContainer", insecureContext: false, fennec: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorkerRegistration", insecureContext: true},
+    {name: "ServiceWorkerRegistration", insecureContext: true, fennec: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ScopedCredential", insecureContext: true, disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!

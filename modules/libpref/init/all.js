@@ -1280,7 +1280,8 @@ pref("dom.storage.enabled", true);
 // See bug 1517090 for enabling this on Nightly.
 // See bug 1534736 for changing it to EARLY_BETA_OR_EARLIER.
 // See bug 1539835 for enabling this unconditionally.
-pref("dom.storage.next_gen", true);
+// See bug 1562942 for disabling this in late 68.
+pref("dom.storage.next_gen", false);
 pref("dom.storage.default_quota",      5120);
 pref("dom.storage.shadow_writes", true);
 pref("dom.storage.snapshot_prefill", 16384);
@@ -3365,6 +3366,15 @@ pref("dom.largeAllocationHeader.enabled", true);
 
 // Disable e10s for Gecko by default. This is overridden in firefox.js.
 pref("browser.tabs.remote.autostart", false);
+
+// Disable fission for Gecko by default. Lock it on release and beta because
+// it is not ready for use and can leak URIs to telemetry until bug 1561653 is
+// fixed.
+#ifdef RELEASE_OR_BETA
+pref("fission.autostart", false, locked);
+#else
+pref("fission.autostart", false);
+#endif
 
 // Pref to control whether we use separate content processes for top-level load
 // of file:// URIs.

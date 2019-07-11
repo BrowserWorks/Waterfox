@@ -10,7 +10,6 @@ transforms:
 
 kind-dependencies:
     - build-signing
-    - google-play-strings
     - push-apk-checks
 
 job-defaults:
@@ -30,13 +29,12 @@ job-defaults:
             by-release-level:
                 production: true
                 staging: false
-    requires: all-resolved
     scopes:  # see transforms
     treeherder:
         platform: Android/opt
         tier: 2
         kind: other
-    run-on-projects: ['try', 'mozilla-beta', 'mozilla-esr68']
+    run-on-projects: ['try', 'mozilla-esr68']
 
 jobs:
     push-apk-nightly/opt:
@@ -66,3 +64,22 @@ jobs:
                     staging: null
         treeherder:
             symbol: pub(gp-b)
+
+    push-apk-release/opt:
+        attributes:
+            release-type: release
+        worker:
+            google-play-track:
+                by-release-level:
+                    production: rollout
+                    staging: alpha
+            rollout-percentage:
+                by-release-level:
+                    # XXX Change this value if google-play-track becomes rollout
+                    production:
+                        by-release-type:
+                            esr68-rc: 5
+                            default: 10
+                    staging: null
+        treeherder:
+            symbol: pub(gp-r)

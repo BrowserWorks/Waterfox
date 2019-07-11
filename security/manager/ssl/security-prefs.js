@@ -55,7 +55,7 @@ pref("security.password_lifetime",       30);
 // This preference takes precedence over "security.enterprise_roots.enabled".
 pref("security.family_safety.mode", 2);
 
-pref("security.enterprise_roots.enabled", false);
+pref("security.enterprise_roots.enabled", true);
 
 // The supported values of this pref are:
 // 0: do not fetch OCSP

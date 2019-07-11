@@ -6,6 +6,11 @@
 // are correctly fetched via the service worker in the stylesheet editor.
 
 add_task(async function() {
+  await SpecialPowers.pushPrefEnv({"set": [
+    ["dom.serviceWorkers.enabled", true],
+    ["dom.serviceWorkers.testing.enabled", true],
+  ]});
+
   const TEST_URL = "https://test1.example.com/browser/devtools/client/styleeditor/test/bug_1405342_serviceworker_iframes.html";
   const { ui } = await openStyleEditorForURL(TEST_URL);
 

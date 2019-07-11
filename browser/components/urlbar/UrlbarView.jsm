@@ -114,6 +114,18 @@ class UrlbarView {
   }
 
   /**
+   * @returns {number}
+   *   The number of visible results in the view.  Note that this may be larger
+   *   than the number of results in the current query context since the view
+   *   may be showing stale results.
+   */
+  get visibleItemCount() {
+    return Array.reduce(this._rows.children, (sum, r) => {
+      return sum + Number(this._isRowVisible(r));
+    }, 0);
+  }
+
+  /**
    * Moves the view selection forward or backward.
    *
    * @param {number} amount
@@ -217,7 +229,9 @@ class UrlbarView {
         });
       } else {
         // Clear the selection when we get a new set of results.
-        this._selectItem(null);
+        this._selectItem(null, {
+          updateInput: false,
+        });
       }
       // Hide the one-off search buttons if the search string is empty, or
       // starts with a potential @ search alias or the search restriction

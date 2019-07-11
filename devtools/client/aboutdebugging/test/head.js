@@ -401,6 +401,7 @@ async function enableServiceWorkerDebugging() {
   const options = { "set": [
     // Enable service workers.
     ["dom.serviceWorkers.enabled", true],
+    ["dom.push.enabled", true],
     // Accept workers from mochitest's http.
     ["dom.serviceWorkers.testing.enabled", true],
     // Force single content process.

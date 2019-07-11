@@ -26,6 +26,9 @@ pref("geckoview.logging", "Warn");
 pref("geckoview.logging", "Debug");
 #endif
 
+// Disable ServiceWorkers on ESR68 for non-Fennec
+pref("dom.serviceWorkers.enabled", false);
+
 // Disable Web Push until we get it working
 pref("dom.push.enabled", false);
 

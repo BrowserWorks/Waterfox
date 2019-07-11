@@ -677,6 +677,9 @@ nsFocusManager::WindowRaised(mozIDOMWindowProxy* aWindow) {
   // Events for child process windows will be sent when ParentActivated
   // is called.
   if (XRE_IsParentProcess()) {
+    // Popping upon lowering was inhibited to accommodate ATOK,
+    // so we need to do it here.
+    BrowserParent::PopFocusAll();
     ActivateOrDeactivate(window, true);
   }
 
@@ -3364,7 +3367,7 @@ nsresult nsFocusManager::GetNextTabbableContent(
       // that is not owned by document in frame traversal.
       nsIContent* currentContent = frame->GetContent();
       nsIContent* oldTopLevelScopeOwner = currentTopLevelScopeOwner;
-      if (oldTopLevelScopeOwner != currentContent) {
+      if (!aForward || oldTopLevelScopeOwner != currentContent) {
         currentTopLevelScopeOwner = GetTopLevelScopeOwner(currentContent);
       } else {
         currentTopLevelScopeOwner = currentContent;

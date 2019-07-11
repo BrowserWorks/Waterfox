@@ -1194,6 +1194,12 @@ function defineAddonWrapperProperty(name, getter) {
 
     let [result, usedRepository] = chooseValue(addon, addon.selectedLocale, aProp);
 
+    if (result == null) {
+      // Legacy add-ons may be partially localized. Fall back to the default
+      // locale ensure that the result is a string where possible.
+      [result, usedRepository] = chooseValue(addon, addon.defaultLocale, aProp);
+    }
+
     if (result && !usedRepository && aProp == "creator")
       return new AddonManagerPrivate.AddonAuthor(result);
 
@@ -2886,7 +2892,7 @@ this.XPIDatabaseReconcile = {
       // Do some blocklist checks. These will happen after we've just saved everything,
       // because they're async and depend on the blocklist loading. When we're done, save
       // the data if any of the add-ons' blocklist state has changed.
-      AddonManager.shutdown.addBlocker(
+      AddonManager.beforeShutdown.addBlocker(
         "Update add-on blocklist state into add-on DB",
         (async () => {
           // Avoid querying the AddonManager immediately to give startup a chance

@@ -1687,43 +1687,15 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
     ////////////////////////////////////
     // FEATURE_WEBRENDER
 
-    // We are blocking most hardware explicitly in gfxPlatform.cpp where we
-    // check for the WEBRENDER_QUALIFIED feature. However we also want to block
-    // some specific Nvidia cards for being too low-powered, so we do that here.
+    // Block WebRender on all Windows
     APPEND_TO_DRIVER_BLOCKLIST2(
-        OperatingSystem::Windows10,
-        (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorNVIDIA),
-        (nsAString&)GfxDriverInfo::GetDriverVendor(DriverVendorAll),
-        (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(NvidiaBlockWebRender),
-        nsIGfxInfo::FEATURE_WEBRENDER, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
-        DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions,
-        "FEATURE_UNQUALIFIED_WEBRENDER_NVIDIA_BLOCKED");
-
-    // Block all windows versions other than windows 10
-    APPEND_TO_DRIVER_BLOCKLIST2(
-        OperatingSystem::Windows7,
+        OperatingSystem::Windows,
         (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorAll),
         (nsAString&)GfxDriverInfo::GetDriverVendor(DriverVendorAll),
         GfxDriverInfo::allDevices, nsIGfxInfo::FEATURE_WEBRENDER,
         nsIGfxInfo::FEATURE_BLOCKED_DEVICE, DRIVER_LESS_THAN,
         GfxDriverInfo::allDriverVersions,
-        "FEATURE_UNQUALIFIED_WEBRENDER_WINDOWS_7");
-    APPEND_TO_DRIVER_BLOCKLIST2(
-        OperatingSystem::Windows8,
-        (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorAll),
-        (nsAString&)GfxDriverInfo::GetDriverVendor(DriverVendorAll),
-        GfxDriverInfo::allDevices, nsIGfxInfo::FEATURE_WEBRENDER,
-        nsIGfxInfo::FEATURE_BLOCKED_DEVICE, DRIVER_LESS_THAN,
-        GfxDriverInfo::allDriverVersions,
-        "FEATURE_UNQUALIFIED_WEBRENDER_WINDOWS_8");
-    APPEND_TO_DRIVER_BLOCKLIST2(
-        OperatingSystem::Windows8_1,
-        (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorAll),
-        (nsAString&)GfxDriverInfo::GetDriverVendor(DriverVendorAll),
-        GfxDriverInfo::allDevices, nsIGfxInfo::FEATURE_WEBRENDER,
-        nsIGfxInfo::FEATURE_BLOCKED_DEVICE, DRIVER_LESS_THAN,
-        GfxDriverInfo::allDriverVersions,
-        "FEATURE_UNQUALIFIED_WEBRENDER_WINDOWS_8_1");
+        "FEATURE_UNQUALIFIED_WEBRENDER_WINDOWS");
   }
   return *sDriverInfo;
 }
