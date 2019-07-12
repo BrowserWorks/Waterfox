@@ -745,6 +745,14 @@ VARCACHE_PREF(
   bool, false
 )
 
+// This pref governs whether we run webextensions in a separate process (true)
+// or the parent/main process (false)
+VARCACHE_PREF(
+  "extensions.webextensions.remote",
+  extensions_webextensions_remote,
+  bool, false
+)
+
 //---------------------------------------------------------------------------
 // Full-screen prefs
 //---------------------------------------------------------------------------
