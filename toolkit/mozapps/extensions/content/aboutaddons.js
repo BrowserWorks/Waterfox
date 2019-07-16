@@ -55,6 +55,8 @@ XPCOMUtils.defineLazyPreferenceGetter(
   "extensions.htmlaboutaddons.recommendations.enabled", false);
 
 const PLUGIN_ICON_URL = "chrome://global/skin/plugins/pluginGeneric.svg";
+const EXTENSION_ICON_URL =
+  "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 const PERMISSION_MASKS = {
   "ask-to-activate": AddonManager.PERM_CAN_ASK_TO_ACTIVATE,
   enable: AddonManager.PERM_CAN_ENABLE,
@@ -1706,7 +1708,9 @@ class AddonCard extends HTMLElement {
     if (addon.type == "plugin") {
       icon = PLUGIN_ICON_URL;
     } else {
-      icon = AddonManager.getPreferredIconURL(addon, 32, window);
+      icon =
+        AddonManager.getPreferredIconURL(addon, 32, window) ||
+        EXTENSION_ICON_URL;
     }
     card.querySelector(".addon-icon").src = icon;
 
