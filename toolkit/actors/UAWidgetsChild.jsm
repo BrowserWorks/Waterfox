@@ -6,8 +6,10 @@
 
 var EXPORTED_SYMBOLS = ["UAWidgetsChild"];
 
-const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { ActorChild } = ChromeUtils.import(
+  "resource://gre/modules/ActorChild.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 class UAWidgetsChild extends ActorChild {
   constructor(dispatcher) {
@@ -76,25 +78,33 @@ class UAWidgetsChild extends ActorChild {
     }
 
     if (!uri || !widgetName) {
-      Cu.reportError("Getting a UAWidgetSetupOrChange event on undefined element.");
+      Cu.reportError(
+        "Getting a UAWidgetSetupOrChange event on undefined element."
+      );
       return;
     }
 
     let shadowRoot = aElement.openOrClosedShadowRoot;
     if (!shadowRoot) {
-      Cu.reportError("Getting a UAWidgetSetupOrChange event without the Shadow Root.");
+      Cu.reportError(
+        "Getting a UAWidgetSetupOrChange event without the Shadow Root."
+      );
       return;
     }
 
     let isSystemPrincipal = aElement.nodePrincipal.isSystemPrincipal;
-    let sandbox = isSystemPrincipal ?
-      Object.create(null) : Cu.getUAWidgetScope(aElement.nodePrincipal);
+    let sandbox = isSystemPrincipal
+      ? Object.create(null)
+      : Cu.getUAWidgetScope(aElement.nodePrincipal);
 
     if (!sandbox[widgetName]) {
       Services.scriptloader.loadSubScript(uri, sandbox);
     }
 
-    let prefs = Cu.cloneInto(this.getPrefsForUAWidget(widgetName, prefKeys), sandbox);
+    let prefs = Cu.cloneInto(
+      this.getPrefsForUAWidget(widgetName, prefKeys),
+      sandbox
+    );
 
     let widget = new sandbox[widgetName](shadowRoot, prefs);
     if (!isSystemPrincipal) {
