@@ -1,4 +1,4 @@
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // Versions to test listed in ascending order, none can be equal
 var comparisons = [
@@ -24,22 +24,20 @@ var comparisons = [
 ];
 
 // Every version in this list means the same version number
-var equality = [
-  "1.1pre",
-  "1.1pre0",
-  "1.0+",
-];
+var equality = ["1.1pre", "1.1pre0", "1.0+"];
 
 function run_test() {
   for (var i = 0; i < comparisons.length; i++) {
     for (var j = 0; j < comparisons.length; j++) {
       var result = Services.vc.compare(comparisons[i], comparisons[j]);
       if (i == j) {
-        if (result != 0)
+        if (result != 0) {
           do_throw(comparisons[i] + " should be the same as itself");
+        }
       } else if (i < j) {
-        if (!(result < 0))
+        if (!(result < 0)) {
           do_throw(comparisons[i] + " should be less than " + comparisons[j]);
+        }
       } else if (!(result > 0)) {
         do_throw(comparisons[i] + " should be greater than " + comparisons[j]);
       }
@@ -48,8 +46,9 @@ function run_test() {
 
   for (i = 0; i < equality.length; i++) {
     for (j = 0; j < equality.length; j++) {
-      if (Services.vc.compare(equality[i], equality[j]) != 0)
+      if (Services.vc.compare(equality[i], equality[j]) != 0) {
         do_throw(equality[i] + " should equal " + equality[j]);
+      }
     }
   }
 }
