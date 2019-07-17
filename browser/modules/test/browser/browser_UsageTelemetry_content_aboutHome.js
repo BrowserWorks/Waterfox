@@ -12,11 +12,23 @@ add_task(async function setup() {
   // Create two new search engines. Mark one as the default engine, so
   // the test don't crash. We need to engines for this test as the searchbar
   // in content doesn't display the default search engine among the one-off engines.
-  await Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
-                                             "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails(
+    "MozSearch",
+    "",
+    "mozalias",
+    "",
+    "GET",
+    "http://example.com/?q={searchTerms}"
+  );
 
-  await Services.search.addEngineWithDetails("MozSearch2", "", "mozalias2", "", "GET",
-                                             "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails(
+    "MozSearch2",
+    "",
+    "mozalias2",
+    "",
+    "GET",
+    "http://example.com/?q={searchTerms}"
+  );
 
   // Make the first engine the default search engine.
   let engineDefault = Services.search.getEngineByName("MozSearch");
@@ -49,7 +61,9 @@ add_task(async function test_abouthome_activitystream_simpleQuery() {
   // Let's reset the counts.
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
 
@@ -59,28 +73,56 @@ add_task(async function test_abouthome_activitystream_simpleQuery() {
 
   info("Wait for ContentSearchUI search provider to initialize.");
   await ContentTask.spawn(tab.linkedBrowser, null, async function() {
-    await ContentTaskUtils.waitForCondition(() => content.wrappedJSObject.gContentSearchController.defaultEngine);
+    await ContentTaskUtils.waitForCondition(
+      () => content.wrappedJSObject.gContentSearchController.defaultEngine
+    );
   });
 
   info("Trigger a simple search, just test + enter.");
-  let p = BrowserTestUtils.browserStopped(tab.linkedBrowser, "http://example.com/?q=test+query");
-  await typeInSearchField(tab.linkedBrowser, "test query", "newtab-search-text");
+  let p = BrowserTestUtils.browserStopped(
+    tab.linkedBrowser,
+    "http://example.com/?q=test+query"
+  );
+  await typeInSearchField(
+    tab.linkedBrowser,
+    "test query",
+    "newtab-search-text"
+  );
   await BrowserTestUtils.synthesizeKey("VK_RETURN", {}, tab.linkedBrowser);
   await p;
 
   // Check if the scalars contain the expected values.
   const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
-  TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_ABOUT_HOME, "search_enter", 1);
-  Assert.equal(Object.keys(scalars[SCALAR_ABOUT_HOME]).length, 1,
-    "This search must only increment one entry in the scalar.");
+  TelemetryTestUtils.assertKeyedScalar(
+    scalars,
+    SCALAR_ABOUT_HOME,
+    "search_enter",
+    1
+  );
+  Assert.equal(
+    Object.keys(scalars[SCALAR_ABOUT_HOME]).length,
+    1,
+    "This search must only increment one entry in the scalar."
+  );
 
   // Make sure SEARCH_COUNTS contains identical values.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.abouthome", 1);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.abouthome",
+    1
+  );
 
   // Also check events.
   TelemetryTestUtils.assertEvents(
-    [{object: "about_home", value: "enter", extra: {engine: "other-MozSearch"}}],
-    {category: "navigation", method: "search"});
+    [
+      {
+        object: "about_home",
+        value: "enter",
+        extra: { engine: "other-MozSearch" },
+      },
+    ],
+    { category: "navigation", method: "search" }
+  );
 
   BrowserTestUtils.removeTab(tab);
 });

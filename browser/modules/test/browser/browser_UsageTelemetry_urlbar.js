@@ -13,14 +13,16 @@ const SCALAR_URLBAR = "browser.engagement.navigation.urlbar";
 // The preference to enable suggestions in the urlbar.
 const SUGGEST_URLBAR_PREF = "browser.urlbar.suggest.searches";
 // The name of the search engine used to generate suggestions.
-const SUGGESTION_ENGINE_NAME = "browser_UsageTelemetry usageTelemetrySearchSuggestions.xml";
+const SUGGESTION_ENGINE_NAME =
+  "browser_UsageTelemetry usageTelemetrySearchSuggestions.xml";
 const ONEOFF_URLBAR_PREF = "browser.urlbar.oneOffSearches";
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   SearchTelemetry: "resource:///modules/SearchTelemetry.jsm",
   UrlbarTestUtils: "resource://testing-common/UrlbarTestUtils.jsm",
   URLBAR_SELECTED_RESULT_TYPES: "resource:///modules/BrowserUsageTelemetry.jsm",
-  URLBAR_SELECTED_RESULT_METHODS: "resource:///modules/BrowserUsageTelemetry.jsm",
+  URLBAR_SELECTED_RESULT_METHODS:
+    "resource:///modules/BrowserUsageTelemetry.jsm",
 });
 
 function searchInAwesomebar(value, win = window) {
@@ -48,11 +50,17 @@ async function clickURLBarSuggestion(resultTitle, button = 1) {
     let result = await UrlbarTestUtils.getDetailsOfResultAt(window, i);
     if (result.displayed.title == resultTitle) {
       // This entry is the search suggestion we're looking for.
-      let element = await UrlbarTestUtils.waitForAutocompleteResultAt(window, i);
+      let element = await UrlbarTestUtils.waitForAutocompleteResultAt(
+        window,
+        i
+      );
       if (button == 1) {
         EventUtils.synthesizeMouseAtCenter(element, {});
       } else if (button == 2) {
-        EventUtils.synthesizeMouseAtCenter(element, {type: "mousedown", button: 2});
+        EventUtils.synthesizeMouseAtCenter(element, {
+          type: "mousedown",
+          button: 2,
+        });
       }
       return;
     }
@@ -64,7 +72,8 @@ async function clickURLBarSuggestion(resultTitle, button = 1) {
  * for this test.
  */
 async function withNewSearchEngine(taskFn) {
-  const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
+  const url =
+    getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
   let suggestionEngine = await Services.search.addEngine(url, "", false);
   let previousEngine = await Services.search.getDefault();
   await Services.search.setDefault(suggestionEngine);
@@ -79,8 +88,14 @@ async function withNewSearchEngine(taskFn) {
 
 add_task(async function setup() {
   // Create a new search engine.
-  await Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
-                                             "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails(
+    "MozSearch",
+    "",
+    "mozalias",
+    "",
+    "GET",
+    "http://example.com/?q={searchTerms}"
+  );
 
   // Make it the default search engine.
   let engine = Services.search.getEngineByName("MozSearch");
@@ -113,10 +128,14 @@ add_task(async function setup() {
 
   // Clear historical search suggestions to avoid interference from previous
   // tests.
-  await SpecialPowers.pushPrefEnv({"set": [["browser.urlbar.maxHistoricalSearchSuggestions", 0]]});
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.urlbar.maxHistoricalSearchSuggestions", 0]],
+  });
 
   // Use the default matching bucket configuration.
-  await SpecialPowers.pushPrefEnv({"set": [["browser.urlbar.matchBuckets", "general:5,suggestion:4"]]});
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.urlbar.matchBuckets", "general:5,suggestion:4"]],
+  });
 
   // Make sure to restore the engine once we're done.
   registerCleanupFunction(async function() {
@@ -134,13 +153,26 @@ add_task(async function test_simpleQuery() {
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
 
-  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_INDEX");
-  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_TYPE");
-  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram("FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE");
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX"
+  );
+  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_TYPE"
+  );
+  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE"
+  );
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
 
   info("Simulate entering a simple search.");
   let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -150,30 +182,65 @@ add_task(async function test_simpleQuery() {
 
   // Check if the scalars contain the expected values.
   const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
-  TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_enter", 1);
-  Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
-               "This search must only increment one entry in the scalar.");
+  TelemetryTestUtils.assertKeyedScalar(
+    scalars,
+    SCALAR_URLBAR,
+    "search_enter",
+    1
+  );
+  Assert.equal(
+    Object.keys(scalars[SCALAR_URLBAR]).length,
+    1,
+    "This search must only increment one entry in the scalar."
+  );
 
   // Make sure SEARCH_COUNTS contains identical values.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.alias", undefined);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.alias",
+    undefined
+  );
 
   // Also check events.
   TelemetryTestUtils.assertEvents(
-    [["navigation", "search", "urlbar", "enter", {engine: "other-MozSearch"}]],
-    {category: "navigation", method: "search"});
+    [
+      [
+        "navigation",
+        "search",
+        "urlbar",
+        "enter",
+        { engine: "other-MozSearch" },
+      ],
+    ],
+    { category: "navigation", method: "search" }
+  );
 
   // Check the histograms as well.
   TelemetryTestUtils.assertHistogram(resultIndexHist, 0, 1);
 
-  TelemetryTestUtils.assertHistogram(resultTypeHist,
-    URLBAR_SELECTED_RESULT_TYPES.searchengine, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultTypeHist,
+    URLBAR_SELECTED_RESULT_TYPES.searchengine,
+    1
+  );
 
-  TelemetryTestUtils.assertKeyedHistogramValue(resultIndexByTypeHist,
-    "searchengine", 0, 1);
+  TelemetryTestUtils.assertKeyedHistogramValue(
+    resultIndexByTypeHist,
+    "searchengine",
+    0,
+    1
+  );
 
-  TelemetryTestUtils.assertHistogram(resultMethodHist,
-    URLBAR_SELECTED_RESULT_METHODS.enter, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultMethodHist,
+    URLBAR_SELECTED_RESULT_METHODS.enter,
+    1
+  );
 
   BrowserTestUtils.removeTab(tab);
 });
@@ -182,13 +249,26 @@ add_task(async function test_searchAlias() {
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
 
-  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_INDEX");
-  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_TYPE");
-  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram("FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE");
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX"
+  );
+  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_TYPE"
+  );
+  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE"
+  );
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
 
   info("Search using a search alias.");
   let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -198,38 +278,78 @@ add_task(async function test_searchAlias() {
 
   // Check if the scalars contain the expected values.
   const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
-  TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_alias", 1);
-  Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
-               "This search must only increment one entry in the scalar.");
+  TelemetryTestUtils.assertKeyedScalar(
+    scalars,
+    SCALAR_URLBAR,
+    "search_alias",
+    1
+  );
+  Assert.equal(
+    Object.keys(scalars[SCALAR_URLBAR]).length,
+    1,
+    "This search must only increment one entry in the scalar."
+  );
 
   // Make sure SEARCH_COUNTS contains identical values.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.alias", undefined);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.alias",
+    undefined
+  );
 
   // Also check events.
   TelemetryTestUtils.assertEvents(
-    [["navigation", "search", "urlbar", "alias", {engine: "other-MozSearch"}]],
-    {category: "navigation", method: "search"});
+    [
+      [
+        "navigation",
+        "search",
+        "urlbar",
+        "alias",
+        { engine: "other-MozSearch" },
+      ],
+    ],
+    { category: "navigation", method: "search" }
+  );
 
   // Check the histograms as well.
   TelemetryTestUtils.assertHistogram(resultIndexHist, 0, 1);
 
-  TelemetryTestUtils.assertHistogram(resultTypeHist,
-    URLBAR_SELECTED_RESULT_TYPES.searchengine, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultTypeHist,
+    URLBAR_SELECTED_RESULT_TYPES.searchengine,
+    1
+  );
 
-  TelemetryTestUtils.assertKeyedHistogramValue(resultIndexByTypeHist,
-    "searchengine", 0, 1);
+  TelemetryTestUtils.assertKeyedHistogramValue(
+    resultIndexByTypeHist,
+    "searchengine",
+    0,
+    1
+  );
 
-  TelemetryTestUtils.assertHistogram(resultMethodHist,
-    URLBAR_SELECTED_RESULT_METHODS.enter, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultMethodHist,
+    URLBAR_SELECTED_RESULT_METHODS.enter,
+    1
+  );
 
   BrowserTestUtils.removeTab(tab);
 });
 
 add_task(async function test_internalSearchAlias() {
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
 
   info("Search using an internal search alias.");
   let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -237,8 +357,16 @@ add_task(async function test_internalSearchAlias() {
   EventUtils.synthesizeKey("KEY_Enter");
   await p;
 
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.alias", 1);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.alias",
+    1
+  );
 
   info("Search using the other internal search alias.");
   p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -246,8 +374,16 @@ add_task(async function test_internalSearchAlias() {
   EventUtils.synthesizeKey("KEY_Enter");
   await p;
 
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 2);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.alias", 2);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    2
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.alias",
+    2
+  );
 
   BrowserTestUtils.removeTab(tab);
 });
@@ -258,13 +394,26 @@ add_task(async function test_oneOff_enter() {
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
 
-  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_INDEX");
-  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_TYPE");
-  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram("FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE");
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX"
+  );
+  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_TYPE"
+  );
+  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE"
+  );
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
 
   info("Perform a one-off search using the first engine.");
   let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -277,30 +426,65 @@ add_task(async function test_oneOff_enter() {
 
   // Check if the scalars contain the expected values.
   const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
-  TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_oneoff", 1);
-  Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
-               "This search must only increment one entry in the scalar.");
+  TelemetryTestUtils.assertKeyedScalar(
+    scalars,
+    SCALAR_URLBAR,
+    "search_oneoff",
+    1
+  );
+  Assert.equal(
+    Object.keys(scalars[SCALAR_URLBAR]).length,
+    1,
+    "This search must only increment one entry in the scalar."
+  );
 
   // Make sure SEARCH_COUNTS contains identical values.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.alias", undefined);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.alias",
+    undefined
+  );
 
   // Also check events.
   TelemetryTestUtils.assertEvents(
-    [["navigation", "search", "urlbar", "oneoff", {engine: "other-MozSearch"}]],
-    {category: "navigation", method: "search"});
+    [
+      [
+        "navigation",
+        "search",
+        "urlbar",
+        "oneoff",
+        { engine: "other-MozSearch" },
+      ],
+    ],
+    { category: "navigation", method: "search" }
+  );
 
   // Check the histograms as well.
   TelemetryTestUtils.assertHistogram(resultIndexHist, 0, 1);
 
-  TelemetryTestUtils.assertHistogram(resultTypeHist,
-    URLBAR_SELECTED_RESULT_TYPES.searchengine, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultTypeHist,
+    URLBAR_SELECTED_RESULT_TYPES.searchengine,
+    1
+  );
 
-  TelemetryTestUtils.assertKeyedHistogramValue(resultIndexByTypeHist,
-    "searchengine", 0, 1);
+  TelemetryTestUtils.assertKeyedHistogramValue(
+    resultIndexByTypeHist,
+    "searchengine",
+    0,
+    1
+  );
 
-  TelemetryTestUtils.assertHistogram(resultMethodHist,
-    URLBAR_SELECTED_RESULT_METHODS.enter, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultMethodHist,
+    URLBAR_SELECTED_RESULT_METHODS.enter,
+    1
+  );
 
   BrowserTestUtils.removeTab(tab);
 });
@@ -310,23 +494,33 @@ add_task(async function test_oneOff_enter() {
 // since test_oneOff_enter covers everything else.
 add_task(async function test_oneOff_enterSelection() {
   Services.telemetry.clearScalars();
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
   await withNewSearchEngine(async function() {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
     await searchInAwesomebar("query");
 
-    info("Select the second result, press Alt+Down to take us to the first one-off engine.");
+    info(
+      "Select the second result, press Alt+Down to take us to the first one-off engine."
+    );
     EventUtils.synthesizeKey("KEY_ArrowDown");
-    EventUtils.synthesizeKey("KEY_ArrowDown", {altKey: true});
+    EventUtils.synthesizeKey("KEY_ArrowDown", { altKey: true });
     EventUtils.synthesizeKey("KEY_Enter");
     await p;
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.arrowEnterSelection, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.arrowEnterSelection,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -338,19 +532,29 @@ add_task(async function test_oneOff_enterSelection() {
 add_task(async function test_oneOff_click() {
   Services.telemetry.clearScalars();
 
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
 
   info("Type a query.");
   let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
   await searchInAwesomebar("query");
   info("Click the first one-off button.");
-  UrlbarTestUtils.getOneOffSearchButtons(window).getSelectableButtons(false)[0].click();
+  UrlbarTestUtils.getOneOffSearchButtons(window)
+    .getSelectableButtons(false)[0]
+    .click();
   await p;
 
-  TelemetryTestUtils.assertHistogram(resultMethodHist,
-    URLBAR_SELECTED_RESULT_METHODS.click, 1);
+  TelemetryTestUtils.assertHistogram(
+    resultMethodHist,
+    URLBAR_SELECTED_RESULT_METHODS.click,
+    1
+  );
 
   BrowserTestUtils.removeTab(tab);
 });
@@ -360,14 +564,27 @@ add_task(async function test_suggestion_click() {
   Services.telemetry.clearScalars();
   Services.telemetry.clearEvents();
 
-  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_INDEX");
-  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_TYPE");
-  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram("FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE");
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let resultIndexHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX"
+  );
+  let resultTypeHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_TYPE"
+  );
+  let resultIndexByTypeHist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE"
+  );
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
   await withNewSearchEngine(async function(engine) {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -378,30 +595,61 @@ add_task(async function test_suggestion_click() {
 
     // Check if the scalars contain the expected values.
     const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
-    TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_suggestion", 1);
-    Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
-                "This search must only increment one entry in the scalar.");
+    TelemetryTestUtils.assertKeyedScalar(
+      scalars,
+      SCALAR_URLBAR,
+      "search_suggestion",
+      1
+    );
+    Assert.equal(
+      Object.keys(scalars[SCALAR_URLBAR]).length,
+      1,
+      "This search must only increment one entry in the scalar."
+    );
 
     // Make sure SEARCH_COUNTS contains identical values.
     let searchEngineId = "other-" + engine.name;
-    TelemetryTestUtils.assertKeyedHistogramSum(search_hist, searchEngineId + ".urlbar", 1);
+    TelemetryTestUtils.assertKeyedHistogramSum(
+      search_hist,
+      searchEngineId + ".urlbar",
+      1
+    );
 
     // Also check events.
     TelemetryTestUtils.assertEvents(
-      [["navigation", "search", "urlbar", "suggestion", {engine: searchEngineId}]],
-      {category: "navigation", method: "search"});
+      [
+        [
+          "navigation",
+          "search",
+          "urlbar",
+          "suggestion",
+          { engine: searchEngineId },
+        ],
+      ],
+      { category: "navigation", method: "search" }
+    );
 
     // Check the histograms as well.
     TelemetryTestUtils.assertHistogram(resultIndexHist, 3, 1);
 
-    TelemetryTestUtils.assertHistogram(resultTypeHist,
-      URLBAR_SELECTED_RESULT_TYPES.searchsuggestion, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultTypeHist,
+      URLBAR_SELECTED_RESULT_TYPES.searchsuggestion,
+      1
+    );
 
-    TelemetryTestUtils.assertKeyedHistogramValue(resultIndexByTypeHist,
-      "searchsuggestion", 3, 1);
+    TelemetryTestUtils.assertKeyedHistogramValue(
+      resultIndexByTypeHist,
+      "searchsuggestion",
+      3,
+      1
+    );
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.click, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.click,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -412,10 +660,15 @@ add_task(async function test_suggestion_click() {
 // histogram since test_suggestion_click covers everything else.
 add_task(async function test_suggestion_arrowEnterSelection() {
   Services.telemetry.clearScalars();
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
   await withNewSearchEngine(async function() {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -425,8 +678,11 @@ add_task(async function test_suggestion_arrowEnterSelection() {
     EventUtils.synthesizeKey("KEY_Enter");
     await p;
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.arrowEnterSelection, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.arrowEnterSelection,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -436,10 +692,15 @@ add_task(async function test_suggestion_arrowEnterSelection() {
 // suggestion offered by the test search engine.
 add_task(async function test_suggestion_tabEnterSelection() {
   Services.telemetry.clearScalars();
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
   await withNewSearchEngine(async function() {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -449,8 +710,11 @@ add_task(async function test_suggestion_tabEnterSelection() {
     EventUtils.synthesizeKey("KEY_Enter");
     await p;
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.tabEnterSelection, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.tabEnterSelection,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -460,10 +724,15 @@ add_task(async function test_suggestion_tabEnterSelection() {
 // suggestion offered by the test search engine.
 add_task(async function test_suggestion_enterSelection() {
   Services.telemetry.clearScalars();
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
   await withNewSearchEngine(async function() {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -473,8 +742,11 @@ add_task(async function test_suggestion_enterSelection() {
     EventUtils.synthesizeKey("KEY_Enter");
     await p;
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.enterSelection, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.enterSelection,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -487,10 +759,15 @@ add_task(async function test_suggestion_rightclick() {
     return;
   }
   Services.telemetry.clearScalars();
-  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram("FX_URLBAR_SELECTED_RESULT_METHOD");
+  let resultMethodHist = TelemetryTestUtils.getAndClearHistogram(
+    "FX_URLBAR_SELECTED_RESULT_METHOD"
+  );
 
   await withNewSearchEngine(async function() {
-    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    let tab = await BrowserTestUtils.openNewForegroundTab(
+      gBrowser,
+      "about:blank"
+    );
 
     info("Type a query. Suggestions should be generated by the test engine.");
     let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
@@ -500,8 +777,11 @@ add_task(async function test_suggestion_rightclick() {
     EventUtils.synthesizeKey("KEY_Enter");
     await p;
 
-    TelemetryTestUtils.assertHistogram(resultMethodHist,
-      URLBAR_SELECTED_RESULT_METHODS.rightClickEnter, 1);
+    TelemetryTestUtils.assertHistogram(
+      resultMethodHist,
+      URLBAR_SELECTED_RESULT_METHODS.rightClickEnter,
+      1
+    );
 
     BrowserTestUtils.removeTab(tab);
   });
@@ -511,13 +791,15 @@ add_task(async function test_privateWindow() {
   // Override the search telemetry search provider info to
   // count in-content SEARCH_COUNTs telemetry for our test engine.
   SearchTelemetry.overrideSearchTelemetryForTests({
-    "example": {
-      "regexp": "^http://example\\.com/",
-      "queryParam": "q",
+    example: {
+      regexp: "^http://example\\.com/",
+      queryParam: "q",
     },
   });
 
-  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram("SEARCH_COUNTS");
+  let search_hist = TelemetryTestUtils.getAndClearKeyedHistogram(
+    "SEARCH_COUNTS"
+  );
 
   // First, do a bunch of searches in a private window.
   let win = await BrowserTestUtils.openNewBrowserWindow({ private: true });
@@ -529,8 +811,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 1);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    1
+  );
 
   info("Search again in a private window after setting the pref to true");
   Services.prefs.setBoolPref("browser.engagement.search_counts.pbm", true);
@@ -540,8 +830,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should *not* be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 1);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 1);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    1
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    1
+  );
 
   info("Search again in a private window after setting the pref to false");
   Services.prefs.setBoolPref("browser.engagement.search_counts.pbm", false);
@@ -551,8 +849,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 2);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 2);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    2
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    2
+  );
 
   info("Search again in a private window after clearing the pref");
   Services.prefs.clearUserPref("browser.engagement.search_counts.pbm");
@@ -562,8 +868,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 3);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 3);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    3
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    3
+  );
 
   await BrowserTestUtils.closeWindow(win);
 
@@ -578,8 +892,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 4);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 4);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    4
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    4
+  );
 
   info("Search again in a non-private window after setting the pref to true");
   Services.prefs.setBoolPref("browser.engagement.search_counts.pbm", true);
@@ -589,8 +911,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 5);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 5);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    5
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    5
+  );
 
   info("Search again in a non-private window after setting the pref to false");
   Services.prefs.setBoolPref("browser.engagement.search_counts.pbm", false);
@@ -600,8 +930,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 6);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 6);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    6
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    6
+  );
 
   info("Search again in a non-private window after clearing the pref");
   Services.prefs.clearUserPref("browser.engagement.search_counts.pbm");
@@ -611,8 +949,16 @@ add_task(async function test_privateWindow() {
   await p;
 
   // SEARCH_COUNTS should be incremented.
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "other-MozSearch.urlbar", 7);
-  TelemetryTestUtils.assertKeyedHistogramSum(search_hist, "example.in-content:organic:none", 7);
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "other-MozSearch.urlbar",
+    7
+  );
+  TelemetryTestUtils.assertKeyedHistogramSum(
+    search_hist,
+    "example.in-content:organic:none",
+    7
+  );
 
   await BrowserTestUtils.closeWindow(win);
 
