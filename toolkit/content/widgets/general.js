@@ -7,63 +7,70 @@
 // This is loaded into chrome windows with the subscript loader. Wrap in
 // a block to prevent accidentally leaking globals onto `window`.
 {
-class MozDeck extends MozXULElement {
-  set selectedIndex(val) {
-    if (this.selectedIndex == val) return val;
-    this.setAttribute("selectedIndex", val);
-    var event = document.createEvent("Events");
-    event.initEvent("select", true, true);
-    this.dispatchEvent(event);
-    return val;
-  }
-
-  get selectedIndex() {
-    return this.getAttribute("selectedIndex") || "0";
-  }
-
-  set selectedPanel(val) {
-    var selectedIndex = -1;
-    for (var panel = val; panel != null; panel = panel.previousElementSibling)
-      ++selectedIndex;
-    this.selectedIndex = selectedIndex;
-    return val;
-  }
-
-  get selectedPanel() {
-    return this.children[this.selectedIndex];
-  }
-}
-
-customElements.define("deck", MozDeck);
-
-class MozDropmarker extends MozXULElement {
-  connectedCallback() {
-    // Only create the image the first time we are connected
-    if (!this.firstElementChild) {
-      let image = document.createXULElement("image");
-      image.classList.add("dropmarker-icon");
-      this.appendChild(image);
+  class MozDeck extends MozXULElement {
+    set selectedIndex(val) {
+      if (this.selectedIndex == val) {
+        return val;
+      }
+      this.setAttribute("selectedIndex", val);
+      var event = document.createEvent("Events");
+      event.initEvent("select", true, true);
+      this.dispatchEvent(event);
+      return val;
     }
-  }
-}
 
-customElements.define("dropmarker", MozDropmarker);
+    get selectedIndex() {
+      return this.getAttribute("selectedIndex") || "0";
+    }
 
-class MozCommandSet extends MozXULElement {
-  connectedCallback() {
-    if (this.getAttribute("commandupdater") === "true") {
-      const events = this.getAttribute("events") || "*";
-      const targets = this.getAttribute("targets") || "*";
-      document.commandDispatcher.addCommandUpdater(this, events, targets);
+    set selectedPanel(val) {
+      var selectedIndex = -1;
+      for (
+        var panel = val;
+        panel != null;
+        panel = panel.previousElementSibling
+      ) {
+        ++selectedIndex;
+      }
+      this.selectedIndex = selectedIndex;
+      return val;
+    }
+
+    get selectedPanel() {
+      return this.children[this.selectedIndex];
     }
   }
 
-  disconnectedCallback() {
-    if (this.getAttribute("commandupdater") === "true") {
-      document.commandDispatcher.removeCommandUpdater(this);
+  customElements.define("deck", MozDeck);
+
+  class MozDropmarker extends MozXULElement {
+    connectedCallback() {
+      // Only create the image the first time we are connected
+      if (!this.firstElementChild) {
+        let image = document.createXULElement("image");
+        image.classList.add("dropmarker-icon");
+        this.appendChild(image);
+      }
     }
   }
-}
 
-customElements.define("commandset", MozCommandSet);
+  customElements.define("dropmarker", MozDropmarker);
+
+  class MozCommandSet extends MozXULElement {
+    connectedCallback() {
+      if (this.getAttribute("commandupdater") === "true") {
+        const events = this.getAttribute("events") || "*";
+        const targets = this.getAttribute("targets") || "*";
+        document.commandDispatcher.addCommandUpdater(this, events, targets);
+      }
+    }
+
+    disconnectedCallback() {
+      if (this.getAttribute("commandupdater") === "true") {
+        document.commandDispatcher.removeCommandUpdater(this);
+      }
+    }
+  }
+
+  customElements.define("commandset", MozCommandSet);
 }

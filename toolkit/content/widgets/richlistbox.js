@@ -23,41 +23,54 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
     this._currentItem = null;
     this._selectionStart = null;
 
-    this.addEventListener("keypress", event => {
-      if (event.altKey || event.metaKey) {
-        return;
-      }
+    this.addEventListener(
+      "keypress",
+      event => {
+        if (event.altKey || event.metaKey) {
+          return;
+        }
 
-      switch (event.keyCode) {
-        case KeyEvent.DOM_VK_UP:
-          this._moveByOffsetFromUserEvent(-1, event);
-          break;
-        case KeyEvent.DOM_VK_DOWN:
-          this._moveByOffsetFromUserEvent(1, event);
-          break;
-        case KeyEvent.DOM_VK_HOME:
-          this._moveByOffsetFromUserEvent(-this.currentIndex, event);
-          break;
-        case KeyEvent.DOM_VK_END:
-          this._moveByOffsetFromUserEvent(this.getRowCount() - this.currentIndex - 1, event);
-          break;
-        case KeyEvent.DOM_VK_PAGE_UP:
-          this._moveByOffsetFromUserEvent(this.scrollOnePage(-1), event);
-          break;
-        case KeyEvent.DOM_VK_PAGE_DOWN:
-          this._moveByOffsetFromUserEvent(this.scrollOnePage(1), event);
-          break;
-      }
-    }, { mozSystemGroup: true });
+        switch (event.keyCode) {
+          case KeyEvent.DOM_VK_UP:
+            this._moveByOffsetFromUserEvent(-1, event);
+            break;
+          case KeyEvent.DOM_VK_DOWN:
+            this._moveByOffsetFromUserEvent(1, event);
+            break;
+          case KeyEvent.DOM_VK_HOME:
+            this._moveByOffsetFromUserEvent(-this.currentIndex, event);
+            break;
+          case KeyEvent.DOM_VK_END:
+            this._moveByOffsetFromUserEvent(
+              this.getRowCount() - this.currentIndex - 1,
+              event
+            );
+            break;
+          case KeyEvent.DOM_VK_PAGE_UP:
+            this._moveByOffsetFromUserEvent(this.scrollOnePage(-1), event);
+            break;
+          case KeyEvent.DOM_VK_PAGE_DOWN:
+            this._moveByOffsetFromUserEvent(this.scrollOnePage(1), event);
+            break;
+        }
+      },
+      { mozSystemGroup: true }
+    );
 
     this.addEventListener("keypress", event => {
       if (event.target != this) {
         return;
       }
 
-      if (event.key == " " &&
-          event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey &&
-          this.currentItem && this.selType == "multiple") {
+      if (
+        event.key == " " &&
+        event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey &&
+        !event.metaKey &&
+        this.currentItem &&
+        this.selType == "multiple"
+      ) {
         this.toggleItemSelection(this.currentItem);
       }
 
@@ -75,8 +88,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
       // If all letters in the incremental string are the same, just
       // try to match the first one
-      var incrementalString = /^(.)\1+$/.test(this._incrementalString) ?
-        RegExp.$1 : this._incrementalString;
+      var incrementalString = /^(.)\1+$/.test(this._incrementalString)
+        ? RegExp.$1
+        : this._incrementalString;
       var length = incrementalString.length;
 
       var rowCount = this.getRowCount();
@@ -95,8 +109,10 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
           continue;
         }
         // allow richlistitems to specify the string being searched for
-        var searchText = "searchLabel" in listitem ? listitem.searchLabel :
-          listitem.getAttribute("label"); // (see also bug 250123)
+        var searchText =
+          "searchLabel" in listitem
+            ? listitem.searchLabel
+            : listitem.getAttribute("label"); // (see also bug 250123)
         searchText = searchText.substring(0, length).toLowerCase();
         if (searchText == incrementalString) {
           this.ensureIndexIsVisible(k);
@@ -123,8 +139,7 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
     this.addEventListener("click", event => {
       // clicking into nothing should unselect multiple selections
-      if (event.originalTarget == this &&
-          this.selType == "multiple") {
+      if (event.originalTarget == this && this.selType == "multiple") {
         this.clearSelection();
         this.currentItem = null;
       }
@@ -261,8 +276,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
   }
 
   get itemChildren() {
-    let children = Array.from(this.children)
-      .filter(node => node.localName == "richlistitem");
+    let children = Array.from(this.children).filter(
+      node => node.localName == "richlistitem"
+    );
     return children;
   }
 
@@ -290,8 +306,15 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
     // remember the current item and all selected items with IDs
     var state = this.currentItem ? this.currentItem.id : "";
     if (this.selType == "multiple" && this.selectedCount) {
-      let getId = function getId(aItem) { return aItem.id; };
-      state += " " + [...this.selectedItems].filter(getId).map(getId).join(" ");
+      let getId = function getId(aItem) {
+        return aItem.id;
+      };
+      state +=
+        " " +
+        [...this.selectedItems]
+          .filter(getId)
+          .map(getId)
+          .join(" ");
     }
     if (state) {
       this.setAttribute("last-selected", state);
@@ -315,8 +338,11 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
   getNextItem(aStartItem, aDelta) {
     while (aStartItem) {
       aStartItem = aStartItem.nextSibling;
-      if (aStartItem && aStartItem.localName == "richlistitem" &&
-        (!this._userSelecting || this._canUserSelect(aStartItem))) {
+      if (
+        aStartItem &&
+        aStartItem.localName == "richlistitem" &&
+        (!this._userSelecting || this._canUserSelect(aStartItem))
+      ) {
         --aDelta;
         if (aDelta == 0) {
           return aStartItem;
@@ -329,8 +355,11 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
   getPreviousItem(aStartItem, aDelta) {
     while (aStartItem) {
       aStartItem = aStartItem.previousSibling;
-      if (aStartItem && aStartItem.localName == "richlistitem" &&
-        (!this._userSelecting || this._canUserSelect(aStartItem))) {
+      if (
+        aStartItem &&
+        aStartItem.localName == "richlistitem" &&
+        (!this._userSelecting || this._canUserSelect(aStartItem))
+      ) {
         --aDelta;
         if (aDelta == 0) {
           return aStartItem;
@@ -341,8 +370,7 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
   }
 
   appendItem(aLabel, aValue) {
-    var item =
-      this.ownerDocument.createXULElement("richlistitem");
+    var item = this.ownerDocument.createXULElement("richlistitem");
     item.setAttribute("value", aValue);
 
     var label = this.ownerDocument.createXULElement("label");
@@ -442,8 +470,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
     }
 
     if (!aStartItem) {
-      aStartItem = this._selectionStart ? this._selectionStart
-                                        : this.currentItem;
+      aStartItem = this._selectionStart
+        ? this._selectionStart
+        : this.currentItem;
     }
 
     if (!aStartItem) {
@@ -485,8 +514,11 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
       this.removeItemFromSelection(currentItem);
     }
 
-    for (currentItem = this.getItemAtIndex(0); currentItem != aStartItem;
-         currentItem = this.getNextItem(currentItem, 1)) {
+    for (
+      currentItem = this.getItemAtIndex(0);
+      currentItem != aStartItem;
+      currentItem = this.getNextItem(currentItem, 1)
+    ) {
       this.removeItemFromSelection(currentItem);
     }
     this._userSelecting = userSelecting;
@@ -550,8 +582,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
   // nsIDOMXULMultiSelectControlElement
   getSelectedItem(aIndex) {
-    return aIndex < this.selectedItems.length ?
-      this.selectedItems[aIndex] : null;
+    return aIndex < this.selectedItems.length
+      ? this.selectedItems[aIndex]
+      : null;
   }
 
   ensureIndexIsVisible(aIndex) {
@@ -670,8 +703,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
       var currentItem = document.getElementById(ids[0]);
       if (!currentItem && this._currentIndex) {
-        currentItem = this.getItemAtIndex(Math.min(
-          this._currentIndex - 1, this.getRowCount()));
+        currentItem = this.getItemAtIndex(
+          Math.min(this._currentIndex - 1, this.getRowCount())
+        );
       }
       if (currentItem) {
         this.currentItem = currentItem;
@@ -745,13 +779,13 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
     // Partially visible items are also considered visible
     let itemRect = aItem.getBoundingClientRect();
-    return (itemRect.y + itemRect.height > y) &&
-           (itemRect.y < y + this.clientHeight);
+    return (
+      itemRect.y + itemRect.height > y && itemRect.y < y + this.clientHeight
+    );
   }
 
   moveByOffset(aOffset, aIsSelecting, aIsSelectingRange) {
-    if ((aIsSelectingRange || !aIsSelecting) &&
-      this.selType != "multiple") {
+    if ((aIsSelectingRange || !aIsSelecting) && this.selType != "multiple") {
       return;
     }
 
@@ -769,8 +803,9 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
     // make sure that the item is actually visible/selectable
     if (this._userSelecting && newItem && !this._canUserSelect(newItem)) {
       newItem =
-      aOffset > 0 ? this.getNextItem(newItem, 1) || this.getPreviousItem(newItem, 1) :
-      this.getPreviousItem(newItem, 1) || this.getNextItem(newItem, 1);
+        aOffset > 0
+          ? this.getNextItem(newItem, 1) || this.getPreviousItem(newItem, 1)
+          : this.getPreviousItem(newItem, 1) || this.getNextItem(newItem, 1);
     }
     if (newItem) {
       this.ensureIndexIsVisible(this.getIndexOfItem(newItem));
@@ -795,8 +830,11 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
 
   _canUserSelect(aItem) {
     var style = document.defaultView.getComputedStyle(aItem);
-    return style.display != "none" && style.visibility == "visible" &&
-      style.MozUserInput != "none";
+    return (
+      style.display != "none" &&
+      style.visibility == "visible" &&
+      style.MozUserInput != "none"
+    );
   }
 
   _selectTimeoutHandler(aMe) {
@@ -818,8 +856,11 @@ MozElements.RichListBox = class RichListBox extends MozElements.BaseControl {
       if (this._selectTimeout) {
         window.clearTimeout(this._selectTimeout);
       }
-      this._selectTimeout =
-        window.setTimeout(this._selectTimeoutHandler, aTimeout, this);
+      this._selectTimeout = window.setTimeout(
+        this._selectTimeoutHandler,
+        aTimeout,
+        this
+      );
     }
   }
 
@@ -858,12 +899,17 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
      * If there is no modifier key, we select on mousedown, not
      * click, so that drags work correctly.
      */
-    this.addEventListener("mousedown", (event) => {
+    this.addEventListener("mousedown", event => {
       var control = this.control;
-      if (!control || control.disabled)
+      if (!control || control.disabled) {
         return;
-      if ((!event.ctrlKey || (/Mac/.test(navigator.platform) && event.button == 2)) &&
-        !event.shiftKey && !event.metaKey) {
+      }
+      if (
+        (!event.ctrlKey ||
+          (/Mac/.test(navigator.platform) && event.button == 2)) &&
+        !event.shiftKey &&
+        !event.metaKey
+      ) {
         if (!this.selected) {
           control.selectItem(this);
         }
@@ -875,14 +921,15 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
      * On a click (up+down on the same item), deselect everything
      * except this item.
      */
-    this.addEventListener("click", (event) => {
+    this.addEventListener("click", event => {
       if (event.button != 0) {
         return;
       }
 
       var control = this.control;
-      if (!control || control.disabled)
+      if (!control || control.disabled) {
         return;
+      }
       control._userSelecting = true;
       if (control.selType != "multiple") {
         control.selectItem(this);
@@ -912,23 +959,27 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
   get label() {
     const XULNS =
       "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    return Array.from(this.getElementsByTagNameNS(XULNS, "label"),
-        label => label.value)
-      .join(" ");
+    return Array.from(
+      this.getElementsByTagNameNS(XULNS, "label"),
+      label => label.value
+    ).join(" ");
   }
 
   set searchLabel(val) {
-    if (val !== null)
+    if (val !== null) {
       this.setAttribute("searchlabel", val);
-    else
-      // fall back to the label property (default value)
+    }
+    // fall back to the label property (default value)
+    else {
       this.removeAttribute("searchlabel");
+    }
     return val;
   }
 
   get searchLabel() {
-    return this.hasAttribute("searchlabel") ?
-      this.getAttribute("searchlabel") : this.label;
+    return this.hasAttribute("searchlabel")
+      ? this.getAttribute("searchlabel")
+      : this.label;
   }
   /**
    * nsIDOMXULSelectControlItemElement
@@ -946,10 +997,11 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
    * nsIDOMXULSelectControlItemElement
    */
   set selected(val) {
-    if (val)
+    if (val) {
       this.setAttribute("selected", "true");
-    else
+    } else {
       this.removeAttribute("selected");
+    }
 
     return val;
   }
@@ -963,18 +1015,20 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
   get control() {
     var parent = this.parentNode;
     while (parent) {
-      if (parent.localName == "richlistbox")
+      if (parent.localName == "richlistbox") {
         return parent;
+      }
       parent = parent.parentNode;
     }
     return null;
   }
 
   set current(val) {
-    if (val)
+    if (val) {
       this.setAttribute("current", "true");
-    else
+    } else {
       this.removeAttribute("current");
+    }
     return val;
   }
 
@@ -983,8 +1037,9 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
   }
   disconnectedCallback() {
     var control = this.control;
-    if (!control)
+    if (!control) {
       return;
+    }
     // When we are destructed and we are current or selected, unselect ourselves
     // so that richlistbox's selection doesn't point to something not in the DOM.
     // We don't want to reset last-selected, so we set _suppressOnSelect.
@@ -994,11 +1049,12 @@ MozElements.MozRichlistitem = class MozRichlistitem extends MozElements.BaseText
       control.removeItemFromSelection(this);
       control._suppressOnSelect = suppressSelect;
     }
-    if (this.current)
+    if (this.current) {
       control.currentItem = null;
+    }
   }
 };
 
-MozXULElement.implementCustomInterface(
-  MozElements.MozRichlistitem, [Ci.nsIDOMXULSelectControlItemElement]
-);
+MozXULElement.implementCustomInterface(MozElements.MozRichlistitem, [
+  Ci.nsIDOMXULSelectControlItemElement,
+]);
