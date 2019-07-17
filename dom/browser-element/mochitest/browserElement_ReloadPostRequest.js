@@ -20,12 +20,19 @@ var isPostRequestSubmitted;
 
 function getExpectedStrings() {
   let result = {};
-  let appBundle = Services.strings.createBundle("chrome://global/locale/appstrings.properties");
-  let brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
+  let appBundle = Services.strings.createBundle(
+    "chrome://global/locale/appstrings.properties"
+  );
+  let brandBundle = Services.strings.createBundle(
+    "chrome://branding/locale/brand.properties"
+  );
   try {
     let brandName = brandBundle.GetStringFromName("brandShortName");
-    result.message = appBundle.formatStringFromName("confirmRepostPrompt",
-                                                    [brandName], 1);
+    result.message = appBundle.formatStringFromName(
+      "confirmRepostPrompt",
+      [brandName],
+      1
+    );
   } catch (e) {
     // for the case that we don't have brandShortName
     result.message = appBundle.GetStringFromName("confirmRepostPrompt");
