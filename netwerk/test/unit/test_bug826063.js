@@ -6,26 +6,22 @@
  * result for various combinations of .setPrivate() and nsILoadContexts
  */
 
-
-
-var URIs = [
-  "http://example.org",
-  "https://example.org",
-  "ftp://example.org"
-  ];
+var URIs = ["http://example.org", "https://example.org", "ftp://example.org"];
 
 function* getChannels() {
   for (let u of URIs) {
     yield NetUtil.newChannel({
       uri: u,
-      loadUsingSystemPrincipal: true
+      loadUsingSystemPrincipal: true,
     });
   }
 }
 
 function checkPrivate(channel, shouldBePrivate) {
-  Assert.equal(channel.QueryInterface(Ci.nsIPrivateBrowsingChannel).isChannelPrivate,
-               shouldBePrivate);
+  Assert.equal(
+    channel.QueryInterface(Ci.nsIPrivateBrowsingChannel).isChannelPrivate,
+    shouldBePrivate
+  );
 }
 
 /**
@@ -85,12 +81,10 @@ add_test(function test_LoadContextRegular() {
   run_next_test();
 });
 
-
 // Do not test simultanous uses of .setPrivate and load context.
 // There is little merit in doing so, and combining both will assert in
 // Debug builds anyway.
 
-
 function run_test() {
-    run_next_test();
+  run_next_test();
 }

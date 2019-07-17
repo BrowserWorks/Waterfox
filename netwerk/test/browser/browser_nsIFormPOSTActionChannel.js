@@ -3,7 +3,7 @@
  * should be able to accept form POST.
  */
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const SCHEME = "x-bug1241377";
 
@@ -17,8 +17,7 @@ const NORMAL_ACTION_URI = ACTION_BASE + "normal.html";
 const UPLOAD_ACTION_URI = ACTION_BASE + "upload.html";
 const POST_ACTION_URI = ACTION_BASE + "post.html";
 
-function CustomProtocolHandler() {
-}
+function CustomProtocolHandler() {}
 CustomProtocolHandler.prototype = {
   /** nsIProtocolHandler */
   get scheme() {
@@ -28,14 +27,16 @@ CustomProtocolHandler.prototype = {
     return -1;
   },
   get protocolFlags() {
-    return Ci.nsIProtocolHandler.URI_NORELATIVE |
-           Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE;
+    return (
+      Ci.nsIProtocolHandler.URI_NORELATIVE |
+      Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE
+    );
   },
   newURI: function(aSpec, aOriginCharset, aBaseURI) {
     return Cc["@mozilla.org/network/standard-url-mutator;1"]
-             .createInstance(Ci.nsIURIMutator)
-             .setSpec(aSpec)
-             .finalize()
+      .createInstance(Ci.nsIURIMutator)
+      .setSpec(aSpec)
+      .finalize();
   },
   newChannel: function(aURI, aLoadInfo) {
     return new CustomChannel(aURI, aLoadInfo);
@@ -54,9 +55,11 @@ CustomProtocolHandler.prototype = {
   lockFactory: function() {},
 
   /** nsISupports */
-  QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolHandler,
-                                          Ci.nsIFactory]),
-  classID: Components.ID("{16d594bc-d9d8-47ae-a139-ea714dc0c35c}")
+  QueryInterface: ChromeUtils.generateQI([
+    Ci.nsIProtocolHandler,
+    Ci.nsIFactory,
+  ]),
+  classID: Components.ID("{16d594bc-d9d8-47ae-a139-ea714dc0c35c}"),
 };
 
 function CustomChannel(aURI, aLoadInfo) {
@@ -100,8 +103,7 @@ CustomChannel.prototype = {
   get contentType() {
     return "text/html";
   },
-  set contentType(val) {
-  },
+  set contentType(val) {},
   contentCharset: "UTF-8",
   get contentLength() {
     return -1;
@@ -143,8 +145,9 @@ document.getElementById('form').submit();
       var postData = "";
       var headers = {};
       if (this._uploadStream) {
-        var bstream = Cc["@mozilla.org/binaryinputstream;1"]
-            .createInstance(Ci.nsIBinaryInputStream);
+        var bstream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(
+          Ci.nsIBinaryInputStream
+        );
         bstream.setInputStream(this._uploadStream);
         postData = bstream.readBytes(bstream.available());
 
@@ -166,22 +169,23 @@ document.getElementById('form').submit();
 </html>
 `;
 
-    var stream = Cc["@mozilla.org/io/string-input-stream;1"]
-        .createInstance(Ci.nsIStringInputStream);
+    var stream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
+      Ci.nsIStringInputStream
+    );
     stream.setData(data, data.length);
 
     var runnable = {
       run: () => {
         try {
           aListener.onStartRequest(this, null);
-        } catch(e) {}
+        } catch (e) {}
         try {
           aListener.onDataAvailable(this, stream, 0, stream.available());
-        } catch(e) {}
+        } catch (e) {}
         try {
           aListener.onStopRequest(this, null, Cr.NS_OK);
-        } catch(e) {}
-      }
+        } catch (e) {}
+      },
     };
     Services.tm.dispatchToMainThread(runnable);
   },
@@ -190,7 +194,7 @@ document.getElementById('form').submit();
   get name() {
     return this.uri.spec;
   },
-  isPending: function () {
+  isPending: function() {
     return false;
   },
   get status() {
@@ -198,9 +202,10 @@ document.getElementById('form').submit();
   },
   cancel: function(status) {},
   loadGroup: null,
-  loadFlags: Ci.nsIRequest.LOAD_NORMAL |
-             Ci.nsIRequest.INHIBIT_CACHING |
-             Ci.nsIRequest.LOAD_BYPASS_CACHE,
+  loadFlags:
+    Ci.nsIRequest.LOAD_NORMAL |
+    Ci.nsIRequest.INHIBIT_CACHING |
+    Ci.nsIRequest.LOAD_BYPASS_CACHE,
 };
 
 function frameScript() {
@@ -209,11 +214,17 @@ function frameScript() {
       if (content) {
         var frame = content.document.getElementById("frame");
         if (frame) {
-          var upload_stream = frame.contentDocument.getElementById("upload_stream");
+          var upload_stream = frame.contentDocument.getElementById(
+            "upload_stream"
+          );
           var post_data = frame.contentDocument.getElementById("post_data");
           var headers = frame.contentDocument.getElementById("upload_headers");
           if (upload_stream && post_data && headers) {
-            sendAsyncMessage("Test:IFrameLoaded", [upload_stream.value, post_data.value, headers.value]);
+            sendAsyncMessage("Test:IFrameLoaded", [
+              upload_stream.value,
+              post_data.value,
+              headers.value,
+            ]);
             return;
           }
         }
@@ -231,7 +242,10 @@ function loadTestTab(uri) {
   var browser = gBrowser.selectedBrowser;
 
   let manager = browser.messageManager;
-  browser.messageManager.loadFrameScript("data:,(" + frameScript.toString() + ")();", true);
+  browser.messageManager.loadFrameScript(
+    "data:,(" + frameScript.toString() + ")();",
+    true
+  );
 
   return new Promise(resolve => {
     function listener({ data: [hasUploadStream, postData, headers] }) {
@@ -247,9 +261,12 @@ function loadTestTab(uri) {
 add_task(async function() {
   var handler = new CustomProtocolHandler();
   var registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.registerFactory(handler.classID, "",
-                            "@mozilla.org/network/protocol;1?name=" + handler.scheme,
-                            handler);
+  registrar.registerFactory(
+    handler.classID,
+    "",
+    "@mozilla.org/network/protocol;1?name=" + handler.scheme,
+    handler
+  );
   registerCleanupFunction(function() {
     registrar.unregisterFactory(handler.classID, handler);
   });
@@ -273,8 +290,7 @@ add_task(async function() {
   var [hasUploadStream, postData, headers] = await loadTestTab(POST_FORM_URI);
 
   is(hasUploadStream, "yes", "post action should have uploadStream");
-  is(postData, "foo=bar\r\n",
-     "POST data is received correctly");
+  is(postData, "foo=bar\r\n", "POST data is received correctly");
 
   is(headers["Content-Type"], "text/plain", "Content-Type header is correct");
   is(headers["Content-Length"], undefined, "Content-Length header is correct");
