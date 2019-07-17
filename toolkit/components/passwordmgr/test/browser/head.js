@@ -6,22 +6,24 @@ ChromeUtils.import("resource://testing-common/ContentTaskUtils.jsm", this);
 ChromeUtils.import("resource://testing-common/TelemetryTestUtils.jsm", this);
 
 add_task(async function common_initialize() {
-  await SpecialPowers.pushPrefEnv({"set": [["signon.rememberSignons", true]]});
+  await SpecialPowers.pushPrefEnv({ set: [["signon.rememberSignons", true]] });
 });
 
-registerCleanupFunction(async function cleanup_removeAllLoginsAndResetRecipes() {
-  await SpecialPowers.popPrefEnv();
+registerCleanupFunction(
+  async function cleanup_removeAllLoginsAndResetRecipes() {
+    await SpecialPowers.popPrefEnv();
 
-  Services.logins.removeAllLogins();
-  clearHttpAuths();
+    Services.logins.removeAllLogins();
+    clearHttpAuths();
 
-  let recipeParent = LoginTestUtils.recipes.getRecipeParent();
-  if (!recipeParent) {
-    // No need to reset the recipes if the recipe module wasn't even loaded.
-    return;
+    let recipeParent = LoginTestUtils.recipes.getRecipeParent();
+    if (!recipeParent) {
+      // No need to reset the recipes if the recipe module wasn't even loaded.
+      return;
+    }
+    await recipeParent.then(recipeParentResult => recipeParentResult.reset());
   }
-  await recipeParent.then(recipeParentResult => recipeParentResult.reset());
-});
+);
 
 /**
  * Loads a test page in `DIRECTORY_URL` which automatically submits to formsubmit.sjs and returns a
@@ -32,30 +34,43 @@ registerCleanupFunction(async function cleanup_removeAllLoginsAndResetRecipes() 
  * @param {String} [aOrigin="http://example.com"] - origin of the server to use
  *                                                  to load `aPageFile`.
  */
-function testSubmittingLoginForm(aPageFile, aTaskFn, aOrigin = "http://example.com") {
-  return BrowserTestUtils.withNewTab({
-    gBrowser,
-    url: aOrigin + DIRECTORY_PATH + aPageFile,
-  }, async function(browser) {
-    ok(true, "loaded " + aPageFile);
-    let fieldValues = await ContentTask.spawn(browser, undefined, async function() {
-      await ContentTaskUtils.waitForCondition(() => {
-        return content.location.pathname.endsWith("/formsubmit.sjs") &&
-          content.document.readyState == "complete";
-      }, "Wait for form submission load (formsubmit.sjs)");
-      let username = content.document.getElementById("user").textContent;
-      let password = content.document.getElementById("pass").textContent;
-      return {
-        username,
-        password,
-      };
-    });
-    ok(true, "form submission loaded");
-    if (aTaskFn) {
-      await aTaskFn(fieldValues);
+function testSubmittingLoginForm(
+  aPageFile,
+  aTaskFn,
+  aOrigin = "http://example.com"
+) {
+  return BrowserTestUtils.withNewTab(
+    {
+      gBrowser,
+      url: aOrigin + DIRECTORY_PATH + aPageFile,
+    },
+    async function(browser) {
+      ok(true, "loaded " + aPageFile);
+      let fieldValues = await ContentTask.spawn(
+        browser,
+        undefined,
+        async function() {
+          await ContentTaskUtils.waitForCondition(() => {
+            return (
+              content.location.pathname.endsWith("/formsubmit.sjs") &&
+              content.document.readyState == "complete"
+            );
+          }, "Wait for form submission load (formsubmit.sjs)");
+          let username = content.document.getElementById("user").textContent;
+          let password = content.document.getElementById("pass").textContent;
+          return {
+            username,
+            password,
+          };
+        }
+      );
+      ok(true, "form submission loaded");
+      if (aTaskFn) {
+        await aTaskFn(fieldValues);
+      }
+      return fieldValues;
     }
-    return fieldValues;
-  });
+  );
 }
 
 function checkOnlyLoginWasUsedTwice({ justChanged }) {
@@ -67,18 +82,26 @@ function checkOnlyLoginWasUsedTwice({ justChanged }) {
   is(logins[0].timesUsed, 2, "check .timesUsed for existing login submission");
   ok(logins[0].timeCreated < logins[0].timeLastUsed, "timeLastUsed bumped");
   if (justChanged) {
-    is(logins[0].timeLastUsed, logins[0].timePasswordChanged, "timeLastUsed == timePasswordChanged");
+    is(
+      logins[0].timeLastUsed,
+      logins[0].timePasswordChanged,
+      "timeLastUsed == timePasswordChanged"
+    );
   } else {
-    is(logins[0].timeCreated, logins[0].timePasswordChanged, "timeChanged not updated");
+    is(
+      logins[0].timeCreated,
+      logins[0].timePasswordChanged,
+      "timeChanged not updated"
+    );
   }
 }
 
 function clearHttpAuths() {
-  let authMgr = Cc["@mozilla.org/network/http-auth-manager;1"].
-              getService(Ci.nsIHttpAuthManager);
+  let authMgr = Cc["@mozilla.org/network/http-auth-manager;1"].getService(
+    Ci.nsIHttpAuthManager
+  );
   authMgr.clearAll();
 }
-
 
 // Begin popup notification (doorhanger) functions //
 
@@ -97,15 +120,31 @@ const DONT_CHANGE_BUTTON = "secondaryButton";
  * @param {Object} [browser = null] Optional browser whose notifications should be searched.
  * @return the found password popup notification.
  */
-function getCaptureDoorhanger(aKind, popupNotifications = PopupNotifications, browser = null) {
+function getCaptureDoorhanger(
+  aKind,
+  popupNotifications = PopupNotifications,
+  browser = null
+) {
   ok(true, "Looking for " + aKind + " popup notification");
   let notification = popupNotifications.getNotification("password", browser);
   if (notification) {
-    is(notification.options.passwordNotificationType, aKind, "Notification type matches.");
+    is(
+      notification.options.passwordNotificationType,
+      aKind,
+      "Notification type matches."
+    );
     if (aKind == "password-change") {
-      is(notification.mainAction.label, "Update", "Main action label matches update doorhanger.");
+      is(
+        notification.mainAction.label,
+        "Update",
+        "Main action label matches update doorhanger."
+      );
     } else if (aKind == "password-save") {
-      is(notification.mainAction.label, "Save", "Main action label matches save doorhanger.");
+      is(
+        notification.mainAction.label,
+        "Save",
+        "Main action label matches save doorhanger."
+      );
     }
   }
   return notification;
@@ -134,7 +173,9 @@ function clickDoorhangerButton(aPopup, aButtonIndex) {
     notification.secondaryButton.doCommand();
   } else {
     ok(true, "Triggering menuitem # " + aButtonIndex);
-    notification.menupopup.querySelectorAll("menuitem")[aButtonIndex].doCommand();
+    notification.menupopup
+      .querySelectorAll("menuitem")
+      [aButtonIndex].doCommand();
   }
 }
 
@@ -146,12 +187,21 @@ function clickDoorhangerButton(aPopup, aButtonIndex) {
  */
 async function checkDoorhangerUsernamePassword(username, password) {
   await BrowserTestUtils.waitForCondition(() => {
-    return document.getElementById("password-notification-username").value == username;
+    return (
+      document.getElementById("password-notification-username").value ==
+      username
+    );
   }, "Wait for nsLoginManagerPrompter writeDataToUI()");
-  is(document.getElementById("password-notification-username").value, username,
-     "Check doorhanger username");
-  is(document.getElementById("password-notification-password").value, password,
-     "Check doorhanger password");
+  is(
+    document.getElementById("password-notification-username").value,
+    username,
+    "Check doorhanger username"
+  );
+  is(
+    document.getElementById("password-notification-password").value,
+    password,
+    "Check doorhanger password"
+  );
 }
 
 // End popup notification (doorhanger) functions //

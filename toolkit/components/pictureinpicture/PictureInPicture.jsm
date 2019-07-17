@@ -6,7 +6,7 @@
 
 var EXPORTED_SYMBOLS = ["PictureInPicture"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const PLAYER_URI = "chrome://global/content/pictureinpicture/player.xhtml";
 const PLAYER_FEATURES = `chrome,titlebar=no,alwaysontop,lockaspectratio,resizable`;
@@ -70,7 +70,7 @@ var PictureInPicture = {
         continue;
       }
       let closedPromise = new Promise(resolve => {
-        win.addEventListener("unload", resolve, {once: true});
+        win.addEventListener("unload", resolve, { once: true });
       });
       win.close();
       await closedPromise;
@@ -146,16 +146,28 @@ var PictureInPicture = {
 
     // The Picture in Picture window will open on the same display as the
     // originating window, and anchor to the bottom right.
-    let screenManager = Cc["@mozilla.org/gfx/screenmanager;1"]
-                          .getService(Ci.nsIScreenManager);
-    let screen = screenManager.screenForRect(parentWin.screenX,
-                                             parentWin.screenY, 1, 1);
+    let screenManager = Cc["@mozilla.org/gfx/screenmanager;1"].getService(
+      Ci.nsIScreenManager
+    );
+    let screen = screenManager.screenForRect(
+      parentWin.screenX,
+      parentWin.screenY,
+      1,
+      1
+    );
 
     // Now that we have the right screen, let's see how much available
     // real-estate there is for us to work with.
-    let screenLeft = {}, screenTop = {}, screenWidth = {}, screenHeight = {};
-    screen.GetAvailRectDisplayPix(screenLeft, screenTop, screenWidth,
-                                  screenHeight);
+    let screenLeft = {},
+      screenTop = {},
+      screenWidth = {},
+      screenHeight = {};
+    screen.GetAvailRectDisplayPix(
+      screenLeft,
+      screenTop,
+      screenWidth,
+      screenHeight
+    );
 
     // We have to divide these dimensions by the CSS scale factor for the
     // display in order for the video to be positioned correctly on displays
@@ -199,16 +211,26 @@ var PictureInPicture = {
     // opening to get the top left coordinates that openWindow expects.
     let pipLeft = screenWidth.value - resultWidth;
     let pipTop = screenHeight.value - resultHeight;
-    let features = `${PLAYER_FEATURES},top=${pipTop},left=${pipLeft},` +
-                   `outerWidth=${resultWidth},outerHeight=${resultHeight}`;
+    let features =
+      `${PLAYER_FEATURES},top=${pipTop},left=${pipLeft},` +
+      `outerWidth=${resultWidth},outerHeight=${resultHeight}`;
 
-    let pipWindow =
-      Services.ww.openWindow(parentWin, PLAYER_URI, null, features, null);
+    let pipWindow = Services.ww.openWindow(
+      parentWin,
+      PLAYER_URI,
+      null,
+      features,
+      null
+    );
 
     return new Promise(resolve => {
-      pipWindow.addEventListener("load", () => {
-        resolve(pipWindow);
-      }, { once: true });
+      pipWindow.addEventListener(
+        "load",
+        () => {
+          resolve(pipWindow);
+        },
+        { once: true }
+      );
     });
   },
 };

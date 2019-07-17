@@ -32,7 +32,14 @@ add_task(async function setup() {
 });
 
 async function addAndMakeDefault(name, searchURL) {
-  await Services.search.addEngineWithDetails(name, null, null, null, "GET", searchURL);
+  await Services.search.addEngineWithDetails(
+    name,
+    null,
+    null,
+    null,
+    "GET",
+    searchURL
+  );
   let engine = Services.search.getEngineByName(name);
   await Services.search.setDefault(engine);
   return engine;
@@ -46,14 +53,17 @@ add_task(async function test() {
   for (let [name, searchURL] of SUBMISSION_YES) {
     engine = await addAndMakeDefault(name, searchURL);
     engineInfo = await Services.search.getDefaultEngineInfo();
-    Assert.equal(engineInfo.submissionURL, searchURL.replace("{searchTerms}", ""));
+    Assert.equal(
+      engineInfo.submissionURL,
+      searchURL.replace("{searchTerms}", "")
+    );
     await Services.search.removeEngine(engine);
   }
 
- for (let [name, searchURL] of SUBMISSION_NO) {
-   engine = await addAndMakeDefault(name, searchURL);
-   engineInfo = await Services.search.getDefaultEngineInfo();
-   Assert.equal(engineInfo.submissionURL, null);
-   await Services.search.removeEngine(engine);
- }
+  for (let [name, searchURL] of SUBMISSION_NO) {
+    engine = await addAndMakeDefault(name, searchURL);
+    engineInfo = await Services.search.getDefaultEngineInfo();
+    Assert.equal(engineInfo.submissionURL, null);
+    await Services.search.removeEngine(engine);
+  }
 });

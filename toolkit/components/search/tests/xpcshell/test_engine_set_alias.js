@@ -25,7 +25,13 @@ add_task(async function test_engine_set_alias_with_left_space() {
   let [engine2] = await addTestEngines([
     {
       name: "bacon",
-      details: ["", "   a", "Search Bacon", "GET", "http://www.bacon.test/find"],
+      details: [
+        "",
+        "   a",
+        "Search Bacon",
+        "GET",
+        "http://www.bacon.test/find",
+      ],
     },
   ]);
   Assert.equal(engine2.alias, "a");
@@ -39,7 +45,13 @@ add_task(async function test_engine_set_alias_with_right_space() {
   let [engine3] = await addTestEngines([
     {
       name: "bacon",
-      details: ["", "c   ", "Search Bacon", "GET", "http://www.bacon.test/find"],
+      details: [
+        "",
+        "c   ",
+        "Search Bacon",
+        "GET",
+        "http://www.bacon.test/find",
+      ],
     },
   ]);
   Assert.equal(engine3.alias, "c");
@@ -53,7 +65,13 @@ add_task(async function test_engine_set_alias_with_right_left_space() {
   let [engine4] = await addTestEngines([
     {
       name: "bacon",
-      details: ["", " o  ", "Search Bacon", "GET", "http://www.bacon.test/find"],
+      details: [
+        "",
+        " o  ",
+        "Search Bacon",
+        "GET",
+        "http://www.bacon.test/find",
+      ],
     },
   ]);
   Assert.equal(engine4.alias, "o");

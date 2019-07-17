@@ -3,14 +3,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ChromeUtils.defineModuleGetter(this, "Services",
-  "resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "Utils",
-  "resource://gre/modules/sessionstore/Utils.jsm");
-ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
-  "resource://gre/modules/PrivateBrowsingUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "E10SUtils",
-  "resource://gre/modules/E10SUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "Services",
+  "resource://gre/modules/Services.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "Utils",
+  "resource://gre/modules/sessionstore/Utils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
 
 function makeURI(url) {
   return Services.io.newURI(url);
@@ -58,22 +70,29 @@ RemoteWebNavigation.prototype = {
   goBack() {
     let cancelContentJSEpoch = this._cancelContentJSEpoch++;
     this._browser.frameLoader.remoteTab.maybeCancelContentJSExecution(
-      Ci.nsIRemoteTab.NAVIGATE_BACK, {epoch: cancelContentJSEpoch});
-    this._sendMessage("WebNavigation:GoBack", {cancelContentJSEpoch});
+      Ci.nsIRemoteTab.NAVIGATE_BACK,
+      { epoch: cancelContentJSEpoch }
+    );
+    this._sendMessage("WebNavigation:GoBack", { cancelContentJSEpoch });
   },
   goForward() {
     let cancelContentJSEpoch = this._cancelContentJSEpoch++;
     this._browser.frameLoader.remoteTab.maybeCancelContentJSExecution(
-      Ci.nsIRemoteTab.NAVIGATE_FORWARD, {epoch: cancelContentJSEpoch});
-    this._sendMessage("WebNavigation:GoForward", {cancelContentJSEpoch});
+      Ci.nsIRemoteTab.NAVIGATE_FORWARD,
+      { epoch: cancelContentJSEpoch }
+    );
+    this._sendMessage("WebNavigation:GoForward", { cancelContentJSEpoch });
   },
   gotoIndex(aIndex) {
     let cancelContentJSEpoch = this._cancelContentJSEpoch++;
     this._browser.frameLoader.remoteTab.maybeCancelContentJSExecution(
       Ci.nsIRemoteTab.NAVIGATE_INDEX,
-      {index: aIndex, epoch: cancelContentJSEpoch});
-    this._sendMessage("WebNavigation:GotoIndex", {index: aIndex,
-                                                  cancelContentJSEpoch});
+      { index: aIndex, epoch: cancelContentJSEpoch }
+    );
+    this._sendMessage("WebNavigation:GotoIndex", {
+      index: aIndex,
+      cancelContentJSEpoch,
+    });
   },
   loadURI(aURI, aLoadURIOptions) {
     let uri;
@@ -92,9 +111,16 @@ RemoteWebNavigation.prototype = {
         if (!principal || principal.isSystemPrincipal) {
           let attrs = {
             userContextId: this._browser.getAttribute("usercontextid") || 0,
-            privateBrowsingId: PrivateBrowsingUtils.isBrowserPrivate(this._browser) ? 1 : 0,
+            privateBrowsingId: PrivateBrowsingUtils.isBrowserPrivate(
+              this._browser
+            )
+              ? 1
+              : 0,
           };
-          principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, attrs);
+          principal = Services.scriptSecurityManager.createCodebasePrincipal(
+            uri,
+            attrs
+          );
         }
         Services.io.speculativeConnect(uri, principal, null);
       } catch (ex) {
@@ -105,17 +131,29 @@ RemoteWebNavigation.prototype = {
 
     let cancelContentJSEpoch = this._cancelContentJSEpoch++;
     this._browser.frameLoader.remoteTab.maybeCancelContentJSExecution(
-      Ci.nsIRemoteTab.NAVIGATE_URL, {uri, epoch: cancelContentJSEpoch});
+      Ci.nsIRemoteTab.NAVIGATE_URL,
+      { uri, epoch: cancelContentJSEpoch }
+    );
     this._sendMessage("WebNavigation:LoadURI", {
       uri: aURI,
       flags: aLoadURIOptions.loadFlags,
-      referrerInfo: E10SUtils.serializeReferrerInfo(aLoadURIOptions.referrerInfo),
-      postData: aLoadURIOptions.postData ? Utils.serializeInputStream(aLoadURIOptions.postData) : null,
-      headers: aLoadURIOptions.headers ? Utils.serializeInputStream(aLoadURIOptions.headers) : null,
+      referrerInfo: E10SUtils.serializeReferrerInfo(
+        aLoadURIOptions.referrerInfo
+      ),
+      postData: aLoadURIOptions.postData
+        ? Utils.serializeInputStream(aLoadURIOptions.postData)
+        : null,
+      headers: aLoadURIOptions.headers
+        ? Utils.serializeInputStream(aLoadURIOptions.headers)
+        : null,
       baseURI: aLoadURIOptions.baseURI ? aLoadURIOptions.baseURI.spec : null,
       triggeringPrincipal: E10SUtils.serializePrincipal(
-                           aLoadURIOptions.triggeringPrincipal || Services.scriptSecurityManager.createNullPrincipal({})),
-      csp: aLoadURIOptions.csp ? E10SUtils.serializeCSP(aLoadURIOptions.csp) : null,
+        aLoadURIOptions.triggeringPrincipal ||
+          Services.scriptSecurityManager.createNullPrincipal({})
+      ),
+      csp: aLoadURIOptions.csp
+        ? E10SUtils.serializeCSP(aLoadURIOptions.csp)
+        : null,
       requestTime: Services.telemetry.msSystemNow(),
       cancelContentJSEpoch,
     });
@@ -126,10 +164,10 @@ RemoteWebNavigation.prototype = {
     });
   },
   reload(aReloadFlags) {
-    this._sendMessage("WebNavigation:Reload", {flags: aReloadFlags});
+    this._sendMessage("WebNavigation:Reload", { flags: aReloadFlags });
   },
   stop(aStopFlags) {
-    this._sendMessage("WebNavigation:Stop", {flags: aStopFlags});
+    this._sendMessage("WebNavigation:Stop", { flags: aStopFlags });
   },
 
   get document() {

@@ -8,12 +8,15 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "PlacesSearchAutocompleteProvider" ];
+var EXPORTED_SYMBOLS = ["PlacesSearchAutocompleteProvider"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-ChromeUtils.defineModuleGetter(this, "SearchSuggestionController",
-  "resource://gre/modules/SearchSuggestionController.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "SearchSuggestionController",
+  "resource://gre/modules/SearchSuggestionController.jsm"
+);
 
 const SEARCH_ENGINE_TOPIC = "browser-search-engine-modified";
 
@@ -96,8 +99,10 @@ const SearchAutocompleteProviderInternal = {
     }
   },
 
-  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
-                                          Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([
+    Ci.nsIObserver,
+    Ci.nsISupportsWeakReference,
+  ]),
 };
 
 class SuggestionsFetch {
@@ -118,29 +123,34 @@ class SuggestionsFetch {
    * @param {int} userContextId
    *        The user context ID in which the fetch is being performed.
    */
-  constructor(engine,
-              searchString,
-              inPrivateContext,
-              maxLocalResults,
-              maxRemoteResults,
-              userContextId) {
+  constructor(
+    engine,
+    searchString,
+    inPrivateContext,
+    maxLocalResults,
+    maxRemoteResults,
+    userContextId
+  ) {
     this._controller = new SearchSuggestionController();
     this._controller.maxLocalResults = maxLocalResults;
     this._controller.maxRemoteResults = maxRemoteResults;
     this._engine = engine;
     this._suggestions = [];
     this._success = false;
-    this._promise = this._controller.fetch(searchString, inPrivateContext, engine, userContextId).then(results => {
-      this._success = true;
-      if (results) {
-        this._suggestions.push(
-          ...results.local.map(r => ({ suggestion: r, historical: true })),
-          ...results.remote.map(r => ({ suggestion: r, historical: false }))
-        );
-      }
-    }).catch(err => {
-      // fetch() rejects its promise if there's a pending request.
-    });
+    this._promise = this._controller
+      .fetch(searchString, inPrivateContext, engine, userContextId)
+      .then(results => {
+        this._success = true;
+        if (results) {
+          this._suggestions.push(
+            ...results.local.map(r => ({ suggestion: r, historical: true })),
+            ...results.remote.map(r => ({ suggestion: r, historical: false }))
+          );
+        }
+      })
+      .catch(err => {
+        // fetch() rejects its promise if there's a pending request.
+      });
   }
 
   /**
@@ -236,8 +246,11 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
   async engineForAlias(alias) {
     await this.ensureInitialized();
 
-    return SearchAutocompleteProviderInternal
-           .enginesByAlias.get(alias.toLocaleLowerCase()) || null;
+    return (
+      SearchAutocompleteProviderInternal.enginesByAlias.get(
+        alias.toLocaleLowerCase()
+      ) || null
+    );
   },
 
   /**
@@ -290,10 +303,12 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
     }
 
     let parseUrlResult = Services.search.parseSubmissionURL(url);
-    return parseUrlResult.engine && {
-      engineName: parseUrlResult.engine.name,
-      terms: parseUrlResult.terms,
-    };
+    return (
+      parseUrlResult.engine && {
+        engineName: parseUrlResult.engine.name,
+        terms: parseUrlResult.terms,
+      }
+    );
   },
 
   /**
@@ -315,20 +330,27 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    * @returns {SuggestionsFetch} A new suggestions fetch object you should use
    *          to track the fetch.
    */
-  newSuggestionsFetch(engine,
-                      searchString,
-                      inPrivateContext,
-                      maxLocalResults,
-                      maxRemoteResults,
-                      userContextId) {
+  newSuggestionsFetch(
+    engine,
+    searchString,
+    inPrivateContext,
+    maxLocalResults,
+    maxRemoteResults,
+    userContextId
+  ) {
     if (!SearchAutocompleteProviderInternal.initialized) {
       throw new Error("The component has not been initialized.");
     }
     if (!engine) {
       throw new Error("`engine` is null");
     }
-    return new SuggestionsFetch(engine, searchString, inPrivateContext,
-                                maxLocalResults, maxRemoteResults,
-                                userContextId);
+    return new SuggestionsFetch(
+      engine,
+      searchString,
+      inPrivateContext,
+      maxLocalResults,
+      maxRemoteResults,
+      userContextId
+    );
   },
 });

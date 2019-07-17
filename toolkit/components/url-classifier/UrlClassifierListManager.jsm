@@ -2,8 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
 // This is the only implementation of nsIUrlListManager.
 // A class that manages lists, namely white and black lists for
@@ -20,7 +22,8 @@ const minDelayMs = 5 * 60 * 1000;
 const maxDelayMs = 24 * 60 * 60 * 1000;
 const defaultUpdateIntervalMs = 30 * 60 * 1000;
 const PREF_DEBUG_ENABLED = "browser.safebrowsing.debug";
-const PREF_TEST_NOTIFICATIONS = "browser.safebrowsing.test-notifications.enabled";
+const PREF_TEST_NOTIFICATIONS =
+  "browser.safebrowsing.test-notifications.enabled";
 
 let loggingEnabled = false;
 
@@ -63,8 +66,9 @@ this.PROT_ListManager = function PROT_ListManager() {
   // success, update failure, download error).
   this.updateCheckers_ = {};
   this.requestBackoffs_ = {};
-  this.dbService_ = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                   .getService(Ci.nsIUrlClassifierDBService);
+  this.dbService_ = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+    Ci.nsIUrlClassifierDBService
+  );
 
   Services.obs.addObserver(this, "quit-application");
   Services.prefs.addObserver(PREF_DEBUG_ENABLED, this);
@@ -77,10 +81,12 @@ this.PROT_ListManager = function PROT_ListManager() {
  * @param gethashUrl - the url for fetching hash completions
  * @returns true if the table could be created; false otherwise
  */
-PROT_ListManager.prototype.registerTable = function(tableName,
-                                                    providerName,
-                                                    updateUrl,
-                                                    gethashUrl) {
+PROT_ListManager.prototype.registerTable = function(
+  tableName,
+  providerName,
+  updateUrl,
+  gethashUrl
+) {
   this.tablesData[tableName] = {};
   if (!updateUrl) {
     log("Can't register table " + tableName + " without updateUrl");
@@ -97,9 +103,10 @@ PROT_ListManager.prototype.registerTable = function(tableName,
 
     // Using the V4 backoff algorithm for both V2 and V4. See bug 1273398.
     this.requestBackoffs_[updateUrl] = new RequestBackoffV4(
-                                            4 /* num requests */,
-                               60 * 60 * 1000 /* request time, 60 min */,
-                                 providerName /* used by testcase */);
+      4 /* num requests */,
+      60 * 60 * 1000 /* request time, 60 min */,
+      providerName /* used by testcase */
+    );
   }
   this.needsUpdate_[updateUrl][tableName] = false;
 
@@ -113,8 +120,10 @@ PROT_ListManager.prototype.unregisterTable = function(tableName) {
   log("unregistering " + tableName);
   var table = this.tablesData[tableName];
   if (table) {
-    if (!this.updatesNeeded_(table.updateUrl) &&
-        this.updateCheckers_[table.updateUrl]) {
+    if (
+      !this.updatesNeeded_(table.updateUrl) &&
+      this.updateCheckers_[table.updateUrl]
+    ) {
       this.updateCheckers_[table.updateUrl].cancel();
       this.updateCheckers_[table.updateUrl] = null;
     }
@@ -141,17 +150,16 @@ PROT_ListManager.prototype.shutdown_ = function() {
  */
 PROT_ListManager.prototype.observe = function(aSubject, aTopic, aData) {
   switch (aTopic) {
-  case "quit-application":
-    this.shutdown_();
-    break;
-  case "nsPref:changed":
-    if (aData == PREF_DEBUG_ENABLED) {
-      loggingEnabled = Services.prefs.getBoolPref(PREF_DEBUG_ENABLED);
-    }
-    break;
+    case "quit-application":
+      this.shutdown_();
+      break;
+    case "nsPref:changed":
+      if (aData == PREF_DEBUG_ENABLED) {
+        loggingEnabled = Services.prefs.getBoolPref(PREF_DEBUG_ENABLED);
+      }
+      break;
   }
 };
-
 
 PROT_ListManager.prototype.getGethashUrl = function(tableName) {
   if (this.tablesData[tableName] && this.tablesData[tableName].gethashUrl) {
@@ -210,8 +218,10 @@ PROT_ListManager.prototype.disableUpdate = function(tableName) {
   if (table) {
     log("Disabling table updates for " + tableName);
     this.needsUpdate_[table.updateUrl][tableName] = false;
-    if (!this.updatesNeeded_(table.updateUrl) &&
-        this.updateCheckers_[table.updateUrl]) {
+    if (
+      !this.updatesNeeded_(table.updateUrl) &&
+      this.updateCheckers_[table.updateUrl]
+    ) {
       this.updateCheckers_[table.updateUrl].cancel();
       this.updateCheckers_[table.updateUrl] = null;
     }
@@ -235,17 +245,21 @@ PROT_ListManager.prototype.requireTableUpdates = function() {
 /**
  *  Set timer to check update after delay
  */
-PROT_ListManager.prototype.setUpdateCheckTimer = function(updateUrl,
-                                                          delay) {
-  this.updateCheckers_[updateUrl] = Cc["@mozilla.org/timer;1"]
-                                    .createInstance(Ci.nsITimer);
-  this.updateCheckers_[updateUrl].initWithCallback(() => {
-    this.updateCheckers_[updateUrl] = null;
-    if (updateUrl && !this.checkForUpdates(updateUrl)) {
-      // Make another attempt later.
-      this.setUpdateCheckTimer(updateUrl, this.updateInterval);
-    }
-  }, delay, Ci.nsITimer.TYPE_ONE_SHOT);
+PROT_ListManager.prototype.setUpdateCheckTimer = function(updateUrl, delay) {
+  this.updateCheckers_[updateUrl] = Cc["@mozilla.org/timer;1"].createInstance(
+    Ci.nsITimer
+  );
+  this.updateCheckers_[updateUrl].initWithCallback(
+    () => {
+      this.updateCheckers_[updateUrl] = null;
+      if (updateUrl && !this.checkForUpdates(updateUrl)) {
+        // Make another attempt later.
+        this.setUpdateCheckTimer(updateUrl, this.updateInterval);
+      }
+    },
+    delay,
+    Ci.nsITimer.TYPE_ONE_SHOT
+  );
 };
 /**
  * Acts as a nsIUrlClassifierCallback for getTables.
@@ -271,25 +285,34 @@ PROT_ListManager.prototype.kickoffUpdate_ = function(onDiskTableData) {
           let newProvider = this.tablesData[table].provider;
           if (provider) {
             if (newProvider !== provider) {
-              log("Multiple tables for the same updateURL have a different provider?!");
+              log(
+                "Multiple tables for the same updateURL have a different provider?!"
+              );
             }
           } else {
             provider = newProvider;
           }
         }
       }, this);
-      log("Initializing update checker for " + updateUrl
-          + " provided by " + provider);
+      log(
+        "Initializing update checker for " +
+          updateUrl +
+          " provided by " +
+          provider
+      );
 
       // Use the initialUpdateDelay + fuzz unless we had previous updates
       // and the server told us when to try again.
       let updateDelay = initialUpdateDelay;
-      let nextUpdatePref = "browser.safebrowsing.provider." + provider +
-                           ".nextupdatetime";
+      let nextUpdatePref =
+        "browser.safebrowsing.provider." + provider + ".nextupdatetime";
       let nextUpdate = Services.prefs.getCharPref(nextUpdatePref, "");
 
       if (nextUpdate) {
-        updateDelay = Math.min(maxDelayMs, Math.max(0, nextUpdate - Date.now()));
+        updateDelay = Math.min(
+          maxDelayMs,
+          Math.max(0, nextUpdate - Date.now())
+        );
         log("Next update at " + nextUpdate);
       }
       log("Next update " + Math.round(updateDelay / 60000) + "min from now");
@@ -346,7 +369,7 @@ PROT_ListManager.prototype.forceUpdates = function(tables) {
   }
 
   let updateUrls = new Set();
-  tables.split(",").forEach((table) => {
+  tables.split(",").forEach(table => {
     if (this.tablesData[table]) {
       updateUrls.add(this.tablesData[table].updateUrl);
     }
@@ -354,7 +377,7 @@ PROT_ListManager.prototype.forceUpdates = function(tables) {
 
   let ret = true;
 
-  updateUrls.forEach((url) => {
+  updateUrls.forEach(url => {
     // Cancel current update timer for the url because we are forcing an update.
     if (this.updateCheckers_[url]) {
       this.updateCheckers_[url].cancel();
@@ -384,17 +407,24 @@ PROT_ListManager.prototype.checkForUpdates = function(updateUrl) {
   }
 
   if (enableTestNotifications) {
-    Services.obs.notifyObservers(null, "safebrowsing-update-attempt", updateUrl);
+    Services.obs.notifyObservers(
+      null,
+      "safebrowsing-update-attempt",
+      updateUrl
+    );
   }
 
-  if (!this.requestBackoffs_[updateUrl] ||
-      !this.requestBackoffs_[updateUrl].canMakeRequest()) {
+  if (
+    !this.requestBackoffs_[updateUrl] ||
+    !this.requestBackoffs_[updateUrl].canMakeRequest()
+  ) {
     log("Can't make update request");
     return false;
   }
   // Grab the current state of the tables from the database
-  this.dbService_.getTables(BindToObject(this.makeUpdateRequest_, this,
-                            updateUrl));
+  this.dbService_.getTables(
+    BindToObject(this.makeUpdateRequest_, this, updateUrl)
+  );
   return true;
 };
 
@@ -416,10 +446,12 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
   //   tableNames: map of tables that need updating,
   //   request: list of tables and existing chunk ranges from tableData
   // }
-  var streamerMap = { tableList: null,
-                      tableNames: {},
-                      requestPayload: "",
-                      isPostRequest: true };
+  var streamerMap = {
+    tableList: null,
+    tableNames: {},
+    requestPayload: "",
+    isPostRequest: true,
+  };
 
   let useProtobuf = false;
   let onceThru = false;
@@ -437,8 +469,10 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
       useProtobuf = isCurTableProto;
       onceThru = true;
     } else if (useProtobuf !== isCurTableProto) {
-      log('ERROR: Cannot mix "proto" tables with other types ' +
-          "within the same provider.");
+      log(
+        'ERROR: Cannot mix "proto" tables with other types ' +
+          "within the same provider."
+      );
     }
 
     if (this.needsUpdate_[this.tablesData[tableName].updateUrl][tableName]) {
@@ -487,11 +521,14 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
 
     log("stateArray: " + stateArray);
 
-    let urlUtils = Cc["@mozilla.org/url-classifier/utils;1"]
-                     .getService(Ci.nsIUrlClassifierUtils);
+    let urlUtils = Cc["@mozilla.org/url-classifier/utils;1"].getService(
+      Ci.nsIUrlClassifierUtils
+    );
 
-    streamerMap.requestPayload = urlUtils.makeUpdateRequestV4(tableArray,
-                                                              stateArray);
+    streamerMap.requestPayload = urlUtils.makeUpdateRequestV4(
+      tableArray,
+      stateArray
+    );
     streamerMap.isPostRequest = false;
   } else {
     // Build the request. For each table already in the database, include the
@@ -518,34 +555,50 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
 
   // Don't send an empty request.
   if (streamerMap.requestPayload.length > 0) {
-    this.makeUpdateRequestForEntry_(updateUrl, streamerMap.tableList,
-                                    streamerMap.requestPayload,
-                                    streamerMap.isPostRequest);
+    this.makeUpdateRequestForEntry_(
+      updateUrl,
+      streamerMap.tableList,
+      streamerMap.requestPayload,
+      streamerMap.isPostRequest
+    );
   } else {
     // We were disabled between kicking off getTables and now.
     log("Not sending empty request");
   }
 };
 
-PROT_ListManager.prototype.makeUpdateRequestForEntry_ = function(updateUrl,
-                                                                 tableList,
-                                                                 requestPayload,
-                                                                 isPostRequest) {
-  log("makeUpdateRequestForEntry_: requestPayload " + requestPayload +
-      " update: " + updateUrl + " tablelist: " + tableList + "\n");
-  var streamer = Cc["@mozilla.org/url-classifier/streamupdater;1"]
-                 .getService(Ci.nsIUrlClassifierStreamUpdater);
+PROT_ListManager.prototype.makeUpdateRequestForEntry_ = function(
+  updateUrl,
+  tableList,
+  requestPayload,
+  isPostRequest
+) {
+  log(
+    "makeUpdateRequestForEntry_: requestPayload " +
+      requestPayload +
+      " update: " +
+      updateUrl +
+      " tablelist: " +
+      tableList +
+      "\n"
+  );
+  var streamer = Cc["@mozilla.org/url-classifier/streamupdater;1"].getService(
+    Ci.nsIUrlClassifierStreamUpdater
+  );
 
   this.requestBackoffs_[updateUrl].noteRequest();
 
-  if (!streamer.downloadUpdates(
-        tableList,
-        requestPayload,
-        isPostRequest,
-        updateUrl,
-        BindToObject(this.updateSuccess_, this, tableList, updateUrl),
-        BindToObject(this.updateError_, this, tableList, updateUrl),
-        BindToObject(this.downloadError_, this, tableList, updateUrl))) {
+  if (
+    !streamer.downloadUpdates(
+      tableList,
+      requestPayload,
+      isPostRequest,
+      updateUrl,
+      BindToObject(this.updateSuccess_, this, tableList, updateUrl),
+      BindToObject(this.updateError_, this, tableList, updateUrl),
+      BindToObject(this.downloadError_, this, tableList, updateUrl)
+    )
+  ) {
     // Our alarm gets reset in one of the 3 callbacks.
     log("pending update, queued request until later");
   } else {
@@ -562,10 +615,20 @@ PROT_ListManager.prototype.makeUpdateRequestForEntry_ = function(updateUrl,
  * @param waitForUpdate String The number of seconds that the client should
  *        wait before requesting again.
  */
-PROT_ListManager.prototype.updateSuccess_ = function(tableList, updateUrl,
-                                                     waitForUpdateSec) {
-  log("update success for " + tableList + " from " + updateUrl + ": " +
-      waitForUpdateSec + "\n");
+PROT_ListManager.prototype.updateSuccess_ = function(
+  tableList,
+  updateUrl,
+  waitForUpdateSec
+) {
+  log(
+    "update success for " +
+      tableList +
+      " from " +
+      updateUrl +
+      ": " +
+      waitForUpdateSec +
+      "\n"
+  );
 
   // The time unit below are all milliseconds if not specified.
 
@@ -577,12 +640,18 @@ PROT_ListManager.prototype.updateSuccess_ = function(tableList, updateUrl,
   // our delay time for requesting updates. We always use a non-repeating
   // timer since the delay is set differently at every callback.
   if (delay > maxDelayMs) {
-    log("Ignoring delay from server (too long), waiting " +
-        Math.round(maxDelayMs / 60000) + "min");
+    log(
+      "Ignoring delay from server (too long), waiting " +
+        Math.round(maxDelayMs / 60000) +
+        "min"
+    );
     delay = maxDelayMs;
   } else if (delay < minDelayMs) {
-    log("Ignoring delay from server (too short), waiting " +
-        Math.round(this.updateInterval / 60000) + "min");
+    log(
+      "Ignoring delay from server (too short), waiting " +
+        Math.round(this.updateInterval / 60000) +
+        "min"
+    );
     delay = this.updateInterval;
   } else {
     log("Waiting " + Math.round(delay / 60000) + "min");
@@ -601,7 +670,9 @@ PROT_ListManager.prototype.updateSuccess_ = function(tableList, updateUrl,
     let newProvider = this.tablesData[table].provider;
     if (provider) {
       if (newProvider !== provider) {
-        log("Multiple tables for the same updateURL have a different provider?!");
+        log(
+          "Multiple tables for the same updateURL have a different provider?!"
+        );
       }
     } else {
       provider = newProvider;
@@ -610,15 +681,24 @@ PROT_ListManager.prototype.updateSuccess_ = function(tableList, updateUrl,
 
   // Store the last update time (needed to know if the table is "fresh")
   // and the next update time (to know when to update next).
-  let lastUpdatePref = "browser.safebrowsing.provider." + provider + ".lastupdatetime";
+  let lastUpdatePref =
+    "browser.safebrowsing.provider." + provider + ".lastupdatetime";
   let now = Date.now();
   log("Setting last update of " + provider + " to " + now);
   Services.prefs.setCharPref(lastUpdatePref, now.toString());
 
-  let nextUpdatePref = "browser.safebrowsing.provider." + provider + ".nextupdatetime";
+  let nextUpdatePref =
+    "browser.safebrowsing.provider." + provider + ".nextupdatetime";
   let targetTime = now + delay;
-  log("Setting next update of " + provider + " to " + targetTime
-      + " (" + Math.round(delay / 60000) + "min from now)");
+  log(
+    "Setting next update of " +
+      provider +
+      " to " +
+      targetTime +
+      " (" +
+      Math.round(delay / 60000) +
+      "min from now)"
+  );
   Services.prefs.setCharPref(nextUpdatePref, targetTime.toString());
 
   Services.obs.notifyObservers(null, "safebrowsing-update-finished", "success");
@@ -629,13 +709,18 @@ PROT_ListManager.prototype.updateSuccess_ = function(tableList, updateUrl,
  * @param result String The error code of the failure
  */
 PROT_ListManager.prototype.updateError_ = function(table, updateUrl, result) {
-  log("update error for " + table + " from " + updateUrl + ": " + result + "\n");
+  log(
+    "update error for " + table + " from " + updateUrl + ": " + result + "\n"
+  );
   // There was some trouble applying the updates. Don't try again for at least
   // updateInterval milliseconds.
   this.setUpdateCheckTimer(updateUrl, this.updateInterval);
 
-  Services.obs.notifyObservers(null, "safebrowsing-update-finished",
-                               "update error: " + result);
+  Services.obs.notifyObservers(
+    null,
+    "safebrowsing-update-finished",
+    "update error: " + result
+  );
 };
 
 /**
@@ -661,8 +746,11 @@ PROT_ListManager.prototype.downloadError_ = function(table, updateUrl, status) {
 
   this.setUpdateCheckTimer(updateUrl, delay);
 
-  Services.obs.notifyObservers(null, "safebrowsing-update-finished",
-                               "download error: " + status);
+  Services.obs.notifyObservers(
+    null,
+    "safebrowsing-update-finished",
+    "download error: " + status
+  );
 };
 
 /**
@@ -686,13 +774,17 @@ PROT_ListManager.prototype.getBackOffTime = function(provider) {
   return delay == 0 ? 0 : Date.now() + delay;
 };
 
-PROT_ListManager.prototype.QueryInterface = ChromeUtils.generateQI(["nsIUrlListManager", "nsIObserver", "nsITimerCallback"]);
+PROT_ListManager.prototype.QueryInterface = ChromeUtils.generateQI([
+  "nsIUrlListManager",
+  "nsIObserver",
+  "nsITimerCallback",
+]);
 
 var modScope = this;
 function Init() {
   // Pull the library in.
-  var jslib = Cc["@mozilla.org/url-classifier/jslib;1"]
-              .getService().wrappedJSObject;
+  var jslib = Cc["@mozilla.org/url-classifier/jslib;1"].getService()
+    .wrappedJSObject;
   /* global BindToObject, RequestBackoffV4 */
   modScope.BindToObject = jslib.BindToObject;
   modScope.RequestBackoffV4 = jslib.RequestBackoffV4;
@@ -706,7 +798,11 @@ function RegistrationData() {
   return new PROT_ListManager();
 }
 
-XPCOMUtils.defineLazyPreferenceGetter(this, "enableTestNotifications",
-  PREF_TEST_NOTIFICATIONS, false);
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "enableTestNotifications",
+  PREF_TEST_NOTIFICATIONS,
+  false
+);
 
 var EXPORTED_SYMBOLS = ["RegistrationData"];

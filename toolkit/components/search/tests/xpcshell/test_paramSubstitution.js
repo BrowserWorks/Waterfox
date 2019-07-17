@@ -11,8 +11,10 @@ add_task(async function test_paramSubstitution() {
 
   let prefix = "http://test.moz/search?q=";
   let [engine] = await addTestEngines([
-    { name: "test", details: ["", "test", "Search Test", "GET",
-                              prefix + "{searchTerms}"] },
+    {
+      name: "test",
+      details: ["", "test", "Search Test", "GET", prefix + "{searchTerms}"],
+    },
   ]);
   let url = engine.wrappedJSObject._getURLOfType("text/html");
   equal(url.template, prefix + "{searchTerms}");

@@ -9,7 +9,6 @@ var hs = PlacesUtils.history;
 var os = PlacesUtils.observers;
 var anno = PlacesUtils.annotations;
 
-
 var bookmarksObserver = {
   handlePlacesEvents(events) {
     Assert.equal(events.length, 1);
@@ -17,7 +16,9 @@ var bookmarksObserver = {
     bookmarksObserver._itemAddedId = event.id;
     bookmarksObserver._itemAddedParent = event.parentId;
     bookmarksObserver._itemAddedIndex = event.index;
-    bookmarksObserver._itemAddedURI = event.url ? Services.io.newURI(event.url) : null;
+    bookmarksObserver._itemAddedURI = event.url
+      ? Services.io.newURI(event.url)
+      : null;
     bookmarksObserver._itemAddedTitle = event.title;
 
     // Ensure that we've created a guid for this item.
@@ -45,9 +46,18 @@ var bookmarksObserver = {
     this._itemRemovedFolder = folder;
     this._itemRemovedIndex = index;
   },
-  onItemChanged(id, property, isAnnotationProperty, value,
-                          lastModified, itemType, parentId, guid, parentGuid,
-                          oldValue) {
+  onItemChanged(
+    id,
+    property,
+    isAnnotationProperty,
+    value,
+    lastModified,
+    itemType,
+    parentId,
+    guid,
+    parentGuid,
+    oldValue
+  ) {
     this._itemChangedId = id;
     this._itemChangedProperty = property;
     this._itemChanged_isAnnotationProperty = isAnnotationProperty;
@@ -59,19 +69,15 @@ var bookmarksObserver = {
     this._itemVisitedVistId = visitID;
     this._itemVisitedTime = time;
   },
-  onItemMoved(id, oldParent, oldIndex, newParent, newIndex,
-                        itemType) {
+  onItemMoved(id, oldParent, oldIndex, newParent, newIndex, itemType) {
     this._itemMovedId = id;
     this._itemMovedOldParent = oldParent;
     this._itemMovedOldIndex = oldIndex;
     this._itemMovedNewParent = newParent;
     this._itemMovedNewIndex = newIndex;
   },
-  QueryInterface: ChromeUtils.generateQI([
-    Ci.nsINavBookmarkObserver,
-  ]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsINavBookmarkObserver]),
 };
-
 
 // Get bookmarks menu folder id.
 var root = bs.bookmarksMenuFolder;
@@ -107,8 +113,11 @@ add_task(async function test_bookmarks() {
 
   // create a folder to hold all the tests
   // this makes the tests more tolerant of changes to default_places.html
-  let testRoot = bs.createFolder(root, "places bookmarks xpcshell tests",
-                                 bs.DEFAULT_INDEX);
+  let testRoot = bs.createFolder(
+    root,
+    "places bookmarks xpcshell tests",
+    bs.DEFAULT_INDEX
+  );
   let testRootGuid = await PlacesUtils.promiseItemGuid(testRoot);
   Assert.equal(bookmarksObserver._itemAddedId, testRoot);
   Assert.equal(bookmarksObserver._itemAddedParent, root);
@@ -121,16 +130,23 @@ add_task(async function test_bookmarks() {
   let beforeInsert = Date.now() * 1000;
   Assert.ok(beforeInsert > 0);
 
-  let newId = bs.insertBookmark(testRoot, uri("http://google.com/"),
-                                bs.DEFAULT_INDEX, "");
+  let newId = bs.insertBookmark(
+    testRoot,
+    uri("http://google.com/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId);
   Assert.equal(bookmarksObserver._itemAddedParent, testRoot);
   Assert.equal(bookmarksObserver._itemAddedIndex, testStartIndex);
   Assert.ok(bookmarksObserver._itemAddedURI.equals(uri("http://google.com/")));
 
   // after just inserting, modified should not be set
-  let lastModified = PlacesUtils.toPRTime((await PlacesUtils.bookmarks.fetch(
-    await PlacesUtils.promiseItemGuid(newId))).lastModified);
+  let lastModified = PlacesUtils.toPRTime(
+    (await PlacesUtils.bookmarks.fetch(
+      await PlacesUtils.promiseItemGuid(newId)
+    )).lastModified
+  );
 
   // The time before we set the title, in microseconds.
   let beforeSetTitle = Date.now() * 1000;
@@ -148,8 +164,11 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemChangedValue, "Google");
 
   // check lastModified after we set the title
-  let lastModified2 = PlacesUtils.toPRTime((await PlacesUtils.bookmarks.fetch(
-    await PlacesUtils.promiseItemGuid(newId))).lastModified);
+  let lastModified2 = PlacesUtils.toPRTime(
+    (await PlacesUtils.bookmarks.fetch(
+      await PlacesUtils.promiseItemGuid(newId)
+    )).lastModified
+  );
   info("test setItemTitle");
   info("beforeSetTitle = " + beforeSetTitle);
   info("lastModified = " + lastModified);
@@ -182,9 +201,12 @@ add_task(async function test_bookmarks() {
   Assert.equal(bs.getItemTitle(workFolder), "Work #");
 
   // add item into subfolder, specifying index
-  let newId2 = bs.insertBookmark(workFolder,
-                                 uri("http://developer.mozilla.org/"),
-                                 0, "");
+  let newId2 = bs.insertBookmark(
+    workFolder,
+    uri("http://developer.mozilla.org/"),
+    0,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId2);
   Assert.equal(bookmarksObserver._itemAddedParent, workFolder);
   Assert.equal(bookmarksObserver._itemAddedIndex, 0);
@@ -194,9 +216,12 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemChangedProperty, "title");
 
   // insert item into subfolder
-  let newId3 = bs.insertBookmark(workFolder,
-                                 uri("http://msdn.microsoft.com/"),
-                                 bs.DEFAULT_INDEX, "");
+  let newId3 = bs.insertBookmark(
+    workFolder,
+    uri("http://msdn.microsoft.com/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId3);
   Assert.equal(bookmarksObserver._itemAddedParent, workFolder);
   Assert.equal(bookmarksObserver._itemAddedIndex, 1);
@@ -212,9 +237,12 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemRemovedIndex, 0);
 
   // insert item into subfolder
-  let newId4 = bs.insertBookmark(workFolder,
-                                 uri("http://developer.mozilla.org/"),
-                                 bs.DEFAULT_INDEX, "");
+  let newId4 = bs.insertBookmark(
+    workFolder,
+    uri("http://developer.mozilla.org/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId4);
   Assert.equal(bookmarksObserver._itemAddedParent, workFolder);
   Assert.equal(bookmarksObserver._itemAddedIndex, 1);
@@ -226,8 +254,12 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemAddedIndex, 2);
 
   // insert item
-  let newId5 = bs.insertBookmark(homeFolder, uri("http://espn.com/"),
-                                 bs.DEFAULT_INDEX, "");
+  let newId5 = bs.insertBookmark(
+    homeFolder,
+    uri("http://espn.com/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId5);
   Assert.equal(bookmarksObserver._itemAddedParent, homeFolder);
   Assert.equal(bookmarksObserver._itemAddedIndex, 0);
@@ -238,8 +270,10 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemChangedProperty, "title");
 
   // insert query item
-  let uri6 = uri("place:domain=google.com&type=" +
-                 Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY);
+  let uri6 = uri(
+    "place:domain=google.com&type=" +
+      Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY
+  );
   let newId6 = bs.insertBookmark(testRoot, uri6, bs.DEFAULT_INDEX, "");
   Assert.equal(bookmarksObserver._itemAddedParent, testRoot);
   Assert.equal(bookmarksObserver._itemAddedIndex, 3);
@@ -261,10 +295,12 @@ add_task(async function test_bookmarks() {
     Assert.ok(cc > 0);
     for (let i = 0; i < cc; ++i) {
       let node = rootNode.getChild(i);
-      if (node.type == node.RESULT_TYPE_FOLDER ||
-          node.type == node.RESULT_TYPE_URI ||
-          node.type == node.RESULT_TYPE_SEPARATOR ||
-          node.type == node.RESULT_TYPE_QUERY) {
+      if (
+        node.type == node.RESULT_TYPE_FOLDER ||
+        node.type == node.RESULT_TYPE_URI ||
+        node.type == node.RESULT_TYPE_SEPARATOR ||
+        node.type == node.RESULT_TYPE_QUERY
+      ) {
         Assert.ok(node.itemId > 0);
       } else {
         Assert.equal(node.itemId, -1);
@@ -304,8 +340,12 @@ add_task(async function test_bookmarks() {
   }
 
   // test change bookmark uri
-  let newId10 = bs.insertBookmark(testRoot, uri("http://foo10.com/"),
-                                  bs.DEFAULT_INDEX, "");
+  let newId10 = bs.insertBookmark(
+    testRoot,
+    uri("http://foo10.com/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
 
   // Workaround possible VM timers issues moving lastModified and dateAdded
   // to the past.
@@ -316,8 +356,12 @@ add_task(async function test_bookmarks() {
   // this test confirms that we can find bookmarks that we haven't visited
   // (which are "hidden") and that we can find by title.
   // see bug #369887 for more details
-  let newId13 = bs.insertBookmark(testRoot, uri("http://foobarcheese.com/"),
-                                  bs.DEFAULT_INDEX, "");
+  let newId13 = bs.insertBookmark(
+    testRoot,
+    uri("http://foobarcheese.com/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   Assert.equal(bookmarksObserver._itemAddedId, newId13);
   Assert.equal(bookmarksObserver._itemAddedParent, testRoot);
   Assert.equal(bookmarksObserver._itemAddedIndex, 6);
@@ -330,7 +374,13 @@ add_task(async function test_bookmarks() {
 
   // check if setting an item annotation triggers onItemChanged
   bookmarksObserver._itemChangedId = -1;
-  anno.setItemAnnotation(newId3, "test-annotation", "foo", 0, anno.EXPIRE_NEVER);
+  anno.setItemAnnotation(
+    newId3,
+    "test-annotation",
+    "foo",
+    0,
+    anno.EXPIRE_NEVER
+  );
   Assert.equal(bookmarksObserver._itemChangedId, newId3);
   Assert.equal(bookmarksObserver._itemChangedProperty, "test-annotation");
   Assert.ok(bookmarksObserver._itemChanged_isAnnotationProperty);
@@ -411,11 +461,18 @@ add_task(async function test_bookmarks() {
   }
 
   // check setItemLastModified()
-  let newId14 = bs.insertBookmark(testRoot, uri("http://bar.tld/"),
-                                  bs.DEFAULT_INDEX, "");
+  let newId14 = bs.insertBookmark(
+    testRoot,
+    uri("http://bar.tld/"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   bs.setItemLastModified(newId14, 1234000000000000);
-  let fakeLastModified = PlacesUtils.toPRTime((await PlacesUtils.bookmarks.fetch(
-    await PlacesUtils.promiseItemGuid(newId14))).lastModified);
+  let fakeLastModified = PlacesUtils.toPRTime(
+    (await PlacesUtils.bookmarks.fetch(
+      await PlacesUtils.promiseItemGuid(newId14)
+    )).lastModified
+  );
   Assert.equal(fakeLastModified, 1234000000000000);
 
   // ensure that removing an item removes its annotations
@@ -431,16 +488,18 @@ add_task(async function test_bookmarks() {
   // bug 646993 - test bookmark titles longer than the maximum allowed length
   let title15 = Array(TITLE_LENGTH_MAX + 5).join("X");
   let title15expected = title15.substring(0, TITLE_LENGTH_MAX);
-  let newId15 = bs.insertBookmark(testRoot, uri("http://evil.com/"),
-                                  bs.DEFAULT_INDEX, title15);
+  let newId15 = bs.insertBookmark(
+    testRoot,
+    uri("http://evil.com/"),
+    bs.DEFAULT_INDEX,
+    title15
+  );
 
-  Assert.equal(bs.getItemTitle(newId15).length,
-               title15expected.length);
+  Assert.equal(bs.getItemTitle(newId15).length, title15expected.length);
   Assert.equal(bookmarksObserver._itemAddedTitle, title15expected);
   // test title length after updates
   bs.setItemTitle(newId15, title15 + " updated");
-  Assert.equal(bs.getItemTitle(newId15).length,
-               title15expected.length);
+  Assert.equal(bs.getItemTitle(newId15).length, title15expected.length);
   Assert.equal(bookmarksObserver._itemChangedId, newId15);
   Assert.equal(bookmarksObserver._itemChangedProperty, "title");
   Assert.equal(bookmarksObserver._itemChangedValue, title15expected);
@@ -464,8 +523,12 @@ async function testSimpleFolderResult() {
   Assert.ok(beforeInsert > 0);
 
   // re-set item title separately so can test nodes' last modified
-  let item = bs.insertBookmark(parent, uri("about:blank"),
-                               bs.DEFAULT_INDEX, "");
+  let item = bs.insertBookmark(
+    parent,
+    uri("about:blank"),
+    bs.DEFAULT_INDEX,
+    ""
+  );
   bs.setItemTitle(item, "test bookmark");
 
   // see above
@@ -474,7 +537,10 @@ async function testSimpleFolderResult() {
 
   let longName = Array(TITLE_LENGTH_MAX + 5).join("A");
   let folderLongName = bs.createFolder(parent, longName, bs.DEFAULT_INDEX);
-  Assert.equal(bookmarksObserver._itemAddedTitle, longName.substring(0, TITLE_LENGTH_MAX));
+  Assert.equal(
+    bookmarksObserver._itemAddedTitle,
+    longName.substring(0, TITLE_LENGTH_MAX)
+  );
 
   let options = hs.getNewQueryOptions();
   let query = hs.getNewQuery();
@@ -504,7 +570,10 @@ async function testSimpleFolderResult() {
   bs.setItemTitle(folderLongName, longName + " updated");
   Assert.equal(bookmarksObserver._itemChangedId, folderLongName);
   Assert.equal(bookmarksObserver._itemChangedProperty, "title");
-  Assert.equal(bookmarksObserver._itemChangedValue, longName.substring(0, TITLE_LENGTH_MAX));
+  Assert.equal(
+    bookmarksObserver._itemChangedValue,
+    longName.substring(0, TITLE_LENGTH_MAX)
+  );
 
   node = rootNode.getChild(2);
   Assert.equal(node.title, longName.substring(0, TITLE_LENGTH_MAX));

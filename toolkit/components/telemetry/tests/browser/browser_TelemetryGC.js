@@ -14,7 +14,9 @@
  *                                                                               *
  ********************************************************************************/
 
-const {GCTelemetry} = ChromeUtils.import("resource://gre/modules/GCTelemetry.jsm");
+const { GCTelemetry } = ChromeUtils.import(
+  "resource://gre/modules/GCTelemetry.jsm"
+);
 
 function check(entries) {
   const FIELDS = ["random", "worst"];
@@ -51,13 +53,17 @@ function check(entries) {
       ok(gc.slices_list.length <= 4, "slices_list array is not too long");
 
       ok("totals" in gc, "totals field present");
-      is(typeof(gc.totals), "object", "totals is an object");
+      is(typeof gc.totals, "object", "totals is an object");
       ok(Object.keys(gc.totals).length <= 65, "totals array is not too long");
 
       // Make sure we don't skip any big objects.
       for (let key in gc) {
         if (key != "slices_list" && key != "totals") {
-          isnot(typeof(gc[key]), "object", `${key} property should be primitive`);
+          isnot(
+            typeof gc[key],
+            "object",
+            `${key} property should be primitive`
+          );
         }
       }
 
@@ -73,7 +79,11 @@ function check(entries) {
         // Make sure we don't skip any big objects.
         for (let key in slice) {
           if (key != "times") {
-            isnot(typeof(slice[key]), "object", `${key} property should be primitive`);
+            isnot(
+              typeof slice[key],
+              "object",
+              `${key} property should be primitive`
+            );
           }
         }
 
@@ -81,14 +91,22 @@ function check(entries) {
 
         for (let phase in slice.times) {
           phases.add(phase);
-          is(typeof(slice.times[phase]), "number", `${phase} property should be a number`);
+          is(
+            typeof slice.times[phase],
+            "number",
+            `${phase} property should be a number`
+          );
         }
       }
 
       let totals = gc.totals;
       // Make sure we don't skip any big objects.
       for (let phase in totals) {
-        is(typeof(totals[phase]), "number", `${phase} property should be a number`);
+        is(
+          typeof totals[phase],
+          "number",
+          `${phase} property should be a number`
+        );
       }
 
       for (let phase of phases) {
@@ -102,16 +120,23 @@ add_task(async function test() {
   let multiprocess = Services.appinfo.browserTabsRemoteAutostart;
 
   // Set these prefs to ensure that we get measurements.
-  await SpecialPowers.pushPrefEnv({"set": [["javascript.options.mem.notify", true]]});
+  await SpecialPowers.pushPrefEnv({
+    set: [["javascript.options.mem.notify", true]],
+  });
 
   function runRemote(f) {
-    gBrowser.selectedBrowser.messageManager.loadFrameScript(`data:,(${f})()`, false);
+    gBrowser.selectedBrowser.messageManager.loadFrameScript(
+      `data:,(${f})()`,
+      false
+    );
   }
 
   // These are available to frame scripts.
   /* global addMessageListener:false, removeMessageListener: false */
   function initScript() {
-    const {GCTelemetry} = ChromeUtils.import("resource://gre/modules/GCTelemetry.jsm");
+    const { GCTelemetry } = ChromeUtils.import(
+      "resource://gre/modules/GCTelemetry.jsm"
+    );
 
     /*
      * Don't shut down GC telemetry if it was already running before the test!
@@ -139,7 +164,9 @@ add_task(async function test() {
       GCTelemetry.shutdown();
     }
 
-    gBrowser.selectedBrowser.messageManager.sendAsyncMessage("GCTelemTest:Shutdown");
+    gBrowser.selectedBrowser.messageManager.sendAsyncMessage(
+      "GCTelemTest:Shutdown"
+    );
   });
 
   let localPromise = new Promise(resolve => {
@@ -174,13 +201,17 @@ add_task(async function test() {
   await Promise.all([localPromise, remotePromise]);
 
   let localEntries = GCTelemetry.entries("main", true);
-  let remoteEntries = multiprocess ? GCTelemetry.entries("content", true) : localEntries;
+  let remoteEntries = multiprocess
+    ? GCTelemetry.entries("content", true)
+    : localEntries;
 
   check(localEntries);
   check(remoteEntries);
 
   localEntries = GCTelemetry.entries("main", false);
-  remoteEntries = multiprocess ? GCTelemetry.entries("content", false) : localEntries;
+  remoteEntries = multiprocess
+    ? GCTelemetry.entries("content", false)
+    : localEntries;
 
   is(localEntries.random.length, 0, "no random GCs after reset");
   is(localEntries.worst.length, 0, "no worst GCs after reset");

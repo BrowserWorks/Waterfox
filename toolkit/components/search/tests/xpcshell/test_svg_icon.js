@@ -9,8 +9,8 @@ var requestHandled;
 const icon =
   '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' +
   '<svg xmlns="http://www.w3.org/2000/svg" ' +
-       'width="16" height="16" viewBox="0 0 16 16">' +
-   '<rect x="4" y="4" width="8px" height="8px" style="fill: blue"/>' +
+  'width="16" height="16" viewBox="0 0 16 16">' +
+  '<rect x="4" y="4" width="8px" height="8px" style="fill: blue"/>' +
   "</svg>";
 
 function run_test() {
@@ -39,14 +39,24 @@ add_task(async function test_svg_icon() {
   await Services.search.init();
 
   let [engine] = await addTestEngines([
-    { name: "SVGIcon", details: [url, "", "SVG icon", "GET",
-                                 "http://icon.svg/search?q={searchTerms}"] },
+    {
+      name: "SVGIcon",
+      details: [
+        url,
+        "",
+        "SVG icon",
+        "GET",
+        "http://icon.svg/search?q={searchTerms}",
+      ],
+    },
   ]);
 
   await requestHandled;
   await promiseAfterCache();
 
   ok(engine.iconURI, "the engine has an icon");
-  ok(engine.iconURI.spec.startsWith("data:image/svg+xml"),
-     "the icon is saved as an SVG data url");
+  ok(
+    engine.iconURI.spec.startsWith("data:image/svg+xml"),
+    "the icon is saved as an SVG data url"
+  );
 });

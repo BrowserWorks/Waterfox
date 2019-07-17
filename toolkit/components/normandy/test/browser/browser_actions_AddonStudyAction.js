@@ -7,12 +7,10 @@ ChromeUtils.import("resource://normandy/lib/AddonStudies.jsm", this);
 ChromeUtils.import("resource://normandy/lib/Uptake.jsm", this);
 
 const FIXTURE_ADDON_ID = "normandydriver@example.com";
-const FIXTURE_ADDON_BASE_URL = "http://example.com/browser/toolkit/components/normandy/test/browser/addons/";
+const FIXTURE_ADDON_BASE_URL =
+  "http://example.com/browser/toolkit/components/normandy/test/browser/addons/";
 
-const FIXTURE_ADDONS = [
-  "normandydriver-1.0",
-  "normandydriver-2.0",
-];
+const FIXTURE_ADDONS = ["normandydriver-1.0", "normandydriver-2.0"];
 
 // Generate fixture add-on details
 const FIXTURE_ADDON_DETAILS = {};
@@ -21,7 +19,8 @@ FIXTURE_ADDONS.forEach(addon => {
   const dir = getChromeDir(getResolvedURI(gTestPath));
   dir.append("addons");
   dir.append(filename);
-  const xpiFile = Services.io.newFileURI(dir).QueryInterface(Ci.nsIFileURL).file;
+  const xpiFile = Services.io.newFileURI(dir).QueryInterface(Ci.nsIFileURL)
+    .file;
 
   FIXTURE_ADDON_DETAILS[addon] = {
     url: `${FIXTURE_ADDON_BASE_URL}${filename}`,
@@ -40,19 +39,24 @@ function addonStudyRecipeFactory(overrides = {}) {
     args = Object.assign(args, overrides.arguments);
     delete overrides.arguments;
   }
-  return recipeFactory(Object.assign({ action: "addon-study", arguments: args }, overrides));
+  return recipeFactory(
+    Object.assign({ action: "addon-study", arguments: args }, overrides)
+  );
 }
 
 function extensionDetailsFactory(overrides = {}) {
-  return Object.assign({
-    id: 1,
-    name: "Normandy Fixture",
-    xpi: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url,
-    extension_id: FIXTURE_ADDON_ID,
-    version: "1.0",
-    hash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
-    hash_algorithm: "sha256",
-  }, overrides);
+  return Object.assign(
+    {
+      id: 1,
+      name: "Normandy Fixture",
+      xpi: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url,
+      extension_id: FIXTURE_ADDON_ID,
+      version: "1.0",
+      hash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
+      hash_algorithm: "sha256",
+    },
+    overrides
+  );
 }
 
 /**
@@ -64,14 +68,19 @@ function extensionDetailsFactory(overrides = {}) {
  * done so we can wait until AddonStudies cleanup is finished.
  */
 async function safeUninstallAddon(addon) {
-  const activeStudies = (await AddonStudies.getAll()).filter(study => study.active);
+  const activeStudies = (await AddonStudies.getAll()).filter(
+    study => study.active
+  );
   const matchingStudy = activeStudies.find(study => study.addonId === addon.id);
 
   let studyEndedPromise;
   if (matchingStudy) {
-    studyEndedPromise = TestUtils.topicObserved("shield-study-ended", (subject, message) => {
-      return message === `${matchingStudy.recipeId}`;
-    });
+    studyEndedPromise = TestUtils.topicObserved(
+      "shield-study-ended",
+      (subject, message) => {
+        return message === `${matchingStudy.recipeId}`;
+      }
+    );
   }
 
   const addonUninstallPromise = addon.uninstall();
@@ -86,18 +95,20 @@ async function safeUninstallAddon(addon) {
 function withInstalledWebExtensionSafe(manifestOverrides = {}) {
   return testFunction => {
     return async function wrappedTestFunction(...args) {
-      const decorated = withInstalledWebExtension(manifestOverrides, true)(async ([id, file]) => {
-        try {
-          await testFunction(...args, [id, file]);
-        } finally {
-          let addon = await AddonManager.getAddonByID(id);
-          if (addon) {
-            await safeUninstallAddon(addon);
-            addon = await AddonManager.getAddonByID(id);
-            ok(!addon, "add-on should be uninstalled");
+      const decorated = withInstalledWebExtension(manifestOverrides, true)(
+        async ([id, file]) => {
+          try {
+            await testFunction(...args, [id, file]);
+          } finally {
+            let addon = await AddonManager.getAddonByID(id);
+            if (addon) {
+              await safeUninstallAddon(addon);
+              addon = await AddonManager.getAddonByID(id);
+              ok(!addon, "add-on should be uninstalled");
+            }
           }
         }
-      });
+      );
       await decorated();
     };
   };
@@ -146,7 +157,11 @@ function ensureAddonCleanup(testFunction) {
       await testFunction(...args);
     } finally {
       const afterAddons = new Set(await AddonManager.getAllAddons());
-      Assert.deepEqual(beforeAddons, afterAddons, "The add-ons should be same before and after the test");
+      Assert.deepEqual(
+        beforeAddons,
+        afterAddons,
+        "The add-ons should be same before and after the test"
+      );
     }
   };
 }
@@ -158,8 +173,13 @@ decorate_task(
   withMockNormandyApi,
   AddonStudies.withStudies([addonStudyFactory()]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "1.0"}),
-  async function enrollTwiceFail(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "1.0" }),
+  async function enrollTwiceFail(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -185,7 +205,7 @@ decorate_task(
     ok(!enrollSpy.called, "enroll should not be called");
     ok(updateSpy.called, "update should be called");
     sendEventStub.assertEvents([]);
-  },
+  }
 );
 
 // Test that if the add-on fails to install, the database is cleaned up and the
@@ -215,9 +235,14 @@ decorate_task(
     const studies = await AddonStudies.getAll();
     Assert.deepEqual(studies, [], "the study should not be in the database");
 
-    sendEventStub.assertEvents(
-      [["enrollFailed", "addon_study", recipe.arguments.name, {reason: "download-failure", detail: "ERROR_NETWORK_FAILURE"}]]
-    );
+    sendEventStub.assertEvents([
+      [
+        "enrollFailed",
+        "addon_study",
+        recipe.arguments.name,
+        { reason: "download-failure", detail: "ERROR_NETWORK_FAILURE" },
+      ],
+    ]);
   }
 );
 
@@ -247,12 +272,17 @@ decorate_task(
     const studies = await AddonStudies.getAll();
     Assert.deepEqual(studies, [], "the study should not be in the database");
 
-    sendEventStub.assertEvents(
-      [["enrollFailed", "addon_study", recipe.arguments.name, {
-        reason: "download-failure",
-        detail: "ERROR_INCORRECT_HASH",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "enrollFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "download-failure",
+          detail: "ERROR_INCORRECT_HASH",
+        },
+      ],
+    ]);
   }
 );
 
@@ -284,11 +314,16 @@ decorate_task(
     const studies = await AddonStudies.getAll();
     Assert.deepEqual(studies, [], "the study should not be in the database");
 
-    sendEventStub.assertEvents(
-      [["enrollFailed", "addon_study", recipe.arguments.name, {
-        reason: "metadata-mismatch",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "enrollFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "metadata-mismatch",
+        },
+      ],
+    ]);
   }
 );
 
@@ -299,8 +334,16 @@ decorate_task(
   withSendEventStub,
   withInstalledWebExtensionSafe({ version: "0.1", id: FIXTURE_ADDON_ID }),
   AddonStudies.withStudies(),
-  async function conflictingEnrollment(mockApi, sendEventStub, [installedAddonId, installedAddonFile]) {
-    is(installedAddonId, FIXTURE_ADDON_ID, "Generated, installed add-on should have the same ID as the fixture");
+  async function conflictingEnrollment(
+    mockApi,
+    sendEventStub,
+    [installedAddonId, installedAddonFile]
+  ) {
+    is(
+      installedAddonId,
+      FIXTURE_ADDON_ID,
+      "Generated, installed add-on should have the same ID as the fixture"
+    );
     const addonUrl = FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url;
     const recipe = addonStudyRecipeFactory({
       arguments: {
@@ -321,12 +364,21 @@ decorate_task(
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     is(addon.version, "0.1", "The installed add-on should not be replaced");
 
-    Assert.deepEqual(await AddonStudies.getAll(), [], "There should be no enrolled studies");
-
-    sendEventStub.assertEvents(
-      [["enrollFailed", "addon_study", recipe.arguments.name, { reason: "conflicting-addon-id" }]]
+    Assert.deepEqual(
+      await AddonStudies.getAll(),
+      [],
+      "There should be no enrolled studies"
     );
-  },
+
+    sendEventStub.assertEvents([
+      [
+        "enrollFailed",
+        "addon_study",
+        recipe.arguments.name,
+        { reason: "conflicting-addon-id" },
+      ],
+    ]);
+  }
 );
 
 // Test a successful enrollment
@@ -336,7 +388,9 @@ decorate_task(
   withMockNormandyApi,
   AddonStudies.withStudies(),
   async function successfulEnroll(mockApi, sendEventStub, studies) {
-    const webExtStartupPromise = AddonTestUtils.promiseWebExtensionStartup(FIXTURE_ADDON_ID);
+    const webExtStartupPromise = AddonTestUtils.promiseWebExtensionStartup(
+      FIXTURE_ADDON_ID
+    );
     const addonUrl = FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url;
 
     let addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
@@ -363,8 +417,11 @@ decorate_task(
     addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon, "After start is called, the add-on is installed");
 
-    Assert.deepEqual(addon.installTelemetryInfo, {source: "internal"},
-                     "Got the expected installTelemetryInfo");
+    Assert.deepEqual(
+      addon.installTelemetryInfo,
+      { source: "internal" },
+      "Got the expected installTelemetryInfo"
+    );
 
     const study = await AddonStudies.get(recipe.id);
     Assert.deepEqual(
@@ -382,34 +439,50 @@ decorate_task(
         extensionHash: extensionDetails.hash,
         extensionHashAlgorithm: extensionDetails.hash_algorithm,
       },
-      "study data should be stored",
+      "study data should be stored"
     );
     ok(study.studyStartDate, "a start date should be assigned");
     is(study.studyEndDate, null, "an end date should not be assigned");
 
-    sendEventStub.assertEvents(
-      [["enroll", "addon_study", recipe.arguments.name, { addonId: FIXTURE_ADDON_ID, addonVersion: "1.0" }]]
-    );
+    sendEventStub.assertEvents([
+      [
+        "enroll",
+        "addon_study",
+        recipe.arguments.name,
+        { addonId: FIXTURE_ADDON_ID, addonVersion: "1.0" },
+      ],
+    ]);
 
     // cleanup
     await safeUninstallAddon(addon);
-    Assert.deepEqual(AddonManager.getAllAddons(), [], "add-on should be uninstalled.");
-  },
+    Assert.deepEqual(
+      AddonManager.getAllAddons(),
+      [],
+      "add-on should be uninstalled."
+    );
+  }
 );
 
 // Test a successful update
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "1.0",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "1.0",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "1.0"}),
-  async function successfulUpdate(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "1.0" }),
+  async function successfulUpdate(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const addonUrl = FIXTURE_ADDON_DETAILS["normandydriver-2.0"].url;
     const recipe = recipeFactory({
       id: study.recipeId,
@@ -438,12 +511,17 @@ decorate_task(
     is(action.lastError, null, "lastError should be null");
     ok(!enrollSpy.called, "enroll should not be called");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["update", "addon_study", recipe.arguments.name, {
-        addonId: FIXTURE_ADDON_ID,
-        addonVersion: "2.0",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "update",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          addonId: FIXTURE_ADDON_ID,
+          addonVersion: "2.0",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(
@@ -455,27 +533,34 @@ decorate_task(
         extensionApiId: recipe.arguments.extensionApiId,
         extensionHash: hash,
       },
-      "study data should be updated",
+      "study data should be updated"
     );
 
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "2.0", "add-on should be updated");
-  },
+  }
 );
 
 // Test update fails when addon ID does not match
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: "test@example.com",
-    extensionHash: "01d",
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "0.1",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: "test@example.com",
+      extensionHash: "01d",
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "0.1",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "0.1"}),
-  async function updateFailsAddonIdMismatch(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "0.1" }),
+  async function updateFailsAddonIdMismatch(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -498,32 +583,44 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "addon-id-mismatch",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "addon-id-mismatch",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
 
     let addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "0.1", "add-on should be unchanged");
-  },
+  }
 );
 
 // Test update fails when original addon does not exist
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    extensionHash: "01d",
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "0.1",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      extensionHash: "01d",
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "0.1",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: "test@example.com", version: "0.1"}),
-  async function updateFailsAddonDoesNotExist(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: "test@example.com", version: "0.1" }),
+  async function updateFailsAddonDoesNotExist(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -546,11 +643,16 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "addon-does-not-exist",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "addon-does-not-exist",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
@@ -560,22 +662,29 @@ decorate_task(
 
     addon = await AddonManager.getAddonByID("test@example.com");
     ok(addon, "old add-on should still be installed");
-  },
+  }
 );
 
 // Test update fails when download fails
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: "01d",
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "0.1",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: "01d",
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "0.1",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "0.1"}),
-  async function updateDownloadFailure(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "0.1" }),
+  async function updateDownloadFailure(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -598,34 +707,46 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "download-failure",
-        detail: "ERROR_NETWORK_FAILURE",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "download-failure",
+          detail: "ERROR_NETWORK_FAILURE",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
 
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "0.1", "add-on should be unchanged");
-  },
+  }
 );
 
 // Test update fails when hash check fails
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: "01d",
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "0.1",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: "01d",
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "0.1",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "0.1"}),
-  async function updateFailsHashCheckFail(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "0.1" }),
+  async function updateFailsHashCheckFail(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -649,34 +770,46 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "download-failure",
-        detail: "ERROR_INCORRECT_HASH",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "download-failure",
+          detail: "ERROR_INCORRECT_HASH",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
 
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "0.1", "add-on should be unchanged");
-  },
+  }
 );
 
 // Test update fails on downgrade when study version is greater than extension version
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: "01d",
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "2.0",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: "01d",
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "2.0",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "2.0"}),
-  async function upgradeFailsNoDowngrades(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "2.0" }),
+  async function upgradeFailsNoDowngrades(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -700,33 +833,47 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "no-downgrade",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "no-downgrade",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
 
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "2.0", "add-on should be unchanged");
-  },
+  }
 );
 
 // Test update fails when there is a version mismatch with metadata
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "1.0",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "1.0",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionFromURL(FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url),
-  async function upgradeFailsMetadataMismatchVersion(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionFromURL(
+    FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url
+  ),
+  async function upgradeFailsMetadataMismatchVersion(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const recipe = recipeFactory({
       id: study.recipeId,
       type: "addon-study",
@@ -751,11 +898,16 @@ decorate_task(
     await action.runRecipe(recipe);
     is(action.lastError, null, "lastError should be null");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["updateFailed", "addon_study", recipe.arguments.name, {
-        reason: "metadata-mismatch",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "updateFailed",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          reason: "metadata-mismatch",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(updatedStudy, study, "study data should be unchanged");
@@ -768,9 +920,12 @@ decorate_task(
       addonSourceURI = addonSourceURI.JARFile;
     }
     const xpiFile = addonSourceURI.QueryInterface(Ci.nsIFileURL).file;
-    const installedHash = CryptoUtils.getFileHash(xpiFile, study.extensionHashAlgorithm);
+    const installedHash = CryptoUtils.getFileHash(
+      xpiFile,
+      study.extensionHashAlgorithm
+    );
     ok(installedHash === study.extensionHash, "add-on should be unchanged");
-  },
+  }
 );
 
 // Test that unenrolling fails if the study doesn't exist
@@ -790,9 +945,7 @@ decorate_task(
 // Test that unenrolling an inactive experiment fails
 decorate_task(
   ensureAddonCleanup,
-  AddonStudies.withStudies([
-    addonStudyFactory({active: false}),
-  ]),
+  AddonStudies.withStudies([addonStudyFactory({ active: false })]),
   withSendEventStub,
   async ([study], sendEventStub) => {
     const action = new AddonStudyAction();
@@ -809,9 +962,13 @@ const testStopId = "testStop@example.com";
 decorate_task(
   ensureAddonCleanup,
   AddonStudies.withStudies([
-    addonStudyFactory({active: true, addonId: testStopId, studyEndDate: null}),
+    addonStudyFactory({
+      active: true,
+      addonId: testStopId,
+      studyEndDate: null,
+    }),
   ]),
-  withInstalledWebExtension({id: testStopId}, /* expectUninstall: */ true),
+  withInstalledWebExtension({ id: testStopId }, /* expectUninstall: */ true),
   withSendEventStub,
   async function unenrollTest([study], [addonId, addonFile], sendEventStub) {
     let addon = await AddonManager.getAddonByID(addonId);
@@ -827,40 +984,56 @@ decorate_task(
     addon = await AddonManager.getAddonByID(addonId);
     is(addon, null, "the add-on should be uninstalled after unenrolling");
 
-    sendEventStub.assertEvents(
-      [["unenroll", "addon_study", study.name, {
-        addonId,
-        addonVersion: study.addonVersion,
-        reason: "test-reason",
-      }]]
-    );
-  },
+    sendEventStub.assertEvents([
+      [
+        "unenroll",
+        "addon_study",
+        study.name,
+        {
+          addonId,
+          addonVersion: study.addonVersion,
+          reason: "test-reason",
+        },
+      ],
+    ]);
+  }
 );
 
 // If the add-on for a study isn't installed, a warning should be logged, but the action is still successful
 decorate_task(
   ensureAddonCleanup,
   AddonStudies.withStudies([
-    addonStudyFactory({active: true, addonId: "missingAddon@example.com", studyEndDate: null}),
+    addonStudyFactory({
+      active: true,
+      addonId: "missingAddon@example.com",
+      studyEndDate: null,
+    }),
   ]),
   withSendEventStub,
   async function unenrollMissingAddonTest([study], sendEventStub) {
     const action = new AddonStudyAction();
 
     SimpleTest.waitForExplicitFinish();
-    SimpleTest.monitorConsole(() => SimpleTest.finish(), [{message: /could not uninstall addon/i}]);
+    SimpleTest.monitorConsole(() => SimpleTest.finish(), [
+      { message: /could not uninstall addon/i },
+    ]);
     await action.unenroll(study.recipeId);
 
-    sendEventStub.assertEvents(
-      [["unenroll", "addon_study", study.name, {
-        addonId: study.addonId,
-        addonVersion: study.addonVersion,
-        reason: "unknown",
-      }]]
-    );
+    sendEventStub.assertEvents([
+      [
+        "unenroll",
+        "addon_study",
+        study.name,
+        {
+          addonId: study.addonId,
+          addonVersion: study.addonVersion,
+          reason: "unknown",
+        },
+      ],
+    ]);
 
     SimpleTest.endMonitorConsole();
-  },
+  }
 );
 
 // Test that the action respects the study opt-out
@@ -881,13 +1054,21 @@ decorate_task(
       }),
     };
     await action.runRecipe(recipe);
-    is(action.state, AddonStudyAction.STATE_DISABLED, "the action should be disabled");
+    is(
+      action.state,
+      AddonStudyAction.STATE_DISABLED,
+      "the action should be disabled"
+    );
     await action.finalize();
-    is(action.state, AddonStudyAction.STATE_FINALIZED, "the action should be finalized");
+    is(
+      action.state,
+      AddonStudyAction.STATE_FINALIZED,
+      "the action should be finalized"
+    );
     is(action.lastError, null, "lastError should be null");
     Assert.deepEqual(enrollSpy.args, [], "enroll should not be called");
     sendEventStub.assertEvents([]);
-  },
+  }
 );
 
 // Test that the action does not enroll paused recipes
@@ -899,7 +1080,9 @@ decorate_task(
   async function testEnrollmentPaused(mockApi, sendEventStub) {
     const action = new AddonStudyAction();
     const enrollSpy = sinon.spy(action, "enroll");
-    const recipe = addonStudyRecipeFactory({arguments: {isEnrollmentPaused: true}});
+    const recipe = addonStudyRecipeFactory({
+      arguments: { isEnrollmentPaused: true },
+    });
     const extensionDetails = extensionDetailsFactory({
       id: recipe.arguments.extensionApiId,
     });
@@ -907,27 +1090,36 @@ decorate_task(
       [recipe.arguments.extensionApiId]: extensionDetails,
     };
     await action.runRecipe(recipe);
-    const addon = await AddonManager.getAddonByID(extensionDetails.extension_id);
+    const addon = await AddonManager.getAddonByID(
+      extensionDetails.extension_id
+    );
     is(addon, null, "the add-on should not have been installed");
     await action.finalize();
     ok(enrollSpy.called, "enroll should be called");
     sendEventStub.assertEvents([]);
-  },
+  }
 );
 
 // Test that the action updates paused recipes
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonId: FIXTURE_ADDON_ID,
-    extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
-    extensionHashAlgorithm: "sha256",
-    addonVersion: "1.0",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonId: FIXTURE_ADDON_ID,
+      extensionHash: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].hash,
+      extensionHashAlgorithm: "sha256",
+      addonVersion: "1.0",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionSafe({id: FIXTURE_ADDON_ID, version: "1.0"}),
-  async function testUpdateEnrollmentPaused(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionSafe({ id: FIXTURE_ADDON_ID, version: "1.0" }),
+  async function testUpdateEnrollmentPaused(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     const addonUrl = FIXTURE_ADDON_DETAILS["normandydriver-2.0"].url;
     const recipe = recipeFactory({
       id: study.recipeId,
@@ -956,30 +1148,44 @@ decorate_task(
     is(action.lastError, null, "lastError should be null");
     ok(!enrollSpy.called, "enroll should not be called");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["update", "addon_study", recipe.arguments.name, {
-        addonId: FIXTURE_ADDON_ID,
-        addonVersion: "2.0",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "update",
+        "addon_study",
+        recipe.arguments.name,
+        {
+          addonId: FIXTURE_ADDON_ID,
+          addonVersion: "2.0",
+        },
+      ],
+    ]);
 
     const addon = await AddonManager.getAddonByID(FIXTURE_ADDON_ID);
     ok(addon.version === "2.0", "add-on should be updated");
-  },
+  }
 );
 
 // Test that update method works for legacy studies with no hash
 decorate_task(
   ensureAddonCleanup,
   withMockNormandyApi,
-  AddonStudies.withStudies([addonStudyFactory({
-    addonUrl: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url,
-    addonId: FIXTURE_ADDON_ID,
-    addonVersion: "1.0",
-  })]),
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      addonUrl: FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url,
+      addonId: FIXTURE_ADDON_ID,
+      addonVersion: "1.0",
+    }),
+  ]),
   withSendEventStub,
-  withInstalledWebExtensionFromURL(FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url),
-  async function updateWorksLegacyStudy(mockApi, [study], sendEventStub, installedAddon) {
+  withInstalledWebExtensionFromURL(
+    FIXTURE_ADDON_DETAILS["normandydriver-1.0"].url
+  ),
+  async function updateWorksLegacyStudy(
+    mockApi,
+    [study],
+    sendEventStub,
+    installedAddon
+  ) {
     delete study.extensionHash;
     delete study.extensionHashAlgorithm;
     await AddonStudies.update(study);
@@ -1014,12 +1220,17 @@ decorate_task(
     is(action.lastError, null, "lastError should be null");
     ok(!enrollSpy.called, "enroll should not be called");
     ok(updateSpy.called, "update should be called");
-    sendEventStub.assertEvents(
-      [["update", "addon_study", "Test study", {
-        addonId: "normandydriver@example.com",
-        addonVersion: "2.0",
-      }]],
-    );
+    sendEventStub.assertEvents([
+      [
+        "update",
+        "addon_study",
+        "Test study",
+        {
+          addonId: "normandydriver@example.com",
+          addonVersion: "2.0",
+        },
+      ],
+    ]);
 
     const updatedStudy = await AddonStudies.get(recipe.id);
     Assert.deepEqual(
@@ -1032,9 +1243,9 @@ decorate_task(
         extensionHash: hash,
         extensionHashAlgorithm: "sha256",
       },
-      "study data should be updated",
+      "study data should be updated"
     );
-  },
+  }
 );
 
 // Test that enroll is not called if recipe is already enrolled
@@ -1046,6 +1257,10 @@ decorate_task(
     const unenrollSpy = sinon.stub(action, "unenroll");
     await action.finalize();
     is(action.lastError, null, "lastError should be null");
-    Assert.deepEqual(unenrollSpy.args, [[study.recipeId, "recipe-not-seen"]], "unenroll should be called");
-  },
+    Assert.deepEqual(
+      unenrollSpy.args,
+      [[study.recipeId, "recipe-not-seen"]],
+      "unenroll should be called"
+    );
+  }
 );

@@ -10,7 +10,7 @@ const DESCRIPTION_ANNO = "bookmarkProperties/description";
 add_task(async function() {
   // Removes bookmarks.html if the file already exists.
   let HTMLFile = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.html");
-  if ((await OS.File.exists(HTMLFile))) {
+  if (await OS.File.exists(HTMLFile)) {
     await OS.File.remove(HTMLFile);
   }
 
@@ -22,7 +22,11 @@ add_task(async function() {
     url,
     title: unescaped,
   });
-  await PlacesUtils.keywords.insert({ url, keyword: unescaped, postData: unescaped });
+  await PlacesUtils.keywords.insert({
+    url,
+    keyword: unescaped,
+    postData: unescaped,
+  });
   PlacesUtils.tagging.tagURI(Services.io.newURI(url), [unescaped]);
   await PlacesUtils.history.update({
     url,
@@ -30,7 +34,11 @@ add_task(async function() {
   });
   PlacesUtils.annotations.setItemAnnotation(
     await PlacesUtils.promiseItemId(bm.guid),
-    DESCRIPTION_ANNO, unescaped, 0, PlacesUtils.annotations.EXPIRE_NEVER);
+    DESCRIPTION_ANNO,
+    unescaped,
+    0,
+    PlacesUtils.annotations.EXPIRE_NEVER
+  );
 
   // Exports the bookmarks as a HTML file.
   await BookmarkHTMLUtils.exportToFile(HTMLFile);
@@ -56,15 +64,27 @@ add_task(async function() {
   });
 
   let checksCount = 6;
-  for (let current = xml; current;
-    current = current.firstChild || current.nextSibling || current.parentNode.nextSibling) {
+  for (
+    let current = xml;
+    current;
+    current =
+      current.firstChild ||
+      current.nextSibling ||
+      current.parentNode.nextSibling
+  ) {
     switch (current.nodeType) {
       case current.ELEMENT_NODE:
-        for (let {name, value} of current.attributes) {
+        for (let { name, value } of current.attributes) {
           info("Found attribute: " + name);
           // Check tags, keyword, postData and charSet.
-          if (["tags", "last_charset", "shortcuturl", "post_data"].includes(name)) {
-            Assert.equal(value, unescaped, `Attribute ${name} should be complete`);
+          if (
+            ["tags", "last_charset", "shortcuturl", "post_data"].includes(name)
+          ) {
+            Assert.equal(
+              value,
+              unescaped,
+              `Attribute ${name} should be complete`
+            );
             checksCount--;
           }
         }
@@ -72,7 +92,11 @@ add_task(async function() {
       case current.TEXT_NODE:
         // Check Title and description.
         if (!current.data.startsWith("\n") && current.data.includes("test")) {
-          Assert.equal(current.data.trim(), unescaped, "Text node should be complete");
+          Assert.equal(
+            current.data.trim(),
+            unescaped,
+            "Text node should be complete"
+          );
           checksCount--;
         }
         break;

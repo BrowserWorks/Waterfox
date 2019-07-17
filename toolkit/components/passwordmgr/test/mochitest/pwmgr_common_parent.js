@@ -9,11 +9,19 @@
 /* global assert */
 /* eslint-env mozilla/frame-script */
 
-var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-var {LoginHelper} = ChromeUtils.import("resource://gre/modules/LoginHelper.jsm");
-var {LoginManagerParent} = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
-const {LoginTestUtils} = ChromeUtils.import("resource://testing-common/LoginTestUtils.jsm");
-var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+var { LoginHelper } = ChromeUtils.import(
+  "resource://gre/modules/LoginHelper.jsm"
+);
+var { LoginManagerParent } = ChromeUtils.import(
+  "resource://gre/modules/LoginManagerParent.jsm"
+);
+const { LoginTestUtils } = ChromeUtils.import(
+  "resource://testing-common/LoginTestUtils.jsm"
+);
+var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 /**
  * Init with a common login
@@ -38,16 +46,28 @@ function commonInit(selfFilling, testDependsOnDeprecatedLogin) {
 
   if (testDependsOnDeprecatedLogin) {
     // Add a login that's used in multiple tests
-    var login = Cc["@mozilla.org/login-manager/loginInfo;1"].
-                createInstance(Ci.nsILoginInfo);
-    login.init("http://mochi.test:8888", "http://mochi.test:8888", null,
-               "testuser", "testpass", "uname", "pword");
+    var login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(
+      Ci.nsILoginInfo
+    );
+    login.init(
+      "http://mochi.test:8888",
+      "http://mochi.test:8888",
+      null,
+      "testuser",
+      "testpass",
+      "uname",
+      "pword"
+    );
     pwmgr.addLogin(login);
   }
 
   // Last sanity check
   logins = pwmgr.getAllLogins();
-  assert.equal(logins.length, testDependsOnDeprecatedLogin ? 1 : 0, "Checking for successful init login");
+  assert.equal(
+    logins.length,
+    testDependsOnDeprecatedLogin ? 1 : 0,
+    "Checking for successful init login"
+  );
   disabledHosts = pwmgr.getAllDisabledHosts();
   assert.equal(disabledHosts.length, 0, "Checking for no disabled hosts");
 
@@ -103,13 +123,15 @@ function onPrompt(subject, topic, data) {
 Services.obs.addObserver(onPrompt, "passwordmgr-prompt-change");
 Services.obs.addObserver(onPrompt, "passwordmgr-prompt-save");
 
-
 // Begin message listeners
 
-addMessageListener("setupParent", ({selfFilling = false, testDependsOnDeprecatedLogin = false} = {}) => {
-  commonInit(selfFilling, testDependsOnDeprecatedLogin);
-  sendAsyncMessage("doneSetup");
-});
+addMessageListener(
+  "setupParent",
+  ({ selfFilling = false, testDependsOnDeprecatedLogin = false } = {}) => {
+    commonInit(selfFilling, testDependsOnDeprecatedLogin);
+    sendAsyncMessage("doneSetup");
+  }
+);
 
 addMessageListener("loadRecipes", async function(recipes) {
   var recipeParent = await LoginManagerParent.recipeParentPromise;
@@ -136,7 +158,11 @@ addMessageListener("proxyLoginManager", msg => {
   let rv = Services.logins[msg.methodName](...recreatedArgs);
   if (rv instanceof Ci.nsILoginInfo) {
     rv = LoginHelper.loginToVanillaObject(rv);
-  } else if (Array.isArray(rv) && rv.length > 0 && rv[0] instanceof Ci.nsILoginInfo) {
+  } else if (
+    Array.isArray(rv) &&
+    rv.length > 0 &&
+    rv[0] instanceof Ci.nsILoginInfo
+  ) {
     rv = rv.map(login => LoginHelper.loginToVanillaObject(login));
   }
   return rv;
@@ -155,6 +181,9 @@ addMessageListener("setMasterPassword", ({ enable }) => {
   }
 });
 
-Services.mm.addMessageListener("PasswordManager:onFormSubmit", function onFormSubmit(message) {
-  sendAsyncMessage("formSubmissionProcessed", message.data, message.objects);
-});
+Services.mm.addMessageListener(
+  "PasswordManager:onFormSubmit",
+  function onFormSubmit(message) {
+    sendAsyncMessage("formSubmissionProcessed", message.data, message.objects);
+  }
+);
