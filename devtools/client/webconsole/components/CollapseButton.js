@@ -12,11 +12,7 @@ const { l10n } = require("devtools/client/webconsole/utils/messages");
 const messageToggleDetails = l10n.getStr("messageToggleDetails");
 
 function CollapseButton(props) {
-  const {
-    open,
-    onClick,
-    title = messageToggleDetails,
-  } = props;
+  const { open, onClick, title = messageToggleDetails } = props;
 
   return dom.button({
     "aria-expanded": open ? "true" : "false",

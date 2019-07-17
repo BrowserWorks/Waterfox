@@ -8,7 +8,7 @@
 
 "use strict";
 
-const {PrefObserver} = require("devtools/client/shared/prefs");
+const { PrefObserver } = require("devtools/client/shared/prefs");
 
 const TEST_URI = `data:text/html;charset=utf-8,
   Web Console test for bug 1307871 - preference for toggling timestamps in messages
@@ -47,8 +47,11 @@ async function testPrefDefaults(hud) {
   const prefValue = Services.prefs.getBoolPref(PREF_MESSAGE_TIMESTAMP);
   ok(!prefValue, "Messages should have no timestamp by default (pref check)");
   const message = await waitFor(() => findMessage(hud, "simple text message"));
-  is(message.querySelectorAll(".timestamp").length, 0,
-     "Messages should have no timestamp by default (element check)");
+  is(
+    message.querySelectorAll(".timestamp").length,
+    0,
+    "Messages should have no timestamp by default (element check)"
+  );
 }
 
 async function togglePref(panel, observer) {
@@ -56,7 +59,9 @@ async function togglePref(panel, observer) {
 
   info("Changing pref");
   const prefChanged = observer.once(PREF_MESSAGE_TIMESTAMP, () => {});
-  const checkbox = panel.panelDoc.getElementById("webconsole-timestamp-messages");
+  const checkbox = panel.panelDoc.getElementById(
+    "webconsole-timestamp-messages"
+  );
   checkbox.click();
 
   await prefChanged;
@@ -66,6 +71,9 @@ async function testChangedPref(hud) {
   const prefValue = Services.prefs.getBoolPref(PREF_MESSAGE_TIMESTAMP);
   ok(prefValue, "Messages should have timestamps (pref check)");
   const message = await waitFor(() => findMessage(hud, "simple text message"));
-  is(message.querySelectorAll(".timestamp").length, 1,
-     "Messages should have timestamp (element check)");
+  is(
+    message.querySelectorAll(".timestamp").length,
+    1,
+    "Messages should have timestamp (element check)"
+  );
 }

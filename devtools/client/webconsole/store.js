@@ -40,19 +40,18 @@ const enableMessagesCacheClearing = require("./enhancers/message-cache-clearing"
  */
 function configureStore(webConsoleUI, options = {}) {
   const prefsService = getPrefsService(webConsoleUI);
-  const {
-    getBoolPref,
-    getIntPref,
-  } = prefsService;
+  const { getBoolPref, getIntPref } = prefsService;
 
-  const logLimit = options.logLimit
-    || Math.max(getIntPref("devtools.hud.loglimit"), 1);
+  const logLimit =
+    options.logLimit || Math.max(getIntPref("devtools.hud.loglimit"), 1);
   const sidebarToggle = getBoolPref(PREFS.FEATURES.SIDEBAR_TOGGLE);
   const jstermCodeMirror = getBoolPref(PREFS.FEATURES.JSTERM_CODE_MIRROR);
   const autocomplete = getBoolPref(PREFS.FEATURES.AUTOCOMPLETE);
   const groupWarnings = getBoolPref(PREFS.FEATURES.GROUP_WARNINGS);
   const historyCount = getIntPref(PREFS.UI.INPUT_HISTORY_COUNT);
-  const filterContentMessages = getBoolPref(PREFS.FEATURES.FILTER_CONTENT_MESSAGES);
+  const filterContentMessages = getBoolPref(
+    PREFS.FEATURES.FILTER_CONTENT_MESSAGES
+  );
 
   const initialState = {
     prefs: PrefState({
@@ -77,15 +76,16 @@ function configureStore(webConsoleUI, options = {}) {
     ui: UiState({
       networkMessageActiveTabId: "headers",
       persistLogs: getBoolPref(PREFS.UI.PERSIST),
-      showContentMessages: webConsoleUI.isBrowserConsole && filterContentMessages
-        ? getBoolPref(PREFS.UI.CONTENT_MESSAGES)
-        : true,
+      showContentMessages:
+        webConsoleUI.isBrowserConsole && filterContentMessages
+          ? getBoolPref(PREFS.UI.CONTENT_MESSAGES)
+          : true,
       editor: getBoolPref(PREFS.UI.EDITOR),
     }),
   };
 
   // Prepare middleware.
-  const services = (options.services || {});
+  const services = options.services || {};
 
   const middleware = applyMiddleware(
     thunk.bind(null, {
@@ -99,7 +99,7 @@ function configureStore(webConsoleUI, options = {}) {
       },
     }),
     historyPersistence,
-    eventTelemetry.bind(null, options.telemetry, options.sessionId),
+    eventTelemetry.bind(null, options.telemetry, options.sessionId)
   );
 
   return createStore(
@@ -111,7 +111,7 @@ function configureStore(webConsoleUI, options = {}) {
       enableBatching(),
       enableNetProvider(webConsoleUI),
       enableMessagesCacheClearing(webConsoleUI),
-      ensureCSSErrorReportingEnabled(webConsoleUI),
+      ensureCSSErrorReportingEnabled(webConsoleUI)
     )
   );
 }
@@ -137,7 +137,7 @@ function createRootReducer() {
       action,
       newState.filters,
       newState.prefs,
-      newState.ui,
+      newState.ui
     );
 
     return newState;

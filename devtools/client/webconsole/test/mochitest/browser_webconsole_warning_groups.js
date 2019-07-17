@@ -12,10 +12,13 @@ const TEST_FILE =
 const TEST_URI = "http://example.org/" + TEST_FILE;
 
 const TRACKER_URL = "http://tracking.example.com/";
-const BLOCKED_URL = TRACKER_URL +
+const BLOCKED_URL =
+  TRACKER_URL +
   "browser/devtools/client/webconsole/test/mochitest/test-image.png";
 
-const {UrlClassifierTestUtils} = ChromeUtils.import("resource://testing-common/UrlClassifierTestUtils.jsm");
+const { UrlClassifierTestUtils } = ChromeUtils.import(
+  "resource://testing-common/UrlClassifierTestUtils.jsm"
+);
 UrlClassifierTestUtils.addTestTrackers();
 registerCleanupFunction(function() {
   UrlClassifierTestUtils.cleanupTestTrackers();
@@ -32,24 +35,45 @@ add_task(async function testContentBlockingMessage() {
 
   const hud = await openNewTabAndConsole(TEST_URI);
 
-  info("Log a tracking protection message to check a single message isn't grouped");
-  let onContentBlockingWarningMessage = waitForMessage(hud, BLOCKED_URL, ".warn");
+  info(
+    "Log a tracking protection message to check a single message isn't grouped"
+  );
+  let onContentBlockingWarningMessage = waitForMessage(
+    hud,
+    BLOCKED_URL,
+    ".warn"
+  );
   emitStorageAccessBlockedMessage(hud);
-  let {node} = await onContentBlockingWarningMessage;
-  is(node.querySelector(".warning-indent"), null, "The message has the expected style");
-  is(node.querySelector(".indent").getAttribute("data-indent"), "0",
-    "The message has the expected indent");
+  let { node } = await onContentBlockingWarningMessage;
+  is(
+    node.querySelector(".warning-indent"),
+    null,
+    "The message has the expected style"
+  );
+  is(
+    node.querySelector(".indent").getAttribute("data-indent"),
+    "0",
+    "The message has the expected indent"
+  );
 
   info("Log a simple message");
   await logString(hud, "simple message 1");
 
-  info("Log a second tracking protection message to check that it causes the grouping");
-  let onContentBlockingWarningGroupMessage =
-    waitForMessage(hud, CONTENT_BLOCKING_GROUP_LABEL, ".warn");
+  info(
+    "Log a second tracking protection message to check that it causes the grouping"
+  );
+  let onContentBlockingWarningGroupMessage = waitForMessage(
+    hud,
+    CONTENT_BLOCKING_GROUP_LABEL,
+    ".warn"
+  );
   emitStorageAccessBlockedMessage(hud);
-  ({node} = await onContentBlockingWarningGroupMessage);
-  is(node.querySelector(".warning-group-badge").textContent, "2",
-    "The badge has the expected text");
+  ({ node } = await onContentBlockingWarningGroupMessage);
+  is(
+    node.querySelector(".warning-group-badge").textContent,
+    "2",
+    "The badge has the expected text"
+  );
 
   checkConsoleOutputForWarningGroup(hud, [
     `▶︎⚠ ${CONTENT_BLOCKING_GROUP_LABEL}`,
@@ -65,9 +89,13 @@ add_task(async function testContentBlockingMessage() {
     `simple message 2`,
   ]);
 
-  info("Log a third tracking protection message to check that the badge updates");
+  info(
+    "Log a third tracking protection message to check that the badge updates"
+  );
   emitStorageAccessBlockedMessage(hud);
-  await waitFor(() => node.querySelector(".warning-group-badge").textContent == "3");
+  await waitFor(
+    () => node.querySelector(".warning-group-badge").textContent == "3"
+  );
 
   checkConsoleOutputForWarningGroup(hud, [
     `▶︎⚠ ${CONTENT_BLOCKING_GROUP_LABEL}`,
@@ -88,9 +116,10 @@ add_task(async function testContentBlockingMessage() {
     `simple message 2`,
   ]);
 
-  info("Log a new tracking protection message to check it appears inside the group");
-  onContentBlockingWarningMessage =
-    waitForMessage(hud, BLOCKED_URL, ".warn");
+  info(
+    "Log a new tracking protection message to check it appears inside the group"
+  );
+  onContentBlockingWarningMessage = waitForMessage(hud, BLOCKED_URL, ".warn");
   emitStorageAccessBlockedMessage(hud);
   await onContentBlockingWarningMessage;
   ok(true, "The new tracking protection message is displayed");
@@ -107,7 +136,10 @@ add_task(async function testContentBlockingMessage() {
 
   info("Reload the page and wait for it to be ready");
   const onDomContentLoaded = BrowserTestUtils.waitForContentEvent(
-    hud.target.tab.linkedBrowser, "DOMContentLoaded", true);
+    hud.target.tab.linkedBrowser,
+    "DOMContentLoaded",
+    true
+  );
   ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
     content.location.reload();
   });
@@ -117,8 +149,7 @@ add_task(async function testContentBlockingMessage() {
   await waitFor(() => findMessage(hud, "Navigated to"));
 
   info("Log a tracking protection message to check it is not grouped");
-  onContentBlockingWarningMessage =
-    waitForMessage(hud, BLOCKED_URL, ".warn");
+  onContentBlockingWarningMessage = waitForMessage(hud, BLOCKED_URL, ".warn");
   emitStorageAccessBlockedMessage(hud);
   await onContentBlockingWarningMessage;
 
@@ -137,13 +168,21 @@ add_task(async function testContentBlockingMessage() {
     `simple message 3`,
   ]);
 
-  info("Log a second tracking protection message to check that it causes the grouping");
-  onContentBlockingWarningGroupMessage =
-    waitForMessage(hud, CONTENT_BLOCKING_GROUP_LABEL, ".warn");
+  info(
+    "Log a second tracking protection message to check that it causes the grouping"
+  );
+  onContentBlockingWarningGroupMessage = waitForMessage(
+    hud,
+    CONTENT_BLOCKING_GROUP_LABEL,
+    ".warn"
+  );
   emitStorageAccessBlockedMessage(hud);
-  ({node} = await onContentBlockingWarningGroupMessage);
-  is(node.querySelector(".warning-group-badge").textContent, "2",
-    "The badge has the expected text");
+  ({ node } = await onContentBlockingWarningGroupMessage);
+  is(
+    node.querySelector(".warning-group-badge").textContent,
+    "2",
+    "The badge has the expected text"
+  );
 
   checkConsoleOutputForWarningGroup(hud, [
     `▼︎⚠ ${CONTENT_BLOCKING_GROUP_LABEL}`,
@@ -194,9 +233,13 @@ add_task(async function testContentBlockingMessage() {
     `simple message 3`,
   ]);
 
-  info("Log a third tracking protection message to check that the badge updates");
+  info(
+    "Log a third tracking protection message to check that the badge updates"
+  );
   emitStorageAccessBlockedMessage(hud);
-  await waitFor(() => node.querySelector(".warning-group-badge").textContent == "3");
+  await waitFor(
+    () => node.querySelector(".warning-group-badge").textContent == "3"
+  );
 
   checkConsoleOutputForWarningGroup(hud, [
     `▼︎⚠ ${CONTENT_BLOCKING_GROUP_LABEL}`,

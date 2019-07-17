@@ -7,11 +7,22 @@
 const { editableField } = require("devtools/client/shared/inplace-editor");
 const { LocalizationHelper } = require("devtools/shared/l10n");
 
-loader.lazyRequireGetter(this, "getAutocompleteMaxWidth", "devtools/client/inspector/markup/utils", true);
-loader.lazyRequireGetter(this, "getLongString", "devtools/client/inspector/shared/utils", true);
+loader.lazyRequireGetter(
+  this,
+  "getAutocompleteMaxWidth",
+  "devtools/client/inspector/markup/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "getLongString",
+  "devtools/client/inspector/shared/utils",
+  true
+);
 
-const INSPECTOR_L10N =
-  new LocalizationHelper("devtools/client/locales/inspector.properties");
+const INSPECTOR_L10N = new LocalizationHelper(
+  "devtools/client/locales/inspector.properties"
+);
 
 /**
  * Creates a simple text editor node, used for TEXT and COMMENT
@@ -44,11 +55,14 @@ function TextEditor(container, node, type) {
         return;
       }
       getLongString(this.node.getNodeValue()).then(oldValue => {
-        this.container.undo.do(() => {
-          this.node.setNodeValue(val);
-        }, () => {
-          this.node.setNodeValue(oldValue);
-        });
+        this.container.undo.do(
+          () => {
+            this.node.setNodeValue(val);
+          },
+          () => {
+            this.node.setNodeValue(oldValue);
+          }
+        );
       });
     },
     cssProperties: this.markup.inspector.cssProperties,
@@ -71,7 +85,10 @@ TextEditor.prototype = {
     }
 
     this.value = doc.createElement("pre");
-    this.value.setAttribute("style", "display:inline-block;white-space: normal;");
+    this.value.setAttribute(
+      "style",
+      "display:inline-block;white-space: normal;"
+    );
     this.value.setAttribute("tabindex", "-1");
     this.elt.appendChild(this.value);
 
@@ -95,19 +112,25 @@ TextEditor.prototype = {
   },
 
   update: function() {
-    getLongString(this.node.getNodeValue()).then(str => {
-      this.value.textContent = str;
+    getLongString(this.node.getNodeValue())
+      .then(str => {
+        this.value.textContent = str;
 
-      const isWhitespace = !/[^\s]/.exec(str);
-      this.value.classList.toggle("whitespace", isWhitespace);
+        const isWhitespace = !/[^\s]/.exec(str);
+        this.value.classList.toggle("whitespace", isWhitespace);
 
-      const chars = str.replace(/\n/g, "⏎")
-                     .replace(/\t/g, "⇥")
-                     .replace(/ /g, "◦");
-      this.value.setAttribute("title", isWhitespace
-        ? INSPECTOR_L10N.getFormatStr("markupView.whitespaceOnly", chars)
-        : "");
-    }).catch(console.error);
+        const chars = str
+          .replace(/\n/g, "⏎")
+          .replace(/\t/g, "⇥")
+          .replace(/ /g, "◦");
+        this.value.setAttribute(
+          "title",
+          isWhitespace
+            ? INSPECTOR_L10N.getFormatStr("markupView.whitespaceOnly", chars)
+            : ""
+        );
+      })
+      .catch(console.error);
   },
 
   destroy: function() {},

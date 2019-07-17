@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { createFactory, PureComponent } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  PureComponent,
+} = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
@@ -16,7 +19,8 @@ const { MESSAGE_LEVEL } = require("../../constants");
 const ICONS = {
   // Reuse the warning icon for errors. Waiting for the proper icon in Bug 1520191.
   [MESSAGE_LEVEL.ERROR]: "chrome://global/skin/icons/warning.svg",
-  [MESSAGE_LEVEL.INFO]: "chrome://devtools/skin/images/aboutdebugging-information.svg",
+  [MESSAGE_LEVEL.INFO]:
+    "chrome://devtools/skin/images/aboutdebugging-information.svg",
   [MESSAGE_LEVEL.WARNING]: "chrome://global/skin/icons/warning.svg",
 };
 const CLOSE_ICON_SRC = "chrome://devtools/skin/images/close.svg";
@@ -50,7 +54,8 @@ class Message extends PureComponent {
   renderButton(level) {
     return dom.button(
       {
-        className: `ghost-button message__button message__button--${level} ` +
+        className:
+          `ghost-button message__button message__button--${level} ` +
           `qa-message-button-close-button`,
         onClick: () => this.closeMessage(),
       },
@@ -61,13 +66,11 @@ class Message extends PureComponent {
             alt: true,
           },
         },
-        dom.img(
-          {
-            className: "qa-message-button-close-icon",
-            src: CLOSE_ICON_SRC,
-          },
-        ),
-      ),
+        dom.img({
+          className: "qa-message-button-close-icon",
+          src: CLOSE_ICON_SRC,
+        })
+      )
     );
   }
 
@@ -81,15 +84,14 @@ class Message extends PureComponent {
 
     return dom.aside(
       {
-        className: `message message--level-${level}  qa-message` +
-                   (className ? ` ${ className }` : ""),
+        className:
+          `message message--level-${level}  qa-message` +
+          (className ? ` ${className}` : ""),
       },
-      dom.img(
-        {
-          className: "message__icon",
-          src: ICONS[level],
-        }
-      ),
+      dom.img({
+        className: "message__icon",
+        src: ICONS[level],
+      }),
       dom.div(
         {
           className: "message__body",
@@ -97,9 +99,7 @@ class Message extends PureComponent {
         children
       ),
       // if the message is closeable, render a closing button
-      isCloseable
-        ? this.renderButton(level)
-        : null,
+      isCloseable ? this.renderButton(level) : null
     );
   }
 }

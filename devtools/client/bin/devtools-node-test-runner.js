@@ -29,15 +29,15 @@ const SUITES = {
     path: "../aboutdebugging-new/test/jest",
     type: TEST_TYPES.JEST,
   },
-  "framework": {
+  framework: {
     path: "../framework/test/jest",
     type: TEST_TYPES.JEST,
   },
-  "netmonitor": {
+  netmonitor: {
     path: "../netmonitor/test",
     type: TEST_TYPES.JEST,
   },
-  "webconsole": {
+  webconsole: {
     path: "../webconsole/test",
     type: TEST_TYPES.MOCHA,
   },
@@ -81,7 +81,9 @@ function runTests() {
   const suiteArg = process.argv.find(arg => arg.includes("suite="));
   const suite = suiteArg.split("=")[1];
   if (!SUITES[suite]) {
-    throw new Error("Invalid suite argument to devtools-node-test-runner: " + suite);
+    throw new Error(
+      "Invalid suite argument to devtools-node-test-runner: " + suite
+    );
   }
 
   console.log("[devtools-node-test-runner] Found test suite: " + suite);
@@ -104,7 +106,9 @@ function runTests() {
   console.log("[devtools-node-test-runner] Parse errors from the test logs");
   const errors = getErrors(suite, out, err) || [];
   for (const error of errors) {
-    console.log(`TEST-UNEXPECTED-FAIL | ${SUITES[suite].type} | ${suite} | ${error}`);
+    console.log(
+      `TEST-UNEXPECTED-FAIL | ${SUITES[suite].type} | ${suite} | ${error}`
+    );
   }
   return errors.length === 0;
 }

@@ -139,11 +139,13 @@ define(function(require, exports, module) {
         // Long string is expandable by a toggle button
         expandableStrings: PropTypes.bool,
         // Array of columns
-        columns: PropTypes.arrayOf(PropTypes.shape({
-          id: PropTypes.string.isRequired,
-          title: PropTypes.string,
-          width: PropTypes.string,
-        })),
+        columns: PropTypes.arrayOf(
+          PropTypes.shape({
+            id: PropTypes.string.isRequired,
+            title: PropTypes.string,
+            width: PropTypes.string,
+          })
+        ),
       };
     }
 
@@ -166,15 +168,20 @@ define(function(require, exports, module) {
            Sibling nodes will either be all expanded or none expanded.
      * }
      */
-    static getExpandedNodes(rootObj, { maxLevel = Infinity, maxNodes = Infinity } = {}) {
+    static getExpandedNodes(
+      rootObj,
+      { maxLevel = Infinity, maxNodes = Infinity } = {}
+    ) {
       const expandedNodes = new Set();
-      const queue = [{
-        object: rootObj,
-        level: 1,
-        path: "",
-      }];
+      const queue = [
+        {
+          object: rootObj,
+          level: 1,
+          path: "",
+        },
+      ];
       while (queue.length) {
-        const {object, level, path} = queue.shift();
+        const { object, level, path } = queue.shift();
         if (Object(object) !== object) {
           continue;
         }
@@ -242,9 +249,12 @@ define(function(require, exports, module) {
     componentDidUpdate() {
       const selected = this.getSelectedRow();
       if (!selected && this.rows.length > 0) {
-        this.selectRow(this.rows[
-          Math.min(this.state.lastSelectedIndex, this.rows.length - 1)
-        ], { alignTo: "top" });
+        this.selectRow(
+          this.rows[
+            Math.min(this.state.lastSelectedIndex, this.rows.length - 1)
+          ],
+          { alignTo: "top" }
+        );
       }
     }
 
@@ -259,9 +269,11 @@ define(function(require, exports, module) {
       }
 
       // Compute new state and update the tree.
-      this.setState(Object.assign({}, this.state, {
-        expandedNodes: nodes,
-      }));
+      this.setState(
+        Object.assign({}, this.state, {
+          expandedNodes: nodes,
+        })
+      );
     }
 
     isExpanded(nodePath) {
@@ -292,8 +304,10 @@ define(function(require, exports, module) {
           if (row && row.props.member.open) {
             this.toggle(this.state.selected);
           } else {
-            const parentRow = this.rows.slice(0, index).reverse().find(
-              r => r.props.member.level < row.props.member.level);
+            const parentRow = this.rows
+              .slice(0, index)
+              .reverse()
+              .find(r => r.props.member.level < row.props.member.level);
             if (parentRow) {
               this.selectRow(parentRow, { alignTo: "top" });
             }
@@ -369,7 +383,8 @@ define(function(require, exports, module) {
 
       this.selectRow(
         this.rows.find(row => row.props.member.path === nodePath),
-        { preventAutoScroll: true });
+        { preventAutoScroll: true }
+      );
     }
 
     onContextMenu(member, event) {
@@ -591,8 +606,11 @@ define(function(require, exports, module) {
 
         // If a child node is expanded render its rows too.
         if (member.hasChildren && member.open) {
-          const childRows = this.renderRows(member.object, level + 1,
-            member.path);
+          const childRows = this.renderRows(
+            member.object,
+            level + 1,
+            member.path
+          );
 
           // If children needs to be asynchronously fetched first,
           // set 'loading' property to the parent row. Otherwise
@@ -635,8 +653,8 @@ define(function(require, exports, module) {
         columns: this.state.columns,
       });
 
-      return (
-        dom.table({
+      return dom.table(
+        {
           className: classNames.join(" "),
           role: "tree",
           ref: this.treeRef,
@@ -658,12 +676,15 @@ define(function(require, exports, module) {
           "aria-label": this.props.label || "",
           "aria-activedescendant": this.state.selected,
           cellPadding: 0,
-          cellSpacing: 0},
-          TreeHeader(props),
-          dom.tbody({
+          cellSpacing: 0,
+        },
+        TreeHeader(props),
+        dom.tbody(
+          {
             role: "presentation",
             tabIndex: -1,
-          }, rows)
+          },
+          rows
         )
       );
     }
@@ -686,7 +707,7 @@ define(function(require, exports, module) {
     }
 
     // The default column is usually the first one.
-    return [{id: "default"}, ...columns];
+    return [{ id: "default" }, ...columns];
   }
 
   function isLongString(value) {

@@ -32,7 +32,11 @@ class StatusCode extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    return !propertiesEqual(UPDATED_STATUS_PROPS, this.props.item, nextProps.item);
+    return !propertiesEqual(
+      UPDATED_STATUS_PROPS,
+      this.props.item,
+      nextProps.item
+    );
   }
 
   render() {
@@ -55,8 +59,8 @@ class StatusCode extends Component {
     // or the status-code itself
     // For example - if a resource is cached, `data-code` would be 200
     // and the `data-status-code` would be "cached"
-    return (
-      div({
+    return div(
+      {
         className: "requests-list-status-code status-code",
         onMouseOver: function({ target }) {
           if (status && statusText && !target.title) {
@@ -65,7 +69,8 @@ class StatusCode extends Component {
         },
         "data-status-code": code,
         "data-code": status,
-      }, status)
+      },
+      status
     );
   }
 }
@@ -74,17 +79,29 @@ function getStatusTooltip(item) {
   const { fromCache, fromServiceWorker, status, statusText } = item;
   let title;
   if (fromCache && fromServiceWorker) {
-    title = L10N.getFormatStr("netmonitor.status.tooltip.cachedworker",
-      status, statusText);
+    title = L10N.getFormatStr(
+      "netmonitor.status.tooltip.cachedworker",
+      status,
+      statusText
+    );
   } else if (fromCache) {
-    title = L10N.getFormatStr("netmonitor.status.tooltip.cached",
-      status, statusText);
+    title = L10N.getFormatStr(
+      "netmonitor.status.tooltip.cached",
+      status,
+      statusText
+    );
   } else if (fromServiceWorker) {
-    title = L10N.getFormatStr("netmonitor.status.tooltip.worker",
-      status, statusText);
+    title = L10N.getFormatStr(
+      "netmonitor.status.tooltip.worker",
+      status,
+      statusText
+    );
   } else {
-    title = L10N.getFormatStr("netmonitor.status.tooltip.simple",
-      status, statusText);
+    title = L10N.getFormatStr(
+      "netmonitor.status.tooltip.simple",
+      status,
+      statusText
+    );
   }
   return title;
 }

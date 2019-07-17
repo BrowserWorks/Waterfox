@@ -11,15 +11,24 @@ const promise = require("promise");
 const { LocalizationHelper } = require("devtools/shared/l10n");
 
 loader.lazyRequireGetter(this, "Menu", "devtools/client/framework/menu");
-loader.lazyRequireGetter(this, "MenuItem", "devtools/client/framework/menu-item");
-loader.lazyRequireGetter(this, "clipboardHelper", "devtools/shared/platform/clipboard");
+loader.lazyRequireGetter(
+  this,
+  "MenuItem",
+  "devtools/client/framework/menu-item"
+);
+loader.lazyRequireGetter(
+  this,
+  "clipboardHelper",
+  "devtools/shared/platform/clipboard"
+);
 
 loader.lazyGetter(this, "TOOLBOX_L10N", function() {
   return new LocalizationHelper("devtools/client/locales/toolbox.properties");
 });
 
-const INSPECTOR_L10N =
-  new LocalizationHelper("devtools/client/locales/inspector.properties");
+const INSPECTOR_L10N = new LocalizationHelper(
+  "devtools/client/locales/inspector.properties"
+);
 
 /**
  * Context menu for the Markup view.
@@ -46,10 +55,12 @@ class MarkupContextMenu {
   }
 
   show(event) {
-    if (!(event.originalTarget instanceof Element) ||
-        event.originalTarget.closest("input[type=text]") ||
-        event.originalTarget.closest("input:not([type])") ||
-        event.originalTarget.closest("textarea")) {
+    if (
+      !(event.originalTarget instanceof Element) ||
+      event.originalTarget.closest("input[type=text]") ||
+      event.originalTarget.closest("input:not([type])") ||
+      event.originalTarget.closest("textarea")
+    ) {
       return;
     }
 
@@ -83,9 +94,12 @@ class MarkupContextMenu {
     }
 
     this.telemetry.scalarSet("devtools.copy.full.css.selector.opened", 1);
-    this.selection.nodeFront.getCssPath().then(path => {
-      clipboardHelper.copyString(path);
-    }).catch(console.error);
+    this.selection.nodeFront
+      .getCssPath()
+      .then(path => {
+        clipboardHelper.copyString(path);
+      })
+      .catch(console.error);
   }
 
   /**
@@ -121,9 +135,12 @@ class MarkupContextMenu {
     }
 
     this.telemetry.scalarSet("devtools.copy.unique.css.selector.opened", 1);
-    this.selection.nodeFront.getUniqueSelector().then(selector => {
-      clipboardHelper.copyString(selector);
-    }).catch(console.error);
+    this.selection.nodeFront
+      .getUniqueSelector()
+      .then(selector => {
+        clipboardHelper.copyString(selector);
+      })
+      .catch(console.error);
   }
 
   /**
@@ -135,17 +152,19 @@ class MarkupContextMenu {
     }
 
     this.telemetry.scalarSet("devtools.copy.xpath.opened", 1);
-    this.selection.nodeFront.getXPath().then(path => {
-      clipboardHelper.copyString(path);
-    }).catch(console.error);
+    this.selection.nodeFront
+      .getXPath()
+      .then(path => {
+        clipboardHelper.copyString(path);
+      })
+      .catch(console.error);
   }
 
   /**
    * Delete the selected node.
    */
   _deleteNode() {
-    if (!this.selection.isNode() ||
-         this.selection.isRoot()) {
+    if (!this.selection.isNode() || this.selection.isRoot()) {
       return;
     }
 
@@ -163,10 +182,12 @@ class MarkupContextMenu {
    * Duplicate the selected node
    */
   _duplicateNode() {
-    if (!this.selection.isElementNode() ||
-        this.selection.isRoot() ||
-        this.selection.isAnonymousNode() ||
-        this.selection.isPseudoElementNode()) {
+    if (
+      !this.selection.isElementNode() ||
+      this.selection.isRoot() ||
+      this.selection.isAnonymousNode() ||
+      this.selection.isPseudoElementNode()
+    ) {
       return;
     }
 
@@ -188,8 +209,18 @@ class MarkupContextMenu {
    * Jumps to the custom element definition in the debugger.
    */
   _jumpToCustomElementDefinition() {
-    const { url, line, column } = this.selection.nodeFront.customElementLocation;
-    this.toolbox.viewSourceInDebugger(url, line, column, null, "show_custom_element");
+    const {
+      url,
+      line,
+      column,
+    } = this.selection.nodeFront.customElementLocation;
+    this.toolbox.viewSourceInDebugger(
+      url,
+      line,
+      column,
+      null,
+      "show_custom_element"
+    );
   }
 
   /**
@@ -300,7 +331,10 @@ class MarkupContextMenu {
     // Select the accessible object in the panel and wait for the event that
     // tells us it has been done.
     const onSelected = a11yPanel.once("new-accessible-front-selected");
-    a11yPanel.selectAccessibleForNode(this.selection.nodeFront, "inspector-context-menu");
+    a11yPanel.selectAccessibleForNode(
+      this.selection.nodeFront,
+      "inspector-context-menu"
+    );
     await onSelected;
   }
 
@@ -326,7 +360,7 @@ class MarkupContextMenu {
    */
   _useInConsole() {
     this.toolbox.openSplitConsole().then(() => {
-      const {hud} = this.toolbox.getPanel("webconsole");
+      const { hud } = this.toolbox.getPanel("webconsole");
 
       const evalString = `{ let i = 0;
         while (window.hasOwnProperty("temp" + i) && i < 1000) {
@@ -339,7 +373,7 @@ class MarkupContextMenu {
       const options = {
         selectedNodeActor: this.selection.nodeFront.actorID,
       };
-      hud.jsterm.requestEvaluation(evalString, options).then((res) => {
+      hud.jsterm.requestEvaluation(evalString, options).then(res => {
         hud.setInputValue(res.result);
         this.inspector.emit("console-var-ready");
       });
@@ -347,14 +381,18 @@ class MarkupContextMenu {
   }
 
   _buildA11YMenuItem(menu) {
-    if (!(this.selection.isElementNode() || this.selection.isTextNode()) ||
-        !Services.prefs.getBoolPref("devtools.accessibility.enabled")) {
+    if (
+      !(this.selection.isElementNode() || this.selection.isTextNode()) ||
+      !Services.prefs.getBoolPref("devtools.accessibility.enabled")
+    ) {
       return;
     }
 
     const showA11YPropsItem = new MenuItem({
       id: "node-menu-showaccessibilityproperties",
-      label: INSPECTOR_L10N.getStr("inspectorShowAccessibilityProperties.label"),
+      label: INSPECTOR_L10N.getStr(
+        "inspectorShowAccessibilityProperties.label"
+      ),
       click: () => this._showAccessibilityProperties(),
       disabled: true,
     });
@@ -371,40 +409,56 @@ class MarkupContextMenu {
   _getAttributesSubmenu(isEditableElement) {
     const attributesSubmenu = new Menu();
     const nodeInfo = this.nodeMenuTriggerInfo;
-    const isAttributeClicked = isEditableElement && nodeInfo &&
-                              nodeInfo.type === "attribute";
+    const isAttributeClicked =
+      isEditableElement && nodeInfo && nodeInfo.type === "attribute";
 
-    attributesSubmenu.append(new MenuItem({
-      id: "node-menu-add-attribute",
-      label: INSPECTOR_L10N.getStr("inspectorAddAttribute.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorAddAttribute.accesskey"),
-      disabled: !isEditableElement,
-      click: () => this._onAddAttribute(),
-    }));
-    attributesSubmenu.append(new MenuItem({
-      id: "node-menu-copy-attribute",
-      label: INSPECTOR_L10N.getFormatStr("inspectorCopyAttributeValue.label",
-                                        isAttributeClicked ? `${nodeInfo.value}` : ""),
-      accesskey: INSPECTOR_L10N.getStr("inspectorCopyAttributeValue.accesskey"),
-      disabled: !isAttributeClicked,
-      click: () => this._onCopyAttributeValue(),
-    }));
-    attributesSubmenu.append(new MenuItem({
-      id: "node-menu-edit-attribute",
-      label: INSPECTOR_L10N.getFormatStr("inspectorEditAttribute.label",
-                                        isAttributeClicked ? `${nodeInfo.name}` : ""),
-      accesskey: INSPECTOR_L10N.getStr("inspectorEditAttribute.accesskey"),
-      disabled: !isAttributeClicked,
-      click: () => this._onEditAttribute(),
-    }));
-    attributesSubmenu.append(new MenuItem({
-      id: "node-menu-remove-attribute",
-      label: INSPECTOR_L10N.getFormatStr("inspectorRemoveAttribute.label",
-                                        isAttributeClicked ? `${nodeInfo.name}` : ""),
-      accesskey: INSPECTOR_L10N.getStr("inspectorRemoveAttribute.accesskey"),
-      disabled: !isAttributeClicked,
-      click: () => this._onRemoveAttribute(),
-    }));
+    attributesSubmenu.append(
+      new MenuItem({
+        id: "node-menu-add-attribute",
+        label: INSPECTOR_L10N.getStr("inspectorAddAttribute.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorAddAttribute.accesskey"),
+        disabled: !isEditableElement,
+        click: () => this._onAddAttribute(),
+      })
+    );
+    attributesSubmenu.append(
+      new MenuItem({
+        id: "node-menu-copy-attribute",
+        label: INSPECTOR_L10N.getFormatStr(
+          "inspectorCopyAttributeValue.label",
+          isAttributeClicked ? `${nodeInfo.value}` : ""
+        ),
+        accesskey: INSPECTOR_L10N.getStr(
+          "inspectorCopyAttributeValue.accesskey"
+        ),
+        disabled: !isAttributeClicked,
+        click: () => this._onCopyAttributeValue(),
+      })
+    );
+    attributesSubmenu.append(
+      new MenuItem({
+        id: "node-menu-edit-attribute",
+        label: INSPECTOR_L10N.getFormatStr(
+          "inspectorEditAttribute.label",
+          isAttributeClicked ? `${nodeInfo.name}` : ""
+        ),
+        accesskey: INSPECTOR_L10N.getStr("inspectorEditAttribute.accesskey"),
+        disabled: !isAttributeClicked,
+        click: () => this._onEditAttribute(),
+      })
+    );
+    attributesSubmenu.append(
+      new MenuItem({
+        id: "node-menu-remove-attribute",
+        label: INSPECTOR_L10N.getFormatStr(
+          "inspectorRemoveAttribute.label",
+          isAttributeClicked ? `${nodeInfo.name}` : ""
+        ),
+        accesskey: INSPECTOR_L10N.getStr("inspectorRemoveAttribute.accesskey"),
+        disabled: !isAttributeClicked,
+        click: () => this._onRemoveAttribute(),
+      })
+    );
 
     return attributesSubmenu;
   }
@@ -423,51 +477,62 @@ class MarkupContextMenu {
 
   _getCopySubmenu(markupContainer, isSelectionElement) {
     const copySubmenu = new Menu();
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copyinner",
-      label: INSPECTOR_L10N.getStr("inspectorCopyInnerHTML.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorCopyInnerHTML.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this._copyInnerHTML(),
-    }));
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copyouter",
-      label: INSPECTOR_L10N.getStr("inspectorCopyOuterHTML.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorCopyOuterHTML.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this._copyOuterHTML(),
-    }));
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copyuniqueselector",
-      label: INSPECTOR_L10N.getStr("inspectorCopyCSSSelector.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorCopyCSSSelector.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this._copyUniqueSelector(),
-    }));
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copycsspath",
-      label: INSPECTOR_L10N.getStr("inspectorCopyCSSPath.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorCopyCSSPath.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this._copyCssPath(),
-    }));
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copyxpath",
-      label: INSPECTOR_L10N.getStr("inspectorCopyXPath.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorCopyXPath.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this._copyXPath(),
-    }));
-    copySubmenu.append(new MenuItem({
-      id: "node-menu-copyimagedatauri",
-      label: INSPECTOR_L10N.getStr("inspectorImageDataUri.label"),
-      disabled: !isSelectionElement || !markupContainer ||
-                !markupContainer.isPreviewable(),
-      click: () => this._copyImageDataUri(),
-    }));
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copyinner",
+        label: INSPECTOR_L10N.getStr("inspectorCopyInnerHTML.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorCopyInnerHTML.accesskey"),
+        disabled: !isSelectionElement,
+        click: () => this._copyInnerHTML(),
+      })
+    );
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copyouter",
+        label: INSPECTOR_L10N.getStr("inspectorCopyOuterHTML.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorCopyOuterHTML.accesskey"),
+        disabled: !isSelectionElement,
+        click: () => this._copyOuterHTML(),
+      })
+    );
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copyuniqueselector",
+        label: INSPECTOR_L10N.getStr("inspectorCopyCSSSelector.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorCopyCSSSelector.accesskey"),
+        disabled: !isSelectionElement,
+        click: () => this._copyUniqueSelector(),
+      })
+    );
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copycsspath",
+        label: INSPECTOR_L10N.getStr("inspectorCopyCSSPath.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorCopyCSSPath.accesskey"),
+        disabled: !isSelectionElement,
+        click: () => this._copyCssPath(),
+      })
+    );
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copyxpath",
+        label: INSPECTOR_L10N.getStr("inspectorCopyXPath.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorCopyXPath.accesskey"),
+        disabled: !isSelectionElement,
+        click: () => this._copyXPath(),
+      })
+    );
+    copySubmenu.append(
+      new MenuItem({
+        id: "node-menu-copyimagedatauri",
+        label: INSPECTOR_L10N.getStr("inspectorImageDataUri.label"),
+        disabled:
+          !isSelectionElement ||
+          !markupContainer ||
+          !markupContainer.isPreviewable(),
+        click: () => this._copyImageDataUri(),
+      })
+    );
 
     return copySubmenu;
   }
@@ -497,90 +562,110 @@ class MarkupContextMenu {
     }
 
     const type = popupNode.dataset.type;
-    if ((type === "uri" || type === "cssresource" || type === "jsresource")) {
+    if (type === "uri" || type === "cssresource" || type === "jsresource") {
       // Links can't be opened in new tabs in the browser toolbox.
       if (type === "uri" && !this.target.chrome) {
         linkFollow.visible = true;
         linkFollow.label = INSPECTOR_L10N.getStr(
-          "inspector.menu.openUrlInNewTab.label");
+          "inspector.menu.openUrlInNewTab.label"
+        );
       } else if (type === "cssresource") {
         linkFollow.visible = true;
         linkFollow.label = TOOLBOX_L10N.getStr(
-          "toolbox.viewCssSourceInStyleEditor.label");
+          "toolbox.viewCssSourceInStyleEditor.label"
+        );
       } else if (type === "jsresource") {
         linkFollow.visible = true;
         linkFollow.label = TOOLBOX_L10N.getStr(
-          "toolbox.viewJsSourceInDebugger.label");
+          "toolbox.viewJsSourceInDebugger.label"
+        );
       }
 
       linkCopy.visible = true;
       linkCopy.label = INSPECTOR_L10N.getStr(
-        "inspector.menu.copyUrlToClipboard.label");
+        "inspector.menu.copyUrlToClipboard.label"
+      );
     } else if (type === "idref") {
       linkFollow.visible = true;
       linkFollow.label = INSPECTOR_L10N.getFormatStr(
-        "inspector.menu.selectElement.label", popupNode.dataset.link);
+        "inspector.menu.selectElement.label",
+        popupNode.dataset.link
+      );
     }
 
     return [linkFollow, linkCopy];
   }
 
   _getPasteSubmenu(isEditableElement) {
-    const isPasteable = isEditableElement && this._getClipboardContentForPaste();
-    const disableAdjacentPaste = !isPasteable ||
-                                 this.selection.isRoot() ||
-                                 this.selection.isBodyNode() ||
-                                 this.selection.isHeadNode();
-    const disableFirstLastPaste = !isPasteable ||
-      (this.selection.isHTMLNode() && this.selection.isRoot());
+    const isPasteable =
+      isEditableElement && this._getClipboardContentForPaste();
+    const disableAdjacentPaste =
+      !isPasteable ||
+      this.selection.isRoot() ||
+      this.selection.isBodyNode() ||
+      this.selection.isHeadNode();
+    const disableFirstLastPaste =
+      !isPasteable || (this.selection.isHTMLNode() && this.selection.isRoot());
 
     const pasteSubmenu = new Menu();
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pasteinnerhtml",
-      label: INSPECTOR_L10N.getStr("inspectorPasteInnerHTML.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorPasteInnerHTML.accesskey"),
-      disabled: !isPasteable,
-      click: () => this._pasteInnerHTML(),
-    }));
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pasteouterhtml",
-      label: INSPECTOR_L10N.getStr("inspectorPasteOuterHTML.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorPasteOuterHTML.accesskey"),
-      disabled: !isPasteable,
-      click: () => this._pasteOuterHTML(),
-    }));
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pastebefore",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLPasteBefore.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorHTMLPasteBefore.accesskey"),
-      disabled: disableAdjacentPaste,
-      click: () => this._pasteAdjacentHTML("beforeBegin"),
-    }));
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pasteafter",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLPasteAfter.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorHTMLPasteAfter.accesskey"),
-      disabled: disableAdjacentPaste,
-      click: () => this._pasteAdjacentHTML("afterEnd"),
-    }));
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pastefirstchild",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLPasteFirstChild.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorHTMLPasteFirstChild.accesskey"),
-      disabled: disableFirstLastPaste,
-      click: () => this._pasteAdjacentHTML("afterBegin"),
-    }));
-    pasteSubmenu.append(new MenuItem({
-      id: "node-menu-pastelastchild",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLPasteLastChild.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorHTMLPasteLastChild.accesskey"),
-      disabled: disableFirstLastPaste,
-      click: () => this._pasteAdjacentHTML("beforeEnd"),
-    }));
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pasteinnerhtml",
+        label: INSPECTOR_L10N.getStr("inspectorPasteInnerHTML.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorPasteInnerHTML.accesskey"),
+        disabled: !isPasteable,
+        click: () => this._pasteInnerHTML(),
+      })
+    );
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pasteouterhtml",
+        label: INSPECTOR_L10N.getStr("inspectorPasteOuterHTML.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorPasteOuterHTML.accesskey"),
+        disabled: !isPasteable,
+        click: () => this._pasteOuterHTML(),
+      })
+    );
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pastebefore",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLPasteBefore.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorHTMLPasteBefore.accesskey"),
+        disabled: disableAdjacentPaste,
+        click: () => this._pasteAdjacentHTML("beforeBegin"),
+      })
+    );
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pasteafter",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLPasteAfter.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorHTMLPasteAfter.accesskey"),
+        disabled: disableAdjacentPaste,
+        click: () => this._pasteAdjacentHTML("afterEnd"),
+      })
+    );
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pastefirstchild",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLPasteFirstChild.label"),
+        accesskey: INSPECTOR_L10N.getStr(
+          "inspectorHTMLPasteFirstChild.accesskey"
+        ),
+        disabled: disableFirstLastPaste,
+        click: () => this._pasteAdjacentHTML("afterBegin"),
+      })
+    );
+    pasteSubmenu.append(
+      new MenuItem({
+        id: "node-menu-pastelastchild",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLPasteLastChild.label"),
+        accesskey: INSPECTOR_L10N.getStr(
+          "inspectorHTMLPasteLastChild.accesskey"
+        ),
+        disabled: disableFirstLastPaste,
+        click: () => this._pasteAdjacentHTML("beforeEnd"),
+      })
+    );
 
     return pasteSubmenu;
   }
@@ -594,58 +679,72 @@ class MarkupContextMenu {
     const markupContainer = this.markup.getContainer(this.selection.nodeFront);
 
     this.contextMenuTarget = target;
-    this.nodeMenuTriggerInfo = markupContainer &&
-      markupContainer.editor.getInfoAtNode(target);
+    this.nodeMenuTriggerInfo =
+      markupContainer && markupContainer.editor.getInfoAtNode(target);
 
-    const isSelectionElement = this.selection.isElementNode() &&
-                             !this.selection.isPseudoElementNode();
-    const isEditableElement = isSelectionElement &&
-                            !this.selection.isAnonymousNode();
-    const isDuplicatableElement = isSelectionElement &&
-                                !this.selection.isAnonymousNode() &&
-                                !this.selection.isRoot();
-    const isScreenshotable = isSelectionElement &&
-                           this.selection.nodeFront.isTreeDisplayed;
+    const isSelectionElement =
+      this.selection.isElementNode() && !this.selection.isPseudoElementNode();
+    const isEditableElement =
+      isSelectionElement && !this.selection.isAnonymousNode();
+    const isDuplicatableElement =
+      isSelectionElement &&
+      !this.selection.isAnonymousNode() &&
+      !this.selection.isRoot();
+    const isScreenshotable =
+      isSelectionElement && this.selection.nodeFront.isTreeDisplayed;
 
     const menu = new Menu();
-    menu.append(new MenuItem({
-      id: "node-menu-edithtml",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLEdit.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorHTMLEdit.accesskey"),
-      disabled: !isEditableElement,
-      click: () => this._editHTML(),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-add",
-      label: INSPECTOR_L10N.getStr("inspectorAddNode.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorAddNode.accesskey"),
-      disabled: !this.inspector.canAddHTMLChild(),
-      click: () => this.inspector.addNode(),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-duplicatenode",
-      label: INSPECTOR_L10N.getStr("inspectorDuplicateNode.label"),
-      disabled: !isDuplicatableElement,
-      click: () => this._duplicateNode(),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-delete",
-      label: INSPECTOR_L10N.getStr("inspectorHTMLDelete.label"),
-      accesskey: INSPECTOR_L10N.getStr("inspectorHTMLDelete.accesskey"),
-      disabled: !this.markup.isDeletable(this.selection.nodeFront),
-      click: () => this._deleteNode(),
-    }));
+    menu.append(
+      new MenuItem({
+        id: "node-menu-edithtml",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLEdit.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorHTMLEdit.accesskey"),
+        disabled: !isEditableElement,
+        click: () => this._editHTML(),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-add",
+        label: INSPECTOR_L10N.getStr("inspectorAddNode.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorAddNode.accesskey"),
+        disabled: !this.inspector.canAddHTMLChild(),
+        click: () => this.inspector.addNode(),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-duplicatenode",
+        label: INSPECTOR_L10N.getStr("inspectorDuplicateNode.label"),
+        disabled: !isDuplicatableElement,
+        click: () => this._duplicateNode(),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-delete",
+        label: INSPECTOR_L10N.getStr("inspectorHTMLDelete.label"),
+        accesskey: INSPECTOR_L10N.getStr("inspectorHTMLDelete.accesskey"),
+        disabled: !this.markup.isDeletable(this.selection.nodeFront),
+        click: () => this._deleteNode(),
+      })
+    );
 
-    menu.append(new MenuItem({
-      label: INSPECTOR_L10N.getStr("inspectorAttributesSubmenu.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorAttributesSubmenu.accesskey"),
-      submenu: this._getAttributesSubmenu(isEditableElement),
-    }));
+    menu.append(
+      new MenuItem({
+        label: INSPECTOR_L10N.getStr("inspectorAttributesSubmenu.label"),
+        accesskey: INSPECTOR_L10N.getStr(
+          "inspectorAttributesSubmenu.accesskey"
+        ),
+        submenu: this._getAttributesSubmenu(isEditableElement),
+      })
+    );
 
-    menu.append(new MenuItem({
-      type: "separator",
-    }));
+    menu.append(
+      new MenuItem({
+        type: "separator",
+      })
+    );
 
     // Set the pseudo classes
     for (const name of ["hover", "active", "focus", "focus-within"]) {
@@ -666,88 +765,119 @@ class MarkupContextMenu {
       menu.append(menuitem);
     }
 
-    menu.append(new MenuItem({
-      type: "separator",
-    }));
+    menu.append(
+      new MenuItem({
+        type: "separator",
+      })
+    );
 
-    menu.append(new MenuItem({
-      label: INSPECTOR_L10N.getStr("inspectorCopyHTMLSubmenu.label"),
-      submenu: this._getCopySubmenu(markupContainer, isSelectionElement),
-    }));
+    menu.append(
+      new MenuItem({
+        label: INSPECTOR_L10N.getStr("inspectorCopyHTMLSubmenu.label"),
+        submenu: this._getCopySubmenu(markupContainer, isSelectionElement),
+      })
+    );
 
-    menu.append(new MenuItem({
-      label: INSPECTOR_L10N.getStr("inspectorPasteHTMLSubmenu.label"),
-      submenu: this._getPasteSubmenu(isEditableElement),
-    }));
+    menu.append(
+      new MenuItem({
+        label: INSPECTOR_L10N.getStr("inspectorPasteHTMLSubmenu.label"),
+        submenu: this._getPasteSubmenu(isEditableElement),
+      })
+    );
 
-    menu.append(new MenuItem({
-      type: "separator",
-    }));
+    menu.append(
+      new MenuItem({
+        type: "separator",
+      })
+    );
 
-    const isNodeWithChildren = this.selection.isNode() &&
-                             markupContainer.hasChildren;
-    menu.append(new MenuItem({
-      id: "node-menu-expand",
-      label: INSPECTOR_L10N.getStr("inspectorExpandNode.label"),
-      disabled: !isNodeWithChildren,
-      click: () => this.markup.expandAll(this.selection.nodeFront),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-collapse",
-      label: INSPECTOR_L10N.getStr("inspectorCollapseAll.label"),
-      disabled: !isNodeWithChildren || !markupContainer.expanded,
-      click: () => this.markup.collapseAll(this.selection.nodeFront),
-    }));
+    const isNodeWithChildren =
+      this.selection.isNode() && markupContainer.hasChildren;
+    menu.append(
+      new MenuItem({
+        id: "node-menu-expand",
+        label: INSPECTOR_L10N.getStr("inspectorExpandNode.label"),
+        disabled: !isNodeWithChildren,
+        click: () => this.markup.expandAll(this.selection.nodeFront),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-collapse",
+        label: INSPECTOR_L10N.getStr("inspectorCollapseAll.label"),
+        disabled: !isNodeWithChildren || !markupContainer.expanded,
+        click: () => this.markup.collapseAll(this.selection.nodeFront),
+      })
+    );
 
-    menu.append(new MenuItem({
-      type: "separator",
-    }));
+    menu.append(
+      new MenuItem({
+        type: "separator",
+      })
+    );
 
-    menu.append(new MenuItem({
-      id: "node-menu-scrollnodeintoview",
-      label: INSPECTOR_L10N.getStr("inspectorScrollNodeIntoView.label"),
-      accesskey:
-        INSPECTOR_L10N.getStr("inspectorScrollNodeIntoView.accesskey"),
-      disabled: !isSelectionElement,
-      click: () => this.markup.scrollNodeIntoView(),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-screenshotnode",
-      label: INSPECTOR_L10N.getStr("inspectorScreenshotNode.label"),
-      disabled: !isScreenshotable,
-      click: () => this.inspector.screenshotNode().catch(console.error),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-useinconsole",
-      label: INSPECTOR_L10N.getStr("inspectorUseInConsole.label"),
-      click: () => this._useInConsole(),
-    }));
-    menu.append(new MenuItem({
-      id: "node-menu-showdomproperties",
-      label: INSPECTOR_L10N.getStr("inspectorShowDOMProperties.label"),
-      click: () => this._showDOMProperties(),
-    }));
+    menu.append(
+      new MenuItem({
+        id: "node-menu-scrollnodeintoview",
+        label: INSPECTOR_L10N.getStr("inspectorScrollNodeIntoView.label"),
+        accesskey: INSPECTOR_L10N.getStr(
+          "inspectorScrollNodeIntoView.accesskey"
+        ),
+        disabled: !isSelectionElement,
+        click: () => this.markup.scrollNodeIntoView(),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-screenshotnode",
+        label: INSPECTOR_L10N.getStr("inspectorScreenshotNode.label"),
+        disabled: !isScreenshotable,
+        click: () => this.inspector.screenshotNode().catch(console.error),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-useinconsole",
+        label: INSPECTOR_L10N.getStr("inspectorUseInConsole.label"),
+        click: () => this._useInConsole(),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        id: "node-menu-showdomproperties",
+        label: INSPECTOR_L10N.getStr("inspectorShowDOMProperties.label"),
+        click: () => this._showDOMProperties(),
+      })
+    );
 
     if (this.selection.nodeFront.customElementLocation) {
-      menu.append(new MenuItem({
-        type: "separator",
-      }));
+      menu.append(
+        new MenuItem({
+          type: "separator",
+        })
+      );
 
-      menu.append(new MenuItem({
-        id: "node-menu-jumptodefinition",
-        label: INSPECTOR_L10N.getStr("inspectorCustomElementDefinition.label"),
-        click: () => this._jumpToCustomElementDefinition(),
-      }));
+      menu.append(
+        new MenuItem({
+          id: "node-menu-jumptodefinition",
+          label: INSPECTOR_L10N.getStr(
+            "inspectorCustomElementDefinition.label"
+          ),
+          click: () => this._jumpToCustomElementDefinition(),
+        })
+      );
     }
 
     this._buildA11YMenuItem(menu);
 
     const nodeLinkMenuItems = this._getNodeLinkMenuItems();
     if (nodeLinkMenuItems.filter(item => item.visible).length > 0) {
-      menu.append(new MenuItem({
-        id: "node-menu-link-separator",
-        type: "separator",
-      }));
+      menu.append(
+        new MenuItem({
+          id: "node-menu-link-separator",
+          type: "separator",
+        })
+      );
     }
 
     for (const menuitem of nodeLinkMenuItems) {
@@ -759,16 +889,19 @@ class MarkupContextMenu {
   }
 
   async _updateA11YMenuItem(menuItem) {
-    const hasMethod = await this.target.actorHasMethod(
-      "domwalker", "hasAccessibilityProperties").catch(
+    const hasMethod = await this.target
+      .actorHasMethod("domwalker", "hasAccessibilityProperties")
+      .catch(
         // Connection to DOMWalker might have been already closed.
-        error => console.warn(error));
+        error => console.warn(error)
+      );
     if (!hasMethod) {
       return;
     }
 
     const hasA11YProps = await this.walker.hasAccessibilityProperties(
-      this.selection.nodeFront);
+      this.selection.nodeFront
+    );
     if (hasA11YProps) {
       const menuItemEl = Menu.getMenuElementById(menuItem.id, this.toolbox.doc);
       menuItemEl.disabled = menuItem.disabled = false;

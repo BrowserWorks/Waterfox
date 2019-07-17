@@ -7,17 +7,12 @@
 "use strict";
 
 const l10n = require("devtools/client/webconsole/webconsole-l10n");
-const { getUrlDetails } = require("devtools/client/netmonitor/src/utils/request-utils");
+const {
+  getUrlDetails,
+} = require("devtools/client/netmonitor/src/utils/request-utils");
 
-const {
-  MESSAGE_SOURCE,
-  MESSAGE_TYPE,
-  MESSAGE_LEVEL,
-} = require("../constants");
-const {
-  ConsoleMessage,
-  NetworkEventMessage,
-} = require("../types");
+const { MESSAGE_SOURCE, MESSAGE_TYPE, MESSAGE_LEVEL } = require("../constants");
+const { ConsoleMessage, NetworkEventMessage } = require("../types");
 
 function prepareMessage(packet, idGenerator) {
   if (!packet.source) {
@@ -86,7 +81,7 @@ function transformConsoleAPICallPacket(packet) {
     case "countReset":
       // Chrome RDP doesn't have a special type for count.
       type = MESSAGE_TYPE.LOG;
-      const {counter} = message;
+      const { counter } = message;
 
       if (!counter) {
         // We don't show anything if we don't have counter data.
@@ -96,7 +91,9 @@ function transformConsoleAPICallPacket(packet) {
         level = MESSAGE_LEVEL.WARN;
         parameters = null;
       } else {
-        const label = counter.label ? counter.label : l10n.getStr("noCounterLabel");
+        const label = counter.label
+          ? counter.label
+          : l10n.getStr("noCounterLabel");
         messageText = `${label}: ${counter.count}`;
         parameters = null;
       }
@@ -125,7 +122,10 @@ function transformConsoleAPICallPacket(packet) {
         // if corresponding console.time() was called before.
         const duration = Math.round(timer.duration * 100) / 100;
         if (type === "timeEnd") {
-          messageText = l10n.getFormatStr("console.timeEnd", [timer.name, duration]);
+          messageText = l10n.getFormatStr("console.timeEnd", [
+            timer.name,
+            duration,
+          ]);
           parameters = null;
         } else if (type === "timeLog") {
           const [, ...rest] = parameters;
@@ -141,7 +141,13 @@ function transformConsoleAPICallPacket(packet) {
       break;
     case "table":
       const supportedClasses = [
-        "Array", "Object", "Map", "Set", "WeakMap", "WeakSet"];
+        "Array",
+        "Object",
+        "Map",
+        "Set",
+        "WeakMap",
+        "WeakSet",
+      ];
       if (
         !Array.isArray(parameters) ||
         parameters.length === 0 ||
@@ -174,12 +180,14 @@ function transformConsoleAPICallPacket(packet) {
       break;
   }
 
-  const frame = message.filename ? {
-    source: message.filename,
-    sourceId: message.sourceId,
-    line: message.lineNumber,
-    column: message.columnNumber,
-  } : null;
+  const frame = message.filename
+    ? {
+        source: message.filename,
+        sourceId: message.sourceId,
+        line: message.lineNumber,
+        column: message.columnNumber,
+      }
+    : null;
 
   return new ConsoleMessage({
     source: MESSAGE_SOURCE.CONSOLE_API,
@@ -211,10 +219,7 @@ function transformNavigationMessagePacket(packet) {
 }
 
 function transformLogMessagePacket(packet) {
-  const {
-    message,
-    timeStamp,
-  } = packet;
+  const { message, timeStamp } = packet;
 
   return new ConsoleMessage({
     source: MESSAGE_SOURCE.CONSOLE_API,
@@ -236,16 +241,19 @@ function transformPageErrorPacket(packet) {
     level = MESSAGE_LEVEL.INFO;
   }
 
-  const frame = pageError.sourceName ? {
-    source: pageError.sourceName,
-    sourceId: pageError.sourceId,
-    line: pageError.lineNumber,
-    column: pageError.columnNumber,
-  } : null;
+  const frame = pageError.sourceName
+    ? {
+        source: pageError.sourceName,
+        sourceId: pageError.sourceId,
+        line: pageError.lineNumber,
+        column: pageError.columnNumber,
+      }
+    : null;
 
   const matchesCSS = /^(?:CSS|Layout)\b/.test(pageError.category);
-  const messageSource = matchesCSS ? MESSAGE_SOURCE.CSS
-                                  : MESSAGE_SOURCE.JAVASCRIPT;
+  const messageSource = matchesCSS
+    ? MESSAGE_SOURCE.CSS
+    : MESSAGE_SOURCE.JAVASCRIPT;
   return new ConsoleMessage({
     innerWindowID: pageError.innerWindowID,
     source: messageSource,
@@ -304,9 +312,8 @@ function transformEvaluationResultPacket(packet) {
     notes,
   } = packet;
 
-  const parameter = helperResult && helperResult.object
-    ? helperResult.object
-    : result;
+  const parameter =
+    helperResult && helperResult.object ? helperResult.object : result;
 
   if (helperResult && helperResult.type === "error") {
     try {
@@ -319,9 +326,10 @@ function transformEvaluationResultPacket(packet) {
     exceptionMessage = new Error(exceptionMessage).toString();
   }
 
-  const level = typeof exceptionMessage !== "undefined" && exceptionMessage !== null
-    ? MESSAGE_LEVEL.ERROR
-    : MESSAGE_LEVEL.LOG;
+  const level =
+    typeof exceptionMessage !== "undefined" && exceptionMessage !== null
+      ? MESSAGE_LEVEL.ERROR
+      : MESSAGE_LEVEL.LOG;
 
   return new ConsoleMessage({
     source: MESSAGE_SOURCE.JAVASCRIPT,
@@ -485,9 +493,11 @@ function getParentWarningGroupMessageId(message) {
  * @returns {Boolean}
  */
 function isWarningGroup(message) {
-  return message.type === MESSAGE_TYPE.CONTENT_BLOCKING_GROUP
-   || message.type === MESSAGE_TYPE.CORS_GROUP
-   || message.type === MESSAGE_TYPE.CSP_GROUP;
+  return (
+    message.type === MESSAGE_TYPE.CONTENT_BLOCKING_GROUP ||
+    message.type === MESSAGE_TYPE.CORS_GROUP ||
+    message.type === MESSAGE_TYPE.CSP_GROUP
+  );
 }
 
 /**
@@ -496,12 +506,14 @@ function isWarningGroup(message) {
  * @returns {Boolean}
  */
 function isContentBlockingMessage(message) {
-  const {category} = message;
-  return category == "cookieBlockedPermission" ||
+  const { category } = message;
+  return (
+    category == "cookieBlockedPermission" ||
     category == "cookieBlockedTracker" ||
     category == "cookieBlockedAll" ||
     category == "cookieBlockedForeign" ||
-    category == "Tracking Protection";
+    category == "Tracking Protection"
+  );
 }
 
 module.exports = {

@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { createFactory, PureComponent } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  PureComponent,
+} = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
@@ -70,12 +73,10 @@ class ExtensionDetail extends PureComponent {
         id: "about-debugging-extension-uuid",
         attrs: { label: true },
       },
-      FieldPair(
-        {
-          label: "Internal UUID",
-          value: uuid,
-        }
-      )
+      FieldPair({
+        label: "Internal UUID",
+        value: uuid,
+      })
     );
   }
 
@@ -87,12 +88,10 @@ class ExtensionDetail extends PureComponent {
         id: "about-debugging-extension-id",
         attrs: { label: true },
       },
-      FieldPair(
-        {
-          label: "Extension ID",
-          value: id,
-        }
-      )
+      FieldPair({
+        label: "Extension ID",
+        value: id,
+      })
     );
   }
 
@@ -107,12 +106,10 @@ class ExtensionDetail extends PureComponent {
         id: "about-debugging-extension-location",
         attrs: { label: true },
       },
-      FieldPair(
-        {
-          label: "Location",
-          value: location,
-        }
-      )
+      FieldPair({
+        label: "Location",
+        value: location,
+      })
     );
   }
 
@@ -128,7 +125,7 @@ class ExtensionDetail extends PureComponent {
         href: manifestURL,
         target: "_blank",
       },
-      manifestURL,
+      manifestURL
     );
 
     return Localized(
@@ -136,12 +133,10 @@ class ExtensionDetail extends PureComponent {
         id: "about-debugging-extension-manifest-url",
         attrs: { label: true },
       },
-      FieldPair(
-        {
-          label: "Manifest URL",
-          value: link,
-        }
-      )
+      FieldPair({
+        label: "Manifest URL",
+        value: link,
+      })
     );
   }
 
@@ -157,8 +152,8 @@ class ExtensionDetail extends PureComponent {
         this.renderExtensionId(),
         this.renderUUID(),
         this.renderManifest(),
-        this.props.children,
-      ),
+        this.props.children
+      )
     );
   }
 }

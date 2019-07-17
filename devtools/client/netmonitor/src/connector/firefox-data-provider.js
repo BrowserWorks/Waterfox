@@ -25,7 +25,7 @@ class FirefoxDataProvider {
    * @param {Object} actions set of actions fired during data fetching process
    * @params {Object} owner all events are fired on this object
    */
-  constructor({webConsoleClient, actions, owner}) {
+  constructor({ webConsoleClient, actions, owner }) {
     // Options
     this.webConsoleClient = webConsoleClient;
     this.actions = actions || {};
@@ -83,25 +83,29 @@ class FirefoxDataProvider {
     });
 
     if (this.actionsEnabled && this.actions.addRequest) {
-      await this.actions.addRequest(id, {
-        // Convert the received date/time string to a unix timestamp.
-        startedMillis: Date.parse(startedDateTime),
-        method,
-        url,
-        isXHR,
-        cause,
+      await this.actions.addRequest(
+        id,
+        {
+          // Convert the received date/time string to a unix timestamp.
+          startedMillis: Date.parse(startedDateTime),
+          method,
+          url,
+          isXHR,
+          cause,
 
-        // Compatibility code to support Firefox 58 and earlier that always
-        // send stack-trace immediately on networkEvent message.
-        // FF59+ supports fetching the traces lazily via requestData.
-        stacktrace: cause.stacktrace,
+          // Compatibility code to support Firefox 58 and earlier that always
+          // send stack-trace immediately on networkEvent message.
+          // FF59+ supports fetching the traces lazily via requestData.
+          stacktrace: cause.stacktrace,
 
-        fromCache,
-        fromServiceWorker,
-        isThirdPartyTrackingResource,
-        referrerPolicy,
-        blockedReason,
-      }, true);
+          fromCache,
+          fromServiceWorker,
+          isThirdPartyTrackingResource,
+          referrerPolicy,
+          blockedReason,
+        },
+        true
+      );
     }
 
     this.emit(EVENTS.REQUEST_ADDED, id);
@@ -143,7 +147,8 @@ class FirefoxDataProvider {
       this.fetchResponseCache(responseCache),
     ]);
 
-    const payload = Object.assign({},
+    const payload = Object.assign(
+      {},
       data,
       responseContentObj,
       requestHeadersObj,
@@ -151,7 +156,7 @@ class FirefoxDataProvider {
       postDataObj,
       requestCookiesObj,
       responseCookiesObj,
-      responseCacheObj,
+      responseCacheObj
     );
 
     if (this.actionsEnabled && this.actions.updateRequest) {
@@ -174,7 +179,11 @@ class FirefoxDataProvider {
 
   async fetchRequestHeaders(requestHeaders) {
     const payload = {};
-    if (requestHeaders && requestHeaders.headers && requestHeaders.headers.length) {
+    if (
+      requestHeaders &&
+      requestHeaders.headers &&
+      requestHeaders.headers.length
+    ) {
       const headers = await fetchHeaders(requestHeaders, this.getLongString);
       if (headers) {
         payload.requestHeaders = headers;
@@ -185,7 +194,11 @@ class FirefoxDataProvider {
 
   async fetchResponseHeaders(responseHeaders) {
     const payload = {};
-    if (responseHeaders && responseHeaders.headers && responseHeaders.headers.length) {
+    if (
+      responseHeaders &&
+      responseHeaders.headers &&
+      responseHeaders.headers.length
+    ) {
       const headers = await fetchHeaders(responseHeaders, this.getLongString);
       if (headers) {
         payload.responseHeaders = headers;
@@ -221,14 +234,17 @@ class FirefoxDataProvider {
     if (requestCookies) {
       const reqCookies = [];
       // request store cookies in requestCookies or requestCookies.cookies
-      const cookies = requestCookies.cookies ?
-        requestCookies.cookies : requestCookies;
+      const cookies = requestCookies.cookies
+        ? requestCookies.cookies
+        : requestCookies;
       // make sure cookies is iterable
       if (typeof cookies[Symbol.iterator] === "function") {
         for (const cookie of cookies) {
-          reqCookies.push(Object.assign({}, cookie, {
-            value: await this.getLongString(cookie.value),
-          }));
+          reqCookies.push(
+            Object.assign({}, cookie, {
+              value: await this.getLongString(cookie.value),
+            })
+          );
         }
         if (reqCookies.length) {
           payload.requestCookies = reqCookies;
@@ -243,14 +259,17 @@ class FirefoxDataProvider {
     if (responseCookies) {
       const resCookies = [];
       // response store cookies in responseCookies or responseCookies.cookies
-      const cookies = responseCookies.cookies ?
-        responseCookies.cookies : responseCookies;
+      const cookies = responseCookies.cookies
+        ? responseCookies.cookies
+        : responseCookies;
       // make sure cookies is iterable
       if (typeof cookies[Symbol.iterator] === "function") {
         for (const cookie of cookies) {
-          resCookies.push(Object.assign({}, cookie, {
-            value: await this.getLongString(cookie.value),
-          }));
+          resCookies.push(
+            Object.assign({}, cookie, {
+              value: await this.getLongString(cookie.value),
+            })
+          );
         }
         if (resCookies.length) {
           payload.responseCookies = resCookies;
@@ -330,10 +349,7 @@ class FirefoxDataProvider {
       fromCache,
       fromServiceWorker,
       isXHR,
-      request: {
-        method,
-        url,
-      },
+      request: { method, url },
       startedDateTime,
       isThirdPartyTrackingResource,
       referrerPolicy,
@@ -469,18 +485,22 @@ class FirefoxDataProvider {
       return promise;
     }
     // Fetch the data
-    promise = this._requestData(actor, method).then(async (payload) => {
+    promise = this._requestData(actor, method).then(async payload => {
       // Remove the request from the cache, any new call to requestData will fetch the
       // data again.
       this.lazyRequestData.delete(key);
 
       if (this.actionsEnabled && this.actions.updateRequest) {
-        await this.actions.updateRequest(actor, {
-          ...payload,
-          // Lockdown *Available property once we fetch data from back-end.
-          // Using this as a flag to prevent fetching arrived data again.
-          [`${method}Available`]: false,
-        }, true);
+        await this.actions.updateRequest(
+          actor,
+          {
+            ...payload,
+            // Lockdown *Available property once we fetch data from back-end.
+            // Using this as a flag to prevent fetching arrived data again.
+            [`${method}Available`]: false,
+          },
+          true
+        );
       }
 
       return payload;
@@ -506,12 +526,17 @@ class FirefoxDataProvider {
    */
   async _requestData(actor, method) {
     // Calculate real name of the client getter.
-    const clientMethodName = `get${method.charAt(0).toUpperCase()}${method.slice(1)}`;
+    const clientMethodName = `get${method
+      .charAt(0)
+      .toUpperCase()}${method.slice(1)}`;
     // The name of the callback that processes request response
-    const callbackMethodName = `on${method.charAt(0).toUpperCase()}${method.slice(1)}`;
+    const callbackMethodName = `on${method
+      .charAt(0)
+      .toUpperCase()}${method.slice(1)}`;
     // And the event to fire before updating this data
-    const updatingEventName =
-      `UPDATING_${method.replace(/([A-Z])/g, "_$1").toUpperCase()}`;
+    const updatingEventName = `UPDATING_${method
+      .replace(/([A-Z])/g, "_$1")
+      .toUpperCase()}`;
 
     // Emit event that tell we just start fetching some data
     this.emit(EVENTS[updatingEventName], actor);
@@ -521,16 +546,25 @@ class FirefoxDataProvider {
       if (typeof this.webConsoleClient[clientMethodName] === "function") {
         // Make sure we fetch the real actor data instead of cloned actor
         // e.g. CustomRequestPanel will clone a request with additional '-clone' actor id
-        this.webConsoleClient[clientMethodName](actor.replace("-clone", ""), (res) => {
-          if (res.error) {
-            reject(
-              new Error(`Error while calling method ${clientMethodName}: ${res.message}`)
-            );
+        this.webConsoleClient[clientMethodName](
+          actor.replace("-clone", ""),
+          res => {
+            if (res.error) {
+              reject(
+                new Error(
+                  `Error while calling method ${clientMethodName}: ${
+                    res.message
+                  }`
+                )
+              );
+            }
+            resolve(res);
           }
-          resolve(res);
-        });
+        );
       } else {
-        reject(new Error(`Error: No such client method '${clientMethodName}'!`));
+        reject(
+          new Error(`Error: No such client method '${clientMethodName}'!`)
+        );
       }
     });
 

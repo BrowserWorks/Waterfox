@@ -7,7 +7,9 @@ const { render } = require("enzyme");
 
 const { createFactory } = require("devtools/client/shared/vendor/react");
 
-const FilterButton = createFactory(require("devtools/client/webconsole/components/FilterButton"));
+const FilterButton = createFactory(
+  require("devtools/client/webconsole/components/FilterButton")
+);
 const { MESSAGE_LEVEL } = require("devtools/client/webconsole/constants");
 
 describe("FilterButton component:", () => {
@@ -28,7 +30,7 @@ describe("FilterButton component:", () => {
   });
 
   it("displays as inactive when turned off", () => {
-    const wrapper = render(FilterButton({...props, active: false}));
+    const wrapper = render(FilterButton({ ...props, active: false }));
     expect(wrapper.is("button")).toBe(true);
     expect(wrapper.hasClass("devtools-button")).toBe(true);
     expect(wrapper.hasClass("error")).toBe(true);

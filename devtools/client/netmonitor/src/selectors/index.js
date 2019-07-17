@@ -8,8 +8,4 @@ const requests = require("./requests");
 const timingMarkers = require("./timing-markers");
 const ui = require("./ui");
 
-Object.assign(exports,
-  requests,
-  timingMarkers,
-  ui
-);
+Object.assign(exports, requests, timingMarkers, ui);

@@ -58,9 +58,11 @@ add_task(async function() {
 
   info("Clear the filters using the 'Reset filters' button");
   const resetButton = await waitFor(() =>
-    hud.ui.window.document.querySelector(".reset-filters-button"));
-  const onResetButtonHidden = waitFor(() =>
-    !hud.ui.window.document.querySelector(".reset-filters-button"));
+    hud.ui.window.document.querySelector(".reset-filters-button")
+  );
+  const onResetButtonHidden = waitFor(
+    () => !hud.ui.window.document.querySelector(".reset-filters-button")
+  );
   resetButton.click();
   await onResetButtonHidden;
 
@@ -77,20 +79,25 @@ function checkTelemetryEvent(expectedEvent) {
   const [event] = events;
   ok(event.session_id > 0, "There is a valid session_id in the logged event");
   const f = e => JSON.stringify(e, null, 2);
-  is(f(event), f({
-    ...expectedEvent,
-    "session_id": event.session_id,
-  }), "The event has the expected data");
+  is(
+    f(event),
+    f({
+      ...expectedEvent,
+      session_id: event.session_id,
+    }),
+    "The event has the expected data"
+  );
 }
 
 function getFiltersChangedEventsExtra() {
   // Retrieve and clear telemetry events.
   const snapshot = Services.telemetry.snapshotEvents(ALL_CHANNELS, true);
 
-  const filtersChangedEvents = snapshot.parent.filter(event =>
-    event[1] === "devtools.main" &&
-    event[2] === "filters_changed" &&
-    event[3] === "webconsole"
+  const filtersChangedEvents = snapshot.parent.filter(
+    event =>
+      event[1] === "devtools.main" &&
+      event[2] === "filters_changed" &&
+      event[3] === "webconsole"
   );
 
   // Since we already know we have the correct event, we only return the `extra` field

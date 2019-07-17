@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { createFactory, PureComponent } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  PureComponent,
+} = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
@@ -50,7 +53,7 @@ class TemporaryExtensionAdditionalActions extends PureComponent {
         level: MESSAGE_LEVEL.ERROR,
         key: "reload-error",
       },
-      dom.p({ className: "technical-text" }, reloadError),
+      dom.p({ className: "technical-text" }, reloadError)
     );
   }
 
@@ -67,11 +70,12 @@ class TemporaryExtensionAdditionalActions extends PureComponent {
           },
           dom.button(
             {
-              className: "default-button default-button--micro " +
-                         "qa-temporary-extension-reload-button",
+              className:
+                "default-button default-button--micro " +
+                "qa-temporary-extension-reload-button",
               onClick: e => this.reload(),
             },
-            "Reload",
+            "Reload"
           )
         ),
         Localized(
@@ -80,13 +84,14 @@ class TemporaryExtensionAdditionalActions extends PureComponent {
           },
           dom.button(
             {
-              className: "default-button default-button--micro " +
-                         "qa-temporary-extension-remove-button",
+              className:
+                "default-button default-button--micro " +
+                "qa-temporary-extension-remove-button",
               onClick: e => this.remove(),
             },
-            "Remove",
+            "Remove"
           )
-        ),
+        )
       ),
       this.renderReloadError(),
     ];

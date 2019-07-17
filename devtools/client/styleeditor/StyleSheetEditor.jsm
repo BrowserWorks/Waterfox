@@ -7,16 +7,19 @@
 
 this.EXPORTED_SYMBOLS = ["StyleSheetEditor"];
 
-const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
+const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 const Editor = require("devtools/client/shared/sourceeditor/editor");
 const promise = require("promise");
-const {shortSource, prettifyCSS} = require("devtools/shared/inspector/css-logic");
-const {throttle} = require("devtools/shared/throttle");
+const {
+  shortSource,
+  prettifyCSS,
+} = require("devtools/shared/inspector/css-logic");
+const { throttle } = require("devtools/shared/throttle");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {FileUtils} = require("resource://gre/modules/FileUtils.jsm");
-const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
-const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const { FileUtils } = require("resource://gre/modules/FileUtils.jsm");
+const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
+const { OS } = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 const {
   getString,
   showFilePicker,
@@ -93,14 +96,16 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this._state = {
     text: "",
     selection: {
-      start: {line: 0, ch: 0},
-      end: {line: 0, ch: 0},
+      start: { line: 0, ch: 0 },
+      end: { line: 0, ch: 0 },
     },
   };
 
   this._styleSheetFilePath = null;
-  if (styleSheet.href &&
-      Services.io.extractScheme(this.styleSheet.href) == "file") {
+  if (
+    styleSheet.href &&
+    Services.io.extractScheme(this.styleSheet.href) == "file"
+  ) {
     this._styleSheetFilePath = this.styleSheet.href;
   }
 
@@ -115,16 +120,20 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this._updateStyleSheet = this._updateStyleSheet.bind(this);
   this._onMouseMove = this._onMouseMove.bind(this);
 
-  this.emitMediaRulesChanged =
-    throttle(this.emitMediaRulesChanged, EMIT_MEDIA_RULES_THROTTLING, this);
+  this.emitMediaRulesChanged = throttle(
+    this.emitMediaRulesChanged,
+    EMIT_MEDIA_RULES_THROTTLING,
+    this
+  );
 
   this._focusOnSourceEditorReady = false;
   this.cssSheet.on("property-change", this._onPropertyChange);
   this.styleSheet.on("error", this._onError);
   this.mediaRules = [];
   if (this.cssSheet.getMediaRules) {
-    this.cssSheet.getMediaRules().then(this._onMediaRulesChanged,
-                                       console.error);
+    this.cssSheet
+      .getMediaRules()
+      .then(this._onMediaRulesChanged, console.error);
   }
   this.cssSheet.on("media-rules-changed", this._onMediaRulesChanged);
   this.cssSheet.on("style-applied", this._onStyleApplied);
@@ -249,7 +258,7 @@ StyleSheetEditor.prototype = {
     this.linkedCSSFileError = null;
 
     // save last file change time so we can compare when we check for changes.
-    OS.File.stat(path).then((info) => {
+    OS.File.stat(path).then(info => {
       this._fileModDate = info.lastModificationDate.getTime();
     }, this.markLinkedFileBroken);
 
@@ -264,16 +273,19 @@ StyleSheetEditor.prototype = {
    * @return {Promise} a promise that resolves to the new text
    */
   _getSourceTextAndPrettify: function() {
-    return this.styleSheet.getText().then((longStr) => {
-      return longStr.string();
-    }).then((source) => {
-      const ruleCount = this.styleSheet.ruleCount;
-      if (!this.styleSheet.isOriginalSource) {
-        source = prettifyCSS(source, ruleCount);
-      }
-      this._state.text = source;
-      return source;
-    });
+    return this.styleSheet
+      .getText()
+      .then(longStr => {
+        return longStr.string();
+      })
+      .then(source => {
+        const ruleCount = this.styleSheet.ruleCount;
+        if (!this.styleSheet.isOriginalSource) {
+          source = prettifyCSS(source, ruleCount);
+        }
+        this._state.text = source;
+        return source;
+      });
   },
 
   /**
@@ -284,22 +296,29 @@ StyleSheetEditor.prototype = {
    *         has been loaded or reject on unexpected error.
    */
   fetchSource: function() {
-    return this._getSourceTextAndPrettify().then((source) => {
-      this.sourceLoaded = true;
-      return source;
-    }).catch(e => {
-      if (this._isDestroyed) {
-        console.warn("Could not fetch the source for " +
-                     this.styleSheet.href +
-                     ", the editor was destroyed");
-        console.error(e);
-      } else {
-        console.error(e);
-        this.emit("error", { key: LOAD_ERROR, append: this.styleSheet.href,
-                             level: "warning" });
-        throw e;
-      }
-    });
+    return this._getSourceTextAndPrettify()
+      .then(source => {
+        this.sourceLoaded = true;
+        return source;
+      })
+      .catch(e => {
+        if (this._isDestroyed) {
+          console.warn(
+            "Could not fetch the source for " +
+              this.styleSheet.href +
+              ", the editor was destroyed"
+          );
+          console.error(e);
+        } else {
+          console.error(e);
+          this.emit("error", {
+            key: LOAD_ERROR,
+            append: this.styleSheet.href,
+            level: "warning",
+          });
+          throw e;
+        }
+      });
   },
 
   /**
@@ -324,7 +343,7 @@ StyleSheetEditor.prototype = {
       this._isUpdating = false;
       this.emit("style-applied");
     } else if (this.sourceEditor) {
-      this._getSourceTextAndPrettify().then((newText) => {
+      this._getSourceTextAndPrettify().then(newText => {
         this._justSetText = true;
         const firstLine = this.sourceEditor.getFirstVisibleLine();
         const pos = this.sourceEditor.getCursor();
@@ -387,8 +406,10 @@ StyleSheetEditor.prototype = {
    */
   load: function(inputElement, cssProperties) {
     if (this._isDestroyed) {
-      return promise.reject("Won't load source editor as the style sheet has " +
-                            "already been removed from Style Editor.");
+      return promise.reject(
+        "Won't load source editor as the style sheet has " +
+          "already been removed from Style Editor."
+      );
     }
 
     this._inputElement = inputElement;
@@ -405,7 +426,7 @@ StyleSheetEditor.prototype = {
       autocompleteOpts: { walker: this.walker, cssProperties },
       cssProperties,
     };
-    const sourceEditor = this._sourceEditor = new Editor(config);
+    const sourceEditor = (this._sourceEditor = new Editor(config));
 
     sourceEditor.on("dirty-change", this._onPropertyChange);
 
@@ -423,8 +444,10 @@ StyleSheetEditor.prototype = {
         sourceEditor.focus();
       }
 
-      sourceEditor.setSelection(this._state.selection.start,
-                                this._state.selection.end);
+      sourceEditor.setSelection(
+        this._state.selection.start,
+        this._state.selection.end
+      );
 
       if (this.highlighter && this.walker) {
         sourceEditor.container.addEventListener("mousemove", this._onMouseMove);
@@ -496,8 +519,10 @@ StyleSheetEditor.prototype = {
       this._window.clearTimeout(this._updateTask);
     }
 
-    this._updateTask = this._window.setTimeout(this._updateStyleSheet,
-                                               UPDATE_STYLESHEET_DELAY);
+    this._updateTask = this._window.setTimeout(
+      this._updateStyleSheet,
+      UPDATE_STYLESHEET_DELAY
+    );
   },
 
   /**
@@ -525,7 +550,8 @@ StyleSheetEditor.prototype = {
     }
 
     this._isUpdating = true;
-    this.styleSheet.update(this._state.text, this.transitionsEnabled)
+    this.styleSheet
+      .update(this._state.text, this.transitionsEnabled)
       .catch(console.error);
   },
 
@@ -554,14 +580,15 @@ StyleSheetEditor.prototype = {
    * @param {Number} y
    */
   async _highlightSelectorAt(x, y) {
-    const pos = this.sourceEditor.getPositionFromCoords({left: x, top: y});
+    const pos = this.sourceEditor.getPositionFromCoords({ left: x, top: y });
     const info = this.sourceEditor.getInfoAt(pos);
     if (!info || info.state !== "selector") {
       return;
     }
 
-    const node =
-        await this.walker.getStyleSheetOwnerNode(this.styleSheet.actorID);
+    const node = await this.walker.getStyleSheetOwnerNode(
+      this.styleSheet.actorID
+    );
     await this.highlighter.show(node, {
       selector: info.selector,
       hideInfoBar: true,
@@ -589,7 +616,7 @@ StyleSheetEditor.prototype = {
    * @see savedFile
    */
   saveToFile: function(file, callback) {
-    const onFile = (returnFile) => {
+    const onFile = returnFile => {
       if (!returnFile) {
         if (callback) {
           callback(null);
@@ -602,12 +629,13 @@ StyleSheetEditor.prototype = {
       }
 
       const ostream = FileUtils.openSafeFileOutputStream(returnFile);
-      const converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
-                        .createInstance(Ci.nsIScriptableUnicodeConverter);
+      const converter = Cc[
+        "@mozilla.org/intl/scriptableunicodeconverter"
+      ].createInstance(Ci.nsIScriptableUnicodeConverter);
       converter.charset = "UTF-8";
       const istream = converter.convertToInputStream(this._state.text);
 
-      NetUtil.asyncCopy(istream, ostream, (status) => {
+      NetUtil.asyncCopy(istream, ostream, status => {
         if (!Components.isSuccessCode(status)) {
           if (callback) {
             callback(null);
@@ -629,8 +657,13 @@ StyleSheetEditor.prototype = {
     if (this._friendlyName) {
       defaultName = OS.Path.basename(this._friendlyName);
     }
-    showFilePicker(file || this._styleSheetFilePath, true, this._window,
-                   onFile, defaultName);
+    showFilePicker(
+      file || this._styleSheetFilePath,
+      true,
+      this._window,
+      onFile,
+      defaultName
+    );
   },
 
   /**
@@ -651,8 +684,10 @@ StyleSheetEditor.prototype = {
     this._window.clearTimeout(this._timeout);
 
     if (this.linkedCSSFile && !this.linkedCSSFileError) {
-      this._timeout = this._window.setTimeout(this.checkLinkedFileForChanges,
-                                              CHECK_LINKED_SHEET_DELAY);
+      this._timeout = this._window.setTimeout(
+        this.checkLinkedFileForChanges,
+        CHECK_LINKED_SHEET_DELAY
+      );
     }
   },
 
@@ -661,7 +696,7 @@ StyleSheetEditor.prototype = {
    * if so, update the live style sheet.
    */
   checkLinkedFileForChanges: function() {
-    OS.File.stat(this.linkedCSSFile).then((info) => {
+    OS.File.stat(this.linkedCSSFile).then(info => {
       const lastChange = info.lastModificationDate.getTime();
 
       if (this._fileModDate && lastChange != this._fileModDate) {
@@ -678,8 +713,10 @@ StyleSheetEditor.prototype = {
       }
 
       // try again in a bit
-      this._timeout = this._window.setTimeout(this.checkLinkedFileForChanges,
-                                              CHECK_LINKED_SHEET_DELAY);
+      this._timeout = this._window.setTimeout(
+        this.checkLinkedFileForChanges,
+        CHECK_LINKED_SHEET_DELAY
+      );
     }, this.markLinkedFileBroken);
   },
 
@@ -694,8 +731,11 @@ StyleSheetEditor.prototype = {
     this.linkedCSSFileError = error || true;
     this.emit("linked-css-file-error");
 
-    error += " querying " + this.linkedCSSFile +
-             " original source location: " + this.savedFile.path;
+    error +=
+      " querying " +
+      this.linkedCSSFile +
+      " original source location: " +
+      this.savedFile.path;
     console.error(error);
   },
 
@@ -704,7 +744,7 @@ StyleSheetEditor.prototype = {
    * file from disk and live update the stylesheet object with the contents.
    */
   updateLinkedStyleSheet: function() {
-    OS.File.read(this.linkedCSSFile).then((array) => {
+    OS.File.read(this.linkedCSSFile).then(array => {
       const decoder = new TextDecoder();
       const text = decoder.decode(array);
 
@@ -717,11 +757,11 @@ StyleSheetEditor.prototype = {
   },
 
   /**
-    * Retrieve custom key bindings objects as expected by Editor.
-    * Editor action names are not displayed to the user.
-    *
-    * @return {array} key binding objects for the source editor
-    */
+   * Retrieve custom key bindings objects as expected by Editor.
+   * Editor action names are not displayed to the user.
+   *
+   * @return {array} key binding objects for the source editor
+   */
   _getKeyBindings: function() {
     const bindings = {};
     const keybind = Editor.accel(getString("saveStyleSheet.commandkey"));
@@ -748,8 +788,10 @@ StyleSheetEditor.prototype = {
       this._sourceEditor.off("saveRequested", this.saveToFile);
       this._sourceEditor.off("change", this.updateStyleSheet);
       if (this.highlighter && this.walker && this._sourceEditor.container) {
-        this._sourceEditor.container.removeEventListener("mousemove",
-          this._onMouseMove);
+        this._sourceEditor.container.removeEventListener(
+          "mousemove",
+          this._onMouseMove
+        );
       }
       this._sourceEditor.destroy();
     }

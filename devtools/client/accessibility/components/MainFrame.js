@@ -6,8 +6,14 @@
 /* global gToolbox */
 
 // React & Redux
-const { Component, createFactory } = require("devtools/client/shared/vendor/react");
-const { span, div } = require("devtools/client/shared/vendor/react-dom-factories");
+const {
+  Component,
+  createFactory,
+} = require("devtools/client/shared/vendor/react");
+const {
+  span,
+  div,
+} = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 const { reset } = require("../actions/ui");
@@ -21,7 +27,9 @@ const AuditProgressOverlay = createFactory(require("./AuditProgressOverlay"));
 const Description = createFactory(require("./Description").Description);
 const RightSidebar = createFactory(require("./RightSidebar"));
 const Toolbar = createFactory(require("./Toolbar"));
-const SplitBox = createFactory(require("devtools/client/shared/components/splitter/SplitBox"));
+const SplitBox = createFactory(
+  require("devtools/client/shared/components/splitter/SplitBox")
+);
 
 /**
  * Renders basic layout of the Accessibility panel. The Accessibility panel
@@ -97,30 +105,35 @@ class MainFrame extends Component {
       return Description({ accessibility });
     }
 
-    return (
-      div({ className: "mainFrame", role: "presentation" },
-        Toolbar({ accessibility, walker }),
-        auditing && AuditProgressOverlay(),
-        span({
+    return div(
+      { className: "mainFrame", role: "presentation" },
+      Toolbar({ accessibility, walker }),
+      auditing && AuditProgressOverlay(),
+      span(
+        {
           "aria-hidden": !!auditing,
           role: "presentation",
           style: { display: "contents" },
         },
-          SplitBox({
-            ref: "splitBox",
-            initialSize: SIDEBAR_WIDTH,
-            minSize: "10px",
-            maxSize: "80%",
-            splitterSize: 1,
-            endPanelControl: true,
-            startPanel: div({
+        SplitBox({
+          ref: "splitBox",
+          initialSize: SIDEBAR_WIDTH,
+          minSize: "10px",
+          maxSize: "80%",
+          splitterSize: 1,
+          endPanelControl: true,
+          startPanel: div(
+            {
               className: "main-panel",
               role: "presentation",
-            }, AccessibilityTree({ walker })),
-            endPanel: RightSidebar({ walker }),
-            vert: this.useLandscapeMode,
-          })),
-      ));
+            },
+            AccessibilityTree({ walker })
+          ),
+          endPanel: RightSidebar({ walker }),
+          vert: this.useLandscapeMode,
+        })
+      )
+    );
   }
 }
 

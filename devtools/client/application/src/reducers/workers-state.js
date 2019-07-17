@@ -4,9 +4,7 @@
 
 "use strict";
 
-const {
-  UPDATE_WORKERS,
-} = require("../constants");
+const { UPDATE_WORKERS } = require("../constants");
 
 function WorkersState() {
   return {

@@ -29,7 +29,7 @@ const TEST_URI = `
 
 add_task(async function() {
   await addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  const {inspector, view} = await openRuleView();
+  const { inspector, view } = await openRuleView();
   await selectNode("div", inspector);
 
   await assertPseudoPanelClosed(view);
@@ -73,14 +73,22 @@ add_task(async function() {
 
   info("Select a null element");
   await view.selectElement(null);
-  ok(!view.hoverCheckbox.checked && view.hoverCheckbox.disabled,
-    ":hover checkbox is unchecked and disabled");
-  ok(!view.activeCheckbox.checked && view.activeCheckbox.disabled,
-    ":active checkbox is unchecked and disabled");
-  ok(!view.focusCheckbox.checked && view.focusCheckbox.disabled,
-    ":focus checkbox is unchecked and disabled");
-  ok(!view.focusWithinCheckbox.checked && view.focusWithinCheckbox.disabled,
-    ":focus-within checkbox is unchecked and disabled");
+  ok(
+    !view.hoverCheckbox.checked && view.hoverCheckbox.disabled,
+    ":hover checkbox is unchecked and disabled"
+  );
+  ok(
+    !view.activeCheckbox.checked && view.activeCheckbox.disabled,
+    ":active checkbox is unchecked and disabled"
+  );
+  ok(
+    !view.focusCheckbox.checked && view.focusCheckbox.disabled,
+    ":focus checkbox is unchecked and disabled"
+  );
+  ok(
+    !view.focusWithinCheckbox.checked && view.focusWithinCheckbox.disabled,
+    ":focus-within checkbox is unchecked and disabled"
+  );
 
   info("Toggle the pseudo class panel close");
   view.pseudoClassToggle.click();
@@ -94,21 +102,32 @@ async function togglePseudoClass(inspector, pseudoClassOption) {
   await onRefresh;
 }
 
-function assertPseudoAdded(inspector, view, pseudoClass, numRules,
-    childIndex) {
+function assertPseudoAdded(inspector, view, pseudoClass, numRules, childIndex) {
   info("Check that the ruleview contains the pseudo-class rule");
-  is(view.element.children.length, numRules,
-    "Should have " + numRules + " rules.");
-  is(getRuleViewRuleEditor(view, childIndex).rule.selectorText,
-    "div" + pseudoClass, "rule view is showing " + pseudoClass + " rule");
+  is(
+    view.element.children.length,
+    numRules,
+    "Should have " + numRules + " rules."
+  );
+  is(
+    getRuleViewRuleEditor(view, childIndex).rule.selectorText,
+    "div" + pseudoClass,
+    "rule view is showing " + pseudoClass + " rule"
+  );
 }
 
 function assertPseudoRemoved(inspector, view, numRules) {
   info("Check that the ruleview no longer contains the pseudo-class rule");
-  is(view.element.children.length, numRules,
-    "Should have " + numRules + " rules.");
-  is(getRuleViewRuleEditor(view, 1).rule.selectorText, "div",
-    "Second rule is div");
+  is(
+    view.element.children.length,
+    numRules,
+    "Should have " + numRules + " rules."
+  );
+  is(
+    getRuleViewRuleEditor(view, 1).rule.selectorText,
+    "div",
+    "Second rule is div"
+  );
 }
 
 function assertPseudoPanelOpened(view) {
@@ -118,16 +137,31 @@ function assertPseudoPanelOpened(view) {
   ok(!view.hoverCheckbox.disabled, ":hover checkbox is not disabled");
   ok(!view.activeCheckbox.disabled, ":active checkbox is not disabled");
   ok(!view.focusCheckbox.disabled, ":focus checkbox is not disabled");
-  ok(!view.focusWithinCheckbox.disabled, ":focus-within checkbox is not disabled");
+  ok(
+    !view.focusWithinCheckbox.disabled,
+    ":focus-within checkbox is not disabled"
+  );
 
-  is(view.hoverCheckbox.getAttribute("tabindex"), "0",
-    ":hover checkbox has a tabindex of 0");
-  is(view.activeCheckbox.getAttribute("tabindex"), "0",
-    ":active checkbox has a tabindex of 0");
-  is(view.focusCheckbox.getAttribute("tabindex"), "0",
-    ":focus checkbox has a tabindex of 0");
-  is(view.focusWithinCheckbox.getAttribute("tabindex"), "0",
-    ":focus-within checkbox has a tabindex of 0");
+  is(
+    view.hoverCheckbox.getAttribute("tabindex"),
+    "0",
+    ":hover checkbox has a tabindex of 0"
+  );
+  is(
+    view.activeCheckbox.getAttribute("tabindex"),
+    "0",
+    ":active checkbox has a tabindex of 0"
+  );
+  is(
+    view.focusCheckbox.getAttribute("tabindex"),
+    "0",
+    ":focus checkbox has a tabindex of 0"
+  );
+  is(
+    view.focusWithinCheckbox.getAttribute("tabindex"),
+    "0",
+    ":focus-within checkbox has a tabindex of 0"
+  );
 }
 
 function assertPseudoPanelClosed(view) {
@@ -135,12 +169,24 @@ function assertPseudoPanelClosed(view) {
 
   ok(view.pseudoClassPanel.hidden, "Pseudo Class Panel Hidden");
 
-  is(view.hoverCheckbox.getAttribute("tabindex"), "-1",
-    ":hover checkbox has a tabindex of -1");
-  is(view.activeCheckbox.getAttribute("tabindex"), "-1",
-    ":active checkbox has a tabindex of -1");
-  is(view.focusCheckbox.getAttribute("tabindex"), "-1",
-    ":focus checkbox has a tabindex of -1");
-  is(view.focusWithinCheckbox.getAttribute("tabindex"), "-1",
-    ":focus-within checkbox has a tabindex of -1");
+  is(
+    view.hoverCheckbox.getAttribute("tabindex"),
+    "-1",
+    ":hover checkbox has a tabindex of -1"
+  );
+  is(
+    view.activeCheckbox.getAttribute("tabindex"),
+    "-1",
+    ":active checkbox has a tabindex of -1"
+  );
+  is(
+    view.focusCheckbox.getAttribute("tabindex"),
+    "-1",
+    ":focus checkbox has a tabindex of -1"
+  );
+  is(
+    view.focusWithinCheckbox.getAttribute("tabindex"),
+    "-1",
+    ":focus-within checkbox has a tabindex of -1"
+  );
 }

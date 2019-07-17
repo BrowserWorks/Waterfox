@@ -10,7 +10,11 @@ const FirefoxDataProvider = require("./firefox-data-provider");
 const { getDisplayedTimingMarker } = require("../selectors/index");
 
 // Network throttling
-loader.lazyRequireGetter(this, "throttlingProfiles", "devtools/client/shared/components/throttling/profiles");
+loader.lazyRequireGetter(
+  this,
+  "throttlingProfiles",
+  "devtools/client/shared/components/throttling/profiles"
+);
 
 /**
  * Connector to Firefox backend.
@@ -116,10 +120,11 @@ class FirefoxConnector {
 
   async addListeners() {
     this.tabTarget.on("close", this.disconnect);
-    this.webConsoleClient.on("networkEvent",
-      this.dataProvider.onNetworkEvent);
-    this.webConsoleClient.on("networkEventUpdate",
-      this.dataProvider.onNetworkEventUpdate);
+    this.webConsoleClient.on("networkEvent", this.dataProvider.onNetworkEvent);
+    this.webConsoleClient.on(
+      "networkEventUpdate",
+      this.dataProvider.onNetworkEventUpdate
+    );
     this.webConsoleClient.on("documentEvent", this.onDocEvent);
 
     // The console actor supports listening to document events like
@@ -132,9 +137,14 @@ class FirefoxConnector {
       this.tabTarget.off("close", this.disconnect);
     }
     if (this.webConsoleClient) {
-      this.webConsoleClient.off("networkEvent", this.dataProvider.onNetworkEvent);
-      this.webConsoleClient.off("networkEventUpdate",
-        this.dataProvider.onNetworkEventUpdate);
+      this.webConsoleClient.off(
+        "networkEvent",
+        this.dataProvider.onNetworkEvent
+      );
+      this.webConsoleClient.off(
+        "networkEventUpdate",
+        this.dataProvider.onNetworkEventUpdate
+      );
       this.webConsoleClient.off("docEvent", this.onDocEvent);
     }
   }
@@ -277,7 +287,7 @@ class FirefoxConnector {
 
     // Waits for a series of "navigation start" and "navigation stop" events.
     const waitForNavigation = () => {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         this.tabTarget.once("will-navigate", () => {
           this.tabTarget.once("navigate", () => {
             resolve();
@@ -292,7 +302,7 @@ class FirefoxConnector {
     };
 
     // Reconfigures the tab and waits for the target to finish navigating.
-    const reconfigureTabAndWaitForNavigation = (options) => {
+    const reconfigureTabAndWaitForNavigation = options => {
       options.performReload = true;
       const navigationFinished = waitForNavigation();
       return reconfigureTab(options).then(() => navigationFinished);

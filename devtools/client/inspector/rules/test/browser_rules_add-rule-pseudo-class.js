@@ -24,7 +24,7 @@ const TEST_DATA = [
 
 add_task(async function() {
   await addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  const {inspector, view} = await openRuleView();
+  const { inspector, view } = await openRuleView();
   await selectNode("#element", inspector);
 
   for (const data of TEST_DATA) {
@@ -69,10 +69,12 @@ async function setPseudoLocks(inspector, view, pseudoClasses) {
 }
 
 async function resetPseudoLocks(inspector, view) {
-  if (!view.hoverCheckbox.checked &&
-      !view.activeCheckbox.checked &&
-      !view.focusCheckbox.checked &&
-      !view.focusWithinCheckbox.checked) {
+  if (
+    !view.hoverCheckbox.checked &&
+    !view.activeCheckbox.checked &&
+    !view.focusCheckbox.checked &&
+    !view.focusWithinCheckbox.checked
+  ) {
     return;
   }
   if (view.hoverCheckbox.checked) {

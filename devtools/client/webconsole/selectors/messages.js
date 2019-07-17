@@ -5,8 +5,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-loader.lazyRequireGetter(this, "getWarningGroupType", "devtools/client/webconsole/utils/messages", true);
-loader.lazyRequireGetter(this, "getParentWarningGroupMessageId", "devtools/client/webconsole/utils/messages", true);
+loader.lazyRequireGetter(
+  this,
+  "getWarningGroupType",
+  "devtools/client/webconsole/utils/messages",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "getParentWarningGroupMessageId",
+  "devtools/client/webconsole/utils/messages",
+  true
+);
 
 function getAllMessagesById(state) {
   return state.messages.messagesById;
@@ -68,7 +78,9 @@ function isMessageInWarningGroup(state, message) {
     return false;
   }
 
-  return getVisibleMessages(state).includes(getParentWarningGroupMessageId(message));
+  return getVisibleMessages(state).includes(
+    getParentWarningGroupMessageId(message)
+  );
 }
 
 module.exports = {

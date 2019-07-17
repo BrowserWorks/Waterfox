@@ -55,7 +55,7 @@ function parseFilters(query) {
     if (colonIndex === -1) {
       const isNegative = part.startsWith("-");
       // Stores list of HTTP codes that starts with value of lastToken
-      const filteredStatusCodes = SUPPORTED_HTTP_CODES.filter((item) => {
+      const filteredStatusCodes = SUPPORTED_HTTP_CODES.filter(item => {
         item = isNegative ? item.substr(1) : item;
         return item.toLowerCase().startsWith(part.toLowerCase());
       });
@@ -142,8 +142,10 @@ function isFlagFilterMatch(item, { type, value, negative }) {
       break;
     case "protocol":
       const protocol = item.httpVersion;
-      match = typeof protocol === "string" ?
-                protocol.toLowerCase().includes(value) : false;
+      match =
+        typeof protocol === "string"
+          ? protocol.toLowerCase().includes(value)
+          : false;
       break;
     case "domain":
       match = item.urlDetails.host.toLowerCase().includes(value);
@@ -162,8 +164,10 @@ function isFlagFilterMatch(item, { type, value, negative }) {
       break;
     case "cause":
       const causeType = item.cause.type;
-      match = typeof causeType === "string" ?
-                causeType.toLowerCase().includes(value) : false;
+      match =
+        typeof causeType === "string"
+          ? causeType.toLowerCase().includes(value)
+          : false;
       break;
     case "transferred":
       if (item.fromCache) {
@@ -189,8 +193,7 @@ function isFlagFilterMatch(item, { type, value, negative }) {
       match = item.mimeType.includes(value);
       break;
     case "is":
-      if (value === "from-cache" ||
-          value === "cached") {
+      if (value === "from-cache" || value === "cached") {
         match = item.fromCache || item.status === "304";
       } else if (value === "running") {
         match = !item.status;
@@ -220,12 +223,14 @@ function isFlagFilterMatch(item, { type, value, negative }) {
       }
       break;
     case "set-cookie-name":
-      match = responseCookies.findIndex(c =>
-        c.name.toLowerCase().includes(value)) > -1;
+      match =
+        responseCookies.findIndex(c => c.name.toLowerCase().includes(value)) >
+        -1;
       break;
     case "set-cookie-value":
-      match = responseCookies.findIndex(c =>
-        c.value.toLowerCase().includes(value)) > -1;
+      match =
+        responseCookies.findIndex(c => c.value.toLowerCase().includes(value)) >
+        -1;
       break;
   }
   if (negative) {
@@ -235,7 +240,7 @@ function isFlagFilterMatch(item, { type, value, negative }) {
 }
 
 function isSizeMatch(value, size) {
-  return value >= (size - size / 10) && value <= (size + size / 10);
+  return value >= size - size / 10 && value <= size + size / 10;
 }
 
 function isTextFilterMatch({ url }, text) {

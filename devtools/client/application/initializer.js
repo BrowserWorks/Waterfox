@@ -4,15 +4,22 @@
 
 "use strict";
 
-const { BrowserLoader } = ChromeUtils.import("resource://devtools/client/shared/browser-loader.js");
+const { BrowserLoader } = ChromeUtils.import(
+  "resource://devtools/client/shared/browser-loader.js"
+);
 const require = BrowserLoader({
   baseURI: "resource://devtools/client/application/",
   window,
 }).require;
 
 const { createFactory } = require("devtools/client/shared/vendor/react");
-const { render, unmountComponentAtNode } = require("devtools/client/shared/vendor/react-dom");
-const Provider = createFactory(require("devtools/client/shared/vendor/react-redux").Provider);
+const {
+  render,
+  unmountComponentAtNode,
+} = require("devtools/client/shared/vendor/react-dom");
+const Provider = createFactory(
+  require("devtools/client/shared/vendor/react-redux").Provider
+);
 const { bindActionCreators } = require("devtools/client/shared/vendor/redux");
 const { L10nRegistry } = require("resource://gre/modules/L10nRegistry.jsm");
 const Services = require("Services");
@@ -45,7 +52,10 @@ window.Application = {
       },
     };
     this.toolbox.target.on("workerListChanged", this.updateWorkers);
-    this.client.mainRoot.on("serviceWorkerRegistrationListChanged", this.updateWorkers);
+    this.client.mainRoot.on(
+      "serviceWorkerRegistrationListChanged",
+      this.updateWorkers
+    );
     this.client.mainRoot.on("processListChanged", this.updateWorkers);
     this.client.mainRoot.onFront("serviceWorkerRegistration", front => {
       this.serviceWorkerRegistrationFronts.push(front);
@@ -70,8 +80,9 @@ window.Application = {
    */
   async createFluentBundles() {
     const locales = Services.locale.appLocalesAsBCP47;
-    const generator =
-      L10nRegistry.generateBundles(locales, ["devtools/application.ftl"]);
+    const generator = L10nRegistry.generateBundles(locales, [
+      "devtools/application.ftl",
+    ]);
 
     // Return value of generateBundles is a generator and should be converted to
     // a sync iterable before using it with React.
@@ -102,8 +113,10 @@ window.Application = {
 
   destroy() {
     this.toolbox.target.off("workerListChanged", this.updateWorkers);
-    this.client.mainRoot.off("serviceWorkerRegistrationListChanged",
-      this.updateWorkers);
+    this.client.mainRoot.off(
+      "serviceWorkerRegistrationListChanged",
+      this.updateWorkers
+    );
     this.client.mainRoot.off("processListChanged", this.updateWorkers);
     this.removeRegistrationFrontListeners();
     this.toolbox.target.off("navigate", this.updateDomain);

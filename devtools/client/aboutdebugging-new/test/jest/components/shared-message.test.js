@@ -8,12 +8,12 @@
  */
 
 /**
-* ============================================================
-* PLEASE NOTE:
-* This test is failing due to https://bugzilla.mozilla.org/show_bug.cgi?id=1546370
-* The fix described in 1546370 is depending on try supporting a Node version >=10
-* ============================================================
-*/
+ * ============================================================
+ * PLEASE NOTE:
+ * This test is failing due to https://bugzilla.mozilla.org/show_bug.cgi?id=1546370
+ * The fix described in 1546370 is depending on try supporting a Node version >=10
+ * ============================================================
+ */
 
 describe("Dummy test", () => {
   it("runs", () => {

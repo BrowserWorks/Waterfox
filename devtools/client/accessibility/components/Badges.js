@@ -4,16 +4,22 @@
 "use strict";
 
 // React
-const { Component, createFactory } = require("devtools/client/shared/vendor/react");
+const {
+  Component,
+  createFactory,
+} = require("devtools/client/shared/vendor/react");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { span } = require("devtools/client/shared/vendor/react-dom-factories");
 
 const { L10N } = require("../utils/l10n");
 
-const { accessibility: { AUDIT_TYPE } } = require("devtools/shared/constants");
+const {
+  accessibility: { AUDIT_TYPE },
+} = require("devtools/shared/constants");
 
-loader.lazyGetter(this, "ContrastBadge",
-  () => createFactory(require("./ContrastBadge")));
+loader.lazyGetter(this, "ContrastBadge", () =>
+  createFactory(require("./ContrastBadge"))
+);
 
 function getComponentForAuditType(type) {
   const auditTypeToComponentMap = {
@@ -48,13 +54,13 @@ class Badges extends Component {
       return null;
     }
 
-    return (
-      span({
+    return span(
+      {
         className: "badges",
         role: "group",
         "aria-label": L10N.getStr("accessibility.badges"),
       },
-        items)
+      items
     );
   }
 }

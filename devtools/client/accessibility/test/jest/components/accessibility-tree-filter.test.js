@@ -6,14 +6,19 @@
 const { mount } = require("enzyme");
 
 const { createFactory } = require("devtools/client/shared/vendor/react");
-const Provider = createFactory(require("devtools/client/shared/vendor/react-redux").Provider);
+const Provider = createFactory(
+  require("devtools/client/shared/vendor/react-redux").Provider
+);
 
-const { ToggleButton } = require("devtools/client/accessibility/components/Button");
-const ConnectedAccessibilityTreeFilterClass =
-  require("devtools/client/accessibility/components/AccessibilityTreeFilter");
+const {
+  ToggleButton,
+} = require("devtools/client/accessibility/components/Button");
+const ConnectedAccessibilityTreeFilterClass = require("devtools/client/accessibility/components/AccessibilityTreeFilter");
 const AccessibilityTreeFilterClass =
   ConnectedAccessibilityTreeFilterClass.WrappedComponent;
-const AccessibilityTreeFilter = createFactory(ConnectedAccessibilityTreeFilterClass);
+const AccessibilityTreeFilter = createFactory(
+  ConnectedAccessibilityTreeFilterClass
+);
 const {
   setupStore,
 } = require("devtools/client/accessibility/test/jest/helpers");
@@ -23,7 +28,7 @@ describe("AccessibilityTreeFilter component:", () => {
   it("audit filter not filtered", () => {
     const store = setupStore();
 
-    const wrapper = mount(Provider({store}, AccessibilityTreeFilter()));
+    const wrapper = mount(Provider({ store }, AccessibilityTreeFilter()));
     expect(wrapper.html()).toMatchSnapshot();
 
     const filters = wrapper.find(AccessibilityTreeFilterClass);
@@ -47,10 +52,10 @@ describe("AccessibilityTreeFilter component:", () => {
 
   it("audit filter filtered", () => {
     const store = setupStore({
-      preloadedState: { audit: { filters: { [FILTERS.CONTRAST]: true }}},
+      preloadedState: { audit: { filters: { [FILTERS.CONTRAST]: true } } },
     });
 
-    const wrapper = mount(Provider({store}, AccessibilityTreeFilter()));
+    const wrapper = mount(Provider({ store }, AccessibilityTreeFilter()));
     expect(wrapper.html()).toMatchSnapshot();
 
     const button = wrapper.find("button");
@@ -60,15 +65,17 @@ describe("AccessibilityTreeFilter component:", () => {
 
   it("audit filter not filtered auditing", () => {
     const store = setupStore({
-      preloadedState: { audit: {
-        filters: {
-          [FILTERS.CONTRAST]: false,
+      preloadedState: {
+        audit: {
+          filters: {
+            [FILTERS.CONTRAST]: false,
+          },
+          auditing: FILTERS.CONTRAST,
         },
-        auditing: FILTERS.CONTRAST,
-      }},
+      },
     });
 
-    const wrapper = mount(Provider({store}, AccessibilityTreeFilter()));
+    const wrapper = mount(Provider({ store }, AccessibilityTreeFilter()));
     expect(wrapper.html()).toMatchSnapshot();
 
     const button = wrapper.find("button");
@@ -80,15 +87,17 @@ describe("AccessibilityTreeFilter component:", () => {
 
   it("audit filter filtered auditing", () => {
     const store = setupStore({
-      preloadedState: { audit: {
-        filters: {
-          [FILTERS.CONTRAST]: true,
+      preloadedState: {
+        audit: {
+          filters: {
+            [FILTERS.CONTRAST]: true,
+          },
+          auditing: FILTERS.CONTRAST,
         },
-        auditing: FILTERS.CONTRAST,
-      }},
+      },
     });
 
-    const wrapper = mount(Provider({store}, AccessibilityTreeFilter()));
+    const wrapper = mount(Provider({ store }, AccessibilityTreeFilter()));
     expect(wrapper.html()).toMatchSnapshot();
 
     const button = wrapper.find("button");
@@ -100,18 +109,26 @@ describe("AccessibilityTreeFilter component:", () => {
 
   it("toggle filter", () => {
     const store = setupStore();
-    const wrapper = mount(Provider({store}, AccessibilityTreeFilter()));
+    const wrapper = mount(Provider({ store }, AccessibilityTreeFilter()));
     expect(wrapper.html()).toMatchSnapshot();
 
-    const filterInstance = wrapper.find(AccessibilityTreeFilterClass).instance();
+    const filterInstance = wrapper
+      .find(AccessibilityTreeFilterClass)
+      .instance();
     filterInstance.toggleFilter = jest.fn();
-    wrapper.find("button.toggle-button.badge").simulate("keydown", { key: " " });
+    wrapper
+      .find("button.toggle-button.badge")
+      .simulate("keydown", { key: " " });
     expect(filterInstance.toggleFilter.mock.calls.length).toBe(1);
 
-    wrapper.find("button.toggle-button.badge").simulate("keydown", { key: "Enter" });
+    wrapper
+      .find("button.toggle-button.badge")
+      .simulate("keydown", { key: "Enter" });
     expect(filterInstance.toggleFilter.mock.calls.length).toBe(2);
 
-    wrapper.find("button.toggle-button.badge").simulate("click", { clientX: 1 });
+    wrapper
+      .find("button.toggle-button.badge")
+      .simulate("click", { clientX: 1 });
     expect(filterInstance.toggleFilter.mock.calls.length).toBe(3);
   });
 });
