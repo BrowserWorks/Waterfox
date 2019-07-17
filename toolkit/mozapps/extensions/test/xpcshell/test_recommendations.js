@@ -3,8 +3,9 @@ http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
-const {XPIInstall} =
-  ChromeUtils.import("resource://gre/modules/addons/XPIInstall.jsm");
+const { XPIInstall } = ChromeUtils.import(
+  "resource://gre/modules/addons/XPIInstall.jsm"
+);
 
 AddonTestUtils.init(this);
 AddonTestUtils.overrideCertDB();
@@ -21,7 +22,7 @@ function createFileWithRecommendations(id, recommendation) {
   }
   return AddonTestUtils.createTempWebExtensionFile({
     manifest: {
-      applications: {gecko: {id}},
+      applications: { gecko: { id } },
     },
     files,
   });
@@ -60,7 +61,7 @@ add_task(async function test_valid_recommendation_file() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(addon.isRecommended, "The add-on is recommended");
@@ -78,7 +79,7 @@ add_task(async function test_unsigned() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -93,7 +94,7 @@ add_task(async function test_temporary() {
   let xpi = createFileWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
   let addon = await XPIInstall.installTemporaryAddon(xpi);
 
@@ -106,14 +107,14 @@ add_task(async function test_builtin() {
   const id = "builtin@test.web.extension";
   let extension = await installBuiltinExtension({
     manifest: {
-      applications: {gecko: {id}},
+      applications: { gecko: { id } },
     },
     background: `browser.test.sendMessage("started");`,
     files: {
       [RECOMMENDATION_FILE_NAME]: {
         addon_id: id,
         states: ["recommended"],
-        validity: {not_before, not_after},
+        validity: { not_before, not_after },
       },
     },
   });
@@ -128,18 +129,18 @@ add_task(async function test_theme() {
   const id = "theme@test.web.extension";
   let xpi = AddonTestUtils.createTempWebExtensionFile({
     manifest: {
-      applications: {gecko: {id}},
+      applications: { gecko: { id } },
       theme: {},
     },
     files: {
       [RECOMMENDATION_FILE_NAME]: {
         addon_id: id,
         states: ["recommended"],
-        validity: {not_before, not_after},
+        validity: { not_before, not_after },
       },
     },
   });
-  let {addon} = await AddonTestUtils.promiseInstallFile(xpi);
+  let { addon } = await AddonTestUtils.promiseInstallFile(xpi);
 
   ok(!addon.isRecommended, "The add-on is not recommended");
 
@@ -151,7 +152,7 @@ add_task(async function test_not_recommended() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["something"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -163,7 +164,7 @@ add_task(async function test_id_missing() {
   const id = "no-id@test.web.extension";
   let addon = await installAddonWithRecommendations(id, {
     states: ["recommended"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -176,7 +177,7 @@ add_task(async function test_expired() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before, not_after: not_before},
+    validity: { not_before, not_after: not_before },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -189,7 +190,7 @@ add_task(async function test_not_valid_yet() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before: not_after, not_after},
+    validity: { not_before: not_after, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -201,7 +202,7 @@ add_task(async function test_states_missing() {
   const id = "states-missing@test.web.extension";
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -226,7 +227,7 @@ add_task(async function test_not_before_missing() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_after},
+    validity: { not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -238,8 +239,8 @@ add_task(async function test_bad_states() {
   const id = "bad-states@test.web.extension";
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
-    states: {recommended: true},
-    validity: {not_before, not_after},
+    states: { recommended: true },
+    validity: { not_before, not_after },
   });
 
   ok(!addon.isRecommended, "The add-on is not recommended");
@@ -252,7 +253,7 @@ add_task(async function test_recommendation_persist_restart() {
   let addon = await installAddonWithRecommendations(id, {
     addon_id: id,
     states: ["recommended"],
-    validity: {not_before, not_after},
+    validity: { not_before, not_after },
   });
 
   ok(addon.isRecommended, "The add-on is recommended");

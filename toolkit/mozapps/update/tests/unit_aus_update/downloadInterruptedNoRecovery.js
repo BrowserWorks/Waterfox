@@ -16,9 +16,12 @@ async function run_test() {
   let patches = getRemotePatchString({});
   let updates = getRemoteUpdateString({}, patches);
   gResponseBody = getRemoteUpdatesXMLString(updates);
-  await waitForUpdateCheck(true, {updateCount: 1}).then(async (aArgs) => {
-    await waitForUpdateDownload(aArgs.updates, aArgs.updateCount,
-                                Cr.NS_ERROR_NET_RESET);
+  await waitForUpdateCheck(true, { updateCount: 1 }).then(async aArgs => {
+    await waitForUpdateDownload(
+      aArgs.updates,
+      aArgs.updateCount,
+      Cr.NS_ERROR_NET_RESET
+    );
   });
   stop_httpserver(doTestFinish);
 }

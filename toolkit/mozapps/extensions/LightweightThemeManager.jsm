@@ -6,17 +6,25 @@
 
 var EXPORTED_SYMBOLS = ["LightweightThemeManager"];
 
-const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
 XPCOMUtils.defineLazyGetter(this, "hiddenWindow", () => {
-  const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+  const { Services } = ChromeUtils.import(
+    "resource://gre/modules/Services.jsm"
+  );
 
   let browser = Services.appShell.createWindowlessBrowser(true);
   let principal = Services.scriptSecurityManager.getSystemPrincipal();
   browser.docShell.createAboutBlankContentViewer(principal);
 
-  Services.obs.addObserver(() => { browser.close(); }, "xpcom-will-shutdown");
+  Services.obs.addObserver(() => {
+    browser.close();
+  }, "xpcom-will-shutdown");
 
   return browser.document.ownerGlobal;
 });
@@ -56,6 +64,6 @@ var LightweightThemeManager = {
   },
 
   get themeData() {
-    return _fallbackThemeData || {theme: null};
+    return _fallbackThemeData || { theme: null };
   },
 };
