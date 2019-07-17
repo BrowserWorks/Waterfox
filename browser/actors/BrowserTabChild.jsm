@@ -6,39 +6,44 @@
 
 var EXPORTED_SYMBOLS = ["BrowserTabChild"];
 
-const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
+const { ActorChild } = ChromeUtils.import(
+  "resource://gre/modules/ActorChild.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "E10SUtils",
-                               "resource://gre/modules/E10SUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
 
 class BrowserTabChild extends ActorChild {
   handleEvent(event) {
     switch (event.type) {
-    case "DOMWindowCreated":
-      let loadContext = this.mm.docShell.QueryInterface(Ci.nsILoadContext);
-      let userContextId = loadContext.originAttributes.userContextId;
+      case "DOMWindowCreated":
+        let loadContext = this.mm.docShell.QueryInterface(Ci.nsILoadContext);
+        let userContextId = loadContext.originAttributes.userContextId;
 
-      this.mm.sendAsyncMessage("Browser:WindowCreated", { userContextId });
-      break;
+        this.mm.sendAsyncMessage("Browser:WindowCreated", { userContextId });
+        break;
 
-    case "MozAfterPaint":
-      this.mm.sendAsyncMessage("Browser:FirstPaint");
-      break;
+      case "MozAfterPaint":
+        this.mm.sendAsyncMessage("Browser:FirstPaint");
+        break;
 
-    case "MozDOMPointerLock:Entered":
-      this.mm.sendAsyncMessage("PointerLock:Entered", {
-        originNoSuffix: event.target.nodePrincipal.originNoSuffix,
-      });
-      break;
+      case "MozDOMPointerLock:Entered":
+        this.mm.sendAsyncMessage("PointerLock:Entered", {
+          originNoSuffix: event.target.nodePrincipal.originNoSuffix,
+        });
+        break;
 
-    case "MozDOMPointerLock:Exited":
-      this.mm.sendAsyncMessage("PointerLock:Exited");
-      break;
+      case "MozDOMPointerLock:Exited":
+        this.mm.sendAsyncMessage("PointerLock:Exited");
+        break;
     }
   }
 
   switchDocumentDirection(window = this.content) {
-   // document.dir can also be "auto", in which case it won't change
+    // document.dir can also be "auto", in which case it won't change
     if (window.document.dir == "ltr" || window.document.dir == "") {
       window.document.dir = "rtl";
     } else if (window.document.dir == "rtl") {
@@ -63,12 +68,12 @@ class BrowserTabChild extends ActorChild {
 
       case "Browser:HasSiblings":
         try {
-          let browserChild = this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)
-                             .getInterface(Ci.nsIBrowserChild);
+          let browserChild = this.docShell
+            .QueryInterface(Ci.nsIInterfaceRequestor)
+            .getInterface(Ci.nsIBrowserChild);
           let hasSiblings = message.data;
           browserChild.hasSiblings = hasSiblings;
-        } catch (e) {
-        }
+        } catch (e) {}
         break;
 
       // XXX(nika): Should we try to call this in the parent process instead?
@@ -84,15 +89,16 @@ class BrowserTabChild extends ActorChild {
           if (webNav.sessionHistory) {
             webNav = webNav.sessionHistory;
           }
-        } catch (e) {
-        }
+        } catch (e) {}
 
         let reloadFlags = message.data.flags;
         try {
-          E10SUtils.wrapHandlingUserInput(this.content, message.data.handlingUserInput,
-                                          () => webNav.reload(reloadFlags));
-        } catch (e) {
-        }
+          E10SUtils.wrapHandlingUserInput(
+            this.content,
+            message.data.handlingUserInput,
+            () => webNav.reload(reloadFlags)
+          );
+        } catch (e) {}
         break;
 
       case "MixedContent:ReenableProtection":
