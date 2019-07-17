@@ -6,9 +6,12 @@
 
 const { extend } = require("devtools/shared/extend");
 var EventEmitter = require("devtools/shared/event-emitter");
-var {getStack, callFunctionWithAsyncStack} = require("devtools/shared/platform/stack");
-var {settleAll} = require("devtools/shared/DevToolsUtils");
-var {lazyLoadSpec, lazyLoadFront} = require("devtools/shared/specs/index");
+var {
+  getStack,
+  callFunctionWithAsyncStack,
+} = require("devtools/shared/platform/stack");
+var { settleAll } = require("devtools/shared/DevToolsUtils");
+var { lazyLoadSpec, lazyLoadFront } = require("devtools/shared/specs/index");
 
 // Bug 1454373: devtools/shared/defer still uses Promise.jsm which is slower
 // than DOM Promises. So implement our own copy of `defer` based on DOM Promises.
@@ -43,8 +46,8 @@ function defer() {
 var types = Object.create(null);
 exports.types = types;
 
-var registeredTypes = types.registeredTypes = new Map();
-var registeredLifetimes = types.registeredLifetimes = new Map();
+var registeredTypes = (types.registeredTypes = new Map());
+var registeredLifetimes = (types.registeredLifetimes = new Map());
 
 /**
  * Return the type object associated with a given typestring.
@@ -69,7 +72,7 @@ types.getType = function(type) {
     return types.Primitive;
   }
 
-  if (typeof (type) !== "string") {
+  if (typeof type !== "string") {
     return type;
   }
 
@@ -112,7 +115,9 @@ types.getType = function(type) {
   const pieces = type.split("#", 2);
   if (pieces.length > 1) {
     if (pieces[1] != "actorid") {
-      throw new Error("Unsupported detail, only support 'actorid', got: " + pieces[1]);
+      throw new Error(
+        "Unsupported detail, only support 'actorid', got: " + pieces[1]
+      );
     }
     return types.addActorDetail(type, pieces[0], pieces[1]);
   }
@@ -164,15 +169,18 @@ types.addType = function(name, typeObject = {}, options = {}) {
     throw Error("Type '" + name + "' already exists.");
   }
 
-  const type = Object.assign({
-    toString() {
-      return "[protocol type:" + name + "]";
+  const type = Object.assign(
+    {
+      toString() {
+        return "[protocol type:" + name + "]";
+      },
+      name: name,
+      primitive: !(typeObject.read || typeObject.write),
+      read: identityWrite,
+      write: identityWrite,
     },
-    name: name,
-    primitive: !(typeObject.read || typeObject.write),
-    read: identityWrite,
-    write: identityWrite,
-  }, typeObject);
+    typeObject
+  );
 
   registeredTypes.set(name, type);
 
@@ -324,7 +332,7 @@ types.addActorType = function(name) {
       // Reading a response on the client side, check for an
       // existing front on the connection, and create the front
       // if it isn't found.
-      const actorID = typeof (v) === "string" ? v : v.actor;
+      const actorID = typeof v === "string" ? v : v.actor;
       let front = ctx.conn.getActor(actorID);
       if (!front) {
         // If front isn't instantiated yet, create one.
@@ -409,8 +417,10 @@ types.addNullableType = function(subtype) {
 types.addActorDetail = function(name, actorType, detail) {
   actorType = types.getType(actorType);
   if (!actorType._actor) {
-    throw Error(`Details only apply to actor types, tried to add detail '${detail}' ` +
-                `to ${actorType.name}`);
+    throw Error(
+      `Details only apply to actor types, tried to add detail '${detail}' ` +
+        `to ${actorType.name}`
+    );
   }
   return types.addType(name, {
     _actor: true,
@@ -459,8 +469,10 @@ types.removeLifetime = function(name) {
 types.addLifetimeType = function(lifetime, subtype) {
   subtype = types.getType(subtype);
   if (!subtype._actor) {
-    throw Error(`Lifetimes only apply to actor types, tried to apply ` +
-                `lifetime '${lifetime}' to ${subtype.name}`);
+    throw Error(
+      `Lifetimes only apply to actor types, tried to apply ` +
+        `lifetime '${lifetime}' to ${subtype.name}`
+    );
   }
   const prop = registeredLifetimes.get(lifetime);
   return types.addType(lifetime + ":" + subtype.name, {
@@ -635,7 +647,7 @@ function getPath(obj, path) {
  * paths.
  */
 function findPlaceholders(template, constructor, path = [], placeholders = []) {
-  if (!template || typeof (template) != "object") {
+  if (!template || typeof template != "object") {
     return placeholders;
   }
 
@@ -654,12 +666,14 @@ function findPlaceholders(template, constructor, path = [], placeholders = []) {
 }
 
 function describeTemplate(template) {
-  return JSON.parse(JSON.stringify(template, (key, value) => {
-    if (value.describe) {
-      return value.describe();
-    }
-    return value;
-  }));
+  return JSON.parse(
+    JSON.stringify(template, (key, value) => {
+      if (value.describe) {
+        return value.describe();
+      }
+      return value;
+    })
+  );
 }
 
 /**
@@ -690,12 +704,17 @@ Request.prototype = {
     for (const key in this.template) {
       const value = this.template[key];
       if (value instanceof Arg) {
-        ret[key] = value.write(value.index in fnArgs ? fnArgs[value.index] : undefined,
-                               ctx, key);
+        ret[key] = value.write(
+          value.index in fnArgs ? fnArgs[value.index] : undefined,
+          ctx,
+          key
+        );
       } else if (key == "type") {
         ret[key] = value;
       } else {
-        throw new Error("Request can only an object with `Arg` or `Option` properties");
+        throw new Error(
+          "Request can only an object with `Arg` or `Option` properties"
+        );
       }
     }
     return ret;
@@ -767,8 +786,10 @@ Response.prototype = {
       if (value instanceof RetVal) {
         result[key] = value.write(ret, ctx);
       } else {
-        throw new Error("Response can only be a `RetVal` instance or an object " +
-                        "with one property being a `RetVal` instance.");
+        throw new Error(
+          "Response can only be a `RetVal` instance or an object " +
+            "with one property being a `RetVal` instance."
+        );
       }
     }
     return result;
@@ -908,7 +929,7 @@ class Pool extends EventEmitter {
   }
 
   // Generator that yields each non-self child of the pool.
-  * poolChildren() {
+  *poolChildren() {
     if (!this.__poolMap) {
       return;
     }
@@ -1008,8 +1029,10 @@ class Actor extends Pool {
 
   _sendEvent(name, request, ...args) {
     if (!this.actorID) {
-      console.error(`Tried to send a '${name}' event on an already destroyed actor` +
-                    ` '${this.typeName}'`);
+      console.error(
+        `Tried to send a '${name}' event on an already destroyed actor` +
+          ` '${this.typeName}'`
+      );
       return;
     }
     let packet;
@@ -1039,8 +1062,10 @@ class Actor extends Pool {
   }
 
   writeError(error, typeName, method) {
-    console.error(`Error while calling actor '${typeName}'s method '${method}'`,
-                  error.message);
+    console.error(
+      `Error while calling actor '${typeName}'s method '${method}'`,
+      error.message
+    );
     if (error.stack) {
       console.error(error.stack);
     }
@@ -1116,8 +1141,9 @@ var generateActorSpec = function(actorDesc) {
       const methodSpec = desc.value._methodSpec;
       const spec = {};
       spec.name = methodSpec.name || name;
-      spec.request = new Request(Object.assign({type: spec.name},
-                                          methodSpec.request || undefined));
+      spec.request = new Request(
+        Object.assign({ type: spec.name }, methodSpec.request || undefined)
+      );
       spec.response = new Response(methodSpec.response || undefined);
       spec.release = methodSpec.release;
       spec.oneway = methodSpec.oneway;
@@ -1133,8 +1159,9 @@ var generateActorSpec = function(actorDesc) {
       const spec = {};
 
       spec.name = methodSpec.name || name;
-      spec.request = new Request(Object.assign({type: spec.name},
-                                          methodSpec.request || undefined));
+      spec.request = new Request(
+        Object.assign({ type: spec.name }, methodSpec.request || undefined)
+      );
       spec.response = new Response(methodSpec.response || undefined);
       spec.release = methodSpec.release;
       spec.oneway = methodSpec.oneway;
@@ -1149,7 +1176,10 @@ var generateActorSpec = function(actorDesc) {
     for (const name in actorDesc.events) {
       const eventRequest = actorDesc.events[name];
       Object.freeze(eventRequest);
-      actorSpec.events.set(name, new Request(Object.assign({type: name}, eventRequest)));
+      actorSpec.events.set(
+        name,
+        new Request(Object.assign({ type: name }, eventRequest))
+      );
     }
   }
 
@@ -1183,12 +1213,14 @@ var generateRequestHandlers = function(actorSpec, actorProto) {
         }
 
         if (!this[spec.name]) {
-          throw new Error(`Spec for '${actorProto.typeName}' specifies a '${spec.name}'` +
-                          ` method that isn't implemented by the actor`);
+          throw new Error(
+            `Spec for '${actorProto.typeName}' specifies a '${spec.name}'` +
+              ` method that isn't implemented by the actor`
+          );
         }
         const ret = this[spec.name].apply(this, args);
 
-        const sendReturn = (retToSend) => {
+        const sendReturn = retToSend => {
           if (spec.oneway) {
             // No need to send a response.
             return;
@@ -1223,7 +1255,9 @@ var generateRequestHandlers = function(actorSpec, actorProto) {
         });
       } catch (e) {
         this._queueResponse(p => {
-          return p.then(() => this.writeError(e, actorProto.typeName, spec.name));
+          return p.then(() =>
+            this.writeError(e, actorProto.typeName, spec.name)
+          );
         });
       }
     };
@@ -1254,7 +1288,10 @@ var ActorClassWithSpec = function(actorSpec, actorProto) {
     instance.initialize.apply(instance, arguments);
     return instance;
   };
-  cls.prototype = extend(Actor.prototype, generateRequestHandlers(actorSpec, actorProto));
+  cls.prototype = extend(
+    Actor.prototype,
+    generateRequestHandlers(actorSpec, actorProto)
+  );
 
   actorSpecs.set(cls.prototype, actorSpec);
 
@@ -1293,9 +1330,14 @@ class Front extends Pool {
     // the front is destroyed.
     while (this._requests && this._requests.length > 0) {
       const { deferred, to, type, stack } = this._requests.shift();
-      const msg = "Connection closed, pending request to " + to +
-                ", type " + type + " failed" +
-                "\n\nRequest stack:\n" + stack.formattedStack;
+      const msg =
+        "Connection closed, pending request to " +
+        to +
+        ", type " +
+        type +
+        " failed" +
+        "\n\nRequest stack:\n" +
+        stack.formattedStack;
       deferred.reject(new Error(msg));
     }
     super.destroy();
@@ -1307,8 +1349,12 @@ class Front extends Pool {
 
   manage(front) {
     if (!front.actorID) {
-      throw new Error("Can't manage front without an actor ID.\n" +
-                      "Ensure server supports " + front.typeName + ".");
+      throw new Error(
+        "Can't manage front without an actor ID.\n" +
+          "Ensure server supports " +
+          front.typeName +
+          "."
+      );
     }
     super.manage(front);
 
@@ -1342,7 +1388,9 @@ class Front extends Pool {
    */
   before(type, callback) {
     if (this._beforeListeners.has(type)) {
-      throw new Error(`Can't register multiple before listeners for "${type}".`);
+      throw new Error(
+        `Can't register multiple before listeners for "${type}".`
+      );
     }
     this._beforeListeners.set(type, callback);
   }
@@ -1427,28 +1475,34 @@ class Front extends Pool {
 
     // Remaining packets must be responses.
     if (this._requests.length === 0) {
-      const msg = "Unexpected packet " + this.actorID + ", " + JSON.stringify(packet);
+      const msg =
+        "Unexpected packet " + this.actorID + ", " + JSON.stringify(packet);
       const err = Error(msg);
       console.error(err);
       throw err;
     }
 
     const { deferred, stack } = this._requests.shift();
-    callFunctionWithAsyncStack(() => {
-      if (packet.error) {
-        // "Protocol error" is here to avoid TBPL heuristics. See also
-        // https://dxr.mozilla.org/webtools-central/source/tbpl/php/inc/GeneralErrorFilter.php
-        let message;
-        if (packet.error && packet.message) {
-          message = "Protocol error (" + packet.error + "): " + packet.message;
+    callFunctionWithAsyncStack(
+      () => {
+        if (packet.error) {
+          // "Protocol error" is here to avoid TBPL heuristics. See also
+          // https://dxr.mozilla.org/webtools-central/source/tbpl/php/inc/GeneralErrorFilter.php
+          let message;
+          if (packet.error && packet.message) {
+            message =
+              "Protocol error (" + packet.error + "): " + packet.message;
+          } else {
+            message = packet.error;
+          }
+          deferred.reject(message);
         } else {
-          message = packet.error;
+          deferred.resolve(packet);
         }
-        deferred.reject(message);
-      } else {
-        deferred.resolve(packet);
-      }
-    }, stack, "DevTools RDP");
+      },
+      stack,
+      "DevTools RDP"
+    );
   }
 
   hasRequests() {
@@ -1491,7 +1545,10 @@ var generateRequestMethods = function(actorSpec, frontProto) {
       // The front was probably destroyed earlier.
       if (!this.actorID) {
         throw new Error(
-          `Can not send request because front '${this.typeName}' is already destroyed.`);
+          `Can not send request because front '${
+            this.typeName
+          }' is already destroyed.`
+        );
       }
 
       let packet;
@@ -1561,8 +1618,7 @@ var generateRequestMethods = function(actorSpec, frontProto) {
  *    should have method definitions, can have event definitions.
  */
 var FrontClassWithSpec = function(actorSpec) {
-  class OneFront extends Front {
-  }
+  class OneFront extends Front {}
   generateRequestMethods(actorSpec, OneFront.prototype);
   return OneFront;
 };
@@ -1661,8 +1717,10 @@ function getFront(client, typeName, form) {
   // Retrive the actor ID from root or target actor's form
   instance.actorID = form[formAttributeName];
   if (!instance.actorID) {
-    throw new Error(`Can't find the actor ID for ${typeName} from root or target` +
-      ` actor's form.`);
+    throw new Error(
+      `Can't find the actor ID for ${typeName} from root or target` +
+        ` actor's form.`
+    );
   }
   // Historically, all global and target scoped front were the first protocol.js in the
   // hierarchy of fronts. So that they have to self-own themself. But now, Root and Target
@@ -1670,7 +1728,7 @@ function getFront(client, typeName, form) {
   // front *before* calling initialize which is going to try managing child fronts.
   instance.manage(instance);
 
-  if (typeof (instance.initialize) == "function") {
+  if (typeof instance.initialize == "function") {
     return instance.initialize().then(() => instance);
   }
   return instance;
