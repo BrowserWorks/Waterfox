@@ -11,23 +11,31 @@ var gProtectionsHandler = {
   // smart getters
   get _protectionsPopup() {
     delete this._protectionsPopup;
-    return this._protectionsPopup = document.getElementById("protections-popup");
+    return (this._protectionsPopup = document.getElementById(
+      "protections-popup"
+    ));
   },
   get _protectionsIconBox() {
     delete this._protectionsIconBox;
-    return this._protectionsIconBox = document.getElementById("tracking-protection-icon-animatable-box");
+    return (this._protectionsIconBox = document.getElementById(
+      "tracking-protection-icon-animatable-box"
+    ));
   },
   get _protectionsPopupMainViewHeaderLabel() {
     delete this._protectionsPopupMainViewHeaderLabel;
-    return this._protectionsPopupMainViewHeaderLabel =
-      document.getElementById("protections-popup-mainView-panel-header-span");
+    return (this._protectionsPopupMainViewHeaderLabel = document.getElementById(
+      "protections-popup-mainView-panel-header-span"
+    ));
   },
 
   handleProtectionsButtonEvent(event) {
     event.stopPropagation();
-    if ((event.type == "click" && event.button != 0) ||
-        (event.type == "keypress" && event.charCode != KeyEvent.DOM_VK_SPACE &&
-         event.keyCode != KeyEvent.DOM_VK_RETURN)) {
+    if (
+      (event.type == "click" && event.button != 0) ||
+      (event.type == "keypress" &&
+        event.charCode != KeyEvent.DOM_VK_SPACE &&
+        event.keyCode != KeyEvent.DOM_VK_RETURN)
+    ) {
       return; // Left click, space or enter only
     }
 

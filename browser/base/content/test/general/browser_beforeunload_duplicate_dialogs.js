@@ -1,4 +1,5 @@
-const TEST_PAGE = "http://mochi.test:8888/browser/browser/base/content/test/general/file_double_close_tab.html";
+const TEST_PAGE =
+  "http://mochi.test:8888/browser/browser/base/content/test/general/file_double_close_tab.html";
 
 var expectingDialog = false;
 var wantToClose = true;
@@ -18,7 +19,9 @@ function onTabModalDialogLoaded(node) {
   }
 }
 
-SpecialPowers.pushPrefEnv({"set": [["dom.require_user_interaction_for_beforeunload", false]]});
+SpecialPowers.pushPrefEnv({
+  set: [["dom.require_user_interaction_for_beforeunload", false]],
+});
 
 // Listen for the dialog being created
 Services.obs.addObserver(onTabModalDialogLoaded, "tabmodal-dialog-loaded");
@@ -34,7 +37,9 @@ add_task(async function closeLastTabInWindow() {
   let windowClosedPromise = BrowserTestUtils.domWindowClosed(newWin);
   expectingDialog = true;
   // close tab:
-  document.getAnonymousElementByAttribute(firstTab, "anonid", "close-button").click();
+  document
+    .getAnonymousElementByAttribute(firstTab, "anonid", "close-button")
+    .click();
   await windowClosedPromise;
   ok(!expectingDialog, "There should have been a dialog.");
   ok(newWin.closed, "Window should be closed.");
@@ -45,7 +50,10 @@ add_task(async function closeWindowWithMultipleTabsIncludingOneBeforeUnload() {
   let newWin = await promiseOpenAndLoadWindow({}, true);
   let firstTab = newWin.gBrowser.selectedTab;
   await promiseTabLoadEvent(firstTab, TEST_PAGE);
-  await promiseTabLoadEvent(BrowserTestUtils.addTab(newWin.gBrowser), "http://example.com/");
+  await promiseTabLoadEvent(
+    BrowserTestUtils.addTab(newWin.gBrowser),
+    "http://example.com/"
+  );
   let windowClosedPromise = BrowserTestUtils.domWindowClosed(newWin);
   expectingDialog = true;
   newWin.BrowserTryToCloseWindow();
@@ -62,14 +70,20 @@ add_task(async function closeWindoWithSingleTabTwice() {
   let windowClosedPromise = BrowserTestUtils.domWindowClosed(newWin);
   expectingDialog = true;
   wantToClose = false;
-  let firstDialogShownPromise = new Promise((resolve, reject) => { resolveDialogPromise = resolve; });
-  document.getAnonymousElementByAttribute(firstTab, "anonid", "close-button").click();
+  let firstDialogShownPromise = new Promise((resolve, reject) => {
+    resolveDialogPromise = resolve;
+  });
+  document
+    .getAnonymousElementByAttribute(firstTab, "anonid", "close-button")
+    .click();
   await firstDialogShownPromise;
   info("Got initial dialog, now trying again");
   expectingDialog = true;
   wantToClose = true;
   resolveDialogPromise = null;
-  document.getAnonymousElementByAttribute(firstTab, "anonid", "close-button").click();
+  document
+    .getAnonymousElementByAttribute(firstTab, "anonid", "close-button")
+    .click();
   await windowClosedPromise;
   ok(!expectingDialog, "There should have been a dialog.");
   ok(newWin.closed, "Window should be closed.");

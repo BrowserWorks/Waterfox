@@ -7,14 +7,17 @@
 /* import-globals-from browser.js */
 /* import-globals-from nsContextMenu.js */
 
-ChromeUtils.defineModuleGetter(this, "ExtensionParent",
-                               "resource://gre/modules/ExtensionParent.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "ExtensionParent",
+  "resource://gre/modules/ExtensionParent.jsm"
+);
 
-const {ExtensionUtils} = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
+const { ExtensionUtils } = ChromeUtils.import(
+  "resource://gre/modules/ExtensionUtils.jsm"
+);
 
-var {
-  promiseEvent,
-} = ExtensionUtils;
+var { promiseEvent } = ExtensionUtils;
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -50,17 +53,28 @@ function getBrowser(panel) {
   let readyPromise;
   if (panel.extension.remote) {
     browser.setAttribute("remote", "true");
-    browser.setAttribute("remoteType",
-                         E10SUtils.getRemoteTypeForURI(panel.uri,
-                                                       /* remote */ true,
-                                                       /* fission */ false,
-                                                       E10SUtils.EXTENSION_REMOTE_TYPE));
+    browser.setAttribute(
+      "remoteType",
+      E10SUtils.getRemoteTypeForURI(
+        panel.uri,
+        /* remote */ true,
+        /* fission */ false,
+        E10SUtils.EXTENSION_REMOTE_TYPE
+      )
+    );
     readyPromise = promiseEvent(browser, "XULFrameLoaderCreated");
 
     window.messageManager.addMessageListener("contextmenu", openContextMenu);
-    window.addEventListener("unload", () => {
-      window.messageManager.removeMessageListener("contextmenu", openContextMenu);
-    }, {once: true});
+    window.addEventListener(
+      "unload",
+      () => {
+        window.messageManager.removeMessageListener(
+          "contextmenu",
+          openContextMenu
+        );
+      },
+      { once: true }
+    );
   } else {
     readyPromise = Promise.resolve();
   }
@@ -68,13 +82,27 @@ function getBrowser(panel) {
   stack.appendChild(browser);
 
   return readyPromise.then(() => {
-    browser.messageManager.loadFrameScript("chrome://browser/content/content.js", false, true);
-    ExtensionParent.apiManager.emit("extension-browser-inserted", browser, panel.browserInsertedData);
+    browser.messageManager.loadFrameScript(
+      "chrome://browser/content/content.js",
+      false,
+      true
+    );
+    ExtensionParent.apiManager.emit(
+      "extension-browser-inserted",
+      browser,
+      panel.browserInsertedData
+    );
 
     browser.messageManager.loadFrameScript(
-      "chrome://extensions/content/ext-browser-content.js", false, true);
+      "chrome://extensions/content/ext-browser-content.js",
+      false,
+      true
+    );
 
-    let options = panel.browserStyle !== false ? {stylesheets: ExtensionParent.extensionStylesheets} : {};
+    let options =
+      panel.browserStyle !== false
+        ? { stylesheets: ExtensionParent.extensionStylesheets }
+        : {};
     browser.messageManager.sendAsyncMessage("Extension:InitBrowser", options);
     return browser;
   });
@@ -101,12 +129,14 @@ var gBrowser = {
 function updatePosition() {
   // We need both of these to make sure we update the position
   // after any lower level updates have finished.
-  requestAnimationFrame(() => setTimeout(() => {
-    let browser = document.getElementById("webext-panels-browser");
-    if (browser && browser.isRemoteBrowser) {
-      browser.frameLoader.requestUpdatePosition();
-    }
-  }, 0));
+  requestAnimationFrame(() =>
+    setTimeout(() => {
+      let browser = document.getElementById("webext-panels-browser");
+      if (browser && browser.isRemoteBrowser) {
+        browser.frameLoader.requestUpdatePosition();
+      }
+    }, 0)
+  );
 }
 
 function loadPanel(extensionId, extensionUrl, browserStyle) {
@@ -130,7 +160,10 @@ function loadPanel(extensionId, extensionUrl, browserStyle) {
 
   getBrowser(sidebar).then(browser => {
     let uri = Services.io.newURI(policy.getURL());
-    let triggeringPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
-    browser.loadURI(extensionUrl, {triggeringPrincipal});
+    let triggeringPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+      uri,
+      {}
+    );
+    browser.loadURI(extensionUrl, { triggeringPrincipal });
   });
 }

@@ -3,10 +3,7 @@ const PREF_WARN_ON_CLOSE = "browser.tabs.warnOnCloseOtherTabs";
 
 add_task(async function setPref() {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      [PREF_MULTISELECT_TABS, true],
-      [PREF_WARN_ON_CLOSE, false],
-    ],
+    set: [[PREF_MULTISELECT_TABS, true], [PREF_WARN_ON_CLOSE, false]],
   });
 });
 
@@ -29,7 +26,11 @@ add_task(async function usingTabCloseButton() {
   is(gBrowser.selectedTab, tab1, "Tab1 is active");
 
   // Closing a tab which is not multiselected
-  let tab4CloseBtn = document.getAnonymousElementByAttribute(tab4, "anonid", "close-button");
+  let tab4CloseBtn = document.getAnonymousElementByAttribute(
+    tab4,
+    "anonid",
+    "close-button"
+  );
   let tab4Closing = BrowserTestUtils.waitForTabClosing(tab4);
 
   tab4.mOverCloseButton = true;
@@ -48,7 +49,11 @@ add_task(async function usingTabCloseButton() {
   is(gBrowser.multiSelectedTabsCount, 2, "Two multiselected tabs");
 
   // Closing a selected tab
-  let tab2CloseBtn = document.getAnonymousElementByAttribute(tab2, "anonid", "close-button");
+  let tab2CloseBtn = document.getAnonymousElementByAttribute(
+    tab2,
+    "anonid",
+    "close-button"
+  );
   tab2.mOverCloseButton = true;
   let tab1Closing = BrowserTestUtils.waitForTabClosing(tab1);
   let tab2Closing = BrowserTestUtils.waitForTabClosing(tab2);
@@ -71,7 +76,9 @@ add_task(async function usingTabContextMenu() {
   let tab4 = await addTab();
 
   let menuItemCloseTab = document.getElementById("context_closeTab");
-  let menuItemCloseSelectedTabs = document.getElementById("context_closeSelectedTabs");
+  let menuItemCloseSelectedTabs = document.getElementById(
+    "context_closeSelectedTabs"
+  );
 
   is(gBrowser.multiSelectedTabsCount, 0, "Zero multiselected tabs");
 
@@ -109,4 +116,3 @@ add_task(async function usingTabContextMenu() {
   BrowserTestUtils.removeTab(tab3);
   BrowserTestUtils.removeTab(tab4);
 });
-

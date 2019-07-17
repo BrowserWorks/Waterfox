@@ -1,4 +1,7 @@
-var gTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
+var gTestRoot = getRootDirectory(gTestPath).replace(
+  "chrome://mochitests/content/",
+  "http://127.0.0.1:8888/"
+);
 var gPluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
 var gTestBrowser = null;
 
@@ -12,8 +15,14 @@ add_task(async function() {
     clearAllPluginPermissions();
     Services.prefs.clearUserPref("plugins.click_to_play");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
-    setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Second Test Plug-in");
-    await asyncSetAndUpdateBlocklist(gTestRoot + "blockNoPlugins", gTestBrowser);
+    setTestPluginEnabledState(
+      Ci.nsIPluginTag.STATE_ENABLED,
+      "Second Test Plug-in"
+    );
+    await asyncSetAndUpdateBlocklist(
+      gTestRoot + "blockNoPlugins",
+      gTestBrowser
+    );
     resetBlocklist();
     gTestBrowser = null;
     gBrowser.removeCurrentTab();
@@ -31,21 +40,30 @@ add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
   // Prime the blocklist service, the remote service doesn't launch on startup.
-  await promiseTabLoadEvent(gBrowser.selectedTab, "data:text/html,<html></html>");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    "data:text/html,<html></html>"
+  );
 
   await asyncSetAndUpdateBlocklist(gTestRoot + "blockNoPlugins", gTestBrowser);
 });
 
 // Tests a page with an unknown plugin in it.
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_unknown.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_unknown.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
   let pluginInfo = await promiseForPluginInfo("unknown");
-  is(pluginInfo.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_UNSUPPORTED,
-     "Test 1a, plugin fallback type should be PLUGIN_UNSUPPORTED");
+  is(
+    pluginInfo.pluginFallbackType,
+    Ci.nsIObjectLoadingContent.PLUGIN_UNSUPPORTED,
+    "Test 1a, plugin fallback type should be PLUGIN_UNSUPPORTED"
+  );
 });
 
 // Test that the doorhanger is shown when the user clicks on the overlay
@@ -53,7 +71,10 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -64,7 +85,10 @@ add_task(async function() {
   ok(!pluginInfo.activated, "Plugin should not be activated");
 
   // Simulate clicking the "Allow" button.
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
 
   await promiseForNotificationShown(notification);
 
@@ -84,13 +108,18 @@ add_task(async function() {
   let browserLoaded = BrowserTestUtils.browserLoaded(gTestBrowser);
   gTestBrowser.reload();
   await browserLoaded;
-  notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
 
   // Simulate clicking the overlay
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
-    let bounds = plugin.openOrClosedShadowRoot.getElementById("main").getBoundingClientRect();
+    let bounds = plugin.openOrClosedShadowRoot
+      .getElementById("main")
+      .getBoundingClientRect();
     let left = (bounds.left + bounds.right) / 2;
     let top = (bounds.top + bounds.bottom) / 2;
     let utils = content.windowUtils;
@@ -107,17 +136,26 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
   await promisePopupNotification("click-to-play-plugins");
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, "data:text/html,<html>hi</html>");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    "data:text/html,<html>hi</html>"
+  );
 
   // make sure the notification is gone
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
   ok(!notification, "Test 11b, Should not have a click-to-play notification");
 
   gTestBrowser.webNavigation.goBack();
@@ -129,7 +167,10 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -140,7 +181,10 @@ add_task(async function() {
   ok(!pluginInfo.activated, "Test 12a, Plugin should not be activated");
 
   // Simulate clicking the "Allow" button.
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
 
   await promiseForNotificationShown(notification);
 
@@ -153,7 +197,10 @@ add_task(async function() {
 // Test that the "Always" permission, when set for just the Test plugin,
 // does not also allow the Second Test plugin.
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_two_types.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_two_types.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -164,8 +211,10 @@ add_task(async function() {
     let test = content.document.getElementById("test");
     let secondtestA = content.document.getElementById("secondtestA");
     let secondtestB = content.document.getElementById("secondtestB");
-    Assert.ok(test.activated && !secondtestA.activated && !secondtestB.activated,
-      "Content plugins are set up");
+    Assert.ok(
+      test.activated && !secondtestA.activated && !secondtestB.activated,
+      "Content plugins are set up"
+    );
   });
 
   clearAllPluginPermissions();
@@ -176,7 +225,10 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_ENABLED);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test2.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test2.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -190,7 +242,10 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_alternate_content.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_alternate_content.html"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
@@ -203,18 +258,27 @@ add_task(async function() {
 // Tests that mContentType is used for click-to-play plugins, and not the
 // inspected type.
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_bug749455.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_bug749455.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
   ok(notification, "Test 17, Should have a click-to-play notification");
 });
 
 // Tests that clicking the icon of the overlay activates the doorhanger
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   await asyncSetAndUpdateBlocklist(gTestRoot + "blockNoPlugins", gTestBrowser);
 
@@ -224,8 +288,11 @@ add_task(async function() {
   let pluginInfo = await promiseForPluginInfo("test");
   ok(!pluginInfo.activated, "Test 18g, Plugin should not be activated");
 
-  ok(PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed,
-     "Test 19a, Doorhanger should start out dismissed");
+  ok(
+    PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed,
+    "Test 19a, Doorhanger should start out dismissed"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
@@ -239,13 +306,18 @@ add_task(async function() {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
+  let condition = () =>
+    !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed;
   await promiseForCondition(condition);
 });
 
 // Tests that clicking the text of the overlay activates the plugin
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -253,8 +325,11 @@ add_task(async function() {
   let pluginInfo = await promiseForPluginInfo("test");
   ok(!pluginInfo.activated, "Test 18g, Plugin should not be activated");
 
-  ok(PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed,
-     "Test 19c, Doorhanger should start out dismissed");
+  ok(
+    PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed,
+    "Test 19c, Doorhanger should start out dismissed"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
@@ -268,14 +343,19 @@ add_task(async function() {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
+  let condition = () =>
+    !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed;
   await promiseForCondition(condition);
 });
 
 // Tests that clicking the box of the overlay activates the doorhanger
 // (just to be thorough)
 add_task(async function() {
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
@@ -283,8 +363,11 @@ add_task(async function() {
   let pluginInfo = await promiseForPluginInfo("test");
   ok(!pluginInfo.activated, "Test 18g, Plugin should not be activated");
 
-  ok(PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed,
-     "Test 19e, Doorhanger should start out dismissed");
+  ok(
+    PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed,
+    "Test 19e, Doorhanger should start out dismissed"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let utils = content.windowUtils;
@@ -292,8 +375,9 @@ add_task(async function() {
     utils.sendMouseEvent("mouseup", 50, 50, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed &&
-    PopupNotifications.panel.firstElementChild;
+  let condition = () =>
+    !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser)
+      .dismissed && PopupNotifications.panel.firstElementChild;
   await promiseForCondition(condition);
   PopupNotifications.panel.firstElementChild.button.click();
 
@@ -308,12 +392,18 @@ add_task(async function() {
 add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_hidden_to_visible.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_hidden_to_visible.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
   ok(notification, "Test 20a, Should have a click-to-play notification");
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
@@ -328,8 +418,10 @@ add_task(async function() {
     let plugin = doc.getElementById("test");
     let mainBox = plugin.openOrClosedShadowRoot.getElementById("main");
     let overlayRect = mainBox.getBoundingClientRect();
-    Assert.ok(overlayRect.width == 0 && overlayRect.height == 0,
-      "Test 20a, plugin should have an overlay with 0px width and height");
+    Assert.ok(
+      overlayRect.width == 0 && overlayRect.height == 0,
+      "Test 20a, plugin should have an overlay with 0px width and height"
+    );
   });
 
   let pluginInfo = await promiseForPluginInfo("test");
@@ -338,8 +430,11 @@ add_task(async function() {
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
     let div = doc.getElementById("container");
-    Assert.equal(div.style.display, "none",
-      "Test 20b, container div should be display: none");
+    Assert.equal(
+      div.style.display,
+      "none",
+      "Test 20b, container div should be display: none"
+    );
   });
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
@@ -357,8 +452,10 @@ add_task(async function() {
     let plugin = doc.getElementById("test");
     let mainBox = plugin.openOrClosedShadowRoot.getElementById("main");
     let overlayRect = mainBox.getBoundingClientRect();
-    Assert.ok(overlayRect.width == 200 && overlayRect.height == 200,
-      "Test 20c, plugin should have overlay dims of 200px");
+    Assert.ok(
+      overlayRect.width == 200 && overlayRect.height == 200,
+      "Test 20c, plugin should have overlay dims of 200px"
+    );
   });
 
   pluginInfo = await promiseForPluginInfo("test");
@@ -377,7 +474,8 @@ add_task(async function() {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = () => !notification.dismissed && !!PopupNotifications.panel.firstElementChild;
+  let condition = () =>
+    !notification.dismissed && !!PopupNotifications.panel.firstElementChild;
   await promiseForCondition(condition);
   PopupNotifications.panel.firstElementChild.button.click();
 
@@ -387,8 +485,10 @@ add_task(async function() {
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
-    Assert.ok(!plugin.openOrClosedShadowRoot,
-      "Test 20c, CTP UA Widget Shadow Root is removed");
+    Assert.ok(
+      !plugin.openOrClosedShadowRoot,
+      "Test 20c, CTP UA Widget Shadow Root is removed"
+    );
   });
 
   clearAllPluginPermissions();
@@ -400,18 +500,27 @@ add_task(async function() {
 
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins",
+    gTestBrowser
+  );
   ok(notification, "Test 22, Should have a click-to-play notification");
 
   // Plugin should start as CTP
   let pluginInfo = await promiseForPluginInfo("test");
-  is(pluginInfo.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY,
-     "Test 23, plugin fallback type should be PLUGIN_CLICK_TO_PLAY");
+  is(
+    pluginInfo.pluginFallbackType,
+    Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY,
+    "Test 23, plugin fallback type should be PLUGIN_CLICK_TO_PLAY"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
@@ -423,7 +532,11 @@ add_task(async function() {
   });
 
   pluginInfo = await promiseForPluginInfo("test");
-  is(pluginInfo.displayedType, Ci.nsIObjectLoadingContent.TYPE_NULL, "Test 23, plugin should be TYPE_NULL");
+  is(
+    pluginInfo.displayedType,
+    Ci.nsIObjectLoadingContent.TYPE_NULL,
+    "Test 23, plugin should be TYPE_NULL"
+  );
 
   await ContentTask.spawn(gTestBrowser, null, async function() {
     let doc = content.document;
@@ -433,9 +546,16 @@ add_task(async function() {
   });
 
   pluginInfo = await promiseForPluginInfo("test");
-  is(pluginInfo.displayedType, Ci.nsIObjectLoadingContent.TYPE_NULL, "Test 23, plugin should be TYPE_NULL");
-  is(pluginInfo.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY,
-     "Test 23, plugin fallback type should be PLUGIN_CLICK_TO_PLAY");
+  is(
+    pluginInfo.displayedType,
+    Ci.nsIObjectLoadingContent.TYPE_NULL,
+    "Test 23, plugin should be TYPE_NULL"
+  );
+  is(
+    pluginInfo.pluginFallbackType,
+    Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY,
+    "Test 23, plugin fallback type should be PLUGIN_CLICK_TO_PLAY"
+  );
   ok(!pluginInfo.activated, "Test 23, plugin node should not be activated");
 });
 
@@ -444,17 +564,31 @@ add_task(async function() {
 add_task(async function blockPluginSyncRemoved() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_syncRemoved.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_syncRemoved.html"
+  );
 
   // Maybe there some better trick here, we need to wait for the page load, then
   // wait for the js to execute in the page.
   await waitForMs(500);
 
-  let notification = PopupNotifications.getNotification("click-to-play-plugins");
-  ok(notification, "Test 25: There should be a plugin notification even if the plugin was immediately removed");
-  ok(notification.dismissed, "Test 25: The notification should be dismissed by default");
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins"
+  );
+  ok(
+    notification,
+    "Test 25: There should be a plugin notification even if the plugin was immediately removed"
+  );
+  ok(
+    notification.dismissed,
+    "Test 25: The notification should be dismissed by default"
+  );
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, "data:text/html,<html>hi</html>");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    "data:text/html,<html>hi</html>"
+  );
 });
 
 // Tests a page with a blocked plugin in it and make sure the infoURL property
@@ -462,15 +596,23 @@ add_task(async function blockPluginSyncRemoved() {
 add_task(async function blockPluginInfoURL() {
   clearAllPluginPermissions();
 
-  await asyncSetAndUpdateBlocklist(gTestRoot + "blockPluginInfoURL", gTestBrowser);
+  await asyncSetAndUpdateBlocklist(
+    gTestRoot + "blockPluginInfoURL",
+    gTestBrowser
+  );
 
-  await promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+  await promiseTabLoadEvent(
+    gBrowser.selectedTab,
+    gTestRoot + "plugin_test.html"
+  );
 
   // Work around for delayed PluginBindingAttached
   info("Waiting for plugin bindings");
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  let notification = PopupNotifications.getNotification("click-to-play-plugins");
+  let notification = PopupNotifications.getNotification(
+    "click-to-play-plugins"
+  );
 
   info("Waiting for notification to be shown");
   // Since the plugin notification is dismissed by default, reshow it.
@@ -478,7 +620,10 @@ add_task(async function blockPluginInfoURL() {
 
   info("Waiting for plugin info");
   let pluginInfo = await promiseForPluginInfo("test");
-  is(pluginInfo.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_BLOCKLISTED,
-     "Test 26, plugin fallback type should be PLUGIN_BLOCKLISTED");
+  is(
+    pluginInfo.pluginFallbackType,
+    Ci.nsIObjectLoadingContent.PLUGIN_BLOCKLISTED,
+    "Test 26, plugin fallback type should be PLUGIN_BLOCKLISTED"
+  );
   ok(!pluginInfo.activated, "Plugin should be activated.");
 });
