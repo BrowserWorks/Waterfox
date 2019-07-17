@@ -6,34 +6,54 @@
 
 var EXPORTED_SYMBOLS = ["SyncTelemetry"];
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
-const {AuthenticationError} = ChromeUtils.import("resource://services-sync/browserid_identity.js");
-const {Weave} = ChromeUtils.import("resource://services-sync/main.js");
-const {Status} = ChromeUtils.import("resource://services-sync/status.js");
-const {Svc} = ChromeUtils.import("resource://services-sync/util.js");
-const {Resource} = ChromeUtils.import("resource://services-sync/resource.js");
-const {Observers} = ChromeUtils.import("resource://services-common/observers.js");
-const {Async} = ChromeUtils.import("resource://services-common/async.js");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Log } = ChromeUtils.import("resource://gre/modules/Log.jsm");
+const { AuthenticationError } = ChromeUtils.import(
+  "resource://services-sync/browserid_identity.js"
+);
+const { Weave } = ChromeUtils.import("resource://services-sync/main.js");
+const { Status } = ChromeUtils.import("resource://services-sync/status.js");
+const { Svc } = ChromeUtils.import("resource://services-sync/util.js");
+const { Resource } = ChromeUtils.import("resource://services-sync/resource.js");
+const { Observers } = ChromeUtils.import(
+  "resource://services-common/observers.js"
+);
+const { Async } = ChromeUtils.import("resource://services-common/async.js");
 
 let constants = {};
 ChromeUtils.import("resource://services-sync/constants.js", constants);
 
-ChromeUtils.defineModuleGetter(this, "TelemetryController",
-                              "resource://gre/modules/TelemetryController.jsm");
-ChromeUtils.defineModuleGetter(this, "TelemetryUtils",
-                               "resource://gre/modules/TelemetryUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "TelemetryEnvironment",
-                               "resource://gre/modules/TelemetryEnvironment.jsm");
-ChromeUtils.defineModuleGetter(this, "ObjectUtils",
-                               "resource://gre/modules/ObjectUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "OS",
-                               "resource://gre/modules/osfile.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "TelemetryController",
+  "resource://gre/modules/TelemetryController.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "TelemetryUtils",
+  "resource://gre/modules/TelemetryUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "TelemetryEnvironment",
+  "resource://gre/modules/TelemetryEnvironment.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "ObjectUtils",
+  "resource://gre/modules/ObjectUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
-XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
-                                   "@mozilla.org/base/telemetry;1",
-                                   "nsITelemetry");
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "Telemetry",
+  "@mozilla.org/base/telemetry;1",
+  "nsITelemetry"
+);
 
 const log = Log.repository.getLogger("Sync.Telemetry");
 
@@ -60,17 +80,28 @@ const PING_FORMAT_VERSION = 1;
 const EMPTY_UID = "0".repeat(32);
 
 // The set of engines we record telemetry for - any other engines are ignored.
-const ENGINES = new Set(["addons", "bookmarks", "clients", "forms", "history",
-                         "passwords", "prefs", "tabs", "extension-storage",
-                         "addresses", "creditcards"]);
+const ENGINES = new Set([
+  "addons",
+  "bookmarks",
+  "clients",
+  "forms",
+  "history",
+  "passwords",
+  "prefs",
+  "tabs",
+  "extension-storage",
+  "addresses",
+  "creditcards",
+]);
 
 // A regex we can use to replace the profile dir in error messages. We use a
 // regexp so we can simply replace all case-insensitive occurences.
 // This escaping function is from:
 // https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
 const reProfileDir = new RegExp(
-        OS.Constants.Path.profileDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-        "gi");
+  OS.Constants.Path.profileDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  "gi"
+);
 
 function tryGetMonotonicTimestamp() {
   try {
@@ -100,11 +131,13 @@ function normalizeExtraTelemetryFields(extra) {
     if (type == "string") {
       result[key] = cleanErrorMessage(value);
     } else if (type == "number") {
-      result[key] = Number.isInteger(value) ? value.toString(10) :
-                    value.toFixed(3);
+      result[key] = Number.isInteger(value)
+        ? value.toString(10)
+        : value.toFixed(3);
     } else if (type != "undefined") {
-      throw new TypeError(`Invalid type ${
-        type} for extra telemetry field ${key}`);
+      throw new TypeError(
+        `Invalid type ${type} for extra telemetry field ${key}`
+      );
     }
   }
   return ObjectUtils.isEmpty(result) ? undefined : result;
@@ -118,15 +151,21 @@ function validateTelemetryEvent(eventDetails) {
   let { object, method, value, extra } = eventDetails;
   // Do do basic validation of the params - everything except "extra" must
   // be a string. method and object are required.
-  if (typeof method != "string" || typeof object != "string" ||
-      (value && typeof value != "string") ||
-      (extra && typeof extra != "object")) {
+  if (
+    typeof method != "string" ||
+    typeof object != "string" ||
+    (value && typeof value != "string") ||
+    (extra && typeof extra != "object")
+  ) {
     log.warn("Invalid event parameters - wrong types", eventDetails);
     return false;
   }
   // length checks.
-  if (method.length > 20 || object.length > 20 ||
-      (value && value.length > 80)) {
+  if (
+    method.length > 20 ||
+    object.length > 20 ||
+    (value && value.length > 80)
+  ) {
     log.warn("Invalid event parameters - wrong lengths", eventDetails);
     return false;
   }
@@ -138,9 +177,16 @@ function validateTelemetryEvent(eventDetails) {
       return false;
     }
     for (let [ename, evalue] of Object.entries(extra)) {
-      if (typeof ename != "string" || ename.length > 15 ||
-          typeof evalue != "string" || evalue.length > 85) {
-        log.warn(`Invalid event parameters: extra item "${ename} is invalid`, eventDetails);
+      if (
+        typeof ename != "string" ||
+        ename.length > 15 ||
+        typeof evalue != "string" ||
+        evalue.length > 85
+      ) {
+        log.warn(
+          `Invalid event parameters: extra item "${ename} is invalid`,
+          eventDetails
+        );
         return false;
       }
     }
@@ -165,8 +211,14 @@ class EngineRecord {
 
   toJSON() {
     let result = { name: this.overrideTelemetryName || this.name };
-    let properties = ["took", "status", "failureReason", "incoming", "outgoing",
-      "validation"];
+    let properties = [
+      "took",
+      "status",
+      "failureReason",
+      "incoming",
+      "outgoing",
+      "validation",
+    ];
     for (let property of properties) {
       result[property] = this[property];
     }
@@ -185,7 +237,9 @@ class EngineRecord {
 
   recordApplied(counts) {
     if (this.incoming) {
-      log.error(`Incoming records applied multiple times for engine ${this.name}!`);
+      log.error(
+        `Incoming records applied multiple times for engine ${this.name}!`
+      );
       return;
     }
     if (this.name === "clients" && !counts.failed) {
@@ -219,7 +273,7 @@ class EngineRecord {
     if (duration > 0) {
       validation.took = Math.round(duration);
     }
-    let summarized = problems.getSummary(true).filter(({count}) => count > 0);
+    let summarized = problems.getSummary(true).filter(({ count }) => count > 0);
     if (summarized.length) {
       validation.problems = summarized;
     }
@@ -293,7 +347,9 @@ class TelemetryRecord {
   finished(error) {
     this.took = timeDeltaFrom(this.startTime);
     if (this.currentEngine != null) {
-      log.error("Finished called for the sync before the current engine finished");
+      log.error(
+        "Finished called for the sync before the current engine finished"
+      );
       this.currentEngine.finished(null);
       this.onEngineStop(this.currentEngine.name);
     }
@@ -310,7 +366,9 @@ class TelemetryRecord {
     let includeDeviceInfo = false;
     try {
       this.uid = Weave.Service.identity.hashedUID();
-      this.deviceID = Weave.Service.identity.hashedDeviceID(Weave.Service.clientsEngine.localID);
+      this.deviceID = Weave.Service.identity.hashedDeviceID(
+        Weave.Service.clientsEngine.localID
+      );
       includeDeviceInfo = true;
     } catch (e) {
       this.uid = EMPTY_UID;
@@ -357,8 +415,11 @@ class TelemetryRecord {
     }
 
     if (this.currentEngine) {
-      log.error(`Being told that engine ${engineName} has started, but current engine ${
-        this.currentEngine.name} hasn't stopped`);
+      log.error(
+        `Being told that engine ${engineName} has started, but current engine ${
+          this.currentEngine.name
+        } hasn't stopped`
+      );
       // Just discard the current engine rather than making up data for it.
     }
     this.currentEngine = new EngineRecord(engineName);
@@ -375,7 +436,9 @@ class TelemetryRecord {
       if (!error) {
         return;
       }
-      log.error(`Error triggered on ${engineName} when no current engine exists: ${error}`);
+      log.error(
+        `Error triggered on ${engineName} when no current engine exists: ${error}`
+      );
       this.currentEngine = new EngineRecord(engineName);
     }
     this.currentEngine.finished(error);
@@ -395,13 +458,19 @@ class TelemetryRecord {
       return;
     }
     let engine = this.engines.find(e => e.name === engineName);
-    if (!engine && this.currentEngine && engineName === this.currentEngine.name) {
+    if (
+      !engine &&
+      this.currentEngine &&
+      engineName === this.currentEngine.name
+    ) {
       engine = this.currentEngine;
     }
     if (engine) {
       engine.recordValidation(validationData);
     } else {
-      log.warn(`Validation event triggered for engine ${engineName}, which hasn't been synced!`);
+      log.warn(
+        `Validation event triggered for engine ${engineName}, which hasn't been synced!`
+      );
     }
   }
 
@@ -410,13 +479,19 @@ class TelemetryRecord {
       return;
     }
     let engine = this.engines.find(e => e.name === engineName);
-    if (!engine && this.currentEngine && engineName === this.currentEngine.name) {
+    if (
+      !engine &&
+      this.currentEngine &&
+      engineName === this.currentEngine.name
+    ) {
       engine = this.currentEngine;
     }
     if (engine) {
       engine.recordValidationError(error);
     } else {
-      log.warn(`Validation failure event triggered for engine ${engineName}, which hasn't been synced!`);
+      log.warn(
+        `Validation failure event triggered for engine ${engineName}, which hasn't been synced!`
+      );
     }
   }
 
@@ -429,7 +504,9 @@ class TelemetryRecord {
 
   _shouldIgnoreEngine(engineName, shouldBeCurrent = true) {
     if (!this.allowedEngines.has(engineName)) {
-      log.info(`Notification for engine ${engineName}, but we aren't recording telemetry for it`);
+      log.info(
+        `Notification for engine ${engineName}, but we aren't recording telemetry for it`
+      );
       return true;
     }
     if (shouldBeCurrent) {
@@ -473,7 +550,8 @@ class SyncTelemetryImpl {
     this.histograms = {};
     this.maxEventsCount = Svc.Prefs.get("telemetry.maxEventsCount", 1000);
     this.maxPayloadCount = Svc.Prefs.get("telemetry.maxPayloadCount");
-    this.submissionInterval = Svc.Prefs.get("telemetry.submissionInterval") * 1000;
+    this.submissionInterval =
+      Svc.Prefs.get("telemetry.submissionInterval") * 1000;
     this.lastSubmissionTime = Telemetry.msSinceProcessStart();
     this.lastUID = EMPTY_UID;
     this.lastDeviceID = undefined;
@@ -484,7 +562,8 @@ class SyncTelemetryImpl {
     // telemetry modules to expose what it thinks the sessionStartDate is.
     let sessionStartDate = new Date();
     this.sessionStartDate = TelemetryUtils.toLocalTimeISOString(
-      TelemetryUtils.truncateToHours(sessionStartDate));
+      TelemetryUtils.truncateToHours(sessionStartDate)
+    );
   }
 
   getPingJSON(reason) {
@@ -498,7 +577,8 @@ class SyncTelemetryImpl {
       deviceID: this.lastDeviceID,
       sessionStartDate: this.sessionStartDate,
       events: this.events.length == 0 ? undefined : this.events,
-      histograms: Object.keys(this.histograms).length == 0 ? undefined : this.histograms,
+      histograms:
+        Object.keys(this.histograms).length == 0 ? undefined : this.histograms,
     };
   }
 
@@ -527,8 +607,10 @@ class SyncTelemetryImpl {
   }
 
   submit(record) {
-    if (Services.prefs.prefHasUserValue("identity.sync.tokenserver.uri") ||
-      Services.prefs.prefHasUserValue("services.sync.tokenServerURI")) {
+    if (
+      Services.prefs.prefHasUserValue("identity.sync.tokenserver.uri") ||
+      Services.prefs.prefHasUserValue("services.sync.tokenServerURI")
+    ) {
       log.trace(`Not sending telemetry ping for self-hosted Sync user`);
       return false;
     }
@@ -536,9 +618,13 @@ class SyncTelemetryImpl {
     // know that the ping was built. We don't end up submitting them, however.
     let numEvents = record.events ? record.events.length : 0;
     if (record.syncs.length || numEvents) {
-      log.trace(`submitting ${record.syncs.length} sync record(s) and ` +
-                `${numEvents} event(s) to telemetry`);
-      TelemetryController.submitExternalPing("sync", record, { usePingSender: true });
+      log.trace(
+        `submitting ${record.syncs.length} sync record(s) and ` +
+          `${numEvents} event(s) to telemetry`
+      );
+      TelemetryController.submitExternalPing("sync", record, {
+        usePingSender: true,
+      });
       return true;
     }
     return false;
@@ -547,7 +633,9 @@ class SyncTelemetryImpl {
   onSyncStarted(data) {
     const why = data && JSON.parse(data).why;
     if (this.current) {
-      log.warn("Observed weave:service:sync:start, but we're already recording a sync!");
+      log.warn(
+        "Observed weave:service:sync:start, but we're already recording a sync!"
+      );
       // Just discard the old record, consistent with our handling of engines, above.
       this.current = null;
     }
@@ -556,7 +644,9 @@ class SyncTelemetryImpl {
 
   _checkCurrent(topic) {
     if (!this.current) {
-      log.warn(`Observed notification ${topic} but no current sync is being recorded.`);
+      log.warn(
+        `Observed notification ${topic} but no current sync is being recorded.`
+      );
       return false;
     }
     return true;
@@ -584,7 +674,9 @@ class SyncTelemetryImpl {
     }
     this.current.finished(error);
     if (this.payloads.length) {
-      if (this.shouldSubmitForIDChange(this.current.uid, this.current.deviceID)) {
+      if (
+        this.shouldSubmitForIDChange(this.current.uid, this.current.deviceID)
+      ) {
         log.info("Early submission of sync telemetry due to changed IDs");
         this.finish("idchange");
         this.lastSubmissionTime = Telemetry.msSinceProcessStart();
@@ -603,16 +695,19 @@ class SyncTelemetryImpl {
       ++this.discarded;
     }
     this.current = null;
-    if ((Telemetry.msSinceProcessStart() - this.lastSubmissionTime) > this.submissionInterval) {
+    if (
+      Telemetry.msSinceProcessStart() - this.lastSubmissionTime >
+      this.submissionInterval
+    ) {
       this.finish("schedule");
       this.lastSubmissionTime = Telemetry.msSinceProcessStart();
     }
   }
 
   _addHistogram(hist) {
-      let histogram = Telemetry.getHistogramById(hist);
-      let s = histogram.snapshot();
-      this.histograms[hist] = s;
+    let histogram = Telemetry.getHistogramById(hist);
+    let s = histogram.snapshot();
+    this.histograms[hist] = s;
   }
 
   _recordEvent(eventDetails) {
@@ -764,9 +859,8 @@ class SyncTelemetryImpl {
       return { name: "autherror", from: error.source };
     }
 
-    let httpCode = error.status ||
-      (error.response && error.response.status) ||
-      error.code;
+    let httpCode =
+      error.status || (error.response && error.response.status) || error.code;
 
     if (httpCode) {
       return { name: "httperror", code: httpCode };

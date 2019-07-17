@@ -1,10 +1,15 @@
 const { Constructor: CC } = Components;
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {BlocklistClients} = ChromeUtils.import("resource://services-common/blocklist-clients.js");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { BlocklistClients } = ChromeUtils.import(
+  "resource://services-common/blocklist-clients.js"
+);
 
-const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
-  "nsIBinaryInputStream", "setInputStream");
+const BinaryInputStream = CC(
+  "@mozilla.org/binaryinputstream;1",
+  "nsIBinaryInputStream",
+  "setInputStream"
+);
 
 let server;
 
@@ -16,24 +21,33 @@ add_task(async function test_something() {
   const dummyServerURL = `http://localhost:${server.identity.primaryPort}/v1`;
   Services.prefs.setCharPref("services.settings.server", dummyServerURL);
 
-  const {OneCRLBlocklistClient} = BlocklistClients.initialize({verifySignature: false});
+  const { OneCRLBlocklistClient } = BlocklistClients.initialize({
+    verifySignature: false,
+  });
 
   // register a handler
   function handleResponse(request, response) {
     try {
       const sample = getSampleResponse(request, server.identity.primaryPort);
       if (!sample) {
-        do_throw(`unexpected ${request.method} request for ${request.path}?${request.queryString}`);
+        do_throw(
+          `unexpected ${request.method} request for ${request.path}?${
+            request.queryString
+          }`
+        );
       }
 
-      response.setStatusLine(null, sample.status.status,
-                             sample.status.statusText);
+      response.setStatusLine(
+        null,
+        sample.status.status,
+        sample.status.statusText
+      );
       // send the headers
       for (let headerLine of sample.sampleHeaders) {
         let headerElements = headerLine.split(":");
         response.setHeader(headerElements[0], headerElements[1].trimLeft());
       }
-      response.setHeader("Date", (new Date()).toUTCString());
+      response.setHeader("Date", new Date().toUTCString());
 
       response.write(sample.responseBody);
     } catch (e) {
@@ -41,8 +55,14 @@ add_task(async function test_something() {
     }
   }
   server.registerPathHandler("/v1/", handleResponse);
-  server.registerPathHandler("/v1/buckets/security-state/collections/onecrl", handleResponse);
-  server.registerPathHandler("/v1/buckets/security-state/collections/onecrl/records", handleResponse);
+  server.registerPathHandler(
+    "/v1/buckets/security-state/collections/onecrl",
+    handleResponse
+  );
+  server.registerPathHandler(
+    "/v1/buckets/security-state/collections/onecrl/records",
+    handleResponse
+  );
 
   // Test an empty db populates from JSON dump.
   await OneCRLBlocklistClient.maybeSync(42);
@@ -109,124 +129,143 @@ function run_test() {
   run_next_test();
 
   registerCleanupFunction(function() {
-    server.stop(() => { });
+    server.stop(() => {});
   });
 }
 
 // get a response for a given request from sample data
 function getSampleResponse(req, port) {
   const responses = {
-    "OPTIONS": {
-      "sampleHeaders": [
+    OPTIONS: {
+      sampleHeaders: [
         "Access-Control-Allow-Headers: Content-Length,Expires,Backoff,Retry-After,Last-Modified,Total-Records,ETag,Pragma,Cache-Control,authorization,content-type,if-none-match,Alert,Next-Page",
         "Access-Control-Allow-Methods: GET,HEAD,OPTIONS,POST,DELETE,OPTIONS",
         "Access-Control-Allow-Origin: *",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": "null",
+      status: { status: 200, statusText: "OK" },
+      responseBody: "null",
     },
     "GET:/v1/?": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({
-        "settings": {
-          "batch_max_requests": 25,
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        settings: {
+          batch_max_requests: 25,
         },
-        "url": `http://localhost:${port}/v1/`,
-        "documentation": "https://kinto.readthedocs.org/",
-        "version": "1.5.1",
-        "commit": "cbc6f58",
-        "hello": "kinto",
+        url: `http://localhost:${port}/v1/`,
+        documentation: "https://kinto.readthedocs.org/",
+        version: "1.5.1",
+        commit: "cbc6f58",
+        hello: "kinto",
       }),
     },
     "GET:/v1/buckets/security-state/collections/onecrl": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"1234\"",
+        'Etag: "1234"',
       ],
-      "status": { status: 200, statusText: "OK" },
-      "responseBody": JSON.stringify({
-        "data": {
-          "id": "onecrl",
-          "last_modified": 1234,
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: {
+          id: "onecrl",
+          last_modified: 1234,
         },
       }),
     },
     "GET:/v1/buckets/security-state/collections/onecrl/records?_expected=2000&_sort=-last_modified&_since=1000": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"3000\"",
+        'Etag: "3000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "issuerName": "MEQxCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwx0aGF3dGUsIEluYy4xHjAcBgNVBAMTFXRoYXd0ZSBFViBTU0wgQ0EgLSBHMw==",
-        "serialNumber": "CrTHPEE6AZSfI3jysin2bA==",
-        "id": "78cf8900-fdea-4ce5-f8fb-b78710617718",
-        "last_modified": 3000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            issuerName:
+              "MEQxCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwx0aGF3dGUsIEluYy4xHjAcBgNVBAMTFXRoYXd0ZSBFViBTU0wgQ0EgLSBHMw==",
+            serialNumber: "CrTHPEE6AZSfI3jysin2bA==",
+            id: "78cf8900-fdea-4ce5-f8fb-b78710617718",
+            last_modified: 3000,
+          },
+        ],
+      }),
     },
     "GET:/v1/buckets/security-state/collections/onecrl/records?_expected=4000&_sort=-last_modified&_since=3000": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"4000\"",
+        'Etag: "4000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "issuerName": "MFkxCzAJBgNVBAYTAk5MMR4wHAYDVQQKExVTdGFhdCBkZXIgTmVkZXJsYW5kZW4xKjAoBgNVBAMTIVN0YWF0IGRlciBOZWRlcmxhbmRlbiBPdmVyaGVpZCBDQQ",
-        "serialNumber": "ATFpsA==",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02c",
-        "last_modified": 4000,
-      }, {
-        "subject": "MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
-        "pubKeyHash": "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02d",
-        "last_modified": 4000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            issuerName:
+              "MFkxCzAJBgNVBAYTAk5MMR4wHAYDVQQKExVTdGFhdCBkZXIgTmVkZXJsYW5kZW4xKjAoBgNVBAMTIVN0YWF0IGRlciBOZWRlcmxhbmRlbiBPdmVyaGVpZCBDQQ",
+            serialNumber: "ATFpsA==",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02c",
+            last_modified: 4000,
+          },
+          {
+            subject: "MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
+            pubKeyHash: "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02d",
+            last_modified: 4000,
+          },
+        ],
+      }),
     },
     "GET:/v1/buckets/security-state/collections/onecrl/records?_expected=5000&_sort=-last_modified&_since=4000": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"5000\"",
+        'Etag: "5000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "issuerName": "not a base64 encoded issuer",
-        "serialNumber": "not a base64 encoded serial",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02e",
-        "last_modified": 5000,
-      }, {
-        "subject": "not a base64 encoded subject",
-        "pubKeyHash": "not a base64 encoded pubKeyHash",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02f",
-        "last_modified": 5000,
-      }, {
-        "subject": "MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
-        "pubKeyHash": "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02g",
-        "last_modified": 5000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            issuerName: "not a base64 encoded issuer",
+            serialNumber: "not a base64 encoded serial",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02e",
+            last_modified: 5000,
+          },
+          {
+            subject: "not a base64 encoded subject",
+            pubKeyHash: "not a base64 encoded pubKeyHash",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02f",
+            last_modified: 5000,
+          },
+          {
+            subject: "MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
+            pubKeyHash: "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02g",
+            last_modified: 5000,
+          },
+        ],
+      }),
     },
   };
-  return responses[`${req.method}:${req.path}?${req.queryString}`] ||
-         responses[`${req.method}:${req.path}`] ||
-         responses[req.method];
+  return (
+    responses[`${req.method}:${req.path}?${req.queryString}`] ||
+    responses[`${req.method}:${req.path}`] ||
+    responses[req.method]
+  );
 }
