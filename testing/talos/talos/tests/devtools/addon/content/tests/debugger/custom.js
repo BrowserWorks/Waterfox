@@ -5,10 +5,23 @@
 "use strict";
 
 const Services = require("Services");
-const { closeToolboxAndLog, garbageCollect, runTest, testSetup,
-        testTeardown, PAGES_BASE_URL } = require("../head");
-const { createContext, openDebuggerAndLog, pauseDebugger, reloadDebuggerAndLog,
-        removeBreakpoints, resume, step } = require("./debugger-helpers");
+const {
+  closeToolboxAndLog,
+  garbageCollect,
+  runTest,
+  testSetup,
+  testTeardown,
+  PAGES_BASE_URL,
+} = require("../head");
+const {
+  createContext,
+  openDebuggerAndLog,
+  pauseDebugger,
+  reloadDebuggerAndLog,
+  removeBreakpoints,
+  resume,
+  step,
+} = require("./debugger-helpers");
 
 const EXPECTED = {
   sources: 107,

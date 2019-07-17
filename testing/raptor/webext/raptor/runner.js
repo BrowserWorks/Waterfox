@@ -1,4 +1,3 @@
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -69,16 +68,16 @@ var debugMode = 0;
 var screenCapture = false;
 
 var results = {
-  "name": "",
-  "page": "",
-  "type": "",
-  "browser_cycle": 0,
-  "expected_browser_cycles": 0,
-  "cold": false,
-  "lower_is_better": true,
-  "alert_change_type": "relative",
-  "alert_threshold": 2.0,
-  "measurements": {},
+  name: "",
+  page: "",
+  type: "",
+  browser_cycle: 0,
+  expected_browser_cycles: 0,
+  cold: false,
+  lower_is_better: true,
+  alert_change_type: "relative",
+  alert_threshold: 2.0,
+  measurements: {},
 };
 
 function getTestSettings() {
@@ -122,7 +121,8 @@ function getTestSettings() {
         results.type = testType;
         results.unit = settings.unit;
         results.subtest_unit = settings.subtest_unit;
-        results.subtest_lower_is_better = settings.subtest_lower_is_better === true;
+        results.subtest_lower_is_better =
+          settings.subtest_lower_is_better === true;
 
         if (settings.gecko_profile === true) {
           results.extra_options = ["gecko_profile"];
@@ -177,16 +177,18 @@ function getTestSettings() {
         }
 
         // write options to storage that our content script needs to know
-        if (["firefox", "geckoview", "refbrow", "fenix"].includes(browserName)) {
+        if (
+          ["firefox", "geckoview", "refbrow", "fenix"].includes(browserName)
+        ) {
           ext.storage.local.clear().then(function() {
-            ext.storage.local.set({settings}).then(function() {
+            ext.storage.local.set({ settings }).then(function() {
               console.log("wrote settings to ext local storage");
               resolve();
             });
           });
         } else {
           ext.storage.local.clear(function() {
-            ext.storage.local.set({settings}, function() {
+            ext.storage.local.set({ settings }, function() {
               console.log("wrote settings to ext local storage");
               resolve();
             });
@@ -224,9 +226,9 @@ function getBrowserInfo() {
 
 function scenarioTimer() {
   postToControlServer("status", `started scenario test timer`);
-    setTimeout(function() {
-      isScenarioPending = false;
-      results.measurements.scenario = [1];
+  setTimeout(function() {
+    isScenarioPending = false;
+    results.measurements.scenario = [1];
   }, scenarioTestTime);
 }
 
@@ -234,7 +236,7 @@ function testTabCreated(tab) {
   testTabID = tab.id;
   postToControlServer("status", `opened new empty tab: ${testTabID}`);
   // update raptor browser toolbar icon text, for a visual indicator when debugging
-  ext.browserAction.setTitle({title: "Raptor RUNNING"});
+  ext.browserAction.setTitle({ title: "Raptor RUNNING" });
 }
 
 function testTabRemoved(tab) {
@@ -264,12 +266,14 @@ async function waitForResult() {
           break;
 
         case TEST_PAGE_LOAD:
-          if (!isHeroPending &&
-              !isFNBPaintPending &&
-              !isFCPPending &&
-              !isDCFPending &&
-              !isTTFIPending &&
-              !isLoadTimePending) {
+          if (
+            !isHeroPending &&
+            !isFNBPaintPending &&
+            !isFCPPending &&
+            !isDCFPending &&
+            !isTTFIPending &&
+            !isLoadTimePending
+          ) {
             resolve();
           } else {
             setTimeout(checkForResult, 250);
@@ -316,7 +320,8 @@ async function getScreenCapture() {
       screenshotUri = await ext.tabs.captureVisibleTab();
     } else {
       screenshotUri = await new Promise(resolve =>
-          ext.tabs.captureVisibleTab(resolve));
+        ext.tabs.captureVisibleTab(resolve)
+      );
     }
     postToControlServer("screenshot", [screenshotUri, testName, pageCycle]);
   } catch (e) {
@@ -325,7 +330,10 @@ async function getScreenCapture() {
 }
 
 async function startGeckoProfiling() {
-  postToControlServer("status", `starting Gecko profiling for threads: ${geckoThreads}`);
+  postToControlServer(
+    "status",
+    `starting Gecko profiling for threads: ${geckoThreads}`
+  );
   await browser.geckoProfiler.start({
     bufferSize: geckoEntries,
     interval: geckoInterval,
@@ -383,16 +391,21 @@ async function nextCycle() {
             isHeroPending = true;
             pendingHeroes = Array.from(settings.measure.hero);
           }
-          if (getFNBPaint)
+          if (getFNBPaint) {
             isFNBPaintPending = true;
-          if (getFCP)
+          }
+          if (getFCP) {
             isFCPPending = true;
-          if (getDCF)
+          }
+          if (getDCF) {
             isDCFPending = true;
-          if (getTTFI)
+          }
+          if (getTTFI) {
             isTTFIPending = true;
-          if (getLoadTime)
+          }
+          if (getLoadTime) {
             isLoadTimePending = true;
+          }
           break;
 
         case TEST_SCENARIO:
@@ -406,32 +419,32 @@ async function nextCycle() {
         postToControlServer("status", `closing Tab: ${testTabID}`);
 
         // open new tab
-        ext.tabs.create({url: "about:blank"});
+        ext.tabs.create({ url: "about:blank" });
         postToControlServer("status", "Open new tab");
       }
       setTimeout(function() {
         postToControlServer("status", `update tab: ${testTabID}`);
         // update the test page - browse to our test URL
-        ext.tabs.update(testTabID, {url: testURL}, testTabUpdated);
+        ext.tabs.update(testTabID, { url: testURL }, testTabUpdated);
         if (testType == TEST_SCENARIO) {
           scenarioTimer();
         }
-        }, newTabDelay);
-      }, pageCycleDelay);
-    } else {
-      verifyResults();
-    }
+      }, newTabDelay);
+    }, pageCycleDelay);
+  } else {
+    verifyResults();
+  }
 }
 
 async function timeoutAlarmListener() {
   console.error(`raptor-page-timeout on ${testURL}`);
 
   var pendingMetrics = {
-    "hero": isHeroPending,
+    hero: isHeroPending,
     "fnb paint": isFNBPaintPending,
-    "fcp": isFCPPending,
-    "dcf": isDCFPending,
-    "ttfi": isTTFIPending,
+    fcp: isFCPPending,
+    dcf: isDCFPending,
+    ttfi: isTTFIPending,
     "load time": isLoadTimePending,
   };
 
@@ -452,13 +465,19 @@ function setTimeoutAlarm(timeoutName, timeoutMS) {
   var now = Date.now(); // eslint-disable-line mozilla/avoid-Date-timing
   var timeout_when = now + timeoutMS;
   ext.alarms.create(timeoutName, { when: timeout_when });
-  console.log(`now is ${now}, set raptor alarm ${timeoutName} to expire ` +
-    `at ${timeout_when}`);
+  console.log(
+    `now is ${now}, set raptor alarm ${timeoutName} to expire ` +
+      `at ${timeout_when}`
+  );
 }
 
 function cancelTimeoutAlarm(timeoutName) {
-  if (browserName === "firefox" || browserName === "geckoview" ||
-      browserName === "refbrow" || browserName === "fenix") {
+  if (
+    browserName === "firefox" ||
+    browserName === "geckoview" ||
+    browserName === "refbrow" ||
+    browserName === "fenix"
+  ) {
     var clearAlarm = ext.alarms.clear(timeoutName);
     clearAlarm.then(function(onCleared) {
       if (onCleared) {
@@ -482,10 +501,11 @@ function resultListener(request, sender, sendResponse) {
   console.log(`received message from ${sender.tab.url}`);
   if (request.type && request.value) {
     console.log(`result: ${request.type} ${request.value}`);
-    sendResponse({text: `confirmed ${request.type}`});
+    sendResponse({ text: `confirmed ${request.type}` });
 
-    if (!(request.type in results.measurements))
+    if (!(request.type in results.measurements)) {
       results.measurements[request.type] = [];
+    }
 
     switch (testType) {
       case TEST_BENCHMARK:
@@ -539,8 +559,10 @@ function verifyResults() {
     if (count == pageCycles) {
       console.log(`have ${count} results for ${x}, as expected`);
     } else {
-      console.log(`ERROR: expected ${pageCycles} results for ${x} ` +
-                  `but only have ${count}`);
+      console.log(
+        `ERROR: expected ${pageCycles} results for ${x} ` +
+          `but only have ${count}`
+      );
     }
   }
   postToControlServer("results", results);
@@ -566,7 +588,7 @@ function postToControlServer(msgType, msgData) {
   if (client.readyState == 1) {
     console.log("posting to control server");
     console.log(msgData);
-    var data = { "type": `webext_${msgType}`, "data": msgData};
+    var data = { type: `webext_${msgType}`, data: msgData };
     client.send(JSON.stringify(data));
   }
   if (msgType == "results") {
@@ -636,17 +658,23 @@ function raptorRunner() {
 
       // create new empty tab, which starts the test; we want to
       // wait some time for the browser to settle before beginning
-      let text = `* pausing ${postStartupDelay / 1000} seconds to let browser settle... *`;
+      let text = `* pausing ${postStartupDelay /
+        1000} seconds to let browser settle... *`;
       postToControlServer("status", text);
 
       // setTimeout(function() { nextCycle(); }, postStartupDelay);
       // on geckoview you can't create a new tab; only using existing tab - set it blank first
-      if (config.browser == "geckoview" || config.browser == "refbrow" ||
-          config.browser == "fenix") {
-        setTimeout(function() { nextCycle(); }, postStartupDelay);
+      if (
+        config.browser == "geckoview" ||
+        config.browser == "refbrow" ||
+        config.browser == "fenix"
+      ) {
+        setTimeout(function() {
+          nextCycle();
+        }, postStartupDelay);
       } else {
         setTimeout(function() {
-          ext.tabs.create({url: "about:blank"});
+          ext.tabs.create({ url: "about:blank" });
           nextCycle();
         }, postStartupDelay);
       }

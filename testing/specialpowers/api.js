@@ -4,20 +4,30 @@
 
 /* globals ExtensionAPI */
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyServiceGetter(this, "resProto",
-                                   "@mozilla.org/network/protocol;1?name=resource",
-                                   "nsISubstitutingProtocolHandler");
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "resProto",
+  "@mozilla.org/network/protocol;1?name=resource",
+  "nsISubstitutingProtocolHandler"
+);
 
 this.specialpowers = class extends ExtensionAPI {
   onStartup() {
     let uri = Services.io.newURI("content/", null, this.extension.rootURI);
-    resProto.setSubstitutionWithFlags("specialpowers", uri,
-                                      resProto.ALLOW_CONTENT_ACCESS);
+    resProto.setSubstitutionWithFlags(
+      "specialpowers",
+      uri,
+      resProto.ALLOW_CONTENT_ACCESS
+    );
 
-    const {SpecialPowersObserver} = ChromeUtils.import("resource://specialpowers/SpecialPowersObserver.jsm");
+    const { SpecialPowersObserver } = ChromeUtils.import(
+      "resource://specialpowers/SpecialPowersObserver.jsm"
+    );
     this.observer = new SpecialPowersObserver();
     this.observer.init();
   }
