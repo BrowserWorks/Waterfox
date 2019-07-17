@@ -883,6 +883,7 @@ nsDefaultCommandLineHandler.prototype = {
           Services.dirsvc.get("ProfD", Ci.nsIFile);
           this._haveProfile = true;
         } catch (e) {
+          // eslint-disable-next-line no-empty
           while ((ar = cmdLine.handleFlagWithParam("url", false))) {}
           cmdLine.preventDefault = true;
         }

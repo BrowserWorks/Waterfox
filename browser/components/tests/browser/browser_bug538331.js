@@ -79,7 +79,7 @@ const BCH_TESTS = [
   },
   {
     description:
-      "update with 'showNotification showURL' for actions and " + "openURL",
+      "update with 'showNotification showURL' for actions and openURL",
     actions: "showNotification showURL",
     openURL: DEFAULT_UPDATE_URL,
   },
