@@ -8,18 +8,23 @@
  * Check basic step-out functionality.
  */
 
-add_task(threadClientTest(async ({ threadClient, debuggee, client }) => {
-  dumpn("Evaluating test code and waiting for first debugger statement");
-  await executeOnNextTickAndWaitForPause(() => evaluateTestCode(debuggee), client);
+add_task(
+  threadClientTest(async ({ threadClient, debuggee, client }) => {
+    dumpn("Evaluating test code and waiting for first debugger statement");
+    await executeOnNextTickAndWaitForPause(
+      () => evaluateTestCode(debuggee),
+      client
+    );
 
-  const step1 = await stepOut(client, threadClient);
-  equal(step1.type, "paused");
-  equal(step1.frame.where.line, 8);
-  equal(step1.why.type, "resumeLimit");
+    const step1 = await stepOut(client, threadClient);
+    equal(step1.type, "paused");
+    equal(step1.frame.where.line, 8);
+    equal(step1.why.type, "resumeLimit");
 
-  equal(debuggee.a, 1);
-  equal(debuggee.b, 2);
-}));
+    equal(debuggee.a, 1);
+    equal(debuggee.b, 2);
+  })
+);
 
 function evaluateTestCode(debuggee) {
   /* eslint-disable */

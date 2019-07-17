@@ -8,28 +8,29 @@
  * Check that setting breakpoints when the debuggee is running works.
  */
 
-add_task(threadClientTest(({ threadClient, debuggee }) => {
-  return new Promise((resolve) => {
-    threadClient.addOneTimeListener("paused", async function(event, packet) {
-      const source = await getSourceById(
-        threadClient,
-        packet.frame.where.actor
-      );
-      const location = { sourceUrl: source.url, line: debuggee.line0 + 3 };
+add_task(
+  threadClientTest(({ threadClient, debuggee }) => {
+    return new Promise(resolve => {
+      threadClient.addOneTimeListener("paused", async function(event, packet) {
+        const source = await getSourceById(
+          threadClient,
+          packet.frame.where.actor
+        );
+        const location = { sourceUrl: source.url, line: debuggee.line0 + 3 };
 
-      threadClient.resume();
+        threadClient.resume();
 
-      // Setting the breakpoint later should interrupt the debuggee.
-      threadClient.addOneTimeListener("paused", function(event, packet) {
-        Assert.equal(packet.type, "paused");
-        Assert.equal(packet.why.type, "interrupted");
+        // Setting the breakpoint later should interrupt the debuggee.
+        threadClient.addOneTimeListener("paused", function(event, packet) {
+          Assert.equal(packet.type, "paused");
+          Assert.equal(packet.why.type, "interrupted");
+        });
+
+        threadClient.setBreakpoint(location, {});
+        executeSoon(resolve);
       });
 
-      threadClient.setBreakpoint(location, {});
-      executeSoon(resolve);
-    });
-
-    /* eslint-disable */
+      /* eslint-disable */
     Cu.evalInSandbox(
       "var line0 = Error().lineNumber;\n" +
       "debugger;\n" +
@@ -38,5 +39,6 @@ add_task(threadClientTest(({ threadClient, debuggee }) => {
       debuggee
     );
     /* eslint-enable */
-  });
-}));
+    });
+  })
+);

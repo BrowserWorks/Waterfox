@@ -1,6 +1,6 @@
 "use strict";
 
-const {Cc} = require("chrome");
+const { Cc } = require("chrome");
 const cpmm = Cc["@mozilla.org/childprocessmessagemanager;1"].getService();
 const { DebuggerServer } = require("devtools/server/main");
 
@@ -13,9 +13,10 @@ exports.callParent = function() {
   for (const id in DebuggerServer._connections) {
     const conn = DebuggerServer._connections[id];
     conn.setupInParent({
-      module: "chrome://mochitests/content/chrome/devtools/server/tests/mochitest/setup-in-parent.js",
+      module:
+        "chrome://mochitests/content/chrome/devtools/server/tests/mochitest/setup-in-parent.js",
       setupParent: "setupParent",
-      args: [{one: true}, 2, "three"],
+      args: [{ one: true }, 2, "three"],
     });
   }
 };

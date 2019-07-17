@@ -9,11 +9,14 @@
 
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/shared/test/shared-head.js",
-  this);
+  this
+);
 
-const {DebuggerClient} = require("devtools/shared/client/debugger-client");
-const { ActorRegistry } = require("devtools/server/actors/utils/actor-registry");
-const {DebuggerServer} = require("devtools/server/main");
+const { DebuggerClient } = require("devtools/shared/client/debugger-client");
+const {
+  ActorRegistry,
+} = require("devtools/server/actors/utils/actor-registry");
+const { DebuggerServer } = require("devtools/server/main");
 
 const PATH = "browser/devtools/server/tests/browser/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
@@ -38,7 +41,7 @@ waitForExplicitFinish();
  */
 var addTab = async function(url) {
   info(`Adding a new tab with URL: ${url}`);
-  const tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url);
+  const tab = (gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url));
   await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   info(`Tab added a URL ${url} loaded`);
@@ -49,7 +52,7 @@ var addTab = async function(url) {
 // does almost the same thing as addTab, but directly returns an object
 async function addTabTarget(url) {
   info(`Adding a new tab with URL: ${url}`);
-  const tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url);
+  const tab = (gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url));
   await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
   info(`Tab added a URL ${url} loaded`);
   return getTargetForTab(tab);
@@ -66,14 +69,14 @@ async function initAnimationsFrontForUrl(url) {
   const { inspector, walker, target } = await initInspectorFront(url);
   const animations = await target.getFront("animations");
 
-  return {inspector, walker, animations, target};
+  return { inspector, walker, animations, target };
 }
 
 async function initLayoutFrontForUrl(url) {
-  const {inspector, walker, target} = await initInspectorFront(url);
+  const { inspector, walker, target } = await initInspectorFront(url);
   const layout = await walker.getLayoutInspector();
 
-  return {inspector, walker, layout, target};
+  return { inspector, walker, layout, target };
 }
 
 async function initAccessibilityFrontForUrl(url) {
@@ -84,7 +87,7 @@ async function initAccessibilityFrontForUrl(url) {
 
   await accessibility.bootstrap();
 
-  return {inspector, walker, accessibility, target};
+  return { inspector, walker, accessibility, target };
 }
 
 function initDebuggerServer() {
@@ -104,7 +107,7 @@ async function initPerfFront() {
   const client = new DebuggerClient(DebuggerServer.connectPipe());
   await waitUntilClientConnected(client);
   const front = await client.mainRoot.getFront("perf");
-  return {front, client};
+  return { front, client };
 }
 
 async function initInspectorFront(url) {
@@ -113,7 +116,7 @@ async function initInspectorFront(url) {
   const inspector = await target.getInspector();
   const walker = inspector.walker;
 
-  return {inspector, walker, target};
+  return { inspector, walker, target };
 }
 
 /**
@@ -144,12 +147,16 @@ function once(target, eventName, useCapture = false) {
       ["addListener", "removeListener"],
       ["on", "off"],
     ]) {
-      if ((add in target) && (remove in target)) {
-        target[add](eventName, function onEvent(...aArgs) {
-          info("Got event: '" + eventName + "' on " + target + ".");
-          target[remove](eventName, onEvent, useCapture);
-          resolve(...aArgs);
-        }, useCapture);
+      if (add in target && remove in target) {
+        target[add](
+          eventName,
+          function onEvent(...aArgs) {
+            info("Got event: '" + eventName + "' on " + target + ".");
+            target[remove](eventName, onEvent, useCapture);
+            resolve(...aArgs);
+          },
+          useCapture
+        );
         break;
       }
     }
@@ -206,13 +213,19 @@ function waitUntil(predicate, interval = 10) {
   });
 }
 
-function waitForMarkerType(front, types, predicate,
-                           unpackFun = (name, data) => data.markers,
-                           eventName = "timeline-data") {
+function waitForMarkerType(
+  front,
+  types,
+  predicate,
+  unpackFun = (name, data) => data.markers,
+  eventName = "timeline-data"
+) {
   types = [].concat(types);
-  predicate = predicate || function() {
-    return true;
-  };
+  predicate =
+    predicate ||
+    function() {
+      return true;
+    };
   let filteredMarkers = [];
   const { promise, resolve } = defer();
 
@@ -227,10 +240,13 @@ function waitForMarkerType(front, types, predicate,
     info("Got markers");
 
     filteredMarkers = filteredMarkers.concat(
-      markers.filter(m => types.includes(m.name)));
+      markers.filter(m => types.includes(m.name))
+    );
 
-    if (types.every(t => filteredMarkers.some(m => m.name === t)) &&
-        predicate(filteredMarkers)) {
+    if (
+      types.every(t => filteredMarkers.some(m => m.name === t)) &&
+      predicate(filteredMarkers)
+    ) {
       front.off(eventName, handler);
       resolve(filteredMarkers);
     }
@@ -283,8 +299,11 @@ function checkA11yFront(front, expected, expectedFront) {
     }
 
     if (["actions", "states", "attributes", "checks"].includes(key)) {
-      SimpleTest.isDeeply(front[key], expected[key],
-        `Accessible Front has correct ${key}`);
+      SimpleTest.isDeeply(
+        front[key],
+        expected[key],
+        `Accessible Front has correct ${key}`
+      );
     } else {
       is(front[key], expected[key], `accessibility front has correct ${key}`);
     }
@@ -311,7 +330,8 @@ async function waitForA11yShutdown() {
   }
 
   await getA11yInitOrShutdownPromise().then(data =>
-    data === "0" ? Promise.resolve() : Promise.reject());
+    data === "0" ? Promise.resolve() : Promise.reject()
+  );
 }
 
 /**
@@ -324,5 +344,6 @@ async function waitForA11yInit() {
   }
 
   await getA11yInitOrShutdownPromise().then(data =>
-    data === "1" ? Promise.resolve() : Promise.reject());
+    data === "1" ? Promise.resolve() : Promise.reject()
+  );
 }

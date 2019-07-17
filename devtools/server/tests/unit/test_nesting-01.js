@@ -15,15 +15,18 @@ function run_test() {
   addTestGlobal("test-nesting");
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
   gClient.connect().then(function() {
-    attachTestTabAndResume(
-      gClient, "test-nesting",
-      function(response, targetFront, threadClient) {
-        // Reach over the protocol connection and get a reference to the thread actor.
-        gThreadActor =
-          threadClient._transport._serverConnection.getActor(threadClient._actor);
+    attachTestTabAndResume(gClient, "test-nesting", function(
+      response,
+      targetFront,
+      threadClient
+    ) {
+      // Reach over the protocol connection and get a reference to the thread actor.
+      gThreadActor = threadClient._transport._serverConnection.getActor(
+        threadClient._actor
+      );
 
-        test_nesting();
-      });
+      test_nesting();
+    });
   });
   do_test_pending();
 }

@@ -9,20 +9,79 @@ const Services = require("Services");
 const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
 const { accessibleWalkerSpec } = require("devtools/shared/specs/accessibility");
 
-loader.lazyRequireGetter(this, "AccessibleActor", "devtools/server/actors/accessibility/accessible", true);
-loader.lazyRequireGetter(this, "CustomHighlighterActor", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "DevToolsUtils", "devtools/shared/DevToolsUtils");
+loader.lazyRequireGetter(
+  this,
+  "AccessibleActor",
+  "devtools/server/actors/accessibility/accessible",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "CustomHighlighterActor",
+  "devtools/server/actors/highlighters",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "DevToolsUtils",
+  "devtools/shared/DevToolsUtils"
+);
 loader.lazyRequireGetter(this, "events", "devtools/shared/event-emitter");
-loader.lazyRequireGetter(this, "getCurrentZoom", "devtools/shared/layout/utils", true);
+loader.lazyRequireGetter(
+  this,
+  "getCurrentZoom",
+  "devtools/shared/layout/utils",
+  true
+);
 loader.lazyRequireGetter(this, "InspectorUtils", "InspectorUtils");
-loader.lazyRequireGetter(this, "isDefunct", "devtools/server/actors/utils/accessibility", true);
-loader.lazyRequireGetter(this, "isTypeRegistered", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "isWindowIncluded", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "isXUL", "devtools/server/actors/highlighters/utils/markup", true);
-loader.lazyRequireGetter(this, "loadSheet", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "register", "devtools/server/actors/highlighters", true);
-loader.lazyRequireGetter(this, "removeSheet", "devtools/shared/layout/utils", true);
-loader.lazyRequireGetter(this, "accessibility", "devtools/shared/constants", true);
+loader.lazyRequireGetter(
+  this,
+  "isDefunct",
+  "devtools/server/actors/utils/accessibility",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isTypeRegistered",
+  "devtools/server/actors/highlighters",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isWindowIncluded",
+  "devtools/shared/layout/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isXUL",
+  "devtools/server/actors/highlighters/utils/markup",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "loadSheet",
+  "devtools/shared/layout/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "register",
+  "devtools/server/actors/highlighters",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "removeSheet",
+  "devtools/shared/layout/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "accessibility",
+  "devtools/shared/constants",
+  true
+);
 
 const kStateHover = 0x00000004; // NS_EVENT_STATE_HOVER
 
@@ -140,10 +199,13 @@ function getAudit(acc, report, progress) {
   }
 
   // Audit returns a promise, save the actual value in the report.
-  report.set(acc, acc.audit().then(result => {
-    report.set(acc, result);
-    progress.increment();
-  }));
+  report.set(
+    acc,
+    acc.audit().then(result => {
+      report.set(acc, result);
+      progress.increment();
+    })
+  );
 
   for (const child of acc.children()) {
     getAudit(child, report, progress);
@@ -182,7 +244,7 @@ class AuditProgress {
       return;
     }
 
-    const percentage = Math.round(completed / size * 100);
+    const percentage = Math.round((completed / size) * 100);
     if (percentage > this.percentage) {
       this.percentage = percentage;
       this.notify();
@@ -223,14 +285,19 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
           register("XULWindowAccessibleHighlighter", "xul-accessible");
         }
 
-        this._highlighter = CustomHighlighterActor(this,
-                                                   "XULWindowAccessibleHighlighter");
+        this._highlighter = CustomHighlighterActor(
+          this,
+          "XULWindowAccessibleHighlighter"
+        );
       } else {
         if (!isTypeRegistered("AccessibleHighlighter")) {
           register("AccessibleHighlighter", "accessible");
         }
 
-        this._highlighter = CustomHighlighterActor(this, "AccessibleHighlighter");
+        this._highlighter = CustomHighlighterActor(
+          this,
+          "AccessibleHighlighter"
+        );
       }
 
       this.manage(this._highlighter);
@@ -244,7 +311,8 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     DevToolsUtils.defineLazyGetter(this, "a11yService", () => {
       Services.obs.addObserver(this, "accessible-event");
       return Cc["@mozilla.org/accessibilityService;1"].getService(
-        Ci.nsIAccessibilityService);
+        Ci.nsIAccessibilityService
+      );
     });
   },
 
@@ -270,8 +338,10 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     if (this.refMap.size > 0) {
       try {
         if (this.rootDoc) {
-          this.purgeSubtree(this.getRawAccessibleFor(this.rootDoc),
-                            this.rootDoc);
+          this.purgeSubtree(
+            this.getRawAccessibleFor(this.rootDoc),
+            this.rootDoc
+          );
         }
       } catch (e) {
         // Accessibility service might be already destroyed.
@@ -329,7 +399,11 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
 
     const actor = this.getRef(rawAccessible);
     if (actor && rawAccessible && !actor.isDefunct) {
-      for (let child = rawAccessible.firstChild; child; child = child.nextSibling) {
+      for (
+        let child = rawAccessible.firstChild;
+        child;
+        child = child.nextSibling
+      ) {
         this.purgeSubtree(child);
       }
     }
@@ -397,7 +471,8 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
   getAccessibleFor(domNode) {
     // We need to make sure that the document is loaded processed by a11y first.
     return this.getDocument().then(() =>
-      this.addRef(this.getRawAccessibleFor(domNode.rawNode)));
+      this.addRef(this.getRawAccessibleFor(domNode.rawNode))
+    );
   },
 
   /**
@@ -436,8 +511,10 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
       throw new Error(`Failed to get ancestor for ${accessible}: ${error}`);
     }
 
-    return ancestry.map(parent => (
-      { accessible: parent, children: parent.children() }));
+    return ancestry.map(parent => ({
+      accessible: parent,
+      children: parent.children(),
+    }));
   },
 
   /**
@@ -459,9 +536,15 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     const ancestries = [];
     for (const [acc, audit] of report.entries()) {
       // Filter out audits that have no failing checks.
-      if (audit &&
-          Object.values(audit).some(check => check != null && !check.error &&
-            check.score === accessibility.SCORES.FAIL)) {
+      if (
+        audit &&
+        Object.values(audit).some(
+          check =>
+            check != null &&
+            !check.error &&
+            check.score === accessibility.SCORES.FAIL
+        )
+      ) {
         ancestries.push(this.getAncestry(acc));
       }
     }
@@ -483,10 +566,12 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     this._auditing = this.audit()
       // We do not want to block on audit request, instead fire "audit-event"
       // event when internal audit is finished or failed.
-      .then(ancestries => this.emit("audit-event", {
-        type: "completed",
-        ancestries,
-      }))
+      .then(ancestries =>
+        this.emit("audit-event", {
+          type: "completed",
+          ancestries,
+        })
+      )
       .catch(() => this.emit("audit-event", { type: "error" }))
       .finally(() => {
         this._auditing = null;
@@ -510,7 +595,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     const rawAccessible = event.accessible;
     const accessible = this.getRef(rawAccessible);
 
-    if ((rawAccessible instanceof Ci.nsIAccessibleDocument) && !accessible) {
+    if (rawAccessible instanceof Ci.nsIAccessibleDocument && !accessible) {
       const rootDocAcc = this.getRawAccessibleFor(this.rootDoc);
       if (rawAccessible === rootDocAcc && !isStale(rawAccessible)) {
         this.purgeSubtree(rawAccessible, event.DOMNode);
@@ -522,8 +607,9 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
 
     switch (event.eventType) {
       case EVENT_STATE_CHANGE:
-        const { state, isEnabled } =
-          event.QueryInterface(Ci.nsIAccessibleStateChangeEvent);
+        const { state, isEnabled } = event.QueryInterface(
+          Ci.nsIAccessibleStateChangeEvent
+        );
         const isBusy = state & Ci.nsIAccessibleStates.STATE_BUSY;
         if (accessible) {
           // Only propagate state change events for active accessibles.
@@ -540,9 +626,15 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
         break;
       case EVENT_NAME_CHANGE:
         if (accessible) {
-          events.emit(accessible, "name-change", rawAccessible.name,
-            event.DOMNode == this.rootDoc ?
-              undefined : this.getRef(rawAccessible.parent), this);
+          events.emit(
+            accessible,
+            "name-change",
+            rawAccessible.name,
+            event.DOMNode == this.rootDoc
+              ? undefined
+              : this.getRef(rawAccessible.parent),
+            this
+          );
         }
         break;
       case EVENT_VALUE_CHANGE:
@@ -552,13 +644,20 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
         break;
       case EVENT_DESCRIPTION_CHANGE:
         if (accessible) {
-          events.emit(accessible, "description-change", rawAccessible.description);
+          events.emit(
+            accessible,
+            "description-change",
+            rawAccessible.description
+          );
         }
         break;
       case EVENT_REORDER:
         if (accessible) {
-          accessible.children().forEach(child =>
-            events.emit(child, "index-in-parent-change", child.indexInParent));
+          accessible
+            .children()
+            .forEach(child =>
+              events.emit(child, "index-in-parent-change", child.indexInParent)
+            );
           events.emit(accessible, "reorder", rawAccessible.childCount, this);
         }
         break;
@@ -577,9 +676,15 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
         if (accessible) {
           events.emit(accessible, "text-change", this);
           if (NAME_FROM_SUBTREE_RULE_ROLES.has(rawAccessible.role)) {
-            events.emit(accessible, "name-change", rawAccessible.name,
-              event.DOMNode == this.rootDoc ?
-                undefined : this.getRef(rawAccessible.parent), this);
+            events.emit(
+              accessible,
+              "name-change",
+              rawAccessible.name,
+              event.DOMNode == this.rootDoc
+                ? undefined
+                : this.getRef(rawAccessible.parent),
+              this
+            );
           }
         }
         break;
@@ -593,7 +698,11 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
       // EVENT_ACCELERATOR_CHANGE is currently not fired by gecko accessibility.
       case EVENT_ACCELERATOR_CHANGE:
         if (accessible) {
-          events.emit(accessible, "shortcut-change", accessible.keyboardShortcut);
+          events.emit(
+            accessible,
+            "shortcut-change",
+            accessible.keyboardShortcut
+          );
         }
         break;
       default:
@@ -700,8 +809,10 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     }
 
     const { name, role } = accessible;
-    const shown = this.highlighter.show({ rawNode },
-                                        { ...options, ...bounds, name, role, audit });
+    const shown = this.highlighter.show(
+      { rawNode },
+      { ...options, ...bounds, name, role, audit }
+    );
     this._highlightingAccessible = null;
 
     return shown;
@@ -731,8 +842,10 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    * Check is event handling is allowed.
    */
   _isEventAllowed: function({ view }) {
-    return this.rootWin instanceof Ci.nsIDOMChromeWindow ||
-           isWindowIncluded(this.rootWin, view);
+    return (
+      this.rootWin instanceof Ci.nsIDOMChromeWindow ||
+      isWindowIncluded(this.rootWin, view)
+    );
   },
 
   _preventContentEvent(event) {
@@ -855,8 +968,10 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
         events.emit(this, "picker-accessible-canceled");
         break;
       case event.DOM_VK_C:
-        if ((IS_OSX && event.metaKey && event.altKey) ||
-          (!IS_OSX && event.ctrlKey && event.shiftKey)) {
+        if (
+          (IS_OSX && event.metaKey && event.altKey) ||
+          (!IS_OSX && event.ctrlKey && event.shiftKey)
+        ) {
           this.cancelPick();
           events.emit(this, "picker-accessible-canceled");
         }
@@ -887,7 +1002,11 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
   attachAccessible(rawAccessible, accessibleDocument) {
     // If raw accessible object is defunct or detached, no need to cache it and
     // its ancestry.
-    if (!rawAccessible || isDefunct(rawAccessible) || rawAccessible.indexInParent < 0) {
+    if (
+      !rawAccessible ||
+      isDefunct(rawAccessible) ||
+      rawAccessible.indexInParent < 0
+    ) {
       return null;
     }
 
@@ -944,7 +1063,8 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     const scale = this.pixelRatio / getCurrentZoom(win);
     const rawAccessible = docAcc.getDeepestChildAtPoint(
       event.screenX * scale,
-      event.screenY * scale);
+      event.screenY * scale
+    );
     return this.attachAccessible(rawAccessible, docAcc);
   },
 

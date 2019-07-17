@@ -5,17 +5,33 @@
 "use strict";
 
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { getCurrentZoom, getViewportDimensions } = require("devtools/shared/layout/utils");
+const {
+  getCurrentZoom,
+  getViewportDimensions,
+} = require("devtools/shared/layout/utils");
 const { moveInfobar, createNode } = require("./markup");
 const { truncateString } = require("devtools/shared/inspector/utils");
 
-const { accessibility: { SCORES } } = require("devtools/shared/constants");
+const {
+  accessibility: { SCORES },
+} = require("devtools/shared/constants");
 
 const STRINGS_URI = "devtools/shared/locales/accessibility.properties";
-loader.lazyRequireGetter(this, "LocalizationHelper", "devtools/shared/l10n", true);
-DevToolsUtils.defineLazyGetter(this, "L10N", () => new LocalizationHelper(STRINGS_URI));
+loader.lazyRequireGetter(
+  this,
+  "LocalizationHelper",
+  "devtools/shared/l10n",
+  true
+);
+DevToolsUtils.defineLazyGetter(
+  this,
+  "L10N",
+  () => new LocalizationHelper(STRINGS_URI)
+);
 
-const { accessibility: { AUDIT_TYPE } } = require("devtools/shared/constants");
+const {
+  accessibility: { AUDIT_TYPE },
+} = require("devtools/shared/constants");
 
 // Max string length for truncating accessible name values.
 const MAX_STRING_LENGTH = 50;
@@ -75,10 +91,10 @@ class Infobar {
     const container = createNode(this.win, {
       parent: root,
       attributes: {
-        "class": "infobar-container",
-        "id": "infobar-container",
+        class: "infobar-container",
+        id: "infobar-container",
         "aria-hidden": "true",
-        "hidden": "true",
+        hidden: "true",
       },
       prefix: this.prefix,
     });
@@ -86,8 +102,8 @@ class Infobar {
     const infobar = createNode(this.win, {
       parent: container,
       attributes: {
-        "class": "infobar",
-        "id": "infobar",
+        class: "infobar",
+        id: "infobar",
       },
       prefix: this.prefix,
     });
@@ -95,8 +111,8 @@ class Infobar {
     const infobarText = createNode(this.win, {
       parent: infobar,
       attributes: {
-        "class": "infobar-text",
-        "id": "infobar-text",
+        class: "infobar-text",
+        id: "infobar-text",
       },
       prefix: this.prefix,
     });
@@ -105,8 +121,8 @@ class Infobar {
       nodeType: "span",
       parent: infobarText,
       attributes: {
-        "class": "infobar-role",
-        "id": "infobar-role",
+        class: "infobar-role",
+        id: "infobar-role",
       },
       prefix: this.prefix,
     });
@@ -115,8 +131,8 @@ class Infobar {
       nodeType: "span",
       parent: infobarText,
       attributes: {
-        "class": "infobar-name",
-        "id": "infobar-name",
+        class: "infobar-name",
+        id: "infobar-name",
       },
       prefix: this.prefix,
     });
@@ -292,7 +308,9 @@ class XULWindowInfobar extends Infobar {
       arrow.setAttribute("hidden", "true");
     } else if (isOffScreenOnRight) {
       const leftOffset = rightBoundary - boundsRight;
-      container.style.left = `${rightBoundary - leftOffset - containerHalfWidth}px`;
+      container.style.left = `${rightBoundary -
+        leftOffset -
+        containerHalfWidth}px`;
       arrow.setAttribute("hidden", "true");
     }
 
@@ -328,8 +346,8 @@ class XULWindowInfobar extends Infobar {
     createNode(this.win, {
       parent: this.getElement("infobar"),
       attributes: {
-        "class": "arrow",
-        "id": "arrow",
+        class: "arrow",
+        id: "arrow",
       },
       prefix: this.prefix,
     });
@@ -381,9 +399,7 @@ class Audit {
 
     // A list of audit reports to be shown on the fly when highlighting an accessible
     // object.
-    this.reports = [
-      new ContrastRatio(this),
-    ];
+    this.reports = [new ContrastRatio(this)];
   }
 
   get prefix() {
@@ -399,8 +415,8 @@ class Audit {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "infobar-audit",
-        "id": "infobar-audit",
+        class: "infobar-audit",
+        id: "infobar-audit",
       },
       prefix: this.prefix,
     });
@@ -479,8 +495,8 @@ class ContrastRatio extends AuditReport {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "contrast-ratio-label",
-        "id": "contrast-ratio-label",
+        class: "contrast-ratio-label",
+        id: "contrast-ratio-label",
       },
       prefix: this.prefix,
     });
@@ -489,8 +505,8 @@ class ContrastRatio extends AuditReport {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "contrast-ratio-error",
-        "id": "contrast-ratio-error",
+        class: "contrast-ratio-error",
+        id: "contrast-ratio-error",
       },
       prefix: this.prefix,
       text: L10N.getStr("accessibility.contrast.ratio.error"),
@@ -500,8 +516,8 @@ class ContrastRatio extends AuditReport {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "contrast-ratio",
-        "id": "contrast-ratio-min",
+        class: "contrast-ratio",
+        id: "contrast-ratio-min",
       },
       prefix: this.prefix,
     });
@@ -510,8 +526,8 @@ class ContrastRatio extends AuditReport {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "contrast-ratio-separator",
-        "id": "contrast-ratio-separator",
+        class: "contrast-ratio-separator",
+        id: "contrast-ratio-separator",
       },
       prefix: this.prefix,
     });
@@ -520,8 +536,8 @@ class ContrastRatio extends AuditReport {
       nodeType: "span",
       parent: root,
       attributes: {
-        "class": "contrast-ratio",
-        "id": "contrast-ratio-max",
+        class: "contrast-ratio",
+        id: "contrast-ratio-max",
       },
       prefix: this.prefix,
     });
@@ -531,9 +547,11 @@ class ContrastRatio extends AuditReport {
     value = value.toFixed(2);
     this.setTextContent(el, value);
     el.classList.add(className);
-    el.setAttribute("style",
+    el.setAttribute(
+      "style",
       `--accessibility-highlighter-contrast-ratio-color: rgba(${color});` +
-      `--accessibility-highlighter-contrast-ratio-bg: rgba(${backgroundColor});`);
+        `--accessibility-highlighter-contrast-ratio-bg: rgba(${backgroundColor});`
+    );
     el.removeAttribute("hidden");
   }
 
@@ -548,10 +566,11 @@ class ContrastRatio extends AuditReport {
   update({ [AUDIT_TYPE.CONTRAST]: contrastRatio }) {
     const els = {};
     for (const key of ["label", "min", "max", "error", "separator"]) {
-      const el = els[key] = this.getElement(`contrast-ratio-${key}`);
+      const el = (els[key] = this.getElement(`contrast-ratio-${key}`));
       if (["min", "max"].includes(key)) {
-        Object.values(SCORES).forEach(
-          className => el.classList.remove(className));
+        Object.values(SCORES).forEach(className =>
+          el.classList.remove(className)
+        );
         this.setTextContent(el, "");
       }
 
@@ -564,8 +583,12 @@ class ContrastRatio extends AuditReport {
     }
 
     const { isLargeText, error } = contrastRatio;
-    this.setTextContent(els.label,
-      L10N.getStr(`accessibility.contrast.ratio.label${isLargeText ? ".large" : ""}`));
+    this.setTextContent(
+      els.label,
+      L10N.getStr(
+        `accessibility.contrast.ratio.label${isLargeText ? ".large" : ""}`
+      )
+    );
     els.label.removeAttribute("hidden");
     if (error) {
       els.error.removeAttribute("hidden");
@@ -574,19 +597,37 @@ class ContrastRatio extends AuditReport {
 
     if (contrastRatio.value) {
       const { value, color, score, backgroundColor } = contrastRatio;
-      this._fillAndStyleContrastValue(els.min,
-        { value, className: score, color, backgroundColor });
+      this._fillAndStyleContrastValue(els.min, {
+        value,
+        className: score,
+        color,
+        backgroundColor,
+      });
       return true;
     }
 
     const {
-      min, max, color, backgroundColorMin, backgroundColorMax, scoreMin, scoreMax,
+      min,
+      max,
+      color,
+      backgroundColorMin,
+      backgroundColorMax,
+      scoreMin,
+      scoreMax,
     } = contrastRatio;
-    this._fillAndStyleContrastValue(els.min,
-      { value: min, className: scoreMin, color, backgroundColor: backgroundColorMin });
+    this._fillAndStyleContrastValue(els.min, {
+      value: min,
+      className: scoreMin,
+      color,
+      backgroundColor: backgroundColorMin,
+    });
     els.separator.removeAttribute("hidden");
-    this._fillAndStyleContrastValue(els.max,
-      { value: max, className: scoreMax, color, backgroundColor: backgroundColorMax });
+    this._fillAndStyleContrastValue(els.max, {
+      value: max,
+      className: scoreMax,
+      color,
+      backgroundColor: backgroundColorMax,
+    });
 
     return true;
   }

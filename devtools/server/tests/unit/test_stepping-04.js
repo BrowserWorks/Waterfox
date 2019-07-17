@@ -8,26 +8,31 @@
  * Check that stepping over a function call does not pause inside the function.
  */
 
-add_task(threadClientTest(async ({ threadClient, debuggee, client }) => {
-  dumpn("Evaluating test code and waiting for first debugger statement");
-  await executeOnNextTickAndWaitForPause(() => evaluateTestCode(debuggee), client);
+add_task(
+  threadClientTest(async ({ threadClient, debuggee, client }) => {
+    dumpn("Evaluating test code and waiting for first debugger statement");
+    await executeOnNextTickAndWaitForPause(
+      () => evaluateTestCode(debuggee),
+      client
+    );
 
-  dumpn("Step Over to f()");
-  const step1 = await stepOver(client, threadClient);
-  equal(step1.type, "paused");
-  equal(step1.why.type, "resumeLimit");
-  equal(step1.frame.where.line, 6);
-  equal(debuggee.a, undefined);
-  equal(debuggee.b, undefined);
+    dumpn("Step Over to f()");
+    const step1 = await stepOver(client, threadClient);
+    equal(step1.type, "paused");
+    equal(step1.why.type, "resumeLimit");
+    equal(step1.frame.where.line, 6);
+    equal(debuggee.a, undefined);
+    equal(debuggee.b, undefined);
 
-  dumpn("Step Over f()");
-  const step2 = await stepOver(client, threadClient);
-  equal(step2.type, "paused");
-  equal(step2.frame.where.line, 7);
-  equal(step2.why.type, "resumeLimit");
-  equal(debuggee.a, 1);
-  equal(debuggee.b, undefined);
-}));
+    dumpn("Step Over f()");
+    const step2 = await stepOver(client, threadClient);
+    equal(step2.type, "paused");
+    equal(step2.frame.where.line, 7);
+    equal(step2.why.type, "resumeLimit");
+    equal(debuggee.a, 1);
+    equal(debuggee.b, undefined);
+  })
+);
 
 function evaluateTestCode(debuggee) {
   /* eslint-disable */

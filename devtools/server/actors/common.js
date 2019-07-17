@@ -43,8 +43,10 @@ ActorPool.prototype = {
       // Older style actors use actorPrefix, while protocol.js-based actors use typeName
       const prefix = actor.actorPrefix || actor.typeName;
       if (!prefix) {
-        throw new Error("Actor should precify either `actorPrefix` or `typeName` " +
-                        "attribute");
+        throw new Error(
+          "Actor should precify either `actorPrefix` or `typeName` " +
+            "attribute"
+        );
       }
       actor.actorID = this.conn.allocID(prefix || undefined);
     }
@@ -119,7 +121,7 @@ function GeneratedLocation(actor, line, column, lastColumn) {
   this._actorID = actor ? actor.actorID : undefined;
   this._line = line;
   this._column = column;
-  this._lastColumn = (lastColumn !== undefined) ? lastColumn : column + 1;
+  this._lastColumn = lastColumn !== undefined ? lastColumn : column + 1;
 }
 
 GeneratedLocation.prototype = {
@@ -164,11 +166,13 @@ GeneratedLocation.prototype = {
   },
 
   equals: function(other) {
-    return this.generatedSourceActor.url == other.generatedSourceActor.url &&
-           this.generatedLine === other.generatedLine &&
-           (this.generatedColumn === undefined ||
-            other.generatedColumn === undefined ||
-            this.generatedColumn === other.generatedColumn);
+    return (
+      this.generatedSourceActor.url == other.generatedSourceActor.url &&
+      this.generatedLine === other.generatedLine &&
+      (this.generatedColumn === undefined ||
+        other.generatedColumn === undefined ||
+        this.generatedColumn === other.generatedColumn)
+    );
   },
 
   toJSON: function() {
@@ -204,9 +208,10 @@ exports.GeneratedLocation = GeneratedLocation;
 function expectState(expectedState, methodFunc, activity) {
   return function(...args) {
     if (this.state !== expectedState) {
-      const msg = `Wrong state while ${activity}:` +
-                  `Expected '${expectedState}', ` +
-                  `but current state is '${this.state}'.`;
+      const msg =
+        `Wrong state while ${activity}:` +
+        `Expected '${expectedState}', ` +
+        `but current state is '${this.state}'.`;
       return Promise.reject(new Error(msg));
     }
 

@@ -52,11 +52,7 @@ class InactivePropertyHelper {
     return [
       // Flex container property used on non-flex container.
       {
-        invalidProperties: [
-          "flex-direction",
-          "flex-flow",
-          "flex-wrap",
-        ],
+        invalidProperties: ["flex-direction", "flex-flow", "flex-wrap"],
         when: () => !this.flexContainer,
         fixId: "inactive-css-not-flex-container-fix",
         msgId: "inactive-css-not-flex-container",
@@ -112,9 +108,7 @@ class InactivePropertyHelper {
       },
       // Grid and flex item properties used on non-grid or non-flex item.
       {
-        invalidProperties: [
-          "align-self",
-        ],
+        invalidProperties: ["align-self"],
         when: () => !this.gridItem && !this.flexItem,
         fixId: "inactive-css-not-grid-or-flex-item-fix",
         msgId: "inactive-css-not-grid-or-flex-item",
@@ -122,11 +116,7 @@ class InactivePropertyHelper {
       },
       // Grid and flex container properties used on non-grid or non-flex container.
       {
-        invalidProperties: [
-          "align-content",
-          "align-items",
-          "justify-content",
-        ],
+        invalidProperties: ["align-content", "align-items", "justify-content"],
         when: () => !this.gridContainer && !this.flexContainer,
         fixId: "inactive-css-not-grid-or-flex-container-fix",
         msgId: "inactive-css-not-grid-or-flex-container",
@@ -137,7 +127,10 @@ class InactivePropertyHelper {
 
   get unusedCssEnabled() {
     if (!this._unusedCssEnabled) {
-      this._unusedCssEnabled = Services.prefs.getBoolPref(PREF_UNUSED_CSS_ENABLED, false);
+      this._unusedCssEnabled = Services.prefs.getBoolPref(
+        PREF_UNUSED_CSS_ENABLED,
+        false
+      );
     }
     return this._unusedCssEnabled;
   }
@@ -170,7 +163,7 @@ class InactivePropertyHelper {
    */
   isPropertyUsed(el, elStyle, cssRule, property) {
     if (!this.unusedCssEnabled) {
-      return {used: true};
+      return { used: true };
     }
 
     let fixId = "";
@@ -183,8 +176,9 @@ class InactivePropertyHelper {
       let isRuleConcerned = false;
 
       if (validator.invalidProperties) {
-        isRuleConcerned = validator.invalidProperties === "*" ||
-                          validator.invalidProperties.includes(property);
+        isRuleConcerned =
+          validator.invalidProperties === "*" ||
+          validator.invalidProperties.includes(property);
       } else if (validator.validProperties) {
         isRuleConcerned = !validator.validProperties.includes(property);
       }
@@ -352,9 +346,11 @@ class InactivePropertyHelper {
         return null;
       }
       const position = this.style.position;
-      if (position === "absolute" ||
-          position === "fixed" ||
-          this.style.cssFloat !== "none") {
+      if (
+        position === "absolute" ||
+        position === "fixed" ||
+        this.style.cssFloat !== "none"
+      ) {
         // Out of flow, not a grid item.
         return null;
       }
@@ -362,7 +358,11 @@ class InactivePropertyHelper {
       return null;
     }
 
-    for (let p = node.flattenedTreeParentNode; p; p = p.flattenedTreeParentNode) {
+    for (
+      let p = node.flattenedTreeParentNode;
+      p;
+      p = p.flattenedTreeParentNode
+    ) {
       const style = node.ownerGlobal.getComputedStyle(p);
       const display = style.display;
 
