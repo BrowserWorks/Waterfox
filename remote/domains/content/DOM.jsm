@@ -6,6 +6,8 @@
 
 var EXPORTED_SYMBOLS = ["DOM"];
 
-const {ContentProcessDomain} = ChromeUtils.import("chrome://remote/content/domains/ContentProcessDomain.jsm");
+const { ContentProcessDomain } = ChromeUtils.import(
+  "chrome://remote/content/domains/ContentProcessDomain.jsm"
+);
 
 class DOM extends ContentProcessDomain {}

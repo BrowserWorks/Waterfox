@@ -6,9 +6,15 @@
 
 var EXPORTED_SYMBOLS = ["Target"];
 
-const {Domain} = ChromeUtils.import("chrome://remote/content/domains/Domain.jsm");
-const {TabManager} = ChromeUtils.import("chrome://remote/content/WindowManager.jsm");
-const {TabSession} = ChromeUtils.import("chrome://remote/content/sessions/TabSession.jsm");
+const { Domain } = ChromeUtils.import(
+  "chrome://remote/content/domains/Domain.jsm"
+);
+const { TabManager } = ChromeUtils.import(
+  "chrome://remote/content/WindowManager.jsm"
+);
+const { TabSession } = ChromeUtils.import(
+  "chrome://remote/content/sessions/TabSession.jsm"
+);
 
 let sessionIds = 1;
 
@@ -48,14 +54,16 @@ class Target extends Domain {
   }
 
   async createTarget() {
-    const {targets} = this.session.target;
+    const { targets } = this.session.target;
     const onTarget = targets.once("connect");
     const tab = TabManager.addTab();
     const target = await onTarget;
     if (tab.linkedBrowser != target.browser) {
-      throw new Error("Unexpected tab opened: " + tab.linkedBrowser.currentURI.spec);
+      throw new Error(
+        "Unexpected tab opened: " + tab.linkedBrowser.currentURI.spec
+      );
     }
-    return {targetId: target.id};
+    return { targetId: target.id };
   }
 
   attachToTarget({ targetId }) {
@@ -65,7 +73,12 @@ class Target extends Domain {
       return new Error(`Unable to find target with id '${targetId}'`);
     }
 
-    const session = new TabSession(this.session.connection, target, sessionIds++, this.session);
+    const session = new TabSession(
+      this.session.connection,
+      target,
+      sessionIds++,
+      this.session
+    );
     this.emit("Target.attachedToTarget", {
       targetInfo: {
         type: "page",

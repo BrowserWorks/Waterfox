@@ -28,7 +28,7 @@ add_task(async function testCDP() {
   });
   ok(true, "CDP client has been instantiated");
 
-  const {Browser, Log, Page} = client;
+  const { Browser, Log, Page } = client;
   ok("Browser" in client, "Browser domain is available");
   ok("Log" in client, "Log domain is available");
   ok("Page" in client, "Page domain is available");
@@ -40,8 +40,8 @@ add_task(async function testCDP() {
   Log.enable();
   ok(true, "Log domain has been enabled");
 
-  Log.entryAdded(({entry}) => {
-    const {timestamp, level, text, args} = entry;
+  Log.entryAdded(({ entry }) => {
+    const { timestamp, level, text, args } = entry;
     const msg = text || args.join(" ");
     console.log(`${new Date(timestamp)}\t${level.toUpperCase()}\t${msg}`);
   });
@@ -53,7 +53,10 @@ add_task(async function testCDP() {
   const frameStoppedLoading = Page.frameStoppedLoading();
   const navigatedWithinDocument = Page.navigatedWithinDocument();
   const loadEventFired = Page.loadEventFired();
-  await Page.navigate({url: "data:text/html;charset=utf-8,test-page<script>console.log('foo');</script><script>'</script>"});
+  await Page.navigate({
+    url:
+      "data:text/html;charset=utf-8,test-page<script>console.log('foo');</script><script>'</script>",
+  });
   ok(true, "A new page has been loaded");
 
   await loadEventFired;
