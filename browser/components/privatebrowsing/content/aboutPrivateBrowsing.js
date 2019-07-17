@@ -11,9 +11,11 @@ document.addEventListener("DOMContentLoaded", function() {
   if (!RPMIsWindowPrivate()) {
     document.documentElement.classList.remove("private");
     document.documentElement.classList.add("normal");
-    document.getElementById("startPrivateBrowsing").addEventListener("click", function() {
-      RPMSendAsyncMessage("OpenPrivateWindow");
-    });
+    document
+      .getElementById("startPrivateBrowsing")
+      .addEventListener("click", function() {
+        RPMSendAsyncMessage("OpenPrivateWindow");
+      });
     return;
   }
 
@@ -25,10 +27,16 @@ document.addEventListener("DOMContentLoaded", function() {
   // Variation 1 is specific to the Content Blocking UI.
   let variation = "?variation=1";
 
-  document.getElementById("startTour").setAttribute("href", introURL + variation);
+  document
+    .getElementById("startTour")
+    .setAttribute("href", introURL + variation);
 
-  document.getElementById("learnMore").setAttribute("href",
-    RPMGetFormatURLPref("app.support.baseURL") + "private-browsing");
+  document
+    .getElementById("learnMore")
+    .setAttribute(
+      "href",
+      RPMGetFormatURLPref("app.support.baseURL") + "private-browsing"
+    );
 
   let tpEnabled = RPMGetBoolPref(TP_PB_ENABLED_PREF);
   if (!tpEnabled) {
@@ -48,8 +56,12 @@ function setupSearchUI() {
   document.documentElement.classList.add("search-ui");
 
   // Setup the private browsing myths link.
-  document.getElementById("private-browsing-myths").setAttribute("href",
-    RPMGetFormatURLPref("app.support.baseURL") + "private-browsing-myths");
+  document
+    .getElementById("private-browsing-myths")
+    .setAttribute(
+      "href",
+      RPMGetFormatURLPref("app.support.baseURL") + "private-browsing-myths"
+    );
 
   // Setup the search hand-off box.
   let btn = document.getElementById("search-handoff-button");
@@ -69,7 +81,7 @@ function setupSearchUI() {
   }
 
   function handoffSearch(text) {
-    RPMSendAsyncMessage(SEARCH_HANDOFF_TOPIC, {text});
+    RPMSendAsyncMessage(SEARCH_HANDOFF_TOPIC, { text });
     RPMAddMessageListener(SHOW_SEARCH_TOPIC, showSearch);
     if (text) {
       hideSearch();
@@ -103,5 +115,10 @@ function setupSearchUI() {
   // we need and have it do the common search handoff work for
   // about:newtab and about:privatebrowsing.
   let input = document.getElementById("dummy-input");
-  new window.ContentSearchUIController(input, input.parentNode, "aboutprivatebrowsing", "aboutprivatebrowsing");
+  new window.ContentSearchUIController(
+    input,
+    input.parentNode,
+    "aboutprivatebrowsing",
+    "aboutprivatebrowsing"
+  );
 }

@@ -16,8 +16,9 @@ class LoginList extends ReflectedFluentElement {
       return;
     }
     let loginListTemplate = document.querySelector("#login-list-template");
-    this.attachShadow({mode: "open"})
-        .appendChild(loginListTemplate.content.cloneNode(true));
+    this.attachShadow({ mode: "open" }).appendChild(
+      loginListTemplate.content.cloneNode(true)
+    );
 
     this.reflectFluentStrings();
 
@@ -32,7 +33,9 @@ class LoginList extends ReflectedFluentElement {
     for (let login of this._logins) {
       list.append(new LoginListItem(login));
     }
-    document.l10n.setAttributes(this, "login-list", {count: this._logins.length});
+    document.l10n.setAttributes(this, "login-list", {
+      count: this._logins.length,
+    });
   }
 
   handleEvent(event) {
@@ -41,14 +44,20 @@ class LoginList extends ReflectedFluentElement {
         let query = event.detail.toLocaleLowerCase();
         let matchingLoginGuids;
         if (query) {
-          matchingLoginGuids = this._logins.filter(login => {
-            return login.hostname.toLocaleLowerCase().includes(query) ||
-                   login.username.toLocaleLowerCase().includes(query);
-          }).map(login => login.guid);
+          matchingLoginGuids = this._logins
+            .filter(login => {
+              return (
+                login.hostname.toLocaleLowerCase().includes(query) ||
+                login.username.toLocaleLowerCase().includes(query)
+              );
+            })
+            .map(login => login.guid);
         } else {
           matchingLoginGuids = this._logins.map(login => login.guid);
         }
-        for (let listItem of this.shadowRoot.querySelectorAll("login-list-item")) {
+        for (let listItem of this.shadowRoot.querySelectorAll(
+          "login-list-item"
+        )) {
           if (matchingLoginGuids.includes(listItem.getAttribute("guid"))) {
             if (listItem.hidden) {
               listItem.hidden = false;
@@ -57,7 +66,9 @@ class LoginList extends ReflectedFluentElement {
             listItem.hidden = true;
           }
         }
-        document.l10n.setAttributes(this, "login-list", {count: matchingLoginGuids.length});
+        document.l10n.setAttributes(this, "login-list", {
+          count: matchingLoginGuids.length,
+        });
         break;
       }
       case "AboutLoginsLoginSelected": {
@@ -67,7 +78,9 @@ class LoginList extends ReflectedFluentElement {
           }
           this._selectedItem.classList.toggle("selected", false);
         }
-        this._selectedItem = this.shadowRoot.querySelector(`login-list-item[guid="${event.detail.guid}"]`);
+        this._selectedItem = this.shadowRoot.querySelector(
+          `login-list-item[guid="${event.detail.guid}"]`
+        );
         this._selectedItem.classList.toggle("selected", true);
         break;
       }

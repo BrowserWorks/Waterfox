@@ -6,13 +6,24 @@
 
 var EXPORTED_SYMBOLS = ["AboutLoginsParent"];
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "E10SUtils",
-                               "resource://gre/modules/E10SUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "LoginHelper",
-                               "resource://gre/modules/LoginHelper.jsm");
-ChromeUtils.defineModuleGetter(this, "Services",
-                               "resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "LoginHelper",
+  "resource://gre/modules/LoginHelper.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "Services",
+  "resource://gre/modules/Services.jsm"
+);
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
   return LoginHelper.createLogger("AboutLoginsParent");
@@ -22,26 +33,28 @@ const ABOUT_LOGINS_ORIGIN = "about:logins";
 
 const PRIVILEGED_PROCESS_PREF =
   "browser.tabs.remote.separatePrivilegedContentProcess";
-const PRIVILEGED_PROCESS_ENABLED =
-  Services.prefs.getBoolPref(PRIVILEGED_PROCESS_PREF, false);
+const PRIVILEGED_PROCESS_ENABLED = Services.prefs.getBoolPref(
+  PRIVILEGED_PROCESS_PREF,
+  false
+);
 
 // When the privileged content process is enabled, we expect about:logins
 // to load in it. Otherwise, it's in a normal web content process.
-const EXPECTED_ABOUTLOGINS_REMOTE_TYPE =
-  PRIVILEGED_PROCESS_ENABLED ? E10SUtils.PRIVILEGED_REMOTE_TYPE
-                             : E10SUtils.DEFAULT_REMOTE_TYPE;
+const EXPECTED_ABOUTLOGINS_REMOTE_TYPE = PRIVILEGED_PROCESS_ENABLED
+  ? E10SUtils.PRIVILEGED_REMOTE_TYPE
+  : E10SUtils.DEFAULT_REMOTE_TYPE;
 
 const isValidLogin = login => {
   return !(login.hostname || "").startsWith("chrome://");
 };
 
 const convertSubjectToLogin = subject => {
-    subject.QueryInterface(Ci.nsILoginMetaInfo).QueryInterface(Ci.nsILoginInfo);
-    const login = LoginHelper.loginToVanillaObject(subject);
-    if (!isValidLogin(login)) {
-      return null;
-    }
-    return login;
+  subject.QueryInterface(Ci.nsILoginMetaInfo).QueryInterface(Ci.nsILoginInfo);
+  const login = LoginHelper.loginToVanillaObject(subject);
+  if (!isValidLogin(login)) {
+    return null;
+  }
+  return login;
 };
 
 var AboutLoginsParent = {
@@ -50,8 +63,10 @@ var AboutLoginsParent = {
   // Listeners are added in BrowserGlue.jsm
   receiveMessage(message) {
     // Only respond to messages sent from about:logins.
-    if (message.target.remoteType != EXPECTED_ABOUTLOGINS_REMOTE_TYPE ||
-        message.target.contentPrincipal.originNoSuffix != ABOUT_LOGINS_ORIGIN) {
+    if (
+      message.target.remoteType != EXPECTED_ABOUTLOGINS_REMOTE_TYPE ||
+      message.target.contentPrincipal.originNoSuffix != ABOUT_LOGINS_ORIGIN
+    ) {
       return;
     }
 
@@ -63,30 +78,47 @@ var AboutLoginsParent = {
       }
       case "AboutLogins:OpenSite": {
         let guid = message.data.login.guid;
-        let logins = LoginHelper.searchLoginsWithObject({guid});
+        let logins = LoginHelper.searchLoginsWithObject({ guid });
         if (!logins || logins.length != 1) {
-          log.warn(`AboutLogins:OpenSite: expected to find a login for guid: ${guid} but found ${(logins || []).length}`);
+          log.warn(
+            `AboutLogins:OpenSite: expected to find a login for guid: ${guid} but found ${
+              (logins || []).length
+            }`
+          );
           return;
         }
 
-        message.target.ownerGlobal.openWebLinkIn(logins[0].hostname, "tab", {relatedToCurrent: true});
+        message.target.ownerGlobal.openWebLinkIn(logins[0].hostname, "tab", {
+          relatedToCurrent: true,
+        });
         break;
       }
       case "AboutLogins:Subscribe": {
-        if (!ChromeUtils.nondeterministicGetWeakSetKeys(this._subscribers).length) {
+        if (
+          !ChromeUtils.nondeterministicGetWeakSetKeys(this._subscribers).length
+        ) {
           Services.obs.addObserver(this, "passwordmgr-storage-changed");
         }
         this._subscribers.add(message.target);
 
         let messageManager = message.target.messageManager;
-        messageManager.sendAsyncMessage("AboutLogins:AllLogins", this.getAllLogins());
+        messageManager.sendAsyncMessage(
+          "AboutLogins:AllLogins",
+          this.getAllLogins()
+        );
         break;
       }
       case "AboutLogins:UpdateLogin": {
         let loginUpdates = message.data.login;
-        let logins = LoginHelper.searchLoginsWithObject({guid: loginUpdates.guid});
+        let logins = LoginHelper.searchLoginsWithObject({
+          guid: loginUpdates.guid,
+        });
         if (!logins || logins.length != 1) {
-          log.warn(`AboutLogins:UpdateLogin: expected to find a login for guid: ${loginUpdates.guid} but found ${(logins || []).length}`);
+          log.warn(
+            `AboutLogins:UpdateLogin: expected to find a login for guid: ${
+              loginUpdates.guid
+            } but found ${(logins || []).length}`
+          );
           return;
         }
 
@@ -142,11 +174,15 @@ var AboutLoginsParent = {
   },
 
   messageSubscribers(name, details) {
-    let subscribers = ChromeUtils.nondeterministicGetWeakSetKeys(this._subscribers);
+    let subscribers = ChromeUtils.nondeterministicGetWeakSetKeys(
+      this._subscribers
+    );
     for (let subscriber of subscribers) {
-      if (subscriber.remoteType != EXPECTED_ABOUTLOGINS_REMOTE_TYPE ||
-          !subscriber.contentPrincipal ||
-          subscriber.contentPrincipal.originNoSuffix != ABOUT_LOGINS_ORIGIN) {
+      if (
+        subscriber.remoteType != EXPECTED_ABOUTLOGINS_REMOTE_TYPE ||
+        !subscriber.contentPrincipal ||
+        subscriber.contentPrincipal.originNoSuffix != ABOUT_LOGINS_ORIGIN
+      ) {
         this._subscribers.delete(subscriber);
         continue;
       }
@@ -158,8 +194,8 @@ var AboutLoginsParent = {
 
   getAllLogins() {
     return Services.logins
-                   .getAllLogins()
-                   .filter(isValidLogin)
-                   .map(LoginHelper.loginToVanillaObject);
+      .getAllLogins()
+      .filter(isValidLogin)
+      .map(LoginHelper.loginToVanillaObject);
   },
 };

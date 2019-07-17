@@ -11,8 +11,9 @@ class LoginFilter extends ReflectedFluentElement {
     }
 
     let loginFilterTemplate = document.querySelector("#login-filter-template");
-    this.attachShadow({mode: "open"})
-        .appendChild(loginFilterTemplate.content.cloneNode(true));
+    this.attachShadow({ mode: "open" }).appendChild(
+      loginFilterTemplate.content.cloneNode(true)
+    );
 
     this.reflectFluentStrings();
 
@@ -22,11 +23,13 @@ class LoginFilter extends ReflectedFluentElement {
   handleEvent(event) {
     switch (event.type) {
       case "input": {
-        this.dispatchEvent(new CustomEvent("AboutLoginsFilterLogins", {
-          bubbles: true,
-          composed: true,
-          detail: event.originalTarget.value,
-        }));
+        this.dispatchEvent(
+          new CustomEvent("AboutLoginsFilterLogins", {
+            bubbles: true,
+            composed: true,
+            detail: event.originalTarget.value,
+          })
+        );
         break;
       }
     }
@@ -45,7 +48,9 @@ class LoginFilter extends ReflectedFluentElement {
       return false;
     }
 
-    this.shadowRoot.querySelector("input").placeholder = this.getAttribute(attrName);
+    this.shadowRoot.querySelector("input").placeholder = this.getAttribute(
+      attrName
+    );
     return true;
   }
 }

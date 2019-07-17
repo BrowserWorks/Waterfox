@@ -12,15 +12,19 @@ class ReflectedFluentElement extends HTMLElement {
   reflectFluentStrings() {
     for (let reflectedFluentID of this.constructor.reflectedFluentIDs) {
       if (this.hasAttribute(reflectedFluentID)) {
-        if (this.handleSpecialCaseFluentString &&
-            this.handleSpecialCaseFluentString(reflectedFluentID)) {
+        if (
+          this.handleSpecialCaseFluentString &&
+          this.handleSpecialCaseFluentString(reflectedFluentID)
+        ) {
           continue;
         }
 
         let attrValue = this.getAttribute(reflectedFluentID);
         // Strings that are reflected to their shadowed element are assigned
         // to an attribute name that matches a className on the element.
-        let shadowedElement = this.shadowRoot.querySelector("." + reflectedFluentID);
+        let shadowedElement = this.shadowRoot.querySelector(
+          "." + reflectedFluentID
+        );
         shadowedElement.textContent = attrValue;
       }
     }
@@ -38,8 +42,10 @@ class ReflectedFluentElement extends HTMLElement {
       return;
     }
 
-    if (this.handleSpecialCaseFluentString &&
-        this.handleSpecialCaseFluentString(attr)) {
+    if (
+      this.handleSpecialCaseFluentString &&
+      this.handleSpecialCaseFluentString(attr)
+    ) {
       return;
     }
 
