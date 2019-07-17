@@ -1239,7 +1239,7 @@ LoginManagerStorage_mozStorage.prototype = {
       return false;
     }
 
-    query = "SELECT " + "id, " + "hostname " + "FROM moz_disabledHosts";
+    query = "SELECT id, hostname FROM moz_disabledHosts";
     try {
       let stmt = this._dbConnection.createStatement(query);
       // (no need to execute statement, if it compiled we're good)

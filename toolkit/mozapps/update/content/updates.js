@@ -1002,7 +1002,7 @@ var gDownloadingPage = {
     // Continue download in the background at full speed.
     LOG(
       "gDownloadingPage",
-      "onHide - continuing download in background " + "at full speed"
+      "onHide - continuing download in background at full speed"
     );
     gAUS.downloadUpdate(gUpdates.update, false);
     gUpdates.wiz.cancel();

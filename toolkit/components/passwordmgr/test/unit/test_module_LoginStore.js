@@ -152,7 +152,7 @@ add_task(async function test_load_string_predefined() {
 add_task(async function test_load_string_malformed() {
   let store = new LoginStore(getTempFile(TEST_STORE_FILE_NAME).path);
 
-  let string = '{"logins":[{"hostname":"http://www.example.com",' + '"id":1,';
+  let string = '{"logins":[{"hostname":"http://www.example.com","id":1,';
 
   await OS.File.writeAtomic(store.path, new TextEncoder().encode(string), {
     tmpPath: store.path + ".tmp",
@@ -175,7 +175,7 @@ add_task(async function test_load_string_malformed() {
 add_task(async function test_load_string_malformed_sync() {
   let store = new LoginStore(getTempFile(TEST_STORE_FILE_NAME).path);
 
-  let string = '{"logins":[{"hostname":"http://www.example.com",' + '"id":1,';
+  let string = '{"logins":[{"hostname":"http://www.example.com","id":1,';
 
   await OS.File.writeAtomic(store.path, new TextEncoder().encode(string), {
     tmpPath: store.path + ".tmp",

@@ -573,8 +573,7 @@ var SafeBrowsing = {
       "\n" +
       harmfulURL +
       "\n";
-    update +=
-      "n:1000\ni:test-track-simple\n" + "ad:" + trackerURLs.length + "\n";
+    update += "n:1000\ni:test-track-simple\nad:" + trackerURLs.length + "\n";
     trackerURLs.forEach((trackerURL, i) => {
       update +=
         "a:" + (i + 1) + ":32:" + trackerURL.length + "\n" + trackerURL + "\n";

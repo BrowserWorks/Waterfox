@@ -122,7 +122,7 @@ function promiseInsertLoginInfo(aConnection, aLoginInfo) {
  */
 function promiseInsertDisabledHost(aConnection, aHostname) {
   return aConnection.execute(
-    "INSERT INTO moz_disabledHosts (hostname) " + "VALUES (?)",
+    "INSERT INTO moz_disabledHosts (hostname) VALUES (?)",
     [aHostname]
   );
 }

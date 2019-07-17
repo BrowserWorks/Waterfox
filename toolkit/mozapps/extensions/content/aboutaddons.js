@@ -689,7 +689,8 @@ class PanelList extends HTMLElement {
         ) {
           this.focusHasChanged = true;
           // If the target isn't in the panel, hide. This will close when focus
-          // moves out of the panel, or there's a click started outside the panel.
+          // moves out of the panel, or there's a click started outside the
+          // panel.
         } else if (!e.target || e.target.closest("panel-list") != this) {
           this.hide();
           // Just record that there was a focusin event.
@@ -933,9 +934,9 @@ customElements.define("content-select-dropdown", ContentSelectDropdown);
 
 class ProxyContextMenu extends HTMLElement {
   openPopupAtScreen(...args) {
-    const parentContextMenuPopup = windowRoot.ownerGlobal.document.getElementById(
-      "contentAreaContextMenu"
-    );
+    // prettier-ignore
+    const parentContextMenuPopup =
+      windowRoot.ownerGlobal.document.getElementById("contentAreaContextMenu");
     return parentContextMenuPopup.openPopupAtScreen(...args);
   }
 }
@@ -1114,8 +1115,10 @@ class InlineOptionsBrowser extends HTMLElement {
 
       mm.sendAsyncMessage("Extension:InitBrowser", browserOptions);
 
+      // prettier-ignore
       browser.loadURI(optionsURL, {
-        triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+        triggeringPrincipal:
+          Services.scriptSecurityManager.getSystemPrincipal(),
       });
     });
   }
@@ -1595,7 +1598,8 @@ class AddonCard extends HTMLElement {
         case "install-update":
           this.updateInstall.install().then(
             () => {
-              // The card will update with the new add-on when it gets installed.
+              // The card will update with the new add-on when it gets
+              // installed.
               this.sendEvent("update-installed");
             },
             () => {
@@ -1610,10 +1614,12 @@ class AddonCard extends HTMLElement {
           break;
         case "contribute":
           this.recordActionEvent("contribute");
+          // prettier-ignore
           windowRoot.ownerGlobal.openUILinkIn(addon.contributionURL, "tab", {
-            triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal(
-              {}
-            ),
+            triggeringPrincipal:
+              Services.scriptSecurityManager.createNullPrincipal(
+                {}
+              ),
           });
           break;
         case "preferences":
