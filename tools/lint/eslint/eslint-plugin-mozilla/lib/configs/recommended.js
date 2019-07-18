@@ -16,6 +16,7 @@ module.exports = {
 
   "extends": [
     "eslint:recommended",
+    "plugin:prettier/recommended",
   ],
 
   "globals": {
@@ -29,7 +30,6 @@ module.exports = {
     "Debugger": false,
     "InstallTrigger": false,
     // Specific to Firefox
-    // eslint-disable-next-line max-len
     // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/InternalError
     "InternalError": true,
     "Intl": false,
@@ -44,7 +44,6 @@ module.exports = {
     "saveStack": false,
     "sizeToContent": false,
     // Specific to Firefox
-    // eslint-disable-next-line max-len
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/uneval
     "uneval": false,
   },
@@ -81,40 +80,16 @@ module.exports = {
 
   // When adding items to this file please check for effects on sub-directories.
   "plugins": [
-    "mozilla",
+    "html",
     "no-unsanitized",
   ],
 
   // When adding items to this file please check for effects on all of toolkit
   // and browser
   "rules": {
-    // Require spacing around =>
-    "arrow-spacing": "error",
-
-    // Braces only needed for multi-line arrow function blocks
-    // "arrow-body-style": ["error", "as-needed"]
-
-    // Always require spacing around a single line block
-    "block-spacing": "error",
-
-    // No newline before open brace for a block
-    "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-
-    // Require trailing commas for easy list extension and consistent style.
-    "comma-dangle": ["error", "always-multiline"],
-
-    // No space before always a space after a comma
-    "comma-spacing": ["error", {"after": true, "before": false}],
-
-    // Commas at the end of the line not the start
-    "comma-style": "error",
-
     // Warn about cyclomatic complexity in functions.
     // XXX Get this down to 20?
     "complexity": ["error", 34],
-
-    // Don't require spaces around computed properties
-    "computed-property-spacing": ["error", "never"],
 
     // Functions must always return something or nothing
     "consistent-return": "error",
@@ -124,41 +99,14 @@ module.exports = {
     "constructor-super": "off",
 
     // Require braces around blocks that start a new line
-    // Note that this rule is likely to be overridden on a per-directory basis
-    // very frequently.
-    // "curly": ["error", "multi-line"],
+    "curly": ["error", "all"],
 
     // Encourage the use of dot notation whenever possible.
     "dot-notation": "error",
 
-    // Always require a trailing EOL
-    "eol-last": "error",
-
-    // No spaces between function name and parentheses
-    "func-call-spacing": "error",
-
-    // Require function* name()
-    "generator-star-spacing": ["error", {"after": true, "before": false}],
-
     // XXX This rule line should be removed to enable it. See bug 1487642.
     // Enforce return statements in getters
     "getter-return": "off",
-
-    // Two space indent
-    // "indent": ["error", 2, { "SwitchCase": 1 }],
-
-    // Space after colon not before in property declarations
-    "key-spacing": ["error", {
-      "afterColon": true,
-      "beforeColon": false,
-      "mode": "minimum",
-    }],
-
-    // Require spaces before and after keywords
-    "keyword-spacing": "error",
-
-    // Unix linebreaks
-    "linebreak-style": ["error", "unix"],
 
     // Don't enforce the maximum depth that blocks can be nested. The complexity
     // rule is a better rule to check this.
@@ -185,9 +133,6 @@ module.exports = {
     "mozilla/use-ownerGlobal": "error",
     "mozilla/use-returnValue": "error",
     "mozilla/use-services": "error",
-
-    // Always require parenthesis for new calls
-    // "new-parens": "error",
 
     // Use [] instead of Array()
     "no-array-constructor": "error",
@@ -248,14 +193,6 @@ module.exports = {
     // No single if block inside an else block
     "no-lonely-if": "error",
 
-    // No unnecessary spacing
-    "no-multi-spaces": ["error", { exceptions: {
-      "ArrayExpression": true,
-      "AssignmentExpression": true,
-      "ObjectExpression": true,
-      "VariableDeclarator": true,
-    } }],
-
     // Nested ternary statements are confusing
     "no-nested-ternary": "error",
 
@@ -283,15 +220,9 @@ module.exports = {
     // No declaring variables that hide things like arguments
     "no-shadow-restricted-names": "error",
 
-    // Disallow tabs.
-    "no-tabs": "error",
-
     // Disallow throwing literals (eg. throw "error" instead of
     // throw new Error("error")).
     "no-throw-literal": "error",
-
-    // No trailing whitespace
-    "no-trailing-spaces": "error",
 
     // Disallow the use of Boolean literals in conditional expressions.
     "no-unneeded-ternary": "error",
@@ -324,61 +255,21 @@ module.exports = {
     // Disallow redundant return statements
     "no-useless-return": "error",
 
-    // Disallow whitespace before properties.
-    "no-whitespace-before-property": "error",
-
     // No using with
     "no-with": "error",
 
     // Require object-literal shorthand with ES6 method syntax
     "object-shorthand": ["error", "always", { "avoidQuotes": true }],
 
-    // Prohibit blank lines at the beginning and end of blocks.
-    "padded-blocks": ["error", "never"],
-
-    // Require double-quotes everywhere, except where quotes are escaped
-    // or template literals are used.
-    "quotes": ["error", "double", {
-      "allowTemplateLiterals": true,
-      "avoidEscape": true,
-    }],
-
     // XXX Bug 1487642 - decide if we want to enable this or not.
     // Require generator functions to contain yield
     "require-yield": "off",
+  },
 
-    // No spacing inside rest or spread expressions
-    "rest-spread-spacing": "error",
-
-    // Always require semicolon at end of statement
-    "semi": ["error", "always"],
-
-    // Require space before blocks
-    "space-before-blocks": "error",
-
-    // Never use spaces before function parentheses
-    "space-before-function-paren": ["error", {
-      "anonymous": "never",
-      "asyncArrow": "always",
-      "named": "never",
-    }],
-
-    // No space padding in parentheses
-    // "space-in-parens": ["error", "never"],
-
-    // Require spaces around operators
-    "space-infix-ops": ["error", { "int32Hint": true }],
-
-    // ++ and -- should not need spacing
-    "space-unary-ops": ["error", {
-      "nonwords": false,
-      "overrides": {
-        "typeof": false, // We tend to use typeof as a function call
-      },
-      "words": true,
-    }],
-
-    // Requires or disallows a whitespace (space or tab) beginning a comment
-    "spaced-comment": ["error", "always", { "markers": ["#"] }],
+  // The html plugin is enabled via a command line option on eslint. To avoid
+  // bad interactions with the xml preprocessor in eslint-plugin-mozilla, we
+  // turn off processing of the html plugin for .xml files.
+  "settings": {
+    "html/xml-extensions": [ ".xhtml" ]
   },
 };

@@ -14,7 +14,4 @@ module.exports = {
     "sendAsyncMessage": true,
 
   },
-  "rules": {
-    "brace-style": ["error", "1tbs", {"allowSingleLine": false}],
-  },
 };

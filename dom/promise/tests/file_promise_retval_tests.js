@@ -11,13 +11,16 @@
  * 3) A subframe (frames[0]) which can be used as a second global for creating
  *    promises.
  */
+
+/* global verifyPromiseGlobal, expectedExceptionGlobal */
+
 var label = "parent";
 
 function testThrownException(global) {
   var p = global.TestFunctions.throwToRejectPromise();
   verifyPromiseGlobal(p, global, "throwToRejectPromise return value");
   return p.then(() => {}).catch((err) => {
-    var expected = expectedExceptionGlobal(global)
+    var expected = expectedExceptionGlobal(global);
     is(SpecialPowers.unwrap(SpecialPowers.Cu.getGlobalForObject(err)),
        expected,
        "Should have an exception object from the right global too");

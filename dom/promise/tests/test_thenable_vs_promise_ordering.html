@@ -5,6 +5,8 @@
 <script src="/resources/testharnessreport.js"></script>
 <div id="log"></div>
 <script>
+/* global async_test, assert_true, assert_equals */
+
 var t = async_test("A promise resolved first (with a thenable) should trigger its callbacks before a promise resolved second (with a promise).");
 t.step(function() {
   var customThenCalled = false;
@@ -12,7 +14,7 @@ t.step(function() {
   p0.then = function(resolved, rejected) {
     customThenCalled = true;
     Promise.prototype.then.call(this, resolved, rejected);
-  }
+  };
   var p1 = new Promise(function(r) { r(p0); });
   delete p0.then;
   var p2 = new Promise(function(r) { r(p0); });

@@ -11,37 +11,14 @@
 # Exclude expected objdirs.
 obj*/**
 
-# We ignore all these directories by default, until we get them enabled.
-# If you are enabling a directory, please add directory specific exclusions
-# below.
-extensions/permissions/**
-extensions/spellcheck/**
-extensions/universalchardet/**
-image/**
-layout/**
-netwerk/cookie/test/browser/**
-netwerk/test/browser/**
-netwerk/test/mochitests/**
-netwerk/test/unit*/**
-startupcache/**
+# dom/ exclusions which should be removed (aka ESLint enabled)
+dom/base/*.*
+dom/media/test/**
+!dom/media/test/marionette/yttest/*.js
+dom/xhr/**
 
-# We currently have no js files in these directories, so we ignore them by
-# default to aid ESLint's performance.
-build/**
-config/**
-db/**
-embedding/**
-gradle/**
-hal/**
-mfbt/**
-mozglue/**
-nsprpub/**
-other-licenses/**
-xpfe/**
-
-# These directories only contain crashtests, but we still skip the whole
-# directory to aid performance.
-view/**
+# build/ third-party code
+build/pgo/js-input/**
 
 # browser/ exclusions
 browser/app/**
@@ -114,17 +91,6 @@ devtools/client/debugger/packages/**/fixtures/**
 devtools/client/debugger/node_modules
 devtools/client/debugger/out
 
-# Ignore devtools debugger files
-# Keep in sync with devtools/client/debugger/.prettierignore
-devtools/client/debugger/src/workers/parser/tests/fixtures/functionNames.js
-devtools/client/debugger/src/workers/parser/tests/fixtures/scopes/*.js
-devtools/client/debugger/src/workers/parser/tests/fixtures/pause/*.js
-devtools/client/debugger/src/test/mochitest/examples/babel/polyfill-bundle.js
-devtools/client/debugger/src/test/mochitest/examples/babel/fixtures/*/input.js
-devtools/client/debugger/src/test/mochitest/examples/babel/fixtures/*/output.js
-devtools/client/debugger/src/test/mochitest/examples/babel/fixtures/*/output.js.map
-devtools/client/debugger/src/test/mochitest/examples/ember/quickstart
-
 # Ignore devtools debugger files which aren't intended for linting, and also
 # aren't included in any .eslintignore or .prettierignore file.
 # See https://github.com/firefox-devtools/debugger/blob/master/package.json#L24
@@ -184,57 +150,6 @@ devtools/server/tests/unit/sourcemapped.js
 # devtools specific format test file
 devtools/server/tests/unit/xpcshell_debugging_script.js
 
-# dom/ exclusions which should be removed (aka ESLint enabled)
-dom/animation/**
-dom/base/*.*
-dom/base/test/*.*
-dom/base/test/unit/test_serializers_entities*.js
-dom/base/test/unit_ipc/**
-dom/base/test/jsmodules/**
-dom/canvas/**
-dom/encoding/**
-dom/events/**
-dom/fetch/**
-dom/file/**
-dom/flex/**
-dom/grid/**
-dom/html/**
-dom/jsurl/**
-dom/media/test/**
-!dom/media/test/marionette/yttest/*.js
-dom/media/tests/**
-dom/media/webaudio/**
-dom/media/webspeech/**
-dom/messagechannel/**
-dom/midi/**
-dom/network/**
-dom/payments/**
-dom/performance/**
-dom/permission/**
-dom/promise/**
-dom/quota/**
-dom/security/test/cors/**
-dom/security/test/csp/**
-dom/security/test/general/**
-dom/security/test/mixedcontentblocker/**
-dom/security/test/sri/**
-dom/serviceworkers/**
-dom/smil/**
-dom/tests/html/**
-dom/tests/mochitest/**
-dom/u2f/**
-dom/vr/**
-dom/webauthn/**
-dom/webgpu/**
-dom/websocket/**
-dom/workers/**
-dom/worklet/**
-dom/xbl/**
-dom/xhr/**
-dom/xml/**
-dom/xslt/**
-dom/xul/**
-
 # Third-party
 dom/canvas/test/webgl-conf/**
 dom/imptests/**
@@ -242,6 +157,33 @@ dom/media/webaudio/test/blink/**
 dom/media/webvtt/**
 dom/svg/test/test_nonAnimStrings.xhtml
 dom/svg/test/test_SVG_namespace_ids.html
+
+# Strange encodings
+dom/base/test/file_bug687859-16.js
+dom/encoding/test/test_utf16_files.html
+dom/encoding/test/file_utf16_be_bom.js
+dom/encoding/test/file_utf16_le_bom.js
+
+# Not parsable
+dom/tests/mochitest/general/test_focusrings.xul
+dom/html/test/test_bug677658.html
+
+# Intentional broken files
+dom/base/test/file_js_cache_syntax_error.js
+dom/base/test/jsmodules/test_syntaxError.html
+dom/base/test/jsmodules/test_syntaxErrorAsync.html
+dom/base/test/jsmodules/module_badSyntax.js
+dom/base/test/jsmodules/test_syntaxErrorInline.html
+dom/base/test/jsmodules/test_syntaxErrorInlineAsync.html
+dom/base/test/test_bug687859.html
+dom/media/tests/mochitest/identity/idp-bad.js
+dom/serviceworkers/test/file_js_cache_syntax_error.js
+dom/serviceworkers/test/parse_error_worker.js
+dom/tests/mochitest/bugs/test_bug531176.html
+dom/webauthn/tests/cbor.js
+dom/workers/test/importScripts_worker_imported3.js
+dom/workers/test/invalid.js
+dom/workers/test/threadErrors_worker1.js
 
 # Third-party
 editor/libeditor/tests/browserscope/**

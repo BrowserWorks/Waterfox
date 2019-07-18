@@ -6,6 +6,8 @@
 <div id="log"></div>
 <script>
 test(function() {
+  /* global test, assert_not_equals, assert_equals */
+
   var desc = Object.getOwnPropertyDescriptor(Promise, Symbol.species);
   assert_not_equals(desc, undefined, "Should have a property");
 
@@ -19,6 +21,5 @@ test(function() {
     assert_equals(getter.call(thing), thing,
                   "Getter should return its this value");
   }
-
 }, "Promise should have an @@species getter that works per spec");
 </script>
