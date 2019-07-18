@@ -141,27 +141,27 @@ var gSyncPane = {
       return Services.strings.createBundle("chrome://browser/locale/accounts.properties");
     });
 
-    // Links for mobile devices before the user is logged in.
-    let url = Services.prefs.getCharPref("identity.mobilepromo.android") + "sync-preferences";
-    document.getElementById("fxaMobilePromo-android").setAttribute("href", url);
-    url = Services.prefs.getCharPref("identity.mobilepromo.ios") + "sync-preferences";
-    document.getElementById("fxaMobilePromo-ios").setAttribute("href", url);
+    // // Links for mobile devices before the user is logged in.
+    // let url = Services.prefs.getCharPref("identity.mobilepromo.android") + "sync-preferences";
+    // document.getElementById("fxaMobilePromo-android").setAttribute("href", url);
+    // url = Services.prefs.getCharPref("identity.mobilepromo.ios") + "sync-preferences";
+    // document.getElementById("fxaMobilePromo-ios").setAttribute("href", url);
 
-    // Links for mobile devices shown after the user is logged in.
-    FxAccounts.config.promiseConnectDeviceURI(this._getEntryPoint()).then(connectURI => {
-      document.getElementById("connect-another-device").setAttribute("href", connectURI);
-    });
+    // // Links for mobile devices shown after the user is logged in.
+    // FxAccounts.config.promiseConnectDeviceURI(this._getEntryPoint()).then(connectURI => {
+    //   document.getElementById("connect-another-device").setAttribute("href", connectURI);
+    // });
 
-    FxAccounts.config.promiseManageDevicesURI(this._getEntryPoint()).then(manageURI => {
-      document.getElementById("manage-devices").setAttribute("href", manageURI);
-    });
+    // FxAccounts.config.promiseManageDevicesURI(this._getEntryPoint()).then(manageURI => {
+    //   document.getElementById("manage-devices").setAttribute("href", manageURI);
+    // });
 
-    document.getElementById("tosPP-small-ToS").setAttribute("href", Weave.Svc.Prefs.get("fxa.termsURL"));
-    document.getElementById("tosPP-small-PP").setAttribute("href", Weave.Svc.Prefs.get("fxa.privacyURL"));
+    // document.getElementById("tosPP-small-ToS").setAttribute("href", Weave.Svc.Prefs.get("fxa.termsURL"));
+    // document.getElementById("tosPP-small-PP").setAttribute("href", Weave.Svc.Prefs.get("fxa.privacyURL"));
 
-    FxAccounts.config.promiseSignUpURI(this._getEntryPoint()).then(signUpURI => {
-      document.getElementById("noFxaSignUp").setAttribute("href", signUpURI);
-    });
+    // FxAccounts.config.promiseSignUpURI(this._getEntryPoint()).then(signUpURI => {
+    //   document.getElementById("noFxaSignUp").setAttribute("href", signUpURI);
+    // });
 
     this.updateWeavePrefs();
 

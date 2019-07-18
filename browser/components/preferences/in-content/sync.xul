@@ -46,7 +46,7 @@
         </hbox>
       </vbox>
     </hbox>
-    <label class="fxaMobilePromo" data-l10n-id="sync-mobile-promo">
+<!--     <label class="fxaMobilePromo" data-l10n-id="sync-mobile-promo">
       <html:img
         src="chrome://browser/skin/preferences/in-content/logo-android.svg"
         data-l10n-name="android-icon"
@@ -63,7 +63,7 @@
         id="fxaMobilePromo-ios"
         data-l10n-name="ios-link"
         class="text-link" target="_blank"/>
-    </label>
+    </label> -->
   </groupbox>
 
   <vbox id="hasFxaAccount">
