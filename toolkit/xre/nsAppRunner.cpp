@@ -41,6 +41,7 @@
 #endif
 
 #ifdef XP_MACOSX
+#  include "nsCocoaFeatures.h"
 #  include "nsVersionComparator.h"
 #  include "MacLaunchHelper.h"
 #  include "MacApplicationDelegate.h"
@@ -5018,6 +5019,12 @@ enum {
   // kE10sDisabledForXPAcceleration = 9, removed in bug 1296353
   // kE10sDisabledForOperatingSystem = 10, removed due to xp-eol
 };
+
+#if defined(XP_MACOSX)
+  if (!nsCocoaFeatures::OnYosemiteOrLater()) {
+    return kE10sForceDisabled;
+  }
+#endif
 
 namespace mozilla {
 
