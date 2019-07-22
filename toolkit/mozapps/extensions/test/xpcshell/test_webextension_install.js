@@ -635,10 +635,11 @@ add_task(async function test_non_gecko_bss_install() {
 
   const manifest = {
     name: "MS Edge and unknown browser test",
-    description: "extension with bss properties for 'edge', and 'unknown_browser'",
+    description:
+      "extension with bss properties for 'edge', and 'unknown_browser'",
     manifest_version: 2,
     version: "1.0",
-    applications: {gecko: {id: ID}},
+    applications: { gecko: { id: ID } },
     browser_specific_settings: {
       edge: {
         browser_action_next_to_addressbar: true,
