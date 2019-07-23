@@ -1300,6 +1300,7 @@ void nsPresContext::ThemeChangedInternal() {
   }
 
   RefreshSystemMetrics();
+  PreferenceSheet::Refresh();
 
   // Recursively notify all remote leaf descendants that the
   // system theme has changed.
