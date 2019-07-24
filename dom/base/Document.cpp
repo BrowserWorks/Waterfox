@@ -8462,7 +8462,7 @@ nsresult Document::CloneDocHelper(Document* clone) const {
   // State from Document
   clone->mCharacterSet = mCharacterSet;
   clone->mCharacterSetSource = mCharacterSetSource;
-  clone->SetCompatibilityMode(mCompatMode);
+  clone->mCompatMode = mCompatMode;
   clone->mBidiOptions = mBidiOptions;
   clone->mContentLanguage = mContentLanguage;
   clone->SetContentTypeInternal(GetContentTypeInternal());
