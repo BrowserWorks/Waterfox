@@ -2372,6 +2372,16 @@ VARCACHE_PREF(
   uint32_t, 2048
 )
 
+// Prefs starting with "plain_text."
+//---------------------------------------------------------------------------
+
+// When false, text in plaintext documents does not wrap long lines.
+VARCACHE_PREF(
+  "plain_text.wrap_long_lines",
+  plain_text_wrap_long_lines,
+  bool, true
+)
+
 //---------------------------------------------------------------------------
 // Preferences prefs
 //---------------------------------------------------------------------------
