@@ -187,7 +187,6 @@ HTMLEditRules::HTMLEditRules()
       mReturnInEmptyLIKillsList(false),
       mDidDeleteSelection(false),
       mDidRangedDelete(false),
-      mDidEmptyParentBlocksRemoved(false),
       mRestoreContentEditableCount(false),
       mJoinOffset(0) {
   mIsHTMLEditRules = true;
@@ -200,7 +199,6 @@ void HTMLEditRules::InitFields() {
   mReturnInEmptyLIKillsList = true;
   mDidDeleteSelection = false;
   mDidRangedDelete = false;
-  mDidEmptyParentBlocksRemoved = false;
   mRestoreContentEditableCount = false;
   mUtilRange = nullptr;
   mJoinOffset = 0;
@@ -494,11 +492,8 @@ nsresult HTMLEditRules::AfterEditInner(EditSubAction aEditSubAction,
     // not if deletion was done along the way for
     // EditSubAction::eInsertHTMLSource, EditSubAction::eInsertText, etc.
     // That's why this is here rather than DidDeleteSelection().
-    // However, we shouldn't insert <br> elements if we've already removed
-    // empty block parents because users may want to disappear the line by
-    // the deletion.
     if (aEditSubAction == EditSubAction::eDeleteSelectedContent &&
-        mDidRangedDelete && !mDidEmptyParentBlocksRemoved) {
+        mDidRangedDelete) {
       nsresult rv = InsertBRIfNeeded();
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
@@ -592,26 +587,17 @@ nsresult HTMLEditRules::AfterEditInner(EditSubAction aEditSubAction,
       mNewBlock = nullptr;
     }
 
-    // Adjust selection for insert text, html paste, and delete actions if
-    // we haven't removed new empty blocks.  Note that if empty block parents
-    // are removed, Selection should've been adjusted by the method which
-    // did it.
-    if (!mDidEmptyParentBlocksRemoved) {
-      switch (aEditSubAction) {
-        case EditSubAction::eInsertText:
-        case EditSubAction::eInsertTextComingFromIME:
-        case EditSubAction::eDeleteSelectedContent:
-        case EditSubAction::eInsertLineBreak:
-        case EditSubAction::eInsertParagraphSeparator:
-        case EditSubAction::ePasteHTMLContent:
-        case EditSubAction::eInsertHTMLSource:
-          rv = AdjustSelection(aDirection);
-          if (NS_WARN_IF(NS_FAILED(rv))) {
-            return rv;
-          }
-          break;
-        default:
-          break;
+    // adjust selection for insert text, html paste, and delete actions
+    if (aEditSubAction == EditSubAction::eInsertText ||
+        aEditSubAction == EditSubAction::eInsertTextComingFromIME ||
+        aEditSubAction == EditSubAction::eDeleteSelectedContent ||
+        aEditSubAction == EditSubAction::eInsertLineBreak ||
+        aEditSubAction == EditSubAction::eInsertParagraphSeparator ||
+        aEditSubAction == EditSubAction::ePasteHTMLContent ||
+        aEditSubAction == EditSubAction::eInsertHTMLSource) {
+      rv = AdjustSelection(aDirection);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
       }
     }
 
@@ -3105,39 +3091,6 @@ nsresult HTMLEditRules::WillDeleteSelection(
           }
         }
       }
-    }
-  }
-
-  // If we're handling D&D, this is called to delete dragging item from the
-  // tree.  In this case, we should move parent blocks if it becomes empty.
-  if (HTMLEditorRef().GetEditAction() == EditAction::eDrop) {
-    MOZ_ASSERT(startNode == endNode);
-    MOZ_ASSERT(startOffset == endOffset);
-    {
-      AutoTrackDOMPoint startTracker(HTMLEditorRef().RangeUpdaterRef(),
-                                     address_of(startNode), &startOffset);
-      AutoTrackDOMPoint endTracker(HTMLEditorRef().RangeUpdaterRef(),
-                                   address_of(endNode), &endOffset);
-
-      EditorDOMPoint atStart(startNode, startOffset);
-      nsresult rv = MOZ_KnownLive(HTMLEditorRef())
-                        .DeleteParentBlocksWithTransactionIfEmpty(atStart);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-      mDidEmptyParentBlocksRemoved = rv == NS_OK;
-    }
-    // If we removed parent blocks, Selection should be collapsed at where
-    // the most ancestor empty block has been.
-    if (mDidEmptyParentBlocksRemoved) {
-      rv = SelectionRefPtr()->Collapse(startNode, startOffset);
-      if (NS_WARN_IF(!CanHandleEditAction())) {
-        return NS_ERROR_EDITOR_DESTROYED;
-      }
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-      return NS_OK;
     }
   }
 
