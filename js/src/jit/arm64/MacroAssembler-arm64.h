@@ -1346,7 +1346,11 @@ class MacroAssemblerCompat : public vixl::MacroAssembler {
   }
 
   void unboxPrivate(const ValueOperand& src, Register dest) {
+#if defined(JS_UNALIGNED_PRIVATE_VALUES)
+    Mov(ARMRegister(dest, 64), ARMRegister(src.valueReg(), 64));
+#else
     Lsl(ARMRegister(dest, 64), ARMRegister(src.valueReg(), 64), 1);
+#endif
   }
 
   void notBoolean(const ValueOperand& val) {

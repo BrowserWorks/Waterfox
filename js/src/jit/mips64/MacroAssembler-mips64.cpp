@@ -967,7 +967,9 @@ void MacroAssemblerMIPS64Compat::loadPtr(wasm::SymbolicAddress address,
 void MacroAssemblerMIPS64Compat::loadPrivate(const Address& address,
                                              Register dest) {
   loadPtr(address, dest);
+#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
   ma_dsll(dest, dest, Imm32(1));
+#endif
 }
 
 void MacroAssemblerMIPS64Compat::loadUnalignedDouble(
@@ -1312,7 +1314,11 @@ void MacroAssemblerMIPS64Compat::unboxValue(const ValueOperand& src,
 
 void MacroAssemblerMIPS64Compat::unboxPrivate(const ValueOperand& src,
                                               Register dest) {
+#if defined(JS_UNALIGNED_PRIVATE_VALUES)
+  ma_move(dest, src);
+#else
   ma_dsll(dest, src.valueReg(), Imm32(1));
+#endif
 }
 
 void MacroAssemblerMIPS64Compat::boxDouble(FloatRegister src,

@@ -109,7 +109,9 @@ BufferOffset MacroAssemblerCompat::movePatchablePtr(ImmWord ptr,
 
 void MacroAssemblerCompat::loadPrivate(const Address& src, Register dest) {
   loadPtr(src, dest);
+#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
   asMasm().lshiftPtr(Imm32(1), dest);
+#endif
 }
 
 void MacroAssemblerCompat::handleFailureWithHandlerTail(
