@@ -31,6 +31,7 @@
 #include "AlternateServices.h"
 #include "nsIHstsPrimingCallback.h"
 #include "nsIRaceCacheWithNetwork.h"
+#include "mozilla/extensions/PStreamFilterParent.h"
 
 class nsDNSPrefetch;
 class nsICancelable;
@@ -289,6 +290,10 @@ public: /* internal necko use only */
     // Return true if the latest ODA is invoked by mCachePump.
     // Should only be called on the same thread as ODA.
     bool IsReadingFromCache() const { return mIsReadingFromCache; }
+
+    base::ProcessId ProcessId();
+
+    MOZ_MUST_USE bool AttachStreamFilter(ipc::Endpoint<extensions::PStreamFilterParent>&& aEndpoint);
 
 private: // used for alternate service validation
     RefPtr<TransactionObserver> mTransactionObserver;
