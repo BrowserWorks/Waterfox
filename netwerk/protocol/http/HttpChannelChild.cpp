@@ -1193,6 +1193,9 @@ HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest, nsresult aChannelStatus,
   }
   mOnStopRequestCalled = true;
 
+  // notify "http-on-stop-connect" observers
+  gHttpHandler->OnStopRequest(this);
+
   ReleaseListeners();
 
   // If a preferred alt-data type was set, the parent would hold a reference to

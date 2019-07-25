@@ -7535,6 +7535,9 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
         mOnStopRequestCalled = true;
     }
 
+    // notify "http-on-stop-connect" observers
+    gHttpHandler->OnStopRequest(this);
+
     // If a preferred alt-data type was set, this signals the consumer is
     // interested in reading and/or writing the alt-data representation.
     // We need to hold a reference to the cache entry in case the listener calls

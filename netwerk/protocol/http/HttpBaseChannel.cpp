@@ -3197,6 +3197,9 @@ HttpBaseChannel::DoNotifyListener()
     mOnStopRequestCalled = true;
   }
 
+  // notify "http-on-stop-connect" observers
+  gHttpHandler->OnStopRequest(this);
+
   // We have to make sure to drop the references to listeners and callbacks
   // no longer  needed
   ReleaseListeners();
