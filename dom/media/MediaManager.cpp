@@ -2279,6 +2279,7 @@ static void ReduceConstraint(
   // Keep mediaSource, ignore all other constraints.
   auto& c = aConstraint.GetAsMediaTrackConstraints();
   nsString mediaSource = c.mMediaSource;
+  aConstraint.Uninit();
   aConstraint.SetAsMediaTrackConstraints().mMediaSource = mediaSource;
 }
 
