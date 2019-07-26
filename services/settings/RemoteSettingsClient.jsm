@@ -337,6 +337,7 @@ class RemoteSettingsClient extends EventEmitter {
   async maybeSync(expectedTimestamp, options = {}) {
     const { loadDump = true, trigger = "manual" } = options;
 
+    let importedFromDump = [];
     const startedAt = new Date();
     let reportStatus = null;
     try {
@@ -350,22 +351,24 @@ class RemoteSettingsClient extends EventEmitter {
       // cold start.
       if (!collectionLastModified && loadDump) {
         try {
-          await RemoteSettingsWorker.importJSONDump(
+          const imported = await RemoteSettingsWorker.importJSONDump(
             this.bucketName,
             this.collectionName
           );
+          // The worker only returns an integer. List the imported records to build the sync event.
+          if (imported > 0) {
+            console.debug(
+              `${this.identifier} ${imported} records loaded from JSON dump`
+            );
+            ({ data: importedFromDump } = await kintoCollection.list({
+              order: "",
+            }));
+          }
           collectionLastModified = await kintoCollection.db.getLastModified();
         } catch (e) {
           // Report but go-on.
           Cu.reportError(e);
         }
-      }
-
-      // If the data is up to date, there's no need to sync. We still need
-      // to record the fact that a check happened.
-      if (expectedTimestamp <= collectionLastModified) {
-        reportStatus = UptakeTelemetry.STATUS.UP_TO_DATE;
-        return;
       }
 
       // If signature verification is enabled, then add a synchronization hook
@@ -394,16 +397,36 @@ class RemoteSettingsClient extends EventEmitter {
 
       let syncResult;
       try {
-        // Fetch changes from server, and make sure we overwrite local data.
-        const strategy = Kinto.syncStrategy.SERVER_WINS;
-        syncResult = await kintoCollection.sync({
-          remote: gServerURL,
-          strategy,
-          expectedTimestamp,
-        });
-        if (!syncResult.ok) {
-          // With SERVER_WINS, there cannot be any conflicts, but don't silent it anyway.
-          throw new Error("Synced failed");
+        // If the data is up to date, there's no need to sync. We still need
+        // to record the fact that a check happened.
+        if (expectedTimestamp <= collectionLastModified) {
+          reportStatus = UptakeTelemetry.STATUS.UP_TO_DATE;
+          // Since the data is up-to-date, if we didn't load any dump then we're done here.
+          if (importedFromDump.length == 0) {
+            return;
+          }
+          // Otherwise we want to continue with sending the sync event to notify about the created records.
+          syncResult = {
+            current: importedFromDump,
+            created: importedFromDump,
+            updated: [],
+            deleted: [],
+          };
+        } else {
+          // Fetch changes from server, and make sure we overwrite local data.
+          const strategy = Kinto.syncStrategy.SERVER_WINS;
+          syncResult = await kintoCollection.sync({
+            remote: gServerURL,
+            strategy,
+            expectedTimestamp,
+          });
+          if (!syncResult.ok) {
+            // With SERVER_WINS, there cannot be any conflicts, but don't silent it anyway.
+            throw new Error("Synced failed");
+          }
+          // The records imported from the dump should be considered as "created" for the
+          // listeners.
+          syncResult.created = importedFromDump.concat(syncResult.created);
         }
       } catch (e) {
         if (e instanceof RemoteSettingsClient.InvalidSignatureError) {
