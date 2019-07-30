@@ -5020,12 +5020,6 @@ enum {
   // kE10sDisabledForOperatingSystem = 10, removed due to xp-eol
 };
 
-#if defined(XP_MACOSX)
-  if (!nsCocoaFeatures::OnYosemiteOrLater()) {
-    return kE10sForceDisabled;
-  }
-#endif
-
 namespace mozilla {
 
 bool BrowserTabsRemoteAutostart() {
@@ -5072,6 +5066,12 @@ bool BrowserTabsRemoteAutostart() {
     gBrowserTabsRemoteAutostart = false;
     status = kE10sForceDisabled;
   }
+
+#ifdef XP_MACOSX
+  if (!nsCocoaFeatures::OnYosemiteOrLater()) {
+    return kE10sForceDisabled;
+  }
+#endif
 
   gBrowserTabsRemoteStatus = status;
 
