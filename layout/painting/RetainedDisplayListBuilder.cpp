@@ -734,19 +734,6 @@ class MergeState {
   bool mResultIsModified;
 };
 
-#ifdef DEBUG
-void VerifyNotModified(nsDisplayList* aList) {
-  for (nsDisplayItem* item = aList->GetBottom(); item;
-       item = item->GetAbove()) {
-    MOZ_ASSERT(!AnyContentAncestorModified(item->FrameForInvalidation()));
-
-    if (item->GetChildren()) {
-      VerifyNotModified(item->GetChildren());
-    }
-  }
-}
-#endif
-
 /**
  * Takes two display lists and merges them into an output list.
  *
@@ -771,9 +758,6 @@ bool RetainedDisplayListBuilder::MergeDisplayLists(
     // can just use it directly, and throw any new items away.
 
     aNewList->DeleteAll(&mBuilder);
-#ifdef DEBUG
-    VerifyNotModified(aOldList);
-#endif
 
     if (aOldList != aOutList) {
       *aOutList = std::move(*aOldList);
