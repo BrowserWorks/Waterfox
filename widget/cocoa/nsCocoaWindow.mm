@@ -2136,7 +2136,7 @@ nsCocoaWindow::CaptureRollupEvents(nsIRollupListener* aListener,
       // the active application. We only set this up when needed
       // because they cause spurious mouse event after crash
       // and gdb sessions. See bug 699538.
-      nsToolkit::GetToolkit()->RegisterForAllProcessMouseEvents();
+      nsToolkit::GetToolkit()->MonitorAllProcessMouseEvents();
     }
     gRollupListener = aListener;
 
@@ -2155,7 +2155,7 @@ nsCocoaWindow::CaptureRollupEvents(nsIRollupListener* aListener,
     if (mWindow && (mWindowType == eWindowType_popup))
       SetPopupWindowLevel();
   } else {
-    nsToolkit::GetToolkit()->UnregisterAllProcessMouseEventHandlers();
+    nsToolkit::GetToolkit()->StopMonitoringAllProcessMouseEvents();
 
     // XXXndeakin this doesn't make sense.
     // Why is the new window assumed to be a modal panel?
