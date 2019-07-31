@@ -2,7 +2,7 @@
 
 # macOS Specific Options
 if test `uname -s` = Darwin; then
-ac_add_options --enable-optimize="-O3 -march=core2 -mtune=generic -w"
+ac_add_options --enable-optimize="-O2 -march=core2 -mtune=generic -w"
 ac_add_options --enable-macos-target=10.9
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
@@ -18,17 +18,11 @@ export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/D
 elif test `uname -s` = Linux; then
 export CC=clang
 export CXX=clang++
-ac_add_options --enable-optimize="-O3 -msse3 -march=x86-64 -mtune=generic -w"
+ac_add_options --enable-optimize="-O2 -msse3 -march=x86-64 -mtune=generic -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
 fi
-
-export MOZ_GECKO_PROFILER=
-export MOZ_ENABLE_PROFILER_SPS=
-export MOZ_PROFILING=
-export MOZ_MAINTENANCE_SERVICE=
-MOZ_REQUIRE_SIGNING=0
 
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j8
@@ -39,7 +33,6 @@ fi
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_OBJDIR=objdir-68
 
-ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 ac_add_options --disable-debug
 ac_add_options --disable-dmd
 ac_add_options --disable-crashreporter
@@ -51,7 +44,6 @@ ac_add_options --disable-verify-mar
 ac_add_options --enable-application=browser
 ac_add_options --enable-ccache=sccache
 ac_add_options --enable-lto
-ac_add_options --enable-release
 ac_add_options --enable-rust-simd # on x86 requires SSE2
 ac_add_options --enable-update-channel=aurora
 ac_add_options --enable-updater

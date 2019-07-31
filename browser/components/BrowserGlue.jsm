@@ -1392,6 +1392,16 @@ BrowserGlue.prototype = {
     Services.prefs.addObserver("media.autoplay.default", this._updateAutoplayPref);
     Services.prefs.addObserver("privacy.trackingprotection", this._setPrefExpectations);
     Services.prefs.addObserver("browser.contentblocking.features.strict", this._setPrefExpectationsAndUpdate);
+
+    let sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
+                        .getService(Components.interfaces.nsIStyleSheetService);
+    let ios = Components.classes["@mozilla.org/network/io-service;1"]
+                        .getService(Components.interfaces.nsIIOService);
+    let australisDark = ios.newURI("chrome://browser/skin/australis-dark.css", null, null);
+
+    if (Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org") == "firefox-compact-dark@mozilla.org") {
+      sss.loadAndRegisterSheet(australisDark, sss.USER_SHEET);
+    }
   },
 
   _updateAutoplayPref() {

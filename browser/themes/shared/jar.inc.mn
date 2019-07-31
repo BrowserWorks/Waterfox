@@ -8,6 +8,9 @@
 # to the location of the actual manifest.
 
   skin/classic/browser/aboutNetError.css                       (../shared/aboutNetError.css)
+  skin/classic/browser/australis-dark.css                      (../shared/australis-dark.css)
+  skin/classic/browser/australis-default.css                   (../shared/australis-default.css)
+  skin/classic/browser/australis-light.css                     (../shared/australis-light.css)
   skin/classic/browser/blockedSite.css                         (../shared/blockedSite.css)
   skin/classic/browser/error-pages.css                         (../shared/error-pages.css)
   skin/classic/browser/aboutRestartRequired.css                (../shared/aboutRestartRequired.css)
