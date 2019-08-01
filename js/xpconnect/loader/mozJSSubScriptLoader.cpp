@@ -320,7 +320,7 @@ class MOZ_STACK_CLASS AutoRejectPromise {
       if (mAutoEntryScript.HasException()) {
         Unused << mAutoEntryScript.PeekException(&rejectionValue);
       }
-      mPromise->MaybeReject(rejectionValue);
+      mPromise->MaybeReject(cx, rejectionValue);
     }
   }
 

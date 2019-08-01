@@ -238,13 +238,13 @@ void PromiseNativeThenHandlerBase::ResolvedCallback(
   if (promise) {
     mPromise->MaybeResolve(promise);
   } else {
-    mPromise->MaybeResolveWithUndefined();
+    mPromise->MaybeResolve(JS::UndefinedHandleValue);
   }
 }
 
 void PromiseNativeThenHandlerBase::RejectedCallback(
     JSContext* aCx, JS::Handle<JS::Value> aValue) {
-  mPromise->MaybeReject(aValue);
+  mPromise->MaybeReject(aCx, aValue);
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(PromiseNativeThenHandlerBase)
@@ -470,7 +470,7 @@ void Promise::HandleException(JSContext* aCx) {
   JS::Rooted<JS::Value> exn(aCx);
   if (JS_GetPendingException(aCx, &exn)) {
     JS_ClearPendingException(aCx);
-    // Always reject even if this was called in *Resolve.
+    // This is only called from MaybeSomething, so it's OK to MaybeReject here.
     MaybeReject(aCx, exn);
   }
 }
@@ -559,10 +559,7 @@ void Promise::MaybeResolveWithClone(JSContext* aCx,
 
   xpc::StackScopedCloneOptions options;
   options.wrapReflectors = true;
-  if (!StackScopedClone(cx, options, sourceScope, &value)) {
-    HandleException(cx);
-    return;
-  }
+  StackScopedClone(cx, options, sourceScope, &value);
   MaybeResolve(aCx, value);
 }
 
@@ -575,10 +572,7 @@ void Promise::MaybeRejectWithClone(JSContext* aCx,
 
   xpc::StackScopedCloneOptions options;
   options.wrapReflectors = true;
-  if (!StackScopedClone(cx, options, sourceScope, &value)) {
-    HandleException(cx);
-    return;
-  }
+  StackScopedClone(cx, options, sourceScope, &value);
   MaybeReject(aCx, value);
 }
 

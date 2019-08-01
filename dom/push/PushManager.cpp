@@ -299,7 +299,7 @@ class PermissionResultRunnable final : public WorkerRunnable {
     if (NS_SUCCEEDED(mStatus)) {
       promise->MaybeResolve(mState);
     } else {
-      promise->MaybeRejectWithUndefined();
+      promise->MaybeReject(aCx, JS::UndefinedHandleValue);
     }
 
     mProxy->CleanUp();
@@ -437,7 +437,7 @@ already_AddRefed<Promise> PushManager::PermissionState(
 
   RefPtr<PromiseWorkerProxy> proxy = PromiseWorkerProxy::Create(worker, p);
   if (!proxy) {
-    p->MaybeRejectWithUndefined();
+    p->MaybeReject(worker->GetJSContext(), JS::UndefinedHandleValue);
     return p.forget();
   }
 
