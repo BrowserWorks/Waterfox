@@ -57,6 +57,7 @@
 #include "mozilla/dom/time/DateCacheCleaner.h"
 #include "mozilla/dom/URLClassifierParent.h"
 #include "mozilla/embedding/printingui/PrintingParent.h"
+#include "mozilla/extensions/StreamFilterParent.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/hal_sandbox/PHalParent.h"
@@ -3199,6 +3200,19 @@ ContentParent::GetPrintingParent()
 }
 #endif
 
+mozilla::ipc::IPCResult
+ContentParent::RecvInitStreamFilter(const uint64_t& aChannelId,
+                                    const nsString& aAddonId,
+                                    InitStreamFilterResolver&& aResolver)
+{
+  Endpoint<PStreamFilterChild> endpoint;
+  Unused << extensions::StreamFilterParent::Create(this, aChannelId, aAddonId, &endpoint);
+
+  aResolver(Move(endpoint));
+
+  return IPC_OK();
+}
+
 PChildToParentStreamParent*
 ContentParent::AllocPChildToParentStreamParent()
 {
@@ -5021,7 +5035,7 @@ ContentParent::RecvGetFilesRequest(const nsID& aUUID,
                                    const bool& aRecursiveFlag)
 {
   MOZ_ASSERT(!mGetFilesPendingRequests.GetWeak(aUUID));
-  
+
   if (!mozilla::Preferences::GetBool("dom.filesystem.pathcheck.disabled", false)) {
     RefPtr<FileSystemSecurity> fss = FileSystemSecurity::Get();
     if (NS_WARN_IF(!fss ||

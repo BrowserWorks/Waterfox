@@ -15,6 +15,7 @@
 #include "mozilla/dom/DocGroup.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/TabGroup.h"
+#include "mozilla/extensions/StreamFilterParent.h"
 #include "mozilla/ipc/FileDescriptorSetChild.h"
 #include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/net/NeckoChild.h"
@@ -1191,6 +1192,9 @@ HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest, nsresult aChannelStatus,
     mListener->OnStopRequest(aRequest, aContext, mStatus);
   }
   mOnStopRequestCalled = true;
+
+  // notify "http-on-stop-connect" observers
+  gHttpHandler->OnStopRequest(this);
 
   ReleaseListeners();
 
@@ -3604,6 +3608,13 @@ mozilla::ipc::IPCResult
 HttpChannelChild::RecvSetPriority(const int16_t& aPriority)
 {
   mPriority = aPriority;
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+HttpChannelChild::RecvAttachStreamFilter(Endpoint<extensions::PStreamFilterParent>&& aEndpoint)
+{
+  extensions::StreamFilterParent::Attach(this, Move(aEndpoint));
   return IPC_OK();
 }
 

@@ -76,6 +76,13 @@ extensions.registerModules({
       ["test"],
     ],
   },
+  webRequest: {
+    url: "chrome://extensions/content/ext-c-webRequest.js",
+    scopes: ["addon_child"],
+    paths: [
+      ["webRequest"],
+    ],
+  },
 });
 
 if (AppConstants.MOZ_BUILD_APP === "browser") {
