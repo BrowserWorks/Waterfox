@@ -2392,13 +2392,14 @@ PREF("preferences.allow.omt-write", bool, true)
 // Privacy prefs
 //---------------------------------------------------------------------------
 
-// Whether Content Blocking Third-Party Cookies UI has been enabled.
+// Whether Content Blocking allow list is respected for ETP interventions.
 VARCACHE_PREF(
   "browser.contentblocking.allowlist.storage.enabled",
    browser_contentblocking_allowlist_storage_enabled,
-  bool, false
+  bool, true
 )
 
+// Whether Content Blocking allow list is respected for tracking annotations.
 VARCACHE_PREF(
   "browser.contentblocking.allowlist.annotations.enabled",
    browser_contentblocking_allowlist_annotations_enabled,

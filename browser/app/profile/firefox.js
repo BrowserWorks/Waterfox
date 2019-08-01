@@ -1570,8 +1570,6 @@ pref("privacy.trackingprotection.fingerprinting.enabled", true);
 pref("privacy.trackingprotection.cryptomining.enabled", true);
 #endif
 
-pref("browser.contentblocking.allowlist.storage.enabled", true);
-
 pref("dom.storage_access.enabled", true);
 
 pref("dom.storage_access.auto_grants", true);
