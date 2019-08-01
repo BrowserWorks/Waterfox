@@ -318,9 +318,9 @@ class MOZ_STACK_CLASS AutoRejectPromise {
       JSContext* cx = mAutoEntryScript.cx();
       RootedValue rejectionValue(cx, JS::UndefinedValue());
       if (mAutoEntryScript.HasException()) {
-        Unused << mAutoEntryScript.PeekException(&rejectionValue);
+        Unused << mAutoEntryScript.StealException(&rejectionValue);
       }
-      mPromise->MaybeReject(cx, rejectionValue);
+      mPromise->MaybeReject(rejectionValue);
     }
   }
 

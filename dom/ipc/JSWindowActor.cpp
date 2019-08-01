@@ -214,7 +214,7 @@ void JSWindowActor::ReceiveMessageOrQuery(
     if (aRv.Failed()) {
       promise->MaybeReject(aRv);
     } else {
-      promise->MaybeResolve(aCx, retval);
+      promise->MaybeResolve(retval);
     }
   }
 }
@@ -236,7 +236,7 @@ void JSWindowActor::ReceiveQueryReply(JSContext* aCx,
   }
 
   if (aMetadata.kind() == JSWindowActorMessageKind::QueryResolve) {
-    promise->MaybeResolve(aCx, aData);
+    promise->MaybeResolve(aData);
   } else {
     promise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);
   }
