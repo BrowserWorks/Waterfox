@@ -199,6 +199,7 @@ class EventStream {
  public:
   virtual void write(const char* aData, size_t aSize) = 0;
   virtual void read(char* aOut, size_t aSize) = 0;
+  virtual void SetIsBad() = 0;
 };
 
 class RecordedEvent {

@@ -135,6 +135,7 @@ enum class LogReason : int {
   UnscaledFontNotFound,
   ScaledFontNotFound,
   InvalidLayerType,
+  InvalidConstrainedValueRead,
   // End
   MustBeLessThanThis = 101,
 };
