@@ -158,7 +158,6 @@ OutputStreamManager::OutputStreamManager(SourceMediaStream* aSourceStream,
           aAbstractMainThread,
           aPrincipal ? MakePrincipalHandle(aPrincipal) : PRINCIPAL_HANDLE_NONE,
           "OutputStreamManager::mPrincipalHandle (Canonical)"),
-      mPrincipal(aPrincipal),
       mCORSMode(aCORSMode),
       mNextTrackID(aNextTrackID),
       mPlaying(true)  // mSourceStream always starts non-suspended
@@ -179,7 +178,7 @@ void OutputStreamManager::Add(DOMMediaStream* aDOMStream) {
                                 this, mAbstractMainThread, aDOMStream))
                             ->get();
   for (const Pair<TrackID, MediaSegment::Type>& pair : mLiveTracks) {
-    p->AddTrack(pair.first(), pair.second(), mPrincipal, mCORSMode, false);
+    p->AddTrack(pair.first(), pair.second(), mPrincipalHandle.Ref(), mCORSMode, false);
   }
 }
 
@@ -246,7 +245,7 @@ void OutputStreamManager::AddTrack(MediaSegment::Type aType) {
 
   mLiveTracks.AppendElement(MakePair(id, aType));
   for (const auto& data : mStreams) {
-    data->AddTrack(id, aType, mPrincipal, mCORSMode, true);
+    data->AddTrack(id, aType, mPrincipalHandle.Ref(), mCORSMode, true);
   }
 }
 
@@ -293,11 +292,10 @@ OutputStreamManager::CanonicalPrincipalHandle() {
 
 void OutputStreamManager::SetPrincipal(nsIPrincipal* aPrincipal) {
   MOZ_ASSERT(NS_IsMainThread());
-  nsCOMPtr<nsIPrincipal> principal = mPrincipal;
+  nsCOMPtr<nsIPrincipal> principal = GetPrincipalFromHandle(mPrincipalHandle);
   if (nsContentUtils::CombineResourcePrincipals(&principal, aPrincipal)) {
-    mPrincipal = principal;
     for (const UniquePtr<OutputStreamData>& data : mStreams) {
-      data->SetPrincipal(mPrincipal);
+      data->SetPrincipal(principal);
     }
     mPrincipalHandle = MakePrincipalHandle(principal);
   }
