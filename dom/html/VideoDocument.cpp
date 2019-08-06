@@ -90,7 +90,7 @@ VideoDocument::CreateSyntheticVideoDocument(nsIChannel* aChannel,
   nsresult rv = MediaDocument::CreateSyntheticDocument();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  Element* body = GetBodyElement();
+  RefPtr<Element> body = GetBodyElement();
   if (!body) {
     NS_WARNING("no body on video document!");
     return NS_ERROR_FAILURE;
