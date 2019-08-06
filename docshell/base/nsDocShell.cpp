@@ -12311,7 +12311,7 @@ nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
   // history. This will erase all SHEntries after the new entry and make this
   // entry the current one.  This operation may modify mOSHE, which we need
   // later, so we keep a reference here.
-  NS_ENSURE_TRUE(mOSHE, NS_ERROR_FAILURE);
+  NS_ENSURE_TRUE(mOSHE || aReplace, NS_ERROR_FAILURE);
   nsCOMPtr<nsISHEntry> oldOSHE = mOSHE;
 
   mLoadType = LOAD_PUSHSTATE;
@@ -12358,6 +12358,16 @@ nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
   } else {
     // Step 3.
     newSHEntry = mOSHE;
+
+    // Since we're not changing which page we have loaded, pass
+    if (!newSHEntry) {
+      nsresult rv = AddToSessionHistory(
+          aNewURI, nullptr,
+          aDocument->NodePrincipal(),  // triggeringPrincipal
+          nullptr, true, getter_AddRefs(newSHEntry));
+      NS_ENSURE_SUCCESS(rv, rv);
+      mOSHE = newSHEntry;
+    }
     newSHEntry->SetURI(aNewURI);
     newSHEntry->SetOriginalURI(aNewURI);
     newSHEntry->SetLoadReplace(false);
@@ -12374,7 +12384,10 @@ nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
   // set URIWasModified to true for the current SHEntry (bug 669671).
   bool sameExceptHashes = true, oldURIWasModified = false;
   aNewURI->EqualsExceptRef(aCurrentURI, &sameExceptHashes);
-  oldOSHE->GetURIWasModified(&oldURIWasModified);
+  // mOSHE might be null on replace. Only check if we're not replacing.
+  if (oldOSHE) {
+    oldOSHE->GetURIWasModified(&oldURIWasModified);
+  }
   newSHEntry->SetURIWasModified(!sameExceptHashes || oldURIWasModified);
 
   // Step E as described at the top of AddState: If aReplace is false,
