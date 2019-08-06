@@ -12394,7 +12394,9 @@ nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
   // indicating that we're doing a pushState rather than a replaceState, notify
   // bfcache that we've added a page to the history so it can evict content
   // viewers if appropriate. Otherwise call ReplaceEntry so that we notify
-  // nsIHistoryListeners that an entry was replaced.
+  // nsIHistoryListeners that an entry was replaced.  We may not have a root
+  // session history if this call is coming from a document.open() in a docshell
+  // subtree that disables session history.
   nsCOMPtr<nsISHistory> rootSH;
   GetRootSessionHistory(getter_AddRefs(rootSH));
   NS_ENSURE_TRUE(rootSH, NS_ERROR_UNEXPECTED);
@@ -12404,19 +12406,20 @@ nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
 
   nsresult rv;
 
-  if (!aReplace) {
-    int32_t curIndex = -1;
-    rv = rootSH->GetIndex(&curIndex);
-    if (NS_SUCCEEDED(rv) && curIndex > -1) {
-      internalSH->EvictOutOfRangeContentViewers(curIndex);
-    }
-  } else {
-    nsCOMPtr<nsISHEntry> rootSHEntry = GetRootSHEntry(newSHEntry);
-
-    int32_t index = -1;
-    rv = rootSH->GetIndexOfEntry(rootSHEntry, &index);
-    if (NS_SUCCEEDED(rv) && index > -1) {
-      internalSH->ReplaceEntry(index, rootSHEntry);
+  if (rootSH) {
+    if (!aReplace) {
+      int32_t curIndex = -1;
+      rv = rootSH->GetIndex(&curIndex);
+      if (NS_SUCCEEDED(rv) && curIndex > -1) {
+        internalSH->EvictOutOfRangeContentViewers(curIndex);
+      }
+    } else {
+      nsCOMPtr<nsISHEntry> rootSHEntry = GetRootSHEntry(newSHEntry);
+      int32_t index = -1;
+      rv = rootSH->GetIndexOfEntry(rootSHEntry, &index);
+      if (NS_SUCCEEDED(rv) && index > -1) {
+        internalSH->ReplaceEntry(index, rootSHEntry);
+      }
     }
   }
 
