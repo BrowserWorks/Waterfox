@@ -134,6 +134,7 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
 
   const bool sizeChanges = (size != ByteLength());
   if (sizeChanges) {
+    mContext->InvalidateBufferFetching();
     gl::GLContext::LocalErrorScope errorScope(*gl);
     gl->fBufferData(target, size, uploadData, usage);
     const auto error = errorScope.GetError();
