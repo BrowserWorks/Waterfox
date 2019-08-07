@@ -2417,7 +2417,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "browser.contentblocking.rejecttrackers.control-center.ui.enabled",
    browser_contentblocking_rejecttrackers_control_center_ui_enabled,
-  bool, false
+  bool, true
 )
 
 VARCACHE_PREF(
