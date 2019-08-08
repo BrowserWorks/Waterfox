@@ -375,7 +375,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "9645ed74d9b2"
+        "revision": "96a5f058ae64"
     },
     "oc": {
         "platforms": [
@@ -543,6 +543,6 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "eea9ed443311"
+        "revision": "1a3f12719d4c"
     }
 }
