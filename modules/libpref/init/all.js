@@ -6072,3 +6072,6 @@ pref("fission.preserve_browsing_contexts", false);
 //  * userChrome.css
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
+// Enable support for XMLDocument.load and .async for webcompat (bug 1569102).
+pref("dom.xmldocument.load.enabled", true);
+pref("dom.xmldocument.async.enabled", true);
