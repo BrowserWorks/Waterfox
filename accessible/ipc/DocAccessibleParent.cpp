@@ -703,10 +703,7 @@ void DocAccessibleParent::MaybeInitWindowEmulation() {
   MOZ_ASSERT(hWnd);
 }
 
-/**
- * @param aCOMProxy COM Proxy to the document in the content process.
- */
-void DocAccessibleParent::SendParentCOMProxy() {
+void DocAccessibleParent::SendParentCOMProxy(Accessible* aOuterDoc) {
   // Make sure that we're not racing with a tab shutdown
   auto tab = static_cast<dom::BrowserParent*>(Manager());
   MOZ_ASSERT(tab);
@@ -714,13 +711,8 @@ void DocAccessibleParent::SendParentCOMProxy() {
     return;
   }
 
-  Accessible* outerDoc = OuterDocOfRemoteBrowser();
-  if (!outerDoc) {
-    return;
-  }
-
   RefPtr<IAccessible> nativeAcc;
-  outerDoc->GetNativeInterface(getter_AddRefs(nativeAcc));
+  aOuterDoc->GetNativeInterface(getter_AddRefs(nativeAcc));
   MOZ_ASSERT(nativeAcc);
 
   RefPtr<IDispatch> wrapped(
