@@ -4042,9 +4042,9 @@ jit::ConvertLinearInequality(TempAllocator& alloc, MBasicBlock* block, const Lin
     return compare;
 }
 
-static bool
-AnalyzePoppedThis(JSContext* cx, ObjectGroup* group,
-                  MDefinition* thisValue, MInstruction* ins, bool definitelyExecuted,
+static bool AnalyzePoppedThis(JSContext* cx, DPAConstraintInfo& constraintInfo,
+                              ObjectGroup* group, MDefinition* thisValue,
+                              MInstruction* ins, bool definitelyExecuted,
                   HandlePlainObject baseobj,
                   Vector<TypeNewScript::Initializer>* initializerList,
                   Vector<PropertyName*>* accessedProperties,
@@ -4084,7 +4084,12 @@ AnalyzePoppedThis(JSContext* cx, ObjectGroup* group,
             return true;
 
         RootedId id(cx, NameToId(setprop->name()));
-        if (!AddClearDefiniteGetterSetterForPrototypeChain(cx, group, id)) {
+        bool added = false;
+        if (!AddClearDefiniteGetterSetterForPrototypeChain(cx, constraintInfo,
+                                                           group, id, &added)) {
+          return false;
+        }
+        if (!added) {
             // The prototype chain already contains a getter/setter for this
             // property, or type information is too imprecise.
             return true;
@@ -4144,7 +4149,12 @@ AnalyzePoppedThis(JSContext* cx, ObjectGroup* group,
         if (!baseobj->lookup(cx, id) && !accessedProperties->append(get->name()))
             return false;
 
-        if (!AddClearDefiniteGetterSetterForPrototypeChain(cx, group, id)) {
+        bool added = false;
+        if (!AddClearDefiniteGetterSetterForPrototypeChain(cx, constraintInfo,
+                                                           group, id, &added)) {
+          return false;
+        }
+        if (!added) {
             // The |this| value can escape if any property reads it does go
             // through a getter.
             return true;
@@ -4170,7 +4180,7 @@ CmpInstructions(const void* a, const void* b)
 }
 
 bool
-jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
+jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, DPAConstraintInfo& constraintInfo, HandleFunction fun,
                                         ObjectGroup* group, HandlePlainObject baseobj,
                                         Vector<TypeNewScript::Initializer>* initializerList)
 {
@@ -4333,9 +4343,9 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
 
         bool handled = false;
         size_t slotSpan = baseobj->slotSpan();
-        if (!AnalyzePoppedThis(cx, group, thisValue, ins, definitelyExecuted,
-                               baseobj, initializerList, &accessedProperties, &handled))
-        {
+        if (!AnalyzePoppedThis(cx, constraintInfo, group, thisValue, ins,
+                       definitelyExecuted, baseobj, initializerList,
+                       &accessedProperties, &handled)) {
             return false;
         }
         if (!handled)
@@ -4352,7 +4362,6 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
         // contingent on the correct frames being inlined. Add constraints to
         // invalidate the definite properties if additional functions could be
         // called at the inline frame sites.
-        Vector<MBasicBlock*> exitBlocks(cx);
         for (MBasicBlockIterator block(graph.begin()); block != graph.end(); block++) {
             // Inlining decisions made after the last new property was added to
             // the object don't need to be frozen.
@@ -4360,8 +4369,9 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
                 break;
             if (MResumePoint* rp = block->callerResumePoint()) {
                 if (block->numPredecessors() == 1 && block->getPredecessor(0) == rp->block()) {
-                    JSScript* script = rp->block()->info().script();
-                    if (!AddClearDefiniteFunctionUsesInScript(cx, group, script, block->info().script()))
+              JSScript* caller = rp->block()->info().script();
+              JSScript* callee = block->info().script();
+              if (!constraintInfo.addInliningConstraint(caller, callee))
                         return false;
                 }
             }

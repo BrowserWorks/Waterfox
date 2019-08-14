@@ -195,27 +195,23 @@ ConvertLinearSum(TempAllocator& alloc, MBasicBlock* block, const LinearSum& sum,
 
 // Convert the test 'sum >= 0' to a comparison, adding any necessary
 // instructions to the end of block.
-MCompare*
-ConvertLinearInequality(TempAllocator& alloc, MBasicBlock* block, const LinearSum& sum);
+MCompare* ConvertLinearInequality(TempAllocator& alloc, MBasicBlock* block,
+                                  const LinearSum& sum);
 
-MOZ_MUST_USE bool
-AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
-                                   ObjectGroup* group, HandlePlainObject baseobj,
-                                   Vector<TypeNewScript::Initializer>* initializerList);
+MOZ_MUST_USE bool AnalyzeNewScriptDefiniteProperties(
+    JSContext* cx, DPAConstraintInfo& constraintInfo, HandleFunction fun,
+    ObjectGroup* group, HandlePlainObject baseobj,
+    Vector<TypeNewScript::Initializer>* initializerList);
 
-MOZ_MUST_USE bool
-AnalyzeArgumentsUsage(JSContext* cx, JSScript* script);
+MOZ_MUST_USE bool AnalyzeArgumentsUsage(JSContext* cx, JSScript* script);
 
-bool
-DeadIfUnused(const MDefinition* def);
+bool DeadIfUnused(const MDefinition* def);
 
-bool
-IsDiscardable(const MDefinition* def);
+bool IsDiscardable(const MDefinition* def);
 
-void
-DumpMIRExpressions(MIRGraph& graph);
+void DumpMIRExpressions(MIRGraph& graph);
 
-} // namespace jit
-} // namespace js
+}  // namespace jit
+}  // namespace js
 
 #endif /* jit_IonAnalysis_h */
