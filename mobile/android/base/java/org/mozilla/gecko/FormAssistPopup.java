@@ -132,7 +132,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
                                              final GeckoBundle rect,
                                              final boolean isEmpty) {
         final String inputMethod = InputMethods.getCurrentInputMethod(getContext());
-        if (!isEmpty && sInputMethodBlocklist.contains(inputMethod)) {
+        if (!mGeckoView.isShown() || (!isEmpty && sInputMethodBlocklist.contains(inputMethod))) {
             // Don't display the form auto-complete popup after the user starts typing
             // to avoid confusing somes IME. See bug 758820 and bug 632744.
             hide();
