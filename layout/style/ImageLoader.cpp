@@ -425,6 +425,21 @@ void ImageLoader::ClearFrames(nsPresContext* aPresContext) {
   mFrameToRequestMap.Clear();
 }
 
+static CORSMode EffectiveCorsMode(nsIURI* aURI,
+                                  const URLValue* aImage) {
+  MOZ_ASSERT(aURI);
+  CORSMode mode = aImage->CorsMode();
+  if (mode == CORSMode::CORS_NONE) {
+    return mode;
+  }
+  MOZ_ASSERT(mode == CORSMode::CORS_ANONYMOUS);
+  if (aURI->SchemeIs("resource")) {
+    return CORSMode::CORS_NONE;
+  }
+  return mode;
+}
+
+
 /* static */
 void ImageLoader::LoadImage(URLValue* aImage, Document* aLoadingDoc) {
   MOZ_ASSERT(NS_IsMainThread());
@@ -455,7 +470,7 @@ void ImageLoader::LoadImage(URLValue* aImage, Document* aLoadingDoc) {
 
   int32_t loadFlags =
       nsIRequest::LOAD_NORMAL |
-      nsContentUtils::CORSModeToLoadImageFlags(aImage->CorsMode());
+      nsContentUtils::CORSModeToLoadImageFlags(EffectiveCorsMode(uri, aImage));
 
   URLExtraData* data = aImage->ExtraData();
 
