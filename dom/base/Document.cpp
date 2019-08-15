@@ -11636,13 +11636,6 @@ static bool MightBeChromeScheme(nsIURI* aURI) {
   return isChrome;
 }
 
-static bool MightBeAboutOrChromeScheme(nsIURI* aURI) {
-  MOZ_ASSERT(aURI);
-  bool isAbout = true;
-  aURI->SchemeIs("about", &isAbout);
-  return isAbout || MightBeChromeScheme(aURI);
-}
-
 void Document::PropagateUseCounters(Document* aParentDocument) {
   MOZ_ASSERT(this != aParentDocument);
 
@@ -11760,7 +11753,8 @@ void Document::ReportUseCounters(UseCounterReportKind aKind) {
       (IsContentDocument() || IsResourceDoc())) {
     nsCOMPtr<nsIURI> uri;
     NodePrincipal()->GetURI(getter_AddRefs(uri));
-    if (!uri || MightBeAboutOrChromeScheme(uri)) {
+    if (!uri || uri->SchemeIs("about") || uri->SchemeIs("chrome") ||
+        uri->SchemeIs("resource")) {
       return;
     }
 
