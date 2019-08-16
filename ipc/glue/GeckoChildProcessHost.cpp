@@ -470,7 +470,7 @@ GeckoChildProcessHost::PerformAsyncLaunch(std::vector<std::string> aExtraOpts)
   const char* origNSPRLogName = PR_GetEnv("NSPR_LOG_FILE");
   const char* origMozLogName = PR_GetEnv("MOZ_LOG_FILE");
   if (!origNSPRLogName && !origMozLogName) {
-    return PerformAsyncLaunchInternal(aExtraOpts, arch);
+    return PerformAsyncLaunchInternal(aExtraOpts);
   }
 
   // - Note: this code is not called re-entrantly, nor are restoreOrig*LogName
@@ -498,15 +498,15 @@ GeckoChildProcessHost::PerformAsyncLaunch(std::vector<std::string> aExtraOpts)
   }
 
   // `RUST_LOG_CHILD` is meant for logging child processes only.
-  if (childRustLog) {
-    if (mRestoreOrigRustLog.IsEmpty()) {
-      mRestoreOrigRustLog.AssignLiteral("RUST_LOG=");
-      mRestoreOrigRustLog.Append(origRustLog);
-    }
-    rustLog.AssignLiteral("RUST_LOG=");
-    rustLog.Append(childRustLog);
-    PR_SetEnv(rustLog.get());
-  }
+  // if (childRustLog) {
+  //   if (mRestoreOrigRustLog.IsEmpty()) {
+  //     mRestoreOrigRustLog.AssignLiteral("RUST_LOG=");
+  //     mRestoreOrigRustLog.Append(origRustLog);
+  //   }
+  //   rustLog.AssignLiteral("RUST_LOG=");
+  //   rustLog.Append(childRustLog);
+  //   PR_SetEnv(rustLog.get());
+  // }
 
   bool retval = PerformAsyncLaunchInternal(aExtraOpts);
 

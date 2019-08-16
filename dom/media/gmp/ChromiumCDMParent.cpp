@@ -45,11 +45,10 @@ ChromiumCDMParent::Init(ChromiumCDMCallback* aCDMCallback,
                         bool aAllowPersistentState)
 {
   GMP_LOG("ChromiumCDMParent::Init(this=%p)", this);
-  if (!aCDMCallback || !aMainThread) {
+  if (!aCDMCallback) {
     return false;
   }
   mCDMCallback = aCDMCallback;
-  mMainThread = aMainThread;
   return SendInit(aAllowDistinctiveIdentifier, aAllowPersistentState);
 }
 
