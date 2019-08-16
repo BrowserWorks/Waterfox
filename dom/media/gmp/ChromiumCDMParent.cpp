@@ -76,7 +76,7 @@ RefPtr<ChromiumCDMParent::InitPromise> ChromiumCDMParent::Init(
                 "ChromiumCDMParent::Init() succeeded with callback from child");
             self->mInitPromise.ResolveIfExists(true /* unused */, __func__);
           },
-          [self](ResponseRejectReason aReason) {
+          [self](PromiseRejectReason aReason) {
             RefPtr<gmp::GeckoMediaPluginService> service =
                 gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
             bool xpcomWillShutdown =

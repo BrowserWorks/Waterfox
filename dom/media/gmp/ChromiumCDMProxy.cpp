@@ -39,33 +39,27 @@ ChromiumCDMProxy::~ChromiumCDMProxy()
   MOZ_COUNT_DTOR(ChromiumCDMProxy);
 }
 
-void
-ChromiumCDMProxy::Init(PromiseId aPromiseId,
-                       const nsAString& aOrigin,
-                       const nsAString& aTopLevelOrigin,
-                       const nsAString& aGMPName)
-{
+void ChromiumCDMProxy::Init(PromiseId aPromiseId, const nsAString& aOrigin,
+                            const nsAString& aTopLevelOrigin,
+                            const nsAString& aGMPName) {
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
   EME_LOG(
-    "ChromiumCDMProxy::Init (pid=%u, origin=%s, topLevelOrigin=%s, gmp=%s)",
-    aPromiseId,
-    NS_ConvertUTF16toUTF8(aOrigin).get(),
-    NS_ConvertUTF16toUTF8(aTopLevelOrigin).get(),
-    NS_ConvertUTF16toUTF8(aGMPName).get());
+      "ChromiumCDMProxy::Init (pid=%u, origin=%s, topLevelOrigin=%s, gmp=%s)",
+      aPromiseId, NS_ConvertUTF16toUTF8(aOrigin).get(),
+      NS_ConvertUTF16toUTF8(aTopLevelOrigin).get(),
+      NS_ConvertUTF16toUTF8(aGMPName).get());
 
   if (!mGMPThread) {
     RejectPromise(
-      aPromiseId,
-      NS_ERROR_DOM_INVALID_STATE_ERR,
-      NS_LITERAL_CSTRING("Couldn't get GMP thread ChromiumCDMProxy::Init"));
+        aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+        NS_LITERAL_CSTRING("Couldn't get GMP thread ChromiumCDMProxy::Init"));
     return;
   }
 
   if (aGMPName.IsEmpty()) {
-    RejectPromise(aPromiseId,
-                  NS_ERROR_DOM_INVALID_STATE_ERR,
+    RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
                   nsPrintfCString("Unknown GMP for keysystem '%s'",
                                   NS_ConvertUTF16toUTF8(mKeySystem).get()));
     return;
@@ -77,44 +71,13 @@ ChromiumCDMProxy::Init(PromiseId aPromiseId,
   RefPtr<ChromiumCDMProxy> self(this);
   nsCString keySystem = NS_ConvertUTF16toUTF8(mKeySystem);
   RefPtr<Runnable> task(NS_NewRunnableFunction(
-    "ChromiumCDMProxy::Init",
-    [self, nodeId, helper, aPromiseId, thread, keySystem]() -> void {
-      MOZ_ASSERT(self->IsOnOwnerThread());
+      "ChromiumCDMProxy::Init",
+      [self, nodeId, helper, aPromiseId, thread, keySystem]() -> void {
+        MOZ_ASSERT(self->IsOnOwnerThread());
 
-      RefPtr<gmp::GeckoMediaPluginService> service =
-        gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
-      if (!service) {
-        self->RejectPromise(
-          aPromiseId,
-          NS_ERROR_DOM_INVALID_STATE_ERR,
-          NS_LITERAL_CSTRING(
-            "Couldn't get GeckoMediaPluginService in ChromiumCDMProxy::Init"));
-        return;
-      }
-      RefPtr<gmp::GetCDMParentPromise> promise =
-        service->GetCDM(nodeId, { keySystem }, helper);
-      promise->Then(
-        thread,
-        __func__,
-        [self, aPromiseId](RefPtr<gmp::ChromiumCDMParent> cdm) {
-          self->mCallback =
-            MakeUnique<ChromiumCDMCallbackProxy>(self, self->mMainThread);
-          nsCString failureReason;
-          if (!cdm->Init(self->mCallback.get(),
-                         self->mDistinctiveIdentifierRequired,
-                         self->mPersistentStateRequired,
-                         self->mMainThread,
-                         failureReason)) {
-            self->RejectPromise(aPromiseId, NS_ERROR_FAILURE, failureReason);
-            return;
-          }
-          {
-            MutexAutoLock lock(self->mCDMMutex);
-            self->mCDM = cdm;
-          }
-          self->OnCDMCreated(aPromiseId);
-        },
-        [self, aPromiseId](MediaResult rv) {
+        RefPtr<gmp::GeckoMediaPluginService> service =
+            gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
+        if (!service) {
           self->RejectPromise(
               aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
               NS_LITERAL_CSTRING("Couldn't get GeckoMediaPluginService in "
