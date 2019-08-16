@@ -4401,7 +4401,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                                                 errfn, "'%s'" % resolve.name,
                                                 sentinelKey=resolve.name, errfnSentinel=errfnSent,
                                                 actor=ExprVar.THIS) ]
-        desrej = [ StmtDecl(Decl(_ResponseRejectReason.Type(), reason.name)),
+        desrej = [ StmtDecl(Decl(_PromiseRejectReason.Type(), reason.name)),
                    _ParamTraits.checkedRead(None, ExprAddrOf(reason), msgexpr,
                                             ExprAddrOf(itervar),
                                             errfn, "'%s'" % reason.name,
