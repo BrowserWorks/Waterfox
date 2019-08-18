@@ -19,6 +19,10 @@ SOURCES += [
 FINAL_TARGET_FILES += ['blocklist.xml']
 FINAL_TARGET_FILES.defaults += ['permissions']
 
+FINAL_TARGET_PP_FILES += [
+  'ua-update.json.in',
+]
+
 DEFINES['APP_VERSION'] = CONFIG['MOZ_APP_VERSION']
 
 LOCAL_INCLUDES += [
