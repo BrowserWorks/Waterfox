@@ -581,3 +581,5 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == fragid-shadow-7.html fra
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == fragid-shadow-8.html fragid-shadow-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == fragid-shadow-9.html fragid-shadow-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == fragid-shadow-10.html fragid-shadow-ref.html # Bug 1392106
+
+!= bug-1562091.html bug-1562091-ref.html
