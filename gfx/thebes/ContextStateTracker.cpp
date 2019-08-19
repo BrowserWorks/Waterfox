@@ -6,7 +6,6 @@
 #include "ContextStateTracker.h"
 #include "GLContext.h"
 #include "GeckoProfiler.h"
-#include "ProfilerMarkerPayload.h"
 
 namespace mozilla {
 
@@ -108,14 +107,6 @@ ContextStateTrackerOGL::Flush(GLContext* aGL)
     aGL->fGetQueryObjectuiv(handle, LOCAL_GL_QUERY_RESULT, &gpuTime);
 
     aGL->fDeleteQueries(1, &handle);
-
-    if (profiler_is_active()) {
-      profiler_add_marker(
-        "gpu_timer_query",
-        MakeUnique<GPUMarkerPayload>(mCompletedSections[0].mCpuTimeStart,
-                                     mCompletedSections[0].mCpuTimeEnd,
-                                     0, gpuTime));
-    }
 
     mCompletedSections.RemoveElementAt(0);
   }

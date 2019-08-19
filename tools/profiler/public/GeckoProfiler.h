@@ -40,7 +40,6 @@
 #endif
 
 class ProfilerBacktrace;
-class ProfilerMarkerPayload;
 class SpliceableJSONWriter;
 
 namespace mozilla {
@@ -426,9 +425,6 @@ PROFILER_FUNC(PseudoStack* profiler_get_pseudo_stack(), nullptr)
 // certain length of time. A no-op if the profiler is inactive or in privacy
 // mode.
 PROFILER_FUNC_VOID(profiler_add_marker(const char* aMarkerName))
-PROFILER_FUNC_VOID(
-  profiler_add_marker(const char* aMarkerName,
-                      mozilla::UniquePtr<ProfilerMarkerPayload> aPayload))
 
 enum TracingKind {
   TRACING_EVENT,

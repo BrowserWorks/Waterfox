@@ -8,7 +8,6 @@
 
 #include "GeckoProfiler.h"
 #include "nsRFPService.h"
-#include "ProfilerMarkerPayload.h"
 #include "PerformanceEntry.h"
 #include "PerformanceMainThread.h"
 #include "PerformanceMark.h"
@@ -285,11 +284,6 @@ Performance::Mark(const nsAString& aName, ErrorResult& aRv)
     new PerformanceMark(GetParentObject(), aName, Now());
   InsertUserEntry(performanceMark);
 
-  if (profiler_is_active()) {
-    profiler_add_marker(
-      "UserTiming",
-      MakeUnique<UserTimingMarkerPayload>(aName, TimeStamp::Now()));
-  }
 }
 
 void
@@ -371,15 +365,6 @@ Performance::Measure(const nsAString& aName,
     new PerformanceMeasure(GetParentObject(), aName, startTime, endTime);
   InsertUserEntry(performanceMeasure);
 
-  if (profiler_is_active()) {
-    TimeStamp startTimeStamp = CreationTimeStamp() +
-                               TimeDuration::FromMilliseconds(startTime);
-    TimeStamp endTimeStamp = CreationTimeStamp() +
-                             TimeDuration::FromMilliseconds(endTime);
-    profiler_add_marker(
-      "UserTiming",
-      MakeUnique<UserTimingMarkerPayload>(aName, startTimeStamp, endTimeStamp));
-  }
 }
 
 void

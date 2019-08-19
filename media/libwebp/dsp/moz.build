@@ -46,16 +46,16 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES['yuv_neon.c'].flags += CONFIG['NEON_FLAGS']
 elif CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['alpha_processing_sse2.c'].flags += CONFIG['SSE2_FLAGS']
-    SOURCES['alpha_processing_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['alpha_processing_sse41.c'].flags += ['-msse4.1']
     SOURCES['dec_sse2.c'].flags += CONFIG['SSE2_FLAGS']
-    SOURCES['dec_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['dec_sse41.c'].flags += ['-msse4.1']
     SOURCES['filters_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['lossless_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['rescaler_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['upsampling_sse2.c'].flags += CONFIG['SSE2_FLAGS']
-    SOURCES['upsampling_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['upsampling_sse41.c'].flags += ['-msse4.1']
     SOURCES['yuv_sse2.c'].flags += CONFIG['SSE2_FLAGS']
-    SOURCES['yuv_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['yuv_sse41.c'].flags += ['-msse4.1']
 
 FINAL_LIBRARY = 'gkmedias'
 

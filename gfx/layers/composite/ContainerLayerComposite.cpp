@@ -35,7 +35,6 @@
 #include "TextRenderer.h"               // for TextRenderer
 #include <vector>
 #include "GeckoProfiler.h"              // for GeckoProfiler
-#include "ProfilerMarkerPayload.h"      // for LayerTranslationMarkerPayload
 
 #define CULLING_LOG(...)
 // #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
@@ -97,10 +96,6 @@ PrintUniformityInfo(Layer* aLayer)
   }
 
   Point translation = transform.As2D().GetTranslation();
-  profiler_add_marker(
-    "LayerTranslation",
-    MakeUnique<LayerTranslationMarkerPayload>(aLayer, translation,
-                                              TimeStamp::Now()));
 }
 
 static Maybe<gfx::Polygon>

@@ -33,7 +33,6 @@
 
 #include "EventListenerService.h"
 #include "GeckoProfiler.h"
-#include "ProfilerMarkerPayload.h"
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
@@ -1303,10 +1302,6 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
               TimeStamp endTime = TimeStamp::Now();
               uint16_t phase;
               (*aDOMEvent)->GetEventPhase(&phase);
-              profiler_add_marker(
-                "DOMEvent",
-                MakeUnique<DOMEventMarkerPayload>(typeStr, phase,
-                                                  startTime, endTime));
             } else {
               rv = HandleEventSubType(listener, *aDOMEvent, aCurrentTarget);
             }

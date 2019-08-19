@@ -83,7 +83,6 @@
 #include "mozilla/HalTypes.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
-#include "ProfilerMarkerPayload.h"
 #include "mozilla/VsyncDispatcher.h"
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 #include "VsyncSource.h"
@@ -1852,9 +1851,6 @@ static void
 InsertVsyncProfilerMarker(TimeStamp aVsyncTimestamp)
 {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  profiler_add_marker(
-    "VsyncTimestamp",
-    MakeUnique<VsyncMarkerPayload>(aVsyncTimestamp));
 }
 
 /*static */ void

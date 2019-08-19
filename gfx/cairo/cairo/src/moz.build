@@ -222,6 +222,7 @@ if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
         '-Wno-missing-field-initializers',
         '-Wno-conversion',
         '-Wno-unused',
+        '-Wno-c++11-narrowing',
     ]
 
 if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
@@ -233,6 +234,8 @@ if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
         '-Wno-tautological-compare',
         '-Wno-tautological-constant-out-of-range-compare',
         '-Wno-error=uninitialized',
+        '-Wno-c++11-narrowing',
+
     ]
 
 if CONFIG['_MSC_VER'] and not CONFIG['CLANG_CL']:
