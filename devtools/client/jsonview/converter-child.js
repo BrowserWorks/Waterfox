@@ -365,7 +365,10 @@ function onContentMessage(e) {
   const value = e.detail.value;
   switch (e.detail.type) {
     case "save":
-      Services.cpmm.sendAsyncMessage("devtools:jsonview:save", value);
+      win.docShell.messageManager.sendAsyncMessage(
+        "devtools:jsonview:save",
+        value
+      );
   }
 }
 
