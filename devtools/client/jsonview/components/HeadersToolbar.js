@@ -40,7 +40,7 @@ define(function(require, exports, module) {
         {},
         ToolbarButton(
           { className: "btn copy", onClick: this.onCopy },
-          JSONView.Locale.$STR("jsonViewer.Copy")
+          JSONView.Locale["jsonViewer.Copy"]
         )
       );
     }

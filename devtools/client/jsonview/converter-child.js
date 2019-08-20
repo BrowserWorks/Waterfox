@@ -219,6 +219,17 @@ function getHttpHeaders(request) {
   return headers;
 }
 
+let jsonViewStringDict = null;
+function getAllStrings() {
+  if (!jsonViewStringDict) {
+    jsonViewStringDict = {};
+    for (const string of jsonViewStrings.getSimpleEnumeration()) {
+      jsonViewStringDict[string.key] = string.value;
+    }
+  }
+  return jsonViewStringDict;
+}
+
 // Exports variables that will be accessed by the non-privileged scripts.
 function exportData(win, headers) {
   const json = new win.Text();
@@ -228,20 +239,10 @@ function exportData(win, headers) {
       headers,
       json,
       readyState: "uninitialized",
-      Locale: {
-        $STR: key => {
-          try {
-            return jsonViewStrings.GetStringFromName(key);
-          } catch (err) {
-            console.error(err);
-            return undefined;
-          }
-        },
-      },
+      Locale: getAllStrings(),
     },
     win,
     {
-      cloneFunctions: true,
       wrapReflectors: true,
     }
   );

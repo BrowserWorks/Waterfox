@@ -42,7 +42,7 @@ define(function(require, exports, module) {
           { className: "netHeadersGroup" },
           div(
             { className: "netInfoHeadersGroup" },
-            JSONView.Locale.$STR("jsonViewer.responseHeaders")
+            JSONView.Locale["jsonViewer.responseHeaders"]
           ),
           table(
             { cellPadding: 0, cellSpacing: 0 },
@@ -53,7 +53,7 @@ define(function(require, exports, module) {
           { className: "netHeadersGroup" },
           div(
             { className: "netInfoHeadersGroup" },
-            JSONView.Locale.$STR("jsonViewer.requestHeaders")
+            JSONView.Locale["jsonViewer.requestHeaders"]
           ),
           table(
             { cellPadding: 0, cellSpacing: 0 },

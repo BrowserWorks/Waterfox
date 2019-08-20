@@ -53,14 +53,14 @@ define(function(require, exports, module) {
             className: "btn save",
             onClick: this.onSave,
           },
-          JSONView.Locale.$STR("jsonViewer.Save")
+          JSONView.Locale["jsonViewer.Save"]
         ),
         ToolbarButton(
           {
             className: "btn copy",
             onClick: this.onCopy,
           },
-          JSONView.Locale.$STR("jsonViewer.Copy")
+          JSONView.Locale["jsonViewer.Copy"]
         ),
         this.props.isValidJson
           ? ToolbarButton(
@@ -68,7 +68,7 @@ define(function(require, exports, module) {
                 className: "btn prettyprint",
                 onClick: this.onPrettify,
               },
-              JSONView.Locale.$STR("jsonViewer.PrettyPrint")
+              JSONView.Locale["jsonViewer.PrettyPrint"]
             )
           : null
       );
