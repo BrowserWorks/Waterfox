@@ -96,10 +96,7 @@ static mozilla::LauncherFlags ProcessCmdLine(int& aArgc, wchar_t* aArgv[]) {
     result |= mozilla::LauncherFlags::eWaitForBrowser;
   }
 
-  if (mozilla::CheckArg(
-          aArgc, aArgv, L"no-deelevate", static_cast<const wchar_t**>(nullptr),
-          mozilla::CheckArgFlag::CheckOSInt |
-              mozilla::CheckArgFlag::RemoveArg) == mozilla::ARG_FOUND) {
+  if (mozilla::CheckArg(aArgc, aArgv, L"no-deelevate") == mozilla::ARG_FOUND) {
     result |= mozilla::LauncherFlags::eNoDeelevate;
   }
 
@@ -203,6 +200,8 @@ namespace mozilla {
 
 Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
                         const StaticXREAppData& aAppData) {
+  EnsureCommandlineSafe(argc, argv);
+
   SetLauncherErrorAppData(aAppData);
 
   if (CheckArg(argc, argv, L"log-launcher-error",
