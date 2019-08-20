@@ -6,7 +6,7 @@
 
 "use strict";
 
-const { Ci, Cu, CC } = require("chrome");
+const { components, Ci, Cr, Cu, CC } = require("chrome");
 const ChromeUtils = require("ChromeUtils");
 const Services = require("Services");
 
@@ -123,6 +123,19 @@ Converter.prototype = {
 
     // Initialize stuff.
     const win = NetworkHelper.getWindowForRequest(request);
+    if (!win || !components.isSuccessCode(request.status)) {
+      return;
+    }
+
+    // We compare actual pointer identities here rather than using .equals(),
+    // because if things went correctly then the document must have exactly
+    // the principal we reset it to above. If not, something went wrong.
+    if (win.document.nodePrincipal != request.loadInfo.principalToInherit) {
+      // Whatever that document is, it's not ours.
+      request.cancel(Cr.NS_BINDING_ABORTED);
+      return;
+    }
+
     this.data = exportData(win, headers);
     insertJsonData(win, this.data.json);
     win.addEventListener("contentMessage", onContentMessage, false, true);
@@ -135,8 +148,10 @@ Converter.prototype = {
   },
 
   onStopRequest: function(request, statusCode) {
-    // Flush data.
-    this.decodeAndInsertBuffer(new ArrayBuffer(0), true);
+    // Flush data if we haven't been canceled.
+    if (components.isSuccessCode(statusCode)) {
+      this.decodeAndInsertBuffer(new ArrayBuffer(0), true);
+    }
 
     // Stop the request.
     this.listener.onStopRequest(request, statusCode);
